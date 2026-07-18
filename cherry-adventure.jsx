@@ -304,6 +304,7 @@ const ULTS = {
 // 👑 alternate ultimates — unlocked classes can switch between two ults (toggled in the skill panel)
 const ULT_ALT = {
   samurai: { name: "เทพดาบซากุระ", emoji: "👑🌸", desc: "จันทร์แตก ซากุระถล่ม ฟันร้อยดาบ ×4 · เจาะเกราะ + ทำลายเกราะ + เลือดไหล + หวาดกลัว" },
+  lancer: { name: "พระโพธิสัตว์พิฆาต", emoji: "🪷✨", desc: "ปักไม้เท้าศักดิ์สิทธิ์ บัวทองบาน พระพุทธเจ้าปรากฏ ไม้เท้ายักษ์ทุบ ×3.0 · ฟื้น HP + ชำระสถานะ + สตันปีศาจ" },
 };
 // resolve which ultimate a class is currently using
 const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls];
@@ -8947,7 +8948,7 @@ export default function CherryAdventure() {
         G.ultUsed = true;
         const U = ultOf(G.cls, G.ultAlt);
         const altUlt = !!(G.ultAlt && ULT_ALT[G.cls]); // 👑 alternate ultimate selected
-        G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
+        G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
         if (G.sfx && G.sfx.charge) G.sfx.charge(); // ⚡ rising hum as the ultimate winds up
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
       } else if (kind === "catch") {
@@ -13485,6 +13486,166 @@ export default function CherryAdventure() {
               }
               // fade dimensional slashes each frame (assault trails)
               DP.slashes.forEach(sl => { if (sl.visible) { sl.material.opacity = Math.max(0, sl.material.opacity - dt * 3.5); if (sl.material.opacity <= 0.02) sl.visible = false; } });
+            } else if (cls === "lancer" && A.altUlt) {
+              // 🪷✨ SACRED MONK — plant the holy staff, bloom a golden lotus, summon the Buddha, then SMASH
+              const gold = 0xf5c542, dgold = 0xe0a020, warm = 0xfff6d0, saffron = 0xf59a3a, jade = 0x8fd0a0;
+              const EP = em.position;
+              const CX = () => battleCenter.x - 1.3, CZ = () => battleCenter.z;
+              if (!A.mk) {
+                A.mk = { fx: new THREE.Group(), petals: [], beads: [], scripts: [], seg: [], teleT: 0, struck: 0 };
+                scene.add(A.mk.fx);
+                // giant golden lotus petals (two rings)
+                for (let i = 0; i < 12; i++) {
+                  const pet = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 10, 0, Math.PI), new THREE.MeshBasicMaterial({ color: i % 2 ? gold : warm, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  pet.userData.ang = i / 12 * Math.PI * 2; pet.userData.ring = i % 2;
+                  pet.visible = false; A.mk.fx.add(pet); A.mk.petals.push(pet);
+                }
+                // floating prayer beads
+                for (let i = 0; i < 16; i++) {
+                  const b = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), new THREE.MeshStandardMaterial({ color: 0x8a4a20, emissive: dgold, emissiveIntensity: 0.8, transparent: true, opacity: 0, metalness: 0.3, roughness: 0.4 }));
+                  b.userData.ph = i / 16 * Math.PI * 2; A.mk.fx.add(b); A.mk.beads.push(b);
+                }
+                // floating sanskrit scripture panels
+                for (let i = 0; i < 7; i++) {
+                  const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.9), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  const glyph = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 6, 3), new THREE.MeshBasicMaterial({ color: saffron, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  glyph.position.z = 0.01; sc.add(glyph);
+                  sc.userData.ph = Math.random() * Math.PI * 2; sc.visible = false; A.mk.fx.add(sc); A.mk.scripts.push(sc);
+                }
+                // colossal sacred staff (pillar) + orb + rings
+                const staff = new THREE.Group();
+                const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 6.5, 14), new THREE.MeshStandardMaterial({ color: gold, emissive: dgold, emissiveIntensity: 0.6, metalness: 0.7, roughness: 0.25, transparent: true, opacity: 0.98 }));
+                const orb = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshBasicMaterial({ color: warm, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+                orb.position.y = 3.5;
+                for (let r = 0; r < 4; r++) {
+                  const rg = new THREE.Mesh(new THREE.TorusGeometry(0.5 + r * 0.12, 0.05, 8, 20), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  rg.position.y = 3.5; rg.rotation.x = Math.PI / 2; staff.add(rg);
+                }
+                staff.add(pillar); staff.add(orb);
+                staff.visible = false; A.mk.fx.add(staff); A.mk.staff = staff; A.mk.orb = orb; A.mk.pillar = pillar;
+                // golden dragon coiling the staff
+                for (let i = 0; i < 16; i++) {
+                  const s = new THREE.Mesh(new THREE.SphereGeometry(0.28 - i * 0.012, 12, 12), new THREE.MeshBasicMaterial({ color: i === 0 ? warm : gold, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  s.visible = false; A.mk.fx.add(s); A.mk.seg.push(s);
+                }
+                // divine Buddha silhouette (simple seated form + big halo) high above
+                const bud = new THREE.Group();
+                const halo = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.14, 12, 48), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                const bhead = new THREE.Mesh(new THREE.SphereGeometry(0.7, 16, 16), new THREE.MeshBasicMaterial({ color: warm, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                bhead.position.y = 1.5;
+                const bbody = new THREE.Mesh(new THREE.ConeGeometry(1.9, 2.4, 20), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                bbody.position.y = 0.1;
+                bud.add(halo); bud.add(bhead); bud.add(bbody);
+                bud.visible = false; A.mk.fx.add(bud); A.mk.bud = bud; A.mk.halo = halo;
+                if (G.sfx && G.sfx.charge) G.sfx.charge();
+              }
+              const MK = A.mk;
+              char.position.x = CX(); char.position.z = CZ(); char.rotation.y = Math.PI / 2;
+              const base = new THREE.Vector3(CX(), 0, CZ());
+              // ============ PHASE 1 — PLANT STAFF + SCRIPTURES (p 0 → 0.18) ============
+              if (p < 0.18) {
+                const cp = p / 0.18; G._ultCamOrbit = cp * 0.3;
+                if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.3;
+                armR.rotation.x = -0.5 - cp * 0.3; armL.rotation.x = -0.5; wand.rotation.set(0, 0, 0); wand.scale.setScalar(1 + cp * 0.6);
+                magicCircle.visible = true; magicCircle.position.set(base.x, 0.06, base.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + cp * 1.6);
+                magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.2 + si) * (si % 2 ? -1 : 1); st.children.forEach(c => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? gold : saffron); }); });
+                // scriptures rise + orbit
+                MK.scripts.forEach((sc, i) => { sc.visible = true; const a = sc.userData.ph + t * 0.6; sc.position.set(base.x + Math.cos(a) * 1.9, 1.2 + Math.sin(a * 1.3) * 0.7 + cp, base.z + Math.sin(a) * 1.9); sc.lookAt(base.x, sc.position.y, base.z); sc.material.opacity = cp * 0.9; });
+                // prayer beads ring
+                MK.beads.forEach((b, i) => { b.visible = true; const a = b.userData.ph + t * 1.2; b.position.set(base.x + Math.cos(a) * 1.3, 1.5 + Math.sin(a * 2) * 0.2, base.z + Math.sin(a) * 1.3); b.material.opacity = cp; });
+                if (Math.random() < 0.6) burst(new THREE.Vector3(base.x + (Math.random() - 0.5) * 2.5, 0, base.z + (Math.random() - 0.5) * 2.5), Math.random() < 0.5 ? gold : warm, 0.4 + Math.random() * 2);
+                if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x2a2210), 0.05);
+                G._camShake = 0.04 + cp * 0.05;
+              }
+              // ============ PHASE 2 — LOTUS BLOOM (p 0.18 → 0.36) ============
+              else if (p < 0.36) {
+                const cp = (p - 0.18) / 0.18; G._ultCamOrbit = 0.3 + cp * 0.3;
+                MK.beads.forEach(b => { const a = b.userData.ph + t * 1.4; b.position.set(base.x + Math.cos(a) * 1.4, 1.4 + Math.sin(a * 2) * 0.3, base.z + Math.sin(a) * 1.4); b.material.opacity = 1; });
+                MK.scripts.forEach(sc => { const a = sc.userData.ph + t * 0.7; sc.position.set(base.x + Math.cos(a) * 2.0, 1.6 + Math.sin(a * 1.3) * 0.7, base.z + Math.sin(a) * 2.0); sc.lookAt(base.x, sc.position.y, base.z); sc.material.opacity = 0.9; });
+                // giant lotus blooms — petals unfold outward + upward
+                MK.petals.forEach((pet, i) => { pet.visible = true; const a = pet.userData.ang; const open = Math.min(1, cp * 1.3); const r = (pet.userData.ring ? 1.1 : 0.7) * (0.3 + open * 1.5); pet.position.set(base.x + Math.cos(a) * r, 0.15 + open * (pet.userData.ring ? 0.5 : 0.9), base.z + Math.sin(a) * r); pet.rotation.set(-Math.PI / 2 + open * 0.9, 0, a); pet.scale.setScalar(0.6 + open * 1.1); pet.material.opacity = open; });
+                if (Math.random() < 0.6) burst(new THREE.Vector3(base.x + (Math.random() - 0.5) * 3, 0, base.z + (Math.random() - 0.5) * 3), warm, 0.3 + Math.random() * 2.5);
+                if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x201a0c), 0.05);
+                G._camShake = 0.09;
+              }
+              // ============ PHASE 3 — SKY OPENS / BUDDHA (p 0.36 → 0.52) ============
+              else if (p < 0.52) {
+                const cp = (p - 0.36) / 0.16; G._ultCamOrbit = 0.6;
+                MK.petals.forEach((pet, i) => { const a = pet.userData.ang; const r = (pet.userData.ring ? 1.1 : 0.7) * 1.8; pet.position.set(base.x + Math.cos(a) * r, 0.15 + (pet.userData.ring ? 0.5 : 0.9), base.z + Math.sin(a) * r); pet.material.opacity = 1; });
+                // the divine Buddha rises high above the battlefield
+                MK.bud.visible = true; MK.bud.position.set(base.x + 3, 6.5, base.z - 1); MK.bud.lookAt(char.position.x, 6.5, char.position.z + 3); MK.bud.scale.setScalar(0.6 + cp * 0.9);
+                MK.bud.children.forEach(c => c.material.opacity = Math.min(0.8, cp * 1.1)); MK.halo.rotation.z = t * 0.5;
+                // golden rays descend (beads/scripts drift up toward the light)
+                MK.beads.forEach(b => { const a = b.userData.ph + t * 1.5; b.position.set(base.x + Math.cos(a) * 1.5, 1.6 + Math.sin(a * 2) * 0.3, base.z + Math.sin(a) * 1.5); });
+                if (Math.random() < 0.8) burst(new THREE.Vector3(base.x + (Math.random() - 0.5) * 5, 0, base.z + (Math.random() - 0.5) * 5), gold, 4 + Math.random() * 3);
+                if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x3a2e12), 0.06);
+                G._camShake = 0.12;
+              }
+              // ============ PHASE 4 — STAFF PILLAR + GOLDEN DRAGON (p 0.52 → 0.68) ============
+              else if (p < 0.68) {
+                const cp = (p - 0.52) / 0.16; G._ultCamOrbit = 0.6 - cp * 0.3;
+                MK.bud.children.forEach(c => c.material.opacity = 0.8); MK.halo.rotation.z = t * 0.6;
+                // sacred staff grows into a colossal pillar above the enemy
+                MK.staff.visible = true; MK.staff.position.set(EP.x, 0, EP.z); MK.staff.scale.set(1 + cp * 0.6, 0.5 + cp * 1.2, 1 + cp * 0.6);
+                MK.orb.material.opacity = 0.9;
+                // golden dragon coils up the pillar
+                MK.seg.forEach((s, i) => { s.visible = true; const u = i * 0.55 - t * 5; const rise = (i / 16) * 6.5; const rad = 0.9 - i * 0.02; s.position.set(EP.x + Math.cos(u) * rad, 0.4 + rise * Math.min(1, cp * 1.4), EP.z + Math.sin(u) * rad); s.material.opacity = Math.min(1, cp * 1.4); });
+                // purify pulses on the enemy
+                MK.teleT += dt;
+                if (MK.teleT > 0.16) {
+                  MK.teleT = 0; burst(EP.clone(), MK.struck % 2 ? warm : gold, 0.6 + Math.random() * 1.6);
+                  if (MK.struck < 6) applyHit(roll() * 0.35, gold, " 🪷 ชำระบาป!");
+                  monGlow(em, 0x554422, 0.6); setTimeout(() => monGlow(em, 0x000000, null), 90);
+                  MK.struck++; G._camShake = Math.max(G._camShake || 0, 0.2);
+                  if (G.sfx && G.sfx.hit) G.sfx.hit();
+                }
+                if (Math.random() < 0.6) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0, EP.z), gold, 3 + Math.random() * 3);
+                G._camShake = Math.max(G._camShake || 0, 0.14 + cp * 0.1);
+              }
+              // ============ PHASE 5 — DIVINE SMASH (p 0.68 → 0.9) ============
+              else if (p < 0.9) {
+                const cp = (p - 0.68) / 0.22; G._ultCamOrbit = 0;
+                MK.seg.forEach(s => s.material.opacity = Math.max(0, s.material.opacity - dt * 3));
+                // the monk leaps, the colossal staff SMASHES straight down onto the arena
+                const drop = Math.min(1, cp * 1.7);
+                char.position.y = Math.sin(Math.min(1, cp * 2) * Math.PI) * 1.6; // leap
+                MK.staff.visible = true; MK.staff.scale.set(1.6, 1.8, 1.6);
+                MK.staff.position.set(EP.x, Math.max(0, 5.5 - drop * 5.5), EP.z);
+                MK.orb.material.opacity = 1;
+                if (Math.random() < 0.85) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0, EP.z), Math.random() < 0.5 ? gold : warm, MK.staff.position.y + 1);
+                G._camShake = 0.3 + cp * 0.4;
+                if (drop >= 1 && !A.mkBoom) {
+                  A.mkBoom = true;
+                  if (G.sfx) { G.sfx.crit && G.sfx.crit(); G.sfx.boom && G.sfx.boom(); }
+                  G._camShake = 1.1;
+                  applyHit(roll() * 3.0, gold, " 🪷✨ พุทธานุภาพ!");
+                  G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); G.est.frozen = true;
+                  // 💚 heal the monk + purify own status
+                  if (typeof effMaxHp === "function") { const heal = Math.round(effMaxHp() * 0.35); G.player.hp = Math.min(effMaxHp(), (G.player.hp || 0) + heal); popDamage(new THREE.Vector3(char.position.x, 1.5, char.position.z), heal, "heal"); setUi(u => ({ ...u, hp: G.player.hp })); }
+                  G.est.burn = 0; G.est.poison = 0; G.est.bleed = 0; // purify
+                  // golden shockwave + lotus petal explosion
+                  for (let k = 0; k < 24; k++) setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 5.5, 0, EP.z + (Math.random() - 0.5) * 5.5), [gold, warm, saffron, jade][k % 4], 0.2 + Math.random() * 3.5), k * 20);
+                  magicCircle.visible = true; magicCircle.position.set(EP.x, 0.12, EP.z); magicCircle.rotation.x = Math.PI / 2;
+                  if (em.userData.body) em.position.y = 1.2;
+                }
+                if (A.mkBoom) { magicCircle.visible = true; magicCircle.scale.setScalar(4 + cp * 7); magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.max(0, 1 - cp); c.material.color.setHex(gold); })); if (em.userData.body) em.position.y = Math.max(0, em.position.y - dt * 3); }
+                G._camShake = Math.max(G._camShake || 0, 0.2);
+              }
+              // ============ PHASE 6 — AFTERMATH (p 0.9 → 1) ============
+              else {
+                const cp = (p - 0.9) / 0.1; G._ultCamOrbit = 0;
+                char.position.y = Math.max(0, char.position.y - dt * 4); wand.scale.setScalar(Math.max(1, 1.6 - cp));
+                armR.rotation.x = -0.4 + Math.sin(t * 2) * 0.05; armL.rotation.x = -0.3;
+                MK.staff.visible = cp < 0.7; MK.staff.children.forEach(c => { if (c.material) c.material.opacity = Math.max(0, (c.material.opacity || 0) - dt * 3); });
+                MK.bud.children.forEach(c => c.material.opacity = Math.max(0, c.material.opacity - dt * 2));
+                MK.petals.forEach(pet => { pet.material.opacity = Math.max(0, pet.material.opacity - dt * 2); pet.position.y += dt * 0.5; });
+                MK.beads.forEach(b => b.material.opacity = Math.max(0, b.material.opacity - dt * 2));
+                MK.scripts.forEach(sc => sc.material.opacity = Math.max(0, sc.material.opacity - dt * 2));
+                if (em.userData.body) { em.position.y = Math.max(0, em.position.y - dt * 3); em.rotation.z = 0; }
+                if (Math.random() < 0.3 * (1 - cp)) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), gold, Math.random() * 2.5);
+                if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.08);
+                G._camShake = Math.max(0, 0.2 * (1 - cp));
+              }
             } else if (cls === "lancer") {
               // 🔱🐉 DRAGON SPEAR JUDGMENT — summon a storm dragon, infuse the spear, hurl it from the heavens
               const elec = 0x5ac8ff, white = 0xffffff, storm = 0x7a5ad0, gold = 0xf5d24a;
@@ -14259,6 +14420,7 @@ export default function CherryAdventure() {
               if (A.rr) { scene.remove(A.rr.fx); A.rr.fx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.rr = null; }
               if (A.ot) { scene.remove(A.ot.fx); A.ot.fx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.ot = null; }
               if (A.hs) { scene.remove(A.hs.fx); A.hs.fx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.hs = null; }
+              if (A.mk) { scene.remove(A.mk.fx); A.mk.fx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.mk = null; }
               // 🔱🐉 Dragon Spear Judgment cleanup — dragon, levitating rocks, restore the spear
               if (A.dragon) { scene.remove(A.dragon); A.dragon = null; }
               if (A.rocks) { A.rocks.forEach((rk) => scene.remove(rk)); A.rocks = null; }
