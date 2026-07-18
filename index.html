@@ -16415,7 +16415,7 @@ function CherryAdventure() {
         G.banim = {
           type: "ult",
           t: 0,
-          dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? altUlt ? 4.6 : 3.8 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 4.2 : G.cls === "coder" ? 6.0 : 2.4,
+          dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? altUlt ? 4.6 : 3.8 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4,
           hits: 0,
           total: 0,
           altUlt
@@ -21878,7 +21878,7 @@ function CherryAdventure() {
               const roll = () => (effAtk() + Math.random() * 4) * ultMul;
               // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
               // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
-              const CAST_SEC = cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" ? 0 : 1.0;
+              const CAST_SEC = cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" ? 0 : 1.0;
               const castP = CAST_SEC > 0 ? Math.min(1, A.t / CAST_SEC) : 1;
               const casting = A.t < CAST_SEC;
               // remap post-cast progress so attack motions play at normal speed
@@ -22914,182 +22914,144 @@ function CherryAdventure() {
                 // fade delete lasers each frame
                 RR.lasers.forEach(l => { if (l.visible) { l.material.opacity = Math.max(0, l.material.opacity - dt * 5); if (l.material.opacity <= 0.02) l.visible = false; } });
               } else if (cls === "office") {
-                // 💻⚡ OT OVERLOAD — documents rain, a giant laptop crashes, digital explosion
-                const blue = 0x2a7ad0,
-                  holo = 0x5ab0f0,
-                  paper = 0xe8eef6,
-                  red = 0xe84a4a,
-                  cyan = 0x8ae0ff;
-                char.position.x = battleCenter.x - 1.3;
-                char.rotation.y = Math.PI / 2;
-                // ─── Phase 1 (0 → 0.2): digital magic circle, holograms boot up, keyboard floats ───
-                if (p < 0.2) {
-                  const dp = p / 0.2;
-                  armR.rotation.x = -1.2 * dp;
-                  armR.rotation.z = 0.2;
-                  armL.rotation.x = -0.9 * dp;
-                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x101a2e), 0.05); // office lights dim
-                  magicCircle.visible = true;
-                  magicCircle.position.set(char.position.x, 0.08, char.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(1 + dp * 2);
-                  magicCircle.userData.stars.forEach((st, si) => {
-                    st.rotation.z = t * (2 + si) * (si % 2 ? -1 : 1);
-                    st.children.forEach(c => {
-                      c.material.opacity = Math.min(1, dp * 1.5);
-                      c.material.color.setHex(si === 0 ? blue : cyan);
-                    });
-                  });
-                  // ⌨️ keyboard, mouse, sticky notes float up around the worker
-                  if (Math.random() < 0.9) {
-                    const a = t * 4 + Math.random() * 6.28,
-                      r = 0.9;
-                    burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.2 + dp * 2, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? holo : paper, 0.32);
+                // 💻⚡ OT OVERLOAD — coffee rush, a document storm, then a colossal laptop SLAM
+                const ofBlue = 0x3a7ad0, paper = 0xf5f5ea, coffee = 0x8a5a3a, digi = 0x2fd0ff, redD = 0xff5a5a;
+                const EP = em.position;
+                if (!A.ot) {
+                  A.ot = { fx: new THREE.Group(), docs: [], bolts: [], teleT: 0, teleI: 0, struck: 0 };
+                  scene.add(A.ot.fx);
+                  // flying documents (paper planes)
+                  for (let i = 0; i < 16; i++) {
+                    const d = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.46), new THREE.MeshBasicMaterial({ color: paper, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+                    const line = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.03), new THREE.MeshBasicMaterial({ color: ofBlue, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false }));
+                    line.position.set(0, 0.08, 0.001); d.add(line);
+                    d.userData.ph = Math.random() * Math.PI * 2; d.userData.sp = 1 + Math.random() * 1.5;
+                    d.visible = false; A.ot.fx.add(d); A.ot.docs.push(d);
                   }
-                  G._ultCamOrbit = dp * 0.5;
+                  // stapler / digital bolts (reused)
+                  for (let i = 0; i < 6; i++) {
+                    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 1, 6), new THREE.MeshBasicMaterial({ color: digi, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    b.visible = false; A.ot.fx.add(b); A.ot.bolts.push(b);
+                  }
+                  // deadline clock ring
+                  const clock = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.07, 8, 40), new THREE.MeshBasicMaterial({ color: redD, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  clock.visible = false; A.ot.fx.add(clock); A.ot.clock = clock;
+                  // colossal laptop
+                  const lap = new THREE.Group();
+                  const base = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.24, 2.2), new THREE.MeshStandardMaterial({ color: 0x9aa4b0, metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0 }));
+                  const screen = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.1, 0.16), new THREE.MeshStandardMaterial({ color: 0x9aa4b0, metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0 }));
+                  screen.position.set(0, 1.05, -1.05); screen.rotation.x = -0.35;
+                  const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 1.8), new THREE.MeshBasicMaterial({ color: ofBlue, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+                  glow.position.set(0, 1.05, -0.96); glow.rotation.x = -0.35;
+                  lap.add(base); lap.add(screen); lap.add(glow);
+                  lap.visible = false; A.ot.fx.add(lap); A.ot.lap = lap; A.ot.lapGlow = glow;
+                  if (G.sfx && G.sfx.charge) G.sfx.charge();
                 }
-                // ─── Phase 2 (0.2 → 0.42): binary code fills the air, holograms spin up ───
-                else if (p < 0.42) {
-                  const dp = (p - 0.2) / 0.22;
-                  armR.rotation.x = -1.2 - dp * 1.0; // raise both arms — summoning the overtime
-                  armL.rotation.x = -0.9 - dp * 1.0;
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 5.5, em.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(1.5 + dp * 2.5);
-                  magicCircle.userData.stars.forEach(st => st.rotation.z = t * 3);
-                  // 0/1 binary rain + hologram grid
-                  if (Math.random() < 0.95) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 5, 1 + Math.random() * 4.5, em.position.z + (Math.random() - 0.5) * 3), Math.random() < 0.5 ? cyan : blue, 0.3);
+                const OT = A.ot;
+                char.position.x = battleCenter.x - 1.3; char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2;
+                const zap = (from, to, col) => { const l = OT.bolts[OT.teleI % OT.bolts.length]; OT.teleI++; const mid = from.clone().lerp(to, 0.5); const len = from.distanceTo(to); l.visible = true; l.position.copy(mid); l.scale.set(1, Math.max(0.1, len), 1); l.material.color.setHex(col); l.material.opacity = 1; l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize()); };
+                // ============ PHASE 1 — COFFEE RUSH / CHARGE (p 0 → 0.18) ============
+                if (p < 0.18) {
+                  const cp = p / 0.18; G._ultCamOrbit = cp * 0.3;
+                  armR.rotation.x = -0.8 - cp * 0.5; armL.rotation.x = -0.5;
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.06, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + cp * 1.5);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.5 + si) * (si % 2 ? -1 : 1); st.children.forEach(c => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? ofBlue : coffee); }); });
+                  OT.clock.visible = true; OT.clock.position.set(char.position.x, 2.4, char.position.z); OT.clock.rotation.z = t * 2; OT.clock.material.opacity = cp; OT.clock.scale.setScalar(0.6 + cp * 0.4);
+                  if (Math.random() < 0.6) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 2.5, 0, char.position.z + (Math.random() - 0.5) * 2.5), Math.random() < 0.5 ? coffee : ofBlue, 0.4 + Math.random() * 2);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x1a1620), 0.05);
+                  G._camShake = 0.05 + cp * 0.06;
+                }
+                // ============ PHASE 2 — DOCUMENT STORM (p 0.18 → 0.4) ============
+                else if (p < 0.4) {
+                  const cp = (p - 0.18) / 0.22; G._ultCamOrbit = 0.3 + cp * 0.35;
+                  OT.clock.material.opacity = 1; OT.clock.position.set(EP.x, 2.6, EP.z); OT.clock.rotation.z = t * 3;
+                  // documents swirl up from the archer and blizzard toward the enemy
+                  OT.docs.forEach((d, i) => {
+                    d.visible = true; d.material.opacity = Math.min(1, cp * 1.5);
+                    const a = d.userData.ph + t * d.userData.sp;
+                    const spread = 2.2 - cp * 0.6;
+                    const cx = char.position.x + (EP.x - char.position.x) * Math.min(1, cp * 1.3);
+                    const cz = char.position.z + (EP.z - char.position.z) * Math.min(1, cp * 1.3);
+                    d.position.set(cx + Math.cos(a) * spread, 0.6 + ((i / 16) * 3 + Math.sin(a * 1.4)) % 3, cz + Math.sin(a) * spread);
+                    d.rotation.set(t * 2 + i, a, t * 1.5);
+                  });
+                  if (Math.random() < 0.5) burst(EP.clone(), paper, 0.4 + Math.random() * 2);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x141018), 0.06);
                   G._camShake = 0.1;
-                  G._ultCamOrbit = 0.5 + dp * 0.4;
                 }
-                // ─── Phase 3 (0.42 → 0.66): THOUSANDS of documents rain from the sky ───
-                else if (p < 0.66) {
-                  const dp = (p - 0.42) / 0.24;
-                  armR.rotation.x = -2.2;
-                  armL.rotation.x = -2.2;
-                  if (!A.docs) {
-                    A.docs = [];
-                    for (let k = 0; k < 22; k++) {
-                      const d2 = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.27), new THREE.MeshStandardMaterial({
-                        color: paper,
-                        side: THREE.DoubleSide,
-                        roughness: 0.85
-                      }));
-                      d2.userData = {
-                        x: (Math.random() - 0.5) * 5,
-                        z: (Math.random() - 0.5) * 3,
-                        delay: Math.random() * 0.6,
-                        spin: Math.random() * 6,
-                        sp: 0.6 + Math.random() * 0.6
-                      };
-                      scene.add(d2);
-                      A.docs.push(d2);
-                    }
-                  }
-                  A.docs.forEach(d2 => {
-                    const lp = Math.max(0, Math.min(1, (dp - d2.userData.delay) / 0.5));
-                    d2.visible = lp > 0;
-                    d2.position.set(em.position.x + d2.userData.x, 6 - lp * 6 * d2.userData.sp, em.position.z + d2.userData.z);
-                    d2.rotation.set(d2.userData.spin + lp * 8, lp * 6, lp * 4);
-                  });
-                  if (dp > 0.3 && A.hits < 3) {
-                    const step = Math.floor(dp * 4) - 1;
-                    if (step > A.hits) {
-                      A.hits = step;
-                      applyHit(roll() * 0.5, paper, " 📄 เอกสารถล่ม!");
-                      G._camShake = Math.max(G._camShake || 0, 0.2);
-                      if (G.sfx) G.sfx.hit && G.sfx.hit();
-                    }
-                  }
-                  if (Math.random() < 0.7) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 4, 0.3 + Math.random() * 2, em.position.z + (Math.random() - 0.5) * 2.5), paper, 0.3);
-                  G._ultCamOrbit = 0;
+                // ============ PHASE 3 — SUMMON GIANT LAPTOP (p 0.4 → 0.52) ============
+                else if (p < 0.52) {
+                  const cp = (p - 0.4) / 0.12; G._ultCamOrbit = 0.65 - cp * 0.3;
+                  armR.rotation.x = -2.2; armL.rotation.x = -1.8;
+                  OT.docs.forEach((d, i) => { const a = d.userData.ph + t * d.userData.sp; d.position.set(EP.x + Math.cos(a) * 1.6, 0.6 + ((i / 16) * 3 + t) % 3, EP.z + Math.sin(a) * 1.6); d.material.opacity = 1; });
+                  OT.lap.visible = true; OT.lap.position.set(EP.x, 5.5 + cp * 0.5, EP.z); OT.lap.rotation.y = Math.PI; OT.lap.scale.setScalar(0.6 + cp * 0.8);
+                  OT.lap.children.forEach(c => { if (c.material) c.material.opacity = c === OT.lapGlow ? Math.min(0.7, cp) : Math.min(1, cp * 1.4); });
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0, EP.z), ofBlue, 4 + Math.random() * 2);
+                  G._camShake = 0.14 + cp * 0.1;
                 }
-                // ─── Phase 4 (0.66 → 0.84): a GIANT laptop crashes into the battlefield ───
-                else if (p < 0.84) {
-                  const dp = (p - 0.66) / 0.18;
-                  armR.rotation.x = -2.2 + dp * 1.6;
-                  armL.rotation.x = -2.2 + dp * 1.6;
-                  if (A.docs) A.docs.forEach(d2 => {
-                    d2.position.y -= 0.02;
-                    if (d2.position.y < 0) d2.visible = false;
-                  });
-                  // 💻 the colossal laptop falling from the sky
-                  if (!A.bigLaptop) {
-                    A.bigLaptop = new THREE.Group();
-                    const shell = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.16, 1.9), new THREE.MeshStandardMaterial({
-                      color: 0x9aa4b2,
-                      metalness: 0.75,
-                      roughness: 0.35
-                    }));
-                    const scr = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.7, 0.14), new THREE.MeshStandardMaterial({
-                      color: 0x0e1c33,
-                      emissive: blue,
-                      emissiveIntensity: 1.3,
-                      roughness: 0.2
-                    }));
-                    scr.position.set(0, 0.85, -0.9);
-                    scr.rotation.x = -0.3;
-                    A.bigLaptop.add(shell, scr);
-                    scene.add(A.bigLaptop);
+                // ============ PHASE 4 — DOCUMENT ASSAULT (p 0.52 → 0.72) ============
+                else if (p < 0.72) {
+                  const cp = (p - 0.52) / 0.2; G._ultCamOrbit = 0.35 - cp * 0.2;
+                  OT.lap.visible = true; OT.lap.position.set(EP.x, 5.7, EP.z); OT.lap.scale.setScalar(1.4);
+                  OT.lap.children.forEach(c => { if (c.material) c.material.opacity = c === OT.lapGlow ? 0.6 : 1; });
+                  OT.teleT += dt;
+                  if (OT.teleT > 0.11) {
+                    OT.teleT = 0;
+                    const ox = (Math.random() - 0.5) * 1.4, oz = (Math.random() - 0.5) * 1.4;
+                    zap(new THREE.Vector3(EP.x + ox, 3, EP.z + oz), new THREE.Vector3(EP.x + ox, 0.2, EP.z + oz), OT.struck % 2 ? digi : ofBlue);
+                    burst(EP.clone(), OT.struck % 2 ? paper : digi, 0.4 + Math.random() * 1.6);
+                    // a document slams in
+                    const d = OT.docs[OT.struck % OT.docs.length]; d.visible = true; d.position.set(EP.x, 1.2, EP.z); d.scale.setScalar(1.6); d.material.opacity = 1;
+                    if (OT.struck < 9) applyHit(roll() * 0.42, OT.struck % 2 ? ofBlue : digi, " 📄 เอกสารถล่ม!");
+                    monGlow(em, 0x223344, 0.7); setTimeout(() => monGlow(em, 0x000000, null), 90);
+                    OT.struck++; G._camShake = Math.max(G._camShake || 0, 0.28);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
                   }
-                  A.bigLaptop.visible = true;
-                  A.bigLaptop.position.set(em.position.x, 7 - Math.pow(dp, 2) * 6.6, em.position.z);
-                  A.bigLaptop.rotation.z = (1 - dp) * 0.3;
-                  if (Math.random() < 0.9) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2, A.bigLaptop.position.y, em.position.z + (Math.random() - 0.5) * 1.5), Math.random() < 0.5 ? cyan : blue, 0.4);
-                  G._camShake = 0.2 + dp * 0.3;
+                  OT.docs.forEach((d, i) => { if (d.scale.x > 1.05) d.scale.multiplyScalar(1 - dt * 2); const a = d.userData.ph + t * d.userData.sp; if (i % 2) d.position.set(EP.x + Math.cos(a) * 1.5, 0.8 + (t % 2), EP.z + Math.sin(a) * 1.5); });
+                  if (em.userData.body) em.position.x = EP.x + Math.sin(t * 45) * 0.05;
+                  G._camShake = Math.max(G._camShake || 0, 0.16);
                 }
-                // ─── Phase 5 (0.84 → 1): blue digital explosion, binary everywhere ───
-                else {
-                  const dp = (p - 0.84) / 0.16;
-                  armR.rotation.x = -0.6 + dp * 0.6;
-                  armL.rotation.x = -0.6 + dp * 0.6;
-                  if (A.bigLaptop) {
-                    A.bigLaptop.position.y = 0.4;
-                    A.bigLaptop.scale.setScalar(Math.max(0.01, 1 - dp * 1.6));
-                    if (dp > 0.6) A.bigLaptop.visible = false;
-                  }
-                  if (!A.otBoom) {
+                // ============ PHASE 5 — LAPTOP SLAM (p 0.72 → 0.9) ============
+                else if (p < 0.9) {
+                  const cp = (p - 0.72) / 0.18; G._ultCamOrbit = 0;
+                  if (em.userData.body) em.position.x = EP.x;
+                  OT.docs.forEach(d => d.material.opacity = Math.max(0, d.material.opacity - dt * 2));
+                  OT.clock.material.opacity = Math.max(0, OT.clock.material.opacity - dt * 2);
+                  // the colossal laptop crashes straight down (Enter key smash)
+                  OT.lap.visible = true;
+                  const drop = Math.min(1, cp * 1.6);
+                  OT.lap.position.set(EP.x, 5.7 - drop * 5.0, EP.z); OT.lap.scale.setScalar(1.6);
+                  OT.lap.rotation.x = drop * 0.3;
+                  if (Math.random() < 0.8) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0, EP.z), digi, OT.lap.position.y);
+                  G._camShake = 0.25 + cp * 0.35;
+                  if (drop >= 1 && !A.otBoom) {
                     A.otBoom = true;
-                    if (G.sfx) {
-                      G.sfx.crit && G.sfx.crit();
-                      G.sfx.boom && G.sfx.boom();
-                    } // 💣 real explosion
-                    G._camShake = 0.85;
-                    spawnSkillFx("quake", em.position, blue);
-                    for (let k = 0; k < 24; k++) setTimeout(() => burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 4, 0.3 + Math.random() * 3, em.position.z + (Math.random() - 0.5) * 4), k % 3 === 0 ? cyan : k % 3 === 1 ? blue : paper, 1 + Math.random() * 0.6), k * 18);
-                    applyHit(roll() * 3.5, blue, " 💻⚡ โอทีล้นทะลัก!!");
-                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); // armor break
-                    G.est.frozen = true; // stun
-                    if (em.userData.body) em.userData._stagger = 0.9;
+                    if (G.sfx) { G.sfx.crit && G.sfx.crit(); G.sfx.boom && G.sfx.boom(); }
+                    G._camShake = 1.0;
+                    applyHit(roll() * 2.9, ofBlue, " 💻💥 ส่งงานเดดไลน์!");
+                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); G.est.frozen = true;
+                    for (let k = 0; k < 20; k++) setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4.5, 0, EP.z + (Math.random() - 0.5) * 4.5), [ofBlue, digi, paper, redD][k % 4], 0.2 + Math.random() * 3.2), k * 22);
+                    // shockwave via magic circle
+                    magicCircle.visible = true; magicCircle.position.set(EP.x, 0.12, EP.z); magicCircle.rotation.x = Math.PI / 2;
+                    if (em.userData.body) em.position.y = 1.2;
                   }
-                  // 0/1 binary code raining through the blast
-                  if (Math.random() < 0.8) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 3.5, Math.random() * 3, em.position.z + (Math.random() - 0.5) * 2.5), cyan, 0.35);
-                  if (em.userData.body) {
-                    em.position.y = Math.sin(dp * Math.PI) * 1.2;
-                    em.rotation.z = dp * 0.4;
-                  }
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 0.12, em.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(3 + dp * 5);
-                  magicCircle.userData.stars.forEach(st => st.children.forEach(c => {
-                    c.material.opacity = Math.max(0, 1 - dp);
-                    c.material.color.setHex(blue);
-                  }));
-                  if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.07);
+                  if (A.otBoom) { magicCircle.visible = true; magicCircle.scale.setScalar(4 + cp * 6); magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.max(0, 1 - cp); c.material.color.setHex(ofBlue); })); if (em.userData.body) em.position.y = Math.max(0, em.position.y - dt * 3); }
+                  G._camShake = Math.max(G._camShake || 0, 0.2);
                 }
-                // cleanup
-                if (p >= 1) {
-                  if (A.docs) {
-                    A.docs.forEach(d2 => scene.remove(d2));
-                    A.docs = null;
-                  }
-                  if (A.bigLaptop) {
-                    scene.remove(A.bigLaptop);
-                    A.bigLaptop = null;
-                  }
+                // ============ PHASE 6 — AFTERMATH (p 0.9 → 1) ============
+                else {
+                  const cp = (p - 0.9) / 0.1; G._ultCamOrbit = 0;
+                  armR.rotation.x = -0.4 + Math.sin(t * 2) * 0.05; armL.rotation.x = -0.3;
+                  OT.lap.visible = cp < 0.7; OT.lap.children.forEach(c => { if (c.material) c.material.opacity = Math.max(0, c.material.opacity - dt * 3); });
+                  OT.docs.forEach(d => { d.material.opacity = Math.max(0, d.material.opacity - dt * 2.5); d.position.y = Math.max(0.05, d.position.y - dt * 2); });
+                  OT.bolts.forEach(b => { if (b.visible) { b.material.opacity = Math.max(0, b.material.opacity - dt * 4); if (b.material.opacity <= 0.02) b.visible = false; } });
+                  if (em.userData.body) { em.position.y = Math.max(0, em.position.y - dt * 3); em.rotation.z = 0; }
+                  if (Math.random() < 0.3 * (1 - cp)) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), paper, Math.random() * 2.5);
+                  if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.08);
+                  G._camShake = Math.max(0, 0.2 * (1 - cp));
                 }
+                // fade bolts each frame
+                OT.bolts.forEach(b => { if (b.visible) { b.material.opacity = Math.max(0, b.material.opacity - dt * 5); if (b.material.opacity <= 0.02) b.visible = false; } });
               } else if (cls === "samurai" && A.altUlt) {
                 // 👑🌸 HEAVENLY SAKURA JUDGMENT — the moon splits, a hundred blades fall, sakura buries the field
                 const white = 0xffffff,
@@ -23803,6 +23765,15 @@ function CherryAdventure() {
                     if (o.material) o.material.dispose();
                   });
                   A.rr = null;
+                }
+                // 💻⚡ OT Overload cleanup — remove documents / giant laptop rig
+                if (A.ot) {
+                  scene.remove(A.ot.fx);
+                  A.ot.fx.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) o.material.dispose();
+                  });
+                  A.ot = null;
                 }
                 // 🔱🐉 Dragon Spear Judgment cleanup — dragon, levitating rocks, restore the spear
                 if (A.dragon) {
