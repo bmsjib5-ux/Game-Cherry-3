@@ -17402,8 +17402,8 @@ function CherryAdventure() {
         if (shield) shield.visible = G.cls === "warrior" && G.mode !== "create";
         // 🗡️ off-hand dagger shows for assassins
         if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create";
-        // 🏷️ name label shows while exploring, hidden in creator/battle
-        if (nameSprite) nameSprite.visible = G.mode === "explore";
+        // 🏷️ name label (ชื่อ + Lv + ฉายา) shows while exploring and battling, hidden only in creator
+        if (nameSprite) nameSprite.visible = G.mode === "explore" || G.mode === "battle";
         ahoge.rotation.x = Math.sin(t * 1.7 + 1) * 0.08;
 
         // blink
