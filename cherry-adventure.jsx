@@ -679,7 +679,7 @@ export default function CherryAdventure() {
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, forgeOpen: false, treeOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
-    warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
+    warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
     toast: "", toastAt: 0,
   });
 
@@ -15363,7 +15363,58 @@ export default function CherryAdventure() {
                 );
               })()}
             </div>
+            {/* 🧑 เลือกตัวละคร / 🚪 Logout */}
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              <button
+                onClick={() => {
+                  G.saveGame && G.saveGame();
+                  G.mode = "title";
+                  setUi((u) => ({ ...u, homeOpen: false, mode: "title", slots: G.readSlots() }));
+                }}
+                title="บันทึกแล้วกลับไปหน้าเลือกช่องบันทึก"
+                style={{
+                  flex: 1, padding: "11px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                  fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff",
+                  background: "linear-gradient(90deg,#5aa06a,#7ba05b)",
+                  boxShadow: "0 3px 10px rgba(90,150,90,0.4)",
+                }}
+              >🧑 เลือกตัวละคร</button>
+              <button
+                onClick={() => {
+                  G.saveGame && G.saveGame();
+                  try { window.close(); } catch (e) {}
+                  setUi((u) => ({ ...u, homeOpen: false, loggedOut: true }));
+                }}
+                title="บันทึกแล้วออกจากระบบ/ปิดเกม"
+                style={{
+                  flex: 1, padding: "11px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                  fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff",
+                  background: "linear-gradient(90deg,#d9536b,#b03050)",
+                  boxShadow: "0 3px 10px rgba(200,60,90,0.4)",
+                }}
+              >🚪 Logout</button>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* 🚪 หน้าจอออกจากระบบ/ปิดเกม */}
+      {ui.loggedOut && (
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 100,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: 14, background: "linear-gradient(180deg,#2a2030,#1a1420)", color: "#fff", padding: 24,
+        }}>
+          <div style={{ fontSize: 54 }}>🍒</div>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>ออกจากระบบแล้ว</div>
+          <div style={{ fontSize: 13, color: "#d0c0d0", textAlign: "center", lineHeight: 1.7 }}>
+            บันทึกเกมเรียบร้อย · ขอบคุณที่เล่นนะ 🌸<br />ปิดแท็บนี้เพื่อปิดเกมได้เลย
+          </div>
+          <button onClick={() => window.location.reload()} style={{
+            marginTop: 8, padding: "12px 28px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 800, fontFamily: font, color: "#8a3a5a",
+            background: "linear-gradient(90deg,#f5c542,#f5a0b8)", boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+          }}>🔄 เปิดเกมใหม่</button>
         </div>
       )}
 
