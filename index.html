@@ -19065,338 +19065,81 @@ function CherryAdventure() {
                   }
                 }
               } else if (cls === "coder") {
-                // 💻🔮 ARCANE CODER — types spells into existence
+                // 💻🔮 ARCANE CODER — types spells into existence (AAA visuals)
                 const skId = A.skill ? A.skill.id : null;
-                const cyan = 0x2ad0e8,
-                  green = 0x2ae84a,
-                  aiBlue = 0x6ac0ff,
-                  err = 0xe84a7a;
-                char.position.x = battleCenter.x - 1.3;
-                char.rotation.y = Math.PI / 2;
-                // ⌨️ typing pose is the through-line for every coder skill
-                const typing = rate => {
-                  armR.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate)) * 0.22;
-                  armL.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate + 1.1)) * 0.22;
-                  armR.rotation.z = 0.3;
-                  armL.rotation.z = -0.3;
-                };
+                const cyan = 0x2ad0e8, green = 0x2ae84a, matrix = 0x38f08a, aiBlue = 0x6ac0ff, err = 0xe84a7a, purp = 0x9a6aff, white = 0xeafcff;
+                const EP = em.position;
+                char.position.x = battleCenter.x - 1.3; char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2;
+                const typing = rate => { armR.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate)) * 0.22; armL.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate + 1.1)) * 0.22; armR.rotation.z = 0.3; armL.rotation.z = -0.3; };
+                if (!A.cfx) { A.cfx = new THREE.Group(); scene.add(A.cfx); A.cfxParts = {}; }
+                const CFX = A.cfx;
+                const ensure = (key, n, make) => { if (!A.cfxParts[key]) { A.cfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); CFX.add(m); A.cfxParts[key].push(m); } } return A.cfxParts[key]; };
+                const addMat = (col, op) => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op == null ? 1 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
                 if (skId === "c_inject") {
-                  // ⌨️ CODE INJECTION — type fast, glowing code streams into the target
-                  typing(20);
-                  char.rotation.z = Math.sin(p * Math.PI * 10) * 0.03;
-                  if (Math.random() < 0.9) {
-                    // code streaming toward the enemy
-                    const f = Math.random();
-                    burst(new THREE.Vector3(battleCenter.x - 0.9 + f * 2.4, 1.25 + (Math.random() - 0.5) * 0.4, battleCenter.z), Math.random() < 0.5 ? green : cyan, 0.28);
-                  }
-                  magicCircle.visible = true;
-                  magicCircle.position.set(char.position.x, 0.08, char.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(1 + Math.min(1, p * 2) * 0.6);
-                  magicCircle.userData.stars.forEach((st, si) => {
-                    st.rotation.z = t * (3 + si * 2);
-                    st.children.forEach(c => {
-                      c.material.opacity = 0.85;
-                      c.material.color.setHex(si === 1 ? green : cyan);
-                    });
-                  });
+                  // ⌨️ CODE INJECTION — a tunnel of glowing glyphs streams from the keyboard into the target
+                  typing(22); char.rotation.z = Math.sin(p * Math.PI * 12) * 0.03;
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.08, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1 + Math.min(1, p * 2) * 0.7);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (3 + si * 2); st.children.forEach(c => { c.material.opacity = 0.85; c.material.color.setHex(si === 1 ? green : cyan); }); });
+                  const from = new THREE.Vector3(char.position.x + 0.4, 1.4, char.position.z);
+                  const glyphs = ensure("g", 16, i => new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.28), addMat(i % 2 ? green : cyan, 0.9)));
+                  glyphs.forEach((g, i) => { const f = ((t * 2.2 + i / glyphs.length) % 1); const pos = from.clone().lerp(EP, f); g.position.set(pos.x, pos.y + Math.sin(i + t * 8) * 0.2, pos.z); g.lookAt(char.position.x - 5, pos.y, char.position.z); g.material.opacity = 0.9 * (1 - Math.abs(f - 0.5) * 0.6); g.material.color.setHex(i % 2 ? green : cyan); });
+                  // targeting brackets lock onto the enemy
+                  const br = ensure("br", 4, i => new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.08), addMat(green, 0)));
+                  br.forEach((b, i) => { const s = i < 2 ? 1 : -1; const v = i % 2 ? 1 : -1; b.visible = true; b.position.set(EP.x + s * 0.9, 1.2 + v * 0.9, EP.z + 0.6); b.rotation.z = (i % 2) ? Math.PI / 2 : 0; b.material.opacity = Math.min(0.9, p * 2); });
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(from.x + Math.random() * (EP.x - from.x), 1.2 + (Math.random() - 0.5) * 0.6, char.position.z), Math.random() < 0.5 ? green : cyan, 0.3);
+                  if (p > 0.78) { burst(EP.clone(), green, 0.6 + Math.random() * 1.2); monGlow(em, 0x115533, 0.6); if (em.userData.body) em.position.x = EP.x + Math.sin(t * 60) * 0.04; G._camShake = Math.max(G._camShake || 0, 0.12); }
                 } else if (skId === "c_wall") {
-                  // 🛡️ FIREWALL — raise a wall of holographic panels
+                  // 🛡️ FIREWALL — a dome of hexagonal shield panels with a scanning sweep
                   const w = Math.min(1, p / 0.4);
-                  armR.rotation.x = -0.4 - w * 1.0;
-                  armL.rotation.x = -0.4 - w * 1.0;
-                  armR.rotation.z = 0.5;
-                  armL.rotation.z = -0.5;
-                  if (!A.fw) {
-                    A.fw = [];
-                    for (let k = 0; k < 8; k++) {
-                      const pane = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshBasicMaterial({
-                        color: cyan,
-                        transparent: true,
-                        opacity: 0.35,
-                        side: THREE.DoubleSide
-                      }));
-                      const edge = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.44), new THREE.MeshBasicMaterial({
-                        color: 0x8ae0ff,
-                        wireframe: true,
-                        transparent: true,
-                        opacity: 0.8,
-                        side: THREE.DoubleSide
-                      }));
-                      pane.add(edge);
-                      pane.userData = {
-                        i: k
-                      };
-                      scene.add(pane);
-                      A.fw.push(pane);
-                    }
-                  }
-                  A.fw.forEach((pane, k) => {
-                    pane.visible = true;
-                    const col = k % 4,
-                      row = Math.floor(k / 4);
-                    const lp = Math.max(0, Math.min(1, (p - k * 0.04) / 0.35));
-                    pane.position.set(char.position.x + 0.75, 0.35 + row * 0.45, battleCenter.z - 0.65 + col * 0.44);
-                    pane.rotation.y = Math.PI / 2;
-                    pane.scale.setScalar(lp);
-                    pane.material.opacity = 0.35 * lp * (p > 0.75 ? (1 - p) * 4 : 1);
-                  });
-                  if (Math.random() < 0.6) burst(new THREE.Vector3(char.position.x + 0.75, 0.4 + Math.random() * 1.4, battleCenter.z + (Math.random() - 0.5) * 1.6), cyan, 0.3);
-                  // 🔒 CONTAINMENT: rings of source code spin around the ENEMY, boxing it in
-                  if (!A.fwCode) {
-                    A.fwCode = [];
-                    for (let ring = 0; ring < 5; ring++) {
-                      // 5 stacked rows of code
-                      for (let k = 0; k < 12; k++) {
-                        // each "glyph" is a short bar — reads as a line of code from any angle
-                        const glyph = new THREE.Mesh(new THREE.BoxGeometry(0.06 + Math.random() * 0.16, 0.11, 0.018),
-                        // 🔠 chunkier, readable text
-                        new THREE.MeshBasicMaterial({
-                          color: ring % 2 ? green : cyan,
-                          transparent: true,
-                          opacity: 0.95
-                        }));
-                        glyph.userData = {
-                          ring,
-                          a: k / 12 * Math.PI * 2 + ring * 0.35,
-                          y: 0.3 + ring * 0.46,
-                          // 5 rows stacked up the body
-                          sp: (ring % 2 ? -1 : 1) * (1.3 + ring * 0.28),
-                          // alternate spin direction
-                          blink: Math.random() * 6
-                        };
-                        scene.add(glyph);
-                        A.fwCode.push(glyph);
-                      }
-                      // the ring outline itself
-                      const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.014, 6, 36), new THREE.MeshBasicMaterial({
-                        color: 0x8ae0ff,
-                        transparent: true,
-                        opacity: 0.7
-                      }));
-                      hoop.rotation.x = Math.PI / 2;
-                      hoop.userData = {
-                        hoop: true,
-                        y: 0.3 + ring * 0.46,
-                        ring
-                      };
-                      scene.add(hoop);
-                      A.fwCode.push(hoop);
-                    }
-                  }
-                  A.fwCode.forEach(o => {
-                    const u = o.userData;
-                    const lp = Math.max(0, Math.min(1, (p - u.ring * 0.08) / 0.35)); // rings snap on one by one
-                    o.visible = lp > 0.02;
-                    const fade = p > 0.75 ? Math.max(0, (1 - p) * 4) : 1;
-                    if (u.hoop) {
-                      o.position.set(em.position.x, u.y, em.position.z);
-                      o.rotation.z = t * u.ring * 0.6;
-                      o.scale.setScalar(lp);
-                      o.material.opacity = 0.7 * lp * fade;
-                      return;
-                    }
-                    const a = u.a + t * u.sp; // 🔄 orbit the monster
-                    const r = 0.95 * lp;
-                    o.position.set(em.position.x + Math.cos(a) * r, u.y + Math.sin(t * 2 + u.a) * 0.05, em.position.z + Math.sin(a) * r);
-                    o.rotation.y = -a; // always face outward
-                    o.scale.setScalar(lp);
-                    // flicker like scrolling text
-                    o.material.opacity = (0.5 + Math.abs(Math.sin(t * 7 + u.blink)) * 0.5) * lp * fade;
-                  });
-                  // 🔐 the enemy is sealed in — sparks where the code meets it
-                  if (Math.random() < 0.7) {
-                    const a = Math.random() * Math.PI * 2;
-                    burst(new THREE.Vector3(em.position.x + Math.cos(a) * 0.95, 0.35 + Math.random() * 1.4, em.position.z + Math.sin(a) * 0.95), Math.random() < 0.5 ? green : cyan, 0.28);
-                  }
-                  if (p >= 1) {
-                    if (A.fw) {
-                      A.fw.forEach(x => scene.remove(x));
-                      A.fw = null;
-                    }
-                    if (A.fwCode) {
-                      A.fwCode.forEach(x => scene.remove(x));
-                      A.fwCode = null;
-                    }
-                  }
+                  armR.rotation.x = -0.4 - w * 1.0; armL.rotation.x = -0.4 - w * 1.0; armR.rotation.z = 0.5; armL.rotation.z = -0.5;
+                  const hexes = ensure("hex", 14, i => { const m = new THREE.Mesh(new THREE.CircleGeometry(0.34, 6), addMat(cyan, 0.4)); const e = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.02, 6, 6), addMat(0x8ae0ff, 0.9)); m.add(e); return m; });
+                  hexes.forEach((h, i) => { const col = i % 4, row = Math.floor(i / 4); const a = (col - 1.5) * 0.42; h.position.set(char.position.x + 1.2, 0.7 + row * 0.7, char.position.z + (col - 1.5) * 0.7); h.rotation.y = -Math.PI / 2 + a * 0.2; const pop = Math.min(1, Math.max(0, (w * 14 - i))); h.scale.setScalar(0.2 + pop * 0.9); h.material.opacity = 0.45 * pop; h.children[0].material.opacity = 0.9 * pop; });
+                  // shield aura + scan sweep around the coder
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.06, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + w); magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = 0.7; c.material.color.setHex(cyan); }));
+                  const scan = ensure("scan", 1, () => new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.1), addMat(white, 0.9)))[0];
+                  scan.position.set(char.position.x + 1.2, 0.5 + ((t * 1.5) % 1) * 2.6, char.position.z); scan.rotation.y = -Math.PI / 2; scan.material.opacity = 0.8;
+                  if (Math.random() < 0.5) burst(new THREE.Vector3(char.position.x + 1.2, 0.5 + Math.random() * 2.4, char.position.z + (Math.random() - 0.5) * 2), cyan, 0.3);
+                  if (p > 0.5 && Math.random() < 0.3) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5), 1.2, char.position.z), aiBlue, 1.4); // buff sparkle on the coder
                 } else if (skId === "c_drone") {
-                  // 🤖 AI DRONE — summon drones that strafe the target with lasers
+                  // 🤖 AI DRONES — summon drones that orbit and strafe the enemy with lasers
                   typing(8);
-                  if (!A.drones) {
-                    A.drones = [];
-                    for (let k = 0; k < 3; k++) {
-                      const d = new THREE.Group();
-                      const core = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.16), new THREE.MeshStandardMaterial({
-                        color: 0x2a3040,
-                        metalness: 0.7,
-                        roughness: 0.35
-                      }));
-                      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshStandardMaterial({
-                        color: aiBlue,
-                        emissive: aiBlue,
-                        emissiveIntensity: 1.6
-                      }));
-                      eye.position.z = 0.1;
-                      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.012, 6, 16), new THREE.MeshBasicMaterial({
-                        color: 0x8ae0ff,
-                        transparent: true,
-                        opacity: 0.8
-                      }));
-                      ring.rotation.x = Math.PI / 2;
-                      d.add(core, eye, ring);
-                      d.userData = {
-                        a: k / 3 * Math.PI * 2
-                      };
-                      scene.add(d);
-                      A.drones.push(d);
-                    }
-                  }
-                  // 🚁 launch from the coder, then hold station ABOVE the monster
-                  A.drones.forEach((d, k) => {
-                    d.visible = true;
-                    const fly = Math.min(1, p / 0.3); // travel to the target
-                    const e = 1 - Math.pow(1 - fly, 3);
-                    const a = d.userData.a + t * 2.2; // orbit overhead
-                    const hoverR = 0.55;
-                    const tx = em.position.x + Math.cos(a) * hoverR;
-                    const tz = em.position.z + Math.sin(a) * hoverR;
-                    const ty = 2.9 + Math.sin(t * 3 + d.userData.a) * 0.12; // ✈️ high above the monster
-                    d.position.set(char.position.x + 0.6 + (tx - (char.position.x + 0.6)) * e, 1.5 + (ty - 1.5) * e, battleCenter.z + (tz - battleCenter.z) * e);
-                    d.lookAt(em.position.x, em.position.y + 0.6, em.position.z); // 🎯 aim straight down at it
-                    d.children[2].rotation.z = t * 5;
-                  });
-                  // 🔫 4 laser volleys — vertical beams punching down onto the target
-                  [0.4, 0.55, 0.7, 0.85].forEach((hp2, i) => {
-                    if (p >= hp2 && (A.dHits2 == null ? A.dHits2 = 0 : A.dHits2) <= i) {
-                      A.dHits2 = i + 1;
-                      const d = A.drones[i % 3];
-                      // draw the beam from the drone down to the monster
-                      for (let j = 0; j <= 10; j++) {
-                        const f = j / 10;
-                        burst(new THREE.Vector3(d.position.x + (em.position.x - d.position.x) * f, d.position.y + (0.7 - d.position.y) * f, d.position.z + (em.position.z - d.position.z) * f), j % 2 ? aiBlue : 0xdff6ff, 0.22);
-                      }
-                      burst(em.position, aiBlue, 0.9);
-                      // 💥 scorch ring where the beam lands
-                      for (let j = 0; j < 5; j++) {
-                        const ra = Math.random() * Math.PI * 2;
-                        burst(new THREE.Vector3(em.position.x + Math.cos(ra) * 0.5, 0.15, em.position.z + Math.sin(ra) * 0.5), aiBlue, 0.3);
-                      }
-                      G._camShake = Math.max(G._camShake || 0, 0.16);
-                      if (G.sfx) G.sfx.hit && G.sfx.hit();
-                    }
-                  });
-                  if (p >= 1 && A.drones) {
-                    A.drones.forEach(d => scene.remove(d));
-                    A.drones = null;
-                  }
+                  const drones = ensure("dr", 3, i => { const g = new THREE.Group(); const bodyM = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.16, 0.34), new THREE.MeshStandardMaterial({ color: 0x2a3a4a, emissive: aiBlue, emissiveIntensity: 0.8, metalness: 0.6, roughness: 0.3, transparent: true, opacity: 0 })); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), addMat(err, 0.9)); eye.position.set(0, 0, 0.18); g.add(bodyM); g.add(eye); return g; });
+                  const lasers = ensure("lz", 3, () => { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), addMat(aiBlue, 0)); l.visible = false; return l; });
+                  drones.forEach((d, i) => { const a = t * 2.2 + i / 3 * Math.PI * 2; const app = Math.min(1, p * 3); d.position.set(EP.x + Math.cos(a) * 2.0, 2.0 + Math.sin(a * 1.5) * 0.4, EP.z + Math.sin(a) * 2.0); d.lookAt(EP.x, 1.0, EP.z); d.children[0].material.opacity = app; d.children[1].material.opacity = app; });
+                  // volley of lasers timed through the skill
+                  if (p > 0.25) { A.dvT = (A.dvT || 0) + dt; if (A.dvT > 0.16) { A.dvT = 0; const di = (A.dvI = ((A.dvI || 0) + 1) % 3); const d = drones[di]; const l = lasers[di]; const to = new THREE.Vector3(EP.x, 1.0, EP.z); const mid = d.position.clone().lerp(to, 0.5); const len = d.position.distanceTo(to); l.visible = true; l.position.copy(mid); l.scale.set(1, Math.max(0.1, len), 1); l.material.opacity = 1; l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(d.position).normalize()); burst(EP.clone(), aiBlue, 0.6 + Math.random()); if (G.sfx && G.sfx.tick) G.sfx.tick(); } }
+                  lasers.forEach(l => { if (l.visible) { l.material.opacity = Math.max(0, l.material.opacity - dt * 6); if (l.material.opacity <= 0.02) l.visible = false; } });
+                  // reticle on the enemy
+                  const ret = ensure("ret", 1, () => new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.04, 8, 24), addMat(err, 0)))[0];
+                  ret.position.set(EP.x, 1.1, EP.z); ret.lookAt(char.position.x, 1.1, char.position.z); ret.rotation.z = t * 2; ret.material.opacity = Math.min(0.9, p * 2);
                 } else if (skId === "c_crash") {
-                  // 💥 SYSTEM CRASH — error windows everywhere, then a blue-screen blast
-                  typing(24);
-                  char.position.x = battleCenter.x - 1.3 + Math.sin(p * Math.PI * 18) * 0.03;
-                  if (!A.errs) {
-                    A.errs = [];
-                    for (let k = 0; k < 7; k++) {
-                      const w = new THREE.Group();
-                      const pane = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.26), new THREE.MeshBasicMaterial({
-                        color: 0xf0f6ff,
-                        transparent: true,
-                        opacity: 0.95,
-                        side: THREE.DoubleSide
-                      }));
-                      const bar = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.055), new THREE.MeshBasicMaterial({
-                        color: err,
-                        side: THREE.DoubleSide
-                      }));
-                      bar.position.set(0, 0.1, 0.002);
-                      const x1 = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.02), new THREE.MeshBasicMaterial({
-                        color: err,
-                        side: THREE.DoubleSide
-                      }));
-                      x1.position.set(-0.02, -0.02, 0.002);
-                      x1.rotation.z = 0.7;
-                      const x2 = x1.clone();
-                      x2.rotation.z = -0.7;
-                      w.add(pane, bar, x1, x2);
-                      w.userData = {
-                        a: k / 7 * Math.PI * 2,
-                        r: 0.9 + Math.random() * 0.5,
-                        y: 0.8 + Math.random() * 1.4,
-                        pop: k * 0.07
-                      };
-                      w.visible = false;
-                      scene.add(w);
-                      A.errs.push(w);
-                    }
-                  }
-                  A.errs.forEach(w => {
-                    const lp = Math.max(0, Math.min(1, (p - w.userData.pop) / 0.3));
-                    if (lp <= 0) return;
-                    w.visible = true;
-                    const a = w.userData.a + t * 1.5;
-                    w.position.set(em.position.x + Math.cos(a) * w.userData.r, w.userData.y, em.position.z + Math.sin(a) * w.userData.r);
-                    w.lookAt(camera.position);
-                    w.scale.setScalar(lp * (p > 0.8 ? (1 - p) * 5 : 1));
-                  });
-                  if (Math.random() < 0.7) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2, 0.4 + Math.random() * 2, em.position.z + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? err : cyan, 0.35);
-                  G._camShake = 0.12;
-                  if (p >= 1 && A.errs) {
-                    A.errs.forEach(w => scene.remove(w));
-                    A.errs = null;
-                  }
+                  // 💥 SYSTEM CRASH — error popups swarm the enemy, glitch shards, a blue-screen flash
+                  typing(6);
+                  const pops = ensure("pop", 8, i => { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.55), addMat(0x101828, 0.85)); const bar = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.12), addMat(err, 0.95)); bar.position.set(0, 0.22, 0.01); const x = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.05), addMat(white, 0.9)); x.position.set(0, -0.05, 0.01); m.add(bar); m.add(x); m.userData.ph = Math.random() * Math.PI * 2; return m; });
+                  pops.forEach((pp, i) => { const app = Math.min(1, Math.max(0, p * 10 - i)); const a = pp.userData.ph + t * 0.6; pp.position.set(EP.x + Math.cos(a) * 1.4, 0.7 + (i % 4) * 0.55, EP.z + Math.sin(a) * 1.4 + 0.4); pp.lookAt(char.position.x, pp.position.y, char.position.z); pp.scale.setScalar(0.4 + app * 0.7); pp.children.forEach(c => c.material.opacity = app * (c.material.color.getHex() === 0x101828 ? 0.85 : 0.95)); pp.material.opacity = app * 0.85; });
+                  // glitch shards + enemy jitter
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.4, 0.4 + Math.random() * 2, EP.z + (Math.random() - 0.5) * 2.4), [err, cyan, white][Math.floor(Math.random() * 3)], 0.3);
+                  if (em.userData.body) em.position.x = EP.x + Math.sin(t * 70) * 0.08; monGlow(em, 0x223355, 0.4);
+                  // BSOD flash at the crash
+                  const bsod = ensure("bsod", 1, () => new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), addMat(0x2a6ad0, 0)))[0];
+                  bsod.position.set(EP.x, 1.3, EP.z); bsod.lookAt(char.position.x, 1.3, char.position.z);
+                  bsod.material.opacity = p > 0.75 ? Math.max(0, 0.7 - (p - 0.75) * 6) : 0;
+                  if (p > 0.75 && p < 0.82) G._camShake = Math.max(G._camShake || 0, 0.35);
                 } else if (skId === "c_matrix") {
-                  // 🟩 MATRIX — green code rain crushes the target
-                  typing(14);
-                  if (!A.rain) {
-                    A.rain = [];
-                    for (let k = 0; k < 26; k++) {
-                      const col = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.5 + Math.random() * 0.6, 0.01), new THREE.MeshBasicMaterial({
-                        color: green,
-                        transparent: true,
-                        opacity: 0.9
-                      }));
-                      col.userData = {
-                        x: (Math.random() - 0.5) * 3.6,
-                        z: (Math.random() - 0.5) * 2.4,
-                        sp: 0.7 + Math.random() * 0.9,
-                        off: Math.random()
-                      };
-                      scene.add(col);
-                      A.rain.push(col);
-                    }
-                  }
-                  A.rain.forEach(c2 => {
-                    c2.visible = true;
-                    const lp = (p * 1.8 + c2.userData.off) % 1;
-                    c2.position.set(em.position.x + c2.userData.x, 5 - lp * 5.4 * c2.userData.sp, em.position.z + c2.userData.z);
-                    c2.material.opacity = 0.9 * (1 - lp * 0.5);
-                  });
-                  [0.25, 0.4, 0.55, 0.7, 0.85].forEach((hp2, i) => {
-                    if (p >= hp2 && (A.mHits == null ? A.mHits = 0 : A.mHits) <= i) {
-                      A.mHits = i + 1;
-                      burst(em.position, green, 0.8);
-                      G._camShake = Math.max(G._camShake || 0, 0.15);
-                      if (G.sfx) G.sfx.hit && G.sfx.hit();
-                    }
-                  });
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 0.1, em.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(2.4);
-                  magicCircle.userData.stars.forEach(st => {
-                    st.rotation.z = t * 4;
-                    st.children.forEach(c => c.material.color.setHex(green));
-                  });
-                  if (p >= 1 && A.rain) {
-                    A.rain.forEach(c2 => scene.remove(c2));
-                    A.rain = null;
-                  }
+                  // 🟩 MATRIX — dense green code rain pours down and dissolves the enemy
+                  typing(5); char.rotation.z = Math.sin(p * Math.PI * 6) * 0.02;
+                  magicCircle.visible = true; magicCircle.position.set(EP.x, 0.06, EP.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(2 + Math.min(1, p * 2)); magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = 0.7; c.material.color.setHex(matrix); }));
+                  const cols = ensure("col", 16, i => { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 1.4), addMat(matrix, 0.85)); m.userData.ox = (Math.random() - 0.5) * 3.0; m.userData.oz = (Math.random() - 0.5) * 3.0; m.userData.off = Math.random(); m.userData.sp = 3 + Math.random() * 3; return m; });
+                  cols.forEach((c2, i) => { const y = 4.2 - (((t * c2.userData.sp + c2.userData.off * 4) % 4.6)); c2.position.set(EP.x + c2.userData.ox, Math.max(0.2, y), EP.z + c2.userData.oz); c2.lookAt(char.position.x, c2.position.y, char.position.z); c2.material.opacity = Math.min(0.9, p * 1.6) * (y < 0.6 ? 0.3 : 1); });
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), matrix, 0.3 + Math.random() * 1.6);
+                  // enemy dissolves into green code
+                  if (p > 0.5 && em.userData.body) { const dp = Math.min(0.6, (p - 0.5) * 1.2); em.userData.body.traverse(o => { if (o.isMesh && o.material) { o.material.transparent = true; o.material.opacity = 1 - dp; } }); monGlow(em, 0x115522, 0.5); }
+                  if (p > 0.9 && em.userData.body) em.userData.body.traverse(o => { if (o.isMesh && o.material) o.material.opacity = Math.min(1, (o.material.opacity || 0.4) + dt * 3); });
+                  if (p > 0.78) G._camShake = Math.max(G._camShake || 0, 0.12);
                 } else {
-                  // ⌨️ basic attack — a quick burst of typing that fires a code bolt
-                  typing(12);
-                  if (p > 0.3 && p < 0.75) {
-                    const f = (p - 0.3) / 0.45;
-                    burst(new THREE.Vector3(battleCenter.x - 0.9 + f * 2.3, 1.3, battleCenter.z), f > 0.7 ? green : cyan, 0.3);
-                  }
+                  typing(10);
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.08, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.3);
+                  if (Math.random() < 0.5) burst(EP.clone(), cyan, 0.5 + Math.random());
                 }
               } else if (cls === "office") {
                 // 💼 OFFICE WORKER — coffee, paper storms, laptop smashes, deadline panic
@@ -21795,6 +21538,19 @@ function CherryAdventure() {
                 if (A.drones) {
                   A.drones.forEach(x => scene.remove(x));
                   A.drones = null;
+                }
+                // 💻 AAA coder-skill FX rig — remove group + restore any dissolved enemy body
+                if (A.cfx) {
+                  scene.remove(A.cfx);
+                  A.cfx.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) o.material.dispose();
+                  });
+                  A.cfx = null;
+                  A.cfxParts = null;
+                  if (G.enemy && G.enemy.mesh && G.enemy.mesh.userData.body) G.enemy.mesh.userData.body.traverse(o => {
+                    if (o.isMesh && o.material) o.material.opacity = 1;
+                  });
                 }
                 if (A.errs) {
                   A.errs.forEach(x => scene.remove(x));
