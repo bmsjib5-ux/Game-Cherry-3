@@ -17290,10 +17290,11 @@ export default function CherryAdventure() {
             {(() => {
               const canAct = ui.bstate === "choose";
               const iconBtn = (icon, bg, onClick, badge, opts = {}) => (
-                <button onClick={onClick} title={opts.title || ""} style={{
-                  position: "relative", width: 52, height: 52, borderRadius: "50%", border: "none",
+                <button key={opts.key} onClick={onClick} title={opts.title || ""} style={{
+                  position: "relative", width: 52, height: 52, borderRadius: "50%", border: opts.border || "none",
                   cursor: "pointer", fontSize: 24, background: bg,
                   boxShadow: "0 4px 10px rgba(0,0,0,0.18)", fontFamily: font,
+                  opacity: opts.opacity != null ? opts.opacity : 1,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                   {icon}
@@ -17309,7 +17310,10 @@ export default function CherryAdventure() {
               );
               const cornerStyle = (side) => ({
                 position: "absolute", bottom: 16, [side]: 12, zIndex: 6,
-                display: "flex", flexDirection: "column", gap: 10, alignItems: "center",
+                display: "flex", flexDirection: "column", flexWrap: "wrap",
+                maxHeight: "calc(100vh - 168px)", alignContent: "flex-start",
+                direction: side === "right" ? "rtl" : "ltr",
+                gap: 10, alignItems: "center",
                 opacity: canAct ? 1 : 0.45, pointerEvents: canAct ? "auto" : "none",
               });
               return (
@@ -17328,7 +17332,25 @@ export default function CherryAdventure() {
                       ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)",
                       () => G.act("ult"), null,
                       { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตาย" })}
-                    {iconBtn("⚡", "#4a90e0", () => setUi((u) => ({ ...u, skillMenu: !u.skillMenu })), Math.floor(ui.mp || 0), { title: "สกิลอาชีพ (มานา)", badgeBg: "#3a70c0" })}
+                    {skillsOf(ui.cls, ui.pathId).map((sk, slot) => {
+                      const cost = sk.cost || 8;
+                      const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId);
+                      const afford = (ui.mp || 0) >= cost && gate.open;
+                      const skEl = SKILL_ELEM[sk.id];
+                      const advantage = gate.open && skEl && ui.enemy && WEAK[ui.enemy.spId] === skEl;
+                      const bg = gate.open ? `#${sk.color.toString(16).padStart(6, "0")}` : "#b0aca4";
+                      return iconBtn(gate.open ? sk.emoji : "🔒", bg, () => {
+                        if (!gate.open) { G.toast(`🔒 ${sk.name} — ${gate.reasons.filter((r) => !r.ok).map((r) => r.text).join(" · ")}`); return; }
+                        if (!afford) { G.toast(`💧 มานาไม่พอ — ${sk.name} ใช้ ${cost} มานา`); return; }
+                        G.act("skill", sk.id);
+                      }, gate.open ? cost : null, {
+                        key: sk.id,
+                        title: gate.open ? `${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา)` : `🔒 ${sk.name}`,
+                        badgeBg: afford ? "#3a70c0" : "#c05a5a",
+                        opacity: gate.open ? (afford ? 1 : 0.5) : 0.55,
+                        border: advantage ? "2px solid #f5a623" : "none",
+                      });
+                    })}
                   </div>
                 </>
               );
