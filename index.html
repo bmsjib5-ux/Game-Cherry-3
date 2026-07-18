@@ -29951,18 +29951,8 @@ function CherryAdventure() {
         fontWeight: 800
       }
     }, "💧 ", cost, " มานา"));
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      flexWrap: "nowrap",
-      justifyContent: "center",
-      maxWidth: 440,
-      width: "100%",
-      opacity: ui.bstate === "choose" ? 1 : 0.45,
-      pointerEvents: ui.bstate === "choose" ? "auto" : "none"
-    }
-  }, (() => {
+  }))), (() => {
+    const canAct = ui.bstate === "choose";
     const iconBtn = (icon, bg, onClick, badge, opts = {}) => /*#__PURE__*/React.createElement("button", {
       onClick: onClick,
       title: opts.title || "",
@@ -30000,17 +29990,21 @@ function CherryAdventure() {
         boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
       }
     }, badge));
-    return /*#__PURE__*/React.createElement(React.Fragment, null, iconBtn("⚔️", "#d9536b", () => G.act("attack"), null, {
-      title: "โจมตี"
-    }), iconBtn(ui.ultUsed ? "💫" : "🌟", ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)", () => G.act("ult"), null, {
-      title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตาย"
-    }), iconBtn("⚡", "#4a90e0", () => setUi(u => ({
-      ...u,
-      skillMenu: !u.skillMenu
-    })), Math.floor(ui.mp || 0), {
-      title: "สกิลอาชีพ (มานา)",
-      badgeBg: "#3a70c0"
-    }), iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, {
+    const cornerStyle = side => ({
+      position: "absolute",
+      bottom: 16,
+      [side]: 12,
+      zIndex: 6,
+      display: "flex",
+      flexDirection: "column",
+      gap: 10,
+      alignItems: "center",
+      opacity: canAct ? 1 : 0.45,
+      pointerEvents: canAct ? "auto" : "none"
+    });
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: cornerStyle("left")
+    }, iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, {
       title: "จับ",
       badgeBg: "#c05878"
     }), iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, {
@@ -30021,8 +30015,20 @@ function CherryAdventure() {
       badgeBg: "#3a70a0"
     }), iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, {
       title: "หนี"
-    }));
-  })()), /*#__PURE__*/React.createElement("button", {
+    })), /*#__PURE__*/React.createElement("div", {
+      style: cornerStyle("right")
+    }, iconBtn("⚔️", "#d9536b", () => G.act("attack"), null, {
+      title: "โจมตี"
+    }), iconBtn(ui.ultUsed ? "💫" : "🌟", ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)", () => G.act("ult"), null, {
+      title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตาย"
+    }), iconBtn("⚡", "#4a90e0", () => setUi(u => ({
+      ...u,
+      skillMenu: !u.skillMenu
+    })), Math.floor(ui.mp || 0), {
+      title: "สกิลอาชีพ (มานา)",
+      badgeBg: "#3a70c0"
+    })));
+  })(), /*#__PURE__*/React.createElement("button", {
     onClick: () => G.toggleAuto(),
     style: {
       padding: "6px 18px",

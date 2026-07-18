@@ -17236,47 +17236,52 @@ export default function CherryAdventure() {
                 </div>
               </div>
             )}
-            <div style={{
-              display: "flex", gap: 10, flexWrap: "nowrap", justifyContent: "center",
-              maxWidth: 440, width: "100%",
-              opacity: ui.bstate === "choose" ? 1 : 0.45,
-              pointerEvents: ui.bstate === "choose" ? "auto" : "none",
-            }}>
-              {(() => {
-                const iconBtn = (icon, bg, onClick, badge, opts = {}) => (
-                  <button onClick={onClick} title={opts.title || ""} style={{
-                    position: "relative", width: 52, height: 52, borderRadius: "50%", border: "none",
-                    cursor: "pointer", fontSize: 24, background: bg,
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.18)", fontFamily: font,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    {icon}
-                    {badge != null && (
-                      <span style={{
-                        position: "absolute", top: -3, right: -3, minWidth: 20, height: 20, padding: "0 3px",
-                        borderRadius: 10, background: opts.badgeBg || "#4a4a52", color: "#fff",
-                        fontSize: 11.5, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                      }}>{badge}</span>
-                    )}
-                  </button>
-                );
-                return (
-                  <>
+            {(() => {
+              const canAct = ui.bstate === "choose";
+              const iconBtn = (icon, bg, onClick, badge, opts = {}) => (
+                <button onClick={onClick} title={opts.title || ""} style={{
+                  position: "relative", width: 52, height: 52, borderRadius: "50%", border: "none",
+                  cursor: "pointer", fontSize: 24, background: bg,
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.18)", fontFamily: font,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {icon}
+                  {badge != null && (
+                    <span style={{
+                      position: "absolute", top: -3, right: -3, minWidth: 20, height: 20, padding: "0 3px",
+                      borderRadius: 10, background: opts.badgeBg || "#4a4a52", color: "#fff",
+                      fontSize: 11.5, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                    }}>{badge}</span>
+                  )}
+                </button>
+              );
+              const cornerStyle = (side) => ({
+                position: "absolute", bottom: 16, [side]: 12, zIndex: 6,
+                display: "flex", flexDirection: "column", gap: 10, alignItems: "center",
+                opacity: canAct ? 1 : 0.45, pointerEvents: canAct ? "auto" : "none",
+              });
+              return (
+                <>
+                  {/* มุมล่างซ้าย: จับ / เลือด / มานา / หนี */}
+                  <div style={cornerStyle("left")}>
+                    {iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" })}
+                    {iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, { title: "น้ำยาเพิ่มเลือด", badgeBg: "#3a8050" })}
+                    {iconBtn("💧", "#4a90c0", () => G.useManaPotion(), ui.mpPotions, { title: "น้ำยาเพิ่มมานา", badgeBg: "#3a70a0" })}
+                    {iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })}
+                  </div>
+                  {/* มุมล่างขวา: skill ต่อสู้ (โจมตี / ท่าไม้ตาย / สกิลอาชีพ) */}
+                  <div style={cornerStyle("right")}>
                     {iconBtn("⚔️", "#d9536b", () => G.act("attack"), null, { title: "โจมตี" })}
                     {iconBtn(ui.ultUsed ? "💫" : "🌟",
                       ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)",
                       () => G.act("ult"), null,
                       { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตาย" })}
                     {iconBtn("⚡", "#4a90e0", () => setUi((u) => ({ ...u, skillMenu: !u.skillMenu })), Math.floor(ui.mp || 0), { title: "สกิลอาชีพ (มานา)", badgeBg: "#3a70c0" })}
-                    {iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" })}
-                    {iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, { title: "น้ำยาเพิ่มเลือด", badgeBg: "#3a8050" })}
-                    {iconBtn("💧", "#4a90c0", () => G.useManaPotion(), ui.mpPotions, { title: "น้ำยาเพิ่มมานา", badgeBg: "#3a70a0" })}
-                    {iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })}
-                  </>
-                );
-              })()}
-            </div>
+                  </div>
+                </>
+              );
+            })()}
             {/* AUTO toggle — usable anytime, even mid-animation */}
             <button
               onClick={() => G.toggleAuto()}
