@@ -24510,7 +24510,7 @@ function CherryAdventure() {
   });
   const hpBar = (hp, maxHp, color) => /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "#eee",
+      background: "rgba(0,0,0,0.07)",
       borderRadius: 999,
       height: 10,
       overflow: "hidden",
@@ -26160,7 +26160,30 @@ function CherryAdventure() {
       color: "#a3796a",
       marginTop: 2
     }
-  }, "HP ", ui.hp, "/", ui.maxHp, " · EXP ", ui.exp, "/", ui.expNext), /*#__PURE__*/React.createElement("div", {
+  }, "HP ", ui.hp, "/", ui.maxHp), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(0,0,0,0.07)",
+      borderRadius: 99,
+      height: 6,
+      marginTop: 3,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: `${ui.expNext ? Math.min(100, ui.exp / ui.expNext * 100) : 0}%`,
+      height: "100%",
+      background: "linear-gradient(90deg,#f5c542,#f5a623)",
+      borderRadius: 99,
+      transition: "width 0.3s"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9.5,
+      color: "#c99a2e",
+      fontWeight: 700,
+      marginTop: 2
+    }
+  }, "⭐ EXP ", ui.exp, "/", ui.expNext), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#dbe8f0",
       borderRadius: 99,

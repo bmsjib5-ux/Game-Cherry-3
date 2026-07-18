@@ -14708,7 +14708,7 @@ export default function CherryAdventure() {
     background: bg, boxShadow: "0 4px 10px rgba(0,0,0,0.18)", fontFamily: font,
   });
   const hpBar = (hp, maxHp, color) => (
-    <div style={{ background: "#eee", borderRadius: 999, height: 10, overflow: "hidden", marginTop: 4 }}>
+    <div style={{ background: "rgba(0,0,0,0.07)", borderRadius: 999, height: 10, overflow: "hidden", marginTop: 4 }}>
       <div style={{
         width: `${Math.max(0, (hp / maxHp) * 100)}%`, height: "100%",
         background: hp / maxHp > 0.35 ? color : "#e05555", borderRadius: 999, transition: "width 0.3s",
@@ -15506,7 +15506,17 @@ export default function CherryAdventure() {
           </div>
           {hpBar(ui.hp, ui.maxHp, "#7fd08a")}
           <div style={{ fontSize: 9.5, color: "#a3796a", marginTop: 2 }}>
-            HP {ui.hp}/{ui.maxHp} · EXP {ui.exp}/{ui.expNext}
+            HP {ui.hp}/{ui.maxHp}
+          </div>
+          {/* ⭐ exp bar */}
+          <div style={{ background: "rgba(0,0,0,0.07)", borderRadius: 99, height: 6, marginTop: 3, overflow: "hidden" }}>
+            <div style={{
+              width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%",
+              background: "linear-gradient(90deg,#f5c542,#f5a623)", borderRadius: 99, transition: "width 0.3s",
+            }}/>
+          </div>
+          <div style={{ fontSize: 9.5, color: "#c99a2e", fontWeight: 700, marginTop: 2 }}>
+            ⭐ EXP {ui.exp}/{ui.expNext}
           </div>
           {/* 💧 mana bar */}
           <div style={{ background: "#dbe8f0", borderRadius: 99, height: 6, marginTop: 3, overflow: "hidden" }}>
