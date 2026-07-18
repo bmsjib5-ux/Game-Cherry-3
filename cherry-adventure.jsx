@@ -9592,19 +9592,19 @@ export default function CherryAdventure() {
       if (shield) shield.visible = G.cls === "warrior" && G.mode !== "create";
       // 🗡️ off-hand dagger shows for assassins
       if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create";
-      // 🏷️ 3D name sprite (ชื่อ + Lv + ฉายา) floats above the head while exploring;
-      // in battle the richer HTML nameplate (with HP + mana) takes over instead
-      if (nameSprite) nameSprite.visible = G.mode === "explore";
-      // 🏷️ float the player's battle nameplate (ชื่อ + เลือด + มานา) above Cherry's head
+      // 🏷️ 3D name sprite replaced by the richer HTML nameplate (ชื่อ + เลือด + มานา) — keep hidden
+      if (nameSprite) nameSprite.visible = false;
+      // 🏷️ float the player's nameplate (ชื่อ + เลือด + มานา) above Cherry's head (explore + battle)
       if (G.playerPlateEl) {
-        if (G.mode === "battle" && char) {
+        if ((G.mode === "explore" || G.mode === "battle") && char) {
           _plateV.set(char.position.x, char.position.y + 3.4, char.position.z);
           _plateV.project(camera);
           const cw = renderer.domElement.clientWidth || W;
           const ch = renderer.domElement.clientHeight || H;
           if (_plateV.z < 1) {
             const sx = Math.max(90, Math.min(cw - 90, (_plateV.x * 0.5 + 0.5) * cw));
-            const sy = Math.max(48, Math.min(ch - 40, (-_plateV.y * 0.5 + 0.5) * ch));
+            // keep the plate clear of the top HUD even when the camera is zoomed all the way in
+            const sy = Math.max(120, Math.min(ch - 40, (-_plateV.y * 0.5 + 0.5) * ch));
             G.playerPlateEl.style.display = "block";
             G.playerPlateEl.style.left = sx + "px";
             G.playerPlateEl.style.top = sy + "px";
@@ -15540,30 +15540,6 @@ export default function CherryAdventure() {
           borderRadius: 14, padding: "7px 11px", width: 150, maxWidth: "42vw",
           boxShadow: "0 4px 12px rgba(90,120,70,0.2)", pointerEvents: "none",
         }}>
-          {ui.mode !== "battle" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 3, overflow: "hidden" }}>
-            <span style={{ fontSize: 12, flexShrink: 0 }}>{ui.cls ? CLASSES[ui.cls].emoji : "🍒"}</span>
-            {/* 🏃 name scrolls if too long, else static */}
-            <div style={{ flex: 1, overflow: "hidden", position: "relative", height: 15 }}>
-              <div style={{
-                fontSize: 11, fontWeight: 800, color: "#8a5a4a", whiteSpace: "nowrap",
-                position: "absolute", left: 0, top: 0,
-                animation: (ui.playerName || "").length > 8 ? "hudscroll 7s linear infinite" : "none",
-              }}>
-                {ui.playerName || "เชอร์รี่"}{ui.cls ? ` · ${CLASSES[ui.cls].name}` : ""} Lv.{ui.level}
-                {(ui.playerName || "").length > 8 && <span style={{ paddingLeft: 30 }}>{ui.playerName} · {ui.cls ? CLASSES[ui.cls].name : ""} Lv.{ui.level}</span>}
-              </div>
-            </div>
-            {ui.ngPlus > 0 && <span style={{ fontSize: 8.5, fontWeight: 800, color: "#fff", background: "#d9536b", borderRadius: 999, padding: "1px 5px", flexShrink: 0 }}>ตื่น {ui.ngPlus}</span>}
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#7a8aa8", flexShrink: 0 }}>{ui.dayPhase || ""}</span>
-          </div>
-          )}
-          {ui.mode !== "battle" && hpBar(ui.hp, ui.maxHp, "#7fd08a")}
-          {ui.mode !== "battle" && (
-          <div style={{ fontSize: 9.5, color: "#a3796a", marginTop: 2 }}>
-            HP {ui.hp}/{ui.maxHp}
-          </div>
-          )}
           {/* ⭐ exp bar */}
           <div style={{ background: "rgba(0,0,0,0.07)", borderRadius: 99, height: 6, marginTop: 3, overflow: "hidden" }}>
             <div style={{
@@ -15574,26 +15550,14 @@ export default function CherryAdventure() {
           <div style={{ fontSize: 9.5, color: "#c99a2e", fontWeight: 700, marginTop: 2 }}>
             ⭐ EXP {ui.exp}/{ui.expNext}
           </div>
-          {/* 💧 mana bar (explore only — moves to the head plate in battle) */}
-          {ui.mode !== "battle" && (<>
-          <div style={{ background: "#dbe8f0", borderRadius: 99, height: 6, marginTop: 3, overflow: "hidden" }}>
-            <div style={{
-              width: `${ui.maxMp ? Math.min(100, (ui.mp / ui.maxMp) * 100) : 0}%`, height: "100%",
-              background: "linear-gradient(90deg,#4a90e0,#6ac0f0)", borderRadius: 99, transition: "width 0.3s",
-            }}/>
-          </div>
-          <div style={{ fontSize: 9.5, color: "#4a90c0", fontWeight: 700, marginTop: 2 }}>
-            💧 มานา {ui.mp || 0}/{ui.maxMp || 0}
-          </div>
-          </>)}
           <div style={{ fontSize: 10.5, color: "#8a5a4a", marginTop: 2 }}>
             ⚔️{ui.atk} 🛡️{ui.def} 💰{ui.gold} · 💗×{ui.balls} · 🐾×{totalCaught}
           </div>
         </div>
       )}
 
-      {/* 🏷️ player battle nameplate — floats above Cherry's head (positioned each frame) */}
-      {ui.mode === "battle" && (
+      {/* 🏷️ player nameplate — floats above Cherry's head (positioned each frame), explore + battle */}
+      {(ui.mode === "explore" || ui.mode === "battle") && (
         <div ref={(el) => { G.playerPlateEl = el; }} style={{
           position: "absolute", left: 0, top: 0, display: "none",
           transform: "translate(-50%,-100%)", width: 168, textAlign: "center",
