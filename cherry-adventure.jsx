@@ -15484,9 +15484,10 @@ export default function CherryAdventure() {
       {/* ===== explore HUD ===== */}
       {(ui.mode === "explore" || ui.mode === "battle") && (
         <div style={{
-          position: "absolute", top: 12, left: 12, background: "#fff",
+          position: "absolute", top: 12, left: 12,
+          background: "rgba(255,255,255,0.5)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)",
           borderRadius: 14, padding: "7px 11px", width: 150, maxWidth: "42vw",
-          boxShadow: "0 4px 12px rgba(90,120,70,0.25)", pointerEvents: "none",
+          boxShadow: "0 4px 12px rgba(90,120,70,0.2)", pointerEvents: "none",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 3, overflow: "hidden" }}>
             <span style={{ fontSize: 12, flexShrink: 0 }}>{ui.cls ? CLASSES[ui.cls].emoji : "🍒"}</span>
