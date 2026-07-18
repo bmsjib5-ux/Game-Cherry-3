@@ -10283,25 +10283,70 @@ export default function CherryAdventure() {
             const skFx = A.skill ? A.skill.fx : null;
             const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
             if (cls === "warrior") {
-              if (skFx === "quake") {
-                // 🌍 leap up and slam down
-                const jump = Math.sin(p * Math.PI) * 0.8;
-                char.position.x = battleCenter.x - 1.3 + Math.sin(p * Math.PI) * 0.6;
-                char.position.y = p < 0.5 ? jump : Math.max(0, 0.8 - (p - 0.5) * 3.2);
-                armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 2.2;
-              } else if (skFx === "rage") {
-                // 🔥 wild multi-swing frenzy
-                char.position.x = battleCenter.x - 1.3 + Math.sin(p * Math.PI) * 1.3;
-                armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 4) * 1.8;
+              // ⚔️ WARRIOR — melee skills with real FX rigs (AAA)
+              const steel = 0x9ec8ff, wind = 0x8fd0ff, gold = 0xf5d24a, rageR = 0xff5a2a, flame = 0xffa030, earth = 0x8a6a44, dust = 0xe0d0a8, white = 0xeafcff;
+              const EP = em.position;
+              const bx = battleCenter.x - 1.3;
+              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              const WFX = A.wfx;
+              const addMat = (col, op) => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op == null ? 1 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+              const ensure = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); WFX.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
+              if (skFx === "slash") {
+                // 🌙💨 CRESCENT WIND-BLADE — wind up, then a giant blue crescent sweeps across the enemy
+                const lunge = Math.sin(p * Math.PI) * 1.0;
+                char.position.x = bx + lunge;
+                char.rotation.z = Math.sin(p * Math.PI) * 0.08;
+                armR.rotation.z = 0.12 + (p < 0.5 ? -p * 1.6 : Math.sin((p - 0.5) * Math.PI) * 3.4);
+                const arc = ensure("arc", 1, () => new THREE.Mesh(new THREE.RingGeometry(1.3, 2.1, 40, 1, Math.PI * 0.1, Math.PI * 0.8), addMat(wind, 0)))[0];
+                if (p > 0.42) { const sp = Math.min(1, (p - 0.42) / 0.35); arc.visible = true; arc.position.set(EP.x, 1.2, EP.z); arc.lookAt(char.position.x, 1.2, char.position.z); arc.rotation.z = -Math.PI * 0.6 + sp * Math.PI * 1.1; arc.scale.setScalar(0.6 + sp * 1.0); arc.material.color.setHex(wind); arc.material.opacity = Math.max(0, 0.95 - sp * 0.6); if (Math.random() < 0.8) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0.5 + Math.random() * 1.8, EP.z + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? wind : white, 0.3 + Math.random()); }
+                else arc.visible = false;
+                if (p > 0.48 && p < 0.56) G._camShake = Math.max(G._camShake || 0, 0.22);
               } else if (skFx === "bash") {
-                // 🛡️ shield shove forward
-                char.position.x = battleCenter.x - 1.3 + Math.sin(p * Math.PI) * 1.0;
-                armL.rotation.z = -0.12 - Math.sin(p * Math.PI) * 1.4;
-                armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 0.5;
-              } else {
-                // default heavy lunge + sword swing
+                // 🛡️ SHIELD BASH — charge forward, slam a shockwave ring, guard sparks
                 const lunge = Math.sin(p * Math.PI) * 1.2;
-                char.position.x = battleCenter.x - 1.3 + lunge;
+                char.position.x = bx + lunge;
+                armL.rotation.z = -0.12 - Math.sin(p * Math.PI) * 1.5;
+                armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 0.4;
+                const ring = ensure("ring", 1, () => new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.14, 10, 32), addMat(steel, 0)))[0];
+                ring.rotation.x = Math.PI / 2;
+                if (p > 0.45) { const sp = Math.min(1, (p - 0.45) / 0.4); ring.visible = true; ring.position.set(EP.x, 0.5, EP.z); ring.scale.setScalar(0.5 + sp * 3.5); ring.material.opacity = Math.max(0, 1 - sp); if (Math.random() < 0.7) burst(EP.clone(), Math.random() < 0.5 ? steel : gold, 0.5 + Math.random() * 1.2); if (em.userData.body) em.position.x = EP.x + Math.sin(t * 60) * 0.06; }
+                else ring.visible = false;
+                // guard aura on the warrior
+                const aura = ensure("aura", 1, () => new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.05, 8, 28), addMat(0x8ae0ff, 0.6)))[0];
+                aura.position.set(char.position.x, 1.0, char.position.z); aura.rotation.x = Math.PI / 2; aura.rotation.z = t * 2; aura.material.opacity = 0.5 * Math.sin(p * Math.PI);
+                if (p > 0.45 && p < 0.55) G._camShake = Math.max(G._camShake || 0, 0.3);
+              } else if (skFx === "rage") {
+                // 🔥 WAR FRENZY — a blazing aura erupts, the warrior flurries with fire-trailed swings
+                char.position.x = bx + Math.sin(p * Math.PI) * 1.2;
+                char.rotation.z = Math.sin(p * Math.PI * 6) * 0.05;
+                armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 8) * 2.0;
+                // rising flame aura ring around the warrior
+                const flames = ensure("fl", 10, i => new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 6), addMat(i % 2 ? rageR : flame, 0)));
+                flames.forEach((f, i) => { const a = i / flames.length * Math.PI * 2 + t * 3; const r = 0.55; f.position.set(char.position.x + Math.cos(a) * r, 0.4 + (Math.abs(Math.sin(a * 2 + t * 6)) * 0.6), char.position.z + Math.sin(a) * r); f.material.opacity = Math.sin(p * Math.PI) * 0.9; f.material.color.setHex(i % 2 ? rageR : flame); });
+                // fire-trail crescents on the enemy each swing
+                if (p > 0.3 && Math.random() < 0.6) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.4, 0.6 + Math.random() * 1.4, EP.z + (Math.random() - 0.5) * 1.4), Math.random() < 0.5 ? rageR : flame, 0.4 + Math.random());
+                if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x2a1410), 0.04 * Math.sin(p * Math.PI));
+                G._camShake = Math.max(G._camShake || 0, 0.12 + Math.sin(p * Math.PI) * 0.2);
+              } else if (skFx === "quake") {
+                // 🌍 EARTH SPLIT — leap high, crash down, ground cracks radiate + rock shards erupt
+                const jump = Math.sin(p * Math.PI) * 0.9;
+                char.position.x = bx + Math.sin(p * Math.PI) * 0.6;
+                char.position.y = p < 0.5 ? jump : Math.max(0, 0.9 - (p - 0.5) * 3.6);
+                armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 2.4;
+                // radiating ground cracks (planes) + rock shards, spawned at the slam
+                const cracks = ensure("cr", 8, i => new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.18), addMat(gold, 0)));
+                const rocks = ensure("rk", 10, i => new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 5), new THREE.MeshStandardMaterial({ color: earth, transparent: true, opacity: 0, roughness: 0.9 })));
+                if (p >= 0.5) {
+                  const sp = Math.min(1, (p - 0.5) / 0.4);
+                  cracks.forEach((c2, i) => { c2.visible = true; c2.position.set(EP.x, 0.05, EP.z); c2.rotation.set(-Math.PI / 2, 0, i / cracks.length * Math.PI * 2); c2.scale.set(sp, 1, 1); c2.material.color.setHex(i % 2 ? gold : rageR); c2.material.opacity = Math.max(0, 0.9 - sp * 0.7); });
+                  rocks.forEach((rk, i) => { rk.visible = true; const a = i / rocks.length * Math.PI * 2; const rr = sp * (1.5 + (i % 3) * 0.5); rk.position.set(EP.x + Math.cos(a) * rr, Math.sin(sp * Math.PI) * (0.8 + (i % 3) * 0.4), EP.z + Math.sin(a) * rr); rk.rotation.set(t + i, a, 0); rk.material.opacity = Math.max(0, 1 - sp); });
+                  if (Math.random() < 0.8) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), Math.random() < 0.5 ? dust : gold, 0.3 + Math.random() * 1.6);
+                  if (p < 0.6) G._camShake = Math.max(G._camShake || 0, 0.55);
+                  else G._camShake = Math.max(G._camShake || 0, 0.2 * (1 - sp));
+                } else { cracks.forEach(c2 => c2.visible = false); rocks.forEach(rk => rk.visible = false); }
+              } else {
+                const lunge = Math.sin(p * Math.PI) * 1.2;
+                char.position.x = bx + lunge;
                 armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 1.9;
               }
             } else if (cls === "assassin") {
@@ -12682,6 +12727,7 @@ export default function CherryAdventure() {
               if (A.fwCode) { A.fwCode.forEach((x) => scene.remove(x)); A.fwCode = null; } // 🔒 firewall code rings
               if (A.drones) { A.drones.forEach((x) => scene.remove(x)); A.drones = null; }
                 if (A.cfx) { scene.remove(A.cfx); A.cfx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.cfx = null; A.cfxParts = null; if (G.enemy && G.enemy.mesh && G.enemy.mesh.userData.body) G.enemy.mesh.userData.body.traverse(o => { if (o.isMesh && o.material) o.material.opacity = 1; }); }
+                if (A.wfx) { scene.remove(A.wfx); A.wfx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.wfx = null; A.wfxParts = null; }
               if (A.errs) { A.errs.forEach((x) => scene.remove(x)); A.errs = null; }
               if (A.rain) { A.rain.forEach((x) => scene.remove(x)); A.rain = null; }
               if (A.ceo) { scene.remove(A.ceo); A.ceo = null; } // 🏆 remove the CEO silhouette
