@@ -16415,7 +16415,7 @@ function CherryAdventure() {
         G.banim = {
           type: "ult",
           t: 0,
-          dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? altUlt ? 4.6 : 3.8 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4,
+          dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? altUlt ? 4.6 : 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4,
           hits: 0,
           total: 0,
           altUlt
@@ -23331,386 +23331,136 @@ function CherryAdventure() {
                   }
                 }
               } else if (cls === "samurai") {
-                // ⚔️🌸 HEAVEN SPLIT SLASH — time stops, one instant draw, the sky itself is cut
-                const white = 0xffffff,
-                  zenBlue = 0x6ab0f0,
-                  petal = 0xffc0d8,
-                  deepBlue = 0x2a6ad0;
-                const near = battleCenter.x + (G.enemyX || 1.3) - 0.95;
-                char.rotation.y = Math.PI / 2;
-                // ─── Phase 1 (0 → 0.18): eyes close, the world freezes, the katana glows white ───
+                // ⚔️🌸 HEAVEN SPLIT SLASH — focus, stop time, an iaido flurry, then cut the sky itself
+                const sakura = 0xffb0d0, white = 0xffffff, steel = 0xbfe0ff, crimson = 0xd94a6a, voidC = 0x2a2438;
+                const EP = em.position;
+                if (!A.hs) {
+                  A.hs = { fx: new THREE.Group(), petals: [], slashes: [], teleT: 0, teleI: 0, struck: 0 };
+                  scene.add(A.hs.fx);
+                  for (let i = 0; i < 20; i++) {
+                    const pt = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.22), new THREE.MeshBasicMaterial({ color: sakura, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+                    pt.userData.ph = Math.random() * Math.PI * 2; pt.userData.sp = 0.6 + Math.random() * 1.2; pt.userData.rad = 1.2 + Math.random() * 1.6;
+                    pt.visible = false; A.hs.fx.add(pt); A.hs.petals.push(pt);
+                  }
+                  // slash arcs (reused for the flurry)
+                  for (let i = 0; i < 8; i++) {
+                    const sl = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 0.28), new THREE.MeshBasicMaterial({ color: i % 2 ? sakura : white, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+                    sl.visible = false; A.hs.fx.add(sl); A.hs.slashes.push(sl);
+                  }
+                  // time-stop void ring
+                  const tr = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.05, 8, 44), new THREE.MeshBasicMaterial({ color: steel, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  tr.rotation.x = Math.PI / 2; tr.visible = false; A.hs.fx.add(tr); A.hs.tr = tr;
+                  // colossal heaven-split crescent
+                  const big = new THREE.Mesh(new THREE.RingGeometry(3.6, 4.4, 48, 1, Math.PI * 0.15, Math.PI * 0.7), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+                  big.visible = false; A.hs.fx.add(big); A.hs.big = big;
+                  if (G.sfx && G.sfx.charge) G.sfx.charge();
+                }
+                const HS = A.hs;
+                char.position.x = battleCenter.x - 1.3; char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2;
+                const flashSlash = (col) => {
+                  const sl = HS.slashes[HS.struck % HS.slashes.length];
+                  sl.visible = true; sl.position.set(EP.x + (Math.random() - 0.5) * 0.7, 0.7 + Math.random() * 1.5, EP.z + (Math.random() - 0.5) * 0.7);
+                  sl.rotation.set(0, Math.random() * Math.PI, (Math.random() - 0.5) * Math.PI); sl.scale.setScalar(0.8 + Math.random() * 0.7); sl.material.opacity = 1; sl.material.color.setHex(col);
+                };
+                // ============ PHASE 1 — FOCUS / IAIDO STANCE (p 0 → 0.18) ============
                 if (p < 0.18) {
-                  const dp = p / 0.18;
-                  char.position.set(battleCenter.x - 1.3, 0, battleCenter.z);
-                  char.rotation.z = 0;
-                  // sheathed, hand resting on the hilt — perfectly still
-                  armR.rotation.x = 0.3;
-                  armR.rotation.z = 0.16;
-                  armL.rotation.x = 0.1;
-                  armL.rotation.z = -0.2;
-                  wand.rotation.set(-0.75, 0.15, -0.1);
-                  // everything freezes: the world darkens and drains to a hush
-                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x20283a), 0.06);
-                  // the katana glows white
-                  if (Math.random() < 0.5) burst(new THREE.Vector3(char.position.x + 0.25, 1.05, char.position.z), white, 0.22);
-                  G._ultCamOrbit = dp * 0.25;
+                  const cp = p / 0.18; G._ultCamOrbit = cp * 0.35;
+                  if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.4;
+                  armR.rotation.x = -0.2; armL.rotation.x = -0.3; armR.rotation.z = 0.2;
+                  wand.scale.setScalar(1);
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.06, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + cp * 1.4);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.4 + si) * (si % 2 ? -1 : 1); st.children.forEach(c => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? sakura : crimson); }); });
+                  HS.petals.forEach(pt => { pt.visible = true; const a = pt.userData.ph + t * pt.userData.sp; pt.position.set(char.position.x + Math.cos(a) * pt.userData.rad, 0.5 + (a % 3), char.position.z + Math.sin(a) * pt.userData.rad); pt.rotation.set(t, a, t); pt.material.opacity = cp; });
+                  if (Math.random() < 0.5) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 2.5, 0, char.position.z + (Math.random() - 0.5) * 2.5), sakura, 0.4 + Math.random() * 2);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x1c1826), 0.05);
+                  G._camShake = 0.04 + cp * 0.05;
                 }
-                // ─── Phase 2 (0.18 → 0.4): hand on the katana, blue wind gathers, petals float ───
-                else if (p < 0.4) {
-                  const dp = (p - 0.18) / 0.22;
-                  char.position.set(battleCenter.x - 1.3, 0, battleCenter.z);
-                  // 🤚 both hands settle onto the hilt — the draw is coiled
-                  armR.rotation.x = 0.3 - dp * 0.15;
-                  armR.rotation.z = 0.16 + dp * 0.1;
-                  armL.rotation.x = -0.15 - dp * 0.35;
-                  armL.rotation.z = -0.3 - dp * 0.25;
-                  if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.6 * dp;
-                  // 🌸 cherry blossoms + blue zen wind spiralling in
-                  if (Math.random() < 0.9) {
-                    const a = t * 2 + Math.random() * 6.28,
-                      r = 1.2 - dp * 0.5;
-                    burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.3 + Math.random() * 2, char.position.z + Math.sin(a) * r), Math.random() < 0.5 ? petal : zenBlue, 0.3);
-                  }
-                  // heartbeat pulse on the blade
-                  const beat = Math.abs(Math.sin(dp * Math.PI * 3));
-                  if (beat > 0.85) burst(new THREE.Vector3(char.position.x + 0.25, 1.05, char.position.z), white, 0.3);
-                  // camera slowly zooms/orbits in
-                  G._ultCamOrbit = 0.25 + dp * 0.2;
+                // ============ PHASE 2 — TIME STOP (p 0.18 → 0.36) ============
+                else if (p < 0.36) {
+                  const cp = (p - 0.18) / 0.18; G._ultCamOrbit = 0.35 + cp * 0.3;
+                  if (!A.hsStop) { A.hsStop = true; if (G.sfx && G.sfx.boom) G.sfx.boom(); }
+                  HS.tr.visible = true; HS.tr.position.set(EP.x, 1.2, EP.z); HS.tr.scale.setScalar(0.5 + cp * 3.5); HS.tr.material.opacity = Math.max(0, 1 - cp); HS.tr.rotation.z = t * 3;
+                  // world "freezes" — desaturate toward a cold void
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x24202e), 0.12);
+                  // petals hang frozen mid-air
+                  HS.petals.forEach(pt => { pt.material.opacity = 1; });
+                  // samurai after-images streak around the enemy
+                  HS.teleT += dt;
+                  if (HS.teleT > 0.09) { HS.teleT = 0; flashSlash(steel); burst(EP.clone(), steel, 0.6 + Math.random() * 1.6); }
+                  if (em.userData.body) em.rotation.y = EP.y; // hold still (frozen)
+                  G._camShake = 0.08;
                 }
-                // ─── Phase 3 (0.4 → 0.5): INSTANT DRAW — the samurai vanishes, only a slash line remains ───
+                // ============ PHASE 3 — DRAW / CHARGE BLADE (p 0.36 → 0.5) ============
                 else if (p < 0.5) {
-                  const dp = (p - 0.4) / 0.1;
-                  // gone in a blink — reappears past the enemy
-                  char.position.set(battleCenter.x - 1.3 + dp * (near + 1.9 - (battleCenter.x - 1.3)), 0, battleCenter.z);
-                  char.traverse(o => {
-                    if (o.isMesh && o.material) {
-                      o.material.transparent = true;
-                      o.material.opacity = dp > 0.15 && dp < 0.85 ? 0.06 : 1;
-                    }
-                  });
-                  armR.rotation.z = 0.12 + dp * 2.4; // the draw
-                  armR.rotation.x = -0.2;
-                  // white afterimage streak along the path
-                  for (let k = 0; k < 3; k++) burst(new THREE.Vector3(battleCenter.x - 1.0 + Math.random() * 3.2, 1.0 + (Math.random() - 0.5) * 0.5, battleCenter.z), white, 0.3);
-                  if (!A.drawn) {
-                    A.drawn = true;
-                    if (G.sfx) G.sfx.slash && G.sfx.slash();
-                  }
-                  G._ultCamOrbit = 0;
+                  const cp = (p - 0.36) / 0.14; G._ultCamOrbit = 0.65 - cp * 0.3;
+                  armR.rotation.x = -0.5 - cp * 0.6; armR.rotation.z = 0.3 + cp * 0.4; wand.scale.setScalar(1 + cp * 0.8);
+                  HS.tr.material.opacity = 0;
+                  // petals swirl into the blade at the hip
+                  const hip = new THREE.Vector3(char.position.x + 0.3, 1.1, char.position.z);
+                  HS.petals.forEach((pt, i) => { const a = pt.userData.ph + t * 4; const r = pt.userData.rad * (1 - cp); pt.position.set(hip.x + Math.cos(a) * r, hip.y + Math.sin(a) * r * 0.5, hip.z + Math.sin(a) * r); pt.material.opacity = 1 - cp * 0.3; });
+                  if (Math.random() < 0.7) burst(hip.clone(), Math.random() < 0.5 ? sakura : white, hip.y);
+                  G._camShake = 0.12 + cp * 0.1;
                 }
-                // ─── Phase 4 (0.5 → 0.68): a gigantic slash cuts the battlefield, the sky splits ───
-                else if (p < 0.68) {
-                  const dp = (p - 0.5) / 0.18;
-                  char.position.set(near + 1.9, 0, battleCenter.z);
-                  char.rotation.y = Math.PI / 2;
-                  char.traverse(o => {
-                    if (o.isMesh && o.material) o.material.opacity = Math.min(1, dp * 3);
-                  }); // reappear, back turned
-                  armR.rotation.z = 2.52;
-                  armR.rotation.x = -0.2;
-                  // ⚔️ the colossal slash line hanging across the whole battlefield
-                  if (!A.slashLine) {
-                    A.slashLine = [];
-                    // one huge diagonal cut + a thinner echo above it (the split sky)
-                    const cut = new THREE.Mesh(new THREE.BoxGeometry(14, 0.3, 0.3), new THREE.MeshBasicMaterial({
-                      color: white,
-                      transparent: true,
-                      opacity: 0,
-                      depthWrite: false
-                    }));
-                    cut.position.set(em.position.x, 1.3, em.position.z + 0.3);
-                    cut.rotation.z = 0.32;
-                    cut.renderOrder = 999;
-                    const skyCut = new THREE.Mesh(new THREE.BoxGeometry(16, 0.18, 0.18), new THREE.MeshBasicMaterial({
-                      color: zenBlue,
-                      transparent: true,
-                      opacity: 0,
-                      depthWrite: false
-                    }));
-                    skyCut.position.set(em.position.x, 4.2, em.position.z);
-                    skyCut.rotation.z = 0.28;
-                    skyCut.renderOrder = 999;
-                    scene.add(cut, skyCut);
-                    A.slashLine.push(cut, skyCut);
+                // ============ PHASE 4 — IAIDO FLURRY (p 0.5 → 0.72) ============
+                else if (p < 0.72) {
+                  const cp = (p - 0.5) / 0.22; G._ultCamOrbit = 0.4 - cp * 0.2;
+                  wand.scale.setScalar(1.6);
+                  HS.petals.forEach(pt => pt.material.opacity = Math.max(0, pt.material.opacity - dt * 1.5));
+                  HS.teleT += dt;
+                  if (HS.teleT > 0.1) {
+                    HS.teleT = 0;
+                    // dash to a new angle around the enemy, cut, leave an after-image slash
+                    const ang = HS.struck * 1.25;
+                    char.position.set(EP.x + Math.cos(ang) * 1.6, 0, EP.z + Math.sin(ang) * 1.6); char.rotation.y = Math.atan2(EP.x - char.position.x, EP.z - char.position.z);
+                    flashSlash(HS.struck % 2 ? sakura : white);
+                    burst(EP.clone(), HS.struck % 2 ? crimson : sakura, 0.6 + Math.random() * 1.6);
+                    if (HS.struck < 10) applyHit(roll() * 0.4, HS.struck % 2 ? crimson : sakura, " 🌸 ฟันเสี้ยววินาที!");
+                    monGlow(em, 0x442233, 0.7); setTimeout(() => monGlow(em, 0x000000, null), 80);
+                    HS.struck++; G._camShake = Math.max(G._camShake || 0, 0.3);
+                    if (G.sfx && G.sfx.slash) G.sfx.slash();
                   }
-                  A.slashLine.forEach((c, i) => {
-                    c.material.opacity = Math.min(1, dp * 4);
-                    c.scale.x = Math.min(1, dp * 2);
-                    c.scale.y = 1 + Math.sin(dp * Math.PI) * (i ? 1 : 2);
-                  });
-                  // blue energy erupting along the cut
-                  if (Math.random() < 0.9) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 6, 1.3 + (Math.random() - 0.5) * 2, em.position.z), Math.random() < 0.5 ? zenBlue : white, 0.4);
-                  if (Math.random() < 0.4) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 7, 4.2 + (Math.random() - 0.5) * 1.2, em.position.z), deepBlue, 0.5); // the sky splitting
-                  G._camShake = 0.12;
+                  if (em.userData.body) em.position.x = EP.x + Math.sin(t * 50) * 0.05;
+                  G._camShake = Math.max(G._camShake || 0, 0.15);
                 }
-                // ─── Phase 5 (0.68 → 0.88): one second of silence... then everything explodes ───
-                else if (p < 0.88) {
-                  const dp = (p - 0.68) / 0.2;
-                  char.position.set(near + 1.9, 0, battleCenter.z);
-                  char.traverse(o => {
-                    if (o.isMesh && o.material) o.material.opacity = 1;
-                  });
-                  if (dp < 0.3) {
-                    // 🤫 the held silence — the cut just hangs there
-                    if (A.slashLine) A.slashLine.forEach(c => {
-                      c.material.opacity = 0.95;
-                    });
-                  } else if (!A.heavenBoom) {
-                    A.heavenBoom = true;
-                    if (G.sfx) {
-                      G.sfx.crit && G.sfx.crit();
-                      G.sfx.boom && G.sfx.boom();
-                    } // 💣 real explosion
-                    G._camShake = 0.85;
-                    spawnSkillFx("quake", em.position, zenBlue); // ground crack
-                    for (let k = 0; k < 24; k++) setTimeout(() => burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 4, 0.3 + Math.random() * 3.5, em.position.z + (Math.random() - 0.5) * 4), k % 3 === 0 ? white : k % 3 === 1 ? zenBlue : petal, 1 + Math.random()), k * 18);
-                    applyHit(roll() * 3.6, white, " ⚔️🌸 ฟ้าแยก!!"); // massive critical
-                    A.pierce = true; // ignore defense
-                    G.est.bleed = (G.est.bleed || 0) + 5; // bleeding
-                    G.est.frozen = true; // fear — loses its turn
-                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5);
-                    if (em.userData.body) em.userData._stagger = 0.9;
-                  }
-                  if (dp > 0.3 && A.slashLine) A.slashLine.forEach(c => {
-                    c.material.opacity = Math.max(0, 0.95 - (dp - 0.3) * 2);
-                    c.scale.y = 1 + (dp - 0.3) * 8;
-                  });
-                  if (dp > 0.3) {
-                    if (em.userData.body) {
-                      em.position.y = Math.sin((dp - 0.3) / 0.7 * Math.PI) * 0.9;
-                      em.rotation.z = (dp - 0.3) * 0.5;
-                    }
-                    G._camShake = 0.5 * (1 - dp);
-                  }
-                }
-                // ─── Phase 6 (0.88 → 1): sheathe the katana, blossoms keep falling ───
-                else {
-                  const dp = (p - 0.88) / 0.12;
-                  char.position.set(near + 1.9 - dp * (near + 1.9 - (battleCenter.x - 1.3)), 0, battleCenter.z);
-                  char.rotation.y = Math.PI / 2;
-                  // 🗡️ slow, deliberate sheathe
-                  armR.rotation.z = 2.52 - dp * 2.36;
-                  armR.rotation.x = -0.2 + dp * 0.5;
-                  armL.rotation.x = -0.5 + dp * 0.4;
-                  armL.rotation.z = -0.55 + dp * 0.43;
-                  if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.6 * (1 - dp);
-                  if (em.userData.body) {
-                    em.position.y = Math.max(0, 0.9 * (1 - dp));
-                    em.rotation.z = 0.5 * (1 - dp);
-                  }
-                  if (A.slashLine) A.slashLine.forEach(c => c.material.opacity = 0);
-                  // 🌸 cherry blossoms drifting down as the world returns
-                  if (Math.random() < 0.6) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 4, 0.5 + Math.random() * 2.5, battleCenter.z + (Math.random() - 0.5) * 2), petal, 0.3);
-                  if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.07);
-                }
-                // cleanup when the ult finishes
-                if (p >= 1 && A.slashLine) {
-                  A.slashLine.forEach(c => scene.remove(c));
-                  A.slashLine = null;
-                }
-              } else {
-                // ☄️🌌 CELESTIAL APOCALYPSE — galaxy portal, meteor rain, cosmic explosion
-                const arcane = 0x9a4ad0,
-                  cosmicBlue = 0x4a7af0,
-                  gold = 0xf5d24a,
-                  star = 0xfff2b0;
-                char.position.x = battleCenter.x - 1.3;
-                char.rotation.y = Math.PI / 2 - 0.1;
-                // ─── Phase 1 Arcane Awakening (p 0 → 0.18): raise staff, giant magic circle, spiraling particles ───
-                if (p < 0.18) {
-                  const dp = p / 0.18;
-                  armR.rotation.x = -1.6 - dp * 0.8; // raise the staff high
-                  armR.rotation.z = 0.1;
-                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x150e22), 0.05); // battlefield darkens
-                  // giant arcane magic circle beneath the mage
-                  magicCircle.visible = true;
-                  magicCircle.position.set(char.position.x, 0.1, char.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(1 + dp * 1.8);
-                  magicCircle.userData.stars.forEach((st, si) => {
-                    st.rotation.z = t * (1.5 + si) * (si % 2 ? -1 : 1);
-                    st.children.forEach(c => {
-                      c.material.opacity = Math.min(1, dp * 1.5);
-                      c.material.color.setHex(si === 0 ? arcane : si === 1 ? cosmicBlue : gold);
-                    });
-                  });
-                  // purple/blue/gold particles spiral upward
-                  if (Math.random() < 0.9) {
-                    const ang = t * 5 + Math.random() * 6.28,
-                      rad = 0.8 * (1 - dp * 0.4);
-                    const cols = [arcane, cosmicBlue, gold];
-                    burst(new THREE.Vector3(char.position.x + Math.cos(ang) * rad, 0.2 + dp * 2, char.position.z + Math.sin(ang) * rad), cols[Math.floor(Math.random() * 3)], 0.35);
-                  }
-                  G._ultCamOrbit = dp * 0.5; // camera circles the mage
-                }
-                // ─── Phase 2 Portal of Heaven (p 0.18 → 0.35): giant sky portal, galaxy, overlapping circles ───
-                else if (p < 0.35) {
-                  const dp = (p - 0.18) / 0.17;
-                  armR.rotation.x = -2.4; // staff pointed up
-                  // gigantic galaxy portal opens in the sky
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 6.5, em.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(1.5 + dp * 3);
-                  magicCircle.userData.stars.forEach((st, si) => {
-                    st.rotation.z = t * (1 + si * 0.7) * (si % 2 ? -1 : 1);
-                    st.children.forEach(c => {
-                      c.material.opacity = Math.min(1, dp * 1.5);
-                      c.material.color.setHex(si === 0 ? arcane : si === 1 ? cosmicBlue : star);
-                    });
-                  });
-                  // stars rotating + arcane lightning striking the center
-                  if (Math.random() < 0.8) {
-                    const ang = t * 2 + Math.random() * 6.28,
-                      rad = 1.5 + Math.random() * 2;
-                    burst(new THREE.Vector3(em.position.x + Math.cos(ang) * rad, 6.5 + (Math.random() - 0.5) * 2, em.position.z + Math.sin(ang) * rad), Math.random() < 0.5 ? cosmicBlue : star, 0.4);
-                  }
-                  if (Math.random() < 0.3) {
-                    G._camShake = 0.12;
-                    burst(new THREE.Vector3(em.position.x, 6.5, em.position.z), arcane, 0.6);
-                  }
-                  G._ultCamOrbit = 0.5 + dp * 0.3;
-                }
-                // ─── Phase 3 Meteor Summoning (p 0.35 → 0.5): meteors appear in portal, comet trails ───
-                else if (p < 0.5) {
-                  const dp = (p - 0.35) / 0.15;
-                  armR.rotation.x = -2.2;
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 6.5, em.position.z);
-                  magicCircle.scale.setScalar(4.5);
-                  magicCircle.userData.stars.forEach(st => st.rotation.z = t * 2.5);
-                  // meteors forming inside the portal (glowing masses)
-                  if (!A.meteors) {
-                    A.meteors = [];
-                    for (let k = 0; k < 8; k++) {
-                      const met = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18 + Math.random() * 0.12, 0), new THREE.MeshStandardMaterial({
-                        color: 0x6a3aa0,
-                        emissive: arcane,
-                        emissiveIntensity: 0.8,
-                        roughness: 0.7,
-                        flatShading: true
-                      }));
-                      met.userData = {
-                        ox: (Math.random() - 0.5) * 3,
-                        oz: (Math.random() - 0.5) * 3,
-                        delay: Math.random() * 0.5,
-                        spin: Math.random() * 5
-                      };
-                      met.visible = false;
-                      scene.add(met);
-                      A.meteors.push(met);
-                    }
-                  }
-                  A.meteors.forEach((met, i) => {
-                    met.visible = true;
-                    met.position.set(em.position.x + met.userData.ox, 6.5 + Math.sin(t * 3 + i) * 0.3, em.position.z + met.userData.oz);
-                    met.rotation.set(t * 2 + i, t * 3, 0);
-                    if (Math.random() < 0.5) burst(new THREE.Vector3(met.position.x, met.position.y, met.position.z), Math.random() < 0.5 ? arcane : gold, 0.4);
-                  });
-                  G._camShake = 0.1 + dp * 0.1; // battlefield trembles
-                  G._ultCamOrbit = 0;
-                }
-                // ─── Phase 4 Celestial Rain (p 0.5 → 0.75): meteors fall, explosions, crystal spikes ───
-                else if (p < 0.75) {
-                  const dp = (p - 0.5) / 0.25;
-                  armR.rotation.x = -1.2;
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 6.5, em.position.z);
-                  magicCircle.scale.setScalar(4.5);
-                  // meteors rain down one by one
-                  if (A.meteors) A.meteors.forEach((met, i) => {
-                    const mp = Math.max(0, Math.min(1, (dp - met.userData.delay * 0.6) / 0.4));
-                    if (mp > 0 && mp < 1) {
-                      met.visible = true;
-                      met.position.set(em.position.x + met.userData.ox * (1 - mp), 6.5 - mp * 6.3, em.position.z + met.userData.oz * (1 - mp));
-                      met.rotation.set(t * 4 + i, t * 5, 0);
-                      if (Math.random() < 0.7) burst(new THREE.Vector3(met.position.x, met.position.y, met.position.z), Math.random() < 0.5 ? arcane : gold, 0.35);
-                    } else if (mp >= 1) {
-                      if (met.visible) {
-                        met.visible = false;
-                        // impact explosion + purple crystal spike + damage
-                        for (let k = 0; k < 5; k++) burst(new THREE.Vector3(em.position.x + met.userData.ox * 0.3 + (Math.random() - 0.5), 0.3 + Math.random() * 1.5, em.position.z + met.userData.oz * 0.3 + (Math.random() - 0.5)), k % 2 ? arcane : cosmicBlue, 0.6);
-                        G._camShake = Math.max(G._camShake || 0, 0.25);
-                        applyHit(roll() * 0.5, arcane, " ☄️");
-                        if (G.sfx) G.sfx.hit && G.sfx.hit();
-                      }
-                    }
-                  });
-                  // arcane shockwaves + enemy launched
-                  if (em.userData.body) em.position.y = Math.abs(Math.sin(dp * Math.PI * 3)) * 0.6;
-                }
-                // ─── Phase 5 Cosmic Explosion (p 0.75 → 0.9): final giant meteor, pillar of light, white flash ───
+                // ============ PHASE 5 — HEAVEN SPLIT (p 0.72 → 0.9) ============
                 else if (p < 0.9) {
-                  const dp = (p - 0.75) / 0.15;
-                  armR.rotation.x = -0.6;
-                  if (dp < 0.5) {
-                    // the final gigantic meteor plummets
-                    arrowFx.visible = true;
-                    arrowFx.position.set(em.position.x, 7 - dp / 0.5 * 7, em.position.z);
-                    arrowFx.scale.setScalar(4);
-                    arrowFx.children.forEach(c => {
-                      if (c.material) {
-                        c.material.color.setHex(arcane);
-                        if (c.material.emissive) c.material.emissive.setHex(arcane);
-                      }
-                    });
-                    if (Math.random() < 0.9) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5), 7 - dp / 0.5 * 7, em.position.z), Math.random() < 0.5 ? arcane : gold, 0.5);
-                    G._camShake = 0.2 + dp * 0.3;
-                  } else {
-                    arrowFx.visible = false;
-                    if (!A.cosmicBoom) {
-                      A.cosmicBoom = true;
-                      if (G.sfx) {
-                        G.sfx.crit && G.sfx.crit();
-                        G.sfx.boom && G.sfx.boom();
-                      } // 💣 real explosion
-                      G._camShake = 0.8;
-                      fireShock(em.position, arcane);
-                      // massive cosmic explosion
-                      for (let k = 0; k < 24; k++) setTimeout(() => burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 4, 0.3 + Math.random() * 3.5, em.position.z + (Math.random() - 0.5) * 4), [arcane, cosmicBlue, gold, star][k % 4], 1 + Math.random()), k * 20);
-                      // massive damage + effects
-                      applyHit(roll() * 3.5, arcane, " ☄️🌌 วิบัติจักรวาล!!");
-                      G.est.burn = 3; // burn
-                      G.est.frozen = true; // stun
-                      G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); // magic resist down
-                      if (em.userData.body) em.userData._stagger = 0.9;
-                    }
-                    // pillar of cosmic light + galaxy shockwave
-                    magicCircle.visible = true;
-                    magicCircle.position.set(em.position.x, 0.15, em.position.z);
-                    magicCircle.rotation.x = Math.PI / 2;
-                    magicCircle.scale.setScalar(3 + (dp - 0.5) / 0.5 * 7);
-                    magicCircle.userData.stars.forEach(st => st.children.forEach(c => {
-                      c.material.opacity = Math.max(0, 1 - (dp - 0.5) / 0.5);
-                      c.material.color.setHex(star);
-                    }));
-                    if (em.userData.body) em.position.y = Math.sin((dp - 0.5) / 0.5 * Math.PI) * 1.5;
+                  const cp = (p - 0.72) / 0.18; G._ultCamOrbit = 0;
+                  // return to stance, sheathe for the final draw
+                  char.position.x = battleCenter.x - 1.3; char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2;
+                  if (em.userData.body) em.position.x = EP.x;
+                  armR.rotation.x = -0.3 + cp * 1.2; // the great overhead cut
+                  HS.slashes.forEach(sl => sl.material.opacity = Math.max(0, sl.material.opacity - dt * 3));
+                  // colossal crescent sweeps down through the sky above the enemy
+                  HS.big.visible = true; HS.big.position.set(EP.x, 3.5, EP.z); HS.big.lookAt(char.position.x, 3.5, char.position.z);
+                  HS.big.rotation.z = -Math.PI * 0.5 + cp * Math.PI; HS.big.scale.setScalar(0.5 + Math.min(1, cp * 1.5) * 1.2); HS.big.material.opacity = Math.min(1, cp * 1.6);
+                  if (Math.random() < 0.85) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), Math.random() < 0.5 ? white : sakura, 0.3 + Math.random() * 3.5);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x140a14), 0.06);
+                  G._camShake = 0.25 + cp * 0.3;
+                  if (cp > 0.55 && !A.hsBoom) {
+                    A.hsBoom = true;
+                    if (G.sfx) { G.sfx.crit && G.sfx.crit(); G.sfx.boom && G.sfx.boom(); }
+                    G._camShake = 1.0;
+                    applyHit(roll() * 2.9, crimson, " ⚔️🌸 ฟันฟ้าแยก!");
+                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); G.est.bleed = 3; G.est.confused = 3;
+                    for (let k = 0; k < 20; k++) setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4.5, 0, EP.z + (Math.random() - 0.5) * 4.5), [sakura, white, crimson, steel][k % 4], 0.2 + Math.random() * 3.2), k * 22);
                   }
+                  G._camShake = Math.max(G._camShake || 0, 0.2);
                 }
-                // ─── Phase 6 Arcane Aftermath (p 0.9 → 1): portal closes, particles float, staff lowers ───
+                // ============ PHASE 6 — AFTERMATH (p 0.9 → 1) ============
                 else {
-                  const dp = (p - 0.9) / 0.1;
-                  armR.rotation.x = -0.6 + dp * 0.4; // lower the staff
-                  if (em.userData.body) {
-                    em.position.y = Math.max(0, 1.5 * (1 - dp));
-                    em.rotation.z = 0;
-                  }
-                  if (A.meteors) {
-                    A.meteors.forEach(m => scene.remove(m));
-                    if (dp > 0.5) A.meteors = null;
-                  }
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 0.12, em.position.z);
-                  magicCircle.scale.setScalar(4);
-                  magicCircle.userData.stars.forEach(st => {
-                    st.rotation.z = t;
-                    st.children.forEach(c => {
-                      c.material.opacity = 0.4 * (1 - dp);
-                    });
-                  });
-                  if (Math.random() < 0.4) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.5, Math.random() * 2.5, em.position.z + (Math.random() - 0.5) * 2.5), [arcane, cosmicBlue, gold][Math.floor(Math.random() * 3)], 0.35); // lingering arcane particles
-                  if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.06);
+                  const cp = (p - 0.9) / 0.1; G._ultCamOrbit = 0;
+                  armR.rotation.x = -0.3 + Math.sin(t * 2) * 0.05; armL.rotation.x = -0.3; wand.scale.setScalar(Math.max(1, 1.6 - cp));
+                  HS.big.material.opacity = Math.max(0, HS.big.material.opacity - dt * 3); HS.big.visible = HS.big.material.opacity > 0.02;
+                  HS.slashes.forEach(sl => { sl.material.opacity = Math.max(0, sl.material.opacity - dt * 4); });
+                  // petals drift down and settle
+                  HS.petals.forEach(pt => { pt.material.opacity = Math.max(0, pt.material.opacity - dt * 1.2); pt.position.y = Math.max(0.05, pt.position.y - dt * 1.5); pt.rotation.z += dt; });
+                  if (em.userData.body) { em.position.x = EP.x; em.rotation.z = 0; }
+                  if (Math.random() < 0.3 * (1 - cp)) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), sakura, Math.random() * 2.5);
+                  if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.08);
+                  G._camShake = Math.max(0, 0.2 * (1 - cp));
                 }
+                // fade flurry slashes each frame
+                HS.slashes.forEach(sl => { if (sl.visible) { sl.material.opacity = Math.max(0, sl.material.opacity - dt * 4); if (sl.material.opacity <= 0.02) sl.visible = false; } });
               }
               if (p >= 1) {
                 char.rotation.y = Math.PI / 2;
@@ -23774,6 +23524,15 @@ function CherryAdventure() {
                     if (o.material) o.material.dispose();
                   });
                   A.ot = null;
+                }
+                // ⚔️🌸 Heaven Split cleanup — remove petals / slashes / crescent rig
+                if (A.hs) {
+                  scene.remove(A.hs.fx);
+                  A.hs.fx.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) o.material.dispose();
+                  });
+                  A.hs = null;
                 }
                 // 🔱🐉 Dragon Spear Judgment cleanup — dragon, levitating rocks, restore the spear
                 if (A.dragon) {
