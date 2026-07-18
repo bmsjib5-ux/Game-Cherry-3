@@ -6218,11 +6218,12 @@ export default function CherryAdventure() {
       if (newly) {
         toast(`🏅 ปลดล็อกฉายาใหม่! ${newly.emoji} ${newly.name} — ${titleBonusText(newly)}`);
         if (G.sfx) G.sfx.levelup && G.sfx.levelup();
-        setUi((u) => ({ ...u, titleTick: (u.titleTick || 0) + 1 }));
       }
       const eq = titleOf(G.titleId);
       G.playerTitle = eq && eq.id !== "t_none" ? `${eq.name} ${eq.emoji}` : "";
       if (G.drawPlayerLabel) G.drawPlayerLabel();
+      // 🏷️ keep the React state in sync so the head nameplate shows the equipped title
+      setUi((u) => ({ ...u, playerTitle: G.playerTitle, titleTick: newly ? (u.titleTick || 0) + 1 : u.titleTick }));
       return G.playerTitle;
     };
     G.setTitle = (id) => {
@@ -15859,8 +15860,8 @@ export default function CherryAdventure() {
         </div>
       )}
 
-      {/* 🏷️ player nameplate — floats above Cherry's head (positioned each frame), explore + battle */}
-      {(ui.mode === "explore" || ui.mode === "battle") && (
+      {/* 🏷️ player nameplate — floats above Cherry's head (positioned each frame), explore + battle; hidden while a menu is open */}
+      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.socialOpen) && (
         <div ref={(el) => { G.playerPlateEl = el; }} style={{
           position: "absolute", left: 0, top: 0, display: "none",
           transform: "translate(-50%,-100%)", width: 168, textAlign: "center",

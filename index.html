@@ -11926,14 +11926,16 @@ function CherryAdventure() {
       if (newly) {
         toast(`🏅 ปลดล็อกฉายาใหม่! ${newly.emoji} ${newly.name} — ${titleBonusText(newly)}`);
         if (G.sfx) G.sfx.levelup && G.sfx.levelup();
-        setUi(u => ({
-          ...u,
-          titleTick: (u.titleTick || 0) + 1
-        }));
       }
       const eq = titleOf(G.titleId);
       G.playerTitle = eq && eq.id !== "t_none" ? `${eq.name} ${eq.emoji}` : "";
       if (G.drawPlayerLabel) G.drawPlayerLabel();
+      // 🏷️ keep the React state in sync so the head nameplate shows the equipped title
+      setUi(u => ({
+        ...u,
+        playerTitle: G.playerTitle,
+        titleTick: newly ? (u.titleTick || 0) + 1 : u.titleTick
+      }));
       return G.playerTitle;
     };
     G.setTitle = id => {
@@ -26048,7 +26050,7 @@ function CherryAdventure() {
       color: "#8a5a4a",
       marginTop: 2
     }
-  }, "⚔️", ui.atk, " 🛡️", ui.def, " 💰", ui.gold, " · 💗×", ui.balls, " · 🐾×", totalCaught)), (ui.mode === "explore" || ui.mode === "battle") && /*#__PURE__*/React.createElement("div", {
+  }, "⚔️", ui.atk, " 🛡️", ui.def, " 💰", ui.gold, " · 💗×", ui.balls, " · 🐾×", totalCaught)), (ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.socialOpen) && /*#__PURE__*/React.createElement("div", {
     ref: el => {
       G.playerPlateEl = el;
     },
