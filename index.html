@@ -16420,7 +16420,7 @@ function CherryAdventure() {
         G.banim = {
           type: "ult",
           t: 0,
-          dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? altUlt ? 4.6 : 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4,
+          dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? altUlt ? 4.6 : 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4,
           hits: 0,
           total: 0,
           altUlt
@@ -21883,7 +21883,7 @@ function CherryAdventure() {
               const roll = () => (effAtk() + Math.random() * 4) * ultMul;
               // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
               // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
-              const CAST_SEC = cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" ? 0 : 1.0;
+              const CAST_SEC = cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" || cls === "mage" ? 0 : 1.0;
               const castP = CAST_SEC > 0 ? Math.min(1, A.t / CAST_SEC) : 1;
               const casting = A.t < CAST_SEC;
               // remap post-cast progress so attack motions play at normal speed
@@ -21913,7 +21913,7 @@ function CherryAdventure() {
                   c.material.opacity = Math.max(0, 0.85 - (A.t - CAST_SEC) * 8);
                 }));
                 // ⚔️☁️ release: a giant blade of light plunges from the sky onto the enemy (once)
-                if (!A.beamFired && !["warrior", "archer", "assassin", "lancer", "samurai", "coder"].includes(cls)) {
+                if (!A.beamFired && !["warrior", "archer", "assassin", "lancer", "samurai", "coder", "mage", "office"].includes(cls)) {
                   A.beamFired = true;
                   const bc = CLASSES[cls] && CLASSES[cls].color || 0xfff2c0;
                   spawnSkillFx("swordbeam", em.position, bc);
@@ -23461,6 +23461,142 @@ function CherryAdventure() {
                 }
                 // fade flurry slashes each frame
                 HS.slashes.forEach(sl => { if (sl.visible) { sl.material.opacity = Math.max(0, sl.material.opacity - dt * 4); if (sl.material.opacity <= 0.02) sl.visible = false; } });
+              } else if (cls === "mage") {
+                // ☄️🌌 COSMIC CATACLYSM — open a galaxy, converge the elements, rain meteors, then collapse a star
+                const cosmic = 0x9a4ad0, arc = 0x4a6aff, starl = 0xeaf0ff, fire = 0xff6a3a, ice = 0x6ae0ff;
+                const EP = em.position;
+                const CX = () => battleCenter.x - 1.3, CZ = () => battleCenter.z;
+                if (!A.mg) {
+                  A.mg = { fx: new THREE.Group(), runes: [], orbs: [], meteors: [], teleT: 0, struck: 0 };
+                  scene.add(A.mg.fx);
+                  // arcane runes
+                  for (let i = 0; i < 6; i++) {
+                    const r = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.MeshBasicMaterial({ color: i % 2 ? cosmic : arc, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    const gl = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.04, 6, 3), new THREE.MeshBasicMaterial({ color: starl, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    r.add(gl); r.userData.ph = i / 6 * Math.PI * 2; r.visible = false; A.mg.fx.add(r); A.mg.runes.push(r);
+                  }
+                  // 3 elemental orbs (fire / ice / arcane-thunder)
+                  [fire, ice, cosmic].forEach((col, i) => {
+                    const o = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 14), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    o.userData.ph = i / 3 * Math.PI * 2; A.mg.fx.add(o); A.mg.orbs.push(o);
+                  });
+                  // meteors (reused)
+                  for (let i = 0; i < 8; i++) {
+                    const m2 = new THREE.Group();
+                    const core = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 12), new THREE.MeshBasicMaterial({ color: fire, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.24, 1.2, 8), new THREE.MeshBasicMaterial({ color: cosmic, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    tail.position.y = 0.7; m2.add(core); m2.add(tail); m2.visible = false; A.mg.fx.add(m2); A.mg.meteors.push(m2);
+                  }
+                  // galaxy vortex overhead
+                  const vortex = new THREE.Group();
+                  for (let r = 0; r < 4; r++) {
+                    const rg = new THREE.Mesh(new THREE.TorusGeometry(1.4 + r * 0.7, 0.16 - r * 0.02, 10, 44), new THREE.MeshBasicMaterial({ color: r % 2 ? cosmic : arc, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    rg.rotation.x = Math.PI / 2; vortex.add(rg);
+                  }
+                  const eye = new THREE.Mesh(new THREE.CircleGeometry(1.3, 40), new THREE.MeshBasicMaterial({ color: 0x1a0a30, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+                  eye.rotation.x = -Math.PI / 2; vortex.add(eye);
+                  vortex.visible = false; A.mg.fx.add(vortex); A.mg.vortex = vortex; A.mg.eye = eye;
+                  // colossal cosmic beam for the finale
+                  const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.5, 12, 20), new THREE.MeshBasicMaterial({ color: starl, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  beam.visible = false; A.mg.fx.add(beam); A.mg.beam = beam;
+                  if (G.sfx && G.sfx.charge) G.sfx.charge();
+                }
+                const MG = A.mg;
+                char.position.x = CX(); char.position.z = CZ(); char.rotation.y = Math.PI / 2;
+                armL.rotation.x = -1.35; armR.rotation.x = -0.9;
+                const wandTip = new THREE.Vector3(char.position.x + 0.4, 1.9, char.position.z);
+                // ============ PHASE 1 — ARCANE CHARGE (p 0 → 0.18) ============
+                if (p < 0.18) {
+                  const cp = p / 0.18; G._ultCamOrbit = cp * 0.3;
+                  armR.rotation.x = -0.9 - cp * 0.5; wand.scale.setScalar(1 + cp * 0.4);
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.06, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + cp * 1.6);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.4 + si) * (si % 2 ? -1 : 1); st.children.forEach(c => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? cosmic : arc); }); });
+                  MG.runes.forEach(r => { r.visible = true; const a = r.userData.ph + t * 0.7; r.position.set(char.position.x + Math.cos(a) * 1.7, 1.3 + Math.sin(a * 1.3) * 0.6, char.position.z + Math.sin(a) * 1.7); r.lookAt(char.position.x, r.position.y, char.position.z); r.material.opacity = cp * 0.9; });
+                  MG.orbs.forEach((o, i) => { o.visible = true; const a = o.userData.ph + t * 2; o.position.set(wandTip.x + Math.cos(a) * 0.6, wandTip.y + Math.sin(a) * 0.3, wandTip.z + Math.sin(a) * 0.6); o.material.opacity = cp; });
+                  if (Math.random() < 0.5) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 2, 0, char.position.z + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? cosmic : arc, 0.4 + Math.random() * 2);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x0e0a1e), 0.05);
+                  G._camShake = 0.04 + cp * 0.05;
+                }
+                // ============ PHASE 2 — GALAXY PORTAL (p 0.18 → 0.36) ============
+                else if (p < 0.36) {
+                  const cp = (p - 0.18) / 0.18; G._ultCamOrbit = 0.3 + cp * 0.35;
+                  MG.runes.forEach(r => { const a = r.userData.ph + t * 0.9; r.position.set(char.position.x + Math.cos(a) * 1.6, 1.5 + Math.sin(a * 1.3) * 0.6, char.position.z + Math.sin(a) * 1.6); r.lookAt(char.position.x, r.position.y, char.position.z); r.material.opacity = 0.9; });
+                  MG.orbs.forEach((o, i) => { const a = o.userData.ph + t * 2.4; o.position.set(wandTip.x + Math.cos(a) * 0.6, wandTip.y + Math.sin(a) * 0.3, wandTip.z + Math.sin(a) * 0.6); o.material.opacity = 1; });
+                  // galaxy vortex opens high above the battlefield
+                  MG.vortex.visible = true; MG.vortex.position.set(EP.x, 7.5, EP.z); MG.vortex.rotation.z = t * 0.6; MG.vortex.scale.setScalar(0.4 + cp * 1.2);
+                  MG.vortex.children.forEach((c, i) => { if (c === MG.eye) c.material.opacity = Math.min(0.9, cp * 1.2); else { c.material.opacity = Math.min(1, cp * 1.4); c.rotation.z = t * (0.5 + i * 0.3); } });
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 6, 0, EP.z + (Math.random() - 0.5) * 6), starl, 4 + Math.random() * 3);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x080616), 0.06);
+                  G._camShake = 0.1;
+                }
+                // ============ PHASE 3 — ELEMENTAL CONVERGENCE (p 0.36 → 0.5) ============
+                else if (p < 0.5) {
+                  const cp = (p - 0.36) / 0.14; G._ultCamOrbit = 0.65 - cp * 0.3;
+                  armR.rotation.x = -1.6 - cp * 0.3; wand.scale.setScalar(1 + cp * 0.8);
+                  MG.vortex.rotation.z = t * 0.8; MG.vortex.children.forEach((c, i) => { if (c !== MG.eye) c.rotation.z = t * (0.6 + i * 0.3); });
+                  // the three elemental orbs spiral together into one cosmic sphere at the wand
+                  MG.orbs.forEach((o, i) => { const a = o.userData.ph + t * 5; const r = 0.6 * (1 - cp); o.position.set(wandTip.x + Math.cos(a) * r, wandTip.y + Math.sin(a) * r, wandTip.z + Math.sin(a) * r); o.scale.setScalar(1 + cp * 0.8); });
+                  if (Math.random() < 0.8) burst(wandTip.clone(), [fire, ice, cosmic][Math.floor(Math.random() * 3)], wandTip.y);
+                  G._camShake = 0.12 + cp * 0.1;
+                }
+                // ============ PHASE 4 — METEOR STORM (p 0.5 → 0.72) ============
+                else if (p < 0.72) {
+                  const cp = (p - 0.5) / 0.22; G._ultCamOrbit = 0.4 - cp * 0.2;
+                  MG.orbs.forEach(o => o.material.opacity = Math.max(0, o.material.opacity - dt * 2));
+                  MG.vortex.rotation.z = t;
+                  // meteors rain down from the galaxy onto the enemy
+                  MG.meteors.forEach((m2, i) => { if (m2.visible) { m2.position.y -= dt * 16; if (m2.position.y <= 0.3) { m2.visible = false; burst(new THREE.Vector3(m2.position.x, 0, m2.position.z), Math.random() < 0.5 ? fire : cosmic, 0.4 + Math.random() * 1.8); } } });
+                  MG.teleT += dt;
+                  if (MG.teleT > 0.13) {
+                    MG.teleT = 0;
+                    const m2 = MG.meteors[MG.struck % MG.meteors.length];
+                    m2.visible = true; m2.position.set(EP.x + (Math.random() - 0.5) * 2.4, 7.5, EP.z + (Math.random() - 0.5) * 2.4);
+                    if (MG.struck < 10) applyHit(roll() * 0.4, MG.struck % 2 ? fire : cosmic, " ☄️ อุกกาบาต!");
+                    monGlow(em, 0x442255, 0.7); setTimeout(() => monGlow(em, 0x000000, null), 90);
+                    MG.struck++; G._camShake = Math.max(G._camShake || 0, 0.28);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
+                  }
+                  if (em.userData.body) em.position.x = EP.x + Math.sin(t * 45) * 0.05;
+                  G._camShake = Math.max(G._camShake || 0, 0.16);
+                }
+                // ============ PHASE 5 — COSMIC COLLAPSE (p 0.72 → 0.9) ============
+                else if (p < 0.9) {
+                  const cp = (p - 0.72) / 0.18; G._ultCamOrbit = 0;
+                  if (em.userData.body) em.position.x = EP.x;
+                  MG.meteors.forEach(m2 => { if (m2.visible) { m2.position.y -= dt * 16; if (m2.position.y <= 0.3) m2.visible = false; } });
+                  MG.vortex.visible = true; MG.vortex.position.set(EP.x, 7.5, EP.z); MG.vortex.rotation.z = t * 2; MG.vortex.scale.setScalar(1.6 + cp * 0.8);
+                  // a colossal cosmic beam collapses from the galaxy onto the enemy
+                  MG.beam.visible = true; MG.beam.position.set(EP.x, 6, EP.z); MG.beam.scale.set(0.3 + Math.min(1, cp * 1.6), 1, 0.3 + Math.min(1, cp * 1.6)); MG.beam.material.opacity = Math.min(0.9, cp * 1.6);
+                  if (Math.random() < 0.9) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0, EP.z), [cosmic, arc, starl][Math.floor(Math.random() * 3)], Math.random() * 6);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x0a0620), 0.06);
+                  G._camShake = 0.25 + cp * 0.35;
+                  if (cp > 0.55 && !A.mgBoom) {
+                    A.mgBoom = true;
+                    if (G.sfx) { G.sfx.crit && G.sfx.crit(); G.sfx.boom && G.sfx.boom(); }
+                    G._camShake = 1.1;
+                    applyHit(roll() * 3.0, cosmic, " ☄️🌌 วิบัติจักรวาล!");
+                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); G.est.burn = 3; G.est.frozen = true;
+                    for (let k = 0; k < 22; k++) setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 5, 0, EP.z + (Math.random() - 0.5) * 5), [cosmic, arc, starl, fire][k % 4], 0.2 + Math.random() * 3.4), k * 20);
+                    magicCircle.visible = true; magicCircle.position.set(EP.x, 0.12, EP.z); magicCircle.rotation.x = Math.PI / 2;
+                    if (em.userData.body) em.position.y = 1.1;
+                  }
+                  if (A.mgBoom) { magicCircle.visible = true; magicCircle.scale.setScalar(4 + cp * 7); magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.max(0, 1 - cp); c.material.color.setHex(cosmic); })); if (em.userData.body) em.position.y = Math.max(0, em.position.y - dt * 3); }
+                  G._camShake = Math.max(G._camShake || 0, 0.2);
+                }
+                // ============ PHASE 6 — AFTERMATH (p 0.9 → 1) ============
+                else {
+                  const cp = (p - 0.9) / 0.1; G._ultCamOrbit = 0;
+                  wand.scale.setScalar(Math.max(1, 1.8 - cp)); armR.rotation.x = -0.9 + Math.sin(t * 2) * 0.05;
+                  MG.beam.material.opacity = Math.max(0, MG.beam.material.opacity - dt * 3); MG.beam.visible = MG.beam.material.opacity > 0.02;
+                  MG.vortex.scale.multiplyScalar(1 - dt * 0.8); MG.vortex.children.forEach(c => c.material.opacity = Math.max(0, c.material.opacity - dt * 2.5));
+                  MG.runes.forEach(r => r.material.opacity = Math.max(0, r.material.opacity - dt * 2.5));
+                  MG.orbs.forEach(o => o.material.opacity = Math.max(0, o.material.opacity - dt * 3));
+                  MG.meteors.forEach(m2 => m2.visible = false);
+                  if (em.userData.body) { em.position.y = Math.max(0, em.position.y - dt * 3); em.rotation.z = 0; }
+                  if (Math.random() < 0.3 * (1 - cp)) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), cosmic, Math.random() * 2.5);
+                  if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.08);
+                  G._camShake = Math.max(0, 0.2 * (1 - cp));
+                }
               }
               if (p >= 1) {
                 char.rotation.y = Math.PI / 2;
@@ -23560,6 +23696,15 @@ function CherryAdventure() {
                     if (o.material) o.material.dispose();
                   });
                   A.se = null;
+                }
+                // ☄️🌌 Cosmic Cataclysm cleanup — remove runes / orbs / vortex / meteors / beam rig
+                if (A.mg) {
+                  scene.remove(A.mg.fx);
+                  A.mg.fx.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) o.material.dispose();
+                  });
+                  A.mg = null;
                 }
                 // 🔱🐉 Dragon Spear Judgment cleanup — dragon, levitating rocks, restore the spear
                 if (A.dragon) {
