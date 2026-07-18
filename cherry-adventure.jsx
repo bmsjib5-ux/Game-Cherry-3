@@ -962,7 +962,8 @@ export default function CherryAdventure() {
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const FIELD_R = 16; // much bigger playable field
+    const FIELD_R = 28; // 🗺️ playable field radius — ~3× the area (was 16)
+    const TARGET_WILDS = 24; // 🐾 how many wild monsters populate the map (grouped into camps)
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(FIELD_R - 0.08, FIELD_R + 0.08, 72),
       new THREE.MeshBasicMaterial({ color: 0x7ba05b, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
@@ -5194,20 +5195,49 @@ export default function CherryAdventure() {
 
     // ---------- Wild monsters ----------
     const wilds = [];
-    const spawnWild = () => {
+    // 🏕️ MONSTER CAMPS — group monsters into a handful of camps spread across the map, each owning a
+    // level band (lower Lv near the middle, higher Lv further out) so they cluster by level at points.
+    const CAMP_COUNT = 6;
+    const makeCamps = () => {
+      const lo = G.biomeLvMin != null ? G.biomeLvMin : 1;
+      const hi = G.biomeLvMax != null ? G.biomeLvMax : lo + 9;
+      const span = Math.max(1, hi - lo + 1);
+      const camps = [];
+      for (let i = 0; i < CAMP_COUNT; i++) {
+        const a = i / CAMP_COUNT * Math.PI * 2 + Math.random() * 0.5;
+        const rr = FIELD_R * (0.32 + 0.6 * (i / (CAMP_COUNT - 1)));
+        const bandLo = Math.round(lo + span * (i / CAMP_COUNT));
+        const bandHi = Math.round(lo + span * ((i + 1) / CAMP_COUNT)) - 1;
+        camps.push({ x: Math.cos(a) * rr, z: Math.sin(a) * rr, lvMin: bandLo, lvMax: Math.max(bandLo, bandHi) });
+      }
+      G.camps = camps;
+      return camps;
+    };
+    G.makeCamps = makeCamps;
+    const spawnWild = (camp) => {
       const pool = G.biomePool || SPAWN_POOL;
       const spId = Math.random() < 0.08 ? "kirara" : pool[Math.floor(Math.random() * pool.length)];
       const m = buildMonster(spId);
-      // 🗺️ monster level from the current map's range (fallback: near player level)
-      if (G.biomeLvMin != null) {
-        m.userData.lv = G.biomeLvMin + Math.floor(Math.random() * (G.biomeLvMax - G.biomeLvMin + 1));
+      const c = camp || (G.camps && G.camps.length ? G.camps[Math.floor(Math.random() * G.camps.length)] : null);
+      if (c) {
+        // 🏕️ join a camp: level from the camp's band, clustered tightly around the camp centre
+        m.userData.lv = c.lvMin + Math.floor(Math.random() * (c.lvMax - c.lvMin + 1));
+        const a = Math.random() * Math.PI * 2;
+        const rr = 0.6 + Math.random() * 2.4;
+        m.position.set(c.x + Math.cos(a) * rr, 0, c.z + Math.sin(a) * rr);
+        m.userData.wander = { cx: c.x + Math.cos(a) * rr * 0.5, cz: c.z + Math.sin(a) * rr * 0.5, ph: Math.random() * Math.PI * 2, r: 0.5 + Math.random() * 0.8, sp: 0.25 + Math.random() * 0.35 };
       } else {
-        m.userData.lv = Math.max(1, (G.player ? G.player.level : 1) + Math.floor(Math.random() * 4) - 1);
+        // fallback (no camps yet): old scattered behaviour
+        if (G.biomeLvMin != null) {
+          m.userData.lv = G.biomeLvMin + Math.floor(Math.random() * (G.biomeLvMax - G.biomeLvMin + 1));
+        } else {
+          m.userData.lv = Math.max(1, (G.player ? G.player.level : 1) + Math.floor(Math.random() * 4) - 1);
+        }
+        const a = Math.random() * Math.PI * 2;
+        const r = 2.5 + Math.random() * (FIELD_R - 3);
+        m.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+        m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 1.2, sp: 0.3 + Math.random() * 0.4 };
       }
-      const a = Math.random() * Math.PI * 2;
-      const r = 2.5 + Math.random() * (FIELD_R - 3);
-      m.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-      m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 1.2, sp: 0.3 + Math.random() * 0.4 };
       pushOut(m, 0.6); // don't spawn inside a tree or building
       applyMenace(m); // 😱 scarier at higher level
       // ✨ shiny: rare special variant (4% chance) — golden sparkle, stronger, better rewards
@@ -5242,7 +5272,9 @@ export default function CherryAdventure() {
       wilds.push(m);
     };
     G.biomeLvMin = BIOMES[0].lvMin; G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-10
-    for (let i = 0; i < 9; i++) spawnWild(); // bigger map, more monsters
+    // 🏕️ populate the map by camp: several groups, each clustered by level at its own spot
+    makeCamps();
+    for (const c of G.camps) { const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnWild(c); }
     G.respawnT = 0;
 
     // 🏜️ DESERT DECOR — cacti, sand dunes/mountains, and a blowing sandstorm (hidden unless in desert)
@@ -5909,7 +5941,9 @@ export default function CherryAdventure() {
         : [];
       if (G.rebuildNav) G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
       G.path = null; G._pathGoal = null;
-      for (let i = 0; i < 9; i++) spawnWild();
+      // 🏕️ rebuild camps for this map's level range and spawn each group
+      makeCamps();
+      for (const c of G.camps) { const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnWild(c); }
       if (!quiet) { // 🔇 loading a save shouldn't sound like a fresh warp
         if (G.sfx) G.sfx.warp();
         toast(`${b.emoji} วาร์ปสู่ ${b.name}! มอนสเตอร์ประจำถิ่นปรากฏตัว`);
@@ -9683,8 +9717,8 @@ export default function CherryAdventure() {
         pushOut(m, 0.3);
       });
 
-      // respawn wilds
-      if (wilds.length < 9) {
+      // respawn wilds (rejoin a random camp)
+      if (wilds.length < TARGET_WILDS) {
         G.respawnT += dt;
         if (G.respawnT > 3) { G.respawnT = 0; spawnWild(); }
         // ☁️ sky islands: drifting clouds + rising star motes (sky biome only)
