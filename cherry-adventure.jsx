@@ -7459,6 +7459,7 @@ export default function CherryAdventure() {
     G.banim = null; // {type,t,dur,...}
     G.enemy = null; // {spId, hp, maxHp, atk, lv, boss, mesh}
     let battleCenter = new THREE.Vector3();
+    const _plateV = new THREE.Vector3(); // 🏷️ scratch for projecting the enemy nameplate to screen
     G.restoreScenery = () => { if (G._hiddenScenery) { G._hiddenScenery.forEach((o) => (o.visible = true)); G._hiddenScenery = []; } if (torso) torso.rotation.y = 0; /* undo archer aim twist */ };
 
     // item stats scale +20% per enhancement level
@@ -8531,6 +8532,14 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       wild.position.set(battleCenter.x + G.enemyX, 0, battleCenter.z);
       wild.rotation.y = -Math.PI / 2; // face -x
+      // 🏷️ anchor a stable world-Y just above the monster's head for its floating nameplate
+      wild.updateWorldMatrix(true, true);
+      try {
+        const _pb = new THREE.Box3().setFromObject(wild);
+        G.enemyPlateWorldY = isFinite(_pb.max.y) ? _pb.max.y + 0.5 : 3.5;
+      } catch (e) {
+        G.enemyPlateWorldY = 3.5;
+      }
       // buddy joins the fight beside Cherry
       if (buddyMesh) {
         buddyMesh.position.set(battleCenter.x - 2.2, 0, battleCenter.z + 0.7);
@@ -9585,6 +9594,27 @@ export default function CherryAdventure() {
       if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create";
       // 🏷️ name label (ชื่อ + Lv + ฉายา) shows while exploring and battling, hidden only in creator
       if (nameSprite) nameSprite.visible = G.mode === "explore" || G.mode === "battle";
+      // 🏷️ float the enemy nameplate (ชื่อ + เลือด) above the monster's head via screen projection
+      if (G.enemyPlateEl) {
+        const em = G.enemy && G.enemy.mesh;
+        if (G.mode === "battle" && em) {
+          _plateV.set(em.position.x, G.enemyPlateWorldY || 3.5, em.position.z);
+          _plateV.project(camera);
+          const cw = renderer.domElement.clientWidth || W;
+          const ch = renderer.domElement.clientHeight || H;
+          if (_plateV.z < 1) {
+            const sx = Math.max(90, Math.min(cw - 90, (_plateV.x * 0.5 + 0.5) * cw));
+            const sy = Math.max(66, Math.min(ch - 40, (-_plateV.y * 0.5 + 0.5) * ch));
+            G.enemyPlateEl.style.display = "block";
+            G.enemyPlateEl.style.left = sx + "px";
+            G.enemyPlateEl.style.top = sy + "px";
+          } else {
+            G.enemyPlateEl.style.display = "none";
+          }
+        } else {
+          G.enemyPlateEl.style.display = "none";
+        }
+      }
       ahoge.rotation.x = Math.sin(t * 1.7 + 1) * 0.08;
 
       // blink
@@ -17163,24 +17193,30 @@ export default function CherryAdventure() {
               }}>{sym}</button>
             ))}
           </div>
-          {/* enemy bar */}
-          <div style={{
-            position: "absolute", top: 12, right: 12, background: "#fff",
-            borderRadius: 14, padding: "7px 12px", width: 150, maxWidth: "42vw",
-            boxShadow: "0 4px 12px rgba(90,120,70,0.25)", pointerEvents: "none",
+          {/* 🏷️ enemy nameplate — floats above the monster's head (positioned each frame), no white card */}
+          <div ref={(el) => { G.enemyPlateEl = el; }} style={{
+            position: "absolute", left: 0, top: 0, display: "none",
+            transform: "translate(-50%,-100%)", width: 168, textAlign: "center",
+            pointerEvents: "none", zIndex: 7, willChange: "left, top",
+            textShadow: "0 1px 3px rgba(0,0,0,0.65)",
           }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: ui.enemy.boss ? "#b03060" : "#8a5a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {ui.enemy.boss ? "👑 บอส" : ui.enemy.emoji + " "}{ui.enemy.boss ? EVOLVED[Object.keys(SPECIES).find(k => SPECIES[k].name === ui.enemy.name)] || ui.enemy.name : ui.enemy.name + "ป่า"}{ui.enemy.shiny ? " ✨" : ""} <span style={{ color: "#d9536b" }}>Lv.{ui.enemy.lv}</span>
+            <div style={{ fontSize: 13, fontWeight: 800, color: ui.enemy.boss ? "#ffd6e6" : "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {ui.enemy.boss ? "👑 บอส" : ui.enemy.emoji + " "}{ui.enemy.boss ? EVOLVED[Object.keys(SPECIES).find(k => SPECIES[k].name === ui.enemy.name)] || ui.enemy.name : ui.enemy.name + "ป่า"}{ui.enemy.shiny ? " ✨" : ""} <span style={{ color: "#ffd0a0" }}>Lv.{ui.enemy.lv}</span>
             </div>
-            {hpBar(ui.enemy.hp, ui.enemy.maxHp, "#f0a05a")}
-            <div style={{ fontSize: 10.5, color: "#a3796a", marginTop: 3 }}>
+            <div style={{ background: "rgba(0,0,0,0.38)", borderRadius: 999, height: 9, overflow: "hidden", marginTop: 3, border: "1px solid rgba(255,255,255,0.55)" }}>
+              <div style={{
+                width: `${Math.max(0, (ui.enemy.hp / ui.enemy.maxHp) * 100)}%`, height: "100%",
+                background: ui.enemy.hp / ui.enemy.maxHp > 0.35 ? "#f0a05a" : "#e05555", borderRadius: 999, transition: "width 0.3s",
+              }}/>
+            </div>
+            <div style={{ fontSize: 10.5, color: "#ffffff", fontWeight: 700, marginTop: 2 }}>
               HP {ui.enemy.hp}/{ui.enemy.maxHp}
             </div>
             {ui.enemy.spId && WEAK[ui.enemy.spId] && ELEM_META[WEAK[ui.enemy.spId]] && (
               <div style={{
                 marginTop: 4, display: "inline-block",
-                background: "rgba(245,101,46,0.14)", border: "1px solid rgba(245,101,46,0.4)",
-                borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 800, color: "#d9532e",
+                background: "rgba(245,101,46,0.92)",
+                borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 800, color: "#fff",
               }}>
                 💢 อ่อนแอต่อธาตุ{ELEM_META[WEAK[ui.enemy.spId]].emoji}{ELEM_META[WEAK[ui.enemy.spId]].name}
               </div>
