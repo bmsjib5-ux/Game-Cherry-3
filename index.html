@@ -16415,7 +16415,7 @@ function CherryAdventure() {
         G.banim = {
           type: "ult",
           t: 0,
-          dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? altUlt ? 4.6 : 3.8 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 4.2 : G.cls === "coder" ? 4.4 : 2.4,
+          dur: G.cls === "warrior" ? 3.5 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? altUlt ? 4.6 : 3.8 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 4.5 : G.cls === "assassin" ? 4.0 : G.cls === "office" ? 4.2 : G.cls === "coder" ? 6.0 : 2.4,
           hits: 0,
           total: 0,
           altUlt
@@ -21878,7 +21878,7 @@ function CherryAdventure() {
               const roll = () => (effAtk() + Math.random() * 4) * ultMul;
               // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
               // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
-              const CAST_SEC = cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" ? 0 : 1.0;
+              const CAST_SEC = cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" ? 0 : 1.0;
               const castP = CAST_SEC > 0 ? Math.min(1, A.t / CAST_SEC) : 1;
               const casting = A.t < CAST_SEC;
               // remap post-cast progress so attack motions play at normal speed
@@ -22783,241 +22783,136 @@ function CherryAdventure() {
                 // fade lightning bolts each frame
                 DS.bolts.forEach(b => { if (b.visible) { b.material.opacity = Math.max(0, b.material.opacity - dt * 5); if (b.material.opacity <= 0.02) b.visible = false; } });
               } else if (cls === "coder") {
-                // 💻🔮 REALITY REWRITE — compile a new world; the old one dissolves into pixels
-                const cyan = 0x2ad0e8,
-                  green = 0x2ae84a,
-                  aiBlue = 0x6ac0ff,
-                  white = 0xdff6ff;
-                char.position.x = battleCenter.x - 1.3;
-                char.rotation.y = Math.PI / 2;
-                // ─── Phase 1 (0 → 0.22): furious typing, circuit magic circle, code spirals ───
-                if (p < 0.22) {
-                  const dp = p / 0.22;
-                  armR.rotation.x = -1.15 + Math.abs(Math.sin(t * 34)) * 0.24;
-                  armL.rotation.x = -1.15 + Math.abs(Math.sin(t * 34 + 1.1)) * 0.24;
-                  armR.rotation.z = 0.3;
-                  armL.rotation.z = -0.3;
-                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x081420), 0.06); // the world dims
-                  magicCircle.visible = true;
-                  magicCircle.position.set(char.position.x, 0.08, char.position.z);
-                  magicCircle.rotation.x = Math.PI / 2;
-                  magicCircle.scale.setScalar(1 + dp * 2.4);
-                  magicCircle.userData.stars.forEach((st, si) => {
-                    st.rotation.z = t * (2 + si * 2) * (si % 2 ? -1 : 1);
-                    st.children.forEach(c => {
-                      c.material.opacity = Math.min(1, dp * 1.6);
-                      c.material.color.setHex(si === 1 ? green : cyan);
-                    });
-                  });
-                  if (Math.random() < 0.95) {
-                    const a = t * 6 + Math.random() * 6.28,
-                      r = 1.1 * (1 - dp) + 0.2;
-                    burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.2 + dp * 2.4, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? green : cyan, 0.32);
+                // 💻🔮 REALITY REWRITE — scan, debug, then recompile the enemy out of existence
+                const grn = 0x38f08a, cyanC = 0x2fe0ff, purp = 0x9a6aff, redE = 0xff5a5a, white = 0xffffff;
+                const EP = em.position;
+                if (!A.rr) {
+                  A.rr = { fx: new THREE.Group(), windows: [], cubes: [], lasers: [], teleT: 0, teleI: 0, struck: 0 };
+                  scene.add(A.rr.fx);
+                  // holographic code windows
+                  for (let i = 0; i < 5; i++) {
+                    const w = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.9), new THREE.MeshBasicMaterial({ color: i % 2 ? cyanC : grn, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+                    const frame = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.03, 6, 4), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    frame.rotation.z = Math.PI / 4; frame.scale.set(1.15, 0.8, 1);
+                    w.add(frame); w.visible = false; A.rr.fx.add(w); A.rr.windows.push(w);
                   }
-                  G._ultCamOrbit = dp * 0.5;
+                  // orbiting code cubes
+                  for (let i = 0; i < 8; i++) {
+                    const cu = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), new THREE.MeshBasicMaterial({ color: [grn, cyanC, purp][i % 3], transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    cu.userData.ph = i / 8 * Math.PI * 2; A.rr.fx.add(cu); A.rr.cubes.push(cu);
+                  }
+                  // vertical delete lasers (reused)
+                  for (let i = 0; i < 6; i++) {
+                    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.02, 8, 8), new THREE.MeshBasicMaterial({ color: cyanC, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    l.visible = false; A.rr.fx.add(l); A.rr.lasers.push(l);
+                  }
+                  // scan ring
+                  const scan = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.06, 8, 40), new THREE.MeshBasicMaterial({ color: redE, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  scan.rotation.x = Math.PI / 2; scan.visible = false; A.rr.fx.add(scan); A.rr.scan = scan;
+                  // giant compile gate (finale screen)
+                  const gate = new THREE.Group();
+                  const scr = new THREE.Mesh(new THREE.PlaneGeometry(5, 6), new THREE.MeshBasicMaterial({ color: grn, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+                  const brd = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.12, 8, 4), new THREE.MeshBasicMaterial({ color: cyanC, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  brd.rotation.z = Math.PI / 4; brd.scale.set(1.05, 0.9, 1);
+                  gate.add(scr); gate.add(brd); gate.visible = false; A.rr.fx.add(gate); A.rr.gate = gate; A.rr.scr = scr; A.rr.brd = brd;
+                  if (G.sfx && G.sfx.charge) G.sfx.charge();
                 }
-                // ─── Phase 2 (0.22 → 0.44): holo windows + AI cubes boot up around the field ───
-                else if (p < 0.44) {
-                  const dp = (p - 0.22) / 0.22;
-                  armR.rotation.x = -1.3;
-                  armL.rotation.x = -1.3;
-                  if (!A.win) {
-                    A.win = [];
-                    for (let k = 0; k < 8; k++) {
-                      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.4), new THREE.MeshBasicMaterial({
-                        color: cyan,
-                        transparent: true,
-                        opacity: 0.3,
-                        side: THREE.DoubleSide
-                      }));
-                      const e2 = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.42), new THREE.MeshBasicMaterial({
-                        color: 0x8ae0ff,
-                        wireframe: true,
-                        transparent: true,
-                        opacity: 0.8,
-                        side: THREE.DoubleSide
-                      }));
-                      w.add(e2);
-                      w.userData = {
-                        a: k / 8 * Math.PI * 2,
-                        y: 0.7 + k % 4 * 0.6,
-                        pop: k * 0.05
-                      };
-                      scene.add(w);
-                      A.win.push(w);
-                    }
-                    A.cubes = [];
-                    for (let k = 0; k < 4; k++) {
-                      const cb = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.26), new THREE.MeshStandardMaterial({
-                        color: aiBlue,
-                        emissive: 0x2a80d0,
-                        emissiveIntensity: 1.2,
-                        transparent: true,
-                        opacity: 0.8
-                      }));
-                      const cg = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), new THREE.MeshBasicMaterial({
-                        color: 0x8ae0ff,
-                        wireframe: true
-                      }));
-                      cb.add(cg);
-                      cb.userData = {
-                        a: k / 4 * Math.PI * 2
-                      };
-                      scene.add(cb);
-                      A.cubes.push(cb);
-                    }
-                  }
-                  A.win.forEach(w => {
-                    const lp = Math.max(0, Math.min(1, (dp - w.userData.pop) / 0.3));
-                    w.visible = lp > 0;
-                    const a = w.userData.a + t * 0.9;
-                    w.position.set(em.position.x + Math.cos(a) * 2.1, w.userData.y, em.position.z + Math.sin(a) * 2.1);
-                    w.lookAt(camera.position);
-                    w.scale.setScalar(lp);
-                  });
-                  A.cubes.forEach(cb => {
-                    cb.visible = true;
-                    const a = cb.userData.a + t * 2;
-                    cb.position.set(char.position.x + Math.cos(a) * 1.1, 1.3 + Math.sin(a * 2) * 0.3, battleCenter.z + Math.sin(a) * 1.1);
-                    cb.rotation.set(t * 1.4, t * 1.8, 0);
-                  });
-                  if (Math.random() < 0.8) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 4, Math.random() * 3, em.position.z + (Math.random() - 0.5) * 3), green, 0.3);
+                const RR = A.rr;
+                char.position.x = battleCenter.x - 1.3; char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2;
+                // typing pose
+                armR.rotation.x = -1.2; armL.rotation.x = -1.2; armR.rotation.z = 0.2; armL.rotation.z = -0.2;
+                const hub = new THREE.Vector3(char.position.x + 0.5, 1.9, char.position.z);
+                const zap = (from, to, col, w) => { const l = RR.lasers[RR.teleI % RR.lasers.length]; RR.teleI++; const mid = from.clone().lerp(to, 0.5); const len = from.distanceTo(to); l.visible = true; l.position.copy(mid); l.scale.set((w || 1), Math.max(0.1, len / 8), (w || 1)); l.material.color.setHex(col); l.material.opacity = 1; l.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize()); };
+                // ============ PHASE 1 — BOOT / CHARGE (p 0 → 0.18) ============
+                if (p < 0.18) {
+                  const cp = p / 0.18; G._ultCamOrbit = cp * 0.3;
+                  magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.06, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + cp * 1.5);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.5 + si) * (si % 2 ? -1 : 1); st.children.forEach(c => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? grn : cyanC); }); });
+                  RR.windows.forEach((w, i) => { w.visible = true; const a = i / RR.windows.length * Math.PI * 2 + t * 0.5; w.position.set(char.position.x + Math.cos(a) * 1.7, 1.4 + Math.sin(a * 1.5) * 0.6, char.position.z + Math.sin(a) * 1.7); w.lookAt(char.position.x, w.position.y, char.position.z); w.material.opacity = cp * 0.7; w.children[0].material.opacity = cp; });
+                  if (Math.random() < 0.8) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 3, 0, char.position.z + (Math.random() - 0.5) * 3), grn, 0.2 + Math.random() * 3);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x08140e), 0.05);
+                  G._camShake = 0.05 + cp * 0.06;
+                }
+                // ============ PHASE 2 — SCAN / DEBUG (p 0.18 → 0.36) ============
+                else if (p < 0.36) {
+                  const cp = (p - 0.18) / 0.18; G._ultCamOrbit = 0.3 + cp * 0.3;
+                  RR.windows.forEach((w, i) => { const a = i / RR.windows.length * Math.PI * 2 + t * 0.8; w.position.set(char.position.x + Math.cos(a) * 1.6, 1.5 + Math.sin(a * 1.5) * 0.6, char.position.z + Math.sin(a) * 1.6); w.lookAt(char.position.x, w.position.y, char.position.z); w.material.opacity = 0.7; w.children[0].material.opacity = 1; });
+                  // wireframe scan sweeps down over the enemy
+                  RR.scan.visible = true; RR.scan.position.set(EP.x, 0.2 + (1 - (cp % 0.5) / 0.5) * 2.6, EP.z); RR.scan.scale.setScalar(0.9); RR.scan.material.opacity = 0.9;
+                  RR.cubes.forEach((cu, i) => { cu.visible = true; const a = cu.userData.ph + t * 2.4; cu.position.set(EP.x + Math.cos(a) * 1.5, 1.2 + Math.sin(a * 1.3) * 0.9, EP.z + Math.sin(a) * 1.5); cu.rotation.set(t * 2, t * 3, 0); cu.material.opacity = cp; });
+                  if (Math.random() < 0.5) burst(EP.clone(), redE, 0.6 + Math.random() * 1.8); // error markers
+                  if (em.userData.body) em.position.x = EP.x + Math.sin(t * 50) * 0.04; // glitch jitter
+                  monGlow(em, 0x114422, 0.4);
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x06100b), 0.06);
                   G._camShake = 0.1;
-                  G._ultCamOrbit = 0.5 + dp * 0.4;
                 }
-                // ─── Phase 3 (0.44 → 0.68): COMPILING… progress bar climbs to 100% ───
-                else if (p < 0.68) {
-                  const dp = (p - 0.44) / 0.24;
-                  armR.rotation.x = -1.15 + Math.abs(Math.sin(t * 40)) * 0.2;
-                  armL.rotation.x = -1.15 + Math.abs(Math.sin(t * 40 + 1)) * 0.2;
-                  if (!A.bar) {
-                    A.bar = new THREE.Group();
-                    const track = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.2), new THREE.MeshBasicMaterial({
-                      color: 0x0a2030,
-                      transparent: true,
-                      opacity: 0.85,
-                      side: THREE.DoubleSide
-                    }));
-                    const fill = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.2), new THREE.MeshBasicMaterial({
-                      color: green,
-                      side: THREE.DoubleSide
-                    }));
-                    fill.position.z = 0.004;
-                    const edge = new THREE.Mesh(new THREE.PlaneGeometry(2.66, 0.26), new THREE.MeshBasicMaterial({
-                      color: 0x8ae0ff,
-                      wireframe: true,
-                      side: THREE.DoubleSide
-                    }));
-                    A.bar.add(track, fill, edge);
-                    A.barFill = fill;
-                    scene.add(A.bar);
-                  }
-                  A.bar.visible = true;
-                  A.bar.position.set(em.position.x, 3.3, em.position.z);
-                  A.bar.lookAt(camera.position);
-                  A.barFill.scale.x = Math.max(0.001, dp);
-                  A.barFill.position.x = -1.3 * (1 - dp); // fill grows from the left
-                  if (A.win) A.win.forEach(w => {
-                    const a = w.userData.a + t * 2.2;
-                    w.position.set(em.position.x + Math.cos(a) * (2.1 - dp * 0.9), w.userData.y, em.position.z + Math.sin(a) * (2.1 - dp * 0.9));
-                    w.lookAt(camera.position);
-                  });
-                  if (A.cubes) A.cubes.forEach(cb => {
-                    const a = cb.userData.a + t * 4;
-                    cb.position.set(em.position.x + Math.cos(a) * 1.5, 1.3 + Math.sin(a * 2) * 0.4, em.position.z + Math.sin(a) * 1.5);
-                    cb.rotation.set(t * 3, t * 3.4, 0);
-                  });
-                  if (Math.random() < 0.9) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 3, Math.random() * 3, em.position.z + (Math.random() - 0.5) * 2.5), Math.random() < 0.5 ? green : cyan, 0.3);
-                  G._camShake = 0.1 + dp * 0.2;
-                  G._ultCamOrbit = 0;
+                // ============ PHASE 3 — CONSOLE OPEN (p 0.36 → 0.5) ============
+                else if (p < 0.5) {
+                  const cp = (p - 0.36) / 0.14; G._ultCamOrbit = 0.6;
+                  RR.scan.material.opacity = Math.max(0, 0.9 - cp);
+                  // windows converge toward a console hub above the enemy
+                  RR.windows.forEach((w, i) => { const from = new THREE.Vector3(char.position.x + Math.cos(i) * 1.6, 1.5, char.position.z + Math.sin(i) * 1.6); w.position.copy(from.lerp(new THREE.Vector3(EP.x, 2.6, EP.z), cp)); w.lookAt(char.position.x, w.position.y, char.position.z); w.material.opacity = 0.8; });
+                  RR.cubes.forEach((cu, i) => { const a = cu.userData.ph + t * 3; cu.position.set(EP.x + Math.cos(a) * (1.5 - cp * 0.6), 1.6 + Math.sin(a * 1.3) * 0.7, EP.z + Math.sin(a) * (1.5 - cp * 0.6)); cu.material.opacity = 1; cu.rotation.set(t * 3, t * 4, 0); });
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(EP.x, 0, EP.z), cyanC, 2.6);
+                  G._camShake = 0.12;
                 }
-                // ─── Phase 4 (0.68 → 0.88): 100% — the world recompiles, enemy dissolves to pixels ───
-                else if (p < 0.88) {
-                  const dp = (p - 0.68) / 0.2;
-                  armR.rotation.x = -1.3 + dp * 0.8;
-                  armL.rotation.x = -1.3 + dp * 0.8;
-                  if (A.barFill) A.barFill.scale.x = 1;
-                  if (A.barFill) A.barFill.position.x = 0;
-                  if (A.bar && dp > 0.3) A.bar.visible = false;
-                  if (!A.rewrite) {
-                    A.rewrite = true;
-                    if (G.sfx) {
-                      G.sfx.crit && G.sfx.crit();
-                      G.sfx.boom && G.sfx.boom();
-                    }
-                    G._camShake = 0.9;
-                    spawnSkillFx("quake", em.position, cyan);
-                    applyHit(roll() * 3.6, cyan, " 💻🔮 เขียนความจริงใหม่!!");
-                    A.pierce = true; // ignore defense
-                    G.est.frozen = true; // system frozen
-                    G.est.confused = (G.est.confused || 0) + 3; // logic corrupted
-                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 6);
-                    if (em.userData.body) em.userData._stagger = 0.9;
-                    // 🟦 blue digital explosion
-                    for (let k = 0; k < 26; k++) setTimeout(() => burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 4.2, 0.3 + Math.random() * 3.2, em.position.z + (Math.random() - 0.5) * 4.2), k % 3 === 0 ? white : k % 3 === 1 ? cyan : green, 1 + Math.random() * 0.7), k * 15);
+                // ============ PHASE 4 — EXECUTE / rm -rf (p 0.5 → 0.72) ============
+                else if (p < 0.72) {
+                  const cp = (p - 0.5) / 0.22; G._ultCamOrbit = 0.6 - cp * 0.3;
+                  RR.windows.forEach(w => { w.position.lerp(new THREE.Vector3(EP.x, 3, EP.z), 0.05); w.material.opacity = 0.7; });
+                  RR.cubes.forEach((cu, i) => { const a = cu.userData.ph + t * 4; cu.position.set(EP.x + Math.cos(a) * 1.3, 1.6 + Math.sin(a * 1.3) * 0.7, EP.z + Math.sin(a) * 1.3); });
+                  RR.teleT += dt;
+                  if (RR.teleT > 0.12) {
+                    RR.teleT = 0;
+                    const ox = (Math.random() - 0.5) * 1.2, oz = (Math.random() - 0.5) * 1.2;
+                    zap(new THREE.Vector3(EP.x + ox, 8, EP.z + oz), new THREE.Vector3(EP.x + ox, 0.1, EP.z + oz), RR.struck % 2 ? cyanC : grn, 1.2);
+                    burst(new THREE.Vector3(EP.x + ox, 0, EP.z + oz), RR.struck % 2 ? grn : cyanC, 0.4 + Math.random() * 1.6); // pixel shatter
+                    if (RR.struck < 9) applyHit(roll() * 0.42, RR.struck % 2 ? grn : cyanC, " 💻 ลบข้อมูล!");
+                    monGlow(em, 0x115533, 0.7); setTimeout(() => monGlow(em, 0x000000, null), 90);
+                    RR.struck++; G._camShake = Math.max(G._camShake || 0, 0.28);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
                   }
-                  // ✨ enemy dissolves into glowing pixels
-                  if (em.userData.body) {
-                    em.userData.body.traverse(o => {
-                      if (o.isMesh && o.material && o.material.transparent !== undefined) {
-                        o.material.transparent = true;
-                        o.material.opacity = Math.max(0.25, 1 - dp * 0.75);
-                      }
-                    });
-                    em.position.y = Math.sin(dp * Math.PI) * 0.6;
-                  }
-                  for (let k = 0; k < 3; k++) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 1.6, 0.3 + Math.random() * 1.8, em.position.z + (Math.random() - 0.5) * 1.6), Math.random() < 0.5 ? cyan : white, 0.4);
-                  if (A.win) A.win.forEach(w => {
-                    w.material.opacity = Math.max(0, 0.3 * (1 - dp * 1.5));
-                    w.scale.setScalar(Math.max(0.01, 1 - dp));
-                  });
-                  if (A.cubes) A.cubes.forEach(cb => {
-                    cb.scale.setScalar(Math.max(0.01, 1 - dp * 1.4));
-                    cb.rotation.set(t * 6, t * 7, 0);
-                  });
-                  magicCircle.visible = true;
-                  magicCircle.position.set(em.position.x, 0.12, em.position.z);
-                  magicCircle.scale.setScalar(3 + dp * 6);
-                  magicCircle.userData.stars.forEach(st => st.children.forEach(c => {
-                    c.material.opacity = Math.max(0, 1 - dp);
-                    c.material.color.setHex(cyan);
-                  }));
+                  if (em.userData.body) em.position.x = EP.x + Math.sin(t * 45) * 0.05;
+                  G._camShake = Math.max(G._camShake || 0, 0.16);
                 }
-                // ─── Phase 5 (0.88 → 1): the new world settles, the enemy re-renders ───
+                // ============ PHASE 5 — COMPILE REALITY (p 0.72 → 0.9) ============
+                else if (p < 0.9) {
+                  const cp = (p - 0.72) / 0.18; G._ultCamOrbit = 0;
+                  if (em.userData.body) em.position.x = EP.x;
+                  RR.cubes.forEach(cu => cu.material.opacity = Math.max(0, cu.material.opacity - dt * 2));
+                  RR.windows.forEach(w => w.material.opacity = Math.max(0, w.material.opacity - dt * 2));
+                  // giant compile gate rises behind the enemy
+                  RR.gate.visible = true; RR.gate.position.set(EP.x, 3.2, EP.z - 0.5); RR.gate.lookAt(char.position.x, 3.2, char.position.z);
+                  RR.gate.scale.setScalar(0.3 + cp * 1.0); RR.scr.material.opacity = Math.min(0.55, cp * 0.8); RR.brd.material.opacity = Math.min(1, cp * 1.4); RR.brd.rotation.z += dt * 1.5;
+                  if (Math.random() < 0.9) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), [grn, cyanC, purp][Math.floor(Math.random() * 3)], 0.3 + Math.random() * 3); // enemy dissolving into pixels
+                  // enemy dissolves (fade body)
+                  if (em.userData.body) em.userData.body.traverse(o => { if (o.isMesh && o.material) { o.material.transparent = true; o.material.opacity = Math.max(0.15, 1 - cp * 0.85); } });
+                  G._camShake = 0.2 + cp * 0.3;
+                  if (cp > 0.7 && !A.rrBoom) {
+                    A.rrBoom = true;
+                    if (G.sfx) { G.sfx.crit && G.sfx.crit(); G.sfx.boom && G.sfx.boom(); }
+                    G._camShake = 1.0;
+                    applyHit(roll() * 2.9, purp, " 🔮💥 คอมไพล์ใหม่!");
+                    G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); G.est.frozen = true; G.est.confused = 3;
+                    for (let k = 0; k < 20; k++) setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4, 0, EP.z + (Math.random() - 0.5) * 4), [grn, cyanC, purp, white][k % 4], 0.2 + Math.random() * 3.2), k * 22);
+                  }
+                  G._camShake = Math.max(G._camShake || 0, 0.2);
+                }
+                // ============ PHASE 6 — AFTERMATH (p 0.9 → 1) ============
                 else {
-                  const dp = (p - 0.88) / 0.12;
-                  armR.rotation.x = -0.5 + dp * 0.5;
-                  armL.rotation.x = -0.5 + dp * 0.5;
-                  armR.rotation.z = 0.3 - dp * 0.18;
-                  armL.rotation.z = -0.3 + dp * 0.18;
-                  if (em.userData.body) {
-                    em.userData.body.traverse(o => {
-                      if (o.isMesh && o.material) o.material.opacity = 0.25 + dp * 0.75;
-                    });
-                    em.position.y = Math.max(0, 0.6 * (1 - dp));
-                  }
-                  if (Math.random() < 0.5) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.5, Math.random() * 2, em.position.z + (Math.random() - 0.5) * 2), green, 0.3);
+                  const cp = (p - 0.9) / 0.1; G._ultCamOrbit = 0;
+                  RR.gate.visible = cp < 0.7; RR.scr.material.opacity = Math.max(0, RR.scr.material.opacity - dt * 2); RR.brd.material.opacity = Math.max(0, RR.brd.material.opacity - dt * 2);
+                  RR.windows.forEach(w => { w.material.opacity = Math.max(0, w.material.opacity - dt * 3); w.children[0].material.opacity = Math.max(0, w.children[0].material.opacity - dt * 3); });
+                  RR.cubes.forEach(cu => { cu.material.opacity = Math.max(0, cu.material.opacity - dt * 3); cu.scale.multiplyScalar(1 - dt * 1.5); });
+                  RR.scan.material.opacity = 0;
+                  // enemy reassembles
+                  if (em.userData.body) em.userData.body.traverse(o => { if (o.isMesh && o.material) o.material.opacity = Math.min(1, (o.material.opacity || 0.2) + dt * 1.5); });
+                  if (Math.random() < 0.3 * (1 - cp)) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 3, 0, EP.z + (Math.random() - 0.5) * 3), grn, Math.random() * 2.5);
                   if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.08);
+                  G._camShake = Math.max(0, 0.2 * (1 - cp));
                 }
-                // cleanup
-                if (p >= 1) {
-                  if (A.win) {
-                    A.win.forEach(w => scene.remove(w));
-                    A.win = null;
-                  }
-                  if (A.cubes) {
-                    A.cubes.forEach(c2 => scene.remove(c2));
-                    A.cubes = null;
-                  }
-                  if (A.bar) {
-                    scene.remove(A.bar);
-                    A.bar = null;
-                    A.barFill = null;
-                  }
-                  if (em.userData.body) em.userData.body.traverse(o => {
-                    if (o.isMesh && o.material) o.material.opacity = 1;
-                  });
-                }
+                // fade delete lasers each frame
+                RR.lasers.forEach(l => { if (l.visible) { l.material.opacity = Math.max(0, l.material.opacity - dt * 5); if (l.material.opacity <= 0.02) l.visible = false; } });
               } else if (cls === "office") {
                 // 💻⚡ OT OVERLOAD — documents rain, a giant laptop crashes, digital explosion
                 const blue = 0x2a7ad0,
@@ -23899,6 +23794,15 @@ function CherryAdventure() {
                     if (o.material) o.material.dispose();
                   });
                   A.ds = null;
+                }
+                // 💻🔮 Reality Rewrite cleanup — remove code windows / cubes / gate rig
+                if (A.rr) {
+                  scene.remove(A.rr.fx);
+                  A.rr.fx.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) o.material.dispose();
+                  });
+                  A.rr = null;
                 }
                 // 🔱🐉 Dragon Spear Judgment cleanup — dragon, levitating rocks, restore the spear
                 if (A.dragon) {
