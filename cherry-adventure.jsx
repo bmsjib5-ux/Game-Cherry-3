@@ -779,6 +779,27 @@ const OUTFIT_SETS = [
   { id: "nature", name: "พิทักษ์พงไพร",  emoji: "🌿", desc: "HP +8% · DEF +6",    dye: { outfit: 0x4aa04a, weapon: 0x8fd04a, pants: 0x3a7a3a, shoes: 0x6ab04a, gloves: 0x4aa04a }, bonus: { hpPct: 8, def: 6 },  aura: 0x8fe05a, unlock: { stat: "catches", val: 25 } },
 ];
 
+// ---------- 🎉 SEASONAL COSTUMES (ชุดตามเทศกาล) — cosmetic-only themed looks (no stats) ----------
+const SEASONAL_SETS = [
+  { id: "songkran",  name: "ชุดสงกรานต์",  emoji: "💦", desc: "คอสเมติกล้วน", dye: { outfit: 0x6ac0e0, weapon: 0xbfe8ff, pants: 0x4a90c0, shoes: 0xffffff, gloves: 0x9ad0ff }, bonus: {}, aura: 0x8fe0ff, seasonal: true, unlock: { stat: "wins", val: 10 } },
+  { id: "xmas",      name: "ชุดคริสต์มาส", emoji: "🎄", desc: "คอสเมติกล้วน", dye: { outfit: 0xd0402a, weapon: 0x4aa04a, pants: 0x2a5a2a, shoes: 0xffffff, gloves: 0xd0402a }, bonus: {}, aura: 0xff5a5a, seasonal: true, unlock: { stat: "bosses", val: 5 } },
+  { id: "halloween", name: "ชุดฮาโลวีน",   emoji: "🎃", desc: "คอสเมติกล้วน", dye: { outfit: 0xe08020, weapon: 0x9a4ad0, pants: 0x2a1a2a, shoes: 0x1a1a24, gloves: 0xe08020 }, bonus: {}, aura: 0xff9020, seasonal: true, unlock: { stat: "catches", val: 20 } },
+  { id: "newyear",   name: "ชุดปีใหม่",     emoji: "🎆", desc: "คอสเมติกล้วน", dye: { outfit: 0xf5c542, weapon: 0xff70b0, pants: 0x9a4ad0, shoes: 0xffe070, gloves: 0xf5c542 }, bonus: {}, aura: 0xffd24a, seasonal: true, unlock: { stat: "level", val: 20 } },
+];
+const findSet = (id) => OUTFIT_SETS.find((x) => x.id === id) || SEASONAL_SETS.find((x) => x.id === id) || null;
+
+// ---------- 🌟✨ COSMETIC AURAS (ออร่าประจำตัว) — floating ambient particles around the character ----------
+const COSMETIC_AURAS = [
+  { id: "none",    name: "ไม่มี",         emoji: "⚪", color: null,     unlock: null },
+  { id: "petals",  name: "กลีบซากุระ",    emoji: "🌸", color: 0xf6a8c0, unlock: { stat: "catches", val: 10 } },
+  { id: "sparkle", name: "ประกายดาว",     emoji: "✨", color: 0xfff070, unlock: { stat: "wins", val: 15 } },
+  { id: "ember",   name: "เพลิงริบหรี่",  emoji: "🔥", color: 0xff7020, unlock: { stat: "bosses", val: 3 } },
+  { id: "snow",    name: "เกล็ดหิมะ",     emoji: "❄️", color: 0xbfe8ff, unlock: { stat: "floor", val: 5 } },
+  { id: "hearts",  name: "หัวใจฟุ้ง",     emoji: "💗", color: 0xf06a8a, unlock: { stat: "species", val: 5 } },
+  { id: "nature",  name: "ใบไม้พลิ้ว",    emoji: "🍃", color: 0x8fd05a, unlock: { stat: "level", val: 15 } },
+  { id: "gold",    name: "ธุลีทองคำ",     emoji: "👑", color: 0xffe070, unlock: { stat: "gold", val: 8000 } },
+];
+
 // ---------- 🎀 Character customization options ----------
 const CUSTOM = {
   genders: [
@@ -826,7 +847,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 }, customTab: "gender",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
@@ -1787,7 +1808,7 @@ export default function CherryAdventure() {
     char.add(setAura);
     G.setAura = setAura; G.setRing = setRing; G.setMotes = setMotes;
     G.applySetAura = () => {
-      const s = OUTFIT_SETS.find((x) => x.id === G.activeSet);
+      const s = findSet(G.activeSet);
       const on = !!s;
       setAura.visible = on;
       if (on) { const c = s.aura || 0xffffff; setRing.material.color.setHex(c); setMotes.forEach((m) => m.material.color.setHex(c)); }
@@ -1903,6 +1924,26 @@ export default function CherryAdventure() {
     wand.add(wpGlow);
     G.wpGlow = wpGlow;
     G.wpGlowSprites = wpGlowSprites;
+    // 🌟✨ COSMETIC AURA — floating ambient particles rising around the character (color set per aura)
+    const auraFx = new THREE.Group();
+    const auraFxParts = [];
+    for (let i = 0; i < 12; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: wpGlowTex, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+      sp.scale.setScalar(0.16);
+      sp.userData = { t: i / 12, a: Math.random() * Math.PI * 2, r: 0.32 + Math.random() * 0.4, sp: 0.35 + Math.random() * 0.4 };
+      auraFx.add(sp);
+      auraFxParts.push(sp);
+    }
+    auraFx.visible = false;
+    char.add(auraFx);
+    G.auraFx = auraFx;
+    G.auraFxParts = auraFxParts;
+    G.applyCosmeticAura = () => {
+      const a = COSMETIC_AURAS.find((x) => x.id === G.activeAura);
+      const on = !!(a && a.color != null);
+      auraFx.visible = on;
+      if (on) auraFxParts.forEach((sp) => sp.material.color.setHex(a.color));
+    };
     // 🛡️ warrior phoenix shield — carried on the LEFT arm, shown only for the warrior class
     {
       const shield = new THREE.Group();
@@ -7736,6 +7777,7 @@ export default function CherryAdventure() {
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
     G.activeSet = null; // 👘 active outfit-set id
+    G.activeAura = "none"; // 🌟 cosmetic aura id
     G.tfGauge = 0; // ⚡ transformation power gauge — persists across battles until used
     G.ultAlt = false; // 👑 alternate ultimate selected?
     G.pathId = null; // 🌟 chosen class path (สายอาชีพ) — set at Lv.40
@@ -8513,16 +8555,25 @@ export default function CherryAdventure() {
       toast(id === "none" ? "🗡️ ถอดสกินอาวุธแล้ว" : `🗡️✨ ใส่สกิน ${skin.emoji} ${skin.name}!`);
       setUi((u) => ({ ...u, weaponSkin: id }));
     };
+    G.setCosmeticAura = (id) => {
+      const a = COSMETIC_AURAS.find((x) => x.id === id);
+      if (!a) return;
+      if (!G.collectUnlocked(a.unlock)) { toast(`🔒 ยังปลดไม่ได้ — ${G.unlockLabel(a.unlock)}`); return; }
+      G.activeAura = id;
+      if (G.applyCosmeticAura) G.applyCosmeticAura();
+      toast(id === "none" ? "🌟 เอาออร่าออกแล้ว" : `🌟✨ ใส่ออร่า ${a.emoji} ${a.name}!`);
+      setUi((u) => ({ ...u, activeAura: id }));
+    };
     const setBonus = () => {
       const b = { atkPct: 0, defPct: 0, def: 0, hpPct: 0, crit: 0, critDmg: 0, luck: 0, mp: 0, eva: 0 };
-      const s = OUTFIT_SETS.find((x) => x.id === G.activeSet);
+      const s = findSet(G.activeSet);
       if (!s || !s.bonus) return b;
       for (const k in s.bonus) b[k] = (b[k] || 0) + s.bonus[k];
       return b;
     };
     G.setBonus = setBonus;
     G.equipSet = (id) => {
-      const s = OUTFIT_SETS.find((x) => x.id === id);
+      const s = findSet(id);
       if (!s) return;
       if (!G.collectUnlocked(s.unlock)) { toast(`🔒 ยังปลดไม่ได้ — ${G.unlockLabel(s.unlock)}`); return; }
       G.activeSet = id;
@@ -8659,7 +8710,7 @@ export default function CherryAdventure() {
     G.toggleCollection = () => {
       const willOpen = !G.collectionOpen;
       G.collectionOpen = willOpen;
-      setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+      setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
     };
     G.unlockConst = (nodeId) => {
       if (!G.constNodes) G.constNodes = {};
@@ -9738,6 +9789,7 @@ export default function CherryAdventure() {
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
       G.activeSet = null; // 👘 fresh (no set)
+      G.activeAura = "none"; // 🌟 fresh (no aura)
       G.tfGauge = 0; // ⚡ fresh power gauge
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
@@ -9805,7 +9857,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -10020,10 +10072,12 @@ export default function CherryAdventure() {
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
+      G.activeAura = d.activeAura || "none";
       G.ultAlt = !!d.ultAlt;
       G.pathId = d.pathId || null;
       if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
       if (G.applySetAura) G.applySetAura(); // 👘 restore the outfit-set aura on load
+      if (G.applyCosmeticAura) G.applyCosmeticAura(); // 🌟 restore the cosmetic aura on load
       G.titleId = d.titleId || "t_none";
       G.titleId = d.titleId || "t_none";
       G.rolls = d.rolls || {}; G.sockets = d.sockets || {}; G.gems = d.gems || {};
@@ -10296,6 +10350,18 @@ export default function CherryAdventure() {
         const sp = 0.5 + Math.abs(Math.sin(t * 2.3)) * 0.4;
         setRing.rotation.z = t * 1.4; setRing.material.opacity = sp * 0.6;
         setMotes.forEach((m) => { const a = m.userData.ph + t * 1.3; m.position.set(Math.cos(a) * 0.64, 0.1 + Math.abs(Math.sin(a * 2 + t * 2.5)) * 0.55, Math.sin(a) * 0.64); m.material.opacity = sp * 0.85; });
+      }
+      // 🌟✨ cosmetic aura — particles rise, orbit gently, fade in near the feet and out near the head
+      if (auraFx.visible) {
+        auraFxParts.forEach((p) => {
+          const u = p.userData;
+          u.t += dt * u.sp * 0.4;
+          if (u.t > 1) u.t -= 1;
+          const y = u.t * 2.6;
+          const ang = u.a + t * 0.8;
+          p.position.set(Math.cos(ang) * u.r, y, Math.sin(ang) * u.r);
+          p.material.opacity = Math.sin(u.t * Math.PI) * 0.85;
+        });
       }
       // ⚡ transformation (ร่างพลัง) aura — blazing rising flames + spinning ground rings while the super-form is active
       if (tfAura.visible || tfAura.userData.fade) {
@@ -17799,7 +17865,39 @@ export default function CherryAdventure() {
                   </div>
                 );
               })}
-              <div style={{ fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" }}>สวมเซ็ต = ลุคธีม + บัฟ + ออร่า · สกินอาวุธเป็นแค่ความสวยงาม (ไม่มีสเตตัส)</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a04a80", margin: "4px 0 5px" }}>🎉 ชุดตามเทศกาล (คอสเมติกล้วน)</div>
+              {SEASONAL_SETS.map((s) => {
+                const unlocked = G.collectUnlocked ? G.collectUnlocked(s.unlock) : true;
+                const on = ui.activeSet === s.id;
+                const c = `#${(s.aura || 0xffffff).toString(16).padStart(6, "0")}`;
+                return (
+                  <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, background: on ? "#fdeef6" : "#faf5f8", borderRadius: 10, padding: "7px 9px", border: on ? "1.5px solid #d06ab0" : `1px solid ${c}55`, opacity: unlocked ? 1 : 0.65 }}>
+                    <div style={{ fontSize: 22 }}>{unlocked ? s.emoji : "🔒"}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#8a4a70" }}>{s.name}{on ? " ✓" : ""}</div>
+                      <div style={{ fontSize: 9.5, color: "#b07a9a" }}>{unlocked ? s.desc : `🔒 ${G.unlockLabel(s.unlock)}`}</div>
+                    </div>
+                    <button onClick={() => (on ? G.removeSet() : unlocked ? G.equipSet(s.id) : G.toast(`🔒 ${G.unlockLabel(s.unlock)}`))} disabled={!unlocked} style={{ border: "none", borderRadius: 8, padding: "6px 10px", cursor: unlocked ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: on ? "#b0aca4" : unlocked ? "#d06ab0" : "#e0d0da" }}>{on ? "ถอด" : "สวม"}</button>
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a04a80", margin: "4px 0 5px" }}>🌟 ออร่าประจำตัว (อนุภาครอบตัว)</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 }}>
+                {COSMETIC_AURAS.map((a) => {
+                  const unlocked = G.collectUnlocked ? G.collectUnlocked(a.unlock) : true;
+                  const on = (ui.activeAura || "none") === a.id;
+                  const cc = a.color != null ? `#${a.color.toString(16).padStart(6, "0")}` : "#cccccc";
+                  return (
+                    <button key={a.id} onClick={() => (unlocked ? G.setCosmeticAura(a.id) : G.toast(`🔒 ${G.unlockLabel(a.unlock)}`))} style={{ position: "relative", width: 80, padding: "6px 4px", borderRadius: 10, cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800, textAlign: "center", border: on ? "2px solid #d06ab0" : `2px solid ${cc}55`, background: on ? "#fff" : "#faf0f6", color: unlocked ? "#8a4a70" : "#b0a0aa", opacity: unlocked ? 1 : 0.6 }}>
+                      <div style={{ fontSize: 18 }}>{unlocked ? a.emoji : "🔒"}</div>
+                      <div>{a.name}</div>
+                      {!unlocked && <div style={{ fontSize: 8, color: "#c07a4a" }}>{G.unlockLabel(a.unlock)}</div>}
+                      {a.color != null && <div style={{ height: 3, borderRadius: 2, marginTop: 3, background: cc }} />}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" }}>ชุดเทศกาล/ออร่า = คอสเมติกล้วน · เซ็ตบัฟด้านบนให้สเตตัสเพิ่ม</div>
             </div>
           )}
 
