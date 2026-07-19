@@ -7606,6 +7606,7 @@ export default function CherryAdventure() {
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
+    G.tfGauge = 0; // ⚡ transformation power gauge — persists across battles until used
     G.ultAlt = false; // 👑 alternate ultimate selected?
     G.pathId = null; // 🌟 chosen class path (สายอาชีพ) — set at Lv.40
     G.titleId = "t_none"; // 🏅 equipped title (bonus applies only while it stays unlocked)
@@ -8734,10 +8735,12 @@ export default function CherryAdventure() {
       G.battleCritDmg = 0; // 💥 crit damage buff
       G.regen = 0; // ✨ Holy Healing regeneration turns
       G.ultUsed = false; // 🌟 one ultimate per battle
-      // ⚡ TRANSFORMATION MODE — fresh power gauge every battle (✨ constellation can pre-charge it)
+      // ⚡ TRANSFORMATION MODE — the power gauge PERSISTS across battles; it only empties when you transform.
+      // Constellation "tfStart" acts as a minimum floor when entering a fight.
       G.tfActive = false;
       G.tfTurns = 0;
-      G.tfGauge = Math.min(100, (G.constBonus ? G.constBonus().tfStart : 0) || 0);
+      G.tfGauge = Math.min(100, Math.max(G.tfGauge || 0, (G.constBonus ? G.constBonus().tfStart : 0) || 0));
+      G._tfAnnounced = G.tfGauge >= 100; // don't re-toast if it's already full
       if (G.tfAura) { G.tfAura.visible = false; G.tfAura.userData.fade = false; G.tfAura.userData.fadeT = 0; }
       // 🔍 keep the player's last battle zoom (loaded from storage) instead of resetting
       // stage positions
@@ -8828,13 +8831,13 @@ export default function CherryAdventure() {
       }
       G.enemy = null;
       G.banim = null;
-      // ⚡ end any active transformation when the battle ends
-      G.tfActive = false; G.tfTurns = 0; G.tfGauge = 0; G._tfAnnounced = false;
+      // ⚡ the transformation form ends with the battle, but the power gauge PERSISTS (accumulates until used)
+      G.tfActive = false; G.tfTurns = 0;
       if (G.tfAura) { G.tfAura.visible = false; G.tfAura.userData.fade = false; G.tfAura.userData.fadeT = 0; }
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
       setMouth("smile");
-      setUi((u) => ({ ...u, mode: "explore", enemy: null, tfActive: false, tfGauge: 0, tfReady: false, msg: "" }));
+      setUi((u) => ({ ...u, mode: "explore", enemy: null, tfActive: false, tfGauge: Math.round(G.tfGauge || 0), tfReady: (G.tfGauge || 0) >= 100, msg: "" }));
       setTimeout(() => saveGame(), 50); // 💾 save after every battle
       // ♾️ endless mode: heal a little and roll into the next wave
       if (G.endlessMode) {
@@ -9472,6 +9475,7 @@ export default function CherryAdventure() {
       G.treeNodes = {}; // 🌳 fresh passive skill tree
       G.constNodes = {}; // ✨ fresh constellation board
       G.stardust = 0; // ✨ fresh star dust
+      G.tfGauge = 0; // ⚡ fresh power gauge
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
       G.ultAlt = false;
@@ -9537,7 +9541,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -9789,6 +9793,7 @@ export default function CherryAdventure() {
       G.storyChapter = d.storyChapter || 0;
       G.pvpRank = d.pvpRank || 1000;
       G.pid = d.pid || null;
+      G.tfGauge = d.tfGauge || 0; // ⚡ restore the accumulated power gauge
       if (G.ensurePid) G.ensurePid(); // 🪪 make sure this save has a stable online id
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
