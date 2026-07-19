@@ -4828,23 +4828,39 @@ export default function CherryAdventure() {
     }
 
     // apply hat/mask/gloves/pants/shoes visuals from G.equip
+    // 🎨 cache of dye-tinted material clones so shared base materials are never mutated
+    const dyeCache = {};
+    const dyedMat = (baseMat, hex) => {
+      const key = baseMat.uuid + "_" + hex;
+      if (!dyeCache[key]) { const m = baseMat.clone(); m.color = new THREE.Color(hex); dyeCache[key] = m; }
+      return dyeCache[key];
+    };
     const applyGear = () => {
       const eq = G.equip || {};
-      Object.entries(hatModels).forEach(([k, m]) => (m.visible = k === eq.hat));
-      Object.entries(maskModels).forEach(([k, m]) => (m.visible = k === eq.mask));
+      const cos = G.costume || {};
+      const dye = G.dye || {};
+      const look = (s) => cos[s] || eq[s]; // 👗 transmog: a costume override changes the LOOK, stats stay from eq
+      Object.entries(hatModels).forEach(([k, m]) => (m.visible = k === look("hat")));
+      Object.entries(maskModels).forEach(([k, m]) => (m.visible = k === look("mask")));
+      const gl = look("gloves");
       handMeshes.forEach((h) => {
-        if (eq.gloves === "g1") { h.material = gloveFluffMat; h.scale.setScalar(1.18); }
-        else if (eq.gloves === "g2") { h.material = gloveBoxMat; h.scale.setScalar(1.4); }
-        else if (eq.gloves === "gS") { h.material = gloveStormMat; h.scale.setScalar(1.3); }
-        else if (eq.gloves === "gD") { h.material = gloveDragonMat; h.scale.setScalar(1.5); }
-        else { h.material = skinMat; h.scale.setScalar(1); }
+        let gmat, sc;
+        if (gl === "g1") { gmat = gloveFluffMat; sc = 1.18; }
+        else if (gl === "g2") { gmat = gloveBoxMat; sc = 1.4; }
+        else if (gl === "gS") { gmat = gloveStormMat; sc = 1.3; }
+        else if (gl === "gD") { gmat = gloveDragonMat; sc = 1.5; }
+        else { gmat = skinMat; sc = 1; }
+        if (gl && dye.gloves) gmat = dyedMat(gmat, dye.gloves); // 🎨 dye covers gloves, not bare skin
+        h.material = gmat; h.scale.setScalar(sc);
       });
-      pantsMat.color.setHex(
-        eq.pants === "p1" ? 0x5a7ab0 : eq.pants === "p2" ? 0x44445a : eq.pants === "pD" ? 0x5a1f1a : basePantsColor
-      );
-      pantsMat.metalness = eq.pants === "p2" || eq.pants === "pD" ? 0.55 : 0;
+      const pa = look("pants");
+      pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x5a1f1a : basePantsColor);
+      pantsMat.metalness = pa === "p2" || pa === "pD" ? 0.55 : 0;
+      const sh = look("shoes");
       shoeMeshes.forEach((s) => {
-        s.material = eq.shoes === "s1" ? shoePinkMat : eq.shoes === "s2" ? shoeBoltMat : eq.shoes === "sD" ? shoeDragonMat : whiteMat;
+        let smat = sh === "s1" ? shoePinkMat : sh === "s2" ? shoeBoltMat : sh === "sD" ? shoeDragonMat : whiteMat;
+        if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
+        s.material = smat;
       });
       updateAura();
     };
@@ -7633,8 +7649,9 @@ export default function CherryAdventure() {
     G.rolls = {};    // 🎲 itemId -> { p: prefix, m: multiplier }
     G.sockets = {};  // 💎 itemId -> [gemId|null, ...]
     G.gems = {};     // 💎 gemId -> owned count
-    G.costume = { weapon: null, outfit: null }; // 👗 appearance override
+    G.costume = { weapon: null, outfit: null }; // 👗 appearance override (transmog, all 7 slots)
     G.dye = { outfit: null, weapon: null };     // 🎨 colour override
+    G.wardrobePresets = [];                      // 👗 saved full-look presets
     G.mats = {}; // ⛏️ crafting materials
     G.weaponInfuse = {}; // 🔮 weaponId -> element
     G.potions = 1; // 🧪 start with one
@@ -8334,22 +8351,49 @@ export default function CherryAdventure() {
       toast(`${GEMS[g].emoji} ถอด ${GEMS[g].name} คืนแล้ว`);
       syncPlayer();
     };
-    // 👗 fashion
-    G.setCostume = (slot, id) => {
-      G.costume = G.costume || { weapon: null, outfit: null };
-      G.costume[slot] = id;
+    // 👗 fashion / wardrobe (transmog + dye, all 7 slots)
+    const refreshLook = (slot) => {
       if (slot === "weapon") G.setWeaponVisual(G.equip.weapon);
-      else G.setOutfitVisual(G.equip.outfit);
-      toast(id ? `👗 เปลี่ยนรูปลักษณ์แล้ว` : `👗 กลับไปใช้ของที่สวมจริง`);
+      else if (slot === "outfit") G.setOutfitVisual(G.equip.outfit);
+      else applyGear();
+    };
+    G.setCostume = (slot, id) => {
+      G.costume = G.costume || {};
+      G.costume[slot] = id;
+      refreshLook(slot);
+      toast(id ? `👗 เปลี่ยนรูปลักษณ์${SLOT_NAMES[slot] || ""}แล้ว` : `👗 กลับไปใช้ของที่สวมจริง`);
       syncPlayer();
     };
     G.setDye = (slot, hex) => {
-      G.dye = G.dye || { outfit: null, weapon: null };
+      G.dye = G.dye || {};
       G.dye[slot] = hex;
-      if (slot === "weapon") G.setWeaponVisual(G.equip.weapon);
-      else applyGear();
-      toast(hex ? "🎨 ย้อมสีแล้ว!" : "🎨 ล้างสีย้อม");
+      refreshLook(slot);
+      toast(hex != null ? "🎨 ย้อมสีแล้ว!" : "🎨 ล้างสีย้อม");
       syncPlayer();
+    };
+    // 👗 WARDROBE PRESETS — save/apply/delete a whole look (all costume + dye slots)
+    G.saveWardrobe = () => {
+      G.wardrobePresets = G.wardrobePresets || [];
+      if (G.wardrobePresets.length >= 8) { toast("👗 ตู้เสื้อผ้าเต็มแล้ว (สูงสุด 8 ลุค) — ลบลุคเก่าก่อน"); return; }
+      G.wardrobePresets.push({ name: `ลุค ${G.wardrobePresets.length + 1}`, costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) } });
+      toast("💾 บันทึกลุคปัจจุบันแล้ว!");
+      setUi((u) => ({ ...u, wardrobePresets: G.wardrobePresets.map((p) => ({ ...p })) }));
+    };
+    G.applyWardrobe = (i) => {
+      const p = (G.wardrobePresets || [])[i];
+      if (!p) return;
+      G.costume = { ...(p.costume || {}) };
+      G.dye = { ...(p.dye || {}) };
+      SLOTS.forEach((s) => refreshLook(s));
+      toast(`👗 สวมลุค "${p.name}" แล้ว!`);
+      setUi((u) => ({ ...u, costume: { ...G.costume }, dye: { ...G.dye } }));
+      syncPlayer();
+    };
+    G.delWardrobe = (i) => {
+      if (!G.wardrobePresets) return;
+      G.wardrobePresets.splice(i, 1);
+      toast("🗑️ ลบลุคแล้ว");
+      setUi((u) => ({ ...u, wardrobePresets: G.wardrobePresets.map((p) => ({ ...p })) }));
     };
     // 🌟 choose a class path at Lv.40 — permanent, so confirm-gate it in the UI
     // 🌟 apply the chosen path's look — a persistent glowing aura tinted to the evolution
@@ -9546,6 +9590,7 @@ export default function CherryAdventure() {
       G.rolls = {}; G.sockets = {}; G.gems = {};
       G.costume = { weapon: null, outfit: null };
       G.dye = { outfit: null, weapon: null };
+      G.wardrobePresets = [];
       G.mats = {};
       G.weaponInfuse = {};
       G.potions = 1;
@@ -9608,7 +9653,7 @@ export default function CherryAdventure() {
           titleId: G.titleId || "t_none", // 🏅 equipped title
           titleId: G.titleId || "t_none", // 🏅 equipped title
           rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
-          costume: G.costume || null, dye: G.dye || null, // 👗 fashion
+          costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], // 👗 fashion
           pos: { x: char.position.x, z: char.position.z },
         }));
       } catch (e) { /* storage unavailable — keep playing without saves */ }
@@ -9823,6 +9868,7 @@ export default function CherryAdventure() {
       G.rolls = d.rolls || {}; G.sockets = d.sockets || {}; G.gems = d.gems || {};
       G.costume = d.costume || { weapon: null, outfit: null };
       G.dye = d.dye || { outfit: null, weapon: null };
+      G.wardrobePresets = d.wardrobePresets || [];
       // 🎲 back-fill rolls for gear owned before this system existed
       G.inv.forEach((iid) => { const it = LOOT.find((x) => x.id === iid); if (it && !it.starter && !G.rolls[iid]) G.rolls[iid] = rollQuality(); });
       G.potions = d.potions == null ? 1 : d.potions;
@@ -17649,9 +17695,9 @@ export default function CherryAdventure() {
               {ui.fashionOpen && (
                 <div style={{ background: "#fdf2f8", borderRadius: 12, padding: "9px 10px", marginBottom: 9, border: "1px solid #f0d0e4" }}>
                   <div style={{ fontSize: 9.5, color: "#a3789a", marginBottom: 7 }}>
-                    เปลี่ยนเฉพาะ<b>รูปลักษณ์</b> — ค่าสถานะยังมาจากของที่สวมจริง ✨
+                    เปลี่ยนเฉพาะ<b>รูปลักษณ์</b> — ค่าสถานะยังมาจากของที่สวมจริง ✨ (ครบทั้ง 7 ช่อง)
                   </div>
-                  {["weapon", "outfit"].map((slot) => {
+                  {SLOTS.map((slot) => {
                     const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot; });
                     const cur = (ui.costume || {})[slot];
                     return (
@@ -17681,7 +17727,7 @@ export default function CherryAdventure() {
                     );
                   })}
                   {/* 🎨 dye */}
-                  {["outfit", "weapon"].map((slot) => (
+                  {["weapon", "outfit", "pants", "shoes", "gloves"].map((slot) => (
                     <div key={slot} style={{ marginBottom: 6 }}>
                       <div style={{ fontSize: 11, fontWeight: 800, color: "#a04a80", marginBottom: 4 }}>
                         🎨 ย้อมสี{SLOT_NAMES[slot]}
@@ -17702,6 +17748,22 @@ export default function CherryAdventure() {
                       </div>
                     </div>
                   ))}
+                  {/* 👗 wardrobe presets */}
+                  <div style={{ marginTop: 8, borderTop: "1px dashed #f0d0e4", paddingTop: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#a04a80", marginBottom: 5 }}>👗 ตู้เสื้อผ้า (บันทึกลุคไว้สลับใช้)</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
+                      <button onClick={() => G.saveWardrobe()} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", background: "#d06ab0" }}>💾 บันทึกลุคนี้</button>
+                      {(ui.wardrobePresets || []).map((p, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 2, background: "#fff", borderRadius: 999, border: "1px solid #f0d0e4", padding: "2px 3px 2px 8px" }}>
+                          <button onClick={() => G.applyWardrobe(i)} style={{ border: "none", background: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#a04a80" }}>👗 {p.name}</button>
+                          <button onClick={() => G.delWardrobe(i)} style={{ border: "none", background: "#f4e8f0", borderRadius: "50%", width: 16, height: 16, cursor: "pointer", fontSize: 9, color: "#c05a8a", padding: 0 }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                    {(!ui.wardrobePresets || ui.wardrobePresets.length === 0) && (
+                      <div style={{ fontSize: 9, color: "#c0a0b4", marginTop: 4 }}>ผสมลุคด้านบนแล้วกด 💾 เพื่อบันทึกไว้สลับใช้ทีหลัง</div>
+                    )}
+                  </div>
                 </div>
               )}
               {/* 📂 category tabs: รวม + แยกประเภท */}
