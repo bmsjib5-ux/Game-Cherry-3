@@ -8223,7 +8223,7 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, gold: G.gold }));
+      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, gold: G.gold }));
       syncPlayer();
     };
     G.closeEquip = () => {
@@ -15732,11 +15732,14 @@ export default function CherryAdventure() {
       // camera
       if (G.mode === "create" || G.mode === "class") {
         // centered turntable, zoomable with pinch/wheel/buttons (camDist)
-        const cd = Math.max(2.6, Math.min(7, camDist * 0.5));
+        // 🧍 equip screen pulls the camera back so the whole body is visible
+        const cd = G.equipOpen ? 8.6 : Math.max(2.6, Math.min(7, camDist * 0.5));
+        const camY = G.equipOpen ? 1.5 : 1.55 + cd * 0.18;
+        const lookY = G.equipOpen ? 0.95 : 1.35;
         camera.position.x += (0 - camera.position.x) * 0.08;
-        camera.position.y += (1.55 + cd * 0.18 - camera.position.y) * 0.08;
+        camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (cd - camera.position.z) * 0.08;
-        camera.lookAt(0, 1.35, 0);
+        camera.lookAt(0, lookY, 0);
       } else if (G.mode === "battle" || G.mode === "fainted") {
         const cx = battleCenter.x, cz = battleCenter.z;
         const big = G.enemy && G.enemy.boss;
@@ -18050,7 +18053,7 @@ export default function CherryAdventure() {
               const it = id ? LOOT.find((x) => x.id === id) : null;
               const col = it ? RARITY[it.rarity].color : "#4a5a4a";
               return (
-                <div key={slot} onClick={() => setUi((u) => ({ ...u, invCat: slot, invSel: null }))}
+                <div key={slot} onClick={() => setUi((u) => ({ ...u, invCat: slot, invSel: null, equipPage: 0 }))}
                   style={{ position: "relative", width: 54, height: 54, borderRadius: 10, marginBottom: 10, cursor: "pointer", background: it ? `linear-gradient(135deg, ${col}33, #232a24)` : "rgba(35,42,36,0.85)", border: `2px solid ${it ? col : "#3a463a"}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
                   <span style={{ fontSize: it ? 26 : 22, opacity: it ? 1 : 0.35 }}>{it ? it.emoji : SLOT_ICON[slot]}</span>
                   {!it && <span style={{ position: "absolute", bottom: 2, fontSize: 7, color: "#8a9a8a", fontWeight: 700 }}>{SLOT_NAMES[slot]}</span>}
@@ -18063,7 +18066,17 @@ export default function CherryAdventure() {
                 {slots.map(slotCell)}
               </div>
             );
-            const ids = [...new Set(ui.inv || [])].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && (ui.invCat === "all" || !ui.invCat || it.slot === ui.invCat); });
+            const allIds = [...new Set(ui.inv || [])].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && (ui.invCat === "all" || !ui.invCat || it.slot === ui.invCat); });
+            const eqSort = ui.equipSort || "none";
+            const qkey = (id) => { const it = LOOT.find((x) => x.id === id); return (TIER[it.rarity] || 1) * 100 + ((ui.plus || {})[id] || 0); };
+            const sortedIds = eqSort === "qual" ? [...allIds].sort((a, b) => qkey(b) - qkey(a)) : eqSort === "qualAsc" ? [...allIds].sort((a, b) => qkey(a) - qkey(b)) : allIds;
+            const PER = 30;
+            const totalPages = Math.max(1, Math.ceil(sortedIds.length / PER));
+            const page = Math.min(Math.max(0, ui.equipPage || 0), totalPages - 1);
+            const ids = sortedIds.slice(page * PER, page * PER + PER);
+            const showPots = (ui.invCat === "all" || !ui.invCat) && page === 0;
+            const sortLabel = eqSort === "qual" ? "คุณภาพ ↓" : eqSort === "qualAsc" ? "คุณภาพ ↑" : "เรียง";
+            const nextSort = eqSort === "none" ? "qual" : eqSort === "qual" ? "qualAsc" : "none";
             const itemTile = (id) => {
               const it = LOOT.find((x) => x.id === id);
               const count = (ui.inv || []).filter((x) => x === id).length;
@@ -18087,7 +18100,7 @@ export default function CherryAdventure() {
               </button>
             );
             const catChip = (ck, label) => (
-              <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null }))} style={{ padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: (ui.invCat || "all") === ck ? "#c9a24a" : "rgba(255,255,255,0.08)", color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0" }}>{label}</button>
+              <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 }))} style={{ padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: (ui.invCat || "all") === ck ? "#c9a24a" : "rgba(255,255,255,0.08)", color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0" }}>{label}</button>
             );
             return (
               <div key="eqscr" style={{ position: "absolute", inset: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
@@ -18109,19 +18122,29 @@ export default function CherryAdventure() {
                   {cellsCol(RIGHT)}
                 </div>
                 <div style={{ pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", maxHeight: "44vh", display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 }}>
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
+                    <button key="eqsort" onClick={() => setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 }))} style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>⇅ {sortLabel}</button>
                   </div>
                   <div style={{ overflowY: "auto", flex: 1 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5 }}>
-                      {[...(ui.invCat === "all" || !ui.invCat ? [potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp"), potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp")] : []), ...ids.map(itemTile)]}
+                      {[...(showPots ? [potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp"), potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp")] : []), ...ids.map(itemTile)]}
                     </div>
-                    {ids.length === 0 && ui.invCat && ui.invCat !== "all" && (
-                      <div style={{ fontSize: 11, color: "#8a9a8a", textAlign: "center", padding: "10px 0" }}>{`ยังไม่มี${SLOT_NAMES[ui.invCat] || "ไอเทม"} — สู้เพื่อลุ้นดรอป!`}</div>
+                    {ids.length === 0 && !showPots && (
+                      <div style={{ fontSize: 11, color: "#8a9a8a", textAlign: "center", padding: "10px 0" }}>{ui.invCat && ui.invCat !== "all" ? `ยังไม่มี${SLOT_NAMES[ui.invCat] || "ไอเทม"} — สู้เพื่อลุ้นดรอป!` : "กระเป๋าว่างเปล่า"}</div>
                     )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 6, color: "#f5d24a", fontSize: 13, fontWeight: 800 }}>
-                    💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginTop: 6 }}>
+                    {totalPages > 1 ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(255,255,255,0.04)" : "rgba(201,162,74,0.28)", color: "#e8dcc0", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font }}>‹</button>
+                        <span style={{ fontSize: 11.5, fontWeight: 800, color: "#d8c898", minWidth: 34, textAlign: "center" }}>{`${page + 1}/${totalPages}`}</span>
+                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.min(totalPages - 1, page + 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page >= totalPages - 1 ? "default" : "pointer", background: page >= totalPages - 1 ? "rgba(255,255,255,0.04)" : "rgba(201,162,74,0.28)", color: "#e8dcc0", fontSize: 15, fontWeight: 800, opacity: page >= totalPages - 1 ? 0.4 : 1, fontFamily: font }}>›</button>
+                      </div>
+                    ) : <span />}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#f5d24a", fontSize: 13, fontWeight: 800 }}>
+                      💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}
+                    </div>
                   </div>
                 </div>
               </div>
