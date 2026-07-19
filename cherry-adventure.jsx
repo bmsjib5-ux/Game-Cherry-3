@@ -612,6 +612,16 @@ const CRAFT_RECIPES = {
 
 // 🌳 Skill tree: each node can be leveled up (rank 1..max). Bonuses are PER RANK.
 // Conditions: reqLv = min player level, req = prerequisite node id (must have ≥1 rank).
+// ---------- 🌐 ONLINE (async multiplayer) CONFIG ----------
+// เกมนี้เล่นได้เลยแบบออฟไลน์ 100%. ถ้าต้องการระบบเพื่อน/กระดานอันดับ "ออนไลน์จริง"
+// (แชร์ข้ามเครื่อง, อัปเดตอัตโนมัติ) ให้สร้างโปรเจกต์ Supabase ฟรีแล้ววาง url + anon key ที่นี่
+// วิธีตั้งค่าแบบละเอียด (พร้อม SQL) อยู่ในไฟล์ ONLINE_SETUP.md
+// ปล่อยว่างไว้ = เกมใช้ระบบเพื่อนแบบออฟไลน์ (รหัสก็อป-วาง) เหมือนเดิม
+const ONLINE_CONFIG = {
+  url: "",      // เช่น "https://abcdefgh.supabase.co"
+  anonKey: "",  // public anon key ของโปรเจกต์ (ปลอดภัยที่จะฝังใน client)
+};
+
 const SKILL_TREE = {
   common: [
     { id: "t_hp1",   name: "พลังชีวิต",   emoji: "❤️", cost: 2, max: 5, reqLv: 1,  hp: 8,  desc: "HP สูงสุด +8%/ระดับ" },
@@ -8375,7 +8385,9 @@ export default function CherryAdventure() {
     G.toggleSocial = () => {
       const willOpen = !G.socialOpen;
       G.socialOpen = willOpen;
-      setUi((u) => ({ ...u, socialOpen: willOpen, friends: G.readFriends(), myCode: willOpen ? G.makeFriendCode() : null, pvpRank: G.pvpRank || 1000, endlessBest: G.endlessBest || 0, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, homeOpen: false }));
+      if (willOpen && G.ensurePid) G.ensurePid();
+      if (willOpen && G.publishProfile) G.publishProfile(true); // 🌐 push latest stats when opening
+      setUi((u) => ({ ...u, socialOpen: willOpen, friends: G.readFriends(), myCode: willOpen ? G.makeFriendCode() : null, pid: G.pid || null, netEnabled: G.net ? G.net.enabled() : false, netStatus: G.net ? G.net.status : "off", pvpRank: G.pvpRank || 1000, endlessBest: G.endlessBest || 0, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, constOpen: false, homeOpen: false }));
     };
     G.toggleTree = () => {
       const willOpen = !G.treeOpen;
@@ -9460,6 +9472,8 @@ export default function CherryAdventure() {
       G.treeNodes = {}; // 🌳 fresh passive skill tree
       G.constNodes = {}; // ✨ fresh constellation board
       G.stardust = 0; // ✨ fresh star dust
+      G.pid = null;
+      if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
       G.ultAlt = false;
       G.pathId = null; // 🌟 fresh character has no path yet
       G.titleId = "t_none";
@@ -9523,7 +9537,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -9533,8 +9547,91 @@ export default function CherryAdventure() {
           pos: { x: char.position.x, z: char.position.z },
         }));
       } catch (e) { /* storage unavailable — keep playing without saves */ }
+      // 🌐 push my latest profile to the cloud (throttled, no-op when offline)
+      if (G.publishProfile) G.publishProfile();
     };
     G.saveGame = saveGame;
+    // ---------- 🌐 ONLINE (async) — a real shared backend via Supabase REST ----------
+    const CN = {
+      cfg: ONLINE_CONFIG,
+      status: "off", // off | ok | error
+      enabled() { return !!(this.cfg && this.cfg.url && this.cfg.anonKey); },
+      _url(path) { return this.cfg.url.replace(/\/+$/, "") + "/rest/v1/" + path; },
+      _headers(extra) {
+        return Object.assign({ apikey: this.cfg.anonKey, Authorization: "Bearer " + this.cfg.anonKey, "Content-Type": "application/json" }, extra || {});
+      },
+      async publish(profile) {
+        if (!this.enabled() || !profile || !profile.pid) return false;
+        try {
+          const res = await fetch(this._url("players"), { method: "POST", headers: this._headers({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify(profile) });
+          this.status = res.ok ? "ok" : "error";
+          return res.ok;
+        } catch (e) { this.status = "error"; return false; }
+      },
+      async getPlayer(pid) {
+        if (!this.enabled() || !pid) return null;
+        try {
+          const res = await fetch(this._url(`players?pid=eq.${encodeURIComponent(pid)}&select=*`), { headers: this._headers() });
+          if (!res.ok) { this.status = "error"; return null; }
+          this.status = "ok";
+          const rows = await res.json();
+          return (rows && rows[0]) || null;
+        } catch (e) { this.status = "error"; return null; }
+      },
+      async leaderboard(limit) {
+        if (!this.enabled()) return null;
+        try {
+          const res = await fetch(this._url(`players?select=pid,n,c,lv,atk,def,hp,crit,rank,ng&order=lv.desc,rank.desc&limit=${limit || 20}`), { headers: this._headers() });
+          if (!res.ok) { this.status = "error"; return null; }
+          this.status = "ok";
+          return await res.json();
+        } catch (e) { this.status = "error"; return null; }
+      },
+    };
+    G.net = CN;
+    // 🪪 stable per-player id (used as the cloud row key + shareable friend id)
+    const genPid = () => "CH" + Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
+    G.ensurePid = () => { if (!G.pid) G.pid = genPid(); return G.pid; };
+    G.cloudProfile = () => ({
+      pid: G.ensurePid(),
+      n: (G.playerName || "เชอร์รี่").slice(0, 12),
+      c: G.cls,
+      lv: G.player ? G.player.level : 1,
+      atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()),
+      w: G.equip.weapon || null, cu: G.custom || {}, ng: G.ngPlus || 0, rank: G.pvpRank || 1000, ts: Date.now(),
+    });
+    G.publishProfile = (force) => {
+      if (!CN.enabled() || !G.player || !G.cls) return;
+      const now = Date.now();
+      if (!force && G._lastPub && now - G._lastPub < 20000) return;
+      G._lastPub = now;
+      CN.publish(G.cloudProfile()).then((ok) => { if (ok) setUi((u) => ({ ...u, netStatus: "ok" })); });
+    };
+    G.addFriendOnline = async (pid) => {
+      pid = (pid || "").trim();
+      if (!pid) { toast("ใส่ ID เพื่อนก่อนนะ"); return; }
+      if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าออนไลน์ (ดู ONLINE_SETUP.md)"); return; }
+      if (pid === G.pid) { toast("นั่นคือ ID ของคุณเอง 😅"); return; }
+      toast("🔍 กำลังค้นหาเพื่อน...");
+      const row = await CN.getPlayer(pid);
+      if (!row) { toast("❌ ไม่พบผู้เล่น ID นี้ — ตรวจสอบแล้วลองใหม่"); setUi((u) => ({ ...u, netStatus: CN.status })); return; }
+      let list = G.readFriends();
+      list = list.filter((f) => f.pid !== row.pid && !(f.n === row.n && f.c === row.c));
+      list.push({ pid: row.pid, n: row.n, c: row.c, lv: row.lv, atk: row.atk, def: row.def, hp: row.hp, crit: row.crit, w: row.w, cu: row.cu, ng: row.ng, online: true });
+      list.sort((a, b) => b.lv - a.lv || b.atk - a.atk);
+      list = list.slice(0, 20);
+      try { window.localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); } catch (e) {}
+      toast(`🤝 เพิ่มเพื่อนออนไลน์ "${row.n}" (Lv.${row.lv}) แล้ว!`);
+      setUi((u) => ({ ...u, friends: list, netStatus: "ok" }));
+    };
+    G.loadGlobalBoard = async () => {
+      if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าออนไลน์ (ดู ONLINE_SETUP.md)"); return; }
+      toast("🌐 กำลังโหลดกระดานอันดับโลก...");
+      const rows = await CN.leaderboard(20);
+      if (!rows) { toast("❌ โหลดไม่สำเร็จ ลองใหม่อีกครั้ง"); setUi((u) => ({ ...u, netStatus: CN.status })); return; }
+      setUi((u) => ({ ...u, globalBoard: rows, netStatus: "ok" }));
+      toast(`🏆 โหลดอันดับโลก ${rows.length} คน`);
+    };
     // ---------- 👥 SOCIAL: friend codes, ghost battles, local leaderboard ----------
     // encode the player's battle profile into a compact shareable code
     G.makeFriendCode = () => {
@@ -9590,12 +9687,19 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, friends: list }));
     };
     // ⚔️ battle a friend's GHOST — a mirror-match against their profile stats
-    G.fightGhost = (friend) => {
+    // 🌐 for online friends (has pid), pull their LATEST stats first so the ghost is always current
+    G.fightGhost = async (friend) => {
       if (!friend) return;
-      G.pendingGhost = friend; // consumed by the battle starter
+      let f = friend;
+      if (friend.pid && CN.enabled()) {
+        toast("🌐 ดึงพลังล่าสุดของเพื่อน...");
+        const row = await CN.getPlayer(friend.pid);
+        if (row) f = Object.assign({}, friend, row);
+      }
+      G.pendingGhost = f; // consumed by the battle starter
       G.socialOpen = false;
       // build a "ghost enemy" from the friend's profile and start a special battle
-      startGhostBattle(friend);
+      startGhostBattle(f);
       setUi((u) => ({ ...u, socialOpen: false }));
     };
     const loadSave = (i) => {
@@ -9684,6 +9788,8 @@ export default function CherryAdventure() {
       G.ngPlus = d.ngPlus || 0;
       G.storyChapter = d.storyChapter || 0;
       G.pvpRank = d.pvpRank || 1000;
+      G.pid = d.pid || null;
+      if (G.ensurePid) G.ensurePid(); // 🪪 make sure this save has a stable online id
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
       if (d.buddy && G.pets[d.buddy]) G.setBuddy(d.buddy);
@@ -16872,6 +16978,52 @@ export default function CherryAdventure() {
                       <div style={{ fontSize: 13, fontWeight: 800, color: tier.color }}>{tier.name}</div>
                       <div style={{ fontSize: 10.5, color: "#8a7aa0" }}>อันดับ PvP: <b>{rank}</b></div>
                     </div>
+                  </div>
+                );
+              })()}
+
+              {/* 🌐 online (async multiplayer) */}
+              {(() => {
+                const enabled = ui.netEnabled;
+                const st = ui.netStatus || "off";
+                const stColor = st === "ok" ? "#3a9a5a" : st === "error" ? "#c04a4a" : "#8a8a8a";
+                const stText = !enabled ? "ยังไม่ได้ตั้งค่า" : st === "ok" ? "เชื่อมต่อแล้ว" : st === "error" ? "เชื่อมต่อไม่ได้" : "พร้อม";
+                return (
+                  <div style={{ background: "linear-gradient(135deg,#eef4ff,#e4ecfb)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #b8ccf0" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#3a6ac0" }}>🌐 ออนไลน์ (เล่นกับเพื่อนจริง)</div>
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: stColor, background: "#fff", borderRadius: 999, padding: "1px 8px" }}>● {stText}</div>
+                    </div>
+                    {!enabled ? (
+                      <div style={{ fontSize: 9.5, color: "#7a86a0", lineHeight: 1.5 }}>ยังเป็นโหมดออฟไลน์ — ตั้งค่า Supabase ใน ONLINE_CONFIG (ดูไฟล์ ONLINE_SETUP.md) เพื่อเปิดระบบเพื่อน/กระดานอันดับข้ามเครื่องแบบออนไลน์จริง</div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 9.5, color: "#6a7a9a", marginBottom: 3 }}>🪪 ID ของฉัน (ส่งให้เพื่อนเพื่อเพิ่มเป็นเพื่อน):</div>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+                          <div style={{ flex: 1, fontSize: 13, fontWeight: 800, fontFamily: "monospace", color: "#3a6ac0", background: "#fff", borderRadius: 8, padding: "5px 8px", letterSpacing: 1 }}>{ui.pid || "..."}</div>
+                          <button onClick={() => { try { if (navigator.clipboard && ui.pid) { navigator.clipboard.writeText(ui.pid); G.toast("📋 คัดลอก ID แล้ว! ส่งให้เพื่อนได้เลย"); } } catch (e) {} }} style={{ border: "none", borderRadius: 8, padding: "0 10px", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "#4a7ad0" }}>คัดลอก</button>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+                          <input id="onlineIdInput" placeholder="ใส่ ID เพื่อน (เช่น CH...)" style={{ flex: 1, fontSize: 12, fontFamily: "monospace", borderRadius: 8, border: "1px solid #c8d4ee", padding: "6px 8px", outline: "none" }} />
+                          <button onClick={() => { const el = document.getElementById("onlineIdInput"); const v = el && el.value; if (v) { G.addFriendOnline(v); if (el) el.value = ""; } }} style={{ border: "none", borderRadius: 8, padding: "0 12px", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>➕ เพิ่ม</button>
+                        </div>
+                        <button onClick={() => G.loadGlobalBoard()} style={{ width: "100%", padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#4a7ad0,#7a5ad0)" }}>🏆 โหลดกระดานอันดับโลก</button>
+                        {ui.globalBoard && ui.globalBoard.length > 0 && (
+                          <div style={{ marginTop: 6 }}>
+                            {ui.globalBoard.map((p, i) => (
+                              <div key={p.pid || i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #eef" }}>
+                                <b style={{ width: 22, color: i === 0 ? "#e0a020" : i === 1 ? "#9aa0b0" : i === 2 ? "#c08050" : "#8a8a9a" }}>#{i + 1}</b>
+                                <span style={{ flex: 1, fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</span>
+                                <span style={{ color: "#8a7aa0" }}>Lv.{p.lv}</span>
+                                {p.pid && p.pid !== ui.pid && (
+                                  <button onClick={() => G.addFriendOnline(p.pid)} style={{ border: "none", borderRadius: 6, padding: "2px 7px", cursor: "pointer", fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>+</button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })()}
