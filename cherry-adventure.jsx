@@ -630,6 +630,90 @@ const SKILL_TREE = {
   samurai:  { id: "t_samurai", name: "วิถีซามูไร", emoji: "⚔️", cost: 4, max: 3, reqLv: 8, req: "t_atk1", atk: 5, hp: 8, crit: 6, desc: "โจมตี+5 คริ+6% HP+8% /ระดับ" },
 };
 
+// ---------- ✨ CONSTELLATION BOARD (กระดานพรสวรรค์) — a Genshin-style per-class star board ----------
+// Each class has its own 6-star constellation, unlocked in order with ✨ ผงดาว (Star Dust).
+// Each star grants a permanent passive; the C6 capstone is a class signature effect.
+const CONSTELLATION = (() => {
+  const COSTS = [4, 6, 9, 13, 18, 26];
+  const FIELDS = ["atk", "atkPct", "def", "defPct", "hpPct", "crit", "critDmg", "luck", "mp", "eva", "tfStart", "tfTurns"];
+  const raw = {
+    warrior: { name: "ปราการอมตะ", star: 0xffb060, emoji: "🛡️", nodes: [
+      { n: "แกร่งดั่งภูผา", e: "🪨", d: "DEF +6", def: 6 },
+      { n: "เกราะเลือด", e: "❤️", d: "HP สูงสุด +8%", hpPct: 8 },
+      { n: "ใจนักสู้", e: "🔥", d: "เริ่มศึกด้วยเกจพลัง +20%", tfStart: 20 },
+      { n: "โล่ศักดิ์สิทธิ์", e: "✨", d: "DEF +8% · คริ +4%", defPct: 8, crit: 4 },
+      { n: "พลังไม่สิ้น", e: "💪", d: "ATK +12 · HP +8%", atk: 12, hpPct: 8 },
+      { n: "วีรบุรุษอมตะ", e: "👑", d: "DEF +12% · ร่างพลังนานขึ้น +1 เทิร์น", defPct: 12, tfTurns: 1 },
+    ] },
+    archer: { name: "ตากรัดดารา", star: 0x8fe0a0, emoji: "🏹", nodes: [
+      { n: "สายตาเหยี่ยว", e: "🎯", d: "คริ +5%", crit: 5 },
+      { n: "ลูกธนูคม", e: "🏹", d: "ATK +8", atk: 8 },
+      { n: "จุดตาย", e: "💥", d: "ดาเมจคริ +20%", critDmg: 20 },
+      { n: "เล็งแม่น", e: "👁️", d: "คริ +6% · หลบ +4%", crit: 6, eva: 4 },
+      { n: "ยิงต่อเนื่อง", e: "🌪️", d: "ATK +8%", atkPct: 8 },
+      { n: "ธนูดวงดาว", e: "🌌", d: "คริ +10% · ดาเมจคริ +25%", crit: 10, critDmg: 25 },
+    ] },
+    mage: { name: "ห้วงเวทดารา", star: 0xb08ae8, emoji: "🔮", nodes: [
+      { n: "บ่อมานา", e: "💧", d: "มานาสูงสุด +10", mp: 10 },
+      { n: "พลังเวท", e: "🔮", d: "ATK +10", atk: 10 },
+      { n: "ไหลเวียนเวท", e: "✨", d: "มานา +8 · คริ +4%", mp: 8, crit: 4 },
+      { n: "คาถาต้องห้าม", e: "🌟", d: "ATK +10%", atkPct: 10 },
+      { n: "เกราะเวท", e: "❤️", d: "HP +8% · มานา +8", hpPct: 8, mp: 8 },
+      { n: "ปราชญ์จักรวาล", e: "🌌", d: "ATK +12% · เริ่มศึกด้วยเกจพลัง +20%", atkPct: 12, tfStart: 20 },
+    ] },
+    assassin: { name: "เงาสังหาร", star: 0x9a7ae0, emoji: "🗡️", nodes: [
+      { n: "ว่องไว", e: "💨", d: "หลบ +5%", eva: 5 },
+      { n: "คมมีด", e: "🗡️", d: "ATK +8", atk: 8 },
+      { n: "จุดอ่อน", e: "🎯", d: "คริ +6%", crit: 6 },
+      { n: "เงาลวง", e: "🌑", d: "หลบ +6% · ดาเมจคริ +15%", eva: 6, critDmg: 15 },
+      { n: "ฉับพลัน", e: "⚡", d: "ATK +8% · คริ +4%", atkPct: 8, crit: 4 },
+      { n: "องค์ราชันเงา", e: "🌌", d: "คริ +10% · หลบ +6% · ร่างพลังนาน +1 เทิร์น", crit: 10, eva: 6, tfTurns: 1 },
+    ] },
+    lancer: { name: "หอกสวรรค์", star: 0x6ac0e0, emoji: "🔱", nodes: [
+      { n: "ด้ามแกร่ง", e: "🔱", d: "ATK +8", atk: 8 },
+      { n: "กายทรหด", e: "❤️", d: "HP +8%", hpPct: 8 },
+      { n: "พลังทะลวง", e: "💪", d: "ATK +10 · DEF +4", atk: 10, def: 4 },
+      { n: "ใจฮึกเหิม", e: "🔥", d: "เริ่มศึกด้วยเกจพลัง +15%", tfStart: 15 },
+      { n: "แทงทะลุ", e: "⚔️", d: "ATK +8% · คริ +4%", atkPct: 8, crit: 4 },
+      { n: "เทพแห่งหอก", e: "🌌", d: "ATK +12% · HP +10%", atkPct: 12, hpPct: 10 },
+    ] },
+    samurai: { name: "วิถีดาบดารา", star: 0xf58aa0, emoji: "⚔️", nodes: [
+      { n: "คมกล้า", e: "⚔️", d: "ATK +8", atk: 8 },
+      { n: "จิตนิ่ง", e: "🎯", d: "คริ +5%", crit: 5 },
+      { n: "ดาบเดียวจอด", e: "💥", d: "ดาเมจคริ +20%", critDmg: 20 },
+      { n: "วิถีนักดาบ", e: "🌸", d: "ATK +8%", atkPct: 8 },
+      { n: "เฉือนคม", e: "🩸", d: "คริ +6% · ATK +6", crit: 6, atk: 6 },
+      { n: "ราชันดาบ", e: "🌌", d: "คริ +10% · ดาเมจคริ +25% · ร่างพลังนาน +1 เทิร์น", crit: 10, critDmg: 25, tfTurns: 1 },
+    ] },
+    coder: { name: "เมทริกซ์ดารา", star: 0x6ad0c0, emoji: "💻", nodes: [
+      { n: "ฟังก์ชันโชค", e: "🍀", d: "โชค +8", luck: 8 },
+      { n: "อัลกอริทึม", e: "💻", d: "ATK +8", atk: 8 },
+      { n: "ปรับแต่ง", e: "⚙️", d: "คริ +5% · โชค +5", crit: 5, luck: 5 },
+      { n: "ล่าบั๊ก", e: "🐛", d: "ATK +8%", atkPct: 8 },
+      { n: "โอเวอร์คล็อก", e: "🔋", d: "มานา +8 · คริ +4%", mp: 8, crit: 4 },
+      { n: "เทพเจ้าโค้ด", e: "🌌", d: "ATK +10% · โชค +10 · เริ่มศึกด้วยเกจพลัง +15%", atkPct: 10, luck: 10, tfStart: 15 },
+    ] },
+    office: { name: "โต๊ะทำงานดารา", star: 0xf5c060, emoji: "☕", nodes: [
+      { n: "คาเฟอีน", e: "☕", d: "มานา +10", mp: 10 },
+      { n: "วางแผน", e: "📊", d: "DEF +6", def: 6 },
+      { n: "โบนัส", e: "🍀", d: "โชค +8", luck: 8 },
+      { n: "ทำโอที", e: "💼", d: "ATK +8% · มานา +6", atkPct: 8, mp: 6 },
+      { n: "ประกันกลุ่ม", e: "🛡️", d: "HP +8% · DEF +6", hpPct: 8, def: 6 },
+      { n: "ซีอีโอจักรวาล", e: "🌌", d: "ATK +8% · โชค +10 · ร่างพลังนาน +1 เทิร์น", atkPct: 8, luck: 10, tfTurns: 1 },
+    ] },
+  };
+  const out = {};
+  Object.keys(raw).forEach((cls) => {
+    const c = raw[cls];
+    out[cls] = { name: c.name, star: c.star, emoji: c.emoji, nodes: c.nodes.map((nd, i) => {
+      const node = { id: `c_${cls}_${i + 1}`, name: nd.n, emoji: nd.e, desc: nd.d, cost: COSTS[i], req: i > 0 ? `c_${cls}_${i}` : null };
+      FIELDS.forEach((f) => { node[f] = nd[f] || 0; });
+      return node;
+    }) };
+  });
+  return out;
+})();
+
 // ---------- 🎀 Character customization options ----------
 const CUSTOM = {
   genders: [
@@ -677,7 +761,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 }, customTab: "gender",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, forgeOpen: false, treeOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, forgeOpen: false, treeOpen: false, constOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
@@ -7510,6 +7594,8 @@ export default function CherryAdventure() {
     G.equip = EMPTY_EQUIP();
     G.plus = {}; // itemId -> enhancement level (+1..+5)
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
+    G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
+    G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
     G.ultAlt = false; // 👑 alternate ultimate selected?
     G.pathId = null; // 🌟 chosen class path (สายอาชีพ) — set at Lv.40
     G.titleId = "t_none"; // 🏅 equipped title (bonus applies only while it stays unlocked)
@@ -7644,6 +7730,16 @@ export default function CherryAdventure() {
       });
       return b;
     };
+    // ✨ constellation-board passive bonuses (กระดานพรสวรรค์) from unlocked stars
+    const constBonus = () => {
+      const b = { atk: 0, atkPct: 0, def: 0, defPct: 0, hpPct: 0, crit: 0, critDmg: 0, luck: 0, mp: 0, eva: 0, tfStart: 0, tfTurns: 0 };
+      const un = G.constNodes || {};
+      const board = CONSTELLATION[G.cls];
+      if (!board) return b;
+      board.nodes.forEach((n) => { if (un[n.id]) { for (const k in b) b[k] += n[k] || 0; } });
+      return b;
+    };
+    G.constBonus = constBonus;
     // ⚡ การตื่นพลัง: each awakening tier grants +5% to all core stats, permanently
     const awakenMul = () => 1 + (G.ngPlus || 0) * 0.05;
     // 🌟 class path multipliers (สายอาชีพ) — folded into every derived stat
@@ -7670,14 +7766,14 @@ export default function CherryAdventure() {
     // ⚡ TRANSFORMATION MODE (ร่างพลัง) — a temporary super-form that supercharges every stat while active
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
-    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk"));
-    const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def"));
-    const effMaxHp = () => Math.round((G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + treeBonus().hpPct / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
-    const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5; // 🔮 mage has more mana
+    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + constBonus().atkPct / 100));
+    const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + constBonus().defPct / 100));
+    const effMaxHp = () => Math.round((G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
+    const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp; // 🔮 mage has more mana + ✨ constellation
     const effSpd = () => 3.4 * (1 + equipBonus().spd / 100); // ⚡ shoes speed up walking
-    const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0); // 💨 % chance to dodge + 🌟 path
-    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit(); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform
-    const effLuck = () => bs().luck + tB("luck"); // 🍀 luck: catch % + gold % + 🏅 title
+    const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva; // 💨 % chance to dodge + 🌟 path + ✨ constellation
+    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit; // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation
+    const effLuck = () => bs().luck + tB("luck") + constBonus().luck; // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation
     const weaponElem = () => {
       const wid = G.equip.weapon;
       // ⛏️ forge infusion overrides/adds an element to the weapon
@@ -8287,6 +8383,37 @@ export default function CherryAdventure() {
       if (!G.treeNodes) G.treeNodes = {}; // 🛟 self-heal for old saves
       setUi((u) => ({ ...u, treeOpen: willOpen, treeNodes: { ...G.treeNodes }, sp: (G.player && G.player.sp) || 0, level: (G.player && G.player.level) || 1, treeCap: G.treeCap ? G.treeCap() : 1, invOpen: false, skillPanel: false, forgeOpen: false, homeOpen: false }));
     };
+    // ✨ CONSTELLATION BOARD (กระดานพรสวรรค์)
+    G.toggleConst = () => {
+      const willOpen = !G.constOpen;
+      G.constOpen = willOpen;
+      if (!G.constNodes) G.constNodes = {}; // 🛟 self-heal for old saves
+      setUi((u) => ({ ...u, constOpen: willOpen, constNodes: { ...G.constNodes }, stardust: G.stardust || 0, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+    };
+    G.unlockConst = (nodeId) => {
+      if (!G.constNodes) G.constNodes = {};
+      const board = CONSTELLATION[G.cls];
+      if (!board || !G.player) return;
+      const node = board.nodes.find((n) => n.id === nodeId);
+      if (!node) return;
+      if (G.constNodes[nodeId]) { toast(`${node.emoji} ${node.name} ปลดล็อกแล้ว ⭐`); return; }
+      if (node.req && !G.constNodes[node.req]) {
+        const pre = board.nodes.find((n) => n.id === node.req);
+        toast(`🔒 ต้องปลดล็อก "${pre ? pre.name : ""}" ก่อน`);
+        return;
+      }
+      if ((G.stardust || 0) < node.cost) { toast(`✨ ผงดาวไม่พอ — ต้องใช้ ${node.cost} (มี ${G.stardust || 0})`); return; }
+      const oldMax = effMaxHp();
+      G.stardust -= node.cost;
+      G.constNodes[nodeId] = 1;
+      const diff = effMaxHp() - oldMax;
+      if (diff > 0) G.player.hp += diff; // hpPct nodes raise current HP too
+      if (G.sfx) G.sfx.levelup();
+      if (char) burst(char.position, board.star, 1.6);
+      toast(`✨⭐ ปลดล็อก ${node.emoji} ${node.name}! (−${node.cost}✨) — ${node.desc}`);
+      setUi((u) => ({ ...u, constNodes: { ...G.constNodes }, stardust: G.stardust || 0 }));
+      syncPlayer(); // re-sync boosted stats
+    };
     G.rankSkill = (skillId) => {
       // 🔒 can't rank a skill that isn't unlocked yet
       const slot = skillsOf(G.cls, G.pathId).findIndex((s) => s.id === skillId);
@@ -8594,10 +8721,10 @@ export default function CherryAdventure() {
       G.battleCritDmg = 0; // 💥 crit damage buff
       G.regen = 0; // ✨ Holy Healing regeneration turns
       G.ultUsed = false; // 🌟 one ultimate per battle
-      // ⚡ TRANSFORMATION MODE — fresh power gauge every battle
+      // ⚡ TRANSFORMATION MODE — fresh power gauge every battle (✨ constellation can pre-charge it)
       G.tfActive = false;
       G.tfTurns = 0;
-      G.tfGauge = 0;
+      G.tfGauge = Math.min(100, (G.constBonus ? G.constBonus().tfStart : 0) || 0);
       if (G.tfAura) { G.tfAura.visible = false; G.tfAura.userData.fade = false; G.tfAura.userData.fadeT = 0; }
       // 🔍 keep the player's last battle zoom (loaded from storage) instead of resetting
       // stage positions
@@ -8650,7 +8777,7 @@ export default function CherryAdventure() {
       }
       setMouth("smile");
       setUi((u) => ({
-        ...u, mode: "battle", bstate: "choose", ultUsed: false, tfGauge: 0, tfActive: false, tfTurns: 0, tfReady: false,
+        ...u, mode: "battle", bstate: "choose", ultUsed: false, tfGauge: Math.round(G.tfGauge || 0), tfActive: false, tfTurns: 0, tfReady: (G.tfGauge || 0) >= 100,
         enemy: { name: sp.name, emoji: sp.emoji, hp: G.enemy.hp, maxHp: G.enemy.maxHp, lv, boss, desc: sp.desc, spId: G.enemy.spId, shiny },
         msg: ghost ? `👻 ผีราตรี Lv.${lv} ลอยเข้าหา... หนาวเยือกไปทั้งตัว!!`
           : golden ? `🌟 จับมอนสเตอร์ทองให้ได้!! (จับติดง่ายมาก)`
@@ -8814,6 +8941,13 @@ export default function CherryAdventure() {
         }
         toast("⛏️ ได้วัตถุดิบคราฟต์!");
       }
+      // ✨ STAR DUST — currency for the constellation board; bosses/golden/ghost give much more
+      {
+        const dust = (wasBoss ? 6 : isGhost || isGolden ? 4 : 1) + Math.floor(Math.random() * 2) + (G.dungeon ? 1 : 0);
+        G.stardust = (G.stardust || 0) + dust;
+        toast(`✨ ได้ผงดาว +${dust} (รวม ${G.stardust})`);
+        setUi((u) => ({ ...u, stardust: G.stardust }));
+      }
       if (em.userData.ghost) ghostMesh = null;
       scene.remove(em);
       G.banim = { type: "wait", t: 0, dur: 1.2 };
@@ -8887,7 +9021,8 @@ export default function CherryAdventure() {
     G.doTransform = () => {
       if (G.tfActive) { toast(`🔥 ร่างพลังทำงานอยู่ (เหลือ ${G.tfTurns} เทิร์น)`); return; }
       if ((G.tfGauge || 0) < 100) { toast("⚡ เกจพลังยังไม่เต็ม! สู้ต่อเพื่อสะสมพลัง"); return; }
-      G.tfActive = true; G.tfTurns = TF_TURNS; G.tfGauge = 0; G._tfAnnounced = false;
+      const tfDur = TF_TURNS + ((G.constBonus && G.constBonus().tfTurns) || 0); // ✨ constellation can extend the form
+      G.tfActive = true; G.tfTurns = tfDur; G.tfGauge = 0; G._tfAnnounced = false;
       // 💥 power surge — a burst of HP + mana on transforming
       G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.round(effMaxHp() * 0.2));
       G.player.mp = Math.min(effMaxMp(), G.player.mp + Math.round(effMaxMp() * 0.3));
@@ -8908,8 +9043,8 @@ export default function CherryAdventure() {
       }, 40);
       G._camShake = Math.max(G._camShake || 0, 0.6);
       if (G.sfx && G.sfx.charge) G.sfx.charge();
-      toast(`⚡🔥 แปลงร่าง! พลังทะลุขีดจำกัด — โจมตี/พลังป้องกัน/คริพุ่ง ${TF_TURNS} เทิร์น!`);
-      setUi((u) => ({ ...u, bstate: "busy", tfActive: true, tfTurns: TF_TURNS, tfGauge: 0, tfReady: false }));
+      toast(`⚡🔥 แปลงร่าง! พลังทะลุขีดจำกัด — โจมตี/พลังป้องกัน/คริพุ่ง ${tfDur} เทิร์น!`);
+      setUi((u) => ({ ...u, bstate: "busy", tfActive: true, tfTurns: tfDur, tfGauge: 0, tfReady: false }));
       syncPlayer(); // stats jump immediately
       setTimeout(() => { if (G.mode === "battle" && !G.banim) setUi((u) => ({ ...u, bstate: "choose" })); }, 1300);
     };
@@ -9319,6 +9454,8 @@ export default function CherryAdventure() {
       G.equip = EMPTY_EQUIP();
       G.plus = {};
       G.treeNodes = {}; // 🌳 fresh passive skill tree
+      G.constNodes = {}; // ✨ fresh constellation board
+      G.stardust = 0; // ✨ fresh star dust
       G.ultAlt = false;
       G.pathId = null; // 🌟 fresh character has no path yet
       G.titleId = "t_none";
@@ -9382,7 +9519,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -9502,6 +9639,8 @@ export default function CherryAdventure() {
       G.mats = d.mats || {};
       G.weaponInfuse = d.weaponInfuse || {};
       G.treeNodes = d.treeNodes || {};
+      G.constNodes = d.constNodes || {};
+      G.stardust = d.stardust || 0;
       G.ultAlt = !!d.ultAlt;
       G.pathId = d.pathId || null;
       if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
@@ -12731,7 +12870,7 @@ export default function CherryAdventure() {
               const critBase = cls === "archer" ? 0.25 : cls === "assassin" ? 0.3 : cls === "samurai" ? 0.22 : 0.05;
               const critCh = critBase + critBonus + effCrit() / 100 + (G.battleCrit || 0) / 100;
               if (Math.random() < critCh) {
-                dmg *= 2 + (G.battleCritDmg || 0) / 100 + ((curPath() && curPath().critDmg) || 0) / 100 + tB("critDmg") / 100; // 💥 crit dmg: buffs + 🌟 path + 🏅 title
+                dmg *= 2 + (G.battleCritDmg || 0) / 100 + ((curPath() && curPath().critDmg) || 0) / 100 + tB("critDmg") / 100 + (G.constBonus ? G.constBonus().critDmg : 0) / 100; // 💥 crit dmg: buffs + 🌟 path + 🏅 title + ✨ constellation
                 didCrit = true;
                 G.achStats.crits = (G.achStats.crits || 0) + 1; // 🏅 for the ราชาคริติคอล title
                 fxMsg += " 🎯 คริติคอล!!";
@@ -15111,7 +15250,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "socialOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "socialOpen"];
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
@@ -15898,7 +16037,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 🏷️ player nameplate — floats above Cherry's head (positioned each frame), explore + battle; hidden while a menu is open */}
-      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.socialOpen) && (
+      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.socialOpen) && (
         <div ref={(el) => { G.playerPlateEl = el; }} style={{
           position: "absolute", left: 0, top: 0, display: "none",
           transform: "translate(-50%,-100%)", width: 168, textAlign: "center",
@@ -16260,6 +16399,26 @@ export default function CherryAdventure() {
                 borderRadius: 10, background: "#4a9a5a", color: "#fff",
                 fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
               }}>{ui.sp || 0}</span>
+            )}
+          </button>
+
+          {/* 🌌 constellation board button */}
+          <button
+            onClick={() => G.toggleConst()}
+            title="กระดานพรสวรรค์ (ดวงดาว)"
+            style={{
+              position: "absolute", right: 12, bottom: 522,
+              width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              fontSize: 24, background: "linear-gradient(145deg,#3a2a5a,#5a3a7a)", boxShadow: "0 4px 12px rgba(90,70,140,0.4)",
+            }}
+          >
+            🌌
+            {(ui.stardust || 0) > 0 && (
+              <span style={{
+                position: "absolute", top: -5, right: -6, minWidth: 20, height: 20, padding: "0 4px",
+                borderRadius: 10, background: "#8a6ad8", color: "#fff",
+                fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
+              }}>✨{ui.stardust || 0}</span>
             )}
           </button>
 
@@ -17008,6 +17167,58 @@ export default function CherryAdventure() {
                 });
               })()}
               <div style={{ fontSize: 10, color: "#a3a396", marginTop: 6, textAlign: "center" }}>อัพซ้ำได้จนเต็ม · โหนด ⭐ ประจำอาชีพ · บางโหนดต้องปลดโหนดก่อนหน้า</div>
+            </div>
+          )}
+
+          {/* ✨ constellation board */}
+          {ui.constOpen && (
+            <div style={{
+              position: "absolute", right: 72, bottom: 28, width: 276, maxHeight: "66vh", overflowY: "auto",
+              background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: "0 6px 20px rgba(70,50,120,0.35)",
+            }}>
+              {closeBtn("constOpen")}
+              {(() => {
+                const cls = (G && G.cls) || ui.cls;
+                const board = CONSTELLATION[cls];
+                if (!board) return <div style={{ fontSize: 12, color: "#8a7aa0" }}>เลือกอาชีพก่อนจึงจะเปิดกระดานพรสวรรค์ได้</div>;
+                const un = ui.constNodes || {};
+                const dust = ui.stardust || 0;
+                const done = board.nodes.filter((n) => un[n.id]).length;
+                return (
+                  <>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: "#6a4ab0", marginBottom: 2 }}>{board.emoji} {board.name} 🌌</div>
+                    <div style={{ fontSize: 11, color: "#8a7aa0", marginBottom: 6 }}>กระดานพรสวรรค์ประจำอาชีพ · ปลดล็อกดาวตามลำดับ ({done}/6)</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a5ad0", background: "#f0eaff", borderRadius: 999, padding: "4px 10px", display: "inline-block", marginBottom: 8, border: "1px solid #d8c8f0" }}>✨ ผงดาว {dust}</div>
+                    {board.nodes.map((node, idx) => {
+                      const unlocked = !!un[node.id];
+                      const available = !unlocked && (!node.req || un[node.req]);
+                      const afford = dust >= node.cost;
+                      const can = available && afford;
+                      return (
+                        <div key={node.id} style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6,
+                          background: unlocked ? "#efe8ff" : available ? "#fbf7ff" : "#f4f2f7", borderRadius: 10, padding: "7px 9px",
+                          border: unlocked ? "1.5px solid #a98ae0" : available ? "1.5px solid #d8c8f0" : "1px solid #e6e2ee",
+                          opacity: unlocked || available ? 1 : 0.7,
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: unlocked ? "#6a4ab0" : "#7a6a8a" }}>C{idx + 1} {node.emoji} {node.name}{idx === 5 && " 🌟"}</div>
+                            <div style={{ fontSize: 9.5, color: "#9a8ab0" }}>{node.desc}</div>
+                            {!available && !unlocked && <div style={{ fontSize: 9.5, color: "#c07a4a", fontWeight: 700 }}>🔒 ต้องปลดดาวก่อนหน้าก่อน</div>}
+                          </div>
+                          <button onClick={() => G.unlockConst(node.id)} disabled={!can} style={{
+                            border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6,
+                            cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font,
+                            color: unlocked ? "#fff" : can ? "#fff" : "#a89ab8",
+                            background: unlocked ? "#a98ae0" : can ? "#7a5ad0" : "#e6e2ee",
+                          }}>{unlocked ? "✅" : !available ? "🔒" : `✨${node.cost}`}</button>
+                        </div>
+                      );
+                    })}
+                    <div style={{ fontSize: 10, color: "#a99ac0", marginTop: 6, textAlign: "center" }}>รับ ✨ ผงดาว จากการชนะศึก (บอสให้เยอะ) · ดาว C6 คือพลังพิเศษประจำอาชีพ</div>
+                  </>
+                );
+              })()}
             </div>
           )}
 
