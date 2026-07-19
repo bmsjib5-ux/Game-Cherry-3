@@ -3727,6 +3727,7 @@ function CherryAdventure() {
     constOpen: false,
     masteryOpen: false,
     collectionOpen: false,
+    equipScreen: false,
     comboSeq: [],
     potions: 1,
     mpPotions: 1,
@@ -15162,6 +15163,37 @@ function CherryAdventure() {
       toast(`สวมใส่ ${it.emoji} ${it.name}!`);
       syncPlayer();
     };
+    // 🎽 unequip a slot back to empty
+    G.unequipSlot = slot => {
+      if (!G.equip || !G.equip[slot]) return;
+      G.equip[slot] = null;
+      if (slot === "weapon") G.setWeaponVisual(null);else if (slot === "outfit") G.setOutfitVisual(null);else applyGear();
+      G.player.hp = Math.min(G.player.hp, effMaxHp());
+      toast(`ถอด${SLOT_NAMES[slot] || ""}แล้ว`);
+      syncPlayer();
+    };
+    // 🧍 PAPER-DOLL EQUIPMENT SCREEN — open a dressing-room view (centered 3D turntable) + equip UI
+    G.spinChar = d => { if (char) char.rotation.y += d; };
+    G.openEquip = () => {
+      if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
+      G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
+      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI; } // face the camera
+      G.mode = "create"; // 3D turntable framing (React creator UI stays hidden — that keys on ui.mode)
+      G.equipOpen = true;
+      if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
+      G.moveTarget = null;
+      G.equipScreen = true;
+      setUi(u => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, gold: G.gold }));
+      syncPlayer();
+    };
+    G.closeEquip = () => {
+      G.equipOpen = false;
+      G.equipScreen = false;
+      G.mode = "explore";
+      if (char && G._equipPrevPos) char.position.set(G._equipPrevPos.x, 0, G._equipPrevPos.z);
+      if (char) char.rotation.y = Math.PI / 2; // face walking direction again
+      setUi(u => ({ ...u, equipScreen: false }));
+    };
 
     // 🎽 auto-equip: put on the strongest item in every slot
     const itemPower = id => {
@@ -18655,8 +18687,8 @@ function CherryAdventure() {
           }
         }
         if (G.mode === "create" || G.mode === "class") {
-          // 🎀 turntable preview in the character creator / class picker
-          char.rotation.y += dt * 0.55;
+          // 🎀 turntable preview in the character creator / class picker (frozen while dressing up — spin via arrows)
+          if (!G.equipOpen) char.rotation.y += dt * 0.55;
           char.position.y = Math.sin(t * 2) * 0.03;
           headG.rotation.z = Math.sin(t * 0.9) * 0.04;
         } else if (G.mode === "explore") {
@@ -25286,7 +25318,7 @@ function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen"];
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach(f => cleared[f] = false);
@@ -26003,7 +26035,7 @@ function CherryAdventure() {
       boxShadow: "0 3px 9px rgba(90,120,70,0.3)",
       fontFamily: font
     }
-  }, sym))), ui.dailyReady && ui.mode === "explore" && /*#__PURE__*/React.createElement("div", {
+  }, sym))), ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: 70,
@@ -26119,7 +26151,7 @@ function CherryAdventure() {
       color: "#8a5a4a",
       background: "#f3ede4"
     }
-  }, "ปิด"))), ui.mode === "explore" && /*#__PURE__*/React.createElement("div", {
+  }, "ปิด"))), ui.mode === "explore" && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: 12,
@@ -26134,7 +26166,7 @@ function CherryAdventure() {
       pointerEvents: "none",
       boxShadow: "0 2px 8px rgba(90,120,70,0.2)"
     }
-  }, ui.biomeName), ui.mode === "explore" && /*#__PURE__*/React.createElement("button", {
+  }, ui.biomeName), ui.mode === "explore" && !ui.equipScreen && /*#__PURE__*/React.createElement("button", {
     onClick: () => G.challengeBiomeBoss(),
     style: {
       position: "absolute",
@@ -26152,7 +26184,7 @@ function CherryAdventure() {
       cursor: "pointer",
       boxShadow: "0 3px 10px rgba(176,48,96,0.4)"
     }
-  }, "⚔️ ท้าดวลเจ้าถิ่น"), ui.mode !== "create" && ui.mode !== "title" && /*#__PURE__*/React.createElement("div", {
+  }, "⚔️ ท้าดวลเจ้าถิ่น"), ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: 148,
@@ -26848,7 +26880,7 @@ function CherryAdventure() {
       background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
       boxShadow: "0 5px 16px rgba(90,160,106,0.5)"
     }
-  }, "🌸 เริ่มผจญภัย! ", ui.chosenClass && CLASSES[ui.chosenClass] ? `(${CLASSES[ui.chosenClass].emoji}${CLASSES[ui.chosenClass].name})` : ""))), (ui.mode === "explore" || ui.mode === "battle") && /*#__PURE__*/React.createElement("div", {
+  }, "🌸 เริ่มผจญภัย! ", ui.chosenClass && CLASSES[ui.chosenClass] ? `(${CLASSES[ui.chosenClass].emoji}${CLASSES[ui.chosenClass].name})` : ""))), (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: 12,
@@ -26892,7 +26924,7 @@ function CherryAdventure() {
       color: "#8a5a4a",
       marginTop: 2
     }
-  }, "⚔️", ui.atk, " 🛡️", ui.def, " 💰", ui.gold, " · 💗×", ui.balls, " · 🐾×", totalCaught)), (ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.collectionOpen || ui.socialOpen) && /*#__PURE__*/React.createElement("div", {
+  }, "⚔️", ui.atk, " 🛡️", ui.def, " 💰", ui.gold, " · 💗×", ui.balls, " · 🐾×", totalCaught)), (ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.collectionOpen || ui.socialOpen || ui.equipScreen) && /*#__PURE__*/React.createElement("div", {
     ref: el => {
       G.playerPlateEl = el;
     },
@@ -27647,7 +27679,23 @@ function CherryAdventure() {
       background: "#f5d24a",
       border: "2px solid #fff"
     }
-  })), ui.skillPanel && /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: () => G.openEquip(),
+    title: "ตัวละคร & ช่องเก็บของ",
+    style: {
+      position: "absolute",
+      right: 12,
+      bottom: 690,
+      width: 50,
+      height: 50,
+      borderRadius: 15,
+      border: "none",
+      cursor: "pointer",
+      fontSize: 24,
+      background: "linear-gradient(145deg,#3a4a6a,#5a6a8a)",
+      boxShadow: "0 4px 12px rgba(60,80,120,0.4)"
+    }
+  }, "🧍"), ui.skillPanel && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       right: 72,
@@ -29743,7 +29791,37 @@ function CherryAdventure() {
         !unlocked && /*#__PURE__*/React.createElement("div", { style: { fontSize: 8, color: "#c07a4a" } }, G.unlockLabel(a.unlock)),
         a.color != null && /*#__PURE__*/React.createElement("div", { style: { height: 3, borderRadius: 2, marginTop: 3, background: cc } }));
     })),
-    /*#__PURE__*/React.createElement("div", { style: { fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" } }, "ชุดเทศกาล/ออร่า = คอสเมติกล้วน · เซ็ตบัฟด้านบนให้สเตตัสเพิ่ม")), ui.invOpen && /*#__PURE__*/React.createElement("div", {
+    /*#__PURE__*/React.createElement("div", { style: { fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" } }, "ชุดเทศกาล/ออร่า = คอสเมติกล้วน · เซ็ตบัฟด้านบนให้สเตตัสเพิ่ม")), ui.equipScreen && (() => {
+    const LEFT = ["hat", "mask", "outfit", "gloves"];
+    const RIGHT = ["weapon", "pants", "shoes"];
+    const arrowStyle = { pointerEvents: "auto", width: 38, height: 38, borderRadius: "50%", border: "2px solid #c9a24a", background: "rgba(20,26,20,0.55)", color: "#e8dcc0", fontSize: 18, cursor: "pointer" };
+    const slotCell = slot => {
+      const id = ui.equip && ui.equip[slot];
+      const it = id ? LOOT.find(x => x.id === id) : null;
+      const col = it ? RARITY[it.rarity].color : "#4a5a4a";
+      return /*#__PURE__*/React.createElement("div", {
+        key: slot,
+        onClick: () => setUi(u => ({ ...u, invCat: slot, invSel: null })),
+        style: { position: "relative", width: 54, height: 54, borderRadius: 10, marginBottom: 10, cursor: "pointer", background: it ? `linear-gradient(135deg, ${col}33, #232a24)` : "rgba(35,42,36,0.85)", border: `2px solid ${it ? col : "#3a463a"}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }
+      }, /*#__PURE__*/React.createElement("span", { style: { fontSize: it ? 26 : 22, opacity: it ? 1 : 0.35 } }, it ? it.emoji : SLOT_ICON[slot]), !it && /*#__PURE__*/React.createElement("span", { style: { position: "absolute", bottom: 2, fontSize: 7, color: "#8a9a8a", fontWeight: 700 } }, SLOT_NAMES[slot]), it && /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); G.unequipSlot(slot); }, style: { position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%", border: "none", background: "#b03a3a", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "16px" } }, "✕"));
+    };
+    const cellsCol = slots => /*#__PURE__*/React.createElement("div", { style: { width: 84, flex: "0 0 84px", display: "flex", flexDirection: "column", alignItems: "center", pointerEvents: "auto", background: "linear-gradient(180deg,#283029,#161a15)", borderRadius: 12, padding: "10px 0 4px", border: "1.5px solid #c9a24a44", boxShadow: "0 4px 14px rgba(0,0,0,0.5)" } }, slots.map(slotCell));
+    const ids = [...new Set(ui.inv || [])].filter(id => { const it = LOOT.find(x => x.id === id); return it && (ui.invCat === "all" || !ui.invCat || it.slot === ui.invCat); });
+    const itemTile = id => {
+      const it = LOOT.find(x => x.id === id);
+      const count = (ui.inv || []).filter(x => x === id).length;
+      const equipped = ui.equip && ui.equip[it.slot] === id;
+      const plus = (ui.plus || {})[id] || 0;
+      const locked = it.req && ui.level < it.req;
+      return /*#__PURE__*/React.createElement("button", { key: id, onClick: () => G.equipItem(id), style: { position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: equipped ? `2px solid ${RARITY[it.rarity].color}` : "2px solid #33402f", background: `linear-gradient(135deg, ${RARITY[it.rarity].color}22, #1c231d)`, display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.55 : 1 } }, /*#__PURE__*/React.createElement("span", { style: { fontSize: 22 } }, it.emoji), plus > 0 && /*#__PURE__*/React.createElement("span", { style: { position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" } }, "+", plus), count > 1 && /*#__PURE__*/React.createElement("span", { style: { position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" } }, "×", count), equipped && /*#__PURE__*/React.createElement("span", { style: { position: "absolute", bottom: 1, left: 3, fontSize: 9 } }, "✓"), locked && /*#__PURE__*/React.createElement("span", { style: { position: "absolute", top: 1, left: 3, fontSize: 9 } }, "🔒"));
+    };
+    const potTile = (emoji, n, onClick, key) => /*#__PURE__*/React.createElement("button", { key, onClick, style: { position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: "2px solid #33402f", background: "linear-gradient(135deg,#3a2a2a55,#1c231d)", display: "flex", alignItems: "center", justifyContent: "center" } }, /*#__PURE__*/React.createElement("span", { style: { fontSize: 22 } }, emoji), /*#__PURE__*/React.createElement("span", { style: { position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" } }, n));
+    const catChip = (ck, label) => /*#__PURE__*/React.createElement("button", { key: ck, onClick: () => setUi(u => ({ ...u, invCat: ck, invSel: null })), style: { padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: (ui.invCat || "all") === ck ? "#c9a24a" : "rgba(255,255,255,0.08)", color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0" } }, label);
+    return /*#__PURE__*/React.createElement("div", { key: "eqscr", style: { position: "absolute", inset: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" } },
+      /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" } }, "🎒 ช่องเก็บของ", /*#__PURE__*/React.createElement("button", { title: "ปิดหน้าตัวละคร", onClick: () => G.closeEquip(), style: { position: "absolute", right: 12, top: 8, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#e8dcc0", fontSize: 16, cursor: "pointer" } }, "✕")),
+      /*#__PURE__*/React.createElement("div", { style: { flex: 1, display: "flex", justifyContent: "space-between", alignItems: "stretch", padding: 0, pointerEvents: "none" } }, cellsCol(LEFT), /*#__PURE__*/React.createElement("div", { style: { flex: 1, alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", pointerEvents: "none" } }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", gap: 44, marginBottom: 10 } }, /*#__PURE__*/React.createElement("button", { onClick: () => G.spinChar(-0.5), style: arrowStyle }, "↺"), /*#__PURE__*/React.createElement("button", { onClick: () => G.spinChar(0.5), style: arrowStyle }, "↻")), /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", display: "flex", gap: 10, background: "rgba(20,26,20,0.7)", borderRadius: 999, padding: "5px 14px", color: "#e8dcc0", fontSize: 12.5, fontWeight: 800, border: "1px solid #c9a24a44", marginBottom: 4 } }, "⚔️ " + (ui.atk || 0), "🛡️ " + (ui.def || 0), "❤️ " + (ui.maxHp || 0))), cellsCol(RIGHT)),
+      /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", maxHeight: "44vh", display: "flex", flexDirection: "column" } }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7 } }, [["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map(s => [s, SLOT_ICON[s]])].map(pair => catChip(pair[0], pair[1]))), /*#__PURE__*/React.createElement("div", { style: { overflowY: "auto", flex: 1 } }, /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5 } }, [...(ui.invCat === "all" || !ui.invCat ? [potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp"), potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp")] : []), ...ids.map(itemTile)]), ids.length === 0 && ui.invCat && ui.invCat !== "all" && /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: "#8a9a8a", textAlign: "center", padding: "10px 0" } }, `ยังไม่มี${SLOT_NAMES[ui.invCat] || "ไอเทม"} — สู้เพื่อลุ้นดรอป!`)), /*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 6, color: "#f5d24a", fontSize: 13, fontWeight: 800 } }, "💰 ", ui.gold != null ? ui.gold.toLocaleString() : 0)));
+  })(), ui.invOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       right: 72,

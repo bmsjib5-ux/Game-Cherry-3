@@ -857,7 +857,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 }, customTab: "gender",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
@@ -8202,6 +8202,39 @@ export default function CherryAdventure() {
       syncPlayer();
     };
 
+    // 🧍 paper-doll character & inventory screen
+    G.unequipSlot = (slot) => {
+      if (!G.equip || !G.equip[slot]) return;
+      G.equip[slot] = null;
+      if (slot === "weapon") G.setWeaponVisual(null);
+      else if (slot === "outfit") G.setOutfitVisual(null);
+      else applyGear();
+      G.player.hp = Math.min(G.player.hp, effMaxHp());
+      toast(`ถอด${SLOT_NAMES[slot] || ""}แล้ว`);
+      syncPlayer();
+    };
+    G.spinChar = (d) => { if (char) char.rotation.y += d; };
+    G.openEquip = () => {
+      if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
+      G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
+      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI; } // face the camera
+      G.mode = "create"; // 3D turntable framing (React creator UI stays hidden — that keys on ui.mode)
+      G.equipOpen = true;
+      if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
+      G.moveTarget = null;
+      G.equipScreen = true;
+      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, gold: G.gold }));
+      syncPlayer();
+    };
+    G.closeEquip = () => {
+      G.equipOpen = false;
+      G.equipScreen = false;
+      G.mode = "explore";
+      if (char && G._equipPrevPos) char.position.set(G._equipPrevPos.x, 0, G._equipPrevPos.z);
+      if (char) char.rotation.y = Math.PI / 2; // face walking direction again
+      setUi((u) => ({ ...u, equipScreen: false }));
+    };
+
     // 🎽 auto-equip: put on the strongest item in every slot
     const itemPower = (id) => {
       const st = itemStats(id);
@@ -10574,8 +10607,8 @@ export default function CherryAdventure() {
       }
 
       if (G.mode === "create" || G.mode === "class") {
-        // 🎀 turntable preview in the character creator / class picker
-        char.rotation.y += dt * 0.55;
+        // 🎀 turntable preview in the character creator / class picker (frozen while equip screen open so manual rotate works)
+        if (!G.equipOpen) char.rotation.y += dt * 0.55;
         char.position.y = Math.sin(t * 2) * 0.03;
         headG.rotation.z = Math.sin(t * 0.9) * 0.04;
       } else if (G.mode === "explore") {
@@ -15792,7 +15825,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen"];
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
@@ -16129,7 +16162,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 📅 daily login reward */}
-      {ui.dailyReady && ui.mode === "explore" && (
+      {ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && (
         <div style={{
           position: "absolute", top: 70, left: "50%", transform: "translateX(-50%)",
           background: "linear-gradient(135deg,#fff2c8,#ffe0a0)", borderRadius: 16, padding: "12px 16px",
@@ -16185,7 +16218,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 🗺️ biome name badge */}
-      {ui.mode === "explore" && (
+      {ui.mode === "explore" && !ui.equipScreen && (
         <div style={{
           position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)",
           background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
@@ -16196,7 +16229,7 @@ export default function CherryAdventure() {
         </div>
       )}
       {/* 🏰 biome boss challenge button */}
-      {ui.mode === "explore" && (
+      {ui.mode === "explore" && !ui.equipScreen && (
         <button
           onClick={() => G.challengeBiomeBoss()}
           style={{
@@ -16211,7 +16244,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 🎵 sound/music toggles */}
-      {ui.mode !== "create" && ui.mode !== "title" && (
+      {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (
         <div style={{ position: "absolute", top: 148, left: 12, display: "flex", gap: 6 }}>
           <button onClick={() => G.toggleSound()} title="เสียงเอฟเฟกต์" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
@@ -16555,7 +16588,7 @@ export default function CherryAdventure() {
       )}
 
       {/* ===== explore HUD ===== */}
-      {(ui.mode === "explore" || ui.mode === "battle") && (
+      {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
         <div style={{
           position: "absolute", top: 12, left: 12,
           background: "rgba(255,255,255,0.5)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)",
@@ -16579,7 +16612,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 🏷️ player nameplate — floats above Cherry's head (positioned each frame), explore + battle; hidden while a menu is open */}
-      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.collectionOpen || ui.socialOpen) && (
+      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.collectionOpen || ui.socialOpen || ui.equipScreen) && (
         <div ref={(el) => { G.playerPlateEl = el; }} style={{
           position: "absolute", left: 0, top: 0, display: "none",
           transform: "translate(-50%,-100%)", width: 168, textAlign: "center",
@@ -17002,6 +17035,19 @@ export default function CherryAdventure() {
             {(ui.activeSet || (ui.weaponSkin && ui.weaponSkin !== "none") || (ui.weaponEnchant && ui.weaponEnchant !== "none") || (ui.activeAura && ui.activeAura !== "none")) && (
               <span style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, borderRadius: "50%", background: "#f5d24a", border: "2px solid #fff" }} />
             )}
+          </button>
+
+          {/* 🧍 character & inventory (paper-doll) button */}
+          <button
+            onClick={() => G.openEquip()}
+            title="ตัวละคร & ช่องเก็บของ"
+            style={{
+              position: "absolute", right: 12, bottom: 690,
+              width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              fontSize: 24, background: "linear-gradient(145deg,#6a8cc0,#8aa8e0)", boxShadow: "0 4px 12px rgba(90,120,180,0.4)",
+            }}
+          >
+            🧍
           </button>
 
           {/* ⚡ skill upgrade panel */}
@@ -17993,6 +18039,94 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" }}>ชุดเทศกาล/ออร่า = คอสเมติกล้วน · เซ็ตบัฟด้านบนให้สเตตัสเพิ่ม</div>
             </div>
           )}
+
+          {/* 🧍 paper-doll character equipment + inventory screen */}
+          {ui.equipScreen && (() => {
+            const LEFT = ["hat", "mask", "outfit", "gloves"];
+            const RIGHT = ["weapon", "pants", "shoes"];
+            const arrowStyle = { pointerEvents: "auto", width: 38, height: 38, borderRadius: "50%", border: "2px solid #c9a24a", background: "rgba(20,26,20,0.55)", color: "#e8dcc0", fontSize: 18, cursor: "pointer" };
+            const slotCell = (slot) => {
+              const id = ui.equip && ui.equip[slot];
+              const it = id ? LOOT.find((x) => x.id === id) : null;
+              const col = it ? RARITY[it.rarity].color : "#4a5a4a";
+              return (
+                <div key={slot} onClick={() => setUi((u) => ({ ...u, invCat: slot, invSel: null }))}
+                  style={{ position: "relative", width: 54, height: 54, borderRadius: 10, marginBottom: 10, cursor: "pointer", background: it ? `linear-gradient(135deg, ${col}33, #232a24)` : "rgba(35,42,36,0.85)", border: `2px solid ${it ? col : "#3a463a"}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
+                  <span style={{ fontSize: it ? 26 : 22, opacity: it ? 1 : 0.35 }}>{it ? it.emoji : SLOT_ICON[slot]}</span>
+                  {!it && <span style={{ position: "absolute", bottom: 2, fontSize: 7, color: "#8a9a8a", fontWeight: 700 }}>{SLOT_NAMES[slot]}</span>}
+                  {it && <button onClick={(e) => { e.stopPropagation(); G.unequipSlot(slot); }} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%", border: "none", background: "#b03a3a", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "16px" }}>✕</button>}
+                </div>
+              );
+            };
+            const cellsCol = (slots) => (
+              <div style={{ width: 84, flex: "0 0 84px", display: "flex", flexDirection: "column", alignItems: "center", pointerEvents: "auto", background: "linear-gradient(180deg,#283029,#161a15)", borderRadius: 12, padding: "10px 0 4px", border: "1.5px solid #c9a24a44", boxShadow: "0 4px 14px rgba(0,0,0,0.5)" }}>
+                {slots.map(slotCell)}
+              </div>
+            );
+            const ids = [...new Set(ui.inv || [])].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && (ui.invCat === "all" || !ui.invCat || it.slot === ui.invCat); });
+            const itemTile = (id) => {
+              const it = LOOT.find((x) => x.id === id);
+              const count = (ui.inv || []).filter((x) => x === id).length;
+              const equipped = ui.equip && ui.equip[it.slot] === id;
+              const plus = (ui.plus || {})[id] || 0;
+              const locked = it.req && ui.level < it.req;
+              return (
+                <button key={id} onClick={() => G.equipItem(id)} style={{ position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: equipped ? `2px solid ${RARITY[it.rarity].color}` : "2px solid #33402f", background: `linear-gradient(135deg, ${RARITY[it.rarity].color}22, #1c231d)`, display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.55 : 1 }}>
+                  <span style={{ fontSize: 22 }}>{it.emoji}</span>
+                  {plus > 0 && <span style={{ position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" }}>+{plus}</span>}
+                  {count > 1 && <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>×{count}</span>}
+                  {equipped && <span style={{ position: "absolute", bottom: 1, left: 3, fontSize: 9 }}>✓</span>}
+                  {locked && <span style={{ position: "absolute", top: 1, left: 3, fontSize: 9 }}>🔒</span>}
+                </button>
+              );
+            };
+            const potTile = (emoji, n, onClick, key) => (
+              <button key={key} onClick={onClick} style={{ position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: "2px solid #33402f", background: "linear-gradient(135deg,#3a2a2a55,#1c231d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: 22 }}>{emoji}</span>
+                <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>{n}</span>
+              </button>
+            );
+            const catChip = (ck, label) => (
+              <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null }))} style={{ padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: (ui.invCat || "all") === ck ? "#c9a24a" : "rgba(255,255,255,0.08)", color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0" }}>{label}</button>
+            );
+            return (
+              <div key="eqscr" style={{ position: "absolute", inset: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
+                <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                  🎒 ช่องเก็บของ
+                  <button title="ปิดหน้าตัวละคร" onClick={() => G.closeEquip()} style={{ position: "absolute", right: 12, top: 8, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#e8dcc0", fontSize: 16, cursor: "pointer" }}>✕</button>
+                </div>
+                <div style={{ flex: 1, display: "flex", justifyContent: "space-between", alignItems: "stretch", padding: 0, pointerEvents: "none" }}>
+                  {cellsCol(LEFT)}
+                  <div style={{ flex: 1, alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", pointerEvents: "none" }}>
+                    <div style={{ display: "flex", gap: 44, marginBottom: 10 }}>
+                      <button onClick={() => G.spinChar(-0.5)} style={arrowStyle}>↺</button>
+                      <button onClick={() => G.spinChar(0.5)} style={arrowStyle}>↻</button>
+                    </div>
+                    <div style={{ pointerEvents: "auto", display: "flex", gap: 10, background: "rgba(20,26,20,0.7)", borderRadius: 999, padding: "5px 14px", color: "#e8dcc0", fontSize: 12.5, fontWeight: 800, border: "1px solid #c9a24a44", marginBottom: 4 }}>
+                      <span>⚔️ {ui.atk || 0}</span><span>🛡️ {ui.def || 0}</span><span>❤️ {ui.maxHp || 0}</span>
+                    </div>
+                  </div>
+                  {cellsCol(RIGHT)}
+                </div>
+                <div style={{ pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", maxHeight: "44vh", display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7 }}>
+                    {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
+                  </div>
+                  <div style={{ overflowY: "auto", flex: 1 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5 }}>
+                      {[...(ui.invCat === "all" || !ui.invCat ? [potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp"), potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp")] : []), ...ids.map(itemTile)]}
+                    </div>
+                    {ids.length === 0 && ui.invCat && ui.invCat !== "all" && (
+                      <div style={{ fontSize: 11, color: "#8a9a8a", textAlign: "center", padding: "10px 0" }}>{`ยังไม่มี${SLOT_NAMES[ui.invCat] || "ไอเทม"} — สู้เพื่อลุ้นดรอป!`}</div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 6, color: "#f5d24a", fontSize: 13, fontWeight: 800 }}>
+                    💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {ui.invOpen && (
             <div style={{
