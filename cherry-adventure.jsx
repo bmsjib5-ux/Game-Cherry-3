@@ -800,6 +800,16 @@ const COSMETIC_AURAS = [
   { id: "gold",    name: "ธุลีทองคำ",     emoji: "👑", color: 0xffe070, unlock: { stat: "gold", val: 8000 } },
 ];
 
+// ---------- 🗡️⭐ LEGENDARY WEAPON ENCHANTS (จารึกอาวุธ) — a combat proc on your weapon ----------
+const WEAPON_ENCHANTS = [
+  { id: "none",        name: "ไม่มี",         emoji: "⚪", desc: "ไม่มีจารึก",                       unlock: null },
+  { id: "chain",       name: "สายฟ้าลูกโซ่",   emoji: "⚡", desc: "คริแล้วปล่อยสายฟ้าซ้ำ +45%",       unlock: { stat: "crits", val: 50 } },
+  { id: "bloodthirst", name: "กระหายเลือด",    emoji: "🩸", desc: "ดูดเลือด 12% ของดาเมจทุกครั้ง",    unlock: { stat: "wins", val: 25 } },
+  { id: "executioner", name: "เพชฌฆาต",        emoji: "⭐", desc: "ศัตรูเลือด <30% → ฟันจบ +50%",     unlock: { stat: "bosses", val: 6 } },
+  { id: "venom",       name: "พิษมรณะ",        emoji: "☠️", desc: "35% ติดพิษร้ายแรง 3 เทิร์น",       unlock: { stat: "catches", val: 30 } },
+  { id: "overload",    name: "ทลายพลัง",       emoji: "💥", desc: "ทุกการโจมตีที่ 4 → ระเบิดพลังใส่",  unlock: { stat: "floor", val: 15 } },
+];
+
 // ---------- 🎀 Character customization options ----------
 const CUSTOM = {
   genders: [
@@ -847,7 +857,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 }, customTab: "gender",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
@@ -7778,6 +7788,7 @@ export default function CherryAdventure() {
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
     G.activeSet = null; // 👘 active outfit-set id
     G.activeAura = "none"; // 🌟 cosmetic aura id
+    G.weaponEnchant = "none"; // 🗡️⭐ legendary weapon enchant id
     G.tfGauge = 0; // ⚡ transformation power gauge — persists across battles until used
     G.ultAlt = false; // 👑 alternate ultimate selected?
     G.pathId = null; // 🌟 chosen class path (สายอาชีพ) — set at Lv.40
@@ -7789,6 +7800,7 @@ export default function CherryAdventure() {
     G.costume = { weapon: null, outfit: null }; // 👗 appearance override (transmog, all 7 slots)
     G.dye = { outfit: null, weapon: null };     // 🎨 colour override
     G.wardrobePresets = [];                      // 👗 saved full-look presets
+    G.dyePalette = [];                           // 🎨 custom saved dye colours
     G.mats = {}; // ⛏️ crafting materials
     G.weaponInfuse = {}; // 🔮 weaponId -> element
     G.potions = 1; // 🧪 start with one
@@ -8026,7 +8038,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold,
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold,
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -8508,10 +8520,27 @@ export default function CherryAdventure() {
     };
     G.setDye = (slot, hex) => {
       G.dye = G.dye || {};
+      if (typeof hex === "string" && hex[0] === "#") hex = parseInt(hex.slice(1), 16); // 🎨 accept #rrggbb (colour picker)
       G.dye[slot] = hex;
       refreshLook(slot);
       toast(hex != null ? "🎨 ย้อมสีแล้ว!" : "🎨 ล้างสีย้อม");
       syncPlayer();
+    };
+    // 🎨 CUSTOM DYE PALETTE — save any colour you mixed, re-use across slots
+    G.savePaletteColor = (hex) => {
+      if (hex == null) { toast("เลือกสีก่อนนะ"); return; }
+      if (typeof hex === "string" && hex[0] === "#") hex = parseInt(hex.slice(1), 16);
+      G.dyePalette = G.dyePalette || [];
+      if (G.dyePalette.includes(hex)) { toast("🎨 มีสีนี้ในพาเลตแล้ว"); return; }
+      if (G.dyePalette.length >= 12) { toast("🎨 พาเลตเต็ม (สูงสุด 12 สี) — ลบสีเก่าก่อน"); return; }
+      G.dyePalette.push(hex);
+      toast("💾 บันทึกสีลงพาเลตแล้ว!");
+      setUi((u) => ({ ...u, dyePalette: [...G.dyePalette] }));
+    };
+    G.delPaletteColor = (i) => {
+      if (!G.dyePalette) return;
+      G.dyePalette.splice(i, 1);
+      setUi((u) => ({ ...u, dyePalette: [...G.dyePalette] }));
     };
     // 👗 WARDROBE PRESETS — save/apply/delete a whole look (all costume + dye slots)
     G.saveWardrobe = () => {
@@ -8554,6 +8583,14 @@ export default function CherryAdventure() {
       G.setWeaponVisual(G.equip.weapon);
       toast(id === "none" ? "🗡️ ถอดสกินอาวุธแล้ว" : `🗡️✨ ใส่สกิน ${skin.emoji} ${skin.name}!`);
       setUi((u) => ({ ...u, weaponSkin: id }));
+    };
+    G.setWeaponEnchant = (id) => {
+      const e = WEAPON_ENCHANTS.find((x) => x.id === id);
+      if (!e) return;
+      if (!G.collectUnlocked(e.unlock)) { toast(`🔒 ยังปลดไม่ได้ — ${G.unlockLabel(e.unlock)}`); return; }
+      G.weaponEnchant = id;
+      toast(id === "none" ? "🗡️ ถอดจารึกอาวุธแล้ว" : `🗡️⭐ จารึก ${e.emoji} ${e.name}! (${e.desc})`);
+      setUi((u) => ({ ...u, weaponEnchant: id }));
     };
     G.setCosmeticAura = (id) => {
       const a = COSMETIC_AURAS.find((x) => x.id === id);
@@ -8710,7 +8747,7 @@ export default function CherryAdventure() {
     G.toggleCollection = () => {
       const willOpen = !G.collectionOpen;
       G.collectionOpen = willOpen;
-      setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+      setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
     };
     G.unlockConst = (nodeId) => {
       if (!G.constNodes) G.constNodes = {};
@@ -9790,6 +9827,7 @@ export default function CherryAdventure() {
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
       G.activeSet = null; // 👘 fresh (no set)
       G.activeAura = "none"; // 🌟 fresh (no aura)
+      G.weaponEnchant = "none"; // 🗡️⭐ fresh (no enchant)
       G.tfGauge = 0; // ⚡ fresh power gauge
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
@@ -9801,6 +9839,7 @@ export default function CherryAdventure() {
       G.costume = { weapon: null, outfit: null };
       G.dye = { outfit: null, weapon: null };
       G.wardrobePresets = [];
+      G.dyePalette = [];
       G.mats = {};
       G.weaponInfuse = {};
       G.potions = 1;
@@ -9857,13 +9896,13 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
           titleId: G.titleId || "t_none", // 🏅 equipped title
           rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
-          costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], // 👗 fashion
+          costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
           pos: { x: char.position.x, z: char.position.z },
         }));
       } catch (e) { /* storage unavailable — keep playing without saves */ }
@@ -10073,6 +10112,7 @@ export default function CherryAdventure() {
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
       G.activeAura = d.activeAura || "none";
+      G.weaponEnchant = d.weaponEnchant || "none";
       G.ultAlt = !!d.ultAlt;
       G.pathId = d.pathId || null;
       if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
@@ -10084,6 +10124,7 @@ export default function CherryAdventure() {
       G.costume = d.costume || { weapon: null, outfit: null };
       G.dye = d.dye || { outfit: null, weapon: null };
       G.wardrobePresets = d.wardrobePresets || [];
+      G.dyePalette = d.dyePalette || [];
       // 🎲 back-fill rolls for gear owned before this system existed
       G.inv.forEach((iid) => { const it = LOOT.find((x) => x.id === iid); if (it && !it.starter && !G.rolls[iid]) G.rolls[iid] = rollQuality(); });
       G.potions = d.potions == null ? 1 : d.potions;
@@ -13388,6 +13429,43 @@ export default function CherryAdventure() {
                   burst(char.position, 0xc4102a, 0.6);
                   syncPlayer();
                 } }
+              // 🗡️⭐ LEGENDARY WEAPON ENCHANT procs
+              if (dmg > 0 && G.enemy) {
+                const ench = G.weaponEnchant || "none";
+                if (ench === "chain" && didCrit) {
+                  const bonus = Math.max(1, Math.round(dmg * 0.45));
+                  G.enemy.hp = Math.max(0, G.enemy.hp - bonus);
+                  fxMsg += ` ⚡โซ่ฟ้า ${bonus}!`;
+                  setTimeout(() => popDamage(em.position, bonus, "weak"), 120);
+                  burst(em.position, 0xfff070, 1.1);
+                } else if (ench === "bloodthirst") {
+                  const v = Math.max(1, Math.round(dmg * 0.12));
+                  G.player.hp = Math.min(effMaxHp(), G.player.hp + v);
+                  fxMsg += ` 🩸+${v}`;
+                  popDamage(char.position, v, "heal");
+                  syncPlayer();
+                } else if (ench === "executioner" && G.enemy.hp > 0 && G.enemy.hp / G.enemy.maxHp < 0.3) {
+                  const fin = Math.max(1, Math.round(dmg * 0.5));
+                  G.enemy.hp = Math.max(0, G.enemy.hp - fin);
+                  fxMsg += ` ⭐เพชฌฆาต ${fin}!`;
+                  setTimeout(() => popDamage(em.position, fin, "crit"), 120);
+                  burst(em.position, 0xff4a6a, 1.2);
+                } else if (ench === "venom" && Math.random() < 0.35) {
+                  G.est.poison = Math.max(G.est.poison || 0, 3);
+                  fxMsg += " ☠️พิษมรณะ";
+                  burst(em.position, 0x8aff5a, 0.7);
+                } else if (ench === "overload") {
+                  G._enchHits = (G._enchHits || 0) + 1;
+                  if (G._enchHits % 4 === 0) {
+                    const ov = Math.max(1, Math.round(dmg * 0.35 + effAtk() * 0.3));
+                    G.enemy.hp = Math.max(0, G.enemy.hp - ov);
+                    fxMsg += ` 💥ทลายพลัง ${ov}!`;
+                    setTimeout(() => popDamage(em.position, ov, "crit"), 120);
+                    burst(em.position, 0xff9020, 1.4);
+                    G._camShake = Math.max(G._camShake || 0, 0.3);
+                  }
+                }
+              }
               // class impact FX
               const fxColor = sk ? sk.color : CLASSES[cls].color;
               if (cls === "warrior") fireSlash(em.position, fxColor);
@@ -16921,7 +16999,7 @@ export default function CherryAdventure() {
             }}
           >
             ✨
-            {(ui.activeSet || (ui.weaponSkin && ui.weaponSkin !== "none")) && (
+            {(ui.activeSet || (ui.weaponSkin && ui.weaponSkin !== "none") || (ui.weaponEnchant && ui.weaponEnchant !== "none") || (ui.activeAura && ui.activeAura !== "none")) && (
               <span style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, borderRadius: "50%", background: "#f5d24a", border: "2px solid #fff" }} />
             )}
           </button>
@@ -17849,6 +17927,21 @@ export default function CherryAdventure() {
                   );
                 })}
               </div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a04a80", marginBottom: 5 }}>🗡️⭐ จารึกอาวุธเลเจนดารี (พลังพิเศษตอนสู้)</div>
+              {WEAPON_ENCHANTS.filter((e) => e.id !== "none").map((e) => {
+                const unlocked = G.collectUnlocked ? G.collectUnlocked(e.unlock) : true;
+                const on = (ui.weaponEnchant || "none") === e.id;
+                return (
+                  <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, background: on ? "#fdeef6" : "#faf5f8", borderRadius: 10, padding: "7px 9px", border: on ? "1.5px solid #d06ab0" : "1px solid #eddbe6", opacity: unlocked ? 1 : 0.65 }}>
+                    <div style={{ fontSize: 20 }}>{unlocked ? e.emoji : "🔒"}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#8a4a70" }}>{e.name}{on ? " ✓" : ""}</div>
+                      <div style={{ fontSize: 9.5, color: "#b07a9a" }}>{unlocked ? e.desc : `🔒 ${G.unlockLabel(e.unlock)}`}</div>
+                    </div>
+                    <button onClick={() => (unlocked ? G.setWeaponEnchant(on ? "none" : e.id) : G.toast(`🔒 ${G.unlockLabel(e.unlock)}`))} disabled={!unlocked} style={{ border: "none", borderRadius: 8, padding: "6px 10px", cursor: unlocked ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: on ? "#b0aca4" : unlocked ? "#d06ab0" : "#e0d0da" }}>{on ? "ถอด" : "จารึก"}</button>
+                  </div>
+                );
+              })}
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a04a80", marginBottom: 5 }}>👘 ชุดคอสตูมเป็นเซ็ต (ลุค + บัฟ + ออร่า)</div>
               {OUTFIT_SETS.map((s) => {
                 const unlocked = G.collectUnlocked ? G.collectUnlocked(s.unlock) : true;
@@ -18077,10 +18170,31 @@ export default function CherryAdventure() {
                           );
                         })}
                       </div>
+                      {/* 🎨 full-RGB colour picker + save + saved palette */}
+                      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        <input type="color" title="เลือกสีอิสระ (RGB)" value={ui.dye && ui.dye[slot] != null ? `#${ui.dye[slot].toString(16).padStart(6, "0")}` : "#ffffff"} onChange={(e) => G.setDye(slot, e.target.value)} style={{ width: 30, height: 26, border: "none", borderRadius: 6, cursor: "pointer", padding: 0, background: "none" }} />
+                        <button onClick={() => { const curC = ui.dye && ui.dye[slot]; if (curC != null) G.savePaletteColor(curC); else G.toast("เลือกสีก่อน (แตะวงกลมสี หรือใช้ตัวเลือกสี RGB)"); }} title="บันทึกสีนี้ลงพาเลต" style={{ border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: "#fff", background: "#b07ae0" }}>💾</button>
+                        {(ui.dyePalette || []).map((hx, pi) => (
+                          <button key={"p" + pi} onClick={() => G.setDye(slot, hx)} style={{ width: 24, height: 24, borderRadius: "50%", cursor: "pointer", border: "2px solid #fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", background: `#${hx.toString(16).padStart(6, "0")}`, padding: 0 }} />
+                        ))}
+                      </div>
                     </div>
                   ))}
                   {/* 👗 wardrobe presets */}
                   <div style={{ marginTop: 8, borderTop: "1px dashed #f0d0e4", paddingTop: 8 }}>
+                    {(ui.dyePalette && ui.dyePalette.length > 0) && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: "#a04a80", marginBottom: 3 }}>🎨 พาเลตสีของฉัน (แตะ ✕ เพื่อลบ)</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {(ui.dyePalette || []).map((hx, pi) => (
+                            <div key={"dp" + pi} style={{ position: "relative", width: 24, height: 24 }}>
+                              <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", background: `#${hx.toString(16).padStart(6, "0")}` }} />
+                              <button onClick={() => G.delPaletteColor(pi)} style={{ position: "absolute", top: -6, right: -6, width: 15, height: 15, borderRadius: "50%", border: "none", background: "#c05a8a", color: "#fff", fontSize: 8, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "13px" }}>✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div style={{ fontSize: 11, fontWeight: 800, color: "#a04a80", marginBottom: 5 }}>👗 ตู้เสื้อผ้า (บันทึกลุคไว้สลับใช้)</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
                       <button onClick={() => G.saveWardrobe()} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", background: "#d06ab0" }}>💾 บันทึกลุคนี้</button>
