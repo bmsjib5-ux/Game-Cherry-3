@@ -1588,6 +1588,22 @@ export default function CherryAdventure() {
     nameSprite.visible = false;
     char.add(nameSprite);
     G.nameSprite = nameSprite;
+    // 🌟 CLASS-EVOLUTION AURA — a glowing ring + orbiting motes that appear once a class path (evolution) is chosen
+    const pathAura = new THREE.Group();
+    const auraRing = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.06, 10, 44), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+    auraRing.rotation.x = Math.PI / 2; auraRing.position.y = 0.06;
+    const auraRing2 = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 8, 36), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
+    auraRing2.rotation.x = Math.PI / 2; auraRing2.position.y = 0.14;
+    pathAura.add(auraRing); pathAura.add(auraRing2);
+    const auraMotes = [];
+    for (let i = 0; i < 6; i++) {
+      const mo = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+      mo.userData.ph = i / 6 * Math.PI * 2;
+      pathAura.add(mo); auraMotes.push(mo);
+    }
+    pathAura.visible = false;
+    char.add(pathAura);
+    G.pathAura = pathAura; G.pathAuraRing = auraRing; G.pathAuraRing2 = auraRing2; G.pathAuraMotes = auraMotes;
     G.drawPlayerLabel = () => {
       const ctx = nameCanvas.getContext("2d");
       const W = 480, H = 130, cx = W / 2;
@@ -8156,6 +8172,16 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // 🌟 choose a class path at Lv.40 — permanent, so confirm-gate it in the UI
+    // 🌟 apply the chosen path's look — a persistent glowing aura tinted to the evolution
+    G.applyPathLook = () => {
+      const p = curPath();
+      const on = !!(p && p.tint != null);
+      if (G.pathAura) G.pathAura.visible = on;
+      if (on) {
+        [G.pathAuraRing, G.pathAuraRing2].forEach((r) => r && r.material.color.setHex(p.tint));
+        (G.pathAuraMotes || []).forEach((m) => m.material.color.setHex(p.tint));
+      }
+    };
     G.pickPath = (pathId) => {
       if (G.pathId) { toast("🌟 เลือกสายอาชีพไปแล้ว!"); return; }
       if (G.player.level < PATH_LV) { toast(`🔒 ต้องถึงเลเวล ${PATH_LV} ก่อน (ตอนนี้ Lv.${G.player.level})`); return; }
@@ -8163,9 +8189,23 @@ export default function CherryAdventure() {
       if (!p) return;
       G.pathId = pathId;
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // 🌟 fully restored on awakening
-      if (G.sfx) G.sfx.levelup && G.sfx.levelup();
-      for (let k = 0; k < 18; k++) setTimeout(() => burst(char.position, k % 2 ? p.tint : 0xffffff, 0.8 + Math.random() * 0.6), k * 30);
-      toast(`🌟 ตื่นสายอาชีพ! ${p.emoji} ${p.name}`);
+      if (G.sfx) { G.sfx.levelup && G.sfx.levelup(); G.sfx.boom && G.sfx.boom(); }
+      // 🌟✨ AWAKENING MOMENT — a pillar of light + expanding rings + a shower of tinted sparks
+      G._camShake = 0.7;
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, 7, 20), new THREE.MeshBasicMaterial({ color: p.tint, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+      pillar.position.set(char.position.x, 3.5, char.position.z); scene.add(pillar);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.12, 10, 40), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+      ring.rotation.x = Math.PI / 2; ring.position.set(char.position.x, 0.1, char.position.z); scene.add(ring);
+      let aw = 0;
+      const awT = setInterval(() => {
+        aw += 0.05;
+        pillar.scale.set(1 + aw * 0.5, 1, 1 + aw * 0.5); pillar.material.opacity = Math.max(0, 0.85 - aw);
+        ring.scale.setScalar(1 + aw * 6); ring.material.opacity = Math.max(0, 0.9 - aw * 0.9);
+        if (aw >= 1) { clearInterval(awT); scene.remove(pillar); scene.remove(ring); pillar.geometry.dispose(); pillar.material.dispose(); ring.geometry.dispose(); ring.material.dispose(); }
+      }, 30);
+      for (let k = 0; k < 26; k++) setTimeout(() => burst(char.position, k % 2 ? p.tint : 0xffffff, 0.6 + Math.random() * 2.2), k * 26);
+      if (G.applyPathLook) G.applyPathLook(); // ✨ the evolution aura ignites and stays
+      toast(`🌟 ตื่นสายอาชีพ! ${p.emoji} ${p.name} — พลังใหม่ตื่นขึ้น!`);
       syncPlayer();
       setUi((u) => ({ ...u, pathId: G.pathId, pathOpen: false }));
     };
@@ -9380,6 +9420,7 @@ export default function CherryAdventure() {
       G.treeNodes = d.treeNodes || {};
       G.ultAlt = !!d.ultAlt;
       G.pathId = d.pathId || null;
+      if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
       G.titleId = d.titleId || "t_none";
       G.titleId = d.titleId || "t_none";
       G.rolls = d.rolls || {}; G.sockets = d.sockets || {}; G.gems = d.gems || {};
@@ -9630,6 +9671,13 @@ export default function CherryAdventure() {
       if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create";
       // 🏷️ 3D name sprite replaced by the richer HTML nameplate (ชื่อ + เลือด + มานา) — keep hidden
       if (nameSprite) nameSprite.visible = false;
+      // 🌟 class-evolution aura — spin the rings + orbit the motes + gentle pulse
+      if (pathAura.visible) {
+        const pulse = 0.6 + Math.abs(Math.sin(t * 2)) * 0.35;
+        auraRing.rotation.z = t * 1.2; auraRing.material.opacity = pulse * 0.7;
+        auraRing2.rotation.z = -t * 1.8; auraRing2.material.opacity = pulse * 0.5;
+        auraMotes.forEach((m) => { const a = m.userData.ph + t * 1.6; m.position.set(Math.cos(a) * 0.6, 0.12 + Math.abs(Math.sin(a * 2 + t * 3)) * 0.5, Math.sin(a) * 0.6); m.material.opacity = pulse; });
+      }
       // 🏷️ float the player's nameplate (ชื่อ + เลือด + มานา) above Cherry's head (explore + battle)
       if (G.playerPlateEl) {
         if ((G.mode === "explore" || G.mode === "battle") && char) {
