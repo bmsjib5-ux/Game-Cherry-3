@@ -227,6 +227,17 @@ const ELEM_META = {
   earth: { name: "ดิน", emoji: "🪨" }, light: { name: "แสง", emoji: "✨" },
   arcane: { name: "เวท", emoji: "🔮" }, dragon: { name: "มังกร", emoji: "🐉" },
 };
+// 🎡 ELEMENT WHEEL (วงล้อธาตุ) — a clean 5-element cycle: each beats 2 and is beaten by 2. light shines on arcane/dragon.
+const ELEM_BEATS = {
+  fire: ["ice", "wind"], ice: ["wind", "earth"], wind: ["earth", "water"], earth: ["water", "fire"], water: ["fire", "ice"],
+  light: ["arcane", "dragon"], arcane: [], dragon: [],
+};
+const elemAdv = (atk, def) => {
+  if (!atk || !def) return 1;
+  if ((ELEM_BEATS[atk] || []).includes(def)) return 1.3; // 🔺 strong
+  if ((ELEM_BEATS[def] || []).includes(atk)) return 0.75; // 🔻 weak
+  return 1;
+};
 
 // ---------- Character classes ----------
 const CLASSES = {
@@ -564,10 +575,14 @@ const MATERIALS = {
 };
 // forge recipes: infuse an element onto the equipped weapon
 const ELEM_INFUSE = {
-  fire:  { mat: "fireEss",  qty: 3, name: "ธาตุไฟ",     emoji: "🔥" },
-  ice:   { mat: "iceEss",   qty: 3, name: "ธาตุน้ำแข็ง", emoji: "❄️" },
-  wind:  { mat: "windEss",  qty: 3, name: "ธาตุลม",     emoji: "🌪️" },
-  earth: { mat: "earthEss", qty: 3, name: "ธาตุดิน",     emoji: "🌍" },
+  fire:   { cost: { fireEss: 3 },              name: "ธาตุไฟ",     emoji: "🔥" },
+  ice:    { cost: { iceEss: 3 },               name: "ธาตุน้ำแข็ง", emoji: "❄️" },
+  wind:   { cost: { windEss: 3 },              name: "ธาตุลม",     emoji: "🌪️" },
+  earth:  { cost: { earthEss: 3 },             name: "ธาตุดิน",     emoji: "🌍" },
+  water:  { cost: { iceEss: 2, crystal: 1 },   name: "ธาตุน้ำ",     emoji: "💧" },
+  light:  { cost: { crystal: 3 },              name: "ธาตุแสง",     emoji: "✨" },
+  arcane: { cost: { crystal: 2, windEss: 1 },  name: "ธาตุเวท",     emoji: "🔮" },
+  dragon: { cost: { dragonScale: 2 },          name: "ธาตุมังกร",   emoji: "🐉" },
 };
 
 // ---------- 🌳 Skill tree: passive nodes unlocked with skill points (per class) ----------
@@ -7941,6 +7956,7 @@ export default function CherryAdventure() {
       const it = LOOT.find((x) => x.id === wid);
       return it && it.elem ? it.elem : null;
     };
+    G.weaponElem = weaponElem; // 🎡 expose for the element-wheel UI
 
     // switching buddies changes buffs → re-sync stats
     {
@@ -8078,10 +8094,13 @@ export default function CherryAdventure() {
       if (!wid) { toast("⚔️ ต้องสวมอาวุธก่อนถึงจะเสริมธาตุได้"); return; }
       const recipe = ELEM_INFUSE[elem];
       if (!recipe) return;
-      const have = (G.mats && G.mats[recipe.mat]) || 0;
-      if (have < recipe.qty) { toast(`${MATERIALS[recipe.mat].emoji} ${MATERIALS[recipe.mat].name} ไม่พอ! ต้องการ ${recipe.qty} (มี ${have})`); return; }
+      G.mats = G.mats || {};
+      for (const m in recipe.cost) {
+        const have = G.mats[m] || 0;
+        if (have < recipe.cost[m]) { toast(`${MATERIALS[m].emoji} ${MATERIALS[m].name} ไม่พอ! ต้องการ ${recipe.cost[m]} (มี ${have})`); return; }
+      }
       if (G.weaponInfuse[wid] === elem) { toast(`อาวุธนี้เสริม${recipe.name}อยู่แล้ว`); return; }
-      G.mats[recipe.mat] -= recipe.qty;
+      for (const m in recipe.cost) G.mats[m] -= recipe.cost[m];
       G.weaponInfuse[wid] = elem;
       burst(char.position, ELEM_INFUSE[elem].emoji === "🔥" ? 0xf5652e : 0x6ac0f0, 1.6);
       if (G.sfx) G.sfx.levelup();
@@ -13228,6 +13247,7 @@ export default function CherryAdventure() {
                 // ⚡ weakness advantage
                 const skEl = SKILL_ELEM[sk.id];
                 if (skEl && WEAK[G.enemy.spId] === skEl) { dmg *= 1.5; fxMsg += " โดนจุดอ่อน!! ⚡💢"; weakHit = true; }
+                if (skEl) { const adv = elemAdv(skEl, PET_ELEM[G.enemy.spId]); if (adv !== 1) { dmg *= adv; fxMsg += adv > 1 ? " ได้เปรียบธาตุ 🔺" : " เสียเปรียบธาตุ 🔻"; } } // 🎡 element wheel
               } else {
                 // basic attack
                 dmg = roll() * A.mult;
@@ -13235,6 +13255,7 @@ export default function CherryAdventure() {
                 if (wl) {
                   dmg *= 1.15;
                   if (WEAK[G.enemy.spId] === wl) { dmg *= 1.5; fxMsg += " โดนจุดอ่อน!! 💢"; }
+                  { const adv = elemAdv(wl, PET_ELEM[G.enemy.spId]); if (adv !== 1) { dmg *= adv; fxMsg += adv > 1 ? " ได้เปรียบธาตุ 🔺" : " เสียเปรียบธาตุ 🔻"; } } // 🎡 element wheel
                   if (wl === "fire" && Math.random() < 0.3) { G.est.burn = 2; fxMsg += " เผาไหม้ 🔥"; }
                   else if (wl === "ice" && Math.random() < 0.22) { G.est.frozen = true; fxMsg += " แช่แข็ง ❄️"; }
                   else if (wl === "dragon") { dmg *= 1.2; if (Math.random() < 0.35) { G.est.burn = 2; fxMsg += " เพลิงมังกร 🐉"; } }
@@ -17496,15 +17517,15 @@ export default function CherryAdventure() {
               <div style={{ borderTop: "1px dashed #e0d0b0", margin: "8px 0 6px" }} />
               {/* infuse element onto weapon */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a", margin: "2px 0 5px" }}>✨ เสริมธาตุให้อาวุธ</div>
-              <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>ใส่ธาตุแล้วอาวุธจะโจมตีตรงจุดอ่อนศัตรูได้ + ติดสถานะ</div>
+              <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>ใส่ธาตุแล้วอาวุธจะโจมตีตรงจุดอ่อน + ได้เปรียบตามวงล้อธาตุ + ติดสถานะ</div>
               {Object.keys(ELEM_INFUSE).map((el) => {
                 const r = ELEM_INFUSE[el];
-                const have = (ui.mats || {})[r.mat] || 0;
-                const can = have >= r.qty;
+                const can = Object.keys(r.cost).every((m) => ((ui.mats || {})[m] || 0) >= r.cost[m]);
+                const costText = Object.keys(r.cost).map((m) => `${MATERIALS[m].emoji}×${r.cost[m]}`).join(" ");
                 const cur = (ui.weaponInfuse || {})[G.equip && G.equip.weapon] === el;
                 return (
                   <div key={el} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, background: cur ? "#eef8ee" : "#f7f7f2", borderRadius: 9, padding: "5px 8px", border: cur ? "1.5px solid #6ac09a" : "1px solid #e8e8de" }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#5a5a4a" }}>{r.emoji} {r.name} <span style={{ color: "#a89a8a", fontSize: 10 }}>({MATERIALS[r.mat].emoji}×{r.qty})</span></div>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#5a5a4a" }}>{r.emoji} {r.name} <span style={{ color: "#a89a8a", fontSize: 10 }}>({costText})</span></div>
                     <button onClick={() => { G.infuseWeapon(el); setUi((u) => ({ ...u, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse } })); }}
                       disabled={cur || !can}
                       style={{ border: "none", borderRadius: 8, padding: "5px 10px", cursor: cur || !can ? "not-allowed" : "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: cur || !can ? "#a8a89a" : "#fff", background: cur ? "#6ac09a" : can ? "#c09020" : "#e8e8de" }}>
@@ -18369,6 +18390,17 @@ export default function CherryAdventure() {
                 💢 อ่อนแอต่อธาตุ{ELEM_META[WEAK[ui.enemy.spId]].emoji}{ELEM_META[WEAK[ui.enemy.spId]].name}
               </div>
             )}
+            {ui.enemy.spId && PET_ELEM[ui.enemy.spId] && ELEM_META[PET_ELEM[ui.enemy.spId]] && (() => {
+              const emE = PET_ELEM[ui.enemy.spId];
+              const wl = G && G.weaponElem ? G.weaponElem() : null;
+              const adv = wl ? elemAdv(wl, emE) : 1;
+              const advTxt = adv > 1 ? " 🔺ได้เปรียบ" : adv < 1 ? " 🔻เสียเปรียบ" : "";
+              return (
+                <div style={{ marginTop: 3, marginLeft: 4, display: "inline-block", background: adv > 1 ? "rgba(74,160,90,0.92)" : adv < 1 ? "rgba(180,90,90,0.92)" : "rgba(90,110,140,0.85)", borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 800, color: "#fff" }}>
+                  ธาตุ{ELEM_META[emE].emoji}{ELEM_META[emE].name}{advTxt}
+                </div>
+              );
+            })()}
           </div>
           {/* 🔥 combo streak */}
           {ui.endlessWave > 0 && ui.mode === "battle" && (
