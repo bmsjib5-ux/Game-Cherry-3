@@ -724,6 +724,24 @@ const CONSTELLATION = (() => {
   return out;
 })();
 
+// ---------- ⚔️ WEAPON MASTERY (ความชำนาญอาวุธ) ----------
+// Each class fights with a signature weapon TYPE. Using it in battle earns mastery XP;
+// each mastery level grants a permanent passive tuned to that weapon type. Max Lv.10 = signature.
+const WP_MASTERY = {
+  warrior:  { key: "sword",  name: "ดาบ",       emoji: "⚔️", per: { atkPct: 1.5, def: 0.6 },              cap: { atkPct: 5, def: 5 },   capDesc: "ATK +5% · DEF +5 เพิ่ม" },
+  archer:   { key: "bow",    name: "ธนู",       emoji: "🏹", per: { crit: 0.8, critDmg: 1.5 },            cap: { crit: 4, critDmg: 15 }, capDesc: "คริ +4% · ดาเมจคริ +15%" },
+  mage:     { key: "staff",  name: "คทา",       emoji: "🔮", per: { atkPct: 1.5, mp: 1 },                 cap: { atkPct: 5, mp: 10 },   capDesc: "ATK +5% · มานา +10" },
+  assassin: { key: "dagger", name: "กริช",      emoji: "🗡️", per: { crit: 0.7, eva: 0.4 },                cap: { crit: 5, eva: 5 },     capDesc: "คริ +5% · หลบ +5%" },
+  lancer:   { key: "spear",  name: "หอก",       emoji: "🔱", per: { atkPct: 1.3, hpPct: 0.7 },            cap: { atkPct: 5, hpPct: 6 }, capDesc: "ATK +5% · HP +6%" },
+  samurai:  { key: "katana", name: "คาตานะ",    emoji: "⚔️", per: { crit: 0.6, atkPct: 1.0, critDmg: 1 }, cap: { crit: 4, critDmg: 12 }, capDesc: "คริ +4% · ดาเมจคริ +12%" },
+  office:   { key: "gun",    name: "ปืน",       emoji: "🔫", per: { atkPct: 1.2, luck: 0.6 },             cap: { atkPct: 5, luck: 6 },  capDesc: "ATK +5% · โชค +6" },
+  coder:    { key: "laptop", name: "แล็ปท็อป",  emoji: "💻", per: { atkPct: 1.2, crit: 0.4, luck: 0.4 },  cap: { atkPct: 5, luck: 5 },  capDesc: "ATK +5% · โชค +5" },
+};
+// cumulative XP needed to REACH each level (index = level, 0..10)
+const WP_MASTERY_XP = [0, 120, 300, 560, 900, 1320, 1850, 2500, 3300, 4300, 5500];
+const WP_MASTERY_MAX = 10;
+const masteryLvFromXp = (xp) => { let lv = 0; for (let i = 1; i <= WP_MASTERY_MAX; i++) { if ((xp || 0) >= WP_MASTERY_XP[i]) lv = i; else break; } return lv; };
+
 // ---------- 🎀 Character customization options ----------
 const CUSTOM = {
   genders: [
@@ -771,7 +789,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 }, customTab: "gender",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, forgeOpen: false, treeOpen: false, constOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
@@ -7606,6 +7624,7 @@ export default function CherryAdventure() {
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
+    G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.tfGauge = 0; // ⚡ transformation power gauge — persists across battles until used
     G.ultAlt = false; // 👑 alternate ultimate selected?
     G.pathId = null; // 🌟 chosen class path (สายอาชีพ) — set at Lv.40
@@ -7751,6 +7770,38 @@ export default function CherryAdventure() {
       return b;
     };
     G.constBonus = constBonus;
+    // ⚔️ weapon-mastery passive bonuses (ความชำนาญอาวุธ) for the current weapon type
+    const masteryInfo = () => WP_MASTERY[G.cls] || null;
+    const masteryLv = () => { const m = masteryInfo(); if (!m) return 0; return masteryLvFromXp((G.wpMastery || {})[m.key] || 0); };
+    const masteryBonus = () => {
+      const b = { atkPct: 0, def: 0, crit: 0, critDmg: 0, hpPct: 0, mp: 0, luck: 0, eva: 0 };
+      const m = masteryInfo();
+      if (!m) return b;
+      const lv = masteryLv();
+      if (lv <= 0) return b;
+      for (const k in m.per) b[k] = (b[k] || 0) + (m.per[k] || 0) * lv;
+      if (lv >= WP_MASTERY_MAX && m.cap) for (const k in m.cap) b[k] = (b[k] || 0) + (m.cap[k] || 0); // 🌟 max-level signature
+      return b;
+    };
+    G.masteryBonus = masteryBonus;
+    G.masteryLv = masteryLv;
+    G.masteryInfo = masteryInfo;
+    // ⚔️ earn weapon-mastery XP (called on victory) → level up grants permanent passives
+    G.gainMastery = (amt) => {
+      const m = masteryInfo();
+      if (!m || !amt) return;
+      G.wpMastery = G.wpMastery || {};
+      const before = masteryLvFromXp(G.wpMastery[m.key] || 0);
+      G.wpMastery[m.key] = (G.wpMastery[m.key] || 0) + amt;
+      const after = masteryLvFromXp(G.wpMastery[m.key]);
+      if (after > before) {
+        if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+        if (char) burst(char.position, 0xf5c542, 1.5);
+        toast(after >= WP_MASTERY_MAX ? `⚔️🌟 ${m.emoji} ชำนาญ${m.name}ขั้นสูงสุด Lv.${WP_MASTERY_MAX}! ปลดพลังพิเศษ: ${m.capDesc}` : `⚔️ ${m.emoji} ความชำนาญ${m.name} → Lv.${after}! สเตตัสถาวรเพิ่มขึ้น`);
+        syncPlayer();
+      }
+      setUi((u) => ({ ...u, wpMastery: { ...G.wpMastery } }));
+    };
     // ⚡ การตื่นพลัง: each awakening tier grants +5% to all core stats, permanently
     const awakenMul = () => 1 + (G.ngPlus || 0) * 0.05;
     // 🌟 class path multipliers (สายอาชีพ) — folded into every derived stat
@@ -7777,14 +7828,14 @@ export default function CherryAdventure() {
     // ⚡ TRANSFORMATION MODE (ร่างพลัง) — a temporary super-form that supercharges every stat while active
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
-    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + constBonus().atkPct / 100));
-    const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + constBonus().defPct / 100));
-    const effMaxHp = () => Math.round((G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
-    const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp; // 🔮 mage has more mana + ✨ constellation
+    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct) / 100));
+    const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + constBonus().defPct / 100));
+    const effMaxHp = () => Math.round((G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
+    const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + masteryBonus().mp; // 🔮 mage has more mana + ✨ constellation + ⚔️ mastery
     const effSpd = () => 3.4 * (1 + equipBonus().spd / 100); // ⚡ shoes speed up walking
-    const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva; // 💨 % chance to dodge + 🌟 path + ✨ constellation
-    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit; // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation
-    const effLuck = () => bs().luck + tB("luck") + constBonus().luck; // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation
+    const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva; // 💨 % chance to dodge + 🌟 path + ✨ constellation + ⚔️ mastery
+    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit; // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery
+    const effLuck = () => bs().luck + tB("luck") + constBonus().luck + masteryBonus().luck; // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + ⚔️ mastery
     const weaponElem = () => {
       const wid = G.equip.weapon;
       // ⛏️ forge infusion overrides/adds an element to the weapon
@@ -8401,7 +8452,14 @@ export default function CherryAdventure() {
       const willOpen = !G.constOpen;
       G.constOpen = willOpen;
       if (!G.constNodes) G.constNodes = {}; // 🛟 self-heal for old saves
-      setUi((u) => ({ ...u, constOpen: willOpen, constNodes: { ...G.constNodes }, stardust: G.stardust || 0, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+      setUi((u) => ({ ...u, constOpen: willOpen, constNodes: { ...G.constNodes }, stardust: G.stardust || 0, masteryOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+    };
+    // ⚔️ WEAPON MASTERY panel
+    G.toggleMastery = () => {
+      const willOpen = !G.masteryOpen;
+      G.masteryOpen = willOpen;
+      if (!G.wpMastery) G.wpMastery = {};
+      setUi((u) => ({ ...u, masteryOpen: willOpen, wpMastery: { ...G.wpMastery }, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
     };
     G.unlockConst = (nodeId) => {
       if (!G.constNodes) G.constNodes = {};
@@ -8967,6 +9025,8 @@ export default function CherryAdventure() {
         toast(`✨ ได้ผงดาว +${dust} (รวม ${G.stardust})`);
         setUi((u) => ({ ...u, stardust: G.stardust }));
       }
+      // ⚔️ WEAPON MASTERY XP — earned for fighting with your weapon (bosses/ghosts give more)
+      if (G.gainMastery) G.gainMastery(Math.round((6 + G.enemy.lv * 2) * (wasBoss ? 3 : isGhost ? 2 : 1)));
       if (em.userData.ghost) ghostMesh = null;
       scene.remove(em);
       G.banim = { type: "wait", t: 0, dur: 1.2 };
@@ -9475,6 +9535,7 @@ export default function CherryAdventure() {
       G.treeNodes = {}; // 🌳 fresh passive skill tree
       G.constNodes = {}; // ✨ fresh constellation board
       G.stardust = 0; // ✨ fresh star dust
+      G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.tfGauge = 0; // ⚡ fresh power gauge
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
@@ -9541,7 +9602,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -9753,6 +9814,7 @@ export default function CherryAdventure() {
       G.treeNodes = d.treeNodes || {};
       G.constNodes = d.constNodes || {};
       G.stardust = d.stardust || 0;
+      G.wpMastery = d.wpMastery || {};
       G.ultAlt = !!d.ultAlt;
       G.pathId = d.pathId || null;
       if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
@@ -12985,7 +13047,7 @@ export default function CherryAdventure() {
               const critBase = cls === "archer" ? 0.25 : cls === "assassin" ? 0.3 : cls === "samurai" ? 0.22 : 0.05;
               const critCh = critBase + critBonus + effCrit() / 100 + (G.battleCrit || 0) / 100;
               if (Math.random() < critCh) {
-                dmg *= 2 + (G.battleCritDmg || 0) / 100 + ((curPath() && curPath().critDmg) || 0) / 100 + tB("critDmg") / 100 + (G.constBonus ? G.constBonus().critDmg : 0) / 100; // 💥 crit dmg: buffs + 🌟 path + 🏅 title + ✨ constellation
+                dmg *= 2 + (G.battleCritDmg || 0) / 100 + ((curPath() && curPath().critDmg) || 0) / 100 + tB("critDmg") / 100 + (G.constBonus ? G.constBonus().critDmg : 0) / 100 + (G.masteryBonus ? G.masteryBonus().critDmg : 0) / 100; // 💥 crit dmg: buffs + 🌟 path + 🏅 title + ✨ constellation + ⚔️ mastery
                 didCrit = true;
                 G.achStats.crits = (G.achStats.crits || 0) + 1; // 🏅 for the ราชาคริติคอล title
                 fxMsg += " 🎯 คริติคอล!!";
@@ -15365,7 +15427,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "socialOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "socialOpen"];
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
@@ -16152,7 +16214,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 🏷️ player nameplate — floats above Cherry's head (positioned each frame), explore + battle; hidden while a menu is open */}
-      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.socialOpen) && (
+      {(ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.socialOpen) && (
         <div ref={(el) => { G.playerPlateEl = el; }} style={{
           position: "absolute", left: 0, top: 0, display: "none",
           transform: "translate(-50%,-100%)", width: 168, textAlign: "center",
@@ -16535,6 +16597,30 @@ export default function CherryAdventure() {
                 fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
               }}>✨{ui.stardust || 0}</span>
             )}
+          </button>
+
+          {/* ⚔️ weapon mastery button */}
+          <button
+            onClick={() => G.toggleMastery()}
+            title="ความชำนาญอาวุธ"
+            style={{
+              position: "absolute", right: 12, bottom: 578,
+              width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              fontSize: 24, background: "linear-gradient(145deg,#5a4a2a,#8a6a2a)", boxShadow: "0 4px 12px rgba(140,110,60,0.4)",
+            }}
+          >
+            {(WP_MASTERY[ui.cls] || {}).emoji || "⚔️"}
+            {(() => {
+              const mi = WP_MASTERY[ui.cls];
+              const mlv = mi ? masteryLvFromXp((ui.wpMastery || {})[mi.key] || 0) : 0;
+              return mlv > 0 && (
+                <span style={{
+                  position: "absolute", top: -5, right: -6, minWidth: 20, height: 20, padding: "0 4px",
+                  borderRadius: 10, background: mlv >= WP_MASTERY_MAX ? "#e0a020" : "#c0902a", color: "#fff",
+                  fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
+                }}>Lv{mlv}</span>
+              );
+            })()}
           </button>
 
           {/* ⚡ skill upgrade panel */}
@@ -17377,6 +17463,61 @@ export default function CherryAdventure() {
                       );
                     })}
                     <div style={{ fontSize: 10, color: "#a99ac0", marginTop: 6, textAlign: "center" }}>รับ ✨ ผงดาว จากการชนะศึก (บอสให้เยอะ) · ดาว C6 คือพลังพิเศษประจำอาชีพ</div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ⚔️ weapon mastery panel */}
+          {ui.masteryOpen && (
+            <div style={{
+              position: "absolute", right: 72, bottom: 28, width: 268, maxHeight: "66vh", overflowY: "auto",
+              background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: "0 6px 20px rgba(120,100,50,0.32)",
+            }}>
+              {closeBtn("masteryOpen")}
+              {(() => {
+                const mi = WP_MASTERY[(G && G.cls) || ui.cls];
+                if (!mi) return <div style={{ fontSize: 12, color: "#8a7a5a" }}>เลือกอาชีพก่อนจึงจะมีอาวุธประจำตัว</div>;
+                const xp = (ui.wpMastery || {})[mi.key] || 0;
+                const lv = masteryLvFromXp(xp);
+                const maxed = lv >= WP_MASTERY_MAX;
+                const cur = WP_MASTERY_XP[lv];
+                const nextT = maxed ? xp : WP_MASTERY_XP[lv + 1];
+                const prog = maxed ? 1 : Math.max(0, Math.min(1, (xp - cur) / (nextT - cur)));
+                const LAB = { atkPct: "ATK %", def: "DEF", crit: "คริ %", critDmg: "ดาเมจคริ %", hpPct: "HP %", mp: "มานา", luck: "โชค", eva: "หลบ %" };
+                const bon = {};
+                for (const k in mi.per) bon[k] = (bon[k] || 0) + mi.per[k] * lv;
+                if (maxed) for (const k in mi.cap) bon[k] = (bon[k] || 0) + mi.cap[k];
+                const keys = Object.keys(bon).filter((k) => bon[k] > 0);
+                return (
+                  <>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: "#a07a20", marginBottom: 2 }}>{mi.emoji} ความชำนาญ{mi.name}{maxed ? " 🌟" : ""}</div>
+                    <div style={{ fontSize: 11, color: "#9a8a6a", marginBottom: 6 }}>ยิ่งใช้อาวุธประจำอาชีพสู้ ยิ่งชำนาญ → สเตตัสถาวรเพิ่มขึ้น</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 46, height: 46, borderRadius: "50%", background: maxed ? "linear-gradient(135deg,#f5c542,#e0894a)" : "#f0e6cf", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: maxed ? "#fff" : "#a07a20", border: "2px solid " + (maxed ? "#e0a020" : "#dcc890") }}>Lv{lv}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 10, color: "#9a8a6a", marginBottom: 2 }}>{maxed ? "ชำนาญขั้นสูงสุดแล้ว!" : `XP ${xp} / ${nextT} (เหลือ ${nextT - xp})`}</div>
+                        <div style={{ height: 9, borderRadius: 6, background: "#eadfc4", overflow: "hidden" }}>
+                          <div style={{ width: Math.round(prog * 100) + "%", height: "100%", background: "linear-gradient(90deg,#e0a020,#f5c542)" }} />
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#8a7040", margin: "6px 0 3px" }}>โบนัสที่ได้รับตอนนี้</div>
+                    {keys.length === 0 ? (
+                      <div style={{ fontSize: 10.5, color: "#a89a7a", background: "#f5efdd", borderRadius: 8, padding: "6px 8px" }}>ยังไม่มี — ชนะศึกด้วยอาวุธนี้เพื่อสะสมความชำนาญ</div>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {keys.map((k) => (
+                          <div key={k} style={{ fontSize: 10.5, fontWeight: 800, color: "#7a5a10", background: "#faf0d2", border: "1px solid #e6d5a0", borderRadius: 999, padding: "3px 9px" }}>+{Math.round(bon[k] * 10) / 10} {LAB[k] || k}</div>
+                        ))}
+                      </div>
+                    )}
+                    {maxed ? (
+                      <div style={{ fontSize: 10.5, color: "#c07a10", fontWeight: 800, marginTop: 8, background: "#fff3d6", borderRadius: 8, padding: "6px 8px" }}>🌟 พลังพิเศษสูงสุด: {mi.capDesc}</div>
+                    ) : (
+                      <div style={{ fontSize: 10, color: "#a89a7a", marginTop: 8, textAlign: "center" }}>เลเวลถัดไปเพิ่มสเตตัสอีก · Lv.10 ปลดพลังพิเศษ: {mi.capDesc}</div>
+                    )}
                   </>
                 );
               })()}
