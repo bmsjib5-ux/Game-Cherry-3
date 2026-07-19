@@ -14897,13 +14897,14 @@ export default function CherryAdventure() {
           G._camShake *= 0.88; // decay
         }
       } else {
-        const camX = char.position.x * 0.5;
+        // 🎥 follow the character 1:1 so it always stays centered on screen
+        const camX = char.position.x;
         const camY = camDist * 0.77;
-        const camZ = camDist * 0.8 + char.position.z * 0.55;
-        camera.position.x += (camX - camera.position.x) * 0.05;
-        camera.position.y += (camY - camera.position.y) * 0.07;
-        camera.position.z += (camZ - camera.position.z) * 0.05;
-        camera.lookAt(char.position.x * 0.6, 0.8, char.position.z * 0.55);
+        const camZ = camDist * 0.8 + char.position.z;
+        camera.position.x += (camX - camera.position.x) * 0.1;
+        camera.position.y += (camY - camera.position.y) * 0.08;
+        camera.position.z += (camZ - camera.position.z) * 0.1;
+        camera.lookAt(char.position.x, 0.8, char.position.z);
       }
 
       renderer.render(scene, camera);
