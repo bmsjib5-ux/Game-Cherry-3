@@ -15950,7 +15950,8 @@ function CherryAdventure() {
       const sp = SPECIES[wild.userData.spId];
       const lv = wild.userData.lv || 1;
       const boss = !!wild.userData.boss;
-      const scale = (1 + (lv - 1) * 0.20) * (boss ? 2.0 : 1.35); // ⚖️ rebalanced: smoother curve, fairer bosses
+      const scale = (1 + (lv - 1) * 0.32) * (boss ? 2.0 : 1.4); // ⚖️ เลือดเยอะขึ้น & โตตามเลเวลเร็วขึ้น (ตียากขึ้น)
+      const lvDef = Math.min(0.1, (lv - 1) * 0.004); // 🛡️ ยิ่งเลเวลสูง ยิ่งตั้งรับเก่ง — ลดดาเมจบ่อยขึ้น
       const ghost = !!wild.userData.ghost;
       const golden = !!wild.userData.golden;
       const shiny = !!wild.userData.shiny;
@@ -15971,10 +15972,10 @@ function CherryAdventure() {
         biomeBoss: wild.userData.biomeBoss || null,
         horde: !!wild.userData.horde,
         dungeon: !!wild.userData.dungeon,
-        // 🎲 defensive-skill chances (bosses & ghosts are craftier)
+        // 🎲 defensive-skill chances (bosses & ghosts are craftier; scales up with level)
         evaChance: boss ? 0.2 : ghost ? 0.16 : golden ? 0.05 : 0.1,
-        blockChance: boss ? 0.22 : ghost ? 0.16 : 0.12,
-        guardChance: boss ? 0.28 : 0.18,
+        blockChance: (boss ? 0.22 : ghost ? 0.16 : 0.12) + lvDef * 0.3,
+        guardChance: (boss ? 0.28 : 0.18) + lvDef,
         mesh: wild
       };
       // 👻 friend-ghost: override stats + name from the friend's profile (mirror duel)
@@ -16285,7 +16286,10 @@ function CherryAdventure() {
       } // ✨ shiny bonus
       G.gold += goldGain;
       toast(`💰 +${goldGain} ทอง`);
-      gainExp(Math.round((20 + sp.tier * 10 + G.enemy.lv * 3) * (wasBoss ? 3 : isGhost ? 2 : 1) * comboMult * ngRew));
+      // 📈 EXP scales strongly with the monster's level — and with how tough it was relative to you
+      // (สู้ตัวเลเวลสูงกว่าได้ EXP เยอะ · ตัวเลเวลต่ำกว่ามากได้น้อยลง)
+      const expRelMul = Math.max(0.35, Math.min(1.6, 1 + (G.enemy.lv - G.player.level) * 0.06));
+      gainExp(Math.round((15 + sp.tier * 8 + G.enemy.lv * 6) * expRelMul * (wasBoss ? 3 : isGhost ? 2 : 1) * comboMult * ngRew));
       setUi(u => ({
         ...u,
         combo: G.combo
