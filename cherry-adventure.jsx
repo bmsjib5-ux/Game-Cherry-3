@@ -1604,6 +1604,25 @@ export default function CherryAdventure() {
     pathAura.visible = false;
     char.add(pathAura);
     G.pathAura = pathAura; G.pathAuraRing = auraRing; G.pathAuraRing2 = auraRing2; G.pathAuraMotes = auraMotes;
+    // ⚡ TRANSFORMATION (ร่างพลัง) AURA — a blazing super-form aura that erupts around Cherry while transformed
+    const tfAura = new THREE.Group();
+    const tfMat = (col, op) => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const tfColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.78, 3.4, 20, 1, true), tfMat(0xffd24a, 0.26));
+    tfColumn.position.y = 1.6;
+    const tfGroundRing = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.09, 10, 40), tfMat(0xffa030, 0.8));
+    tfGroundRing.rotation.x = Math.PI / 2; tfGroundRing.position.y = 0.05;
+    const tfGroundRing2 = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.9, 36), tfMat(0xffe070, 0.5));
+    tfGroundRing2.rotation.x = -Math.PI / 2; tfGroundRing2.position.y = 0.04;
+    tfAura.add(tfColumn); tfAura.add(tfGroundRing); tfAura.add(tfGroundRing2);
+    const tfFlames = [];
+    for (let i = 0; i < 10; i++) {
+      const fl = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.62, 6), tfMat(i % 2 ? 0xffb020 : 0xff7020, 0.85));
+      fl.userData.ph = i / 10 * Math.PI * 2;
+      tfAura.add(fl); tfFlames.push(fl);
+    }
+    tfAura.visible = false;
+    char.add(tfAura);
+    G.tfAura = tfAura; G.tfColumn = tfColumn; G.tfGroundRing = tfGroundRing; G.tfGroundRing2 = tfGroundRing2; G.tfFlames = tfFlames;
     G.drawPlayerLabel = () => {
       const ctx = nameCanvas.getContext("2d");
       const W = 480, H = 130, cx = W / 2;
@@ -7648,13 +7667,16 @@ export default function CherryAdventure() {
     // the worn title only counts if it's actually been earned (guards against edited saves)
     const curTitle = () => { const t = titleOf(G.titleId); return titleUnlocked(t) ? t : TITLES[0]; };
     const tB = (k) => { const b = curTitle().bonus; return (b && b[k]) || 0; }; // 🏅 bonus %, 0 when none
-    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100));
-    const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def) * awakenMul() * pMul("def") * (1 + tB("def") / 100));
+    // ⚡ TRANSFORMATION MODE (ร่างพลัง) — a temporary super-form that supercharges every stat while active
+    const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
+    const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
+    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk"));
+    const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def"));
     const effMaxHp = () => Math.round((G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + treeBonus().hpPct / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5; // 🔮 mage has more mana
     const effSpd = () => 3.4 * (1 + equipBonus().spd / 100); // ⚡ shoes speed up walking
     const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0); // 💨 % chance to dodge + 🌟 path
-    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit"); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title
+    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit(); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform
     const effLuck = () => bs().luck + tB("luck"); // 🍀 luck: catch % + gold % + 🏅 title
     const weaponElem = () => {
       const wid = G.equip.weapon;
@@ -8572,6 +8594,11 @@ export default function CherryAdventure() {
       G.battleCritDmg = 0; // 💥 crit damage buff
       G.regen = 0; // ✨ Holy Healing regeneration turns
       G.ultUsed = false; // 🌟 one ultimate per battle
+      // ⚡ TRANSFORMATION MODE — fresh power gauge every battle
+      G.tfActive = false;
+      G.tfTurns = 0;
+      G.tfGauge = 0;
+      if (G.tfAura) { G.tfAura.visible = false; G.tfAura.userData.fade = false; G.tfAura.userData.fadeT = 0; }
       // 🔍 keep the player's last battle zoom (loaded from storage) instead of resetting
       // stage positions
       battleCenter.set(char.position.x, 0, char.position.z);
@@ -8623,7 +8650,7 @@ export default function CherryAdventure() {
       }
       setMouth("smile");
       setUi((u) => ({
-        ...u, mode: "battle", bstate: "choose", ultUsed: false,
+        ...u, mode: "battle", bstate: "choose", ultUsed: false, tfGauge: 0, tfActive: false, tfTurns: 0, tfReady: false,
         enemy: { name: sp.name, emoji: sp.emoji, hp: G.enemy.hp, maxHp: G.enemy.maxHp, lv, boss, desc: sp.desc, spId: G.enemy.spId, shiny },
         msg: ghost ? `👻 ผีราตรี Lv.${lv} ลอยเข้าหา... หนาวเยือกไปทั้งตัว!!`
           : golden ? `🌟 จับมอนสเตอร์ทองให้ได้!! (จับติดง่ายมาก)`
@@ -8661,10 +8688,13 @@ export default function CherryAdventure() {
       }
       G.enemy = null;
       G.banim = null;
+      // ⚡ end any active transformation when the battle ends
+      G.tfActive = false; G.tfTurns = 0; G.tfGauge = 0; G._tfAnnounced = false;
+      if (G.tfAura) { G.tfAura.visible = false; G.tfAura.userData.fade = false; G.tfAura.userData.fadeT = 0; }
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
       setMouth("smile");
-      setUi((u) => ({ ...u, mode: "explore", enemy: null, msg: "" }));
+      setUi((u) => ({ ...u, mode: "explore", enemy: null, tfActive: false, tfGauge: 0, tfReady: false, msg: "" }));
       setTimeout(() => saveGame(), 50); // 💾 save after every battle
       // ♾️ endless mode: heal a little and roll into the next wave
       if (G.endlessMode) {
@@ -8832,8 +8862,62 @@ export default function CherryAdventure() {
       setTimeout(() => endBattle(false), 1200);
     };
 
+    // ⚡ TRANSFORMATION MODE (ร่างพลัง) — power gauge fills through battle, then a temporary super-form
+    const TF_TURNS = 4; // how many player actions the transformation lasts
+    G.chargeTf = (n) => {
+      if (G.tfActive || (G.tfGauge || 0) >= 100) return;
+      G.tfGauge = Math.min(100, (G.tfGauge || 0) + n);
+      const ready = G.tfGauge >= 100;
+      if (ready && !G._tfAnnounced) { G._tfAnnounced = true; toast("⚡ เกจพลังเต็ม! กด ⚡ เพื่อแปลงร่าง!"); }
+      setUi((u) => ({ ...u, tfGauge: Math.round(G.tfGauge), tfReady: ready }));
+    };
+    G.tickTransform = () => {
+      if (!G.tfActive) return;
+      G.tfTurns--;
+      if (G.tfTurns <= 0) {
+        G.tfActive = false; G.tfTurns = 0;
+        if (G.tfAura) { G.tfAura.userData.fade = true; G.tfAura.userData.fadeT = 0; }
+        toast("⚡ ร่างพลังสลายลง... เกจพลังเริ่มสะสมใหม่");
+        setUi((u) => ({ ...u, tfActive: false, tfTurns: 0 }));
+        syncPlayer(); // stats drop back down
+      } else {
+        setUi((u) => ({ ...u, tfTurns: G.tfTurns }));
+      }
+    };
+    G.doTransform = () => {
+      if (G.tfActive) { toast(`🔥 ร่างพลังทำงานอยู่ (เหลือ ${G.tfTurns} เทิร์น)`); return; }
+      if ((G.tfGauge || 0) < 100) { toast("⚡ เกจพลังยังไม่เต็ม! สู้ต่อเพื่อสะสมพลัง"); return; }
+      G.tfActive = true; G.tfTurns = TF_TURNS; G.tfGauge = 0; G._tfAnnounced = false;
+      // 💥 power surge — a burst of HP + mana on transforming
+      G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.round(effMaxHp() * 0.2));
+      G.player.mp = Math.min(effMaxMp(), G.player.mp + Math.round(effMaxMp() * 0.3));
+      if (G.tfAura) { G.tfAura.visible = true; G.tfAura.userData.fade = false; G.tfAura.userData.fadeT = 0; }
+      // ✨ activation VFX — a rising light pillar + expanding shockwave ring + sparks around Cherry
+      const cx = char.position.x, cz = char.position.z;
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 5.2, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xffe070, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+      pillar.position.set(cx, 2.6, cz); scene.add(pillar);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.13, 12, 40), new THREE.MeshBasicMaterial({ color: 0xffa030, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
+      ring.rotation.x = Math.PI / 2; ring.position.set(cx, 0.1, cz); scene.add(ring);
+      let vt = 0;
+      const iv = setInterval(() => {
+        vt += 0.05;
+        pillar.scale.set(1 + vt * 3.5, 1, 1 + vt * 3.5); pillar.material.opacity = Math.max(0, 0.9 - vt * 1.05);
+        ring.scale.setScalar(1 + vt * 6); ring.material.opacity = Math.max(0, 0.95 - vt * 0.9);
+        if (Math.random() < 0.85) burst(new THREE.Vector3(cx + (Math.random() - 0.5) * 1.6, Math.random() * 2.6, cz + (Math.random() - 0.5) * 1.6), Math.random() < 0.5 ? 0xffd24a : 0xff7020, 0.5 + Math.random() * 1.2);
+        if (vt >= 1) { clearInterval(iv); scene.remove(pillar); scene.remove(ring); pillar.geometry.dispose(); pillar.material.dispose(); ring.geometry.dispose(); ring.material.dispose(); }
+      }, 40);
+      G._camShake = Math.max(G._camShake || 0, 0.6);
+      if (G.sfx && G.sfx.charge) G.sfx.charge();
+      toast(`⚡🔥 แปลงร่าง! พลังทะลุขีดจำกัด — โจมตี/พลังป้องกัน/คริพุ่ง ${TF_TURNS} เทิร์น!`);
+      setUi((u) => ({ ...u, bstate: "busy", tfActive: true, tfTurns: TF_TURNS, tfGauge: 0, tfReady: false }));
+      syncPlayer(); // stats jump immediately
+      setTimeout(() => { if (G.mode === "battle" && !G.banim) setUi((u) => ({ ...u, bstate: "choose" })); }, 1300);
+    };
     const enemyTurn = () => {
       if (!G.enemy) return;
+      // ⚡ transformation ticks down one step each round; gauge builds while not transformed
+      G.tickTransform();
+      if (!G.tfActive) G.chargeTf(15);
       // 🌟 path perk: passive HP regen each turn (Paladin / Priest)
       { const P = curPath();
         if (P && P.regen && G.player.hp < effMaxHp()) {
@@ -9677,6 +9761,23 @@ export default function CherryAdventure() {
         auraRing.rotation.z = t * 1.2; auraRing.material.opacity = pulse * 0.7;
         auraRing2.rotation.z = -t * 1.8; auraRing2.material.opacity = pulse * 0.5;
         auraMotes.forEach((m) => { const a = m.userData.ph + t * 1.6; m.position.set(Math.cos(a) * 0.6, 0.12 + Math.abs(Math.sin(a * 2 + t * 3)) * 0.5, Math.sin(a) * 0.6); m.material.opacity = pulse; });
+      }
+      // ⚡ transformation (ร่างพลัง) aura — blazing rising flames + spinning ground rings while the super-form is active
+      if (tfAura.visible || tfAura.userData.fade) {
+        const fade = tfAura.userData.fade;
+        if (fade) tfAura.userData.fadeT = (tfAura.userData.fadeT || 0) + dt;
+        const fk = fade ? Math.max(0, 1 - tfAura.userData.fadeT / 0.8) : 1;
+        if (fade && fk <= 0) {
+          tfAura.visible = false; tfAura.userData.fade = false; tfAura.userData.fadeT = 0;
+        } else {
+          tfAura.visible = true;
+          const puls = 0.7 + Math.abs(Math.sin(t * 6)) * 0.3;
+          tfColumn.rotation.y = t * 1.5; tfColumn.material.opacity = 0.24 * puls * fk;
+          tfColumn.scale.set(1, 1 + Math.sin(t * 8) * 0.06, 1);
+          tfGroundRing.rotation.z = t * 2.6; tfGroundRing.material.opacity = 0.8 * fk;
+          tfGroundRing2.rotation.z = -t * 1.9; tfGroundRing2.scale.setScalar(1 + Math.abs(Math.sin(t * 3)) * 0.15); tfGroundRing2.material.opacity = 0.45 * puls * fk;
+          tfFlames.forEach((f) => { const a = f.userData.ph + t * 3; const r = 0.62; f.position.set(Math.cos(a) * r, 0.3 + Math.abs(Math.sin(a * 2 + t * 7)) * 0.7, Math.sin(a) * r); f.rotation.y = a; f.material.opacity = 0.85 * puls * fk; });
+        }
       }
       // 🏷️ float the player's nameplate (ชื่อ + เลือด + มานา) above Cherry's head (explore + battle)
       if (G.playerPlateEl) {
@@ -14550,6 +14651,7 @@ export default function CherryAdventure() {
                   dmg = Math.max(1, Math.round(dmg * 0.35)); // block soaks 65% of the blow
                 }
                 G.player.hp = Math.max(0, G.player.hp - dmg);
+                G.chargeTf(9); // ⚡ taking a hit builds the power gauge (fighting spirit)
                 popDamage(char.position, dmg, "hit"); // 💢 damage taken pops on the player too
                 // ✨ affix: 🌵 หนามสะท้อน
                 { const AF = equipAffixes();
@@ -17638,6 +17740,15 @@ export default function CherryAdventure() {
                       ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)",
                       () => G.act("ult"), null,
                       { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตาย" })}
+                    {iconBtn(ui.tfActive ? "🔥" : "⚡",
+                      ui.tfActive ? "linear-gradient(135deg,#ff7020,#f5c542)" : ((ui.tfGauge || 0) >= 100 ? "linear-gradient(135deg,#ffd24a,#ff7020)" : "#8a8a7a"),
+                      () => G.doTransform(),
+                      ui.tfActive ? ui.tfTurns : (ui.tfGauge || 0),
+                      {
+                        title: ui.tfActive ? `🔥 ร่างพลัง — เหลือ ${ui.tfTurns} เทิร์น` : ((ui.tfGauge || 0) >= 100 ? "⚡ แปลงร่าง! (เกจพลังเต็ม)" : `⚡ เกจพลัง ${ui.tfGauge || 0}% — สู้ต่อเพื่อสะสม`),
+                        badgeBg: ui.tfActive ? "#c0501a" : ((ui.tfGauge || 0) >= 100 ? "#e08020" : "#5a5a52"),
+                        border: ((ui.tfGauge || 0) >= 100 && !ui.tfActive) ? "2px solid #fff" : "none",
+                      })}
                     {skillsOf(ui.cls, ui.pathId).map((sk, slot) => {
                       const cost = sk.cost || 8;
                       const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId);
