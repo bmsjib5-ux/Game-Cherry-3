@@ -290,6 +290,29 @@ const CLASSES = {
     perk: "กาแฟฟื้นมานาทุกเทิร์น · ยิ่งเลือดน้อยยิ่ง OT แรง",
   },
 };
+// 📊 role ratings (0–5) shown as a stat graph on the class picker
+const RATING_CATS = [["single", "โจมตีเดี่ยว"], ["control", "ควบคุม"], ["aoe", "โจมตีกลุ่ม"], ["def", "ป้องกัน"], ["heal", "ฟื้นฟู"]];
+const CLASS_RATINGS = {
+  warrior:  { single: 3, control: 2, aoe: 2, def: 5, heal: 3 },
+  archer:   { single: 5, control: 2, aoe: 3, def: 1, heal: 2 },
+  mage:     { single: 4, control: 3, aoe: 5, def: 1, heal: 2 },
+  assassin: { single: 5, control: 3, aoe: 2, def: 2, heal: 1 },
+  lancer:   { single: 4, control: 4, aoe: 2, def: 3, heal: 2 },
+  samurai:  { single: 5, control: 2, aoe: 3, def: 2, heal: 1 },
+  coder:    { single: 4, control: 4, aoe: 3, def: 2, heal: 4 },
+  office:   { single: 3, control: 3, aoe: 2, def: 3, heal: 5 },
+};
+// 💡 quick playstyle guidance per class
+const CLASS_TIP = {
+  warrior:  "แท็งก์แนวหน้า อึดทน บุกรับได้ครบ — เหมาะกับมือใหม่",
+  archer:   "ดาเมจเดี่ยวจากระยะไกล คริแรง แต่ตัวบางต้องรักษาระยะ",
+  mage:     "กวาดมอนเป็นกลุ่มด้วยเวท เก็บระยะแล้วปล่อยของหนัก",
+  assassin: "เบิร์สต์เดี่ยวไว หลบเก่ง เล่นจังหวะเข้า-ออก",
+  lancer:   "เจาะเกราะ/ทะลุบล็อก คุมศัตรูจากระยะกลาง",
+  samurai:  "ฟันรัวคริสูง สายบุกดุดันจบไว",
+  coder:    "สายไฮบริดรอบด้าน คริ + มานาฟื้นไว",
+  office:   "อึดยาว ยิ่งเลือดน้อยยิ่งแรง — สายอดทนสู้ยืดเยื้อ",
+};
 const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc" };
 // 👗 per-class outfit look: shirt/pants/trim colors + which accessory to show
 const CLASS_OUTFIT = {
@@ -16162,6 +16185,7 @@ export default function CherryAdventure() {
               background: "rgba(255,255,255,0.95)", borderRadius: 14, padding: "10px 16px", maxWidth: 320,
               textAlign: "center", boxShadow: "0 4px 14px rgba(90,120,70,0.25)",
             }}>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", color: "#b0a080" }}>แนะนำอาชีพ</div>
               <div style={{ fontSize: 15, fontWeight: 800, color: `#${CLASSES[ui.chosenClass].color.toString(16).padStart(6, "0")}` }}>
                 {CLASSES[ui.chosenClass].emoji} {CLASSES[ui.chosenClass].name}
               </div>
@@ -16170,6 +16194,26 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 10, color: "#6a8a5a", fontWeight: 700, marginTop: 2 }}>
                 ❤️{CLASSES[ui.chosenClass].hp} ⚔️{CLASSES[ui.chosenClass].atk} 🛡️{CLASSES[ui.chosenClass].def} · 🌟 {ULTS[ui.chosenClass].name}
               </div>
+              {CLASS_TIP[ui.chosenClass] && (
+                <div style={{ fontSize: 10, color: "#5a7a4a", fontWeight: 700, marginTop: 5, background: "rgba(120,160,100,0.12)", borderRadius: 8, padding: "4px 9px", lineHeight: 1.4 }}>💡 {CLASS_TIP[ui.chosenClass]}</div>
+              )}
+              {CLASS_RATINGS[ui.chosenClass] && (
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 3.5 }}>
+                  {RATING_CATS.map((pair) => {
+                    const v = CLASS_RATINGS[ui.chosenClass][pair[0]] || 0;
+                    const col = `#${CLASSES[ui.chosenClass].color.toString(16).padStart(6, "0")}`;
+                    return (
+                      <div key={pair[0]} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 9.5, color: "#7a6a5a", width: 56, textAlign: "right", flex: "none", fontWeight: 700 }}>{pair[1]}</span>
+                        <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(0,0,0,0.09)", overflow: "hidden" }}>
+                          <div style={{ width: `${v / 5 * 100}%`, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${col}, ${col}bb)` }} />
+                        </div>
+                        <span style={{ fontSize: 9, color: "#a09080", width: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{v}/5</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
           {/* class cards */}
