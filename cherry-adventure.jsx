@@ -1113,12 +1113,12 @@ export default function CherryAdventure() {
     renderer.outputEncoding = THREE.sRGBEncoding;
     mount.appendChild(renderer.domElement);
 
-    const amb = new THREE.AmbientLight(0xffffff, 0.38);
+    const amb = new THREE.AmbientLight(0xffffff, 0.32);
     scene.add(amb);
     // sky/ground bounce light for softer, more realistic shading
-    const hemi = new THREE.HemisphereLight(0xfff6e6, 0x8aa878, 0.5);
+    const hemi = new THREE.HemisphereLight(0xfff6e6, 0x8aa878, 0.4);
     scene.add(hemi);
-    const key = new THREE.DirectionalLight(0xfff8e8, 0.85);
+    const key = new THREE.DirectionalLight(0xfff8e8, 0.66);
     key.position.set(6, 11, 7);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -10726,10 +10726,10 @@ export default function CherryAdventure() {
         const fogSky = G.biomeFog || daySky;
         scene.fog.color.copy(skyTmp).lerp(fogSky, dayAmt * 0.5);
         // lights (soft, no glare)
-        amb.intensity = 0.13 + 0.25 * dayAmt;
-        hemi.intensity = 0.12 + 0.36 * dayAmt;
+        amb.intensity = 0.13 + 0.19 * dayAmt; // ☀️ ลดแดดจ้ากลางวัน
+        hemi.intensity = 0.12 + 0.28 * dayAmt;
         hemi.color.lerpColors(dayColors.hemiSkyNight, dayColors.hemiSkyDay, dayAmt);
-        key.intensity = 0.16 + 0.62 * dayAmt;
+        key.intensity = 0.16 + 0.50 * dayAmt;
         key.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
         // sun/moon travels across the sky → shadows move through the day
         key.position.set(Math.cos(sunA) * 9, 4 + Math.max(0.1, sunH) * 8, 7);
