@@ -4971,40 +4971,43 @@ function CherryAdventure() {
     const char = new THREE.Group();
     scene.add(char);
     const shoeMeshes = [];
+    const legSkinMeshes = []; // 🦵 ขาเปลี่ยนเป็นสีผิวได้ (ฮารุ)
     const makeLeg = side => {
       const hip = new THREE.Group();
-      hip.position.set(0.165 * side, 1.22, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
-      hip.scale.set(1, 1.14, 1); // 🦵 ขายาวขึ้น (ยืดแนวตั้ง เท้ายังอยู่พื้น)
+      hip.position.set(0.165 * side, 1.26, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
+      hip.scale.set(1, 1.18, 1); // 🦵 ขายาวขึ้น (ยืดแนวตั้ง เท้ายังอยู่พื้น)
       // ✨ thigh (upper leg) — from hip down to the knee
-      const thighProfile = [[0.175, 0.00],
+      const thighProfile = [[0.162, 0.00],
       // ✏️ pencil leg — smooth continuous taper hip → knee
-      [0.165, 0.20], [0.152, 0.42], [0.145, 0.56]
+      [0.152, 0.20], [0.142, 0.42], [0.135, 0.56]
       ].map(([r, y]) => new THREE.Vector2(r, y));
-      const thigh = new THREE.Mesh(new THREE.LatheGeometry(thighProfile, 24), pantsMat);
+      const thigh = new THREE.Mesh(new THREE.LatheGeometry(thighProfile, 30), pantsMat);
       thigh.position.y = -0.56;
       thigh.scale.set(1, 1, 0.9);
       thigh.castShadow = true;
-      const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.175, 20, 20), pantsMat);
+      const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.165, 20, 20), pantsMat);
       hipBall.position.y = -0.06;
       hipBall.scale.set(1, 0.9, 0.85);
+      legSkinMeshes.push(thigh, hipBall);
       hip.add(hipBall, thigh);
       // 🦵 KNEE JOINT — pivot at the knee; the calf + foot bend from here
       const knee = new THREE.Group();
       knee.position.y = -0.56; // knee height, relative to hip
-      const calfProfile = [[0.145, 0.00],
+      const calfProfile = [[0.135, 0.00],
       // ✏️ pencil leg — no calf bulge, straight taper knee → ankle
-      [0.132, 0.12], [0.115, 0.30], [0.10, 0.42]
+      [0.123, 0.12], [0.108, 0.30], [0.095, 0.42]
       ].map(([r, y]) => new THREE.Vector2(r, y));
-      const calf = new THREE.Mesh(new THREE.LatheGeometry(calfProfile, 24), pantsMat);
+      const calf = new THREE.Mesh(new THREE.LatheGeometry(calfProfile, 30), pantsMat);
       calf.position.y = -0.42;
       calf.scale.set(1, 1, 0.9);
       calf.castShadow = true;
-      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 14), pantsMat);
+      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.135, 16, 14), pantsMat);
       kneeCap.scale.set(0.98, 0.85, 0.9); // ✏️ ขนาดเท่าท่อขา — มองไม่เห็นตอนยืดตรง แค่อุดรอยต่อตอนงอ
       const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 24), whiteMat);
       shoe.scale.set(1, 0.6, 1.4);
       shoe.position.set(0, -0.46, 0.06);
       shoeMeshes.push(shoe);
+      legSkinMeshes.push(kneeCap, calf);
       knee.add(kneeCap, calf, shoe);
       hip.add(knee);
       hip.userData.knee = knee; // 🦵 expose the joint for bending
@@ -8515,6 +8518,7 @@ function CherryAdventure() {
       };
       const sleeveL = mkSleeve(); (armL.userData.elbow || armL).add(sleeveL);
       const sleeveR = mkSleeve(); (armR.userData.elbow || armR).add(sleeveR);
+      G._haruSleeves = [sleeveL, sleeveR]; // 👘 พริ้วไหวใน render loop
       // 🌸 sakura magic circle pedestal at her feet (glowing pink rings + petals)
       const haruCircle = new THREE.Group();
       const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.022, 8, 52), hPink); ring1.rotation.x = Math.PI / 2; ring1.position.y = 0.04;
@@ -10177,6 +10181,8 @@ function CherryAdventure() {
         h.scale.setScalar(sc);
       });
       const pa = look("pants");
+      const bareLegs = G.heroId === "haru" && !pa; // 🦵 ขาเรียวสีผิวเดียวกับใบหน้า
+      legSkinMeshes.forEach(m => m.material = bareLegs ? skinMat : pantsMat);
       pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x5a1f1a : basePantsColor);
       pantsMat.metalness = pa === "p2" || pa === "pD" ? 0.55 : 0;
       const sh = look("shoes");
@@ -18851,6 +18857,8 @@ function CherryAdventure() {
             const amp = 0.05 + spd * 0.09;
             G._haruSkirt.rotation.x = Math.sin(t * 2.1) * amp;
             G._haruSkirt.rotation.z = Math.cos(t * 1.6) * amp * 0.8;
+            // 👘 sleeves flutter with the same breeze
+            if (G._haruSleeves) G._haruSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.8 + i * 1.3) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.4 + i) * (amp * 1.2); });
           }
           // 🌸 sacred sakura staff — halo spins, orb breathes with light
           const hst = weaponModels.haruStaff;
@@ -18864,6 +18872,12 @@ function CherryAdventure() {
             const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32;
             G._haruIrises.forEach(m => { if (m.material && m.material.emissiveIntensity != null) m.material.emissiveIntensity = ei; });
           }
+        }
+        // 💇 gentle hair sway (พริ้วไหว) — back hair + the visible hairstyle
+        {
+          const hz = Math.sin(t * 1.6) * 0.028, hx = Math.cos(t * 1.15) * 0.02;
+          if (hairBackGroup) { hairBackGroup.rotation.z = hz; hairBackGroup.rotation.x = hx; }
+          hairStyles.forEach(h => { if (h.visible) { h.rotation.z = hz * 0.8; h.rotation.x = hx * 0.8; } });
         }
         // 🌟✨ cosmetic aura — particles rise, orbit gently, fade in near the feet and out near the head
         if (auraFx.visible) {
