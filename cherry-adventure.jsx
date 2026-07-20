@@ -4115,12 +4115,32 @@ export default function CherryAdventure() {
       const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), hCrimson);
       scarfKnot.position.set(0, 1.86, 0.34);
       haruOutfit.add(scarf, scarfKnot);
-      // navy pleated skirt (faceted cone reads as pleats)
-      const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.54, 0.52, 16, 1, true), navy);
-      skirt.position.y = 1.16;
-      const skirtHem = new THREE.Mesh(new THREE.TorusGeometry(0.53, 0.025, 6, 22), navy);
-      skirtHem.position.y = 0.9; skirtHem.rotation.x = Math.PI / 2;
-      haruOutfit.add(skirt, skirtHem);
+      // 👗 true pleated school skirt — zigzag hem (alternating outer/inner radii) with crisp flat facets
+      const mkPleatedSkirt = (rTop, rHemOut, rHemIn, h, pleats) => {
+        const pos = [];
+        const n = pleats * 2;
+        for (let k = 0; k < n; k++) {
+          const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2;
+          const rH0 = k % 2 === 0 ? rHemOut : rHemIn;
+          const rH1 = (k + 1) % 2 === 0 ? rHemOut : rHemIn;
+          const t0 = [Math.cos(a0) * rTop, h / 2, Math.sin(a0) * rTop];
+          const t1 = [Math.cos(a1) * rTop, h / 2, Math.sin(a1) * rTop];
+          const b0 = [Math.cos(a0) * rH0, -h / 2, Math.sin(a0) * rH0];
+          const b1 = [Math.cos(a1) * rH1, -h / 2, Math.sin(a1) * rH1];
+          pos.push(...t0, ...b0, ...t1, ...t1, ...b0, ...b1);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        geo.computeVertexNormals(); // non-indexed → flat per-face normals = คมเป็นจีบ
+        return geo;
+      };
+      const navy2 = navy.clone(); navy2.side = THREE.DoubleSide;
+      const skirt = new THREE.Mesh(mkPleatedSkirt(0.29, 0.57, 0.47, 0.55, 14), navy2);
+      skirt.position.y = 1.165;
+      // waistband
+      const waistband = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.03, 8, 26), navy);
+      waistband.position.y = 1.43; waistband.rotation.x = Math.PI / 2;
+      haruOutfit.add(skirt, waistband);
       // waist ofuda charm: sakura ornament + tassels (front hip)
       const charm = new THREE.Group();
       for (let i = 0; i < 5; i++) { const pet = mkPetal(hPink, 0.65); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.055, Math.sin(a) * 0.055, 0); pet.rotation.z = a; charm.add(pet); }
