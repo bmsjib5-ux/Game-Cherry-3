@@ -8392,6 +8392,8 @@ function CherryAdventure() {
           if (tint != null) o.material.color.lerp(new THREE.Color(tint), 0.55);
         });
       }
+      // 🚫 no overlap: reconcile which class pieces stay hidden behind equipped gear
+      if (G.reconcileClassPieces) G.reconcileClassPieces();
       updateAura();
     };
 
@@ -9479,6 +9481,25 @@ function CherryAdventure() {
     });
     G.classAccessories = classAccessories;
 
+    // 🚫 no overlap: recompute class-look piece visibility so equipped gear replaces it
+    //   - outfit slot  → hides the class body armor/accessory + shield
+    //   - hat slot     → hides the class head piece (helm / circlet)
+    //   - mask slot    → hides the class face piece (glasses)
+    G.reconcileClassPieces = () => {
+      const acc = G._classAcc;
+      const eq = G.equip || {};
+      const cos = G.costume || {};
+      const outfitOn = !!(cos.outfit || eq.outfit); // real gear OR a transmog costume counts as "wearing an outfit"
+      const hatOn = !!(cos.hat || eq.hat);
+      const maskOn = !!(cos.mask || eq.mask);
+      Object.entries(classAccessories).forEach(([k, g]) => { if (g) g.visible = k === acc && !outfitOn; });
+      if (G.warriorShield) G.warriorShield.visible = acc === "cape" && !outfitOn;
+      if (G.warriorHelm) G.warriorHelm.visible = acc === "cape" && !outfitOn && !hatOn;
+      if (G.elvenCirclet) G.elvenCirclet.visible = acc === "hood" && !outfitOn && !hatOn;
+      if (G.officeGlasses) G.officeGlasses.visible = acc === "tie" && !outfitOn && !maskOn;
+      if (G.coderGlasses) G.coderGlasses.visible = acc === "hoodie" && !outfitOn && !maskOn;
+    };
+
     // apply the outfit look for a class: recolor shirt/pants + show the matching accessory
     G.applyClassOutfit = cls => {
       const o = CLASS_OUTFIT[cls];
@@ -9496,6 +9517,7 @@ function CherryAdventure() {
       if (G.officeGlasses) G.officeGlasses.visible = o.acc === "tie"; // 👓 glasses for the office worker
       if (G.coderGlasses) G.coderGlasses.visible = o.acc === "hoodie"; // 👓 glasses for the coder
       G._classAcc = o.acc;
+      G.reconcileClassPieces(); // 🚫 keep equipped gear from overlapping the class look
     };
     // 👀 preview a class during selection: outfit + weapon in hand
     G.previewClass = cls => {
@@ -9838,6 +9860,7 @@ function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
+      if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
     };
     G.applyGear = applyGear;
