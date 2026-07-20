@@ -1718,29 +1718,29 @@ export default function CherryAdventure() {
       hip.scale.set(1, 1.14, 1); // 🦵 ขายาวขึ้น (ยืดแนวตั้ง เท้ายังอยู่พื้น)
       // ✨ thigh (upper leg) — from hip down to the knee
       const thighProfile = [
-        [0.19, 0.00],  // hip/thigh top (thickest)
-        [0.185, 0.20],
-        [0.168, 0.42],
-        [0.15, 0.56],  // knee
+        [0.175, 0.00], // ✏️ pencil leg — smooth continuous taper hip → knee
+        [0.165, 0.20],
+        [0.152, 0.42],
+        [0.145, 0.56],
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const thigh = new THREE.Mesh(new THREE.LatheGeometry(thighProfile, 24), pantsMat);
       thigh.position.y = -0.56; thigh.scale.set(1, 1, 0.9); thigh.castShadow = true;
-      const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.185, 20, 20), pantsMat);
+      const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.175, 20, 20), pantsMat);
       hipBall.position.y = -0.06; hipBall.scale.set(1, 0.9, 0.85);
       hip.add(hipBall, thigh);
       // 🦵 KNEE JOINT — pivot at the knee; the calf + foot bend from here
       const knee = new THREE.Group();
       knee.position.y = -0.56; // knee height, relative to hip
       const calfProfile = [
-        [0.15, 0.00],  // knee
-        [0.16, 0.12],  // calf muscle
-        [0.135, 0.30],
-        [0.10, 0.42],  // slim ankle
+        [0.145, 0.00], // ✏️ pencil leg — no calf bulge, straight taper knee → ankle
+        [0.132, 0.12],
+        [0.115, 0.30],
+        [0.10, 0.42],
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const calf = new THREE.Mesh(new THREE.LatheGeometry(calfProfile, 24), pantsMat);
       calf.position.y = -0.42; calf.scale.set(1, 1, 0.9); calf.castShadow = true;
-      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 14), pantsMat);
-      kneeCap.scale.set(1, 0.8, 0.9);
+      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 14), pantsMat);
+      kneeCap.scale.set(0.98, 0.85, 0.9); // ✏️ ขนาดเท่าท่อขา — มองไม่เห็นตอนยืดตรง แค่อุดรอยต่อตอนงอ
       const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 24), whiteMat);
       shoe.scale.set(1, 0.6, 1.4);
       shoe.position.set(0, -0.46, 0.06);
@@ -4186,6 +4186,19 @@ export default function CherryAdventure() {
       [-0.08, 0, 0.08].forEach((dx, i) => { const tas = new THREE.Mesh(new THREE.ConeGeometry(0.022, i === 1 ? 0.3 : 0.22, 6), i === 1 ? hGold : hCrimson); tas.position.set(dx, -0.2 - (i === 1 ? 0.05 : 0), 0); tas.rotation.x = Math.PI; charm.add(tas); });
       charm.position.set(0, 1.42, 0.36);
       haruOutfit.add(charm);
+      // 🎀 big red back bow over the skirt (ตามภาพด้านหลัง)
+      const backBow = new THREE.Group();
+      const bLoopL = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), hCrimson);
+      bLoopL.scale.set(1.7, 0.95, 0.45); bLoopL.position.set(-0.15, 0.02, 0);
+      const bLoopR = bLoopL.clone(); bLoopR.position.x = 0.15;
+      const bLoopTL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), hCrimson);
+      bLoopTL.scale.set(1.4, 0.8, 0.45); bLoopTL.position.set(-0.11, 0.14, 0.01); bLoopTL.rotation.z = 0.5;
+      const bLoopTR = bLoopTL.clone(); bLoopTR.position.x = 0.11; bLoopTR.rotation.z = -0.5;
+      backBow.add(bLoopL, bLoopR, bLoopTL, bLoopTR);
+      backBow.add(mkWBloom(hPink, 0.9, 0, 0.02));
+      [[-0.09, 0.15], [0.09, -0.15]].forEach(([dx, lean]) => { const tail = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.5, 5), hCrimson); tail.position.set(dx, -0.32, -0.01); tail.rotation.set(Math.PI - 0.12, 0, lean); tail.scale.set(1, 1, 0.5); backBow.add(tail); });
+      backBow.position.set(0, 1.42, -0.32);
+      haruOutfit.add(backBow);
       // white knee socks
       for (const sx of [-0.18, 0.18]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.44, 14), cream); sock.position.set(sx, 0.32, 0.01); haruOutfit.add(sock); }
       // red thigh ribbon (garter) on the right leg
