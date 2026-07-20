@@ -837,7 +837,7 @@ const CUSTOM = {
 // 🦸 preset characters — pick a ready-made hero instead of always starting as Cherry.
 const CHAR_PRESETS = [
   { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
-  { name: "ฮารุ",    emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2 },
+  { name: "ฮารุ",    emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
   { name: "ลูน่า",   emoji: "🌙", gender: 0, skin: 0, hairColor: 4, hairStyle: 6, eyes: 0, outfit: 0 },
   { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 3, hairColor: 4, hairStyle: 2, eyes: 3, outfit: 0 },
   { name: "โรส",     emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 2, outfit: 4 },
@@ -3941,6 +3941,158 @@ export default function CherryAdventure() {
     const setMouth = (n) => Object.entries(mouths).forEach(([k, m]) => (m.visible = k === n));
     setMouth("smile");
 
+    // ---------- 🌸 HARU signature look (sakura & moon hero) ----------
+    // A distinctive accessory + aura set shown when the Haru character is active.
+    {
+      const hPink = new THREE.MeshStandardMaterial({ color: 0xf7a8c4, emissive: 0xf28cb0, emissiveIntensity: 0.35, roughness: 0.5 });
+      const hPinkSoft = new THREE.MeshStandardMaterial({ color: 0xfcd0e0, emissive: 0xf7b8d0, emissiveIntensity: 0.3, roughness: 0.6 });
+      const hCrimson = new THREE.MeshStandardMaterial({ color: 0xc8203a, emissive: 0x5a0a16, emissiveIntensity: 0.28, roughness: 0.45 });
+      const hGold = new THREE.MeshStandardMaterial({ color: 0xf5c542, emissive: 0x8a6410, emissiveIntensity: 0.35, metalness: 0.6, roughness: 0.35 });
+      const hWhite = new THREE.MeshStandardMaterial({ color: 0xfff2f7, emissive: 0xffd8e8, emissiveIntensity: 0.28, roughness: 0.6 });
+      const hPaper = new THREE.MeshStandardMaterial({ color: 0xf3ead0, emissive: 0x201408, emissiveIntensity: 0.05, roughness: 0.85 });
+      const mkPetal = (mat, s) => { s = s || 1; const p = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), mat); p.scale.set(0.7 * s, 0.26 * s, 1.15 * s); return p; };
+
+      // ===== head accessories (headG-local) =====
+      const haruHead = new THREE.Group();
+      // 🎀 crimson half-up ribbon bow (back-upper)
+      const bow = new THREE.Group();
+      const loopL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), hCrimson); loopL.scale.set(1.5, 0.95, 0.5); loopL.position.x = -0.14;
+      const loopR = loopL.clone(); loopR.position.x = 0.14;
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), hCrimson); knot.scale.z = 0.6;
+      const tailA = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.26, 6), hCrimson); tailA.position.set(-0.07, -0.19, 0); tailA.rotation.set(0.25, 0, 0.32);
+      const tailB = tailA.clone(); tailB.position.x = 0.07; tailB.rotation.z = -0.32;
+      bow.add(loopL, loopR, knot, tailA, tailB);
+      bow.position.set(0, 0.72, 0.02); bow.rotation.x = -0.15; bow.scale.setScalar(1.7);
+      haruHead.add(bow);
+      // 🌸 sakura hairpin (left temple) — 5 petals + gold center
+      const pin = new THREE.Group();
+      for (let i = 0; i < 5; i++) { const pet = mkPetal(hPinkSoft, 0.85); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.075, Math.sin(a) * 0.075, 0); pet.rotation.z = a - Math.PI / 2; pin.add(pet); }
+      const pinC = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), hGold); pin.add(pinC);
+      pin.position.set(-0.52, 0.4, 0.3); pin.rotation.set(0.2, -0.5, 0); pin.scale.setScalar(1.45);
+      haruHead.add(pin);
+      // 🔔 tiny golden bell (right of ribbon)
+      const bell = new THREE.Group();
+      bell.add(new THREE.Mesh(new THREE.SphereGeometry(0.048, 12, 12), hGold));
+      const bRing = new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.007, 6, 12), hGold); bRing.position.y = 0.052; bRing.rotation.x = Math.PI / 2;
+      bell.add(bRing); bell.position.set(0.26, 0.16, -0.58); bell.scale.setScalar(1.2);
+      haruHead.add(bell);
+      // 🌸 sakura petal mark beneath the left eye
+      const mark = mkPetal(hPink, 0.4); mark.position.set(-0.31, -0.24, 0.55); mark.rotation.set(0.2, 0, 0.6);
+      haruHead.add(mark);
+      // 🌸 soft pink hair tips (accent strands along the back/sides)
+      for (let i = 0; i < 8; i++) { const a = Math.PI * 0.42 + (i / 7) * Math.PI * 1.16; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.24, 6), hPinkSoft); tip.position.set(Math.cos(a) * 0.52, -0.34, Math.sin(a) * 0.5 - 0.02); tip.rotation.set(Math.PI - 0.1 * Math.cos(a), 0, 0.1 * Math.sin(a)); haruHead.add(tip); }
+      headG.add(haruHead);
+
+      // ===== body: crescent moon pendant (char-local) =====
+      const haruBody = new THREE.Group();
+      const cresShape = new THREE.Shape();
+      cresShape.absarc(0, 0, 0.09, -Math.PI * 0.5, Math.PI * 0.5, false);
+      cresShape.absarc(0.05, 0, 0.072, Math.PI * 0.5, -Math.PI * 0.5, true);
+      const moon = new THREE.Mesh(new THREE.ShapeGeometry(cresShape), hGold);
+      moon.position.set(0, 1.82, 0.2); moon.rotation.z = -0.35;
+      const cord = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.006, 6, 24), hGold);
+      cord.position.set(0, 2.0, 0.02); cord.rotation.x = 1.35;
+      haruBody.add(moon, cord);
+      char.add(haruBody);
+
+      // ===== wrist talisman (ofuda) on the left wrist =====
+      const talis = new THREE.Group();
+      talis.add(new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.15, 0.012), hPaper));
+      const sigil = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.11, 0.014), hCrimson); talis.add(sigil);
+      talis.position.set(0.02, -0.4, 0.11); talis.rotation.set(0.2, 0, 0.3);
+      (armL.userData.elbow || armL).add(talis);
+
+      // ===== floating sakura petal aura (char-local) =====
+      const haruPetals = new THREE.Group();
+      const petalArr = [];
+      for (let i = 0; i < 18; i++) {
+        const mat = [hPink, hWhite, hGold][i % 3];
+        const pet = mkPetal(mat, 0.7 + Math.random() * 0.6);
+        const ang = Math.random() * Math.PI * 2;
+        const rad = 0.68 + Math.random() * 0.55;
+        const y0 = 0.5 + Math.random() * 1.9;
+        pet.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad);
+        pet.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+        pet.userData = { ang, rad, y0, spin: 0.4 + Math.random() * 0.9, bob: Math.random() * Math.PI * 2, fall: 0.15 + Math.random() * 0.25 };
+        haruPetals.add(pet); petalArr.push(pet);
+      }
+      char.add(haruPetals);
+
+      // iris refs for the pink magic glow (iris is child index 1 of each eye)
+      const haruIrises = [eyeL.children[1], eyeR.children[1]].filter(Boolean);
+      const irisBase = haruIrises.map(m => ({ col: m.material.color.getHex(), emi: m.material.emissive ? m.material.emissive.getHex() : 0x000000, ei: m.material.emissiveIntensity || 0 }));
+
+      // ===== 🌸 sakura sailor uniform (char-local) =====
+      const navy = new THREE.MeshStandardMaterial({ color: 0x2b3358, roughness: 0.72, metalness: 0.05 });
+      const cream = new THREE.MeshStandardMaterial({ color: 0xfbf7f2, roughness: 0.78 });
+      const haruOutfit = new THREE.Group();
+      // white sailor top (shell over the torso)
+      const topProfile = [[0.30, 0.02], [0.33, 0.16], [0.40, 0.40], [0.435, 0.62], [0.44, 0.76], [0.42, 0.9], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y));
+      const topShell = new THREE.Mesh(new THREE.LatheGeometry(topProfile, 40), cream);
+      topShell.position.y = 1.0; topShell.scale.set(1.03, 1.0, 0.75);
+      haruOutfit.add(topShell);
+      // navy sailor collar (drapes over the shoulders) + square back flap
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.5, 0.16, 24, 1, true), navy);
+      collar.position.y = 1.9; collar.scale.set(1.02, 1, 0.78);
+      haruOutfit.add(collar);
+      const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.03), navy);
+      backFlap.position.set(0, 1.82, -0.3); backFlap.rotation.x = 0.28;
+      haruOutfit.add(backFlap);
+      // red neckerchief (scarf) at the front — a clear triangle + knot
+      const scarf = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.36, 3), hCrimson);
+      scarf.position.set(0, 1.72, 0.32); scarf.rotation.set(0.2, Math.PI, 0); scarf.scale.set(1, 1, 0.45);
+      const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), hCrimson);
+      scarfKnot.position.set(0, 1.9, 0.34);
+      haruOutfit.add(scarf, scarfKnot);
+      // navy pleated skirt (faceted cone reads as pleats)
+      const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.54, 0.5, 16, 1, true), navy);
+      skirt.position.y = 0.9;
+      const skirtHem = new THREE.Mesh(new THREE.TorusGeometry(0.53, 0.025, 6, 22), navy);
+      skirtHem.position.y = 0.66; skirtHem.rotation.x = Math.PI / 2;
+      haruOutfit.add(skirt, skirtHem);
+      // waist ofuda charm: sakura ornament + tassels (front hip)
+      const charm = new THREE.Group();
+      for (let i = 0; i < 5; i++) { const pet = mkPetal(hPink, 0.65); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.055, Math.sin(a) * 0.055, 0); pet.rotation.z = a; charm.add(pet); }
+      charm.add(new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), hGold));
+      const tasA = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 6), hCrimson); tasA.position.set(-0.03, -0.15, 0); tasA.rotation.x = Math.PI;
+      const tasB = tasA.clone(); tasB.position.x = 0.03;
+      charm.add(tasA, tasB);
+      charm.position.set(0.15, 1.0, 0.28);
+      haruOutfit.add(charm);
+      // white knee socks
+      for (const sx of [-0.18, 0.18]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.34, 14), cream); sock.position.set(sx, 0.28, 0.01); haruOutfit.add(sock); }
+      // red thigh ribbon (garter) on the right leg
+      const garter = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.022, 6, 18), hCrimson);
+      garter.position.set(0.18, 0.6, 0); garter.rotation.x = 0.25;
+      const garterBow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), hCrimson); garterBow.scale.set(1.7, 0.8, 0.6); garterBow.position.set(0.18, 0.6, 0.15);
+      haruOutfit.add(garter, garterBow);
+      char.add(haruOutfit);
+      // detached flowing white sleeves (on the upper arms)
+      const mkSleeve = () => { const s = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.22, 0.6, 14, 1, true), cream); s.position.y = -0.3; return s; };
+      const sleeveL = mkSleeve(); (armL.userData.elbow || armL).add(sleeveL);
+      const sleeveR = mkSleeve(); (armR.userData.elbow || armR).add(sleeveR);
+      G._haruShoeMat = new THREE.MeshStandardMaterial({ color: 0x5a3a24, roughness: 0.55 }); // brown loafers
+
+      const haruParts = [haruHead, haruBody, talis, haruPetals, haruOutfit, sleeveL, sleeveR];
+      haruParts.forEach(p => p.visible = false);
+      G._haruPetals = petalArr;
+      G._haruIrises = haruIrises;
+      G.heroId = G.heroId || null;
+      // 🌸 toggle Haru's signature look + pink-violet magic eyes
+      G.setHero = id => {
+        const on = id === "haru";
+        G.heroId = id || null;
+        haruParts.forEach(p => p.visible = on);
+        if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
+        if (G.applyGear) G.applyGear();
+        haruIrises.forEach((m, i) => {
+          if (on) { m.material = m.material.clone(); m.material.color.setHex(0xc86ad8); m.material.emissive && m.material.emissive.setHex(0x9a3ad0); m.material.emissiveIntensity = 0.35; }
+          else { m.material.color.setHex(irisBase[i].col); if (m.material.emissive) m.material.emissive.setHex(irisBase[i].emi); m.material.emissiveIntensity = irisBase[i].ei; }
+        });
+      };
+    }
+
+
     // ---------- Outfits: visible on Cherry when equipped ----------
     const outfitModels = {};
     { // o1 ผ้าพันคอนุ่มฟู : cozy scarf
@@ -4780,7 +4932,7 @@ export default function CherryAdventure() {
       const acc = G._classAcc;
       const eq = G.equip || {};
       const cos = G.costume || {};
-      const outfitOn = !!(cos.outfit || eq.outfit || G.activeSet); // real gear, transmog costume, OR a collection set = wearing an outfit
+      const outfitOn = !!(cos.outfit || eq.outfit || G.activeSet || G.heroId); // gear, transmog, a set, OR a signature hero look replaces the class armor
       const hatOn = !!(cos.hat || eq.hat);
       const maskOn = !!(cos.mask || eq.mask);
       Object.entries(classAccessories).forEach(([k, g]) => { if (g) g.visible = k === acc && !outfitOn; });
@@ -5039,6 +5191,7 @@ export default function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
+      if (G.heroId === "haru" && !sh && G._haruShoeMat) shoeMeshes.forEach((s) => (s.material = G._haruShoeMat)); // 🌸 brown loafers
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
     };
@@ -5111,6 +5264,7 @@ export default function CherryAdventure() {
       G.setCustom("hairStyle", p.hairStyle);
       G.setCustom("eyes", p.eyes);
       G.setCustom("outfit", p.outfit);
+      if (G.setHero) G.setHero(p.hero || null); // 🌸 signature look for special heroes (Haru)
       G.pendingName = p.name;
       setUi((u) => ({ ...u, pendingName: p.name, charPreset: idx, custom: { ...G.custom } }));
     };
@@ -8085,7 +8239,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold,
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold,
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -8830,7 +8984,7 @@ export default function CherryAdventure() {
     G.toggleCollection = () => {
       const willOpen = !G.collectionOpen;
       G.collectionOpen = willOpen;
-      setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+      setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
     };
     G.unlockConst = (nodeId) => {
       if (!G.constNodes) G.constNodes = {};
@@ -9979,7 +10133,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -10180,6 +10334,7 @@ export default function CherryAdventure() {
       G.cls = d.cls || "warrior";
       G.playerName = d.name || "เชอร์รี่";
       Object.entries(d.custom || {}).forEach(([k, v]) => G.setCustom(k, v));
+      if (G.setHero) G.setHero(d.heroId || null); // 🌸 restore a hero.s signature look
       G.player = { ...d.player };
       G.col = d.col || {};
       G.pets = d.pets || {};
@@ -10474,6 +10629,23 @@ export default function CherryAdventure() {
         const sp = 0.5 + Math.abs(Math.sin(t * 2.3)) * 0.4;
         setRing.rotation.z = t * 1.4; setRing.material.opacity = sp * 0.6;
         setMotes.forEach((m) => { const a = m.userData.ph + t * 1.3; m.position.set(Math.cos(a) * 0.64, 0.1 + Math.abs(Math.sin(a * 2 + t * 2.5)) * 0.55, Math.sin(a) * 0.64); m.material.opacity = sp * 0.85; });
+      }
+      // 🌸 Haru's floating sakura petals — orbit, spin, and drift down gently
+      if (G._haruPetals && G._haruPetals.length && G._haruPetals[0].parent && G._haruPetals[0].parent.visible) {
+        G._haruPetals.forEach((p) => {
+          const u = p.userData;
+          u.ang += dt * 0.35;
+          p.position.x = Math.cos(u.ang) * u.rad;
+          p.position.z = Math.sin(u.ang) * u.rad;
+          p.position.y -= dt * u.fall;
+          if (p.position.y < 0.35) p.position.y = u.y0;
+          p.rotation.x += dt * u.spin;
+          p.rotation.y += dt * u.spin * 0.7;
+        });
+        if (G._haruIrises && G._haruIrises.length) {
+          const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32;
+          G._haruIrises.forEach((m) => { if (m.material && m.material.emissiveIntensity != null) m.material.emissiveIntensity = ei; });
+        }
       }
       // 🌟✨ cosmetic aura — particles rise, orbit gently, fade in near the feet and out near the head
       if (auraFx.visible) {
@@ -15783,9 +15955,9 @@ export default function CherryAdventure() {
       if (G.mode === "create" || G.mode === "class") {
         // centered turntable, zoomable with pinch/wheel/buttons (camDist)
         // 🧍 equip screen pulls the camera back so the whole body is visible
-        const cd = G.equipOpen ? 8.6 : Math.max(2.6, Math.min(7, camDist * 0.5));
-        const camY = G.equipOpen ? 1.5 : 1.55 + cd * 0.18;
-        const lookY = G.equipOpen ? 0.95 : 1.35;
+        const cd = G.equipOpen ? 9.4 : Math.max(2.6, Math.min(7, camDist * 0.5));
+        const camY = G.equipOpen ? 1.62 : 1.55 + cd * 0.18;
+        const lookY = G.equipOpen ? 1.02 : 1.35;
         camera.position.x += (0 - camera.position.x) * 0.08;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (cd - camera.position.z) * 0.08;
