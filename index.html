@@ -4944,7 +4944,8 @@ function CherryAdventure() {
     const shoeMeshes = [];
     const makeLeg = side => {
       const hip = new THREE.Group();
-      hip.position.set(0.165 * side, 1.08, 0); // ขาชิดแบบสรีระจริง
+      hip.position.set(0.165 * side, 1.22, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
+      hip.scale.set(1, 1.14, 1); // 🦵 ขายาวขึ้น (ยืดแนวตั้ง เท้ายังอยู่พื้น)
       // ✨ thigh (upper leg) — from hip down to the knee
       const thighProfile = [[0.19, 0.00],
       // hip/thigh top (thickest)
@@ -5004,21 +5005,21 @@ function CherryAdventure() {
     // neck base
     [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y));
     const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoProfile, 44), shirtMat);
-    torso.position.y = 1.0;
-    torso.scale.set(1.0, 1.0, 0.72); // 📏 compact torso (not elongated), flatter front-to-back
+    torso.position.y = 1.14; // 📏 ยกฐานลำตัวขึ้น (สะโพกสูงขึ้น)
+    torso.scale.set(1.0, 0.8, 0.72); // 📏 ช่วงตัวสั้นลง (ย่อแนวตั้ง), flatter front-to-back
     torso.castShadow = true;
     char.add(torso);
     // pelvis: hip mass connecting the legs (flatter, wider than deep)
     const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 26, 26), pantsMat);
     pelvis.scale.set(1.06, 0.6, 0.78);
-    pelvis.position.y = 1.0;
+    pelvis.position.y = 1.14;
     pelvis.castShadow = true;
     char.add(pelvis);
     // 👗 feminine curve — hips (widened side masses), toggled by gender
     const hips = new THREE.Group();
     for (const side of [-1, 1]) {
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), pantsMat);
-      h.position.set(side * 0.16, 1.0, 0);
+      h.position.set(side * 0.16, 1.14, 0);
       h.scale.set(0.95, 0.7, 0.85);
       hips.add(h);
     }
@@ -5026,7 +5027,7 @@ function CherryAdventure() {
     G.hips = hips;
     // neck connects head and body naturally
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.16, 0.3, 22), skinMat);
-    neck.position.y = 2.02;
+    neck.position.y = 1.96;
     char.add(neck);
     // 🏷️ player name + level + title label floating above the head
     const nameCanvas = document.createElement("canvas");
@@ -5040,7 +5041,7 @@ function CherryAdventure() {
       depthTest: false
     }));
     nameSprite.scale.set(2.8, 0.76, 1);
-    nameSprite.position.y = 3.15;
+    nameSprite.position.y = 3.1;
     nameSprite.visible = false;
     char.add(nameSprite);
     G.nameSprite = nameSprite;
@@ -5154,7 +5155,7 @@ function CherryAdventure() {
     const handMeshes = [];
     const makeArm = side => {
       const p = new THREE.Group();
-      p.position.set(0.46 * side, 1.86, 0); // shoulders sit a touch narrower on the slimmer torso
+      p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
       const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.14, 22, 22), shirtMat);
       sleeve.scale.set(1.0, 1.25, 1.0);
       sleeve.position.y = -0.06;
@@ -7418,7 +7419,7 @@ function CherryAdventure() {
       updateAura();
     };
     const headG = new THREE.Group();
-    headG.position.y = 2.6;
+    headG.position.y = 2.55;
     headG.scale.setScalar(1.3); // 🎌 chibi proportions: big cute head
     char.add(headG);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
@@ -8281,9 +8282,9 @@ function CherryAdventure() {
       cresShape.absarc(0, 0, 0.09, -Math.PI * 0.5, Math.PI * 0.5, false);
       cresShape.absarc(0.05, 0, 0.072, Math.PI * 0.5, -Math.PI * 0.5, true);
       const moon = new THREE.Mesh(new THREE.ShapeGeometry(cresShape), hGold);
-      moon.position.set(0, 1.82, 0.2); moon.rotation.z = -0.35;
+      moon.position.set(0, 1.8, 0.2); moon.rotation.z = -0.35;
       const cord = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.006, 6, 24), hGold);
-      cord.position.set(0, 2.0, 0.02); cord.rotation.x = 1.35;
+      cord.position.set(0, 1.95, 0.02); cord.rotation.x = 1.35;
       haruBody.add(moon, cord);
       char.add(haruBody);
 
@@ -8321,26 +8322,26 @@ function CherryAdventure() {
       // white sailor top (shell over the torso)
       const topProfile = [[0.30, 0.02], [0.33, 0.16], [0.40, 0.40], [0.435, 0.62], [0.44, 0.76], [0.42, 0.9], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y));
       const topShell = new THREE.Mesh(new THREE.LatheGeometry(topProfile, 40), cream);
-      topShell.position.y = 1.0; topShell.scale.set(1.03, 1.0, 0.75);
+      topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
       haruOutfit.add(topShell);
       // navy sailor collar (drapes over the shoulders) + square back flap
       const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.5, 0.16, 24, 1, true), navy);
-      collar.position.y = 1.9; collar.scale.set(1.02, 1, 0.78);
+      collar.position.y = 1.86; collar.scale.set(1.02, 1, 0.78);
       haruOutfit.add(collar);
       const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.03), navy);
-      backFlap.position.set(0, 1.82, -0.3); backFlap.rotation.x = 0.28;
+      backFlap.position.set(0, 1.79, -0.3); backFlap.rotation.x = 0.28;
       haruOutfit.add(backFlap);
       // red neckerchief (scarf) at the front — a clear triangle + knot
       const scarf = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.36, 3), hCrimson);
       scarf.position.set(0, 1.72, 0.32); scarf.rotation.set(0.2, Math.PI, 0); scarf.scale.set(1, 1, 0.45);
       const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), hCrimson);
-      scarfKnot.position.set(0, 1.9, 0.34);
+      scarfKnot.position.set(0, 1.86, 0.34);
       haruOutfit.add(scarf, scarfKnot);
       // navy pleated skirt (faceted cone reads as pleats)
-      const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.54, 0.5, 16, 1, true), navy);
-      skirt.position.y = 0.9;
+      const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.54, 0.52, 16, 1, true), navy);
+      skirt.position.y = 1.02;
       const skirtHem = new THREE.Mesh(new THREE.TorusGeometry(0.53, 0.025, 6, 22), navy);
-      skirtHem.position.y = 0.66; skirtHem.rotation.x = Math.PI / 2;
+      skirtHem.position.y = 0.76; skirtHem.rotation.x = Math.PI / 2;
       haruOutfit.add(skirt, skirtHem);
       // waist ofuda charm: sakura ornament + tassels (front hip)
       const charm = new THREE.Group();
@@ -8349,14 +8350,14 @@ function CherryAdventure() {
       const tasA = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 6), hCrimson); tasA.position.set(-0.03, -0.15, 0); tasA.rotation.x = Math.PI;
       const tasB = tasA.clone(); tasB.position.x = 0.03;
       charm.add(tasA, tasB);
-      charm.position.set(0.15, 1.0, 0.28);
+      charm.position.set(0.15, 1.12, 0.28);
       haruOutfit.add(charm);
       // white knee socks
-      for (const sx of [-0.18, 0.18]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.34, 14), cream); sock.position.set(sx, 0.28, 0.01); haruOutfit.add(sock); }
+      for (const sx of [-0.18, 0.18]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.44, 14), cream); sock.position.set(sx, 0.32, 0.01); haruOutfit.add(sock); }
       // red thigh ribbon (garter) on the right leg
       const garter = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.022, 6, 18), hCrimson);
-      garter.position.set(0.18, 0.6, 0); garter.rotation.x = 0.25;
-      const garterBow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), hCrimson); garterBow.scale.set(1.7, 0.8, 0.6); garterBow.position.set(0.18, 0.6, 0.15);
+      garter.position.set(0.19, 0.74, 0); garter.rotation.x = 0.25;
+      const garterBow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), hCrimson); garterBow.scale.set(1.7, 0.8, 0.6); garterBow.position.set(0.19, 0.74, 0.15);
       haruOutfit.add(garter, garterBow);
       char.add(haruOutfit);
       // detached flowing white sleeves (on the upper arms)
@@ -10043,9 +10044,9 @@ function CherryAdventure() {
     const applyGender = g => {
       const male = g === 1;
       // male: broader shoulders, straighter/boxier torso; female: soft curves, narrower waist
-      torso.scale.set(male ? 1.14 : 0.98, 1.0, male ? 0.8 : 0.72);
-      armL.position.y = 1.86;
-      armR.position.y = 1.86; // keep shoulders at the shorter torso height
+      torso.scale.set(male ? 1.14 : 0.98, 0.8, male ? 0.8 : 0.72); // 📏 y=0.8 ช่วงตัวสั้นลง
+      armL.position.y = 1.8;
+      armR.position.y = 1.8; // keep shoulders at the shorter torso height
       pelvis.scale.set(male ? 0.98 : 1.1, 0.6, male ? 0.78 : 0.82);
       armL.position.x = -0.46 * (male ? 1.18 : 0.98); // shoulders wider apart for male
       armR.position.x = 0.46 * (male ? 1.18 : 0.98);
