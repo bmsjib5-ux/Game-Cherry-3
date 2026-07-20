@@ -18070,11 +18070,13 @@ export default function CherryAdventure() {
             const eqSort = ui.equipSort || "none";
             const qkey = (id) => { const it = LOOT.find((x) => x.id === id); return (TIER[it.rarity] || 1) * 100 + ((ui.plus || {})[id] || 0); };
             const sortedIds = eqSort === "qual" ? [...allIds].sort((a, b) => qkey(b) - qkey(a)) : eqSort === "qualAsc" ? [...allIds].sort((a, b) => qkey(a) - qkey(b)) : allIds;
-            const PER = 30;
-            const totalPages = Math.max(1, Math.ceil(sortedIds.length / PER));
+            const PER = 24; // fixed 24 slots per page (potions counted in), pad with empties
+            const potCells = (ui.invCat === "all" || !ui.invCat) ? [{ pot: "hp" }, { pot: "mp" }] : [];
+            const allCells = [...potCells, ...sortedIds.map((id) => ({ id }))];
+            const totalPages = Math.max(1, Math.ceil(allCells.length / PER));
             const page = Math.min(Math.max(0, ui.equipPage || 0), totalPages - 1);
-            const ids = sortedIds.slice(page * PER, page * PER + PER);
-            const showPots = (ui.invCat === "all" || !ui.invCat) && page === 0;
+            const pageCells = allCells.slice(page * PER, page * PER + PER);
+            while (pageCells.length < PER) pageCells.push({ empty: true });
             const sortLabel = eqSort === "qual" ? "คุณภาพ ↓" : eqSort === "qualAsc" ? "คุณภาพ ↑" : "เรียง";
             const nextSort = eqSort === "none" ? "qual" : eqSort === "qual" ? "qualAsc" : "none";
             const itemTile = (id) => {
@@ -18102,6 +18104,8 @@ export default function CherryAdventure() {
             const catChip = (ck, label) => (
               <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 }))} style={{ padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: (ui.invCat || "all") === ck ? "#c9a24a" : "rgba(255,255,255,0.08)", color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0" }}>{label}</button>
             );
+            const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 9, border: "2px dashed #2f3a2b", background: "rgba(255,255,255,0.02)" }} />;
+            const renderCell = (cell, i) => cell.pot === "hp" ? potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp") : cell.pot === "mp" ? potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp") : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
               <div key="eqscr" style={{ position: "absolute", inset: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
                 <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -18128,11 +18132,8 @@ export default function CherryAdventure() {
                   </div>
                   <div style={{ overflowY: "auto", flex: 1 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5 }}>
-                      {[...(showPots ? [potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp"), potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp")] : []), ...ids.map(itemTile)]}
+                      {pageCells.map(renderCell)}
                     </div>
-                    {ids.length === 0 && !showPots && (
-                      <div style={{ fontSize: 11, color: "#8a9a8a", textAlign: "center", padding: "10px 0" }}>{ui.invCat && ui.invCat !== "all" ? `ยังไม่มี${SLOT_NAMES[ui.invCat] || "ไอเทม"} — สู้เพื่อลุ้นดรอป!` : "กระเป๋าว่างเปล่า"}</div>
-                    )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginTop: 6 }}>
                     {totalPages > 1 ? (
