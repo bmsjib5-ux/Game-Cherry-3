@@ -2144,6 +2144,7 @@ export default function CherryAdventure() {
     const gripFor = (id) => {
       const it = LOOT.find((x) => x.id === id);
       const cls = G.cls;
+      if (id === "haruStaff") return { x: -0.12, y: 0, z: -0.45 }; // 🌸 sakura staff tilted outward so the orb clears the chibi head
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
       if (cls === "mage" || id === "cm" || id === "wDm") return { x: -0.15, y: 0, z: 0 };
@@ -3212,12 +3213,62 @@ export default function CherryAdventure() {
       g.userData.gripY = 0.12;
       weaponModels.wDs = g;
     }
+    {
+      // 🌸 haruStaff — Sacred Sakura Staff (Haru's signature): dark polished wood,
+      //    gold trim, pink crystal orb in a gold halo, sakura blossoms, talisman, bells, red ribbons
+      const g = new THREE.Group();
+      const wood = new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: 0.35, metalness: 0.15 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, emissive: 0x8a6410, emissiveIntensity: 0.4, metalness: 0.7, roughness: 0.3 });
+      const pinkM = new THREE.MeshStandardMaterial({ color: 0xf7a8c4, emissive: 0xf28cb0, emissiveIntensity: 0.5, roughness: 0.5 });
+      const whiteM = new THREE.MeshStandardMaterial({ color: 0xfff2f7, emissive: 0xffd8e8, emissiveIntensity: 0.35, roughness: 0.55 });
+      const redM = new THREE.MeshStandardMaterial({ color: 0xc8203a, emissive: 0x5a0a16, emissiveIntensity: 0.3, roughness: 0.5 });
+      const paperM = new THREE.MeshStandardMaterial({ color: 0xf3ead0, roughness: 0.85 });
+      const sPetal = (mat, s) => { const p = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat); p.scale.set(0.7 * s, 0.26 * s, 1.1 * s); return p; };
+      // long polished shaft + gold ferrules + bottom finial
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.036, 2.0, 10), wood);
+      g.add(shaft);
+      [-0.75, -0.2, 0.55].forEach(y => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.011, 6, 14), gold); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); });
+      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.14, 8), gold); finial.position.y = -1.05; finial.rotation.x = Math.PI; g.add(finial);
+      // spinning head: gold halo + pink crystal orb + blossoms + hangings
+      const head = new THREE.Group(); head.position.y = 1.25;
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.017, 8, 30), gold); head.add(halo);
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.105, 20, 20), new THREE.MeshStandardMaterial({ color: 0xffb8d8, emissive: 0xf05a9a, emissiveIntensity: 1.1, roughness: 0.1, metalness: 0.1 }));
+      head.add(orb);
+      // sakura blossoms perched on the halo
+      for (let b = 0; b < 3; b++) {
+        const bloom = new THREE.Group();
+        for (let i = 0; i < 5; i++) { const pet = sPetal(b === 1 ? whiteM : pinkM, 0.8); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.045, Math.sin(a) * 0.045, 0); pet.rotation.z = a - Math.PI / 2; bloom.add(pet); }
+        bloom.add(new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), gold));
+        const ba = b / 3 * Math.PI * 2 + 0.5;
+        bloom.position.set(Math.cos(ba) * 0.19, Math.sin(ba) * 0.12, 0.02);
+        bloom.rotation.y = 0.4;
+        head.add(bloom);
+      }
+      // floating talisman + golden bells hanging from the halo
+      const tal = new THREE.Group();
+      tal.add(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.13, 0.01), paperM));
+      const talSig = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.09, 0.012), redM); tal.add(talSig);
+      tal.position.set(-0.23, -0.1, 0); tal.rotation.z = 0.25;
+      head.add(tal);
+      for (const bx of [0.16, 0.24]) { const bell = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), gold); bell.position.set(bx, -0.16 - (bx === 0.24 ? 0.05 : 0), 0); head.add(bell); }
+      // red ribbon tails fluttering below the head
+      for (const [rx, rr] of [[-0.05, 0.3], [0.05, -0.2]]) { const tail = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.34, 5), redM); tail.position.set(rx, -0.32, -0.01); tail.rotation.set(0.15, 0, rr); head.add(tail); }
+      g.add(head);
+      const glowLight = new THREE.PointLight(0xf07ab0, 0.7, 2.4); glowLight.position.y = 1.25; g.add(glowLight);
+      g.userData.orb = orb;
+      g.userData.head = head; // 🌸 spins slowly in the render loop
+      g.userData.glowLight = glowLight;
+      g.userData.gripY = 0.05;
+      weaponModels.haruStaff = g;
+    }
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
     weaponModels.default.visible = true;
     let curWeapon = "default";
     G.setWeaponVisual = (id) => {
       // 👗 fashion: if a costume weapon is set, SHOW that instead (stats stay from the real gear)
       if (G.costume && G.costume.weapon) id = G.costume.weapon;
+      // 🌸 Haru carries her Sacred Sakura Staff (signature look; stats still come from real gear)
+      else if (G.heroId === "haru" && weaponModels.haruStaff) id = "haruStaff";
       curWeapon = id && weaponModels[id] ? id : (CLASS_WEAPON[G.cls] || "default"); // class weapons share the class model
       Object.entries(weaponModels).forEach(([k, m]) => (m.visible = k === curWeapon));
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
@@ -4128,6 +4179,7 @@ export default function CherryAdventure() {
         haruParts.forEach(p => p.visible = on);
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
+        if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null); // 🌸 swap to/from the sakura staff
         haruIrises.forEach((m, i) => {
           if (on) { m.material = m.material.clone(); m.material.color.setHex(0xc86ad8); m.material.emissive && m.material.emissive.setHex(0x9a3ad0); m.material.emissiveIntensity = 0.35; }
           else { m.material.color.setHex(irisBase[i].col); if (m.material.emissive) m.material.emissive.setHex(irisBase[i].emi); m.material.emissiveIntensity = irisBase[i].ei; }
@@ -10686,6 +10738,13 @@ export default function CherryAdventure() {
           p.rotation.y += dt * u.spin * 0.7;
         });
         if (G._haruCircle) G._haruCircle.rotation.y += dt * 0.3; // 🌸 sakura circle spins slowly
+        // 🌸 sacred sakura staff — halo spins, orb breathes with light
+        const hst = weaponModels.haruStaff;
+        if (hst && hst.visible && hst.userData.head) {
+          hst.userData.head.rotation.y += dt * 0.8;
+          if (hst.userData.orb) hst.userData.orb.material.emissiveIntensity = 0.85 + Math.abs(Math.sin(t * 2.2)) * 0.55;
+          if (hst.userData.glowLight) hst.userData.glowLight.intensity = 0.55 + Math.abs(Math.sin(t * 2.2)) * 0.35;
+        }
         if (G._haruIrises && G._haruIrises.length) {
           const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32;
           G._haruIrises.forEach((m) => { if (m.material && m.material.emissiveIntensity != null) m.material.emissiveIntensity = ei; });
