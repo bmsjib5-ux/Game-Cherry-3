@@ -8390,19 +8390,24 @@ function CherryAdventure() {
       const topShell = new THREE.Mesh(new THREE.LatheGeometry(topProfile, 40), cream);
       topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
       haruOutfit.add(topShell);
-      // navy sailor collar (drapes over the shoulders) + square back flap
-      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.5, 0.16, 24, 1, true), navy);
+      // 🧣 slate-blue sailor collar (ตามภาพ) — shoulder ring + front V panels + back flap
+      const slate = new THREE.MeshStandardMaterial({ color: 0x6a7590, roughness: 0.7 });
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.5, 0.16, 24, 1, true), slate);
       collar.position.y = 1.86; collar.scale.set(1.02, 1, 0.78);
-      haruOutfit.add(collar);
-      const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.03), navy);
+      const vL = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.36, 0.03), slate);
+      vL.position.set(-0.14, 1.76, 0.26); vL.rotation.set(0.18, 0, 0.55);
+      const vR = vL.clone(); vR.position.x = 0.14; vR.rotation.z = -0.55;
+      const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.03), slate);
       backFlap.position.set(0, 1.79, -0.3); backFlap.rotation.x = 0.28;
-      haruOutfit.add(backFlap);
-      // red neckerchief (scarf) at the front — a clear triangle + knot
-      const scarf = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.36, 3), hCrimson);
-      scarf.position.set(0, 1.72, 0.32); scarf.rotation.set(0.2, Math.PI, 0); scarf.scale.set(1, 1, 0.45);
-      const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), hCrimson);
-      scarfKnot.position.set(0, 1.86, 0.34);
-      haruOutfit.add(scarf, scarfKnot);
+      haruOutfit.add(collar, vL, vR, backFlap);
+      // 🎀 big red neckerchief — knot + two long draping tails + gold pin (ตามภาพ)
+      const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 10), hCrimson);
+      scarfKnot.scale.set(1.4, 0.85, 0.7); scarfKnot.position.set(0, 1.85, 0.33);
+      const tailL2 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.46, 4), hCrimson);
+      tailL2.position.set(-0.1, 1.6, 0.3); tailL2.rotation.set(Math.PI - 0.2, 0, 0.2); tailL2.scale.set(1, 1, 0.4);
+      const tailR2 = tailL2.clone(); tailR2.position.x = 0.1; tailR2.rotation.z = -0.2;
+      const scarfPin = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), hGold); scarfPin.position.set(0, 1.86, 0.38);
+      haruOutfit.add(scarfKnot, tailL2, tailR2, scarfPin);
       // 👗 true pleated school skirt — zigzag hem (alternating outer/inner radii) with crisp flat facets
       const mkPleatedSkirt = (rTop, rHemOut, rHemIn, h, pleats) => {
         const pos = [];
@@ -8430,14 +8435,18 @@ function CherryAdventure() {
       const waistband = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.03, 8, 26), navy);
       waistband.position.y = 1.43; waistband.rotation.x = Math.PI / 2;
       haruOutfit.add(skirt, waistband);
-      // waist ofuda charm: sakura ornament + tassels (front hip)
+      // 🌸🎀 front waist ornament — sakura cluster on a red bow + hanging tassels (ตามภาพ)
       const charm = new THREE.Group();
-      for (let i = 0; i < 5; i++) { const pet = mkPetal(hPink, 0.65); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.055, Math.sin(a) * 0.055, 0); pet.rotation.z = a; charm.add(pet); }
-      charm.add(new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), hGold));
-      const tasA = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.2, 6), hCrimson); tasA.position.set(-0.03, -0.15, 0); tasA.rotation.x = Math.PI;
-      const tasB = tasA.clone(); tasB.position.x = 0.03;
-      charm.add(tasA, tasB);
-      charm.position.set(0.15, 1.12, 0.28);
+      const wLoopL = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), hCrimson);
+      wLoopL.scale.set(1.5, 0.8, 0.5); wLoopL.position.x = -0.1;
+      const wLoopR = wLoopL.clone(); wLoopR.position.x = 0.1;
+      charm.add(wLoopL, wLoopR);
+      const mkWBloom = (mat, sc, cx, cy) => { const b = new THREE.Group(); for (let i = 0; i < 5; i++) { const pet = mkPetal(mat, sc); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.06 * sc, Math.sin(a) * 0.06 * sc, 0); pet.rotation.z = a; b.add(pet); } b.add(new THREE.Mesh(new THREE.SphereGeometry(0.024 * sc, 8, 8), hGold)); b.position.set(cx, cy, 0.02); return b; };
+      charm.add(mkWBloom(hPink, 1.1, 0, 0));
+      charm.add(mkWBloom(hWhite, 0.65, 0.11, 0.05));
+      charm.add(mkWBloom(hPinkSoft, 0.6, -0.11, 0.04));
+      [-0.08, 0, 0.08].forEach((dx, i) => { const tas = new THREE.Mesh(new THREE.ConeGeometry(0.022, i === 1 ? 0.3 : 0.22, 6), i === 1 ? hGold : hCrimson); tas.position.set(dx, -0.2 - (i === 1 ? 0.05 : 0), 0); tas.rotation.x = Math.PI; charm.add(tas); });
+      charm.position.set(0, 1.42, 0.36);
       haruOutfit.add(charm);
       // white knee socks
       for (const sx of [-0.18, 0.18]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.44, 14), cream); sock.position.set(sx, 0.32, 0.01); haruOutfit.add(sock); }
