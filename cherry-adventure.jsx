@@ -834,6 +834,17 @@ const CUSTOM = {
     { n: "เดรสดำขลิบทอง", base: "#2b2724", stripe: "#c9a24a", pants: 0xf5f2ec, collar: true },
   ],
 };
+// 🦸 preset characters — pick a ready-made hero instead of always starting as Cherry.
+const CHAR_PRESETS = [
+  { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
+  { name: "ฮารุ",    emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2 },
+  { name: "ลูน่า",   emoji: "🌙", gender: 0, skin: 0, hairColor: 4, hairStyle: 6, eyes: 0, outfit: 0 },
+  { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 3, hairColor: 4, hairStyle: 2, eyes: 3, outfit: 0 },
+  { name: "โรส",     emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 2, outfit: 4 },
+  { name: "โคทาโร่", emoji: "⚔️", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 3 },
+  { name: "ไครี",    emoji: "⚡", gender: 1, skin: 2, hairColor: 2, hairStyle: 5, eyes: 1, outfit: 2 },
+  { name: "โนอาห์",  emoji: "🖤", gender: 1, skin: 1, hairColor: 1, hairStyle: 1, eyes: 0, outfit: 3 },
+];
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 const rollRarity = (boss) => {
   const r = Math.random();
@@ -5089,6 +5100,19 @@ export default function CherryAdventure() {
       G.setCustom("hairStyle", Math.floor(Math.random() * CUSTOM.hairStyles.length));
       G.setCustom("eyes", Math.floor(Math.random() * CUSTOM.eyes.length));
       G.setCustom("outfit", Math.floor(Math.random() * CUSTOM.outfits.length));
+    };
+    // 🦸 apply a preset character (name + full look) from the roster
+    G.applyCharPreset = (idx) => {
+      const p = CHAR_PRESETS[idx];
+      if (!p) return;
+      G.setCustom("gender", p.gender);
+      G.setCustom("skin", p.skin);
+      G.setCustom("hairColor", p.hairColor);
+      G.setCustom("hairStyle", p.hairStyle);
+      G.setCustom("eyes", p.eyes);
+      G.setCustom("outfit", p.outfit);
+      G.pendingName = p.name;
+      setUi((u) => ({ ...u, pendingName: p.name, charPreset: idx, custom: { ...G.custom } }));
     };
 
     // ---------- ✨ Elemental gear glow (rare+ items) ----------
@@ -16020,7 +16044,7 @@ export default function CherryAdventure() {
           <div style={{
             position: "absolute", top: 14, left: 190, right: 12, textAlign: "center", pointerEvents: "none",
           }}>
-            <div style={{ fontSize: 19, fontWeight: 800, color: "#8a5a4a" }}>🎀 ออกแบบน้องเชอร์รี่</div>
+            <div style={{ fontSize: 19, fontWeight: 800, color: "#8a5a4a" }}>🎀 ออกแบบตัวละคร</div>
             <div style={{ fontSize: 11.5, color: "#a3796a", marginTop: 2 }}>เมนูซ้าย · บีบ/ลากซูมได้ · ลากหมุนตัวได้</div>
           </div>
           {/* 💾 back to slot selection */}
@@ -16040,10 +16064,29 @@ export default function CherryAdventure() {
           }}>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#8a5a4a", textAlign: "center" }}>🎀 แต่งตัว</div>
 
+            {/* 🦸 preset character roster */}
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>🦸 เลือกตัวละคร</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 }}>
+                {CHAR_PRESETS.map((p, i) => (
+                  <button key={i} onClick={() => G.applyCharPreset(i)} style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 2px",
+                    borderRadius: 10, cursor: "pointer", fontFamily: font,
+                    border: ui.charPreset === i ? "2px solid #e0788a" : "2px solid #ece0d8",
+                    background: ui.charPreset === i ? "#fff0f4" : "#faf6f2",
+                  }}>
+                    <span style={{ fontSize: 18 }}>{p.emoji}</span>
+                    <span style={{ fontSize: 8.5, fontWeight: 800, color: "#8a5a4a" }}>{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* ✏️ character name */}
             <div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>✏️ ตั้งชื่อตัวละคร</div>
               <input
+                key={"nm-" + (ui.pendingName || "")}
                 type="text"
                 maxLength={12}
                 defaultValue={ui.pendingName || ""}
