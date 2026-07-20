@@ -1754,20 +1754,13 @@ export default function CherryAdventure() {
     const legL = makeLeg(-1);
     const legR = makeLeg(1);
     // ✨ human-proportioned torso: broad chest → narrow waist → hips, with sloped shoulders
-    const torsoProfile = [
-      [0.30, 0.00],  // waist base (narrower)
-      [0.315, 0.10],
-      [0.30, 0.22],  // narrowest at the waist
-      [0.32, 0.34],
-      [0.37, 0.48],  // ribcage widening
-      [0.405, 0.62], // chest
-      [0.415, 0.74], // upper chest / bust line
-      [0.40, 0.86],  // toward the shoulders
-      [0.35, 0.97],  // shoulder slope begins
-      [0.24, 1.08],  // neck base
-      [0.12, 1.16],
-    ].map(([r, y]) => new THREE.Vector2(r, y));
-    const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoProfile, 44), shirtMat);
+    // ♂ straight athletic profile
+    const torsoProfileM = [[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.34], [0.37, 0.48], [0.405, 0.62], [0.415, 0.74], [0.40, 0.86], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y));
+    // ♀ hourglass profile — hip flare → pinched waist → soft bust swell (ส่วนโค้งเว้า)
+    const torsoProfileF = [[0.315, 0.00], [0.335, 0.08], [0.295, 0.20], [0.262, 0.32], [0.30, 0.46], [0.385, 0.60], [0.435, 0.72], [0.415, 0.84], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y));
+    const torsoGeoM = new THREE.LatheGeometry(torsoProfileM, 44);
+    const torsoGeoF = new THREE.LatheGeometry(torsoProfileF, 44);
+    const torso = new THREE.Mesh(torsoGeoF, shirtMat); // female curves by default
     torso.position.y = 1.14;
     torso.scale.set(1.0, 0.8, 0.72); // 📏 ช่วงตัวสั้นลง (ย่อแนวตั้ง), flatter front-to-back
     torso.castShadow = true;
@@ -1782,8 +1775,8 @@ export default function CherryAdventure() {
     const hips = new THREE.Group();
     for (const side of [-1, 1]) {
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), pantsMat);
-      h.position.set(side * 0.16, 1.14, 0);
-      h.scale.set(0.95, 0.7, 0.85);
+      h.position.set(side * 0.175, 1.14, 0);
+      h.scale.set(1.08, 0.78, 0.9); // 📏 สะโพกผายรับกับเอวคอด
       hips.add(h);
     }
     char.add(hips);
@@ -4105,7 +4098,7 @@ export default function CherryAdventure() {
       const cream = new THREE.MeshStandardMaterial({ color: 0xfbf7f2, roughness: 0.78 });
       const haruOutfit = new THREE.Group();
       // white sailor top (shell over the torso)
-      const topProfile = [[0.30, 0.02], [0.33, 0.16], [0.40, 0.40], [0.435, 0.62], [0.44, 0.76], [0.42, 0.9], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y));
+      const topProfile = [[0.325, 0.02], [0.345, 0.12], [0.30, 0.28], [0.278, 0.38], [0.315, 0.52], [0.40, 0.64], [0.45, 0.76], [0.43, 0.88], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y)); // เข้ารูปตามทรง hourglass
       const topShell = new THREE.Mesh(new THREE.LatheGeometry(topProfile, 40), cream);
       topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
       haruOutfit.add(topShell);
@@ -5298,10 +5291,11 @@ export default function CherryAdventure() {
     // 👦👧 apply body shape for the chosen gender
     const applyGender = (g) => {
       const male = g === 1;
-      // male: broader shoulders, straighter/boxier torso; female: soft curves, narrower waist
+      // male: broader shoulders, straighter/boxier torso; female: hourglass curves (โค้งเว้า)
+      torso.geometry = male ? torsoGeoM : torsoGeoF;
       torso.scale.set(male ? 1.14 : 0.98, 0.8, male ? 0.8 : 0.72); // 📏 y=0.8 ช่วงตัวสั้นลง
       armL.position.y = 1.8; armR.position.y = 1.8; // keep shoulders at the shorter torso height
-      pelvis.scale.set(male ? 0.98 : 1.1, 0.6, male ? 0.78 : 0.82);
+      pelvis.scale.set(male ? 0.98 : 1.16, 0.6, male ? 0.78 : 0.84); // ♀ เชิงกรานกว้างขึ้นรับส่วนโค้ง
       armL.position.x = -0.46 * (male ? 1.18 : 0.98); // shoulders wider apart for male
       armR.position.x = 0.46 * (male ? 1.18 : 0.98);
       // 👗 feminine curve — hips only show for the female form
