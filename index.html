@@ -4913,9 +4913,15 @@ function CherryAdventure() {
     toonGrad.minFilter = THREE.NearestFilter;
     toonGrad.magFilter = THREE.NearestFilter;
     toonGrad.needsUpdate = true;
+    // 🎨 skin-only gradient: เงาลึกขึ้นเล็กน้อย + ไฮไลต์ไม่ถึงขาวสุด (ลดความโปร่งแสง)
+    const skinToneData = new Uint8Array([95, 95, 95, 255, 150, 150, 150, 255, 205, 205, 205, 255, 242, 242, 242, 255]);
+    const skinGrad = new THREE.DataTexture(skinToneData, 4, 1, THREE.RGBAFormat);
+    skinGrad.minFilter = THREE.NearestFilter;
+    skinGrad.magFilter = THREE.NearestFilter;
+    skinGrad.needsUpdate = true;
     const skinMat = new THREE.MeshToonMaterial({
       color: 0xffe0c8,
-      gradientMap: toonGrad
+      gradientMap: skinGrad
     });
     const hairMat = new THREE.MeshStandardMaterial({
       color: 0x4a3020,
@@ -8397,7 +8403,7 @@ function CherryAdventure() {
       const cream = new THREE.MeshStandardMaterial({ color: 0xfbf7f2, roughness: 0.78 });
       const haruOutfit = new THREE.Group();
       // white sailor top (shell over the torso)
-      const topProfile = [[0.325, 0.02], [0.34, 0.12], [0.308, 0.28], [0.298, 0.38], [0.318, 0.52], [0.395, 0.64], [0.435, 0.76], [0.42, 0.88], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y)); // เข้ารูปพองาม ไม่เว้าลึก
+      const topProfile = [[0.325, 0.02], [0.34, 0.12], [0.308, 0.28], [0.298, 0.38], [0.318, 0.52], [0.395, 0.64], [0.435, 0.76], [0.425, 0.86], [0.40, 0.94]].map(([r, y]) => new THREE.Vector2(r, y)); // จบใต้หัวไหล่ — ไหล่เปลือยไม่มีแขนเสื้อ
       const topShellGeo = new THREE.LatheGeometry(topProfile, 40);
       { // 📐 หน้านูน หลังตรง — match the sculpted torso
         const pos = topShellGeo.attributes.position;
@@ -8411,13 +8417,14 @@ function CherryAdventure() {
         pos.needsUpdate = true;
         topShellGeo.computeVertexNormals();
       }
-      const topShell = new THREE.Mesh(topShellGeo, cream);
+      const pureWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 });
+      const topShell = new THREE.Mesh(topShellGeo, pureWhite); // เสื้อขาวล้วน
       topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
       haruOutfit.add(topShell);
       // 🧣 slate-blue sailor collar (ตามภาพ) — shoulder ring + front V panels + back flap
-      const slate = new THREE.MeshStandardMaterial({ color: 0x6a7590, roughness: 0.7 });
-      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.5, 0.16, 24, 1, true), slate);
-      collar.position.y = 1.86; collar.scale.set(1.02, 1, 0.78);
+      const slate = new THREE.MeshStandardMaterial({ color: 0x2b3358, roughness: 0.72 }); // น้ำเงินเดียวกับกระโปรง
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.15, 24, 1, true), slate);
+      collar.position.y = 1.87; collar.scale.set(1.0, 1, 0.75);
       const vL = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.36, 0.03), slate);
       vL.position.set(-0.14, 1.76, 0.26); vL.rotation.set(0.18, 0, 0.55);
       const vR = vL.clone(); vR.position.x = 0.14; vR.rotation.z = -0.55;
@@ -8426,11 +8433,11 @@ function CherryAdventure() {
       haruOutfit.add(collar, vL, vR, backFlap);
       // 🎀 big red neckerchief — knot + two long draping tails + gold pin (ตามภาพ)
       const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 10), hCrimson);
-      scarfKnot.scale.set(1.4, 0.85, 0.7); scarfKnot.position.set(0, 1.85, 0.33);
+      scarfKnot.scale.set(1.4, 0.85, 0.7); scarfKnot.position.set(0, 1.85, 0.42); // ลอยหน้าอก ไม่จมในตัว
       const tailL2 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.46, 4), hCrimson);
-      tailL2.position.set(-0.1, 1.6, 0.3); tailL2.rotation.set(Math.PI - 0.2, 0, 0.2); tailL2.scale.set(1, 1, 0.4);
+      tailL2.position.set(-0.1, 1.6, 0.4); tailL2.rotation.set(Math.PI - 0.2, 0, 0.2); tailL2.scale.set(1, 1, 0.4);
       const tailR2 = tailL2.clone(); tailR2.position.x = 0.1; tailR2.rotation.z = -0.2;
-      const scarfPin = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), hGold); scarfPin.position.set(0, 1.86, 0.38);
+      const scarfPin = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), hGold); scarfPin.position.set(0, 1.86, 0.47);
       haruOutfit.add(scarfKnot, tailL2, tailR2, scarfPin);
       // 👗 true pleated school skirt — zigzag hem (alternating outer/inner radii) with crisp flat facets
       const mkPleatedSkirt = (rTop, rHemOut, rHemIn, h, pleats) => {
@@ -8452,12 +8459,16 @@ function CherryAdventure() {
         return geo;
       };
       const navy2 = navy.clone(); navy2.side = THREE.DoubleSide;
-      const skirt = new THREE.Mesh(mkPleatedSkirt(0.29, 0.57, 0.47, 0.55, 14), navy2);
-      skirt.position.y = 1.44; // pivot ที่ขอบเอว — แกว่งชายกระโปรงได้
+      const skirt = new THREE.Mesh(mkPleatedSkirt(0.272, 0.57, 0.47, 0.55, 14), navy2);
+      skirt.position.y = 1.45; // pivot ที่ขอบเอว — แกว่งชายกระโปรงได้
+      skirt.scale.set(1, 1, 0.85); // รัดเอวแนบลำตัว ไม่มีช่องว่างหน้า-หลัง
+      const hemLine = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.02, 6, 40), new THREE.MeshStandardMaterial({ color: 0x7a4a26, roughness: 0.6 }));
+      hemLine.rotation.x = Math.PI / 2; hemLine.position.y = -0.46; // เส้นน้ำตาลรอบกระโปรงช่วงเกือบตีนกระโปรง
+      skirt.add(hemLine);
       G._haruSkirt = skirt;
       // waistband
-      const waistband = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.03, 8, 26), navy);
-      waistband.position.y = 1.43; waistband.rotation.x = Math.PI / 2;
+      const waistband = new THREE.Mesh(new THREE.TorusGeometry(0.278, 0.032, 8, 26), navy);
+      waistband.position.y = 1.44; waistband.rotation.x = Math.PI / 2; waistband.scale.set(1, 0.85, 1); // รัดพอดีตามลำตัว
       haruOutfit.add(skirt, waistband);
       // 🌸🎀 front waist ornament — sakura cluster on a red bow + hanging tassels (ตามภาพ)
       const charm = new THREE.Group();
