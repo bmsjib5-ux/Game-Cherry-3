@@ -1782,8 +1782,8 @@ export default function CherryAdventure() {
     char.add(hips);
     G.hips = hips;
     // neck connects head and body naturally
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.16, 0.3, 22), skinMat);
-    neck.position.y = 1.96;
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.62, 22), skinMat);
+    neck.position.y = 2.1; // คอยาวขึ้น เชื่อมไหล่→หัว
     char.add(neck);
     // 🏷️ player name + level + title label floating above the head
     const nameCanvas = document.createElement("canvas");
@@ -1792,7 +1792,7 @@ export default function CherryAdventure() {
     nameTex.minFilter = THREE.LinearFilter;
     const nameSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: nameTex, transparent: true, depthTest: false }));
     nameSprite.scale.set(2.8, 0.76, 1);
-    nameSprite.position.y = 3.1;
+    nameSprite.position.y = 3.45;
     nameSprite.visible = false;
     char.add(nameSprite);
     G.nameSprite = nameSprite;
@@ -3371,7 +3371,7 @@ export default function CherryAdventure() {
     };
 
     const headG = new THREE.Group();
-    headG.position.y = 2.55;
+    headG.position.y = 2.92; // ยกหัวขึ้นให้เห็นคอ
     headG.scale.setScalar(1.3); // 🎌 chibi proportions: big cute head
     char.add(headG);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
@@ -4123,10 +4123,10 @@ export default function CherryAdventure() {
           const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2;
           const rH0 = k % 2 === 0 ? rHemOut : rHemIn;
           const rH1 = (k + 1) % 2 === 0 ? rHemOut : rHemIn;
-          const t0 = [Math.cos(a0) * rTop, h / 2, Math.sin(a0) * rTop];
-          const t1 = [Math.cos(a1) * rTop, h / 2, Math.sin(a1) * rTop];
-          const b0 = [Math.cos(a0) * rH0, -h / 2, Math.sin(a0) * rH0];
-          const b1 = [Math.cos(a1) * rH1, -h / 2, Math.sin(a1) * rH1];
+          const t0 = [Math.cos(a0) * rTop, 0, Math.sin(a0) * rTop];
+          const t1 = [Math.cos(a1) * rTop, 0, Math.sin(a1) * rTop];
+          const b0 = [Math.cos(a0) * rH0, -h, Math.sin(a0) * rH0];
+          const b1 = [Math.cos(a1) * rH1, -h, Math.sin(a1) * rH1];
           pos.push(...t0, ...b0, ...t1, ...t1, ...b0, ...b1);
         }
         const geo = new THREE.BufferGeometry();
@@ -4136,7 +4136,8 @@ export default function CherryAdventure() {
       };
       const navy2 = navy.clone(); navy2.side = THREE.DoubleSide;
       const skirt = new THREE.Mesh(mkPleatedSkirt(0.29, 0.57, 0.47, 0.55, 14), navy2);
-      skirt.position.y = 1.165;
+      skirt.position.y = 1.44; // pivot ที่ขอบเอว — แกว่งชายกระโปรงได้
+      G._haruSkirt = skirt;
       // waistband
       const waistband = new THREE.Mesh(new THREE.TorusGeometry(0.295, 0.03, 8, 26), navy);
       waistband.position.y = 1.43; waistband.rotation.x = Math.PI / 2;
@@ -10752,6 +10753,13 @@ export default function CherryAdventure() {
           p.rotation.y += dt * u.spin * 0.7;
         });
         if (G._haruCircle) G._haruCircle.rotation.y += dt * 0.3; // 🌸 sakura circle spins slowly
+        // 👗 skirt sways from the waist — gentle at idle, stronger while moving
+        if (G._haruSkirt) {
+          const spd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
+          const amp = 0.05 + spd * 0.09;
+          G._haruSkirt.rotation.x = Math.sin(t * 2.1) * amp;
+          G._haruSkirt.rotation.z = Math.cos(t * 1.6) * amp * 0.8;
+        }
         // 🌸 sacred sakura staff — halo spins, orb breathes with light
         const hst = weaponModels.haruStaff;
         if (hst && hst.visible && hst.userData.head) {
