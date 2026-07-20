@@ -1757,7 +1757,7 @@ export default function CherryAdventure() {
     // ♂ straight athletic profile
     const torsoProfileM = [[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.34], [0.37, 0.48], [0.405, 0.62], [0.415, 0.74], [0.40, 0.86], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y));
     // ♀ hourglass profile — hip flare → pinched waist → soft bust swell (ส่วนโค้งเว้า)
-    const torsoProfileF = [[0.315, 0.00], [0.335, 0.08], [0.295, 0.20], [0.262, 0.32], [0.30, 0.46], [0.385, 0.60], [0.435, 0.72], [0.415, 0.84], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y));
+    const torsoProfileF = [[0.315, 0.00], [0.33, 0.08], [0.302, 0.20], [0.29, 0.32], [0.312, 0.46], [0.38, 0.60], [0.415, 0.72], [0.402, 0.84], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
     const torsoGeoM = new THREE.LatheGeometry(torsoProfileM, 44);
     const torsoGeoF = new THREE.LatheGeometry(torsoProfileF, 44);
     const torso = new THREE.Mesh(torsoGeoF, shirtMat); // female curves by default
@@ -4098,7 +4098,7 @@ export default function CherryAdventure() {
       const cream = new THREE.MeshStandardMaterial({ color: 0xfbf7f2, roughness: 0.78 });
       const haruOutfit = new THREE.Group();
       // white sailor top (shell over the torso)
-      const topProfile = [[0.325, 0.02], [0.345, 0.12], [0.30, 0.28], [0.278, 0.38], [0.315, 0.52], [0.40, 0.64], [0.45, 0.76], [0.43, 0.88], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y)); // เข้ารูปตามทรง hourglass
+      const topProfile = [[0.325, 0.02], [0.34, 0.12], [0.308, 0.28], [0.298, 0.38], [0.318, 0.52], [0.395, 0.64], [0.435, 0.76], [0.42, 0.88], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y)); // เข้ารูปพองาม ไม่เว้าลึก
       const topShell = new THREE.Mesh(new THREE.LatheGeometry(topProfile, 40), cream);
       topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
       haruOutfit.add(topShell);
