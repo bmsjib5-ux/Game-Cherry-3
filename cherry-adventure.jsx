@@ -4769,7 +4769,7 @@ export default function CherryAdventure() {
       const acc = G._classAcc;
       const eq = G.equip || {};
       const cos = G.costume || {};
-      const outfitOn = !!(cos.outfit || eq.outfit); // real gear OR a transmog costume counts as "wearing an outfit"
+      const outfitOn = !!(cos.outfit || eq.outfit || G.activeSet); // real gear, transmog costume, OR a collection set = wearing an outfit
       const hatOn = !!(cos.hat || eq.hat);
       const maskOn = !!(cos.mask || eq.mask);
       Object.entries(classAccessories).forEach(([k, g]) => { if (g) g.visible = k === acc && !outfitOn; });
@@ -8672,6 +8672,7 @@ export default function CherryAdventure() {
       G.activeSet = id;
       G.dye = { ...(G.dye || {}), ...(s.dye || {}) };
       if (s.costume) G.costume = { ...(G.costume || {}), ...s.costume };
+      if (G.applyClassOutfit) G.applyClassOutfit(G.cls); // 👘 recolour the body to the set theme (class armor is hidden below)
       SLOTS.forEach((slot) => { if (slot === "weapon") G.setWeaponVisual(G.equip.weapon); else if (slot === "outfit") G.setOutfitVisual(G.equip.outfit); else applyGear(); });
       if (G.applySetAura) G.applySetAura();
       const oldMax = effMaxHp();
@@ -8684,6 +8685,8 @@ export default function CherryAdventure() {
     };
     G.removeSet = () => {
       G.activeSet = null;
+      if (G.applyClassOutfit) G.applyClassOutfit(G.cls); // 👘 bring the class outfit look back
+      SLOTS.forEach((slot) => { if (slot === "weapon") G.setWeaponVisual(G.equip.weapon); else if (slot === "outfit") G.setOutfitVisual(G.equip.outfit); else applyGear(); });
       if (G.applySetAura) G.applySetAura();
       toast("👘 ถอดเซ็ตแล้ว (ลุค/สียังอยู่ ปรับได้ในแฟชั่น)");
       setUi((u) => ({ ...u, activeSet: null }));
