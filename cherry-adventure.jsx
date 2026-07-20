@@ -1760,6 +1760,19 @@ export default function CherryAdventure() {
     const torsoProfileF = [[0.315, 0.00], [0.33, 0.08], [0.302, 0.20], [0.29, 0.32], [0.312, 0.46], [0.38, 0.60], [0.415, 0.72], [0.402, 0.84], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
     const torsoGeoM = new THREE.LatheGeometry(torsoProfileM, 44);
     const torsoGeoF = new THREE.LatheGeometry(torsoProfileF, 44);
+    // 📐 side-view shaping (หน้านูน หลังตรง): flatten the back to a near-straight wall, puff the chest slightly
+    {
+      const pos = torsoGeoF.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let z = pos.getZ(i);
+        const y = pos.getY(i);
+        if (z < -0.17) z = -0.17 - (Math.abs(z) - 0.17) * 0.12;
+        else if (z > 0 && y > 0.5 && y < 1.0) z *= 1.08;
+        pos.setZ(i, z);
+      }
+      pos.needsUpdate = true;
+      torsoGeoF.computeVertexNormals();
+    }
     const torso = new THREE.Mesh(torsoGeoF, shirtMat); // female curves by default
     torso.position.y = 1.14;
     torso.scale.set(1.0, 0.8, 0.72); // 📏 ช่วงตัวสั้นลง (ย่อแนวตั้ง), flatter front-to-back
@@ -4099,7 +4112,20 @@ export default function CherryAdventure() {
       const haruOutfit = new THREE.Group();
       // white sailor top (shell over the torso)
       const topProfile = [[0.325, 0.02], [0.34, 0.12], [0.308, 0.28], [0.298, 0.38], [0.318, 0.52], [0.395, 0.64], [0.435, 0.76], [0.42, 0.88], [0.36, 1.0], [0.26, 1.09]].map(([r, y]) => new THREE.Vector2(r, y)); // เข้ารูปพองาม ไม่เว้าลึก
-      const topShell = new THREE.Mesh(new THREE.LatheGeometry(topProfile, 40), cream);
+      const topShellGeo = new THREE.LatheGeometry(topProfile, 40);
+      { // 📐 หน้านูน หลังตรง — match the sculpted torso
+        const pos = topShellGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          let z = pos.getZ(i);
+          const y = pos.getY(i);
+          if (z < -0.18) z = -0.18 - (Math.abs(z) - 0.18) * 0.12;
+          else if (z > 0 && y > 0.5 && y < 1.0) z *= 1.08;
+          pos.setZ(i, z);
+        }
+        pos.needsUpdate = true;
+        topShellGeo.computeVertexNormals();
+      }
+      const topShell = new THREE.Mesh(topShellGeo, cream);
       topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
       haruOutfit.add(topShell);
       // 🧣 slate-blue sailor collar (ตามภาพ) — shoulder ring + front V panels + back flap
@@ -4110,7 +4136,7 @@ export default function CherryAdventure() {
       vL.position.set(-0.14, 1.76, 0.26); vL.rotation.set(0.18, 0, 0.55);
       const vR = vL.clone(); vR.position.x = 0.14; vR.rotation.z = -0.55;
       const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.03), slate);
-      backFlap.position.set(0, 1.79, -0.3); backFlap.rotation.x = 0.28;
+      backFlap.position.set(0, 1.8, -0.21); backFlap.rotation.x = 0.34; // ชิดแผ่นหลังที่แบนลง
       haruOutfit.add(collar, vL, vR, backFlap);
       // 🎀 big red neckerchief — knot + two long draping tails + gold pin (ตามภาพ)
       const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 10), hCrimson);
