@@ -4459,18 +4459,23 @@ export default function CherryAdventure() {
       };
       const navy2L = lMidnight.clone(); navy2L.side = THREE.DoubleSide;
       const blackL = lNavyBlack.clone(); blackL.side = THREE.DoubleSide;
-      const lSkirt = new THREE.Mesh(mkPleatL(0.30, 0.40, 0.365, 0.5, 16), navy2L); // ทรงนุ่มแนบชิดขา ไม่บาน (ครอบนอกลำตัวเสมอ)
+      const lSkirt = new THREE.Mesh(mkPleatL(0.30, 0.5, 0.44, 0.48, 18), navy2L); // A-line บานกำลังดี ทิ้งชายพลิ้ว
       lSkirt.position.y = 1.45; lSkirt.scale.set(1, 1, 0.9);
       const petti = lWhite.clone(); petti.side = THREE.DoubleSide;
-      const lSkirtUnder = new THREE.Mesh(mkPleatL(0.285, 0.335, 0.315, 0.55, 18), petti); // แคบกว่าชั้นนอก โผล่เฉพาะใต้ชาย
+      const lSkirtUnder = new THREE.Mesh(mkPleatL(0.285, 0.44, 0.4, 0.6, 20), petti); // ชั้นในขาวยาวกว่า โผล่ใต้ชาย
+      // 🤍 ระบายลูกไม้ขาวปลายแหลมรอบชายกระโปรง (ตามภาพ)
+      const frill = new THREE.Group();
+      for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2; const pt = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.14, 4), petti); pt.position.set(Math.cos(a) * 0.5, -0.5, Math.sin(a) * 0.5); pt.rotation.set(Math.PI, a, 0); frill.add(pt); }
+      lSkirt.add(frill);
       lSkirt.add(lSkirtUnder); // 🤍 สุ่มขาวจีบถี่โผล่ใต้ชาย — แกว่งตามกัน
-      const lHemTrim = new THREE.Mesh(new THREE.TorusGeometry(0.372, 0.012, 6, 40), lGoldTrim);
+      const lHemTrim = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.012, 6, 44), lGoldTrim);
       lHemTrim.rotation.x = Math.PI / 2; lHemTrim.position.y = -0.44;
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), lStar); st.scale.set(0.7, 1.1, 0.3); st.position.set(Math.cos(a) * 0.44, -0.28, Math.sin(a) * 0.44); lSkirt.add(st); } // ⭐ ดาวทองบนกระโปรง
       lSkirt.add(lHemTrim); // เส้นทองใกล้ชายกระโปรง
       lunaOutfit.add(lSkirt);
       lSkirt.userData.basePos = lSkirt.geometry.attributes.position.array.slice(); // สำหรับคลื่นผ้าปลิวลม
       G._lunaSkirt = lSkirt;
-      const lWaist = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.03, 8, 26), lNavyBlack);
+      const lWaist = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.032, 8, 26), lNavyBlack);
       lWaist.position.y = 1.44; lWaist.rotation.x = Math.PI / 2; lWaist.scale.set(1, 0.9, 1);
       lunaOutfit.add(lWaist);
       // 🎀 big violet-blue back bow + crystals (ตามภาพ)
@@ -11135,7 +11140,7 @@ export default function CherryAdventure() {
           if (G._lunaCircle) G._lunaCircle.rotation.y += dt * 0.25;
           if (G._lunaSkirt) {
             const spd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
-            const amp = 0.045 + spd * 0.09; // ผ้านุ่ม แกว่งละมุน
+            const amp = 0.055 + spd * 0.11; // ผ้าพลิ้ว
             G._lunaSkirt.rotation.x = Math.sin(t * 2.0) * amp;
             G._lunaSkirt.rotation.z = Math.cos(t * 1.5) * amp * 0.8;
             // 🌬️ คลื่นผ้าปลิวตามลม — ripple วิ่งรอบชายกระโปรง
