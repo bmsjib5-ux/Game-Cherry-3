@@ -4216,13 +4216,22 @@ export default function CherryAdventure() {
       [[-0.09, 0.15], [0.09, -0.15]].forEach(([dx, lean]) => { const tail = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.5, 5), hCrimson); tail.position.set(dx, -0.32, -0.01); tail.rotation.set(Math.PI - 0.12, 0, lean); tail.scale.set(1, 1, 0.5); backBow.add(tail); });
       backBow.position.set(0, 1.42, -0.32);
       haruOutfit.add(backBow);
-      // white knee socks
-      for (const sx of [-0.18, 0.18]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.44, 14), cream); sock.position.set(sx, 0.32, 0.01); haruOutfit.add(sock); }
-      // red thigh ribbon (garter) on the right leg
-      const garter = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.022, 6, 18), hCrimson);
-      garter.position.set(0.19, 0.74, 0); garter.rotation.x = 0.25;
-      const garterBow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), hCrimson); garterBow.scale.set(1.7, 0.8, 0.6); garterBow.position.set(0.19, 0.74, 0.15);
-      haruOutfit.add(garter, garterBow);
+      // 🧦 knee socks ride ON the legs (ตามขาตอนเดิน) — attached to each knee joint
+      const mkSock = leg => {
+        const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.128, 0.108, 0.36, 14), cream);
+        sock.position.y = -0.235;
+        (leg.userData.knee || leg).add(sock);
+        return sock;
+      };
+      const sockL = mkSock(legL), sockR = mkSock(legR);
+      // 🎀 red thigh ribbon (garter) rides on the right thigh (ตามขาตอนเดิน)
+      const garterG = new THREE.Group();
+      const garter = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.022, 6, 18), hCrimson);
+      garter.rotation.x = Math.PI / 2 - 0.2;
+      const garterBow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), hCrimson); garterBow.scale.set(1.7, 0.8, 0.6); garterBow.position.set(0, 0.02, 0.15);
+      garterG.add(garter, garterBow);
+      garterG.position.set(0.02, -0.44, 0);
+      legR.add(garterG);
       char.add(haruOutfit);
       // 👘 detached flowing white kimono sleeves — long, flared, with a red cuff + gold trim
       const mkSleeve = () => {
@@ -4247,7 +4256,7 @@ export default function CherryAdventure() {
       G._haruCircle = haruCircle;
       G._haruShoeMat = new THREE.MeshStandardMaterial({ color: 0x5a3a24, roughness: 0.55 }); // brown loafers
 
-      const haruParts = [haruHead, haruBody, talis, haruPetals, haruOutfit, sleeveL, sleeveR, haruCircle];
+      const haruParts = [haruHead, haruBody, talis, haruPetals, haruOutfit, sleeveL, sleeveR, haruCircle, sockL, sockR, garterG];
       haruParts.forEach(p => p.visible = false);
       G._haruPetals = petalArr;
       G._haruIrises = haruIrises;
