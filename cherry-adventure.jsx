@@ -856,7 +856,27 @@ const CUSTOM = {
     { n: "ดำสุดเท่", base: "#3a3a44", stripe: "#8a8a98", pants: 0x52525c },
     { n: "เดรสดำขลิบทอง", base: "#2b2724", stripe: "#c9a24a", pants: 0xf5f2ec, collar: true },
   ],
+  // 🎨 shared palette for individually recolouring the top / pants / shoes
+  clothColors: [
+    { n: "ขาว", c: 0xf5f2ec }, { n: "ดำ", c: 0x2a2a30 }, { n: "กรมท่า", c: 0x33415e },
+    { n: "แดง", c: 0xc4102a }, { n: "ชมพู", c: 0xe8879e }, { n: "มิ้นต์", c: 0x4f9a7d },
+    { n: "ฟ้า", c: 0x5a8fd0 }, { n: "ม่วง", c: 0x8a6ad0 }, { n: "ทอง", c: 0xd9a92a },
+    { n: "น้ำตาล", c: 0x8a5a3a }, { n: "เทา", c: 0x8a8a92 }, { n: "ส้ม", c: 0xe08020 },
+  ],
+  // 💎 toggleable cosmetic accessories worn on the head
+  accessories: [
+    { k: "glasses", n: "แว่นตา", e: "👓" },
+    { k: "earring", n: "ต่างหูอัญมณี", e: "💠" },
+    { k: "tiara", n: "มงกุฎน้อย", e: "👑" },
+  ],
 };
+// 🎀 character-creator category tabs (keeps the dressing panel short & tidy)
+const CREATE_TABS = [
+  { k: "char", n: "ตัวละคร", e: "🦸" }, { k: "body", n: "รูปร่าง", e: "🧍" },
+  { k: "hair", n: "ผม", e: "💇" }, { k: "face", n: "ใบหน้า", e: "👀" },
+  { k: "top", n: "เสื้อ", e: "👚" }, { k: "pants", n: "กางเกง", e: "👖" },
+  { k: "shoes", n: "รองเท้า", e: "👟" }, { k: "acc", n: "ประดับ", e: "💎" },
+];
 // 🦸 preset characters — pick a ready-made hero instead of always starting as Cherry.
 const CHAR_PRESETS = [
   { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
@@ -890,7 +910,7 @@ export default function CherryAdventure() {
     enemy: null, // {id,name,emoji,hp,maxHp,lv}
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
-    custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 }, customTab: "gender",
+    custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
@@ -5622,6 +5642,58 @@ export default function CherryAdventure() {
       if (!dyeCache[key]) { const m = baseMat.clone(); m.color = new THREE.Color(hex); dyeCache[key] = m; }
       return dyeCache[key];
     };
+    // ---------- 💎 generic cosmetic accessories (creator) — ride the head, toggle freely ----------
+    {
+      const accFrameMat = new THREE.MeshStandardMaterial({ color: 0x2a2630, metalness: 0.4, roughness: 0.4 });
+      const accLensMat = new THREE.MeshStandardMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0.32, roughness: 0.1 });
+      const accGoldMat = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.6, roughness: 0.3 });
+      const accGemMat = new THREE.MeshStandardMaterial({ color: 0xff6a9a, metalness: 0.3, roughness: 0.2, emissive: 0x5a1020, emissiveIntensity: 0.35 });
+      // 👓 round glasses
+      const accGlasses = new THREE.Group();
+      for (const sx of [-1, 1]) {
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.02, 6, 16), accFrameMat);
+        rim.position.set(sx * 0.19, 0.0, 0.55); rim.rotation.y = sx * 0.12;
+        const lens = new THREE.Mesh(new THREE.CircleGeometry(0.15, 16), accLensMat);
+        lens.position.set(sx * 0.19, 0.0, 0.565); lens.rotation.y = sx * 0.12;
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.24), accFrameMat);
+        arm.position.set(sx * 0.33, 0.0, 0.42);
+        accGlasses.add(rim, lens, arm);
+      }
+      const accBridge = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.018, 0.018), accFrameMat);
+      accBridge.position.set(0, 0.01, 0.57); accGlasses.add(accBridge);
+      accGlasses.visible = false; headG.add(accGlasses); G._accGlasses = accGlasses;
+      // 💠 dangling gem earrings
+      const accEarrings = new THREE.Group();
+      for (const sx of [-1, 1]) {
+        const hook = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), accGoldMat);
+        hook.position.set(sx * 0.52, -0.28, 0.12);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), accGemMat);
+        gem.position.set(sx * 0.52, -0.4, 0.12);
+        accEarrings.add(hook, gem);
+      }
+      accEarrings.visible = false; headG.add(accEarrings); G._accEarrings = accEarrings;
+      // 👑 little tiara
+      const accTiara = new THREE.Group();
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.024, 8, 24, Math.PI), accGoldMat);
+      band.rotation.x = Math.PI / 2; band.rotation.z = Math.PI; band.position.set(0, 0.34, 0.30);
+      accTiara.add(band);
+      for (let k = -1; k <= 1; k++) {
+        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.033, 0.13, 4), accGoldMat);
+        spike.position.set(k * 0.15, 0.44, 0.34);
+        accTiara.add(spike);
+      }
+      const cgem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), accGemMat);
+      cgem.position.set(0, 0.49, 0.36); accTiara.add(cgem);
+      accTiara.visible = false; headG.add(accTiara); G._accTiara = accTiara;
+    }
+    const applyAccessories = () => {
+      const a = (G.custom && G.custom.acc) || {};
+      if (G._accGlasses) G._accGlasses.visible = !!a.glasses;
+      if (G._accEarrings) G._accEarrings.visible = !!a.earring;
+      if (G._accTiara) G._accTiara.visible = !!a.tiara;
+    };
+    G.applyAccessories = applyAccessories;
+
     const applyGear = () => {
       const eq = G.equip || {};
       const cos = G.costume || {};
@@ -5660,7 +5732,7 @@ export default function CherryAdventure() {
 
     // ---------- 🎀 apply character customization ----------
     let curBasePants = basePantsColor; // eslint-disable-line
-    G.custom = { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0 };
+    G.custom = { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} };
     // 👦👧 apply body shape for the chosen gender
     const applyGender = (g) => {
       const male = g === 1;
@@ -5703,9 +5775,29 @@ export default function CherryAdventure() {
         ctxS.fillStyle = o.stripe;
         for (let x = 4; x < 128; x += 16) ctxS.fillRect(x, 0, 3, 128);
         stripeTex.needsUpdate = true;
+        shirtMat.map = stripeTex; shirtMat.color.setHex(0xffffff); shirtMat.needsUpdate = true;
         basePantsColor = o.pants;
         collarSet.visible = !!o.collar; // 🎀 dress comes with collar + ribbon
+        // 👗 picking a full outfit clears the individual top/pants/shoes overrides
+        G.custom.top = null; G.custom.pants = null; G.custom.shoes = null;
+        G.dye = G.dye || {}; G.dye.pants = null; G.dye.shoes = null;
         applyGear();
+      } else if (cat === "top") {
+        const c = CUSTOM.clothColors[i].c;
+        // 👚 recolour the striped shirt: chosen colour as base + a light stripe
+        ctxS.fillStyle = "#" + c.toString(16).padStart(6, "0");
+        ctxS.fillRect(0, 0, 128, 128);
+        ctxS.fillStyle = "rgba(255,255,255,0.30)";
+        for (let x = 4; x < 128; x += 16) ctxS.fillRect(x, 0, 3, 128);
+        stripeTex.needsUpdate = true;
+        shirtMat.map = stripeTex; shirtMat.color.setHex(0xffffff); shirtMat.needsUpdate = true;
+      } else if (cat === "pants") {
+        G.dye = G.dye || {}; G.dye.pants = CUSTOM.clothColors[i].c; applyGear();
+      } else if (cat === "shoes") {
+        G.dye = G.dye || {}; G.dye.shoes = CUSTOM.clothColors[i].c; applyGear();
+      } else if (cat === "acc") {
+        G.custom.acc = (i && typeof i === "object") ? i : (G.custom.acc || {});
+        applyAccessories();
       }
       setUi((u) => ({ ...u, custom: { ...G.custom } }));
     };
@@ -16764,33 +16856,45 @@ export default function CherryAdventure() {
       )}
 
       {ui.mode === "create" && (
-        <>
-          <div style={{
-            position: "absolute", top: 14, left: 190, right: 12, textAlign: "center", pointerEvents: "none",
+  <>
+    <div style={{ position: "absolute", top: 14, left: 202, right: 12, textAlign: "center", pointerEvents: "none" }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: "#8a5a4a" }}>🎀 ออกแบบตัวละคร</div>
+      <div style={{ fontSize: 11, color: "#a3796a", marginTop: 2 }}>เลือกหมวดทางซ้าย · ลาก/บีบเพื่อหมุน–ซูม</div>
+    </div>
+    <div style={{ position: "absolute", top: 12, right: 12 }}>
+      <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots() }))} style={{
+        padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
+        fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
+        background: "#fff", boxShadow: "0 3px 10px rgba(90,120,70,0.25)",
+      }}>← ช่องเซฟ</button>
+    </div>
+    {/* left dressing card — fixed proportions, opaque, never overlaps the model on the right */}
+    <div style={{
+      position: "absolute", top: 0, left: 0, bottom: 118, width: 192,
+      background: "#fffdfb", borderRadius: "0 22px 22px 0",
+      boxShadow: "8px 0 28px rgba(90,120,70,0.28)",
+      display: "flex", flexDirection: "column",
+    }}>
+      <div style={{ padding: "12px 12px 8px", fontSize: 15, fontWeight: 800, color: "#8a5a4a", textAlign: "center" }}>🎀 แต่งตัว</div>
+      {/* category tabs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4, padding: "0 8px 8px", borderBottom: "1px solid #f1e7dd" }}>
+        {CREATE_TABS.map((tb) => (
+          <button key={tb.k} onClick={() => setUi((u) => ({ ...u, customTab: tb.k }))} style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "5px 0",
+            borderRadius: 10, cursor: "pointer", fontFamily: font, border: "none",
+            background: ui.customTab === tb.k ? "#ffe1ea" : "#f5efe8",
           }}>
-            <div style={{ fontSize: 19, fontWeight: 800, color: "#8a5a4a" }}>🎀 ออกแบบตัวละคร</div>
-            <div style={{ fontSize: 11.5, color: "#a3796a", marginTop: 2 }}>เมนูซ้าย · บีบ/ลากซูมได้ · ลากหมุนตัวได้</div>
-          </div>
-          {/* 💾 back to slot selection */}
-          <div style={{ position: "absolute", top: 12, right: 12 }}>
-            <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots() }))} style={{
-              padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
-              fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
-              background: "#fff", boxShadow: "0 3px 10px rgba(90,120,70,0.25)",
-            }}>← ช่องเซฟ</button>
-          </div>
-          <div style={{
-            position: "absolute", top: 0, left: 0, bottom: 128, width: 178,
-            background: "rgba(255,255,255,0.94)", borderRadius: "0 20px 20px 0",
-            padding: "12px 10px", overflowY: "auto",
-            boxShadow: "6px 0 24px rgba(90,120,70,0.22)",
-            display: "flex", flexDirection: "column", gap: 10,
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#8a5a4a", textAlign: "center" }}>🎀 แต่งตัว</div>
-
-            {/* 🦸 preset character roster */}
+            <span style={{ fontSize: 15 }}>{tb.e}</span>
+            <span style={{ fontSize: 8, fontWeight: 800, color: ui.customTab === tb.k ? "#d9536b" : "#9a7a6a" }}>{tb.n}</span>
+          </button>
+        ))}
+      </div>
+      {/* active-tab content */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {ui.customTab === "char" && (
+          <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>🦸 เลือกตัวละคร</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🦸 ตัวละครสำเร็จรูป</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 }}>
                 {CHAR_PRESETS.map((p, i) => (
                   <button key={i} onClick={() => G.applyCharPreset(i)} style={{
@@ -16805,16 +16909,11 @@ export default function CherryAdventure() {
                 ))}
               </div>
             </div>
-
-            {/* ✏️ character name */}
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>✏️ ตั้งชื่อตัวละคร</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>✏️ ตั้งชื่อตัวละคร</div>
               <input
                 key={"nm-" + (ui.pendingName || "")}
-                type="text"
-                maxLength={12}
-                defaultValue={ui.pendingName || ""}
-                placeholder="เชอร์รี่"
+                type="text" maxLength={12} defaultValue={ui.pendingName || ""} placeholder="เชอร์รี่"
                 onChange={(e) => { G.pendingName = e.target.value; }}
                 style={{
                   width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 10,
@@ -16823,40 +16922,41 @@ export default function CherryAdventure() {
                 }}
               />
             </div>
-
-            {/* 👦👧 gender */}
+          </>
+        )}
+        {ui.customTab === "body" && (
+          <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>🧍 เพศ</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🧍 เพศ</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {CUSTOM.genders.map((o, i) => (
                   <button key={i} onClick={() => G.setCustom("gender", i)} style={{
                     flex: 1, padding: "8px 0", borderRadius: 10, cursor: "pointer", fontFamily: font,
-                    fontSize: 12.5, fontWeight: 800,
+                    fontSize: 12.5, fontWeight: 800, border: "none",
                     color: ui.custom.gender === i ? "#fff" : "#8a5a4a",
                     background: ui.custom.gender === i ? "#d9536b" : "#f3ede4",
-                    border: "none",
                   }}>{o.emoji} {o.n}</button>
                 ))}
               </div>
             </div>
-
-            {/* 🖐️ skin */}
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>🖐️ สีผิว</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🖐️ สีผิว</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {CUSTOM.skins.map((o, i) => (
                   <button key={i} onClick={() => G.setCustom("skin", i)} title={o.n} style={{
-                    width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+                    width: 34, height: 34, borderRadius: "50%", cursor: "pointer",
                     background: `#${o.c.toString(16).padStart(6, "0")}`,
                     border: ui.custom.skin === i ? "3px solid #d9536b" : "3px solid #eee",
                   }}/>
                 ))}
               </div>
             </div>
-
-            {/* 💇 hair style */}
+          </>
+        )}
+        {ui.customTab === "hair" && (
+          <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>💇 ทรงผม</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>💇 ทรงผม</div>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {CUSTOM.hairStyles.map((n, i) => (
                   <button key={i} onClick={() => G.setCustom("hairStyle", i)} style={{
@@ -16868,81 +16968,140 @@ export default function CherryAdventure() {
                 ))}
               </div>
             </div>
-
-            {/* 🎨 hair color */}
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>🎨 สีผม</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🎨 สีผม</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {CUSTOM.hairColors.map((o, i) => (
                   <button key={i} onClick={() => G.setCustom("hairColor", i)} title={o.n} style={{
-                    width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+                    width: 34, height: 34, borderRadius: "50%", cursor: "pointer",
                     background: `#${o.c.toString(16).padStart(6, "0")}`,
                     border: ui.custom.hairColor === i ? "3px solid #d9536b" : "3px solid #eee",
                   }}/>
                 ))}
               </div>
             </div>
-
-            {/* 👀 eyes */}
-            <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>👀 ดวงตา</div>
-              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                {CUSTOM.eyes.map((n, i) => (
-                  <button key={i} onClick={() => G.setCustom("eyes", i)} style={{
-                    padding: "6px 9px", borderRadius: 999, border: "none", cursor: "pointer",
-                    fontSize: 11, fontWeight: 700, fontFamily: font,
-                    background: ui.custom.eyes === i ? "#d9536b" : "#f3ede4",
-                    color: ui.custom.eyes === i ? "#fff" : "#8a5a4a",
-                  }}>{n}</button>
-                ))}
-              </div>
+          </>
+        )}
+        {ui.customTab === "face" && (
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👀 ดวงตา</div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+              {CUSTOM.eyes.map((n, i) => (
+                <button key={i} onClick={() => G.setCustom("eyes", i)} style={{
+                  padding: "6px 9px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: 11, fontWeight: 700, fontFamily: font,
+                  background: ui.custom.eyes === i ? "#d9536b" : "#f3ede4",
+                  color: ui.custom.eyes === i ? "#fff" : "#8a5a4a",
+                }}>{n}</button>
+              ))}
             </div>
-
-            {/* 👗 outfit */}
+          </div>
+        )}
+        {ui.customTab === "top" && (
+          <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 4 }}>👗 ชุดเริ่มต้น</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👗 ชุดสำเร็จรูป</div>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {CUSTOM.outfits.map((o, i) => (
                   <button key={i} onClick={() => G.setCustom("outfit", i)} style={{
                     padding: "6px 9px", borderRadius: 999, cursor: "pointer",
                     fontSize: 11, fontWeight: 700, fontFamily: font,
-                    background: ui.custom.outfit === i ? o.base : "#f3ede4",
-                    color: ui.custom.outfit === i ? "#fff" : "#8a5a4a",
+                    background: ui.custom.outfit === i && ui.custom.top == null ? o.base : "#f3ede4",
+                    color: ui.custom.outfit === i && ui.custom.top == null ? "#fff" : "#8a5a4a",
                     border: `2px solid ${o.base}`,
                   }}>{o.n}</button>
                 ))}
               </div>
             </div>
-
-            {/* actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "auto" }}>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={() => {
-                  G.setCustom("skin", 0);
-                  G.setCustom("hairColor", 3);
-                  G.setCustom("hairStyle", 4);
-                  G.setCustom("eyes", 3);
-                  G.setCustom("outfit", 4);
-                }} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 999, border: "none", cursor: "pointer",
-                  fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff",
-                  background: "linear-gradient(90deg,#f2a0b4,#2b2724)",
-                }}>🌸 พรีเซ็ต</button>
-                <button onClick={() => G.randomCustom()} style={{
-                  padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
-                  fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
-                }}>🎲</button>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👚 สีเสื้อ</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {CUSTOM.clothColors.map((o, i) => (
+                  <button key={i} onClick={() => G.setCustom("top", i)} title={o.n} style={{
+                    width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+                    background: `#${o.c.toString(16).padStart(6, "0")}`,
+                    border: ui.custom.top === i ? "3px solid #d9536b" : "3px solid #eee",
+                  }}/>
+                ))}
               </div>
-              <button
-                onClick={() => { gameRef.current.mode = "title"; setUi((u) => ({ ...u, mode: "title" })); }}
-                style={{ ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%" }}
-              >
-                ถัดไป ➜ อาชีพ
-              </button>
+            </div>
+          </>
+        )}
+        {ui.customTab === "pants" && (
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👖 สีกางเกง / กระโปรง</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {CUSTOM.clothColors.map((o, i) => (
+                <button key={i} onClick={() => G.setCustom("pants", i)} title={o.n} style={{
+                  width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+                  background: `#${o.c.toString(16).padStart(6, "0")}`,
+                  border: ui.custom.pants === i ? "3px solid #d9536b" : "3px solid #eee",
+                }}/>
+              ))}
             </div>
           </div>
-        </>
-      )}
+        )}
+        {ui.customTab === "shoes" && (
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👟 สีรองเท้า</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {CUSTOM.clothColors.map((o, i) => (
+                <button key={i} onClick={() => G.setCustom("shoes", i)} title={o.n} style={{
+                  width: 32, height: 32, borderRadius: "50%", cursor: "pointer",
+                  background: `#${o.c.toString(16).padStart(6, "0")}`,
+                  border: ui.custom.shoes === i ? "3px solid #d9536b" : "3px solid #eee",
+                }}/>
+              ))}
+            </div>
+          </div>
+        )}
+        {ui.customTab === "acc" && (
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>💎 เครื่องประดับ</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {CUSTOM.accessories.map((a) => {
+                const on = !!(ui.custom.acc && ui.custom.acc[a.k]);
+                return (
+                  <button key={a.k} onClick={() => { const cur = { ...(ui.custom.acc || {}) }; cur[a.k] = !cur[a.k]; G.setCustom("acc", cur); }} style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 12,
+                    cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, textAlign: "left",
+                    border: on ? "2px solid #d9536b" : "2px solid #ece0d8",
+                    color: on ? "#d9536b" : "#8a5a4a", background: on ? "#fff0f4" : "#faf6f2",
+                  }}>
+                    <span style={{ fontSize: 17 }}>{a.e}</span>
+                    <span style={{ flex: 1 }}>{a.n}</span>
+                    <span style={{ fontSize: 12 }}>{on ? "✓" : "○"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+      {/* footer actions */}
+      <div style={{ padding: "8px 12px 12px", borderTop: "1px solid #f1e7dd", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => {
+            G.setCustom("skin", 0); G.setCustom("hairColor", 3); G.setCustom("hairStyle", 4);
+            G.setCustom("eyes", 3); G.setCustom("outfit", 4);
+          }} style={{
+            flex: 1, padding: "8px 0", borderRadius: 999, border: "none", cursor: "pointer",
+            fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff",
+            background: "linear-gradient(90deg,#f2a0b4,#2b2724)",
+          }}>🌸 พรีเซ็ต</button>
+          <button onClick={() => G.randomCustom()} style={{
+            padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
+          }}>🎲</button>
+        </div>
+        <button
+          onClick={() => { gameRef.current.mode = "title"; setUi((u) => ({ ...u, mode: "title" })); }}
+          style={{ ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%" }}
+        >ถัดไป ➜ อาชีพ</button>
+      </div>
+    </div>
+  </>
+)}
 
       {/* creator zoom buttons */}
       {ui.mode === "create" && (
