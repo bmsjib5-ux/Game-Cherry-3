@@ -7336,45 +7336,54 @@ function CherryAdventure() {
       weaponModels.wDs = g;
     }
     {
-      // 🌸 haruStaff — Sacred Sakura Staff (Haru's signature): dark polished wood,
-      //    gold trim, pink crystal orb in a gold halo, sakura blossoms, talisman, bells, red ribbons
+      // 🌸 haruStaff — Sacred Sakura Staff (ตามภาพ concept): ลูกแก้วชมพูในกรอบทองประดับเม็ดทอง
+      //    คริสตัลแหลม ช่อซากุระสองข้าง ปลอกคอทอง+ริบบิ้น+พู่แดง+ยันต์ ด้ามพันเชือกแดง ปลายแหลมทองหรู
       const g = new THREE.Group();
-      const wood = new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: 0.35, metalness: 0.15 });
+      const wood = new THREE.MeshStandardMaterial({ color: 0x4a2318, roughness: 0.35, metalness: 0.15 });
       const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, emissive: 0x8a6410, emissiveIntensity: 0.4, metalness: 0.7, roughness: 0.3 });
+      const goldBright = new THREE.MeshStandardMaterial({ color: 0xffe082, emissive: 0xb08420, emissiveIntensity: 0.55, metalness: 0.75, roughness: 0.25 });
       const pinkM = new THREE.MeshStandardMaterial({ color: 0xf7a8c4, emissive: 0xf28cb0, emissiveIntensity: 0.5, roughness: 0.5 });
       const whiteM = new THREE.MeshStandardMaterial({ color: 0xfff2f7, emissive: 0xffd8e8, emissiveIntensity: 0.35, roughness: 0.55 });
       const redM = new THREE.MeshStandardMaterial({ color: 0xc8203a, emissive: 0x5a0a16, emissiveIntensity: 0.3, roughness: 0.5 });
       const paperM = new THREE.MeshStandardMaterial({ color: 0xf3ead0, roughness: 0.85 });
+      const crystalM = new THREE.MeshStandardMaterial({ color: 0xf9a8d0, emissive: 0xf05a9a, emissiveIntensity: 0.8, roughness: 0.15, metalness: 0.1 });
+      const leafM = new THREE.MeshStandardMaterial({ color: 0x6aa04a, roughness: 0.6 });
       const sPetal = (mat, s) => { const p = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat); p.scale.set(0.7 * s, 0.26 * s, 1.1 * s); return p; };
-      // long polished shaft + gold ferrules + bottom finial
+      const mkBloomS = (mat, sc) => { const b = new THREE.Group(); for (let i = 0; i < 5; i++) { const pet = sPetal(mat, sc); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.045 * sc, Math.sin(a) * 0.045 * sc, 0); pet.rotation.z = a - Math.PI / 2; b.add(pet); } b.add(new THREE.Mesh(new THREE.SphereGeometry(0.018 * sc, 8, 8), gold)); return b; };
+      // dark polished shaft + gold bands + red cord wrap
       const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.036, 2.0, 10), wood);
       g.add(shaft);
-      [-0.75, -0.2, 0.55].forEach(y => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.011, 6, 14), gold); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); });
-      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.14, 8), gold); finial.position.y = -1.05; finial.rotation.x = Math.PI; g.add(finial);
-      // spinning head: gold halo + pink crystal orb + blossoms + hangings
+      [-0.75, 0.55].forEach(y => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.011, 6, 14), gold); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); });
+      for (let k = 0; k < 5; k++) { const cord = new THREE.Mesh(new THREE.TorusGeometry(0.041, 0.009, 6, 14), redM); cord.rotation.x = Math.PI / 2; cord.position.y = -0.12 - k * 0.045; g.add(cord); } // 🔴 ด้ามพันเชือกแดง
+      // ornate gold finial: ring + cone + tip ball
+      const fRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 6, 16), gold); fRing.rotation.x = Math.PI / 2; fRing.position.y = -0.98; g.add(fRing);
+      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 8), goldBright); finial.position.y = -1.09; finial.rotation.x = Math.PI; g.add(finial);
+      const fBall = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), gold); fBall.position.y = -1.21; g.add(fBall);
+      // 👑 gold collar below the head + red ribbon knot + hanging tassels + talisman + bells
+      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.035, 0.11, 10), gold); crown.position.y = 1.0; g.add(crown);
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), redM); knot.scale.set(1.5, 0.8, 0.8); knot.position.y = 0.94; g.add(knot);
+      [[-0.075, 0.02], [0.075, -0.02]].forEach(([dx, dz]) => {
+        const cordT = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.22, 6), redM); cordT.position.set(dx, 0.82, dz); g.add(cordT);
+        const tas = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.16, 6), redM); tas.position.set(dx, 0.64, dz); tas.rotation.x = Math.PI; g.add(tas);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 8), gold); cap.position.set(dx, 0.72, dz); g.add(cap);
+      }); // 🎐 พู่แดงปลายทองสองเส้น
+      const tal = new THREE.Group();
+      tal.add(new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.16, 0.01), paperM));
+      const talSig = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.12, 0.012), redM); tal.add(talSig);
+      const talCap = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.02, 0.014), gold); talCap.position.y = 0.09; tal.add(talCap);
+      tal.position.set(0, 0.8, 0.06); tal.rotation.z = 0.12;
+      g.add(tal); // 📜 ยันต์ห้อยหน้าปลอกคอ
+      [[-0.05, -0.03], [0.05, -0.03]].forEach(([dx, dz]) => { const bell = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 10), goldBright); bell.position.set(dx, 0.86, dz); g.add(bell); });
+      // spinning head: gold halo + rim beads + inner ring + pink crystal orb + shards + sakura clusters
       const head = new THREE.Group(); head.position.y = 1.25;
       const halo = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.017, 8, 30), gold); head.add(halo);
-      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.105, 20, 20), new THREE.MeshStandardMaterial({ color: 0xffb8d8, emissive: 0xf05a9a, emissiveIntensity: 1.1, roughness: 0.1, metalness: 0.1 }));
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const bead = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), goldBright); bead.position.set(Math.cos(a) * 0.19, Math.sin(a) * 0.19, 0); head.add(bead); } // ✨ เม็ดทองรอบกรอบ
+      const innerRing = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.008, 6, 24), goldBright); innerRing.rotation.y = Math.PI / 2.6; head.add(innerRing);
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.115, 20, 20), new THREE.MeshStandardMaterial({ color: 0xffb8d8, emissive: 0xf05a9a, emissiveIntensity: 1.1, roughness: 0.1, metalness: 0.1 }));
       head.add(orb);
-      // sakura blossoms perched on the halo
-      for (let b = 0; b < 3; b++) {
-        const bloom = new THREE.Group();
-        for (let i = 0; i < 5; i++) { const pet = sPetal(b === 1 ? whiteM : pinkM, 0.8); const a = i / 5 * Math.PI * 2; pet.position.set(Math.cos(a) * 0.045, Math.sin(a) * 0.045, 0); pet.rotation.z = a - Math.PI / 2; bloom.add(pet); }
-        bloom.add(new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), gold));
-        const ba = b / 3 * Math.PI * 2 + 0.5;
-        bloom.position.set(Math.cos(ba) * 0.19, Math.sin(ba) * 0.12, 0.02);
-        bloom.rotation.y = 0.4;
-        head.add(bloom);
-      }
-      // floating talisman + golden bells hanging from the halo
-      const tal = new THREE.Group();
-      tal.add(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.13, 0.01), paperM));
-      const talSig = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.09, 0.012), redM); tal.add(talSig);
-      tal.position.set(-0.23, -0.1, 0); tal.rotation.z = 0.25;
-      head.add(tal);
-      for (const bx of [0.16, 0.24]) { const bell = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), gold); bell.position.set(bx, -0.16 - (bx === 0.24 ? 0.05 : 0), 0); head.add(bell); }
-      // red ribbon tails fluttering below the head
-      for (const [rx, rr] of [[-0.05, 0.3], [0.05, -0.2]]) { const tail = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.34, 5), redM); tail.position.set(rx, -0.32, -0.01); tail.rotation.set(0.15, 0, rr); head.add(tail); }
+      [[-0.1, 0.21, 0.5], [0.02, 0.26, 0], [0.12, 0.19, -0.45]].forEach(([sx, sy, rz]) => { const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), crystalM); shard.scale.set(0.55, 1.7, 0.55); shard.position.set(sx, sy, 0); shard.rotation.z = rz; head.add(shard); }); // 💎 คริสตัลแหลมงอกด้านบน
+      [[-0.26, 0.05, 1.05, pinkM], [-0.29, -0.06, 0.75, whiteM], [0.26, 0.07, 0.9, pinkM], [0.29, -0.04, 0.65, whiteM]].forEach(([cx, cy, sc, mat]) => { const bl = mkBloomS(mat, sc); bl.position.set(cx, cy, 0.01); head.add(bl); }); // 🌸 ช่อซากุระสองข้าง
+      [[-0.22, 0.13], [0.22, 0.12]].forEach(([cx, cy]) => { const leaf = sPetal(leafM, 0.7); leaf.position.set(cx, cy, 0); leaf.rotation.z = cx < 0 ? 0.9 : -0.9; head.add(leaf); });
       g.add(head);
       const glowLight = new THREE.PointLight(0xf07ab0, 0.7, 2.4); glowLight.position.y = 1.25; g.add(glowLight);
       g.userData.orb = orb;
@@ -7434,13 +7443,14 @@ function CherryAdventure() {
         });
       }
       // 🛡️ warriors carry a shield in the off-hand
-      if (G.shield) G.shield.visible = G.cls === "warrior";
-      if (G.quiver) G.quiver.visible = G.cls === "archer"; // 🏹 quiver on the back for archers
-      if (G.officeLaptop) G.officeLaptop.visible = G.cls === "office"; // 💻 laptop in the office worker's left hand
-      if (G.holoLaptop) G.holoLaptop.visible = G.cls === "coder"; // 💻✨ holographic laptop orbits the coder
+      const heroHands = G.heroId === "haru"; // 🌸 ฮีโร่ถืออาวุธประจำตัวล้วน — ซ่อนของประจำอาชีพมือรอง
+      if (G.shield) G.shield.visible = G.cls === "warrior" && !heroHands;
+      if (G.quiver) G.quiver.visible = G.cls === "archer" && !heroHands; // 🏹 quiver on the back for archers
+      if (G.officeLaptop) G.officeLaptop.visible = G.cls === "office" && !heroHands; // 💻 laptop in the office worker's left hand
+      if (G.holoLaptop) G.holoLaptop.visible = G.cls === "coder" && !heroHands; // 💻✨ holographic laptop orbits the coder
       // 🗡️🗡️ assassins carry the twin Shadow Reaper in the off-hand
       if (G.offHandDagger) {
-        G.offHandDagger.visible = G.cls === "assassin";
+        G.offHandDagger.visible = G.cls === "assassin" && !heroHands;
         if (G.offHandDagger.userData.tintParts) {
           const it2 = LOOT.find(x => x.id === id);
           const hex2 = G.dye && G.dye.weapon || (it2 && it2.elem ? ELEM_GLOW[it2.elem] || G.offHandDagger.userData.baseTint : G.offHandDagger.userData.baseTint); // 🎨 dye
@@ -7453,7 +7463,7 @@ function CherryAdventure() {
       }
       // 🔮 mage: hide the hand weapon, show the floating orb tinted by element
       if (G.mageOrb) {
-        const isMage = G.cls === "mage";
+        const isMage = G.cls === "mage" && G.heroId !== "haru"; // 🌸 ฮีโร่ถือคทาประจำตัว ไม่ใช้ลูกแก้ว/ตำรา
         G.mageOrb.visible = isMage;
         if (model) model.visible = model.visible && !isMage; // don't show a staff in hand
         // 💪 left arm pose: raise & bend the forearm forward to cradle the orb (mage only)
@@ -9839,6 +9849,7 @@ function CherryAdventure() {
       if (G.elvenCirclet) G.elvenCirclet.visible = acc === "hood" && !outfitOn && !hatOn;
       if (G.officeGlasses) G.officeGlasses.visible = acc === "tie" && !outfitOn && !maskOn;
       if (G.coderGlasses) G.coderGlasses.visible = acc === "hoodie" && !outfitOn && !maskOn;
+      if (G.heroId === "haru") { shirtMat.map = null; shirtMat.color.copy(skinMat.color); } // 🌸 ไหล่เปลือยโชว์สีผิว ไม่ใช่สีเสื้อคลาส
     };
 
     // apply the outfit look for a class: recolor shirt/pants + show the matching accessory
@@ -18826,9 +18837,9 @@ function CherryAdventure() {
           }
         }
         // 🛡️ shield shows for warriors once a class is chosen
-        if (shield) shield.visible = G.cls === "warrior" && G.mode !== "create";
+        if (shield) shield.visible = G.cls === "warrior" && G.mode !== "create" && G.heroId !== "haru";
         // 🗡️ off-hand dagger shows for assassins
-        if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create";
+        if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create" && G.heroId !== "haru";
         // 🏷️ 3D name sprite replaced by the richer HTML nameplate (ชื่อ + เลือด + มานา) — keep hidden
         if (nameSprite) nameSprite.visible = false;
         // 🌟 class-evolution aura — spin the rings + orbit the motes + gentle pulse
