@@ -5110,11 +5110,11 @@ export default function CherryAdventure() {
       const mkLockY = (pts, r, mat, tipLen) => { const v = pts.map(p => new THREE.Vector3(p[0], p[1], p[2])); const curve = new THREE.CatmullRomCurve3(v); const gp = new THREE.Group(); gp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 13, r, 6, false), mat)); const end = v[v.length - 1], prev = v[v.length - 2], dir = end.clone().sub(prev).normalize(); const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.92, tipLen, 6), yhTip); tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); tip.position.copy(end).addScaledVector(dir, tipLen * 0.42); gp.add(tip); return gp; };
       const yhCap = new THREE.Mesh(new THREE.SphereGeometry(0.63, 26, 20), yhRoot); yhCap.scale.set(1.05, 1.0, 1.02); yhCap.position.set(0, 0.14, -0.05); yHair.add(yhCap);
       const yHairBack = new THREE.Group();
-      for (let i = 0; i < 12; i++) { const az = -Math.PI * 0.42 + (i / 11) * Math.PI * 0.84; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92, tx = -z0, tz = x0; const w = k => Math.sin(i * 2.1 + k * 1.6) * 0.05; const yEnd = -(1.0 + Math.abs(x0) * 0.5 + (i % 3) * 0.13); yHairBack.add(mkLockY([[x0 * 0.32, 0.47, z0 * 0.30], [x0 * 0.62, 0.05, z0 * 0.61], [x0 * 0.56 + tx * w(1), -0.5, z0 * 0.56 + tz * w(1)], [x0 * 0.45 + tx * w(2), -1.0, z0 * 0.44 + tz * w(2)], [x0 * 0.37 + tx * w(3), yEnd, z0 * 0.36 + tz * w(3)]], 0.058 + (i % 3) * 0.011, i % 2 ? yhMid : yhRoot, 0.26)); }
-      for (let i = 0; i < 9; i++) { const az = -Math.PI * 0.3 + ((i + 0.5) / 9) * Math.PI * 0.6; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92, tx = -z0, tz = x0; const w = k => Math.cos(i * 2.5 + k * 1.8) * 0.045; const yEnd = -(0.72 + Math.abs(x0) * 0.4 + (i % 3) * 0.12); yHairBack.add(mkLockY([[x0 * 0.30, 0.5, z0 * 0.28], [x0 * 0.63, 0.14, z0 * 0.64], [x0 * 0.56 + tx * w(1), -0.4, z0 * 0.56 + tz * w(1)], [x0 * 0.45 + tx * w(2), yEnd, z0 * 0.44 + tz * w(2)]], 0.05, i % 2 ? yhRoot : yhMid, 0.18)); }
+      for (let i = 0; i < 12; i++) { const az = -Math.PI * 0.42 + (i / 11) * Math.PI * 0.84; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92, tx = -z0, tz = x0; const w = k => Math.sin(i * 2.1 + k * 1.6) * 0.05; const yEnd = -(0.6 + Math.abs(x0) * 0.3 + (i % 3) * 0.08); yHairBack.add(mkLockY([[x0 * 0.32, 0.47, z0 * 0.30], [x0 * 0.62, 0.05, z0 * 0.61], [x0 * 0.56 + tx * w(1), -0.32, z0 * 0.56 + tz * w(1)], [x0 * 0.45 + tx * w(2), -0.58, z0 * 0.44 + tz * w(2)], [x0 * 0.37 + tx * w(3), yEnd, z0 * 0.36 + tz * w(3)]], 0.058 + (i % 3) * 0.011, i % 2 ? yhMid : yhRoot, 0.26)); }
+      for (let i = 0; i < 9; i++) { const az = -Math.PI * 0.3 + ((i + 0.5) / 9) * Math.PI * 0.6; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92, tx = -z0, tz = x0; const w = k => Math.cos(i * 2.5 + k * 1.8) * 0.045; const yEnd = -(0.42 + Math.abs(x0) * 0.24 + (i % 3) * 0.07); yHairBack.add(mkLockY([[x0 * 0.30, 0.5, z0 * 0.28], [x0 * 0.63, 0.14, z0 * 0.64], [x0 * 0.56 + tx * w(1), -0.26, z0 * 0.56 + tz * w(1)], [x0 * 0.45 + tx * w(2), yEnd, z0 * 0.44 + tz * w(2)]], 0.05, i % 2 ? yhRoot : yhMid, 0.18)); }
       yHair.add(yHairBack); G._yukiHairBack = yHairBack;
       const yHairSide = [];
-      for (const sx of [-1, 1]) { const sg = new THREE.Group(); sg.add(mkLockY([[sx * 0.4, 0.44, 0.2], [sx * 0.64, -0.05, 0.28], [sx * 0.6, -0.6, 0.24], [sx * 0.5, -1.15, 0.2]], 0.062, yhRoot, 0.2)); yHair.add(sg); yHairSide.push(sg); }
+      for (const sx of [-1, 1]) { const sg = new THREE.Group(); sg.add(mkLockY([[sx * 0.4, 0.44, 0.2], [sx * 0.64, -0.05, 0.28], [sx * 0.6, -0.42, 0.24], [sx * 0.5, -0.72, 0.2]], 0.062, yhRoot, 0.2)); yHair.add(sg); yHairSide.push(sg); }
       G._yukiHairSide = yHairSide;
       // 🪢 two small braids framing the face, tied with blue ribbons
       for (const sx of [-1, 1]) { const braid = new THREE.Group(); let yy = 0.28; for (let k = 0; k < 6; k++) { const bead = new THREE.Mesh(new THREE.SphereGeometry(0.05 - k * 0.004, 10, 8), k % 2 ? yhMid : yhRoot); bead.scale.set(1, 0.85, 1); bead.position.set(0, yy, 0); braid.add(bead); yy -= 0.088; } const rib = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 8), yRibbon); rib.scale.set(1.5, 0.7, 0.6); rib.position.y = 0.3; braid.add(rib); braid.position.set(sx * 0.47, 0.16, 0.28); braid.rotation.z = sx * 0.12; yHair.add(braid); }
@@ -5194,12 +5194,12 @@ export default function CherryAdventure() {
       // ===== back: blue cape + quiver of ice arrows =====
       const yCape = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.7, 1.5, 18, 1, true, Math.PI * 0.62, Math.PI * 0.76), yCapeMat);
       yCape.position.set(0, 1.5, -0.06); char.add(yCape); G._yukiCape = yCape;
-      // 👘 ผ้าคลุมกางเกง — พริ้วไหว (flowing overskirt: short front, long sides)
+      // 👘 ผ้าคลุมกางเกง — แยก 2 ชิ้น ไม่ติดกัน (หน้าสั้นเท่ากางเกง / หลังยาว) เปิดข้าง พริ้วไหว
       const ySkirtMat = new THREE.MeshStandardMaterial({ color: 0x22407e, emissive: 0x0a1838, emissiveIntensity: 0.22, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide, depthWrite: false });
-      const skirtGeo = new THREE.CylinderGeometry(0.35, 0.55, 0.82, 44, 7, true);
-      { const p = skirtGeo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const r = Math.hypot(x, z) || 1e-4; const zn = z / r, xn = x / r; const low = Math.max(0, (0.41 - y) / 0.82); const frontness = Math.max(0, zn); const sideness = Math.abs(xn); const dy = low * low * (frontness * 0.56 - sideness * 0.12); const flare = low * (0.05 + sideness * 0.05); p.setX(i, x + xn * flare); p.setY(i, y + dy); p.setZ(i, z + zn * flare); } p.needsUpdate = true; skirtGeo.computeVertexNormals(); }
-      const ySkirt = new THREE.Mesh(skirtGeo, ySkirtMat); ySkirt.position.set(0, 0.75, 0); char.add(ySkirt);
-      G._yukiSkirt = ySkirt; G._yukiSkirtBase = Float32Array.from(skirtGeo.attributes.position.array);
+      G._yukiSkirtPanels = [];
+      const mkSkirtPanel = (rTop, rBot, h, thetaStart, thetaLen, py, faceBack) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 22, 7, true, thetaStart, thetaLen); { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const r = Math.hypot(x, z) || 1e-4; const low = Math.max(0, (h / 2 - y) / h); const flare = low * 0.06; p.setX(i, x + (x / r) * flare); p.setZ(i, z + (z / r) * flare); } p.needsUpdate = true; geo.computeVertexNormals(); } const m = new THREE.Mesh(geo, ySkirtMat); m.position.set(0, py, 0); if (faceBack) m.rotation.y = Math.PI; char.add(m); G._yukiSkirtPanels.push({ m, base: Float32Array.from(geo.attributes.position.array), h, faceBack }); return m; };
+      const ySkirtF = mkSkirtPanel(0.36, 0.44, 0.28, -0.62, 1.24, 1.06, false); // หน้าสั้นเท่ากางเกง
+      const ySkirtB = mkSkirtPanel(0.36, 0.52, 0.92, -0.8, 1.6, 0.72, true);   // หลังยาวเท่าเดิม
       const quiver = new THREE.Group();
       const qbody = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.5, 12), yBelt); quiver.add(qbody);
       const qcap = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 6, 14), ySilver); qcap.position.y = 0.25; qcap.rotation.x = Math.PI / 2; quiver.add(qcap);
@@ -5236,7 +5236,7 @@ export default function CherryAdventure() {
       char.add(auroraG); G._yukiAurora = auroraG;
       const yGlow = new THREE.PointLight(0x8ac0ff, 0.7, 6); yGlow.position.set(0, 1.5, 0.4); char.add(yGlow);
 
-      const yukiParts = [yEars, yHair, yOutfit, yCape, ySkirt, quiver, snowG, auroraG, yGlow, thighStrap, strapGem, ...shortsLegs, ...bootL, ...bootR, bracerL, bracerR];
+      const yukiParts = [yEars, yHair, yOutfit, yCape, ySkirtF, ySkirtB, quiver, snowG, auroraG, yGlow, thighStrap, strapGem, ...shortsLegs, ...bootL, ...bootR, bracerL, bracerR];
       yukiParts.forEach(p => p.visible = false);
       G._yukiParts = yukiParts;
     }
@@ -11975,7 +11975,7 @@ export default function CherryAdventure() {
           if (G._yukiCape) G._yukiCape.rotation.x = 0.08 + Math.sin(t * 1.3) * 0.05 + spd * 0.2;
           if (G._yukiHairBack) { G._yukiHairBack.rotation.x = 0.02 + Math.sin(t * 1.2) * 0.035 + spd * 0.1; G._yukiHairBack.rotation.y = Math.sin(t * 0.8) * 0.03; }
           if (G._yukiHairSide) G._yukiHairSide.forEach((s, i) => { s.rotation.z = Math.sin(t * 1.5 + i * 2.1) * 0.05; });
-          if (G._yukiSkirt) { const gp = G._yukiSkirt.geometry.attributes.position, bb = G._yukiSkirtBase; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (0.41 - by) / 0.82); if (low < 0.03) continue; const ph = Math.atan2(bz, bx); const wave = (Math.sin(t * 2.4 + ph * 3) + 0.5 * Math.sin(t * 1.7 + ph * 5)) * 0.05 * low; const gust = (0.02 + spd * 0.4) * low * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave - gust); gp.setY(i, by - Math.abs(wave) * 0.25 - gust * 0.15); } gp.needsUpdate = true; }
+          if (G._yukiSkirtPanels) { for (const sp of G._yukiSkirtPanels) { const gp = sp.m.geometry.attributes.position, bb = sp.base, hh = sp.h; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (hh / 2 - by) / hh); if (low < 0.03) continue; const ph = Math.atan2(bz, bx); const wave = (Math.sin(t * 2.4 + ph * 4 + (sp.faceBack ? 1.5 : 0)) + 0.5 * Math.sin(t * 1.7 + ph * 6)) * 0.045 * low; const gust = (0.02 + spd * 0.4) * low * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave + (sp.faceBack ? 1 : -1) * gust); gp.setY(i, by - Math.abs(wave) * 0.25 - gust * 0.15); } gp.needsUpdate = true; } }
           if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
         }
         // ❄️ Frostwing bow — ice crystal breathes, wings shimmer
