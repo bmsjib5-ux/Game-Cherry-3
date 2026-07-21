@@ -5220,15 +5220,15 @@ function CherryAdventure() {
     const makeArm = side => {
       const p = new THREE.Group();
       p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
-      const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.14, 22, 22), shirtMat);
-      sleeve.scale.set(1.0, 1.25, 1.0);
+      const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 22, 22), shirtMat);
+      sleeve.scale.set(1.0, 1.2, 1.0);
       sleeve.position.y = -0.06;
       // ✨ upper arm (shoulder → elbow)
-      const upperProfile = [[0.10, 0.00],
+      const upperProfile = [[0.082, 0.00],
       // shoulder/upper arm
-      [0.095, 0.18],
+      [0.08, 0.18],
       // bicep
-      [0.085, 0.36], [0.078, 0.5] // elbow
+      [0.078, 0.36], [0.076, 0.5] // elbow
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const upperArm = new THREE.Mesh(new THREE.LatheGeometry(upperProfile, 20), skinMat);
       upperArm.position.y = -0.5;
