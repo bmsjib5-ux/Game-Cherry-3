@@ -4361,7 +4361,7 @@ export default function CherryAdventure() {
         (G._lunaParts || []).forEach(p => p.visible = id === "luna");
         (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
         (G._dressButtons || []).forEach(b => b.visible = !id);
-        if (id === "celestia") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸 เซเลสเทียใช้ผมประจำตัว
+        if (id === "celestia" || id === "luna") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸🌙 ฮีโร่ใช้ผมประจำตัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
@@ -4413,14 +4413,11 @@ export default function CherryAdventure() {
       lunaHead.add(sBow);
       // ⭐ tiny stars woven into the hair (back hemisphere)
       [[-0.35, 0.25, -0.42], [0.3, 0.05, -0.52], [-0.2, -0.15, -0.55], [0.42, 0.3, -0.32], [0.12, -0.35, -0.5], [-0.48, 0.05, -0.35]].forEach(([sx, sy, sz]) => {
-        const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), lStar); st.scale.set(0.7, 1.3, 0.7); st.position.set(sx, sy, sz); st.rotation.z = sx; lunaHead.add(st);
+        const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), lStar); st.scale.set(0.7, 1.3, 0.7); st.position.set(sx * 1.18, sy * 1.18, sz * 1.18); st.rotation.z = sx; lunaHead.add(st);
       });
       // 💜 blue-lavender gradient hair tips (back hemisphere + side locks)
       const lTip = new THREE.MeshStandardMaterial({ color: 0xb8c4f0, emissive: 0x7a8ae0, emissiveIntensity: 0.45, roughness: 0.5 });
       const lTipSoft = new THREE.MeshStandardMaterial({ color: 0xd8dcf5, emissive: 0x9aa8e8, emissiveIntensity: 0.3, roughness: 0.55 });
-      for (let i = 0; i < 12; i++) { const a = Math.PI * 1.02 + (i / 11) * Math.PI * 0.96; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.34, 6), lTip); tip.position.set(Math.cos(a) * 0.52, -0.42, Math.sin(a) * 0.5 - 0.02); tip.rotation.set(Math.PI - 0.1 * Math.cos(a), 0, 0.1 * Math.sin(a)); lunaHead.add(tip); }
-      for (let i = 0; i < 8; i++) { const a = Math.PI * 1.1 + (i / 7) * Math.PI * 0.8; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 6), lTipSoft); tip.position.set(Math.cos(a) * 0.46, -0.24, Math.sin(a) * 0.44 - 0.04); tip.rotation.set(Math.PI - 0.08 * Math.cos(a), 0, 0.08 * Math.sin(a)); lunaHead.add(tip); }
-      for (const sx of [-0.68, 0.68]) { const tip = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.36, 6), lTip); tip.position.set(sx, -0.7, 0.02); tip.rotation.x = Math.PI; lunaHead.add(tip); }
       headG.add(lunaHead);
 
       // ===== body: silver crescent necklace =====
@@ -4565,6 +4562,104 @@ export default function CherryAdventure() {
       const thighL = mkThighHigh(legL), thighR = mkThighHigh(legR);
       G._lunaShoeMat = new THREE.MeshStandardMaterial({ color: 0x24305e, roughness: 0.4, metalness: 0.2 }); // dark navy shoes
 
+      // ===== 🌙 signature layered hair — long moonlight-silver princess locks with lavender-blue tips =====
+      const lhRoot = new THREE.MeshStandardMaterial({ color: 0xeef1f8, roughness: 0.44, metalness: 0.04, emissive: 0x2a2e3e, emissiveIntensity: 0.08 });
+      const lhMid = new THREE.MeshStandardMaterial({ color: 0xe0e5f2, roughness: 0.48, metalness: 0.04, emissive: 0x262a3a, emissiveIntensity: 0.08 });
+      const lhDeep = new THREE.MeshStandardMaterial({ color: 0xd2d8ea, roughness: 0.5, metalness: 0.04, emissive: 0x222636, emissiveIntensity: 0.08 });
+      const lhTipM = new THREE.MeshStandardMaterial({ color: 0xc4cdf5, emissive: 0x7a8ae0, emissiveIntensity: 0.4, roughness: 0.3, transparent: true, opacity: 0.72, depthWrite: false }); // ปลายไล่ม่วง-ฟ้าโปร่งแสง
+      const lunaHair = new THREE.Group();
+      const mkLockL = (pts, r, mat, tipLen) => {
+        const v = pts.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+        const curve = new THREE.CatmullRomCurve3(v);
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 14, r, 6, false), mat));
+        const end = v[v.length - 1], prev = v[v.length - 2];
+        const dir = end.clone().sub(prev).normalize();
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.92, tipLen, 6), lhTipM);
+        tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        tip.position.copy(end).addScaledVector(dir, tipLen * 0.42);
+        g.add(tip);
+        return g;
+      };
+      const lhCap = new THREE.Mesh(new THREE.SphereGeometry(0.63, 28, 20), lhRoot);
+      lhCap.scale.set(1.05, 1.0, 1.02); lhCap.position.set(0, 0.14, -0.05);
+      lunaHair.add(lhCap);
+      const lunaHairBack = new THREE.Group();
+      for (let i = 0; i < 12; i++) {
+        const az = -Math.PI * 0.42 + (i / 11) * Math.PI * 0.84;
+        const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92;
+        const tx = -z0, tz = x0;
+        const w = k => Math.sin(i * 2.3 + k * 1.7) * 0.055;
+        const yEnd = -(0.95 + Math.abs(x0) * 0.55 + (i % 3) * 0.12); // กลางสั้นเผยโบว์ม่วง ข้างยาวถึงกลางหลัง
+        lunaHairBack.add(mkLockL([
+          [x0 * 0.32, 0.47, z0 * 0.30],
+          [x0 * 0.62, 0.05, z0 * 0.61],
+          [x0 * 0.56 + tx * w(1), -0.48, z0 * 0.56 + tz * w(1)],
+          [x0 * 0.45 + tx * w(2), -0.9, z0 * 0.44 + tz * w(2)],
+          [x0 * 0.37 + tx * w(3), yEnd, z0 * 0.36 + tz * w(3)],
+        ], 0.06 + (i % 3) * 0.011, i % 2 ? lhMid : lhRoot, 0.26));
+      }
+      for (let i = 0; i < 10; i++) {
+        const az = -Math.PI * 0.30 + ((i + 0.5) / 9.5) * Math.PI * 0.60;
+        const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92;
+        const tx = -z0, tz = x0;
+        const w = k => Math.cos(i * 2.7 + k * 1.9) * 0.05;
+        const yEnd = -(0.72 + Math.abs(x0) * 0.4 + (i % 3) * 0.12);
+        lunaHairBack.add(mkLockL([
+          [x0 * 0.30, 0.5, z0 * 0.28],
+          [x0 * 0.63, 0.14, z0 * 0.64],
+          [x0 * 0.56 + tx * w(1), -0.4, z0 * 0.56 + tz * w(1)],
+          [x0 * 0.45 + tx * w(2), yEnd, z0 * 0.44 + tz * w(2)],
+        ], 0.05 + (i % 2) * 0.012, i % 2 ? lhRoot : lhMid, 0.18));
+      }
+      lunaHair.add(lunaHairBack);
+      G._lunaHairBack = lunaHairBack;
+      const lunaHairSides = [];
+      for (const sx of [-1, 1]) {
+        const sg = new THREE.Group();
+        sg.add(mkLockL([
+          [sx * 0.38, 0.44, 0.22],
+          [sx * 0.63, -0.05, 0.30],
+          [sx * 0.60, -0.55, 0.25],
+          [sx * 0.50, -1.02, 0.21],
+        ], 0.068, lhRoot, 0.2));
+        sg.add(mkLockL([
+          [sx * 0.44, 0.4, 0.12],
+          [sx * 0.68, -0.15, 0.14],
+          [sx * 0.63, -0.7, 0.1],
+          [sx * 0.55, -1.28, 0.08],
+        ], 0.048, lhMid, 0.16));
+        lunaHair.add(sg); lunaHairSides.push(sg);
+      }
+      G._lunaHairSide = lunaHairSides;
+      for (const sx of [-1, 1]) {
+        for (let k = 0; k < 3; k++) {
+          lunaHair.add(mkLockL([
+            [sx * (0.10 + k * 0.04), 0.78 - k * 0.03, 0.14 - k * 0.04],
+            [sx * (0.45 + k * 0.06), 0.58 - k * 0.04, -0.20 - k * 0.05],
+            [sx * (0.55 + k * 0.04), 0.26 - k * 0.04, -0.44 - k * 0.04],
+          ], 0.034, k === 1 ? lhMid : lhRoot, 0.12));
+        }
+      }
+      [-0.42, -0.30, -0.19, -0.09, 0, 0.09, 0.19, 0.30, 0.42].forEach((azf, bi) => { // หน้าม้าเต็มแถวหลัก
+        const az = azf * Math.PI;
+        const bl = bi === 4 ? 0.3 : 0.34 + (bi % 3) * 0.05;
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.088 - (bi % 2) * 0.014, bl, 6), [lhRoot, lhMid, lhDeep][bi % 3]);
+        b.position.set(Math.sin(az) * 0.60, 0.36 - bl / 2, Math.cos(az) * 0.60);
+        b.rotation.set(Math.PI - Math.cos(az) * 0.16, 0, Math.sin(az) * 0.32);
+        lunaHair.add(b);
+      });
+      [-0.36, -0.24, -0.13, -0.04, 0.04, 0.13, 0.24, 0.36].forEach((azf, bi) => { // แถวหน้าบางเส้นแยก
+        const az = azf * Math.PI;
+        const bl = 0.24 + (bi % 3) * 0.05;
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.045, bl, 6), bi % 2 ? lhDeep : lhMid);
+        b.position.set(Math.sin(az) * 0.63, 0.32 - bl / 2, Math.cos(az) * 0.64);
+        b.rotation.set(Math.PI - Math.cos(az) * 0.2, 0, Math.sin(az) * 0.38);
+        lunaHair.add(b);
+      });
+      headG.add(lunaHair);
+      G._lunaHair = lunaHair;
+
       // ===== floating star aura + moon magic circle =====
       const lunaStarsG = new THREE.Group();
       const lunaStarArr = [];
@@ -4606,7 +4701,7 @@ export default function CherryAdventure() {
       lunaGlow.add(moonPool);
       char.add(lunaGlow);
       G._lunaGlow = { light: moonLight, halo: moonHalo, pool: moonPool };
-      const lunaParts = [lunaHead, lunaBody, lunaOutfit, lSleeveL, lSleeveR, lunaStarsG, lunaCircle, lunaGlow, ...thighL, ...thighR];
+      const lunaParts = [lunaHead, lunaBody, lunaOutfit, lSleeveL, lSleeveR, lunaStarsG, lunaCircle, lunaGlow, lunaHair, ...thighL, ...thighR];
       lunaParts.forEach(p => p.visible = false);
       G._lunaParts = lunaParts;
     }
@@ -6061,7 +6156,7 @@ export default function CherryAdventure() {
         const selfContained = i >= 5;
         if (baseHair) baseHair.visible = !selfContained;
         if (ahoge) ahoge.visible = i < 5; // hide the wisp on the sleek image styles
-        if (G.heroId === "celestia") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸 ผมประจำตัวแทนทรงปกติ
+        if (G.heroId === "celestia" || G.heroId === "luna") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸🌙 ผมประจำตัวแทนทรงปกติ
       } else if (cat === "eyes") {
         applyEyeStyle(i);
       } else if (cat === "outfit") {
@@ -11548,6 +11643,8 @@ export default function CherryAdventure() {
             if (G._lunaSleeves) G._lunaSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.7 + i * 1.2) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.3 + i) * (amp * 1.2); });
             if (G._lunaCape) G._lunaCape.rotation.x = 0.1 + Math.sin(t * 1.4) * 0.05 + spd * 0.15;
             if (G._lunaGlow) { const mp = Math.abs(Math.sin(t * 1.1)); G._lunaGlow.light.intensity = 0.75 + mp * 0.35; G._lunaGlow.halo.material.opacity = 0.55 + mp * 0.3; G._lunaGlow.halo.material.rotation += dt * 0.1; G._lunaGlow.pool.material.opacity = 0.11 + mp * 0.1; } // 🌕 แสงจันทร์ทองหายใจ
+            if (G._lunaHairBack) { G._lunaHairBack.rotation.x = 0.02 + Math.sin(t * 1.2) * 0.035 + spd * 0.1; G._lunaHairBack.rotation.y = Math.sin(t * 0.8) * 0.03; }
+            if (G._lunaHairSide) G._lunaHairSide.forEach((s, i) => { s.rotation.z = Math.sin(t * 1.5 + i * 2.1) * 0.05; s.rotation.x = Math.cos(t * 1.1 + i) * 0.03; });
           }
           if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
         }
