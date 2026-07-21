@@ -844,7 +844,7 @@ const CUSTOM = {
     { n: "แทนเข้ม", c: 0xc98e62 }, { n: "ครีมนวล", c: 0xf7dcc4 },
   ],
   hairColors: [
-    { n: "น้ำตาล", c: 0x5a3b26 }, { n: "ดำขลับ", c: 0x2a2226 }, { n: "บลอนด์", c: 0xd9b56a },
+    { n: "น้ำตาล", c: 0x3f2517 }, { n: "ดำขลับ", c: 0x2a2226 }, { n: "บลอนด์", c: 0xd9b56a },
     { n: "ชมพูซากุระ", c: 0xf2a0b4 }, { n: "ฟ้าพาสเทล", c: 0x6a9ad0 },
   ],
   hairStyles: ["ยาวประบ่า", "บ๊อบสั้น", "หางม้าคู่", "หางม้าสูง", "บ๊อบติดเขาดำ 🖤", "บ๊อบตรง", "ยาวตรงหน้าม้า", "เปียโบว์กระต่าย 🎀", "มวยผมหน้าม้า"],
@@ -1697,7 +1697,7 @@ export default function CherryAdventure() {
     skinGrad.magFilter = THREE.NearestFilter;
     skinGrad.needsUpdate = true;
     const skinMat = new THREE.MeshToonMaterial({ color: 0xffe0c8, gradientMap: skinGrad });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x4a3020, roughness: 0.6, metalness: 0.08, emissive: 0x1a0f08, emissiveIntensity: 0.15 }); // smooth shading for rounded strands
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x3f2517, roughness: 0.6, metalness: 0.08, emissive: 0x1a0f08, emissiveIntensity: 0.15 }); // smooth shading for rounded strands
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x33241f, roughness: 0.4 });
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 });
     const blushMat = new THREE.MeshBasicMaterial({ color: 0xf7b2ba, transparent: true, opacity: 0.75 });
@@ -4072,8 +4072,11 @@ export default function CherryAdventure() {
       // 🌸 sakura petal mark beneath the left eye
       const mark = mkPetal(hPink, 0.4); mark.position.set(-0.31, -0.24, 0.55); mark.rotation.set(0.2, 0, 0.6);
       haruHead.add(mark);
-      // 🌸 soft pink hair tips (accent strands along the back/sides)
-      for (let i = 0; i < 8; i++) { const a = Math.PI * 0.42 + (i / 7) * Math.PI * 1.16; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.24, 6), hPinkSoft); tip.position.set(Math.cos(a) * 0.52, -0.34, Math.sin(a) * 0.5 - 0.02); tip.rotation.set(Math.PI - 0.1 * Math.cos(a), 0, 0.1 * Math.sin(a)); haruHead.add(tip); }
+      // 🌸 pink gradient hair tips — bigger, brighter, denser (ไล่สีชมพูชัดขึ้น)
+      const hPinkTip = new THREE.MeshStandardMaterial({ color: 0xf78ab8, emissive: 0xf05a9a, emissiveIntensity: 0.5, roughness: 0.5 });
+      for (let i = 0; i < 12; i++) { const a = Math.PI * 1.02 + (i / 11) * Math.PI * 0.96; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.34, 6), hPinkTip); tip.position.set(Math.cos(a) * 0.52, -0.42, Math.sin(a) * 0.5 - 0.02); tip.rotation.set(Math.PI - 0.1 * Math.cos(a), 0, 0.1 * Math.sin(a)); haruHead.add(tip); }
+      for (let i = 0; i < 8; i++) { const a = Math.PI * 1.1 + (i / 7) * Math.PI * 0.8; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 6), hPinkSoft); tip.position.set(Math.cos(a) * 0.46, -0.24, Math.sin(a) * 0.44 - 0.04); tip.rotation.set(Math.PI - 0.08 * Math.cos(a), 0, 0.08 * Math.sin(a)); haruHead.add(tip); } // แถวบนไล่เฉดอ่อน
+      for (const sx of [-0.68, 0.68]) { const tip = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.36, 6), hPinkTip); tip.position.set(sx, -0.7, 0.02); tip.rotation.x = Math.PI; haruHead.add(tip); } // ปลายปอยผมข้างหน้า
       headG.add(haruHead);
 
       // ===== body: crescent moon pendant (char-local) =====
