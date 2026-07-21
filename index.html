@@ -9438,9 +9438,9 @@ function CherryAdventure() {
       const harness = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.4, 0.03), yBlue); harness.position.set(0, 1.6, 0.37); yOutfit.add(harness);
       [1.74, 1.62, 1.5].forEach((hy, k) => { const hg = new THREE.Mesh(new THREE.OctahedronGeometry(0.045 - k * 0.004, 0), yIce.clone()); hg.scale.set(0.85, 1.3, 0.6); hg.position.set(0, hy, 0.39); yOutfit.add(hg); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), yGoldTrim); ring.position.set(0, hy, 0.37); yOutfit.add(ring); });
       // 🖤 black-and-gold corset cincher just under the bust + blue gems (wraps outside)
-      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.352, 0.368, 0.14, 24, 1, true), yCorsetY); cincher.position.y = 1.46; cincher.scale.set(1.02, 1, 0.98); yOutfit.add(cincher);
-      [1.52, 1.4].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.362, 0.013, 6, 26), yGoldTrim); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1.02, 0.98, 1); yOutfit.add(ct); });
-      for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.36, 1.46, Math.cos(a) * 0.35); yOutfit.add(cg); }
+      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.15, 24, 1, true), yCorsetY); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.92); yOutfit.add(cincher); // 🖤 วงดำเล็กกว่าวงขาว (รัดเอว)
+      [1.525, 1.395].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 26), yGoldTrim); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.92, 1); yOutfit.add(ct); });
+      for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.305, 1.46, Math.cos(a) * 0.285); yOutfit.add(cg); }
       // 💎 blue jewel hanging at the hip / waistline front
       const hipJewel = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), yIce.clone()); hipJewel.scale.set(0.9, 1.5, 0.5); hipJewel.position.set(0, 1.13, 0.37); yOutfit.add(hipJewel);
       const hipJewelRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), yGoldTrim); hipJewelRing.position.set(0, 1.18, 0.35); yOutfit.add(hipJewelRing);
