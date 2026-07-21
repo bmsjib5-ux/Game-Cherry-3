@@ -3680,6 +3680,7 @@ const CHAR_PRESETS = [
   { name: "โคทาโร่", emoji: "⚔️", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 3 },
   { name: "ไครี",    emoji: "⚡", gender: 1, skin: 2, hairColor: 2, hairStyle: 5, eyes: 1, outfit: 2 },
   { name: "โนอาห์",  emoji: "🖤", gender: 1, skin: 1, hairColor: 1, hairStyle: 1, eyes: 0, outfit: 3 },
+  { name: "เซเลสเทีย", emoji: "👸", gender: 0, skin: 0, hairColor: 5, hairStyle: 8, eyes: 0, outfit: 0, hero: "celestia" },
 ];
 const WEAPON_TIP = {
   w1: 0xf28ba8,
@@ -5206,11 +5207,13 @@ function CherryAdventure() {
       nameTex.needsUpdate = true;
       nameSprite.visible = true;
     };
+    const dressButtons = [];
     for (let i = 0; i < 3; i++) {
       const b = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 10), redMat);
       b.position.set(0, 1.85 - i * 0.28, 0.47 - i * 0.02);
-      char.add(b);
+      char.add(b); dressButtons.push(b);
     }
+    G._dressButtons = dressButtons; // 🔴 Cherry's dress buttons — hidden when a signature hero look is worn
     const handMeshes = [];
     const makeArm = side => {
       const p = new THREE.Group();
@@ -7485,6 +7488,7 @@ function CherryAdventure() {
       // 🦸 heroes carry their signature staff (signature look; stats still come from real gear)
       else if (G.heroId === "haru" && weaponModels.haruStaff) id = "haruStaff";
       else if (G.heroId === "luna" && weaponModels.lunaStaff) id = "lunaStaff";
+      else if (G.heroId === "celestia" && weaponModels.lunaStaff) id = "lunaStaff";
       curWeapon = id && weaponModels[id] ? id : CLASS_WEAPON[G.cls] || "default"; // class weapons share the class model
       Object.entries(weaponModels).forEach(([k, m]) => m.visible = k === curWeapon);
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
@@ -8643,11 +8647,13 @@ function CherryAdventure() {
       G._irisBase = irisBase;
       G.heroId = G.heroId || null;
       // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0] };
+      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0] };
       G.setHero = id => {
         G.heroId = id || null;
         (G._haruParts || []).forEach(p => p.visible = id === "haru");
         (G._lunaParts || []).forEach(p => p.visible = id === "luna");
+        (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
+        (G._dressButtons || []).forEach(b => b.visible = !id);
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
         if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null); // swap to/from the signature staff
@@ -8860,6 +8866,153 @@ function CherryAdventure() {
       const lunaParts = [lunaHead, lunaBody, lunaOutfit, lSleeveL, lSleeveR, lunaStarsG, lunaCircle, ...thighL, ...thighR];
       lunaParts.forEach(p => p.visible = false);
       G._lunaParts = lunaParts;
+    }
+
+    // ---------- 🌌 CELESTIA signature look (celestial royal mage princess / moon goddess) ----------
+    {
+      const cSapphire = new THREE.MeshStandardMaterial({ color: 0x1e2f66, roughness: 0.55, metalness: 0.12 }); // navy velvet
+      const cRoyal = new THREE.MeshStandardMaterial({ color: 0x2a45a0, roughness: 0.5, metalness: 0.1 }); // royal blue silk
+      const cSilk = new THREE.MeshStandardMaterial({ color: 0xfbfcff, roughness: 0.62 }); // white silk
+      const cGold = new THREE.MeshStandardMaterial({ color: 0xe8c878, emissive: 0x7a5a1a, emissiveIntensity: 0.4, metalness: 0.8, roughness: 0.28 }); // champagne gold
+      const cGoldB = new THREE.MeshStandardMaterial({ color: 0xffe8a8, emissive: 0xb08828, emissiveIntensity: 0.55, metalness: 0.7, roughness: 0.25 });
+      const cCryst = new THREE.MeshStandardMaterial({ color: 0x9ac0ff, emissive: 0x3a6ae0, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.1 });
+      const cGem = new THREE.MeshStandardMaterial({ color: 0x6a8ae8, emissive: 0x2a4ac0, emissiveIntensity: 0.7, roughness: 0.15 });
+
+      // ===== head: gold crescent tiara + constellation crown =====
+      const celHead = new THREE.Group();
+      const tShape = new THREE.Shape();
+      tShape.absarc(0, 0, 0.12, -Math.PI * 0.62, Math.PI * 0.62, false);
+      tShape.absarc(0.055, 0, 0.092, Math.PI * 0.5, -Math.PI * 0.5, true);
+      const tMoon = new THREE.Mesh(new THREE.ExtrudeGeometry(tShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.006, bevelSegments: 1 }), cGold.clone());
+      tMoon.position.set(0, 0.44, 0.42); tMoon.rotation.set(-0.2, 0, 0);
+      celHead.add(tMoon);
+      const tBand = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 8, 28, Math.PI * 0.9), cGold);
+      tBand.rotation.set(Math.PI / 2, Math.PI, 0); tBand.position.set(0, 0.3, 0.30);
+      celHead.add(tBand);
+      for (const sx of [-1, 1]) {
+        const spire = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 4), cGold); spire.position.set(sx * 0.26, 0.44, 0.34); spire.rotation.z = sx * 0.2; celHead.add(spire);
+        const g = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), cCryst.clone()); g.scale.set(0.8, 1.2, 0.8); g.position.set(sx * 0.16, 0.45, 0.38); celHead.add(g);
+      }
+      const cTopGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), cGem.clone()); cTopGem.scale.set(0.8, 1.3, 0.8); cTopGem.position.set(0, 0.35, 0.45); celHead.add(cTopGem);
+      [[-0.35, 0.28, -0.4], [0.32, 0.12, -0.5], [-0.2, -0.1, -0.55], [0.44, 0.32, -0.3], [0.1, -0.3, -0.5], [-0.46, 0.1, -0.34], [0.0, 0.42, -0.42]].forEach(([sx, sy, sz]) => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), cGoldB); st.scale.set(0.7, 1.3, 0.7); st.position.set(sx, sy, sz); celHead.add(st); });
+      headG.add(celHead);
+
+      // ===== body: off-shoulder white silk + navy corset with gold celestial embroidery =====
+      const celOutfit = new THREE.Group();
+      const shoulderBand = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.16, 26, 1, true), cSilk);
+      shoulderBand.position.y = 1.86; shoulderBand.scale.set(1.02, 1, 0.8); celOutfit.add(shoulderBand);
+      [1.93, 1.79].forEach(y => { const tr = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.012, 6, 28), cGold); tr.position.y = y; tr.rotation.x = Math.PI / 2; tr.scale.set(1.02, 0.8, 1); celOutfit.add(tr); });
+      const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.29, 0.30], [0.31, 0.5], [0.33, 0.66], [0.32, 0.8]].map(([r, y]) => new THREE.Vector2(r, y)), 36), cSilk);
+      bodice.position.y = 1.16; bodice.scale.set(1.02, 0.9, 0.78); celOutfit.add(bodice);
+      const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.285, 0.31, 0.30, 24, 1, true), cSapphire);
+      corset.position.y = 1.52; corset.scale.set(1, 1, 0.8); celOutfit.add(corset);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const ln = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.3, 4), cGold); ln.position.set(Math.cos(a) * 0.3, 1.52, Math.sin(a) * 0.24); celOutfit.add(ln); }
+      [1.66, 1.4].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.014, 6, 28), cGold); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.8, 1); celOutfit.add(trim); });
+      const emblem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), cGoldB); emblem.scale.set(0.85, 1.2, 0.4); emblem.position.set(0, 1.55, 0.255); celOutfit.add(emblem);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.011, 0.05, 4), cGold); ray.position.set(Math.cos(a) * 0.08, 1.55 + Math.sin(a) * 0.08, 0.255); ray.rotation.z = -a + Math.PI / 2; celOutfit.add(ray); }
+      // gold waist chain + crescent pendant
+      const waistChain = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.01, 6, 30), cGold); waistChain.position.y = 1.4; waistChain.rotation.x = Math.PI / 2 - 0.14; celOutfit.add(waistChain);
+      const chainDrop = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.008, 6, 18, Math.PI), cGold); chainDrop.position.set(0, 1.38, 0.26); chainDrop.rotation.z = Math.PI; celOutfit.add(chainDrop);
+      const pendShape = new THREE.Shape();
+      pendShape.absarc(0, 0, 0.05, -Math.PI * 0.55, Math.PI * 0.55, false);
+      pendShape.absarc(0.025, 0, 0.038, Math.PI * 0.5, -Math.PI * 0.5, true);
+      const moonPend = new THREE.Mesh(new THREE.ShapeGeometry(pendShape), cGoldB.clone()); moonPend.material.side = THREE.DoubleSide;
+      moonPend.position.set(0, 1.27, 0.27); moonPend.rotation.z = 0.5; celOutfit.add(moonPend);
+
+      // ===== multi-layer short skirt: navy over white ruffles + white lace under =====
+      const mkPleatC = (rTop, rHemOut, rHemIn, h, pleats) => {
+        const pos = []; const n = pleats * 2;
+        for (let k = 0; k < n; k++) {
+          const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2;
+          const rH0 = k % 2 === 0 ? rHemOut : rHemIn, rH1 = (k + 1) % 2 === 0 ? rHemOut : rHemIn;
+          const t0 = [Math.cos(a0) * rTop, 0, Math.sin(a0) * rTop], t1 = [Math.cos(a1) * rTop, 0, Math.sin(a1) * rTop];
+          const b0 = [Math.cos(a0) * rH0, -h, Math.sin(a0) * rH0], b1 = [Math.cos(a1) * rH1, -h, Math.sin(a1) * rH1];
+          pos.push(...t0, ...b0, ...t1, ...t1, ...b0, ...b1);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        geo.computeVertexNormals();
+        return geo;
+      };
+      const navyD = cSapphire.clone(); navyD.side = THREE.DoubleSide;
+      const silkD = cSilk.clone(); silkD.side = THREE.DoubleSide;
+      const skirtLace = new THREE.Mesh(mkPleatC(0.28, 0.52, 0.45, 0.58, 26), silkD); skirtLace.position.y = 1.44; // white lace underlayer, longest
+      const skirtMid = new THREE.Mesh(mkPleatC(0.29, 0.48, 0.42, 0.45, 20), silkD); skirtMid.position.y = 1.46; // white ruffle
+      const skirtTop = new THREE.Mesh(mkPleatC(0.30, 0.46, 0.40, 0.35, 18), navyD); skirtTop.position.y = 1.48; // navy top layer
+      skirtTop.userData.basePos = skirtTop.geometry.attributes.position.array.slice();
+      G._celSkirt = skirtTop;
+      const laceTrim = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.011, 6, 44), cGold); laceTrim.rotation.x = Math.PI / 2; laceTrim.position.y = -0.58; skirtLace.add(laceTrim);
+      const topTrim = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.012, 6, 40), cGold); topTrim.rotation.x = Math.PI / 2; topTrim.position.y = -0.35; skirtTop.add(topTrim);
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), cGoldB); st.scale.set(0.7, 1.2, 0.3); st.position.set(Math.cos(a) * 0.42, -0.24, Math.sin(a) * 0.42); skirtTop.add(st); }
+      celOutfit.add(skirtLace, skirtMid, skirtTop);
+      // floating gold stars hanging on threads from the hem
+      for (let i = 0; i < 8; i++) { const a = (i + 0.5) / 8 * Math.PI * 2; const thread = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.12, 4), cGold); thread.position.set(Math.cos(a) * 0.47, 1.11, Math.sin(a) * 0.44); celOutfit.add(thread); const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), cGoldB); st.scale.set(0.7, 1.3, 0.4); st.position.set(Math.cos(a) * 0.47, 1.03, Math.sin(a) * 0.44); celOutfit.add(st); }
+      const waistband = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.03, 8, 26), cSapphire); waistband.position.y = 1.44; waistband.rotation.x = Math.PI / 2; waistband.scale.set(1, 0.9, 1); celOutfit.add(waistband);
+
+      // ===== large royal ribbon at the back of the waist =====
+      const rbbn = new THREE.Group();
+      const rL = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), cRoyal); rL.scale.set(1.9, 1.0, 0.5); rL.position.set(-0.17, 0.02, 0);
+      const rR = rL.clone(); rR.position.x = 0.17;
+      const rTL = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), cRoyal); rTL.scale.set(1.4, 0.85, 0.5); rTL.position.set(-0.12, 0.14, 0.01); rTL.rotation.z = 0.5;
+      const rTR = rTL.clone(); rTR.position.x = 0.12; rTR.rotation.z = -0.5;
+      const rKnot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), cSapphire); rKnot.scale.set(0.9, 1.1, 0.7);
+      const rKnotGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), cCryst.clone()); rKnotGem.scale.set(0.7, 1.1, 0.4); rKnotGem.position.z = 0.05;
+      [[-0.1, 0.2], [0.1, -0.2]].forEach(([dx, lean]) => { const tail = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.5, 5), cRoyal); tail.position.set(dx, -0.32, -0.01); tail.rotation.set(Math.PI - 0.1, 0, lean); tail.scale.set(1, 1, 0.5); const gt = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), cGold); gt.position.set(dx * 1.4, -0.55, -0.01); gt.rotation.x = Math.PI / 2; rbbn.add(tail, gt); });
+      rbbn.add(rL, rR, rTL, rTR, rKnot, rKnotGem);
+      rbbn.position.set(0, 1.42, -0.32);
+      celOutfit.add(rbbn);
+      G._celRibbon = rbbn;
+      char.add(celOutfit);
+
+      // ===== detached white silk sleeves + blue arm guards =====
+      const mkSleeveC = () => {
+        const grp = new THREE.Group();
+        const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.17, 0.26, 14), cRoyal); guard.position.y = -0.16;
+        const gTrim = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.012, 6, 16), cGold); gTrim.rotation.x = Math.PI / 2; gTrim.position.y = -0.29;
+        const gGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), cCryst.clone()); gGem.position.set(0, -0.14, 0.16);
+        const sv = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.30, 0.6, 14, 1, true), cSilk); sv.position.y = -0.56;
+        const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.32, 0.1, 14, 1, true), cRoyal); cuff.position.y = -0.86;
+        const cuffTrim = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.012, 6, 18), cGold); cuffTrim.rotation.x = Math.PI / 2; cuffTrim.position.y = -0.91;
+        grp.add(guard, gTrim, gGem, sv, cuff, cuffTrim);
+        return grp;
+      };
+      const celSleeveL = mkSleeveC(); (armL.userData.elbow || armL).add(celSleeveL);
+      const celSleeveR = mkSleeveC(); (armR.userData.elbow || armR).add(celSleeveR);
+      G._celSleeves = [celSleeveL, celSleeveR];
+
+      // ===== thigh-high white stockings + gold embroidery + blue garter straps =====
+      const mkStockC = leg => {
+        const grp = [];
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.128, 0.108, 0.4, 14), cSilk); shin.position.y = -0.235; (leg.userData.knee || leg).add(shin); grp.push(shin);
+        const thighC = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.132, 0.34, 14), cSilk); thighC.position.y = -0.44; leg.add(thighC); grp.push(thighC);
+        const goldBand = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.012, 6, 16), cGold); goldBand.rotation.x = Math.PI / 2 - 0.12; goldBand.position.y = -0.3; leg.add(goldBand); grp.push(goldBand);
+        const garter = new THREE.Mesh(new THREE.TorusGeometry(0.152, 0.016, 6, 16), cRoyal); garter.rotation.x = Math.PI / 2 - 0.12; garter.position.y = -0.36; leg.add(garter); grp.push(garter);
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.012), cRoyal); strap.position.set(0.08, -0.28, 0.13); leg.add(strap); grp.push(strap);
+        return grp;
+      };
+      const stockL = mkStockC(legL), stockR = mkStockC(legR);
+      G._celShoeMat = new THREE.MeshStandardMaterial({ color: 0x1e2f66, roughness: 0.35, metalness: 0.25 }); // sapphire heels
+
+      // ===== floating star aura + celestial magic circle =====
+      const celStarsG = new THREE.Group(); const celStarArr = [];
+      for (let i = 0; i < 14; i++) {
+        const mat = [cGoldB, cCryst, cGem][i % 3];
+        const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.038 + (i % 3) * 0.014, 0), mat);
+        st.scale.set(0.7, 1.4, 0.7);
+        const ang = (i / 14) * Math.PI * 2, rad = 0.7 + (i % 4) * 0.14, y0 = 0.5 + (i % 5) * 0.42;
+        st.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad);
+        st.userData = { ang, rad, y0, spin: 0.5 + (i % 3) * 0.35, fall: 0.12 + (i % 4) * 0.05 };
+        celStarsG.add(st); celStarArr.push(st);
+      }
+      char.add(celStarsG); G._celStars = celStarArr;
+      const celCircle = new THREE.Group();
+      [[0.68, 0.022, cCryst], [0.54, 0.014, cGold], [0.42, 0.01, cGoldB]].forEach(([r, tube, mat]) => { const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 8, 52), mat); ring.rotation.x = Math.PI / 2; ring.position.y = 0.045; celCircle.add(ring); });
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), cGoldB); st.scale.set(0.7, 0.7, 0.2); st.position.set(Math.cos(a) * 0.61, 0.05, Math.sin(a) * 0.61); st.rotation.x = Math.PI / 2; celCircle.add(st); }
+      char.add(celCircle); G._celCircle = celCircle;
+
+      const celParts = [celHead, celOutfit, celSleeveL, celSleeveR, celStarsG, celCircle, ...stockL, ...stockR];
+      celParts.forEach(p => p.visible = false);
+      G._celestiaParts = celParts;
     }
 
     // ---------- Outfits: visible on Cherry when equipped ----------
@@ -10553,7 +10706,7 @@ function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
-      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : null;
+      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : null;
       if (heroShoe && !sh) shoeMeshes.forEach(s => s.material = heroShoe); // 🦸 hero signature shoes
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
@@ -19292,6 +19445,41 @@ function CherryAdventure() {
             }
             if (G._lunaSleeves) G._lunaSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.7 + i * 1.2) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.3 + i) * (amp * 1.2); });
             if (G._lunaCape) G._lunaCape.rotation.x = 0.1 + Math.sin(t * 1.4) * 0.05 + spd * 0.15;
+          }
+          if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
+        }
+        // 🌌 Celestia — celestial star aura, magic circle, skirt wind ripple, ribbon + sleeve sway
+        if (G._celStars && G._celStars.length && G._celStars[0].parent && G._celStars[0].parent.visible) {
+          G._celStars.forEach(p => {
+            const u = p.userData;
+            u.ang += dt * 0.3;
+            p.position.x = Math.cos(u.ang) * u.rad;
+            p.position.z = Math.sin(u.ang) * u.rad;
+            p.position.y -= dt * u.fall;
+            if (p.position.y < 0.35) p.position.y = u.y0;
+            p.rotation.y += dt * u.spin;
+          });
+          if (G._celCircle) G._celCircle.rotation.y += dt * 0.25;
+          if (G._celSkirt) {
+            const spd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
+            const amp = 0.05 + spd * 0.1;
+            G._celSkirt.rotation.x = Math.sin(t * 2.0) * amp;
+            G._celSkirt.rotation.z = Math.cos(t * 1.5) * amp * 0.8;
+            const posA = G._celSkirt.geometry.attributes.position, baseP = G._celSkirt.userData.basePos;
+            if (baseP) {
+              const wind = 1 + spd * 1.6;
+              for (let vi = 0; vi < posA.count; vi++) {
+                const bx = baseP[vi * 3], by = baseP[vi * 3 + 1], bz = baseP[vi * 3 + 2];
+                if (by < -0.05) {
+                  const ap = Math.atan2(bz, bx), w = (-by / 0.4) * wind;
+                  const rip = (Math.sin(ap * 4 + t * 2.6) * 0.015 + Math.cos(ap * 2 - t * 1.9) * 0.01) * w;
+                  posA.setXYZ(vi, bx + Math.cos(ap) * rip, by + Math.sin(t * 2.2 + ap * 3) * 0.01 * w, bz + Math.sin(ap) * rip);
+                }
+              }
+              posA.needsUpdate = true;
+            }
+            if (G._celSleeves) G._celSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.7 + i * 1.2) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.3 + i) * (amp * 1.2); });
+            if (G._celRibbon) G._celRibbon.rotation.x = Math.sin(t * 1.4) * 0.08;
           }
           if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
         }
