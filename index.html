@@ -9486,6 +9486,12 @@ function CherryAdventure() {
       // ===== back: blue cape + quiver of ice arrows =====
       const yCape = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.7, 1.5, 18, 1, true, Math.PI * 0.62, Math.PI * 0.76), yCapeMat);
       yCape.position.set(0, 1.5, -0.06); char.add(yCape); G._yukiCape = yCape;
+      // 👘 ผ้าคลุมกางเกง — พริ้วไหว (flowing overskirt: short front, long sides)
+      const ySkirtMat = new THREE.MeshStandardMaterial({ color: 0x22407e, emissive: 0x0a1838, emissiveIntensity: 0.22, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+      const skirtGeo = new THREE.CylinderGeometry(0.35, 0.55, 0.82, 44, 7, true);
+      { const p = skirtGeo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const r = Math.hypot(x, z) || 1e-4; const zn = z / r, xn = x / r; const low = Math.max(0, (0.41 - y) / 0.82); const frontness = Math.max(0, zn); const sideness = Math.abs(xn); const dy = low * low * (frontness * 0.56 - sideness * 0.12); const flare = low * (0.05 + sideness * 0.05); p.setX(i, x + xn * flare); p.setY(i, y + dy); p.setZ(i, z + zn * flare); } p.needsUpdate = true; skirtGeo.computeVertexNormals(); }
+      const ySkirt = new THREE.Mesh(skirtGeo, ySkirtMat); ySkirt.position.set(0, 0.75, 0); char.add(ySkirt);
+      G._yukiSkirt = ySkirt; G._yukiSkirtBase = Float32Array.from(skirtGeo.attributes.position.array);
       const quiver = new THREE.Group();
       const qbody = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.5, 12), yBelt); quiver.add(qbody);
       const qcap = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 6, 14), ySilver); qcap.position.y = 0.25; qcap.rotation.x = Math.PI / 2; quiver.add(qcap);
@@ -9500,10 +9506,14 @@ function CherryAdventure() {
         for (let k = 0; k < 4; k++) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.129, 0.007, 6, 18), yGoldTrim); band.position.y = -0.02 - k * 0.11; band.rotation.x = Math.PI / 2; kn.add(band); grp.push(band); } // ขลิบทองรอบบูท
         const vine = new THREE.Mesh(new THREE.TorusGeometry(0.132, 0.006, 6, 16, Math.PI * 1.3), yGoldTrim); vine.position.set(0, -0.26, 0.03); vine.rotation.set(Math.PI / 2, 0.5, 0); kn.add(vine); grp.push(vine); // ลายทองวิจิตร
         const toe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), yGoldTrim); toe.scale.set(1, 0.62, 1.5); toe.position.set(0, -0.5, 0.12); kn.add(toe); grp.push(toe); // หัวรองเท้าทอง
-        const heel = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.042, 0.15, 10), yGoldTrim); heel.position.set(0, -0.58, -0.07); kn.add(heel); grp.push(heel); // ส้นสูงทอง
+        const heel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.27, 10), yGoldTrim); heel.position.set(0, -0.65, -0.078); kn.add(heel); grp.push(heel); // 👠 ส้นสูงสติเลตโต
+        const heelCap = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.03, 0.032, 8), yGoldTrim); heelCap.position.set(0, -0.795, -0.078); kn.add(heelCap); grp.push(heelCap); // ปลายส้น
         return grp;
       };
       const bootL = mkBootY(legL), bootR = mkBootY(legR);
+      // 🧤 ปลอกแขนสองข้าง (elegant forearm bracers) — white leather + gold trim + ice gem
+      const mkBracerY = elbow => { const g = new THREE.Group(); const main = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.102, 0.30, 16), yLeather); main.position.y = -0.29; g.add(main); const topC = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.014, 6, 18), yGoldTrim); topC.position.y = -0.145; topC.rotation.x = Math.PI / 2; g.add(topC); const midB = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.007, 6, 18), yGoldTrim); midB.position.y = -0.30; midB.rotation.x = Math.PI / 2; g.add(midB); const wristC = new THREE.Mesh(new THREE.TorusGeometry(0.108, 0.017, 6, 18), yGoldTrim); wristC.position.y = -0.44; wristC.rotation.x = Math.PI / 2; g.add(wristC); const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), yIce.clone()); gem.scale.set(0.9, 1.35, 0.5); gem.position.set(0, -0.23, 0.098); g.add(gem); elbow.add(g); return g; };
+      const bracerL = mkBracerY(armL.userData.elbow || armL), bracerR = mkBracerY(armR.userData.elbow || armR);
       G._yukiShoeMat = new THREE.MeshStandardMaterial({ color: 0xe8edf5, roughness: 0.4, metalness: 0.2 });
       // 🦵 blue thigh strap on the right leg
       const thighStrap = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.018, 6, 16), yBlue); thighStrap.position.y = -0.34; thighStrap.rotation.x = Math.PI / 2 - 0.12; legR.add(thighStrap);
@@ -9518,7 +9528,7 @@ function CherryAdventure() {
       char.add(auroraG); G._yukiAurora = auroraG;
       const yGlow = new THREE.PointLight(0x8ac0ff, 0.7, 6); yGlow.position.set(0, 1.5, 0.4); char.add(yGlow);
 
-      const yukiParts = [yEars, yHair, yOutfit, yCape, quiver, snowG, auroraG, yGlow, thighStrap, strapGem, ...shortsLegs, ...bootL, ...bootR];
+      const yukiParts = [yEars, yHair, yOutfit, yCape, ySkirt, quiver, snowG, auroraG, yGlow, thighStrap, strapGem, ...shortsLegs, ...bootL, ...bootR, bracerL, bracerR];
       yukiParts.forEach(p => p.visible = false);
       G._yukiParts = yukiParts;
     }
@@ -20006,6 +20016,7 @@ function CherryAdventure() {
           if (G._yukiCape) G._yukiCape.rotation.x = 0.08 + Math.sin(t * 1.3) * 0.05 + spd * 0.2;
           if (G._yukiHairBack) { G._yukiHairBack.rotation.x = 0.02 + Math.sin(t * 1.2) * 0.035 + spd * 0.1; G._yukiHairBack.rotation.y = Math.sin(t * 0.8) * 0.03; }
           if (G._yukiHairSide) G._yukiHairSide.forEach((s, i) => { s.rotation.z = Math.sin(t * 1.5 + i * 2.1) * 0.05; });
+          if (G._yukiSkirt) { const gp = G._yukiSkirt.geometry.attributes.position, bb = G._yukiSkirtBase; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (0.41 - by) / 0.82); if (low < 0.03) continue; const ph = Math.atan2(bz, bx); const wave = (Math.sin(t * 2.4 + ph * 3) + 0.5 * Math.sin(t * 1.7 + ph * 5)) * 0.05 * low; const gust = (0.02 + spd * 0.4) * low * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave - gust); gp.setY(i, by - Math.abs(wave) * 0.25 - gust * 0.15); } gp.needsUpdate = true; }
           if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
         }
         // ❄️ Frostwing bow — ice crystal breathes, wings shimmer
