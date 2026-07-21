@@ -8654,6 +8654,8 @@ function CherryAdventure() {
         (G._lunaParts || []).forEach(p => p.visible = id === "luna");
         (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
         (G._dressButtons || []).forEach(b => b.visible = !id);
+        if (id === "celestia") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸 เซเลสเทียใช้ผมประจำตัว
+        else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
         if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null); // swap to/from the signature staff
@@ -8884,17 +8886,17 @@ function CherryAdventure() {
       tShape.absarc(0, 0, 0.12, -Math.PI * 0.62, Math.PI * 0.62, false);
       tShape.absarc(0.055, 0, 0.092, Math.PI * 0.5, -Math.PI * 0.5, true);
       const tMoon = new THREE.Mesh(new THREE.ExtrudeGeometry(tShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.006, bevelSegments: 1 }), cGold.clone());
-      tMoon.position.set(0, 0.44, 0.42); tMoon.rotation.set(-0.2, 0, 0);
+      tMoon.position.set(0, 0.52, 0.50); tMoon.rotation.set(-0.2, 0, 0);
       celHead.add(tMoon);
       const tBand = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 8, 28, Math.PI * 0.9), cGold);
-      tBand.rotation.set(Math.PI / 2, Math.PI, 0); tBand.position.set(0, 0.3, 0.30);
+      tBand.rotation.set(Math.PI / 2, Math.PI, 0); tBand.position.set(0, 0.34, 0.34);
       celHead.add(tBand);
       for (const sx of [-1, 1]) {
-        const spire = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 4), cGold); spire.position.set(sx * 0.26, 0.44, 0.34); spire.rotation.z = sx * 0.2; celHead.add(spire);
-        const g = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), cCryst.clone()); g.scale.set(0.8, 1.2, 0.8); g.position.set(sx * 0.16, 0.45, 0.38); celHead.add(g);
+        const spire = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 4), cGold); spire.position.set(sx * 0.26, 0.50, 0.46); spire.rotation.z = sx * 0.2; celHead.add(spire);
+        const g = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), cCryst.clone()); g.scale.set(0.8, 1.2, 0.8); g.position.set(sx * 0.16, 0.50, 0.48); celHead.add(g);
       }
-      const cTopGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), cGem.clone()); cTopGem.scale.set(0.8, 1.3, 0.8); cTopGem.position.set(0, 0.35, 0.45); celHead.add(cTopGem);
-      [[-0.35, 0.28, -0.4], [0.32, 0.12, -0.5], [-0.2, -0.1, -0.55], [0.44, 0.32, -0.3], [0.1, -0.3, -0.5], [-0.46, 0.1, -0.34], [0.0, 0.42, -0.42]].forEach(([sx, sy, sz]) => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), cGoldB); st.scale.set(0.7, 1.3, 0.7); st.position.set(sx, sy, sz); celHead.add(st); });
+      const cTopGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), cGem.clone()); cTopGem.scale.set(0.8, 1.3, 0.8); cTopGem.position.set(0, 0.40, 0.55); celHead.add(cTopGem);
+      [[-0.35, 0.28, -0.4], [0.32, 0.12, -0.5], [-0.2, -0.1, -0.55], [0.44, 0.32, -0.3], [0.1, -0.3, -0.5], [-0.46, 0.1, -0.34], [0.0, 0.42, -0.42]].forEach(([sx, sy, sz]) => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), cGoldB); st.scale.set(0.7, 1.3, 0.7); st.position.set(sx * 1.18, sy * 1.18, sz * 1.18); celHead.add(st); });
       headG.add(celHead);
 
       // ===== body: off-shoulder white silk + navy corset with gold celestial embroidery =====
@@ -8993,6 +8995,113 @@ function CherryAdventure() {
       const stockL = mkStockC(legL), stockR = mkStockC(legR);
       G._celShoeMat = new THREE.MeshStandardMaterial({ color: 0x1e2f66, roughness: 0.35, metalness: 0.25 }); // sapphire heels
 
+      // ===== 👸 signature layered hair — long silver-white princess locks (replaces the generic hair mesh) =====
+      const hRoot = new THREE.MeshStandardMaterial({ color: 0xf0f3fa, roughness: 0.42, metalness: 0.04, emissive: 0x2a2e3a, emissiveIntensity: 0.08 });
+      const hMid = new THREE.MeshStandardMaterial({ color: 0xe3e8f4, roughness: 0.46, metalness: 0.04, emissive: 0x262a38, emissiveIntensity: 0.08 });
+      const hTipM = new THREE.MeshStandardMaterial({ color: 0xf8faff, roughness: 0.3, transparent: true, opacity: 0.72, depthWrite: false }); // ✨ wispy semi-transparent tips
+      const celHair = new THREE.Group();
+      // a lock = wavy tapering tube along a curve + translucent cone tip
+      const mkLock = (pts, r, mat, tipLen) => {
+        const v = pts.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+        const curve = new THREE.CatmullRomCurve3(v);
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 14, r, 6, false), mat));
+        const end = v[v.length - 1], prev = v[v.length - 2];
+        const dir = end.clone().sub(prev).normalize();
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.92, tipLen, 6), hTipM);
+        tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        tip.position.copy(end).addScaledVector(dir, tipLen * 0.42);
+        g.add(tip);
+        return g;
+      };
+      // scalp cap + back shell hide the strand roots while keeping the face clear
+      const hCap = new THREE.Mesh(new THREE.SphereGeometry(0.63, 28, 20), hRoot);
+      hCap.scale.set(1.05, 1.0, 1.02); hCap.position.set(0, 0.14, -0.05);
+      celHair.add(hCap);
+      const hShell = new THREE.Mesh(new THREE.SphereGeometry(0.585, 24, 12, Math.PI, Math.PI, Math.PI * 0.4, Math.PI * 0.4), hMid);
+      hShell.position.set(0, 0, -0.02);
+      celHair.add(hShell);
+      // 💇 long layered back hair — two overlapping rings of wavy locks, uneven layered ends
+      const celHairBack = new THREE.Group();
+      for (let i = 0; i < 12; i++) {
+        const az = -Math.PI * 0.42 + (i / 11) * Math.PI * 0.84;
+        const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92;
+        const tx = -z0, tz = x0; // tangential wave direction
+        const w = k => Math.sin(i * 2.3 + k * 1.7) * 0.055;
+        const yEnd = -(0.95 + Math.abs(x0) * 0.55 + (i % 3) * 0.12); // กลางสั้นเผยโบว์ ข้างยาวถึงกลางหลัง
+        celHairBack.add(mkLock([
+          [x0 * 0.32, 0.47, z0 * 0.30],
+          [x0 * 0.62, 0.05, z0 * 0.61],
+          [x0 * 0.56 + tx * w(1), -0.48, z0 * 0.56 + tz * w(1)],
+          [x0 * 0.45 + tx * w(2), -0.9, z0 * 0.44 + tz * w(2)],
+          [x0 * 0.37 + tx * w(3), yEnd, z0 * 0.36 + tz * w(3)],
+        ], 0.06 + (i % 3) * 0.011, i % 2 ? hMid : hRoot, 0.26));
+      }
+      for (let i = 0; i < 10; i++) { // ชั้นนอกสั้นกว่า ซ้อนเหลื่อมกัน
+        const az = -Math.PI * 0.30 + ((i + 0.5) / 9.5) * Math.PI * 0.60;
+        const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92;
+        const tx = -z0, tz = x0;
+        const w = k => Math.cos(i * 2.7 + k * 1.9) * 0.05;
+        const yEnd = -(0.72 + Math.abs(x0) * 0.4 + (i % 3) * 0.12);
+        celHairBack.add(mkLock([
+          [x0 * 0.30, 0.5, z0 * 0.28],
+          [x0 * 0.63, 0.14, z0 * 0.64],
+          [x0 * 0.56 + tx * w(1), -0.4, z0 * 0.56 + tz * w(1)],
+          [x0 * 0.45 + tx * w(2), yEnd, z0 * 0.44 + tz * w(2)],
+        ], 0.05 + (i % 2) * 0.012, i % 2 ? hRoot : hMid, 0.18));
+      }
+      celHair.add(celHairBack);
+      G._celHairBack = celHairBack;
+      // face-framing side locks — long and slightly wavy, one thick + one thin per side
+      const celHairSides = [];
+      for (const sx of [-1, 1]) {
+        const sg = new THREE.Group();
+        sg.add(mkLock([
+          [sx * 0.38, 0.44, 0.22],
+          [sx * 0.63, -0.05, 0.30],
+          [sx * 0.60, -0.55, 0.25],
+          [sx * 0.50, -1.02, 0.21],
+        ], 0.068, hRoot, 0.2));
+        sg.add(mkLock([
+          [sx * 0.44, 0.4, 0.12],
+          [sx * 0.68, -0.15, 0.14],
+          [sx * 0.63, -0.7, 0.1],
+          [sx * 0.55, -1.28, 0.08],
+        ], 0.048, hMid, 0.16));
+        celHair.add(sg); celHairSides.push(sg);
+      }
+      G._celHairSide = celHairSides;
+      // crown overlay strands — thin layers hugging the cap for depth
+      for (const sx of [-1, 1]) {
+        for (let k = 0; k < 3; k++) {
+          celHair.add(mkLock([
+            [sx * (0.10 + k * 0.04), 0.78 - k * 0.03, 0.14 - k * 0.04],
+            [sx * (0.45 + k * 0.06), 0.58 - k * 0.04, -0.20 - k * 0.05],
+            [sx * (0.55 + k * 0.04), 0.26 - k * 0.04, -0.44 - k * 0.04],
+          ], 0.034, k === 1 ? hMid : hRoot, 0.12));
+        }
+      }
+      // soft uneven full bangs — two overlapping rows of separated strands over the forehead
+      const hDeep = new THREE.MeshStandardMaterial({ color: 0xd7ddec, roughness: 0.48, metalness: 0.04, emissive: 0x232634, emissiveIntensity: 0.08 }); // เฉดลึกให้หน้าม้ามีมิติ
+      [-0.42, -0.30, -0.19, -0.09, 0, 0.09, 0.19, 0.30, 0.42].forEach((azf, bi) => {
+        const az = azf * Math.PI;
+        const bl = bi === 4 ? 0.3 : 0.34 + (bi % 3) * 0.05; // ปลายไม่เท่ากันแบบเลเยอร์
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.088 - (bi % 2) * 0.014, bl, 6), [hRoot, hMid, hDeep][bi % 3]);
+        b.position.set(Math.sin(az) * 0.60, 0.36 - bl / 2, Math.cos(az) * 0.60);
+        b.rotation.set(Math.PI - Math.cos(az) * 0.16, 0, Math.sin(az) * 0.32);
+        celHair.add(b);
+      });
+      [-0.36, -0.24, -0.13, -0.04, 0.04, 0.13, 0.24, 0.36].forEach((azf, bi) => { // แถวหน้าบาง เส้นแยกพลิ้ว
+        const az = azf * Math.PI;
+        const bl = 0.24 + (bi % 3) * 0.05;
+        const b = new THREE.Mesh(new THREE.ConeGeometry(0.045, bl, 6), bi % 2 ? hDeep : hMid);
+        b.position.set(Math.sin(az) * 0.63, 0.32 - bl / 2, Math.cos(az) * 0.64);
+        b.rotation.set(Math.PI - Math.cos(az) * 0.2, 0, Math.sin(az) * 0.38);
+        celHair.add(b);
+      });
+      headG.add(celHair);
+      G._celHair = celHair;
+
       // ===== floating star aura + celestial magic circle =====
       const celStarsG = new THREE.Group(); const celStarArr = [];
       for (let i = 0; i < 14; i++) {
@@ -9010,7 +9119,7 @@ function CherryAdventure() {
       for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), cGoldB); st.scale.set(0.7, 0.7, 0.2); st.position.set(Math.cos(a) * 0.61, 0.05, Math.sin(a) * 0.61); st.rotation.x = Math.PI / 2; celCircle.add(st); }
       char.add(celCircle); G._celCircle = celCircle;
 
-      const celParts = [celHead, celOutfit, celSleeveL, celSleeveR, celStarsG, celCircle, ...stockL, ...stockR];
+      const celParts = [celHead, celOutfit, celSleeveL, celSleeveR, celStarsG, celCircle, celHair, ...stockL, ...stockR];
       celParts.forEach(p => p.visible = false);
       G._celestiaParts = celParts;
     }
@@ -10761,6 +10870,7 @@ function CherryAdventure() {
         const selfContained = i >= 5;
         if (baseHair) baseHair.visible = !selfContained;
         if (ahoge) ahoge.visible = i < 5; // hide the wisp on the sleek image styles
+        if (G.heroId === "celestia") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸 ผมประจำตัวแทนทรงปกติ
       } else if (cat === "eyes") {
         applyEyeStyle(i);
       } else if (cat === "outfit") {
@@ -19480,6 +19590,8 @@ function CherryAdventure() {
             }
             if (G._celSleeves) G._celSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.7 + i * 1.2) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.3 + i) * (amp * 1.2); });
             if (G._celRibbon) G._celRibbon.rotation.x = Math.sin(t * 1.4) * 0.08;
+            if (G._celHairBack) { G._celHairBack.rotation.x = 0.02 + Math.sin(t * 1.2) * 0.035 + spd * 0.1; G._celHairBack.rotation.y = Math.sin(t * 0.8) * 0.03; }
+            if (G._celHairSide) G._celHairSide.forEach((s, i) => { s.rotation.z = Math.sin(t * 1.5 + i * 2.1) * 0.05; s.rotation.x = Math.cos(t * 1.1 + i) * 0.03; });
           }
           if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
         }
