@@ -5129,10 +5129,13 @@ export default function CherryAdventure() {
       yOutfit.add(collar);
       // 👙 ornate white bustier (เสื้อเกาะอก) — wraps OUTSIDE the torso so nothing clips through
       const yCorsetY = new THREE.MeshStandardMaterial({ color: 0x141620, roughness: 0.5, metalness: 0.22 }); // black corset cincher
-      const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.315, 1.5], [0.36, 1.6], [0.375, 1.72], [0.335, 1.8]].map(([r, y]) => new THREE.Vector2(r, y)), 28), yLeather);
-      bodice.scale.set(1.08, 1, 0.99); yOutfit.add(bodice);
-      // gold armour trim along the top bust edge + bottom edge
-      const bustTop = new THREE.Mesh(new THREE.TorusGeometry(0.335, 0.018, 6, 28), yGoldTrim); bustTop.position.y = 1.79; bustTop.rotation.x = Math.PI / 2; bustTop.scale.set(1.07, 0.99, 1); yOutfit.add(bustTop);
+      const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.315, 1.5], [0.36, 1.6], [0.375, 1.72], [0.34, 1.82]].map(([r, y]) => new THREE.Vector2(r, y)), 32), yLeather);
+      bodice.scale.set(1.08, 1, 0.99);
+      // 👗 คอวี — ดึงขอบบนด้านหน้ากลางอกให้เว้าลงเป็นตัว V
+      { const pos = bodice.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i); if (y > 1.66 && z > 0) { const cen = Math.max(0, 1 - Math.abs(x) / 0.26); const front = Math.min(1, z / 0.28); const upper = Math.min(1, (y - 1.66) / 0.16); pos.setY(i, y - 0.34 * cen * front * upper); } } pos.needsUpdate = true; bodice.geometry.computeVertexNormals(); }
+      yOutfit.add(bodice);
+      // ✨ gold V-neck trim framing the neckline (two sloped bars meeting at the point)
+      for (const sx of [-1, 1]) { const vt = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.38, 8), yGoldTrim); vt.position.set(sx * 0.12, 1.66, 0.35); vt.rotation.z = -sx * 0.62; yOutfit.add(vt); const vtip = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), yGoldTrim); vtip.position.set(sx * 0.225, 1.83, 0.32); yOutfit.add(vtip); }
       const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.017, 6, 26), yGoldTrim); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.07, 0.99, 1); yOutfit.add(bTrim);
       // 🌀 gold scroll ornaments on each cup + tiny blue gems (on the outer surface)
       for (const sx of [-1, 1]) {
