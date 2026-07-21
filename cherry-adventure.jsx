@@ -882,7 +882,7 @@ const CHAR_PRESETS = [
   { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
   { name: "ฮารุ",    emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
   { name: "ลูน่า",   emoji: "🌙", gender: 0, skin: 0, hairColor: 5, hairStyle: 6, eyes: 0, outfit: 0, hero: "luna" },
-  { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 3, hairColor: 4, hairStyle: 2, eyes: 3, outfit: 0 },
+  { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 2, hairColor: 5, hairStyle: 6, eyes: 3, outfit: 0, hero: "yuki" },
   { name: "โรส",     emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 2, outfit: 4 },
   { name: "โคทาโร่", emoji: "⚔️", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 3 },
   { name: "ไครี",    emoji: "⚡", gender: 1, skin: 2, hairColor: 2, hairStyle: 5, eyes: 1, outfit: 2 },
@@ -2183,6 +2183,7 @@ export default function CherryAdventure() {
       const it = LOOT.find((x) => x.id === id);
       const cls = G.cls;
       if (id === "haruStaff" || id === "lunaStaff") return { x: -0.12, y: 0, z: -0.45 }; // 🦸 signature staff tilted outward so the head-piece clears the chibi head
+      if (id === "yukiBow") return { x: -0.15, y: 0, z: Math.PI / 2 }; // 🏹 signature bow held sideways
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
       if (cls === "mage" || id === "cm" || id === "wDm") return { x: -0.15, y: 0, z: 0 };
@@ -3373,6 +3374,54 @@ export default function CherryAdventure() {
       g.userData.gripY = 0.05;
       weaponModels.lunaStaff = g;
     }
+
+    { // ❄️ yukiBow — Frostwing Longbow (ธนูน้ำแข็งในตำนาน)
+      const g = new THREE.Group();
+      const whiteWood = new THREE.MeshStandardMaterial({ color: 0xeef3fa, roughness: 0.5, metalness: 0.05 });
+      const silverY = new THREE.MeshStandardMaterial({ color: 0xc6d2e2, roughness: 0.3, metalness: 0.7 });
+      const iceGem = new THREE.MeshStandardMaterial({ color: 0x9ad0ff, emissive: 0x3a7ae0, emissiveIntensity: 1.2, roughness: 0.1, metalness: 0.1 });
+      const iceWingMat = new THREE.MeshStandardMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0.5, emissive: 0x5a9ae0, emissiveIntensity: 0.5, roughness: 0.2, side: THREE.DoubleSide, depthWrite: false });
+      const energyMat = new THREE.MeshBasicMaterial({ color: 0xaddcff, transparent: true, opacity: 0.85 });
+      // riser (grip) + silver bands
+      const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.32, 10), whiteWood); g.add(riser);
+      for (const yy of [-0.13, 0.13]) { const bnd = new THREE.Mesh(new THREE.CylinderGeometry(0.057, 0.057, 0.05, 10), silverY); bnd.position.y = yy; g.add(bnd); }
+      // recurve limbs
+      const limbY = (sign, lenMul) => {
+        const pts = [];
+        for (let i = 0; i <= 14; i++) { const u = i / 14; const y = sign * (0.15 + u * 0.66 * lenMul); const x = 0.30 * Math.sin(u * Math.PI * 0.9) - (u > 0.55 ? (u - 0.55) * 0.66 : 0) + (u > 0.85 ? (u - 0.85) * 0.95 : 0); pts.push(new THREE.Vector3(x, y, Math.sin(u * Math.PI) * 0.03 * sign)); }
+        const curve = new THREE.CatmullRomCurve3(pts);
+        const limb = new THREE.Mesh(new THREE.TubeGeometry(curve, 30, 0.03, 8, false), whiteWood);
+        const lp = limb.geometry.attributes.position, rv = 9;
+        for (let r = 0; r < 31; r++) { const u = r / 30, sc = 1 - u * 0.55, c = curve.getPoint(u); for (let v = 0; v <= 8; v++) { const idx = r * rv + v; if (idx >= lp.count) continue; lp.setX(idx, c.x + (lp.getX(idx) - c.x) * sc); lp.setY(idx, c.y + (lp.getY(idx) - c.y) * sc); lp.setZ(idx, c.z + (lp.getZ(idx) - c.z) * sc); } }
+        lp.needsUpdate = true; limb.geometry.computeVertexNormals();
+        const end = pts[pts.length - 1];
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.12, 6), silverY); cap.position.copy(end); cap.position.y += sign * 0.05;
+        const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), iceGem.clone()); shard.scale.set(0.5, 1.7, 0.5); shard.position.copy(end); shard.position.y += sign * 0.02;
+        // ❄️ ice wing feathers fanning from the tip
+        const wing = new THREE.Group();
+        for (let k = 0; k < 4; k++) { const fe = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.34 + k * 0.06, 4), iceWingMat); fe.position.copy(end); fe.position.x += 0.02 + k * 0.03; fe.position.y += sign * (0.04 + k * 0.02); fe.rotation.z = -sign * (0.5 + k * 0.28); wing.add(fe); }
+        return { limb, cap, shard, wing, end };
+      };
+      const up = limbY(1, 1.15), lo = limbY(-1, 1.0);
+      g.add(up.limb, up.cap, up.shard, up.wing, lo.limb, lo.cap, lo.shard, lo.wing);
+      // ⚡ glowing energy bowstring pulled back at the nock
+      const mid = new THREE.Vector3(-0.2, 0, 0);
+      for (const end of [up.end, lo.end]) { const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, end.distanceTo(mid), 5), energyMat); seg.position.copy(end.clone().add(mid).multiplyScalar(0.5)); seg.lookAt(end); seg.rotateX(Math.PI / 2); g.add(seg); }
+      // 💎 central ice crystal in a silver holder
+      const holder = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 8, 16), silverY); holder.position.set(0.055, 0, 0); holder.rotation.y = Math.PI / 2; g.add(holder);
+      const bowGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), iceGem); bowGem.position.set(0.065, 0, 0); bowGem.scale.set(0.7, 1.25, 0.7); g.add(bowGem);
+      for (const s of [-1, 1]) { const scroll = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14, Math.PI), silverY); scroll.position.set(0.045, s * 0.1, 0.01); scroll.rotation.set(0, Math.PI / 2, s * 1.2); g.add(scroll); }
+      // ❄️ nocked ice arrow drawn back
+      const arrow = new THREE.Group();
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.72, 6), silverY); shaft.rotation.z = Math.PI / 2; shaft.position.x = 0.17;
+      const ahead = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), iceGem.clone()); ahead.scale.set(0.6, 1.8, 0.6); ahead.rotation.z = Math.PI / 2; ahead.position.x = 0.56;
+      for (let k = 0; k < 3; k++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 5), iceWingMat); fl.scale.set(1.4, 0.5, 0.12); fl.position.set(-0.18, 0, 0); fl.rotation.x = k * (Math.PI * 2 / 3); arrow.add(fl); }
+      arrow.add(shaft, ahead); arrow.userData.isArrow = true; g.add(arrow);
+      const bowGlow = new THREE.PointLight(0x6aa0ff, 0.6, 2.2); g.add(bowGlow);
+      g.userData.arrow = arrow; g.userData.bowGem = bowGem; g.userData.wings = [up.wing, lo.wing]; g.userData.glow = bowGlow;
+      g.userData.gripY = 0.3; g.userData.gripZ = 0.3; g.scale.setScalar(1.35);
+      weaponModels.yukiBow = g;
+    }
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
     weaponModels.default.visible = true;
     let curWeapon = "default";
@@ -3383,6 +3432,7 @@ export default function CherryAdventure() {
       else if (G.heroId === "haru" && weaponModels.haruStaff) id = "haruStaff";
       else if (G.heroId === "luna" && weaponModels.lunaStaff) id = "lunaStaff";
       else if (G.heroId === "celestia" && weaponModels.lunaStaff) id = "lunaStaff";
+      else if (G.heroId === "yuki" && weaponModels.yukiBow) id = "yukiBow";
       curWeapon = id && weaponModels[id] ? id : (CLASS_WEAPON[G.cls] || "default"); // class weapons share the class model
       Object.entries(weaponModels).forEach(([k, m]) => (m.visible = k === curWeapon));
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
@@ -4365,14 +4415,15 @@ export default function CherryAdventure() {
       G._irisBase = irisBase;
       G.heroId = G.heroId || null;
       // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0] };
+      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0] };
       G.setHero = id => {
         G.heroId = id || null;
         (G._haruParts || []).forEach(p => p.visible = id === "haru");
         (G._lunaParts || []).forEach(p => p.visible = id === "luna");
         (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
+        (G._yukiParts || []).forEach(p => p.visible = id === "yuki");
         (G._dressButtons || []).forEach(b => b.visible = !id);
-        if (id === "celestia" || id === "luna") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸🌙 ฮีโร่ใช้ผมประจำตัว
+        if (id === "celestia" || id === "luna" || id === "yuki") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸🌙❄️ ฮีโร่ใช้ผมประจำตัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
@@ -5029,6 +5080,109 @@ export default function CherryAdventure() {
       const celParts = [celHead, celOutfit, celSleeveL, celSleeveR, celStarsG, celCircle, celHair, ...stockL, ...stockR];
       celParts.forEach(p => p.visible = false);
       G._celestiaParts = celParts;
+    }
+
+    // ---------- ❄️ YUKI signature look (frostwind ranger — half-elf ice archer) ----------
+    {
+      const yLeather = new THREE.MeshStandardMaterial({ color: 0xf0f3f9, roughness: 0.55, metalness: 0.14 }); // white/silver leather
+      const ySilver = new THREE.MeshStandardMaterial({ color: 0xc4cedd, roughness: 0.32, metalness: 0.7 });
+      const yBlue = new THREE.MeshStandardMaterial({ color: 0x2a4a92, roughness: 0.5, metalness: 0.12 });
+      const yCapeMat = new THREE.MeshStandardMaterial({ color: 0x24408a, emissive: 0x0a1838, emissiveIntensity: 0.3, roughness: 0.5, side: THREE.DoubleSide, depthWrite: false });
+      const yFur = new THREE.MeshStandardMaterial({ color: 0xf7f9fd, roughness: 0.92 });
+      const yIce = new THREE.MeshStandardMaterial({ color: 0x9ad0ff, emissive: 0x4a8ae0, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.1 });
+      const yBelt = new THREE.MeshStandardMaterial({ color: 0x5a4a30, roughness: 0.6 });
+      const yGoldTrim = new THREE.MeshStandardMaterial({ color: 0xdccf9a, roughness: 0.4, metalness: 0.6 });
+      const yRibbon = new THREE.MeshStandardMaterial({ color: 0x3a6ad0, roughness: 0.5 });
+
+      // ===== 🧝 pointed elf ears (skin) =====
+      const yEars = new THREE.Group();
+      for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.34, 5), skinMat); ear.position.set(sx * 0.5, 0.06, -0.06); ear.rotation.set(0.2, 0, sx * -0.9); ear.scale.set(0.7, 1, 0.5); yEars.add(ear); }
+      headG.add(yEars);
+
+      // ===== ❄️ layered ice-silver hair + braids + ribbons + ice ornaments =====
+      const yhRoot = new THREE.MeshStandardMaterial({ color: 0xeef2fb, roughness: 0.44, metalness: 0.05, emissive: 0x2a3040, emissiveIntensity: 0.08 });
+      const yhMid = new THREE.MeshStandardMaterial({ color: 0xdbe4f4, roughness: 0.48, emissive: 0x28303f, emissiveIntensity: 0.08 });
+      const yhTip = new THREE.MeshStandardMaterial({ color: 0x9ac4f0, emissive: 0x5a9ae0, emissiveIntensity: 0.45, roughness: 0.35, transparent: true, opacity: 0.78, depthWrite: false }); // ปลายไล่ฟ้าน้ำแข็ง
+      const yHair = new THREE.Group();
+      const mkLockY = (pts, r, mat, tipLen) => { const v = pts.map(p => new THREE.Vector3(p[0], p[1], p[2])); const curve = new THREE.CatmullRomCurve3(v); const gp = new THREE.Group(); gp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 13, r, 6, false), mat)); const end = v[v.length - 1], prev = v[v.length - 2], dir = end.clone().sub(prev).normalize(); const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.92, tipLen, 6), yhTip); tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); tip.position.copy(end).addScaledVector(dir, tipLen * 0.42); gp.add(tip); return gp; };
+      const yhCap = new THREE.Mesh(new THREE.SphereGeometry(0.63, 26, 20), yhRoot); yhCap.scale.set(1.05, 1.0, 1.02); yhCap.position.set(0, 0.14, -0.05); yHair.add(yhCap);
+      const yHairBack = new THREE.Group();
+      for (let i = 0; i < 12; i++) { const az = -Math.PI * 0.42 + (i / 11) * Math.PI * 0.84; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92, tx = -z0, tz = x0; const w = k => Math.sin(i * 2.1 + k * 1.6) * 0.05; const yEnd = -(1.0 + Math.abs(x0) * 0.5 + (i % 3) * 0.13); yHairBack.add(mkLockY([[x0 * 0.32, 0.47, z0 * 0.30], [x0 * 0.62, 0.05, z0 * 0.61], [x0 * 0.56 + tx * w(1), -0.5, z0 * 0.56 + tz * w(1)], [x0 * 0.45 + tx * w(2), -1.0, z0 * 0.44 + tz * w(2)], [x0 * 0.37 + tx * w(3), yEnd, z0 * 0.36 + tz * w(3)]], 0.058 + (i % 3) * 0.011, i % 2 ? yhMid : yhRoot, 0.26)); }
+      for (let i = 0; i < 9; i++) { const az = -Math.PI * 0.3 + ((i + 0.5) / 9) * Math.PI * 0.6; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.92, tx = -z0, tz = x0; const w = k => Math.cos(i * 2.5 + k * 1.8) * 0.045; const yEnd = -(0.72 + Math.abs(x0) * 0.4 + (i % 3) * 0.12); yHairBack.add(mkLockY([[x0 * 0.30, 0.5, z0 * 0.28], [x0 * 0.63, 0.14, z0 * 0.64], [x0 * 0.56 + tx * w(1), -0.4, z0 * 0.56 + tz * w(1)], [x0 * 0.45 + tx * w(2), yEnd, z0 * 0.44 + tz * w(2)]], 0.05, i % 2 ? yhRoot : yhMid, 0.18)); }
+      yHair.add(yHairBack); G._yukiHairBack = yHairBack;
+      const yHairSide = [];
+      for (const sx of [-1, 1]) { const sg = new THREE.Group(); sg.add(mkLockY([[sx * 0.4, 0.44, 0.2], [sx * 0.64, -0.05, 0.28], [sx * 0.6, -0.6, 0.24], [sx * 0.5, -1.15, 0.2]], 0.062, yhRoot, 0.2)); yHair.add(sg); yHairSide.push(sg); }
+      G._yukiHairSide = yHairSide;
+      // 🪢 two small braids framing the face, tied with blue ribbons
+      for (const sx of [-1, 1]) { const braid = new THREE.Group(); let yy = 0.28; for (let k = 0; k < 6; k++) { const bead = new THREE.Mesh(new THREE.SphereGeometry(0.05 - k * 0.004, 10, 8), k % 2 ? yhMid : yhRoot); bead.scale.set(1, 0.85, 1); bead.position.set(0, yy, 0); braid.add(bead); yy -= 0.088; } const rib = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 8), yRibbon); rib.scale.set(1.5, 0.7, 0.6); rib.position.y = 0.3; braid.add(rib); braid.position.set(sx * 0.47, 0.16, 0.28); braid.rotation.z = sx * 0.12; yHair.add(braid); }
+      // 🌸 uneven fringe
+      [-0.4, -0.28, -0.16, -0.05, 0.05, 0.16, 0.28, 0.4].forEach((azf, bi) => { const az = azf * Math.PI; const bl = 0.32 + (bi % 3) * 0.05; const b = new THREE.Mesh(new THREE.ConeGeometry(0.08 - (bi % 2) * 0.014, bl, 6), bi % 2 ? yhMid : yhRoot); b.position.set(Math.sin(az) * 0.6, 0.36 - bl / 2, Math.cos(az) * 0.6); b.rotation.set(Math.PI - Math.cos(az) * 0.16, 0, Math.sin(az) * 0.32); yHair.add(b); });
+      // ❄️ ice crystal hair ornaments
+      for (const [ox, oy, oz] of [[0.34, 0.42, 0.34], [-0.28, 0.5, 0.3]]) { const oc = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), yIce.clone()); oc.scale.set(0.6, 1.4, 0.6); oc.position.set(ox, oy, oz); oc.rotation.z = ox; yHair.add(oc); const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), yIce.clone()); star.scale.set(1.3, 1.3, 0.3); star.position.set(ox * 0.8, oy - 0.08, oz + 0.04); yHair.add(star); }
+      headG.add(yHair); G._yukiHair = yHair;
+
+      // ===== ranger outfit — white/silver leather bodice, fur collar, bare midriff, belts =====
+      const yOutfit = new THREE.Group();
+      // white fur collar around the shoulders
+      const collar = new THREE.Group();
+      for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; const puff = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 8), yFur); puff.position.set(Math.cos(a) * 0.28, 1.8 + Math.sin(a * 3) * 0.02, Math.sin(a) * 0.24 - 0.02); collar.add(puff); }
+      yOutfit.add(collar);
+      // cropped leather bodice (bandeau) — leaves midriff bare
+      const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.30, 1.5], [0.335, 1.6], [0.34, 1.72], [0.30, 1.8]].map(([r, y]) => new THREE.Vector2(r, y)), 28), yLeather);
+      bodice.scale.set(1.02, 1, 0.82); yOutfit.add(bodice);
+      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.015, 6, 26), ySilver); bTrim.position.y = 1.52; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.04, 0.82, 1); yOutfit.add(bTrim);
+      // one asymmetric shoulder strap + silver pauldron on the left
+      const pauldron = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 12, 0, Math.PI * 2, 0, Math.PI / 2), ySilver); pauldron.position.set(-0.46, 1.86, 0); pauldron.scale.set(1, 0.7, 1); yOutfit.add(pauldron);
+      const pTrim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.014, 6, 18), yIce.clone()); pTrim.position.set(-0.46, 1.83, 0); pTrim.rotation.x = Math.PI / 2; yOutfit.add(pTrim);
+      // waist belt + buckle + hanging straps
+      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.028, 8, 26), yBelt); belt.position.y = 1.34; belt.rotation.x = Math.PI / 2; belt.scale.set(1, 0.85, 1); yOutfit.add(belt);
+      const buckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), yIce.clone()); buckle.scale.set(0.9, 1.1, 0.5); buckle.position.set(0, 1.34, 0.27); yOutfit.add(buckle);
+      // asymmetric skirt — blue wrap panel on the right + short white underskirt
+      const mkPanel = (rTop, rHem, h, a0, a1, mat) => { const pos = []; const n = 8; for (let k = 0; k < n; k++) { const b0 = a0 + (a1 - a0) * k / n, b1 = a0 + (a1 - a0) * (k + 1) / n; const t0 = [Math.cos(b0) * rTop, 0, Math.sin(b0) * rTop], t1 = [Math.cos(b1) * rTop, 0, Math.sin(b1) * rTop]; const c0 = [Math.cos(b0) * rHem, -h, Math.sin(b0) * rHem], c1 = [Math.cos(b1) * rHem, -h, Math.sin(b1) * rHem]; pos.push(...t0, ...c0, ...t1, ...t1, ...c0, ...c1); } const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); return m; };
+      const whiteUnder = yLeather.clone(); whiteUnder.side = THREE.DoubleSide;
+      const blueWrap = yCapeMat.clone(); blueWrap.depthWrite = true; blueWrap.opacity = 1; blueWrap.transparent = false;
+      const underSkirt = mkPanel(0.3, 0.42, 0.44, 0, Math.PI * 2, whiteUnder); underSkirt.position.y = 1.32; yOutfit.add(underSkirt);
+      const wrapSkirt = mkPanel(0.32, 0.52, 0.72, -Math.PI * 0.15, Math.PI * 0.95, blueWrap); wrapSkirt.position.y = 1.34; yOutfit.add(wrapSkirt);
+      const wrapTrim = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.02, 6, 26), yGoldTrim); wrapTrim.position.y = 1.33; wrapTrim.rotation.x = Math.PI / 2; yOutfit.add(wrapTrim);
+      // ❄️ ice shards floating at the hip
+      for (let i = 0; i < 3; i++) { const sh = new THREE.Mesh(new THREE.OctahedronGeometry(0.03 + i * 0.006, 0), yIce.clone()); sh.scale.set(0.5, 1.6, 0.5); sh.position.set(0.34, 1.2 - i * 0.12, 0.14); yOutfit.add(sh); }
+      char.add(yOutfit); G._yukiOutfit = yOutfit;
+
+      // ===== back: blue cape + quiver of ice arrows =====
+      const yCape = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.7, 1.5, 18, 1, true, Math.PI * 0.62, Math.PI * 0.76), yCapeMat);
+      yCape.position.set(0, 1.5, -0.06); char.add(yCape); G._yukiCape = yCape;
+      const quiver = new THREE.Group();
+      const qbody = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.5, 12), yBelt); quiver.add(qbody);
+      const qcap = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 6, 14), ySilver); qcap.position.y = 0.25; qcap.rotation.x = Math.PI / 2; quiver.add(qcap);
+      for (let k = 0; k < 4; k++) { const a = k / 4 * Math.PI * 2; const ar = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.34, 5), ySilver); ar.position.set(Math.cos(a) * 0.035, 0.36, Math.sin(a) * 0.035); quiver.add(ar); const tip = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), yIce.clone()); tip.scale.set(0.6, 1.5, 0.6); tip.position.set(Math.cos(a) * 0.035, 0.56, Math.sin(a) * 0.035); quiver.add(tip); }
+      quiver.position.set(0.16, 1.55, -0.28); quiver.rotation.z = -0.5; char.add(quiver); G._yukiQuiver = quiver;
+
+      // ===== tall laced boots (over the skin legs) =====
+      const mkBootY = leg => {
+        const grp = [];
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.115, 0.5, 14), yLeather); shin.position.y = -0.2; (leg.userData.knee || leg).add(shin); grp.push(shin);
+        const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.138, 0.02, 6, 16), yFur); cuff.position.y = 0.04; cuff.rotation.x = Math.PI / 2; (leg.userData.knee || leg).add(cuff); grp.push(cuff);
+        for (let k = 0; k < 3; k++) { const lace = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.008, 6, 16), ySilver); lace.position.y = -0.08 - k * 0.13; lace.rotation.x = Math.PI / 2; (leg.userData.knee || leg).add(lace); grp.push(lace); }
+        return grp;
+      };
+      const bootL = mkBootY(legL), bootR = mkBootY(legR);
+      G._yukiShoeMat = new THREE.MeshStandardMaterial({ color: 0xe8edf5, roughness: 0.4, metalness: 0.2 });
+      // 🦵 blue thigh strap on the right leg
+      const thighStrap = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.018, 6, 16), yBlue); thighStrap.position.y = -0.34; thighStrap.rotation.x = Math.PI / 2 - 0.12; legR.add(thighStrap);
+      const strapGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), yIce.clone()); strapGem.position.set(0.14, -0.34, 0.06); legR.add(strapGem);
+
+      // ===== ❄️ frost aura — floating snowflakes + aurora ring + cold mist =====
+      const snowG = new THREE.Group(); const snowArr = [];
+      for (let i = 0; i < 16; i++) { const fl = new THREE.Group(); const c = new THREE.Mesh(new THREE.OctahedronGeometry(0.03 + (i % 3) * 0.01, 0), yIce.clone()); c.scale.set(1, 1, 0.25); fl.add(c); for (let a = 0; a < 3; a++) { const arm = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.07, 0.008), yIce.clone()); arm.rotation.z = a * Math.PI / 3; fl.add(arm); } const ang = (i / 16) * Math.PI * 2, rad = 0.7 + (i % 4) * 0.14, y0 = 0.5 + (i % 5) * 0.42; fl.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); fl.userData = { ang, rad, y0, spin: 0.4 + (i % 3) * 0.3, fall: 0.14 + (i % 4) * 0.06 }; snowG.add(fl); snowArr.push(fl); }
+      char.add(snowG); G._yukiSnow = snowArr;
+      const auroraG = new THREE.Group();
+      [[0.66, 0x9ad0ff], [0.52, 0x8ae0c0], [0.4, 0xb0a0ff]].forEach(([r, col], k) => { const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.016 - k * 0.003, 8, 50), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.05; auroraG.add(ring); });
+      char.add(auroraG); G._yukiAurora = auroraG;
+      const yGlow = new THREE.PointLight(0x8ac0ff, 0.7, 6); yGlow.position.set(0, 1.5, 0.4); char.add(yGlow);
+
+      const yukiParts = [yEars, yHair, yOutfit, yCape, quiver, snowG, auroraG, yGlow, thighStrap, strapGem, ...bootL, ...bootR];
+      yukiParts.forEach(p => p.visible = false);
+      G._yukiParts = yukiParts;
     }
 
     // ---------- Outfits: visible on Cherry when equipped ----------
@@ -6184,7 +6338,7 @@ export default function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
-      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : null;
+      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : null;
       if (heroShoe && !sh) shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
@@ -6227,7 +6381,7 @@ export default function CherryAdventure() {
         const selfContained = i >= 5;
         if (baseHair) baseHair.visible = !selfContained;
         if (ahoge) ahoge.visible = i < 5; // hide the wisp on the sleek image styles
-        if (G.heroId === "celestia" || G.heroId === "luna") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸🌙 ผมประจำตัวแทนทรงปกติ
+        if (G.heroId === "celestia" || G.heroId === "luna" || G.heroId === "yuki") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; } // 👸🌙❄️ ผมประจำตัวแทนทรงปกติ
       } else if (cat === "eyes") {
         applyEyeStyle(i);
       } else if (cat === "outfit") {
@@ -11757,6 +11911,19 @@ export default function CherryAdventure() {
           }
           if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
         }
+        // ❄️ Yuki — frost aura, aurora ring, cape + hair sway, bow glow
+        if (G._yukiSnow && G._yukiSnow.length && G._yukiSnow[0].parent && G._yukiSnow[0].parent.visible) {
+          G._yukiSnow.forEach(p => { const u = p.userData; u.ang += dt * 0.25; p.position.x = Math.cos(u.ang) * u.rad; p.position.z = Math.sin(u.ang) * u.rad; p.position.y -= dt * u.fall; if (p.position.y < 0.35) p.position.y = u.y0; p.rotation.y += dt * u.spin; p.rotation.z += dt * 0.4; });
+          if (G._yukiAurora) { G._yukiAurora.rotation.y += dt * 0.3; G._yukiAurora.children.forEach((r, i) => { r.material.opacity = 0.35 + Math.abs(Math.sin(t * 1.2 + i)) * 0.3; }); }
+          const spd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
+          if (G._yukiCape) G._yukiCape.rotation.x = 0.08 + Math.sin(t * 1.3) * 0.05 + spd * 0.2;
+          if (G._yukiHairBack) { G._yukiHairBack.rotation.x = 0.02 + Math.sin(t * 1.2) * 0.035 + spd * 0.1; G._yukiHairBack.rotation.y = Math.sin(t * 0.8) * 0.03; }
+          if (G._yukiHairSide) G._yukiHairSide.forEach((s, i) => { s.rotation.z = Math.sin(t * 1.5 + i * 2.1) * 0.05; });
+          if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
+        }
+        // ❄️ Frostwing bow — ice crystal breathes, wings shimmer
+        const ybw = weaponModels.yukiBow;
+        if (ybw && ybw.visible) { if (ybw.userData.bowGem) ybw.userData.bowGem.material.emissiveIntensity = 0.9 + Math.abs(Math.sin(t * 2)) * 0.6; if (ybw.userData.glow) ybw.userData.glow.intensity = 0.5 + Math.abs(Math.sin(t * 2)) * 0.3; }
         // 🌙 moonlight crescent staff — head spins, stars orbit, crystal breathes
         const lst = weaponModels.lunaStaff;
         if (lst && lst.visible && lst.userData.head) {
