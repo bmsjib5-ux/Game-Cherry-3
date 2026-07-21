@@ -4427,10 +4427,11 @@ export default function CherryAdventure() {
       lTop.position.y = 1.14; lTop.scale.set(1.03, 0.82, 0.75);
       lunaOutfit.add(lTop);
       // 🌑 midnight corset with silver trim + gold moon emblem
-      const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.325, 0.24, 22, 1, true), lMidnight);
-      corset.position.y = 1.54; corset.scale.set(1, 1, 0.8);
+      const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.283, 0.308, 0.27, 22, 1, true), lMidnight);
+      corset.position.y = 1.55; corset.scale.set(1, 1, 0.78); // เอวรัดรูปแนบลำตัว
       lunaOutfit.add(corset);
-      [1.65, 1.43].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.012, 6, 26), lGoldTrim); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.8, 1); lunaOutfit.add(trim); }); // ขลิบทอง
+      [1.68, 1.43].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.293, 0.012, 6, 26), lGoldTrim); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.78, 1); lunaOutfit.add(trim); }); // ขลิบทอง
+      [[-0.09, 1.49], [0, 1.58], [0.09, 1.49]].forEach(([sx, sy]) => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), lGoldTrim); st.scale.set(0.7, 1.2, 0.4); st.position.set(sx, sy, 0.24); lunaOutfit.add(st); }); // ⭐ ดาวทองบนคอร์เซ็ต
       const eShape = new THREE.Shape();
       eShape.absarc(0, 0, 0.05, -Math.PI * 0.55, Math.PI * 0.55, false);
       eShape.absarc(0.025, 0, 0.04, Math.PI * 0.5, -Math.PI * 0.5, true);
@@ -4458,12 +4459,13 @@ export default function CherryAdventure() {
       };
       const navy2L = lMidnight.clone(); navy2L.side = THREE.DoubleSide;
       const blackL = lNavyBlack.clone(); blackL.side = THREE.DoubleSide;
-      const lSkirt = new THREE.Mesh(mkPleatL(0.272, 0.53, 0.44, 0.4, 14), navy2L);
+      const lSkirt = new THREE.Mesh(mkPleatL(0.272, 0.68, 0.56, 0.44, 16), navy2L); // จีบใหญ่บาน
       lSkirt.position.y = 1.45; lSkirt.scale.set(1, 1, 0.85);
-      const lSkirtUnder = new THREE.Mesh(mkPleatL(0.272, 0.6, 0.5, 0.52, 12), blackL);
-      lSkirt.add(lSkirtUnder); // ชั้นในดำยาวกว่า — แกว่งตามกัน
-      const lHemTrim = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.014, 6, 40), lGoldTrim);
-      lHemTrim.rotation.x = Math.PI / 2; lHemTrim.position.y = -0.33;
+      const petti = lWhite.clone(); petti.side = THREE.DoubleSide;
+      const lSkirtUnder = new THREE.Mesh(mkPleatL(0.26, 0.6, 0.52, 0.56, 18), petti); // แคบกว่าชั้นนอก โผล่เฉพาะใต้ชาย
+      lSkirt.add(lSkirtUnder); // 🤍 สุ่มขาวจีบถี่โผล่ใต้ชาย — แกว่งตามกัน
+      const lHemTrim = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.014, 6, 44), lGoldTrim);
+      lHemTrim.rotation.x = Math.PI / 2; lHemTrim.position.y = -0.36;
       lSkirt.add(lHemTrim); // เส้นทองใกล้ชายกระโปรง
       lunaOutfit.add(lSkirt);
       G._lunaSkirt = lSkirt;
@@ -11132,7 +11134,7 @@ export default function CherryAdventure() {
           if (G._lunaCircle) G._lunaCircle.rotation.y += dt * 0.25;
           if (G._lunaSkirt) {
             const spd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
-            const amp = 0.05 + spd * 0.09;
+            const amp = 0.075 + spd * 0.13; // กระโปรงใหญ่พริ้วแรงขึ้น
             G._lunaSkirt.rotation.x = Math.sin(t * 2.0) * amp;
             G._lunaSkirt.rotation.z = Math.cos(t * 1.5) * amp * 0.8;
             if (G._lunaSleeves) G._lunaSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.7 + i * 1.2) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.3 + i) * (amp * 1.2); });
