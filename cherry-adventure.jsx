@@ -1811,6 +1811,7 @@ export default function CherryAdventure() {
     char.add(torso);
     // pelvis: hip mass connecting the legs (flatter, wider than deep)
     const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 26, 26), pantsMat);
+    { const pos = pelvis.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { let z = pos.getZ(i); if (z > 0.04) z = 0.04 + (z - 0.04) * 0.55; pos.setZ(i, z); } pos.needsUpdate = true; pelvis.geometry.computeVertexNormals(); } // 🍑 สะโพกด้านหน้าแบนราบ (มุมข้าง)
     pelvis.scale.set(1.06, 0.6, 0.78);
     pelvis.position.y = 1.14;
     pelvis.castShadow = true;
@@ -5151,7 +5152,9 @@ export default function CherryAdventure() {
       [1.525, 1.395].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 26), yGoldTrim); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.92, 1); yOutfit.add(ct); });
       for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.305, 1.46, Math.cos(a) * 0.285); yOutfit.add(cg); }
       // 🩳 short pants (กางเกงขาสั้น) — snug hip shell + upper-thigh legs that follow the walk
-      const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), yBlue); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2; yOutfit.add(hipShort);
+      const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), yBlue); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2;
+      { const pos = hipShort.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { let z = pos.getZ(i); if (z > 0.04) z = 0.04 + (z - 0.04) * 0.6; pos.setZ(i, z); } pos.needsUpdate = true; hipShort.geometry.computeVertexNormals(); } // 🍑 หน้าสะโพกกางเกงแบนราบ
+      yOutfit.add(hipShort);
       // 🎗️ V-shaped belt on the shorts (เข็มขัดตัว V) — two straps dipping to a centre point + side straps
       for (const sx of [-1, 1]) {
         const strap = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.058, 0.05), yBelt); strap.position.set(sx * 0.17, 1.29, 0.33); strap.rotation.z = sx * 0.5; yOutfit.add(strap);
