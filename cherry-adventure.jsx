@@ -1796,7 +1796,7 @@ export default function CherryAdventure() {
       for (let i = 0; i < pos.count; i++) {
         let z = pos.getZ(i);
         const y = pos.getY(i);
-        if (z < -0.17) z = -0.17 - (Math.abs(z) - 0.17) * 0.12;
+        if (z < -0.17) z = -0.17 - (Math.abs(z) - 0.17) * 0.42;
         else if (z > 0 && y > 0.5 && y < 1.0) z *= 1.08;
         else if (z > 0 && y >= 0.05 && y <= 0.5) z *= 0.76; // 🫃 หน้าท้องแบนราบในมุมข้าง
         pos.setZ(i, z);
@@ -5134,7 +5134,7 @@ export default function CherryAdventure() {
       const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.315, 1.5], [0.36, 1.6], [0.375, 1.72], [0.37, 1.84], [0.34, 1.96]].map(([r, y]) => new THREE.Vector2(r, y)), 32), yLeather);
       bodice.scale.set(1.08, 1, 0.99);
       // 👗 ยกเสื้อขึ้นถึงไหล่ + คอวีลึก — เว้าขอบบนด้านหน้ากลางอกลงเป็นตัว V จากระดับไหล่
-      { const pos = bodice.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); let y = pos.getY(i); let z = pos.getZ(i); if (y > 1.72 && z > 0) { const cen = Math.max(0, 1 - Math.abs(x) / 0.27); const front = Math.min(1, z / 0.28); const upper = Math.min(1, (y - 1.72) / 0.22); y -= 0.26 * cen * front * upper; pos.setY(i, y); } /* 📐 มุมข้าง: หลังแบน หน้าโค้งตามอก */ if (z < -0.14) z = -0.14 - (Math.abs(z) - 0.14) * 0.18; else if (z > 0 && y > 1.56 && y < 1.82) z *= 1.05; else if (z > 0 && y <= 1.56) z *= 0.9; if (z > 0 && Math.abs(x) < 0.11 && y > 1.5 && y < 1.86) z *= 0.8; /* 🫧 ร่องกลางอกตามเส้นน้ำเงิน */ pos.setZ(i, z); } pos.needsUpdate = true; bodice.geometry.computeVertexNormals(); }
+      { const pos = bodice.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); let y = pos.getY(i); let z = pos.getZ(i); if (y > 1.72 && z > 0) { const cen = Math.max(0, 1 - Math.abs(x) / 0.27); const front = Math.min(1, z / 0.28); const upper = Math.min(1, (y - 1.72) / 0.22); y -= 0.26 * cen * front * upper; pos.setY(i, y); } /* 📐 มุมข้าง: หลังแบน หน้าโค้งตามอก */ if (z < -0.14) z = -0.14 - (Math.abs(z) - 0.14) * 0.45; else if (z > 0 && y > 1.56 && y < 1.82) z *= 1.05; else if (z > 0 && y <= 1.56) z *= 0.9; if (z > 0 && Math.abs(x) < 0.11 && y > 1.5 && y < 1.86) z *= 0.8; /* 🫧 ร่องกลางอกตามเส้นน้ำเงิน */ pos.setZ(i, z); } pos.needsUpdate = true; bodice.geometry.computeVertexNormals(); }
       yOutfit.add(bodice);
       // ⌃ helpers — โค้งขอบด้านหน้ากลางให้ขึ้นเป็นตัว v คว่ำ (ตื้น ๆ)
       const archTorus = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setZ(i, p.getZ(i) - amt * (gy / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
