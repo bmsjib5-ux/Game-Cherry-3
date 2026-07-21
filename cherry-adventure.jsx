@@ -5139,12 +5139,10 @@ export default function CherryAdventure() {
       // ⌃ helpers — โค้งขอบด้านหน้ากลางให้ขึ้นเป็นตัว v คว่ำ (ตื้น ๆ)
       const archTorus = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setZ(i, p.getZ(i) - amt * (gy / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
       const archCyl = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gz = p.getZ(i); if (gz > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setY(i, p.getY(i) + amt * (gz / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
-      // ✨ gold V-neck trim framing the neckline (two sloped bars meeting at the point)
-      for (const sx of [-1, 1]) { const vt = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.36, 8), yGoldTrim); vt.position.set(sx * 0.16, 1.79, 0.35); vt.rotation.z = -sx * 0.58; yOutfit.add(vt); const vtip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), yGoldTrim); vtip.position.set(sx * 0.27, 1.93, 0.29); yOutfit.add(vtip); }
-      // ✨ เส้นทองขอบบนของเสื้อ — ไล่ตามแนวคอ (สูงข้าง–หลัง, เว้าลงตรง V ด้านหน้า)
-      const topTrim = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.016, 6, 40), yGoldTrim);
-      { const p = topTrim.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.32); p.setZ(i, p.getZ(i) + 0.3 * (gy / 0.35) * cen); } } p.needsUpdate = true; topTrim.geometry.computeVertexNormals(); }
-      topTrim.position.y = 1.94; topTrim.rotation.x = Math.PI / 2; topTrim.scale.set(1.03, 0.99, 1); yOutfit.add(topTrim);
+      // ✨ เส้นทองขอบบนของเสื้อ — เส้นเดียวโค้งเนียนไล่ตามแนวคอ (V ด้านหน้า, สูงข้าง–หลัง)
+      const topTrim = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.015, 10, 84), yGoldTrim);
+      { const p = topTrim.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const t = Math.max(0, 1 - Math.abs(gx) / 0.35); const dip = 0.34 * Math.pow(t, 1.5) * Math.min(1, gy / 0.16); p.setZ(i, p.getZ(i) + dip); } } p.needsUpdate = true; topTrim.geometry.computeVertexNormals(); }
+      topTrim.position.y = 1.95; topTrim.rotation.x = Math.PI / 2; topTrim.scale.set(1.03, 0.99, 1); yOutfit.add(topTrim);
       const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.017, 6, 34), yGoldTrim); archTorus(bTrim, 0.11); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.0, 0.99, 1); yOutfit.add(bTrim);
       // 🌀 gold scroll ornaments on each cup + tiny blue gems (on the outer surface)
       for (const sx of [-1, 1]) {
