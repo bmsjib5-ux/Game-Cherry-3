@@ -9441,12 +9441,21 @@ function CherryAdventure() {
       const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.15, 24, 1, true), yCorsetY); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.92); yOutfit.add(cincher); // 🖤 วงดำเล็กกว่าวงขาว (รัดเอว)
       [1.525, 1.395].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 26), yGoldTrim); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.92, 1); yOutfit.add(ct); });
       for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.305, 1.46, Math.cos(a) * 0.285); yOutfit.add(cg); }
-      // 💎 blue jewel hanging at the hip / waistline front
-      const hipJewel = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), yIce.clone()); hipJewel.scale.set(0.9, 1.5, 0.5); hipJewel.position.set(0, 1.13, 0.37); yOutfit.add(hipJewel);
-      const hipJewelRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), yGoldTrim); hipJewelRing.position.set(0, 1.18, 0.35); yOutfit.add(hipJewelRing);
       // 🩳 short pants (กางเกงขาสั้น) — snug hip shell + upper-thigh legs that follow the walk
       const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), yBlue); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2; yOutfit.add(hipShort);
-      const hipTrim = new THREE.Mesh(new THREE.TorusGeometry(0.342, 0.016, 6, 26), ySilver); hipTrim.position.y = 1.32; hipTrim.rotation.x = Math.PI / 2; hipTrim.scale.set(1.02, 0.9, 1); yOutfit.add(hipTrim);
+      // 🎗️ V-shaped belt on the shorts (เข็มขัดตัว V) — two straps dipping to a centre point + side straps
+      for (const sx of [-1, 1]) {
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.058, 0.05), yBelt); strap.position.set(sx * 0.17, 1.29, 0.33); strap.rotation.z = sx * 0.5; yOutfit.add(strap);
+        [1.318, 1.262].forEach(gy => { const gt = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.013, 0.053), yGoldTrim); gt.position.set(sx * 0.17, gy, 0.335); gt.rotation.z = sx * 0.5; yOutfit.add(gt); });
+        const sideBelt = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.058, 0.26), yBelt); sideBelt.position.set(sx * 0.335, 1.315, -0.03); yOutfit.add(sideBelt);
+      }
+      // 💎 bright blue 4-point star gem at the V point (ตามภาพ)
+      const vStarMat = yIce.clone(); vStarMat.emissiveIntensity = 1.4;
+      const vStar = new THREE.Group();
+      const vs1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.08, 0), vStarMat); vs1.scale.set(0.32, 1, 0.3);
+      const vs2 = vs1.clone(); vs2.rotation.z = Math.PI / 2;
+      vStar.add(vs1, vs2); vStar.position.set(0, 1.19, 0.37); yOutfit.add(vStar);
+      const vStarRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.011, 6, 16), yGoldTrim); vStarRing.position.set(0, 1.19, 0.35); yOutfit.add(vStarRing);
       const inseam = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.26), yBlue); inseam.position.set(0, 1.02, 0); yOutfit.add(inseam); // ตะเข็บเป้ากางเกงแยกสองขา
       const shortsLegs = [];
       for (const leg of [legL, legR]) {
