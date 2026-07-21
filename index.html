@@ -8720,38 +8720,38 @@ function CherryAdventure() {
       lunaBody.add(choker);
       // โซ่ห้อยเป็นระย้า 3 ช่วงบนอก
       const swagTop = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.006, 6, 22, Math.PI), lGoldTrim);
-      swagTop.position.set(0, 1.97, 0.345); swagTop.rotation.set(0.28, 0, Math.PI);
+      swagTop.position.set(0, 1.97, 0.39); swagTop.rotation.set(0.28, 0, Math.PI);
       lunaBody.add(swagTop);
       for (const sx of [-1, 1]) {
         const swag = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.005, 6, 20, Math.PI), lGoldTrim);
-        swag.position.set(sx * 0.115, 1.9, 0.35); swag.rotation.set(0.28, 0, Math.PI + sx * 0.18);
+        swag.position.set(sx * 0.115, 1.9, 0.395); swag.rotation.set(0.28, 0, Math.PI + sx * 0.18);
         lunaBody.add(swag);
         const chain2 = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 0.2, 4), lGoldTrim);
-        chain2.position.set(sx * 0.20, 1.9, 0.345); chain2.rotation.z = sx * 0.42;
+        chain2.position.set(sx * 0.20, 1.9, 0.39); chain2.rotation.z = sx * 0.42;
         lunaBody.add(chain2); // สายโซ่เฉียงลงหาจี้กลาง
       }
       // เม็ดอัญมณีน้ำเงินเล็กบนแนวโซ่
       [[-0.225, 1.99], [0.225, 1.99], [-0.115, 1.845], [0.115, 1.845], [0, 1.93]].forEach(([gx, gy]) => {
         const g = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), lCryst.clone());
-        g.scale.set(0.75, 1.15, 0.55); g.position.set(gx, gy, 0.36);
+        g.scale.set(0.75, 1.15, 0.55); g.position.set(gx, gy, 0.405);
         lunaBody.add(g);
       });
       // 💧 จี้คริสตัลหยดน้ำใหญ่กลางอก ในกรอบทอง
       const bail = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), lGoldTrim);
-      bail.position.set(0, 1.845, 0.365);
+      bail.position.set(0, 1.845, 0.41);
       const pendFrame = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.008, 6, 18), lGoldTrim);
-      pendFrame.position.set(0, 1.76, 0.365); pendFrame.scale.set(0.82, 1.18, 1);
+      pendFrame.position.set(0, 1.76, 0.415); pendFrame.scale.set(0.82, 1.18, 1);
       const pendGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.052, 0), lCryst.clone());
       pendGem.material.emissiveIntensity = 1.1;
-      pendGem.scale.set(0.72, 1.35, 0.5); pendGem.position.set(0, 1.76, 0.375);
+      pendGem.scale.set(0.72, 1.35, 0.5); pendGem.position.set(0, 1.76, 0.425);
       const pendTip = new THREE.Mesh(new THREE.OctahedronGeometry(0.024, 0), lCryst.clone());
-      pendTip.scale.set(0.6, 1.3, 0.5); pendTip.position.set(0, 1.655, 0.365);
+      pendTip.scale.set(0.6, 1.3, 0.5); pendTip.position.set(0, 1.655, 0.415);
       lunaBody.add(bail, pendFrame, pendGem, pendTip);
       char.add(lunaBody);
 
       // ===== outfit: white blouse + midnight corset + layered navy skirt + cape =====
       const lunaOutfit = new THREE.Group();
-      const lProfile = [[0.243, 0.36], [0.258, 0.52], [0.355, 0.64], [0.40, 0.76], [0.39, 0.86], [0.37, 0.94]].map(([r, y]) => new THREE.Vector2(r, y)); // เสื้อ tuck ในคอร์เซ็ต — ไม่คลุมกระโปรง
+      const lProfile = [[0.243, 0.36], [0.262, 0.52], [0.37, 0.64], [0.43, 0.76]].map(([r, y]) => new THREE.Vector2(r, y)); // 👗 เกาะอก — จบที่แนวอก เผยไหล่ // เสื้อ tuck ในคอร์เซ็ต — ไม่คลุมกระโปรง
       const lTopGeo = new THREE.LatheGeometry(lProfile, 40);
       {
         const pos = lTopGeo.attributes.position;
@@ -8763,36 +8763,40 @@ function CherryAdventure() {
         }
         pos.needsUpdate = true; lTopGeo.computeVertexNormals();
       }
-      const lTop = new THREE.Mesh(lTopGeo, lWhite);
-      lTop.position.y = 1.14; lTop.scale.set(1.03, 0.82, 0.75);
+      const lNavyDress = new THREE.MeshStandardMaterial({ color: 0x1a2340, roughness: 0.55, metalness: 0.1 }); // น้ำเงินดำกำมะหยี่เข้ม
+      const lTop = new THREE.Mesh(lTopGeo, lNavyDress);
+      lTop.position.y = 1.14; lTop.scale.set(1.03, 0.82, 0.85);
       lunaOutfit.add(lTop);
+      const bustTrim = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.014, 6, 30), lGoldTrim);
+      bustTrim.position.y = 1.755; bustTrim.rotation.x = Math.PI / 2; bustTrim.scale.set(1.04, 0.94, 1);
+      lunaOutfit.add(bustTrim); // ขลิบทองขอบเกาะอก
       // 🌑 midnight corset with silver trim + gold moon emblem
       const lCorsetMat = new THREE.MeshStandardMaterial({ color: 0x121828, roughness: 0.5, metalness: 0.15 }); // น้ำเงินดำกำมะหยี่
       const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.285, 0.31, 0.36, 24, 1, true), lCorsetMat);
-      corset.position.y = 1.54; corset.scale.set(1, 1, 0.78); // ชุดรัดรูปช่วงท้อง สีน้ำเงินดำ
-      for (let bi = 0; bi < 8; bi++) { const ba = bi / 8 * Math.PI * 2; const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.34, 4), lGoldTrim); bone.position.set(Math.cos(ba) * 0.30, 1.54, Math.sin(ba) * 0.234); lunaOutfit.add(bone); } // เส้นทองแนวตั้งรัดทรง
+      corset.position.y = 1.54; corset.scale.set(1, 1, 1.05); // ชุดรัดรูปช่วงท้อง สีน้ำเงินดำ
+      for (let bi = 0; bi < 8; bi++) { const ba = bi / 8 * Math.PI * 2; const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.34, 4), lGoldTrim); bone.position.set(Math.cos(ba) * 0.30, 1.54, Math.sin(ba) * 0.31); lunaOutfit.add(bone); } // เส้นทองแนวตั้งรัดทรง
       lunaOutfit.add(corset);
-      [1.71, 1.38].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.303, 0.013, 6, 26), lGoldTrim); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.78, 1); lunaOutfit.add(trim); }); // ขลิบทองขอบบน-ล่าง
-      [[-0.09, 1.49], [0, 1.58], [0.09, 1.49]].forEach(([sx, sy]) => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), lGoldTrim); st.scale.set(0.7, 1.2, 0.4); st.position.set(sx, sy, 0.25); lunaOutfit.add(st); }); // ⭐ ดาวทองบนคอร์เซ็ต
+      [1.71, 1.38].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.303, 0.013, 6, 26), lGoldTrim); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 1.05, 1); lunaOutfit.add(trim); }); // ขลิบทองขอบบน-ล่าง
+      [[-0.09, 1.49], [0, 1.58], [0.09, 1.49]].forEach(([sx, sy]) => { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), lGoldTrim); st.scale.set(0.7, 1.2, 0.4); st.position.set(sx, sy, 0.33); lunaOutfit.add(st); }); // ⭐ ดาวทองบนคอร์เซ็ต
       // 💠 เครื่องประดับกลางท้อง — เพชรม่วงกรอบทองพร้อมรังสี (ตามภาพ)
       const lVioGem = new THREE.MeshStandardMaterial({ color: 0x8a6ae8, emissive: 0x4a2ae0, emissiveIntensity: 0.8, roughness: 0.15, metalness: 0.1 });
       const cGemC = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), lVioGem);
-      cGemC.scale.set(0.75, 1.35, 0.45); cGemC.position.set(0, 1.55, 0.262);
+      cGemC.scale.set(0.75, 1.35, 0.45); cGemC.position.set(0, 1.55, 0.345);
       lunaOutfit.add(cGemC);
       const gemRing = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.009, 6, 18), lGoldTrim);
-      gemRing.position.set(0, 1.55, 0.257); gemRing.scale.set(0.8, 1.25, 1);
+      gemRing.position.set(0, 1.55, 0.34); gemRing.scale.set(0.8, 1.25, 1);
       lunaOutfit.add(gemRing);
       [[0, 0.105, 0.014, 0.05], [0, -0.105, 0.014, 0.05], [0.085, 0, 0.011, 0.04], [-0.085, 0, 0.011, 0.04]].forEach(([dx, dy, rr, ll]) => {
         const ray = new THREE.Mesh(new THREE.ConeGeometry(rr, ll, 4), lGoldTrim);
-        ray.position.set(dx, 1.55 + dy, 0.257);
+        ray.position.set(dx, 1.55 + dy, 0.34);
         ray.rotation.z = Math.atan2(-dx, dy);
         lunaOutfit.add(ray);
       });
       const gemDrop = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), lCryst.clone());
-      gemDrop.scale.set(0.6, 1.3, 0.5); gemDrop.position.set(0, 1.41, 0.262);
+      gemDrop.scale.set(0.6, 1.3, 0.5); gemDrop.position.set(0, 1.41, 0.345);
       lunaOutfit.add(gemDrop);
       const chainDrape = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.008, 6, 18, Math.PI), lGoldTrim);
-      chainDrape.position.set(0, 1.6, 0.262); chainDrape.rotation.z = Math.PI;
+      chainDrape.position.set(0, 1.6, 0.34); chainDrape.rotation.z = Math.PI;
       lunaOutfit.add(chainDrape); // ⛓️ โซ่ทองห้อยหน้าคอร์เซ็ต
       // 👗 layered pleated skirt — navy over black
       const mkPleatL = (rTop, rHemOut, rHemIn, h, pleats) => {
@@ -8809,11 +8813,11 @@ function CherryAdventure() {
         geo.computeVertexNormals();
         return geo;
       };
-      const navy2L = lMidnight.clone(); navy2L.side = THREE.DoubleSide;
+      const navy2L = new THREE.MeshStandardMaterial({ color: 0x151b33, roughness: 0.55, metalness: 0.12, side: THREE.DoubleSide }); // กระโปรงกรมดำเข้ม
       const blackL = lNavyBlack.clone(); blackL.side = THREE.DoubleSide;
       const lSkirt = new THREE.Mesh(mkPleatL(0.30, 0.5, 0.44, 0.48, 18), navy2L); // A-line บานกำลังดี ทิ้งชายพลิ้ว
       lSkirt.position.y = 1.45; lSkirt.scale.set(1, 1, 0.9);
-      const petti = lWhite.clone(); petti.side = THREE.DoubleSide;
+      const petti = new THREE.MeshStandardMaterial({ color: 0x2a3560, roughness: 0.6, side: THREE.DoubleSide }); // สุ่มชั้นในน้ำเงินเข้มอ่อนกว่าเล็กน้อย
       const lSkirtUnder = new THREE.Mesh(mkPleatL(0.285, 0.44, 0.4, 0.6, 20), petti); // ชั้นในขาวยาวกว่า โผล่ใต้ชาย
       // 🤍 ระบายลูกไม้ขาวปลายแหลมรอบชายกระโปรง (ตามภาพ)
       const frill = new THREE.Group();
@@ -8854,9 +8858,9 @@ function CherryAdventure() {
       // 👘 detached sleeves — white with navy cuff + silver trim
       const mkSleeveL2 = () => {
         const grp = new THREE.Group();
-        const sv = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.27, 0.72, 14, 1, true), lWhite); sv.position.y = -0.36;
+        const sv = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.27, 0.72, 14, 1, true), lNavyDress); sv.position.y = -0.36;
         const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.29, 0.09, 14, 1, true), lMidnight); cuff.position.y = -0.7;
-        const trim = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.013, 6, 16), lSilver); trim.rotation.x = Math.PI / 2;
+        const trim = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.013, 6, 16), lGoldTrim); trim.rotation.x = Math.PI / 2;
         grp.add(sv, cuff, trim);
         return grp;
       };
