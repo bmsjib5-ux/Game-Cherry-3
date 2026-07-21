@@ -845,7 +845,7 @@ const CUSTOM = {
   ],
   hairColors: [
     { n: "น้ำตาล", c: 0x3f2517 }, { n: "ดำขลับ", c: 0x2a2226 }, { n: "บลอนด์", c: 0xd9b56a },
-    { n: "ชมพูซากุระ", c: 0xf2a0b4 }, { n: "ฟ้าพาสเทล", c: 0x6a9ad0 },
+    { n: "ชมพูซากุระ", c: 0xf2a0b4 }, { n: "ฟ้าพาสเทล", c: 0x6a9ad0 }, { n: "เงินจันทรา", c: 0xdfe3ec },
   ],
   hairStyles: ["ยาวประบ่า", "บ๊อบสั้น", "หางม้าคู่", "หางม้าสูง", "บ๊อบติดเขาดำ 🖤", "บ๊อบตรง", "ยาวตรงหน้าม้า", "เปียโบว์กระต่าย 🎀", "มวยผมหน้าม้า"],
   eyes: ["กลมใส", "โตประกาย", "ยิ้มหวาน", "ประกายดาวเขียว ✨"],
@@ -861,7 +861,7 @@ const CUSTOM = {
 const CHAR_PRESETS = [
   { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
   { name: "ฮารุ",    emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
-  { name: "ลูน่า",   emoji: "🌙", gender: 0, skin: 0, hairColor: 4, hairStyle: 6, eyes: 0, outfit: 0 },
+  { name: "ลูน่า",   emoji: "🌙", gender: 0, skin: 0, hairColor: 5, hairStyle: 6, eyes: 0, outfit: 0, hero: "luna" },
   { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 3, hairColor: 4, hairStyle: 2, eyes: 3, outfit: 0 },
   { name: "โรส",     emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 2, outfit: 4 },
   { name: "โคทาโร่", emoji: "⚔️", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 3 },
@@ -2159,7 +2159,7 @@ export default function CherryAdventure() {
     const gripFor = (id) => {
       const it = LOOT.find((x) => x.id === id);
       const cls = G.cls;
-      if (id === "haruStaff") return { x: -0.12, y: 0, z: -0.45 }; // 🌸 sakura staff tilted outward so the orb clears the chibi head
+      if (id === "haruStaff" || id === "lunaStaff") return { x: -0.12, y: 0, z: -0.45 }; // 🦸 signature staff tilted outward so the head-piece clears the chibi head
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
       if (cls === "mage" || id === "cm" || id === "wDm") return { x: -0.15, y: 0, z: 0 };
@@ -3285,14 +3285,68 @@ export default function CherryAdventure() {
       g.userData.gripY = 0.05;
       weaponModels.haruStaff = g;
     }
+    {
+      // 🌙 lunaStaff — Moonlight Crescent Staff (ตามภาพ): คทาเงิน จันทร์เสี้ยวใหญ่ + ลูกแก้วน้ำเงินลอย
+      //    ดาวโคจรรอบ โบกรมท่า คริสตัลห้อย กระดิ่งเงิน ริบบิ้นลาเวนเดอร์ ปลายแหลมเงิน
+      const g = new THREE.Group();
+      const silver = new THREE.MeshStandardMaterial({ color: 0xd8dde8, emissive: 0x5a6a8a, emissiveIntensity: 0.25, metalness: 0.75, roughness: 0.25 });
+      const goldL = new THREE.MeshStandardMaterial({ color: 0xe8c878, emissive: 0x8a6a20, emissiveIntensity: 0.4, metalness: 0.7, roughness: 0.3 });
+      const navyL = new THREE.MeshStandardMaterial({ color: 0x2a3468, emissive: 0x0a1030, emissiveIntensity: 0.3, roughness: 0.5 });
+      const lavR = new THREE.MeshStandardMaterial({ color: 0xb8a8e8, emissive: 0x6a5ac0, emissiveIntensity: 0.4, roughness: 0.5 });
+      const moonCryst = new THREE.MeshStandardMaterial({ color: 0x9ac0ff, emissive: 0x4a7ae0, emissiveIntensity: 1.0, roughness: 0.12, metalness: 0.1 });
+      const starM = new THREE.MeshStandardMaterial({ color: 0xffe8a0, emissive: 0xc09030, emissiveIntensity: 0.7, metalness: 0.5, roughness: 0.3 });
+      // silver shaft + gold bands + navy cord wrap + ornate finial
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 2.0, 10), silver);
+      g.add(shaft);
+      [-0.75, 0.55].forEach(y => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.041, 0.011, 6, 14), goldL); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); });
+      for (let k = 0; k < 5; k++) { const cord = new THREE.Mesh(new THREE.TorusGeometry(0.039, 0.008, 6, 14), navyL); cord.rotation.x = Math.PI / 2; cord.position.y = -0.12 - k * 0.045; g.add(cord); }
+      const fRing = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.011, 6, 16), goldL); fRing.rotation.x = Math.PI / 2; fRing.position.y = -0.98; g.add(fRing);
+      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.2, 8), silver); finial.position.y = -1.09; finial.rotation.x = Math.PI; g.add(finial);
+      const fBall = new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 10), moonCryst.clone()); fBall.position.y = -1.21; g.add(fBall);
+      // 🎀 navy bow + hanging crystals under the head
+      const bowKnot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), navyL); bowKnot.scale.set(1.5, 0.8, 0.8); bowKnot.position.y = 0.95; g.add(bowKnot);
+      [[-0.09, 0.4], [0.09, -0.4]].forEach(([dx, rz]) => { const loop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), navyL); loop.scale.set(1.5, 0.75, 0.45); loop.position.set(dx, 0.97, 0); loop.rotation.z = rz; g.add(loop); });
+      [[-0.07, 0.02], [0, -0.02], [0.07, 0.02]].forEach(([dx, dz], i) => {
+        const cd = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.16, 5), silver); cd.position.set(dx, 0.84, dz); g.add(cd);
+        const cry = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), i === 1 ? moonCryst.clone() : lavR); cry.scale.set(0.6, 1.5, 0.6); cry.position.set(dx, 0.72, dz); g.add(cry);
+      }); // 💎 คริสตัลห้อยสามเส้น
+      [[-0.12, -0.02], [0.12, -0.02]].forEach(([dx, dz]) => { const bell = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 10), silver); bell.position.set(dx, 0.88, dz); g.add(bell); });
+      [[-0.05, 0.2], [0.05, -0.2]].forEach(([dx, lean]) => { const rib = new THREE.Mesh(new THREE.ConeGeometry(0.026, 0.3, 5), lavR); rib.position.set(dx, 0.74, -0.02); rib.rotation.set(Math.PI - 0.1, 0, lean); rib.scale.set(1, 1, 0.5); g.add(rib); });
+      // spinning head: big silver crescent + floating blue crystal + orbiting stars
+      const head = new THREE.Group(); head.position.y = 1.3;
+      const cres = new THREE.Shape();
+      cres.absarc(0, 0, 0.26, -Math.PI * 0.62, Math.PI * 0.62, false);
+      cres.absarc(0.11, 0, 0.2, Math.PI * 0.55, -Math.PI * 0.55, true);
+      const cresMesh = new THREE.Mesh(new THREE.ShapeGeometry(cres), silver);
+      cresMesh.material = silver.clone(); cresMesh.material.side = THREE.DoubleSide;
+      cresMesh.rotation.z = Math.PI / 2; // เขาชี้ขึ้น-ลงแบบภาพ
+      head.add(cresMesh);
+      const cresRim = new THREE.Mesh(new THREE.TorusGeometry(0.265, 0.012, 6, 30, Math.PI * 1.24), goldL);
+      cresRim.rotation.z = Math.PI / 2 - Math.PI * 0.62; head.add(cresRim);
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 20), moonCryst);
+      orb.position.set(0, 0.02, 0.02); head.add(orb); // ลูกแก้วน้ำเงินลอยกลางเสี้ยว
+      const starsOrbit = new THREE.Group();
+      for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), starM); st.scale.set(0.7, 1.4, 0.7); st.position.set(Math.cos(a) * 0.17, Math.sin(a) * 0.17, 0.03); starsOrbit.add(st); }
+      head.add(starsOrbit); // ⭐ ดาวสามดวงโคจรรอบลูกแก้ว
+      [[-0.05, 0.3, 0.5], [0.1, 0.33, -0.3]].forEach(([sx, sy, rz]) => { const spike = new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), moonCryst.clone()); spike.scale.set(0.5, 1.6, 0.5); spike.position.set(sx, sy, 0); spike.rotation.z = rz; head.add(spike); }); // 💎 ยอดคริสตัล
+      g.add(head);
+      const glowLight = new THREE.PointLight(0x7a9ae8, 0.7, 2.4); glowLight.position.y = 1.3; g.add(glowLight);
+      g.userData.orb = orb;
+      g.userData.head = head; // 🌙 spins slowly in the render loop
+      g.userData.starsOrbit = starsOrbit;
+      g.userData.glowLight = glowLight;
+      g.userData.gripY = 0.05;
+      weaponModels.lunaStaff = g;
+    }
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
     weaponModels.default.visible = true;
     let curWeapon = "default";
     G.setWeaponVisual = (id) => {
       // 👗 fashion: if a costume weapon is set, SHOW that instead (stats stay from the real gear)
       if (G.costume && G.costume.weapon) id = G.costume.weapon;
-      // 🌸 Haru carries her Sacred Sakura Staff (signature look; stats still come from real gear)
+      // 🦸 heroes carry their signature staff (signature look; stats still come from real gear)
       else if (G.heroId === "haru" && weaponModels.haruStaff) id = "haruStaff";
+      else if (G.heroId === "luna" && weaponModels.lunaStaff) id = "lunaStaff";
       curWeapon = id && weaponModels[id] ? id : (CLASS_WEAPON[G.cls] || "default"); // class weapons share the class model
       Object.entries(weaponModels).forEach(([k, m]) => (m.visible = k === curWeapon));
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
@@ -3333,7 +3387,7 @@ export default function CherryAdventure() {
         });
       }
       // 🛡️ warriors carry a shield in the off-hand
-      const heroHands = G.heroId === "haru"; // 🌸 ฮีโร่ถืออาวุธประจำตัวล้วน — ซ่อนของประจำอาชีพมือรอง
+      const heroHands = !!G.heroId; // 🦸 ฮีโร่ถืออาวุธประจำตัวล้วน — ซ่อนของประจำอาชีพมือรอง
       if (G.shield) G.shield.visible = G.cls === "warrior" && !heroHands;
       if (G.quiver) G.quiver.visible = G.cls === "archer" && !heroHands; // 🏹 quiver on the back for archers
       if (G.officeLaptop) G.officeLaptop.visible = G.cls === "office" && !heroHands; // 💻 laptop in the office worker's left hand
@@ -3353,7 +3407,7 @@ export default function CherryAdventure() {
       }
       // 🔮 mage: hide the hand weapon, show the floating orb tinted by element
       if (G.mageOrb) {
-        const isMage = G.cls === "mage" && G.heroId !== "haru"; // 🌸 ฮีโร่ถือคทาประจำตัว ไม่ใช้ลูกแก้ว/ตำรา
+        const isMage = G.cls === "mage" && !G.heroId; // 🦸 ฮีโร่ถือคทาประจำตัว ไม่ใช้ลูกแก้ว/ตำรา
         G.mageOrb.visible = isMage;
         if (model) model.visible = model.visible && !isMage; // don't show a staff in hand
         // 💪 left arm pose: raise & bend the forearm forward to cradle the orb (mage only)
@@ -4268,24 +4322,205 @@ export default function CherryAdventure() {
 
       const haruParts = [haruHead, haruBody, talis, haruPetals, haruOutfit, sleeveL, sleeveR, haruCircle, sockL, sockR, garterG];
       haruParts.forEach(p => p.visible = false);
+      G._haruParts = haruParts;
       G._haruPetals = petalArr;
       G._haruIrises = haruIrises;
+      G._irisRefs = haruIrises;
+      G._irisBase = irisBase;
       G.heroId = G.heroId || null;
-      // 🌸 toggle Haru's signature look + pink-violet magic eyes
+      // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
+      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0] };
       G.setHero = id => {
-        const on = id === "haru";
         G.heroId = id || null;
-        haruParts.forEach(p => p.visible = on);
+        (G._haruParts || []).forEach(p => p.visible = id === "haru");
+        (G._lunaParts || []).forEach(p => p.visible = id === "luna");
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
-        if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null); // 🌸 swap to/from the sakura staff
+        if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null); // swap to/from the signature staff
         haruIrises.forEach((m, i) => {
-          if (on) { m.material = m.material.clone(); m.material.color.setHex(0xc86ad8); m.material.emissive && m.material.emissive.setHex(0x9a3ad0); m.material.emissiveIntensity = 0.35; }
+          const eye = HERO_EYES[id];
+          if (eye) { m.material = m.material.clone(); m.material.color.setHex(eye[0]); m.material.emissive && m.material.emissive.setHex(eye[1]); m.material.emissiveIntensity = 0.35; }
           else { m.material.color.setHex(irisBase[i].col); if (m.material.emissive) m.material.emissive.setHex(irisBase[i].emi); m.material.emissiveIntensity = irisBase[i].ei; }
         });
       };
     }
 
+
+
+    // ---------- 🌙 LUNA signature look (moonlight maiden) ----------
+    {
+      const lSilver = new THREE.MeshStandardMaterial({ color: 0xd8dde8, emissive: 0x5a6a8a, emissiveIntensity: 0.25, metalness: 0.7, roughness: 0.3 });
+      const lSilverCloth = new THREE.MeshStandardMaterial({ color: 0xeef0f6, roughness: 0.7 });
+      const lWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 });
+      const lMidnight = new THREE.MeshStandardMaterial({ color: 0x1e2a52, roughness: 0.6, metalness: 0.1 });
+      const lNavyBlack = new THREE.MeshStandardMaterial({ color: 0x14162a, roughness: 0.62, metalness: 0.1 });
+      const lLav = new THREE.MeshStandardMaterial({ color: 0xb8a8e8, emissive: 0x6a5ac0, emissiveIntensity: 0.4, roughness: 0.5 });
+      const lCryst = new THREE.MeshStandardMaterial({ color: 0x9ac0ff, emissive: 0x4a7ae0, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.1 });
+      const lStar = new THREE.MeshStandardMaterial({ color: 0xffe8a0, emissive: 0xc09030, emissiveIntensity: 0.7, metalness: 0.5, roughness: 0.3 });
+      const lGoldTrim = new THREE.MeshStandardMaterial({ color: 0xe8c878, emissive: 0x8a6a20, emissiveIntensity: 0.4, metalness: 0.7, roughness: 0.3 });
+
+      // ===== head accessories (headG-local) =====
+      const lunaHead = new THREE.Group();
+      // 🌙 crescent moon crystal ornament (right temple)
+      const cShape = new THREE.Shape();
+      cShape.absarc(0, 0, 0.11, -Math.PI * 0.6, Math.PI * 0.6, false);
+      cShape.absarc(0.05, 0, 0.085, Math.PI * 0.52, -Math.PI * 0.52, true);
+      const cMoon = new THREE.Mesh(new THREE.ShapeGeometry(cShape), lSilver.clone());
+      cMoon.material.side = THREE.DoubleSide;
+      cMoon.position.set(0.5, 0.42, 0.28); cMoon.rotation.set(0.15, 0.6, 0.5);
+      lunaHead.add(cMoon);
+      const cGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), lCryst.clone());
+      cGem.scale.set(0.7, 1.2, 0.7); cGem.position.set(0.52, 0.36, 0.3);
+      lunaHead.add(cGem);
+      // 🎀 silver ribbon bow (back half-up)
+      const sBow = new THREE.Group();
+      const sLoopL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), lSilverCloth); sLoopL.scale.set(1.5, 0.85, 0.5); sLoopL.position.x = -0.11;
+      const sLoopR = sLoopL.clone(); sLoopR.position.x = 0.11;
+      const sKnot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), lSilverCloth);
+      sBow.add(sLoopL, sLoopR, sKnot);
+      sBow.position.set(0, 0.6, -0.28); sBow.rotation.x = -0.4;
+      lunaHead.add(sBow);
+      // ⭐ tiny stars woven into the hair (back hemisphere)
+      [[-0.35, 0.25, -0.42], [0.3, 0.05, -0.52], [-0.2, -0.15, -0.55], [0.42, 0.3, -0.32], [0.12, -0.35, -0.5], [-0.48, 0.05, -0.35]].forEach(([sx, sy, sz]) => {
+        const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), lStar); st.scale.set(0.7, 1.3, 0.7); st.position.set(sx, sy, sz); st.rotation.z = sx; lunaHead.add(st);
+      });
+      // 💜 blue-lavender gradient hair tips (back hemisphere + side locks)
+      const lTip = new THREE.MeshStandardMaterial({ color: 0xb8c4f0, emissive: 0x7a8ae0, emissiveIntensity: 0.45, roughness: 0.5 });
+      const lTipSoft = new THREE.MeshStandardMaterial({ color: 0xd8dcf5, emissive: 0x9aa8e8, emissiveIntensity: 0.3, roughness: 0.55 });
+      for (let i = 0; i < 12; i++) { const a = Math.PI * 1.02 + (i / 11) * Math.PI * 0.96; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.34, 6), lTip); tip.position.set(Math.cos(a) * 0.52, -0.42, Math.sin(a) * 0.5 - 0.02); tip.rotation.set(Math.PI - 0.1 * Math.cos(a), 0, 0.1 * Math.sin(a)); lunaHead.add(tip); }
+      for (let i = 0; i < 8; i++) { const a = Math.PI * 1.1 + (i / 7) * Math.PI * 0.8; const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 6), lTipSoft); tip.position.set(Math.cos(a) * 0.46, -0.24, Math.sin(a) * 0.44 - 0.04); tip.rotation.set(Math.PI - 0.08 * Math.cos(a), 0, 0.08 * Math.sin(a)); lunaHead.add(tip); }
+      for (const sx of [-0.68, 0.68]) { const tip = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.36, 6), lTip); tip.position.set(sx, -0.7, 0.02); tip.rotation.x = Math.PI; lunaHead.add(tip); }
+      headG.add(lunaHead);
+
+      // ===== body: silver crescent necklace =====
+      const lunaBody = new THREE.Group();
+      const nShape = new THREE.Shape();
+      nShape.absarc(0, 0, 0.085, -Math.PI * 0.5, Math.PI * 0.5, false);
+      nShape.absarc(0.045, 0, 0.068, Math.PI * 0.5, -Math.PI * 0.5, true);
+      const nMoon = new THREE.Mesh(new THREE.ShapeGeometry(nShape), lSilver.clone());
+      nMoon.material.side = THREE.DoubleSide;
+      nMoon.position.set(0, 1.8, 0.24); nMoon.rotation.z = -0.35;
+      const nCord = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.006, 6, 24), lSilver);
+      nCord.position.set(0, 1.97, 0.02); nCord.rotation.x = 1.35;
+      lunaBody.add(nMoon, nCord);
+      char.add(lunaBody);
+
+      // ===== outfit: white blouse + midnight corset + layered navy skirt + cape =====
+      const lunaOutfit = new THREE.Group();
+      const lProfile = [[0.325, 0.02], [0.34, 0.12], [0.308, 0.28], [0.298, 0.38], [0.318, 0.52], [0.395, 0.64], [0.435, 0.76], [0.425, 0.86], [0.40, 0.94]].map(([r, y]) => new THREE.Vector2(r, y));
+      const lTopGeo = new THREE.LatheGeometry(lProfile, 40);
+      {
+        const pos = lTopGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          let z = pos.getZ(i); const y = pos.getY(i);
+          if (z < -0.18) z = -0.18 - (Math.abs(z) - 0.18) * 0.12;
+          else if (z > 0 && y > 0.5 && y < 1.0) z *= 1.08;
+          pos.setZ(i, z);
+        }
+        pos.needsUpdate = true; lTopGeo.computeVertexNormals();
+      }
+      const lTop = new THREE.Mesh(lTopGeo, lWhite);
+      lTop.position.y = 1.14; lTop.scale.set(1.03, 0.82, 0.75);
+      lunaOutfit.add(lTop);
+      // 🌑 midnight corset with silver trim + gold moon emblem
+      const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.325, 0.24, 22, 1, true), lMidnight);
+      corset.position.y = 1.54; corset.scale.set(1, 1, 0.8);
+      lunaOutfit.add(corset);
+      [1.65, 1.43].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.012, 6, 26), lSilver); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.8, 1); lunaOutfit.add(trim); });
+      const eShape = new THREE.Shape();
+      eShape.absarc(0, 0, 0.05, -Math.PI * 0.55, Math.PI * 0.55, false);
+      eShape.absarc(0.025, 0, 0.04, Math.PI * 0.5, -Math.PI * 0.5, true);
+      const emblem = new THREE.Mesh(new THREE.ShapeGeometry(eShape), lGoldTrim.clone());
+      emblem.material.side = THREE.DoubleSide;
+      emblem.position.set(0, 1.55, 0.27); emblem.rotation.z = 0.5;
+      lunaOutfit.add(emblem);
+      // 👗 layered pleated skirt — navy over black
+      const mkPleatL = (rTop, rHemOut, rHemIn, h, pleats) => {
+        const pos = []; const n = pleats * 2;
+        for (let k = 0; k < n; k++) {
+          const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2;
+          const rH0 = k % 2 === 0 ? rHemOut : rHemIn, rH1 = (k + 1) % 2 === 0 ? rHemOut : rHemIn;
+          const t0 = [Math.cos(a0) * rTop, 0, Math.sin(a0) * rTop], t1 = [Math.cos(a1) * rTop, 0, Math.sin(a1) * rTop];
+          const b0 = [Math.cos(a0) * rH0, -h, Math.sin(a0) * rH0], b1 = [Math.cos(a1) * rH1, -h, Math.sin(a1) * rH1];
+          pos.push(...t0, ...b0, ...t1, ...t1, ...b0, ...b1);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        geo.computeVertexNormals();
+        return geo;
+      };
+      const navy2L = lMidnight.clone(); navy2L.side = THREE.DoubleSide;
+      const blackL = lNavyBlack.clone(); blackL.side = THREE.DoubleSide;
+      const lSkirt = new THREE.Mesh(mkPleatL(0.272, 0.53, 0.44, 0.4, 14), navy2L);
+      lSkirt.position.y = 1.45; lSkirt.scale.set(1, 1, 0.85);
+      const lSkirtUnder = new THREE.Mesh(mkPleatL(0.272, 0.6, 0.5, 0.52, 12), blackL);
+      lSkirt.add(lSkirtUnder); // ชั้นในดำยาวกว่า — แกว่งตามกัน
+      const lHemTrim = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.014, 6, 40), lGoldTrim);
+      lHemTrim.rotation.x = Math.PI / 2; lHemTrim.position.y = -0.33;
+      lSkirt.add(lHemTrim); // เส้นทองใกล้ชายกระโปรง
+      lunaOutfit.add(lSkirt);
+      G._lunaSkirt = lSkirt;
+      const lWaist = new THREE.Mesh(new THREE.TorusGeometry(0.278, 0.03, 8, 26), lNavyBlack);
+      lWaist.position.y = 1.44; lWaist.rotation.x = Math.PI / 2; lWaist.scale.set(1, 0.85, 1);
+      lunaOutfit.add(lWaist);
+      // 🌌 translucent starry cape (back)
+      const capeMat = new THREE.MeshStandardMaterial({ color: 0x9ab0e8, transparent: true, opacity: 0.32, roughness: 0.4, side: THREE.DoubleSide, depthWrite: false });
+      const cape = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.66, 1.1, 18, 1, true, Math.PI * 0.625, Math.PI * 0.75), capeMat);
+      cape.position.set(0, 1.32, -0.04);
+      lunaOutfit.add(cape);
+      for (let i = 0; i < 6; i++) { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.024, 0), lStar); st.scale.set(0.7, 1.3, 0.15); const a = Math.PI * (0.75 + i * 0.1); st.position.set(Math.sin(a) * (0.4 + (i % 3) * 0.08), 1.1 - (i % 3) * 0.22, Math.cos(a) * (0.4 + (i % 3) * 0.08)); lunaOutfit.add(st); } // ⭐ ดาวบนเคป
+      G._lunaCape = cape;
+      char.add(lunaOutfit);
+      // 👘 detached sleeves — white with navy cuff + silver trim
+      const mkSleeveL2 = () => {
+        const grp = new THREE.Group();
+        const sv = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.27, 0.72, 14, 1, true), lWhite); sv.position.y = -0.36;
+        const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.29, 0.09, 14, 1, true), lMidnight); cuff.position.y = -0.7;
+        const trim = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.013, 6, 16), lSilver); trim.rotation.x = Math.PI / 2;
+        grp.add(sv, cuff, trim);
+        return grp;
+      };
+      const lSleeveL = mkSleeveL2(); (armL.userData.elbow || armL).add(lSleeveL);
+      const lSleeveR = mkSleeveL2(); (armR.userData.elbow || armR).add(lSleeveR);
+      G._lunaSleeves = [lSleeveL, lSleeveR];
+      // 🧦 white thigh-high stockings (ride on the legs)
+      const mkThighHigh = leg => {
+        const grp = [];
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.128, 0.108, 0.36, 14), lWhite); shin.position.y = -0.235;
+        (leg.userData.knee || leg).add(shin); grp.push(shin);
+        const thighC = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.132, 0.3, 14), lWhite); thighC.position.y = -0.44;
+        leg.add(thighC); grp.push(thighC);
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.014, 6, 16), lGoldTrim); band.rotation.x = Math.PI / 2 - 0.15; band.position.y = -0.3;
+        leg.add(band); grp.push(band);
+        return grp;
+      };
+      const thighL = mkThighHigh(legL), thighR = mkThighHigh(legR);
+      G._lunaShoeMat = new THREE.MeshStandardMaterial({ color: 0x24305e, roughness: 0.4, metalness: 0.2 }); // dark navy shoes
+
+      // ===== floating star aura + moon magic circle =====
+      const lunaStarsG = new THREE.Group();
+      const lunaStarArr = [];
+      for (let i = 0; i < 14; i++) {
+        const mat = [lStar, lLav, lCryst][i % 3];
+        const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.04 + (i % 3) * 0.014, 0), mat);
+        st.scale.set(0.7, 1.4, 0.7);
+        const ang = (i / 14) * Math.PI * 2, rad = 0.68 + (i % 4) * 0.14, y0 = 0.5 + (i % 5) * 0.42;
+        st.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad);
+        st.userData = { ang, rad, y0, spin: 0.5 + (i % 3) * 0.35, fall: 0.12 + (i % 4) * 0.05 };
+        lunaStarsG.add(st); lunaStarArr.push(st);
+      }
+      char.add(lunaStarsG);
+      const lunaCircle = new THREE.Group();
+      [[0.66, 0.022, lCryst], [0.52, 0.014, lSilver], [0.4, 0.01, lGoldTrim]].forEach(([r, tube, mat]) => { const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 8, 52), mat); ring.rotation.x = Math.PI / 2; ring.position.y = 0.045; lunaCircle.add(ring); });
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), lStar); st.scale.set(0.7, 0.7, 0.2); st.position.set(Math.cos(a) * 0.59, 0.05, Math.sin(a) * 0.59); st.rotation.x = Math.PI / 2; lunaCircle.add(st); }
+      char.add(lunaCircle);
+      G._lunaCircle = lunaCircle;
+      G._lunaStars = lunaStarArr;
+
+      const lunaParts = [lunaHead, lunaBody, lunaOutfit, lSleeveL, lSleeveR, lunaStarsG, lunaCircle, ...thighL, ...thighR];
+      lunaParts.forEach(p => p.visible = false);
+      G._lunaParts = lunaParts;
+    }
 
     // ---------- Outfits: visible on Cherry when equipped ----------
     const outfitModels = {};
@@ -5135,7 +5370,7 @@ export default function CherryAdventure() {
       if (G.elvenCirclet) G.elvenCirclet.visible = acc === "hood" && !outfitOn && !hatOn;
       if (G.officeGlasses) G.officeGlasses.visible = acc === "tie" && !outfitOn && !maskOn;
       if (G.coderGlasses) G.coderGlasses.visible = acc === "hoodie" && !outfitOn && !maskOn;
-      if (G.heroId === "haru") { shirtMat.map = null; shirtMat.color.copy(skinMat.color); } // 🌸 ไหล่เปลือยโชว์สีผิว ไม่ใช่สีเสื้อคลาส
+      if (G.heroId) { shirtMat.map = null; shirtMat.color.copy(skinMat.color); } // 🦸 ไหล่เปลือยโชว์สีผิว ไม่ใช่สีเสื้อคลาส
     };
 
     // apply the outfit look for a class: recolor shirt/pants + show the matching accessory
@@ -5378,7 +5613,7 @@ export default function CherryAdventure() {
         h.material = gmat; h.scale.setScalar(sc);
       });
       const pa = look("pants");
-      const bareLegs = G.heroId === "haru" && !pa; // 🦵 ขาเรียวสีผิวเดียวกับใบหน้า
+      const bareLegs = !!G.heroId && !pa; // 🦵 ขาเรียวสีผิวเดียวกับใบหน้า (ทุกฮีโร่)
       legSkinMeshes.forEach(m => m.material = bareLegs ? skinMat : pantsMat);
       pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x5a1f1a : basePantsColor);
       pantsMat.metalness = pa === "p2" || pa === "pD" ? 0.55 : 0;
@@ -5388,7 +5623,8 @@ export default function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
-      if (G.heroId === "haru" && !sh && G._haruShoeMat) shoeMeshes.forEach((s) => (s.material = G._haruShoeMat)); // 🌸 brown loafers
+      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : null;
+      if (heroShoe && !sh) shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
     };
@@ -10862,6 +11098,36 @@ export default function CherryAdventure() {
           G._haruIrises.forEach((m) => { if (m.material && m.material.emissiveIntensity != null) m.material.emissiveIntensity = ei; });
         }
       }
+        // 🌙 Luna — star aura, circle, skirt/cape/sleeve sway, eye glow
+        if (G._lunaStars && G._lunaStars.length && G._lunaStars[0].parent && G._lunaStars[0].parent.visible) {
+          G._lunaStars.forEach(p => {
+            const u = p.userData;
+            u.ang += dt * 0.3;
+            p.position.x = Math.cos(u.ang) * u.rad;
+            p.position.z = Math.sin(u.ang) * u.rad;
+            p.position.y -= dt * u.fall;
+            if (p.position.y < 0.35) p.position.y = u.y0;
+            p.rotation.y += dt * u.spin;
+          });
+          if (G._lunaCircle) G._lunaCircle.rotation.y += dt * 0.25;
+          if (G._lunaSkirt) {
+            const spd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
+            const amp = 0.05 + spd * 0.09;
+            G._lunaSkirt.rotation.x = Math.sin(t * 2.0) * amp;
+            G._lunaSkirt.rotation.z = Math.cos(t * 1.5) * amp * 0.8;
+            if (G._lunaSleeves) G._lunaSleeves.forEach((sv, i) => { sv.rotation.x = Math.sin(t * 1.7 + i * 1.2) * (amp * 1.6); sv.rotation.z = Math.cos(t * 1.3 + i) * (amp * 1.2); });
+            if (G._lunaCape) G._lunaCape.rotation.x = 0.1 + Math.sin(t * 1.4) * 0.05 + spd * 0.15;
+          }
+          if (G._irisRefs) { const ei = G.tfActive ? 0.4 + Math.abs(Math.sin(t * 6)) * 0.55 : 0.32; G._irisRefs.forEach(m => { if (m.material && m.material.emissiveIntensity != null && m.material.emissive) m.material.emissiveIntensity = ei; }); }
+        }
+        // 🌙 moonlight crescent staff — head spins, stars orbit, crystal breathes
+        const lst = weaponModels.lunaStaff;
+        if (lst && lst.visible && lst.userData.head) {
+          lst.userData.head.rotation.y += dt * 0.5;
+          if (lst.userData.starsOrbit) lst.userData.starsOrbit.rotation.z += dt * 1.6;
+          if (lst.userData.orb) { lst.userData.orb.material.emissiveIntensity = 0.7 + Math.abs(Math.sin(t * 2)) * 0.5; lst.userData.orb.rotation.y += dt; }
+          if (lst.userData.glowLight) lst.userData.glowLight.intensity = 0.5 + Math.abs(Math.sin(t * 2)) * 0.3;
+        }
       // 💇 gentle hair sway (พริ้วไหว) — back hair + the visible hairstyle
       {
         const hz = Math.sin(t * 1.6) * 0.028, hx = Math.cos(t * 1.15) * 0.02;
