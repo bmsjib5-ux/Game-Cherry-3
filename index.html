@@ -9433,7 +9433,7 @@ function CherryAdventure() {
       const archCyl = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gz = p.getZ(i); if (gz > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setY(i, p.getY(i) + amt * (gz / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
       // ✨ gold V-neck trim framing the neckline (two sloped bars meeting at the point)
       for (const sx of [-1, 1]) { const vt = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.36, 8), yGoldTrim); vt.position.set(sx * 0.16, 1.79, 0.35); vt.rotation.z = -sx * 0.58; yOutfit.add(vt); const vtip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), yGoldTrim); vtip.position.set(sx * 0.27, 1.93, 0.29); yOutfit.add(vtip); }
-      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.318, 0.017, 6, 30), yGoldTrim); archTorus(bTrim, 0.05); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.02, 0.99, 1); yOutfit.add(bTrim);
+      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.017, 6, 34), yGoldTrim); archTorus(bTrim, 0.11); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.0, 0.99, 1); yOutfit.add(bTrim);
       // 🌀 gold scroll ornaments on each cup + tiny blue gems (on the outer surface)
       for (const sx of [-1, 1]) {
         const scroll = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.011, 6, 14, Math.PI * 1.1), yGoldTrim); scroll.position.set(sx * 0.17, 1.7, 0.33); scroll.rotation.set(0.3, sx * 0.3, sx * 1.4); yOutfit.add(scroll);
@@ -9443,8 +9443,8 @@ function CherryAdventure() {
       const harness = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.48, 0.03), yBlue); harness.position.set(0, 1.68, 0.37); yOutfit.add(harness);
       [1.87, 1.73, 1.59].forEach((hy, k) => { const hg = new THREE.Mesh(new THREE.OctahedronGeometry(0.045 - k * 0.004, 0), yIce.clone()); hg.scale.set(0.85, 1.3, 0.6); hg.position.set(0, hy, 0.39); yOutfit.add(hg); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), yGoldTrim); ring.position.set(0, hy, 0.37); yOutfit.add(ring); });
       // 🖤 black-and-gold corset cincher just under the bust + blue gems (wraps outside)
-      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.15, 28, 1, true), yCorsetY); archCyl(cincher, 0.05); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.92); yOutfit.add(cincher); // 🖤 วงดำเล็กกว่าวงขาว (รัดเอว)
-      [1.525, 1.395].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 30), yGoldTrim); archTorus(ct, 0.045); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.92, 1); yOutfit.add(ct); });
+      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.16, 32, 1, true), yCorsetY); archCyl(cincher, 0.11); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.92); yOutfit.add(cincher); // 🖤 วงดำเล็กกว่าวงขาว (รัดเอว)
+      [1.525, 1.395].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 34), yGoldTrim); archTorus(ct, 0.11); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.92, 1); yOutfit.add(ct); });
       for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.305, 1.46, Math.cos(a) * 0.285); yOutfit.add(cg); }
       // 🩳 short pants (กางเกงขาสั้น) — snug hip shell + upper-thigh legs that follow the walk
       const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 26, 20), yBlue); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2;
