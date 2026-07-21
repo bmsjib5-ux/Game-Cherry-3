@@ -7460,21 +7460,21 @@ function CherryAdventure() {
       const cresGeo = new THREE.ExtrudeGeometry(cres, { depth: 0.075, bevelEnabled: true, bevelThickness: 0.022, bevelSize: 0.02, bevelSegments: 2, curveSegments: 32 });
       cresGeo.translate(0, 0, -0.055); // center the thickness on the head plane
       const cresMesh = new THREE.Mesh(cresGeo, goldL); // ทองตามภาพ
-      cresMesh.rotation.z = Math.PI / 2; // เขาชี้ขึ้น-ลง หนาเป็น 3D
+      cresMesh.rotation.z = Math.PI; // 🌙 หันเป็นตัว C เปิดด้านขวา หนาเป็น 3D
       head.add(cresMesh);
       const cresRim = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.014, 8, 36, Math.PI * 1.2), starM); // ขอบทองสว่าง
-      cresRim.rotation.z = Math.PI / 2 - Math.PI * 0.60; head.add(cresRim);
+      cresRim.rotation.z = Math.PI - Math.PI * 0.60; head.add(cresRim);
       // 🔵 ลูกแก้วคริสตัลน้ำเงินเจียระไน กลางเสี้ยว + กรอบทอง
       const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.125, 0), moonCryst);
-      orb.position.set(0.02, 0, 0.03); head.add(orb);
+      orb.position.set(0.075, 0, 0.03); head.add(orb); // อยู่ในช่องเปิดของตัว C
       const orbFrame = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.015, 8, 22), goldL); orbFrame.position.copy(orb.position); orbFrame.rotation.x = 0.5; head.add(orbFrame);
       const orbFrame2 = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.013, 8, 22), goldL); orbFrame2.position.copy(orb.position); orbFrame2.rotation.y = 0.5; head.add(orbFrame2);
       // ⭐ ดาวทองประดับตามส่วนโค้งของเสี้ยว
-      for (let i = 0; i < 7; i++) { const a = Math.PI * 0.5 + (i / 6 - 0.5) * Math.PI * 1.18; const st = mk4Star(0.028 + (i % 2) * 0.016, starM); st.position.set(Math.cos(a) * 0.30, Math.sin(a) * 0.30, 0.07); head.add(st); }
+      for (let i = 0; i < 7; i++) { const a = Math.PI + (i / 6 - 0.5) * Math.PI * 1.18; const st = mk4Star(0.028 + (i % 2) * 0.016, starM); st.position.set(Math.cos(a) * 0.30, Math.sin(a) * 0.30, 0.07); head.add(st); }
       // ⭐ ดาวใหญ่ที่ปลายเขาทั้งสอง
-      [[0, 0.345], [0, -0.345]].forEach(([hx, hy]) => { const bs = mk4Star(0.06, starM); bs.position.set(hx, hy, 0.07); head.add(bs); });
+      [[0.105, 0.323], [0.105, -0.323]].forEach(([hx, hy]) => { const bs = mk4Star(0.06, starM); bs.position.set(hx, hy, 0.07); head.add(bs); }); // ดาวใหญ่ปลายเขาตัว C
       // 💠 เม็ดคริสตัลน้ำเงินเล็กประดับเสี้ยว
-      for (let i = 0; i < 4; i++) { const a = Math.PI * 0.5 + (i / 3 - 0.5) * Math.PI * 0.9; const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), moonCryst.clone()); gem.scale.set(0.7, 1.2, 0.7); gem.position.set(Math.cos(a) * 0.24, Math.sin(a) * 0.24, 0.06); head.add(gem); }
+      for (let i = 0; i < 4; i++) { const a = Math.PI + (i / 3 - 0.5) * Math.PI * 0.9; const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), moonCryst.clone()); gem.scale.set(0.7, 1.2, 0.7); gem.position.set(Math.cos(a) * 0.24, Math.sin(a) * 0.24, 0.06); head.add(gem); }
       const starsOrbit = new THREE.Group();
       for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; const st = mk4Star(0.026, starM); st.position.set(Math.cos(a) * 0.19, Math.sin(a) * 0.19, 0.06); starsOrbit.add(st); }
       head.add(starsOrbit); // ⭐ ดาวสามดวงโคจรรอบลูกแก้ว
