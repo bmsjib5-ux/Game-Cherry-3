@@ -4366,13 +4366,15 @@ export default function CherryAdventure() {
       const cShape = new THREE.Shape();
       cShape.absarc(0, 0, 0.11, -Math.PI * 0.6, Math.PI * 0.6, false);
       cShape.absarc(0.05, 0, 0.085, Math.PI * 0.52, -Math.PI * 0.52, true);
-      const cMoon = new THREE.Mesh(new THREE.ShapeGeometry(cShape), lSilver.clone());
+      const cMoon = new THREE.Mesh(new THREE.ShapeGeometry(cShape), lGoldTrim.clone()); // ทองตามภาพ
       cMoon.material.side = THREE.DoubleSide;
       cMoon.position.set(0.5, 0.42, 0.28); cMoon.rotation.set(0.15, 0.6, 0.5);
       lunaHead.add(cMoon);
       const cGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), lCryst.clone());
       cGem.scale.set(0.7, 1.2, 0.7); cGem.position.set(0.52, 0.36, 0.3);
       lunaHead.add(cGem);
+      [[0.44, 0.3], [0.56, -0.2]].forEach(([sx, lean]) => { const rb = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.16, 5), lMidnight); rb.position.set(sx, 0.22, 0.3); rb.rotation.set(Math.PI - 0.1, 0, lean); lunaHead.add(rb); }); // 🎀 ริบบิ้นกรมใต้เครื่องประดับ
+      const hCharm = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), lCryst.clone()); hCharm.scale.set(0.6, 1.3, 0.6); hCharm.position.set(0.5, 0.14, 0.3); lunaHead.add(hCharm); // 💎 จี้คริสตัลห้อย
       // 🎀 silver ribbon bow (back half-up)
       const sBow = new THREE.Group();
       const sLoopL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), lSilverCloth); sLoopL.scale.set(1.5, 0.85, 0.5); sLoopL.position.x = -0.11;
@@ -4401,9 +4403,10 @@ export default function CherryAdventure() {
       const nMoon = new THREE.Mesh(new THREE.ShapeGeometry(nShape), lSilver.clone());
       nMoon.material.side = THREE.DoubleSide;
       nMoon.position.set(0, 1.8, 0.24); nMoon.rotation.z = -0.35;
-      const nCord = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.006, 6, 24), lSilver);
+      const nCord = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.007, 6, 24), lGoldTrim); // โซ่ทอง
       nCord.position.set(0, 1.97, 0.02); nCord.rotation.x = 1.35;
-      lunaBody.add(nMoon, nCord);
+      const nDrop = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), lCryst.clone()); nDrop.scale.set(0.65, 1.3, 0.65); nDrop.position.set(0, 1.7, 0.27); // 💧 จี้คริสตัลน้ำเงิน
+      lunaBody.add(nMoon, nCord, nDrop);
       char.add(lunaBody);
 
       // ===== outfit: white blouse + midnight corset + layered navy skirt + cape =====
@@ -4427,7 +4430,7 @@ export default function CherryAdventure() {
       const corset = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.325, 0.24, 22, 1, true), lMidnight);
       corset.position.y = 1.54; corset.scale.set(1, 1, 0.8);
       lunaOutfit.add(corset);
-      [1.65, 1.43].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.012, 6, 26), lSilver); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.8, 1); lunaOutfit.add(trim); });
+      [1.65, 1.43].forEach(y => { const trim = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.012, 6, 26), lGoldTrim); trim.position.y = y; trim.rotation.x = Math.PI / 2; trim.scale.set(1, 0.8, 1); lunaOutfit.add(trim); }); // ขลิบทอง
       const eShape = new THREE.Shape();
       eShape.absarc(0, 0, 0.05, -Math.PI * 0.55, Math.PI * 0.55, false);
       eShape.absarc(0.025, 0, 0.04, Math.PI * 0.5, -Math.PI * 0.5, true);
@@ -4435,6 +4438,9 @@ export default function CherryAdventure() {
       emblem.material.side = THREE.DoubleSide;
       emblem.position.set(0, 1.55, 0.27); emblem.rotation.z = 0.5;
       lunaOutfit.add(emblem);
+      const chainDrape = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.008, 6, 18, Math.PI), lGoldTrim);
+      chainDrape.position.set(0, 1.6, 0.26); chainDrape.rotation.z = Math.PI;
+      lunaOutfit.add(chainDrape); // ⛓️ โซ่ทองห้อยหน้าคอร์เซ็ต
       // 👗 layered pleated skirt — navy over black
       const mkPleatL = (rTop, rHemOut, rHemIn, h, pleats) => {
         const pos = []; const n = pleats * 2;
@@ -4464,6 +4470,19 @@ export default function CherryAdventure() {
       const lWaist = new THREE.Mesh(new THREE.TorusGeometry(0.278, 0.03, 8, 26), lNavyBlack);
       lWaist.position.y = 1.44; lWaist.rotation.x = Math.PI / 2; lWaist.scale.set(1, 0.85, 1);
       lunaOutfit.add(lWaist);
+      // 🎀 big violet-blue back bow + crystals (ตามภาพ)
+      const lViolet = new THREE.MeshStandardMaterial({ color: 0x6a5ad0, emissive: 0x2a1a70, emissiveIntensity: 0.35, roughness: 0.5 });
+      const lBow = new THREE.Group();
+      const blL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), lViolet); blL.scale.set(1.7, 0.95, 0.45); blL.position.set(-0.14, 0.02, 0);
+      const blR = blL.clone(); blR.position.x = 0.14;
+      const blTL = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), lViolet); blTL.scale.set(1.4, 0.8, 0.45); blTL.position.set(-0.1, 0.13, 0.01); blTL.rotation.z = 0.5;
+      const blTR = blTL.clone(); blTR.position.x = 0.1; blTR.rotation.z = -0.5;
+      const bCry = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), lCryst.clone()); bCry.scale.set(0.7, 1.1, 0.7);
+      const bDrop = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), lCryst.clone()); bDrop.scale.set(0.55, 1.4, 0.55); bDrop.position.y = -0.24;
+      [[-0.08, 0.15], [0.08, -0.15]].forEach(([dx, lean]) => { const tail = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.42, 5), lViolet); tail.position.set(dx, -0.28, -0.01); tail.rotation.set(Math.PI - 0.1, 0, lean); tail.scale.set(1, 1, 0.5); lBow.add(tail); });
+      lBow.add(blL, blR, blTL, blTR, bCry, bDrop);
+      lBow.position.set(0, 1.42, -0.3);
+      lunaOutfit.add(lBow);
       // 🌌 translucent starry cape (back)
       const capeMat = new THREE.MeshStandardMaterial({ color: 0x9ab0e8, transparent: true, opacity: 0.32, roughness: 0.4, side: THREE.DoubleSide, depthWrite: false });
       const cape = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.66, 1.1, 18, 1, true, Math.PI * 0.625, Math.PI * 0.75), capeMat);
