@@ -5127,15 +5127,28 @@ export default function CherryAdventure() {
       const collar = new THREE.Group();
       for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; const puff = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 8), yFur); puff.position.set(Math.cos(a) * 0.28, 1.8 + Math.sin(a * 3) * 0.02, Math.sin(a) * 0.24 - 0.02); collar.add(puff); }
       yOutfit.add(collar);
-      // cropped leather bodice (bandeau) — leaves midriff bare
+      // 👙 ornate white bustier (เสื้อเกาะอก) — gold armour trim + blue-crystal harness (ตามภาพ)
+      const yCorsetY = new THREE.MeshStandardMaterial({ color: 0x141620, roughness: 0.5, metalness: 0.22 }); // black corset cincher
       const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.30, 1.5], [0.335, 1.6], [0.34, 1.72], [0.30, 1.8]].map(([r, y]) => new THREE.Vector2(r, y)), 28), yLeather);
       bodice.scale.set(1.02, 1, 0.82); yOutfit.add(bodice);
-      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.015, 6, 26), ySilver); bTrim.position.y = 1.52; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.04, 0.82, 1); yOutfit.add(bTrim);
-      // 👙 strapless top (เสื้อเกาะอก) — no shoulder piece, bare shoulders; small ice brooch on the band
-      const brooch = new THREE.Mesh(new THREE.OctahedronGeometry(0.036, 0), yIce.clone()); brooch.scale.set(0.9, 1.15, 0.5); brooch.position.set(0, 1.64, 0.27); yOutfit.add(brooch);
-      // waist belt + buckle + hanging straps
-      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.028, 8, 26), yBelt); belt.position.y = 1.34; belt.rotation.x = Math.PI / 2; belt.scale.set(1, 0.85, 1); yOutfit.add(belt);
-      const buckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), yIce.clone()); buckle.scale.set(0.9, 1.1, 0.5); buckle.position.set(0, 1.34, 0.27); yOutfit.add(buckle);
+      // gold armour trim along the top bust edge + bottom edge
+      const bustTop = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.017, 6, 28), yGoldTrim); bustTop.position.y = 1.79; bustTop.rotation.x = Math.PI / 2; bustTop.scale.set(1.03, 0.82, 1); yOutfit.add(bustTop);
+      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.016, 6, 26), yGoldTrim); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.04, 0.82, 1); yOutfit.add(bTrim);
+      // 🌀 gold scroll ornaments on each cup + tiny blue gems
+      for (const sx of [-1, 1]) {
+        const scroll = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.01, 6, 14, Math.PI * 1.1), yGoldTrim); scroll.position.set(sx * 0.13, 1.63, 0.24); scroll.rotation.set(0.3, sx * 0.3, sx * 1.4); yOutfit.add(scroll);
+        const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), yIce.clone()); cg.position.set(sx * 0.2, 1.67, 0.23); yOutfit.add(cg);
+      }
+      // ⛓️ central blue-crystal harness strap down the sternum
+      const harness = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.4, 0.03), yBlue); harness.position.set(0, 1.6, 0.28); yOutfit.add(harness);
+      [1.74, 1.62, 1.5].forEach((hy, k) => { const hg = new THREE.Mesh(new THREE.OctahedronGeometry(0.042 - k * 0.004, 0), yIce.clone()); hg.scale.set(0.85, 1.3, 0.6); hg.position.set(0, hy, 0.305); yOutfit.add(hg); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.008, 6, 14), yGoldTrim); ring.position.set(0, hy, 0.285); yOutfit.add(ring); });
+      // 🖤 black-and-gold corset cincher just under the bust + blue gems
+      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.318, 0.335, 0.14, 24, 1, true), yCorsetY); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.84); yOutfit.add(cincher);
+      [1.52, 1.4].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.326, 0.013, 6, 26), yGoldTrim); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.84, 1); yOutfit.add(ct); });
+      for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.315, 1.46, Math.cos(a) * 0.275); yOutfit.add(cg); }
+      // 💎 blue jewel hanging at the hip / waistline front
+      const hipJewel = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), yIce.clone()); hipJewel.scale.set(0.9, 1.5, 0.5); hipJewel.position.set(0, 1.13, 0.32); yOutfit.add(hipJewel);
+      const hipJewelRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), yGoldTrim); hipJewelRing.position.set(0, 1.18, 0.3); yOutfit.add(hipJewelRing);
       // 🩳 short pants (กางเกงขาสั้น) — snug hip shell + upper-thigh legs that follow the walk
       const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 22, 16), yBlue); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2; yOutfit.add(hipShort);
       const hipTrim = new THREE.Mesh(new THREE.TorusGeometry(0.342, 0.016, 6, 26), ySilver); hipTrim.position.y = 1.32; hipTrim.rotation.x = Math.PI / 2; hipTrim.scale.set(1.02, 0.9, 1); yOutfit.add(hipTrim);
