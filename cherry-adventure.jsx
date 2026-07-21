@@ -5199,6 +5199,7 @@ export default function CherryAdventure() {
       G._yukiSkirtPanels = [];
       const mkSkirtPanel = (rTop, rBot, h, thetaStart, thetaLen, py, faceBack) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 22, 7, true, thetaStart, thetaLen); { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const r = Math.hypot(x, z) || 1e-4; const low = Math.max(0, (h / 2 - y) / h); const flare = low * 0.06; p.setX(i, x + (x / r) * flare); p.setZ(i, z + (z / r) * flare); } p.needsUpdate = true; geo.computeVertexNormals(); } const m = new THREE.Mesh(geo, ySkirtMat); m.position.set(0, py, 0); if (faceBack) m.rotation.y = Math.PI; char.add(m); G._yukiSkirtPanels.push({ m, base: Float32Array.from(geo.attributes.position.array), h, faceBack }); return m; };
       const ySkirtF = mkSkirtPanel(0.36, 0.44, 0.28, -0.62, 1.24, 1.06, false); // หน้าสั้นเท่ากางเกง
+      ySkirtF.scale.z = 0.7; // 👘 สอดผ้าชิ้นหน้าไว้หลังเข็มขัด — เข็มขัดตัว V + คริสตัลอยู่หน้าผ้า
       const ySkirtB = mkSkirtPanel(0.36, 0.52, 0.92, -0.8, 1.6, 0.72, true);   // หลังยาวเท่าเดิม
       const quiver = new THREE.Group();
       const qbody = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.5, 12), yBelt); quiver.add(qbody);
