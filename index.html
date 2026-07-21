@@ -9422,6 +9422,9 @@ function CherryAdventure() {
       const collar = new THREE.Group();
       for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; const puff = new THREE.Mesh(new THREE.SphereGeometry(0.058, 8, 8), yFur); puff.position.set(Math.cos(a) * 0.28, 1.8 + Math.sin(a * 3) * 0.02, Math.sin(a) * 0.24 - 0.02); collar.add(puff); }
       yOutfit.add(collar);
+      // 🖤 ปอกคอสีดำน้ำตาล (black-brown choker) รอบคอ
+      const yChoker = new THREE.MeshStandardMaterial({ color: 0x2a1c10, roughness: 0.55, metalness: 0.15 });
+      { const band = new THREE.Mesh(new THREE.CylinderGeometry(0.146, 0.152, 0.086, 24, 1, true), yChoker); band.position.y = 1.95; yOutfit.add(band); [1.99, 1.906].forEach(ey => { const tr = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.008, 6, 30), yGoldTrim); tr.position.y = ey; tr.rotation.x = Math.PI / 2; yOutfit.add(tr); }); const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.038, 0), yIce.clone()); cg.scale.set(0.85, 1.25, 0.6); cg.position.set(0, 1.95, 0.148); yOutfit.add(cg); const cr = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.007, 6, 14), yGoldTrim); cr.position.set(0, 1.95, 0.132); cr.rotation.x = Math.PI / 2; yOutfit.add(cr); }
       // 👙 ornate white bustier (เสื้อเกาะอก) — wraps OUTSIDE the torso so nothing clips through
       const yCorsetY = new THREE.MeshStandardMaterial({ color: 0x141620, roughness: 0.5, metalness: 0.22 }); // black corset cincher
       const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.315, 1.5], [0.36, 1.6], [0.375, 1.72], [0.37, 1.84], [0.34, 1.96]].map(([r, y]) => new THREE.Vector2(r, y)), 32), yLeather);
