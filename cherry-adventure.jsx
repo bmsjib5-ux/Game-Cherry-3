@@ -3317,9 +3317,10 @@ export default function CherryAdventure() {
       const cres = new THREE.Shape();
       cres.absarc(0, 0, 0.26, -Math.PI * 0.62, Math.PI * 0.62, false);
       cres.absarc(0.11, 0, 0.2, Math.PI * 0.55, -Math.PI * 0.55, true);
-      const cresMesh = new THREE.Mesh(new THREE.ShapeGeometry(cres), silver);
-      cresMesh.material = silver.clone(); cresMesh.material.side = THREE.DoubleSide;
-      cresMesh.rotation.z = Math.PI / 2; // เขาชี้ขึ้น-ลงแบบภาพ
+      const cresGeo = new THREE.ExtrudeGeometry(cres, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.016, bevelSize: 0.014, bevelSegments: 2, curveSegments: 28 });
+      cresGeo.translate(0, 0, -0.045); // center the thickness on the head plane
+      const cresMesh = new THREE.Mesh(cresGeo, silver);
+      cresMesh.rotation.z = Math.PI / 2; // เขาชี้ขึ้น-ลงแบบภาพ — หนาเป็น 3D
       head.add(cresMesh);
       const cresRim = new THREE.Mesh(new THREE.TorusGeometry(0.265, 0.012, 6, 30, Math.PI * 1.24), goldL);
       cresRim.rotation.z = Math.PI / 2 - Math.PI * 0.62; head.add(cresRim);
