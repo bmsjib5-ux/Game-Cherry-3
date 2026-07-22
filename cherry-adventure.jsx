@@ -10802,7 +10802,7 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // ⚒️ Blacksmith shop: forge weapons priced by rarity
-    G.FORGE_PRICE = { rare: 380, epic: 820 };
+    G.FORGE_PRICE = { rare: 15000, epic: 28000 };
     G.openSmith = () => setUi((u) => ({ ...u, smithOpen: true, menuOpen: false }));
     G.buyForge = (id) => {
       const it = LOOT.find((x) => x.id === id);
