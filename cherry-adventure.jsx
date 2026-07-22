@@ -9645,6 +9645,7 @@ export default function CherryAdventure() {
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
     G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
     G.diaSkins = {}; // 💎 skins bought with diamonds
+    G.dressRotY = null; G.dressHideGear = false; // 🧍 remembered dressing-room angle + hide-gear toggle
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
     G.activeSet = null; // 👘 active outfit-set id
@@ -10076,7 +10077,7 @@ export default function CherryAdventure() {
       toast(`ถอด${SLOT_NAMES[slot] || ""}แล้ว`);
       syncPlayer();
     };
-    G.spinChar = (d) => { if (char) char.rotation.y += d; };
+    G.spinChar = (d) => { if (char) { char.rotation.y += d; if (G.equipScreen) G.dressRotY = char.rotation.y; } };
     // 🙈 dressing-room preview: hide the currently-worn gear to see the base character; the weapon stays in hand. Stats are untouched.
     G.setGearHidden = (on) => {
       G._gearHidden = !!on;
@@ -10098,15 +10099,16 @@ export default function CherryAdventure() {
     G.openEquip = () => {
       if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
       G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
-      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI; } // face the camera straight on
+      if (char) { char.position.set(0, 0, 0); char.rotation.y = (G.dressRotY != null ? G.dressRotY : Math.PI); } // restore remembered dressing-room angle
       G.mode = "create"; // 3D turntable framing (React creator UI stays hidden — that keys on ui.mode)
       G.equipOpen = true;
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      G._gearHidden = false; // always start showing the worn gear
-      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: false, gold: G.gold }));
+      G._gearHidden = false;
+      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, gold: G.gold }));
       syncPlayer();
+      if (G.dressHideGear && G.setGearHidden) G.setGearHidden(true); // 🙈 restore remembered hide-gear preference
     };
     G.closeEquip = () => {
       G.equipOpen = false;
@@ -10114,8 +10116,8 @@ export default function CherryAdventure() {
       G.mode = "explore";
       if (char && G._equipPrevPos) char.position.set(G._equipPrevPos.x, 0, G._equipPrevPos.z);
       if (char) char.rotation.y = Math.PI / 2; // face walking direction again
-      if (G._gearHidden) G.setGearHidden(false); // 🙈 never carry the hidden-gear preview into gameplay
-      setUi((u) => ({ ...u, equipScreen: false, hideGear: false }));
+      if (G._gearHidden) G.setGearHidden(false); // 🙈 restore worn gear for gameplay (preference is remembered)
+      setUi((u) => ({ ...u, equipScreen: false }));
     };
 
     // 🎽 auto-equip: put on the strongest item in every slot
@@ -11784,6 +11786,7 @@ export default function CherryAdventure() {
       G.diamonds = 0; // 💎 fresh diamonds
       G.lastRankClaim = null;
       G.diaSkins = {};
+      G.dressRotY = null; G.dressHideGear = false;
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
       G.activeSet = null; // 👘 fresh (no set)
@@ -11858,7 +11861,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -12528,6 +12531,8 @@ export default function CherryAdventure() {
       G.diamonds = d.diamonds || 0;
       G.lastRankClaim = d.lastRankClaim || null;
       G.diaSkins = d.diaSkins || {};
+      G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
+      G.dressHideGear = !!d.dressHideGear;
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
@@ -21057,7 +21062,7 @@ export default function CherryAdventure() {
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡ ออโต้</button>
                     <button key="eqsort" onClick={() => setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 }))} style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>⇅ {sortLabel}</button>
-                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
+                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 }}>
                     <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>

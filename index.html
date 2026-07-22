@@ -16321,6 +16321,7 @@ function CherryAdventure() {
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
     G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
     G.diaSkins = {}; // 💎 skins bought with diamonds
+    G.dressRotY = null; G.dressHideGear = false; // 🧍 remembered dressing-room angle + hide-gear toggle
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
     G.activeSet = null; // 👘 active outfit-set id
@@ -17050,7 +17051,7 @@ function CherryAdventure() {
       syncPlayer();
     };
     // 🧍 PAPER-DOLL EQUIPMENT SCREEN — open a dressing-room view (centered 3D turntable) + equip UI
-    G.spinChar = d => { if (char) char.rotation.y += d; };
+    G.spinChar = d => { if (char) { char.rotation.y += d; if (G.equipScreen) G.dressRotY = char.rotation.y; } };
     // 🙈 dressing-room preview: hide the currently-worn gear (outfit/hat/mask/gloves/pants/shoes) to see the base character; the weapon stays in hand. Stats are untouched (equip is only swapped out for the re-render).
     G.setGearHidden = on => {
       G._gearHidden = !!on;
@@ -17072,15 +17073,16 @@ function CherryAdventure() {
     G.openEquip = () => {
       if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
       G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
-      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI; } // face the camera straight on
+      if (char) { char.position.set(0, 0, 0); char.rotation.y = (G.dressRotY != null ? G.dressRotY : Math.PI); } // restore remembered dressing-room angle
       G.mode = "create"; // 3D turntable framing (React creator UI stays hidden — that keys on ui.mode)
       G.equipOpen = true;
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      G._gearHidden = false; // always start showing the worn gear
-      setUi(u => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: false, gold: G.gold }));
+      G._gearHidden = false;
+      setUi(u => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, gold: G.gold }));
       syncPlayer();
+      if (G.dressHideGear && G.setGearHidden) G.setGearHidden(true); // 🙈 restore remembered hide-gear preference
     };
     G.closeEquip = () => {
       G.equipOpen = false;
@@ -17088,8 +17090,8 @@ function CherryAdventure() {
       G.mode = "explore";
       if (char && G._equipPrevPos) char.position.set(G._equipPrevPos.x, 0, G._equipPrevPos.z);
       if (char) char.rotation.y = Math.PI / 2; // face walking direction again
-      if (G._gearHidden) G.setGearHidden(false); // 🙈 never carry the hidden-gear preview into gameplay
-      setUi(u => ({ ...u, equipScreen: false, hideGear: false }));
+      if (G._gearHidden) G.setGearHidden(false); // 🙈 restore worn gear for gameplay (preference is remembered)
+      setUi(u => ({ ...u, equipScreen: false }));
     };
 
     // 🎽 auto-equip: put on the strongest item in every slot
@@ -19625,6 +19627,7 @@ function CherryAdventure() {
       G.diamonds = 0; // 💎 fresh diamonds
       G.lastRankClaim = null;
       G.diaSkins = {};
+      G.dressRotY = null; G.dressHideGear = false;
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
       G.activeSet = null; // 👘 fresh (no set)
@@ -19772,6 +19775,8 @@ function CherryAdventure() {
           diamonds: G.diamonds || 0,
           lastRankClaim: G.lastRankClaim || null,
           diaSkins: G.diaSkins || {},
+          dressRotY: G.dressRotY != null ? G.dressRotY : null,
+          dressHideGear: !!G.dressHideGear,
           wpMastery: G.wpMastery || {},
           weaponSkin: G.weaponSkin || "none",
           activeSet: G.activeSet || null,
@@ -20544,6 +20549,8 @@ function CherryAdventure() {
       G.diamonds = d.diamonds || 0;
       G.lastRankClaim = d.lastRankClaim || null;
       G.diaSkins = d.diaSkins || {};
+      G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
+      G.dressHideGear = !!d.dressHideGear;
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
@@ -32419,7 +32426,7 @@ function CherryAdventure() {
     return /*#__PURE__*/React.createElement("div", { key: "eqscr", style: { position: "absolute", inset: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" } },
       /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" } }, "🎒 ช่องเก็บของ", /*#__PURE__*/React.createElement("button", { title: "ปิดหน้าตัวละคร", onClick: () => G.closeEquip(), style: { position: "absolute", right: 12, top: 8, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#e8dcc0", fontSize: 16, cursor: "pointer" } }, "✕")),
       /*#__PURE__*/React.createElement("div", { style: { flex: 1, display: "flex", justifyContent: "space-between", alignItems: "stretch", padding: 0, pointerEvents: "none" } }, cellsCol(LEFT), /*#__PURE__*/React.createElement("div", { style: { flex: 1, alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", pointerEvents: "none" } }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", gap: 44, marginBottom: 10 } }, /*#__PURE__*/React.createElement("button", { onClick: () => G.spinChar(-0.5), style: arrowStyle }, "↺"), /*#__PURE__*/React.createElement("button", { onClick: () => G.spinChar(0.5), style: arrowStyle }, "↻")), /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", display: "flex", gap: 10, background: "rgba(20,26,20,0.7)", borderRadius: 999, padding: "5px 14px", color: "#e8dcc0", fontSize: 12.5, fontWeight: 800, border: "1px solid #c9a24a44", marginBottom: 4 } }, "⚔️ " + (ui.atk || 0), "🛡️ " + (ui.def || 0), "❤️ " + (ui.maxHp || 0)), /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", display: "flex", gap: 14, background: "rgba(20,26,20,0.72)", borderRadius: 999, padding: "5px 16px", fontSize: 13, fontWeight: 800, border: "1px solid #c9a24a44", marginBottom: 8 } }, /*#__PURE__*/React.createElement("span", { style: { color: "#f5d24a" } }, "💰 ", ui.gold != null ? ui.gold.toLocaleString() : 0), /*#__PURE__*/React.createElement("span", { style: { color: "#7fd0f5" } }, "💎 ", (ui.diamonds || 0).toLocaleString()))), cellsCol(RIGHT)),
-      /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", maxHeight: "46vh", display: "flex", flexDirection: "column" } }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 } }, [["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map(s => [s, SLOT_ICON[s]])].map(pair => catChip(pair[0], pair[1])), /*#__PURE__*/React.createElement("button", { key: "eqauto", onClick: () => G.autoEquip(), title: "สวมของแรงสุดให้อัตโนมัติ", style: { marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" } }, "⚡ ออโต้"), /*#__PURE__*/React.createElement("button", { key: "eqsort", onClick: () => setUi(u => ({ ...u, equipSort: nextSort, equipPage: 0 })), style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" } }, "⇅ ", sortLabel), /*#__PURE__*/React.createElement("button", { key: "eqhide", onClick: () => { const nv = !ui.hideGear; if (G.setGearHidden) G.setGearHidden(nv); setUi(u => ({ ...u, hideGear: nv })); }, title: "ซ่อน/แสดงชุดที่สวมบนตัวละคร", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" } }, ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด")), React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 } },
+      /*#__PURE__*/React.createElement("div", { style: { pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", maxHeight: "46vh", display: "flex", flexDirection: "column" } }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 } }, [["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map(s => [s, SLOT_ICON[s]])].map(pair => catChip(pair[0], pair[1])), /*#__PURE__*/React.createElement("button", { key: "eqauto", onClick: () => G.autoEquip(), title: "สวมของแรงสุดให้อัตโนมัติ", style: { marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" } }, "⚡ ออโต้"), /*#__PURE__*/React.createElement("button", { key: "eqsort", onClick: () => setUi(u => ({ ...u, equipSort: nextSort, equipPage: 0 })), style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" } }, "⇅ ", sortLabel), /*#__PURE__*/React.createElement("button", { key: "eqhide", onClick: () => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi(u => ({ ...u, hideGear: nv })); }, title: "ซ่อน/แสดงชุดที่สวมบนตัวละคร", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" } }, ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด")), React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 } },
         React.createElement("button", { onClick: () => G.autoSell(), title: "\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E40\u0E01\u0E34\u0E19\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07\u0E14\u0E35\u0E2A\u0E38\u0E14 + \u0E2A\u0E33\u0E23\u0E2D\u0E07 1 \u0E0A\u0E34\u0E49\u0E19\u0E44\u0E27\u0E49\u0E15\u0E35\u0E1A\u0E27\u0E01)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49"),
         React.createElement("button", { onClick: () => G.cycleSellRarity(), title: "\u0E02\u0E32\u0E22\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19\u0E19\u0E35\u0E49 (\u0E41\u0E15\u0E30\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(255,255,255,0.08)", color: "#e0d0a0" } },
             "\uD83C\uDFF7\uFE0F \u2264",
