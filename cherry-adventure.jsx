@@ -10544,6 +10544,8 @@ export default function CherryAdventure() {
       G.socialOpen = willOpen;
       if (willOpen && G.ensurePid) G.ensurePid();
       if (willOpen && G.publishProfile) G.publishProfile(true); // 🌐 push latest stats when opening
+      if (willOpen && G.syncServerFriends) G.syncServerFriends();
+      if (willOpen && G.pollFriendsOnline) G.pollFriendsOnline();
       setUi((u) => ({ ...u, socialOpen: willOpen, friends: G.readFriends(), myCode: willOpen ? G.makeFriendCode() : null, pid: G.pid || null, netEnabled: G.net ? G.net.enabled() : false, netStatus: G.net ? G.net.status : "off", pvpRank: G.pvpRank || 1000, endlessBest: G.endlessBest || 0, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, constOpen: false, homeOpen: false }));
     };
     G.toggleTree = () => {
@@ -11973,6 +11975,9 @@ export default function CherryAdventure() {
       list.sort((a, b) => b.lv - a.lv || b.atk - a.atk);
       list = list.slice(0, 20);
       try { window.localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); } catch (e) {}
+      if (G.ensurePid) G.ensurePid();
+      if (G.publishProfile) G.publishProfile(true);
+      CN.addFriendship(G.pid, row.pid);
       toast(`🤝 เพิ่มเพื่อนออนไลน์ "${row.n}" (Lv.${row.lv}) แล้ว!`);
       setUi((u) => ({ ...u, friends: list, netStatus: "ok" }));
     };
@@ -12081,7 +12086,7 @@ export default function CherryAdventure() {
     };
     G.startPresence = () => {
       if (G._presenceT || !CN.enabled()) return;
-      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); };
+      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); };
       beat();
       G._presenceT = setInterval(beat, 25000);
     };
@@ -12107,6 +12112,43 @@ export default function CherryAdventure() {
     };
     G.chatStart = () => { if (G._chatT) return; G.chatPollNow(); G._chatT = setInterval(() => G.chatPollNow(), 3500); };
     G.chatStop = () => { if (G._chatT) { clearInterval(G._chatT); G._chatT = null; } };
+    // 🤝 mutual friendships (server-synced, two-way automatically)
+    Object.assign(CN, {
+      async addFriendship(a, b) {
+        if (!this.enabled() || !a || !b) return false;
+        try {
+          const now = Date.now();
+          const res = await fetch(this._url("friends"), { method: "POST", headers: this._headers({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify([{ a: a, b: b, ts: now }, { a: b, b: a, ts: now }]) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async getFriendPids(pid) {
+        if (!this.enabled() || !pid) return null;
+        try {
+          const res = await fetch(this._url("friends?a=eq." + encodeURIComponent(pid) + "&select=b&order=ts.desc&limit=60"), { headers: this._headers() });
+          if (!res.ok) return null;
+          return (await res.json()).map(r => r.b);
+        } catch (e) { return null; }
+      }
+    });
+    // pull friendships others created with me → add them locally (auto two-way)
+    G.syncServerFriends = async () => {
+      if (!CN.enabled() || !G.pid) return;
+      const pids = await CN.getFriendPids(G.pid);
+      if (!pids || !pids.length) return;
+      let list = G.readFriends();
+      const have = new Set(list.map(f => f.pid).filter(Boolean));
+      const missing = pids.filter(p => p && p !== G.pid && !have.has(p));
+      if (!missing.length) return;
+      for (const p of missing) {
+        const row = await CN.getPlayer(p);
+        if (row && !list.some(f => f.pid === row.pid)) list.push({ pid: row.pid, n: row.n, c: row.c, lv: row.lv, atk: row.atk, def: row.def, hp: row.hp, crit: row.crit, w: row.w, cu: row.cu, ng: row.ng, online: true });
+      }
+      list.sort((a, b) => b.lv - a.lv || (b.atk || 0) - (a.atk || 0));
+      list = list.slice(0, 30);
+      try { window.localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); } catch (e) {}
+      setUi(u => ({ ...u, friends: list }));
+    };
     // ⚔️ battle a friend's GHOST — a mirror-match against their profile stats
     // 🌐 for online friends (has pid), pull their LATEST stats first so the ghost is always current
     G.fightGhost = async (friend) => {

@@ -177,3 +177,27 @@ create index if not exists messages_room_id on public.messages (room, id);
 - **แชทโลก:** ปุ่ม 💬 (มุมซ้ายล่างตอนอยู่ในโลกกว้าง + ล็อกอินแล้ว) → พิมพ์คุยกับทุกคนที่ออนไลน์ (poll ทุก ~3.5 วิ)
 
 > `players` เปิดอ่าน/เขียนสาธารณะ (ข้อมูลโปรไฟล์ไม่ลับ) · `messages` เขียนได้เฉพาะบัญชีตัวเอง (RLS `auth.uid() = uid`) อ่านได้เมื่อล็อกอิน
+
+---
+
+# 🤝 เพื่อนแบบสองทางอัตโนมัติ (Mutual Friends)
+
+เมื่อฝ่ายใดเพิ่มเพื่อนด้วย ID → **ทั้งสองฝ่ายเป็นเพื่อนกันเองอัตโนมัติ** (ไม่ต้องเพิ่มกลับ)
+เก็บความสัมพันธ์บนตาราง `friends` (2 แถวต่อ 1 คู่: a→b และ b→a) แล้วแต่ละคน sync รายชื่อเพื่อนจากเซิร์ฟเวอร์
+
+## รัน SQL นี้
+```sql
+create table if not exists public.friends (
+  a text not null,   -- เจ้าของรายการ (pid)
+  b text not null,   -- เพื่อน (pid)
+  ts bigint,
+  primary key (a, b)
+);
+alter table public.friends enable row level security;
+create policy "friends_read"   on public.friends for select using (true);
+create policy "friends_insert" on public.friends for insert with check (true);
+```
+
+## ทำงานยังไง
+- A เพิ่ม B ด้วย ID → เกมเขียน 2 แถว: (A→B) และ (B→A)
+- เกมของ B จะ **sync รายชื่อเพื่อนจากเซิร์ฟเวอร์** (ตอนเปิดหน้าเพื่อน + heartbeat ทุก 25 วิ) → เห็น A เป็นเพื่อนเองอัตโนมัติ พร้อมพลังล่าสุด
