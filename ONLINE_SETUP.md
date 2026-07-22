@@ -138,3 +138,42 @@ const ONLINE_CONFIG = {
 
 ## ถ้าไม่ตั้งค่า
 ไม่กรอก `ONLINE_CONFIG` = ปุ่มเข้าสู่ระบบจะแจ้งว่ายังไม่ได้ตั้งค่า และเกมยังเซฟลงเครื่อง (localStorage) ตามปกติ
+
+---
+
+# 🟢 ระบบเพื่อนออนไลน์ + แชท (Presence + Chat)
+
+เพิ่ม: เห็น **เพื่อนออนไลน์อยู่ตอนนี้** (จุดเขียว) + **แชทโลก** แบบเรียลไทม์ (poll ทุก ~3.5 วิ)
+ทำงานบน Supabase REST — ต้องมีตาราง `players` (โปรไฟล์/สถานะออนไลน์) และ `messages` (แชท)
+
+## รัน SQL นี้ (SQL Editor → New query → Run)
+```sql
+-- 1) players : โปรไฟล์สาธารณะ + last-seen (ใช้ทำ leaderboard/friends/สถานะออนไลน์)
+create table if not exists public.players (
+  pid text primary key, n text, c text, lv int default 1,
+  atk int default 0, def int default 0, hp int default 0, crit int default 0,
+  w text, cu jsonb default '{}'::jsonb, ng int default 0, rank int default 1000, ts bigint
+);
+alter table public.players enable row level security;
+create policy "players_read"   on public.players for select using (true);
+create policy "players_insert" on public.players for insert with check (true);
+create policy "players_update" on public.players for update using (true);
+
+-- 2) messages : แชท (เขียนได้เฉพาะเป็นตัวเอง, อ่านได้เมื่อ login)
+create table if not exists public.messages (
+  id   bigint generated always as identity primary key,
+  room text not null default 'global',
+  uid  uuid not null references auth.users(id) on delete cascade,
+  n text, c text, lv int, body text not null, ts bigint
+);
+alter table public.messages enable row level security;
+create policy "msg_read"       on public.messages for select using (auth.uid() is not null);
+create policy "msg_insert_own" on public.messages for insert with check (auth.uid() = uid);
+create index if not exists messages_room_id on public.messages (room, id);
+```
+
+## ใช้งานในเกม
+- **สถานะออนไลน์:** ขณะล็อกอิน เกมจะอัปเดต last-seen (`players.ts`) ทุก ~25 วิ → เพื่อนที่ last-seen < 60 วิ = ออนไลน์ (จุดเขียว) · ปุ่ม 💬 มีตัวเลขจำนวนเพื่อนออนไลน์
+- **แชทโลก:** ปุ่ม 💬 (มุมซ้ายล่างตอนอยู่ในโลกกว้าง + ล็อกอินแล้ว) → พิมพ์คุยกับทุกคนที่ออนไลน์ (poll ทุก ~3.5 วิ)
+
+> `players` เปิดอ่าน/เขียนสาธารณะ (ข้อมูลโปรไฟล์ไม่ลับ) · `messages` เขียนได้เฉพาะบัญชีตัวเอง (RLS `auth.uid() = uid`) อ่านได้เมื่อล็อกอิน

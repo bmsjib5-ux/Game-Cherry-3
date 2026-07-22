@@ -11836,6 +11836,7 @@ export default function CherryAdventure() {
       _saveSession(s);
       G.auth = { status: "in", email: s.email, uid: s.uid };
       _setAuthUi();
+      if (G.startPresence) G.startPresence();
       return true;
     };
     G._authToken = async () => {
@@ -11912,6 +11913,7 @@ export default function CherryAdventure() {
     G.accountSignOut = async () => {
       const t = G._session && G._session.access_token;
       _clearSession(); G.auth = { status: "out", email: null, uid: null }; _setAuthUi();
+      if (G.stopPresence) G.stopPresence(); if (G.chatStop) G.chatStop();
       toast("ออกจากระบบแล้ว");
       if (t) CN.signOutRemote(t);
     };
@@ -12036,6 +12038,75 @@ export default function CherryAdventure() {
       try { window.localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); } catch (e) {}
       setUi((u) => ({ ...u, friends: list }));
     };
+    // ---------- 🟢 Presence (online friends) + 💬 Chat (poll-based) ----------
+    G.ONLINE_WINDOW = 60000;
+    G.chat = { room: "global", msgs: [], lastId: 0 };
+    G._online = {};
+    Object.assign(CN, {
+      async getPlayersByPid(pids) {
+        if (!this.enabled() || !pids || !pids.length) return null;
+        try {
+          const inq = pids.map(p => '"' + p + '"').join(",");
+          const res = await fetch(this._url("players?pid=in.(" + encodeURIComponent(inq) + ")&select=pid,n,c,lv,ts"), { headers: this._headers() });
+          if (!res.ok) return null; return await res.json();
+        } catch (e) { return null; }
+      },
+      async sendMsg(token, msg) {
+        if (!this.enabled() || !token) return false;
+        try {
+          const res = await fetch(this._url("messages"), { method: "POST", headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + token, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify(msg) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async getMsgs(token, room, sinceId) {
+        if (!this.enabled() || !token) return null;
+        try {
+          const res = await fetch(this._url("messages?room=eq." + encodeURIComponent(room) + "&id=gt." + (sinceId || 0) + "&select=id,uid,n,c,lv,body,ts&order=id.asc&limit=60"), { headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + token } });
+          if (!res.ok) return null; return await res.json();
+        } catch (e) { return null; }
+      }
+    });
+    G.pollFriendsOnline = async () => {
+      if (!CN.enabled()) return;
+      const pids = (G.readFriends ? G.readFriends() : []).map(f => f.pid).filter(Boolean);
+      if (G.pid) pids.push(G.pid);
+      if (!pids.length) return;
+      const rows = await CN.getPlayersByPid(pids);
+      if (!rows) return;
+      const now = Date.now(), map = {};
+      let online = 0;
+      rows.forEach(r => { const on = now - (r.ts || 0) < G.ONLINE_WINDOW; if (on && r.pid !== G.pid) online++; map[r.pid] = { ts: r.ts, online: on, lv: r.lv, n: r.n, c: r.c }; });
+      G._online = map;
+      setUi(u => ({ ...u, onlineMap: map, onlineCount: online }));
+    };
+    G.startPresence = () => {
+      if (G._presenceT || !CN.enabled()) return;
+      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); };
+      beat();
+      G._presenceT = setInterval(beat, 25000);
+    };
+    G.stopPresence = () => { if (G._presenceT) { clearInterval(G._presenceT); G._presenceT = null; } };
+    G.chatSend = async (body) => {
+      body = (body || "").trim().slice(0, 200);
+      if (!body) return;
+      if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อนแชท"); return; }
+      const token = await G._authToken(); if (!token) return;
+      const msg = { room: G.chat.room, uid: G.auth.uid, n: (G.playerName || "?").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1, body: body, ts: Date.now() };
+      const ok = await CN.sendMsg(token, msg);
+      if (ok) G.chatPollNow(); else toast("ส่งข้อความไม่สำเร็จ");
+    };
+    G.chatPollNow = async () => {
+      if (G.auth.status !== "in" || !CN.enabled()) return;
+      const token = await G._authToken(); if (!token) return;
+      const rows = await CN.getMsgs(token, G.chat.room, G.chat.lastId);
+      if (rows && rows.length) {
+        G.chat.msgs = G.chat.msgs.concat(rows).slice(-80);
+        G.chat.lastId = rows[rows.length - 1].id;
+        setUi(u => ({ ...u, chatMsgs: G.chat.msgs.slice(), chatLastId: G.chat.lastId }));
+      }
+    };
+    G.chatStart = () => { if (G._chatT) return; G.chatPollNow(); G._chatT = setInterval(() => G.chatPollNow(), 3500); };
+    G.chatStop = () => { if (G._chatT) { clearInterval(G._chatT); G._chatT = null; } };
     // ⚔️ battle a friend's GHOST — a mirror-match against their profile stats
     // 🌐 for online friends (has pid), pull their LATEST stats first so the ghost is always current
     G.fightGhost = async (friend) => {
@@ -19006,6 +19077,39 @@ export default function CherryAdventure() {
             </div>
             <button onClick={() => G.accountSignInGoogle()} style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff" }}>🇬 เข้าสู่ระบบด้วย Google</button>
             <div style={{ fontSize: 9.5, color: "#c0b0a4", marginTop: 12, lineHeight: 1.5 }}>ต้องตั้งค่า Supabase (url + anonKey ใน ONLINE_CONFIG) และเปิด Auth ก่อน — ดู ONLINE_SETUP.md</div>
+          </div>
+        </div>
+      )}
+
+      {/* 💬 online chat */}
+      {ui.mode === "explore" && ui.auth && ui.auth.status === "in" && !ui.equipScreen && (
+        <button onClick={() => { setUi((u) => ({ ...u, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }} style={{ position: "absolute", left: 12, bottom: 150, width: 46, height: 46, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 20, background: "linear-gradient(135deg,#5a8ae0,#7b6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(60,60,120,0.35)", zIndex: 25 }}>💬{ui.onlineCount > 0 ? <span style={{ position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "16px", padding: "0 3px" }}>{ui.onlineCount}</span> : null}</button>
+      )}
+      {ui.chatOpen && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }} onClick={() => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, height: "72%", background: "#fbf7f2", borderTopLeftRadius: 20, borderTopRightRadius: 20, display: "flex", flexDirection: "column", boxShadow: "0 -8px 30px rgba(0,0,0,0.25)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderBottom: "1px solid #ece0d4" }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#5a4a6a" }}>💬 แชทโลก</div>
+              <div style={{ fontSize: 11, color: "#3ac06a", fontWeight: 800 }}>🟢 {ui.onlineCount || 0} เพื่อนออนไลน์</div>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); }} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
+              {(ui.chatMsgs || []).length === 0 && <div style={{ textAlign: "center", color: "#c0b0a4", fontSize: 12, marginTop: 20 }}>ยังไม่มีข้อความ — ทักทายเพื่อนสิ! 👋</div>}
+              {(ui.chatMsgs || []).map((m) => {
+                const mine = m.uid === (ui.auth && ui.auth.uid);
+                return (
+                  <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
+                    <div style={{ fontSize: 10, color: "#a3907e", margin: "0 6px 1px" }}>{mine ? "ฉัน" : (m.n || "?")}{m.lv ? " · Lv." + m.lv : ""}</div>
+                    <div style={{ maxWidth: "78%", padding: "7px 11px", borderRadius: 14, fontSize: 13.5, wordBreak: "break-word", background: mine ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#fff", color: mine ? "#fff" : "#4a4038", border: mine ? "none" : "1px solid #ece0d4" }}>{m.body}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 8, padding: "10px 12px", borderTop: "1px solid #ece0d4" }}>
+              <input value={ui.chatInput || ""} maxLength={200} placeholder="พิมพ์ข้อความ..." onChange={(e) => setUi((u) => ({ ...u, chatInput: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") { G.chatSend(ui.chatInput || ""); setUi((u) => ({ ...u, chatInput: "" })); } }} style={{ flex: 1, boxSizing: "border-box", padding: "11px 13px", borderRadius: 999, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font }} />
+              <button onClick={() => { G.chatSend(ui.chatInput || ""); setUi((u) => ({ ...u, chatInput: "" })); }} style={{ padding: "0 18px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" }}>ส่ง</button>
+            </div>
           </div>
         </div>
       )}
