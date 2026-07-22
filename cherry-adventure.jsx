@@ -11731,6 +11731,7 @@ export default function CherryAdventure() {
       } catch (e) { /* storage unavailable — keep playing without saves */ }
       // 🌐 push my latest profile to the cloud (throttled, no-op when offline)
       if (G.publishProfile) G.publishProfile();
+      if (G._cloudPush) G._cloudPush(); // ☁️ mirror the save to the cloud when logged in
     };
     G.saveGame = saveGame;
     // ---------- 🌐 ONLINE (async) — a real shared backend via Supabase REST ----------
@@ -11771,6 +11772,157 @@ export default function CherryAdventure() {
       },
     };
     G.net = CN;
+    // ---------- 🔐 Account & cross-device login (Supabase Auth + cloud full-save) ----------
+    const AUTH_KEY = "cherry-auth-v1";
+    Object.assign(CN, {
+      _authUrl(path) { return this.cfg.url.replace(/\/+$/, "") + "/auth/v1/" + path; },
+      async signUp(email, password) {
+        if (!this.enabled()) return { ok: false, err: "ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ (ONLINE_CONFIG)" };
+        try {
+          const res = await fetch(this._authUrl("signup"), { method: "POST", headers: { apikey: this.cfg.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+          const j = await res.json().catch(() => ({}));
+          if (!res.ok) return { ok: false, err: (j && (j.msg || j.error_description || j.message)) || "สมัครไม่สำเร็จ" };
+          if (j.access_token) return { ok: true, session: j, needConfirm: false };
+          return { ok: true, session: null, needConfirm: true };
+        } catch (e) { return { ok: false, err: "เชื่อมต่อไม่ได้" }; }
+      },
+      async signIn(email, password) {
+        if (!this.enabled()) return { ok: false, err: "ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์" };
+        try {
+          const res = await fetch(this._authUrl("token?grant_type=password"), { method: "POST", headers: { apikey: this.cfg.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+          const j = await res.json().catch(() => ({}));
+          if (!res.ok || !j.access_token) return { ok: false, err: (j && (j.error_description || j.msg || j.message)) || "อีเมลหรือรหัสผ่านไม่ถูกต้อง" };
+          return { ok: true, session: j };
+        } catch (e) { return { ok: false, err: "เชื่อมต่อไม่ได้" }; }
+      },
+      async refresh(refresh_token) {
+        if (!this.enabled() || !refresh_token) return null;
+        try {
+          const res = await fetch(this._authUrl("token?grant_type=refresh_token"), { method: "POST", headers: { apikey: this.cfg.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token }) });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      async signOutRemote(access_token) {
+        if (!this.enabled() || !access_token) return;
+        try { await fetch(this._authUrl("logout"), { method: "POST", headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + access_token } }); } catch (e) {}
+      },
+      async getSave(access_token, uid) {
+        if (!this.enabled() || !access_token) return null;
+        try {
+          const res = await fetch(this._url(`saves?uid=eq.${uid}&select=data,ts`), { headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + access_token } });
+          if (!res.ok) return null;
+          const rows = await res.json();
+          return rows && rows[0] || null;
+        } catch (e) { return null; }
+      },
+      async putSave(access_token, uid, data, ts) {
+        if (!this.enabled() || !access_token) return false;
+        try {
+          const res = await fetch(this._url("saves"), { method: "POST", headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + access_token, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ uid, data, ts }) });
+          return res.ok;
+        } catch (e) { return false; }
+      }
+    });
+    G.auth = { status: "out", email: null, uid: null };
+    G._session = null;
+    const _saveSession = s => { G._session = s; try { window.localStorage.setItem(AUTH_KEY, JSON.stringify(s)); } catch (e) {} };
+    const _clearSession = () => { G._session = null; try { window.localStorage.removeItem(AUTH_KEY); } catch (e) {} };
+    const _setAuthUi = () => setUi(u => ({ ...u, auth: { status: G.auth.status, email: G.auth.email } }));
+    const _applySession = j => {
+      if (!j || !j.access_token) return false;
+      const user = j.user || {};
+      const s = { access_token: j.access_token, refresh_token: j.refresh_token, uid: user.id || j.uid, email: (user.email || j.email || G.auth.email), exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 3600000) - 60000 };
+      _saveSession(s);
+      G.auth = { status: "in", email: s.email, uid: s.uid };
+      _setAuthUi();
+      return true;
+    };
+    G._authToken = async () => {
+      if (!G._session) return null;
+      if (Date.now() < (G._session.exp || 0)) return G._session.access_token;
+      const j = await CN.refresh(G._session.refresh_token);
+      if (j && j.access_token) { _applySession(j); return G._session.access_token; }
+      _clearSession(); G.auth = { status: "out", email: null, uid: null }; _setAuthUi();
+      return null;
+    };
+    G._cloudPush = async (force) => {
+      if (G.auth.status !== "in") return;
+      const now = Date.now();
+      if (!force && G._lastCloud && now - G._lastCloud < 15000) return;
+      G._lastCloud = now;
+      const token = await G._authToken(); if (!token) return;
+      let raw = null; try { raw = window.localStorage.getItem(slotKey()); } catch (e) {}
+      if (!raw) return;
+      let data; try { data = JSON.parse(raw); } catch (e) { return; }
+      data.ts = now;
+      const ok = await CN.putSave(token, G.auth.uid, data, now);
+      if (ok) setUi(u => ({ ...u, cloudSyncedAt: now }));
+    };
+    G._cloudPull = async () => {
+      if (G.auth.status !== "in") return { loaded: false };
+      const token = await G._authToken(); if (!token) return { loaded: false };
+      const row = await CN.getSave(token, G.auth.uid);
+      if (!row || !row.data) { await G._cloudPush(true); return { loaded: false }; }
+      const cloud = row.data;
+      let localTs = 0; try { const r = window.localStorage.getItem(slotKey(0)); if (r) localTs = (JSON.parse(r).ts) || 0; } catch (e) {}
+      if ((cloud.ts || 0) >= localTs) {
+        try { window.localStorage.setItem(slotKey(0), JSON.stringify(cloud)); } catch (e) {}
+        setUi(u => ({ ...u, slots: G.readSlots ? G.readSlots() : u.slots }));
+        return { loaded: true };
+      }
+      await G._cloudPush(true);
+      return { loaded: false };
+    };
+    G.accountSignUp = async (email, password) => {
+      const r = await CN.signUp(email, password);
+      if (!r.ok) { toast("⚠️ " + r.err); return r; }
+      if (r.session && _applySession(r.session)) { toast("✅ สมัคร + เข้าสู่ระบบแล้ว"); const p = await G._cloudPull(); if (p.loaded) toast("☁️ โหลดเซฟจากคลาวด์"); setUi(u => ({ ...u, slots: G.readSlots() })); }
+      else toast("📧 สมัครแล้ว — ตรวจอีเมลเพื่อยืนยัน แล้วเข้าสู่ระบบ");
+      return r;
+    };
+    G.accountSignIn = async (email, password) => {
+      const r = await CN.signIn(email, password);
+      if (!r.ok) { toast("⚠️ " + r.err); return r; }
+      _applySession(r.session); toast("✅ เข้าสู่ระบบแล้ว");
+      const p = await G._cloudPull();
+      if (p.loaded) { toast("☁️ ซิงค์เซฟจากคลาวด์แล้ว"); setUi(u => ({ ...u, slots: G.readSlots() })); }
+      return r;
+    };
+    G.accountSignInGoogle = () => {
+      if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ (ONLINE_SETUP.md)"); return; }
+      const redirect = location.href.split("#")[0];
+      location.href = CN._authUrl("authorize?provider=google&redirect_to=" + encodeURIComponent(redirect));
+    };
+    G.accountSignOut = async () => {
+      const t = G._session && G._session.access_token;
+      _clearSession(); G.auth = { status: "out", email: null, uid: null }; _setAuthUi();
+      toast("ออกจากระบบแล้ว");
+      if (t) CN.signOutRemote(t);
+    };
+    G.accountSync = async () => {
+      if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อน"); return; }
+      await G._cloudPush(true); toast("☁️ ซิงค์เซฟขึ้นคลาวด์แล้ว");
+    };
+    (async () => {
+      try {
+        if (location.hash && location.hash.indexOf("access_token=") >= 0) {
+          const h = new URLSearchParams(location.hash.slice(1));
+          const at = h.get("access_token"), rt = h.get("refresh_token"), ei = parseInt(h.get("expires_in") || "3600", 10);
+          if (at) {
+            let uid = null, email = null;
+            try { const ur = await fetch(CN._authUrl("user"), { headers: { apikey: CN.cfg.anonKey, Authorization: "Bearer " + at } }); if (ur.ok) { const u = await ur.json(); uid = u.id; email = u.email; } } catch (e) {}
+            _applySession({ access_token: at, refresh_token: rt, expires_in: ei, user: { id: uid, email } });
+            try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+            toast("✅ เข้าสู่ระบบด้วย Google แล้ว");
+          }
+        } else {
+          const raw = window.localStorage.getItem(AUTH_KEY);
+          if (raw) { const s = JSON.parse(raw); G._session = s; G.auth = { status: "in", email: s.email, uid: s.uid }; _setAuthUi(); }
+        }
+        if (G.auth.status === "in") { await G._authToken(); await G._cloudPull(); setUi(u => ({ ...u, slots: G.readSlots ? G.readSlots() : u.slots })); }
+      } catch (e) {}
+    })();
     // 🪪 stable per-player id (used as the cloud row key + shareable friend id)
     const genPid = () => "CH" + Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
     G.ensurePid = () => { if (!G.pid) G.pid = genPid(); return G.pid; };
@@ -18798,6 +18950,46 @@ export default function CherryAdventure() {
             animation: "toastUp 1.7s ease forwards",
           }}>
             {ui.toast}
+          </div>
+        </div>
+      )}
+
+      {/* 🔐 cross-device account (login/sync) */}
+      {ui.mode === "title" && (
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 14, display: "flex", justifyContent: "center", padding: "0 18px", zIndex: 30, pointerEvents: "none" }}>
+          <div style={{ width: "100%", maxWidth: 340, pointerEvents: "auto" }}>
+            {ui.auth && ui.auth.status === "in" ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", borderRadius: 14, padding: "9px 13px", boxShadow: "0 6px 18px rgba(60,40,80,0.2)" }}>
+                <div style={{ fontSize: 18 }}>☁️</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a" }}>ซิงค์ข้ามเครื่องเปิดอยู่</div>
+                  <div style={{ fontSize: 10, color: "#a3a396", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ui.auth.email}</div>
+                </div>
+                <button onClick={() => G.accountSync()} style={{ padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "#5aa06a" }}>ซิงค์</button>
+                <button onClick={() => G.accountSignOut()} style={{ padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#8a6a5a", background: "#f3ede4" }}>ออก</button>
+              </div>
+            ) : (
+              <button onClick={() => setUi((u) => ({ ...u, accountOpen: true }))} style={{ width: "100%", padding: "11px 14px", borderRadius: 14, border: "1px dashed #c9a24a", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a06a2a", background: "#fff7ea", boxShadow: "0 6px 18px rgba(60,40,80,0.15)" }}>🔐 เข้าสู่ระบบ / บันทึกข้ามเครื่อง</button>
+            )}
+          </div>
+        </div>
+      )}
+      {ui.accountOpen && (
+        <div onClick={() => setUi((u) => ({ ...u, accountOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 340, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#5a4a6a" }}>🔐 บัญชีผู้เล่น</div>
+              <button onClick={() => setUi((u) => ({ ...u, accountOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f3ede4", fontWeight: 800 }}>✕</button>
+            </div>
+            <div style={{ fontSize: 11.5, color: "#9a8a7a", marginBottom: 14 }}>เข้าสู่ระบบเพื่อบันทึกเซฟบนคลาวด์ — เล่นเครื่องไหนก็โหลดตัวละครเดิมได้</div>
+            <input type="email" placeholder="อีเมล" value={ui.authEmail || ""} onChange={(e) => setUi((u) => ({ ...u, authEmail: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: 12, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font, marginBottom: 9 }} />
+            <input type="password" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)" value={ui.authPass || ""} onChange={(e) => setUi((u) => ({ ...u, authPass: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: 12, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font, marginBottom: 12 }} />
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <button onClick={() => G.accountSignIn(ui.authEmail || "", ui.authPass || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" }}>เข้าสู่ระบบ</button>
+              <button onClick={() => G.accountSignUp(ui.authEmail || "", ui.authPass || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "1px solid #c9b6f0", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#6a5ac0", background: "#f3eeff" }}>สมัครใหม่</button>
+            </div>
+            <button onClick={() => G.accountSignInGoogle()} style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff" }}>🇬 เข้าสู่ระบบด้วย Google</button>
+            <div style={{ fontSize: 9.5, color: "#c0b0a4", marginTop: 12, lineHeight: 1.5 }}>ต้องตั้งค่า Supabase (url + anonKey ใน ONLINE_CONFIG) และเปิด Auth ก่อน — ดู ONLINE_SETUP.md</div>
           </div>
         </div>
       )}

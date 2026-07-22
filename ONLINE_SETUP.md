@@ -79,3 +79,62 @@ const ONLINE_CONFIG = {
 ## ถ้าไม่ตั้งค่า
 ปล่อย `url`/`anonKey` ว่างไว้ = เกมใช้ **ระบบเพื่อนออฟไลน์** (ก็อป-วางรหัส `CHERRY1:...`) เหมือนเดิมทุกอย่าง
 ไม่มี error ใดๆ และไม่มีการเรียกเครือข่าย
+
+---
+
+# 🔐 ระบบบัญชี + จำ Login ข้ามเครื่อง (Cross-Device Save)
+
+เปิดให้ผู้เล่น **เข้าสู่ระบบด้วยอีเมล/รหัสผ่าน หรือ Google** แล้วเซฟทั้งหมด (ตัวละคร ไอเทม เงิน สกิล ฯลฯ)
+จะถูกเก็บบนคลาวด์ **เล่นเครื่องไหนก็โหลดตัวเดิมกลับมาได้** (ต่อยอดจาก Supabase เดิม)
+
+## 1) สร้างตาราง `saves` + เปิด RLS (วาง SQL)
+เปิด **SQL Editor → New query** วาง SQL นี้ทั้งหมด → **Run**
+
+```sql
+-- เซฟเต็ม (ผูกกับบัญชีผู้ใช้ Auth)
+create table if not exists public.saves (
+  uid   uuid primary key references auth.users(id) on delete cascade,
+  data  jsonb not null,               -- ก้อนเซฟทั้งหมด (เหมือน slot ใน localStorage)
+  ts    bigint,                        -- เวลาอัปเดตล่าสุด (newest-wins)
+  updated_at timestamptz default now()
+);
+
+alter table public.saves enable row level security;
+
+-- ผู้ใช้เห็น/แก้ได้เฉพาะแถวของตัวเอง (uid = auth.uid())
+create policy "saves_select_own" on public.saves for select using (auth.uid() = uid);
+create policy "saves_insert_own" on public.saves for insert with check (auth.uid() = uid);
+create policy "saves_update_own" on public.saves for update using (auth.uid() = uid) with check (auth.uid() = uid);
+```
+
+## 2) เปิดระบบ Auth
+1. เมนู **Authentication → Providers → Email** → เปิด (Enable)
+2. **ปิด "Confirm email"** (Authentication → Providers → Email → เอาติ๊ก *Confirm email* ออก)
+   เพื่อให้สมัครแล้วเข้าเล่นได้ทันที (ถ้าเปิดไว้ ผู้เล่นต้องกดยืนยันในอีเมลก่อน)
+3. ใส่ค่าใน `ONLINE_CONFIG` (บนสุดของไฟล์เกม) — ใช้ url + anonKey **เดียวกับระบบเพื่อน**:
+```js
+const ONLINE_CONFIG = {
+  url: "https://xxxx.supabase.co",
+  anonKey: "eyJhbGciOi...",
+};
+```
+
+## 3) (ตัวเลือก) เข้าสู่ระบบด้วย Google
+1. **Authentication → Providers → Google** → เปิด แล้วใส่ **Client ID/Secret** จาก Google Cloud Console
+2. ใน Google Cloud → OAuth consent + Credentials → **Authorized redirect URI** ใส่:
+   `https://xxxx.supabase.co/auth/v1/callback`
+3. ใน Supabase → **Authentication → URL Configuration → Redirect URLs** เพิ่ม URL ของเว็บเกมคุณ
+   (เช่น `https://your-game-site/` — เกมจะส่งผู้เล่นกลับมาที่หน้านี้พร้อม token)
+
+## ใช้งานในเกม
+ที่ **หน้าเลือกช่องบันทึก (Title)** จะมีปุ่ม **🔐 เข้าสู่ระบบ / บันทึกข้ามเครื่อง**
+- **สมัครใหม่ / เข้าสู่ระบบ** ด้วยอีเมล+รหัสผ่าน (หรือปุ่ม Google)
+- เข้าสู่ระบบแล้ว: เซฟจะ **อัปโหลดขึ้นคลาวด์อัตโนมัติทุกครั้งที่เกมเซฟ** (จำกัด 1 ครั้ง/15 วินาที)
+- บนเครื่องใหม่: แค่เข้าสู่ระบบบัญชีเดิม → เกม **ดึงเซฟล่าสุดจากคลาวด์มาลงช่อง 1** ให้อัตโนมัติ
+- ปุ่ม **ซิงค์** = ดันเซฟขึ้นคลาวด์เดี๋ยวนั้น · ปุ่ม **ออก** = ออกจากระบบ
+
+> เซฟจะถูกป้องกันด้วย **Row-Level Security** — ผู้เล่นอ่าน/เขียนได้เฉพาะบัญชีตัวเอง (anon key ฝัง client ได้อย่างปลอดภัย)
+> ระบบเลือกเซฟด้วย **newest-wins** (เวลาล่าสุดชนะ) — ถ้าเครื่อง A เพิ่งเซฟ แล้วเข้า B ระบบจะโหลดของ A ให้
+
+## ถ้าไม่ตั้งค่า
+ไม่กรอก `ONLINE_CONFIG` = ปุ่มเข้าสู่ระบบจะแจ้งว่ายังไม่ได้ตั้งค่า และเกมยังเซฟลงเครื่อง (localStorage) ตามปกติ
