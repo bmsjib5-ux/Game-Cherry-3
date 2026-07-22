@@ -10069,7 +10069,7 @@ export default function CherryAdventure() {
     G.openEquip = () => {
       if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
       G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
-      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI - Math.PI / 4; } // face the camera at a 45° 3/4 angle
+      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI; } // face the camera straight on
       G.mode = "create"; // 3D turntable framing (React creator UI stays hidden — that keys on ui.mode)
       G.equipOpen = true;
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
