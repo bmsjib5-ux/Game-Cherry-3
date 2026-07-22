@@ -19420,21 +19420,27 @@ export default function CherryAdventure() {
         <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} style={{ position: "absolute", right: 12, bottom: 150, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 24 }}>☰</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
+        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, bottom: 348, width: 48, height: 48, borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#a78bff,#8a6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(120,90,200,0.42)", zIndex: 24 }}>🎒</button>
+      )}
+      {ui.mode === "explore" && !ui.equipScreen && (
+        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", left: 12, bottom: 282, width: 48, height: 48, borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#f2b24d,#d8912a)", color: "#fff", boxShadow: "0 4px 12px rgba(200,150,60,0.42)", zIndex: 24 }}>⚡</button>
+      )}
+      {ui.mode === "explore" && !ui.equipScreen && (
+        <button onClick={() => G.toggleSocial()} title="เพื่อน & สู้ผี" style={{ position: "absolute", left: 12, bottom: 216, width: 48, height: 48, borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥</button>
+      )}
+      {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => G.usePotion()} style={{ position: "absolute", right: 12, bottom: 84, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
       )}
       {ui.menuOpen && (
         <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-end", justifyContent: "flex-end", zIndex: 66 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ margin: "0 12px 212px 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(4, 54px)", gap: 12 }}>
             {[
-              ["🎒", "แต่งตัว & ช่องเก็บของ", () => G.openEquip(), "#b79bff"],
-              ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel"), "#b79bff"],
-              ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
+                          ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
               ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
               ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
               ["⛏️", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
               ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
-              ["👥", "เพื่อน & สู้ผี", () => G.toggleSocial(), "#5fb0f0"],
-              ["📜", "เควส", () => toggleMenu("questOpen"), "#5fb0f0"],
+                    ["📜", "เควส", () => toggleMenu("questOpen"), "#5fb0f0"],
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
               ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen"), "#6fce97"],
               ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion(), "#6fce97"],
