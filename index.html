@@ -11657,17 +11657,20 @@ function CherryAdventure() {
         G.dye = G.dye || {}; G.dye.pants = null; G.dye.shoes = null;
         applyGear();
       } else if (cat === "top") {
-        const c = CUSTOM.clothColors[i].c;
-        ctxS.fillStyle = "#" + c.toString(16).padStart(6, "0");
-        ctxS.fillRect(0, 0, 128, 128);
-        ctxS.fillStyle = "rgba(255,255,255,0.30)";
-        for (let x = 4; x < 128; x += 16) ctxS.fillRect(x, 0, 3, 128);
-        stripeTex.needsUpdate = true;
-        shirtMat.map = stripeTex; shirtMat.color.setHex(0xffffff); shirtMat.needsUpdate = true;
+        const cc = CUSTOM.clothColors[i]; // 🛡️ null/out-of-range = "no override" (e.g. restored from a save)
+        if (cc) {
+          const c = cc.c;
+          ctxS.fillStyle = "#" + c.toString(16).padStart(6, "0");
+          ctxS.fillRect(0, 0, 128, 128);
+          ctxS.fillStyle = "rgba(255,255,255,0.30)";
+          for (let x = 4; x < 128; x += 16) ctxS.fillRect(x, 0, 3, 128);
+          stripeTex.needsUpdate = true;
+          shirtMat.map = stripeTex; shirtMat.color.setHex(0xffffff); shirtMat.needsUpdate = true;
+        }
       } else if (cat === "pants") {
-        G.dye = G.dye || {}; G.dye.pants = CUSTOM.clothColors[i].c; applyGear();
+        G.dye = G.dye || {}; G.dye.pants = CUSTOM.clothColors[i] ? CUSTOM.clothColors[i].c : null; applyGear();
       } else if (cat === "shoes") {
-        G.dye = G.dye || {}; G.dye.shoes = CUSTOM.clothColors[i].c; applyGear();
+        G.dye = G.dye || {}; G.dye.shoes = CUSTOM.clothColors[i] ? CUSTOM.clothColors[i].c : null; applyGear();
       } else if (cat === "acc") {
         G.custom.acc = (i && typeof i === "object") ? i : (G.custom.acc || {});
         applyAccessories();
