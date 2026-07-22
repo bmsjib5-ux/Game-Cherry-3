@@ -19245,7 +19245,7 @@ export default function CherryAdventure() {
               <button onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 }}>✕</button>
             </div>
             {[
-              { t: "👤 ตัวละคร", items: [["🧍", "แต่งตัว & ช่องเก็บของ", () => G.openEquip()], ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel")], ["✨", "คอลเลกชัน", () => G.toggleCollection()]] },
+              { t: "👤 ตัวละคร", items: [["🎒", "แต่งตัว & ช่องเก็บของ", () => G.openEquip()], ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel")], ["✨", "คอลเลกชัน", () => G.toggleCollection()]] },
               { t: "⚔️ พลัง & อัปเกรด", items: [["🌳", "ต้นไม้ทักษะ", () => G.toggleTree()], ["🌌", "หมู่ดาว", () => G.toggleConst()], ["⛏️", "หลอม & ตีบวก", () => G.toggleForge()], ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery()]] },
               { t: "🌐 สังคม & เควส", items: [["👥", "เพื่อน & สู้ผี", () => G.toggleSocial()], ["📜", "เควส", () => toggleMenu("questOpen")]] },
               { t: "🛒 ไอเทม & อื่นๆ", items: [["🏪", "ร้านค้า", () => toggleMenu("shopOpen")], ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen")], ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion()]] },
@@ -20686,6 +20686,24 @@ export default function CherryAdventure() {
                     <button key="eqauto" onClick={() => G.autoEquip()} title="สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡ ออโต้</button>
                     <button key="eqsort" onClick={() => setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 }))} style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>⇅ {sortLabel}</button>
                   </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 }}>
+                    <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
+                    <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(255,255,255,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
+                    <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(255,255,255,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
+                  </div>
+                  {ui.sellSetup && (
+                    <div style={{ background: "rgba(20,26,20,0.6)", borderRadius: 10, padding: "8px 10px", marginBottom: 7, border: "1px solid #c9a24a33" }}>
+                      <div style={{ fontSize: 10, color: "#b8c0a8", marginBottom: 6, lineHeight: 1.5 }}>⚙️ ลำดับการขาย (บนก่อน) — ระบบเก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก แล้วขายที่เหลือ</div>
+                      {(ui.sellPriority || SLOTS).map((slot, i) => (
+                        <div key={slot} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 6px", background: "rgba(255,255,255,0.05)", borderRadius: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: "#d0b060", width: 16 }}>{i + 1}.</span>
+                          <span style={{ flex: 1, fontSize: 11.5, fontWeight: 700, color: "#d8dcc8" }}>{SLOT_NAMES[slot]}</span>
+                          <button onClick={() => G.moveSellPriority(slot, -1)} disabled={i === 0} style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === 0 ? "default" : "pointer", fontSize: 12, background: i === 0 ? "rgba(255,255,255,0.05)" : "rgba(201,162,74,0.3)", color: "#e8dcc0", fontWeight: 800 }}>▲</button>
+                          <button onClick={() => G.moveSellPriority(slot, 1)} disabled={i === (ui.sellPriority || SLOTS).length - 1} style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === (ui.sellPriority || SLOTS).length - 1 ? "default" : "pointer", fontSize: 12, background: i === (ui.sellPriority || SLOTS).length - 1 ? "rgba(255,255,255,0.05)" : "rgba(201,162,74,0.3)", color: "#e8dcc0", fontWeight: 800 }}>▼</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ overflowY: "auto", flex: 1 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5 }}>
                       {pageCells.map(renderCell)}
