@@ -9874,15 +9874,15 @@ function CherryAdventure() {
       kScab.add(sayaB, sayaW); char.add(kScab); G._kenScab = kScab;
       // 🧥 ผ้าคลุมหลังสีดำแดง (black-red back cloak / jinbaori)
       const kCape = new THREE.Group();
-      const kcO = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.66, 1.25, 24, 8, true, Math.PI * 0.58, Math.PI * 0.84), kBlack);
-      const kcI = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.64, 1.22, 24, 8, true, Math.PI * 0.6, Math.PI * 0.8), kCrim); kcI.position.y = 0.008;
-      const flareCape = (m, hh) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); const low = Math.max(0, (hh / 2 - y) / hh); const f = 1 + 0.16 * Math.pow(low, 2); p.setX(i, x * f); p.setZ(i, p.getZ(i) * f); } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
-      flareCape(kcO, 1.25); flareCape(kcI, 1.22); kCape.add(kcO, kcI);
+      const kcO = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.82, 1.78, 24, 14, true, Math.PI * 0.58, Math.PI * 0.84), kBlack); kcO.position.y = -0.26;
+      const kcI = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.8, 1.75, 24, 14, true, Math.PI * 0.6, Math.PI * 0.8), kCrim); kcI.position.y = -0.252;
+      const flareCape = (m, hh) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); const low = Math.max(0, (hh / 2 - y) / hh); const f = 1 + 0.22 * Math.pow(low, 2); p.setX(i, x * f); p.setZ(i, p.getZ(i) * f); } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
+      flareCape(kcO, 1.78); flareCape(kcI, 1.75); kCape.add(kcO, kcI);
       const kcCollar = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.032, 8, 24, Math.PI * 1.3), kBlackD); kcCollar.position.set(0, 0.62, -0.02); kcCollar.rotation.set(Math.PI / 2 - 0.3, 0, 0); kCape.add(kcCollar);
       const kcTrim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.011, 6, 24, Math.PI * 1.3), kGold); kcTrim.position.set(0, 0.63, 0.0); kcTrim.rotation.set(Math.PI / 2 - 0.3, 0, 0); kCape.add(kcTrim);
       for (let k = -2; k <= 2; k++) { const a = Math.PI + k * 0.26; const em = new THREE.Mesh(new THREE.CircleGeometry(0.03, 5), kSakura); em.position.set(Math.sin(a) * 0.6, -0.5, Math.cos(a) * 0.6); em.rotation.y = -a; kCape.add(em); }
       kCape.position.set(0, 1.6, -0.14); char.add(kCape); G._kenCape = kCape; kHakamaParts.push(kCape);
-      G._kenHakama.push({ m: kcO, base: Float32Array.from(kcO.geometry.attributes.position.array), h: 1.25 }, { m: kcI, base: Float32Array.from(kcI.geometry.attributes.position.array), h: 1.22 });
+      G._kenCapeCloth = [{ m: kcO, base: Float32Array.from(kcO.geometry.attributes.position.array), h: 1.78 }, { m: kcI, base: Float32Array.from(kcI.geometry.attributes.position.array), h: 1.75 }];
       // ===== effects: sakura petals + crimson aura =====
       const kPetalsG = new THREE.Group(); const kPetals = [];
       for (let i = 0; i < 14; i++) { const pt = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), kSakura); const ang = i / 14 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.15, y0 = 0.4 + (i % 5) * 0.42; pt.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); pt.userData = { ang, rad, y0, fall: 0.14 + (i % 3) * 0.06, spin: 0.6 + (i % 3) * 0.4 }; kPetalsG.add(pt); kPetals.push(pt); }
@@ -20056,6 +20056,7 @@ function CherryAdventure() {
         dtGlobal = dt;
         const t = clock.getElapsedTime();
         updateDamageNumbers(dt); // 💢 float the damage popups
+        if (window.__poseFn) { try { window.__poseFn({ armL, armR, wand, char, legL, legR, headG, G }); } catch (e) {} } // 🎬 studio character-sheet hook (no-op in production)
 
         // 🎬 clean backdrop on the character screens (class picker / dress-up): hide trees, monsters, decor
         {
@@ -20399,6 +20400,7 @@ function CherryAdventure() {
           G._kenPetals.forEach(p => { const u = p.userData; u.ang += dt * 0.2; p.position.x = Math.cos(u.ang) * u.rad; p.position.z = Math.sin(u.ang) * u.rad; p.position.y -= dt * u.fall; if (p.position.y < 0.2) p.position.y = 2.6; p.rotation.y += dt * u.spin; p.rotation.x += dt * 0.5; });
           const kSpd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
           if (G._kenHakama) { for (const sk of G._kenHakama) { const gp = sk.m.geometry.attributes.position, bb = sk.base, hh = sk.h; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (hh / 2 - by) / hh); if (low < 0.05) continue; const ph = Math.atan2(bz, bx); const wave = Math.sin(t * 2.1 + ph * 5) * 0.03 * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave - (0.01 + kSpd * 0.3) * low * low); } gp.needsUpdate = true; } }
+          if (G._kenCapeCloth) { for (const ck of G._kenCapeCloth) { const gp = ck.m.geometry.attributes.position, bb = ck.base, hh = ck.h; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (hh / 2 - by) / hh); if (low < 0.04) continue; const ph = Math.atan2(bz, bx); const wave = (Math.sin(t * 2.7 + ph * 6 + by * 4.5) + 0.6 * Math.sin(t * 1.7 + ph * 10)) * 0.1 * low; const billow = (0.07 + kSpd * 0.45) * low * low; gp.setX(i, bx + Math.cos(ph) * wave * 0.5); gp.setZ(i, bz + Math.sin(ph) * wave - billow); gp.setY(i, by - Math.abs(wave) * 0.35 - billow * 0.2); } gp.needsUpdate = true; } } // 🧥 ผ้าคลุมหลังปลิวตลอดเวลา
         }
         const kkt = weaponModels.kenKatana;
         if (kkt && kkt.visible) { if (kkt.userData.blade) kkt.userData.blade.material.emissiveIntensity = 0.25 + Math.abs(Math.sin(t * 2.2)) * 0.35; }
