@@ -3678,6 +3678,7 @@ const CHAR_PRESETS = [
   { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 2, hairColor: 5, hairStyle: 6, eyes: 3, outfit: 0, hero: "yuki" },
   { name: "โรส",     emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 3, outfit: 0, hero: "rose" },
   { name: "โคทาโร่", emoji: "⚔️", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 3 },
+  { name: "เคนทาโร่", emoji: "🗡️", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 0, hero: "kentaro" },
   { name: "ไครี",    emoji: "⚡", gender: 1, skin: 2, hairColor: 2, hairStyle: 5, eyes: 1, outfit: 2 },
   { name: "โนอาห์",  emoji: "🖤", gender: 1, skin: 1, hairColor: 1, hairStyle: 1, eyes: 0, outfit: 3 },
   { name: "เซเลสเทีย", emoji: "👸", gender: 0, skin: 0, hairColor: 5, hairStyle: 8, eyes: 0, outfit: 0, hero: "celestia" },
@@ -5554,6 +5555,7 @@ function CherryAdventure() {
       if (id === "haruStaff" || id === "lunaStaff") return { x: -0.12, y: 0, z: -0.45 }; // 🦸 signature staff tilted outward so the head-piece clears the chibi head
       if (id === "yukiBow") return { x: -0.15, y: 0, z: Math.PI / 2 }; // 🏹 signature bow held sideways
       if (id === "roseSword") return { x: -0.3, y: 0, z: 0.5 }; // ☀️ Lightblade katana angled up-forward
+      if (id === "kenKatana") return { x: -0.55, y: 0, z: -0.1 }; // 🗡️ katana angled down-forward
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa") return {
         x: -0.15,
@@ -7576,6 +7578,28 @@ function CherryAdventure() {
       g.scale.setScalar(1.25);
       weaponModels.roseSword = g;
     }
+    { // 🗡️ kenKatana — samurai katana (Kentaro's signature blade)
+      const g = new THREE.Group();
+      const kSt = new THREE.MeshStandardMaterial({ color: 0xd2d8e2, roughness: 0.22, metalness: 0.9 });
+      const kHm = new THREE.MeshStandardMaterial({ color: 0xf0f4fa, emissive: 0x8aa0c0, emissiveIntensity: 0.3, roughness: 0.3 });
+      const kGd = new THREE.MeshStandardMaterial({ color: 0xd8b45a, roughness: 0.35, metalness: 0.78, emissive: 0x4a3208, emissiveIntensity: 0.2 });
+      const kWd = new THREE.MeshStandardMaterial({ color: 0x141118, roughness: 0.72 });
+      const kWr = new THREE.MeshStandardMaterial({ color: 0x9a2820, roughness: 0.6 });
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.3, 10), kWd); handle.position.y = 0.08; g.add(handle);
+      for (let k = 0; k < 6; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.006, 4, 10), kWr); w.position.y = -0.03 + k * 0.06; w.rotation.x = Math.PI / 2; w.rotation.z = 0.5; g.add(w); }
+      const kashira = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.06), kGd); kashira.position.y = -0.09; g.add(kashira);
+      const tsuba = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.076, 0.016, 16), kGd); tsuba.position.y = 0.24; g.add(tsuba);
+      const tsubaR = new THREE.Mesh(new THREE.TorusGeometry(0.072, 0.008, 6, 20), kSt); tsubaR.position.y = 0.24; tsubaR.rotation.x = Math.PI / 2; g.add(tsubaR);
+      const habaki = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.034, 0.05, 8), kGd); habaki.position.y = 0.28; g.add(habaki);
+      const bend = geo => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.55)); p.setX(i, p.getX(i) + u * u * 0.09); } p.needsUpdate = true; geo.computeVertexNormals(); };
+      const bg2 = new THREE.BoxGeometry(0.05, 1.1, 0.02, 1, 12, 1); bend(bg2); const blade = new THREE.Mesh(bg2, kSt); blade.position.y = 0.88; g.add(blade);
+      const hg2 = new THREE.BoxGeometry(0.016, 1.1, 0.011, 1, 12, 1); bend(hg2); const hamon = new THREE.Mesh(hg2, kHm); hamon.position.set(0.024, 0.88, 0); g.add(hamon);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.15, 4), kSt); tip.position.set(0.13, 1.44, 0); tip.rotation.z = -0.5; tip.scale.z = 0.35; g.add(tip);
+      const glow = new THREE.PointLight(0xaad0ff, 0.3, 1.8); glow.position.y = 0.9; g.add(glow);
+      g.userData.blade = hamon; g.userData.glow = glow;
+      g.scale.setScalar(1.2);
+      weaponModels.kenKatana = g;
+    }
     Object.values(weaponModels).forEach(m => {
       m.visible = false;
       wand.add(m);
@@ -7591,6 +7615,7 @@ function CherryAdventure() {
       else if (G.heroId === "celestia" && weaponModels.lunaStaff) id = "lunaStaff";
       else if (G.heroId === "yuki" && weaponModels.yukiBow) id = "yukiBow";
       else if (G.heroId === "rose" && weaponModels.roseSword) id = "roseSword";
+      else if (G.heroId === "kentaro" && weaponModels.kenKatana) id = "kenKatana";
       curWeapon = id && weaponModels[id] ? id : CLASS_WEAPON[G.cls] || "default"; // class weapons share the class model
       Object.entries(weaponModels).forEach(([k, m]) => m.visible = k === curWeapon);
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
@@ -8749,7 +8774,7 @@ function CherryAdventure() {
       G._irisBase = irisBase;
       G.heroId = G.heroId || null;
       // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a] };
+      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408] };
       G.setHero = id => {
         G.heroId = id || null;
         (G._haruParts || []).forEach(p => p.visible = id === "haru");
@@ -8757,8 +8782,9 @@ function CherryAdventure() {
         (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
         (G._yukiParts || []).forEach(p => p.visible = id === "yuki");
         (G._roseParts || []).forEach(p => p.visible = id === "rose");
+        (G._kenParts || []).forEach(p => p.visible = id === "kentaro");
         (G._dressButtons || []).forEach(b => b.visible = !id);
-        if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose"; } // 👸🌙❄️ ฮีโร่ใช้ผมประจำตัว
+        if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro"; } // 👸🌙❄️ ฮีโร่ใช้ผมประจำตัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = true; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.applyGear) G.applyGear();
@@ -9752,6 +9778,72 @@ function CherryAdventure() {
       const roseParts = [rHair, rOutfit, rCape, rSkirtW, rSkirtB, ...rSkirtDeco, rMotesG, rGlowL, rCircleG, ...rLegParts, ...rBootL, ...rBootR2, ...rArmParts];
       roseParts.forEach(p => p.visible = false);
       G._roseParts = roseParts;
+    }
+
+    // ---------- 🗡️ KENTARO signature look (Dual-Blade Samurai — นักดาบคู่) ----------
+    {
+      const kNavy = new THREE.MeshStandardMaterial({ color: 0x1c2c50, roughness: 0.7, metalness: 0.05 });
+      const kNavyD = new THREE.MeshStandardMaterial({ color: 0x101830, roughness: 0.68 });
+      const kRed = new THREE.MeshStandardMaterial({ color: 0xa8322a, roughness: 0.55, emissive: 0x350a06, emissiveIntensity: 0.2 });
+      const kGold = new THREE.MeshStandardMaterial({ color: 0xd8b45a, roughness: 0.35, metalness: 0.72, emissive: 0x5a4010, emissiveIntensity: 0.2 });
+      const kBlack = new THREE.MeshStandardMaterial({ color: 0x15151b, roughness: 0.55, metalness: 0.25 });
+      const kSteelM = new THREE.MeshStandardMaterial({ color: 0xccd3dd, roughness: 0.25, metalness: 0.85 });
+      const kWhiteM = new THREE.MeshStandardMaterial({ color: 0xe6e3d8, roughness: 0.62 });
+      const kHairMat = new THREE.MeshStandardMaterial({ color: 0x18181f, roughness: 0.62 });
+      const kHairHi = new THREE.MeshStandardMaterial({ color: 0x2a2a34, roughness: 0.6 });
+      // ===== hair — black spiky + topknot + red hachimaki =====
+      const kHair = new THREE.Group();
+      const kCap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 20), kHairMat); kCap.scale.set(1.03, 0.95, 1.02); kCap.position.set(0, 0.16, -0.03); kHair.add(kCap);
+      [-0.44, -0.3, -0.16, -0.05, 0.05, 0.16, 0.3, 0.44].forEach((azf, bi) => { const az = azf * Math.PI; const bl = 0.34 + (bi % 3) * 0.08; const b = new THREE.Mesh(new THREE.ConeGeometry(0.085 - (bi % 2) * 0.018, bl, 5), bi % 2 ? kHairHi : kHairMat); b.position.set(Math.sin(az) * 0.56, 0.46 - bl / 2, Math.cos(az) * 0.56); b.rotation.set(Math.PI - Math.cos(az) * 0.55, 0, Math.sin(az) * 0.55); kHair.add(b); });
+      for (const sx of [-0.2, 0, 0.2]) { const fs = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 5), kHairMat); fs.position.set(sx, 0.5, 0.5); fs.rotation.set(0.6, 0, -sx * 1.2); kHair.add(fs); }
+      const tie = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 14), kRed); tie.position.set(0, 0.66, -0.12); tie.rotation.x = Math.PI / 2; kHair.add(tie);
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), kHairMat); knot.scale.set(1, 1.15, 1); knot.position.set(0, 0.78, -0.13); kHair.add(knot);
+      const knotTip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 6), kHairMat); knotTip.position.set(0, 0.92, -0.13); knotTip.rotation.x = -0.2; kHair.add(knotTip);
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.607, 0.607, 0.11, 26, 1, true), kRed); band.position.set(0, 0.34, 0); kHair.add(band);
+      const emblem = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.02, 6), kGold); emblem.position.set(0, 0.34, 0.605); emblem.rotation.x = Math.PI / 2; kHair.add(emblem);
+      const embGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), kRed); embGem.scale.set(1, 1, 0.4); embGem.position.set(0, 0.34, 0.635); kHair.add(embGem);
+      for (const sx of [-1, 1]) { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.4, 0.012), kRed); tl.position.set(sx * 0.1, 0.1, -0.58); tl.rotation.set(-0.35, 0, sx * 0.1); kHair.add(tl); }
+      headG.add(kHair); G._kenHair = kHair;
+      // ===== outfit — white kimono + navy haori + do armor + sode + obi =====
+      const kOutfit = new THREE.Group();
+      const under = new THREE.Mesh(new THREE.LatheGeometry([[0.33, 1.26], [0.35, 1.45], [0.36, 1.66], [0.35, 1.86], [0.33, 1.99]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kWhiteM); under.scale.set(1.06, 1, 0.94); kOutfit.add(under);
+      const haori = new THREE.Mesh(new THREE.LatheGeometry([[0.355, 1.3], [0.38, 1.5], [0.395, 1.72], [0.385, 1.92], [0.35, 2.02]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kNavy); haori.scale.set(1.07, 1, 0.97);
+      { const pos = haori.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i); if (z > 0 && Math.abs(x) < 0.22) { const open = Math.max(0, 1 - Math.abs(x) / 0.22) * Math.min(1, (y - 1.3) / 0.5); pos.setZ(i, z * (1 - open * 0.92)); pos.setX(i, x + (x >= 0 ? 1 : -1) * open * 0.15); } } pos.needsUpdate = true; haori.geometry.computeVertexNormals(); }
+      kOutfit.add(haori);
+      for (const sx of [-1, 1]) { const lap = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.52, 0.028), kNavyD); lap.position.set(sx * 0.13, 1.66, 0.3); lap.rotation.set(-0.2, 0, -sx * 0.34); kOutfit.add(lap); const lt = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.52, 0.03), kGold); lt.position.set(sx * 0.16, 1.66, 0.31); lt.rotation.set(-0.2, 0, -sx * 0.34); kOutfit.add(lt); }
+      for (const yy of [1.42, 1.55, 1.68]) { const slat = new THREE.Mesh(new THREE.CylinderGeometry(0.365, 0.365, 0.1, 20, 1, true, -0.85, 1.7), kBlack); slat.position.set(0, yy, 0); slat.scale.set(1.02, 1, 0.96); kOutfit.add(slat); const gt = new THREE.Mesh(new THREE.TorusGeometry(0.372, 0.006, 6, 22, 1.7), kGold); gt.position.set(0, yy + 0.05, 0); gt.rotation.x = Math.PI / 2; gt.rotation.z = -0.85; gt.scale.set(1.02, 0.96, 1); kOutfit.add(gt); }
+      const mkSode = sx => { const grp = new THREE.Group(); for (let k = 0; k < 3; k++) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.055, 0.24), kNavyD); pl.position.y = -k * 0.075; grp.add(pl); const gt = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.012, 0.25), kGold); gt.position.y = -k * 0.075 + 0.03; grp.add(gt); } grp.position.set(sx * 0.5, 1.92, 0); grp.rotation.z = sx * 0.22; kOutfit.add(grp); return grp; };
+      mkSode(-1); mkSode(1);
+      const obi = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.385, 0.22, 24, 1, true), kRed); obi.position.y = 1.3; obi.scale.set(1.05, 1, 0.95); kOutfit.add(obi);
+      [1.4, 1.2].forEach(ty => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.008, 6, 28), kGold); t.position.y = ty; t.rotation.x = Math.PI / 2; t.scale.set(1.05, 0.95, 1); kOutfit.add(t); });
+      const obiKnot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.12), kRed); obiKnot.position.set(-0.34, 1.3, -0.08); obiKnot.rotation.y = 0.3; kOutfit.add(obiKnot);
+      for (const dx of [-0.05, 0.05]) { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.02), kRed); tl.position.set(-0.36 + dx, 1.12, -0.12); tl.rotation.z = dx * 3; kOutfit.add(tl); }
+      char.add(kOutfit); G._kenOutfit = kOutfit;
+      // hakama (wide pleated pants)
+      const kHakamaParts = []; G._kenHakama = [];
+      const mkHakama = (rTop, rBot, h, py, mat, pleats, amp) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 44, 6, true); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const ang = Math.atan2(z, x); const low = Math.max(0, (h / 2 - y) / h); const f = 1 + Math.sin(ang * pleats) * amp * low; p.setX(i, x * f); p.setZ(i, z * f); } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.y = py; char.add(m); kHakamaParts.push(m); G._kenHakama.push({ m, base: Float32Array.from(p.array), h }); return m; };
+      mkHakama(0.37, 0.6, 1.0, 0.66, kNavy, 16, 0.05);
+      mkHakama(0.6, 0.605, 0.03, 0.17, kGold, 16, 0.05);
+      const kLegParts = [];
+      for (const leg of [legL, legR]) { const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.3, 12), kNavyD); wrap.position.set(0, -0.28, 0.01); leg.add(wrap); kLegParts.push(wrap); const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.22, 10, 1, true, -0.9, 1.8), kBlack); shin.position.set(0, -0.28, 0.02); leg.add(shin); kLegParts.push(shin); for (let k = 0; k < 3; k++) { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.006, 6, 12, 1.7), kGold); bd.position.set(0, -0.2 - k * 0.08, 0.02); bd.rotation.x = Math.PI / 2; bd.rotation.z = -0.85; leg.add(bd); kLegParts.push(bd); } }
+      const kBootParts = [];
+      const mkBootK = leg => { const grp = []; const kn = leg.userData.knee || leg; const foot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), kBlack); foot.scale.set(1, 0.55, 1.5); foot.position.set(0, -0.5, 0.08); kn.add(foot); grp.push(foot); const strap = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 14), kWhiteM); strap.position.set(0, -0.46, 0.06); strap.rotation.x = Math.PI / 2 - 0.3; kn.add(strap); grp.push(strap); const sole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.32), kWhiteM); sole.position.set(0, -0.56, 0.06); kn.add(sole); grp.push(sole); return grp; };
+      const kBootL = mkBootK(legL), kBootR = mkBootK(legR); G._kenShoeMat = kBlack;
+      // ===== dual wield — left-hand katana + hip scabbards =====
+      const mkBlade = () => { const bg = new THREE.Group(); const h = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.28, 8), kBlack); h.position.y = 0.06; bg.add(h); for (let k = 0; k < 5; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 4, 10), kRed); w.position.y = -0.05 + k * 0.06; w.rotation.x = Math.PI / 2; w.rotation.z = 0.5; bg.add(w); } const ts = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.014, 14), kGold); ts.position.y = 0.2; bg.add(ts); const bend = geo => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.5)); p.setX(i, p.getX(i) + u * u * 0.08); } p.needsUpdate = true; geo.computeVertexNormals(); }; const blg = new THREE.BoxGeometry(0.042, 0.95, 0.016, 1, 10, 1); bend(blg); const bl = new THREE.Mesh(blg, kSteelM); bl.position.y = 0.72; bg.add(bl); const tp = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.13, 4), kSteelM); tp.position.set(0.1, 1.2, 0); tp.rotation.z = -0.5; tp.scale.z = 0.35; bg.add(tp); return bg; };
+      const leftBlade = mkBlade(); leftBlade.position.set(0.0, -0.55, 0.14); leftBlade.rotation.set(-0.5, 0, 0.15); (armL.userData.elbow || armL).add(leftBlade); G._kenLeftBlade = leftBlade;
+      const kScab = new THREE.Group();
+      for (const [off, col] of [[0.0, kBlack], [0.06, kNavyD]]) { const saya = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.03, 0.95, 10), col); { const p = saya.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.5)); p.setX(i, p.getX(i) + u * u * 0.05); } p.needsUpdate = true; saya.geometry.computeVertexNormals(); } saya.position.set(off, 0, 0); const cap = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), kGold); cap.position.set(off, -0.48, 0); kScab.add(saya, cap); }
+      kScab.position.set(-0.42, 1.2, -0.12); kScab.rotation.set(0.3, 0, -0.4); char.add(kScab); G._kenScab = kScab;
+      // ===== effects: sakura petals + red aura =====
+      const kPetalsG = new THREE.Group(); const kPetals = [];
+      const petalMat = new THREE.MeshStandardMaterial({ color: 0xf2a8c0, roughness: 0.6, side: THREE.DoubleSide, emissive: 0x6a2030, emissiveIntensity: 0.2 });
+      for (let i = 0; i < 14; i++) { const pt = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), petalMat); const ang = i / 14 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.15, y0 = 0.4 + (i % 5) * 0.42; pt.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); pt.userData = { ang, rad, y0, fall: 0.14 + (i % 3) * 0.06, spin: 0.6 + (i % 3) * 0.4 }; kPetalsG.add(pt); kPetals.push(pt); }
+      char.add(kPetalsG); G._kenPetals = kPetals;
+      const kGlowL = new THREE.PointLight(0xff8060, 0.4, 5); kGlowL.position.set(0, 1.5, 0.3); char.add(kGlowL);
+      const kenParts = [kHair, kOutfit, kScab, leftBlade, kPetalsG, kGlowL, ...kHakamaParts, ...kLegParts, ...kBootL, ...kBootR];
+      kenParts.forEach(p => p.visible = false);
+      G._kenParts = kenParts;
     }
 
     // ---------- Outfits: visible on Cherry when equipped ----------
@@ -11445,7 +11537,7 @@ function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
-      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : null;
+      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : null;
       if (heroShoe && !sh) shoeMeshes.forEach(s => s.material = heroShoe); // 🦸 hero signature shoes
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
@@ -11500,7 +11592,7 @@ function CherryAdventure() {
         const selfContained = i >= 5;
         if (baseHair) baseHair.visible = !selfContained;
         if (ahoge) ahoge.visible = i < 5; // hide the wisp on the sleek image styles
-        if (G.heroId === "celestia" || G.heroId === "luna" || G.heroId === "yuki" || G.heroId === "rose") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (G.heroId === "rose") hairBackGroup.visible = false; } // 👸🌙❄️ ผมประจำตัวแทนทรงปกติ
+        if (G.heroId === "celestia" || G.heroId === "luna" || G.heroId === "yuki" || G.heroId === "rose" || G.heroId === "kentaro") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (G.heroId === "rose" || G.heroId === "kentaro") hairBackGroup.visible = false; } // 👸🌙❄️ ผมประจำตัวแทนทรงปกติ
       } else if (cat === "eyes") {
         applyEyeStyle(i);
       } else if (cat === "outfit") {
@@ -20255,6 +20347,14 @@ function CherryAdventure() {
         // ☀️ Lightblade — glowing edge breathes
         const rsw = weaponModels.roseSword;
         if (rsw && rsw.visible) { if (rsw.userData.blade) rsw.userData.blade.material.emissiveIntensity = 1.0 + Math.abs(Math.sin(t * 2.4)) * 0.7; if (rsw.userData.glow) rsw.userData.glow.intensity = 0.4 + Math.abs(Math.sin(t * 2.4)) * 0.35; }
+        // 🗡️ Kentaro — sakura petals fall, hakama sways, blade gleams
+        if (G._kenPetals && G._kenPetals.length && G._kenPetals[0].parent && G._kenPetals[0].parent.visible) {
+          G._kenPetals.forEach(p => { const u = p.userData; u.ang += dt * 0.2; p.position.x = Math.cos(u.ang) * u.rad; p.position.z = Math.sin(u.ang) * u.rad; p.position.y -= dt * u.fall; if (p.position.y < 0.2) p.position.y = 2.6; p.rotation.y += dt * u.spin; p.rotation.x += dt * 0.5; });
+          const kSpd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
+          if (G._kenHakama) { for (const sk of G._kenHakama) { const gp = sk.m.geometry.attributes.position, bb = sk.base, hh = sk.h; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (hh / 2 - by) / hh); if (low < 0.05) continue; const ph = Math.atan2(bz, bx); const wave = Math.sin(t * 2.1 + ph * 5) * 0.03 * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave - (0.01 + kSpd * 0.3) * low * low); } gp.needsUpdate = true; } }
+        }
+        const kkt = weaponModels.kenKatana;
+        if (kkt && kkt.visible) { if (kkt.userData.blade) kkt.userData.blade.material.emissiveIntensity = 0.25 + Math.abs(Math.sin(t * 2.2)) * 0.35; }
         // ❄️ Frostwing bow — ice crystal breathes, wings shimmer
         const ybw = weaponModels.yukiBow;
         if (ybw && ybw.visible) { if (ybw.userData.bowGem) ybw.userData.bowGem.material.emissiveIntensity = 0.9 + Math.abs(Math.sin(t * 2)) * 0.6; if (ybw.userData.glow) ybw.userData.glow.intensity = 0.5 + Math.abs(Math.sin(t * 2)) * 0.3; }
