@@ -5525,6 +5525,10 @@ export default function CherryAdventure() {
       for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 4), kIvory); ear.position.set(sx * 0.12, 0.22, 0.0); ear.scale.z = 0.5; kMask.add(ear); const ein = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.1, 4), kCrim); ein.position.set(sx * 0.12, 0.22, 0.03); ein.scale.z = 0.5; kMask.add(ein); const eye = new THREE.Mesh(new THREE.OctahedronGeometry(0.038, 0), kCrim); eye.scale.set(1.3, 0.7, 0.4); eye.position.set(sx * 0.08, 0.02, 0.17); kMask.add(eye); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.014, 0.012), kCrim); brow.position.set(sx * 0.08, 0.1, 0.18); brow.rotation.z = sx * 0.35; kMask.add(brow); const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.014, 0.012), kCrim); cheek.position.set(sx * 0.11, -0.05, 0.17); cheek.rotation.z = -sx * 0.5; kMask.add(cheek); }
       kMask.position.set(-0.5, 0.36, 0.42); kMask.rotation.set(0.1, -1.05, 0.32); kMask.scale.setScalar(1.05); kHair.add(kMask); G._kenMask = kMask;
       headG.add(kHair); G._kenHair = kHair;
+      // 🥸 หนวดบนใบหน้า (mustache)
+      const kStache = new THREE.Group();
+      for (const sx of [-1, 1]) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.036, 0.03), kHairMat); st.position.set(sx * 0.065, -0.14, 0.575); st.rotation.z = sx * 0.28; kStache.add(st); const tipn = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.08, 5), kHairMat); tipn.position.set(sx * 0.145, -0.175, 0.57); tipn.rotation.z = sx * 1.3; kStache.add(tipn); }
+      headG.add(kStache); G._kenStache = kStache;
       // ===== outfit — black kimono / dark-red inner robe / armored haori =====
       const kOutfit = new THREE.Group();
       const under = new THREE.Mesh(new THREE.LatheGeometry([[0.33, 1.26], [0.35, 1.45], [0.36, 1.66], [0.35, 1.86], [0.33, 1.99]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kCrim); under.scale.set(1.06, 1, 0.94); kOutfit.add(under);
@@ -5554,12 +5558,16 @@ export default function CherryAdventure() {
       // ===== short hakama — black + red trim + thigh straps =====
       const kHakamaParts = []; G._kenHakama = [];
       const mkHakama = (rTop, rBot, h, py, mat, pleats, amp) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 44, 6, true); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const ang = Math.atan2(z, x); const low = Math.max(0, (h / 2 - y) / h); const f = 1 + Math.sin(ang * pleats) * amp * low; p.setX(i, x * f); p.setZ(i, z * f); } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.y = py; char.add(m); kHakamaParts.push(m); G._kenHakama.push({ m, base: Float32Array.from(p.array), h }); return m; };
-      mkHakama(0.37, 0.56, 0.78, 0.78, kBlack, 16, 0.05);
-      mkHakama(0.56, 0.565, 0.03, 0.4, kCrim, 16, 0.05);
+      // 👖 ผ้าคลุมกางเกง — แผงผ้าคลุมหน้า-หลัง เปิดข้าง พริ้วตามลม (แทนกระโปรงฮากามะ)
+      const mkPanel = (rTop, rBot, h, thetaStart, thetaLen, py, faceBack) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 22, 6, true, thetaStart, thetaLen); const m = new THREE.Mesh(geo, kBlack); m.position.y = py; if (faceBack) m.rotation.y = Math.PI; char.add(m); kHakamaParts.push(m); G._kenHakama.push({ m, base: Float32Array.from(geo.attributes.position.array), h }); const tgeo = new THREE.CylinderGeometry(rBot + 0.006, rBot + 0.01, 0.06, 22, 2, true, thetaStart, thetaLen); const tm = new THREE.Mesh(tgeo, kCrim); tm.position.y = py - h / 2 + 0.03; if (faceBack) tm.rotation.y = Math.PI; char.add(tm); kHakamaParts.push(tm); G._kenHakama.push({ m: tm, base: Float32Array.from(tgeo.attributes.position.array), h: 0.06 }); return m; };
+      mkPanel(0.37, 0.46, 0.72, -0.68, 1.36, 0.86, false);
+      mkPanel(0.37, 0.52, 0.94, -0.82, 1.64, 0.73, true);
       const kLegParts = [];
       for (const leg of [legL, legR]) { const th = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.135, 0.26, 12), kBlack); th.position.set(0, -0.1, 0.0); leg.add(th); kLegParts.push(th); for (const sy of [-0.06, -0.16]) { const strap = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.014, 5, 16), kLeather); strap.position.set(0, sy, 0.0); strap.rotation.x = Math.PI / 2; leg.add(strap); kLegParts.push(strap); } const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), kGold); buckle.position.set(0, -0.06, 0.15); leg.add(buckle); kLegParts.push(buckle); }
       // ===== armored boots — black leather + gold trim =====
       const mkBootK = leg => { const grp = []; const kn = leg.userData.knee || leg; const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.115, 0.44, 14), kBlack); shin.position.y = -0.24; kn.add(shin); grp.push(shin); const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.02, 6, 16), kGold); cuff.position.y = -0.02; cuff.rotation.x = Math.PI / 2; kn.add(cuff); grp.push(cuff); const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.26, 12, 1, true, -0.9, 1.8), kSteelD); plate.position.set(0, -0.24, 0.01); kn.add(plate); grp.push(plate); const band = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.006, 6, 14, 1.7), kGold); band.position.set(0, -0.36, 0.01); band.rotation.set(Math.PI / 2, 0, -0.85); kn.add(band); grp.push(band); const foot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), kBlack); foot.scale.set(1, 0.55, 1.5); foot.position.set(0, -0.5, 0.1); kn.add(foot); grp.push(foot); const toe = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), kGold); toe.scale.set(1, 0.5, 1.1); toe.position.set(0, -0.52, 0.24); kn.add(toe); grp.push(toe); return grp; };
+      // 👖 กางเกงสีดำตัวใหญ่ (baggy black pants)
+      for (const leg of [legL, legR]) { const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.17, 0.52, 16), kBlack); bag.position.set(0, -0.18, 0.01); leg.add(bag); kLegParts.push(bag); const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.172, 0.022, 6, 18), kCrim); cuff.position.set(0, -0.42, 0.01); cuff.rotation.x = Math.PI / 2; leg.add(cuff); kLegParts.push(cuff); const gc = new THREE.Mesh(new THREE.TorusGeometry(0.182, 0.007, 6, 18), kGold); gc.position.set(0, -0.4, 0.01); gc.rotation.x = Math.PI / 2; leg.add(gc); kLegParts.push(gc); }
       const kBootL = mkBootK(legL), kBootR = mkBootK(legR); G._kenShoeMat = kBlack;
       // ===== fingerless gloves + dark-steel wrist guards =====
       const kArmParts = [];
@@ -5577,7 +5585,7 @@ export default function CherryAdventure() {
       for (let i = 0; i < 14; i++) { const pt = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), kSakura); const ang = i / 14 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.15, y0 = 0.4 + (i % 5) * 0.42; pt.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); pt.userData = { ang, rad, y0, fall: 0.14 + (i % 3) * 0.06, spin: 0.6 + (i % 3) * 0.4 }; kPetalsG.add(pt); kPetals.push(pt); }
       char.add(kPetalsG); G._kenPetals = kPetals;
       const kGlowL = new THREE.PointLight(0xff5040, 0.4, 5); kGlowL.position.set(0, 1.5, 0.3); char.add(kGlowL);
-      const kenParts = [kHair, kOutfit, kScab, leftBlade, kPetalsG, kGlowL, ...kHakamaParts, ...kLegParts, ...kBootL, ...kBootR, ...kArmParts];
+      const kenParts = [kHair, kStache, kOutfit, kScab, leftBlade, kPetalsG, kGlowL, ...kHakamaParts, ...kLegParts, ...kBootL, ...kBootR, ...kArmParts];
       kenParts.forEach(p => p.visible = false);
       G._kenParts = kenParts;
     }
