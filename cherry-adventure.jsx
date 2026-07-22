@@ -19420,30 +19420,23 @@ export default function CherryAdventure() {
         <button onClick={() => G.usePotion()} style={{ position: "absolute", right: 12, bottom: 84, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
       )}
       {ui.menuOpen && (
-        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 66 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, maxHeight: "82%", overflowY: "auto", background: "#fbf7f2", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px" }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#5a4a6a" }}>☰ เมนู</div>
-              <div style={{ flex: 1 }} />
-              <button onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 }}>✕</button>
-            </div>
+        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-end", justifyContent: "flex-end", zIndex: 66 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ margin: "0 12px 212px 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(4, 54px)", gap: 12 }}>
             {[
-              { t: "👤 ตัวละคร", items: [["🎒", "แต่งตัว & ช่องเก็บของ", () => G.openEquip()], ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel")], ["✨", "คอลเลกชัน", () => G.toggleCollection()]] },
-              { t: "⚔️ พลัง & อัปเกรด", items: [["🌳", "ต้นไม้ทักษะ", () => G.toggleTree()], ["🌌", "หมู่ดาว", () => G.toggleConst()], ["⛏️", "หลอม & ตีบวก", () => G.toggleForge()], ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery()]] },
-              { t: "🌐 สังคม & เควส", items: [["👥", "เพื่อน & สู้ผี", () => G.toggleSocial()], ["📜", "เควส", () => toggleMenu("questOpen")]] },
-              { t: "🛒 ไอเทม & อื่นๆ", items: [["🏪", "ร้านค้า", () => toggleMenu("shopOpen")], ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen")], ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion()]] },
-            ].map((cat) => (
-              <div key={cat.t} style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a07a4a", margin: "2px 2px 8px" }}>{cat.t}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
-                  {cat.items.map((it) => (
-                    <button key={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", borderRadius: 14, border: "1px solid #ece0d4", cursor: "pointer", background: "#fff", fontFamily: font, textAlign: "left" }}>
-                      <span style={{ fontSize: 22 }}>{it[0]}</span>
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: "#5a4a42" }}>{it[1]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              ["🎒", "แต่งตัว & ช่องเก็บของ", () => G.openEquip(), "#b79bff"],
+              ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel"), "#b79bff"],
+              ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
+              ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
+              ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
+              ["⛏️", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
+              ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
+              ["👥", "เพื่อน & สู้ผี", () => G.toggleSocial(), "#5fb0f0"],
+              ["📜", "เควส", () => toggleMenu("questOpen"), "#5fb0f0"],
+              ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
+              ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen"), "#6fce97"],
+              ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion(), "#6fce97"],
+            ].map((it) => (
+              <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
           </div>
         </div>
