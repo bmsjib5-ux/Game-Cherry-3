@@ -19570,6 +19570,7 @@ function CherryAdventure() {
       G.tfGauge = 0; // ⚡ fresh power gauge
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
+      if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
       G.ultAlt = false;
       G.pathId = null; // 🌟 fresh character has no path yet
       G.titleId = "t_none";
@@ -20289,7 +20290,8 @@ function CherryAdventure() {
     // challenge an online friend
     G.pvpChallenge = async friend => {
       if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
-      if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อนถึงจะดวลกับเพื่อนได้"); return; }
+      if (G.ensurePid) G.ensurePid();
+      if (G.startPresence) G.startPresence(); // make sure my own duel poller is live too
       if (!friend || !friend.pid) { toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์"); return; }
       if (friend.pid === G.pid) { toast("ดวลกับตัวเองไม่ได้นะ 😅"); return; }
       const on = G._online && G._online[friend.pid] && G._online[friend.pid].online;
@@ -20316,7 +20318,7 @@ function CherryAdventure() {
     // poll for incoming challenges (called from the presence heartbeat)
     G._pvpHandled = {};
     G.pollDuels = async () => {
-      if (!CN.enabled() || G.auth.status !== "in" || !G.pid) return;
+      if (!CN.enabled() || !G.pid) return; // pid-based (anon) — works with or without an account
       if (G._pvpBusy || G._pvpIncoming || G._pvpOutgoing) return; // don't interrupt an ongoing duel/prompt
       const rows = await CN.getIncomingDuels(G.pid);
       if (!rows || !rows.length) return;
@@ -20542,6 +20544,7 @@ function CherryAdventure() {
       G.pid = d.pid || null;
       G.tfGauge = d.tfGauge || 0; // ⚡ restore the accumulated power gauge
       if (G.ensurePid) G.ensurePid(); // 🪪 make sure this save has a stable online id
+      if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
       if (d.buddy && G.pets[d.buddy]) G.setBuddy(d.buddy);else G.setBuddy(null);
