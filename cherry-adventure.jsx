@@ -928,7 +928,7 @@ export default function CherryAdventure() {
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
-    warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
+    warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
     toast: "", toastAt: 0,
   });
 
@@ -10027,6 +10027,7 @@ export default function CherryAdventure() {
       if (it.slot === "weapon") G.setWeaponVisual(id);
       else if (it.slot === "outfit") G.setOutfitVisual(id);
       else applyGear(); // hat/mask/gloves/pants/shoes visuals
+      if (G._gearHidden) G.setGearHidden(true); // keep the base-body preview consistent
       // ✨ dazzling burst for rare+ gear
       const tier = TIER[it.rarity] || 1;
       if (tier >= 3) burst(char.position, ELEM_GLOW[it.elem] || 0xffe28a, 1 + tier * 0.4);
@@ -10041,11 +10042,30 @@ export default function CherryAdventure() {
       if (slot === "weapon") G.setWeaponVisual(null);
       else if (slot === "outfit") G.setOutfitVisual(null);
       else applyGear();
+      if (G._gearHidden) G.setGearHidden(true); // keep the base-body preview consistent
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       toast(`ถอด${SLOT_NAMES[slot] || ""}แล้ว`);
       syncPlayer();
     };
     G.spinChar = (d) => { if (char) char.rotation.y += d; };
+    // 🙈 dressing-room preview: hide the currently-worn gear to see the base character; the weapon stays in hand. Stats are untouched.
+    G.setGearHidden = (on) => {
+      G._gearHidden = !!on;
+      const eq = G.equip || {}, cos = G.costume || {};
+      if (on) {
+        G.equip = { weapon: eq.weapon };
+        G.costume = { weapon: cos.weapon || null };
+        try {
+          if (G.setOutfitVisual) G.setOutfitVisual(null);
+          applyGear();
+          if (G.setWeaponVisual) G.setWeaponVisual(eq.weapon || null);
+        } finally { G.equip = eq; G.costume = cos; }
+      } else {
+        if (G.setOutfitVisual) G.setOutfitVisual(eq.outfit || null);
+        applyGear();
+        if (G.setWeaponVisual) G.setWeaponVisual(eq.weapon || null);
+      }
+    };
     G.openEquip = () => {
       if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
       G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
@@ -10055,7 +10075,8 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, gold: G.gold }));
+      G._gearHidden = false; // always start showing the worn gear
+      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: false, gold: G.gold }));
       syncPlayer();
     };
     G.closeEquip = () => {
@@ -10064,7 +10085,8 @@ export default function CherryAdventure() {
       G.mode = "explore";
       if (char && G._equipPrevPos) char.position.set(G._equipPrevPos.x, 0, G._equipPrevPos.z);
       if (char) char.rotation.y = Math.PI / 2; // face walking direction again
-      setUi((u) => ({ ...u, equipScreen: false }));
+      if (G._gearHidden) G.setGearHidden(false); // 🙈 never carry the hidden-gear preview into gameplay
+      setUi((u) => ({ ...u, equipScreen: false, hideGear: false }));
     };
 
     // 🎽 auto-equip: put on the strongest item in every slot
@@ -10090,6 +10112,7 @@ export default function CherryAdventure() {
       if (G.applyClassOutfit) G.applyClassOutfit(G.cls); // 👗 class outfit look
       G.setOutfitVisual(G.equip.outfit);
       applyGear();
+      if (G._gearHidden) G.setGearHidden(true); // keep the base-body preview consistent
       toast(changed ? `🎽 สวมใส่ของแรงสุดครบ ${changed} ชิ้น!` : "🎽 สวมของดีที่สุดอยู่แล้ว");
       syncPlayer();
     };
@@ -20927,6 +20950,7 @@ export default function CherryAdventure() {
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡ ออโต้</button>
                     <button key="eqsort" onClick={() => setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 }))} style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>⇅ {sortLabel}</button>
+                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 }}>
                     <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
