@@ -19843,27 +19843,32 @@ function CherryAdventure() {
       return null;
     };
     // pick the save blob to upload: the active slot if it holds a character, else the strongest non-empty slot
-    G._bestSaveRaw = () => {
-      try {
-        const act = window.localStorage.getItem(slotKey());
-        if (act) { try { if (JSON.parse(act).player) return act; } catch (e) {} }
-      } catch (e) {}
-      let best = null, bestLv = -1;
+    // pick the slot to sync: the active slot if it holds a character, else the strongest non-empty slot (-1 = none)
+    G._bestSaveSlot = () => {
+      try { const act = window.localStorage.getItem(slotKey()); if (act && JSON.parse(act).player) return G.saveSlot; } catch (e) {}
+      let best = -1, bestLv = -1;
       for (let i = 0; i < 6; i++) {
-        try { const r = window.localStorage.getItem(slotKey(i)); if (!r) continue; const d = JSON.parse(r); if (d && d.player) { const lv = (d.player.level || 0) + (d.ngPlus || 0) * 1000; if (lv > bestLv) { bestLv = lv; best = r; } } } catch (e) {}
+        try { const r = window.localStorage.getItem(slotKey(i)); if (!r) continue; const d = JSON.parse(r); if (d && d.player) { const lv = (d.player.level || 0) + (d.ngPlus || 0) * 1000; if (lv > bestLv) { bestLv = lv; best = i; } } } catch (e) {}
       }
       return best;
+    };
+    G._bestSaveRaw = () => {
+      const i = G._bestSaveSlot();
+      if (i < 0) return null;
+      try { return window.localStorage.getItem(slotKey(i)); } catch (e) { return null; }
     };
     G._cloudPush = async (force) => {
       if (G.auth.status !== "in") return false;
       const now = Date.now();
       if (!force && G._lastCloud && now - G._lastCloud < 15000) return false;
       const token = await G._authToken(); if (!token) return false;
-      const raw = G._bestSaveRaw();
-      if (!raw) return false;
-      let data; try { data = JSON.parse(raw); } catch (e) { return false; }
+      const slot = G._bestSaveSlot();
+      if (slot < 0) return false;
+      let data; try { data = JSON.parse(window.localStorage.getItem(slotKey(slot))); } catch (e) { return false; }
+      if (!data) return false;
       G._lastCloud = now;
       data.ts = now;
+      data._slot = slot; // 🎯 remember which local slot this save belongs to
       const ok = await CN.putSave(token, G.auth.uid, data, now);
       if (ok) setUi(u => ({ ...u, cloudSyncedAt: now }));
       return ok;
@@ -19874,11 +19879,13 @@ function CherryAdventure() {
       const row = await CN.getSave(token, G.auth.uid);
       if (!row || !row.data) { await G._cloudPush(true); return { loaded: false }; }
       const cloud = row.data;
-      let localTs = 0; try { const r = window.localStorage.getItem(slotKey(0)); if (r) localTs = (JSON.parse(r).ts) || 0; } catch (e) {}
+      // 🎯 land the cloud save in the slot it came from — never clobber a different character sitting in slot 0
+      const slot = (typeof cloud._slot === "number" && cloud._slot >= 0 && cloud._slot < 6) ? cloud._slot : 0;
+      let localTs = 0; try { const r = window.localStorage.getItem(slotKey(slot)); if (r) localTs = (JSON.parse(r).ts) || 0; } catch (e) {}
       if ((cloud.ts || 0) >= localTs) {
-        try { window.localStorage.setItem(slotKey(0), JSON.stringify(cloud)); } catch (e) {}
+        try { window.localStorage.setItem(slotKey(slot), JSON.stringify(cloud)); } catch (e) {}
         setUi(u => ({ ...u, slots: G.readSlots ? G.readSlots() : u.slots }));
-        return { loaded: true };
+        return { loaded: true, slot };
       }
       await G._cloudPush(true);
       return { loaded: false };
@@ -19895,7 +19902,7 @@ function CherryAdventure() {
       if (!r.ok) { toast("⚠️ " + r.err); return r; }
       _applySession(r.session); toast("✅ เข้าสู่ระบบแล้ว");
       const p = await G._cloudPull();
-      if (p.loaded) { toast("☁️ โหลดเซฟจากคลาวด์แล้ว — แตะ ช่อง 1 เพื่อเล่นต่อ"); setUi(u => ({ ...u, slots: G.readSlots() })); }
+      if (p.loaded) { toast(`☁️ โหลดเซฟจากคลาวด์แล้ว — แตะ ช่อง ${(p.slot || 0) + 1} เพื่อเล่นต่อ`); setUi(u => ({ ...u, slots: G.readSlots() })); }
       else if (G._bestSaveRaw && G._bestSaveRaw()) toast("☁️ อัปโหลดเซฟเครื่องนี้ขึ้นคลาวด์แล้ว");
       else toast("บัญชีนี้ยังไม่มีเซฟบนคลาวด์ — เริ่มเล่นได้เลย");
       return r;
