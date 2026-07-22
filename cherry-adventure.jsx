@@ -3464,25 +3464,27 @@ export default function CherryAdventure() {
       g.scale.setScalar(1.25);
       weaponModels.roseSword = g;
     }
-    { // 🗡️ kenKatana — samurai katana (Kentaro's signature blade)
+    { // 🗡️ kenKatana — Shirohikari (silver blade, gold edge, sakura tsuba — Kentaro's right sword)
       const g = new THREE.Group();
-      const kSt = new THREE.MeshStandardMaterial({ color: 0xd2d8e2, roughness: 0.22, metalness: 0.9 });
-      const kHm = new THREE.MeshStandardMaterial({ color: 0xf0f4fa, emissive: 0x8aa0c0, emissiveIntensity: 0.3, roughness: 0.3 });
-      const kGd = new THREE.MeshStandardMaterial({ color: 0xd8b45a, roughness: 0.35, metalness: 0.78, emissive: 0x4a3208, emissiveIntensity: 0.2 });
-      const kWd = new THREE.MeshStandardMaterial({ color: 0x141118, roughness: 0.72 });
-      const kWr = new THREE.MeshStandardMaterial({ color: 0x9a2820, roughness: 0.6 });
-      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.3, 10), kWd); handle.position.y = 0.08; g.add(handle);
-      for (let k = 0; k < 6; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.006, 4, 10), kWr); w.position.y = -0.03 + k * 0.06; w.rotation.x = Math.PI / 2; w.rotation.z = 0.5; g.add(w); }
-      const kashira = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.06), kGd); kashira.position.y = -0.09; g.add(kashira);
-      const tsuba = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.076, 0.016, 16), kGd); tsuba.position.y = 0.24; g.add(tsuba);
-      const tsubaR = new THREE.Mesh(new THREE.TorusGeometry(0.072, 0.008, 6, 20), kSt); tsubaR.position.y = 0.24; tsubaR.rotation.x = Math.PI / 2; g.add(tsubaR);
+      const kSt = new THREE.MeshStandardMaterial({ color: 0xdde3ee, roughness: 0.18, metalness: 0.92 });
+      const kEdge = new THREE.MeshStandardMaterial({ color: 0xf6e0a0, emissive: 0xd8a838, emissiveIntensity: 0.85, roughness: 0.2, metalness: 0.4 });
+      const kGd = new THREE.MeshStandardMaterial({ color: 0xe0c070, roughness: 0.32, metalness: 0.82, emissive: 0x5a4010, emissiveIntensity: 0.22 });
+      const kWh = new THREE.MeshStandardMaterial({ color: 0xf0ece0, roughness: 0.5 });
+      const kSak = new THREE.MeshStandardMaterial({ color: 0xf6c8d8, roughness: 0.5, side: THREE.DoubleSide });
+      const kCry = new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xe0a828, emissiveIntensity: 1.1, roughness: 0.1 });
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.3, 10), kWh); handle.position.y = 0.08; g.add(handle);
+      for (let k = 0; k < 6; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.006, 4, 10), kGd); w.position.y = -0.03 + k * 0.06; w.rotation.x = Math.PI / 2; w.rotation.z = 0.5; g.add(w); }
+      const pom = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), kCry); pom.position.y = -0.1; g.add(pom); // golden crystal pommel
+      // sakura-shaped tsuba (5 petals)
+      for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; const pet = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), kSak); pet.scale.set(1, 0.5, 1.2); pet.position.set(Math.cos(a) * 0.05, 0.24, Math.sin(a) * 0.05); g.add(pet); }
+      const tCore = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.02, 12), kGd); tCore.position.y = 0.24; g.add(tCore);
       const habaki = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.034, 0.05, 8), kGd); habaki.position.y = 0.28; g.add(habaki);
       const bend = geo => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.55)); p.setX(i, p.getX(i) + u * u * 0.09); } p.needsUpdate = true; geo.computeVertexNormals(); };
       const bg2 = new THREE.BoxGeometry(0.05, 1.1, 0.02, 1, 12, 1); bend(bg2); const blade = new THREE.Mesh(bg2, kSt); blade.position.y = 0.88; g.add(blade);
-      const hg2 = new THREE.BoxGeometry(0.016, 1.1, 0.011, 1, 12, 1); bend(hg2); const hamon = new THREE.Mesh(hg2, kHm); hamon.position.set(0.024, 0.88, 0); g.add(hamon);
+      const eg = new THREE.BoxGeometry(0.014, 1.1, 0.011, 1, 12, 1); bend(eg); const edge = new THREE.Mesh(eg, kEdge); edge.position.set(0.024, 0.88, 0); g.add(edge);
       const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.15, 4), kSt); tip.position.set(0.13, 1.44, 0); tip.rotation.z = -0.5; tip.scale.z = 0.35; g.add(tip);
-      const glow = new THREE.PointLight(0xaad0ff, 0.3, 1.8); glow.position.y = 0.9; g.add(glow);
-      g.userData.blade = hamon; g.userData.glow = glow;
+      const glow = new THREE.PointLight(0xffe0a0, 0.35, 2); glow.position.y = 0.9; g.add(glow);
+      g.userData.blade = edge; g.userData.glow = glow;
       g.scale.setScalar(1.2);
       weaponModels.kenKatana = g;
     }
@@ -5488,68 +5490,94 @@ export default function CherryAdventure() {
       G._roseParts = roseParts;
     }
 
-    // ---------- 🗡️ KENTARO signature look (Dual-Blade Samurai — นักดาบคู่) ----------
+    // ---------- 🗡️ KENTARO — Dual Blade Ronin (นักดาบคู่ ซามูไร-นินจา) ----------
     {
-      const kNavy = new THREE.MeshStandardMaterial({ color: 0x1c2c50, roughness: 0.7, metalness: 0.05 });
-      const kNavyD = new THREE.MeshStandardMaterial({ color: 0x101830, roughness: 0.68 });
-      const kRed = new THREE.MeshStandardMaterial({ color: 0xa8322a, roughness: 0.55, emissive: 0x350a06, emissiveIntensity: 0.2 });
-      const kGold = new THREE.MeshStandardMaterial({ color: 0xd8b45a, roughness: 0.35, metalness: 0.72, emissive: 0x5a4010, emissiveIntensity: 0.2 });
-      const kBlack = new THREE.MeshStandardMaterial({ color: 0x15151b, roughness: 0.55, metalness: 0.25 });
+      const kBlack = new THREE.MeshStandardMaterial({ color: 0x17171e, roughness: 0.62, metalness: 0.1 });
+      const kBlackD = new THREE.MeshStandardMaterial({ color: 0x0d0d12, roughness: 0.6 });
+      const kSteelD = new THREE.MeshStandardMaterial({ color: 0x2c2e38, roughness: 0.4, metalness: 0.65 });
+      const kCrim = new THREE.MeshStandardMaterial({ color: 0x6e1a1a, roughness: 0.55, emissive: 0x2a0808, emissiveIntensity: 0.2 });
+      const kCrimD = new THREE.MeshStandardMaterial({ color: 0x4a1214, roughness: 0.6 });
+      const kGold = new THREE.MeshStandardMaterial({ color: 0xd8b45a, roughness: 0.32, metalness: 0.78, emissive: 0x5a4010, emissiveIntensity: 0.22 });
       const kSteelM = new THREE.MeshStandardMaterial({ color: 0xccd3dd, roughness: 0.25, metalness: 0.85 });
-      const kWhiteM = new THREE.MeshStandardMaterial({ color: 0xe6e3d8, roughness: 0.62 });
-      const kHairMat = new THREE.MeshStandardMaterial({ color: 0x18181f, roughness: 0.62 });
-      const kHairHi = new THREE.MeshStandardMaterial({ color: 0x2a2a34, roughness: 0.6 });
-      // ===== hair — black spiky + topknot + red hachimaki =====
+      const kIvory = new THREE.MeshStandardMaterial({ color: 0xf4f0e6, roughness: 0.45, emissive: 0x3a382e, emissiveIntensity: 0.35 });
+      const kLeather = new THREE.MeshStandardMaterial({ color: 0x241a16, roughness: 0.72 });
+      const kHairMat = new THREE.MeshStandardMaterial({ color: 0x14141a, roughness: 0.62 });
+      const kHairHi = new THREE.MeshStandardMaterial({ color: 0x24242e, roughness: 0.6 });
+      const kHairTip = new THREE.MeshStandardMaterial({ color: 0x6a1518, roughness: 0.55 });
+      const kSakura = new THREE.MeshStandardMaterial({ color: 0xf2a8c0, roughness: 0.55, emissive: 0x5a1830, emissiveIntensity: 0.15, side: THREE.DoubleSide });
+      // ===== hair — messy black, crimson tips, high ponytail, loose bangs =====
       const kHair = new THREE.Group();
       const kCap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 20), kHairMat); kCap.scale.set(1.03, 0.95, 1.02); kCap.position.set(0, 0.16, -0.03); kHair.add(kCap);
+      const mkLockK = (pts, r, mat, tipLen) => { const v = pts.map(p => new THREE.Vector3(p[0], p[1], p[2])); const curve = new THREE.CatmullRomCurve3(v); const gp = new THREE.Group(); gp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 12, r, 6, false), mat)); const end = v[v.length - 1], prev = v[v.length - 2], dir = end.clone().sub(prev).normalize(); const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.92, tipLen, 6), kHairTip); tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); tip.position.copy(end).addScaledVector(dir, tipLen * 0.42); gp.add(tip); return gp; };
       [-0.44, -0.3, -0.16, -0.05, 0.05, 0.16, 0.3, 0.44].forEach((azf, bi) => { const az = azf * Math.PI; const bl = 0.34 + (bi % 3) * 0.08; const b = new THREE.Mesh(new THREE.ConeGeometry(0.085 - (bi % 2) * 0.018, bl, 5), bi % 2 ? kHairHi : kHairMat); b.position.set(Math.sin(az) * 0.56, 0.46 - bl / 2, Math.cos(az) * 0.56); b.rotation.set(Math.PI - Math.cos(az) * 0.55, 0, Math.sin(az) * 0.55); kHair.add(b); });
-      for (const sx of [-0.2, 0, 0.2]) { const fs = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 5), kHairMat); fs.position.set(sx, 0.5, 0.5); fs.rotation.set(0.6, 0, -sx * 1.2); kHair.add(fs); }
-      const tie = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 14), kRed); tie.position.set(0, 0.66, -0.12); tie.rotation.x = Math.PI / 2; kHair.add(tie);
-      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), kHairMat); knot.scale.set(1, 1.15, 1); knot.position.set(0, 0.78, -0.13); kHair.add(knot);
-      const knotTip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 6), kHairMat); knotTip.position.set(0, 0.92, -0.13); knotTip.rotation.x = -0.2; kHair.add(knotTip);
-      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.607, 0.607, 0.11, 26, 1, true), kRed); band.position.set(0, 0.34, 0); kHair.add(band);
-      const emblem = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.02, 6), kGold); emblem.position.set(0, 0.34, 0.605); emblem.rotation.x = Math.PI / 2; kHair.add(emblem);
-      const embGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), kRed); embGem.scale.set(1, 1, 0.4); embGem.position.set(0, 0.34, 0.635); kHair.add(embGem);
-      for (const sx of [-1, 1]) { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.4, 0.012), kRed); tl.position.set(sx * 0.1, 0.1, -0.58); tl.rotation.set(-0.35, 0, sx * 0.1); kHair.add(tl); }
+      for (const sx of [-0.22, -0.08, 0.08, 0.22]) { const fs = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.4, 5), kHairMat); fs.position.set(sx, 0.46, 0.5); fs.rotation.set(0.7, 0, -sx * 1.3); kHair.add(fs); const ft = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 5), kHairTip); ft.position.set(sx * 1.3, 0.27, 0.6); ft.rotation.set(0.9, 0, -sx * 1.3); kHair.add(ft); }
+      const kTail = new THREE.Group();
+      kTail.add(mkLockK([[0, 0.1, -0.1], [0.03, -0.05, -0.5], [0, -0.42, -0.62], [-0.02, -0.9, -0.5]], 0.095, kHairMat, 0.26));
+      kTail.add(mkLockK([[0.08, 0.06, -0.12], [0.16, -0.2, -0.5], [0.1, -0.64, -0.54]], 0.055, kHairHi, 0.2));
+      kTail.add(mkLockK([[-0.08, 0.06, -0.12], [-0.16, -0.26, -0.48], [-0.1, -0.72, -0.5]], 0.055, kHairHi, 0.2));
+      kTail.position.set(0, 0.5, -0.24); kHair.add(kTail); G._kenTail = kTail;
+      const ptie = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.024, 6, 14), kCrim); ptie.position.set(0, 0.52, -0.3); ptie.rotation.x = 0.5; kHair.add(ptie);
+      // 🦊 white Kitsune fox mask on the LEFT side of the head (decorative)
+      const kMask = new THREE.Group();
+      const mface = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), kIvory); mface.scale.set(1, 1.12, 0.72); kMask.add(mface);
+      const msnout = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.17, 8), kIvory); msnout.rotation.x = Math.PI / 2; msnout.position.set(0, -0.06, 0.17); msnout.scale.set(1, 0.7, 1); kMask.add(msnout);
+      const mnose = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), kCrimD); mnose.position.set(0, -0.06, 0.26); kMask.add(mnose);
+      for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 4), kIvory); ear.position.set(sx * 0.12, 0.22, 0.0); ear.scale.z = 0.5; kMask.add(ear); const ein = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.1, 4), kCrim); ein.position.set(sx * 0.12, 0.22, 0.03); ein.scale.z = 0.5; kMask.add(ein); const eye = new THREE.Mesh(new THREE.OctahedronGeometry(0.038, 0), kCrim); eye.scale.set(1.3, 0.7, 0.4); eye.position.set(sx * 0.08, 0.02, 0.17); kMask.add(eye); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.014, 0.012), kCrim); brow.position.set(sx * 0.08, 0.1, 0.18); brow.rotation.z = sx * 0.35; kMask.add(brow); const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.014, 0.012), kCrim); cheek.position.set(sx * 0.11, -0.05, 0.17); cheek.rotation.z = -sx * 0.5; kMask.add(cheek); }
+      kMask.position.set(-0.5, 0.36, 0.42); kMask.rotation.set(0.1, -1.05, 0.32); kMask.scale.setScalar(1.05); kHair.add(kMask); G._kenMask = kMask;
       headG.add(kHair); G._kenHair = kHair;
-      // ===== outfit — white kimono + navy haori + do armor + sode + obi =====
+      // ===== outfit — black kimono / dark-red inner robe / armored haori =====
       const kOutfit = new THREE.Group();
-      const under = new THREE.Mesh(new THREE.LatheGeometry([[0.33, 1.26], [0.35, 1.45], [0.36, 1.66], [0.35, 1.86], [0.33, 1.99]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kWhiteM); under.scale.set(1.06, 1, 0.94); kOutfit.add(under);
-      const haori = new THREE.Mesh(new THREE.LatheGeometry([[0.355, 1.3], [0.38, 1.5], [0.395, 1.72], [0.385, 1.92], [0.35, 2.02]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kNavy); haori.scale.set(1.07, 1, 0.97);
+      const under = new THREE.Mesh(new THREE.LatheGeometry([[0.33, 1.26], [0.35, 1.45], [0.36, 1.66], [0.35, 1.86], [0.33, 1.99]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kCrim); under.scale.set(1.06, 1, 0.94); kOutfit.add(under);
+      const haori = new THREE.Mesh(new THREE.LatheGeometry([[0.355, 1.3], [0.38, 1.5], [0.395, 1.72], [0.385, 1.92], [0.35, 2.02]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kBlack); haori.scale.set(1.07, 1, 0.97);
       { const pos = haori.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i); if (z > 0 && Math.abs(x) < 0.22) { const open = Math.max(0, 1 - Math.abs(x) / 0.22) * Math.min(1, (y - 1.3) / 0.5); pos.setZ(i, z * (1 - open * 0.92)); pos.setX(i, x + (x >= 0 ? 1 : -1) * open * 0.15); } } pos.needsUpdate = true; haori.geometry.computeVertexNormals(); }
       kOutfit.add(haori);
-      for (const sx of [-1, 1]) { const lap = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.52, 0.028), kNavyD); lap.position.set(sx * 0.13, 1.66, 0.3); lap.rotation.set(-0.2, 0, -sx * 0.34); kOutfit.add(lap); const lt = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.52, 0.03), kGold); lt.position.set(sx * 0.16, 1.66, 0.31); lt.rotation.set(-0.2, 0, -sx * 0.34); kOutfit.add(lt); }
-      for (const yy of [1.42, 1.55, 1.68]) { const slat = new THREE.Mesh(new THREE.CylinderGeometry(0.365, 0.365, 0.1, 20, 1, true, -0.85, 1.7), kBlack); slat.position.set(0, yy, 0); slat.scale.set(1.02, 1, 0.96); kOutfit.add(slat); const gt = new THREE.Mesh(new THREE.TorusGeometry(0.372, 0.006, 6, 22, 1.7), kGold); gt.position.set(0, yy + 0.05, 0); gt.rotation.x = Math.PI / 2; gt.rotation.z = -0.85; gt.scale.set(1.02, 0.96, 1); kOutfit.add(gt); }
-      const mkSode = sx => { const grp = new THREE.Group(); for (let k = 0; k < 3; k++) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.055, 0.24), kNavyD); pl.position.y = -k * 0.075; grp.add(pl); const gt = new THREE.Mesh(new THREE.BoxGeometry(0.29, 0.012, 0.25), kGold); gt.position.y = -k * 0.075 + 0.03; grp.add(gt); } grp.position.set(sx * 0.5, 1.92, 0); grp.rotation.z = sx * 0.22; kOutfit.add(grp); return grp; };
-      mkSode(-1); mkSode(1);
-      const obi = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.385, 0.22, 24, 1, true), kRed); obi.position.y = 1.3; obi.scale.set(1.05, 1, 0.95); kOutfit.add(obi);
-      [1.4, 1.2].forEach(ty => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.008, 6, 28), kGold); t.position.y = ty; t.rotation.x = Math.PI / 2; t.scale.set(1.05, 0.95, 1); kOutfit.add(t); });
-      const obiKnot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.12), kRed); obiKnot.position.set(-0.34, 1.3, -0.08); obiKnot.rotation.y = 0.3; kOutfit.add(obiKnot);
-      for (const dx of [-0.05, 0.05]) { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.02), kRed); tl.position.set(-0.36 + dx, 1.12, -0.12); tl.rotation.z = dx * 3; kOutfit.add(tl); }
+      for (const sx of [-1, 1]) { const lap = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.52, 0.028), kBlackD); lap.position.set(sx * 0.13, 1.66, 0.3); lap.rotation.set(-0.2, 0, -sx * 0.34); kOutfit.add(lap); const lt = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.52, 0.03), kGold); lt.position.set(sx * 0.16, 1.66, 0.31); lt.rotation.set(-0.2, 0, -sx * 0.34); kOutfit.add(lt); }
+      // ☁️ gold cloud embroidery + sakura on the haori
+      for (const [cx, cy] of [[-0.28, 1.78], [0.28, 1.62], [-0.24, 1.5]]) { const cl = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.006, 5, 12, Math.PI * 1.4), kGold); cl.position.set(cx, cy, 0.31); cl.rotation.set(0.1, cx * 1.2, 0.6); kOutfit.add(cl); }
+      for (const [sx2, sy2] of [[0.26, 1.86], [-0.3, 1.66]]) { const fl = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), kSakura); fl.position.set(sx2, sy2, 0.33); kOutfit.add(fl); }
+      // do lamellar armor (dark steel)
+      for (const yy of [1.42, 1.55, 1.68]) { const slat = new THREE.Mesh(new THREE.CylinderGeometry(0.365, 0.365, 0.1, 20, 1, true, -0.85, 1.7), kSteelD); slat.position.set(0, yy, 0); slat.scale.set(1.02, 1, 0.96); kOutfit.add(slat); const gt = new THREE.Mesh(new THREE.TorusGeometry(0.372, 0.006, 6, 22, 1.7), kGold); gt.position.set(0, yy + 0.05, 0); gt.rotation.x = Math.PI / 2; gt.rotation.z = -0.85; gt.scale.set(1.02, 0.96, 1); kOutfit.add(gt); }
+      // asymmetric shoulder armor — right bigger, dragon-horn gold edge
+      const mkSode = (sx, sc) => { const grp = new THREE.Group(); for (let k = 0; k < 3; k++) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.28 * sc, 0.055, 0.24 * sc), kSteelD); pl.position.y = -k * 0.075; grp.add(pl); const gt = new THREE.Mesh(new THREE.BoxGeometry(0.29 * sc, 0.012, 0.25 * sc), kGold); gt.position.y = -k * 0.075 + 0.03; grp.add(gt); } grp.position.set(sx * 0.5, 1.92, 0); grp.rotation.z = sx * 0.22; kOutfit.add(grp); return grp; };
+      const sodeR = mkSode(1, 1.28); const sodeL = mkSode(-1, 0.82);
+      for (let k = 0; k < 3; k++) { const horn = new THREE.Mesh(new THREE.ConeGeometry(0.028 - k * 0.005, 0.16, 4), kGold); horn.position.set(0.16, 0.06 - k * 0.05, 0.14 - k * 0.02); horn.rotation.set(0.3, 0, -1.1); sodeR.add(horn); } // 🐉 dragon-claw gold edge on the big right pauldron
       char.add(kOutfit); G._kenOutfit = kOutfit;
-      // hakama (wide pleated pants)
+      // obi — dark red sash + gold braided rope + hanging talismans
+      const obi = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.385, 0.22, 24, 1, true), kCrim); obi.position.y = 1.3; obi.scale.set(1.05, 1, 0.95); kOutfit.add(obi);
+      [1.4, 1.2].forEach(ty => { const t = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.008, 6, 28), kGold); t.position.y = ty; t.rotation.x = Math.PI / 2; t.scale.set(1.05, 0.95, 1); kOutfit.add(t); });
+      const rope = new THREE.Mesh(new THREE.TorusGeometry(0.392, 0.014, 6, 30), kGold); rope.position.y = 1.3; rope.rotation.x = Math.PI / 2; rope.scale.set(1.05, 0.95, 1); kOutfit.add(rope);
+      const obiKnot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.12), kCrimD); obiKnot.position.set(-0.34, 1.3, -0.08); obiKnot.rotation.y = 0.3; kOutfit.add(obiKnot);
+      for (const dx of [-0.05, 0.05]) { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.02), kCrim); tl.position.set(-0.36 + dx, 1.12, -0.12); tl.rotation.z = dx * 3; kOutfit.add(tl); }
+      // hanging talismans (ofuda) + leather straps at the right hip
+      for (let k = 0; k < 2; k++) { const ofuda = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.008), kIvory); ofuda.position.set(0.34 + k * 0.05, 1.14, 0.16); ofuda.rotation.z = -0.1 + k * 0.15; kOutfit.add(ofuda); const stamp = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.09, 0.01), kCrim); stamp.position.set(0.34 + k * 0.05, 1.14, 0.166); stamp.rotation.z = -0.1 + k * 0.15; kOutfit.add(stamp); }
+      const strapL = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.01, 5, 24), kLeather); strapL.position.y = 1.24; strapL.rotation.set(Math.PI / 2, 0, 0.2); strapL.scale.set(1.05, 0.95, 1); kOutfit.add(strapL);
+      // ===== short hakama — black + red trim + thigh straps =====
       const kHakamaParts = []; G._kenHakama = [];
       const mkHakama = (rTop, rBot, h, py, mat, pleats, amp) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 44, 6, true); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const ang = Math.atan2(z, x); const low = Math.max(0, (h / 2 - y) / h); const f = 1 + Math.sin(ang * pleats) * amp * low; p.setX(i, x * f); p.setZ(i, z * f); } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.y = py; char.add(m); kHakamaParts.push(m); G._kenHakama.push({ m, base: Float32Array.from(p.array), h }); return m; };
-      mkHakama(0.37, 0.6, 1.0, 0.66, kNavy, 16, 0.05);
-      mkHakama(0.6, 0.605, 0.03, 0.17, kGold, 16, 0.05);
+      mkHakama(0.37, 0.56, 0.78, 0.78, kBlack, 16, 0.05);
+      mkHakama(0.56, 0.565, 0.03, 0.4, kCrim, 16, 0.05);
       const kLegParts = [];
-      for (const leg of [legL, legR]) { const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.3, 12), kNavyD); wrap.position.set(0, -0.28, 0.01); leg.add(wrap); kLegParts.push(wrap); const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.22, 10, 1, true, -0.9, 1.8), kBlack); shin.position.set(0, -0.28, 0.02); leg.add(shin); kLegParts.push(shin); for (let k = 0; k < 3; k++) { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.006, 6, 12, 1.7), kGold); bd.position.set(0, -0.2 - k * 0.08, 0.02); bd.rotation.x = Math.PI / 2; bd.rotation.z = -0.85; leg.add(bd); kLegParts.push(bd); } }
-      const kBootParts = [];
-      const mkBootK = leg => { const grp = []; const kn = leg.userData.knee || leg; const foot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), kBlack); foot.scale.set(1, 0.55, 1.5); foot.position.set(0, -0.5, 0.08); kn.add(foot); grp.push(foot); const strap = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 14), kWhiteM); strap.position.set(0, -0.46, 0.06); strap.rotation.x = Math.PI / 2 - 0.3; kn.add(strap); grp.push(strap); const sole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.32), kWhiteM); sole.position.set(0, -0.56, 0.06); kn.add(sole); grp.push(sole); return grp; };
+      for (const leg of [legL, legR]) { const th = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.135, 0.26, 12), kBlack); th.position.set(0, -0.1, 0.0); leg.add(th); kLegParts.push(th); for (const sy of [-0.06, -0.16]) { const strap = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.014, 5, 16), kLeather); strap.position.set(0, sy, 0.0); strap.rotation.x = Math.PI / 2; leg.add(strap); kLegParts.push(strap); } const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), kGold); buckle.position.set(0, -0.06, 0.15); leg.add(buckle); kLegParts.push(buckle); }
+      // ===== armored boots — black leather + gold trim =====
+      const mkBootK = leg => { const grp = []; const kn = leg.userData.knee || leg; const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.115, 0.44, 14), kBlack); shin.position.y = -0.24; kn.add(shin); grp.push(shin); const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.02, 6, 16), kGold); cuff.position.y = -0.02; cuff.rotation.x = Math.PI / 2; kn.add(cuff); grp.push(cuff); const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.26, 12, 1, true, -0.9, 1.8), kSteelD); plate.position.set(0, -0.24, 0.01); kn.add(plate); grp.push(plate); const band = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.006, 6, 14, 1.7), kGold); band.position.set(0, -0.36, 0.01); band.rotation.set(Math.PI / 2, 0, -0.85); kn.add(band); grp.push(band); const foot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), kBlack); foot.scale.set(1, 0.55, 1.5); foot.position.set(0, -0.5, 0.1); kn.add(foot); grp.push(foot); const toe = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), kGold); toe.scale.set(1, 0.5, 1.1); toe.position.set(0, -0.52, 0.24); kn.add(toe); grp.push(toe); return grp; };
       const kBootL = mkBootK(legL), kBootR = mkBootK(legR); G._kenShoeMat = kBlack;
-      // ===== dual wield — left-hand katana + hip scabbards =====
-      const mkBlade = () => { const bg = new THREE.Group(); const h = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.28, 8), kBlack); h.position.y = 0.06; bg.add(h); for (let k = 0; k < 5; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 4, 10), kRed); w.position.y = -0.05 + k * 0.06; w.rotation.x = Math.PI / 2; w.rotation.z = 0.5; bg.add(w); } const ts = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.014, 14), kGold); ts.position.y = 0.2; bg.add(ts); const bend = geo => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.5)); p.setX(i, p.getX(i) + u * u * 0.08); } p.needsUpdate = true; geo.computeVertexNormals(); }; const blg = new THREE.BoxGeometry(0.042, 0.95, 0.016, 1, 10, 1); bend(blg); const bl = new THREE.Mesh(blg, kSteelM); bl.position.y = 0.72; bg.add(bl); const tp = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.13, 4), kSteelM); tp.position.set(0.1, 1.2, 0); tp.rotation.z = -0.5; tp.scale.z = 0.35; bg.add(tp); return bg; };
-      const leftBlade = mkBlade(); leftBlade.position.set(0.0, -0.55, 0.14); leftBlade.rotation.set(-0.5, 0, 0.15); (armL.userData.elbow || armL).add(leftBlade); G._kenLeftBlade = leftBlade;
+      // ===== fingerless gloves + dark-steel wrist guards =====
+      const kArmParts = [];
+      for (const arm of [armL, armR]) { const el = arm.userData.elbow || arm; const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.088, 0.16, 12), kSteelD); guard.position.y = -0.3; el.add(guard); kArmParts.push(guard); const gtrim = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.008, 6, 16), kGold); gtrim.position.y = -0.24; gtrim.rotation.x = Math.PI / 2; el.add(gtrim); kArmParts.push(gtrim); const rune = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.005), kGold); rune.position.set(0, -0.31, 0.08); el.add(rune); kArmParts.push(rune); const glove = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), kLeather); glove.scale.set(0.95, 0.8, 0.85); glove.position.y = -0.47; el.add(glove); kArmParts.push(glove); }
+      // ===== dual wield — LEFT katana Kurotsuki + back-crossed scabbards =====
+      const mkKuro = () => { const bg = new THREE.Group(); const h = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.28, 8), kBlackD); h.position.y = 0.06; bg.add(h); for (let k = 0; k < 5; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 4, 10), kCrimD); w.position.y = -0.05 + k * 0.06; w.rotation.x = Math.PI / 2; w.rotation.z = 0.5; bg.add(w); } const pom = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), new THREE.MeshStandardMaterial({ color: 0xd83030, emissive: 0x901010, emissiveIntensity: 0.9, roughness: 0.1 })); pom.position.y = -0.1; bg.add(pom); const ts = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.014, 4, 4), kGold); ts.position.y = 0.2; ts.rotation.x = Math.PI / 2; ts.rotation.z = Math.PI / 4; bg.add(ts); const bend = geo => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.5)); p.setX(i, p.getX(i) + u * u * 0.08); } p.needsUpdate = true; geo.computeVertexNormals(); }; const blg = new THREE.BoxGeometry(0.042, 0.95, 0.016, 1, 10, 1); bend(blg); const bl = new THREE.Mesh(blg, new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.2, metalness: 0.7 })); bl.position.y = 0.72; bg.add(bl); const eg = new THREE.BoxGeometry(0.012, 0.95, 0.01, 1, 10, 1); bend(eg); const edge = new THREE.Mesh(eg, new THREE.MeshStandardMaterial({ color: 0xd83040, emissive: 0x901020, emissiveIntensity: 0.8, roughness: 0.2 })); edge.position.set(0.02, 0.72, 0); bg.add(edge); const tp = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.13, 4), new THREE.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.2, metalness: 0.7 })); tp.position.set(0.1, 1.2, 0); tp.rotation.z = -0.5; tp.scale.z = 0.35; bg.add(tp); return bg; };
+      const leftBlade = mkKuro(); leftBlade.position.set(0.0, -0.55, 0.14); leftBlade.rotation.set(-0.5, 0, 0.15); (armL.userData.elbow || armL).add(leftBlade); G._kenLeftBlade = leftBlade;
       const kScab = new THREE.Group();
-      for (const [off, col] of [[0.0, kBlack], [0.06, kNavyD]]) { const saya = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.03, 0.95, 10), col); { const p = saya.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.5)); p.setX(i, p.getX(i) + u * u * 0.05); } p.needsUpdate = true; saya.geometry.computeVertexNormals(); } saya.position.set(off, 0, 0); const cap = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), kGold); cap.position.set(off, -0.48, 0); kScab.add(saya, cap); }
-      kScab.position.set(-0.42, 1.2, -0.12); kScab.rotation.set(0.3, 0, -0.4); char.add(kScab); G._kenScab = kScab;
-      // ===== effects: sakura petals + red aura =====
+      const mkSaya = (col, tasCol) => { const sg = new THREE.Group(); const saya = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.032, 1.05, 10), col); sg.add(saya); const cap = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 8), kGold); cap.position.y = -0.54; sg.add(cap); for (let k = 0; k < 3; k++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.007, 6, 12), kGold); ring.position.y = 0.3 - k * 0.3; ring.rotation.x = Math.PI / 2; sg.add(ring); } const tas = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 6), tasCol); tas.position.set(0, 0.42, 0.02); tas.rotation.x = 0.3; sg.add(tas); return sg; };
+      const sayaB = mkSaya(kBlackD, kCrim); sayaB.position.set(0.02, 1.5, -0.34); sayaB.rotation.set(0.25, 0, 0.72);
+      const sayaW = mkSaya(kBlack, kGold); sayaW.position.set(-0.02, 1.5, -0.34); sayaW.rotation.set(0.25, 0, -0.72);
+      kScab.add(sayaB, sayaW); char.add(kScab); G._kenScab = kScab;
+      // ===== effects: sakura petals + crimson aura =====
       const kPetalsG = new THREE.Group(); const kPetals = [];
-      const petalMat = new THREE.MeshStandardMaterial({ color: 0xf2a8c0, roughness: 0.6, side: THREE.DoubleSide, emissive: 0x6a2030, emissiveIntensity: 0.2 });
-      for (let i = 0; i < 14; i++) { const pt = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), petalMat); const ang = i / 14 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.15, y0 = 0.4 + (i % 5) * 0.42; pt.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); pt.userData = { ang, rad, y0, fall: 0.14 + (i % 3) * 0.06, spin: 0.6 + (i % 3) * 0.4 }; kPetalsG.add(pt); kPetals.push(pt); }
+      for (let i = 0; i < 14; i++) { const pt = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), kSakura); const ang = i / 14 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.15, y0 = 0.4 + (i % 5) * 0.42; pt.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); pt.userData = { ang, rad, y0, fall: 0.14 + (i % 3) * 0.06, spin: 0.6 + (i % 3) * 0.4 }; kPetalsG.add(pt); kPetals.push(pt); }
       char.add(kPetalsG); G._kenPetals = kPetals;
-      const kGlowL = new THREE.PointLight(0xff8060, 0.4, 5); kGlowL.position.set(0, 1.5, 0.3); char.add(kGlowL);
-      const kenParts = [kHair, kOutfit, kScab, leftBlade, kPetalsG, kGlowL, ...kHakamaParts, ...kLegParts, ...kBootL, ...kBootR];
+      const kGlowL = new THREE.PointLight(0xff5040, 0.4, 5); kGlowL.position.set(0, 1.5, 0.3); char.add(kGlowL);
+      const kenParts = [kHair, kOutfit, kScab, leftBlade, kPetalsG, kGlowL, ...kHakamaParts, ...kLegParts, ...kBootL, ...kBootR, ...kArmParts];
       kenParts.forEach(p => p.visible = false);
       G._kenParts = kenParts;
     }
