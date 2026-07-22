@@ -5580,6 +5580,17 @@ export default function CherryAdventure() {
       const sayaB = mkSaya(kBlackD, kCrim); sayaB.position.set(0.02, 1.5, -0.34); sayaB.rotation.set(0.25, 0, 0.72);
       const sayaW = mkSaya(kBlack, kGold); sayaW.position.set(-0.02, 1.5, -0.34); sayaW.rotation.set(0.25, 0, -0.72);
       kScab.add(sayaB, sayaW); char.add(kScab); G._kenScab = kScab;
+      // 🧥 ผ้าคลุมหลังสีดำแดง (black-red back cloak / jinbaori)
+      const kCape = new THREE.Group();
+      const kcO = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.66, 1.25, 24, 8, true, Math.PI * 0.58, Math.PI * 0.84), kBlack);
+      const kcI = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.64, 1.22, 24, 8, true, Math.PI * 0.6, Math.PI * 0.8), kCrim); kcI.position.y = 0.008;
+      const flareCape = (m, hh) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); const low = Math.max(0, (hh / 2 - y) / hh); const f = 1 + 0.16 * Math.pow(low, 2); p.setX(i, x * f); p.setZ(i, p.getZ(i) * f); } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
+      flareCape(kcO, 1.25); flareCape(kcI, 1.22); kCape.add(kcO, kcI);
+      const kcCollar = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.032, 8, 24, Math.PI * 1.3), kBlackD); kcCollar.position.set(0, 0.62, -0.02); kcCollar.rotation.set(Math.PI / 2 - 0.3, 0, 0); kCape.add(kcCollar);
+      const kcTrim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.011, 6, 24, Math.PI * 1.3), kGold); kcTrim.position.set(0, 0.63, 0.0); kcTrim.rotation.set(Math.PI / 2 - 0.3, 0, 0); kCape.add(kcTrim);
+      for (let k = -2; k <= 2; k++) { const a = Math.PI + k * 0.26; const em = new THREE.Mesh(new THREE.CircleGeometry(0.03, 5), kSakura); em.position.set(Math.sin(a) * 0.6, -0.5, Math.cos(a) * 0.6); em.rotation.y = -a; kCape.add(em); }
+      kCape.position.set(0, 1.6, -0.14); char.add(kCape); G._kenCape = kCape; kHakamaParts.push(kCape);
+      G._kenHakama.push({ m: kcO, base: Float32Array.from(kcO.geometry.attributes.position.array), h: 1.25 }, { m: kcI, base: Float32Array.from(kcI.geometry.attributes.position.array), h: 1.22 });
       // ===== effects: sakura petals + crimson aura =====
       const kPetalsG = new THREE.Group(); const kPetals = [];
       for (let i = 0; i < 14; i++) { const pt = new THREE.Mesh(new THREE.CircleGeometry(0.035, 5), kSakura); const ang = i / 14 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.15, y0 = 0.4 + (i % 5) * 0.42; pt.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); pt.userData = { ang, rad, y0, fall: 0.14 + (i % 3) * 0.06, spin: 0.6 + (i % 3) * 0.4 }; kPetalsG.add(pt); kPetals.push(pt); }
