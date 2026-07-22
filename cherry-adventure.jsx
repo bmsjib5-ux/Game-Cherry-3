@@ -11846,18 +11846,31 @@ export default function CherryAdventure() {
       _clearSession(); G.auth = { status: "out", email: null, uid: null }; _setAuthUi();
       return null;
     };
+    // pick the save blob to upload: the active slot if it holds a character, else the strongest non-empty slot
+    G._bestSaveRaw = () => {
+      try {
+        const act = window.localStorage.getItem(slotKey());
+        if (act) { try { if (JSON.parse(act).player) return act; } catch (e) {} }
+      } catch (e) {}
+      let best = null, bestLv = -1;
+      for (let i = 0; i < 6; i++) {
+        try { const r = window.localStorage.getItem(slotKey(i)); if (!r) continue; const d = JSON.parse(r); if (d && d.player) { const lv = (d.player.level || 0) + (d.ngPlus || 0) * 1000; if (lv > bestLv) { bestLv = lv; best = r; } } } catch (e) {}
+      }
+      return best;
+    };
     G._cloudPush = async (force) => {
-      if (G.auth.status !== "in") return;
+      if (G.auth.status !== "in") return false;
       const now = Date.now();
-      if (!force && G._lastCloud && now - G._lastCloud < 15000) return;
+      if (!force && G._lastCloud && now - G._lastCloud < 15000) return false;
+      const token = await G._authToken(); if (!token) return false;
+      const raw = G._bestSaveRaw();
+      if (!raw) return false;
+      let data; try { data = JSON.parse(raw); } catch (e) { return false; }
       G._lastCloud = now;
-      const token = await G._authToken(); if (!token) return;
-      let raw = null; try { raw = window.localStorage.getItem(slotKey()); } catch (e) {}
-      if (!raw) return;
-      let data; try { data = JSON.parse(raw); } catch (e) { return; }
       data.ts = now;
       const ok = await CN.putSave(token, G.auth.uid, data, now);
       if (ok) setUi(u => ({ ...u, cloudSyncedAt: now }));
+      return ok;
     };
     G._cloudPull = async () => {
       if (G.auth.status !== "in") return { loaded: false };
@@ -11886,7 +11899,9 @@ export default function CherryAdventure() {
       if (!r.ok) { toast("⚠️ " + r.err); return r; }
       _applySession(r.session); toast("✅ เข้าสู่ระบบแล้ว");
       const p = await G._cloudPull();
-      if (p.loaded) { toast("☁️ ซิงค์เซฟจากคลาวด์แล้ว"); setUi(u => ({ ...u, slots: G.readSlots() })); }
+      if (p.loaded) { toast("☁️ โหลดเซฟจากคลาวด์แล้ว — แตะ ช่อง 1 เพื่อเล่นต่อ"); setUi(u => ({ ...u, slots: G.readSlots() })); }
+      else if (G._bestSaveRaw && G._bestSaveRaw()) toast("☁️ อัปโหลดเซฟเครื่องนี้ขึ้นคลาวด์แล้ว");
+      else toast("บัญชีนี้ยังไม่มีเซฟบนคลาวด์ — เริ่มเล่นได้เลย");
       return r;
     };
     G.accountSignInGoogle = () => {
@@ -11902,7 +11917,8 @@ export default function CherryAdventure() {
     };
     G.accountSync = async () => {
       if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อน"); return; }
-      await G._cloudPush(true); toast("☁️ ซิงค์เซฟขึ้นคลาวด์แล้ว");
+      const ok = await G._cloudPush(true);
+      toast(ok ? "☁️ ซิงค์เซฟขึ้นคลาวด์แล้ว" : "ไม่พบเซฟในเครื่องให้ซิงค์");
     };
     (async () => {
       try {
