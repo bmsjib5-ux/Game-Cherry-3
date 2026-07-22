@@ -5417,11 +5417,13 @@ export default function CherryAdventure() {
       const rRing = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 6, 10), rGold); rRing.position.set(0.04, -0.55, 0.03); rRing.rotation.x = Math.PI / 2; (armR.userData.elbow || armR).add(rRing); rArmParts.push(rRing); // 💍 แหวนผู้พิทักษ์
       // 🧣 short royal-blue cape — gold inner, rune-embroidered hem
       const rCape = new THREE.Group();
-      const capeO = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.54, 0.88, 24, 6, true, Math.PI * 0.6, Math.PI * 0.8), rNavy); rCape.add(capeO);
-      const capeI = new THREE.Mesh(new THREE.CylinderGeometry(0.285, 0.52, 0.85, 24, 6, true, Math.PI * 0.62, Math.PI * 0.76), rGoldCloth); capeI.position.y = 0.01; rCape.add(capeI);
-      for (let k = -2; k <= 2; k++) { const a = Math.PI + k * 0.28; const rn = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), rRune.clone()); rn.scale.set(1, 1.4, 0.4); rn.position.set(Math.sin(a) * 0.52, -0.38, Math.cos(a) * 0.52); rn.rotation.y = -a; rCape.add(rn); }
-      rCape.position.set(0, 1.62, -0.05); char.add(rCape); G._roseCape = rCape;
-      G._roseCapeCloth = [{ m: capeO, base: Float32Array.from(capeO.geometry.attributes.position.array), h: 0.88 }, { m: capeI, base: Float32Array.from(capeI.geometry.attributes.position.array), h: 0.85 }]; // 🧣 ผ้าเคปพริ้วตามลม
+      const capeO = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.72, 1.8, 24, 10, true, Math.PI * 0.6, Math.PI * 0.8), rSkirtWhite); rCape.add(capeO); // ⚪ ผืนนอกสีขาว ยาวถึงข้อเท้า
+      const capeI = new THREE.Mesh(new THREE.CylinderGeometry(0.285, 0.69, 1.76, 24, 10, true, Math.PI * 0.62, Math.PI * 0.76), rSkirtNavy); capeI.position.y = 0.01; rCape.add(capeI); // 🔵 ซับในสีน้ำเงิน
+      const flareCape = (m, hh) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const low = Math.max(0, (hh / 2 - y) / hh); const f = 1 + 0.24 * Math.pow(low, 2.5); p.setX(i, x * f); p.setZ(i, z * f); } p.needsUpdate = true; m.geometry.computeVertexNormals(); }; // 🔔 ปลายผ้าบานออก
+      flareCape(capeO, 1.8); flareCape(capeI, 1.76);
+      for (let k = -2; k <= 2; k++) { const a = Math.PI + k * 0.28; const rn = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), rRune.clone()); rn.scale.set(1, 1.4, 0.4); rn.position.set(Math.sin(a) * 0.84, -0.84, Math.cos(a) * 0.84); rn.rotation.y = -a; rCape.add(rn); }
+      rCape.position.set(0, 1.15, -0.08); char.add(rCape); G._roseCape = rCape;
+      G._roseCapeCloth = [{ m: capeO, base: Float32Array.from(capeO.geometry.attributes.position.array), h: 1.8 }, { m: capeI, base: Float32Array.from(capeI.geometry.attributes.position.array), h: 1.76 }]; // 🧣 ผ้าเคปพริ้วตามลม
       // ✨ floating light motes + holy glow
       const rMotesG = new THREE.Group(); const rMotes = [];
       for (let i = 0; i < 12; i++) { const mo = new THREE.Mesh(new THREE.OctahedronGeometry(0.022 + (i % 3) * 0.008, 0), rRune.clone()); const ang = i / 12 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.16, y0 = 0.4 + (i % 5) * 0.45; mo.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); mo.userData = { ang, rad, y0, rise: 0.16 + (i % 3) * 0.07, spin: 0.5 + (i % 3) * 0.3 }; rMotesG.add(mo); rMotes.push(mo); }
