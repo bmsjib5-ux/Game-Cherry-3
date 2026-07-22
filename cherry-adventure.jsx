@@ -5305,6 +5305,15 @@ export default function CherryAdventure() {
       const rTie = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.03, 8, 14), rGold); rTie.position.set(0, 0.5, -0.36); rTie.rotation.x = 0.5; rHair.add(rTie);
       // 👑 gold circlet + kingdom emblem (ตราอาณาจักร) + crystal earrings
       const rCirc = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.022, 8, 40), rGold); rCirc.position.set(0, 0.3, 0); rCirc.rotation.x = Math.PI / 2 + 0.12; rHair.add(rCirc);
+      // 👑 มงกุฎทองบนหัว — วงแหวนฐาน + ยอดแหลมสลับสูงต่ำ + พลอยน้ำเงินยอดกลาง
+      const rCrown = new THREE.Group();
+      const crownBand = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.37, 0.09, 28, 1, true), rGold); rCrown.add(crownBand);
+      const cbT = new THREE.Mesh(new THREE.TorusGeometry(0.365, 0.011, 6, 30), rGold); cbT.position.y = 0.045; cbT.rotation.x = Math.PI / 2; rCrown.add(cbT);
+      const cbB = new THREE.Mesh(new THREE.TorusGeometry(0.352, 0.011, 6, 30), rGold); cbB.position.y = -0.045; cbB.rotation.x = Math.PI / 2; rCrown.add(cbB);
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const tall = k % 2 === 0; const sp = new THREE.Mesh(new THREE.ConeGeometry(tall ? 0.045 : 0.03, tall ? 0.2 : 0.11, 4), rGold); const r = 0.355; sp.position.set(Math.cos(a) * r, 0.045 + (tall ? 0.1 : 0.055), Math.sin(a) * r); rCrown.add(sp); const gem = new THREE.Mesh(new THREE.OctahedronGeometry(tall ? 0.024 : 0.016, 0), rBlueGem.clone()); gem.scale.set(0.9, 1.2, 0.6); gem.position.set(Math.cos(a) * r, 0.045 + (tall ? 0.19 : 0.1), Math.sin(a) * r); rCrown.add(gem); }
+      const cFront = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.26, 4), rGold); cFront.position.set(0, 0.19, 0.355); rCrown.add(cFront);
+      const cFrontGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.034, 0), rBlueGem.clone()); cFrontGem.scale.set(0.9, 1.3, 0.6); cFrontGem.position.set(0, 0.14, 0.4); rCrown.add(cFrontGem);
+      rCrown.position.set(0, 0.42, 0.04); rCrown.rotation.x = -0.1; rHair.add(rCrown);
       const rEmb = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), rGold); rEmb.scale.set(0.9, 1.2, 0.35); rEmb.position.set(0, 0.37, 0.57); rHair.add(rEmb);
       const rEmbGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), rBlueGem.clone()); rEmbGem.scale.set(0.9, 1.2, 0.5); rEmbGem.position.set(0, 0.37, 0.61); rHair.add(rEmbGem);
       for (const sx of [-1, 1]) { const er = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), rBlueGem.clone()); er.scale.set(0.7, 1.4, 0.7); er.position.set(sx * 0.61, -0.12, 0.05); rHair.add(er); }
