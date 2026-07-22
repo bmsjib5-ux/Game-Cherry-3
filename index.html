@@ -1361,7 +1361,19 @@ const LOOT = [
   eva: 6,
   crit: 5,
   elem: "dragon"
-}].concat(genArmour()); // ⚔️🛡️💨 + 54 archetype pieces (3 flavours × 6 slots × 3 tiers)
+}, // ⚒️ blacksmith forge weapons
+{ id: "fg_sword", slot: "weapon", name: "ดาบเหล็กกล้า", emoji: "🗡️", rarity: "rare", atk: 18, cls: "warrior", forge: true },
+{ id: "fg_great", slot: "weapon", name: "ดาบใหญ่ทำลายล้าง", emoji: "⚔️", rarity: "epic", atk: 28, cls: "warrior", forge: true },
+{ id: "fg_shield", slot: "weapon", name: "โล่เหล็กหนา", emoji: "🛡️", rarity: "rare", atk: 8, def: 16, cls: "warrior", forge: true },
+{ id: "fg_bow", slot: "weapon", name: "ธนูล่าสัตว์", emoji: "🏹", rarity: "rare", atk: 18, cls: "archer", forge: true },
+{ id: "fg_dagger", slot: "weapon", name: "มีดสั้นคู่", emoji: "🔪", rarity: "rare", atk: 16, crit: 6, cls: "assassin", forge: true },
+{ id: "fg_spear", slot: "weapon", name: "หอกเหล็กกล้า", emoji: "🔱", rarity: "rare", atk: 19, cls: "lancer", forge: true },
+{ id: "fg_mace", slot: "weapon", name: "กระบองยาวสังหาร", emoji: "🔨", rarity: "epic", atk: 27, cls: "lancer", forge: true },
+{ id: "fg_saber", slot: "weapon", name: "กระบี่พริ้วลม", emoji: "🤺", rarity: "rare", atk: 17, spd: 8, cls: "assassin", forge: true },
+{ id: "fg_katana", slot: "weapon", name: "ดาบคาตานะเหล็กกล้า", emoji: "⚔️", rarity: "rare", atk: 20, crit: 5, cls: "samurai", forge: true },
+{ id: "fg_staff", slot: "weapon", name: "คทาเวทมนตร์", emoji: "🪄", rarity: "rare", atk: 17, cls: "mage", forge: true },
+{ id: "fg_book", slot: "weapon", name: "หนังสือเวทโบราณ", emoji: "📖", rarity: "epic", atk: 24, cls: "mage", forge: true },
+{ id: "fg_orb", slot: "weapon", name: "ลูกแก้ววิเศษ", emoji: "🔮", rarity: "epic", atk: 25, cls: "mage", forge: true }].concat(genArmour()); // ⚔️🛡️💨 + 54 archetype pieces (3 flavours × 6 slots × 3 tiers)
 // 🏷️ build stamp — shown on the title screen so you can tell at a glance whether a
 // browser is running a stale cached copy (GitHub Pages CDN caches index.html ~10 min).
 const BUILD_VER = "2026.07.16.0633";
@@ -3844,6 +3856,8 @@ function CherryAdventure() {
     ngPlus: 0,
     npcNear: false,
     npcTalk: null,
+    smithNear: false,
+    smithOpen: false,
     storyChapter: 0,
     dailyReady: false,
     dailyStreak: 0,
@@ -4836,6 +4850,36 @@ function CherryAdventure() {
         x: -8.5,
         z: -7
       };
+    }
+    // ⚒️ Blacksmith NPC — sells forged weapons
+    {
+      const smith = new THREE.Group();
+      const smMat = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 });
+      const apron = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.1, 14), smMat(0x5a3a24)); apron.position.y = 0.58;
+      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.06, 8, 20), smMat(0x2a1a10)); belt.position.y = 0.6; belt.rotation.x = Math.PI / 2;
+      const chest = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 12), smMat(0xd8a06a)); chest.scale.set(1, 0.7, 0.8); chest.position.y = 1.02;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), smMat(0xf0c088)); head.position.y = 1.48;
+      const beard = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.4, 10), smMat(0x3a2a1a)); beard.position.set(0, 1.32, 0.14); beard.rotation.x = 0.25;
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.05, 8, 18), smMat(0x9a2a20)); band.position.set(0, 1.6, 0); band.rotation.x = 0.4;
+      for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.55, 10), smMat(0xd8a06a)); arm.position.set(sx * 0.44, 0.92, 0.1); arm.rotation.z = sx * 0.5; smith.add(arm); }
+      const hammer = new THREE.Group();
+      hammer.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.55, 8), smMat(0x6a4a2a)));
+      const hhead = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.14), new THREE.MeshStandardMaterial({ color: 0x4a4a55, metalness: 0.7, roughness: 0.4 })); hhead.position.y = 0.3; hammer.add(hhead);
+      hammer.position.set(0.62, 1.15, 0.16); hammer.rotation.z = -0.7; smith.add(hammer);
+      const anvil = new THREE.Group();
+      const anMat = new THREE.MeshStandardMaterial({ color: 0x3a3a44, metalness: 0.6, roughness: 0.5 });
+      const anTop = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.18, 0.34), anMat); anTop.position.y = 0.62; anvil.add(anTop);
+      const anHorn = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.34, 8), anMat); anHorn.position.set(-0.46, 0.62, 0); anHorn.rotation.z = Math.PI / 2; anvil.add(anHorn);
+      const anBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.55, 10), smMat(0x2a2a33)); anBase.position.y = 0.28; anvil.add(anBase);
+      anvil.position.set(0.9, 0, 0.35); smith.add(anvil);
+      smith.add(apron, belt, chest, head, beard, band);
+      const smc = document.createElement("canvas"); smc.width = 64; smc.height = 64;
+      const sctx = smc.getContext("2d"); sctx.font = "44px system-ui"; sctx.textAlign = "center"; sctx.textBaseline = "middle"; sctx.fillText("⚒️", 32, 34);
+      const smark = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(smc), transparent: true, depthTest: false }));
+      smark.scale.set(0.55, 0.55, 1); smark.position.y = 2.15; smith.add(smark); smith.userData.mark = smark;
+      smith.position.set(8.5, 0, -7); smith.rotation.y = -0.55; scene.add(smith);
+      colliders.push({ x: 8.5, z: -7, r: 0.6 });
+      G.smith = smith; G.smithPos = { x: 8.5, z: -7 };
     }
     addWell(9.5, -9); // stone well in the northeast
     // 🎣 fishing pond (southwest)
@@ -17137,7 +17181,7 @@ function CherryAdventure() {
         return null;
       } // 55% gear drop (ง่ายขึ้น 20%), boss = always
       const rar = rollRarity(boss);
-      const pool = LOOT.filter(x => x.rarity === rar && !x.starter && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+      const pool = LOOT.filter(x => x.rarity === rar && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
       const it = pool[Math.floor(Math.random() * pool.length)];
       gainItem(it.id);
       questProgress && questProgress("collect", 1); // 📜
@@ -17994,7 +18038,7 @@ function CherryAdventure() {
     const rollShopItem = () => {
       const r = Math.random();
       const rar = r < 0.05 ? "secret" : r < 0.3 ? "epic" : r < 0.65 ? "rare" : "common";
-      const pool = LOOT.filter(x => x.rarity === rar && !x.starter && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+      const pool = LOOT.filter(x => x.rarity === rar && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
       return pool[Math.floor(Math.random() * pool.length)].id;
     };
     G.refreshShop = free => {
@@ -18052,6 +18096,27 @@ function CherryAdventure() {
       G.mpPotions = (G.mpPotions || 0) + 1;
       if (G.sfx) G.sfx.coin();
       toast("💧 ซื้อน้ำยามานา +1!");
+      syncPlayer();
+    };
+    // ⚒️ Blacksmith shop: forge weapons priced by rarity
+    G.FORGE_PRICE = { rare: 380, epic: 820 };
+    G.openSmith = () => setUi(u => ({
+      ...u,
+      smithOpen: true,
+      menuOpen: false
+    }));
+    G.buyForge = id => {
+      const it = LOOT.find(x => x.id === id);
+      if (!it) return;
+      const price = G.FORGE_PRICE[it.rarity] || 400;
+      if (G.gold < price) {
+        toast(`ทองไม่พอ! ต้องมี ${price}💰`);
+        return;
+      }
+      G.gold -= price;
+      gainItem(id);
+      if (G.sfx) G.sfx.coin();
+      toast(`⚒️ ตีอาวุธ ${it.emoji} ${it.name} เสร็จแล้ว!`);
       syncPlayer();
     };
     G.sellItem = id => {
@@ -18482,7 +18547,7 @@ function CherryAdventure() {
         if (!G.biomeBossDefeated[bid]) {
           G.biomeBossDefeated[bid] = true;
           G.gold += 500;
-          const dPool = LOOT.filter(x => x.rarity === "epic" || x.rarity === "dragon");
+          const dPool = LOOT.filter(x => (x.rarity === "epic" || x.rarity === "dragon") && !x.forge);
           if (dPool.length) {
             const dIt = dPool[Math.floor(Math.random() * dPool.length)];
             gainItem(dIt.id);
@@ -21003,7 +21068,7 @@ function CherryAdventure() {
               if (dd2 < 0.85) {
                 const r3 = Math.random();
                 const rar3 = r3 < 0.03 ? "secret" : r3 < 0.25 ? "epic" : r3 < 0.6 ? "rare" : "common";
-                const pool3 = LOOT.filter(x => x.rarity === rar3 && !x.starter && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+                const pool3 = LOOT.filter(x => x.rarity === rar3 && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
                 const it3 = pool3[Math.floor(Math.random() * pool3.length)];
                 gainItem(it3.id);
                 G.gold += 10;
@@ -21057,6 +21122,21 @@ function CherryAdventure() {
               setUi(u => ({
                 ...u,
                 npcNear: near
+              }));
+            }
+          }
+          // ⚒️ Blacksmith: bob the marker + proximity
+          if (G.smith) {
+            if (G.smith.userData.mark) {
+              G.smith.userData.mark.position.y = 2.1 + Math.sin(t * 3 + 1) * 0.12;
+            }
+            const sd = Math.hypot(char.position.x - G.smithPos.x, char.position.z - G.smithPos.z);
+            const snear = sd < 2.1;
+            if (snear !== G.smithNear) {
+              G.smithNear = snear;
+              setUi(u => ({
+                ...u,
+                smithNear: snear
               }));
             }
           }
@@ -29336,7 +29416,33 @@ function CherryAdventure() {
                 React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#a07a4a", margin: "2px 2px 8px" } }, cat.t),
                 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 } }, cat.items.map((it) => (React.createElement("button", { key: it[1], onClick: () => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }, style: { display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", borderRadius: 14, border: "1px solid #ece0d4", cursor: "pointer", background: "#fff", fontFamily: font, textAlign: "left" } },
                     React.createElement("span", { style: { fontSize: 22 } }, it[0]),
-                    React.createElement("span", { style: { fontSize: 12.5, fontWeight: 700, color: "#5a4a42" } }, it[1]))))))))))))), ui.mode === "explore" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+                    React.createElement("span", { style: { fontSize: 12.5, fontWeight: 700, color: "#5a4a42" } }, it[1]))))))))))))), ui.mode === "explore" && ui.smithNear && !ui.smithOpen && (React.createElement("div", { style: { position: "absolute", bottom: 218, left: "50%", transform: "translateX(-50%)" } },
+        React.createElement("button", { onClick: () => G.openSmith(), style: { padding: "10px 24px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.5)" } }, "\u2692\uFE0F \u0E15\u0E35\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E01\u0E31\u0E1A\u0E0A\u0E48\u0E32\u0E07\u0E15\u0E35\u0E40\u0E2B\u0E25\u0E47\u0E01"))),
+    ui.smithOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, smithOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(20,14,10,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 } },
+        React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 470, maxHeight: "84%", overflowY: "auto", background: "#fbf6ef", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 4 } },
+                React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#7a4a24" } }, "\u2692\uFE0F \u0E0A\u0E48\u0E32\u0E07\u0E15\u0E35\u0E2D\u0E32\u0E27\u0E38\u0E18"),
+                React.createElement("div", { style: { flex: 1 } }),
+                React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#c09020", marginRight: 10 } },
+                    ui.gold || 0,
+                    " \uD83D\uDCB0"),
+                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, smithOpen: false })), style: { width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#efe2d2", fontWeight: 800 } }, "\u2715")),
+            React.createElement("div", { style: { fontSize: 11.5, color: "#a08464", marginBottom: 11 } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E17\u0E35\u0E48\u0E08\u0E30\u0E43\u0E2B\u0E49\u0E02\u0E49\u0E32\u0E15\u0E35\u0E43\u0E2B\u0E49 \u0E40\u0E08\u0E49\u0E32\u0E2B\u0E19\u0E39! \u0E17\u0E38\u0E01\u0E0A\u0E34\u0E49\u0E19\u0E15\u0E35\u0E08\u0E32\u0E01\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E01\u0E25\u0E49\u0E32\u0E0A\u0E31\u0E49\u0E19\u0E14\u0E35"),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 } }, LOOT.filter((x) => x.forge).map((it) => {
+                const price = (G.FORGE_PRICE && G.FORGE_PRICE[it.rarity]) || 400;
+                const afford = (ui.gold || 0) >= price;
+                const rc = it.rarity === "epic" ? "#a24ad0" : "#3a7ad0";
+                const stats = [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : ""].filter(Boolean).join("  ");
+                return (React.createElement("div", { key: it.id, style: { border: "1px solid #ece0d0", borderRadius: 14, padding: "10px 11px", background: "#fff", display: "flex", flexDirection: "column", gap: 5 } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7 } },
+                        React.createElement("span", { style: { fontSize: 24 } }, it.emoji),
+                        React.createElement("span", { style: { fontSize: 12.5, fontWeight: 800, color: "#4a3a2a", lineHeight: 1.15 } }, it.name)),
+                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: rc } }, it.rarity === "epic" ? "★ Epic" : "◆ Rare"),
+                    React.createElement("div", { style: { fontSize: 11, color: "#6a5a4a" } }, stats),
+                    React.createElement("button", { onClick: () => G.buyForge(it.id), disabled: !afford, style: { marginTop: 2, padding: "7px 0", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontSize: 12, fontWeight: 800, fontFamily: font, color: afford ? "#fff" : "#a8a094", background: afford ? "linear-gradient(90deg,#c08040,#a8642a)" : "#ece7de" } },
+                        price,
+                        " \uD83D\uDCB0")));
+            }))))), ui.mode === "explore" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     onClick: () => G.toggleAuto(),
     style: {
       position: "absolute",
