@@ -9709,10 +9709,11 @@ function CherryAdventure() {
       const rRing = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 6, 10), rGold); rRing.position.set(0.04, -0.55, 0.03); rRing.rotation.x = Math.PI / 2; (armR.userData.elbow || armR).add(rRing); rArmParts.push(rRing); // 💍 แหวนผู้พิทักษ์
       // 🧣 short royal-blue cape — gold inner, rune-embroidered hem
       const rCape = new THREE.Group();
-      const capeO = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.54, 0.88, 20, 1, true, Math.PI * 0.6, Math.PI * 0.8), rNavy); rCape.add(capeO);
-      const capeI = new THREE.Mesh(new THREE.CylinderGeometry(0.285, 0.52, 0.85, 20, 1, true, Math.PI * 0.62, Math.PI * 0.76), rGoldCloth); capeI.position.y = 0.01; rCape.add(capeI);
+      const capeO = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.54, 0.88, 24, 6, true, Math.PI * 0.6, Math.PI * 0.8), rNavy); rCape.add(capeO);
+      const capeI = new THREE.Mesh(new THREE.CylinderGeometry(0.285, 0.52, 0.85, 24, 6, true, Math.PI * 0.62, Math.PI * 0.76), rGoldCloth); capeI.position.y = 0.01; rCape.add(capeI);
       for (let k = -2; k <= 2; k++) { const a = Math.PI + k * 0.28; const rn = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), rRune.clone()); rn.scale.set(1, 1.4, 0.4); rn.position.set(Math.sin(a) * 0.52, -0.38, Math.cos(a) * 0.52); rn.rotation.y = -a; rCape.add(rn); }
       rCape.position.set(0, 1.62, -0.05); char.add(rCape); G._roseCape = rCape;
+      G._roseCapeCloth = [{ m: capeO, base: Float32Array.from(capeO.geometry.attributes.position.array), h: 0.88 }, { m: capeI, base: Float32Array.from(capeI.geometry.attributes.position.array), h: 0.85 }]; // 🧣 ผ้าเคปพริ้วตามลม
       // ✨ floating light motes + holy glow
       const rMotesG = new THREE.Group(); const rMotes = [];
       for (let i = 0; i < 12; i++) { const mo = new THREE.Mesh(new THREE.OctahedronGeometry(0.022 + (i % 3) * 0.008, 0), rRune.clone()); const ang = i / 12 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.16, y0 = 0.4 + (i % 5) * 0.45; mo.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); mo.userData = { ang, rad, y0, rise: 0.16 + (i % 3) * 0.07, spin: 0.5 + (i % 3) * 0.3 }; rMotesG.add(mo); rMotes.push(mo); }
@@ -20219,6 +20220,7 @@ function CherryAdventure() {
           if (G._roseCrystal) G._roseCrystal.material.emissiveIntensity = 1.0 + Math.abs(Math.sin(t * 1.8)) * 0.7;
           if (G._roseSoles) G._roseSoles.forEach((s, i) => { s.material.emissiveIntensity = 0.7 + Math.abs(Math.sin(t * 2.2 + i)) * 0.5; });
           if (G._roseSkirts) { for (const sk of G._roseSkirts) { const gp = sk.m.geometry.attributes.position, bb = sk.base, hh = sk.h; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (hh / 2 - by) / hh); if (low < 0.05) continue; const ph = Math.atan2(bz, bx); const wave = (Math.sin(t * 2.3 + ph * 5) + 0.5 * Math.sin(t * 1.6 + ph * 8)) * 0.035 * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave - (0.015 + rSpd * 0.3) * low * low); gp.setY(i, by - Math.abs(wave) * 0.2); } gp.needsUpdate = true; } } // 👗 กระโปรงจีบพริ้วตามลม
+          if (G._roseCapeCloth) { for (const ck of G._roseCapeCloth) { const gp = ck.m.geometry.attributes.position, bb = ck.base, hh = ck.h; for (let i = 0; i < gp.count; i++) { const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2]; const low = Math.max(0, (hh / 2 - by) / hh); if (low < 0.06) continue; const ph = Math.atan2(bz, bx); const wave = (Math.sin(t * 2.1 + ph * 4 + by * 3) + 0.5 * Math.sin(t * 1.5 + ph * 7)) * 0.05 * low; gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave - (0.02 + rSpd * 0.35) * low * low); gp.setY(i, by - Math.abs(wave) * 0.2); } gp.needsUpdate = true; } } // 🧣 เคปพริ้วตามลม
         }
         // ☀️ Lightblade — glowing edge breathes
         const rsw = weaponModels.roseSword;
