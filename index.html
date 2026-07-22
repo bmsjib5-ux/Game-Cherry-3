@@ -20502,6 +20502,12 @@ function CherryAdventure() {
           if (!G.equipOpen) char.rotation.y += dt * 0.55;
           char.position.y = Math.sin(t * 2) * 0.03;
           headG.rotation.z = Math.sin(t * 0.9) * 0.04;
+          if (G.equipOpen && G.heroId === "rose") {
+            // ⚔️ ท่ายืนชูดาบแสดงด้านหน้า (present the Divine Light Katana)
+            armR.rotation.set(-0.55, 0.0, -0.28); if (armR.userData.elbow) armR.userData.elbow.rotation.set(-0.5, 0, 0);
+            armL.rotation.set(-0.45, -0.1, 0.24); if (armL.userData.elbow) armL.userData.elbow.rotation.set(-0.8, 0, 0);
+            wand.position.set(0.02, -0.54, 0.16); wand.rotation.set(0.02, 0, 0.0);
+          }
         } else if (G.mode === "explore") {
           // ---------- ⏰ random event scheduler ----------
           if (!G.event) {
