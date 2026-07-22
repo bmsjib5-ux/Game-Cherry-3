@@ -9684,10 +9684,14 @@ function CherryAdventure() {
       // 👢 white boots — gold trim + glowing soles (พื้นเรืองแสง)
       const rSoles = [];
       const mkBootR = leg => { const grp = []; const kn = leg.userData.knee || leg;
-        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.115, 0.5, 16), rWhiteL); shin.position.y = -0.2; kn.add(shin); grp.push(shin);
-        const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.02, 6, 18), rGold); cuff.position.y = 0.03; cuff.rotation.x = Math.PI / 2; kn.add(cuff); grp.push(cuff);
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.132, 0.112, 0.58, 16), rWhiteL); shin.position.y = -0.16; kn.add(shin); grp.push(shin); // 👢 บูทยาวถึงเข่า
+        const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.136, 0.022, 6, 18), rGold); cuff.position.y = 0.1; cuff.rotation.x = Math.PI / 2; kn.add(cuff); grp.push(cuff); // ขอบทองที่เข่า
+        const vtip = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.07, 4), rGold); vtip.position.set(0, 0.14, 0.11); vtip.scale.z = 0.5; kn.add(vtip); grp.push(vtip); // ยอดแหลมทองหน้าเข่า
         const band = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.007, 6, 18), rGold); band.position.y = -0.3; band.rotation.x = Math.PI / 2; kn.add(band); grp.push(band);
         const toe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), rWhiteL); toe.scale.set(1, 0.6, 1.45); toe.position.set(0, -0.5, 0.1); kn.add(toe); grp.push(toe);
+        const toeTrim = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.007, 6, 16), rGold); toeTrim.position.set(0, -0.46, 0.06); toeTrim.rotation.x = Math.PI / 2 - 0.25; kn.add(toeTrim); grp.push(toeTrim); // ขลิบทองหัวรองเท้า
+        const heel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.27, 10), rGold); heel.position.set(0, -0.65, -0.078); kn.add(heel); grp.push(heel); // 👠 ส้นสูงทอง
+        const heelCap = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.03, 0.032, 8), rGold); heelCap.position.set(0, -0.795, -0.078); kn.add(heelCap); grp.push(heelCap);
         const sole = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.11, 0.035, 14), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8b040, emissiveIntensity: 0.9, roughness: 0.3 })); sole.scale.z = 1.5; sole.position.set(0, -0.545, 0.08); kn.add(sole); grp.push(sole); rSoles.push(sole);
         return grp; };
       const rBootL = mkBootR(legL), rBootR2 = mkBootR(legR);
