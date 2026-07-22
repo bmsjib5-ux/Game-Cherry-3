@@ -19433,7 +19433,7 @@ export default function CherryAdventure() {
       )}
       {ui.menuOpen && (
         <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-end", justifyContent: "flex-end", zIndex: 66 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ margin: "0 12px 212px 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(4, 54px)", gap: 12 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ margin: "0 12px 212px 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(3, 54px)", gap: 12 }}>
             {[
                           ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
               ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
