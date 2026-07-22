@@ -12152,11 +12152,12 @@ export default function CherryAdventure() {
     };
     G.startPresence = () => {
       if (G._presenceT || !CN.enabled()) return;
-      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); };
+      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); };
       beat();
       G._presenceT = setInterval(beat, 25000);
+      if (!G._duelT) G._duelT = setInterval(() => { if (G.pollDuels) G.pollDuels(); }, 6000); // ⚔️ faster incoming-challenge detection
     };
-    G.stopPresence = () => { if (G._presenceT) { clearInterval(G._presenceT); G._presenceT = null; } };
+    G.stopPresence = () => { if (G._presenceT) { clearInterval(G._presenceT); G._presenceT = null; } if (G._duelT) { clearInterval(G._duelT); G._duelT = null; } };
     G.chatSend = async (body) => {
       body = (body || "").trim().slice(0, 200);
       if (!body) return;
@@ -12215,6 +12216,165 @@ export default function CherryAdventure() {
       try { window.localStorage.setItem(FRIENDS_KEY, JSON.stringify(list)); } catch (e) {}
       setUi(u => ({ ...u, friends: list }));
     };
+    // ---------- ⚔️ Live PvP with friends (challenge → accept → deterministic synced duel) ----------
+    Object.assign(CN, {
+      async createDuel(row) {
+        if (!this.enabled()) return null;
+        try {
+          const res = await fetch(this._url("duels"), { method: "POST", headers: this._headers({ Prefer: "return=representation" }), body: JSON.stringify(row) });
+          if (!res.ok) return null;
+          const rows = await res.json();
+          return (rows && rows[0]) || null;
+        } catch (e) { return null; }
+      },
+      async getDuel(id) {
+        if (!this.enabled() || id == null) return null;
+        try {
+          const res = await fetch(this._url("duels?id=eq." + id + "&select=*"), { headers: this._headers() });
+          if (!res.ok) return null;
+          const rows = await res.json();
+          return (rows && rows[0]) || null;
+        } catch (e) { return null; }
+      },
+      async getIncomingDuels(pid) {
+        if (!this.enabled() || !pid) return null;
+        try {
+          const since = Date.now() - 60000;
+          const res = await fetch(this._url("duels?to_pid=eq." + encodeURIComponent(pid) + "&state=eq.pending&ts=gt." + since + "&select=*&order=ts.desc&limit=5"), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      async patchDuel(id, patch) {
+        if (!this.enabled() || id == null) return false;
+        try {
+          const res = await fetch(this._url("duels?id=eq." + id), { method: "PATCH", headers: this._headers({ Prefer: "return=minimal" }), body: JSON.stringify(patch) });
+          return res.ok;
+        } catch (e) { return false; }
+      }
+    });
+    // seeded RNG (mulberry32) — identical output on both clients for the same seed → both watch the same duel
+    G._pvpRng = seed => {
+      let a = seed >>> 0;
+      return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    };
+    // a snapshot of MY fighter for a duel (uses the same effective stats as the cloud profile)
+    G.pvpSnapshot = () => ({ pid: G.ensurePid(), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls, lv: G.player ? G.player.level : 1, atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()), w: G.equip.weapon || null, ng: G.ngPlus || 0 });
+    // deterministic auto-battle between two snapshots — pure function of (A, B, seed)
+    G.simDuel = (A, B, seed) => {
+      const rng = G._pvpRng(seed);
+      const a = { pid: A.pid, n: A.n, atk: A.atk || 10, def: A.def || 0, crit: A.crit || 0, hp: Math.max(1, A.hp | 0), max: Math.max(1, A.hp | 0) };
+      const b = { pid: B.pid, n: B.n, atk: B.atk || 10, def: B.def || 0, crit: B.crit || 0, hp: Math.max(1, B.hp | 0), max: Math.max(1, B.hp | 0) };
+      const aFirst = (a.max !== b.max) ? (A.lv || 0) >= (B.lv || 0) : true; // faster/stronger strikes first, ties → challenger
+      const log = [];
+      const hit = (att, dfn) => {
+        const base = Math.max(1, att.atk - dfn.def * 0.45);
+        const varr = 0.8 + rng() * 0.4;
+        const crit = rng() * 100 < (att.crit || 0);
+        const dmg = Math.max(1, Math.round(base * varr * (crit ? 1.85 : 1)));
+        dfn.hp = Math.max(0, dfn.hp - dmg);
+        log.push({ by: att.pid, byName: att.n, dmg, crit, aHp: a.hp, bHp: b.hp });
+      };
+      let round = 0;
+      while (a.hp > 0 && b.hp > 0 && round < 80) {
+        if (aFirst) { hit(a, b); if (b.hp <= 0) break; hit(b, a); }
+        else { hit(b, a); if (a.hp <= 0) break; hit(a, b); }
+        round++;
+      }
+      let winner;
+      if (a.hp <= 0 && b.hp <= 0) winner = aFirst ? a.pid : b.pid;
+      else if (a.hp <= 0) winner = b.pid;
+      else if (b.hp <= 0) winner = a.pid;
+      else winner = (a.hp / a.max) >= (b.hp / b.max) ? a.pid : b.pid;
+      return { log, winner, aHp: a.hp, bHp: b.hp, aMax: a.max, bMax: b.max, rounds: round };
+    };
+    G._pvpStopOut = () => { if (G._pvpPollOut) { clearInterval(G._pvpPollOut); G._pvpPollOut = null; } };
+    // challenge an online friend
+    G.pvpChallenge = async friend => {
+      if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อนถึงจะดวลกับเพื่อนได้"); return; }
+      if (!friend || !friend.pid) { toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์"); return; }
+      if (friend.pid === G.pid) { toast("ดวลกับตัวเองไม่ได้นะ 😅"); return; }
+      const on = G._online && G._online[friend.pid] && G._online[friend.pid].online;
+      if (!on) { toast("เพื่อนคนนี้ไม่ออนไลน์ตอนนี้ — ลองใหม่ทีหลัง"); return; }
+      if (G._pvpOutgoing) { toast("กำลังรอผลคำท้าอยู่..."); return; }
+      const A = G.pvpSnapshot();
+      const seed = ((Date.now() & 0xffffff) ^ Math.floor(Math.random() * 0xffffff)) >>> 0;
+      const row = { from_pid: G.pid, to_pid: friend.pid, from_name: A.n, to_name: (friend.n || "?").slice(0, 12), seed: seed, a: A, b: null, state: "pending", ts: Date.now() };
+      toast("⚔️ ส่งคำท้าไปหา " + row.to_name + " ...");
+      const created = await CN.createDuel(row);
+      if (!created) { toast("❌ ส่งคำท้าไม่สำเร็จ ลองใหม่"); return; }
+      G._pvpOutgoing = { id: created.id, toName: row.to_name, ts: Date.now() };
+      setUi(u => ({ ...u, socialOpen: false, pvpWaiting: { name: row.to_name } }));
+      G._pvpPollOut = setInterval(async () => {
+        if (!G._pvpOutgoing) { G._pvpStopOut(); return; }
+        const d = await CN.getDuel(G._pvpOutgoing.id);
+        if (!d) return;
+        if (d.state === "active" && d.b) { G._pvpStopOut(); G.pvpRunDuel(d, "a"); }
+        else if (d.state === "declined") { G._pvpStopOut(); const nm = G._pvpOutgoing.toName; G._pvpOutgoing = null; setUi(u => ({ ...u, pvpWaiting: null })); toast("😅 " + nm + " ปฏิเสธคำท้า"); }
+        else if (Date.now() - G._pvpOutgoing.ts > 45000) { G._pvpStopOut(); G._pvpOutgoing = null; setUi(u => ({ ...u, pvpWaiting: null })); toast("⌛ ไม่มีการตอบรับคำท้า"); }
+      }, 3000);
+    };
+    G.pvpCancelWait = () => { G._pvpStopOut(); if (G._pvpOutgoing) CN.patchDuel(G._pvpOutgoing.id, { state: "declined" }); G._pvpOutgoing = null; setUi(u => ({ ...u, pvpWaiting: null })); };
+    // poll for incoming challenges (called from the presence heartbeat)
+    G._pvpHandled = {};
+    G.pollDuels = async () => {
+      if (!CN.enabled() || G.auth.status !== "in" || !G.pid) return;
+      if (G._pvpBusy || G._pvpIncoming || G._pvpOutgoing) return; // don't interrupt an ongoing duel/prompt
+      const rows = await CN.getIncomingDuels(G.pid);
+      if (!rows || !rows.length) return;
+      const d = rows.find(r => r.state === "pending" && !G._pvpHandled[r.id]);
+      if (!d) return;
+      G._pvpIncoming = d;
+      setUi(u => ({ ...u, pvpIncoming: { id: d.id, from_name: d.from_name, lv: (d.a && d.a.lv) || 1 } }));
+    };
+    G.pvpAccept = async () => {
+      const d = G._pvpIncoming;
+      if (!d) return;
+      G._pvpHandled[d.id] = 1;
+      setUi(u => ({ ...u, pvpIncoming: null }));
+      const B = G.pvpSnapshot();
+      const ok = await CN.patchDuel(d.id, { b: B, state: "active" });
+      if (!ok) { toast("❌ รับคำท้าไม่สำเร็จ"); G._pvpIncoming = null; return; }
+      const full = { id: d.id, seed: d.seed, a: d.a, b: B, from_pid: d.from_pid, to_pid: d.to_pid };
+      G._pvpIncoming = null;
+      G.pvpRunDuel(full, "b");
+    };
+    G.pvpDecline = async () => {
+      const d = G._pvpIncoming;
+      if (!d) return;
+      G._pvpHandled[d.id] = 1;
+      G._pvpIncoming = null;
+      setUi(u => ({ ...u, pvpIncoming: null }));
+      await CN.patchDuel(d.id, { state: "declined" });
+    };
+    // run + animate the deterministic duel; side is "a" (challenger) or "b" (opponent)
+    G.pvpRunDuel = (duel, side) => {
+      G._pvpStopOut();
+      G._pvpOutgoing = null;
+      G._pvpBusy = true;
+      const A = duel.a, B = duel.b, seed = duel.seed >>> 0;
+      const sim = G.simDuel(A, B, seed);
+      const iWon = sim.winner === G.pid;
+      const before = G.pvpRank || 1000;
+      const delta = iWon ? 25 : -18;
+      G.pvpRank = Math.max(0, before + delta);
+      setUi(u => ({ ...u, socialOpen: false, pvpWaiting: null, pvpIncoming: null, pvpDuel: { A, B, side, log: sim.log, winner: sim.winner, aMax: sim.aMax, bMax: sim.bMax, step: 0, done: sim.log.length === 0, iWon, myPid: G.pid, rank: G.pvpRank, delta } }));
+      if (G._pvpTick) { clearInterval(G._pvpTick); G._pvpTick = null; }
+      let step = 0;
+      G._pvpTick = setInterval(() => {
+        step++;
+        if (step >= sim.log.length) {
+          clearInterval(G._pvpTick); G._pvpTick = null;
+          setUi(u => u.pvpDuel ? ({ ...u, pvpDuel: { ...u.pvpDuel, step: sim.log.length, done: true } }) : u);
+          if (G.saveGame) G.saveGame();
+        } else {
+          setUi(u => u.pvpDuel ? ({ ...u, pvpDuel: { ...u.pvpDuel, step } }) : u);
+        }
+      }, 620);
+    };
+    G.pvpSkipDuel = () => { if (G._pvpTick) { clearInterval(G._pvpTick); G._pvpTick = null; } setUi(u => u.pvpDuel ? ({ ...u, pvpDuel: { ...u.pvpDuel, step: u.pvpDuel.log.length, done: true } }) : u); };
+    G.pvpCloseDuel = () => { if (G._pvpTick) { clearInterval(G._pvpTick); G._pvpTick = null; } G._pvpBusy = false; setUi(u => ({ ...u, pvpDuel: null })); };
     // ⚔️ battle a friend's GHOST — a mirror-match against their profile stats
     // 🌐 for online friends (has pid), pull their LATEST stats first so the ghost is always current
     G.fightGhost = async (friend) => {
@@ -19304,6 +19464,83 @@ export default function CherryAdventure() {
         </div>
       )}
 
+      {ui.pvpWaiting && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(20,14,10,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 80, fontFamily: font }}>
+          <div style={{ background: "#fbf6ef", borderRadius: 20, padding: "22px 26px", textAlign: "center", maxWidth: 300, boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>⚔️</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#7a4a24", marginBottom: 4 }}>ส่งคำท้าไปหา {ui.pvpWaiting.name}</div>
+            <div style={{ fontSize: 12, color: "#a08464", marginBottom: 16 }}>กำลังรอตอบรับ... (รอสูงสุด 45 วินาที)</div>
+            <button onClick={() => G.pvpCancelWait()} style={{ padding: "9px 22px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff", background: "#b06a6a" }}>ยกเลิก</button>
+          </div>
+        </div>
+      )}
+      {ui.pvpIncoming && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(20,14,10,0.62)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 82, fontFamily: font }}>
+          <div style={{ background: "linear-gradient(180deg,#fff5ec,#fbe8d6)", borderRadius: 20, padding: "22px 24px", textAlign: "center", maxWidth: 320, boxShadow: "0 10px 30px rgba(0,0,0,0.45)", border: "2px solid #e0a020" }}>
+            <div style={{ fontSize: 40, marginBottom: 6 }}>⚔️</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#b0341f", marginBottom: 2 }}>{ui.pvpIncoming.from_name} ท้าดวล!</div>
+            <div style={{ fontSize: 12, color: "#8a6a4a", marginBottom: 16 }}>Lv.{ui.pvpIncoming.lv} · ยอมรับเพื่อประลองสด</div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={() => G.pvpAccept()} style={{ flex: 1, padding: "11px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" }}>⚔️ รับคำท้า</button>
+              <button onClick={() => G.pvpDecline()} style={{ flex: 1, padding: "11px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#7a5a4a", background: "#efe2d2" }}>ปฏิเสธ</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {ui.pvpDuel && (() => {
+        const d = ui.pvpDuel;
+        const meA = d.side === "a";
+        const me = meA ? d.A : d.B, foe = meA ? d.B : d.A;
+        const logK = (d.log || []).slice(0, d.step);
+        const last = logK.length ? logK[logK.length - 1] : null;
+        const aHp = last ? last.aHp : d.aMax, bHp = last ? last.bHp : d.bMax;
+        const meHp = meA ? aHp : bHp, foeHp = meA ? bHp : aHp;
+        const meMax = meA ? d.aMax : d.bMax, foeMax = meA ? d.bMax : d.aMax;
+        const emo = (c) => (CLASSES[c] ? CLASSES[c].emoji : "🧑");
+        const bar = (hp, max, col) => (
+          <div style={{ height: 12, borderRadius: 999, background: "rgba(255,255,255,0.15)", overflow: "hidden", marginTop: 4 }}>
+            <div style={{ height: "100%", width: Math.max(0, Math.min(100, (hp / max) * 100)) + "%", background: col, transition: "width 0.3s" }} />
+          </div>
+        );
+        const fighter = (snap, hp, max, col, mine) => (
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ fontSize: 34 }}>{emo(snap.c)}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: mine ? "#8ad0ff" : "#ffb0a0" }}>{snap.n}{mine ? " (คุณ)" : ""}</div>
+            <div style={{ fontSize: 10, color: "#c0c8d0" }}>Lv.{snap.lv} ⚔️{snap.atk} 🛡️{snap.def}</div>
+            {bar(hp, max, col)}
+            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#e8eef4", marginTop: 2 }}>{Math.max(0, hp)}/{max}</div>
+          </div>
+        );
+        return (
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#1a1420,#0e0a14)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 84, fontFamily: font, padding: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#f5c542", marginBottom: 14, letterSpacing: 1 }}>⚔️ ประลองสด PvP</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", maxWidth: 420, marginBottom: 12 }}>
+              {fighter(me, meHp, meMax, "linear-gradient(90deg,#4aa0e0,#6ad0f0)", true)}
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#e05a5a" }}>VS</div>
+              {fighter(foe, foeHp, foeMax, "linear-gradient(90deg,#e0704a,#f0a05a)", false)}
+            </div>
+            <div style={{ width: "100%", maxWidth: 420, height: 116, overflowY: "auto", background: "rgba(0,0,0,0.35)", borderRadius: 12, padding: "8px 10px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 3 }}>
+              {logK.slice(-6).map((e, i) => (
+                <div key={i} style={{ fontSize: 11, color: e.by === d.myPid ? "#9ad8ff" : "#ffb4a4" }}>
+                  {e.by === d.myPid ? "▶ คุณ" : "◀ " + e.byName} โจมตี {e.crit ? "💥คริติคอล " : ""}-{e.dmg}
+                </div>
+              ))}
+              {logK.length === 0 && <div style={{ fontSize: 11, color: "#889", textAlign: "center" }}>เริ่มการต่อสู้...</div>}
+            </div>
+            {!d.done && (
+              <button onClick={() => G.pvpSkipDuel()} style={{ padding: "8px 22px", borderRadius: 12, border: "1px solid #c9a24a55", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#e8dcc0", background: "rgba(255,255,255,0.08)" }}>⏩ ข้ามไปดูผล</button>
+            )}
+            {d.done && (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 26, fontWeight: 800, color: d.iWon ? "#5ae0a0" : "#e05a5a", marginBottom: 4 }}>{d.iWon ? "🏆 คุณชนะ!" : "💀 คุณแพ้"}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#f5c542", marginBottom: 14 }}>อันดับ {d.delta >= 0 ? "+" : ""}{d.delta} → {d.rank}</div>
+                <button onClick={() => G.pvpCloseDuel()} style={{ padding: "11px 30px", borderRadius: 14, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" }}>ปิด</button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ===== explore controls ===== */}
       {ui.mode === "explore" && (
         <>
@@ -20160,6 +20397,11 @@ export default function CherryAdventure() {
                         <div style={{ fontSize: 12, fontWeight: 800, color: "#4a5a4a" }}>{clsEmoji} {f.n} {f.ng > 0 && <span style={{ fontSize: 8.5, color: "#fff", background: "#7a3ad0", borderRadius: 999, padding: "0 5px" }}>ตื่น{f.ng}</span>}</div>
                         <div style={{ fontSize: 9.5, color: "#8a9a7a" }}>Lv.{f.lv} · ⚔️{f.atk} 🛡️{f.def} ❤️{f.hp}</div>
                       </div>
+                      {f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online && (
+                        <button onClick={() => G.pvpChallenge(f)} title="ท้าดวลสด (ออนไลน์)" style={{ border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" }}>
+                          ⚔️ ดวลสด
+                        </button>
+                      )}
                       <button onClick={() => G.fightGhost(f)} style={{ border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#d9536b,#e87a5a)" }}>
                         👻 สู้ผี
                       </button>

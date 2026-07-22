@@ -201,3 +201,37 @@ create policy "friends_insert" on public.friends for insert with check (true);
 ## ทำงานยังไง
 - A เพิ่ม B ด้วย ID → เกมเขียน 2 แถว: (A→B) และ (B→A)
 - เกมของ B จะ **sync รายชื่อเพื่อนจากเซิร์ฟเวอร์** (ตอนเปิดหน้าเพื่อน + heartbeat ทุก 25 วิ) → เห็น A เป็นเพื่อนเองอัตโนมัติ พร้อมพลังล่าสุด
+
+---
+
+## ⚔️ Live PvP (ตาราง `duels`)
+
+ระบบท้าดวลสดกับเพื่อน: ผู้ท้าสร้างแถว duel (พร้อม snapshot + seed) → ฝ่ายรับกด "รับคำท้า" (เขียน snapshot ตัวเอง + state=active) → ทั้งสองเครื่องรัน simulation แบบ deterministic จาก seed เดียวกัน จึงเห็นผลการต่อสู้ตรงกัน
+
+รันใน Supabase → SQL Editor:
+
+```sql
+create table if not exists public.duels (
+  id         bigint generated always as identity primary key,
+  from_pid   text not null,
+  to_pid     text not null,
+  from_name  text,
+  to_name    text,
+  seed       bigint not null,
+  a          jsonb,          -- challenger snapshot
+  b          jsonb,          -- opponent snapshot (filled on accept)
+  state      text not null default 'pending',  -- pending | active | declined
+  ts         bigint not null
+);
+create index if not exists duels_to_idx   on public.duels (to_pid, state, ts desc);
+create index if not exists duels_id_idx    on public.duels (id);
+
+alter table public.duels enable row level security;
+
+-- pid-based (not user-secured) like the players table → allow anon read/insert/update
+create policy "duels read"   on public.duels for select using (true);
+create policy "duels insert" on public.duels for insert with check (true);
+create policy "duels update" on public.duels for update using (true) with check (true);
+```
+
+> หมายเหตุ: ตาราง `duels` ใช้สิทธิ์ anon เหมือน `players` (อ้างอิงด้วย pid ไม่ใช่ uid) — เหมาะกับการดวลเล่นสนุก ไม่ใช่ระบบจัดอันดับที่ต้องกันโกง
