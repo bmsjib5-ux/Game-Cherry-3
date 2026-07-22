@@ -9870,7 +9870,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold,
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0,
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -20943,6 +20943,10 @@ export default function CherryAdventure() {
                     </div>
                     <div style={{ pointerEvents: "auto", display: "flex", gap: 10, background: "rgba(20,26,20,0.7)", borderRadius: 999, padding: "5px 14px", color: "#e8dcc0", fontSize: 12.5, fontWeight: 800, border: "1px solid #c9a24a44", marginBottom: 4 }}>
                       <span>⚔️ {ui.atk || 0}</span><span>🛡️ {ui.def || 0}</span><span>❤️ {ui.maxHp || 0}</span>
+                    </div>
+                    <div style={{ pointerEvents: "auto", display: "flex", gap: 14, background: "rgba(20,26,20,0.72)", borderRadius: 999, padding: "5px 16px", fontSize: 13, fontWeight: 800, border: "1px solid #c9a24a44", marginBottom: 8 }}>
+                      <span style={{ color: "#f5d24a" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
+                      <span style={{ color: "#7fd0f5" }}>💎 {(ui.stardust || 0).toLocaleString()}</span>
                     </div>
                   </div>
                   {cellsCol(RIGHT)}
