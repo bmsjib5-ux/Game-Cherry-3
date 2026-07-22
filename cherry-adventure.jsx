@@ -5404,8 +5404,9 @@ export default function CherryAdventure() {
       const rArmParts = [];
       for (const arm of [armL, armR]) { const el = arm.userData.elbow || arm;
         const cuffRoll = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.028, 8, 16), rPearl); cuffRoll.position.y = -0.16; cuffRoll.rotation.x = Math.PI / 2; arm.add(cuffRoll); rArmParts.push(cuffRoll);
-        const fGuard = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.085, 0.2, 12), rSilver); fGuard.position.y = -0.33; el.add(fGuard); rArmParts.push(fGuard);
-        const fTrim = new THREE.Mesh(new THREE.TorusGeometry(0.087, 0.008, 6, 16), rGold); fTrim.position.y = -0.42; fTrim.rotation.x = Math.PI / 2; el.add(fTrim); rArmParts.push(fTrim);
+        const gloveArm = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.09, 0.46, 14), rWhiteL); gloveArm.position.y = -0.25; el.add(gloveArm); rArmParts.push(gloveArm); // 🧤 ถุงมือยาวถึงศอก สีขาว
+        const gTop = new THREE.Mesh(new THREE.TorusGeometry(0.076, 0.012, 6, 16), rGold); gTop.position.y = -0.04; gTop.rotation.x = Math.PI / 2; el.add(gTop); rArmParts.push(gTop); // ขอบทองที่ศอก
+        const gLine = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.006, 6, 16), rGold); gLine.position.y = -0.44; gLine.rotation.x = Math.PI / 2; el.add(gLine); rArmParts.push(gLine); // เส้นทองข้อมือ
         const glove = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), rWhiteL); glove.scale.set(0.95, 0.75, 0.85); glove.position.y = -0.47; el.add(glove); rArmParts.push(glove);
         const mCirc = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.006, 6, 16), rRune.clone()); mCirc.position.set(0, -0.455, 0.055); mCirc.rotation.x = 0.5; el.add(mCirc); rArmParts.push(mCirc);
       }
