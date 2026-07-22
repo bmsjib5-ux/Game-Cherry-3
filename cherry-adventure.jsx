@@ -19156,6 +19156,43 @@ export default function CherryAdventure() {
         </div>
       )}
 
+      {/* ☰ combined menu */}
+      {ui.mode === "explore" && !ui.equipScreen && (
+        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} style={{ position: "absolute", right: 12, bottom: 150, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 24 }}>☰</button>
+      )}
+      {ui.mode === "explore" && !ui.equipScreen && (
+        <button onClick={() => G.usePotion()} style={{ position: "absolute", right: 12, bottom: 84, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
+      )}
+      {ui.menuOpen && (
+        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 66 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, maxHeight: "82%", overflowY: "auto", background: "#fbf7f2", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#5a4a6a" }}>☰ เมนู</div>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 }}>✕</button>
+            </div>
+            {[
+              { t: "👤 ตัวละคร", items: [["🧍", "แต่งตัว & ช่องเก็บของ", () => G.openEquip()], ["🎒", "กระเป๋า", () => toggleMenu("invOpen")], ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel")], ["✨", "คอลเลกชัน", () => G.toggleCollection()]] },
+              { t: "⚔️ พลัง & อัปเกรด", items: [["🌳", "ต้นไม้ทักษะ", () => G.toggleTree()], ["🌌", "หมู่ดาว", () => G.toggleConst()], ["⛏️", "หลอม & ตีบวก", () => G.toggleForge()], ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery()]] },
+              { t: "🌐 สังคม & เควส", items: [["👥", "เพื่อน & สู้ผี", () => G.toggleSocial()], ["📜", "เควส", () => toggleMenu("questOpen")]] },
+              { t: "🛒 ไอเทม & อื่นๆ", items: [["🏪", "ร้านค้า", () => toggleMenu("shopOpen")], ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen")], ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion()]] },
+            ].map((cat) => (
+              <div key={cat.t} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a07a4a", margin: "2px 2px 8px" }}>{cat.t}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
+                  {cat.items.map((it) => (
+                    <button key={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", borderRadius: 14, border: "1px solid #ece0d4", cursor: "pointer", background: "#fff", fontFamily: font, textAlign: "left" }}>
+                      <span style={{ fontSize: 22 }}>{it[0]}</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: "#5a4a42" }}>{it[1]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ===== explore controls ===== */}
       {ui.mode === "explore" && (
         <>
@@ -19222,6 +19259,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 28,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 26, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19318,6 +19356,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 82,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: ui.potions > 0 ? "#fff" : "rgba(255,255,255,0.5)",
               boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
@@ -19336,6 +19375,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 136,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19348,6 +19388,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 298,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19367,6 +19408,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 466,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19379,6 +19421,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 354,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19391,6 +19434,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 410,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19411,6 +19455,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 522,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "linear-gradient(145deg,#3a2a5a,#5a3a7a)", boxShadow: "0 4px 12px rgba(90,70,140,0.4)",
             }}
           >
@@ -19431,6 +19476,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 578,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "linear-gradient(145deg,#5a4a2a,#8a6a2a)", boxShadow: "0 4px 12px rgba(140,110,60,0.4)",
             }}
           >
@@ -19455,6 +19501,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 634,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "linear-gradient(145deg,#b0407a,#e06aa0)", boxShadow: "0 4px 12px rgba(200,90,150,0.4)",
             }}
           >
@@ -19471,6 +19518,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 690,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 24, background: "linear-gradient(145deg,#6a8cc0,#8aa8e0)", boxShadow: "0 4px 12px rgba(90,120,180,0.4)",
             }}
           >
@@ -19786,6 +19834,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 244,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 26, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
@@ -19805,6 +19854,7 @@ export default function CherryAdventure() {
             style={{
               position: "absolute", right: 12, bottom: 190,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
+              display: "none",
               fontSize: 26, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
             }}
           >
