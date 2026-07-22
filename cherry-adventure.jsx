@@ -5772,8 +5772,9 @@ export default function CherryAdventure() {
     const OUTFIT_FALLBACK = { rare: "o2", epic: "o3", secret: "oS", dragon: "oD", common: "o1" };
     const ARCH_TINT = { atk: 0xd9536b, def: 0x3a7ac0, agi: 0x4aa06a };
     G.setOutfitVisual = (id) => {
-      // 👗 fashion: costume outfit overrides the look only
-      if (G.costume && G.costume.outfit) id = G.costume.outfit;
+      // 🙈 hide-gear hides the worn outfit everywhere; 👗 else a costume outfit overrides the look
+      if (G._gearHidden) id = null;
+      else if (G.costume && G.costume.outfit) id = G.costume.outfit;
       const it = LOOT.find((x) => x.id === id);
       // pick the mesh: exact model if it exists, else a stand-in for this rarity
       let modelKey = id && outfitModels[id] ? id : (it ? OUTFIT_FALLBACK[it.rarity] : null);
@@ -6496,9 +6497,10 @@ export default function CherryAdventure() {
       const acc = G._classAcc;
       const eq = G.equip || {};
       const cos = G.costume || {};
-      const outfitOn = !!(cos.outfit || eq.outfit || G.activeSet || G.heroId); // gear, transmog, a set, OR a signature hero look replaces the class armor
-      const hatOn = !!(cos.hat || eq.hat);
-      const maskOn = !!(cos.mask || eq.mask);
+      const hidden = G._gearHidden;
+      const outfitOn = !!((!hidden && (cos.outfit || eq.outfit || G.activeSet)) || G.heroId); // gear/transmog/set (unless hidden), OR a signature hero look, replaces the class armor
+      const hatOn = !hidden && !!(cos.hat || eq.hat);
+      const maskOn = !hidden && !!(cos.mask || eq.mask);
       Object.entries(classAccessories).forEach(([k, g]) => { if (g) g.visible = k === acc && !outfitOn; });
       if (G.warriorShield) G.warriorShield.visible = acc === "cape" && !outfitOn;
       if (G.warriorHelm) G.warriorHelm.visible = acc === "cape" && !outfitOn && !hatOn;
@@ -6785,7 +6787,7 @@ export default function CherryAdventure() {
       const eq = G.equip || {};
       const cos = G.costume || {};
       const dye = G.dye || {};
-      const look = (s) => cos[s] || eq[s]; // 👗 transmog: a costume override changes the LOOK, stats stay from eq
+      const look = (s) => (G._gearHidden && s !== "weapon") ? null : (cos[s] || eq[s]); // 🙈 hidden = base body; 👗 else transmog overrides the LOOK, stats stay from eq
       Object.entries(hatModels).forEach(([k, m]) => (m.visible = k === look("hat")));
       Object.entries(maskModels).forEach(([k, m]) => (m.visible = k === look("mask")));
       const gl = look("gloves");
@@ -10081,20 +10083,10 @@ export default function CherryAdventure() {
     // 🙈 dressing-room preview: hide the currently-worn gear to see the base character; the weapon stays in hand. Stats are untouched.
     G.setGearHidden = (on) => {
       G._gearHidden = !!on;
-      const eq = G.equip || {}, cos = G.costume || {};
-      if (on) {
-        G.equip = { weapon: eq.weapon };
-        G.costume = { weapon: cos.weapon || null };
-        try {
-          if (G.setOutfitVisual) G.setOutfitVisual(null);
-          applyGear();
-          if (G.setWeaponVisual) G.setWeaponVisual(eq.weapon || null);
-        } finally { G.equip = eq; G.costume = cos; }
-      } else {
-        if (G.setOutfitVisual) G.setOutfitVisual(eq.outfit || null);
-        applyGear();
-        if (G.setWeaponVisual) G.setWeaponVisual(eq.weapon || null);
-      }
+      G.dressHideGear = !!on; // 🙈 persistent preference — applies on every screen & event
+      const eq = G.equip || {};
+      if (G.setOutfitVisual) G.setOutfitVisual(eq.outfit || null); // honors _gearHidden internally
+      applyGear(); // honors _gearHidden internally (weapon stays)
     };
     G.openEquip = () => {
       if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
@@ -10105,10 +10097,8 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      G._gearHidden = false;
       setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, gold: G.gold }));
       syncPlayer();
-      if (G.dressHideGear && G.setGearHidden) G.setGearHidden(true); // 🙈 restore remembered hide-gear preference
     };
     G.closeEquip = () => {
       G.equipOpen = false;
@@ -10116,8 +10106,7 @@ export default function CherryAdventure() {
       G.mode = "explore";
       if (char && G._equipPrevPos) char.position.set(G._equipPrevPos.x, 0, G._equipPrevPos.z);
       if (char) char.rotation.y = Math.PI / 2; // face walking direction again
-      if (G._gearHidden) G.setGearHidden(false); // 🙈 restore worn gear for gameplay (preference is remembered)
-      setUi((u) => ({ ...u, equipScreen: false }));
+      setUi((u) => ({ ...u, equipScreen: false })); // 🙈 hide-gear preference persists into the world/battle
     };
 
     // 🎽 auto-equip: put on the strongest item in every slot
@@ -12533,6 +12522,7 @@ export default function CherryAdventure() {
       G.diaSkins = d.diaSkins || {};
       G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
       G.dressHideGear = !!d.dressHideGear;
+      G._gearHidden = G.dressHideGear; // 🙈 apply saved hide-gear on load (before visuals render)
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
