@@ -805,6 +805,20 @@ const WEAPON_SKINS = [
   { id: "dragon",  name: "มังกรโบราณ",      emoji: "🐉", tint: 0xe0402a, glow: 0xff6030,  rarity: "dragon", unlock: { stat: "dragon", val: 1 } },
 ];
 
+// ---------- 💎 DIAMOND SHOP — spend diamonds on special skins / weapons / outfits ----------
+const DIAMOND_SHOP = [
+  { id: "sk_dragon",  kind: "skin", ref: "dragon",  cat: "skin",   emoji: "🐉", name: "สกินมังกรโบราณ",  price: 60 },
+  { id: "sk_rainbow", kind: "skin", ref: "rainbow", cat: "skin",   emoji: "🌈", name: "สกินรุ้งพราวแพรว", price: 50 },
+  { id: "sk_gold",    kind: "skin", ref: "gold",    cat: "skin",   emoji: "👑", name: "สกินทองคำราชัน",  price: 45 },
+  { id: "dw_kd",  kind: "item", ref: "kd",  cat: "weapon", emoji: "🐉", name: "คาตานะมังกร",   price: 90 },
+  { id: "dw_wlm", kind: "item", ref: "wlm", cat: "weapon", emoji: "🌟", name: "คทาสุริยเทพ",    price: 90 },
+  { id: "dw_wla", kind: "item", ref: "wla", cat: "weapon", emoji: "🌟", name: "ธนูแสงดารา",     price: 90 },
+  { id: "dw_wls", kind: "item", ref: "wls", cat: "weapon", emoji: "🌙", name: "มีดคู่จันทราลับ", price: 90 },
+  { id: "dw_wlw", kind: "item", ref: "wlw", cat: "weapon", emoji: "🌙", name: "ดาบเทพจันทรา",   price: 90 },
+  { id: "do_oD", kind: "item", ref: "oD", cat: "outfit", emoji: "🐉", name: "เกราะเกล็ดมังกร", price: 80 },
+  { id: "do_oS", kind: "item", ref: "oS", cat: "outfit", emoji: "✨", name: "อาภรณ์ดวงดาว",    price: 80 },
+];
+
 // ---------- 👘✨ OUTFIT SETS (ชุดคอสตูมเป็นเซ็ต) — themed look + set bonus + aura ----------
 const OUTFIT_SETS = [
   { id: "dragon", name: "ชุดจอมมังกร",   emoji: "🐉", desc: "ATK +6% · HP +6%",  dye: { outfit: 0xe0402a, weapon: 0xf5c542, pants: 0x5a1f1a, shoes: 0xf5c542, gloves: 0xe0402a }, bonus: { atkPct: 6, hpPct: 6 },  aura: 0xff6030, unlock: { stat: "bosses", val: 8 } },
@@ -925,7 +939,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
@@ -8284,6 +8298,16 @@ export default function CherryAdventure() {
       G.dailyStreak = (G.lastDaily === ydStamp) ? ((G.dailyStreak || 0)) : 0; // keep streak if yesterday, else reset
       setUi((u) => ({ ...u, dailyReady: true, dailyStreak: G.dailyStreak || 0 }));
     };
+    // 💎 central diamond-gain helper (premium currency)
+    G.gainDiamonds = (n, reason) => {
+      n = Math.max(0, Math.floor(n || 0));
+      if (!n) return 0;
+      G.diamonds = (G.diamonds || 0) + n;
+      if (G.sfx) G.sfx.coin();
+      toast(`💎 +${n} เพชร${reason ? " · " + reason : ""} (รวม ${G.diamonds})`);
+      setUi((u) => ({ ...u, diamonds: G.diamonds }));
+      return n;
+    };
     G.claimDaily = () => {
       const today = todayStamp();
       if (G.lastDaily === today) { toast("📅 วันนี้รับรางวัลไปแล้ว กลับมาใหม่พรุ่งนี้!"); return; }
@@ -8295,6 +8319,7 @@ export default function CherryAdventure() {
       if (r.potion) G.potions = (G.potions || 0) + r.potion;
       G.lastDaily = today;
       G.dailyStreak = (G.dailyStreak || 0) + 1;
+      if (G.gainDiamonds) G.gainDiamonds(day === 6 ? 8 : 3, "ล็อกอินประจำวัน");
       if (G.sfx) G.sfx.levelup();
       toast(`📅✨ รางวัลล็อกอินวันที่ ${day + 1}! ได้ ${r.label} (ต่อเนื่อง ${G.dailyStreak} วัน)`);
       setUi((u) => ({ ...u, dailyReady: false, dailyStreak: G.dailyStreak, gold: G.gold }));
@@ -8383,6 +8408,7 @@ export default function CherryAdventure() {
       q.claimed = true;
       G.gold += q.gold;
       toast(`🎉 รับรางวัลภารกิจ! +${q.exp} EXP +${q.gold}💰`);
+      if (G.gainDiamonds) G.gainDiamonds(2, "ภารกิจสำเร็จ");
       gainExp(q.exp); // handles level-ups
       G.quests = G.quests.filter((x) => !x.claimed);
       refreshQuests();
@@ -9617,6 +9643,8 @@ export default function CherryAdventure() {
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
+    G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
+    G.diaSkins = {}; // 💎 skins bought with diamonds
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
     G.activeSet = null; // 👘 active outfit-set id
@@ -9871,7 +9899,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0,
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) },
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -10467,7 +10495,7 @@ export default function CherryAdventure() {
     G.setWeaponSkin = (id) => {
       const skin = WEAPON_SKINS.find((s) => s.id === id);
       if (!skin) return;
-      if (!G.collectUnlocked(skin.unlock)) { toast(`🔒 ยังปลดไม่ได้ — ${G.unlockLabel(skin.unlock)}`); return; }
+      if (!G.collectUnlocked(skin.unlock) && !(G.diaSkins && G.diaSkins[id])) { toast(`🔒 ยังปลดไม่ได้ — ${G.unlockLabel(skin.unlock)}`); return; }
       G.weaponSkin = id;
       G.setWeaponVisual(G.equip.weapon);
       toast(id === "none" ? "🗡️ ถอดสกินอาวุธแล้ว" : `🗡️✨ ใส่สกิน ${skin.emoji} ${skin.name}!`);
@@ -10838,6 +10866,27 @@ export default function CherryAdventure() {
       if (G.sfx) G.sfx.coin();
       toast(`⚒️ ตีอาวุธ ${it.emoji} ${it.name} เสร็จแล้ว!`);
       syncPlayer();
+    };
+    // 💎 diamond shop
+    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false }));
+    G.buyDiamond = (id) => {
+      const it = DIAMOND_SHOP.find((x) => x.id === id);
+      if (!it) return;
+      if (it.kind === "skin" && G.diaSkins && G.diaSkins[it.ref]) { toast("มีสกินนี้อยู่แล้ว ✨"); return; }
+      if ((G.diamonds || 0) < it.price) { toast(`💎 เพชรไม่พอ — ต้องมี ${it.price}`); return; }
+      G.diamonds -= it.price;
+      if (it.kind === "skin") {
+        G.diaSkins = G.diaSkins || {};
+        G.diaSkins[it.ref] = 1;
+        if (G.setWeaponSkin) G.setWeaponSkin(it.ref);
+        toast(`💎✨ แลกสกิน ${it.emoji} ${it.name} แล้ว!`);
+      } else {
+        gainItem(it.ref);
+        toast(`💎 แลก ${it.emoji} ${it.name} เข้ากระเป๋าแล้ว!`);
+      }
+      if (G.sfx) G.sfx.coin();
+      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) } }));
+      if (G.saveGame) G.saveGame();
     };
     G.sellItem = (id) => {
       const idx = G.inv.indexOf(id);
@@ -11221,15 +11270,6 @@ export default function CherryAdventure() {
         toast(`✨ ได้ผงดาว +${dust} (รวม ${G.stardust})`);
         setUi((u) => ({ ...u, stardust: G.stardust }));
       }
-      // 💎 DIAMONDS — a rarer premium currency (separate from star dust); bosses give the most
-      {
-        const dia = wasBoss ? 2 + Math.floor(Math.random() * 3) : (isGhost || isGolden) ? 1 : (Math.random() < 0.08 ? 1 : 0);
-        if (dia > 0) {
-          G.diamonds = (G.diamonds || 0) + dia;
-          toast(`💎 ได้เพชร +${dia} (รวม ${G.diamonds})`);
-          setUi((u) => ({ ...u, diamonds: G.diamonds }));
-        }
-      }
       // ⚔️ WEAPON MASTERY XP — earned for fighting with your weapon (bosses/ghosts give more)
       if (G.gainMastery) G.gainMastery(Math.round((6 + G.enemy.lv * 2) * (wasBoss ? 3 : isGhost ? 2 : 1)));
       if (em.userData.ghost) ghostMesh = null;
@@ -11568,6 +11608,7 @@ export default function CherryAdventure() {
       const chapter = STORY[ch];
       if (!chapter.goal(storyState())) return;
       G.gold += chapter.reward;
+      if (G.gainDiamonds) G.gainDiamonds(5, "เควสเนื้อเรื่อง");
       G.storyChapter = ch + 1;
       if (G.sfx) G.sfx.levelup();
       toast(`📖 บทที่ ${ch + 1} สำเร็จ! +${chapter.reward}💰`);
@@ -11741,6 +11782,8 @@ export default function CherryAdventure() {
       G.constNodes = {}; // ✨ fresh constellation board
       G.stardust = 0; // ✨ fresh star dust
       G.diamonds = 0; // 💎 fresh diamonds
+      G.lastRankClaim = null;
+      G.diaSkins = {};
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
       G.activeSet = null; // 👘 fresh (no set)
@@ -11815,7 +11858,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -12089,6 +12132,12 @@ export default function CherryAdventure() {
       if (!rows) { toast("❌ โหลดไม่สำเร็จ ลองใหม่อีกครั้ง"); setUi((u) => ({ ...u, netStatus: CN.status })); return; }
       setUi((u) => ({ ...u, globalBoard: rows, netStatus: "ok" }));
       toast(`🏆 โหลดอันดับโลก ${rows.length} คน`);
+      const myIdx = G.pid ? rows.findIndex((r) => r.pid === G.pid) : -1;
+      if (myIdx >= 0 && myIdx <= 2 && G.lastRankClaim !== todayStamp()) {
+        G.lastRankClaim = todayStamp();
+        if (G.gainDiamonds) G.gainDiamonds([30, 20, 10][myIdx], `อันดับ ${myIdx + 1} ของโลก`);
+        if (G.saveGame) G.saveGame();
+      }
     };
     // ---------- 👥 SOCIAL: friend codes, ghost battles, local leaderboard ----------
     // encode the player's battle profile into a compact shareable code
@@ -12395,6 +12444,7 @@ export default function CherryAdventure() {
       const before = G.pvpRank || 1000;
       const delta = iWon ? 25 : -18;
       G.pvpRank = Math.max(0, before + delta);
+      if (iWon && G.gainDiamonds) G.gainDiamonds(5, "ชนะ PvP");
       setUi(u => ({ ...u, socialOpen: false, pvpWaiting: null, pvpIncoming: null, pvpDuel: { A, B, side, log: sim.log, winner: sim.winner, aMax: sim.aMax, bMax: sim.bMax, step: 0, done: sim.log.length === 0, iWon, myPid: G.pid, rank: G.pvpRank, delta } }));
       if (G._pvpTick) { clearInterval(G._pvpTick); G._pvpTick = null; }
       let step = 0;
@@ -12476,6 +12526,8 @@ export default function CherryAdventure() {
       G.constNodes = d.constNodes || {};
       G.stardust = d.stardust || 0;
       G.diamonds = d.diamonds || 0;
+      G.lastRankClaim = d.lastRankClaim || null;
+      G.diaSkins = d.diaSkins || {};
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
@@ -19454,6 +19506,7 @@ export default function CherryAdventure() {
               ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
                     ["📜", "เควส", () => toggleMenu("questOpen"), "#5fb0f0"],
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
+              ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
               ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen"), "#6fce97"],
               ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion(), "#6fce97"],
             ].map((it) => (
@@ -19577,6 +19630,42 @@ export default function CherryAdventure() {
           </div>
         );
       })()}
+
+      {ui.diamondShopOpen && (
+        <div onClick={() => setUi((u) => ({ ...u, diamondShopOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(14,18,30,0.62)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70, fontFamily: font }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 470, maxHeight: "86%", overflowY: "auto", background: "linear-gradient(180deg,#101830,#0b1020)", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px", border: "1px solid #3a5a8a" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#8fd0ff" }}>💎 ร้านเพชร</div>
+              <div style={{ flex: 1 }} />
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "3px 12px", border: "1px solid #3a6aa0", marginRight: 10 }}>💎 {(ui.diamonds || 0).toLocaleString()}</div>
+              <button onClick={() => setUi((u) => ({ ...u, diamondShopOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(255,255,255,0.12)", color: "#cfe0f0", fontWeight: 800 }}>✕</button>
+            </div>
+            <div style={{ fontSize: 11, color: "#8a9ac0", marginBottom: 12 }}>เพชรหาได้จาก เควส · ชนะ PvP · อันดับโลก 1-3 · ล็อกอินประจำวัน</div>
+            {[["skin", "🗡️ สกินอาวุธพิเศษ"], ["weapon", "⚔️ อาวุธพิเศษ"], ["outfit", "👗 ชุดพิเศษ"]].map((grp) => (
+              <div key={grp[0]} style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#c0a060", margin: "2px 2px 8px" }}>{grp[1]}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
+                  {DIAMOND_SHOP.filter((x) => x.cat === grp[0]).map((it) => {
+                    const owned = it.kind === "skin" && ui.diaSkins && ui.diaSkins[it.ref];
+                    const afford = (ui.diamonds || 0) >= it.price;
+                    return (
+                      <div key={it.id} style={{ border: "1px solid #2a3a58", borderRadius: 14, padding: "10px 11px", background: "rgba(30,44,72,0.55)", display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <span style={{ fontSize: 25 }}>{it.emoji}</span>
+                          <span style={{ fontSize: 12, fontWeight: 800, color: "#e6eefc", lineHeight: 1.2 }}>{it.name}</span>
+                        </div>
+                        <button onClick={() => G.buyDiamond(it.id)} disabled={owned || !afford} style={{ marginTop: 2, padding: "7px 0", borderRadius: 10, border: "none", cursor: owned || !afford ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: owned ? "#8fe0b0" : afford ? "#fff" : "#7f8aa5", background: owned ? "rgba(90,220,150,0.15)" : afford ? "linear-gradient(90deg,#4a86e0,#6a5ad0)" : "rgba(255,255,255,0.06)" }}>
+                          {owned ? "✓ มีแล้ว" : `💎 ${it.price}`}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ===== explore controls ===== */}
       {ui.mode === "explore" && (
@@ -20797,7 +20886,7 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a04a80", marginBottom: 5 }}>🗡️ สกินอาวุธ (แสงเรืองรอบอาวุธ)</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 10 }}>
                 {WEAPON_SKINS.map((sk) => {
-                  const unlocked = G.collectUnlocked ? G.collectUnlocked(sk.unlock) : true;
+                  const unlocked = (G.collectUnlocked ? G.collectUnlocked(sk.unlock) : true) || (ui.diaSkins && ui.diaSkins[sk.id]);
                   const on = (ui.weaponSkin || "none") === sk.id;
                   const glowC = sk.glow && sk.glow !== "rainbow" ? `#${sk.glow.toString(16).padStart(6, "0")}` : sk.glow === "rainbow" ? "#e06aa0" : "#cccccc";
                   return (
