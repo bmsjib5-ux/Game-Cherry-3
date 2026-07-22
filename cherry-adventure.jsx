@@ -19245,7 +19245,7 @@ export default function CherryAdventure() {
               <button onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 }}>✕</button>
             </div>
             {[
-              { t: "👤 ตัวละคร", items: [["🧍", "แต่งตัว & ช่องเก็บของ", () => G.openEquip()], ["🎒", "กระเป๋า", () => toggleMenu("invOpen")], ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel")], ["✨", "คอลเลกชัน", () => G.toggleCollection()]] },
+              { t: "👤 ตัวละคร", items: [["🧍", "แต่งตัว & ช่องเก็บของ", () => G.openEquip()], ["⚡", "สกิล & สเตตัส", () => toggleMenu("skillPanel")], ["✨", "คอลเลกชัน", () => G.toggleCollection()]] },
               { t: "⚔️ พลัง & อัปเกรด", items: [["🌳", "ต้นไม้ทักษะ", () => G.toggleTree()], ["🌌", "หมู่ดาว", () => G.toggleConst()], ["⛏️", "หลอม & ตีบวก", () => G.toggleForge()], ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery()]] },
               { t: "🌐 สังคม & เควส", items: [["👥", "เพื่อน & สู้ผี", () => G.toggleSocial()], ["📜", "เควส", () => toggleMenu("questOpen")]] },
               { t: "🛒 ไอเทม & อื่นๆ", items: [["🏪", "ร้านค้า", () => toggleMenu("shopOpen")], ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen")], ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion()]] },
