@@ -656,8 +656,8 @@ const CRAFT_RECIPES = {
 // วิธีตั้งค่าแบบละเอียด (พร้อม SQL) อยู่ในไฟล์ ONLINE_SETUP.md
 // ปล่อยว่างไว้ = เกมใช้ระบบเพื่อนแบบออฟไลน์ (รหัสก็อป-วาง) เหมือนเดิม
 const ONLINE_CONFIG = {
-  url: "",      // เช่น "https://abcdefgh.supabase.co"
-  anonKey: "",  // public anon key ของโปรเจกต์ (ปลอดภัยที่จะฝังใน client)
+  url: "https://xaifhvlvfdvpieeutmys.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaWZodmx2ZmR2cGllZXV0bXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTcyMzEsImV4cCI6MjEwMDI5MzIzMX0.OdLp0--DlPrStyeJ9pZn33h6EigN5uqUby-yq8jAGH4",  // anon public key (ปลอดภัยที่จะฝังใน client — RLS เป็นตัวกันข้อมูล)
 };
 
 const SKILL_TREE = {
