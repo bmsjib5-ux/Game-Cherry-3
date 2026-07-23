@@ -18428,7 +18428,13 @@ export default function CherryAdventure() {
             <div style={{ fontSize: 22, fontWeight: 800, color: "#c0446a", marginBottom: 2 }}>Cherry Adventure</div>
             <div style={{ fontSize: 11.5, color: "#a07a8a", marginBottom: 18, lineHeight: 1.5 }}>เข้าสู่ระบบเพื่อเซฟข้ามเครื่อง<br />(หรือเล่นแบบไม่ล็อกอินก็ได้)</div>
             {ui.auth && ui.auth.status === "in" ? (
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#4a9a5e", background: "#eaf7ec", borderRadius: 12, padding: "12px", marginBottom: 16 }}>✅ เข้าสู่ระบบแล้ว<br /><span style={{ fontSize: 11, color: "#6a8a6a", fontWeight: 700 }}>{ui.auth.email}</span></div>
+              <>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#4a9a5e", background: "#eaf7ec", borderRadius: 12, padding: "12px", marginBottom: 10 }}>✅ เข้าสู่ระบบแล้ว<br /><span style={{ fontSize: 11, color: "#6a8a6a", fontWeight: 700 }}>{ui.auth.email}</span></div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => G.accountSync()} style={{ flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #cfe6d2", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#4a9a5e", background: "#f2fbf4" }}>☁️ ซิงค์</button>
+                  <button onClick={() => G.accountSignOut()} style={{ flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a06a6a", background: "#fff" }}>ออกจากระบบ</button>
+                </div>
+              </>
             ) : (
               <>
                 <input type="email" value={ui.authEmail || ""} onChange={(e) => setUi((u) => ({ ...u, authEmail: e.target.value }))} placeholder="อีเมล" style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 8, fontFamily: font }} />
@@ -19427,26 +19433,6 @@ export default function CherryAdventure() {
         </div>
       )}
 
-      {/* 🔐 cross-device account (login/sync) */}
-      {ui.mode === "title" && (
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 14, display: "flex", justifyContent: "center", padding: "0 18px", zIndex: 30, pointerEvents: "none" }}>
-          <div style={{ width: "100%", maxWidth: 340, pointerEvents: "auto" }}>
-            {ui.auth && ui.auth.status === "in" ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", borderRadius: 14, padding: "9px 13px", boxShadow: "0 6px 18px rgba(60,40,80,0.2)" }}>
-                <div style={{ fontSize: 18 }}>☁️</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a" }}>ซิงค์ข้ามเครื่องเปิดอยู่</div>
-                  <div style={{ fontSize: 10, color: "#a3a396", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ui.auth.email}</div>
-                </div>
-                <button onClick={() => G.accountSync()} style={{ padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "#5aa06a" }}>ซิงค์</button>
-                <button onClick={() => G.accountSignOut()} style={{ padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#8a6a5a", background: "#f3ede4" }}>ออก</button>
-              </div>
-            ) : (
-              <button onClick={() => setUi((u) => ({ ...u, accountOpen: true }))} style={{ width: "100%", padding: "11px 14px", borderRadius: 14, border: "1px dashed #c9a24a", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a06a2a", background: "#fff7ea", boxShadow: "0 6px 18px rgba(60,40,80,0.15)" }}>🔐 เข้าสู่ระบบ / บันทึกข้ามเครื่อง</button>
-            )}
-          </div>
-        </div>
-      )}
       {ui.accountOpen && (
         <div onClick={() => setUi((u) => ({ ...u, accountOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 340, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
