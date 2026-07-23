@@ -20610,29 +20610,6 @@ export default function CherryAdventure() {
                   </div>
                 );
               })()}
-              {/* ⚖️ RESPEC — undo stat/skill choices so builds can be experimented with */}
-              {(() => {
-                const cost = 200 + (ui.level || 1) * 40;
-                const afford = (ui.gold || 0) >= cost;
-                return (
-                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "9px 11px", background: "#f2f0fa", border: "1px solid #d8d0ee" }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a4ad0", marginBottom: 2 }}>⚖️ รีเซ็ตแต้ม (Respec)</div>
-                    <div style={{ fontSize: 9.5, color: "#9a8ab0", marginBottom: 6 }}>
-                      คืนแต้มทั้งหมดเพื่อลองบิลด์ใหม่ · ค่าใช้จ่าย 💰{cost} (มี {ui.gold || 0})
-                    </div>
-                    <div style={{ display: "flex", gap: 5 }}>
-                      {[["stats", "💪 สถานะ"], ["skills", "🌳 สกิล+ต้นไม้"], ["all", "♻️ ทั้งหมด"]].map(([k, label]) => (
-                        <button key={k} onClick={() => G.respec(k)} disabled={!afford} style={{
-                          flex: 1, padding: "7px 0", borderRadius: 8, border: "none",
-                          cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 10.5, fontWeight: 800,
-                          color: afford ? "#fff" : "#a89ab0",
-                          background: afford ? "linear-gradient(90deg,#9a4ad0,#b07ae0)" : "#e0dce8",
-                        }}>{label}</button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
               {/* 🌟 CLASS PATH (สายอาชีพขั้นสูง) — unlocks at Lv.40, permanent choice */}
               {ui.cls && CLASS_PATHS[ui.cls] && (() => {
                 const chosen = pathOf(ui.cls, ui.pathId);
@@ -20813,6 +20790,29 @@ export default function CherryAdventure() {
                       fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                       background: maxed ? "#b0a396" : can ? "linear-gradient(90deg,#f5a623,#f5763a)" : "#d0c0a0",
                     }}>{maxed ? "สุดยอดแล้ว Lv.5 ⭐" : can ? `ปลุกพลังท่าไม้ตาย (${cost} แต้ม)` : "🔒 ยังไม่ครบเงื่อนไข"}</button>
+                  </div>
+                );
+              })()}
+              {/* ⚖️ RESPEC — undo stat/skill choices so builds can be experimented with */}
+              {(() => {
+                const cost = 200 + (ui.level || 1) * 40;
+                const afford = (ui.gold || 0) >= cost;
+                return (
+                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "9px 11px", background: "#f2f0fa", border: "1px solid #d8d0ee" }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a4ad0", marginBottom: 2 }}>⚖️ รีเซ็ตแต้ม (Respec)</div>
+                    <div style={{ fontSize: 9.5, color: "#9a8ab0", marginBottom: 6 }}>
+                      คืนแต้มทั้งหมดเพื่อลองบิลด์ใหม่ · ค่าใช้จ่าย 💰{cost} (มี {ui.gold || 0})
+                    </div>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      {[["stats", "💪 สถานะ"], ["skills", "🌳 สกิล+ต้นไม้"], ["all", "♻️ ทั้งหมด"]].map(([k, label]) => (
+                        <button key={k} onClick={() => G.respec(k)} disabled={!afford} style={{
+                          flex: 1, padding: "7px 0", borderRadius: 8, border: "none",
+                          cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 10.5, fontWeight: 800,
+                          color: afford ? "#fff" : "#a89ab0",
+                          background: afford ? "linear-gradient(90deg,#9a4ad0,#b07ae0)" : "#e0dce8",
+                        }}>{label}</button>
+                      ))}
+                    </div>
                   </div>
                 );
               })()}
