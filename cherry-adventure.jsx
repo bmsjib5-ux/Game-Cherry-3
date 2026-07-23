@@ -20069,9 +20069,10 @@ export default function CherryAdventure() {
           {/* ⚡ skill upgrade panel */}
           {ui.skillPanel && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 260, maxHeight: "60vh", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50,
+              width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              background: "#fff", borderRadius: 20, padding: 16,
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("skillPanel")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
@@ -20496,9 +20497,10 @@ export default function CherryAdventure() {
           {/* 👥 SOCIAL panel — friend codes, ghost battles, leaderboard */}
           {ui.socialOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 280, maxHeight: "70vh", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50,
+              width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              background: "#fff", borderRadius: 20, padding: 16,
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("socialOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a7ad0", marginBottom: 6 }}>👥 เพื่อน & สู้ผี</div>
