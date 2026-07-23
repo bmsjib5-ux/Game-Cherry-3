@@ -10015,8 +10015,8 @@ function CherryAdventure() {
       // ===== whole head shadowed in black cloth (over the 0.62 base head) — only glowing crimson eyes show =====
       const faceCore = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 20), kMask); faceCore.scale.set(1.09, 1.1, 1.12); faceCore.position.set(0, 0.0, -0.02); headG.add(faceCore);
       const kEyes = [];
-      for (const sx of [-0.185, 0.185]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), kCrim); eye.scale.set(1.4, 1.0, 0.42); eye.position.set(sx, 0.11, 0.63); eye.rotation.z = -sx * 0.85; headG.add(eye); kEyes.push(eye); const spark = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffe0c0, emissive: 0xff9060, emissiveIntensity: 1.0 })); spark.position.set(sx + sx * 0.1, 0.15, 0.67); headG.add(spark); kEyes.push(spark); }
-      const eyeGlow = new THREE.PointLight(0xff2e1c, 0.55, 1.7); eyeGlow.position.set(0, 0.12, 0.66); headG.add(eyeGlow); G._kotEyeGlow = eyeGlow;
+      for (const sx of [-0.185, 0.185]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), kCrim); eye.scale.set(1.4, 1.0, 0.42); eye.position.set(sx, 0.02, 0.635); eye.rotation.z = -sx * 0.85; headG.add(eye); kEyes.push(eye); const spark = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffe0c0, emissive: 0xff9060, emissiveIntensity: 1.0 })); spark.position.set(sx + sx * 0.1, 0.06, 0.675); headG.add(spark); kEyes.push(spark); }
+      const eyeGlow = new THREE.PointLight(0xff2e1c, 0.55, 1.7); eyeGlow.position.set(0, 0.03, 0.66); headG.add(eyeGlow); G._kotEyeGlow = eyeGlow;
 
       // ===== desert hood — dark cowl over crown/back/sides, framing the face =====
       const cowl = new THREE.Mesh(new THREE.SphereGeometry(0.72, 28, 24), kHoodM); cowl.scale.set(1.08, 1.14, 1.14); cowl.position.set(0, 0.2, -0.08);
