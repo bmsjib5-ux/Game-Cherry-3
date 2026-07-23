@@ -18322,14 +18322,15 @@ export default function CherryAdventure() {
       if (G.mode === "create" || G.mode === "class") {
         // centered turntable, zoomable with pinch/wheel/buttons (camDist)
         // 🧍 equip screen pulls the camera back so the whole body is visible
-        const cd = G.equipOpen ? 9.4 : Math.max(2.6, Math.min(11, camDist * 0.5));
-        const camY = G.equipOpen ? 1.62 : 1.55 + cd * 0.14;
-        const lookY = G.equipOpen ? 1.02 : 1.35;
-        // 📱 บนจอแนวตั้ง (มือถือ) แผงแต่งตัวบังครึ่งซ้าย — เลื่อนตัวละครไปด้านขวาที่มองเห็น
-        const wideEquip = G.equipOpen && window.innerWidth > 620; // 🖥️ คอม: หน้าแต่งตัวเป็นแผงเล็กชิดซ้าย → ตัวละครไปอยู่ในแผงซ้าย
+        // 🖥️ คอม (จอกว้าง): ถอยกล้องออกอีก + ยกตัวละครขึ้นให้พอดีช่องว่างระหว่างหัวเรื่องกับกระเป๋าด้านล่าง
+        const wideEquip = G.equipOpen && window.innerWidth > 620;
+        const cd = G.equipOpen ? (wideEquip ? 14.0 : 9.4) : Math.max(2.6, Math.min(11, camDist * 0.5));
+        const camY = G.equipOpen ? (wideEquip ? 1.86 : 1.62) : 1.55 + cd * 0.14;
+        const lookY = G.equipOpen ? (wideEquip ? 0.42 : 1.02) : 1.35;
+        // 🖥️ หน้าแต่งตัว: จัดตัวละครให้อยู่กึ่งกลางจอเสมอ (ทั้งมือถือและคอม) — คอลัมน์อุปกรณ์อยู่ริมซ้าย/ขวา
         const panX = !G.equipOpen && window.innerWidth < 640 ? -cd * 0.11 : 0;
-        const camX = wideEquip ? cd * 0.05 : panX;
-        const lookX = wideEquip ? cd * 0.32 : panX;
+        const camX = panX;
+        const lookX = panX;
         camera.position.x += (camX - camera.position.x) * 0.08;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (cd - camera.position.z) * 0.08;
@@ -21099,7 +21100,7 @@ export default function CherryAdventure() {
             const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 9, border: "2px dashed #2f3a2b", background: "rgba(255,255,255,0.02)" }} />;
             const renderCell = (cell, i) => cell.pot === "hp" ? potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp") : cell.pot === "mp" ? potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp") : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
-              <div key="eqscr" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "min(100vw, 560px)", zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
+              <div key="eqscr" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
                 <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                   🎒 ช่องเก็บของ
                   <button title="ปิดหน้าตัวละคร" onClick={() => G.closeEquip()} style={{ position: "absolute", right: 12, top: 8, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#e8dcc0", fontSize: 16, cursor: "pointer" }}>✕</button>
