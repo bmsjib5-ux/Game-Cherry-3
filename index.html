@@ -34632,22 +34632,26 @@ document.getElementById("loading").remove();
   }
   function makeBtn() {
     if (document.getElementById("pwaInstall") || isStandalone()) return null;
+    var wrap = document.createElement("div");
+    wrap.id = "pwaInstall";
+    wrap.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:2147483647;max-width:calc(100vw - 20px);box-sizing:border-box;padding:11px 12px 12px;border-radius:16px;background:rgba(26,18,32,0.94);box-shadow:0 8px 28px rgba(0,0,0,0.42);border:1px solid rgba(255,255,255,0.14);font-family:system-ui,sans-serif;text-align:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);";
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:8px;justify-content:center;";
     var b = document.createElement("button");
-    b.id = "pwaInstall";
-    b.innerHTML = "📲 ติดตั้งเกม";
-    b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:2147483647;padding:10px 18px;border:none;border-radius:999px;cursor:pointer;font:800 14px system-ui,sans-serif;color:#fff;background:linear-gradient(90deg,#e0709a,#c05a86);box-shadow:0 6px 20px rgba(150,90,120,0.45);";
-    var x = document.createElement("span");
+    b.innerHTML = "📲 ติดตั้งเกมลงเครื่อง";
+    b.style.cssText = "padding:9px 16px;border:none;border-radius:999px;cursor:pointer;font:800 13.5px system-ui,sans-serif;color:#fff;background:linear-gradient(90deg,#e0709a,#c05a86);box-shadow:0 4px 14px rgba(150,90,120,0.4);";
+    b.onclick = function () { if (!deferred) return; deferred.prompt(); deferred.userChoice.finally(function () { deferred = null; wrap.remove(); }); };
+    var x = document.createElement("button");
     x.textContent = "✕";
-    x.style.cssText = "margin-left:10px;opacity:0.75;font-weight:800;";
-    x.onclick = function (e) { e.stopPropagation(); b.remove(); };
-    b.appendChild(x);
-    b.onclick = function () {
-      if (!deferred) return;
-      deferred.prompt();
-      deferred.userChoice.finally(function () { deferred = null; b.remove(); });
-    };
-    document.body.appendChild(b);
-    return b;
+    x.style.cssText = "border:none;background:rgba(255,255,255,0.12);color:#e6dce8;width:26px;height:26px;border-radius:50%;cursor:pointer;font-weight:800;flex:0 0 auto;";
+    x.onclick = function (e) { e.stopPropagation(); wrap.remove(); };
+    row.appendChild(b); row.appendChild(x);
+    var note = document.createElement("div");
+    note.innerHTML = "🍒 <b>เกมปลอดภัย</b> — ถ้าขึ้นเตือน \"Play Protect\" กด <b>ยืนยัน</b> ได้เลย<br>ติดตั้งไม่ได้ (Android รุ่นใหม่)? กด <b>⋮</b> ของเบราว์เซอร์ → <b>“เพิ่มไปยังหน้าจอโฮม”</b> หรือเล่นในเบราว์เซอร์ได้เต็มที่";
+    note.style.cssText = "margin-top:9px;font-size:10.5px;line-height:1.55;color:#cdbdd6;max-width:290px;";
+    wrap.appendChild(row); wrap.appendChild(note);
+    document.body.appendChild(wrap);
+    return wrap;
   }
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault();
