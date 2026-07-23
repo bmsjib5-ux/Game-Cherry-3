@@ -4494,9 +4494,9 @@ export default function CherryAdventure() {
         pos.needsUpdate = true;
         topShellGeo.computeVertexNormals();
       }
-      const pureWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 });
+      const pureWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75, side: THREE.DoubleSide });
       const topShell = new THREE.Mesh(topShellGeo, pureWhite); // เสื้อขาวล้วน
-      topShell.position.y = 1.14; topShell.scale.set(1.03, 0.82, 0.75);
+      topShell.position.y = 1.12; topShell.scale.set(1.12, 0.9, 0.94); // คลุมลำตัวเต็ม ไม่โผล่ผิว
       haruOutfit.add(topShell);
       // 🧣 slate-blue sailor collar (ตามภาพ) — shoulder ring + front V panels + back flap
       const slate = new THREE.MeshStandardMaterial({ color: 0x2b3358, roughness: 0.72 }); // น้ำเงินเดียวกับกระโปรง
@@ -10211,7 +10211,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0,
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -12185,7 +12185,7 @@ export default function CherryAdventure() {
       G.treeNodes = {}; // 🌳 fresh passive skill tree
       G.constNodes = {}; // ✨ fresh constellation board
       G.stardust = 0; // ✨ fresh star dust
-      G.diamonds = 0; // 💎 fresh diamonds
+      G.diamonds = 1000; G.starterGems = 1; // 💎 fresh diamonds — แจกเพชรเริ่มต้น 1000
       G.lastRankClaim = null;
       G.diaSkins = {};
       G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; G.gachaPity = 0;
@@ -12970,6 +12970,7 @@ export default function CherryAdventure() {
       G.constNodes = d.constNodes || {};
       G.stardust = d.stardust || 0;
       G.diamonds = d.diamonds || 0;
+      if (!d.starterGems) { G.diamonds += 1000; G.starterGems = 1; setTimeout(() => toast("🎁 แจกเพชรเริ่มต้น +1000 💎! สนุกกับกาชาได้เลย"), 900); } else { G.starterGems = 1; } // 💎 one-time starter grant
       G.lastRankClaim = d.lastRankClaim || null;
       G.diaSkins = d.diaSkins || {};
       G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
