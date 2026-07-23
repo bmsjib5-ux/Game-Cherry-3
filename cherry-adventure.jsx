@@ -918,14 +918,14 @@ const CHAR_PRESETS = [
 ];
 // 🦸 ฮีโร่ในตำนาน — โชว์ในหน้ารวมฮีโร่ (Hero Gallery)
 const HERO_GALLERY = [
-  { id: "rose",     name: "โรส",       emoji: "👑", title: "อัศวินแสงกุหลาบ",       c1: "#f7d488", c2: "#e0a038" },
-  { id: "kentaro",  name: "เคนทาโร่",  emoji: "🗡️", title: "ซามูไรดาบคู่",          c1: "#f0907a", c2: "#c0402e" },
-  { id: "kotaro",   name: "โคทาโร่",   emoji: "🦂", title: "นักลอบสังหารทะเลทราย",  c1: "#e0c088", c2: "#9a7c4c" },
-  { id: "kairi",    name: "ไครี",      emoji: "⚡", title: "เทพเจ้าสายฟ้า",         c1: "#8fd0ff", c2: "#3a6ae0" },
-  { id: "celestia", name: "เซเลสเทีย", emoji: "👸", title: "เทพีสวรรค์",            c1: "#9ab0f0", c2: "#4a6ad0" },
-  { id: "luna",     name: "ลูน่า",     emoji: "🌙", title: "เจ้าหญิงจันทรา",        c1: "#b0b8f0", c2: "#6a7ae0" },
-  { id: "yuki",     name: "ยูกิ",      emoji: "❄️", title: "นักธนูน้ำแข็ง",         c1: "#a8e0ff", c2: "#4a9ad0" },
-  { id: "haru",     name: "ฮารุ",      emoji: "🌸", title: "จอมเวทซากุระ",          c1: "#f2a8d0", c2: "#c05a9a" },
+  { id: "rose",     name: "โรส",       emoji: "👑", title: "อัศวินแสงกุหลาบ",       c1: "#f7d488", c2: "#e0a038", price: 160 },
+  { id: "kentaro",  name: "เคนทาโร่",  emoji: "🗡️", title: "ซามูไรดาบคู่",          c1: "#f0907a", c2: "#c0402e", price: 200 },
+  { id: "kotaro",   name: "โคทาโร่",   emoji: "🦂", title: "นักลอบสังหารทะเลทราย",  c1: "#e0c088", c2: "#9a7c4c", price: 220 },
+  { id: "kairi",    name: "ไครี",      emoji: "⚡", title: "เทพเจ้าสายฟ้า",         c1: "#8fd0ff", c2: "#3a6ae0", price: 260 },
+  { id: "celestia", name: "เซเลสเทีย", emoji: "👸", title: "เทพีสวรรค์",            c1: "#9ab0f0", c2: "#4a6ad0", price: 180 },
+  { id: "luna",     name: "ลูน่า",     emoji: "🌙", title: "เจ้าหญิงจันทรา",        c1: "#b0b8f0", c2: "#6a7ae0", price: 120 },
+  { id: "yuki",     name: "ยูกิ",      emoji: "❄️", title: "นักธนูน้ำแข็ง",         c1: "#a8e0ff", c2: "#4a9ad0", price: 120 },
+  { id: "haru",     name: "ฮารุ",      emoji: "🌸", title: "จอมเวทซากุระ",          c1: "#f2a8d0", c2: "#c05a9a", price: 80 },
 ];
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 const rollRarity = (boss) => {
@@ -9940,6 +9940,7 @@ export default function CherryAdventure() {
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
     G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
     G.diaSkins = {}; // 💎 skins bought with diamonds
+    G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; // 🦸 hero unlocks + temp passes
     G.dressRotY = null; G.dressHideGear = false; // 🧍 remembered dressing-room angle + hide-gear toggle
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
@@ -10195,7 +10196,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) },
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) },
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -10524,6 +10525,13 @@ export default function CherryAdventure() {
 
     // loot drop on victory
     const dropLoot = (boss) => {
+      // 🦸 boss can drop a temporary hero pass (1 / 2 / 5 days)
+      if (boss && Math.random() < 0.32) {
+        const r = Math.random(); const days = r < 0.55 ? 1 : r < 0.87 ? 2 : 5;
+        G.heroPasses = G.heroPasses || {}; G.heroPasses[days] = (G.heroPasses[days] || 0) + 1;
+        toast(`🎫 ดรอปบัตรแต่งตัวฮีโร่ ${days} วัน! (แลกที่เมนู 🦸 ฮีโร่)`);
+        setUi((u) => ({ ...u, heroPasses: { ...G.heroPasses } }));
+      }
       // 🧪 potion roll (independent): 25% normal, boss always drops one
       if (boss || Math.random() < 0.25) {
         G.potions++;
@@ -11171,6 +11179,47 @@ export default function CherryAdventure() {
       if (G.sfx) G.sfx.coin();
       setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) } }));
       if (G.saveGame) G.saveGame();
+    };
+    // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
+    G.HERO_PRICE = { haru: 80, yuki: 120, luna: 120, celestia: 180, rose: 160, kentaro: 200, kotaro: 220, kairi: 260 };
+    G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
+    G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now()) return 0; return Math.ceil((t - Date.now()) / 86400000); };
+    G.buyHero = (id) => {
+      if (G.heroesOwned && G.heroesOwned[id]) { toast("ปลดล็อกฮีโร่นี้ถาวรแล้ว ✨"); return; }
+      const price = (G.HERO_PRICE && G.HERO_PRICE[id]) || 150;
+      if ((G.diamonds || 0) < price) { toast(`💎 เพชรไม่พอ — ต้องมี ${price}`); return; }
+      G.diamonds -= price;
+      G.heroesOwned = G.heroesOwned || {}; G.heroesOwned[id] = 1;
+      if (G.setHero) G.setHero(id);
+      if (G.sfx) G.sfx.coin();
+      toast("💎🦸 ปลดล็อกฮีโร่ถาวรแล้ว!");
+      setUi((u) => ({ ...u, diamonds: G.diamonds, heroesOwned: { ...G.heroesOwned }, heroId: id }));
+      if (G.saveGame) G.saveGame();
+    };
+    G.redeemHeroPass = (id, days) => {
+      G.heroPasses = G.heroPasses || {};
+      if (!G.heroPasses[days] || G.heroPasses[days] <= 0) { toast(`ไม่มีบัตร ${days} วัน`); return; }
+      G.heroPasses[days] -= 1;
+      G.heroTemp = G.heroTemp || {};
+      const base = Math.max(Date.now(), (G.heroTemp[id] || 0));
+      G.heroTemp[id] = base + days * 86400000;
+      if (G.setHero) G.setHero(id);
+      if (G.sfx) G.sfx.coin();
+      toast(`🎫 สวมฮีโร่ชั่วคราว ${days} วันแล้ว!`);
+      setUi((u) => ({ ...u, heroPasses: { ...G.heroPasses }, heroTemp: { ...G.heroTemp }, heroId: id }));
+      if (G.saveGame) G.saveGame();
+    };
+    G.pickHero = (id) => {
+      if (id && !G.heroUnlocked(id)) { toast("🔒 ต้องปลดล็อกฮีโร่นี้ก่อน"); return; }
+      if (G.setHero) G.setHero(id);
+      setUi((u) => ({ ...u, heroId: id }));
+      if (G.saveGame) G.saveGame();
+    };
+    G.sweepHeroTemp = () => {
+      const now = Date.now(); let changed = false;
+      if (G.heroTemp) for (const k of Object.keys(G.heroTemp)) { if (G.heroTemp[k] <= now) { delete G.heroTemp[k]; changed = true; } }
+      if (G.heroId && !G.heroUnlocked(G.heroId)) { if (G.setHero) G.setHero(null); toast("⏳ บัตรฮีโร่หมดอายุ — กลับเป็นตัวละครปกติ"); setUi((u) => ({ ...u, heroId: null })); changed = true; }
+      if (changed && G.saveGame) G.saveGame();
     };
     G.sellItem = (id) => {
       const idx = G.inv.indexOf(id);
@@ -12068,6 +12117,7 @@ export default function CherryAdventure() {
       G.diamonds = 0; // 💎 fresh diamonds
       G.lastRankClaim = null;
       G.diaSkins = {};
+      G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {};
       G.dressRotY = null; G.dressHideGear = false;
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
@@ -12819,7 +12869,12 @@ export default function CherryAdventure() {
       G.cls = d.cls || "warrior";
       G.playerName = d.name || "เชอร์รี่";
       Object.entries(d.custom || {}).forEach(([k, v]) => G.setCustom(k, v));
-      if (G.setHero) G.setHero(d.heroId || null); // 🌸 restore a hero.s signature look
+      G.heroesOwned = d.heroesOwned || {};
+      if (d.heroId && !d.heroesOwned) G.heroesOwned[d.heroId] = 1; // 🎁 grandfather heroes owned before the unlock economy
+      G.heroPasses = d.heroPasses || {};
+      G.heroTemp = d.heroTemp || {};
+      { const now = Date.now(); for (const k in G.heroTemp) if (G.heroTemp[k] <= now) delete G.heroTemp[k]; } // prune expired temp unlocks
+      if (G.setHero) G.setHero(G.heroUnlocked && G.heroUnlocked(d.heroId) ? (d.heroId || null) : null); // 🌸 restore hero look only if still unlocked
       G.player = { ...d.player };
       G.col = d.col || {};
       G.pets = d.pets || {};
@@ -18753,7 +18808,7 @@ export default function CherryAdventure() {
     const willOpen = !u[name];
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
-    const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId } : {};
+    const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId, diamonds: G.diamonds, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) } } : {};
     return { ...u, ...cleared, [name]: willOpen, ...extra };
   });
   // ✕ close button shown in the corner of every menu panel
@@ -19875,7 +19930,7 @@ export default function CherryAdventure() {
               ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
               ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
-              ["🦸", "ฮีโร่", () => toggleMenu("heroGalleryOpen"), "#e07ac0"],
+              ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
@@ -19884,27 +19939,59 @@ export default function CherryAdventure() {
       )}
 
       {ui.heroGalleryOpen && (
-        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #4a3a6a" }}>
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 392, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #4a3a6a" }}>
           {closeBtn("heroGalleryOpen")}
-          <div style={{ fontSize: 17, fontWeight: 800, color: "#e6c6ff", marginBottom: 2 }}>🦸 ฮีโร่ในตำนาน</div>
-          <div style={{ fontSize: 11, color: "#a898c8", marginBottom: 10 }}>สวมลุคฮีโร่ประจำตัว — กด "ดูตัวละคร 3D" เพื่อพรีวิว</div>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: "#e6c6ff" }}>🦸 ฮีโร่ในตำนาน</div>
+            <div style={{ flex: 1 }} />
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", border: "1px solid #3a6aa0" }}>💎 {(ui.diamonds || 0).toLocaleString()}</div>
+          </div>
+          <div style={{ fontSize: 10.5, color: "#a898c8", marginBottom: 8 }}>ซื้อถาวรด้วยเพชร · หรือใช้บัตรชั่วคราว (ดรอปจากบอส)</div>
+          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+            {[1, 2, 5].map((d) => (
+              <div key={d} style={{ fontSize: 10.5, fontWeight: 800, color: (ui.heroPasses && ui.heroPasses[d]) ? "#ffd76a" : "#7a6a8a", background: "rgba(255,255,255,0.05)", borderRadius: 8, padding: "3px 9px", border: "1px solid #3a2f52" }}>🎫 {d}วัน ×{(ui.heroPasses && ui.heroPasses[d]) || 0}</div>
+            ))}
+          </div>
           <button onClick={() => { setUi((u) => ({ ...u, heroGalleryOpen: false })); G.openEquip && G.openEquip(); }} style={{ width: "100%", padding: "8px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b5ad0,#b07ae0)", marginBottom: 12 }}>🎒 ดูตัวละคร 3D</button>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
             {HERO_GALLERY.map((h) => {
+              const owned = !!(ui.heroesOwned && ui.heroesOwned[h.id]);
+              const tempMs = ui.heroTemp && ui.heroTemp[h.id];
+              const tempDays = tempMs && tempMs > Date.now() ? Math.ceil((tempMs - Date.now()) / 86400000) : 0;
+              const unlocked = owned || tempDays > 0;
               const on = ui.heroId === h.id;
+              const passList = [1, 2, 5].filter((d) => ui.heroPasses && ui.heroPasses[d] > 0);
+              const afford = (ui.diamonds || 0) >= h.price;
               return (
-                <button key={h.id} onClick={() => { G.setHero && G.setHero(h.id); setUi((u) => ({ ...u, heroId: h.id })); }} style={{ position: "relative", textAlign: "left", border: on ? "2px solid #ffd76a" : "1px solid #3a2f52", borderRadius: 14, padding: "10px 11px", cursor: "pointer", fontFamily: font, background: `linear-gradient(135deg, ${h.c1}33, ${h.c2}22), #1c1630`, display: "flex", flexDirection: "column", gap: 3 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span style={{ fontSize: 30, filter: `drop-shadow(0 2px 5px ${h.c2}aa)` }}>{h.emoji}</span>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{h.name}</span>
+                <div key={h.id} style={{ position: "relative", border: on ? "2px solid #ffd76a" : "1px solid #3a2f52", borderRadius: 14, padding: "9px 10px", fontFamily: font, background: `linear-gradient(135deg, ${h.c1}${unlocked ? "33" : "16"}, ${h.c2}${unlocked ? "22" : "10"}), #1c1630`, display: "flex", flexDirection: "column", gap: 5 }}>
+                  <div onClick={() => unlocked && G.pickHero(h.id)} style={{ display: "flex", alignItems: "center", gap: 7, cursor: unlocked ? "pointer" : "default" }}>
+                    <span style={{ fontSize: 27, filter: unlocked ? `drop-shadow(0 2px 5px ${h.c2}aa)` : "grayscale(0.7) brightness(0.75)" }}>{h.emoji}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: unlocked ? "#fff" : "#b8a8c8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: h.c1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.title}</div>
+                    </div>
+                    {!unlocked && <span style={{ position: "absolute", top: 7, right: 8, fontSize: 13 }}>🔒</span>}
+                    {owned && !on && <span style={{ position: "absolute", top: 7, right: 8, fontSize: 8.5, fontWeight: 800, color: "#8fe0b0" }}>ถาวร</span>}
                   </div>
-                  <span style={{ fontSize: 10.5, fontWeight: 700, color: h.c1 }}>{h.title}</span>
-                  {on && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 10, fontWeight: 800, color: "#2a2416", background: "#ffd76a", borderRadius: 999, padding: "1px 7px" }}>✓ สวมอยู่</span>}
-                </button>
+                  {unlocked ? (
+                    <button onClick={() => G.pickHero(h.id)} style={{ padding: "5px 0", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: on ? "#2a2416" : "#fff", background: on ? "#ffd76a" : "rgba(255,255,255,0.13)" }}>{on ? "✓ สวมอยู่" : "สวมใส่"}{owned ? "" : ` ⏳${tempDays}ว`}</button>
+                  ) : (
+                    <>
+                      <button onClick={() => G.buyHero(h.id)} style={{ padding: "5px 0", borderRadius: 9, border: "none", cursor: afford ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: afford ? "#fff" : "#8a7fa5", background: afford ? "linear-gradient(90deg,#4a86e0,#6a5ad0)" : "rgba(255,255,255,0.07)" }}>💎 {h.price} · ถาวร</button>
+                      {passList.length > 0 && (
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {passList.map((d) => (
+                            <button key={d} onClick={() => G.redeemHeroPass(h.id, d)} style={{ flex: 1, padding: "4px 0", borderRadius: 8, border: "1px solid #6a5a2a", cursor: "pointer", fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", background: "rgba(255,215,106,0.1)" }}>🎫{d}ว</button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               );
             })}
           </div>
-          <button onClick={() => { G.setHero && G.setHero(null); setUi((u) => ({ ...u, heroId: null })); }} style={{ width: "100%", marginTop: 12, padding: "9px 0", borderRadius: 12, border: ui.heroId ? "1px solid #6a5a8a" : "2px solid #ffd76a", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: ui.heroId ? "#c8b8e0" : "#ffd76a", background: "rgba(255,255,255,0.06)" }}>🧍 กลับเป็นตัวละครของเรา{!ui.heroId ? " ✓" : ""}</button>
+          <button onClick={() => G.pickHero(null)} style={{ width: "100%", marginTop: 12, padding: "9px 0", borderRadius: 12, border: ui.heroId ? "1px solid #6a5a8a" : "2px solid #ffd76a", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: ui.heroId ? "#c8b8e0" : "#ffd76a", background: "rgba(255,255,255,0.06)" }}>🧍 กลับเป็นตัวละครของเรา{!ui.heroId ? " ✓" : ""}</button>
         </div>
       )}
 
