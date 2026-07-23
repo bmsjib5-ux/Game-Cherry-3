@@ -4480,23 +4480,25 @@ export default function CherryAdventure() {
       const cream = new THREE.MeshStandardMaterial({ color: 0xfbf7f2, roughness: 0.78 });
       const haruOutfit = new THREE.Group();
       // white sailor top (shell over the torso)
-      const topProfile = [[0.325, 0.02], [0.34, 0.12], [0.308, 0.28], [0.298, 0.38], [0.318, 0.52], [0.395, 0.64], [0.435, 0.76], [0.425, 0.86], [0.40, 0.94]].map(([r, y]) => new THREE.Vector2(r, y)); // จบใต้หัวไหล่ — ไหล่เปลือยไม่มีแขนเสื้อ
-      const topShellGeo = new THREE.LatheGeometry(topProfile, 40);
-      { // 📐 หน้านูน หลังตรง — match the sculpted torso
+      // 👚 white sailor top = a lightly-inflated copy of the sculpted torso so it hugs every curve (เว้าโค้งตามรูปร่างกาย) and never bares skin, front or back
+      const topProfile = [[0.29, 0.30], [0.312, 0.46], [0.38, 0.60], [0.415, 0.72], [0.402, 0.84], [0.35, 0.95]].map(([r, y]) => new THREE.Vector2(r * 1.05 + 0.012, y));
+      const topShellGeo = new THREE.LatheGeometry(topProfile, 44);
+      { // 📐 same side-view sculpt as the body torso (หน้านูน · หลังแบน · หน้าท้องแบน) → follows the body, not a round tube
         const pos = topShellGeo.attributes.position;
         for (let i = 0; i < pos.count; i++) {
           let z = pos.getZ(i);
           const y = pos.getY(i);
-          if (z < -0.18) z = -0.18 - (Math.abs(z) - 0.18) * 0.12;
+          if (z < -0.17) z = -0.17 - (Math.abs(z) - 0.17) * 0.80 - 0.055 * Math.max(0, 1 - Math.abs(y - 0.55) / 0.55);
           else if (z > 0 && y > 0.5 && y < 1.0) z *= 1.08;
+          else if (z > 0 && y >= 0.05 && y <= 0.5) z *= 0.76;
           pos.setZ(i, z);
         }
         pos.needsUpdate = true;
         topShellGeo.computeVertexNormals();
       }
       const pureWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75, side: THREE.DoubleSide });
-      const topShell = new THREE.Mesh(topShellGeo, pureWhite); // เสื้อขาวล้วน
-      topShell.position.y = 1.12; topShell.scale.set(1.12, 0.9, 0.94); // คลุมลำตัวเต็ม ไม่โผล่ผิว
+      const topShell = new THREE.Mesh(topShellGeo, pureWhite);
+      topShell.position.y = 1.14; topShell.scale.set(1.0, 0.8, 0.72); // ตรงกับสัดส่วน/สเกลของลำตัว
       haruOutfit.add(topShell);
       // 🧣 slate-blue sailor collar (ตามภาพ) — shoulder ring + front V panels + back flap
       const slate = new THREE.MeshStandardMaterial({ color: 0x2b3358, roughness: 0.72 }); // น้ำเงินเดียวกับกระโปรง
