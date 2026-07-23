@@ -18324,9 +18324,9 @@ export default function CherryAdventure() {
         // 🧍 equip screen pulls the camera back so the whole body is visible
         // 🖥️ คอม (จอกว้าง): ถอยกล้องออกอีก + ยกตัวละครขึ้นให้พอดีช่องว่างระหว่างหัวเรื่องกับกระเป๋าด้านล่าง
         const wideEquip = G.equipOpen && window.innerWidth > 620;
-        const cd = G.equipOpen ? (wideEquip ? 14.0 : 9.4) : Math.max(2.6, Math.min(11, camDist * 0.5));
-        const camY = G.equipOpen ? (wideEquip ? 1.86 : 1.62) : 1.55 + cd * 0.14;
-        const lookY = G.equipOpen ? (wideEquip ? 0.42 : 1.02) : 1.35;
+        const cd = G.equipOpen ? (wideEquip ? 16.5 : 9.4) : Math.max(2.6, Math.min(11, camDist * 0.5));
+        const camY = G.equipOpen ? (wideEquip ? 2.05 : 1.62) : 1.55 + cd * 0.14;
+        const lookY = G.equipOpen ? (wideEquip ? 0.30 : 1.02) : 1.35;
         // 🖥️ หน้าแต่งตัว: จัดตัวละครให้อยู่กึ่งกลางจอเสมอ (ทั้งมือถือและคอม) — คอลัมน์อุปกรณ์อยู่ริมซ้าย/ขวา
         const panX = !G.equipOpen && window.innerWidth < 640 ? -cd * 0.11 : 0;
         const camX = panX;
