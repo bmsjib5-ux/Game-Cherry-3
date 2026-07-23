@@ -12187,7 +12187,7 @@ export default function CherryAdventure() {
     };
     // ---------- 🟢 Presence (online friends) + 💬 Chat (poll-based) ----------
     G.ONLINE_WINDOW = 60000;
-    G.chat = { room: "global", msgs: [], lastId: 0 };
+    G.chat = { room: "global", label: "แชทรวม", msgs: [], lastId: 0 };
     G._online = {};
     Object.assign(CN, {
       async getPlayersByPid(pids) {
@@ -12255,6 +12255,15 @@ export default function CherryAdventure() {
     };
     G.chatStart = () => { if (G._chatT) return; G.chatPollNow(); G._chatT = setInterval(() => G.chatPollNow(), 3500); };
     G.chatStop = () => { if (G._chatT) { clearInterval(G._chatT); G._chatT = null; } };
+    // 💬 private DM: a stable room key from the two player ids (sorted)
+    G.dmRoom = (pid) => "dm_" + [(G.pid || ""), pid].sort().join("_");
+    G.chatSetRoom = (room, label) => {
+      if (!room || G.chat.room === room) return;
+      G.chat.room = room; G.chat.label = label || room;
+      G.chat.msgs = []; G.chat.lastId = 0;
+      setUi((u) => ({ ...u, chatMsgs: [], chatLastId: 0, chatRoom: room, chatRoomLabel: G.chat.label }));
+      if (G.chatPollNow) G.chatPollNow();
+    };
     // 🤝 mutual friendships (server-synced, two-way automatically)
     Object.assign(CN, {
       async addFriendship(a, b) {
@@ -19461,10 +19470,16 @@ export default function CherryAdventure() {
         <div style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }} onClick={() => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, height: "72%", background: "#fbf7f2", borderTopLeftRadius: 20, borderTopRightRadius: 20, display: "flex", flexDirection: "column", boxShadow: "0 -8px 30px rgba(0,0,0,0.25)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderBottom: "1px solid #ece0d4" }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#5a4a6a" }}>💬 แชทโลก</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#5a4a6a" }}>💬 {ui.chatRoomLabel || "แชทรวม"}</div>
               <div style={{ fontSize: 11, color: "#3ac06a", fontWeight: 800 }}>🟢 {ui.onlineCount || 0} เพื่อนออนไลน์</div>
               <div style={{ flex: 1 }} />
               <button onClick={() => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); }} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 }}>✕</button>
+            </div>
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "8px 12px", borderBottom: "1px solid #ece0d4", flexShrink: 0 }}>
+              <button key="g" onClick={() => G.chatSetRoom("global", "แชทรวม")} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: (ui.chatRoom || "global") === "global" ? "#fff" : "#8a6a5a", background: (ui.chatRoom || "global") === "global" ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" }}>🌐 ทั่วไป</button>
+              {(G.readFriends ? G.readFriends() : []).filter((f) => f.pid).map((f) => (
+                <button key={f.pid} onClick={() => G.chatSetRoom(G.dmRoom(f.pid), f.n)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === G.dmRoom(f.pid) ? "#fff" : "#8a6a5a", background: ui.chatRoom === G.dmRoom(f.pid) ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" }}>{(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online ? "🟢 " : "💬 ") + f.n}</button>
+              ))}
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
               {(ui.chatMsgs || []).length === 0 && <div style={{ textAlign: "center", color: "#c0b0a4", fontSize: 12, marginTop: 20 }}>ยังไม่มีข้อความ — ทักทายเพื่อนสิ! 👋</div>}
@@ -19491,10 +19506,10 @@ export default function CherryAdventure() {
         <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} style={{ position: "absolute", right: 12, bottom: 150, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 24 }}>☰</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, bottom: 348, width: 48, height: 48, borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#a78bff,#8a6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(120,90,200,0.42)", zIndex: 24 }}>🎒</button>
+        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, bottom: 348, width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", left: 12, bottom: 282, width: 48, height: 48, borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#f2b24d,#d8912a)", color: "#fff", boxShadow: "0 4px 12px rgba(200,150,60,0.42)", zIndex: 24 }}>⚡</button>
+        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", left: 12, bottom: 282, width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>⚡{((ui.sp || 0) + (ui.statPts || 0)) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => G.toggleSocial()} title="เพื่อน & สู้ผี" style={{ position: "absolute", left: 12, bottom: 216, width: 48, height: 48, borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥</button>
