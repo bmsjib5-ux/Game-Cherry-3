@@ -18676,16 +18676,21 @@ export default function CherryAdventure() {
     animate();
 
     const onResize = () => {
+      // 📱 track the REAL visible viewport height (mobile URL bar / notches) so nothing is cut off
+      document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
       const w = mount.clientWidth, h = mount.clientHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
     window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    onResize();
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       renderer.domElement.removeEventListener("wheel", onWheel);
@@ -18749,7 +18754,7 @@ export default function CherryAdventure() {
   );
 
   return (
-    <div style={{ width: "100%", height: "100vh", position: "relative", background: "#eef2df", fontFamily: font }}>
+    <div style={{ width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
 
