@@ -5,6 +5,15 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>🍒 น้องเชอร์รี่ผจญภัยแดนมอนสเตอร์</title>
+<!-- 📲 PWA: installable, home-screen icon, fullscreen, offline shell -->
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#eef2df" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Cherry Adventure" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
 <style>
   html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #eef2df; }
   #root { width: 100%; height: 100%; }
@@ -34580,6 +34589,49 @@ function CherryAdventure() {
 }
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(CherryAdventure));
 document.getElementById("loading").remove();
+</script>
+<!-- 📲 PWA: service worker + install prompt -->
+<script>
+(function () {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./sw.js").catch(function () {});
+    });
+  }
+  var deferred = null;
+  function isStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches || window.navigator.standalone === true;
+  }
+  function makeBtn() {
+    if (document.getElementById("pwaInstall") || isStandalone()) return null;
+    var b = document.createElement("button");
+    b.id = "pwaInstall";
+    b.innerHTML = "📲 ติดตั้งเกม";
+    b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:2147483647;padding:10px 18px;border:none;border-radius:999px;cursor:pointer;font:800 14px system-ui,sans-serif;color:#fff;background:linear-gradient(90deg,#e0709a,#c05a86);box-shadow:0 6px 20px rgba(150,90,120,0.45);";
+    var x = document.createElement("span");
+    x.textContent = "✕";
+    x.style.cssText = "margin-left:10px;opacity:0.75;font-weight:800;";
+    x.onclick = function (e) { e.stopPropagation(); b.remove(); };
+    b.appendChild(x);
+    b.onclick = function () {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.finally(function () { deferred = null; b.remove(); });
+    };
+    document.body.appendChild(b);
+    return b;
+  }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferred = e;
+    makeBtn();
+  });
+  window.addEventListener("appinstalled", function () {
+    deferred = null;
+    var b = document.getElementById("pwaInstall");
+    if (b) b.remove();
+  });
+})();
 </script>
 </body>
 </html>
