@@ -22272,7 +22272,7 @@ export default function CherryAdventure() {
           {/* message + actions */}
           <div style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
-            padding: "8px 12px 12px",
+            padding: "8px 12px 74px",
             background: "linear-gradient(transparent, rgba(238,242,223,0.9) 55%)",
             display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
           }}>
@@ -22371,9 +22371,9 @@ export default function CherryAdventure() {
                 </button>
               );
               const cornerStyle = (side) => ({
-                position: "absolute", bottom: 16, [side]: 12, zIndex: 6,
+                position: "absolute", bottom: 80, [side]: 12, zIndex: 6,
                 display: "flex", flexDirection: "column", flexWrap: "wrap",
-                maxHeight: "calc(100vh - 168px)", alignContent: "flex-start",
+                maxHeight: "calc(100vh - 232px)", alignContent: "flex-start",
                 direction: side === "right" ? "rtl" : "ltr",
                 gap: 10, alignItems: "center",
                 opacity: canAct ? 1 : 0.45, pointerEvents: canAct ? "auto" : "none",
