@@ -27957,6 +27957,10 @@ function CherryAdventure() {
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
   const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen"];
+  // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
+  const _uiWideModal = window.innerWidth > 820;
+  const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
+  const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach(f => cleared[f] = false);
@@ -29964,9 +29968,7 @@ function CherryAdventure() {
   }, "🏪"), ui.shopOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -29975,7 +29977,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("shopOpen"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -30415,9 +30417,7 @@ function CherryAdventure() {
   }, "🧍"), ui.skillPanel && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -30426,7 +30426,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 20,
       padding: 16,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("skillPanel"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -31178,9 +31178,7 @@ function CherryAdventure() {
   }, ui.inv.length)), ui.questOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -31189,7 +31187,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("questOpen"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -31352,9 +31350,7 @@ function CherryAdventure() {
   }))), ui.socialOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -31363,7 +31359,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 20,
       padding: 16,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("socialOpen"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -31586,9 +31582,7 @@ function CherryAdventure() {
   }, "แลกรหัสกับเพื่อน → สู้ \"ผี\" ของเพื่อน (ใช้พลังจริงของเขา) → ไต่อันดับ! 🏆")), ui.forgeOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -31597,7 +31591,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("forgeOpen"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -32080,9 +32074,7 @@ function CherryAdventure() {
   })()), ui.treeOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -32091,7 +32083,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("treeOpen"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -32226,9 +32218,7 @@ function CherryAdventure() {
   }, "อัพซ้ำได้จนเต็ม · โหนด ⭐ ประจำอาชีพ · บางโหนดต้องปลดโหนดก่อนหน้า")), ui.constOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -32237,7 +32227,7 @@ function CherryAdventure() {
       background: "#fbf9ff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("constOpen"), (() => {
     const cls = G && G.cls || ui.cls;
@@ -32342,9 +32332,7 @@ function CherryAdventure() {
   })()), ui.masteryOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -32353,7 +32341,7 @@ function CherryAdventure() {
       background: "#fdfaf3",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("masteryOpen"), (() => {
     const mi = WP_MASTERY[G && G.cls || ui.cls];
@@ -32387,7 +32375,7 @@ function CherryAdventure() {
         ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 10.5, color: "#c07a10", fontWeight: 800, marginTop: 8, background: "#fff3d6", borderRadius: 8, padding: "6px 8px" } }, "🌟 พลังพิเศษสูงสุด: ", mi.capDesc)
         : /*#__PURE__*/React.createElement("div", { style: { fontSize: 10, color: "#a89a7a", marginTop: 8, textAlign: "center" } }, "เลเวลถัดไปเพิ่มสเตตัสอีก · Lv.10 ปลดพลังพิเศษ: ", mi.capDesc));
   })()), ui.collectionOpen && /*#__PURE__*/React.createElement("div", {
-    style: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)" }
+    style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }
   }, closeBtn("collectionOpen"),
     /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#b0407a", marginBottom: 2 } }, "✨ คอลเลกชัน"),
     /*#__PURE__*/React.createElement("div", { style: { fontSize: 10.5, color: "#a3789a", marginBottom: 8 } }, "สะสมสกินอาวุธ & ชุดเซ็ต — ปลดล็อกด้วยความสำเร็จ"),
@@ -32509,9 +32497,7 @@ function CherryAdventure() {
   })(), ui.invOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -32520,7 +32506,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("invOpen"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -33497,9 +33483,7 @@ function CherryAdventure() {
   })()), ui.panelOpen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
-      left: "50%",
-      top: "50%",
-      transform: "translate(-50%,-50%)",
+      ...MODAL_POS,
       zIndex: 50,
       width: "90%",
       maxWidth: 380,
@@ -33510,7 +33494,7 @@ function CherryAdventure() {
       background: "#fff",
       borderRadius: 16,
       padding: 12,
-      boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)"
+      boxShadow: MODAL_SHADOW
     }
   }, closeBtn("panelOpen"), /*#__PURE__*/React.createElement("div", {
     style: {

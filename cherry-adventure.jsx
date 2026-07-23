@@ -18426,6 +18426,10 @@ export default function CherryAdventure() {
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
   const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen"];
+  // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
+  const _uiWideModal = window.innerWidth > 820;
+  const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
+  const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
@@ -19811,9 +19815,9 @@ export default function CherryAdventure() {
           {/* shop panel */}
           {ui.shopOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("shopOpen")}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -20070,10 +20074,10 @@ export default function CherryAdventure() {
           {/* ⚡ skill upgrade panel */}
           {ui.skillPanel && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50,
+              position: "absolute", ...MODAL_POS, zIndex: 50,
               width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 20, padding: 16,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("skillPanel")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
@@ -20415,9 +20419,9 @@ export default function CherryAdventure() {
           {/* 📜 quest panel */}
           {ui.questOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("questOpen")}
               <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
@@ -20498,10 +20502,10 @@ export default function CherryAdventure() {
           {/* 👥 SOCIAL panel — friend codes, ghost battles, leaderboard */}
           {ui.socialOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50,
+              position: "absolute", ...MODAL_POS, zIndex: 50,
               width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 20, padding: 16,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("socialOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a7ad0", marginBottom: 6 }}>👥 เพื่อน & สู้ผี</div>
@@ -20617,9 +20621,9 @@ export default function CherryAdventure() {
           {/* ⛏️ FORGE panel — craft with materials */}
           {ui.forgeOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("forgeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 }}>⛏️ โรงตีเหล็ก (คราฟต์)</div>
@@ -20784,9 +20788,9 @@ export default function CherryAdventure() {
           {/* 🌳 SKILL TREE panel — passive nodes */}
           {ui.treeOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("treeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a9a5a", marginBottom: 2 }}>🌳 สกิลต้นไม้ (พาสซีฟ)</div>
@@ -20843,8 +20847,8 @@ export default function CherryAdventure() {
           {/* ✨ constellation board */}
           {ui.constOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("constOpen")}
               {(() => {
@@ -20895,8 +20899,8 @@ export default function CherryAdventure() {
           {/* ⚔️ weapon mastery panel */}
           {ui.masteryOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("masteryOpen")}
               {(() => {
@@ -20949,7 +20953,7 @@ export default function CherryAdventure() {
 
           {/* ✨ collection panel: weapon skins + outfit sets */}
           {ui.collectionOpen && (
-            <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)" }}>
+            <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
               {closeBtn("collectionOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#b0407a", marginBottom: 2 }}>✨ คอลเลกชัน</div>
               <div style={{ fontSize: 10.5, color: "#a3789a", marginBottom: 8 }}>สะสมสกินอาวุธ & ชุดเซ็ต — ปลดล็อกด้วยความสำเร็จ</div>
@@ -21171,9 +21175,9 @@ export default function CherryAdventure() {
 
           {ui.invOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("invOpen")}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -21577,10 +21581,10 @@ export default function CherryAdventure() {
           {/* collection panel */}
           {ui.panelOpen && (
             <div style={{
-              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380,
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380,
               maxHeight: "84vh", overflowY: "auto", display: "flex", flexDirection: "column",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
+              boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("panelOpen")}
               <div style={{ display: "flex", gap: 6, marginBottom: 6, flexShrink: 0 }}>
