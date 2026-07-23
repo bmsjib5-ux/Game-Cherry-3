@@ -12128,6 +12128,7 @@ export default function CherryAdventure() {
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
       if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
+      if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.ultAlt = false;
       G.pathId = null; // 🌟 fresh character has no path yet
       G.titleId = "t_none";
@@ -12485,6 +12486,16 @@ export default function CherryAdventure() {
         if (G.gainDiamonds) G.gainDiamonds([30, 20, 10][myIdx], `อันดับ ${myIdx + 1} ของโลก`);
         if (G.saveGame) G.saveGame();
       }
+    };
+    // 🏆 lightweight world-board fetch for the top-left widget (silent; auto-reload every 10 min)
+    G.refreshBoard = async () => {
+      if (!CN.enabled()) { setUi((u) => ({ ...u, netEnabled: false })); return; }
+      const rows = await CN.leaderboard(5);
+      if (rows) setUi((u) => ({ ...u, globalBoard: rows, netEnabled: true, boardTs: Date.now() }));
+    };
+    G.startBoardPoll = () => {
+      G.refreshBoard();
+      if (!G._boardT) G._boardT = setInterval(() => G.refreshBoard(), 600000);
     };
     // ---------- 👥 SOCIAL: friend codes, ghost battles, local leaderboard ----------
     // encode the player's battle profile into a compact shareable code
@@ -12944,6 +12955,7 @@ export default function CherryAdventure() {
       G.tfGauge = d.tfGauge || 0; // ⚡ restore the accumulated power gauge
       if (G.ensurePid) G.ensurePid(); // 🪪 make sure this save has a stable online id
       if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
+      if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
       if (d.buddy && G.pets[d.buddy]) G.setBuddy(d.buddy);
@@ -19697,25 +19709,44 @@ export default function CherryAdventure() {
       )}
 
       {/* ===== explore HUD ===== */}
+      {/* 🏆 top-left world leaderboard (top 5) — auto-reload every 10 min or on 🔄 */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{
-          position: "absolute", top: 12, left: 12,
-          background: "rgba(255,255,255,0.5)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)",
-          borderRadius: 14, padding: "7px 11px", width: 150, maxWidth: "42vw",
-          boxShadow: "0 4px 12px rgba(90,120,70,0.2)", pointerEvents: "none",
-        }}>
-          {/* ⭐ exp bar */}
-          <div style={{ background: "rgba(0,0,0,0.07)", borderRadius: 99, height: 6, marginTop: 3, overflow: "hidden" }}>
-            <div style={{
-              width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%",
-              background: "linear-gradient(90deg,#f5c542,#f5a623)", borderRadius: 99, transition: "width 0.3s",
-            }}/>
+        <div style={{ position: "absolute", top: 10, left: 10, width: 174, maxWidth: "50vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
+            <div style={{ flex: 1 }} />
+            <button onClick={() => G.refreshBoard && G.refreshBoard()} title="รีเฟรช" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 }}>🔄</button>
           </div>
-          <div style={{ fontSize: 9.5, color: "#c99a2e", fontWeight: 700, marginTop: 2 }}>
-            ⭐ EXP {ui.exp}/{ui.expNext}
+          {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => (
+            <div key={r.pid || i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, marginBottom: 1.5, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
+              <span style={{ width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" }}>{i + 1}</span>
+              <span style={{ flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
+              <span style={{ fontWeight: 800, color: "#9ad0ff" }}>Lv.{r.lv}</span>
+            </div>
+          )) : (
+            <div style={{ fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" }}>{ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด"}</div>
+          )}
+        </div>
+      )}
+
+      {/* ⭐ bottom status bar — long, 2 lines (EXP + AUTO / stats) */}
+      {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
+        <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, pointerEvents: "auto" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
+            <div style={{ flex: 1, position: "relative", height: 16, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
+              <div style={{ width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" }}/>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
+            </div>
+            <button onClick={() => G.toggleAuto()} style={{ padding: "6px 13px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: ui.auto ? "#fff" : "#59a0e8", background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff", boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>🤖 {ui.auto ? "ON" : "OFF"}</button>
           </div>
-          <div style={{ fontSize: 10.5, color: "#8a5a4a", marginTop: 2 }}>
-            ⚔️{ui.atk} 🛡️{ui.def} 💰{ui.gold} · 💗×{ui.balls} · 🐾×{totalCaught}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 5, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" }}>
+            <span style={{ color: "#c04a5a" }}>💗{ui.hp}/{ui.maxHp}</span>
+            <span>⚔️{ui.atk}</span>
+            <span>🛡️{ui.def}</span>
+            <span style={{ color: "#c99a2e" }}>💰{ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
+            <span style={{ color: "#3a86c0" }}>💎{ui.diamonds || 0}</span>
+            <span>🐾×{totalCaught}</span>
           </div>
         </div>
       )}
@@ -20169,25 +20200,12 @@ export default function CherryAdventure() {
       {/* ===== explore controls ===== */}
       {ui.mode === "explore" && (
         <>
-          {/* AUTO hunt toggle */}
-          <button
-            onClick={() => G.toggleAuto()}
-            style={{
-              position: "absolute", top: 12, right: 12,
-              padding: "9px 18px", borderRadius: 999, border: "none", cursor: "pointer",
-              fontSize: 13.5, fontWeight: 800, fontFamily: font,
-              color: ui.auto ? "#fff" : "#59a0e8",
-              background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff",
-              boxShadow: ui.auto ? "0 4px 14px rgba(89,160,232,0.5)" : "0 3px 10px rgba(90,120,70,0.25)",
-            }}
-          >
-            🤖 AUTO {ui.auto ? "ON" : "OFF"}
-          </button>
+          {/* AUTO toggle now lives on the bottom status bar */}
           {ui.auto && (
             <div style={{
-              position: "absolute", top: 58, right: 12, pointerEvents: "none",
-              background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 12px",
-              fontSize: 11.5, fontWeight: 700, color: "#59a0e8",
+              position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
+              background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
+              fontSize: 11.5, fontWeight: 700, color: "#59a0e8", whiteSpace: "nowrap",
             }}>
               กำลังออกล่ามอนสเตอร์... 🏃‍♀️💨
             </div>
@@ -20200,7 +20218,7 @@ export default function CherryAdventure() {
             onPointerUp={joyEnd}
             onPointerCancel={joyEnd}
             style={{
-              position: "absolute", left: 18, ...(_shortHud ? { bottom: 6, width: 70, height: 70 } : { bottom: 24, width: 120, height: 120 }), borderRadius: "50%",
+              position: "absolute", left: 18, ...(_shortHud ? { bottom: 6, width: 70, height: 70 } : { bottom: 82, width: 112, height: 112 }), borderRadius: "50%",
               background: "rgba(255,255,255,0.45)", border: "3px solid rgba(122,160,91,0.5)",
               touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 14px rgba(90,120,70,0.2)",

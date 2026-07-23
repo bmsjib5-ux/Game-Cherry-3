@@ -19981,6 +19981,7 @@ function CherryAdventure() {
       G.pid = null;
       if (G.ensurePid) G.ensurePid(); // 🪪 assign a fresh online id
       if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
+      if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.ultAlt = false;
       G.pathId = null; // 🌟 fresh character has no path yet
       G.titleId = "t_none";
@@ -20461,7 +20462,17 @@ function CherryAdventure() {
         if (G.saveGame) G.saveGame();
       }
     };
-    // ---------- 👥 SOCIAL: friend codes, ghost battles, local leaderboard ----------
+    // 🏆 lightweight world-board fetch for the top-left widget (silent; auto-reload every 10 min)
+    G.refreshBoard = async () => {
+      if (!CN.enabled()) { setUi((u) => ({ ...u, netEnabled: false })); return; }
+      const rows = await CN.leaderboard(5);
+      if (rows) setUi((u) => ({ ...u, globalBoard: rows, netEnabled: true, boardTs: Date.now() }));
+    };
+    G.startBoardPoll = () => {
+      G.refreshBoard();
+      if (!G._boardT) G._boardT = setInterval(() => G.refreshBoard(), 600000);
+    };
+        // ---------- 👥 SOCIAL: friend codes, ghost battles, local leaderboard ----------
     // encode the player's battle profile into a compact shareable code
     G.makeFriendCode = () => {
       const profile = {
@@ -21000,6 +21011,7 @@ function CherryAdventure() {
       G.tfGauge = d.tfGauge || 0; // ⚡ restore the accumulated power gauge
       if (G.ensurePid) G.ensurePid(); // 🪪 make sure this save has a stable online id
       if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
+      if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
       if (d.buddy && G.pets[d.buddy]) G.setBuddy(d.buddy);else G.setBuddy(null);
@@ -29782,51 +29794,55 @@ function CherryAdventure() {
       background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
       boxShadow: "0 5px 16px rgba(90,160,106,0.5)"
     }
-  }, "เลือกอาชีพ →"))), (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "absolute",
-      top: 12,
-      left: 12,
-      background: "rgba(255,255,255,0.5)",
-      backdropFilter: "blur(5px)",
-      WebkitBackdropFilter: "blur(5px)",
-      borderRadius: 14,
-      padding: "7px 11px",
-      width: 150,
-      maxWidth: "42vw",
-      boxShadow: "0 4px 12px rgba(90,120,70,0.2)",
-      pointerEvents: "none"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "rgba(0,0,0,0.07)",
-      borderRadius: 99,
-      height: 6,
-      marginTop: 3,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: `${ui.expNext ? Math.min(100, ui.exp / ui.expNext * 100) : 0}%`,
-      height: "100%",
-      background: "linear-gradient(90deg,#f5c542,#f5a623)",
-      borderRadius: 99,
-      transition: "width 0.3s"
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9.5,
-      color: "#c99a2e",
-      fontWeight: 700,
-      marginTop: 2
-    }
-  }, "⭐ EXP ", ui.exp, "/", ui.expNext), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10.5,
-      color: "#8a5a4a",
-      marginTop: 2
-    }
-  }, "⚔️", ui.atk, " 🛡️", ui.def, " 💰", ui.gold, " · 💗×", ui.balls, " · 🐾×", totalCaught)), (ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.collectionOpen || ui.socialOpen || ui.equipScreen) && /*#__PURE__*/React.createElement("div", {
+  }, "เลือกอาชีพ →"))), (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: 10, left: 10, width: 174, maxWidth: "50vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, marginBottom: 4 } },
+        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#ffd76a" } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
+        React.createElement("div", { style: { flex: 1 } }),
+        React.createElement("button", { onClick: () => G.refreshBoard && G.refreshBoard(), title: "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A", style: { width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 } }, "\uD83D\uDD04")),
+    (ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => (React.createElement("div", { key: r.pid || i, style: { display: "flex", alignItems: "center", gap: 5, fontSize: 10, marginBottom: 1.5, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" } },
+        React.createElement("span", { style: { width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" } }, i + 1),
+        React.createElement("span", { style: { flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+            (CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂",
+            " ",
+            r.n),
+        React.createElement("span", { style: { fontWeight: 800, color: "#9ad0ff" } },
+            "Lv.",
+            r.lv)))) : (React.createElement("div", { style: { fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" } }, ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด")))), (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, pointerEvents: "auto" } },
+        React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" } },
+            "Lv.",
+            ui.level),
+        React.createElement("div", { style: { flex: 1, position: "relative", height: 16, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" } },
+            React.createElement("div", { style: { width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" } }),
+            React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" } },
+                "\u2B50 ",
+                ui.exp,
+                "/",
+                ui.expNext)),
+        React.createElement("button", { onClick: () => G.toggleAuto(), style: { padding: "6px 13px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: ui.auto ? "#fff" : "#59a0e8", background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff", boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(0,0,0,0.28)", whiteSpace: "nowrap" } },
+            "\uD83E\uDD16 ",
+            ui.auto ? "ON" : "OFF")),
+    React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 5, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" } },
+        React.createElement("span", { style: { color: "#c04a5a" } },
+            "\uD83D\uDC97",
+            ui.hp,
+            "/",
+            ui.maxHp),
+        React.createElement("span", null,
+            "\u2694\uFE0F",
+            ui.atk),
+        React.createElement("span", null,
+            "\uD83D\uDEE1\uFE0F",
+            ui.def),
+        React.createElement("span", { style: { color: "#c99a2e" } },
+            "\uD83D\uDCB0",
+            ui.gold != null ? ui.gold.toLocaleString() : 0),
+        React.createElement("span", { style: { color: "#3a86c0" } },
+            "\uD83D\uDC8E",
+            ui.diamonds || 0),
+        React.createElement("span", null,
+            "\uD83D\uDC3E\u00D7",
+            totalCaught)))), (ui.mode === "explore" || ui.mode === "battle") && !(ui.shopOpen || ui.invOpen || ui.panelOpen || ui.questOpen || ui.skillPanel || ui.homeOpen || ui.forgeOpen || ui.treeOpen || ui.constOpen || ui.masteryOpen || ui.collectionOpen || ui.socialOpen || ui.equipScreen) && /*#__PURE__*/React.createElement("div", {
     ref: el => {
       G.playerPlateEl = el;
     },
@@ -30291,37 +30307,7 @@ function CherryAdventure() {
     ["", null],
     ["▼", () => G.rotateCam(0, -0.12)],
     ["", null],
-].map((c, i) => c[1] ? (React.createElement("button", { key: i, onClick: c[1], style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? 14 : 15, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font } }, c[0])) : (React.createElement("span", { key: i }))))), ui.mode === "explore" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-    onClick: () => G.toggleAuto(),
-    style: {
-      position: "absolute",
-      top: 12,
-      right: 12,
-      padding: "9px 18px",
-      borderRadius: 999,
-      border: "none",
-      cursor: "pointer",
-      fontSize: 13.5,
-      fontWeight: 800,
-      fontFamily: font,
-      color: ui.auto ? "#fff" : "#59a0e8",
-      background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff",
-      boxShadow: ui.auto ? "0 4px 14px rgba(89,160,232,0.5)" : "0 3px 10px rgba(90,120,70,0.25)"
-    }
-  }, "🤖 AUTO ", ui.auto ? "ON" : "OFF"), ui.auto && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "absolute",
-      top: 58,
-      right: 12,
-      pointerEvents: "none",
-      background: "rgba(255,255,255,0.85)",
-      borderRadius: 999,
-      padding: "4px 12px",
-      fontSize: 11.5,
-      fontWeight: 700,
-      color: "#59a0e8"
-    }
-  }, "กำลังออกล่ามอนสเตอร์... 🏃‍♀️💨"), /*#__PURE__*/React.createElement("div", {
+].map((c, i) => c[1] ? (React.createElement("button", { key: i, onClick: c[1], style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? 14 : 15, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font } }, c[0])) : (React.createElement("span", { key: i }))))), ui.mode === "explore" && /*#__PURE__*/React.createElement(React.Fragment, null, ui.auto && (React.createElement("div", { style: { position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", pointerEvents: "none", background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px", fontSize: 11.5, fontWeight: 700, color: "#59a0e8", whiteSpace: "nowrap" } }, "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E2D\u0E01\u0E25\u0E48\u0E32\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C... \uD83C\uDFC3\u200D\u2640\uFE0F\uD83D\uDCA8")), /*#__PURE__*/React.createElement("div", {
     ref: joyRef,
     onPointerDown: joyStart,
     onPointerMove: joyMove,
@@ -30330,7 +30316,7 @@ function CherryAdventure() {
     style: {
       position: "absolute",
       left: 18,
-      ...(_shortHud ? { bottom: 6, width: 70, height: 70 } : { bottom: 24, width: 120, height: 120 }),
+      ...(_shortHud ? { bottom: 6, width: 70, height: 70 } : { bottom: 82, width: 112, height: 112 }),
       borderRadius: "50%",
       background: "rgba(255,255,255,0.45)",
       border: "3px solid rgba(122,160,91,0.5)",
