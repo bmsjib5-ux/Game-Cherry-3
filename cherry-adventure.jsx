@@ -916,6 +916,17 @@ const CHAR_PRESETS = [
   { name: "โนอาห์",  emoji: "🖤", gender: 1, skin: 1, hairColor: 1, hairStyle: 1, eyes: 0, outfit: 3 },
   { name: "เซเลสเทีย", emoji: "👸", gender: 0, skin: 0, hairColor: 5, hairStyle: 8, eyes: 0, outfit: 0, hero: "celestia" },
 ];
+// 🦸 ฮีโร่ในตำนาน — โชว์ในหน้ารวมฮีโร่ (Hero Gallery)
+const HERO_GALLERY = [
+  { id: "rose",     name: "โรส",       emoji: "👑", title: "อัศวินแสงกุหลาบ",       c1: "#f7d488", c2: "#e0a038" },
+  { id: "kentaro",  name: "เคนทาโร่",  emoji: "🗡️", title: "ซามูไรดาบคู่",          c1: "#f0907a", c2: "#c0402e" },
+  { id: "kotaro",   name: "โคทาโร่",   emoji: "🦂", title: "นักลอบสังหารทะเลทราย",  c1: "#e0c088", c2: "#9a7c4c" },
+  { id: "kairi",    name: "ไครี",      emoji: "⚡", title: "เทพเจ้าสายฟ้า",         c1: "#8fd0ff", c2: "#3a6ae0" },
+  { id: "celestia", name: "เซเลสเทีย", emoji: "👸", title: "เทพีสวรรค์",            c1: "#9ab0f0", c2: "#4a6ad0" },
+  { id: "luna",     name: "ลูน่า",     emoji: "🌙", title: "เจ้าหญิงจันทรา",        c1: "#b0b8f0", c2: "#6a7ae0" },
+  { id: "yuki",     name: "ยูกิ",      emoji: "❄️", title: "นักธนูน้ำแข็ง",         c1: "#a8e0ff", c2: "#4a9ad0" },
+  { id: "haru",     name: "ฮารุ",      emoji: "🌸", title: "จอมเวทซากุระ",          c1: "#f2a8d0", c2: "#c05a9a" },
+];
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 const rollRarity = (boss) => {
   const r = Math.random();
@@ -18727,7 +18738,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen"];
   // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
   const _uiWideModal = window.innerWidth > 820;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
@@ -18742,7 +18753,7 @@ export default function CherryAdventure() {
     const willOpen = !u[name];
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
-    const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : {};
+    const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId } : {};
     return { ...u, ...cleared, [name]: willOpen, ...extra };
   });
   // ✕ close button shown in the corner of every menu panel
@@ -19864,10 +19875,36 @@ export default function CherryAdventure() {
               ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
               ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
+              ["🦸", "ฮีโร่", () => toggleMenu("heroGalleryOpen"), "#e07ac0"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
           </div>
+        </div>
+      )}
+
+      {ui.heroGalleryOpen && (
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #4a3a6a" }}>
+          {closeBtn("heroGalleryOpen")}
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#e6c6ff", marginBottom: 2 }}>🦸 ฮีโร่ในตำนาน</div>
+          <div style={{ fontSize: 11, color: "#a898c8", marginBottom: 10 }}>สวมลุคฮีโร่ประจำตัว — กด "ดูตัวละคร 3D" เพื่อพรีวิว</div>
+          <button onClick={() => { setUi((u) => ({ ...u, heroGalleryOpen: false })); G.openEquip && G.openEquip(); }} style={{ width: "100%", padding: "8px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b5ad0,#b07ae0)", marginBottom: 12 }}>🎒 ดูตัวละคร 3D</button>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
+            {HERO_GALLERY.map((h) => {
+              const on = ui.heroId === h.id;
+              return (
+                <button key={h.id} onClick={() => { G.setHero && G.setHero(h.id); setUi((u) => ({ ...u, heroId: h.id })); }} style={{ position: "relative", textAlign: "left", border: on ? "2px solid #ffd76a" : "1px solid #3a2f52", borderRadius: 14, padding: "10px 11px", cursor: "pointer", fontFamily: font, background: `linear-gradient(135deg, ${h.c1}33, ${h.c2}22), #1c1630`, display: "flex", flexDirection: "column", gap: 3 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <span style={{ fontSize: 30, filter: `drop-shadow(0 2px 5px ${h.c2}aa)` }}>{h.emoji}</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{h.name}</span>
+                  </div>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: h.c1 }}>{h.title}</span>
+                  {on && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 10, fontWeight: 800, color: "#2a2416", background: "#ffd76a", borderRadius: 999, padding: "1px 7px" }}>✓ สวมอยู่</span>}
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={() => { G.setHero && G.setHero(null); setUi((u) => ({ ...u, heroId: null })); }} style={{ width: "100%", marginTop: 12, padding: "9px 0", borderRadius: 12, border: ui.heroId ? "1px solid #6a5a8a" : "2px solid #ffd76a", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: ui.heroId ? "#c8b8e0" : "#ffd76a", background: "rgba(255,255,255,0.06)" }}>🧍 กลับเป็นตัวละครของเรา{!ui.heroId ? " ✓" : ""}</button>
         </div>
       )}
 
