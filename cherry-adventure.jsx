@@ -19810,9 +19810,9 @@ export default function CherryAdventure() {
           {/* shop panel */}
           {ui.shopOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 270, maxHeight: "60vh", overflowY: "auto",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("shopOpen")}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -20414,9 +20414,9 @@ export default function CherryAdventure() {
           {/* 📜 quest panel */}
           {ui.questOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 280, maxHeight: "60vh", overflowY: "auto",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("questOpen")}
               <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
@@ -20616,9 +20616,9 @@ export default function CherryAdventure() {
           {/* ⛏️ FORGE panel — craft with materials */}
           {ui.forgeOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 268, maxHeight: "64vh", overflowY: "auto",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("forgeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 }}>⛏️ โรงตีเหล็ก (คราฟต์)</div>
@@ -20783,9 +20783,9 @@ export default function CherryAdventure() {
           {/* 🌳 SKILL TREE panel — passive nodes */}
           {ui.treeOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 264, maxHeight: "64vh", overflowY: "auto",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("treeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a9a5a", marginBottom: 2 }}>🌳 สกิลต้นไม้ (พาสซีฟ)</div>
@@ -20842,8 +20842,8 @@ export default function CherryAdventure() {
           {/* ✨ constellation board */}
           {ui.constOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 276, maxHeight: "66vh", overflowY: "auto",
-              background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: "0 6px 20px rgba(70,50,120,0.35)",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("constOpen")}
               {(() => {
@@ -20894,8 +20894,8 @@ export default function CherryAdventure() {
           {/* ⚔️ weapon mastery panel */}
           {ui.masteryOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 268, maxHeight: "66vh", overflowY: "auto",
-              background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: "0 6px 20px rgba(120,100,50,0.32)",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
+              background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("masteryOpen")}
               {(() => {
@@ -20948,7 +20948,7 @@ export default function CherryAdventure() {
 
           {/* ✨ collection panel: weapon skins + outfit sets */}
           {ui.collectionOpen && (
-            <div style={{ position: "absolute", right: 72, bottom: 28, width: 282, maxHeight: "70vh", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: "0 6px 20px rgba(180,80,130,0.3)" }}>
+            <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)" }}>
               {closeBtn("collectionOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#b0407a", marginBottom: 2 }}>✨ คอลเลกชัน</div>
               <div style={{ fontSize: 10.5, color: "#a3789a", marginBottom: 8 }}>สะสมสกินอาวุธ & ชุดเซ็ต — ปลดล็อกด้วยความสำเร็จ</div>
@@ -21170,9 +21170,9 @@ export default function CherryAdventure() {
 
           {ui.invOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 260, maxHeight: "60vh", overflowY: "auto",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("invOpen")}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -21576,10 +21576,10 @@ export default function CherryAdventure() {
           {/* collection panel */}
           {ui.panelOpen && (
             <div style={{
-              position: "absolute", right: 72, bottom: 28, width: 240,
-              maxHeight: "60vh", display: "flex", flexDirection: "column",
+              position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 50, width: "90%", maxWidth: 380,
+              maxHeight: "84vh", overflowY: "auto", display: "flex", flexDirection: "column",
               background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: "0 6px 20px rgba(90,120,70,0.3)",
+              boxShadow: "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)",
             }}>
               {closeBtn("panelOpen")}
               <div style={{ display: "flex", gap: 6, marginBottom: 6, flexShrink: 0 }}>
