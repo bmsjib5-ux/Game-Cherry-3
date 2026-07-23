@@ -19975,7 +19975,7 @@ export default function CherryAdventure() {
           <div style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: "#e6c6ff" }}>🦸 ฮีโร่ในตำนาน</div>
             <div style={{ flex: 1 }} />
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", border: "1px solid #3a6aa0" }}>💎 {(ui.diamonds || 0).toLocaleString()}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", marginRight: 32, border: "1px solid #3a6aa0" }}>💎 {(ui.diamonds || 0).toLocaleString()}</div>
           </div>
           <div style={{ fontSize: 10.5, color: "#a898c8", marginBottom: 8 }}>ซื้อถาวรด้วยเพชร · หรือใช้บัตรชั่วคราว (ดรอปจากบอส)</div>
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
