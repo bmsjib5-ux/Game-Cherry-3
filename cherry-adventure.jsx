@@ -19526,11 +19526,8 @@ export default function CherryAdventure() {
               ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
               ["⛏️", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
               ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
-                    ["📜", "เควส", () => toggleMenu("questOpen"), "#5fb0f0"],
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
               ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
-              ["🐾", "สัตว์เลี้ยง & ทีม", () => toggleMenu("panelOpen"), "#6fce97"],
-              ["🧪", "ใช้ยาฟื้นฟู", () => G.usePotion(), "#6fce97"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
