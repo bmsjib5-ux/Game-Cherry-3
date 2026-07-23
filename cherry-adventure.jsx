@@ -18624,10 +18624,10 @@ export default function CherryAdventure() {
         const cd = G.equipOpen ? (wideEquip ? 16.5 : 9.4) : Math.max(2.6, Math.min(11, camDist * 0.5));
         const camY = G.equipOpen ? (wideEquip ? 2.05 : 1.62) : 1.55 + cd * 0.14;
         const lookY = G.equipOpen ? (wideEquip ? 0.30 : 1.02) : 1.35;
-        // 🖥️ หน้าแต่งตัว: จัดตัวละครให้อยู่กึ่งกลางจอเสมอ (ทั้งมือถือและคอม) — คอลัมน์อุปกรณ์อยู่ริมซ้าย/ขวา
+        // 🖥️ หน้าแต่งตัว: คอม = แผงครึ่งจอฝั่งซ้าย → เลื่อนตัวละครไปอยู่กึ่งกลางแผงซ้าย · มือถือ = กลางจอ
         const panX = !G.equipOpen && window.innerWidth < 640 ? -cd * 0.11 : 0;
-        const camX = panX;
-        const lookX = panX;
+        const camX = wideEquip ? cd * 0.03 : panX;
+        const lookX = wideEquip ? cd * 0.25 : panX;
         camera.position.x += (camX - camera.position.x) * 0.08;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (cd - camera.position.z) * 0.08;
@@ -21401,7 +21401,7 @@ export default function CherryAdventure() {
             const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 9, border: "2px dashed #2f3a2b", background: "rgba(255,255,255,0.02)" }} />;
             const renderCell = (cell, i) => cell.pot === "hp" ? potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp") : cell.pot === "mp" ? potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp") : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
-              <div key="eqscr" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
+              <div key="eqscr" style={{ position: "absolute", left: 0, top: 0, bottom: 0, ...(window.innerWidth > 620 ? { width: "50vw" } : { right: 0 }), zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
                 <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                   🎒 ช่องเก็บของ
                   <button title="ปิดหน้าตัวละคร" onClick={() => G.closeEquip()} style={{ position: "absolute", right: 12, top: 8, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#e8dcc0", fontSize: 16, cursor: "pointer" }}>✕</button>
