@@ -3732,6 +3732,20 @@ const HERO_GALLERY = [
   { id: "yuki",     name: "ยูกิ",      emoji: "❄️", title: "นักธนูน้ำแข็ง",         c1: "#a8e0ff", c2: "#4a9ad0", price: 120 },
   { id: "haru",     name: "ฮารุ",      emoji: "🌸", title: "จอมเวทซากุระ",          c1: "#f2a8d0", c2: "#c05a9a", price: 80 },
 ];
+// ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
+const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
+const GACHA_POOL = [
+  ...HERO_GALLERY.map((h) => ({ type: "hero", ref: h.id, name: h.name, emoji: h.emoji, rarity: "legendary", weight: 0.25 })),
+  ...WEAPON_SKINS.filter((sk) => ["epic", "secret", "dragon"].includes(sk.rarity)).map((sk) => ({ type: "skin", ref: sk.id, name: sk.name, emoji: sk.emoji, rarity: "epic", weight: 1.5 })),
+  ...WEAPON_SKINS.filter((sk) => sk.rarity === "rare").map((sk) => ({ type: "skin", ref: sk.id, name: sk.name, emoji: sk.emoji, rarity: "rare", weight: 4 })),
+  { type: "pass", days: 1, name: "บัตรฮีโร่ 1 วัน", emoji: "🎫", rarity: "rare",   weight: 6 },
+  { type: "pass", days: 2, name: "บัตรฮีโร่ 2 วัน", emoji: "🎫", rarity: "rare",   weight: 2 },
+  { type: "dia",  amount: 10, name: "เพชร 10", emoji: "💎", rarity: "rare",   weight: 4 },
+  { type: "dia",  amount: 5,  name: "เพชร 5",  emoji: "💎", rarity: "common", weight: 12 },
+  { type: "gold", amount: 1500, name: "ทอง 1500", emoji: "💰", rarity: "common", weight: 12 },
+  { type: "gold", amount: 800,  name: "ทอง 800",  emoji: "💰", rarity: "common", weight: 15 },
+  { type: "gold", amount: 300,  name: "ทอง 300",  emoji: "💰", rarity: "common", weight: 30 },
+]; // total weight 100 → hero 2% · epic-skin 9% · rare(skin/pass/dia) 32% · gold 57%
 const WEAPON_TIP = {
   w1: 0xf28ba8,
   w2: 0xf5652e,
@@ -16625,7 +16639,7 @@ function CherryAdventure() {
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
     G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
     G.diaSkins = {}; // 💎 skins bought with diamonds
-    G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; // 🦸 hero unlocks + temp passes
+    G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; G.gachaPity = 0; // 🦸 hero unlocks + temp passes
     G.dressRotY = null; G.dressHideGear = false; // 🧍 remembered dressing-room angle + hide-gear toggle
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
@@ -17102,7 +17116,8 @@ function CherryAdventure() {
       diaSkins: { ...(G.diaSkins || {}) },
       heroesOwned: { ...(G.heroesOwned || {}) },
       heroPasses: { ...(G.heroPasses || {}) },
-      heroTemp: { ...(G.heroTemp || {}) }
+      heroTemp: { ...(G.heroTemp || {}) },
+      gachaPity: G.gachaPity || 0
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -18547,6 +18562,62 @@ function CherryAdventure() {
       if (G.heroId && !G.heroUnlocked(G.heroId)) { if (G.setHero) G.setHero(null); toast("⏳ บัตรฮีโร่หมดอายุ — กลับเป็นตัวละครปกติ"); setUi((u) => ({ ...u, heroId: null })); changed = true; }
       if (changed && G.saveGame) G.saveGame();
     };
+    // 🎰 GACHA — premium summon: heroes / weapon skins / items with diamonds
+    G.gachaPickHero = () => {
+      const un = HERO_GALLERY.filter((h) => !(G.heroesOwned && G.heroesOwned[h.id]));
+      const src = un.length ? un : HERO_GALLERY;
+      const h = src[Math.floor(Math.random() * src.length)];
+      return { type: "hero", ref: h.id, name: h.name, emoji: h.emoji, rarity: "legendary" };
+    };
+    const gachaWeighted = (pool) => {
+      const tot = pool.reduce((a, x) => a + x.weight, 0);
+      let x = Math.random() * tot, e = pool[pool.length - 1];
+      for (const it of pool) { if ((x -= it.weight) < 0) { e = it; break; } }
+      return { ...e };
+    };
+    const gachaRollOne = () => {
+      G.gachaPity = (G.gachaPity || 0) + 1;
+      let e;
+      if (G.gachaPity >= 60) e = G.gachaPickHero();          // 🎯 hard pity → guaranteed hero
+      else e = gachaWeighted(GACHA_POOL);
+      if (e.type === "hero") G.gachaPity = 0;                // reset pity whenever a hero drops
+      return e;
+    };
+    const gachaApply = (r) => {
+      if (r.type === "hero") {
+        if (G.heroesOwned && G.heroesOwned[r.ref]) { r.dupe = true; r.refund = 60; G.diamonds = (G.diamonds || 0) + 60; }
+        else { G.heroesOwned = G.heroesOwned || {}; G.heroesOwned[r.ref] = 1; r.isNew = true; }
+      } else if (r.type === "skin") {
+        const sk = WEAPON_SKINS.find((x) => x.id === r.ref);
+        const have = (G.diaSkins && G.diaSkins[r.ref]) || (G.collectUnlocked && sk && G.collectUnlocked(sk.unlock));
+        if (have) { r.dupe = true; r.refund = 15; G.diamonds = (G.diamonds || 0) + 15; }
+        else { G.diaSkins = G.diaSkins || {}; G.diaSkins[r.ref] = 1; r.isNew = true; }
+      } else if (r.type === "gold") { G.gold = (G.gold || 0) + r.amount; }
+      else if (r.type === "dia") { G.diamonds = (G.diamonds || 0) + r.amount; }
+      else if (r.type === "pass") { G.heroPasses = G.heroPasses || {}; G.heroPasses[r.days] = (G.heroPasses[r.days] || 0) + 1; }
+      return r;
+    };
+    G.openGacha = () => setUi((u) => ({ ...u, gachaOpen: true, menuOpen: false, diamonds: G.diamonds || 0, gachaPity: G.gachaPity || 0 }));
+    G.closeGachaResult = () => setUi((u) => ({ ...u, gachaResult: null }));
+    G.gachaPull = (n) => {
+      n = n === 10 ? 10 : 1;
+      const cost = n === 10 ? GACHA_COST.ten : GACHA_COST.single;
+      if ((G.diamonds || 0) < cost) { toast(`💎 เพชรไม่พอ — ต้องมี ${cost}`); return; }
+      G.diamonds -= cost;
+      const results = [];
+      for (let i = 0; i < n; i++) results.push(gachaRollOne());
+      if (n === 10 && !results.some((r) => r.rarity !== "common")) {  // 🎯 10x floor → guarantee a rare+
+        results[9] = gachaWeighted(GACHA_POOL.filter((x) => x.rarity !== "common"));
+        if (results[9].type === "hero") G.gachaPity = 0;
+      }
+      results.forEach((r) => gachaApply(r));
+      if (typeof syncPlayer === "function") syncPlayer();
+      const gotHero = results.some((r) => r.type === "hero");
+      if (G.sfx) { if (gotHero && G.sfx.levelup) G.sfx.levelup(); else if (G.sfx.coin) G.sfx.coin(); }
+      if (gotHero) toast("🎰🦸 อัญเชิญได้ฮีโร่ในตำนาน!");
+      setUi((u) => ({ ...u, diamonds: G.diamonds, gold: G.gold, heroesOwned: { ...(G.heroesOwned || {}) }, diaSkins: { ...(G.diaSkins || {}) }, heroPasses: { ...(G.heroPasses || {}) }, gachaResult: results, gachaPity: G.gachaPity || 0 }));
+      if (G.saveGame) G.saveGame();
+    };
     G.sellItem = id => {
       const idx = G.inv.indexOf(id);
       if (idx < 0) return;
@@ -19970,7 +20041,7 @@ function CherryAdventure() {
       G.diamonds = 0; // 💎 fresh diamonds
       G.lastRankClaim = null;
       G.diaSkins = {};
-      G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {};
+      G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; G.gachaPity = 0;
       G.dressRotY = null; G.dressHideGear = false;
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
@@ -20909,6 +20980,7 @@ function CherryAdventure() {
       if (d.heroId && !d.heroesOwned) G.heroesOwned[d.heroId] = 1; // 🎁 grandfather heroes owned before the unlock economy
       G.heroPasses = d.heroPasses || {};
       G.heroTemp = d.heroTemp || {};
+      G.gachaPity = d.gachaPity || 0;
       { const now = Date.now(); for (const k in G.heroTemp) if (G.heroTemp[k] <= now) delete G.heroTemp[k]; }
       if (G.setHero) G.setHero(G.heroUnlocked && G.heroUnlocked(d.heroId) ? (d.heroId || null) : null); // 🌸 restore hero look only if still unlocked
       G.player = {
@@ -30132,6 +30204,7 @@ function CherryAdventure() {
         ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
         ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
         ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
+        ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
     ].map((it) => (React.createElement("button", { key: it[1], title: it[1], onClick: () => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }, style: { width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" } }, it[0])))))))), ui.heroGalleryOpen && (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 392, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #4a3a6a" } },
     closeBtn("heroGalleryOpen"),
     React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 3 } },
@@ -30277,7 +30350,77 @@ function CherryAdventure() {
                     " \u2192 ",
                     d.rank),
                 React.createElement("button", { onClick: () => G.pvpCloseDuel(), style: { padding: "11px 30px", borderRadius: 14, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" } }, "\u0E1B\u0E34\u0E14")))));
-    })(), ui.diamondShopOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, diamondShopOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(14,18,30,0.62)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70, fontFamily: font } },
+    })(), ui.gachaOpen && (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 60, width: "90%", maxWidth: 392, maxHeight: "88vh", overflowY: "auto", background: "linear-gradient(180deg,#241033,#150a22)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #5a3a7a" } },
+        closeBtn("gachaOpen"),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 3 } },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "#ffd6f5" } }, "\uD83C\uDFB0 \u0E2D\u0E31\u0E0D\u0E40\u0E0A\u0E34\u0E0D\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19"),
+            React.createElement("div", { style: { flex: 1 } }),
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", border: "1px solid #3a6aa0", marginRight: 32 } },
+                "\uD83D\uDC8E ",
+                (ui.diamonds || 0).toLocaleString())),
+        React.createElement("div", { style: { fontSize: 10.5, color: "#c8a8e0", marginBottom: 10 } }, "\u0E2A\u0E38\u0E48\u0E21\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19 \u00B7 \u0E2A\u0E01\u0E34\u0E19\u0E2D\u0E32\u0E27\u0E38\u0E18 \u00B7 \u0E44\u0E2D\u0E40\u0E17\u0E47\u0E21 \u2014 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E04\u0E23\u0E1A 60 \u0E04\u0E23\u0E31\u0E49\u0E07"),
+        React.createElement("div", { style: { borderRadius: 16, padding: "18px 10px", marginBottom: 12, textAlign: "center", background: "radial-gradient(circle at 50% 28%, rgba(255,150,230,0.30), rgba(120,60,200,0.08)), linear-gradient(135deg,#3a1a5a,#1a1030)", border: "1px solid #6a4a9a", position: "relative", overflow: "hidden" } },
+            React.createElement("div", { style: { fontSize: 46, filter: "drop-shadow(0 3px 10px rgba(255,180,240,0.6))" } }, "\uD83E\uDDB8\u2728\uD83D\uDDE1\uFE0F"),
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#fff", marginTop: 4 } }, "\u0E1E\u0E39\u0E25\u0E2D\u0E31\u0E0D\u0E40\u0E0A\u0E34\u0E0D\u0E1E\u0E34\u0E40\u0E28\u0E29"),
+            React.createElement("div", { style: { fontSize: 9.5, color: "#e0c0ff", marginTop: 2 } }, "\u0E2E\u0E35\u0E42\u0E23\u0E48 8 \u0E15\u0E31\u0E27 \u00B7 \u0E2A\u0E01\u0E34\u0E19\u0E2B\u0E32\u0E22\u0E32\u0E01 8 \u0E41\u0E1A\u0E1A \u00B7 \u0E1A\u0E31\u0E15\u0E23 & \u0E40\u0E1E\u0E0A\u0E23")),
+        React.createElement("div", { style: { marginBottom: 12 } },
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: "#c8a8e0", marginBottom: 3 } },
+                React.createElement("span", null, "\uD83C\uDFAF \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35\u0E2E\u0E35\u0E42\u0E23\u0E48"),
+                React.createElement("span", null,
+                    (ui.gachaPity || 0),
+                    " / 60")),
+            React.createElement("div", { style: { height: 8, background: "rgba(0,0,0,0.35)", borderRadius: 999, overflow: "hidden", border: "1px solid #4a3a6a" } },
+                React.createElement("div", { style: { width: `${Math.min(100, ((ui.gachaPity || 0) / 60) * 100)}%`, height: "100%", background: "linear-gradient(90deg,#f5a623,#ff6ac0)", transition: "width 0.3s" } }))),
+        React.createElement("div", { style: { display: "flex", gap: 10 } },
+            React.createElement("button", { onClick: () => G.gachaPull(1), disabled: (ui.diamonds || 0) < 30, style: { flex: 1, padding: "12px 0", borderRadius: 14, border: "none", cursor: (ui.diamonds || 0) >= 30 ? "pointer" : "not-allowed", fontFamily: font, fontWeight: 800, color: "#fff", background: (ui.diamonds || 0) >= 30 ? "linear-gradient(135deg,#6a8ae0,#8a5ad0)" : "rgba(255,255,255,0.08)", opacity: (ui.diamonds || 0) >= 30 ? 1 : 0.5 } },
+                React.createElement("div", { style: { fontSize: 14 } }, "\u0E2A\u0E38\u0E48\u0E21 \u00D71"),
+                React.createElement("div", { style: { fontSize: 11.5, color: "#ffe08a" } }, "\uD83D\uDC8E 30")),
+            React.createElement("button", { onClick: () => G.gachaPull(10), disabled: (ui.diamonds || 0) < 270, style: { flex: 1.25, padding: "12px 0", borderRadius: 14, border: "2px solid #ffd76a", cursor: (ui.diamonds || 0) >= 270 ? "pointer" : "not-allowed", fontFamily: font, fontWeight: 800, color: "#fff", background: (ui.diamonds || 0) >= 270 ? "linear-gradient(135deg,#e0708a,#b05ad0)" : "rgba(255,255,255,0.08)", opacity: (ui.diamonds || 0) >= 270 ? 1 : 0.5, position: "relative" } },
+                React.createElement("span", { style: { position: "absolute", top: -9, right: 6, background: "#ffd76a", color: "#5a3a10", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px" } }, "\u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35\u0E41\u0E23\u0E23\u0E4C+"),
+                React.createElement("div", { style: { fontSize: 14 } }, "\u0E2A\u0E38\u0E48\u0E21 \u00D710"),
+                React.createElement("div", { style: { fontSize: 11.5, color: "#ffe08a" } }, "\uD83D\uDC8E 270"))),
+        React.createElement("div", { style: { marginTop: 12, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "9px 11px", fontSize: 10, color: "#c0b0d8" } },
+            React.createElement("div", { style: { fontWeight: 800, color: "#e6c6ff", marginBottom: 4 } }, "\u0E2D\u0E31\u0E15\u0E23\u0E32\u0E2D\u0E2D\u0E01"),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+                React.createElement("span", { style: { color: "#ffcf4a" } }, "\uD83E\uDDB8 \u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19"),
+                React.createElement("span", null, "2%")),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+                React.createElement("span", { style: { color: "#c98aff" } }, "\uD83D\uDDE1\uFE0F \u0E2A\u0E01\u0E34\u0E19\u0E2D\u0E35\u0E1E\u0E34\u0E04"),
+                React.createElement("span", null, "9%")),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+                React.createElement("span", { style: { color: "#6ac0ff" } }, "\u2694\uFE0F \u0E2A\u0E01\u0E34\u0E19\u0E41\u0E23\u0E23\u0E4C \u00B7 \u0E1A\u0E31\u0E15\u0E23 \u00B7 \u0E40\u0E1E\u0E0A\u0E23"),
+                React.createElement("span", null, "32%")),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+                React.createElement("span", { style: { color: "#b8c0a8" } }, "\uD83D\uDCB0 \u0E17\u0E2D\u0E07"),
+                React.createElement("span", null, "57%")),
+            React.createElement("div", { style: { marginTop: 5, color: "#9a8ab8", fontSize: 9 } }, "* \u0E44\u0E14\u0E49\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33 \u2192 \u0E04\u0E37\u0E19\u0E40\u0E1E\u0E0A\u0E23\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E2E\u0E35\u0E42\u0E23\u0E48 +60\uD83D\uDC8E \u00B7 \u0E2A\u0E01\u0E34\u0E19 +15\uD83D\uDC8E)")))),
+    ui.gachaResult && (React.createElement("div", { onClick: () => G.closeGachaResult(), style: { position: "absolute", inset: 0, background: "rgba(10,6,20,0.82)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 80, fontFamily: font, padding: 16 } },
+        React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#ffe0f5", marginBottom: 12, textShadow: "0 2px 10px rgba(255,150,230,0.6)" } },
+            "\uD83C\uDFB0 ",
+            ui.gachaResult.length > 1 ? `ผลอัญเชิญ ×${ui.gachaResult.length}` : "ผลอัญเชิญ"),
+        React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { display: "grid", gridTemplateColumns: ui.gachaResult.length > 1 ? "repeat(5,1fr)" : "1fr", gap: 8, maxWidth: 384, width: "100%" } }, ui.gachaResult.map((r, i) => {
+            const rc = { legendary: "#ffcf4a", epic: "#c98aff", rare: "#6ac0ff", common: "#9aa88a" }[r.rarity] || "#9aa88a";
+            const many = ui.gachaResult.length > 1;
+            return (React.createElement("div", { key: i, style: { position: "relative", borderRadius: 12, padding: many ? "10px 4px" : "22px 12px", textAlign: "center", background: `radial-gradient(circle at 50% 28%, ${rc}33, rgba(0,0,0,0.2)), #1a1228`, border: `2px solid ${rc}`, boxShadow: `0 0 14px ${rc}66` } },
+                r.isNew && React.createElement("span", { style: { position: "absolute", top: -7, left: "50%", transform: "translateX(-50%)", background: "#ff4a8a", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "1px 7px" } }, "NEW"),
+                React.createElement("div", { style: { fontSize: many ? 24 : 54, filter: `drop-shadow(0 2px 6px ${rc}aa)` } }, r.emoji),
+                React.createElement("div", { style: { fontSize: many ? 8.5 : 13.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 } }, r.name),
+                r.dupe && React.createElement("div", { style: { fontSize: many ? 7.5 : 11, color: "#8fd0ff", fontWeight: 700 } },
+                    "\u0E0B\u0E49\u0E33 +",
+                    r.refund,
+                    "\uD83D\uDC8E")));
+        })),
+        React.createElement("button", { onClick: () => G.closeGachaResult(), style: { marginTop: 16, padding: "10px 34px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 13.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#7b5ad0,#e0708a)", boxShadow: "0 4px 16px rgba(180,90,200,0.5)" } }, "\u0E15\u0E01\u0E25\u0E07 \u2728"),
+        (() => {
+            const nn = ui.gachaResult.length >= 10 ? 10 : 1;
+            const cc = nn === 10 ? 270 : 30;
+            const can = (ui.diamonds || 0) >= cc;
+            return (React.createElement("button", { onClick: () => { if (!can)
+                    return; G.closeGachaResult(); G.gachaPull(nn); }, disabled: !can, style: { marginTop: 8, padding: "7px 22px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.3)", cursor: can ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#ffe08a", background: "rgba(255,255,255,0.08)", opacity: can ? 1 : 0.4 } },
+                "\uD83D\uDD01 \u0E2A\u0E38\u0E48\u0E21\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07 (\uD83D\uDC8E",
+                cc,
+                ")"));
+        })())), ui.diamondShopOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, diamondShopOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(14,18,30,0.62)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70, fontFamily: font } },
     React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 470, maxHeight: "86%", overflowY: "auto", background: "linear-gradient(180deg,#101830,#0b1020)", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px", border: "1px solid #3a5a8a" } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 4 } },
             React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#8fd0ff" } }, "\uD83D\uDC8E \u0E23\u0E49\u0E32\u0E19\u0E40\u0E1E\u0E0A\u0E23"),

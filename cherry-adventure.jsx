@@ -927,6 +927,21 @@ const HERO_GALLERY = [
   { id: "yuki",     name: "ยูกิ",      emoji: "❄️", title: "นักธนูน้ำแข็ง",         c1: "#a8e0ff", c2: "#4a9ad0", price: 120 },
   { id: "haru",     name: "ฮารุ",      emoji: "🌸", title: "จอมเวทซากุระ",          c1: "#f2a8d0", c2: "#c05a9a", price: 80 },
 ];
+
+// ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
+const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
+const GACHA_POOL = [
+  ...HERO_GALLERY.map((h) => ({ type: "hero", ref: h.id, name: h.name, emoji: h.emoji, rarity: "legendary", weight: 0.25 })),
+  ...WEAPON_SKINS.filter((sk) => ["epic", "secret", "dragon"].includes(sk.rarity)).map((sk) => ({ type: "skin", ref: sk.id, name: sk.name, emoji: sk.emoji, rarity: "epic", weight: 1.5 })),
+  ...WEAPON_SKINS.filter((sk) => sk.rarity === "rare").map((sk) => ({ type: "skin", ref: sk.id, name: sk.name, emoji: sk.emoji, rarity: "rare", weight: 4 })),
+  { type: "pass", days: 1, name: "บัตรฮีโร่ 1 วัน", emoji: "🎫", rarity: "rare",   weight: 6 },
+  { type: "pass", days: 2, name: "บัตรฮีโร่ 2 วัน", emoji: "🎫", rarity: "rare",   weight: 2 },
+  { type: "dia",  amount: 10, name: "เพชร 10", emoji: "💎", rarity: "rare",   weight: 4 },
+  { type: "dia",  amount: 5,  name: "เพชร 5",  emoji: "💎", rarity: "common", weight: 12 },
+  { type: "gold", amount: 1500, name: "ทอง 1500", emoji: "💰", rarity: "common", weight: 12 },
+  { type: "gold", amount: 800,  name: "ทอง 800",  emoji: "💰", rarity: "common", weight: 15 },
+  { type: "gold", amount: 300,  name: "ทอง 300",  emoji: "💰", rarity: "common", weight: 30 },
+]; // total weight 100 → hero 2% · epic-skin 9% · rare(skin/pass/dia) 32% · gold 57%
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 const rollRarity = (boss) => {
   const r = Math.random();
@@ -9940,7 +9955,7 @@ export default function CherryAdventure() {
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
     G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
     G.diaSkins = {}; // 💎 skins bought with diamonds
-    G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; // 🦸 hero unlocks + temp passes
+    G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; G.gachaPity = 0; // 🦸 hero unlocks + temp passes
     G.dressRotY = null; G.dressHideGear = false; // 🧍 remembered dressing-room angle + hide-gear toggle
     G.wpMastery = {}; // ⚔️ weapon-mastery XP per weapon type
     G.weaponSkin = "none"; // 🗡️ cosmetic weapon skin id
@@ -10196,7 +10211,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) },
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0,
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -11221,6 +11236,62 @@ export default function CherryAdventure() {
       if (G.heroId && !G.heroUnlocked(G.heroId)) { if (G.setHero) G.setHero(null); toast("⏳ บัตรฮีโร่หมดอายุ — กลับเป็นตัวละครปกติ"); setUi((u) => ({ ...u, heroId: null })); changed = true; }
       if (changed && G.saveGame) G.saveGame();
     };
+    // 🎰 GACHA — premium summon: heroes / weapon skins / items with diamonds
+    G.gachaPickHero = () => {
+      const un = HERO_GALLERY.filter((h) => !(G.heroesOwned && G.heroesOwned[h.id]));
+      const src = un.length ? un : HERO_GALLERY;
+      const h = src[Math.floor(Math.random() * src.length)];
+      return { type: "hero", ref: h.id, name: h.name, emoji: h.emoji, rarity: "legendary" };
+    };
+    const gachaWeighted = (pool) => {
+      const tot = pool.reduce((a, x) => a + x.weight, 0);
+      let x = Math.random() * tot, e = pool[pool.length - 1];
+      for (const it of pool) { if ((x -= it.weight) < 0) { e = it; break; } }
+      return { ...e };
+    };
+    const gachaRollOne = () => {
+      G.gachaPity = (G.gachaPity || 0) + 1;
+      let e;
+      if (G.gachaPity >= 60) e = G.gachaPickHero();          // 🎯 hard pity → guaranteed hero
+      else e = gachaWeighted(GACHA_POOL);
+      if (e.type === "hero") G.gachaPity = 0;                // reset pity whenever a hero drops
+      return e;
+    };
+    const gachaApply = (r) => {
+      if (r.type === "hero") {
+        if (G.heroesOwned && G.heroesOwned[r.ref]) { r.dupe = true; r.refund = 60; G.diamonds = (G.diamonds || 0) + 60; }
+        else { G.heroesOwned = G.heroesOwned || {}; G.heroesOwned[r.ref] = 1; r.isNew = true; }
+      } else if (r.type === "skin") {
+        const sk = WEAPON_SKINS.find((x) => x.id === r.ref);
+        const have = (G.diaSkins && G.diaSkins[r.ref]) || (G.collectUnlocked && sk && G.collectUnlocked(sk.unlock));
+        if (have) { r.dupe = true; r.refund = 15; G.diamonds = (G.diamonds || 0) + 15; }
+        else { G.diaSkins = G.diaSkins || {}; G.diaSkins[r.ref] = 1; r.isNew = true; }
+      } else if (r.type === "gold") { G.gold = (G.gold || 0) + r.amount; }
+      else if (r.type === "dia") { G.diamonds = (G.diamonds || 0) + r.amount; }
+      else if (r.type === "pass") { G.heroPasses = G.heroPasses || {}; G.heroPasses[r.days] = (G.heroPasses[r.days] || 0) + 1; }
+      return r;
+    };
+    G.openGacha = () => setUi((u) => ({ ...u, gachaOpen: true, menuOpen: false, diamonds: G.diamonds || 0, gachaPity: G.gachaPity || 0 }));
+    G.closeGachaResult = () => setUi((u) => ({ ...u, gachaResult: null }));
+    G.gachaPull = (n) => {
+      n = n === 10 ? 10 : 1;
+      const cost = n === 10 ? GACHA_COST.ten : GACHA_COST.single;
+      if ((G.diamonds || 0) < cost) { toast(`💎 เพชรไม่พอ — ต้องมี ${cost}`); return; }
+      G.diamonds -= cost;
+      const results = [];
+      for (let i = 0; i < n; i++) results.push(gachaRollOne());
+      if (n === 10 && !results.some((r) => r.rarity !== "common")) {  // 🎯 10x floor → guarantee a rare+
+        results[9] = gachaWeighted(GACHA_POOL.filter((x) => x.rarity !== "common"));
+        if (results[9].type === "hero") G.gachaPity = 0;
+      }
+      results.forEach((r) => gachaApply(r));
+      if (typeof syncPlayer === "function") syncPlayer();
+      const gotHero = results.some((r) => r.type === "hero");
+      if (G.sfx) { if (gotHero && G.sfx.levelup) G.sfx.levelup(); else if (G.sfx.coin) G.sfx.coin(); }
+      if (gotHero) toast("🎰🦸 อัญเชิญได้ฮีโร่ในตำนาน!");
+      setUi((u) => ({ ...u, diamonds: G.diamonds, gold: G.gold, heroesOwned: { ...(G.heroesOwned || {}) }, diaSkins: { ...(G.diaSkins || {}) }, heroPasses: { ...(G.heroPasses || {}) }, gachaResult: results, gachaPity: G.gachaPity || 0 }));
+      if (G.saveGame) G.saveGame();
+    };
     G.sellItem = (id) => {
       const idx = G.inv.indexOf(id);
       if (idx < 0) return;
@@ -12117,7 +12188,7 @@ export default function CherryAdventure() {
       G.diamonds = 0; // 💎 fresh diamonds
       G.lastRankClaim = null;
       G.diaSkins = {};
-      G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {};
+      G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; G.gachaPity = 0;
       G.dressRotY = null; G.dressHideGear = false;
       G.wpMastery = {}; // ⚔️ fresh weapon mastery
       G.weaponSkin = "none"; // 🗡️ fresh (no skin)
@@ -12884,6 +12955,7 @@ export default function CherryAdventure() {
       if (d.heroId && !d.heroesOwned) G.heroesOwned[d.heroId] = 1; // 🎁 grandfather heroes owned before the unlock economy
       G.heroPasses = d.heroPasses || {};
       G.heroTemp = d.heroTemp || {};
+      G.gachaPity = d.gachaPity || 0;
       { const now = Date.now(); for (const k in G.heroTemp) if (G.heroTemp[k] <= now) delete G.heroTemp[k]; } // prune expired temp unlocks
       if (G.setHero) G.setHero(G.heroUnlocked && G.heroUnlocked(d.heroId) ? (d.heroId || null) : null); // 🌸 restore hero look only if still unlocked
       G.player = { ...d.player };
@@ -19962,6 +20034,7 @@ export default function CherryAdventure() {
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
               ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
               ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
+              ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
@@ -20141,6 +20214,70 @@ export default function CherryAdventure() {
         );
       })()}
 
+      {ui.gachaOpen && (
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 60, width: "90%", maxWidth: 392, maxHeight: "88vh", overflowY: "auto", background: "linear-gradient(180deg,#241033,#150a22)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #5a3a7a" }}>
+          {closeBtn("gachaOpen")}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#ffd6f5" }}>🎰 อัญเชิญในตำนาน</div>
+            <div style={{ flex: 1 }} />
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", border: "1px solid #3a6aa0", marginRight: 32 }}>💎 {(ui.diamonds || 0).toLocaleString()}</div>
+          </div>
+          <div style={{ fontSize: 10.5, color: "#c8a8e0", marginBottom: 10 }}>สุ่มฮีโร่ในตำนาน · สกินอาวุธ · ไอเท็ม — การันตีฮีโร่ครบ 60 ครั้ง</div>
+          <div style={{ borderRadius: 16, padding: "18px 10px", marginBottom: 12, textAlign: "center", background: "radial-gradient(circle at 50% 28%, rgba(255,150,230,0.30), rgba(120,60,200,0.08)), linear-gradient(135deg,#3a1a5a,#1a1030)", border: "1px solid #6a4a9a", position: "relative", overflow: "hidden" }}>
+            <div style={{ fontSize: 46, filter: "drop-shadow(0 3px 10px rgba(255,180,240,0.6))" }}>🦸✨🗡️</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginTop: 4 }}>พูลอัญเชิญพิเศษ</div>
+            <div style={{ fontSize: 9.5, color: "#e0c0ff", marginTop: 2 }}>ฮีโร่ 8 ตัว · สกินหายาก 8 แบบ · บัตร &amp; เพชร</div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: "#c8a8e0", marginBottom: 3 }}>
+              <span>🎯 การันตีฮีโร่</span><span>{(ui.gachaPity || 0)} / 60</span>
+            </div>
+            <div style={{ height: 8, background: "rgba(0,0,0,0.35)", borderRadius: 999, overflow: "hidden", border: "1px solid #4a3a6a" }}>
+              <div style={{ width: `${Math.min(100, ((ui.gachaPity || 0) / 60) * 100)}%`, height: "100%", background: "linear-gradient(90deg,#f5a623,#ff6ac0)", transition: "width 0.3s" }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={() => G.gachaPull(1)} disabled={(ui.diamonds || 0) < 30} style={{ flex: 1, padding: "12px 0", borderRadius: 14, border: "none", cursor: (ui.diamonds || 0) >= 30 ? "pointer" : "not-allowed", fontFamily: font, fontWeight: 800, color: "#fff", background: (ui.diamonds || 0) >= 30 ? "linear-gradient(135deg,#6a8ae0,#8a5ad0)" : "rgba(255,255,255,0.08)", opacity: (ui.diamonds || 0) >= 30 ? 1 : 0.5 }}>
+              <div style={{ fontSize: 14 }}>สุ่ม ×1</div><div style={{ fontSize: 11.5, color: "#ffe08a" }}>💎 30</div>
+            </button>
+            <button onClick={() => G.gachaPull(10)} disabled={(ui.diamonds || 0) < 270} style={{ flex: 1.25, padding: "12px 0", borderRadius: 14, border: "2px solid #ffd76a", cursor: (ui.diamonds || 0) >= 270 ? "pointer" : "not-allowed", fontFamily: font, fontWeight: 800, color: "#fff", background: (ui.diamonds || 0) >= 270 ? "linear-gradient(135deg,#e0708a,#b05ad0)" : "rgba(255,255,255,0.08)", opacity: (ui.diamonds || 0) >= 270 ? 1 : 0.5, position: "relative" }}>
+              <span style={{ position: "absolute", top: -9, right: 6, background: "#ffd76a", color: "#5a3a10", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px" }}>การันตีแรร์+</span>
+              <div style={{ fontSize: 14 }}>สุ่ม ×10</div><div style={{ fontSize: 11.5, color: "#ffe08a" }}>💎 270</div>
+            </button>
+          </div>
+          <div style={{ marginTop: 12, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "9px 11px", fontSize: 10, color: "#c0b0d8" }}>
+            <div style={{ fontWeight: 800, color: "#e6c6ff", marginBottom: 4 }}>อัตราออก</div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#ffcf4a" }}>🦸 ฮีโร่ในตำนาน</span><span>2%</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#c98aff" }}>🗡️ สกินอีพิค</span><span>9%</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#6ac0ff" }}>⚔️ สกินแรร์ · บัตร · เพชร</span><span>32%</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#b8c0a8" }}>💰 ทอง</span><span>57%</span></div>
+            <div style={{ marginTop: 5, color: "#9a8ab8", fontSize: 9 }}>* ได้ของซ้ำ → คืนเพชรอัตโนมัติ (ฮีโร่ +60💎 · สกิน +15💎)</div>
+          </div>
+        </div>
+      )}
+      {ui.gachaResult && (
+        <div onClick={() => G.closeGachaResult()} style={{ position: "absolute", inset: 0, background: "rgba(10,6,20,0.82)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 80, fontFamily: font, padding: 16 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#ffe0f5", marginBottom: 12, textShadow: "0 2px 10px rgba(255,150,230,0.6)" }}>🎰 {ui.gachaResult.length > 1 ? `ผลอัญเชิญ ×${ui.gachaResult.length}` : "ผลอัญเชิญ"}</div>
+          <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: ui.gachaResult.length > 1 ? "repeat(5,1fr)" : "1fr", gap: 8, maxWidth: 384, width: "100%" }}>
+            {ui.gachaResult.map((r, i) => {
+              const rc = { legendary: "#ffcf4a", epic: "#c98aff", rare: "#6ac0ff", common: "#9aa88a" }[r.rarity] || "#9aa88a";
+              const many = ui.gachaResult.length > 1;
+              return (
+                <div key={i} style={{ position: "relative", borderRadius: 12, padding: many ? "10px 4px" : "22px 12px", textAlign: "center", background: `radial-gradient(circle at 50% 28%, ${rc}33, rgba(0,0,0,0.2)), #1a1228`, border: `2px solid ${rc}`, boxShadow: `0 0 14px ${rc}66` }}>
+                  {r.isNew && <span style={{ position: "absolute", top: -7, left: "50%", transform: "translateX(-50%)", background: "#ff4a8a", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "1px 7px" }}>NEW</span>}
+                  <div style={{ fontSize: many ? 24 : 54, filter: `drop-shadow(0 2px 6px ${rc}aa)` }}>{r.emoji}</div>
+                  <div style={{ fontSize: many ? 8.5 : 13.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>{r.name}</div>
+                  {r.dupe && <div style={{ fontSize: many ? 7.5 : 11, color: "#8fd0ff", fontWeight: 700 }}>ซ้ำ +{r.refund}💎</div>}
+                </div>
+              );
+            })}
+          </div>
+          <button onClick={() => G.closeGachaResult()} style={{ marginTop: 16, padding: "10px 34px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 13.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#7b5ad0,#e0708a)", boxShadow: "0 4px 16px rgba(180,90,200,0.5)" }}>ตกลง ✨</button>
+          {(() => { const nn = ui.gachaResult.length >= 10 ? 10 : 1; const cc = nn === 10 ? 270 : 30; const can = (ui.diamonds || 0) >= cc; return (
+            <button onClick={() => { if (!can) return; G.closeGachaResult(); G.gachaPull(nn); }} disabled={!can} style={{ marginTop: 8, padding: "7px 22px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.3)", cursor: can ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#ffe08a", background: "rgba(255,255,255,0.08)", opacity: can ? 1 : 0.4 }}>🔁 สุ่มอีกครั้ง (💎{cc})</button>
+          ); })()}
+        </div>
+      )}
       {ui.diamondShopOpen && (
         <div onClick={() => setUi((u) => ({ ...u, diamondShopOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(14,18,30,0.62)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70, fontFamily: font }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 470, maxHeight: "86%", overflowY: "auto", background: "linear-gradient(180deg,#101830,#0b1020)", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px", border: "1px solid #3a5a8a" }}>
