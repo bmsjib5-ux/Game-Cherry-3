@@ -19862,6 +19862,7 @@ function CherryAdventure() {
     G.net = CN;
     // ---------- 🔐 Account & cross-device login (Supabase Auth + cloud full-save) ----------
     const AUTH_KEY = "cherry-auth-v1";
+    const SLOTS_OWNER_KEY = "cherry-slots-owner-v1"; // 🔒 which account the local save slots belong to
     Object.assign(CN, {
       _authUrl(path) { return this.cfg.url.replace(/\/+$/, "") + "/auth/v1/" + path; },
       async signUp(email, password) {
@@ -19923,6 +19924,17 @@ function CherryAdventure() {
       const s = { access_token: j.access_token, refresh_token: j.refresh_token, uid: user.id || j.uid, email: (user.email || j.email || G.auth.email), exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 3600000) - 60000 };
       _saveSession(s);
       G.auth = { status: "in", email: s.email, uid: s.uid };
+      // 🔒 account isolation: if the local saves belong to a DIFFERENT account, wipe them so the new user loads only their own cloud save
+      try {
+        const owner = window.localStorage.getItem(SLOTS_OWNER_KEY);
+        if (owner && s.uid && owner !== s.uid) {
+          for (let i = 0; i < 6; i++) window.localStorage.removeItem(slotKey(i));
+          window.localStorage.removeItem(SAVE_BASE);
+          G.saveSlot = 0;
+          if (G.readSlots) setUi(u => ({ ...u, slots: G.readSlots() }));
+        }
+        if (s.uid) window.localStorage.setItem(SLOTS_OWNER_KEY, s.uid);
+      } catch (e) {}
       _setAuthUi();
       if (G.startPresence) G.startPresence();
       return true;
