@@ -1150,6 +1150,14 @@ export default function CherryAdventure() {
       }
       saveZoom(); // 🔍 remember zoom level
     };
+    // 🎥 explore camera orbit (yaw = left/right, pitch = up/down)
+    G.camYaw = 0;
+    G.camPitch = 0.77;
+    G.rotateCam = (dyaw, dpitch) => {
+      G.camYaw = (G.camYaw || 0) + (dyaw || 0);
+      G.camPitch = Math.max(0.42, Math.min(1.35, (G.camPitch != null ? G.camPitch : 0.77) + (dpitch || 0)));
+    };
+    G.resetCam = () => { G.camYaw = 0; G.camPitch = 0.77; };
     camera.position.set(0, 8.5, 11);
     camera.lookAt(0, 0.8, 0);
 
@@ -18338,10 +18346,12 @@ export default function CherryAdventure() {
           G._camShake *= 0.88; // decay
         }
       } else {
-        // 🎥 follow the character 1:1 so it always stays centered on screen
-        const camX = char.position.x;
-        const camY = camDist * 0.77;
-        const camZ = camDist * 0.8 + char.position.z;
+        // 🎥 follow the character + orbit (yaw left/right, pitch up/down)
+        const hd = camDist * 0.8;
+        const yaw = G.camYaw || 0;
+        const camX = char.position.x + Math.sin(yaw) * hd;
+        const camY = camDist * (G.camPitch != null ? G.camPitch : 0.77);
+        const camZ = char.position.z + Math.cos(yaw) * hd;
         camera.position.x += (camX - camera.position.x) * 0.1;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (camZ - camera.position.z) * 0.1;
@@ -19683,6 +19693,26 @@ export default function CherryAdventure() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {ui.mode === "explore" && !ui.equipScreen && (
+        <div style={{ position: "absolute", right: 14, top: "30%", display: "grid", gridTemplateColumns: "repeat(3, 34px)", gridTemplateRows: "repeat(3, 34px)", gap: 3, zIndex: 24 }}>
+          {[
+            ["", null],
+            ["▲", () => G.rotateCam(0, 0.12)],
+            ["", null],
+            ["◀", () => G.rotateCam(0.22, 0)],
+            ["🔄", () => G.resetCam()],
+            ["▶", () => G.rotateCam(-0.22, 0)],
+            ["", null],
+            ["▼", () => G.rotateCam(0, -0.12)],
+            ["", null],
+          ].map((c, i) => c[1] ? (
+            <button key={i} onClick={c[1]} style={{ width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? 14 : 15, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font }}>{c[0]}</button>
+          ) : (
+            <span key={i} />
+          ))}
         </div>
       )}
 
