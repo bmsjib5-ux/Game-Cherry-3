@@ -3729,7 +3729,7 @@ function CherryAdventure() {
   const mountRef = useRef(null);
   const gameRef = useRef({});
   const [ui, setUi] = useState({
-    mode: "title",
+    mode: "login",
     // title | class | create | explore | battle | fainted
     chosenClass: null,
     slots: [null, null, null, null, null, null],
@@ -20492,7 +20492,7 @@ function CherryAdventure() {
       } else {
         setUi(u => ({
           ...u,
-          mode: "class",
+          mode: "create",
           saveSlot: i,
           chosenClass: "warrior"
         }));
@@ -27988,7 +27988,25 @@ function CherryAdventure() {
       width: "100%",
       height: "100%"
     }
-  }), ui.mode === "title" && /*#__PURE__*/React.createElement("div", {
+  }), ui.mode === "login" && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font } },
+    React.createElement("div", { style: { width: "100%", maxWidth: 360, background: "#fff", borderRadius: 24, padding: "26px 22px", boxShadow: "0 14px 44px rgba(150,90,120,0.28)", textAlign: "center" } },
+        React.createElement("div", { style: { fontSize: 42 } }, "\uD83C\uDF52"),
+        React.createElement("div", { style: { fontSize: 22, fontWeight: 800, color: "#c0446a", marginBottom: 2 } }, "Cherry Adventure"),
+        React.createElement("div", { style: { fontSize: 11.5, color: "#a07a8a", marginBottom: 18, lineHeight: 1.5 } },
+            "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E0B\u0E1F\u0E02\u0E49\u0E32\u0E21\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07",
+            React.createElement("br", null),
+            "(\u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E25\u0E48\u0E19\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E34\u0E19\u0E01\u0E47\u0E44\u0E14\u0E49)"),
+        ui.auth && ui.auth.status === "in" ? (React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#4a9a5e", background: "#eaf7ec", borderRadius: 12, padding: "12px", marginBottom: 16 } },
+            "\u2705 \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E41\u0E25\u0E49\u0E27",
+            React.createElement("br", null),
+            React.createElement("span", { style: { fontSize: 11, color: "#6a8a6a", fontWeight: 700 } }, ui.auth.email))) : (React.createElement(React.Fragment, null,
+            React.createElement("input", { type: "email", value: ui.authEmail || "", onChange: (e) => setUi((u) => ({ ...u, authEmail: e.target.value })), placeholder: "\u0E2D\u0E35\u0E40\u0E21\u0E25", style: { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 8, fontFamily: font } }),
+            React.createElement("input", { type: "password", value: ui.authPass || "", onChange: (e) => setUi((u) => ({ ...u, authPass: e.target.value })), placeholder: "\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19", style: { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 10, fontFamily: font } }),
+            React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8 } },
+                React.createElement("button", { onClick: () => G.accountSignIn(ui.authEmail || "", ui.authPass || ""), style: { flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0709a,#c05a86)" } }, "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A"),
+                React.createElement("button", { onClick: () => G.accountSignUp(ui.authEmail || "", ui.authPass || ""), style: { padding: "11px 14px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "#fff" } }, "\u0E2A\u0E21\u0E31\u0E04\u0E23")),
+            React.createElement("button", { onClick: () => G.accountSignInGoogle(), style: { width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff", marginBottom: 14 } }, "\uD83C\uDDEC \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22 Google"))),
+        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots })), style: { width: "100%", padding: "13px", borderRadius: 14, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ac08a)", boxShadow: "0 5px 16px rgba(90,160,106,0.4)" } }, ui.auth && ui.auth.status === "in" ? "เข้าเกม →" : "เข้าเกมเลย (ไม่ล็อกอิน) →")))), ui.mode === "title" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       inset: 0,
@@ -28173,8 +28191,7 @@ function CherryAdventure() {
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setUi(u => ({
       ...u,
-      mode: "title",
-      slots: G.readSlots()
+      mode: "create"
     })),
     style: {
       padding: "7px 13px",
@@ -28309,10 +28326,7 @@ function CherryAdventure() {
     }
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => {
-      if (ui.chosenClass) setUi(u => ({
-        ...u,
-        mode: "create"
-      }));
+      if (ui.chosenClass) G.startGame(ui.chosenClass);
     },
     disabled: !ui.chosenClass,
     style: {
@@ -28327,7 +28341,7 @@ function CherryAdventure() {
       background: ui.chosenClass ? "linear-gradient(90deg,#f5a623,#f5c542)" : "#c8c8c0",
       boxShadow: ui.chosenClass ? "0 5px 16px rgba(245,166,35,0.5)" : "none"
     }
-  }, "เลือกอาชีพนี้ →"))), ui.mode === "create" && (React.createElement(React.Fragment, null,
+  }, "🌸 เริ่มผจญภัย!"))), ui.mode === "create" && (React.createElement(React.Fragment, null,
     React.createElement("div", { style: { position: "absolute", top: 14, left: 202, right: 12, textAlign: "center", pointerEvents: "none" } },
         React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "#8a5a4a" } }, "\uD83C\uDF80 \u0E2D\u0E2D\u0E01\u0E41\u0E1A\u0E1A\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23"),
         React.createElement("div", { style: { fontSize: 11, color: "#a3796a", marginTop: 2 } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2B\u0E21\u0E27\u0E14\u0E17\u0E32\u0E07\u0E0B\u0E49\u0E32\u0E22 \u00B7 \u0E25\u0E32\u0E01/\u0E1A\u0E35\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2B\u0E21\u0E38\u0E19\u2013\u0E0B\u0E39\u0E21")),
@@ -29317,7 +29331,8 @@ function CherryAdventure() {
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setUi(u => ({
       ...u,
-      mode: "class"
+      mode: "title",
+      slots: G.readSlots ? G.readSlots() : u.slots
     })),
     style: {
       padding: "12px 22px",
@@ -29331,8 +29346,8 @@ function CherryAdventure() {
       background: "#fff",
       boxShadow: "0 4px 12px rgba(90,120,70,0.25)"
     }
-  }, "← เปลี่ยนอาชีพ"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => G.startGame(ui.chosenClass || "warrior"),
+  }, "← กลับ"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setUi(u => ({ ...u, mode: "class" })),
     style: {
       padding: "12px 42px",
       borderRadius: 999,
@@ -29345,7 +29360,7 @@ function CherryAdventure() {
       background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
       boxShadow: "0 5px 16px rgba(90,160,106,0.5)"
     }
-  }, "🌸 เริ่มผจญภัย! ", ui.chosenClass && CLASSES[ui.chosenClass] ? `(${CLASSES[ui.chosenClass].emoji}${CLASSES[ui.chosenClass].name})` : ""))), (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
+  }, "เลือกอาชีพ →"))), (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: 12,

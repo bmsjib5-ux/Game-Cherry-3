@@ -928,7 +928,7 @@ export default function CherryAdventure() {
   const mountRef = useRef(null);
   const gameRef = useRef({});
   const [ui, setUi] = useState({
-    mode: "title", // title | class | create | explore | battle | fainted
+    mode: "login", // login | title | class | create | explore | battle | fainted
     chosenClass: null,
     slots: [null, null, null, null, null, null], saveSlot: 0, confirmDelete: null, playerName: "เชอร์รี่", playerTitle: "", pendingName: "",
     cls: null,
@@ -12488,7 +12488,7 @@ export default function CherryAdventure() {
       G.saveSlot = i;
       const sv = loadSave(i);
       if (sv && sv.player) { G.continueGame(); }
-      else { setUi((u) => ({ ...u, mode: "class", saveSlot: i, chosenClass: "warrior" })); G.previewClass && G.previewClass("warrior"); }
+      else { setUi((u) => ({ ...u, mode: "create", saveSlot: i, chosenClass: "warrior" })); G.previewClass && G.previewClass("warrior"); }
     };
     G.clearSave = (i) => {
       const target = i == null ? G.saveSlot : i;
@@ -18421,6 +18421,29 @@ export default function CherryAdventure() {
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
 
       {/* ===== 💾 title / save-slot selection ===== */}
+      {ui.mode === "login" && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font }}>
+          <div style={{ width: "100%", maxWidth: 360, background: "#fff", borderRadius: 24, padding: "26px 22px", boxShadow: "0 14px 44px rgba(150,90,120,0.28)", textAlign: "center" }}>
+            <div style={{ fontSize: 42 }}>🍒</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#c0446a", marginBottom: 2 }}>Cherry Adventure</div>
+            <div style={{ fontSize: 11.5, color: "#a07a8a", marginBottom: 18, lineHeight: 1.5 }}>เข้าสู่ระบบเพื่อเซฟข้ามเครื่อง<br />(หรือเล่นแบบไม่ล็อกอินก็ได้)</div>
+            {ui.auth && ui.auth.status === "in" ? (
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#4a9a5e", background: "#eaf7ec", borderRadius: 12, padding: "12px", marginBottom: 16 }}>✅ เข้าสู่ระบบแล้ว<br /><span style={{ fontSize: 11, color: "#6a8a6a", fontWeight: 700 }}>{ui.auth.email}</span></div>
+            ) : (
+              <>
+                <input type="email" value={ui.authEmail || ""} onChange={(e) => setUi((u) => ({ ...u, authEmail: e.target.value }))} placeholder="อีเมล" style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 8, fontFamily: font }} />
+                <input type="password" value={ui.authPass || ""} onChange={(e) => setUi((u) => ({ ...u, authPass: e.target.value }))} placeholder="รหัสผ่าน" style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 10, fontFamily: font }} />
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <button onClick={() => G.accountSignIn(ui.authEmail || "", ui.authPass || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0709a,#c05a86)" }}>เข้าสู่ระบบ</button>
+                  <button onClick={() => G.accountSignUp(ui.authEmail || "", ui.authPass || "")} style={{ padding: "11px 14px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "#fff" }}>สมัคร</button>
+                </div>
+                <button onClick={() => G.accountSignInGoogle()} style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff", marginBottom: 14 }}>🇬 เข้าสู่ระบบด้วย Google</button>
+              </>
+            )}
+            <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots }))} style={{ width: "100%", padding: "13px", borderRadius: 14, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ac08a)", boxShadow: "0 5px 16px rgba(90,160,106,0.4)" }}>{ui.auth && ui.auth.status === "in" ? "เข้าเกม →" : "เข้าเกมเลย (ไม่ล็อกอิน) →"}</button>
+          </div>
+        </div>
+      )}
       {ui.mode === "title" && (
         <div style={{
           position: "absolute", inset: 0, display: "flex", flexDirection: "column",
@@ -18489,9 +18512,9 @@ export default function CherryAdventure() {
             <div style={{ fontSize: 22, fontWeight: 800, color: "#8a5a4a" }}>⚔️ เลือกสายอาชีพ</div>
             <div style={{ fontSize: 12, color: "#a3796a", marginTop: 3 }}>แตะการ์ดเพื่อดูตัวละครในชุดอาชีพ · ลากหมุน/ซูมได้</div>
           </div>
-          {/* back to slots */}
+          {/* back to customize */}
           <div style={{ position: "absolute", top: 14, right: 12 }}>
-            <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots() }))} style={{
+            <button onClick={() => setUi((u) => ({ ...u, mode: "create" }))} style={{
               padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
               background: "#fff", boxShadow: "0 3px 10px rgba(90,120,70,0.25)",
@@ -18560,7 +18583,7 @@ export default function CherryAdventure() {
           {/* confirm button */}
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 22, display: "flex", justifyContent: "center" }}>
             <button
-              onClick={() => { if (ui.chosenClass) setUi((u) => ({ ...u, mode: "create" })); }}
+              onClick={() => { if (ui.chosenClass) G.startGame(ui.chosenClass); }}
               disabled={!ui.chosenClass}
               style={{
                 padding: "12px 40px", borderRadius: 999, border: "none",
@@ -18569,7 +18592,7 @@ export default function CherryAdventure() {
                 background: ui.chosenClass ? "linear-gradient(90deg,#f5a623,#f5c542)" : "#c8c8c0",
                 boxShadow: ui.chosenClass ? "0 5px 16px rgba(245,166,35,0.5)" : "none",
               }}>
-              เลือกอาชีพนี้ →
+              🌸 เริ่มผจญภัย!
             </button>
           </div>
         </>
@@ -19245,18 +19268,18 @@ export default function CherryAdventure() {
           background: "linear-gradient(180deg,rgba(238,242,223,0),rgba(238,242,223,0.9) 40%)",
         }}>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", pointerEvents: "auto" }}>
-            <button onClick={() => setUi((u) => ({ ...u, mode: "class" }))} style={{
+            <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots }))} style={{
               padding: "12px 22px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
               background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.25)",
-            }}>← เปลี่ยนอาชีพ</button>
-            <button onClick={() => G.startGame(ui.chosenClass || "warrior")} style={{
+            }}>← กลับ</button>
+            <button onClick={() => setUi((u) => ({ ...u, mode: "class" }))} style={{
               padding: "12px 42px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 15.5, fontWeight: 800, fontFamily: font, color: "#fff",
               background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
               boxShadow: "0 5px 16px rgba(90,160,106,0.5)",
             }}>
-              🌸 เริ่มผจญภัย! {ui.chosenClass && CLASSES[ui.chosenClass] ? `(${CLASSES[ui.chosenClass].emoji}${CLASSES[ui.chosenClass].name})` : ""}
+              เลือกอาชีพ →
             </button>
           </div>
         </div>
