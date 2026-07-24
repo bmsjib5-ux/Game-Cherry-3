@@ -9016,6 +9016,7 @@ export default function CherryAdventure() {
     G.addPetInstance = (spId, base) => {
       if ((G.petBox || []).length >= G.PETBOX_MAX) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.PETBOX_MAX} ช่อง) — ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
       const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, fresh: 1, iv: rollIv(spId) }, base || {}); // 🆕 ติดป้าย "ใหม่" จนกว่าจะเปิดดู
+      G.dexSeen = G.dexSeen || {}; G.dexSeen[spId] = 1; // 📖 สมุดภาพจารึกถาวร — ผสม/ขายภายหลังก็ไม่หาย
       G.petBox.push(inst);
       if (!G.pets[spId]) G.pets[spId] = { lv: inst.lv, exp: 0, stage: inst.stage }; // สายพันธุ์ปรากฏในระบบสกิล
       return inst;
@@ -10520,7 +10521,7 @@ export default function CherryAdventure() {
       sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
       ultRank: G.ultRank || 1, ultSkillSum: G.skillSum ? G.skillSum() : 0, skillMode: G.skillMode || "basic", sellPriority: G.sellPriority ? [...G.sellPriority] : SLOTS.slice(),
       statPts: G.player.statPts || 0, baseStats: { ...(G.baseStats || {}) },
-      col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
+      col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle,
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
@@ -12425,8 +12426,10 @@ export default function CherryAdventure() {
       toast(`⚡✨ ตื่นพลังครั้งที่ ${G.ngPlus}! ศัตรูโหดขึ้น ${Math.round((G.ngPlus) * 40)}% · รางวัลเพิ่ม ${Math.round(G.ngPlus * 50)}% (เก็บของ+สัตว์เลี้ยงไว้)`);
       setUi((u) => ({ ...u, ngPlus: G.ngPlus, mode: "explore", homeOpen: false }));
       char.position.set(0, 0, 0);
+      G.mode = "explore"; // ให้ saveGame ผ่านการ์ดโหมดแน่นอน
       syncPlayer();
       saveGame && saveGame();
+      if (G._cloudPush) G._cloudPush(true); // ☁️ ดันขึ้นคลาวด์ทันที ไม่รอ throttle — ปิดเกมปุ๊บก็ไม่หาย
     };
     const autoDecide = () => {
       const e = G.enemy;
@@ -12602,7 +12605,7 @@ export default function CherryAdventure() {
       G.achUnlocked = {};
       G.combo = 0;
       G.team = [];
-      G.petBox = []; G._petSeq = 1;
+      G.petBox = []; G._petSeq = 1; G.dexSeen = {};
       G.mountsOwned = {}; if (G.setMount) G.setMount(null, true);
       G.petSp = 0;
       G.petSkillLv = {};
@@ -12648,7 +12651,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -13455,6 +13458,8 @@ export default function CherryAdventure() {
       G.refreshShop(true);
       G.team = d.team || (d.buddy ? [d.buddy] : []);
       // 📦 pet box: โหลดตรง หรือ migrate เซฟเก่า (นับต่อชนิด) → รายตัว
+      G.dexSeen = d.dexSeen || {};
+      [Object.keys(d.col || {}), Object.keys(d.pets || {}), (Array.isArray(d.petBox) ? d.petBox.map((p) => p && p.sp) : [])].flat().forEach((k) => { if (k && SPECIES[k]) G.dexSeen[k] = 1; }); // 🔁 เติมทะเบียนจากเซฟเก่า
       G.petBox = Array.isArray(d.petBox) ? d.petBox.filter((p) => p && SPECIES[p.sp]) : null;
       G._petSeq = d.petSeq || 1;
       if (!G.petBox) {
@@ -19026,6 +19031,7 @@ export default function CherryAdventure() {
                 const cid = G.enemy.spId;
                 const isNew = !G.pets[cid];
                 G.col[cid] = (G.col[cid] || 0) + 1;
+                G.dexSeen = G.dexSeen || {}; G.dexSeen[cid] = 1; // 📖 จารึกสมุดภาพถาวร
                 const petInst = G.addPetInstance ? G.addPetInstance(cid, { lv: Math.max(1, Math.round(G.enemy.lv * 0.6)) }) : null;
                 if (G.sfx) G.sfx.catch();
                 questProgress("catch", 1); // 📜
@@ -22735,7 +22741,7 @@ export default function CherryAdventure() {
                 <div style={{ overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" }}>
                   {(() => {
                     const allIds = Object.keys(SPECIES);
-                    const caughtCount = allIds.filter((id) => ui.col[id]).length;
+                    const caughtCount = allIds.filter((id) => ui.col[id] || (ui.dexSeen && ui.dexSeen[id])).length;
                     return (
                       <>
                         <div style={{ fontSize: 11, fontWeight: 800, color: "#c09020", marginBottom: 6 }}>
@@ -22744,7 +22750,7 @@ export default function CherryAdventure() {
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                           {allIds.map((id) => {
                             const sp = SPECIES[id];
-                            const got = !!ui.col[id];
+                            const got = !!ui.col[id] || !!(ui.dexSeen && ui.dexSeen[id]);
                             const rr = petRarity(id);
                             return (
                               <div key={id} style={{
@@ -22760,7 +22766,7 @@ export default function CherryAdventure() {
                                   {got ? sp.name : "???"}
                                 </div>
                                 {got && <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name}</div>}
-                                {got && <div style={{ fontSize: 9, color: "#8a8a7a" }}>ธาตุ {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} · จับ {ui.col[id]}</div>}
+                                {got && <div style={{ fontSize: 9, color: "#8a8a7a" }}>ธาตุ {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} · จับ {ui.col[id] || 0}</div>}
                               </div>
                             );
                           })}
