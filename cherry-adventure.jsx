@@ -467,6 +467,11 @@ const PATH_ADV = {
     { id: "x_grd_2", cost: 10, name: "เกราะภูผา",      emoji: "⛰️", color: 0x8a6a3a, mult: 1.0, perLv: 0.22, buffDef: 18, heal: 0.15, regen: 3, cleanse: true, fx: "bash", desc: "เกราะหินโบราณ ป้องกัน +18 สะท้อนแรง + ล้างสถานะ + ฟื้นต่อเนื่อง" },
     { id: "x_grd_3", cost: 13, name: "หอกแผ่นดินไหว",  emoji: "🌍", color: 0xa08050, mult: 1.6, perLv: 0.34, hits: 2, stun: true, defDown: 8, slow: true, fx: "quake", desc: "แผ่นดินไหว ×2 ทุ่มล้ม ลดเกราะ + ลดความเร็วโจมตี" },
     { id: "x_grd_4", cost: 16, name: "พิพากษาปฐพี",    emoji: "🗿", color: 0x6a5a3a, mult: 1.5, perLv: 0.32, hits: 2, defDown: 10, slow: true, buffDef: 8, fx: "quake", desc: "โกเลมโบราณทุบสนาม ×2 (Taunt) ทำลายเกราะ + ช้าลง + เสริมเกราะ" } ] },
+  l_frost: { ult: { name: "ธารน้ำแข็งดำนิรันดร์", emoji: "🧊🌌", mul: 1.7, freeze: true, defDown: 15, slow: true, stun: true, buffTeam: true, desc: "Eternal Black Glacier — เปิดเหวน้ำแข็งดำ ทวนน้ำแข็งยักษ์ดิ่งจากฟ้า แช่แข็งทั้งสนาม ภูเขาน้ำแข็งดำผุด พายุเยือกแข็งโอบล้อม + พลังโวยด์ระเบิด" }, skills: [
+    { id: "x_frz_1", cost: 7,  name: "ทะลวงเยือกแข็ง",  emoji: "🧊", color: 0x66ccff, mult: 1.9, perLv: 0.4,  pierce: true, freeze: true, defDown: 5, fx: "pierce", desc: "Frozen Piercing — พุ่งทะลวงทิ้งรอยน้ำแข็ง ระเบิดเยือกแข็ง เจาะเกราะ + แช่แข็ง" },
+    { id: "x_frz_2", cost: 10, name: "วังวนน้ำแข็งดำ",   emoji: "🌀", color: 0x88eeff, mult: 0.8, perLv: 0.18, hits: 5, slow: true, freeze: true, fx: "quake", desc: "Frozen Spiral — หมุนทวนดูดศัตรูเข้ากลาง เศษน้ำแข็งโคจร ×5 ช้าลง + แช่แข็ง" },
+    { id: "x_frz_3", cost: 13, name: "มังกรน้ำแข็งโวยด์", emoji: "🐉", color: 0x5b4bff, mult: 2.6, perLv: 0.54, freeze: true, defDown: 8, fx: "bolt", desc: "Void Frost Throw — ขว้างทวนแปลงเป็นมังกรน้ำแข็งดำ ระเบิดเยือกแข็ง + ทำลายเกราะ" },
+    { id: "x_frz_4", cost: 16, name: "เหวนรกเยือกแข็ง",  emoji: "❄️", color: 0xeaf8ff, mult: 0.85, perLv: 0.18, hits: 6, freeze: true, stun: true, defDown: 6, fx: "quake", desc: "Frozen Abyss — ฝนทวนน้ำแข็งยักษ์ถล่มฟ้า ×6 คลื่นเยือกแข็ง สตัน + แช่แข็ง" } ] },
   k_kensei: { ult: { name: "หมื่นดาบไร้เงา", emoji: "⚔️🌌", mul: 1.7, defDown: 15, bleed: 5, buffTeam: true, desc: "หยุดเวลาในโดเมนดาบ — หมื่นดาบซากุระฟันพร้อมกัน ทะลุเกราะ+บล็อก คริ 100% + Sword Saint Realm (เร็ว/คริ/หลบให้ทีม)" }, skills: [
     { id: "x_ken_1", cost: 7,  name: "ดาบไร้กระบวนท่า", emoji: "⚔️", color: 0xcfe0ff, mult: 0.7, perLv: 0.16, hits: 5, pierce: true, buffSpd: true, bleed: 3, critBonus: 0.25, fx: "multi", desc: "ล่องหนฟันไร้รูปแบบ ×5 ทะลุหลบ เร่งสปีด +คริ + เลือดไหล" },
     { id: "x_ken_2", cost: 10, name: "จันทร์เสี้ยวคู่",  emoji: "🌙", color: 0xb0b8f0, mult: 1.2, perLv: 0.26, hits: 3, stun: true, defDown: 6, fx: "multi", desc: "คลื่นดาบจันทร์เสี้ยวไป-กลับ ×3 Knockback + ลดเกราะ" },
@@ -667,6 +672,10 @@ const CLASS_PATHS = {
       desc: "สายตั้งรับ — แข็งแกร่ง สะท้อนดาเมจ", perk: "สะท้อนดาเมจ 20%",
       mul: { atk: 1.05, def: 1.4, hp: 1.3, crit: 0 }, thorns: 0.2,
       skill: { id: "p_fortress", cost: 12, name: "ป้อมปราการ", emoji: "🛡️🌍", color: 0x8a6a3a, mult: 1.7, perLv: 0.34, buffDef: 8, stun: true, fx: "quake", desc: "ตั้งป้อม ป้องกัน+8 + สตัน 🌍" } },
+    { id: "l_frost", name: "อัศวินน้ำแข็งดำ", emoji: "🧊🔱", tint: 0x66ccff,
+      desc: "สายน้ำแข็งดำ+โวยด์ — แช่แข็งควบคุม เจาะทะลุ", perk: "โจมตีมีโอกาส 30% แช่แข็ง + ศัตรูช้าลง",
+      mul: { atk: 1.24, def: 1.05, hp: 1.05, crit: 6 }, freezeChance: 0.3, chillOnHit: true,
+      skill: { id: "p_frostpierce", cost: 13, name: "ทวนน้ำแข็งดำ", emoji: "🧊🔱", color: 0x66ccff, mult: 2.5, perLv: 0.52, pierce: true, freeze: true, slow: true, fx: "pierce", desc: "พุ่งแทงทวนน้ำแข็งดำ เจาะเกราะ + แช่แข็ง + ช้าลง 🧊" } },
   ],
   samurai: [
     { id: "k_kensei", name: "เคนเซย์", emoji: "⚔️🌸", tint: 0xbfd8f0,
@@ -745,6 +754,7 @@ const SKILL_ELEM = {
   s_double: null, s_poison: "earth", s_shadow: null, s_evade: "wind",
   l_thrust: null, l_sweep: "wind", l_quake: "earth", l_charge: null,
   k_slash: null, k_double: null, k_iai: "wind", k_moon: null,
+  p_frostpierce: "ice", x_frz_1: "ice", x_frz_2: "ice", x_frz_3: "ice", x_frz_4: "ice", // 🧊 อัศวินน้ำแข็งดำ
 };
 
 // ---------- ⛏️ Crafting materials (drop from monsters, used at the forge) ----------
@@ -17147,6 +17157,26 @@ export default function CherryAdventure() {
                   if (em.userData.body) em.userData._stagger = 0.6; // launched slightly upward
                   fxMsg += " 💻 ข้อมูลกระแทก!";
                 }
+                // 🧊 BLACK ICE SPEAR VFX — frost shockwave + ice-crystal burst + black smoke/mist + frozen enemy + camera shake
+                if (sk.id === "p_frostpierce" || (sk.id && sk.id.indexOf("x_frz") === 0)) {
+                  const iceBlue = 0x66ccff, cyan = 0x88eeff, frost = 0xeaf8ff, violet = 0x5b4bff, indigo = 0x1a237e, black = 0x141018;
+                  const big = sk.id === "x_frz_3" || sk.id === "x_frz_4"; // มังกร/เหวนรก อลังกว่า
+                  const EP = em.position;
+                  spawnSkillFx("ice", EP, iceBlue);                 // ❄️ ice shards stab up from the ground
+                  spawnSkillFx("quake", EP, cyan);                  // 🌀 frozen shockwave ring spreading outward
+                  if (big) spawnSkillFx("quake", EP, violet);       // extra void ring for the finishers
+                  G._camShake = Math.max(G._camShake || 0, big ? 0.55 : 0.38); // 📷 camera shake
+                  if (em.userData.body) em.userData._stagger = 0.5;
+                  burst(EP, frost, big ? 2.2 : 1.5);                // ✨ bright icy bloom flash
+                  const cols = [iceBlue, cyan, frost, violet, indigo, black];
+                  const n = big ? 16 : 11;
+                  for (let k = 0; k < n; k++) setTimeout(() => { if (G.mode === "battle") burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * (big ? 3 : 2), 0.2 + Math.random() * (big ? 2.6 : 1.9), EP.z + (Math.random() - 0.5) * (big ? 3 : 2)), cols[k % cols.length], 0.5 + Math.random() * 0.7); }, k * 22); // 🧊 ice crystals + black smoke + icy mist
+                  monGlow(em, iceBlue, 0.85);                        // 🥶 frozen-enemy tint
+                  setTimeout(() => { if (G.enemy) monGlow(em, 0x101820, 0.4); }, 420); // black-ice residue
+                  setTimeout(() => { if (G.enemy) monGlow(em, 0x000000, null); }, 1200);
+                  if (G.sfx && G.sfx.crit) G.sfx.crit();
+                  fxMsg += big ? " 🧊 มังกรน้ำแข็งดำระเบิด!" : " 🧊 ระเบิดน้ำแข็งดำ!";
+                }
                 if (sk.stun && Math.random() < 0.3 + rank * 0.05) { G.est.frozen = true; fxMsg += " มึนงง 💫"; }
                 if (sk.buffDef) { G.battleDef += sk.buffDef; fxMsg += ` ป้องกัน +${sk.buffDef} 🛡️`; }
                 if (sk.cleanse && G.pst) { G.pst.poison = 0; G.pst.stun = 0; fxMsg += " ล้างสถานะผิดปกติ ✨"; setUi((u) => ({ ...u, pPoison: 0, pStun: 0 })); } // ✨ นักบวช: ชำระ Debuff ผู้เล่น
@@ -17179,6 +17209,8 @@ export default function CherryAdventure() {
                 if (cls === "assassin") { dmg += roll(); fxMsg += " แทงสองมีด 🗡️🗡️"; }
                 if (cls === "samurai" && Math.random() < 0.35) { dmg += roll() * 0.8; fxMsg += " ฟันซ้ำ ⚔️⚔️"; } // double-cut chance
                 if (cls === "lancer") { A.pierce = true; dmg += 2; fxMsg += " เจาะเกราะ 🔱"; } // pierce + armor break
+                // 🧊 อัศวินน้ำแข็งดำ: โจมตีปกติมีโอกาสแช่แข็ง + ทำให้ศัตรูช้าลง
+                { const _P = curPath(); if (_P && _P.chillOnHit) { G.enemy.slowed = true; if (Math.random() < (_P.freezeChance || 0)) { G.est.frozen = true; fxMsg += " แช่แข็งดำ 🧊"; } else fxMsg += " เยือกแข็ง ❄️"; } }
               }
               // 🎯 critical
               const critBase = cls === "archer" ? 0.25 : cls === "assassin" ? 0.3 : cls === "samurai" ? 0.22 : 0.05;
