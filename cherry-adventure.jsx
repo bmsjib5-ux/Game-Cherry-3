@@ -851,6 +851,9 @@ const DIAMOND_SHOP = [
   { id: "dw_wlw", kind: "item", ref: "wlw", cat: "weapon", emoji: "🌙", name: "ดาบเทพจันทรา",   price: 90 },
   { id: "do_oD", kind: "item", ref: "oD", cat: "outfit", emoji: "🐉", name: "เกราะเกล็ดมังกร", price: 80 },
   { id: "do_oS", kind: "item", ref: "oS", cat: "outfit", emoji: "✨", name: "อาภรณ์ดวงดาว",    price: 80 },
+  { id: "mt_donkey",  kind: "mount", ref: "donkey",  cat: "mount", emoji: "🫏", name: "ลาน้อย (เร็ว +40%)",       price: 40 },
+  { id: "mt_ostrich", kind: "mount", ref: "ostrich", cat: "mount", emoji: "🪶", name: "นกกระจอกเทศ (เร็ว +60%)", price: 60 },
+  { id: "mt_shark",   kind: "mount", ref: "shark",   cat: "mount", emoji: "🦈", name: "ฉลามบก (เร็ว +80%)",      price: 90 },
 ];
 
 // ---------- 👘✨ OUTFIT SETS (ชุดคอสตูมเป็นเซ็ต) — themed look + set bonus + aura ----------
@@ -976,6 +979,12 @@ const GACHA_POOL = [
   { type: "gold", amount: 800,  name: "ทอง 800",  emoji: "💰", rarity: "common", weight: 15 },
   { type: "gold", amount: 300,  name: "ทอง 300",  emoji: "💰", rarity: "common", weight: 30 },
 ]; // total weight 100 → hero 2% · epic-skin 9% · rare(skin/pass/dia) 32% · gold 57%
+// 🐎 MOUNTS — สัตว์ขี่เพิ่มความเร็วเดินทาง (ซื้อด้วยเพชรที่ร้านเพชร)
+const MOUNTS = [
+  { id: "donkey",  name: "ลาน้อย",       emoji: "🫏", spd: 1.4, shape: "beast", color: 0x9a8878, desc: "ความเร็ว +40%" },
+  { id: "ostrich", name: "นกกระจอกเทศ",  emoji: "🪶", spd: 1.6, shape: "bird",  color: 0xd8b090, desc: "ความเร็ว +60%" },
+  { id: "shark",   name: "ฉลามบก",       emoji: "🦈", spd: 1.8, shape: "fish",  color: 0x7ab8e0, desc: "ความเร็ว +80%" },
+];
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 const rollRarity = (boss) => {
   const r = Math.random();
@@ -7361,6 +7370,24 @@ export default function CherryAdventure() {
       });
     };
     G.monGlow = monGlow;
+    // ✨ EVOLUTION VISUALS — ร่างเปลี่ยนตามเลเวล: 10 เขาทอง · 20 หางไฟ · 30 ปีกใหญ่ · 40 น้ำแข็งบนหลัง · 100 ออร่าทอง + ตัวใหญ่ขึ้นเรื่อยๆ
+    const applyEvoParts = (g, spId, lv) => {
+      if (!g || !lv || lv < 10) return g;
+      const body = (g.userData && g.userData.body) || g;
+      const headY = (g.userData && g.userData.headY) != null ? g.userData.headY : 0.4;
+      const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.6, roughness: 0.3, emissive: 0x8a6410, emissiveIntensity: 0.4 });
+      if (lv >= 10) for (const sx of [-0.12, 0.12]) { const horn = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.22, 8), gold); horn.position.set(sx, headY + 0.3, 0); horn.rotation.z = sx > 0 ? -0.3 : 0.3; body.add(horn); }
+      if (lv >= 20) {
+        const fl = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xff7020, emissive: 0xff4a10, emissiveIntensity: 0.9 })); fl.position.set(0, 0.15, -0.5); fl.rotation.x = -2.2; body.add(fl);
+        const fl2 = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.2, 8), new THREE.MeshStandardMaterial({ color: 0xffd24a, emissive: 0xffa020, emissiveIntensity: 1.0 })); fl2.position.set(0, 0.22, -0.52); fl2.rotation.x = -2.2; body.add(fl2);
+      }
+      if (lv >= 30) for (const sx of [-1, 1]) { const wing = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.62, 3), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.88, roughness: 0.4 })); wing.position.set(sx * 0.34, 0.36, -0.16); wing.rotation.z = sx > 0 ? -1.75 : 1.75; wing.scale.set(1, 1, 0.22); body.add(wing); }
+      if (lv >= 40) for (let k = 0; k < 3; k++) { const ice = new THREE.Mesh(new THREE.OctahedronGeometry(0.09 - k * 0.015, 0), new THREE.MeshStandardMaterial({ color: 0x9adcf5, transparent: true, opacity: 0.85, emissive: 0x6ac0f0, emissiveIntensity: 0.4, roughness: 0.2 })); ice.scale.y = 1.9; ice.position.set(0, 0.32 - k * 0.05, -0.25 - k * 0.12); body.add(ice); }
+      if (lv >= 100) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 10, 36), gold); ring.rotation.x = Math.PI / 2; ring.position.y = 0.06; g.add(ring); monGlow(g, 0xf5c542, 0.35); }
+      g.scale.multiplyScalar(1 + Math.min(0.45, lv * 0.0045)); // 📏 ตัวใหญ่ขึ้นตามเลเวล
+      return g;
+    };
+    G.applyEvoParts = applyEvoParts;
     const buildMonster = (spId, stage = 1) => {
       const sp = SPECIES[spId];
       const g = new THREE.Group();
@@ -8853,12 +8880,32 @@ export default function CherryAdventure() {
       const inst = iid != null ? (G.petAt ? G.petAt(iid) : null) : null;
       if (inst) {
         buddyMesh = buildMonster(inst.sp, inst.stage);
+        if (G.applyEvoParts) G.applyEvoParts(buddyMesh, inst.sp, inst.lv); // ✨ ร่างวิวัฒน์ตามเลเวล
         buddyMesh.scale.multiplyScalar(0.62);
         buddyMesh.position.set(char.position.x - 1, 0, char.position.z + 0.6);
         vivify(buddyMesh);
         scene.add(buddyMesh);
       } else G.buddy = null;
       setUi((u) => ({ ...u, buddy: G.buddy })); // 🖼️ เลือกบัดดี้แล้วหน้าจอไม่ปิด
+    };
+    // 🐎 MOUNT — สัตว์ขี่: โมเดลวิ่งใต้ตัวละคร + คูณความเร็วเดินทาง
+    G.setMount = (id, quiet) => {
+      if (id && !(G.mountsOwned || {})[id]) { toast("🔒 ยังไม่ได้ปลดล็อกสัตว์ขี่ตัวนี้ — ซื้อได้ที่ร้านเพชร 💎"); return; }
+      if (G._mountMesh) { char.remove(G._mountMesh); G._mountMesh = null; }
+      G.mountId = id || null;
+      const mdef = MOUNTS.find((m) => m.id === id);
+      if (mdef) {
+        const proxy = mdef.id === "donkey" ? "khiao" : mdef.id === "ostrich" ? "paksi" : "nam"; // ใช้โครงร่างเดิม + ย้อมสีเป็นสัตว์ขี่
+        const m = buildMonster(proxy, 1);
+        m.traverse((o) => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.setHex(mdef.color); } });
+        m.scale.setScalar(0.9);
+        m.position.set(0, 0.02, 0.12);
+        char.add(m);
+        G._mountMesh = m;
+        if (!quiet) toast(`🐎 ขี่ ${mdef.emoji} ${mdef.name} — ${mdef.desc}!`);
+      } else if (!quiet) toast("🚶 ลงจากสัตว์ขี่แล้ว");
+      setUi((u) => ({ ...u, mountId: G.mountId }));
+      if (!quiet && G.saveGame) G.saveGame();
     };
     // 🐾 add/remove a pet from the active team (max 3); slot 0 = walking buddy
     G.petSkillLv = G.petSkillLv || {};
@@ -10340,7 +10387,7 @@ export default function CherryAdventure() {
     const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100));
     const effMaxHp = () => Math.round(3 * (G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + ⚔️ mastery + 👘 set
-    const effSpd = () => 3.4 * (1 + equipBonus().spd / 100); // ⚡ shoes speed up walking
+    const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + equipBonus().spd / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit"); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set
@@ -10374,7 +10421,7 @@ export default function CherryAdventure() {
       sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
       ultRank: G.ultRank || 1, ultSkillSum: G.skillSum ? G.skillSum() : 0, sellPriority: G.sellPriority ? [...G.sellPriority] : SLOTS.slice(),
       statPts: G.player.statPts || 0, baseStats: { ...(G.baseStats || {}) },
-      col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })),
+      col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle,
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
@@ -11346,12 +11393,13 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // 💎 diamond shop
-    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false, inv: [...(G.inv || [])], diaSkins: { ...(G.diaSkins || {}) } }));
+    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false, inv: [...(G.inv || [])], diaSkins: { ...(G.diaSkins || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null }));
     G.buyDiamond = (id) => {
       const it = DIAMOND_SHOP.find((x) => x.id === id);
       if (!it) return;
       if (it.kind === "skin" && G.diaSkins && G.diaSkins[it.ref]) { toast("มีสกินนี้อยู่แล้ว ✨"); return; }
-      if (it.kind !== "skin" && G.inv && G.inv.includes(it.ref)) { toast("มีไอเทมนี้ในกระเป๋าแล้ว ✨"); return; } // 🔒 ซื้อไอเทมด้วยเพชรได้ครั้งเดียว
+      if (it.kind === "mount" && (G.mountsOwned || {})[it.ref]) { toast("มีสัตว์ขี่ตัวนี้แล้ว 🐎"); return; }
+      if (it.kind !== "skin" && it.kind !== "mount" && G.inv && G.inv.includes(it.ref)) { toast("มีไอเทมนี้ในกระเป๋าแล้ว ✨"); return; } // 🔒 ซื้อไอเทมด้วยเพชรได้ครั้งเดียว
       if ((G.diamonds || 0) < it.price) { toast(`💎 เพชรไม่พอ — ต้องมี ${it.price}`); return; }
       G.diamonds -= it.price;
       if (it.kind === "skin") {
@@ -11359,12 +11407,17 @@ export default function CherryAdventure() {
         G.diaSkins[it.ref] = 1;
         if (G.setWeaponSkin) G.setWeaponSkin(it.ref);
         toast(`💎✨ แลกสกิน ${it.emoji} ${it.name} แล้ว!`);
+      } else if (it.kind === "mount") {
+        G.mountsOwned = G.mountsOwned || {};
+        G.mountsOwned[it.ref] = 1;
+        if (G.setMount) G.setMount(it.ref);
+        toast(`💎🐎 ได้สัตว์ขี่ ${it.emoji} ${it.name} แล้ว!`);
       } else {
         gainItem(it.ref);
         toast(`💎 แลก ${it.emoji} ${it.name} เข้ากระเป๋าแล้ว!`);
       }
       if (G.sfx) G.sfx.coin();
-      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) }, inv: [...(G.inv || [])] }));
+      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) }, inv: [...(G.inv || [])], mountsOwned: { ...(G.mountsOwned || {}) } }));
       if (G.saveGame) G.saveGame();
     };
     // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
@@ -11502,6 +11555,12 @@ export default function CherryAdventure() {
           G.petSp = (G.petSp || 0) + 1; // 🎯 pet skill point on evolution
           if (G.buddy === iid) G.setBuddy(iid); // rebuild follower with new form
         }
+        if (p.lv === 10 || p.lv === 20 || p.lv === 30 || p.lv === 40 || p.lv === 100) {
+          const evoName = p.lv >= 100 ? "ออร่าทองเทพ" : p.lv >= 40 ? "เกล็ดน้ำแข็งบนหลัง" : p.lv >= 30 ? "ปีกใหญ่" : p.lv >= 20 ? "หางไฟ" : "เขาทอง";
+          toast(`✨🎉 ${SPECIES[p.sp].name} วิวัฒนาการรูปลักษณ์! Lv.${p.lv} — ได้${evoName} + ตัวใหญ่ขึ้น`);
+          burst(char.position, 0xffd76a, 1.6);
+          if (G.buddy === iid) G.setBuddy(iid); // ประกอบร่างใหม่พร้อมชิ้นส่วนวิวัฒน์
+        }
       }
       setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })) }));
       syncPlayer(); // pet buffs affect character stats
@@ -11573,6 +11632,7 @@ export default function CherryAdventure() {
       const sp = SPECIES[wild.userData.spId];
       const lv = wild.userData.lv || 1;
       const boss = !!wild.userData.boss;
+      if (G.applyEvoParts && !wild.userData._evo) { wild.userData._evo = true; G.applyEvoParts(wild, wild.userData.spId, lv); } // ✨ มอนเลเวลสูงมีร่างวิวัฒน์
       const scale = (1 + (lv - 1) * 0.9) * (boss ? 2.0 : 1.4); // ⚖️ เลือดมอนโตตามเลเวลชันขึ้น → ~3 เท่าเมื่อเลเวลสูง
       const lvDef = Math.min(0.1, (lv - 1) * 0.004); // 🛡️ ยิ่งเลเวลสูง ยิ่งตั้งรับเก่ง — ลดดาเมจบ่อยขึ้น
       const lvGap = Math.max(0, lv - (G.player ? G.player.level : 1)); // 📈 มอนสเตอร์เหนือกว่ากี่เลเวล
@@ -12433,6 +12493,7 @@ export default function CherryAdventure() {
       G.combo = 0;
       G.team = [];
       G.petBox = []; G._petSeq = 1;
+      G.mountsOwned = {}; if (G.setMount) G.setMount(null, true);
       G.petSp = 0;
       G.petSkillLv = {};
       G.ngPlus = 0;
@@ -12477,7 +12538,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1,
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null,
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -13294,6 +13355,8 @@ export default function CherryAdventure() {
       if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
+      G.mountsOwned = d.mountsOwned || {};
+      if (d.mountId && G.mountsOwned[d.mountId]) G.setMount(d.mountId, true); else if (G.setMount) G.setMount(null, true);
       { let bid = d.buddy;
         if (bid != null && !G.petBox.some((x) => x.i === bid)) { const fb = G.petBox.find((x) => x.sp === bid); bid = fb ? fb.i : (G.team[0] || null); } // เซฟเก่าเก็บเป็นชนิด → หา instance
         G.setBuddy(bid != null ? bid : null); }
@@ -20612,12 +20675,12 @@ export default function CherryAdventure() {
               <button onClick={() => setUi((u) => ({ ...u, diamondShopOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(255,255,255,0.12)", color: "#cfe0f0", fontWeight: 800 }}>✕</button>
             </div>
             <div style={{ fontSize: 11, color: "#8a9ac0", marginBottom: 12 }}>เพชรหาได้จาก เควส · ชนะ PvP · อันดับโลก 1-3 · ล็อกอินประจำวัน</div>
-            {[["skin", "🗡️ สกินอาวุธพิเศษ"], ["weapon", "⚔️ อาวุธพิเศษ"], ["outfit", "👗 ชุดพิเศษ"]].map((grp) => (
+            {[["skin", "🗡️ สกินอาวุธพิเศษ"], ["weapon", "⚔️ อาวุธพิเศษ"], ["outfit", "👗 ชุดพิเศษ"], ["mount", "🐎 สัตว์ขี่ (เพิ่มความเร็ว)"]].map((grp) => (
               <div key={grp[0]} style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#c0a060", margin: "2px 2px 8px" }}>{grp[1]}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
                   {DIAMOND_SHOP.filter((x) => x.cat === grp[0]).map((it) => {
-                    const owned = it.kind === "skin" ? (ui.diaSkins && ui.diaSkins[it.ref]) : (ui.inv && ui.inv.includes(it.ref));
+                    const owned = it.kind === "skin" ? (ui.diaSkins && ui.diaSkins[it.ref]) : it.kind === "mount" ? (ui.mountsOwned && ui.mountsOwned[it.ref]) : (ui.inv && ui.inv.includes(it.ref));
                     const afford = (ui.diamonds || 0) >= it.price;
                     return (
                       <div key={it.id} style={{ border: "1px solid #2a3a58", borderRadius: 14, padding: "10px 11px", background: "rgba(30,44,72,0.55)", display: "flex", flexDirection: "column", gap: 6 }}>
@@ -22553,6 +22616,15 @@ export default function CherryAdventure() {
                   👥 ทีม ({(ui.team || []).length}/3): {(ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม"}
                   <span style={{ float: "right", color: "#7a9a5a" }}>📦 {(ui.petBox || []).length}/30 ช่อง</span>
                   <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 }}>ทุกตัวในทีมช่วยบัฟ · ตัวแรกเดินตาม · แต่ละตัวมี "พรสวรรค์" ประจำตัวไม่ซ้ำกัน</div>
+                </div>
+              )}
+              {Object.keys(ui.mountsOwned || {}).length > 0 && (
+                <div style={{ background: "#e8f0f8", borderRadius: 10, padding: "6px 9px", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#4a6a9a" }}>🐎 สัตว์ขี่:</span>
+                  {MOUNTS.filter((m) => (ui.mountsOwned || {})[m.id]).map((m) => (
+                    <button key={m.id} onClick={() => G.setMount(ui.mountId === m.id ? null : m.id)} style={{ margin: "2px 3px", padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: ui.mountId === m.id ? "#fff" : "#4a6a9a", background: ui.mountId === m.id ? "linear-gradient(90deg,#5a8ad0,#7b6ad0)" : "#fff" }}>{m.emoji} {m.name} {ui.mountId === m.id ? "✓" : ""}</button>
+                  ))}
+                  {ui.mountId && <button onClick={() => G.setMount(null)} style={{ margin: "2px 3px", padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" }}>🚶 ลงจากหลัง</button>}
                 </div>
               )}
               {(ui.fuseA || ui.fuseB) && (
