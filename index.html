@@ -498,29 +498,29 @@ const PATH_ADV = {
             { id: "x_iai_3", cost: 13, name: "ดาบเทพลงทัณฑ์", emoji: "👹", color: 0xe0503a, mult: 2.2, perLv: 0.46, stun: true, defDown: 8, critBonus: 0.4, fx: "stab", desc: "เทพดาบสายฟ้าฟันจากฟ้า AoE ทุ่มลอย + ทำลายเกราะ" },
             { id: "x_iai_4", cost: 16, name: "อสนีบาตสุดท้าย", emoji: "🌩️", color: 0x9a6ad0, mult: 3.2, perLv: 0.66, stun: true, pierce: true, defDown: 10, fx: "bolt", desc: "ฟ้าผ่าหมื่นสายพร้อมกัน เจาะเกราะเวท สตัน + ทำลายเกราะ" }
         ] },
-    c_hacker: { ult: { name: "ล่มระบบทั้งจักรวาล", emoji: "🕶️🌐", mul: 1.45, desc: "แฮกโค้ดโลก ปิดระบบศัตรูถาวรแล้วลบทิ้ง" }, skills: [
-            { id: "x_hck_1", cost: 7, name: "สคริปต์มืด", emoji: "🕶️", color: 0x2ae84a, mult: 1.8, perLv: 0.38, defDown: 3, fx: "shot", desc: "ฝังสคริปต์เจาะระบบ ลดเกราะ" },
-            { id: "x_hck_2", cost: 10, name: "DDoS ถล่ม", emoji: "📡", color: 0x2ad0e8, mult: 1.1, perLv: 0.24, hits: 5, fx: "multi", desc: "ยิงแพ็กเก็ตรัว ×5" },
-            { id: "x_hck_3", cost: 13, name: "แรนซัมแวร์", emoji: "🔒", color: 0xe84a7a, mult: 2.2, perLv: 0.46, stun: true, poison: 3, fx: "bolt", desc: "ล็อกระบบเรียกค่าไถ่ + กัดกร่อน" },
-            { id: "x_hck_4", cost: 16, name: "Zero-Day สังหาร", emoji: "💀", color: 0x4a2a6a, mult: 3.0, perLv: 0.62, pierce: true, critBonus: 0.5, fx: "shot", desc: "ช่องโหว่ร้ายแรงสุด เจาะทุกเกราะ" }
+    c_hacker: { ult: { name: "ล่มระบบทั้งจักรวาล", emoji: "🕶️🌐", mul: 1.7, defDown: 15, stun: true, slow: true, buffTeam: true, desc: "SYSTEM OVERRIDE — พายุข้อมูลกลืนทั้งสนาม ดาเมจไซเบอร์มหาศาล สตันทั้งหมด ลดเกราะ/ความเร็ว + Cyber Overclock (เร่งร่ายสกิลทีม)" }, skills: [
+            { id: "x_hck_1", cost: 7, name: "สคริปต์มืด", emoji: "🕶️", color: 0x9a4ad0, mult: 1.6, perLv: 0.34, defDown: 6, stun: true, slow: true, fx: "shot", desc: "โซ่ข้อมูลพันธนาการ (Bind) ลดเกราะ + ลดพลัง/ความเร็ว" },
+            { id: "x_hck_2", cost: 10, name: "DDoS ถล่ม", emoji: "📡", color: 0x2ad0e8, mult: 0.9, perLv: 0.2, hits: 5, slow: true, confuse: 2, fx: "multi", desc: "Data Storm ×5 ขัดจังหวะร่าย (Interrupt) + ช้าลง" },
+            { id: "x_hck_3", cost: 13, name: "แรนซัมแวร์", emoji: "🔒", color: 0xe84a7a, mult: 2.0, perLv: 0.42, stun: true, defDown: 8, confuse: 2, fx: "bolt", desc: "เข้ารหัสข้อมูล (Silence) ลดเกราะ + ระเบิดดิจิทัล" },
+            { id: "x_hck_4", cost: 16, name: "Zero-Day สังหาร", emoji: "💀", color: 0x4a2a6a, mult: 3.0, perLv: 0.62, pierce: true, critBonus: 0.5, defDown: 10, fx: "shot", desc: "ช่องโหว่ Zero-Day หอกข้อมูลถล่ม AoE ทะลุทุกเกราะ" }
         ] },
-    c_ai: { ult: { name: "ซิงกูลาริตี้", emoji: "🤖🌌", mul: 1.4, desc: "ปลุก AI เหนือมนุษย์ คำนวณจุดจบของศัตรูล่วงหน้า" }, skills: [
-            { id: "x_ai_1", cost: 7, name: "โดรนจู่โจม", emoji: "🛸", color: 0x7fd0f5, mult: 1.4, perLv: 0.3, hits: 2, fx: "shot", desc: "โดรนคู่ยิงเลเซอร์ ×2" },
-            { id: "x_ai_2", cost: 10, name: "เกราะนาโน", emoji: "🤖", color: 0x8fe0b0, mult: 1.2, perLv: 0.26, buffDef: 7, regen: 3, fx: "bash", desc: "นาโนบอทซ่อมเกราะ +7 + ฟื้น" },
-            { id: "x_ai_3", cost: 13, name: "เลเซอร์วงโคจร", emoji: "🛰️", color: 0x59a0e8, mult: 2.4, perLv: 0.5, pierce: true, fx: "bolt", desc: "ดาวเทียมยิงเลเซอร์เจาะเกราะ" },
-            { id: "x_ai_4", cost: 16, name: "คำนวณจุดจบ", emoji: "🧠", color: 0xb07ae0, mult: 2.9, perLv: 0.6, guaranteedCrit: true, defDown: 4, fx: "bolt", desc: "AI ชี้จุดตาย คริการันตี + ลดเกราะ" }
+    c_ai: { ult: { name: "ซิงกูลาริตี้", emoji: "🤖🌌", mul: 1.7, defDown: 15, burn: 4, buffTeam: true, desc: "หลอมโดรน/ดาวเทียม/นาโนเป็นไททันควอนตัม — ลำแสงควอนตัมกวาดสนาม ลดเกราะ เผา + Singularity Mode (ATK/ความเร็ว/Skill Haste ทีม)" }, skills: [
+            { id: "x_ai_1", cost: 7, name: "โดรนจู่โจม", emoji: "🛸", color: 0x7fd0f5, mult: 0.9, perLv: 0.2, hits: 4, defDown: 5, fx: "multi", desc: "ฝูงโดรนล็อกเป้ายิงพลาสมา ×4 ลดเกราะ" },
+            { id: "x_ai_2", cost: 10, name: "เกราะนาโน", emoji: "🤖", color: 0x8fe0b0, mult: 1.0, perLv: 0.22, buffDef: 15, regen: 3, heal: 0.12, cleanse: true, fx: "bash", desc: "นาโนบอทสร้างเกราะ +15 สะท้อนแรง + ฟื้น + ล้างสถานะ" },
+            { id: "x_ai_3", cost: 13, name: "เลเซอร์วงโคจร", emoji: "🛰️", color: 0x59a0e8, mult: 2.2, perLv: 0.46, pierce: true, burn: 4, defDown: 8, fx: "bolt", desc: "ดาวเทียมยิงเลเซอร์จากอวกาศ AoE เผา + ทำลายเกราะ" },
+            { id: "x_ai_4", cost: 16, name: "คำนวณจุดจบ", emoji: "🧠", color: 0xb07ae0, mult: 2.6, perLv: 0.54, hits: 2, guaranteedCrit: true, pierce: true, defDown: 6, fx: "bolt", desc: "AI คำนวณจุดตาย ยิงทุกเป้า ×2 คริการันตี ทะลุหลบ" }
         ] },
-    o_ceo: { ult: { name: "เทคโอเวอร์จักรวาล", emoji: "👑🌐", mul: 1.4, desc: "ซื้อกิจการทั้งจักรวาล ศัตรูกลายเป็นลูกจ้างชั่วคราว" }, skills: [
-            { id: "x_ceo_1", cost: 7, name: "เซ็นคำสั่งฟ้าผ่า", emoji: "🖋️", color: 0xd8a840, mult: 1.8, perLv: 0.38, fx: "bolt", desc: "ลายเซ็นเปลี่ยนชะตา ดาเมจหนัก" },
-            { id: "x_ceo_2", cost: 10, name: "ประชุมด่วนนรก", emoji: "📊", color: 0xe0708a, mult: 1.2, perLv: 0.26, hits: 4, confuse: 2, fx: "multi", desc: "ประชุม 4 วาระรวด ศัตรูสับสน" },
-            { id: "x_ceo_3", cost: 13, name: "ปลดฟ้าผ่า", emoji: "📉", color: 0xc0202a, mult: 2.3, perLv: 0.48, defDown: 6, fx: "quake", desc: "ใบปลดกลางอากาศ ลดเกราะหนัก" },
-            { id: "x_ceo_4", cost: 16, name: "ควบรวมมหาอำนาจ", emoji: "👑", color: 0xf5c542, mult: 2.9, perLv: 0.6, stun: true, hits: 2, fx: "quake", desc: "เทคโอเวอร์สองชั้น ×2 + สตัน" }
+    o_ceo: { ult: { name: "เทคโอเวอร์จักรวาล", emoji: "👑🌐", mul: 1.6, defDown: 15, stun: true, slow: true, buffDef: 12, buffTeam: true, desc: "Universal Takeover — คลื่นเศรษฐกิจกวาดล้างทั้งสนาม สตัน ลดเกราะ/ความเร็วศัตรู โล่ให้ทีม + Corporate Dominion (ATK/DEF/Skill Haste ทีม)" }, skills: [
+            { id: "x_ceo_1", cost: 7, name: "เซ็นคำสั่งฟ้าผ่า", emoji: "🖋️", color: 0xd8a840, mult: 1.8, perLv: 0.38, defDown: 6, stun: true, buffCrit: 12, fx: "bolt", desc: "ตราประทับสายฟ้าทอง AoE สตัน ลดเกราะ + เพิ่มพลังโจมตีทีม" },
+            { id: "x_ceo_2", cost: 10, name: "ประชุมด่วนนรก", emoji: "📊", color: 0xe0708a, mult: 1.0, perLv: 0.22, hits: 4, confuse: 2, slow: true, fx: "multi", desc: "ประชุมบอร์ด (Taunt) 4 วาระรวด สะกด (Silence) + ช้าลง + ลดแม่นยำ" },
+            { id: "x_ceo_3", cost: 13, name: "ปลดฟ้าผ่า", emoji: "📉", color: 0xc0202a, mult: 2.2, perLv: 0.46, defDown: 10, stun: true, fx: "quake", desc: "ใบปลด TERMINATED สายฟ้าแดง ทำลายเกราะ + ขวัญเสีย (Fear)" },
+            { id: "x_ceo_4", cost: 16, name: "ควบรวมมหาอำนาจ", emoji: "👑", color: 0xf5c542, mult: 2.8, perLv: 0.58, stun: true, hits: 2, defDown: 8, buffDef: 8, fx: "quake", desc: "Corporate Titan ×2 ทุ่มล้ม ลดเกราะศัตรู + เสริมเกราะทีม" }
         ] },
-    o_work: { ult: { name: "โอทีข้ามมิติ", emoji: "🌙💼", mul: 1.35, desc: "ทำงานข้ามเวลา ศัตรูแก่ตายก่อนงานเสร็จ" }, skills: [
-            { id: "x_wrk_1", cost: 7, name: "กาแฟช็อตคู่", emoji: "☕", color: 0x8a5a3a, mult: 1.4, perLv: 0.3, buffSpd: true, heal: 0.15, fx: "heal", desc: "ดับเบิลเอสเปรสโซ ฟื้น + ไวขึ้น" },
-            { id: "x_wrk_2", cost: 10, name: "แฟ้มถล่มทับ", emoji: "🗂️", color: 0xc0a060, mult: 1.3, perLv: 0.28, hits: 3, fx: "multi", desc: "กองแฟ้มถล่ม ×3" },
-            { id: "x_wrk_3", cost: 13, name: "เดดไลน์ทมิฬ", emoji: "⏰", color: 0xe0503a, mult: 2.3, perLv: 0.48, stun: true, slow: true, fx: "quake", desc: "เวลาบีบคั้น สตัน + ช้า" },
-            { id: "x_wrk_4", cost: 16, name: "โอทีนรกแตก", emoji: "🔥", color: 0xff7020, mult: 2.8, perLv: 0.58, hits: 3, defDown: 3, fx: "multi", desc: "งานถล่มสามกะรวด ลดเกราะ" }
+    o_work: { ult: { name: "คืนนี้ไม่กลับบ้าน", emoji: "🌅💻", mul: 1.5, burn: 4, heal: 0.4, regen: 3, buffTeam: true, cleanse: true, desc: "All-Night Crunch — กด SEND ALL อีเมลพลังงานถล่มทั้งสนาม ดาเมจต่อเนื่อง ฟื้น HP/พลัง เร่งความเร็วทุกอย่าง + Infinite Productivity (รีเซ็ตคูลดาวน์)" }, skills: [
+            { id: "x_wrk_1", cost: 7, name: "กาแฟช็อตคู่", emoji: "☕", color: 0x8a5a3a, mult: 1.5, perLv: 0.32, buffSpd: true, buffEva: true, heal: 0.12, fx: "heal", desc: "ดับเบิลเอสเปรสโซพุ่งชน (Dash) เร่งความเร็วโจมตี+เคลื่อนที่ + ฟื้นพลัง" },
+            { id: "x_wrk_2", cost: 10, name: "แฟ้มถล่มทับ", emoji: "🗂️", color: 0xc0a060, mult: 0.9, perLv: 0.2, hits: 4, stun: true, slow: true, confuse: 2, fx: "multi", desc: "ภูเขาเอกสารถล่ม ×4 ทุ่มล้ม ช้าลง + ลดความแม่นยำ" },
+            { id: "x_wrk_3", cost: 13, name: "เดดไลน์ทมิฬ", emoji: "⏰", color: 0xe0503a, mult: 2.2, perLv: 0.46, stun: true, slow: true, defDown: 6, fx: "quake", desc: "นาฬิกานับถอยหลังระเบิดเวลา สตัน + ลดความเร็วศัตรู + ลดเกราะ" },
+            { id: "x_wrk_4", cost: 16, name: "โอทีนรกแตก", emoji: "🔥", color: 0xff7020, mult: 1.4, perLv: 0.3, hits: 3, burn: 4, mpHeal: 0.3, buffCrit: 12, fx: "multi", desc: "โอทีนรกแตก ×3 เผาไหม้ + เพิ่มพลังโจมตี + ฟื้นพลังงานต่อเนื่อง" }
         ] },
 };
 let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสลับสกิลพื้นฐาน/ขั้นสูง (singleton ต่อหน้าเกม)
