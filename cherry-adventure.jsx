@@ -419,16 +419,16 @@ const PATH_ADV = {
     { id: "x_pri_2", cost: 10, name: "พรฟื้นชีพ",      emoji: "💫", color: 0xfff2b0, mult: 0.5,  perLv: 0.1,  heal: 0.5, regen: 4, buffDef: 12, cleanse: true, fx: "heal", desc: "วงเวทฟื้นชีพ — ฟื้น HP หนัก ล้างสถานะผิดปกติ + เพิ่มเกราะ" },
     { id: "x_pri_3", cost: 13, name: "มนตร์สะกดวิญญาณ", emoji: "🕊️", color: 0xd8ecff, mult: 1.8,  perLv: 0.38, stun: true, confuse: 3, defDown: 5, fx: "heal", desc: "โซ่แสงพันธนาการ (Bind) + สะกด (Silence) + ลดพลังเวท" },
     { id: "x_pri_4", cost: 16, name: "นทีสวรรค์",      emoji: "🌊", color: 0x8fd0ff, mult: 1.6,  perLv: 0.34, hits: 2, heal: 0.25, regen: 3, buffDef: 10, cleanse: true, fx: "multi", desc: "นทีสวรรค์กวาดสนาม ×2 ฟื้นต่อเนื่อง + โล่แสง + ล้าง Debuff" } ] },
-  s_shade: { ult: { name: "ราตรีนิรันดร์", emoji: "🌑⚰️", mul: 1.45, desc: "กลืนสนามสู่ความมืด เงาสังหารนับพันพร้อมกัน" }, skills: [
-    { id: "x_shd_1", cost: 7,  name: "กรีดเงา",       emoji: "🌑", color: 0x9a4ad0, mult: 1.8, perLv: 0.38, critBonus: 0.25, fx: "stab", desc: "กรีดจากเงา คริง่าย" },
-    { id: "x_shd_2", cost: 10, name: "แฝดเงามรณะ",    emoji: "👥", color: 0x6a4a8a, mult: 1.2, perLv: 0.26, hits: 3, buffEva: true, fx: "stab", desc: "โคลนเงาฟัน ×3 + หลบเพิ่ม" },
-    { id: "x_shd_3", cost: 13, name: "หัตถ์ยมทูต",     emoji: "💀", color: 0x2a2a3a, mult: 2.5, perLv: 0.52, defDown: 6, fx: "pierce", desc: "มือเงาบีบวิญญาณ ลดเกราะหนัก" },
-    { id: "x_shd_4", cost: 16, name: "สุริยุปราคา",    emoji: "🌘", color: 0x4a2a6a, mult: 3.2, perLv: 0.64, hits: 2, guaranteedCrit: true, fx: "bolt", desc: "บดบังดวงตะวัน ฟันคริการันตี ×2" } ] },
-  s_venom: { ult: { name: "มหาสมุทรพิษกัดกร่อน", emoji: "☠️🌊", mul: 1.4, desc: "ท่วมสนามด้วยพิษราชันย์ กัดกร่อนทุกอย่างจนหมดสิ้น" }, skills: [
-    { id: "x_vnm_1", cost: 7,  name: "เข็มพิษราชินี",  emoji: "🕷️", color: 0x7ad04a, mult: 1.6, perLv: 0.32, poison: 4, fx: "shot", desc: "เข็มพิษเข้มข้น 4 เทิร์น" },
-    { id: "x_vnm_2", cost: 10, name: "หมอกพิษม่วง",    emoji: "🟣", color: 0x9a4ad0, mult: 1.4, perLv: 0.3, poison: 3, confuse: 2, fx: "poison", desc: "หมอกพิษ + สับสน" },
-    { id: "x_vnm_3", cost: 13, name: "กรงเล็บงูเห่า",   emoji: "🐍", color: 0x4aa04a, mult: 2.2, perLv: 0.46, hits: 2, poison: 3, fx: "stab", desc: "ตะปบคู่อาบพิษ ×2" },
-    { id: "x_vnm_4", cost: 16, name: "วาระสุดท้าย",    emoji: "⚗️", color: 0x2ad08a, mult: 2.8, perLv: 0.58, poison: 6, defDown: 5, fx: "poison", desc: "พิษบีบหัวใจ 6 เทิร์น + ละลายเกราะ" } ] },
+  s_shade: { ult: { name: "ราตรีนิรันดร์", emoji: "🌑⚰️", mul: 1.7, defDown: 15, bleed: 5, buffTeam: true, desc: "หยุดเวลาในคืนนิรันดร์ — ฟันนับพันพร้อมกัน ทะลุเกราะ+หลบ ติด Bleed/Curse + Shadow Dominion (เร็ว/คริ/หลบให้ทีม)" }, skills: [
+    { id: "x_shd_1", cost: 7,  name: "กรีดเงา",       emoji: "🌑", color: 0x9a4ad0, mult: 0.7, perLv: 0.16, hits: 4, critBonus: 0.3, bleed: 3, pierce: true, fx: "multi", desc: "หายตัวลอบกรีดหลัง ×4 ทะลุหลบ +คริ + เลือดไหล" },
+    { id: "x_shd_2", cost: 10, name: "แฝดเงามรณะ",    emoji: "👥", color: 0x6a4a8a, mult: 1.1, perLv: 0.24, hits: 3, confuse: 2, buffSpd: true, buffEva: true, fx: "multi", desc: "ร่างเงาสามทิศฟัน ×3 สับสน + เร่งสปีด + หลบเพิ่ม" },
+    { id: "x_shd_3", cost: 13, name: "หัตถ์ยมทูต",     emoji: "💀", color: 0x2a2a3a, mult: 2.2, perLv: 0.46, defDown: 8, stun: true, heal: 0.12, fx: "pierce", desc: "มือมัจจุราชจับบีบ (Bind) สตัน ลดเกราะ + ดูด HP" },
+    { id: "x_shd_4", cost: 16, name: "สุริยุปราคา",    emoji: "🌘", color: 0x4a2a6a, mult: 1.0, perLv: 0.22, hits: 4, guaranteedCrit: true, buffCritDmg: 50, buffEva: true, fx: "bolt", desc: "สุริยุปราคา ล่องหนพุ่งฟัน ×4 คริการันตี +ดาเมจคริ +หลบ" } ] },
+  s_venom: { ult: { name: "มหาสมุทรพิษกัดกร่อน", emoji: "☠️🌊", mul: 1.6, poison: 5, defDown: 15, slow: true, healCut: true, buffTeam: true, desc: "เรียกมหาสมุทรพิษ+ไฮดรา — พิษ/กรดมหาศาลทั้งสนาม สะสมพิษเต็ม ลดเกราะ/ความเร็ว กันฟื้น HP + Venom Overlord (พิษ/หลบให้ทีม)" }, skills: [
+    { id: "x_vnm_1", cost: 7,  name: "เข็มพิษราชินี",  emoji: "🕷️", color: 0x7ad04a, mult: 0.7, perLv: 0.16, hits: 4, poison: 4, slow: true, healCut: true, fx: "multi", desc: "สาดเข็มพิษ ×4 พิษสะสม ช้าลง + ลดการรักษา" },
+    { id: "x_vnm_2", cost: 10, name: "หมอกพิษม่วง",    emoji: "🟣", color: 0x9a4ad0, mult: 1.4, perLv: 0.3, poison: 4, confuse: 2, defDown: 5, healCut: true, fx: "poison", desc: "หมอกพิษม่วงกัดกร่อน (Silence) พิษ + ลดเกราะเวท + ลดฟื้นฟู" },
+    { id: "x_vnm_3", cost: 13, name: "กรงเล็บงูเห่า",   emoji: "🐍", color: 0x4aa04a, mult: 1.3, perLv: 0.28, hits: 2, poison: 4, bleed: 3, defDown: 5, fx: "stab", desc: "เงางูเห่าขย้ำ ×2 พิษ+เลือดไหล + ลดเกราะ" },
+    { id: "x_vnm_4", cost: 16, name: "วาระสุดท้าย",    emoji: "⚗️", color: 0x2ad08a, mult: 1.4, perLv: 0.3, poison: 6, defDown: 8, healCut: true, fx: "poison", desc: "ขวดพิษโบราณระเบิดลูกโซ่ พิษหนัก 6 เทิร์น ละลายเกราะ + กันฟื้น" } ] },
   l_dragoon: { ult: { name: "จ้าวเวหามังกรราช", emoji: "🐉🌩️", mul: 1.45, desc: "ควบมังกรราชทะยานฟ้า ดำดิ่งทะลวงพร้อมสายฟ้า" }, skills: [
     { id: "x_drg_1", cost: 7,  name: "ทะยานเสียดฟ้า",  emoji: "🐉", color: 0x4a9ae8, mult: 1.9, perLv: 0.4, pierce: true, fx: "pierce", desc: "พุ่งทะลวงเจาะเกราะ" },
     { id: "x_drg_2", cost: 10, name: "เพลิงมังกร",     emoji: "🔥", color: 0xe0503a, mult: 2.0, perLv: 0.42, burn: 3, fx: "bolt", desc: "ลมหายใจมังกรเผาไหม้" },
@@ -18920,6 +18920,9 @@ export default function CherryAdventure() {
                 if (AU.freeze && G.enemy && G.enemy.hp > 0) { G.est.frozen = true; note += " แช่แข็ง ❄️"; }
                 if (AU.burn && G.enemy && G.enemy.hp > 0) { G.est.burn = Math.max(G.est.burn || 0, AU.burn); note += " เผาไหม้ 🔥"; }
                 if (AU.poison && G.enemy && G.enemy.hp > 0) { const P = curPath(); const amp = (P && P.poisonAmp) || 1; G.est.poison = Math.min(5, (G.est.poison || 0) + AU.poison * amp); note += ` ติดพิษ ☠️ (${G.est.poison}/5)`; }
+                if (AU.bleed && G.enemy && G.enemy.hp > 0) { G.est.bleed = (G.est.bleed || 0) + AU.bleed; note += " เลือดไหล 🩸"; }
+                if (AU.slow && G.enemy && G.enemy.hp > 0) { G.enemy.slowed = true; note += " ช้าลง 🐌"; }
+                if (AU.healCut && G.enemy && G.enemy.hp > 0) { G.enemy.healCut = true; note += " กันฟื้น HP 💔"; }
                 if (AU.cleanse && G.pst) { G.pst.poison = 0; G.pst.stun = 0; note += " ล้าง Debuff ✨"; }
                 if (AU.heal) { const hh = Math.round(effMaxHp() * AU.heal); G.player.hp = Math.min(effMaxHp(), G.player.hp + hh); note += ` ฟื้น +${hh} HP ✨`; }
                 if (AU.regen) { G.regen = (G.regen || 0) + AU.regen; note += ` ฟื้นต่อเนื่อง ${AU.regen} เทิร์น 💚`; }
