@@ -17203,6 +17203,27 @@ export default function CherryAdventure() {
                   if (G.sfx && G.sfx.crit) G.sfx.crit();
                   fxMsg += K.note;
                 }
+                // 🌑 SHADOW ASSASSIN VFX — void-purple slashes, shadow shockwave, black feathers/smoke, crimson bleed, camera shake
+                if (sk.id && sk.id.indexOf("x_shd") === 0) {
+                  const black = 0x0a0a12, voidP = 0x4a1a6a, violet = 0x9a4ad0, neon = 0xc060ff, blood = 0xc0203a, white = 0xe0c0ff;
+                  const EP = em.position;
+                  const big = sk.id === "x_shd_3" || sk.id === "x_shd_4"; // หัตถ์ยมทูต / สุริยุปราคา อลังกว่า
+                  spawnSkillFx(sk.id === "x_shd_4" ? "bolt" : "quake", EP, violet); // สุริยุปราคา = สายฟ้าม่วง · อื่น = ช็อกเวฟเงา
+                  spawnSkillFx("quake", EP, voidP);
+                  G._camShake = Math.max(G._camShake || 0, big ? 0.55 : 0.42);
+                  if (em.userData.body) em.userData._stagger = 0.5;
+                  burst(EP, neon, big ? 2.2 : 1.6); // ✨ neon-violet flash
+                  const cols = [voidP, violet, neon, black, blood, white];
+                  const n = big ? 18 : 13;
+                  for (let k = 0; k < n; k++) setTimeout(() => { if (G.mode === "battle") burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * (big ? 3 : 2.2), 0.2 + Math.random() * (big ? 2.8 : 2), EP.z + (Math.random() - 0.5) * (big ? 3 : 2.2)), cols[k % cols.length], 0.5 + Math.random() * 0.8); }, k * 20); // shadow particles + black feathers + crimson bleed sparks
+                  // ✖️ giant X-shaped void slash for กรีดเงา (Shadow Slash)
+                  if (sk.id === "x_shd_1") { spawnSkillFx("swordbeam", EP, violet); setTimeout(() => { if (G.enemy) spawnSkillFx("swordbeam", EP, neon); }, 120); }
+                  monGlow(em, voidP, 0.9); // shadow-cursed enemy tint
+                  setTimeout(() => { if (G.enemy) monGlow(em, 0x1a0a24, 0.4); }, 500);
+                  setTimeout(() => { if (G.enemy) monGlow(em, 0x000000, null); }, 1200);
+                  if (G.sfx && G.sfx.crit) G.sfx.crit();
+                  fxMsg += big ? " 🌑 เงามัจจุราชถล่ม!" : " 🌑 กรีดเงาระเบิด!";
+                }
                 if (sk.stun && Math.random() < 0.3 + rank * 0.05) { G.est.frozen = true; fxMsg += " มึนงง 💫"; }
                 if (sk.buffDef) { G.battleDef += sk.buffDef; fxMsg += ` ป้องกัน +${sk.buffDef} 🛡️`; }
                 if (sk.cleanse && G.pst) { G.pst.poison = 0; G.pst.stun = 0; fxMsg += " ล้างสถานะผิดปกติ ✨"; setUi((u) => ({ ...u, pPoison: 0, pStun: 0 })); } // ✨ นักบวช: ชำระ Debuff ผู้เล่น
