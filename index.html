@@ -789,12 +789,8 @@ const SKILL_GATE = [
 ];
 const STAT_LABEL = { atk: "พลังโจมตี ⚔️", hp: "พลังชีวิต ❤️", def: "ป้องกัน 🛡️", crit: "คริติคอล 🎯", luck: "โชค 🍀", mp: "มานา 🔮" };
 // returns { open, reasons[] } for a skill slot of a class
-const ADV_UNLOCK_LV = 60; // 🌟 ถึงเลเวล 60 ปลดล็อกสกิลขั้นสูงที่เหลือของสายอาชีพทั้งหมด
+const PATH_SWITCH_LV = 60; // 🔀 ถึงเลเวล 60 สลับ/เปลี่ยนสายอาชีพขั้นสูงได้
 const skillGate = (cls, slot, level, ranks, stats, pathId) => {
-    // 🌟 ชุดสกิลขั้นสูง: พอถึง Lv.60 ปลดล็อกครบทุกสกิลของสายทันที (ไม่ต้องไล่เงื่อนไขทีละสกิล)
-    if (SKILL_MODE_ADV && pathId && PATH_ADV[pathId] && (level || 1) >= ADV_UNLOCK_LV) {
-        return { open: true, reasons: [{ ok: true, text: `🌟 Lv.${ADV_UNLOCK_LV} ปลดล็อกสกิลขั้นสูงครบสาย` }] };
-    }
     const g = SKILL_GATE[slot];
     if (!g)
         return { open: true, reasons: [] };
@@ -15062,8 +15058,13 @@ function CherryAdventure() {
                 G.saveGame();
         };
         G.pickPath = (pathId) => {
-            if (G.pathId) {
-                toast("🌟 เลือกสายอาชีพไปแล้ว!");
+            const switching = !!G.pathId; // 🔀 มีสายอยู่แล้ว = กำลังเปลี่ยนสาย (ต้อง Lv.60)
+            if (switching && G.pathId === pathId) {
+                toast("🌟 ใช้สายอาชีพนี้อยู่แล้ว");
+                return;
+            }
+            if (switching && G.player.level < PATH_SWITCH_LV) {
+                toast(`🔒 เปลี่ยนสายอาชีพขั้นสูงได้เมื่อถึง Lv.${PATH_SWITCH_LV} (ตอนนี้ Lv.${G.player.level})`);
                 return;
             }
             if (G.player.level < PATH_LV) {
@@ -15111,7 +15112,7 @@ function CherryAdventure() {
                 setTimeout(() => burst(char.position, k % 2 ? p.tint : 0xffffff, 0.6 + Math.random() * 2.2), k * 26);
             if (G.applyPathLook)
                 G.applyPathLook(); // ✨ the evolution aura ignites and stays
-            toast(`🌟 ตื่นสายอาชีพ! ${p.emoji} ${p.name} — พลังใหม่ตื่นขึ้น!`);
+            toast(switching ? `🔀 เปลี่ยนสายอาชีพเป็น ${p.emoji} ${p.name}!` : `🌟 ตื่นสายอาชีพ! ${p.emoji} ${p.name} — พลังใหม่ตื่นขึ้น!`);
             syncPlayer();
             setUi((u) => ({ ...u, pathId: G.pathId, pathOpen: false }));
         };
@@ -28431,8 +28432,28 @@ function CherryAdventure() {
                                     "%")),
                             React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#5a7a4a", background: "#fff", borderRadius: 8, padding: "4px 7px" } },
                                 "\u2728 ",
-                                chosen.perk))) : (React.createElement(React.Fragment, null,
-                            React.createElement("div", { style: { fontSize: 10, color: "#9a8a7a", marginBottom: 6 } }, canPick ? "เลือกได้ครั้งเดียว เลือกแล้วเปลี่ยนไม่ได้!" : `ถึง Lv.${PATH_LV} แล้วเลือกได้ (ตอนนี้ Lv.${ui.level || 1})`),
+                                chosen.perk),
+                            (ui.level || 1) >= PATH_SWITCH_LV ? (React.createElement("div", { style: { marginTop: 8, borderTop: "1px dashed #e0c090", paddingTop: 7 } },
+                                React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#8a5ad0", marginBottom: 5 } },
+                                    "\uD83D\uDD00 \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E2A\u0E32\u0E22\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E44\u0E14\u0E49\u0E41\u0E25\u0E49\u0E27 (Lv.",
+                                    PATH_SWITCH_LV,
+                                    "+)"),
+                                CLASS_PATHS[ui.cls].filter((p) => p.id !== ui.pathId).map((p) => (React.createElement("div", { key: p.id, style: { background: "#fff", borderRadius: 10, padding: "6px 9px", marginBottom: 5, border: "1px solid #e8e0d0" } },
+                                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#7a5a2a" } },
+                                        p.emoji,
+                                        " ",
+                                        p.name),
+                                    React.createElement("div", { style: { fontSize: 9, color: "#8a8a7a", margin: "1px 0 3px" } },
+                                        p.desc,
+                                        " \u00B7 \u2728 ",
+                                        p.perk),
+                                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, pathConfirm: p.id })), style: { width: "100%", padding: "5px 0", borderRadius: 8, border: "none", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", cursor: "pointer", background: "linear-gradient(90deg,#9a6ad0,#d07ae0)" } }, "\uD83D\uDD00 \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E40\u0E1B\u0E47\u0E19\u0E2A\u0E32\u0E22\u0E19\u0E35\u0E49")))))) : (React.createElement("div", { style: { fontSize: 9.5, color: "#a08a6a", marginTop: 6, fontWeight: 700 } },
+                                "\uD83D\uDD00 \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E2A\u0E32\u0E22\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E44\u0E14\u0E49\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E16\u0E36\u0E07 Lv.",
+                                PATH_SWITCH_LV,
+                                " (\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 Lv.",
+                                ui.level || 1,
+                                ")")))) : (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { fontSize: 10, color: "#9a8a7a", marginBottom: 6 } }, canPick ? `เลือก 1 สายก่อน · เปลี่ยนสายได้เมื่อถึง Lv.${PATH_SWITCH_LV}` : `ถึง Lv.${PATH_LV} แล้วเลือกได้ (ตอนนี้ Lv.${ui.level || 1})`),
                             CLASS_PATHS[ui.cls].map((p) => (React.createElement("div", { key: p.id, style: { background: "#fff", borderRadius: 10, padding: "7px 9px", marginBottom: 5, border: "1px solid #e8e0d0", opacity: canPick ? 1 : 0.55 } },
                                 React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#7a5a2a" } },
                                     p.emoji,
@@ -28459,12 +28480,9 @@ function CherryAdventure() {
                             if (!p)
                                 return null;
                             return (React.createElement("div", { style: { background: "#fff8e4", border: "2px solid #e0a020", borderRadius: 10, padding: "8px 9px", marginTop: 5 } },
-                                React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#c04a4a", marginBottom: 4 } },
-                                    "\u26A0\uFE0F \u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E40\u0E25\u0E37\u0E2D\u0E01 ",
-                                    p.emoji,
-                                    " ",
-                                    p.name,
-                                    "? \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E2D\u0E35\u0E01!"),
+                                React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#c04a4a", marginBottom: 4 } }, ui.pathId && ui.pathId !== ui.pathConfirm
+                                    ? `🔀 เปลี่ยนเป็น ${p.emoji} ${p.name}? สกิลชุดใหม่จะมาแทนสายเดิม`
+                                    : `⚠️ ยืนยันเลือก ${p.emoji} ${p.name}?`),
                                 React.createElement("div", { style: { display: "flex", gap: 5 } },
                                     React.createElement("button", { onClick: () => { G.pickPath(ui.pathConfirm); setUi((u) => ({ ...u, pathConfirm: null })); }, style: {
                                             flex: 1, padding: "7px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,

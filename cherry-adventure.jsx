@@ -730,12 +730,8 @@ const SKILL_GATE = [
 ];
 const STAT_LABEL = { atk: "พลังโจมตี ⚔️", hp: "พลังชีวิต ❤️", def: "ป้องกัน 🛡️", crit: "คริติคอล 🎯", luck: "โชค 🍀", mp: "มานา 🔮" };
 // returns { open, reasons[] } for a skill slot of a class
-const ADV_UNLOCK_LV = 60; // 🌟 ถึงเลเวล 60 ปลดล็อกสกิลขั้นสูงที่เหลือของสายอาชีพทั้งหมด
+const PATH_SWITCH_LV = 60; // 🔀 ถึงเลเวล 60 สลับ/เปลี่ยนสายอาชีพขั้นสูงได้
 const skillGate = (cls, slot, level, ranks, stats, pathId) => {
-  // 🌟 ชุดสกิลขั้นสูง: พอถึง Lv.60 ปลดล็อกครบทุกสกิลของสายทันที (ไม่ต้องไล่เงื่อนไขทีละสกิล)
-  if (SKILL_MODE_ADV && pathId && PATH_ADV[pathId] && (level || 1) >= ADV_UNLOCK_LV) {
-    return { open: true, reasons: [{ ok: true, text: `🌟 Lv.${ADV_UNLOCK_LV} ปลดล็อกสกิลขั้นสูงครบสาย` }] };
-  }
   const g = SKILL_GATE[slot];
   if (!g) return { open: true, reasons: [] };
   const list = skillsOf(cls, pathId);
@@ -11413,7 +11409,9 @@ export default function CherryAdventure() {
       syncPlayer(); if (G.saveGame) G.saveGame();
     };
     G.pickPath = (pathId) => {
-      if (G.pathId) { toast("🌟 เลือกสายอาชีพไปแล้ว!"); return; }
+      const switching = !!G.pathId; // 🔀 มีสายอยู่แล้ว = กำลังเปลี่ยนสาย (ต้อง Lv.60)
+      if (switching && G.pathId === pathId) { toast("🌟 ใช้สายอาชีพนี้อยู่แล้ว"); return; }
+      if (switching && G.player.level < PATH_SWITCH_LV) { toast(`🔒 เปลี่ยนสายอาชีพขั้นสูงได้เมื่อถึง Lv.${PATH_SWITCH_LV} (ตอนนี้ Lv.${G.player.level})`); return; }
       if (G.player.level < PATH_LV) { toast(`🔒 ต้องถึงเลเวล ${PATH_LV} ก่อน (ตอนนี้ Lv.${G.player.level})`); return; }
       const p = pathOf(G.cls, pathId);
       if (!p) return;
@@ -11436,7 +11434,7 @@ export default function CherryAdventure() {
       }, 30);
       for (let k = 0; k < 26; k++) setTimeout(() => burst(char.position, k % 2 ? p.tint : 0xffffff, 0.6 + Math.random() * 2.2), k * 26);
       if (G.applyPathLook) G.applyPathLook(); // ✨ the evolution aura ignites and stays
-      toast(`🌟 ตื่นสายอาชีพ! ${p.emoji} ${p.name} — พลังใหม่ตื่นขึ้น!`);
+      toast(switching ? `🔀 เปลี่ยนสายอาชีพเป็น ${p.emoji} ${p.name}!` : `🌟 ตื่นสายอาชีพ! ${p.emoji} ${p.name} — พลังใหม่ตื่นขึ้น!`);
       syncPlayer();
       setUi((u) => ({ ...u, pathId: G.pathId, pathOpen: false }));
     };
@@ -21672,11 +21670,26 @@ export default function CherryAdventure() {
                         <div style={{ fontSize: 10, fontWeight: 700, color: "#5a7a4a", background: "#fff", borderRadius: 8, padding: "4px 7px" }}>
                           ✨ {chosen.perk}
                         </div>
+                        {/* 🔀 เปลี่ยนสายอาชีพขั้นสูงได้เมื่อถึง Lv.60 */}
+                        {(ui.level || 1) >= PATH_SWITCH_LV ? (
+                          <div style={{ marginTop: 8, borderTop: "1px dashed #e0c090", paddingTop: 7 }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8a5ad0", marginBottom: 5 }}>🔀 เปลี่ยนสายอาชีพขั้นสูงได้แล้ว (Lv.{PATH_SWITCH_LV}+)</div>
+                            {CLASS_PATHS[ui.cls].filter((p) => p.id !== ui.pathId).map((p) => (
+                              <div key={p.id} style={{ background: "#fff", borderRadius: 10, padding: "6px 9px", marginBottom: 5, border: "1px solid #e8e0d0" }}>
+                                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#7a5a2a" }}>{p.emoji} {p.name}</div>
+                                <div style={{ fontSize: 9, color: "#8a8a7a", margin: "1px 0 3px" }}>{p.desc} · ✨ {p.perk}</div>
+                                <button onClick={() => setUi((u) => ({ ...u, pathConfirm: p.id }))} style={{ width: "100%", padding: "5px 0", borderRadius: 8, border: "none", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", cursor: "pointer", background: "linear-gradient(90deg,#9a6ad0,#d07ae0)" }}>🔀 เปลี่ยนเป็นสายนี้</button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 9.5, color: "#a08a6a", marginTop: 6, fontWeight: 700 }}>🔀 เปลี่ยนสายอาชีพได้เมื่อถึง Lv.{PATH_SWITCH_LV} (ตอนนี้ Lv.{ui.level || 1})</div>
+                        )}
                       </>
                     ) : (
                       <>
                         <div style={{ fontSize: 10, color: "#9a8a7a", marginBottom: 6 }}>
-                          {canPick ? "เลือกได้ครั้งเดียว เลือกแล้วเปลี่ยนไม่ได้!" : `ถึง Lv.${PATH_LV} แล้วเลือกได้ (ตอนนี้ Lv.${ui.level || 1})`}
+                          {canPick ? `เลือก 1 สายก่อน · เปลี่ยนสายได้เมื่อถึง Lv.${PATH_SWITCH_LV}` : `ถึง Lv.${PATH_LV} แล้วเลือกได้ (ตอนนี้ Lv.${ui.level || 1})`}
                         </div>
                         {CLASS_PATHS[ui.cls].map((p) => (
                           <div key={p.id} style={{ background: "#fff", borderRadius: 10, padding: "7px 9px", marginBottom: 5, border: "1px solid #e8e0d0", opacity: canPick ? 1 : 0.55 }}>
@@ -21699,7 +21712,9 @@ export default function CherryAdventure() {
                       return (
                         <div style={{ background: "#fff8e4", border: "2px solid #e0a020", borderRadius: 10, padding: "8px 9px", marginTop: 5 }}>
                           <div style={{ fontSize: 11.5, fontWeight: 800, color: "#c04a4a", marginBottom: 4 }}>
-                            ⚠️ ยืนยันเลือก {p.emoji} {p.name}? เปลี่ยนไม่ได้อีก!
+                            {ui.pathId && ui.pathId !== ui.pathConfirm
+                              ? `🔀 เปลี่ยนเป็น ${p.emoji} ${p.name}? สกิลชุดใหม่จะมาแทนสายเดิม`
+                              : `⚠️ ยืนยันเลือก ${p.emoji} ${p.name}?`}
                           </div>
                           <div style={{ display: "flex", gap: 5 }}>
                             <button onClick={() => { G.pickPath(ui.pathConfirm); setUi((u) => ({ ...u, pathConfirm: null })); }} style={{
