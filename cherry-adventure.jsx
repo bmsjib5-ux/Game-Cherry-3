@@ -8916,7 +8916,7 @@ export default function CherryAdventure() {
     const rollIv = (spId) => { const t = (SPECIES[spId] && SPECIES[spId].tier) || 1; return { a: Math.floor(Math.random() * (3 + t * 2)), h: Math.floor(Math.random() * (5 + t * 3)), d: Math.floor(Math.random() * (2 + t)) }; };
     G.addPetInstance = (spId, base) => {
       if ((G.petBox || []).length >= G.PETBOX_MAX) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.PETBOX_MAX} ช่อง) — ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
-      const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, iv: rollIv(spId) }, base || {});
+      const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, fresh: 1, iv: rollIv(spId) }, base || {}); // 🆕 ติดป้าย "ใหม่" จนกว่าจะเปิดดู
       G.petBox.push(inst);
       if (!G.pets[spId]) G.pets[spId] = { lv: inst.lv, exp: 0, stage: inst.stage }; // สายพันธุ์ปรากฏในระบบสกิล
       return inst;
@@ -19272,7 +19272,11 @@ export default function CherryAdventure() {
     const willOpen = !u[name];
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
-    const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId, diamonds: G.diamonds, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) } } : {};
+    const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId, diamonds: G.diamonds, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) } } : (name === "panelOpen" && willOpen) ? (() => {
+      const snap = { petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null };
+      setTimeout(() => { let ch = false; (G.petBox || []).forEach((p) => { if (p.fresh) { delete p.fresh; ch = true; } }); if (ch && G.saveGame) G.saveGame(); }, 1200); // 🆕 เห็นป้ายรอบนี้ รอบหน้าถือว่าดูแล้ว
+      return snap;
+    })() : {};
     return { ...u, ...cleared, [name]: willOpen, ...extra };
   });
   // ✕ close button shown in the corner of every menu panel
@@ -20395,7 +20399,7 @@ export default function CherryAdventure() {
         <button onClick={() => toggleMenu("questOpen")} title="เควส & ภารกิจ" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 208, width: 44, height: 44 } : { bottom: 216, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null; })()}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 160, width: 44, height: 44 } : { bottom: 282, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
+        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 160, width: 44, height: 44 } : { bottom: 282, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 176, width: 42, height: 42 } : { bottom: 348, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
@@ -22655,7 +22659,7 @@ export default function CherryAdventure() {
                 </div>
               ); })()}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              {(ui.petBox || []).slice().sort((a, b) => (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
+              {(ui.petBox || []).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
                 const sp = SPECIES[p.sp];
                 const rr = petRarity(p.sp);
                 const isBuddy = ui.buddy === p.i;
@@ -22667,7 +22671,8 @@ export default function CherryAdventure() {
                 const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
                 const selFuse = ui.fuseA === p.i || ui.fuseB === p.i;
                 return (
-                  <div key={p.i} style={{ padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font }}>
+                  <div key={p.i} style={{ position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font }}>
+                    {p.fresh && <span style={{ position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 }}>ใหม่ ✨</span>}
                     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                       <span style={{ fontSize: 19 }}>{sp.emoji}</span>
                       <div style={{ minWidth: 0, flex: 1 }}>

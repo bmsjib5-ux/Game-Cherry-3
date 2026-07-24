@@ -11929,7 +11929,7 @@ function CherryAdventure() {
                 toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.PETBOX_MAX} ช่อง) — ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`);
                 return null;
             }
-            const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, iv: rollIv(spId) }, base || {});
+            const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, fresh: 1, iv: rollIv(spId) }, base || {}); // 🆕 ติดป้าย "ใหม่" จนกว่าจะเปิดดู
             G.petBox.push(inst);
             if (!G.pets[spId])
                 G.pets[spId] = { lv: inst.lv, exp: 0, stage: inst.stage }; // สายพันธุ์ปรากฏในระบบสกิล
@@ -26186,7 +26186,15 @@ function CherryAdventure() {
         const willOpen = !u[name];
         const cleared = {};
         MENU_FLAGS.forEach((f) => (cleared[f] = false));
-        const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId, diamonds: G.diamonds, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) } } : {};
+        const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId, diamonds: G.diamonds, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) } } : (name === "panelOpen" && willOpen) ? (() => {
+            const snap = { petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null };
+            setTimeout(() => { let ch = false; (G.petBox || []).forEach((p) => { if (p.fresh) {
+                delete p.fresh;
+                ch = true;
+            } }); if (ch && G.saveGame)
+                G.saveGame(); }, 1200); // 🆕 เห็นป้ายรอบนี้ รอบหน้าถือว่าดูแล้ว
+            return snap;
+        })() : {};
         return { ...u, ...cleared, [name]: willOpen, ...extra };
     });
     // ✕ close button shown in the corner of every menu panel
@@ -27040,7 +27048,7 @@ function CherryAdventure() {
             (() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, active) : null; })())),
         ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => toggleMenu("panelOpen"), title: "\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07", style: { position: "absolute", right: 12, ...(_shortHud ? { top: 160, width: 44, height: 44 } : { bottom: 282, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 } },
             "\uD83D\uDC3E",
-            (ui.petBox || []).length > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, (ui.petBox || []).length))),
+            (ui.petBox || []).length > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, (ui.petBox || []).length))),
         ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.openEquip(), title: "\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 & \u0E41\u0E15\u0E48\u0E07\u0E15\u0E31\u0E27", style: { position: "absolute", left: 12, ...(_shortHud ? { top: 176, width: 42, height: 42 } : { bottom: 348, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 } },
             "\uD83C\uDF92",
             ui.inv && ui.inv.length > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, ui.inv.length))),
@@ -29035,7 +29043,7 @@ function CherryAdventure() {
                                 React.createElement("button", { onClick: () => G.sellPet(ui.sellPetAsk), style: { flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "#d9536b" } }, "\u2705 \u0E02\u0E32\u0E22\u0E40\u0E25\u0E22"),
                                 React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellPetAsk: null })), style: { flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#6a5a7a", background: "#eee" } }, "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01"))));
                     })(),
-                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 } }, (ui.petBox || []).slice().sort((a, b) => (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 } }, (ui.petBox || []).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
                         const sp = SPECIES[p.sp];
                         const rr = petRarity(p.sp);
                         const isBuddy = ui.buddy === p.i;
@@ -29046,7 +29054,8 @@ function CherryAdventure() {
                         const buff = { atk: sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3, hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5, def: (p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2 };
                         const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
                         const selFuse = ui.fuseA === p.i || ui.fuseB === p.i;
-                        return (React.createElement("div", { key: p.i, style: { padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font } },
+                        return (React.createElement("div", { key: p.i, style: { position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font } },
+                            p.fresh && React.createElement("span", { style: { position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 } }, "\u0E43\u0E2B\u0E21\u0E48 \u2728"),
                             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } },
                                 React.createElement("span", { style: { fontSize: 19 } }, sp.emoji),
                                 React.createElement("div", { style: { minWidth: 0, flex: 1 } },
