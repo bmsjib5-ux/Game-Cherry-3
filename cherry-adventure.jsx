@@ -10172,10 +10172,11 @@ export default function CherryAdventure() {
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
     const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100));
     const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100));
-    const effMaxHp = () => Math.round((G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
+    const effMaxHp = () => Math.round(3 * (G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + ⚔️ mastery + 👘 set
     const effSpd = () => 3.4 * (1 + equipBonus().spd / 100); // ⚡ shoes speed up walking
     const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
+    const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit"); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + ⚔️ mastery + 👘 set
     const weaponElem = () => {
@@ -10201,7 +10202,7 @@ export default function CherryAdventure() {
     G.toast = toast; // 📣 the JSX below lives OUTSIDE this effect's closure — it must call G.toast(...)
     const syncPlayer = () => setUi((u) => ({
       ...u, hp: Math.ceil(G.player.hp), maxHp: effMaxHp(), level: G.player.level,
-      exp: G.player.exp, expNext: G.player.level * 50, balls: G.player.balls, specials: G.player.specials,
+      exp: G.player.exp, expNext: expForLevel(G.player.level), balls: G.player.balls, specials: G.player.specials,
       mp: Math.ceil(G.player.mp), maxMp: effMaxMp(),
       atk: effAtk(), def: effDef(), skillPts: G.player.skillPts,
       sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
@@ -10606,8 +10607,8 @@ export default function CherryAdventure() {
       G.player.exp += amt;
       toast(`+${amt} EXP`);
       let leveled = false;
-      while (G.player.exp >= G.player.level * 50) {
-        G.player.exp -= G.player.level * 50;
+      while (G.player.exp >= expForLevel(G.player.level)) {
+        G.player.exp -= expForLevel(G.player.level);
         G.player.level++;
         // (ระบบอัพซ้ายมือเดิมถูกแทนด้วยค่าสถานะ 6 อย่าง)
         G.player.sp += 3; // 🎯 3 skill points per level
@@ -10643,10 +10644,10 @@ export default function CherryAdventure() {
     const skillCap = () => Math.max(1, Math.min(SKILL_MAX, 1 + Math.floor(G.player.level / 3)));
     G.skillCap = skillCap;
     // 💰 SP cost rises as the skill gets stronger: 1 (Lv1-5), 2 (Lv6-10), 3 (Lv11-15), 4 (Lv16-19)
-    const skillCost = (rank) => rank < 5 ? 1 : rank < 10 ? 2 : rank < 15 ? 3 : 4;
+    const skillCost = (rank) => rank < 3 ? 1 : rank < 6 ? 2 : rank < 9 ? 3 : rank < 12 ? 5 : rank < 15 ? 7 : rank < 18 ? 9 : 12; // ⚖️ ยิ่งเลเวลสกิลสูง ยิ่งใช้แต้มมากขึ้นตามลำดับ
     // 🌳 passive-tree ranks are level-gated too, so passives grow with the character
     // instead of being fully buyable the moment the node unlocks.
-    const treeCap = () => Math.max(1, 1 + Math.floor(G.player.level / 8));
+    const treeCap = () => Math.max(1, 1 + Math.floor(G.player.level / 12)); // ⚖️ ปมพรสวรรค์อัพช้าลงตามเลเวล
     G.treeCap = treeCap;
     G.skillCost = skillCost;
     // ⚖️ RESPEC — refund everything you've spent so builds can be experimented with.
@@ -10926,7 +10927,7 @@ export default function CherryAdventure() {
       if (node.reqLv && G.player.level < node.reqLv) { toast(`🔒 ต้องเลเวล ${node.reqLv} ขึ้นไป (ตอนนี้ Lv.${G.player.level})`); return; }
       // ⛔ condition: this node's rank is capped by character level (passives grow with you)
       const tcap = Math.min(max, treeCap());
-      if (cur >= tcap) { toast(`🎚️ เลเวลตัวละครยังต่ำ — โหนดนี้อัพได้ถึง Lv.${tcap} · ต้องเลเวล ${cur * 8} เพื่ออัพต่อ`); return; }
+      if (cur >= tcap) { toast(`🎚️ เลเวลตัวละครยังต่ำ — โหนดนี้อัพได้ถึง Lv.${tcap} · ต้องเลเวล ${cur * 12} เพื่ออัพต่อ`); return; }
       // ⛔ condition: prerequisite node must have at least 1 rank
       if (node.req && !(G.treeNodes[node.req] > 0)) {
         const pre = all.find((n) => n.id === node.req);
@@ -10992,6 +10993,7 @@ export default function CherryAdventure() {
         toast(`🔒 ต้องปลดล็อก "${pre ? pre.name : ""}" ก่อน`);
         return;
       }
+      { const uc = Object.keys(G.constNodes || {}).length; const needLv = (uc + 1) * 3; if (G.player.level < needLv) { toast(`🔒 ต้องเลเวล ${needLv} เพื่อปลดล็อกดาวดวงต่อไป (ตอนนี้ Lv.${G.player.level})`); return; } } // ⚖️ เงื่อนไขเลเวลเพิ่มขึ้นเรื่อยๆ
       if ((G.stardust || 0) < node.cost) { toast(`✨ ผงดาวไม่พอ — ต้องใช้ ${node.cost} (มี ${G.stardust || 0})`); return; }
       const oldMax = effMaxHp();
       G.stardust -= node.cost;
@@ -11024,7 +11026,7 @@ export default function CherryAdventure() {
     // 🌟 ULTIMATE ranking — gated behind character level + your 4 skills being trained
     const ULT_MAX = 5;
     // requirements to unlock each ult rank: character level & total skill ranks invested
-    const ultReq = (rank) => ({ lv: 5 + rank * 5, skillSum: 8 + rank * 8 }); // rank1 needs Lv10 & 16 skill ranks, etc.
+    const ultReq = (rank) => ({ lv: 8 + rank * 8, skillSum: 12 + rank * 12 }); // ⚖️ ยากขึ้น — rank1 ต้อง Lv16 & รวมสกิล 24
     G.ultReq = ultReq;
     G.skillSum = () => skillsOf(G.cls, G.pathId).reduce((a, s) => a + (G.skillRanks[s.id] || 1), 0);
     G.rankUlt = () => {
@@ -11033,7 +11035,7 @@ export default function CherryAdventure() {
       const req = ultReq(cur);
       if (G.player.level < req.lv) { toast(`🔒 ต้องเลเวล ${req.lv} ขึ้นไป (ตอนนี้ ${G.player.level})`); return; }
       if (G.skillSum() < req.skillSum) { toast(`🔒 ต้องฝึก 4 สกิลรวม ${req.skillSum} ระดับก่อน (ตอนนี้ ${G.skillSum()})`); return; }
-      const cost = 3 + cur; // expensive: 4,5,6,7 SP
+      const cost = 4 + cur * 2; // ⚖️ แพงขึ้น: 6,8,10,12 SP
       if ((G.player.sp || 0) < cost) { toast(`ท่าไม้ตายใช้ ${cost} แต้มสกิล (มี ${G.player.sp || 0})`); return; }
       G.player.sp -= cost;
       G.ultRank = cur + 1;
@@ -11401,8 +11403,11 @@ export default function CherryAdventure() {
       const sp = SPECIES[wild.userData.spId];
       const lv = wild.userData.lv || 1;
       const boss = !!wild.userData.boss;
-      const scale = (1 + (lv - 1) * 0.32) * (boss ? 2.0 : 1.4); // ⚖️ เลือดเยอะขึ้น & โตตามเลเวลเร็วขึ้น (ตียากขึ้น)
+      const scale = (1 + (lv - 1) * 0.9) * (boss ? 2.0 : 1.4); // ⚖️ เลือดมอนโตตามเลเวลชันขึ้น → ~3 เท่าเมื่อเลเวลสูง
       const lvDef = Math.min(0.1, (lv - 1) * 0.004); // 🛡️ ยิ่งเลเวลสูง ยิ่งตั้งรับเก่ง — ลดดาเมจบ่อยขึ้น
+      const lvGap = Math.max(0, lv - (G.player ? G.player.level : 1)); // 📈 มอนสเตอร์เหนือกว่ากี่เลเวล
+      const gapMul = lvGap >= 2 ? 1 + (lvGap - 1) * 0.07 : 1; // ⚔️ ต่างกัน 2 lv+ → ตีแรงขึ้น (แต่ยังสู้ได้ถ้าพลังโจมตีสูง)
+      const gapDodge = lvGap >= 2 ? Math.min(0.22, (lvGap - 1) * 0.03) : 0; // 🎲 หลบ/บล็อกบ่อยขึ้น
       const ghost = !!wild.userData.ghost;
       const golden = !!wild.userData.golden;
       const shiny = !!wild.userData.shiny;
@@ -11411,15 +11416,15 @@ export default function CherryAdventure() {
         spId: wild.userData.spId,
         hp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
         maxHp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
-        atk: Math.round(sp.atk * (1 + (lv - 1) * 0.18) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul),
+        atk: Math.round(sp.atk * (1 + (lv - 1) * 0.18) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul),
         lv, boss, ghost, golden,
         enraged: false, rageAura: null, shiny,
         name: sp.name, biomeBoss: wild.userData.biomeBoss || null,
         horde: !!wild.userData.horde,
         dungeon: !!wild.userData.dungeon,
         // 🎲 defensive-skill chances (bosses & ghosts are craftier; scales up with level)
-        evaChance: boss ? 0.2 : ghost ? 0.16 : golden ? 0.05 : 0.1,
-        blockChance: (boss ? 0.22 : ghost ? 0.16 : 0.12) + lvDef * 0.3,
+        evaChance: (boss ? 0.2 : ghost ? 0.16 : golden ? 0.05 : 0.1) + gapDodge,
+        blockChance: (boss ? 0.22 : ghost ? 0.16 : 0.12) + lvDef * 0.3 + gapDodge,
         guardChance: (boss ? 0.28 : 0.18) + lvDef,
         mesh: wild,
       };
@@ -18457,6 +18462,7 @@ export default function CherryAdventure() {
                 setUi((u) => ({ ...u, combo: 0 }));
                 G.mode = "fainted";
                 setMouth("sad");
+                { const pen = Math.round(expForLevel(G.player.level) * 0.2); if (pen > 0 && G.player.exp > 0) { G.player.exp = Math.max(0, G.player.exp - pen); toast(`💀 พ่ายแพ้ต่อมอนสเตอร์! เสีย EXP -${pen}`); } } // ⚖️ บทลงโทษเมื่อตาย
                 // 🏅 PvP: losing to a friend's ghost costs rank
                 if (G.enemy && G.enemy.friendGhost) {
                   const loss = Math.max(6, Math.round(15 - (G.enemy.lv - G.player.level) * 2));
