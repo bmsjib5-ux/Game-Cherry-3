@@ -1084,6 +1084,7 @@ const CHAR_PRESETS = [
     { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
     { name: "ฮารุ", emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
     { name: "ออเรลิอุส", emoji: "⚜️", gender: 1, skin: 1, hairColor: 3, hairStyle: 1, eyes: 0, outfit: 0, hero: "aurelius" },
+    { name: "รักนาร์", emoji: "🪓", gender: 1, skin: 2, hairColor: 1, hairStyle: 2, eyes: 2, outfit: 1, hero: "ragnar" },
     { name: "ลูน่า", emoji: "🌙", gender: 0, skin: 0, hairColor: 5, hairStyle: 6, eyes: 0, outfit: 0, hero: "luna" },
     { name: "ยูกิ", emoji: "❄️", gender: 0, skin: 2, hairColor: 5, hairStyle: 6, eyes: 3, outfit: 0, hero: "yuki" },
     { name: "โรส", emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 3, outfit: 0, hero: "rose" },
@@ -1104,6 +1105,7 @@ const HERO_GALLERY = [
     { id: "yuki", name: "ยูกิ", emoji: "❄️", title: "นักธนูน้ำแข็ง", c1: "#a8e0ff", c2: "#4a9ad0", price: 120 },
     { id: "haru", name: "ฮารุ", emoji: "🌸", title: "จอมเวทซากุระ", c1: "#f2a8d0", c2: "#c05a9a", price: 80 },
     { id: "aurelius", name: "ออเรลิอุส", emoji: "⚜️", title: "ครูเสดแห่งสวรรค์", c1: "#ffe9a0", c2: "#c8961e", price: 300 },
+    { id: "ragnar", name: "รักนาร์", emoji: "🪓", title: "นักรบโทสะปีศาจ", c1: "#e05a4a", c2: "#7a1410", price: 300 },
 ];
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
 const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
@@ -5559,7 +5561,7 @@ function CherryAdventure() {
             G._irisBase = irisBase;
             G.heroId = G.heroId || null;
             // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808] }; // ⚜️ ตาทองออเรลิอุส
+            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xff3a2a, 0xa00808] }; // ⚜️ ตาทอง · 🪓 ตาแดงเรือง
             G.setHero = id => {
                 G.heroId = id || null;
                 (G._haruParts || []).forEach(p => p.visible = id === "haru");
@@ -9772,7 +9774,7 @@ function CherryAdventure() {
                     smat = dyedMat(smat, dye.shoes);
                 s.material = smat;
             });
-            const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : null;
+            const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : null;
             if (heroShoe && !sh)
                 shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
             if (G.reconcileClassPieces)
@@ -15322,7 +15324,7 @@ function CherryAdventure() {
                 G.saveGame();
         };
         // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
-        G.HERO_PRICE = { haru: 80, yuki: 120, luna: 120, celestia: 180, rose: 160, kentaro: 200, kotaro: 220, kairi: 260, aurelius: 300 };
+        G.HERO_PRICE = { haru: 80, yuki: 120, luna: 120, celestia: 180, rose: 160, kentaro: 200, kotaro: 220, kairi: 260, aurelius: 300, ragnar: 300 };
         G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
         G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now())
             return 0; return Math.ceil((t - Date.now()) / 86400000); };
