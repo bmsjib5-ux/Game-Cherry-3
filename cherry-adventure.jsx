@@ -22297,11 +22297,13 @@ export default function CherryAdventure() {
                           {allIds.map((id) => {
                             const sp = SPECIES[id];
                             const got = !!ui.col[id];
+                            const rr = petRarity(id);
                             return (
                               <div key={id} style={{
                                 padding: "8px 6px", borderRadius: 10, textAlign: "center",
                                 background: got ? "#f0f9e8" : "#eee",
-                                border: got ? "2px solid #b5d99a" : "2px solid transparent",
+                                border: got ? "2px solid " + rr.color : "2px solid transparent",
+                                boxShadow: got && sp.tier >= 5 ? "0 0 9px " + rr.color + "99" : "none",
                               }}>
                                 <div style={{ fontSize: 26, filter: got ? "none" : "grayscale(1) brightness(0.6)", opacity: got ? 1 : 0.5 }}>
                                   {got ? sp.emoji : "❓"}
@@ -22309,6 +22311,7 @@ export default function CherryAdventure() {
                                 <div style={{ fontSize: 11, fontWeight: 800, color: got ? "#5a7a4a" : "#a3a396" }}>
                                   {got ? sp.name : "???"}
                                 </div>
+                                {got && <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name}</div>}
                                 {got && <div style={{ fontSize: 9, color: "#8a8a7a" }}>ธาตุ {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} · จับ {ui.col[id]}</div>}
                               </div>
                             );
@@ -22358,6 +22361,7 @@ export default function CherryAdventure() {
               {Object.entries(ui.col).map(([id, n]) => {
                 const sp = SPECIES[id];
                 const pet = ui.pets[id] || { lv: 1, exp: 0, stage: 1 };
+                const rr = petRarity(id);
                 const isBuddy = ui.buddy === id;
                 const dispName = pet.stage >= 3 ? `อัลติเมท${EVOLVED[id]} 🌟` : pet.stage === 2 ? `${EVOLVED[id]} 👑` : sp.name;
                 const buff = {
@@ -22370,6 +22374,8 @@ export default function CherryAdventure() {
                   <div key={id} style={{
                     padding: "7px 8px", borderRadius: 10, marginBottom: 4,
                     background: isBuddy ? "#eaf5e0" : "#f7f7f0",
+                    borderLeft: "4px solid " + rr.color,
+                    boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none",
                   }}>
                     <button onClick={() => G.setBuddy(id)} style={{
                       display: "flex", alignItems: "center", gap: 8, width: "100%",
@@ -22379,7 +22385,7 @@ export default function CherryAdventure() {
                       <span style={{ fontSize: 20 }}>{sp.emoji}</span>
                       <span style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: pet.stage >= 3 ? "#d08a20" : pet.stage === 2 ? "#c09020" : "#5a7a4a" }}>
-                          {dispName} Lv.{pet.lv} · ร่าง {pet.stage} ×{n}
+                          {dispName} Lv.{pet.lv} · ร่าง {pet.stage} ×{n} <span style={{ fontSize: 8.5, fontWeight: 800, color: "#fff", background: rr.color, borderRadius: 999, padding: "1px 7px", marginLeft: 2 }}>{rr.name}</span>
                         </div>
                         <div style={{ background: "#e5e5da", borderRadius: 99, height: 5, marginTop: 3, overflow: "hidden" }}>
                           <div style={{
