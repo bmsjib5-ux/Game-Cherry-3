@@ -22261,7 +22261,7 @@ export default function CherryAdventure() {
                                 <div style={{ fontSize: 11, fontWeight: 800, color: got ? "#5a7a4a" : "#a3a396" }}>
                                   {got ? sp.name : "???"}
                                 </div>
-                                {got && <div style={{ fontSize: 9, color: "#8a8a7a" }}>ธาตุ {ELEMENTS[PET_ELEM[id]].emoji} · จับ {ui.col[id]}</div>}
+                                {got && <div style={{ fontSize: 9, color: "#8a8a7a" }}>ธาตุ {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} · จับ {ui.col[id]}</div>}
                               </div>
                             );
                           })}
@@ -22343,7 +22343,7 @@ export default function CherryAdventure() {
                           บัฟให้เชอร์รี่: ⚔️+{buff.atk} ❤️+{buff.hp} 🛡️+{buff.def}
                         </div>
                         <div style={{ fontSize: 9.5, color: "#b0526a", fontWeight: 700 }}>
-                          สกิลร่วมรบ: {ELEMENTS[PET_ELEM[id]].emoji} {PET_SKILL[id]} <b style={{ color: "#8a5ad0" }}>Lv.{(ui.petSkillLv && ui.petSkillLv[id]) || 1}</b>
+                          สกิลร่วมรบ: {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} {PET_SKILL[id]} <b style={{ color: "#8a5ad0" }}>Lv.{(ui.petSkillLv && ui.petSkillLv[id]) || 1}</b>
                         </div>
                         <div style={{ fontSize: 9.5, color: "#a3a396" }}>
                           EXP {pet.exp}/{pet.lv * 30} · วิวัฒน์ร่างใหม่ที่ Lv.{nextEvo}

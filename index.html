@@ -34205,7 +34205,7 @@ function CherryAdventure() {
           fontSize: 9,
           color: "#8a8a7a"
         }
-      }, "ธาตุ ", ELEMENTS[PET_ELEM[id]].emoji, " · จับ ", ui.col[id]));
+      }, "ธาตุ ", (ELEM_META[PET_ELEM[id]] || {}).emoji || "❓", " · จับ ", ui.col[id]));
     })));
   })()) : /*#__PURE__*/React.createElement("div", {
     style: {
@@ -34383,7 +34383,7 @@ function CherryAdventure() {
         color: "#b0526a",
         fontWeight: 700
       }
-    }, "สกิลร่วมรบ: ", ELEMENTS[PET_ELEM[id]].emoji, " ", PET_SKILL[id], " ", /*#__PURE__*/React.createElement("b", {
+    }, "สกิลร่วมรบ: ", (ELEM_META[PET_ELEM[id]] || {}).emoji || "❓", " ", PET_SKILL[id], " ", /*#__PURE__*/React.createElement("b", {
       style: {
         color: "#8a5ad0"
       }
