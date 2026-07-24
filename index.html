@@ -486,17 +486,17 @@ const PATH_ADV = {
             { id: "x_grd_3", cost: 13, name: "หอกแผ่นดินไหว", emoji: "🌍", color: 0xa08050, mult: 1.6, perLv: 0.34, hits: 2, stun: true, defDown: 8, slow: true, fx: "quake", desc: "แผ่นดินไหว ×2 ทุ่มล้ม ลดเกราะ + ลดความเร็วโจมตี" },
             { id: "x_grd_4", cost: 16, name: "พิพากษาปฐพี", emoji: "🗿", color: 0x6a5a3a, mult: 1.5, perLv: 0.32, hits: 2, defDown: 10, slow: true, buffDef: 8, fx: "quake", desc: "โกเลมโบราณทุบสนาม ×2 (Taunt) ทำลายเกราะ + ช้าลง + เสริมเกราะ" }
         ] },
-    k_kensei: { ult: { name: "หมื่นดาบไร้เงา", emoji: "⚔️🌌", mul: 1.45, desc: "วาดดาบหมื่นครั้งในพริบตา จบทุกอย่างก่อนเสียงดาบมาถึง" }, skills: [
-            { id: "x_ken_1", cost: 7, name: "ดาบไร้กระบวนท่า", emoji: "⚔️", color: 0xcfe0ff, mult: 1.9, perLv: 0.4, fx: "stab", desc: "ฟันไร้รูปแบบ อ่านทางไม่ได้" },
-            { id: "x_ken_2", cost: 10, name: "จันทร์เสี้ยวคู่", emoji: "🌙", color: 0xb0b8f0, mult: 1.3, perLv: 0.28, hits: 3, fx: "multi", desc: "วาดดาบโค้งจันทร์ ×3" },
-            { id: "x_ken_3", cost: 13, name: "ลมดาบพันลี้", emoji: "🌪️", color: 0xb8e8c0, mult: 2.3, perLv: 0.48, hits: 2, critBonus: 0.3, fx: "stab", desc: "คมลมฟันไกล ×2 คริง่าย" },
-            { id: "x_ken_4", cost: 16, name: "เคนเซย์สังหาร", emoji: "🗡️", color: 0xf5d24a, mult: 3.1, perLv: 0.64, guaranteedCrit: true, fx: "bolt", desc: "ดาบสุดท้ายของเคนเซย์ คริการันตี" }
+    k_kensei: { ult: { name: "หมื่นดาบไร้เงา", emoji: "⚔️🌌", mul: 1.7, defDown: 15, bleed: 5, buffTeam: true, desc: "หยุดเวลาในโดเมนดาบ — หมื่นดาบซากุระฟันพร้อมกัน ทะลุเกราะ+บล็อก คริ 100% + Sword Saint Realm (เร็ว/คริ/หลบให้ทีม)" }, skills: [
+            { id: "x_ken_1", cost: 7, name: "ดาบไร้กระบวนท่า", emoji: "⚔️", color: 0xcfe0ff, mult: 0.7, perLv: 0.16, hits: 5, pierce: true, buffSpd: true, bleed: 3, critBonus: 0.25, fx: "multi", desc: "ล่องหนฟันไร้รูปแบบ ×5 ทะลุหลบ เร่งสปีด +คริ + เลือดไหล" },
+            { id: "x_ken_2", cost: 10, name: "จันทร์เสี้ยวคู่", emoji: "🌙", color: 0xb0b8f0, mult: 1.2, perLv: 0.26, hits: 3, stun: true, defDown: 6, fx: "multi", desc: "คลื่นดาบจันทร์เสี้ยวไป-กลับ ×3 Knockback + ลดเกราะ" },
+            { id: "x_ken_3", cost: 13, name: "ลมดาบพันลี้", emoji: "🌪️", color: 0xb8e8c0, mult: 1.0, perLv: 0.22, hits: 4, slow: true, defDown: 6, critBonus: 0.3, fx: "stab", desc: "พายุใบมีดลม ×4 ช้าลง + ทำลายเกราะ +คริ" },
+            { id: "x_ken_4", cost: 16, name: "เคนเซย์สังหาร", emoji: "🗡️", color: 0xf5d24a, mult: 3.1, perLv: 0.64, guaranteedCrit: true, defDown: 10, bleed: 4, fx: "bolt", desc: "ชักดาบครั้งเดียว รอยฟันทั่วร่าง คริการันตี ทะลุเกราะ + เลือดไหลระเบิด" }
         ] },
-    k_iai: { ult: { name: "ชักดาบเทพสายฟ้าหมื่นสาย", emoji: "⚡👹", mul: 1.5, desc: "ชักดาบเร็วกว่าฟ้าผ่า หมื่นสายฟ้าฟาดตามรอยดาบ" }, skills: [
-            { id: "x_iai_1", cost: 7, name: "ชักดาบแรกพบ", emoji: "⚡", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, fx: "bolt", desc: "ชักดาบเสี้ยววินาที" },
-            { id: "x_iai_2", cost: 10, name: "ฟ้าแลบสองจังหวะ", emoji: "🌩️", color: 0xf5d24a, mult: 1.5, perLv: 0.32, hits: 2, stun: true, fx: "bolt", desc: "สองจังหวะสายฟ้า + มึน" },
-            { id: "x_iai_3", cost: 13, name: "ดาบเทพลงทัณฑ์", emoji: "👹", color: 0xe0503a, mult: 2.4, perLv: 0.5, critBonus: 0.4, fx: "stab", desc: "รอยดาบอสูร คริสูงมาก" },
-            { id: "x_iai_4", cost: 16, name: "อสนีบาตสุดท้าย", emoji: "🌩️", color: 0x9a6ad0, mult: 3.2, perLv: 0.66, stun: true, pierce: true, fx: "bolt", desc: "ฟ้าผ่าหมื่นสาย เจาะเกราะ + สตัน" }
+    k_iai: { ult: { name: "ชักดาบเทพสายฟ้าหมื่นสาย", emoji: "⚡👹", mul: 1.7, defDown: 15, stun: true, buffTeam: true, desc: "อัญเชิญเทพอสนีบาต ชักดาบดึงสายฟ้าทั้งฟ้า — กายภาพ+สายฟ้ามหาศาล ทะลุเกราะ+เวทป้องกัน สตันทั้งสนาม + Thunder Iaido (คริ/ความเร็วทีม)" }, skills: [
+            { id: "x_iai_1", cost: 7, name: "ชักดาบแรกพบ", emoji: "⚡", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, stun: true, critBonus: 0.3, fx: "bolt", desc: "ชักดาบเปิดศึกเร็วกว่าแสง สตัน + คริสูง" },
+            { id: "x_iai_2", cost: 10, name: "ฟ้าแลบสองจังหวะ", emoji: "🌩️", color: 0xf5d24a, mult: 1.0, perLv: 0.22, hits: 4, stun: true, slow: true, fx: "bolt", desc: "ฟ้าแลบลูกโซ่ ×4 สตัน + ลดความเร็วโจมตี" },
+            { id: "x_iai_3", cost: 13, name: "ดาบเทพลงทัณฑ์", emoji: "👹", color: 0xe0503a, mult: 2.2, perLv: 0.46, stun: true, defDown: 8, critBonus: 0.4, fx: "stab", desc: "เทพดาบสายฟ้าฟันจากฟ้า AoE ทุ่มลอย + ทำลายเกราะ" },
+            { id: "x_iai_4", cost: 16, name: "อสนีบาตสุดท้าย", emoji: "🌩️", color: 0x9a6ad0, mult: 3.2, perLv: 0.66, stun: true, pierce: true, defDown: 10, fx: "bolt", desc: "ฟ้าผ่าหมื่นสายพร้อมกัน เจาะเกราะเวท สตัน + ทำลายเกราะ" }
         ] },
     c_hacker: { ult: { name: "ล่มระบบทั้งจักรวาล", emoji: "🕶️🌐", mul: 1.45, desc: "แฮกโค้ดโลก ปิดระบบศัตรูถาวรแล้วลบทิ้ง" }, skills: [
             { id: "x_hck_1", cost: 7, name: "สคริปต์มืด", emoji: "🕶️", color: 0x2ae84a, mult: 1.8, perLv: 0.38, defDown: 3, fx: "shot", desc: "ฝังสคริปต์เจาะระบบ ลดเกราะ" },
