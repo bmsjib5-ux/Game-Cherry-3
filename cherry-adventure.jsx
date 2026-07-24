@@ -17012,6 +17012,29 @@ export default function CherryAdventure() {
                   if (skId === "m_bolt" || skId === "m_heal") magicCircle.scale.multiplyScalar(0.96);
                   if (skId === "m_bolt" && scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.05); // storm clears
                 }
+              } else if (skId && skId.indexOf("x_elm") === 0) {
+                // 🌈 ELEMENTAL ARCHMAGE — ท่าร่ายเฉพาะแต่ละธาตุ (ไฟ/น้ำแข็ง/สายฟ้า/ธรรมชาติ)
+                magicCircle.visible = true; magicCircle.position.set(char.position.x, 0.09, char.position.z); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.1 + Math.sin(p * Math.PI) * 0.6);
+                magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (2 + si) * (si % 2 ? -1 : 1); st.children.forEach((c) => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(skC); }); });
+                const stx = char.position.x - 0.05, stz = char.position.z;
+                if (skId === "x_elm_1") {
+                  // ☄️ INFERNO METEOR — ชูคทาเหนือหัวรวมพลัง → ฟาดลง เรียกอุกกาบาต
+                  if (p < 0.55) { const cp = p / 0.55; armR.rotation.x = -2.4 * cp; armR.rotation.z = 0.12; char.rotation.z = -0.12 * cp; orbFx.visible = true; orbFx.position.set(stx, 2.1 + cp * 1.0, stz); orbFx.scale.setScalar(0.4 + cp * 1.9); orbFx.material.emissive.setHex(0xff5a2a); if (Math.random() < 0.7) burst(new THREE.Vector3(stx + (Math.random() - 0.5) * 1.2, 2.6 + Math.random() * 1.3, stz), Math.random() < 0.5 ? 0xff7a1a : 0xffd24a, 0.35); }
+                  else { const cp = (p - 0.55) / 0.45; armR.rotation.x = -2.4 + cp * 3.2; char.rotation.z = 0.16 * (1 - cp); orbFx.visible = false; if (Math.random() < 0.75) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 1.5, 5 - cp * 4 + Math.random(), em.position.z), Math.random() < 0.5 ? 0xff5a2a : 0xffd24a, 0.6 + Math.random()); }
+                } else if (skId === "x_elm_2") {
+                  // 🧊 BLACK FROST SPEAR — กวาดคทาแนวนอน เรียกฝนหอกน้ำแข็งดำ
+                  armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 0.5; armR.rotation.y = -1.2 + p * 2.4; char.rotation.y = Math.PI / 2 + Math.sin(p * Math.PI) * 0.22;
+                  if (Math.random() < 0.85) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.6, 3 - p * 2 + Math.random() * 1.6, em.position.z + (Math.random() - 0.5) * 1.6), Math.random() < 0.5 ? 0x66ccff : 0x4a6ad0, 0.4);
+                } else if (skId === "x_elm_3") {
+                  // ⚡ THUNDER JUDGMENT — ชูคทาสู่ฟ้า เรียกเสาสายฟ้าฟาดต่อเนื่อง
+                  armR.rotation.x = -2.6; armR.rotation.z = 0.2 + Math.sin(t * 22) * 0.06;
+                  if (scene.fog) scene.fog.color.lerp(new THREE.Color(0x1a1a2e), 0.05);
+                  if (Math.random() < 0.8) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.2, 0.5 + Math.random() * 4, em.position.z + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? 0x5b4bff : 0x88aaff, 0.4);
+                } else if (skId === "x_elm_4") {
+                  // 🌪️ NATURE CATACLYSM — ชูคทา → ฟาดลงพื้น เสาศิลา+พายุใบไม้ผุด
+                  if (p < 0.45) { armR.rotation.x = -1.8 * (p / 0.45); }
+                  else { const cp = (p - 0.45) / 0.55; armR.rotation.x = -1.8 + cp * 3.0; char.rotation.z = 0.2 * Math.sin(cp * Math.PI); char.position.y = -0.1 * Math.sin(cp * Math.PI); if (Math.random() < 0.85) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.8, 0.1 + Math.random() * 1.9, em.position.z + (Math.random() - 0.5) * 2.4), [0x6ac04a, 0x8a6a3a, 0xc0a060][Math.floor(Math.random() * 3)], 0.45); }
+                }
               } else {
                 // basic attack: raise staff, orb arcs to target
                 armR.rotation.z = 0.12 + Math.sin(Math.min(p * 2, 1) * Math.PI) * 2.0;
