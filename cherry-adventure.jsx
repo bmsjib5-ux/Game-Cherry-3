@@ -7595,6 +7595,90 @@ export default function CherryAdventure() {
       } else if (spId === "ngu") {
         g.userData.animalEyes = true;
       }
+      // 🎨✨ REALISM PACK — per-shape fur/feather/scale/claw detailing + legendary signature parts (อัพเกรดความสมจริง)
+      {
+        const col = new THREE.Color(sp.color);
+        const dkHex = col.clone().multiplyScalar(0.55).getHex();
+        const ltHex = col.clone().lerp(new THREE.Color(0xffffff), 0.4).getHex();
+        const dk = new THREE.MeshStandardMaterial({ color: dkHex, roughness: 0.75 });
+        const lt = new THREE.MeshStandardMaterial({ color: ltHex, roughness: 0.55 });
+        const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.65, roughness: 0.3, emissive: 0x8a6410, emissiveIntensity: 0.35 });
+        mat.roughness = 0.58; belly.roughness = 0.66; // จากผิวตุ๊กตา → ผิวหนัง/ขนที่มีมิติ
+        if (mat.emissive && mat.emissive.getHex() === 0) mat.emissive = col.clone().multiplyScalar(0.045); // rim-life อ่อนๆ ทุกตัว
+        if (shape === "beast") {
+          // 🐾 แผงขนคอ + ขนสัน + เล็บ + อกสีอ่อน + ปลายหาง
+          for (let k = 0; k < 9; k++) { const a = (k / 9) * Math.PI * 2; const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.17, 6), k % 2 ? dk : mat); tuft.position.set(Math.cos(a) * 0.24, 0.26 + Math.sin(a) * 0.05, 0.3); tuft.rotation.z = a + Math.PI; tuft.rotation.x = -0.35; body.add(tuft); }
+          for (let k = 0; k < 4; k++) { const t2 = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.13, 6), dk); t2.position.set(0, 0.34 - k * 0.03, 0.08 - k * 0.17); t2.rotation.x = 2.7; body.add(t2); }
+          for (const sx of [-1, 1]) for (const pz of [0.28, -0.3]) for (const cx of [-0.035, 0.035]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.055, 6), whiteMat); claw.position.set(sx * 0.2 + cx, -0.63, pz + 0.11); claw.rotation.x = 1.35; body.add(claw); }
+          const chest = latheOf([[0, -0.12], [0.13, -0.04], [0.15, 0.1], [0, 0.18]], lt, 20); chest.position.set(0, 0.0, 0.3); chest.scale.z = 0.5; body.add(chest);
+        } else if (shape === "bunny") {
+          // 🐰 หนวด + ขนอกฟู
+          for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.2, 4), whiteMat); w.position.set(sx * 0.26, 0.44 - k * 0.03, 0.24); w.rotation.z = Math.PI / 2 + sx * (0.2 + k * 0.16); body.add(w); }
+          const fluff = latheOf([[0, -0.06], [0.1, 0], [0.12, 0.1], [0, 0.16]], lt, 18); fluff.position.set(0, 0.12, 0.3); fluff.scale.z = 0.5; body.add(fluff);
+        } else if (shape === "bird") {
+          // 🦅 หงอนหัว + กรงเล็บ
+          for (let k = -1; k <= 1; k++) { const cf = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 6), k === 0 ? dk : mat); cf.position.set(k * 0.07, 0.8, -0.04 + Math.abs(k) * 0.02); cf.rotation.x = -0.5 - Math.abs(k) * 0.25; body.add(cf); }
+          for (const sx of [-0.11, 0.11]) for (const cx of [-0.03, 0, 0.03]) { const talon = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.06, 5), darkMat); talon.position.set(sx + cx, -0.68, 0.1); talon.rotation.x = 1.4; body.add(talon); }
+        } else if (shape === "fish") {
+          // 🐟 เส้นเหงือก + ลายเกล็ดเป็นวง
+          for (let k = 0; k < 3; k++) { const gill = new THREE.Mesh(new THREE.TorusGeometry(0.16 - k * 0.02, 0.012, 8, 20, Math.PI * 0.7), dk); gill.position.set(0, 0.05, 0.24 - k * 0.05); gill.rotation.z = Math.PI * 0.16; body.add(gill); }
+          for (let k = 0; k < 4; k++) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.24 - k * 0.035, 0.014, 8, 22), k % 2 ? lt : dk); band.position.set(0, 0.02, -0.06 - k * 0.13); body.add(band); }
+        } else if (shape === "serpent") {
+          // 🐍 ปุ่มเกล็ดรอบขนด + ลายเพชรบนแผงคอ
+          for (let k = 0; k < 4; k++) { const r = 0.42 - k * 0.05; for (let j = 0; j < 8; j++) { const a = (j / 8) * Math.PI * 2 + k; const st = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), j % 2 ? dk : lt); st.position.set(Math.cos(a) * r, -0.42 + k * 0.2 + 0.06, Math.sin(a) * r); body.add(st); } }
+          const dia = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), dk); dia.scale.set(1, 1.4, 0.3); dia.position.set(0, 0.58, -0.16); body.add(dia);
+        } else if (shape === "slime") {
+          // 🍮 หยดวุ้นรอบฐาน + ฟองในตัว
+          for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2 + 0.4; const drip = latheOf([[0, 0], [0.05, 0.05], [0.03, 0.16], [0, 0.2]], mat, 12); drip.position.set(Math.cos(a) * 0.42, -0.36, Math.sin(a) * 0.42); drip.rotation.x = Math.PI; body.add(drip); }
+          const bubMat = new THREE.MeshStandardMaterial({ color: ltHex, transparent: true, opacity: 0.5, roughness: 0.3, depthWrite: false });
+          for (let k = 0; k < 4; k++) { const bub = new THREE.Mesh(new THREE.SphereGeometry(0.035 + (k % 2) * 0.02, 10, 10), bubMat); bub.position.set(Math.cos(k * 2.4) * 0.2, -0.1 + k * 0.09, Math.sin(k * 2.4) * 0.16); body.add(bub); }
+        } else if (shape === "cloud") {
+          // ☁️ หมอกฟุ้งรอบตัว + หยดฝน
+          const mist = new THREE.Mesh(new THREE.SphereGeometry(0.52, 18, 14), new THREE.MeshStandardMaterial({ color: ltHex, transparent: true, opacity: 0.22, roughness: 1, depthWrite: false })); mist.scale.set(1.25, 0.9, 1.1); body.add(mist);
+          for (let k = 0; k < 3; k++) { const drop = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), new THREE.MeshStandardMaterial({ color: 0x59a0e8, transparent: true, opacity: 0.8 })); drop.scale.y = 1.5; drop.position.set((k - 1) * 0.24, -0.42, 0.05); body.add(drop); }
+        } else if (shape === "star") {
+          // ⭐ ผิวปริซึม + ประกายรอบตัว
+          mat.emissive = col.clone().multiplyScalar(0.35); mat.metalness = 0.25; mat.roughness = 0.35;
+          for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.5; const spk = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), whiteMat); spk.position.set(Math.cos(a) * 0.45, Math.sin(a) * 0.45, 0.05); body.add(spk); }
+        } else if (shape === "wisp") {
+          // 👻 ออร่าเรืองบางๆ หุ้มตัว
+          const aura = new THREE.Mesh(new THREE.SphereGeometry(0.4, 18, 14), new THREE.MeshStandardMaterial({ color: ltHex, transparent: true, opacity: 0.16, emissive: ltHex, emissiveIntensity: 0.3, depthWrite: false })); aura.position.y = 0.05; body.add(aura);
+        }
+        // 🌟 legendary/mythic signature parts
+        if (spId === "mangkorn") {
+          for (const sx of [-0.08, 0.08]) { const horn = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.2, 8), gold); horn.position.set(sx, 0.76, 0.04); horn.rotation.z = sx > 0 ? -0.35 : 0.35; body.add(horn); }
+          for (const sx of [-1, 1]) { const wing = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 3), new THREE.MeshStandardMaterial({ color: dkHex, transparent: true, opacity: 0.85 })); wing.position.set(sx * 0.3, 0.3, -0.1); wing.rotation.z = sx > 0 ? -1.9 : 1.9; wing.scale.set(1, 1, 0.25); body.add(wing); }
+        } else if (spId === "hanuman") {
+          const crown = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 12, 1, true), gold); crown.position.set(0, 0.52, 0.42); body.add(crown);
+          if (g.userData.tail) { const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 8), gold); tip.position.set(0, 0.5, 0); g.userData.tail.add(tip); }
+        } else if (spId === "suphan") {
+          const crest = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.24, 8), gold); crest.position.set(0, 0.84, 0); crest.rotation.x = -0.6; body.add(crest);
+          const collar = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.025, 10, 22), gold); collar.position.set(0, 0.42, 0.02); collar.rotation.x = Math.PI / 2.4; body.add(collar);
+          mat.emissive = new THREE.Color(0xf5c542).multiplyScalar(0.12);
+        } else if (spId === "nakprok") {
+          // 🐉 นาค 7 เศียร — 6 เศียรเล็กกางพัดหลังเศียรหลัก + ยอดทอง
+          for (let k = 0; k < 6; k++) { const a = (k - 2.5) * 0.42; const mh = new THREE.Group();
+            const hd = latheOf([[0, 0], [0.16, 0.05], [0.18, 0.14], [0.07, 0.24], [0, 0.26]], k % 2 ? dk : mat, 18); hd.scale.set(1.35, 1, 0.5); mh.add(hd);
+            const hh = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), k % 2 ? dk : mat); hh.scale.set(1, 0.8, 1.25); hh.position.set(0, 0.1, 0.05); mh.add(hh);
+            mh.position.set(Math.sin(a) * 0.42, 0.5, -0.18 - Math.abs(Math.sin(a)) * 0.05); mh.rotation.y = a * 0.6; mh.rotation.x = -0.25; body.add(mh); }
+          const crest2 = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 8), gold); crest2.position.set(0, 0.86, 0.1); body.add(crest2);
+        } else if (spId === "erawan") {
+          // 🐘 งวง + งา + เศียรข้าง + หูใหญ่ + เครื่องทรงทอง
+          const trunk = latheOf([[0.05, 0], [0.07, 0.14], [0.05, 0.3], [0.035, 0.44]], mat, 16); trunk.position.set(0, 0.2, 0.62); trunk.rotation.x = 2.5; body.add(trunk);
+          for (const sx of [-0.1, 0.1]) { const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.2, 8), whiteMat); tusk.position.set(sx, 0.1, 0.6); tusk.rotation.x = 1.9; tusk.rotation.z = sx * 1.2; body.add(tusk); }
+          for (const sx of [-1, 1]) { const sh = new THREE.Mesh(new THREE.SphereGeometry(0.17, 18, 16), mat); sh.position.set(sx * 0.3, 0.22, 0.34); body.add(sh); }
+          for (const sx of [-0.24, 0.24]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 14), belly); ear.scale.set(0.22, 1.15, 0.9); ear.position.set(sx, 0.3, 0.3); body.add(ear); }
+          const dress = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.2, 12, 1, true), gold); dress.position.set(0, 0.5, 0.4); body.add(dress);
+        } else if (spId === "ngueak") {
+          mat.metalness = 0.35; mat.roughness = 0.35; mat.emissive = new THREE.Color(0x2ad0c0).multiplyScalar(0.12); // 🧜 เกล็ดเหลือบมุก
+        } else if (spId === "hima") {
+          for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; const flake = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), whiteMat); flake.position.set(Math.cos(a) * 0.34, 0.2 + Math.sin(k * 2) * 0.2, Math.sin(a) * 0.3); body.add(flake); }
+          mat.emissive = new THREE.Color(0x9adcf5).multiplyScalar(0.1);
+        } else if (spId === "pikul") {
+          const bloomC = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), gold); bloomC.position.set(0, 0.42, 0); body.add(bloomC);
+          for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; const pet = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), lt); pet.scale.set(1.3, 0.4, 0.8); pet.position.set(Math.cos(a) * 0.09, 0.42, Math.sin(a) * 0.09); pet.rotation.y = -a; body.add(pet); }
+        }
+      }
       // 👑 evolved form: crown + glow + bigger
       if (stage >= 2) {
         const crown = new THREE.Mesh(
