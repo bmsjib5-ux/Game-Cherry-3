@@ -9107,6 +9107,55 @@ export default function CherryAdventure() {
 
     // ---------- FX ----------
     const sparks = [];
+    // 🌟💫 SSS ADVANCED-SKILL CINEMATICS — วงเวทซ้อน + เสาแสง + รูนลอย ตอนร่าย และช็อกเวฟ+เศษพลัง ตอนกระทบ
+    const advRigs = [];
+    const _advMat = (color, op) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const spawnAdvCast = (color, pos, big) => {
+      const g = new THREE.Group(); g.position.set(pos.x, 0.05, pos.z);
+      const sc = big ? 1.5 : 1;
+      const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.95 * sc, 0.045, 8, 48), _advMat(color, 0.95)); r1.rotation.x = Math.PI / 2;
+      const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.6 * sc, 0.03, 8, 40), _advMat(0xffffff, 0.8)); r2.rotation.x = Math.PI / 2; r2.position.y = 0.05;
+      const r3 = new THREE.Mesh(new THREE.TorusGeometry(1.3 * sc, 0.025, 8, 56), _advMat(color, 0.6)); r3.rotation.x = Math.PI / 2; r3.position.y = 0.02;
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5 * sc, 0.62 * sc, 3.4, 20, 1, true), _advMat(color, 0.3)); pillar.position.y = 1.7;
+      g.add(r1, r2, r3, pillar);
+      const runes = [];
+      for (let k = 0; k < 8; k++) { const ru = new THREE.Mesh(new THREE.OctahedronGeometry(0.07 * sc, 0), _advMat(k % 2 ? 0xffffff : color, 0.95)); ru.userData.a = (k / 8) * Math.PI * 2; g.add(ru); runes.push(ru); }
+      g.userData = { kind: "cast", life: big ? 1.5 : 1.05, max: big ? 1.5 : 1.05, runes, r1, r2, r3, pillar };
+      g.scale.setScalar(0.25);
+      scene.add(g); advRigs.push(g);
+    };
+    const spawnAdvImpact = (color, pos, big) => {
+      const g = new THREE.Group(); g.position.set(pos.x, 0.5, pos.z);
+      const sc = big ? 1.6 : 1;
+      const wave = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.06, 8, 40), _advMat(color, 0.95)); wave.rotation.x = Math.PI / 2; wave.position.y = -0.35;
+      const flash = new THREE.Mesh(new THREE.SphereGeometry(0.42 * sc, 18, 14), _advMat(0xffffff, 0.9));
+      g.add(wave, flash);
+      const shards = [];
+      for (let k = 0; k < 14; k++) { const sh = new THREE.Mesh(new THREE.ConeGeometry(0.05 * sc, 0.3 * sc, 5), _advMat(k % 3 ? color : 0xffe08a, 0.95)); const a = Math.random() * Math.PI * 2, up = 0.5 + Math.random() * 1.6; sh.userData = { vx: Math.cos(a) * (1.6 + Math.random() * 2.2), vz: Math.sin(a) * (1.6 + Math.random() * 2.2), vy: up * 2.2 }; sh.rotation.set(Math.random() * 3, 0, Math.random() * 3); g.add(sh); shards.push(sh); }
+      g.userData = { kind: "boom", life: 0.85, max: 0.85, wave, flash, shards, sc };
+      scene.add(g); advRigs.push(g);
+      burst(pos, color, big ? 2.2 : 1.6); burst(pos, 0xffffff, big ? 1.5 : 1.0); burst(pos, 0xffe08a, 0.9);
+      if (G.sfx && G.sfx.crit) G.sfx.crit();
+    };
+    const updateAdvFx = (dt) => {
+      for (let i = advRigs.length - 1; i >= 0; i--) {
+        const g = advRigs[i], U = g.userData; U.life -= dt;
+        const pr = 1 - U.life / U.max;
+        if (U.kind === "cast") {
+          g.scale.setScalar(0.25 + Math.min(1, pr * 3.2) * 0.75);
+          g.rotation.y += dt * 2.4;
+          U.r2.rotation.z += dt * 3.5; U.r3.rotation.z -= dt * 1.8;
+          U.runes.forEach((ru, k) => { const a = ru.userData.a + pr * 5; ru.position.set(Math.cos(a) * 1.0, 0.25 + pr * 2.0 + Math.sin(pr * 9 + k) * 0.08, Math.sin(a) * 1.0); ru.rotation.y += dt * 6; });
+          U.pillar.material.opacity = 0.3 * (1 - pr * 0.6);
+          if (pr > 0.7) g.traverse((o) => { if (o.material) o.material.opacity *= 0.93; });
+        } else {
+          U.wave.scale.setScalar(1 + pr * (5.2 * U.sc)); U.wave.material.opacity = 0.95 * (1 - pr);
+          U.flash.scale.setScalar(1 + pr * 2.6); U.flash.material.opacity = 0.9 * (1 - pr);
+          U.shards.forEach((sh) => { const v = sh.userData; sh.position.x += v.vx * dt; sh.position.z += v.vz * dt; sh.position.y += v.vy * dt; v.vy -= 7.5 * dt; sh.material.opacity = 0.95 * (1 - pr); });
+        }
+        if (U.life <= 0) { scene.remove(g); advRigs.splice(i, 1); }
+      }
+    };
     for (let i = 0; i < 14; i++) {
       const s = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffd6e4, transparent: true }));
       s.visible = false;
@@ -12281,6 +12330,11 @@ export default function CherryAdventure() {
         }
         G.chainMult = 1 + Math.max(0, G.comboSeq.length - 1) * 0.12; // +12% per distinct chained skill (max ~+48%)
         setUi((u) => ({ ...u, chainLen: G.comboSeq.length }));
+        if (sk.id && sk.id.indexOf("x_") === 0) { // 🌟 สกิลขั้นสูง — ซีนีมาติกระดับ SSS
+          spawnAdvCast(sk.color || 0xb07ae0, char.position, false);
+          const dly = 620 / (G.battleSpeed || 1);
+          setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh) spawnAdvImpact(sk.color || 0xb07ae0, G.enemy.mesh.position, false); }, dly);
+        }
         // 🏹⚡ archer single-arrow skills charge for 1s before the shot — longer animation
         const chargeSkill = G.cls === "archer" && (sk.id === "a_power" || sk.id === "a_snipe" || sk.id === "a_weak" || sk.id === "a_poison"); // 🏹 charge shots
         const lastBullet = G.cls === "archer" && sk.id === "a_snipe"; // 💥 cinematic 2s slow-mo shot
@@ -12319,6 +12373,13 @@ export default function CherryAdventure() {
         const altUlt = !!(G.ultAlt && ULT_ALT[G.cls]); // 👑 alternate ultimate selected
         G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
         if (G.sfx && G.sfx.charge) G.sfx.charge(); // ⚡ rising hum as the ultimate winds up
+        if (G.skillMode === "adv" && G.pathId) { // 🌟 อัลติสายขั้นสูง — ซีนีมาติกใหญ่พิเศษ
+          const uc = (PATH_ADV[G.pathId] && PATH_ADV[G.pathId].skills[3] && PATH_ADV[G.pathId].skills[3].color) || 0xf5c542;
+          spawnAdvCast(uc, char.position, true);
+          const dly2 = 1500 / (G.battleSpeed || 1);
+          setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh) spawnAdvImpact(uc, G.enemy.mesh.position, true); }, dly2);
+          setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh) spawnAdvImpact(0xffffff, G.enemy.mesh.position, true); }, dly2 + 500 / (G.battleSpeed || 1));
+        }
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
       } else if (kind === "catch") {
         if (G.player.balls <= 0) { toast("บอลหัวใจหมด! ชนะศึกเพื่อรับเพิ่ม"); return; }
@@ -13534,6 +13595,7 @@ export default function CherryAdventure() {
       dtGlobal = dt;
       const t = clock.getElapsedTime();
       updateDamageNumbers(dt); // 💢 float the damage popups
+      updateAdvFx(dt); // 🌟 SSS advanced-skill cinematics
       if (window.__poseFn) { try { window.__poseFn({ armL, armR, wand, char, legL, legR, headG, G }); } catch (e) {} } // 🎬 studio character-sheet hook (no-op in production)
 
       // 🎬 clean backdrop on the character screens (class picker / dress-up): hide trees, monsters, decor
