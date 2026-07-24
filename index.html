@@ -24033,6 +24033,46 @@ function CherryAdventure() {
                                     bigX.visible = false;
                                     A.se.fx.add(bigX);
                                     A.se.bigX = bigX;
+                                    // 👑💀 DEATH GOD'S EXECUTION (advanced ult only) — towering reaper + giant scythe + world-cleaving slash
+                                    if (A.advU) {
+                                        const rMat = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                                        const reaper = new THREE.Group();
+                                        const cloak = new THREE.Mesh(new THREE.ConeGeometry(2.6, 8.6, 12), rMat(0x2a1246, 0));
+                                        cloak.position.y = 4.1;
+                                        reaper.add(cloak);
+                                        const hood = new THREE.Mesh(new THREE.SphereGeometry(1.35, 14, 12), rMat(0x1a0a2e, 0));
+                                        hood.position.y = 7.7;
+                                        reaper.add(hood);
+                                        for (const sx of [-0.5, 0.5]) {
+                                            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 10), rMat(0xd94a6a, 0));
+                                            eye.position.set(sx, 7.75, 1.15);
+                                            reaper.add(eye);
+                                        }
+                                        // giant scythe: long pole + crescent blade
+                                        const scythe = new THREE.Group();
+                                        scythe.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 9.5, 8), rMat(0x6a4ad0, 0)));
+                                        const blade = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.24, 8, 22, Math.PI * 0.95), rMat(0x9a4ad0, 0));
+                                        blade.position.set(1.7, 4.6, 0);
+                                        blade.rotation.z = -0.6;
+                                        scythe.add(blade);
+                                        scythe.position.set(3.0, 4.6, -0.4);
+                                        scythe.rotation.z = 0.3;
+                                        reaper.add(scythe);
+                                        reaper.userData.scythe = scythe;
+                                        reaper.visible = false;
+                                        A.se.fx.add(reaper);
+                                        A.se.reaper = reaper;
+                                        // ⚔️🌍 world-cleaving slash (huge bright bar) + glowing ground crack
+                                        const worldSlash = new THREE.Mesh(new THREE.PlaneGeometry(26, 0.55), rMat(0xffffff, 0));
+                                        worldSlash.position.set(EP.x, 1.7, EP.z);
+                                        A.se.fx.add(worldSlash);
+                                        A.se.worldSlash = worldSlash;
+                                        const crack = new THREE.Mesh(new THREE.PlaneGeometry(26, 0.5), rMat(0x9a4ad0, 0));
+                                        crack.rotation.x = -Math.PI / 2;
+                                        crack.position.set(EP.x, 0.05, EP.z);
+                                        A.se.fx.add(crack);
+                                        A.se.crack = crack;
+                                    }
                                     if (G.sfx && G.sfx.charge)
                                         G.sfx.charge();
                                 }
@@ -24166,6 +24206,15 @@ function CherryAdventure() {
                                         G.est.frozen = true;
                                         for (let k = 0; k < 20; k++)
                                             setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4.5, 0, EP.z + (Math.random() - 0.5) * 4.5), [shadow, blood, voidC, silver][k % 4], 0.2 + Math.random() * 3.2), k * 20);
+                                        // 👑💀 ADVANCED FINISHER — the Death God cleaves the world in two
+                                        if (A.advU) {
+                                            G._camShake = 1.5;
+                                            applyHit(roll() * 2.1, 0x9a4ad0, " 💀⚔️ ยมทูตฟันโลกเป็นสองซีก!");
+                                            if (scene.fog)
+                                                scene.fog.color.lerp(new THREE.Color(0x08040f), 0.6); // screen plunges to near-black
+                                            for (let k = 0; k < 28; k++)
+                                                setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 8, 0.1 + Math.random() * 0.6, EP.z + (Math.random() - 0.5) * 2), [0x9a4ad0, 0xc060ff, 0x1a0a2e, 0xffffff][k % 4], 0.3 + Math.random() * 3.4), k * 14);
+                                        }
                                     }
                                     G._camShake = Math.max(G._camShake || 0, 0.2);
                                 }
@@ -24191,6 +24240,59 @@ function CherryAdventure() {
                                     if (scene.fog && G.biomeFog)
                                         scene.fog.color.lerp(G.biomeFog, 0.08);
                                     G._camShake = Math.max(0, 0.2 * (1 - cp));
+                                }
+                                // 👑💀 DEATH GOD + WORLD-CLEAVE — advanced-ult overlay (runs every frame after the phase logic)
+                                if (A.advU && SE.reaper) {
+                                    const R = SE.reaper;
+                                    R.position.set(EP.x + 2.6, 0, EP.z - 4.8);
+                                    R.rotation.y = -0.42;
+                                    let opa = 0, sc = 1;
+                                    if (p < 0.18)
+                                        opa = 0;
+                                    else if (p < 0.5) {
+                                        const rp = (p - 0.18) / 0.32;
+                                        opa = rp * 0.85;
+                                        sc = 0.82 + rp * 0.22;
+                                    } // rise from the underworld
+                                    else if (p < 0.9) {
+                                        opa = 0.85;
+                                        sc = 1.04;
+                                    } // loom over the field
+                                    else {
+                                        opa = 0.85 * (1 - (p - 0.9) / 0.1);
+                                    } // dissolve
+                                    R.visible = opa > 0.02;
+                                    R.scale.setScalar(sc);
+                                    R.traverse((o) => { if (o.isMesh && o.material) {
+                                        const isEye = o.material.color.getHex() === 0xd94a6a;
+                                        o.material.opacity = opa * (isEye ? (0.6 + Math.sin(t * 6) * 0.4) : 0.9);
+                                    } });
+                                    // scythe: hold, then raise (0.72→0.86), then swing down to cleave the world (0.86→1)
+                                    const scy = R.userData.scythe;
+                                    if (scy) {
+                                        if (p < 0.72)
+                                            scy.rotation.z = 0.3;
+                                        else if (p < 0.86)
+                                            scy.rotation.z = 0.3 + (p - 0.72) / 0.14 * 1.25;
+                                        else
+                                            scy.rotation.z = 1.55 - (p - 0.86) / 0.14 * 3.1;
+                                    }
+                                    // world-cleave slash bar + ground crack appear on the finishing swing
+                                    if (SE.worldSlash) {
+                                        if (p < 0.84) {
+                                            SE.worldSlash.material.opacity = 0;
+                                            SE.crack.material.opacity = 0;
+                                        }
+                                        else {
+                                            const rp = (p - 0.84) / 0.16;
+                                            SE.worldSlash.position.set(EP.x, 1.7, EP.z);
+                                            SE.worldSlash.material.opacity = Math.sin(rp * Math.PI) * 0.95;
+                                            SE.worldSlash.scale.set(0.2 + rp * 1.1, 1 + Math.sin(rp * Math.PI) * 2.4, 1);
+                                            SE.crack.position.set(EP.x, 0.05, EP.z);
+                                            SE.crack.material.opacity = Math.min(0.9, rp * 1.6);
+                                            SE.crack.scale.set(0.3 + rp, 1 + rp * 2, 1);
+                                        }
+                                    }
                                 }
                             }
                             else if (cls === "archer") {
