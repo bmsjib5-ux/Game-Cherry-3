@@ -20235,6 +20235,7 @@ function CherryAdventure() {
       try {
         window.localStorage.setItem(slotKey(), JSON.stringify({
           v: 1,
+          ts: Date.now(),
           cls: G.cls,
           name: G.playerName,
           custom: G.custom,
@@ -20272,6 +20273,11 @@ function CherryAdventure() {
           diamonds: G.diamonds || 0,
           lastRankClaim: G.lastRankClaim || null,
           diaSkins: G.diaSkins || {},
+          heroesOwned: G.heroesOwned || {},
+          heroPasses: G.heroPasses || {},
+          heroTemp: G.heroTemp || {},
+          gachaPity: G.gachaPity || 0,
+          starterGems: G.starterGems ? 1 : 0,
           dressRotY: G.dressRotY != null ? G.dressRotY : null,
           dressHideGear: !!G.dressHideGear,
           wpMastery: G.wpMastery || {},
