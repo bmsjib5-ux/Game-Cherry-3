@@ -450,17 +450,17 @@ const PATH_ADV = {
             { id: "x_rng_3", cost: 13, name: "วิญญาณหมาป่า", emoji: "🐺", color: 0x4ad07a, mult: 1.3, perLv: 0.28, hits: 3, bleed: 3, stun: true, fx: "stab", desc: "ฝูงหมาป่าวิญญาณขย้ำ ×3 เลือดไหล + ขู่ขวัญ (Fear)" },
             { id: "x_rng_4", cost: 16, name: "คำสาปพงไพร", emoji: "🌳", color: 0x3a7a3a, mult: 1.6, perLv: 0.34, poison: 5, defDown: 8, stun: true, healCut: true, fx: "poison", desc: "รากไม้โบราณตรึงทั้งพื้นที่ (Root) ลดเกราะ พิษต่อเนื่อง + ลดการฟื้นฟู" }
         ] },
-    m_elem: { ult: { name: "มหาวินาศธาตุประสาน", emoji: "🌈☄️", mul: 1.45, desc: "หลอมสี่ธาตุเป็นหนึ่ง ระเบิดล้างสนาม" }, skills: [
-            { id: "x_elm_1", cost: 7, name: "หอกน้ำแข็งดำ", emoji: "🧊", color: 0x9adcf5, mult: 1.8, perLv: 0.36, freeze: true, fx: "shot", desc: "หอกน้ำแข็งมืด แช่แข็งข้ามเทิร์น" },
-            { id: "x_elm_2", cost: 10, name: "เพลิงนรกสีคราม", emoji: "🔵", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, burn: 3, fx: "bolt", desc: "เปลวเพลิงสีครามเผาต่อเนื่อง" },
-            { id: "x_elm_3", cost: 13, name: "ศิลาสายฟ้า", emoji: "🌋", color: 0xc09a5a, mult: 1.3, perLv: 0.28, hits: 3, stun: true, fx: "quake", desc: "หินภูเขาไฟ+ฟ้าผ่า ×3 + มึน" },
-            { id: "x_elm_4", cost: 16, name: "จตุธาตุสังหาร", emoji: "🌈", color: 0xb07ae0, mult: 2.6, perLv: 0.54, hits: 4, fx: "multi", desc: "สี่ธาตุถล่มพร้อมกัน ×4" }
+    m_elem: { ult: { name: "มหาวินาศธาตุประสาน", emoji: "🌈☄️", mul: 1.7, stun: true, defDown: 15, burn: 5, freeze: true, buffTeam: true, desc: "หลอมสี่ธาตุเป็นดวงดาวมหาธาตุ — ทะลุเวทป้องกัน ลดต้านทานทุกธาตุ ติดเผา+แช่แข็ง+ช็อกพร้อมกัน + Elemental Overload (พลังเวท/ความเร็วร่ายทีม)" }, skills: [
+            { id: "x_elm_1", cost: 7, name: "หอกน้ำแข็งดำ", emoji: "🧊", color: 0x9adcf5, mult: 0.7, perLv: 0.16, hits: 5, freeze: true, slow: true, fx: "multi", desc: "ฝนหอกน้ำแข็งดำ ×5 แช่แข็ง + ช้าลง + หนาวเยือก" },
+            { id: "x_elm_2", cost: 10, name: "เพลิงนรกสีคราม", emoji: "🔵", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, burn: 4, defDown: 6, fx: "bolt", desc: "มังกรเพลิงสีคราม เผาต่อเนื่อง + ลดต้านเวท" },
+            { id: "x_elm_3", cost: 13, name: "ศิลาสายฟ้า", emoji: "🌋", color: 0xc09a5a, mult: 1.0, perLv: 0.24, hits: 4, stun: true, defDown: 5, fx: "quake", desc: "อุกกาบาตสายฟ้า + ฟ้าผ่าลูกโซ่ ×4 สตัน + ทำลายเกราะ" },
+            { id: "x_elm_4", cost: 16, name: "จตุธาตุสังหาร", emoji: "🌈", color: 0xb07ae0, mult: 0.9, perLv: 0.2, hits: 4, burn: 3, freeze: true, defDown: 8, fx: "multi", desc: "พายุสี่ธาตุถล่มพร้อมกัน ×4 เผา+แช่แข็ง + ลดต้านธาตุ" }
         ] },
-    m_priest: { ult: { name: "ประตูสวรรค์เบิกฟ้า", emoji: "⛩️✨", mul: 1.3, desc: "เปิดประตูสวรรค์ แสงชำระทุกสิ่ง + ฟื้นพลังเต็มอัตรา" }, skills: [
-            { id: "x_pri_1", cost: 7, name: "แสงลงทัณฑ์", emoji: "☀️", color: 0xffe9a0, mult: 1.7, perLv: 0.34, fx: "bolt", desc: "ลำแสงสวรรค์ลงทัณฑ์" },
-            { id: "x_pri_2", cost: 10, name: "พรฟื้นชีพ", emoji: "💫", color: 0xfff2b0, mult: 1.0, perLv: 0.22, heal: 0.5, regen: 4, fx: "heal", desc: "ฟื้น HP หนัก + ฟื้นต่อเนื่อง 4 เทิร์น" },
-            { id: "x_pri_3", cost: 13, name: "มนตร์สะกดวิญญาณ", emoji: "🕊️", color: 0xd8ecff, mult: 1.9, perLv: 0.4, stun: true, confuse: 2, fx: "heal", desc: "แสงสะกด + สตัน + สับสน" },
-            { id: "x_pri_4", cost: 16, name: "นทีสวรรค์", emoji: "🌊", color: 0x8fd0ff, mult: 2.5, perLv: 0.52, hits: 2, heal: 0.25, fx: "multi", desc: "คลื่นแสงถล่ม ×2 + ฟื้น HP" }
+    m_priest: { ult: { name: "ประตูสวรรค์เบิกฟ้า", emoji: "⛩️✨", mul: 1.5, defDown: 8, heal: 0.6, regen: 4, buffDef: 15, cleanse: true, buffTeam: true, desc: "เปิดประตูสวรรค์ — ลำแสงพระเจ้ากวาดล้างศัตรู ฟื้น HP เต็ม ล้าง Debuff ทีม + Divine Protection (เกราะศักดิ์สิทธิ์/พลังเวท/ความเร็วร่าย)" }, skills: [
+            { id: "x_pri_1", cost: 7, name: "แสงลงทัณฑ์", emoji: "☀️", color: 0xffe9a0, mult: 1.6, perLv: 0.32, hits: 3, defDown: 6, confuse: 2, fx: "bolt", desc: "เสาแสงสวรรค์ลงทัณฑ์ ×3 ลดเกราะ + ตาพร่า (Blind)" },
+            { id: "x_pri_2", cost: 10, name: "พรฟื้นชีพ", emoji: "💫", color: 0xfff2b0, mult: 0.5, perLv: 0.1, heal: 0.5, regen: 4, buffDef: 12, cleanse: true, fx: "heal", desc: "วงเวทฟื้นชีพ — ฟื้น HP หนัก ล้างสถานะผิดปกติ + เพิ่มเกราะ" },
+            { id: "x_pri_3", cost: 13, name: "มนตร์สะกดวิญญาณ", emoji: "🕊️", color: 0xd8ecff, mult: 1.8, perLv: 0.38, stun: true, confuse: 3, defDown: 5, fx: "heal", desc: "โซ่แสงพันธนาการ (Bind) + สะกด (Silence) + ลดพลังเวท" },
+            { id: "x_pri_4", cost: 16, name: "นทีสวรรค์", emoji: "🌊", color: 0x8fd0ff, mult: 1.6, perLv: 0.34, hits: 2, heal: 0.25, regen: 3, buffDef: 10, cleanse: true, fx: "multi", desc: "นทีสวรรค์กวาดสนาม ×2 ฟื้นต่อเนื่อง + โล่แสง + ล้าง Debuff" }
         ] },
     s_shade: { ult: { name: "ราตรีนิรันดร์", emoji: "🌑⚰️", mul: 1.45, desc: "กลืนสนามสู่ความมืด เงาสังหารนับพันพร้อมกัน" }, skills: [
             { id: "x_shd_1", cost: 7, name: "กรีดเงา", emoji: "🌑", color: 0x9a4ad0, mult: 1.8, perLv: 0.38, critBonus: 0.25, fx: "stab", desc: "กรีดจากเงา คริง่าย" },
@@ -22722,6 +22722,12 @@ function CherryAdventure() {
                                         G.battleDef += sk.buffDef;
                                         fxMsg += ` ป้องกัน +${sk.buffDef} 🛡️`;
                                     }
+                                    if (sk.cleanse && G.pst) {
+                                        G.pst.poison = 0;
+                                        G.pst.stun = 0;
+                                        fxMsg += " ล้างสถานะผิดปกติ ✨";
+                                        setUi((u) => ({ ...u, pPoison: 0, pStun: 0 }));
+                                    } // ✨ นักบวช: ชำระ Debuff ผู้เล่น
                                     if (sk.buffEva) {
                                         G.battleEva = (G.battleEva || 0) + 20;
                                         fxMsg += " หลบ +20% 💨";
@@ -25857,11 +25863,24 @@ function CherryAdventure() {
                                         G.est.frozen = true;
                                         note += " ตรึง/ล้มศัตรู 🔗💫";
                                     }
+                                    if (AU.freeze && G.enemy && G.enemy.hp > 0) {
+                                        G.est.frozen = true;
+                                        note += " แช่แข็ง ❄️";
+                                    }
+                                    if (AU.burn && G.enemy && G.enemy.hp > 0) {
+                                        G.est.burn = Math.max(G.est.burn || 0, AU.burn);
+                                        note += " เผาไหม้ 🔥";
+                                    }
                                     if (AU.poison && G.enemy && G.enemy.hp > 0) {
                                         const P = curPath();
                                         const amp = (P && P.poisonAmp) || 1;
                                         G.est.poison = Math.min(5, (G.est.poison || 0) + AU.poison * amp);
                                         note += ` ติดพิษ ☠️ (${G.est.poison}/5)`;
+                                    }
+                                    if (AU.cleanse && G.pst) {
+                                        G.pst.poison = 0;
+                                        G.pst.stun = 0;
+                                        note += " ล้าง Debuff ✨";
                                     }
                                     if (AU.heal) {
                                         const hh = Math.round(effMaxHp() * AU.heal);
@@ -25872,6 +25891,10 @@ function CherryAdventure() {
                                         G.regen = (G.regen || 0) + AU.regen;
                                         note += ` ฟื้นต่อเนื่อง ${AU.regen} เทิร์น 💚`;
                                     }
+                                    if (AU.buffDef) {
+                                        G.battleDef = (G.battleDef || 0) + AU.buffDef;
+                                        note += ` เกราะศักดิ์สิทธิ์ +${AU.buffDef} 🛡️`;
+                                    }
                                     if (AU.buffTeam) {
                                         G.battleCrit = (G.battleCrit || 0) + 15;
                                         G.battleSpd = (G.battleSpd || 0) + 20;
@@ -25880,7 +25903,7 @@ function CherryAdventure() {
                                     }
                                     if (note) {
                                         syncPlayer();
-                                        setUi((u) => ({ ...u, hp: G.player.hp, enemy: { ...u.enemy, hp: (G.enemy || u.enemy).hp }, msg: `👑 ${AU.name} — ${note.trim()}` }));
+                                        setUi((u) => ({ ...u, hp: G.player.hp, pPoison: G.pst ? G.pst.poison : u.pPoison, pStun: G.pst ? G.pst.stun : u.pStun, enemy: { ...u.enemy, hp: (G.enemy || u.enemy).hp }, msg: `👑 ${AU.name} — ${note.trim()}` }));
                                     }
                                 }
                                 G.banim = null;
