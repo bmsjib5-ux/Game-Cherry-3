@@ -14693,6 +14693,7 @@ function CherryAdventure() {
       if (G.buddy && !G.col[G.buddy]) G.setBuddy(G.team[0] || null);
       if (G.sfx) G.sfx.catch();
       toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}] (ร่าง ${G.pets[result].stage})!`);
+      if (SPECIES[result].tier >= 5 && G.announce) G.announce(`🔮 ${G.playerName || "ผู้เล่น"} ผสมพันธุ์ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]!`);
       setUi(u => ({
         ...u,
         col: {
@@ -17753,6 +17754,7 @@ function CherryAdventure() {
           // 🎉 milestone bonus keeps the curve rewarding late
           G.player.sp += 5;
           toast(`🎉 เลเวล ${G.player.level}! โบนัสแต้มสกิล +5 ⭐`);
+          if (G.player.level >= 20 && G.announce) G.announce(`🎉 ${G.playerName || "ผู้เล่น"} ถึงเลเวล ${G.player.level} แล้ว!`);
         }
         G.player.statPts = (G.player.statPts || 0) + 3; // 💪 3 stat points per level (แทนระบบอัพเดิม)
         G.player.hp = effMaxHp();
@@ -18743,6 +18745,7 @@ function CherryAdventure() {
       const gotHero = results.some((r) => r.type === "hero");
       if (G.sfx) { if (gotHero && G.sfx.levelup) G.sfx.levelup(); else if (G.sfx.coin) G.sfx.coin(); }
       if (gotHero) toast("🎰🦸 อัญเชิญได้ฮีโร่ในตำนาน!");
+      { const nh = results.filter((r) => r.type === "hero" && r.isNew); if (nh.length && G.announce) G.announce(`🎰 ${G.playerName || "ผู้เล่น"} อัญเชิญได้ฮีโร่ในตำนาน ${nh.map((r) => r.emoji + r.name).join(" ")}!`); }
       setUi((u) => ({ ...u, diamonds: G.diamonds, gold: G.gold, heroesOwned: { ...(G.heroesOwned || {}) }, diaSkins: { ...(G.diaSkins || {}) }, heroPasses: { ...(G.heroPasses || {}) }, gachaResult: results, gachaPity: G.gachaPity || 0 }));
       if (G.saveGame) G.saveGame();
     };
@@ -19240,6 +19243,7 @@ function CherryAdventure() {
         burst(char.position, 0xff4a8a, 1.8);
         if (G.sfx) G.sfx.levelup();
         toast(`🌟✨ สัตว์เลี้ยง${petRarity(lp).name}หลุดจากบอส! ได้ ${SPECIES[lp].emoji} ${SPECIES[lp].name}!`);
+        if (G.announce) G.announce(`🌟 ${G.playerName || "ผู้เล่น"} ได้สัตว์เลี้ยง${petRarity(lp).name} ${SPECIES[lp].emoji} ${SPECIES[lp].name} จากบอส!`);
       }
       // ⛏️ material drops — every fight drops some ore; tougher/special foes drop essences & scales
       {
@@ -20837,7 +20841,7 @@ function CherryAdventure() {
     };
     G.startPresence = () => {
       if (G._presenceT || !CN.enabled()) return;
-      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); };
+      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); if (G.pollAnnounce) G.pollAnnounce(); };
       beat();
       G._presenceT = setInterval(beat, 25000);
       if (!G._duelT) G._duelT = setInterval(() => { if (G.pollDuels) G.pollDuels(); }, 6000); // ⚔️ faster incoming-challenge detection
@@ -20847,6 +20851,7 @@ function CherryAdventure() {
       body = (body || "").trim().slice(0, 200);
       if (!body) return;
       if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อนแชท"); return; }
+      if (G.chat.room === "announce") { toast("📢 ห้องประกาศอ่านอย่างเดียว"); return; }
       const token = await G._authToken(); if (!token) return;
       const msg = { room: G.chat.room, uid: G.auth.uid, n: (G.playerName || "?").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1, body: body, ts: Date.now() };
       const ok = await CN.sendMsg(token, msg);
@@ -20866,6 +20871,39 @@ function CherryAdventure() {
     G.chatStop = () => { if (G._chatT) { clearInterval(G._chatT); G._chatT = null; } };
     // 💬 private DM: a stable room key from the two player ids (sorted)
     G.dmRoom = pid => "dm_" + [(G.pid || ""), pid].sort().join("_");
+    // 📢 GAME ANNOUNCEMENTS — เหตุการณ์ใหญ่ถูกโพสต์ลงห้องแชต "announce" และวิ่งบนจอผู้เล่นทุกคน ~10 วิ
+    G._annQueue = [];
+    const annNext = () => {
+      if (G._annShowing) return;
+      const txt = G._annQueue.shift();
+      if (!txt) return;
+      G._annShowing = true;
+      setUi((u) => ({ ...u, announce: { text: txt, key: Date.now() } }));
+      setTimeout(() => { G._annShowing = false; setUi((u) => ({ ...u, announce: null })); setTimeout(annNext, 400); }, 10000); // 🕙 ตัววิ่ง ~10 วินาที
+    };
+    G.showAnnounce = (txt) => { if (!txt) return; G._annQueue.push(String(txt).slice(0, 160)); if (G._annQueue.length > 6) G._annQueue.shift(); annNext(); };
+    G.announce = async (txt) => {
+      G.showAnnounce(txt); // เจ้าของเหตุการณ์เห็นบนจอตัวเองทันที
+      try {
+        if (G.auth.status !== "in" || !CN.enabled()) return;
+        const now = Date.now();
+        if (G._lastAnnSend && now - G._lastAnnSend < 30000) return; // 🔇 กันสแปมประกาศถี่เกิน
+        G._lastAnnSend = now;
+        const token = await G._authToken(); if (!token) return;
+        await CN.sendMsg(token, { room: "announce", uid: G.auth.uid, n: (G.playerName || "?").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1, body: String(txt).slice(0, 160), ts: now });
+      } catch (e) {}
+    };
+    G.pollAnnounce = async () => {
+      try {
+        if (G.auth.status !== "in" || !CN.enabled()) return;
+        const token = await G._authToken(); if (!token) return;
+        const rows = await CN.getMsgs(token, "announce", G._annLastId || 0);
+        if (!rows || !rows.length) return;
+        G._annLastId = rows[rows.length - 1].id;
+        if (!G._annInit) { G._annInit = true; return; } // เข้าเกมครั้งแรกไม่เล่นประกาศย้อนหลัง
+        rows.forEach((m) => { if (m.uid !== G.auth.uid) G.showAnnounce(m.body); });
+      } catch (e) {}
+    };
     G.chatSetRoom = (room, label) => {
       if (!room || G.chat.room === room) return;
       G.chat.room = room; G.chat.label = label || room;
@@ -28712,13 +28750,14 @@ function CherryAdventure() {
       paddingLeft: "env(safe-area-inset-left)",
       paddingRight: "env(safe-area-inset-right)"
     }
-  }, /*#__PURE__*/React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }`), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} }`), /*#__PURE__*/React.createElement("div", {
     ref: mountRef,
     style: {
       width: "100%",
       height: "100%"
     }
-  }), ui.mode === "login" && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font } },
+  }), ui.announce && (React.createElement("div", { key: ui.announce.key, style: { position: "absolute", top: 4, left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" } },
+    React.createElement("div", { style: { whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform" } }, "📢 ", ui.announce.text))), ui.mode === "login" && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font } },
     React.createElement("div", { style: { width: "100%", maxWidth: 360, background: "#fff", borderRadius: 24, padding: "26px 22px", boxShadow: "0 14px 44px rgba(150,90,120,0.28)", textAlign: "center" } },
         React.createElement("div", { style: { fontSize: 42 } }, "\uD83C\uDF52"),
         React.createElement("div", { style: { fontSize: 22, fontWeight: 800, color: "#c0446a", marginBottom: 2 } }, "Cherry Adventure"),
@@ -30393,7 +30432,7 @@ function CherryAdventure() {
                     " \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C"),
                 React.createElement("div", { style: { flex: 1 } }),
                 React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); }, style: { width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f0e6da", fontWeight: 800 } }, "\u2715")),
-            React.createElement("div", { style: { display: "flex", gap: 6, overflowX: "auto", padding: "8px 12px", borderBottom: "1px solid #ece0d4", flexShrink: 0 } }, React.createElement("button", { key: "g", onClick: () => G.chatSetRoom("global", "\u0E41\u0E0A\u0E17\u0E23\u0E27\u0E21"), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: (ui.chatRoom || "global") === "global" ? "#fff" : "#8a6a5a", background: (ui.chatRoom || "global") === "global" ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" } }, "\uD83C\uDF10 \u0E17\u0E31\u0E48\u0E27\u0E44\u0E1B"), (G.readFriends ? G.readFriends() : []).filter(f => f.pid).map(f => React.createElement("button", { key: f.pid, onClick: () => G.chatSetRoom(G.dmRoom(f.pid), f.n), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === G.dmRoom(f.pid) ? "#fff" : "#8a6a5a", background: ui.chatRoom === G.dmRoom(f.pid) ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" } }, ((ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online) ? "\uD83D\uDFE2 " : "\uD83D\uDCAC ") + f.n))), React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 } },
+            React.createElement("div", { style: { display: "flex", gap: 6, overflowX: "auto", padding: "8px 12px", borderBottom: "1px solid #ece0d4", flexShrink: 0 } }, React.createElement("button", { key: "g", onClick: () => G.chatSetRoom("global", "\u0E41\u0E0A\u0E17\u0E23\u0E27\u0E21"), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: (ui.chatRoom || "global") === "global" ? "#fff" : "#8a6a5a", background: (ui.chatRoom || "global") === "global" ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" } }, "\uD83C\uDF10 \u0E17\u0E31\u0E48\u0E27\u0E44\u0E1B"), React.createElement("button", { key: "ann", onClick: () => G.chatSetRoom("announce", "ประกาศเกม"), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === "announce" ? "#fff" : "#a5762a", background: ui.chatRoom === "announce" ? "linear-gradient(90deg,#e0a020,#d06a30)" : "#f8edd8" } }, "📢 ประกาศ"), (G.readFriends ? G.readFriends() : []).filter(f => f.pid).map(f => React.createElement("button", { key: f.pid, onClick: () => G.chatSetRoom(G.dmRoom(f.pid), f.n), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === G.dmRoom(f.pid) ? "#fff" : "#8a6a5a", background: ui.chatRoom === G.dmRoom(f.pid) ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" } }, ((ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online) ? "\uD83D\uDFE2 " : "\uD83D\uDCAC ") + f.n))), React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 } },
                 (ui.chatMsgs || []).length === 0 && React.createElement("div", { style: { textAlign: "center", color: "#c0b0a4", fontSize: 12, marginTop: 20 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 \u2014 \u0E17\u0E31\u0E01\u0E17\u0E32\u0E22\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E2A\u0E34! \uD83D\uDC4B"),
                 (ui.chatMsgs || []).map((m) => {
                     const mine = m.uid === (ui.auth && ui.auth.uid);

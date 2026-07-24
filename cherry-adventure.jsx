@@ -8913,6 +8913,7 @@ export default function CherryAdventure() {
       if (G.buddy && !G.col[G.buddy]) G.setBuddy(G.team[0] || null);
       if (G.sfx) G.sfx.catch();
       toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}] (ร่าง ${G.pets[result].stage})!`);
+      if (SPECIES[result].tier >= 5 && G.announce) G.announce(`🔮 ${G.playerName || "ผู้เล่น"} ผสมพันธุ์ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]!`);
       setUi((u) => ({ ...u, col: { ...G.col }, pets: { ...G.pets }, team: [...(G.team || [])], fuseA: null, fuseB: null }));
       syncPlayer();
     };
@@ -10738,6 +10739,7 @@ export default function CherryAdventure() {
         if (G.player.level % 10 === 0) { // 🎉 milestone bonus keeps the curve rewarding late
           G.player.sp += 5;
           toast(`🎉 เลเวล ${G.player.level}! โบนัสแต้มสกิล +5 ⭐`);
+          if (G.player.level >= 20 && G.announce) G.announce(`🎉 ${G.playerName || "ผู้เล่น"} ถึงเลเวล ${G.player.level} แล้ว!`);
         }
         G.player.statPts = (G.player.statPts || 0) + 3; // 💪 3 stat points per level (แทนระบบอัพเดิม)
         G.player.hp = effMaxHp();
@@ -11417,6 +11419,7 @@ export default function CherryAdventure() {
       const gotHero = results.some((r) => r.type === "hero");
       if (G.sfx) { if (gotHero && G.sfx.levelup) G.sfx.levelup(); else if (G.sfx.coin) G.sfx.coin(); }
       if (gotHero) toast("🎰🦸 อัญเชิญได้ฮีโร่ในตำนาน!");
+      { const nh = results.filter((r) => r.type === "hero" && r.isNew); if (nh.length && G.announce) G.announce(`🎰 ${G.playerName || "ผู้เล่น"} อัญเชิญได้ฮีโร่ในตำนาน ${nh.map((r) => r.emoji + r.name).join(" ")}!`); }
       setUi((u) => ({ ...u, diamonds: G.diamonds, gold: G.gold, heroesOwned: { ...(G.heroesOwned || {}) }, diaSkins: { ...(G.diaSkins || {}) }, heroPasses: { ...(G.heroPasses || {}) }, gachaResult: results, gachaPity: G.gachaPity || 0 }));
       if (G.saveGame) G.saveGame();
     };
@@ -11793,6 +11796,7 @@ export default function CherryAdventure() {
         burst(char.position, 0xff4a8a, 1.8);
         if (G.sfx) G.sfx.levelup();
         toast(`🌟✨ สัตว์เลี้ยง${petRarity(lp).name}หลุดจากบอส! ได้ ${SPECIES[lp].emoji} ${SPECIES[lp].name}!`);
+        if (G.announce) G.announce(`🌟 ${G.playerName || "ผู้เล่น"} ได้สัตว์เลี้ยง${petRarity(lp).name} ${SPECIES[lp].emoji} ${SPECIES[lp].name} จากบอส!`);
       }
       // ⛏️ material drops — every fight drops some ore; tougher/special foes drop essences & scales
       {
@@ -12829,7 +12833,7 @@ export default function CherryAdventure() {
     };
     G.startPresence = () => {
       if (G._presenceT || !CN.enabled()) return;
-      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); };
+      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); if (G.pollAnnounce) G.pollAnnounce(); };
       beat();
       G._presenceT = setInterval(beat, 25000);
       if (!G._duelT) G._duelT = setInterval(() => { if (G.pollDuels) G.pollDuels(); }, 6000); // ⚔️ faster incoming-challenge detection
@@ -12839,6 +12843,7 @@ export default function CherryAdventure() {
       body = (body || "").trim().slice(0, 200);
       if (!body) return;
       if (G.auth.status !== "in") { toast("เข้าสู่ระบบก่อนแชท"); return; }
+      if (G.chat.room === "announce") { toast("📢 ห้องประกาศอ่านอย่างเดียว"); return; }
       const token = await G._authToken(); if (!token) return;
       const msg = { room: G.chat.room, uid: G.auth.uid, n: (G.playerName || "?").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1, body: body, ts: Date.now() };
       const ok = await CN.sendMsg(token, msg);
@@ -12858,6 +12863,39 @@ export default function CherryAdventure() {
     G.chatStop = () => { if (G._chatT) { clearInterval(G._chatT); G._chatT = null; } };
     // 💬 private DM: a stable room key from the two player ids (sorted)
     G.dmRoom = (pid) => "dm_" + [(G.pid || ""), pid].sort().join("_");
+    // 📢 GAME ANNOUNCEMENTS — เหตุการณ์ใหญ่ถูกโพสต์ลงห้องแชต "announce" และวิ่งบนจอผู้เล่นทุกคน ~10 วิ
+    G._annQueue = [];
+    const annNext = () => {
+      if (G._annShowing) return;
+      const txt = G._annQueue.shift();
+      if (!txt) return;
+      G._annShowing = true;
+      setUi((u) => ({ ...u, announce: { text: txt, key: Date.now() } }));
+      setTimeout(() => { G._annShowing = false; setUi((u) => ({ ...u, announce: null })); setTimeout(annNext, 400); }, 10000); // 🕙 ตัววิ่ง ~10 วินาที
+    };
+    G.showAnnounce = (txt) => { if (!txt) return; G._annQueue.push(String(txt).slice(0, 160)); if (G._annQueue.length > 6) G._annQueue.shift(); annNext(); };
+    G.announce = async (txt) => {
+      G.showAnnounce(txt); // เจ้าของเหตุการณ์เห็นบนจอตัวเองทันที
+      try {
+        if (G.auth.status !== "in" || !CN.enabled()) return;
+        const now = Date.now();
+        if (G._lastAnnSend && now - G._lastAnnSend < 30000) return; // 🔇 กันสแปมประกาศถี่เกิน
+        G._lastAnnSend = now;
+        const token = await G._authToken(); if (!token) return;
+        await CN.sendMsg(token, { room: "announce", uid: G.auth.uid, n: (G.playerName || "?").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1, body: String(txt).slice(0, 160), ts: now });
+      } catch (e) {}
+    };
+    G.pollAnnounce = async () => {
+      try {
+        if (G.auth.status !== "in" || !CN.enabled()) return;
+        const token = await G._authToken(); if (!token) return;
+        const rows = await CN.getMsgs(token, "announce", G._annLastId || 0);
+        if (!rows || !rows.length) return;
+        G._annLastId = rows[rows.length - 1].id;
+        if (!G._annInit) { G._annInit = true; return; } // เข้าเกมครั้งแรกไม่เล่นประกาศย้อนหลัง
+        rows.forEach((m) => { if (m.uid !== G.auth.uid) G.showAnnounce(m.body); });
+      } catch (e) {}
+    };
     G.chatSetRoom = (room, label) => {
       if (!room || G.chat.room === room) return;
       G.chat.room = room; G.chat.label = label || room;
@@ -19123,8 +19161,14 @@ export default function CherryAdventure() {
 
   return (
     <div style={{ width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
-      <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }`}</style>
+      <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+      {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
+      {ui.announce && (
+        <div key={ui.announce.key} style={{ position: "absolute", top: 4, left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" }}>
+          <div style={{ whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform" }}>📢 {ui.announce.text}</div>
+        </div>
+      )}
 
       {/* ===== 💾 title / save-slot selection ===== */}
       {ui.mode === "login" && (
@@ -20193,6 +20237,7 @@ export default function CherryAdventure() {
             </div>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", padding: "8px 12px", borderBottom: "1px solid #ece0d4", flexShrink: 0 }}>
               <button key="g" onClick={() => G.chatSetRoom("global", "แชทรวม")} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: (ui.chatRoom || "global") === "global" ? "#fff" : "#8a6a5a", background: (ui.chatRoom || "global") === "global" ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" }}>🌐 ทั่วไป</button>
+              <button key="ann" onClick={() => G.chatSetRoom("announce", "ประกาศเกม")} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === "announce" ? "#fff" : "#a5762a", background: ui.chatRoom === "announce" ? "linear-gradient(90deg,#e0a020,#d06a30)" : "#f8edd8" }}>📢 ประกาศ</button>
               {(G.readFriends ? G.readFriends() : []).filter((f) => f.pid).map((f) => (
                 <button key={f.pid} onClick={() => G.chatSetRoom(G.dmRoom(f.pid), f.n)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === G.dmRoom(f.pid) ? "#fff" : "#8a6a5a", background: ui.chatRoom === G.dmRoom(f.pid) ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" }}>{(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online ? "🟢 " : "💬 ") + f.n}</button>
               ))}
