@@ -437,11 +437,11 @@ const PATH_ADV = {
     { id: "x_rng_2", cost: 10, name: "ฝนศรพิษไพร",    emoji: "🍃", color: 0x7ad04a, mult: 0.85, perLv: 0.2, hits: 5, poison: 4, healCut: true, fx: "multi", desc: "ฝนศรพิษ ×5 อาบพื้นที่ พิษสะสม + ลดการฟื้นฟู HP" },
     { id: "x_rng_3", cost: 13, name: "วิญญาณหมาป่า",  emoji: "🐺", color: 0x4ad07a, mult: 1.3, perLv: 0.28, hits: 3, bleed: 3, stun: true, fx: "stab", desc: "ฝูงหมาป่าวิญญาณขย้ำ ×3 เลือดไหล + ขู่ขวัญ (Fear)" },
     { id: "x_rng_4", cost: 16, name: "คำสาปพงไพร",    emoji: "🌳", color: 0x3a7a3a, mult: 1.6, perLv: 0.34, poison: 5, defDown: 8, stun: true, healCut: true, fx: "poison", desc: "รากไม้โบราณตรึงทั้งพื้นที่ (Root) ลดเกราะ พิษต่อเนื่อง + ลดการฟื้นฟู" } ] },
-  m_elem: { ult: { name: "มหาวินาศธาตุประสาน", emoji: "🌈☄️", mul: 1.7, stun: true, defDown: 15, burn: 5, freeze: true, buffTeam: true, desc: "หลอมสี่ธาตุเป็นดวงดาวมหาธาตุ — ทะลุเวทป้องกัน ลดต้านทานทุกธาตุ ติดเผา+แช่แข็ง+ช็อกพร้อมกัน + Elemental Overload (พลังเวท/ความเร็วร่ายทีม)" }, skills: [
-    { id: "x_elm_1", cost: 7,  name: "หอกน้ำแข็งดำ",  emoji: "🧊", color: 0x9adcf5, mult: 0.7,  perLv: 0.16, hits: 5, freeze: true, slow: true, fx: "multi", desc: "ฝนหอกน้ำแข็งดำ ×5 แช่แข็ง + ช้าลง + หนาวเยือก" },
-    { id: "x_elm_2", cost: 10, name: "เพลิงนรกสีคราม", emoji: "🔵", color: 0x4a9ae8, mult: 2.0,  perLv: 0.42, burn: 4, defDown: 6, fx: "bolt", desc: "มังกรเพลิงสีคราม เผาต่อเนื่อง + ลดต้านเวท" },
-    { id: "x_elm_3", cost: 13, name: "ศิลาสายฟ้า",    emoji: "🌋", color: 0xc09a5a, mult: 1.0,  perLv: 0.24, hits: 4, stun: true, defDown: 5, fx: "quake", desc: "อุกกาบาตสายฟ้า + ฟ้าผ่าลูกโซ่ ×4 สตัน + ทำลายเกราะ" },
-    { id: "x_elm_4", cost: 16, name: "จตุธาตุสังหาร",  emoji: "🌈", color: 0xb07ae0, mult: 0.9,  perLv: 0.2,  hits: 4, burn: 3, freeze: true, defDown: 8, fx: "multi", desc: "พายุสี่ธาตุถล่มพร้อมกัน ×4 เผา+แช่แข็ง + ลดต้านธาตุ" } ] },
+  m_elem: { ult: { name: "มหาวิบัติหกธาตุ", emoji: "🌈☄️", mul: 1.8, stun: true, defDown: 15, burn: 5, freeze: true, buffTeam: true, desc: "Elemental Apocalypse — อัญเชิญหกธาตุ (มังกรไฟ🔥/หงส์น้ำแข็ง❄️/มังกรสายฟ้า⚡/ไททันปฐพี🌍/วิญญาณวายุ🌪️/ดาราอาคม✨) หลอมเป็นทรงกลมมหาเวท ระเบิดพายุหกธาตุถล่มทั้งสนาม ทะลุเวทป้องกัน เผา+แช่แข็ง+ช็อก + Elemental Overload (พลังเวท/ความเร็วร่ายทีม)" }, skills: [
+    { id: "x_elm_1", cost: 7,  name: "อุกกาบาตเพลิงนรก", emoji: "☄️", color: 0xff5a2a, mult: 2.4, perLv: 0.5,  burn: 5, defDown: 8, fx: "orb",   desc: "Inferno Meteor — อัญเชิญอุกกาบาตเพลิงยักษ์ตกจากฟ้า ระเบิดลาวา+พื้นลุกไหม้ เผาหนัก + ลดต้านไฟ" },
+    { id: "x_elm_2", cost: 10, name: "หอกน้ำแข็งดำ",     emoji: "🧊", color: 0x4a6ad0, mult: 0.8, perLv: 0.18, hits: 5, freeze: true, slow: true, fx: "shot", desc: "Black Frost Spear — ฝนหอกน้ำแข็งดำ ×5 พื้นเยือกแข็งทันที แช่แข็ง + ช้าลง" },
+    { id: "x_elm_3", cost: 13, name: "คำพิพากษาสายฟ้า",  emoji: "⚡", color: 0x5b4bff, mult: 0.9, perLv: 0.2,  hits: 5, stun: true, defDown: 6, fx: "bolt", desc: "Thunder Judgment — เสาสายฟ้าสวรรค์ฟาดต่อเนื่อง ×5 พลาสมาลูกโซ่ สตัน + ทำลายเกราะ" },
+    { id: "x_elm_4", cost: 16, name: "มหันตภัยพงพนา",    emoji: "🌪️", color: 0x6ac04a, mult: 1.0, perLv: 0.22, hits: 4, stun: true, slow: true, defDown: 8, fx: "quake", desc: "Nature Cataclysm — เสาศิลาผุด+ทอร์นาโดใบไม้ ×4 แผ่นดินแยก ทุ่มล้ม + ช้าลง + ลดเกราะ" } ] },
   m_priest: { ult: { name: "ประตูสวรรค์เบิกฟ้า", emoji: "⛩️✨", mul: 1.5, defDown: 8, heal: 0.6, regen: 4, buffDef: 15, cleanse: true, buffTeam: true, desc: "เปิดประตูสวรรค์ — ลำแสงพระเจ้ากวาดล้างศัตรู ฟื้น HP เต็ม ล้าง Debuff ทีม + Divine Protection (เกราะศักดิ์สิทธิ์/พลังเวท/ความเร็วร่าย)" }, skills: [
     { id: "x_pri_1", cost: 7,  name: "แสงลงทัณฑ์",    emoji: "☀️", color: 0xffe9a0, mult: 1.6,  perLv: 0.32, hits: 3, defDown: 6, confuse: 2, fx: "bolt", desc: "เสาแสงสวรรค์ลงทัณฑ์ ×3 ลดเกราะ + ตาพร่า (Blind)" },
     { id: "x_pri_2", cost: 10, name: "พรฟื้นชีพ",      emoji: "💫", color: 0xfff2b0, mult: 0.5,  perLv: 0.1,  heal: 0.5, regen: 4, buffDef: 12, cleanse: true, fx: "heal", desc: "วงเวทฟื้นชีพ — ฟื้น HP หนัก ล้างสถานะผิดปกติ + เพิ่มเกราะ" },
@@ -755,6 +755,7 @@ const SKILL_ELEM = {
   l_thrust: null, l_sweep: "wind", l_quake: "earth", l_charge: null,
   k_slash: null, k_double: null, k_iai: "wind", k_moon: null,
   p_frostpierce: "ice", x_frz_1: "ice", x_frz_2: "ice", x_frz_3: "ice", x_frz_4: "ice", // 🧊 อัศวินน้ำแข็งดำ
+  x_elm_1: "fire", x_elm_2: "ice", x_elm_3: "arcane", x_elm_4: "earth", // 🌈 จอมเวทธาตุ (ไฟ/น้ำแข็ง/สายฟ้า/ธรรมชาติ)
 };
 
 // ---------- ⛏️ Crafting materials (drop from monsters, used at the forge) ----------
@@ -17176,6 +17177,28 @@ export default function CherryAdventure() {
                   setTimeout(() => { if (G.enemy) monGlow(em, 0x000000, null); }, 1200);
                   if (G.sfx && G.sfx.crit) G.sfx.crit();
                   fxMsg += big ? " 🧊 มังกรน้ำแข็งดำระเบิด!" : " 🧊 ระเบิดน้ำแข็งดำ!";
+                }
+                // 🔥❄️⚡🌪️ ELEMENTAL ARCHMAGE VFX — per-element impact (Inferno Meteor / Black Frost / Thunder Judgment / Nature Cataclysm)
+                if (sk.id && sk.id.indexOf("x_elm") === 0) {
+                  const EP = em.position;
+                  const kits = {
+                    x_elm_1: { fx: "fire",  ring: 0xff4a1a, glow: 0xff5a20, cols: [0xff7a1a, 0xffd24a, 0xd82a10, 0xffffff, 0xff3a08], shake: 0.55, note: " ☄️ อุกกาบาตเพลิงถล่ม!" },   // fire — orange/red/gold/white-hot
+                    x_elm_2: { fx: "ice",   ring: 0x4a6ad0, glow: 0x66ccff, cols: [0x66ccff, 0x88eeff, 0xeaf8ff, 0x1a237e, 0x141018], shake: 0.4,  note: " 🧊 หอกน้ำแข็งดำเยือกแข็ง!" }, // ice — cyan/blue/black crystal
+                    x_elm_3: { fx: "bolt",  ring: 0x5b4bff, glow: 0x88aaff, cols: [0x5b4bff, 0x88aaff, 0xffffff, 0x9a4ad0, 0xcfe0ff], shake: 0.45, note: " ⚡ คำพิพากษาสายฟ้า!" },     // lightning — electric blue/purple/white
+                    x_elm_4: { fx: "quake", ring: 0x6ac04a, glow: 0x8ad06a, cols: [0x6ac04a, 0x8a6a3a, 0xc0a060, 0xeaffe0, 0x4a7a3a], shake: 0.5,  note: " 🌪️ มหันตภัยพงพนา!" },      // nature — emerald/brown/gold dust
+                  };
+                  const K = kits[sk.id]; const big = sk.id === "x_elm_1" || sk.id === "x_elm_4";
+                  spawnSkillFx(K.fx, EP, K.ring);
+                  spawnSkillFx("quake", EP, K.ring); // shockwave ring spreading outward
+                  G._camShake = Math.max(G._camShake || 0, K.shake);
+                  if (em.userData.body) em.userData._stagger = 0.5;
+                  burst(EP, K.cols[3], big ? 2.2 : 1.6); // bright elemental bloom flash
+                  const n = big ? 16 : 12;
+                  for (let k = 0; k < n; k++) setTimeout(() => { if (G.mode === "battle") burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * (big ? 3 : 2.2), 0.2 + Math.random() * (big ? 2.8 : 2), EP.z + (Math.random() - 0.5) * (big ? 3 : 2.2)), K.cols[k % K.cols.length], 0.5 + Math.random() * 0.8); }, k * 22);
+                  monGlow(em, K.glow, 0.85);
+                  setTimeout(() => { if (G.enemy) monGlow(em, 0x000000, null); }, 900);
+                  if (G.sfx && G.sfx.crit) G.sfx.crit();
+                  fxMsg += K.note;
                 }
                 if (sk.stun && Math.random() < 0.3 + rank * 0.05) { G.est.frozen = true; fxMsg += " มึนงง 💫"; }
                 if (sk.buffDef) { G.battleDef += sk.buffDef; fxMsg += ` ป้องกัน +${sk.buffDef} 🛡️`; }
