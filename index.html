@@ -29979,8 +29979,8 @@ function CherryAdventure() {
                             iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })),
                         React.createElement("div", { style: cornerStyle("right") },
                             iconBtn("⚔️", "#d9536b", () => G.act("attack"), null, { title: "โจมตี" }),
-                            iconBtn(ui.ultUsed ? "💫" : "🌟", ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)", () => G.act("ult"), null, { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตายทั่วไป" }),
-                            ui.pathId && advUltOf(ui.pathId) && iconBtn(ui.advUltUsed ? "🌫️" : "👑", ui.advUltUsed ? "#b0a396" : "linear-gradient(135deg,#9a6ad0,#d07ae0)", () => G.act("advUlt"), null, { key: "advult", title: `👑 ${advUltOf(ui.pathId).name} — ${advUltOf(ui.pathId).desc} (ท่าไม้ตายขั้นสูง)` }),
+                            !(ui.skillMode === "adv" && ui.pathId && advUltOf(ui.pathId)) && iconBtn(ui.ultUsed ? "💫" : "🌟", ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)", () => G.act("ult"), null, { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตายทั่วไป" }),
+                            ui.skillMode === "adv" && ui.pathId && advUltOf(ui.pathId) && iconBtn(ui.advUltUsed ? "🌫️" : "👑", ui.advUltUsed ? "#b0a396" : "linear-gradient(135deg,#9a6ad0,#d07ae0)", () => G.act("advUlt"), null, { key: "advult", title: `👑 ${advUltOf(ui.pathId).name} — ${advUltOf(ui.pathId).desc} (ท่าไม้ตายขั้นสูง)` }),
                             iconBtn(ui.tfActive ? "🔥" : "⚡", ui.tfActive ? "linear-gradient(135deg,#ff7020,#f5c542)" : ((ui.tfGauge || 0) >= 100 ? "linear-gradient(135deg,#ffd24a,#ff7020)" : "#8a8a7a"), () => G.doTransform(), ui.tfActive ? ui.tfTurns : (ui.tfGauge || 0), {
                                 title: ui.tfActive ? `🔥 ร่างพลัง — เหลือ ${ui.tfTurns} เทิร์น` : ((ui.tfGauge || 0) >= 100 ? "⚡ แปลงร่าง! (เกจพลังเต็ม)" : `⚡ เกจพลัง ${ui.tfGauge || 0}% — สู้ต่อเพื่อสะสม`),
                                 badgeBg: ui.tfActive ? "#c0501a" : ((ui.tfGauge || 0) >= 100 ? "#e08020" : "#5a5a52"),

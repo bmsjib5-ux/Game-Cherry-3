@@ -23365,11 +23365,13 @@ export default function CherryAdventure() {
                   {/* มุมล่างขวา: skill ต่อสู้ (โจมตี / ท่าไม้ตาย / สกิลอาชีพ) */}
                   <div style={cornerStyle("right")}>
                     {iconBtn("⚔️", "#d9536b", () => G.act("attack"), null, { title: "โจมตี" })}
-                    {iconBtn(ui.ultUsed ? "💫" : "🌟",
+                    {/* 🌟 ท่าไม้ตายทั่วไป — โชว์เฉพาะโหมดสกิลพื้นฐาน (หรือยังไม่มีสายขั้นสูง) */}
+                    {!(ui.skillMode === "adv" && ui.pathId && advUltOf(ui.pathId)) && iconBtn(ui.ultUsed ? "💫" : "🌟",
                       ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)",
                       () => G.act("ult"), null,
                       { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตายทั่วไป" })}
-                    {ui.pathId && advUltOf(ui.pathId) && iconBtn(ui.advUltUsed ? "🌫️" : "👑",
+                    {/* 👑 ท่าไม้ตายขั้นสูง — โชว์เฉพาะเมื่อสลับเป็นโหมดสกิลขั้นสูง */}
+                    {ui.skillMode === "adv" && ui.pathId && advUltOf(ui.pathId) && iconBtn(ui.advUltUsed ? "🌫️" : "👑",
                       ui.advUltUsed ? "#b0a396" : "linear-gradient(135deg,#9a6ad0,#d07ae0)",
                       () => G.act("advUlt"), null,
                       { key: "advult", title: `👑 ${advUltOf(ui.pathId).name} — ${advUltOf(ui.pathId).desc} (ท่าไม้ตายขั้นสูง)` })}
