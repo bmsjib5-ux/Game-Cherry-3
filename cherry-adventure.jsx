@@ -9079,6 +9079,19 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, petSkillLv: { ...G.petSkillLv }, petSp: G.petSp }));
       syncPlayer();
     };
+    // 🔮 เลือก/ยกเลิกเลือกสัตว์เพื่อผสม (ช่องเลือกสูงสุด 2 — คลิกซ้ำเพื่อยกเลิก, เลือกตัวที่ 3 จะแทนที่ตัวเก่าสุด)
+    G.toggleFuse = (iid) => {
+      if (G.petInUse(iid)) { toast("⛔ ตัวในทีม/บัดดี้ ห้ามผสม — ถอดออกก่อน"); return; }
+      setUi((u) => {
+        let a = u.fuseA, b = u.fuseB;
+        if (a === iid) a = null;               // คลิกซ้ำตัว A → ยกเลิก
+        else if (b === iid) b = null;          // คลิกซ้ำตัว B → ยกเลิก
+        else if (a == null) a = iid;           // ช่องแรกว่าง
+        else if (b == null) b = iid;           // ช่องสองว่าง
+        else { a = b; b = iid; }               // เต็มทั้งคู่ → เลื่อนแทนที่ตัวเก่าสุด
+        return { ...u, fuseA: a, fuseB: b, fuseAsk: null };
+      });
+    };
     // 🔮 fuse two pets → a random rarer one (both consumed)
     G.fusePets = (iidA, iidB) => {
       const instA = G.petAt(iidA), instB = G.petAt(iidB);
@@ -9094,7 +9107,10 @@ export default function CherryAdventure() {
       let pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt);
       while (!pool.length && rt > 1) { rt--; pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt); }
       const result = pool[Math.floor(Math.random() * pool.length)];
-      // 🔥 ทั้งสองตัวหายไป → ได้ตัวใหม่ (IV สุ่มใหม่)
+      // 📖 สมุดภาพจารึกถาวร — ตัวที่นำมาผสม (ทั้งคู่) + ตัวที่ได้ใหม่ ต้องไม่หายจากสมุดภาพ
+      G.dexSeen = G.dexSeen || {};
+      G.dexSeen[idA] = 1; G.dexSeen[idB] = 1; G.dexSeen[result] = 1;
+      // 🔥 ทั้งสองตัวหายไปจากกล่อง → ได้ตัวใหม่ (IV สุ่มใหม่) แต่สมุดภาพยังอยู่ครบ
       G.petBox = G.petBox.filter((x) => x.i !== iidA && x.i !== iidB);
       const newStage = Math.min(3, Math.max(instA.stage, instB.stage));
       const inst = G.addPetInstance(result, { lv: 3, stage: newStage });
@@ -22940,7 +22956,7 @@ export default function CherryAdventure() {
                       <button onClick={() => G.setBuddy(isBuddy ? null : p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: isBuddy ? "#d9536b" : "#7ba05b" }}>{isBuddy ? "ถอดบัดดี้" : "🐾 บัดดี้"}</button>
                       <button onClick={() => G.toggleTeam(p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: inTeam ? "#d9536b" : "#5a8ad0" }}>{inTeam ? "ออกทีม" : "➕ ทีม"}</button>
                       <button onClick={() => G.rankPetSkill(p.sp)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: (ui.petSp || 0) > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.petSp || 0) > 0 ? "#9a6ad0" : "#ccc" }}>⚡ ({ui.petSp || 0})</button>
-                      <button onClick={() => (ui.buddy === p.i || (ui.team || []).includes(p.i)) ? G.toast("⛔ ตัวในทีม/บัดดี้ ห้ามผสม — ถอดออกก่อน") : setUi((u) => ({ ...u, fuseAsk: null, fuseA: u.fuseA === p.i ? null : (u.fuseB === p.i ? u.fuseA : (u.fuseA ? u.fuseA : p.i)), fuseB: u.fuseA && u.fuseA !== p.i && !u.fuseB ? p.i : (u.fuseB === p.i ? null : u.fuseB) }))} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" }}>🔮 ผสม</button>
+                      <button onClick={() => G.toggleFuse(p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" }}>🔮 {selFuse ? "เลือกแล้ว ✓" : "ผสม"}</button>
                       <button onClick={() => G.enhancePet(p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: dupes > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: dupes > 0 ? "#e0862f" : "#ccc" }}>⚒️ ตีบวก ({dupes})</button>
                       <button onClick={() => setUi((u) => ({ ...u, sellPetAsk: p.i }))} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" }}>💰 ขาย</button>
                     </div>

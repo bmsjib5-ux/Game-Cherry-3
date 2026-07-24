@@ -12151,6 +12151,29 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, petSkillLv: { ...G.petSkillLv }, petSp: G.petSp }));
             syncPlayer();
         };
+        // 🔮 เลือก/ยกเลิกเลือกสัตว์เพื่อผสม (ช่องเลือกสูงสุด 2 — คลิกซ้ำเพื่อยกเลิก, เลือกตัวที่ 3 จะแทนที่ตัวเก่าสุด)
+        G.toggleFuse = (iid) => {
+            if (G.petInUse(iid)) {
+                toast("⛔ ตัวในทีม/บัดดี้ ห้ามผสม — ถอดออกก่อน");
+                return;
+            }
+            setUi((u) => {
+                let a = u.fuseA, b = u.fuseB;
+                if (a === iid)
+                    a = null; // คลิกซ้ำตัว A → ยกเลิก
+                else if (b === iid)
+                    b = null; // คลิกซ้ำตัว B → ยกเลิก
+                else if (a == null)
+                    a = iid; // ช่องแรกว่าง
+                else if (b == null)
+                    b = iid; // ช่องสองว่าง
+                else {
+                    a = b;
+                    b = iid;
+                } // เต็มทั้งคู่ → เลื่อนแทนที่ตัวเก่าสุด
+                return { ...u, fuseA: a, fuseB: b, fuseAsk: null };
+            });
+        };
         // 🔮 fuse two pets → a random rarer one (both consumed)
         G.fusePets = (iidA, iidB) => {
             const instA = G.petAt(iidA), instB = G.petAt(iidB);
@@ -12175,7 +12198,12 @@ function CherryAdventure() {
                 pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt);
             }
             const result = pool[Math.floor(Math.random() * pool.length)];
-            // 🔥 ทั้งสองตัวหายไป → ได้ตัวใหม่ (IV สุ่มใหม่)
+            // 📖 สมุดภาพจารึกถาวร — ตัวที่นำมาผสม (ทั้งคู่) + ตัวที่ได้ใหม่ ต้องไม่หายจากสมุดภาพ
+            G.dexSeen = G.dexSeen || {};
+            G.dexSeen[idA] = 1;
+            G.dexSeen[idB] = 1;
+            G.dexSeen[result] = 1;
+            // 🔥 ทั้งสองตัวหายไปจากกล่อง → ได้ตัวใหม่ (IV สุ่มใหม่) แต่สมุดภาพยังอยู่ครบ
             G.petBox = G.petBox.filter((x) => x.i !== iidA && x.i !== iidB);
             const newStage = Math.min(3, Math.max(instA.stage, instB.stage));
             const inst = G.addPetInstance(result, { lv: 3, stage: newStage });
@@ -29468,7 +29496,9 @@ function CherryAdventure() {
                                     "\u26A1 (",
                                     ui.petSp || 0,
                                     ")"),
-                                React.createElement("button", { onClick: () => (ui.buddy === p.i || (ui.team || []).includes(p.i)) ? G.toast("⛔ ตัวในทีม/บัดดี้ ห้ามผสม — ถอดออกก่อน") : setUi((u) => ({ ...u, fuseAsk: null, fuseA: u.fuseA === p.i ? null : (u.fuseB === p.i ? u.fuseA : (u.fuseA ? u.fuseA : p.i)), fuseB: u.fuseA && u.fuseA !== p.i && !u.fuseB ? p.i : (u.fuseB === p.i ? null : u.fuseB) })), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" } }, "\uD83D\uDD2E \u0E1C\u0E2A\u0E21"),
+                                React.createElement("button", { onClick: () => G.toggleFuse(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" } },
+                                    "\uD83D\uDD2E ",
+                                    selFuse ? "เลือกแล้ว ✓" : "ผสม"),
                                 React.createElement("button", { onClick: () => G.enhancePet(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: dupes > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: dupes > 0 ? "#e0862f" : "#ccc" } },
                                     "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 (",
                                     dupes,
