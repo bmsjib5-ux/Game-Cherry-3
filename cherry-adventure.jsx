@@ -8847,31 +8847,72 @@ export default function CherryAdventure() {
 
     // ---------- Buddy (caught pet following) ----------
     let buddyMesh = null;
-    G.setBuddy = (spId) => {
+    G.setBuddy = (iid) => {
       if (buddyMesh) { scene.remove(buddyMesh); buddyMesh = null; }
-      G.buddy = spId;
-      if (spId) {
-        const stage = (G.pets && G.pets[spId] && G.pets[spId].stage) || 1;
-        buddyMesh = buildMonster(spId, stage);
+      G.buddy = iid || null;
+      const inst = iid != null ? (G.petAt ? G.petAt(iid) : null) : null;
+      if (inst) {
+        buddyMesh = buildMonster(inst.sp, inst.stage);
         buddyMesh.scale.multiplyScalar(0.62);
         buddyMesh.position.set(char.position.x - 1, 0, char.position.z + 0.6);
         vivify(buddyMesh);
         scene.add(buddyMesh);
-      }
-      setUi((u) => ({ ...u, buddy: spId, panelOpen: false }));
+      } else G.buddy = null;
+      setUi((u) => ({ ...u, buddy: G.buddy })); // 🖼️ เลือกบัดดี้แล้วหน้าจอไม่ปิด
     };
     // 🐾 add/remove a pet from the active team (max 3); slot 0 = walking buddy
     G.petSkillLv = G.petSkillLv || {};
-    G.toggleTeam = (spId) => {
+    // 📦 PET BOX — สัตว์เลี้ยงรายตัว 1 ตัว/ช่อง (สูงสุด 30) แต่ละตัวมีบัฟประจำตัว (IV) ไม่ซ้ำกัน
+    G.PETBOX_MAX = 30;
+    G.petBox = G.petBox || [];
+    G._petSeq = G._petSeq || 1;
+    const rollIv = (spId) => { const t = (SPECIES[spId] && SPECIES[spId].tier) || 1; return { a: Math.floor(Math.random() * (3 + t * 2)), h: Math.floor(Math.random() * (5 + t * 3)), d: Math.floor(Math.random() * (2 + t)) }; };
+    G.addPetInstance = (spId, base) => {
+      if ((G.petBox || []).length >= G.PETBOX_MAX) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.PETBOX_MAX} ช่อง) — ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
+      const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, iv: rollIv(spId) }, base || {});
+      G.petBox.push(inst);
+      if (!G.pets[spId]) G.pets[spId] = { lv: inst.lv, exp: 0, stage: inst.stage }; // สายพันธุ์ปรากฏในระบบสกิล
+      return inst;
+    };
+    G.petAt = (iid) => (G.petBox || []).find((p) => p.i === iid) || null;
+    G.petInUse = (iid) => (G.team || []).includes(iid) || G.buddy === iid;
+    G.petSellPrice = (p) => { const t = SPECIES[p.sp].tier; return t * 90 + p.lv * 15 + (p.plus || 0) * 120 + (p.stage - 1) * 150; };
+    G.sellPet = (iid) => {
+      const p = G.petAt(iid); if (!p) return;
+      if (G.petInUse(iid)) { toast("⛔ ตัวที่อยู่ในทีม/บัดดี้ ขายไม่ได้ — ถอดออกก่อน"); return; }
+      const price = G.petSellPrice(p);
+      G.petBox = G.petBox.filter((x) => x.i !== iid);
+      G.gold += price;
+      if (G.sfx) G.sfx.coin();
+      toast(`💰 ขาย ${SPECIES[p.sp].emoji} ${SPECIES[p.sp].name} ได้ ${price} ทอง`);
+      setUi((u) => ({ ...u, petBox: G.petBox.map((x) => ({ ...x })), gold: G.gold, sellPetAsk: null }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.enhancePet = (iid) => {
+      const p = G.petAt(iid); if (!p) return;
+      if ((p.plus || 0) >= 9) { toast("ตีบวกเต็ม +9 แล้ว! ⭐"); return; }
+      // ⚒️ ใช้ "ตัวซ้ำ" ชนิดเดียวกันเป็นวัตถุดิบ (ไม่อยู่ในทีม/บัดดี้ · เลเวลต่ำสุดก่อน)
+      const fodder = (G.petBox || []).filter((x) => x.sp === p.sp && x.i !== iid && !G.petInUse(x.i)).sort((a, b) => a.lv - b.lv)[0];
+      if (!fodder) { toast("ต้องมีตัวซ้ำชนิดเดียวกัน (ที่ไม่อยู่ในทีม) ไว้เป็นวัตถุดิบ ⚒️"); return; }
+      G.petBox = G.petBox.filter((x) => x.i !== fodder.i);
+      p.plus = (p.plus || 0) + 1;
+      if (G.sfx) G.sfx.levelup();
+      burst(char.position, 0xf5c542, 1.2);
+      toast(`⚒️ ตีบวกสำเร็จ! ${SPECIES[p.sp].emoji} ${SPECIES[p.sp].name} → +${p.plus} (ใช้ตัวซ้ำ Lv.${fodder.lv})`);
+      setUi((u) => ({ ...u, petBox: G.petBox.map((x) => ({ ...x })) }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.toggleTeam = (iid) => {
       if (!G.team) G.team = [];
-      const i = G.team.indexOf(spId);
+      const p = G.petAt(iid); if (!p) return;
+      const i = G.team.indexOf(iid);
       if (i >= 0) {
         G.team.splice(i, 1);
-        toast(`ถอด ${SPECIES[spId].name} ออกจากทีม`);
+        toast(`ถอด ${SPECIES[p.sp].name} ออกจากทีม`);
       } else {
         if (G.team.length >= 3) { toast("ทีมเต็มแล้ว (3 ตัว)! ถอดตัวอื่นก่อน"); return; }
-        G.team.push(spId);
-        toast(`➕ ${SPECIES[spId].name} เข้าทีม!`);
+        G.team.push(iid);
+        toast(`➕ ${SPECIES[p.sp].name} เข้าทีม!`);
       }
       // slot 0 walks with you
       G.setBuddy(G.team[0] || null);
@@ -8891,9 +8932,11 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // 🔮 fuse two pets → a random rarer one (both consumed)
-    G.fusePets = (idA, idB) => {
-      if (!idA || !idB || idA === idB) { toast("เลือกสัตว์เลี้ยง 2 ตัวที่ต่างกัน"); return; }
-      if (!G.col[idA] || !G.col[idB]) return;
+    G.fusePets = (iidA, iidB) => {
+      const instA = G.petAt(iidA), instB = G.petAt(iidB);
+      if (!instA || !instB || iidA === iidB) { toast("เลือกสัตว์เลี้ยง 2 ตัวที่ต่างกัน"); return; }
+      if (G.petInUse(iidA) || G.petInUse(iidB)) { toast("⛔ ตัวที่อยู่ในทีมหรือเป็นบัดดี้ ห้ามผสม — ถอดออกก่อน"); return; }
+      const idA = instA.sp, idB = instB.sp;
       // result: a higher-tier species
       // ⚖️ rarity-scaled fusion: high-tier parents can birth legendary/mythic companions
       const maxTier = Math.max(SPECIES[idA].tier, SPECIES[idB].tier);
@@ -8903,19 +8946,16 @@ export default function CherryAdventure() {
       let pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt);
       while (!pool.length && rt > 1) { rt--; pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt); }
       const result = pool[Math.floor(Math.random() * pool.length)];
-      // consume one of each
-      G.col[idA]--; if (G.col[idA] <= 0) { delete G.col[idA]; G.team = (G.team || []).filter((x) => x !== idA); }
-      G.col[idB]--; if (G.col[idB] <= 0) { delete G.col[idB]; G.team = (G.team || []).filter((x) => x !== idB); }
-      // grant result (evolved a stage)
-      G.col[result] = (G.col[result] || 0) + 1;
-      if (!G.pets[result]) G.pets[result] = { lv: 3, exp: 0, stage: 2 };
-      else G.pets[result].stage = Math.min(3, G.pets[result].stage + 1);
-      if (G.buddy && !G.col[G.buddy]) G.setBuddy(G.team[0] || null);
+      // 🔥 ทั้งสองตัวหายไป → ได้ตัวใหม่ (IV สุ่มใหม่)
+      G.petBox = G.petBox.filter((x) => x.i !== iidA && x.i !== iidB);
+      const newStage = Math.min(3, Math.max(instA.stage, instB.stage));
+      const inst = G.addPetInstance(result, { lv: 3, stage: newStage });
+      G.col[result] = (G.col[result] || 0) + 1; // สมุดภาพนับสะสม
       if (G.sfx) G.sfx.catch();
-      toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}] (ร่าง ${G.pets[result].stage})!`);
+      toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]${inst ? ` (พรสวรรค์ ${inst.iv.a + inst.iv.h + inst.iv.d})` : ""}!`);
       if (SPECIES[result].tier >= 5 && G.announce) G.announce(`🔮 ${G.playerName || "ผู้เล่น"} ผสมพันธุ์ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]!`);
-      setUi((u) => ({ ...u, col: { ...G.col }, pets: { ...G.pets }, team: [...(G.team || [])], fuseA: null, fuseB: null }));
-      syncPlayer();
+      setUi((u) => ({ ...u, col: { ...G.col }, petBox: (G.petBox || []).map((x) => ({ ...x })), team: [...(G.team || [])], fuseA: null, fuseB: null, fuseAsk: null }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
     };
 
     // ---------- FX ----------
@@ -10190,15 +10230,17 @@ export default function CherryAdventure() {
     // active buddy buffs the character — grows every pet level, jumps at evolution
     // 🐾 pet team (up to 3) — all members contribute buffs; slot 0 walks with you
     G.team = [];
-    const petBuffOne = (spId) => {
-      if (!spId || !G.pets[spId]) return { atk: 0, hp: 0, def: 0 };
-      const p = G.pets[spId];
-      const tier = SPECIES[spId].tier;
-      const skLv = (G.petSkillLv && G.petSkillLv[spId]) || 1; // 🎯 pet skill level boosts buffs
+    G.petBox = []; G._petSeq = 1;
+    const petBuffOne = (iid) => {
+      const p = G.petAt ? G.petAt(iid) : null;
+      if (!p || !SPECIES[p.sp]) return { atk: 0, hp: 0, def: 0 };
+      const tier = SPECIES[p.sp].tier;
+      const skLv = (G.petSkillLv && G.petSkillLv[p.sp]) || 1; // 🎯 pet skill level boosts buffs
+      const plus = p.plus || 0, iv = p.iv || { a: 0, h: 0, d: 0 };
       return {
-        atk: tier * 2 * p.stage + p.lv + (skLv - 1) * 2,
-        hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4,
-        def: (p.stage - 1) + Math.floor(p.lv / 2),
+        atk: tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + plus * 3,
+        hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + plus * 5,
+        def: (p.stage - 1) + Math.floor(p.lv / 2) + iv.d + plus * 2,
       };
     };
     const petBuff = () => {
@@ -10332,7 +10374,7 @@ export default function CherryAdventure() {
       sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
       ultRank: G.ultRank || 1, ultSkillSum: G.skillSum ? G.skillSum() : 0, sellPriority: G.sellPriority ? [...G.sellPriority] : SLOTS.slice(),
       statPts: G.player.statPts || 0, baseStats: { ...(G.baseStats || {}) },
-      col: { ...G.col }, pets: { ...G.pets },
+      col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })),
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle,
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
@@ -11444,23 +11486,24 @@ export default function CherryAdventure() {
     };
 
     // pet EXP / level — every level buffs Cherry, evolves every 3 levels!
-    const petGain = (id, amt) => {
-      const p = G.pets[id];
+    const petGain = (iid, amt) => {
+      const p = G.petAt ? G.petAt(iid) : null;
       if (!p) return;
       p.exp += amt;
       while (p.exp >= p.lv * 30) {
         p.exp -= p.lv * 30;
         p.lv++;
-        toast(`🐾 ${SPECIES[id].name} เลเวลอัพ! Lv.${p.lv} — บัฟให้เชอร์รี่แรงขึ้น!`);
+        toast(`🐾 ${SPECIES[p.sp].name} เลเวลอัพ! Lv.${p.lv} — บัฟให้เชอร์รี่แรงขึ้น!`);
         if (p.lv % 3 === 0 && p.stage < 3) {
           p.stage++;
-          const newName = p.stage >= 3 ? `อัลติเมท${EVOLVED[id]} 🌟` : `${EVOLVED[id]} 👑`;
+          const newName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]} 🌟` : `${EVOLVED[p.sp]} 👑`;
           toast(`✨ วิวัฒนาการร่างที่ ${p.stage}! → ${newName}`);
           burst(char.position, 0xf5d05a, 1.4);
           G.petSp = (G.petSp || 0) + 1; // 🎯 pet skill point on evolution
-          if (G.buddy === id) G.setBuddy(id); // rebuild follower with new form
+          if (G.buddy === iid) G.setBuddy(iid); // rebuild follower with new form
         }
       }
+      setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })) }));
       syncPlayer(); // pet buffs affect character stats
     };
 
@@ -11792,7 +11835,7 @@ export default function CherryAdventure() {
       if (wasBoss && LEGEND_PETS.length && Math.random() < 0.20) {
         const lp = LEGEND_PETS[Math.floor(Math.random() * LEGEND_PETS.length)];
         G.col[lp] = (G.col[lp] || 0) + 1;
-        if (!G.pets[lp]) G.pets[lp] = { lv: 1, exp: 0, stage: 1 };
+        if (G.addPetInstance) G.addPetInstance(lp);
         burst(char.position, 0xff4a8a, 1.8);
         if (G.sfx) G.sfx.levelup();
         toast(`🌟✨ สัตว์เลี้ยง${petRarity(lp).name}หลุดจากบอส! ได้ ${SPECIES[lp].emoji} ${SPECIES[lp].name}!`);
@@ -12389,6 +12432,7 @@ export default function CherryAdventure() {
       G.achUnlocked = {};
       G.combo = 0;
       G.team = [];
+      G.petBox = []; G._petSeq = 1;
       G.petSp = 0;
       G.petSkillLv = {};
       G.ngPlus = 0;
@@ -12433,6 +12477,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1,
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -13221,6 +13266,22 @@ export default function CherryAdventure() {
       applyGear();
       G.refreshShop(true);
       G.team = d.team || (d.buddy ? [d.buddy] : []);
+      // 📦 pet box: โหลดตรง หรือ migrate เซฟเก่า (นับต่อชนิด) → รายตัว
+      G.petBox = Array.isArray(d.petBox) ? d.petBox.filter((p) => p && SPECIES[p.sp]) : null;
+      G._petSeq = d.petSeq || 1;
+      if (!G.petBox) {
+        G.petBox = []; G._petSeq = 1;
+        const mids = Object.keys(d.col || {}).filter((k) => SPECIES[k]).sort((a, b) => SPECIES[b].tier - SPECIES[a].tier);
+        mids.forEach((spId) => {
+          const nInst = Math.max(1, Math.min(5, d.col[spId] || 1));
+          const base = (d.pets && d.pets[spId]) || { lv: 1, exp: 0, stage: 1 };
+          for (let k = 0; k < nInst && G.petBox.length < 30; k++) G.petBox.push({ i: G._petSeq++, sp: spId, lv: base.lv || 1, exp: 0, stage: base.stage || 1, plus: 0, iv: { a: Math.floor(Math.random() * 6), h: Math.floor(Math.random() * 9), d: Math.floor(Math.random() * 4) } });
+        });
+        const bySp = (spId) => { const fi = G.petBox.find((x) => x.sp === spId && !(G.team || []).some((t) => t === x.i)); return fi ? fi.i : null; };
+        G.team = (d.team || []).map(bySp).filter((x) => x != null).slice(0, 3);
+      } else {
+        G.team = (G.team || []).filter((iid) => G.petBox.some((x) => x.i === iid)).slice(0, 3);
+      }
       G.petSp = d.petSp || 0;
       G.petSkillLv = d.petSkillLv || {};
       G.ngPlus = d.ngPlus || 0;
@@ -13233,8 +13294,9 @@ export default function CherryAdventure() {
       if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
-      if (d.buddy && G.pets[d.buddy]) G.setBuddy(d.buddy);
-      else G.setBuddy(null);
+      { let bid = d.buddy;
+        if (bid != null && !G.petBox.some((x) => x.i === bid)) { const fb = G.petBox.find((x) => x.sp === bid); bid = fb ? fb.i : (G.team[0] || null); } // เซฟเก่าเก็บเป็นชนิด → หา instance
+        G.setBuddy(bid != null ? bid : null); }
       // 🗺️ return to the map you logged out on (quiet = no warp sfx/toast).
       // Must run BEFORE the position restore — switchBiome respawns monsters & rebuilds the nav grid.
       if (G.switchBiome) G.switchBiome(d.curBiome || 0, true);
@@ -16869,7 +16931,7 @@ export default function CherryAdventure() {
               else if (G.buddy && buddyMesh) {
                 // 🐾 pet assist strike!
                 G.banim = { type: "petAttack", t: 0, dur: 0.55 };
-                setUi((u) => ({ ...u, msg: `🐾 ${PET_SKILL[G.buddy]}!` }));
+                setUi((u) => ({ ...u, msg: `🐾 ${PET_SKILL[(G.petAt(G.buddy) || {}).sp] || "สัตว์เลี้ยงร่วมโจมตี"}!` }));
               } else enemyTurn();
             }
           } else if (A.type === "ult") {
@@ -18553,7 +18615,7 @@ export default function CherryAdventure() {
               if (G.enemy.hp <= 0) winBattle();
               else if (G.buddy && buddyMesh) {
                 G.banim = { type: "petAttack", t: 0, dur: 0.55 };
-                setUi((u) => ({ ...u, msg: `🐾 ${PET_SKILL[G.buddy]}!` }));
+                setUi((u) => ({ ...u, msg: `🐾 ${PET_SKILL[(G.petAt(G.buddy) || {}).sp] || "สัตว์เลี้ยงร่วมโจมตี"}!` }));
               } else enemyTurn();
             }
           } else if (A.type === "petAttack" && buddyMesh) {
@@ -18562,20 +18624,20 @@ export default function CherryAdventure() {
             buddyMesh.position.z = battleCenter.z + 0.7 - Math.sin(p * Math.PI) * 0.5;
             if (p >= 0.5 && !A.hitDone) {
               A.hitDone = true;
-              const pet = G.pets[G.buddy];
-              const elem = PET_ELEM[G.buddy];
+              const pet = (G.petAt ? G.petAt(G.buddy) : null) || { sp: null, stage: 1, lv: 1, plus: 0, iv: { a: 0 } };
+              const elem = PET_ELEM[pet.sp];
               const weak = WEAK[G.enemy.spId] === elem;
-              let dmg = 3 + SPECIES[G.buddy].tier * 2 * pet.stage + pet.lv + Math.random() * 3;
+              let dmg = 3 + ((SPECIES[pet.sp] || {}).tier || 1) * 2 * pet.stage + pet.lv + (pet.plus || 0) * 3 + ((pet.iv || {}).a || 0) + Math.random() * 3;
               if (weak) dmg *= 1.5;
               dmg = Math.round(dmg);
               let petNote = weak ? " โดนจุดอ่อน!! 💢" : "";
               { const d2 = enemyDefend(dmg); dmg = d2.dmg; petNote += d2.note; }
               G.enemy.hp = Math.max(0, G.enemy.hp - dmg);
               popDamage(em.position, dmg, weak ? "weak" : "hit"); // 💢 pet damage number
-              burst(em.position, ELEMENTS[elem].color, 0.6);
+              burst(em.position, (ELEMENTS[elem] || { color: 0xc0a0f5 }).color, 0.6);
               setUi((u) => ({
                 ...u, enemy: { ...u.enemy, hp: G.enemy.hp },
-                msg: `🐾 ${PET_SKILL[G.buddy]} -${dmg} HP${petNote}`,
+                msg: `🐾 ${PET_SKILL[pet.sp] || "โจมตี"} -${dmg} HP${petNote}`,
               }));
             }
             if (p >= 1) {
@@ -18758,19 +18820,19 @@ export default function CherryAdventure() {
                 const cid = G.enemy.spId;
                 const isNew = !G.pets[cid];
                 G.col[cid] = (G.col[cid] || 0) + 1;
+                const petInst = G.addPetInstance ? G.addPetInstance(cid, { lv: Math.max(1, Math.round(G.enemy.lv * 0.6)) }) : null;
                 if (G.sfx) G.sfx.catch();
                 questProgress("catch", 1); // 📜
                 G.achStats.catches = (G.achStats.catches || 0) + 1;
                 checkAchievements();
                 if (isNew) G.pets[cid] = { lv: 1, exp: 0, stage: 1 };
                 setUi((u) => ({
-                  ...u, col: { ...G.col }, pets: { ...G.pets },
-                  msg: isNew ? `🎊 จับ${sp.name} Lv.${G.enemy.lv} ได้แล้ว!` : `🎊 จับ${sp.name}ตัวที่ ${G.col[cid]} ได้! พลังวิญญาณ +20`,
+                  ...u, col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })),
+                  msg: petInst ? `🎊 จับ${sp.name} Lv.${petInst.lv} ได้! พรสวรรค์ ${petInst.iv.a + petInst.iv.h + petInst.iv.d} ✨` : `🎊 จับ${sp.name}ได้ แต่กล่องเต็ม (${G.PETBOX_MAX}) — บันทึกในสมุดภาพ`,
                 }));
-                if (!isNew) petGain(cid, 20); // duplicate catch powers up the pet
                 gainExp(30 + sp.tier * 10 + G.enemy.lv * 3);
                 scene.remove(em);
-                if (!G.buddy) G.setBuddy(cid);
+                if (!G.buddy && petInst) G.setBuddy(petInst.i);
                 setTimeout(() => endBattle(false), 1400);
                 G.banim = { type: "wait", t: 0, dur: 1.4 };
               } else {
@@ -20270,7 +20332,7 @@ export default function CherryAdventure() {
         <button onClick={() => toggleMenu("questOpen")} title="เควส & ภารกิจ" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 208, width: 44, height: 44 } : { bottom: 216, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null; })()}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 160, width: 44, height: 44 } : { bottom: 282, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{Object.keys(ui.pets || {}).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{Object.keys(ui.pets).length}</span>}</button>
+        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 160, width: 44, height: 44 } : { bottom: 282, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 176, width: 42, height: 42 } : { bottom: 348, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
@@ -22435,7 +22497,7 @@ export default function CherryAdventure() {
                   flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
                   fontSize: 12, fontWeight: 800, color: !ui.dexTab ? "#fff" : "#5a7a4a",
                   background: !ui.dexTab ? "#7ba05b" : "#eaf5e0",
-                }}>🐾 ของฉัน ({totalCaught})</button>
+                }}>📦 กล่อง ({(ui.petBox || []).length}/30)</button>
                 <button onClick={() => setUi((u) => ({ ...u, dexTab: true }))} style={{
                   flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
                   fontSize: 12, fontWeight: 800, color: ui.dexTab ? "#fff" : "#5a7a4a",
@@ -22483,105 +22545,83 @@ export default function CherryAdventure() {
                 </div>
               ) : (
               <div style={{ overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" }}>
-              {totalCaught === 0 && (
+              {(ui.petBox || []).length === 0 && (
                 <div style={{ fontSize: 12.5, color: "#a3a396" }}>ยังไม่มีเลย ไปจับกันเถอะ!</div>
               )}
-              {totalCaught > 0 && (
+              {(ui.petBox || []).length > 0 && (
                 <div style={{ background: "#eaf5e0", borderRadius: 10, padding: "6px 9px", marginBottom: 8, fontSize: 11, fontWeight: 700, color: "#5a7a4a" }}>
-                  👥 ทีมร่วมรบ ({(ui.team || []).length}/3): {(ui.team || []).length ? (ui.team || []).map((id) => SPECIES[id].emoji).join(" ") : "ยังไม่มี — กด + เข้าทีม"}
-                  <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 }}>ทุกตัวในทีมช่วยบัฟ · ตัวแรกเดินตาม+ ร่วมโจมตี</div>
+                  👥 ทีม ({(ui.team || []).length}/3): {(ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม"}
+                  <span style={{ float: "right", color: "#7a9a5a" }}>📦 {(ui.petBox || []).length}/30 ช่อง</span>
+                  <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 }}>ทุกตัวในทีมช่วยบัฟ · ตัวแรกเดินตาม · แต่ละตัวมี "พรสวรรค์" ประจำตัวไม่ซ้ำกัน</div>
                 </div>
               )}
-              {/* 🔮 fusion */}
-              {totalCaught >= 2 && (
-                <div style={{ background: "#f0e8f8", borderRadius: 10, padding: "8px 9px", marginBottom: 8 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: "#6a4a8a", marginBottom: 5 }}>🔮 ผสมพันธุ์ (ได้ตัวหายากขึ้น)</div>
-                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 5 }}>
-                    {Object.keys(ui.col).map((id) => (
-                      <button key={id} onClick={() => setUi((u) => ({ ...u, fuseA: u.fuseA === id ? null : (u.fuseB === id ? u.fuseA : (u.fuseA ? u.fuseA : id)), fuseB: u.fuseA && u.fuseA !== id && !u.fuseB ? id : (u.fuseB === id ? null : u.fuseB) }))} style={{
-                        padding: "4px 7px", borderRadius: 7, border: (ui.fuseA === id || ui.fuseB === id) ? "2px solid #9a6ad0" : "2px solid transparent",
-                        cursor: "pointer", fontSize: 15, background: "#fff",
-                      }}>{SPECIES[id].emoji}</button>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: "#8a7a9a", flex: 1 }}>
-                      {ui.fuseA ? SPECIES[ui.fuseA].emoji : "?"} + {ui.fuseB ? SPECIES[ui.fuseB].emoji : "?"}
-                    </span>
-                    <button onClick={() => G.fusePets(ui.fuseA, ui.fuseB)} disabled={!ui.fuseA || !ui.fuseB} style={{
-                      padding: "5px 14px", borderRadius: 8, border: "none",
-                      cursor: (ui.fuseA && ui.fuseB) ? "pointer" : "default",
-                      fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff",
-                      background: (ui.fuseA && ui.fuseB) ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#ccc",
-                    }}>🔮 ผสม</button>
-                  </div>
-                  <div style={{ fontSize: 9, color: "#a898b8", marginTop: 3 }}>⚠️ ใช้อย่างละ 1 ตัว</div>
+              {(ui.fuseA || ui.fuseB) && (
+                <div style={{ background: "#f0e8f8", borderRadius: 10, padding: "7px 9px", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11, color: "#6a4a8a", fontWeight: 700, flex: 1 }}>
+                    🔮 ผสม: {(() => { const a = (ui.petBox || []).find((x) => x.i === ui.fuseA), b = (ui.petBox || []).find((x) => x.i === ui.fuseB); return `${a ? SPECIES[a.sp].emoji + " Lv." + a.lv : "?"} + ${b ? SPECIES[b.sp].emoji + " Lv." + b.lv : "?"}`; })()}
+                  </span>
+                  <button onClick={() => { const a = (ui.petBox || []).find((x) => x.i === ui.fuseA), b = (ui.petBox || []).find((x) => x.i === ui.fuseB); if (!a || !b) return; if (SPECIES[a.sp].tier >= 3 || SPECIES[b.sp].tier >= 3) setUi((u) => ({ ...u, fuseAsk: true })); else G.fusePets(ui.fuseA, ui.fuseB); }} disabled={!ui.fuseA || !ui.fuseB} style={{ padding: "5px 14px", borderRadius: 8, border: "none", cursor: (ui.fuseA && ui.fuseB) ? "pointer" : "default", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.fuseA && ui.fuseB) ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#ccc" }}>🔮 ผสม</button>
+                  <button onClick={() => setUi((u) => ({ ...u, fuseA: null, fuseB: null, fuseAsk: null }))} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#8a7a9a", background: "#eee" }}>✕</button>
                 </div>
               )}
-              {Object.entries(ui.col).map(([id, n]) => {
-                const sp = SPECIES[id];
-                const pet = ui.pets[id] || { lv: 1, exp: 0, stage: 1 };
-                const rr = petRarity(id);
-                const isBuddy = ui.buddy === id;
-                const dispName = pet.stage >= 3 ? `อัลติเมท${EVOLVED[id]} 🌟` : pet.stage === 2 ? `${EVOLVED[id]} 👑` : sp.name;
-                const buff = {
-                  atk: sp.tier * 2 * pet.stage + pet.lv,
-                  hp: 3 * pet.lv + 5 * (pet.stage - 1),
-                  def: (pet.stage - 1) + Math.floor(pet.lv / 2),
-                };
-                const nextEvo = Math.ceil((pet.lv + 1) / 3) * 3;
+              {ui.fuseAsk && (
+                <div style={{ background: "#fdf0e0", border: "1.5px solid #e0a020", borderRadius: 10, padding: "8px 10px", marginBottom: 8 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a5762a" }}>⚠️ มีตัวหายากร่วมผสม — ทั้งสองตัวจะหายไปถาวร ยืนยันไหม?</div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                    <button onClick={() => G.fusePets(ui.fuseA, ui.fuseB)} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#9a6ad0,#d07ae0)" }}>✅ ยืนยันผสม</button>
+                    <button onClick={() => setUi((u) => ({ ...u, fuseAsk: null }))} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#6a5a7a", background: "#eee" }}>ยกเลิก</button>
+                  </div>
+                </div>
+              )}
+              {ui.sellPetAsk != null && (() => { const p = (ui.petBox || []).find((x) => x.i === ui.sellPetAsk); if (!p) return null; return (
+                <div style={{ background: "#fdeaea", border: "1.5px solid #d9536b", borderRadius: 10, padding: "8px 10px", marginBottom: 8 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: "#b04050" }}>💰 ขาย {SPECIES[p.sp].emoji} {SPECIES[p.sp].name} Lv.{p.lv}{p.plus ? ` +${p.plus}` : ""} ได้ {G.petSellPrice(p)} ทอง — ตัวนี้จะหายไปถาวร?</div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                    <button onClick={() => G.sellPet(ui.sellPetAsk)} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "#d9536b" }}>✅ ขายเลย</button>
+                    <button onClick={() => setUi((u) => ({ ...u, sellPetAsk: null }))} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#6a5a7a", background: "#eee" }}>ยกเลิก</button>
+                  </div>
+                </div>
+              ); })()}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {(ui.petBox || []).slice().sort((a, b) => (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
+                const sp = SPECIES[p.sp];
+                const rr = petRarity(p.sp);
+                const isBuddy = ui.buddy === p.i;
+                const inTeam = (ui.team || []).includes(p.i);
+                const dispName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]}` : p.stage === 2 ? EVOLVED[p.sp] : sp.name;
+                const skLv = (ui.petSkillLv && ui.petSkillLv[p.sp]) || 1;
+                const iv = p.iv || { a: 0, h: 0, d: 0 };
+                const buff = { atk: sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3, hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5, def: (p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2 };
+                const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
+                const selFuse = ui.fuseA === p.i || ui.fuseB === p.i;
                 return (
-                  <div key={id} style={{
-                    padding: "7px 8px", borderRadius: 10, marginBottom: 4,
-                    background: isBuddy ? "#eaf5e0" : "#f7f7f0",
-                    borderLeft: "4px solid " + rr.color,
-                    boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none",
-                  }}>
-                    <button onClick={() => G.setBuddy(id)} style={{
-                      display: "flex", alignItems: "center", gap: 8, width: "100%",
-                      border: "none", cursor: "pointer", background: "transparent",
-                      fontFamily: font, textAlign: "left", padding: 0,
-                    }}>
-                      <span style={{ fontSize: 20 }}>{sp.emoji}</span>
-                      <span style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: pet.stage >= 3 ? "#d08a20" : pet.stage === 2 ? "#c09020" : "#5a7a4a" }}>
-                          {dispName} Lv.{pet.lv} · ร่าง {pet.stage} ×{n} <span style={{ fontSize: 8.5, fontWeight: 800, color: "#fff", background: rr.color, borderRadius: 999, padding: "1px 7px", marginLeft: 2 }}>{rr.name}</span>
-                        </div>
-                        <div style={{ background: "#e5e5da", borderRadius: 99, height: 5, marginTop: 3, overflow: "hidden" }}>
-                          <div style={{
-                            width: `${Math.min(100, (pet.exp / (pet.lv * 30)) * 100)}%`, height: "100%",
-                            background: "#b07ae0", borderRadius: 99,
-                          }}/>
-                        </div>
-                        <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 700, marginTop: 2 }}>
-                          บัฟให้เชอร์รี่: ⚔️+{buff.atk} ❤️+{buff.hp} 🛡️+{buff.def}
-                        </div>
-                        <div style={{ fontSize: 9.5, color: "#b0526a", fontWeight: 700 }}>
-                          สกิลร่วมรบ: {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} {PET_SKILL[id]} <b style={{ color: "#8a5ad0" }}>Lv.{(ui.petSkillLv && ui.petSkillLv[id]) || 1}</b>
-                        </div>
-                        <div style={{ fontSize: 9.5, color: "#a3a396" }}>
-                          EXP {pet.exp}/{pet.lv * 30} · วิวัฒน์ร่างใหม่ที่ Lv.{nextEvo}
-                        </div>
-                      </span>
-                      {isBuddy && <span style={{ fontSize: 11, fontWeight: 800, color: "#7ba05b" }}>บัดดี้ ✓</span>}
-                    </button>
-                    {/* team + skill controls */}
-                    <div style={{ display: "flex", gap: 5, marginTop: 6 }}>
-                      <button onClick={() => G.toggleTeam(id)} style={{
-                        flex: 1, padding: "5px 0", borderRadius: 7, border: "none", cursor: "pointer",
-                        fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff",
-                        background: (ui.team || []).includes(id) ? "#d9536b" : "#7ba05b",
-                      }}>{(ui.team || []).includes(id) ? "− ออกทีม" : "+ เข้าทีม"}</button>
-                      <button onClick={() => G.rankPetSkill(id)} disabled={(ui.petSp || 0) <= 0} style={{
-                        flex: 1, padding: "5px 0", borderRadius: 7, border: "none",
-                        cursor: (ui.petSp || 0) > 0 ? "pointer" : "default",
-                        fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff",
-                        background: (ui.petSp || 0) > 0 ? "linear-gradient(90deg,#9a6ad0,#b07ae0)" : "#ccc",
-                      }}>⚡ อัพสกิล ({ui.petSp || 0})</button>
+                  <div key={p.i} style={{ padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ fontSize: 19 }}>{sp.emoji}</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#c09020" : "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{dispName}{p.plus ? <b style={{ color: "#e0862f" }}> +{p.plus}</b> : null}</div>
+                        <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name} · Lv.{p.lv} · ร่าง {p.stage}</div>
+                      </div>
+                      {isBuddy && <span style={{ fontSize: 9, fontWeight: 800, color: "#7ba05b" }}>บัดดี้</span>}
+                      {!isBuddy && inTeam && <span style={{ fontSize: 9, fontWeight: 800, color: "#5a8ad0" }}>ทีม</span>}
+                    </div>
+                    <div style={{ background: "#e5e5da", borderRadius: 99, height: 4, marginTop: 3, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "#b07ae0", borderRadius: 99 }}/>
+                    </div>
+                    <div style={{ fontSize: 8.5, color: "#7a9a5a", fontWeight: 700, marginTop: 2 }}>⚔️+{buff.atk} ❤️+{buff.hp} 🛡️+{buff.def}</div>
+                    <div style={{ fontSize: 8, color: "#b0526a", fontWeight: 700 }}>{(ELEM_META[PET_ELEM[p.sp]] || {}).emoji || ""} {PET_SKILL[p.sp]} Lv.{skLv} · ✨ พรสวรรค์ {iv.a + iv.h + iv.d}</div>
+                    <div style={{ display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" }}>
+                      <button onClick={() => G.setBuddy(isBuddy ? null : p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: isBuddy ? "#d9536b" : "#7ba05b" }}>{isBuddy ? "ถอดบัดดี้" : "🐾 บัดดี้"}</button>
+                      <button onClick={() => G.toggleTeam(p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: inTeam ? "#d9536b" : "#5a8ad0" }}>{inTeam ? "ออกทีม" : "➕ ทีม"}</button>
+                      <button onClick={() => G.rankPetSkill(p.sp)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: (ui.petSp || 0) > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.petSp || 0) > 0 ? "#9a6ad0" : "#ccc" }}>⚡ ({ui.petSp || 0})</button>
+                      <button onClick={() => (ui.buddy === p.i || (ui.team || []).includes(p.i)) ? G.toast("⛔ ตัวในทีม/บัดดี้ ห้ามผสม — ถอดออกก่อน") : setUi((u) => ({ ...u, fuseAsk: null, fuseA: u.fuseA === p.i ? null : (u.fuseB === p.i ? u.fuseA : (u.fuseA ? u.fuseA : p.i)), fuseB: u.fuseA && u.fuseA !== p.i && !u.fuseB ? p.i : (u.fuseB === p.i ? null : u.fuseB) }))} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" }}>🔮 ผสม</button>
+                      <button onClick={() => G.enhancePet(p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: dupes > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: dupes > 0 ? "#e0862f" : "#ccc" }}>⚒️ ตีบวก ({dupes})</button>
+                      <button onClick={() => setUi((u) => ({ ...u, sellPetAsk: p.i }))} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" }}>💰 ขาย</button>
                     </div>
                   </div>
                 );
               })}
+              </div>
               </div>
               )}
             </div>
