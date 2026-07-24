@@ -66,6 +66,12 @@ const BIOMES = [
     { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 60, lvMax: 80, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
     { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 80, lvMax: 99, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
     { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 99, lvMax: 120, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
+    // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 150-200 · โทนดำแดงมืด กลางคืนตลอด
+    { id: "hell", name: "ขุมนรกันตร์", emoji: "🔥", lvMin: 150, lvMax: 200, ground: 0x2a0a12, sky: 0x160406, fog: 0x2a0a0c, pool: ["winyan", "pisaj"], tree: "dead", boss: "yommathut", bossName: "ยมทูตมัจจุราช ☠️", night: true },
+    // ☀️ ด่านสวรรค์ — เทพ เทวดา บอสพระโพธิสัตว์ Lv 200-250 · โทนครีมเหลืองทองส้ม สว่างตลอด
+    { id: "heaven", name: "สรวงสวรรค์ชั้นฟ้า", emoji: "☀️", lvMin: 200, lvMax: 250, ground: 0xf2e2ac, sky: 0xfff0c8, fog: 0xffe6ac, pool: ["thewada", "kinnara"], tree: "none", boss: "phothisat", bossName: "พระโพธิสัตว์ 🧘", bright: true },
+    // 🌑 ด่านดวงจันทร์ — เอเลี่ยน สัตว์ต่างดาว บอสจักรพรรดิเอเลี่ยน Lv 250-300 · พื้นเทาขรุขระ ฟ้ามืดมีดาว+ดาวตก
+    { id: "moon", name: "พื้นผิวดวงจันทร์", emoji: "🌑", lvMin: 250, lvMax: 300, ground: 0x8a8a94, sky: 0x05060f, fog: 0x0a0c1a, pool: ["alienpet", "alien"], tree: "none", boss: "ufoboss", bossName: "จักรพรรดิเอเลี่ยน 🪐", night: true, moon: true },
 ];
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "พายุเทพเจ้า", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
@@ -297,6 +303,28 @@ const PET_RARITY = {
 };
 const petRarity = (spId) => PET_RARITY[(SPECIES[spId] && SPECIES[spId].tier) || 1] || PET_RARITY[1];
 const LEGEND_PETS = Object.keys(SPECIES).filter((k) => SPECIES[k].tier >= 5); // 🌟 boss-drop & high-fusion exclusive pool
+// 🔥😇🌙 END-GAME MONSTERS — ผีปีศาจนรก · เทพเทวดาสวรรค์ · เอเลี่ยนดวงจันทร์ (Lv 150-300)
+Object.assign(SPECIES, {
+    winyan: { name: "วิญญาณเร่ร่อน", emoji: "👻", color: 0x7a3a5a, hp: 130, atk: 20, catch: 0.03, tier: 6, desc: "ดวงวิญญาณคนบาปที่หลงวนอยู่ในนรก", weak: "light" },
+    pisaj: { name: "ปีศาจเขี้ยวเพลิง", emoji: "😈", color: 0xc02028, hp: 170, atk: 24, catch: 0.02, tier: 7, desc: "อสูรกายจากขุมนรกลึกที่สุด", animal: "beast", weak: "light" },
+    yommathut: { name: "ยมทูตมัจจุราช", emoji: "☠️", color: 0x8a1224, hp: 340, atk: 32, catch: 0.01, tier: 8, desc: "เจ้าแห่งความตาย ผู้เก็บดวงวิญญาณ", weak: "light" },
+    thewada: { name: "เทวดาน้อย", emoji: "👼", color: 0xffe6a0, hp: 140, atk: 21, catch: 0.03, tier: 6, desc: "เทพผู้พิทักษ์แห่งสรวงสวรรค์", weak: "arcane" },
+    kinnara: { name: "กินรีสวรรค์", emoji: "🕊️", color: 0xf5cf5a, hp: 180, atk: 25, catch: 0.02, tier: 7, desc: "อมนุษย์ครึ่งคนครึ่งหงส์แห่งวิมาน", animal: "bird", weak: "arcane" },
+    phothisat: { name: "พระโพธิสัตว์", emoji: "🧘", color: 0xffb84a, hp: 360, atk: 34, catch: 0.01, tier: 8, desc: "ผู้ตรัสรู้ เปี่ยมเมตตาและพลังศักดิ์สิทธิ์", weak: "arcane" },
+    alienpet: { name: "สัตว์ต่างดาว", emoji: "🛸", color: 0x5ad0a0, hp: 150, atk: 22, catch: 0.03, tier: 6, desc: "สิ่งมีชีวิตประหลาดจากนอกโลก", weak: "fire" },
+    alien: { name: "มนุษย์ต่างดาว", emoji: "👽", color: 0x7ae0c0, hp: 190, atk: 26, catch: 0.02, tier: 7, desc: "นักรบเอเลี่ยนพร้อมเทคโนโลยีล้ำยุค", animal: "beast", weak: "fire" },
+    ufoboss: { name: "จักรพรรดิเอเลี่ยน", emoji: "🪐", color: 0x4ac0e0, hp: 380, atk: 36, catch: 0.01, tier: 8, desc: "ผู้ปกครองกองทัพจักรวาลจากดวงจันทร์", weak: "fire" },
+});
+Object.assign(EVOLVED, { winyan: "ราชาวิญญาณ", pisaj: "อสูรนรกันตร์", yommathut: "มหายมราช", thewada: "เทพเทวินทร์", kinnara: "กินนรราชหงส์", phothisat: "สัมมาสัมพุทธเจ้า", alienpet: "สัตว์จักรวาล", alien: "เอเลี่ยนโอเวอร์ลอร์ด", ufoboss: "จักรพรรดิกาแล็กซี" });
+Object.assign(WEAK, { winyan: "light", pisaj: "light", yommathut: "light", thewada: "arcane", kinnara: "arcane", phothisat: "arcane", alienpet: "fire", alien: "fire", ufoboss: "fire" });
+Object.assign(PET_ELEM, { winyan: "arcane", pisaj: "fire", yommathut: "arcane", thewada: "light", kinnara: "light", phothisat: "light", alienpet: "arcane", alien: "arcane", ufoboss: "arcane" });
+Object.assign(PET_SKILL, { winyan: "สาปวิญญาณ", pisaj: "เปลวเพลิงนรก", yommathut: "เคียวเก็บวิญญาณ", thewada: "พรสวรรค์", kinnara: "ขับขานทิพย์", phothisat: "เมตตาบารมี", alienpet: "คลื่นเอเลี่ยน", alien: "ปืนพลาสมา", ufoboss: "ลำแสงจักรวาล" });
+Object.assign(MON_SHAPE_EXTRA, { winyan: "wisp", pisaj: "beast", yommathut: "wisp", thewada: "bird", kinnara: "bird", phothisat: "star", alienpet: "slime", alien: "beast", ufoboss: "star" });
+Object.assign(FLOATY, { winyan: true, yommathut: true, thewada: true, kinnara: true, phothisat: true, ufoboss: true });
+Object.assign(PET_RARITY, {
+    7: { key: "celestial", name: "เหนือเทพ", color: "#5ad0ff", glow: "#2a80c0" },
+    8: { key: "cosmic", name: "จักรวาล", color: "#e05aff", glow: "#8a2ac0" },
+});
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow") || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert") || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -11391,6 +11419,150 @@ function CherryAdventure() {
         G.skyMotes = skyMotes;
         G.skyDecor = skyDecor;
         G.skyColliders = skyColliders;
+        // 🔥 HELL DECOR — jagged blood-rock spires, glowing lava cracks, rising red embers
+        const hellDecor = new THREE.Group();
+        hellDecor.visible = false;
+        scene.add(hellDecor);
+        const hellColliders = [];
+        const hellRock = new THREE.MeshStandardMaterial({ color: 0x2a0a10, roughness: 0.95, flatShading: true, emissive: 0x3a0808, emissiveIntensity: 0.25 });
+        const hellLavaMat = new THREE.MeshStandardMaterial({ color: 0xff3a12, emissive: 0xff2a08, emissiveIntensity: 1.1 });
+        for (let i = 0; i < 16; i++) {
+            const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 3);
+            const x = Math.cos(a) * r, z = Math.sin(a) * r;
+            if (inKeepOut(x, z) || nearWarpG(x, z))
+                continue;
+            const h = rnd(1.4, 3.6);
+            const spire = new THREE.Mesh(new THREE.ConeGeometry(rnd(0.4, 0.9), h, 5), hellRock);
+            spire.position.set(x, h / 2 - 0.2, z);
+            spire.rotation.y = Math.random() * Math.PI;
+            spire.castShadow = true;
+            hellDecor.add(spire);
+            hellColliders.push({ x, z, r: 0.7 });
+        }
+        for (let i = 0; i < 10; i++) { // 🌋 glowing lava crack pools on the ground
+            const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 2);
+            const x = Math.cos(a) * r, z = Math.sin(a) * r;
+            if (nearWarpG(x, z))
+                continue;
+            const crack = new THREE.Mesh(new THREE.CircleGeometry(rnd(0.5, 1.2), 7), hellLavaMat);
+            crack.rotation.x = -Math.PI / 2;
+            crack.position.set(x, 0.04, z);
+            hellDecor.add(crack);
+        }
+        const hellEmbers = [];
+        const hellEmberMat = new THREE.MeshBasicMaterial({ color: 0xff6a2a, transparent: true, opacity: 0.9 });
+        for (let i = 0; i < 46; i++) {
+            const e = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), hellEmberMat);
+            e.position.set(rnd(-FIELD_R, FIELD_R), rnd(0.2, 3.5), rnd(-FIELD_R, FIELD_R));
+            e.userData = { rise: rnd(0.4, 1.1), sway: Math.random() * 6 };
+            hellDecor.add(e);
+            hellEmbers.push(e);
+        }
+        G.hellEmbers = hellEmbers;
+        G.hellDecor = hellDecor;
+        G.hellColliders = hellColliders;
+        // ☀️ HEAVEN DECOR — golden clouds, floating halos, soft light pillars, drifting golden motes
+        const heavenDecor = new THREE.Group();
+        heavenDecor.visible = false;
+        scene.add(heavenDecor);
+        const heavenColliders = [];
+        const goldCloud = new THREE.MeshStandardMaterial({ color: 0xfff0c0, roughness: 1, transparent: true, opacity: 0.9, emissive: 0xf5d24a, emissiveIntensity: 0.2 });
+        const haloMat = new THREE.MeshBasicMaterial({ color: 0xffe07a, transparent: true, opacity: 0.85 });
+        const heavenClouds = [];
+        for (let i = 0; i < 12; i++) {
+            const cloud = new THREE.Group();
+            for (let k = 0; k < 3 + (Math.random() * 3 | 0); k++) {
+                const puff = new THREE.Mesh(new THREE.SphereGeometry(rnd(0.5, 1.0), 8, 8), goldCloud);
+                puff.position.set(rnd(-0.8, 0.8), rnd(-0.15, 0.15), rnd(-0.6, 0.6));
+                cloud.add(puff);
+            }
+            cloud.position.set(rnd(-FIELD_R, FIELD_R), rnd(1.6, 4.6), rnd(-FIELD_R, FIELD_R));
+            cloud.userData = { sp: rnd(0.3, 0.7) };
+            heavenDecor.add(cloud);
+            heavenClouds.push(cloud);
+        }
+        G.heavenClouds = heavenClouds;
+        for (let i = 0; i < 7; i++) { // 😇 floating golden halo rings
+            const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4);
+            const x = Math.cos(a) * r, z = Math.sin(a) * r;
+            if (nearWarpG(x, z))
+                continue;
+            const halo = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.06, 10, 30), haloMat);
+            halo.rotation.x = Math.PI / 2;
+            halo.position.set(x, rnd(1.2, 2.6), z);
+            heavenDecor.add(halo);
+        }
+        const heavenMotes = [];
+        const heavenMoteMat = new THREE.MeshBasicMaterial({ color: 0xfff2c0, transparent: true, opacity: 0.95 });
+        for (let i = 0; i < 44; i++) {
+            const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), heavenMoteMat);
+            m.position.set(rnd(-FIELD_R, FIELD_R), rnd(0.3, 4), rnd(-FIELD_R, FIELD_R));
+            m.userData = { rise: rnd(0.3, 0.8), spin: rnd(1, 3), sway: Math.random() * 6 };
+            heavenDecor.add(m);
+            heavenMotes.push(m);
+        }
+        G.heavenMotes = heavenMotes;
+        G.heavenDecor = heavenDecor;
+        G.heavenColliders = heavenColliders;
+        // 🌑 MOON DECOR — gray cratered surface, rocky boulders, star field, shooting-star meteors
+        const moonDecor = new THREE.Group();
+        moonDecor.visible = false;
+        scene.add(moonDecor);
+        const moonColliders = [];
+        const moonRock = new THREE.MeshStandardMaterial({ color: 0x6a6a72, roughness: 1, flatShading: true });
+        const craterMat = new THREE.MeshStandardMaterial({ color: 0x5a5a62, roughness: 1 });
+        const craterRim = new THREE.MeshStandardMaterial({ color: 0x9a9aa2, roughness: 1 });
+        for (let i = 0; i < 18; i++) { // 🕳️ craters — dark disc + light rim ring
+            const a = Math.random() * Math.PI * 2, r = 1.5 + Math.random() * (FIELD_R - 1.5);
+            const x = Math.cos(a) * r, z = Math.sin(a) * r;
+            if (nearWarpG(x, z))
+                continue;
+            const cr = rnd(0.5, 1.6);
+            const pit = new THREE.Mesh(new THREE.CircleGeometry(cr, 14), craterMat);
+            pit.rotation.x = -Math.PI / 2;
+            pit.position.set(x, 0.03, z);
+            moonDecor.add(pit);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(cr, cr * 0.14, 8, 18), craterRim);
+            rim.rotation.x = -Math.PI / 2;
+            rim.position.set(x, 0.05, z);
+            moonDecor.add(rim);
+        }
+        for (let i = 0; i < 12; i++) { // 🪨 gray boulders (solid)
+            const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 3);
+            const x = Math.cos(a) * r, z = Math.sin(a) * r;
+            if (inKeepOut(x, z) || nearWarpG(x, z))
+                continue;
+            const rk = new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(0.4, 1.0), 0), moonRock);
+            rk.position.set(x, rnd(0.2, 0.5), z);
+            rk.rotation.set(Math.random(), Math.random(), Math.random());
+            rk.castShadow = true;
+            moonDecor.add(rk);
+            moonColliders.push({ x, z, r: 0.6 });
+        }
+        const moonStars = []; // ✨ bright fixed star field overhead
+        const starWhite = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
+        for (let i = 0; i < 80; i++) {
+            const s = new THREE.Mesh(new THREE.SphereGeometry(rnd(0.03, 0.08), 5, 5), starWhite);
+            const a = Math.random() * Math.PI * 2, rr = rnd(4, FIELD_R + 6);
+            s.position.set(Math.cos(a) * rr, rnd(4, 13), Math.sin(a) * rr);
+            s.userData = { tw: Math.random() * 6 };
+            moonDecor.add(s);
+            moonStars.push(s);
+        }
+        G.moonStars = moonStars;
+        const moonMeteors = []; // 🌠 shooting stars (streaks that fall then reset)
+        const meteorMat = new THREE.MeshBasicMaterial({ color: 0xbfe0ff, transparent: true, opacity: 0 });
+        for (let i = 0; i < 5; i++) {
+            const mt = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.08, 2.4, 5), meteorMat.clone());
+            mt.userData = { t: Math.random() * 4, dur: rnd(1.4, 2.6), ox: rnd(-FIELD_R, FIELD_R), oz: rnd(-FIELD_R, FIELD_R) };
+            mt.visible = false;
+            moonDecor.add(mt);
+            moonMeteors.push(mt);
+        }
+        G.moonMeteors = moonMeteors;
+        G.moonDecor = moonDecor;
+        G.moonColliders = moonColliders;
+        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor); // 🌳 hide during battle too
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -11575,6 +11747,7 @@ function CherryAdventure() {
             const isCave = b.id === "cave";
             const isVolcano = b.id === "volcano";
             const isSky = b.id === "sky";
+            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon"; // 🔥😇🌙 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
             if (G.snowDecor)
@@ -11585,15 +11758,25 @@ function CherryAdventure() {
                 G.volcanoDecor.visible = isVolcano;
             if (G.skyDecor)
                 G.skyDecor.visible = isSky;
+            if (G.hellDecor)
+                G.hellDecor.visible = b.id === "hell";
+            if (G.heavenDecor)
+                G.heavenDecor.visible = b.id === "heaven";
+            if (G.moonDecor)
+                G.moonDecor.visible = b.id === "moon";
+            G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.sceneryObjects)
-                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky));
+                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isEndgame));
             // 🧭 obstacles the player must walk around in this biome (for collision + auto-steer)
             G.biomeColliders = isDesert ? (G.desertColliders || [])
                 : isSnow ? (G.snowColliders || [])
                     : isCave ? (G.caveColliders || [])
                         : isVolcano ? (G.volcanoColliders || [])
                             : isSky ? (G.skyColliders || [])
-                                : [];
+                                : b.id === "hell" ? (G.hellColliders || [])
+                                    : b.id === "heaven" ? (G.heavenColliders || [])
+                                        : b.id === "moon" ? (G.moonColliders || [])
+                                            : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -18324,7 +18507,15 @@ function CherryAdventure() {
                     const dayT = (t % DAY_CYCLE) / DAY_CYCLE;
                     const sunA = dayT * Math.PI * 2 + 0.7; // start mid-morning
                     const sunH = Math.sin(sunA);
-                    const dayAmt = Math.min(1, Math.max(0, (sunH + 0.25) / 0.9)); // 0 = night, 1 = day
+                    let dayAmt = Math.min(1, Math.max(0, (sunH + 0.25) / 0.9)); // 0 = night, 1 = day
+                    // 🔥🌑 นรก/ดวงจันทร์ = กลางคืนตลอด · ☀️ สวรรค์ = สว่างตลอด
+                    {
+                        const _cb = BIOMES[G.curBiome] || {};
+                        if (_cb.night)
+                            dayAmt = 0.05;
+                        else if (_cb.bright)
+                            dayAmt = 1;
+                    }
                     G.dayPhaseAmt = dayAmt;
                     // sky & fog (day color tinted by the current biome)
                     const daySky = G.biomeSky || dayColors.skyDay;
@@ -18998,6 +19189,62 @@ function CherryAdventure() {
                                     m.position.x = rnd(-FIELD_R, FIELD_R);
                                     m.position.z = rnd(-FIELD_R, FIELD_R);
                                 }
+                            });
+                    }
+                    // 🔥 hell: rising embers (hell biome only)
+                    if (G.hellDecor && G.hellDecor.visible && G.hellEmbers) {
+                        G.hellEmbers.forEach((e) => {
+                            e.position.y += e.userData.rise * dt;
+                            e.position.x += Math.sin(t * 2 + e.userData.sway) * 0.012;
+                            if (e.position.y > 3.6) {
+                                e.position.y = 0.15;
+                                e.position.x = rnd(-FIELD_R, FIELD_R);
+                                e.position.z = rnd(-FIELD_R, FIELD_R);
+                            }
+                        });
+                    }
+                    // ☀️ heaven: drifting golden clouds + rising motes (heaven biome only)
+                    if (G.heavenDecor && G.heavenDecor.visible) {
+                        if (G.heavenClouds)
+                            G.heavenClouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > FIELD_R + 5) {
+                                c.position.x = -FIELD_R - 5;
+                                c.position.z = rnd(-FIELD_R, FIELD_R);
+                            } });
+                        if (G.heavenMotes)
+                            G.heavenMotes.forEach((m) => {
+                                m.position.y += m.userData.rise * dt;
+                                m.rotation.y += m.userData.spin * dt;
+                                m.position.x += Math.sin(t + m.userData.sway) * 0.005;
+                                if (m.position.y > 4.5) {
+                                    m.position.y = 0.3;
+                                    m.position.x = rnd(-FIELD_R, FIELD_R);
+                                    m.position.z = rnd(-FIELD_R, FIELD_R);
+                                }
+                            });
+                    }
+                    // 🌑 moon: twinkling stars + shooting-star meteors (moon biome only)
+                    if (G.moonDecor && G.moonDecor.visible) {
+                        if (G.moonStars)
+                            G.moonStars.forEach((s) => { s.material.opacity = 0.55 + Math.sin(t * 2.2 + s.userData.tw) * 0.4; });
+                        if (G.moonMeteors)
+                            G.moonMeteors.forEach((mt) => {
+                                mt.userData.t += dt;
+                                const cyc = mt.userData.dur + 2.4; // ตกแล้วรอสักครู่ค่อยเกิดใหม่
+                                if (mt.userData.t > cyc) {
+                                    mt.userData.t = 0;
+                                    mt.userData.ox = rnd(-FIELD_R, FIELD_R);
+                                    mt.userData.oz = rnd(-FIELD_R, FIELD_R);
+                                    mt.userData.dur = rnd(1.4, 2.6);
+                                }
+                                const fp = mt.userData.t / mt.userData.dur;
+                                if (fp <= 1) {
+                                    mt.visible = true;
+                                    mt.position.set(mt.userData.ox + fp * 6, 13 - fp * 12, mt.userData.oz + fp * 3);
+                                    mt.rotation.z = 0.9;
+                                    mt.material.opacity = Math.sin(fp * Math.PI) * 0.9;
+                                }
+                                else
+                                    mt.visible = false;
                             });
                     }
                     // 🌪️ sandstorm drift (desert only)
