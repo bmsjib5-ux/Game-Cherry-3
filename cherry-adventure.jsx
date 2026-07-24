@@ -387,7 +387,96 @@ const ULT_ALT = {
   lancer: { name: "พระโพธิสัตว์พิฆาต", emoji: "🪷✨", desc: "ปักไม้เท้าศักดิ์สิทธิ์ บัวทองบาน พระพุทธเจ้าปรากฏ ไม้เท้ายักษ์ทุบ ×3.0 · ฟื้น HP + ชำระสถานะ + สตันปีศาจ" },
 };
 // resolve which ultimate a class is currently using
-const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls];
+// 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
+const PATH_ADV = {
+  w_pal: { ult: { name: "ศาลเทพพิพากษา", emoji: "⚖️✨", mul: 1.35, desc: "อัญเชิญบัลลังก์แสง ฟาดคำพิพากษาศักดิ์สิทธิ์ + ฟื้นพลัง" }, skills: [
+    { id: "x_pal_1", cost: 7,  name: "ดาบครูเสด",     emoji: "✝️", color: 0xf5d24a, mult: 1.7, perLv: 0.34, heal: 0.12, fx: "bash",  desc: "ฟันดาบแสง + ฟื้น HP เล็กน้อย" },
+    { id: "x_pal_2", cost: 10, name: "โล่เทวฑูต",      emoji: "🛡️", color: 0xffe9a0, mult: 1.3, perLv: 0.26, buffDef: 8, regen: 3, fx: "bash", desc: "โล่แสงเทวฑูต ป้องกัน+8 + ฟื้นต่อเนื่อง" },
+    { id: "x_pal_3", cost: 13, name: "แสงชำระบาป",     emoji: "🌟", color: 0xfff2b0, mult: 2.2, perLv: 0.46, stun: true, fx: "bolt",  desc: "ลำแสงพิพากษา + สตัน" },
+    { id: "x_pal_4", cost: 16, name: "ครูเสดสวรรค์",   emoji: "👼", color: 0xf5c542, mult: 2.9, perLv: 0.6,  hits: 3, heal: 0.2, fx: "multi", desc: "กองทัพแสงถล่ม ×3 + ฟื้น HP" } ] },
+  w_ber: { ult: { name: "วิญญาณอสูรคลั่ง", emoji: "😈🔥", mul: 1.45, desc: "ปลดปล่อยอสูรในกาย ฟันไม่ยั้งทั้งสนาม ดาเมจมหาศาล" }, skills: [
+    { id: "x_ber_1", cost: 7,  name: "ขวานเดือด",     emoji: "🪓", color: 0xe0503a, mult: 1.9, perLv: 0.4, fx: "bash",  desc: "ฟันขวานเดือดพล่าน ดาเมจสูง" },
+    { id: "x_ber_2", cost: 10, name: "โลหิตคลั่ง",     emoji: "🩸", color: 0xd9536b, mult: 2.1, perLv: 0.44, hits: 2, fx: "stab", desc: "ฟันสองจังหวะ ดูดเลือดจากแผล" },
+    { id: "x_ber_3", cost: 13, name: "สับแหลก",       emoji: "💢", color: 0xff5a2a, mult: 1.4, perLv: 0.3, hits: 4, fx: "multi", desc: "สับรัว 4 ครั้งไม่ยั้งมือ" },
+    { id: "x_ber_4", cost: 16, name: "พายุอสูร",      emoji: "🌪️", color: 0xc0202a, mult: 3.1, perLv: 0.64, defDown: 6, fx: "quake", desc: "หมุนขวานพายุเลือด + ลดเกราะศัตรู" } ] },
+  a_sharp: { ult: { name: "กระสุนเทพเจาะฟ้า", emoji: "🎯🌠", mul: 1.4, desc: "ล็อกเป้าข้ามขอบฟ้า ยิงนัดเดียวทะลุทุกสิ่ง" }, skills: [
+    { id: "x_shp_1", cost: 7,  name: "ยิงเจาะเกราะ",  emoji: "🎯", color: 0x7ba05b, mult: 1.8, perLv: 0.36, pierce: true, fx: "shot", desc: "กระสุนเจาะทะลุเกราะ" },
+    { id: "x_shp_2", cost: 10, name: "ตาเหยี่ยวล็อกเป้า", emoji: "🦅", color: 0xf5d24a, mult: 1.5, perLv: 0.3, critBonus: 0.4, fx: "shot", desc: "ล็อกจุดตาย คริสูงมาก" },
+    { id: "x_shp_3", cost: 13, name: "สไนป์สายฟ้า",   emoji: "⚡", color: 0x4a9ae8, mult: 2.4, perLv: 0.5, stun: true, fx: "bolt", desc: "นัดสายฟ้า + สตัน" },
+    { id: "x_shp_4", cost: 16, name: "นัดพิฆาตโลก",   emoji: "💥", color: 0xff7020, mult: 3.3, perLv: 0.66, pierce: true, guaranteedCrit: true, fx: "shot", desc: "นัดเดียวจอด คริการันตี + เจาะเกราะ" } ] },
+  a_range: { ult: { name: "พงไพรพิโรธ", emoji: "🌿🏹", mul: 1.35, desc: "เรียกวิญญาณป่าทั้งผืน ระดมยิงพร้อมพิษธรรมชาติ" }, skills: [
+    { id: "x_rng_1", cost: 7,  name: "ศรเถาวัลย์",    emoji: "🌿", color: 0x4aa04a, mult: 1.6, perLv: 0.32, slow: true, fx: "shot", desc: "เถาวัลย์รัด ศัตรูช้าลง" },
+    { id: "x_rng_2", cost: 10, name: "ฝนศรพิษไพร",    emoji: "🍃", color: 0x7ad04a, mult: 0.9, perLv: 0.2, hits: 4, poison: 3, fx: "multi", desc: "ระดมยิง 4 ดอกอาบพิษป่า" },
+    { id: "x_rng_3", cost: 13, name: "วิญญาณหมาป่า",  emoji: "🐺", color: 0x8a8a92, mult: 2.2, perLv: 0.46, hits: 2, fx: "stab", desc: "เรียกหมาป่าเงาขย้ำ ×2" },
+    { id: "x_rng_4", cost: 16, name: "คำสาปพงไพร",    emoji: "🌳", color: 0x3a7a3a, mult: 2.7, perLv: 0.56, poison: 5, defDown: 5, fx: "poison", desc: "ป่าสาปแช่ง พิษหนัก + ลดเกราะ" } ] },
+  m_elem: { ult: { name: "มหาวินาศธาตุประสาน", emoji: "🌈☄️", mul: 1.45, desc: "หลอมสี่ธาตุเป็นหนึ่ง ระเบิดล้างสนาม" }, skills: [
+    { id: "x_elm_1", cost: 7,  name: "หอกน้ำแข็งดำ",  emoji: "🧊", color: 0x9adcf5, mult: 1.8, perLv: 0.36, freeze: true, fx: "shot", desc: "หอกน้ำแข็งมืด แช่แข็งข้ามเทิร์น" },
+    { id: "x_elm_2", cost: 10, name: "เพลิงนรกสีคราม", emoji: "🔵", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, burn: 3, fx: "bolt", desc: "เปลวเพลิงสีครามเผาต่อเนื่อง" },
+    { id: "x_elm_3", cost: 13, name: "ศิลาสายฟ้า",    emoji: "🌋", color: 0xc09a5a, mult: 1.3, perLv: 0.28, hits: 3, stun: true, fx: "quake", desc: "หินภูเขาไฟ+ฟ้าผ่า ×3 + มึน" },
+    { id: "x_elm_4", cost: 16, name: "จตุธาตุสังหาร",  emoji: "🌈", color: 0xb07ae0, mult: 2.6, perLv: 0.54, hits: 4, fx: "multi", desc: "สี่ธาตุถล่มพร้อมกัน ×4" } ] },
+  m_priest: { ult: { name: "ประตูสวรรค์เบิกฟ้า", emoji: "⛩️✨", mul: 1.3, desc: "เปิดประตูสวรรค์ แสงชำระทุกสิ่ง + ฟื้นพลังเต็มอัตรา" }, skills: [
+    { id: "x_pri_1", cost: 7,  name: "แสงลงทัณฑ์",    emoji: "☀️", color: 0xffe9a0, mult: 1.7, perLv: 0.34, fx: "bolt", desc: "ลำแสงสวรรค์ลงทัณฑ์" },
+    { id: "x_pri_2", cost: 10, name: "พรฟื้นชีพ",      emoji: "💫", color: 0xfff2b0, mult: 1.0, perLv: 0.22, heal: 0.5, regen: 4, fx: "heal", desc: "ฟื้น HP หนัก + ฟื้นต่อเนื่อง 4 เทิร์น" },
+    { id: "x_pri_3", cost: 13, name: "มนตร์สะกดวิญญาณ", emoji: "🕊️", color: 0xd8ecff, mult: 1.9, perLv: 0.4, stun: true, confuse: 2, fx: "heal", desc: "แสงสะกด + สตัน + สับสน" },
+    { id: "x_pri_4", cost: 16, name: "นทีสวรรค์",      emoji: "🌊", color: 0x8fd0ff, mult: 2.5, perLv: 0.52, hits: 2, heal: 0.25, fx: "multi", desc: "คลื่นแสงถล่ม ×2 + ฟื้น HP" } ] },
+  s_shade: { ult: { name: "ราตรีนิรันดร์", emoji: "🌑⚰️", mul: 1.45, desc: "กลืนสนามสู่ความมืด เงาสังหารนับพันพร้อมกัน" }, skills: [
+    { id: "x_shd_1", cost: 7,  name: "กรีดเงา",       emoji: "🌑", color: 0x9a4ad0, mult: 1.8, perLv: 0.38, critBonus: 0.25, fx: "stab", desc: "กรีดจากเงา คริง่าย" },
+    { id: "x_shd_2", cost: 10, name: "แฝดเงามรณะ",    emoji: "👥", color: 0x6a4a8a, mult: 1.2, perLv: 0.26, hits: 3, buffEva: true, fx: "stab", desc: "โคลนเงาฟัน ×3 + หลบเพิ่ม" },
+    { id: "x_shd_3", cost: 13, name: "หัตถ์ยมทูต",     emoji: "💀", color: 0x2a2a3a, mult: 2.5, perLv: 0.52, defDown: 6, fx: "pierce", desc: "มือเงาบีบวิญญาณ ลดเกราะหนัก" },
+    { id: "x_shd_4", cost: 16, name: "สุริยุปราคา",    emoji: "🌘", color: 0x4a2a6a, mult: 3.2, perLv: 0.64, hits: 2, guaranteedCrit: true, fx: "bolt", desc: "บดบังดวงตะวัน ฟันคริการันตี ×2" } ] },
+  s_venom: { ult: { name: "มหาสมุทรพิษกัดกร่อน", emoji: "☠️🌊", mul: 1.4, desc: "ท่วมสนามด้วยพิษราชันย์ กัดกร่อนทุกอย่างจนหมดสิ้น" }, skills: [
+    { id: "x_vnm_1", cost: 7,  name: "เข็มพิษราชินี",  emoji: "🕷️", color: 0x7ad04a, mult: 1.6, perLv: 0.32, poison: 4, fx: "shot", desc: "เข็มพิษเข้มข้น 4 เทิร์น" },
+    { id: "x_vnm_2", cost: 10, name: "หมอกพิษม่วง",    emoji: "🟣", color: 0x9a4ad0, mult: 1.4, perLv: 0.3, poison: 3, confuse: 2, fx: "poison", desc: "หมอกพิษ + สับสน" },
+    { id: "x_vnm_3", cost: 13, name: "กรงเล็บงูเห่า",   emoji: "🐍", color: 0x4aa04a, mult: 2.2, perLv: 0.46, hits: 2, poison: 3, fx: "stab", desc: "ตะปบคู่อาบพิษ ×2" },
+    { id: "x_vnm_4", cost: 16, name: "วาระสุดท้าย",    emoji: "⚗️", color: 0x2ad08a, mult: 2.8, perLv: 0.58, poison: 6, defDown: 5, fx: "poison", desc: "พิษบีบหัวใจ 6 เทิร์น + ละลายเกราะ" } ] },
+  l_dragoon: { ult: { name: "จ้าวเวหามังกรราช", emoji: "🐉🌩️", mul: 1.45, desc: "ควบมังกรราชทะยานฟ้า ดำดิ่งทะลวงพร้อมสายฟ้า" }, skills: [
+    { id: "x_drg_1", cost: 7,  name: "ทะยานเสียดฟ้า",  emoji: "🐉", color: 0x4a9ae8, mult: 1.9, perLv: 0.4, pierce: true, fx: "pierce", desc: "พุ่งทะลวงเจาะเกราะ" },
+    { id: "x_drg_2", cost: 10, name: "เพลิงมังกร",     emoji: "🔥", color: 0xe0503a, mult: 2.0, perLv: 0.42, burn: 3, fx: "bolt", desc: "ลมหายใจมังกรเผาไหม้" },
+    { id: "x_drg_3", cost: 13, name: "หอกร้อยเงา",     emoji: "🔱", color: 0x8fd0ff, mult: 1.2, perLv: 0.26, hits: 4, fx: "multi", desc: "แทงรัวราวเงาร้อยเล่ม ×4" },
+    { id: "x_drg_4", cost: 16, name: "ดิ่งพสุธาสะท้าน", emoji: "☄️", color: 0xf5a623, mult: 3.0, perLv: 0.62, stun: true, defDown: 4, fx: "quake", desc: "ดิ่งจากฟ้าสะท้านปฐพี + สตัน" } ] },
+  l_guard: { ult: { name: "ปราการนิรันดร์กาล", emoji: "🏰🌍", mul: 1.3, desc: "ยกปราการศิลาโอบสนาม สะท้อนทุกการโจมตี" }, skills: [
+    { id: "x_grd_1", cost: 7,  name: "ทุบศิลา",        emoji: "🪨", color: 0xc09a5a, mult: 1.7, perLv: 0.34, buffDef: 4, fx: "quake", desc: "ทุบพื้น + ป้องกัน +4" },
+    { id: "x_grd_2", cost: 10, name: "เกราะภูผา",      emoji: "⛰️", color: 0x8a6a3a, mult: 1.2, perLv: 0.26, buffDef: 9, heal: 0.15, fx: "bash", desc: "ป้องกัน +9 + ฟื้นเล็กน้อย" },
+    { id: "x_grd_3", cost: 13, name: "หอกแผ่นดินไหว",  emoji: "🌍", color: 0xa08050, mult: 2.3, perLv: 0.48, stun: true, fx: "quake", desc: "แทงสะเทือนแผ่นดิน + มึน" },
+    { id: "x_grd_4", cost: 16, name: "พิพากษาปฐพี",    emoji: "🗿", color: 0x6a5a3a, mult: 2.8, perLv: 0.58, hits: 2, buffDef: 5, fx: "quake", desc: "เสาศิลาพุ่งทะลวง ×2 + เสริมเกราะ" } ] },
+  k_kensei: { ult: { name: "หมื่นดาบไร้เงา", emoji: "⚔️🌌", mul: 1.45, desc: "วาดดาบหมื่นครั้งในพริบตา จบทุกอย่างก่อนเสียงดาบมาถึง" }, skills: [
+    { id: "x_ken_1", cost: 7,  name: "ดาบไร้กระบวนท่า", emoji: "⚔️", color: 0xcfe0ff, mult: 1.9, perLv: 0.4, fx: "stab", desc: "ฟันไร้รูปแบบ อ่านทางไม่ได้" },
+    { id: "x_ken_2", cost: 10, name: "จันทร์เสี้ยวคู่",  emoji: "🌙", color: 0xb0b8f0, mult: 1.3, perLv: 0.28, hits: 3, fx: "multi", desc: "วาดดาบโค้งจันทร์ ×3" },
+    { id: "x_ken_3", cost: 13, name: "ลมดาบพันลี้",     emoji: "🌪️", color: 0xb8e8c0, mult: 2.3, perLv: 0.48, hits: 2, critBonus: 0.3, fx: "stab", desc: "คมลมฟันไกล ×2 คริง่าย" },
+    { id: "x_ken_4", cost: 16, name: "เคนเซย์สังหาร",   emoji: "🗡️", color: 0xf5d24a, mult: 3.1, perLv: 0.64, guaranteedCrit: true, fx: "bolt", desc: "ดาบสุดท้ายของเคนเซย์ คริการันตี" } ] },
+  k_iai: { ult: { name: "ชักดาบเทพสายฟ้าหมื่นสาย", emoji: "⚡👹", mul: 1.5, desc: "ชักดาบเร็วกว่าฟ้าผ่า หมื่นสายฟ้าฟาดตามรอยดาบ" }, skills: [
+    { id: "x_iai_1", cost: 7,  name: "ชักดาบแรกพบ",    emoji: "⚡", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, fx: "bolt", desc: "ชักดาบเสี้ยววินาที" },
+    { id: "x_iai_2", cost: 10, name: "ฟ้าแลบสองจังหวะ", emoji: "🌩️", color: 0xf5d24a, mult: 1.5, perLv: 0.32, hits: 2, stun: true, fx: "bolt", desc: "สองจังหวะสายฟ้า + มึน" },
+    { id: "x_iai_3", cost: 13, name: "ดาบเทพลงทัณฑ์",   emoji: "👹", color: 0xe0503a, mult: 2.4, perLv: 0.5, critBonus: 0.4, fx: "stab", desc: "รอยดาบอสูร คริสูงมาก" },
+    { id: "x_iai_4", cost: 16, name: "อสนีบาตสุดท้าย",  emoji: "🌩️", color: 0x9a6ad0, mult: 3.2, perLv: 0.66, stun: true, pierce: true, fx: "bolt", desc: "ฟ้าผ่าหมื่นสาย เจาะเกราะ + สตัน" } ] },
+  c_hacker: { ult: { name: "ล่มระบบทั้งจักรวาล", emoji: "🕶️🌐", mul: 1.45, desc: "แฮกโค้ดโลก ปิดระบบศัตรูถาวรแล้วลบทิ้ง" }, skills: [
+    { id: "x_hck_1", cost: 7,  name: "สคริปต์มืด",     emoji: "🕶️", color: 0x2ae84a, mult: 1.8, perLv: 0.38, defDown: 3, fx: "shot", desc: "ฝังสคริปต์เจาะระบบ ลดเกราะ" },
+    { id: "x_hck_2", cost: 10, name: "DDoS ถล่ม",      emoji: "📡", color: 0x2ad0e8, mult: 1.1, perLv: 0.24, hits: 5, fx: "multi", desc: "ยิงแพ็กเก็ตรัว ×5" },
+    { id: "x_hck_3", cost: 13, name: "แรนซัมแวร์",     emoji: "🔒", color: 0xe84a7a, mult: 2.2, perLv: 0.46, stun: true, poison: 3, fx: "bolt", desc: "ล็อกระบบเรียกค่าไถ่ + กัดกร่อน" },
+    { id: "x_hck_4", cost: 16, name: "Zero-Day สังหาร", emoji: "💀", color: 0x4a2a6a, mult: 3.0, perLv: 0.62, pierce: true, critBonus: 0.5, fx: "shot", desc: "ช่องโหว่ร้ายแรงสุด เจาะทุกเกราะ" } ] },
+  c_ai: { ult: { name: "ซิงกูลาริตี้", emoji: "🤖🌌", mul: 1.4, desc: "ปลุก AI เหนือมนุษย์ คำนวณจุดจบของศัตรูล่วงหน้า" }, skills: [
+    { id: "x_ai_1", cost: 7,  name: "โดรนจู่โจม",     emoji: "🛸", color: 0x7fd0f5, mult: 1.4, perLv: 0.3, hits: 2, fx: "shot", desc: "โดรนคู่ยิงเลเซอร์ ×2" },
+    { id: "x_ai_2", cost: 10, name: "เกราะนาโน",      emoji: "🤖", color: 0x8fe0b0, mult: 1.2, perLv: 0.26, buffDef: 7, regen: 3, fx: "bash", desc: "นาโนบอทซ่อมเกราะ +7 + ฟื้น" },
+    { id: "x_ai_3", cost: 13, name: "เลเซอร์วงโคจร",   emoji: "🛰️", color: 0x59a0e8, mult: 2.4, perLv: 0.5, pierce: true, fx: "bolt", desc: "ดาวเทียมยิงเลเซอร์เจาะเกราะ" },
+    { id: "x_ai_4", cost: 16, name: "คำนวณจุดจบ",     emoji: "🧠", color: 0xb07ae0, mult: 2.9, perLv: 0.6, guaranteedCrit: true, defDown: 4, fx: "bolt", desc: "AI ชี้จุดตาย คริการันตี + ลดเกราะ" } ] },
+  o_ceo: { ult: { name: "เทคโอเวอร์จักรวาล", emoji: "👑🌐", mul: 1.4, desc: "ซื้อกิจการทั้งจักรวาล ศัตรูกลายเป็นลูกจ้างชั่วคราว" }, skills: [
+    { id: "x_ceo_1", cost: 7,  name: "เซ็นคำสั่งฟ้าผ่า", emoji: "🖋️", color: 0xd8a840, mult: 1.8, perLv: 0.38, fx: "bolt", desc: "ลายเซ็นเปลี่ยนชะตา ดาเมจหนัก" },
+    { id: "x_ceo_2", cost: 10, name: "ประชุมด่วนนรก",   emoji: "📊", color: 0xe0708a, mult: 1.2, perLv: 0.26, hits: 4, confuse: 2, fx: "multi", desc: "ประชุม 4 วาระรวด ศัตรูสับสน" },
+    { id: "x_ceo_3", cost: 13, name: "ปลดฟ้าผ่า",      emoji: "📉", color: 0xc0202a, mult: 2.3, perLv: 0.48, defDown: 6, fx: "quake", desc: "ใบปลดกลางอากาศ ลดเกราะหนัก" },
+    { id: "x_ceo_4", cost: 16, name: "ควบรวมมหาอำนาจ", emoji: "👑", color: 0xf5c542, mult: 2.9, perLv: 0.6, stun: true, hits: 2, fx: "quake", desc: "เทคโอเวอร์สองชั้น ×2 + สตัน" } ] },
+  o_work: { ult: { name: "โอทีข้ามมิติ", emoji: "🌙💼", mul: 1.35, desc: "ทำงานข้ามเวลา ศัตรูแก่ตายก่อนงานเสร็จ" }, skills: [
+    { id: "x_wrk_1", cost: 7,  name: "กาแฟช็อตคู่",    emoji: "☕", color: 0x8a5a3a, mult: 1.4, perLv: 0.3, buffSpd: true, heal: 0.15, fx: "heal", desc: "ดับเบิลเอสเปรสโซ ฟื้น + ไวขึ้น" },
+    { id: "x_wrk_2", cost: 10, name: "แฟ้มถล่มทับ",    emoji: "🗂️", color: 0xc0a060, mult: 1.3, perLv: 0.28, hits: 3, fx: "multi", desc: "กองแฟ้มถล่ม ×3" },
+    { id: "x_wrk_3", cost: 13, name: "เดดไลน์ทมิฬ",    emoji: "⏰", color: 0xe0503a, mult: 2.3, perLv: 0.48, stun: true, slow: true, fx: "quake", desc: "เวลาบีบคั้น สตัน + ช้า" },
+    { id: "x_wrk_4", cost: 16, name: "โอทีนรกแตก",     emoji: "🔥", color: 0xff7020, mult: 2.8, perLv: 0.58, hits: 3, defDown: 3, fx: "multi", desc: "งานถล่มสามกะรวด ลดเกราะ" } ] },
+};
+let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสลับสกิลพื้นฐาน/ขั้นสูง (singleton ต่อหน้าเกม)
+const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
+const ultOf = (cls, alt) => {
+  const adv = SKILL_MODE_ADV && ACTIVE_ADV_PATH && PATH_ADV[ACTIVE_ADV_PATH];
+  if (adv) return adv.ult; // 🌟 ท่าไม้ตายประจำสายขั้นสูง
+  return (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls];
+};
 // 🎯 4 signature skills per class — each level up gives 5 skill points to rank them up (max Lv.20)
 // dmg = base attack × (mult + perLv×(rank-1)); each skill costs "cost" mana 💧
 const CLASS_SKILLS = {
@@ -589,6 +678,7 @@ const CLASS_PATHS = {
 const pathOf = (cls, pathId) => (CLASS_PATHS[cls] || []).find((p) => p.id === pathId) || null;
 // a path's signature skill appears as a 6th entry in the skill list
 const skillsOf = (cls, pathId) => {
+  if (SKILL_MODE_ADV && pathId && PATH_ADV[pathId]) return PATH_ADV[pathId].skills; // 🌟 ชุดสกิลขั้นสูงของสาย
   const base = CLASS_SKILLS[cls] || [];
   const p = pathOf(cls, pathId);
   return p && p.skill ? base.concat([p.skill]) : base;
@@ -10428,7 +10518,7 @@ export default function CherryAdventure() {
       mp: Math.ceil(G.player.mp), maxMp: effMaxMp(),
       atk: effAtk(), def: effDef(), skillPts: G.player.skillPts,
       sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
-      ultRank: G.ultRank || 1, ultSkillSum: G.skillSum ? G.skillSum() : 0, sellPriority: G.sellPriority ? [...G.sellPriority] : SLOTS.slice(),
+      ultRank: G.ultRank || 1, ultSkillSum: G.skillSum ? G.skillSum() : 0, skillMode: G.skillMode || "basic", sellPriority: G.sellPriority ? [...G.sellPriority] : SLOTS.slice(),
       statPts: G.player.statPts || 0, baseStats: { ...(G.baseStats || {}) },
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
@@ -10860,14 +10950,14 @@ export default function CherryAdventure() {
     // spend a skill point (called from the level-up panel)
     // 🎯 spend skill points to rank up a class skill (max Lv.20, costs 1 point per rank)
     // 🔒 max skill rank you can reach depends on character level
-    const SKILL_MAX = 20;
+    const SKILL_MAX = 40;
     // 🎚️ skill rank cap grows with level across the WHOLE game (rank 20 ≈ Lv.57).
     // The old rule (cap = level) hit the Lv.20 ceiling and then did nothing for 80 levels,
     // which let a Lv.20 character dump every point into one maxed skill.
     const skillCap = () => Math.max(1, Math.min(SKILL_MAX, 1 + Math.floor(G.player.level / 3)));
     G.skillCap = skillCap;
     // 💰 SP cost rises as the skill gets stronger: 1 (Lv1-5), 2 (Lv6-10), 3 (Lv11-15), 4 (Lv16-19)
-    const skillCost = (rank) => rank < 3 ? 1 : rank < 6 ? 2 : rank < 9 ? 3 : rank < 12 ? 5 : rank < 15 ? 7 : rank < 18 ? 9 : 12; // ⚖️ ยิ่งเลเวลสกิลสูง ยิ่งใช้แต้มมากขึ้นตามลำดับ
+    const skillCost = (rank) => rank <= 4 ? 1 : rank <= 9 ? 3 : rank <= 14 ? 4 : 5; // ⚖️ อัพ 1-5 ใช้ 1 แต้ม · 6-10 ใช้ 3 · 11-15 ใช้ 4 · 16-40 ใช้ 5
     // 🌳 passive-tree ranks are level-gated too, so passives grow with the character
     // instead of being fully buyable the moment the node unlocks.
     const treeCap = () => Math.max(1, 1 + Math.floor(G.player.level / 12)); // ⚖️ ปมพรสวรรค์อัพช้าลงตามเลเวล
@@ -11097,12 +11187,21 @@ export default function CherryAdventure() {
         (G.pathAuraMotes || []).forEach((m) => m.material.color.setHex(p.tint));
       }
     };
+    G.setSkillMode = (m) => {
+      if (m === "adv" && !G.pathId) { toast("🔒 ต้องเลือกสายอาชีพขั้นสูงก่อน จึงใช้ชุดสกิลขั้นสูงได้"); return; }
+      G.skillMode = m === "adv" ? "adv" : "basic";
+      setSkillModeGlobals(G.skillMode === "adv", G.pathId);
+      toast(G.skillMode === "adv" ? "🌟 สลับเป็นชุดสกิลขั้นสูง + ท่าไม้ตายใหม่!" : "⚔️ กลับมาใช้ชุดสกิลพื้นฐาน");
+      setUi((u) => ({ ...u, skillMode: G.skillMode, skillRanks: { ...(G.skillRanks || {}) } }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
     G.pickPath = (pathId) => {
       if (G.pathId) { toast("🌟 เลือกสายอาชีพไปแล้ว!"); return; }
       if (G.player.level < PATH_LV) { toast(`🔒 ต้องถึงเลเวล ${PATH_LV} ก่อน (ตอนนี้ Lv.${G.player.level})`); return; }
       const p = pathOf(G.cls, pathId);
       if (!p) return;
       G.pathId = pathId;
+      setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 อัปเดตชุดสกิลขั้นสูงของสายที่เลือก
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // 🌟 fully restored on awakening
       if (G.sfx) { G.sfx.levelup && G.sfx.levelup(); G.sfx.boom && G.sfx.boom(); }
       // 🌟✨ AWAKENING MOMENT — a pillar of light + expanding rings + a shower of tinted sparks
@@ -12483,6 +12582,7 @@ export default function CherryAdventure() {
       if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.ultAlt = false;
       G.pathId = null; // 🌟 fresh character has no path yet
+      G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
       G.titleId = "t_none";
       G.rolls = {}; G.sockets = {}; G.gems = {};
@@ -12548,7 +12648,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0,
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -13316,6 +13416,8 @@ export default function CherryAdventure() {
       G.weaponEnchant = d.weaponEnchant || "none";
       G.ultAlt = !!d.ultAlt;
       G.pathId = d.pathId || null;
+      G.skillMode = d.skillMode === "adv" && G.pathId ? "adv" : "basic";
+      setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 คืนโหมดสกิลที่ใช้อยู่
       if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
       if (G.applySetAura) G.applySetAura(); // 👘 restore the outfit-set aura on load
       if (G.applyCosmeticAura) G.applyCosmeticAura(); // 🌟 restore the cosmetic aura on load
@@ -17040,7 +17142,7 @@ export default function CherryAdventure() {
             }
           } else if (A.type === "ult") {
             const cls = G.cls || "warrior";
-            const ultMul = 1 + ((G.ultRank || 1) - 1) * 0.18; // 🌟 higher ult rank = stronger
+            const ultMul = (1 + ((G.ultRank || 1) - 1) * 0.18) * ((SKILL_MODE_ADV && ACTIVE_ADV_PATH && PATH_ADV[ACTIVE_ADV_PATH]) ? PATH_ADV[ACTIVE_ADV_PATH].ult.mul : 1); // 🌟 rank สูง + อัลติสายขั้นสูงแรงกว่า
             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
@@ -21103,6 +21205,15 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
                 ⚡ อัพเกรดสกิลอาชีพ
               </div>
+              {/* 🔀 โหมดสลับชุดสกิล พื้นฐาน/ขั้นสูง */}
+              {ui.pathId ? (
+                <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                  <button onClick={() => G.setSkillMode("basic")} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: (ui.skillMode || "basic") === "basic" ? "#fff" : "#5a7a4a", background: (ui.skillMode || "basic") === "basic" ? "#7ba05b" : "#eaf5e0" }}>⚔️ สกิลพื้นฐาน</button>
+                  <button onClick={() => G.setSkillMode("adv")} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.skillMode === "adv" ? "#fff" : "#8a5ad0", background: ui.skillMode === "adv" ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#f0e8f8" }}>🌟 สกิลขั้นสูง</button>
+                </div>
+              ) : (
+                <div style={{ fontSize: 9.5, color: "#a89ac0", marginBottom: 6 }}>🔒 เลือกสายอาชีพขั้นสูง แล้วจะสลับใช้ "ชุดสกิลขั้นสูง 4 สกิล + ท่าไม้ตายใหม่" ของสายนั้นได้</div>
+              )}
               {/* 💪 base stats allocation */}
               <div style={{ background: "linear-gradient(135deg,#f0f6ff,#f6f0ff)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #c0d0f0" }}>
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#4a6ac0" }}>💪 ค่าสถานะพื้นฐาน <span style={{ color: "#9a6ad0" }}>· มี {ui.statPts || 0} แต้ม</span></div>
@@ -21304,7 +21415,7 @@ export default function CherryAdventure() {
                       <div style={{ width: `${(rank / 20) * 100}%`, height: "100%", background: `#${sk.color.toString(16).padStart(6, "0")}`, borderRadius: 99 }}/>
                       {cap < 20 && <div style={{ position: "absolute", top: 0, left: `${(cap / 20) * 100}%`, width: 2, height: "100%", background: "#c04a4a" }}/>}
                     </div>
-                    <button onClick={() => gate.open && G.rankSkill(sk.id)} disabled={!gate.open || maxed || atCap || (ui.sp || 0) < (rank < 5 ? 1 : rank < 10 ? 2 : rank < 15 ? 3 : 4)} style={{
+                    <button onClick={() => gate.open && G.rankSkill(sk.id)} disabled={!gate.open || maxed || atCap || (ui.sp || 0) < (G.skillCost ? G.skillCost(rank) : 1)} style={{
                       width: "100%", padding: "6px 0", borderRadius: 8, border: "none",
                       cursor: (maxed || atCap) ? "default" : "pointer",
                       fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
