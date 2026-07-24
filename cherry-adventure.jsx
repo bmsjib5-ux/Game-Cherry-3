@@ -730,7 +730,12 @@ const SKILL_GATE = [
 ];
 const STAT_LABEL = { atk: "พลังโจมตี ⚔️", hp: "พลังชีวิต ❤️", def: "ป้องกัน 🛡️", crit: "คริติคอล 🎯", luck: "โชค 🍀", mp: "มานา 🔮" };
 // returns { open, reasons[] } for a skill slot of a class
+const ADV_UNLOCK_LV = 60; // 🌟 ถึงเลเวล 60 ปลดล็อกสกิลขั้นสูงที่เหลือของสายอาชีพทั้งหมด
 const skillGate = (cls, slot, level, ranks, stats, pathId) => {
+  // 🌟 ชุดสกิลขั้นสูง: พอถึง Lv.60 ปลดล็อกครบทุกสกิลของสายทันที (ไม่ต้องไล่เงื่อนไขทีละสกิล)
+  if (SKILL_MODE_ADV && pathId && PATH_ADV[pathId] && (level || 1) >= ADV_UNLOCK_LV) {
+    return { open: true, reasons: [{ ok: true, text: `🌟 Lv.${ADV_UNLOCK_LV} ปลดล็อกสกิลขั้นสูงครบสาย` }] };
+  }
   const g = SKILL_GATE[slot];
   if (!g) return { open: true, reasons: [] };
   const list = skillsOf(cls, pathId);
