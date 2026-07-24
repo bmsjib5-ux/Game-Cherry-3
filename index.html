@@ -474,17 +474,17 @@ const PATH_ADV = {
             { id: "x_vnm_3", cost: 13, name: "กรงเล็บงูเห่า", emoji: "🐍", color: 0x4aa04a, mult: 1.3, perLv: 0.28, hits: 2, poison: 4, bleed: 3, defDown: 5, fx: "stab", desc: "เงางูเห่าขย้ำ ×2 พิษ+เลือดไหล + ลดเกราะ" },
             { id: "x_vnm_4", cost: 16, name: "วาระสุดท้าย", emoji: "⚗️", color: 0x2ad08a, mult: 1.4, perLv: 0.3, poison: 6, defDown: 8, healCut: true, fx: "poison", desc: "ขวดพิษโบราณระเบิดลูกโซ่ พิษหนัก 6 เทิร์น ละลายเกราะ + กันฟื้น" }
         ] },
-    l_dragoon: { ult: { name: "จ้าวเวหามังกรราช", emoji: "🐉🌩️", mul: 1.45, desc: "ควบมังกรราชทะยานฟ้า ดำดิ่งทะลวงพร้อมสายฟ้า" }, skills: [
-            { id: "x_drg_1", cost: 7, name: "ทะยานเสียดฟ้า", emoji: "🐉", color: 0x4a9ae8, mult: 1.9, perLv: 0.4, pierce: true, fx: "pierce", desc: "พุ่งทะลวงเจาะเกราะ" },
-            { id: "x_drg_2", cost: 10, name: "เพลิงมังกร", emoji: "🔥", color: 0xe0503a, mult: 2.0, perLv: 0.42, burn: 3, fx: "bolt", desc: "ลมหายใจมังกรเผาไหม้" },
-            { id: "x_drg_3", cost: 13, name: "หอกร้อยเงา", emoji: "🔱", color: 0x8fd0ff, mult: 1.2, perLv: 0.26, hits: 4, fx: "multi", desc: "แทงรัวราวเงาร้อยเล่ม ×4" },
-            { id: "x_drg_4", cost: 16, name: "ดิ่งพสุธาสะท้าน", emoji: "☄️", color: 0xf5a623, mult: 3.0, perLv: 0.62, stun: true, defDown: 4, fx: "quake", desc: "ดิ่งจากฟ้าสะท้านปฐพี + สตัน" }
+    l_dragoon: { ult: { name: "จ้าวเวหามังกรราช", emoji: "🐉🌩️", mul: 1.7, defDown: 15, burn: 5, stun: true, buffTeam: true, desc: "หลอมร่างกับมังกรจักรพรรดิ ดิ่งทะลวงจากเวหา — ไฟ+กายภาพมหาศาล ทะลุเกราะ เผา+ทุ่มลอย + Dragon Emperor Form (ATK/คริ/ความเร็วทีม)" }, skills: [
+            { id: "x_drg_1", cost: 7, name: "ทะยานเสียดฟ้า", emoji: "🐉", color: 0xe0803a, mult: 1.9, perLv: 0.4, pierce: true, defDown: 6, critBonus: 0.25, stun: true, fx: "pierce", desc: "พุ่งขึ้นฟ้าแทงทะลวงจากเบื้องบน ทุ่มลอย ลดเกราะ + เพิ่มคริ" },
+            { id: "x_drg_2", cost: 10, name: "เพลิงมังกร", emoji: "🔥", color: 0xe0503a, mult: 2.0, perLv: 0.42, burn: 5, defDown: 6, fx: "bolt", desc: "มังกรเพลิงพุ่งเผา เผาไหม้หนัก + ลดต้านไฟ" },
+            { id: "x_drg_3", cost: 13, name: "หอกร้อยเงา", emoji: "🔱", color: 0x8fd0ff, mult: 0.9, perLv: 0.2, hits: 5, pierce: true, bleed: 3, buffCritDmg: 40, fx: "multi", desc: "เงาหอกร้อยเล่มแทงรัว ×5 ทะลุหลบ เลือดไหล +ดาเมจคริ" },
+            { id: "x_drg_4", cost: 16, name: "ดิ่งพสุธาสะท้าน", emoji: "☄️", color: 0xf5a623, mult: 3.0, perLv: 0.62, stun: true, defDown: 10, burn: 4, fx: "quake", desc: "ดิ่งอุกกาบาตแทงพื้น AoE ทำลายเกราะ + ระเบิดเพลิง" }
         ] },
-    l_guard: { ult: { name: "ปราการนิรันดร์กาล", emoji: "🏰🌍", mul: 1.3, desc: "ยกปราการศิลาโอบสนาม สะท้อนทุกการโจมตี" }, skills: [
-            { id: "x_grd_1", cost: 7, name: "ทุบศิลา", emoji: "🪨", color: 0xc09a5a, mult: 1.7, perLv: 0.34, buffDef: 4, fx: "quake", desc: "ทุบพื้น + ป้องกัน +4" },
-            { id: "x_grd_2", cost: 10, name: "เกราะภูผา", emoji: "⛰️", color: 0x8a6a3a, mult: 1.2, perLv: 0.26, buffDef: 9, heal: 0.15, fx: "bash", desc: "ป้องกัน +9 + ฟื้นเล็กน้อย" },
-            { id: "x_grd_3", cost: 13, name: "หอกแผ่นดินไหว", emoji: "🌍", color: 0xa08050, mult: 2.3, perLv: 0.48, stun: true, fx: "quake", desc: "แทงสะเทือนแผ่นดิน + มึน" },
-            { id: "x_grd_4", cost: 16, name: "พิพากษาปฐพี", emoji: "🗿", color: 0x6a5a3a, mult: 2.8, perLv: 0.58, hits: 2, buffDef: 5, fx: "quake", desc: "เสาศิลาพุ่งทะลวง ×2 + เสริมเกราะ" }
+    l_guard: { ult: { name: "ปราการนิรันดร์กาล", emoji: "🏰🌍", mul: 1.4, defDown: 12, buffDef: 20, slow: true, regen: 4, buffTeam: true, desc: "อัญเชิญป้อมปราการ+โกเลมโบราณ — ดาเมจปฐพีทั่วสนาม โล่ยักษ์ให้ทีม เพิ่ม DEF ลดพลัง/ความเร็วศัตรู + Earth Dominion" }, skills: [
+            { id: "x_grd_1", cost: 7, name: "ทุบศิลา", emoji: "🪨", color: 0xc09a5a, mult: 1.7, perLv: 0.34, buffDef: 6, stun: true, slow: true, fx: "quake", desc: "เสาหินพุ่งทุ่มลอย สตัน + ช้าลง + ป้องกัน +6" },
+            { id: "x_grd_2", cost: 10, name: "เกราะภูผา", emoji: "⛰️", color: 0x8a6a3a, mult: 1.0, perLv: 0.22, buffDef: 18, heal: 0.15, regen: 3, cleanse: true, fx: "bash", desc: "เกราะหินโบราณ ป้องกัน +18 สะท้อนแรง + ล้างสถานะ + ฟื้นต่อเนื่อง" },
+            { id: "x_grd_3", cost: 13, name: "หอกแผ่นดินไหว", emoji: "🌍", color: 0xa08050, mult: 1.6, perLv: 0.34, hits: 2, stun: true, defDown: 8, slow: true, fx: "quake", desc: "แผ่นดินไหว ×2 ทุ่มล้ม ลดเกราะ + ลดความเร็วโจมตี" },
+            { id: "x_grd_4", cost: 16, name: "พิพากษาปฐพี", emoji: "🗿", color: 0x6a5a3a, mult: 1.5, perLv: 0.32, hits: 2, defDown: 10, slow: true, buffDef: 8, fx: "quake", desc: "โกเลมโบราณทุบสนาม ×2 (Taunt) ทำลายเกราะ + ช้าลง + เสริมเกราะ" }
         ] },
     k_kensei: { ult: { name: "หมื่นดาบไร้เงา", emoji: "⚔️🌌", mul: 1.45, desc: "วาดดาบหมื่นครั้งในพริบตา จบทุกอย่างก่อนเสียงดาบมาถึง" }, skills: [
             { id: "x_ken_1", cost: 7, name: "ดาบไร้กระบวนท่า", emoji: "⚔️", color: 0xcfe0ff, mult: 1.9, perLv: 0.4, fx: "stab", desc: "ฟันไร้รูปแบบ อ่านทางไม่ได้" },
