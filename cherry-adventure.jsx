@@ -8888,6 +8888,14 @@ export default function CherryAdventure() {
       } else G.buddy = null;
       setUi((u) => ({ ...u, buddy: G.buddy })); // 🖼️ เลือกบัดดี้แล้วหน้าจอไม่ปิด
     };
+    // 🐎 ปุ่มเดียวขี่/ลง — จำตัวล่าสุดที่ขี่ไว้
+    G.toggleMount = () => {
+      if (G.mountId) { G._lastMount = G.mountId; G.setMount(null); return; }
+      const owned = Object.keys(G.mountsOwned || {});
+      if (!owned.length) { toast("ยังไม่มีสัตว์ขี่ — ซื้อได้ที่ร้านเพชร 💎🐎"); return; }
+      const id = (G._lastMount && G.mountsOwned[G._lastMount]) ? G._lastMount : owned[0];
+      G.setMount(id);
+    };
     // 🐎 MOUNT — สัตว์ขี่: โมเดลวิ่งใต้ตัวละคร + คูณความเร็วเดินทาง
     G.setMount = (id, quiet) => {
       if (id && !(G.mountsOwned || {})[id]) { toast("🔒 ยังไม่ได้ปลดล็อกสัตว์ขี่ตัวนี้ — ซื้อได้ที่ร้านเพชร 💎"); return; }
@@ -12538,7 +12546,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null,
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null,
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -13356,6 +13364,7 @@ export default function CherryAdventure() {
       G.endlessBest = d.endlessBest || 0;
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < (G.STORY ? G.STORY.length : 5);
       G.mountsOwned = d.mountsOwned || {};
+      G._lastMount = d.mountLast || null;
       if (d.mountId && G.mountsOwned[d.mountId]) G.setMount(d.mountId, true); else if (G.setMount) G.setMount(null, true);
       { let bid = d.buddy;
         if (bid != null && !G.petBox.some((x) => x.i === bid)) { const fb = G.petBox.find((x) => x.sp === bid); bid = fb ? fb.i : (G.team[0] || null); } // เซฟเก่าเก็บเป็นชนิด → หา instance
@@ -20412,6 +20421,13 @@ export default function CherryAdventure() {
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => G.usePotion()} style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 304, width: 44, height: 44 } : { bottom: 84, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
+      )}
+      {/* 🐎 ride / dismount — one tap */}
+      {ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (
+        <button onClick={() => G.toggleMount()} title={ui.mountId ? "ลงจากหลัง" : "ขี่สัตว์ขี่"} style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 256, width: 44, height: 44 } : { bottom: 150, width: 52, height: 52 }), borderRadius: 16, border: ui.mountId ? "2px solid #ffd76a" : "none", cursor: "pointer", fontSize: 24, background: ui.mountId ? "linear-gradient(135deg,#5a8ad0,#7b6ad0)" : "#fff", boxShadow: ui.mountId ? "0 4px 14px rgba(90,110,210,0.5)" : "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>
+          {ui.mountId ? ((MOUNTS.find((m) => m.id === ui.mountId) || {}).emoji || "🐎") : "🐎"}
+          {ui.mountId && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "18px", padding: "0 3px" }}>✓</span>}
+        </button>
       )}
       {ui.menuOpen && (
         <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-end", justifyContent: "flex-end", zIndex: 66 }}>
