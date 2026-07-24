@@ -399,16 +399,16 @@ const PATH_ADV = {
     { id: "x_ber_2", cost: 10, name: "โลหิตคลั่ง",     emoji: "🩸", color: 0xd9536b, mult: 1.9,  perLv: 0.4,  hits: 2, buffSpd: true, buffCritDmg: 40, heal: 0.12, fx: "stab", desc: "กรีดเลือดปลุกพลังอสูร ×2 ดูดเลือด เพิ่มความเร็ว+ดาเมจคริ" },
     { id: "x_ber_3", cost: 13, name: "สับแหลก",       emoji: "💢", color: 0xff5a2a, mult: 0.9,  perLv: 0.2,  hits: 5, stun: true, defDown: 8, burn: 3, fx: "quake", desc: "สับขวานยักษ์ผ่าพื้น ×5 สตัน ทำลายเกราะ + รอยแยกเผาไหม้" },
     { id: "x_ber_4", cost: 16, name: "พายุอสูร",      emoji: "🌪️", color: 0xc0202a, mult: 0.8,  perLv: 0.18, hits: 8, stun: true, defDown: 8, fx: "quake", desc: "พายุขวานอสูร ดูดศัตรูเข้ากลาง ฟันรัว 8 ครั้ง Knockback + ลดเกราะ" } ] },
-  a_sharp: { ult: { name: "กระสุนเทพเจาะฟ้า", emoji: "🎯🌠", mul: 1.4, desc: "ล็อกเป้าข้ามขอบฟ้า ยิงนัดเดียวทะลุทุกสิ่ง" }, skills: [
-    { id: "x_shp_1", cost: 7,  name: "ยิงเจาะเกราะ",  emoji: "🎯", color: 0x7ba05b, mult: 1.8, perLv: 0.36, pierce: true, fx: "shot", desc: "กระสุนเจาะทะลุเกราะ" },
-    { id: "x_shp_2", cost: 10, name: "ตาเหยี่ยวล็อกเป้า", emoji: "🦅", color: 0xf5d24a, mult: 1.5, perLv: 0.3, critBonus: 0.4, fx: "shot", desc: "ล็อกจุดตาย คริสูงมาก" },
-    { id: "x_shp_3", cost: 13, name: "สไนป์สายฟ้า",   emoji: "⚡", color: 0x4a9ae8, mult: 2.4, perLv: 0.5, stun: true, fx: "bolt", desc: "นัดสายฟ้า + สตัน" },
-    { id: "x_shp_4", cost: 16, name: "นัดพิฆาตโลก",   emoji: "💥", color: 0xff7020, mult: 3.3, perLv: 0.66, pierce: true, guaranteedCrit: true, fx: "shot", desc: "นัดเดียวจอด คริการันตี + เจาะเกราะ" } ] },
-  a_range: { ult: { name: "พงไพรพิโรธ", emoji: "🌿🏹", mul: 1.35, desc: "เรียกวิญญาณป่าทั้งผืน ระดมยิงพร้อมพิษธรรมชาติ" }, skills: [
-    { id: "x_rng_1", cost: 7,  name: "ศรเถาวัลย์",    emoji: "🌿", color: 0x4aa04a, mult: 1.6, perLv: 0.32, slow: true, fx: "shot", desc: "เถาวัลย์รัด ศัตรูช้าลง" },
-    { id: "x_rng_2", cost: 10, name: "ฝนศรพิษไพร",    emoji: "🍃", color: 0x7ad04a, mult: 0.9, perLv: 0.2, hits: 4, poison: 3, fx: "multi", desc: "ระดมยิง 4 ดอกอาบพิษป่า" },
-    { id: "x_rng_3", cost: 13, name: "วิญญาณหมาป่า",  emoji: "🐺", color: 0x8a8a92, mult: 2.2, perLv: 0.46, hits: 2, fx: "stab", desc: "เรียกหมาป่าเงาขย้ำ ×2" },
-    { id: "x_rng_4", cost: 16, name: "คำสาปพงไพร",    emoji: "🌳", color: 0x3a7a3a, mult: 2.7, perLv: 0.56, poison: 5, defDown: 5, fx: "poison", desc: "ป่าสาปแช่ง พิษหนัก + ลดเกราะ" } ] },
+  a_sharp: { ult: { name: "กระสุนเทพเจาะฟ้า", emoji: "🎯🌠", mul: 1.6, defDown: 15, buffTeam: true, desc: "อัญเชิญเทพนักธนู — ล็อกทุกเป้า ยิงลูกศรจักรวาล+ฝนดาวตก เจาะเกราะ 100% หลบไม่ได้ + Perfect Aim (เพิ่มคริ/ความเร็ว/หลบให้ทีม)" }, skills: [
+    { id: "x_shp_1", cost: 7,  name: "ยิงเจาะเกราะ",  emoji: "🎯", color: 0xf5d24a, mult: 1.8, perLv: 0.36, pierce: true, defDown: 8, critBonus: 0.25, fx: "shot", desc: "ลูกศรสายฟ้าทองทะลุทุกเป้า ลดเกราะหนัก + เพิ่มคริ" },
+    { id: "x_shp_2", cost: 10, name: "ตาเหยี่ยวล็อกเป้า", emoji: "🦅", color: 0xf5e08a, mult: 1.1, perLv: 0.24, hits: 3, critBonus: 0.5, buffCrit: 20, fx: "multi", desc: "อินทรีล็อกเป้า ยิงรัว ×3 แม่นยำ 100% คริง่ายมาก" },
+    { id: "x_shp_3", cost: 13, name: "สไนป์สายฟ้า",   emoji: "⚡", color: 0x4a9ae8, mult: 0.9, perLv: 0.2, hits: 4, pierce: true, stun: true, slow: true, fx: "bolt", desc: "สายฟ้าลูกโซ่ ×4 เจาะเกราะ สตัน + ช้าลง" },
+    { id: "x_shp_4", cost: 16, name: "นัดพิฆาตโลก",   emoji: "💥", color: 0xff7020, mult: 3.3, perLv: 0.66, pierce: true, guaranteedCrit: true, defDown: 10, stun: true, fx: "shot", desc: "ธนูยักษ์ระเบิดทั่วสนาม เจาะเกราะ คริการันตี + Knockback" } ] },
+  a_range: { ult: { name: "พงไพรพิโรธ", emoji: "🌿🏹", mul: 1.5, stun: true, defDown: 12, poison: 5, heal: 0.25, buffTeam: true, desc: "ปลุกต้นไม้โลก — รากยักษ์ตรึงศัตรูทั้งสนาม ฝนศรพิษ+พายุใบไม้ ลดเกราะ ติดพิษหนัก ฟื้น HP ทีม + พรพงไพร (เร็ว/หลบ)" }, skills: [
+    { id: "x_rng_1", cost: 7,  name: "ศรเถาวัลย์",    emoji: "🌿", color: 0x4aa04a, mult: 1.6, perLv: 0.32, slow: true, poison: 3, stun: true, fx: "shot", desc: "เถาวัลย์ยักษ์พันธนาการ (Root) + พิษ + ช้าลง" },
+    { id: "x_rng_2", cost: 10, name: "ฝนศรพิษไพร",    emoji: "🍃", color: 0x7ad04a, mult: 0.85, perLv: 0.2, hits: 5, poison: 4, healCut: true, fx: "multi", desc: "ฝนศรพิษ ×5 อาบพื้นที่ พิษสะสม + ลดการฟื้นฟู HP" },
+    { id: "x_rng_3", cost: 13, name: "วิญญาณหมาป่า",  emoji: "🐺", color: 0x4ad07a, mult: 1.3, perLv: 0.28, hits: 3, bleed: 3, stun: true, fx: "stab", desc: "ฝูงหมาป่าวิญญาณขย้ำ ×3 เลือดไหล + ขู่ขวัญ (Fear)" },
+    { id: "x_rng_4", cost: 16, name: "คำสาปพงไพร",    emoji: "🌳", color: 0x3a7a3a, mult: 1.6, perLv: 0.34, poison: 5, defDown: 8, stun: true, healCut: true, fx: "poison", desc: "รากไม้โบราณตรึงทั้งพื้นที่ (Root) ลดเกราะ พิษต่อเนื่อง + ลดการฟื้นฟู" } ] },
   m_elem: { ult: { name: "มหาวินาศธาตุประสาน", emoji: "🌈☄️", mul: 1.45, desc: "หลอมสี่ธาตุเป็นหนึ่ง ระเบิดล้างสนาม" }, skills: [
     { id: "x_elm_1", cost: 7,  name: "หอกน้ำแข็งดำ",  emoji: "🧊", color: 0x9adcf5, mult: 1.8, perLv: 0.36, freeze: true, fx: "shot", desc: "หอกน้ำแข็งมืด แช่แข็งข้ามเทิร์น" },
     { id: "x_elm_2", cost: 10, name: "เพลิงนรกสีคราม", emoji: "🔵", color: 0x4a9ae8, mult: 2.0, perLv: 0.42, burn: 3, fx: "bolt", desc: "เปลวเพลิงสีครามเผาต่อเนื่อง" },
@@ -16904,6 +16904,7 @@ export default function CherryAdventure() {
                 }
                 if (sk.confuse) { G.est.confused = (G.est.confused || 0) + sk.confuse; fxMsg += ` สับสน 😵‍💫 ${sk.confuse} เทิร์น`; }
                 if (sk.slow) { G.enemy.slowed = true; fxMsg += " ช้าลง 🐌"; }
+                if (sk.healCut && G.enemy) { G.enemy.healCut = true; fxMsg += " ฟื้นตัวลด 💔"; } // 🍃 นักธนูพงไพร: ลดการฟื้นฟู HP ศัตรู
                 if (sk.defDown) { G.enemy.def = Math.max(0, (G.enemy.def || 0) - sk.defDown); fxMsg += ` ป้องกัน -${sk.defDown} 🛡️💔`; }
                 if (sk.bleed) { G.est.bleed = (G.est.bleed || 0) + sk.bleed; fxMsg += " เลือดไหล 🩸"; }
                 // 🎯💨 Armor Piercing Arrow: metallic impact, blue shockwave, armor break debuff
@@ -18899,9 +18900,10 @@ export default function CherryAdventure() {
                 const AU = PATH_ADV[G.pathId].ult; let note = "";
                 if (AU.defDown && G.enemy && G.enemy.hp > 0) { G.enemy.def = Math.max(0, (G.enemy.def || 0) - AU.defDown); note += ` เกราะ -${AU.defDown} 🛡️💔`; }
                 if (AU.stun && G.enemy && G.enemy.hp > 0) { G.est.frozen = true; note += " ตรึง/ล้มศัตรู 🔗💫"; }
+                if (AU.poison && G.enemy && G.enemy.hp > 0) { const P = curPath(); const amp = (P && P.poisonAmp) || 1; G.est.poison = Math.min(5, (G.est.poison || 0) + AU.poison * amp); note += ` ติดพิษ ☠️ (${G.est.poison}/5)`; }
                 if (AU.heal) { const hh = Math.round(effMaxHp() * AU.heal); G.player.hp = Math.min(effMaxHp(), G.player.hp + hh); note += ` ฟื้น +${hh} HP ✨`; }
                 if (AU.regen) { G.regen = (G.regen || 0) + AU.regen; note += ` ฟื้นต่อเนื่อง ${AU.regen} เทิร์น 💚`; }
-                if (AU.buffTeam) { G.battleCrit = (G.battleCrit || 0) + 15; G.battleSpd = (G.battleSpd || 0) + 20; note += " พรพิพากษา คริ+15% เร็ว+20% 👑"; }
+                if (AU.buffTeam) { G.battleCrit = (G.battleCrit || 0) + 15; G.battleSpd = (G.battleSpd || 0) + 20; G.battleEva = (G.battleEva || 0) + 15; note += " พร คริ+15% เร็ว+20% หลบ+15% 👑"; }
                 if (note) { syncPlayer(); setUi((u) => ({ ...u, hp: G.player.hp, enemy: { ...u.enemy, hp: (G.enemy || u.enemy).hp }, msg: `👑 ${AU.name} — ${note.trim()}` })); }
               }
               G.banim = null;
