@@ -525,12 +525,8 @@ const PATH_ADV = {
 };
 let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสลับสกิลพื้นฐาน/ขั้นสูง (singleton ต่อหน้าเกม)
 const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
-const ultOf = (cls, alt) => {
-    const adv = SKILL_MODE_ADV && ACTIVE_ADV_PATH && PATH_ADV[ACTIVE_ADV_PATH];
-    if (adv)
-        return adv.ult; // 🌟 ท่าไม้ตายประจำสายขั้นสูง
-    return (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls];
-};
+const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls]; // ท่าไม้ตายทั่วไป (ขั้นสูงแยกเป็นปุ่ม/แอ็กชันต่างหาก)
+const advUltOf = (pathId) => (pathId && PATH_ADV[pathId]) ? PATH_ADV[pathId].ult : null;
 // 🎯 4 signature skills per class — each level up gives 5 skill points to rank them up (max Lv.20)
 // dmg = base attack × (mult + perLv×(rank-1)); each skill costs "cost" mana 💧
 const CLASS_SKILLS = {
@@ -15693,7 +15689,7 @@ function CherryAdventure() {
             G.pst = { poison: 0, stun: 0, poisonDmg: 0 }; // 🐍💫 สถานะที่มอนสเตอร์ทำใส่ผู้เล่น
             G.comboSeq = [];
             G.chainMult = 1;
-            setUi((u) => ({ ...u, chainLen: 0, pPoison: 0, pStun: 0 })); // ⚔️ reset skill chain + player status
+            setUi((u) => ({ ...u, chainLen: 0, pPoison: 0, pStun: 0, advUltUsed: false })); // ⚔️ reset skill chain + player status
             G.battleEva = 0;
             G.battleDef = 0;
             G.battleCrit = 0;
@@ -15701,6 +15697,7 @@ function CherryAdventure() {
             G.battleCritDmg = 0; // 💥 crit damage buff
             G.regen = 0; // ✨ Holy Healing regeneration turns
             G.ultUsed = false; // 🌟 one ultimate per battle
+            G.advUltUsed = false; // 👑 อัลติขั้นสูงแยกโควตาของตัวเอง
             // ⚡ TRANSFORMATION MODE — the power gauge PERSISTS across battles; it only empties when you transform.
             // Constellation "tfStart" acts as a minimum floor when entering a fight.
             G.tfActive = false;
@@ -16376,8 +16373,26 @@ function CherryAdventure() {
                 G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
                 if (G.sfx && G.sfx.charge)
                     G.sfx.charge(); // ⚡ rising hum as the ultimate winds up
-                if (G.skillMode === "adv" && G.pathId) { // 🌟 อัลติสายขั้นสูง — ซีนีมาติกใหญ่พิเศษ
-                    const uc = (PATH_ADV[G.pathId] && PATH_ADV[G.pathId].skills[3] && PATH_ADV[G.pathId].skills[3].color) || 0xf5c542;
+                setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
+            }
+            else if (kind === "advUlt") {
+                // 👑 ท่าไม้ตายขั้นสูงประจำสาย — แยกจากท่าไม้ตายทั่วไป ใช้ได้อีก 1 ครั้ง/ศึก
+                const AU = advUltOf(G.pathId);
+                if (!AU) {
+                    toast("🔒 ต้องเลือกสายอาชีพขั้นสูงก่อน");
+                    return;
+                }
+                if (G.advUltUsed) {
+                    toast("ท่าไม้ตายขั้นสูงใช้ได้ 1 ครั้งต่อศึก!");
+                    return;
+                }
+                G.advUltUsed = true;
+                const altUlt2 = false;
+                G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt: altUlt2, advU: true };
+                if (G.sfx && G.sfx.charge)
+                    G.sfx.charge();
+                {
+                    const uc = (PATH_ADV[G.pathId] && PATH_ADV[G.pathId].skills[3] && PATH_ADV[G.pathId].skills[3].color) || 0xf5c542; // 🌟 ซีนีมาติก SSS ของอัลติขั้นสูง
                     spawnAdvCast(uc, char.position, true);
                     const dly2 = 1500 / (G.battleSpeed || 1);
                     setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh)
@@ -16385,7 +16400,7 @@ function CherryAdventure() {
                     setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh)
                         spawnAdvImpact(0xffffff, G.enemy.mesh.position, true); }, dly2 + 500 / (G.battleSpeed || 1));
                 }
-                setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
+                setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, advUltUsed: true, msg: `👑 ${AU.emoji} ${AU.name}!!` }));
             }
             else if (kind === "catch") {
                 if (G.player.balls <= 0) {
@@ -23165,7 +23180,7 @@ function CherryAdventure() {
                         }
                         else if (A.type === "ult") {
                             const cls = G.cls || "warrior";
-                            const ultMul = (1 + ((G.ultRank || 1) - 1) * 0.18) * ((SKILL_MODE_ADV && ACTIVE_ADV_PATH && PATH_ADV[ACTIVE_ADV_PATH]) ? PATH_ADV[ACTIVE_ADV_PATH].ult.mul : 1); // 🌟 rank สูง + อัลติสายขั้นสูงแรงกว่า
+                            const ultMul = (1 + ((G.ultRank || 1) - 1) * 0.18) * ((A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติขั้นสูงแรงกว่า
                             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
                             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
                             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
@@ -23223,7 +23238,7 @@ function CherryAdventure() {
                                 setTimeout(() => monGlow(em, 0x000000, null), 150);
                                 setUi((u) => ({
                                     ...u, enemy: { ...u.enemy, hp: G.enemy.hp },
-                                    msg: `🌟 ${ultOf(cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
+                                    msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.pathId)) ? advUltOf(G.pathId).name : ultOf(cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
                                 }));
                             };
                             // ⏳ hold the strike until casting is done — the char just charges during the cast
@@ -29606,7 +29621,8 @@ function CherryAdventure() {
                             iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })),
                         React.createElement("div", { style: cornerStyle("right") },
                             iconBtn("⚔️", "#d9536b", () => G.act("attack"), null, { title: "โจมตี" }),
-                            iconBtn(ui.ultUsed ? "💫" : "🌟", ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)", () => G.act("ult"), null, { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตาย" }),
+                            iconBtn(ui.ultUsed ? "💫" : "🌟", ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)", () => G.act("ult"), null, { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตายทั่วไป" }),
+                            ui.pathId && advUltOf(ui.pathId) && iconBtn(ui.advUltUsed ? "🌫️" : "👑", ui.advUltUsed ? "#b0a396" : "linear-gradient(135deg,#9a6ad0,#d07ae0)", () => G.act("advUlt"), null, { key: "advult", title: `👑 ${advUltOf(ui.pathId).name} — ${advUltOf(ui.pathId).desc} (ท่าไม้ตายขั้นสูง)` }),
                             iconBtn(ui.tfActive ? "🔥" : "⚡", ui.tfActive ? "linear-gradient(135deg,#ff7020,#f5c542)" : ((ui.tfGauge || 0) >= 100 ? "linear-gradient(135deg,#ffd24a,#ff7020)" : "#8a8a7a"), () => G.doTransform(), ui.tfActive ? ui.tfTurns : (ui.tfGauge || 0), {
                                 title: ui.tfActive ? `🔥 ร่างพลัง — เหลือ ${ui.tfTurns} เทิร์น` : ((ui.tfGauge || 0) >= 100 ? "⚡ แปลงร่าง! (เกจพลังเต็ม)" : `⚡ เกจพลัง ${ui.tfGauge || 0}% — สู้ต่อเพื่อสะสม`),
                                 badgeBg: ui.tfActive ? "#c0501a" : ((ui.tfGauge || 0) >= 100 ? "#e08020" : "#5a5a52"),
