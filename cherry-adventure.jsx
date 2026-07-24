@@ -20536,7 +20536,7 @@ export default function CherryAdventure() {
 
       {/* ☰ combined menu */}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 256, width: 44, height: 44 } : { bottom: 150, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 24 }}>☰</button>
+        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} style={{ position: "absolute", right: 12, top: 10, ...(_shortHud ? { width: 44, height: 44 } : { width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => toggleMenu("questOpen")} title="เควส & ภารกิจ" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 208, width: 44, height: 44 } : { bottom: 216, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null; })()}</button>
@@ -20564,8 +20564,8 @@ export default function CherryAdventure() {
         </button>
       )}
       {ui.menuOpen && (
-        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-end", justifyContent: "flex-end", zIndex: 66 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ margin: "0 12px 212px 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(3, 54px)", gap: 12 }}>
+        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", zIndex: 66 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ margin: "70px 12px 0 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(3, 54px)", gap: 12 }}>
             {[
                           ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
               ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
