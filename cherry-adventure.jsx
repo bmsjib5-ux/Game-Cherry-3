@@ -12667,8 +12667,12 @@ export default function CherryAdventure() {
       }
       // 3) weak wild we don't own yet → try to catch
       if (!e.boss && !G.pets[e.spId] && G.player.balls > 0 && e.hp / e.maxHp < 0.3) { G.act("catch"); return; }
-      // 4) open strong fights with the ultimate
-      if (!G.ultUsed && (e.boss || e.maxHp > effMaxHp())) { G.act("ult"); return; }
+      // 4) open strong fights with the ultimate — ใช้ท่าไม้ตายให้ตรงโหมดสกิลที่เลือก (ขั้นสูง/พื้นฐาน)
+      if (e.boss || e.maxHp > effMaxHp()) {
+        if (G.skillMode === "adv" && G.pathId && advUltOf(G.pathId)) { // 👑 โหมดขั้นสูง → ใช้ท่าไม้ตายขั้นสูง
+          if (!G.advUltUsed) { G.act("advUlt"); return; }
+        } else if (!G.ultUsed) { G.act("ult"); return; } // 🌟 โหมดพื้นฐาน → ท่าไม้ตายทั่วไป
+      }
       // 5) choose among affordable skills with WEIGHTED RANDOM for variety
       {
         const affordable = skillsOf(G.cls, G.pathId).filter((sk) => !sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
