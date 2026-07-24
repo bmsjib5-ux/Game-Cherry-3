@@ -13227,12 +13227,14 @@ export default function CherryAdventure() {
     let blinkTimer = 0, nextBlink = 2;
     let yaw = Math.PI;
     let raf;
+    let dtForce = null; // 🤖💤 dt บังคับตอนขับซิมพื้นหลัง (แท็บถูกซ่อน)
     let regenAcc = 0;
 
     const animate = () => {
-      raf = requestAnimationFrame(animate);
+      if (dtForce == null) raf = requestAnimationFrame(animate);
       try {
-      const dt = Math.min(clock.getDelta(), 0.05);
+      const dtReal = Math.min(clock.getDelta(), 0.05);
+      const dt = dtForce != null ? dtForce : dtReal; // 🤖💤 forced dt while background-farming
       dtGlobal = dt;
       const t = clock.getElapsedTime();
       updateDamageNumbers(dt); // 💢 float the damage popups
@@ -19005,11 +19007,37 @@ export default function CherryAdventure() {
         camera.lookAt(char.position.x, 0.8, char.position.z);
       }
 
-      renderer.render(scene, camera);
+      if (dtForce == null) renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
       } catch (err) {
         if (!G._loggedErr) { G._loggedErr = true; console.error("animate loop error:", err); }
       }
     };
+    // 🤖💤 BACKGROUND AUTO-FARM — เบราว์เซอร์หยุด rAF เมื่อพับ/ซ่อนแท็บ จึงขับซิมูเลชัน
+    // ด้วย interval แบบ sub-steps (ข้ามการวาดภาพ) ให้โหมด AUTO ตีเก็บเลเวลต่อได้
+    let bgTimer = null, bgLast = 0;
+    const bgTick = () => {
+      if (!document.hidden) return;
+      if (!G.auto) { bgLast = performance.now(); return; } // ฟาร์มต่อเฉพาะตอนเปิด AUTO
+      const now = performance.now();
+      const steps = Math.max(1, Math.min(400, Math.round((now - bgLast) / 50))); // ชดเชยกรณีเบราว์เซอร์หน่วง timer (ยิ่งหน่วงนาน ยิ่งเดินซิมชดเชยมากขึ้น)
+      bgLast = now;
+      dtForce = 0.05;
+      for (let i = 0; i < steps; i++) { try { animate(); } catch (e) {} }
+      dtForce = null;
+    };
+    const onVisBg = () => {
+      if (document.hidden) {
+        bgLast = performance.now();
+        if (!bgTimer) { bgTimer = setInterval(bgTick, 250); G._bgFarm = true; }
+      } else {
+        if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
+        G._bgFarm = false;
+        dtForce = null;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(animate); // กลับมา rAF ลูปเดียวสะอาดๆ
+      }
+    };
+    document.addEventListener("visibilitychange", onVisBg);
     animate();
 
     const onResize = () => {
@@ -19026,6 +19054,8 @@ export default function CherryAdventure() {
 
     return () => {
       cancelAnimationFrame(raf);
+      if (bgTimer) clearInterval(bgTimer);
+      document.removeEventListener("visibilitychange", onVisBg);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
       window.removeEventListener("keydown", onKeyDown);
