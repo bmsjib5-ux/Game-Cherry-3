@@ -4502,13 +4502,13 @@ export default function CherryAdventure() {
       haruOutfit.add(topShell);
       // 🧣 slate-blue sailor collar (ตามภาพ) — shoulder ring + front V panels + back flap
       const slate = new THREE.MeshStandardMaterial({ color: 0x2b3358, roughness: 0.72 }); // น้ำเงินเดียวกับกระโปรง
-      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.15, 24, 1, true), slate);
-      collar.position.y = 1.87; collar.scale.set(1.0, 1, 0.75);
-      const vL = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.36, 0.03), slate);
-      vL.position.set(-0.14, 1.76, 0.26); vL.rotation.set(0.18, 0, 0.55);
-      const vR = vL.clone(); vR.position.x = 0.14; vR.rotation.z = -0.55;
-      const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.34, 0.03), slate);
-      backFlap.position.set(0, 1.8, -0.21); backFlap.rotation.x = 0.34; // ชิดแผ่นหลังที่แบนลง
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.53, 0.17, 24, 1, true), slate);
+      collar.position.y = 1.86; collar.scale.set(1.0, 1, 0.88); // 🧣 ครอบอยู่นอกเสื้อขาว
+      const vL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.4, 0.03), slate);
+      vL.position.set(-0.15, 1.74, 0.37); vL.rotation.set(0.18, 0, 0.55); // แผ่นหน้าอยู่นอกเสื้อ
+      const vR = vL.clone(); vR.position.x = 0.15; vR.rotation.z = -0.55;
+      const backFlap = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.38, 0.03), slate);
+      backFlap.position.set(0, 1.79, -0.28); backFlap.rotation.x = 0.34; // แผ่นหลังอยู่นอกเสื้อ
       haruOutfit.add(collar, vL, vR, backFlap);
       // 🎀 big red neckerchief — knot + two long draping tails + gold pin (ตามภาพ)
       const scarfKnot = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 10), hCrimson);
