@@ -11441,7 +11441,8 @@ export default function CherryAdventure() {
       if (wild.userData.lbl) wild.userData.lbl.sprite.visible = false; // hide floating tag in battle
       // status effects & battle buffs
       G.est = { burn: 0, frozen: false, poison: 0, bleed: 0, confused: 0 };
-      G.comboSeq = []; G.chainMult = 1; setUi((u) => ({ ...u, chainLen: 0 })); // ⚔️ reset skill chain
+      G.pst = { poison: 0, stun: 0, poisonDmg: 0 }; // 🐍💫 สถานะที่มอนสเตอร์ทำใส่ผู้เล่น
+      G.comboSeq = []; G.chainMult = 1; setUi((u) => ({ ...u, chainLen: 0, pPoison: 0, pStun: 0 })); // ⚔️ reset skill chain + player status
       G.battleEva = 0;
       G.battleDef = 0;
       G.battleCrit = 0;
@@ -11582,7 +11583,14 @@ export default function CherryAdventure() {
         return { dmg: Math.max(1, Math.round(raw * 0.3)), note: " — ศัตรูบล็อก! 🛡️" };
       }
       if (r < e.evaChance + e.blockChance + e.guardChance) {
-        // 🪨 guard — reduces ~40%
+        // 🪨 guard — reduces ~40%, มีโอกาสสวนกลับ
+        if (Math.random() < (e.boss ? 0.4 : 0.25)) {
+          const cd = Math.max(1, Math.round(e.atk * 0.5 - effDef() * 0.4));
+          G.player.hp = Math.max(1, G.player.hp - cd);
+          burst(char.position, 0xff5a5a, 0.9);
+          syncPlayer();
+          return { dmg: Math.max(1, Math.round(raw * 0.6)), note: ` — ศัตรูสวนกลับ! ⚔️ (-${cd})` };
+        }
         return { dmg: Math.max(1, Math.round(raw * 0.6)), note: " — ศัตรูตั้งการ์ด! 🪨" };
       }
       return { dmg: raw, note: "" };
@@ -11788,6 +11796,15 @@ export default function CherryAdventure() {
       // ⚡ transformation ticks down one step each round; gauge builds while not transformed
       G.tickTransform();
       if (!G.tfActive) G.chargeTf(15);
+      if (G.pst && G.pst.poison > 0) { // ☠️ พิษกัดผู้เล่นต้นเทิร์น
+        G.pst.poison--;
+        const pd = G.pst.poisonDmg || Math.max(3, Math.round(effMaxHp() * 0.03));
+        G.player.hp = Math.max(1, G.player.hp - pd);
+        burst(char.position, 0x8ad04a, 0.7);
+        toast(`☠️ พิษกัดกร่อน! -${pd} ❤️ (เหลือ ${G.pst.poison})`);
+        setUi((u) => ({ ...u, hp: Math.ceil(G.player.hp), pPoison: G.pst.poison }));
+        syncPlayer();
+      }
       // 🌟 path perk: passive HP regen each turn (Paladin / Priest)
       { const P = curPath();
         if (P && P.regen && G.player.hp < effMaxHp()) {
@@ -11880,6 +11897,13 @@ export default function CherryAdventure() {
     // battle actions (called from UI)
     G.act = (kind, arg) => {
       if (G.mode !== "battle" || G.banim) return;
+      if (G.pst && G.pst.stun > 0 && (kind === "attack" || kind === "skill" || kind === "ult")) { // 💫 ถูกสตัน — ข้ามเทิร์น
+        G.pst.stun--;
+        toast(`💫 เชอร์รี่ถูกสตัน ขยับไม่ได้! (เหลือ ${G.pst.stun})`);
+        setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: "💫 ถูกสตัน — ข้ามเทิร์น!", pStun: G.pst.stun }));
+        setTimeout(() => { if (G.mode === "battle") enemyTurn(); }, 750);
+        return;
+      }
       if (kind === "attack") {
         G.banim = { type: "playerAttack", t: 0, dur: G.cls === "warrior" ? 0.5 : 0.65, mult: 1 };
         const atkMsg = G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
@@ -18428,6 +18452,27 @@ export default function CherryAdventure() {
                     toast(`🛡️ สะท้อนดาเมจ ${rf}!`);
                     setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp } }));
                   } }
+                if (G.player.hp > 0 && G.enemy) { // 🐍💫🧛 มอนสเตอร์ปล่อยสถานะ
+                  const eboss = G.enemy.boss; G.pst = G.pst || { poison: 0, stun: 0, poisonDmg: 0 };
+                  if (Math.random() < (eboss ? 0.22 : 0.12)) {
+                    G.pst.poison = Math.max(G.pst.poison, eboss ? 4 : 3);
+                    G.pst.poisonDmg = Math.max(3, Math.round(effMaxHp() * (eboss ? 0.04 : 0.03)));
+                    burst(char.position, 0x8ad04a, 0.9);
+                    toast(`☠️ ${G.enemy.name} ปล่อยพิษใส่เชอร์รี่!`);
+                    setUi((u) => ({ ...u, pPoison: G.pst.poison }));
+                  } else if (Math.random() < (eboss ? 0.14 : 0.07)) {
+                    G.pst.stun = Math.max(G.pst.stun, 1);
+                    burst(char.position, 0xf5d24a, 1.0);
+                    toast(`💫 ${G.enemy.name} ทำให้เชอร์รี่มึน!`);
+                    setUi((u) => ({ ...u, pStun: G.pst.stun }));
+                  }
+                  if (eboss && dmg > 0 && Math.random() < 0.25) {
+                    const drain = Math.max(1, Math.round(dmg * 0.4));
+                    G.enemy.hp = Math.min(G.enemy.maxHp, G.enemy.hp + drain);
+                    burst(G.enemy.mesh.position, 0xd94a6a, 0.6);
+                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp }, msg: `🧛 ${G.enemy.name} ดูดเลือด +${drain}!` }));
+                  }
+                }
                 setMouth("ow");
                 if (blocked) {
                   // shield flash + clang
@@ -22412,6 +22457,18 @@ export default function CherryAdventure() {
               boxShadow: "0 3px 10px rgba(90,74,208,0.5)",
             }}>
               🔗 เชนสกิล ×{ui.chainLen} (+{Math.round((ui.chainLen - 1) * 12)}%)
+            </div>
+          )}
+
+          {/* 🐍💫 player status inflicted by monsters */}
+          {((ui.pPoison || 0) > 0 || (ui.pStun || 0) > 0) && (
+            <div style={{ position: "absolute", top: 58, left: 12, display: "flex", flexDirection: "column", gap: 5, pointerEvents: "none", zIndex: 8 }}>
+              {(ui.pPoison || 0) > 0 && (
+                <div style={{ background: "linear-gradient(90deg,#4a9a3a,#7ac04a)", borderRadius: 999, padding: "3px 11px", fontSize: 11.5, fontWeight: 800, color: "#fff", boxShadow: "0 3px 10px rgba(74,154,58,0.5)" }}>☠️ ติดพิษ ×{ui.pPoison}</div>
+              )}
+              {(ui.pStun || 0) > 0 && (
+                <div style={{ background: "linear-gradient(90deg,#e0a020,#f5d24a)", borderRadius: 999, padding: "3px 11px", fontSize: 11.5, fontWeight: 800, color: "#5a3a10", boxShadow: "0 3px 10px rgba(224,160,32,0.5)" }}>💫 สตัน ×{ui.pStun}</div>
+              )}
             </div>
           )}
 
