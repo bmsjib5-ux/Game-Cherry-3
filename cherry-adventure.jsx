@@ -981,9 +981,9 @@ const GACHA_POOL = [
 ]; // total weight 100 → hero 2% · epic-skin 9% · rare(skin/pass/dia) 32% · gold 57%
 // 🐎 MOUNTS — สัตว์ขี่เพิ่มความเร็วเดินทาง (ซื้อด้วยเพชรที่ร้านเพชร)
 const MOUNTS = [
-  { id: "donkey",  name: "ลาน้อย",       emoji: "🫏", spd: 1.4, shape: "beast", color: 0x9a8878, desc: "ความเร็ว +40%" },
-  { id: "ostrich", name: "นกกระจอกเทศ",  emoji: "🪶", spd: 1.6, shape: "bird",  color: 0xd8b090, desc: "ความเร็ว +60%" },
-  { id: "shark",   name: "ฉลามบก",       emoji: "🦈", spd: 1.8, shape: "fish",  color: 0x7ab8e0, desc: "ความเร็ว +80%" },
+  { id: "donkey",  name: "ลาน้อย",       emoji: "🫏", spd: 1.4, shape: "beast", color: 0x9a8878, scale: 1.6,  lift: 1.02, desc: "ความเร็ว +40%" },
+  { id: "ostrich", name: "นกกระจอกเทศ",  emoji: "🪶", spd: 1.6, shape: "bird",  color: 0xd8b090, scale: 1.55, lift: 1.1,  desc: "ความเร็ว +60%" },
+  { id: "shark",   name: "ฉลามบก",       emoji: "🦈", spd: 1.8, shape: "fish",  color: 0x7ab8e0, scale: 1.7,  lift: 0.95, desc: "ความเร็ว +80%" },
 ];
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 const rollRarity = (boss) => {
@@ -8906,10 +8906,11 @@ export default function CherryAdventure() {
         const proxy = mdef.id === "donkey" ? "khiao" : mdef.id === "ostrich" ? "paksi" : "nam"; // ใช้โครงร่างเดิม + ย้อมสีเป็นสัตว์ขี่
         const m = buildMonster(proxy, 1);
         m.traverse((o) => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.setHex(mdef.color); } });
-        m.scale.setScalar(0.9);
-        m.position.set(0, 0.02, 0.12);
+        m.scale.setScalar(mdef.scale || 1.55); // 🐘 ตัวใหญ่กว่าตัวละคร
+        m.position.set(0, 0, 0.05);
         char.add(m);
         G._mountMesh = m;
+        G._rideLift = mdef.lift || 1.0; // 🪑 ความสูงอานนั่ง
         if (!quiet) toast(`🐎 ขี่ ${mdef.emoji} ${mdef.name} — ${mdef.desc}!`);
       } else if (!quiet) toast("🚶 ลงจากสัตว์ขี่แล้ว");
       setUi((u) => ({ ...u, mountId: G.mountId }));
@@ -11635,6 +11636,7 @@ export default function CherryAdventure() {
     };
     const startBattle = (wild) => {
       G.mode = "battle";
+      if (G._mountMesh) { G._mountMesh.visible = false; char.position.y = 0; legL.rotation.z = 0; legR.rotation.z = 0; } // 🐎 พักสัตว์ขี่ระหว่างสู้
       G.joy = { x: 0, y: 0 };
       G.moveTarget = null; G.huntTarget = null; // 🎯 stop chasing once we engage
       const sp = SPECIES[wild.userData.spId];
@@ -12546,7 +12548,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null,
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0,
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -13287,6 +13289,21 @@ export default function CherryAdventure() {
       G.stardust = d.stardust || 0;
       G.diamonds = d.diamonds || 0;
       G.starterGems = 1; // 💎 เซฟที่มีอยู่ถือว่าได้เพชรเริ่มต้นแล้ว (เฉพาะเกมใหม่ได้ 1000) — กันบั๊กแจกซ้ำทุกครั้งที่รีเฟรช
+      // 🎁 EVENT: ผู้เล่นวันที่ 2 ขึ้นไป ล็อกอินช่วง 20:00–24:00 รับเพชรโบนัส 10,000 (ครั้งเดียวต่อเซฟ)
+      G.day2Gift = d.day2Gift ? 1 : 0;
+      {
+        const hr = new Date().getHours();
+        const day2 = (d.dailyStreak || 0) >= 2 || (d.lastDaily && d.lastDaily !== todayStamp());
+        if (!G.day2Gift && day2 && hr >= 20 && hr < 24) {
+          G.day2Gift = 1;
+          G.diamonds = (G.diamonds || 0) + 10000;
+          setTimeout(() => {
+            toast("🎁🎉 อีเวนต์ผู้เล่นวันที่ 2! รับเพชรโบนัส +10,000 💎");
+            if (G.showAnnounce) G.showAnnounce("🎉 อีเวนต์ 2 ทุ่ม–เที่ยงคืน: ผู้เล่นวันที่ 2 รับเพชรโบนัส 10,000 💎!");
+            if (G.sfx) G.sfx.levelup();
+          }, 1600);
+        }
+      }
       G.lastRankClaim = d.lastRankClaim || null;
       G.diaSkins = d.diaSkins || {};
       G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
@@ -14335,6 +14352,21 @@ export default function CherryAdventure() {
         }
         // grounded bounce blends into idle breathing
         char.position.y = Math.abs(swing) * 0.07 * moveAmt + Math.sin(t * 2) * 0.03 * (1 - moveAmt);
+        // 🐎 RIDING — ตัวละครนั่งค่อมบนหลัง สัตว์ขี่เป็นฝ่ายเดิน (ขา/หาง/ปีกขยับแทน)
+        if (G.mountId && G._mountMesh) {
+          const M = G._mountMesh;
+          M.visible = true;
+          char.position.y = (G._rideLift || 1.0) + Math.abs(swing) * 0.05 * moveAmt + Math.sin(t * 2) * 0.02 * (1 - moveAmt); // นั่งบนอาน + โยกตามจังหวะ
+          M.position.y = -char.position.y + 0.02; // สัตว์ขี่เหยียบพื้นเสมอ (ลูกของ char ที่ถูกยกขึ้น)
+          legL.rotation.x = -1.05; legR.rotation.x = -1.05; // 🪑 ท่านั่งค่อม — ต้นขากางไปหน้า
+          legL.rotation.z = 0.6; legR.rotation.z = -0.6;    // ถ่างขาคร่อมหลัง
+          if (legL.userData.knee) legL.userData.knee.rotation.x = 1.4; // เข่างอพับ
+          if (legR.userData.knee) legR.userData.knee.rotation.x = 1.4;
+          const mls = (M.userData && M.userData.legs) || [];
+          mls.forEach((lg, i2) => { lg.rotation.x = Math.sin(G.walkPhase + (i2 % 2 ? Math.PI : 0)) * 0.75 * moveAmt; }); // 🐾 ขาสัตว์ขี่ก้าวแทน
+          if (M.userData && M.userData.tail) M.userData.tail.rotation.y = Math.sin(G.walkPhase * 1.4) * 0.5 * (0.35 + moveAmt * 0.65); // 🦈 สะบัดหาง
+          if (M.userData && M.userData.wing) M.userData.wing.rotation.z = 0.35 + Math.sin(G.walkPhase) * 0.3 * moveAmt; // 🪶 กระพือตอนวิ่ง
+        } else { legL.rotation.z = 0; legR.rotation.z = 0; }
         // torso counter-sway + natural head motion
         torso.rotation.z += (swing * 0.04 * moveAmt - torso.rotation.z) * Math.min(1, dt * 10);
         headG.rotation.z = Math.sin(G.walkPhase * 0.5) * 0.05 * moveAmt + Math.sin(t * 0.9) * 0.035 * (1 - moveAmt);
