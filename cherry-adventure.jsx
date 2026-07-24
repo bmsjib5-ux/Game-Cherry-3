@@ -11218,11 +11218,12 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // 💎 diamond shop
-    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false }));
+    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false, inv: [...(G.inv || [])], diaSkins: { ...(G.diaSkins || {}) } }));
     G.buyDiamond = (id) => {
       const it = DIAMOND_SHOP.find((x) => x.id === id);
       if (!it) return;
       if (it.kind === "skin" && G.diaSkins && G.diaSkins[it.ref]) { toast("มีสกินนี้อยู่แล้ว ✨"); return; }
+      if (it.kind !== "skin" && G.inv && G.inv.includes(it.ref)) { toast("มีไอเทมนี้ในกระเป๋าแล้ว ✨"); return; } // 🔒 ซื้อไอเทมด้วยเพชรได้ครั้งเดียว
       if ((G.diamonds || 0) < it.price) { toast(`💎 เพชรไม่พอ — ต้องมี ${it.price}`); return; }
       G.diamonds -= it.price;
       if (it.kind === "skin") {
@@ -11235,7 +11236,7 @@ export default function CherryAdventure() {
         toast(`💎 แลก ${it.emoji} ${it.name} เข้ากระเป๋าแล้ว!`);
       }
       if (G.sfx) G.sfx.coin();
-      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) } }));
+      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) }, inv: [...(G.inv || [])] }));
       if (G.saveGame) G.saveGame();
     };
     // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
@@ -13049,7 +13050,7 @@ export default function CherryAdventure() {
       G.constNodes = d.constNodes || {};
       G.stardust = d.stardust || 0;
       G.diamonds = d.diamonds || 0;
-      if (!d.starterGems) { G.diamonds += 1000; G.starterGems = 1; setTimeout(() => toast("🎁 แจกเพชรเริ่มต้น +1000 💎! สนุกกับกาชาได้เลย"), 900); } else { G.starterGems = 1; } // 💎 one-time starter grant
+      G.starterGems = 1; // 💎 เซฟที่มีอยู่ถือว่าได้เพชรเริ่มต้นแล้ว (เฉพาะเกมใหม่ได้ 1000) — กันบั๊กแจกซ้ำทุกครั้งที่รีเฟรช
       G.lastRankClaim = d.lastRankClaim || null;
       G.diaSkins = d.diaSkins || {};
       G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
@@ -20395,7 +20396,7 @@ export default function CherryAdventure() {
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#c0a060", margin: "2px 2px 8px" }}>{grp[1]}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
                   {DIAMOND_SHOP.filter((x) => x.cat === grp[0]).map((it) => {
-                    const owned = it.kind === "skin" && ui.diaSkins && ui.diaSkins[it.ref];
+                    const owned = it.kind === "skin" ? (ui.diaSkins && ui.diaSkins[it.ref]) : (ui.inv && ui.inv.includes(it.ref));
                     const afford = (ui.diamonds || 0) >= it.price;
                     return (
                       <div key={it.id} style={{ border: "1px solid #2a3a58", borderRadius: 14, padding: "10px 11px", background: "rgba(30,44,72,0.55)", display: "flex", flexDirection: "column", gap: 6 }}>
