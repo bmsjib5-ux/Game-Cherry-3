@@ -1509,6 +1509,40 @@ const PET_SKILL = {
   taara: "แสงจักรวาล"
 };
 // 🌈 element display metadata (name + emoji) for clear weakness indicators
+// ---------- 🐾✨ EXPANDED PET SYSTEM — more monsters, rarity tiers, legendary boss pets ----------
+Object.assign(SPECIES, {
+  pikul:    { name: "พิกุลทอง",    emoji: "🌼", color: 0xf5d878, hp: 44,  atk: 7,  catch: 0.42, tier: 2, desc: "สไลม์ดอกพิกุลหอมหวาน", weak: "fire" },
+  hima:     { name: "กระต่ายหิมะ",  emoji: "🐇", color: 0xd8ecff, hp: 58,  atk: 10, catch: 0.26, tier: 3, desc: "กระต่ายหิมะแห่งขุนเขา", weak: "fire" },
+  ngueak:   { name: "เงือกวารี",    emoji: "🐠", color: 0x4ad0c0, hp: 62,  atk: 11, catch: 0.24, tier: 3, desc: "เงือกน้อยแห่งวังบาดาล", animal: "fish", weak: "wind" },
+  mangkorn: { name: "มังกรเยาว์",   emoji: "🐲", color: 0xe0503a, hp: 88,  atk: 15, catch: 0.16, tier: 4, desc: "มังกรน้อยพ่นเปลวเพลิง", animal: "snake", weak: "ice" },
+  hanuman:  { name: "หนุมานเผือก",  emoji: "🐵", color: 0xf0f0e0, hp: 150, atk: 22, catch: 0.05, tier: 5, desc: "วานรเทพกายสิทธิ์ อมตะ", animal: "beast", weak: "arcane" },
+  suphan:   { name: "สุพรรณหงส์",   emoji: "🦢", color: 0xf5d24a, hp: 165, atk: 24, catch: 0.05, tier: 5, desc: "หงส์ทองแห่งสรวงสวรรค์", animal: "bird", weak: "earth" },
+  nakprok:  { name: "นาคเจ็ดเศียร", emoji: "🐉", color: 0x2ad08a, hp: 210, atk: 28, catch: 0.03, tier: 6, desc: "พญานาคาเจ็ดเศียร เทพเจ้าแห่งวารี", animal: "snake", weak: "arcane" },
+  erawan:   { name: "ช้างเอราวัณ",  emoji: "🐘", color: 0xe8e0ff, hp: 240, atk: 30, catch: 0.02, tier: 6, desc: "ช้างสามเศียรพาหนะเทพ สูงสุดแห่งตำนาน", animal: "beast", weak: "light" },
+});
+Object.assign(EVOLVED, { pikul: "พิกุลราชินี", hima: "กระต่ายเทพหิมะ", ngueak: "เงือกราชานาคี", mangkorn: "มังกรอัคคีราช", hanuman: "หนุมานชาญสมร", suphan: "สุพรรณหงส์ทิพย์", nakprok: "อนันตนาคราช", erawan: "เอราวัณเทวราช" });
+Object.assign(WEAK, { pikul: "fire", hima: "fire", ngueak: "wind", mangkorn: "ice", hanuman: "arcane", suphan: "earth", nakprok: "arcane", erawan: "light" });
+Object.assign(PET_ELEM, { pikul: "wind", hima: "ice", ngueak: "water", mangkorn: "fire", hanuman: "wind", suphan: "light", nakprok: "water", erawan: "arcane" });
+Object.assign(PET_SKILL, { pikul: "ละอองพิกุลทอง", hima: "พายุเกล็ดหิมะ", ngueak: "วังวนวารี", mangkorn: "ลมหายใจมังกร", hanuman: "หาวเป็นดาวเป็นเดือน", suphan: "ปีกทองสุพรรณ", nakprok: "คลื่นนาคาเจ็ดเศียร", erawan: "ตรีเนตรเอราวัณ" });
+Object.assign(FLOATY, { suphan: true });
+const MON_SHAPE_EXTRA = { pikul: "slime", hima: "bunny", ngueak: "fish", mangkorn: "serpent", hanuman: "beast", suphan: "bird", nakprok: "serpent", erawan: "beast" };
+// 🏅 rarity tiers (แบ่งตามความหายาก) — mapped from each species' tier
+const PET_RARITY = {
+  1: { key: "common",    name: "สามัญ",      color: "#9aa89a", glow: "#6a7a6a" },
+  2: { key: "uncommon",  name: "ไม่ธรรมดา",  color: "#5fc06a", glow: "#3a8a4a" },
+  3: { key: "rare",      name: "หายาก",      color: "#4a9ae8", glow: "#2a6ab0" },
+  4: { key: "epic",      name: "มหากาพย์",   color: "#b060e0", glow: "#7a3aa0" },
+  5: { key: "legendary", name: "ตำนาน",      color: "#f5a623", glow: "#c07a10" },
+  6: { key: "mythic",    name: "เทพนิยาย",   color: "#ff4a8a", glow: "#c02a5a" },
+};
+const petRarity = (spId) => PET_RARITY[(SPECIES[spId] && SPECIES[spId].tier) || 1] || PET_RARITY[1];
+const LEGEND_PETS = Object.keys(SPECIES).filter((k) => SPECIES[k].tier >= 5); // 🌟 boss-drop & high-fusion exclusive pool
+// 🗺️ seed the new wild monsters into biomes
+(BIOMES.find((b) => b.id === "meadow")  || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
+(BIOMES.find((b) => b.id === "desert")  || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
+(BIOMES.find((b) => b.id === "snow")    || {}).pool && BIOMES.find((b) => b.id === "snow").pool.push("hima", "ngueak");
+(BIOMES.find((b) => b.id === "volcano") || {}).pool && BIOMES.find((b) => b.id === "volcano").pool.push("mangkorn");
+
 const ELEM_META = {
   fire: {
     name: "ไฟ",
@@ -12221,7 +12255,7 @@ function CherryAdventure() {
     const buildMonster = (spId, stage = 1) => {
       const sp = SPECIES[spId];
       const g = new THREE.Group();
-      const shape = MON_SHAPE[spId] || "slime";
+      const shape = MON_SHAPE[spId] || MON_SHAPE_EXTRA[spId] || "slime";
       // 🎨 flat shading + a lighter belly reads far better than one smooth colour
       const mat = new THREE.MeshStandardMaterial({
         color: sp.color,
@@ -14547,9 +14581,13 @@ function CherryAdventure() {
       }
       if (!G.col[idA] || !G.col[idB]) return;
       // result: a higher-tier species
-      const pool = Object.keys(SPECIES).filter(k => SPECIES[k].tier >= Math.max(SPECIES[idA].tier, SPECIES[idB].tier));
-      const rarePool = pool.filter(k => SPECIES[k].tier >= 3);
-      const result = (rarePool.length ? rarePool : pool)[Math.floor(Math.random() * (rarePool.length ? rarePool.length : pool.length))];
+      const maxTier = Math.max(SPECIES[idA].tier, SPECIES[idB].tier);
+      const bothHigh = SPECIES[idA].tier >= 4 && SPECIES[idB].tier >= 4;
+      const froll = Math.random();
+      let rt = bothHigh && froll < 0.30 ? 6 : (maxTier >= 4 && froll < 0.55) ? 5 : Math.min(6, maxTier + (froll < 0.45 ? 1 : 0));
+      let pool = Object.keys(SPECIES).filter(k => SPECIES[k].tier === rt);
+      while (!pool.length && rt > 1) { rt--; pool = Object.keys(SPECIES).filter(k => SPECIES[k].tier === rt); }
+      const result = pool[Math.floor(Math.random() * pool.length)];
       // consume one of each
       G.col[idA]--;
       if (G.col[idA] <= 0) {
@@ -14570,7 +14608,7 @@ function CherryAdventure() {
       };else G.pets[result].stage = Math.min(3, G.pets[result].stage + 1);
       if (G.buddy && !G.col[G.buddy]) G.setBuddy(G.team[0] || null);
       if (G.sfx) G.sfx.catch();
-      toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].name} (ร่าง ${G.pets[result].stage})!`);
+      toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}] (ร่าง ${G.pets[result].stage})!`);
       setUi(u => ({
         ...u,
         col: {
@@ -19110,6 +19148,14 @@ function CherryAdventure() {
       }));
       if (G.buddy) petGain(G.buddy, wasBoss || isGhost ? 40 : 15);
       dropLoot(wasBoss || isGhost || isGolden); // 🎁 boss/ghost/golden = guaranteed big loot
+      if (wasBoss && LEGEND_PETS.length && Math.random() < 0.20) {
+        const lp = LEGEND_PETS[Math.floor(Math.random() * LEGEND_PETS.length)];
+        G.col[lp] = (G.col[lp] || 0) + 1;
+        if (!G.pets[lp]) G.pets[lp] = { lv: 1, exp: 0, stage: 1 };
+        burst(char.position, 0xff4a8a, 1.8);
+        if (G.sfx) G.sfx.levelup();
+        toast(`🌟✨ สัตว์เลี้ยง${petRarity(lp).name}หลุดจากบอส! ได้ ${SPECIES[lp].emoji} ${SPECIES[lp].name}!`);
+      }
       // ⛏️ material drops — every fight drops some ore; tougher/special foes drop essences & scales
       {
         G.mats = G.mats || {};
