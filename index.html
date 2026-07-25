@@ -20112,6 +20112,105 @@ function CherryAdventure() {
                                         rocks.forEach(rk => rk.visible = false);
                                     }
                                 }
+                                else if (A.skill && A.skill.id && (A.skill.id.indexOf("x_pal") === 0 || A.skill.id.indexOf("x_ber") === 0)) {
+                                    // ⚔️ WARRIOR ADVANCED — ท่าเฉพาะแต่ละสกิล (ครูเสด/เบอร์เซิร์ก)
+                                    const sid2 = A.skill.id, holy = 0xfff2b0, blood = 0xc0203a, crimson = 0xd94a6a;
+                                    if (sid2 === "x_pal_1") {
+                                        // ✝️ ดาบครูเสด — พุ่งเข้า ฟันดาบแสงรัว 5 ครั้ง
+                                        char.position.x = bx + Math.min(1, p * 1.6) * 1.4;
+                                        char.rotation.z = Math.sin(p * Math.PI * 5) * 0.08;
+                                        armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 5) * 2.6;
+                                        if (p > 0.18 && Math.random() < 0.7)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.4, 0.5 + Math.random() * 1.6, EP.z), Math.random() < 0.5 ? gold : white, 0.4 + Math.random() * 0.4);
+                                        G._camShake = Math.max(G._camShake || 0, 0.18);
+                                    }
+                                    else if (sid2 === "x_pal_2") {
+                                        // 🛡️ โล่เทวฑูต — ยกโล่ พุ่งกระแทก คลื่นแสงทอง
+                                        char.position.x = bx + Math.sin(p * Math.PI) * 1.3;
+                                        armL.rotation.z = -0.12 - Math.sin(p * Math.PI) * 1.6;
+                                        armR.rotation.z = 0.12 + Math.sin(p * Math.PI) * 0.4;
+                                        if (p > 0.42) {
+                                            if (Math.random() < 0.8)
+                                                burst(EP.clone(), Math.random() < 0.5 ? gold : holy, 0.5 + Math.random() * 1.2);
+                                            if (em.userData.body)
+                                                em.userData._stagger = 0.5;
+                                        }
+                                        if (p > 0.42 && p < 0.55)
+                                            G._camShake = Math.max(G._camShake || 0, 0.32);
+                                    }
+                                    else if (sid2 === "x_pal_3") {
+                                        // 🌟 แสงชำระบาป — ชูดาบสู่ฟ้า ฝนแสงพิพากษาตกลงมา
+                                        armR.rotation.x = -Math.min(1, p * 2) * 2.2;
+                                        armR.rotation.z = 0.15;
+                                        char.rotation.z = -0.08;
+                                        if (p > 0.3 && Math.random() < 0.9)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.2, 4.5 - (((p * 4) % 1)) * 4, EP.z + (Math.random() - 0.5) * 1.2), Math.random() < 0.5 ? gold : holy, 0.45);
+                                        G._camShake = Math.max(G._camShake || 0, 0.14);
+                                    }
+                                    else if (sid2 === "x_pal_4") {
+                                        // 👼 ครูเสดสวรรค์ — หมุนตัวฟันกากบาทแสง + ออร่าปีก
+                                        char.rotation.y = Math.PI / 2 + p * Math.PI * 4;
+                                        armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 4) * 2.3;
+                                        if (Math.random() < 0.8) {
+                                            const a = t * 6 + Math.random() * 6.28, r = 0.8 + Math.random() * 1.2;
+                                            burst(new THREE.Vector3(EP.x + Math.cos(a) * r, 0.5 + Math.random() * 1.8, EP.z + Math.sin(a) * r), Math.random() < 0.5 ? gold : white, 0.4);
+                                        }
+                                        G._camShake = Math.max(G._camShake || 0, 0.16);
+                                    }
+                                    else if (sid2 === "x_ber_1") {
+                                        // 🪓 ขวานเดือด — ย่างเข้า ฟันขวานบ้าคลั่งรัว 6 ครั้ง
+                                        char.position.x = bx + Math.min(1, p * 1.4) * 1.2;
+                                        char.rotation.z = Math.sin(p * Math.PI * 6) * 0.1;
+                                        armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 6) * 2.8;
+                                        if (p > 0.15 && Math.random() < 0.75)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.5, 0.5 + Math.random() * 1.6, EP.z), Math.random() < 0.5 ? rageR : flame, 0.4 + Math.random() * 0.5);
+                                        G._camShake = Math.max(G._camShake || 0, 0.2);
+                                    }
+                                    else if (sid2 === "x_ber_2") {
+                                        // 🩸 โลหิตคลั่ง — กรีดแขน ออร่าเลือดระเบิด → พุ่งทะลุ
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -0.6 - cp * 0.4;
+                                            if (Math.random() < 0.85)
+                                                burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 1.3, 0.3 + Math.random() * 1.9, char.position.z), Math.random() < 0.5 ? blood : crimson, 0.4);
+                                        }
+                                        else {
+                                            const dp = (p - 0.4) / 0.6;
+                                            char.position.x = bx + dp * (EP.x - bx - 0.7);
+                                            armR.rotation.x = 0;
+                                            armR.rotation.z = 0.12 + Math.sin(dp * Math.PI * 2) * 1.9;
+                                            if (Math.random() < 0.8)
+                                                burst(new THREE.Vector3(char.position.x, 0.5 + Math.random() * 1.4, char.position.z), blood, 0.4);
+                                        }
+                                        G._camShake = Math.max(G._camShake || 0, 0.18);
+                                    }
+                                    else if (sid2 === "x_ber_3") {
+                                        // 💢 สับแหลก — กระโดดสูง ฟันขวานยักษ์ลงพื้น
+                                        char.position.y = p < 0.45 ? Math.sin(p / 0.45 * Math.PI / 2) * 1.3 : Math.max(0, 1.3 - (p - 0.45) / 0.15 * 1.3);
+                                        char.position.x = bx + Math.min(1, p * 1.5) * 0.9;
+                                        armR.rotation.z = 0.12 + (p < 0.45 ? -0.8 : Math.min(1, (p - 0.45) / 0.15) * 3.2);
+                                        if (p > 0.55 && Math.random() < 0.85)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.6, 0.1 + Math.random() * 1.4, EP.z + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? rageR : 0xff3010, 0.5 + Math.random());
+                                        if (p > 0.55 && p < 0.7)
+                                            G._camShake = Math.max(G._camShake || 0, 0.55);
+                                    }
+                                    else if (sid2 === "x_ber_4") {
+                                        // 🌪️ พายุอสูร — หมุนขวานเป็นพายุเลือด ดูดศัตรูเข้ากลาง
+                                        char.rotation.y = Math.PI / 2 + p * Math.PI * 8;
+                                        char.position.x = bx + 0.4 + Math.sin(p * Math.PI) * 0.6;
+                                        armR.rotation.z = 1.4;
+                                        armR.rotation.y = p * Math.PI * 8;
+                                        if (em.userData.body) {
+                                            const pullX = char.position.x + 1.5;
+                                            em.position.x += (pullX - em.position.x) * 0.04;
+                                        }
+                                        if (Math.random() < 0.85) {
+                                            const a = t * 10 + Math.random() * 6.28, r = 0.8 + Math.random() * 1.4;
+                                            burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.3 + Math.random() * 1.8, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? blood : rageR, 0.4);
+                                        }
+                                        G._camShake = Math.max(G._camShake || 0, 0.2);
+                                    }
+                                }
                                 else {
                                     const lunge = Math.sin(p * Math.PI) * 1.2;
                                     char.position.x = bx + lunge;
