@@ -243,8 +243,8 @@ const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
 
 // ---------- 👹 WORLD BOSS — daily raid boss (party up online, shared HP, 60s rounds) ----------
-const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 180,
-  block: 0.20, dodge: 0.15, atkDebuff: 0.20, critDebuff: 20 }; // ⏱️ 3 นาที/รอบ · 🛡️ block 20% · 💨 dodge 15% · ลด ATK 20% · ลดคริ 20%
+const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 180, epoch: 2,
+  block: 0.20, dodge: 0.15, atkDebuff: 0.20, critDebuff: 20 }; // ⏱️ 3 นาที/รอบ · 🛡️ block 20% · 💨 dodge 15% · ลด ATK 20% · ลดคริ 20% · 🔄 bump epoch to force a fresh re-boss for everyone
 
 // ---------- Elemental skills (unlock by level) ----------
 const ELEMENTS = {
@@ -11984,9 +11984,9 @@ export default function CherryAdventure() {
     // ---------- 👹 WORLD BOSS — daily raid (party online, shared HP, 60s timed rounds) ----------
     G.wbEnsureDaily = () => {
       const today = todayStamp();
-      // reset on a new day OR when the boss definition changes (e.g. new max HP) → "รีบอส เริ่มใหม่"
-      if (!G.worldBoss || G.worldBoss.day !== today || G.worldBoss.maxHp !== WORLD_BOSS.maxHp) {
-        G.worldBoss = { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, day: today, cleared: false };
+      // reset on a new day, a max-HP change, OR an epoch bump (forced re-boss) → "รีบอส เริ่มใหม่"
+      if (!G.worldBoss || G.worldBoss.day !== today || G.worldBoss.maxHp !== WORLD_BOSS.maxHp || G.worldBoss.epoch !== WORLD_BOSS.epoch) {
+        G.worldBoss = { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, day: today, cleared: false, epoch: WORLD_BOSS.epoch };
       }
       return G.worldBoss;
     };
