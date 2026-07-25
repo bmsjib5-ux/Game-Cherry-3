@@ -265,6 +265,10 @@ alter table public.boss_raids add column if not exists ready  jsonb not null def
 alter table public.boss_raids add column if not exists scores jsonb not null default '{}'::jsonb;
 
 alter table public.boss_raids enable row level security;
+-- drop-then-create so the whole block is safe to re-run (create policy ไม่มี if not exists)
+drop policy if exists "boss read"   on public.boss_raids;
+drop policy if exists "boss insert" on public.boss_raids;
+drop policy if exists "boss update" on public.boss_raids;
 create policy "boss read"   on public.boss_raids for select using (true);
 create policy "boss insert" on public.boss_raids for insert with check (true);
 create policy "boss update" on public.boss_raids for update using (true) with check (true);
