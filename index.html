@@ -22378,6 +22378,202 @@ function CherryAdventure() {
                                         }
                                     }
                                 }
+                                else if (skId && (skId.indexOf("x_ceo") === 0 || skId.indexOf("x_wrk") === 0)) {
+                                    // 💼 OFFICE ADVANCED — ท่าเฉพาะแต่ละสกิล (CEO/เวิร์กโฮลิก)
+                                    const ex = battleCenter.x + (G.enemyX || 1.3), EP = em.position, bx = battleCenter.x - 1.3;
+                                    const gold = 0xd8a840, goldB = 0xf5c542, redC = 0xc0202a, pink = 0xe0708a, coffeeC = 0x8a5a2a, warmC = 0xf5d88a, docC = 0xc0a060, fire = 0xff7020, ember = 0xe0503a;
+                                    // ── CEO ──
+                                    if (skId === "x_ceo_1") { // 🖋️ เซ็นคำสั่งฟ้าผ่า — ชูปากกาขึ้นสูง → ฟาดเซ็นกลางอากาศ ตราสายฟ้าทองลงทัณฑ์
+                                        if (p < 0.45) {
+                                            const cp = p / 0.45;
+                                            armR.rotation.x = -2.3 * cp;
+                                            armR.rotation.z = 0.2;
+                                            char.rotation.z = -0.1 * cp;
+                                            if (Math.random() < 0.6)
+                                                burst(new THREE.Vector3(char.position.x + 0.3, 2.2 + Math.random() * 0.8, battleCenter.z), Math.random() < 0.5 ? gold : goldB, 0.3);
+                                        }
+                                        else {
+                                            const cp = (p - 0.45) / 0.55;
+                                            armR.rotation.x = -2.3 + cp * 3.0;
+                                            char.rotation.z = -0.1 + cp * 0.2;
+                                            if (cp < 0.2 && !A._oHit) {
+                                                A._oHit = true;
+                                                spawnSkillFx("bolt", EP, gold);
+                                                G._camShake = 0.6;
+                                            }
+                                            magicCircle.visible = true;
+                                            magicCircle.position.set(EP.x, 0.08, EP.z);
+                                            magicCircle.rotation.x = Math.PI / 2;
+                                            magicCircle.scale.setScalar(1.2 + cp * 1.2);
+                                            magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = 1 - cp * 0.5; c.material.color.setHex(gold); }));
+                                            if (Math.random() < 0.9)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 5 - ((cp * 2) % 1) * 5 + Math.random(), EP.z + (Math.random() - 0.5) * 1.2), Math.random() < 0.5 ? gold : goldB, 0.5);
+                                        }
+                                    }
+                                    else if (skId === "x_ceo_2") { // 📊 ประชุมด่วนนรก — กวาดมือนำเสนอสั่งประชุม 4 วาระรวด
+                                        char.position.x = bx + 0.3;
+                                        const seg = Math.min(3, Math.floor(p * 4)), local = (p * 4) % 1, dir = seg % 2 ? -1 : 1;
+                                        armR.rotation.x = -1.4;
+                                        armR.rotation.y = dir * (-0.8 + local * 1.6);
+                                        armR.rotation.z = 0.3;
+                                        char.rotation.z = dir * 0.06;
+                                        if (A._oSeg !== seg) {
+                                            A._oSeg = seg;
+                                            G._camShake = 0.2;
+                                            for (let k = 0; k < 4; k++)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.8, 0.5 + Math.random() * 1.8, EP.z + (Math.random() - 0.5) * 1.2), k % 2 ? pink : gold, 0.4);
+                                        }
+                                        if (Math.random() < 0.6)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0.4 + Math.random() * 2, EP.z), pink, 0.35);
+                                    }
+                                    else if (skId === "x_ceo_3") { // 📉 ปลดฟ้าผ่า — ชี้มือขาด "คุณถูกไล่ออก!" สายฟ้าแดงถล่ม
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -0.5 - cp * 0.7;
+                                            armR.rotation.z = 0.3;
+                                            char.rotation.z = 0.06 * cp;
+                                            if (Math.random() < 0.6)
+                                                burst(new THREE.Vector3(char.position.x + 0.3, 1.4 + Math.random() * 0.4, battleCenter.z), redC, 0.3);
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            armR.rotation.x = -1.2 + cp * 1.6;
+                                            armR.rotation.z = 0.12;
+                                            char.rotation.z = 0.06 - cp * 0.14;
+                                            if (cp < 0.15 && !A._oHit) {
+                                                A._oHit = true;
+                                                spawnSkillFx("quake", EP, redC);
+                                                spawnSkillFx("bolt", EP, redC);
+                                                G._camShake = 0.7;
+                                            }
+                                            if (em.userData.body)
+                                                monGlow(em, 0x551015, 0.5);
+                                            if (Math.random() < 0.9)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.2, 0.3 + Math.random() * 2.6, EP.z + (Math.random() - 0.5) * 1.4), Math.random() < 0.5 ? redC : 0xff5a4a, 0.45);
+                                        }
+                                    }
+                                    else if (skId === "x_ceo_4") { // 👑 ควบรวมมหาอำนาจ — ชูสองแขนแล้วประกบ ควบรวมไททันทุ่มล้ม ×2
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -2.2 * cp;
+                                            armL.rotation.x = -2.2 * cp;
+                                            armR.rotation.z = 0.5 * cp;
+                                            armL.rotation.z = -0.5 * cp;
+                                            if (Math.random() < 0.6)
+                                                burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5), 2.4 + Math.random(), battleCenter.z), goldB, 0.35);
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            armR.rotation.x = -2.2 + cp * 2.6;
+                                            armL.rotation.x = -2.2 + cp * 2.6;
+                                            armR.rotation.z = 0.5 - cp * 0.4;
+                                            armL.rotation.z = -0.5 + cp * 0.4;
+                                            char.rotation.z = 0.1 * Math.sin(cp * Math.PI);
+                                            if (A._oSeg !== Math.min(1, Math.floor(cp * 2))) {
+                                                A._oSeg = Math.min(1, Math.floor(cp * 2));
+                                                spawnSkillFx("quake", EP, goldB);
+                                                G._camShake = 0.6;
+                                            }
+                                            if (Math.random() < 0.85)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.4, 0.1 + Math.random() * 2, EP.z + (Math.random() - 0.5) * 1.8), Math.random() < 0.5 ? gold : goldB, 0.5);
+                                        }
+                                    }
+                                    // ── WORKAHOLIC ──
+                                    else if (skId === "x_wrk_1") { // ☕ กาแฟช็อตคู่ — ยกกาแฟกระดกดื่ม → พุ่งชนด้วยพลังคาเฟอีน
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -1.3 - cp * 0.8;
+                                            armR.rotation.z = 0.3;
+                                            char.rotation.z = -cp * 0.08;
+                                            if (Math.random() < 0.8)
+                                                burst(new THREE.Vector3(char.position.x + 0.2, 1.5 + Math.random() * 0.4, battleCenter.z), Math.random() < 0.5 ? coffeeC : warmC, 0.28);
+                                        }
+                                        else if (p < 0.7) {
+                                            const cp = (p - 0.4) / 0.3, e = 1 - Math.pow(1 - cp, 3);
+                                            char.position.x = bx + e * (ex - bx);
+                                            armR.rotation.x = -0.5;
+                                            char.rotation.z = 0.12;
+                                            if (e > 0.5 && !A._oHit) {
+                                                A._oHit = true;
+                                                spawnSkillFx("pierce", EP, warmC);
+                                                G._camShake = 0.4;
+                                            }
+                                            for (let k = 0; k < 3; k++)
+                                                burst(new THREE.Vector3(char.position.x - 0.3 - k * 0.4, 1.2, battleCenter.z), k ? coffeeC : warmC, 0.32);
+                                        }
+                                        else {
+                                            const rp = (p - 0.7) / 0.3;
+                                            char.position.x = ex - rp * (ex - bx);
+                                            char.rotation.z = 0.12 * (1 - rp);
+                                            armR.rotation.x = -0.5 + rp * 0.4;
+                                        }
+                                    }
+                                    else if (skId === "x_wrk_2") { // 🗂️ แฟ้มถล่มทับ — ยกกองเอกสารเหนือหัว → ทุ่มถล่ม ×4
+                                        char.position.x = bx + 0.3;
+                                        if (p < 0.35) {
+                                            const cp = p / 0.35;
+                                            armR.rotation.x = -2.0 * cp;
+                                            armL.rotation.x = -2.0 * cp;
+                                            char.rotation.z = 0;
+                                        }
+                                        else {
+                                            const cp = (p - 0.35) / 0.65;
+                                            armR.rotation.x = -2.0 + cp * 2.4;
+                                            armL.rotation.x = -2.0 + cp * 2.4;
+                                            if (A._oSeg !== Math.min(3, Math.floor(cp * 4))) {
+                                                A._oSeg = Math.min(3, Math.floor(cp * 4));
+                                                G._camShake = 0.3;
+                                            }
+                                            if (Math.random() < 0.92)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.2, 4 - ((cp * 3) % 1) * 4 + Math.random(), EP.z + (Math.random() - 0.5) * 1.6), Math.random() < 0.5 ? docC : 0xe8eef6, 0.42);
+                                        }
+                                    }
+                                    else if (skId === "x_wrk_3") { // ⏰ เดดไลน์ทมิฬ — ชี้ดูนาฬิกาข้อมือ → ตื่นตระหนก นาฬิการะเบิดเวลา
+                                        char.position.x = bx + 0.3;
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armL.rotation.x = -1.6 * cp;
+                                            armR.rotation.x = -1.2 * cp;
+                                            char.rotation.z = Math.sin(p * Math.PI * 8) * 0.05;
+                                            if (Math.random() < 0.5)
+                                                burst(new THREE.Vector3(char.position.x + 0.2, 1.4, battleCenter.z), ember, 0.25);
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            armR.rotation.x = -1.2 + cp * 1.0;
+                                            armL.rotation.x = -1.6 + cp * 1.2;
+                                            char.rotation.z = Math.sin(cp * Math.PI * 6) * 0.06;
+                                            if (cp < 0.2 && !A._oHit) {
+                                                A._oHit = true;
+                                                spawnSkillFx("quake", EP, ember);
+                                                G._camShake = 0.6;
+                                            }
+                                            if (em.userData.body)
+                                                monGlow(em, 0x552018, 0.4);
+                                            if (Math.random() < 0.85)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.2, 0.3 + Math.random() * 2.2, EP.z + (Math.random() - 0.5) * 1.4), Math.random() < 0.5 ? ember : fire, 0.42);
+                                        }
+                                    }
+                                    else if (skId === "x_wrk_4") { // 🔥 โอทีนรกแตก — รัวพิมพ์แล็ปท็อป → ลุกเป็นไฟโอที ระเบิดเพลิง ×3
+                                        char.position.x = bx + 0.3;
+                                        armR.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * 24)) * 0.25;
+                                        armL.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * 24 + 1.1)) * 0.25;
+                                        armR.rotation.z = 0.3;
+                                        armL.rotation.z = -0.3;
+                                        char.rotation.z = Math.sin(p * Math.PI * 24) * 0.03;
+                                        if (Math.random() < 0.85) {
+                                            const a = t * 6 + Math.random() * 6.28, r = 0.5 + Math.random() * 0.4;
+                                            burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.2 + ((t * 2 + Math.random()) % 1) * 2, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? fire : ember, 0.3);
+                                        }
+                                        if (A._oSeg !== Math.min(2, Math.floor(p * 3))) {
+                                            A._oSeg = Math.min(2, Math.floor(p * 3));
+                                            spawnSkillFx("fire", EP, fire);
+                                            G._camShake = 0.3;
+                                            for (let k = 0; k < 4; k++)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.8, 0.4 + Math.random() * 2, EP.z), k % 2 ? fire : ember, 0.45);
+                                        }
+                                    }
+                                }
                                 else {
                                     // 💻 basic attack — a quick two-handed laptop bash
                                     const jab = Math.abs(Math.sin(p * Math.PI * 2));
