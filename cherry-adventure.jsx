@@ -15318,6 +15318,36 @@ export default function CherryAdventure() {
                   if (p > 0.42 && p < 0.5) spawnSkillFx("bolt", em.position, purple);
                   G._camShake = Math.max(G._camShake || 0, 0.3);
                 }
+              } else if (skId && skId.indexOf("x_vnm") === 0) {
+                // ☠️ VENOM KING ADVANCED — ท่าเฉพาะแต่ละสกิล (ราชาพิษ)
+                const ex = battleCenter.x + (G.enemyX || 1.3);
+                const bx = battleCenter.x - 1.3, EPl = em.position;
+                const acid = 0x7ad04a, toxic = 0x2ad08a, vmist = 0x9a4ad0, deep = 0x4aa04a, sick = 0xbfff4a;
+                char.rotation.y = Math.PI / 2; char.position.z = battleCenter.z;
+                if (skId === "x_vnm_1") {
+                  // 🕷️ เข็มพิษราชินี — สะบัดข้อมือสาดเข็มพิษเป็นชุด ×4 พุ่งเข้าเป้า
+                  char.position.x = bx + 0.2;
+                  const fl = Math.sin(p * Math.PI * 8); armR.rotation.x = -0.9 + fl * 1.3; armR.rotation.z = 0.12 + fl * 0.4; armL.rotation.z = -0.12;
+                  char.rotation.z = -0.06 + fl * 0.06;
+                  if (p > 0.15 && Math.random() < 0.95) { const q = (Math.random()); const nx = bx + 0.5 + q * (EPl.x - bx - 0.5); burst(new THREE.Vector3(nx, 1.3 + (Math.random() - 0.5) * 1.2 * q, battleCenter.z + (Math.random() - 0.5) * 0.9 * q), Math.random() < 0.5 ? acid : sick, 0.24); }
+                  if (p > 0.15 && Math.random() < 0.7) burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 1.3, 0.5 + Math.random() * 1.6, EPl.z), Math.random() < 0.5 ? acid : toxic, 0.32);
+                } else if (skId === "x_vnm_2") {
+                  // 🟣 หมอกพิษม่วง — กางสองแขนปล่อยหมอกพิษม่วงแผ่คลุมศัตรู
+                  char.position.x = bx + 0.3;
+                  const op = Math.min(1, p * 1.8); armR.rotation.x = -0.3; armR.rotation.z = 0.2 + op * 1.0; armL.rotation.x = -0.3; armL.rotation.z = -0.2 - op * 1.0;
+                  if (p > 0.2 && em.userData.body) monGlow(em, 0x8a3ad0, 0.5);
+                  if (Math.random() < 0.95) { const a = Math.random() * Math.PI * 2, r = (0.4 + Math.random() * 1.5) * op; burst(new THREE.Vector3(EPl.x + Math.cos(a) * r, 0.3 + Math.random() * 2.2 * op, EPl.z + Math.sin(a) * r), Math.random() < 0.6 ? vmist : deep, 0.5 + Math.random() * 0.3); }
+                  G._camShake = Math.max(G._camShake || 0, 0.1);
+                } else if (skId === "x_vnm_3") {
+                  // 🐍 กรงเล็บงูเห่า — เอนหลังตั้งท่า → พุ่งขย้ำแบบงูเห่า ×2
+                  const strike = (w0, w1) => { const s = (p - w0) / (w1 - w0); if (s < 0.4) { const cp = s / 0.4; char.position.x = bx + 0.2 - cp * 0.25; char.rotation.z = 0.18 * cp; armR.rotation.x = -0.4 - cp * 1.0; } else { const cp = (s - 0.4) / 0.6, e = 1 - Math.pow(1 - cp, 3); char.position.x = bx - 0.05 + e * (EPl.x - 0.7 - (bx - 0.05)); char.rotation.z = 0.18 - e * 0.34; armR.rotation.x = -1.4 + e * 2.2; armR.rotation.z = 0.12 + e * 0.6; if (e > 0.5 && !A._vHit) { A._vHit = true; spawnSkillFx("pierce", EPl, deep); G._camShake = 0.4; } if (e > 0.4) burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 1.2, 0.6 + Math.random() * 1.4, EPl.z), Math.random() < 0.5 ? deep : acid, 0.4); } };
+                  if (p < 0.5) { strike(0.0, 0.5); } else { if (A._vHit) A._vHit = false; strike(0.5, 1.0); }
+                } else if (skId === "x_vnm_4") {
+                  // ⚗️ วาระสุดท้าย — ชูขวดพิษโบราณเหนือหัว → ขว้างลง ระเบิดพิษลูกโซ่
+                  char.position.x = bx + 0.2;
+                  if (p < 0.45) { const cp = p / 0.45; armR.rotation.x = -2.0 * cp; armR.rotation.z = 0.12; char.rotation.z = -0.08 * cp; if (Math.random() < 0.7) burst(new THREE.Vector3(char.position.x + 0.3, 2.0 + Math.random() * 0.5, battleCenter.z), Math.random() < 0.5 ? toxic : sick, 0.3 + Math.random() * 0.2); }
+                  else { const cp = (p - 0.45) / 0.55; armR.rotation.x = -2.0 + cp * 2.8; char.rotation.z = -0.08 + cp * 0.16; if (cp < 0.2 && !A._vHit) { A._vHit = true; spawnSkillFx("orb", EPl, toxic); G._camShake = 0.6; } if (Math.random() < 0.92) { const a = Math.random() * Math.PI * 2, r = 0.3 + cp * 2.6 * Math.random(); burst(new THREE.Vector3(EPl.x + Math.cos(a) * r, 0.1 + Math.random() * 2.4, EPl.z + Math.sin(a) * r), [acid, toxic, deep, sick][Math.floor(Math.random() * 4)], 0.45 + Math.random() * 0.4); } if (cp > 0.15 && cp < 0.4) G._camShake = Math.max(G._camShake || 0, 0.35); }
+                }
               } else {
                 // 🗡️ quick dash-in, alternating dagger stabs, dash back
                 const dash = Math.sin(p * Math.PI) * 1.6;
@@ -17161,6 +17191,40 @@ export default function CherryAdventure() {
                   // 🌪️ NATURE CATACLYSM — ชูคทา → ฟาดลงพื้น เสาศิลา+พายุใบไม้ผุด
                   if (p < 0.45) { armR.rotation.x = -1.8 * (p / 0.45); }
                   else { const cp = (p - 0.45) / 0.55; armR.rotation.x = -1.8 + cp * 3.0; char.rotation.z = 0.2 * Math.sin(cp * Math.PI); char.position.y = -0.1 * Math.sin(cp * Math.PI); if (Math.random() < 0.85) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.8, 0.1 + Math.random() * 1.9, em.position.z + (Math.random() - 0.5) * 2.4), [0x6ac04a, 0x8a6a3a, 0xc0a060][Math.floor(Math.random() * 3)], 0.45); }
+                }
+              } else if (skId && skId.indexOf("x_pri") === 0) {
+                // ✨ HOLY PRIEST ADVANCED — ท่าร่ายเฉพาะแต่ละสกิล (นักบวชแสง)
+                const gold = 0xffe9a0, holy = 0xfff2b0, sky = 0xd8ecff, aqua = 0x8fd0ff, white = 0xffffff, life = 0x8ad06a;
+                const stx = char.position.x - 0.05, stz = char.position.z, EPl = em.position;
+                magicCircle.visible = true; magicCircle.rotation.x = Math.PI / 2;
+                if (skId === "x_pri_1") {
+                  // ☀️ แสงลงทัณฑ์ — ชูคทาสู่ฟ้า → เสาแสงสวรรค์ลงทัณฑ์ ×3
+                  armR.rotation.x = -2.5; armR.rotation.z = 0.15; char.rotation.z = 0;
+                  magicCircle.position.set(EPl.x, 0.09, EPl.z); magicCircle.scale.setScalar(1.3 + Math.sin(p * Math.PI) * 0.5);
+                  magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(gold); }));
+                  const pil = (p * 3) % 1; if (p > 0.15 && Math.random() < 0.95) burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 0.8, 4.2 - pil * 4 + Math.random() * 0.6, EPl.z + (Math.random() - 0.5) * 0.8), Math.random() < 0.5 ? gold : white, 0.45);
+                  if (p > 0.2 && em.userData.body) monGlow(em, 0xfff0b0, 0.5);
+                } else if (skId === "x_pri_2") {
+                  // 💫 พรฟื้นชีพ — น้อมคทาแนบอก วงเวทฟื้นชีพเรืองรอบตัว แสงชีวิตลอยขึ้น
+                  orbFx.visible = false; armR.rotation.x = -0.7; armR.rotation.z = 0.9; armL.rotation.x = -0.7; armL.rotation.z = -0.9; char.rotation.z = 0;
+                  magicCircle.position.set(stx, 0.09, stz); magicCircle.scale.setScalar(1.5 + Math.min(1, p * 2) * 0.9);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.5 + si); st.children.forEach((c) => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(holy); }); });
+                  for (let k = 0; k < 3; k++) if (Math.random() < 0.8) { const a = Math.random() * Math.PI * 2, r = 0.4 + Math.random() * 0.9; burst(new THREE.Vector3(stx + Math.cos(a) * r, 0.1 + ((t * 1.4 + k * 0.4) % 1) * 2.4, stz + Math.sin(a) * r), [holy, life, white][k % 3], 0.35); }
+                } else if (skId === "x_pri_3") {
+                  // 🕊️ มนตร์สะกดวิญญาณ — เล็งคทาไปเป้า → โซ่แสงพันธนาการรัดรอบศัตรู
+                  armR.rotation.x = -1.3; armR.rotation.z = 0.2; char.rotation.z = -0.05;
+                  orbFx.visible = true; orbFx.position.set(stx + 0.5, 1.7, stz); orbFx.scale.setScalar(0.6 + Math.sin(t * 18) * 0.1); orbFx.material.emissive.setHex(sky);
+                  magicCircle.position.set(EPl.x, 0.09, EPl.z); magicCircle.scale.setScalar(1.2 + Math.sin(p * Math.PI) * 0.4);
+                  magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(sky); }));
+                  if (p > 0.2 && em.userData.body) monGlow(em, 0xcfeaff, 0.6);
+                  if (Math.random() < 0.9) { const a = t * 5 + Math.random() * 6.28, ry = (p * 2) % 1; burst(new THREE.Vector3(EPl.x + Math.cos(a) * 0.9, 0.2 + ry * 2.4, EPl.z + Math.sin(a) * 0.9), Math.random() < 0.5 ? sky : white, 0.35); }
+                } else if (skId === "x_pri_4") {
+                  // 🌊 นทีสวรรค์ — กวาดคทาแนวนอน → คลื่นนทีสวรรค์ซัดกวาดสนาม ×2
+                  const wave = (p * 2) % 1; armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 2) * 0.6; armR.rotation.y = -1.1 + wave * 2.2; char.rotation.y = Math.PI / 2 + Math.sin(p * Math.PI * 2) * 0.2;
+                  magicCircle.position.set(stx, 0.09, stz); magicCircle.scale.setScalar(1.3);
+                  magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(aqua); }));
+                  if (Math.random() < 0.95) { const wx = stx + 0.6 + wave * (EPl.x + 1 - stx - 0.6); burst(new THREE.Vector3(wx, 0.4 + Math.random() * 2.0, battleCenter.z + (Math.random() - 0.5) * 2.2), Math.random() < 0.5 ? aqua : white, 0.45); }
+                  G._camShake = Math.max(G._camShake || 0, 0.12);
                 }
               } else {
                 // basic attack: raise staff, orb arcs to target
