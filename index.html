@@ -15501,7 +15501,7 @@ function CherryAdventure() {
             }
             const cost = statCost(cur);
             if ((G.player.statPts || 0) < cost) {
-                toast(`ต้องใช้ ${cost} แต้มสถานะ (มี ${G.player.statPts || 0}) — เลเวลอัพรับ +2`);
+                toast(`ต้องใช้ ${cost} แต้มสถานะ (มี ${G.player.statPts || 0}) — เลเวลอัพรับ +3`);
                 return;
             }
             G.player.statPts -= cost;
@@ -30893,6 +30893,15 @@ function CherryAdventure() {
                 } },
                 closeBtn("skillPanel"),
                 React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 } }, "\u26A1 \u0E2D\u0E31\u0E1E\u0E40\u0E01\u0E23\u0E14\u0E2A\u0E01\u0E34\u0E25\u0E2D\u0E32\u0E0A\u0E35\u0E1E"),
+                React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#8a5ad0", background: "linear-gradient(90deg,#f3ecff,#fdeef6)", border: "1px solid #e0d0f5", borderRadius: 10, padding: "6px 10px", marginBottom: 8 } },
+                    "\u26A1 \u0E41\u0E15\u0E49\u0E21\u0E17\u0E35\u0E48\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E43\u0E0A\u0E49\u0E23\u0E27\u0E21 ",
+                    React.createElement("b", { style: { color: "#6a3ac0" } }, (ui.sp || 0) + (ui.statPts || 0)),
+                    " ",
+                    React.createElement("span", { style: { color: "#9a8ab0", fontWeight: 700 } },
+                        "= \uD83D\uDCAA \u0E2A\u0E16\u0E32\u0E19\u0E30 ",
+                        ui.statPts || 0,
+                        " + \u26A1 \u0E2A\u0E01\u0E34\u0E25 ",
+                        ui.sp || 0)),
                 ui.pathId ? (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } },
                     React.createElement("button", { onClick: () => G.setSkillMode("basic"), style: { flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: (ui.skillMode || "basic") === "basic" ? "#fff" : "#5a7a4a", background: (ui.skillMode || "basic") === "basic" ? "#7ba05b" : "#eaf5e0" } }, "\u2694\uFE0F \u0E2A\u0E01\u0E34\u0E25\u0E1E\u0E37\u0E49\u0E19\u0E10\u0E32\u0E19"),
                     React.createElement("button", { onClick: () => G.setSkillMode("adv"), style: { flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.skillMode === "adv" ? "#fff" : "#8a5ad0", background: ui.skillMode === "adv" ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#f0e8f8" } }, "\uD83C\uDF1F \u0E2A\u0E01\u0E34\u0E25\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07"))) : (React.createElement("div", { style: { fontSize: 9.5, color: "#a89ac0", marginBottom: 6 } }, "\uD83D\uDD12 \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2A\u0E32\u0E22\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07 \u0E41\u0E25\u0E49\u0E27\u0E08\u0E30\u0E2A\u0E25\u0E31\u0E1A\u0E43\u0E0A\u0E49 \"\u0E0A\u0E38\u0E14\u0E2A\u0E01\u0E34\u0E25\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07 4 \u0E2A\u0E01\u0E34\u0E25 + \u0E17\u0E48\u0E32\u0E44\u0E21\u0E49\u0E15\u0E32\u0E22\u0E43\u0E2B\u0E21\u0E48\" \u0E02\u0E2D\u0E07\u0E2A\u0E32\u0E22\u0E19\u0E31\u0E49\u0E19\u0E44\u0E14\u0E49")),
@@ -30903,7 +30912,7 @@ function CherryAdventure() {
                             "\u00B7 \u0E21\u0E35 ",
                             ui.statPts || 0,
                             " \u0E41\u0E15\u0E49\u0E21")),
-                    React.createElement("div", { style: { fontSize: 9.5, color: "#7a8aa8", margin: "2px 0 6px" } }, "\u0E44\u0E14\u0E49 2 \u0E41\u0E15\u0E49\u0E21/\u0E40\u0E25\u0E40\u0E27\u0E25 \u00B7 \u0E22\u0E34\u0E48\u0E07\u0E2D\u0E31\u0E1E\u0E2A\u0E39\u0E07\u0E22\u0E34\u0E48\u0E07\u0E43\u0E0A\u0E49\u0E41\u0E15\u0E49\u0E21\u0E40\u0E1E\u0E34\u0E48\u0E21 (\u0E17\u0E38\u0E01 10 \u0E23\u0E30\u0E14\u0E31\u0E1A +1 \u0E41\u0E15\u0E49\u0E21)"),
+                    React.createElement("div", { style: { fontSize: 9.5, color: "#7a8aa8", margin: "2px 0 6px" } }, "\u0E44\u0E14\u0E49 3 \u0E41\u0E15\u0E49\u0E21/\u0E40\u0E25\u0E40\u0E27\u0E25 \u00B7 \u0E22\u0E34\u0E48\u0E07\u0E2D\u0E31\u0E1E\u0E2A\u0E39\u0E07\u0E22\u0E34\u0E48\u0E07\u0E43\u0E0A\u0E49\u0E41\u0E15\u0E49\u0E21\u0E40\u0E1E\u0E34\u0E48\u0E21 (\u0E17\u0E38\u0E01 10 \u0E23\u0E30\u0E14\u0E31\u0E1A +1 \u0E41\u0E15\u0E49\u0E21)"),
                     Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
                         const rank = (ui.baseStats || {})[k] || 0;
                         const cost = 1 + Math.floor(rank / 10);

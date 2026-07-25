@@ -11717,7 +11717,7 @@ export default function CherryAdventure() {
       const cur = (G.baseStats && G.baseStats[stat]) || 0;
       if (cur >= STAT_MAX) { toast(`${STAT_INFO[stat].emoji} ${STAT_INFO[stat].name} เต็ม ${STAT_MAX} แล้ว!`); return; }
       const cost = statCost(cur);
-      if ((G.player.statPts || 0) < cost) { toast(`ต้องใช้ ${cost} แต้มสถานะ (มี ${G.player.statPts || 0}) — เลเวลอัพรับ +2`); return; }
+      if ((G.player.statPts || 0) < cost) { toast(`ต้องใช้ ${cost} แต้มสถานะ (มี ${G.player.statPts || 0}) — เลเวลอัพรับ +3`); return; }
       G.player.statPts -= cost;
       G.baseStats[stat] = cur + 1;
       if (G.sfx) G.sfx.levelup();
@@ -22798,6 +22798,10 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
                 ⚡ อัพเกรดสกิลอาชีพ
               </div>
+              {/* 🔢 combined unspent-points banner — matches the ⚡ button badge (สถานะ + สกิล) */}
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8a5ad0", background: "linear-gradient(90deg,#f3ecff,#fdeef6)", border: "1px solid #e0d0f5", borderRadius: 10, padding: "6px 10px", marginBottom: 8 }}>
+                ⚡ แต้มที่ยังไม่ได้ใช้รวม <b style={{ color: "#6a3ac0" }}>{(ui.sp || 0) + (ui.statPts || 0)}</b> <span style={{ color: "#9a8ab0", fontWeight: 700 }}>= 💪 สถานะ {ui.statPts || 0} + ⚡ สกิล {ui.sp || 0}</span>
+              </div>
               {/* 🔀 โหมดสลับชุดสกิล พื้นฐาน/ขั้นสูง */}
               {ui.pathId ? (
                 <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
@@ -22810,7 +22814,7 @@ export default function CherryAdventure() {
               {/* 💪 base stats allocation */}
               <div style={{ background: "linear-gradient(135deg,#f0f6ff,#f6f0ff)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #c0d0f0" }}>
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#4a6ac0" }}>💪 ค่าสถานะพื้นฐาน <span style={{ color: "#9a6ad0" }}>· มี {ui.statPts || 0} แต้ม</span></div>
-                <div style={{ fontSize: 9.5, color: "#7a8aa8", margin: "2px 0 6px" }}>ได้ 2 แต้ม/เลเวล · ยิ่งอัพสูงยิ่งใช้แต้มเพิ่ม (ทุก 10 ระดับ +1 แต้ม)</div>
+                <div style={{ fontSize: 9.5, color: "#7a8aa8", margin: "2px 0 6px" }}>ได้ 3 แต้ม/เลเวล · ยิ่งอัพสูงยิ่งใช้แต้มเพิ่ม (ทุก 10 ระดับ +1 แต้ม)</div>
                 {Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
                   const rank = (ui.baseStats || {})[k] || 0;
                   const cost = 1 + Math.floor(rank / 10);
