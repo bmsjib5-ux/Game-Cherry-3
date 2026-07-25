@@ -250,6 +250,8 @@ create table if not exists public.boss_raids (
   host     text not null,
   day      text not null,                      -- daily key เช่น "2026-6-25"
   members  jsonb not null default '[]'::jsonb, -- [{pid,n,c,lv}, ...]
+  ready    jsonb not null default '[]'::jsonb, -- [pid, ...] คนที่กด "พร้อม"
+  scores   jsonb not null default '{}'::jsonb, -- {pid: ดาเมจสะสม} สำหรับกระดานคะแนน
   hp       bigint not null,
   maxhp    bigint not null,
   lv       int not null default 99,
@@ -258,6 +260,9 @@ create table if not exists public.boss_raids (
   ts       bigint not null
 );
 create index if not exists boss_raids_host_idx on public.boss_raids (host, day, state, ts desc);
+-- ถ้าเคยสร้างตารางเวอร์ชันเก่าไว้แล้ว ให้เพิ่มคอลัมน์ที่ขาด:
+alter table public.boss_raids add column if not exists ready  jsonb not null default '[]'::jsonb;
+alter table public.boss_raids add column if not exists scores jsonb not null default '{}'::jsonb;
 
 alter table public.boss_raids enable row level security;
 create policy "boss read"   on public.boss_raids for select using (true);
@@ -278,16 +283,33 @@ begin
   return query select * from public.boss_raids where id = p_id;
 end; $$;
 
--- ⚔️ หักเลือดก้อนกลางแบบ atomic; เมื่อถึง 0 → cleared + สุ่มผู้ได้ของตำนาน (20%)
-create or replace function public.boss_hit(p_id bigint, p_dmg bigint, p_winner text)
-returns table(hp bigint, state text, winner text)
+-- ✋ กด "พร้อม" (เพิ่ม pid ลงใน ready แบบไม่ซ้ำ)
+create or replace function public.boss_ready(p_id bigint, p_pid text)
+returns setof public.boss_raids
 language plpgsql security definer as $$
-declare r public.boss_raids; new_hp bigint; wn text;
+begin
+  update public.boss_raids
+    set ready = case when ready ? p_pid then ready else ready || to_jsonb(p_pid) end
+    where id = p_id;
+  return query select * from public.boss_raids where id = p_id;
+end; $$;
+
+-- ⚔️ หักเลือดก้อนกลางแบบ atomic + สะสมคะแนนผู้ตี; เมื่อถึง 0 → cleared + สุ่มผู้ได้ของตำนาน (20%)
+create or replace function public.boss_hit(p_id bigint, p_dmg bigint, p_winner text)
+returns table(hp bigint, state text, winner text, scores jsonb)
+language plpgsql security definer as $$
+declare r public.boss_raids; new_hp bigint; wn text; new_scores jsonb;
 begin
   select * into r from public.boss_raids where id = p_id for update;
   if not found then return; end if;
   if r.state = 'cleared' then
-    return query select r.hp, r.state, r.winner; return;
+    return query select r.hp, r.state, r.winner, r.scores; return;
+  end if;
+  -- สะสมคะแนน (ดาเมจ) ของผู้ตี
+  new_scores := coalesce(r.scores, '{}'::jsonb);
+  if p_winner is not null then
+    new_scores := jsonb_set(new_scores, array[p_winner],
+      to_jsonb(coalesce((new_scores->>p_winner)::bigint, 0) + greatest(0, p_dmg)), true);
   end if;
   new_hp := greatest(0, r.hp - greatest(0, p_dmg));
   if new_hp <= 0 then
@@ -296,18 +318,20 @@ begin
     else
       wn := null;
     end if;
-    update public.boss_raids set hp = 0, state = 'cleared', winner = wn where id = p_id;
-    return query select 0::bigint, 'cleared'::text, wn;
+    update public.boss_raids set hp = 0, state = 'cleared', winner = wn, scores = new_scores where id = p_id;
+    return query select 0::bigint, 'cleared'::text, wn, new_scores;
   else
-    update public.boss_raids set hp = new_hp where id = p_id;
-    return query select new_hp, 'open'::text, null::text;
+    update public.boss_raids set hp = new_hp, scores = new_scores where id = p_id;
+    return query select new_hp, 'open'::text, null::text, new_scores;
   end if;
 end; $$;
 
 grant execute on function public.boss_join(bigint, jsonb) to anon, authenticated;
+grant execute on function public.boss_ready(bigint, text) to anon, authenticated;
 grant execute on function public.boss_hit(bigint, bigint, text) to anon, authenticated;
 ```
 
-> ทำงานยังไง: `boss_hit` ใช้ `for update` ล็อกแถวตอนหักเลือด จึงกันดาเมจชนกันเมื่อหลายคนตีพร้อมกัน · ผู้ได้ของตำนานถูกสุ่มที่เซิร์ฟเวอร์ (ยุติธรรมกับทุกเครื่อง) · ตาราง `boss_raids` อ้างอิงด้วย pid เหมือน `players`/`duels` (เกมแคชชวล ไม่กันโกงระดับจริงจัง)
+> ทำงานยังไง: `boss_hit` ใช้ `for update` ล็อกแถวตอนหักเลือด จึงกันดาเมจชนกันเมื่อหลายคนตีพร้อมกัน และสะสมดาเมจของผู้ตีลง `scores` (กระดานคะแนน) · `boss_ready` เก็บคนที่กดพร้อม · ผู้ได้ของตำนานถูกสุ่มที่เซิร์ฟเวอร์ (ยุติธรรมกับทุกเครื่อง) · ตาราง `boss_raids` อ้างอิงด้วย pid เหมือน `players`/`duels` (เกมแคชชวล ไม่กันโกงระดับจริงจัง)
+> หมายเหตุ: ถ้าเคยรัน `boss_hit` เวอร์ชันเก่า ให้รัน SQL นี้ทับได้เลย (create or replace) — โครงสร้างผลลัพธ์เพิ่มคอลัมน์ `scores`
 >
 > ถ้าไม่ตั้งค่า Supabase เกมจะเล่นบอสโลกแบบ **เดี่ยว (ออฟไลน์)** ได้ตามปกติ — เลือดบอสเก็บในเซฟเครื่องตัวเอง รีเซ็ตรายวัน ส่วนระบบปาร์ตี้เพื่อนจะเปิดใช้เมื่อเชื่อมต่อออนไลน์แล้ว

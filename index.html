@@ -15973,6 +15973,116 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, socialOpen: false, wbPanel: false }));
             wbStartRound();
         };
+        // ---------- ✋ READY CHECK — everyone presses พร้อม within 30s, else cancel & retry ----------
+        const wbBoard = () => {
+            const myPid = G.pid || "me";
+            let rows;
+            if (G.wbRaid && G.wbRaidRow && G.wbRaidRow.members) {
+                const sc = (G.wbRaidRow && G.wbRaidRow.scores) || {};
+                rows = G.wbRaidRow.members.map((m) => ({ n: m.n || "?", score: (m.pid === myPid ? Math.max(sc[m.pid] || 0, G.wbMyScore || 0) : (sc[m.pid] || 0)), me: m.pid === myPid }));
+            }
+            else {
+                rows = [{ n: (G.playerName || "เชอร์รี่"), score: G.wbMyScore || 0, me: true }];
+            }
+            rows.sort((a, b) => b.score - a.score);
+            return rows;
+        };
+        G._wbSyncBoard = () => setUi((u) => ({ ...u, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard() }));
+        G.wbOpenReady = () => {
+            if (G.mode !== "explore") {
+                toast("👹 เข้าตีบอสโลกได้จากโลกกว้างเท่านั้น");
+                return;
+            }
+            const st = G.wbStatus();
+            if (st.cleared) {
+                toast("👹 วันนี้ปราบจอมมารโลกันตร์แล้ว — กลับมาใหม่พรุ่งนี้!");
+                return;
+            }
+            G.wbMyScore = 0; // 🏆 fresh session score
+            const myPid = G.pid || "me";
+            const members = (G.wbRaid && G.wbRaidRow && G.wbRaidRow.members && G.wbRaidRow.members.length)
+                ? G.wbRaidRow.members.map((m) => ({ pid: m.pid, n: m.n, lv: m.lv, ready: false }))
+                : [{ pid: myPid, n: (G.playerName || "เชอร์รี่"), lv: G.player ? G.player.level : 1, ready: false }];
+            G._wbReady = { members, left: 30 };
+            setUi((u) => ({ ...u, wbPanel: false, wbReady: { members: members.map((m) => ({ ...m })), left: 30, allReady: false, meReady: false } }));
+            if (G._wbReadyIv)
+                clearInterval(G._wbReadyIv);
+            G._wbReadyIv = setInterval(() => { G._wbReadyTick(); }, 1000);
+        };
+        G._wbReadyTick = async () => {
+            const R = G._wbReady;
+            if (!R) {
+                if (G._wbReadyIv) {
+                    clearInterval(G._wbReadyIv);
+                    G._wbReadyIv = null;
+                }
+                return;
+            }
+            R.left -= 1;
+            if (G.wbRaid && CN.enabled()) { // 🤝 sync others' ready from the cloud
+                try {
+                    const row = await CN.bossGet(G.wbRaid);
+                    if (row) {
+                        G.wbRaidRow = row;
+                        const rd = row.ready || [];
+                        R.members = (row.members || []).map((m) => ({ pid: m.pid, n: m.n, lv: m.lv, ready: rd.indexOf(m.pid) >= 0 }));
+                    }
+                }
+                catch (e) { }
+            }
+            const allReady = R.members.length > 0 && R.members.every((m) => m.ready);
+            const meReady = !!(R.members.find((m) => m.pid === (G.pid || "me")) || {}).ready;
+            setUi((u) => ({ ...u, wbReady: { members: R.members.map((m) => ({ ...m })), left: Math.max(0, R.left), allReady, meReady } }));
+            if (allReady) {
+                G._wbBeginFromReady();
+                return;
+            }
+            if (R.left <= 0) { // ⏳ someone didn't ready in time → cancel, go back to the lobby
+                if (G._wbReadyIv) {
+                    clearInterval(G._wbReadyIv);
+                    G._wbReadyIv = null;
+                }
+                G._wbReady = null;
+                toast("⏳ มีคนไม่กดพร้อมภายใน 30 วิ — กดเริ่มใหม่อีกครั้ง");
+                setUi((u) => ({ ...u, wbReady: null, wbPanel: true, wbStat: G.wbStatus() }));
+            }
+        };
+        G.wbSetReady = async () => {
+            const R = G._wbReady;
+            if (!R)
+                return;
+            const myPid = G.pid || "me";
+            const me = R.members.find((m) => m.pid === myPid) || R.members[0];
+            if (me)
+                me.ready = true;
+            if (G.wbRaid && CN.enabled()) {
+                try {
+                    await CN.bossReady(G.wbRaid, myPid);
+                }
+                catch (e) { }
+            } // 🤝 write my ready to the cloud
+            const allReady = R.members.every((m) => m.ready);
+            setUi((u) => ({ ...u, wbReady: { members: R.members.map((m) => ({ ...m })), left: Math.max(0, R.left), allReady, meReady: true } }));
+            if (allReady)
+                G._wbBeginFromReady();
+        };
+        G._wbBeginFromReady = () => {
+            if (G._wbReadyIv) {
+                clearInterval(G._wbReadyIv);
+                G._wbReadyIv = null;
+            }
+            G._wbReady = null;
+            setUi((u) => ({ ...u, wbReady: null }));
+            G.startWorldBoss();
+        };
+        G.wbCancelReady = () => {
+            if (G._wbReadyIv) {
+                clearInterval(G._wbReadyIv);
+                G._wbReadyIv = null;
+            }
+            G._wbReady = null;
+            setUi((u) => ({ ...u, wbReady: null, wbPanel: true, wbStat: G.wbStatus() }));
+        };
         // store the remaining shared HP (so the next round continues from here)
         const wbSaveHp = () => {
             if (G.enemy && G.enemy.worldBoss) {
@@ -16010,7 +16120,7 @@ function CherryAdventure() {
             G.player.mp = effMaxMp(); // recover between rounds so you can try again
             syncPlayer();
             saveGame();
-            setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true,
+            setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard(),
                 wbResult: { reason, hp: wb.hp, maxHp: wb.maxHp, pct: Math.round(wb.hp / wb.maxHp * 100) }, msg: "" }));
         };
         G.wbRetry = () => {
@@ -16029,6 +16139,11 @@ function CherryAdventure() {
             G.wbRoundOn = false;
             G.wbAtkDebuff = 0;
             G.wbCritDebuff = 0; // 👹 clear the boss aura
+            if (G._wbReadyIv) {
+                clearInterval(G._wbReadyIv);
+                G._wbReadyIv = null;
+            }
+            G._wbReady = null;
             if (G.enemy && G.enemy.worldBoss) {
                 const mm = G.enemy.mesh;
                 if (mm)
@@ -16108,7 +16223,7 @@ function CherryAdventure() {
             syncPlayer();
             saveGame();
             const legName = rw.legend ? (LOOT.find((x) => x.id === rw.legend) || {}).name : null;
-            setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true,
+            setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard(),
                 wbResult: { reason: "win", hp: 0, maxHp: wb.maxHp, pct: 0, reward: rw, legName }, msg: "" }));
             toast(`🏆 ปราบ ${WORLD_BOSS.name} สำเร็จ! +100,000💰 +1,000💎 +100💠`);
             if (legName)
@@ -18306,7 +18421,8 @@ function CherryAdventure() {
                 }
             },
             async bossJoin(id, member) { return await this._rpc("boss_join", { p_id: id, p_member: member }); }, // atomic append to members[]
-            async bossHit(id, dmg, winner) { return await this._rpc("boss_hit", { p_id: id, p_dmg: dmg, p_winner: winner || null }); }, // atomic decrement → { hp, state, winner }
+            async bossReady(id, pid) { return await this._rpc("boss_ready", { p_id: id, p_pid: pid }); }, // mark a member ready → row
+            async bossHit(id, dmg, winner) { return await this._rpc("boss_hit", { p_id: id, p_dmg: dmg, p_winner: winner || null }); }, // atomic decrement + score → { hp, state, winner, scores }
         });
         // 🤝 my party snapshot member object
         G.wbMember = () => ({ pid: G.ensurePid ? G.ensurePid() : (G.pid || "?"), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1 });
@@ -18399,6 +18515,11 @@ function CherryAdventure() {
                     const shared = Math.max(0, row.hp);
                     G.enemy.hp = shared;
                     G._wbPrevHp = shared; // reconcile with the true shared pool (includes allies' damage)
+                    if (row.scores && G.wbRaidRow) {
+                        G.wbRaidRow.scores = row.scores;
+                        if (G._wbSyncBoard)
+                            G._wbSyncBoard();
+                    } // 🏆 party scores
                     if (row.state === "cleared" || shared <= 0) {
                         G.wbRaidWinner = row.winner || null;
                         G.wbVictory();
@@ -18882,20 +19003,25 @@ function CherryAdventure() {
                 if (G.wbActive && G.wbRoundOn && G.mode === "battle" && G.enemy && G.enemy.worldBoss) {
                     G.wbTimeLeft = (G.wbTimeLeft || 0) - dt;
                     const secLeft = Math.max(0, Math.ceil(G.wbTimeLeft));
-                    if (secLeft !== G._wbLastSec) {
-                        G._wbLastSec = secLeft;
-                        setUi((u) => ({ ...u, wbTime: secLeft }));
-                    }
-                    // 🤝 online party: accumulate the damage we deal and flush it to the shared cloud pool
-                    if (G.wbRaid) {
+                    // 🏆 count the damage WE deal into our score (both solo and party)
+                    {
                         const cur = G.enemy.hp;
                         if (G._wbPrevHp == null)
                             G._wbPrevHp = cur;
                         const dealt = G._wbPrevHp - cur;
                         if (dealt > 0) {
-                            G._wbDmgAccum = (G._wbDmgAccum || 0) + dealt;
+                            G.wbMyScore = (G.wbMyScore || 0) + dealt;
+                            if (G.wbRaid)
+                                G._wbDmgAccum = (G._wbDmgAccum || 0) + dealt;
                             G._wbPrevHp = cur;
                         }
+                    }
+                    if (secLeft !== G._wbLastSec) {
+                        G._wbLastSec = secLeft;
+                        setUi((u) => ({ ...u, wbTime: secLeft, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard() }));
+                    } // ⏱️ + 🏆 scoreboard
+                    // 🤝 online party: flush our damage to the shared cloud pool
+                    if (G.wbRaid) {
                         G._wbSyncT = (G._wbSyncT || 0) + dt;
                         if (G._wbSyncT >= 1.5) {
                             G._wbSyncT = 0;
@@ -32058,6 +32184,33 @@ function CherryAdventure() {
             React.createElement("span", { style: { fontSize: 15 } }, "\u23F1\uFE0F"),
             React.createElement("span", { style: { fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: font, minWidth: 44, textAlign: "center" } }, (() => { const s = ui.wbTime != null ? ui.wbTime : 180; return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); })()),
             React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#f5d0a0" } }, "\u00B7 \uD83D\uDC79 \u0E1A\u0E2D\u0E2A\u0E42\u0E25\u0E01"))),
+        ui.wbActive && ui.mode === "battle" && (ui.wbBoard || []).length > 0 && (React.createElement("div", { style: { position: "absolute", top: 132, left: 8, minWidth: 128, maxWidth: 176, background: "rgba(20,12,18,0.8)", border: "1px solid #f5a62388", borderRadius: 10, padding: "6px 8px", pointerEvents: "none", fontFamily: font } },
+            React.createElement("div", { style: { fontSize: 9.5, fontWeight: 900, color: "#f5c542", marginBottom: 3 } }, "\uD83C\uDFC6 \u0E04\u0E30\u0E41\u0E19\u0E19\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49 (\u0E14\u0E32\u0E40\u0E21\u0E08)"),
+            (ui.wbBoard || []).slice(0, 6).map((r, i) => (React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10, padding: "1px 0", color: r.me ? "#8ae0ff" : "#e8dcc8", fontWeight: r.me ? 900 : 700 } },
+                React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+                    ["🥇", "🥈", "🥉"][i] || "▫️",
+                    " ",
+                    r.n,
+                    r.me ? " (คุณ)" : ""),
+                React.createElement("span", { style: { color: "#9ae86a", fontWeight: 900 } }, Math.round(r.score).toLocaleString())))))),
+        ui.wbReady && (React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(15,8,12,0.82)", zIndex: 66, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font } },
+            React.createElement("div", { style: { width: "86%", maxWidth: 340, background: "linear-gradient(180deg,#2a1622,#3a1f2a)", borderRadius: 16, padding: 18, border: "2px solid #f5a623", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" } },
+                React.createElement("div", { style: { textAlign: "center", fontSize: 34 } }, "\u2694\uFE0F"),
+                React.createElement("div", { style: { textAlign: "center", fontSize: 16, fontWeight: 900, color: "#f5c542" } }, "\u0E40\u0E15\u0E23\u0E35\u0E22\u0E21\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E15\u0E35\u0E1A\u0E2D\u0E2A\u0E42\u0E25\u0E01!"),
+                React.createElement("div", { style: { textAlign: "center", fontSize: 11.5, color: "#e0c0c8", marginTop: 3 } }, "\u0E17\u0E38\u0E01\u0E04\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E01\u0E14 \u201C\u0E1E\u0E23\u0E49\u0E2D\u0E21\u201D \u0E20\u0E32\u0E22\u0E43\u0E19\u0E40\u0E27\u0E25\u0E32 \u2014 \u0E16\u0E49\u0E32\u0E44\u0E21\u0E48\u0E04\u0E23\u0E1A \u0E15\u0E49\u0E2D\u0E07\u0E40\u0E23\u0E34\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48"),
+                React.createElement("div", { style: { textAlign: "center", margin: "10px 0" } },
+                    React.createElement("span", { style: { fontSize: 30, fontWeight: 900, color: ui.wbReady.left <= 10 ? "#ff7a7a" : "#fff" } }, ui.wbReady.left),
+                    React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: "#f5d0a0" } }, " \u0E27\u0E34\u0E19\u0E32\u0E17\u0E35")),
+                React.createElement("div", { style: { background: "rgba(0,0,0,0.28)", borderRadius: 10, padding: "8px 10px", marginBottom: 10 } }, (ui.wbReady.members || []).map((m, i) => (React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0" } },
+                    React.createElement("span", { style: { color: "#e8dcc8", fontWeight: 700 } },
+                        m.n || "?",
+                        " ",
+                        React.createElement("span", { style: { color: "#a89888", fontSize: 10 } },
+                            "Lv.",
+                            m.lv || "?")),
+                    React.createElement("span", { style: { fontWeight: 900, color: m.ready ? "#8ae0a0" : "#c8a0a0" } }, m.ready ? "✅ พร้อม" : "… รอ"))))),
+                ui.wbReady.meReady ? (React.createElement("div", { style: { textAlign: "center", fontSize: 12.5, fontWeight: 900, color: "#8ae0a0", padding: "10px" } }, "\u2705 \u0E04\u0E38\u0E13\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E41\u0E25\u0E49\u0E27 \u2014 \u0E23\u0E2D\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19...")) : (React.createElement("button", { onClick: () => G.wbSetReady(), style: { width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ba05b)", boxShadow: "0 4px 14px rgba(90,160,106,0.5)" } }, "\u270B \u0E1E\u0E23\u0E49\u0E2D\u0E21!")),
+                React.createElement("button", { onClick: () => G.wbCancelReady(), style: { width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#e8d0c0", background: "rgba(255,255,255,0.12)" } }, "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01")))),
         ui.wbPanel && (() => {
             const st = ui.wbStat || { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, cleared: false, canEnter: true, lv: WORLD_BOSS.lv };
             const pct = Math.max(0, Math.round(st.hp / st.maxHp * 100));
@@ -32130,7 +32283,7 @@ function CherryAdventure() {
                     st.cleared ? (React.createElement("div", { style: { marginTop: 14, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#8af0a0", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "10px" } },
                         "\u2705 \u0E27\u0E31\u0E19\u0E19\u0E35\u0E49\u0E1B\u0E23\u0E32\u0E1A\u0E08\u0E2D\u0E21\u0E21\u0E32\u0E23\u0E41\u0E25\u0E49\u0E27!",
                         React.createElement("br", null),
-                        React.createElement("span", { style: { fontSize: 10.5, color: "#c0d0c0", fontWeight: 700 } }, "\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32\u0E43\u0E2B\u0E21\u0E48\u0E1E\u0E23\u0E38\u0E48\u0E07\u0E19\u0E35\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E1A\u0E2D\u0E2A\u0E15\u0E31\u0E27\u0E43\u0E2B\u0E21\u0E48"))) : (React.createElement("button", { onClick: () => G.startWorldBoss(), style: {
+                        React.createElement("span", { style: { fontSize: 10.5, color: "#c0d0c0", fontWeight: 700 } }, "\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32\u0E43\u0E2B\u0E21\u0E48\u0E1E\u0E23\u0E38\u0E48\u0E07\u0E19\u0E35\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E1A\u0E2D\u0E2A\u0E15\u0E31\u0E27\u0E43\u0E2B\u0E21\u0E48"))) : (React.createElement("button", { onClick: () => G.wbOpenReady(), style: {
                             marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer",
                             fontSize: 15, fontWeight: 900, fontFamily: font, color: "#fff",
                             background: "linear-gradient(90deg,#c0392b,#f5a623)", boxShadow: "0 4px 14px rgba(192,57,43,0.6)",
@@ -32148,6 +32301,16 @@ function CherryAdventure() {
             const win = r.reason === "win";
             const rw = r.reward || {};
             const itemName = (id) => { const it = LOOT.find((x) => x.id === id); return it ? `${it.emoji || ""} ${it.name}` : id; };
+            const board = ui.wbBoard || [];
+            const boardEl = board.length > 0 ? (React.createElement("div", { style: { marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 12 } },
+                React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#f5d0a0", marginBottom: 6 } }, "\uD83C\uDFC6 \u0E2A\u0E23\u0E38\u0E1B\u0E04\u0E30\u0E41\u0E19\u0E19 (\u0E14\u0E32\u0E40\u0E21\u0E08)"),
+                board.map((rr, i) => (React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12.5, padding: "2px 0", color: rr.me ? "#8ae0ff" : "#fff", fontWeight: rr.me ? 900 : 700 } },
+                    React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+                        ["🥇", "🥈", "🥉"][i] || "▫️",
+                        " ",
+                        rr.n,
+                        rr.me ? " (คุณ)" : ""),
+                    React.createElement("span", { style: { color: "#9ae86a", fontWeight: 900 } }, Math.round(rr.score).toLocaleString())))))) : null;
             return (React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(15,8,12,0.86)", zIndex: 65, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font } },
                 React.createElement("div", { style: { width: "88%", maxWidth: 360, background: win ? "linear-gradient(180deg,#2a2010,#3a2e14)" : "linear-gradient(180deg,#241820,#331f28)", borderRadius: 18, padding: 18, border: win ? "1.5px solid #f5c542" : "1.5px solid #a05060", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "90%", overflowY: "auto" } }, win ? (React.createElement(React.Fragment, null,
                     React.createElement("div", { style: { textAlign: "center", fontSize: 40 } }, "\uD83C\uDFC6"),
@@ -32171,6 +32334,7 @@ function CherryAdventure() {
                         r.legName ? (React.createElement("div", { style: { marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#f5c542", background: "rgba(245,197,66,0.14)", borderRadius: 10, padding: "8px", border: "1px solid #f5a623" } },
                             "\u2B50 \u0E02\u0E2D\u0E07\u0E15\u0E33\u0E19\u0E32\u0E19! ",
                             itemName(r.legend || ""))) : (React.createElement("div", { style: { marginTop: 8, textAlign: "center", fontSize: 10, color: "#a89888" } }, "\u2B50 \u0E02\u0E2D\u0E07\u0E15\u0E33\u0E19\u0E32\u0E19: \u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E23\u0E2D\u0E1A\u0E19\u0E35\u0E49 (\u0E42\u0E2D\u0E01\u0E32\u0E2A 20%)"))),
+                    boardEl,
                     React.createElement("button", { onClick: () => G.wbLeave(), style: { marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ba05b)" } }, "\u0E23\u0E31\u0E1A\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25 & \u0E2D\u0E2D\u0E01 \uD83C\uDF89"))) : (React.createElement(React.Fragment, null,
                     React.createElement("div", { style: { textAlign: "center", fontSize: 38 } }, r.reason === "dead" ? "💀" : r.reason === "flee" ? "🏃" : "⏱️"),
                     React.createElement("div", { style: { textAlign: "center", fontSize: 16, fontWeight: 900, color: "#f0a0b0" } }, r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : r.reason === "flee" ? "หนีออกจากการต่อสู้" : "หมดเวลารอบนี้!"),
@@ -32187,6 +32351,7 @@ function CherryAdventure() {
                             Math.round(r.hp).toLocaleString(),
                             " / ",
                             r.maxHp.toLocaleString())),
+                    boardEl,
                     React.createElement("button", { onClick: () => G.wbRetry(), style: { marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#f5a623)" } }, "\u2694\uFE0F \u0E2A\u0E39\u0E49\u0E2D\u0E35\u0E01\u0E23\u0E2D\u0E1A (\u0E40\u0E25\u0E37\u0E2D\u0E14\u0E1A\u0E2D\u0E2A\u0E04\u0E07\u0E40\u0E14\u0E34\u0E21)"),
                     React.createElement("button", { onClick: () => G.wbLeave(), style: { marginTop: 8, width: "100%", padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#e8d0c0", background: "rgba(255,255,255,0.12)" } }, "\u0E2D\u0E2D\u0E01\u0E01\u0E48\u0E2D\u0E19 (\u0E44\u0E27\u0E49\u0E21\u0E32\u0E15\u0E48\u0E2D)"))))));
         })(),
