@@ -12024,10 +12024,11 @@ export default function CherryAdventure() {
       }
       // 👹 boss aura weakens the challenger: −ATK & −crit while fighting it
       G.wbAtkDebuff = WORLD_BOSS.atkDebuff; G.wbCritDebuff = WORLD_BOSS.critDebuff;
+      G.battleSpeed = 1; // 👹 no x2/x3 speed-up against the world boss — 60s rounds are real-time
       G.wbRoundOn = true;
       G.wbTimeLeft = WORLD_BOSS.roundSec;
       G._wbLastSec = WORLD_BOSS.roundSec;
-      setUi((u) => ({ ...u, mode: "battle", wbActive: true, wbTime: WORLD_BOSS.roundSec, wbResult: null,
+      setUi((u) => ({ ...u, mode: "battle", wbActive: true, wbTime: WORLD_BOSS.roundSec, wbResult: null, battleSpeed: 1,
         enemy: { name: WORLD_BOSS.name, emoji: WORLD_BOSS.emoji, hp: G.enemy ? G.enemy.hp : wb.hp, maxHp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, boss: true, worldBoss: true, spId: WORLD_BOSS.spId },
         msg: `👹 ${WORLD_BOSS.name} Lv.${WORLD_BOSS.lv} — เลือด ${Math.round((G.enemy ? G.enemy.hp : wb.hp)).toLocaleString()} · เหลือเวลา 60 วิ!` }));
     };
@@ -12777,6 +12778,7 @@ export default function CherryAdventure() {
     // ⏩ battle speed: cycle 1x → 2x → 3x
     G.battleSpeed = 1;
     G.cycleSpeed = () => {
+      if (G.wbActive && G.enemy && G.enemy.worldBoss) { toast("👹 บอสโลกใช้เร่งความเร็วไม่ได้"); return; } // no x2/x3 vs the world boss
       G.battleSpeed = G.battleSpeed >= 3 ? 1 : G.battleSpeed + 1;
       setUi((u) => ({ ...u, battleSpeed: G.battleSpeed }));
       toast(`⏩ ความเร็วต่อสู้ ×${G.battleSpeed}`);
@@ -24247,7 +24249,8 @@ export default function CherryAdventure() {
             >
               🤖 AUTO {ui.auto ? "ON" : "OFF"}
             </button>
-            {/* ⏩ battle speed */}
+            {/* ⏩ battle speed — hidden during the world boss (no speed-up allowed) */}
+            {!ui.wbActive && (
             <button
               onClick={() => G.cycleSpeed()}
               style={{
@@ -24260,6 +24263,7 @@ export default function CherryAdventure() {
             >
               ⏩ ×{ui.battleSpeed || 1}
             </button>
+            )}
           </div>
         </>
       )}
