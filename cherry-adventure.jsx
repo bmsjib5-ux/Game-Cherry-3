@@ -744,6 +744,12 @@ const skillsOf = (cls, pathId) => {
   const p = pathOf(cls, pathId);
   return p && p.skill ? base.concat([p.skill]) : base;
 };
+// 🗺️⚔️ open-world classification: which skills sweep a GROUP vs strike a single target.
+// Ground-slam (quake) and poison-cloud (poison) effects blanket an area; a few signature
+// wide swings are AoE too. Everything else (incl. multi-hit combos) focuses one target.
+const AOE_FX = { quake: 1, poison: 1 };
+const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1 };
+const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
 // 🔒 SKILL UNLOCK CONDITIONS — every class gates skills 2..5 behind level, the previous
 // skill's rank, and an allocated base stat. Skill 1 is always free so you can always fight.
 // slot = index in CLASS_SKILLS[cls]; stat keys match G.baseStats (atk/hp/def/crit/luck/mp)
@@ -12470,6 +12476,172 @@ export default function CherryAdventure() {
       return { dmg: raw, note: "" };
     };
 
+    // ---------- 🗺️⚔️ OPEN-WORLD ACTION COMBAT (hybrid) — walk & hit normal monsters; bosses still enter the arena ----------
+    G.actionMode = true;
+    const WILD_AGGRO = 5.2, WILD_MELEE = 1.7;
+    const isArenaFoe = (m) => !!(m.userData.boss || m.userData.biomeBoss || m.userData.dungeon || m.userData.golden || m.userData.ghost || m.userData.horde);
+    const initWildHp = (m) => {
+      if (m.userData.whp != null) return;
+      const sp = SPECIES[m.userData.spId] || { hp: 40, atk: 8, tier: 1 };
+      const lv = m.userData.lv || 1;
+      const ng = 1 + (G.ngPlus || 0) * 0.4;
+      const scale = (1 + (lv - 1) * 0.9) * 1.4 * (m.userData.shiny ? 1.3 : 1);
+      m.userData.wmaxhp = Math.max(12, Math.round(sp.hp * scale * ng * 0.55)); // 0.55 → snappy open-world fights
+      m.userData.whp = m.userData.wmaxhp;
+      m.userData.watk = Math.round(sp.atk * (1 + (lv - 1) * 0.18) * ng * (m.userData.shiny ? 1.2 : 1));
+      m.userData.wcd = 0.5 + Math.random();
+    };
+    const wildBar = (m) => {
+      if (!m.userData.hpbar) {
+        const g = new THREE.Group();
+        const bg = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.14), new THREE.MeshBasicMaterial({ color: 0x1a0e14, transparent: true, opacity: 0.72, depthTest: false }));
+        const fill = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.12), new THREE.MeshBasicMaterial({ color: 0x6ae06a, transparent: true, depthTest: false }));
+        bg.renderOrder = 991; fill.renderOrder = 992; fill.position.z = 0.001;
+        g.add(bg, fill); g.userData = { fill };
+        m.add(g); m.userData.hpbar = g;
+      }
+      return m.userData.hpbar;
+    };
+    const updateWildBar = (m) => {
+      const g = m.userData.hpbar; if (!g) return;
+      const hurt = m.userData.whp != null && m.userData.whp < m.userData.wmaxhp && m.userData.whp > 0;
+      g.visible = hurt; if (!hurt) return;
+      const pc = Math.max(0, m.userData.whp / m.userData.wmaxhp);
+      g.userData.fill.scale.x = pc; g.userData.fill.position.x = -(1 - pc) * 0.5;
+      g.userData.fill.material.color.setHex(pc > 0.4 ? 0x6ae06a : 0xe05555);
+      g.position.set(0, (FLOATY[m.userData.spId] ? 1.7 : 1.35), 0);
+      g.quaternion.copy(camera.quaternion);
+      g.scale.setScalar(1 / (m.scale.x || 1)); // keep bar size constant regardless of monster size
+    };
+    G._updateWildBar = updateWildBar;
+    G._wilds = wilds; // 🔧 debug/test hook: read-only reference to the live wild list
+    const killWild = (m) => {
+      const sp = SPECIES[m.userData.spId] || { tier: 1, name: "มอนสเตอร์" };
+      const lv = m.userData.lv || 1; const shiny = m.userData.shiny;
+      burst(m.position, 0xf5d05a, 1.0);
+      if (G.sfx) G.sfx.win && G.sfx.win();
+      G.player.balls = (G.player.balls || 0) + 1;
+      questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
+      G.combo = (G.combo || 0) + 1;
+      const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
+      const ngRew = 1 + (G.ngPlus || 0) * 0.5;
+      let goldGain = Math.round((8 + lv * 2) * comboMult * ngRew * (1 + effLuck() * 0.02));
+      { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); }
+      if (tB("gold")) goldGain = Math.round(goldGain * (1 + tB("gold") / 100));
+      if (shiny) goldGain += 100;
+      G.gold += goldGain;
+      const expRelMul = Math.max(0.35, Math.min(1.6, 1 + (lv - G.player.level) * 0.06));
+      gainExp(Math.round((15 + (sp.tier || 1) * 8 + lv * 6) * expRelMul * comboMult * ngRew));
+      if (G.buddy) petGain(G.buddy, 15);
+      dropLoot(shiny);
+      G.mats = G.mats || {}; G.mats.ironOre = (G.mats.ironOre || 0) + 1 + Math.floor(Math.random() * 2);
+      G.stardust = (G.stardust || 0) + 1 + Math.floor(Math.random() * 2);
+      if (G.gainMastery) G.gainMastery(Math.round(6 + lv * 2));
+      checkAchievements();
+      setUi((u) => ({ ...u, combo: G.combo, gold: G.gold, stardust: G.stardust }));
+      if (m.userData.lbl) m.userData.lbl.sprite.visible = false;
+      if (m.userData.hpbar) { m.remove(m.userData.hpbar); m.userData.hpbar = null; }
+      scene.remove(m);
+      const idx = wilds.indexOf(m); if (idx >= 0) wilds.splice(idx, 1);
+      if (G.huntTarget === m) G.huntTarget = null;
+      syncPlayer();
+    };
+    const hurtWild = (m, dmg, opts) => {
+      opts = opts || {};
+      initWildHp(m);
+      dmg = Math.max(1, Math.round(dmg));
+      m.userData.whp -= dmg;
+      popDamage(m.position, dmg, opts.crit ? "crit" : "hit");
+      if (opts.color != null) burst(m.position, opts.color, 0.5);
+      monGlow(m, 0xffffff, 0.5);
+      m.userData.aggro = true;
+      wildBar(m); updateWildBar(m);
+      if (m.userData.whp <= 0) killWild(m);
+      return m.userData.whp <= 0;
+    };
+    const nearestWild = (range) => {
+      let best = null, bd = range * range;
+      for (const m of wilds) {
+        if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+        const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 < bd) { bd = d2; best = m; }
+      }
+      return best;
+    };
+    const wildsInRadius = (cx, cz, radius) => {
+      const out = [];
+      for (const m of wilds) { if (m.userData.shy > 0 || isArenaFoe(m)) continue; const dx = m.position.x - cx, dz = m.position.z - cz; if (dx * dx + dz * dz < radius * radius) out.push(m); }
+      return out;
+    };
+    const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 7.5 : 2.6;
+    const worldSwing = () => { G._worldSwingT = 0.25; };
+    G.worldAttack = () => {
+      if (G.mode !== "explore" || G.banim) return;
+      const m = nearestWild(worldRange());
+      if (!m) return;
+      char.rotation.y = Math.atan2(m.position.x - char.position.x, m.position.z - char.position.z);
+      worldSwing();
+      const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
+      const dmg = (effAtk() + Math.random() * 4) * (crit ? 2 : 1);
+      if (worldRange() > 4) spawnSkillFx(G.cls === "mage" ? "orb" : "bolt", m.position, G.cls === "mage" ? 0x8a5cff : 0xf5d24a);
+      hurtWild(m, dmg, { crit, color: 0xffe08a });
+      if (G.sfx) G.sfx.hit && G.sfx.hit();
+    };
+    G.worldSkill = (id) => {
+      if (G.mode !== "explore" || G.banim) return;
+      const list = skillsOf(G.cls, G.pathId) || [];
+      const sk = list.find((s) => s.id === id); if (!sk) return;
+      const rank = (G.skillRanks && G.skillRanks[id]) || 1;
+      const cost = sk.cost || 0;
+      if ((G.player.mp || 0) < cost) { toast("💧 มานาไม่พอ!"); return; }
+      const aoe = isAoeSkill(sk);
+      const focus = nearestWild(worldRange() + (aoe ? 3 : 2));
+      if (!focus) return;
+      G.player.mp -= cost;
+      char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
+      worldSwing();
+      const base = (effAtk() + Math.random() * 4) * (sk.mult || 1) * (1 + ((rank - 1) * (sk.perLv || 0)));
+      const col = sk.color || 0xffd24a;
+      const applyTo = (m) => {
+        const crit = !!sk.guaranteedCrit || Math.random() < (0.08 + effCrit() / 100 + (sk.critBonus || 0));
+        let d = base;
+        if (sk.hits && sk.hits > 1 && !aoe) d = base * sk.hits; // multi-hit on one target
+        d *= (crit ? 2 : 1);
+        hurtWild(m, d, { crit, color: col });
+        spawnSkillFx(sk.fx === "quake" ? "quake" : sk.fx === "bolt" ? "bolt" : "orb", m.position, col);
+      };
+      if (aoe) {
+        const targets = wildsInRadius(focus.position.x, focus.position.z, 3.2);
+        (targets.length ? targets : [focus]).forEach(applyTo);
+        G._camShake = Math.max(G._camShake || 0, 0.25);
+        toast(`${sk.emoji || "✨"} ${sk.name} — โจมตีหมู่ ${targets.length || 1} ตัว!`);
+      } else applyTo(focus);
+      if (G.sfx) G.sfx.skill && G.sfx.skill();
+      syncPlayer();
+    };
+    // player fell in the open world
+    G.worldFaint = () => {
+      if (G.sfx) G.sfx.lose && G.sfx.lose();
+      G.combo = 0;
+      wilds.forEach((w) => { w.userData.aggro = false; });
+      const pen = Math.round(expForLevel(G.player.level) * 0.2);
+      if (pen > 0 && G.player.exp > 0) { G.player.exp = Math.max(0, G.player.exp - pen); toast(`💀 พ่ายแพ้! เสีย EXP -${pen}`); }
+      G.mode = "fainted";
+      if (setMouth) setMouth("sad");
+      setUi((u) => ({ ...u, mode: "fainted", combo: 0, msg: "" }));
+      setTimeout(() => {
+        if (G.mode !== "fainted") return;
+        G.player.hp = effMaxHp();
+        char.position.set(0, 0, 0);
+        if (G.restoreScenery) G.restoreScenery();
+        G.mode = "explore";
+        if (setMouth) setMouth("smile");
+        syncPlayer();
+        setUi((u) => ({ ...u, mode: "explore" }));
+      }, 2000);
+    };
+
     const winBattle = () => {
       if (!G.enemy) return;
       if (G.enemy.worldBoss) { G.wbVictory(); return; } // 👹 world boss → special reward flow
@@ -14659,8 +14831,39 @@ export default function CherryAdventure() {
         if (m.userData.shy > 0) m.userData.shy -= dt;
         if (m.userData.shinyRing) { m.userData.shinyRing.rotation.z = t * 2; m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4; }
         drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
+        if (G.actionMode) updateWildBar(m); // ⚔️ open-world HP bar
+        // ⚔️ open-world action: normal monsters aggro → chase → hit the player
+        let aggroHandled = false;
+        if (G.actionMode && G.mode === "explore" && !isArenaFoe(m) && !m.userData.golden) {
+          initWildHp(m);
+          const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
+          const pdist = Math.hypot(pdx, pdz) || 0.001;
+          if (m.userData.aggro || pdist < WILD_AGGRO) {
+            m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
+            aggroHandled = true;
+            if (pdist > WILD_MELEE) {
+              m.position.x += (pdx / pdist) * 1.9 * dt;
+              m.position.z += (pdz / pdist) * 1.9 * dt;
+              pushOut(m, 0.6);
+              m.rotation.y = Math.atan2(pdx, pdz);
+            } else {
+              m.rotation.y = Math.atan2(pdx, pdz);
+              m.userData.wcd = (m.userData.wcd || 0) - dt;
+              if (m.userData.wcd <= 0) {
+                m.userData.wcd = 1.3;
+                const raw = Math.max(1, Math.round((m.userData.watk || 8) - effDef() * 0.4));
+                G.player.hp = Math.max(0, G.player.hp - raw);
+                popDamage(char.position, raw, "hit"); burst(char.position, 0xff5a5a, 0.5);
+                if (G.sfx) G.sfx.hit && G.sfx.hit();
+                syncPlayer();
+                if (G.player.hp <= 0) G.worldFaint();
+              }
+            }
+          }
+        }
         let dx, dz;
-        if (m.userData.golden && G.mode === "explore") {
+        if (aggroHandled) { dx = 0; dz = 0; }
+        else if (m.userData.golden && G.mode === "explore") {
           // 🌟 golden monster runs away from Cherry!
           const fx2 = m.position.x - char.position.x, fz2 = m.position.z - char.position.z;
           const fd = Math.max(0.001, Math.hypot(fx2, fz2));
@@ -15192,11 +15395,11 @@ export default function CherryAdventure() {
           buddyMesh.userData.body.position.y = (FLOATY[buddyMesh.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 5)) * 0.07;
         }
 
-        // encounter check
+        // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
           const dd = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
-          if (dd < 0.95) { startBattle(m); break; }
+          if (dd < 0.95 && (!G.actionMode || isArenaFoe(m))) { startBattle(m); break; }
         }
       } else if (G.mode === "battle" && G.enemy) {
         // 🤖 auto battle: decide after a short beat whenever it's our turn
@@ -22167,6 +22370,40 @@ export default function CherryAdventure() {
               fontSize: 20, pointerEvents: "none",
             }}>🍒</div>
           </div>
+
+          {/* ⚔️ open-world action bar — attack + class skills (walk up & hit normal monsters; bosses still enter the arena) */}
+          {G.actionMode && !ui.equipScreen && (() => {
+            const list = skillsOf(ui.cls, ui.pathId) || [];
+            const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
+            return (
+              <div style={{ position: "absolute", right: 14, ...(_shortHud ? { bottom: 6 } : { bottom: 92 }), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 24, pointerEvents: "auto" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 168 }}>
+                  {skills.map((sk) => {
+                    const cost = sk.cost || 0;
+                    const afford = (ui.mp || 0) >= cost;
+                    const aoe = isAoeSkill(sk);
+                    return (
+                      <button key={sk.id} onClick={() => G.worldSkill(sk.id)} title={`${sk.name} · 💧${cost}`} style={{
+                        width: 48, height: 48, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
+                        cursor: afford ? "pointer" : "not-allowed", position: "relative",
+                        background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: afford ? 1 : 0.45,
+                        boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: 21, color: "#fff", fontFamily: font,
+                      }}>
+                        {sk.emoji || "✨"}
+                        <span style={{ position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>{cost}</span>
+                        {aoe && <span style={{ position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>หมู่</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button onClick={() => G.worldAttack()} title="โจมตี" style={{
+                  width: 72, height: 72, borderRadius: "50%", border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer",
+                  background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: 32,
+                  boxShadow: "0 5px 16px rgba(217,54,74,0.55)", fontFamily: font,
+                }}>⚔️</button>
+              </div>
+            );
+          })()}
 
           {/* zoom */}
           <div style={{ position: "absolute", left: 14, ...(_shortHud ? { top: 48 } : { top: "32%" }), display: "flex", flexDirection: "column", gap: 8 }}>
