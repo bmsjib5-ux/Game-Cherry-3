@@ -24867,7 +24867,7 @@ export default function CherryAdventure() {
 
       {/* 🏆 World Boss — live party scoreboard (damage contribution) */}
       {ui.wbActive && ui.mode === "battle" && (ui.wbBoard || []).length > 0 && (
-        <div style={{ position: "absolute", top: 132, left: 8, minWidth: 128, maxWidth: 176, background: "rgba(20,12,18,0.8)", border: "1px solid #f5a62388", borderRadius: 10, padding: "6px 8px", pointerEvents: "none", fontFamily: font }}>
+        <div style={{ position: "absolute", top: 44, right: 8, minWidth: 128, maxWidth: 176, background: "rgba(20,12,18,0.8)", border: "1px solid #f5a62388", borderRadius: 10, padding: "6px 8px", pointerEvents: "none", fontFamily: font, zIndex: 28 }}>
           <div style={{ fontSize: 9.5, fontWeight: 900, color: "#f5c542", marginBottom: 3 }}>🏆 คะแนนปาร์ตี้ (ดาเมจ)</div>
           {(ui.wbBoard || []).slice(0, 6).map((r, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10, padding: "1px 0", color: r.me ? "#8ae0ff" : "#e8dcc8", fontWeight: r.me ? 900 : 700 }}>
