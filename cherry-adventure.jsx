@@ -243,7 +243,8 @@ const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
 
 // ---------- 👹 WORLD BOSS — daily raid boss (party up online, shared HP, 60s rounds) ----------
-const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 1000000, roundSec: 60 };
+const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 60,
+  block: 0.10, dodge: 0.05, atkDebuff: 0.10, critDebuff: 10 }; // 🛡️ block 10% · 💨 dodge 5% · ลด ATK 10% · ลดคริ 10%
 
 // ---------- Elemental skills (unlock by level) ----------
 const ELEMENTS = {
@@ -10734,14 +10735,14 @@ export default function CherryAdventure() {
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100));
+    const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK
     const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100));
     const effMaxHp = () => Math.round(3 * (G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + ⚔️ mastery + 👘 set
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + equipBonus().spd / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
-    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit"); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set
+    const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") - (G.wbCritDebuff || 0); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set · 👹 −world-boss aura
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + ⚔️ mastery + 👘 set
     const weaponElem = () => {
       const wid = G.equip.weapon;
@@ -11983,7 +11984,8 @@ export default function CherryAdventure() {
     // ---------- 👹 WORLD BOSS — daily raid (party online, shared HP, 60s timed rounds) ----------
     G.wbEnsureDaily = () => {
       const today = todayStamp();
-      if (!G.worldBoss || G.worldBoss.day !== today) {
+      // reset on a new day OR when the boss definition changes (e.g. new max HP) → "รีบอส เริ่มใหม่"
+      if (!G.worldBoss || G.worldBoss.day !== today || G.worldBoss.maxHp !== WORLD_BOSS.maxHp) {
         G.worldBoss = { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, day: today, cleared: false };
       }
       return G.worldBoss;
@@ -12018,8 +12020,10 @@ export default function CherryAdventure() {
         G.enemy.name = WORLD_BOSS.name;
         // survivable but threatening: fixed high atk instead of the runaway lv99 scaling
         G.enemy.atk = Math.round(40 + G.player.level * 2.2);
-        G.enemy.evaChance = 0.05; G.enemy.blockChance = 0.1; G.enemy.guardChance = 0.16; // don't stonewall the DPS check
+        G.enemy.evaChance = WORLD_BOSS.dodge; G.enemy.blockChance = WORLD_BOSS.block; G.enemy.guardChance = 0; // 💨 dodge 5% · 🛡️ block 10%
       }
+      // 👹 boss aura weakens the challenger: −ATK & −crit while fighting it
+      G.wbAtkDebuff = WORLD_BOSS.atkDebuff; G.wbCritDebuff = WORLD_BOSS.critDebuff;
       G.wbRoundOn = true;
       G.wbTimeLeft = WORLD_BOSS.roundSec;
       G._wbLastSec = WORLD_BOSS.roundSec;
@@ -12047,6 +12051,7 @@ export default function CherryAdventure() {
     G.wbEndRound = (reason) => { // reason: "timeout" | "dead"
       if (G.wbRaid && G._wbFlushDamage) { try { G._wbFlushDamage(); } catch (e) {} } // 🤝 push our last damage to the shared pool
       wbSaveHp();
+      G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura between rounds
       G.wbRoundOn = false;
       const wb = G.wbEnsureDaily();
       if (G.enemy) { const mm = G.enemy.mesh; if (mm) { scene.remove(mm); const i = wilds.indexOf(mm); if (i >= 0) wilds.splice(i, 1); } G.enemy = null; }
@@ -12068,6 +12073,7 @@ export default function CherryAdventure() {
     };
     G.wbLeave = () => {
       G.wbActive = false; G.wbRoundOn = false;
+      G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura
       if (G.enemy && G.enemy.worldBoss) { const mm = G.enemy.mesh; if (mm) scene.remove(mm); G.enemy = null; G.banim = null; if (G.restoreScenery) G.restoreScenery(); G.mode = "explore"; }
       setUi((u) => ({ ...u, wbActive: false, wbResult: null, wbPanel: false, mode: "explore", enemy: null }));
       saveGame();
@@ -12094,6 +12100,7 @@ export default function CherryAdventure() {
       const wb = G.wbEnsureDaily();
       wb.hp = 0; wb.cleared = true;
       G.wbRoundOn = false;
+      G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura
       if (G.enemy) { const mm = G.enemy.mesh; if (mm) { burst(mm.position, 0xf5d05a, 2.4); scene.remove(mm); } G.enemy = null; }
       G.banim = null;
       if (G.restoreScenery) G.restoreScenery();
@@ -24301,6 +24308,7 @@ export default function CherryAdventure() {
                 ⏱️ ต่อสู้รอบละ <b>60 วินาที</b><br />
                 💀 ตายหรือหมดเวลา → <b>สู้ต่อรอบใหม่ได้</b> เลือดบอส<b>ไม่รีเซ็ต</b> (คงเลือดล่าสุด)<br />
                 📅 <b>จำกัดวันละครั้ง</b> — รีเซ็ตเลือดใหม่ทุกวัน<br />
+                🛡️ บอสแกร่ง: บล็อก 10% · หลบ 5% · ลดพลังโจมตีเรา 10% · ลดคริเรา 10%<br />
                 🤝 ชวนเพื่อนออนไลน์มาช่วยตี แชร์เลือดบอสก้อนเดียวกัน
               </div>
               {/* reward preview */}
