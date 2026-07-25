@@ -273,6 +273,11 @@ create policy "boss read"   on public.boss_raids for select using (true);
 create policy "boss insert" on public.boss_raids for insert with check (true);
 create policy "boss update" on public.boss_raids for update using (true) with check (true);
 
+-- drop ก่อน create — จำเป็นเมื่อเปลี่ยน return type ของฟังก์ชัน (เช่น boss_hit เพิ่มคอลัมน์ scores)
+drop function if exists public.boss_hit(bigint, bigint, text);
+drop function if exists public.boss_ready(bigint, text);
+drop function if exists public.boss_join(bigint, jsonb);
+
 -- 🤝 เข้าร่วมปาร์ตี้ (เพิ่ม member แบบไม่ซ้ำ pid)
 create or replace function public.boss_join(p_id bigint, p_member jsonb)
 returns setof public.boss_raids
