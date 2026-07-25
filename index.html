@@ -20975,6 +20975,170 @@ function CherryAdventure() {
                                         A.chDragon = null;
                                     }
                                 }
+                                else if (skId && (skId.indexOf("x_drg") === 0 || skId.indexOf("x_grd") === 0 || skId.indexOf("x_frz") === 0)) {
+                                    // 🔱 LANCER ADVANCED — ท่าเฉพาะแต่ละสกิล (ดราก้อนไนท์/ผู้พิทักษ์ปฐพี/อัศวินน้ำแข็งดำ)
+                                    const bx = battleCenter.x - 1.3, ex = battleCenter.x + (G.enemyX || 1.3), EPl = em.position;
+                                    const fire = 0xff7020, flame = 0xffd24a, ember = 0xe0503a, ice = 0x66ccff, iceD = 0x4a6ad0, frost = 0xeaf8ff, voidP = 0x5b4bff, earthC = 0xc09a5a, rock = 0x8a6a44;
+                                    // ── DRAGON KNIGHT ──
+                                    if (skId === "x_drg_1") { // 🐉 ทะยานเสียดฟ้า — พุ่งขึ้นฟ้า → ดิ่งแทงจากเบื้องบน
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            char.position.set(bx, Math.sin(cp * Math.PI / 2) * 1.7, battleCenter.z);
+                                            armR.rotation.x = -1.2 * cp;
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            char.position.set(bx + cp * (ex - bx), Math.max(0, 1.7 - cp * 1.7), battleCenter.z);
+                                            armR.rotation.x = -1.2 + cp * 2.3;
+                                            char.rotation.z = -0.2;
+                                            if (cp > 0.4 && !A._lHit) {
+                                                A._lHit = true;
+                                                spawnSkillFx("pierce", EPl, 0xe0803a);
+                                                G._camShake = 0.4;
+                                            }
+                                            if (Math.random() < 0.6)
+                                                burst(new THREE.Vector3(char.position.x, 1.4 + char.position.y, battleCenter.z), Math.random() < 0.5 ? fire : flame, 0.35);
+                                        }
+                                    }
+                                    else if (skId === "x_drg_2") { // 🔥 เพลิงมังกร — จ้วงหอก พ่นลมหายใจมังกรเพลิงพุ่งใส่
+                                        char.position.x = bx + Math.sin(p * Math.PI) * 0.9;
+                                        armR.rotation.x = -0.5 + Math.sin(p * Math.PI) * 1.6;
+                                        if (p > 0.35 && Math.random() < 0.9) {
+                                            const fx2 = bx + (p - 0.35) / 0.65 * (EPl.x - bx);
+                                            burst(new THREE.Vector3(fx2 + (Math.random() - 0.5) * 0.9, 1.2 + Math.random() * 0.8, battleCenter.z), Math.random() < 0.5 ? fire : ember, 0.4);
+                                        }
+                                    }
+                                    else if (skId === "x_drg_3") { // 🔱 หอกร้อยเงา — แทงรัวเงาหอกร้อยเล่ม
+                                        char.position.x = bx + Math.min(1, p * 1.5) * 0.9;
+                                        armR.rotation.x = -0.5 + Math.sin(p * Math.PI * 6) * 1.4;
+                                        if (p > 0.2 && Math.random() < 0.8)
+                                            burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 1.4, 0.6 + Math.random() * 1.4, EPl.z), Math.random() < 0.5 ? 0x8fd0ff : 0xbfe4ff, 0.35);
+                                    }
+                                    else if (skId === "x_drg_4") { // ☄️ ดิ่งพสุธาสะท้าน — ทะยานสูงมาก → ดิ่งอุกกาบาตแทงพื้น
+                                        if (p < 0.45) {
+                                            const cp = p / 0.45;
+                                            char.position.set(bx, Math.sin(cp * Math.PI / 2) * 2.3, battleCenter.z);
+                                            armR.rotation.x = -1.5 * cp;
+                                        }
+                                        else {
+                                            const cp = (p - 0.45) / 0.55;
+                                            char.position.set(bx + cp * 0.8, Math.max(0, 2.3 - cp * 2.3), battleCenter.z);
+                                            armR.rotation.x = -1.5 + cp * 3.0;
+                                            if (cp > 0.5 && !A._lHit) {
+                                                A._lHit = true;
+                                                spawnSkillFx("quake", EPl, 0xff5a2a);
+                                                G._camShake = 0.7;
+                                            }
+                                            if (cp > 0.5 && Math.random() < 0.85)
+                                                burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 3, 0.1 + Math.random() * 1.6, EPl.z + (Math.random() - 0.5) * 2.4), Math.random() < 0.5 ? fire : flame, 0.5 + Math.random());
+                                        }
+                                    }
+                                    // ── EARTH GUARDIAN ──
+                                    else if (skId === "x_grd_1") { // 🪨 ทุบศิลา — ยกหอกทุบกระแทกพื้น เสาหินผุด
+                                        armR.rotation.x = p < 0.4 ? -0.8 * (p / 0.4) : -0.8 + Math.min(1, (p - 0.4) / 0.2) * 1.9;
+                                        char.position.y = p > 0.4 ? -0.1 * Math.sin(Math.min(1, (p - 0.4) / 0.2) * Math.PI) : 0;
+                                        if (p > 0.5 && Math.random() < 0.85)
+                                            burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 2, 0.1 + Math.random() * 1.8, EPl.z + (Math.random() - 0.5) * 1.6), Math.random() < 0.5 ? earthC : rock, 0.45);
+                                        if (p > 0.5 && p < 0.65)
+                                            G._camShake = Math.max(G._camShake || 0, 0.4);
+                                    }
+                                    else if (skId === "x_grd_2") { // ⛰️ เกราะภูผา — ชูหอกขึ้น เกราะหินหมุนรอบตัว
+                                        armR.rotation.x = -Math.min(1, p * 2) * 2.0;
+                                        if (Math.random() < 0.8) {
+                                            const a = t * 3 + Math.random() * 6.28, r = 0.7;
+                                            burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.4 + ((t + Math.random()) % 1) * 1.6, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? earthC : rock, 0.35);
+                                        }
+                                    }
+                                    else if (skId === "x_grd_3") { // 🌍 หอกแผ่นดินไหว — แทงหอกลงพื้น แรงสั่นแผ่วง
+                                        char.position.x = bx;
+                                        armR.rotation.x = p < 0.4 ? -0.5 - (p / 0.4) * 0.3 : -0.8 + Math.min(1, (p - 0.4) / 0.15) * 1.4;
+                                        char.rotation.z = p > 0.4 ? 0.12 * Math.sin(Math.min(1, (p - 0.4) / 0.15) * Math.PI) : 0;
+                                        if (p > 0.5 && Math.random() < 0.85)
+                                            burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 3.2, 0.05 + Math.random() * 1.2, EPl.z + (Math.random() - 0.5) * 2.8), Math.random() < 0.5 ? 0xa08050 : earthC, 0.45);
+                                        if (p > 0.5 && p < 0.72)
+                                            G._camShake = Math.max(G._camShake || 0, 0.45);
+                                    }
+                                    else if (skId === "x_grd_4") { // 🗿 พิพากษาปฐพี — ชูสองแขนอัญเชิญโกเลม ทุบสนาม
+                                        armR.rotation.x = -1.8;
+                                        armL.rotation.x = -1.6;
+                                        if (p > 0.4 && Math.random() < 0.85) {
+                                            const a = Math.random() * Math.PI * 2, r = 0.5 + Math.random() * 1.6;
+                                            burst(new THREE.Vector3(EPl.x + Math.cos(a) * r, 0.1 + Math.random() * 2.4, EPl.z + Math.sin(a) * r), [rock, earthC, 0x6a5a3a][Math.floor(Math.random() * 3)], 0.5);
+                                        }
+                                        if (p > 0.55 && p < 0.7)
+                                            G._camShake = Math.max(G._camShake || 0, 0.5);
+                                    }
+                                    // ── BLACK ICE KNIGHT ──
+                                    else if (skId === "x_frz_1") { // 🧊 ทะลวงเยือกแข็ง — พุ่งทะลวงทิ้งรอยน้ำแข็ง
+                                        if (p < 0.35) {
+                                            const cp = p / 0.35;
+                                            armR.rotation.x = -0.5 - cp * 0.5;
+                                            char.position.x = bx - cp * 0.15;
+                                        }
+                                        else {
+                                            const dp = (p - 0.35) / 0.65, e = 1 - Math.pow(1 - dp, 4);
+                                            char.position.set(bx + e * (ex - bx), 0, battleCenter.z);
+                                            armR.rotation.x = -1.0 + e * 1.8;
+                                            if (e > 0.5 && !A._lHit) {
+                                                A._lHit = true;
+                                                spawnSkillFx("pierce", EPl, ice);
+                                                G._camShake = 0.35;
+                                            }
+                                            for (let k = 0; k < 3; k++)
+                                                burst(new THREE.Vector3(char.position.x - 0.3 - k * 0.4, 1.4, battleCenter.z), k ? iceD : ice, 0.3);
+                                        }
+                                    }
+                                    else if (skId === "x_frz_2") { // 🌀 วังวนน้ำแข็งดำ — หมุนหอกเป็นวังวน ดูดศัตรูเข้ากลาง
+                                        char.rotation.y = Math.PI / 2 + p * Math.PI * 6;
+                                        armR.rotation.z = 1.3;
+                                        armR.rotation.y = p * Math.PI * 6;
+                                        if (em.userData.body) {
+                                            const pullX = char.position.x + 1.5;
+                                            em.position.x += (pullX - em.position.x) * 0.035;
+                                        }
+                                        if (Math.random() < 0.85) {
+                                            const a = t * 8 + Math.random() * 6.28, r = 0.9 + Math.random() * 1.2;
+                                            burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.3 + Math.random() * 1.8, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? ice : 0x88eeff, 0.4);
+                                        }
+                                    }
+                                    else if (skId === "x_frz_3") { // 🐉 มังกรน้ำแข็งโวยด์ — ง้างแล้วขว้างหอกกลายเป็นมังกรน้ำแข็ง
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -1.2 * cp;
+                                            char.rotation.z = -0.15 * cp;
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            armR.rotation.x = -1.2 + cp * 2.6;
+                                            char.rotation.z = -0.15 + cp * 0.3;
+                                            if (cp > 0.2 && !A._lHit) {
+                                                A._lHit = true;
+                                                spawnSkillFx("bolt", EPl, voidP);
+                                                G._camShake = 0.4;
+                                            }
+                                            if (cp > 0.2 && Math.random() < 0.8) {
+                                                const fx3 = char.position.x + cp * (EPl.x - char.position.x);
+                                                burst(new THREE.Vector3(fx3, 1.4, battleCenter.z), Math.random() < 0.5 ? ice : voidP, 0.4);
+                                            }
+                                        }
+                                    }
+                                    else if (skId === "x_frz_4") { // ❄️ เหวนรกเยือกแข็ง — กระโดด → ฝนหอกน้ำแข็งยักษ์ถล่มฟ้า
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            char.position.set(bx, Math.sin(cp * Math.PI / 2) * 1.4, battleCenter.z);
+                                            armR.rotation.x = -1.6 * cp;
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            char.position.set(bx, Math.max(0, 1.4 - cp * 1.4), battleCenter.z);
+                                            armR.rotation.x = -1.6 + cp * 1.0;
+                                            if (Math.random() < 0.9)
+                                                burst(new THREE.Vector3(EPl.x + (Math.random() - 0.5) * 2.8, 4 - ((cp * 3) % 1) * 4 + Math.random(), EPl.z + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? ice : frost, 0.45);
+                                            if (cp > 0.5)
+                                                G._camShake = Math.max(G._camShake || 0, 0.4);
+                                        }
+                                    }
+                                }
                                 else {
                                     // 🔱💨 PIERCING THRUST — crouch, gather blue wind at the tip, dash STRAIGHT THROUGH
                                     const windBlue = 0x4a90c0, bright = 0xbfe4ff;
