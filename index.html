@@ -15489,7 +15489,7 @@ function CherryAdventure() {
             mp: { name: "มานา", emoji: "💧", per: "+5 มานาสูงสุด" },
         };
         G.STAT_INFO = STAT_INFO;
-        const STAT_MAX = 50;
+        const STAT_MAX = 9999; // 💪 no practical cap — อัพได้เรื่อยๆ จนกว่าแต้มจะหมด
         // ⚖️ scaling cost: 1 pt (rank 0-9), 2 (10-19), 3 (20-29), 4 (30+) — deep investment costs more
         const statCost = (rank) => 1 + Math.floor(rank / 10);
         G.statCost = statCost;
@@ -30916,7 +30916,7 @@ function CherryAdventure() {
                     Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
                         const rank = (ui.baseStats || {})[k] || 0;
                         const cost = 1 + Math.floor(rank / 10);
-                        const can = (ui.statPts || 0) >= cost && rank < 50;
+                        const can = (ui.statPts || 0) >= cost; // 💪 อัพได้เรื่อยๆ จนกว่าแต้มจะหมด (ไม่มีเพดาน)
                         return (React.createElement("div", { key: k, style: { display: "flex", alignItems: "center", gap: 5, marginBottom: 3 } },
                             React.createElement("span", { style: { fontSize: 12, width: 18 } }, inf.emoji),
                             React.createElement("div", { style: { flex: 1 } },
