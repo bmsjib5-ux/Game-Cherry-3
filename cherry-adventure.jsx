@@ -817,6 +817,12 @@ function pvpTier(score) {
   for (const tier of PVP_TIERS) if (score >= tier.min) t = tier;
   return t;
 }
+// ⚔️ total combat power (พลังการต่อสู้รวม) — one number summarizing a fighter's stats
+// (hp here is the inflated effMaxHp, so it's weighted lightly; atk/def/crit weighted up)
+function powerOf(r) {
+  if (!r) return 0;
+  return Math.round((r.atk || 0) * 4 + (r.def || 0) * 3 + (r.hp || 0) * 0.05 + (r.crit || 0) * 8);
+}
 
 // 🔨 advanced craft recipes — forge a powerful dragon-tier weapon from materials (per class)
 // 🐉 dragon ARMOUR recipes — priced per slot (body armour costs the most, boots the least)
@@ -10744,6 +10750,37 @@ export default function CherryAdventure() {
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") - (G.wbCritDebuff || 0); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set · 👹 −world-boss aura
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + ⚔️ mastery + 👘 set
+    // 👤 full character profile for the Profile menu
+    G.profileInfo = () => {
+      const C = CLASSES[G.cls] || {}; const P = curPath(); const T = curTitle();
+      const lv = G.player.level; const tier = pvpTier(G.pvpRank || 1000); const a = G.achStats || {};
+      return {
+        name: G.playerName || "เชอร์รี่",
+        className: C.name || "-", classEmoji: C.emoji || "",
+        path: P ? P.name : null, pathEmoji: P ? P.emoji : null,
+        title: T ? T.name : null, titleEmoji: T ? T.emoji : null,
+        level: lv, exp: Math.round(G.player.exp || 0), expNeed: expForLevel(lv),
+        hp: Math.round(G.player.hp), maxHp: effMaxHp(), mp: Math.round(G.player.mp), maxMp: effMaxMp(),
+        atk: effAtk(), def: effDef(), crit: Math.round(effCrit()), eva: Math.round(effEva()), luck: Math.round(effLuck()), spd: +effSpd().toFixed(1),
+        power: powerOf({ atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()) }),
+        gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0,
+        pid: G.pid || null, code: (G.pid && G.makeFriendCode) ? G.makeFriendCode() : null,
+        pvpRank: G.pvpRank || 1000, pvpTier: tier ? (tier.emoji + " " + tier.name) : null,
+        endlessBest: G.endlessBest || 0, ngPlus: G.ngPlus || 0,
+        wins: a.wins || 0, bosses: a.bosses || 0, catches: a.catches || 0, crits: a.crits || 0, wbKills: a.wbKills || 0,
+        pets: (G.petBox || []).length, species: Object.keys(G.dexSeen || {}).length, items: (G.inv || []).length,
+      };
+    };
+    G.setPlayerName = (name) => {
+      const n = (name || "").trim().slice(0, 14);
+      if (!n) { toast("ใส่ชื่อก่อนนะ"); return false; }
+      G.playerName = n;
+      setUi((u) => ({ ...u, playerName: n }));
+      if (G.publishProfile) { try { G.publishProfile(true); } catch (e) {} } // 🌐 update online name too
+      saveGame();
+      toast("✏️ เปลี่ยนชื่อเป็น " + n + " แล้ว");
+      return true;
+    };
     const weaponElem = () => {
       const wid = G.equip.weapon;
       // ⛏️ forge infusion overrides/adds an element to the weapon
@@ -20555,7 +20592,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen"];
   // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
   const _uiWideModal = window.innerWidth > 820;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
@@ -21157,6 +21194,12 @@ export default function CherryAdventure() {
               fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
             }}>🏠</button>
           )}
+          {ui.mode === "explore" && (
+            <button onClick={() => { if (G.ensurePid) G.ensurePid(); setUi((u) => ({ ...u, ...closeAllMenus(), profileOpen: true, profileInfo: G.profileInfo(), profileNameEdit: null })); }} title="โปรไฟล์" style={{
+              width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
+              fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
+            }}>👤</button>
+          )}
         </div>
       )}
 
@@ -21492,10 +21535,13 @@ export default function CherryAdventure() {
             <button onClick={() => G.refreshBoard && G.refreshBoard()} title="รีเฟรช" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 }}>🔄</button>
           </div>
           {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => (
-            <div key={r.pid || i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, marginBottom: 1.5, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
-              <span style={{ width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" }}>{i + 1}</span>
-              <span style={{ flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
-              <span style={{ fontWeight: 800, color: "#9ad0ff" }}>Lv.{r.lv}</span>
+            <div key={r.pid || i} style={{ marginBottom: 3, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+                <span style={{ width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" }}>{i + 1}</span>
+                <span style={{ flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
+                <span style={{ fontWeight: 800, color: "#9ad0ff" }}>Lv.{r.lv}{(r.ng || 0) > 0 ? <span style={{ color: "#ff9a6a" }}> ⚡{r.ng}</span> : null}</span>
+              </div>
+              <div style={{ fontSize: 8.5, color: "#b8a8d0", paddingLeft: 20 }}>⚔️ พลังรวม {powerOf(r).toLocaleString()}</div>
             </div>
           )) : (
             <div style={{ fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" }}>{ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด"}</div>
@@ -22873,8 +22919,11 @@ export default function CherryAdventure() {
                             {ui.globalBoard.map((p, i) => (
                               <div key={p.pid || i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #eef" }}>
                                 <b style={{ width: 22, color: i === 0 ? "#e0a020" : i === 1 ? "#9aa0b0" : i === 2 ? "#c08050" : "#8a8a9a" }}>#{i + 1}</b>
-                                <span style={{ flex: 1, fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</span>
-                                <span style={{ color: "#8a7aa0" }}>Lv.{p.lv}</span>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</div>
+                                  <div style={{ fontSize: 9, color: "#9a8ab0" }}>⚔️ พลังรวม {powerOf(p).toLocaleString()}{(p.ng || 0) > 0 ? ` · ⚡ ตื่น ${p.ng}` : ""}</div>
+                                </div>
+                                <span style={{ color: "#8a7aa0", fontWeight: 800 }}>Lv.{p.lv}</span>
                                 {p.pid && p.pid !== ui.pid && (
                                   <button onClick={() => G.addFriendOnline(p.pid)} style={{ border: "none", borderRadius: 6, padding: "2px 7px", cursor: "pointer", fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>+</button>
                                 )}
@@ -24640,6 +24689,93 @@ export default function CherryAdventure() {
                 }}>💠 การันตี ({info.dustCost})</button>
               </div>
               <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 👤 Profile menu — edit name + full character info */}
+      {ui.profileOpen && (() => {
+        const p = G.profileInfo();
+        const editing = ui.profileNameEdit != null;
+        const stat = (label, val, col) => (
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <span style={{ color: "#b8c0cf", fontWeight: 700 }}>{label}</span>
+            <span style={{ color: col || "#fff", fontWeight: 900 }}>{val}</span>
+          </div>
+        );
+        const expPct = Math.min(100, Math.round(p.exp / Math.max(1, p.expNeed) * 100));
+        return (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(12,14,22,0.82)", zIndex: 62, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div style={{ width: "88%", maxWidth: 370, background: "linear-gradient(180deg,#1e2740,#232a3e)", borderRadius: 18, padding: 18, border: "2px solid #5a78c0", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "90%", overflowY: "auto" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontSize: 16, fontWeight: 900, color: "#9ec0ff" }}>👤 โปรไฟล์</div>
+                <button onClick={() => setUi((u) => ({ ...u, profileOpen: false, profileNameEdit: null }))} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#dfe6f5", fontSize: 15, cursor: "pointer" }}>✕</button>
+              </div>
+              {/* identity */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, background: "linear-gradient(135deg,#3a4a7a,#141a2c)", border: "2px solid #5a78c0" }}>{p.classEmoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {editing ? (
+                    <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                      <input value={ui.profileNameEdit} maxLength={14} onChange={(e) => setUi((u) => ({ ...u, profileNameEdit: e.target.value }))} style={{ flex: 1, minWidth: 0, fontFamily: font, fontSize: 14, fontWeight: 800, padding: "6px 8px", borderRadius: 8, border: "1px solid #5a78c0", background: "#10152a", color: "#fff" }} />
+                      <button onClick={() => { if (G.setPlayerName(ui.profileNameEdit)) setUi((u) => ({ ...u, profileNameEdit: null })); }} style={{ border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#fff", background: "#5aa06a" }}>✓</button>
+                      <button onClick={() => setUi((u) => ({ ...u, profileNameEdit: null }))} style={{ border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#e8d0c0", background: "rgba(255,255,255,0.12)" }}>✕</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 17, fontWeight: 900, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
+                      <button onClick={() => setUi((u) => ({ ...u, profileNameEdit: p.name }))} title="แก้ไขชื่อ" style={{ border: "none", borderRadius: 8, padding: "3px 8px", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "#5a78c0" }}>✏️ แก้ชื่อ</button>
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, color: "#a8b4cf", fontWeight: 700, marginTop: 3 }}>{p.classEmoji} {p.className}{p.path ? ` · ${p.pathEmoji || ""} ${p.path}` : ""}</div>
+                  {p.title && <div style={{ fontSize: 10.5, color: "#f5c542", fontWeight: 800 }}>{p.titleEmoji} {p.title}</div>}
+                </div>
+              </div>
+              {/* level + exp */}
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#cfe0ff", marginBottom: 3 }}>
+                  <span>เลเวล {p.level}{p.ngPlus > 0 ? ` · NG+${p.ngPlus}` : ""}</span><span>EXP {p.exp.toLocaleString()} / {p.expNeed.toLocaleString()}</span>
+                </div>
+                <div style={{ height: 12, background: "#10152a", borderRadius: 999, overflow: "hidden", border: "1px solid #3a4a6a" }}>
+                  <div style={{ width: expPct + "%", height: "100%", background: "linear-gradient(90deg,#5a78c0,#9ec0ff)" }} />
+                </div>
+              </div>
+              {/* combat stats */}
+              <div style={{ marginTop: 12, background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "8px 12px" }}>
+                <div style={{ fontSize: 11.5, fontWeight: 900, color: "#9ec0ff", marginBottom: 4 }}>⚔️ ค่าพลังตัวละคร</div>
+                {stat("💪 พลังการต่อสู้รวม", p.power.toLocaleString(), "#ffd06a")}
+                {p.ngPlus > 0 && stat("⚡ ขั้นการตื่น", "ตื่น " + p.ngPlus, "#ff9a6a")}
+                {stat("❤️ พลังชีวิต (HP)", `${p.hp.toLocaleString()} / ${p.maxHp.toLocaleString()}`, "#8ae0a0")}
+                {stat("💧 มานา (MP)", `${p.mp} / ${p.maxMp}`, "#8ac0ff")}
+                {stat("⚔️ พลังโจมตี", p.atk.toLocaleString(), "#ff9a6a")}
+                {stat("🛡️ ป้องกัน", p.def.toLocaleString(), "#a0c0ff")}
+                {stat("🎯 คริติคอล", p.crit + "%", "#ffd06a")}
+                {stat("💨 หลบหลีก", p.eva + "%", "#8ae0d0")}
+                {stat("🍀 โชค", p.luck + "%", "#c0f08a")}
+                {stat("👟 ความเร็ว", p.spd, "#e0c0ff")}
+              </div>
+              {/* wallet */}
+              <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "space-between" }}>
+                {[["💰", p.gold.toLocaleString()], ["💎", p.diamonds.toLocaleString()], ["💠", p.gemDust.toLocaleString()], ["✨", p.stardust.toLocaleString()]].map(([e, v], i) => (
+                  <div key={i} style={{ flex: "1 1 44%", background: "rgba(0,0,0,0.25)", borderRadius: 9, padding: "6px 8px", fontSize: 12, fontWeight: 800, color: "#fff" }}>{e} {v}</div>
+                ))}
+              </div>
+              {/* online + records */}
+              <div style={{ marginTop: 10, background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "8px 12px" }}>
+                <div style={{ fontSize: 11.5, fontWeight: 900, color: "#9ec0ff", marginBottom: 4 }}>📊 สถิติ & ออนไลน์</div>
+                {p.code && stat("🆔 รหัสเพื่อน", p.code, "#9ec0ff")}
+                {stat("🏅 อันดับ PvP", `${p.pvpRank}${p.pvpTier ? ` (${p.pvpTier})` : ""}`, "#f5c542")}
+                {stat("♾️ เอาชีวิตรอด (เวฟดีสุด)", p.endlessBest, "#c0f08a")}
+                {stat("🏆 ชนะศึก", p.wins.toLocaleString())}
+                {stat("👑 ปราบบอส", p.bosses.toLocaleString())}
+                {stat("👹 ปราบบอสโลก", p.wbKills.toLocaleString(), "#ff9a6a")}
+                {stat("💗 จับมอนสเตอร์", p.catches.toLocaleString())}
+                {stat("🎯 ออกคริรวม", p.crits.toLocaleString())}
+                {stat("🐾 สัตว์เลี้ยง / สายพันธุ์", `${p.pets} / ${p.species}`)}
+                {stat("🎒 ไอเทมในกระเป๋า", p.items.toLocaleString())}
+              </div>
+              <button onClick={() => setUi((u) => ({ ...u, profileOpen: false, profileNameEdit: null }))} style={{ width: "100%", marginTop: 12, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 13, fontWeight: 800, color: "#dfe6f5", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
             </div>
           </div>
         );
