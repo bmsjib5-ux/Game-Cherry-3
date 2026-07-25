@@ -598,6 +598,13 @@ const TITLES = [
   { id: "t_crit",    name: "ราชาคริติคอล",        emoji: "🎯", desc: "ออกคริ 300 ครั้ง",     cond: (s) => s.crits >= 300,  bonus: { crit: 9, critDmg: 10 } },
   { id: "t_tamer",   name: "จอมเลี้ยงสัตว์",       emoji: "🐾", desc: "จับมอนสเตอร์ 50 ตัว",  cond: (s) => s.catches >= 50, bonus: { hp: 10, luck: 8 } },
   { id: "t_eternal", name: "ตำนานอมตะ",           emoji: "⭐", desc: "ตื่นพลัง (NG+) 1 ครั้ง", cond: (s) => (s.ngPlus || 0) >= 1, bonus: { atk: 10, def: 10, hp: 10, crit: 5 } },
+  // 👑✨ LEVEL PRESTIGE TITLES — unlocked by reaching a level milestone, shown with a big fancy style
+  { id: "t_lnw100", name: "Lnwทรู",       emoji: "⚡", desc: "ถึงเลเวล 100",  cond: (s) => (s.level || 1) >= 100, bonus: { atk: 12, crit: 6 },
+    fancy: { grad: ["#00e5ff", "#3aa0ff", "#7a5cff"], glow: "#3aa0ff", font: "'Trebuchet MS', 'Segoe UI', sans-serif", lIcon: "⚡", rIcon: "⚡", weight: 900, italic: true } },
+  { id: "t_lnw200", name: "มหาLnw",       emoji: "👑", desc: "ถึงเลเวล 200",  cond: (s) => (s.level || 1) >= 200, bonus: { atk: 20, crit: 8, hp: 10 },
+    fancy: { grad: ["#ffe38a", "#ff9a3a", "#ff3ac0"], glow: "#ff8a3a", font: "Georgia, 'Times New Roman', serif", lIcon: "👑", rIcon: "👑", weight: 900, italic: false } },
+  { id: "t_lnw300", name: "Lnwจุติมาเกิด", emoji: "🐉", desc: "ถึงเลเวล 300",  cond: (s) => (s.level || 1) >= 300, bonus: { atk: 33, crit: 12, hp: 18, critDmg: 20 },
+    fancy: { grad: ["#fff27a", "#ff5a2a", "#ff2a7a", "#a04aff"], glow: "#ff5a2a", font: "'Impact', 'Georgia', fantasy", lIcon: "🔥🐉", rIcon: "🐉🔥", weight: 900, italic: true, rainbow: true } },
 ];
 const titleOf = (id) => TITLES.find((t) => t.id === id) || TITLES[0];
 const TITLE_LABEL = { atk: "โจมตี", def: "ป้องกัน", hp: "พลังชีวิต", crit: "คริ", critDmg: "ดาเมจคริ", luck: "โชค", gold: "ทอง" };
@@ -10730,6 +10737,7 @@ export default function CherryAdventure() {
       gold: (G.achStats && G.achStats.goldEarned) || 0,
       species: Object.keys(G.col || {}).length,
       ngPlus: G.ngPlus || 0,
+      level: (G.player && G.player.level) || 1,
     });
     const titleUnlocked = (t) => { try { return t.cond(titleStats()); } catch (e) { return false; } };
     G.titleUnlocked = titleUnlocked;
@@ -10758,7 +10766,7 @@ export default function CherryAdventure() {
         name: G.playerName || "เชอร์รี่",
         className: C.name || "-", classEmoji: C.emoji || "",
         path: P ? P.name : null, pathEmoji: P ? P.emoji : null,
-        title: T ? T.name : null, titleEmoji: T ? T.emoji : null,
+        title: T ? T.name : null, titleEmoji: T ? T.emoji : null, titleId: T ? T.id : "t_none",
         level: lv, exp: Math.round(G.player.exp || 0), expNeed: expForLevel(lv),
         hp: Math.round(G.player.hp), maxHp: effMaxHp(), mp: Math.round(G.player.mp), maxMp: effMaxMp(),
         atk: effAtk(), def: effDef(), crit: Math.round(effCrit()), eva: Math.round(effEva()), luck: Math.round(effLuck()), spd: +effSpd().toFixed(1),
@@ -20603,6 +20611,20 @@ export default function CherryAdventure() {
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
     return { ...cleared, ...extra };
   };
+  // 🏅✨ render a title (ฉายา) — prestige titles get a big gradient + glow + fancy font + icons
+  const renderTitle = (t, size) => {
+    if (!t) return null;
+    const f = t.fancy;
+    if (!f) return <span style={{ fontSize: size, fontWeight: 800, fontFamily: font }}>{t.emoji} {t.name}</span>;
+    const grad = `linear-gradient(90deg, ${f.grad.join(", ")})`;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: Math.round(size * 0.22), fontFamily: f.font, filter: `drop-shadow(0 0 ${Math.max(3, Math.round(size * 0.32))}px ${f.glow})`, maxWidth: "100%" }}>
+        <span style={{ fontSize: Math.round(size * 0.82), flexShrink: 0 }}>{f.lIcon}</span>
+        <span style={{ fontSize: size, fontWeight: f.weight || 900, fontStyle: f.italic ? "italic" : "normal", backgroundImage: grad, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", letterSpacing: 0.5, lineHeight: 1.15, whiteSpace: "nowrap" }}>{t.name}</span>
+        <span style={{ fontSize: Math.round(size * 0.82), flexShrink: 0 }}>{f.rIcon}</span>
+      </span>
+    );
+  };
   const toggleMenu = (name) => setUi((u) => {
     const willOpen = !u[name];
     const cleared = {};
@@ -22501,7 +22523,7 @@ export default function CherryAdventure() {
                               opacity: ok ? 1 : 0.65,
                             }}>
                               <div style={{ fontSize: 11.5, fontWeight: 800, color: ok ? "#8a6a20" : "#a3a396" }}>
-                                {ok ? t.emoji : "🔒"} {t.name}{on ? " ✓" : ""}
+                                {t.fancy && ok ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{renderTitle(t, 18)}{on ? <span style={{ color: "#8a6a20" }}> ✓</span> : null}</span> : <>{ok ? t.emoji : "🔒"} {t.name}{on ? " ✓" : ""}</>}
                               </div>
                               <div style={{ fontSize: 9, color: "#a89a7a" }}>{t.desc}</div>
                               <div style={{ fontSize: 9, fontWeight: 700, color: ok ? "#5a7a4a" : "#b0b0a0" }}>✨ {titleBonusText(t)}</div>
@@ -24698,6 +24720,7 @@ export default function CherryAdventure() {
       {/* 👤 Profile menu — edit name + full character info */}
       {ui.profileOpen && (() => {
         const p = G.profileInfo();
+        const T = TITLES.find((x) => x.id === p.titleId) || null;
         const editing = ui.profileNameEdit != null;
         const stat = (label, val, col) => (
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -24730,9 +24753,15 @@ export default function CherryAdventure() {
                     </div>
                   )}
                   <div style={{ fontSize: 11, color: "#a8b4cf", fontWeight: 700, marginTop: 3 }}>{p.classEmoji} {p.className}{p.path ? ` · ${p.pathEmoji || ""} ${p.path}` : ""}</div>
-                  {p.title && <div style={{ fontSize: 10.5, color: "#f5c542", fontWeight: 800 }}>{p.titleEmoji} {p.title}</div>}
                 </div>
               </div>
+              {/* 🏅 worn title (ฉายา) — prestige titles shown big & fancy */}
+              {T && (
+                <div style={{ marginTop: 10, textAlign: "center", background: T.fancy ? "rgba(0,0,0,0.28)" : "transparent", borderRadius: 12, padding: T.fancy ? "10px 8px" : "0", border: T.fancy ? "1px solid rgba(255,255,255,0.12)" : "none", overflowX: "auto" }}>
+                  <div style={{ fontSize: 9, color: "#8a94ad", fontWeight: 700, marginBottom: T.fancy ? 4 : 0 }}>🏅 ฉายา</div>
+                  {renderTitle(T, T.fancy ? 30 : 14)}
+                </div>
+              )}
               {/* level + exp */}
               <div style={{ marginTop: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#cfe0ff", marginBottom: 3 }}>
