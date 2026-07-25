@@ -10826,6 +10826,26 @@ export default function CherryAdventure() {
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       syncPlayer();
     };
+    // 💠 guaranteed enhance using World-Boss gem dust (no duplicate needed, never fails)
+    G.WB_DUST_COST = 30;
+    G.enhanceDust = (id) => {
+      const it = LOOT.find((x) => x.id === id);
+      if (!it) return;
+      const cur = G.plus[id] || 0;
+      const cap = Math.min(5, 1 + Math.floor(G.player.level / 2));
+      if (cur >= 5) { toast("ตีบวกเต็ม +5 แล้ว! ⭐"); return; }
+      if (cur >= cap) { toast(`⚒️ เพดานตีบวกตอนนี้คือ +${cap} — อัพเลเวลตัวละครเพื่อปลดล็อกต่อ!`); return; }
+      const cost = G.WB_DUST_COST;
+      if ((G.gemDust || 0) < cost) { toast(`💠 ผงเพชรไม่พอ (ต้องใช้ ${cost} · มี ${G.gemDust || 0})`); return; }
+      G.gemDust -= cost;
+      G.plus[id] = cur + 1;
+      burst(char.position, 0xf5a623, 1.6);
+      toast(`💠 ตีบวกด้วยผงเพชรสำเร็จ (การันตี)! ${it.emoji} ${it.name} +${cur + 1} ✨`);
+      updateAura();
+      G.player.hp = Math.min(G.player.hp, effMaxHp());
+      syncPlayer();
+      setUi((u) => ({ ...u, gemDust: G.gemDust, plus: { ...G.plus } }));
+    };
 
     // 🔨 craft the class's dragon-tier weapon from materials
     // 🔨🐉 craft ANY dragon-tier piece, as many times as you like.
@@ -11973,7 +11993,10 @@ export default function CherryAdventure() {
       if (G.enemy) {
         G.enemy.worldBoss = true;
         G.enemy.maxHp = WORLD_BOSS.maxHp;
-        G.enemy.hp = Math.max(1, Math.min(WORLD_BOSS.maxHp, Math.round(wb.hp)));
+        // 🤝 online party → the shared cloud pool; otherwise the local daily pool
+        const startHp = (G.wbRaid && G.wbRaidRow && G.wbRaidRow.hp != null) ? G.wbRaidRow.hp : wb.hp;
+        G.enemy.hp = Math.max(1, Math.min(WORLD_BOSS.maxHp, Math.round(startHp)));
+        G._wbPrevHp = G.enemy.hp; G._wbDmgAccum = 0; G._wbSyncT = 0; // 🤝 damage-sync accumulators
         G.enemy.name = WORLD_BOSS.name;
         // survivable but threatening: fixed high atk instead of the runaway lv99 scaling
         G.enemy.atk = Math.round(40 + G.player.level * 2.2);
@@ -12004,6 +12027,7 @@ export default function CherryAdventure() {
       }
     };
     G.wbEndRound = (reason) => { // reason: "timeout" | "dead"
+      if (G.wbRaid && G._wbFlushDamage) { try { G._wbFlushDamage(); } catch (e) {} } // 🤝 push our last damage to the shared pool
       wbSaveHp();
       G.wbRoundOn = false;
       const wb = G.wbEnsureDaily();
@@ -12057,8 +12081,10 @@ export default function CherryAdventure() {
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
       G.achStats.wbKills = (G.achStats.wbKills || 0) + 1;
-      const gotLegend = !G.wbRaid && Math.random() < 0.20; // solo: you are the party (online winner decided server-side)
+      // solo: you are the party (20% roll). online: the server RPC picks one random member as the legendary winner.
+      const gotLegend = G.wbRaid ? (G.wbRaidWinner && G.wbRaidWinner === G.pid) : (Math.random() < 0.20);
       const rw = G.wbGrantRewards(gotLegend);
+      if (G.wbRaid) { G.wbRaid = null; G.wbRaidRow = null; G.wbRaidWinner = null; } // 🤝 raid concluded
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp();
       syncPlayer(); saveGame();
       const legName = rw.legend ? (LOOT.find((x) => x.id === rw.legend) || {}).name : null;
@@ -13584,6 +13610,80 @@ export default function CherryAdventure() {
         } catch (e) { return false; }
       }
     });
+    // ---------- 👹 World-Boss raids — a shared HP pool your online friends chip down together ----------
+    Object.assign(CN, {
+      async _rpc(fn, args) {
+        if (!this.enabled()) return null;
+        try {
+          const res = await fetch(this.cfg.url.replace(/\/+$/, "") + "/rest/v1/rpc/" + fn, { method: "POST", headers: this._headers(), body: JSON.stringify(args || {}) });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      async bossCreate(row) { // {host, day, members, hp, maxhp, lv, state, ts}
+        if (!this.enabled()) return null;
+        try { const res = await fetch(this._url("boss_raids"), { method: "POST", headers: this._headers({ Prefer: "return=representation" }), body: JSON.stringify(row) }); if (!res.ok) return null; const rows = await res.json(); return (rows && rows[0]) || null; } catch (e) { return null; }
+      },
+      async bossGet(id) {
+        if (!this.enabled() || id == null) return null;
+        try { const res = await fetch(this._url("boss_raids?id=eq." + id + "&select=*"), { headers: this._headers() }); if (!res.ok) return null; const rows = await res.json(); return (rows && rows[0]) || null; } catch (e) { return null; }
+      },
+      async bossListOpen(pids, day) { // open raids hosted by my friends today
+        if (!this.enabled() || !pids || !pids.length) return null;
+        try { const inq = pids.map(encodeURIComponent).join(","); const res = await fetch(this._url("boss_raids?host=in.(" + inq + ")&day=eq." + encodeURIComponent(day) + "&state=eq.open&select=*&order=ts.desc&limit=10"), { headers: this._headers() }); if (!res.ok) return null; return await res.json(); } catch (e) { return null; }
+      },
+      async bossJoin(id, member) { return await this._rpc("boss_join", { p_id: id, p_member: member }); }, // atomic append to members[]
+      async bossHit(id, dmg, winner) { return await this._rpc("boss_hit", { p_id: id, p_dmg: dmg, p_winner: winner || null }); }, // atomic decrement → { hp, state, winner }
+    });
+    // 🤝 my party snapshot member object
+    G.wbMember = () => ({ pid: G.ensurePid ? G.ensurePid() : (G.pid || "?"), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1 });
+    // host a new online party (its own shared 1,000,000 HP pool for today)
+    G.wbCreateParty = async () => {
+      if (!CN.enabled() || !G.pid) { toast("🌐 ต้องเชื่อมต่อออนไลน์ (ตั้งค่า Supabase) เพื่อชวนเพื่อน"); return; }
+      const row = { host: G.pid, day: todayStamp(), members: [G.wbMember()], hp: WORLD_BOSS.maxHp, maxhp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, state: "open", ts: Date.now() };
+      const created = await CN.bossCreate(row);
+      if (!created) { toast("🌐 สร้างปาร์ตี้ไม่สำเร็จ (ตรวจสอบตาราง boss_raids)"); return; }
+      G.wbRaid = created.id; G.wbRaidRow = created;
+      toast("🤝 สร้างปาร์ตี้บอสโลกแล้ว! รอเพื่อนเข้าร่วม");
+      setUi((u) => ({ ...u, wbRaid: created.id, wbParty: created.members || [], wbRaidHp: created.hp }));
+    };
+    // join a friend's open party
+    G.wbJoinParty = async (id) => {
+      if (!CN.enabled()) return;
+      const row = await CN.bossJoin(id, G.wbMember());
+      const got = Array.isArray(row) ? row[0] : row;
+      if (!got) { toast("🌐 เข้าร่วมปาร์ตี้ไม่สำเร็จ"); return; }
+      G.wbRaid = id; G.wbRaidRow = got;
+      toast("🤝 เข้าร่วมปาร์ตี้บอสโลกแล้ว!");
+      setUi((u) => ({ ...u, wbRaid: id, wbParty: got.members || [], wbRaidHp: got.hp }));
+    };
+    // refresh the open party list + my party state for the lobby
+    G.wbRefreshParty = async () => {
+      if (!CN.enabled() || !G.pid) { setUi((u) => ({ ...u, wbOpenRaids: [] })); return; }
+      const friendPids = (G.readFriends ? G.readFriends() : []).map((f) => f.pid).filter(Boolean);
+      const open = friendPids.length ? await CN.bossListOpen(friendPids.concat([G.pid]), todayStamp()) : [];
+      let mine = null;
+      if (G.wbRaid) { mine = await CN.bossGet(G.wbRaid); if (mine) { G.wbRaidRow = mine; } }
+      setUi((u) => ({ ...u, wbOpenRaids: open || [], wbParty: mine ? mine.members : (u.wbParty || []), wbRaidHp: mine ? mine.hp : u.wbRaidHp }));
+    };
+    G.wbLeaveParty = () => { G.wbRaid = null; G.wbRaidRow = null; setUi((u) => ({ ...u, wbRaid: null, wbParty: [], wbRaidHp: null })); };
+    // flush accumulated local damage to the shared cloud pool, reconcile HP (called from the battle loop)
+    G._wbFlushDamage = async () => {
+      if (G._wbSyncing || !G.wbRaid || !CN.enabled()) return;
+      const dmg = Math.round(G._wbDmgAccum || 0);
+      if (dmg <= 0) return;
+      G._wbSyncing = true; G._wbDmgAccum = 0;
+      try {
+        const res = await CN.bossHit(G.wbRaid, dmg, G.pid);
+        const row = Array.isArray(res) ? res[0] : res;
+        if (row && row.hp != null && G.enemy && G.enemy.worldBoss) {
+          const shared = Math.max(0, row.hp);
+          G.enemy.hp = shared; G._wbPrevHp = shared; // reconcile with the true shared pool (includes allies' damage)
+          if (row.state === "cleared" || shared <= 0) { G.wbRaidWinner = row.winner || null; G.wbVictory(); }
+        }
+      } catch (e) {}
+      G._wbSyncing = false;
+    };
     // seeded RNG (mulberry32) — identical output on both clients for the same seed → both watch the same duel
     G._pvpRng = seed => {
       let a = seed >>> 0;
@@ -13928,6 +14028,15 @@ export default function CherryAdventure() {
         G.wbTimeLeft = (G.wbTimeLeft || 0) - dt;
         const secLeft = Math.max(0, Math.ceil(G.wbTimeLeft));
         if (secLeft !== G._wbLastSec) { G._wbLastSec = secLeft; setUi((u) => ({ ...u, wbTime: secLeft })); }
+        // 🤝 online party: accumulate the damage we deal and flush it to the shared cloud pool
+        if (G.wbRaid) {
+          const cur = G.enemy.hp;
+          if (G._wbPrevHp == null) G._wbPrevHp = cur;
+          const dealt = G._wbPrevHp - cur;
+          if (dealt > 0) { G._wbDmgAccum = (G._wbDmgAccum || 0) + dealt; G._wbPrevHp = cur; }
+          G._wbSyncT = (G._wbSyncT || 0) + dt;
+          if (G._wbSyncT >= 1.5) { G._wbSyncT = 0; if (G._wbFlushDamage) G._wbFlushDamage(); }
+        }
         if (G.wbTimeLeft <= 0) { G.wbEndRound("timeout"); }
       }
       updateDamageNumbers(dt); // 💢 float the damage popups
@@ -20909,7 +21018,7 @@ export default function CherryAdventure() {
       {/* 👹 World Boss entry */}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button
-          onClick={() => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false })); }}
+          onClick={() => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }}
           style={{
             position: "absolute", top: 72, left: "50%", transform: "translateX(-50%)",
             background: "linear-gradient(90deg,#5a1a2a,#c0392b)", borderRadius: 999,
@@ -22765,10 +22874,16 @@ export default function CherryAdventure() {
                         </div>
                         <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>{SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}</div>
                       </div>
-                      <button onClick={() => { G.enhance(id); }} style={{
-                        border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, cursor: "pointer",
-                        fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#59a0e8,#7ad0e8)",
-                      }}>⚒️ +{plus + 1} ({rate}%)</button>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginLeft: 6 }}>
+                        <button onClick={() => { G.enhance(id); }} style={{
+                          border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer",
+                          fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#59a0e8,#7ad0e8)",
+                        }}>⚒️ +{plus + 1} ({rate}%)</button>
+                        <button onClick={() => { G.enhanceDust(id); }} title={`ตีบวกการันตีด้วยผงเพชร ${G.WB_DUST_COST || 30}💠`} style={{
+                          border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer",
+                          fontSize: 10, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#f5a623)",
+                        }}>💠 การันตี ({G.WB_DUST_COST || 30})</button>
+                      </div>
                     </div>
                   );
                 });
@@ -24176,6 +24291,36 @@ export default function CherryAdventure() {
                 💎 เพชร 1,000 · 💰 ทอง 100,000 · 💠 ผงเพชร 100<br />
                 🗡️ ของระดับสูง 3–5 ชิ้น + ของระดับกลาง<br />
                 ⭐ ของตำนาน 1 ชิ้น (โอกาส 20% · สุ่มให้ 1 คนในปาร์ตี้)
+              </div>
+              {/* 🤝 online party */}
+              <div style={{ marginTop: 12, background: "rgba(90,40,120,0.18)", borderRadius: 10, padding: "8px 10px", border: "1px solid rgba(180,120,220,0.3)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 11, fontWeight: 900, color: "#e0b0f0" }}>🤝 ปาร์ตี้เพื่อนออนไลน์</span>
+                  {ui.netEnabled && <button onClick={() => G.wbRefreshParty && G.wbRefreshParty()} style={{ fontSize: 9.5, fontWeight: 800, border: "none", borderRadius: 8, padding: "2px 8px", cursor: "pointer", background: "rgba(255,255,255,0.15)", color: "#e0d0f0", fontFamily: font }}>↻ รีเฟรช</button>}
+                </div>
+                {!ui.netEnabled ? (
+                  <div style={{ fontSize: 9.5, color: "#c0a8c8", marginTop: 4, lineHeight: 1.5 }}>เล่นออฟไลน์ (เดี่ยว) — ตั้งค่า Supabase + ล็อกอิน เพื่อชวนเพื่อนมาช่วยตีบอสก้อนเลือดเดียวกัน (ดู ONLINE_SETUP.md)</div>
+                ) : ui.wbRaid ? (
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ fontSize: 10, color: "#d8c0e8", fontWeight: 700 }}>อยู่ในปาร์ตี้ ({(ui.wbParty || []).length} คน):</div>
+                    <div style={{ fontSize: 10, color: "#fff", marginTop: 2, lineHeight: 1.5 }}>{(ui.wbParty || []).map((m, i) => `${m.n || "?"} Lv.${m.lv || "?"}`).join(" · ") || "คุณ"}</div>
+                    <button onClick={() => G.wbLeaveParty && G.wbLeaveParty()} style={{ marginTop: 6, fontSize: 9.5, fontWeight: 800, border: "none", borderRadius: 8, padding: "3px 10px", cursor: "pointer", background: "rgba(255,120,120,0.25)", color: "#ffd0d0", fontFamily: font }}>ออกจากปาร์ตี้</button>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 4 }}>
+                    <button onClick={() => G.wbCreateParty && G.wbCreateParty()} style={{ width: "100%", fontSize: 11, fontWeight: 900, border: "none", borderRadius: 8, padding: "7px", cursor: "pointer", background: "linear-gradient(90deg,#7a3aa0,#b060d0)", color: "#fff", fontFamily: font }}>➕ สร้างปาร์ตี้ (ชวนเพื่อน)</button>
+                    {(ui.wbOpenRaids || []).length > 0 && (
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ fontSize: 9.5, color: "#d0b8e0", fontWeight: 700 }}>ปาร์ตี้เพื่อนที่เปิดอยู่:</div>
+                        {(ui.wbOpenRaids || []).map((r) => (
+                          <button key={r.id} onClick={() => G.wbJoinParty && G.wbJoinParty(r.id)} style={{ width: "100%", marginTop: 3, fontSize: 10, fontWeight: 800, border: "1px solid rgba(180,120,220,0.4)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", background: "rgba(255,255,255,0.08)", color: "#e8d8f0", fontFamily: font, textAlign: "left" }}>
+                            🤝 {((r.members && r.members[0] && r.members[0].n) || "เพื่อน")} · {(r.members || []).length} คน · เลือด {Math.round((r.hp / r.maxhp) * 100)}%
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               {st.cleared ? (
                 <div style={{ marginTop: 14, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#8af0a0", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "10px" }}>

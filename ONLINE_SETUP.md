@@ -235,3 +235,79 @@ create policy "duels update" on public.duels for update using (true) with check 
 ```
 
 > หมายเหตุ: ตาราง `duels` ใช้สิทธิ์ anon เหมือน `players` (อ้างอิงด้วย pid ไม่ใช่ uid) — เหมาะกับการดวลเล่นสนุก ไม่ใช่ระบบจัดอันดับที่ต้องกันโกง
+
+---
+
+## 👹 World Boss ปาร์ตี้ (ตาราง `boss_raids` + ฟังก์ชัน RPC)
+
+บอสโลกเป็นเรด "เลือดก้อนเดียวแชร์ทั้งปาร์ตี้" (async raid): เจ้าของสร้างปาร์ตี้ (แถว `boss_raids` เลือด 1,000,000 ต่อวัน) → เพื่อนออนไลน์กด "เข้าร่วม" → ทุกคนสู้บอสของตัวเองในรอบละ 60 วินาที ดาเมจที่ทำได้จะถูกส่งเข้าไปหักเลือดก้อนกลางบนคลาวด์ (ผ่าน RPC `boss_hit` แบบ atomic) เลือดที่เหลือจึงลดลงร่วมกัน เมื่อเลือดถึง 0 บอสตาย ระบบสุ่มผู้ได้ของตำนาน (โอกาส 20% · 1 คนในปาร์ตี้) ให้ที่ฝั่งเซิร์ฟเวอร์
+
+รันใน Supabase → SQL Editor:
+
+```sql
+create table if not exists public.boss_raids (
+  id       bigint generated always as identity primary key,
+  host     text not null,
+  day      text not null,                      -- daily key เช่น "2026-6-25"
+  members  jsonb not null default '[]'::jsonb, -- [{pid,n,c,lv}, ...]
+  hp       bigint not null,
+  maxhp    bigint not null,
+  lv       int not null default 99,
+  state    text not null default 'open',       -- open | cleared
+  winner   text,                               -- pid ผู้ได้ของตำนาน (ถ้ามี)
+  ts       bigint not null
+);
+create index if not exists boss_raids_host_idx on public.boss_raids (host, day, state, ts desc);
+
+alter table public.boss_raids enable row level security;
+create policy "boss read"   on public.boss_raids for select using (true);
+create policy "boss insert" on public.boss_raids for insert with check (true);
+create policy "boss update" on public.boss_raids for update using (true) with check (true);
+
+-- 🤝 เข้าร่วมปาร์ตี้ (เพิ่ม member แบบไม่ซ้ำ pid)
+create or replace function public.boss_join(p_id bigint, p_member jsonb)
+returns setof public.boss_raids
+language plpgsql security definer as $$
+begin
+  update public.boss_raids
+    set members = case
+      when members @> jsonb_build_array(jsonb_build_object('pid', p_member->>'pid')) then members
+      else members || jsonb_build_array(p_member)
+    end
+    where id = p_id and state = 'open';
+  return query select * from public.boss_raids where id = p_id;
+end; $$;
+
+-- ⚔️ หักเลือดก้อนกลางแบบ atomic; เมื่อถึง 0 → cleared + สุ่มผู้ได้ของตำนาน (20%)
+create or replace function public.boss_hit(p_id bigint, p_dmg bigint, p_winner text)
+returns table(hp bigint, state text, winner text)
+language plpgsql security definer as $$
+declare r public.boss_raids; new_hp bigint; wn text;
+begin
+  select * into r from public.boss_raids where id = p_id for update;
+  if not found then return; end if;
+  if r.state = 'cleared' then
+    return query select r.hp, r.state, r.winner; return;
+  end if;
+  new_hp := greatest(0, r.hp - greatest(0, p_dmg));
+  if new_hp <= 0 then
+    if random() < 0.20 then
+      select (m->>'pid') into wn from jsonb_array_elements(r.members) m order by random() limit 1;
+    else
+      wn := null;
+    end if;
+    update public.boss_raids set hp = 0, state = 'cleared', winner = wn where id = p_id;
+    return query select 0::bigint, 'cleared'::text, wn;
+  else
+    update public.boss_raids set hp = new_hp where id = p_id;
+    return query select new_hp, 'open'::text, null::text;
+  end if;
+end; $$;
+
+grant execute on function public.boss_join(bigint, jsonb) to anon, authenticated;
+grant execute on function public.boss_hit(bigint, bigint, text) to anon, authenticated;
+```
+
+> ทำงานยังไง: `boss_hit` ใช้ `for update` ล็อกแถวตอนหักเลือด จึงกันดาเมจชนกันเมื่อหลายคนตีพร้อมกัน · ผู้ได้ของตำนานถูกสุ่มที่เซิร์ฟเวอร์ (ยุติธรรมกับทุกเครื่อง) · ตาราง `boss_raids` อ้างอิงด้วย pid เหมือน `players`/`duels` (เกมแคชชวล ไม่กันโกงระดับจริงจัง)
+>
+> ถ้าไม่ตั้งค่า Supabase เกมจะเล่นบอสโลกแบบ **เดี่ยว (ออฟไลน์)** ได้ตามปกติ — เลือดบอสเก็บในเซฟเครื่องตัวเอง รีเซ็ตรายวัน ส่วนระบบปาร์ตี้เพื่อนจะเปิดใช้เมื่อเชื่อมต่อออนไลน์แล้ว
