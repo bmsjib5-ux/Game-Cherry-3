@@ -243,8 +243,8 @@ const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
 
 // ---------- 👹 WORLD BOSS — daily raid boss (party up online, shared HP, 60s rounds) ----------
-const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 60,
-  block: 0.10, dodge: 0.05, atkDebuff: 0.10, critDebuff: 10 }; // 🛡️ block 10% · 💨 dodge 5% · ลด ATK 10% · ลดคริ 10%
+const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 180,
+  block: 0.20, dodge: 0.15, atkDebuff: 0.20, critDebuff: 20 }; // ⏱️ 3 นาที/รอบ · 🛡️ block 20% · 💨 dodge 15% · ลด ATK 20% · ลดคริ 20%
 
 // ---------- Elemental skills (unlock by level) ----------
 const ELEMENTS = {
@@ -12030,7 +12030,7 @@ export default function CherryAdventure() {
       G._wbLastSec = WORLD_BOSS.roundSec;
       setUi((u) => ({ ...u, mode: "battle", wbActive: true, wbTime: WORLD_BOSS.roundSec, wbResult: null, battleSpeed: 1,
         enemy: { name: WORLD_BOSS.name, emoji: WORLD_BOSS.emoji, hp: G.enemy ? G.enemy.hp : wb.hp, maxHp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, boss: true, worldBoss: true, spId: WORLD_BOSS.spId },
-        msg: `👹 ${WORLD_BOSS.name} Lv.${WORLD_BOSS.lv} — เลือด ${Math.round((G.enemy ? G.enemy.hp : wb.hp)).toLocaleString()} · เหลือเวลา 60 วิ!` }));
+        msg: `👹 ${WORLD_BOSS.name} Lv.${WORLD_BOSS.lv} — เลือด ${Math.round((G.enemy ? G.enemy.hp : wb.hp)).toLocaleString()} · เหลือเวลา 3 นาที!` }));
     };
     G.startWorldBoss = () => {
       if (G.mode !== "explore") { toast("👹 เข้าตีบอสโลกได้จากโลกกว้างเท่านั้น"); return; }
@@ -13664,9 +13664,13 @@ export default function CherryAdventure() {
     });
     // 🤝 my party snapshot member object
     G.wbMember = () => ({ pid: G.ensurePid ? G.ensurePid() : (G.pid || "?"), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1 });
-    // host a new online party (its own shared 1,000,000 HP pool for today)
+    // host a new online party (its own shared HP pool for today)
     G.wbCreateParty = async () => {
-      if (!CN.enabled() || !G.pid) { toast("🌐 ต้องเชื่อมต่อออนไลน์ (ตั้งค่า Supabase) เพื่อชวนเพื่อน"); return; }
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่า Supabase (ONLINE_CONFIG) เพื่อชวนเพื่อน"); return; }
+      if (G.ensurePid) G.ensurePid(); // 🪪 make sure we have an online id even if Social was never opened
+      if (G.publishProfile) { try { G.publishProfile(true); } catch (e) {} } // let friends find us
+      if (!G.pid) { toast("🌐 ยังไม่มีรหัสผู้เล่นออนไลน์ — ลองเปิดเมนู 👥 สังคม สักครั้ง"); return; }
+      toast("🤝 กำลังสร้างปาร์ตี้...");
       const row = { host: G.pid, day: todayStamp(), members: [G.wbMember()], hp: WORLD_BOSS.maxHp, maxhp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, state: "open", ts: Date.now() };
       const created = await CN.bossCreate(row);
       if (!created) { toast("🌐 สร้างปาร์ตี้ไม่สำเร็จ (ตรวจสอบตาราง boss_raids)"); return; }
@@ -13677,6 +13681,8 @@ export default function CherryAdventure() {
     // join a friend's open party
     G.wbJoinParty = async (id) => {
       if (!CN.enabled()) return;
+      if (G.ensurePid) G.ensurePid();
+      if (G.publishProfile) { try { G.publishProfile(true); } catch (e) {} }
       const row = await CN.bossJoin(id, G.wbMember());
       const got = Array.isArray(row) ? row[0] : row;
       if (!got) { toast("🌐 เข้าร่วมปาร์ตี้ไม่สำเร็จ"); return; }
@@ -13686,7 +13692,8 @@ export default function CherryAdventure() {
     };
     // refresh the open party list + my party state for the lobby
     G.wbRefreshParty = async () => {
-      if (!CN.enabled() || !G.pid) { setUi((u) => ({ ...u, wbOpenRaids: [] })); return; }
+      if (!CN.enabled()) { setUi((u) => ({ ...u, wbOpenRaids: [] })); return; }
+      if (G.ensurePid) G.ensurePid();
       const friendPids = (G.readFriends ? G.readFriends() : []).map((f) => f.pid).filter(Boolean);
       const open = friendPids.length ? await CN.bossListOpen(friendPids.concat([G.pid]), todayStamp()) : [];
       let mine = null;
@@ -24278,8 +24285,8 @@ export default function CherryAdventure() {
           boxShadow: "0 3px 10px rgba(0,0,0,0.4)",
         }}>
           <span style={{ fontSize: 15 }}>⏱️</span>
-          <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: font, minWidth: 30, textAlign: "center" }}>{ui.wbTime != null ? ui.wbTime : 60}</span>
-          <span style={{ fontSize: 11, fontWeight: 800, color: "#f5d0a0" }}>วินาที · 👹 บอสโลก</span>
+          <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: font, minWidth: 44, textAlign: "center" }}>{(() => { const s = ui.wbTime != null ? ui.wbTime : 180; return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); })()}</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#f5d0a0" }}>· 👹 บอสโลก</span>
         </div>
       )}
 
@@ -24309,10 +24316,10 @@ export default function CherryAdventure() {
               </div>
               {/* rules */}
               <div style={{ marginTop: 12, background: "rgba(0,0,0,0.25)", borderRadius: 10, padding: "8px 10px", fontSize: 10.5, color: "#e8d0c0", lineHeight: 1.6 }}>
-                ⏱️ ต่อสู้รอบละ <b>60 วินาที</b><br />
+                ⏱️ ต่อสู้รอบละ <b>3 นาที</b><br />
                 💀 ตายหรือหมดเวลา → <b>สู้ต่อรอบใหม่ได้</b> เลือดบอส<b>ไม่รีเซ็ต</b> (คงเลือดล่าสุด)<br />
                 📅 <b>จำกัดวันละครั้ง</b> — รีเซ็ตเลือดใหม่ทุกวัน<br />
-                🛡️ บอสแกร่ง: บล็อก 10% · หลบ 5% · ลดพลังโจมตีเรา 10% · ลดคริเรา 10%<br />
+                🛡️ บอสแกร่ง: บล็อก 20% · หลบ 15% · ลดพลังโจมตีเรา 20% · ลดคริเรา 20%<br />
                 🤝 ชวนเพื่อนออนไลน์มาช่วยตี แชร์เลือดบอสก้อนเดียวกัน
               </div>
               {/* reward preview */}
