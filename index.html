@@ -21466,6 +21466,176 @@ function CherryAdventure() {
                                     if (p > 0.78)
                                         G._camShake = Math.max(G._camShake || 0, 0.12);
                                 }
+                                else if (skId && (skId.indexOf("x_hck") === 0 || skId.indexOf("x_ai") === 0)) {
+                                    // 💻 CODER ADVANCED — ท่าเฉพาะแต่ละสกิล (แฮกเกอร์เงา/AI)
+                                    const purp2 = 0x9a4ad0, neonP = 0xc060ff, dark = 0x1a0e28, aiB = 0x6ac0ff, plasma = 0x7fd0f5, laserB = 0x59a0e8, nano = 0x8fe0b0;
+                                    magicCircle.visible = true;
+                                    magicCircle.rotation.x = Math.PI / 2;
+                                    // ── SHADOW HACKER ──
+                                    if (skId === "x_hck_1") { // 🕶️ สคริปต์มืด — ยกมือเสก โซ่ข้อมูลพันธนาการรัดศัตรู
+                                        armR.rotation.x = -1.5;
+                                        armR.rotation.z = 0.4 + Math.sin(p * Math.PI * 4) * 0.15;
+                                        armL.rotation.x = -0.7;
+                                        armL.rotation.z = -0.3;
+                                        char.rotation.z = -0.06;
+                                        magicCircle.position.set(EP.x, 0.08, EP.z);
+                                        magicCircle.scale.setScalar(1.2 + Math.sin(p * Math.PI) * 0.5);
+                                        magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(purp2); }));
+                                        if (p > 0.2 && em.userData.body)
+                                            monGlow(em, 0x7a3ad0, 0.6);
+                                        if (Math.random() < 0.92) {
+                                            const a = t * 6 + Math.random() * 6.28, ry = (p * 2) % 1;
+                                            burst(new THREE.Vector3(EP.x + Math.cos(a) * 1.0, 0.2 + ry * 2.4, EP.z + Math.sin(a) * 1.0), Math.random() < 0.5 ? purp2 : neonP, 0.35);
+                                        }
+                                    }
+                                    else if (skId === "x_hck_2") { // 📡 DDoS ถล่ม — รัวคีย์บอร์ดสุดพลัง สาดพายุข้อมูล ×5
+                                        typing(26);
+                                        char.rotation.z = Math.sin(p * Math.PI * 16) * 0.04;
+                                        char.position.y = Math.abs(Math.sin(p * Math.PI * 16)) * 0.03;
+                                        magicCircle.position.set(char.position.x, 0.08, char.position.z);
+                                        magicCircle.scale.setScalar(1.1 + Math.min(1, p * 2) * 0.5);
+                                        magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = 0.8; c.material.color.setHex(cyan); }));
+                                        if (Math.random() < 0.95) {
+                                            const f = Math.random();
+                                            burst(new THREE.Vector3(char.position.x + 0.4 + f * (EP.x - char.position.x - 0.4), 1.3 + (Math.random() - 0.5) * 1.2 * f, char.position.z + (Math.random() - 0.5) * 0.8), Math.random() < 0.5 ? cyan : aiB, 0.3);
+                                        }
+                                        if (Math.random() < 0.6)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.6, 0.4 + Math.random() * 2, EP.z), cyan, 0.4);
+                                    }
+                                    else if (skId === "x_hck_3") { // 🔒 แรนซัมแวร์ — รัวพิมพ์แล้วกระแทก ENTER สองมือ เข้ารหัสระเบิดดิจิทัล
+                                        if (p < 0.5) {
+                                            typing(20);
+                                            if (Math.random() < 0.5) {
+                                                const a = Math.random() * Math.PI * 2;
+                                                burst(new THREE.Vector3(EP.x + Math.cos(a) * 1.1, 0.4 + Math.random() * 1.8, EP.z + Math.sin(a) * 1.1), err, 0.3);
+                                            }
+                                        }
+                                        else {
+                                            const cp = (p - 0.5) / 0.5;
+                                            armR.rotation.x = -1.15 + cp * 1.6;
+                                            armL.rotation.x = -1.15 + cp * 1.6;
+                                            armR.rotation.z = 0.3 - cp * 0.2;
+                                            armL.rotation.z = -0.3 + cp * 0.2;
+                                            char.rotation.z = -cp * 0.12;
+                                            if (cp < 0.15 && !A._cHit) {
+                                                A._cHit = true;
+                                                spawnSkillFx("bolt", EP, err);
+                                                G._camShake = 0.6;
+                                            }
+                                            if (Math.random() < 0.9)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.2, 0.3 + Math.random() * 2.4, EP.z + (Math.random() - 0.5) * 1.6), Math.random() < 0.5 ? err : white, 0.45);
+                                        }
+                                        if (em.userData.body && p > 0.3)
+                                            monGlow(em, 0x552233, 0.5);
+                                    }
+                                    else if (skId === "x_hck_4") { // 💀 Zero-Day สังหาร — ง้างแล้วชี้มือปล่อยหอกข้อมูลทะลวง
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -0.5 - cp * 1.0;
+                                            armR.rotation.z = 0.3 - cp * 0.5;
+                                            char.rotation.z = 0.06 * cp;
+                                            if (Math.random() < 0.7)
+                                                burst(new THREE.Vector3(char.position.x + 0.4, 1.3 + Math.random() * 0.5, char.position.z), Math.random() < 0.5 ? dark : purp2, 0.3);
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            armR.rotation.x = -1.5 + cp * 2.0;
+                                            armR.rotation.z = 0.12;
+                                            char.rotation.z = 0.06 - cp * 0.12;
+                                            if (cp < 0.15 && !A._cHit) {
+                                                A._cHit = true;
+                                                spawnSkillFx("pierce", EP, purp2);
+                                                G._camShake = 0.5;
+                                            }
+                                            if (cp > 0.1 && Math.random() < 0.85) {
+                                                const fx = char.position.x + 0.5 + cp * (EP.x - char.position.x - 0.5);
+                                                burst(new THREE.Vector3(fx, 1.3, char.position.z), Math.random() < 0.5 ? neonP : dark, 0.4);
+                                            }
+                                        }
+                                    }
+                                    // ── AI ARCHITECT ──
+                                    else if (skId === "x_ai_1") { // 🛸 โดรนจู่โจม — ยกมือสั่งการ ฝูงโดรนยิงพลาสมา ×4
+                                        armR.rotation.x = -1.7;
+                                        armR.rotation.z = 0.2;
+                                        armL.rotation.x = -0.5;
+                                        char.rotation.z = 0;
+                                        for (let d = 0; d < 4; d++) {
+                                            const a = d / 4 * Math.PI * 2 + t * 2.5;
+                                            const dx = EP.x + Math.cos(a) * 1.8, dy = 2.0 + Math.sin(a * 1.5) * 0.4, dz = EP.z + Math.sin(a) * 1.8;
+                                            if (Math.min(1, p * 3) > d / 4)
+                                                burst(new THREE.Vector3(dx, dy, dz), aiB, 0.3);
+                                            if (p > 0.3 && Math.random() < 0.4) {
+                                                const f = Math.random();
+                                                burst(new THREE.Vector3(dx + f * (EP.x - dx), dy + f * (1.0 - dy), dz + f * (EP.z - dz)), plasma, 0.28);
+                                            }
+                                        }
+                                        if (p > 0.3 && Math.random() < 0.7)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.4, 0.6 + Math.random() * 1.4, EP.z), plasma, 0.4);
+                                    }
+                                    else if (skId === "x_ai_2") { // 🤖 เกราะนาโน — กอดอกสร้างเกราะ นาโนบอทหุ้มร่าง ฟื้น+ล้างสถานะ
+                                        armR.rotation.x = -1.2;
+                                        armR.rotation.z = 1.0;
+                                        armL.rotation.x = -1.2;
+                                        armL.rotation.z = -1.0;
+                                        char.rotation.z = 0;
+                                        magicCircle.position.set(char.position.x, 0.08, char.position.z);
+                                        magicCircle.scale.setScalar(1.4 + Math.min(1, p * 2) * 0.7);
+                                        magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(nano); }));
+                                        if (Math.random() < 0.9) {
+                                            const a = t * 4 + Math.random() * 6.28, r = 0.5 + Math.random() * 0.5;
+                                            burst(new THREE.Vector3(char.position.x + Math.cos(a) * r, 0.4 + ((t + Math.random()) % 1) * 1.8, char.position.z + Math.sin(a) * r), Math.random() < 0.5 ? nano : 0x8fffd0, 0.32);
+                                        }
+                                    }
+                                    else if (skId === "x_ai_3") { // 🛰️ เลเซอร์วงโคจร — ชูสองแขนสู่ฟ้า ดาวเทียมยิงเลเซอร์จากอวกาศ
+                                        armR.rotation.x = -2.6;
+                                        armL.rotation.x = -2.6;
+                                        armR.rotation.z = 0.3;
+                                        armL.rotation.z = -0.3;
+                                        char.rotation.z = 0;
+                                        magicCircle.position.set(EP.x, 0.06, EP.z);
+                                        magicCircle.scale.setScalar(1.6 + Math.sin(p * Math.PI) * 0.6);
+                                        magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.min(1, p * 2); c.material.color.setHex(laserB); }));
+                                        if (p > 0.45) {
+                                            if (!A._cHit) {
+                                                A._cHit = true;
+                                                spawnSkillFx("bolt", EP, laserB);
+                                                G._camShake = 0.6;
+                                            }
+                                            if (Math.random() < 0.95)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 1.4, 6 - ((p * 3) % 1) * 6 + Math.random(), EP.z + (Math.random() - 0.5) * 1.0), Math.random() < 0.5 ? laserB : white, 0.5);
+                                        }
+                                        else if (Math.random() < 0.5)
+                                            burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5), 2.6 + Math.random(), char.position.z), aiB, 0.3);
+                                    }
+                                    else if (skId === "x_ai_4") { // 🧠 คำนวณจุดจบ — เอามือแตะขมับคำนวณ → กวาดมือยิงจุดตายทุกเป้า ×2
+                                        if (p < 0.4) {
+                                            const cp = p / 0.4;
+                                            armR.rotation.x = -1.9 * cp;
+                                            armR.rotation.z = 0.6 * cp;
+                                            armL.rotation.x = -0.4;
+                                            char.rotation.z = 0;
+                                            if (em.userData.body)
+                                                monGlow(em, 0x3355aa, 0.4 * cp);
+                                            if (Math.random() < 0.6) {
+                                                const a = Math.random() * Math.PI * 2, r = 0.4 + Math.random() * 1.2;
+                                                burst(new THREE.Vector3(EP.x + Math.cos(a) * r, 0.5 + Math.random() * 2, EP.z + Math.sin(a) * r), Math.random() < 0.5 ? aiB : white, 0.22);
+                                            }
+                                        }
+                                        else {
+                                            const cp = (p - 0.4) / 0.6;
+                                            armR.rotation.x = -1.9 + cp * 2.4;
+                                            armR.rotation.z = 0.6 - cp * 0.5;
+                                            char.rotation.z = -0.08 * Math.sin(cp * Math.PI);
+                                            if (cp < 0.15 && !A._cHit) {
+                                                A._cHit = true;
+                                                spawnSkillFx("bolt", EP, purp);
+                                                G._camShake = 0.5;
+                                            }
+                                            if (Math.random() < 0.9)
+                                                burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2, 0.4 + Math.random() * 2.2, EP.z + (Math.random() - 0.5) * 1.4), Math.random() < 0.5 ? 0xb07ae0 : white, 0.42);
+                                        }
+                                    }
+                                }
                                 else {
                                     typing(10);
                                     magicCircle.visible = true;
