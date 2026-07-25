@@ -12478,7 +12478,7 @@ export default function CherryAdventure() {
 
     // ---------- 🗺️⚔️ OPEN-WORLD ACTION COMBAT (hybrid) — walk & hit normal monsters; bosses still enter the arena ----------
     G.actionMode = true;
-    const WILD_AGGRO = 5.2, WILD_MELEE = 1.7;
+    const WILD_AGGRO = 6.0, WILD_MELEE = 2.1; // monsters notice from further, stop & strike at arm's length
     const isArenaFoe = (m) => !!(m.userData.boss || m.userData.biomeBoss || m.userData.dungeon || m.userData.golden || m.userData.ghost || m.userData.horde);
     const initWildHp = (m) => {
       if (m.userData.whp != null) return;
@@ -12574,8 +12574,39 @@ export default function CherryAdventure() {
       for (const m of wilds) { if (m.userData.shy > 0 || isArenaFoe(m)) continue; const dx = m.position.x - cx, dz = m.position.z - cz; if (dx * dx + dz * dz < radius * radius) out.push(m); }
       return out;
     };
-    const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 7.5 : 2.6;
-    const worldSwing = () => { G._worldSwingT = 0.25; };
+    const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 9.0 : 3.6;
+    const worldSwing = () => { G._worldSwingT = 0.28; };
+    // 🎬 map a skill to its signature battle FX so open-world casts look like the 1-v-1 arena
+    const worldFxFor = (sk) => {
+      if (!sk) return "default";
+      const m = {
+        m_fire: "hellfire", w_cleave: "crescent", w_bash: "shieldbash", w_rage: "warfrenzy", w_quake: "earthsplit",
+        m_ice: "icespear", m_bolt: "thunderstorm", m_heal: "healbless",
+        a_power: "arrowpierce", a_snipe: "arrowsnipe", a_multi: "arrowmulti", a_poison: "arrowpoison", a_weak: "arrowsnipe",
+        s_double: "bleedstab", s_poison: "poisonknives", s_shadow: "shadow", s_evade: "shadowdance",
+        l_thrust: "pierce", l_sweep: "multi", l_quake: "earthsplit",
+      };
+      if (m[sk.id]) return m[sk.id];
+      if (sk.burn) return "fire";
+      if (sk.freeze) return "ice";
+      if (sk.poison) return "poison";
+      if (sk.fx === "bolt") return "bolt";
+      if (sk.fx === "quake") return "quake";
+      if (sk.fx === "pierce") return "pierce";
+      if (sk.fx === "multi") return "multi";
+      if (sk.stun) return "quake";
+      if (sk.fx === "orb") return "fire";
+      if (sk.fx === "shot") return "arrowpierce";
+      if (sk.fx === "stab") return "bleedstab";
+      return "snipe"; // generic bright starburst impact
+    };
+    // 🎬 class attack gesture FX at the target (mirrors the arena's melee/cast tell)
+    const worldGestureFx = (pos, col) => {
+      if (G.cls === "warrior" || G.cls === "samurai") fireSlash(pos, col);
+      else if (G.cls === "lancer") spawnSkillFx("pierce", pos, col);
+      else if (G.cls === "mage" || G.cls === "coder" || G.cls === "office") fireShock(pos, col);
+      else fireSlash(pos, col);
+    };
     G.worldAttack = () => {
       if (G.mode !== "explore" || G.banim) return;
       const m = nearestWild(worldRange());
@@ -12584,8 +12615,14 @@ export default function CherryAdventure() {
       worldSwing();
       const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
       const dmg = (effAtk() + Math.random() * 4) * (crit ? 2 : 1);
-      if (worldRange() > 4) spawnSkillFx(G.cls === "mage" ? "orb" : "bolt", m.position, G.cls === "mage" ? 0x8a5cff : 0xf5d24a);
-      hurtWild(m, dmg, { crit, color: 0xffe08a });
+      // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
+      if (worldRange() > 4) {
+        spawnSkillFx(G.cls === "archer" ? "arrowpierce" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
+      } else {
+        worldGestureFx(m.position, crit ? 0xffd24a : 0xffe08a);
+      }
+      if (crit) G._camShake = Math.max(G._camShake || 0, 0.18);
+      hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a });
       if (G.sfx) G.sfx.hit && G.sfx.hit();
     };
     G.worldSkill = (id) => {
@@ -12603,20 +12640,23 @@ export default function CherryAdventure() {
       worldSwing();
       const base = (effAtk() + Math.random() * 4) * (sk.mult || 1) * (1 + ((rank - 1) * (sk.perLv || 0)));
       const col = sk.color || 0xffd24a;
-      const applyTo = (m) => {
+      const applyDmg = (m) => {
         const crit = !!sk.guaranteedCrit || Math.random() < (0.08 + effCrit() / 100 + (sk.critBonus || 0));
         let d = base;
-        if (sk.hits && sk.hits > 1 && !aoe) d = base * sk.hits; // multi-hit on one target
+        if (sk.hits && sk.hits > 1 && !aoe) d = base * sk.hits; // multi-hit lands on the one target
         d *= (crit ? 2 : 1);
         hurtWild(m, d, { crit, color: col });
-        spawnSkillFx(sk.fx === "quake" ? "quake" : sk.fx === "bolt" ? "bolt" : "orb", m.position, col);
       };
+      // 🎬 signature FX + class gesture at the focus, exactly like the arena
+      const fk = worldFxFor(sk);
+      worldGestureFx(focus.position, col);
+      spawnSkillFx(fk, (fk === "healbless" || fk === "warfrenzy") ? char.position : focus.position, col);
+      G._camShake = Math.max(G._camShake || 0, aoe ? 0.35 : 0.22);
       if (aoe) {
-        const targets = wildsInRadius(focus.position.x, focus.position.z, 3.2);
-        (targets.length ? targets : [focus]).forEach(applyTo);
-        G._camShake = Math.max(G._camShake || 0, 0.25);
+        const targets = wildsInRadius(focus.position.x, focus.position.z, 3.4);
+        (targets.length ? targets : [focus]).forEach(applyDmg);
         toast(`${sk.emoji || "✨"} ${sk.name} — โจมตีหมู่ ${targets.length || 1} ตัว!`);
-      } else applyTo(focus);
+      } else applyDmg(focus);
       if (G.sfx) G.sfx.skill && G.sfx.skill();
       syncPlayer();
     };
@@ -13203,6 +13243,35 @@ export default function CherryAdventure() {
       // 6) no mana → occasionally still just attack
       G._lastSkill = null;
       G.act("attack");
+    };
+    // 🤖🗺️ auto open-world combat — pick a skill (or basic attack) against nearby wilds, like auto 1-v-1
+    const autoWorldAct = () => {
+      if (G.mode !== "explore" || G.banim) return;
+      const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
+      // top up HP with a potion when low
+      if (G.player.hp < effMaxHp() * 0.35 && G.potions > 0) { G.usePotion(); return; }
+      // a mage/priest with a heal skill & hurt → heal (cast targets self-safely via the arena FX path)
+      if (G.player.hp < effMaxHp() * 0.5) {
+        const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
+        if (healSk && Math.random() < 0.7) { G.player.mp -= (healSk.cost || 8); G.player.hp = Math.min(effMaxHp(), G.player.hp + effMaxHp() * (healSk.heal || 0.3)); spawnSkillFx("healbless", char.position, healSk.color || 0xffe9a0); popDamage(char.position, effMaxHp() * (healSk.heal || 0.3), "heal"); syncPlayer(); return; }
+      }
+      const affordable = skillsOf(G.cls, G.pathId).filter((sk) => !sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
+      if (affordable.length && Math.random() < 0.8) {
+        const many = wildsInRadius(char.position.x, char.position.z, worldRange() + 1).length >= 2;
+        const scored = affordable.map((sk) => {
+          const r = G.skillRanks[sk.id] || 1;
+          let w = (sk.mult + sk.perLv * (r - 1)) * (sk.hits || 1) + r * 0.25;
+          if (many && isAoeSkill(sk)) w *= 2.4;       // gang of foes → favour AoE
+          if (!many && isAoeSkill(sk)) w *= 0.7;      // lone foe → prefer single-target
+          if (G._lastSkill === sk.id) w *= 0.4;       // avoid spamming one skill
+          return { sk, w: Math.max(0.1, w) };
+        });
+        const total = scored.reduce((a, s) => a + s.w, 0);
+        let roll = Math.random() * total; let chosen = scored[0].sk;
+        for (const s of scored) { roll -= s.w; if (roll <= 0) { chosen = s.sk; break; } }
+        G._lastSkill = chosen.id; G.worldSkill(chosen.id); return;
+      }
+      G._lastSkill = null; G.worldAttack();
     };
 
     // ---------- Input (tap-to-move + keys + pinch zoom) ----------
@@ -15191,6 +15260,16 @@ export default function CherryAdventure() {
               G.huntTarget = targetMesh; // follow it as it wanders; cleared on engage
             }
           }
+          // 🤖⚔️ open-world auto combat — once a normal wild is in range, stand & fight with skills
+          if (G.actionMode && !G.banim) {
+            const foe = nearestWild(worldRange() + 0.5);
+            if (foe) {
+              const fd = Math.hypot(foe.position.x - char.position.x, foe.position.z - char.position.z);
+              if (fd <= worldRange() * 0.92) { G.moveTarget = null; G.huntTarget = null; } // stand off at attack range
+              G.autoWT = (G.autoWT || 0) + dt;
+              if (G.autoWT > 0.5) { G.autoWT = 0; autoWorldAct(); }
+            }
+          }
         }
 
         // ---------- smooth physics-based locomotion ----------
@@ -15377,6 +15456,23 @@ export default function CherryAdventure() {
         // hair trails behind the motion (strand sway handled by hairSwayParts)
         const hairSway = Math.sin(G.walkPhase - 0.7) * 0.14 * moveAmt - moveAmt * 0.12;
         hairBack.rotation.x += (hairSway * 0.4 - hairBack.rotation.x) * Math.min(1, dt * 6);
+
+        // ⚔️🎬 open-world attack swing — overrides the walk pose for a brief strike (mirrors the arena tell)
+        if (G._worldSwingT > 0) {
+          G._worldSwingT = Math.max(0, G._worldSwingT - dt);
+          const s = Math.min(1, 1 - G._worldSwingT / 0.28); // 0→1 across the swing
+          const sw = Math.sin(s * Math.PI);                  // ease up then back down
+          if (G.cls === "archer" || G.cls === "lancer") {
+            armR.rotation.x = -0.3 - 1.3 * sw;               // draw the bow / thrust the spear forward
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.35 * sw;
+          } else if (G.cls === "mage" || G.cls === "coder" || G.cls === "office") {
+            armR.rotation.x = -0.9 - 1.05 * sw; armR.rotation.z = 0.12 + 0.22 * sw; // raise the staff to cast
+            armL.rotation.x = -1.35 - 0.35 * sw;
+          } else {
+            armR.rotation.x = -1.75 * sw; armR.rotation.z = 0.12 - 0.55 * sw;        // overhead slash
+            char.rotation.z += sw * 0.12;
+          }
+        }
 
         // buddy follows with its own inertia
         if (buddyMesh) {
@@ -22376,18 +22472,20 @@ export default function CherryAdventure() {
             const list = skillsOf(ui.cls, ui.pathId) || [];
             const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
             return (
-              <div style={{ position: "absolute", right: 14, ...(_shortHud ? { bottom: 6 } : { bottom: 92 }), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 24, pointerEvents: "auto" }}>
-                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 168 }}>
+              // anchored to the LEFT of the right-edge utility column (potion/mount/quest/pet) so the
+              // skill buttons never sit on top of them while roaming
+              <div style={{ position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" }}>
                   {skills.map((sk) => {
                     const cost = sk.cost || 0;
                     const afford = (ui.mp || 0) >= cost;
                     const aoe = isAoeSkill(sk);
                     return (
                       <button key={sk.id} onClick={() => G.worldSkill(sk.id)} title={`${sk.name} · 💧${cost}`} style={{
-                        width: 48, height: 48, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
+                        width: 46, height: 46, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
                         cursor: afford ? "pointer" : "not-allowed", position: "relative",
                         background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: afford ? 1 : 0.45,
-                        boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: 21, color: "#fff", fontFamily: font,
+                        boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: 20, color: "#fff", fontFamily: font,
                       }}>
                         {sk.emoji || "✨"}
                         <span style={{ position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>{cost}</span>
@@ -22397,9 +22495,9 @@ export default function CherryAdventure() {
                   })}
                 </div>
                 <button onClick={() => G.worldAttack()} title="โจมตี" style={{
-                  width: 72, height: 72, borderRadius: "50%", border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer",
-                  background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: 32,
-                  boxShadow: "0 5px 16px rgba(217,54,74,0.55)", fontFamily: font,
+                  width: 66, height: 66, borderRadius: "50%", border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer",
+                  background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: 30,
+                  boxShadow: "0 5px 16px rgba(217,54,74,0.55)", fontFamily: font, pointerEvents: "auto",
                 }}>⚔️</button>
               </div>
             );
