@@ -10571,6 +10571,24 @@ export default function CherryAdventure() {
         crit: Math.round((it.crit || 0) * m * q) + gb.crit,
       };
     };
+    // 🔎 full item detail for the inventory popup (name, image, stats, actions state)
+    G.itemInfo = (id) => {
+      const it = LOOT.find((x) => x.id === id);
+      if (!it) return null;
+      const r = rollOf(id);
+      const px = r ? prefixOf(r.p) : null;
+      const count = (G.inv || []).filter((x) => x === id).length;
+      const equipped = !!(G.equip && G.equip[it.slot] === id);
+      const plus = (G.plus || {})[id] || 0;
+      const cap = Math.min(5, 1 + Math.floor((G.player ? G.player.level : 1) / 2));
+      const locked = !!(it.req && (G.player ? G.player.level : 1) < it.req);
+      return {
+        id, name: it.name, emoji: it.emoji, slot: it.slot, slotName: SLOT_NAMES[it.slot] || it.slot, slotIcon: SLOT_ICON[it.slot] || "",
+        rarity: it.rarity, rarityName: (RARITY[it.rarity] || {}).name || it.rarity, rarityColor: (RARITY[it.rarity] || {}).color || "#8a9aa8",
+        stats: itemStats(id), elem: it.elem || null, req: it.req || 0, cls: it.cls || null, locked, count, equipped, plus, cap,
+        prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.WB_DUST_COST || 30,
+      };
+    };
     // 🎁 THE one way items enter the bag — guarantees every drop gets a quality roll
     const gainItem = (id) => {
       if (!id) return;
@@ -23298,7 +23316,7 @@ export default function CherryAdventure() {
               const plus = (ui.plus || {})[id] || 0;
               const locked = it.req && ui.level < it.req;
               return (
-                <button key={id} onClick={() => G.equipItem(id)} style={{ position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: equipped ? `2px solid ${RARITY[it.rarity].color}` : "2px solid #33402f", background: `linear-gradient(135deg, ${RARITY[it.rarity].color}22, #1c231d)`, display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.55 : 1 }}>
+                <button key={id} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: equipped ? `2px solid ${RARITY[it.rarity].color}` : "2px solid #33402f", background: `linear-gradient(135deg, ${RARITY[it.rarity].color}22, #1c231d)`, display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.55 : 1 }}>
                   <span style={{ fontSize: 22 }}>{it.emoji}</span>
                   {plus > 0 && <span style={{ position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" }}>+{plus}</span>}
                   {count > 1 && <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>×{count}</span>}
@@ -24396,6 +24414,83 @@ export default function CherryAdventure() {
                   <button onClick={() => G.wbLeave()} style={{ marginTop: 8, width: "100%", padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#e8d0c0", background: "rgba(255,255,255,0.12)" }}>ออกก่อน (ไว้มาต่อ)</button>
                 </>
               )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 🎒 inventory item popup — name, image, stats + close / equip / unequip / enhance */}
+      {ui.equipScreen && ui.invSel && (() => {
+        const info = G.itemInfo(ui.invSel);
+        if (!info) return null;
+        const id = info.id;
+        const s = info.stats || {};
+        const rate = info.plus < 3 ? 100 : info.plus === 3 ? 70 : 50;
+        const rows = [
+          s.atk && ["⚔️ พลังโจมตี", `+${s.atk}`], s.hp && ["❤️ พลังชีวิต", `+${s.hp}`],
+          s.def && ["🛡️ ป้องกัน", `+${s.def}`], s.spd && ["👟 ความเร็ว", `+${s.spd}%`],
+          s.eva && ["💨 หลบหลีก", `+${s.eva}%`], s.crit && ["🎯 คริติคอล", `+${s.crit}%`],
+        ].filter(Boolean);
+        const close = () => setUi((u) => ({ ...u, invSel: null }));
+        return (
+          <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(10,14,10,0.72)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: "86%", maxWidth: 340, background: "linear-gradient(180deg,#2c362e,#20281f)", borderRadius: 16, padding: 16, border: `2px solid ${info.rarityColor}`, boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
+              {/* header: image + name */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 62, height: 62, borderRadius: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38, background: `linear-gradient(135deg, ${info.rarityColor}33, #10160f)`, border: `2px solid ${info.rarityColor}` }}>{info.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: info.rarityColor }}>{info.name}{info.plus > 0 && <span style={{ color: "#f5c542" }}> +{info.plus}</span>}</div>
+                  <div style={{ fontSize: 10.5, color: "#b8c0a8", fontWeight: 700 }}>[{info.rarityName}] {info.slotIcon} {info.slotName}{info.count > 1 ? ` · มี ${info.count} ชิ้น` : ""}</div>
+                  {info.prefix && <div style={{ fontSize: 10, fontWeight: 800, color: "#e0b060" }}>✨ {info.prefix}</div>}
+                  {info.equipped && <div style={{ fontSize: 10, fontWeight: 800, color: "#8ae0a0" }}>✓ กำลังสวมใส่</div>}
+                </div>
+              </div>
+              {info.elem && ELEM_META[info.elem] && (
+                <div style={{ display: "inline-block", fontSize: 10.5, fontWeight: 800, color: "#f5a05a", background: "rgba(245,120,60,0.16)", borderRadius: 999, padding: "2px 9px", marginTop: 8 }}>
+                  {ELEM_META[info.elem].emoji} ธาตุ{ELEM_META[info.elem].name}
+                </div>
+              )}
+              {/* stats */}
+              <div style={{ background: "rgba(0,0,0,0.28)", borderRadius: 10, padding: "9px 11px", marginTop: 10 }}>
+                {rows.length ? rows.map(([lb, val]) => (
+                  <div key={lb} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "2px 0" }}>
+                    <span style={{ color: "#b8c0a8", fontWeight: 700 }}>{lb}</span>
+                    <span style={{ color: "#9ae86a", fontWeight: 900 }}>{val}</span>
+                  </div>
+                )) : <div style={{ fontSize: 11, color: "#8a9080" }}>ไม่มีค่าสถานะพิเศษ</div>}
+                {info.plus > 0 && <div style={{ fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" }}>⚒️ ตีบวก +{info.plus}</div>}
+              </div>
+              {info.req > 0 && (
+                <div style={{ fontSize: 10.5, fontWeight: 800, color: info.locked ? "#e08080" : "#8ae0a0", marginTop: 7 }}>
+                  {info.locked ? `🔒 ต้องถึงเลเวล ${info.req} จึงจะสวมได้` : `✅ ใช้ได้ (Lv.${info.req})`}
+                </div>
+              )}
+              {/* actions: equip / unequip / enhance */}
+              <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+                <button onClick={() => { G.equipItem(id); }} disabled={info.equipped || info.locked} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
+                  cursor: (info.equipped || info.locked) ? "not-allowed" : "pointer", color: "#fff",
+                  background: (info.equipped || info.locked) ? "#5a6450" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
+                }}>🎽 สวมใส่</button>
+                <button onClick={() => { G.unequipSlot(info.slot); }} disabled={!info.equipped} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
+                  cursor: info.equipped ? "pointer" : "not-allowed", color: "#fff",
+                  background: info.equipped ? "linear-gradient(90deg,#b06a4a,#c08a5a)" : "#5a6450",
+                }}>👕 ถอด</button>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                <button onClick={() => { G.enhance(id); }} disabled={!info.canEnhance} title={info.canEnhance ? "" : "ต้องมีของชิ้นเดียวกันซ้ำอีก 1 ชิ้น · เพดานตามเลเวล"} style={{
+                  flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                  cursor: info.canEnhance ? "pointer" : "not-allowed", color: "#fff",
+                  background: info.canEnhance ? "linear-gradient(90deg,#59a0e8,#7ad0e8)" : "#5a6450",
+                }}>⚒️ ตีบวก +{info.plus + 1} ({rate}%)</button>
+                <button onClick={() => { G.enhanceDust(id); }} disabled={info.plus >= 5 || info.plus >= info.cap} title={`ตีบวกการันตีด้วยผงเพชร ${info.dustCost}💠 (มี ${info.gemDust})`} style={{
+                  flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                  cursor: (info.plus >= 5 || info.plus >= info.cap) ? "not-allowed" : "pointer", color: "#fff",
+                  background: (info.plus >= 5 || info.plus >= info.cap) ? "#5a6450" : "linear-gradient(90deg,#c0392b,#f5a623)",
+                }}>💠 การันตี ({info.dustCost})</button>
+              </div>
+              <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
             </div>
           </div>
         );
