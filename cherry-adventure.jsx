@@ -21528,22 +21528,23 @@ export default function CherryAdventure() {
       {/* ===== explore HUD ===== */}
       {/* 🏆 top-left world leaderboard (top 5) — auto-reload every 10 min or on 🔄 */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{ position: "absolute", top: 10, left: 10, width: 174, maxWidth: "50vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
+        <div style={{ position: "absolute", top: 10, left: 10, width: 196, maxWidth: "56vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
             <div style={{ flex: 1 }} />
             <button onClick={() => G.refreshBoard && G.refreshBoard()} title="รีเฟรช" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 }}>🔄</button>
           </div>
-          {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => (
-            <div key={r.pid || i} style={{ marginBottom: 3, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                <span style={{ width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" }}>{i + 1}</span>
-                <span style={{ flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
-                <span style={{ fontWeight: 800, color: "#9ad0ff" }}>Lv.{r.lv}{(r.ng || 0) > 0 ? <span style={{ color: "#ff9a6a" }}> ⚡{r.ng}</span> : null}</span>
-              </div>
-              <div style={{ fontSize: 8.5, color: "#b8a8d0", paddingLeft: 20 }}>⚔️ พลังรวม {powerOf(r).toLocaleString()}</div>
+          {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => {
+            const pw = powerOf(r); const pwS = pw >= 1000 ? (pw / 1000).toFixed(1) + "k" : String(pw);
+            return (
+            <div key={r.pid || i} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 9.5, marginBottom: 2, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
+              <span style={{ width: 13, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" }}>{i + 1}</span>
+              <span style={{ flex: 1, minWidth: 0, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
+              <span style={{ fontWeight: 800, color: "#9ad0ff", whiteSpace: "nowrap" }}>Lv{r.lv}{(r.ng || 0) > 0 ? <span style={{ color: "#ff9a6a" }}> ⚡{r.ng}</span> : null}</span>
+              <span style={{ fontWeight: 800, color: "#c0f08a", whiteSpace: "nowrap" }}>⚔️{pwS}</span>
             </div>
-          )) : (
+            );
+          }) : (
             <div style={{ fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" }}>{ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด"}</div>
           )}
         </div>
