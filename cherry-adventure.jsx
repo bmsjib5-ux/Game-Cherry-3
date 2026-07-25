@@ -12757,12 +12757,14 @@ export default function CherryAdventure() {
           setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh) spawnAdvImpact(0xffffff, G.enemy.mesh.position, true); }, dly2 + 500 / (G.battleSpeed || 1)); }
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, advUltUsed: true, msg: `👑 ${AU.emoji} ${AU.name}!!` }));
       } else if (kind === "catch") {
+        if (G.enemy && G.enemy.worldBoss) { toast("👹 จับบอสโลกไม่ได้!"); return; } // world boss cannot be captured
         if (G.player.balls <= 0) { toast("บอลหัวใจหมด! ชนะศึกเพื่อรับเพิ่ม"); return; }
         G.player.balls--;
         G.banim = { type: "throwBall", t: 0, dur: 1.9 };
         setUi((u) => ({ ...u, bstate: "busy", msg: "💗 ขว้างบอลหัวใจ!" }));
         syncPlayer();
       } else if (kind === "run") {
+        if (G.enemy && G.enemy.worldBoss) { G.wbEndRound("flee"); return; } // fleeing the boss saves its HP + shows the round result
         setUi((u) => ({ ...u, msg: "วิ่งหนีสำเร็จ!" }));
         endBattle(true);
       }
@@ -24193,7 +24195,7 @@ export default function CherryAdventure() {
                 <>
                   {/* มุมล่างซ้าย: จับ / เลือด / มานา / หนี */}
                   <div style={cornerStyle("left")}>
-                    {iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" })}
+                    {!(ui.enemy && ui.enemy.worldBoss) && iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" })}
                     {iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, { title: "น้ำยาเพิ่มเลือด", badgeBg: "#3a8050" })}
                     {iconBtn("💧", "#4a90c0", () => G.useManaPotion(), ui.mpPotions, { title: "น้ำยาเพิ่มมานา", badgeBg: "#3a70a0" })}
                     {iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })}
@@ -24256,8 +24258,8 @@ export default function CherryAdventure() {
             >
               🤖 AUTO {ui.auto ? "ON" : "OFF"}
             </button>
-            {/* ⏩ battle speed — hidden during the world boss (no speed-up allowed) */}
-            {!ui.wbActive && (
+            {/* ⏩ battle speed — hidden only while fighting the world boss; returns once the fight is over */}
+            {!(ui.enemy && ui.enemy.worldBoss) && (
             <button
               onClick={() => G.cycleSpeed()}
               style={{
@@ -24415,9 +24417,9 @@ export default function CherryAdventure() {
                 </>
               ) : (
                 <>
-                  <div style={{ textAlign: "center", fontSize: 38 }}>{r.reason === "dead" ? "💀" : "⏱️"}</div>
+                  <div style={{ textAlign: "center", fontSize: 38 }}>{r.reason === "dead" ? "💀" : r.reason === "flee" ? "🏃" : "⏱️"}</div>
                   <div style={{ textAlign: "center", fontSize: 16, fontWeight: 900, color: "#f0a0b0" }}>
-                    {r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : "หมดเวลารอบนี้!"}
+                    {r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : r.reason === "flee" ? "หนีออกจากการต่อสู้" : "หมดเวลารอบนี้!"}
                   </div>
                   <div style={{ textAlign: "center", fontSize: 11.5, color: "#e0c0c8", marginTop: 4 }}>บอสยังไม่ตาย — เลือดคงไว้ที่เดิม สู้ต่อได้เลย</div>
                   <div style={{ marginTop: 12 }}>

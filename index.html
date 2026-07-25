@@ -16924,6 +16924,10 @@ function CherryAdventure() {
                 setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, advUltUsed: true, msg: `👑 ${AU.emoji} ${AU.name}!!` }));
             }
             else if (kind === "catch") {
+                if (G.enemy && G.enemy.worldBoss) {
+                    toast("👹 จับบอสโลกไม่ได้!");
+                    return;
+                } // world boss cannot be captured
                 if (G.player.balls <= 0) {
                     toast("บอลหัวใจหมด! ชนะศึกเพื่อรับเพิ่ม");
                     return;
@@ -16934,6 +16938,10 @@ function CherryAdventure() {
                 syncPlayer();
             }
             else if (kind === "run") {
+                if (G.enemy && G.enemy.worldBoss) {
+                    G.wbEndRound("flee");
+                    return;
+                } // fleeing the boss saves its HP + shows the round result
                 setUi((u) => ({ ...u, msg: "วิ่งหนีสำเร็จ!" }));
                 endBattle(true);
             }
@@ -31983,7 +31991,7 @@ function CherryAdventure() {
                     });
                     return (React.createElement(React.Fragment, null,
                         React.createElement("div", { style: cornerStyle("left") },
-                            iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" }),
+                            !(ui.enemy && ui.enemy.worldBoss) && iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" }),
                             iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, { title: "น้ำยาเพิ่มเลือด", badgeBg: "#3a8050" }),
                             iconBtn("💧", "#4a90c0", () => G.useManaPotion(), ui.mpPotions, { title: "น้ำยาเพิ่มมานา", badgeBg: "#3a70a0" }),
                             iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })),
@@ -32031,7 +32039,7 @@ function CherryAdventure() {
                     } },
                     "\uD83E\uDD16 AUTO ",
                     ui.auto ? "ON" : "OFF"),
-                !ui.wbActive && (React.createElement("button", { onClick: () => G.cycleSpeed(), style: {
+                !(ui.enemy && ui.enemy.worldBoss) && (React.createElement("button", { onClick: () => G.cycleSpeed(), style: {
                         marginLeft: 8, padding: "6px 16px", borderRadius: 999, border: "none", cursor: "pointer",
                         fontSize: 12.5, fontWeight: 800, fontFamily: font,
                         color: (ui.battleSpeed || 1) > 1 ? "#fff" : "#e0894a",
@@ -32164,8 +32172,8 @@ function CherryAdventure() {
                             "\u2B50 \u0E02\u0E2D\u0E07\u0E15\u0E33\u0E19\u0E32\u0E19! ",
                             itemName(r.legend || ""))) : (React.createElement("div", { style: { marginTop: 8, textAlign: "center", fontSize: 10, color: "#a89888" } }, "\u2B50 \u0E02\u0E2D\u0E07\u0E15\u0E33\u0E19\u0E32\u0E19: \u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E23\u0E2D\u0E1A\u0E19\u0E35\u0E49 (\u0E42\u0E2D\u0E01\u0E32\u0E2A 20%)"))),
                     React.createElement("button", { onClick: () => G.wbLeave(), style: { marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ba05b)" } }, "\u0E23\u0E31\u0E1A\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25 & \u0E2D\u0E2D\u0E01 \uD83C\uDF89"))) : (React.createElement(React.Fragment, null,
-                    React.createElement("div", { style: { textAlign: "center", fontSize: 38 } }, r.reason === "dead" ? "💀" : "⏱️"),
-                    React.createElement("div", { style: { textAlign: "center", fontSize: 16, fontWeight: 900, color: "#f0a0b0" } }, r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : "หมดเวลารอบนี้!"),
+                    React.createElement("div", { style: { textAlign: "center", fontSize: 38 } }, r.reason === "dead" ? "💀" : r.reason === "flee" ? "🏃" : "⏱️"),
+                    React.createElement("div", { style: { textAlign: "center", fontSize: 16, fontWeight: 900, color: "#f0a0b0" } }, r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : r.reason === "flee" ? "หนีออกจากการต่อสู้" : "หมดเวลารอบนี้!"),
                     React.createElement("div", { style: { textAlign: "center", fontSize: 11.5, color: "#e0c0c8", marginTop: 4 } }, "\u0E1A\u0E2D\u0E2A\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E15\u0E32\u0E22 \u2014 \u0E40\u0E25\u0E37\u0E2D\u0E14\u0E04\u0E07\u0E44\u0E27\u0E49\u0E17\u0E35\u0E48\u0E40\u0E14\u0E34\u0E21 \u0E2A\u0E39\u0E49\u0E15\u0E48\u0E2D\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22"),
                     React.createElement("div", { style: { marginTop: 12 } },
                         React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#f5d0a0", marginBottom: 3 } },
