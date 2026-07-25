@@ -9201,12 +9201,31 @@ export default function CherryAdventure() {
     // 🐾 add/remove a pet from the active team (max 3); slot 0 = walking buddy
     G.petSkillLv = G.petSkillLv || {};
     // 📦 PET BOX — สัตว์เลี้ยงรายตัว 1 ตัว/ช่อง (สูงสุด 30) แต่ละตัวมีบัฟประจำตัว (IV) ไม่ซ้ำกัน
-    G.PETBOX_MAX = 30;
+    G.PETBOX_MAX = 30; // 📦 ช่องเริ่มต้น
+    G.petSlotsBought = G.petSlotsBought || 0; // 🛒 ช่องที่ซื้อเพิ่ม
+    G.petCap = () => G.PETBOX_MAX + (G.petSlotsBought || 0); // ความจุกล่องรวม
+    // 💰 5 ช่องแรกช่องละ 10,000 ทอง · หลังจากนั้นช่องละ 10 เพชร
+    G.petSlotCost = () => (G.petSlotsBought || 0) < 5 ? { kind: "gold", amount: 10000 } : { kind: "diamond", amount: 10 };
+    G.buyPetSlot = () => {
+      const c = G.petSlotCost();
+      if (c.kind === "gold") {
+        if ((G.gold || 0) < c.amount) { toast(`💰 ทองไม่พอ! ต้องใช้ ${c.amount.toLocaleString()} ทอง`); return; }
+        G.gold -= c.amount;
+      } else {
+        if ((G.diamonds || 0) < c.amount) { toast(`💎 เพชรไม่พอ! ต้องใช้ ${c.amount} เพชร`); return; }
+        G.diamonds -= c.amount;
+      }
+      G.petSlotsBought = (G.petSlotsBought || 0) + 1;
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      toast(`📦✨ เพิ่มช่องสัตว์เลี้ยง! ตอนนี้ ${G.petCap()} ช่อง`);
+      setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })), gold: G.gold, diamonds: G.diamonds, petSlotsBought: G.petSlotsBought }));
+      if (G.saveGame) G.saveGame();
+    };
     G.petBox = G.petBox || [];
     G._petSeq = G._petSeq || 1;
     const rollIv = (spId) => { const t = (SPECIES[spId] && SPECIES[spId].tier) || 1; return { a: Math.floor(Math.random() * (3 + t * 2)), h: Math.floor(Math.random() * (5 + t * 3)), d: Math.floor(Math.random() * (2 + t)) }; };
     G.addPetInstance = (spId, base) => {
-      if ((G.petBox || []).length >= G.PETBOX_MAX) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.PETBOX_MAX} ช่อง) — ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
+      if ((G.petBox || []).length >= G.petCap()) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.petCap()} ช่อง) — ซื้อช่องเพิ่ม/ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
       const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, fresh: 1, iv: rollIv(spId) }, base || {}); // 🆕 ติดป้าย "ใหม่" จนกว่าจะเปิดดู
       G.dexSeen = G.dexSeen || {}; G.dexSeen[spId] = 1; // 📖 สมุดภาพจารึกถาวร — ผสม/ขายภายหลังก็ไม่หาย
       G.petBox.push(inst);
@@ -9270,26 +9289,23 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, petSkillLv: { ...G.petSkillLv }, petSp: G.petSp }));
       syncPlayer();
     };
-    // 🔮 เลือก/ยกเลิกเลือกสัตว์เพื่อผสม (ช่องเลือกสูงสุด 2 — คลิกซ้ำเพื่อยกเลิก, เลือกตัวที่ 3 จะแทนที่ตัวเก่าสุด)
+    // 🔮 เลือก/ยกเลิกเลือกสัตว์เพื่อผสม — เลือกได้หลายตัว (ผสมทีละหลายคู่ในครั้งเดียว)
     G.toggleFuse = (iid) => {
       if (G.petInUse(iid)) { toast("⛔ ตัวในทีม/บัดดี้ ห้ามผสม — ถอดออกก่อน"); return; }
       setUi((u) => {
-        let a = u.fuseA, b = u.fuseB;
-        if (a === iid) a = null;               // คลิกซ้ำตัว A → ยกเลิก
-        else if (b === iid) b = null;          // คลิกซ้ำตัว B → ยกเลิก
-        else if (a == null) a = iid;           // ช่องแรกว่าง
-        else if (b == null) b = iid;           // ช่องสองว่าง
-        else { a = b; b = iid; }               // เต็มทั้งคู่ → เลื่อนแทนที่ตัวเก่าสุด
-        return { ...u, fuseA: a, fuseB: b, fuseAsk: null };
+        const sel = (u.fuseSel || []).slice();
+        const i = sel.indexOf(iid);
+        if (i >= 0) sel.splice(i, 1); else sel.push(iid);
+        return { ...u, fuseSel: sel, fuseAsk: null };
       });
     };
-    // 🔮 fuse two pets → a random rarer one (both consumed)
-    G.fusePets = (iidA, iidB) => {
+    G.clearFuse = () => setUi((u) => ({ ...u, fuseSel: [], fuseAsk: null }));
+    // 🔮 core: fuse two pets → a random rarer one (both consumed). returns the result species id, or null.
+    G._fuseCore = (iidA, iidB) => {
       const instA = G.petAt(iidA), instB = G.petAt(iidB);
-      if (!instA || !instB || iidA === iidB) { toast("เลือกสัตว์เลี้ยง 2 ตัวที่ต่างกัน"); return; }
-      if (G.petInUse(iidA) || G.petInUse(iidB)) { toast("⛔ ตัวที่อยู่ในทีมหรือเป็นบัดดี้ ห้ามผสม — ถอดออกก่อน"); return; }
+      if (!instA || !instB || iidA === iidB) return null;
+      if (G.petInUse(iidA) || G.petInUse(iidB)) return null;
       const idA = instA.sp, idB = instB.sp;
-      // result: a higher-tier species
       // ⚖️ rarity-scaled fusion: high-tier parents can birth legendary/mythic companions
       const maxTier = Math.max(SPECIES[idA].tier, SPECIES[idB].tier);
       const bothHigh = SPECIES[idA].tier >= 4 && SPECIES[idB].tier >= 4;
@@ -9298,19 +9314,46 @@ export default function CherryAdventure() {
       let pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt);
       while (!pool.length && rt > 1) { rt--; pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt); }
       const result = pool[Math.floor(Math.random() * pool.length)];
-      // 📖 สมุดภาพจารึกถาวร — ตัวที่นำมาผสม (ทั้งคู่) + ตัวที่ได้ใหม่ ต้องไม่หายจากสมุดภาพ
       G.dexSeen = G.dexSeen || {};
       G.dexSeen[idA] = 1; G.dexSeen[idB] = 1; G.dexSeen[result] = 1;
-      // 🔥 ทั้งสองตัวหายไปจากกล่อง → ได้ตัวใหม่ (IV สุ่มใหม่) แต่สมุดภาพยังอยู่ครบ
       G.petBox = G.petBox.filter((x) => x.i !== iidA && x.i !== iidB);
       const newStage = Math.min(3, Math.max(instA.stage, instB.stage));
-      const inst = G.addPetInstance(result, { lv: 3, stage: newStage });
-      G.col[result] = (G.col[result] || 0) + 1; // สมุดภาพนับสะสม
+      G.addPetInstance(result, { lv: 3, stage: newStage });
+      G.col[result] = (G.col[result] || 0) + 1;
+      return result;
+    };
+    // 🔮 fuse one pair (kept for compatibility)
+    G.fusePets = (iidA, iidB) => {
+      const result = G._fuseCore(iidA, iidB);
+      if (!result) { toast("เลือกสัตว์เลี้ยง 2 ตัวที่ต่างกัน (ห้ามตัวในทีม/บัดดี้)"); return; }
       if (G.sfx) G.sfx.catch();
-      toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]${inst ? ` (พรสวรรค์ ${inst.iv.a + inst.iv.h + inst.iv.d})` : ""}!`);
+      toast(`🔮✨ ผสมสำเร็จ! ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]!`);
       if (SPECIES[result].tier >= 5 && G.announce) G.announce(`🔮 ${G.playerName || "ผู้เล่น"} ผสมพันธุ์ได้ ${SPECIES[result].emoji} ${SPECIES[result].name} [${petRarity(result).name}]!`);
-      setUi((u) => ({ ...u, col: { ...G.col }, petBox: (G.petBox || []).map((x) => ({ ...x })), team: [...(G.team || [])], fuseA: null, fuseB: null, fuseAsk: null }));
+      setUi((u) => ({ ...u, col: { ...G.col }, petBox: (G.petBox || []).map((x) => ({ ...x })), team: [...(G.team || [])], fuseSel: [], fuseAsk: null }));
       syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // 🔮🔮 batch: fuse ALL selected pets in pairs (2 by 2) in one go — ผสมทีละหลายคู่
+    G.fuseBatch = () => {
+      // read the selection from the live ui inside setUi (avoids stale G.ui)
+      setUi((u) => {
+        const ids = (u.fuseSel || []).filter((iid) => G.petAt(iid) && !G.petInUse(iid));
+        if (ids.length < 2) { toast("เลือกอย่างน้อย 2 ตัวเพื่อผสม"); return { ...u, fuseAsk: null }; }
+        const results = [];
+        let best = null;
+        for (let k = 0; k + 1 < ids.length; k += 2) {
+          const r = G._fuseCore(ids[k], ids[k + 1]);
+          if (r) { results.push(r); if (!best || SPECIES[r].tier > SPECIES[best].tier) best = r; }
+        }
+        const leftover = ids.length % 2 === 1;
+        if (results.length) {
+          if (G.sfx) G.sfx.catch();
+          toast(`🔮✨ ผสม ${results.length} คู่สำเร็จ!${best ? ` ตัวเด่น: ${SPECIES[best].emoji} ${SPECIES[best].name} [${petRarity(best).name}]` : ""}${leftover ? " · เหลือ 1 ตัวไม่มีคู่" : ""}`);
+          const legend = results.find((r) => SPECIES[r].tier >= 5);
+          if (legend && G.announce) G.announce(`🔮 ${G.playerName || "ผู้เล่น"} ผสมพันธุ์ได้ ${SPECIES[legend].emoji} ${SPECIES[legend].name} [${petRarity(legend).name}]!`);
+          syncPlayer(); if (G.saveGame) G.saveGame();
+        }
+        return { ...u, col: { ...G.col }, petBox: (G.petBox || []).map((x) => ({ ...x })), team: [...(G.team || [])], fuseSel: [], fuseAsk: null };
+      });
     };
 
     // ---------- FX ----------
@@ -13445,7 +13488,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -14343,6 +14386,7 @@ export default function CherryAdventure() {
       [Object.keys(d.col || {}), Object.keys(d.pets || {}), (Array.isArray(d.petBox) ? d.petBox.map((p) => p && p.sp) : [])].flat().forEach((k) => { if (k && SPECIES[k]) G.dexSeen[k] = 1; }); // 🔁 เติมทะเบียนจากเซฟเก่า
       G.petBox = Array.isArray(d.petBox) ? d.petBox.filter((p) => p && SPECIES[p.sp]) : null;
       G._petSeq = d.petSeq || 1;
+      G.petSlotsBought = d.petSlotsBought || 0;
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
         const mids = Object.keys(d.col || {}).filter((k) => SPECIES[k]).sort((a, b) => SPECIES[b].tier - SPECIES[a].tier);
@@ -20532,7 +20576,7 @@ export default function CherryAdventure() {
                 if (isNew) G.pets[cid] = { lv: 1, exp: 0, stage: 1 };
                 setUi((u) => ({
                   ...u, col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })),
-                  msg: petInst ? `🎊 จับ${sp.name} Lv.${petInst.lv} ได้! พรสวรรค์ ${petInst.iv.a + petInst.iv.h + petInst.iv.d} ✨` : `🎊 จับ${sp.name}ได้ แต่กล่องเต็ม (${G.PETBOX_MAX}) — บันทึกในสมุดภาพ`,
+                  msg: petInst ? `🎊 จับ${sp.name} Lv.${petInst.lv} ได้! พรสวรรค์ ${petInst.iv.a + petInst.iv.h + petInst.iv.d} ✨` : `🎊 จับ${sp.name}ได้ แต่กล่องเต็ม (${G.petCap()}) — บันทึกในสมุดภาพ`,
                 }));
                 gainExp(30 + sp.tier * 10 + G.enemy.lv * 3);
                 scene.remove(em);
@@ -20935,7 +20979,7 @@ export default function CherryAdventure() {
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
     const extra = (name === "invOpen" && willOpen) ? { gold: G.gold, inv: [...G.inv], invSel: null } : (name === "heroGalleryOpen" && willOpen) ? { heroId: G.heroId, diamonds: G.diamonds, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) } } : (name === "panelOpen" && willOpen) ? (() => {
-      const snap = { petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null };
+      const snap = { petBox: (G.petBox || []).map((x) => ({ ...x })), mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null, gold: G.gold, diamonds: G.diamonds, petSlotsBought: G.petSlotsBought || 0 };
       setTimeout(() => { let ch = false; (G.petBox || []).forEach((p) => { if (p.fresh) { delete p.fresh; ch = true; } }); if (ch && G.saveGame) G.saveGame(); }, 1200); // 🆕 เห็นป้ายรอบนี้ รอบหน้าถือว่าดูแล้ว
       return snap;
     })() : {};
@@ -20954,6 +20998,10 @@ export default function CherryAdventure() {
     <div style={{ width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+      {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
+      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen"].some((f) => ui[f]) && (
+        <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
+      )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
       {ui.announce && (
         <div key={ui.announce.key} style={{ position: "absolute", top: 4, left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" }}>
@@ -24347,7 +24395,7 @@ export default function CherryAdventure() {
                   flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
                   fontSize: 12, fontWeight: 800, color: !ui.dexTab ? "#fff" : "#5a7a4a",
                   background: !ui.dexTab ? "#7ba05b" : "#eaf5e0",
-                }}>📦 กล่อง ({(ui.petBox || []).length}/30)</button>
+                }}>📦 กล่อง ({(ui.petBox || []).length}/{G.petCap()})</button>
                 <button onClick={() => setUi((u) => ({ ...u, dexTab: true }))} style={{
                   flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
                   fontSize: 12, fontWeight: 800, color: ui.dexTab ? "#fff" : "#5a7a4a",
@@ -24401,10 +24449,25 @@ export default function CherryAdventure() {
               {(ui.petBox || []).length > 0 && (
                 <div style={{ background: "#eaf5e0", borderRadius: 10, padding: "6px 9px", marginBottom: 8, fontSize: 11, fontWeight: 700, color: "#5a7a4a" }}>
                   👥 ทีม ({(ui.team || []).length}/3): {(ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม"}
-                  <span style={{ float: "right", color: "#7a9a5a" }}>📦 {(ui.petBox || []).length}/30 ช่อง</span>
+                  <span style={{ float: "right", color: "#7a9a5a" }}>📦 {(ui.petBox || []).length}/{G.petCap()} ช่อง</span>
                   <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 }}>ทุกตัวในทีมช่วยบัฟ · ตัวแรกเดินตาม · แต่ละตัวมี "พรสวรรค์" ประจำตัวไม่ซ้ำกัน</div>
                 </div>
               )}
+              {/* 🛒 ซื้อช่องสัตว์เลี้ยงเพิ่ม — 5 ช่องแรกช่องละ 10,000 ทอง · หลังจากนั้นช่องละ 10 เพชร */}
+              {(() => {
+                const c = G.petSlotCost();
+                const afford = c.kind === "gold" ? (ui.gold || 0) >= c.amount : (ui.diamonds || 0) >= c.amount;
+                return (
+                  <button onClick={() => G.buyPetSlot()} disabled={!afford} style={{
+                    width: "100%", marginBottom: 8, padding: "8px 10px", borderRadius: 10, border: "none",
+                    cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff",
+                    background: afford ? (c.kind === "gold" ? "linear-gradient(90deg,#e0a84a,#f5c542)" : "linear-gradient(90deg,#4a90c0,#6ac0e0)") : "#cfcfc6",
+                  }}>
+                    ➕📦 ซื้อช่องเพิ่ม — {c.kind === "gold" ? `${c.amount.toLocaleString()} 💰` : `${c.amount} 💎`}
+                    <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.9 }}> {(ui.petSlotsBought || 0) < 5 ? `(เหลืออีก ${5 - (ui.petSlotsBought || 0)} ช่องราคาทอง)` : "(ช่องละ 10 เพชร)"}</span>
+                  </button>
+                );
+              })()}
               {Object.keys(ui.mountsOwned || {}).length > 0 && (
                 <div style={{ background: "#e8f0f8", borderRadius: 10, padding: "6px 9px", marginBottom: 8 }}>
                   <span style={{ fontSize: 11, fontWeight: 800, color: "#4a6a9a" }}>🐎 สัตว์ขี่:</span>
@@ -24414,20 +24477,26 @@ export default function CherryAdventure() {
                   {ui.mountId && <button onClick={() => G.setMount(null)} style={{ margin: "2px 3px", padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" }}>🚶 ลงจากหลัง</button>}
                 </div>
               )}
-              {(ui.fuseA || ui.fuseB) && (
-                <div style={{ background: "#f0e8f8", borderRadius: 10, padding: "7px 9px", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 11, color: "#6a4a8a", fontWeight: 700, flex: 1 }}>
-                    🔮 ผสม: {(() => { const a = (ui.petBox || []).find((x) => x.i === ui.fuseA), b = (ui.petBox || []).find((x) => x.i === ui.fuseB); return `${a ? SPECIES[a.sp].emoji + " Lv." + a.lv : "?"} + ${b ? SPECIES[b.sp].emoji + " Lv." + b.lv : "?"}`; })()}
-                  </span>
-                  <button onClick={() => { const a = (ui.petBox || []).find((x) => x.i === ui.fuseA), b = (ui.petBox || []).find((x) => x.i === ui.fuseB); if (!a || !b) return; if (SPECIES[a.sp].tier >= 3 || SPECIES[b.sp].tier >= 3) setUi((u) => ({ ...u, fuseAsk: true })); else G.fusePets(ui.fuseA, ui.fuseB); }} disabled={!ui.fuseA || !ui.fuseB} style={{ padding: "5px 14px", borderRadius: 8, border: "none", cursor: (ui.fuseA && ui.fuseB) ? "pointer" : "default", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.fuseA && ui.fuseB) ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#ccc" }}>🔮 ผสม</button>
-                  <button onClick={() => setUi((u) => ({ ...u, fuseA: null, fuseB: null, fuseAsk: null }))} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#8a7a9a", background: "#eee" }}>✕</button>
-                </div>
-              )}
+              {(ui.fuseSel || []).length > 0 && (() => {
+                const selPets = (ui.fuseSel || []).map((iid) => (ui.petBox || []).find((x) => x.i === iid)).filter(Boolean);
+                const pairs = Math.floor(selPets.length / 2);
+                const hasRare = selPets.some((p) => SPECIES[p.sp].tier >= 3);
+                const doFuse = () => { if (hasRare) setUi((u) => ({ ...u, fuseAsk: true })); else G.fuseBatch(); };
+                return (
+                  <div style={{ background: "#f0e8f8", borderRadius: 10, padding: "7px 9px", marginBottom: 8, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, color: "#6a4a8a", fontWeight: 700, flex: "1 1 100%" }}>
+                      🔮 เลือก {selPets.length} ตัว → ผสมได้ {pairs} คู่{selPets.length % 2 === 1 ? " (เหลือ 1 ตัวไม่มีคู่)" : ""}: {selPets.slice(0, 10).map((p) => SPECIES[p.sp].emoji).join(" ")}{selPets.length > 10 ? " …" : ""}
+                    </span>
+                    <button onClick={doFuse} disabled={pairs < 1} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: pairs >= 1 ? "pointer" : "default", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: pairs >= 1 ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#ccc" }}>🔮 ผสม {pairs} คู่</button>
+                    <button onClick={() => G.clearFuse()} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#8a7a9a", background: "#eee" }}>ล้าง</button>
+                  </div>
+                );
+              })()}
               {ui.fuseAsk && (
                 <div style={{ background: "#fdf0e0", border: "1.5px solid #e0a020", borderRadius: 10, padding: "8px 10px", marginBottom: 8 }}>
-                  <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a5762a" }}>⚠️ มีตัวหายากร่วมผสม — ทั้งสองตัวจะหายไปถาวร ยืนยันไหม?</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a5762a" }}>⚠️ มีตัวหายากร่วมผสม — ตัวที่นำมาผสมจะหายไปถาวร ยืนยันไหม?</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                    <button onClick={() => G.fusePets(ui.fuseA, ui.fuseB)} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#9a6ad0,#d07ae0)" }}>✅ ยืนยันผสม</button>
+                    <button onClick={() => G.fuseBatch()} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#9a6ad0,#d07ae0)" }}>✅ ยืนยันผสม</button>
                     <button onClick={() => setUi((u) => ({ ...u, fuseAsk: null }))} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#6a5a7a", background: "#eee" }}>ยกเลิก</button>
                   </div>
                 </div>
@@ -24452,7 +24521,7 @@ export default function CherryAdventure() {
                 const iv = p.iv || { a: 0, h: 0, d: 0 };
                 const buff = { atk: sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3, hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5, def: (p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2 };
                 const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
-                const selFuse = ui.fuseA === p.i || ui.fuseB === p.i;
+                const selFuse = (ui.fuseSel || []).includes(p.i);
                 return (
                   <div key={p.i} style={{ position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font }}>
                     {p.fresh && <span style={{ position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 }}>ใหม่ ✨</span>}
@@ -24843,8 +24912,8 @@ export default function CherryAdventure() {
         const st = ui.wbStat || { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, cleared: false, canEnter: true, lv: WORLD_BOSS.lv };
         const pct = Math.max(0, Math.round(st.hp / st.maxHp * 100));
         return (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(20,10,16,0.78)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
-            <div style={{ width: "88%", maxWidth: 360, background: "linear-gradient(180deg,#2a1622,#3a1f2a)", borderRadius: 18, padding: 18, border: "1.5px solid #f5a623", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
+          <div onClick={() => setUi((u) => ({ ...u, wbPanel: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,10,16,0.78)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: "88%", maxWidth: 360, background: "linear-gradient(180deg,#2a1622,#3a1f2a)", borderRadius: 18, padding: 18, border: "1.5px solid #f5a623", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 46 }}>{WORLD_BOSS.emoji}</div>
                 <div style={{ fontSize: 18, fontWeight: 900, color: "#f5c542" }}>{WORLD_BOSS.name}</div>
@@ -25090,8 +25159,8 @@ export default function CherryAdventure() {
         );
         const expPct = Math.min(100, Math.round(p.exp / Math.max(1, p.expNeed) * 100));
         return (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(12,14,22,0.82)", zIndex: 62, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
-            <div style={{ width: "88%", maxWidth: 370, background: "linear-gradient(180deg,#1e2740,#232a3e)", borderRadius: 18, padding: 18, border: "2px solid #5a78c0", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "90%", overflowY: "auto" }}>
+          <div onClick={() => setUi((u) => ({ ...u, profileOpen: false, profileNameEdit: null }))} style={{ position: "absolute", inset: 0, background: "rgba(12,14,22,0.82)", zIndex: 62, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: "88%", maxWidth: 370, background: "linear-gradient(180deg,#1e2740,#232a3e)", borderRadius: 18, padding: 18, border: "2px solid #5a78c0", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "90%", overflowY: "auto" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ fontSize: 16, fontWeight: 900, color: "#9ec0ff" }}>👤 โปรไฟล์</div>
                 <button onClick={() => setUi((u) => ({ ...u, profileOpen: false, profileNameEdit: null }))} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#dfe6f5", fontSize: 15, cursor: "pointer" }}>✕</button>
