@@ -46,8 +46,9 @@ const RARITY = {
   epic: { name: "มหากาพย์", color: "#b07ae0" },
   secret: { name: "SECRET", color: "#f5c542" },
   dragon: { name: "มังกร 🐉", color: "#e8552e" },
+  legend: { name: "ตำนาน ⭐", color: "#f5a623" },
 };
-const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5 };
+const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5, legend: 6 };
 const ELEM_GLOW = {
   fire: 0xf5652e, ice: 0x9adcf5, wind: 0xb8e8c0, water: 0x59a0e8,
   earth: 0xc09a5a, light: 0xffe28a, arcane: 0xb07ae0, dragon: 0xff4a2a,
@@ -217,6 +218,21 @@ const LOOT = [
 { id: "fg_staff", slot: "weapon", name: "คทาเวทมนตร์", emoji: "🪄", rarity: "rare", atk: 17, cls: "mage", forge: true },
 { id: "fg_book", slot: "weapon", name: "หนังสือเวทโบราณ", emoji: "📖", rarity: "epic", atk: 24, cls: "mage", forge: true },
 { id: "fg_orb", slot: "weapon", name: "ลูกแก้ววิเศษ", emoji: "🔮", rarity: "epic", atk: 25, cls: "mage", forge: true },
+// ---------- ⭐ LEGENDARY (ตำนาน) — only drops from the World Boss ----------
+{ id: "lg_ow", slot: "weapon", name: "ดาบเทพโลกันตร์", emoji: "⭐", rarity: "legend", atk: 40, def: 8, crit: 10, hp: 30, elem: "light", cls: "warrior", req: 60, set: "legend" },
+{ id: "lg_oa", slot: "weapon", name: "ธนูสุริยเทพ", emoji: "⭐", rarity: "legend", atk: 38, crit: 20, spd: 10, elem: "light", cls: "archer", req: 60, set: "legend" },
+{ id: "lg_os", slot: "weapon", name: "มีดคู่ราตรีนิรันดร์", emoji: "⭐", rarity: "legend", atk: 36, crit: 24, eva: 10, elem: "light", cls: "assassin", req: 60, set: "legend" },
+{ id: "lg_ol", slot: "weapon", name: "หอกจ้าวสวรรค์", emoji: "⭐", rarity: "legend", atk: 40, def: 10, crit: 12, elem: "light", cls: "lancer", req: 60, set: "legend" },
+{ id: "lg_om", slot: "weapon", name: "คทาจักรวาลาไลย", emoji: "⭐", rarity: "legend", atk: 38, hp: 45, mp: 20, crit: 12, elem: "light", cls: "mage", req: 60, set: "legend" },
+{ id: "lg_ok", slot: "weapon", name: "ดาบเทพอสนีบาต", emoji: "⭐", rarity: "legend", atk: 40, crit: 18, spd: 8, elem: "light", cls: "samurai", req: 60, set: "legend" },
+{ id: "lg_oo", slot: "weapon", name: "ปากกาจักรพรรดิ", emoji: "⭐", rarity: "legend", atk: 38, mp: 18, crit: 16, hp: 25, elem: "light", cls: "office", req: 60, set: "legend" },
+{ id: "lg_oc", slot: "weapon", name: "คีย์บอร์ดซิงกูลาริตี้", emoji: "⭐", rarity: "legend", atk: 38, mp: 22, crit: 18, elem: "light", cls: "coder", req: 60, set: "legend" },
+{ id: "lg_out", slot: "outfit", name: "อาภรณ์เทพโลกันตร์", emoji: "⭐", rarity: "legend", hp: 120, def: 22, atk: 12, elem: "light", set: "legend" },
+{ id: "lg_hat", slot: "hat", name: "มงกุฎเทพโลกันตร์", emoji: "⭐", rarity: "legend", atk: 14, hp: 50, def: 10, crit: 6, elem: "light", set: "legend" },
+{ id: "lg_msk", slot: "mask", name: "หน้ากากสุริยเทพ", emoji: "⭐", rarity: "legend", atk: 16, crit: 14, eva: 6, def: 6, elem: "light", set: "legend" },
+{ id: "lg_glv", slot: "gloves", name: "ถุงมือจ้าวพิภพ", emoji: "⭐", rarity: "legend", atk: 22, def: 6, crit: 8, elem: "light", set: "legend" },
+{ id: "lg_pnt", slot: "pants", name: "เกราะขาเทพโลกันตร์", emoji: "⭐", rarity: "legend", hp: 70, def: 14, atk: 8, elem: "light", set: "legend" },
+{ id: "lg_sho", slot: "shoes", name: "รองเท้าเหินสวรรค์", emoji: "⭐", rarity: "legend", def: 8, spd: 28, eva: 10, crit: 8, elem: "light", set: "legend" },
 ].concat(genArmour()); // ⚔️🛡️💨 + 54 archetype pieces (3 flavours × 6 slots × 3 tiers)
 // 🏷️ build stamp — shown on the title screen so you can tell at a glance whether a
 // browser is running a stale cached copy (GitHub Pages CDN caches index.html ~10 min).
@@ -225,6 +241,9 @@ const SLOT_NAMES = { weapon: "อาวุธ", outfit: "ชุด", hat: "ห�
 const SLOT_ICON = { weapon: "⚔️", outfit: "👕", hat: "🎩", mask: "😷", gloves: "🧤", pants: "👖", shoes: "👟" };
 const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
+
+// ---------- 👹 WORLD BOSS — daily raid boss (party up online, shared HP, 60s rounds) ----------
+const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 1000000, roundSec: 60 };
 
 // ---------- Elemental skills (unlock by level) ----------
 const ELEMENTS = {
@@ -617,7 +636,7 @@ const GEMS = {
   g_spd:  { name: "โทแพซความเร็ว", emoji: "🔶", color: "#d88a20", stat: "spd",  val: 6 },
   g_eva:  { name: "โอปอลหลบหลีก", emoji: "🟣", color: "#9a4ad0", stat: "eva",  val: 4 },
 };
-const SOCKETS_BY_RARITY = { common: 0, rare: 1, epic: 2, secret: 3, dragon: 3 };
+const SOCKETS_BY_RARITY = { common: 0, rare: 1, epic: 2, secret: 3, dragon: 3, legend: 4 };
 // 🌟 CLASS PATHS (สายอาชีพขั้นสูง) — at Lv.40 every class splits into two specialisations.
 // Each path grants permanent stat multipliers, a passive perk, and unlocks a 6th signature skill.
 // (Distinct from "การตื่นพลัง"/ngPlus, which is the prestige reset.)
@@ -10478,6 +10497,8 @@ export default function CherryAdventure() {
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
+    G.gemDust = 0; // 💠 ผงเพชร — guaranteed-enhance currency (drops from the World Boss)
+    G.worldBoss = null; // 👹 daily world-boss state { hp, maxHp, day, cleared }
     G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
     G.diaSkins = {}; // 💎 skins bought with diamonds
     G.heroesOwned = {}; G.heroPasses = {}; G.heroTemp = {}; G.gachaPity = 0; // 🦸 hero unlocks + temp passes
@@ -11001,7 +11022,7 @@ export default function CherryAdventure() {
     // 💰 auto-sell surplus gear — keeps the best (and equipped) per slot, sells the rest.
     // Processes the LOWEST tiers first, and follows the player's slot-priority order.
     // 💰 rarity tiers low→high; auto-sell only touches items at or below G.sellMaxRarity
-    const RARITY_ORDER = ["common", "rare", "epic", "secret", "dragon"];
+    const RARITY_ORDER = ["common", "rare", "epic", "secret", "dragon", "legend"];
     const rarityRank = (r) => { const i = RARITY_ORDER.indexOf(r); return i < 0 ? 0 : i; };
     G.sellMaxRarity = G.sellMaxRarity || "rare"; // default: sell common + rare only
     G.autoSell = () => {
@@ -11648,7 +11669,7 @@ export default function CherryAdventure() {
     };
 
     // ---------- 🏪 Shop: buy & sell with gold ----------
-    const SELL_BASE = { common: 15, rare: 40, epic: 100, secret: 300, dragon: 800 };
+    const SELL_BASE = { common: 15, rare: 40, epic: 100, secret: 300, dragon: 800, legend: 2500 };
     const sellPrice = (id) => {
       const it = LOOT.find((x) => x.id === id);
       if (!it) return 0;
@@ -11920,6 +11941,133 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, endlessWave: G.endlessWave, mode: "explore" }));
       setTimeout(() => { if (G.endlessMode) spawnEndlessWave(); }, 600);
     };
+
+    // ---------- 👹 WORLD BOSS — daily raid (party online, shared HP, 60s timed rounds) ----------
+    G.wbEnsureDaily = () => {
+      const today = todayStamp();
+      if (!G.worldBoss || G.worldBoss.day !== today) {
+        G.worldBoss = { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, day: today, cleared: false };
+      }
+      return G.worldBoss;
+    };
+    G.wbStatus = () => {
+      const wb = G.wbEnsureDaily();
+      return { hp: wb.hp, maxHp: wb.maxHp, cleared: !!wb.cleared, canEnter: !wb.cleared && wb.hp > 0, lv: WORLD_BOSS.lv };
+    };
+    const wbBuildBossMesh = () => {
+      const m = buildMonster(WORLD_BOSS.spId);
+      m.userData.lv = WORLD_BOSS.lv;
+      m.userData.boss = true;
+      m.userData.worldBoss = true;
+      m.position.set(char.position.x + 2.4, 0, char.position.z);
+      m.scale.multiplyScalar(2.4); // 👹 towering
+      scene.add(m);
+      wilds.push(m);
+      return m;
+    };
+    const wbStartRound = () => {
+      const wb = G.wbEnsureDaily();
+      const m = wbBuildBossMesh();
+      startBattle(m);
+      // 👹 override with the shared world-boss HP (persists across rounds)
+      if (G.enemy) {
+        G.enemy.worldBoss = true;
+        G.enemy.maxHp = WORLD_BOSS.maxHp;
+        G.enemy.hp = Math.max(1, Math.min(WORLD_BOSS.maxHp, Math.round(wb.hp)));
+        G.enemy.name = WORLD_BOSS.name;
+        // survivable but threatening: fixed high atk instead of the runaway lv99 scaling
+        G.enemy.atk = Math.round(40 + G.player.level * 2.2);
+        G.enemy.evaChance = 0.05; G.enemy.blockChance = 0.1; G.enemy.guardChance = 0.16; // don't stonewall the DPS check
+      }
+      G.wbRoundOn = true;
+      G.wbTimeLeft = WORLD_BOSS.roundSec;
+      G._wbLastSec = WORLD_BOSS.roundSec;
+      setUi((u) => ({ ...u, mode: "battle", wbActive: true, wbTime: WORLD_BOSS.roundSec, wbResult: null,
+        enemy: { name: WORLD_BOSS.name, emoji: WORLD_BOSS.emoji, hp: G.enemy ? G.enemy.hp : wb.hp, maxHp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, boss: true, worldBoss: true, spId: WORLD_BOSS.spId },
+        msg: `👹 ${WORLD_BOSS.name} Lv.${WORLD_BOSS.lv} — เลือด ${Math.round((G.enemy ? G.enemy.hp : wb.hp)).toLocaleString()} · เหลือเวลา 60 วิ!` }));
+    };
+    G.startWorldBoss = () => {
+      if (G.mode !== "explore") { toast("👹 เข้าตีบอสโลกได้จากโลกกว้างเท่านั้น"); return; }
+      const st = G.wbStatus();
+      if (st.cleared) { toast("👹 วันนี้ปราบจอมมารโลกันตร์แล้ว — กลับมาใหม่พรุ่งนี้!"); return; }
+      G.endlessMode = false; G.endlessWave = 0;
+      G.wbActive = true;
+      G.socialOpen = false;
+      setUi((u) => ({ ...u, socialOpen: false, wbPanel: false }));
+      wbStartRound();
+    };
+    // store the remaining shared HP (so the next round continues from here)
+    const wbSaveHp = () => {
+      if (G.enemy && G.enemy.worldBoss) {
+        const wb = G.wbEnsureDaily();
+        wb.hp = Math.max(0, Math.min(WORLD_BOSS.maxHp, Math.round(G.enemy.hp)));
+      }
+    };
+    G.wbEndRound = (reason) => { // reason: "timeout" | "dead"
+      wbSaveHp();
+      G.wbRoundOn = false;
+      const wb = G.wbEnsureDaily();
+      if (G.enemy) { const mm = G.enemy.mesh; if (mm) { scene.remove(mm); const i = wilds.indexOf(mm); if (i >= 0) wilds.splice(i, 1); } G.enemy = null; }
+      G.banim = null;
+      if (G.restoreScenery) G.restoreScenery();
+      G.mode = "explore";
+      G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // recover between rounds so you can try again
+      syncPlayer();
+      saveGame();
+      setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true,
+        wbResult: { reason, hp: wb.hp, maxHp: wb.maxHp, pct: Math.round(wb.hp / wb.maxHp * 100) }, msg: "" }));
+    };
+    G.wbRetry = () => {
+      const st = G.wbStatus();
+      if (st.cleared || st.hp <= 0) { G.wbLeave(); return; }
+      if (G.mode !== "explore") return;
+      setUi((u) => ({ ...u, wbResult: null }));
+      wbStartRound();
+    };
+    G.wbLeave = () => {
+      G.wbActive = false; G.wbRoundOn = false;
+      if (G.enemy && G.enemy.worldBoss) { const mm = G.enemy.mesh; if (mm) scene.remove(mm); G.enemy = null; G.banim = null; if (G.restoreScenery) G.restoreScenery(); G.mode = "explore"; }
+      setUi((u) => ({ ...u, wbActive: false, wbResult: null, wbPanel: false, mode: "explore", enemy: null }));
+      saveGame();
+    };
+    // 🎁 grant the world-boss reward bundle to THIS player (also used for each party member's share)
+    G.wbGrantRewards = (getLegendary) => {
+      const out = { gold: 100000, diamonds: 1000, gemDust: 100, items: [], legend: null };
+      G.gold += out.gold;
+      if (G.gainDiamonds) G.gainDiamonds(out.diamonds, "บอสโลก"); else G.diamonds = (G.diamonds || 0) + out.diamonds;
+      G.gemDust = (G.gemDust || 0) + out.gemDust;
+      const hiPool = LOOT.filter((x) => (x.rarity === "epic" || x.rarity === "dragon") && !x.forge);
+      const hiN = 3 + Math.floor(Math.random() * 3); // 3–5 high-tier pieces
+      for (let i = 0; i < hiN && hiPool.length; i++) { const it = hiPool[Math.floor(Math.random() * hiPool.length)]; gainItem(it.id); out.items.push(it.id); }
+      const midPool = LOOT.filter((x) => x.rarity === "rare" && !x.forge); // a couple of mid-tier pieces
+      for (let i = 0; i < 2 && midPool.length; i++) { const it = midPool[Math.floor(Math.random() * midPool.length)]; gainItem(it.id); out.items.push(it.id); }
+      if (getLegendary) { // ⭐ legendary weapon/outfit — the one random winner of the 20% roll
+        const lgPool = LOOT.filter((x) => x.rarity === "legend" && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+        if (lgPool.length) { const it = lgPool[Math.floor(Math.random() * lgPool.length)]; gainItem(it.id); out.legend = it.id; }
+      }
+      syncPlayer();
+      return out;
+    };
+    G.wbVictory = () => {
+      const wb = G.wbEnsureDaily();
+      wb.hp = 0; wb.cleared = true;
+      G.wbRoundOn = false;
+      if (G.enemy) { const mm = G.enemy.mesh; if (mm) { burst(mm.position, 0xf5d05a, 2.4); scene.remove(mm); } G.enemy = null; }
+      G.banim = null;
+      if (G.restoreScenery) G.restoreScenery();
+      G.mode = "explore";
+      G.achStats.wbKills = (G.achStats.wbKills || 0) + 1;
+      const gotLegend = !G.wbRaid && Math.random() < 0.20; // solo: you are the party (online winner decided server-side)
+      const rw = G.wbGrantRewards(gotLegend);
+      G.player.hp = effMaxHp(); G.player.mp = effMaxMp();
+      syncPlayer(); saveGame();
+      const legName = rw.legend ? (LOOT.find((x) => x.id === rw.legend) || {}).name : null;
+      setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true,
+        wbResult: { reason: "win", hp: 0, maxHp: wb.maxHp, pct: 0, reward: rw, legName }, msg: "" }));
+      toast(`🏆 ปราบ ${WORLD_BOSS.name} สำเร็จ! +100,000💰 +1,000💎 +100💠`);
+      if (legName) toast(`⭐ ได้ของตำนาน: ${legName}!`);
+    };
+
     // 👻 spawn a friend's ghost as a special battle opponent (mirror match)
     const startGhostBattle = (friend) => {
       // pick a stand-in monster mesh, colored to hint it's a ghost duel
@@ -12153,6 +12301,7 @@ export default function CherryAdventure() {
 
     const winBattle = () => {
       if (!G.enemy) return;
+      if (G.enemy.worldBoss) { G.wbVictory(); return; } // 👹 world boss → special reward flow
       const em = G.enemy.mesh;
       const sp = SPECIES[G.enemy.spId];
       const wasBoss = G.enemy.boss;
@@ -12891,7 +13040,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -13630,6 +13779,8 @@ export default function CherryAdventure() {
       G.constNodes = d.constNodes || {};
       G.stardust = d.stardust || 0;
       G.diamonds = d.diamonds || 0;
+      G.gemDust = d.gemDust || 0;
+      G.worldBoss = d.worldBoss || null;
       G.starterGems = 1; // 💎 เซฟที่มีอยู่ถือว่าได้เพชรเริ่มต้นแล้ว (เฉพาะเกมใหม่ได้ 1000) — กันบั๊กแจกซ้ำทุกครั้งที่รีเฟรช
       // 🎁 EVENT: ผู้เล่นวันที่ 2 ขึ้นไป ล็อกอินช่วง 20:00–24:00 รับเพชรโบนัส 10,000 (ครั้งเดียวต่อเซฟ)
       G.day2Gift = d.day2Gift ? 1 : 0;
@@ -13772,6 +13923,13 @@ export default function CherryAdventure() {
       const dt = dtForce != null ? dtForce : dtReal; // 🤖💤 forced dt while background-farming
       dtGlobal = dt;
       const t = clock.getElapsedTime();
+      // 👹 World Boss round timer — 60s per round; time-out ends the round (boss HP persists)
+      if (G.wbActive && G.wbRoundOn && G.mode === "battle" && G.enemy && G.enemy.worldBoss) {
+        G.wbTimeLeft = (G.wbTimeLeft || 0) - dt;
+        const secLeft = Math.max(0, Math.ceil(G.wbTimeLeft));
+        if (secLeft !== G._wbLastSec) { G._wbLastSec = secLeft; setUi((u) => ({ ...u, wbTime: secLeft })); }
+        if (G.wbTimeLeft <= 0) { G.wbEndRound("timeout"); }
+      }
       updateDamageNumbers(dt); // 💢 float the damage popups
       updateAdvFx(dt); // 🌟 SSS advanced-skill cinematics
       if (window.__poseFn) { try { window.__poseFn({ armL, armR, wand, char, legL, legR, headG, G }); } catch (e) {} } // 🎬 studio character-sheet hook (no-op in production)
@@ -19720,6 +19878,7 @@ export default function CherryAdventure() {
               em.position.x = battleCenter.x + (G.enemyX || 1.3);
               G.banim = null;
               if (G.player.hp <= 0) {
+                if (G.enemy && G.enemy.worldBoss) { G.wbEndRound("dead"); return; } // 👹 world boss: round ends, boss HP persists
                 // faint
                 if (G.sfx) G.sfx.lose();
                 G.combo = 0; // 💔 streak broken
@@ -20179,7 +20338,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel"];
   // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
   const _uiWideModal = window.innerWidth > 820;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
@@ -20745,6 +20904,20 @@ export default function CherryAdventure() {
           }}
         >
           ⚔️ ท้าดวลเจ้าถิ่น
+        </button>
+      )}
+      {/* 👹 World Boss entry */}
+      {ui.mode === "explore" && !ui.equipScreen && (
+        <button
+          onClick={() => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false })); }}
+          style={{
+            position: "absolute", top: 72, left: "50%", transform: "translateX(-50%)",
+            background: "linear-gradient(90deg,#5a1a2a,#c0392b)", borderRadius: 999,
+            padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
+            border: "1px solid #f5a623", cursor: "pointer", boxShadow: "0 3px 10px rgba(192,57,43,0.5)",
+          }}
+        >
+          👹 บอสโลก (ปาร์ตี้)
         </button>
       )}
 
@@ -23950,6 +24123,138 @@ export default function CherryAdventure() {
           </div>
         </>
       )}
+
+      {/* 👹 World Boss — 60s round timer overlay */}
+      {ui.wbActive && ui.mode === "battle" && (
+        <div style={{
+          position: "absolute", top: 96, left: "50%", transform: "translateX(-50%)",
+          display: "flex", alignItems: "center", gap: 8, pointerEvents: "none",
+          background: (ui.wbTime <= 10 ? "rgba(192,40,40,0.92)" : "rgba(30,20,30,0.82)"),
+          borderRadius: 999, padding: "5px 16px", border: "1px solid #f5a623",
+          boxShadow: "0 3px 10px rgba(0,0,0,0.4)",
+        }}>
+          <span style={{ fontSize: 15 }}>⏱️</span>
+          <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: font, minWidth: 30, textAlign: "center" }}>{ui.wbTime != null ? ui.wbTime : 60}</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#f5d0a0" }}>วินาที · 👹 บอสโลก</span>
+        </div>
+      )}
+
+      {/* 👹 World Boss lobby panel */}
+      {ui.wbPanel && (() => {
+        const st = ui.wbStat || { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, cleared: false, canEnter: true, lv: WORLD_BOSS.lv };
+        const pct = Math.max(0, Math.round(st.hp / st.maxHp * 100));
+        return (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(20,10,16,0.78)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div style={{ width: "88%", maxWidth: 360, background: "linear-gradient(180deg,#2a1622,#3a1f2a)", borderRadius: 18, padding: 18, border: "1.5px solid #f5a623", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 46 }}>{WORLD_BOSS.emoji}</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: "#f5c542" }}>{WORLD_BOSS.name}</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#e0a0b0" }}>บอสโลก · Lv.{WORLD_BOSS.lv}</div>
+              </div>
+              {/* shared HP bar */}
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#f5d0a0", marginBottom: 3 }}>
+                  <span>เลือดที่เหลือ (แชร์ทั้งปาร์ตี้)</span><span>{pct}%</span>
+                </div>
+                <div style={{ height: 16, background: "#1a0e14", borderRadius: 999, overflow: "hidden", border: "1px solid #5a2a3a" }}>
+                  <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg,#c0392b,#f5a623)", transition: "width 0.3s" }} />
+                </div>
+                <div style={{ textAlign: "center", fontSize: 11, fontWeight: 800, color: "#fff", marginTop: 3 }}>
+                  {Math.round(st.hp).toLocaleString()} / {st.maxHp.toLocaleString()}
+                </div>
+              </div>
+              {/* rules */}
+              <div style={{ marginTop: 12, background: "rgba(0,0,0,0.25)", borderRadius: 10, padding: "8px 10px", fontSize: 10.5, color: "#e8d0c0", lineHeight: 1.6 }}>
+                ⏱️ ต่อสู้รอบละ <b>60 วินาที</b><br />
+                💀 ตายหรือหมดเวลา → <b>สู้ต่อรอบใหม่ได้</b> เลือดบอส<b>ไม่รีเซ็ต</b> (คงเลือดล่าสุด)<br />
+                📅 <b>จำกัดวันละครั้ง</b> — รีเซ็ตเลือดใหม่ทุกวัน<br />
+                🤝 ชวนเพื่อนออนไลน์มาช่วยตี แชร์เลือดบอสก้อนเดียวกัน
+              </div>
+              {/* reward preview */}
+              <div style={{ marginTop: 10, fontSize: 10.5, color: "#f5d0a0", fontWeight: 800 }}>🎁 รางวัลเมื่อปราบสำเร็จ (ทุกคนในปาร์ตี้):</div>
+              <div style={{ fontSize: 10, color: "#d8c0b0", lineHeight: 1.6, marginTop: 2 }}>
+                💎 เพชร 1,000 · 💰 ทอง 100,000 · 💠 ผงเพชร 100<br />
+                🗡️ ของระดับสูง 3–5 ชิ้น + ของระดับกลาง<br />
+                ⭐ ของตำนาน 1 ชิ้น (โอกาส 20% · สุ่มให้ 1 คนในปาร์ตี้)
+              </div>
+              {st.cleared ? (
+                <div style={{ marginTop: 14, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#8af0a0", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "10px" }}>
+                  ✅ วันนี้ปราบจอมมารแล้ว!<br /><span style={{ fontSize: 10.5, color: "#c0d0c0", fontWeight: 700 }}>กลับมาใหม่พรุ่งนี้เพื่อบอสตัวใหม่</span>
+                </div>
+              ) : (
+                <button onClick={() => G.startWorldBoss()} style={{
+                  marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer",
+                  fontSize: 15, fontWeight: 900, fontFamily: font, color: "#fff",
+                  background: "linear-gradient(90deg,#c0392b,#f5a623)", boxShadow: "0 4px 14px rgba(192,57,43,0.6)",
+                }}>⚔️ เข้าตีบอส ({pct}%)</button>
+              )}
+              <button onClick={() => setUi((u) => ({ ...u, wbPanel: false }))} style={{
+                marginTop: 8, width: "100%", padding: "9px", borderRadius: 10, border: "none", cursor: "pointer",
+                fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#e8d0c0", background: "rgba(255,255,255,0.12)",
+              }}>ปิด</button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 👹 World Boss round result / victory */}
+      {ui.wbResult && (() => {
+        const r = ui.wbResult;
+        const win = r.reason === "win";
+        const rw = r.reward || {};
+        const itemName = (id) => { const it = LOOT.find((x) => x.id === id); return it ? `${it.emoji || ""} ${it.name}` : id; };
+        return (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(15,8,12,0.86)", zIndex: 65, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div style={{ width: "88%", maxWidth: 360, background: win ? "linear-gradient(180deg,#2a2010,#3a2e14)" : "linear-gradient(180deg,#241820,#331f28)", borderRadius: 18, padding: 18, border: win ? "1.5px solid #f5c542" : "1.5px solid #a05060", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "90%", overflowY: "auto" }}>
+              {win ? (
+                <>
+                  <div style={{ textAlign: "center", fontSize: 40 }}>🏆</div>
+                  <div style={{ textAlign: "center", fontSize: 18, fontWeight: 900, color: "#f5d05a" }}>ปราบจอมมารโลกันตร์!</div>
+                  <div style={{ marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: "#f5d0a0", marginBottom: 6 }}>🎁 รางวัลที่ได้รับ</div>
+                    <div style={{ fontSize: 12.5, color: "#fff", lineHeight: 1.8 }}>
+                      💎 เพชร +{(rw.diamonds || 0).toLocaleString()}<br />
+                      💰 ทอง +{(rw.gold || 0).toLocaleString()}<br />
+                      💠 ผงเพชร +{rw.gemDust || 0}<br />
+                      🗡️ ไอเทม +{(rw.items || []).length} ชิ้น
+                    </div>
+                    {(rw.items || []).length > 0 && (
+                      <div style={{ fontSize: 9.5, color: "#c8b8a8", marginTop: 4, lineHeight: 1.5 }}>{(rw.items || []).map(itemName).join(" · ")}</div>
+                    )}
+                    {r.legName ? (
+                      <div style={{ marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#f5c542", background: "rgba(245,197,66,0.14)", borderRadius: 10, padding: "8px", border: "1px solid #f5a623" }}>
+                        ⭐ ของตำนาน! {itemName(r.legend || "")}
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: 8, textAlign: "center", fontSize: 10, color: "#a89888" }}>⭐ ของตำนาน: ไม่ได้รอบนี้ (โอกาส 20%)</div>
+                    )}
+                  </div>
+                  <button onClick={() => G.wbLeave()} style={{ marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ba05b)" }}>รับรางวัล & ออก 🎉</button>
+                </>
+              ) : (
+                <>
+                  <div style={{ textAlign: "center", fontSize: 38 }}>{r.reason === "dead" ? "💀" : "⏱️"}</div>
+                  <div style={{ textAlign: "center", fontSize: 16, fontWeight: 900, color: "#f0a0b0" }}>
+                    {r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : "หมดเวลารอบนี้!"}
+                  </div>
+                  <div style={{ textAlign: "center", fontSize: 11.5, color: "#e0c0c8", marginTop: 4 }}>บอสยังไม่ตาย — เลือดคงไว้ที่เดิม สู้ต่อได้เลย</div>
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#f5d0a0", marginBottom: 3 }}>
+                      <span>👹 เลือดบอสที่เหลือ</span><span>{r.pct}%</span>
+                    </div>
+                    <div style={{ height: 16, background: "#1a0e14", borderRadius: 999, overflow: "hidden", border: "1px solid #5a2a3a" }}>
+                      <div style={{ width: r.pct + "%", height: "100%", background: "linear-gradient(90deg,#c0392b,#f5a623)" }} />
+                    </div>
+                    <div style={{ textAlign: "center", fontSize: 11, fontWeight: 800, color: "#fff", marginTop: 3 }}>{Math.round(r.hp).toLocaleString()} / {r.maxHp.toLocaleString()}</div>
+                  </div>
+                  <button onClick={() => G.wbRetry()} style={{ marginTop: 14, width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#f5a623)" }}>⚔️ สู้อีกรอบ (เลือดบอสคงเดิม)</button>
+                  <button onClick={() => G.wbLeave()} style={{ marginTop: 8, width: "100%", padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#e8d0c0", background: "rgba(255,255,255,0.12)" }}>ออกก่อน (ไว้มาต่อ)</button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ===== fainted ===== */}
       {ui.mode === "fainted" && (
