@@ -243,7 +243,7 @@ const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
 
 // ---------- 👹 WORLD BOSS — daily raid boss (party up online, shared HP, 60s rounds) ----------
-const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 180, epoch: 2,
+const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 180, epoch: 3,
   block: 0.20, dodge: 0.15, atkDebuff: 0.20, critDebuff: 20 }; // ⏱️ 3 นาที/รอบ · 🛡️ block 20% · 💨 dodge 15% · ลด ATK 20% · ลดคริ 20% · 🔄 bump epoch to force a fresh re-boss for everyone
 
 // ---------- Elemental skills (unlock by level) ----------
