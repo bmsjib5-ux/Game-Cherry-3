@@ -9114,7 +9114,7 @@ export default function CherryAdventure() {
       G.playerTitle = eq && eq.id !== "t_none" ? `${eq.name} ${eq.emoji}` : "";
       if (G.drawPlayerLabel) G.drawPlayerLabel();
       // 🏷️ keep the React state in sync so the head nameplate shows the equipped title
-      setUi((u) => ({ ...u, playerTitle: G.playerTitle, titleTick: newly ? (u.titleTick || 0) + 1 : u.titleTick }));
+      setUi((u) => ({ ...u, playerTitle: G.playerTitle, playerTitleId: eq ? eq.id : "t_none", titleTick: newly ? (u.titleTick || 0) + 1 : u.titleTick }));
       return G.playerTitle;
     };
     G.setTitle = (id) => {
@@ -9126,7 +9126,7 @@ export default function CherryAdventure() {
       if (G.sfx) G.sfx.button && G.sfx.button();
       toast(t.id !== "t_none" ? `🏅 สวมฉายา ${t.emoji} ${t.name} — ${titleBonusText(t)}` : "🏅 ถอดฉายาแล้ว");
       syncPlayer();
-      setUi((u) => ({ ...u, titleId: G.titleId }));
+      setUi((u) => ({ ...u, titleId: G.titleId, playerTitleId: G.titleId }));
     };
     G.ACHIEVEMENTS = ACHIEVEMENTS;
     G.claimQuest = (i) => {
@@ -10820,7 +10820,7 @@ export default function CherryAdventure() {
       statPts: G.player.statPts || 0, baseStats: { ...(G.baseStats || {}) },
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
-      playerName: G.playerName, playerTitle: G.playerTitle,
+      playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
@@ -13253,7 +13253,7 @@ export default function CherryAdventure() {
       async leaderboard(limit) {
         if (!this.enabled()) return null;
         try {
-          const res = await fetch(this._url(`players?select=pid,n,c,lv,atk,def,hp,crit,rank,ng&order=lv.desc,rank.desc&limit=${limit || 20}`), { headers: this._headers() });
+          const res = await fetch(this._url(`players?select=pid,n,c,lv,atk,def,hp,crit,rank,ng,t&order=lv.desc,rank.desc&limit=${limit || 20}`), { headers: this._headers() });
           if (!res.ok) { this.status = "error"; return null; }
           this.status = "ok";
           return await res.json();
@@ -13458,7 +13458,9 @@ export default function CherryAdventure() {
       c: G.cls,
       lv: G.player ? G.player.level : 1,
       atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()),
-      w: G.equip.weapon || null, cu: G.custom || {}, ng: G.ngPlus || 0, rank: G.pvpRank || 1000, ts: Date.now(),
+      w: G.equip.weapon || null, cu: G.custom || {}, ng: G.ngPlus || 0, rank: G.pvpRank || 1000,
+      t: (curTitle() || {}).id || "t_none", // 🏅 equipped title (ฉายา)
+      ts: Date.now(),
     });
     G.publishProfile = (force) => {
       if (!CN.enabled() || !G.player || !G.cls) return;
@@ -20612,18 +20614,25 @@ export default function CherryAdventure() {
     return { ...cleared, ...extra };
   };
   // 🏅✨ render a title (ฉายา) — prestige titles get a big gradient + glow + fancy font + icons
-  const renderTitle = (t, size) => {
+  const renderTitle = (t, size, blink) => {
     if (!t) return null;
     const f = t.fancy;
-    if (!f) return <span style={{ fontSize: size, fontWeight: 800, fontFamily: font }}>{t.emoji} {t.name}</span>;
+    const anim = blink ? { animation: "titleBlink 1.1s ease-in-out infinite" } : {};
+    if (!f) return <span style={{ fontSize: size, fontWeight: 800, fontFamily: font, ...anim }}>{t.emoji} {t.name}</span>;
     const grad = `linear-gradient(90deg, ${f.grad.join(", ")})`;
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: Math.round(size * 0.22), fontFamily: f.font, filter: `drop-shadow(0 0 ${Math.max(3, Math.round(size * 0.32))}px ${f.glow})`, maxWidth: "100%" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: Math.round(size * 0.22), fontFamily: f.font, filter: `drop-shadow(0 0 ${Math.max(3, Math.round(size * 0.32))}px ${f.glow})`, maxWidth: "100%", ...anim }}>
         <span style={{ fontSize: Math.round(size * 0.82), flexShrink: 0 }}>{f.lIcon}</span>
         <span style={{ fontSize: size, fontWeight: f.weight || 900, fontStyle: f.italic ? "italic" : "normal", backgroundImage: grad, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", letterSpacing: 0.5, lineHeight: 1.15, whiteSpace: "nowrap" }}>{t.name}</span>
         <span style={{ fontSize: Math.round(size * 0.82), flexShrink: 0 }}>{f.rIcon}</span>
       </span>
     );
+  };
+  // 🏅 a leaderboard row's title (ฉายา) from its `t` id — same fancy font/icon, blinking
+  const boardTitle = (r, size) => {
+    const t = r && r.t && TITLES.find((x) => x.id === r.t);
+    if (!t || t.id === "t_none") return null;
+    return renderTitle(t, size, true);
   };
   const toggleMenu = (name) => setUi((u) => {
     const willOpen = !u[name];
@@ -20647,7 +20656,7 @@ export default function CherryAdventure() {
 
   return (
     <div style={{ width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
-      <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} }`}</style>
+      <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
       {ui.announce && (
@@ -21563,7 +21572,10 @@ export default function CherryAdventure() {
                 <span style={{ flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
                 <span style={{ fontWeight: 800, color: "#9ad0ff" }}>Lv.{r.lv}{(r.ng || 0) > 0 ? <span style={{ color: "#ff9a6a" }}> ⚡{r.ng}</span> : null}</span>
               </div>
-              <div style={{ fontSize: 8.5, color: "#b8a8d0", paddingLeft: 20 }}>⚔️ พลังรวม {powerOf(r).toLocaleString()}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, paddingLeft: 20 }}>
+                <span style={{ minWidth: 0, overflow: "hidden", flex: 1 }}>{boardTitle(r, 9.5)}</span>
+                <span style={{ fontSize: 8.5, color: "#b8a8d0", whiteSpace: "nowrap" }}>⚔️ {powerOf(r).toLocaleString()}</span>
+              </div>
             </div>
           )) : (
             <div style={{ fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" }}>{ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด"}</div>
@@ -21601,7 +21613,17 @@ export default function CherryAdventure() {
           pointerEvents: "none", zIndex: 6, willChange: "left, top",
           textShadow: "0 1px 3px rgba(0,0,0,0.6)",
         }}>
-          {ui.playerTitle && <div style={{ fontSize: 10.5, fontWeight: 800, color: "#f5d05a" }}>{ui.playerTitle}</div>}
+          {ui.playerTitleId && ui.playerTitleId !== "t_none" && (() => {
+            const nT = TITLES.find((x) => x.id === ui.playerTitleId);
+            if (!nT) return null;
+            return (
+              <div style={{ marginBottom: 2, display: "flex", justifyContent: "center", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.6))" }}>
+                {nT.fancy
+                  ? renderTitle(nT, 19, true)
+                  : <span style={{ fontSize: 16, fontWeight: 900, fontFamily: font, color: "#f5d05a", whiteSpace: "nowrap", animation: "titleBlink 1.1s ease-in-out infinite" }}>{nT.emoji} {nT.name} {nT.emoji}</span>}
+              </div>
+            );
+          })()}
           <div style={{ fontSize: 13, fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {ui.playerName || "เชอร์รี่"} <span style={{ color: "#ffd0a0" }}>Lv.{ui.level}</span>
           </div>
@@ -22943,6 +22965,7 @@ export default function CherryAdventure() {
                                 <b style={{ width: 22, color: i === 0 ? "#e0a020" : i === 1 ? "#9aa0b0" : i === 2 ? "#c08050" : "#8a8a9a" }}>#{i + 1}</b>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</div>
+                                  {boardTitle(p, 12) && <div style={{ margin: "1px 0" }}>{boardTitle(p, 12)}</div>}
                                   <div style={{ fontSize: 9, color: "#9a8ab0" }}>⚔️ พลังรวม {powerOf(p).toLocaleString()}{(p.ng || 0) > 0 ? ` · ⚡ ตื่น ${p.ng}` : ""}</div>
                                 </div>
                                 <span style={{ color: "#8a7aa0", fontWeight: 800 }}>Lv.{p.lv}</span>

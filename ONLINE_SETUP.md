@@ -152,9 +152,14 @@ const ONLINE_CONFIG = {
 create table if not exists public.players (
   pid text primary key, n text, c text, lv int default 1,
   atk int default 0, def int default 0, hp int default 0, crit int default 0,
-  w text, cu jsonb default '{}'::jsonb, ng int default 0, rank int default 1000, ts bigint
+  w text, cu jsonb default '{}'::jsonb, ng int default 0, rank int default 1000, t text, ts bigint
 );
+-- ถ้าเคยสร้างตารางเวอร์ชันเก่า ให้เพิ่มคอลัมน์ฉายา (ใช้โชว์ฉายาบนกระดานอันดับโลก):
+alter table public.players add column if not exists t text;
 alter table public.players enable row level security;
+drop policy if exists "players_read"   on public.players;
+drop policy if exists "players_insert" on public.players;
+drop policy if exists "players_update" on public.players;
 create policy "players_read"   on public.players for select using (true);
 create policy "players_insert" on public.players for insert with check (true);
 create policy "players_update" on public.players for update using (true);
