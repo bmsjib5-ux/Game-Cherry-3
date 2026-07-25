@@ -824,6 +824,12 @@ function pvpTier(score) {
   for (const tier of PVP_TIERS) if (score >= tier.min) t = tier;
   return t;
 }
+// ⚡ การตื่นพลัง (Awakening) tiers — reach `at` to awaken; level rewinds back to `to`
+const AWAKEN_TIERS = [
+  { at: 40, to: 1 }, { at: 80, to: 40 }, { at: 100, to: 60 }, { at: 150, to: 100 },
+  { at: 200, to: 150 }, { at: 250, to: 200 }, { at: 300, to: 250 }, { at: 350, to: 300 },
+  { at: 400, to: 350 }, { at: 500, to: 450 },
+];
 // ⚔️ total combat power (พลังการต่อสู้รวม) — one number summarizing a fighter's stats
 // (hp here is the inflated effMaxHp, so it's weighted lightly; atk/def/crit weighted up)
 function powerOf(r) {
@@ -12954,29 +12960,20 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     G.closeNPC = () => setUi((u) => ({ ...u, npcTalk: null }));
-    // ⚡ การตื่นพลัง (Awakening): grow stronger each time, keep gear/pets/gold, reset level
-    // requires reaching a set level per awakening: 1→Lv20, 2→Lv40, 3→Lv60, 4→Lv80, 5→Lv99
-    const AWAKEN_REQ = [20, 40, 60, 80, 99];
-    G.awakenReq = () => AWAKEN_REQ[G.ngPlus || 0]; // level needed for the NEXT awakening (undefined if maxed)
+    // ⚡ การตื่นพลัง (Awakening): reach a milestone level → rewind level to its floor, keep everything, +5% perm
+    G.awakenReq = () => (AWAKEN_TIERS[G.ngPlus || 0] || {}).at; // level needed for the NEXT awakening (undefined if maxed)
     G.startNGPlus = () => {
       const cur = G.ngPlus || 0;
-      if (cur >= AWAKEN_REQ.length) { toast("⚡ ตื่นพลังครบทุกขั้นแล้ว! (สูงสุด 5 ครั้ง) ⭐"); return; }
-      const need = AWAKEN_REQ[cur];
-      if (G.player.level < need) { toast(`🔒 การตื่นพลังครั้งที่ ${cur + 1} ต้องถึง Lv.${need} ก่อน (ตอนนี้ Lv.${G.player.level})`); return; }
+      if (cur >= AWAKEN_TIERS.length) { toast(`⚡ ตื่นพลังครบทุกขั้นแล้ว! (สูงสุด ${AWAKEN_TIERS.length} ครั้ง) ⭐`); return; }
+      const m = AWAKEN_TIERS[cur];
+      if (G.player.level < m.at) { toast(`🔒 การตื่นพลังครั้งที่ ${cur + 1} ต้องถึง Lv.${m.at} ก่อน (ตอนนี้ Lv.${G.player.level})`); return; }
       G.ngPlus = cur + 1;
-      // reset progression but keep collection/gear
-      G.player.level = 1; G.player.exp = 0;
-      const C = CLASSES[G.cls];
-      G.player.maxHp = C.hp; G.player.hp = C.hp; G.player.atk = C.atk; G.player.def = C.def;
-      G.player.sp = 0; G.player.skillPts = 0;
-      G.player.maxMp = effMaxMp(); G.player.mp = G.player.maxMp;
-      G.dungeonProgress = 1;
+      // rewind level to this tier's floor — keep gear/pets/skills/stats/gold; +5% permanent power
+      G.player.level = m.to; G.player.exp = 0;
+      G.player.maxMp = effMaxMp(); G.player.hp = effMaxHp(); G.player.mp = G.player.maxMp;
       G.combo = 0;
-      // reset skill ranks to 1 (re-earn them, but keep gear power)
-      G.skillRanks = {};
-      skillsOf(G.cls, G.pathId).forEach((sk) => { G.skillRanks[sk.id] = 1; });
-      toast(`⚡✨ ตื่นพลังครั้งที่ ${G.ngPlus}! ศัตรูโหดขึ้น ${Math.round((G.ngPlus) * 40)}% · รางวัลเพิ่ม ${Math.round(G.ngPlus * 50)}% (เก็บของ+สัตว์เลี้ยงไว้)`);
-      setUi((u) => ({ ...u, ngPlus: G.ngPlus, mode: "explore", homeOpen: false }));
+      toast(`⚡✨ ตื่นพลังครั้งที่ ${G.ngPlus}! รีเซ็ตกลับ Lv.${m.to} · +5% ทุกสเตตัสถาวร (รวม +${G.ngPlus * 5}%) · เก็บของ/สกิล/สัตว์เลี้ยงไว้ครบ`);
+      setUi((u) => ({ ...u, ngPlus: G.ngPlus, level: G.player.level, mode: "explore", homeOpen: false }));
       char.position.set(0, 0, 0);
       G.mode = "explore"; // ให้ saveGame ผ่านการ์ดโหมดแน่นอน
       syncPlayer();
@@ -21400,23 +21397,25 @@ export default function CherryAdventure() {
                 ⚡ การตื่นพลัง {ui.ngPlus > 0 ? `(ขั้น ${ui.ngPlus})` : ""}
               </div>
               {(() => {
-                const reqs = [20, 40, 60, 80, 99];
+                const tiers = AWAKEN_TIERS;
                 const cur = ui.ngPlus || 0;
-                const maxed = cur >= reqs.length;
-                const need = maxed ? null : reqs[cur];
+                const maxed = cur >= tiers.length;
+                const m = maxed ? null : tiers[cur];
+                const need = m ? m.at : null;
                 const ready = !maxed && (ui.level || 0) >= need;
                 return (
                   <>
                     <div style={{ fontSize: 10.5, color: "#8a6ac0", marginBottom: 6, lineHeight: 1.6 }}>
-                      ปลุกพลังในตัวให้แข็งแกร่งขึ้น — <b>เก็บของ/สัตว์เลี้ยง/ทองไว้</b> รีเซ็ตเลเวล+สกิล · <b style={{ color: "#7a3ad0" }}>ทุกขั้น +5% ทุกสเตตัส (+2% คริ) ถาวร!</b>{cur > 0 && ` ตอนนี้ +${cur * 5}%`}
+                      ปลุกพลังในตัวให้แข็งแกร่งขึ้น — <b>เก็บของ/สกิล/สัตว์เลี้ยง/ทองไว้ครบ</b> รีเซ็ตเลเวลกลับตามขั้น · <b style={{ color: "#7a3ad0" }}>ทุกขั้น +5% ทุกสเตตัส (+2% คริ) ถาวร!</b>{cur > 0 ? ` ตอนนี้ +${cur * 5}%` : ""}
+                      {m ? <><br />ครั้งนี้: ถึง <b>Lv.{m.at}</b> → รีเซ็ตกลับ <b>Lv.{m.to}</b></> : null}
                     </div>
                     {/* tier progress */}
                     <div style={{ display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" }}>
-                      {reqs.map((rq, i) => (
-                        <div key={i} style={{ flex: 1, minWidth: 42, textAlign: "center", fontSize: 9.5, fontWeight: 800, borderRadius: 8, padding: "4px 2px",
+                      {tiers.map((tr, i) => (
+                        <div key={i} style={{ minWidth: 40, textAlign: "center", fontSize: 9, fontWeight: 800, borderRadius: 8, padding: "4px 4px",
                           background: i < cur ? "#7a3ad0" : (i === cur && ready) ? "#c0a0f0" : "#eae0f5",
                           color: i < cur ? "#fff" : "#7a5aa0", border: i === cur ? "1.5px solid #9a5ad0" : "none" }}>
-                          {i < cur ? "✓" : `Lv.${rq}`}
+                          {i < cur ? "✓" : `${tr.at}→${tr.to}`}
                         </div>
                       ))}
                     </div>
