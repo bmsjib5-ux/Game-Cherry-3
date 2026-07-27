@@ -11906,6 +11906,75 @@ export default function CherryAdventure() {
       toast(`⚒️ ตีอาวุธ ${it.emoji} ${it.name} เสร็จแล้ว!`);
       syncPlayer();
     };
+    // ---------- 🏛️ GOLD MARKET — ตู้แลกเปลี่ยน + ร้านทองพรีเมียมหมุนเวียน (ที่ทิ้งทองปลายเกม) ----------
+    // 🔁 ตู้แลกเปลี่ยน: ทอง → สกุลเงินอื่น มีเพดานต่อวัน (รีเซ็ตรายวัน)
+    G.GOLD_EXCHANGE = [
+      { key: "gemDust",  emoji: "✨", name: "ผงอัพเกรด", cost: 8000,   cap: 30, grant: () => { G.gemDust = (G.gemDust || 0) + 1; } },
+      { key: "stardust", emoji: "🌟", name: "ผงดาว",     cost: 3000,   cap: 60, grant: () => { G.stardust = (G.stardust || 0) + 1; } },
+      { key: "ore",      emoji: "⛏️", name: "แร่เหล็ก",  cost: 1500,   cap: 80, grant: () => { G.mats = G.mats || {}; G.mats.ironOre = (G.mats.ironOre || 0) + 1; } },
+      { key: "diamond",  emoji: "💎", name: "เพชร",      cost: 100000, cap: 10, grant: () => { G.diamonds = (G.diamonds || 0) + 1; } },
+    ];
+    G._exchDay = () => { const today = todayStamp(); if (!G.goldExch || G.goldExch.day !== today) G.goldExch = { day: today, used: {} }; return G.goldExch; };
+    G.exchangeGold = (key, qty) => {
+      qty = qty || 1;
+      const e = G.GOLD_EXCHANGE.find((x) => x.key === key); if (!e) return;
+      const st = G._exchDay();
+      const used = st.used[key] || 0;
+      const left = e.cap - used;
+      if (left <= 0) { toast(`วันนี้แลก${e.name}ครบเพดานแล้ว (${e.cap}/วัน) — พรุ่งนี้ค่อยมาใหม่`); return; }
+      qty = Math.min(qty, left);
+      const total = e.cost * qty;
+      if ((G.gold || 0) < total) { toast(`ทองไม่พอ! ต้องมี ${total.toLocaleString()}💰`); return; }
+      G.gold -= total;
+      for (let i = 0; i < qty; i++) e.grant();
+      st.used[key] = used + qty;
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🔁 แลก ${e.emoji} ${e.name} +${qty}!`);
+      setUi((u) => ({ ...u, gold: G.gold, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, ore: (G.mats && G.mats.ironOre) || 0, goldExchUsed: { ...st.used } }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // 🏪 ร้านทองพรีเมียม: สุ่มสินค้าใหม่ทุกวัน ซื้อด้วยทอง (สต็อกจำกัด)
+    G.rollGoldShop = (force) => {
+      const today = todayStamp();
+      if (!force && G.goldShop && G.goldShop.day === today && G.goldShop.items) return G.goldShop;
+      const items = [];
+      const hiPool = LOOT.filter((x) => ["dragon", "secret", "legend", "epic"].includes(x.rarity) && !x.starter);
+      const pick = (pool) => pool[Math.floor(Math.random() * pool.length)];
+      const seen = {};
+      for (let i = 0; i < 2 && hiPool.length; i++) { let it = pick(hiPool); let g = 0; while (seen[it.id] && g++ < 8) it = pick(hiPool); seen[it.id] = 1; const base = (sellPrice(it.id) || 5000) * 6; items.push({ t: "gear", id: it.id, name: it.name, emoji: it.emoji, rarity: it.rarity, price: Math.max(25000, base), stock: 1 }); }
+      items.push({ t: "gem",  name: "ผงอัพเกรด ×20", emoji: "✨", price: 120000, stock: 2, amount: 20 });
+      items.push({ t: "star", name: "ผงดาว ×50",     emoji: "🌟", price: 120000, stock: 2, amount: 50 });
+      items.push({ t: "ore",  name: "แร่เหล็ก ×50",   emoji: "⛏️", price: 60000,  stock: 3, amount: 50 });
+      items.push({ t: "pot",  name: "น้ำยาเลือด+มานา ×20", emoji: "🧪", price: 18000, stock: 5, amount: 20 });
+      if (Math.random() < 0.5) items.push({ t: "dia", name: "เพชร ×5", emoji: "💎", price: 400000, stock: 1, amount: 5 });
+      G.goldShop = { day: today, items, bought: {} };
+      return G.goldShop;
+    };
+    G.buyGoldItem = (idx) => {
+      const shop = G.rollGoldShop();
+      const it = shop.items[idx]; if (!it) return;
+      const bought = shop.bought[idx] || 0;
+      if (bought >= it.stock) { toast("สินค้าชิ้นนี้หมดแล้ววันนี้ — พรุ่งนี้สุ่มใหม่"); return; }
+      if ((G.gold || 0) < it.price) { toast(`ทองไม่พอ! ต้องมี ${it.price.toLocaleString()}💰`); return; }
+      G.gold -= it.price;
+      if (it.t === "gear") gainItem(it.id);
+      else if (it.t === "gem") G.gemDust = (G.gemDust || 0) + it.amount;
+      else if (it.t === "star") G.stardust = (G.stardust || 0) + it.amount;
+      else if (it.t === "ore") { G.mats = G.mats || {}; G.mats.ironOre = (G.mats.ironOre || 0) + it.amount; }
+      else if (it.t === "pot") { G.potions = (G.potions || 0) + it.amount; G.mpPotions = (G.mpPotions || 0) + it.amount; }
+      else if (it.t === "dia") G.diamonds = (G.diamonds || 0) + it.amount;
+      shop.bought[idx] = bought + 1;
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏪 ซื้อ ${it.emoji} ${it.name} แล้ว!`);
+      setUi((u) => ({ ...u, gold: G.gold, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, ore: (G.mats && G.mats.ironOre) || 0, inv: [...G.inv], potions: G.potions || 0, mpPotions: G.mpPotions || 0, goldShopBought: { ...shop.bought } }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.openGoldMarket = () => {
+      const st = G._exchDay(); const shop = G.rollGoldShop();
+      setUi((u) => ({ ...u, goldMarketOpen: true, menuOpen: false, goldMarketTab: "exchange",
+        gold: G.gold, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, ore: (G.mats && G.mats.ironOre) || 0,
+        goldExchUsed: { ...(st.used || {}) }, goldShopItems: shop.items, goldShopBought: { ...(shop.bought || {}) } }));
+    };
     // 💎 diamond shop
     G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false, inv: [...(G.inv || [])], diaSkins: { ...(G.diaSkins || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null }));
     G.buyDiamond = (id) => {
@@ -13519,7 +13588,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -14456,6 +14525,7 @@ export default function CherryAdventure() {
       G.petBox = Array.isArray(d.petBox) ? d.petBox.filter((p) => p && SPECIES[p.sp]) : null;
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
+      G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
         const mids = Object.keys(d.col || {}).filter((k) => SPECIES[k]).sort((a, b) => SPECIES[b].tier - SPECIES[a].tier);
@@ -21018,7 +21088,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen"];
   // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
   const _uiWideModal = window.innerWidth > 820;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
@@ -21075,7 +21145,7 @@ export default function CherryAdventure() {
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
-      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen"].some((f) => ui[f]) && (
+      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen"].some((f) => ui[f]) && (
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
@@ -22256,6 +22326,7 @@ export default function CherryAdventure() {
           <div onClick={(e) => e.stopPropagation()} style={{ margin: "70px 12px 0 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(3, 54px)", gap: 12 }}>
             {[
               ["💾", "ช่องเซฟทั้งหมด", () => { if (G.saveGame) G.saveGame(); if (G._cloudPush) G._cloudPush(true); setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots, confirmDelete: null })); }, "#8fd0ff"],
+              ["🏛️", "ตลาดทองคำ", () => G.openGoldMarket(), "#f5c542"],
                           ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
               ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
               ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
@@ -22269,6 +22340,60 @@ export default function CherryAdventure() {
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* 🏛️ Gold Market — currency exchange + rotating premium gold shop */}
+      {ui.goldMarketOpen && (
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#2a2416,#20190e)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, border: "1.5px solid #f5c542" }}>
+          {closeBtn("goldMarketOpen")}
+          <div style={{ fontSize: 16, fontWeight: 900, color: "#f5d76a" }}>🏛️ ตลาดทองคำ</div>
+          <div style={{ display: "flex", gap: 9, fontSize: 11, fontWeight: 800, margin: "5px 0 9px", color: "#e8d9a8", flexWrap: "wrap" }}>
+            <span>💰 {(ui.gold || 0).toLocaleString()}</span><span>💎 {ui.diamonds || 0}</span><span>✨ {ui.gemDust || 0}</span><span>🌟 {ui.stardust || 0}</span><span>⛏️ {ui.ore || 0}</span>
+          </div>
+          <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+            {[["exchange", "🔁 แลกเปลี่ยน"], ["shop", "🏪 ร้านพรีเมียม"]].map(([k, lbl]) => {
+              const on = (ui.goldMarketTab || "exchange") === k;
+              return <button key={k} onClick={() => setUi((u) => ({ ...u, goldMarketTab: k }))} style={{ flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: on ? "#4a3a10" : "#c9b98a", background: on ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "rgba(255,255,255,0.06)" }}>{lbl}</button>;
+            })}
+          </div>
+          {(ui.goldMarketTab || "exchange") !== "shop" ? (
+            <>
+              <div style={{ fontSize: 10.5, color: "#c9b98a", marginBottom: 8 }}>แลกทองส่วนเกินเป็นสกุลเงินอื่น · มีเพดานต่อวัน (รีเซ็ตรายวัน)</div>
+              {(G.GOLD_EXCHANGE || []).map((e) => {
+                const used = (ui.goldExchUsed || {})[e.key] || 0; const left = e.cap - used; const afford = (ui.gold || 0) >= e.cost && left > 0;
+                return (
+                  <div key={e.key} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "8px 10px", marginBottom: 7, border: "1px solid #4a3f22" }}>
+                    <span style={{ fontSize: 23 }}>{e.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: "#fff" }}>{e.name} <span style={{ color: "#8ad0ff" }}>+1</span></div>
+                      <div style={{ fontSize: 9.5, color: "#c9b98a" }}>💰 {e.cost.toLocaleString()} /ชิ้น · วันนี้ {used}/{e.cap}</div>
+                    </div>
+                    {afford && left >= 10 && <button onClick={() => G.exchangeGold(e.key, 10)} style={{ padding: "6px 9px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", background: "#c09a2a" }}>×10</button>}
+                    <button disabled={!afford} onClick={() => G.exchangeGold(e.key, 1)} style={{ padding: "6px 13px", borderRadius: 9, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: left <= 0 ? "#aaa" : "#4a3a10", background: left <= 0 ? "#4a4436" : afford ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "#5a5240" }}>{left <= 0 ? "เต็ม" : "แลก"}</button>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 10.5, color: "#c9b98a", marginBottom: 8 }}>สินค้าพิเศษหมุนเวียนทุกวัน · สต็อกจำกัด (รีเซ็ตรายวัน)</div>
+              {(ui.goldShopItems || []).map((it, idx) => {
+                const bought = (ui.goldShopBought || {})[idx] || 0; const sold = bought >= it.stock; const afford = (ui.gold || 0) >= it.price && !sold;
+                const rc = it.rarity ? ((RARITY[it.rarity] || {}).color || "#f5c542") : "#f5c542";
+                return (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "8px 10px", marginBottom: 7, border: "1px solid " + rc + "55", opacity: sold ? 0.5 : 1 }}>
+                    <span style={{ fontSize: 23 }}>{it.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: rc, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.name}</div>
+                      <div style={{ fontSize: 9.5, color: "#c9b98a" }}>💰 {it.price.toLocaleString()} · เหลือ {Math.max(0, it.stock - bought)}/{it.stock}</div>
+                    </div>
+                    <button disabled={!afford} onClick={() => G.buyGoldItem(idx)} style={{ padding: "6px 13px", borderRadius: 9, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: sold ? "#aaa" : "#4a3a10", background: sold ? "#4a4436" : afford ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "#5a5240" }}>{sold ? "หมด" : "ซื้อ"}</button>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
 
