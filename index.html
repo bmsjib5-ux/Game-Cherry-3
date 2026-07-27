@@ -5229,6 +5229,113 @@ function CherryAdventure() {
             headG.add(helm);
             G.warriorHelm = helm;
         }
+        // 🤖 AEGIS-X mech helmet — white head, dark visor band w/ glowing blue eyes, forehead triangle, swept blade fins, ear pods
+        {
+            const H = new THREE.Group();
+            const white = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
+            const silver = new THREE.MeshStandardMaterial({ color: 0xa8b0bc, metalness: 0.92, roughness: 0.22 });
+            const dark = new THREE.MeshStandardMaterial({ color: 0x12151d, metalness: 0.7, roughness: 0.42 });
+            const led = new THREE.MeshStandardMaterial({ color: 0x9ae8ff, emissive: 0x3ac8ff, emissiveIntensity: 2.0, roughness: 0.2 });
+            const plasma = new THREE.MeshStandardMaterial({ color: 0x6ad8ff, emissive: 0x2ab0f5, emissiveIntensity: 1.3, roughness: 0.25, metalness: 0.3 });
+            const glowM = new THREE.MeshBasicMaterial({ color: 0x4ac0ff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+            // 🥚 white head shell (the chibi head is hidden underneath)
+            const shell = new THREE.Mesh(new THREE.SphereGeometry(0.6, 30, 24), white);
+            shell.scale.set(1, 1.04, 0.96);
+            H.add(shell);
+            // top ridge + silver brow band
+            const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.5, 0.44), silver);
+            ridge.position.set(0, 0.26, 0.02);
+            H.add(ridge);
+            // 🕶️ dark angular faceplate on the front (flat plate → reliably shows over the shell)
+            const face = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.12), dark);
+            face.position.set(0, -0.04, 0.5);
+            face.scale.set(1, 1, 1);
+            H.add(face);
+            const faceBevel = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.1, 6), dark);
+            faceBevel.rotation.x = Math.PI / 2;
+            faceBevel.position.set(0, -0.02, 0.56);
+            H.add(faceBevel);
+            const cheekL2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.12), white);
+            cheekL2.position.set(-0.34, -0.02, 0.46);
+            cheekL2.rotation.y = 0.5;
+            H.add(cheekL2);
+            const cheekR2 = cheekL2.clone();
+            cheekR2.position.x = 0.34;
+            cheekR2.rotation.y = -0.5;
+            H.add(cheekR2);
+            // 🔺 forehead inverted triangle
+            const tri = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.12, 3), plasma);
+            tri.position.set(0, 0.2, 0.62);
+            tri.rotation.set(Math.PI, 0, 0);
+            H.add(tri);
+            const triGlow = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.18, 3), glowM);
+            triGlow.position.set(0, 0.2, 0.6);
+            triGlow.rotation.set(Math.PI, 0, 0);
+            H.add(triGlow);
+            // 👁️ two angular glowing LED eyes on the faceplate (in front)
+            const eyes = [];
+            for (const sx of [-1, 1]) {
+                const eye = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.09, 0.04), led);
+                eye.position.set(sx * 0.17, 0.01, 0.63);
+                eye.rotation.z = sx * 0.34;
+                H.add(eye);
+                eyes.push(eye);
+                const eyeGlow = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.18, 0.02), glowM);
+                eyeGlow.position.set(sx * 0.17, 0.01, 0.61);
+                eyeGlow.rotation.z = sx * 0.34;
+                H.add(eyeGlow);
+            }
+            // silver mouth vents
+            for (let k = 0; k < 3; k++) {
+                const vent = new THREE.Mesh(new THREE.BoxGeometry(0.16 - k * 0.03, 0.02, 0.02), silver);
+                vent.position.set(0, -0.26 - k * 0.05, 0.6);
+                H.add(vent);
+            }
+            // 🗡️ swept-back blade fins (3 per side, white w/ glowing blue edges) — the signature head wings
+            for (const sx of [-1, 1]) {
+                for (let k = 0; k < 3; k++) {
+                    const len = 0.92 - k * 0.16;
+                    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.1, len, 4), white);
+                    fin.scale.set(1, 1, 0.26); // flatten into a blade
+                    fin.position.set(sx * (0.5 + k * 0.03), 0.3 - k * 0.24, -0.08 - k * 0.06);
+                    fin.rotation.set(0.15, sx * -0.35, sx * (1.15 + k * 0.14)); // flare up-and-out, swept back
+                    H.add(fin);
+                    const edge = new THREE.Mesh(new THREE.ConeGeometry(0.04, len * 0.95, 4), plasma);
+                    edge.scale.set(1, 1, 0.26);
+                    edge.position.copy(fin.position);
+                    edge.rotation.copy(fin.rotation);
+                    edge.position.z += 0.02;
+                    H.add(edge);
+                }
+            }
+            // 🔵 round ear pods with a glowing blue core (both sides)
+            for (const sx of [-1, 1]) {
+                const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 16), silver);
+                pod.rotation.z = Math.PI / 2;
+                pod.position.set(sx * 0.6, -0.04, 0.08);
+                H.add(pod);
+                const podRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 20), dark);
+                podRing.rotation.y = Math.PI / 2;
+                podRing.position.set(sx * 0.66, -0.04, 0.08);
+                H.add(podRing);
+                const podCore = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 12), plasma);
+                podCore.rotation.z = Math.PI / 2;
+                podCore.position.set(sx * 0.68, -0.04, 0.08);
+                H.add(podCore);
+            }
+            // small top antenna
+            const ant = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.22, 5), silver);
+            ant.position.set(0, 0.66, -0.02);
+            ant.rotation.x = -0.2;
+            H.add(ant);
+            const antTip = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), plasma);
+            antTip.position.set(0, 0.79, -0.06);
+            H.add(antTip);
+            H.visible = false;
+            headG.add(H);
+            G.aegisHelm = H;
+            G.aegisHelmEyes = eyes;
+        }
         const baseHair = new THREE.Group(); // scalp + bangs + fringe shared by styles 0-4
         headG.add(baseHair);
         // 🎀 back-of-head hair cover — ALWAYS visible so no style leaves the nape bare
@@ -5835,6 +5942,8 @@ function CherryAdventure() {
         Object.values(mouths).forEach((m) => { m.visible = false; headG.add(m); });
         const setMouth = (n) => Object.entries(mouths).forEach(([k, m]) => (m.visible = k === n));
         setMouth("smile");
+        G._chibiFace = [head, eyes, browL, browR, nose, cheekL, cheekR];
+        G._chibiMouths = mouths; // 🤖 hidden under the aegis helmet
         // ---------- 🌸 HARU signature look (sakura & moon hero) ----------
         // A distinctive accessory + aura set shown when the Haru character is active.
         {
@@ -6221,6 +6330,8 @@ function CherryAdventure() {
                         m.material.emissiveIntensity = irisBase[i].ei;
                     }
                 });
+                if (G.refreshAegisHead)
+                    G.refreshAegisHead(); // 🤖 re-apply the aegis mech head after a hero swap
             };
         }
         // ---------- 🌙 LUNA signature look (moonlight maiden) ----------
@@ -10429,6 +10540,80 @@ function CherryAdventure() {
         }
         Object.values(classAccessories).forEach((g) => { g.visible = false; char.add(g); });
         G.classAccessories = classAccessories;
+        // 🛡️ AEGIS-X round tech shield — held on the left arm (concentric silver rings + glowing plasma core)
+        {
+            const sh = new THREE.Group();
+            const white = new THREE.MeshStandardMaterial({ color: 0xeef1f6, metalness: 0.6, roughness: 0.28 });
+            const silver = new THREE.MeshStandardMaterial({ color: 0xaeb6c2, metalness: 0.92, roughness: 0.22 });
+            const dark = new THREE.MeshStandardMaterial({ color: 0x161a23, metalness: 0.7, roughness: 0.4 });
+            const plasma = new THREE.MeshStandardMaterial({ color: 0x6ad8ff, emissive: 0x2ab0f5, emissiveIntensity: 1.3, roughness: 0.25, metalness: 0.3 });
+            const glowM = new THREE.MeshBasicMaterial({ color: 0x4ac0ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+            const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.06, 28), white);
+            disc.rotation.x = Math.PI / 2;
+            sh.add(disc);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.04, 10, 30), silver);
+            sh.add(rim);
+            const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.025, 8, 28), dark);
+            ring2.position.z = 0.03;
+            sh.add(ring2);
+            const ring3 = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.03, 8, 24), plasma);
+            ring3.position.z = 0.04;
+            sh.add(ring3);
+            // 6 angular segment plates around the rim
+            for (let k = 0; k < 6; k++) {
+                const a = k / 6 * Math.PI * 2;
+                const seg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.02), silver);
+                seg.position.set(Math.cos(a) * 0.35, Math.sin(a) * 0.35, 0.035);
+                seg.rotation.z = a;
+                sh.add(seg);
+            }
+            const coreDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 6), plasma);
+            coreDisc.rotation.x = Math.PI / 2;
+            coreDisc.position.z = 0.05;
+            sh.add(coreDisc);
+            const coreGlow = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 12), glowM);
+            coreGlow.position.z = 0.07;
+            coreGlow.scale.set(1, 1, 0.5);
+            sh.add(coreGlow);
+            // mount on the left forearm, facing forward
+            sh.position.set(0.06, -0.42, 0.12);
+            sh.rotation.set(1.5, 0, 0.1);
+            sh.scale.setScalar(1.05);
+            (armL.userData.elbow || armL).add(sh);
+            sh.visible = false;
+            G.aegisShield = sh;
+            G.aegisShieldCore = coreGlow;
+        }
+        // 🤖 toggle the Aegis-X mech head + shield (+ hide hair) whenever the class look changes
+        G.refreshAegisHead = () => {
+            const aeg = !G.heroId && G.cls === "aegis";
+            const eq = G.equip || {}, cos = G.costume || {}, hidden = G._gearHidden;
+            const hatOn = !hidden && !!(cos.hat || eq.hat);
+            const showHelm = aeg && !hatOn;
+            if (G.aegisHelm)
+                G.aegisHelm.visible = showHelm; // a worn hat replaces the helmet
+            if (G.aegisShield)
+                G.aegisShield.visible = aeg; // the tech shield is a held piece
+            if (showHelm) { // 🤖 hide the chibi hair + face — the helmet covers the head
+                if (typeof hairStyles !== "undefined")
+                    hairStyles.forEach((h) => (h.visible = false));
+                if (typeof baseHair !== "undefined" && baseHair)
+                    baseHair.visible = false;
+                if (typeof ahoge !== "undefined" && ahoge)
+                    ahoge.visible = false;
+                if (typeof hairBackGroup !== "undefined" && hairBackGroup)
+                    hairBackGroup.visible = false;
+                if (G._chibiFace)
+                    G._chibiFace.forEach((p) => (p.visible = false));
+                if (G._chibiMouths)
+                    Object.values(G._chibiMouths).forEach((m) => (m.visible = false));
+            }
+            else if (G._chibiFace) { // restore the chibi face when the helmet is off
+                G._chibiFace.forEach((p) => (p.visible = true));
+                if (G._chibiMouths && G._chibiMouths.smile)
+                    G._chibiMouths.smile.visible = true;
+            }
+        };
         // 🚫 no overlap: recompute class-look piece visibility so equipped gear replaces it
         //   - outfit slot → hides the class body armor/accessory + shield
         //   - hat slot    → hides the class head piece (helm / circlet)
@@ -10457,6 +10642,8 @@ function CherryAdventure() {
                 shirtMat.map = null;
                 shirtMat.color.copy(skinMat.color);
             } // 🦸 ไหล่เปลือยโชว์สีผิว ไม่ใช่สีเสื้อคลาส
+            if (G.refreshAegisHead)
+                G.refreshAegisHead(); // 🤖 mech head/shield + hide hair for aegis
         };
         // apply the outfit look for a class: recolor shirt/pants + show the matching accessory
         G.applyClassOutfit = (cls) => {
@@ -10481,7 +10668,7 @@ function CherryAdventure() {
             if (G.coderGlasses)
                 G.coderGlasses.visible = o.acc === "hoodie"; // 👓 glasses for the coder
             G._classAcc = o.acc;
-            G.reconcileClassPieces(); // 🚫 keep equipped gear from overlapping the class look
+            G.reconcileClassPieces(); // 🚫 keep equipped gear from overlapping the class look (also refreshes the aegis head)
         };
         // 👀 preview a class during selection: outfit + weapon in hand
         G.previewClass = (cls) => {
@@ -21007,6 +21194,14 @@ function CherryAdventure() {
                         if (G.npc)
                             G.npc.visible = !preview;
                     }
+                }
+                // 🤖 aegis mech helmet eyes scan/pulse + shield core breathe
+                if (G.aegisHelm && G.aegisHelm.visible) {
+                    const pulse = 1.4 + Math.sin(t * 2.6) * 0.5;
+                    if (G.aegisHelmEyes)
+                        G.aegisHelmEyes.forEach((e) => (e.material.emissiveIntensity = pulse));
+                    if (G.aegisShieldCore)
+                        G.aegisShieldCore.material.opacity = 0.35 + Math.abs(Math.sin(t * 2.2)) * 0.2;
                 }
                 // 👗 class outfit accessories: flutter cloth + spin mage star
                 if (G._classAcc && G.classAccessories) {
