@@ -1515,6 +1515,40 @@ export default function CherryAdventure() {
     key.shadow.camera.top = 12; key.shadow.camera.bottom = -12;
     scene.add(key);
 
+    // ---------- 🔋 POWER-SAVING MODE — ยืดแบต: ลด pixel ratio + ปิดเงา + จำกัด 30fps ----------
+    // จุดที่กินแบตมากสุด: (1) pixel ratio สูง (วาดพิกเซลมากถึง 9 เท่า) (2) เงานุ่ม 2048² ทุกเฟรม (3) เฟรมเรตไม่จำกัด (90/120Hz)
+    let powerSave = false;
+    try { powerSave = window.localStorage.getItem("cherry-powersave") === "1"; } catch (e) {}
+    G.powerSave = powerSave;
+    const applyQuality = () => {
+      const ps = !!G.powerSave;
+      renderer.setPixelRatio(ps ? Math.min(window.devicePixelRatio, 1) : Math.min(window.devicePixelRatio, 2)); // 🔍 ลดความละเอียดการวาด (ประหยัดสุด ×1, ปกติ ×2 — เดิม ×3 เปลืองเกินจำเป็น)
+      renderer.shadowMap.enabled = !ps;      // 🌑 ปิดเงาในโหมดประหยัด
+      key.castShadow = !ps;
+      key.shadow.mapSize.set(ps ? 512 : 1536, ps ? 512 : 1536); // 🌑 ลด shadow map (เดิม 2048 → 1536 เพื่อประหยัดทั่วไป)
+      renderer.shadowMap.needsUpdate = true;
+      try { scene.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (m) m.needsUpdate = true; }); }); } catch (e) {} // รีคอมไพล์วัสดุให้เพิ่ม/ตัด shadow sampling
+      G._fpsInterval = ps ? (1000 / 30) : 0; // ⏱️ จำกัด 30fps ในโหมดประหยัด (ปกติไม่จำกัด)
+    };
+    G.applyQuality = applyQuality;
+    G.togglePowerSave = () => {
+      G.powerSave = !G.powerSave;
+      try { window.localStorage.setItem("cherry-powersave", G.powerSave ? "1" : "0"); } catch (e) {}
+      applyQuality();
+      if (G.toast) G.toast(G.powerSave ? "🔋 โหมดประหยัดพลังงาน: เปิด — ลดความคมชัด/เงา/เฟรมเรต ยืดแบต" : "⚡ โหมดประหยัดพลังงาน: ปิด — ภาพคมชัดเต็ม");
+      setUi((u) => ({ ...u, powerSave: G.powerSave }));
+    };
+    applyQuality(); // ใช้การตั้งค่าที่บันทึกไว้ (และลดค่าเริ่มต้นที่เปลืองเกิน)
+    setUi((u) => ({ ...u, powerSave: G.powerSave })); // 🔋 sync ปุ่มให้ตรงกับค่าที่บันทึก
+    // 🔋 ถ้าอุปกรณ์แบตต่ำ (<20%) และยังไม่เคยตั้งค่า → แนะนำเปิดอัตโนมัติ (best-effort)
+    try {
+      if (navigator.getBattery && window.localStorage.getItem("cherry-powersave") == null) {
+        navigator.getBattery().then((bat) => {
+          if (bat && bat.level <= 0.2 && !bat.charging && !G.powerSave) { G.powerSave = true; applyQuality(); setUi((u) => ({ ...u, powerSave: true })); if (G.toast) G.toast("🔋 แบตต่ำ — เปิดโหมดประหยัดพลังงานให้อัตโนมัติ"); }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+
     // ---------- 🌗 Day / Night cycle ----------
     const DAY_CYCLE = 120; // seconds per full day
     const dayColors = {
@@ -14849,6 +14883,12 @@ export default function CherryAdventure() {
 
     const animate = () => {
       if (dtForce == null) raf = requestAnimationFrame(animate);
+      // ⏱️🔋 frame cap (power-save mode) — skip this rAF tick if it's too soon
+      if (dtForce == null && G._fpsInterval) {
+        const nowF = performance.now();
+        if (nowF - (G._lastFrameT || 0) < G._fpsInterval - 1) return;
+        G._lastFrameT = nowF;
+      }
       try {
       const dtReal = Math.min(clock.getDelta(), 0.05);
       const dt = dtForce != null ? dtForce : dtReal; // 🤖💤 forced dt while background-farming
@@ -22002,6 +22042,11 @@ export default function CherryAdventure() {
               fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
             }}>👤</button>
           )}
+          <button onClick={() => G.togglePowerSave()} title="โหมดประหยัดพลังงาน (ยืดแบต)" style={{
+            width: 34, height: 34, borderRadius: "50%", border: ui.powerSave ? "2px solid #3ac06a" : "none", cursor: "pointer",
+            fontSize: 15, background: ui.powerSave ? "#d6f5df" : "#fff", opacity: ui.powerSave ? 1 : 0.72,
+            boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
+          }}>🔋</button>
         </div>
       )}
 
