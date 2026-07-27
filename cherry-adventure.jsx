@@ -248,9 +248,36 @@ const SLOT_ICON = { weapon: "⚔️", outfit: "👕", hat: "🎩", mask: "😷",
 const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
 
-// ---------- 👹 WORLD BOSS — daily raid boss (party up online, shared HP, 60s rounds) ----------
-const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 99, maxHp: 5000000, roundSec: 180, epoch: 3,
-  block: 0.20, dodge: 0.15, atkDebuff: 0.20, critDebuff: 20 }; // ⏱️ 3 นาที/รอบ · 🛡️ block 20% · 💨 dodge 15% · ลด ATK 20% · ลดคริ 20% · 🔄 bump epoch to force a fresh re-boss for everyone
+// ---------- 👹 WORLD BOSS — hourly raid boss (spawns fresh every hour, random boss + level, party up online, shared HP, timed rounds) ----------
+// 🎲 pool of possible world bosses (deterministic per hour so every player agrees without a server)
+const WB_POOL = [
+  { spId: "yommathut", name: "ยมทูตมัจจุราช", emoji: "☠️" },
+  { spId: "titanlord", name: "จอมไททันบรรพกาล", emoji: "⛰️" },
+  { spId: "kraken",    name: "คราเคนเจ้าสมุทร", emoji: "🐙" },
+  { spId: "candyking", name: "ราชาขนมหวาน",   emoji: "🍭" },
+  { spId: "alien",     name: "เอเลี่ยนโอเวอร์ลอร์ด", emoji: "👽" },
+  { spId: "ufoboss",   name: "จักรพรรดิกาแล็กซี", emoji: "🛸" },
+];
+const WB_LEVELS = [100, 150, 200, 250, 300];
+const WB_HP_BY_LV = { 100: 5000000, 150: 7000000, 200: 10000000, 250: 13000000, 300: 15000000 };
+const wbHourStamp = () => Math.floor(Date.now() / 3600000); // which hour-epoch we're in
+const _wbHash = (n, salt) => { let h = ((n >>> 0) * 2654435761 + (salt >>> 0) * 40503) >>> 0; h ^= h >>> 15; h = (h * 2246822519) >>> 0; h ^= h >>> 13; return h >>> 0; };
+const wbBossForHour = (hour) => {
+  const b = WB_POOL[_wbHash(hour, 7) % WB_POOL.length];
+  const lv = WB_LEVELS[_wbHash(hour, 19) % WB_LEVELS.length];
+  return { spId: b.spId, name: b.name, emoji: b.emoji, lv, maxHp: WB_HP_BY_LV[lv] || 5000000 };
+};
+// live boss identity for the current hour — refreshed lazily; all WORLD_BOSS.* reads stay valid
+const WORLD_BOSS = { name: "จอมมารโลกันตร์", emoji: "👹", spId: "yommathut", lv: 100, maxHp: 5000000, roundSec: 180, hour: -1,
+  block: 0.20, dodge: 0.15, atkDebuff: 0.20, critDebuff: 20 }; // ⏱️ 3 นาที/รอบ · 🛡️ block 20% · 💨 dodge 15% · ลด ATK 20% · ลดคริ 20%
+const wbRefreshBoss = () => {
+  const h = wbHourStamp();
+  if (WORLD_BOSS.hour !== h) {
+    const b = wbBossForHour(h);
+    WORLD_BOSS.hour = h; WORLD_BOSS.spId = b.spId; WORLD_BOSS.name = b.name; WORLD_BOSS.emoji = b.emoji; WORLD_BOSS.lv = b.lv; WORLD_BOSS.maxHp = b.maxHp;
+  }
+  return WORLD_BOSS;
+};
 
 // ---------- Elemental skills (unlock by level) ----------
 const ELEMENTS = {
@@ -12228,16 +12255,44 @@ export default function CherryAdventure() {
 
     // ---------- 👹 WORLD BOSS — daily raid (party online, shared HP, 60s timed rounds) ----------
     G.wbEnsureDaily = () => {
-      const today = todayStamp();
-      // reset on a new day, a max-HP change, OR an epoch bump (forced re-boss) → "รีบอส เริ่มใหม่"
-      if (!G.worldBoss || G.worldBoss.day !== today || G.worldBoss.maxHp !== WORLD_BOSS.maxHp || G.worldBoss.epoch !== WORLD_BOSS.epoch) {
-        G.worldBoss = { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, day: today, cleared: false, epoch: WORLD_BOSS.epoch };
+      // 🔒 during an active boss round, freeze the boss so an hour-rollover mid-fight can't wipe progress
+      if (G.wbRoundOn && G.worldBoss) return G.worldBoss;
+      wbRefreshBoss();
+      const h = wbHourStamp();
+      // 🕐 spawn a fresh boss every hour (random boss + level, shared by everyone)
+      if (!G.worldBoss || G.worldBoss.hour !== h) {
+        G.worldBoss = { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, hour: h, cleared: false,
+          lv: WORLD_BOSS.lv, spId: WORLD_BOSS.spId, name: WORLD_BOSS.name, emoji: WORLD_BOSS.emoji };
+        // 📢 announce the new boss once per hour (only once the player is actually in-game)
+        if (G._wbAnnouncedHour !== h) {
+          G._wbAnnouncedHour = h;
+          if (G.showAnnounce && G.player) G.showAnnounce(`👹 บอสโลกปรากฏตัว! ${WORLD_BOSS.emoji} ${WORLD_BOSS.name} Lv.${WORLD_BOSS.lv} · เลือด ${(WORLD_BOSS.maxHp / 1000000).toLocaleString()} ล้าน — รีบไปตีรับรางวัลก่อนหมดชั่วโมง!`);
+        }
       }
       return G.worldBoss;
     };
     G.wbStatus = () => {
       const wb = G.wbEnsureDaily();
-      return { hp: wb.hp, maxHp: wb.maxHp, cleared: !!wb.cleared, canEnter: !wb.cleared && wb.hp > 0, lv: WORLD_BOSS.lv };
+      const hourLeft = 3600 - Math.floor((Date.now() / 1000) % 3600); // ⏳ seconds until this boss despawns
+      return { hp: wb.hp, maxHp: wb.maxHp, cleared: !!wb.cleared, canEnter: !wb.cleared && wb.hp > 0,
+        lv: wb.lv, name: wb.name, emoji: wb.emoji, spId: wb.spId, hourLeft };
+    };
+    // 🎁 consolation reward when the hour ends without a kill — scaled by the damage you dealt
+    G.wbConsolation = (score) => {
+      score = Math.max(0, Math.round(score || 0));
+      if (score <= 0) return null;
+      const gold = Math.min(200000, Math.round(score / 50));
+      const gemDust = Math.min(200, Math.floor(score / 100000));
+      const diamonds = Math.min(300, Math.floor(score / 200000));
+      G.gold += gold;
+      if (gemDust > 0) G.gemDust = (G.gemDust || 0) + gemDust;
+      if (diamonds > 0) { if (G.gainDiamonds) G.gainDiamonds(diamonds, "ปลอบใจบอสโลก"); else G.diamonds = (G.diamonds || 0) + diamonds; }
+      syncPlayer(); saveGame();
+      const msg = `🎁 รางวัลปลอบใจบอสโลก (ดาเมจ ${score.toLocaleString()}): +${gold.toLocaleString()}💰${gemDust > 0 ? ` +${gemDust}💠` : ""}${diamonds > 0 ? ` +${diamonds}💎` : ""}`;
+      toast(msg);
+      if (G.showAnnounce) G.showAnnounce(msg);
+      setUi((u) => ({ ...u, gold: G.gold, gemDust: G.gemDust || 0, diamonds: G.diamonds || 0 }));
+      return { gold, gemDust, diamonds };
     };
     const wbBuildBossMesh = () => {
       const m = buildMonster(WORLD_BOSS.spId);
@@ -12280,7 +12335,7 @@ export default function CherryAdventure() {
     G.startWorldBoss = () => {
       if (G.mode !== "explore") { toast("👹 เข้าตีบอสโลกได้จากโลกกว้างเท่านั้น"); return; }
       const st = G.wbStatus();
-      if (st.cleared) { toast("👹 วันนี้ปราบจอมมารโลกันตร์แล้ว — กลับมาใหม่พรุ่งนี้!"); return; }
+      if (st.cleared) { toast(`👹 ปราบ${st.name}แล้วในชั่วโมงนี้ — รอบอสตัวใหม่ชั่วโมงหน้า!`); return; }
       G.endlessMode = false; G.endlessWave = 0;
       G.wbActive = true;
       G.socialOpen = false;
@@ -12304,7 +12359,7 @@ export default function CherryAdventure() {
     G.wbOpenReady = () => {
       if (G.mode !== "explore") { toast("👹 เข้าตีบอสโลกได้จากโลกกว้างเท่านั้น"); return; }
       const st = G.wbStatus();
-      if (st.cleared) { toast("👹 วันนี้ปราบจอมมารโลกันตร์แล้ว — กลับมาใหม่พรุ่งนี้!"); return; }
+      if (st.cleared) { toast(`👹 ปราบ${st.name}แล้วในชั่วโมงนี้ — รอบอสตัวใหม่ชั่วโมงหน้า!`); return; }
       G.wbMyScore = 0; // 🏆 fresh session score
       const myPid = G.pid || "me";
       const members = (G.wbRaid && G.wbRaidRow && G.wbRaidRow.members && G.wbRaidRow.members.length)
@@ -12413,6 +12468,7 @@ export default function CherryAdventure() {
     G.wbVictory = () => {
       const wb = G.wbEnsureDaily();
       wb.hp = 0; wb.cleared = true;
+      G.wbHourScore = 0; // 🏆 killed it → consolation no longer applies this hour
       G.wbRoundOn = false;
       G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura
       if (G.enemy) { const mm = G.enemy.mesh; if (mm) { burst(mm.position, 0xf5d05a, 2.4); scene.remove(mm); } G.enemy = null; }
@@ -14253,7 +14309,7 @@ export default function CherryAdventure() {
       if (G.publishProfile) { try { G.publishProfile(true); } catch (e) {} } // let friends find us
       if (!G.pid) { toast("🌐 ยังไม่มีรหัสผู้เล่นออนไลน์ — ลองเปิดเมนู 👥 สังคม สักครั้ง"); return; }
       toast("🤝 กำลังสร้างปาร์ตี้...");
-      const row = { host: G.pid, day: todayStamp(), members: [G.wbMember()], hp: WORLD_BOSS.maxHp, maxhp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, state: "open", ts: Date.now() };
+      const row = { host: G.pid, day: "h" + wbHourStamp(), members: [G.wbMember()], hp: WORLD_BOSS.maxHp, maxhp: WORLD_BOSS.maxHp, lv: WORLD_BOSS.lv, state: "open", ts: Date.now() };
       const created = await CN.bossCreate(row);
       if (!created) { toast("🌐 สร้างปาร์ตี้ไม่สำเร็จ (ตรวจสอบตาราง boss_raids)"); return; }
       G.wbRaid = created.id; G.wbRaidRow = created;
@@ -14277,7 +14333,7 @@ export default function CherryAdventure() {
       if (!CN.enabled()) { setUi((u) => ({ ...u, wbOpenRaids: [] })); return; }
       if (G.ensurePid) G.ensurePid();
       const friendPids = (G.readFriends ? G.readFriends() : []).map((f) => f.pid).filter(Boolean);
-      const open = friendPids.length ? await CN.bossListOpen(friendPids.concat([G.pid]), todayStamp()) : [];
+      const open = friendPids.length ? await CN.bossListOpen(friendPids.concat([G.pid]), "h" + wbHourStamp()) : [];
       let mine = null;
       if (G.wbRaid) { mine = await CN.bossGet(G.wbRaid); if (mine) { G.wbRaidRow = mine; } }
       setUi((u) => ({ ...u, wbOpenRaids: open || [], wbParty: mine ? mine.members : (u.wbParty || []), wbRaidHp: mine ? mine.hp : u.wbRaidHp }));
@@ -14650,7 +14706,7 @@ export default function CherryAdventure() {
         { const cur = G.enemy.hp;
           if (G._wbPrevHp == null) G._wbPrevHp = cur;
           const dealt = G._wbPrevHp - cur;
-          if (dealt > 0) { G.wbMyScore = (G.wbMyScore || 0) + dealt; if (G.wbRaid) G._wbDmgAccum = (G._wbDmgAccum || 0) + dealt; G._wbPrevHp = cur; }
+          if (dealt > 0) { G.wbMyScore = (G.wbMyScore || 0) + dealt; G.wbHourScore = (G.wbHourScore || 0) + dealt; if (G.wbRaid) G._wbDmgAccum = (G._wbDmgAccum || 0) + dealt; G._wbPrevHp = cur; }
         }
         if (secLeft !== G._wbLastSec) { G._wbLastSec = secLeft; setUi((u) => ({ ...u, wbTime: secLeft, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard() })); } // ⏱️ + 🏆 scoreboard
         // 🤝 online party: flush our damage to the shared cloud pool
@@ -14659,6 +14715,24 @@ export default function CherryAdventure() {
           if (G._wbSyncT >= 1.5) { G._wbSyncT = 0; if (G._wbFlushDamage) G._wbFlushDamage(); }
         }
         if (G.wbTimeLeft <= 0) { G.wbEndRound("timeout"); }
+      }
+      // 🕐 hourly world-boss rollover — announce the new boss + hand out consolation for the expired one
+      if (G.player) {
+        G._wbHourCheckT = (G._wbHourCheckT || 0) + dt;
+        if (G._wbHourCheckT >= 1) {
+          G._wbHourCheckT = 0;
+          const h = wbHourStamp();
+          if (G._wbSeenHour == null) G._wbSeenHour = h;
+          else if (h !== G._wbSeenHour && !G.wbRoundOn) { // don't roll over mid-fight
+            const prevCleared = !!(G.worldBoss && G.worldBoss.cleared);
+            const prevScore = G.wbHourScore || 0;
+            G._wbSeenHour = h;
+            G.wbEnsureDaily(); // → new boss for the hour (announces)
+            if (!prevCleared && prevScore > 0 && G.mode === "explore") G.wbConsolation(prevScore);
+            G.wbHourScore = 0;
+            if (G.mode === "explore") setUi((u) => ({ ...u, wbStat: G.wbStatus() }));
+          }
+        }
       }
       updateDamageNumbers(dt); // 💢 float the damage popups
       updateAdvFx(dt); // 🌟 SSS advanced-skill cinematics
@@ -25180,15 +25254,18 @@ export default function CherryAdventure() {
 
       {/* 👹 World Boss lobby panel */}
       {ui.wbPanel && (() => {
-        const st = ui.wbStat || { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, cleared: false, canEnter: true, lv: WORLD_BOSS.lv };
+        const st = ui.wbStat || { hp: WORLD_BOSS.maxHp, maxHp: WORLD_BOSS.maxHp, cleared: false, canEnter: true, lv: WORLD_BOSS.lv, name: WORLD_BOSS.name, emoji: WORLD_BOSS.emoji };
         const pct = Math.max(0, Math.round(st.hp / st.maxHp * 100));
+        const hl = st.hourLeft || 0;
+        const hlTxt = `${Math.floor(hl / 60)}:${String(hl % 60).padStart(2, "0")}`;
         return (
           <div onClick={() => setUi((u) => ({ ...u, wbPanel: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,10,16,0.78)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
             <div onClick={(e) => e.stopPropagation()} style={{ width: "88%", maxWidth: 360, background: "linear-gradient(180deg,#2a1622,#3a1f2a)", borderRadius: 18, padding: 18, border: "1.5px solid #f5a623", boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 46 }}>{WORLD_BOSS.emoji}</div>
-                <div style={{ fontSize: 18, fontWeight: 900, color: "#f5c542" }}>{WORLD_BOSS.name}</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: "#e0a0b0" }}>บอสโลก · Lv.{WORLD_BOSS.lv}</div>
+                <div style={{ fontSize: 46 }}>{st.emoji || WORLD_BOSS.emoji}</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: "#f5c542" }}>{st.name || WORLD_BOSS.name}</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#e0a0b0" }}>บอสโลก · Lv.{st.lv || WORLD_BOSS.lv}</div>
+                {hl > 0 && <div style={{ fontSize: 11, fontWeight: 800, color: "#f5b0a0", marginTop: 2 }}>⏳ บอสตัวนี้หายไปในอีก {hlTxt} น. (เกิดใหม่ทุกชั่วโมง)</div>}
               </div>
               {/* shared HP bar */}
               <div style={{ marginTop: 12 }}>
@@ -25204,9 +25281,9 @@ export default function CherryAdventure() {
               </div>
               {/* rules */}
               <div style={{ marginTop: 12, background: "rgba(0,0,0,0.25)", borderRadius: 10, padding: "8px 10px", fontSize: 10.5, color: "#e8d0c0", lineHeight: 1.6 }}>
-                ⏱️ ต่อสู้รอบละ <b>3 นาที</b><br />
-                💀 ตายหรือหมดเวลา → <b>สู้ต่อรอบใหม่ได้</b> เลือดบอส<b>ไม่รีเซ็ต</b> (คงเลือดล่าสุด)<br />
-                📅 <b>จำกัดวันละครั้ง</b> — รีเซ็ตเลือดใหม่ทุกวัน<br />
+                🕐 <b>เกิดใหม่ทุกชั่วโมง</b> — สุ่มบอส & เลเวล (100–300) เลือด 5–15 ล้าน<br />
+                ⏱️ ต่อสู้รอบละ <b>3 นาที</b> · 💀 ตาย/หมดเวลารอบ → <b>สู้ต่อได้</b> เลือดบอสคงเดิม<br />
+                🎁 ถ้าหมดชั่วโมงยังไม่ตาย → รับ <b>รางวัลปลอบใจตามดาเมจ</b>ที่ทำได้<br />
                 🛡️ บอสแกร่ง: บล็อก 20% · หลบ 15% · ลดพลังโจมตีเรา 20% · ลดคริเรา 20%<br />
                 🤝 ชวนเพื่อนออนไลน์มาช่วยตี แชร์เลือดบอสก้อนเดียวกัน
               </div>
@@ -25249,7 +25326,7 @@ export default function CherryAdventure() {
               </div>
               {st.cleared ? (
                 <div style={{ marginTop: 14, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#8af0a0", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "10px" }}>
-                  ✅ วันนี้ปราบจอมมารแล้ว!<br /><span style={{ fontSize: 10.5, color: "#c0d0c0", fontWeight: 700 }}>กลับมาใหม่พรุ่งนี้เพื่อบอสตัวใหม่</span>
+                  ✅ ปราบบอสตัวนี้แล้ว!<br /><span style={{ fontSize: 10.5, color: "#c0d0c0", fontWeight: 700 }}>รอบอสตัวใหม่ในชั่วโมงหน้า{hl > 0 ? ` (อีก ${hlTxt} น.)` : ""}</span>
                 </div>
               ) : (
                 <button onClick={() => G.wbOpenReady()} style={{
@@ -25291,7 +25368,7 @@ export default function CherryAdventure() {
               {win ? (
                 <>
                   <div style={{ textAlign: "center", fontSize: 40 }}>🏆</div>
-                  <div style={{ textAlign: "center", fontSize: 18, fontWeight: 900, color: "#f5d05a" }}>ปราบจอมมารโลกันตร์!</div>
+                  <div style={{ textAlign: "center", fontSize: 18, fontWeight: 900, color: "#f5d05a" }}>ปราบบอสโลกสำเร็จ!</div>
                   <div style={{ marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 12 }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: "#f5d0a0", marginBottom: 6 }}>🎁 รางวัลที่ได้รับ</div>
                     <div style={{ fontSize: 12.5, color: "#fff", lineHeight: 1.8 }}>
@@ -25321,6 +25398,7 @@ export default function CherryAdventure() {
                     {r.reason === "dead" ? "ปาร์ตี้ล้มก่อน!" : r.reason === "flee" ? "หนีออกจากการต่อสู้" : "หมดเวลารอบนี้!"}
                   </div>
                   <div style={{ textAlign: "center", fontSize: 11.5, color: "#e0c0c8", marginTop: 4 }}>บอสยังไม่ตาย — เลือดคงไว้ที่เดิม สู้ต่อได้เลย</div>
+                  <div style={{ textAlign: "center", fontSize: 10.5, color: "#f5c0a0", marginTop: 3 }}>🎁 ถ้าหมดชั่วโมงยังไม่ตาย รับรางวัลปลอบใจตามดาเมจสะสม ({Math.round(G.wbHourScore || 0).toLocaleString()})</div>
                   <div style={{ marginTop: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 800, color: "#f5d0a0", marginBottom: 3 }}>
                       <span>👹 เลือดบอสที่เหลือ</span><span>{r.pct}%</span>
