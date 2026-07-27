@@ -22255,6 +22255,7 @@ export default function CherryAdventure() {
         <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", zIndex: 66 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ margin: "70px 12px 0 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(3, 54px)", gap: 12 }}>
             {[
+              ["💾", "ช่องเซฟทั้งหมด", () => { if (G.saveGame) G.saveGame(); if (G._cloudPush) G._cloudPush(true); setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots, confirmDelete: null })); }, "#8fd0ff"],
                           ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
               ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
               ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
