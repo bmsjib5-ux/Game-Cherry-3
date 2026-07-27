@@ -11171,7 +11171,7 @@ export default function CherryAdventure() {
       updateAura();
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       syncPlayer();
-      setUi((u) => ({ ...u, gemDust: G.gemDust, stardust: G.stardust, ore: (G.mats && G.mats.ironOre) || 0, plus: { ...G.plus } }));
+      setUi((u) => ({ ...u, gemDust: G.gemDust, stardust: G.stardust, ore: (G.mats && G.mats.ironOre) || 0, mats: { ...G.mats }, plus: { ...G.plus } }));
     };
 
     // 🔨 craft the class's dragon-tier weapon from materials
@@ -11260,7 +11260,7 @@ export default function CherryAdventure() {
     G.toggleForge = () => {
       const willOpen = !G.forgeOpen;
       G.forgeOpen = willOpen;
-      setUi((u) => ({ ...u, forgeOpen: willOpen, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, gold: G.gold, rolls: { ...(G.rolls || {}) }, invOpen: false, skillPanel: false, homeOpen: false }));
+      setUi((u) => ({ ...u, forgeOpen: willOpen, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, gold: G.gold, gemDust: G.gemDust || 0, stardust: G.stardust || 0, rolls: { ...(G.rolls || {}) }, invOpen: false, skillPanel: false, homeOpen: false }));
     };
 
     // equip an item (tap in the bag panel)
@@ -23958,6 +23958,16 @@ export default function CherryAdventure() {
             }}>
               {closeBtn("forgeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 }}>⛏️ โรงตีเหล็ก (คราฟต์)</div>
+              {/* 💠🌟⛏️ enhancement resources on hand */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                {[["💠", "ผงเพชร", ui.gemDust || 0, "#7fd0f5"], ["🌟", "ผงดาว", ui.stardust || 0, "#f5c542"], ["⛏️", "แร่", (ui.mats || {}).ironOre || 0, "#a0a8b0"], ["💰", "ทอง", ui.gold || 0, "#e0a84a"]].map(([em, nm, val, col]) => (
+                  <div key={nm} style={{ flex: "1 1 22%", display: "flex", flexDirection: "column", alignItems: "center", background: "linear-gradient(135deg,#fff,#f6efe4)", borderRadius: 10, padding: "5px 4px", border: "1.5px solid " + col + "88" }}>
+                    <span style={{ fontSize: 15 }}>{em}</span>
+                    <span style={{ fontSize: 8.5, fontWeight: 700, color: "#8a7a60" }}>{nm}</span>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: "#5a4a30" }}>{val.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
               {/* materials owned */}
               <div style={{ background: "linear-gradient(135deg,#fdf4e8,#f8ece0)", borderRadius: 12, padding: "8px 10px", marginBottom: 10, border: "1.5px solid #e8c898" }}>
                 <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a06020", marginBottom: 4 }}>🎒 วัตถุดิบที่มี</div>
