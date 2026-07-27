@@ -1107,6 +1107,10 @@ const DIAMOND_SHOP = [
   { id: "mt_donkey",  kind: "mount", ref: "donkey",  cat: "mount", emoji: "🫏", name: "ลาน้อย (เร็ว +40%)",       price: 40 },
   { id: "mt_ostrich", kind: "mount", ref: "ostrich", cat: "mount", emoji: "🪶", name: "นกกระจอกเทศ (เร็ว +60%)", price: 60 },
   { id: "mt_shark",   kind: "mount", ref: "shark",   cat: "mount", emoji: "🦈", name: "ฉลามบก (เร็ว +80%)",      price: 90 },
+  { id: "wg_phoenix", kind: "wing", ref: "phoenix", cat: "wing", emoji: "🔥", name: "ปีกนกฟินิกซ์ (แดง-ส้ม)",  price: 1000 },
+  { id: "wg_angel",   kind: "wing", ref: "angel",   cat: "wing", emoji: "😇", name: "ปีกนางฟ้า (ขาว-ทอง)",    price: 1500 },
+  { id: "wg_demon",   kind: "wing", ref: "demon",   cat: "wing", emoji: "😈", name: "ปีกจอมมาร (ดำ-แดง)",     price: 2000 },
+  { id: "wg_robot",   kind: "wing", ref: "robot",   cat: "wing", emoji: "🤖", name: "ปีกหุ่นยนต์ (เหล็ก)",     price: 2500 },
 ];
 
 // ---------- 👘✨ OUTFIT SETS (ชุดคอสตูมเป็นเซ็ต) — themed look + set bonus + aura ----------
@@ -12347,13 +12351,14 @@ export default function CherryAdventure() {
         goldExchUsed: { ...(st.used || {}) }, goldShopItems: shop.items, goldShopBought: { ...(shop.bought || {}) } }));
     };
     // 💎 diamond shop
-    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false, inv: [...(G.inv || [])], diaSkins: { ...(G.diaSkins || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null }));
+    G.openDiamondShop = () => setUi((u) => ({ ...u, diamondShopOpen: true, menuOpen: false, inv: [...(G.inv || [])], diaSkins: { ...(G.diaSkins || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null, wingsOwned: { ...(G.wingsOwned || {}) }, activeWing: G.activeWing || "none", diamonds: G.diamonds || 0 }));
     G.buyDiamond = (id) => {
       const it = DIAMOND_SHOP.find((x) => x.id === id);
       if (!it) return;
       if (it.kind === "skin" && G.diaSkins && G.diaSkins[it.ref]) { toast("มีสกินนี้อยู่แล้ว ✨"); return; }
       if (it.kind === "mount" && (G.mountsOwned || {})[it.ref]) { toast("มีสัตว์ขี่ตัวนี้แล้ว 🐎"); return; }
-      if (it.kind !== "skin" && it.kind !== "mount" && G.inv && G.inv.includes(it.ref)) { toast("มีไอเทมนี้ในกระเป๋าแล้ว ✨"); return; } // 🔒 ซื้อไอเทมด้วยเพชรได้ครั้งเดียว
+      if (it.kind === "wing" && (G.wingsOwned || {})[it.ref]) { if (G.setWings) G.setWings(it.ref); toast("มีปีกนี้แล้ว — สวมใส่ให้ 🪽"); return; }
+      if (it.kind !== "skin" && it.kind !== "mount" && it.kind !== "wing" && G.inv && G.inv.includes(it.ref)) { toast("มีไอเทมนี้ในกระเป๋าแล้ว ✨"); return; } // 🔒 ซื้อไอเทมด้วยเพชรได้ครั้งเดียว
       if ((G.diamonds || 0) < it.price) { toast(`💎 เพชรไม่พอ — ต้องมี ${it.price}`); return; }
       G.diamonds -= it.price;
       if (it.kind === "skin") {
@@ -12366,12 +12371,18 @@ export default function CherryAdventure() {
         G.mountsOwned[it.ref] = 1;
         if (G.setMount) G.setMount(it.ref);
         toast(`💎🐎 ได้สัตว์ขี่ ${it.emoji} ${it.name} แล้ว!`);
+      } else if (it.kind === "wing") {
+        G.wingsOwned = G.wingsOwned || {};
+        G.wingsOwned[it.ref] = 1;
+        G.activeWing = it.ref;
+        if (G.buildWings) G.buildWings(it.ref);
+        toast(`💎🪽 ได้ ${it.emoji} ${it.name} — สวมใส่แล้ว!`);
       } else {
         gainItem(it.ref);
         toast(`💎 แลก ${it.emoji} ${it.name} เข้ากระเป๋าแล้ว!`);
       }
       if (G.sfx) G.sfx.coin();
-      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) }, inv: [...(G.inv || [])], mountsOwned: { ...(G.mountsOwned || {}) } }));
+      setUi((u) => ({ ...u, diamonds: G.diamonds, diaSkins: { ...(G.diaSkins || {}) }, inv: [...(G.inv || [])], mountsOwned: { ...(G.mountsOwned || {}) }, wingsOwned: { ...(G.wingsOwned || {}) }, activeWing: G.activeWing || "none" }));
       if (G.saveGame) G.saveGame();
     };
     // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
@@ -23145,12 +23156,12 @@ export default function CherryAdventure() {
               <button onClick={() => setUi((u) => ({ ...u, diamondShopOpen: false }))} style={{ width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", background: "rgba(255,255,255,0.12)", color: "#cfe0f0", fontWeight: 800 }}>✕</button>
             </div>
             <div style={{ fontSize: 11, color: "#8a9ac0", marginBottom: 12 }}>เพชรหาได้จาก เควส · ชนะ PvP · อันดับโลก 1-3 · ล็อกอินประจำวัน</div>
-            {[["skin", "🗡️ สกินอาวุธพิเศษ"], ["weapon", "⚔️ อาวุธพิเศษ"], ["outfit", "👗 ชุดพิเศษ"], ["mount", "🐎 สัตว์ขี่ (เพิ่มความเร็ว)"]].map((grp) => (
+            {[["wing", "🪽 ปีกตัวละคร"], ["skin", "🗡️ สกินอาวุธพิเศษ"], ["weapon", "⚔️ อาวุธพิเศษ"], ["outfit", "👗 ชุดพิเศษ"], ["mount", "🐎 สัตว์ขี่ (เพิ่มความเร็ว)"]].map((grp) => (
               <div key={grp[0]} style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#c0a060", margin: "2px 2px 8px" }}>{grp[1]}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
                   {DIAMOND_SHOP.filter((x) => x.cat === grp[0]).map((it) => {
-                    const owned = it.kind === "skin" ? (ui.diaSkins && ui.diaSkins[it.ref]) : it.kind === "mount" ? (ui.mountsOwned && ui.mountsOwned[it.ref]) : (ui.inv && ui.inv.includes(it.ref));
+                    const owned = it.kind === "skin" ? (ui.diaSkins && ui.diaSkins[it.ref]) : it.kind === "mount" ? (ui.mountsOwned && ui.mountsOwned[it.ref]) : it.kind === "wing" ? (ui.wingsOwned && ui.wingsOwned[it.ref]) : (ui.inv && ui.inv.includes(it.ref));
                     const afford = (ui.diamonds || 0) >= it.price;
                     return (
                       <div key={it.id} style={{ border: "1px solid #2a3a58", borderRadius: 14, padding: "10px 11px", background: "rgba(30,44,72,0.55)", display: "flex", flexDirection: "column", gap: 6 }}>
