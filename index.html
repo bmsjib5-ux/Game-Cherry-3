@@ -10241,31 +10241,38 @@ function CherryAdventure() {
             return g;
         };
         G.applyEvoParts = applyEvoParts;
-        // 🧬 MUTATION — เมื่อเลเวลสูงพอสัตว์เลี้ยงกลายพันธุ์: คริสตัลปริซึม + ออร่าเรืองแสง + ตัวใหญ่ขึ้น
-        const mutTierOf = (lv) => (lv >= 80 ? 2 : lv >= 50 ? 1 : 0); // Lv50 = กลายพันธุ์ · Lv80 = กลายพันธุ์ขั้นสูง
-        G.mutTierOf = mutTierOf;
-        const applyMutation = (g, lv) => {
-            const tier = mutTierOf(lv || 1);
+        // 🧬 MUTATION — กลายพันธุ์ 3 ระดับ ซื้อด้วยทอง (ปลดล็อกตามเลเวล): คริสตัลปริซึม + ออร่า + บัฟแรงขึ้น
+        const MUT_MAX = 3;
+        const MUT_COST = [0, 100000, 200000, 300000]; // 💰 ทองที่ต้องจ่ายเพื่อขึ้นแต่ละระดับ (1แสน/2แสน/3แสน)
+        const MUT_REQ_LV = [0, 30, 55, 80]; // 🔒 เลเวลขั้นต่ำที่ปลดล็อกแต่ละระดับ
+        const mutMul = (t) => [1, 1.3, 1.6, 2.0][t || 0] || 1; // 💪 ตัวคูณบัฟตามระดับกลายพันธุ์
+        G.MUT_MAX = MUT_MAX;
+        G.mutMul = mutMul;
+        G.mutCost = (cur) => MUT_COST[(cur || 0) + 1] || null; // ราคาขึ้นระดับถัดไป (null ถ้าสุดแล้ว)
+        G.mutReqLv = (cur) => MUT_REQ_LV[(cur || 0) + 1] || null; // เลเวลปลดล็อกระดับถัดไป
+        const applyMutation = (g, tier) => {
+            tier = tier || 0;
             if (!tier || !g)
                 return g;
             const body = (g.userData && g.userData.body) || g;
             const headY = (g.userData && g.userData.headY) != null ? g.userData.headY : 0.4;
             // 💎 คริสตัลปริซึมบนหลัง (สีรุ้ง) — สัญลักษณ์การกลายพันธุ์
-            const cols = [0xff5aa0, 0x9a6af5, 0x5adcf5, 0x8af59a];
-            const n = tier === 2 ? 5 : 3;
+            const cols = [0xff5aa0, 0x9a6af5, 0x5adcf5, 0x8af59a, 0xffd24a];
+            const n = 3 + (tier - 1) * 2; // 3 / 5 / 7 คริสตัล
             for (let k = 0; k < n; k++) {
                 const c = cols[k % cols.length];
-                const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.11 - k * 0.012, 0), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.9, metalness: 0.4, roughness: 0.15, transparent: true, opacity: 0.92 }));
+                const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.11 - k * 0.01, 0), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.9, metalness: 0.4, roughness: 0.15, transparent: true, opacity: 0.92 }));
                 cr.scale.y = 2.0;
-                const off = (k - (n - 1) / 2) * 0.16;
+                const off = (k - (n - 1) / 2) * 0.15;
                 cr.position.set(off, headY + 0.14 + Math.abs(off) * -0.2, -0.28);
                 cr.rotation.z = off * 1.1;
                 body.add(cr);
             }
             // 🌈 ออร่าเรืองแสงกลายพันธุ์
+            const aura = tier >= 3 ? 0xffd24a : tier === 2 ? 0xba5af5 : 0x5adcf5;
             if (monGlow)
-                monGlow(g, tier === 2 ? 0xba5af5 : 0x5adcf5, tier === 2 ? 0.55 : 0.4);
-            g.scale.multiplyScalar(tier === 2 ? 1.14 : 1.08); // 📏 กลายพันธุ์ตัวใหญ่ขึ้นเล็กน้อย (คริสตัลบ่งบอกอยู่แล้ว)
+                monGlow(g, aura, 0.35 + tier * 0.1);
+            g.scale.multiplyScalar(1 + tier * 0.07); // 📏 ตัวใหญ่ขึ้นเล็กน้อยตามระดับ
             g.userData.mutated = tier;
             return g;
         };
@@ -12349,7 +12356,7 @@ function CherryAdventure() {
                 if (G.applyEvoParts)
                     G.applyEvoParts(buddyMesh, inst.sp, inst.lv); // ✨ ร่างวิวัฒน์ตามเลเวล
                 if (G.applyMutation)
-                    G.applyMutation(buddyMesh, inst.lv); // 🧬 กลายพันธุ์เมื่อเลเวลสูง
+                    G.applyMutation(buddyMesh, inst.mut || 0); // 🧬 กลายพันธุ์ (ซื้อด้วยทอง)
                 buddyMesh.scale.multiplyScalar(1.24); // 🐾 ×2 ตัวใหญ่ขึ้นเท่าตัว
                 buddyMesh.position.set(char.position.x - 1, 0, char.position.z + 0.6);
                 vivify(buddyMesh);
@@ -12498,6 +12505,41 @@ function CherryAdventure() {
             burst(char.position, 0xf5c542, 1.2);
             toast(`⚒️ ตีบวกสำเร็จ! ${SPECIES[p.sp].emoji} ${SPECIES[p.sp].name} → +${p.plus} (ใช้ตัวซ้ำ Lv.${fodder.lv})`);
             setUi((u) => ({ ...u, petBox: G.petBox.map((x) => ({ ...x })) }));
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 🧬 กลายพันธุ์สัตว์เลี้ยง — จ่ายด้วยทอง (1แสน/2แสน/3แสน) ปลดล็อกตามเลเวล
+        G.mutatePet = (iid) => {
+            const p = G.petAt(iid);
+            if (!p)
+                return;
+            const cur = p.mut || 0;
+            if (cur >= G.MUT_MAX) {
+                toast("🧬 กลายพันธุ์สูงสุดแล้ว! (ระดับ 3) ⭐");
+                return;
+            }
+            const reqLv = G.mutReqLv(cur);
+            if (p.lv < reqLv) {
+                toast(`🔒 ต้องเลเวลสัตว์เลี้ยง ${reqLv} ขึ้นไป (ตอนนี้ Lv.${p.lv})`);
+                return;
+            }
+            const cost = G.mutCost(cur);
+            if ((G.gold || 0) < cost) {
+                toast(`💰 ต้องใช้ทอง ${cost.toLocaleString()} (มี ${(G.gold || 0).toLocaleString()})`);
+                return;
+            }
+            G.gold -= cost;
+            p.mut = cur + 1;
+            if (G.sfx)
+                G.sfx.levelup();
+            burst(char.position, p.mut >= 3 ? 0xffd24a : p.mut === 2 ? 0xba5af5 : 0x5adcf5, 2.0);
+            toast(`🧬✨ ${SPECIES[p.sp].name} กลายพันธุ์ระดับ ${p.mut}! บัฟ +${Math.round((G.mutMul(p.mut) - 1) * 100)}% (−${cost.toLocaleString()}💰)`);
+            if (G.showAnnounce)
+                G.showAnnounce(`🧬 ${SPECIES[p.sp].name} ของ ${G.playerName || "เชอร์รี่"} กลายพันธุ์ระดับ ${p.mut}!`);
+            if (G.buddy === iid)
+                G.setBuddy(iid); // ประกอบร่างกลายพันธุ์ใหม่
+            setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })), gold: G.gold }));
             syncPlayer();
             if (G.saveGame)
                 G.saveGame();
@@ -14292,8 +14334,7 @@ function CherryAdventure() {
             const tier = SPECIES[p.sp].tier;
             const skLv = (G.petSkillLv && G.petSkillLv[p.sp]) || 1; // 🎯 pet skill level boosts buffs
             const plus = p.plus || 0, iv = p.iv || { a: 0, h: 0, d: 0 };
-            const mt = G.mutTierOf ? G.mutTierOf(p.lv) : 0; // 🧬 การกลายพันธุ์เพิ่มบัฟ
-            const mm = mt === 2 ? 1.5 : mt === 1 ? 1.25 : 1;
+            const mm = G.mutMul ? G.mutMul(p.mut || 0) : 1; // 🧬 การกลายพันธุ์เพิ่มบัฟ
             return {
                 atk: Math.round((tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + plus * 3) * mm),
                 hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + plus * 5) * mm),
@@ -16402,15 +16443,11 @@ function CherryAdventure() {
                     if (G.buddy === iid)
                         G.setBuddy(iid); // ประกอบร่างใหม่พร้อมชิ้นส่วนวิวัฒน์
                 }
-                // 🧬 การกลายพันธุ์ — เมื่อเลเวลถึงเกณฑ์ (Lv50 / Lv80)
-                if (p.lv === 50 || p.lv === 80) {
-                    const mt = p.lv >= 80 ? "กลายพันธุ์ขั้นสูง 🧬🌈" : "กลายพันธุ์ 🧬";
-                    toast(`🧬✨ ${SPECIES[p.sp].name} ${mt}! Lv.${p.lv} — ร่างคริสตัลปริซึม + พลังบัฟ +${p.lv >= 80 ? 50 : 25}%`);
-                    burst(char.position, p.lv >= 80 ? 0xba5af5 : 0x5adcf5, 2.0);
-                    if (G.showAnnounce)
-                        G.showAnnounce(`🧬 ${SPECIES[p.sp].name} ของ ${G.playerName || "เชอร์รี่"} ${mt}!`);
-                    if (G.buddy === iid)
-                        G.setBuddy(iid); // ประกอบร่างกลายพันธุ์ใหม่
+                // 🧬 ปลดล็อกการกลายพันธุ์ — เมื่อเลเวลถึงเกณฑ์ (Lv30/55/80) แจ้งให้ไปกดกลายพันธุ์ในเมนู
+                if (p.lv === 30 || p.lv === 55 || p.lv === 80) {
+                    const nextTier = p.lv >= 80 ? 3 : p.lv >= 55 ? 2 : 1;
+                    if ((p.mut || 0) < nextTier)
+                        toast(`🧬 ${SPECIES[p.sp].name} ปลดล็อกกลายพันธุ์ระดับ ${nextTier}! ไปกดกลายพันธุ์ในเมนูสัตว์เลี้ยง (จ่ายด้วยทอง)`);
                 }
             }
             setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })) }));
@@ -29401,11 +29438,8 @@ function CherryAdventure() {
                                 const elem = PET_ELEM[pet.sp];
                                 const weak = WEAK[G.enemy.spId] === elem;
                                 let dmg = 3 + ((SPECIES[pet.sp] || {}).tier || 1) * 2 * pet.stage + pet.lv + (pet.plus || 0) * 3 + ((pet.iv || {}).a || 0) + Math.random() * 3;
-                                {
-                                    const _mt = G.mutTierOf ? G.mutTierOf(pet.lv) : 0;
-                                    if (_mt)
-                                        dmg *= (_mt === 2 ? 1.5 : 1.25);
-                                } // 🧬 กลายพันธุ์เพิ่มดาเมจ
+                                if (G.mutMul && (pet.mut || 0))
+                                    dmg *= G.mutMul(pet.mut); // 🧬 กลายพันธุ์เพิ่มดาเมจ
                                 if (weak)
                                     dmg *= 1.5;
                                 dmg = Math.round(dmg);
@@ -33281,8 +33315,8 @@ function CherryAdventure() {
                         const dispName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]}` : p.stage === 2 ? EVOLVED[p.sp] : sp.name;
                         const skLv = (ui.petSkillLv && ui.petSkillLv[p.sp]) || 1;
                         const iv = p.iv || { a: 0, h: 0, d: 0 };
-                        const _mt = G.mutTierOf ? G.mutTierOf(p.lv) : 0; // 🧬 tier กลายพันธุ์
-                        const _mm = _mt === 2 ? 1.5 : _mt === 1 ? 1.25 : 1;
+                        const _mt = p.mut || 0; // 🧬 tier กลายพันธุ์ (เก็บในตัวสัตว์)
+                        const _mm = G.mutMul ? G.mutMul(_mt) : 1;
                         const buff = { atk: Math.round((sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3) * _mm), hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5) * _mm), def: Math.round(((p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2) * _mm) };
                         const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
                         const selFuse = (ui.fuseSel || []).includes(p.i);
@@ -33303,9 +33337,9 @@ function CherryAdventure() {
                                         p.lv,
                                         " \u00B7 \u0E23\u0E48\u0E32\u0E07 ",
                                         p.stage,
-                                        _mt ? React.createElement("span", { style: { color: _mt === 2 ? "#ba5af5" : "#3ab0d0" } },
+                                        _mt ? React.createElement("span", { style: { color: _mt >= 3 ? "#e0a020" : _mt === 2 ? "#ba5af5" : "#3ab0d0" } },
                                             " \u00B7 \uD83E\uDDEC",
-                                            _mt === 2 ? "×2" : "") : null)),
+                                            _mt) : null)),
                                 isBuddy && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#7ba05b" } }, "\u0E1A\u0E31\u0E14\u0E14\u0E35\u0E49"),
                                 !isBuddy && inTeam && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#5a8ad0" } }, "\u0E17\u0E35\u0E21")),
                             React.createElement("div", { style: { background: "#e5e5da", borderRadius: 99, height: 4, marginTop: 3, overflow: "hidden" } },
@@ -33339,7 +33373,21 @@ function CherryAdventure() {
                                     "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 (",
                                     dupes,
                                     ")"),
-                                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellPetAsk: p.i })), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22"))));
+                                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellPetAsk: p.i })), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22"),
+                                (() => {
+                                    const mcur = p.mut || 0;
+                                    if (mcur >= (G.MUT_MAX || 3))
+                                        return React.createElement("button", { disabled: true, style: { flex: "1 1 63%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0a020,#f5c542)" } }, "\uD83E\uDDEC \u0E01\u0E25\u0E32\u0E22\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 \u2B50");
+                                    const mcost = G.mutCost(mcur), mreq = G.mutReqLv(mcur);
+                                    const lvOk = p.lv >= mreq, goldOk = (ui.gold || 0) >= mcost, can = lvOk && goldOk;
+                                    return React.createElement("button", { onClick: () => G.mutatePet(p.i), disabled: !can, title: !lvOk ? `ต้อง Lv.${mreq}` : !goldOk ? "ทองไม่พอ" : "", style: { flex: "1 1 63%", padding: "4px 0", borderRadius: 6, border: "none", cursor: can ? "pointer" : "not-allowed", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: can ? "#fff" : "#9a8fa5", background: can ? "linear-gradient(90deg,#3ab0d0,#9a6ad0)" : "#ddd8e5" } },
+                                        "\uD83E\uDDEC \u0E01\u0E25\u0E32\u0E22\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C Lv.",
+                                        mcur + 1,
+                                        " \u00B7 ",
+                                        (mcost / 100000),
+                                        "\u0E41\u0E2A\u0E19\uD83D\uDCB0",
+                                        !lvOk ? ` 🔒Lv.${mreq}` : "");
+                                })())));
                     })))))))),
         ui.mode === "battle" && ui.enemy && (React.createElement(React.Fragment, null,
             React.createElement("div", { style: { position: "absolute", left: 12, top: "30%", display: "flex", flexDirection: "column", gap: 8 } }, [["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (React.createElement("button", { key: sym, onClick: () => G.zoom(d), style: {
