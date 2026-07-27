@@ -13576,6 +13576,7 @@ export default function CherryAdventure() {
     // ---------- 🔐 Account & cross-device login (Supabase Auth + cloud full-save) ----------
     const AUTH_KEY = "cherry-auth-v1";
     const SLOTS_OWNER_KEY = "cherry-slots-owner-v1";
+    const SAVEVER_KEY = "cherry-savever-"; // + uid → last-synced cloud version on this device
     Object.assign(CN, {
       _authUrl(path) { return this.cfg.url.replace(/\/+$/, "") + "/auth/v1/" + path; },
       async signUp(email, password) {
@@ -13644,10 +13645,13 @@ export default function CherryAdventure() {
           for (let i = 0; i < 6; i++) window.localStorage.removeItem(slotKey(i));
           window.localStorage.removeItem(SAVE_BASE);
           G.saveSlot = 0;
+          G._saveBaseVer = 0; // 🔢 reset sync version for the new account
           if (G.readSlots) setUi((u) => ({ ...u, slots: G.readSlots() }));
         }
         if (s.uid) window.localStorage.setItem(SLOTS_OWNER_KEY, s.uid);
-      } catch (e) {}
+        // 🔢 restore the last-synced cloud version for THIS account (per-device)
+        G._saveBaseVer = parseInt(window.localStorage.getItem(SAVEVER_KEY + s.uid) || "0", 10) || 0;
+      } catch (e) { G._saveBaseVer = G._saveBaseVer || 0; }
       _setAuthUi();
       if (G.startPresence) G.startPresence();
       return true;
@@ -13675,37 +13679,71 @@ export default function CherryAdventure() {
       if (i < 0) return null;
       try { return window.localStorage.getItem(slotKey(i)); } catch (e) { return null; }
     };
+    // 🔢 read the cloud version off a blob (0 for the legacy single-slot format)
+    const _cloudVer = (cloud) => (cloud && typeof cloud.ver === "number") ? cloud.ver : 0;
+    // 📥 gather ALL 6 local slots into a { slotIndex: saveData } map
+    const _gatherSlots = () => {
+      const slots = {};
+      for (let i = 0; i < 6; i++) {
+        try { const r = window.localStorage.getItem(slotKey(i)); if (r) { const d = JSON.parse(r); if (d && d.player) slots[i] = d; } } catch (e) {}
+      }
+      return slots;
+    };
+    const _localHasSave = () => { for (let i = 0; i < 6; i++) { try { const r = window.localStorage.getItem(slotKey(i)); if (r && JSON.parse(r).player) return true; } catch (e) {} } return false; };
+    // 📤 write a cloud blob's slots into local storage & adopt its version (cloud wins)
+    G._adoptCloud = (cloud, ver) => {
+      if (!cloud) return { loaded: false };
+      let slots = cloud.slots;
+      // 🔁 backward-compat: the old format was a single save blob with a _slot field
+      if (!slots && cloud.player) { slots = {}; const si = (typeof cloud._slot === "number" && cloud._slot >= 0 && cloud._slot < 6) ? cloud._slot : 0; slots[si] = cloud; }
+      if (!slots) return { loaded: false };
+      let landed = -1;
+      for (let i = 0; i < 6; i++) { if (slots[i] && slots[i].player) { try { window.localStorage.setItem(slotKey(i), JSON.stringify(slots[i])); if (landed < 0) landed = i; } catch (e) {} } }
+      G._saveBaseVer = ver || 0;
+      try { window.localStorage.setItem(SAVEVER_KEY + G.auth.uid, String(ver || 0)); } catch (e) {}
+      if (typeof cloud.activeSlot === "number" && cloud.activeSlot >= 0 && cloud.activeSlot < 6) G.saveSlot = cloud.activeSlot;
+      setUi(u => ({ ...u, slots: G.readSlots ? G.readSlots() : u.slots }));
+      return { loaded: landed >= 0, slot: (typeof cloud.activeSlot === "number" ? cloud.activeSlot : landed) };
+    };
+    // ☁️⬆️ push — version-guarded so a device holding STALE data never clobbers a newer cloud save
     G._cloudPush = async (force) => {
       if (G.auth.status !== "in") return false;
       const now = Date.now();
       if (!force && G._lastCloud && now - G._lastCloud < 15000) return false;
       const token = await G._authToken(); if (!token) return false;
-      const slot = G._bestSaveSlot();
-      if (slot < 0) return false;
-      let data; try { data = JSON.parse(window.localStorage.getItem(slotKey(slot))); } catch (e) { return false; }
-      if (!data) return false;
+      const slots = _gatherSlots();
+      if (!Object.keys(slots).length) return false; // nothing worth saving
+      // 🔒 optimistic concurrency: check the cloud version first
+      const row = await CN.getSave(token, G.auth.uid);
+      const cloud = row && row.data;
+      const cloudVer = _cloudVer(cloud);
+      const baseVer = G._saveBaseVer || 0;
+      if (cloud && cloudVer > baseVer) {
+        // 👋 another device pushed newer data since we last synced — adopt it instead of overwriting
+        G._adoptCloud(cloud, cloudVer);
+        return false;
+      }
       G._lastCloud = now;
-      data.ts = now;
-      data._slot = slot; // 🎯 remember which local slot this save belongs to
-      const ok = await CN.putSave(token, G.auth.uid, data, now);
-      if (ok) setUi(u => ({ ...u, cloudSyncedAt: now }));
+      const newVer = Math.max(baseVer, cloudVer) + 1;
+      const blob = { slots, ver: newVer, ts: now, activeSlot: G.saveSlot, owner: G.auth.uid };
+      const ok = await CN.putSave(token, G.auth.uid, blob, now);
+      if (ok) { G._saveBaseVer = newVer; try { window.localStorage.setItem(SAVEVER_KEY + G.auth.uid, String(newVer)); } catch (e) {} setUi(u => ({ ...u, cloudSyncedAt: now })); }
       return ok;
     };
+    // ☁️⬇️ pull — on login/open the cloud is the source of truth unless this device is strictly newer
     G._cloudPull = async () => {
       if (G.auth.status !== "in") return { loaded: false };
       const token = await G._authToken(); if (!token) return { loaded: false };
       const row = await CN.getSave(token, G.auth.uid);
-      if (!row || !row.data) { await G._cloudPush(true); return { loaded: false }; }
+      if (!row || !row.data) { await G._cloudPush(true); return { loaded: false }; } // no cloud yet → seed it
       const cloud = row.data;
-      // 🎯 land the cloud save in the slot it came from — never clobber a different character sitting in slot 0
-      const slot = (typeof cloud._slot === "number" && cloud._slot >= 0 && cloud._slot < 6) ? cloud._slot : 0;
-      let localTs = 0; try { const r = window.localStorage.getItem(slotKey(slot)); if (r) localTs = (JSON.parse(r).ts) || 0; } catch (e) {}
-      if ((cloud.ts || 0) >= localTs) {
-        try { window.localStorage.setItem(slotKey(slot), JSON.stringify(cloud)); } catch (e) {}
-        setUi(u => ({ ...u, slots: G.readSlots ? G.readSlots() : u.slots }));
-        return { loaded: true, slot };
+      const cloudVer = _cloudVer(cloud);
+      const baseVer = G._saveBaseVer || 0;
+      // adopt cloud unless our local copy is strictly newer than the cloud (and we actually have data)
+      if (!(baseVer > cloudVer && _localHasSave())) {
+        return G._adoptCloud(cloud, cloudVer);
       }
-      await G._cloudPush(true);
+      await G._cloudPush(true); // local is genuinely ahead → push it up
       return { loaded: false };
     };
     G.accountSignUp = async (email, password) => {
@@ -13756,7 +13794,7 @@ export default function CherryAdventure() {
           }
         } else {
           const raw = window.localStorage.getItem(AUTH_KEY);
-          if (raw) { const s = JSON.parse(raw); G._session = s; G.auth = { status: "in", email: s.email, uid: s.uid }; _setAuthUi(); }
+          if (raw) { const s = JSON.parse(raw); G._session = s; G.auth = { status: "in", email: s.email, uid: s.uid }; try { G._saveBaseVer = parseInt(window.localStorage.getItem(SAVEVER_KEY + s.uid) || "0", 10) || 0; } catch (e) {} _setAuthUi(); }
         }
         if (G.auth.status === "in") { await G._authToken(); await G._cloudPull(); setUi(u => ({ ...u, slots: G.readSlots ? G.readSlots() : u.slots })); }
       } catch (e) {}

@@ -94,7 +94,7 @@ const ONLINE_CONFIG = {
 -- เซฟเต็ม (ผูกกับบัญชีผู้ใช้ Auth)
 create table if not exists public.saves (
   uid   uuid primary key references auth.users(id) on delete cascade,
-  data  jsonb not null,               -- ก้อนเซฟทั้งหมด (เหมือน slot ใน localStorage)
+  data  jsonb not null,               -- ก้อนเซฟทั้งหมด { slots, ver, ts, activeSlot } — ver ใช้กันข้อมูลทับกันข้ามเครื่อง
   ts    bigint,                        -- เวลาอัปเดตล่าสุด (newest-wins)
   updated_at timestamptz default now()
 );
