@@ -132,6 +132,7 @@ const LOOT = [
   { id: "st_k", slot: "weapon", name: "ดาบไม้ซ้อม", emoji: "🗡️", rarity: "common", atk: 3, cls: "samurai", starter: true },
   { id: "st_o", slot: "weapon", name: "ปากกาฝึกงาน", emoji: "🖊️", rarity: "common", atk: 3, cls: "office", starter: true },
   { id: "st_c", slot: "weapon", name: "คีย์บอร์ดฝึกหัด", emoji: "⌨️", rarity: "common", atk: 3, cls: "coder", starter: true },
+  { id: "st_x", slot: "weapon", name: "ใบมีดพลาสมาฝึก", emoji: "🤖", rarity: "common", atk: 3, cls: "aegis", starter: true },
   // ⚔️ samurai katanas — multiple tiers, each with a distinct look
   { id: "kf", slot: "weapon", name: "คาตานะเพลิง", emoji: "🔥", rarity: "rare", atk: 7, elem: "fire", cls: "samurai", req: 5 },
   { id: "ki", slot: "weapon", name: "คาตานะเยือกเย็น", emoji: "❄️", rarity: "epic", atk: 11, def: 2, elem: "ice", cls: "samurai", req: 10 },
@@ -2179,6 +2180,7 @@ export default function CherryAdventure() {
     skinGrad.magFilter = THREE.NearestFilter;
     skinGrad.needsUpdate = true;
     const skinMat = new THREE.MeshToonMaterial({ color: 0xffe0c8, gradientMap: skinGrad });
+    G._skinBase = 0xffe0c8; // 🤖 remember base skin tone (aegis recolors it metallic, restores on class change)
     const hairMat = new THREE.MeshStandardMaterial({ color: 0x3f2517, roughness: 0.6, metalness: 0.08, emissive: 0x1a0f08, emissiveIntensity: 0.15 }); // smooth shading for rounded strands
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x33241f, roughness: 0.4 });
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 });
@@ -2287,6 +2289,7 @@ export default function CherryAdventure() {
     }
     char.add(hips);
     G.hips = hips;
+    G._chibiBody = [torso, pelvis, ...hips.children, ...legSkinMeshes, ...shoeMeshes]; // 🤖 base garment/skin — hidden under the aegis mech armor
     // neck connects head and body naturally
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.62, 22), skinMat);
     neck.position.y = 2.1; // คอยาวขึ้น เชื่อมไหล่→หัว
@@ -7581,6 +7584,72 @@ export default function CherryAdventure() {
       sh.visible = false;
       G.aegisShield = sh; G.aegisShieldCore = coreGlow;
     }
+    // 🤖 AEGIS-X full-body mech armor — covers arms, hands, legs, feet, torso so the whole character is a robot
+    {
+      const white = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
+      const silver = new THREE.MeshStandardMaterial({ color: 0xa8b0bc, metalness: 0.92, roughness: 0.22 });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x12151d, metalness: 0.72, roughness: 0.42 });
+      const plasma = new THREE.MeshStandardMaterial({ color: 0x6ad8ff, emissive: 0x2ab0f5, emissiveIntensity: 1.2, roughness: 0.25, metalness: 0.3 });
+      const parts = [];
+      // ===== torso shell (dark under-frame + white front/back plates) covers the chibi shirt =====
+      const under = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.86, 20), dark); under.position.y = 1.58; under.scale.set(1.12, 1, 0.95); char.add(under); parts.push(under);
+      const backPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.72, 20, 1, true, Math.PI * 0.55, Math.PI * 0.9), white); backPlate.position.y = 1.6; backPlate.scale.set(1.12, 1, 0.98); char.add(backPlate); parts.push(backPlate);
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.16, 16), silver); collar.position.y = 2.06; char.add(collar); parts.push(collar);
+      const abx = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.34), dark); abx.position.set(0, 1.36, 0.06); abx.scale.set(1.1, 1, 1); char.add(abx); parts.push(abx);
+      for (const sy of [1.42, 1.5]) { const ab = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 6, 16), plasma); ab.position.set(0, sy, 0.34); ab.rotation.x = Math.PI / 2; ab.scale.set(1.1, 1, 0.5); char.add(ab); parts.push(ab); }
+      // ===== pelvis / hip armor (covers the chibi shorts) =====
+      const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.3, 0.46, 18), dark); pelvis.position.y = 1.06; pelvis.scale.set(1.12, 1, 1.0); char.add(pelvis); parts.push(pelvis);
+      const beltR = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.03, 8, 24), silver); beltR.position.y = 1.26; beltR.rotation.x = Math.PI / 2; beltR.scale.set(1.1, 1, 0.98); char.add(beltR); parts.push(beltR);
+      const buckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), plasma); buckle.scale.set(1, 1, 0.5); buckle.position.set(0, 1.24, 0.38); char.add(buckle); parts.push(buckle);
+      for (const sx of [-1, 1]) { const hipPlate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.26, 0.16), white); hipPlate.position.set(sx * 0.34, 1.06, 0.06); hipPlate.rotation.z = sx * 0.2; char.add(hipPlate); parts.push(hipPlate); const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.06), white); skirt.position.set(sx * 0.14, 0.94, 0.28); skirt.rotation.x = 0.3; char.add(skirt); parts.push(skirt); }
+      const skirtB = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.24, 0.06), white); skirtB.position.set(0, 0.92, -0.28); skirtB.rotation.x = -0.3; char.add(skirtB); parts.push(skirtB);
+      const crotch = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.36), dark); crotch.position.set(0, 0.9, 0.02); crotch.scale.set(1, 1, 1); char.add(crotch); parts.push(crotch);
+      // ===== arms: upper + fore plates, elbow joint, mech fists =====
+      for (const arm of [armL, armR]) {
+        const up = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.115, 0.34, 12), white); up.position.y = -0.14; arm.add(up); parts.push(up);
+        const upEdge = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.012, 6, 14), plasma); upEdge.position.y = -0.02; upEdge.rotation.x = Math.PI / 2; arm.add(upEdge); parts.push(upEdge);
+        const fore = arm.userData.elbow || arm;
+        const joint = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), silver); joint.position.y = -0.02; fore.add(joint); parts.push(joint);
+        const fp = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.088, 0.3, 12), white); fp.position.y = -0.24; fore.add(fp); parts.push(fp);
+        const feEdge = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.012, 6, 14), plasma); feEdge.position.y = -0.16; feEdge.rotation.x = Math.PI / 2; fore.add(feEdge); parts.push(feEdge);
+        const fist = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.16), dark); fist.position.y = -0.46; fore.add(fist); parts.push(fist);
+        const knuck = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.16), silver); knuck.position.set(0, -0.42, 0.02); fore.add(knuck); parts.push(knuck);
+      }
+      // ===== legs: thigh + shin plates, knee joint, mech boots =====
+      for (const leg of [legL, legR]) {
+        const th = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.3, 12), white); th.position.set(0, -0.12, 0.01); leg.add(th); parts.push(th);
+        const knee = leg.userData.knee || leg;
+        const kj = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), silver); kj.position.set(0, -0.02, 0.02); knee.add(kj); parts.push(kj);
+        const kGlow = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), plasma); kGlow.position.set(0, -0.02, 0.12); knee.add(kGlow); parts.push(kGlow);
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.4, 12), white); shin.position.set(0, -0.26, 0.01); knee.add(shin); parts.push(shin);
+        const shEdge = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 14), plasma); shEdge.position.set(0, -0.14, 0.01); shEdge.rotation.x = Math.PI / 2; knee.add(shEdge); parts.push(shEdge);
+        const ankle = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.14, 12), white); ankle.position.set(0, -0.46, 0.01); knee.add(ankle); parts.push(ankle);
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.44), dark); foot.position.set(0, -0.56, 0.1); knee.add(foot); parts.push(foot);
+        const toe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.14), silver); toe.position.set(0, -0.58, 0.32); knee.add(toe); parts.push(toe);
+        const heel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.12), white); heel.position.set(0, -0.55, -0.12); knee.add(heel); parts.push(heel);
+      }
+      parts.forEach((p) => (p.visible = false));
+      G._aegisBody = parts; G.aegisShoeMat = dark;
+    }
+    // 🤖 build a COMPLETE list of the base chibi body (torso/shorts/arms/legs/neck/skin + any trim bits)
+    //    so the mech armor fully replaces it — traverse the whole rig for base-body materials + small worn bits,
+    //    excluding the head group (its face/hair are toggled separately by refreshAegisHead) and the mech armor itself.
+    {
+      const baseMats = new Set([skinMat, shirtMat, pantsMat, whiteMat].filter(Boolean));
+      const keep = new Set(G._aegisBody || []);
+      if (G.aegisShield) G.aegisShield.traverse((o) => keep.add(o));
+      if (G.aegisHelm) G.aegisHelm.traverse((o) => keep.add(o));
+      const body = [];
+      char.traverse((o) => {
+        if (!o.isMesh || keep.has(o)) return;
+        // skip anything inside the head group — face/hair/eyes are handled by refreshAegisHead
+        let inHead = false, p = o; while (p) { if (p === headG) { inHead = true; break; } p = p.parent; }
+        if (inHead) return;
+        // only the always-on base body (skin/shirt/pants/shoe) — these are safe to force-show for non-aegis
+        if (baseMats.has(o.material)) body.push(o);
+      });
+      G._chibiBody = Array.from(new Set([...(G._chibiBody || []), ...body]));
+    }
     // 🤖 toggle the Aegis-X mech head + shield (+ hide hair) whenever the class look changes
     G.refreshAegisHead = () => {
       const aeg = !G.heroId && G.cls === "aegis";
@@ -7589,6 +7658,10 @@ export default function CherryAdventure() {
       const showHelm = aeg && !hatOn;
       if (G.aegisHelm) G.aegisHelm.visible = showHelm; // a worn hat replaces the helmet
       if (G.aegisShield) G.aegisShield.visible = aeg;   // the tech shield is a held piece
+      if (G._aegisBody) G._aegisBody.forEach((p) => (p.visible = aeg)); // 🤖 full-body mech armor (arms/legs/torso)
+      if (G._chibiBody) G._chibiBody.forEach((p) => { if (p) p.visible = !aeg; }); // 🤖 hide the base garment/skin body — the mech armor replaces it
+      if (aeg && typeof skinMat !== "undefined" && skinMat) skinMat.color.setHex(0x9aa4b2); // metallic tint for the neck/joints
+      else if (typeof skinMat !== "undefined" && skinMat && G._skinBase != null) skinMat.color.setHex(G._skinBase);
       if (showHelm) { // 🤖 hide the chibi hair + face — the helmet covers the head
         if (typeof hairStyles !== "undefined") hairStyles.forEach((h) => (h.visible = false));
         if (typeof baseHair !== "undefined" && baseHair) baseHair.visible = false;
@@ -14310,11 +14383,12 @@ export default function CherryAdventure() {
       G.petSkillLv = {};
       G.ngPlus = 0;
       G.storyChapter = 0;
-      const starter = { warrior: "st_w", archer: "st_a", mage: "st_m", assassin: "st_s", lancer: "st_l", samurai: "st_k", office: "st_o", coder: "st_c" }[G.cls];
+      const starter = { warrior: "st_w", archer: "st_a", mage: "st_m", assassin: "st_s", lancer: "st_l", samurai: "st_k", office: "st_o", coder: "st_c", aegis: "st_x" }[G.cls];
       G.inv = [starter];
       G.equip.weapon = starter; // 🗡️ starting weapon of your class
       G.setWeaponVisual(starter);
       G.setOutfitVisual(null);
+      if (G.applyClassOutfit) G.applyClassOutfit(G.cls); // 👗 apply the class outfit + accessory (fixes stale accessory e.g. aegis mech vs warrior cape)
       applyGear();
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // ❤️💧 เริ่มเกมเลือด/มานาเต็มหลอด (maxHp จริง = 3× ค่าฐาน)
       G.refreshShop(true); // stock the shop for free
