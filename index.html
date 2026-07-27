@@ -30542,7 +30542,7 @@ function CherryAdventure() {
                 padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                 border: "1px solid #f5a623", cursor: "pointer", boxShadow: "0 3px 10px rgba(192,57,43,0.5)",
             } }, "\uD83D\uDC79 \u0E1A\u0E2D\u0E2A\u0E42\u0E25\u0E01 (\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49)")),
-        ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: 216, left: 12, display: "flex", gap: 6 } },
+        ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: (ui.globalBoard && ui.globalBoard.length) ? 250 : 92, left: 12, display: "flex", gap: 6, zIndex: 27 } },
             React.createElement("button", { onClick: () => G.toggleSound(), title: "\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E40\u0E2D\u0E1F\u0E40\u0E1F\u0E01\u0E15\u0E4C", style: {
                     width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
                     fontSize: 15, background: ui.soundOn ? "#fff" : "#d8d8d0", opacity: ui.soundOn ? 1 : 0.6,

@@ -21974,7 +21974,7 @@ export default function CherryAdventure() {
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (
-        <div style={{ position: "absolute", top: 216, left: 12, display: "flex", gap: 6 }}>
+        <div style={{ position: "absolute", top: (ui.globalBoard && ui.globalBoard.length) ? 250 : 92, left: 12, display: "flex", gap: 6, zIndex: 27 }}>
           <button onClick={() => G.toggleSound()} title="เสียงเอฟเฟกต์" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
             fontSize: 15, background: ui.soundOn ? "#fff" : "#d8d8d0", opacity: ui.soundOn ? 1 : 0.6,
