@@ -9287,7 +9287,8 @@ export default function CherryAdventure() {
         if (G.applyEvoParts) G.applyEvoParts(buddyMesh, inst.sp, inst.lv); // ✨ ร่างวิวัฒน์ตามเลเวล
         if (G.applyMutation) G.applyMutation(buddyMesh, inst.mut || 0); // 🧬 กลายพันธุ์ (ซื้อด้วยทอง)
         buddyMesh.scale.multiplyScalar(1.24); // 🐾 ×2 ตัวใหญ่ขึ้นเท่าตัว
-        buddyMesh.position.set(char.position.x - 1, 0, char.position.z + 0.6);
+        buddyMesh.userData.followDist = 1.5 + buddyMesh.scale.x * 0.85; // 🐾 ตัวใหญ่ยิ่งยืนห่างตัวละคร
+        buddyMesh.position.set(char.position.x - 1.6, 0, char.position.z + 1.0);
         vivify(buddyMesh);
         scene.add(buddyMesh);
       } else G.buddy = null;
@@ -15939,10 +15940,11 @@ export default function CherryAdventure() {
 
         // buddy follows with its own inertia
         if (buddyMesh) {
+          const fd = buddyMesh.userData.followDist || 2.1; // 🐾 ระยะยืนห่าง (ตัวใหญ่ยิ่งห่าง)
           const behind = new THREE.Vector3(
-            char.position.x - Math.sin(char.rotation.y) * 1.1,
+            char.position.x - Math.sin(char.rotation.y) * fd,
             0,
-            char.position.z - Math.cos(char.rotation.y) * 1.1
+            char.position.z - Math.cos(char.rotation.y) * fd
           );
           buddyMesh.position.x += (behind.x - buddyMesh.position.x) * Math.min(1, dt * 4);
           buddyMesh.position.z += (behind.z - buddyMesh.position.z) * Math.min(1, dt * 4);
