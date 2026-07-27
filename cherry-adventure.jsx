@@ -11042,6 +11042,20 @@ export default function CherryAdventure() {
     };
     G.craftWeapon = () => { const r = CRAFT_RECIPES[G.cls]; if (r) G.craftItem(r.itemId); }; // back-compat
     // ⛏️ FORGE: infuse an element onto the currently equipped weapon
+    // 🛒 buy element-infusion materials with gold (เสริมธาตุด้วยทอง)
+    G.ESSENCE_COST = { crystal: 5000, fireEss: 4000, iceEss: 4000, windEss: 4000, earthEss: 4000, dragonScale: 20000 };
+    G.buyEssence = (mat, qty) => {
+      qty = qty || 1;
+      const cost = (G.ESSENCE_COST[mat] || 5000) * qty;
+      if ((G.gold || 0) < cost) { toast(`💰 ทองไม่พอ! ต้องใช้ ${cost.toLocaleString()}`); return; }
+      G.gold -= cost;
+      G.mats = G.mats || {};
+      G.mats[mat] = (G.mats[mat] || 0) + qty;
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🛒 ซื้อ ${(MATERIALS[mat] || {}).emoji || ""} ${(MATERIALS[mat] || {}).name || mat} +${qty}!`);
+      setUi((u) => ({ ...u, gold: G.gold, mats: { ...G.mats } }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
     G.infuseWeapon = (elem) => {
       const wid = G.equip.weapon;
       if (!wid) { toast("⚔️ ต้องสวมอาวุธก่อนถึงจะเสริมธาตุได้"); return; }
@@ -11076,7 +11090,7 @@ export default function CherryAdventure() {
     G.toggleForge = () => {
       const willOpen = !G.forgeOpen;
       G.forgeOpen = willOpen;
-      setUi((u) => ({ ...u, forgeOpen: willOpen, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, invOpen: false, skillPanel: false, homeOpen: false }));
+      setUi((u) => ({ ...u, forgeOpen: willOpen, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, gold: G.gold, rolls: { ...(G.rolls || {}) }, invOpen: false, skillPanel: false, homeOpen: false }));
     };
 
     // equip an item (tap in the bag panel)
@@ -23758,6 +23772,16 @@ export default function CherryAdventure() {
               {/* infuse element onto weapon */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a", margin: "2px 0 5px" }}>✨ เสริมธาตุให้อาวุธ</div>
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>ใส่ธาตุแล้วอาวุธจะโจมตีตรงจุดอ่อน + ได้เปรียบตามวงล้อธาตุ + ติดสถานะ</div>
+              {/* 🛒 ซื้อวัตถุดิบเสริมธาตุด้วยทอง */}
+              <div style={{ background: "#fffaf0", borderRadius: 9, padding: "6px 8px", marginBottom: 7, border: "1px solid #f0e0c0" }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#a5762a", marginBottom: 4 }}>🛒 ซื้อวัตถุดิบธาตุด้วยทอง (💰 {(ui.gold || 0).toLocaleString()})</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {["crystal", "fireEss", "iceEss", "windEss", "earthEss", "dragonScale"].map((m) => {
+                    const price = (G.ESSENCE_COST && G.ESSENCE_COST[m]) || 5000; const afford = (ui.gold || 0) >= price;
+                    return <button key={m} onClick={() => G.buyEssence(m, 1)} disabled={!afford} title={`${MATERIALS[m].name} · ${price.toLocaleString()}💰 · มี ${(ui.mats || {})[m] || 0}`} style={{ border: "none", borderRadius: 8, padding: "4px 7px", cursor: afford ? "pointer" : "not-allowed", fontSize: 9.5, fontWeight: 800, fontFamily: font, color: afford ? "#4a3a10" : "#a8a89a", background: afford ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "#eceadf" }}>{MATERIALS[m].emoji} {(ui.mats || {})[m] || 0} <span style={{ opacity: 0.75 }}>({price / 1000}k)</span></button>;
+                  })}
+                </div>
+              </div>
               {Object.keys(ELEM_INFUSE).map((el) => {
                 const r = ELEM_INFUSE[el];
                 const can = Object.keys(r.cost).every((m) => ((ui.mats || {})[m] || 0) >= r.cost[m]);
