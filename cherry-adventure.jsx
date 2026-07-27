@@ -7651,6 +7651,34 @@ export default function CherryAdventure() {
       return g;
     };
     G.applyEvoParts = applyEvoParts;
+    // 🧬 MUTATION — เมื่อเลเวลสูงพอสัตว์เลี้ยงกลายพันธุ์: คริสตัลปริซึม + ออร่าเรืองแสง + ตัวใหญ่ขึ้น
+    const mutTierOf = (lv) => (lv >= 80 ? 2 : lv >= 50 ? 1 : 0); // Lv50 = กลายพันธุ์ · Lv80 = กลายพันธุ์ขั้นสูง
+    G.mutTierOf = mutTierOf;
+    const applyMutation = (g, lv) => {
+      const tier = mutTierOf(lv || 1);
+      if (!tier || !g) return g;
+      const body = (g.userData && g.userData.body) || g;
+      const headY = (g.userData && g.userData.headY) != null ? g.userData.headY : 0.4;
+      // 💎 คริสตัลปริซึมบนหลัง (สีรุ้ง) — สัญลักษณ์การกลายพันธุ์
+      const cols = [0xff5aa0, 0x9a6af5, 0x5adcf5, 0x8af59a];
+      const n = tier === 2 ? 5 : 3;
+      for (let k = 0; k < n; k++) {
+        const c = cols[k % cols.length];
+        const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.11 - k * 0.012, 0),
+          new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.9, metalness: 0.4, roughness: 0.15, transparent: true, opacity: 0.92 }));
+        cr.scale.y = 2.0;
+        const off = (k - (n - 1) / 2) * 0.16;
+        cr.position.set(off, headY + 0.14 + Math.abs(off) * -0.2, -0.28);
+        cr.rotation.z = off * 1.1;
+        body.add(cr);
+      }
+      // 🌈 ออร่าเรืองแสงกลายพันธุ์
+      if (monGlow) monGlow(g, tier === 2 ? 0xba5af5 : 0x5adcf5, tier === 2 ? 0.55 : 0.4);
+      g.scale.multiplyScalar(tier === 2 ? 1.14 : 1.08); // 📏 กลายพันธุ์ตัวใหญ่ขึ้นเล็กน้อย (คริสตัลบ่งบอกอยู่แล้ว)
+      g.userData.mutated = tier;
+      return g;
+    };
+    G.applyMutation = applyMutation;
     const buildMonster = (spId, stage = 1) => {
       const sp = SPECIES[spId];
       const g = new THREE.Group();
@@ -9250,7 +9278,8 @@ export default function CherryAdventure() {
       if (inst) {
         buddyMesh = buildMonster(inst.sp, inst.stage);
         if (G.applyEvoParts) G.applyEvoParts(buddyMesh, inst.sp, inst.lv); // ✨ ร่างวิวัฒน์ตามเลเวล
-        buddyMesh.scale.multiplyScalar(0.62);
+        if (G.applyMutation) G.applyMutation(buddyMesh, inst.lv); // 🧬 กลายพันธุ์เมื่อเลเวลสูง
+        buddyMesh.scale.multiplyScalar(1.24); // 🐾 ×2 ตัวใหญ่ขึ้นเท่าตัว
         buddyMesh.position.set(char.position.x - 1, 0, char.position.z + 0.6);
         vivify(buddyMesh);
         scene.add(buddyMesh);
@@ -10793,10 +10822,12 @@ export default function CherryAdventure() {
       const tier = SPECIES[p.sp].tier;
       const skLv = (G.petSkillLv && G.petSkillLv[p.sp]) || 1; // 🎯 pet skill level boosts buffs
       const plus = p.plus || 0, iv = p.iv || { a: 0, h: 0, d: 0 };
+      const mt = G.mutTierOf ? G.mutTierOf(p.lv) : 0; // 🧬 การกลายพันธุ์เพิ่มบัฟ
+      const mm = mt === 2 ? 1.5 : mt === 1 ? 1.25 : 1;
       return {
-        atk: tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + plus * 3,
-        hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + plus * 5,
-        def: (p.stage - 1) + Math.floor(p.lv / 2) + iv.d + plus * 2,
+        atk: Math.round((tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + plus * 3) * mm),
+        hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + plus * 5) * mm),
+        def: Math.round(((p.stage - 1) + Math.floor(p.lv / 2) + iv.d + plus * 2) * mm),
       };
     };
     const petBuff = () => {
@@ -12305,6 +12336,14 @@ export default function CherryAdventure() {
           toast(`✨🎉 ${SPECIES[p.sp].name} วิวัฒนาการรูปลักษณ์! Lv.${p.lv} — ได้${evoName} + ตัวใหญ่ขึ้น`);
           burst(char.position, 0xffd76a, 1.6);
           if (G.buddy === iid) G.setBuddy(iid); // ประกอบร่างใหม่พร้อมชิ้นส่วนวิวัฒน์
+        }
+        // 🧬 การกลายพันธุ์ — เมื่อเลเวลถึงเกณฑ์ (Lv50 / Lv80)
+        if (p.lv === 50 || p.lv === 80) {
+          const mt = p.lv >= 80 ? "กลายพันธุ์ขั้นสูง 🧬🌈" : "กลายพันธุ์ 🧬";
+          toast(`🧬✨ ${SPECIES[p.sp].name} ${mt}! Lv.${p.lv} — ร่างคริสตัลปริซึม + พลังบัฟ +${p.lv >= 80 ? 50 : 25}%`);
+          burst(char.position, p.lv >= 80 ? 0xba5af5 : 0x5adcf5, 2.0);
+          if (G.showAnnounce) G.showAnnounce(`🧬 ${SPECIES[p.sp].name} ของ ${G.playerName || "เชอร์รี่"} ${mt}!`);
+          if (G.buddy === iid) G.setBuddy(iid); // ประกอบร่างกลายพันธุ์ใหม่
         }
       }
       setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })) }));
@@ -20732,6 +20771,7 @@ export default function CherryAdventure() {
               const elem = PET_ELEM[pet.sp];
               const weak = WEAK[G.enemy.spId] === elem;
               let dmg = 3 + ((SPECIES[pet.sp] || {}).tier || 1) * 2 * pet.stage + pet.lv + (pet.plus || 0) * 3 + ((pet.iv || {}).a || 0) + Math.random() * 3;
+              { const _mt = G.mutTierOf ? G.mutTierOf(pet.lv) : 0; if (_mt) dmg *= (_mt === 2 ? 1.5 : 1.25); } // 🧬 กลายพันธุ์เพิ่มดาเมจ
               if (weak) dmg *= 1.5;
               dmg = Math.round(dmg);
               let petNote = weak ? " โดนจุดอ่อน!! 💢" : "";
@@ -24873,7 +24913,7 @@ export default function CherryAdventure() {
           {/* collection panel */}
           {ui.panelOpen && (
             <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380,
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "96%", maxWidth: 460,
               maxHeight: "84vh", overflowY: "auto", display: "flex", flexDirection: "column",
               background: "#fff", borderRadius: 16, padding: 12,
               boxShadow: MODAL_SHADOW,
@@ -25008,7 +25048,9 @@ export default function CherryAdventure() {
                 const dispName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]}` : p.stage === 2 ? EVOLVED[p.sp] : sp.name;
                 const skLv = (ui.petSkillLv && ui.petSkillLv[p.sp]) || 1;
                 const iv = p.iv || { a: 0, h: 0, d: 0 };
-                const buff = { atk: sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3, hp: 3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5, def: (p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2 };
+                const _mt = G.mutTierOf ? G.mutTierOf(p.lv) : 0; // 🧬 tier กลายพันธุ์
+                const _mm = _mt === 2 ? 1.5 : _mt === 1 ? 1.25 : 1;
+                const buff = { atk: Math.round((sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3) * _mm), hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5) * _mm), def: Math.round(((p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2) * _mm) };
                 const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
                 const selFuse = (ui.fuseSel || []).includes(p.i);
                 return (
@@ -25018,7 +25060,7 @@ export default function CherryAdventure() {
                       <span style={{ fontSize: 19 }}>{sp.emoji}</span>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#c09020" : "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{dispName}{p.plus ? <b style={{ color: "#e0862f" }}> +{p.plus}</b> : null}</div>
-                        <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name} · Lv.{p.lv} · ร่าง {p.stage}</div>
+                        <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name} · Lv.{p.lv} · ร่าง {p.stage}{_mt ? <span style={{ color: _mt === 2 ? "#ba5af5" : "#3ab0d0" }}> · 🧬{_mt === 2 ? "×2" : ""}</span> : null}</div>
                       </div>
                       {isBuddy && <span style={{ fontSize: 9, fontWeight: 800, color: "#7ba05b" }}>บัดดี้</span>}
                       {!isBuddy && inTeam && <span style={{ fontSize: 9, fontWeight: 800, color: "#5a8ad0" }}>ทีม</span>}
