@@ -21022,10 +21022,14 @@ function CherryAdventure() {
                             armR.rotation.z = 0.1;
                             armR.rotation.x = s < 0.45 ? -2.1 * (s / 0.45) : -2.1 + 3.3 * ((s - 0.45) / 0.55);
                         }
+                        else if (G.cls === "assassin") {
+                            // 🗡️🗡️ รัวมีดคู่แทงไปข้างหน้า สลับซ้าย-ขวา — ไม่เอียงตัว
+                            armR.rotation.x = -1.7 * sw;
+                            armL.rotation.x = -1.7 * Math.sin(Math.min(1, s + 0.28) * Math.PI);
+                        }
                         else {
-                            armR.rotation.x = -1.75 * sw;
-                            armR.rotation.z = 0.12 - 0.55 * sw; // overhead slash
-                            char.rotation.z += sw * 0.12;
+                            armR.rotation.x = -1.85 * sw;
+                            armR.rotation.z = 0.12 - 0.5 * sw; // overhead slash — ไม่เอียงตัว
                         }
                     }
                     // buddy follows with its own inertia
