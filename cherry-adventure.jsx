@@ -921,6 +921,8 @@ const SKILL_TREE = {
   office:   { id: "t_office",  name: "มือโปรออฟฟิศ", emoji: "💼", cost: 4, max: 3, reqLv: 8, req: "t_atk1", atk: 4, mp: 3, crit: 5, desc: "โจมตี+4 มานา+3 คริ+5% /ระดับ" },
   samurai:  { id: "t_samurai", name: "วิถีซามูไร", emoji: "⚔️", cost: 4, max: 3, reqLv: 8, req: "t_atk1", atk: 5, hp: 8, crit: 6, desc: "โจมตี+5 คริ+6% HP+8% /ระดับ" },
 };
+// 🌳 เพดานปมพรสวรรค์ทุกปม → Lv.20 (อัพได้ตามเลเวลตัวละคร ผ่าน treeCap)
+[...SKILL_TREE.common, ...Object.keys(SKILL_TREE).filter((k) => k !== "common").map((k) => SKILL_TREE[k])].forEach((n) => { if (n && n.max) n.max = 20; });
 
 // ---------- ✨ CONSTELLATION BOARD (กระดานพรสวรรค์) — a Genshin-style per-class star board ----------
 // Each class has its own 6-star constellation, unlocked in order with ✨ ผงดาว (Star Dust).
@@ -11432,7 +11434,27 @@ export default function CherryAdventure() {
       const better = before ? next.m > before.m : true;
       if (G.sfx) (better ? G.sfx.levelup : G.sfx.button)();
       toast(`🎲 ${it.emoji} ${it.name}: ${bp ? bp.emoji + bp.name + " → " : ""}${np.emoji} ${np.name} (×${next.m.toFixed(2)}) ${better ? "⬆️ ดีขึ้น!" : "⬇️ แย่ลง..."}`);
+      setUi((u) => ({ ...u, mats: { ...G.mats }, rolls: { ...G.rolls } }));
       syncPlayer();
+    };
+    // 🎲💰 gold-guaranteed reroll — keeps the BETTER of old/new so quality never drops (การันตีแต้มไม่ลด)
+    G.REROLL_SAFE_COST = () => 60000;
+    G.rerollItemSafe = (id) => {
+      const it = LOOT.find((x) => x.id === id);
+      if (!it || it.starter) { toast("อาวุธฝึกหัดสุ่มค่าไม่ได้"); return; }
+      const cost = G.REROLL_SAFE_COST();
+      if ((G.gold || 0) < cost) { toast(`💰 ทองไม่พอ! ต้องใช้ ${cost.toLocaleString()}`); return; }
+      G.gold -= cost;
+      const before = G.rolls[id];
+      const next = rollQuality();
+      const keep = (before && before.m >= next.m) ? before : next; // 🔒 keep the higher-quality roll
+      G.rolls[id] = keep;
+      const improved = !before || keep.m > (before ? before.m : 0);
+      const kp = prefixOf(keep.p);
+      if (G.sfx) (improved ? G.sfx.levelup : G.sfx.button)();
+      toast(`🎲💰 การันตี! ${it.emoji} ${it.name}: ${kp.emoji} ${kp.name} (×${keep.m.toFixed(2)}) ${improved ? "⬆️ ดีขึ้น!" : "คงเดิม (ไม่ลด)"}`);
+      setUi((u) => ({ ...u, gold: G.gold, rolls: { ...G.rolls } }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
     };
     // 💎 socket a gem into an item (consumes the gem)
     G.socketGem = (id, slotIdx, gemId) => {
@@ -23718,10 +23740,16 @@ export default function CherryAdventure() {
                         </div>
                         {px && <div style={{ fontSize: 9.5, fontWeight: 800, color: px.color }}>{px.emoji} {px.name} ×{r.m.toFixed(2)}</div>}
                       </div>
-                      <button onClick={() => G.rerollItem(id)} style={{
-                        border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, cursor: "pointer",
-                        fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#9a4ad0,#b07ae0)",
-                      }}>🎲 สุ่ม</button>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4, marginLeft: 6 }}>
+                        <button onClick={() => G.rerollItem(id)} title="สุ่มค่าใหม่ (อาจแย่ลง)" style={{
+                          border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer",
+                          fontSize: 10, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#9a4ad0,#b07ae0)",
+                        }}>🎲 สุ่ม (แร่)</button>
+                        <button onClick={() => G.rerollItemSafe(id)} title={`สุ่มค่าแบบการันตี — แต้มไม่ลด · ${(G.REROLL_SAFE_COST ? G.REROLL_SAFE_COST() : 60000).toLocaleString()}💰`} style={{
+                          border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", whiteSpace: "nowrap",
+                          fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#4a3a10", background: "linear-gradient(90deg,#f5c542,#ffd76a)",
+                        }}>🔒 การันตี ({((G.REROLL_SAFE_COST ? G.REROLL_SAFE_COST() : 60000) / 1000)}k💰)</button>
+                      </div>
                     </div>
                   );
                 });
