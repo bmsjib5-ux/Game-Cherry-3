@@ -1199,6 +1199,15 @@ const COSMETIC_AURAS = [
     { id: "nature", name: "ใบไม้พลิ้ว", emoji: "🍃", color: 0x8fd05a, unlock: { stat: "level", val: 15 } },
     { id: "gold", name: "ธุลีทองคำ", emoji: "👑", color: 0xffe070, unlock: { stat: "gold", val: 8000 } },
 ];
+// ---------- 🪽 CHARACTER WINGS (ปีกตัวละคร) — cosmetic back wings, bought with diamonds ----------
+const WINGS = [
+    { id: "none", name: "ไม่ใส่ปีก", emoji: "🚫", price: 0 },
+    { id: "phoenix", name: "ปีกนกฟินิกซ์", emoji: "🔥", kind: "phoenix", price: 1000, cols: [0xff2a10, 0xff5a1a, 0xff9020, 0xffc040], glow: 1.1, desc: "เพลิงฟินิกซ์ สีแดง-ส้ม" },
+    { id: "angel", name: "ปีกนางฟ้า", emoji: "😇", kind: "angel", price: 1500, cols: [0xffffff, 0xfff4e0, 0xffe9b0, 0xf5d24a], glow: 0.5, desc: "ขนนกสวรรค์ สีขาว-ทอง" },
+    { id: "demon", name: "ปีกจอมมาร", emoji: "😈", kind: "demon", price: 2000, cols: [0x140810, 0x2a0e1a, 0xd0203a, 0xff3050], glow: 0.9, desc: "ปีกค้างคาว ดำ-แดง" },
+    { id: "robot", name: "ปีกหุ่นยนต์", emoji: "🤖", kind: "robot", price: 2500, cols: [0x9aa4b0, 0xc0c8d0, 0x6a7480, 0x4aa0e0], glow: 0.7, desc: "ปีกกลไก เหล็กโลหะ" },
+];
+const findWing = (id) => WINGS.find((w) => w.id === id) || null;
 // ---------- 🗡️⭐ LEGENDARY WEAPON ENCHANTS (จารึกอาวุธ) — a combat proc on your weapon ----------
 const WEAPON_ENCHANTS = [
     { id: "none", name: "ไม่มี", emoji: "⚪", desc: "ไม่มีจารึก", unlock: null },
@@ -2542,6 +2551,158 @@ function CherryAdventure() {
         G.setAura = setAura;
         G.setRing = setRing;
         G.setMotes = setMotes;
+        // 🪽 CHARACTER WINGS — cosmetic back wings; wingL/wingR flap gently in the loop
+        const wingsGroup = new THREE.Group();
+        wingsGroup.position.set(0, 1.16, -0.3); // 🎒 mid-back (ต่ำลง เพื่อไม่ให้หัวบัง)
+        wingsGroup.scale.setScalar(1.45); // 🪽 ใหญ่ขึ้นให้เห็นชัดพ้นตัว
+        const wingL = new THREE.Group();
+        wingL.position.x = -0.12;
+        const wingR = new THREE.Group();
+        wingR.position.x = 0.12;
+        wingsGroup.add(wingL);
+        wingsGroup.add(wingR);
+        wingsGroup.visible = false;
+        char.add(wingsGroup);
+        G.wingsGroup = wingsGroup;
+        G.wingL = wingL;
+        G.wingR = wingR;
+        const clearGroup = (g) => { while (g.children.length) {
+            const c = g.children.pop();
+            c.traverse && c.traverse((o) => { if (o.geometry)
+                o.geometry.dispose(); if (o.material)
+                (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose && m.dispose()); });
+            g.remove(c);
+        } };
+        G.buildWings = (id) => {
+            clearGroup(wingL);
+            clearGroup(wingR);
+            const w = findWing(id);
+            if (!w || w.id === "none") {
+                wingsGroup.visible = false;
+                return;
+            }
+            wingsGroup.visible = true;
+            const cols = w.cols, glow = w.glow, kind = w.kind;
+            const build = (side, root) => {
+                if (kind === "phoenix" || kind === "angel") {
+                    // 🪶 layered feathers fanning up & out
+                    const rows = 8;
+                    for (let k = 0; k < rows; k++) {
+                        const len = 1.15 - k * 0.085;
+                        const col = cols[Math.min(cols.length - 1, Math.floor(k / rows * cols.length))];
+                        const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: glow * (0.5 + k / rows), roughness: kind === "angel" ? 0.5 : 0.35, metalness: 0.1, side: THREE.DoubleSide, transparent: true, opacity: 0.97 });
+                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.1, len, 5), mat);
+                        f.scale.set(1, 1, 0.22); // flatten into a feather
+                        // 🪽 fan up-and-OUT so tips clear the body silhouette
+                        const spread = 0.85 + k * 0.16; // more horizontal at the base
+                        f.position.set(side * (0.18 + k * 0.16), 0.05 + k * 0.13, 0);
+                        f.rotation.z = side * spread;
+                        f.rotation.x = -0.14;
+                        root.add(f);
+                    }
+                    if (kind === "angel") { // ✨ soft glow tips
+                        const tipMat = new THREE.MeshBasicMaterial({ color: 0xfff3c0, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+                        const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 10), tipMat);
+                        halo.position.set(side * 0.5, 0.55, -0.05);
+                        halo.scale.set(1.2, 1.4, 0.4);
+                        root.add(halo);
+                    }
+                }
+                else if (kind === "demon") {
+                    // 🦇 webbed bat membrane between spiny fingers
+                    const boneMat = new THREE.MeshStandardMaterial({ color: cols[0], roughness: 0.6, metalness: 0.2 });
+                    const memMat = new THREE.MeshStandardMaterial({ color: cols[1], emissive: cols[2], emissiveIntensity: glow * 0.5, roughness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.94 });
+                    const edgeMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow, roughness: 0.3 });
+                    const fingers = 4;
+                    for (let k = 0; k < fingers; k++) {
+                        const len = 1.0 - k * 0.14;
+                        const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, len, 5), boneMat);
+                        const ang = side * (0.3 + k * 0.32);
+                        bone.position.set(side * (0.16 + k * 0.16), 0.16 + k * 0.14, 0);
+                        bone.rotation.z = ang;
+                        root.add(bone);
+                        // membrane panel (flattened cone) filling the gap
+                        const mem = new THREE.Mesh(new THREE.ConeGeometry(0.16, len * 0.92, 3), memMat);
+                        mem.scale.set(1, 1, 0.12);
+                        mem.position.set(side * (0.16 + k * 0.16 - 0.06), 0.13 + k * 0.14, -0.01);
+                        mem.rotation.z = ang;
+                        root.add(mem);
+                        // 🔴 glowing spike at each finger tip
+                        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 5), edgeMat);
+                        spike.position.set(side * (0.16 + k * 0.16) + Math.sin(ang) * len / 2, 0.16 + k * 0.14 + Math.cos(ang) * len / 2, 0);
+                        spike.rotation.z = ang;
+                        root.add(spike);
+                    }
+                }
+                else if (kind === "robot") {
+                    // 🤖 angular metallic blade panels
+                    const steel = new THREE.MeshStandardMaterial({ color: cols[1], metalness: 0.9, roughness: 0.28 });
+                    const dark = new THREE.MeshStandardMaterial({ color: cols[2], metalness: 0.85, roughness: 0.35 });
+                    const glowMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow * 1.4, roughness: 0.2, metalness: 0.4 });
+                    const blades = 4;
+                    for (let k = 0; k < blades; k++) {
+                        const len = 1.0 - k * 0.13, wdt = 0.16 - k * 0.02;
+                        const bl = new THREE.Mesh(new THREE.BoxGeometry(len, wdt, 0.05), k % 2 ? dark : steel);
+                        const ang = side * (0.45 + k * 0.28);
+                        // position so the blade extends outward from the shoulder
+                        bl.position.set(side * (0.12 + Math.cos(ang) * len / 2), 0.16 + k * 0.14 + Math.sin(ang) * len / 2, 0);
+                        bl.rotation.z = ang;
+                        root.add(bl);
+                        // glowing edge strip
+                        const strip = new THREE.Mesh(new THREE.BoxGeometry(len * 0.92, 0.03, 0.06), glowMat);
+                        strip.position.copy(bl.position);
+                        strip.position.y += wdt / 2;
+                        strip.rotation.z = ang;
+                        root.add(strip);
+                    }
+                    // thruster core at the base
+                    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 10), glowMat);
+                    core.rotation.z = Math.PI / 2;
+                    core.position.set(side * 0.14, 0.14, 0.02);
+                    root.add(core);
+                }
+            };
+            build(-1, wingL);
+            build(1, wingR);
+        };
+        G.setWings = (id) => {
+            const w = findWing(id);
+            if (!w)
+                return;
+            if (w.id !== "none" && !(G.wingsOwned && G.wingsOwned[id])) {
+                toast("🔒 ยังไม่ได้ปีกนี้ — ซื้อด้วยเพชรก่อน 💎");
+                return;
+            }
+            G.activeWing = id;
+            G.buildWings(id);
+            if (G.saveGame)
+                G.saveGame();
+            setUi((u) => ({ ...u, activeWing: id }));
+        };
+        G.buyWing = (id) => {
+            const w = findWing(id);
+            if (!w || w.id === "none")
+                return;
+            if (G.wingsOwned && G.wingsOwned[id]) {
+                G.setWings(id);
+                return;
+            }
+            if ((G.diamonds || 0) < w.price) {
+                toast(`💎 เพชรไม่พอ — ต้องใช้ ${w.price} (มี ${G.diamonds || 0})`);
+                return;
+            }
+            G.diamonds -= w.price;
+            G.wingsOwned = G.wingsOwned || {};
+            G.wingsOwned[id] = 1;
+            G.activeWing = id;
+            G.buildWings(id);
+            if (G.sfx)
+                G.sfx.levelup();
+            toast(`🪽✨ ได้ ${w.emoji} ${w.name}! สวมใส่แล้ว`);
+            if (G.saveGame)
+                G.saveGame();
+            setUi((u) => ({ ...u, diamonds: G.diamonds, wingsOwned: { ...(G.wingsOwned || {}) }, activeWing: id }));
+        };
         G.applySetAura = () => {
             const s = findSet(G.activeSet);
             const on = !!s;
@@ -14211,6 +14372,8 @@ function CherryAdventure() {
         G.worldBoss = null; // 👹 daily world-boss state { hp, maxHp, day, cleared }
         G.lastRankClaim = null; // 💎 daily top-3 rank reward guard
         G.diaSkins = {}; // 💎 skins bought with diamonds
+        G.wingsOwned = {};
+        G.activeWing = "none"; // 🪽 character wings bought with diamonds
         G.heroesOwned = {};
         G.heroPasses = {};
         G.heroTemp = {};
@@ -15819,7 +15982,7 @@ function CherryAdventure() {
         G.toggleCollection = () => {
             const willOpen = !G.collectionOpen;
             G.collectionOpen = willOpen;
-            setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
+            setUi((u) => ({ ...u, collectionOpen: willOpen, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", activeWing: G.activeWing || "none", wingsOwned: { ...(G.wingsOwned || {}) }, diamonds: G.diamonds || 0, masteryOpen: false, constOpen: false, invOpen: false, skillPanel: false, forgeOpen: false, treeOpen: false, socialOpen: false, homeOpen: false }));
         };
         G.unlockConst = (nodeId) => {
             if (!G.constNodes)
@@ -18390,6 +18553,8 @@ function CherryAdventure() {
             G.starterGems = 1; // 💎 fresh diamonds — แจกเพชรเริ่มต้น 1000
             G.lastRankClaim = null;
             G.diaSkins = {};
+            G.wingsOwned = {};
+            G.activeWing = "none";
             G.heroesOwned = {};
             G.heroPasses = {};
             G.heroTemp = {};
@@ -18490,7 +18655,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -19933,6 +20098,8 @@ function CherryAdventure() {
             }
             G.lastRankClaim = d.lastRankClaim || null;
             G.diaSkins = d.diaSkins || {};
+            G.wingsOwned = d.wingsOwned || {};
+            G.activeWing = d.activeWing || "none"; // 🪽 wings
             G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
             G.dressHideGear = !!d.dressHideGear;
             G._gearHidden = G.dressHideGear; // 🙈 apply saved hide-gear on load (before visuals render)
@@ -19949,6 +20116,8 @@ function CherryAdventure() {
                 G.applyPathLook(); // 🌟 restore the evolution aura on load
             if (G.applySetAura)
                 G.applySetAura(); // 👘 restore the outfit-set aura on load
+            if (G.buildWings)
+                G.buildWings(G.activeWing || "none"); // 🪽 restore wings on load
             if (G.applyCosmeticAura)
                 G.applyCosmeticAura(); // 🌟 restore the cosmetic aura on load
             G.titleId = d.titleId || "t_none";
@@ -20371,6 +20540,13 @@ function CherryAdventure() {
                     setRing.rotation.z = t * 1.4;
                     setRing.material.opacity = sp * 0.6;
                     setMotes.forEach((m) => { const a = m.userData.ph + t * 1.3; m.position.set(Math.cos(a) * 0.64, 0.1 + Math.abs(Math.sin(a * 2 + t * 2.5)) * 0.55, Math.sin(a) * 0.64); m.material.opacity = sp * 0.85; });
+                }
+                // 🪽 character wings — gentle flap
+                if (wingsGroup.visible) {
+                    const flap = Math.sin(t * 3.4) * 0.28;
+                    wingL.rotation.y = 0.35 + flap; // sweep the wings back/forth
+                    wingR.rotation.y = -0.35 - flap;
+                    wingsGroup.position.y = 1.42 + Math.sin(t * 3.4) * 0.02;
                 }
                 // 🌸 Haru's floating sakura petals — orbit, spin, and drift down gently
                 if (G._haruPetals && G._haruPetals.length && G._haruPetals[0].parent && G._haruPetals[0].parent.visible) {
@@ -32768,7 +32944,22 @@ function CherryAdventure() {
                         !unlocked && React.createElement("div", { style: { fontSize: 8, color: "#c07a4a" } }, G.unlockLabel(a.unlock)),
                         a.color != null && React.createElement("div", { style: { height: 3, borderRadius: 2, marginTop: 3, background: cc } })));
                 })),
-                React.createElement("div", { style: { fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" } }, "\u0E0A\u0E38\u0E14\u0E40\u0E17\u0E28\u0E01\u0E32\u0E25/\u0E2D\u0E2D\u0E23\u0E48\u0E32 = \u0E04\u0E2D\u0E2A\u0E40\u0E21\u0E15\u0E34\u0E01\u0E25\u0E49\u0E27\u0E19 \u00B7 \u0E40\u0E0B\u0E47\u0E15\u0E1A\u0E31\u0E1F\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E43\u0E2B\u0E49\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E40\u0E1E\u0E34\u0E48\u0E21"))),
+                React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#a04a80", margin: "8px 0 5px", display: "flex", justifyContent: "space-between" } },
+                    React.createElement("span", null, "\uD83E\uDEBD \u0E1B\u0E35\u0E01\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23 (\u0E0B\u0E37\u0E49\u0E2D\u0E14\u0E49\u0E27\u0E22\u0E40\u0E1E\u0E0A\u0E23)"),
+                    React.createElement("span", { style: { color: "#4a90c0" } },
+                        "\uD83D\uDC8E ",
+                        ui.diamonds || 0)),
+                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 6 } }, WINGS.map((w) => {
+                    const owned = w.id === "none" || (ui.wingsOwned && ui.wingsOwned[w.id]);
+                    const on = (ui.activeWing || "none") === w.id;
+                    const cc = w.cols ? `#${w.cols[Math.min(2, w.cols.length - 1)].toString(16).padStart(6, "0")}` : "#cccccc";
+                    return (React.createElement("button", { key: w.id, onClick: () => (owned ? G.setWings(w.id) : G.buyWing(w.id)), style: { position: "relative", width: 88, padding: "6px 4px", borderRadius: 10, cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800, textAlign: "center", border: on ? "2px solid #d06ab0" : `2px solid ${cc}66`, background: on ? "#fff" : "#faf0f6", color: "#8a4a70" } },
+                        React.createElement("div", { style: { fontSize: 18 } }, w.emoji),
+                        React.createElement("div", null, w.name),
+                        w.id !== "none" && w.cols && React.createElement("div", { style: { height: 4, borderRadius: 2, margin: "3px 6px 0", background: `linear-gradient(90deg, #${w.cols[0].toString(16).padStart(6, "0")}, #${w.cols[w.cols.length - 1].toString(16).padStart(6, "0")})` } }),
+                        React.createElement("div", { style: { fontSize: 9, marginTop: 2, color: on ? "#3ac06a" : owned ? "#7a9a5a" : "#4a90c0", fontWeight: 800 } }, on ? "✓ ใส่อยู่" : owned ? "สวมใส่" : `💎 ${w.price}`)));
+                })),
+                React.createElement("div", { style: { fontSize: 9, color: "#c0a0b4", marginTop: 4, textAlign: "center" } }, "\u0E0A\u0E38\u0E14\u0E40\u0E17\u0E28\u0E01\u0E32\u0E25/\u0E2D\u0E2D\u0E23\u0E48\u0E32/\u0E1B\u0E35\u0E01 = \u0E04\u0E2D\u0E2A\u0E40\u0E21\u0E15\u0E34\u0E01\u0E25\u0E49\u0E27\u0E19 \u00B7 \u0E40\u0E0B\u0E47\u0E15\u0E1A\u0E31\u0E1F\u0E14\u0E49\u0E32\u0E19\u0E1A\u0E19\u0E43\u0E2B\u0E49\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E40\u0E1E\u0E34\u0E48\u0E21"))),
             ui.equipScreen && (() => {
                 const LEFT = ["hat", "mask", "outfit", "gloves"];
                 const RIGHT = ["weapon", "pants", "shoes"];
