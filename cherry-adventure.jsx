@@ -553,7 +553,7 @@ let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสล�
 const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
 const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls]; // ท่าไม้ตายทั่วไป (ขั้นสูงแยกเป็นปุ่ม/แอ็กชันต่างหาก)
 const advUltOf = (pathId) => (pathId && PATH_ADV[pathId]) ? PATH_ADV[pathId].ult : null;
-// 🎯 4 signature skills per class — each level up gives 5 skill points to rank them up (max Lv.20)
+// 🎯 4 signature skills per class — level up gives skill points to rank them up (max Lv.100, gated by character level)
 // dmg = base attack × (mult + perLv×(rank-1)); each skill costs "cost" mana 💧
 const CLASS_SKILLS = {
   warrior: [
@@ -11347,16 +11347,15 @@ export default function CherryAdventure() {
     };
 
     // spend a skill point (called from the level-up panel)
-    // 🎯 spend skill points to rank up a class skill (max Lv.20, costs 1 point per rank)
+    // 🎯 spend skill points to rank up a class skill (max Lv.100)
     // 🔒 max skill rank you can reach depends on character level
-    const SKILL_MAX = 40;
-    // 🎚️ skill rank cap grows with level across the WHOLE game (rank 20 ≈ Lv.57).
-    // The old rule (cap = level) hit the Lv.20 ceiling and then did nothing for 80 levels,
-    // which let a Lv.20 character dump every point into one maxed skill.
+    const SKILL_MAX = 100;
+    // 🎚️ skill rank cap grows with character level — ต้องเลเวลตัวละครสูงขึ้นถึงจะอัพสกิลต่อได้
+    // (cap = 1 + level/3 → rank 100 ปลดล็อกครบราวเลเวล 297 พอดีกับด่านปลายเกม)
     const skillCap = () => Math.max(1, Math.min(SKILL_MAX, 1 + Math.floor(G.player.level / 3)));
     G.skillCap = skillCap;
-    // 💰 SP cost rises as the skill gets stronger: 1 (Lv1-5), 2 (Lv6-10), 3 (Lv11-15), 4 (Lv16-19)
-    const skillCost = (rank) => rank <= 4 ? 1 : rank <= 9 ? 3 : rank <= 14 ? 4 : 5; // ⚖️ อัพ 1-5 ใช้ 1 แต้ม · 6-10 ใช้ 3 · 11-15 ใช้ 4 · 16-40 ใช้ 5
+    // 💰 SP cost rises as the skill gets stronger: 1 (Lv1-5), 3 (Lv6-10), 4 (Lv11-15), 5 (Lv16-100)
+    const skillCost = (rank) => rank <= 4 ? 1 : rank <= 9 ? 3 : rank <= 14 ? 4 : 5;
     // 🌳 passive-tree ranks are level-gated too, so passives grow with the character
     // instead of being fully buyable the moment the node unlocks.
     const treeCap = () => Math.max(1, 1 + Math.floor(G.player.level / 12)); // ⚖️ ปมพรสวรรค์อัพช้าลงตามเลเวล
@@ -13189,7 +13188,7 @@ export default function CherryAdventure() {
     const TUTORIAL = [
       { emoji: "🕹️", title: "เดินสำรวจ", text: "ใช้จอยสติ๊กมุมซ้ายล่าง (หรือปุ่มลูกศร) เดินหามอนสเตอร์ เข้าใกล้เพื่อเริ่มต่อสู้" },
       { emoji: "⚔️", title: "ต่อสู้", text: "แตะ ⚔️ โจมตี · ⚡ ปล่อยสกิลอาชีพ (ใช้มานา 💧) · 💗 จับมอนสเตอร์ตอนเลือดน้อย" },
-      { emoji: "⚡", title: "สกิล & เลเวล", text: "เลเวลอัพได้แต้มสกิล 5 แต้ม → กด ⚡ (ขวาบน) อัพสกิลอาชีพให้แรงถึง Lv.20" },
+      { emoji: "⚡", title: "สกิล & เลเวล", text: "เลเวลอัพได้แต้มสกิล → กด ⚡ อัพสกิลอาชีพให้แรงถึง Lv.100 (ยิ่งเลเวลตัวละครสูง ยิ่งอัพสกิลได้สูง)" },
       { emoji: "🐾", title: "สัตว์เลี้ยง", text: "จับมอนสเตอร์มาเป็นทีม 3 ตัว (ปุ่ม 🐾) ช่วยบัฟ+ร่วมรบ · ผสมพันธุ์ได้ตัวหายาก" },
       { emoji: "🌀", title: "แผนที่ & หอคอย", text: "แท่นวาร์ป 🌀 ไปแดนอื่น · ประตูมิติ 🗼 เข้าหอคอย 100 ชั้น · ⚔️ ท้าดวลเจ้าถิ่นแต่ละแดน" },
       { emoji: "📜", title: "ภารกิจ & ร้านค้า", text: "ทำภารกิจ 📜 รับ EXP+ทองก้อนโต · ซื้อของ/น้ำยาที่ร้าน 🏪 · ดูความสำเร็จ 🏅 และบ้านถ้วยรางวัล 🏠" },
@@ -22926,7 +22925,7 @@ export default function CherryAdventure() {
                 มีแต้มสกิล: {ui.sp || 0} (ได้ 3 แต้ม/เลเวล)
               </div>
               <div style={{ fontSize: 10, color: "#c04a4a", fontWeight: 700, marginBottom: 8 }}>
-                🔒 เพดานสกิลตอนนี้: Lv.{ui.skillCap || 1}/20 · ยิ่งสูงยิ่งใช้แต้มมาก
+                🔒 เพดานสกิลตอนนี้: Lv.{ui.skillCap || 1}/100 · เลเวลตัวละครสูงขึ้น = อัพสกิลได้สูงขึ้น
               </div>
               {/* 🏅 TITLES — earned by playing; equip one for its bonus */}
               {(() => {
@@ -23071,7 +23070,7 @@ export default function CherryAdventure() {
                 const rank = (ui.skillRanks && ui.skillRanks[sk.id]) || 1;
                 const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId); // 🔒 unlock check
                 const cap = ui.skillCap || 1;
-                const maxed = rank >= 20;
+                const maxed = rank >= 100;
                 const atCap = rank >= cap;
                 // damage estimate at current and next rank
                 const mult = sk.mult + sk.perLv * (rank - 1);
@@ -23087,7 +23086,7 @@ export default function CherryAdventure() {
                     border: gate.open ? "none" : "1px dashed #c8c8bc",
                   }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: gate.open ? "#5a5a4a" : "#9a9a8a" }}>
-                      {gate.open ? "" : "🔒 "}{sk.emoji} {sk.name} <span style={{ color: "#e0a020" }}>Lv.{rank}/20</span>
+                      {gate.open ? "" : "🔒 "}{sk.emoji} {sk.name} <span style={{ color: "#e0a020" }}>Lv.{rank}/100</span>
                     </div>
                     <div style={{ fontSize: 10, color: "#8a8a7a", margin: "3px 0 4px" }}>{sk.desc}</div>
                     {/* 🔒 unlock conditions */}
@@ -23108,15 +23107,15 @@ export default function CherryAdventure() {
                     </div>
                     {/* single progress bar: fill by rank, faint marker for cap */}
                     <div style={{ position: "relative", background: "#e5e5da", borderRadius: 99, height: 8, marginBottom: 6, overflow: "hidden" }}>
-                      <div style={{ width: `${(rank / 20) * 100}%`, height: "100%", background: `#${sk.color.toString(16).padStart(6, "0")}`, borderRadius: 99 }}/>
-                      {cap < 20 && <div style={{ position: "absolute", top: 0, left: `${(cap / 20) * 100}%`, width: 2, height: "100%", background: "#c04a4a" }}/>}
+                      <div style={{ width: `${(rank / 100) * 100}%`, height: "100%", background: `#${sk.color.toString(16).padStart(6, "0")}`, borderRadius: 99 }}/>
+                      {cap < 100 && <div style={{ position: "absolute", top: 0, left: `${(cap / 100) * 100}%`, width: 2, height: "100%", background: "#c04a4a" }}/>}
                     </div>
                     <button onClick={() => gate.open && G.rankSkill(sk.id)} disabled={!gate.open || maxed || atCap || (ui.sp || 0) < (G.skillCost ? G.skillCost(rank) : 1)} style={{
                       width: "100%", padding: "6px 0", borderRadius: 8, border: "none",
                       cursor: (maxed || atCap) ? "default" : "pointer",
                       fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                       background: !gate.open ? "#c8c8bc" : maxed ? "#b0a396" : atCap ? "#d0a0a0" : "linear-gradient(90deg,#9a6ad0,#b07ae0)",
-                    }}>{maxed ? "เต็ม Lv.20 ⭐" : atCap ? `🔒 ปลดล็อกที่ Lv.${cap + 1}` : `อัพเกรด (${rank < 5 ? 1 : rank < 10 ? 2 : rank < 15 ? 3 : 4} แต้ม)`}</button>
+                    }}>{maxed ? "เต็ม Lv.100 ⭐" : atCap ? `🔒 ต้องเลเวลตัวละครสูงขึ้น` : `อัพเกรด (${G.skillCost ? G.skillCost(rank) : 1} แต้ม)`}</button>
                   </div>
                 );
               })}
