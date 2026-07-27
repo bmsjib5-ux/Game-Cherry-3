@@ -14192,10 +14192,10 @@ export default function CherryAdventure() {
       G.dyePalette = [];
       G.mats = {};
       G.weaponInfuse = {};
-      G.potions = 1;
-      G.mpPotions = 1;
+      G.potions = 10;   // 🧪 ยาเลือดเริ่มต้น 10
+      G.mpPotions = 10;  // 💧 ยามานาเริ่มต้น 10
       G.bossSpawned = {};
-      G.gold = 80;
+      G.gold = 1000;     // 💰 เงินเริ่มต้น 1000
       G.dungeonProgress = 1;
       if (G.switchBiome && G.curBiome !== 0) G.switchBiome(0, true); // 🗺️ a brand-new character starts in the meadow
       G.achStats = { wins: 0, bosses: 0, floor: 0, dragon: 0, playSec: 0, catches: 0, goldEarned: 0, crits: 0 };
@@ -14214,6 +14214,7 @@ export default function CherryAdventure() {
       G.setWeaponVisual(starter);
       G.setOutfitVisual(null);
       applyGear();
+      G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // ❤️💧 เริ่มเกมเลือด/มานาเต็มหลอด (maxHp จริง = 3× ค่าฐาน)
       G.refreshShop(true); // stock the shop for free
       G.setBuddy(null);
       char.position.set(0, 0, 0);
