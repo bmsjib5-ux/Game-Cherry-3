@@ -1272,6 +1272,13 @@ function CherryAdventure() {
     const joyRef = useRef(null);
     const knobRef = useRef(null);
     const joyOn = useRef(false);
+    // 💬 keep the chat scrolled to the newest message (cursor at bottom)
+    const chatScrollRef = useRef(null);
+    useEffect(() => {
+        const el = chatScrollRef.current;
+        if (el)
+            el.scrollTop = el.scrollHeight;
+    });
     const moveKnob = (cx0, cy0) => {
         const el = joyRef.current;
         if (!el)
@@ -29910,11 +29917,12 @@ function CherryAdventure() {
                     fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff",
                     background: "linear-gradient(90deg,#f5a623,#f5c542)", boxShadow: "0 3px 8px rgba(200,150,40,0.4)",
                 } }, "\uD83C\uDF81 \u0E23\u0E31\u0E1A\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25"))),
-        ui.warpAsk && ui.mode === "explore" && (React.createElement("div", { style: {
-                position: "absolute", top: "22%", left: 0, right: 0,
-                display: "flex", justifyContent: "center",
+        ui.warpAsk && ui.mode === "explore" && (React.createElement("div", { onClick: () => G.closeWarp(), style: {
+                position: "absolute", inset: 0, zIndex: 68,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(20,16,28,0.5)",
             } },
-            React.createElement("div", { style: {
+            React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
                     background: "#fff", borderRadius: 18, padding: "13px 14px", textAlign: "center",
                     boxShadow: "0 8px 24px rgba(40,90,160,0.4)", width: "92vw", maxWidth: 340, maxHeight: "78vh", overflowY: "auto",
                 } },
@@ -30449,14 +30457,18 @@ function CherryAdventure() {
                     React.createElement("button", { key: "g", onClick: () => G.chatSetRoom("global", "แชทรวม"), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: (ui.chatRoom || "global") === "global" ? "#fff" : "#8a6a5a", background: (ui.chatRoom || "global") === "global" ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" } }, "\uD83C\uDF10 \u0E17\u0E31\u0E48\u0E27\u0E44\u0E1B"),
                     React.createElement("button", { key: "ann", onClick: () => G.chatSetRoom("announce", "ประกาศเกม"), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === "announce" ? "#fff" : "#a5762a", background: ui.chatRoom === "announce" ? "linear-gradient(90deg,#e0a020,#d06a30)" : "#f8edd8" } }, "\uD83D\uDCE2 \u0E1B\u0E23\u0E30\u0E01\u0E32\u0E28"),
                     (G.readFriends ? G.readFriends() : []).filter((f) => f.pid).map((f) => (React.createElement("button", { key: f.pid, onClick: () => G.chatSetRoom(G.dmRoom(f.pid), f.n), style: { flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === G.dmRoom(f.pid) ? "#fff" : "#8a6a5a", background: ui.chatRoom === G.dmRoom(f.pid) ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" } }, (ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online ? "🟢 " : "💬 ") + f.n)))),
-                React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 } },
+                React.createElement("div", { ref: chatScrollRef, style: { flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 } },
                     (ui.chatMsgs || []).length === 0 && React.createElement("div", { style: { textAlign: "center", color: "#c0b0a4", fontSize: 12, marginTop: 20 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21 \u2014 \u0E17\u0E31\u0E01\u0E17\u0E32\u0E22\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E2A\u0E34! \uD83D\uDC4B"),
                     (ui.chatMsgs || []).map((m) => {
                         const mine = m.uid === (ui.auth && ui.auth.uid);
+                        const tstr = m.ts ? (() => { const d = new Date(m.ts); const p = (n) => String(n).padStart(2, "0"); return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; })() : "";
                         return (React.createElement("div", { key: m.id, style: { display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" } },
                             React.createElement("div", { style: { fontSize: 10, color: "#a3907e", margin: "0 6px 1px" } },
                                 mine ? "ฉัน" : (m.n || "?"),
-                                m.lv ? " · Lv." + m.lv : ""),
+                                m.lv ? " · Lv." + m.lv : "",
+                                tstr ? React.createElement("span", { style: { color: "#c4b4a6", marginLeft: 5 } },
+                                    "\uD83D\uDD52 ",
+                                    tstr) : null),
                             React.createElement("div", { style: { maxWidth: "78%", padding: "7px 11px", borderRadius: 14, fontSize: 13.5, wordBreak: "break-word", background: mine ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#fff", color: mine ? "#fff" : "#4a4038", border: mine ? "none" : "1px solid #ece0d4" } }, m.body)));
                     })),
                 React.createElement("div", { style: { display: "flex", gap: 8, padding: "10px 12px", borderTop: "1px solid #ece0d4" } },

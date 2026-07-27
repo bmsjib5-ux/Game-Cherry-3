@@ -1221,6 +1221,12 @@ export default function CherryAdventure() {
   const joyRef = useRef(null);
   const knobRef = useRef(null);
   const joyOn = useRef(false);
+  // 💬 keep the chat scrolled to the newest message (cursor at bottom)
+  const chatScrollRef = useRef(null);
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  });
   const moveKnob = (cx0, cy0) => {
     const el = joyRef.current;
     if (!el) return;
@@ -21505,11 +21511,12 @@ export default function CherryAdventure() {
 
       {/* 🌀 warp map picker */}
       {ui.warpAsk && ui.mode === "explore" && (
-        <div style={{
-          position: "absolute", top: "22%", left: 0, right: 0,
-          display: "flex", justifyContent: "center",
+        <div onClick={() => G.closeWarp()} style={{
+          position: "absolute", inset: 0, zIndex: 68,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(20,16,28,0.5)",
         }}>
-          <div style={{
+          <div onClick={(e) => e.stopPropagation()} style={{
             background: "#fff", borderRadius: 18, padding: "13px 14px", textAlign: "center",
             boxShadow: "0 8px 24px rgba(40,90,160,0.4)", width: "92vw", maxWidth: 340, maxHeight: "78vh", overflowY: "auto",
           }}>
@@ -22149,13 +22156,14 @@ export default function CherryAdventure() {
                 <button key={f.pid} onClick={() => G.chatSetRoom(G.dmRoom(f.pid), f.n)} style={{ flexShrink: 0, padding: "5px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, whiteSpace: "nowrap", color: ui.chatRoom === G.dmRoom(f.pid) ? "#fff" : "#8a6a5a", background: ui.chatRoom === G.dmRoom(f.pid) ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#f0e6da" }}>{(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online ? "🟢 " : "💬 ") + f.n}</button>
               ))}
             </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
+            <div ref={chatScrollRef} style={{ flex: 1, overflowY: "auto", padding: "10px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
               {(ui.chatMsgs || []).length === 0 && <div style={{ textAlign: "center", color: "#c0b0a4", fontSize: 12, marginTop: 20 }}>ยังไม่มีข้อความ — ทักทายเพื่อนสิ! 👋</div>}
               {(ui.chatMsgs || []).map((m) => {
                 const mine = m.uid === (ui.auth && ui.auth.uid);
+                const tstr = m.ts ? (() => { const d = new Date(m.ts); const p = (n) => String(n).padStart(2, "0"); return `${p(d.getDate())}/${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; })() : "";
                 return (
                   <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
-                    <div style={{ fontSize: 10, color: "#a3907e", margin: "0 6px 1px" }}>{mine ? "ฉัน" : (m.n || "?")}{m.lv ? " · Lv." + m.lv : ""}</div>
+                    <div style={{ fontSize: 10, color: "#a3907e", margin: "0 6px 1px" }}>{mine ? "ฉัน" : (m.n || "?")}{m.lv ? " · Lv." + m.lv : ""}{tstr ? <span style={{ color: "#c4b4a6", marginLeft: 5 }}>🕒 {tstr}</span> : null}</div>
                     <div style={{ maxWidth: "78%", padding: "7px 11px", borderRadius: 14, fontSize: 13.5, wordBreak: "break-word", background: mine ? "linear-gradient(90deg,#7b6ad0,#5a8ae0)" : "#fff", color: mine ? "#fff" : "#4a4038", border: mine ? "none" : "1px solid #ece0d4" }}>{m.body}</div>
                   </div>
                 );
