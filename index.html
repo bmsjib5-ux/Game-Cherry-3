@@ -284,6 +284,32 @@ const SLOT_NAMES = { weapon: "อาวุธ", outfit: "ชุด", hat: "ห�
 const SLOT_ICON = { weapon: "⚔️", outfit: "👕", hat: "🎩", mask: "😷", gloves: "🧤", pants: "👖", shoes: "👟" };
 const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
+// ---------- 💍 ACCESSORIES — ring / bracelet / necklace / earring (special stats, own separate slots) ----------
+const ACC_SLOT_NAMES = { ring: "แหวน", bracelet: "กำไล", necklace: "สร้อยคอ", earring: "ต่างหู" };
+const ACC_SLOT_ICON = { ring: "💍", bracelet: "📿", necklace: "🔱", earring: "🌟" };
+const ACC_SLOTS = Object.keys(ACC_SLOT_NAMES);
+const EMPTY_ACC = () => ({ ring: null, bracelet: null, necklace: null, earring: null });
+// stat keys accessories can grant (mirrors constellation-bonus shape so it folds into every derived stat)
+const ACCESSORIES = [
+    // 💍 แหวน — พลังโจมตี & คริ
+    { id: "ac_ring1", slot: "ring", name: "แหวนหินไฟ", emoji: "💍", rarity: "rare", req: 1, cost: { gold: 15000 }, atk: 6, crit: 3 },
+    { id: "ac_ring2", slot: "ring", name: "แหวนราชันเพลิง", emoji: "💍", rarity: "epic", req: 30, cost: { gold: 70000 }, atk: 12, crit: 6, critDmg: 10 },
+    { id: "ac_ring3", slot: "ring", name: "แหวนมังกรนิรันดร์", emoji: "💍", rarity: "legend", req: 80, cost: { diamonds: 80 }, atk: 22, crit: 10, critDmg: 20 },
+    // 📿 กำไล — ป้องกัน & พลังชีวิต
+    { id: "ac_brc1", slot: "bracelet", name: "กำไลศิลา", emoji: "📿", rarity: "rare", req: 1, cost: { gold: 15000 }, def: 5, hp: 30 },
+    { id: "ac_brc2", slot: "bracelet", name: "กำไลพิทักษ์", emoji: "📿", rarity: "epic", req: 30, cost: { gold: 70000 }, def: 10, hp: 70, eva: 4 },
+    { id: "ac_brc3", slot: "bracelet", name: "กำไลปราการเทพ", emoji: "📿", rarity: "legend", req: 80, cost: { diamonds: 80 }, def: 18, hp: 140, eva: 8 },
+    // 🔱 สร้อยคอ — พลังชีวิต & มานา & โชค
+    { id: "ac_nck1", slot: "necklace", name: "สร้อยคริสตัล", emoji: "🔱", rarity: "rare", req: 1, cost: { gold: 15000 }, hp: 40, mp: 10 },
+    { id: "ac_nck2", slot: "necklace", name: "สร้อยจันทรา", emoji: "🔱", rarity: "epic", req: 30, cost: { gold: 70000 }, hp: 90, mp: 20, luck: 6 },
+    { id: "ac_nck3", slot: "necklace", name: "สร้อยเทพสวรรค์", emoji: "🔱", rarity: "legend", req: 80, cost: { diamonds: 80 }, hp: 160, mp: 35, luck: 12, critDmg: 10 },
+    // 🌟 ต่างหู — ความเร็ว & หลบหลีก
+    { id: "ac_ear1", slot: "earring", name: "ต่างหูขนนก", emoji: "🌟", rarity: "rare", req: 1, cost: { gold: 15000 }, spd: 6, eva: 3 },
+    { id: "ac_ear2", slot: "earring", name: "ต่างหูสายลม", emoji: "🌟", rarity: "epic", req: 30, cost: { gold: 70000 }, spd: 12, eva: 6, crit: 4 },
+    { id: "ac_ear3", slot: "earring", name: "ต่างหูเทพสายฟ้า", emoji: "🌟", rarity: "legend", req: 80, cost: { diamonds: 80 }, spd: 20, eva: 10, crit: 8, luck: 8 },
+];
+const ACC_BY_ID = {};
+ACCESSORIES.forEach((a) => (ACC_BY_ID[a.id] = a));
 // ---------- 👹 WORLD BOSS — hourly raid boss (spawns fresh every hour, random boss + level, party up online, shared HP, timed rounds) ----------
 // 🎲 pool of possible world bosses (deterministic per hour so every player agrees without a server)
 const WB_POOL = [
@@ -14048,6 +14074,8 @@ function CherryAdventure() {
         G.pets = {}; // per species: { lv, exp, stage }
         G.inv = []; // loot item ids (duplicates allowed)
         G.equip = EMPTY_EQUIP();
+        G.accEquip = EMPTY_ACC(); // 💍 worn accessories: slot -> accId
+        G.accInv = []; // 💍 owned accessory ids (unique)
         G.plus = {}; // itemId -> enhancement level (+1..+5)
         G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
         G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
@@ -14281,6 +14309,107 @@ function CherryAdventure() {
             return b;
         };
         G.constBonus = constBonus;
+        // 💍 accessory passive bonuses (แหวน/กำไล/สร้อย/ต่างหู) — same shape as constBonus so it folds everywhere
+        const accBonus = () => {
+            const b = { atk: 0, def: 0, hp: 0, spd: 0, crit: 0, critDmg: 0, eva: 0, mp: 0, luck: 0 };
+            if (!G.accEquip)
+                return b;
+            ACC_SLOTS.forEach((sl) => {
+                const a = ACC_BY_ID[G.accEquip[sl]];
+                if (a)
+                    for (const k in b)
+                        b[k] += a[k] || 0;
+            });
+            return b;
+        };
+        G.accBonus = accBonus;
+        // 💍 accessory info for the UI (owned / worn / affordable / level-locked)
+        G.accInfo = () => {
+            const lv = G.player ? G.player.level : 1;
+            return ACC_SLOTS.map((slot) => ({
+                slot, slotName: ACC_SLOT_NAMES[slot], slotIcon: ACC_SLOT_ICON[slot],
+                worn: G.accEquip ? G.accEquip[slot] : null,
+                items: ACCESSORIES.filter((a) => a.slot === slot).map((a) => {
+                    const owned = (G.accInv || []).indexOf(a.id) >= 0;
+                    const cost = a.cost || {};
+                    const afford = (cost.gold == null || (G.gold || 0) >= cost.gold) && (cost.diamonds == null || (G.diamonds || 0) >= cost.diamonds);
+                    const stats = {};
+                    ["atk", "def", "hp", "spd", "crit", "critDmg", "eva", "mp", "luck"].forEach((k) => { if (a[k])
+                        stats[k] = a[k]; });
+                    return { id: a.id, name: a.name, emoji: a.emoji, rarity: a.rarity, rarityName: (RARITY[a.rarity] || {}).name || a.rarity, rarityColor: (RARITY[a.rarity] || {}).color || "#8a9aa8",
+                        req: a.req || 1, locked: lv < (a.req || 1), owned, worn: G.accEquip && G.accEquip[slot] === a.id, cost, afford, stats };
+                }),
+            }));
+        };
+        G._accSync = () => setUi((u) => ({ ...u, accInfo: G.accInfo ? G.accInfo() : [], gold: G.gold, diamonds: G.diamonds || 0,
+            hp: G.player.hp, maxHp: effMaxHp(), mp: G.player.mp, maxMp: effMaxMp(), atk: effAtk(), def: effDef() }));
+        G.buyAccessory = (id) => {
+            const a = ACC_BY_ID[id];
+            if (!a)
+                return;
+            if ((G.accInv || []).indexOf(id) >= 0) {
+                toast("มีเครื่องประดับชิ้นนี้แล้ว");
+                return;
+            }
+            if ((G.player ? G.player.level : 1) < (a.req || 1)) {
+                toast(`ต้องเลเวล ${a.req} ขึ้นไป`);
+                return;
+            }
+            const cost = a.cost || {};
+            if (cost.gold != null && (G.gold || 0) < cost.gold) {
+                toast("ทองไม่พอ 💰");
+                return;
+            }
+            if (cost.diamonds != null && (G.diamonds || 0) < cost.diamonds) {
+                toast("เพชรไม่พอ 💎");
+                return;
+            }
+            if (cost.gold != null)
+                G.gold -= cost.gold;
+            if (cost.diamonds != null) {
+                if (G.spendDiamonds)
+                    G.spendDiamonds(cost.diamonds);
+                else
+                    G.diamonds = (G.diamonds || 0) - cost.diamonds;
+            }
+            G.accInv = G.accInv || [];
+            G.accInv.push(id);
+            G.accEquip = G.accEquip || EMPTY_ACC();
+            if (!G.accEquip[a.slot])
+                G.accEquip[a.slot] = id; // auto-wear if the slot is empty
+            toast(`🛒 ได้ ${a.emoji} ${a.name}!`);
+            syncPlayer();
+            saveGame();
+            if (G._accSync)
+                G._accSync();
+        };
+        G.equipAccessory = (id) => {
+            const a = ACC_BY_ID[id];
+            if (!a)
+                return;
+            if ((G.accInv || []).indexOf(id) < 0)
+                return;
+            G.accEquip = G.accEquip || EMPTY_ACC();
+            G.accEquip[a.slot] = id;
+            G.player.hp = Math.min(G.player.hp, effMaxHp());
+            G.player.mp = Math.min(G.player.mp, effMaxMp());
+            syncPlayer();
+            saveGame();
+            if (G._accSync)
+                G._accSync();
+        };
+        G.unequipAccessory = (slot) => {
+            if (!G.accEquip || !G.accEquip[slot])
+                return;
+            G.accEquip[slot] = null;
+            G.player.hp = Math.min(G.player.hp, effMaxHp());
+            G.player.mp = Math.min(G.player.mp, effMaxMp());
+            syncPlayer();
+            saveGame();
+            if (G._accSync)
+                G._accSync();
+        };
+        G.openAccessories = () => { setUi((u) => ({ ...u, ...closeAllMenus(), accOpen: true, accInfo: G.accInfo(), gold: G.gold, diamonds: G.diamonds || 0 })); };
         // ⚔️ weapon-mastery passive bonuses (ความชำนาญอาวุธ) for the current weapon type
         const masteryInfo = () => WP_MASTERY[G.cls] || null;
         const masteryLv = () => { const m = masteryInfo(); if (!m)
@@ -14355,15 +14484,15 @@ function CherryAdventure() {
         const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
         const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
         const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-        const effAtk = () => Math.round((G.player.atk + equipBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK
-        const effDef = () => Math.round((G.player.def + equipBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100));
-        const effMaxHp = () => Math.round(3 * (G.player.maxHp + equipBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
-        const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + ⚔️ mastery + 👘 set
-        const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + equipBonus().spd / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 🐎 สัตว์ขี่เร่งความเร็ว
-        const effEva = () => equipBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
+        const effAtk = () => Math.round((G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK
+        const effDef = () => Math.round((G.player.def + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100));
+        const effMaxHp = () => Math.round(3 * (G.player.maxHp + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
+        const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
+        const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
+        const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
         const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
-        const effCrit = () => (equipBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") - (G.wbCritDebuff || 0); // 🎯 crit + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set · 👹 −world-boss aura
-        const effLuck = () => bs().luck + tB("luck") + constBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + ⚔️ mastery + 👘 set
+        const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") - (G.wbCritDebuff || 0); // 🎯 crit + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set · 👹 −world-boss aura
+        const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
         // 👤 full character profile for the Profile menu
         G.profileInfo = () => {
             const C = CLASSES[G.cls] || {};
@@ -18114,6 +18243,8 @@ function CherryAdventure() {
             G.pets = {};
             G.inv = [];
             G.equip = EMPTY_EQUIP();
+            G.accEquip = EMPTY_ACC();
+            G.accInv = []; // 💍 fresh accessories
             G.plus = {};
             G.treeNodes = {}; // 🌳 fresh passive skill tree
             G.constNodes = {}; // ✨ fresh constellation board
@@ -18218,7 +18349,7 @@ function CherryAdventure() {
             try {
                 window.localStorage.setItem(slotKey(), JSON.stringify({
                     v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated,
-                    col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, plus: G.plus,
+                    col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
                     potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
@@ -19634,6 +19765,8 @@ function CherryAdventure() {
             G.pets = d.pets || {};
             G.inv = d.inv || [];
             G.equip = { ...EMPTY_EQUIP(), ...(d.equip || {}) };
+            G.accEquip = { ...EMPTY_ACC(), ...(d.accEquip || {}) }; // 💍 worn accessories
+            G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
             G.plus = d.plus || {};
             G.mats = d.mats || {};
             G.weaponInfuse = d.weaponInfuse || {};
@@ -26017,7 +26150,7 @@ function CherryAdventure() {
                                 const critBase = cls === "archer" ? 0.25 : cls === "assassin" ? 0.3 : cls === "samurai" ? 0.22 : 0.05;
                                 const critCh = critBase + critBonus + effCrit() / 100 + (G.battleCrit || 0) / 100;
                                 if (Math.random() < critCh) {
-                                    dmg *= 2 + (G.battleCritDmg || 0) / 100 + ((curPath() && curPath().critDmg) || 0) / 100 + tB("critDmg") / 100 + (G.constBonus ? G.constBonus().critDmg : 0) / 100 + (G.masteryBonus ? G.masteryBonus().critDmg : 0) / 100 + (G.setBonus ? G.setBonus().critDmg : 0) / 100; // 💥 crit dmg: buffs + 🌟 path + 🏅 title + ✨ constellation + ⚔️ mastery + 👘 set
+                                    dmg *= 2 + (G.battleCritDmg || 0) / 100 + ((curPath() && curPath().critDmg) || 0) / 100 + tB("critDmg") / 100 + (G.constBonus ? G.constBonus().critDmg : 0) / 100 + (G.accBonus ? G.accBonus().critDmg : 0) / 100 + (G.masteryBonus ? G.masteryBonus().critDmg : 0) / 100 + (G.setBonus ? G.setBonus().critDmg : 0) / 100; // 💥 crit dmg: buffs + 🌟 path + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
                                     didCrit = true;
                                     G.achStats.crits = (G.achStats.crits || 0) + 1; // 🏅 for the ราชาคริติคอล title
                                     fxMsg += " 🎯 คริติคอล!!";
@@ -29886,7 +30019,7 @@ function CherryAdventure() {
             } })));
     const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
     // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-    const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen"];
+    const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen"];
     // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
     const _uiWideModal = window.innerWidth > 820;
     const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
@@ -29945,7 +30078,7 @@ function CherryAdventure() {
     return (React.createElement("div", { style: { width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" } },
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`),
         React.createElement("div", { ref: mountRef, style: { width: "100%", height: "100%" } }),
-        ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
+        ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
         ui.announce && (React.createElement("div", { key: ui.announce.key, style: { position: "absolute", top: 4, left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" } },
             React.createElement("div", { style: { whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform" } },
                 "\uD83D\uDCE2 ",
@@ -30863,6 +30996,7 @@ function CherryAdventure() {
                         G.saveGame(); if (G._cloudPush)
                         G._cloudPush(true); setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots, confirmDelete: null })); }, "#8fd0ff"],
                 ["🏛️", "ตลาดทองคำ", () => G.openGoldMarket(), "#f5c542"],
+                ["💍", "เครื่องประดับ", () => G.openAccessories(), "#f5a0d0"],
                 ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
                 ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
                 ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
@@ -30938,6 +31072,47 @@ function CherryAdventure() {
                                 it.stock)),
                         React.createElement("button", { disabled: !afford, onClick: () => G.buyGoldItem(idx), style: { padding: "6px 13px", borderRadius: 9, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: sold ? "#aaa" : "#4a3a10", background: sold ? "#4a4436" : afford ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "#5a5240" } }, sold ? "หมด" : "ซื้อ")));
                 }))))),
+        ui.accOpen && (() => {
+            const STAT_L = { atk: "โจมตี ⚔️", def: "ป้องกัน 🛡️", hp: "พลังชีวิต ❤️", spd: "ความเร็ว ⚡", crit: "คริ 🎯", critDmg: "ดาเมจคริ 💥", eva: "หลบ 💨", mp: "มานา 🔮", luck: "โชค 🍀" };
+            const statLine = (st) => Object.keys(st).map((k) => `${STAT_L[k] || k} +${st[k]}${["crit", "critDmg", "eva", "luck"].includes(k) ? "%" : ""}`).join(" · ");
+            const groups = ui.accInfo || [];
+            return (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#2a1a2a,#1c1220)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, border: "1.5px solid #f5a0d0" } },
+                closeBtn("accOpen"),
+                React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#f5b0d8" } }, "\uD83D\uDC8D \u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E1B\u0E23\u0E30\u0E14\u0E31\u0E1A"),
+                React.createElement("div", { style: { fontSize: 10.5, color: "#d8b0c8", margin: "3px 0 8px" } }, "\u0E2A\u0E27\u0E21\u0E43\u0E2A\u0E48\u0E41\u0E2B\u0E27\u0E19 \u00B7 \u0E01\u0E33\u0E44\u0E25 \u00B7 \u0E2A\u0E23\u0E49\u0E2D\u0E22\u0E04\u0E2D \u00B7 \u0E15\u0E48\u0E32\u0E07\u0E2B\u0E39 \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E1E\u0E34\u0E40\u0E28\u0E29"),
+                React.createElement("div", { style: { display: "flex", gap: 10, fontSize: 11.5, fontWeight: 800, marginBottom: 10, color: "#f0d0e0" } },
+                    React.createElement("span", null,
+                        "\uD83D\uDCB0 ",
+                        (ui.gold || 0).toLocaleString()),
+                    React.createElement("span", null,
+                        "\uD83D\uDC8E ",
+                        ui.diamonds || 0)),
+                groups.map((g) => (React.createElement("div", { key: g.slot, style: { marginBottom: 12 } },
+                    React.createElement("div", { style: { fontSize: 12.5, fontWeight: 900, color: "#f5c0e0", marginBottom: 5 } },
+                        g.slotIcon,
+                        " ",
+                        g.slotName,
+                        g.worn ? React.createElement("span", { style: { fontSize: 10, color: "#8fe0b0", marginLeft: 6 } },
+                            "\u0E2A\u0E27\u0E21: ",
+                            (ACC_BY_ID[g.worn] || {}).name) : React.createElement("span", { style: { fontSize: 10, color: "#a888a0", marginLeft: 6 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E2A\u0E27\u0E21"),
+                        g.worn && React.createElement("button", { onClick: () => G.unequipAccessory(g.slot), style: { marginLeft: 8, fontSize: 9.5, fontWeight: 800, border: "none", borderRadius: 7, padding: "2px 8px", cursor: "pointer", background: "rgba(255,120,120,0.22)", color: "#ffc0c0", fontFamily: font } }, "\u0E16\u0E2D\u0E14")),
+                    React.createElement("div", { style: { display: "grid", gap: 6 } }, g.items.map((a) => {
+                        const c = a.cost || {};
+                        const costLabel = c.diamonds != null ? `💎 ${c.diamonds}` : c.gold != null ? `💰 ${c.gold.toLocaleString()}` : "-";
+                        return (React.createElement("div", { key: a.id, style: { border: a.worn ? "2px solid #ffd76a" : "1px solid " + a.rarityColor + "66", borderRadius: 12, padding: "8px 10px", background: `linear-gradient(135deg, ${a.rarityColor}18, rgba(255,255,255,0.03))`, display: "flex", alignItems: "center", gap: 9 } },
+                            React.createElement("span", { style: { fontSize: 24, filter: a.locked ? "grayscale(0.7) brightness(0.7)" : "none" } }, a.emoji),
+                            React.createElement("div", { style: { minWidth: 0, flex: 1 } },
+                                React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: a.locked ? "#b0a0ac" : "#fff" } },
+                                    a.name,
+                                    " ",
+                                    React.createElement("span", { style: { fontSize: 9, color: a.rarityColor, fontWeight: 800 } }, a.rarityName)),
+                                React.createElement("div", { style: { fontSize: 9.5, color: "#e0c0d4", lineHeight: 1.5 } }, statLine(a.stats)),
+                                a.locked && React.createElement("div", { style: { fontSize: 9, color: "#f5a0a0", fontWeight: 700 } },
+                                    "\uD83D\uDD12 \u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25 ",
+                                    a.req)),
+                            a.worn ? (React.createElement("span", { style: { fontSize: 10.5, fontWeight: 800, color: "#ffd76a" } }, "\u2713 \u0E2A\u0E27\u0E21\u0E2D\u0E22\u0E39\u0E48")) : a.owned ? (React.createElement("button", { onClick: () => G.equipAccessory(a.id), style: { padding: "6px 12px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#c060a0,#e07ac0)" } }, "\u0E2A\u0E27\u0E21\u0E43\u0E2A\u0E48")) : (React.createElement("button", { disabled: a.locked || !a.afford, onClick: () => G.buyAccessory(a.id), style: { padding: "6px 11px", borderRadius: 9, border: "none", cursor: (a.locked || !a.afford) ? "not-allowed" : "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: (a.locked || !a.afford) ? "#8a7f88" : "#3a1030", background: (a.locked || !a.afford) ? "rgba(255,255,255,0.07)" : "linear-gradient(90deg,#f5a0d0,#ffc0e0)", whiteSpace: "nowrap" } }, costLabel))));
+                    })))))));
+        })(),
         ui.heroGalleryOpen && (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 392, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #4a3a6a" } },
             closeBtn("heroGalleryOpen"),
             React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 3 } },
