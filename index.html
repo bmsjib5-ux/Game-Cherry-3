@@ -72,6 +72,12 @@ const BIOMES = [
     { id: "heaven", name: "สรวงสวรรค์ชั้นฟ้า", emoji: "☀️", lvMin: 200, lvMax: 250, ground: 0xf2e2ac, sky: 0xfff0c8, fog: 0xffe6ac, pool: ["thewada", "kinnara"], tree: "none", boss: "phothisat", bossName: "พระโพธิสัตว์ 🧘", bright: true },
     // 🌑 ด่านดวงจันทร์ — เอเลี่ยน สัตว์ต่างดาว บอสจักรพรรดิเอเลี่ยน Lv 250-300 · พื้นเทาขรุขระ ฟ้ามืดมีดาว+ดาวตก
     { id: "moon", name: "พื้นผิวดวงจันทร์", emoji: "🌑", lvMin: 250, lvMax: 300, ground: 0x8a8a94, sky: 0x05060f, fog: 0x0a0c1a, pool: ["alienpet", "alien"], tree: "none", boss: "ufoboss", bossName: "จักรพรรดิเอเลี่ยน 🪐", night: true, moon: true },
+    // 🍬 ด่านขนมหวาน — Lv 300-400 · โทนพาสเทลหวานแหวว สว่างสดใส
+    { id: "candy", name: "แดนขนมหวาน", emoji: "🍬", lvMin: 300, lvMax: 400, ground: 0xf7c8e0, sky: 0xfff2fa, fog: 0xffe4f2, pool: ["gummy", "cupcake"], tree: "none", boss: "candyking", bossName: "ราชาขนมหวาน 🍭", bright: true },
+    // 🏖️ ด่านหาดทะเลทราย — Lv 400-500 · หาดทราย + ทะเลคราม
+    { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 400, lvMax: 500, ground: 0xf0dca0, sky: 0xbfe8ff, fog: 0xd8f0ff, pool: ["pooyak", "chalam"], tree: "dead", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
+    // 🗿 ด่านไททัน — Lv 500-600 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
+    { id: "titan", name: "ดินแดนไททัน", emoji: "🗿", lvMin: 500, lvMax: 600, ground: 0x5a5250, sky: 0x201c1a, fog: 0x2e2824, pool: ["stonetitan", "cyclops"], tree: "dead", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️", night: true },
 ];
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "พายุเทพเจ้า", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
@@ -344,6 +350,26 @@ Object.assign(PET_RARITY, {
     7: { key: "celestial", name: "เหนือเทพ", color: "#5ad0ff", glow: "#2a80c0" },
     8: { key: "cosmic", name: "จักรวาล", color: "#e05aff", glow: "#8a2ac0" },
 });
+// 🍬🏖️🗿 LATE-GAME MONSTERS — แดนขนมหวาน · หาดทะเลทราย · ดินแดนไททัน (Lv 300-600)
+Object.assign(SPECIES, {
+    // 🍬 แดนขนมหวาน (Lv 300-400)
+    gummy: { name: "กัมมี่เยลลี่", emoji: "🍬", color: 0xff8ac0, hp: 210, atk: 27, catch: 0.03, tier: 6, desc: "เยลลี่ลูกอมเด้งดึ๋ง หวานจนอันตราย", weak: "water" },
+    cupcake: { name: "คัพเค้กปีศาจ", emoji: "🧁", color: 0xf5b0d8, hp: 240, atk: 29, catch: 0.02, tier: 7, desc: "คัพเค้กมีชีวิต สาดครีมใส่ศัตรู", weak: "fire" },
+    candyking: { name: "ราชาขนมหวาน", emoji: "🍭", color: 0xe05a9a, hp: 420, atk: 40, catch: 0.01, tier: 8, desc: "จอมราชาแห่งแดนขนม ปกครองด้วยน้ำตาล", animal: "beast", weak: "water" },
+    // 🏖️ หาดทะเลทราย (Lv 400-500)
+    pooyak: { name: "ปูยักษ์ทราย", emoji: "🦀", color: 0xe0704a, hp: 270, atk: 31, catch: 0.03, tier: 7, desc: "ปูยักษ์ก้ามเหล็กแห่งหาดทราย", animal: "beast", weak: "wind" },
+    chalam: { name: "ฉลามทะเลทราย", emoji: "🦈", color: 0x5a90c0, hp: 310, atk: 34, catch: 0.02, tier: 7, desc: "ฉลามล่าเหยื่อ ว่ายทะลุผืนทราย", animal: "fish", weak: "wind" },
+    kraken: { name: "คราเคนเจ้าสมุทร", emoji: "🐙", color: 0x7a4ac0, hp: 470, atk: 44, catch: 0.01, tier: 8, desc: "อสูรหมึกยักษ์แห่งท้องทะเลลึก", animal: "snake", weak: "wind" },
+    // 🗿 ดินแดนไททัน (Lv 500-600)
+    stonetitan: { name: "ไททันศิลา", emoji: "🗿", color: 0x8a8078, hp: 380, atk: 39, catch: 0.02, tier: 7, desc: "ยักษ์หินบรรพกาล กายแกร่งดั่งภูผา", animal: "beast", weak: "arcane" },
+    cyclops: { name: "ยักษ์ตาเดียว", emoji: "👹", color: 0xa06a4a, hp: 420, atk: 43, catch: 0.02, tier: 7, desc: "ไซคลอปส์ยักษ์ตาเดียว พละกำลังมหาศาล", animal: "beast", weak: "light" },
+    titanlord: { name: "จอมไททันบรรพกาล", emoji: "⛰️", color: 0x6a5a4a, hp: 580, atk: 50, catch: 0.01, tier: 8, desc: "ราชันไททันผู้สะเทือนปฐพี ตำนานสูงสุด", animal: "beast", weak: "light" },
+});
+Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "คัพเค้กจอมเวท", candyking: "เทพเจ้าขนมหวาน", pooyak: "ปูเทพสมุทร", chalam: "เมกาโลดอน", kraken: "คราเคนราชันสมุทร", stonetitan: "ไททันศิลาเทพ", cyclops: "ไซคลอปส์ราชายักษ์", titanlord: "ไททันเทพบรรพกาล" });
+Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light" });
+Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth" });
+Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย" });
+Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "beast", chalam: "fish", kraken: "serpent", stonetitan: "beast", cyclops: "beast", titanlord: "beast" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow") || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert") || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -30071,7 +30097,9 @@ function CherryAdventure() {
                         "\uD83C\uDFF0 \u0E40\u0E08\u0E49\u0E32\u0E16\u0E34\u0E48\u0E19\u0E17\u0E35\u0E48\u0E1B\u0E23\u0E32\u0E1A: ",
                         React.createElement("b", null,
                             Object.keys(G.biomeBossDefeated || {}).length,
-                            "/5 \u0E41\u0E14\u0E19"),
+                            "/",
+                            BIOMES.length,
+                            " \u0E41\u0E14\u0E19"),
                         React.createElement("br", null),
                         "\u2694\uFE0F \u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C\u0E17\u0E35\u0E48\u0E1B\u0E23\u0E32\u0E1A: ",
                         React.createElement("b", null,
