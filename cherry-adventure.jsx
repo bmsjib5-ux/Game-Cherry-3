@@ -10960,10 +10960,10 @@ export default function CherryAdventure() {
       if (!it) return;
       const copies = G.inv.filter((x) => x === id).length;
       const cur = G.plus[id] || 0;
-      const cap = Math.min(5, 1 + Math.floor(G.player.level / 2));
-      if (cur >= 5) { toast("ตีบวกเต็ม +5 แล้ว! ⭐"); return; }
+      const cap = G.enhanceCap();
+      if (cur >= 20) { toast("ตีบวกเต็ม +20 แล้ว! ⭐"); return; }
       if (cur >= cap) { toast(`⚒️ เพดานตีบวกตอนนี้คือ +${cap} — อัพเลเวลตัวละครเพื่อปลดล็อกต่อ!`); return; }
-      if (copies < 2) { toast("ต้องมีไอเทมชิ้นเดียวกันซ้ำอีก 1 ชิ้นเป็นวัตถุดิบ"); return; }
+      if (copies < 2) { toast("ต้องมีไอเทมชิ้นเดียวกันซ้ำอีก 1 ชิ้นเป็นวัตถุดิบ (หรือใช้ 💠 การันตี ด้วยผงเพชร+ผงดาว+แร่)"); return; }
       G.inv.splice(G.inv.indexOf(id), 1); // consume material
       const rate = cur < 3 ? 1 : cur === 3 ? 0.7 : 0.5;
       if (Math.random() < rate) {
@@ -10979,23 +10979,27 @@ export default function CherryAdventure() {
     };
     // 💠 guaranteed enhance using World-Boss gem dust (no duplicate needed, never fails)
     G.WB_DUST_COST = 30;
+    // 💠 guaranteed enhance — consumes 💠ผงเพชร + 🌟ผงดาว + ⛏️แร่ scaling with the enhance level (no duplicate needed)
     G.enhanceDust = (id) => {
       const it = LOOT.find((x) => x.id === id);
       if (!it) return;
       const cur = G.plus[id] || 0;
-      const cap = Math.min(5, 1 + Math.floor(G.player.level / 2));
-      if (cur >= 5) { toast("ตีบวกเต็ม +5 แล้ว! ⭐"); return; }
+      const cap = G.enhanceCap();
+      if (cur >= 20) { toast("ตีบวกเต็ม +20 แล้ว! ⭐"); return; }
       if (cur >= cap) { toast(`⚒️ เพดานตีบวกตอนนี้คือ +${cap} — อัพเลเวลตัวละครเพื่อปลดล็อกต่อ!`); return; }
-      const cost = G.WB_DUST_COST;
-      if ((G.gemDust || 0) < cost) { toast(`💠 ผงเพชรไม่พอ (ต้องใช้ ${cost} · มี ${G.gemDust || 0})`); return; }
-      G.gemDust -= cost;
+      const c = G.enhanceMats(cur);
+      G.mats = G.mats || {};
+      if ((G.gemDust || 0) < c.gemDust) { toast(`💠 ผงเพชรไม่พอ (ต้องใช้ ${c.gemDust} · มี ${G.gemDust || 0})`); return; }
+      if ((G.stardust || 0) < c.stardust) { toast(`🌟 ผงดาวไม่พอ (ต้องใช้ ${c.stardust} · มี ${G.stardust || 0})`); return; }
+      if ((G.mats.ironOre || 0) < c.ironOre) { toast(`⛏️ แร่เหล็กไม่พอ (ต้องใช้ ${c.ironOre} · มี ${G.mats.ironOre || 0})`); return; }
+      G.gemDust -= c.gemDust; G.stardust -= c.stardust; G.mats.ironOre -= c.ironOre;
       G.plus[id] = cur + 1;
       burst(char.position, 0xf5a623, 1.6);
-      toast(`💠 ตีบวกด้วยผงเพชรสำเร็จ (การันตี)! ${it.emoji} ${it.name} +${cur + 1} ✨`);
+      toast(`💠 ตีบวกการันตีสำเร็จ! ${it.emoji} ${it.name} +${cur + 1} ✨ (−💠${c.gemDust} 🌟${c.stardust} ⛏️${c.ironOre})`);
       updateAura();
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       syncPlayer();
-      setUi((u) => ({ ...u, gemDust: G.gemDust, plus: { ...G.plus } }));
+      setUi((u) => ({ ...u, gemDust: G.gemDust, stardust: G.stardust, ore: (G.mats && G.mats.ironOre) || 0, plus: { ...G.plus } }));
     };
 
     // 🔨 craft the class's dragon-tier weapon from materials
@@ -11167,7 +11171,9 @@ export default function CherryAdventure() {
     };
 
     // ⚒️ max enhancement is capped by character level (protects low levels)
-    const enhanceCap = () => Math.min(5, 1 + Math.floor(G.player.level / 2)); // Lv1→+1, Lv3→+2 ... Lv9→+5
+    const enhanceCap = () => Math.min(20, 2 + Math.floor(G.player.level / 3)); // 🔒 gated by character level → +20 ราวเลเวล 54
+    // 💠 material cost per +1 (guaranteed path) — ยิ่งเลเวลตีบวกสูง ยิ่งใช้มาก
+    G.enhanceMats = (cur) => ({ gemDust: 8 + cur * 4, stardust: 5 + cur * 3, ironOre: 3 + cur * 2 });
 
     // ⚒️ auto-enhance: pour duplicates into every item up to the level cap
     G.autoEnhanceAll = () => {
@@ -11912,7 +11918,7 @@ export default function CherryAdventure() {
     // ---------- 🏛️ GOLD MARKET — ตู้แลกเปลี่ยน + ร้านทองพรีเมียมหมุนเวียน (ที่ทิ้งทองปลายเกม) ----------
     // 🔁 ตู้แลกเปลี่ยน: ทอง → สกุลเงินอื่น มีเพดานต่อวัน (รีเซ็ตรายวัน)
     G.GOLD_EXCHANGE = [
-      { key: "gemDust",  emoji: "✨", name: "ผงอัพเกรด", cost: 8000,   cap: 30, grant: () => { G.gemDust = (G.gemDust || 0) + 1; } },
+      { key: "gemDust",  emoji: "💠", name: "ผงเพชร",    cost: 8000,   cap: 30, grant: () => { G.gemDust = (G.gemDust || 0) + 1; } },
       { key: "stardust", emoji: "🌟", name: "ผงดาว",     cost: 3000,   cap: 60, grant: () => { G.stardust = (G.stardust || 0) + 1; } },
       { key: "ore",      emoji: "⛏️", name: "แร่เหล็ก",  cost: 1500,   cap: 80, grant: () => { G.mats = G.mats || {}; G.mats.ironOre = (G.mats.ironOre || 0) + 1; } },
       { key: "diamond",  emoji: "💎", name: "เพชร",      cost: 100000, cap: 10, grant: () => { G.diamonds = (G.diamonds || 0) + 1; } },
@@ -11945,7 +11951,7 @@ export default function CherryAdventure() {
       const pick = (pool) => pool[Math.floor(Math.random() * pool.length)];
       const seen = {};
       for (let i = 0; i < 2 && hiPool.length; i++) { let it = pick(hiPool); let g = 0; while (seen[it.id] && g++ < 8) it = pick(hiPool); seen[it.id] = 1; const base = (sellPrice(it.id) || 5000) * 6; items.push({ t: "gear", id: it.id, name: it.name, emoji: it.emoji, rarity: it.rarity, price: Math.max(25000, base), stock: 1 }); }
-      items.push({ t: "gem",  name: "ผงอัพเกรด ×20", emoji: "✨", price: 120000, stock: 2, amount: 20 });
+      items.push({ t: "gem",  name: "ผงเพชร ×20", emoji: "💠", price: 120000, stock: 2, amount: 20 });
       items.push({ t: "star", name: "ผงดาว ×50",     emoji: "🌟", price: 120000, stock: 2, amount: 50 });
       items.push({ t: "ore",  name: "แร่เหล็ก ×50",   emoji: "⛏️", price: 60000,  stock: 3, amount: 50 });
       items.push({ t: "pot",  name: "น้ำยาเลือด+มานา ×20", emoji: "🧪", price: 18000, stock: 5, amount: 20 });
@@ -22352,7 +22358,7 @@ export default function CherryAdventure() {
           {closeBtn("goldMarketOpen")}
           <div style={{ fontSize: 16, fontWeight: 900, color: "#f5d76a" }}>🏛️ ตลาดทองคำ</div>
           <div style={{ display: "flex", gap: 9, fontSize: 11, fontWeight: 800, margin: "5px 0 9px", color: "#e8d9a8", flexWrap: "wrap" }}>
-            <span>💰 {(ui.gold || 0).toLocaleString()}</span><span>💎 {ui.diamonds || 0}</span><span>✨ {ui.gemDust || 0}</span><span>🌟 {ui.stardust || 0}</span><span>⛏️ {ui.ore || 0}</span>
+            <span>💰 {(ui.gold || 0).toLocaleString()}</span><span>💎 {ui.diamonds || 0}</span><span>💠 {ui.gemDust || 0}</span><span>🌟 {ui.stardust || 0}</span><span>⛏️ {ui.ore || 0}</span>
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
             {[["exchange", "🔁 แลกเปลี่ยน"], ["shop", "🏪 ร้านพรีเมียม"]].map(([k, lbl]) => {
@@ -23652,13 +23658,13 @@ export default function CherryAdventure() {
               </div>
               {/* ⚒️ enhance weapons & gear — moved here from the bag */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#3a7ac0", margin: "2px 0 5px" }}>⚒️ ตีบวกอาวุธ & ชุด</div>
-              <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>ต้องมีของซ้ำ 2 ชิ้นขึ้นไป · ตีได้ถึง +5 (ยิ่งสูงยิ่งเสี่ยง)</div>
+              <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>⚒️ ของซ้ำ 2 ชิ้น (มีโอกาสพลาด) · 💠 การันตี ใช้ผงเพชร+ผงดาว+แร่ ตามเลเวลตีบวก · ตีได้ถึง +20 (ตามเลเวลตัวละคร)</div>
               <button onClick={() => { G.autoEnhanceAll(); }} style={{
                 width: "100%", padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", marginBottom: 6,
                 fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#59a0e8,#7ad0e8)",
               }}>⚒️ ตีบวกออโต้ทั้งหมด (ถึงเพดาน +{G.enhanceCap ? G.enhanceCap() : 1})</button>
               {(() => {
-                const enhanceable = [...new Set(ui.inv)].filter((id) => { const c = ui.inv.filter((x) => x === id).length; const p = ui.plus[id] || 0; return c >= 2 && p < 5; })
+                const enhanceable = [...new Set(ui.inv)].filter((id) => { const c = ui.inv.filter((x) => x === id).length; const p = ui.plus[id] || 0; return c >= 1 && p < 20; })
                   .sort((a, b) => { const ia = LOOT.find((x) => x.id === a), ib = LOOT.find((x) => x.id === b); return TIER[ib.rarity] - TIER[ia.rarity] || (ui.plus[b] || 0) - (ui.plus[a] || 0); });
                 if (!enhanceable.length) return <div style={{ fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0", marginBottom: 4 }}>ยังไม่มีของซ้ำให้ตีบวก · ล่ามอนสเตอร์เก็บของซ้ำ</div>;
                 return enhanceable.map((id) => {
@@ -23675,14 +23681,15 @@ export default function CherryAdventure() {
                         <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>{SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}</div>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, marginLeft: 6 }}>
-                        <button onClick={() => { G.enhance(id); }} style={{
+                        {count >= 2 && <button onClick={() => { G.enhance(id); }} style={{
                           border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer",
                           fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#59a0e8,#7ad0e8)",
-                        }}>⚒️ +{plus + 1} ({rate}%)</button>
-                        <button onClick={() => { G.enhanceDust(id); }} title={`ตีบวกการันตีด้วยผงเพชร ${G.WB_DUST_COST || 30}💠`} style={{
-                          border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer",
-                          fontSize: 10, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#f5a623)",
-                        }}>💠 การันตี ({G.WB_DUST_COST || 30})</button>
+                        }}>⚒️ +{plus + 1} ({rate}%)</button>}
+                        {(() => { const mc = G.enhanceMats ? G.enhanceMats(plus) : { gemDust: 30, stardust: 0, ironOre: 0 };
+                          return <button onClick={() => { G.enhanceDust(id); }} title={`ตีบวกการันตี → +${plus + 1} · ใช้ 💠${mc.gemDust} 🌟${mc.stardust} ⛏️${mc.ironOre}`} style={{
+                            border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer",
+                            fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#f5a623)", whiteSpace: "nowrap",
+                          }}>💠 +{plus + 1} ({mc.gemDust}/{mc.stardust}/{mc.ironOre})</button>; })()}
                       </div>
                     </div>
                   );
