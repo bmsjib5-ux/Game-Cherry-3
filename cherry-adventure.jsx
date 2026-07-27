@@ -21510,30 +21510,31 @@ export default function CherryAdventure() {
           display: "flex", justifyContent: "center",
         }}>
           <div style={{
-            background: "#fff", borderRadius: 18, padding: "16px 20px", textAlign: "center",
-            boxShadow: "0 8px 24px rgba(40,90,160,0.4)", maxWidth: 320,
+            background: "#fff", borderRadius: 18, padding: "13px 14px", textAlign: "center",
+            boxShadow: "0 8px 24px rgba(40,90,160,0.4)", width: "92vw", maxWidth: 340, maxHeight: "78vh", overflowY: "auto",
           }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "#2a6ad0" }}>🌀 แท่นวาร์ปข้ามแดน</div>
-            <div style={{ fontSize: 11.5, color: "#8a7a9a", margin: "6px 0 10px" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#2a6ad0" }}>🌀 แท่นวาร์ปข้ามแดน</div>
+            <div style={{ fontSize: 10.5, color: "#8a7a9a", margin: "3px 0 8px" }}>
               เลือกแผนที่ผจญภัย — แต่ละแดนมีมอนสเตอร์ประจำถิ่น
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
               {BIOMES.map((b, i) => (
                 <button key={b.id} onClick={() => G.doWarp(i)} disabled={i === ui.biomeIdx} style={{
-                  padding: "10px 14px", borderRadius: 12, border: "none",
+                  padding: "6px 7px", borderRadius: 9, border: i === ui.biomeIdx ? "2px solid #f5a623" : "none",
                   cursor: i === ui.biomeIdx ? "default" : "pointer",
-                  fontSize: 13.5, fontWeight: 800, fontFamily: font, textAlign: "left",
-                  color: i === ui.biomeIdx ? "#a0a0a0" : "#fff",
-                  background: i === ui.biomeIdx ? "#eee" : `#${b.ground.toString(16).padStart(6, "0")}`,
-                  opacity: i === ui.biomeIdx ? 0.7 : 1,
+                  fontFamily: font, textAlign: "left", lineHeight: 1.2,
+                  color: i === ui.biomeIdx ? "#7a7a7a" : "#fff",
+                  background: i === ui.biomeIdx ? "#ececec" : `#${b.ground.toString(16).padStart(6, "0")}`,
+                  opacity: i === ui.biomeIdx ? 0.8 : 1,
                 }}>
-                  {b.emoji} {b.name} <span style={{ fontSize: 10.5, opacity: 0.85 }}>· Lv.{b.lvMin}-{b.lvMax}</span> {i === ui.biomeIdx ? "(อยู่ที่นี่)" : ""}
+                  <div style={{ fontSize: 11, fontWeight: 800, textShadow: i === ui.biomeIdx ? "none" : "0 1px 2px rgba(0,0,0,0.4)" }}>{b.emoji} {b.name}</div>
+                  <div style={{ fontSize: 8.5, fontWeight: 700, opacity: 0.92, textShadow: i === ui.biomeIdx ? "none" : "0 1px 2px rgba(0,0,0,0.4)" }}>Lv.{b.lvMin}-{b.lvMax}{i === ui.biomeIdx ? " • อยู่นี่" : ""}</div>
                 </button>
               ))}
             </div>
             <button onClick={() => G.closeWarp()} style={{
-              marginTop: 10, padding: "8px 20px", borderRadius: 999, border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
+              marginTop: 9, padding: "7px 20px", borderRadius: 999, border: "none", cursor: "pointer",
+              fontSize: 12.5, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
             }}>ปิด</button>
           </div>
         </div>
