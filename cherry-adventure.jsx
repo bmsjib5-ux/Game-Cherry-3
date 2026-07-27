@@ -11375,9 +11375,12 @@ export default function CherryAdventure() {
       if ((G.gold || 0) < cost) { toast(`💰 ทองไม่พอ! ต้องการ ${cost} (มี ${G.gold || 0})`); return; }
       let refundSp = 0, refundStat = 0;
       if (kind === "stats" || kind === "all") {
-        // give back every allocated base stat point
+        // give back EXACTLY what was spent: each +1 at rank i cost statCost(i) = 1 + floor(i/10),
+        // so a maxed stat refunds far more than its rank number — คืนแต้มเท่าที่จ่ายไปจริง ไม่ลด
         const b = G.baseStats || {};
-        refundStat = Object.values(b).reduce((a, v) => a + (v || 0), 0);
+        const _sc = (i) => (G.statCost ? G.statCost(i) : 1 + Math.floor(i / 10));
+        refundStat = 0;
+        for (const k in b) { const rank = b[k] || 0; for (let i = 0; i < rank; i++) refundStat += _sc(i); }
         G.baseStats = { atk: 0, hp: 0, def: 0, crit: 0, luck: 0, mp: 0 };
         G.player.statPts = (G.player.statPts || 0) + refundStat;
       }
