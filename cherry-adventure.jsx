@@ -462,6 +462,12 @@ const CLASSES = {
     desc: "นักรบโต๊ะทำงาน ใช้เวทเทคโนโลยี กาแฟ และเอกสาร",
     perk: "กาแฟฟื้นมานาทุกเทิร์น · ยิ่งเลือดน้อยยิ่ง OT แรง",
   },
+  aegis: {
+    name: "จักรกลพิทักษ์", emoji: "🤖", color: 0x2ab0f5,
+    hp: 48, atk: 10, def: 3,
+    desc: "หุ่นยนต์ AI จากอารยธรรมโบราณ ใช้พลังงานพลาสมา+นาโนเทค อาวุธแปลงร่างและโดรนอัตโนมัติ",
+    perk: "เทคโนโลยีแม่นยำ — คริ +10% · เจาะเกราะศัตรู -1 DEF",
+  },
 };
 // 📊 role ratings (0–5) shown as a stat graph on the class picker
 const RATING_CATS = [["single", "โจมตีเดี่ยว"], ["control", "ควบคุม"], ["aoe", "โจมตีกลุ่ม"], ["def", "ป้องกัน"], ["heal", "ฟื้นฟู"]];
@@ -474,6 +480,7 @@ const CLASS_RATINGS = {
   samurai:  { single: 5, control: 2, aoe: 3, def: 2, heal: 1 },
   coder:    { single: 4, control: 4, aoe: 3, def: 2, heal: 4 },
   office:   { single: 3, control: 3, aoe: 2, def: 3, heal: 5 },
+  aegis:    { single: 4, control: 5, aoe: 4, def: 3, heal: 1 },
 };
 // 💡 quick playstyle guidance per class
 const CLASS_TIP = {
@@ -485,8 +492,9 @@ const CLASS_TIP = {
   samurai:  "ฟันรัวคริสูง สายบุกดุดันจบไว",
   coder:    "สายไฮบริดรอบด้าน คริ + มานาฟื้นไว",
   office:   "อึดยาว ยิ่งเลือดน้อยยิ่งแรง — สายอดทนสู้ยืดเยื้อ",
+  aegis:    "หุ่นรบไซไฟ คุมพื้นที่+เบิร์สต์ ผสมโดรน/พลาสมา/แรงโน้มถ่วง รอบด้าน",
 };
-const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc" };
+const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx" };
 // 👗 per-class outfit look: shirt/pants/trim colors + which accessory to show
 const CLASS_OUTFIT = {
   warrior:  { shirt: 0x5a4a4a, pants: 0x4a4038, trim: 0xe8c848, acc: "cape",     accColor: 0xc41a2a }, // 🛡️ steel plate armor + red cape
@@ -497,6 +505,7 @@ const CLASS_OUTFIT = {
   samurai:  { shirt: 0x2a3450, pants: 0x3a3830, trim: 0xbfa055, acc: "kimono",   accColor: 0x2a3450 }, // ⚔️ ronin indigo kimono + gold
   office:   { shirt: 0x1c1c22, pants: 0x18181e, trim: 0xd8dce4, acc: "tie",      accColor: 0xc4102a }, // 💼 black suit + red necktie
   coder:    { shirt: 0x14161c, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "hoodie",   accColor: 0x2ad0e8 }, // 💻 black hoodie + neon circuits
+  aegis:    { shirt: 0xe8ecf2, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "mecha",    accColor: 0x2ad0e8 }, // 🤖 pearl-white + black mechanical armor, electric-blue energy lines
 };
 const ULTS = {
   warrior: { name: "คำพิพากษาศักดิ์สิทธิ์", emoji: "⚔️✨", desc: "พาลาดินอัญเชิญผู้พิทักษ์ ฟาดดาบศักดิ์สิทธิ์ ×4 + สตัน + ทำลายเกราะ + ฟื้น HP" },
@@ -507,6 +516,7 @@ const ULTS = {
   coder: { name: "เขียนความจริงใหม่", emoji: "💻🔮", desc: "คอมไพล์โลกใหม่ 100% · ศัตรูสลายเป็นพิกเซล ×3.6 + เจาะเกราะ + แช่แข็ง + สับสน" },
   office: { name: "โอทีล้นทะลัก", emoji: "💻⚡", desc: "เอกสารถล่มฟ้า โน้ตบุ๊กยักษ์ทุบ ระเบิดดิจิทัล ×3.5 + สตัน + ทำลายเกราะ" },
   samurai: { name: "ฟันฟ้าแยก", emoji: "⚔️🌸", desc: "เวลาหยุด ชักดาบเสี้ยววินาที ฟันฟ้าแยก ×3.6 · เจาะเกราะ + เลือดไหล + หวาดกลัว" },
+  aegis: { name: "โอเมกาจัดจ์เมนต์ โปรโตคอล", emoji: "🤖⚡", desc: "AI เปิดโปรโตคอลสูงสุด ลอยขึ้นฟ้า ดาวเทียมล็อกเป้า ยิงลำแสงอวกาศ + ดาบพลาสมายักษ์ฟันพื้น ระเบิด EMP ×3.6 · เจาะเกราะ + สตัน" },
 };
 // 👑 alternate ultimates — unlocked classes can switch between two ults (toggled in the skill panel)
 const ULT_ALT = {
@@ -659,6 +669,12 @@ const CLASS_SKILLS = {
     { id: "c_drone", cost: 11, name: "โดรน AI", emoji: "🤖", color: 0x6ac0ff, mult: 0.9, perLv: 0.2, hits: 4, buffCrit: 10, fx: "multi", desc: "เรียกโดรน AI ยิงเลเซอร์ ×4 + คริ+10% 🤖" },
     { id: "c_crash", cost: 13, name: "ระบบล่ม", emoji: "💥", color: 0xe84a7a, mult: 2.2, perLv: 0.46, stun: true, freeze: true, confuse: 2, fx: "bolt", desc: "ทำระบบศัตรูล่ม · แช่แข็ง + สตัน + สับสน 💥" },
     { id: "c_matrix", cost: 15, name: "เมทริกซ์", emoji: "🟩", color: 0x2ae84a, mult: 1.2, perLv: 0.26, hits: 5, slow: true, poison: 4, fx: "quake", desc: "ฝนโค้ดเขียวถล่ม ×5 · ช้าลง + กัดกร่อนระบบ 🟩" },
+  ],
+  aegis: [
+    { id: "g_dash",  cost: 8,  name: "พลาสมาแดช",      emoji: "⚡", color: 0x3ad0ff, mult: 1.9, perLv: 0.42, pierce: true, buffSpd: true, fx: "pierce", desc: "พุ่งพลาสมาความเร็วสูง ทะลุศัตรู เจาะเกราะ + เร็วขึ้น · ประกายไฟฟ้า ⚡" },
+    { id: "g_drone", cost: 11, name: "โดรนนาโนบุก",    emoji: "🤖", color: 0x2ab0f5, mult: 0.62, perLv: 0.16, hits: 6, stun: true, buffCrit: 10, fx: "multi", desc: "ปล่อยโดรน 6 ตัว บินล้อมยิงเลเซอร์พร้อมกัน · โฮโลแกรม + โอกาสสตัน 🔵" },
+    { id: "g_grav",  cost: 12, name: "แรงโน้มถ่วง",     emoji: "🌌", color: 0x6a5ad0, mult: 1.7, perLv: 0.38, stun: true, slow: true, fx: "quake", desc: "สร้างแกนแรงโน้มถ่วง ดูดศัตรูเข้าศูนย์กลาง แล้วระเบิดพลาสมา · สตัน + ช้าลง 🌌" },
+    { id: "g_over",  cost: 13, name: "โอเวอร์คล็อก",    emoji: "🚀", color: 0x2ad0e8, mult: 1.95, perLv: 0.44, buffSpd: true, buffCrit: 18, buffCritDmg: 20, fx: "rage", desc: "AI โอเวอร์คล็อก! เร็วขึ้น + คริ+18% + ดาเมจคริ+20% ร่างแยกดิจิทัลรัวโจมตี 🚀" },
   ],
 };
 // 🏅 TITLES — earned by playing, each grants a real bonus and you pick which one to wear.
@@ -2744,6 +2760,7 @@ export default function CherryAdventure() {
       if (id === "kairiBlade") return { x: -0.42, y: 0, z: 0.32 }; // ⚡ thunder blade up-forward
       if (id === "aurSword") return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
       if (id === "ragAxe") return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
+      if (id === "cx" || cls === "aegis") return { x: -0.3, y: 0, z: 0.42 }; // 🤖 plasma morph blade up-forward
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
       if (cls === "mage" || id === "cm" || id === "wDm") return { x: -0.15, y: 0, z: 0 };
@@ -4141,6 +4158,32 @@ export default function CherryAdventure() {
       g.userData.blade = coreGem; g.userData.glow = glow;
       g.scale.setScalar(1.12);
       weaponModels.ragAxe = g;
+    }
+    { // 🤖⚡ cx — Plasma Morph Blade (AI Mecha Guardian's class weapon: metal hilt + holographic energy blade)
+      const g = new THREE.Group();
+      const steel = new THREE.MeshStandardMaterial({ color: 0xc8ccd4, metalness: 0.9, roughness: 0.25 });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x1c2029, metalness: 0.7, roughness: 0.4 });
+      const plasma = new THREE.MeshBasicMaterial({ color: 0x6ad8ff, transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending, depthWrite: false });
+      const core = new THREE.MeshStandardMaterial({ color: 0xaef0ff, emissive: 0x3aaeff, emissiveIntensity: 1.4, roughness: 0.2 });
+      const emit = new THREE.MeshStandardMaterial({ color: 0x2ab0f5, emissive: 0x2ab0f5, emissiveIntensity: 1.1, roughness: 0.3, metalness: 0.4 });
+      // mechanical hilt
+      const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.04, 0.34, 8), dark); hilt.position.y = 0.05; g.add(hilt);
+      for (let k = 0; k < 4; k++) { const seg = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 4, 10), steel); seg.position.y = -0.05 + k * 0.08; seg.rotation.x = Math.PI / 2; g.add(seg); }
+      const pommel = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), emit); pommel.position.y = -0.14; g.add(pommel);
+      // hexagon energy emitter guard
+      const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 6), steel); guard.position.y = 0.24; guard.rotation.y = Math.PI / 6; g.add(guard);
+      const gRing = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 6), emit); gRing.position.y = 0.24; gRing.rotation.x = Math.PI / 2; gRing.rotation.z = Math.PI / 6; g.add(gRing);
+      // holographic plasma blade — bright core + translucent aura sheath
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.5, 0.02), core); blade.position.y = 1.05; g.add(blade);
+      const sheath = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.55, 0.06), plasma); sheath.position.y = 1.06; g.add(sheath);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.24, 4), core); tip.position.y = 1.9; tip.scale.z = 0.4; g.add(tip);
+      const tipA = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 4), plasma); tipA.position.y = 1.9; tipA.scale.z = 0.5; g.add(tipA);
+      // floating hexagon glyphs along the blade (digital)
+      for (let k = 0; k < 3; k++) { const hx = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.006, 6, 6), emit); hx.position.set(0, 0.6 + k * 0.45, 0.05); hx.rotation.x = Math.PI / 2; g.add(hx); }
+      const glow = new THREE.PointLight(0x3aaeff, 0.55, 2.6); glow.position.y = 1.1; g.add(glow);
+      g.userData.blade = blade; g.userData.glow = glow; g.userData.sheath = sheath;
+      g.scale.setScalar(1.12);
+      weaponModels.cx = g;
     }
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
     weaponModels.default.visible = true;
@@ -7419,6 +7462,41 @@ export default function CherryAdventure() {
         g.add(saya, sayaWrap);
       }
       classAccessories.kimono = g;
+    }
+    { // 🤖 AI Mecha Guardian — pearl-white/black mechanical armor, plasma core, LED visor, energy halo, 2 orbiting drones
+      const g = new THREE.Group();
+      const white = new THREE.MeshStandardMaterial({ color: 0xeef1f6, metalness: 0.55, roughness: 0.3 });
+      const black = new THREE.MeshStandardMaterial({ color: 0x1c2029, metalness: 0.7, roughness: 0.4 });
+      const silver = new THREE.MeshStandardMaterial({ color: 0xaab2be, metalness: 0.92, roughness: 0.22 });
+      const plasma = new THREE.MeshStandardMaterial({ color: 0x6ad8ff, emissive: 0x2ab0f5, emissiveIntensity: 1.3, roughness: 0.25, metalness: 0.3 });
+      const led = new THREE.MeshStandardMaterial({ color: 0x8ae4ff, emissive: 0x3ac0ff, emissiveIntensity: 1.6, roughness: 0.2 });
+      const glowM = new THREE.MeshBasicMaterial({ color: 0x4ac0ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+      // ===== chest plate + glowing plasma core =====
+      const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.62, 20, 1, true), white); chest.position.y = 1.62; chest.scale.set(1.14, 1, 1.02); g.add(chest);
+      const chestB = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.43, 0.2, 20, 1, true), black); chestB.position.y = 1.3; chestB.scale.set(1.14, 1, 1.02); g.add(chestB);
+      for (const sx of [-1, 1]) { const pline = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.02), plasma); pline.position.set(sx * 0.2, 1.62, 0.4); g.add(pline); }
+      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.02, 8, 20), silver); coreRing.position.set(0, 1.66, 0.42); g.add(coreRing);
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), plasma); core.position.set(0, 1.66, 0.43); g.add(core);
+      const coreGlow = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), glowM); coreGlow.position.set(0, 1.66, 0.43); g.add(coreGlow);
+      // ===== angular shoulder pauldrons =====
+      for (const sx of [-1, 1]) { const grp = new THREE.Group(); const pl = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.32), white); pl.rotation.z = sx * 0.2; grp.add(pl); const edge = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.03, 0.34), plasma); edge.position.y = 0.09; edge.rotation.z = sx * 0.2; grp.add(edge); const bolt = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 4), silver); bolt.position.set(sx * 0.16, 0.02, 0); bolt.rotation.z = sx * -1.2; grp.add(bolt); grp.position.set(sx * 0.52, 1.92, 0); g.add(grp); }
+      // ===== waist energy ring + hip plates =====
+      const waist = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.03, 8, 24), plasma); waist.position.y = 1.28; waist.rotation.x = Math.PI / 2; waist.scale.set(1.06, 1, 1); g.add(waist);
+      for (const sx of [-1, 1]) { const hip = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.24, 0.14), black); hip.position.set(sx * 0.38, 1.12, 0.14); hip.rotation.z = sx * 0.15; g.add(hip); }
+      // ===== head: LED visor + antenna + energy halo (char-space, at head height) =====
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.07, 0.04), led); visor.position.set(0, 2.24, 0.46); g.add(visor);
+      const visorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.14, 0.06), black); visorFrame.position.set(0, 2.24, 0.43); g.add(visorFrame);
+      for (const sx of [-1, 1]) { const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.02, 0.34, 6), silver); ant.position.set(sx * 0.26, 2.62, -0.16); ant.rotation.z = sx * 0.35; g.add(ant); const tip = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), plasma); tip.position.set(sx * 0.34, 2.78, -0.22); g.add(tip); }
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.024, 8, 40), plasma); halo.position.set(0, 2.44, -0.2); halo.rotation.x = Math.PI / 2 - 0.3; g.add(halo);
+      const haloGlow = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.06, 8, 40), glowM); haloGlow.position.copy(halo.position); haloGlow.rotation.copy(halo.rotation); g.add(haloGlow);
+      // ===== back booster pack =====
+      const booster = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.16), black); booster.position.set(0, 1.72, -0.4); g.add(booster);
+      for (const sx of [-1, 1]) { const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.16, 8), silver); noz.position.set(sx * 0.1, 1.5, -0.44); g.add(noz); const flame = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 8), glowM); flame.position.set(sx * 0.1, 1.38, -0.44); flame.rotation.x = Math.PI; g.add(flame); }
+      // ===== 2 orbiting support drones =====
+      const drones = [];
+      for (let d = 0; d < 2; d++) { const dr = new THREE.Group(); const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), white); dr.add(body); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), led); eye.position.z = 0.08; dr.add(eye); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 6, 16), plasma); ring.rotation.x = Math.PI / 2; dr.add(ring); dr.userData.ph = d * Math.PI; g.add(dr); drones.push(dr); }
+      g.userData = { core, coreGlow, halo, drones };
+      classAccessories.mecha = g;
     }
     Object.values(classAccessories).forEach((g) => { g.visible = false; char.add(g); });
     G.classAccessories = classAccessories;
@@ -11335,7 +11413,7 @@ export default function CherryAdventure() {
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
-    const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") - (G.wbCritDebuff || 0); // 🎯 crit + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set · 👹 −world-boss aura
+    const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) - (G.wbCritDebuff || 0); // 🎯 crit + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     // 👤 full character profile for the Profile menu
     G.profileInfo = () => {
@@ -13792,7 +13870,7 @@ export default function CherryAdventure() {
         G.ultUsed = true;
         const U = ultOf(G.cls, G.ultAlt);
         const altUlt = !!(G.ultAlt && ULT_ALT[G.cls]); // 👑 alternate ultimate selected
-        G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
+        G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
         if (G.sfx && G.sfx.charge) G.sfx.charge(); // ⚡ rising hum as the ultimate winds up
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
       } else if (kind === "advUlt") {
@@ -13802,7 +13880,7 @@ export default function CherryAdventure() {
         if (G.advUltUsed) { toast("ท่าไม้ตายขั้นสูงใช้ได้ 1 ครั้งต่อศึก!"); return; }
         G.advUltUsed = true;
         const altUlt2 = false;
-        G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : 2.4, hits: 0, total: 0, altUlt: altUlt2, advU: true };
+        G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : 2.4, hits: 0, total: 0, altUlt: altUlt2, advU: true };
         if (G.sfx && G.sfx.charge) G.sfx.charge();
         { const uc = (PATH_ADV[G.pathId] && PATH_ADV[G.pathId].skills[3] && PATH_ADV[G.pathId].skills[3].color) || 0xf5c542; // 🌟 ซีนีมาติก SSS ของอัลติขั้นสูง
           spawnAdvCast(uc, char.position, true);
@@ -15304,6 +15382,14 @@ export default function CherryAdventure() {
             const pulse = 0.7 + Math.sin(t * 3) * 0.3;
             acc.userData.runes.forEach((r) => { r.material.emissiveIntensity = pulse; });
           }
+          // 🤖 aegis mecha: plasma core pulses, halo spins, support drones orbit
+          if (acc.userData.drones) {
+            const pulse = 1.0 + Math.sin(t * 3.2) * 0.5;
+            if (acc.userData.core) { acc.userData.core.material.emissiveIntensity = pulse; acc.userData.core.rotation.y = t * 1.4; }
+            if (acc.userData.coreGlow) { acc.userData.coreGlow.material.opacity = 0.35 + Math.sin(t * 3.2) * 0.2; const s = 1 + Math.sin(t * 3.2) * 0.14; acc.userData.coreGlow.scale.setScalar(s); }
+            if (acc.userData.halo) acc.userData.halo.rotation.z = t * 1.1;
+            acc.userData.drones.forEach((dr, i) => { const a = dr.userData.ph + t * 1.3; dr.position.set(Math.cos(a) * 0.62, 2.0 + Math.sin(t * 2 + i) * 0.1, Math.sin(a) * 0.62 - 0.15); dr.rotation.y = -a + Math.PI / 2; });
+          }
           // 🩸 tattered cape strips (assassin/lancer) flutter independently & flow
           if (acc.userData.capeStrips) {
             acc.userData.capeStrips.forEach((strip) => {
@@ -15607,6 +15693,9 @@ export default function CherryAdventure() {
         }
         const rax = weaponModels.ragAxe;
         if (rax && rax.visible) { if (rax.userData.blade) rax.userData.blade.material.emissiveIntensity = 0.8 + Math.abs(Math.sin(t * 3.4)) * 0.6; if (rax.userData.glow) rax.userData.glow.intensity = 0.45 + Math.abs(Math.sin(t * 3.4)) * 0.4; }
+        // 🤖 plasma morph blade — energy blade flickers + sheath breathes
+        const pmb = weaponModels.cx;
+        if (pmb && pmb.visible) { const fl = 1.0 + Math.abs(Math.sin(t * 5)) * 0.6; if (pmb.userData.blade) pmb.userData.blade.material.emissiveIntensity = fl; if (pmb.userData.glow) pmb.userData.glow.intensity = 0.4 + Math.abs(Math.sin(t * 5)) * 0.35; if (pmb.userData.sheath) pmb.userData.sheath.material.opacity = 0.6 + Math.abs(Math.sin(t * 4)) * 0.25; }
         // ❄️ Frostwing bow — ice crystal breathes, wings shimmer
         const ybw = weaponModels.yukiBow;
         if (ybw && ybw.visible) { if (ybw.userData.bowGem) ybw.userData.bowGem.material.emissiveIntensity = 0.9 + Math.abs(Math.sin(t * 2)) * 0.6; if (ybw.userData.glow) ybw.userData.glow.intensity = 0.5 + Math.abs(Math.sin(t * 2)) * 0.3; }
@@ -16428,7 +16517,7 @@ export default function CherryAdventure() {
           A.t += dt * (G.battleSpeed || 1); // ⏩ speed toggle
           let p = Math.min(1, A.t / A.dur);
           if (A.type === "playerAttack") {
-            const cls = G.cls || "warrior";
+            const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
             const skFx = A.skill ? A.skill.fx : null;
             const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
             if (cls === "warrior") {
@@ -19394,7 +19483,7 @@ export default function CherryAdventure() {
               } else enemyTurn();
             }
           } else if (A.type === "ult") {
-            const cls = G.cls || "warrior";
+            const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
             const ultMul = (1 + ((G.ultRank || 1) - 1) * 0.18) * ((A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติขั้นสูงแรงกว่า
             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
@@ -19447,7 +19536,7 @@ export default function CherryAdventure() {
               setTimeout(() => monGlow(em, 0x000000, null), 150);
               setUi((u) => ({
                 ...u, enemy: { ...u.enemy, hp: G.enemy.hp },
-                msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.pathId)) ? advUltOf(G.pathId).name : ultOf(cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
+                msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.pathId)) ? advUltOf(G.pathId).name : ultOf(G.cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
               }));
             };
             // ⏳ hold the strike until casting is done — the char just charges during the cast
@@ -21389,7 +21478,7 @@ export default function CherryAdventure() {
       // ✨ sword trail — active during a melee player attack/ult swing
       {
         const A = G.banim;
-        const meleeClasses = ["warrior", "samurai", "lancer", "assassin"];
+        const meleeClasses = ["warrior", "samurai", "lancer", "assassin", "aegis"];
         const swinging = A && (A.type === "playerAttack" || A.type === "ult") && meleeClasses.includes(G.cls) && G.mode === "battle";
         const trailColor = A && A.skill ? A.skill.color : (G.cls && CLASSES[G.cls] ? CLASSES[G.cls].color : 0xffffff);
         updateSwordTrail(swinging, trailColor);
