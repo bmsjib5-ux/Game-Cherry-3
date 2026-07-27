@@ -11911,10 +11911,13 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // 🌟 ULTIMATE ranking — gated behind character level + your 4 skills being trained
-    const ULT_MAX = 5;
-    // requirements to unlock each ult rank: character level & total skill ranks invested
-    const ultReq = (rank) => ({ lv: 8 + rank * 8, skillSum: 12 + rank * 12 }); // ⚖️ ยากขึ้น — rank1 ต้อง Lv16 & รวมสกิล 24
+    const ULT_MAX = 20; // 🌟 ท่าไม้ตายอัพได้ถึง Lv.20
+    G.ULT_MAX = ULT_MAX;
+    // requirements to unlock each ult rank: character level & total skill ranks invested (scales smoothly to Lv20)
+    const ultReq = (rank) => ({ lv: 7 + rank * 7, skillSum: 10 + rank * 9 }); // rank1→2 ต้อง Lv14 & รวมสกิล 19 · rank19→20 ต้อง Lv140 & รวมสกิล 181
     G.ultReq = ultReq;
+    const ultCost = (rank) => 3 + rank; // ⚡ SP per rank: 4,5,6,... (rank19→20 = 22)
+    G.ultCost = ultCost;
     G.skillSum = () => skillsOf(G.cls, G.pathId).reduce((a, s) => a + (G.skillRanks[s.id] || 1), 0);
     G.rankUlt = () => {
       const cur = G.ultRank || 1;
@@ -11922,7 +11925,7 @@ export default function CherryAdventure() {
       const req = ultReq(cur);
       if (G.player.level < req.lv) { toast(`🔒 ต้องเลเวล ${req.lv} ขึ้นไป (ตอนนี้ ${G.player.level})`); return; }
       if (G.skillSum() < req.skillSum) { toast(`🔒 ต้องฝึก 4 สกิลรวม ${req.skillSum} ระดับก่อน (ตอนนี้ ${G.skillSum()})`); return; }
-      const cost = 4 + cur * 2; // ⚖️ แพงขึ้น: 6,8,10,12 SP
+      const cost = ultCost(cur);
       if ((G.player.sp || 0) < cost) { toast(`ท่าไม้ตายใช้ ${cost} แต้มสกิล (มี ${G.player.sp || 0})`); return; }
       G.player.sp -= cost;
       G.ultRank = cur + 1;
@@ -23559,9 +23562,10 @@ export default function CherryAdventure() {
                 const uc = ui.cls && ULTS[ui.cls] ? ultOf(ui.cls, ui.ultAlt) : null;
                 if (!uc) return null;
                 const ur = ui.ultRank || 1;
-                const maxed = ur >= 5;
-                const req = { lv: 5 + ur * 5, skillSum: 8 + ur * 8 };
-                const cost = 3 + ur;
+                const ultMax = G.ULT_MAX || 20;
+                const maxed = ur >= ultMax;
+                const req = G.ultReq ? G.ultReq(ur) : { lv: 7 + ur * 7, skillSum: 10 + ur * 9 };
+                const cost = G.ultCost ? G.ultCost(ur) : 3 + ur;
                 const lvOk = (ui.level || 1) >= req.lv;
                 const sumOk = (ui.ultSkillSum || 0) >= req.skillSum;
                 const spOk = (ui.sp || 0) >= cost;
@@ -23569,7 +23573,7 @@ export default function CherryAdventure() {
                 return (
                   <div style={{ borderRadius: 12, marginTop: 4, padding: "10px 11px", background: "linear-gradient(135deg,#fff4e0,#ffe8f0)", border: "2px solid #f5c542" }}>
                     <div style={{ fontSize: 13, fontWeight: 800, color: "#c07a10" }}>
-                      🌟 {uc.name} <span style={{ color: "#e0a020" }}>Lv.{ur}/5</span>
+                      🌟 {uc.name} <span style={{ color: "#e0a020" }}>Lv.{ur}/{ultMax}</span>
                     </div>
                     <div style={{ fontSize: 10, color: "#8a7a5a", margin: "3px 0 5px" }}>ท่าไม้ตาย · {uc.desc}</div>
                     {/* 👑 classes with two ultimates can switch between them */}
@@ -23599,14 +23603,14 @@ export default function CherryAdventure() {
                       </div>
                     )}
                     <div style={{ position: "relative", background: "#e5e5da", borderRadius: 99, height: 8, marginBottom: 6, overflow: "hidden" }}>
-                      <div style={{ width: `${(ur / 5) * 100}%`, height: "100%", background: "linear-gradient(90deg,#f5a623,#f5d05a)", borderRadius: 99 }}/>
+                      <div style={{ width: `${(ur / ultMax) * 100}%`, height: "100%", background: "linear-gradient(90deg,#f5a623,#f5d05a)", borderRadius: 99 }}/>
                     </div>
                     <button onClick={() => G.rankUlt()} disabled={!can} style={{
                       width: "100%", padding: "7px 0", borderRadius: 8, border: "none",
                       cursor: can ? "pointer" : "default",
                       fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                       background: maxed ? "#b0a396" : can ? "linear-gradient(90deg,#f5a623,#f5763a)" : "#d0c0a0",
-                    }}>{maxed ? "สุดยอดแล้ว Lv.5 ⭐" : can ? `ปลุกพลังท่าไม้ตาย (${cost} แต้ม)` : "🔒 ยังไม่ครบเงื่อนไข"}</button>
+                    }}>{maxed ? `สุดยอดแล้ว Lv.${ultMax} ⭐` : can ? `ปลุกพลังท่าไม้ตาย (${cost} แต้ม)` : "🔒 ยังไม่ครบเงื่อนไข"}</button>
                   </div>
                 );
               })()}
