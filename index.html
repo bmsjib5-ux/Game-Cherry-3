@@ -10671,6 +10671,8 @@ function CherryAdventure() {
         }
         // 🦸 expose the singleton rig pivots so remote avatars can clone hero signature parts onto matching anchors
         G._charRig = { root: char, head: headG, armL, armR, legL, legR };
+        // 💇 expose the hair rig so remote avatars can clone the exact hair style + colour
+        G._hairRig = { mat: hairMat, styles: hairStyles, baseHair, ahoge, backGroup: hairBackGroup };
         // 🤖 AEGIS-X full-body mech armor — covers arms, hands, legs, feet, torso so the whole character is a robot
         {
             const white = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
@@ -22830,6 +22832,8 @@ function CherryAdventure() {
                 grp.userData.bodyBaseY = 0;
                 // 🎨 fresh materials — never share char's, so nothing we tint can leak back to the real character
                 const skinMatA = new THREE.MeshStandardMaterial({ color: 0xffe0c8, roughness: 0.7 });
+                if (info.sk != null && CUSTOM.skins[info.sk])
+                    skinMatA.color.setHex(CUSTOM.skins[info.sk].c); // 🎨 real skin tone
                 const shirtMatA = new THREE.MeshStandardMaterial({ color: shirtCol, roughness: 0.62 });
                 const pantsMatA = new THREE.MeshStandardMaterial({ color: co.pants, roughness: 0.62 });
                 const shoeMatA = new THREE.MeshStandardMaterial({ color: 0x2f333c, roughness: 0.5 });
@@ -23175,6 +23179,42 @@ function CherryAdventure() {
                         catch (_) { }
                     }
                 }
+                // ---- 💇 real hair style + colour (mirrors the singleton): normal classes + heroes that keep normal hair (haru/aurelius/ragnar) ----
+                {
+                    const sigHairHero = info.hero && ["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi"].indexOf(info.hero) >= 0; // these bring signature hair via hero parts
+                    const aegisHelmOn = (info.c === "aegis" && !info.hero && !info.hat); // the mech helmet covers the head
+                    const hr = G._hairRig;
+                    if (!sigHairHero && !aegisHelmOn && hr && hr.styles && hr.styles.length) {
+                        const hs = Math.max(0, Math.min(hr.styles.length - 1, info.hair != null ? info.hair : 0));
+                        const hcol = (CUSTOM.hairColors[info.hc] || CUSTOM.hairColors[0]).c;
+                        const prev = hr.mat.color.getHex();
+                        hr.mat.color.setHex(hcol); // temporarily tint the shared hair material so clones capture the right colour, then restore
+                        try {
+                            const pieces = [hr.styles[hs]];
+                            if (hs < 5) {
+                                if (hr.baseHair)
+                                    pieces.push(hr.baseHair);
+                                if (hr.ahoge)
+                                    pieces.push(hr.ahoge);
+                            } // scalp/bangs/ahoge only for the shorter styles (matches setHero)
+                            if (hr.backGroup)
+                                pieces.push(hr.backGroup);
+                            pieces.forEach((pc) => { if (!pc)
+                                return; const c = cloneCosmetic(pc); if (c)
+                                headAnchor.add(c); });
+                            hair.visible = false; // hide the generic brown dome — the real style replaces it
+                        }
+                        catch (e) {
+                            try {
+                                console.warn("hair clone failed", e);
+                            }
+                            catch (_) { }
+                        }
+                        finally {
+                            hr.mat.color.setHex(prev);
+                        }
+                    }
+                }
                 // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
                 try {
                     const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "lunaStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe" };
@@ -23362,8 +23402,12 @@ function CherryAdventure() {
                     return; // ~7-8 updates/sec
                 G._lastRtSend = now;
                 const moving = G.vel ? (Math.hypot(G.vel.x || 0, G.vel.z || 0) > 0.15) : false;
-                // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero; the class accessory derives from c)
-                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: (G.equip && G.equip.weapon) || null, hat: (G.equip && G.equip.hat) || null, mask: (G.equip && G.equip.mask) || null, outfit: (G.equip && G.equip.outfit) || null, wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+                // 👗 resolve the VISUAL cosmetic per slot exactly like applyGear: hidden gear → none; else transmog (costume) overrides the equipped item
+                const eq = G.equip || {}, cos = G.costume || {}, hidden = G._gearHidden;
+                const look = (s) => ((hidden && s !== "weapon") ? null : ((cos[s] || eq[s]) || null));
+                const cu = G.custom || {};
+                // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin; the class accessory derives from c)
+                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
             }
             catch (e) { }
         };
