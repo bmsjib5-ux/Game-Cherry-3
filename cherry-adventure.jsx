@@ -15358,9 +15358,9 @@ export default function CherryAdventure() {
       toast("🌐 กำลังโหลดกระดานอันดับโลก...");
       const rows = await CN.leaderboard(20);
       if (!rows) { toast("❌ โหลดไม่สำเร็จ ลองใหม่อีกครั้ง"); setUi((u) => ({ ...u, netStatus: CN.status })); return; }
-      setUi((u) => ({ ...u, globalBoard: rows, netStatus: "ok" }));
-      toast(`🏆 โหลดอันดับโลก ${rows.length} คน`);
       const myIdx = G.pid ? rows.findIndex((r) => r.pid === G.pid) : -1;
+      setUi((u) => ({ ...u, globalBoard: rows, netStatus: "ok", myRank: myIdx >= 0 && myIdx <= 2 ? myIdx + 1 : 0 })); // 🛡️ head shield
+      toast(`🏆 โหลดอันดับโลก ${rows.length} คน`);
       if (myIdx >= 0 && myIdx <= 2 && G.lastRankClaim !== todayStamp()) {
         G.lastRankClaim = todayStamp();
         if (G.gainDiamonds) G.gainDiamonds([30, 20, 10][myIdx], `อันดับ ${myIdx + 1} ของโลก`);
@@ -15369,9 +15369,13 @@ export default function CherryAdventure() {
     };
     // 🏆 lightweight world-board fetch for the top-left widget (silent; auto-reload every 10 min)
     G.refreshBoard = async () => {
-      if (!CN.enabled()) { setUi((u) => ({ ...u, netEnabled: false })); return; }
+      if (!CN.enabled()) { setUi((u) => ({ ...u, netEnabled: false, myRank: 0 })); return; }
       const rows = await CN.leaderboard(5);
-      if (rows) setUi((u) => ({ ...u, globalBoard: rows, netEnabled: true, boardTs: Date.now() }));
+      if (rows) {
+        // 🛡️ show the head shield only while the player sits in the world top-3
+        const myIdx = G.pid ? rows.findIndex((r) => r.pid === G.pid) : -1;
+        setUi((u) => ({ ...u, globalBoard: rows, netEnabled: true, boardTs: Date.now(), myRank: myIdx >= 0 && myIdx <= 2 ? myIdx + 1 : 0 }));
+      }
     };
     G.startBoardPoll = () => {
       G.refreshBoard();
@@ -22772,6 +22776,19 @@ export default function CherryAdventure() {
     if (!t || t.id === "t_none") return null;
     return renderTitle(t, size, true);
   };
+  // 🛡️ gold / silver / bronze rank shield (1st / 2nd / 3rd) with the rank number
+  const RankShield = ({ rank, size = 17 }) => {
+    const cols = { 1: ["#ffe9a0", "#f5b81e"], 2: ["#f2f5fa", "#b7c2cf"], 3: ["#f2c79a", "#c67a34"] };
+    const [c1, c2] = cols[rank] || ["#c8bcd8", "#8a7f9a"];
+    const gid = "shg" + rank;
+    return (
+      <svg width={size} height={size * 1.16} viewBox="0 0 20 23" style={{ display: "block", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.45))" }}>
+        <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={c1} /><stop offset="1" stopColor={c2} /></linearGradient></defs>
+        <path d="M10 1 L18 4 V11 C18 17 14.4 20.2 10 22 C5.6 20.2 2 17 2 11 V4 Z" fill={`url(#${gid})`} stroke="rgba(60,40,10,0.55)" strokeWidth="1.1" />
+        <text x="10" y="14" textAnchor="middle" fontSize="10.5" fontWeight="900" fill="#5a3a00" fontFamily={font}>{rank}</text>
+      </svg>
+    );
+  };
   const toggleMenu = (name) => setUi((u) => {
     const willOpen = !u[name];
     const cleared = {};
@@ -22802,7 +22819,7 @@ export default function CherryAdventure() {
       )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
       {ui.announce && (
-        <div key={ui.announce.key} style={{ position: "absolute", top: 4, left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" }}>
+        <div key={ui.announce.key} style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" }}>
           <div style={{ whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform" }}>📢 {ui.announce.text}</div>
         </div>
       )}
@@ -23708,22 +23725,22 @@ export default function CherryAdventure() {
       )}
 
       {/* ===== explore HUD ===== */}
-      {/* 🏆 top-left world leaderboard (top 5) — auto-reload every 10 min or on 🔄 */}
+      {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{ position: "absolute", top: 10, left: 10, width: 174, maxWidth: "50vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
+        <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
             <div style={{ flex: 1 }} />
             <button onClick={() => G.refreshBoard && G.refreshBoard()} title="รีเฟรช" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 }}>🔄</button>
           </div>
-          {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => (
-            <div key={r.pid || i} style={{ marginBottom: 3, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
+          {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 3).map((r, i) => (
+            <div key={r.pid || i} style={{ marginBottom: 4, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                <span style={{ width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" }}>{i + 1}</span>
+                <span style={{ width: 18, display: "flex", justifyContent: "center", flexShrink: 0 }}><RankShield rank={i + 1} size={17} /></span>
                 <span style={{ flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{(CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂"} {r.n}</span>
                 <span style={{ fontWeight: 800, color: "#9ad0ff" }}>Lv.{r.lv}{(r.ng || 0) > 0 ? <span style={{ color: "#ff9a6a" }}> ⚡{r.ng}</span> : null}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, paddingLeft: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, paddingLeft: 23 }}>
                 <span style={{ minWidth: 0, overflow: "hidden", flex: 1 }}>{boardTitle(r, 9.5)}</span>
                 <span style={{ fontSize: 8.5, color: "#b8a8d0", whiteSpace: "nowrap" }}>⚔️ {powerOf(r).toLocaleString()}</span>
               </div>
@@ -23736,7 +23753,7 @@ export default function CherryAdventure() {
 
       {/* ⭐ bottom status bar — long, 2 lines (EXP + AUTO / stats) */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+        <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom) + 8px)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, pointerEvents: "auto" }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
             <div style={{ flex: 1, position: "relative", height: 16, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
@@ -23764,6 +23781,12 @@ export default function CherryAdventure() {
           pointerEvents: "none", zIndex: 6, willChange: "left, top",
           textShadow: "0 1px 3px rgba(0,0,0,0.6)",
         }}>
+          {/* 🛡️ world top-3 rank shield — sits above the name, vanishes if you drop out */}
+          {ui.myRank >= 1 && ui.myRank <= 3 && (
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 1, animation: "pulse 1s ease-in-out infinite alternate" }}>
+              <RankShield rank={ui.myRank} size={30} />
+            </div>
+          )}
           {ui.playerTitleId && ui.playerTitleId !== "t_none" && (() => {
             const nT = TITLES.find((x) => x.id === ui.playerTitleId);
             if (!nT) return null;

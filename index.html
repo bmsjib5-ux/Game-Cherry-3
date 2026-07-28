@@ -21452,9 +21452,9 @@ function CherryAdventure() {
                 setUi((u) => ({ ...u, netStatus: CN.status }));
                 return;
             }
-            setUi((u) => ({ ...u, globalBoard: rows, netStatus: "ok" }));
-            toast(`🏆 โหลดอันดับโลก ${rows.length} คน`);
             const myIdx = G.pid ? rows.findIndex((r) => r.pid === G.pid) : -1;
+            setUi((u) => ({ ...u, globalBoard: rows, netStatus: "ok", myRank: myIdx >= 0 && myIdx <= 2 ? myIdx + 1 : 0 })); // 🛡️ head shield
+            toast(`🏆 โหลดอันดับโลก ${rows.length} คน`);
             if (myIdx >= 0 && myIdx <= 2 && G.lastRankClaim !== todayStamp()) {
                 G.lastRankClaim = todayStamp();
                 if (G.gainDiamonds)
@@ -21466,12 +21466,15 @@ function CherryAdventure() {
         // 🏆 lightweight world-board fetch for the top-left widget (silent; auto-reload every 10 min)
         G.refreshBoard = async () => {
             if (!CN.enabled()) {
-                setUi((u) => ({ ...u, netEnabled: false }));
+                setUi((u) => ({ ...u, netEnabled: false, myRank: 0 }));
                 return;
             }
             const rows = await CN.leaderboard(5);
-            if (rows)
-                setUi((u) => ({ ...u, globalBoard: rows, netEnabled: true, boardTs: Date.now() }));
+            if (rows) {
+                // 🛡️ show the head shield only while the player sits in the world top-3
+                const myIdx = G.pid ? rows.findIndex((r) => r.pid === G.pid) : -1;
+                setUi((u) => ({ ...u, globalBoard: rows, netEnabled: true, boardTs: Date.now(), myRank: myIdx >= 0 && myIdx <= 2 ? myIdx + 1 : 0 }));
+            }
         };
         G.startBoardPoll = () => {
             G.refreshBoard();
@@ -32925,6 +32928,19 @@ function CherryAdventure() {
             return null;
         return renderTitle(t, size, true);
     };
+    // 🛡️ gold / silver / bronze rank shield (1st / 2nd / 3rd) with the rank number
+    const RankShield = ({ rank, size = 17 }) => {
+        const cols = { 1: ["#ffe9a0", "#f5b81e"], 2: ["#f2f5fa", "#b7c2cf"], 3: ["#f2c79a", "#c67a34"] };
+        const [c1, c2] = cols[rank] || ["#c8bcd8", "#8a7f9a"];
+        const gid = "shg" + rank;
+        return (React.createElement("svg", { width: size, height: size * 1.16, viewBox: "0 0 20 23", style: { display: "block", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.45))" } },
+            React.createElement("defs", null,
+                React.createElement("linearGradient", { id: gid, x1: "0", y1: "0", x2: "0", y2: "1" },
+                    React.createElement("stop", { offset: "0", stopColor: c1 }),
+                    React.createElement("stop", { offset: "1", stopColor: c2 }))),
+            React.createElement("path", { d: "M10 1 L18 4 V11 C18 17 14.4 20.2 10 22 C5.6 20.2 2 17 2 11 V4 Z", fill: `url(#${gid})`, stroke: "rgba(60,40,10,0.55)", strokeWidth: "1.1" }),
+            React.createElement("text", { x: "10", y: "14", textAnchor: "middle", fontSize: "10.5", fontWeight: "900", fill: "#5a3a00", fontFamily: font }, rank)));
+    };
     const toggleMenu = (name) => setUi((u) => {
         const willOpen = !u[name];
         const cleared = {};
@@ -32950,7 +32966,7 @@ function CherryAdventure() {
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`),
         React.createElement("div", { ref: mountRef, style: { width: "100%", height: "100%" } }),
         ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
-        ui.announce && (React.createElement("div", { key: ui.announce.key, style: { position: "absolute", top: 4, left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" } },
+        ui.announce && (React.createElement("div", { key: ui.announce.key, style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" } },
             React.createElement("div", { style: { whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform" } },
                 "\uD83D\uDCE2 ",
                 ui.announce.text))),
@@ -33611,14 +33627,15 @@ function CherryAdventure() {
                         background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
                         boxShadow: "0 5px 16px rgba(90,160,106,0.5)",
                     } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E32\u0E0A\u0E35\u0E1E \u2192")))),
-        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: 10, left: 10, width: 174, maxWidth: "50vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
+        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, marginBottom: 4 } },
                 React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#ffd76a" } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
                 React.createElement("div", { style: { flex: 1 } }),
                 React.createElement("button", { onClick: () => G.refreshBoard && G.refreshBoard(), title: "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A", style: { width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 } }, "\uD83D\uDD04")),
-            (ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 5).map((r, i) => (React.createElement("div", { key: r.pid || i, style: { marginBottom: 3, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" } },
+            (ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 3).map((r, i) => (React.createElement("div", { key: r.pid || i, style: { marginBottom: 4, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, fontSize: 10 } },
-                    React.createElement("span", { style: { width: 15, fontWeight: 800, color: ["#ffd76a", "#cfd8e0", "#e0a060"][i] || "#8a7f9a", textAlign: "center" } }, i + 1),
+                    React.createElement("span", { style: { width: 18, display: "flex", justifyContent: "center", flexShrink: 0 } },
+                        React.createElement(RankShield, { rank: i + 1, size: 17 })),
                     React.createElement("span", { style: { flex: 1, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
                         (CLASSES[r.c] && CLASSES[r.c].emoji) || "🙂",
                         " ",
@@ -33629,12 +33646,12 @@ function CherryAdventure() {
                         (r.ng || 0) > 0 ? React.createElement("span", { style: { color: "#ff9a6a" } },
                             " \u26A1",
                             r.ng) : null)),
-                React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, paddingLeft: 20 } },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, paddingLeft: 23 } },
                     React.createElement("span", { style: { minWidth: 0, overflow: "hidden", flex: 1 } }, boardTitle(r, 9.5)),
                     React.createElement("span", { style: { fontSize: 8.5, color: "#b8a8d0", whiteSpace: "nowrap" } },
                         "\u2694\uFE0F ",
                         powerOf(r).toLocaleString()))))) : (React.createElement("div", { style: { fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" } }, ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด")))),
-        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
+        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: "calc(env(safe-area-inset-bottom) + 8px)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, pointerEvents: "auto" } },
                 React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" } },
                     "Lv.",
@@ -33676,6 +33693,8 @@ function CherryAdventure() {
                 pointerEvents: "none", zIndex: 6, willChange: "left, top",
                 textShadow: "0 1px 3px rgba(0,0,0,0.6)",
             } },
+            ui.myRank >= 1 && ui.myRank <= 3 && (React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 1, animation: "pulse 1s ease-in-out infinite alternate" } },
+                React.createElement(RankShield, { rank: ui.myRank, size: 30 }))),
             ui.playerTitleId && ui.playerTitleId !== "t_none" && (() => {
                 const nT = TITLES.find((x) => x.id === ui.playerTitleId);
                 if (!nT)
