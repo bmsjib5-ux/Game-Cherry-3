@@ -16016,18 +16016,20 @@ export default function CherryAdventure() {
         const shirtMatA = new THREE.MeshStandardMaterial({ color: shirtCol, roughness: 0.62 });
         const pantsMatA = new THREE.MeshStandardMaterial({ color: co.pants, roughness: 0.62 });
         const shoeMatA = new THREE.MeshStandardMaterial({ color: 0x2f333c, roughness: 0.5 });
+        const baseHide = []; // 🤖 base garment/skin meshes the Aegis mech armor replaces (hidden below when class === aegis)
         // ---- torso / pelvis / neck at char's real Y anchors ----
         const torso = latheOf([[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.34], [0.37, 0.48], [0.405, 0.62], [0.415, 0.74], [0.40, 0.86], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]], shirtMatA, 28);
-        torso.position.y = 1.14; torso.scale.set(1.0, 0.8, 0.72); torso.castShadow = true; body.add(torso);
-        const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), pantsMatA); pelvis.scale.set(1.06, 0.6, 0.78); pelvis.position.y = 1.14; body.add(pelvis);
+        torso.position.y = 1.14; torso.scale.set(1.0, 0.8, 0.72); torso.castShadow = true; body.add(torso); baseHide.push(torso);
+        const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), pantsMatA); pelvis.scale.set(1.06, 0.6, 0.78); pelvis.position.y = 1.14; body.add(pelvis); baseHide.push(pelvis);
         const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.62, 16), skinMatA); neck.position.y = 2.1; body.add(neck);
         // ---- legs: hip pivots at char anchors (±0.165, 1.26), scale (1,1.18,1) ----
         const mkLeg = (sx) => {
           const hip = new THREE.Group(); hip.position.set(0.165 * sx, 1.26, 0); hip.scale.set(1, 1.18, 1);
           const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.135, 0.56, 14), pantsMatA); thigh.position.y = -0.30; thigh.castShadow = true; hip.add(thigh);
-          const knee = new THREE.Group(); knee.position.y = -0.56; hip.add(knee);
+          const knee = new THREE.Group(); knee.position.y = -0.56; hip.add(knee); hip.userData.knee = knee; // 🤖 expose for aegis shin/foot armor
           const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.095, 0.44, 14), pantsMatA); calf.position.y = -0.22; knee.add(calf);
           const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 16), shoeMatA); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(0, -0.46, 0.06); knee.add(shoe);
+          baseHide.push(thigh, calf, shoe);
           body.add(hip); return hip;
         };
         grp.userData.legL = mkLeg(-1); grp.userData.legR = mkLeg(1);
@@ -16039,6 +16041,7 @@ export default function CherryAdventure() {
           const elbow = new THREE.Group(); elbow.position.y = -0.5; p.add(elbow);
           const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.055, 0.42, 12), skinMatA); fore.position.y = -0.24; elbow.add(fore);
           const hand = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 14), skinMatA); hand.scale.set(0.9, 1.15, 0.8); hand.position.y = -0.52; elbow.add(hand);
+          baseHide.push(sleeve, upper, fore, hand);
           p.userData.elbow = elbow; body.add(p); return p;
         };
         grp.userData.armL = mkArm(-1); grp.userData.armR = mkArm(1);
@@ -16046,7 +16049,8 @@ export default function CherryAdventure() {
         const headAnchor = new THREE.Group(); headAnchor.position.y = 2.92; headAnchor.scale.setScalar(1.3); body.add(headAnchor);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 22, 20), skinMatA); head.scale.set(1, 1.02, 0.95); head.castShadow = true; headAnchor.add(head);
         const hair = new THREE.Mesh(new THREE.SphereGeometry(0.66, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), new THREE.MeshStandardMaterial({ color: 0x4a3628, roughness: 0.85 })); hair.position.y = 0.05; headAnchor.add(hair);
-        for (const ex of [-0.2, 0.2]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.4 })); eye.position.set(ex, 0.02, 0.55); eye.scale.set(1, 1.3, 0.6); headAnchor.add(eye); }
+        const headFace = [head, hair]; // 🤖 hidden under the aegis helmet
+        for (const ex of [-0.2, 0.2]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.4 })); eye.position.set(ex, 0.02, 0.55); eye.scale.set(1, 1.3, 0.6); headAnchor.add(eye); headFace.push(eye); }
         // 🧬 deep-clone a reusable cosmetic model + clone its materials (so the shared original is never mutated), force-visible
         const cloneCosmetic = (model) => {
           if (!model) return null;
@@ -16069,6 +16073,55 @@ export default function CherryAdventure() {
         if (info.mask && maskModels[info.mask]) { const mc = cloneCosmetic(maskModels[info.mask]); if (mc) headAnchor.add(mc); }
         // ---- 🪽 wings ----
         if (info.wing) { const wg = buildRemoteWings(info.wing); if (wg) body.add(wg); }
+        // ---- 🤖 AEGIS-X mech look: full-body armor + mech helmet replace the base body (mirrors refreshAegisHead exactly) ----
+        if (info.c === "aegis" && !info.hero) {
+          const aWhite = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
+          const aSilver = new THREE.MeshStandardMaterial({ color: 0xa8b0bc, metalness: 0.92, roughness: 0.22 });
+          const aDark = new THREE.MeshStandardMaterial({ color: 0x12151d, metalness: 0.72, roughness: 0.42 });
+          const aPlasma = new THREE.MeshStandardMaterial({ color: 0x6ad8ff, emissive: 0x2ab0f5, emissiveIntensity: 1.2, roughness: 0.25, metalness: 0.3 });
+          // ===== torso shell (body-origin = char-origin, so absolute Y anchors match the singleton) =====
+          const under = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.86, 20), aDark); under.position.y = 1.58; under.scale.set(1.12, 1, 0.95); body.add(under);
+          const backPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.72, 20, 1, true, Math.PI * 0.55, Math.PI * 0.9), aWhite); backPlate.position.y = 1.6; backPlate.scale.set(1.12, 1, 0.98); body.add(backPlate);
+          const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.16, 16), aSilver); collar.position.y = 2.06; body.add(collar);
+          const abx = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.34), aDark); abx.position.set(0, 1.36, 0.06); abx.scale.set(1.1, 1, 1); body.add(abx);
+          for (const sy of [1.42, 1.5]) { const ab = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 6, 16), aPlasma); ab.position.set(0, sy, 0.34); ab.rotation.x = Math.PI / 2; ab.scale.set(1.1, 1, 0.5); body.add(ab); }
+          // ===== pelvis / hip armor =====
+          const apelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.3, 0.46, 18), aDark); apelvis.position.y = 1.06; apelvis.scale.set(1.12, 1, 1.0); body.add(apelvis);
+          const beltR = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.03, 8, 24), aSilver); beltR.position.y = 1.26; beltR.rotation.x = Math.PI / 2; beltR.scale.set(1.1, 1, 0.98); body.add(beltR);
+          const buckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), aPlasma); buckle.scale.set(1, 1, 0.5); buckle.position.set(0, 1.24, 0.38); body.add(buckle);
+          for (const sx of [-1, 1]) { const hipPlate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.26, 0.16), aWhite); hipPlate.position.set(sx * 0.34, 1.06, 0.06); hipPlate.rotation.z = sx * 0.2; body.add(hipPlate); const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.06), aWhite); skirt.position.set(sx * 0.14, 0.94, 0.28); skirt.rotation.x = 0.3; body.add(skirt); }
+          const skirtB = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.24, 0.06), aWhite); skirtB.position.set(0, 0.92, -0.28); skirtB.rotation.x = -0.3; body.add(skirtB);
+          const crotch = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.36), aDark); crotch.position.set(0, 0.9, 0.02); body.add(crotch);
+          // ===== arms: upper + fore plates, elbow joint, mech fists =====
+          for (const arm of [grp.userData.armL, grp.userData.armR]) {
+            const up = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.115, 0.34, 12), aWhite); up.position.y = -0.14; arm.add(up);
+            const upEdge = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.012, 6, 14), aPlasma); upEdge.position.y = -0.02; upEdge.rotation.x = Math.PI / 2; arm.add(upEdge);
+            const fore = arm.userData.elbow || arm;
+            const joint = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), aSilver); joint.position.y = -0.02; fore.add(joint);
+            const fp = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.088, 0.3, 12), aWhite); fp.position.y = -0.24; fore.add(fp);
+            const feEdge = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.012, 6, 14), aPlasma); feEdge.position.y = -0.16; feEdge.rotation.x = Math.PI / 2; fore.add(feEdge);
+            const fist = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.16, 0.16), aDark); fist.position.y = -0.46; fore.add(fist);
+            const knuck = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.16), aSilver); knuck.position.set(0, -0.42, 0.02); fore.add(knuck);
+          }
+          // ===== legs: thigh + shin plates, knee joint, mech boots =====
+          for (const leg of [grp.userData.legL, grp.userData.legR]) {
+            const th = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.3, 12), aWhite); th.position.set(0, -0.12, 0.01); leg.add(th);
+            const knee = leg.userData.knee || leg;
+            const kj = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), aSilver); kj.position.set(0, -0.02, 0.02); knee.add(kj);
+            const kGlow = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), aPlasma); kGlow.position.set(0, -0.02, 0.12); knee.add(kGlow);
+            const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.4, 12), aWhite); shin.position.set(0, -0.26, 0.01); knee.add(shin);
+            const shEdge = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 14), aPlasma); shEdge.position.set(0, -0.14, 0.01); shEdge.rotation.x = Math.PI / 2; knee.add(shEdge);
+            const ankle = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.14, 12), aWhite); ankle.position.set(0, -0.46, 0.01); knee.add(ankle);
+            const foot = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.44), aDark); foot.position.set(0, -0.56, 0.1); knee.add(foot);
+            const toe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.1, 0.14), aSilver); toe.position.set(0, -0.58, 0.32); knee.add(toe);
+            const heel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.12), aWhite); heel.position.set(0, -0.55, -0.12); knee.add(heel);
+          }
+          // hide the base garment/skin body — the mech armor fully replaces it; metallic neck/joint tint
+          baseHide.forEach((m) => (m.visible = false));
+          skinMatA.color.setHex(0x9aa4b2);
+          // 🤖 mech helmet: clone the singleton's exact helm (hide chibi head/hair/eyes underneath) unless a hat is worn
+          if (!info.hat && G.aegisHelm) { const hc = cloneCosmetic(G.aegisHelm); if (hc) { hc.visible = true; hc.traverse((o) => (o.visible = true)); headAnchor.add(hc); headFace.forEach((m) => (m.visible = false)); } }
+        }
         // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
         try {
           let wid = info.w && weaponModels[info.w] ? info.w : null;
