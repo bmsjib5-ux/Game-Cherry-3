@@ -1663,7 +1663,8 @@ export default function CherryAdventure() {
     // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
     // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
     const KEEP_OUT = [
-      { x: 6.5, z: 6.5, r: 3.2 },    // 🌀 warp pad — needs a generous clear ring
+      { x: -24, z: 0, r: 3.0 },      // 🌀 LEFT dimension rift (far west edge) — keep clear
+      { x: 24, z: 0, r: 3.0 },       // 🌀 RIGHT dimension rift (far east edge) — keep clear
       { x: -10, z: -10.5, r: 3.4 },  // 🎣 pond
       { x: -6.6, z: 7.0, r: 1.6 },   // 🚪 house portal
     ];
@@ -9555,16 +9556,16 @@ export default function CherryAdventure() {
       c.strokeText(lv, 180, 118); c.fillText(lv, 180, 118);
       lab.tex.needsUpdate = true;
     };
-    const warpPair = new THREE.Group(); warpPair.position.set(6.5, 0, 6.5);
-    const warpL = makeDimPortal(); warpL.position.set(-1.5, 0, 0); warpPair.add(warpL);
-    const warpR = makeDimPortal(); warpR.position.set(1.5, 0, 0); warpPair.add(warpR);
+    // 🌀 rifts sit at opposite edges of the map — LEFT far-west, RIGHT far-east
+    const warpPair = new THREE.Group(); warpPair.position.set(0, 0, 0);
+    const WARP_LX = -24.0, WARP_RX = 24.0, WARP_PZ = 0;
+    const warpL = makeDimPortal(); warpL.position.set(WARP_LX, 0, WARP_PZ); warpL.rotation.y = Math.PI / 2; warpPair.add(warpL);
+    const warpR = makeDimPortal(); warpR.position.set(WARP_RX, 0, WARP_PZ); warpR.rotation.y = -Math.PI / 2; warpPair.add(warpR);
     const warpLabL = makeWarpLabel(3.05); warpL.add(warpLabL.sp);
     const warpLabR = makeWarpLabel(3.05); warpR.add(warpLabR.sp);
     scene.add(warpPair);
     G.warpGate = warpPair; // 🌀 reference for hiding during battle
     G._warpL = warpL; G._warpR = warpR; G._warpLabL = warpLabL; G._warpLabR = warpLabR;
-    // world positions for proximity checks
-    const WARP_LX = 5.0, WARP_RX = 8.0, WARP_PZ = 6.5;
     G._warpPts = { LX: WARP_LX, RX: WARP_RX, Z: WARP_PZ };
     G.updateWarpLabels = () => {
       const n = BIOMES.length;
