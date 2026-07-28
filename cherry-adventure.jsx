@@ -7565,13 +7565,23 @@ export default function CherryAdventure() {
       for (const sx of [-1, 1]) { const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.02, 0.34, 6), silver); ant.position.set(sx * 0.26, 2.62, -0.16); ant.rotation.z = sx * 0.35; g.add(ant); const tip = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), plasma); tip.position.set(sx * 0.34, 2.78, -0.22); g.add(tip); }
       const halo = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.024, 8, 40), plasma); halo.position.set(0, 2.44, -0.2); halo.rotation.x = Math.PI / 2 - 0.3; g.add(halo);
       const haloGlow = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.06, 8, 40), glowM); haloGlow.position.copy(halo.position); haloGlow.rotation.copy(halo.rotation); g.add(haloGlow);
-      // ===== back booster pack =====
-      const booster = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.16), black); booster.position.set(0, 1.72, -0.4); g.add(booster);
-      for (const sx of [-1, 1]) { const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.16, 8), silver); noz.position.set(sx * 0.1, 1.5, -0.44); g.add(noz); const flame = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 8), glowM); flame.position.set(sx * 0.1, 1.38, -0.44); flame.rotation.x = Math.PI; g.add(flame); }
+      // ===== back jet-booster pack (twin thrusters — flames animate while hovering) =====
+      const booster = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.18), black); booster.position.set(0, 1.72, -0.42); g.add(booster);
+      const boostTrim = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.06, 0.2), plasma); boostTrim.position.set(0, 1.9, -0.42); g.add(boostTrim);
+      const jets = [], jetCores = [];
+      for (const sx of [-1, 1]) {
+        const noz = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.2, 10), silver); noz.position.set(sx * 0.12, 1.48, -0.46); g.add(noz);
+        const nozLip = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.014, 6, 12), plasma); nozLip.position.set(sx * 0.12, 1.39, -0.46); nozLip.rotation.x = Math.PI / 2; g.add(nozLip);
+        // outer flame (soft additive glow) + bright inner core — both point straight down
+        const flame = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.32, 10), glowM); flame.position.set(sx * 0.12, 1.22, -0.46); flame.rotation.x = Math.PI; g.add(flame);
+        const fcore = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.24, 8), led); fcore.position.set(sx * 0.12, 1.24, -0.46); fcore.rotation.x = Math.PI; g.add(fcore);
+        flame.userData.baseY = flame.position.y; fcore.userData.baseY = fcore.position.y;
+        jets.push(flame); jetCores.push(fcore);
+      }
       // ===== 2 orbiting support drones =====
       const drones = [];
       for (let d = 0; d < 2; d++) { const dr = new THREE.Group(); const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), white); dr.add(body); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), led); eye.position.z = 0.08; dr.add(eye); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 6, 16), plasma); ring.rotation.x = Math.PI / 2; dr.add(ring); dr.userData.ph = d * Math.PI; g.add(dr); drones.push(dr); }
-      g.userData = { core, coreGlow, halo, drones };
+      g.userData = { core, coreGlow, halo, drones, jets, jetCores };
       classAccessories.mecha = g;
     }
     Object.values(classAccessories).forEach((g) => { g.visible = false; char.add(g); });
@@ -7671,7 +7681,7 @@ export default function CherryAdventure() {
       const hatOn = !hidden && !!(cos.hat || eq.hat);
       const showHelm = aeg && !hatOn;
       if (G.aegisHelm) G.aegisHelm.visible = showHelm; // a worn hat replaces the helmet
-      if (G.aegisShield) G.aegisShield.visible = aeg;   // the tech shield is a held piece
+      if (G.aegisShield) G.aegisShield.visible = false; // 🛡️❌ no shield — Aegis keeps both hands free / hovers
       if (G._aegisBody) G._aegisBody.forEach((p) => (p.visible = aeg)); // 🤖 full-body mech armor (arms/legs/torso)
       if (G._chibiBody) G._chibiBody.forEach((p) => { if (p) p.visible = !aeg; }); // 🤖 hide the base garment/skin body — the mech armor replaces it
       if (aeg && typeof skinMat !== "undefined" && skinMat) skinMat.color.setHex(0x9aa4b2); // metallic tint for the neck/joints
@@ -16553,6 +16563,29 @@ export default function CherryAdventure() {
         // hair trails behind the motion (strand sway handled by hairSwayParts)
         const hairSway = Math.sin(G.walkPhase - 0.7) * 0.14 * moveAmt - moveAmt * 0.12;
         hairBack.rotation.x += (hairSway * 0.4 - hairBack.rotation.x) * Math.min(1, dt * 6);
+
+        // 🤖🚀 Aegis-X flies on its back thrusters instead of walking — legs tuck & dangle, jets fire, body hovers
+        if (G.cls === "aegis" && !G.heroId && !G.mountId) {
+          const hb = Math.sin(t * 2.4) * 0.05;                          // gentle hover bob
+          char.position.y = 0.52 + hb + moveAmt * 0.1;                  // float off the ground, rise a touch when boosting
+          const dangle = -0.44 - moveAmt * 0.2;                         // legs hang; swing back when boosting forward
+          legL.rotation.x = dangle + Math.sin(t * 2) * 0.05;
+          legR.rotation.x = dangle - Math.sin(t * 2) * 0.05;
+          legL.rotation.z = 0.14; legR.rotation.z = -0.14;              // slight A-splay
+          if (legL.userData.knee) legL.userData.knee.rotation.x = 0.6 + moveAmt * 0.25; // knees tucked up
+          if (legR.userData.knee) legR.userData.knee.rotation.x = 0.6 + moveAmt * 0.25;
+          torso.rotation.z += (0 - torso.rotation.z) * Math.min(1, dt * 10); // cancel the walk sway
+          char.rotation.z += (-turn * 1.5 * moveAmt - char.rotation.z) * Math.min(1, dt * 7); // bank into turns while flying
+          // 🔥 fire the back thrusters — flames lengthen & brighten with speed, flicker constantly
+          const mecha = G.classAccessories && G.classAccessories.mecha;
+          if (mecha && mecha.visible && mecha.userData.jets) {
+            const flick = 0.78 + Math.abs(Math.sin(t * 22)) * 0.22;     // fast flame flicker
+            const len = (1.15 + moveAmt * 1.0) * flick;                  // always a visible plume; longer when boosting
+            mecha.userData.jets.forEach((fl, i) => { fl.scale.set(0.95 + moveAmt * 0.4, len, 0.95 + moveAmt * 0.4); fl.position.y = fl.userData.baseY - (len - 1) * 0.16; fl.material.opacity = 0.6 + moveAmt * 0.35; });
+            const clen = (1.05 + moveAmt * 0.9) * flick;
+            mecha.userData.jetCores.forEach((fc, i) => { fc.scale.set(1, clen, 1); fc.position.y = fc.userData.baseY - (clen - 1) * 0.12; fc.material.emissiveIntensity = 1.5 + moveAmt * 0.7; });
+          }
+        }
 
         // ⚔️🎬 open-world attack swing — overrides the walk pose for a brief strike (mirrors the arena tell)
         if (G._worldSwingT > 0) {
