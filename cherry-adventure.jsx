@@ -15533,12 +15533,14 @@ export default function CherryAdventure() {
     G.pollAnnounce = async () => {
       try {
         if (G.auth.status !== "in" || !CN.enabled()) return;
+        if (G._annStart == null) G._annStart = Date.now(); // ⏱️ ประกาศที่จะแสดง = ตั้งแต่เวลานี้เป็นต้นไปเท่านั้น
         const token = await G._authToken(); if (!token) return;
         const rows = await CN.getMsgs(token, "announce", G._annLastId || 0);
         if (!rows || !rows.length) return;
         G._annLastId = rows[rows.length - 1].id;
         if (!G._annInit) { G._annInit = true; return; } // เข้าเกมครั้งแรกไม่เล่นประกาศย้อนหลัง
-        rows.forEach((m) => { if (m.uid !== G.auth.uid) G.showAnnounce(m.body); });
+        // 📢 แสดงเฉพาะประกาศที่โพสต์หลังเราเข้าเกม (ตามเวลาปัจจุบัน) — ไม่เล่นย้อนหลัง
+        rows.forEach((m) => { if (m.uid !== G.auth.uid && (!m.ts || m.ts >= G._annStart)) G.showAnnounce(m.body); });
       } catch (e) {}
     };
     G.chatSetRoom = (room, label) => {
