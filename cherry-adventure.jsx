@@ -16220,15 +16220,36 @@ export default function CherryAdventure() {
         return buildRemoteAvatar(info); // 🛟 never break the game
       }
     };
+    // 🐾 dispose a remote avatar's buddy pet
+    G._rtDropPet = (a) => { if (a && a.petMesh) { scene.remove(a.petMesh); (G._disposeObj3D && G._disposeObj3D(a.petMesh)); a.petMesh = null; a.petKey = null; } };
+    // 🐾 (re)build a remote avatar's buddy pet from the payload — only rebuilds when the descriptor actually changes
+    G._rtSyncPet = (a, m) => {
+      const pet = m && m.pet;
+      const key = pet && pet.s ? (pet.s + "-" + (pet.st || 1) + "-" + (pet.lv || 1) + "-" + (pet.mu || 0)) : null;
+      if (key === (a.petKey || null)) return;
+      G._rtDropPet(a);
+      if (!pet || !pet.s || !SPECIES[pet.s]) return;
+      try {
+        const pm = buildMonster(pet.s, pet.st || 1);
+        if (G.applyEvoParts) G.applyEvoParts(pm, pet.s, pet.lv || 1); // ✨ evolved form by level
+        if (G.applyMutation) G.applyMutation(pm, pet.mu || 0); // 🧬 mutation
+        pm.scale.multiplyScalar(0.62); // 🐾 same shrink as the local buddy
+        pm.userData.followDist = 1.4 + pm.scale.x * 0.85;
+        pm.position.set((a.tx || 0) - 1.4, 0, (a.tz || 0) + 1.0);
+        vivify(pm); scene.add(pm);
+        a.petMesh = pm; a.petKey = key;
+      } catch (e) { try { console.warn("remote pet build failed", e); } catch (_) {} }
+    };
     // 📥 a position update arrived (from realtime OR a test) — spawn/refresh the avatar
     G._rtOnPos = (m) => {
       if (!m || !m.pid || m.pid === G.pid) return;
       let a = remoteAvatars.get(m.pid);
       if (!a) { const grp = buildFullAvatar(m); grp.position.set(m.x || 0, 0, m.z || 0); scene.add(grp); a = { grp, walk: 0 }; remoteAvatars.set(m.pid, a); } // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
       a.tx = m.x || 0; a.tz = m.z || 0; a.tyaw = m.yaw || 0; a.biome = m.biome; a.moving = !!m.moving; a.last = Date.now();
+      G._rtSyncPet(a, m); // 🐾 keep the buddy pet in sync
     };
-    G._rtRemove = (pid) => { const a = remoteAvatars.get(pid); if (a) { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); } };
-    G._rtClear = () => { remoteAvatars.forEach((a) => { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); }); remoteAvatars.clear(); };
+    G._rtRemove = (pid) => { const a = remoteAvatars.get(pid); if (a) { G._rtDropPet(a); scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); } };
+    G._rtClear = () => { remoteAvatars.forEach((a) => { G._rtDropPet(a); scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); }); remoteAvatars.clear(); };
     // 🎞️ per-frame: interpolate toward the last-known position, walk-cycle, cull stale/other-biome avatars
     G.updateRemoteAvatars = (dt, t) => {
       const prevCount = G._rtOnlineCount || 0;
@@ -16236,9 +16257,10 @@ export default function CherryAdventure() {
       const now = Date.now();
       let vis = 0;
       remoteAvatars.forEach((a, pid) => {
-        if (a.last && now - a.last > 6000) { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); return; }
+        if (a.last && now - a.last > 6000) { G._rtDropPet(a); scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); return; }
         const show = a.biome === G.curBiome && G.mode === "explore";
-        a.grp.visible = show; if (!show) return;
+        a.grp.visible = show; if (a.petMesh) a.petMesh.visible = show;
+        if (!show) return;
         vis++;
         const k = Math.min(1, dt * 8);
         a.grp.position.x += (a.tx - a.grp.position.x) * k;
@@ -16252,6 +16274,18 @@ export default function CherryAdventure() {
         if (a.grp.userData.legL) { a.grp.userData.legL.rotation.x = sw; a.grp.userData.legR.rotation.x = -sw; a.grp.userData.armL.rotation.x = -sw * 0.7; a.grp.userData.armR.rotation.x = sw * 0.7; }
         const _b0 = (a.grp.userData.bodyBaseY != null ? a.grp.userData.bodyBaseY : 0.9); // 🧍‍♂️ full avatars sit at ground (0); simple avatars keep 0.9
         a.grp.userData.body.position.y = _b0 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
+        // 🐾 buddy pet trails behind the avatar (same follow feel as the local buddy)
+        if (a.petMesh) {
+          const fd = a.petMesh.userData.followDist || 1.8;
+          const bx = a.grp.position.x - Math.sin(a.grp.rotation.y) * fd;
+          const bz = a.grp.position.z - Math.cos(a.grp.rotation.y) * fd;
+          a.petMesh.position.x += (bx - a.petMesh.position.x) * Math.min(1, dt * 4);
+          a.petMesh.position.z += (bz - a.petMesh.position.z) * Math.min(1, dt * 4);
+          const bd = Math.atan2(a.grp.position.x - a.petMesh.position.x, a.grp.position.z - a.petMesh.position.z);
+          let bdd = bd - a.petMesh.rotation.y; while (bdd > Math.PI) bdd -= Math.PI * 2; while (bdd < -Math.PI) bdd += Math.PI * 2;
+          a.petMesh.rotation.y += bdd * Math.min(1, dt * 6);
+          if (a.petMesh.userData.body) a.petMesh.userData.body.position.y = (FLOATY[a.petMesh.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 5)) * 0.07;
+        }
       });
       if (vis !== prevCount) { G._rtOnlineCount = vis; setUi((u) => ({ ...u, rtOnline: vis })); } // 👥 how many other players are in this map right now
     };
@@ -16287,8 +16321,10 @@ export default function CherryAdventure() {
         const eq = G.equip || {}, cos = G.costume || {}, hidden = G._gearHidden;
         const look = (s) => ((hidden && s !== "weapon") ? null : ((cos[s] || eq[s]) || null));
         const cu = G.custom || {};
-        // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin; the class accessory derives from c)
-        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+        // 🐾 active pet descriptor (species/stage/level/mutation) so the receiver can rebuild the same buddy
+        let pet = null; if (G.buddy != null && G.petAt) { const p = G.petAt(G.buddy); if (p) pet = { s: p.sp, st: p.stage || 1, lv: p.lv || 1, mu: p.mut || 0 }; }
+        // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin + pet; the class accessory derives from c)
+        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
       } catch (e) {}
     };
     G.rtLeave = () => { try { if (G.rtChannel) { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); G.rtChannel = null; } G._rtClear(); } catch (e) {} };
