@@ -77,7 +77,7 @@ const BIOMES = [
     // 🏖️ ด่านหาดทะเลทราย — Lv 400-500 · หาดทราย + ทะเลคราม
     { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 400, lvMax: 500, ground: 0xf3e0a8, sky: 0x4aa8ee, fog: 0x9fd4f5, pool: ["pooyak", "chalam"], tree: "none", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
     // 🗿 ด่านไททัน — Lv 500-600 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
-    { id: "titan", name: "ดินแดนไททัน", emoji: "🗿", lvMin: 500, lvMax: 600, ground: 0x5a5250, sky: 0x201c1a, fog: 0x2e2824, pool: ["stonetitan", "cyclops"], tree: "dead", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️", night: true },
+    { id: "titan", name: "ลานประลองไททัน", emoji: "🗿", lvMin: 500, lvMax: 600, ground: 0x46592c, sky: 0x8a8c78, fog: 0x9a9c86, pool: ["stonetitan", "cyclops"], tree: "none", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️" },
     // 🌴 ด่านป่าอเมซอน — Lv 600-750 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
     { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 600, lvMax: 750, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
 ];
@@ -422,9 +422,9 @@ Object.assign(SPECIES, {
     chalam: { name: "ฉลามทะเลทราย", emoji: "🦈", color: 0x5a90c0, hp: 310, atk: 34, catch: 0.02, tier: 7, desc: "ฉลามล่าเหยื่อ ว่ายทะลุผืนทราย", animal: "fish", weak: "wind" },
     kraken: { name: "คราเคนเจ้าสมุทร", emoji: "🐙", color: 0x7a4ac0, hp: 470, atk: 44, catch: 0.01, tier: 8, desc: "อสูรหมึกยักษ์แห่งท้องทะเลลึก", animal: "snake", weak: "wind" },
     // 🗿 ดินแดนไททัน (Lv 500-600)
-    stonetitan: { name: "ไททันศิลา", emoji: "🗿", color: 0x8a8078, hp: 380, atk: 39, catch: 0.02, tier: 7, desc: "ยักษ์หินบรรพกาล กายแกร่งดั่งภูผา", animal: "beast", weak: "arcane" },
-    cyclops: { name: "ยักษ์ตาเดียว", emoji: "👹", color: 0xa06a4a, hp: 420, atk: 43, catch: 0.02, tier: 7, desc: "ไซคลอปส์ยักษ์ตาเดียว พละกำลังมหาศาล", animal: "beast", weak: "light" },
-    titanlord: { name: "จอมไททันบรรพกาล", emoji: "⛰️", color: 0x6a5a4a, hp: 580, atk: 50, catch: 0.01, tier: 8, desc: "ราชันไททันผู้สะเทือนปฐพี ตำนานสูงสุด", animal: "beast", weak: "light" },
+    stonetitan: { name: "ไททันกล้ามเหล็ก", emoji: "🗿", color: 0xb03a2c, hp: 380, atk: 39, catch: 0.02, tier: 7, desc: "ยักษ์กล้ามเนื้อ กายสีเลือด หัวกะโหลกอสูร", animal: "beast", weak: "arcane" },
+    cyclops: { name: "ยักษ์กะโหลก", emoji: "👹", color: 0x9a2f8a, hp: 420, atk: 43, catch: 0.02, tier: 7, desc: "อสูรยักษ์กล้ามเนื้อ ตาเพลิงสีคราม", animal: "beast", weak: "light" },
+    titanlord: { name: "จอมไททันบรรพกาล", emoji: "⛰️", color: 0x7a1e18, hp: 580, atk: 50, catch: 0.01, tier: 8, desc: "ราชันยักษ์กล้ามเหล็ก หัวกะโหลกจอมมาร", animal: "beast", weak: "light" },
     // 🌴 ป่าอเมซอน (Lv 600-750) — ป่าดิบชื้น
     amzmonkey: { name: "ลิงจอมโจร", emoji: "🐒", color: 0x8a5a34, hp: 560, atk: 52, catch: 0.02, tier: 8, desc: "ลิงป่าดิบว่องไว ปีนต้นไม้ใหญ่แห่งอเมซอน", animal: "beast", weak: "arcane" },
     piranha: { name: "ปลาปิรันย่า", emoji: "🐟", color: 0xc0503a, hp: 500, atk: 58, catch: 0.02, tier: 8, desc: "ฝูงปลากินเนื้อจอมดุแห่งแม่น้ำอเมซอน", animal: "fish", weak: "ice" },
@@ -435,7 +435,7 @@ Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "ค�
 Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light", amzmonkey: "arcane", piranha: "ice", crocodile: "wind", anaconda: "fire" });
 Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth", amzmonkey: "earth", piranha: "water", crocodile: "water", anaconda: "earth" });
 Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย", amzmonkey: "ตะกุยป่วน", piranha: "รุมงับฝูง", crocodile: "งับขากรรไกรเหล็ก", anaconda: "รัดมรณะ" });
-Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "beast", cyclops: "beast", titanlord: "beast", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "anaconda" });
+Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "titan", cyclops: "titan", titanlord: "titan", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "anaconda" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow") || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert") || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -12208,6 +12208,117 @@ function CherryAdventure() {
                 headZ = hp.z + 0.1;
                 headR = 0.22;
             }
+            else if (shape === "titan") {
+                // 🗿 muscular humanoid giant — red muscle · black armor · blue glow · skull head w/ flesh · stands on 2 legs
+                const blk = new THREE.MeshStandardMaterial({ color: 0x18181c, roughness: 0.7, metalness: 0.3 });
+                const blu = new THREE.MeshStandardMaterial({ color: 0x2a6af5, emissive: 0x1a4ad0, emissiveIntensity: 0.95, roughness: 0.4 });
+                const bone = new THREE.MeshStandardMaterial({ color: 0xe6ddcb, roughness: 0.6 });
+                // 💪 broad muscular torso
+                const torso = latheOf([[0, -0.34], [0.32, -0.28], [0.38, -0.04], [0.34, 0.2], [0.28, 0.42], [0.2, 0.54]], mat, 24);
+                torso.scale.set(1.2, 1, 0.72);
+                torso.position.y = 0.18;
+                torso.castShadow = true;
+                body.add(torso);
+                for (const sx of [-1, 1]) {
+                    const pec = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 14), mat);
+                    pec.scale.set(1, 0.8, 0.7);
+                    pec.position.set(sx * 0.16, 0.3, 0.24);
+                    body.add(pec);
+                }
+                for (let r = 0; r < 3; r++)
+                    for (const sx of [-0.5, 0.5]) {
+                        const ab = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), mat);
+                        ab.position.set(sx * 0.12, 0.1 - r * 0.11, 0.26);
+                        body.add(ab);
+                    }
+                const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.25, 0.15, 20), blk);
+                belt.position.y = -0.08;
+                body.add(belt);
+                const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), blu);
+                core.position.set(0, -0.08, 0.24);
+                body.add(core);
+                // 🦾 shoulders + big arms
+                for (const sx of [-1, 1]) {
+                    const pauld = new THREE.Mesh(new THREE.SphereGeometry(0.21, 16, 14), blk);
+                    pauld.position.set(sx * 0.48, 0.46, 0);
+                    body.add(pauld);
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 8), blu);
+                    spike.position.set(sx * 0.54, 0.64, 0);
+                    spike.rotation.z = sx * -0.3;
+                    body.add(spike);
+                    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.42, 12), mat);
+                    upper.position.set(sx * 0.54, 0.2, 0);
+                    upper.rotation.z = sx * 0.16;
+                    body.add(upper);
+                    const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.4, 12), mat);
+                    fore.position.set(sx * 0.62, -0.18, 0.02);
+                    body.add(fore);
+                    legs.push(fore);
+                    const fist = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 12), blk);
+                    fist.position.set(sx * 0.64, -0.42, 0.04);
+                    body.add(fist);
+                    const band = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.02, 8, 16), blu);
+                    band.position.set(sx * 0.62, -0.04, 0.02);
+                    band.rotation.x = Math.PI / 2;
+                    body.add(band);
+                }
+                // 🦵 two thick legs + black boots
+                for (const sx of [-1, 1]) {
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.34, 12), mat);
+                    thigh.position.set(sx * 0.19, -0.3, 0);
+                    body.add(thigh);
+                    legs.push(thigh);
+                    const kneeb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), blu);
+                    kneeb.position.set(sx * 0.19, -0.46, 0.09);
+                    body.add(kneeb);
+                    const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.3, 12), mat);
+                    shin.position.set(sx * 0.19, -0.54, 0.02);
+                    body.add(shin);
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.13, 0.32), blk);
+                    boot.position.set(sx * 0.19, -0.66, 0.06);
+                    body.add(boot);
+                }
+                // 💀 skull head with flesh patches + horns + glowing blue eyes
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 18), bone);
+                skull.position.set(0, 0.82, 0.02);
+                skull.scale.set(1, 1.05, 1);
+                skull.castShadow = true;
+                body.add(skull);
+                const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.18), bone);
+                jaw.position.set(0, 0.65, 0.08);
+                body.add(jaw);
+                for (let k = 0; k < 5; k++) {
+                    const a = k / 5 * Math.PI * 2;
+                    const flesh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), mat);
+                    flesh.scale.set(1, 1, 0.4);
+                    flesh.position.set(Math.cos(a) * 0.16, 0.86 + Math.sin(a) * 0.1, 0.13);
+                    body.add(flesh);
+                }
+                for (let k = 0; k < 4; k++) {
+                    const tth = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.055, 4), bone);
+                    tth.position.set(-0.05 + k * 0.033, 0.63, 0.15);
+                    tth.rotation.x = Math.PI;
+                    body.add(tth);
+                }
+                g.userData.customFace = true;
+                for (const sx of [-0.09, 0.09]) {
+                    const socket = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), blk);
+                    socket.position.set(sx, 0.86, 0.18);
+                    body.add(socket);
+                    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), blu);
+                    glow.position.set(sx, 0.86, 0.22);
+                    body.add(glow);
+                }
+                for (const sx of [-1, 1]) {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.24, 8), blk);
+                    horn.position.set(sx * 0.16, 1.0, 0);
+                    horn.rotation.z = sx * -0.42;
+                    body.add(horn);
+                }
+                headY = 0.86;
+                headZ = 0.22;
+                headR = 0.24;
+            }
             else { // wisp 👻🌪️
                 // tapered, trailing body — no legs, no hard bottom
                 mat.transparent = true;
@@ -13799,7 +13910,108 @@ function CherryAdventure() {
         G.amazonDecor = amazonDecor;
         G.amazonColliders = amazonColliders;
         G.amazonMist = amazonMist;
-        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor); // 🌳 hide during battle too
+        // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
+        const titanDecor = new THREE.Group();
+        titanDecor.visible = false;
+        scene.add(titanDecor);
+        const titanColliders = [];
+        // 🟩🟫 green + brown ground patches
+        const gGreen = new THREE.MeshStandardMaterial({ color: 0x3f5a2a, roughness: 1 });
+        const gBrown = new THREE.MeshStandardMaterial({ color: 0x5a4630, roughness: 1 });
+        for (let i = 0; i < 18; i++) {
+            const a = Math.random() * Math.PI * 2, r = Math.random() * (FIELD_R - 2);
+            const patch = new THREE.Mesh(new THREE.CircleGeometry(rnd(1.6, 3.6), 16), i % 2 ? gBrown : gGreen);
+            patch.rotation.x = -Math.PI / 2;
+            patch.position.set(Math.cos(a) * r, 0.02 + Math.random() * 0.008, Math.sin(a) * r);
+            patch.userData.noHide = true;
+            titanDecor.add(patch);
+        }
+        // 🧱 high surrounding wall (open cylinder) + support pillars + crenellations
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x6a6258, roughness: 0.95, side: THREE.DoubleSide, flatShading: true });
+        const wallMatD = new THREE.MeshStandardMaterial({ color: 0x4a443c, roughness: 0.98, flatShading: true });
+        const wall = new THREE.Mesh(new THREE.CylinderGeometry(FIELD_R + 1.6, FIELD_R + 1.9, 12, 52, 1, true), wallMat);
+        wall.position.y = 6;
+        wall.userData.noHide = true;
+        titanDecor.add(wall);
+        for (let k = 0; k < 44; k++) {
+            const a = k / 44 * Math.PI * 2;
+            const m2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.3), wallMatD);
+            m2.position.set(Math.cos(a) * (FIELD_R + 1.7), 12, Math.sin(a) * (FIELD_R + 1.7));
+            m2.rotation.y = -a;
+            m2.userData.noHide = true;
+            titanDecor.add(m2);
+        }
+        for (let k = 0; k < 12; k++) {
+            const a = k / 12 * Math.PI * 2;
+            const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.15, 12, 10), wallMatD);
+            pil.position.set(Math.cos(a) * (FIELD_R + 1.3), 6, Math.sin(a) * (FIELD_R + 1.3));
+            pil.userData.noHide = true;
+            titanDecor.add(pil);
+        }
+        // ⚔️ giant weapons planted point-down in the ground (hilt up)
+        const steelMat = new THREE.MeshStandardMaterial({ color: 0xb8c0cc, metalness: 0.85, roughness: 0.3 });
+        const steelD = new THREE.MeshStandardMaterial({ color: 0x7a828e, metalness: 0.8, roughness: 0.4 });
+        const hiltMat = new THREE.MeshStandardMaterial({ color: 0x4a2f1a, roughness: 0.85 });
+        const goldM = new THREE.MeshStandardMaterial({ color: 0xd0a83e, metalness: 0.7, roughness: 0.35 });
+        const makeGiantSword = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            const bl = rnd(3.6, 5.2);
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.5, bl, 0.14), steelMat);
+            blade.position.y = 1.4 - bl / 2;
+            blade.castShadow = true;
+            g.add(blade);
+            const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.08, bl * 0.8, 0.16), steelD);
+            fuller.position.y = 1.4 - bl / 2;
+            g.add(fuller);
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.22, 0.3), goldM);
+            guard.position.y = 1.5;
+            g.add(guard);
+            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.8, 10), hiltMat);
+            grip.position.y = 1.95;
+            g.add(grip);
+            const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 12), goldM);
+            pommel.position.y = 2.42;
+            g.add(pommel);
+            g.position.set(x, 0, z);
+            g.rotation.z = rnd(-0.28, 0.28);
+            g.rotation.y = Math.random() * Math.PI;
+            titanDecor.add(g);
+            titanColliders.push({ x, z, r: 0.6 });
+        };
+        const makeGiantAxe = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 4.4, 10), hiltMat);
+            haft.position.y = 1.0;
+            haft.castShadow = true;
+            g.add(haft);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.8, 0.5), steelD);
+            head.position.set(0, 2.6, 0.2);
+            g.add(head);
+            const bladeA = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.14, 3, 1, false, -0.4, 1.4), steelMat);
+            bladeA.rotation.z = Math.PI / 2;
+            bladeA.position.set(0, 2.6, 0.55);
+            g.add(bladeA);
+            g.position.set(x, 0, z);
+            g.rotation.z = rnd(-0.18, 0.18);
+            g.rotation.y = Math.random() * Math.PI;
+            titanDecor.add(g);
+            titanColliders.push({ x, z, r: 0.55 });
+        };
+        for (let i = 0; i < 6; i++) {
+            const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * (FIELD_R - 8);
+            makeGiantSword(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 3; i++) {
+            const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (FIELD_R - 9);
+            makeGiantAxe(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        G.titanDecor = titanDecor;
+        G.titanColliders = titanColliders;
+        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor, titanDecor); // 🌳 hide during battle too
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -14105,6 +14317,7 @@ function CherryAdventure() {
             const isSky = b.id === "sky";
             const isBeach = b.id === "beach";
             const isAmazon = b.id === "amazon";
+            const isTitan = b.id === "titan";
             const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon"; // 🔥😇🌙 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
@@ -14126,9 +14339,11 @@ function CherryAdventure() {
                 G.beachDecor.visible = isBeach;
             if (G.amazonDecor)
                 G.amazonDecor.visible = isAmazon;
+            if (G.titanDecor)
+                G.titanDecor.visible = isTitan;
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.sceneryObjects)
-                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isEndgame));
+                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isEndgame));
             // 🧭 obstacles the player must walk around in this biome (for collision + auto-steer)
             G.biomeColliders = isDesert ? (G.desertColliders || [])
                 : isSnow ? (G.snowColliders || [])
@@ -14137,10 +14352,11 @@ function CherryAdventure() {
                             : isSky ? (G.skyColliders || [])
                                 : isBeach ? (G.beachColliders || [])
                                     : isAmazon ? (G.amazonColliders || [])
-                                        : b.id === "hell" ? (G.hellColliders || [])
-                                            : b.id === "heaven" ? (G.heavenColliders || [])
-                                                : b.id === "moon" ? (G.moonColliders || [])
-                                                    : [];
+                                        : isTitan ? (G.titanColliders || [])
+                                            : b.id === "hell" ? (G.hellColliders || [])
+                                                : b.id === "heaven" ? (G.heavenColliders || [])
+                                                    : b.id === "moon" ? (G.moonColliders || [])
+                                                        : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -22936,8 +23152,9 @@ function CherryAdventure() {
                         const isSky = !preview && b.id === "sky";
                         const isBeach = !preview && b.id === "beach";
                         const isAmazon = !preview && b.id === "amazon";
+                        const isTitan = !preview && b.id === "titan";
                         if (G.sceneryObjects)
-                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon));
+                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan));
                         wilds.forEach((m) => (m.visible = !preview));
                         if (G.desertDecor)
                             G.desertDecor.visible = isDesert;
@@ -22953,6 +23170,8 @@ function CherryAdventure() {
                             G.beachDecor.visible = isBeach;
                         if (G.amazonDecor)
                             G.amazonDecor.visible = isAmazon;
+                        if (G.titanDecor)
+                            G.titanDecor.visible = isTitan;
                         if (G.warpGate)
                             G.warpGate.visible = !preview;
                         if (G.npc)
