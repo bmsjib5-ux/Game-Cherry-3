@@ -7699,6 +7699,21 @@ export default function CherryAdventure() {
         if (G._chibiMouths && G._chibiMouths.smile) G._chibiMouths.smile.visible = true;
       }
     };
+    // 🌈 collect every blue plasma-glow accent across the whole Aegis rig (helmet, mecha pack, body armor,
+    //     shield, gun, jets) so they can shimmer through the RGB spectrum instead of a static electric-blue.
+    //     Red materials (the eyes) are skipped — they stay red.
+    {
+      const rgb = new Set();
+      const takeMat = (m) => {
+        if (!m || !m.color) return;
+        if (m.emissive) { if (m.emissive.b > 0.15 && m.emissive.b >= m.emissive.r * 0.9 && m.emissive.b >= m.emissive.g * 0.6) rgb.add(m); }
+        else if (m.blending === THREE.AdditiveBlending && m.color.b > m.color.r && m.color.b > 0.25) rgb.add(m);
+      };
+      const scan = (root) => { if (!root) return; root.traverse((o) => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(takeMat); }); };
+      scan(G.aegisHelm); scan(G.classAccessories && G.classAccessories.mecha); scan(G.aegisShield); scan(weaponModels.cx);
+      (G._aegisBody || []).forEach((p) => (Array.isArray(p.material) ? p.material : [p.material]).forEach(takeMat));
+      G._aegisRgbMats = Array.from(rgb).map((m) => ({ m, emi: m.emissive ? m.emissiveIntensity : null, op: m.opacity }));
+    }
 
     // 🚫 no overlap: recompute class-look piece visibility so equipped gear replaces it
     //   - outfit slot → hides the class body armor/accessory + shield
@@ -10445,6 +10460,48 @@ export default function CherryAdventure() {
         ring.position.y = 1.4; g.add(ring);
         dur = 0.4;
         update = (pr) => { streak.material.opacity = 0.9 * (1 - pr); streak.scale.x = 1 + pr; ring.scale.setScalar(1 + pr * 2.5); ring.material.opacity = 1 - pr; };
+      } else if (fxType === "plasmadash") {
+        // 🤖⚡ AAA Plasma Dash — supersonic dash streak → afterimages → circular plasma explosion + lightning arcs + hex shards
+        const bright = 0xaef0ff;
+        const add = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false });
+        // ⚡ high-speed plasma trail streak across the battlefield
+        const trail = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.26, 0.26), add(col, 0.85)); trail.position.set(0, 1.4, 0); g.add(trail);
+        const trailCore = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.09, 0.09), add(bright)); trailCore.position.set(0, 1.4, 0); g.add(trailCore);
+        // 👻 afterimages — dim ghost streaks trailing behind
+        const ghosts = [];
+        for (let i = 0; i < 3; i++) { const gh = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 0.06), add(col, 0.35)); gh.position.set(-0.9 - i * 0.55, 1.4, 0); g.add(gh); ghosts.push(gh); }
+        // 💥 circular plasma explosion — ring + bright flash core
+        const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.1, 10, 30), add(col)); ring1.position.y = 1.4; g.add(ring1);
+        const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.05, 8, 24), add(bright)); ring2.position.y = 1.4; ring2.rotation.x = Math.PI / 2; g.add(ring2);
+        const flash = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 14), add(bright, 0.95)); flash.position.y = 1.4; g.add(flash);
+        // 🌊 ground energy shockwave
+        const shock = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.52, 36), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })); shock.rotation.x = -Math.PI / 2; shock.position.y = 0.05; g.add(shock);
+        // ⚡ blue lightning arcs radiating outward
+        const arcs = [];
+        for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; const pts = []; for (let k = 0; k <= 5; k++) { const rr = k * 0.36; pts.push(new THREE.Vector3(Math.cos(a) * rr + (Math.random() - 0.5) * 0.22, 1.4 + (Math.random() - 0.5) * 0.34, Math.sin(a) * rr + (Math.random() - 0.5) * 0.22)); } const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: bright, transparent: true })); g.add(ln); arcs.push(ln); }
+        // ⬡ hexagonal holographic fragments shatter outward
+        const hexes = [];
+        for (let i = 0; i < 12; i++) { const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.02, 6), add(col, 0.9)); const a = Math.random() * Math.PI * 2, r = 0.2; hx.position.set(Math.cos(a) * r, 1.4, Math.sin(a) * r); hx.rotation.x = Math.PI / 2; hx.userData = { vx: Math.cos(a) * (1.6 + Math.random() * 2.2), vz: Math.sin(a) * (1.6 + Math.random() * 2.2), vy: 0.6 + Math.random() * 2.2, rx: (Math.random() - 0.5) * 8, ry: (Math.random() - 0.5) * 8 }; g.add(hx); hexes.push(hx); }
+        // ✨ scattering sparks
+        const sparks = [];
+        for (let i = 0; i < 20; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), add(bright)); sp.position.set(0, 1.4, 0); const a = Math.random() * Math.PI * 2, s2 = 2 + Math.random() * 3.4; sp.userData = { vx: Math.cos(a) * s2, vz: Math.sin(a) * s2, vy: 1 + Math.random() * 3 }; g.add(sp); sparks.push(sp); }
+        const light = new THREE.PointLight(col, 3.2, 7.5); light.position.y = 1.4; g.add(light);
+        G._camShake = Math.max(G._camShake || 0, 0.6); // strong camera shake
+        dur = 0.85;
+        update = (pr) => {
+          const tA = pr < 0.28 ? pr / 0.28 : 1, tF = Math.max(0, 1 - (pr - 0.18) / 0.82);
+          trail.material.opacity = 0.85 * tF * tA; trail.scale.x = 0.4 + pr * 1.3; trailCore.material.opacity = tF * tA; trailCore.scale.x = trail.scale.x;
+          ghosts.forEach((gh, i) => { gh.material.opacity = 0.35 * Math.max(0, 1 - pr * 1.7) * (1 - i * 0.22); gh.position.x = -0.9 - i * 0.55 - pr * 1.6; });
+          const ep = Math.max(0, (pr - 0.28) / 0.72);
+          ring1.scale.setScalar(1 + ep * 6.5); ring1.material.opacity = 0.9 * (1 - ep);
+          ring2.scale.setScalar(1 + ep * 5); ring2.material.opacity = 0.85 * (1 - ep); ring2.rotation.z = ep * 5;
+          flash.scale.setScalar(1 + ep * 3.2); flash.material.opacity = 0.95 * Math.max(0, 1 - ep * 1.5);
+          shock.scale.setScalar(1 + ep * 7.5); shock.material.opacity = 0.8 * (1 - ep);
+          arcs.forEach((ln) => { ln.material.opacity = (1 - ep) * (0.55 + Math.random() * 0.45); ln.scale.setScalar(1 + ep * 3.2); });
+          hexes.forEach((hx) => { hx.position.x += hx.userData.vx * 0.03; hx.position.z += hx.userData.vz * 0.03; hx.userData.vy -= 0.12; hx.position.y += hx.userData.vy * 0.03; hx.rotation.x += hx.userData.rx * 0.05; hx.rotation.y += hx.userData.ry * 0.05; hx.material.opacity = 0.9 * (1 - pr); hx.scale.setScalar(Math.max(0.1, 1 - pr * 0.6)); });
+          sparks.forEach((sp) => { sp.position.x += sp.userData.vx * 0.03; sp.position.z += sp.userData.vz * 0.03; sp.userData.vy -= 0.18; sp.position.y += sp.userData.vy * 0.03; sp.material.opacity = 1 - pr; });
+          light.intensity = 3.2 * (1 - pr);
+        };
       } else if (fxType === "snipe") {
         // 💥 crit starburst
         const rays = [];
@@ -13587,6 +13644,7 @@ export default function CherryAdventure() {
         s_double: "bleedstab", s_poison: "poisonknives", s_shadow: "shadow", s_evade: "shadowdance",
         l_thrust: "pierce", l_sweep: "multi", l_quake: "earthsplit",
       };
+      if (sk.id === "g_dash") return "plasmadash"; // 🤖⚡ AI Mecha plasma dash
       if (m[sk.id]) return m[sk.id];
       if (sk.burn) return "fire";
       if (sk.freeze) return "ice";
@@ -15540,6 +15598,15 @@ export default function CherryAdventure() {
         if (G.aegisHelmEyeGlows) G.aegisHelmEyeGlows.forEach((g) => (g.material.opacity = 0.2 + beat * 0.7));
         if (G.aegisShieldCore) G.aegisShieldCore.material.opacity = 0.35 + Math.abs(Math.sin(t * 2.2)) * 0.2;
       }
+      // 🌈 aegis whole-body RGB shimmer — every plasma accent cycles the hue + flickers (แสงวูบวาบ)
+      if (G._aegisRgbMats && !G.heroId && G.cls === "aegis") {
+        const flick = 0.55 + Math.abs(Math.sin(t * 17)) * 0.45; // fast วูบวาบ flicker
+        G._aegisRgbMats.forEach((r, i) => {
+          const hue = ((t * 0.16) + i * 0.05) % 1; // flowing rainbow, offset per accent
+          r.m.color.setHSL(hue, 1, 0.6);
+          if (r.emi != null) r.m.emissive.setHSL(hue, 1, 0.5 * flick + 0.12);
+        });
+      }
       // 👗 class outfit accessories: flutter cloth + spin mage star
       if (G._classAcc && G.classAccessories) {
         const acc = G.classAccessories[G._classAcc];
@@ -16578,8 +16645,9 @@ export default function CherryAdventure() {
           legL.position.x = -0.3; legR.position.x = 0.3;                // held apart (parallel stance)
           if (legL.userData.knee) legL.userData.knee.rotation.x = 0.1;  // knees nearly straight
           if (legR.userData.knee) legR.userData.knee.rotation.x = 0.1;
-          // 🙌 hands stay steady while hovering — no walk swing (gun arm held forward, off-hand relaxed)
-          armR.rotation.x = -0.16; armL.rotation.x = 0.04; armR.rotation.z = 0; armL.rotation.z = 0;
+          // 🙌 hands steady while hovering — arms angled OUT away from the torso (no walk swing)
+          armR.rotation.x = -0.16; armL.rotation.x = 0.04;
+          armR.rotation.z = 0.42; armL.rotation.z = -0.42; // splay both arms outward from the body
           if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.24;
           if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.2;
           torso.rotation.z += (0 - torso.rotation.z) * Math.min(1, dt * 10); // cancel the walk sway
