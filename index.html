@@ -75,7 +75,7 @@ const BIOMES = [
     // 🍬 ด่านขนมหวาน — Lv 300-400 · โทนพาสเทลหวานแหวว สว่างสดใส
     { id: "candy", name: "แดนขนมหวาน", emoji: "🍬", lvMin: 300, lvMax: 400, ground: 0xf7c8e0, sky: 0xfff2fa, fog: 0xffe4f2, pool: ["gummy", "cupcake"], tree: "none", boss: "candyking", bossName: "ราชาขนมหวาน 🍭", bright: true },
     // 🏖️ ด่านหาดทะเลทราย — Lv 400-500 · หาดทราย + ทะเลคราม
-    { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 400, lvMax: 500, ground: 0xf0dca0, sky: 0xbfe8ff, fog: 0xd8f0ff, pool: ["pooyak", "chalam"], tree: "dead", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
+    { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 400, lvMax: 500, ground: 0xf3e0a8, sky: 0x4aa8ee, fog: 0x9fd4f5, pool: ["pooyak", "chalam"], tree: "none", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
     // 🗿 ด่านไททัน — Lv 500-600 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
     { id: "titan", name: "ดินแดนไททัน", emoji: "🗿", lvMin: 500, lvMax: 600, ground: 0x5a5250, sky: 0x201c1a, fog: 0x2e2824, pool: ["stonetitan", "cyclops"], tree: "dead", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️", night: true },
 ];
@@ -13072,7 +13072,208 @@ function CherryAdventure() {
         G.moonMeteors = moonMeteors;
         G.moonDecor = moonDecor;
         G.moonColliders = moonColliders;
-        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor); // 🌳 hide during battle too
+        // 🏖️ BEACH DECOR — coconut palms, blue sea + foam shore, sandcastles, sea rocks, white clouds (map: beach)
+        const beachDecor = new THREE.Group();
+        beachDecor.visible = false;
+        scene.add(beachDecor);
+        const beachColliders = [];
+        // 🌊 the sea — a wide azure ring around the sandy island, out to the horizon
+        const seaMat = new THREE.MeshStandardMaterial({ color: 0x1f8fd8, roughness: 0.28, metalness: 0.12, transparent: true, opacity: 0.94 });
+        const sea = new THREE.Mesh(new THREE.RingGeometry(28.5, 230, 84, 1), seaMat);
+        sea.rotation.x = -Math.PI / 2;
+        sea.position.y = 0.06;
+        sea.userData.noHide = true;
+        beachDecor.add(sea);
+        // deeper blue further out
+        const seaDeep = new THREE.Mesh(new THREE.RingGeometry(70, 230, 84, 1), new THREE.MeshStandardMaterial({ color: 0x1466ad, roughness: 0.3, metalness: 0.12, transparent: true, opacity: 0.95 }));
+        seaDeep.rotation.x = -Math.PI / 2;
+        seaDeep.position.y = 0.055;
+        seaDeep.userData.noHide = true;
+        beachDecor.add(seaDeep);
+        // 🤍 lapping foam ring at the shoreline
+        const beachFoam = new THREE.Mesh(new THREE.RingGeometry(27.6, 29.4, 84), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+        beachFoam.rotation.x = -Math.PI / 2;
+        beachFoam.position.y = 0.075;
+        beachFoam.userData.noHide = true;
+        beachDecor.add(beachFoam);
+        G.beachSea = sea;
+        G.beachFoam = beachFoam;
+        // 🥥 coconut palm tree — curved trunk + drooping fronds + coconuts
+        const palmTrunk = new THREE.MeshStandardMaterial({ color: 0x9a6a3a, roughness: 0.9 });
+        const palmTrunkD = new THREE.MeshStandardMaterial({ color: 0x7a4f2a, roughness: 0.95 });
+        const frondMat = new THREE.MeshStandardMaterial({ color: 0x3aa83e, roughness: 0.8, side: THREE.DoubleSide, flatShading: true });
+        const frondMatD = new THREE.MeshStandardMaterial({ color: 0x2c8532, roughness: 0.85, side: THREE.DoubleSide, flatShading: true });
+        const coconutMat = new THREE.MeshStandardMaterial({ color: 0x5f3d22, roughness: 0.85 });
+        const palmCrowns = [];
+        const makePalm = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const p = new THREE.Group();
+            const h = rnd(2.8, 4.0);
+            const la = Math.random() * Math.PI * 2, lean = rnd(0.06, 0.16);
+            const segN = 6;
+            let px = 0, pz = 0, py = 0;
+            for (let k = 0; k < segN; k++) {
+                const sh = h / segN;
+                const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.12 - k * 0.008, 0.15 - k * 0.008, sh + 0.02, 8), k % 2 ? palmTrunk : palmTrunkD);
+                const bend = k * lean;
+                px += Math.cos(la) * bend * 0.14;
+                pz += Math.sin(la) * bend * 0.14;
+                seg.position.set(px, py + sh / 2, pz);
+                seg.rotation.z = -Math.cos(la) * bend;
+                seg.rotation.x = Math.sin(la) * bend;
+                seg.castShadow = true;
+                p.add(seg);
+                py += sh;
+            }
+            // 🌴 crown of drooping fronds
+            const crown = new THREE.Group();
+            crown.position.set(px, py, pz);
+            for (let k = 0; k < 7; k++) {
+                const a = (k / 7) * Math.PI * 2;
+                const piv = new THREE.Group();
+                piv.rotation.y = a;
+                piv.rotation.z = -0.38;
+                const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.24, 1.75, 4), k % 2 ? frondMat : frondMatD);
+                leaf.scale.set(1, 1, 0.3);
+                leaf.rotation.z = -Math.PI / 2;
+                leaf.position.x = 0.9;
+                leaf.castShadow = true;
+                piv.add(leaf);
+                crown.add(piv);
+            }
+            // 🥥 coconuts under the crown
+            for (let k = 0; k < 3; k++) {
+                const a = (k / 3) * Math.PI * 2 + 0.5;
+                const co = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), coconutMat);
+                co.position.set(Math.cos(a) * 0.16, -0.12, Math.sin(a) * 0.16);
+                crown.add(co);
+            }
+            crown.userData = { ph: Math.random() * 6 };
+            p.add(crown);
+            palmCrowns.push(crown);
+            p.position.set(x, 0, z);
+            p.scale.setScalar(rnd(0.9, 1.25));
+            beachDecor.add(p);
+            beachColliders.push({ x, z, r: 0.4 });
+        };
+        // 🏰 sandcastle — stacked sand blocks + corner towers + keep + flag
+        const sandBlock = new THREE.MeshStandardMaterial({ color: 0xe8c98a, roughness: 1 });
+        const sandBlockD = new THREE.MeshStandardMaterial({ color: 0xd6b06e, roughness: 1 });
+        const makeSandcastle = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, 1.7), sandBlock);
+            base.position.y = 0.25;
+            base.castShadow = true;
+            g.add(base);
+            const base2 = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.5, 1.15), sandBlockD);
+            base2.position.y = 0.72;
+            base2.castShadow = true;
+            g.add(base2);
+            for (const [sx, sz] of [[-0.72, -0.72], [0.72, -0.72], [-0.72, 0.72], [0.72, 0.72]]) {
+                const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.95, 10), sandBlock);
+                tw.position.set(sx, 0.72, sz);
+                tw.castShadow = true;
+                g.add(tw);
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(0.27, 0.42, 10), sandBlockD);
+                roof.position.set(sx, 1.3, sz);
+                g.add(roof);
+            }
+            const keep = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 1.15, 12), sandBlock);
+            keep.position.y = 1.2;
+            keep.castShadow = true;
+            g.add(keep);
+            const keepRoof = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.62, 12), sandBlockD);
+            keepRoof.position.y = 2.08;
+            g.add(keepRoof);
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6), new THREE.MeshStandardMaterial({ color: 0x8a6a4a }));
+            pole.position.y = 2.62;
+            g.add(pole);
+            const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.2), new THREE.MeshStandardMaterial({ color: 0xf0546a, side: THREE.DoubleSide, roughness: 0.7 }));
+            flag.position.set(0.16, 2.78, 0);
+            g.add(flag);
+            g.position.set(x, 0, z);
+            g.rotation.y = Math.random() * Math.PI;
+            beachDecor.add(g);
+            beachColliders.push({ x, z, r: 1.05 });
+        };
+        // 🪨 sea rocks (โขดหิน) — grey boulder clusters near the shore
+        const seaRock = new THREE.MeshStandardMaterial({ color: 0x8b929a, roughness: 1, flatShading: true });
+        const seaRockD = new THREE.MeshStandardMaterial({ color: 0x69707a, roughness: 1, flatShading: true });
+        const makeSeaRocks = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            const n = 2 + (Math.random() * 3 | 0);
+            for (let k = 0; k < n; k++) {
+                const r = rnd(0.4, 1.0);
+                const rk = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), k % 2 ? seaRock : seaRockD);
+                rk.position.set(rnd(-0.7, 0.7), r * 0.4, rnd(-0.7, 0.7));
+                rk.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+                rk.scale.y = rnd(0.6, 0.9);
+                rk.castShadow = true;
+                g.add(rk);
+            }
+            g.position.set(x, 0, z);
+            beachDecor.add(g);
+            beachColliders.push({ x, z, r: 0.85 });
+        };
+        // ⭐🐚 little sand details — starfish + shells scattered on the beach
+        const makeSandDetail = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            if (Math.random() < 0.5) {
+                const star = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.04, 5), new THREE.MeshStandardMaterial({ color: 0xf0925a, roughness: 0.8 }));
+                star.rotation.x = -Math.PI / 2;
+                star.rotation.z = Math.random() * 6;
+                star.position.set(x, 0.03, z);
+                beachDecor.add(star);
+            }
+            else {
+                const sh = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0xffe0ea, roughness: 0.7 }));
+                sh.rotation.x = -Math.PI / 2;
+                sh.position.set(x, 0.02, z);
+                sh.scale.set(1, 1, 0.7);
+                beachDecor.add(sh);
+            }
+        };
+        // ☁️ fluffy white clouds drifting across the blue sky
+        const beachCloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.94, emissive: 0xdcecff, emissiveIntensity: 0.12 });
+        const beachClouds = [];
+        // scatter everything
+        for (let i = 0; i < 9; i++) {
+            const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4);
+            makePalm(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 7; i++) {
+            const a = Math.random() * Math.PI * 2, r = 18 + Math.random() * (FIELD_R - 19);
+            makeSeaRocks(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        makeSandcastle(rnd(-8, 8), rnd(-8, 8));
+        makeSandcastle(rnd(-16, 16), rnd(-16, 16));
+        for (let i = 0; i < 14; i++) {
+            const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3);
+            makeSandDetail(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 9; i++) {
+            const cl = new THREE.Group();
+            for (let k = 0; k < 3 + (Math.random() * 3 | 0); k++) {
+                const puff = new THREE.Mesh(new THREE.SphereGeometry(rnd(0.8, 1.5), 8, 8), beachCloudMat);
+                puff.position.set(rnd(-1.3, 1.3), rnd(-0.2, 0.2), rnd(-0.9, 0.9));
+                cl.add(puff);
+            }
+            cl.position.set(rnd(-FIELD_R, FIELD_R), rnd(6.5, 12), rnd(-FIELD_R, FIELD_R));
+            cl.userData = { sp: rnd(0.3, 0.7), noHide: true };
+            beachDecor.add(cl);
+            beachClouds.push(cl);
+        }
+        G.beachDecor = beachDecor;
+        G.beachColliders = beachColliders;
+        G.beachClouds = beachClouds;
+        G.palmCrowns = palmCrowns;
+        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor); // 🌳 hide during battle too
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -13345,6 +13546,7 @@ function CherryAdventure() {
             const isCave = b.id === "cave";
             const isVolcano = b.id === "volcano";
             const isSky = b.id === "sky";
+            const isBeach = b.id === "beach";
             const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon"; // 🔥😇🌙 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
@@ -13362,19 +13564,22 @@ function CherryAdventure() {
                 G.heavenDecor.visible = b.id === "heaven";
             if (G.moonDecor)
                 G.moonDecor.visible = b.id === "moon";
+            if (G.beachDecor)
+                G.beachDecor.visible = isBeach;
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.sceneryObjects)
-                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isEndgame));
+                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isEndgame));
             // 🧭 obstacles the player must walk around in this biome (for collision + auto-steer)
             G.biomeColliders = isDesert ? (G.desertColliders || [])
                 : isSnow ? (G.snowColliders || [])
                     : isCave ? (G.caveColliders || [])
                         : isVolcano ? (G.volcanoColliders || [])
                             : isSky ? (G.skyColliders || [])
-                                : b.id === "hell" ? (G.hellColliders || [])
-                                    : b.id === "heaven" ? (G.heavenColliders || [])
-                                        : b.id === "moon" ? (G.moonColliders || [])
-                                            : [];
+                                : isBeach ? (G.beachColliders || [])
+                                    : b.id === "hell" ? (G.hellColliders || [])
+                                        : b.id === "heaven" ? (G.heavenColliders || [])
+                                            : b.id === "moon" ? (G.moonColliders || [])
+                                                : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -19003,7 +19208,8 @@ function CherryAdventure() {
             if (G.biomeDecorGroups) {
                 for (const grp of G.biomeDecorGroups) {
                     if (grp && grp.visible && grp.children)
-                        grp.children.forEach((c) => hideNear(c, 7.5));
+                        grp.children.forEach((c) => { if (!(c.userData && c.userData.noHide))
+                            hideNear(c, 7.5); });
                 }
             }
             // NPC + warp gate if they're near the stage
@@ -22161,8 +22367,9 @@ function CherryAdventure() {
                         const isCave = !preview && b.id === "cave";
                         const isVolcano = !preview && b.id === "volcano";
                         const isSky = !preview && b.id === "sky";
+                        const isBeach = !preview && b.id === "beach";
                         if (G.sceneryObjects)
-                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky));
+                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach));
                         wilds.forEach((m) => (m.visible = !preview));
                         if (G.desertDecor)
                             G.desertDecor.visible = isDesert;
@@ -22174,6 +22381,8 @@ function CherryAdventure() {
                             G.volcanoDecor.visible = isVolcano;
                         if (G.skyDecor)
                             G.skyDecor.visible = isSky;
+                        if (G.beachDecor)
+                            G.beachDecor.visible = isBeach;
                         if (G.warpGate)
                             G.warpGate.visible = !preview;
                         if (G.npc)
@@ -23120,6 +23329,20 @@ function CherryAdventure() {
                                 else
                                     mt.visible = false;
                             });
+                    }
+                    // 🏖️ beach: lapping foam + drifting clouds + gentle palm sway (beach biome only)
+                    if (G.beachDecor && G.beachDecor.visible) {
+                        if (G.beachFoam)
+                            G.beachFoam.material.opacity = 0.4 + Math.abs(Math.sin(t * 1.3)) * 0.35;
+                        if (G.beachSea)
+                            G.beachSea.material.opacity = 0.9 + Math.sin(t * 0.9) * 0.04;
+                        if (G.beachClouds)
+                            G.beachClouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > FIELD_R + 6) {
+                                c.position.x = -FIELD_R - 6;
+                                c.position.z = rnd(-FIELD_R, FIELD_R);
+                            } });
+                        if (G.palmCrowns)
+                            G.palmCrowns.forEach((cr) => { cr.rotation.z = Math.sin(t * 1.1 + cr.userData.ph) * 0.05; cr.rotation.x = Math.cos(t * 0.9 + cr.userData.ph) * 0.04; });
                     }
                     // 🌪️ sandstorm drift (desert only)
                     if (G.desertDecor && G.desertDecor.visible && G.sandParticles) {
