@@ -390,12 +390,18 @@ Object.assign(SPECIES, {
   piranha:    { name: "ปลาปิรันย่า",      emoji: "🐟", color: 0xc0503a, hp: 500, atk: 58, catch: 0.02, tier: 8, desc: "ฝูงปลากินเนื้อจอมดุแห่งแม่น้ำอเมซอน", animal: "fish", weak: "ice" },
   crocodile:  { name: "จระเข้ยักษ์",      emoji: "🐊", color: 0x4a6a3a, hp: 680, atk: 60, catch: 0.015, tier: 8, desc: "จระเข้ยักษ์ขากรรไกรเหล็กแห่งลุ่มน้ำ", animal: "beast", weak: "wind" },
   anaconda:   { name: "อนาคอนด้าจ้าวป่า", emoji: "🐍", color: 0x5a7a3a, hp: 980, atk: 70, catch: 0.008, tier: 8, desc: "งูยักษ์รัดเหยื่อ จ้าวป่าดิบชื้นอเมซอน", animal: "snake", weak: "fire" },
+  // 🐤 สัตว์เลี้ยงลับสุดหายาก — ไก่น้อยหัวใจ (แอบซ่อน · จับได้อย่างเดียว · โจมตีไม่ได้)
+  chickpet:   { name: "ไก่น้อยหัวใจ",     emoji: "🐤", color: 0xfdfaf2, hp: 140, atk: 20, catch: 0.20, tier: 8, desc: "สัตว์เลี้ยงลับสุดหายาก ขี้อายชอบหลบซ่อน ต้องเดินเข้าไปจับเอง โจมตีไม่ได้", secret: true, weak: "arcane" },
 });
 Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "คัพเค้กจอมเวท", candyking: "เทพเจ้าขนมหวาน", pooyak: "ปูเทพสมุทร", chalam: "เมกาโลดอน", kraken: "คราเคนราชันสมุทร", stonetitan: "ไททันศิลาเทพ", cyclops: "ไซคลอปส์ราชายักษ์", titanlord: "ไททันเทพบรรพกาล", amzmonkey: "วานรจ้าวไพร", piranha: "ปิรันย่าราชัน", crocodile: "จระเข้เทพเจ้าน้ำ", anaconda: "อนาคอนด้าเทพนาคา" });
 Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light", amzmonkey: "arcane", piranha: "ice", crocodile: "wind", anaconda: "fire" });
 Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth", amzmonkey: "earth", piranha: "water", crocodile: "water", anaconda: "earth" });
 Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย", amzmonkey: "ตะกุยป่วน", piranha: "รุมงับฝูง", crocodile: "งับขากรรไกรเหล็ก", anaconda: "รัดมรณะ" });
-Object.assign(MON_SHAPE_EXTRA, { gummy: "gummy", cupcake: "cupcake", candyking: "candyking", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "titan", cyclops: "titan", titanlord: "titan", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "anaconda" });
+Object.assign(MON_SHAPE_EXTRA, { gummy: "gummy", cupcake: "cupcake", candyking: "candyking", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "titan", cyclops: "titan", titanlord: "titan", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "anaconda", chickpet: "chick" });
+Object.assign(EVOLVED, { chickpet: "ไก่ทองเทวะ" });
+Object.assign(WEAK, { chickpet: "arcane" });
+Object.assign(PET_ELEM, { chickpet: "light" });
+Object.assign(PET_SKILL, { chickpet: "จิกหัวใจ" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow")  || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert")  || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -8676,6 +8682,33 @@ export default function CherryAdventure() {
         for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.36, 8), caneMat); arm.position.set(sx * 0.44, 0.05, 0); arm.rotation.z = sx * 0.4; body.add(arm); legs.push(arm); }
         for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.28, 10), mat); leg.position.set(sx * 0.16, -0.52, 0); body.add(leg); legs.push(leg); const foot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), belly); foot.scale.set(1, 0.6, 1.4); foot.position.set(sx * 0.16, -0.66, 0.05); body.add(foot); }
         headY = 0.14; headZ = 0.42; headR = 0.32;
+      } else if (shape === "chick") {
+        // 🐤 chubby fluffy chick — heart comb, big eyes, orange beak/feet, pink cheeks
+        const white = new THREE.MeshStandardMaterial({ color: 0xfdfaf2, roughness: 0.88 });
+        const orange = new THREE.MeshStandardMaterial({ color: 0xf5a623, roughness: 0.55 });
+        const red = new THREE.MeshStandardMaterial({ color: 0xe8402c, roughness: 0.5 });
+        const bodyB = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 20), white); bodyB.scale.set(1, 1.15, 0.95); bodyB.position.y = 0.02; bodyB.castShadow = true; body.add(bodyB);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 22, 18), white); head.position.set(0, 0.42, 0.06); head.castShadow = true; body.add(head);
+        for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; const tf = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 5), white); tf.position.set(Math.cos(a) * 0.4, -0.1 + Math.sin(a) * 0.05, 0.02); tf.rotation.z = a + Math.PI / 2; tf.rotation.x = -0.3; body.add(tf); }
+        // ❤️ heart-shaped comb
+        for (const sx of [-0.08, 0.08]) { const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), red); lobe.position.set(sx, 0.72, 0.04); body.add(lobe); }
+        const heartTip = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.2, 4), red); heartTip.rotation.x = Math.PI; heartTip.position.set(0, 0.6, 0.04); body.add(heartTip);
+        // 🔶 beak + red wattle
+        const beak = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), orange); beak.scale.set(1, 0.7, 1.25); beak.position.set(0, 0.4, 0.34); body.add(beak);
+        const wattle = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), red); wattle.scale.set(1, 1.4, 0.6); wattle.position.set(0, 0.3, 0.3); body.add(wattle);
+        // wings
+        for (const sx of [-1, 1]) { const wing = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), white); wing.scale.set(0.5, 1, 0.7); wing.position.set(sx * 0.42, 0.0, 0.02); body.add(wing); legs.push(wing); }
+        // 🦶 orange feet (2 legs, 3 toes)
+        for (const sx of [-1, 1]) {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.14, 8), orange); leg.position.set(sx * 0.14, -0.46, 0.04); body.add(leg); legs.push(leg);
+          for (let tI = 0; tI < 3; tI++) { const toe = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.01, 0.12, 6), orange); toe.position.set(sx * 0.14 + (tI - 1) * 0.06, -0.54, 0.08); toe.rotation.x = 1.2; body.add(toe); }
+        }
+        g.userData.customFace = true;
+        // 👀 big cute eyes
+        for (const sx of [-0.12, 0.12]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 14), darkMat); eye.position.set(sx, 0.46, 0.28); body.add(eye); const gl = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), whiteMat); gl.position.set(sx + 0.02, 0.5, 0.34); body.add(gl); }
+        // 😊 pink cheeks
+        for (const sx of [-1, 1]) { const ch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), blushMat); ch.scale.set(1.2, 0.8, 0.5); ch.position.set(sx * 0.2, 0.38, 0.26); body.add(ch); }
+        headY = 0.44; headZ = 0.3; headR = 0.3;
       } else { // wisp 👻🌪️
         // tapered, trailing body — no legs, no hard bottom
         mat.transparent = true; mat.opacity = 0.82;
@@ -12529,6 +12562,46 @@ export default function CherryAdventure() {
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) - (G.wbCritDebuff || 0); // 🎯 crit + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
+    // 🐤✨ SECRET RARE PET — a shy chick that hides in the world; can't be attacked, walk up & catch only
+    G.secretPet = null; G.secretTimer = 0;
+    G.trySpawnSecret = () => {
+      if (G.secretPet || G.mode !== "explore" || G.banim || G.dungeon) return;
+      const findChance = 0.10 + Math.min(0.35, effLuck() * 0.004); // 🍀 luck raises the odds of it appearing
+      if (Math.random() > findChance) return;
+      const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 9);
+      const x = Math.cos(a) * r, z = Math.sin(a) * r;
+      const m = buildMonster("chickpet", 1); m.scale.setScalar(0.7); m.position.set(x, 0, z); m.userData.secret = true;
+      vivify(m); scene.add(m);
+      G.secretPet = { mesh: m, failCount: 0, born: 0 };
+      toast("🐤✨ รู้สึกเหมือนมีสัตว์เลี้ยงลับแอบซ่อนอยู่แถวนี้... ลองเดินสำรวจหาดู!");
+    };
+    G.catchSecret = () => {
+      const s = G.secretPet; if (!s) return;
+      const catchChance = 0.20 + Math.min(0.25, effLuck() * 0.003); // 🍀 luck helps a bit
+      if (Math.random() < catchChance) {
+        burst(s.mesh.position, 0xfff2b0, 1.5); if (G.spawnSkillFx) G.spawnSkillFx("evolve", s.mesh.position, 0xffd76a);
+        const inst = G.addPetInstance ? G.addPetInstance("chickpet", { lv: 1 }) : null;
+        scene.remove(s.mesh); (G._disposeObj3D && G._disposeObj3D(s.mesh)); G.secretPet = null; G._secretNear = false;
+        setUi((u) => ({ ...u, secretNear: false, petBox: (G.petBox || []).map((x) => ({ ...x })) }));
+        toast(inst ? "🎉🐤 จับ ไก่น้อยหัวใจ สำเร็จ! สัตว์เลี้ยงลับสุดหายาก!" : "📦 กล่องสัตว์เลี้ยงเต็ม! เคลียร์ที่ก่อนค่อยจับ");
+        if (inst && G.saveGame) G.saveGame();
+      } else {
+        s.failCount++;
+        burst(s.mesh.position, 0x9ad0ff, 0.9);
+        const a = Math.random() * Math.PI * 2, hop = 2.4 + Math.random() * 2;
+        let nx = s.mesh.position.x + Math.cos(a) * hop, nz = s.mesh.position.z + Math.sin(a) * hop;
+        const rr = Math.hypot(nx, nz); if (rr > FIELD_R - 1) { nx *= (FIELD_R - 1) / rr; nz *= (FIELD_R - 1) / rr; }
+        s.mesh.position.set(nx, 0, nz); G._secretNear = false;
+        if (s.failCount > 2) { // 🏃 flees after more than 2 misses
+          scene.remove(s.mesh); (G._disposeObj3D && G._disposeObj3D(s.mesh)); G.secretPet = null;
+          setUi((u) => ({ ...u, secretNear: false }));
+          toast("💨🐤 ไก่น้อยตกใจ วิ่งหนีหายไปแล้ว! ไว้เจอกันใหม่นะ");
+        } else {
+          setUi((u) => ({ ...u, secretNear: false }));
+          toast(`🐤 พลาด! ไก่น้อยกระโดดหนีไปหลบ (พลาด ${s.failCount}/2 ครั้ง) — รีบตามไปจับต่อ!`);
+        }
+      }
+    };
     // 👤 full character profile for the Profile menu
     G.profileInfo = () => {
       const C = CLASSES[G.cls] || {}; const P = curPath(); const T = curTitle();
@@ -17142,6 +17215,28 @@ export default function CherryAdventure() {
             if (f.position.y < 0.1) { f.position.y = rnd(4, 6); f.position.x = rnd(-FIELD_R, FIELD_R); f.position.z = rnd(-FIELD_R, FIELD_R); }
           });
         }
+      }
+
+      // 🐤 SECRET RARE PET — runs every explore frame (independent of wild count)
+      if (G.mode === "explore") {
+        // spawn roll every ~14s
+        G.secretTimer = (G.secretTimer || 0) + dt;
+        if (G.secretTimer > 14) { G.secretTimer = 0; if (G.trySpawnSecret) G.trySpawnSecret(); }
+        // shy bob/look-around + proximity catch prompt + flee-if-never-found timeout
+        if (G.secretPet && G.secretPet.mesh) {
+          const sm = G.secretPet.mesh;
+          if (sm.userData.body) sm.userData.body.position.y = 0.5 + Math.abs(Math.sin(t * 6)) * 0.06;
+          sm.rotation.y = Math.sin(t * 1.3) * 0.5; // 👀 glances around shyly
+          sm.visible = true;
+          const d = Math.hypot(sm.position.x - char.position.x, sm.position.z - char.position.z);
+          const near = d < 2.2;
+          if (near !== G._secretNear) { G._secretNear = near; setUi((u) => ({ ...u, secretNear: near })); }
+          G.secretPet.born = (G.secretPet.born || 0) + dt;
+          if (G.secretPet.born > 80) { scene.remove(sm); (G._disposeObj3D && G._disposeObj3D(sm)); G.secretPet = null; if (G._secretNear) { G._secretNear = false; setUi((u) => ({ ...u, secretNear: false })); } }
+        }
+      } else if (G.secretPet && G.secretPet.mesh) {
+        G.secretPet.mesh.visible = false; // hide the chick during battle/menus
+        if (G._secretNear) { G._secretNear = false; setUi((u) => ({ ...u, secretNear: false })); }
       }
 
       if (G.mode === "create" || G.mode === "class") {
@@ -24113,6 +24208,13 @@ export default function CherryAdventure() {
         </div>
       )}
 
+      {/* 🐤 secret pet catch prompt — appears when the player walks up to the hidden chick */}
+      {ui.secretNear && ui.mode === "explore" && !ui.equipScreen && (
+        <div style={{ position: "absolute", bottom: "26%", left: "50%", transform: "translateX(-50%)", zIndex: 34, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", fontFamily: font }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(40,24,20,0.7)", borderRadius: 999, padding: "3px 12px", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" }}>🐤✨ เจอสัตว์เลี้ยงลับ! ไก่น้อยหัวใจ</div>
+          <button onClick={() => G.catchSecret && G.catchSecret()} style={{ pointerEvents: "auto", padding: "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(135deg,#ff9ec8,#f5a623)", boxShadow: "0 4px 16px rgba(245,120,80,0.55)", animation: "pulse 0.8s ease-in-out infinite alternate" }}>🎣 จับไก่น้อย</button>
+        </div>
+      )}
       {/* ⭐ bottom status bar — long, 2 lines (stats / EXP + AUTO) */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
         <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
