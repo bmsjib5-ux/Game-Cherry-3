@@ -22824,9 +22824,9 @@ export default function CherryAdventure() {
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
-      {ui.announce && (
-        <div key={ui.announce.key} style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center", background: "linear-gradient(90deg, rgba(40,20,60,0) 0%, rgba(40,20,60,0.78) 10%, rgba(40,20,60,0.78) 90%, rgba(40,20,60,0) 100%)" }}>
-          <div style={{ whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform" }}>📢 {ui.announce.text}</div>
+      {ui.announce && ui.announce.text && (
+        <div key={ui.announce.key} style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center" }}>
+          <div style={{ whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform", background: "rgba(40,20,60,0.74)", padding: "4px 18px", borderRadius: 999, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>📢 {ui.announce.text}</div>
         </div>
       )}
 
