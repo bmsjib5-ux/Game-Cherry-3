@@ -10616,6 +10616,48 @@ export default function CherryAdventure() {
             if (ep < 0.3) G._camShake = Math.max(G._camShake || 0, 0.7);
           }
         };
+      } else if (fxType === "overclock") {
+        // 🤖🚀 AAA Overclock — self buff on the caster: plasma erupts from the core, electricity crawls the armor,
+        //     boosters ignite, holographic afterimages, digital code streams, brief mech wings, plasma aura
+        const bright = 0xaef0ff;
+        const add = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false });
+        // 🌫️ rising plasma aura column
+        const column = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 2.6, 20, 1, true), add(col, 0.3)); column.position.y = 1.3; g.add(column);
+        const burstCore = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 14), add(bright, 0)); burstCore.position.y = 1.6; g.add(burstCore);
+        // 💠 power ring on the ground + expanding afterimage rings
+        const groundRing = new THREE.Mesh(new THREE.RingGeometry(0.6, 0.9, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })); groundRing.rotation.x = -Math.PI / 2; groundRing.position.y = 0.05; g.add(groundRing);
+        const afters = [];
+        for (let k = 0; k < 3; k++) { const rp = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 8, 30), add(bright, 0)); rp.position.y = 1.2; rp.rotation.x = Math.PI / 2; g.add(rp); afters.push(rp); }
+        // ⚡ electric arcs crawling around the body
+        const arcs = [];
+        for (let i = 0; i < 6; i++) { const pts = []; for (let k = 0; k <= 6; k++) pts.push(new THREE.Vector3((Math.random() - 0.5) * 0.9, 0.4 + k * 0.32, (Math.random() - 0.5) * 0.9)); const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: bright, transparent: true })); ln.userData.a = (i / 6) * Math.PI * 2; g.add(ln); arcs.push(ln); }
+        // 🔥 booster jets at the feet
+        const jets = [];
+        for (const sx of [-0.22, 0.22]) { const j = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.6, 10), add(col, 0.8)); j.position.set(sx, 0.3, -0.15); j.rotation.x = Math.PI; g.add(j); jets.push(j); }
+        // 🪽 brief mechanical wings at the back
+        const wings = [];
+        for (const sx of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.5), add(col, 0)); w.position.set(sx * 0.35, 1.7, -0.4); w.rotation.z = sx * 0.5; g.add(w); wings.push(w); }
+        // ⬡ floating holographic symbols + 💾 digital code streams
+        const syms = [];
+        for (let i = 0; i < 8; i++) { const hx = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 3, 6), add(bright, 0)); const a = (i / 8) * Math.PI * 2; hx.position.set(Math.cos(a) * 0.9, 0.5 + Math.random() * 1.8, Math.sin(a) * 0.9); hx.userData = { a, vy: 0.5 + Math.random() * 0.8, ph: Math.random() * 6 }; g.add(hx); syms.push(hx); }
+        const code = [];
+        for (let i = 0; i < 24; i++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.02), add(Math.random() < 0.5 ? col : bright, 0.9)); const a = Math.random() * Math.PI * 2, r = 0.5 + Math.random() * 0.5; c.position.set(Math.cos(a) * r, Math.random() * 2.6, Math.sin(a) * r); c.userData = { a, r, vy: 0.8 + Math.random() * 1.4 }; g.add(c); code.push(c); }
+        const light = new THREE.PointLight(col, 0, 6); light.position.y = 1.4; g.add(light);
+        dur = 1.4;
+        update = (pr) => {
+          const rise = Math.sin(Math.min(1, pr * 1.4) * Math.PI); // erupt then settle
+          burstCore.material.opacity = rise * 0.9; burstCore.scale.setScalar(0.6 + pr * 2.2);
+          column.material.opacity = 0.3 * rise; column.rotation.y = pr * 4; column.scale.set(1 + Math.sin(pr * 20) * 0.05, 1, 1 + Math.sin(pr * 20) * 0.05);
+          groundRing.rotation.z = pr * 5; groundRing.material.opacity = 0.8 * (1 - pr * 0.6); groundRing.scale.setScalar(1 + Math.sin(pr * 12) * 0.06);
+          afters.forEach((rp, k) => { const ap = (pr * 2 + k * 0.33) % 1; rp.scale.setScalar(0.5 + ap * 2.5); rp.material.opacity = Math.max(0, 0.7 - ap) * rise; });
+          arcs.forEach((ln, i) => { ln.rotation.y = ln.userData.a + pr * 12; ln.material.opacity = (0.4 + Math.random() * 0.5) * rise; });
+          jets.forEach((j) => { j.material.opacity = 0.8 * rise; j.scale.y = 0.8 + Math.abs(Math.sin(pr * 24)) * 0.6; });
+          wings.forEach((w, i) => { const wp = Math.sin(Math.min(1, pr * 2.5) * Math.PI); w.material.opacity = wp * 0.7; w.scale.y = wp; });
+          syms.forEach((hx) => { hx.rotation.z += 0.1; hx.rotation.x += 0.06; hx.position.y += hx.userData.vy * 0.012; hx.material.opacity = rise * 0.8; const a = hx.userData.a + pr * 2; hx.position.x = Math.cos(a) * 0.9; hx.position.z = Math.sin(a) * 0.9; });
+          code.forEach((c) => { c.position.y += c.userData.vy * 0.02; if (c.position.y > 2.7) c.position.y = 0; c.material.opacity = rise * 0.85; });
+          light.intensity = rise * 2.5;
+          if (pr < 0.25) G._camShake = Math.max(G._camShake || 0, 0.35 * rise);
+        };
       } else if (fxType === "snipe") {
         // 💥 crit starburst
         const rays = [];
@@ -13761,6 +13803,7 @@ export default function CherryAdventure() {
       if (sk.id === "g_dash") return "plasmadash"; // 🤖⚡ AI Mecha plasma dash
       if (sk.id === "g_drone") return "dronebarrage"; // 🤖🛸 AI Mecha drone barrage
       if (sk.id === "g_grav") return "gravitycore"; // 🤖🌌 AI Mecha gravity singularity
+      if (sk.id === "g_over") return "overclock"; // 🤖🚀 AI Mecha overclock (self-buff)
       if (m[sk.id]) return m[sk.id];
       if (sk.burn) return "fire";
       if (sk.freeze) return "ice";
@@ -13825,7 +13868,7 @@ export default function CherryAdventure() {
       // 🎬 signature FX + class gesture at the focus, exactly like the arena
       const fk = worldFxFor(sk);
       worldGestureFx(focus.position, col);
-      spawnSkillFx(fk, (fk === "healbless" || fk === "warfrenzy") ? char.position : focus.position, col);
+      spawnSkillFx(fk, (fk === "healbless" || fk === "warfrenzy" || fk === "overclock") ? char.position : focus.position, col);
       G._camShake = Math.max(G._camShake || 0, aoe ? 0.35 : 0.22);
       if (aoe) {
         const targets = wildsInRadius(focus.position.x, focus.position.z, 3.4);
@@ -16986,11 +17029,11 @@ export default function CherryAdventure() {
                 armR.rotation.x = -0.9; armL.rotation.x = -0.9; armR.rotation.z = 0.3; armL.rotation.z = -0.3;
                 if (p > 0.12 && !A._aegHit) { A._aegHit = true; spawnSkillFx("gravitycore", EP, col); }
               } else {
-                // 🚀 g_over / other — overclock rush + plasma burst
-                char.position.x = bx + Math.sin(p * Math.PI) * 1.0; char.position.y = lift + Math.sin(p * Math.PI) * 0.15;
-                char.rotation.z = Math.sin(p * Math.PI * 6) * 0.05; armR.rotation.x = -0.4;
-                if (p > 0.3 && Math.random() < 0.5) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 1.2, 1.2 + Math.random(), battleCenter.z), Math.random() < 0.5 ? col : 0xaef0ff, 0.4);
-                if (p > hitP && !A._aegHit) { A._aegHit = true; spawnSkillFx("plasmadash", EP, col); G._camShake = 0.5; }
+                // 🚀 g_over — OVERCLOCK transformation buff on the robot itself (hover + arms flexed)
+                char.position.x = bx; char.position.y = lift + Math.sin(t * 4) * 0.06;
+                char.rotation.z = Math.sin(p * Math.PI * 8) * 0.03;
+                armR.rotation.x = -0.5; armL.rotation.x = -0.5; armR.rotation.z = 0.5; armL.rotation.z = -0.5;
+                if (p > 0.1 && !A._aegHit) { A._aegHit = true; spawnSkillFx("overclock", new THREE.Vector3(char.position.x, 0, char.position.z), col); G._camShake = 0.4; }
               }
             } else if (cls === "warrior") {
               // ⚔️ WARRIOR — melee skills with real FX rigs (AAA)

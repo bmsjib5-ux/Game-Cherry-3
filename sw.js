@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v63";
+const CACHE = "cherry-adventure-v64";
 const SHELL = [
   "./",
   "./index.html",
