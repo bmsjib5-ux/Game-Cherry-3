@@ -169,7 +169,7 @@ const LOOT = [
     { id: "st_k", slot: "weapon", name: "ดาบไม้ซ้อม", emoji: "🗡️", rarity: "common", atk: 3, cls: "samurai", starter: true },
     { id: "st_o", slot: "weapon", name: "ปากกาฝึกงาน", emoji: "🖊️", rarity: "common", atk: 3, cls: "office", starter: true },
     { id: "st_c", slot: "weapon", name: "คีย์บอร์ดฝึกหัด", emoji: "⌨️", rarity: "common", atk: 3, cls: "coder", starter: true },
-    { id: "st_x", slot: "weapon", name: "ใบมีดพลาสมาฝึก", emoji: "🤖", rarity: "common", atk: 3, cls: "aegis", starter: true },
+    { id: "st_x", slot: "weapon", name: "ปืนเลเซอร์ฝึก", emoji: "🔫", rarity: "common", atk: 3, cls: "aegis", starter: true },
     // ⚔️ samurai katanas — multiple tiers, each with a distinct look
     { id: "kf", slot: "weapon", name: "คาตานะเพลิง", emoji: "🔥", rarity: "rare", atk: 7, elem: "fire", cls: "samurai", req: 5 },
     { id: "ki", slot: "weapon", name: "คาตานะเยือกเย็น", emoji: "❄️", rarity: "epic", atk: 11, def: 2, elem: "ice", cls: "samurai", req: 10 },
@@ -3063,7 +3063,7 @@ function CherryAdventure() {
             if (id === "ragAxe")
                 return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
             if (id === "cx" || cls === "aegis")
-                return { x: -0.3, y: 0, z: 0.42 }; // 🤖 plasma morph blade up-forward
+                return { x: -1.42, y: 0, z: 0 }; // 🤖🔫 laser blaster — muzzle levelled forward
             // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
             if (cls === "archer" || id === "ca" || id === "wDa")
                 return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
@@ -4971,65 +4971,94 @@ function CherryAdventure() {
             g.scale.setScalar(1.12);
             weaponModels.ragAxe = g;
         }
-        { // 🤖⚡ cx — Plasma Morph Blade (AI Mecha Guardian's class weapon: metal hilt + holographic energy blade)
+        { // 🤖🔫 cx — Plasma Laser Blaster (AI Mecha Guardian's class weapon: sci-fi energy rifle)
+            //   built barrel-along-+Y (muzzle up in model space) with a pistol grip at the base;
+            //   the grip rotation (see gripFor) swings the muzzle to point forward.
             const g = new THREE.Group();
             const steel = new THREE.MeshStandardMaterial({ color: 0xc8ccd4, metalness: 0.9, roughness: 0.25 });
+            const white = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.3 });
             const dark = new THREE.MeshStandardMaterial({ color: 0x1c2029, metalness: 0.7, roughness: 0.4 });
-            const plasma = new THREE.MeshBasicMaterial({ color: 0x6ad8ff, transparent: true, opacity: 0.82, blending: THREE.AdditiveBlending, depthWrite: false });
+            const plasma = new THREE.MeshBasicMaterial({ color: 0x6ad8ff, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false });
             const core = new THREE.MeshStandardMaterial({ color: 0xaef0ff, emissive: 0x3aaeff, emissiveIntensity: 1.4, roughness: 0.2 });
             const emit = new THREE.MeshStandardMaterial({ color: 0x2ab0f5, emissive: 0x2ab0f5, emissiveIntensity: 1.1, roughness: 0.3, metalness: 0.4 });
-            // mechanical hilt
-            const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.04, 0.34, 8), dark);
-            hilt.position.y = 0.05;
-            g.add(hilt);
-            for (let k = 0; k < 4; k++) {
-                const seg = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 4, 10), steel);
-                seg.position.y = -0.05 + k * 0.08;
-                seg.rotation.x = Math.PI / 2;
-                g.add(seg);
-            }
-            const pommel = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), emit);
-            pommel.position.y = -0.14;
-            g.add(pommel);
-            // hexagon energy emitter guard
-            const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 6), steel);
-            guard.position.y = 0.24;
-            guard.rotation.y = Math.PI / 6;
+            // === pistol grip (the hand holds here, at the origin) ===
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.28, 0.1), dark);
+            grip.position.set(0, -0.1, -0.02);
+            grip.rotation.x = 0.32;
+            g.add(grip);
+            const gripPad = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.2, 0.03), emit);
+            gripPad.position.set(0, -0.1, 0.05);
+            gripPad.rotation.x = 0.32;
+            g.add(gripPad);
+            // === receiver / body (main housing above the grip) ===
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.32, 0.2), white);
+            body.position.set(0, 0.14, 0.0);
+            g.add(body);
+            const bodyTop = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.1, 0.18), dark);
+            bodyTop.position.set(0, 0.3, 0.0);
+            g.add(bodyTop);
+            // trigger guard
+            const guard = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 6, 14, Math.PI * 1.3), steel);
+            guard.position.set(0, 0.0, 0.06);
+            guard.rotation.set(Math.PI / 2, 0, 0.4);
             g.add(guard);
-            const gRing = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 6), emit);
-            gRing.position.y = 0.24;
-            gRing.rotation.x = Math.PI / 2;
-            gRing.rotation.z = Math.PI / 6;
-            g.add(gRing);
-            // holographic plasma blade — bright core + translucent aura sheath
-            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.5, 0.02), core);
-            blade.position.y = 1.05;
-            g.add(blade);
-            const sheath = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.55, 0.06), plasma);
-            sheath.position.y = 1.06;
-            g.add(sheath);
-            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.24, 4), core);
-            tip.position.y = 1.9;
-            tip.scale.z = 0.4;
-            g.add(tip);
-            const tipA = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 4), plasma);
-            tipA.position.y = 1.9;
-            tipA.scale.z = 0.5;
-            g.add(tipA);
-            // floating hexagon glyphs along the blade (digital)
+            // === glowing energy cell (magazine) plugged into the underside/back ===
+            const cell = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.18, 0.06), core);
+            cell.position.set(0, 0.06, -0.14);
+            cell.rotation.x = 0.32;
+            g.add(cell);
+            const cellGlow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.09), plasma);
+            cellGlow.position.copy(cell.position);
+            cellGlow.rotation.x = 0.32;
+            g.add(cellGlow);
+            // === barrel + hexagonal energy shroud (runs up +Y) ===
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.56, 12), steel);
+            barrel.position.set(0, 0.52, 0.02);
+            g.add(barrel);
+            const shroud = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.065, 0.42, 6), white);
+            shroud.position.set(0, 0.44, 0.02);
+            shroud.rotation.y = Math.PI / 6;
+            g.add(shroud);
+            const channel = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.58, 8), core);
+            channel.position.set(0, 0.52, 0.02);
+            g.add(channel); // glowing plasma line in the bore
+            // heat-sink fins along the shroud
             for (let k = 0; k < 3; k++) {
-                const hx = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.006, 6, 6), emit);
-                hx.position.set(0, 0.6 + k * 0.45, 0.05);
-                hx.rotation.x = Math.PI / 2;
-                g.add(hx);
+                const fin = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.008, 5, 6), emit);
+                fin.position.set(0, 0.32 + k * 0.1, 0.02);
+                fin.rotation.x = Math.PI / 2;
+                fin.rotation.z = Math.PI / 6;
+                g.add(fin);
             }
-            const glow = new THREE.PointLight(0x3aaeff, 0.55, 2.6);
-            glow.position.y = 1.1;
+            // === muzzle emitter (the laser fires from here) ===
+            const muzzleRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.014, 8, 16), steel);
+            muzzleRing.position.set(0, 0.8, 0.02);
+            muzzleRing.rotation.x = Math.PI / 2;
+            g.add(muzzleRing);
+            const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.03, 12), core);
+            muzzle.position.set(0, 0.8, 0.02);
+            g.add(muzzle);
+            const muzzleGlow = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), plasma);
+            muzzleGlow.position.set(0, 0.82, 0.02);
+            g.add(muzzleGlow);
+            // === top rail sight + glowing dot ===
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.24, 0.03), dark);
+            rail.position.set(0, 0.36, 0.13);
+            g.add(rail);
+            const sightDot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), emit);
+            sightDot.position.set(0, 0.5, 0.14);
+            g.add(sightDot);
+            const glow = new THREE.PointLight(0x3aaeff, 0.5, 2.4);
+            glow.position.set(0, 0.82, 0.02);
             g.add(glow);
-            g.userData.blade = blade;
+            g.userData.muzzle = muzzle;
+            g.userData.muzzleGlow = muzzleGlow;
+            g.userData.cell = cell;
+            g.userData.channel = channel;
             g.userData.glow = glow;
-            g.userData.sheath = sheath;
-            g.scale.setScalar(1.12);
+            g.userData.gripY = 0.12;
+            g.userData.gripZ = 0.06; // seat the pistol grip in the palm, nudge forward
+            g.scale.setScalar(1.3);
             weaponModels.cx = g;
         }
         Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
@@ -22007,16 +22036,20 @@ function CherryAdventure() {
                     if (rax.userData.glow)
                         rax.userData.glow.intensity = 0.45 + Math.abs(Math.sin(t * 3.4)) * 0.4;
                 }
-                // 🤖 plasma morph blade — energy blade flickers + sheath breathes
+                // 🤖🔫 plasma laser blaster — muzzle charges, energy cell + bore pulse
                 const pmb = weaponModels.cx;
                 if (pmb && pmb.visible) {
-                    const fl = 1.0 + Math.abs(Math.sin(t * 5)) * 0.6;
-                    if (pmb.userData.blade)
-                        pmb.userData.blade.material.emissiveIntensity = fl;
+                    const fl = 1.0 + Math.abs(Math.sin(t * 5)) * 0.7;
+                    if (pmb.userData.muzzle)
+                        pmb.userData.muzzle.material.emissiveIntensity = fl;
+                    if (pmb.userData.channel)
+                        pmb.userData.channel.material.emissiveIntensity = 0.9 + Math.abs(Math.sin(t * 6)) * 0.6;
+                    if (pmb.userData.cell)
+                        pmb.userData.cell.material.emissiveIntensity = 0.8 + Math.abs(Math.sin(t * 3.2)) * 0.5;
                     if (pmb.userData.glow)
-                        pmb.userData.glow.intensity = 0.4 + Math.abs(Math.sin(t * 5)) * 0.35;
-                    if (pmb.userData.sheath)
-                        pmb.userData.sheath.material.opacity = 0.6 + Math.abs(Math.sin(t * 4)) * 0.25;
+                        pmb.userData.glow.intensity = 0.35 + Math.abs(Math.sin(t * 5)) * 0.35;
+                    if (pmb.userData.muzzleGlow)
+                        pmb.userData.muzzleGlow.material.opacity = 0.5 + Math.abs(Math.sin(t * 5)) * 0.3;
                 }
                 // ❄️ Frostwing bow — ice crystal breathes, wings shimmer
                 const ybw = weaponModels.yukiBow;
