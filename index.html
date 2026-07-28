@@ -13211,31 +13211,115 @@ function CherryAdventure() {
         portal.rotation.y = 0.8;
         scene.add(portal);
         colliders.push({ x: -6.6, z: 7.0, r: 0.4 });
-        // ---------- 🌀 Warp pad: travel between adventure maps ----------
+        // ---------- 🌀 Dimension rifts: LEFT = back a stage · RIGHT = forward a stage ----------
         G.curBiome = 0;
         G.biomeLvMin = BIOMES[0].lvMin;
         G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-10
-        const warp = new THREE.Group();
-        const warpBase = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.2, 0.12, 24), new THREE.MeshStandardMaterial({ color: 0x3a6ad0, emissive: 0x1a3a90, emissiveIntensity: 0.5, metalness: 0.5 }));
-        warpBase.position.y = 0.06;
-        const warpGlow = new THREE.Mesh(new THREE.CircleGeometry(0.95, 24), new THREE.MeshBasicMaterial({ color: 0x7ad0ff, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
-        warpGlow.rotation.x = -Math.PI / 2;
-        warpGlow.position.y = 0.13;
-        const warpRing = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.06, 10, 28), new THREE.MeshStandardMaterial({ color: 0x9adcff, emissive: 0x4aa0e0, emissiveIntensity: 0.9 }));
-        warpRing.rotation.x = -Math.PI / 2;
-        warpRing.position.y = 0.5;
-        // floating pillars
-        for (let i = 0; i < 3; i++) {
-            const a = (i / 3) * Math.PI * 2;
-            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.4, 8), new THREE.MeshStandardMaterial({ color: 0x6aa0e0, emissive: 0x2a5a90, emissiveIntensity: 0.6 }));
-            col.position.set(Math.cos(a) * 1.0, 0.7, Math.sin(a) * 1.0);
-            warp.add(col);
-        }
-        warp.add(warpBase, warpGlow, warpRing);
-        warp.position.set(6.5, 0, 6.5);
-        scene.add(warp);
-        G.warpGate = warp; // 🌀 reference for hiding during battle
-        colliders.push({ x: 6.5, z: 6.5, r: 0.5 });
+        // 🌀 a tall spinning oval rift standing on the ground — black void + blue energy swirl
+        const makeDimPortal = () => {
+            const g = new THREE.Group();
+            const OV = (m) => { m.scale.set(0.82, 1.18, 1); m.position.y = 1.4; return m; }; // vertical oval
+            // 🕳️ black void core
+            const core = OV(new THREE.Mesh(new THREE.CircleGeometry(0.9, 40), new THREE.MeshBasicMaterial({ color: 0x04060e, transparent: true, opacity: 0.96, side: THREE.DoubleSide })));
+            g.add(core);
+            // 🌀 blue energy swirl arcs (rotate)
+            const swirls = [];
+            for (let k = 0; k < 4; k++) {
+                const rr = 0.24 + k * 0.19;
+                const sw = new THREE.Mesh(new THREE.RingGeometry(rr, rr + 0.05, 40, 1, 0, Math.PI * (1.1 + k * 0.15)), new THREE.MeshBasicMaterial({ color: k % 2 ? 0x5ac8ff : 0x2a5cf0, transparent: true, opacity: 0.85, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                sw.position.set(0, 1.4, 0.02 + k * 0.004);
+                sw.scale.set(0.82, 1.18, 1);
+                g.add(sw);
+                swirls.push(sw);
+            }
+            // 💠 metal oval rim
+            const rim = OV(new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.1, 12, 48), new THREE.MeshStandardMaterial({ color: 0x101838, emissive: 0x1636c8, emissiveIntensity: 0.9, metalness: 0.7, roughness: 0.3 })));
+            g.add(rim);
+            // ✨ additive glow halo
+            const halo = OV(new THREE.Mesh(new THREE.RingGeometry(0.94, 1.25, 44), new THREE.MeshBasicMaterial({ color: 0x2a6af5, transparent: true, opacity: 0.35, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })));
+            halo.position.z = -0.03;
+            g.add(halo);
+            // 💧 energy pool at the base
+            const pool = new THREE.Mesh(new THREE.CircleGeometry(0.75, 30), new THREE.MeshBasicMaterial({ color: 0x2a6af5, transparent: true, opacity: 0.4, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+            pool.rotation.x = -Math.PI / 2;
+            pool.position.y = 0.05;
+            g.add(pool);
+            // 🔦 descending light beam — appears as you charge the warp (stand still 3s)
+            const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.72, 4.4, 22, 1, true), new THREE.MeshBasicMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+            beam.position.y = 2.2;
+            g.add(beam);
+            // ⭕ charge ring on the ground (fills up over 3s)
+            const chg = new THREE.Mesh(new THREE.RingGeometry(0.78, 0.98, 40, 1, -Math.PI / 2, 0.001), new THREE.MeshBasicMaterial({ color: 0xaad8ff, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+            chg.rotation.x = -Math.PI / 2;
+            chg.position.y = 0.07;
+            g.add(chg);
+            g.userData = { swirls, core, rim, halo, pool, beam, chg };
+            return g;
+        };
+        // 🏷️ floating stage-name label above a portal
+        const makeWarpLabel = (y) => {
+            const cv = document.createElement("canvas");
+            cv.width = 360;
+            cv.height = 150;
+            const tex = new THREE.CanvasTexture(cv);
+            tex.minFilter = THREE.LinearFilter;
+            const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+            sp.scale.set(2.9, 1.2, 1);
+            sp.position.y = y;
+            return { sp, cv, tex };
+        };
+        const drawWarpLabel = (lab, dir, biome) => {
+            const c = lab.cv.getContext("2d");
+            c.clearRect(0, 0, 360, 150);
+            c.textAlign = "center";
+            c.textBaseline = "middle";
+            c.lineJoin = "round";
+            c.strokeStyle = "#04102e";
+            c.lineWidth = 7;
+            c.font = "800 30px system-ui, sans-serif";
+            c.fillStyle = dir < 0 ? "#9ab4ff" : "#8affd0";
+            const hint = dir < 0 ? "◀ ย้อนด่านก่อน" : "ด่านถัดไป ▶";
+            c.strokeText(hint, 180, 26);
+            c.fillText(hint, 180, 26);
+            c.font = "900 36px system-ui, sans-serif";
+            c.fillStyle = "#ffffff";
+            const nm = `${biome.emoji} ${biome.name}`;
+            c.strokeText(nm, 180, 74);
+            c.fillText(nm, 180, 74);
+            c.font = "800 27px system-ui, sans-serif";
+            c.fillStyle = "#ffd24a";
+            const lv = `Lv.${biome.lvMin}-${biome.lvMax}`;
+            c.strokeText(lv, 180, 118);
+            c.fillText(lv, 180, 118);
+            lab.tex.needsUpdate = true;
+        };
+        const warpPair = new THREE.Group();
+        warpPair.position.set(6.5, 0, 6.5);
+        const warpL = makeDimPortal();
+        warpL.position.set(-1.5, 0, 0);
+        warpPair.add(warpL);
+        const warpR = makeDimPortal();
+        warpR.position.set(1.5, 0, 0);
+        warpPair.add(warpR);
+        const warpLabL = makeWarpLabel(3.05);
+        warpL.add(warpLabL.sp);
+        const warpLabR = makeWarpLabel(3.05);
+        warpR.add(warpLabR.sp);
+        scene.add(warpPair);
+        G.warpGate = warpPair; // 🌀 reference for hiding during battle
+        G._warpL = warpL;
+        G._warpR = warpR;
+        G._warpLabL = warpLabL;
+        G._warpLabR = warpLabR;
+        // world positions for proximity checks
+        const WARP_LX = 5.0, WARP_RX = 8.0, WARP_PZ = 6.5;
+        G._warpPts = { LX: WARP_LX, RX: WARP_RX, Z: WARP_PZ };
+        G.updateWarpLabels = () => {
+            const n = BIOMES.length;
+            drawWarpLabel(warpLabL, -1, BIOMES[((G.curBiome - 1) % n + n) % n]);
+            drawWarpLabel(warpLabR, +1, BIOMES[((G.curBiome + 1) % n + n) % n]);
+        };
+        G.updateWarpLabels();
         // decorations we can toggle per biome (trees/bushes already added get a tag)
         const switchBiome = (idx, quiet) => {
             const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
@@ -13305,6 +13389,9 @@ function CherryAdventure() {
                 toast(`${b.emoji} วาร์ปสู่ ${b.name}! มอนสเตอร์ประจำถิ่นปรากฏตัว`);
             }
             setUi((u) => ({ ...u, biomeName: `${b.emoji} ${b.name}`, biomeIdx: G.curBiome }));
+            if (G.updateWarpLabels)
+                G.updateWarpLabels(); // 🏷️ refresh the ◀ prev / next ▶ rift labels
+            G._warpLock = true; // 🔒 don't instantly re-warp — player must step off the rift first
         };
         G.switchBiome = switchBiome;
         G.warpNext = () => switchBiome(G.curBiome + 1);
@@ -22084,7 +22171,8 @@ function CherryAdventure() {
                             G.volcanoDecor.visible = isVolcano;
                         if (G.skyDecor)
                             G.skyDecor.visible = isSky;
-                        warp.visible = !preview;
+                        if (G.warpGate)
+                            G.warpGate.visible = !preview;
                         if (G.npc)
                             G.npc.visible = !preview;
                     }
@@ -23199,25 +23287,54 @@ function CherryAdventure() {
                     // 🗼 portal: swirl + entry prompt
                     pSwirl.rotation.z = t * 3;
                     pRing.rotation.z = -t * 0.8;
-                    // 🌀 warp pad: spin + proximity to open map picker
-                    warpRing.rotation.z = t * 1.5;
-                    warpGlow.material.opacity = 0.4 + Math.sin(t * 3) * 0.15;
+                    // 🌀 dimension rifts: swirl spin + stand-still-3s charge → warp (◀ back / next ▶)
                     {
-                        const wd = Math.hypot(char.position.x - warp.position.x, char.position.z - warp.position.z);
-                        if (wd < 1.7 && !G.warpShy && !G.warpAskShown) {
-                            G.warpAskShown = true;
-                            setUi((u) => ({ ...u, warpAsk: true }));
-                        }
-                        if (wd > 2.9) {
-                            G.warpShy = false;
-                            G.warpAskShown = false;
-                            if (G.uiWarpAsk) {
-                                setUi((u) => ({ ...u, warpAsk: false }));
-                                G.uiWarpAsk = false;
+                        const WL = G._warpL, WR = G._warpR, P = G._warpPts;
+                        if (WL && WR && P) {
+                            WL.userData.swirls.forEach((s, k) => (s.rotation.z = t * (0.9 + k * 0.5)));
+                            WR.userData.swirls.forEach((s, k) => (s.rotation.z = -t * (0.9 + k * 0.5)));
+                            const glow = 0.3 + Math.sin(t * 3) * 0.12;
+                            WL.userData.halo.material.opacity = glow;
+                            WR.userData.halo.material.opacity = glow;
+                            const dL = Math.hypot(char.position.x - P.LX, char.position.z - P.Z);
+                            const dR = Math.hypot(char.position.x - P.RX, char.position.z - P.Z);
+                            const spd = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
+                            const still = spd < 0.35;
+                            const near = dL < 1.5 ? "L" : dR < 1.5 ? "R" : null;
+                            // 🔒 released once the player steps away from both rifts (prevents instant re-warp after arriving)
+                            if (G._warpLock && dL > 2.4 && dR > 2.4)
+                                G._warpLock = false;
+                            if (near && still && !G._warpLock && !G.banim) {
+                                if (G._warpSide !== near) {
+                                    G._warpSide = near;
+                                    G._warpChargeT = 0;
+                                }
+                                G._warpChargeT = (G._warpChargeT || 0) + dt;
+                                const cp = Math.min(1, G._warpChargeT / 3); // 0→1 over 3s
+                                const P3 = near === "L" ? WL : WR;
+                                P3.userData.beam.material.opacity = 0.12 + cp * 0.8; // 🔦 light gradually shines down
+                                P3.userData.beam.scale.set(0.5 + cp * 0.6, 1, 0.5 + cp * 0.6);
+                                P3.userData.chg.geometry.dispose();
+                                P3.userData.chg.geometry = new THREE.RingGeometry(0.78, 1.0, 44, 1, -Math.PI / 2, cp * Math.PI * 2);
+                                P3.userData.chg.material.opacity = 0.9;
+                                if (Math.random() < 0.5)
+                                    burst(new THREE.Vector3(P3 === WL ? P.LX : P.RX, 0.3 + Math.random() * 2.2, P.Z), 0x5ac8ff, 0.3);
+                                if (G._warpChargeT >= 3) {
+                                    const n = BIOMES.length;
+                                    const target = near === "L" ? ((G.curBiome - 1) % n + n) % n : ((G.curBiome + 1) % n + n) % n;
+                                    G._warpChargeT = 0;
+                                    G._warpSide = null;
+                                    P3.userData.beam.material.opacity = 1;
+                                    G._camShake = Math.max(G._camShake || 0, 0.5);
+                                    switchBiome(target); // sets G._warpLock = true
+                                }
+                            }
+                            else {
+                                G._warpSide = null;
+                                G._warpChargeT = 0;
+                                [WL, WR].forEach((p) => { p.userData.beam.material.opacity *= 0.85; p.userData.chg.material.opacity *= 0.8; });
                             }
                         }
-                        else if (wd < 1.7)
-                            G.uiWarpAsk = true;
                     }
                     // 🎣 pond: animate water + proximity prompt + fishing state machine
                     if (G.pondWater)
