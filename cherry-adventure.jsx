@@ -10496,7 +10496,7 @@ export default function CherryAdventure() {
         // ✨ scattering sparks
         const sparks = [];
         for (let i = 0; i < 20; i++) { const sp = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), add(bright)); sp.position.set(0, 1.4, 0); const a = Math.random() * Math.PI * 2, s2 = 2 + Math.random() * 3.4; sp.userData = { vx: Math.cos(a) * s2, vz: Math.sin(a) * s2, vy: 1 + Math.random() * 3 }; g.add(sp); sparks.push(sp); }
-        const light = new THREE.PointLight(col, 3.2, 7.5); light.position.y = 1.4; g.add(light);
+        const light = new THREE.PointLight(col, 3.2, 7.5); light.position.y = 1.4; /* light not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         G._camShake = Math.max(G._camShake || 0, 0.6); // strong camera shake
         dur = 0.85;
         update = (pr) => {
@@ -10546,7 +10546,7 @@ export default function CherryAdventure() {
         // ✨ digital particles + electric arcs
         const parts = [];
         for (let i = 0; i < (G.powerSave?18:40); i++) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), add(Math.random() < 0.5 ? col : bright)); p.position.set((Math.random() - 0.5) * 0.4, CY + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4); const a = Math.random() * Math.PI * 2, sp = 1 + Math.random() * 2.5; p.userData = { vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: (Math.random() - 0.3) * 2, delay: Math.random() * 0.6 }; g.add(p); parts.push(p); }
-        const light = new THREE.PointLight(col, 2.6, 8); light.position.y = CY; g.add(light);
+        const light = new THREE.PointLight(col, 2.6, 8); light.position.y = CY; /* light not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 1.15;
         update = (pr) => {
           const orbit = pr * Math.PI * 6; // rapid rotation around the target
@@ -10599,7 +10599,7 @@ export default function CherryAdventure() {
         for (let k = 0; k < 3; k++) { const rp = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 8, 36), add(bright, 0)); rp.position.y = CY; rp.rotation.x = Math.PI / 2; g.add(rp); ripples.push(rp); }
         const hexOut = [];
         for (let i = 0; i < 14; i++) { const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 6), add(col, 0)); hx.position.y = CY; const a = Math.random() * Math.PI * 2; hx.userData = { vx: Math.cos(a) * (2 + Math.random() * 3), vz: Math.sin(a) * (2 + Math.random() * 3), vy: (Math.random() - 0.2) * 3, rx: (Math.random() - 0.5) * 8 }; g.add(hx); hexOut.push(hx); }
-        const light = new THREE.PointLight(deep, 2.5, 9); light.position.y = CY; g.add(light);
+        const light = new THREE.PointLight(deep, 2.5, 9); light.position.y = CY; /* light not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         const COLLAPSE = 0.62;
         dur = 1.35;
         update = (pr) => {
@@ -10653,7 +10653,7 @@ export default function CherryAdventure() {
         for (let i = 0; i < 8; i++) { const hx = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 3, 6), add(bright, 0)); const a = (i / 8) * Math.PI * 2; hx.position.set(Math.cos(a) * 0.9, 0.5 + Math.random() * 1.8, Math.sin(a) * 0.9); hx.userData = { a, vy: 0.5 + Math.random() * 0.8, ph: Math.random() * 6 }; g.add(hx); syms.push(hx); }
         const code = [];
         for (let i = 0; i < 24; i++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.02), add(Math.random() < 0.5 ? col : bright, 0.9)); const a = Math.random() * Math.PI * 2, r = 0.5 + Math.random() * 0.5; c.position.set(Math.cos(a) * r, Math.random() * 2.6, Math.sin(a) * r); c.userData = { a, r, vy: 0.8 + Math.random() * 1.4 }; g.add(c); code.push(c); }
-        const light = new THREE.PointLight(col, 0, 6); light.position.y = 1.4; g.add(light);
+        const light = new THREE.PointLight(col, 0, 6); light.position.y = 1.4; /* light not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 1.4;
         update = (pr) => {
           const rise = Math.sin(Math.min(1, pr * 1.4) * Math.PI); // erupt then settle
@@ -10706,7 +10706,7 @@ export default function CherryAdventure() {
         for (let i = 0; i < (lowFx ? 6 : 10); i++) { const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 6), add(blue, 0)); hx.rotation.x = Math.PI / 2; const a = Math.random() * Math.PI * 2; hx.userData = { a, vx: Math.cos(a) * (3 + Math.random() * 4), vz: Math.sin(a) * (3 + Math.random() * 4), vy: 1 + Math.random() * 4 }; g.add(hx); hexes.push(hx); }
         const debris = [];
         for (let i = 0; i < (lowFx ? 6 : 10); i++) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + Math.random() * 0.1), new THREE.MeshStandardMaterial({ color: 0x9aa4b2, emissive: blue, emissiveIntensity: 0.5, transparent: true, opacity: 0 })); m.userData = { vx: (Math.random() - 0.5) * 6, vz: (Math.random() - 0.5) * 6, vy: 2 + Math.random() * 5, rx: Math.random() * 8 }; m.position.y = 0.5; g.add(m); debris.push(m); }
-        const light = new THREE.PointLight(blue, 0, 16); light.position.y = 3; g.add(light);
+        const light = new THREE.PointLight(blue, 0, 16); light.position.y = 3; /* light not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 3.8;
         update = (pr) => {
           // 🌌 fog-based darkening (cheap): darken toward the collapse, restore by the end (pr→1 leaves fog original)
@@ -10786,7 +10786,7 @@ export default function CherryAdventure() {
         // big scorch ring + strong light
         const scorch = new THREE.Mesh(new THREE.RingGeometry(0.4, 1.25, 28), new THREE.MeshBasicMaterial({ color: 0xff4a1a, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
         scorch.rotation.x = -Math.PI / 2; scorch.position.y = 0.02; g.add(scorch);
-        const fireLight = new THREE.PointLight(0xff5a1a, 3, 6); fireLight.position.y = 1.2; g.add(fireLight);
+        const fireLight = new THREE.PointLight(0xff5a1a, 3, 6); fireLight.position.y = 1.2; /* fireLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 1.3;
         update = (pr) => {
           flames.forEach((m) => {
@@ -10831,7 +10831,7 @@ export default function CherryAdventure() {
         // frost mist ring + cold light
         const mist = new THREE.Mesh(new THREE.RingGeometry(0.3, 1.1, 24), new THREE.MeshBasicMaterial({ color: 0xaef0ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
         mist.rotation.x = -Math.PI / 2; mist.position.y = 0.02; g.add(mist);
-        const iceLight = new THREE.PointLight(0x6ac0f0, 1.6, 5); iceLight.position.y = 1; g.add(iceLight);
+        const iceLight = new THREE.PointLight(0x6ac0f0, 1.6, 5); iceLight.position.y = 1; /* iceLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 1.2;
         update = (pr) => {
           spears.forEach((grp) => {
@@ -10855,7 +10855,7 @@ export default function CherryAdventure() {
           puff.scale.y = 0.7; cloud.add(puff);
         }
         g.add(cloud);
-        const boltLight = new THREE.PointLight(0xf5e042, 0, 5); boltLight.position.y = 2; g.add(boltLight);
+        const boltLight = new THREE.PointLight(0xf5e042, 0, 5); boltLight.position.y = 2; /* boltLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         // several zigzag bolts fire in sequence
         const bolts = [];
         for (let b = 0; b < 4; b++) {
@@ -10889,7 +10889,7 @@ export default function CherryAdventure() {
         // rising holy column + halo ring
         const halo = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.05, 8, 24), new THREE.MeshBasicMaterial({ color: 0x9affb0, transparent: true, opacity: 0.8 }));
         halo.rotation.x = -Math.PI / 2; halo.position.y = 0.1; g.add(halo);
-        const healLight = new THREE.PointLight(0x9affb0, 1.5, 4); healLight.position.y = 1.2; g.add(healLight);
+        const healLight = new THREE.PointLight(0x9affb0, 1.5, 4); healLight.position.y = 1.2; /* healLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.position.y = 0; // caster base
         dur = 1.1;
         update = (pr) => {
@@ -10922,7 +10922,7 @@ export default function CherryAdventure() {
         g.add(sword);
         const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.6, 24), new THREE.MeshBasicMaterial({ color: beamCol, transparent: true, opacity: 0, side: THREE.DoubleSide }));
         ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03; g.add(ring);
-        const beamLight = new THREE.PointLight(beamCol, 0, 6); beamLight.position.y = 1.5; g.add(beamLight);
+        const beamLight = new THREE.PointLight(beamCol, 0, 6); beamLight.position.y = 1.5; /* beamLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.renderOrder = 998;
         dur = 1.0;
         update = (pr) => {
@@ -10978,7 +10978,7 @@ export default function CherryAdventure() {
         // 💨 wind shockwave ring at the point of impact
         const wave = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.35, 28), new THREE.MeshBasicMaterial({ color: 0xd8f0ff, transparent: true, opacity: 0, side: THREE.DoubleSide }));
         wave.position.set(0.6, 1, 0); wave.rotation.y = Math.PI / 2; g.add(wave);
-        const slLight = new THREE.PointLight(cc, 0, 5); g.add(slLight);
+        const slLight = new THREE.PointLight(cc, 0, 5); /* slLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.renderOrder = 998;
         dur = 0.6;
         update = (pr) => {
@@ -11037,7 +11037,7 @@ export default function CherryAdventure() {
           const rk = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06 + Math.random() * 0.05, 0), new THREE.MeshStandardMaterial({ color: 0x8a7050, roughness: 0.9 }));
           rk.visible = false; rk.userData = { vx: (Math.random() - 0.3) * 1.6, vy: 1.5 + Math.random() * 1.5, rot: Math.random() * 6 }; g.add(rk); rocks.push(rk);
         }
-        const bashLight = new THREE.PointLight(0xffd060, 0, 4); bashLight.position.set(0.5, 1, 0); g.add(bashLight);
+        const bashLight = new THREE.PointLight(0xffd060, 0, 4); bashLight.position.set(0.5, 1, 0); /* bashLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 0.6;
         update = (pr) => {
           if (pr < 0.5) {
@@ -11081,7 +11081,7 @@ export default function CherryAdventure() {
         }
         const pulse = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.5, 28), new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0, side: THREE.DoubleSide }));
         pulse.rotation.x = -Math.PI / 2; pulse.position.y = 0.1; g.add(pulse);
-        const rageLight = new THREE.PointLight(0xff4020, 0, 6); rageLight.position.y = 1; g.add(rageLight);
+        const rageLight = new THREE.PointLight(0xff4020, 0, 6); rageLight.position.y = 1; /* rageLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 1.0;
         update = (pr) => {
           // flames rise and flicker
@@ -11116,7 +11116,7 @@ export default function CherryAdventure() {
           const m = new THREE.Mesh(new THREE.SphereGeometry(0.045, 5, 5), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffd23a : 0xff5a1a, transparent: true }));
           m.userData = { vx: (Math.random() - 0.5) * 2.4, vy: (Math.random() - 0.5) * 2.4 }; m.visible = false; g.add(m); embers.push(m);
         }
-        const xLight = new THREE.PointLight(cc, 0, 4); xLight.position.y = 1; g.add(xLight);
+        const xLight = new THREE.PointLight(cc, 0, 4); xLight.position.y = 1; /* xLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.renderOrder = 998;
         dur = 0.7;
         const setSlash = (grp, o, sx) => { grp.children[0].material.opacity = o; grp.children[1].material.opacity = Math.min(1, o * 1.3); grp.scale.x = sx; };
@@ -11160,7 +11160,7 @@ export default function CherryAdventure() {
           const m = new THREE.Mesh(new THREE.TetrahedronGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0x8a6a4a, roughness: 1, flatShading: true }));
           m.userData = { vx: (Math.random() - 0.5) * 2, vy: 1.5 + Math.random() * 1.5, vz: (Math.random() - 0.5) * 2 }; m.visible = false; g.add(m); debris.push(m);
         }
-        const eqLight = new THREE.PointLight(0xff6a1a, 0, 4); eqLight.position.y = 0.3; g.add(eqLight);
+        const eqLight = new THREE.PointLight(0xff6a1a, 0, 4); eqLight.position.y = 0.3; /* eqLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         // 🗿 tall stone pillars erupting upward (golden earth energy)
         const pillars = [];
         for (let i = 0; i < 5; i++) {
@@ -11224,7 +11224,7 @@ export default function CherryAdventure() {
         // glowing motion trail behind the arrow, along X
         const trail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.005, 1.4, 6), new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0.5, depthWrite: false }));
         trail.rotation.z = -Math.PI / 2; g.add(trail);
-        const aLight = new THREE.PointLight(cc, 1.2, 3); g.add(aLight);
+        const aLight = new THREE.PointLight(cc, 1.2, 3); /* aLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         // impact burst pieces
         const shards = [];
         const nShard = fxType === "arrowsnipe" ? 16 : 10;
@@ -11377,7 +11377,7 @@ export default function CherryAdventure() {
           const m = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), new THREE.MeshBasicMaterial({ color: cc, transparent: true }));
           m.visible = false; m.userData = { a: (i / 12) * Math.PI * 2, sp: 0.7 + Math.random() * 0.5 }; g.add(m); bursts.push(m);
         }
-        const mLight = new THREE.PointLight(cc, 0, 3); g.add(mLight);
+        const mLight = new THREE.PointLight(cc, 0, 3); /* mLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         // 💫 dizzy stars that orbit the monster's head after the triple hit
         const dizzyStars = [];
         for (let i = 0; i < 4; i++) {
@@ -11436,7 +11436,7 @@ export default function CherryAdventure() {
           m.userData = { at: 0.3 + Math.random() * 0.3, vy: 0.8 + Math.random() * 0.8 };
           g.add(m); drops.push(m);
         }
-        const bLight = new THREE.PointLight(0xd9536b, 0, 3); bLight.position.y = 1; g.add(bLight);
+        const bLight = new THREE.PointLight(0xd9536b, 0, 3); bLight.position.y = 1; /* bLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.renderOrder = 998;
         dur = 0.9;
         update = (pr) => {
@@ -11475,7 +11475,7 @@ export default function CherryAdventure() {
           m.userData = { a: (i / 10) * Math.PI * 2, sp: 0.5 + Math.random() * 0.5, at: 0.18 + Math.floor(i / 4) * 0.18 };
           g.add(m); venom.push(m);
         }
-        const pLight = new THREE.PointLight(0x9a4ad0, 0, 3); pLight.position.y = 1; g.add(pLight);
+        const pLight = new THREE.PointLight(0x9a4ad0, 0, 3); pLight.position.y = 1; /* pLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.renderOrder = 998;
         dur = 1.0;
         update = (pr) => {
@@ -11516,7 +11516,7 @@ export default function CherryAdventure() {
           gh.position.set(sx, 0.9, -0.1); gh.userData = { ph: sx > 0 ? 0 : Math.PI };
           g.add(gh); ghosts.push(gh);
         }
-        const sdLight = new THREE.PointLight(0x8affc0, 0, 3); sdLight.position.y = 1; g.add(sdLight);
+        const sdLight = new THREE.PointLight(0x8affc0, 0, 3); sdLight.position.y = 1; /* sdLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         g.renderOrder = 998;
         dur = 0.9;
         update = (pr) => {
