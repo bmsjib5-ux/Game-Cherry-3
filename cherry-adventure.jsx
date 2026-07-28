@@ -10158,7 +10158,7 @@ export default function CherryAdventure() {
           U.flash.scale.setScalar(1 + pr * 2.6); U.flash.material.opacity = 0.9 * (1 - pr);
           U.shards.forEach((sh) => { const v = sh.userData; sh.position.x += v.vx * dt; sh.position.z += v.vz * dt; sh.position.y += v.vy * dt; v.vy -= 7.5 * dt; sh.material.opacity = 0.95 * (1 - pr); });
         }
-        if (U.life <= 0) { scene.remove(g); advRigs.splice(i, 1); }
+        if (U.life <= 0) { scene.remove(g); if (G._disposeObj3D) G._disposeObj3D(g); advRigs.splice(i, 1); }
       }
     };
     for (let i = 0; i < 14; i++) {
@@ -11526,13 +11526,22 @@ export default function CherryAdventure() {
       }
       activeFx.push({ group: g, t: 0, dur, update });
     };
+    // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
+    const disposeObj3D = (grp) => {
+      grp.traverse((o) => {
+        if (o.geometry && o.geometry.dispose) o.geometry.dispose();
+        const m = o.material;
+        if (m) (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm) { if (mm.map && mm.map.dispose) mm.map.dispose(); if (mm.dispose) mm.dispose(); } });
+      });
+    };
+    G._disposeObj3D = disposeObj3D;
     const updateSkillFx = (dt) => {
       for (let i = activeFx.length - 1; i >= 0; i--) {
         const f = activeFx[i];
         f.t += dt;
         const pr = Math.min(1, f.t / f.dur);
         if (f.update) f.update(pr);
-        if (pr >= 1) { scene.remove(f.group); activeFx.splice(i, 1); }
+        if (pr >= 1) { scene.remove(f.group); disposeObj3D(f.group); activeFx.splice(i, 1); }
       }
     };
     // ✨ sword trail: sample the blade tip each frame and draw a fading ribbon
@@ -17300,7 +17309,7 @@ export default function CherryAdventure() {
                   if (A.sxBars) A.sxBars.forEach((b) => { b.material.opacity = Math.max(0, 1 - bp2 * 1.5); b.scale.y = 1 + bp2 * 5; });
                   if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.06); // light returns
                 }
-                if (p >= 1 && A.sxBars) { A.sxBars.forEach((b) => scene.remove(b)); A.sxBars = null; }
+                if (p >= 1 && A.sxBars) { A.sxBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.sxBars = null; }
               } else if (skId === "s_double") {
                 // 🗡️🩸 TWIN BLADE RUSH — crouch, dash in, two rapid CROSS slashes with crimson trails
                 const crimson = 0xc4102a, blood = 0x8a0a1a;
@@ -17372,7 +17381,7 @@ export default function CherryAdventure() {
                   if (A.xBars) A.xBars.forEach((b) => { b.material.opacity = Math.max(0, 0.5 * (1 - rp * 1.6)); b.scale.y = 1 + rp * 3; });
                 }
                 // clean up the X trails when the animation ends
-                if (p >= 1 && A.xBars) { A.xBars.forEach((b) => scene.remove(b)); A.xBars = null; }
+                if (p >= 1 && A.xBars) { A.xBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.xBars = null; }
               } else if (skId === "s_poison") {
                 // ☠️🟣 POISON DAGGER BARRAGE — hurl 3 spinning venom daggers, each bursts into poison mist
                 const venomP = 0x9a4ad0, venomG = 0x4ad04a, mist = 0x6ad08a;
@@ -17430,7 +17439,7 @@ export default function CherryAdventure() {
                 });
                 if (p >= 0.5) { armR.rotation.z = 0.12; armL.rotation.z = -0.12; char.rotation.z = 0; }
                 // clean up the daggers when the throw ends
-                if (p >= 1 && A.pDaggers) { A.pDaggers.forEach((d) => scene.remove(d)); A.pDaggers = null; }
+                if (p >= 1 && A.pDaggers) { A.pDaggers.forEach((d) => { scene.remove(d); disposeObj3D(d); }); A.pDaggers = null; }
               } else if (skId === "s_evade") {
                 // 🌪️🌑 SHADOW DANCE — spin at blinding speed while 4 phantom clones slash as one
                 const windBlue = 0x4a7ad0, shadowDk = 0x1a1a2e, phantom = 0x6a8ae8;
@@ -17497,7 +17506,7 @@ export default function CherryAdventure() {
                   const cl = A.dClones[Math.floor(Math.random() * 4)];
                   burst(new THREE.Vector3(cl.position.x, 0.8, cl.position.z), shadowDk, 0.5);
                 }
-                if (p >= 1 && A.dClones) { A.dClones.forEach((c) => scene.remove(c)); A.dClones = null; }
+                if (p >= 1 && A.dClones) { A.dClones.forEach((c) => { scene.remove(c); disposeObj3D(c); }); A.dClones = null; }
               } else if (skId && skId.indexOf("x_shd") === 0) {
                 // 🌑 SHADOW ASSASSIN ADVANCED — ท่าเฉพาะแต่ละสกิล (ไม่ซ้ำท่าพื้นฐาน)
                 const ex = battleCenter.x + (G.enemyX || 1.3);
@@ -17800,7 +17809,7 @@ export default function CherryAdventure() {
                   });
                   if (Math.random() < 0.6) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.4, 0.3 + Math.random() * 2, em.position.z + (Math.random() - 0.5) * 2.4), Math.random() < 0.5 ? bolt : deep, 0.45);
                 }
-                if (p >= 1 && A.chDragon) { scene.remove(A.chDragon); A.chDragon = null; }
+                if (p >= 1 && A.chDragon) { scene.remove(A.chDragon); disposeObj3D(A.chDragon); A.chDragon = null; }
               } else if (skId && (skId.indexOf("x_drg") === 0 || skId.indexOf("x_grd") === 0 || skId.indexOf("x_frz") === 0)) {
                 // 🔱 LANCER ADVANCED — ท่าเฉพาะแต่ละสกิล (ดราก้อนไนท์/ผู้พิทักษ์ปฐพี/อัศวินน้ำแข็งดำ)
                 const bx = battleCenter.x - 1.3, ex = battleCenter.x + (G.enemyX || 1.3), EPl = em.position;
@@ -18127,7 +18136,7 @@ export default function CherryAdventure() {
                 }
                 if (p >= 1) {
                   if (A.mug) { (A.mugParent || scene).remove(A.mug); A.mug = null; A.mugParent = null; }
-                  if (A.beans) { A.beans.forEach((b) => scene.remove(b)); A.beans = null; }
+                  if (A.beans) { A.beans.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.beans = null; }
                   wand.visible = true; // 🖊️ pen back in hand
                 }
               } else if (skId === "o_paper") {
@@ -18270,8 +18279,8 @@ export default function CherryAdventure() {
                   magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => (c.material.opacity = Math.max(0, 0.8 * (1 - bp)))));
                 }
                 if (p >= 1) {
-                  if (A.sheets) { A.sheets.forEach((sh) => scene.remove(sh)); A.sheets = null; }
-                  if (A.folder) { scene.remove(A.folder); A.folder = null; }
+                  if (A.sheets) { A.sheets.forEach((sh) => { scene.remove(sh); disposeObj3D(sh); }); A.sheets = null; }
+                  if (A.folder) { scene.remove(A.folder); disposeObj3D(A.folder); A.folder = null; }
                 }
               } else if (skId === "o_smash") {
                 // 💻⚡ LAPTOP SMASH — the laptop boots up, grows huge, then a leaping ground slam
@@ -18373,7 +18382,7 @@ export default function CherryAdventure() {
                   magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => { c.material.opacity = Math.max(0, 1 - bp); c.material.color.setHex(blue); }));
                   G._camShake = 0.35 * (1 - bp);
                 }
-                if (p >= 1 && A.smashKeys) { A.smashKeys.forEach((k2) => scene.remove(k2)); A.smashKeys = null; }
+                if (p >= 1 && A.smashKeys) { A.smashKeys.forEach((k2) => { scene.remove(k2); disposeObj3D(k2); }); A.smashKeys = null; }
               } else if (skId === "o_deadline") {
                 // ⏰⚡ DEADLINE RUSH — check the smartwatch, panic, then overtime mode
                 const cyan = 0x8ae0ff, alertRed = 0xe84a4a, screenW = 0xf0f6ff;
@@ -18477,7 +18486,7 @@ export default function CherryAdventure() {
                   magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = -t * (5 + si * 3); st.children.forEach((c) => { c.material.opacity = 0.9 * (dp > 0.75 ? (1 - dp) * 4 : 1); c.material.color.setHex(si === 1 ? alertRed : blue); }); });
                   G._camShake = 0.12;
                 }
-                if (p >= 1 && A.dlUi) { A.dlUi.forEach((u) => scene.remove(u)); A.dlUi = null; }
+                if (p >= 1 && A.dlUi) { A.dlUi.forEach((u) => { scene.remove(u); disposeObj3D(u); }); A.dlUi = null; }
               } else if (skId === "o_ceo") {
                 // 🏆 CEO'S COMMAND — the CEO looms, office junk rains, HQ lands on them
                 const ex = battleCenter.x + (G.enemyX || 1.3);
@@ -18606,9 +18615,9 @@ export default function CherryAdventure() {
                   if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.08);
                 }
                 if (p >= 1) {
-                  if (A.ceo) { scene.remove(A.ceo); A.ceo = null; }
-                  if (A.junk) { A.junk.forEach((m) => scene.remove(m)); A.junk = null; }
-                  if (A.tower) { scene.remove(A.tower); A.tower = null; }
+                  if (A.ceo) { scene.remove(A.ceo); disposeObj3D(A.ceo); A.ceo = null; }
+                  if (A.junk) { A.junk.forEach((m) => { scene.remove(m); disposeObj3D(m); }); A.junk = null; }
+                  if (A.tower) { scene.remove(A.tower); disposeObj3D(A.tower); A.tower = null; }
                 }
               } else if (skId && (skId.indexOf("x_ceo") === 0 || skId.indexOf("x_wrk") === 0)) {
                 // 💼 OFFICE ADVANCED — ท่าเฉพาะแต่ละสกิล (CEO/เวิร์กโฮลิก)
@@ -18742,7 +18751,7 @@ export default function CherryAdventure() {
                   // 🌸 cherry blossoms swirling around the enemy
                   if (Math.random() < 0.7) { const a = t * 3 + Math.random() * 6.28, r = 0.8 + Math.random() * 1.2; burst(new THREE.Vector3(em.position.x + Math.cos(a) * r, 0.3 + Math.random() * 2, em.position.z + Math.sin(a) * r), petal, 0.3 * (1 - rp * 0.5)); }
                 }
-                if (p >= 1 && A.crossBars) { A.crossBars.forEach((b) => scene.remove(b)); A.crossBars = null; }
+                if (p >= 1 && A.crossBars) { A.crossBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.crossBars = null; }
               } else if (skId === "k_iai") {
                 // ⚡⚔️ THUNDER DRAW — iaijutsu: silence, lightning gathers, one draw, then the cut erupts
                 const bolt = 0x4a9ae8, white = 0xdff0ff, deep = 0x2a4ad0;
@@ -18838,7 +18847,7 @@ export default function CherryAdventure() {
                   if (Math.random() < 0.6) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2.4, 0.3 + Math.random() * 2, em.position.z + (Math.random() - 0.5) * 2.4), Math.random() < 0.5 ? bolt : deep, 0.45);
                   if (scene.fog && G.biomeFog) scene.fog.color.lerp(G.biomeFog, 0.06); // light returns
                 }
-                if (p >= 1 && A.boltCut) { scene.remove(A.boltCut); A.boltCut = null; }
+                if (p >= 1 && A.boltCut) { scene.remove(A.boltCut); disposeObj3D(A.boltCut); A.boltCut = null; }
               } else if (skId === "k_moon") {
                 // 🌙🌸 MOONLIGHT DANCE — a full moon rises, afterimages swarm, then one giant crescent
                 const moonW = 0xeef4ff, iceBlue = 0xbfd8f0, petal = 0xffc0d8, deepBlue = 0x6a9ad8;
@@ -18953,9 +18962,9 @@ export default function CherryAdventure() {
                 }
                 // cleanup
                 if (p >= 1) {
-                  if (A.moon) { scene.remove(A.moon); scene.remove(A.moonLight); A.moon = null; A.moonLight = null; }
-                  if (A.ghosts) { A.ghosts.forEach((g2) => scene.remove(g2)); A.ghosts = null; }
-                  if (A.crescent) { scene.remove(A.crescent); A.crescent = null; }
+                  if (A.moon) { scene.remove(A.moon); disposeObj3D(A.moon); scene.remove(A.moonLight); disposeObj3D(A.moonLight); A.moon = null; A.moonLight = null; }
+                  if (A.ghosts) { A.ghosts.forEach((g2) => { scene.remove(g2); disposeObj3D(g2); }); A.ghosts = null; }
+                  if (A.crescent) { scene.remove(A.crescent); disposeObj3D(A.crescent); A.crescent = null; }
                 }
               } else if (skId && (skId.indexOf("x_ken") === 0 || skId.indexOf("x_iai") === 0)) {
                 // ⚔️⚡ SAMURAI ADVANCED — ท่าเฉพาะแต่ละสกิล (เคนเซย์/จอมชักดาบ)
@@ -19080,7 +19089,7 @@ export default function CherryAdventure() {
                   });
                   if (rp < 0.6 && Math.random() < 0.5) burst(new THREE.Vector3(em.position.x + (Math.random() - 0.5) * 2, 0.4 + Math.random() * 1.8, em.position.z + (Math.random() - 0.5) * 1.5), petal, 0.28);
                 }
-                if (p >= 1 && A.slashArc) { A.slashArc.forEach((a2) => scene.remove(a2)); A.slashArc = null; }
+                if (p >= 1 && A.slashArc) { A.slashArc.forEach((a2) => { scene.remove(a2); disposeObj3D(a2); }); A.slashArc = null; }
               }
             } else if (cls === "archer") {
               const skId = A.skill ? A.skill.id : null;
@@ -20010,43 +20019,43 @@ export default function CherryAdventure() {
               orbFx.visible = false;
               magicCircle.visible = false;
               G._ultCamOrbit = 0; // 🎥 clear cinematic orbit
-              if (A.xBars) { A.xBars.forEach((b) => scene.remove(b)); A.xBars = null; } // 🗡️ remove slash trails
-              if (A.pDaggers) { A.pDaggers.forEach((d) => scene.remove(d)); A.pDaggers = null; } // ☠️ remove thrown daggers
-              if (A.chDragon) { scene.remove(A.chDragon); A.chDragon = null; } // ⚡🐉 remove the charge dragon
-              if (A.crossBars) { A.crossBars.forEach((b) => scene.remove(b)); A.crossBars = null; } // 🌸 remove the cross slash
-              if (A.boltCut) { scene.remove(A.boltCut); A.boltCut = null; } // ⚡ remove the lightning cut
-              if (A.slashArc) { A.slashArc.forEach((a2) => scene.remove(a2)); A.slashArc = null; } // ✨ remove the light ribbon
-              if (A.sheets) { A.sheets.forEach((sh) => scene.remove(sh)); A.sheets = null; } // 📄 remove thrown documents
-              if (A.folder) { scene.remove(A.folder); A.folder = null; } // 📁 remove the folder
-              if (A.smashKeys) { A.smashKeys.forEach((k2) => scene.remove(k2)); A.smashKeys = null; } // ⌨️ remove exploded keys
+              if (A.xBars) { A.xBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.xBars = null; } // 🗡️ remove slash trails
+              if (A.pDaggers) { A.pDaggers.forEach((d) => { scene.remove(d); disposeObj3D(d); }); A.pDaggers = null; } // ☠️ remove thrown daggers
+              if (A.chDragon) { scene.remove(A.chDragon); disposeObj3D(A.chDragon); A.chDragon = null; } // ⚡🐉 remove the charge dragon
+              if (A.crossBars) { A.crossBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.crossBars = null; } // 🌸 remove the cross slash
+              if (A.boltCut) { scene.remove(A.boltCut); disposeObj3D(A.boltCut); A.boltCut = null; } // ⚡ remove the lightning cut
+              if (A.slashArc) { A.slashArc.forEach((a2) => { scene.remove(a2); disposeObj3D(a2); }); A.slashArc = null; } // ✨ remove the light ribbon
+              if (A.sheets) { A.sheets.forEach((sh) => { scene.remove(sh); disposeObj3D(sh); }); A.sheets = null; } // 📄 remove thrown documents
+              if (A.folder) { scene.remove(A.folder); disposeObj3D(A.folder); A.folder = null; } // 📁 remove the folder
+              if (A.smashKeys) { A.smashKeys.forEach((k2) => { scene.remove(k2); disposeObj3D(k2); }); A.smashKeys = null; } // ⌨️ remove exploded keys
               if (A.mug) { (A.mugParent || scene).remove(A.mug); A.mug = null; A.mugParent = null; } // ☕ remove the coffee mug
               wand.visible = true; // 🖊️ make sure the pen is back after the coffee skill
-              if (A.beans) { A.beans.forEach((b) => scene.remove(b)); A.beans = null; } // ☕ remove orbiting beans
-              if (A.dlUi) { A.dlUi.forEach((u) => scene.remove(u)); A.dlUi = null; } // ⏰ remove deadline windows/clocks
+              if (A.beans) { A.beans.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.beans = null; } // ☕ remove orbiting beans
+              if (A.dlUi) { A.dlUi.forEach((u) => { scene.remove(u); disposeObj3D(u); }); A.dlUi = null; } // ⏰ remove deadline windows/clocks
               // 💻 coder skill cleanup
-              if (A.fw) { A.fw.forEach((x) => scene.remove(x)); A.fw = null; }
-              if (A.fwCode) { A.fwCode.forEach((x) => scene.remove(x)); A.fwCode = null; } // 🔒 firewall code rings
-              if (A.drones) { A.drones.forEach((x) => scene.remove(x)); A.drones = null; }
-                if (A.cfx) { scene.remove(A.cfx); A.cfx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.cfx = null; A.cfxParts = null; if (G.enemy && G.enemy.mesh && G.enemy.mesh.userData.body) G.enemy.mesh.userData.body.traverse(o => { if (o.isMesh && o.material) o.material.opacity = 1; }); }
-                if (A.wfx) { scene.remove(A.wfx); A.wfx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.wfx = null; A.wfxParts = null; }
-              if (A.errs) { A.errs.forEach((x) => scene.remove(x)); A.errs = null; }
-              if (A.rain) { A.rain.forEach((x) => scene.remove(x)); A.rain = null; }
-              if (A.ceo) { scene.remove(A.ceo); A.ceo = null; } // 🏆 remove the CEO silhouette
-              if (A.junk) { A.junk.forEach((m) => scene.remove(m)); A.junk = null; } // 📦 remove falling office junk
-              if (A.tower) { scene.remove(A.tower); A.tower = null; } // 🏢 remove the HQ tower
+              if (A.fw) { A.fw.forEach((x) => { scene.remove(x); disposeObj3D(x); }); A.fw = null; }
+              if (A.fwCode) { A.fwCode.forEach((x) => { scene.remove(x); disposeObj3D(x); }); A.fwCode = null; } // 🔒 firewall code rings
+              if (A.drones) { A.drones.forEach((x) => { scene.remove(x); disposeObj3D(x); }); A.drones = null; }
+                if (A.cfx) { scene.remove(A.cfx); disposeObj3D(A.cfx); A.cfx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.cfx = null; A.cfxParts = null; if (G.enemy && G.enemy.mesh && G.enemy.mesh.userData.body) G.enemy.mesh.userData.body.traverse(o => { if (o.isMesh && o.material) o.material.opacity = 1; }); }
+                if (A.wfx) { scene.remove(A.wfx); disposeObj3D(A.wfx); A.wfx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.wfx = null; A.wfxParts = null; }
+              if (A.errs) { A.errs.forEach((x) => { scene.remove(x); disposeObj3D(x); }); A.errs = null; }
+              if (A.rain) { A.rain.forEach((x) => { scene.remove(x); disposeObj3D(x); }); A.rain = null; }
+              if (A.ceo) { scene.remove(A.ceo); disposeObj3D(A.ceo); A.ceo = null; } // 🏆 remove the CEO silhouette
+              if (A.junk) { A.junk.forEach((m) => { scene.remove(m); disposeObj3D(m); }); A.junk = null; } // 📦 remove falling office junk
+              if (A.tower) { scene.remove(A.tower); disposeObj3D(A.tower); A.tower = null; } // 🏢 remove the HQ tower
               if (G.officeLaptop) { // 💻 reset the laptop after a smash
                 G.officeLaptop.scale.setScalar(0.95);
                 if (G.officeLaptop.userData.hinge) G.officeLaptop.userData.hinge.rotation.x = -0.4;
                 if (G.officeLaptop.userData.screen) G.officeLaptop.userData.screen.material.emissiveIntensity = 1.2;
               }
               // 🌙 Moonlight Dance cleanup — moon, moonlight, afterimages, crescent
-              if (A.moon) { scene.remove(A.moon); A.moon = null; }
-              if (A.moonLight) { scene.remove(A.moonLight); A.moonLight = null; }
-              if (A.ghosts) { A.ghosts.forEach((g2) => scene.remove(g2)); A.ghosts = null; }
-              if (A.crescent) { scene.remove(A.crescent); A.crescent = null; }
+              if (A.moon) { scene.remove(A.moon); disposeObj3D(A.moon); A.moon = null; }
+              if (A.moonLight) { scene.remove(A.moonLight); disposeObj3D(A.moonLight); A.moonLight = null; }
+              if (A.ghosts) { A.ghosts.forEach((g2) => { scene.remove(g2); disposeObj3D(g2); }); A.ghosts = null; }
+              if (A.crescent) { scene.remove(A.crescent); disposeObj3D(A.crescent); A.crescent = null; }
               // 🌑 Shadow Assassination cleanup — un-hide the assassin, drop the X, restore facing
-              if (A.sxBars) { A.sxBars.forEach((b) => scene.remove(b)); A.sxBars = null; }
-              if (A.dClones) { A.dClones.forEach((c) => scene.remove(c)); A.dClones = null; } // 🌪️ remove dance clones
+              if (A.sxBars) { A.sxBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.sxBars = null; }
+              if (A.dClones) { A.dClones.forEach((c) => { scene.remove(c); disposeObj3D(c); }); A.dClones = null; } // 🌪️ remove dance clones
               char.visible = true;
               char.scale.setScalar(1);
               char.rotation.y = Math.PI / 2;
@@ -21453,11 +21462,11 @@ export default function CherryAdventure() {
               }
               // cleanup
               if (p >= 1) {
-                if (A.sMoon) { scene.remove(A.sMoon); A.sMoon = null; }
-                if (A.sMoonL) { scene.remove(A.sMoonL); A.sMoonL = null; }
-                if (A.moonHalves) { A.moonHalves.forEach((h) => scene.remove(h)); A.moonHalves = null; }
-                if (A.sLines) { A.sLines.forEach((l2) => scene.remove(l2)); A.sLines = null; }
-                if (A.sCrescent) { scene.remove(A.sCrescent); A.sCrescent = null; }
+                if (A.sMoon) { scene.remove(A.sMoon); disposeObj3D(A.sMoon); A.sMoon = null; }
+                if (A.sMoonL) { scene.remove(A.sMoonL); disposeObj3D(A.sMoonL); A.sMoonL = null; }
+                if (A.moonHalves) { A.moonHalves.forEach((h) => { scene.remove(h); disposeObj3D(h); }); A.moonHalves = null; }
+                if (A.sLines) { A.sLines.forEach((l2) => { scene.remove(l2); disposeObj3D(l2); }); A.sLines = null; }
+                if (A.sCrescent) { scene.remove(A.sCrescent); disposeObj3D(A.sCrescent); A.sCrescent = null; }
               }
             } else if (cls === "samurai") {
               // ⚔️🌸 HEAVEN SPLIT SLASH — focus, stop time, an iaido flurry, then cut the sky itself
@@ -21738,8 +21747,8 @@ export default function CherryAdventure() {
               arrowFx.visible = false; arrowFx.scale.setScalar(1);
               // ✨ clean up Divine Judgment wings + guardian
               if (A.wings) { char.remove(A.wings); A.wings = null; }
-              if (A.guardian) { scene.remove(A.guardian); A.guardian = null; }
-              if (A.meteors) { A.meteors.forEach((m) => scene.remove(m)); A.meteors = null; } // ☄️ clean up meteors
+              if (A.guardian) { scene.remove(A.guardian); disposeObj3D(A.guardian); A.guardian = null; }
+              if (A.meteors) { A.meteors.forEach((m) => { scene.remove(m); disposeObj3D(m); }); A.meteors = null; } // ☄️ clean up meteors
               // 🏹🌌 Dimensional Pierce cleanup — remove portals/crystals/gate/arrow rig
               if (A.dp) {
                 scene.remove(A.dp.fx);
@@ -21755,26 +21764,26 @@ export default function CherryAdventure() {
               if (A.se) { scene.remove(A.se.fx); A.se.fx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.se = null; }
               if (A.mg) { scene.remove(A.mg.fx); A.mg.fx.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); A.mg = null; }
               // 🔱🐉 Dragon Spear Judgment cleanup — dragon, levitating rocks, restore the spear
-              if (A.dragon) { scene.remove(A.dragon); A.dragon = null; }
-              if (A.rocks) { A.rocks.forEach((rk) => scene.remove(rk)); A.rocks = null; }
-              if (A.slashLine) { A.slashLine.forEach((c) => scene.remove(c)); A.slashLine = null; } // ⚔️🌸 remove the heaven cut
+              if (A.dragon) { scene.remove(A.dragon); disposeObj3D(A.dragon); A.dragon = null; }
+              if (A.rocks) { A.rocks.forEach((rk) => { scene.remove(rk); disposeObj3D(rk); }); A.rocks = null; }
+              if (A.slashLine) { A.slashLine.forEach((c) => { scene.remove(c); disposeObj3D(c); }); A.slashLine = null; } // ⚔️🌸 remove the heaven cut
               // 👑🌸 Heavenly Sakura Judgment cleanup — moon, moonlight, halves, sword lines, crescent
-              if (A.sMoon) { scene.remove(A.sMoon); A.sMoon = null; }
-              if (A.sMoonL) { scene.remove(A.sMoonL); A.sMoonL = null; }
-              if (A.moonHalves) { A.moonHalves.forEach((h) => scene.remove(h)); A.moonHalves = null; }
-              if (A.sLines) { A.sLines.forEach((l2) => scene.remove(l2)); A.sLines = null; }
-              if (A.sCrescent) { scene.remove(A.sCrescent); A.sCrescent = null; }
+              if (A.sMoon) { scene.remove(A.sMoon); disposeObj3D(A.sMoon); A.sMoon = null; }
+              if (A.sMoonL) { scene.remove(A.sMoonL); disposeObj3D(A.sMoonL); A.sMoonL = null; }
+              if (A.moonHalves) { A.moonHalves.forEach((h) => { scene.remove(h); disposeObj3D(h); }); A.moonHalves = null; }
+              if (A.sLines) { A.sLines.forEach((l2) => { scene.remove(l2); disposeObj3D(l2); }); A.sLines = null; }
+              if (A.sCrescent) { scene.remove(A.sCrescent); disposeObj3D(A.sCrescent); A.sCrescent = null; }
               // 💻🔮 Reality Rewrite cleanup — holo windows, AI cubes, compile bar
-              if (A.win) { A.win.forEach((w) => scene.remove(w)); A.win = null; }
-              if (A.cubes) { A.cubes.forEach((c2) => scene.remove(c2)); A.cubes = null; }
-              if (A.bar) { scene.remove(A.bar); A.bar = null; A.barFill = null; }
+              if (A.win) { A.win.forEach((w) => { scene.remove(w); disposeObj3D(w); }); A.win = null; }
+              if (A.cubes) { A.cubes.forEach((c2) => { scene.remove(c2); disposeObj3D(c2); }); A.cubes = null; }
+              if (A.bar) { scene.remove(A.bar); disposeObj3D(A.bar); A.bar = null; A.barFill = null; }
               if (G.enemy && G.enemy.mesh && G.enemy.mesh.userData.body) G.enemy.mesh.userData.body.traverse((o) => { if (o.isMesh && o.material) o.material.opacity = 1; });
               // 💻⚡ OT Overload cleanup — raining documents + the giant laptop
-              if (A.docs) { A.docs.forEach((d2) => scene.remove(d2)); A.docs = null; }
-              if (A.bigLaptop) { scene.remove(A.bigLaptop); A.bigLaptop = null; }
+              if (A.docs) { A.docs.forEach((d2) => { scene.remove(d2); disposeObj3D(d2); }); A.docs = null; }
+              if (A.bigLaptop) { scene.remove(A.bigLaptop); disposeObj3D(A.bigLaptop); A.bigLaptop = null; }
               // 🗡️🌑 Shadow Execution cleanup — un-hide the assassin and remove clones/X mark
-              if (A.clones) { A.clones.forEach((cl) => scene.remove(cl)); A.clones = null; }
-              if (A.xMark) { scene.remove(A.xMark); A.xMark = null; }
+              if (A.clones) { A.clones.forEach((cl) => { scene.remove(cl); disposeObj3D(cl); }); A.clones = null; }
+              if (A.xMark) { scene.remove(A.xMark); disposeObj3D(A.xMark); A.xMark = null; }
               char.traverse((o) => { if (o.isMesh && o.material && o.material.transparent) o.material.opacity = 1; });
               // 💪 clear elbow bends set by ult poses (samurai sheathe, lancer two-hand grip)
               if (armL.userData.elbow) armL.userData.elbow.rotation.x = 0;
