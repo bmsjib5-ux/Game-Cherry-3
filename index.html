@@ -13593,15 +13593,46 @@ function CherryAdventure() {
             }
         };
         G.eventT = 20; // first event comes fairly soon
-        // ---------- 🗼 Dungeon portal ----------
+        // ---------- 🗼 Dungeon gate — rectangular tower doorway ----------
         const portal = new THREE.Group();
-        const pRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.1, 10, 32), new THREE.MeshStandardMaterial({ color: 0x9a6ad0, emissive: 0x6a2ad0, emissiveIntensity: 0.9 }));
-        pRing.position.y = 1.2;
-        const pDisc = new THREE.Mesh(new THREE.CircleGeometry(0.85, 28), new THREE.MeshBasicMaterial({ color: 0x4a1a8a, transparent: true, opacity: 0.65, side: THREE.DoubleSide }));
-        pDisc.position.y = 1.2;
-        const pSwirl = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.5, 24), new THREE.MeshBasicMaterial({ color: 0xc9a8f0, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
-        pSwirl.position.set(0, 1.2, 0.01);
-        portal.add(pRing, pDisc, pSwirl);
+        const gateStone = new THREE.MeshStandardMaterial({ color: 0x3a2a5a, roughness: 0.85, metalness: 0.1 });
+        const gateTrim = new THREE.MeshStandardMaterial({ color: 0x9a6ad0, emissive: 0x6a2ad0, emissiveIntensity: 0.95, roughness: 0.4, metalness: 0.3 });
+        const DW = 1.7, DH = 2.6, TH = 0.28; // 🚪 door width / height / frame thickness (rectangular)
+        // 🧱 two side pillars + top lintel = the rectangular stone frame
+        for (const sx of [-1, 1]) {
+            const pil = new THREE.Mesh(new THREE.BoxGeometry(TH, DH, TH), gateStone);
+            pil.position.set(sx * (DW / 2), DH / 2, 0);
+            pil.castShadow = true;
+            portal.add(pil);
+        }
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(DW + TH, TH, TH), gateStone);
+        lintel.position.set(0, DH, 0);
+        lintel.castShadow = true;
+        portal.add(lintel);
+        // 🏰 crenellations on top so it reads as a tower gate
+        for (let k = -1; k <= 1; k++) {
+            const cren = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, TH), gateStone);
+            cren.position.set(k * 0.62, DH + 0.3, 0);
+            portal.add(cren);
+        }
+        // ✨ glowing rectangular trim just inside the frame
+        const trimTop = new THREE.Mesh(new THREE.BoxGeometry(DW - TH, 0.07, 0.07), gateTrim);
+        trimTop.position.set(0, DH - TH / 2, TH / 2 + 0.01);
+        portal.add(trimTop);
+        const pRing = trimTop; // 🔖 kept for reference compatibility
+        for (const sx of [-1, 1]) {
+            const tv = new THREE.Mesh(new THREE.BoxGeometry(0.07, DH - TH, 0.07), gateTrim);
+            tv.position.set(sx * (DW / 2 - TH / 2), (DH - TH) / 2, TH / 2 + 0.01);
+            portal.add(tv);
+        }
+        // 🟪 rectangular energy fill (the portal surface)
+        const pDisc = new THREE.Mesh(new THREE.PlaneGeometry(DW - TH, DH - TH), new THREE.MeshBasicMaterial({ color: 0x4a1a8a, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
+        pDisc.position.set(0, (DH - TH) / 2 + TH / 2, 0.015);
+        portal.add(pDisc);
+        // 🔮 inner rectangular glow (pulses)
+        const pSwirl = new THREE.Mesh(new THREE.PlaneGeometry(DW - TH - 0.34, DH - TH - 0.44), new THREE.MeshBasicMaterial({ color: 0xc9a8f0, transparent: true, opacity: 0.5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        pSwirl.position.set(0, (DH - TH) / 2 + TH / 2, 0.03);
+        portal.add(pSwirl);
         portal.position.set(-6.6, 0, 7.0);
         portal.rotation.y = 0.8;
         scene.add(portal);
@@ -23708,9 +23739,9 @@ function CherryAdventure() {
                             }
                         }
                     }
-                    // 🗼 portal: swirl + entry prompt
-                    pSwirl.rotation.z = t * 3;
-                    pRing.rotation.z = -t * 0.8;
+                    // 🗼 tower gate: rectangular portal energy pulses (no spin — it's a doorway now)
+                    pSwirl.material.opacity = 0.32 + Math.abs(Math.sin(t * 2)) * 0.42;
+                    pDisc.material.opacity = 0.62 + Math.sin(t * 1.5) * 0.1;
                     // 🌀 dimension rifts: swirl spin + stand-still-3s charge → warp (◀ back / next ▶)
                     {
                         const WL = G._warpL, WR = G._warpR, P = G._warpPts;
