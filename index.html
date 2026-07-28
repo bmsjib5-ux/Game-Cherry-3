@@ -36392,7 +36392,7 @@ function CherryAdventure() {
                         const can = (ui.sp || 0) >= node.cost && !maxed && !locked && !capped;
                         const preName = node.req ? (nodes.find((n) => n.id === node.req) || {}).name : "";
                         return (React.createElement("div", { key: node.id, style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, background: rank > 0 ? "#eef8ee" : isClass ? "#fef6e8" : locked ? "#f2f0ee" : "#f7f7f2", borderRadius: 10, padding: "7px 9px", border: rank > 0 ? "1.5px solid #6ac09a" : isClass ? "1.5px solid #e8c070" : "1px solid #e8e8de", opacity: locked ? 0.7 : 1 } },
-                            React.createElement("div", { style: { flex: 1 } },
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                                 React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: isClass ? "#b08020" : "#5a6a4a" } },
                                     node.emoji,
                                     " ",
@@ -36417,8 +36417,8 @@ function CherryAdventure() {
                                     " \u00B7 \u0E16\u0E36\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25 ",
                                     rank * 8,
                                     " \u0E2D\u0E31\u0E1E\u0E15\u0E48\u0E2D\u0E44\u0E14\u0E49"),
-                                React.createElement("div", { style: { display: "flex", gap: 3, marginTop: 3 } }, Array.from({ length: max }).map((_, i) => (React.createElement("div", { key: i, style: { width: 14, height: 5, borderRadius: 3, background: i < rank ? "#4a9a5a" : "#dcdcd2" } }))))),
-                            React.createElement("button", { onClick: () => { G.unlockNode(node.id); }, disabled: !can, style: { border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: maxed ? "#fff" : can ? "#fff" : "#a8a89a", background: maxed ? "#6ac09a" : can ? "#4a9a5a" : "#e8e8de" } }, maxed ? "MAX" : locked ? "🔒" : `⚡${node.cost}`)));
+                                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3, marginTop: 3 } }, Array.from({ length: max }).map((_, i) => (React.createElement("div", { key: i, style: { width: 12, height: 5, borderRadius: 3, background: i < rank ? "#4a9a5a" : "#dcdcd2" } }))))),
+                            React.createElement("button", { onClick: () => { G.unlockNode(node.id); }, disabled: !can, style: { border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, flexShrink: 0, whiteSpace: "nowrap", cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: maxed ? "#fff" : can ? "#fff" : "#a8a89a", background: maxed ? "#6ac09a" : can ? "#4a9a5a" : "#e8e8de" } }, maxed ? "MAX" : locked ? "🔒" : `⚡${node.cost}`)));
                     });
                 })(),
                 React.createElement("div", { style: { fontSize: 10, color: "#a3a396", marginTop: 6, textAlign: "center" } }, "\u0E2D\u0E31\u0E1E\u0E0B\u0E49\u0E33\u0E44\u0E14\u0E49\u0E08\u0E19\u0E40\u0E15\u0E47\u0E21 \u00B7 \u0E42\u0E2B\u0E19\u0E14 \u2B50 \u0E1B\u0E23\u0E30\u0E08\u0E33\u0E2D\u0E32\u0E0A\u0E35\u0E1E \u00B7 \u0E1A\u0E32\u0E07\u0E42\u0E2B\u0E19\u0E14\u0E15\u0E49\u0E2D\u0E07\u0E1B\u0E25\u0E14\u0E42\u0E2B\u0E19\u0E14\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"))),

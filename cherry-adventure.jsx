@@ -26049,7 +26049,7 @@ export default function CherryAdventure() {
                   const preName = node.req ? (nodes.find((n) => n.id === node.req) || {}).name : "";
                   return (
                     <div key={node.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, background: rank > 0 ? "#eef8ee" : isClass ? "#fef6e8" : locked ? "#f2f0ee" : "#f7f7f2", borderRadius: 10, padding: "7px 9px", border: rank > 0 ? "1.5px solid #6ac09a" : isClass ? "1.5px solid #e8c070" : "1px solid #e8e8de", opacity: locked ? 0.7 : 1 }}>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 800, color: isClass ? "#b08020" : "#5a6a4a" }}>
                           {node.emoji} {node.name}{isClass && " ⭐"}
                           <span style={{ fontSize: 10, color: "#8aa07a", marginLeft: 4 }}>Lv.{rank}/{max}</span>
@@ -26058,16 +26058,16 @@ export default function CherryAdventure() {
                         {lvLocked && <div style={{ fontSize: 9.5, color: "#d06a4a", fontWeight: 700 }}>🔒 ต้องเลเวล {node.reqLv}</div>}
                         {!lvLocked && preLocked && <div style={{ fontSize: 9.5, color: "#d06a4a", fontWeight: 700 }}>🔒 ต้องปลด "{preName}" ก่อน</div>}
                         {!locked && capped && <div style={{ fontSize: 9.5, color: "#c07a10", fontWeight: 700 }}>🎚️ เลเวลจำกัดที่ Lv.{tcap} · ถึงเลเวล {rank * 8} อัพต่อได้</div>}
-                        {/* rank pips */}
-                        <div style={{ display: "flex", gap: 3, marginTop: 3 }}>
+                        {/* rank pips — wrap so long tracks (max 20) never push the button out of the card */}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 3 }}>
                           {Array.from({ length: max }).map((_, i) => (
-                            <div key={i} style={{ width: 14, height: 5, borderRadius: 3, background: i < rank ? "#4a9a5a" : "#dcdcd2" }} />
+                            <div key={i} style={{ width: 12, height: 5, borderRadius: 3, background: i < rank ? "#4a9a5a" : "#dcdcd2" }} />
                           ))}
                         </div>
                       </div>
                       <button onClick={() => { G.unlockNode(node.id); }}
                         disabled={!can}
-                        style={{ border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: maxed ? "#fff" : can ? "#fff" : "#a8a89a", background: maxed ? "#6ac09a" : can ? "#4a9a5a" : "#e8e8de" }}>
+                        style={{ border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, flexShrink: 0, whiteSpace: "nowrap", cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: maxed ? "#fff" : can ? "#fff" : "#a8a89a", background: maxed ? "#6ac09a" : can ? "#4a9a5a" : "#e8e8de" }}>
                         {maxed ? "MAX" : locked ? "🔒" : `⚡${node.cost}`}
                       </button>
                     </div>
