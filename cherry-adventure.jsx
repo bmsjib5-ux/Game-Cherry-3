@@ -2763,7 +2763,7 @@ export default function CherryAdventure() {
       if (id === "kairiBlade") return { x: -0.42, y: 0, z: 0.32 }; // ⚡ thunder blade up-forward
       if (id === "aurSword") return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
       if (id === "ragAxe") return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
-      if (id === "cx" || cls === "aegis") return { x: -1.42, y: 0, z: 0 }; // 🤖🔫 laser blaster — muzzle levelled forward
+      if (id === "cx" || cls === "aegis") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 laser blaster — muzzle levelled forward (barrel faces ahead)
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
       if (cls === "mage" || id === "cm" || id === "wDm") return { x: -0.15, y: 0, z: 0 };
@@ -4384,9 +4384,10 @@ export default function CherryAdventure() {
       const white = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
       const silver = new THREE.MeshStandardMaterial({ color: 0xa8b0bc, metalness: 0.92, roughness: 0.22 });
       const dark = new THREE.MeshStandardMaterial({ color: 0x12151d, metalness: 0.7, roughness: 0.42 });
-      const led = new THREE.MeshStandardMaterial({ color: 0x9ae8ff, emissive: 0x3ac8ff, emissiveIntensity: 2.0, roughness: 0.2 });
+      const led = new THREE.MeshStandardMaterial({ color: 0xff5555, emissive: 0xff1414, emissiveIntensity: 2.2, roughness: 0.2 }); // 🔴 red blinking eyes
       const plasma = new THREE.MeshStandardMaterial({ color: 0x6ad8ff, emissive: 0x2ab0f5, emissiveIntensity: 1.3, roughness: 0.25, metalness: 0.3 });
       const glowM = new THREE.MeshBasicMaterial({ color: 0x4ac0ff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+      const redGlow = new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }); // 🔴 red eye halo
       // 🥚 white head shell (the chibi head is hidden underneath)
       const shell = new THREE.Mesh(new THREE.SphereGeometry(0.6, 30, 24), white); shell.scale.set(1, 1.04, 0.96); H.add(shell);
       // top ridge + silver brow band
@@ -4400,11 +4401,11 @@ export default function CherryAdventure() {
       const tri = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.12, 3), plasma); tri.position.set(0, 0.2, 0.62); tri.rotation.set(Math.PI, 0, 0); H.add(tri);
       const triGlow = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.18, 3), glowM); triGlow.position.set(0, 0.2, 0.6); triGlow.rotation.set(Math.PI, 0, 0); H.add(triGlow);
       // 👁️ two angular glowing LED eyes on the faceplate (in front)
-      const eyes = [];
+      const eyes = [], eyeGlows = [];
       for (const sx of [-1, 1]) {
         const eye = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.09, 0.04), led);
         eye.position.set(sx * 0.17, 0.01, 0.63); eye.rotation.z = sx * 0.34; H.add(eye); eyes.push(eye);
-        const eyeGlow = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.18, 0.02), glowM); eyeGlow.position.set(sx * 0.17, 0.01, 0.61); eyeGlow.rotation.z = sx * 0.34; H.add(eyeGlow);
+        const eyeGlow = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.18, 0.02), redGlow); eyeGlow.position.set(sx * 0.17, 0.01, 0.61); eyeGlow.rotation.z = sx * 0.34; H.add(eyeGlow); eyeGlows.push(eyeGlow);
       }
       // silver mouth vents
       for (let k = 0; k < 3; k++) { const vent = new THREE.Mesh(new THREE.BoxGeometry(0.16 - k * 0.03, 0.02, 0.02), silver); vent.position.set(0, -0.26 - k * 0.05, 0.6); H.add(vent); }
@@ -4432,7 +4433,7 @@ export default function CherryAdventure() {
       const antTip = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), plasma); antTip.position.set(0, 0.79, -0.06); H.add(antTip);
       H.visible = false;
       headG.add(H);
-      G.aegisHelm = H; G.aegisHelmEyes = eyes;
+      G.aegisHelm = H; G.aegisHelmEyes = eyes; G.aegisHelmEyeGlows = eyeGlows;
     }
     const baseHair = new THREE.Group(); // scalp + bangs + fringe shared by styles 0-4
     headG.add(baseHair);
@@ -7580,7 +7581,7 @@ export default function CherryAdventure() {
       }
       // ===== 2 orbiting support drones =====
       const drones = [];
-      for (let d = 0; d < 2; d++) { const dr = new THREE.Group(); const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), white); dr.add(body); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), led); eye.position.z = 0.08; dr.add(eye); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 6, 16), plasma); ring.rotation.x = Math.PI / 2; dr.add(ring); dr.userData.ph = d * Math.PI; g.add(dr); drones.push(dr); }
+      for (let d = 0; d < 2; d++) { const dr = new THREE.Group(); const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), white); dr.add(body); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), led); eye.position.z = 0.08; dr.add(eye); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 6, 16), plasma); ring.rotation.x = Math.PI / 2; dr.add(ring); dr.userData.ph = d * Math.PI; dr.scale.setScalar(2); g.add(dr); drones.push(dr); } // 🛸 support drones — 2× larger
       g.userData = { core, coreGlow, halo, drones, jets, jetCores };
       classAccessories.mecha = g;
     }
@@ -15531,10 +15532,12 @@ export default function CherryAdventure() {
         }
       }
 
-      // 🤖 aegis mech helmet eyes scan/pulse + shield core breathe
+      // 🤖🔴 aegis mech helmet — red eyes blink (sharp on/off flash), shield core breathe
       if (G.aegisHelm && G.aegisHelm.visible) {
-        const pulse = 1.4 + Math.sin(t * 2.6) * 0.5;
-        if (G.aegisHelmEyes) G.aegisHelmEyes.forEach((e) => (e.material.emissiveIntensity = pulse));
+        const beat = Math.pow(Math.abs(Math.sin(t * 3.1)), 6); // sharp red flash between blinks (stays faintly lit)
+        const eyeI = 0.5 + beat * 2.8;
+        if (G.aegisHelmEyes) G.aegisHelmEyes.forEach((e) => (e.material.emissiveIntensity = eyeI));
+        if (G.aegisHelmEyeGlows) G.aegisHelmEyeGlows.forEach((g) => (g.material.opacity = 0.2 + beat * 0.7));
         if (G.aegisShieldCore) G.aegisShieldCore.material.opacity = 0.35 + Math.abs(Math.sin(t * 2.2)) * 0.2;
       }
       // 👗 class outfit accessories: flutter cloth + spin mage star
@@ -15595,7 +15598,7 @@ export default function CherryAdventure() {
             if (acc.userData.core) { acc.userData.core.material.emissiveIntensity = pulse; acc.userData.core.rotation.y = t * 1.4; }
             if (acc.userData.coreGlow) { acc.userData.coreGlow.material.opacity = 0.35 + Math.sin(t * 3.2) * 0.2; const s = 1 + Math.sin(t * 3.2) * 0.14; acc.userData.coreGlow.scale.setScalar(s); }
             if (acc.userData.halo) acc.userData.halo.rotation.z = t * 1.1;
-            acc.userData.drones.forEach((dr, i) => { const a = dr.userData.ph + t * 1.3; dr.position.set(Math.cos(a) * 0.62, 2.0 + Math.sin(t * 2 + i) * 0.1, Math.sin(a) * 0.62 - 0.15); dr.rotation.y = -a + Math.PI / 2; });
+            acc.userData.drones.forEach((dr, i) => { const a = dr.userData.ph + t * 1.3; dr.position.set(Math.cos(a) * 0.78, 2.0 + Math.sin(t * 2 + i) * 0.1, Math.sin(a) * 0.78 - 0.15); dr.rotation.y = -a + Math.PI / 2; }); // wider orbit for the bigger drones
           }
           // 🩸 tattered cape strips (assassin/lancer) flutter independently & flow
           if (acc.userData.capeStrips) {
@@ -16568,12 +16571,17 @@ export default function CherryAdventure() {
         if (G.cls === "aegis" && !G.heroId && !G.mountId) {
           const hb = Math.sin(t * 2.4) * 0.05;                          // gentle hover bob
           char.position.y = 0.52 + hb + moveAmt * 0.1;                  // float off the ground, rise a touch when boosting
-          const dangle = -0.44 - moveAmt * 0.2;                         // legs hang; swing back when boosting forward
-          legL.rotation.x = dangle + Math.sin(t * 2) * 0.05;
-          legR.rotation.x = dangle - Math.sin(t * 2) * 0.05;
-          legL.rotation.z = 0.14; legR.rotation.z = -0.14;              // slight A-splay
-          if (legL.userData.knee) legL.userData.knee.rotation.x = 0.6 + moveAmt * 0.25; // knees tucked up
-          if (legR.userData.knee) legR.userData.knee.rotation.x = 0.6 + moveAmt * 0.25;
+          const dangle = 0.03 + moveAmt * 0.06;                         // legs hang straight DOWN (only a slight lean when boosting)
+          legL.rotation.x = dangle + Math.sin(t * 2) * 0.03;
+          legR.rotation.x = dangle - Math.sin(t * 2) * 0.03;
+          legL.rotation.z = 0; legR.rotation.z = 0;                     // vertical, NOT slanted
+          legL.position.x = -0.3; legR.position.x = 0.3;                // held apart (parallel stance)
+          if (legL.userData.knee) legL.userData.knee.rotation.x = 0.1;  // knees nearly straight
+          if (legR.userData.knee) legR.userData.knee.rotation.x = 0.1;
+          // 🙌 hands stay steady while hovering — no walk swing (gun arm held forward, off-hand relaxed)
+          armR.rotation.x = -0.16; armL.rotation.x = 0.04; armR.rotation.z = 0; armL.rotation.z = 0;
+          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.24;
+          if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.2;
           torso.rotation.z += (0 - torso.rotation.z) * Math.min(1, dt * 10); // cancel the walk sway
           char.rotation.z += (-turn * 1.5 * moveAmt - char.rotation.z) * Math.min(1, dt * 7); // bank into turns while flying
           // 🔥 fire the back thrusters — flames lengthen & brighten with speed, flicker constantly
@@ -16653,6 +16661,7 @@ export default function CherryAdventure() {
           G.enemy.rageAura.scale.setScalar(1 + Math.sin(t * 4) * 0.1);
         }
         char.position.y = Math.sin(t * 2.5) * 0.03;
+        if (G.cls === "aegis") { legL.position.x = -0.165; legR.position.x = 0.165; } // 🤖 undo the hover leg-spread for the grounded battle stance
         // 🦵💪 relax limb joints in battle idle (mostly straight, gentle knee bend)
         if (!G.banim) {
           if (legL.userData.knee) legL.userData.knee.rotation.x = 0.08;
