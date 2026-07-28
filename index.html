@@ -14603,6 +14603,120 @@ function CherryAdventure() {
                         G._camShake = Math.max(G._camShake || 0, 0.25);
                 };
             }
+            else if (fxType === "gravitycore") {
+                // 🤖🌌 AAA Gravity Manipulation — a floating singularity forms, drags in debris + spiralling lightning,
+                //     then collapses into a massive plasma explosion + EMP shockwave + energy ripples + hex fragments
+                const bright = 0xaef0ff, deep = 0x6a5ad0;
+                const add = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false });
+                const CY = 1.5;
+                // 🕳️ singularity — dark core + glowing energy sphere
+                const dark = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 14), new THREE.MeshBasicMaterial({ color: 0x0a0a1a, transparent: true }));
+                dark.position.y = CY;
+                g.add(dark);
+                const orb = new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 16), add(deep, 0.6));
+                orb.position.y = CY;
+                g.add(orb);
+                const orb2 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 14), add(col, 0.25));
+                orb2.position.y = CY;
+                g.add(orb2);
+                // 💠 concentric holographic rings
+                const rings = [];
+                for (let k = 0; k < 4; k++) {
+                    const rg = new THREE.Mesh(new THREE.TorusGeometry(0.5 + k * 0.16, 0.02, 3, 32), add(k % 2 ? bright : col, 0.8));
+                    rg.position.y = CY;
+                    rg.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+                    g.add(rg);
+                    rings.push(rg);
+                }
+                // 🪨 debris / mech fragments pulled inward
+                const debris = [];
+                for (let i = 0; i < 16; i++) {
+                    const isHex = i % 3 === 0;
+                    const m = new THREE.Mesh(isHex ? new THREE.CylinderGeometry(0.1, 0.1, 0.02, 6) : new THREE.DodecahedronGeometry(0.08 + Math.random() * 0.06), isHex ? add(col, 0.9) : new THREE.MeshStandardMaterial({ color: 0x8a8f9a, emissive: deep, emissiveIntensity: 0.4, metalness: 0.6, roughness: 0.5, transparent: true }));
+                    const a = Math.random() * Math.PI * 2, r = 2.2 + Math.random() * 1.4;
+                    m.position.set(Math.cos(a) * r, CY + (Math.random() - 0.5) * 1.6, Math.sin(a) * r);
+                    m.userData = { a, r, ph: Math.random() * 6, rx: (Math.random() - 0.5) * 8, ry: (Math.random() - 0.5) * 8 };
+                    g.add(m);
+                    debris.push(m);
+                }
+                // 🌀 spiralling lightning arcs around the singularity
+                const spirals = [];
+                for (let s = 0; s < 3; s++) {
+                    const pts = [];
+                    for (let k = 0; k <= 22; k++) {
+                        const a = k / 22 * Math.PI * 4 + s * 2.1;
+                        const rr = 0.9 - k / 22 * 0.75;
+                        pts.push(new THREE.Vector3(Math.cos(a) * rr, CY - 0.6 + k / 22 * 1.2, Math.sin(a) * rr));
+                    }
+                    const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: bright, transparent: true }));
+                    g.add(ln);
+                    spirals.push(ln);
+                }
+                // 💥 collapse explosion + EMP shockwave + energy ripples
+                const flash = new THREE.Mesh(new THREE.SphereGeometry(0.6, 18, 16), add(bright, 0));
+                flash.position.y = CY;
+                g.add(flash);
+                const emp = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.62, 44), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                emp.rotation.x = -Math.PI / 2;
+                emp.position.y = 0.06;
+                g.add(emp);
+                const ripples = [];
+                for (let k = 0; k < 3; k++) {
+                    const rp = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 8, 36), add(bright, 0));
+                    rp.position.y = CY;
+                    rp.rotation.x = Math.PI / 2;
+                    g.add(rp);
+                    ripples.push(rp);
+                }
+                const hexOut = [];
+                for (let i = 0; i < 14; i++) {
+                    const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 6), add(col, 0));
+                    hx.position.y = CY;
+                    const a = Math.random() * Math.PI * 2;
+                    hx.userData = { vx: Math.cos(a) * (2 + Math.random() * 3), vz: Math.sin(a) * (2 + Math.random() * 3), vy: (Math.random() - 0.2) * 3, rx: (Math.random() - 0.5) * 8 };
+                    g.add(hx);
+                    hexOut.push(hx);
+                }
+                const light = new THREE.PointLight(deep, 2.5, 9);
+                light.position.y = CY;
+                g.add(light);
+                const COLLAPSE = 0.62;
+                dur = 1.35;
+                update = (pr) => {
+                    if (pr < COLLAPSE) {
+                        const fp = pr / COLLAPSE; // formation progress
+                        const grow = 0.7 + fp * 0.6 + Math.sin(pr * 30) * 0.05;
+                        dark.scale.setScalar(grow);
+                        orb.scale.setScalar(grow * (1 + Math.sin(pr * 18) * 0.08));
+                        orb2.scale.setScalar(grow * 1.1);
+                        orb.material.opacity = 0.6;
+                        orb2.material.opacity = 0.25;
+                        rings.forEach((rg, k) => { rg.rotation.z += 0.12 + k * 0.03; rg.rotation.x += 0.05; rg.scale.setScalar(1 - fp * 0.3); rg.material.opacity = 0.8; });
+                        spirals.forEach((ln, s) => { ln.rotation.y = pr * 10 + s; ln.material.opacity = 0.6 + Math.random() * 0.3; });
+                        debris.forEach((m) => { const rr = m.userData.r * (1 - fp * 0.92); const a = m.userData.a + pr * 4; m.position.set(Math.cos(a) * rr, CY + (m.position.y - CY) * 0.94, Math.sin(a) * rr); m.rotation.x += m.userData.rx * 0.04; m.rotation.y += m.userData.ry * 0.04; if (m.material.opacity != null)
+                            m.material.opacity = m.material.transparent ? 0.9 : 1; });
+                        light.intensity = 2 + fp * 2;
+                        G._camShake = Math.max(G._camShake || 0, 0.1 + fp * 0.15);
+                    }
+                    else {
+                        const ep = (pr - COLLAPSE) / (1 - COLLAPSE); // explosion progress
+                        [dark, orb, orb2].forEach((o) => o.scale.setScalar(Math.max(0.001, 1 - ep * 3)));
+                        rings.forEach((rg) => (rg.material.opacity = Math.max(0, 0.8 - ep * 2)));
+                        spirals.forEach((ln) => (ln.material.opacity = Math.max(0, 0.6 - ep * 2)));
+                        debris.forEach((m) => { m.position.multiplyScalar(1.0); const dir = m.position.clone().sub(new THREE.Vector3(0, CY, 0)).normalize(); m.position.add(dir.multiplyScalar(ep * 0.5)); if (m.material)
+                            m.material.opacity = Math.max(0, 1 - ep * 1.6); });
+                        flash.material.opacity = Math.max(0, 0.95 - ep * 1.3);
+                        flash.scale.setScalar(1 + ep * 4);
+                        emp.material.opacity = Math.max(0, 0.85 - ep);
+                        emp.scale.setScalar(1 + ep * 9);
+                        ripples.forEach((rp, k) => { const rep = Math.max(0, ep - k * 0.12); rp.material.opacity = Math.max(0, 0.8 - rep * 1.4); rp.scale.setScalar(1 + rep * 7); });
+                        hexOut.forEach((hx) => { hx.position.x += hx.userData.vx * 0.03; hx.position.z += hx.userData.vz * 0.03; hx.userData.vy -= 0.12; hx.position.y += hx.userData.vy * 0.03; hx.rotation.x += hx.userData.rx * 0.05; hx.material.opacity = Math.max(0, 0.9 - ep); });
+                        light.intensity = 4 * (1 - ep);
+                        if (ep < 0.3)
+                            G._camShake = Math.max(G._camShake || 0, 0.7);
+                    }
+                };
+            }
             else if (fxType === "snipe") {
                 // 💥 crit starburst
                 const rays = [];
@@ -18813,6 +18927,8 @@ function CherryAdventure() {
                 return "plasmadash"; // 🤖⚡ AI Mecha plasma dash
             if (sk.id === "g_drone")
                 return "dronebarrage"; // 🤖🛸 AI Mecha drone barrage
+            if (sk.id === "g_grav")
+                return "gravitycore"; // 🤖🌌 AI Mecha gravity singularity
             if (m[sk.id])
                 return m[sk.id];
             if (sk.burn)
@@ -19439,7 +19555,8 @@ function CherryAdventure() {
                 const ceoCommand = G.cls === "office" && sk.id === "o_ceo"; // 🏆 CEO → junk rain → HQ drop
                 const coderSkill = G.cls === "coder"; // 💻 all coder skills need room to breathe
                 const coderDur = { c_inject: 1.2, c_wall: 1.3, c_drone: 1.7, c_crash: 1.6, c_matrix: 1.8 }[sk.id];
-                G.banim = { type: "playerAttack", t: 0, dur: (lastBullet || weakPoint) ? 2.0 : poisonArrow ? 1.6 : chargeSkill ? 1.75 : tripleShot ? 1.0 : mageSpell ? mageDur : twinRush ? 1.2 : poisonBarrage ? 1.4 : shadowKill ? 2.2 : shadowDance ? 1.5 : pierceThrust ? 1.1 : cycloneSweep ? 1.4 : earthBreak ? 1.5 : dragonCharge ? 1.8 : swiftSlash ? 1.1 : twinSky ? 1.3 : thunderDraw ? 1.9 : moonDance ? 2.6 : paperStorm ? 1.9 : laptopSmash ? 1.7 : coffeeBoost ? 1.6 : deadlineRush ? 1.9 : ceoCommand ? 3.2 : (coderSkill && coderDur) ? coderDur : 0.6, mult: 1, skill: sk, chargeSkill, lastBullet, weakPoint, poisonArrow, mageSpell, twinRush, poisonBarrage, shadowKill, shadowDance, pierceThrust, cycloneSweep, earthBreak, dragonCharge, swiftSlash, twinSky, thunderDraw, moonDance, paperStorm, laptopSmash, coffeeBoost, deadlineRush, ceoCommand, coderSkill };
+                const aegisDur = G.cls === "aegis" ? ({ g_dash: 0.95, g_drone: 1.25, g_grav: 1.4, g_over: 1.1 }[sk.id] || 0.85) : null; // 🤖 room for the AAA plasma FX
+                G.banim = { type: "playerAttack", t: 0, dur: (lastBullet || weakPoint) ? 2.0 : poisonArrow ? 1.6 : chargeSkill ? 1.75 : tripleShot ? 1.0 : mageSpell ? mageDur : twinRush ? 1.2 : poisonBarrage ? 1.4 : shadowKill ? 2.2 : shadowDance ? 1.5 : pierceThrust ? 1.1 : cycloneSweep ? 1.4 : earthBreak ? 1.5 : dragonCharge ? 1.8 : swiftSlash ? 1.1 : twinSky ? 1.3 : thunderDraw ? 1.9 : moonDance ? 2.6 : paperStorm ? 1.9 : laptopSmash ? 1.7 : coffeeBoost ? 1.6 : deadlineRush ? 1.9 : ceoCommand ? 3.2 : (coderSkill && coderDur) ? coderDur : aegisDur ? aegisDur : 0.6, mult: 1, skill: sk, chargeSkill, lastBullet, weakPoint, poisonArrow, mageSpell, twinRush, poisonBarrage, shadowKill, shadowDance, pierceThrust, cycloneSweep, earthBreak, dragonCharge, swiftSlash, twinSky, thunderDraw, moonDance, paperStorm, laptopSmash, coffeeBoost, deadlineRush, ceoCommand, coderSkill };
                 setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: `${sk.emoji} ${sk.name}! (-${cost}💧)` }));
                 syncPlayer();
             }
@@ -23438,7 +23555,82 @@ function CherryAdventure() {
                             const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
                             const skFx = A.skill ? A.skill.fx : null;
                             const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
-                            if (cls === "warrior") {
+                            if (G.cls === "aegis") {
+                                // 🤖 AEGIS-X — arena skill choreography reusing the AAA plasma-dash / drone-barrage FX
+                                const EP = em.position;
+                                const bx = battleCenter.x - 1.3;
+                                const col = (A.skill && A.skill.color) || 0x3ad0ff;
+                                const sid = A.skill ? A.skill.id : null;
+                                const lift = 0.45; // hovers on its boosters during skills
+                                if (sid === "g_dash") {
+                                    // ⚡ supersonic plasma dash — wind back, rush THROUGH the enemy, then recover
+                                    let dx;
+                                    if (p < 0.3)
+                                        dx = -(p / 0.3) * 0.5;
+                                    else if (p < 0.68) {
+                                        const e = 1 - Math.pow(1 - (p - 0.3) / 0.38, 3);
+                                        dx = -0.5 + e * (EP.x - bx + 1.1);
+                                    }
+                                    else {
+                                        const e = (p - 0.68) / 0.32;
+                                        dx = (EP.x - bx + 1.1) * (1 - e);
+                                    }
+                                    char.position.x = bx + dx;
+                                    char.position.y = lift + Math.sin(Math.min(1, p) * Math.PI) * 0.25;
+                                    char.rotation.z = (p > 0.3 && p < 0.68) ? -0.18 : 0;
+                                    armR.rotation.x = -0.5;
+                                    armR.rotation.z = 0.1;
+                                    if (p > 0.3 && p < 0.7 && Math.random() < 0.7)
+                                        burst(new THREE.Vector3(char.position.x - 0.4, 1.3, battleCenter.z), Math.random() < 0.5 ? col : 0xaef0ff, 0.4);
+                                    if (p > hitP && !A._aegHit) {
+                                        A._aegHit = true;
+                                        spawnSkillFx("plasmadash", EP, col);
+                                        G._camShake = 0.6;
+                                    }
+                                }
+                                else if (sid === "g_drone") {
+                                    // 🛸 drone barrage — hover in place and deploy the swarm on the target
+                                    char.position.x = bx;
+                                    char.position.y = lift + Math.sin(t * 3) * 0.05;
+                                    char.rotation.z = 0;
+                                    armR.rotation.x = -0.2;
+                                    armL.rotation.x = -0.2;
+                                    if (p > 0.22 && !A._aegHit) {
+                                        A._aegHit = true;
+                                        spawnSkillFx("dronebarrage", EP, col);
+                                    }
+                                    if (p > 0.3 && p < 0.9 && Math.random() < 0.25)
+                                        G._camShake = Math.max(G._camShake || 0, 0.22);
+                                }
+                                else if (sid === "g_grav") {
+                                    // 🌌 gravity singularity — hover + raise both arms as the core forms, then it collapses
+                                    char.position.x = bx;
+                                    char.position.y = lift + Math.sin(t * 3) * 0.05;
+                                    armR.rotation.x = -0.9;
+                                    armL.rotation.x = -0.9;
+                                    armR.rotation.z = 0.3;
+                                    armL.rotation.z = -0.3;
+                                    if (p > 0.12 && !A._aegHit) {
+                                        A._aegHit = true;
+                                        spawnSkillFx("gravitycore", EP, col);
+                                    }
+                                }
+                                else {
+                                    // 🚀 g_over / other — overclock rush + plasma burst
+                                    char.position.x = bx + Math.sin(p * Math.PI) * 1.0;
+                                    char.position.y = lift + Math.sin(p * Math.PI) * 0.15;
+                                    char.rotation.z = Math.sin(p * Math.PI * 6) * 0.05;
+                                    armR.rotation.x = -0.4;
+                                    if (p > 0.3 && Math.random() < 0.5)
+                                        burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 1.2, 1.2 + Math.random(), battleCenter.z), Math.random() < 0.5 ? col : 0xaef0ff, 0.4);
+                                    if (p > hitP && !A._aegHit) {
+                                        A._aegHit = true;
+                                        spawnSkillFx("plasmadash", EP, col);
+                                        G._camShake = 0.5;
+                                    }
+                                }
+                            }
+                            else if (cls === "warrior") {
                                 // ⚔️ WARRIOR — melee skills with real FX rigs (AAA)
                                 const steel = 0x9ec8ff, wind = 0x8fd0ff, gold = 0xf5d24a, rageR = 0xff5a2a, flame = 0xffa030, earth = 0x8a6a44, dust = 0xe0d0a8, white = 0xeafcff;
                                 const EP = em.position;
