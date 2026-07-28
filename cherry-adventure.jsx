@@ -23751,24 +23751,24 @@ export default function CherryAdventure() {
         </div>
       )}
 
-      {/* ⭐ bottom status bar — long, 2 lines (EXP + AUTO / stats) */}
+      {/* ⭐ bottom status bar — long, 2 lines (stats / EXP + AUTO) */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
         <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom) + 8px)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, pointerEvents: "auto" }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
-            <div style={{ flex: 1, position: "relative", height: 16, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
-              <div style={{ width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" }}/>
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
-            </div>
-            <button onClick={() => G.toggleAuto()} style={{ padding: "6px 13px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: ui.auto ? "#fff" : "#59a0e8", background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff", boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>🤖 {ui.auto ? "ON" : "OFF"}</button>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, marginTop: 5, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" }}>
             <span style={{ color: "#c04a5a" }}>💗{ui.hp}/{ui.maxHp}</span>
             <span>⚔️{ui.atk}</span>
             <span>🛡️{ui.def}</span>
             <span style={{ color: "#c99a2e" }}>💰{ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
             <span style={{ color: "#3a86c0" }}>💎{ui.diamonds || 0}</span>
             <span>🐾×{totalCaught}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 5, pointerEvents: "auto" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
+            <div style={{ flex: 1, position: "relative", height: 16, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
+              <div style={{ width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" }}/>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
+            </div>
+            <button onClick={() => G.toggleAuto()} style={{ padding: "6px 13px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: ui.auto ? "#fff" : "#59a0e8", background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff", boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>🤖 {ui.auto ? "ON" : "OFF"}</button>
           </div>
         </div>
       )}
