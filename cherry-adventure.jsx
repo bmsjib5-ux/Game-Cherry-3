@@ -25894,9 +25894,9 @@ export default function CherryAdventure() {
             const renderCell = (cell, i) => cell.pot === "hp" ? potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp") : cell.pot === "mp" ? potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp") : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
               <div key="eqscr" style={{ position: "absolute", left: 0, top: 0, bottom: 0, ...(window.innerWidth > 620 ? { width: "50vw" } : { right: 0 }), zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
-                <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", paddingTop: "calc(env(safe-area-inset-top) + 10px)", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                   🎒 ช่องเก็บของ
-                  <button title="ปิดหน้าตัวละคร" onClick={() => G.closeEquip()} style={{ position: "absolute", right: 12, top: 8, width: 30, height: 30, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#e8dcc0", fontSize: 16, cursor: "pointer" }}>✕</button>
+                  <button title="ปิดหน้าตัวละคร" onClick={() => G.closeEquip()} style={{ position: "absolute", right: 12, top: "calc(env(safe-area-inset-top) + 8px)", width: 34, height: 34, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.45)", color: "#e8dcc0", fontSize: 17, cursor: "pointer", zIndex: 3 }}>✕</button>
                 </div>
                 <div style={{ flex: 1, display: "flex", justifyContent: "space-between", alignItems: "stretch", padding: 0, pointerEvents: "none" }}>
                   {cellsCol(LEFT)}
@@ -25915,7 +25915,7 @@ export default function CherryAdventure() {
                   </div>
                   {cellsCol(RIGHT)}
                 </div>
-                <div style={{ pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", maxHeight: "44vh", display: "flex", flexDirection: "column" }}>
+                <div style={{ pointerEvents: "auto", background: "linear-gradient(180deg,#26302a,#1a211c)", borderTop: "2px solid #c9a24a55", padding: "8px 10px 10px", paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)", maxHeight: "46vh", display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 }}>
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡ ออโต้</button>
