@@ -10202,6 +10202,7 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, biomeName: `${b.emoji} ${b.name}`, biomeIdx: G.curBiome }));
       if (G.updateWarpLabels) G.updateWarpLabels(); // 🏷️ refresh the ◀ prev / next ▶ rift labels
       G._warpLock = true; // 🔒 don't instantly re-warp — player must step off the rift first
+      if (G.rtChannel && G.rtJoinBiome) G.rtJoinBiome(G.curBiome); // 🌐 move to this map's realtime room
     };
     G.switchBiome = switchBiome;
     G.warpNext = () => switchBiome(G.curBiome + 1);
@@ -15891,8 +15892,103 @@ export default function CherryAdventure() {
       beat();
       G._presenceT = setInterval(beat, 25000);
       if (!G._duelT) G._duelT = setInterval(() => { if (G.pollDuels) G.pollDuels(); }, 6000); // ⚔️ faster incoming-challenge detection
+      if (G.rtInit) G.rtInit(); // 🌐 join the realtime shared-world channel
     };
-    G.stopPresence = () => { if (G._presenceT) { clearInterval(G._presenceT); G._presenceT = null; } if (G._duelT) { clearInterval(G._duelT); G._duelT = null; } };
+    G.stopPresence = () => { if (G._presenceT) { clearInterval(G._presenceT); G._presenceT = null; } if (G._duelT) { clearInterval(G._duelT); G._duelT = null; } if (G.rtLeave) G.rtLeave(); };
+
+    // ================= 🌐 REALTIME SHARED-WORLD AVATARS — see other players walking in the same map =================
+    // Durable profile stays in the `players` REST table; live position rides Supabase Realtime *broadcast* (ephemeral, no DB writes).
+    const remoteAvatars = new Map(); // pid -> { grp, tx, tz, tyaw, biome, moving, last, walk }
+    G.remoteAvatars = remoteAvatars;
+    const rMat = (hex, r = 0.62) => new THREE.MeshStandardMaterial({ color: hex, roughness: r });
+    // 🧍 compact chibi avatar for a remote player (class-coloured body, simple limbs, floating nameplate)
+    const buildRemoteAvatar = (info) => {
+      const cl = CLASSES[info.c] || CLASSES.warrior;
+      const col = cl.color != null ? cl.color : 0xd9536b;
+      const grp = new THREE.Group();
+      const bodyG = new THREE.Group(); bodyG.position.y = 0.9; grp.add(bodyG); grp.userData.body = bodyG;
+      const torso = latheOf([[0, -0.5], [0.3, -0.44], [0.36, -0.1], [0.32, 0.3], [0.2, 0.6], [0, 0.72]], rMat(col), 22);
+      torso.castShadow = true; bodyG.add(torso);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 20), rMat(0xffe0c4)); head.position.y = 1.04; head.castShadow = true; bodyG.add(head);
+      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.62), rMat(0x4a3628)); hair.position.y = 1.08; bodyG.add(hair);
+      for (const sx of [-0.12, 0.12]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), rMat(0x2a2a30, 0.4)); e.position.set(sx, 1.04, 0.3); bodyG.add(e); }
+      const mkLimb = (x, y, len, rad, mat) => { const piv = new THREE.Group(); piv.position.set(x, y, 0); const seg = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 0.85, len, 10), mat); seg.position.y = -len / 2; seg.castShadow = true; piv.add(seg); bodyG.add(piv); return piv; };
+      grp.userData.armL = mkLimb(-0.34, 0.5, 0.42, 0.075, rMat(col)); grp.userData.armR = mkLimb(0.34, 0.5, 0.42, 0.075, rMat(col));
+      grp.userData.legL = mkLimb(-0.16, -0.42, 0.44, 0.095, rMat(0x3a4658)); grp.userData.legR = mkLimb(0.16, -0.42, 0.44, 0.095, rMat(0x3a4658));
+      // ⚔️ a little weapon hint in the right hand
+      const wp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.06), rMat(0xcfd6e0, 0.3)); wp.position.set(0.44, 0.28, 0.08); grp.userData.armR.add(wp);
+      // 🏷️ floating nameplate
+      const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64;
+      const ctx = cv.getContext("2d"); ctx.font = "bold 30px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+      const label = `${cl.emoji || "🙂"} ${(info.n || "ผู้เล่น").slice(0, 10)}`;
+      ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = 6; ctx.strokeText(label, 128, 34); ctx.fillStyle = "#ffffff"; ctx.fillText(label, 128, 34);
+      const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter;
+      const plate = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })); plate.scale.set(2.4, 0.6, 1); plate.position.y = 2.55; grp.add(plate);
+      grp.userData.plate = plate;
+      return grp;
+    };
+    // 📥 a position update arrived (from realtime OR a test) — spawn/refresh the avatar
+    G._rtOnPos = (m) => {
+      if (!m || !m.pid || m.pid === G.pid) return;
+      let a = remoteAvatars.get(m.pid);
+      if (!a) { const grp = buildRemoteAvatar(m); grp.position.set(m.x || 0, 0, m.z || 0); scene.add(grp); a = { grp, walk: 0 }; remoteAvatars.set(m.pid, a); }
+      a.tx = m.x || 0; a.tz = m.z || 0; a.tyaw = m.yaw || 0; a.biome = m.biome; a.moving = !!m.moving; a.last = Date.now();
+    };
+    G._rtRemove = (pid) => { const a = remoteAvatars.get(pid); if (a) { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); } };
+    G._rtClear = () => { remoteAvatars.forEach((a) => { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); }); remoteAvatars.clear(); };
+    // 🎞️ per-frame: interpolate toward the last-known position, walk-cycle, cull stale/other-biome avatars
+    G.updateRemoteAvatars = (dt, t) => {
+      if (!remoteAvatars.size) return;
+      const now = Date.now();
+      remoteAvatars.forEach((a, pid) => {
+        if (a.last && now - a.last > 6000) { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); return; }
+        const show = a.biome === G.curBiome && G.mode === "explore";
+        a.grp.visible = show; if (!show) return;
+        const k = Math.min(1, dt * 8);
+        a.grp.position.x += (a.tx - a.grp.position.x) * k;
+        a.grp.position.z += (a.tz - a.grp.position.z) * k;
+        let dy = a.tyaw - a.grp.rotation.y; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
+        a.grp.rotation.y += dy * k;
+        const spd = Math.hypot(a.tx - a.grp.position.x, a.tz - a.grp.position.z);
+        const moving = a.moving || spd > 0.04;
+        a.walk += dt * (moving ? 9 : 0);
+        const sw = Math.sin(a.walk) * (moving ? 0.6 : 0);
+        if (a.grp.userData.legL) { a.grp.userData.legL.rotation.x = sw; a.grp.userData.legR.rotation.x = -sw; a.grp.userData.armL.rotation.x = -sw * 0.7; a.grp.userData.armR.rotation.x = sw * 0.7; }
+        a.grp.userData.body.position.y = 0.9 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
+      });
+    };
+    // ---- transport: Supabase Realtime broadcast (one channel per biome; graceful no-op if unavailable) ----
+    G.rtInit = () => {
+      try {
+        if (!G.pid && G.ensurePid) G.ensurePid();
+        if (G.rtClient || !window.supabase || !window.supabase.createClient || !ONLINE_CONFIG.url || !ONLINE_CONFIG.anonKey || !G.pid) return;
+        G.rtClient = window.supabase.createClient(ONLINE_CONFIG.url, ONLINE_CONFIG.anonKey, { realtime: { params: { eventsPerSecond: 12 } } });
+        G.rtJoinBiome(G.curBiome || 0);
+      } catch (e) { try { console.warn("rtInit failed", e); } catch (_) {} }
+    };
+    G.rtJoinBiome = (biome) => {
+      try {
+        if (!G.rtClient) return;
+        if (G.rtChannel) { try { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); } catch (_) {} G.rtChannel = null; }
+        G._rtClear(); // remote avatars belonged to the old room
+        const ch = G.rtClient.channel("room-" + biome, { config: { broadcast: { self: false } } });
+        ch.on("broadcast", { event: "pos" }, (p) => { if (G._rtOnPos) G._rtOnPos(p.payload); });
+        ch.on("broadcast", { event: "leave" }, (p) => { if (p.payload && p.payload.pid && G._rtRemove) G._rtRemove(p.payload.pid); });
+        ch.subscribe();
+        G.rtChannel = ch;
+      } catch (e) { try { console.warn("rtJoinBiome failed", e); } catch (_) {} }
+    };
+    G.rtSendPos = () => {
+      try {
+        if (!G.rtChannel || G.mode !== "explore" || !char) return;
+        const now = Date.now();
+        if (now - (G._lastRtSend || 0) < 130) return; // ~7-8 updates/sec
+        G._lastRtSend = now;
+        const moving = G.vel ? (Math.hypot(G.vel.x || 0, G.vel.z || 0) > 0.15) : false;
+        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+      } catch (e) {}
+    };
+    G.rtLeave = () => { try { if (G.rtChannel) { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); G.rtChannel = null; } G._rtClear(); } catch (e) {} };
     G.chatSend = async (body) => {
       body = (body || "").trim().slice(0, 200);
       if (!body) return;
@@ -17216,6 +17312,10 @@ export default function CherryAdventure() {
           });
         }
       }
+
+      // 🌐 realtime shared world — broadcast my position + move everyone else's avatar (every frame)
+      if (G.mode === "explore" && G.rtSendPos) G.rtSendPos();
+      if (G.updateRemoteAvatars) G.updateRemoteAvatars(dt, t);
 
       // 🐤 SECRET RARE PET — runs every explore frame (independent of wild count)
       if (G.mode === "explore") {
