@@ -395,7 +395,7 @@ Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "ค�
 Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light", amzmonkey: "arcane", piranha: "ice", crocodile: "wind", anaconda: "fire" });
 Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth", amzmonkey: "earth", piranha: "water", crocodile: "water", anaconda: "earth" });
 Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย", amzmonkey: "ตะกุยป่วน", piranha: "รุมงับฝูง", crocodile: "งับขากรรไกรเหล็ก", anaconda: "รัดมรณะ" });
-Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "titan", cyclops: "titan", titanlord: "titan", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "anaconda" });
+Object.assign(MON_SHAPE_EXTRA, { gummy: "gummy", cupcake: "cupcake", candyking: "candyking", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "titan", cyclops: "titan", titanlord: "titan", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "anaconda" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow")  || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert")  || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -8644,6 +8644,38 @@ export default function CherryAdventure() {
         for (const sx of [-0.09, 0.09]) { const socket = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), blk); socket.position.set(sx, 0.86, 0.18); body.add(socket); const glow = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), blu); glow.position.set(sx, 0.86, 0.22); body.add(glow); }
         for (const sx of [-1, 1]) { const horn = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.24, 8), blk); horn.position.set(sx * 0.16, 1.0, 0); horn.rotation.z = sx * -0.42; body.add(horn); }
         headY = 0.86; headZ = 0.22; headR = 0.24;
+      } else if (shape === "gummy") {
+        // 🐻🍬 translucent gummy bear — jelly body, ears, stubby arms + walking legs, big eyes
+        mat.transparent = true; mat.opacity = 0.82; mat.roughness = 0.22;
+        const torso = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), mat); torso.scale.set(1, 1.15, 0.9); torso.castShadow = true; body.add(torso);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 18), mat); head.position.set(0, 0.44, 0.02); body.add(head);
+        for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), mat); ear.position.set(sx * 0.2, 0.62, 0); body.add(ear); }
+        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), belly); snout.position.set(0, 0.38, 0.22); body.add(snout);
+        for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 12), mat); arm.scale.set(1, 1.5, 1); arm.position.set(sx * 0.34, 0.05, 0.06); arm.rotation.z = sx * 0.3; body.add(arm); }
+        for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.11, 0.24, 12), mat); leg.position.set(sx * 0.16, -0.42, 0.02); body.add(leg); legs.push(leg); const foot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), belly); foot.scale.set(1, 0.7, 1.3); foot.position.set(sx * 0.16, -0.54, 0.06); body.add(foot); }
+        headY = 0.46; headZ = 0.26; headR = 0.24;
+      } else if (shape === "cupcake") {
+        // 🧁 walking cupcake — ridged wrapper, frosting swirl, cherry, sprinkles, legs, eyes
+        const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.24, 0.34, 16), belly); wrap.position.y = -0.1; wrap.castShadow = true; body.add(wrap);
+        for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; const rg = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.32, 0.05), mat); rg.position.set(Math.cos(a) * 0.27, -0.1, Math.sin(a) * 0.27); rg.rotation.y = -a; body.add(rg); }
+        const fr = new THREE.MeshStandardMaterial({ color: 0xfff0f5, roughness: 0.5 });
+        for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.28 - k * 0.05, 16, 14), fr); s.position.y = 0.12 + k * 0.16; s.scale.set(1, 0.72, 1); body.add(s); }
+        const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), new THREE.MeshStandardMaterial({ color: 0xd83048, roughness: 0.4 })); cherry.position.y = 0.78; body.add(cherry);
+        const sc = [0xff5a8a, 0x5ac8ff, 0xffd24a, 0x8affa0];
+        for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.06, 5), new THREE.MeshStandardMaterial({ color: sc[k % 4] })); sp.position.set(Math.cos(a) * 0.18, 0.3 + (k % 3) * 0.1, Math.sin(a) * 0.18); sp.rotation.z = Math.random() * 3; body.add(sp); }
+        for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.26, 10), fr); leg.position.set(sx * 0.14, -0.4, 0); body.add(leg); legs.push(leg); const foot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mat); foot.scale.set(1, 0.6, 1.4); foot.position.set(sx * 0.14, -0.52, 0.05); body.add(foot); }
+        headY = 0.14; headZ = 0.3; headR = 0.26;
+      } else if (shape === "candyking") {
+        // 👑🍬 candy monarch — striped candy body, crown, candy-cane arms, legs, big eyes
+        const bodyM = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 20), mat); bodyM.scale.set(1, 1.1, 1); bodyM.castShadow = true; body.add(bodyM);
+        for (let k = 0; k < 6; k++) { const st = new THREE.Mesh(new THREE.TorusGeometry(0.3 - k * 0.028, 0.03, 8, 24, Math.PI), new THREE.MeshStandardMaterial({ color: k % 2 ? 0xffffff : 0xff5a8a, roughness: 0.4 })); st.position.y = 0.28 - k * 0.11; st.rotation.x = Math.PI / 2; st.rotation.z = k * 0.5; body.add(st); }
+        const goldC = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.7, roughness: 0.3 });
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.16, 12, 1, true), goldC); crown.position.y = 0.64; body.add(crown);
+        for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; const spk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 6), goldC); spk.position.set(Math.cos(a) * 0.24, 0.76, Math.sin(a) * 0.24); body.add(spk); const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), new THREE.MeshStandardMaterial({ color: 0xff3a6a, emissive: 0x8a1030, emissiveIntensity: 0.5 })); gem.position.set(Math.cos(a) * 0.24, 0.82, Math.sin(a) * 0.24); body.add(gem); }
+        const caneMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+        for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.36, 8), caneMat); arm.position.set(sx * 0.44, 0.05, 0); arm.rotation.z = sx * 0.4; body.add(arm); legs.push(arm); }
+        for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.28, 10), mat); leg.position.set(sx * 0.16, -0.52, 0); body.add(leg); legs.push(leg); const foot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), belly); foot.scale.set(1, 0.6, 1.4); foot.position.set(sx * 0.16, -0.66, 0.05); body.add(foot); }
+        headY = 0.14; headZ = 0.42; headR = 0.32;
       } else { // wisp 👻🌪️
         // tapered, trailing body — no legs, no hard bottom
         mat.transparent = true; mat.opacity = 0.82;
@@ -9791,7 +9823,52 @@ export default function CherryAdventure() {
     for (let i = 0; i < 3; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (FIELD_R - 9); makeGiantAxe(Math.cos(a) * r, Math.sin(a) * r); }
     G.titanDecor = titanDecor; G.titanColliders = titanColliders;
 
-    G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor, titanDecor); // 🌳 hide during battle too
+    // 🍬 CANDY LAND DECOR — pink ground, cotton-candy trees, lollipop trees, colourful candies on the floor (map: candy)
+    const candyDecor = new THREE.Group(); candyDecor.visible = false; scene.add(candyDecor);
+    const candyColliders = [];
+    const pinkFloor = new THREE.Mesh(new THREE.CircleGeometry(FIELD_R + 4, 48), new THREE.MeshStandardMaterial({ color: 0xf9b6d6, roughness: 1 }));
+    pinkFloor.rotation.x = -Math.PI / 2; pinkFloor.position.y = 0.012; pinkFloor.userData.noHide = true; candyDecor.add(pinkFloor);
+    // 🌸 cotton-candy tree — stick + fluffy pastel puffs
+    const ccStick = new THREE.MeshStandardMaterial({ color: 0xcaa06a, roughness: 0.8 });
+    const ccPink = new THREE.MeshStandardMaterial({ color: 0xff9ec8, roughness: 0.95 });
+    const ccBlue = new THREE.MeshStandardMaterial({ color: 0xa8d8ff, roughness: 0.95 });
+    const makeCottonTree = (x, z) => {
+      if (inKeepOut(x, z)) return;
+      const g = new THREE.Group(); const h = rnd(1.8, 2.8);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, h, 8), ccStick); trunk.position.y = h / 2; trunk.castShadow = true; g.add(trunk);
+      for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2; const puff = new THREE.Mesh(new THREE.SphereGeometry(rnd(0.4, 0.6), 12, 10), k % 2 ? ccPink : ccBlue); puff.position.set(Math.cos(a) * 0.35, h + 0.2 + Math.sin(a) * 0.2, Math.sin(a) * 0.35); puff.castShadow = true; g.add(puff); }
+      const top = new THREE.Mesh(new THREE.SphereGeometry(0.6, 14, 12), ccPink); top.position.y = h + 0.5; g.add(top);
+      g.position.set(x, 0, z); g.scale.setScalar(rnd(0.9, 1.35)); candyDecor.add(g); candyColliders.push({ x, z, r: 0.4 });
+    };
+    // 🍭 lollipop / candy tree — pole + big swirl disc
+    const swirlA = new THREE.MeshStandardMaterial({ color: 0xff4a7a, roughness: 0.4 });
+    const swirlB = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    const makeLollipop = (x, z) => {
+      if (inKeepOut(x, z)) return;
+      const g = new THREE.Group(); const h = rnd(2.2, 3.2);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, h, 8), swirlB); pole.position.y = h / 2; pole.castShadow = true; g.add(pole);
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.16, 24), swirlA); disc.position.y = h + 0.45; disc.rotation.x = Math.PI / 2; disc.castShadow = true; g.add(disc);
+      for (let k = 0; k < 5; k++) { const arc = new THREE.Mesh(new THREE.TorusGeometry(0.13 + k * 0.13, 0.04, 8, 24, Math.PI * 1.2), swirlB); arc.position.set(0, h + 0.45, 0.09); arc.rotation.z = k * 1.1; g.add(arc); }
+      g.position.set(x, 0, z); g.rotation.y = Math.random() * Math.PI; g.scale.setScalar(rnd(0.9, 1.3)); candyDecor.add(g); candyColliders.push({ x, z, r: 0.4 });
+    };
+    // 🟠🔵🟡 colourful candies scattered on the ground
+    const candyCols = [0xff5a8a, 0x5ac8ff, 0xffd24a, 0x8affa0, 0xc98aff, 0xff9a4a];
+    const makeCandy = (x, z) => {
+      if (inKeepOut(x, z)) return;
+      const c = candyCols[Math.floor(Math.random() * candyCols.length)];
+      const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.32, metalness: 0.05 });
+      const t = Math.random(); let piece;
+      if (t < 0.4) { piece = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), m); piece.scale.set(1.3, 0.85, 0.85); }
+      else if (t < 0.7) { piece = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.05, 8, 16), m); }
+      else { piece = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.22, 10), m); }
+      piece.position.set(x, 0.12, z); piece.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3); piece.userData.noHide = true; candyDecor.add(piece);
+    };
+    for (let i = 0; i < 7; i++) { const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4); makeCottonTree(Math.cos(a) * r, Math.sin(a) * r); }
+    for (let i = 0; i < 6; i++) { const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4); makeLollipop(Math.cos(a) * r, Math.sin(a) * r); }
+    for (let i = 0; i < 32; i++) { const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3); makeCandy(Math.cos(a) * r, Math.sin(a) * r); }
+    G.candyDecor = candyDecor; G.candyColliders = candyColliders;
+
+    G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor, titanDecor, candyDecor); // 🌳 hide during battle too
 
 
     // ---------- 👻 Night ghost boss (dead-tree grove) ----------
@@ -10048,6 +10125,7 @@ export default function CherryAdventure() {
       const isBeach = b.id === "beach";
       const isAmazon = b.id === "amazon";
       const isTitan = b.id === "titan";
+      const isCandy = b.id === "candy";
       const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon"; // 🔥😇🌙 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
       if (G.desertDecor) G.desertDecor.visible = isDesert;
       if (G.snowDecor) G.snowDecor.visible = isSnow;
@@ -10060,8 +10138,9 @@ export default function CherryAdventure() {
       if (G.beachDecor) G.beachDecor.visible = isBeach;
       if (G.amazonDecor) G.amazonDecor.visible = isAmazon;
       if (G.titanDecor) G.titanDecor.visible = isTitan;
+      if (G.candyDecor) G.candyDecor.visible = isCandy;
       G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
-      if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isEndgame));
+      if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isEndgame));
       // 🧭 obstacles the player must walk around in this biome (for collision + auto-steer)
       G.biomeColliders = isDesert ? (G.desertColliders || [])
         : isSnow ? (G.snowColliders || [])
@@ -10071,6 +10150,7 @@ export default function CherryAdventure() {
         : isBeach ? (G.beachColliders || [])
         : isAmazon ? (G.amazonColliders || [])
         : isTitan ? (G.titanColliders || [])
+        : isCandy ? (G.candyColliders || [])
         : b.id === "hell" ? (G.hellColliders || [])
         : b.id === "heaven" ? (G.heavenColliders || [])
         : b.id === "moon" ? (G.moonColliders || [])
@@ -16350,7 +16430,8 @@ export default function CherryAdventure() {
           const isBeach = !preview && b.id === "beach";
           const isAmazon = !preview && b.id === "amazon";
           const isTitan = !preview && b.id === "titan";
-          if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan));
+          const isCandy = !preview && b.id === "candy";
+          if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy));
           wilds.forEach((m) => (m.visible = !preview));
           if (G.desertDecor) G.desertDecor.visible = isDesert;
           if (G.snowDecor) G.snowDecor.visible = isSnow;
@@ -16360,6 +16441,7 @@ export default function CherryAdventure() {
           if (G.beachDecor) G.beachDecor.visible = isBeach;
           if (G.amazonDecor) G.amazonDecor.visible = isAmazon;
           if (G.titanDecor) G.titanDecor.visible = isTitan;
+          if (G.candyDecor) G.candyDecor.visible = isCandy;
           if (G.warpGate) G.warpGate.visible = !preview;
           if (G.npc) G.npc.visible = !preview;
         }
