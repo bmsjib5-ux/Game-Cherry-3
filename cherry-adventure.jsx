@@ -10708,7 +10708,7 @@ export default function CherryAdventure() {
         for (let i = 0; i < (lowFx ? 6 : 10); i++) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + Math.random() * 0.1), new THREE.MeshStandardMaterial({ color: 0x9aa4b2, emissive: blue, emissiveIntensity: 0.5, transparent: true, opacity: 0 })); m.userData = { vx: (Math.random() - 0.5) * 6, vz: (Math.random() - 0.5) * 6, vy: 2 + Math.random() * 5, rx: Math.random() * 8 }; m.position.y = 0.5; g.add(m); debris.push(m); }
         const light = new THREE.PointLight(blue, 0, 16); light.position.y = 3; /* light not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
         dur = 3.8;
-        update = (pr) => {
+        update = (pr, t) => { // 🕒 t (clock) comes from updateSkillFx — never reference the animate-local t directly
           // 🌌 fog-based darkening (cheap): darken toward the collapse, restore by the end (pr→1 leaves fog original)
           if (fog) { const darkAmt = pr < 0.7 ? Math.min(1, pr * 2) : Math.max(0, (1 - pr) / 0.3); fog.color.setHex(fogHex).lerp(darkC, darkAmt * 0.7); }
           auroras.forEach((au, i) => { au.material.opacity = 0.35 * Math.min(1, pr * 3) * (1 - pr * 0.4); });
@@ -11546,12 +11546,12 @@ export default function CherryAdventure() {
       });
     };
     G._disposeObj3D = disposeObj3D;
-    const updateSkillFx = (dt) => {
+    const updateSkillFx = (dt, tNow) => {
       for (let i = activeFx.length - 1; i >= 0; i--) {
         const f = activeFx[i];
         f.t += dt;
         const pr = Math.min(1, f.t / f.dur);
-        if (f.update) f.update(pr);
+        if (f.update) f.update(pr, tNow);
         if (pr >= 1) { scene.remove(f.group); disposeObj3D(f.group); activeFx.splice(i, 1); }
       }
     };
@@ -22082,7 +22082,7 @@ export default function CherryAdventure() {
       });
 
       // class FX lifetimes
-      updateSkillFx(dt); // ✨ per-skill impact effects
+      updateSkillFx(dt, t); // ✨ per-skill impact effects (pass the clock so FX update()s can use time)
       // ✨ sword trail — active during a melee player attack/ult swing
       {
         const A = G.banim;
