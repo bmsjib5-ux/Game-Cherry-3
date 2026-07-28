@@ -1548,12 +1548,23 @@ export default function CherryAdventure() {
 
     // ---------- 🔋 POWER-SAVING MODE — ยืดแบต: ลด pixel ratio + ปิดเงา + จำกัด 30fps ----------
     // จุดที่กินแบตมากสุด: (1) pixel ratio สูง (วาดพิกเซลมากถึง 9 เท่า) (2) เงานุ่ม 2048² ทุกเฟรม (3) เฟรมเรตไม่จำกัด (90/120Hz)
-    let powerSave = false;
-    try { powerSave = window.localStorage.getItem("cherry-powersave") === "1"; } catch (e) {}
+    let powerSave = false, psExplicit = false;
+    try { const v = window.localStorage.getItem("cherry-powersave"); if (v != null) { powerSave = v === "1"; psExplicit = true; } } catch (e) {}
+    // 📱 phones are fill-rate limited (shadows + high pixel-ratio = freezes) → default power-save ON unless the player chose a setting
+    if (!psExplicit) {
+      let isPhone = false;
+      try {
+        const ua = navigator.userAgent || "";
+        const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+        const small = Math.min(window.innerWidth || 9999, window.innerHeight || 9999) < 900;
+        isPhone = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(ua) || (coarse && small) || (navigator.maxTouchPoints > 0 && small);
+      } catch (e) {}
+      if (isPhone) powerSave = true;
+    }
     G.powerSave = powerSave;
     const applyQuality = () => {
       const ps = !!G.powerSave;
-      renderer.setPixelRatio(ps ? Math.min(window.devicePixelRatio, 1) : Math.min(window.devicePixelRatio, 2)); // 🔍 ลดความละเอียดการวาด (ประหยัดสุด ×1, ปกติ ×2 — เดิม ×3 เปลืองเกินจำเป็น)
+      renderer.setPixelRatio(ps ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2)); // 🔍 ลดความละเอียดการวาด (ประหยัด ×1.5 ตัดพิกเซล ~44% แต่ยังคม, ปกติ ×2)
       renderer.shadowMap.enabled = !ps;      // 🌑 ปิดเงาในโหมดประหยัด
       key.castShadow = !ps;
       key.shadow.mapSize.set(ps ? 512 : 1536, ps ? 512 : 1536); // 🌑 ลด shadow map (เดิม 2048 → 1536 เพื่อประหยัดทั่วไป)
