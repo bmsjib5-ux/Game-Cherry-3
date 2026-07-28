@@ -12597,7 +12597,7 @@ export default function CherryAdventure() {
     G.secretPet = null; G.secretTimer = 0;
     G.trySpawnSecret = () => {
       if (G.secretPet || G.mode !== "explore" || G.banim || G.dungeon) return;
-      const findChance = 0.10 + Math.min(0.35, effLuck() * 0.004); // 🍀 luck raises the odds of it appearing
+      const findChance = 0.06 + Math.min(0.24, effLuck() * 0.0032); // 🍀 luck raises the odds of it appearing (rarer now)
       if (Math.random() > findChance) return;
       const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 9);
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
@@ -12608,7 +12608,7 @@ export default function CherryAdventure() {
     };
     G.catchSecret = () => {
       const s = G.secretPet; if (!s) return;
-      const catchChance = 0.20 + Math.min(0.25, effLuck() * 0.003); // 🍀 luck helps a bit
+      const catchChance = 0.10 + Math.min(0.15, effLuck() * 0.002); // 🍀 luck helps a bit — much harder to catch now
       if (Math.random() < catchChance) {
         burst(s.mesh.position, 0xfff2b0, 1.5); if (G.spawnSkillFx) G.spawnSkillFx("evolve", s.mesh.position, 0xffd76a);
         const inst = G.addPetInstance ? G.addPetInstance("chickpet", { lv: 1 }) : null;
@@ -12623,7 +12623,7 @@ export default function CherryAdventure() {
         let nx = s.mesh.position.x + Math.cos(a) * hop, nz = s.mesh.position.z + Math.sin(a) * hop;
         const rr = Math.hypot(nx, nz); if (rr > FIELD_R - 1) { nx *= (FIELD_R - 1) / rr; nz *= (FIELD_R - 1) / rr; }
         s.mesh.position.set(nx, 0, nz); G._secretNear = false;
-        if (s.failCount > 2) { // 🏃 flees after more than 2 misses
+        if (s.failCount > 1) { // 🏃 flees after more than 1 miss (only 2 tries per encounter)
           scene.remove(s.mesh); (G._disposeObj3D && G._disposeObj3D(s.mesh)); G.secretPet = null;
           setUi((u) => ({ ...u, secretNear: false }));
           toast("💨🐤 ไก่น้อยตกใจ วิ่งหนีหายไปแล้ว! ไว้เจอกันใหม่นะ");

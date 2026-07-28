@@ -17979,7 +17979,7 @@ function CherryAdventure() {
         G.trySpawnSecret = () => {
             if (G.secretPet || G.mode !== "explore" || G.banim || G.dungeon)
                 return;
-            const findChance = 0.10 + Math.min(0.35, effLuck() * 0.004); // 🍀 luck raises the odds of it appearing
+            const findChance = 0.06 + Math.min(0.24, effLuck() * 0.0032); // 🍀 luck raises the odds of it appearing (rarer now)
             if (Math.random() > findChance)
                 return;
             const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 9);
@@ -17997,7 +17997,7 @@ function CherryAdventure() {
             const s = G.secretPet;
             if (!s)
                 return;
-            const catchChance = 0.20 + Math.min(0.25, effLuck() * 0.003); // 🍀 luck helps a bit
+            const catchChance = 0.10 + Math.min(0.15, effLuck() * 0.002); // 🍀 luck helps a bit — much harder to catch now
             if (Math.random() < catchChance) {
                 burst(s.mesh.position, 0xfff2b0, 1.5);
                 if (G.spawnSkillFx)
@@ -18024,7 +18024,7 @@ function CherryAdventure() {
                 }
                 s.mesh.position.set(nx, 0, nz);
                 G._secretNear = false;
-                if (s.failCount > 2) { // 🏃 flees after more than 2 misses
+                if (s.failCount > 1) { // 🏃 flees after more than 1 miss (only 2 tries per encounter)
                     scene.remove(s.mesh);
                     (G._disposeObj3D && G._disposeObj3D(s.mesh));
                     G.secretPet = null;
