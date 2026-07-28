@@ -388,7 +388,7 @@ Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "ค�
 Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light" });
 Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth" });
 Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย" });
-Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "beast", chalam: "fish", kraken: "serpent", stonetitan: "beast", cyclops: "beast", titanlord: "beast" });
+Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "beast", cyclops: "beast", titanlord: "beast" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow")  || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert")  || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -8454,6 +8454,97 @@ export default function CherryAdventure() {
           pt.rotation.z = a - Math.PI / 2; body.add(pt);
         }
         headY = 0.02; headZ = 0.3; headR = 0.3;
+      } else if (shape === "crab") {
+        // 🦀 wide flat shell + eyestalks + two big pincers + walking legs
+        const shell = latheOf([[0, -0.16], [0.34, -0.14], [0.5, -0.02], [0.46, 0.12], [0.28, 0.22], [0, 0.26]], mat, 32);
+        shell.scale.set(1.35, 1, 1.05); shell.castShadow = true; body.add(shell);
+        const under = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), belly);
+        under.scale.set(1.35, 0.5, 1.05); under.position.y = -0.14; body.add(under);
+        // bumpy shell studs
+        for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI - Math.PI / 2; const stud = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), belly); stud.position.set(Math.sin(a) * 0.4, 0.16, 0.02 + Math.cos(a) * 0.08); body.add(stud); }
+        // 👀 eyestalks (rise from the shell front)
+        g.userData.customFace = true;
+        for (const sx of [-0.16, 0.16]) {
+          const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.26, 10), mat);
+          stalk.position.set(sx, 0.34, 0.24); stalk.rotation.x = -0.25; body.add(stalk);
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), whiteMat);
+          eye.position.set(sx, 0.48, 0.28); body.add(eye);
+          const pup = new THREE.Mesh(new THREE.SphereGeometry(0.038, 10, 10), darkMat);
+          pup.position.set(sx, 0.49, 0.34); body.add(pup);
+        }
+        // 🦞 two big pincer claws on the front
+        for (const sx of [-1, 1]) {
+          const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.28, 10), mat);
+          arm.position.set(sx * 0.5, -0.02, 0.34); arm.rotation.z = sx * 0.5; arm.rotation.x = -0.5; body.add(arm);
+          const clawBase = new THREE.Mesh(new THREE.SphereGeometry(0.15, 18, 14), mat);
+          clawBase.scale.set(1, 0.75, 1.25); clawBase.position.set(sx * 0.66, 0.06, 0.56); body.add(clawBase);
+          // upper + lower pincer jaws
+          const up = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 10), mat);
+          up.position.set(sx * 0.66, 0.16, 0.68); up.rotation.x = 1.2; body.add(up);
+          const lo = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.22, 10), mat);
+          lo.position.set(sx * 0.66, 0.0, 0.7); lo.rotation.x = 1.9; body.add(lo);
+          legs.push(arm);
+        }
+        // 🦵 3 pairs of walking legs
+        for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.02, 0.4, 8), mat);
+          leg.position.set(sx * 0.5, -0.16, -0.02 - k * 0.16); leg.rotation.z = sx * 1.15; leg.rotation.x = 0.2; body.add(leg); legs.push(leg);
+          const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.14, 6), mat);
+          tip.position.set(sx * 0.72, -0.3, -0.02 - k * 0.16); tip.rotation.z = sx * 0.5; body.add(tip);
+        }
+        headY = 0.16; headZ = 0.5; headR = 0.3;
+      } else if (shape === "shark") {
+        // 🦈 torpedo body + tall dorsal + pectoral fins + crescent tail + toothy grin
+        const hull = latheOf([[0, -0.6], [0.14, -0.42], [0.3, -0.1], [0.32, 0.16], [0.18, 0.44], [0, 0.58]], mat, 30);
+        hull.rotation.x = Math.PI / 2; hull.scale.set(1, 1.35, 0.82); hull.castShadow = true; body.add(hull);
+        const bel = latheOf([[0, -0.44], [0.16, -0.18], [0.18, 0.14], [0, 0.4]], belly, 24);
+        bel.rotation.x = Math.PI / 2; bel.position.y = -0.16; bel.scale.set(1, 1.3, 0.42); body.add(bel);
+        // tall dorsal fin
+        const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.42, 3), mat);
+        dorsal.position.set(0, 0.34, -0.08); dorsal.rotation.y = Math.PI / 2; dorsal.scale.set(1, 1, 0.16); body.add(dorsal);
+        // crescent tail (two lobes)
+        const tail = new THREE.Group();
+        const tUp = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 3), mat); tUp.position.set(0, 0.14, 0); tUp.rotation.z = -0.5; tUp.scale.set(1, 1, 0.16); tail.add(tUp);
+        const tLo = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 3), mat); tLo.position.set(0, -0.1, 0); tLo.rotation.z = 0.6; tLo.scale.set(1, 1, 0.16); tail.add(tLo);
+        tail.position.set(0, 0.02, -0.66); body.add(tail); g.userData.tail = tail;
+        // pectoral fins
+        for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.34, 3), mat); fin.position.set(sx * 0.26, -0.14, 0.12); fin.rotation.z = sx * 1.5; fin.rotation.y = sx * 0.5; fin.scale.set(1, 1, 0.16); body.add(fin); }
+        // gill slits
+        for (let k = 0; k < 3; k++) { const gill = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.012, 6, 14, Math.PI * 0.8), dark); gill.position.set(0, 0.02, 0.2 - k * 0.06); gill.rotation.z = 0.3; body.add(gill); }
+        // wide toothy mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.02), dark); mouth.position.set(0, -0.06, 0.5); mouth.rotation.x = 0.2; body.add(mouth);
+        for (let k = 0; k < 5; k++) { const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.06, 4), whiteMat); tooth.position.set(-0.12 + k * 0.06, -0.02, 0.52); tooth.rotation.x = Math.PI; body.add(tooth); }
+        // 👀 fierce eyes
+        g.userData.customFace = true;
+        for (const sx of [-0.15, 0.15]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), whiteMat); eye.position.set(sx, 0.12, 0.4); body.add(eye); const pup = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), darkMat); pup.position.set(sx, 0.12, 0.45); body.add(pup); }
+        headY = 0.1; headZ = 0.48; headR = 0.26;
+      } else if (shape === "octopus") {
+        // 🐙 bulbous mantle + 8 curling tentacles + big round eyes
+        const mantle = new THREE.Mesh(new THREE.SphereGeometry(0.42, 30, 26), mat);
+        mantle.scale.set(1, 1.18, 1); mantle.position.y = 0.2; mantle.castShadow = true; body.add(mantle);
+        const dome = latheOf([[0, -0.04], [0.2, 0.02], [0.24, 0.16], [0.12, 0.28], [0, 0.34]], mat, 26); dome.position.y = 0.46; body.add(dome);
+        // 8 tentacles curling outward + down
+        const tent = [];
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          const bx = Math.cos(a) * 0.3, bz = Math.sin(a) * 0.3, ox = Math.cos(a) * 0.66, oz = Math.sin(a) * 0.66;
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(bx, 0.0, bz), new THREE.Vector3(ox * 0.95, -0.28, oz * 0.95),
+            new THREE.Vector3(ox, -0.5, oz), new THREE.Vector3(ox * 1.2, -0.6, oz * 1.2),
+          ]);
+          const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 14, 0.085, 8, false), k % 2 ? belly : mat);
+          tube.castShadow = true; body.add(tube); tent.push(tube);
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), belly); tip.position.set(ox * 1.2, -0.6, oz * 1.2); body.add(tip);
+        }
+        g.userData.tentacles = tent;
+        // 👀 big round eyes
+        g.userData.customFace = true;
+        for (const sx of [-0.17, 0.17]) {
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 16), whiteMat); eye.position.set(sx, 0.26, 0.34); body.add(eye);
+          const pup = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), darkMat); pup.position.set(sx, 0.26, 0.44); body.add(pup);
+          const shine = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), whiteMat); shine.position.set(sx + 0.03, 0.31, 0.49); body.add(shine);
+        }
+        headY = 0.26; headZ = 0.4; headR = 0.42;
       } else { // wisp 👻🌪️
         // tapered, trailing body — no legs, no hard bottom
         mat.transparent = true; mat.opacity = 0.82;
@@ -8473,6 +8564,8 @@ export default function CherryAdventure() {
       g.userData.headY = headY;
 
       // 👀 face — parented to `body`, so it bobs WITH the creature (it used to stay behind)
+      // 🌊 sea-creature shapes build their own eyes (stalks / big pupils) — skip the default pair
+      if (!g.userData.customFace) {
       const eyeSpread = Math.max(0.11, headR * 0.42);
       for (const sx of [-eyeSpread, eyeSpread]) {
         const e = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.16, 10, 10), darkMat);
@@ -8482,8 +8575,9 @@ export default function CherryAdventure() {
         gl.position.set(sx + 0.02, headY + headR * 0.26, headZ * 0.99);
         body.add(gl);
       }
+      }
       // 😊 blush (skip on the fierce ones — a tiger with blush undercuts it)
-      if (!["khiao", "saming", "garuda", "ngu"].includes(spId)) {
+      if (!g.userData.customFace && !["khiao", "saming", "garuda", "ngu"].includes(spId)) {
         for (const sx of [-1, 1]) {
           const c = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.14, 14, 12), blushMat);
           c.scale.set(1.3, 0.7, 0.5);
@@ -16558,6 +16652,9 @@ export default function CherryAdventure() {
         // hop
         m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
         if (m.userData.star) m.userData.star.rotation.y = t * 3;
+        // 🐙 octopus tentacles undulate · 🦈 shark tail swishes
+        if (m.userData.tentacles) m.userData.tentacles.forEach((tn, k) => { tn.rotation.y = Math.sin(t * 2 + k * 0.8) * 0.12; tn.position.y = Math.sin(t * 2.6 + k) * 0.03; });
+        if (m.userData.tail && m.userData.spId === "chalam") m.userData.tail.rotation.y = Math.sin(t * 4 + i) * 0.5;
         // keep in field & out of obstacles
         const rr = Math.hypot(m.position.x, m.position.z);
         if (rr > FIELD_R - 0.4) { m.position.x *= (FIELD_R - 0.4) / rr; m.position.z *= (FIELD_R - 0.4) / rr; }
