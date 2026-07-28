@@ -78,6 +78,8 @@ const BIOMES = [
     { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 400, lvMax: 500, ground: 0xf3e0a8, sky: 0x4aa8ee, fog: 0x9fd4f5, pool: ["pooyak", "chalam"], tree: "none", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
     // 🗿 ด่านไททัน — Lv 500-600 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
     { id: "titan", name: "ดินแดนไททัน", emoji: "🗿", lvMin: 500, lvMax: 600, ground: 0x5a5250, sky: 0x201c1a, fog: 0x2e2824, pool: ["stonetitan", "cyclops"], tree: "dead", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️", night: true },
+    // 🌴 ด่านป่าอเมซอน — Lv 600-750 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
+    { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 600, lvMax: 750, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
 ];
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "พายุเทพเจ้า", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
@@ -423,12 +425,17 @@ Object.assign(SPECIES, {
     stonetitan: { name: "ไททันศิลา", emoji: "🗿", color: 0x8a8078, hp: 380, atk: 39, catch: 0.02, tier: 7, desc: "ยักษ์หินบรรพกาล กายแกร่งดั่งภูผา", animal: "beast", weak: "arcane" },
     cyclops: { name: "ยักษ์ตาเดียว", emoji: "👹", color: 0xa06a4a, hp: 420, atk: 43, catch: 0.02, tier: 7, desc: "ไซคลอปส์ยักษ์ตาเดียว พละกำลังมหาศาล", animal: "beast", weak: "light" },
     titanlord: { name: "จอมไททันบรรพกาล", emoji: "⛰️", color: 0x6a5a4a, hp: 580, atk: 50, catch: 0.01, tier: 8, desc: "ราชันไททันผู้สะเทือนปฐพี ตำนานสูงสุด", animal: "beast", weak: "light" },
+    // 🌴 ป่าอเมซอน (Lv 600-750) — ป่าดิบชื้น
+    amzmonkey: { name: "ลิงจอมโจร", emoji: "🐒", color: 0x8a5a34, hp: 560, atk: 52, catch: 0.02, tier: 8, desc: "ลิงป่าดิบว่องไว ปีนต้นไม้ใหญ่แห่งอเมซอน", animal: "beast", weak: "arcane" },
+    piranha: { name: "ปลาปิรันย่า", emoji: "🐟", color: 0xc0503a, hp: 500, atk: 58, catch: 0.02, tier: 8, desc: "ฝูงปลากินเนื้อจอมดุแห่งแม่น้ำอเมซอน", animal: "fish", weak: "ice" },
+    crocodile: { name: "จระเข้ยักษ์", emoji: "🐊", color: 0x4a6a3a, hp: 680, atk: 60, catch: 0.015, tier: 8, desc: "จระเข้ยักษ์ขากรรไกรเหล็กแห่งลุ่มน้ำ", animal: "beast", weak: "wind" },
+    anaconda: { name: "อนาคอนด้าจ้าวป่า", emoji: "🐍", color: 0x5a7a3a, hp: 980, atk: 70, catch: 0.008, tier: 8, desc: "งูยักษ์รัดเหยื่อ จ้าวป่าดิบชื้นอเมซอน", animal: "snake", weak: "fire" },
 });
-Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "คัพเค้กจอมเวท", candyking: "เทพเจ้าขนมหวาน", pooyak: "ปูเทพสมุทร", chalam: "เมกาโลดอน", kraken: "คราเคนราชันสมุทร", stonetitan: "ไททันศิลาเทพ", cyclops: "ไซคลอปส์ราชายักษ์", titanlord: "ไททันเทพบรรพกาล" });
-Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light" });
-Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth" });
-Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย" });
-Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "beast", cyclops: "beast", titanlord: "beast" });
+Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "คัพเค้กจอมเวท", candyking: "เทพเจ้าขนมหวาน", pooyak: "ปูเทพสมุทร", chalam: "เมกาโลดอน", kraken: "คราเคนราชันสมุทร", stonetitan: "ไททันศิลาเทพ", cyclops: "ไซคลอปส์ราชายักษ์", titanlord: "ไททันเทพบรรพกาล", amzmonkey: "วานรจ้าวไพร", piranha: "ปิรันย่าราชัน", crocodile: "จระเข้เทพเจ้าน้ำ", anaconda: "อนาคอนด้าเทพนาคา" });
+Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light", amzmonkey: "arcane", piranha: "ice", crocodile: "wind", anaconda: "fire" });
+Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth", amzmonkey: "earth", piranha: "water", crocodile: "water", anaconda: "earth" });
+Object.assign(PET_SKILL, { gummy: "ระเบิดน้ำตาล", cupcake: "พายุครีม", candyking: "สึนามิลูกอม", pooyak: "ก้ามเหล็กหนีบ", chalam: "งับทะลวง", kraken: "หนวดรัดมรณะ", stonetitan: "กำปั้นปฐพี", cyclops: "ทุบสะเทือนโลก", titanlord: "ปฐพีล่มสลาย", amzmonkey: "ตะกุยป่วน", piranha: "รุมงับฝูง", crocodile: "งับขากรรไกรเหล็ก", anaconda: "รัดมรณะ" });
+Object.assign(MON_SHAPE_EXTRA, { gummy: "slime", cupcake: "bunny", candyking: "beast", pooyak: "crab", chalam: "shark", kraken: "octopus", stonetitan: "beast", cyclops: "beast", titanlord: "beast", amzmonkey: "monkey", piranha: "fish", crocodile: "croc", anaconda: "serpent" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow") || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert") || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -12036,6 +12043,125 @@ function CherryAdventure() {
                 headZ = 0.4;
                 headR = 0.42;
             }
+            else if (shape === "monkey") {
+                // 🐒 upright monkey — round body + head, big ears, muzzle, long arms, curled tail
+                const torso = latheOf([[0, -0.4], [0.26, -0.36], [0.32, -0.08], [0.28, 0.2], [0.16, 0.36], [0, 0.42]], mat, 26);
+                torso.castShadow = true;
+                body.add(torso);
+                const bel = latheOf([[0, -0.3], [0.16, -0.16], [0.18, 0.08], [0, 0.24]], belly, 20);
+                bel.position.z = 0.14;
+                bel.scale.z = 0.55;
+                body.add(bel);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 26, 22), mat);
+                head.position.set(0, 0.6, 0.04);
+                head.castShadow = true;
+                body.add(head);
+                const face = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 18), belly);
+                face.scale.set(1, 0.92, 0.5);
+                face.position.set(0, 0.56, 0.2);
+                body.add(face);
+                const muz = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 14), belly);
+                muz.scale.set(1.1, 0.7, 0.8);
+                muz.position.set(0, 0.48, 0.28);
+                body.add(muz);
+                for (const sx of [-1, 1]) {
+                    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 14), mat);
+                    ear.scale.set(1, 1, 0.5);
+                    ear.position.set(sx * 0.28, 0.62, 0.02);
+                    body.add(ear);
+                    const ei = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), belly);
+                    ei.scale.set(1, 1, 0.5);
+                    ei.position.set(sx * 0.3, 0.62, 0.06);
+                    body.add(ei);
+                }
+                for (const sx of [-1, 1]) {
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.5, 10), mat);
+                    arm.position.set(sx * 0.34, 0.05, 0.05);
+                    arm.rotation.z = sx * 0.25;
+                    body.add(arm);
+                    legs.push(arm);
+                    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), mat);
+                    hand.position.set(sx * 0.46, -0.2, 0.08);
+                    body.add(hand);
+                }
+                for (const sx of [-1, 1]) {
+                    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.34, 10), mat);
+                    leg.position.set(sx * 0.16, -0.5, 0.02);
+                    body.add(leg);
+                    legs.push(leg);
+                    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), mat);
+                    foot.scale.set(1, 0.6, 1.4);
+                    foot.position.set(sx * 0.16, -0.64, 0.08);
+                    body.add(foot);
+                }
+                const mtail = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.045, 10, 24, Math.PI * 1.5), mat);
+                mtail.position.set(0, -0.3, -0.34);
+                mtail.rotation.x = 0.4;
+                mtail.rotation.y = Math.PI / 2;
+                body.add(mtail);
+                headY = 0.6;
+                headZ = 0.34;
+                headR = 0.28;
+            }
+            else if (shape === "croc") {
+                // 🐊 long low body + toothy snout + ridged back + tail + stubby legs
+                const hull = latheOf([[0, -0.7], [0.2, -0.5], [0.28, -0.1], [0.28, 0.3], [0.18, 0.6], [0, 0.72]], mat, 22);
+                hull.rotation.x = Math.PI / 2;
+                hull.scale.set(1, 1.4, 0.6);
+                hull.position.y = -0.04;
+                hull.castShadow = true;
+                body.add(hull);
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.34), mat);
+                head.position.set(0, 0.02, 0.6);
+                body.add(head);
+                const snout = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.13, 0.42), mat);
+                snout.position.set(0, 0.0, 0.92);
+                body.add(snout);
+                const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.4), belly);
+                jaw.position.set(0, -0.1, 0.92);
+                body.add(jaw);
+                for (const sx of [-1, 1])
+                    for (let k = 0; k < 3; k++) {
+                        const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.07, 4), whiteMat);
+                        tooth.position.set(sx * 0.1, -0.03, 0.78 + k * 0.12);
+                        tooth.rotation.x = Math.PI;
+                        body.add(tooth);
+                    }
+                g.userData.customFace = true;
+                for (const sx of [-0.11, 0.11]) {
+                    const bump = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), mat);
+                    bump.position.set(sx, 0.12, 0.5);
+                    body.add(bump);
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), whiteMat);
+                    eye.position.set(sx, 0.16, 0.52);
+                    body.add(eye);
+                    const pup = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), darkMat);
+                    pup.position.set(sx, 0.17, 0.56);
+                    body.add(pup);
+                }
+                for (let k = 0; k < 5; k++) {
+                    const sc = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.12, 4), dark);
+                    sc.position.set(0, 0.16, 0.3 - k * 0.22);
+                    body.add(sc);
+                }
+                const tail = latheOf([[0, 0], [0.14, 0.1], [0.08, 0.5], [0, 0.82]], mat, 14);
+                tail.rotation.x = -Math.PI / 2;
+                tail.position.set(0, -0.02, -0.7);
+                tail.scale.set(1, 1, 0.5);
+                body.add(tail);
+                g.userData.tail = tail;
+                for (const sx of [-1, 1])
+                    for (const pz of [0.3, -0.34]) {
+                        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.24, 8), mat);
+                        leg.position.set(sx * 0.28, -0.16, pz);
+                        leg.rotation.z = sx * 0.7;
+                        body.add(leg);
+                        legs.push(leg);
+                    }
+                headY = 0.12;
+                headZ = 0.5;
+                headR = 0.24;
+            }
             else { // wisp 👻🌪️
                 // tapered, trailing body — no legs, no hard bottom
                 mat.transparent = true;
@@ -13466,7 +13592,168 @@ function CherryAdventure() {
         G.beachColliders = beachColliders;
         G.beachClouds = beachClouds;
         G.palmCrowns = palmCrowns;
-        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor); // 🌳 hide during battle too
+        // 🌴 AMAZON RAINFOREST DECOR — huge canopy trees, giant ferns, grass, swamp pools, the Amazon river, mist (map: amazon)
+        const amazonDecor = new THREE.Group();
+        amazonDecor.visible = false;
+        scene.add(amazonDecor);
+        const amazonColliders = [];
+        // 🟢 green wet ground overlay (darker jungle floor over the base ground)
+        const jungleFloor = new THREE.Mesh(new THREE.CircleGeometry(FIELD_R + 4, 48), new THREE.MeshStandardMaterial({ color: 0x244a28, roughness: 1 }));
+        jungleFloor.rotation.x = -Math.PI / 2;
+        jungleFloor.position.y = 0.015;
+        jungleFloor.userData.noHide = true;
+        amazonDecor.add(jungleFloor);
+        // 🏞️ Amazon river — a wide winding water band crossing the map (murky green-brown)
+        const riverMat = new THREE.MeshStandardMaterial({ color: 0x2a5a52, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.9 });
+        const river = new THREE.Mesh(new THREE.PlaneGeometry(9, 130, 1, 24), riverMat);
+        river.rotation.x = -Math.PI / 2;
+        river.rotation.z = 0.5;
+        river.position.set(4, 0.05, -2);
+        river.userData.noHide = true;
+        amazonDecor.add(river);
+        const riverBank = new THREE.Mesh(new THREE.PlaneGeometry(11, 130), new THREE.MeshStandardMaterial({ color: 0x3a3a24, roughness: 1, transparent: true, opacity: 0.6 }));
+        riverBank.rotation.x = -Math.PI / 2;
+        riverBank.rotation.z = 0.5;
+        riverBank.position.set(4, 0.035, -2);
+        riverBank.userData.noHide = true;
+        amazonDecor.add(riverBank);
+        G.amazonRiver = river;
+        // 🌳 giant canopy tree — tall buttressed trunk + layered green canopy
+        const barkMat = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: 0.95 });
+        const barkD = new THREE.MeshStandardMaterial({ color: 0x40331f, roughness: 0.98 });
+        const canopy1 = new THREE.MeshStandardMaterial({ color: 0x2f6b34, roughness: 0.85, flatShading: true });
+        const canopy2 = new THREE.MeshStandardMaterial({ color: 0x256030, roughness: 0.85, flatShading: true });
+        const canopy3 = new THREE.MeshStandardMaterial({ color: 0x3a7a3e, roughness: 0.85, flatShading: true });
+        const makeBigTree = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            const h = rnd(7, 11);
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.62, h, 12), barkMat);
+            trunk.position.y = h / 2;
+            trunk.castShadow = true;
+            g.add(trunk);
+            // buttress roots at the base
+            for (let k = 0; k < 5; k++) {
+                const a = (k / 5) * Math.PI * 2;
+                const root = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.4, 5), barkD);
+                root.position.set(Math.cos(a) * 0.5, 0.6, Math.sin(a) * 0.5);
+                root.rotation.x = Math.PI;
+                root.scale.set(1, 1, 0.5);
+                root.rotation.y = -a;
+                g.add(root);
+            }
+            // hanging vines
+            for (let k = 0; k < 3; k++) {
+                const a = Math.random() * Math.PI * 2;
+                const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, rnd(1.4, 2.6), 5), canopy2);
+                vine.position.set(Math.cos(a) * 1.2, h - rnd(1, 2.5), Math.sin(a) * 1.2);
+                g.add(vine);
+            }
+            // layered canopy (big overlapping blobs) high up
+            const cy = h + 0.2;
+            for (let k = 0; k < 7; k++) {
+                const a = (k / 7) * Math.PI * 2;
+                const r = 1.7 + (k % 3) * 0.5;
+                const blob = new THREE.Mesh(new THREE.SphereGeometry(rnd(1.5, 2.4), 12, 10), [canopy1, canopy2, canopy3][k % 3]);
+                blob.position.set(Math.cos(a) * r, cy + rnd(-0.6, 0.9), Math.sin(a) * r);
+                blob.castShadow = true;
+                g.add(blob);
+            }
+            const crown = new THREE.Mesh(new THREE.SphereGeometry(2.4, 14, 12), canopy1);
+            crown.position.y = cy + 1;
+            crown.scale.set(1, 0.8, 1);
+            g.add(crown);
+            g.position.set(x, 0, z);
+            g.scale.setScalar(rnd(0.85, 1.2));
+            amazonDecor.add(g);
+            amazonColliders.push({ x, z, r: 0.8 });
+        };
+        // 🌿 giant fern — arching fronds from a low center
+        const fernMat = new THREE.MeshStandardMaterial({ color: 0x3c8a3e, roughness: 0.8, side: THREE.DoubleSide, flatShading: true });
+        const fernMatD = new THREE.MeshStandardMaterial({ color: 0x2c6e30, roughness: 0.85, side: THREE.DoubleSide, flatShading: true });
+        const makeFern = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            const n = 7 + (Math.random() * 3 | 0);
+            for (let k = 0; k < n; k++) {
+                const a = (k / n) * Math.PI * 2;
+                const piv = new THREE.Group();
+                piv.rotation.y = a;
+                piv.rotation.z = -0.5 - Math.random() * 0.2;
+                const frond = new THREE.Mesh(new THREE.ConeGeometry(0.22, rnd(1.4, 2.1), 4), k % 2 ? fernMat : fernMatD);
+                frond.scale.set(1, 1, 0.16);
+                frond.rotation.z = -Math.PI / 2;
+                frond.position.x = rnd(0.8, 1.1);
+                frond.castShadow = true;
+                piv.add(frond);
+                g.add(piv);
+            }
+            g.position.set(x, 0.1, z);
+            g.scale.setScalar(rnd(0.9, 1.4));
+            amazonDecor.add(g);
+            amazonColliders.push({ x, z, r: 0.5 });
+        };
+        // 🌱 grass tufts on the green floor
+        const grassMat = new THREE.MeshStandardMaterial({ color: 0x3f8a40, roughness: 0.9, side: THREE.DoubleSide });
+        const makeGrass = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const g = new THREE.Group();
+            for (let k = 0; k < 5; k++) {
+                const bl = new THREE.Mesh(new THREE.ConeGeometry(0.05, rnd(0.3, 0.6), 3), grassMat);
+                bl.position.set(rnd(-0.15, 0.15), 0.2, rnd(-0.15, 0.15));
+                bl.rotation.z = rnd(-0.3, 0.3);
+                bl.scale.set(1, 1, 0.4);
+                g.add(bl);
+            }
+            g.position.set(x, 0, z);
+            amazonDecor.add(g);
+        };
+        // 💧 swamp puddles (wetland)
+        const swampMat = new THREE.MeshStandardMaterial({ color: 0x2e5648, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.8 });
+        const makeSwamp = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const p = new THREE.Mesh(new THREE.CircleGeometry(rnd(1.2, 2.2), 20), swampMat);
+            p.rotation.x = -Math.PI / 2;
+            p.position.set(x, 0.03, z);
+            p.userData.noHide = true;
+            amazonDecor.add(p);
+        };
+        // 🌫️ low mist patches (no sun, humid air)
+        const mistMat = new THREE.MeshBasicMaterial({ color: 0xbfe0c8, transparent: true, opacity: 0.12, depthWrite: false });
+        const amazonMist = [];
+        // scatter
+        for (let i = 0; i < 9; i++) {
+            const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4);
+            makeBigTree(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 10; i++) {
+            const a = Math.random() * Math.PI * 2, r = 2.5 + Math.random() * (FIELD_R - 3);
+            makeFern(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 22; i++) {
+            const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3);
+            makeGrass(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 5; i++) {
+            const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 8);
+            makeSwamp(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 10; i++) {
+            const m = new THREE.Mesh(new THREE.SphereGeometry(rnd(1.4, 2.6), 8, 6), mistMat);
+            m.position.set(rnd(-FIELD_R, FIELD_R), rnd(0.4, 1.6), rnd(-FIELD_R, FIELD_R));
+            m.scale.set(1.6, 0.5, 1.6);
+            m.userData = { sp: rnd(0.15, 0.4), noHide: true };
+            amazonDecor.add(m);
+            amazonMist.push(m);
+        }
+        G.amazonDecor = amazonDecor;
+        G.amazonColliders = amazonColliders;
+        G.amazonMist = amazonMist;
+        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor); // 🌳 hide during battle too
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -13771,6 +14058,7 @@ function CherryAdventure() {
             const isVolcano = b.id === "volcano";
             const isSky = b.id === "sky";
             const isBeach = b.id === "beach";
+            const isAmazon = b.id === "amazon";
             const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon"; // 🔥😇🌙 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
@@ -13790,9 +14078,11 @@ function CherryAdventure() {
                 G.moonDecor.visible = b.id === "moon";
             if (G.beachDecor)
                 G.beachDecor.visible = isBeach;
+            if (G.amazonDecor)
+                G.amazonDecor.visible = isAmazon;
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.sceneryObjects)
-                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isEndgame));
+                G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isEndgame));
             // 🧭 obstacles the player must walk around in this biome (for collision + auto-steer)
             G.biomeColliders = isDesert ? (G.desertColliders || [])
                 : isSnow ? (G.snowColliders || [])
@@ -13800,10 +14090,11 @@ function CherryAdventure() {
                         : isVolcano ? (G.volcanoColliders || [])
                             : isSky ? (G.skyColliders || [])
                                 : isBeach ? (G.beachColliders || [])
-                                    : b.id === "hell" ? (G.hellColliders || [])
-                                        : b.id === "heaven" ? (G.heavenColliders || [])
-                                            : b.id === "moon" ? (G.moonColliders || [])
-                                                : [];
+                                    : isAmazon ? (G.amazonColliders || [])
+                                        : b.id === "hell" ? (G.hellColliders || [])
+                                            : b.id === "heaven" ? (G.heavenColliders || [])
+                                                : b.id === "moon" ? (G.moonColliders || [])
+                                                    : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -22598,8 +22889,9 @@ function CherryAdventure() {
                         const isVolcano = !preview && b.id === "volcano";
                         const isSky = !preview && b.id === "sky";
                         const isBeach = !preview && b.id === "beach";
+                        const isAmazon = !preview && b.id === "amazon";
                         if (G.sceneryObjects)
-                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach));
+                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon));
                         wilds.forEach((m) => (m.visible = !preview));
                         if (G.desertDecor)
                             G.desertDecor.visible = isDesert;
@@ -22613,6 +22905,8 @@ function CherryAdventure() {
                             G.skyDecor.visible = isSky;
                         if (G.beachDecor)
                             G.beachDecor.visible = isBeach;
+                        if (G.amazonDecor)
+                            G.amazonDecor.visible = isAmazon;
                         if (G.warpGate)
                             G.warpGate.visible = !preview;
                         if (G.npc)
@@ -22744,7 +23038,9 @@ function CherryAdventure() {
                             dayAmt = 0.05;
                         else if (_cb.bright)
                             dayAmt = 1;
-                    }
+                        else if (_cb.dim)
+                            dayAmt = Math.min(dayAmt, 0.4);
+                    } // 🌴 ป่าดิบ = แสงสลัวใต้เรือนยอด ไร้แดดจ้า
                     G.dayPhaseAmt = dayAmt;
                     // sky & fog (day color tinted by the current biome)
                     const daySky = G.biomeSky || dayColors.skyDay;
@@ -23578,6 +23874,16 @@ function CherryAdventure() {
                             } });
                         if (G.palmCrowns)
                             G.palmCrowns.forEach((cr) => { cr.rotation.z = Math.sin(t * 1.1 + cr.userData.ph) * 0.05; cr.rotation.x = Math.cos(t * 0.9 + cr.userData.ph) * 0.04; });
+                    }
+                    // 🌴 amazon: river shimmer + drifting mist (amazon biome only)
+                    if (G.amazonDecor && G.amazonDecor.visible) {
+                        if (G.amazonRiver)
+                            G.amazonRiver.material.opacity = 0.85 + Math.sin(t * 1.2) * 0.08;
+                        if (G.amazonMist)
+                            G.amazonMist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) {
+                                m.position.x = -FIELD_R - 4;
+                                m.position.z = rnd(-FIELD_R, FIELD_R);
+                            } });
                     }
                     // 🌪️ sandstorm drift (desert only)
                     if (G.desertDecor && G.desertDecor.visible && G.sandParticles) {
@@ -32960,13 +33266,13 @@ function CherryAdventure() {
         return { ...u, ...cleared, [name]: willOpen, ...extra };
     });
     // ✕ close button shown in the corner of every menu panel
-    // ✕ close button — sticky so it never scrolls out of the popup, and dropped below the front camera
-    const closeBtn = (name) => (React.createElement("div", { style: { position: "sticky", top: "calc(env(safe-area-inset-top) + 6px)", height: 0, zIndex: 10, pointerEvents: "none" } },
+    // ✕ close button — pinned to the popup's TOP-RIGHT corner, sticky (never scrolls away), below the front camera
+    const closeBtn = (name) => (React.createElement("div", { style: { position: "sticky", top: "calc(env(safe-area-inset-top) + 6px)", height: 0, zIndex: 12, display: "flex", justifyContent: "flex-end", pointerEvents: "none", order: -1 } },
         React.createElement("button", { onClick: () => setUi((u) => ({ ...u, [name]: false })), style: {
-                position: "absolute", top: 0, right: 6, width: 30, height: 30, borderRadius: 9,
+                marginRight: -2, width: 30, height: 30, borderRadius: 9,
                 border: "none", cursor: "pointer", fontSize: 16, fontWeight: 800, lineHeight: "30px",
                 color: "#a06a6a", background: "#f3ede4", padding: 0, fontFamily: font,
-                boxShadow: "0 2px 6px rgba(0,0,0,0.22)", pointerEvents: "auto",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.22)", pointerEvents: "auto", flexShrink: 0,
             } }, "\u2715")));
     return (React.createElement("div", { style: { width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box" } },
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`),
