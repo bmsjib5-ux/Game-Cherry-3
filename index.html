@@ -22724,18 +22724,305 @@ function CherryAdventure() {
             grp.userData.plate = plate;
             return grp;
         };
+        // 🪽 stand-alone replica of G.buildWings' geometry — builds a fresh wings group (char is never touched)
+        const buildRemoteWings = (id) => {
+            const w = findWing(id);
+            if (!w || w.id === "none")
+                return null;
+            const grp = new THREE.Group();
+            grp.position.set(0, 1.16, -0.3);
+            grp.scale.setScalar(1.45); // 🎒 same mount as char's wingsGroup
+            const wingL = new THREE.Group();
+            wingL.position.x = -0.12;
+            const wingR = new THREE.Group();
+            wingR.position.x = 0.12;
+            grp.add(wingL, wingR);
+            const cols = w.cols, glow = w.glow, kind = w.kind;
+            const build = (side, root) => {
+                if (kind === "phoenix" || kind === "angel") {
+                    const rows = 8;
+                    for (let k = 0; k < rows; k++) {
+                        const len = 1.15 - k * 0.085;
+                        const col = cols[Math.min(cols.length - 1, Math.floor(k / rows * cols.length))];
+                        const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: glow * (0.5 + k / rows), roughness: kind === "angel" ? 0.5 : 0.35, metalness: 0.1, side: THREE.DoubleSide, transparent: true, opacity: 0.97 });
+                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.1, len, 5), mat);
+                        f.scale.set(1, 1, 0.22);
+                        const spread = 0.85 + k * 0.16;
+                        f.position.set(side * (0.18 + k * 0.16), 0.05 + k * 0.13, 0);
+                        f.rotation.z = side * spread;
+                        f.rotation.x = -0.14;
+                        root.add(f);
+                    }
+                    if (kind === "angel") {
+                        const tipMat = new THREE.MeshBasicMaterial({ color: 0xfff3c0, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+                        const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 10), tipMat);
+                        halo.position.set(side * 0.5, 0.55, -0.05);
+                        halo.scale.set(1.2, 1.4, 0.4);
+                        root.add(halo);
+                    }
+                }
+                else if (kind === "demon") {
+                    const boneMat = new THREE.MeshStandardMaterial({ color: cols[0], roughness: 0.6, metalness: 0.2 });
+                    const memMat = new THREE.MeshStandardMaterial({ color: cols[1], emissive: cols[2], emissiveIntensity: glow * 0.5, roughness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.94 });
+                    const edgeMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow, roughness: 0.3 });
+                    const fingers = 4;
+                    for (let k = 0; k < fingers; k++) {
+                        const len = 1.0 - k * 0.14;
+                        const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, len, 5), boneMat);
+                        const ang = side * (0.3 + k * 0.32);
+                        bone.position.set(side * (0.16 + k * 0.16), 0.16 + k * 0.14, 0);
+                        bone.rotation.z = ang;
+                        root.add(bone);
+                        const mem = new THREE.Mesh(new THREE.ConeGeometry(0.16, len * 0.92, 3), memMat);
+                        mem.scale.set(1, 1, 0.12);
+                        mem.position.set(side * (0.16 + k * 0.16 - 0.06), 0.13 + k * 0.14, -0.01);
+                        mem.rotation.z = ang;
+                        root.add(mem);
+                        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 5), edgeMat);
+                        spike.position.set(side * (0.16 + k * 0.16) + Math.sin(ang) * len / 2, 0.16 + k * 0.14 + Math.cos(ang) * len / 2, 0);
+                        spike.rotation.z = ang;
+                        root.add(spike);
+                    }
+                }
+                else if (kind === "robot") {
+                    const steel = new THREE.MeshStandardMaterial({ color: cols[1], metalness: 0.9, roughness: 0.28 });
+                    const dark = new THREE.MeshStandardMaterial({ color: cols[2], metalness: 0.85, roughness: 0.35 });
+                    const glowMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow * 1.4, roughness: 0.2, metalness: 0.4 });
+                    const blades = 4;
+                    for (let k = 0; k < blades; k++) {
+                        const len = 1.0 - k * 0.13, wdt = 0.16 - k * 0.02;
+                        const bl = new THREE.Mesh(new THREE.BoxGeometry(len, wdt, 0.05), k % 2 ? dark : steel);
+                        const ang = side * (0.45 + k * 0.28);
+                        bl.position.set(side * (0.12 + Math.cos(ang) * len / 2), 0.16 + k * 0.14 + Math.sin(ang) * len / 2, 0);
+                        bl.rotation.z = ang;
+                        root.add(bl);
+                        const strip = new THREE.Mesh(new THREE.BoxGeometry(len * 0.92, 0.03, 0.06), glowMat);
+                        strip.position.copy(bl.position);
+                        strip.position.y += wdt / 2;
+                        strip.rotation.z = ang;
+                        root.add(strip);
+                    }
+                    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 10), glowMat);
+                    core.rotation.z = Math.PI / 2;
+                    core.position.set(side * 0.14, 0.14, 0.02);
+                    root.add(core);
+                }
+            };
+            build(-1, wingL);
+            build(1, wingR);
+            grp.userData.wingL = wingL;
+            grp.userData.wingR = wingR;
+            return grp;
+        };
+        // 🧍‍♂️✨ FULL "เป๊ะทุกชิ้น" avatar — replicate char's anchor coordinate system + CLONE the real cosmetic models
+        // (outfit, class accessory, hat, mask, wings, weapon) so a remote player looks (near-)identical. Any throw → simple fallback.
+        const buildFullAvatar = (info) => {
+            try {
+                const cl = CLASSES[info.c] || CLASSES.warrior;
+                const co = CLASS_OUTFIT[info.c] || CLASS_OUTFIT.warrior;
+                const shirtCol = (info.dy != null ? info.dy : co.shirt); // 🎨 dye overrides class shirt (matches applyClassOutfit)
+                const grp = new THREE.Group();
+                const body = new THREE.Group();
+                grp.add(body); // feet at y=0 (char origin); manager bobs body via bodyBaseY
+                grp.userData.body = body;
+                grp.userData.bodyBaseY = 0;
+                // 🎨 fresh materials — never share char's, so nothing we tint can leak back to the real character
+                const skinMatA = new THREE.MeshStandardMaterial({ color: 0xffe0c8, roughness: 0.7 });
+                const shirtMatA = new THREE.MeshStandardMaterial({ color: shirtCol, roughness: 0.62 });
+                const pantsMatA = new THREE.MeshStandardMaterial({ color: co.pants, roughness: 0.62 });
+                const shoeMatA = new THREE.MeshStandardMaterial({ color: 0x2f333c, roughness: 0.5 });
+                // ---- torso / pelvis / neck at char's real Y anchors ----
+                const torso = latheOf([[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.34], [0.37, 0.48], [0.405, 0.62], [0.415, 0.74], [0.40, 0.86], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]], shirtMatA, 28);
+                torso.position.y = 1.14;
+                torso.scale.set(1.0, 0.8, 0.72);
+                torso.castShadow = true;
+                body.add(torso);
+                const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), pantsMatA);
+                pelvis.scale.set(1.06, 0.6, 0.78);
+                pelvis.position.y = 1.14;
+                body.add(pelvis);
+                const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.62, 16), skinMatA);
+                neck.position.y = 2.1;
+                body.add(neck);
+                // ---- legs: hip pivots at char anchors (±0.165, 1.26), scale (1,1.18,1) ----
+                const mkLeg = (sx) => {
+                    const hip = new THREE.Group();
+                    hip.position.set(0.165 * sx, 1.26, 0);
+                    hip.scale.set(1, 1.18, 1);
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.135, 0.56, 14), pantsMatA);
+                    thigh.position.y = -0.30;
+                    thigh.castShadow = true;
+                    hip.add(thigh);
+                    const knee = new THREE.Group();
+                    knee.position.y = -0.56;
+                    hip.add(knee);
+                    const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.095, 0.44, 14), pantsMatA);
+                    calf.position.y = -0.22;
+                    knee.add(calf);
+                    const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 16), shoeMatA);
+                    shoe.scale.set(1, 0.6, 1.4);
+                    shoe.position.set(0, -0.46, 0.06);
+                    knee.add(shoe);
+                    body.add(hip);
+                    return hip;
+                };
+                grp.userData.legL = mkLeg(-1);
+                grp.userData.legR = mkLeg(1);
+                // ---- arms: shoulder pivots at char anchors (±0.46, 1.8), tilt ±0.12; right arm carries the weapon ----
+                const mkArm = (sx) => {
+                    const p = new THREE.Group();
+                    p.position.set(0.46 * sx, 1.8, 0);
+                    p.rotation.z = sx * 0.12;
+                    const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 14), shirtMatA);
+                    sleeve.scale.set(1, 1.2, 1);
+                    sleeve.position.y = -0.06;
+                    p.add(sleeve);
+                    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.076, 0.5, 12), skinMatA);
+                    upper.position.y = -0.28;
+                    p.add(upper);
+                    const elbow = new THREE.Group();
+                    elbow.position.y = -0.5;
+                    p.add(elbow);
+                    const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.055, 0.42, 12), skinMatA);
+                    fore.position.y = -0.24;
+                    elbow.add(fore);
+                    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 14), skinMatA);
+                    hand.scale.set(0.9, 1.15, 0.8);
+                    hand.position.y = -0.52;
+                    elbow.add(hand);
+                    p.userData.elbow = elbow;
+                    body.add(p);
+                    return p;
+                };
+                grp.userData.armL = mkArm(-1);
+                grp.userData.armR = mkArm(1);
+                // ---- head anchor: replicate headG (y=2.92, scale 1.3) so cloned hats/masks sit correctly ----
+                const headAnchor = new THREE.Group();
+                headAnchor.position.y = 2.92;
+                headAnchor.scale.setScalar(1.3);
+                body.add(headAnchor);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 22, 20), skinMatA);
+                head.scale.set(1, 1.02, 0.95);
+                head.castShadow = true;
+                headAnchor.add(head);
+                const hair = new THREE.Mesh(new THREE.SphereGeometry(0.66, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), new THREE.MeshStandardMaterial({ color: 0x4a3628, roughness: 0.85 }));
+                hair.position.y = 0.05;
+                headAnchor.add(hair);
+                for (const ex of [-0.2, 0.2]) {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.4 }));
+                    eye.position.set(ex, 0.02, 0.55);
+                    eye.scale.set(1, 1.3, 0.6);
+                    headAnchor.add(eye);
+                }
+                // 🧬 deep-clone a reusable cosmetic model + clone its materials (so the shared original is never mutated), force-visible
+                const cloneCosmetic = (model) => {
+                    if (!model)
+                        return null;
+                    const c = model.clone(true);
+                    c.visible = true;
+                    c.traverse((o) => { if (o.isMesh && o.material)
+                        o.material = Array.isArray(o.material) ? o.material.map((mm) => mm.clone()) : o.material.clone(); });
+                    return c;
+                };
+                // ---- 👗 outfit (body-origin coords) — tinted like setOutfitVisual (reset to base, lerp 0.55 toward dye) ----
+                if (info.outfit && outfitModels[info.outfit]) {
+                    const oc = cloneCosmetic(outfitModels[info.outfit]);
+                    if (oc) {
+                        oc.traverse((o) => { if (!o.isMesh || !o.material || !o.material.color)
+                            return; if (o.userData._baseCol != null)
+                            o.material.color.setHex(o.userData._baseCol); if (info.dy != null)
+                            o.material.color.lerp(new THREE.Color(info.dy), 0.55); });
+                        body.add(oc);
+                    }
+                }
+                // ---- 🛡️ class accessory (body-origin coords) — key from CLASS_OUTFIT[c].acc ----
+                if (co.acc && classAccessories[co.acc]) {
+                    const ac = cloneCosmetic(classAccessories[co.acc]);
+                    if (ac)
+                        body.add(ac);
+                }
+                // ---- 🎩 hat + 😎 mask (headG-local coords → head anchor) ----
+                if (info.hat && hatModels[info.hat]) {
+                    const hc = cloneCosmetic(hatModels[info.hat]);
+                    if (hc)
+                        headAnchor.add(hc);
+                }
+                if (info.mask && maskModels[info.mask]) {
+                    const mc = cloneCosmetic(maskModels[info.mask]);
+                    if (mc)
+                        headAnchor.add(mc);
+                }
+                // ---- 🪽 wings ----
+                if (info.wing) {
+                    const wg = buildRemoteWings(info.wing);
+                    if (wg)
+                        body.add(wg);
+                }
+                // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
+                try {
+                    let wid = info.w && weaponModels[info.w] ? info.w : null;
+                    if (!wid) {
+                        const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx" }[info.c];
+                        wid = (dflt && weaponModels[dflt]) ? dflt : "default";
+                    }
+                    const wm = weaponModels[wid] || weaponModels.default;
+                    if (wm) {
+                        const wand = new THREE.Group();
+                        wand.position.set(0.02, -0.56, 0.12);
+                        const grip = gripFor(wid);
+                        wand.rotation.set(grip.x, grip.y, grip.z);
+                        const model = cloneCosmetic(wm);
+                        model.position.y = model.userData.gripY != null ? model.userData.gripY : 0.28;
+                        model.position.z = model.userData.gripZ != null ? model.userData.gripZ : 0;
+                        wand.add(model);
+                        (grp.userData.armR.userData.elbow || grp.userData.armR).add(wand);
+                    }
+                }
+                catch (e) { }
+                // ---- 🏷️ floating nameplate (same style as the simple avatar) ----
+                const cv = document.createElement("canvas");
+                cv.width = 256;
+                cv.height = 64;
+                const ctx = cv.getContext("2d");
+                ctx.font = "bold 30px system-ui,sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.lineJoin = "round";
+                const label = `${cl.emoji || "🙂"} ${(info.n || "ผู้เล่น").slice(0, 10)}`;
+                ctx.strokeStyle = "rgba(0,0,0,0.6)";
+                ctx.lineWidth = 6;
+                ctx.strokeText(label, 128, 34);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText(label, 128, 34);
+                const tex = new THREE.CanvasTexture(cv);
+                tex.minFilter = THREE.LinearFilter;
+                const plate = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+                plate.scale.set(2.4, 0.6, 1);
+                plate.position.y = 3.9;
+                grp.add(plate);
+                grp.userData.plate = plate;
+                return grp;
+            }
+            catch (e) {
+                try {
+                    console.warn("buildFullAvatar failed → simple avatar", e);
+                }
+                catch (_) { }
+                return buildRemoteAvatar(info); // 🛟 never break the game
+            }
+        };
         // 📥 a position update arrived (from realtime OR a test) — spawn/refresh the avatar
         G._rtOnPos = (m) => {
             if (!m || !m.pid || m.pid === G.pid)
                 return;
             let a = remoteAvatars.get(m.pid);
             if (!a) {
-                const grp = buildRemoteAvatar(m);
+                const grp = buildFullAvatar(m);
                 grp.position.set(m.x || 0, 0, m.z || 0);
                 scene.add(grp);
                 a = { grp, walk: 0 };
                 remoteAvatars.set(m.pid, a);
-            }
+            } // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
             a.tx = m.x || 0;
             a.tz = m.z || 0;
             a.tyaw = m.yaw || 0;
@@ -22784,7 +23071,8 @@ function CherryAdventure() {
                     a.grp.userData.armL.rotation.x = -sw * 0.7;
                     a.grp.userData.armR.rotation.x = sw * 0.7;
                 }
-                a.grp.userData.body.position.y = 0.9 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
+                const _b0 = (a.grp.userData.bodyBaseY != null ? a.grp.userData.bodyBaseY : 0.9); // 🧍‍♂️ full avatars sit at ground (0); simple avatars keep 0.9
+                a.grp.userData.body.position.y = _b0 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
             });
         };
         // ---- transport: Supabase Realtime broadcast (one channel per biome; graceful no-op if unavailable) ----
@@ -22841,7 +23129,8 @@ function CherryAdventure() {
                     return; // ~7-8 updates/sec
                 G._lastRtSend = now;
                 const moving = G.vel ? (Math.hypot(G.vel.x || 0, G.vel.z || 0) > 0.15) : false;
-                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: (G.equip && G.equip.weapon) || null, dy: (G.dye && G.dye.outfit) || null, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+                // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero; the class accessory derives from c)
+                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: (G.equip && G.equip.weapon) || null, hat: (G.equip && G.equip.hat) || null, mask: (G.equip && G.equip.mask) || null, outfit: (G.equip && G.equip.outfit) || null, wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
             }
             catch (e) { }
         };
