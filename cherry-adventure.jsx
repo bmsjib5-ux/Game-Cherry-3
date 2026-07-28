@@ -15904,7 +15904,7 @@ export default function CherryAdventure() {
     // 🧍 compact chibi avatar for a remote player (class-coloured body, simple limbs, floating nameplate)
     const buildRemoteAvatar = (info) => {
       const cl = CLASSES[info.c] || CLASSES.warrior;
-      const col = cl.color != null ? cl.color : 0xd9536b;
+      const col = (info.dy != null ? info.dy : (cl.color != null ? cl.color : 0xd9536b)); // 🎨 match the player's chosen dye colour
       const grp = new THREE.Group();
       const bodyG = new THREE.Group(); bodyG.position.y = 0.9; grp.add(bodyG); grp.userData.body = bodyG;
       const torso = latheOf([[0, -0.5], [0.3, -0.44], [0.36, -0.1], [0.32, 0.3], [0.2, 0.6], [0, 0.72]], rMat(col), 22);
@@ -15989,7 +15989,7 @@ export default function CherryAdventure() {
         if (now - (G._lastRtSend || 0) < 130) return; // ~7-8 updates/sec
         G._lastRtSend = now;
         const moving = G.vel ? (Math.hypot(G.vel.x || 0, G.vel.z || 0) > 0.15) : false;
-        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: (G.equip && G.equip.weapon) || null, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: (G.equip && G.equip.weapon) || null, dy: (G.dye && G.dye.outfit) || null, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
       } catch (e) {}
     };
     G.rtLeave = () => { try { if (G.rtChannel) { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); G.rtChannel = null; } G._rtClear(); } catch (e) {} };
