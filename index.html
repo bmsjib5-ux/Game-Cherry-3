@@ -13103,7 +13103,7 @@ function CherryAdventure() {
             scene.add(g);
             meteors.push(g);
         };
-        const clearMeteors = () => { meteors.forEach((m) => scene.remove(m)); meteors.length = 0; };
+        const clearMeteors = () => { meteors.forEach((m) => { scene.remove(m); (G._disposeObj3D && G._disposeObj3D(m)); }); meteors.length = 0; };
         const makeGolden = () => {
             const spId = SPAWN_POOL[Math.floor(Math.random() * SPAWN_POOL.length)];
             const m = buildMonster(spId);
@@ -13136,6 +13136,7 @@ function CherryAdventure() {
                 for (let i = wilds.length - 1; i >= 0; i--) {
                     if (wilds[i].userData.horde) {
                         scene.remove(wilds[i]);
+                        (G._disposeObj3D && G._disposeObj3D(wilds[i]));
                         wilds.splice(i, 1);
                     }
                 }
@@ -13228,6 +13229,7 @@ function CherryAdventure() {
             // clear current wild monsters and respawn from this biome's pool
             for (let i = wilds.length - 1; i >= 0; i--) {
                 scene.remove(wilds[i]);
+                (G._disposeObj3D && G._disposeObj3D(wilds[i]));
                 wilds.splice(i, 1);
             }
             G.biomePool = b.pool;
@@ -13424,8 +13426,10 @@ function CherryAdventure() {
         };
         G.exitDungeon = () => {
             // leave voluntarily, keep progress
-            if (G.enemy && G.enemy.mesh)
+            if (G.enemy && G.enemy.mesh) {
                 scene.remove(G.enemy.mesh);
+                (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh));
+            }
             G.enemy = null;
             G.banim = null;
             G.dungeon = null;
@@ -13651,6 +13655,7 @@ function CherryAdventure() {
         G.setBuddy = (iid) => {
             if (buddyMesh) {
                 scene.remove(buddyMesh);
+                (G._disposeObj3D && G._disposeObj3D(buddyMesh));
                 buddyMesh = null;
             }
             G.buddy = iid || null;
@@ -18649,6 +18654,7 @@ function CherryAdventure() {
                 const mm = G.enemy.mesh;
                 if (mm) {
                     scene.remove(mm);
+                    (G._disposeObj3D && G._disposeObj3D(mm));
                     const i = wilds.indexOf(mm);
                     if (i >= 0)
                         wilds.splice(i, 1);
@@ -18691,6 +18697,7 @@ function CherryAdventure() {
                 const mm = G.enemy.mesh;
                 if (mm)
                     scene.remove(mm);
+                (G._disposeObj3D && G._disposeObj3D(mm));
                 G.enemy = null;
                 G.banim = null;
                 if (G.restoreScenery)
@@ -18746,6 +18753,7 @@ function CherryAdventure() {
                 if (mm) {
                     burst(mm.position, 0xf5d05a, 2.4);
                     scene.remove(mm);
+                    (G._disposeObj3D && G._disposeObj3D(mm));
                 }
                 G.enemy = null;
             }
@@ -18961,8 +18969,10 @@ function CherryAdventure() {
             syncPlayer();
         };
         const endBattle = (keepEnemyMesh) => {
-            if (!keepEnemyMesh && G.enemy)
+            if (!keepEnemyMesh && G.enemy) {
                 scene.remove(G.enemy.mesh);
+                (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh));
+            }
             else if (G.enemy) {
                 const mm2 = G.enemy.mesh;
                 if (mm2.userData.dungeon || mm2.userData.golden) {
@@ -31797,7 +31807,8 @@ function CherryAdventure() {
                                     if (G.enemy) {
                                         const mm = G.enemy.mesh;
                                         if (mm.userData.dungeon || mm.userData.golden || mm.userData.ghost) {
-                                            scene.remove(mm); // special foes vanish
+                                            scene.remove(mm);
+                                            (G._disposeObj3D && G._disposeObj3D(mm)); // special foes vanish
                                             if (mm.userData.ghost)
                                                 ghostMesh = null;
                                         }

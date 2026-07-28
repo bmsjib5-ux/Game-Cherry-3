@@ -9403,7 +9403,7 @@ export default function CherryAdventure() {
       scene.add(g);
       meteors.push(g);
     };
-    const clearMeteors = () => { meteors.forEach((m) => scene.remove(m)); meteors.length = 0; };
+    const clearMeteors = () => { meteors.forEach((m) => { scene.remove(m); (G._disposeObj3D && G._disposeObj3D(m)); }); meteors.length = 0; };
     const makeGolden = () => {
       const spId = SPAWN_POOL[Math.floor(Math.random() * SPAWN_POOL.length)];
       const m = buildMonster(spId);
@@ -9432,7 +9432,7 @@ export default function CherryAdventure() {
       if (G.event.type === "meteor") clearMeteors();
       if (G.event.type === "horde") {
         for (let i = wilds.length - 1; i >= 0; i--) {
-          if (wilds[i].userData.horde) { scene.remove(wilds[i]); wilds.splice(i, 1); }
+          if (wilds[i].userData.horde) { scene.remove(wilds[i]); (G._disposeObj3D && G._disposeObj3D(wilds[i])); wilds.splice(i, 1); }
         }
       }
       if (G.event.type === "golden" && G.event.mesh) {
@@ -9535,7 +9535,7 @@ export default function CherryAdventure() {
       G.biomeSky = new THREE.Color(b.sky);
       G.biomeFog = new THREE.Color(b.fog);
       // clear current wild monsters and respawn from this biome's pool
-      for (let i = wilds.length - 1; i >= 0; i--) { scene.remove(wilds[i]); wilds.splice(i, 1); }
+      for (let i = wilds.length - 1; i >= 0; i--) { scene.remove(wilds[i]); (G._disposeObj3D && G._disposeObj3D(wilds[i])); wilds.splice(i, 1); }
       G.biomePool = b.pool;
       G.biomeLvMin = b.lvMin; G.biomeLvMax = b.lvMax; // 🗺️ this map's monster level range
       // 🏜️ desert · ❄️ snow · 🕳️ cave · 🌋 volcano — each hides the green trees
@@ -9699,7 +9699,7 @@ export default function CherryAdventure() {
     };
     G.exitDungeon = () => {
       // leave voluntarily, keep progress
-      if (G.enemy && G.enemy.mesh) scene.remove(G.enemy.mesh);
+      if (G.enemy && G.enemy.mesh) { scene.remove(G.enemy.mesh); (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh)); }
       G.enemy = null;
       G.banim = null;
       G.dungeon = null;
@@ -9890,7 +9890,7 @@ export default function CherryAdventure() {
     // ---------- Buddy (caught pet following) ----------
     let buddyMesh = null;
     G.setBuddy = (iid) => {
-      if (buddyMesh) { scene.remove(buddyMesh); buddyMesh = null; }
+      if (buddyMesh) { scene.remove(buddyMesh); (G._disposeObj3D && G._disposeObj3D(buddyMesh)); buddyMesh = null; }
       G.buddy = iid || null;
       const inst = iid != null ? (G.petAt ? G.petAt(iid) : null) : null;
       if (inst) {
@@ -13471,7 +13471,7 @@ export default function CherryAdventure() {
       G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura between rounds
       G.wbRoundOn = false;
       const wb = G.wbEnsureDaily();
-      if (G.enemy) { const mm = G.enemy.mesh; if (mm) { scene.remove(mm); const i = wilds.indexOf(mm); if (i >= 0) wilds.splice(i, 1); } G.enemy = null; }
+      if (G.enemy) { const mm = G.enemy.mesh; if (mm) { scene.remove(mm); (G._disposeObj3D && G._disposeObj3D(mm)); const i = wilds.indexOf(mm); if (i >= 0) wilds.splice(i, 1); } G.enemy = null; }
       G.banim = null;
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
@@ -13492,7 +13492,7 @@ export default function CherryAdventure() {
       G.wbActive = false; G.wbRoundOn = false;
       G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura
       if (G._wbReadyIv) { clearInterval(G._wbReadyIv); G._wbReadyIv = null; } G._wbReady = null;
-      if (G.enemy && G.enemy.worldBoss) { const mm = G.enemy.mesh; if (mm) scene.remove(mm); G.enemy = null; G.banim = null; if (G.restoreScenery) G.restoreScenery(); G.mode = "explore"; }
+      if (G.enemy && G.enemy.worldBoss) { const mm = G.enemy.mesh; if (mm) scene.remove(mm); (G._disposeObj3D && G._disposeObj3D(mm)); G.enemy = null; G.banim = null; if (G.restoreScenery) G.restoreScenery(); G.mode = "explore"; }
       setUi((u) => ({ ...u, wbActive: false, wbResult: null, wbPanel: false, mode: "explore", enemy: null }));
       saveGame();
     };
@@ -13520,7 +13520,7 @@ export default function CherryAdventure() {
       G.wbHourScore = 0; // 🏆 killed it → consolation no longer applies this hour
       G.wbRoundOn = false;
       G.wbAtkDebuff = 0; G.wbCritDebuff = 0; // 👹 clear the boss aura
-      if (G.enemy) { const mm = G.enemy.mesh; if (mm) { burst(mm.position, 0xf5d05a, 2.4); scene.remove(mm); } G.enemy = null; }
+      if (G.enemy) { const mm = G.enemy.mesh; if (mm) { burst(mm.position, 0xf5d05a, 2.4); scene.remove(mm); (G._disposeObj3D && G._disposeObj3D(mm)); } G.enemy = null; }
       G.banim = null;
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
@@ -13694,7 +13694,7 @@ export default function CherryAdventure() {
     };
 
     const endBattle = (keepEnemyMesh) => {
-      if (!keepEnemyMesh && G.enemy) scene.remove(G.enemy.mesh);
+      if (!keepEnemyMesh && G.enemy) { scene.remove(G.enemy.mesh); (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh)); }
       else if (G.enemy) {
         const mm2 = G.enemy.mesh;
         if (mm2.userData.dungeon || mm2.userData.golden) {
@@ -21967,7 +21967,7 @@ export default function CherryAdventure() {
                 if (G.enemy) {
                   const mm = G.enemy.mesh;
                   if (mm.userData.dungeon || mm.userData.golden || mm.userData.ghost) {
-                    scene.remove(mm); // special foes vanish
+                    scene.remove(mm); (G._disposeObj3D && G._disposeObj3D(mm)); // special foes vanish
                     if (mm.userData.ghost) ghostMesh = null;
                   } else {
                     mm.userData.wander = { cx: mm.position.x, cz: mm.position.z, ph: Math.random() * 6, r: 1.4, sp: mm.userData.boss ? 0.2 : 0.4 };
