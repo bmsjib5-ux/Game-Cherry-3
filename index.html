@@ -14500,6 +14500,109 @@ function CherryAdventure() {
                     light.intensity = 3.2 * (1 - pr);
                 };
             }
+            else if (fxType === "dronebarrage") {
+                // 🤖🛸 AAA Drone Barrage — 6 winged combat drones orbit the target, fire synchronized plasma lasers,
+                //     digital explosions + hex energy shields flash on each volley, holo targeting ring + particles
+                const bright = 0xaef0ff;
+                const add = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false });
+                const std = (c, ei) => new THREE.MeshStandardMaterial({ color: 0xeef1f7, emissive: c, emissiveIntensity: ei || 1, metalness: 0.6, roughness: 0.3, transparent: true });
+                const CY = 1.5; // target centre height
+                // 🎯 holographic targeting ring beneath the enemy
+                const target = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.78, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                target.rotation.x = -Math.PI / 2;
+                target.position.y = 0.05;
+                g.add(target);
+                const target2 = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.34, 6), new THREE.MeshBasicMaterial({ color: bright, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                target2.rotation.x = -Math.PI / 2;
+                target2.position.y = 0.06;
+                g.add(target2);
+                // 🛸 six winged drones
+                const drones = [], beams = [];
+                for (let i = 0; i < 6; i++) {
+                    const a0 = (i / 6) * Math.PI * 2;
+                    const dr = new THREE.Group();
+                    const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.13, 0), std(col, 1.2));
+                    dr.add(body);
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), add(bright));
+                    eye.position.set(0, 0, 0.12);
+                    dr.add(eye);
+                    const wings = [];
+                    for (const sx of [-1, 1]) {
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.02, 0.12), std(col, 0.9));
+                        w.position.set(sx * 0.16, 0, -0.02);
+                        wings.push(w);
+                        dr.add(w);
+                    }
+                    dr.userData = { a0, wings };
+                    g.add(dr);
+                    drones.push(dr);
+                    // plasma laser beam from the drone toward the centre (scaled/flashed during volleys)
+                    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 6), add(bright, 0));
+                    beam.userData.di = i;
+                    g.add(beam);
+                    beams.push(beam);
+                }
+                // 💥 digital impact + hex energy shields at the centre
+                const impact = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 12), add(bright, 0));
+                impact.position.y = CY;
+                g.add(impact);
+                const hexShields = [];
+                for (let k = 0; k < 3; k++) {
+                    const hs = new THREE.Mesh(new THREE.TorusGeometry(0.4 + k * 0.12, 0.03, 3, 6), add(col, 0));
+                    hs.position.y = CY;
+                    hs.rotation.set(Math.random(), Math.random(), Math.random());
+                    g.add(hs);
+                    hexShields.push(hs);
+                }
+                // ✨ digital particles + electric arcs
+                const parts = [];
+                for (let i = 0; i < 40; i++) {
+                    const p = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), add(Math.random() < 0.5 ? col : bright));
+                    p.position.set((Math.random() - 0.5) * 0.4, CY + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4);
+                    const a = Math.random() * Math.PI * 2, sp = 1 + Math.random() * 2.5;
+                    p.userData = { vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: (Math.random() - 0.3) * 2, delay: Math.random() * 0.6 };
+                    g.add(p);
+                    parts.push(p);
+                }
+                const light = new THREE.PointLight(col, 2.6, 8);
+                light.position.y = CY;
+                g.add(light);
+                dur = 1.15;
+                update = (pr) => {
+                    const orbit = pr * Math.PI * 6; // rapid rotation around the target
+                    const R = 1.35 - pr * 0.35; // spiral inward slightly
+                    target.rotation.z = pr * 4;
+                    target.material.opacity = 0.85 * Math.min(1, (1 - pr) * 2.5);
+                    target.scale.setScalar(1 - pr * 0.2);
+                    target2.rotation.z = -pr * 5;
+                    target2.material.opacity = 0.9 * Math.min(1, (1 - pr) * 2.5);
+                    // volley pulse — lasers fire in rhythmic bursts
+                    const volley = Math.pow(Math.abs(Math.sin(pr * Math.PI * 5)), 4);
+                    drones.forEach((dr, i) => {
+                        const a = dr.userData.a0 + orbit;
+                        dr.position.set(Math.cos(a) * R, CY + Math.sin(pr * 8 + i) * 0.12, Math.sin(a) * R);
+                        dr.rotation.y = -a;
+                        const wo = Math.min(1, pr * 4); // wings unfold at the start
+                        dr.userData.wings.forEach((w, wi) => { w.rotation.z = (wi ? -1 : 1) * (0.2 + wo * 0.9 + volley * 0.3); });
+                        // beam from drone to centre
+                        const beam = beams[i];
+                        const from = dr.position, to = new THREE.Vector3(0, CY, 0);
+                        const mid = from.clone().add(to).multiplyScalar(0.5);
+                        beam.position.copy(mid);
+                        beam.scale.y = from.distanceTo(to);
+                        beam.lookAt(to);
+                        beam.rotateX(Math.PI / 2);
+                        beam.material.opacity = volley * 0.9;
+                    });
+                    impact.material.opacity = volley * 0.9;
+                    impact.scale.setScalar(0.6 + volley * 1.4);
+                    hexShields.forEach((hs, k) => { const hp = (volley); hs.material.opacity = hp * 0.8; hs.scale.setScalar(1 + (1 - volley) * 0.6); hs.rotation.z += 0.1; });
+                    parts.forEach((p) => { const lp = Math.max(0, (pr - p.userData.delay)); p.position.x += p.userData.vx * 0.02; p.position.z += p.userData.vz * 0.02; p.position.y += p.userData.vy * 0.02; p.userData.vy -= 0.05; p.material.opacity = Math.max(0, 1 - lp * 1.4); p.rotation.x += 0.3; });
+                    light.intensity = 2.6 * (0.4 + volley * 0.6) * (1 - pr * 0.5);
+                    if (volley > 0.7 && Math.random() < 0.4)
+                        G._camShake = Math.max(G._camShake || 0, 0.25);
+                };
+            }
             else if (fxType === "snipe") {
                 // 💥 crit starburst
                 const rays = [];
@@ -18708,6 +18811,8 @@ function CherryAdventure() {
             };
             if (sk.id === "g_dash")
                 return "plasmadash"; // 🤖⚡ AI Mecha plasma dash
+            if (sk.id === "g_drone")
+                return "dronebarrage"; // 🤖🛸 AI Mecha drone barrage
             if (m[sk.id])
                 return m[sk.id];
             if (sk.burn)
@@ -19862,7 +19967,7 @@ function CherryAdventure() {
                     col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
                     potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-                    petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, skillMode: G.skillMode || "basic",
+                    petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
                     mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
@@ -21303,6 +21408,19 @@ function CherryAdventure() {
                             G.sfx.levelup();
                     }, 1600);
                 }
+            }
+            // 🎁💎 GLOBAL GIFT: แจกเพชร 10,000 ให้ทุกคน (รับครั้งเดียวต่อเซฟ)
+            G.gift10k = d.gift10k ? 1 : 0;
+            if (!G.gift10k) {
+                G.gift10k = 1;
+                G.diamonds = (G.diamonds || 0) + 10000;
+                setTimeout(() => {
+                    toast("🎁🎉 ของขวัญพิเศษ! รับเพชร +10,000 💎");
+                    if (G.showAnnounce)
+                        G.showAnnounce("🎉 แจกเพชรให้ทุกคน! รับเพชรฟรี 10,000 💎");
+                    if (G.sfx && G.sfx.levelup)
+                        G.sfx.levelup();
+                }, 1400);
             }
             G.lastRankClaim = d.lastRankClaim || null;
             G.diaSkins = d.diaSkins || {};
