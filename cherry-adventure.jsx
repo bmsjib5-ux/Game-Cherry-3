@@ -10534,7 +10534,7 @@ export default function CherryAdventure() {
         for (let k = 0; k < 3; k++) { const hs = new THREE.Mesh(new THREE.TorusGeometry(0.4 + k * 0.12, 0.03, 3, 6), add(col, 0)); hs.position.y = CY; hs.rotation.set(Math.random(), Math.random(), Math.random()); g.add(hs); hexShields.push(hs); }
         // ✨ digital particles + electric arcs
         const parts = [];
-        for (let i = 0; i < 40; i++) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), add(Math.random() < 0.5 ? col : bright)); p.position.set((Math.random() - 0.5) * 0.4, CY + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4); const a = Math.random() * Math.PI * 2, sp = 1 + Math.random() * 2.5; p.userData = { vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: (Math.random() - 0.3) * 2, delay: Math.random() * 0.6 }; g.add(p); parts.push(p); }
+        for (let i = 0; i < (G.powerSave?18:40); i++) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), add(Math.random() < 0.5 ? col : bright)); p.position.set((Math.random() - 0.5) * 0.4, CY + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.4); const a = Math.random() * Math.PI * 2, sp = 1 + Math.random() * 2.5; p.userData = { vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: (Math.random() - 0.3) * 2, delay: Math.random() * 0.6 }; g.add(p); parts.push(p); }
         const light = new THREE.PointLight(col, 2.6, 8); light.position.y = CY; g.add(light);
         dur = 1.15;
         update = (pr) => {
@@ -10577,7 +10577,7 @@ export default function CherryAdventure() {
         for (let k = 0; k < 4; k++) { const rg = new THREE.Mesh(new THREE.TorusGeometry(0.5 + k * 0.16, 0.02, 3, 32), add(k % 2 ? bright : col, 0.8)); rg.position.y = CY; rg.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3); g.add(rg); rings.push(rg); }
         // 🪨 debris / mech fragments pulled inward
         const debris = [];
-        for (let i = 0; i < 16; i++) { const isHex = i % 3 === 0; const m = new THREE.Mesh(isHex ? new THREE.CylinderGeometry(0.1, 0.1, 0.02, 6) : new THREE.DodecahedronGeometry(0.08 + Math.random() * 0.06), isHex ? add(col, 0.9) : new THREE.MeshStandardMaterial({ color: 0x8a8f9a, emissive: deep, emissiveIntensity: 0.4, metalness: 0.6, roughness: 0.5, transparent: true })); const a = Math.random() * Math.PI * 2, r = 2.2 + Math.random() * 1.4; m.position.set(Math.cos(a) * r, CY + (Math.random() - 0.5) * 1.6, Math.sin(a) * r); m.userData = { a, r, ph: Math.random() * 6, rx: (Math.random() - 0.5) * 8, ry: (Math.random() - 0.5) * 8 }; g.add(m); debris.push(m); }
+        for (let i = 0; i < (G.powerSave?8:16); i++) { const isHex = i % 3 === 0; const m = new THREE.Mesh(isHex ? new THREE.CylinderGeometry(0.1, 0.1, 0.02, 6) : new THREE.DodecahedronGeometry(0.08 + Math.random() * 0.06), isHex ? add(col, 0.9) : new THREE.MeshStandardMaterial({ color: 0x8a8f9a, emissive: deep, emissiveIntensity: 0.4, metalness: 0.6, roughness: 0.5, transparent: true })); const a = Math.random() * Math.PI * 2, r = 2.2 + Math.random() * 1.4; m.position.set(Math.cos(a) * r, CY + (Math.random() - 0.5) * 1.6, Math.sin(a) * r); m.userData = { a, r, ph: Math.random() * 6, rx: (Math.random() - 0.5) * 8, ry: (Math.random() - 0.5) * 8 }; g.add(m); debris.push(m); }
         // 🌀 spiralling lightning arcs around the singularity
         const spirals = [];
         for (let s = 0; s < 3; s++) { const pts = []; for (let k = 0; k <= 22; k++) { const a = k / 22 * Math.PI * 4 + s * 2.1; const rr = 0.9 - k / 22 * 0.75; pts.push(new THREE.Vector3(Math.cos(a) * rr, CY - 0.6 + k / 22 * 1.2, Math.sin(a) * rr)); } const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: bright, transparent: true })); g.add(ln); spirals.push(ln); }
@@ -10664,40 +10664,43 @@ export default function CherryAdventure() {
         const bright = 0xeaffff, blue = 0x3ad0ff, deep = 0x2a6af5;
         const add = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
         const SKY = 5.4, GY = 0.06;
-        // 🌌 darkening dome + blue aurora curtains high in the sky
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(20, 16, 12), new THREE.MeshBasicMaterial({ color: 0x050914, transparent: true, opacity: 0, side: THREE.BackSide, depthWrite: false })); dome.position.y = 2; g.add(dome);
+        const lowFx = !!G.powerSave; // 🔋 lighter effect in power-save mode
+        // 🌌 darken the battlefield with FOG (near-free) instead of a full-screen overdraw dome
+        const fog = scene.fog, fogHex = fog ? fog.color.getHex() : null, darkC = new THREE.Color(0x0a1226);
+        // 🌌 blue aurora curtains (fewer, static — no per-frame vertex churn)
         const auroras = [];
-        for (let i = 0; i < 5; i++) { const au = new THREE.Mesh(new THREE.PlaneGeometry(9, 3, 8, 4), add(i % 2 ? blue : 0x6a8aff, 0)); au.position.set((i - 2) * 2.2, 4.6 + Math.random() * 1.2, -5); g.add(au); auroras.push(au); }
+        for (let i = 0; i < (lowFx ? 2 : 3); i++) { const au = new THREE.Mesh(new THREE.PlaneGeometry(9, 3), add(i % 2 ? blue : 0x6a8aff, 0)); au.position.set((i - 1) * 3.0, 4.8, -5); au.rotation.z = (i - 1) * 0.15; g.add(au); auroras.push(au); }
         // 🛰️ giant orbital mechanical ring above the clouds
         const orbital = new THREE.Group(); orbital.position.set(0, SKY, 0); g.add(orbital);
-        const oRing = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.18, 8, 48), add(blue, 0)); oRing.rotation.x = Math.PI / 2; orbital.add(oRing);
-        const oRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.08, 6, 40), add(bright, 0)); oRing2.rotation.x = Math.PI / 2; orbital.add(oRing2);
-        for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const seg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.26, 0.42), add(deep, 0)); seg.position.set(Math.cos(a) * 2.4, 0, Math.sin(a) * 2.4); orbital.add(seg); }
-        const oCore = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 14), add(bright, 0)); orbital.add(oCore);
+        const oRing = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.18, 8, 40), add(blue, 0)); oRing.rotation.x = Math.PI / 2; orbital.add(oRing);
+        const oRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.08, 6, 32), add(bright, 0)); oRing2.rotation.x = Math.PI / 2; orbital.add(oRing2);
+        for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; const seg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.26, 0.42), add(deep, 0)); seg.position.set(Math.cos(a) * 2.4, 0, Math.sin(a) * 2.4); orbital.add(seg); }
+        const oCore = new THREE.Mesh(new THREE.SphereGeometry(0.6, 14, 12), add(bright, 0)); orbital.add(oCore);
         // 🛸 drone swarm descending from the ring
         const drones = [];
-        for (let i = 0; i < 14; i++) { const dr = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), add(blue, 0)); const a = Math.random() * Math.PI * 2, r = 1 + Math.random() * 3; dr.userData = { a, r, ph: Math.random() * 6 }; g.add(dr); drones.push(dr); }
+        for (let i = 0; i < (lowFx ? 5 : 9); i++) { const dr = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), add(blue, 0)); const a = Math.random() * Math.PI * 2, r = 1 + Math.random() * 3; dr.userData = { a, r, ph: Math.random() * 6 }; g.add(dr); drones.push(dr); }
         // 🎯 holographic targeting grid on the ground
         const grid = new THREE.Group(); grid.position.y = GY; g.add(grid);
         const gRing = new THREE.Mesh(new THREE.RingGeometry(0.4, 3.2, 48), add(blue, 0)); gRing.rotation.x = -Math.PI / 2; grid.add(gRing);
         for (let k = 1; k <= 3; k++) { const rr = new THREE.Mesh(new THREE.TorusGeometry(k * 0.9, 0.015, 4, 40), add(bright, 0)); rr.rotation.x = Math.PI / 2; grid.add(rr); }
         const cross = new THREE.Mesh(new THREE.BoxGeometry(6, 0.02, 0.04), add(blue, 0)); grid.add(cross); const cross2 = cross.clone(); cross2.rotation.y = Math.PI / 2; grid.add(cross2);
         // ⚡ colossal orbital laser (sky → ground)
-        const laser = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, SKY, 24, 1, true), add(bright, 0)); laser.position.y = SKY / 2; g.add(laser);
-        const laserCore = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, SKY, 16), add(0xffffff, 0)); laserCore.position.y = SKY / 2; g.add(laserCore);
+        const laser = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, SKY, 20, 1, true), add(bright, 0)); laser.position.y = SKY / 2; g.add(laser);
+        const laserCore = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, SKY, 14), add(0xffffff, 0)); laserCore.position.y = SKY / 2; g.add(laserCore);
         // 💥 explosion + EMP + hex shields + debris
         const flash = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 16), add(bright, 0)); flash.position.y = 1; g.add(flash);
         const emp = new THREE.Mesh(new THREE.RingGeometry(0.6, 1.0, 52), add(blue, 0)); emp.rotation.x = -Math.PI / 2; emp.position.y = GY; g.add(emp);
         const emp2 = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.7, 52), add(bright, 0)); emp2.rotation.x = -Math.PI / 2; emp2.position.y = GY; g.add(emp2);
         const hexes = [];
-        for (let i = 0; i < 16; i++) { const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 6), add(blue, 0)); hx.rotation.x = Math.PI / 2; const a = Math.random() * Math.PI * 2; hx.userData = { a, vx: Math.cos(a) * (3 + Math.random() * 4), vz: Math.sin(a) * (3 + Math.random() * 4), vy: 1 + Math.random() * 4 }; g.add(hx); hexes.push(hx); }
+        for (let i = 0; i < (lowFx ? 6 : 10); i++) { const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 6), add(blue, 0)); hx.rotation.x = Math.PI / 2; const a = Math.random() * Math.PI * 2; hx.userData = { a, vx: Math.cos(a) * (3 + Math.random() * 4), vz: Math.sin(a) * (3 + Math.random() * 4), vy: 1 + Math.random() * 4 }; g.add(hx); hexes.push(hx); }
         const debris = [];
-        for (let i = 0; i < 18; i++) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + Math.random() * 0.1), new THREE.MeshStandardMaterial({ color: 0x9aa4b2, emissive: blue, emissiveIntensity: 0.5, transparent: true, opacity: 0 })); m.userData = { vx: (Math.random() - 0.5) * 6, vz: (Math.random() - 0.5) * 6, vy: 2 + Math.random() * 5, rx: Math.random() * 8 }; m.position.y = 0.5; g.add(m); debris.push(m); }
+        for (let i = 0; i < (lowFx ? 6 : 10); i++) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + Math.random() * 0.1), new THREE.MeshStandardMaterial({ color: 0x9aa4b2, emissive: blue, emissiveIntensity: 0.5, transparent: true, opacity: 0 })); m.userData = { vx: (Math.random() - 0.5) * 6, vz: (Math.random() - 0.5) * 6, vy: 2 + Math.random() * 5, rx: Math.random() * 8 }; m.position.y = 0.5; g.add(m); debris.push(m); }
         const light = new THREE.PointLight(blue, 0, 16); light.position.y = 3; g.add(light);
         dur = 3.8;
         update = (pr) => {
-          dome.material.opacity = pr < 0.7 ? Math.min(0.55, pr * 2) : Math.max(0, 0.55 - (pr - 0.7) * 1.8);
-          auroras.forEach((au, i) => { const pos = au.geometry.attributes.position; for (let v = 0; v < pos.count; v++) { pos.setZ(v, Math.sin(t * 1.5 + pos.getX(v) * 0.6 + i) * 0.6); } pos.needsUpdate = true; au.material.opacity = 0.35 * Math.min(1, pr * 3) * (1 - pr * 0.4); });
+          // 🌌 fog-based darkening (cheap): darken toward the collapse, restore by the end (pr→1 leaves fog original)
+          if (fog) { const darkAmt = pr < 0.7 ? Math.min(1, pr * 2) : Math.max(0, (1 - pr) / 0.3); fog.color.setHex(fogHex).lerp(darkC, darkAmt * 0.7); }
+          auroras.forEach((au, i) => { au.material.opacity = 0.35 * Math.min(1, pr * 3) * (1 - pr * 0.4); });
           orbital.rotation.y = t * 0.6;
           const ap = Math.min(1, pr / 0.25);
           oRing.material.opacity = ap * 0.9; oRing2.material.opacity = ap; oCore.material.opacity = ap; orbital.children.forEach((c) => { if (c.material) c.material.opacity = Math.max(c.material.opacity, ap * 0.8); });
