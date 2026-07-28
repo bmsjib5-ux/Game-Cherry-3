@@ -10658,6 +10658,74 @@ export default function CherryAdventure() {
           light.intensity = rise * 2.5;
           if (pr < 0.25) G._camShake = Math.max(G._camShake || 0, 0.35 * rise);
         };
+      } else if (fxType === "omega") {
+        // 🤖👑 SSS Omega Judgment Protocol — orbital ring + drone swarm + targeting grid → colossal descending
+        //     plasma laser → massive plasma explosion + EMP shockwave + hex shields + aurora sky. Cinematic.
+        const bright = 0xeaffff, blue = 0x3ad0ff, deep = 0x2a6af5;
+        const add = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+        const SKY = 5.4, GY = 0.06;
+        // 🌌 darkening dome + blue aurora curtains high in the sky
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(20, 16, 12), new THREE.MeshBasicMaterial({ color: 0x050914, transparent: true, opacity: 0, side: THREE.BackSide, depthWrite: false })); dome.position.y = 2; g.add(dome);
+        const auroras = [];
+        for (let i = 0; i < 5; i++) { const au = new THREE.Mesh(new THREE.PlaneGeometry(9, 3, 8, 4), add(i % 2 ? blue : 0x6a8aff, 0)); au.position.set((i - 2) * 2.2, 4.6 + Math.random() * 1.2, -5); g.add(au); auroras.push(au); }
+        // 🛰️ giant orbital mechanical ring above the clouds
+        const orbital = new THREE.Group(); orbital.position.set(0, SKY, 0); g.add(orbital);
+        const oRing = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.18, 8, 48), add(blue, 0)); oRing.rotation.x = Math.PI / 2; orbital.add(oRing);
+        const oRing2 = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.08, 6, 40), add(bright, 0)); oRing2.rotation.x = Math.PI / 2; orbital.add(oRing2);
+        for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const seg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.26, 0.42), add(deep, 0)); seg.position.set(Math.cos(a) * 2.4, 0, Math.sin(a) * 2.4); orbital.add(seg); }
+        const oCore = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 14), add(bright, 0)); orbital.add(oCore);
+        // 🛸 drone swarm descending from the ring
+        const drones = [];
+        for (let i = 0; i < 14; i++) { const dr = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), add(blue, 0)); const a = Math.random() * Math.PI * 2, r = 1 + Math.random() * 3; dr.userData = { a, r, ph: Math.random() * 6 }; g.add(dr); drones.push(dr); }
+        // 🎯 holographic targeting grid on the ground
+        const grid = new THREE.Group(); grid.position.y = GY; g.add(grid);
+        const gRing = new THREE.Mesh(new THREE.RingGeometry(0.4, 3.2, 48), add(blue, 0)); gRing.rotation.x = -Math.PI / 2; grid.add(gRing);
+        for (let k = 1; k <= 3; k++) { const rr = new THREE.Mesh(new THREE.TorusGeometry(k * 0.9, 0.015, 4, 40), add(bright, 0)); rr.rotation.x = Math.PI / 2; grid.add(rr); }
+        const cross = new THREE.Mesh(new THREE.BoxGeometry(6, 0.02, 0.04), add(blue, 0)); grid.add(cross); const cross2 = cross.clone(); cross2.rotation.y = Math.PI / 2; grid.add(cross2);
+        // ⚡ colossal orbital laser (sky → ground)
+        const laser = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, SKY, 24, 1, true), add(bright, 0)); laser.position.y = SKY / 2; g.add(laser);
+        const laserCore = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, SKY, 16), add(0xffffff, 0)); laserCore.position.y = SKY / 2; g.add(laserCore);
+        // 💥 explosion + EMP + hex shields + debris
+        const flash = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 16), add(bright, 0)); flash.position.y = 1; g.add(flash);
+        const emp = new THREE.Mesh(new THREE.RingGeometry(0.6, 1.0, 52), add(blue, 0)); emp.rotation.x = -Math.PI / 2; emp.position.y = GY; g.add(emp);
+        const emp2 = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.7, 52), add(bright, 0)); emp2.rotation.x = -Math.PI / 2; emp2.position.y = GY; g.add(emp2);
+        const hexes = [];
+        for (let i = 0; i < 16; i++) { const hx = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 6), add(blue, 0)); hx.rotation.x = Math.PI / 2; const a = Math.random() * Math.PI * 2; hx.userData = { a, vx: Math.cos(a) * (3 + Math.random() * 4), vz: Math.sin(a) * (3 + Math.random() * 4), vy: 1 + Math.random() * 4 }; g.add(hx); hexes.push(hx); }
+        const debris = [];
+        for (let i = 0; i < 18; i++) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1 + Math.random() * 0.1), new THREE.MeshStandardMaterial({ color: 0x9aa4b2, emissive: blue, emissiveIntensity: 0.5, transparent: true, opacity: 0 })); m.userData = { vx: (Math.random() - 0.5) * 6, vz: (Math.random() - 0.5) * 6, vy: 2 + Math.random() * 5, rx: Math.random() * 8 }; m.position.y = 0.5; g.add(m); debris.push(m); }
+        const light = new THREE.PointLight(blue, 0, 16); light.position.y = 3; g.add(light);
+        dur = 3.8;
+        update = (pr) => {
+          dome.material.opacity = pr < 0.7 ? Math.min(0.55, pr * 2) : Math.max(0, 0.55 - (pr - 0.7) * 1.8);
+          auroras.forEach((au, i) => { const pos = au.geometry.attributes.position; for (let v = 0; v < pos.count; v++) { pos.setZ(v, Math.sin(t * 1.5 + pos.getX(v) * 0.6 + i) * 0.6); } pos.needsUpdate = true; au.material.opacity = 0.35 * Math.min(1, pr * 3) * (1 - pr * 0.4); });
+          orbital.rotation.y = t * 0.6;
+          const ap = Math.min(1, pr / 0.25);
+          oRing.material.opacity = ap * 0.9; oRing2.material.opacity = ap; oCore.material.opacity = ap; orbital.children.forEach((c) => { if (c.material) c.material.opacity = Math.max(c.material.opacity, ap * 0.8); });
+          orbital.position.y = SKY - ap * 1.5;
+          // drones descend + orbit during 0.15–0.55
+          const dp = Math.max(0, Math.min(1, (pr - 0.15) / 0.4));
+          drones.forEach((dr, i) => { const a = dr.userData.a + t * 2; const y = SKY - dp * (SKY - 1.5); dr.position.set(Math.cos(a) * dr.userData.r, y + Math.sin(t * 3 + i) * 0.2, Math.sin(a) * dr.userData.r); dr.material.opacity = dp * (1 - Math.max(0, (pr - 0.6) / 0.4)); dr.rotation.y = -a; });
+          // targeting grid 0.1–0.55
+          const gp = Math.max(0, Math.min(1, (pr - 0.1) / 0.3));
+          grid.rotation.y = pr * 2; grid.children.forEach((c) => { if (c.material) c.material.opacity = gp * 0.8 * (1 - Math.max(0, (pr - 0.55) / 0.15)); }); grid.scale.setScalar(0.6 + gp * 0.5);
+          // laser charges 0.4–0.5, SLAMS 0.5–0.62
+          let lo = 0;
+          if (pr > 0.4 && pr < 0.5) lo = (pr - 0.4) / 0.1 * 0.5;
+          else if (pr >= 0.5 && pr < 0.64) { lo = 1; laser.scale.set(1 + (pr - 0.5) * 6, 1, 1 + (pr - 0.5) * 6); }
+          else if (pr >= 0.64) lo = Math.max(0, 1 - (pr - 0.64) / 0.12);
+          laser.material.opacity = lo * 0.8; laserCore.material.opacity = lo;
+          // impact at 0.6+
+          const ep = Math.max(0, (pr - 0.6) / 0.4);
+          if (ep > 0) {
+            flash.material.opacity = Math.max(0, 0.95 - ep * 1.5); flash.scale.setScalar(1 + ep * 6);
+            emp.material.opacity = Math.max(0, 0.9 - ep * 1.1); emp.scale.setScalar(1 + ep * 12);
+            emp2.material.opacity = Math.max(0, 0.9 - ep * 1.3); emp2.scale.setScalar(1 + ep * 16);
+            hexes.forEach((hx) => { hx.position.x += hx.userData.vx * 0.03; hx.position.z += hx.userData.vz * 0.03; hx.userData.vy -= 0.14; hx.position.y = Math.max(0.05, hx.position.y + hx.userData.vy * 0.03); hx.rotation.z += 0.2; hx.material.opacity = Math.max(0, 0.85 - ep * 1.3); });
+            debris.forEach((m) => { m.position.x += m.userData.vx * 0.03; m.position.z += m.userData.vz * 0.03; m.userData.vy -= 0.16; m.position.y = Math.max(0.05, m.position.y + m.userData.vy * 0.03); m.rotation.x += m.userData.rx * 0.05; m.material.opacity = Math.max(0, 1 - ep * 1.4); });
+            light.intensity = 6 * (1 - ep);
+            if (ep < 0.35) G._camShake = Math.max(G._camShake || 0, 1.0); // EXTREME shake on impact
+          } else { light.intensity = 1 + ap; if (pr > 0.45) G._camShake = Math.max(G._camShake || 0, 0.4); }
+        };
       } else if (fxType === "snipe") {
         // 💥 crit starburst
         const rays = [];
@@ -16996,6 +17064,7 @@ export default function CherryAdventure() {
           let p = Math.min(1, A.t / A.dur);
           if (A.type === "playerAttack") {
             const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
+            if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
             const skFx = A.skill ? A.skill.fx : null;
             const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
             if (G.cls === "aegis") {
@@ -19999,6 +20068,7 @@ export default function CherryAdventure() {
             }
           } else if (A.type === "ult") {
             const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
+            if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
             const ultMul = (1 + ((G.ultRank || 1) - 1) * 0.18) * ((A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติขั้นสูงแรงกว่า
             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
@@ -22204,10 +22274,20 @@ export default function CherryAdventure() {
         // 👹 กึ่งกลางระหว่างตัวละคร (-1.9) กับบอส (+3.0) = +0.55 → ทั้งคู่อยู่สมมาตรกลางเฟรม
         const cx = battleCenter.x + (wb ? 0.55 : 0), cz = battleCenter.z;
         const big = G.enemy && G.enemy.boss;
+        // 🎥👑 Aegis Omega ult — pull the camera back + up so the orbital cinematic fits the frame
+        const au = G.banim;
+        if (au && au.type === "ult" && G.cls === "aegis") {
+          const tt = au.t, hold = Math.max(0.5, au.dur - 2);
+          const target = tt < 0.5 ? 1 + (tt / 0.5) * 0.95 : tt < hold ? 1.95 : Math.max(1, 1.95 - ((tt - hold) / 2) * 0.95);
+          G._ultZoom = (G._ultZoom || 1) + (target - (G._ultZoom || 1)) * 0.12;
+        } else if (G._ultZoom && Math.abs(G._ultZoom - 1) > 0.02) {
+          G._ultZoom = 1 + (G._ultZoom - 1) * 0.85;
+        } else G._ultZoom = 1;
+        const uz = G._ultZoom || 1;
         // frame both fighters head-to-toe; bosses need a wider shot; bZoom = player zoom
-        const dist = (wb ? 13.6 : big ? 8.6 : 6.6) * bZoom;
-        const h = Math.max(1.6, (wb ? 4.6 : big ? 4.3 : 3.2) * (0.45 + 0.55 * bZoom));
-        const lookY = wb ? 2.2 : big ? 2.05 : 1.65;
+        const dist = (wb ? 13.6 : big ? 8.6 : 6.6) * bZoom * uz;
+        const h = Math.max(1.6, (wb ? 4.6 : big ? 4.3 : 3.2) * (0.45 + 0.55 * bZoom)) + (uz - 1) * 2.4;
+        const lookY = (wb ? 2.2 : big ? 2.05 : 1.65) + (uz - 1) * 1.8;
         camera.position.x += (cx - camera.position.x) * 0.06;
         camera.position.y += (h - camera.position.y) * 0.06;
         camera.position.z += (cz + dist - camera.position.z) * 0.06;
