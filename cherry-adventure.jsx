@@ -16109,12 +16109,15 @@ export default function CherryAdventure() {
     G._rtClear = () => { remoteAvatars.forEach((a) => { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); }); remoteAvatars.clear(); };
     // 🎞️ per-frame: interpolate toward the last-known position, walk-cycle, cull stale/other-biome avatars
     G.updateRemoteAvatars = (dt, t) => {
-      if (!remoteAvatars.size) return;
+      const prevCount = G._rtOnlineCount || 0;
+      if (!remoteAvatars.size) { if (prevCount !== 0) { G._rtOnlineCount = 0; setUi((u) => ({ ...u, rtOnline: 0 })); } return; }
       const now = Date.now();
+      let vis = 0;
       remoteAvatars.forEach((a, pid) => {
         if (a.last && now - a.last > 6000) { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); return; }
         const show = a.biome === G.curBiome && G.mode === "explore";
         a.grp.visible = show; if (!show) return;
+        vis++;
         const k = Math.min(1, dt * 8);
         a.grp.position.x += (a.tx - a.grp.position.x) * k;
         a.grp.position.z += (a.tz - a.grp.position.z) * k;
@@ -16128,6 +16131,7 @@ export default function CherryAdventure() {
         const _b0 = (a.grp.userData.bodyBaseY != null ? a.grp.userData.bodyBaseY : 0.9); // 🧍‍♂️ full avatars sit at ground (0); simple avatars keep 0.9
         a.grp.userData.body.position.y = _b0 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
       });
+      if (vis !== prevCount) { G._rtOnlineCount = vis; setUi((u) => ({ ...u, rtOnline: vis })); } // 👥 how many other players are in this map right now
     };
     // ---- transport: Supabase Realtime broadcast (one channel per biome; graceful no-op if unavailable) ----
     G.rtInit = () => {
@@ -16146,7 +16150,7 @@ export default function CherryAdventure() {
         const ch = G.rtClient.channel("room-" + biome, { config: { broadcast: { self: false } } });
         ch.on("broadcast", { event: "pos" }, (p) => { if (G._rtOnPos) G._rtOnPos(p.payload); });
         ch.on("broadcast", { event: "leave" }, (p) => { if (p.payload && p.payload.pid && G._rtRemove) G._rtRemove(p.payload.pid); });
-        ch.subscribe();
+        ch.subscribe((st) => { G.rtStatus = st; try { console.log("🌐 realtime:", st, "room-" + biome); } catch (_) {} setUi((u) => ({ ...u, rtStatus: st })); });
         G.rtChannel = ch;
       } catch (e) { try { console.warn("rtJoinBiome failed", e); } catch (_) {} }
     };
@@ -24460,6 +24464,12 @@ export default function CherryAdventure() {
         <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
+            {ui.netEnabled !== false && (
+              <span title={ui.rtStatus === "SUBSCRIBED" ? "เชื่อมต่อเรียลไทม์แล้ว" : ("เรียลไทม์: " + (ui.rtStatus || "…"))} style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 9, fontWeight: 800, color: "#cfeaff", background: "rgba(60,120,180,0.28)", borderRadius: 7, padding: "1px 5px", lineHeight: 1.4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: ui.rtStatus === "SUBSCRIBED" ? "#5df08a" : "#f0c85d", boxShadow: ui.rtStatus === "SUBSCRIBED" ? "0 0 5px #5df08a" : "none", flexShrink: 0 }} />
+                🌐 {ui.rtOnline || 0}
+              </span>
+            )}
             <div style={{ flex: 1 }} />
             <button onClick={() => G.refreshBoard && G.refreshBoard()} title="รีเฟรช" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 }}>🔄</button>
           </div>

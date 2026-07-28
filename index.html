@@ -23038,9 +23038,16 @@ function CherryAdventure() {
         G._rtClear = () => { remoteAvatars.forEach((a) => { scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); }); remoteAvatars.clear(); };
         // 🎞️ per-frame: interpolate toward the last-known position, walk-cycle, cull stale/other-biome avatars
         G.updateRemoteAvatars = (dt, t) => {
-            if (!remoteAvatars.size)
+            const prevCount = G._rtOnlineCount || 0;
+            if (!remoteAvatars.size) {
+                if (prevCount !== 0) {
+                    G._rtOnlineCount = 0;
+                    setUi((u) => ({ ...u, rtOnline: 0 }));
+                }
                 return;
+            }
             const now = Date.now();
+            let vis = 0;
             remoteAvatars.forEach((a, pid) => {
                 if (a.last && now - a.last > 6000) {
                     scene.remove(a.grp);
@@ -23052,6 +23059,7 @@ function CherryAdventure() {
                 a.grp.visible = show;
                 if (!show)
                     return;
+                vis++;
                 const k = Math.min(1, dt * 8);
                 a.grp.position.x += (a.tx - a.grp.position.x) * k;
                 a.grp.position.z += (a.tz - a.grp.position.z) * k;
@@ -23074,6 +23082,10 @@ function CherryAdventure() {
                 const _b0 = (a.grp.userData.bodyBaseY != null ? a.grp.userData.bodyBaseY : 0.9); // 🧍‍♂️ full avatars sit at ground (0); simple avatars keep 0.9
                 a.grp.userData.body.position.y = _b0 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
             });
+            if (vis !== prevCount) {
+                G._rtOnlineCount = vis;
+                setUi((u) => ({ ...u, rtOnline: vis }));
+            } // 👥 how many other players are in this map right now
         };
         // ---- transport: Supabase Realtime broadcast (one channel per biome; graceful no-op if unavailable) ----
         G.rtInit = () => {
@@ -23110,7 +23122,10 @@ function CherryAdventure() {
                     G._rtOnPos(p.payload); });
                 ch.on("broadcast", { event: "leave" }, (p) => { if (p.payload && p.payload.pid && G._rtRemove)
                     G._rtRemove(p.payload.pid); });
-                ch.subscribe();
+                ch.subscribe((st) => { G.rtStatus = st; try {
+                    console.log("🌐 realtime:", st, "room-" + biome);
+                }
+                catch (_) { } setUi((u) => ({ ...u, rtStatus: st })); });
                 G.rtChannel = ch;
             }
             catch (e) {
@@ -35218,6 +35233,10 @@ function CherryAdventure() {
         (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, marginBottom: 4 } },
                 React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#ffd76a" } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
+                ui.netEnabled !== false && (React.createElement("span", { title: ui.rtStatus === "SUBSCRIBED" ? "เชื่อมต่อเรียลไทม์แล้ว" : ("เรียลไทม์: " + (ui.rtStatus || "…")), style: { display: "inline-flex", alignItems: "center", gap: 2, fontSize: 9, fontWeight: 800, color: "#cfeaff", background: "rgba(60,120,180,0.28)", borderRadius: 7, padding: "1px 5px", lineHeight: 1.4 } },
+                    React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: ui.rtStatus === "SUBSCRIBED" ? "#5df08a" : "#f0c85d", boxShadow: ui.rtStatus === "SUBSCRIBED" ? "0 0 5px #5df08a" : "none", flexShrink: 0 } }),
+                    "\uD83C\uDF10 ",
+                    ui.rtOnline || 0)),
                 React.createElement("div", { style: { flex: 1 } }),
                 React.createElement("button", { onClick: () => G.refreshBoard && G.refreshBoard(), title: "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A", style: { width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 } }, "\uD83D\uDD04")),
             (ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 3).map((r, i) => (React.createElement("div", { key: r.pid || i, style: { marginBottom: 4, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" } },
