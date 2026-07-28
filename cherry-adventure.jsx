@@ -9704,6 +9704,7 @@ export default function CherryAdventure() {
     // 🌴 AMAZON RAINFOREST DECOR — huge canopy trees, giant ferns, grass, swamp pools, the Amazon river, mist (map: amazon)
     const amazonDecor = new THREE.Group(); amazonDecor.visible = false; scene.add(amazonDecor);
     const amazonColliders = [];
+    const amazonTrees = []; // 🌳 big canopy trees — faded/hidden when the player is behind them
     // 🟢 green wet ground overlay (darker jungle floor over the base ground)
     const jungleFloor = new THREE.Mesh(new THREE.CircleGeometry(FIELD_R + 4, 48), new THREE.MeshStandardMaterial({ color: 0x244a28, roughness: 1 }));
     jungleFloor.rotation.x = -Math.PI / 2; jungleFloor.position.y = 0.015; jungleFloor.userData.noHide = true; amazonDecor.add(jungleFloor);
@@ -9735,7 +9736,7 @@ export default function CherryAdventure() {
       for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2; const r = 1.7 + (k % 3) * 0.5; const blob = new THREE.Mesh(new THREE.SphereGeometry(rnd(1.5, 2.4), 12, 10), [canopy1, canopy2, canopy3][k % 3]); blob.position.set(Math.cos(a) * r, cy + rnd(-0.6, 0.9), Math.sin(a) * r); blob.castShadow = true; g.add(blob); }
       const crown = new THREE.Mesh(new THREE.SphereGeometry(2.4, 14, 12), canopy1); crown.position.y = cy + 1; crown.scale.set(1, 0.8, 1); g.add(crown);
       g.position.set(x, 0, z); g.scale.setScalar(rnd(0.85, 1.2));
-      amazonDecor.add(g); amazonColliders.push({ x, z, r: 0.8 });
+      amazonDecor.add(g); amazonColliders.push({ x, z, r: 0.8 }); amazonTrees.push(g);
     };
     // 🌿 giant fern — arching fronds from a low center
     const fernMat = new THREE.MeshStandardMaterial({ color: 0x3c8a3e, roughness: 0.8, side: THREE.DoubleSide, flatShading: true });
@@ -9778,7 +9779,7 @@ export default function CherryAdventure() {
     for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3); makeGrass(Math.cos(a) * r, Math.sin(a) * r); }
     for (let i = 0; i < 5; i++) { const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 8); makeSwamp(Math.cos(a) * r, Math.sin(a) * r); }
     for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(rnd(1.4, 2.6), 8, 6), mistMat); m.position.set(rnd(-FIELD_R, FIELD_R), rnd(0.4, 1.6), rnd(-FIELD_R, FIELD_R)); m.scale.set(1.6, 0.5, 1.6); m.userData = { sp: rnd(0.15, 0.4), noHide: true }; amazonDecor.add(m); amazonMist.push(m); }
-    G.amazonDecor = amazonDecor; G.amazonColliders = amazonColliders; G.amazonMist = amazonMist;
+    G.amazonDecor = amazonDecor; G.amazonColliders = amazonColliders; G.amazonMist = amazonMist; G.amazonTrees = amazonTrees;
 
     // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
     const titanDecor = new THREE.Group(); titanDecor.visible = false; scene.add(titanDecor);
@@ -9788,8 +9789,8 @@ export default function CherryAdventure() {
     const gBrown = new THREE.MeshStandardMaterial({ color: 0x5a4630, roughness: 1 });
     for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, r = Math.random() * (FIELD_R - 2); const patch = new THREE.Mesh(new THREE.CircleGeometry(rnd(1.6, 3.6), 16), i % 2 ? gBrown : gGreen); patch.rotation.x = -Math.PI / 2; patch.position.set(Math.cos(a) * r, 0.02 + Math.random() * 0.008, Math.sin(a) * r); patch.userData.noHide = true; titanDecor.add(patch); }
     // 🧱 high surrounding wall (open cylinder) + support pillars + crenellations
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x6a6258, roughness: 0.95, side: THREE.DoubleSide, flatShading: true });
-    const wallMatD = new THREE.MeshStandardMaterial({ color: 0x4a443c, roughness: 0.98, flatShading: true });
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x6a6258, roughness: 0.95, side: THREE.DoubleSide, flatShading: true, transparent: true });
+    const wallMatD = new THREE.MeshStandardMaterial({ color: 0x4a443c, roughness: 0.98, flatShading: true, transparent: true });
     const wall = new THREE.Mesh(new THREE.CylinderGeometry(FIELD_R + 1.6, FIELD_R + 1.9, 12, 52, 1, true), wallMat); wall.position.y = 6; wall.userData.noHide = true; titanDecor.add(wall);
     for (let k = 0; k < 44; k++) { const a = k / 44 * Math.PI * 2; const m2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.3), wallMatD); m2.position.set(Math.cos(a) * (FIELD_R + 1.7), 12, Math.sin(a) * (FIELD_R + 1.7)); m2.rotation.y = -a; m2.userData.noHide = true; titanDecor.add(m2); }
     for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.15, 12, 10), wallMatD); pil.position.set(Math.cos(a) * (FIELD_R + 1.3), 6, Math.sin(a) * (FIELD_R + 1.3)); pil.userData.noHide = true; titanDecor.add(pil); }
@@ -9798,6 +9799,7 @@ export default function CherryAdventure() {
     const steelD = new THREE.MeshStandardMaterial({ color: 0x7a828e, metalness: 0.8, roughness: 0.4 });
     const hiltMat = new THREE.MeshStandardMaterial({ color: 0x4a2f1a, roughness: 0.85 });
     const goldM = new THREE.MeshStandardMaterial({ color: 0xd0a83e, metalness: 0.7, roughness: 0.35 });
+    const titanWeapons = []; // ⚔️ planted weapons — hidden when the player walks past
     const makeGiantSword = (x, z) => {
       if (inKeepOut(x, z)) return;
       const g = new THREE.Group();
@@ -9808,7 +9810,7 @@ export default function CherryAdventure() {
       const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.8, 10), hiltMat); grip.position.y = 1.95; g.add(grip);
       const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 12), goldM); pommel.position.y = 2.42; g.add(pommel);
       g.position.set(x, 0, z); g.rotation.z = rnd(-0.28, 0.28); g.rotation.y = Math.random() * Math.PI;
-      titanDecor.add(g); titanColliders.push({ x, z, r: 0.6 });
+      titanDecor.add(g); titanColliders.push({ x, z, r: 0.6 }); titanWeapons.push(g);
     };
     const makeGiantAxe = (x, z) => {
       if (inKeepOut(x, z)) return;
@@ -9817,11 +9819,11 @@ export default function CherryAdventure() {
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.8, 0.5), steelD); head.position.set(0, 2.6, 0.2); g.add(head);
       const bladeA = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.14, 3, 1, false, -0.4, 1.4), steelMat); bladeA.rotation.z = Math.PI / 2; bladeA.position.set(0, 2.6, 0.55); g.add(bladeA);
       g.position.set(x, 0, z); g.rotation.z = rnd(-0.18, 0.18); g.rotation.y = Math.random() * Math.PI;
-      titanDecor.add(g); titanColliders.push({ x, z, r: 0.55 });
+      titanDecor.add(g); titanColliders.push({ x, z, r: 0.55 }); titanWeapons.push(g);
     };
     for (let i = 0; i < 6; i++) { const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * (FIELD_R - 8); makeGiantSword(Math.cos(a) * r, Math.sin(a) * r); }
     for (let i = 0; i < 3; i++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (FIELD_R - 9); makeGiantAxe(Math.cos(a) * r, Math.sin(a) * r); }
-    G.titanDecor = titanDecor; G.titanColliders = titanColliders;
+    G.titanDecor = titanDecor; G.titanColliders = titanColliders; G.titanWeapons = titanWeapons; G._titanWallMats = [wallMat, wallMatD];
 
     // 🍬 CANDY LAND DECOR — pink ground, cotton-candy trees, lollipop trees, colourful candies on the floor (map: candy)
     const candyDecor = new THREE.Group(); candyDecor.visible = false; scene.add(candyDecor);
@@ -10489,8 +10491,8 @@ export default function CherryAdventure() {
         buddyMesh = buildMonster(inst.sp, inst.stage);
         if (G.applyEvoParts) G.applyEvoParts(buddyMesh, inst.sp, inst.lv); // ✨ ร่างวิวัฒน์ตามเลเวล
         if (G.applyMutation) G.applyMutation(buddyMesh, inst.mut || 0); // 🧬 กลายพันธุ์ (ซื้อด้วยทอง)
-        buddyMesh.scale.multiplyScalar(1.24); // 🐾 ×2 ตัวใหญ่ขึ้นเท่าตัว
-        buddyMesh.userData.followDist = 1.5 + buddyMesh.scale.x * 0.85; // 🐾 ตัวใหญ่ยิ่งยืนห่างตัวละคร
+        buddyMesh.scale.multiplyScalar(0.62); // 🐾 ลดขนาดลงครึ่งหนึ่ง (เล็กลง)
+        buddyMesh.userData.followDist = 1.4 + buddyMesh.scale.x * 0.85; // 🐾 ระยะยืนห่างตัวละคร
         buddyMesh.position.set(char.position.x - 1.6, 0, char.position.z + 1.0);
         vivify(buddyMesh);
         scene.add(buddyMesh);
@@ -12108,6 +12110,33 @@ export default function CherryAdventure() {
           });
           ghosts.forEach((gh) => { gh.material.opacity = Math.max(0, Math.sin(pr * Math.PI * 10 + gh.userData.ph)) * 0.45 * (1 - pr); });
           sdLight.intensity = 1.5 * Math.sin(pr * Math.PI);
+        };
+      } else if (fxType === "evolve") {
+        // ✨🌟 pet evolution — expanding halo rings + rising sparkles + soft light pillar around the pet
+        const rings = [];
+        for (let k = 0; k < 3; k++) {
+          const rg = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.06, 10, 32), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.1, transparent: true, depthWrite: false }));
+          rg.rotation.x = Math.PI / 2; rg.position.y = 0.12 + k * 0.06; rg.userData.d = k * 0.18; g.add(rg); rings.push(rg);
+        }
+        const halo = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.05, 10, 32), new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+        halo.rotation.x = Math.PI / 2; halo.position.y = 1.0; g.add(halo);
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.62, 2.6, 20, 1, true), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        pillar.position.y = 1.3; g.add(pillar);
+        const sparks = [];
+        for (let i = 0; i < 16; i++) {
+          const sp = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true }));
+          const a = Math.random() * Math.PI * 2, rad = 0.2 + Math.random() * 0.6;
+          sp.position.set(Math.cos(a) * rad, Math.random() * 0.4, Math.sin(a) * rad);
+          sp.userData = { rise: 1.6 + Math.random() * 1.6, spin: 2 + Math.random() * 3 };
+          g.add(sp); sparks.push(sp);
+        }
+        g.renderOrder = 997;
+        dur = 1.3;
+        update = (pr) => {
+          rings.forEach((rg) => { const lp = Math.max(0, Math.min(1, pr - rg.userData.d)); rg.scale.setScalar(0.4 + lp * 2.8); rg.material.opacity = (1 - lp) * 0.9; });
+          halo.rotation.z += 0.06; halo.scale.setScalar(1 + Math.sin(pr * Math.PI) * 0.4); halo.material.opacity = Math.sin(pr * Math.PI) * 0.9;
+          pillar.material.opacity = Math.sin(pr * Math.PI) * 0.5; pillar.scale.set(1 - pr * 0.3, 1, 1 - pr * 0.3);
+          sparks.forEach((sp) => { sp.position.y += sp.userData.rise * 0.016; sp.rotation.y += sp.userData.spin * 0.05; sp.material.opacity = Math.max(0, 1 - pr) * 0.95; });
         };
       } else {
         // default: colored burst ring
@@ -13842,14 +13871,14 @@ export default function CherryAdventure() {
           p.stage++;
           const newName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]} 🌟` : `${EVOLVED[p.sp]} 👑`;
           toast(`✨ วิวัฒนาการร่างที่ ${p.stage}! → ${newName}`);
-          burst(char.position, 0xf5d05a, 1.4);
+          { const efp = (G.buddy === iid && buddyMesh) ? buddyMesh.position : char.position; spawnSkillFx("evolve", efp, 0xffd76a); burst(efp, 0xfff2b0, 1.4); } // ✨ ประกาย + วงแหวนรอบตัวสัตว์เลี้ยง
           G.petSp = (G.petSp || 0) + 1; // 🎯 pet skill point on evolution
           if (G.buddy === iid) G.setBuddy(iid); // rebuild follower with new form
         }
         if (p.lv === 10 || p.lv === 20 || p.lv === 30 || p.lv === 40 || p.lv === 100) {
           const evoName = p.lv >= 100 ? "ออร่าทองเทพ" : p.lv >= 40 ? "เกล็ดน้ำแข็งบนหลัง" : p.lv >= 30 ? "ปีกใหญ่" : p.lv >= 20 ? "หางไฟ" : "เขาทอง";
           toast(`✨🎉 ${SPECIES[p.sp].name} วิวัฒนาการรูปลักษณ์! Lv.${p.lv} — ได้${evoName} + ตัวใหญ่ขึ้น`);
-          burst(char.position, 0xffd76a, 1.6);
+          { const efp = (G.buddy === iid && buddyMesh) ? buddyMesh.position : char.position; spawnSkillFx("evolve", efp, 0xffd76a); burst(efp, 0xfff2b0, 1.6); } // ✨ ประกาย + วงแหวนรอบตัวสัตว์เลี้ยง
           if (G.buddy === iid) G.setBuddy(iid); // ประกอบร่างใหม่พร้อมชิ้นส่วนวิวัฒน์
         }
         // 🧬 ปลดล็อกการกลายพันธุ์ — เมื่อเลเวลถึงเกณฑ์ (Lv30/55/80) แจ้งให้ไปกดกลายพันธุ์ในเมนู
@@ -14267,9 +14296,9 @@ export default function CherryAdventure() {
       } catch (e) {
         G.enemyPlateWorldY = 3.5;
       }
-      // buddy joins the fight beside Cherry
+      // buddy joins the fight — stands a little back-and-to-the-side of Cherry (not overlapping)
       if (buddyMesh) {
-        buddyMesh.position.set(battleCenter.x - (worldBoss ? 3.4 : 2.2), 0, battleCenter.z + 0.7);
+        buddyMesh.position.set(battleCenter.x - (worldBoss ? 3.9 : 2.8), 0, battleCenter.z + 1.1);
         buddyMesh.rotation.y = Math.PI / 2;
       }
       setMouth("smile");
@@ -17059,6 +17088,15 @@ export default function CherryAdventure() {
         if (G.amazonDecor && G.amazonDecor.visible) {
           if (G.amazonRiver) G.amazonRiver.material.opacity = 0.85 + Math.sin(t * 1.2) * 0.08;
           if (G.amazonMist) G.amazonMist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) { m.position.x = -FIELD_R - 4; m.position.z = rnd(-FIELD_R, FIELD_R); } });
+          // 🌳 hide big trees the player is walking past so they never block the view
+          if (G.mode === "explore" && G.amazonTrees) G.amazonTrees.forEach((tr) => { const d = Math.hypot(tr.position.x - char.position.x, tr.position.z - char.position.z); tr.visible = d > 2.8; });
+        }
+        // 🗿 titan: fade the ring wall when the player is near the edge + hide giant weapons walked past (so nothing blocks the view)
+        if (G.titanDecor && G.titanDecor.visible) {
+          const pr2 = Math.hypot(char.position.x, char.position.z);
+          const targetOp = pr2 > FIELD_R - 8 ? 0.16 : 1;
+          if (G._titanWallMats) G._titanWallMats.forEach((mm) => { mm.opacity += (targetOp - mm.opacity) * Math.min(1, dt * 6); });
+          if (G.mode === "explore" && G.titanWeapons) G.titanWeapons.forEach((w) => { const d = Math.hypot(w.position.x - char.position.x, w.position.z - char.position.z); w.visible = d > 2.6; });
         }
         // 🌪️ sandstorm drift (desert only)
         if (G.desertDecor && G.desertDecor.visible && G.sandParticles) {
