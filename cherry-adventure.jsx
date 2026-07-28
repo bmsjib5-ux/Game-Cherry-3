@@ -8321,11 +8321,17 @@ export default function CherryAdventure() {
       // 🌈 ออร่าเรืองแสงกลายพันธุ์
       const aura = tier >= 3 ? 0xffd24a : tier === 2 ? 0xba5af5 : 0x5adcf5;
       if (monGlow) monGlow(g, aura, 0.35 + tier * 0.1);
-      g.scale.multiplyScalar(1 + tier * 0.07); // 📏 ตัวใหญ่ขึ้นเล็กน้อยตามระดับ
+      g.scale.multiplyScalar(1 + tier * 0.5); // 📏 ตัวใหญ่ขึ้น +0.5 เท่าต่อระดับกลายพันธุ์
       g.userData.mutated = tier;
       return g;
     };
     G.applyMutation = applyMutation;
+    // ✨ animate a pet's cosmetic extras (chick's orbiting stars + ground magic circle) — call each frame with a monster mesh
+    G._animPetFx = (g, t) => {
+      if (!g || !g.userData) return;
+      if (g.userData.starRing) { g.userData.starRing.rotation.y = t * 1.1; g.userData.starRing.position.y = (g.userData.starBaseY || 0.5) + Math.sin(t * 2) * 0.06; }
+      if (g.userData.magicCircle) g.userData.magicCircle.rotation.y = -t * 0.5;
+    };
     const buildMonster = (spId, stage = 1) => {
       const sp = SPECIES[spId];
       const g = new THREE.Group();
@@ -8712,6 +8718,26 @@ export default function CherryAdventure() {
         for (const sx of [-0.12, 0.12]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 14), darkMat); eye.position.set(sx, 0.46, 0.28); body.add(eye); const gl = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), whiteMat); gl.position.set(sx + 0.02, 0.5, 0.34); body.add(gl); }
         // 😊 pink cheeks
         for (const sx of [-1, 1]) { const ch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), blushMat); ch.scale.set(1.2, 0.8, 0.5); ch.position.set(sx * 0.2, 0.38, 0.26); body.add(ch); }
+        // ✨ 5 golden stars orbiting the chick (secret-rare aura)
+        {
+          const starMat = new THREE.MeshStandardMaterial({ color: 0xffe14a, emissive: 0xffc61a, emissiveIntensity: 1.0, metalness: 0.3, roughness: 0.2 });
+          const ring = new THREE.Group(); ring.position.y = 0.5; g.userData.starBaseY = 0.5; // orbits around g (not body) so it circles the whole chick
+          for (let s = 0; s < 5; s++) {
+            const a2 = (s / 5) * Math.PI * 2;
+            const star = new THREE.Group();
+            const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), starMat); core.scale.set(0.75, 1.4, 0.75); star.add(core);
+            const cross = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), starMat); cross.scale.set(1.4, 0.75, 0.75); star.add(cross); // 4-point sparkle
+            star.position.set(Math.cos(a2) * 0.8, Math.sin(a2 * 2) * 0.1, Math.sin(a2) * 0.8);
+            ring.add(star);
+          }
+          g.add(ring); g.userData.starRing = ring;
+          // 🔮 magic circle on the ground beneath the chick
+          const mc = new THREE.Group(); mc.position.y = 0.02;
+          const mkRing = (ri, ro, op) => { const r = new THREE.Mesh(new THREE.RingGeometry(ri, ro, 44), new THREE.MeshBasicMaterial({ color: 0xffd76a, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false })); r.rotation.x = -Math.PI / 2; return r; };
+          mc.add(mkRing(0.66, 0.76, 0.55)); mc.add(mkRing(0.4, 0.45, 0.5));
+          for (let r = 0; r < 8; r++) { const a3 = (r / 8) * Math.PI * 2; const rune = new THREE.Mesh(new THREE.CircleGeometry(0.05, 12), new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false })); rune.rotation.x = -Math.PI / 2; rune.position.set(Math.cos(a3) * 0.56, 0, Math.sin(a3) * 0.56); mc.add(rune); }
+          g.add(mc); g.userData.magicCircle = mc;
+        }
         headY = 0.44; headZ = 0.3; headR = 0.3;
       } else { // wisp 👻🌪️
         // tapered, trailing body — no legs, no hard bottom
@@ -16285,6 +16311,7 @@ export default function CherryAdventure() {
           let bdd = bd - a.petMesh.rotation.y; while (bdd > Math.PI) bdd -= Math.PI * 2; while (bdd < -Math.PI) bdd += Math.PI * 2;
           a.petMesh.rotation.y += bdd * Math.min(1, dt * 6);
           if (a.petMesh.userData.body) a.petMesh.userData.body.position.y = (FLOATY[a.petMesh.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 5)) * 0.07;
+          if (G._animPetFx) G._animPetFx(a.petMesh, t); // ✨ spin the chick's stars + magic circle
         }
       });
       if (vis !== prevCount) { G._rtOnlineCount = vis; setUi((u) => ({ ...u, rtOnline: vis })); } // 👥 how many other players are in this map right now
@@ -18174,6 +18201,7 @@ export default function CherryAdventure() {
           while (bdd < -Math.PI) bdd += Math.PI * 2;
           buddyMesh.rotation.y += bdd * Math.min(1, dt * 6);
           buddyMesh.userData.body.position.y = (FLOATY[buddyMesh.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 5)) * 0.07;
+          if (G._animPetFx) G._animPetFx(buddyMesh, t); // ✨ spin the chick's stars + magic circle
         }
 
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
@@ -18287,6 +18315,7 @@ export default function CherryAdventure() {
         }
         if (buddyMesh) {
           buddyMesh.userData.body.position.y = (FLOATY[buddyMesh.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 5)) * 0.06;
+          if (G._animPetFx) G._animPetFx(buddyMesh, t); // ✨ spin the chick's stars + magic circle
         }
 
         // battle animations
