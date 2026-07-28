@@ -23753,7 +23753,7 @@ export default function CherryAdventure() {
 
       {/* ⭐ bottom status bar — long, 2 lines (stats / EXP + AUTO) */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom) + 8px)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+        <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" }}>
             <span style={{ color: "#c04a5a" }}>💗{ui.hp}/{ui.maxHp}</span>
             <span>⚔️{ui.atk}</span>
