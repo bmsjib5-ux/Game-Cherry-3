@@ -15915,8 +15915,12 @@ export default function CherryAdventure() {
       const mkLimb = (x, y, len, rad, mat) => { const piv = new THREE.Group(); piv.position.set(x, y, 0); const seg = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 0.85, len, 10), mat); seg.position.y = -len / 2; seg.castShadow = true; piv.add(seg); bodyG.add(piv); return piv; };
       grp.userData.armL = mkLimb(-0.34, 0.5, 0.42, 0.075, rMat(col)); grp.userData.armR = mkLimb(0.34, 0.5, 0.42, 0.075, rMat(col));
       grp.userData.legL = mkLimb(-0.16, -0.42, 0.44, 0.095, rMat(0x3a4658)); grp.userData.legR = mkLimb(0.16, -0.42, 0.44, 0.095, rMat(0x3a4658));
-      // ⚔️ a little weapon hint in the right hand
-      const wp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.06), rMat(0xcfd6e0, 0.3)); wp.position.set(0.44, 0.28, 0.08); grp.userData.armR.add(wp);
+      // ⚔️ the player's REAL class weapon in the right hand (clone the actual model)
+      try {
+        let wm = info.w && weaponModels[info.w];
+        if (!wm) { const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx" }[info.c]; wm = (dflt && weaponModels[dflt]) || weaponModels.default; }
+        if (wm) { const w = wm.clone(true); w.scale.multiplyScalar(0.8); w.position.set(0.12, -0.36, 0.14); w.rotation.set(0.4, 0, -0.5); grp.userData.armR.add(w); }
+      } catch (e) {}
       // 🏷️ floating nameplate
       const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64;
       const ctx = cv.getContext("2d"); ctx.font = "bold 30px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
@@ -15985,7 +15989,7 @@ export default function CherryAdventure() {
         if (now - (G._lastRtSend || 0) < 130) return; // ~7-8 updates/sec
         G._lastRtSend = now;
         const moving = G.vel ? (Math.hypot(G.vel.x || 0, G.vel.z || 0) > 0.15) : false;
-        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: (G.equip && G.equip.weapon) || null, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
       } catch (e) {}
     };
     G.rtLeave = () => { try { if (G.rtChannel) { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); G.rtChannel = null; } G._rtClear(); } catch (e) {} };
