@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>🍒 Cherry Adventure — Insight Dashboard</title>
+<meta name="description" content="สถิติผู้เล่นเกม Cherry Adventure แบบเรียลไทม์" />
+<link rel="icon" href="./icon-192.png" />
+<style>
+  /* ---------- theme tokens (light + dark, per the data-viz palette) ---------- */
+  :root {
+    color-scheme: light;
+    --plane: #f4eef7;
+    --surface-1: #ffffff;
+    --surface-2: #faf6fd;
+    --text-primary: #241b2e;
+    --text-secondary: #5c5168;
+    --muted: #8a7f96;
+    --grid: #ece4f2;
+    --baseline: #d9cee2;
+    --border: rgba(36,27,46,0.10);
+    --accent: #a24bd0;
+    --accent-soft: #f0e2f8;
+    --seq-1: #256abf;  --seq-2: #2a78d6;  --seq-3: #3987e5;  --seq-4: #5598e7;  --seq-5: #86b6ef;
+    --gold: #f5c542; --silver: #c8ccd4; --bronze: #d08a4a;
+    --good: #0ca30c;
+    --shadow: 0 6px 22px rgba(80,40,110,0.10);
+    --shadow-lg: 0 12px 40px rgba(80,40,110,0.16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --plane: #14101a;
+      --surface-1: #201828;
+      --surface-2: #1a1422;
+      --text-primary: #f6f0fb;
+      --text-secondary: #c7bcd2;
+      --muted: #9a8ea8;
+      --grid: #2e2438;
+      --baseline: #3a2e46;
+      --border: rgba(255,255,255,0.10);
+      --accent: #c07be8;
+      --accent-soft: #35264a;
+      --seq-1: #86b6ef; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #2a78d6; --seq-5: #1c5cab;
+      --shadow: 0 6px 22px rgba(0,0,0,0.4);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane: #14101a; --surface-1: #201828; --surface-2: #1a1422;
+    --text-primary: #f6f0fb; --text-secondary: #c7bcd2; --muted: #9a8ea8;
+    --grid: #2e2438; --baseline: #3a2e46; --border: rgba(255,255,255,0.10);
+    --accent: #c07be8; --accent-soft: #35264a;
+    --seq-1: #86b6ef; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #2a78d6; --seq-5: #1c5cab;
+    --shadow: 0 6px 22px rgba(0,0,0,0.4); --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", "Sarabun", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    line-height: 1.4;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 20px 16px 56px; }
+
+  /* ---------- header ---------- */
+  header.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .logo { font-size: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+  .titles h1 { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -0.01em; }
+  .titles p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-secondary); }
+  .top .spacer { flex: 1; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; box-shadow: var(--shadow); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); }
+  .dot.off { background: var(--muted); box-shadow: none; }
+  button.act { cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, #c07be8, #f0a0c8); border: none; border-radius: 999px; padding: 8px 15px; box-shadow: var(--shadow); }
+  button.ghost { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 800; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; width: 36px; height: 36px; box-shadow: var(--shadow); }
+  button.act:active, button.ghost:active { transform: translateY(1px); }
+
+  /* ---------- KPI tiles ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 18px; }
+  .kpi { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 14px 14px 13px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden; }
+  .kpi .k-ico { font-size: 17px; }
+  .kpi .k-val { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; margin-top: 3px; line-height: 1.05; }
+  .kpi .k-lab { font-size: 11px; color: var(--text-secondary); font-weight: 700; margin-top: 3px; }
+  .kpi .k-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- cards / charts ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 16px 18px 18px; box-shadow: var(--shadow); }
+  .card h2 { margin: 0 0 2px; font-size: 14.5px; font-weight: 900; }
+  .card .csub { margin: 0 0 14px; font-size: 11.5px; color: var(--text-secondary); }
+
+  /* horizontal class bars */
+  .hbar-row { display: grid; grid-template-columns: 128px 1fr 66px; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .hbar-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hbar-track { height: 16px; background: var(--surface-2); border-radius: 8px; overflow: hidden; position: relative; }
+  .hbar-fill { height: 100%; border-radius: 8px; min-width: 3px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .hbar-val { font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* vertical histogram */
+  .histo { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; align-items: end; gap: 12px; height: 172px;
+    border-bottom: 1.5px solid var(--baseline); padding-top: 6px; }
+  .hcol { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+  .hcol .bar { width: 74%; max-width: 52px; border-radius: 6px 6px 2px 2px; min-height: 3px; transition: height .5s cubic-bezier(.2,.8,.2,1); }
+  .hcol .bval { font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .hlabels { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 12px; margin-top: 7px; }
+  .hlabels div { text-align: center; font-size: 10.5px; color: var(--muted); font-weight: 700; }
+
+  /* table */
+  .lb { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .lb th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+    font-weight: 800; padding: 0 10px 9px; border-bottom: 1px solid var(--grid); }
+  .lb td { padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  .lb tr:last-child td { border-bottom: none; }
+  .lb .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+  .rankbadge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 8px;
+    font-size: 11px; font-weight: 900; color: #3a2a10; background: var(--surface-2); }
+  .rankbadge.g1 { background: linear-gradient(135deg,#ffe07a,#f5c542); }
+  .rankbadge.g2 { background: linear-gradient(135deg,#eef1f6,#c8ccd4); }
+  .rankbadge.g3 { background: linear-gradient(135deg,#f0c99a,#d08a4a); color:#fff; }
+  .cchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
+  .cdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .pname { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .ngtag { font-size: 10.5px; font-weight: 800; color: #e0862f; }
+
+  .statmini { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .statmini .sm { background: var(--surface-2); border-radius: 13px; padding: 12px 10px; text-align: center; }
+  .statmini .sm .v { font-size: 20px; font-weight: 900; letter-spacing: -0.01em; }
+  .statmini .sm .l { font-size: 10.5px; color: var(--text-secondary); font-weight: 700; margin-top: 2px; }
+
+  footer { margin-top: 22px; text-align: center; font-size: 11px; color: var(--muted); line-height: 1.7; }
+  footer a { color: var(--accent); text-decoration: none; font-weight: 700; }
+
+  .full { grid-column: 1 / -1; }
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 26px 0; }
+  .skel { background: linear-gradient(90deg, var(--surface-2) 25%, var(--grid) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%; animation: sh 1.2s infinite; border-radius: 8px; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* floating tooltip */
+  #tip { position: fixed; pointer-events: none; z-index: 50; background: var(--text-primary); color: var(--surface-1);
+    font-size: 11.5px; font-weight: 700; padding: 6px 9px; border-radius: 8px; box-shadow: var(--shadow-lg); opacity: 0;
+    transition: opacity .12s; transform: translate(-50%, -130%); white-space: nowrap; }
+
+  @media (max-width: 860px) {
+    .kpis { grid-template-columns: repeat(3, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .hbar-row { grid-template-columns: 104px 1fr 52px; }
+    .lb .hide-s { display: none; }
+    .titles h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="logo">🍒</span>
+    <div class="titles">
+      <h1>Cherry Adventure — Insight Dashboard</h1>
+      <p>สถิติผู้เล่นออนไลน์ · อัปเดตอัตโนมัติทุก 60 วินาที</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="chip" id="statusChip"><span class="dot off" id="statusDot"></span><span id="statusTxt">กำลังโหลด…</span></span>
+    <button class="ghost" id="themeBtn" title="สลับธีมสว่าง/มืด">🌗</button>
+    <button class="act" id="refreshBtn">🔄 รีเฟรช</button>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>การกระจายตามอาชีพ</h2>
+      <p class="csub">จำนวนผู้เล่นในแต่ละอาชีพ</p>
+      <div id="classChart"></div>
+    </div>
+    <div class="card">
+      <h2>การกระจายตามเลเวล</h2>
+      <p class="csub">จำนวนผู้เล่นในแต่ละช่วงเลเวล</p>
+      <div id="levelChart"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>ระดับการตื่นพลัง (New Game+)</h2>
+      <p class="csub">จำนวนผู้เล่นในแต่ละระดับการตื่นพลัง ⚡</p>
+      <div id="ngChart"></div>
+    </div>
+    <div class="card">
+      <h2>ค่าพลังเฉลี่ยของผู้เล่น</h2>
+      <p class="csub">ค่าเฉลี่ยของสถานะการต่อสู้ทั้งหมด</p>
+      <div id="avgStats" class="statmini"></div>
+    </div>
+  </div>
+
+  <div class="card full">
+    <h2>🏆 ตารางอันดับผู้เล่น</h2>
+    <p class="csub">25 อันดับแรก จัดเรียงตามค่าพลังรวม (ATK×4 + DEF×3 + HP×0.05 + CRIT×8)</p>
+    <div id="leaderboard"></div>
+  </div>
+
+  <footer>
+    ข้อมูลจากเซิร์ฟเวอร์ออนไลน์ Cherry Adventure (Supabase) · แสดงเฉพาะโปรไฟล์สาธารณะบนกระดานอันดับ<br/>
+    <a href="./index.html">← กลับไปเล่นเกม</a>
+  </footer>
+</div>
+<div id="tip"></div>
+
+<script>
+(function () {
+  "use strict";
+  var CFG = {
+    url: "https://xaifhvlvfdvpieeutmys.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaWZodmx2ZmR2cGllZXV0bXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTcyMzEsImV4cCI6MjEwMDI5MzIzMX0.OdLp0--DlPrStyeJ9pZn33h6EigN5uqUby-yq8jAGH4"
+  };
+
+  var CLASSES = {
+    warrior:  { name: "นักรบ",          emoji: "🛡️", color: "#d9536b" },
+    archer:   { name: "นักธนู",         emoji: "🏹", color: "#7ba05b" },
+    mage:     { name: "นักเวท",         emoji: "🔮", color: "#9a6ad0" },
+    assassin: { name: "นักฆ่า",         emoji: "🗡️", color: "#5a5a70" },
+    lancer:   { name: "นักหอก",         emoji: "🔱", color: "#4a90c0" },
+    samurai:  { name: "ซามูไร",         emoji: "⚔️", color: "#c0392b" },
+    coder:    { name: "จอมเวทโค้ด",     emoji: "💻", color: "#2ac0d8" },
+    office:   { name: "พนักงานออฟฟิศ",  emoji: "💼", color: "#2a7ad0" },
+    aegis:    { name: "จักรกลพิทักษ์",  emoji: "🤖", color: "#2ab0f5" }
+  };
+  var CLASS_ORDER = ["warrior","archer","mage","assassin","lancer","samurai","coder","office","aegis"];
+  var SEQ = ["var(--seq-1)","var(--seq-2)","var(--seq-3)","var(--seq-4)","var(--seq-5)"];
+
+  function powerOf(r) { return Math.round((r.atk||0)*4 + (r.def||0)*3 + (r.hp||0)*0.05 + (r.crit||0)*8); }
+  function fmt(n) { return (n||0).toLocaleString("en-US"); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  // ---- floating tooltip ----
+  var tip = document.getElementById("tip");
+  function showTip(e, html) { tip.innerHTML = html; tip.style.opacity = "1"; moveTip(e); }
+  function moveTip(e) { var x = e.touches ? e.touches[0].clientX : e.clientX; var y = e.touches ? e.touches[0].clientY : e.clientY; tip.style.left = x + "px"; tip.style.top = y + "px"; }
+  function hideTip() { tip.style.opacity = "0"; }
+  function bindTip(el, html) {
+    el.addEventListener("mousemove", function(e){ showTip(e, html); });
+    el.addEventListener("mouseleave", hideTip);
+    el.addEventListener("touchstart", function(e){ showTip(e, html); }, { passive: true });
+    el.addEventListener("touchend", hideTip);
+  }
+
+  // ---- theme toggle ----
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var dark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  function setStatus(ok, txt) {
+    document.getElementById("statusDot").className = "dot" + (ok ? "" : " off");
+    document.getElementById("statusTxt").textContent = txt;
+  }
+
+  function kpi(ico, val, lab, sub) {
+    return '<div class="kpi"><div class="k-ico">' + ico + '</div><div class="k-val">' + val +
+      '</div><div class="k-lab">' + lab + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function renderKPIs(rows) {
+    var now = Date.now();
+    var total = rows.length;
+    var active = rows.filter(function(r){ return r.ts && (now - r.ts) < 86400000; }).length;
+    var maxLv = rows.reduce(function(m,r){ return Math.max(m, r.lv||0); }, 0);
+    var avgLv = total ? Math.round(rows.reduce(function(s,r){ return s + (r.lv||0); }, 0) / total) : 0;
+    var prestige = rows.reduce(function(s,r){ return s + (r.ng||0); }, 0);
+    var avgPow = total ? Math.round(rows.reduce(function(s,r){ return s + powerOf(r); }, 0) / total) : 0;
+    document.getElementById("kpis").innerHTML =
+      kpi("👥", fmt(total), "ผู้เล่นทั้งหมด") +
+      kpi("🟢", fmt(active), "ใช้งานใน 24 ชม.") +
+      kpi("🏆", fmt(maxLv), "เลเวลสูงสุด") +
+      kpi("📊", fmt(avgLv), "เลเวลเฉลี่ย") +
+      kpi("⚡", fmt(prestige), "ตื่นพลังรวม", "New Game+ สะสม") +
+      kpi("⚔️", fmt(avgPow), "พลังเฉลี่ย");
+  }
+
+  function renderClassChart(rows) {
+    var counts = {}; CLASS_ORDER.forEach(function(c){ counts[c] = 0; });
+    rows.forEach(function(r){ if (counts[r.c] != null) counts[r.c]++; else counts[r.c] = (counts[r.c]||0)+1; });
+    var arr = CLASS_ORDER.map(function(c){ return { c: c, n: counts[c] || 0 }; }).sort(function(a,b){ return b.n - a.n; });
+    var max = Math.max(1, arr[0].n);
+    var total = rows.length || 1;
+    var el = document.getElementById("classChart");
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูลผู้เล่น</div>'; return; }
+    el.innerHTML = arr.map(function(x){
+      var meta = CLASSES[x.c] || { name: x.c, emoji: "❓", color: "#888" };
+      var pct = Math.round(x.n / total * 100);
+      return '<div class="hbar-row">' +
+        '<div class="hbar-name">' + meta.emoji + ' ' + esc(meta.name) + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" data-w="' + (x.n / max * 100) + '" style="width:0;background:' + meta.color + '"></div></div>' +
+        '<div class="hbar-val">' + fmt(x.n) + ' · ' + pct + '%</div></div>';
+    }).join("");
+    // animate + tooltip
+    [].forEach.call(el.querySelectorAll(".hbar-fill"), function(f, i){
+      setTimeout(function(){ f.style.width = f.getAttribute("data-w") + "%"; }, 30);
+      var x = arr[i], meta = CLASSES[x.c] || {};
+      bindTip(f.parentNode, (meta.emoji||"") + " " + esc((meta.name)||x.c) + "<br>" + fmt(x.n) + " คน (" + Math.round(x.n/total*100) + "%)");
+    });
+  }
+
+  function bucketChart(elId, buckets) {
+    var max = Math.max(1, buckets.reduce(function(m,b){ return Math.max(m, b.n); }, 0));
+    var el = document.getElementById(elId);
+    var bars = '<div class="histo">' + buckets.map(function(b, i){
+      var h = Math.round(b.n / max * 100);
+      return '<div class="hcol" data-i="' + i + '"><div class="bval">' + fmt(b.n) + '</div>' +
+        '<div class="bar" data-h="' + h + '" style="height:0;background:' + SEQ[i % SEQ.length] + '"></div></div>';
+    }).join("") + '</div>';
+    var labels = '<div class="hlabels">' + buckets.map(function(b){ return '<div>' + esc(b.label) + '</div>'; }).join("") + '</div>';
+    el.innerHTML = bars + labels;
+    [].forEach.call(el.querySelectorAll(".hcol"), function(col, i){
+      var bar = col.querySelector(".bar");
+      setTimeout(function(){ bar.style.height = bar.getAttribute("data-h") + "%"; }, 30);
+      bindTip(col, esc(buckets[i].label) + "<br>" + fmt(buckets[i].n) + " คน");
+    });
+  }
+
+  function renderLevelChart(rows) {
+    var defs = [
+      { label: "1–49", lo: 1, hi: 49 }, { label: "50–99", lo: 50, hi: 99 },
+      { label: "100–199", lo: 100, hi: 199 }, { label: "200–499", lo: 200, hi: 499 },
+      { label: "500+", lo: 500, hi: Infinity }
+    ];
+    var buckets = defs.map(function(d){ return { label: d.label, n: rows.filter(function(r){ var l = r.lv||1; return l >= d.lo && l <= d.hi; }).length }; });
+    bucketChart("levelChart", buckets);
+  }
+
+  function renderNgChart(rows) {
+    var buckets = [
+      { label: "ยังไม่ตื่น", n: rows.filter(function(r){ return (r.ng||0) === 0; }).length },
+      { label: "⚡ 1", n: rows.filter(function(r){ return (r.ng||0) === 1; }).length },
+      { label: "⚡ 2", n: rows.filter(function(r){ return (r.ng||0) === 2; }).length },
+      { label: "⚡ 3+", n: rows.filter(function(r){ return (r.ng||0) >= 3; }).length }
+    ];
+    bucketChart("ngChart", buckets);
+  }
+
+  function renderAvgStats(rows) {
+    var el = document.getElementById("avgStats");
+    if (!rows.length) { el.innerHTML = '<div class="empty full">ยังไม่มีข้อมูล</div>'; return; }
+    var n = rows.length;
+    var avg = function(k){ return Math.round(rows.reduce(function(s,r){ return s + (r[k]||0); }, 0) / n); };
+    var items = [ ["⚔️","ATK","atk"], ["🛡️","DEF","def"], ["❤️","HP","hp"], ["🎯","CRIT","crit"] ];
+    el.innerHTML = items.map(function(it){
+      var v = avg(it[2]); if (it[2] === "crit") v = v + "%";
+      return '<div class="sm"><div class="v">' + (typeof v === "number" ? fmt(v) : v) + '</div><div class="l">' + it[0] + ' ' + it[1] + '</div></div>';
+    }).join("");
+  }
+
+  function renderLeaderboard(rows) {
+    var el = document.getElementById("leaderboard");
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีผู้เล่นบนกระดานอันดับ — เล่นเกมและเปิดออนไลน์เพื่อขึ้นอันดับ!</div>'; return; }
+    var top = rows.slice().map(function(r){ return { r: r, p: powerOf(r) }; }).sort(function(a,b){ return b.p - a.p; }).slice(0, 25);
+    var body = top.map(function(x, i){
+      var r = x.r, meta = CLASSES[r.c] || { name: r.c || "?", emoji: "❓", color: "#888" };
+      var rk = i + 1, badge = rk <= 3 ? " g" + rk : "";
+      return '<tr>' +
+        '<td><span class="rankbadge' + badge + '">' + rk + '</span></td>' +
+        '<td><span class="pname">' + esc(r.n || "ผู้เล่น") + '</span>' + ((r.ng||0) > 0 ? ' <span class="ngtag">⚡' + r.ng + '</span>' : '') + '</td>' +
+        '<td class="hide-s"><span class="cchip"><span class="cdot" style="background:' + meta.color + '"></span>' + meta.emoji + ' ' + esc(meta.name) + '</span></td>' +
+        '<td class="num">' + fmt(r.lv || 1) + '</td>' +
+        '<td class="num" style="color:var(--accent)">' + fmt(x.p) + '</td>' +
+        '</tr>';
+    }).join("");
+    el.innerHTML = '<div style="overflow-x:auto"><table class="lb"><thead><tr>' +
+      '<th style="width:44px">#</th><th>ผู้เล่น</th><th class="hide-s">อาชีพ</th>' +
+      '<th class="num" style="width:70px">เลเวล</th><th class="num" style="width:90px">พลังรวม</th>' +
+      '</tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+
+  function renderAll(rows) {
+    renderKPIs(rows); renderClassChart(rows); renderLevelChart(rows);
+    renderNgChart(rows); renderAvgStats(rows); renderLeaderboard(rows);
+  }
+
+  function skeletons() {
+    document.getElementById("kpis").innerHTML = Array(6).fill('<div class="kpi"><div class="skel" style="height:56px"></div></div>').join("");
+    ["classChart","levelChart","ngChart","leaderboard"].forEach(function(id){ document.getElementById(id).innerHTML = '<div class="skel" style="height:150px"></div>'; });
+    document.getElementById("avgStats").innerHTML = '<div class="skel full" style="height:80px"></div>';
+  }
+
+  var loading = false;
+  function load() {
+    if (loading) return; loading = true;
+    setStatus(false, "กำลังโหลด…");
+    var url = CFG.url + "/rest/v1/players?select=pid,n,c,lv,atk,def,hp,crit,ng,rank,t,ts&limit=2000";
+    fetch(url, { headers: { apikey: CFG.anonKey, Authorization: "Bearer " + CFG.anonKey } })
+      .then(function(res){ if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+      .then(function(rows){
+        rows = Array.isArray(rows) ? rows : [];
+        renderAll(rows);
+        var t = new Date();
+        setStatus(true, "อัปเดต " + t.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }));
+        loading = false;
+      })
+      .catch(function(err){
+        setStatus(false, "โหลดข้อมูลไม่ได้");
+        document.getElementById("kpis").innerHTML = '<div class="empty full" style="grid-column:1/-1">⚠️ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ — ' + esc(err.message) + '<br>ตรวจสอบว่าเปิด RLS ให้อ่านตาราง players ได้ (ดู ONLINE_SETUP.md)</div>';
+        loading = false;
+      });
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", load);
+  skeletons();
+  load();
+  setInterval(load, 60000);
+})();
+</script>
+</body>
+</html>

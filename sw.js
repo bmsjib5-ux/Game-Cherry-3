@@ -1,8 +1,9 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v104";
+const CACHE = "cherry-adventure-v105";
 const SHELL = [
   "./",
   "./index.html",
+  "./dashboard.html",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
@@ -39,10 +40,11 @@ self.addEventListener("fetch", (e) => {
 
   // navigations → network-first (so game updates land), fall back to cached shell offline
   if (req.mode === "navigate") {
+    const dest = url.pathname.endsWith("/dashboard.html") ? "./dashboard.html" : "./index.html"; // keep each page in its own cache slot
     e.respondWith(
       fetch(req)
-        .then((r) => { const cp = r.clone(); caches.open(CACHE).then((c) => c.put("./index.html", cp)); return r; })
-        .catch(() => caches.match("./index.html").then((r) => r || caches.match("./")))
+        .then((r) => { const cp = r.clone(); caches.open(CACHE).then((c) => c.put(dest, cp)); return r; })
+        .catch(() => caches.match(dest).then((r) => r || caches.match("./index.html")))
     );
     return;
   }
