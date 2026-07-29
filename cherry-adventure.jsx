@@ -8327,6 +8327,8 @@ export default function CherryAdventure() {
         feather.rotation.z = sx > 0 ? -1.3 - f * 0.2 : 1.3 + f * 0.2; feather.scale.set(1, 1, 0.3); grp.add(feather);
       }
     });
+    // 🧤🦵👢 expose the 3D limb-gear dicts so remote (online) avatars can clone them onto matching joints
+    G._gearModels = { gloves: glovesModels, pants: pantsModels, shoes: shoeModels3D };
 
     // 🎀 white collar + red ribbon set (part of the black-gold dress outfit)
     const collarSet = new THREE.Group();
@@ -16517,6 +16519,16 @@ export default function CherryAdventure() {
         if (info.mask && maskModels[info.mask]) { const mc = cloneCosmetic(maskModels[info.mask]); if (mc) headAnchor.add(mc); }
         // ---- 🪽 wings ----
         if (info.wing) { const wg = buildRemoteWings(info.wing); if (wg) body.add(wg); }
+        // ---- 🧤🦵👢 real 3D gloves / pants / shoes (dragon & legend) cloned onto matching limb joints ----
+        if (G._gearModels) {
+          const gm = G._gearModels;
+          const rElL = grp.userData.armL.userData.elbow || grp.userData.armL, rElR = grp.userData.armR.userData.elbow || grp.userData.armR;
+          const rKnL = grp.userData.legL.userData.knee || grp.userData.legL, rKnR = grp.userData.legR.userData.knee || grp.userData.legR;
+          const addPair = (dict, id, aL, aR) => { const pr = dict && dict[id]; if (!pr) return; const cl = cloneCosmetic(pr[0]); if (cl && aL) aL.add(cl); const cr = cloneCosmetic(pr[1]); if (cr && aR) aR.add(cr); };
+          if (info.gl) addPair(gm.gloves, info.gl, rElL, rElR);
+          if (info.pa) addPair(gm.pants, info.pa, rKnL, rKnR);
+          if (info.sh) addPair(gm.shoes, info.sh, rKnL, rKnR);
+        }
         // ---- 🤖 AEGIS-X mech look: full-body armor + mech helmet replace the base body (mirrors refreshAegisHead exactly) ----
         if (info.c === "aegis" && !info.hero) {
           const aWhite = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
@@ -16763,7 +16775,7 @@ export default function CherryAdventure() {
         // 🐾 active pet descriptor (species/stage/level/mutation) so the receiver can rebuild the same buddy
         let pet = null; if (G.buddy != null && G.petAt) { const p = G.petAt(G.buddy); if (p) pet = { s: p.sp, st: p.stage || 1, lv: p.lv || 1, mu: p.mut || 0 }; }
         // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin + pet; the class accessory derives from c)
-        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
       } catch (e) {}
     };
     G.rtLeave = () => { try { if (G.rtChannel) { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); G.rtChannel = null; } G._rtClear(); } catch (e) {} };
