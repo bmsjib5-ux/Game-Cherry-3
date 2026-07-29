@@ -15502,6 +15502,7 @@ export default function CherryAdventure() {
           titleId: G.titleId || "t_none", // 🏅 equipped title
           rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
           costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
+          profile: (G.profileInfo ? G.profileInfo() : null), // 📊 computed profile snapshot (for the web dashboard's character detail)
           pos: { x: char.position.x, z: char.position.z },
         }));
       } catch (e) { /* storage unavailable — keep playing without saves */ }

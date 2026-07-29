@@ -204,6 +204,32 @@
   .slotcard .sc-slot { position: absolute; top: 11px; right: 12px; font-size: 9.5px; font-weight: 800; color: var(--muted); background: var(--surface-1); border-radius: 6px; padding: 2px 6px; }
   .slotcard .sc-rank { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; color: #b8860b; background: rgba(245,197,66,0.16); border-radius: 999px; padding: 3px 8px; margin-top: 10px; }
   .herotag { font-size: 10px; font-weight: 800; color: #fff; background: linear-gradient(135deg,#c07be8,#f0a0c8); border-radius: 999px; padding: 2px 7px; }
+  .slotcard { cursor: pointer; transition: transform .1s, box-shadow .15s; }
+  .slotcard:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+
+  /* ---------- character detail modal ---------- */
+  .modal.detail { max-width: 440px; max-height: 90vh; overflow-y: auto; padding: 20px 20px 16px; }
+  .dt-x { position: sticky; top: -2px; float: right; margin: -6px -4px 0 0; cursor: pointer; border: none; background: var(--surface-2);
+    color: var(--text-secondary); width: 30px; height: 30px; border-radius: 50%; font-size: 16px; font-weight: 800; }
+  .dt-head { text-align: center; margin-bottom: 12px; }
+  .dt-title { font-size: 17px; font-weight: 900; }
+  .dt-sub { font-size: 12.5px; color: var(--text-secondary); font-weight: 800; margin-top: 2px; }
+  .dt-exp { font-size: 10.5px; color: var(--muted); margin-top: 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  .dt-expbar { height: 9px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-top: 3px; }
+  .dt-expfill { height: 100%; background: linear-gradient(90deg,#6da7ec,#256abf); border-radius: 6px; }
+  .dt-sec { background: var(--surface-2); border-radius: 14px; padding: 11px 14px; margin-top: 12px; }
+  .dt-sec h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 900; }
+  .dt-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; border-top: 1px solid var(--grid); }
+  .dt-row:first-of-type { border-top: none; }
+  .dt-row .l { color: var(--text-secondary); font-weight: 700; display: flex; gap: 8px; align-items: center; }
+  .dt-row .v { font-weight: 900; font-variant-numeric: tabular-nums; }
+  .dt-cur { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .dt-cur .c { background: var(--surface-2); border-radius: 12px; padding: 11px 13px; display: flex; align-items: center; gap: 9px; font-weight: 900; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  .dt-cur .c .ic { font-size: 16px; }
+  .dt-code { display: flex; align-items: center; gap: 8px; }
+  .dt-code code { font-family: ui-monospace, monospace; font-size: 11px; background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+  .dt-code button { cursor: pointer; border: none; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 11px; border-radius: 8px; padding: 5px 9px; font-family: inherit; }
 
   @media (max-width: 860px) {
     .grid2 { grid-template-columns: 1fr; }
@@ -305,6 +331,9 @@
     <div class="err" id="lgErr"></div>
     <div class="note">ระบบอ่านข้อมูลเซฟของคุณอย่างเดียว (read-only) · การเข้าสู่ระบบใช้ Supabase Auth เดียวกับตัวเกม</div>
   </div>
+</div>
+<div class="modal-bg" id="detailModal">
+  <div class="modal detail" id="detailBox"></div>
 </div>
 <div id="tip"></div>
 
@@ -672,7 +701,7 @@
         var on = row.ts && (now - row.ts) < 180000;
         rankHtml = '<div class="sc-rank">🏆 อันดับโลก #' + rk + ' · ⚔️ ' + fmt(powerOf(row)) + (on ? ' · 🟢 ออนไลน์' : '') + '</div>';
       }
-      return '<div class="slotcard"><span class="sc-slot">ช่อง ' + (parseInt(k, 10) + 1) + '</span>' +
+      return '<div class="slotcard" data-k="' + k + '"><span class="sc-slot">ช่อง ' + (parseInt(k, 10) + 1) + '</span>' +
         '<div class="sc-top"><div class="sc-av" style="background:' + meta.color + '">' + meta.emoji + '</div>' +
         '<div style="min-width:0"><div class="sc-name">' + esc(name) + (s.heroId ? ' <span class="herotag">ฮีโร่</span>' : '') + '</div>' +
         '<div class="sc-cls">' + esc(meta.name) + ' · Lv.' + fmt(lv) + '</div></div></div>' +
@@ -681,13 +710,84 @@
           scRow("⚡ ตื่นพลัง", (s.ngPlus || 0)) + scRow("🐾 สัตว์เลี้ยง", fmt((s.petBox && s.petBox.length) || 0)) +
         '</div>' + rankHtml + '</div>';
     }).join("");
-    el.innerHTML = '<div class="card"><h2>👤 ตัวละครของฉัน</h2><p class="csub">ข้อมูลเซฟจากบัญชี ' + esc(session.email) + '</p><div class="slotgrid">' + (cards || '<div class="empty">ยังไม่มีตัวละครในเซฟ</div>') + '</div></div>';
+    el.innerHTML = '<div class="card"><h2>👤 ตัวละครของฉัน</h2><p class="csub">ข้อมูลเซฟจากบัญชี ' + esc(session.email) + ' · แตะการ์ดเพื่อดูรายละเอียดเต็ม</p><div class="slotgrid">' + (cards || '<div class="empty">ยังไม่มีตัวละครในเซฟ</div>') + '</div></div>';
+    Array.prototype.forEach.call(el.querySelectorAll(".slotcard"), function(card){ card.addEventListener("click", function(){ openDetail(card.getAttribute("data-k")); }); });
   }
+
+  // ---- 📊 character detail (mirrors the in-game profile popup) ----
+  function effProfile(s) {
+    if (s.profile) return s.profile; // 📊 game-stored snapshot (full, exact)
+    var meta = CLASSES[s.cls] || {}; var byPid = {}; lastRows.forEach(function(r){ if (r.pid) byPid[r.pid] = r; });
+    var row = s.pid && byPid[s.pid] ? byPid[s.pid] : null, a = s.achStats || {};
+    return { name: s.name || "เชอร์รี่", className: meta.name || s.cls, classEmoji: meta.emoji || "",
+      title: null, titleEmoji: null, level: (s.player && s.player.level) || 1, exp: Math.round((s.player && s.player.exp) || 0), expNeed: null,
+      hp: Math.round((s.player && s.player.hp) || 0), maxHp: row ? row.hp : null, mp: Math.round((s.player && s.player.mp) || 0), maxMp: null,
+      atk: row ? row.atk : null, def: row ? row.def : null, crit: row ? row.crit : null, eva: null, luck: null, spd: null, power: row ? powerOf(row) : null,
+      gold: s.gold || 0, diamonds: s.diamonds || 0, gemDust: s.gemDust || 0, stardust: s.stardust || 0,
+      pid: s.pid || null, code: null, pvpRank: s.pvpRank || 1000, pvpTier: null, endlessBest: s.endlessBest || 0, ngPlus: s.ngPlus || 0,
+      wins: a.wins || 0, bosses: a.bosses || 0, catches: a.catches || 0, crits: a.crits || 0, wbKills: a.wbKills || 0,
+      pets: (s.petBox && s.petBox.length) || 0, species: Object.keys(s.dexSeen || {}).length, items: (s.inv && s.inv.length) || 0 };
+  }
+  function nv(v, suffix) { return (v == null || v === "") ? "—" : (fmt(v) + (suffix || "")); }
+  function dRow(icon, label, valHtml) { return '<div class="dt-row"><span class="l">' + icon + ' ' + label + '</span><span class="v">' + valHtml + '</span></div>'; }
+  function openDetail(k) {
+    if (!mineSlots || !mineSlots[k]) return;
+    var s = mineSlots[k], p = effProfile(s);
+    var meta = CLASSES[s.cls] || { emoji: "❓", color: "#888", name: s.cls };
+    var headEmoji = p.titleEmoji || p.classEmoji || meta.emoji;
+    var headName = p.title || p.className || meta.name;
+    var expPct = (p.expNeed && p.exp != null) ? Math.max(0, Math.min(100, p.exp / p.expNeed * 100)) : 0;
+    var col = { orange: "#eb6834", green: "#1baf7a", blue: "#3987e5", teal: "#1baf7a", purple: "#9a6ad0", gold: "#e0a020" };
+    var hp = nv(p.hp) + (p.maxHp != null ? " / " + fmt(p.maxHp) : "");
+    var mp = nv(p.mp) + (p.maxMp != null ? " / " + fmt(p.maxMp) : "");
+    var html = '<button class="dt-x" id="dtX">✕</button>' +
+      '<div class="dt-head"><div class="dt-title">' + headEmoji + ' ' + esc(headName) + '</div>' +
+        '<div class="dt-sub">' + esc(p.className || meta.name) + ' · เลเวล ' + fmt(p.level) + (p.ngPlus ? ' · NG+' + p.ngPlus : '') + '</div>' +
+        (p.expNeed ? '<div class="dt-exp">EXP ' + fmt(p.exp) + ' / ' + fmt(p.expNeed) + '</div><div class="dt-expbar"><div class="dt-expfill" style="width:' + expPct + '%"></div></div>' : '') +
+      '</div>' +
+      '<div class="dt-sec"><h4>⚔️ ค่าพลังตัวละคร</h4>' +
+        dRow("💪", "พลังการต่อสู้รวม", '<span style="color:' + col.gold + '">' + nv(p.power) + '</span>') +
+        dRow("⚡", "ขั้นการตื่น", '<span style="color:' + col.orange + '">ตื่น ' + (p.ngPlus || 0) + '</span>') +
+        dRow("❤️", "พลังชีวิต (HP)", '<span style="color:' + col.green + '">' + hp + '</span>') +
+        dRow("💧", "มานา (MP)", '<span style="color:' + col.blue + '">' + mp + '</span>') +
+        dRow("🗡️", "พลังโจมตี", '<span style="color:' + col.orange + '">' + nv(p.atk) + '</span>') +
+        dRow("🛡️", "ป้องกัน", nv(p.def)) +
+        dRow("🎯", "คริติคอล", '<span style="color:' + col.orange + '">' + nv(p.crit, "%") + '</span>') +
+        dRow("💨", "หลบหลีก", '<span style="color:' + col.teal + '">' + nv(p.eva, "%") + '</span>') +
+        dRow("🍀", "โชค", '<span style="color:' + col.green + '">' + nv(p.luck, "%") + '</span>') +
+        dRow("👟", "ความเร็ว", '<span style="color:' + col.purple + '">' + (p.spd == null ? "—" : p.spd) + '</span>') +
+      '</div>' +
+      '<div class="dt-cur">' +
+        '<div class="c"><span class="ic">💰</span>' + fmt(p.gold) + '</div>' +
+        '<div class="c"><span class="ic">💎</span>' + fmt(p.diamonds) + '</div>' +
+        '<div class="c"><span class="ic">🔷</span>' + fmt(p.gemDust) + '</div>' +
+        '<div class="c"><span class="ic">✨</span>' + fmt(p.stardust) + '</div>' +
+      '</div>' +
+      '<div class="dt-sec"><h4>📊 สถิติ & ออนไลน์</h4>' +
+        (p.code || p.pid ? '<div class="dt-row"><span class="l">🆔 รหัสเพื่อน</span><span class="dt-code"><code id="dtCode">' + esc(p.code || p.pid) + '</code><button id="dtCopy">คัดลอก</button></span></div>' : '') +
+        dRow("🥇", "อันดับ PvP", nv(p.pvpRank) + (p.pvpTier ? ' <span style="color:var(--muted);font-weight:700">(' + esc(p.pvpTier) + ')</span>' : '')) +
+        dRow("♾️", "เอาชีวิตรอด (เวฟดีสุด)", nv(p.endlessBest)) +
+        dRow("🏆", "ชนะศึก", nv(p.wins)) +
+        dRow("👑", "ปราบบอส", nv(p.bosses)) +
+        dRow("👹", "ปราบบอสโลก", nv(p.wbKills)) +
+        dRow("💗", "จับมอนสเตอร์", nv(p.catches)) +
+        dRow("🎯", "ออกคริรวม", nv(p.crits)) +
+        dRow("🐾", "สัตว์เลี้ยง / สายพันธุ์", nv(p.pets) + " / " + nv(p.species)) +
+        dRow("🎒", "ไอเทมในกระเป๋า", nv(p.items)) +
+      '</div>';
+    document.getElementById("detailBox").innerHTML = html;
+    document.getElementById("detailModal").classList.add("open");
+    document.getElementById("dtX").addEventListener("click", closeDetail);
+    var cp = document.getElementById("dtCopy");
+    if (cp) cp.addEventListener("click", function(){ try { navigator.clipboard.writeText(p.code || p.pid); cp.textContent = "คัดลอกแล้ว!"; setTimeout(function(){ cp.textContent = "คัดลอก"; }, 1500); } catch (e) {} });
+  }
+  function closeDetail() { document.getElementById("detailModal").classList.remove("open"); }
 
   document.getElementById("lgGo").addEventListener("click", doLogin);
   document.getElementById("lgCancel").addEventListener("click", closeModal);
   document.getElementById("lgPass").addEventListener("keydown", function(e){ if (e.key === "Enter") doLogin(); });
   document.getElementById("loginModal").addEventListener("click", function(e){ if (e.target.id === "loginModal") closeModal(); });
+  document.getElementById("detailModal").addEventListener("click", function(e){ if (e.target.id === "detailModal") closeDetail(); });
   renderAuth();
   if (session) loadMine();
 
