@@ -205,7 +205,7 @@ const LOOT = [
     { id: "wes", slot: "weapon", name: "มีดคู่พสุธา", emoji: "🌍", rarity: "epic", atk: 10, def: 3, crit: 8, elem: "earth", cls: "assassin", req: 15 },
     { id: "wws", slot: "weapon", name: "มีดคู่วายุเงา", emoji: "🌪️", rarity: "secret", atk: 14, spd: 10, crit: 15, eva: 5, elem: "wind", cls: "assassin", req: 20 },
     { id: "wls", slot: "weapon", name: "มีดคู่จันทราลับ", emoji: "🌙", rarity: "secret", atk: 16, crit: 20, eva: 6, elem: "light", cls: "assassin", req: 25 },
-    { id: "wDs", slot: "weapon", name: "มีดคู่เขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 100, crit: 24, eva: 8, elem: "dragon", cls: "assassin", req: 100 },
+    { id: "wDs", slot: "weapon", name: "มีดคู่เขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 100, crit: 24, eva: 8, elem: "dragon", cls: "assassin", req: 100, set: "dragon" },
     // 💼 OFFICE WORKER — magic pens (the mightiest weapon)
     { id: "wfo", slot: "weapon", name: "ปากกาไฟลนก้น", emoji: "🔥", rarity: "rare", atk: 6, mp: 2, elem: "fire", cls: "office", req: 5 },
     { id: "wio", slot: "weapon", name: "ปากกาแอร์ออฟฟิศ", emoji: "❄️", rarity: "epic", atk: 10, def: 3, elem: "ice", cls: "office", req: 10 },
@@ -241,19 +241,19 @@ const LOOT = [
     { id: "s1", slot: "shoes", name: "ผ้าใบชมพูหวาน", emoji: "👟", rarity: "common", def: 2, spd: 5, eva: 4 },
     { id: "s2", slot: "shoes", name: "บูทสายฟ้า", emoji: "⚡", rarity: "epic", def: 3, spd: 15, elem: "wind" },
     // 🐉 THE DRAGON SET — 7 pieces, ultimate tier
-    { id: "wDw", slot: "weapon", name: "ดาบเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 110, def: 28, elem: "dragon", cls: "warrior", req: 100 },
-    { id: "wDa", slot: "weapon", name: "ธนูอสูรมังกร", emoji: "🐉", rarity: "dragon", atk: 105, crit: 20, elem: "dragon", cls: "archer", req: 100 },
-    { id: "wDm", slot: "weapon", name: "คทาราชันมังกร", emoji: "🐉", rarity: "dragon", atk: 105, hp: 120, elem: "dragon", cls: "mage", req: 100 },
-    { id: "wDl", slot: "weapon", name: "หอกเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 110, def: 24, crit: 14, elem: "dragon", cls: "lancer", req: 100 },
-    { id: "wDo", slot: "weapon", name: "ปากกามังกร CEO", emoji: "🐉", rarity: "dragon", atk: 105, mp: 48, crit: 20, elem: "dragon", cls: "office", req: 100 },
-    { id: "wDc", slot: "weapon", name: "คีย์บอร์ดมังกรดิจิทัล", emoji: "🐉", rarity: "dragon", atk: 105, mp: 56, crit: 22, elem: "dragon", cls: "coder", req: 100 },
-    { id: "wDx", slot: "weapon", name: "แคนนอนเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 105, crit: 20, def: 20, elem: "dragon", cls: "aegis", req: 100 },
-    { id: "oD", slot: "outfit", name: "เกราะเกล็ดมังกร", emoji: "🐉", rarity: "dragon", hp: 70, def: 12, atk: 6, elem: "dragon" },
-    { id: "hD", slot: "hat", name: "หมวกเขามังกร", emoji: "🐉", rarity: "dragon", atk: 8, hp: 30, def: 6, elem: "dragon" },
-    { id: "mD", slot: "mask", name: "หน้ากากอสุรมังกร", emoji: "🐉", rarity: "dragon", atk: 10, def: 4, crit: 10, eva: 4, elem: "dragon" },
-    { id: "gD", slot: "gloves", name: "กรงเล็บมังกร", emoji: "🐉", rarity: "dragon", atk: 14, def: 3, elem: "dragon" },
-    { id: "pD", slot: "pants", name: "สนับเกล็ดมังกร", emoji: "🐉", rarity: "dragon", hp: 40, def: 8, elem: "dragon" },
-    { id: "sD", slot: "shoes", name: "รองเท้ามังกรเหิน", emoji: "🐉", rarity: "dragon", def: 5, spd: 20, eva: 6, crit: 5, elem: "dragon" },
+    { id: "wDw", slot: "weapon", name: "ดาบเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 110, def: 28, elem: "dragon", cls: "warrior", req: 100, set: "dragon" },
+    { id: "wDa", slot: "weapon", name: "ธนูอสูรมังกร", emoji: "🐉", rarity: "dragon", atk: 105, crit: 20, elem: "dragon", cls: "archer", req: 100, set: "dragon" },
+    { id: "wDm", slot: "weapon", name: "คทาราชันมังกร", emoji: "🐉", rarity: "dragon", atk: 105, hp: 120, elem: "dragon", cls: "mage", req: 100, set: "dragon" },
+    { id: "wDl", slot: "weapon", name: "หอกเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 110, def: 24, crit: 14, elem: "dragon", cls: "lancer", req: 100, set: "dragon" },
+    { id: "wDo", slot: "weapon", name: "ปากกามังกร CEO", emoji: "🐉", rarity: "dragon", atk: 105, mp: 48, crit: 20, elem: "dragon", cls: "office", req: 100, set: "dragon" },
+    { id: "wDc", slot: "weapon", name: "คีย์บอร์ดมังกรดิจิทัล", emoji: "🐉", rarity: "dragon", atk: 105, mp: 56, crit: 22, elem: "dragon", cls: "coder", req: 100, set: "dragon" },
+    { id: "wDx", slot: "weapon", name: "แคนนอนเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 105, crit: 20, def: 20, elem: "dragon", cls: "aegis", req: 100, set: "dragon" },
+    { id: "oD", slot: "outfit", name: "เกราะเกล็ดมังกร", emoji: "🐉", rarity: "dragon", hp: 70, def: 12, atk: 6, elem: "dragon", set: "dragon" },
+    { id: "hD", slot: "hat", name: "หมวกเขามังกร", emoji: "🐉", rarity: "dragon", atk: 8, hp: 30, def: 6, elem: "dragon", set: "dragon" },
+    { id: "mD", slot: "mask", name: "หน้ากากอสุรมังกร", emoji: "🐉", rarity: "dragon", atk: 10, def: 4, crit: 10, eva: 4, elem: "dragon", set: "dragon" },
+    { id: "gD", slot: "gloves", name: "กรงเล็บมังกร", emoji: "🐉", rarity: "dragon", atk: 14, def: 3, elem: "dragon", set: "dragon" },
+    { id: "pD", slot: "pants", name: "สนับเกล็ดมังกร", emoji: "🐉", rarity: "dragon", hp: 40, def: 8, elem: "dragon", set: "dragon" },
+    { id: "sD", slot: "shoes", name: "รองเท้ามังกรเหิน", emoji: "🐉", rarity: "dragon", def: 5, spd: 20, eva: 6, crit: 5, elem: "dragon", set: "dragon" },
     { id: "fg_sword", slot: "weapon", name: "ดาบเหล็กกล้า", emoji: "🗡️", rarity: "rare", atk: 18, cls: "warrior", forge: true },
     { id: "fg_great", slot: "weapon", name: "ดาบใหญ่ทำลายล้าง", emoji: "⚔️", rarity: "epic", atk: 28, cls: "warrior", forge: true },
     { id: "fg_shield", slot: "weapon", name: "โล่เหล็กหนา", emoji: "🛡️", rarity: "rare", atk: 8, def: 16, cls: "warrior", forge: true },
@@ -1226,6 +1226,21 @@ const SEASONAL_SETS = [
     { id: "newyear", name: "ชุดปีใหม่", emoji: "🎆", desc: "คอสเมติกล้วน", dye: { outfit: 0xf5c542, weapon: 0xff70b0, pants: 0x9a4ad0, shoes: 0xffe070, gloves: 0xf5c542 }, bonus: {}, aura: 0xffd24a, seasonal: true, unlock: { stat: "level", val: 20 } },
 ];
 const findSet = (id) => OUTFIT_SETS.find((x) => x.id === id) || SEASONAL_SETS.find((x) => x.id === id) || null;
+// ---------- 🐉⭐ GEAR SET BONUSES (ใส่อุปกรณ์ครบเซ็ตมังกร/ตำนาน) — counts EQUIPPED pieces sharing a `set` tag ----------
+// Cumulative tiers: every reached threshold adds its bonus. 7 slots max (weapon+outfit+hat+mask+gloves+pants+shoes).
+const GEAR_SET_SLOTS = ["weapon", "outfit", "hat", "mask", "gloves", "pants", "shoes"];
+const GEAR_SETS = {
+    dragon: { name: "จอมมังกร", emoji: "🐉", tiers: [
+            { n: 3, b: { atkPct: 5, hpPct: 5 }, desc: "3 ชิ้น: ATK +5% · HP +5%" },
+            { n: 5, b: { defPct: 6, crit: 4 }, desc: "5 ชิ้น: DEF +6% · คริ +4%" },
+            { n: 7, b: { atkPct: 10, hpPct: 10, critDmg: 15 }, desc: "ครบ 7 ชิ้น: ATK +10% · HP +10% · ดาเมจคริ +15%" },
+        ] },
+    legend: { name: "เทพโลกันตร์", emoji: "⭐", tiers: [
+            { n: 3, b: { atkPct: 8, hpPct: 8 }, desc: "3 ชิ้น: ATK +8% · HP +8%" },
+            { n: 5, b: { defPct: 10, crit: 6 }, desc: "5 ชิ้น: DEF +10% · คริ +6%" },
+            { n: 7, b: { atkPct: 16, hpPct: 16, critDmg: 25, luck: 10 }, desc: "ครบ 7 ชิ้น: ATK +16% · HP +16% · ดาเมจคริ +25% · โชค +10" },
+        ] },
+};
 // ---------- 🌟✨ COSMETIC AURAS (ออร่าประจำตัว) — floating ambient particles around the character ----------
 const COSMETIC_AURAS = [
     { id: "none", name: "ไม่มี", emoji: "⚪", color: null, unlock: null },
@@ -19339,6 +19354,18 @@ function CherryAdventure() {
             if (tier >= 3)
                 burst(char.position, ELEM_GLOW[it.elem] || 0xffe28a, 1 + tier * 0.4);
             toast(`สวมใส่ ${it.emoji} ${it.name}!`);
+            // 🐉⭐ gear-set progress feedback
+            if (it.set && GEAR_SETS[it.set] && G.gearSetCounts) {
+                const n = G.gearSetCounts()[it.set] || 0, gs = GEAR_SETS[it.set];
+                if (n >= 7) {
+                    burst(char.position, it.set === "legend" ? 0xffe08a : 0xff6030, 2.2);
+                    toast(`${gs.emoji}✨ ครบเซ็ต${gs.name}! รับโบนัสเต็มทุกชิ้น`);
+                }
+                else {
+                    const nextTier = gs.tiers.find((t) => t.n > n);
+                    toast(`${gs.emoji} เซ็ต${gs.name} ${n}/7${nextTier ? ` — อีก ${nextTier.n - n} ชิ้นปลดล็อก: ${nextTier.desc}` : ""}`);
+                }
+            }
             syncPlayer();
         };
         // 🧍 paper-doll character & inventory screen
@@ -19927,13 +19954,40 @@ function CherryAdventure() {
             toast(id === "none" ? "🌟 เอาออร่าออกแล้ว" : `🌟✨ ใส่ออร่า ${a.emoji} ${a.name}!`);
             setUi((u) => ({ ...u, activeAura: id }));
         };
+        // 🐉⭐ count equipped pieces per gear-set and sum the reached-tier bonuses
+        const gearSetCounts = () => {
+            const eq = G.equip || {}, counts = {};
+            for (const sl of GEAR_SET_SLOTS) {
+                const it = LOOT.find((x) => x.id === eq[sl]);
+                if (it && it.set && GEAR_SETS[it.set])
+                    counts[it.set] = (counts[it.set] || 0) + 1;
+            }
+            return counts;
+        };
+        const gearSetBonus = () => {
+            const b = { atkPct: 0, defPct: 0, def: 0, hpPct: 0, crit: 0, critDmg: 0, luck: 0, mp: 0, eva: 0 };
+            const counts = gearSetCounts();
+            for (const key in counts) {
+                const gs = GEAR_SETS[key], n = counts[key];
+                if (!gs)
+                    continue;
+                gs.tiers.forEach((t) => { if (n >= t.n)
+                    for (const k in t.b)
+                        b[k] = (b[k] || 0) + t.b[k]; });
+            }
+            return b;
+        };
+        G.gearSetCounts = gearSetCounts;
+        G.gearSetBonus = gearSetBonus;
         const setBonus = () => {
             const b = { atkPct: 0, defPct: 0, def: 0, hpPct: 0, crit: 0, critDmg: 0, luck: 0, mp: 0, eva: 0 };
             const s = findSet(G.activeSet);
-            if (!s || !s.bonus)
-                return b;
-            for (const k in s.bonus)
-                b[k] = (b[k] || 0) + s.bonus[k];
+            if (s && s.bonus)
+                for (const k in s.bonus)
+                    b[k] = (b[k] || 0) + s.bonus[k];
+            const g = gearSetBonus();
+            for (const k in g)
+                b[k] = (b[k] || 0) + g[k]; // 🐉⭐ full-gear-set bonus (dragon/legend)
             return b;
         };
         G.setBonus = setBonus;
