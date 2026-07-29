@@ -135,8 +135,12 @@
   .rankbadge.g3 { background: linear-gradient(135deg,#f0c99a,#d08a4a); color:#fff; }
   .cchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
   .cdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .pcell { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
   .pname { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
   .ngtag { font-size: 10.5px; font-weight: 800; color: #e0862f; }
+  .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .sdot.on { background: var(--good); box-shadow: 0 0 0 0 rgba(12,163,12,0.55); animation: pulse 1.8s infinite; }
+  .sdot.off { background: var(--baseline); }
 
   .statmini { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
   .statmini .sm { background: var(--surface-2); border-radius: 13px; padding: 12px 10px; text-align: center; }
@@ -231,7 +235,7 @@
 
   <div class="card full">
     <h2>🏆 ตารางอันดับผู้เล่น</h2>
-    <p class="csub">25 อันดับแรก จัดเรียงตามค่าพลังรวม (ATK×4 + DEF×3 + HP×0.05 + CRIT×8)</p>
+    <p class="csub">25 อันดับแรก จัดเรียงตามค่าพลังรวม (ATK×4 + DEF×3 + HP×0.05 + CRIT×8) · 🟢 = ออนไลน์ตอนนี้</p>
     <div id="leaderboard"></div>
   </div>
 
@@ -267,6 +271,7 @@
   function powerOf(r) { return Math.round((r.atk||0)*4 + (r.def||0)*3 + (r.hp||0)*0.05 + (r.crit||0)*8); }
   function fmt(n) { return (n||0).toLocaleString("en-US"); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+  function agoTxt(ms) { var m = Math.floor(ms/60000); if (m < 1) return "ไม่กี่วินาทีที่แล้ว"; if (m < 60) return m + " นาทีที่แล้ว"; var h = Math.floor(m/60); if (h < 24) return h + " ชม.ที่แล้ว"; return Math.floor(h/24) + " วันที่แล้ว"; }
 
   // ---- floating tooltip ----
   var tip = document.getElementById("tip");
@@ -394,13 +399,17 @@
   function renderLeaderboard(rows) {
     var el = document.getElementById("leaderboard");
     if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีผู้เล่นบนกระดานอันดับ — เล่นเกมและเปิดออนไลน์เพื่อขึ้นอันดับ!</div>'; return; }
+    var now = Date.now();
     var top = rows.slice().map(function(r){ return { r: r, p: powerOf(r) }; }).sort(function(a,b){ return b.p - a.p; }).slice(0, 25);
     var body = top.map(function(x, i){
       var r = x.r, meta = CLASSES[r.c] || { name: r.c || "?", emoji: "❓", color: "#888" };
       var rk = i + 1, badge = rk <= 3 ? " g" + rk : "";
+      var on = r.ts && (now - r.ts) < 180000; // 🟢 online = active in last 3 min
+      var seen = r.ts ? ("เห็นล่าสุด " + agoTxt(now - r.ts)) : "ไม่ทราบสถานะ";
       return '<tr>' +
         '<td><span class="rankbadge' + badge + '">' + rk + '</span></td>' +
-        '<td><span class="pname">' + esc(r.n || "ผู้เล่น") + '</span>' + ((r.ng||0) > 0 ? ' <span class="ngtag">⚡' + r.ng + '</span>' : '') + '</td>' +
+        '<td><span class="pcell"><span class="sdot ' + (on ? "on" : "off") + '" title="' + (on ? "ออนไลน์" : esc(seen)) + '"></span>' +
+          '<span class="pname">' + esc(r.n || "ผู้เล่น") + '</span>' + ((r.ng||0) > 0 ? '<span class="ngtag">⚡' + r.ng + '</span>' : '') + '</span></td>' +
         '<td class="hide-s"><span class="cchip"><span class="cdot" style="background:' + meta.color + '"></span>' + meta.emoji + ' ' + esc(meta.name) + '</span></td>' +
         '<td class="num">' + fmt(r.lv || 1) + '</td>' +
         '<td class="num" style="color:var(--accent)">' + fmt(x.p) + '</td>' +
