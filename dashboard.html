@@ -85,13 +85,19 @@
   button.act:active, button.ghost:active { transform: translateY(1px); }
 
   /* ---------- KPI tiles ---------- */
-  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 18px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 18px; }
   .kpi { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 14px 14px 13px; box-shadow: var(--shadow);
     position: relative; overflow: hidden; }
   .kpi .k-ico { font-size: 17px; }
   .kpi .k-val { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; margin-top: 3px; line-height: 1.05; }
   .kpi .k-lab { font-size: 11px; color: var(--text-secondary); font-weight: 700; margin-top: 3px; }
   .kpi .k-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .kpi-live { border-color: rgba(12,163,12,0.4); background: linear-gradient(180deg, rgba(12,163,12,0.09), var(--surface-1)); }
+  .kpi-live .k-val { color: var(--good); }
+  .livedot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 rgba(12,163,12,0.6); animation: pulse 1.6s infinite; vertical-align: middle; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(12,163,12,0.55); } 70% { box-shadow: 0 0 0 9px rgba(12,163,12,0); } 100% { box-shadow: 0 0 0 0 rgba(12,163,12,0); } }
+  select.iv { cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 7px 10px; box-shadow: var(--shadow); -webkit-appearance: none; appearance: none; }
 
   /* ---------- cards / charts ---------- */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -152,11 +158,9 @@
     transition: opacity .12s; transform: translate(-50%, -130%); white-space: nowrap; }
 
   @media (max-width: 860px) {
-    .kpis { grid-template-columns: repeat(3, 1fr); }
     .grid2 { grid-template-columns: 1fr; }
   }
   @media (max-width: 520px) {
-    .kpis { grid-template-columns: repeat(2, 1fr); }
     .hbar-row { grid-template-columns: 104px 1fr 52px; }
     .lb .hide-s { display: none; }
     .titles h1 { font-size: 18px; }
@@ -169,10 +173,17 @@
     <span class="logo">🍒</span>
     <div class="titles">
       <h1>Cherry Adventure — Insight Dashboard</h1>
-      <p>สถิติผู้เล่นออนไลน์ · อัปเดตอัตโนมัติทุก 60 วินาที</p>
+      <p>สถิติผู้เล่นออนไลน์ · เลือกช่วงเวลารีเฟรชอัตโนมัติได้เอง</p>
     </div>
     <div class="spacer"></div>
     <span class="chip" id="statusChip"><span class="dot off" id="statusDot"></span><span id="statusTxt">กำลังโหลด…</span></span>
+    <select class="iv" id="intervalSel" title="ตั้งเวลารีเฟรชอัตโนมัติ">
+      <option value="0">⏱️ รีเฟรช: ปิด</option>
+      <option value="10000">⏱️ ทุก 10 วิ</option>
+      <option value="30000">⏱️ ทุก 30 วิ</option>
+      <option value="60000">⏱️ ทุก 1 นาที</option>
+      <option value="300000">⏱️ ทุก 5 นาที</option>
+    </select>
     <button class="ghost" id="themeBtn" title="สลับธีมสว่าง/มืด">🌗</button>
     <button class="act" id="refreshBtn">🔄 รีเฟรช</button>
   </header>
@@ -289,14 +300,18 @@
   function renderKPIs(rows) {
     var now = Date.now();
     var total = rows.length;
+    var online = rows.filter(function(r){ return r.ts && (now - r.ts) < 180000; }).length;   // 🟢 active in last 3 min = online now
     var active = rows.filter(function(r){ return r.ts && (now - r.ts) < 86400000; }).length;
     var maxLv = rows.reduce(function(m,r){ return Math.max(m, r.lv||0); }, 0);
     var avgLv = total ? Math.round(rows.reduce(function(s,r){ return s + (r.lv||0); }, 0) / total) : 0;
     var prestige = rows.reduce(function(s,r){ return s + (r.ng||0); }, 0);
     var avgPow = total ? Math.round(rows.reduce(function(s,r){ return s + powerOf(r); }, 0) / total) : 0;
+    var liveTile = '<div class="kpi kpi-live"><div class="k-ico"><span class="livedot"></span></div><div class="k-val">' + fmt(online) +
+      '</div><div class="k-lab">ออนไลน์ตอนนี้</div><div class="k-sub">ใช้งานใน 3 นาที</div></div>';
     document.getElementById("kpis").innerHTML =
+      liveTile +
       kpi("👥", fmt(total), "ผู้เล่นทั้งหมด") +
-      kpi("🟢", fmt(active), "ใช้งานใน 24 ชม.") +
+      kpi("🕑", fmt(active), "ใช้งานใน 24 ชม.") +
       kpi("🏆", fmt(maxLv), "เลเวลสูงสุด") +
       kpi("📊", fmt(avgLv), "เลเวลเฉลี่ย") +
       kpi("⚡", fmt(prestige), "ตื่นพลังรวม", "New Game+ สะสม") +
@@ -493,10 +508,21 @@
       });
   }
 
+  // ---- user-settable auto-refresh ----
+  var timer = null;
+  function armTimer(ms) { if (timer) { clearInterval(timer); timer = null; } if (ms > 0) timer = setInterval(load, ms); }
+  var sel = document.getElementById("intervalSel");
+  var saved = null; try { saved = window.localStorage.getItem("dash_interval"); } catch (e) {}
+  sel.value = (saved != null && [ "0","10000","30000","60000","300000" ].indexOf(saved) >= 0) ? saved : "60000";
+  sel.addEventListener("change", function () {
+    try { window.localStorage.setItem("dash_interval", sel.value); } catch (e) {}
+    armTimer(parseInt(sel.value, 10) || 0);
+  });
+
   document.getElementById("refreshBtn").addEventListener("click", load);
   skeletons();
   load();
-  setInterval(load, 60000);
+  armTimer(parseInt(sel.value, 10) || 0);
 })();
 </script>
 </body>
