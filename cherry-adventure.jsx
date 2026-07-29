@@ -14509,12 +14509,12 @@ export default function CherryAdventure() {
       if (G.saveGame) G.saveGame();
     };
     // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
-    G.HERO_PRICE = { haru: 80, yuki: 120, luna: 120, celestia: 180, rose: 160, kentaro: 200, kotaro: 220, kairi: 260, aurelius: 300, ragnar: 300 };
+    G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800 }; // 💎 ชุดฮีโร่ 1000++ เพชร
     G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
     G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now()) return 0; return Math.ceil((t - Date.now()) / 86400000); };
     G.buyHero = (id) => {
       if (G.heroesOwned && G.heroesOwned[id]) { toast("ปลดล็อกฮีโร่นี้ถาวรแล้ว ✨"); return; }
-      const price = (G.HERO_PRICE && G.HERO_PRICE[id]) || 150;
+      const price = (G.HERO_PRICE && G.HERO_PRICE[id]) || 1000;
       if ((G.diamonds || 0) < price) { toast(`💎 เพชรไม่พอ — ต้องมี ${price}`); return; }
       G.diamonds -= price;
       G.heroesOwned = G.heroesOwned || {}; G.heroesOwned[id] = 1;
