@@ -14968,6 +14968,7 @@ export default function CherryAdventure() {
     const RANCH_SLOTS = 6;                 // คอกฟาร์ม 6 ช่อง
     const RANCH_CAP_MS = 8 * 3600 * 1000;  // สะสมผลผลิตออฟไลน์สูงสุด 8 ชม.
     const FEED_COST = 60, FEED_HAPPY = 34; // ให้อาหาร: จ่ายทอง → ความสุขเพิ่ม
+    const BREED_COST = 200;                // 🥚 ค่าเพาะพันธุ์ (ทอง)
     if (!G.ranch) G.ranch = { slots: [], happy: {}, last: Date.now(), pending: 0 };
     const ranchHappy = (iid) => Math.max(0, Math.min(100, G.ranch.happy[iid] != null ? G.ranch.happy[iid] : 60));
     // ผลผลิตต่อชั่วโมงของเพ็ต 1 ตัว (ทอง, EXP) — ยิ่ง tier/เลเวล/ความสุขสูง ยิ่งได้เยอะ
@@ -15009,11 +15010,17 @@ export default function CherryAdventure() {
         const r = ranchRate(p), sp = SPECIES[p.sp] || {};
         slots.push({ i: iid, sp: p.sp, lv: p.lv, plus: p.plus || 0, stage: p.stage, emoji: sp.emoji, name: sp.name, happy: Math.round(ranchHappy(iid)), goldHr: Math.round(r.gold), expHr: Math.round(r.exp) });
       }
-      return { slots, slotsMax: RANCH_SLOTS, pending: Math.floor(R.pending || 0), feedCost: FEED_COST };
+      let egg = null;
+      if (R.egg) {
+        const sp = SPECIES[R.egg.sp] || {};
+        const remain = Math.max(0, (R.egg.readyAt || 0) - Date.now());
+        egg = { sp: R.egg.sp, emoji: sp.emoji, name: sp.name, iv: R.egg.iv, total: (R.egg.iv.a + R.egg.iv.h + R.egg.iv.d), ready: remain <= 0, remainMin: Math.ceil(remain / 60000) };
+      }
+      return { slots, slotsMax: RANCH_SLOTS, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST };
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
-    G.openRanch = () => { ranchTick(); setUi((u) => ({ ...u, ranchOpen: true, ranchPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
+    G.openRanch = () => { ranchTick(); setUi((u) => ({ ...u, ranchOpen: true, ranchPick: null, breedPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
     G.ranchAssign = (iid, slot) => {
       ranchTick();
       const R = G.ranch; R.slots = R.slots || [];
@@ -15042,6 +15049,53 @@ export default function CherryAdventure() {
       toast(`🐄 เก็บผลผลิตฟาร์ม +${amt.toLocaleString()} ทอง!`);
       syncPlayer();
       setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
+    };
+    // 🥚 BREEDING — two parents → an egg that inherits (tends to keep) the BEST IVs, then hatches over time
+    const ivMaxOf = (spId) => { const t = (SPECIES[spId] && SPECIES[spId].tier) || 1; return { a: 3 + t * 2, h: 5 + t * 3, d: 2 + t }; }; // exclusive max (matches rollIv)
+    const inheritIv = (pa, pb, spId) => {
+      const max = ivMaxOf(spId);
+      const one = (ka) => {
+        const va = (pa.iv || {})[ka] || 0, vb = (pb.iv || {})[ka] || 0;
+        let v = Math.random() < 0.7 ? Math.max(va, vb) : (va + vb) / 2; // มักสืบทอดค่าที่ดีกว่า
+        v = Math.round(v) + (Math.random() < 0.5 ? 1 : 0);              // กลายพันธุ์เล็กน้อยขึ้นบน
+        return Math.max(0, Math.min(max[ka] - 1, v));
+      };
+      return { a: one("a"), h: one("h"), d: one("d") };
+    };
+    G.breedPets = (iidA, iidB) => {
+      if (G.ranch.egg) { toast("🥚 มีไข่กำลังฟักอยู่แล้ว — รอฟักตัวนี้ก่อน"); return; }
+      const pa = G.petAt(iidA), pb = G.petAt(iidB);
+      if (!pa || !pb || iidA === iidB) { toast("เลือกพ่อแม่ 2 ตัวที่ต่างกัน"); return; }
+      if (G.petInUse(iidA) || G.petInUse(iidB)) { toast("⛔ ตัวในทีม/บัดดี้ ห้ามเพาะพันธุ์ — ถอดออกก่อน"); return; }
+      if ((G.gold || 0) < BREED_COST) { toast("💰 ทองไม่พอเพาะพันธุ์ (ต้องมี " + BREED_COST + ")"); return; }
+      ranchTick();
+      G.gold -= BREED_COST;
+      // offspring species = one of the parents (มักเป็นสายที่หายากกว่า) → เพาะสายที่ต้องการต่อได้
+      const ta = SPECIES[pa.sp].tier, tb = SPECIES[pb.sp].tier;
+      const sp = (pa.sp === pb.sp) ? pa.sp : (Math.random() < (ta >= tb ? 0.65 : 0.35) ? pa.sp : pb.sp);
+      const iv = inheritIv(pa, pb, sp);
+      const t = SPECIES[sp].tier || 1;
+      const mins = 20 + t * 8; // ฟักนานตาม tier
+      G.ranch.egg = { sp, iv, stage: 1, readyAt: Date.now() + mins * 60000 };
+      G.dexSeen = G.dexSeen || {}; G.dexSeen[sp] = 1;
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      toast(`🥚 เพาะพันธุ์สำเร็จ! ได้ไข่ ${SPECIES[sp].emoji} ${SPECIES[sp].name} (IV รวม ${iv.a + iv.h + iv.d}) — ฟักในอีก ${mins} นาที`);
+      syncPlayer();
+      setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap(), breedA: null, breedB: null, breedPick: null }));
+    };
+    G.claimEgg = () => {
+      const e = G.ranch.egg; if (!e) return;
+      if (Date.now() < (e.readyAt || 0)) { toast("🥚 ไข่ยังฟักไม่เสร็จ — รออีกสักครู่"); return; }
+      if ((G.petBox || []).length >= G.petCap()) { toast(`📦 กล่องเต็ม (${G.petCap()}) — เคลียร์ที่ก่อนฟักไข่`); return; }
+      const inst = G.addPetInstance(e.sp, { lv: 5, stage: e.stage || 1, iv: e.iv });
+      G.ranch.egg = null;
+      if (!inst) return;
+      G.col[e.sp] = (G.col[e.sp] || 0) + 1;
+      if (G.sfx) G.sfx.catch && G.sfx.catch();
+      const tot = e.iv.a + e.iv.h + e.iv.d;
+      toast(`🐣✨ ฟักไข่สำเร็จ! ได้ ${SPECIES[e.sp].emoji} ${SPECIES[e.sp].name} Lv.5 · พรสวรรค์ ${tot} ✨`);
+      syncPlayer(); if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, col: { ...G.col }, petBox: (G.petBox || []).map((x) => ({ ...x })), ranch: ranchUiSnap() }));
     };
 
     // ♾️ ENDLESS SURVIVAL: fight escalating waves; a loss ends the run
@@ -18020,8 +18074,8 @@ export default function CherryAdventure() {
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
       G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
-        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 6) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0 }
-        : { slots: [], happy: {}, last: Date.now(), pending: 0 };
+        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 6) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null }
+        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -28620,6 +28674,78 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 10, color: "#a99", marginTop: 10, lineHeight: 1.5, background: "#faf6ef", borderRadius: 10, padding: "8px 10px" }}>
                 🐾 เพ็ตในคอกจะหาทองและได้ EXP ให้เองตลอดเวลา · ให้อาหารเพื่อเพิ่มความสุข → ผลผลิตไวขึ้น · ความสุขจะค่อยๆ ลดถ้าไม่ดูแล
               </div>
+
+              {/* 🥚 breeding pen */}
+              <div style={{ marginTop: 12, borderTop: "1px solid #f0e6da", paddingTop: 10 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 900, color: "#a06ac0", marginBottom: 2 }}>🥚 เพาะพันธุ์ (สืบทอด IV)</div>
+                <div style={{ fontSize: 10, color: "#a99", marginBottom: 8 }}>จับคู่พ่อแม่ → ได้ไข่ที่สืบทอด IV ที่ดีที่สุดของทั้งคู่ (มักดีขึ้นทุกรุ่น) แล้วฟักตามเวลา (ได้แม้ปิดเกม)</div>
+                {ui.ranch.egg ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#f6ecfb,#efe0fa)", border: "1px solid #e3d0f2", borderRadius: 12, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 30, animation: ui.ranch.egg.ready ? "pulse 0.7s ease-in-out infinite alternate" : "none" }}>🥚</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a4a9a" }}>{ui.ranch.egg.emoji} {ui.ranch.egg.name}</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#a07ac0" }}>พรสวรรค์ (IV) รวม {ui.ranch.egg.total} · {ui.ranch.egg.ready ? "🐣 พร้อมฟักแล้ว!" : `⏳ อีก ${ui.ranch.egg.remainMin} นาที`}</div>
+                    </div>
+                    <button onClick={() => G.claimEgg && G.claimEgg()} disabled={!ui.ranch.egg.ready} style={{
+                      padding: "9px 15px", borderRadius: 999, border: "none", cursor: ui.ranch.egg.ready ? "pointer" : "default", fontFamily: font,
+                      fontSize: 12.5, fontWeight: 900, color: "#fff", background: ui.ranch.egg.ready ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#cdc3d3", boxShadow: ui.ranch.egg.ready ? "0 4px 12px rgba(138,74,192,0.45)" : "none",
+                    }}>🐣 ฟักไข่</button>
+                  </div>
+                ) : (() => {
+                  const pa = ui.breedA != null ? (ui.petBox || []).find((p) => p.i === ui.breedA) : null;
+                  const pb = ui.breedB != null ? (ui.petBox || []).find((p) => p.i === ui.breedB) : null;
+                  const cell = (p, which) => (
+                    <button onClick={() => setUi((u) => ({ ...u, breedPick: which }))} style={{
+                      flex: 1, minHeight: 74, borderRadius: 11, border: "2px dashed " + (p ? "#d6c0ea" : "#e0d4c4"), cursor: "pointer", fontFamily: font,
+                      background: p ? "#f6ecfb" : "#fcfaf3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+                    }}>
+                      {p ? (<><span style={{ fontSize: 22 }}>{(SPECIES[p.sp] || {}).emoji}</span><span style={{ fontSize: 10, fontWeight: 800, color: "#7a4a9a" }}>{(SPECIES[p.sp] || {}).name} Lv.{p.lv}</span><span style={{ fontSize: 9, color: "#a07ac0" }}>IV {(p.iv ? p.iv.a + p.iv.h + p.iv.d : 0)}</span></>) : (<><span style={{ fontSize: 20, color: "#c0b090" }}>＋</span><span style={{ fontSize: 10.5, fontWeight: 800, color: "#b8a888" }}>พ่อแม่ {which === "a" ? "①" : "②"}</span></>)}
+                    </button>
+                  );
+                  const canBreed = pa && pb && ui.breedA !== ui.breedB;
+                  return (
+                    <>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                        {cell(pa, "a")}
+                        <span style={{ fontSize: 16 }}>💕</span>
+                        {cell(pb, "b")}
+                      </div>
+                      <button onClick={() => canBreed && G.breedPets && G.breedPets(ui.breedA, ui.breedB)} disabled={!canBreed} style={{
+                        width: "100%", padding: "9px 0", borderRadius: 999, border: "none", cursor: canBreed ? "pointer" : "default", fontFamily: font,
+                        fontSize: 12.5, fontWeight: 900, color: "#fff", background: canBreed ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#cdc3d3", boxShadow: canBreed ? "0 4px 12px rgba(138,74,192,0.4)" : "none",
+                      }}>🥚 เพาะพันธุ์ ({ui.ranch.breedCost}💰)</button>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* 🥚 breeding parent picker */}
+              {ui.breedPick != null && (() => {
+                const other = ui.breedPick === "a" ? ui.breedB : ui.breedA;
+                const avail = (ui.petBox || []).filter((p) => p.i !== other && !(G.petInUse && G.petInUse(p.i)));
+                return (
+                  <div style={{ marginTop: 10, borderTop: "1px solid #eee", paddingTop: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#7a4a9a" }}>เลือกพ่อแม่ {ui.breedPick === "a" ? "①" : "②"}</div>
+                      <div style={{ flex: 1 }} />
+                      <button onClick={() => setUi((u) => ({ ...u, breedPick: null }))} style={{ padding: "4px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#a06a6a", background: "#f0e6e0" }}>ยกเลิก</button>
+                    </div>
+                    {avail.length ? (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, maxHeight: "34vh", overflowY: "auto" }}>
+                        {avail.map((p) => { const sp = SPECIES[p.sp] || {}; return (
+                          <button key={p.i} onClick={() => setUi((u) => ({ ...u, [u.breedPick === "a" ? "breedA" : "breedB"]: p.i, breedPick: null }))} style={{ padding: "7px 4px", borderRadius: 10, border: "1px solid #e3d0f2", cursor: "pointer", fontFamily: font, background: "#f8f2fb", textAlign: "center" }}>
+                            <div style={{ fontSize: 22 }}>{sp.emoji}</div>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: "#7a4a9a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sp.name}</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: "#a07ac0" }}>Lv.{p.lv} · IV {(p.iv ? p.iv.a + p.iv.h + p.iv.d : 0)}</div>
+                          </button>
+                        ); })}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 11, color: "#a99", textAlign: "center", padding: "10px 0" }}>ไม่มีเพ็ตให้เลือก (ต้องมีอย่างน้อย 2 ตัว ไม่อยู่ในทีม/บัดดี้)</div>
+                    )}
+                  </div>
+                );
+              })()}
               {/* pet picker overlay */}
               {ui.ranchPick != null && (() => {
                 const inRanch = new Set((ui.ranch.slots || []).filter(Boolean).map((s) => s.i));
