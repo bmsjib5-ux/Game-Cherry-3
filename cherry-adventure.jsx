@@ -1328,7 +1328,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
@@ -14408,46 +14408,54 @@ export default function CherryAdventure() {
       syncPlayer();
     };
     // 🧪💧 buy sized consumables from the shop (S/M/L)
-    G.buyHpPot = (size) => {
+    G.buyHpPot = (size, qty) => {
       const p = HP_POT[size]; if (!p) return;
-      if (G.gold < p.price) { toast(`ทองไม่พอ! น้ำยาเลือด${p.name} ราคา ${p.price}💰`); return; }
-      G.gold -= p.price; G.hpPots[size] = (G.hpPots[size] || 0) + 1;
+      qty = Math.max(1, Math.floor(qty || 1));
+      const total = p.price * qty;
+      if (G.gold < total) { toast(`ทองไม่พอ! ต้องมี ${total}💰 (น้ำยาเลือด${p.name} ×${qty})`); return; }
+      G.gold -= total; G.hpPots[size] = (G.hpPots[size] || 0) + qty;
       if (G.sfx) G.sfx.coin();
-      toast(`🧪 ซื้อน้ำยาเลือด${p.name} (+${p.heal} HP)!`);
+      toast(`🧪 ซื้อน้ำยาเลือด${p.name} ×${qty} (+${p.heal} HP)!`);
       syncPotions(); syncPlayer();
     };
-    G.buyMpPot = (size) => {
+    G.buyMpPot = (size, qty) => {
       const p = MP_POT[size]; if (!p) return;
-      if (G.gold < p.price) { toast(`ทองไม่พอ! น้ำยามานา${p.name} ราคา ${p.price}💰`); return; }
-      G.gold -= p.price; G.mpPots[size] = (G.mpPots[size] || 0) + 1;
+      qty = Math.max(1, Math.floor(qty || 1));
+      const total = p.price * qty;
+      if (G.gold < total) { toast(`ทองไม่พอ! ต้องมี ${total}💰 (น้ำยามานา${p.name} ×${qty})`); return; }
+      G.gold -= total; G.mpPots[size] = (G.mpPots[size] || 0) + qty;
       if (G.sfx) G.sfx.coin();
-      toast(`💧 ซื้อน้ำยามานา${p.name} (+${p.rest} มานา)!`);
+      toast(`💧 ซื้อน้ำยามานา${p.name} ×${qty} (+${p.rest} มานา)!`);
       syncPotions(); syncPlayer();
     };
     // 🔁 legacy aliases (drops / rewards default to the small size)
     G.buyPotion = () => G.buyHpPot("s");
     G.buyManaPotion = () => G.buyMpPot("s");
-    // 💰 sell a potion back for half its shop price
-    G.sellPot = (type, size) => {
+    // 💰 sell potions back for half the shop price (qty defaults to 1; clamps to what you have)
+    G.sellPot = (type, size, qty) => {
       const inv = type === "hp" ? G.hpPots : G.mpPots;
       const P = (type === "hp" ? HP_POT : MP_POT)[size]; if (!P || !inv) return;
-      if ((inv[size] || 0) <= 0) { toast("ไม่มีน้ำยาชนิดนี้แล้ว"); return; }
-      inv[size]--;
-      const refund = Math.round(P.price / 2);
+      const have = inv[size] || 0;
+      if (have <= 0) { toast("ไม่มีน้ำยาชนิดนี้แล้ว"); return; }
+      qty = Math.max(1, Math.min(have, Math.floor(qty || 1)));
+      inv[size] -= qty;
+      const refund = Math.round(P.price / 2) * qty;
       G.gold += refund;
       if (G.sfx) G.sfx.coin();
-      toast(`💰 ขายคืน${type === "hp" ? "น้ำยาเลือด" : "น้ำยามานา"}${P.name} +${refund} ทอง`);
+      toast(`💰 ขายคืน${type === "hp" ? "น้ำยาเลือด" : "น้ำยามานา"}${P.name} ×${qty} +${refund} ทอง`);
       syncPotions(); syncPlayer();
     };
+    G.sellPotAll = (type, size) => { const inv = type === "hp" ? G.hpPots : G.mpPots; G.sellPot(type, size, (inv && inv[size]) || 0); };
     // 🔴🟡🔵 buy a catch ball — the ONLY way to get balls (no drops)
     G.BALL_PRICE = 1000;
-    G.buyBall = () => {
-      const price = G.BALL_PRICE;
-      if (G.gold < price) { toast(`ทองไม่พอ! ลูกบอลราคา ${price}💰`); return; }
-      G.gold -= price;
-      G.player = G.player || {}; G.player.balls = (G.player.balls || 0) + 1;
+    G.buyBall = (qty) => {
+      qty = Math.max(1, Math.floor(qty || 1));
+      const total = G.BALL_PRICE * qty;
+      if (G.gold < total) { toast(`ทองไม่พอ! ต้องมี ${total}💰 (ลูกบอล ×${qty})`); return; }
+      G.gold -= total;
+      G.player = G.player || {}; G.player.balls = (G.player.balls || 0) + qty;
       if (G.sfx) G.sfx.coin();
-      toast(`🔴🟡🔵 ซื้อลูกบอลจับมอนสเตอร์ +1! (มี ${G.player.balls})`);
+      toast(`🔴🟡🔵 ซื้อลูกบอลจับมอนสเตอร์ ×${qty}! (มี ${G.player.balls})`);
       setUi((u) => ({ ...u, gold: G.gold, balls: G.player.balls }));
       syncPlayer();
     };
@@ -26337,41 +26345,52 @@ export default function CherryAdventure() {
                 <span style={{ fontSize: 13, fontWeight: 800, color: "#c09020" }}>💰 {ui.gold}</span>
               </div>
               {/* 🧪💧 consumables — always in stock */}
-              <div style={{ fontSize: 11, fontWeight: 800, color: "#8a8a7a", marginBottom: 4 }}>ของใช้ (ซื้อได้ไม่จำกัด)</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#8a8a7a" }}>ของใช้ (ซื้อได้ไม่จำกัด)</span>
+                {/* 🔢 จำนวนซื้อ */}
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 800, color: "#8a8a7a" }}>จำนวนซื้อ</span>
+                  <button onClick={() => setUi((u) => ({ ...u, shopQty: Math.max(1, (u.shopQty || 1) - 1) }))} style={{ width: 22, height: 24, borderRadius: 7, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, background: "#f0e8de", color: "#8a5a3a" }}>−</button>
+                  <input type="number" min={1} value={ui.shopQty || 1} onChange={(e) => { const v = Math.max(1, Math.floor(+e.target.value || 1)); setUi((u) => ({ ...u, shopQty: v })); }} style={{ width: 44, textAlign: "center", padding: "3px 2px", borderRadius: 7, border: "1.5px solid #e5d5cc", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#5a5a4a", background: "#fff" }} />
+                  <button onClick={() => setUi((u) => ({ ...u, shopQty: (u.shopQty || 1) + 1 }))} style={{ width: 22, height: 24, borderRadius: 7, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, background: "#f0e8de", color: "#8a5a3a" }}>+</button>
+                  {[10, 50].map((q) => <button key={q} onClick={() => setUi((u) => ({ ...u, shopQty: q }))} style={{ padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 800, fontFamily: font, background: (ui.shopQty || 1) === q ? "#c9a24a" : "#f3ede4", color: (ui.shopQty || 1) === q ? "#fff" : "#8a7a5a" }}>×{q}</button>)}
+                </div>
+              </div>
               {/* 🧪 HP potions — S/M/L */}
               <div style={{ fontSize: 10, fontWeight: 800, color: "#5aa06a", marginBottom: 3 }}>🧪 น้ำยาเลือด (รวม {ui.potions || 0})</div>
               <div style={{ display: "flex", gap: 6, marginBottom: 7 }}>
-                {["s", "m", "l"].map((sz) => { const p = (G.HP_POT || {})[sz] || {}; const cnt = ((ui.hpPots || {})[sz]) || 0; const afford = (ui.gold || 0) >= p.price; return (
-                  <button key={sz} disabled={!afford} onClick={() => G.buyHpPot(sz)} style={{ flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#eaf7ec" : "#eee", opacity: afford ? 1 : 0.55 }}>
+                {["s", "m", "l"].map((sz) => { const p = (G.HP_POT || {})[sz] || {}; const cnt = ((ui.hpPots || {})[sz]) || 0; const q = ui.shopQty || 1; const afford = (ui.gold || 0) >= p.price * q; return (
+                  <button key={sz} disabled={!afford} onClick={() => G.buyHpPot(sz, ui.shopQty || 1)} style={{ flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#eaf7ec" : "#eee", opacity: afford ? 1 : 0.55 }}>
                     <div style={{ fontSize: 16 }}>🧪</div>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#5aa06a" }}>{p.name} +{p.heal}</div>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c09020" }}>{p.price}💰 <span style={{ color: "#8a8a7a" }}>(มี {cnt})</span></div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c09020" }}>{p.price * q}💰 <span style={{ color: "#8a8a7a" }}>(มี {cnt})</span></div>
                   </button> ); })}
               </div>
               {/* 💧 MP potions — S/M/L */}
               <div style={{ fontSize: 10, fontWeight: 800, color: "#4a90c0", marginBottom: 3 }}>💧 น้ำยามานา (รวม {ui.mpPotions || 0})</div>
               <div style={{ display: "flex", gap: 6, marginBottom: 7 }}>
-                {["s", "m", "l"].map((sz) => { const p = (G.MP_POT || {})[sz] || {}; const cnt = ((ui.mpPots || {})[sz]) || 0; const afford = (ui.gold || 0) >= p.price; return (
-                  <button key={sz} disabled={!afford} onClick={() => G.buyMpPot(sz)} style={{ flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#e8f2fb" : "#eee", opacity: afford ? 1 : 0.55 }}>
+                {["s", "m", "l"].map((sz) => { const p = (G.MP_POT || {})[sz] || {}; const cnt = ((ui.mpPots || {})[sz]) || 0; const q = ui.shopQty || 1; const afford = (ui.gold || 0) >= p.price * q; return (
+                  <button key={sz} disabled={!afford} onClick={() => G.buyMpPot(sz, ui.shopQty || 1)} style={{ flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#e8f2fb" : "#eee", opacity: afford ? 1 : 0.55 }}>
                     <div style={{ fontSize: 16 }}>💧</div>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#4a90c0" }}>{p.name} +{p.rest}</div>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c09020" }}>{p.price}💰 <span style={{ color: "#8a8a7a" }}>(มี {cnt})</span></div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c09020" }}>{p.price * q}💰 <span style={{ color: "#8a8a7a" }}>(มี {cnt})</span></div>
                   </button> ); })}
               </div>
               {/* 🔴🟡🔵 catch ball */}
               <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-                <button onClick={() => G.buyBall()} style={{
+                {(() => { const q = ui.shopQty || 1; const total = 1000 * q; const afford = (ui.gold || 0) >= total; return (
+                <button onClick={() => G.buyBall(ui.shopQty || 1)} disabled={!afford} style={{
                   flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
-                  cursor: (ui.gold || 0) >= 1000 ? "pointer" : "not-allowed", fontFamily: font,
-                  background: (ui.gold || 0) >= 1000 ? "#fdf3ea" : "#eee", opacity: (ui.gold || 0) >= 1000 ? 1 : 0.6,
+                  cursor: afford ? "pointer" : "not-allowed", fontFamily: font,
+                  background: afford ? "#fdf3ea" : "#eee", opacity: afford ? 1 : 0.6,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 }}>
                   <span style={{ width: 20, height: 20, borderRadius: "50%", display: "inline-block",
                     background: "conic-gradient(#e5533b 0deg 120deg, #f0c33b 120deg 240deg, #3b8ae0 240deg 360deg)",
                     boxShadow: "inset -2px -2px 4px rgba(0,0,0,0.28), inset 2px 2px 4px rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.7)" }} />
                   <span style={{ fontSize: 11, fontWeight: 800, color: "#c0603b" }}>ลูกบอลจับมอนสเตอร์</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>1000💰 (มี {ui.balls || 0})</span>
-                </button>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>{total}💰 (มี {ui.balls || 0})</span>
+                </button> ); })()}
               </div>
               <div style={{ fontSize: 11, fontWeight: 800, color: "#8a8a7a", marginBottom: 4 }}>อุปกรณ์</div>
               {ui.shop.length === 0 && (
@@ -28936,17 +28955,30 @@ export default function CherryAdventure() {
                   <div style={{ fontSize: 10, color: "#8a9080" }}>ราคาซื้อ {meta.price}💰 · ขายคืน {refund}💰</div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
-                <button onClick={() => { (isHp ? G.usePotion : G.useManaPotion)(sz); }} disabled={n <= 0} style={{
-                  flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13, fontWeight: 900,
-                  cursor: n > 0 ? "pointer" : "not-allowed", color: "#fff",
-                  background: n > 0 ? `linear-gradient(90deg,${col},${isHp ? "#f0a05a" : "#7ad0e8"})` : "#5a6450",
-                }}>{isHp ? "🧪 ใช้ฟื้นเลือด" : "💧 ใช้ฟื้นมานา"}</button>
-                <button onClick={() => { G.sellPot(pot, sz); }} disabled={n <= 0} style={{
-                  flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13, fontWeight: 900,
+              <button onClick={() => { (isHp ? G.usePotion : G.useManaPotion)(sz); }} disabled={n <= 0} style={{
+                width: "100%", padding: "11px 0", marginTop: 14, borderRadius: 10, border: "none", fontFamily: font, fontSize: 13, fontWeight: 900,
+                cursor: n > 0 ? "pointer" : "not-allowed", color: "#fff",
+                background: n > 0 ? `linear-gradient(90deg,${col},${isHp ? "#f0a05a" : "#7ad0e8"})` : "#5a6450",
+              }}>{isHp ? "🧪 ใช้ฟื้นเลือด" : "💧 ใช้ฟื้นมานา"}</button>
+              {/* 🔢 จำนวนขาย */}
+              {(() => { const q = Math.max(1, Math.min(n || 1, ui.potSellQty || 1)); return (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 10 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 800, color: "#b8c0a8" }}>จำนวนขาย</span>
+                <button onClick={() => setUi((u) => ({ ...u, potSellQty: Math.max(1, (u.potSellQty || 1) - 1) }))} style={{ width: 26, height: 28, borderRadius: 7, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, background: "rgba(201,162,74,0.28)", color: "#e8dcc0" }}>−</button>
+                <input type="number" min={1} max={n} value={q} onChange={(e) => { const v = Math.max(1, Math.floor(+e.target.value || 1)); setUi((u) => ({ ...u, potSellQty: v })); }} style={{ width: 48, textAlign: "center", padding: "4px 2px", borderRadius: 7, border: "1.5px solid #c9a24a66", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#e8dcc0", background: "rgba(0,0,0,0.3)" }} />
+                <button onClick={() => setUi((u) => ({ ...u, potSellQty: Math.min(n, (u.potSellQty || 1) + 1) }))} style={{ width: 26, height: 28, borderRadius: 7, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, background: "rgba(201,162,74,0.28)", color: "#e8dcc0" }}>+</button>
+              </div> ); })()}
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <button onClick={() => { G.sellPot(pot, sz, ui.potSellQty || 1); }} disabled={n <= 0} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
                   cursor: n > 0 ? "pointer" : "not-allowed", color: "#fff",
                   background: n > 0 ? "linear-gradient(90deg,#c0902a,#e0b850)" : "#5a6450",
-                }}>💰 ขายคืน (+{refund})</button>
+                }}>💰 ขาย ×{Math.max(1, Math.min(n || 1, ui.potSellQty || 1))} (+{refund * Math.max(1, Math.min(n || 1, ui.potSellQty || 1))})</button>
+                <button onClick={() => { G.sellPotAll(pot, sz); }} disabled={n <= 0} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
+                  cursor: n > 0 ? "pointer" : "not-allowed", color: "#fff",
+                  background: n > 0 ? "linear-gradient(90deg,#b0702a,#d0982a)" : "#5a6450",
+                }}>💰 ขายทั้งหมด ({n})</button>
               </div>
               <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
             </div>
