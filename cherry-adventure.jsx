@@ -15216,6 +15216,17 @@ export default function CherryAdventure() {
     // ---------- 🗺️⚔️ OPEN-WORLD ACTION COMBAT (hybrid) — walk & hit normal monsters; bosses still enter the arena ----------
     G.actionMode = true;
     const WILD_AGGRO = 6.0, WILD_MELEE = 2.1; // monsters notice from further, stop & strike at arm's length
+    // 🛡️🌀 SAFE ZONE — a no-monster bubble around each warp portal; monsters can't enter or attack here
+    const SAFE_R = 4.2;
+    const inSafeZone = (x, z) => { const P = G._warpPts; if (!P) return false; return Math.hypot(x - P.LX, z - P.Z) < SAFE_R || Math.hypot(x - P.RX, z - P.Z) < SAFE_R; };
+    G.inSafeZone = inSafeZone;
+    const clampOutOfSafe = (m) => { // push a monster back to the safe-zone boundary if it drifted inside
+      const P = G._warpPts; if (!P) return;
+      for (const cx of [P.LX, P.RX]) {
+        const dx = m.position.x - cx, dz = m.position.z - P.Z, d = Math.hypot(dx, dz);
+        if (d < SAFE_R) { const k = (SAFE_R + 0.05) / (d || 0.001); m.position.x = cx + dx * k; m.position.z = P.Z + dz * k; }
+      }
+    };
     const isArenaFoe = (m) => !!(m.userData.boss || m.userData.biomeBoss || m.userData.dungeon || m.userData.golden || m.userData.ghost || m.userData.horde);
     const initWildHp = (m) => {
       if (m.userData.whp != null) return;
@@ -18308,12 +18319,16 @@ export default function CherryAdventure() {
           initWildHp(m);
           const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
           const pdist = Math.hypot(pdx, pdz) || 0.001;
-          if (m.userData.aggro || pdist < WILD_AGGRO) {
+          const playerSafe = inSafeZone(char.position.x, char.position.z); // 🛡️ standing on a warp = untouchable
+          if (playerSafe) {
+            m.userData.aggro = false; // 🌀 drop the chase — can't follow into the safe zone
+          } else if (m.userData.aggro || pdist < WILD_AGGRO) {
             m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
             aggroHandled = true;
             if (pdist > WILD_MELEE) {
               m.position.x += (pdx / pdist) * 1.9 * dt;
               m.position.z += (pdz / pdist) * 1.9 * dt;
+              clampOutOfSafe(m); // 🛡️ never chase into the safe bubble
               pushOut(m, 0.6);
               m.rotation.y = Math.atan2(pdx, pdz);
             } else {
@@ -18364,6 +18379,7 @@ export default function CherryAdventure() {
         const rr = Math.hypot(m.position.x, m.position.z);
         if (rr > FIELD_R - 0.4) { m.position.x *= (FIELD_R - 0.4) / rr; m.position.z *= (FIELD_R - 0.4) / rr; }
         pushOut(m, 0.3);
+        if (!isArenaFoe(m)) clampOutOfSafe(m); // 🛡️🌀 keep the warp-portal safe zones monster-free
       });
 
       // respawn wilds (rejoin a random camp)
@@ -19017,6 +19033,7 @@ export default function CherryAdventure() {
         }
 
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
+        if (!inSafeZone(char.position.x, char.position.z)) // 🛡️🌀 no encounters while standing in a warp safe zone
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
           if (G.auto && G.autoNoBoss && m.userData.boss) continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
