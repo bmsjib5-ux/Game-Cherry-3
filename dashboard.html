@@ -183,8 +183,14 @@
   .inp:focus { border-color: var(--accent); }
   .modal .go { width: 100%; margin-top: 18px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 900; color: #fff;
     background: linear-gradient(135deg, #5aa0f0, #6ad0c0); border: none; border-radius: 12px; padding: 13px; box-shadow: var(--shadow); }
-  .modal .go:disabled { opacity: .6; cursor: default; }
-  .modal .cancel { width: 100%; margin-top: 8px; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 800;
+  .modal .go:disabled, .modal .go2:disabled { opacity: .6; cursor: default; }
+  .modal .go2 { width: 100%; margin-top: 9px; cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 800; color: var(--accent);
+    background: var(--accent-soft); border: none; border-radius: 12px; padding: 12px; }
+  .modal .orline { display: flex; align-items: center; gap: 10px; margin: 15px 0 12px; color: var(--muted); font-size: 11px; font-weight: 700; }
+  .modal .orline::before, .modal .orline::after { content: ""; flex: 1; height: 1px; background: var(--grid); }
+  .modal .google { width: 100%; cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 800; color: var(--text-primary);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .modal .cancel { width: 100%; margin-top: 10px; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 800;
     color: var(--text-secondary); background: transparent; border: none; padding: 9px; }
   .modal .err { margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--critical, #d03b3b); text-align: center; min-height: 16px; }
   .modal .note { margin-top: 12px; font-size: 10.5px; color: var(--muted); line-height: 1.5; text-align: center; }
@@ -327,9 +333,12 @@
     <label for="lgPass">รหัสผ่าน</label>
     <input class="inp" id="lgPass" type="password" autocomplete="current-password" placeholder="••••••••" />
     <button class="go" id="lgGo">เข้าสู่ระบบ</button>
+    <button class="go2" id="lgSignup">สมัครสมาชิกใหม่</button>
+    <div class="orline">หรือ</div>
+    <button class="google" id="lgGoogle">🇬 เข้าสู่ระบบด้วย Google</button>
     <button class="cancel" id="lgCancel">ยกเลิก</button>
     <div class="err" id="lgErr"></div>
-    <div class="note">ระบบอ่านข้อมูลเซฟของคุณอย่างเดียว (read-only) · การเข้าสู่ระบบใช้ Supabase Auth เดียวกับตัวเกม</div>
+    <div class="note">ใช้อีเมล/รหัสผ่านหรือ Google เดียวกับตอนเข้าเกม · ระบบอ่านข้อมูลเซฟของคุณอย่างเดียว (read-only)</div>
   </div>
 </div>
 <div class="modal-bg" id="detailModal">
@@ -654,21 +663,54 @@
     } catch (e) { logout(); return null; }
   }
 
+  function applyAuth(j, emailFallback) {
+    session = { access_token: j.access_token, refresh_token: j.refresh_token, uid: (j.user && j.user.id) || j.uid, email: (j.user && j.user.email) || emailFallback, exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 3600000) - 60000 };
+    saveSession(); closeModal(); document.getElementById("lgPass").value = "";
+    renderAuth(); loadMine();
+  }
   async function doLogin() {
-    var email = document.getElementById("lgEmail").value.trim();
-    var pass = document.getElementById("lgPass").value;
+    var email = document.getElementById("lgEmail").value.trim(), pass = document.getElementById("lgPass").value;
     var err = document.getElementById("lgErr"), go = document.getElementById("lgGo");
+    err.style.color = "";
     if (!email || !pass) { err.textContent = "กรอกอีเมลและรหัสผ่าน"; return; }
     go.disabled = true; go.textContent = "กำลังเข้าสู่ระบบ…"; err.textContent = "";
     try {
       var res = await fetch(CFG.url + "/auth/v1/token?grant_type=password", { method: "POST", headers: { apikey: CFG.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email: email, password: pass }) });
       var j = await res.json();
-      if (!res.ok) throw new Error(j.error_description || j.msg || j.error || "เข้าสู่ระบบไม่สำเร็จ");
-      session = { access_token: j.access_token, refresh_token: j.refresh_token, uid: (j.user && j.user.id) || j.uid, email: (j.user && j.user.email) || email, exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 3600000) - 60000 };
-      saveSession(); closeModal(); document.getElementById("lgPass").value = "";
-      renderAuth(); await loadMine();
+      if (!res.ok || !j.access_token) throw new Error(j.error_description || j.msg || j.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      applyAuth(j, email);
     } catch (e) { err.textContent = "❌ " + (e.message || "เข้าสู่ระบบไม่สำเร็จ"); }
     finally { go.disabled = false; go.textContent = "เข้าสู่ระบบ"; }
+  }
+  async function doSignup() {
+    var email = document.getElementById("lgEmail").value.trim(), pass = document.getElementById("lgPass").value;
+    var err = document.getElementById("lgErr"), go2 = document.getElementById("lgSignup");
+    err.style.color = "";
+    if (!email || !pass) { err.textContent = "กรอกอีเมลและรหัสผ่าน"; return; }
+    if (pass.length < 6) { err.textContent = "รหัสผ่านอย่างน้อย 6 ตัวอักษร"; return; }
+    go2.disabled = true; go2.textContent = "กำลังสมัคร…"; err.textContent = "";
+    try {
+      var res = await fetch(CFG.url + "/auth/v1/signup", { method: "POST", headers: { apikey: CFG.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email: email, password: pass }) });
+      var j = await res.json();
+      if (!res.ok) throw new Error(j.msg || j.error_description || j.message || j.error || "สมัครไม่สำเร็จ");
+      if (j.access_token) { applyAuth(j, email); } // auto-confirmed → logged in
+      else { err.style.color = "var(--good)"; err.textContent = "📧 สมัครแล้ว — ตรวจอีเมลเพื่อยืนยัน แล้วเข้าสู่ระบบ"; }
+    } catch (e) { err.textContent = "❌ " + (e.message || "สมัครไม่สำเร็จ"); }
+    finally { go2.disabled = false; go2.textContent = "สมัครสมาชิกใหม่"; }
+  }
+  function googleLogin() {
+    location.href = CFG.url + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(location.href.split("#")[0]);
+  }
+  async function handleOAuthReturn() {
+    if (!(location.hash && location.hash.indexOf("access_token=") >= 0)) return false;
+    var h = new URLSearchParams(location.hash.slice(1));
+    var at = h.get("access_token"), rt = h.get("refresh_token"), ei = parseInt(h.get("expires_in") || "3600", 10);
+    if (!at) return false;
+    var uid = null, email = null;
+    try { var ur = await fetch(CFG.url + "/auth/v1/user", { headers: { apikey: CFG.anonKey, Authorization: "Bearer " + at } }); if (ur.ok) { var u = await ur.json(); uid = u.id; email = u.email; } } catch (e) {}
+    applyAuth({ access_token: at, refresh_token: rt, expires_in: ei, user: { id: uid, email: email } }, email);
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    return true;
   }
   function logout() { session = null; mineSlots = null; saveSession(); renderAuth(); document.getElementById("mine").innerHTML = ""; }
 
@@ -784,12 +826,14 @@
   function closeDetail() { document.getElementById("detailModal").classList.remove("open"); }
 
   document.getElementById("lgGo").addEventListener("click", doLogin);
+  document.getElementById("lgSignup").addEventListener("click", doSignup);
+  document.getElementById("lgGoogle").addEventListener("click", googleLogin);
   document.getElementById("lgCancel").addEventListener("click", closeModal);
   document.getElementById("lgPass").addEventListener("keydown", function(e){ if (e.key === "Enter") doLogin(); });
   document.getElementById("loginModal").addEventListener("click", function(e){ if (e.target.id === "loginModal") closeModal(); });
   document.getElementById("detailModal").addEventListener("click", function(e){ if (e.target.id === "detailModal") closeDetail(); });
   renderAuth();
-  if (session) loadMine();
+  handleOAuthReturn().then(function(handled){ if (!handled && session) loadMine(); }); // 🇬 finish a Google redirect, else resume saved session
 
   document.getElementById("refreshBtn").addEventListener("click", load);
   skeletons();
