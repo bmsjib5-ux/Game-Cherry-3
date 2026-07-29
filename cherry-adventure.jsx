@@ -13344,6 +13344,7 @@ export default function CherryAdventure() {
     const syncPlayer = () => setUi((u) => ({
       ...u, hp: Math.ceil(G.player.hp), maxHp: effMaxHp(), level: G.player.level,
       exp: G.player.exp, expNext: expForLevel(G.player.level), balls: G.player.balls, specials: G.player.specials,
+      battleSpeed: G.battleSpeed || 1, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot,
       mp: Math.ceil(G.player.mp), maxMp: effMaxMp(),
       atk: effAtk(), def: effDef(), skillPts: G.player.skillPts,
       sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
@@ -15851,6 +15852,14 @@ export default function CherryAdventure() {
       G.battleSpeed = G.battleSpeed >= 3 ? 1 : G.battleSpeed + 1;
       setUi((u) => ({ ...u, battleSpeed: G.battleSpeed }));
       toast(`⏩ ความเร็วต่อสู้ ×${G.battleSpeed}`);
+      if (G.saveGame) G.saveGame();
+    };
+    G.setBattleSpeed = (n) => {
+      if (G.wbActive && G.enemy && G.enemy.worldBoss) { toast("👹 บอสโลกใช้เร่งความเร็วไม่ได้"); return; }
+      G.battleSpeed = Math.min(3, Math.max(1, Math.round(n) || 1));
+      setUi((u) => ({ ...u, battleSpeed: G.battleSpeed }));
+      toast(`⏩ ความเร็วต่อสู้ ×${G.battleSpeed}`);
+      if (G.saveGame) G.saveGame();
     };
     // 📖 tutorial steps for new players
     const TUTORIAL = [
@@ -16188,7 +16197,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -17561,6 +17570,7 @@ export default function CherryAdventure() {
       G._gearHidden = G.dressHideGear; // 🙈 apply saved hide-gear on load (before visuals render)
       G.autoNoBoss = !!d.autoNoBoss; G.autoNoEvent = !!d.autoNoEvent; // ⚙️ auto-battle preferences
       G.autoHpPot = d.autoHpPot !== false; G.autoMpPot = !!d.autoMpPot; // ⚙️ auto potion prefs (HP defaults on)
+      G.battleSpeed = Math.min(3, Math.max(1, d.battleSpeed || 1)); // ⏩ saved battle speed
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
@@ -18702,7 +18712,7 @@ export default function CherryAdventure() {
               const fd = Math.hypot(foe.position.x - char.position.x, foe.position.z - char.position.z);
               if (fd <= worldRange() * 0.92) { G.moveTarget = null; G.huntTarget = null; } // stand off at attack range
               G.autoWT = (G.autoWT || 0) + dt;
-              if (G.autoWT > 0.5) { G.autoWT = 0; autoWorldAct(); }
+              if (G.autoWT > 0.5 / (G.battleSpeed || 1)) { G.autoWT = 0; autoWorldAct(); } // ⏩ auto attacks faster at higher battle speed
             }
           }
         }
@@ -18975,7 +18985,7 @@ export default function CherryAdventure() {
         // 🤖 auto battle: decide after a short beat whenever it's our turn
         if (G.auto && !G.banim) {
           G.autoT = (G.autoT || 0) + dt;
-          if (G.autoT > 0.9) { G.autoT = 0; autoDecide(); }
+          if (G.autoT > 0.9 / (G.battleSpeed || 1)) { G.autoT = 0; autoDecide(); } // ⏩ auto acts faster at higher battle speed
         } else G.autoT = 0;
 
         const em = G.enemy.mesh;
@@ -25464,6 +25474,16 @@ export default function CherryAdventure() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
                 <span style={{ fontSize: 13, fontWeight: 800, color: "#4a6a9a" }}>⚙️ ตั้งค่าต่อสู้ออโต้</span>
                 <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: false }))} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 15, color: "#9aa" }}>✕</button>
+              </div>
+              {/* ⏩ battle speed selector */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", marginBottom: 6, borderRadius: 10, background: "#fff4e8" }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#c07a2a", flex: 1 }}>⏩ ความเร็วต่อสู้</span>
+                {[1, 2, 3].map((n) => {
+                  const on = (ui.battleSpeed || 1) === n;
+                  return (
+                    <button key={n} onClick={() => G.setBattleSpeed(n)} style={{ width: 40, height: 30, borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: on ? "#fff" : "#c07a2a", background: on ? "linear-gradient(90deg,#f5a623,#e0894a)" : "#fff", boxShadow: on ? "0 2px 8px rgba(224,137,74,0.45)" : "inset 0 0 0 1px #e8d4bc" }}>×{n}</button>
+                  );
+                })}
               </div>
               {[
                 { key: "autoNoBoss", label: "🚫👹 ไม่ตีบอส", desc: "ออโต้จะเลี่ยงบอส ไม่เข้าอารีน่า" },
