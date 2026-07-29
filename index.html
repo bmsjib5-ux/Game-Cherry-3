@@ -1385,7 +1385,7 @@ function CherryAdventure() {
         bstate: "choose", // choose | busy
         msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
         custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
-        inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+        inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
         gold: 80, shop: [], shopOpen: false,
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
         warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
@@ -16533,8 +16533,11 @@ function CherryAdventure() {
             G.achStats.goldEarned = (G.achStats.goldEarned || 0) + r.gold; // 🏅 เศรษฐีทอง
             if (r.ball)
                 G.balls = (G.balls || 0) + r.ball;
-            if (r.potion)
-                G.potions = (G.potions || 0) + r.potion;
+            if (r.potion) {
+                G.hpPots.s = (G.hpPots.s || 0) + r.potion;
+                if (G.syncPotions)
+                    G.syncPotions();
+            }
             G.lastDaily = today;
             G.dailyStreak = (G.dailyStreak || 0) + 1;
             if (G.gainDiamonds)
@@ -19120,7 +19123,10 @@ function CherryAdventure() {
         G.dyePalette = []; // 🎨 custom saved dye colours
         G.mats = {}; // ⛏️ crafting materials
         G.weaponInfuse = {}; // 🔮 weaponId -> element
-        G.potions = 1; // 🧪 start with one
+        G.hpPots = { s: 1, m: 0, l: 0 };
+        G.mpPots = { s: 1, m: 0, l: 0 };
+        G.potions = 1;
+        G.mpPotions = 1; // 🧪💧 start with one small each
         G.gold = 80; // 💰 currency for the shop
         G.shop = []; // current shop stock (item ids)
         G.bossSpawned = {}; // threshold -> true
@@ -19650,12 +19656,30 @@ function CherryAdventure() {
             inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
             titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
             rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-            costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
+            costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
         }));
         // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
-        G.usePotion = () => {
-            if (G.potions <= 0) {
-                toast("น้ำยาหมด! ชนะมอนสเตอร์เพื่อลุ้นดรอป 🧪");
+        // 🧪💧 SIZED POTIONS — เล็ก/กลาง/ใหญ่ (flat heal, bought at the shop)
+        const HP_POT = { s: { heal: 500, price: 100, name: "เล็ก" }, m: { heal: 1000, price: 500, name: "กลาง" }, l: { heal: 5000, price: 1000, name: "ใหญ่" } };
+        const MP_POT = { s: { rest: 100, price: 100, name: "เล็ก" }, m: { rest: 200, price: 500, name: "กลาง" }, l: { rest: 500, price: 1000, name: "ใหญ่" } };
+        G.HP_POT = HP_POT;
+        G.MP_POT = MP_POT;
+        G.hpPots = G.hpPots || { s: 0, m: 0, l: 0 };
+        G.mpPots = G.mpPots || { s: 0, m: 0, l: 0 };
+        const potTotal = (o) => (o.s || 0) + (o.m || 0) + (o.l || 0);
+        G.hpPotTotal = () => potTotal(G.hpPots);
+        G.mpPotTotal = () => potTotal(G.mpPots);
+        const pickSize = (o, want) => (want && o[want] > 0) ? want : (o.s > 0 ? "s" : o.m > 0 ? "m" : o.l > 0 ? "l" : null);
+        const syncPotions = () => {
+            G.potions = G.hpPotTotal();
+            G.mpPotions = G.mpPotTotal();
+            setUi((u) => ({ ...u, potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots } }));
+        };
+        G.syncPotions = syncPotions;
+        G.usePotion = (size) => {
+            const use = pickSize(G.hpPots, size);
+            if (!use) {
+                toast("น้ำยาเลือดหมด! ซื้อที่ร้านค้า 🧪 (100/500/1000💰)");
                 return;
             }
             if (G.player.hp >= effMaxHp()) {
@@ -19664,26 +19688,28 @@ function CherryAdventure() {
             }
             if (G.mode === "battle" && (G.banim || !G.enemy))
                 return;
-            G.potions--;
-            const heal = Math.round(effMaxHp() * 0.4);
+            G.hpPots[use]--;
+            const heal = HP_POT[use].heal;
+            const before = G.player.hp;
             G.player.hp = Math.min(effMaxHp(), G.player.hp + heal);
+            const got = Math.round(G.player.hp - before);
             burst(char.position, 0x8ae0a0, 1.2);
             setMouth("laugh");
+            syncPotions();
             syncPlayer();
             if (G.mode === "battle") {
-                setUi((u) => ({ ...u, msg: `🧪 ดื่มน้ำยาฟื้นฟู +${heal} HP!` }));
+                setUi((u) => ({ ...u, msg: `🧪 ฟื้นฟู +${got} HP! (${HP_POT[use].name})` }));
                 enemyTurn(); // healing uses your turn
             }
             else {
-                toast(`🧪 ฟื้นฟู +${heal} HP!`);
+                toast(`🧪 ฟื้นฟู +${got} HP! (${HP_POT[use].name})`);
                 setTimeout(() => setMouth("smile"), 800);
             }
         };
-        // 💧 mana potion: restores 50% max mana
-        G.mpPotions = 1;
-        G.useManaPotion = () => {
-            if (G.mpPotions <= 0) {
-                toast("น้ำยามานาหมด! ลุ้นดรอปจากมอนสเตอร์ 💧");
+        G.useManaPotion = (size) => {
+            const use = pickSize(G.mpPots, size);
+            if (!use) {
+                toast("น้ำยามานาหมด! ซื้อที่ร้านค้า 💧 (100/500/1000💰)");
                 return;
             }
             if (G.player.mp >= effMaxMp()) {
@@ -19692,17 +19718,20 @@ function CherryAdventure() {
             }
             if (G.mode === "battle" && (G.banim || !G.enemy))
                 return;
-            G.mpPotions--;
-            const restore = Math.round(effMaxMp() * 0.5);
+            G.mpPots[use]--;
+            const restore = MP_POT[use].rest;
+            const before = G.player.mp;
             G.player.mp = Math.min(effMaxMp(), G.player.mp + restore);
+            const got = Math.round(G.player.mp - before);
             burst(char.position, 0x6ac0f0, 1.2);
+            syncPotions();
             syncPlayer();
             if (G.mode === "battle") {
-                setUi((u) => ({ ...u, msg: `💧 ดื่มน้ำยามานา +${restore} มานา!` }));
+                setUi((u) => ({ ...u, msg: `💧 ฟื้นมานา +${got}! (${MP_POT[use].name})` }));
                 enemyTurn(); // uses your turn
             }
             else {
-                toast(`💧 ฟื้นมานา +${restore}!`);
+                toast(`💧 ฟื้นมานา +${got}! (${MP_POT[use].name})`);
             }
         };
         // ⚒️ enhance: consume 1 duplicate copy as material → +1 (up to +5)
@@ -20155,10 +20184,12 @@ function CherryAdventure() {
                 toast(`🎫 ดรอปบัตรแต่งตัวฮีโร่ ${days} วัน! (แลกที่เมนู 🦸 ฮีโร่)`);
                 setUi((u) => ({ ...u, heroPasses: { ...G.heroPasses } }));
             }
-            // 🧪 potion roll (independent): 25% normal, boss always drops one
+            // 🧪 potion roll (independent): 25% normal, boss always drops one (small)
             if (boss || Math.random() < 0.25) {
-                G.potions++;
-                toast("🧪 ดรอปน้ำยาเพิ่มเลือด!");
+                G.hpPots.s = (G.hpPots.s || 0) + 1;
+                if (G.syncPotions)
+                    G.syncPotions();
+                toast("🧪 ดรอปน้ำยาเลือด (เล็ก)!");
             }
             if (!boss && Math.random() > 0.55) {
                 syncPlayer();
@@ -20259,6 +20290,17 @@ function CherryAdventure() {
         const treeCap = () => Math.max(1, 1 + Math.floor(G.player.level / 12)); // ⚖️ ปมพรสวรรค์อัพช้าลงตามเลเวล
         G.treeCap = treeCap;
         G.skillCost = skillCost;
+        // 💧 MP cost scales with the skill's upgrade rank (higher rank → stronger → costs more, capped ×3)
+        G.mpCostOf = (sk) => { if (!sk)
+            return 0; const r = (G.skillRanks && G.skillRanks[sk.id]) || 1; return Math.round((sk.cost || 8) * Math.min(3, 1 + (r - 1) * 0.05)); };
+        // ⏳ per-skill cooldown (1–3s, heavier skills longer) — after casting, that skill is locked briefly
+        G.skillCd = {};
+        G.cdOf = (sk) => { if (!sk)
+            return 1; return Math.round(Math.min(3, Math.max(1, (sk.mult || 1) * 1.1 + ((sk.hits && sk.hits > 1) ? 0.4 : 0) + (sk.heal ? 0.5 : 0))) * 10) / 10; };
+        G.cdLeft = (sk) => { if (!sk)
+            return 0; const now = (typeof performance !== "undefined" ? performance.now() : Date.now()); return Math.max(0, ((G.skillCd[sk.id] || 0) - now) / 1000); };
+        G.startCd = (sk) => { if (!sk)
+            return; const now = (typeof performance !== "undefined" ? performance.now() : Date.now()); G.skillCd[sk.id] = now + G.cdOf(sk) * 1000; };
         // ⚖️ RESPEC — refund everything you've spent so builds can be experimented with.
         // Without this, one misclick is permanent, so nobody risks trying a new build.
         G.respecCost = () => 200 + (G.player.level || 1) * 40; // scales so it stays meaningful
@@ -21044,33 +21086,42 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, shop: [...G.shop] }));
             syncPlayer();
         };
-        // 🧪💧 buy consumables from the shop
-        G.buyPotion = () => {
-            const price = 40;
-            if (G.gold < price) {
-                toast(`ทองไม่พอ! ต้องมี ${price}💰`);
+        // 🧪💧 buy sized consumables from the shop (S/M/L)
+        G.buyHpPot = (size) => {
+            const p = HP_POT[size];
+            if (!p)
+                return;
+            if (G.gold < p.price) {
+                toast(`ทองไม่พอ! น้ำยาเลือด${p.name} ราคา ${p.price}💰`);
                 return;
             }
-            G.gold -= price;
-            G.potions++;
+            G.gold -= p.price;
+            G.hpPots[size] = (G.hpPots[size] || 0) + 1;
             if (G.sfx)
                 G.sfx.coin();
-            toast("🧪 ซื้อน้ำยาเลือด +1!");
+            toast(`🧪 ซื้อน้ำยาเลือด${p.name} (+${p.heal} HP)!`);
+            syncPotions();
             syncPlayer();
         };
-        G.buyManaPotion = () => {
-            const price = 40;
-            if (G.gold < price) {
-                toast(`ทองไม่พอ! ต้องมี ${price}💰`);
+        G.buyMpPot = (size) => {
+            const p = MP_POT[size];
+            if (!p)
+                return;
+            if (G.gold < p.price) {
+                toast(`ทองไม่พอ! น้ำยามานา${p.name} ราคา ${p.price}💰`);
                 return;
             }
-            G.gold -= price;
-            G.mpPotions = (G.mpPotions || 0) + 1;
+            G.gold -= p.price;
+            G.mpPots[size] = (G.mpPots[size] || 0) + 1;
             if (G.sfx)
                 G.sfx.coin();
-            toast("💧 ซื้อน้ำยามานา +1!");
+            toast(`💧 ซื้อน้ำยามานา${p.name} (+${p.rest} มานา)!`);
+            syncPotions();
             syncPlayer();
         };
+        // 🔁 legacy aliases (drops / rewards default to the small size)
+        G.buyPotion = () => G.buyHpPot("s");
+        G.buyManaPotion = () => G.buyMpPot("s");
         // 🔴🟡🔵 buy a catch ball — the ONLY way to get balls (no drops)
         G.BALL_PRICE = 1000;
         G.buyBall = () => {
@@ -21200,8 +21251,10 @@ function CherryAdventure() {
                 G.mats.ironOre = (G.mats.ironOre || 0) + it.amount;
             }
             else if (it.t === "pot") {
-                G.potions = (G.potions || 0) + it.amount;
-                G.mpPotions = (G.mpPotions || 0) + it.amount;
+                G.hpPots.s = (G.hpPots.s || 0) + it.amount;
+                G.mpPots.s = (G.mpPots.s || 0) + it.amount;
+                if (G.syncPotions)
+                    G.syncPotions();
             }
             else if (it.t === "dia")
                 G.diamonds = (G.diamonds || 0) + it.amount;
@@ -22462,7 +22515,12 @@ function CherryAdventure() {
             if (!sk)
                 return;
             const rank = (G.skillRanks && G.skillRanks[id]) || 1;
-            const cost = sk.cost || 0;
+            const cdL = G.cdLeft(sk);
+            if (cdL > 0) {
+                toast(`⏳ ${sk.name} คูลดาวน์ (${cdL.toFixed(1)} วิ)`);
+                return;
+            }
+            const cost = G.mpCostOf(sk);
             if ((G.player.mp || 0) < cost) {
                 toast("💧 มานาไม่พอ!");
                 return;
@@ -22472,6 +22530,7 @@ function CherryAdventure() {
             if (!focus)
                 return;
             G.player.mp -= cost;
+            G.startCd(sk); // ⏳ begin cooldown
             char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
             worldSwing();
             const base = (effAtk() + Math.random() * 4) * (sk.mult || 1) * (1 + ((rank - 1) * (sk.perLv || 0)));
@@ -22968,12 +23027,18 @@ function CherryAdventure() {
                     toast(`🔒 ยังไม่ปลดล็อก: ${gate.reasons.filter((r) => !r.ok).map((r) => r.text).join(" · ")}`);
                     return;
                 }
-                const cost = sk.cost || 8;
+                const cdL = G.cdLeft(sk);
+                if (cdL > 0) {
+                    toast(`⏳ ${sk.name} กำลังคูลดาวน์ (${cdL.toFixed(1)} วิ)`);
+                    return;
+                }
+                const cost = G.mpCostOf(sk);
                 if (G.player.mp < cost) {
                     toast(`💧 มานาไม่พอ! ต้องการ ${cost} มานา (มี ${Math.floor(G.player.mp)})`);
                     return;
                 }
                 G.player.mp -= cost;
+                G.startCd(sk); // ⏳ begin this skill's cooldown
                 // ⚔️ COMBO CHAIN — using different skills in a row builds a chain multiplier
                 G.comboSeq = G.comboSeq || [];
                 if (G.comboSeq.length && G.comboSeq[G.comboSeq.length - 1] === sk.id) {
@@ -23257,7 +23322,7 @@ function CherryAdventure() {
             }
             // 2) mage with a heal skill and hurt → heal
             if (hpPct < 0.55) {
-                const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
+                const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
                 if (healSk && Math.random() < 0.8) {
                     G.act("skill", healSk.id);
                     return;
@@ -23283,7 +23348,7 @@ function CherryAdventure() {
             }
             // 5) choose among affordable skills with WEIGHTED RANDOM for variety
             {
-                const affordable = skillsOf(G.cls, G.pathId).filter((sk) => !sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
+                const affordable = skillsOf(G.cls, G.pathId).filter((sk) => !sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
                 if (affordable.length) {
                     const weak = WEAK[e.spId]; // enemy elemental weakness
                     const scored = affordable.map((sk) => {
@@ -23339,9 +23404,10 @@ function CherryAdventure() {
             }
             // a mage/priest with a heal skill & hurt → heal (cast targets self-safely via the arena FX path)
             if (G.player.hp < effMaxHp() * 0.5) {
-                const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
+                const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
                 if (healSk && Math.random() < 0.7) {
-                    G.player.mp -= (healSk.cost || 8);
+                    G.player.mp -= G.mpCostOf(healSk);
+                    G.startCd(healSk);
                     G.player.hp = Math.min(effMaxHp(), G.player.hp + effMaxHp() * (healSk.heal || 0.3));
                     spawnSkillFx("healbless", char.position, healSk.color || 0xffe9a0);
                     popDamage(char.position, effMaxHp() * (healSk.heal || 0.3), "heal");
@@ -23349,7 +23415,7 @@ function CherryAdventure() {
                     return;
                 }
             }
-            const affordable = skillsOf(G.cls, G.pathId).filter((sk) => !sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
+            const affordable = skillsOf(G.cls, G.pathId).filter((sk) => !sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
             if (affordable.length && Math.random() < 0.8) {
                 const many = wildsInRadius(char.position.x, char.position.z, worldRange() + 1).length >= 2;
                 const scored = affordable.map((sk) => {
@@ -23519,8 +23585,10 @@ function CherryAdventure() {
             G.dyePalette = [];
             G.mats = {};
             G.weaponInfuse = {};
-            G.potions = 10; // 🧪 ยาเลือดเริ่มต้น 10
-            G.mpPotions = 10; // 💧 ยามานาเริ่มต้น 10
+            G.hpPots = { s: 10, m: 0, l: 0 };
+            G.potions = 10; // 🧪 ยาเลือดเริ่มต้น 10 (เล็ก)
+            G.mpPots = { s: 10, m: 0, l: 0 };
+            G.mpPotions = 10; // 💧 ยามานาเริ่มต้น 10 (เล็ก)
             G.bossSpawned = {};
             G.gold = 1000; // 💰 เงินเริ่มต้น 1000
             G.dungeonProgress = 1;
@@ -23586,7 +23654,7 @@ function CherryAdventure() {
                 window.localStorage.setItem(slotKey(), JSON.stringify({
                     v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated,
                     col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
-                    potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
+                    potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
                     mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
@@ -25989,8 +26057,11 @@ function CherryAdventure() {
             // 🎲 back-fill rolls for gear owned before this system existed
             G.inv.forEach((iid) => { const it = LOOT.find((x) => x.id === iid); if (it && !it.starter && !G.rolls[iid])
                 G.rolls[iid] = rollQuality(); });
-            G.potions = d.potions == null ? 1 : d.potions;
-            G.mpPotions = d.mpPotions == null ? 1 : d.mpPotions;
+            // 🧪💧 sized potions — use saved object, else migrate old flat counts into small potions
+            G.hpPots = d.hpPots ? { s: d.hpPots.s || 0, m: d.hpPots.m || 0, l: d.hpPots.l || 0 } : { s: d.potions == null ? 1 : d.potions, m: 0, l: 0 };
+            G.mpPots = d.mpPots ? { s: d.mpPots.s || 0, m: d.mpPots.m || 0, l: d.mpPots.l || 0 } : { s: d.mpPotions == null ? 1 : d.mpPotions, m: 0, l: 0 };
+            G.potions = G.hpPotTotal();
+            G.mpPotions = G.mpPotTotal();
             G.player.maxMp = effMaxMp();
             if (G.player.mp == null)
                 G.player.mp = G.player.maxMp;
@@ -26123,6 +26194,17 @@ function CherryAdventure() {
                 const dt = dtForce != null ? dtForce : dtReal; // 🤖💤 forced dt while background-farming
                 dtGlobal = dt;
                 const t = clock.getElapsedTime();
+                // ⏳ skill-cooldown HUD sync — push remaining times at ~6fps while any skill cools (+ one final clear)
+                G._cdSyncT = (G._cdSyncT || 0) + dt;
+                if (G._cdSyncT > 0.16) {
+                    G._cdSyncT = 0;
+                    const nowMs = performance.now();
+                    const anyCd = Object.keys(G.skillCd || {}).some((k) => (G.skillCd[k] || 0) > nowMs);
+                    if (anyCd || G._cdWasActive) {
+                        G._cdWasActive = anyCd;
+                        setUi((u) => ({ ...u, cdMap: { ...G.skillCd }, cdNow: nowMs }));
+                    }
+                }
                 // 👹 World Boss round timer — 60s per round; time-out ends the round (boss HP persists)
                 if (G.wbActive && G.wbRoundOn && G.mode === "battle" && G.enemy && G.enemy.worldBoss) {
                     G.wbTimeLeft = (G.wbTimeLeft || 0) - dt;
@@ -38019,16 +38101,19 @@ function CherryAdventure() {
                 const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
                 return (React.createElement("div", { style: { position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" } }, skills.map((sk) => {
-                        const cost = sk.cost || 0;
+                        const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
                         const afford = (ui.mp || 0) >= cost;
                         const aoe = isAoeSkill(sk);
+                        const cdLeft = Math.max(0, (((ui.cdMap || {})[sk.id] || 0) - (ui.cdNow || 0)) / 1000);
+                        const ready = afford && cdLeft <= 0;
                         return (React.createElement("button", { key: sk.id, onClick: () => G.worldSkill(sk.id), title: `${sk.name} · 💧${cost}`, style: {
                                 width: 46, height: 46, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
-                                cursor: afford ? "pointer" : "not-allowed", position: "relative",
-                                background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: afford ? 1 : 0.45,
+                                cursor: ready ? "pointer" : "not-allowed", position: "relative", overflow: "hidden",
+                                background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: ready ? 1 : 0.45,
                                 boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: 20, color: "#fff", fontFamily: font,
                             } },
                             sk.emoji || "✨",
+                            cdLeft > 0 && React.createElement("span", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,12,20,0.62)", color: "#fff", fontSize: 14, fontWeight: 800 } }, cdLeft.toFixed(1)),
                             React.createElement("span", { style: { position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" } }, cost),
                             aoe && React.createElement("span", { style: { position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" } }, "\u0E2B\u0E21\u0E39\u0E48")));
                     })),
@@ -38061,39 +38146,62 @@ function CherryAdventure() {
                         "\uD83D\uDCB0 ",
                         ui.gold)),
                 React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#8a8a7a", marginBottom: 4 } }, "\u0E02\u0E2D\u0E07\u0E43\u0E0A\u0E49 (\u0E0B\u0E37\u0E49\u0E2D\u0E44\u0E14\u0E49\u0E44\u0E21\u0E48\u0E08\u0E33\u0E01\u0E31\u0E14)"),
+                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#5aa06a", marginBottom: 3 } },
+                    "\uD83E\uDDEA \u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E25\u0E37\u0E2D\u0E14 (\u0E23\u0E27\u0E21 ",
+                    ui.potions || 0,
+                    ")"),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 7 } }, ["s", "m", "l"].map((sz) => {
+                    const p = (G.HP_POT || {})[sz] || {};
+                    const cnt = ((ui.hpPots || {})[sz]) || 0;
+                    const afford = (ui.gold || 0) >= p.price;
+                    return (React.createElement("button", { key: sz, disabled: !afford, onClick: () => G.buyHpPot(sz), style: { flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#eaf7ec" : "#eee", opacity: afford ? 1 : 0.55 } },
+                        React.createElement("div", { style: { fontSize: 16 } }, "\uD83E\uDDEA"),
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#5aa06a" } },
+                            p.name,
+                            " +",
+                            p.heal),
+                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#c09020" } },
+                            p.price,
+                            "\uD83D\uDCB0 ",
+                            React.createElement("span", { style: { color: "#8a8a7a" } },
+                                "(\u0E21\u0E35 ",
+                                cnt,
+                                ")"))));
+                })),
+                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#4a90c0", marginBottom: 3 } },
+                    "\uD83D\uDCA7 \u0E19\u0E49\u0E33\u0E22\u0E32\u0E21\u0E32\u0E19\u0E32 (\u0E23\u0E27\u0E21 ",
+                    ui.mpPotions || 0,
+                    ")"),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 7 } }, ["s", "m", "l"].map((sz) => {
+                    const p = (G.MP_POT || {})[sz] || {};
+                    const cnt = ((ui.mpPots || {})[sz]) || 0;
+                    const afford = (ui.gold || 0) >= p.price;
+                    return (React.createElement("button", { key: sz, disabled: !afford, onClick: () => G.buyMpPot(sz), style: { flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#e8f2fb" : "#eee", opacity: afford ? 1 : 0.55 } },
+                        React.createElement("div", { style: { fontSize: 16 } }, "\uD83D\uDCA7"),
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#4a90c0" } },
+                            p.name,
+                            " +",
+                            p.rest),
+                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#c09020" } },
+                            p.price,
+                            "\uD83D\uDCB0 ",
+                            React.createElement("span", { style: { color: "#8a8a7a" } },
+                                "(\u0E21\u0E35 ",
+                                cnt,
+                                ")"))));
+                })),
                 React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } },
-                    React.createElement("button", { onClick: () => G.buyPotion(), style: {
-                            flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
-                            cursor: ui.gold >= 40 ? "pointer" : "not-allowed", fontFamily: font,
-                            background: ui.gold >= 40 ? "#eaf7ec" : "#eee", opacity: ui.gold >= 40 ? 1 : 0.6,
-                        } },
-                        React.createElement("div", { style: { fontSize: 20 } }, "\uD83E\uDDEA"),
-                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 700, color: "#5aa06a" } }, "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E25\u0E37\u0E2D\u0E14"),
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#c09020" } },
-                            "40\uD83D\uDCB0 (\u0E21\u0E35 ",
-                            ui.potions,
-                            ")")),
-                    React.createElement("button", { onClick: () => G.buyManaPotion(), style: {
-                            flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
-                            cursor: ui.gold >= 40 ? "pointer" : "not-allowed", fontFamily: font,
-                            background: ui.gold >= 40 ? "#e8f2fb" : "#eee", opacity: ui.gold >= 40 ? 1 : 0.6,
-                        } },
-                        React.createElement("div", { style: { fontSize: 20 } }, "\uD83D\uDCA7"),
-                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 700, color: "#4a90c0" } }, "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E21\u0E32\u0E19\u0E32"),
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#c09020" } },
-                            "40\uD83D\uDCB0 (\u0E21\u0E35 ",
-                            ui.mpPotions || 0,
-                            ")")),
                     React.createElement("button", { onClick: () => G.buyBall(), style: {
                             flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
-                            cursor: ui.gold >= 1000 ? "pointer" : "not-allowed", fontFamily: font,
-                            background: ui.gold >= 1000 ? "#fdf3ea" : "#eee", opacity: ui.gold >= 1000 ? 1 : 0.6,
+                            cursor: (ui.gold || 0) >= 1000 ? "pointer" : "not-allowed", fontFamily: font,
+                            background: (ui.gold || 0) >= 1000 ? "#fdf3ea" : "#eee", opacity: (ui.gold || 0) >= 1000 ? 1 : 0.6,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                         } },
-                        React.createElement("div", { style: { margin: "0 auto 2px", width: 20, height: 20, borderRadius: "50%",
+                        React.createElement("span", { style: { width: 20, height: 20, borderRadius: "50%", display: "inline-block",
                                 background: "conic-gradient(#e5533b 0deg 120deg, #f0c33b 120deg 240deg, #3b8ae0 240deg 360deg)",
                                 boxShadow: "inset -2px -2px 4px rgba(0,0,0,0.28), inset 2px 2px 4px rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.7)" } }),
-                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 700, color: "#c0603b" } }, "\u0E25\u0E39\u0E01\u0E1A\u0E2D\u0E25\u0E08\u0E31\u0E1A"),
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#c09020" } },
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c0603b" } }, "\u0E25\u0E39\u0E01\u0E1A\u0E2D\u0E25\u0E08\u0E31\u0E1A\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C"),
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c09020" } },
                             "1000\uD83D\uDCB0 (\u0E21\u0E35 ",
                             ui.balls || 0,
                             ")"))),
@@ -40072,9 +40180,10 @@ function CherryAdventure() {
                     React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 6 } }, "\u26A1 \u0E2A\u0E01\u0E34\u0E25\u0E2D\u0E32\u0E0A\u0E35\u0E1E (\u0E43\u0E0A\u0E49\u0E21\u0E32\u0E19\u0E32 \uD83D\uDCA7) \u2014 \u0E22\u0E34\u0E48\u0E07\u0E2D\u0E31\u0E1E\u0E40\u0E25\u0E40\u0E27\u0E25\u0E2A\u0E01\u0E34\u0E25\u0E22\u0E34\u0E48\u0E07\u0E41\u0E23\u0E07!"),
                     React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, skillsOf(ui.cls, ui.pathId).map((sk, slot) => {
                         const rank = (ui.skillRanks && ui.skillRanks[sk.id]) || 1;
-                        const cost = sk.cost || 8;
+                        const cost = Math.round((sk.cost || 8) * Math.min(3, 1 + (rank - 1) * 0.05)); // 💧 scales with rank
+                        const cdLeft = Math.max(0, (((ui.cdMap || {})[sk.id] || 0) - (ui.cdNow || 0)) / 1000); // ⏳
                         const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId); // 🔒 unlock check
-                        const afford = (ui.mp || 0) >= cost && gate.open;
+                        const afford = (ui.mp || 0) >= cost && gate.open && cdLeft <= 0;
                         const mult = sk.mult + sk.perLv * (rank - 1);
                         const hits = sk.hits || 1;
                         const dmg = Math.round((ui.atk || 8) * mult * hits);
@@ -40127,7 +40236,10 @@ function CherryAdventure() {
                             React.createElement("div", { style: { fontSize: 10, color: afford ? "#4a90c0" : "#c04a4a", fontWeight: 800 } },
                                 "\uD83D\uDCA7 ",
                                 cost,
-                                " \u0E21\u0E32\u0E19\u0E32")));
+                                " \u0E21\u0E32\u0E19\u0E32 \u00B7 \u23F3 ",
+                                G.cdOf ? G.cdOf(sk) : 1,
+                                " \u0E27\u0E34",
+                                cdLeft > 0 ? ` (คูลดาวน์ ${cdLeft.toFixed(1)})` : "")));
                     })))),
                 (() => {
                     const canAct = ui.bstate === "choose";
@@ -40176,15 +40288,21 @@ function CherryAdventure() {
                                 border: ((ui.tfGauge || 0) >= 100 && !ui.tfActive) ? "2px solid #fff" : "none",
                             }),
                             skillsOf(ui.cls, ui.pathId).map((sk, slot) => {
-                                const cost = sk.cost || 8;
+                                const rank = (ui.skillRanks && ui.skillRanks[sk.id]) || 1;
+                                const cost = Math.round((sk.cost || 8) * Math.min(3, 1 + (rank - 1) * 0.05)); // 💧 scales with rank
+                                const cdLeft = Math.max(0, (((ui.cdMap || {})[sk.id] || 0) - (ui.cdNow || 0)) / 1000); // ⏳
                                 const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId);
-                                const afford = (ui.mp || 0) >= cost && gate.open;
+                                const afford = (ui.mp || 0) >= cost && gate.open && cdLeft <= 0;
                                 const skEl = SKILL_ELEM[sk.id];
                                 const advantage = gate.open && skEl && ui.enemy && WEAK[ui.enemy.spId] === skEl;
                                 const bg = gate.open ? `#${sk.color.toString(16).padStart(6, "0")}` : "#b0aca4";
-                                return iconBtn(gate.open ? sk.emoji : "🔒", bg, () => {
+                                return iconBtn(cdLeft > 0 ? `${cdLeft.toFixed(1)}` : (gate.open ? sk.emoji : "🔒"), bg, () => {
                                     if (!gate.open) {
                                         G.toast(`🔒 ${sk.name} — ${gate.reasons.filter((r) => !r.ok).map((r) => r.text).join(" · ")}`);
+                                        return;
+                                    }
+                                    if (cdLeft > 0) {
+                                        G.toast(`⏳ ${sk.name} คูลดาวน์ (${cdLeft.toFixed(1)} วิ)`);
                                         return;
                                     }
                                     if (!afford) {
@@ -40194,7 +40312,7 @@ function CherryAdventure() {
                                     G.act("skill", sk.id);
                                 }, gate.open ? cost : null, {
                                     key: sk.id,
-                                    title: gate.open ? `${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา)` : `🔒 ${sk.name}`,
+                                    title: gate.open ? `${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา · ⏳${G.cdOf ? G.cdOf(sk) : 1} วิ)` : `🔒 ${sk.name}`,
                                     badgeBg: afford ? "#3a70c0" : "#c05a5a",
                                     opacity: gate.open ? (afford ? 1 : 0.5) : 0.55,
                                     border: advantage ? "2px solid #f5a623" : "none",
