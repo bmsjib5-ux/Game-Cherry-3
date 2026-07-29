@@ -16142,7 +16142,19 @@ export default function CherryAdventure() {
     renderer.domElement.addEventListener("touchmove", onPinchMove, { passive: true });
     renderer.domElement.addEventListener("touchend", onPinchEnd);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
-    const onKeyDown = (e) => (G.keys[e.key.toLowerCase()] = true);
+    const SKILL_KEYS = { a: 0, s: 1, d: 2, f: 3, g: 4 }; // ⌨️ battle skill hotkeys → skill slot index
+    G.SKILL_KEYS = ["A", "S", "D", "F", "G"];
+    const onKeyDown = (e) => {
+      G.keys[e.key.toLowerCase()] = true;
+      // ⌨️ A S D F G cast the class skills — ONLY during a battle (so they don't clash with WASD movement while exploring)
+      const k = e.key.toLowerCase();
+      if (SKILL_KEYS[k] != null && G.mode === "battle") {
+        const tag = (e.target && e.target.tagName) || "";
+        if (tag === "INPUT" || tag === "TEXTAREA") return; // don't hijack chat/name fields
+        const sk = (skillsOf(G.cls, G.pathId) || [])[SKILL_KEYS[k]];
+        if (sk && G.act) { e.preventDefault(); G.act("skill", sk.id); }
+      }
+    };
     const onKeyUp = (e) => (G.keys[e.key.toLowerCase()] = false);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -28573,6 +28585,7 @@ export default function CherryAdventure() {
                         )}
                         <div style={{ fontSize: 12.5, fontWeight: 800, color: "#5a5a4a" }}>
                           {sk.emoji} {sk.name} <span style={{ color: "#e0a020" }}>Lv.{rank}</span>
+                          {slot < 5 && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 900, color: "#fff", background: "#5a6a8a", borderRadius: 5, padding: "1px 5px" }}>⌨️{(G.SKILL_KEYS || ["A","S","D","F","G"])[slot]}</span>}
                         </div>
                         <div style={{ fontSize: 11, fontWeight: 800, color: "#d9536b" }}>
                           💥 ~{advantage ? Math.round(dmg * 1.5) : dmg} {hits > 1 ? `(×${hits})` : ""}{advantage ? " 🔥" : ""}
@@ -28670,7 +28683,7 @@ export default function CherryAdventure() {
                         G.act("skill", sk.id);
                       }, gate.open ? cost : null, {
                         key: sk.id,
-                        title: gate.open ? `${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา · ⏳${G.cdOf ? G.cdOf(sk) : 1} วิ)` : `🔒 ${sk.name}`,
+                        title: gate.open ? `[⌨️ ${(G.SKILL_KEYS || ["A","S","D","F","G"])[slot] || "-"}] ${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา · ⏳${G.cdOf ? G.cdOf(sk) : 1} วิ)` : `🔒 ${sk.name}`,
                         badgeBg: afford ? "#3a70c0" : "#c05a5a",
                         opacity: gate.open ? (afford ? 1 : 0.5) : 0.55,
                         border: advantage ? "2px solid #f5a623" : "none",
