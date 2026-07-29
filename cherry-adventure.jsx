@@ -15035,7 +15035,7 @@ export default function CherryAdventure() {
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
-    G.openRanch = () => { ranchTick(); setUi((u) => ({ ...u, ranchOpen: true, ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
+    G.openRanch = () => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
     G.ranchAssign = (iid, slot) => {
       ranchTick();
       const R = G.ranch; R.slots = R.slots || [];
