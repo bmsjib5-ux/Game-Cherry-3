@@ -15235,7 +15235,9 @@ export default function CherryAdventure() {
       if (shiny) goldGain += 100;
       G.gold += goldGain;
       const expRelMul = Math.max(0.35, Math.min(1.6, 1 + (lv - G.player.level) * 0.06));
-      gainExp(Math.round((15 + (sp.tier || 1) * 8 + lv * 6) * expRelMul * comboMult * ngRew));
+      const expComboMul = 1 + Math.min(0.5, (G.combo - 1) * 0.04); // ⚖️ คอมโบมีผลกับ EXP เบาลง (ทอง/ดรอปยังได้เต็ม)
+      const rawExpW = Math.round((15 + (sp.tier || 1) * 8 + lv * 6) * expRelMul * expComboMul * ngRew);
+      gainExp(Math.min(rawExpW, Math.round(expForLevel(G.player.level) * 0.3))); // 🧢 เพดาน EXP 30% ต่อการฆ่า 1 ครั้ง
       if (G.buddy) petGain(G.buddy, 15);
       dropLoot(shiny);
       G.mats = G.mats || {}; G.mats.ironOre = (G.mats.ironOre || 0) + 1 + Math.floor(Math.random() * 2);
@@ -15451,7 +15453,9 @@ export default function CherryAdventure() {
       // 📈 EXP scales strongly with the monster's level — and with how tough it was relative to you
       // (สู้ตัวเลเวลสูงกว่าได้ EXP เยอะ · ตัวเลเวลต่ำกว่ามากได้น้อยลง)
       const expRelMul = Math.max(0.35, Math.min(1.6, 1 + (G.enemy.lv - G.player.level) * 0.06));
-      gainExp(Math.round((15 + sp.tier * 8 + G.enemy.lv * 6) * expRelMul * (wasBoss ? 3 : isGhost ? 2 : 1) * comboMult * ngRew));
+      const expComboMul = 1 + Math.min(0.5, (G.combo - 1) * 0.04); // ⚖️ คอมโบมีผลกับ EXP เบาลง (ทองยังได้เต็ม)
+      const rawExpB = Math.round((15 + sp.tier * 8 + G.enemy.lv * 6) * expRelMul * (wasBoss ? 2 : isGhost ? 1.5 : 1) * expComboMul * ngRew); // ⚖️ บอส ×2 · ผี ×1.5
+      gainExp(Math.min(rawExpB, Math.round(expForLevel(G.player.level) * 0.3))); // 🧢 เพดาน EXP 30% ต่อการฆ่า 1 ครั้ง
       setUi((u) => ({ ...u, combo: G.combo }));
       if (G.buddy) petGain(G.buddy, wasBoss || isGhost ? 40 : 15);
       dropLoot(wasBoss || isGhost || isGolden); // 🎁 boss/ghost/golden = guaranteed big loot
