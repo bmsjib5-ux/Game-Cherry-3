@@ -10831,6 +10831,377 @@ function CherryAdventure() {
             }
             outfitModels.lg_out = g;
         }
+        // ---------- 👗🎩 PER-CLASS class outfits + hats (data-driven, 9 classes × 3 tiers) ----------
+        // The generated archetype pieces (oratk/hsdef/…) have no bespoke mesh, so instead of one
+        // re-tinted fallback we pick a silhouette by the WEARER'S CLASS + the item's TIER. The 3
+        // archetypes (atk/def/agi) share the same look (they differ only in stats). Registered under
+        // keys cls_<class>_<r|e|s> into outfitModels / hatModels and resolved via G.resolveOutfitKey /
+        // G.resolveHatKey (see setOutfitVisual + applyGear + buildFullAvatar).
+        const L = (base, trim, accent, glowCol, hat, body, ornate, glow, cape, hatBase) => ({ base, trim, accent, glowCol, hat, body, ornate: !!ornate, glow: !!glow, cape: !!cape, hatBase: hatBase == null ? base : hatBase });
+        const CLASS_LOOKS = {
+            // T1 ชั้นดี · T2 ชั้นเลิศ · T3 ระดับตำนาน
+            warrior: { t: [L(0x6b4a2e, 0x9aa4b4, 0x3a5aa0, 0x3a5aa0, "helm", "plate", false, false, false, 0x3a5aa0), L(0x3a2a5a, 0x5a3a7a, 0x8a6ac0, 0x8a4ad0, "helm", "plate", false, false, true), L(0x8a1c1c, 0xe8c04a, 0xf0cf6a, 0xffcf5a, "helm", "plate", true, true, true)] },
+            archer: { t: [L(0x3a6a3a, 0x2a4a2a, 0x8a6a3a, 0x8ad06a, "cap", "tunic", false, false, false), L(0x24401f, 0x18300f, 0x4a6a3a, 0x6aa04a, "cap", "tunic", false, false, true), L(0xf0ead8, 0xe8c04a, 0xffe0a0, 0xffe0a0, "cap", "tunic", true, true, true)] },
+            mage: { t: [L(0x2a4a9a, 0x1a2a6a, 0x8ab0f0, 0x6a9af0, "pointy", "robe", false, false, false), L(0x5a2a8a, 0x3a1a6a, 0xb08af0, 0x9a5af0, "pointy", "robe", false, true, false), L(0x9a1a2a, 0xe8c04a, 0xffcf5a, 0xffcf5a, "pointy", "robe", true, true, false)] },
+            assassin: { t: [L(0x2a2a30, 0x1a1a20, 0x5a5a66, 0x5a5a66, "hood", "hood", false, false, false), L(0x2a1a3a, 0x160c22, 0x6a4a8a, 0x8a4ad0, "hood", "hood", false, false, false), L(0x0e0e13, 0x1c1c26, 0x3a3a48, 0x4a6a9a, "hood", "hood", false, true, false)] },
+            lancer: { t: [L(0x6a5236, 0x4a3a26, 0x8a7a5a, 0x8a7a5a, "round", "tunic", false, false, false), L(0x2a4a8a, 0xe8ecf5, 0xc0c8d6, 0xc0c8d6, "circlet", "plate", false, false, false), L(0xf0ead8, 0xe8c04a, 0xffe0a0, 0xffe0a0, "circlet", "plate", true, true, true)] },
+            samurai: { t: [L(0x1e2a4a, 0x2a3a5a, 0x8a2a2a, 0x8a2a2a, "kabuto", "tunic", false, false, false), L(0x6a1a1a, 0x3a1010, 0x9a3a3a, 0x8a2a2a, "kabuto", "plate", false, false, false), L(0x9a1a1a, 0xe8c04a, 0xffcf5a, 0xffcf5a, "headband", "plate", true, true, true)] },
+            office: { t: [L(0x1a1a1e, 0xf0f0f0, 0x8a1a1a, 0x8a1a1a, "earpiece", "suit", false, false, false), L(0x0f0f12, 0x2a2a30, 0x3a3a44, 0x3a3a44, "earpiece", "suit", false, false, false), L(0x2a2a30, 0x14141a, 0xe8c04a, 0xffcf5a, "earpiece", "suit", true, true, false)] },
+            coder: { t: [L(0x1a1a1e, 0x2a2a30, 0x4a4a55, 0x4ac0ff, "headphones", "hood", false, false, false), L(0x3a1a5a, 0x2a0f3a, 0xa06af0, 0x8a4af0, "headphones", "hood", false, true, false), L(0xf0ead8, 0xe8c04a, 0xffe0a0, 0xffe0a0, "headphones", "hood", true, true, false)] },
+            aegis: { t: [L(0xeef1f7, 0xa8b0bc, 0x6ad8ff, 0x6ad8ff, "visor", "mech", false, true, false), L(0x2a1a4a, 0x5a3a8a, 0xa06af0, 0x8a4af0, "visor", "mech", false, true, false), L(0xf0ead8, 0xe8c04a, 0xffe0a0, 0xffcf5a, "visor", "mech", true, true, false)] },
+        };
+        const buildClassOutfit = (cfg) => {
+            const g = new THREE.Group();
+            const hard = cfg.body === "plate" || cfg.body === "mech";
+            const baseMat = new THREE.MeshStandardMaterial({ color: cfg.base, roughness: 0.6, metalness: hard ? 0.6 : 0.25, side: THREE.DoubleSide });
+            const trimMat = new THREE.MeshStandardMaterial({ color: cfg.trim, roughness: 0.5, metalness: hard ? 0.75 : 0.3, side: THREE.DoubleSide });
+            const accMat = new THREE.MeshStandardMaterial({ color: cfg.accent, roughness: 0.4, metalness: 0.5, emissive: cfg.glow ? cfg.glowCol : 0x000000, emissiveIntensity: cfg.glow ? 0.9 : 0 });
+            const glowMat = new THREE.MeshStandardMaterial({ color: cfg.glowCol, emissive: cfg.glowCol, emissiveIntensity: 1.2, roughness: 0.3 });
+            const B = cfg.body;
+            if (B === "robe") {
+                const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.72, 1.5, 20, 1, true), baseMat);
+                skirt.position.y = 1.35;
+                g.add(skirt);
+                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.5, 0.5, 20, 1, true, -Math.PI * 0.4, Math.PI * 0.8), baseMat);
+                chest.position.y = 1.9;
+                g.add(chest);
+                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 8, 20, Math.PI * 1.2), trimMat);
+                collar.position.set(0, 2.05, 0.02);
+                collar.rotation.set(Math.PI / 2, 0, -Math.PI * 0.6);
+                g.add(collar);
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.04), trimMat);
+                stripe.position.set(0, 1.5, 0.5);
+                g.add(stripe);
+            }
+            else if (B === "suit") {
+                const jacket = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.54, 0.78, 20, 1, true, -Math.PI * 0.42, Math.PI * 0.84), baseMat);
+                jacket.position.y = 1.6;
+                g.add(jacket);
+                const shirt = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 3), trimMat);
+                shirt.position.set(0, 1.7, 0.46);
+                shirt.rotation.x = Math.PI;
+                g.add(shirt);
+                for (const sx of [-1, 1]) {
+                    const lp = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.04), baseMat);
+                    lp.position.set(sx * 0.13, 1.78, 0.48);
+                    lp.rotation.z = sx * 0.25;
+                    g.add(lp);
+                }
+                const tie = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.42, 0.04), accMat);
+                tie.position.set(0, 1.62, 0.5);
+                g.add(tie);
+            }
+            else if (B === "hood") {
+                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.72, 20, 1, true, -Math.PI * 0.42, Math.PI * 0.84), baseMat);
+                chest.position.y = 1.6;
+                g.add(chest);
+                const hood = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 14, 0, Math.PI * 2, 0, Math.PI * 0.6), baseMat);
+                hood.position.set(0, 2.02, -0.14);
+                hood.scale.set(1.1, 1, 1.1);
+                g.add(hood);
+                const pk = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.05), trimMat);
+                pk.position.set(0, 1.4, 0.5);
+                g.add(pk);
+                for (const sx of [-1, 1]) {
+                    const str = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.24, 6), trimMat);
+                    str.position.set(sx * 0.08, 1.78, 0.5);
+                    g.add(str);
+                }
+            }
+            else if (B === "tunic") {
+                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.66, 18, 1, true, -Math.PI * 0.4, Math.PI * 0.8), baseMat);
+                chest.position.y = 1.62;
+                g.add(chest);
+                for (const sx of [-1, 1]) {
+                    const v = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.04), trimMat);
+                    v.position.set(sx * 0.1, 1.7, 0.48);
+                    v.rotation.z = sx * 0.3;
+                    g.add(v);
+                }
+                const belt = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.04, 8, 22, Math.PI * 1.3), trimMat);
+                belt.position.set(0, 1.38, 0.02);
+                belt.rotation.set(Math.PI / 2, 0, -Math.PI * 0.65);
+                g.add(belt);
+            }
+            else if (B === "mech") {
+                const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.16, 16), trimMat);
+                collar.position.y = 2.12;
+                g.add(collar);
+                const reactor = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.03, 8, 20), trimMat);
+                reactor.position.set(0, 1.7, 0.54);
+                g.add(reactor);
+                const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), glowMat);
+                core.position.set(0, 1.7, 0.56);
+                g.add(core);
+                for (const sx of [-1, 1]) {
+                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.06), baseMat);
+                    fin.position.set(sx * 0.36, 1.98, -0.42);
+                    fin.rotation.z = sx * 0.3;
+                    g.add(fin);
+                    const ft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.04), glowMat);
+                    ft.position.set(sx * 0.36, 1.76, -0.44);
+                    g.add(ft);
+                }
+            }
+            else { // plate
+                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.64, 20, 1, true, -Math.PI * 0.38, Math.PI * 0.76), baseMat);
+                chest.position.y = 1.62;
+                g.add(chest);
+                for (let k = 0; k < 2; k++) {
+                    const ab = new THREE.Mesh(new THREE.TorusGeometry(0.42 - k * 0.03, 0.03, 6, 20, Math.PI * 1.1), trimMat);
+                    ab.position.set(0, 1.44 - k * 0.11, 0.06);
+                    ab.rotation.set(Math.PI / 2, 0, -Math.PI * 0.55);
+                    g.add(ab);
+                }
+                const em = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), accMat);
+                em.position.set(0, 1.74, 0.5);
+                g.add(em);
+            }
+            if (B !== "suit") {
+                for (const sx of [-0.6, 0.6]) {
+                    let pad;
+                    if (B === "plate" || B === "mech") {
+                        pad = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), trimMat);
+                        pad.scale.set(1, 0.62, 1);
+                    }
+                    else {
+                        pad = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), baseMat);
+                        pad.scale.set(1.4, 0.5, 1);
+                    }
+                    pad.position.set(sx, 2.08, 0);
+                    g.add(pad);
+                    if (cfg.ornate) {
+                        const spk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 6), accMat);
+                        spk.position.set(sx * 1.04, 2.24, 0);
+                        spk.rotation.z = sx > 0 ? -0.4 : 0.4;
+                        g.add(spk);
+                    }
+                }
+            }
+            if (cfg.cape) {
+                const cape = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.74, 1.4, 18, 1, true, Math.PI * 0.64, Math.PI * 0.72), trimMat);
+                cape.position.set(0, 1.4, -0.06);
+                g.add(cape);
+            }
+            if (cfg.glow && B !== "mech" && B !== "robe") {
+                const gline = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.02, 6, 24, Math.PI * 1.2), glowMat);
+                gline.position.set(0, 1.36, 0.04);
+                gline.rotation.set(Math.PI / 2, 0, -Math.PI * 0.6);
+                g.add(gline);
+            }
+            return g;
+        };
+        const buildClassHat = (cfg) => {
+            const g = new THREE.Group();
+            const metalHat = cfg.hat === "helm" || cfg.hat === "kabuto" || cfg.hat === "visor";
+            const baseMat = new THREE.MeshStandardMaterial({ color: cfg.hatBase, roughness: 0.6, metalness: metalHat ? 0.6 : 0.3, side: THREE.DoubleSide });
+            const trimMat = new THREE.MeshStandardMaterial({ color: cfg.trim, roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide });
+            const accMat = new THREE.MeshStandardMaterial({ color: cfg.accent, roughness: 0.4, metalness: 0.5, emissive: cfg.glow ? cfg.glowCol : 0x000000, emissiveIntensity: cfg.glow ? 0.9 : 0 });
+            const glowMat = new THREE.MeshStandardMaterial({ color: cfg.glowCol, emissive: cfg.glowCol, emissiveIntensity: 1.2, roughness: 0.3 });
+            const H = cfg.hat;
+            if (H === "helm") {
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.66, 20, 18, 0, Math.PI * 2, 0, Math.PI * 0.62), baseMat);
+                dome.position.y = 0.14;
+                g.add(dome);
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.04, 8, 24), trimMat);
+                band.position.y = 0.32;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+                const guard = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.06), trimMat);
+                guard.position.set(0, 0.3, 0.6);
+                g.add(guard);
+                if (cfg.ornate) {
+                    for (const sx of [-1, 1]) {
+                        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.4, 8), accMat);
+                        horn.position.set(sx * 0.5, 0.6, -0.06);
+                        horn.rotation.z = sx > 0 ? -0.7 : 0.7;
+                        g.add(horn);
+                    }
+                    const crest = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.24, 4), accMat);
+                    crest.position.set(0, 0.82, 0);
+                    g.add(crest);
+                }
+            }
+            else if (H === "pointy") {
+                const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.05, 20), baseMat);
+                brim.position.y = 0.5;
+                g.add(brim);
+                const cone = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.95, 16), baseMat);
+                cone.position.y = 1.0;
+                cone.rotation.z = 0.14;
+                g.add(cone);
+                const bandT = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.04, 8, 20), trimMat);
+                bandT.position.y = 0.56;
+                bandT.rotation.x = Math.PI / 2;
+                g.add(bandT);
+                const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), accMat);
+                gem.position.set(0, 0.62, 0.4);
+                g.add(gem);
+                if (cfg.ornate) {
+                    const tip = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), glowMat);
+                    tip.position.set(0.13, 1.42, 0);
+                    g.add(tip);
+                }
+            }
+            else if (H === "cap") {
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), baseMat);
+                dome.position.y = 0.16;
+                g.add(dome);
+                const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.04, 16, 1, false, -Math.PI * 0.5, Math.PI), baseMat);
+                brim.position.set(0, 0.32, 0.34);
+                g.add(brim);
+                const feather = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.5, 5), accMat);
+                feather.position.set(0.36, 0.62, -0.1);
+                feather.rotation.set(0, 0, -0.5);
+                feather.scale.set(1, 1, 0.3);
+                g.add(feather);
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.54, 0.03, 8, 22), trimMat);
+                band.position.y = 0.3;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+            }
+            else if (H === "hood") {
+                const hood = new THREE.Mesh(new THREE.SphereGeometry(0.72, 18, 16, 0, Math.PI * 2, 0, Math.PI * 0.7), baseMat);
+                hood.position.set(0, 0.12, -0.08);
+                hood.scale.set(1.06, 1.1, 1.12);
+                g.add(hood);
+                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.05, 8, 22, Math.PI * 1.1), trimMat);
+                rim.position.set(0, 0.2, 0.34);
+                rim.rotation.set(0.5, 0, 0);
+                g.add(rim);
+                const peak = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 6), baseMat);
+                peak.position.set(0, 0.7, -0.16);
+                peak.rotation.x = -0.5;
+                g.add(peak);
+                if (cfg.glow) {
+                    for (const sx of [-1, 1]) {
+                        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), glowMat);
+                        eye.position.set(sx * 0.16, 0.06, 0.5);
+                        g.add(eye);
+                    }
+                }
+            }
+            else if (H === "round") {
+                const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.05, 20), baseMat);
+                brim.position.y = 0.46;
+                g.add(brim);
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 14, 0, Math.PI * 2, 0, Math.PI * 0.5), baseMat);
+                dome.position.y = 0.46;
+                g.add(dome);
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.035, 8, 20), trimMat);
+                band.position.y = 0.52;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+            }
+            else if (H === "circlet") {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.035, 8, 26), trimMat);
+                band.position.y = 0.42;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+                const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), accMat);
+                gem.position.set(0, 0.46, 0.58);
+                g.add(gem);
+                if (cfg.ornate) {
+                    for (const sx of [-1, 1]) {
+                        const wing = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.26, 4), accMat);
+                        wing.position.set(sx * 0.5, 0.56, 0.32);
+                        wing.rotation.z = sx > 0 ? -0.7 : 0.7;
+                        wing.scale.set(1, 1, 0.3);
+                        g.add(wing);
+                    }
+                }
+            }
+            else if (H === "kabuto") {
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.64, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55), baseMat);
+                dome.position.y = 0.16;
+                g.add(dome);
+                const flare = new THREE.Mesh(new THREE.ConeGeometry(0.72, 0.3, 16, 1, true), baseMat);
+                flare.position.set(0, 0.02, -0.06);
+                flare.rotation.x = 0.2;
+                g.add(flare);
+                const cres = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.03, 8, 16, Math.PI), accMat);
+                cres.position.set(0, 0.5, 0.44);
+                cres.rotation.set(0, 0, Math.PI);
+                g.add(cres);
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.035, 8, 24), trimMat);
+                band.position.y = 0.3;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+            }
+            else if (H === "headband") {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.05, 8, 26), baseMat);
+                band.position.y = 0.4;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+                const knot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), baseMat);
+                knot.position.set(0, 0.4, -0.6);
+                g.add(knot);
+                for (const sx of [-1, 1]) {
+                    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.03), baseMat);
+                    tail.position.set(sx * 0.06, 0.16, -0.62);
+                    tail.rotation.z = sx * 0.2;
+                    g.add(tail);
+                }
+                const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.03, 16), accMat);
+                disc.rotation.x = Math.PI / 2;
+                disc.position.set(0, 0.44, 0.6);
+                g.add(disc);
+            }
+            else if (H === "headphones") {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.045, 8, 24, Math.PI), baseMat);
+                band.position.y = 0.5;
+                g.add(band);
+                for (const sx of [-1, 1]) {
+                    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 16), baseMat);
+                    cup.rotation.z = Math.PI / 2;
+                    cup.position.set(sx * 0.62, 0.16, 0);
+                    g.add(cup);
+                    const pad = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.03, 8, 16), trimMat);
+                    pad.rotation.y = Math.PI / 2;
+                    pad.position.set(sx * 0.66, 0.16, 0);
+                    g.add(pad);
+                    if (cfg.glow) {
+                        const gl = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.015, 6, 16), glowMat);
+                        gl.rotation.y = Math.PI / 2;
+                        gl.position.set(sx * 0.68, 0.16, 0);
+                        g.add(gl);
+                    }
+                }
+            }
+            else if (H === "earpiece") {
+                for (const sx of [-1, 1]) {
+                    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.16, 10), baseMat);
+                    ear.rotation.x = Math.PI / 2;
+                    ear.position.set(sx * 0.6, 0.12, 0.1);
+                    g.add(ear);
+                }
+                const mic = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.3, 6), trimMat);
+                mic.position.set(0.4, 0.02, 0.4);
+                mic.rotation.z = 0.7;
+                g.add(mic);
+                const bud = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), accMat);
+                bud.position.set(0.3, -0.1, 0.5);
+                g.add(bud);
+            }
+            else if (H === "visor") {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.05, 8, 26), trimMat);
+                band.position.y = 0.36;
+                band.rotation.x = Math.PI / 2;
+                g.add(band);
+                const visor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.14, 20, 1, true, -Math.PI * 0.45, Math.PI * 0.9), baseMat);
+                visor.position.set(0, 0.3, 0.18);
+                g.add(visor);
+                const glowV = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.02, 6, 24, Math.PI * 0.9), glowMat);
+                glowV.position.set(0, 0.3, 0.42);
+                g.add(glowV);
+                const crest = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.3, 4), accMat);
+                crest.position.set(0, 0.66, -0.02);
+                g.add(crest);
+            }
+            return g;
+        };
+        const CLASS_TIER_IDX = { r: 0, e: 1, s: 2 };
+        Object.keys(CLASS_LOOKS).forEach((cls) => { ["r", "e", "s"].forEach((tl) => { outfitModels[`cls_${cls}_${tl}`] = buildClassOutfit(CLASS_LOOKS[cls].t[CLASS_TIER_IDX[tl]]); }); });
         Object.values(outfitModels).forEach((m) => { m.visible = false; char.add(m); });
         let curOutfit = null;
         // 👗 the generated archetype outfits have no bespoke mesh, so borrow a model of the
@@ -10844,15 +11215,24 @@ function CherryAdventure() {
             else if (G.costume && G.costume.outfit)
                 id = G.costume.outfit;
             const it = LOOT.find((x) => x.id === id);
-            // pick the mesh: exact model if it exists, else a stand-in for this rarity
-            let modelKey = id && outfitModels[id] ? id : (it ? OUTFIT_FALLBACK[it.rarity] : null);
-            if (modelKey && !outfitModels[modelKey])
-                modelKey = null;
+            // 👗 per-class outfit look for generated archetype pieces (chosen by wearer's class + tier)
+            const classKey = G.resolveOutfitKey ? G.resolveOutfitKey(id, G.cls) : id;
+            // pick the mesh: class look if it resolves, else exact model, else a stand-in for this rarity
+            let modelKey;
+            if (classKey && classKey !== id && outfitModels[classKey])
+                modelKey = classKey;
+            else {
+                modelKey = id && outfitModels[id] ? id : (it ? OUTFIT_FALLBACK[it.rarity] : null);
+                if (modelKey && !outfitModels[modelKey])
+                    modelKey = null;
+            }
             curOutfit = modelKey || null;
             Object.entries(outfitModels).forEach(([k, m]) => (m.visible = k === curOutfit));
-            // 🎨 recolour the stand-in so each archetype reads differently (dye still wins)
+            // 🎨 recolour the stand-in so each archetype reads differently (dye still wins).
+            // 👗 class models are already coloured per class/tier — never archetype-tint them (dye only).
             if (curOutfit && outfitModels[curOutfit]) {
-                const arch = it && it.id && ARCH_TINT[String(it.id).slice(2)] ? String(it.id).slice(2) : null;
+                const isClassModel = curOutfit.indexOf("cls_") === 0;
+                const arch = !isClassModel && it && it.id && ARCH_TINT[String(it.id).slice(2)] ? String(it.id).slice(2) : null;
                 const tint = (G.dye && G.dye.outfit) || (arch ? ARCH_TINT[arch] : null);
                 outfitModels[curOutfit].traverse((o) => {
                     if (!o.isMesh || !o.material || !o.material.color)
@@ -12346,7 +12726,27 @@ function CherryAdventure() {
             g.userData.crownStar = spireGem;
             hatModels.lg_hat = g;
         }
+        // 🎩 PER-CLASS hats (9 classes × 3 tiers) — same CLASS_LOOKS config, built by buildClassHat
+        Object.keys(CLASS_LOOKS).forEach((cls) => { ["r", "e", "s"].forEach((tl) => { hatModels[`cls_${cls}_${tl}`] = buildClassHat(CLASS_LOOKS[cls].t[CLASS_TIER_IDX[tl]]); }); });
         Object.values(hatModels).forEach((m) => { m.visible = false; headG.add(m); });
+        // 👗🎩 resolvers — a generated archetype OUTFIT/HAT id (o[res](atk|def|agi) / h[res]…) maps to the
+        // wearer's class look at that tier (cls_<class>_<r|e|s>); everything else passes through unchanged.
+        G.resolveOutfitKey = (id, cls) => {
+            if (id && cls && /^o[res](atk|def|agi)$/.test(id)) {
+                const k = `cls_${cls}_${id[1]}`;
+                if (outfitModels[k])
+                    return k;
+            }
+            return id;
+        };
+        G.resolveHatKey = (id, cls) => {
+            if (id && cls && /^h[res](atk|def|agi)$/.test(id)) {
+                const k = `cls_${cls}_${id[1]}`;
+                if (hatModels[k])
+                    return k;
+            }
+            return id;
+        };
         const maskModels = {};
         { // m1 heart sunglasses
             const g = new THREE.Group();
@@ -12788,7 +13188,8 @@ function CherryAdventure() {
             const cos = G.costume || {};
             const dye = G.dye || {};
             const look = (s) => (G._gearHidden && s !== "weapon") ? null : (cos[s] || eq[s]); // 🙈 hidden = base body; 👗 else transmog overrides the LOOK, stats stay from eq
-            Object.entries(hatModels).forEach(([k, m]) => (m.visible = k === look("hat")));
+            const hatKey = G.resolveHatKey ? G.resolveHatKey(look("hat"), G.cls) : look("hat"); // 🎩 archetype hats → class look
+            Object.entries(hatModels).forEach(([k, m]) => (m.visible = k === hatKey));
             Object.entries(maskModels).forEach(([k, m]) => (m.visible = k === look("mask")));
             const gl = look("gloves");
             handMeshes.forEach((h) => {
@@ -24895,8 +25296,9 @@ function CherryAdventure() {
                     return c;
                 };
                 // ---- 👗 outfit (body-origin coords) — tinted like setOutfitVisual (reset to base, lerp 0.55 toward dye) ----
-                if (info.outfit && outfitModels[info.outfit]) {
-                    const oc = cloneCosmetic(outfitModels[info.outfit]);
+                const rOutfitKey = G.resolveOutfitKey ? G.resolveOutfitKey(info.outfit, info.c) : info.outfit; // 👗 remote per-class look
+                if (rOutfitKey && outfitModels[rOutfitKey]) {
+                    const oc = cloneCosmetic(outfitModels[rOutfitKey]);
                     if (oc) {
                         oc.traverse((o) => { if (!o.isMesh || !o.material || !o.material.color)
                             return; if (o.userData._baseCol != null)
@@ -24912,8 +25314,9 @@ function CherryAdventure() {
                         body.add(ac);
                 }
                 // ---- 🎩 hat + 😎 mask (headG-local coords → head anchor) ----
-                if (info.hat && hatModels[info.hat]) {
-                    const hc = cloneCosmetic(hatModels[info.hat]);
+                const rHatKey = G.resolveHatKey ? G.resolveHatKey(info.hat, info.c) : info.hat; // 🎩 remote per-class hat
+                if (rHatKey && hatModels[rHatKey]) {
+                    const hc = cloneCosmetic(hatModels[rHatKey]);
                     if (hc)
                         headAnchor.add(hc);
                 }
