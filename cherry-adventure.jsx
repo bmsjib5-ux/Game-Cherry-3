@@ -261,21 +261,21 @@ const EMPTY_ACC = () => ({ ring: null, bracelet: null, necklace: null, earring: 
 // stat keys accessories can grant (mirrors constellation-bonus shape so it folds into every derived stat)
 const ACCESSORIES = [
   // 💍 แหวน — พลังโจมตี & คริ
-  { id: "ac_ring1", slot: "ring", name: "แหวนหินไฟ",        emoji: "💍", rarity: "rare",   req: 1,   cost: { gold: 15000 },   atk: 6, crit: 3 },
-  { id: "ac_ring2", slot: "ring", name: "แหวนราชันเพลิง",   emoji: "💍", rarity: "epic",   req: 30,  cost: { gold: 70000 },   atk: 12, crit: 6, critDmg: 10 },
-  { id: "ac_ring3", slot: "ring", name: "แหวนมังกรนิรันดร์", emoji: "💍", rarity: "legend", req: 80,  cost: { diamonds: 80 },  atk: 22, crit: 10, critDmg: 20 },
+  { id: "ac_ring1", slot: "ring", name: "แหวนหินไฟ",        emoji: "💍", rarity: "rare",   req: 50,  cost: { gold: 15000 },   atk: 6, crit: 3 },
+  { id: "ac_ring2", slot: "ring", name: "แหวนราชันเพลิง",   emoji: "💍", rarity: "epic",   req: 100, cost: { gold: 70000 },   atk: 12, crit: 6, critDmg: 10 },
+  { id: "ac_ring3", slot: "ring", name: "แหวนมังกรนิรันดร์", emoji: "💍", rarity: "legend", req: 150, cost: { diamonds: 1000 }, atk: 22, crit: 10, critDmg: 20 },
   // 📿 กำไล — ป้องกัน & พลังชีวิต
-  { id: "ac_brc1", slot: "bracelet", name: "กำไลศิลา",       emoji: "📿", rarity: "rare",   req: 1,   cost: { gold: 15000 },   def: 5, hp: 30 },
-  { id: "ac_brc2", slot: "bracelet", name: "กำไลพิทักษ์",    emoji: "📿", rarity: "epic",   req: 30,  cost: { gold: 70000 },   def: 10, hp: 70, eva: 4 },
-  { id: "ac_brc3", slot: "bracelet", name: "กำไลปราการเทพ",  emoji: "📿", rarity: "legend", req: 80,  cost: { diamonds: 80 },  def: 18, hp: 140, eva: 8 },
+  { id: "ac_brc1", slot: "bracelet", name: "กำไลศิลา",       emoji: "📿", rarity: "rare",   req: 50,  cost: { gold: 15000 },   def: 5, hp: 30 },
+  { id: "ac_brc2", slot: "bracelet", name: "กำไลพิทักษ์",    emoji: "📿", rarity: "epic",   req: 100, cost: { gold: 70000 },   def: 10, hp: 70, eva: 4 },
+  { id: "ac_brc3", slot: "bracelet", name: "กำไลปราการเทพ",  emoji: "📿", rarity: "legend", req: 150, cost: { diamonds: 1000 }, def: 18, hp: 140, eva: 8 },
   // 🔱 สร้อยคอ — พลังชีวิต & มานา & โชค
-  { id: "ac_nck1", slot: "necklace", name: "สร้อยคริสตัล",   emoji: "🔱", rarity: "rare",   req: 1,   cost: { gold: 15000 },   hp: 40, mp: 10 },
-  { id: "ac_nck2", slot: "necklace", name: "สร้อยจันทรา",    emoji: "🔱", rarity: "epic",   req: 30,  cost: { gold: 70000 },   hp: 90, mp: 20, luck: 6 },
-  { id: "ac_nck3", slot: "necklace", name: "สร้อยเทพสวรรค์", emoji: "🔱", rarity: "legend", req: 80,  cost: { diamonds: 80 },  hp: 160, mp: 35, luck: 12, critDmg: 10 },
+  { id: "ac_nck1", slot: "necklace", name: "สร้อยคริสตัล",   emoji: "🔱", rarity: "rare",   req: 50,  cost: { gold: 15000 },   hp: 40, mp: 10 },
+  { id: "ac_nck2", slot: "necklace", name: "สร้อยจันทรา",    emoji: "🔱", rarity: "epic",   req: 100, cost: { gold: 70000 },   hp: 90, mp: 20, luck: 6 },
+  { id: "ac_nck3", slot: "necklace", name: "สร้อยเทพสวรรค์", emoji: "🔱", rarity: "legend", req: 150, cost: { diamonds: 1000 }, hp: 160, mp: 35, luck: 12, critDmg: 10 },
   // 🌟 ต่างหู — ความเร็ว & หลบหลีก
-  { id: "ac_ear1", slot: "earring", name: "ต่างหูขนนก",      emoji: "🌟", rarity: "rare",   req: 1,   cost: { gold: 15000 },   spd: 6, eva: 3 },
-  { id: "ac_ear2", slot: "earring", name: "ต่างหูสายลม",     emoji: "🌟", rarity: "epic",   req: 30,  cost: { gold: 70000 },   spd: 12, eva: 6, crit: 4 },
-  { id: "ac_ear3", slot: "earring", name: "ต่างหูเทพสายฟ้า",  emoji: "🌟", rarity: "legend", req: 80,  cost: { diamonds: 80 },  spd: 20, eva: 10, crit: 8, luck: 8 },
+  { id: "ac_ear1", slot: "earring", name: "ต่างหูขนนก",      emoji: "🌟", rarity: "rare",   req: 50,  cost: { gold: 15000 },   spd: 6, eva: 3 },
+  { id: "ac_ear2", slot: "earring", name: "ต่างหูสายลม",     emoji: "🌟", rarity: "epic",   req: 100, cost: { gold: 70000 },   spd: 12, eva: 6, crit: 4 },
+  { id: "ac_ear3", slot: "earring", name: "ต่างหูเทพสายฟ้า",  emoji: "🌟", rarity: "legend", req: 150, cost: { diamonds: 1000 }, spd: 20, eva: 10, crit: 8, luck: 8 },
 ];
 const ACC_BY_ID = {}; ACCESSORIES.forEach((a) => (ACC_BY_ID[a.id] = a));
 
@@ -1127,19 +1127,19 @@ const WEAPON_SKINS = [
 
 // ---------- 💎 DIAMOND SHOP — spend diamonds on special skins / weapons / outfits ----------
 const DIAMOND_SHOP = [
-  { id: "sk_dragon",  kind: "skin", ref: "dragon",  cat: "skin",   emoji: "🐉", name: "สกินมังกรโบราณ",  price: 60 },
-  { id: "sk_rainbow", kind: "skin", ref: "rainbow", cat: "skin",   emoji: "🌈", name: "สกินรุ้งพราวแพรว", price: 50 },
-  { id: "sk_gold",    kind: "skin", ref: "gold",    cat: "skin",   emoji: "👑", name: "สกินทองคำราชัน",  price: 45 },
-  { id: "dw_kd",  kind: "item", ref: "kd",  cat: "weapon", emoji: "🐉", name: "คาตานะมังกร",   price: 90 },
-  { id: "dw_wlm", kind: "item", ref: "wlm", cat: "weapon", emoji: "🌟", name: "คทาสุริยเทพ",    price: 90 },
-  { id: "dw_wla", kind: "item", ref: "wla", cat: "weapon", emoji: "🌟", name: "ธนูแสงดารา",     price: 90 },
-  { id: "dw_wls", kind: "item", ref: "wls", cat: "weapon", emoji: "🌙", name: "มีดคู่จันทราลับ", price: 90 },
-  { id: "dw_wlw", kind: "item", ref: "wlw", cat: "weapon", emoji: "🌙", name: "ดาบเทพจันทรา",   price: 90 },
-  { id: "do_oD", kind: "item", ref: "oD", cat: "outfit", emoji: "🐉", name: "เกราะเกล็ดมังกร", price: 80 },
-  { id: "do_oS", kind: "item", ref: "oS", cat: "outfit", emoji: "✨", name: "อาภรณ์ดวงดาว",    price: 80 },
-  { id: "mt_donkey",  kind: "mount", ref: "donkey",  cat: "mount", emoji: "🫏", name: "ลาน้อย (เร็ว +40%)",       price: 40 },
-  { id: "mt_ostrich", kind: "mount", ref: "ostrich", cat: "mount", emoji: "🪶", name: "นกกระจอกเทศ (เร็ว +60%)", price: 60 },
-  { id: "mt_shark",   kind: "mount", ref: "shark",   cat: "mount", emoji: "🦈", name: "ฉลามบก (เร็ว +80%)",      price: 90 },
+  { id: "sk_dragon",  kind: "skin", ref: "dragon",  cat: "skin",   emoji: "🐉", name: "สกินมังกรโบราณ",  price: 1200 },
+  { id: "sk_rainbow", kind: "skin", ref: "rainbow", cat: "skin",   emoji: "🌈", name: "สกินรุ้งพราวแพรว", price: 1000 },
+  { id: "sk_gold",    kind: "skin", ref: "gold",    cat: "skin",   emoji: "👑", name: "สกินทองคำราชัน",  price: 1000 },
+  { id: "dw_kd",  kind: "item", ref: "kd",  cat: "weapon", emoji: "🐉", name: "คาตานะมังกร",   price: 1800 },
+  { id: "dw_wlm", kind: "item", ref: "wlm", cat: "weapon", emoji: "🌟", name: "คทาสุริยเทพ",    price: 1800 },
+  { id: "dw_wla", kind: "item", ref: "wla", cat: "weapon", emoji: "🌟", name: "ธนูแสงดารา",     price: 1800 },
+  { id: "dw_wls", kind: "item", ref: "wls", cat: "weapon", emoji: "🌙", name: "มีดคู่จันทราลับ", price: 1800 },
+  { id: "dw_wlw", kind: "item", ref: "wlw", cat: "weapon", emoji: "🌙", name: "ดาบเทพจันทรา",   price: 1800 },
+  { id: "do_oD", kind: "item", ref: "oD", cat: "outfit", emoji: "🐉", name: "เกราะเกล็ดมังกร", price: 1600 },
+  { id: "do_oS", kind: "item", ref: "oS", cat: "outfit", emoji: "✨", name: "อาภรณ์ดวงดาว",    price: 1600 },
+  { id: "mt_donkey",  kind: "mount", ref: "donkey",  cat: "mount", emoji: "🫏", name: "ลาน้อย (เร็ว +40%)",       price: 1000 },
+  { id: "mt_ostrich", kind: "mount", ref: "ostrich", cat: "mount", emoji: "🪶", name: "นกกระจอกเทศ (เร็ว +60%)", price: 1200 },
+  { id: "mt_shark",   kind: "mount", ref: "shark",   cat: "mount", emoji: "🦈", name: "ฉลามบก (เร็ว +80%)",      price: 1400 },
   { id: "wg_phoenix", kind: "wing", ref: "phoenix", cat: "wing", emoji: "🔥", name: "ปีกนกฟินิกซ์ (แดง-ส้ม)",  price: 1000 },
   { id: "wg_angel",   kind: "wing", ref: "angel",   cat: "wing", emoji: "😇", name: "ปีกนางฟ้า (ขาว-ทอง)",    price: 1500 },
   { id: "wg_demon",   kind: "wing", ref: "demon",   cat: "wing", emoji: "😈", name: "ปีกจอมมาร (ดำ-แดง)",     price: 2000 },
@@ -11056,12 +11056,12 @@ export default function CherryAdventure() {
     // 📅 DAILY LOGIN REWARD — escalating rewards for consecutive days (7-day cycle)
     const DAILY_REWARDS = [
       { gold: 100, emoji: "💰", label: "100 ทอง" },
-      { gold: 150, ball: 2, emoji: "💗", label: "150 ทอง + บอล 2" },
+      { gold: 250, emoji: "💰", label: "250 ทอง" },
       { gold: 200, emoji: "💰", label: "200 ทอง" },
       { gold: 250, potion: 2, emoji: "🧪", label: "250 ทอง + ยา 2" },
       { gold: 350, emoji: "💰", label: "350 ทอง" },
-      { gold: 450, ball: 3, emoji: "💗", label: "450 ทอง + บอล 3" },
-      { gold: 800, ball: 3, potion: 3, emoji: "🎁", label: "800 ทอง + บอล 3 + ยา 3 (โบนัสใหญ่!)" },
+      { gold: 650, emoji: "💰", label: "650 ทอง" },
+      { gold: 1000, potion: 3, emoji: "🎁", label: "1000 ทอง + ยา 3 (โบนัสใหญ่!)" },
     ];
     const todayStamp = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
     G.checkDailyReward = () => {
@@ -11556,11 +11556,21 @@ export default function CherryAdventure() {
         d.sp.material.opacity = p < 0.65 ? 1 : 1 - (p - 0.65) / 0.35;
       }
     };
-    // heart ball
+    // 🔴🟡🔵 tri-color catch ball — a round beach ball split into 3 vertical wedges
     const ball = new THREE.Group();
-    const ballTop = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xd9536b }));
-    const ballBot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), whiteMat);
-    ball.add(ballTop, ballBot);
+    const ballWedgeColors = [0xe5533b, 0xf0c33b, 0x3b8ae0]; // แดง · เหลือง · น้ำเงิน
+    for (let i = 0; i < 3; i++) {
+      const wedge = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 18, 16, (i / 3) * Math.PI * 2, (Math.PI * 2) / 3),
+        new THREE.MeshStandardMaterial({ color: ballWedgeColors[i], roughness: 0.35, metalness: 0.08 })
+      );
+      ball.add(wedge);
+    }
+    // white poles + glossy highlight so it reads as a round toy ball
+    const ballPoleMat = new THREE.MeshStandardMaterial({ color: 0xfdfdfd, roughness: 0.3 });
+    for (const py of [0.16, -0.16]) { const cap = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), ballPoleMat); cap.position.y = py; cap.scale.y = 0.55; ball.add(cap); }
+    const ballShine = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 }));
+    ballShine.position.set(-0.06, 0.07, 0.11); ball.add(ballShine);
     ball.visible = false;
     scene.add(ball);
 
@@ -13157,6 +13167,7 @@ export default function CherryAdventure() {
     G.equipAccessory = (id) => {
       const a = ACC_BY_ID[id]; if (!a) return;
       if ((G.accInv || []).indexOf(id) < 0) return;
+      if ((G.player ? G.player.level : 1) < (a.req || 1)) { toast(`🔒 ต้องเลเวล ${a.req} ขึ้นไปถึงจะสวมได้`); return; } // ⛓️ เงื่อนไขเลเวลในการสวม
       G.accEquip = G.accEquip || EMPTY_ACC();
       G.accEquip[a.slot] = id;
       G.player.hp = Math.min(G.player.hp, effMaxHp()); G.player.mp = Math.min(G.player.mp, effMaxMp());
@@ -13797,7 +13808,6 @@ export default function CherryAdventure() {
         G.player.hp = effMaxHp();
         G.player.maxMp = effMaxMp();
         G.player.mp = G.player.maxMp; // 💧 full mana on level up
-        G.player.balls++;
         G.player.specials++;
         if (G.checkAchievements) G.checkAchievements();
         if (G.computeTitle) G.computeTitle();
@@ -14388,6 +14398,18 @@ export default function CherryAdventure() {
       G.mpPotions = (G.mpPotions || 0) + 1;
       if (G.sfx) G.sfx.coin();
       toast("💧 ซื้อน้ำยามานา +1!");
+      syncPlayer();
+    };
+    // 🔴🟡🔵 buy a catch ball — the ONLY way to get balls (no drops)
+    G.BALL_PRICE = 1000;
+    G.buyBall = () => {
+      const price = G.BALL_PRICE;
+      if (G.gold < price) { toast(`ทองไม่พอ! ลูกบอลราคา ${price}💰`); return; }
+      G.gold -= price;
+      G.player = G.player || {}; G.player.balls = (G.player.balls || 0) + 1;
+      if (G.sfx) G.sfx.coin();
+      toast(`🔴🟡🔵 ซื้อลูกบอลจับมอนสเตอร์ +1! (มี ${G.player.balls})`);
+      setUi((u) => ({ ...u, gold: G.gold, balls: G.player.balls }));
       syncPlayer();
     };
     // ⚒️ Blacksmith shop: forge weapons priced by rarity
@@ -15203,7 +15225,6 @@ export default function CherryAdventure() {
       const lv = m.userData.lv || 1; const shiny = m.userData.shiny;
       burst(m.position, 0xf5d05a, 1.0);
       if (G.sfx) G.sfx.win && G.sfx.win();
-      G.player.balls = (G.player.balls || 0) + 1;
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
       G.combo = (G.combo || 0) + 1;
       const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
@@ -15377,12 +15398,11 @@ export default function CherryAdventure() {
       const wasBoss = G.enemy.boss;
       burst(em.position, 0xf5d05a);
       setMouth("laugh");
-      G.player.balls += wasBoss ? 3 : 1;
       setUi((u) => ({
         ...u,
         msg: wasBoss
-          ? `🏆 ปราบบอส Lv.${G.enemy.lv} สำเร็จ!! ได้บอลหัวใจ +3 💗`
-          : `ชนะ! ${sp.name} Lv.${G.enemy.lv} วิ่งหนีไป · ได้บอลหัวใจ +1 💗`,
+          ? `🏆 ปราบบอส Lv.${G.enemy.lv} สำเร็จ!!`
+          : `ชนะ! ${sp.name} Lv.${G.enemy.lv} วิ่งหนีไป`,
       }));
       const isGhost = G.enemy.ghost;
       const isGolden = G.enemy.golden;
@@ -15394,7 +15414,7 @@ export default function CherryAdventure() {
         const gain = Math.max(8, Math.round(20 + (ghostLv - myLv) * 3));
         G.pvpRank = (G.pvpRank || 1000) + gain;
         // bonus loot for beating a stronger friend
-        if (ghostLv >= myLv) { G.gold += ghostLv * 5; G.player.balls += 1; }
+        if (ghostLv >= myLv) { G.gold += ghostLv * 5; }
         const tier = pvpTier(G.pvpRank);
         toast(`🏅 ชนะผี ${G.enemy.name}! อันดับ +${gain} → ${G.pvpRank} (${tier.emoji} ${tier.name})`);
         if (ghostLv >= myLv) toast(`💰 โบนัสล้มเพื่อนแกร่ง! +${ghostLv * 5}G +1💗`);
@@ -15777,10 +15797,10 @@ export default function CherryAdventure() {
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, advUltUsed: true, msg: `👑 ${AU.emoji} ${AU.name}!!` }));
       } else if (kind === "catch") {
         if (G.enemy && G.enemy.worldBoss) { toast("👹 จับบอสโลกไม่ได้!"); return; } // world boss cannot be captured
-        if (G.player.balls <= 0) { toast("บอลหัวใจหมด! ชนะศึกเพื่อรับเพิ่ม"); return; }
+        if (G.player.balls <= 0) { toast("ลูกบอลหมด! ซื้อเพิ่มที่ร้านค้า 🏪 (1000💰/ลูก)"); return; }
         G.player.balls--;
         G.banim = { type: "throwBall", t: 0, dur: 1.9 };
-        setUi((u) => ({ ...u, bstate: "busy", msg: "💗 ขว้างบอลหัวใจ!" }));
+        setUi((u) => ({ ...u, bstate: "busy", msg: "🔴🟡🔵 ขว้างลูกบอล!" }));
         syncPlayer();
       } else if (kind === "run") {
         if (G.enemy && G.enemy.worldBoss) { G.wbEndRound("flee"); return; } // fleeing the boss saves its HP + shows the round result
@@ -25743,7 +25763,7 @@ export default function CherryAdventure() {
                         {a.worn ? (
                           <span style={{ fontSize: 10.5, fontWeight: 800, color: "#ffd76a" }}>✓ สวมอยู่</span>
                         ) : a.owned ? (
-                          <button onClick={() => G.equipAccessory(a.id)} style={{ padding: "6px 12px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#c060a0,#e07ac0)" }}>สวมใส่</button>
+                          <button disabled={a.locked} onClick={() => !a.locked && G.equipAccessory(a.id)} style={{ padding: "6px 12px", borderRadius: 9, border: "none", cursor: a.locked ? "not-allowed" : "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: a.locked ? "#8a7f88" : "#fff", background: a.locked ? "rgba(255,255,255,0.07)" : "linear-gradient(90deg,#c060a0,#e07ac0)", whiteSpace: "nowrap" }}>{a.locked ? `🔒 Lv.${a.req}` : "สวมใส่"}</button>
                         ) : (
                           <button disabled={a.locked || !a.afford} onClick={() => G.buyAccessory(a.id)} style={{ padding: "6px 11px", borderRadius: 9, border: "none", cursor: (a.locked || !a.afford) ? "not-allowed" : "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: (a.locked || !a.afford) ? "#8a7f88" : "#3a1030", background: (a.locked || !a.afford) ? "rgba(255,255,255,0.07)" : "linear-gradient(90deg,#f5a0d0,#ffc0e0)", whiteSpace: "nowrap" }}>{costLabel}</button>
                         )}
@@ -26176,6 +26196,17 @@ export default function CherryAdventure() {
                   <div style={{ fontSize: 20 }}>💧</div>
                   <div style={{ fontSize: 10.5, fontWeight: 700, color: "#4a90c0" }}>น้ำยามานา</div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>40💰 (มี {ui.mpPotions || 0})</div>
+                </button>
+                <button onClick={() => G.buyBall()} style={{
+                  flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
+                  cursor: ui.gold >= 1000 ? "pointer" : "not-allowed", fontFamily: font,
+                  background: ui.gold >= 1000 ? "#fdf3ea" : "#eee", opacity: ui.gold >= 1000 ? 1 : 0.6,
+                }}>
+                  <div style={{ margin: "0 auto 2px", width: 20, height: 20, borderRadius: "50%",
+                    background: "conic-gradient(#e5533b 0deg 120deg, #f0c33b 120deg 240deg, #3b8ae0 240deg 360deg)",
+                    boxShadow: "inset -2px -2px 4px rgba(0,0,0,0.28), inset 2px 2px 4px rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.7)" }} />
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: "#c0603b" }}>ลูกบอลจับ</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>1000💰 (มี {ui.balls || 0})</div>
                 </button>
               </div>
               <div style={{ fontSize: 11, fontWeight: 800, color: "#8a8a7a", marginBottom: 4 }}>อุปกรณ์</div>
@@ -28381,6 +28412,15 @@ export default function CherryAdventure() {
                   )}
                 </button>
               );
+              // 🔴🟡🔵 tri-color catch-ball icon (round, 3 wedges) — replaces the old heart
+              const catchBallIcon = (
+                <span style={{
+                  width: 27, height: 27, borderRadius: "50%", display: "inline-block",
+                  background: "conic-gradient(#e5533b 0deg 120deg, #f0c33b 120deg 240deg, #3b8ae0 240deg 360deg)",
+                  boxShadow: "inset -3px -3px 6px rgba(0,0,0,0.28), inset 3px 3px 6px rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.25)",
+                  border: "1.5px solid rgba(255,255,255,0.75)",
+                }} />
+              );
               const cornerStyle = (side) => ({
                 position: "absolute", bottom: 80, [side]: 12, zIndex: 6,
                 display: "flex", flexDirection: "column", flexWrap: "wrap",
@@ -28393,7 +28433,7 @@ export default function CherryAdventure() {
                 <>
                   {/* มุมล่างซ้าย: จับ / เลือด / มานา / หนี */}
                   <div style={cornerStyle("left")}>
-                    {!(ui.enemy && ui.enemy.worldBoss) && iconBtn("💗", "#e0788a", () => G.act("catch"), ui.balls, { title: "จับ", badgeBg: "#c05878" })}
+                    {!(ui.enemy && ui.enemy.worldBoss) && iconBtn(catchBallIcon, "#f5f0e8", () => G.act("catch"), ui.balls, { title: "จับ (ลูกบอล)", badgeBg: "#c05878" })}
                     {iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, { title: "น้ำยาเพิ่มเลือด", badgeBg: "#3a8050" })}
                     {iconBtn("💧", "#4a90c0", () => G.useManaPotion(), ui.mpPotions, { title: "น้ำยาเพิ่มมานา", badgeBg: "#3a70a0" })}
                     {iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })}
