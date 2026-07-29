@@ -25732,8 +25732,8 @@ export default function CherryAdventure() {
       )}
 
       {/* ===== explore HUD ===== */}
-      {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch */}
-      {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
+      {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch; hidden during battle so it doesn't clutter combat */}
+      {ui.mode === "explore" && !ui.equipScreen && (
         <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
