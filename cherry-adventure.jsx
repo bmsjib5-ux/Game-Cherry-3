@@ -1333,6 +1333,7 @@ export default function CherryAdventure() {
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
     toast: "", toastAt: 0,
+    inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
   });
 
   // joystick
@@ -11166,6 +11167,276 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, warpAsk: false }));
     };
 
+    // ================= 🏡 MY RANCH ZONE — พื้นที่ของฉัน (additive personal homestead) =================
+    // ทั้งก้อนนี้เป็นฟีเจอร์เสริมล้วน ไม่แตะ battle/biome เดิม — วาร์ปเข้าจากแท่นใกล้กระท่อม
+    G.inRanchZone = false; // 🔒 ไม่เซฟค่านี้ เริ่มใหม่ทุกครั้ง = false เสมอ
+
+    // 🥕 crop visuals (สี/emoji ต่อชนิด — ตรงกับ CROPS ในระบบฟาร์ม)
+    const RANCH_CROPS = [
+      { id: "carrot", emoji: "🥕", color: 0xe8873a },
+      { id: "corn", emoji: "🌽", color: 0xe8c84a },
+      { id: "berry", emoji: "🫐", color: 0x6a7ae0 },
+    ];
+
+    // 🏷️ ป้ายลอยแบบ canvas-sprite (มี/ไม่มีพื้นหลัง pill)
+    const ranchLabel = (sx, sy, w = 256, h = 96) => {
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const tex = new THREE.CanvasTexture(cv);
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+      spr.scale.set(sx, sy, 1);
+      const draw = (txt, col, noBg) => {
+        const ctx = cv.getContext("2d"); ctx.clearRect(0, 0, w, h);
+        if (!noBg) {
+          const pad = 10, r = 22;
+          ctx.fillStyle = "rgba(70,48,34,0.62)";
+          ctx.beginPath();
+          ctx.moveTo(pad + r, pad);
+          ctx.arcTo(w - pad, pad, w - pad, h - pad, r);
+          ctx.arcTo(w - pad, h - pad, pad, h - pad, r);
+          ctx.arcTo(pad, h - pad, pad, pad, r);
+          ctx.arcTo(pad, pad, w - pad, pad, r);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.font = `bold ${noBg ? Math.floor(h * 0.7) : 34}px system-ui, sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = col || "#fff9f0";
+        ctx.fillText(txt, w / 2, h / 2 + 2);
+        tex.needsUpdate = true;
+      };
+      return { sprite: spr, canvas: cv, tex, draw };
+    };
+
+    // 🧹 dispose ต้นไม้ mesh/sprite แบบ recursive
+    const ranchDispose = (o) => {
+      o.traverse((n) => {
+        if (n.isMesh) { if (n.geometry) n.geometry.dispose(); if (n.material) { const ms = Array.isArray(n.material) ? n.material : [n.material]; ms.forEach((mm) => mm.dispose()); } }
+        if (n.isSprite && n.material) { if (n.material.map) n.material.map.dispose(); n.material.dispose(); }
+      });
+    };
+
+    // 🐄 แท่นวาร์ปเข้าฟาร์ม (โผล่เฉพาะทุ่งซากุระ ใกล้กระท่อม)
+    const ranchPad = new THREE.Group();
+    const rpDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xffd9ec, emissive: 0xf0a8cc, emissiveIntensity: 0.4, roughness: 0.7, side: THREE.DoubleSide }));
+    rpDisc.rotation.x = -Math.PI / 2; rpDisc.position.y = 0.05;
+    const rpRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 12, 30), new THREE.MeshStandardMaterial({ color: 0xffb0d8, emissive: 0xe07ab0, emissiveIntensity: 0.8 }));
+    rpRing.rotation.x = -Math.PI / 2; rpRing.position.y = 0.12;
+    const rpLabel = ranchLabel(2.6, 0.98);
+    rpLabel.draw("🐄 ฟาร์มของฉัน", "#fff4fb");
+    rpLabel.sprite.position.y = 1.7;
+    ranchPad.add(rpDisc, rpRing, rpLabel.sprite);
+    ranchPad.position.set(-6, 0, -3);
+    scene.add(ranchPad);
+    G._ranchPad = ranchPad;
+    G._ranchPadRing = rpRing;
+
+    // 🏡 กลุ่มโซนฟาร์ม (สร้างครั้งเดียว, ซ่อนไว้ก่อน) — อยู่ที่ origin ในรัศมี ~14
+    const ranchZone = new THREE.Group();
+    ranchZone.visible = false;
+    scene.add(ranchZone);
+    G._ranchZone = ranchZone;
+
+    // วัสดุใช้ซ้ำทั่วโซน (ไม้อุ่น/ดิน/หญ้า)
+    const rzWoodMat = new THREE.MeshStandardMaterial({ color: 0x9c6b3f, roughness: 0.85 });
+    const rzWoodDark = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.9 });
+    const rzSoilMat = new THREE.MeshStandardMaterial({ color: 0x8a5a38, roughness: 1 });
+    const rzGrassMat = new THREE.MeshStandardMaterial({ color: 0x9fdd7a, emissive: 0x2f5a20, emissiveIntensity: 0.15, roughness: 0.9 });
+    const rzSproutMat = new THREE.MeshStandardMaterial({ color: 0x5fbf50, roughness: 0.7 });
+
+    // 🌱 พื้นหญ้ากลม + ลานดินตรงกลาง = อ่านออกว่าเป็นบ้านไร่จัดเรียบร้อย
+    const rGround = new THREE.Mesh(new THREE.CircleGeometry(14, 40), rzGrassMat);
+    rGround.rotation.x = -Math.PI / 2; rGround.position.y = 0.02;
+    ranchZone.add(rGround);
+    const rPlaza = new THREE.Mesh(new THREE.CircleGeometry(3.2, 28), rzSoilMat);
+    rPlaza.rotation.x = -Math.PI / 2; rPlaza.position.set(0, 0.03, 0);
+    ranchZone.add(rPlaza);
+
+    // 🪵 รั้วไม้เสา-ราว 2 คอก (geometry ใช้ซ้ำ)
+    const rPostGeo = new THREE.CylinderGeometry(0.09, 0.11, 1.0, 8);
+    const rRailGeo = new THREE.BoxGeometry(1, 0.09, 0.09);
+    const makePen = (cx, cz, halfW, halfD) => {
+      const pen = new THREE.Group();
+      const postAt = (x, z) => { const p = new THREE.Mesh(rPostGeo, rzWoodMat); p.position.set(x, 0.5, z); pen.add(p); };
+      const stepX = (halfW * 2) / 3, stepZ = (halfD * 2) / 3;
+      for (let i = 0; i <= 3; i++) { postAt(cx - halfW + stepX * i, cz - halfD); postAt(cx - halfW + stepX * i, cz + halfD); }
+      for (let i = 1; i < 3; i++) { postAt(cx - halfW, cz - halfD + stepZ * i); postAt(cx + halfW, cz - halfD + stepZ * i); }
+      const railRun = (x, z, len, alongX, yy) => {
+        const r = new THREE.Mesh(rRailGeo, rzWoodDark);
+        r.scale.x = len; r.position.set(x, yy, z);
+        if (!alongX) r.rotation.y = Math.PI / 2;
+        pen.add(r);
+      };
+      for (const yy of [0.4, 0.75]) {
+        railRun(cx, cz - halfD, halfW * 2, true, yy);
+        railRun(cx, cz + halfD, halfW * 2, true, yy);
+        railRun(cx - halfW, cz, halfD * 2, false, yy);
+        railRun(cx + halfW, cz, halfD * 2, false, yy);
+      }
+      ranchZone.add(pen);
+      return { minX: cx - halfW + 0.4, maxX: cx + halfW - 0.4, minZ: cz - halfD + 0.4, maxZ: cz + halfD - 0.4, cx, cz };
+    };
+    G._ranchPens = [makePen(-7, 4, 2.6, 2.3), makePen(7, 4, 2.6, 2.3)];
+
+    // 🌾 4 แปลงพืช (ดิน / ต้นกล้า / ผลสุก) — สลับ visibility ตามสถานะ
+    const RANCH_PLOT_XS = [-4.5, -1.5, 1.5, 4.5];
+    const rPlotSoilGeo = new THREE.BoxGeometry(2.0, 0.25, 1.6);
+    const rPlotSproutGeo = new THREE.ConeGeometry(0.12, 0.4, 8);
+    G._ranchPlots = [];
+    RANCH_PLOT_XS.forEach((px) => {
+      const pg = new THREE.Group(); pg.position.set(px, 0, -8);
+      const soil = new THREE.Mesh(rPlotSoilGeo, rzSoilMat); soil.position.y = 0.12; pg.add(soil);
+      const sprout = new THREE.Group();
+      for (const off of [[-0.4, 0.2], [0.4, -0.2], [0, 0.35], [0.2, -0.4]]) {
+        const s = new THREE.Mesh(rPlotSproutGeo, rzSproutMat); s.position.set(off[0], 0.42, off[1]); sprout.add(s);
+      }
+      sprout.visible = false; pg.add(sprout);
+      const ripe = ranchLabel(1.0, 1.0, 96, 96);
+      ripe.draw("🥕", null, true);
+      ripe.sprite.position.set(0, 0.8, 0); ripe.sprite.visible = false; pg.add(ripe.sprite);
+      ranchZone.add(pg);
+      G._ranchPlots.push({ group: pg, soil, sprout, ripe });
+    });
+
+    // 🥚 แท่นฟักไข่ + ป้ายลอยบอกเวลานับถอยหลัง
+    const rEggPed = new THREE.Group(); rEggPed.position.set(0, 0, 8);
+    const rPedBase = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.85, 0.7, 16), new THREE.MeshStandardMaterial({ color: 0xb8b0a4, roughness: 0.9 }));
+    rPedBase.position.y = 0.35; rEggPed.add(rPedBase);
+    const rPedTop = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.18, 16), rzWoodMat);
+    rPedTop.position.y = 0.78; rEggPed.add(rPedTop);
+    const rEggMesh = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xf0d090, emissiveIntensity: 0.35, roughness: 0.5 }));
+    rEggMesh.scale.set(1, 1.28, 1); rEggMesh.position.y = 1.15; rEggMesh.visible = false; rEggPed.add(rEggMesh);
+    const rEggLabel = ranchLabel(3.0, 0.9);
+    rEggLabel.draw("ยังไม่มีไข่", "#e8e0d0");
+    rEggLabel.sprite.position.y = 2.05; rEggPed.add(rEggLabel.sprite);
+    ranchZone.add(rEggPed);
+    G._ranchEggPed = { group: rEggPed, egg: rEggMesh, label: rEggLabel, base: rPedBase };
+
+    // ⬅️ แท่นวาร์ปกลับหมู่บ้าน (ทางเข้าโซน)
+    const rRetPad = new THREE.Group(); rRetPad.position.set(0, 0, 12);
+    const rRetDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xbfe0ff, emissive: 0x7ab0e0, emissiveIntensity: 0.5, roughness: 0.7, side: THREE.DoubleSide }));
+    rRetDisc.rotation.x = -Math.PI / 2; rRetDisc.position.y = 0.05;
+    const rRetRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 12, 30), new THREE.MeshStandardMaterial({ color: 0x9adcff, emissive: 0x4aa0e0, emissiveIntensity: 0.8 }));
+    rRetRing.rotation.x = -Math.PI / 2; rRetRing.position.y = 0.12;
+    const rRetLabel = ranchLabel(2.8, 0.95);
+    rRetLabel.draw("⬅️ กลับหมู่บ้าน", "#eef7ff");
+    rRetLabel.sprite.position.y = 1.7;
+    rRetPad.add(rRetDisc, rRetRing, rRetLabel.sprite);
+    ranchZone.add(rRetPad);
+    G._ranchReturnPad = rRetPad; G._ranchReturnRing = rRetRing;
+
+    // 🏡 ป้ายไม้ต้อนรับ
+    const rSign = new THREE.Group(); rSign.position.set(2.6, 0, 12);
+    const rSignPost = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.6, 8), rzWoodMat); rSignPost.position.y = 0.8; rSign.add(rSignPost);
+    const rSignBoard = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.7, 0.12), rzWoodDark); rSignBoard.position.y = 1.5; rSign.add(rSignBoard);
+    const rSignLabel = ranchLabel(2.4, 0.7, 256, 80); rSignLabel.draw("🏡 ฟาร์มของฉัน", "#fff4e0", true); rSignLabel.sprite.position.set(0, 1.5, 0.13); rSign.add(rSignLabel.sprite);
+    ranchZone.add(rSign);
+
+    // 🌾 กองฟาง + 🚰 รางน้ำ + 🌸 ดอกไม้ประดับ
+    const rHay = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, 0.9, 12), new THREE.MeshStandardMaterial({ color: 0xe8c85a, roughness: 1 }));
+    rHay.position.set(0, 0.45, 4); ranchZone.add(rHay);
+    const rTrough = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.4, 0.7), rzWoodDark); rTrough.position.set(-3.5, 0.2, 7.5); ranchZone.add(rTrough);
+    const rWater = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 0.55), new THREE.MeshStandardMaterial({ color: 0x6ab0e8, transparent: true, opacity: 0.8, roughness: 0.3 })); rWater.position.set(-3.5, 0.38, 7.5); ranchZone.add(rWater);
+    const rFlowerGeo = new THREE.SphereGeometry(0.12, 8, 8);
+    const rFlowerCols = [0xff8ab0, 0xffd86a, 0xb08aff, 0xff6a6a];
+    for (let i = 0; i < 16; i++) {
+      const a = Math.random() * Math.PI * 2, rr = 6 + Math.random() * 7;
+      const fx = Math.cos(a) * rr, fz = Math.sin(a) * rr;
+      if (Math.hypot(fx, fz) > 13) continue;
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 5), rzSproutMat); stem.position.set(fx, 0.2, fz); ranchZone.add(stem);
+      const fl = new THREE.Mesh(rFlowerGeo, new THREE.MeshStandardMaterial({ color: rFlowerCols[i % rFlowerCols.length], emissive: rFlowerCols[i % rFlowerCols.length], emissiveIntensity: 0.2 }));
+      fl.position.set(fx, 0.42, fz); ranchZone.add(fl);
+    }
+
+    // 🐾 สัตว์เลี้ยงในคอก + ฟังก์ชัน refresh สถานะโซนทั้งหมด
+    G.ranchZonePets = [];
+    G.refreshRanchZone = () => {
+      const zone = G._ranchZone; if (!zone) return;
+      // 🧹 ล้างโมเดลสัตว์เก่า
+      (G.ranchZonePets || []).forEach((m) => { zone.remove(m); ranchDispose(m); });
+      G.ranchZonePets = [];
+      // ดึงสัตว์จากคอกฟาร์ม (G.ranch.slots) → ไม่มีก็โชว์จากทีม/คอลเลกชัน
+      let slots = (G.ranch && G.ranch.slots) ? G.ranch.slots.filter((x) => x != null) : [];
+      if (!slots.length) {
+        const fromTeam = (G.team || []).slice(0, 6);
+        const fromCol = Object.keys(G.col || {});
+        slots = (fromTeam.length ? fromTeam : fromCol).slice(0, 6);
+      }
+      const pens = G._ranchPens || [];
+      slots.forEach((iid, idx) => {
+        const p = G.petAt ? G.petAt(iid) : null; if (!p || !SPECIES[p.sp]) return;
+        const m = buildMonster(p.sp, p.stage || 1);
+        m.scale.multiplyScalar(0.6); // 🐣 ลูกสัตว์น่ารักในคอก
+        const pen = pens[idx % Math.max(1, pens.length)] || { minX: -2, maxX: 2, minZ: 2, maxZ: 6, cx: 0, cz: 4 };
+        const cx = pen.minX + Math.random() * (pen.maxX - pen.minX);
+        const cz = pen.minZ + Math.random() * (pen.maxZ - pen.minZ);
+        m.position.set(cx, 0, cz);
+        m.userData.zwander = { cx, cz, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 0.5, sp: 0.25 + Math.random() * 0.2, penMinX: pen.minX, penMaxX: pen.maxX, penMinZ: pen.minZ, penMaxZ: pen.maxZ };
+        zone.add(m);
+        G.ranchZonePets.push(m);
+      });
+      // 🌱 อัปเดตแปลงพืชจาก G.ranch.garden
+      (G._ranchPlots || []).forEach((plot, k) => {
+        const g = (G.ranch && G.ranch.garden) ? G.ranch.garden[k] : null;
+        const ripeNow = g && (!g.readyAt || g.readyAt <= Date.now());
+        plot.sprout.visible = !!g && !ripeNow;
+        plot.ripe.sprite.visible = !!ripeNow;
+        if (ripeNow) {
+          const cd = RANCH_CROPS.find((c) => c.id === g.crop) || RANCH_CROPS[k % RANCH_CROPS.length];
+          plot.ripe.draw(cd.emoji, null, true);
+        }
+      });
+      // 🥚 อัปเดตแท่นไข่จาก G.ranch.egg
+      const ep = G._ranchEggPed; const e = G.ranch && G.ranch.egg;
+      if (ep) {
+        if (e) {
+          ep.egg.visible = true;
+          const nm = (e.sp && SPECIES[e.sp]) ? SPECIES[e.sp].name : "ไข่ปริศนา";
+          const ready = !e.readyAt || e.readyAt <= Date.now();
+          const mins = ready ? 0 : Math.ceil((e.readyAt - Date.now()) / 60000);
+          ep.label.draw(ready ? `🥚 ${nm} · 🐣 พร้อมฟัก!` : `🥚 ${nm} · อีก ${mins} นาที`, ready ? "#fff0b0" : "#fff4e0");
+        } else {
+          ep.egg.visible = false;
+          ep.label.draw("ยังไม่มีไข่", "#e8e0d0");
+        }
+      }
+    };
+
+    // 🚪 เข้าโซนฟาร์ม
+    G.enterRanchZone = () => {
+      if (G.mode !== "explore" || G.inRanchZone) return;
+      G.inRanchZone = true;
+      G.vel = G.vel || { x: 0, z: 0 };
+      G._ranchReturn = { x: char.position.x, z: char.position.z }; // 💾 จำจุดกลับ
+      char.position.set(0, char.position.y, 10); // 🚶 ย้ายไปทางเข้าใกล้แท่นกลับ
+      G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
+      wilds.forEach((m) => (m.visible = false)); // 👻 ซ่อนมอนสเตอร์ป่า
+      if (portal) portal.visible = false;         // 🗼 ซ่อนพอร์ทัลหอคอย
+      if (G.warpGate) G.warpGate.visible = false; // 🌀 ซ่อนแท่นวาร์ปแมป
+      if (G._ranchPad) G._ranchPad.visible = false;
+      G._ranchZone.visible = true;
+      G.refreshRanchZone();
+      if (G.sfx && G.sfx.warp) G.sfx.warp();
+      if (G.toast) G.toast("🏡 ยินดีต้อนรับสู่ฟาร์มของคุณ!");
+      setUi((u) => ({ ...u, inRanchZone: true }));
+    };
+    // 🚪 ออกจากโซนฟาร์ม → คืนสภาพทุกอย่าง
+    G.exitRanchZone = () => {
+      if (!G.inRanchZone) return;
+      G.inRanchZone = false;
+      G.vel = G.vel || { x: 0, z: 0 };
+      if (G._ranchZone) G._ranchZone.visible = false;
+      wilds.forEach((m) => (m.visible = true));   // 🐾 คืนมอนสเตอร์ป่า
+      if (portal) portal.visible = true;
+      if (G.warpGate) G.warpGate.visible = true;
+      const r = G._ranchReturn || { x: -6, z: -1 };
+      char.position.set(r.x, char.position.y, r.z);
+      G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
+      G.ranchPadShy = true; // 🔁 กันวาร์ปเข้าซ้ำทันที จนกว่าจะเดินห่างแท่น
+      if (G.sfx && G.sfx.warp) G.sfx.warp();
+      if (G.toast) G.toast("⬅️ กลับสู่หมู่บ้าน");
+      setUi((u) => ({ ...u, inRanchZone: false }));
+    };
+    // ================= 🏡 END MY RANCH ZONE =================
+
     // ---------- 🎣 Fishing minigame ----------
     const FISH_TYPES = [
       { name: "ปลาซิว", emoji: "🐟", rarity: "common", gold: 8, exp: 5, w: 40 },
@@ -18997,7 +19268,7 @@ export default function CherryAdventure() {
         }
       } else if (G.mode === "explore") {
         // ---------- ⏰ random event scheduler ----------
-        if (!G.event) {
+        if (!G.event && !G.inRanchZone) {
           G.eventT -= dt;
           if (G.eventT <= 0) {
             G.eventT = 45 + Math.random() * 30; // next one later
@@ -19079,7 +19350,7 @@ export default function CherryAdventure() {
             const near = dL < 1.5 ? "L" : dR < 1.5 ? "R" : null;
             // 🔒 released once the player steps away from both rifts (prevents instant re-warp after arriving)
             if (G._warpLock && dL > 2.4 && dR > 2.4) G._warpLock = false;
-            if (near && still && !G._warpLock && !G.banim) {
+            if (near && still && !G._warpLock && !G.banim && !G.inRanchZone) {
               if (G._warpSide !== near) { G._warpSide = near; G._warpChargeT = 0; }
               G._warpChargeT = (G._warpChargeT || 0) + dt;
               const cp = Math.min(1, G._warpChargeT / 3); // 0→1 over 3s
@@ -19146,12 +19417,52 @@ export default function CherryAdventure() {
         }
         {
           const pd = Math.hypot(char.position.x - portal.position.x, char.position.z - portal.position.z);
-          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown) {
+          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone) {
             G.dungeonAskShown = true;
             setUi((u) => ({ ...u, dungeonAsk: true, dungeonProgress: G.dungeonProgress || 1 }));
           }
           if (pd > 2.8) { G.portalShy = false; G.dungeonAskShown = false; if (G.uiDungeonAsk) { setUi((u) => ({ ...u, dungeonAsk: false })); G.uiDungeonAsk = false; } }
           else if (pd < 1.6) G.uiDungeonAsk = true;
+        }
+
+        // ---------- 🏡 MY RANCH: pad visibility + enter/exit + in-zone life ----------
+        if (G._ranchPad) {
+          G._ranchPad.visible = (G.curBiome === 0 && !G.inRanchZone); // โผล่เฉพาะทุ่งซากุระ
+          if (G._ranchPadRing) G._ranchPadRing.rotation.z = t * 1.2;
+        }
+        if (!G.inRanchZone && G.curBiome === 0 && G._ranchPad && G._ranchPad.visible) {
+          const rpd = Math.hypot(char.position.x - G._ranchPad.position.x, char.position.z - G._ranchPad.position.z);
+          if (rpd < 1.5 && !G.ranchPadShy) { G.ranchPadShy = true; G.enterRanchZone(); }
+          else if (rpd > 3) G.ranchPadShy = false; // เดินห่างแล้วค่อยเข้าได้อีก
+        }
+        if (G.inRanchZone) {
+          // 🐾 สัตว์ในคอกเดินวนเบา ๆ คุมให้อยู่ในขอบคอก + เด้งตัว
+          (G.ranchZonePets || []).forEach((m, i) => {
+            const w = m.userData.zwander; if (!w) return;
+            const a = w.ph + t * w.sp;
+            let tx = w.cx + Math.cos(a) * w.r, tz = w.cz + Math.sin(a) * w.r;
+            tx = Math.max(w.penMinX, Math.min(w.penMaxX, tx));
+            tz = Math.max(w.penMinZ, Math.min(w.penMaxZ, tz));
+            const ddx = tx - m.position.x, ddz = tz - m.position.z;
+            m.position.x += ddx * dt * 1.4; m.position.z += ddz * dt * 1.4;
+            if (Math.hypot(ddx, ddz) > 0.03) m.rotation.y = Math.atan2(ddx, ddz);
+            if (m.userData.body) m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
+          });
+          wilds.forEach((m) => (m.visible = false)); // กันมอนสเตอร์ที่เพิ่ง respawn โผล่
+          if (G._ranchReturnRing) G._ranchReturnRing.rotation.z = t * 1.3;
+          if (G._ranchEggPed && G._ranchEggPed.egg && G._ranchEggPed.egg.visible) { G._ranchEggPed.egg.position.y = 1.15 + Math.sin(t * 2) * 0.05; G._ranchEggPed.egg.rotation.y = t * 0.6; }
+          // ⏱️ รีเฟรชสถานะทุก ~2 วิ ให้ตัวนับเวลาไข่/พืชเดินสด
+          G._ranchRefreshT = (G._ranchRefreshT || 0) + dt;
+          if (G._ranchRefreshT > 2) { G._ranchRefreshT = 0; G.refreshRanchZone(); }
+          // ⬅️ ใกล้แท่นกลับ → ออกจากโซน
+          if (Math.hypot(char.position.x - 0, char.position.z - 12) < 1.5) G.exitRanchZone();
+          // 🥚 ยืนใกล้แท่นไข่ที่พร้อมฟัก → ฟักอัตโนมัติ (debounce ครั้งเดียว)
+          else {
+            const e = G.ranch && G.ranch.egg;
+            if (e && (!e.readyAt || e.readyAt <= Date.now())) {
+              if (Math.hypot(char.position.x - 0, char.position.z - 8) < 1.8 && !G._ranchEggClaiming) { G._ranchEggClaiming = true; G.claimEgg(); G.refreshRanchZone(); }
+            } else G._ranchEggClaiming = false;
+          }
         }
 
         // 💾 autosave every few seconds
@@ -19171,7 +19482,7 @@ export default function CherryAdventure() {
           Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12 ||
           G.keys["arrowup"] || G.keys["w"] || G.keys["arrowdown"] || G.keys["s"] ||
           G.keys["arrowleft"] || G.keys["a"] || G.keys["arrowright"] || G.keys["d"];
-        if (G.auto && !manualInput) {
+        if (G.auto && !manualInput && !G.inRanchZone) {
           // top up HP/MP before charging in (⚙️ togglable in auto settings)
           if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion(G.hpPotUse);
           if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && (G.mpPotions || 0) > 0) G.useManaPotion(G.mpPotUse);
@@ -19488,7 +19799,7 @@ export default function CherryAdventure() {
         }
 
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
-        if (!inSafeZone(char.position.x, char.position.z)) // 🛡️🌀 no encounters while standing in a warp safe zone
+        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone) // 🛡️🌀 no encounters in a warp safe zone or the ranch
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
           if (G.auto && G.autoNoBoss && m.userData.boss) continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
