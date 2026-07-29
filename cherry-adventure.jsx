@@ -10184,10 +10184,19 @@ export default function CherryAdventure() {
     G.warpGate = warpPair; // 🌀 reference for hiding during battle
     G._warpL = warpL; G._warpR = warpR; G._warpLabL = warpLabL; G._warpLabR = warpLabR;
     G._warpPts = { LX: WARP_LX, RX: WARP_RX, Z: WARP_PZ };
-    G.updateWarpLabels = () => {
+    // 🌀 zigzag loop over all 13 maps: advance one stage at a time (1→2→…→13→1); the FORWARD
+    //    side alternates — reaching an EVEN-numbered stage is the RIGHT warp, ODD is the LEFT warp;
+    //    the opposite warp steps back one stage.
+    G._warpTargets = (i) => {
       const n = BIOMES.length;
-      drawWarpLabel(warpLabL, -1, BIOMES[((G.curBiome - 1) % n + n) % n]);
-      drawWarpLabel(warpLabR, +1, BIOMES[((G.curBiome + 1) % n + n) % n]);
+      const nextIdx = ((i + 1) % n + n) % n, prevIdx = ((i - 1) % n + n) % n;
+      const nextStageEven = ((nextIdx + 1) % 2) === 0; // stage number = index + 1
+      return nextStageEven ? { R: nextIdx, L: prevIdx, fwd: "R" } : { L: nextIdx, R: prevIdx, fwd: "L" };
+    };
+    G.updateWarpLabels = () => {
+      const t = G._warpTargets(G.curBiome);
+      drawWarpLabel(warpLabL, t.fwd === "L" ? 1 : -1, BIOMES[t.L]);
+      drawWarpLabel(warpLabR, t.fwd === "R" ? 1 : -1, BIOMES[t.R]);
     };
     G.updateWarpLabels();
 
@@ -17834,8 +17843,8 @@ export default function CherryAdventure() {
               P3.userData.chg.material.opacity = 0.9;
               if (Math.random() < 0.5) burst(new THREE.Vector3(P3 === WL ? P.LX : P.RX, 0.3 + Math.random() * 2.2, P.Z), 0x5ac8ff, 0.3);
               if (G._warpChargeT >= 3) {
-                const n = BIOMES.length;
-                const target = near === "L" ? ((G.curBiome - 1) % n + n) % n : ((G.curBiome + 1) % n + n) % n;
+                const t = G._warpTargets(G.curBiome);
+                const target = near === "L" ? t.L : t.R;
                 G._warpChargeT = 0; G._warpSide = null;
                 P3.userData.beam.material.opacity = 1; G._camShake = Math.max(G._camShake || 0, 0.5);
                 switchBiome(target); // sets G._warpLock = true
