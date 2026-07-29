@@ -181,6 +181,19 @@
 
   <div class="grid2">
     <div class="card">
+      <h2>การใช้งานรายวัน (7 วันล่าสุด)</h2>
+      <p class="csub">จำนวนผู้เล่นแยกตามวันที่ใช้งานล่าสุด 📈</p>
+      <div id="dailyChart"></div>
+    </div>
+    <div class="card">
+      <h2>👑 แชมป์แต่ละอาชีพ</h2>
+      <p class="csub">ผู้เล่นพลังสูงสุดของแต่ละอาชีพ</p>
+      <div id="championChart"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
       <h2>การกระจายตามอาชีพ</h2>
       <p class="csub">จำนวนผู้เล่นในแต่ละอาชีพ</p>
       <div id="classChart"></div>
@@ -384,14 +397,78 @@
       '</tr></thead><tbody>' + body + '</tbody></table></div>';
   }
 
+  function renderDaily(rows) {
+    var el = document.getElementById("dailyChart");
+    var days = 7, now = new Date();
+    var buckets = [];
+    for (var i = days - 1; i >= 0; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      buckets.push({ start: d.getTime(), end: d.getTime() + 86400000, label: (d.getMonth() + 1) + "/" + d.getDate(), n: 0 });
+    }
+    rows.forEach(function(r){ if (!r.ts) return; for (var j = 0; j < buckets.length; j++) { if (r.ts >= buckets[j].start && r.ts < buckets[j].end) { buckets[j].n++; break; } } });
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+    var W = Math.max(240, el.clientWidth || 320), H = 190;
+    var padL = 8, padR = 10, padT = 16, padB = 24;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxN = Math.max(1, buckets.reduce(function(m,b){ return Math.max(m, b.n); }, 0));
+    var peak = buckets.reduce(function(m,b){ return b.n > m ? b.n : m; }, 0);
+    var xs = function(i){ return padL + (days === 1 ? plotW / 2 : plotW * i / (days - 1)); };
+    var ys = function(n){ return padT + plotH * (1 - n / maxN); };
+    var pts = buckets.map(function(b, i){ return [xs(i), ys(b.n)]; });
+    var line = pts.map(function(p, i){ return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+    var area = line + " L" + pts[pts.length-1][0].toFixed(1) + " " + (padT+plotH) + " L" + pts[0][0].toFixed(1) + " " + (padT+plotH) + " Z";
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" style="display:block;overflow:visible">';
+    svg += '<defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--seq-3)" stop-opacity="0.32"/><stop offset="1" stop-color="var(--seq-3)" stop-opacity="0"/></linearGradient></defs>';
+    svg += '<line x1="' + padL + '" y1="' + (padT+plotH) + '" x2="' + (W-padR) + '" y2="' + (padT+plotH) + '" stroke="var(--baseline)" stroke-width="1.5"/>';
+    svg += '<path d="' + area + '" fill="url(#dg)"/>';
+    svg += '<path d="' + line + '" fill="none" stroke="var(--seq-3)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    buckets.forEach(function(b, i){
+      var cx = pts[i][0], cy = pts[i][1];
+      if (b.n === peak && peak > 0) svg += '<text x="' + cx + '" y="' + (cy - 9) + '" text-anchor="middle" font-size="11" font-weight="800" fill="var(--text-primary)">' + b.n + '</text>';
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="var(--surface-1)" stroke="var(--seq-3)" stroke-width="2.5"/>';
+      svg += '<circle class="hit" data-i="' + i + '" cx="' + cx + '" cy="' + cy + '" r="16" fill="transparent"/>';
+      svg += '<text x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--muted)">' + esc(b.label) + '</text>';
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+    [].forEach.call(el.querySelectorAll(".hit"), function(h){
+      var b = buckets[+h.getAttribute("data-i")];
+      bindTip(h, esc(b.label) + "<br>" + fmt(b.n) + " คน");
+    });
+  }
+
+  function renderChampions(rows) {
+    var el = document.getElementById("championChart");
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+    var best = {};
+    rows.forEach(function(r){ var p = powerOf(r); if (!best[r.c] || p > best[r.c].p) best[r.c] = { r: r, p: p }; });
+    var arr = CLASS_ORDER.filter(function(c){ return best[c]; }).map(function(c){ return { c: c, r: best[c].r, p: best[c].p }; }).sort(function(a,b){ return b.p - a.p; });
+    if (!arr.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+    var max = Math.max(1, arr[0].p);
+    el.innerHTML = arr.map(function(x){
+      var meta = CLASSES[x.c] || { name: x.c, emoji: "❓", color: "#888" };
+      var champ = esc((x.r.n || "ผู้เล่น")) + " · Lv." + fmt(x.r.lv || 1);
+      return '<div class="hbar-row" title="">' +
+        '<div class="hbar-name">' + meta.emoji + ' ' + champ + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" data-w="' + (x.p / max * 100) + '" style="width:0;background:' + meta.color + '"></div></div>' +
+        '<div class="hbar-val">' + fmt(x.p) + '</div></div>';
+    }).join("");
+    [].forEach.call(el.querySelectorAll(".hbar-fill"), function(f, i){
+      setTimeout(function(){ f.style.width = f.getAttribute("data-w") + "%"; }, 30);
+      var x = arr[i], meta = CLASSES[x.c] || {};
+      bindTip(f.parentNode, (meta.emoji||"") + " " + esc((meta.name)||x.c) + "<br>" + esc(x.r.n || "ผู้เล่น") + " · Lv." + fmt(x.r.lv||1) + "<br>⚔️ พลัง " + fmt(x.p));
+    });
+  }
+
   function renderAll(rows) {
-    renderKPIs(rows); renderClassChart(rows); renderLevelChart(rows);
+    renderKPIs(rows); renderDaily(rows); renderChampions(rows);
+    renderClassChart(rows); renderLevelChart(rows);
     renderNgChart(rows); renderAvgStats(rows); renderLeaderboard(rows);
   }
 
   function skeletons() {
     document.getElementById("kpis").innerHTML = Array(6).fill('<div class="kpi"><div class="skel" style="height:56px"></div></div>').join("");
-    ["classChart","levelChart","ngChart","leaderboard"].forEach(function(id){ document.getElementById(id).innerHTML = '<div class="skel" style="height:150px"></div>'; });
+    ["dailyChart","championChart","classChart","levelChart","ngChart","leaderboard"].forEach(function(id){ document.getElementById(id).innerHTML = '<div class="skel" style="height:150px"></div>'; });
     document.getElementById("avgStats").innerHTML = '<div class="skel full" style="height:80px"></div>';
   }
 
