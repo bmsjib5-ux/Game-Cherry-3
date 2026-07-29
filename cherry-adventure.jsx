@@ -14013,8 +14013,15 @@ export default function CherryAdventure() {
       aura.rotation.x = -Math.PI / 2;
       aura.position.y = 0.02;
       m.add(aura);
-      const a = Math.random() * Math.PI * 2;
-      m.position.set(Math.cos(a) * (FIELD_R - 1.5), 0, Math.sin(a) * (FIELD_R - 1.5));
+      // 🌀 keep the boss away from the warp portals (safe zone) — reroll until clear
+      const P = G._warpPts; const clearR = 5.6; // SAFE_R (4.2) + boss body margin
+      let a, bx, bz, tries = 0;
+      do {
+        a = Math.random() * Math.PI * 2;
+        bx = Math.cos(a) * (FIELD_R - 1.5); bz = Math.sin(a) * (FIELD_R - 1.5);
+        tries++;
+      } while (P && tries < 24 && (Math.hypot(bx - P.LX, bz - P.Z) < clearR || Math.hypot(bx - P.RX, bz - P.Z) < clearR));
+      m.position.set(bx, 0, bz);
       m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * 6, r: 1.2, sp: 0.2 };
       scene.add(m);
       wilds.push(m);
@@ -24201,7 +24208,7 @@ export default function CherryAdventure() {
             const ex = G.enemyX || 1.3;
             const lunge = Math.sin(p * Math.PI) * (ex - 0.2);
             em.position.x = battleCenter.x + ex - lunge;
-            if (p >= 0.5 && !A.hitDone) {
+            if (p >= 0.5 && !A.hitDone && G.enemy) { // 🛡️ guard: enemy may have vanished (DoT/skill kill or battle end) mid-swing → skip the hit, don't read G.enemy.lv on null
               A.hitDone = true;
               // 💨 evasion check first!
               if (Math.random() < (effEva() + (G.battleEva || 0)) / 100) {
