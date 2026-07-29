@@ -87,6 +87,10 @@
     display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #e0708a, #d9536b);
     border: none; border-radius: 999px; padding: 8px 15px; box-shadow: var(--shadow); }
   a.linkbtn:active { transform: translateY(1px); }
+  a.playbtn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 900; color: #fff; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #5bbf7a, #3a9a5a);
+    border: none; border-radius: 999px; padding: 9px 18px; box-shadow: 0 5px 16px rgba(58,154,90,.4); }
+  a.playbtn:active { transform: translateY(1px); }
 
   /* ---------- KPI tiles ---------- */
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 18px; }
@@ -269,7 +273,10 @@
       <option value="300000">⏱️ ทุก 5 นาที</option>
     </select>
     <span id="authArea"></span>
+    <a class="playbtn" href="./index.html" title="เข้าเล่นเกม">▶ เข้าเล่นเกม</a>
     <a class="linkbtn" href="https://claude.ai/code/artifact/99806fb7-e6fe-4506-8060-654d93b794d4" target="_blank" rel="noopener" title="เปิดคลังไอเทมทั้งหมด">🍒 คลังไอเทม</a>
+    <a class="linkbtn" href="https://claude.ai/code/artifact/6ca69607-2b57-4948-90e3-97a4e7ca863f" target="_blank" rel="noopener" title="คู่มืออาชีพตัวละคร">⚔️ อาชีพ</a>
+    <a class="linkbtn" href="https://claude.ai/code/artifact/cd591aae-c63d-4562-bd3f-da46c262d5e6" target="_blank" rel="noopener" title="แกลเลอรีฮีโร่">🦸 ฮีโร่</a>
     <button class="ghost" id="themeBtn" title="สลับธีมสว่าง/มืด">🌗</button>
     <button class="act" id="refreshBtn">🔄 รีเฟรช</button>
   </header>
@@ -327,7 +334,7 @@
 
   <footer>
     ข้อมูลจากเซิร์ฟเวอร์ออนไลน์ Cherry Adventure (Supabase) · แสดงเฉพาะโปรไฟล์สาธารณะบนกระดานอันดับ<br/>
-    <a href="./index.html">← กลับไปเล่นเกม</a> · <a href="https://claude.ai/code/artifact/99806fb7-e6fe-4506-8060-654d93b794d4" target="_blank" rel="noopener">🍒 คลังไอเทมทั้งหมด</a>
+    <a href="./index.html">← กลับไปเล่นเกม</a> · <a href="https://claude.ai/code/artifact/99806fb7-e6fe-4506-8060-654d93b794d4" target="_blank" rel="noopener">🍒 คลังไอเทม</a> · <a href="https://claude.ai/code/artifact/6ca69607-2b57-4948-90e3-97a4e7ca863f" target="_blank" rel="noopener">⚔️ อาชีพ</a> · <a href="https://claude.ai/code/artifact/cd591aae-c63d-4562-bd3f-da46c262d5e6" target="_blank" rel="noopener">🦸 ฮีโร่</a>
   </footer>
 </div>
 
