@@ -14427,6 +14427,18 @@ export default function CherryAdventure() {
     // 🔁 legacy aliases (drops / rewards default to the small size)
     G.buyPotion = () => G.buyHpPot("s");
     G.buyManaPotion = () => G.buyMpPot("s");
+    // 💰 sell a potion back for half its shop price
+    G.sellPot = (type, size) => {
+      const inv = type === "hp" ? G.hpPots : G.mpPots;
+      const P = (type === "hp" ? HP_POT : MP_POT)[size]; if (!P || !inv) return;
+      if ((inv[size] || 0) <= 0) { toast("ไม่มีน้ำยาชนิดนี้แล้ว"); return; }
+      inv[size]--;
+      const refund = Math.round(P.price / 2);
+      G.gold += refund;
+      if (G.sfx) G.sfx.coin();
+      toast(`💰 ขายคืน${type === "hp" ? "น้ำยาเลือด" : "น้ำยามานา"}${P.name} +${refund} ทอง`);
+      syncPotions(); syncPlayer();
+    };
     // 🔴🟡🔵 buy a catch ball — the ONLY way to get balls (no drops)
     G.BALL_PRICE = 1000;
     G.buyBall = () => {
@@ -27670,7 +27682,9 @@ export default function CherryAdventure() {
             const qkey = (id) => { const it = LOOT.find((x) => x.id === id); return (TIER[it.rarity] || 1) * 100 + ((ui.plus || {})[id] || 0); };
             const sortedIds = eqSort === "qual" ? [...allIds].sort((a, b) => qkey(b) - qkey(a)) : eqSort === "qualAsc" ? [...allIds].sort((a, b) => qkey(a) - qkey(b)) : allIds;
             const PER = 24; // fixed 24 slots per page (potions counted in), pad with empties
-            const potCells = (ui.invCat === "all" || !ui.invCat) ? [{ pot: "hp" }, { pot: "mp" }] : [];
+            const potCells = (ui.invCat === "all" || !ui.invCat)
+              ? [["hp", "s"], ["hp", "m"], ["hp", "l"], ["mp", "s"], ["mp", "m"], ["mp", "l"]].map(([pot, sz]) => ({ pot, sz }))
+              : [];
             const allCells = [...potCells, ...sortedIds.map((id) => ({ id }))];
             const totalPages = Math.max(1, Math.ceil(allCells.length / PER));
             const page = Math.min(Math.max(0, ui.equipPage || 0), totalPages - 1);
@@ -27694,17 +27708,25 @@ export default function CherryAdventure() {
                 </button>
               );
             };
-            const potTile = (emoji, n, onClick, key) => (
-              <button key={key} onClick={onClick} style={{ position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: "2px solid #33402f", background: "linear-gradient(135deg,#3a2a2a55,#1c231d)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 22 }}>{emoji}</span>
-                <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>{n}</span>
-              </button>
-            );
+            const SZ_LABEL = { s: "S", m: "M", l: "L" };
+            const potTile = (pot, sz) => {
+              const emoji = pot === "hp" ? "🧪" : "💧";
+              const n = ((pot === "hp" ? ui.hpPots : ui.mpPots) || {})[sz] || 0;
+              const sel = ui.invSel === `pot:${pot}:${sz}`;
+              const tint = pot === "hp" ? "#3a2a2a55" : "#2a3340aa";
+              return (
+                <button key={`pot:${pot}:${sz}`} onClick={() => setUi((u) => ({ ...u, invSel: `pot:${pot}:${sz}` }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 9, cursor: "pointer", fontFamily: font, border: sel ? "2px solid #7ba05b" : "2px solid #33402f", background: `linear-gradient(135deg,${tint},#1c231d)`, display: "flex", alignItems: "center", justifyContent: "center", opacity: n > 0 ? 1 : 0.5 }}>
+                  <span style={{ fontSize: 20 }}>{emoji}</span>
+                  <span style={{ position: "absolute", top: 1, left: 3, fontSize: 8.5, fontWeight: 900, color: pot === "hp" ? "#f0a0a0" : "#8ecbff" }}>{SZ_LABEL[sz]}</span>
+                  <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>{n}</span>
+                </button>
+              );
+            };
             const catChip = (ck, label) => (
               <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 }))} style={{ padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: (ui.invCat || "all") === ck ? "#c9a24a" : "rgba(255,255,255,0.08)", color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0" }}>{label}</button>
             );
             const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 9, border: "2px dashed #2f3a2b", background: "rgba(255,255,255,0.02)" }} />;
-            const renderCell = (cell, i) => cell.pot === "hp" ? potTile("🧪", ui.potions || 0, () => G.usePotion(), "hp") : cell.pot === "mp" ? potTile("💧", ui.mpPotions || 0, () => G.useManaPotion(), "mp") : cell.id != null ? itemTile(cell.id) : emptyTile(i);
+            const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
               <div key="eqscr" style={{ position: "absolute", left: 0, top: 0, bottom: 0, ...(window.innerWidth > 620 ? { width: "50vw" } : { right: 0 }), zIndex: 45, display: "flex", flexDirection: "column", fontFamily: font, pointerEvents: "none" }}>
                 <div style={{ pointerEvents: "auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: "10px 0", paddingTop: "calc(env(safe-area-inset-top) + 10px)", background: "linear-gradient(180deg,#2c362e,#20281f)", borderBottom: "2px solid #c9a24a55", color: "#e8dcc0", fontSize: 15, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -28895,7 +28917,43 @@ export default function CherryAdventure() {
       })()}
 
       {/* 🎒 inventory item popup — name, image, stats + close / equip / unequip / enhance */}
-      {ui.equipScreen && ui.invSel && (() => {
+      {ui.equipScreen && ui.invSel && typeof ui.invSel === "string" && ui.invSel.indexOf("pot:") === 0 && (() => {
+        const [, pot, sz] = ui.invSel.split(":");
+        const meta = (pot === "hp" ? (G.HP_POT || {}) : (G.MP_POT || {}))[sz] || {};
+        const n = ((pot === "hp" ? ui.hpPots : ui.mpPots) || {})[sz] || 0;
+        const isHp = pot === "hp";
+        const col = isHp ? "#e06a6a" : "#4a90c0";
+        const refund = Math.round((meta.price || 0) / 2);
+        const close = () => setUi((u) => ({ ...u, invSel: null }));
+        return (
+          <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(10,14,10,0.72)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: "84%", maxWidth: 320, background: "linear-gradient(180deg,#2c362e,#20281f)", borderRadius: 16, padding: 16, border: `2px solid ${col}`, boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 58, height: 58, borderRadius: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, background: `linear-gradient(135deg, ${col}33, #10160f)`, border: `2px solid ${col}` }}>{isHp ? "🧪" : "💧"}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: col }}>{isHp ? "น้ำยาเลือด" : "น้ำยามานา"} ({meta.name})</div>
+                  <div style={{ fontSize: 11, color: "#b8c0a8", fontWeight: 700 }}>{isHp ? `ฟื้นเลือด +${meta.heal}` : `ฟื้นมานา +${meta.rest}`} · มี {n} ขวด</div>
+                  <div style={{ fontSize: 10, color: "#8a9080" }}>ราคาซื้อ {meta.price}💰 · ขายคืน {refund}💰</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
+                <button onClick={() => { (isHp ? G.usePotion : G.useManaPotion)(sz); }} disabled={n <= 0} style={{
+                  flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13, fontWeight: 900,
+                  cursor: n > 0 ? "pointer" : "not-allowed", color: "#fff",
+                  background: n > 0 ? `linear-gradient(90deg,${col},${isHp ? "#f0a05a" : "#7ad0e8"})` : "#5a6450",
+                }}>{isHp ? "🧪 ใช้ฟื้นเลือด" : "💧 ใช้ฟื้นมานา"}</button>
+                <button onClick={() => { G.sellPot(pot, sz); }} disabled={n <= 0} style={{
+                  flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13, fontWeight: 900,
+                  cursor: n > 0 ? "pointer" : "not-allowed", color: "#fff",
+                  background: n > 0 ? "linear-gradient(90deg,#c0902a,#e0b850)" : "#5a6450",
+                }}>💰 ขายคืน (+{refund})</button>
+              </div>
+              <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
+            </div>
+          </div>
+        );
+      })()}
+      {ui.equipScreen && ui.invSel && !(typeof ui.invSel === "string" && ui.invSel.indexOf("pot:") === 0) && (() => {
         const info = G.itemInfo(ui.invSel);
         if (!info) return null;
         const id = info.id;
