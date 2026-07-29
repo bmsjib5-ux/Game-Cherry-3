@@ -4166,248 +4166,749 @@ function CherryAdventure() {
         weaponModels.ki = mkKatana({ blade: 0xd0f0ff, glow: 0x4aa0e0, glowI: 0.7, edge: 0xaef0ff, guard: 0x2a5a7a, wrap: 0x4a90c0, roundGuard: true }); // ❄️ ice
         weaponModels.kw = mkKatana({ blade: 0xd8ffe0, glow: 0x4ac06a, glowI: 0.6, edge: 0x8affa0, guard: 0x2a5a30, wrap: 0x5aa06a, curve: 0.16 }); // 🍃 wind (more curved)
         weaponModels.kl = mkKatana({ blade: 0xfff8e0, glow: 0xf5d05a, glowI: 0.9, edge: 0xffe680, guard: 0xd9b45a, guardGlow: 0x5a4210, wrap: 0xf0e0a0, roundGuard: true, animGlow: true }); // 🌟 light
-        weaponModels.kd = mkKatana({ blade: 0x6a2018, glow: 0xff4a1a, glowI: 1.0, edge: 0xff6a2a, guard: 0x8a2a1a, guardGlow: 0x5a0f08, wrap: 0x3a1a12, curve: 0.14, animGlow: true }); // 🐉 dragon
-        { // wDw 🐉 dragon fang sword — dark blade with burning edge + dragon-head guard
+        { // kd 🐉 คาตานะมังกร — bespoke dragon katana: dark curved blade, red flame edge, round gold dragon tsuba, red-wrapped handle
             const g = new THREE.Group();
-            const handle = mkStick(0x3a1a12, 0.3);
-            handle.position.y = -0.22;
-            // dragon-head crossguard
-            const dhead = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), new THREE.MeshStandardMaterial({ color: 0x8a2a1a, metalness: 0.5, roughness: 0.4, emissive: 0x3a0a05, emissiveIntensity: 0.6 }));
-            dhead.scale.set(1.3, 0.8, 1);
-            dhead.position.y = -0.03;
-            const snout = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.14, 8), dhead.material);
-            snout.rotation.x = Math.PI / 2;
-            snout.position.set(0, -0.03, 0.14);
-            for (const sx of [-1, 1]) {
-                const dhorn = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 6), new THREE.MeshStandardMaterial({ color: 0xe8d8b0 }));
-                dhorn.position.set(0.09 * sx, 0.04, -0.05);
-                dhead.add(dhorn);
-                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xe0a020, emissiveIntensity: 1.4 }));
-                eye.position.set(0.05 * sx, 0.02, 0.08);
-                dhead.add(eye);
+            const steelMat = new THREE.MeshStandardMaterial({ color: 0x22242c, metalness: 0.9, roughness: 0.16, emissive: 0x0c0d12, emissiveIntensity: 0.2 }); // dark steel blade
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b44a, metalness: 0.92, roughness: 0.2, emissive: 0x4a3208, emissiveIntensity: 0.4 }); // gold tsuba
+            const goldGlow = new THREE.MeshStandardMaterial({ color: 0xf5d24a, metalness: 0.6, roughness: 0.16, emissive: 0xe0a838, emissiveIntensity: 0.8 });
+            const blackMat = new THREE.MeshStandardMaterial({ color: 0x161318, metalness: 0.5, roughness: 0.55 }); // handle core
+            const wrapMat = new THREE.MeshStandardMaterial({ color: 0xa01c1c, roughness: 0.6, metalness: 0.1, emissive: 0x300606, emissiveIntensity: 0.25 }); // red ito wrap
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 });
+            const fireMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xff5a1a, emissiveIntensity: 1.4, roughness: 0.25, metalness: 0.1 }); // red flame edge
+            // 🪢 tsuka (handle) with red diamond ito wrap
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.034, 0.36, 8), blackMat);
+            handle.position.y = -0.07;
+            g.add(handle);
+            for (let k = 0; k < 6; k++) {
+                const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.009, 4, 8), wrapMat);
+                wrap.position.y = -0.22 + k * 0.065;
+                wrap.rotation.set(Math.PI / 2, 0, 0.4);
+                g.add(wrap);
             }
-            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.82, 0.035), new THREE.MeshStandardMaterial({ color: 0x2a1f1c, metalness: 0.8, roughness: 0.25, emissive: 0x5a1508, emissiveIntensity: 0.7 }));
-            blade.position.y = 0.42;
-            const edge = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.82, 0.045), new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.2 }));
-            edge.position.set(0.06, 0.42, 0);
-            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 4), blade.material);
-            tip.position.y = 0.92;
-            g.add(handle, dhead, snout, blade, edge, tip);
+            const kashira = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.03, 0.04, 8), goldMat);
+            kashira.position.y = -0.26;
+            g.add(kashira);
+            // 🐲 round gold dragon tsuba (guard) — disk + coiled dragon relief + red eye
+            const tsuba = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.02, 20), goldMat);
+            tsuba.position.y = 0.12;
+            g.add(tsuba);
+            const tsubaRim = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.012, 8, 22), goldGlow);
+            tsubaRim.position.y = 0.12;
+            tsubaRim.rotation.x = Math.PI / 2;
+            g.add(tsubaRim);
+            for (let k = 0; k < 5; k++) {
+                const a = (k / 5) * Math.PI * 2;
+                const relief = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 5, 8, Math.PI), goldGlow);
+                relief.position.set(Math.cos(a) * 0.045, 0.13, Math.sin(a) * 0.045);
+                relief.rotation.set(Math.PI / 2, 0, a);
+                g.add(relief);
+            }
+            const dhead = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), goldGlow);
+            dhead.scale.set(1.4, 0.8, 1);
+            dhead.position.set(0.06, 0.14, 0.03);
+            g.add(dhead);
+            const deye = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), fireMat);
+            deye.position.set(0.075, 0.15, 0.05);
+            g.add(deye);
+            const habaki = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.034, 0.06, 8), goldMat);
+            habaki.position.y = 0.16;
+            g.add(habaki);
+            // 🌙 gently curved blade swept along a katana arc (sori)
+            const bladePts = [];
+            const segN = 14, bladeLen = 1.3;
+            for (let i = 0; i <= segN; i++) {
+                const u = i / segN;
+                const y = 0.2 + u * bladeLen;
+                const x = Math.sin(u * 1.05) * 0.26;
+                bladePts.push(new THREE.Vector3(x, y, 0));
+            }
+            const bladeCurve = new THREE.CatmullRomCurve3(bladePts);
+            const blade = new THREE.Mesh(new THREE.TubeGeometry(bladeCurve, 26, 0.03, 4, false), steelMat);
+            blade.scale.set(1, 1, 0.42);
+            g.add(blade);
+            const bladeWide = new THREE.Mesh(new THREE.TubeGeometry(bladeCurve, 26, 0.052, 4, false), steelMat);
+            bladeWide.scale.set(1, 1, 0.22);
+            g.add(bladeWide);
+            // 🔥 red flame edge (hamon) glowing along the cutting side
+            const edge = new THREE.Mesh(new THREE.TubeGeometry(bladeCurve, 26, 0.014, 4, false), fireMat);
+            edge.scale.set(1, 1, 0.5);
+            edge.position.set(0.03, 0, 0.01);
+            g.add(edge);
+            // kissaki tip
+            const tipPos = bladePts[bladePts.length - 1];
+            const tipDir = bladeCurve.getTangent(1);
+            const tipk = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.16, 4), steelMat);
+            tipk.position.copy(tipPos);
+            tipk.scale.set(1, 1, 0.32);
+            tipk.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tipDir);
+            g.add(tipk);
             g.userData.flame = edge;
-            g.userData.gripY = 0.42;
+            g.userData.tint = edge;
+            g.userData.baseTint = 0xff5a1a;
+            g.userData.glow = true;
+            g.userData.gripY = 0.15;
+            weaponModels.kd = g;
+        }
+        { // wDw 🐉 ดาบเขี้ยวมังกร — ornate dragon-fang greatsword: dark steel, serrated spine, red fuller, gold dragon-head guard
+            const g = new THREE.Group();
+            const steelMat = new THREE.MeshStandardMaterial({ color: 0x24262e, metalness: 0.85, roughness: 0.3, emissive: 0x0c0d12, emissiveIntensity: 0.2 }); // dark steel blade
+            const steelEdge = new THREE.MeshStandardMaterial({ color: 0x9aa0ac, metalness: 0.95, roughness: 0.12 }); // polished edge
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b44a, metalness: 0.92, roughness: 0.2, emissive: 0x4a3208, emissiveIntensity: 0.4 }); // ornate gold
+            const goldGlow = new THREE.MeshStandardMaterial({ color: 0xf5d24a, metalness: 0.6, roughness: 0.16, emissive: 0xe0a838, emissiveIntensity: 0.9 }); // glowing gold filigree
+            const blackScale = new THREE.MeshStandardMaterial({ color: 0x161318, metalness: 0.6, roughness: 0.45, emissive: 0x080608, emissiveIntensity: 0.2 }); // black dragon scale
+            const coreMat = new THREE.MeshStandardMaterial({ color: 0xff5a2a, emissive: 0xff4a20, emissiveIntensity: 1.4, roughness: 0.25, metalness: 0.1 }); // red glowing fuller core
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5, metalness: 0.05 }); // pale horn/fang
+            const leatherMat = new THREE.MeshStandardMaterial({ color: 0x241814, roughness: 0.85, metalness: 0.05 }); // wrapped grip
+            // 🪢 long wrapped grip below the guard, with diagonal gold cord wraps
+            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.04, 0.42, 10), leatherMat);
+            grip.position.y = -0.32;
+            g.add(grip);
+            for (let k = 0; k < 6; k++) {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.007, 5, 10), goldMat);
+                band.position.y = -0.13 - k * 0.06;
+                band.rotation.set(Math.PI / 2, 0, 0.3);
+                g.add(band);
+            }
+            // 🐲 gold dragon-tail pommel
+            const pomCap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.038, 0.06, 8), goldMat);
+            pomCap.position.y = -0.55;
+            g.add(pomCap);
+            const pomTail = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 6), goldGlow);
+            pomTail.position.y = -0.63;
+            pomTail.rotation.x = Math.PI;
+            g.add(pomTail);
+            // 👹 ornate gold+black dragon-head crossguard (jaws open forward, horns swept back)
+            const guardBar = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.09), goldMat);
+            guardBar.position.y = -0.02;
+            g.add(guardBar);
+            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), blackScale);
+            skull.scale.set(1.25, 0.85, 1.1);
+            skull.position.set(0, 0.0, 0.03);
+            g.add(skull);
+            const snout = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 8), goldMat);
+            snout.rotation.x = Math.PI / 2;
+            snout.position.set(0, -0.01, 0.16);
+            g.add(snout);
+            const jaw = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.1, 8), blackScale);
+            jaw.rotation.x = Math.PI / 2;
+            jaw.position.set(0, -0.06, 0.14);
+            g.add(jaw);
+            for (const sx of [-1, 1]) {
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.2, 6), goldMat);
+                horn.position.set(0.08 * sx, 0.06, -0.05);
+                horn.rotation.set(-0.5, 0, -sx * 0.5);
+                g.add(horn);
+                const brow = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.09, 5), goldGlow);
+                brow.position.set(0.06 * sx, 0.04, 0.09);
+                brow.rotation.x = -1.2;
+                g.add(brow);
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), coreMat);
+                eye.position.set(0.05 * sx, 0.02, 0.11);
+                g.add(eye);
+                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.06, 5), boneMat);
+                fang.rotation.x = Math.PI;
+                fang.position.set(0.03 * sx, -0.09, 0.16);
+                g.add(fang);
+                // gold guard wing sweeping up around the blade base
+                const wing = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 4), goldMat);
+                wing.position.set(0.14 * sx, 0.02, 0);
+                wing.rotation.z = sx * 1.15;
+                wing.scale.set(1, 1, 0.4);
+                g.add(wing);
+            }
+            // ⚔️ big dark-steel blade: dark core, polished edges, glowing red fuller down the center, gold ricasso collar
+            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.08, 8), goldGlow);
+            collar.position.y = 0.1;
+            g.add(collar);
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.9, 0.045), steelMat);
+            blade.position.y = 0.6;
+            g.add(blade);
+            for (const sx of [-1, 1]) {
+                const edge = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.9, 0.05), steelEdge);
+                edge.position.set(sx * 0.076, 0.6, 0);
+                g.add(edge);
+            }
+            const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.82, 0.05), coreMat);
+            fuller.position.set(0, 0.58, 0);
+            g.add(fuller);
+            // gold filigree glyphs along the fuller
+            for (let k = 0; k < 4; k++) {
+                const gl = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.006, 5, 10, Math.PI * 1.3), goldGlow);
+                gl.position.set(0, 0.32 + k * 0.18, 0.03);
+                gl.rotation.z = k % 2 ? 0.5 : -0.5;
+                g.add(gl);
+            }
+            // 🪚 serrated dragon-spine teeth jutting from ONE side of the blade (jagged fang look)
+            for (let k = 0; k < 7; k++) {
+                const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.09 + (k % 2) * 0.03, 4), steelEdge);
+                tooth.position.set(0.085, 0.24 + k * 0.11, 0);
+                tooth.rotation.z = -1.0;
+                tooth.scale.set(1, 1, 0.45);
+                g.add(tooth);
+            }
+            // hooked dragon-fang tip
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 4), steelMat);
+            tip.position.set(0.02, 1.14, 0);
+            tip.rotation.z = -0.16;
+            tip.scale.set(1, 1, 0.4);
+            g.add(tip);
+            const tipEdge = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.22, 4), steelEdge);
+            tipEdge.position.set(0.02, 1.13, 0.002);
+            tipEdge.rotation.z = -0.16;
+            tipEdge.scale.set(1, 1, 0.44);
+            g.add(tipEdge);
+            g.userData.flame = fuller;
+            g.userData.tint = fuller;
+            g.userData.baseTint = 0xff4a20;
+            g.userData.glow = true;
+            g.userData.gripY = 0.5;
             weaponModels.wDw = g;
         }
-        { // wDa 🐉 dragon bow — curved wings, glowing string, dragon-head tips
+        { // wDa 🐉 ธนูอสูรมังกร — ornate recurve bow: limbs are dragon necks ending in dragon heads, green energy string + nocked arrow
             const g = new THREE.Group();
-            const boneMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.5, roughness: 0.4, emissive: 0x3a0a05, emissiveIntensity: 0.55 });
-            const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9b45a, metalness: 0.7, roughness: 0.3, emissive: 0x5a4210, emissiveIntensity: 0.4 });
-            // two curved limbs (dragon wing-arcs)
-            for (const sy of [1, -1]) {
-                const limb = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 8, 20, Math.PI * 0.6), boneMat);
-                limb.position.y = 0.32 * sy;
-                limb.rotation.z = sy > 0 ? -Math.PI * 0.2 : Math.PI * 0.2 + Math.PI;
-                g.add(limb);
-                // wing membrane
-                const wing = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.28, 3), new THREE.MeshStandardMaterial({ color: 0xc0402a, transparent: true, opacity: 0.6, side: THREE.DoubleSide, emissive: 0x601005, emissiveIntensity: 0.5 }));
-                wing.position.set(-0.14, 0.42 * sy, 0);
-                wing.rotation.z = sy > 0 ? 0.6 : -0.6;
-                g.add(wing);
-                // dragon-head tip
-                const tipHead = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 6), goldMat);
-                tipHead.position.set(0.16, 0.56 * sy, 0);
-                tipHead.rotation.z = sy > 0 ? -0.5 : 0.5;
-                g.add(tipHead);
+            const darkMetal = new THREE.MeshStandardMaterial({ color: 0x1c1a20, metalness: 0.7, roughness: 0.38, emissive: 0x090810, emissiveIntensity: 0.2 }); // dark alloy limbs
+            const scaleMat = new THREE.MeshStandardMaterial({ color: 0x2a3826, metalness: 0.55, roughness: 0.4, emissive: 0x0e180a, emissiveIntensity: 0.25 }); // dark green dragon scale
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9b44a, metalness: 0.9, roughness: 0.24, emissive: 0x4a3410, emissiveIntensity: 0.4 }); // gold trim
+            const goldGlow = new THREE.MeshStandardMaterial({ color: 0xf0d060, metalness: 0.6, roughness: 0.18, emissive: 0xd0a838, emissiveIntensity: 0.8 });
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 }); // horns/teeth
+            const energyMat = new THREE.MeshStandardMaterial({ color: 0x8affa0, emissive: 0x6ad84a, emissiveIntensity: 1.5, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }); // green energy string/arrow
+            const gemMat = new THREE.MeshStandardMaterial({ color: 0x6ad84a, emissive: 0x4ac030, emissiveIntensity: 1.3, roughness: 0.1, metalness: 0.2 });
+            // 🖐️ central grip riser (dark, gold-banded) with a glowing green gem
+            const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.32, 10), darkMetal);
+            g.add(riser);
+            for (const yy of [-0.13, 0.13]) {
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.056, 0.009, 6, 14), goldMat);
+                ring.position.y = yy;
+                ring.rotation.x = Math.PI / 2;
+                g.add(ring);
             }
-            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), goldMat);
-            g.add(grip);
-            // glowing energy string
-            const str = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.86, 6), new THREE.MeshStandardMaterial({ color: 0xff8a3a, emissive: 0xff5a1a, emissiveIntensity: 1.3 }));
-            str.position.x = 0.14;
-            g.add(str);
-            g.userData.flame = str;
+            const riserGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), gemMat);
+            riserGem.position.set(0.055, 0, 0);
+            riserGem.scale.set(0.6, 1.3, 0.6);
+            g.add(riserGem);
+            const gemRing = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 6, 14), goldMat);
+            gemRing.position.set(0.05, 0, 0);
+            gemRing.rotation.y = Math.PI / 2;
+            g.add(gemRing);
+            const tips = [];
+            // 🐉 two limbs shaped as recurving dragon necks, each ending in a small dragon head
+            for (const sy of [1, -1]) {
+                const pts = [];
+                for (let i = 0; i <= 10; i++) {
+                    const u = i / 10;
+                    const y = sy * (0.14 + u * 0.56);
+                    const x = 0.26 * Math.sin(u * Math.PI * 0.85) - (u > 0.6 ? (u - 0.6) * 0.5 : 0);
+                    pts.push(new THREE.Vector3(x, y, 0));
+                }
+                const curve = new THREE.CatmullRomCurve3(pts);
+                const limb = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.03, 8, false), darkMetal);
+                g.add(limb);
+                // dragon-scale ridges + gold binding running along the neck
+                for (let k = 1; k < 6; k++) {
+                    const u = k / 6;
+                    const p = curve.getPoint(u);
+                    const scaleR = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.05, 4), scaleMat);
+                    scaleR.position.copy(p);
+                    scaleR.position.z = 0.02;
+                    scaleR.rotation.x = -Math.PI / 2;
+                    g.add(scaleR);
+                    const bind = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.006, 5, 10), goldGlow);
+                    bind.position.copy(p);
+                    bind.rotation.y = Math.PI / 2;
+                    g.add(bind);
+                }
+                const tip = pts[pts.length - 1];
+                tips.push(tip);
+                // 👹 small dragon head at the tip (snout + horns + glowing eye + jaw)
+                const head = new THREE.Group();
+                head.position.copy(tip);
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), scaleMat);
+                skull.scale.set(1.2, 0.85, 1);
+                head.add(skull);
+                const snout = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.1, 7), goldMat);
+                snout.rotation.z = -Math.PI / 2 * sy;
+                snout.rotation.x = 0;
+                snout.position.set(0.06, sy * 0.02, 0);
+                head.add(snout);
+                for (const sx of [-1, 1]) {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.09, 5), boneMat);
+                    horn.position.set(-0.03, sy * 0.03, sx * 0.025);
+                    horn.rotation.z = sy * 0.9;
+                    head.add(horn);
+                }
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.013, 6, 6), gemMat);
+                eye.position.set(0.02, sy * 0.02, 0.035);
+                head.add(eye);
+                g.add(head);
+            }
+            // 🟢 green glowing energy string, drawn back toward the archer (-x) at the nock
+            const nock = new THREE.Vector3(-0.06, 0, 0);
+            for (const tp of tips) {
+                const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, tp.distanceTo(nock), 6), energyMat);
+                seg.position.copy(tp.clone().add(nock).multiplyScalar(0.5));
+                seg.lookAt(tp);
+                seg.rotateX(Math.PI / 2);
+                g.add(seg);
+            }
+            // 🏹 nocked energy arrow pointing forward (+x)
+            const arrow = new THREE.Group();
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.6, 6), energyMat);
+            shaft.rotation.z = Math.PI / 2;
+            shaft.position.x = 0.2;
+            arrow.add(shaft);
+            const head = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.11, 6), gemMat);
+            head.rotation.z = -Math.PI / 2;
+            head.position.x = 0.54;
+            arrow.add(head);
+            for (let k = 0; k < 3; k++) {
+                const fletch = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 5), energyMat);
+                fletch.scale.set(1.4, 0.5, 0.12);
+                fletch.position.set(-0.06, 0, 0);
+                fletch.rotation.x = k * (Math.PI * 2 / 3);
+                arrow.add(fletch);
+            }
+            arrow.userData.isArrow = true;
+            g.add(arrow);
+            g.userData.arrow = arrow;
+            g.userData.flame = shaft; // green energy shimmer
+            g.userData.tint = riserGem;
+            g.userData.baseTint = 0x6ad84a; // element/dye recolors the riser gem; string stays green
+            g.userData.glow = true;
             g.userData.gripY = 0.0;
+            g.scale.setScalar(1.15);
             weaponModels.wDa = g;
         }
-        { // wDm 🐉 dragon staff — coiled dragon around a blazing orb
+        { // wDm 🐉 คทาราชันมังกร — tall king's staff: black shaft w/ gold rings + spikes, dragon claws/jaws clutching a purple orb
             const g = new THREE.Group();
-            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.0, 8), new THREE.MeshStandardMaterial({ color: 0x4a1a12, metalness: 0.5, roughness: 0.4, emissive: 0x2a0805, emissiveIntensity: 0.5 }));
+            const shaftMat = new THREE.MeshStandardMaterial({ color: 0x14121a, metalness: 0.7, roughness: 0.4, emissive: 0x080610, emissiveIntensity: 0.2 }); // black shaft
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b44a, metalness: 0.92, roughness: 0.2, emissive: 0x4a3208, emissiveIntensity: 0.4 }); // gold rings
+            const goldGlow = new THREE.MeshStandardMaterial({ color: 0xf5d24a, metalness: 0.6, roughness: 0.16, emissive: 0xe0a838, emissiveIntensity: 0.85 });
+            const clawMat = new THREE.MeshStandardMaterial({ color: 0x2a2432, metalness: 0.6, roughness: 0.4, emissive: 0x0e0a14, emissiveIntensity: 0.25 }); // dark dragon claw
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 });
+            const orbMat = new THREE.MeshStandardMaterial({ color: 0xc078ff, emissive: 0xb050f5, emissiveIntensity: 1.5, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.94 }); // purple orb
+            const coreMat = new THREE.MeshStandardMaterial({ color: 0xe0b0ff, emissive: 0xc060ff, emissiveIntensity: 1.1, roughness: 0.1 }); // bright inner core (purple)
+            // 🪵 tall black shaft with gold rings + small spikes
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.04, 1.1, 10), shaftMat);
+            shaft.position.y = 0.02;
             g.add(shaft);
-            // coiled dragon body (stacked rings)
-            for (let i = 0; i < 4; i++) {
-                const coil = new THREE.Mesh(new THREE.TorusGeometry(0.09 + i * 0.005, 0.028, 8, 16), new THREE.MeshStandardMaterial({ color: 0x8a2a1a, metalness: 0.5, roughness: 0.4, emissive: 0x4a0f08, emissiveIntensity: 0.6 }));
-                coil.position.y = 0.1 + i * 0.11;
-                coil.rotation.x = Math.PI / 2;
-                coil.rotation.z = i * 0.5;
-                g.add(coil);
+            [-0.42, -0.14, 0.16, 0.44].forEach((yy) => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.009, 6, 14), goldMat); ring.position.y = yy; ring.rotation.x = Math.PI / 2; g.add(ring); });
+            for (const yy of [-0.28, 0.0, 0.3])
+                for (let s = 0; s < 3; s++) {
+                    const a = (s / 3) * Math.PI * 2 + yy;
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.06, 4), goldGlow);
+                    spike.position.set(Math.cos(a) * 0.045, yy, Math.sin(a) * 0.045);
+                    spike.rotation.z = -Math.cos(a) * 1.4;
+                    spike.rotation.x = Math.sin(a) * 1.4;
+                    g.add(spike);
+                }
+            // ⚜️ ornate gold pommel spike at the base
+            const pom = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.16, 6), goldMat);
+            pom.position.y = -0.63;
+            pom.rotation.x = Math.PI;
+            g.add(pom);
+            // 🐲 gold dragon-jaw crown at the top, framing the orb
+            const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.045, 0.12, 8), goldMat);
+            crown.position.y = 0.62;
+            g.add(crown);
+            for (let s = 0; s < 2; s++) { // two dragon heads facing the orb
+                const sx = s ? 1 : -1;
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), clawMat);
+                skull.scale.set(1.2, 0.9, 1);
+                skull.position.set(sx * 0.08, 0.66, 0);
+                g.add(skull);
+                const snout = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.1, 7), goldMat);
+                snout.position.set(sx * 0.11, 0.72, 0);
+                snout.rotation.z = -sx * 1.0;
+                g.add(snout);
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 6), orbMat);
+                eye.position.set(sx * 0.09, 0.69, 0.04);
+                g.add(eye);
             }
-            // claws holding the orb
+            // 🖐️ four dragon claws/talons curving up to clutch the orb
             for (let i = 0; i < 4; i++) {
-                const claw = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.18, 5), new THREE.MeshStandardMaterial({ color: 0xe8d8b0 }));
-                const a = (i / 4) * Math.PI * 2;
-                claw.position.set(Math.cos(a) * 0.13, 0.6, Math.sin(a) * 0.13);
-                claw.rotation.z = Math.cos(a) * 0.6;
-                claw.rotation.x = -Math.sin(a) * 0.6;
+                const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+                const claw = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.22, 5), clawMat);
+                claw.position.set(Math.cos(a) * 0.11, 0.78, Math.sin(a) * 0.11);
+                claw.rotation.z = Math.cos(a) * 0.7;
+                claw.rotation.x = -Math.sin(a) * 0.7;
                 g.add(claw);
+                const talon = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.06, 4), boneMat);
+                talon.position.set(Math.cos(a) * 0.05, 0.9, Math.sin(a) * 0.05);
+                talon.rotation.z = Math.cos(a) * 1.4;
+                talon.rotation.x = -Math.sin(a) * 1.4;
+                g.add(talon);
             }
-            // blazing dragon orb
-            const orb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), new THREE.MeshStandardMaterial({ color: 0xff7a3a, emissive: 0xff4a1a, emissiveIntensity: 1.4, roughness: 0.2 }));
-            orb.position.y = 0.68;
+            // 💜 glowing purple orb clutched by the claws, with a bright inner core + halo ring
+            const orb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 16), orbMat);
+            orb.position.y = 0.86;
             g.add(orb);
+            const core = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), coreMat);
+            core.position.y = 0.86;
+            g.add(core);
+            const halo = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.014, 8, 24), orbMat);
+            halo.position.y = 0.86;
+            halo.rotation.x = Math.PI / 2.2;
+            g.add(halo);
+            const glowLight = new THREE.PointLight(0xb050f5, 0.9, 3);
+            glowLight.position.y = 0.86;
+            g.add(glowLight);
             g.userData.orb = orb;
-            g.userData.flame = orb;
+            g.userData.crystal = orb;
+            g.userData.glowLight = glowLight;
+            g.userData.flame = core;
+            g.userData.tint = orb;
+            g.userData.baseTint = 0xb050f5;
+            g.userData.glow = true;
             g.userData.gripY = 0.45;
             weaponModels.wDm = g;
         }
-        { // wDs 🐉 dragon main-hand dagger (single — off-hand is separate)
+        { // wDs 🐉 มีดคู่เขี้ยวมังกร — TWIN curved dragon-fang daggers: dark blades, purple glow, gold dragon-head guards + ring pommels
             const g = new THREE.Group();
-            const boneMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.5, roughness: 0.35, emissive: 0x3a0a05, emissiveIntensity: 0.6 });
-            const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.2 });
-            const embers = [];
-            const dg = new THREE.Group();
-            const grip = mkStick(0x3a1a12, 0.2);
-            grip.position.y = -0.08;
-            const guard = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.1, 6), boneMat);
-            guard.rotation.z = Math.PI / 2;
-            guard.position.y = 0.03;
-            const blade = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.42, 4), boneMat);
-            blade.position.y = 0.26;
-            blade.scale.set(1, 1, 0.45);
-            const ember = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.42, 4), emberMat);
-            ember.position.set(0.02, 0.26, 0);
-            embers.push(ember);
-            dg.add(grip, guard, blade, ember);
-            g.add(dg);
-            g.userData.flame = embers[0];
+            const obsidian = new THREE.MeshStandardMaterial({ color: 0x201a28, metalness: 0.82, roughness: 0.3, emissive: 0x0c0a12, emissiveIntensity: 0.25 }); // dark blade
+            const silverEdge = new THREE.MeshStandardMaterial({ color: 0xd6d2e2, metalness: 0.95, roughness: 0.1 }); // polished edge
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b44a, metalness: 0.92, roughness: 0.2, emissive: 0x4a3208, emissiveIntensity: 0.4 }); // gold guard
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 });
+            const purpleCore = new THREE.MeshStandardMaterial({ color: 0xc060ff, emissive: 0xb040f5, emissiveIntensity: 1.5, roughness: 0.2, metalness: 0.1 }); // purple energy vein
+            const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1c1622, roughness: 0.85, metalness: 0.05 });
+            const gemMat = new THREE.MeshStandardMaterial({ color: 0xc060ff, emissive: 0xa040f0, emissiveIntensity: 1.3, roughness: 0.1, metalness: 0.2 }); // pommel/guard gem (tinted by element)
+            const tintParts = [];
+            const cores = [];
+            const mkFang = () => {
+                const dg = new THREE.Group();
+                // 🪢 wrapped grip
+                const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.2, 8), leatherMat);
+                grip.position.y = -0.09;
+                dg.add(grip);
+                for (let k = 0; k < 3; k++) {
+                    const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 5, 10), goldMat);
+                    wrap.position.y = -0.03 - k * 0.05;
+                    wrap.rotation.set(Math.PI / 2, 0, 0.3);
+                    dg.add(wrap);
+                }
+                // 💍 ring pommel
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 8, 16), goldMat);
+                ring.position.y = -0.21;
+                ring.rotation.x = Math.PI / 2;
+                dg.add(ring);
+                const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.018, 0), gemMat);
+                gem.position.y = -0.21;
+                dg.add(gem);
+                tintParts.push(gem);
+                // 👹 small gold dragon-head guard
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), goldMat);
+                skull.scale.set(1.4, 0.7, 1);
+                skull.position.y = 0.03;
+                dg.add(skull);
+                for (const sx of [-1, 1]) {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.07, 5), boneMat);
+                    horn.position.set(sx * 0.05, 0.05, -0.02);
+                    horn.rotation.z = sx * 0.8;
+                    dg.add(horn);
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), purpleCore);
+                    eye.position.set(sx * 0.03, 0.04, 0.045);
+                    dg.add(eye);
+                }
+                // 🌙 curved dragon-fang blade — sweeping segments, dark w/ purple vein + silver edge
+                const segs = [{ p: [0.0, 0.17, 0], r: 0.05, h: 0.24, rot: -0.05 }, { p: [0.05, 0.37, 0], r: 0.04, h: 0.22, rot: -0.32 }, { p: [0.14, 0.54, 0], r: 0.026, h: 0.2, rot: -0.7 }];
+                segs.forEach((s, i) => {
+                    const b = new THREE.Mesh(new THREE.ConeGeometry(s.r, s.h, 4), obsidian.clone());
+                    b.position.set(...s.p);
+                    b.rotation.z = s.rot;
+                    b.scale.set(1, 1, 0.42);
+                    dg.add(b);
+                    const edge = new THREE.Mesh(new THREE.ConeGeometry(s.r * 0.4, s.h * 0.96, 4), silverEdge);
+                    edge.position.set(s.p[0] + 0.018, s.p[1], 0);
+                    edge.rotation.z = s.rot;
+                    edge.scale.set(1, 1, 0.48);
+                    dg.add(edge);
+                    const vein = new THREE.Mesh(new THREE.ConeGeometry(s.r * 0.3, s.h * 0.7, 4), purpleCore);
+                    vein.position.set(s.p[0] - 0.006, s.p[1], 0);
+                    vein.rotation.z = s.rot;
+                    vein.scale.set(1, 1, 0.6);
+                    dg.add(vein);
+                    if (i === 1)
+                        cores.push(vein);
+                });
+                // 🪚 serrated teeth on the inner edge
+                for (let k = 0; k < 3; k++) {
+                    const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.03, 3), silverEdge);
+                    tooth.position.set(-0.045, 0.12 + k * 0.05, 0);
+                    tooth.rotation.z = 2.0;
+                    tooth.scale.set(1, 1, 0.4);
+                    dg.add(tooth);
+                }
+                return dg;
+            };
+            // main-hand fang (mounted in the wand)
+            const main = mkFang();
+            main.position.set(0.03, 0, 0);
+            g.add(main);
+            // twin off-hand fang, crossed & offset behind so it reads as a pair
+            const twin = mkFang();
+            twin.position.set(-0.11, -0.05, -0.05);
+            twin.rotation.z = 0.5;
+            twin.scale.setScalar(0.92);
+            g.add(twin);
+            g.userData.flame = cores[0];
+            g.userData.tintParts = tintParts;
+            g.userData.baseTint = 0xc060ff; // element/dye recolors the pommel gems; blades stay purple
+            g.userData.glow = true;
             g.userData.gripY = 0.12;
             weaponModels.wDs = g;
         }
         // ═══════════ 🐉 dragon spear/pen/keyboard + ⭐ LEGENDARY celestial arsenal ═══════════
-        { // 🐉 wDl — dragon fang spear: dark shaft, dragon-jaw socket, burning blade + wing fins
+        { // 🐉 wDl — หอกเขี้ยวมังกร: long glaive, dragon jaw biting a golden leaf-blade, gold binding rings, amber glow
             const g = new THREE.Group();
-            const shaftMat = new THREE.MeshStandardMaterial({ color: 0x3a1610, metalness: 0.5, roughness: 0.4, emissive: 0x1a0402, emissiveIntensity: 0.4 });
-            const scaleMat = new THREE.MeshStandardMaterial({ color: 0x8a2a1a, metalness: 0.55, roughness: 0.35, emissive: 0x3a0a05, emissiveIntensity: 0.6 });
-            const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
-            const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.3 });
-            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 1.5, 10), shaftMat);
+            const shaftMat = new THREE.MeshStandardMaterial({ color: 0x1a1512, metalness: 0.6, roughness: 0.42, emissive: 0x0a0604, emissiveIntensity: 0.2 }); // dark shaft
+            const scaleMat = new THREE.MeshStandardMaterial({ color: 0x2a2018, metalness: 0.55, roughness: 0.4, emissive: 0x120a06, emissiveIntensity: 0.25 }); // dark dragon scale head
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b44a, metalness: 0.92, roughness: 0.2, emissive: 0x4a3208, emissiveIntensity: 0.4 }); // gold
+            const goldGlow = new THREE.MeshStandardMaterial({ color: 0xf5d24a, metalness: 0.6, roughness: 0.16, emissive: 0xe0a838, emissiveIntensity: 0.85 }); // glowing gold leaf-blade
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 }); // fangs
+            const amberCore = new THREE.MeshStandardMaterial({ color: 0xffb040, emissive: 0xffa030, emissiveIntensity: 1.5, roughness: 0.22, metalness: 0.1 }); // amber energy
+            // 🪵 long dark shaft
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 1.5, 10), shaftMat);
             shaft.position.y = 0.1;
             g.add(shaft);
-            for (let k = 0; k < 4; k++) {
-                const cord = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.008, 6, 12), emberMat);
-                cord.rotation.x = Math.PI / 2;
-                cord.position.y = -0.42 + k * 0.06;
-                g.add(cord);
-            }
-            const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 12), scaleMat);
-            jaw.scale.set(1.25, 0.9, 1);
-            jaw.position.y = 0.72;
-            g.add(jaw);
-            for (const sx of [-1, 1]) {
-                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.1, 6), boneMat);
-                fang.rotation.x = Math.PI;
-                fang.position.set(0.055 * sx, 0.66, 0.07);
+            // gold binding rings up the shaft + a leather grip zone
+            const gripWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0x24160f, roughness: 0.85 }));
+            gripWrap.position.y = -0.42;
+            g.add(gripWrap);
+            [-0.6, -0.24, 0.24, 0.5].forEach((y) => { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.008, 6, 12), goldMat); ring.position.y = y; ring.rotation.x = Math.PI / 2; g.add(ring); });
+            // 👹 dragon-jaw socket: upper skull + lower jaw biting the leaf-blade
+            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), scaleMat);
+            skull.scale.set(1.15, 0.85, 1.05);
+            skull.position.y = 0.72;
+            g.add(skull);
+            const upperJaw = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 8), goldMat);
+            upperJaw.position.y = 0.82;
+            g.add(upperJaw);
+            const lowerJaw = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.12, 8), scaleMat);
+            lowerJaw.position.y = 0.66;
+            lowerJaw.rotation.x = Math.PI;
+            g.add(lowerJaw);
+            for (let k = 0; k < 6; k++) {
+                const a = (k / 6) * Math.PI * 2;
+                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.07, 4), boneMat);
+                fang.position.set(Math.cos(a) * 0.075, 0.78, Math.sin(a) * 0.045);
+                fang.rotation.x = Math.PI + Math.sin(a) * 0.3;
+                fang.rotation.z = Math.cos(a) * 0.3;
                 g.add(fang);
             }
-            const blade = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.52, 4), scaleMat);
-            blade.position.y = 1.03;
-            g.add(blade);
-            const bEdge = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.52, 4), emberMat);
-            bEdge.position.set(0.02, 1.03, 0);
-            g.add(bEdge);
             for (const sx of [-1, 1]) {
-                const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 3), scaleMat);
-                fin.position.set(0.09 * sx, 0.84, 0);
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), amberCore);
+                eye.position.set(sx * 0.055, 0.74, 0.08);
+                g.add(eye);
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.14, 5), goldMat);
+                horn.position.set(sx * 0.07, 0.8, -0.05);
+                horn.rotation.z = sx * 0.6;
+                g.add(horn);
+            }
+            // 🍃 golden leaf-blade held in the jaws, with a glowing amber core
+            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.6, 4), goldGlow);
+            leaf.position.y = 1.18;
+            leaf.scale.set(1, 1, 0.35);
+            g.add(leaf);
+            const leafCore = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.56, 4), amberCore);
+            leafCore.position.y = 1.18;
+            leafCore.scale.set(1, 1, 0.45);
+            g.add(leafCore);
+            const leafBase = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), goldMat);
+            leafBase.scale.set(1.3, 0.5, 0.5);
+            leafBase.position.y = 0.92;
+            g.add(leafBase);
+            // 🐲 gold wing-fins flaring from the socket
+            for (const sx of [-1, 1]) {
+                const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.24, 3), goldMat);
+                fin.position.set(0.1 * sx, 0.88, 0);
                 fin.rotation.z = sx > 0 ? -1.15 : 1.15;
                 fin.scale.set(1, 1, 0.4);
                 g.add(fin);
             }
-            const pom = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 6), boneMat);
+            // ⚜️ gold pommel spike at the butt
+            const pom = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.18, 6), goldMat);
             pom.rotation.x = Math.PI;
             pom.position.y = -0.68;
             g.add(pom);
-            g.userData.flame = bEdge;
-            g.userData.tint = bEdge;
-            g.userData.baseTint = 0xff6a2a;
+            g.userData.flame = leafCore;
+            g.userData.tint = leafCore;
+            g.userData.baseTint = 0xffa030;
+            g.userData.glow = true;
             g.userData.gripY = 0.42;
             weaponModels.wDl = g;
         }
-        { // 🐉 wDo — dragon CEO pen: obsidian barrel, gold scale rings, ember nib
+        { // 🐉 wDo — ปากกามังกร CEO: luxurious oversized fountain pen dragon, polished gold nib, black+gold barrel w/ dragon-scale filigree + gem, subtle gold glow
             const g = new THREE.Group();
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x241012, metalness: 0.6, roughness: 0.3, emissive: 0x1a0402, emissiveIntensity: 0.3 });
-            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b040, metalness: 0.9, roughness: 0.24, emissive: 0x4a2c08, emissiveIntensity: 0.35 });
-            const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.5, roughness: 0.2 });
-            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.031, 0.46, 10), bodyMat);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x14131a, metalness: 0.65, roughness: 0.28, emissive: 0x080610, emissiveIntensity: 0.2 }); // glossy black barrel
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe6bc50, metalness: 0.95, roughness: 0.16, emissive: 0x4a3208, emissiveIntensity: 0.4 }); // polished gold
+            const goldGlow = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.7, roughness: 0.18, emissive: 0xf5c542, emissiveIntensity: 0.9 }); // subtle gold glow
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 });
+            const gemMat = new THREE.MeshStandardMaterial({ color: 0xffe07a, emissive: 0xf5c542, emissiveIntensity: 1.2, roughness: 0.1, metalness: 0.2 }); // cap gem (tinted)
+            // 🖊️ barrel (larger, luxurious)
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.5, 12), bodyMat);
             barrel.position.y = 0.06;
             g.add(barrel);
-            for (const y of [-0.08, 0.06, 0.2]) {
-                const band = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.009, 6, 12), goldMat);
+            // 🐲 dragon-scale filigree: staggered rows of tiny gold scale chips around the barrel
+            for (let r = 0; r < 4; r++) {
+                const yy = -0.06 + r * 0.09;
+                const off = (r % 2) * 0.5;
+                for (let c = 0; c < 8; c++) {
+                    const a = ((c + off) / 8) * Math.PI * 2;
+                    const scale = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.03, 4), goldGlow);
+                    scale.position.set(Math.cos(a) * 0.036, yy, Math.sin(a) * 0.036);
+                    scale.rotation.x = -Math.PI / 2;
+                    scale.rotation.z = a;
+                    scale.scale.set(1, 0.6, 1);
+                    g.add(scale);
+                }
+            }
+            // gold bands + clip
+            for (const y of [-0.14, 0.28]) {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.037, 0.01, 6, 14), goldMat);
                 band.position.y = y;
                 band.rotation.x = Math.PI / 2;
                 g.add(band);
             }
-            const clip = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.18, 0.014), goldMat);
-            clip.position.set(0.034, 0.2, 0);
-            clip.rotation.z = 0.12;
+            const clip = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.2, 0.015), goldMat);
+            clip.position.set(0.04, 0.22, 0);
+            clip.rotation.z = 0.1;
             g.add(clip);
-            const capGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), emberMat);
-            capGem.position.y = 0.32;
+            const clipHead = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), goldMat);
+            clipHead.position.set(0.04, 0.12, 0);
+            g.add(clipHead);
+            // 💎 gem finial on the cap
+            const capTop = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 10), goldMat);
+            capTop.position.y = 0.33;
+            g.add(capTop);
+            const capGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), gemMat);
+            capGem.position.y = 0.4;
+            capGem.scale.set(1, 1.3, 1);
             g.add(capGem);
-            const nib = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 8), goldMat);
-            nib.position.y = -0.24;
+            // ✒️ polished gold nib with an engraved slit + breather hole, glowing gold ink tip
+            const section = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.024, 0.08, 10), goldMat);
+            section.position.y = -0.23;
+            g.add(section);
+            const nib = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.16, 8), goldMat);
+            nib.position.y = -0.32;
+            nib.scale.set(1, 1, 0.6);
             g.add(nib);
-            const inkTip = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.07, 6), emberMat);
-            inkTip.position.y = -0.31;
+            const slit = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.12, 0.008), bodyMat);
+            slit.position.set(0, -0.31, 0.02);
+            g.add(slit);
+            const breather = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), bodyMat);
+            breather.position.set(0, -0.27, 0.018);
+            g.add(breather);
+            const inkTip = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.06, 6), goldGlow);
+            inkTip.position.y = -0.41;
             g.add(inkTip);
+            // ✨ subtle gold ink motes around the nib
             const motes = [];
             for (let k = 0; k < 5; k++) {
-                const m = new THREE.Mesh(new THREE.SphereGeometry(0.011, 5, 5), new THREE.MeshBasicMaterial({ color: 0xffb060, transparent: true, opacity: 0.85 }));
-                m.userData = { a: Math.random() * Math.PI * 2, r: 0.07 + Math.random() * 0.06, y: -0.31 + Math.random() * 0.14, sp: 0.6 + Math.random() };
+                const m = new THREE.Mesh(new THREE.SphereGeometry(0.011, 5, 5), new THREE.MeshBasicMaterial({ color: 0xffdd80, transparent: true, opacity: 0.8 }));
+                m.userData = { a: Math.random() * Math.PI * 2, r: 0.06 + Math.random() * 0.06, y: -0.4 + Math.random() * 0.14, sp: 0.6 + Math.random() };
                 g.add(m);
                 motes.push(m);
             }
             g.userData.motes = motes;
             g.userData.flame = inkTip;
-            g.userData.tint = inkTip;
-            g.userData.baseTint = 0xff6a2a;
+            g.userData.tint = capGem;
+            g.userData.baseTint = 0xf5c542;
             g.userData.gripY = 0.18;
             g.userData.glow = true;
             weaponModels.wDo = g;
         }
-        { // 🐉 wDc — dragon digital keyboard: dark case, ember underglow, gold trim, fire AI-cube
+        { // 🐉 wDc — คีย์บอร์ดมังกร: mechanical keyboard chassis with a dragon head emerging from the top edge, dark case, cyan keys + LED underglow
             const g = new THREE.Group();
-            const caseMat = new THREE.MeshStandardMaterial({ color: 0x241014, metalness: 0.6, roughness: 0.4 });
-            const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc83a10, emissiveIntensity: 1.5, roughness: 0.3 });
-            const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b040, metalness: 0.85, roughness: 0.3, emissive: 0x3a2408, emissiveIntensity: 0.3 });
-            const keyMat = new THREE.MeshStandardMaterial({ color: 0x3a2018, roughness: 0.7 });
-            const board = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.035, 0.19), caseMat);
+            const caseMat = new THREE.MeshStandardMaterial({ color: 0x14161c, metalness: 0.65, roughness: 0.4, emissive: 0x06080c, emissiveIntensity: 0.2 }); // dark case
+            const cyanGlow = new THREE.MeshStandardMaterial({ color: 0x6ae8ff, emissive: 0x3ad0e8, emissiveIntensity: 1.5, roughness: 0.3 }); // cyan LED underglow
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9b44a, metalness: 0.9, roughness: 0.24, emissive: 0x4a3410, emissiveIntensity: 0.35 }); // gold trim
+            const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e2630, metalness: 0.6, roughness: 0.4, emissive: 0x081018, emissiveIntensity: 0.25 }); // dark dragon head
+            const boneMat = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 });
+            const keyMat = new THREE.MeshStandardMaterial({ color: 0x232a34, roughness: 0.6, emissive: 0x0a2a34, emissiveIntensity: 0.5 }); // keycaps w/ cyan tint
+            const gemMat = new THREE.MeshStandardMaterial({ color: 0x8af0ff, emissive: 0x3ad0e8, emissiveIntensity: 1.4, roughness: 0.1, metalness: 0.2 }); // dragon eye (tinted)
+            // ⌨️ chassis + beveled top plate
+            const board = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.05, 0.2), caseMat);
             g.add(board);
-            const glow = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.012, 0.21), emberMat);
-            glow.position.y = -0.026;
+            const plate = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.012, 0.18), new THREE.MeshStandardMaterial({ color: 0x0e1014, roughness: 0.5 }));
+            plate.position.y = 0.03;
+            g.add(plate);
+            // cyan LED underglow strip wrapping the base
+            const glow = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.014, 0.23), cyanGlow);
+            glow.position.y = -0.032;
             g.add(glow);
-            for (const sx of [-1, 1]) {
-                const trim = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.2), goldMat);
-                trim.position.set(sx * 0.235, 0.006, 0);
+            // gold trim rails on the long sides
+            for (const sz of [-1, 1]) {
+                const trim = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.02, 0.014), goldMat);
+                trim.position.set(0, 0.01, sz * 0.1);
                 g.add(trim);
             }
+            // cyan-lit keycaps grid (front rows, leaving room for the dragon head at the back edge)
             const keys = [];
             for (let r = 0; r < 3; r++)
                 for (let c = 0; c < 9; c++) {
-                    const k = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.014, 0.035), keyMat);
-                    k.position.set(-0.19 + c * 0.048, 0.026, -0.05 + r * 0.05);
+                    const k = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.018, 0.036), keyMat.clone());
+                    k.position.set(-0.19 + c * 0.048, 0.045, 0.0 + r * 0.05);
                     k.userData = { phase: (c + r) * 0.4 };
                     g.add(k);
                     keys.push(k);
                 }
             g.userData.keys = keys;
             g.userData.rgb = glow;
-            const cube = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.11), new THREE.MeshStandardMaterial({ color: 0xff8a3a, emissive: 0xd0500a, emissiveIntensity: 1.3, transparent: true, opacity: 0.85, roughness: 0.2 }));
-            cube.position.set(0, 0.22, 0);
-            const cage = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), new THREE.MeshBasicMaterial({ color: 0xffb060, wireframe: true, transparent: true, opacity: 0.7 }));
-            cage.position.copy(cube.position);
-            g.add(cube, cage);
-            g.userData.cube = cube;
-            g.userData.cage = cage;
-            g.userData.tint = glow;
-            g.userData.baseTint = 0xff6a2a;
+            // spacebar
+            const space = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.018, 0.034), keyMat.clone());
+            space.position.set(0, 0.045, 0.16);
+            g.add(space);
+            keys.push(space);
+            // 🐲 dragon head/jaw rising from the top-back edge of the board
+            const dh = new THREE.Group();
+            dh.position.set(0, 0.06, -0.07);
+            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), scaleMat);
+            skull.scale.set(1.3, 0.9, 1.1);
+            skull.position.set(0, 0.03, 0);
+            dh.add(skull);
+            const snout = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.16, 8), scaleMat);
+            snout.rotation.x = -Math.PI / 2.3;
+            snout.position.set(0, 0.02, 0.11);
+            dh.add(snout);
+            const lowJaw = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.11, 8), caseMat);
+            lowJaw.rotation.x = -Math.PI / 2 + 0.4;
+            lowJaw.position.set(0, -0.04, 0.1);
+            dh.add(lowJaw);
+            for (const sx of [-1, 1]) {
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.14, 5), goldMat);
+                horn.position.set(sx * 0.05, 0.08, -0.05);
+                horn.rotation.set(-0.6, 0, -sx * 0.5);
+                dh.add(horn);
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), gemMat);
+                eye.position.set(sx * 0.04, 0.04, 0.06);
+                dh.add(eye);
+                const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.01, 0.04, 4), boneMat);
+                tooth.rotation.x = Math.PI / 2;
+                tooth.position.set(sx * 0.025, -0.01, 0.15);
+                dh.add(tooth);
+            }
+            // cyan glow crest scutes down the snout
+            for (let k = 0; k < 3; k++) {
+                const scute = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.04, 4), cyanGlow);
+                scute.position.set(0, 0.06 - k * 0.02, 0.02 + k * 0.045);
+                scute.rotation.x = -0.6;
+                dh.add(scute);
+            }
+            g.add(dh);
+            // ✨ floating cyan code motes
+            const motes = [];
+            for (let k = 0; k < 6; k++) {
+                const m = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.016, 0.004), new THREE.MeshBasicMaterial({ color: 0x6af0ff, transparent: true, opacity: 0.85 }));
+                m.userData = { a: Math.random() * Math.PI * 2, r: 0.16 + Math.random() * 0.1, y: 0.08 + Math.random() * 0.24, sp: 0.6 + Math.random() };
+                g.add(m);
+                motes.push(m);
+            }
+            g.userData.motes = motes;
+            // a small crest gem so element/dye recolor something (keys + head stay cyan)
+            const tintEye = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), gemMat);
+            tintEye.position.set(0, 0.14, -0.09);
+            g.add(tintEye);
+            g.userData.tint = tintEye;
+            g.userData.baseTint = 0x3ad0e8;
             g.userData.gripY = 0.05;
             g.userData.glow = true;
             weaponModels.wDc = g;
@@ -5502,61 +6003,119 @@ function CherryAdventure() {
             g.scale.setScalar(1.3);
             weaponModels.cx = g;
         }
-        { // 🐉🔫 wDx — Dragon Fang Plasma Cannon (aegis dragon weapon): dark-red scale housing, ember bore, dragon-jaw muzzle
+        { // 🐉🔫 wDx — แคนนอนเขี้ยวมังกร: heavy mechanical dragon cannon — dark armored barrel, red bore core, dragon-jaw muzzle w/ fangs, mech spikes
             const g = new THREE.Group();
-            const scaleMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.72, roughness: 0.3, emissive: 0x3a0a05, emissiveIntensity: 0.5 });
-            const dark = new THREE.MeshStandardMaterial({ color: 0x2a1210, metalness: 0.7, roughness: 0.42 });
-            const bone = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
-            const ember = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.4, roughness: 0.25 });
+            const armor = new THREE.MeshStandardMaterial({ color: 0x23262e, metalness: 0.85, roughness: 0.32, emissive: 0x0c0d12, emissiveIntensity: 0.2 }); // dark armored steel
+            const dark = new THREE.MeshStandardMaterial({ color: 0x14131a, metalness: 0.7, roughness: 0.45 }); // black mech
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9b44a, metalness: 0.9, roughness: 0.24, emissive: 0x4a3410, emissiveIntensity: 0.35 }); // gold dragon accents
+            const bone = new THREE.MeshStandardMaterial({ color: 0xefe3c2, roughness: 0.5 }); // fangs
+            const ember = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xff5a2a, emissiveIntensity: 1.5, roughness: 0.25, metalness: 0.1 }); // red energy core
             const emberGlow = new THREE.MeshBasicMaterial({ color: 0xff7a2a, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
-            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.11), dark);
+            // === pistol grip (hand holds here) ===
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.3, 0.11), dark);
             grip.position.set(0, -0.1, -0.02);
             grip.rotation.x = 0.32;
             g.add(grip);
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.22), scaleMat);
+            const gripPad = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.03), ember);
+            gripPad.position.set(0, -0.1, 0.05);
+            gripPad.rotation.x = 0.32;
+            g.add(gripPad);
+            // === armored receiver / body with panel plates ===
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.24), armor);
             body.position.set(0, 0.16, 0);
             g.add(body);
-            const brow = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.08, 0.2), dark);
-            brow.position.set(0, 0.32, 0);
-            g.add(brow);
-            const cell = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.07), ember);
-            cell.position.set(0, 0.06, -0.15);
+            const topPlate = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.1, 0.22), dark);
+            topPlate.position.set(0, 0.34, 0);
+            g.add(topPlate);
+            for (const sx of [-1, 1]) {
+                const vent = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.16), dark);
+                vent.position.set(sx * 0.085, 0.16, 0);
+                g.add(vent);
+                const trim = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.3, 0.02), goldMat);
+                trim.position.set(sx * 0.082, 0.16, 0.11);
+                g.add(trim);
+            }
+            // glowing energy cell plugged into the back
+            const cell = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.22, 0.08), ember);
+            cell.position.set(0, 0.06, -0.16);
             cell.rotation.x = 0.32;
             g.add(cell);
-            const cellGlow = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.24, 0.1), emberGlow);
+            const cellGlow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.26, 0.11), emberGlow);
             cellGlow.position.copy(cell.position);
             cellGlow.rotation.x = 0.32;
             g.add(cellGlow);
-            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.052, 0.6, 12), scaleMat);
-            barrel.position.set(0, 0.56, 0.02);
+            // === heavy armored barrel with a glowing red bore running up +Y ===
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.056, 0.62, 12), armor);
+            barrel.position.set(0, 0.58, 0.02);
             g.add(barrel);
-            const channel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.62, 8), ember);
-            channel.position.set(0, 0.56, 0.02);
+            const barrelBand = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.06, 12), goldMat);
+            barrelBand.position.set(0, 0.44, 0.02);
+            g.add(barrelBand);
+            const channel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.64, 8), ember);
+            channel.position.set(0, 0.58, 0.02);
             g.add(channel);
+            const coreGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), ember);
+            coreGem.position.set(0, 0.3, 0.13);
+            coreGem.scale.set(0.7, 1.1, 0.7);
+            g.add(coreGem);
+            // 🦿 mechanical spikes / heat-sink scutes along the barrel top
             for (let k = 0; k < 4; k++) {
-                const sc = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.09, 4), scaleMat);
-                sc.position.set(0, 0.36 + k * 0.11, 0.09);
-                sc.rotation.x = 1.2;
+                const sc = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.11, 4), armor);
+                sc.position.set(0, 0.4 + k * 0.12, 0.1);
+                sc.rotation.x = 1.15;
                 g.add(sc);
+                const edge = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.06, 4), goldMat);
+                edge.position.set(0, 0.42 + k * 0.12, 0.12);
+                edge.rotation.x = 1.15;
+                g.add(edge);
             }
-            const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.08, 8), dark);
-            muzzle.position.set(0, 0.86, 0.02);
-            g.add(muzzle);
             for (const sx of [-1, 1]) {
-                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 5), bone);
-                fang.position.set(sx * 0.05, 0.93, 0.02);
-                fang.rotation.z = sx * 0.32;
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.14, 4), armor);
+                spike.position.set(sx * 0.055, 0.62, -0.03);
+                spike.rotation.z = sx * 0.4;
+                g.add(spike);
+            }
+            // 🐲 dragon-jaw muzzle: upper skull + lower jaw with fangs, opening forward (+Y)
+            const muzzleBase = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.055, 0.08, 10), dark);
+            muzzleBase.position.set(0, 0.9, 0.02);
+            g.add(muzzleBase);
+            const upperJaw = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.16, 8), armor);
+            upperJaw.position.set(0, 1.0, 0.05);
+            upperJaw.rotation.x = 0.2;
+            g.add(upperJaw);
+            const lowerJaw = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 8), dark);
+            lowerJaw.position.set(0, 0.98, -0.04);
+            lowerJaw.rotation.x = -0.35;
+            g.add(lowerJaw);
+            for (let k = 0; k < 6; k++) {
+                const a = (k / 6) * Math.PI * 2;
+                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.08, 4), bone);
+                fang.position.set(Math.cos(a) * 0.06, 0.96, 0.02 + Math.sin(a) * 0.04);
+                fang.rotation.x = Math.PI - 0.3;
+                fang.rotation.z = Math.cos(a) * 0.3;
                 g.add(fang);
             }
+            for (const sx of [-1, 1]) {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 6), ember);
+                eye.position.set(sx * 0.05, 0.92, 0.08);
+                g.add(eye);
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.1, 5), goldMat);
+                horn.position.set(sx * 0.06, 0.9, -0.06);
+                horn.rotation.z = sx * 0.5;
+                horn.rotation.x = -0.3;
+                g.add(horn);
+            }
             const muzzleGlow = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), emberGlow);
-            muzzleGlow.position.set(0, 0.9, 0.02);
+            muzzleGlow.position.set(0, 0.98, 0.03);
             g.add(muzzleGlow);
-            const glow = new THREE.PointLight(0xff5a2a, 0.5, 2.4);
-            glow.position.set(0, 0.9, 0.02);
+            const glow = new THREE.PointLight(0xff5a2a, 0.55, 2.6);
+            glow.position.set(0, 0.96, 0.03);
             g.add(glow);
             g.userData.muzzleGlow = muzzleGlow;
             g.userData.channel = channel;
             g.userData.glow = glow;
+            g.userData.tint = channel;
+            g.userData.baseTint = 0xff5a2a;
             g.userData.gripY = 0.12;
             g.userData.gripZ = 0.06;
             g.scale.setScalar(1.32);
