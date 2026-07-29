@@ -1331,7 +1331,7 @@ export default function CherryAdventure() {
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
-    warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0,
+    warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
     toast: "", toastAt: 0,
   });
 
@@ -15823,10 +15823,26 @@ export default function CherryAdventure() {
 
     // ---------- 🤖 Auto-battle AI ----------
     G.auto = false;
+    G.autoNoBoss = false;  // ⚙️ auto setting: skip bosses while auto-hunting
+    G.autoNoEvent = false; // ⚙️ auto setting: skip events (meteor crystals + golden monster)
+    G.autoHpPot = true;    // ⚙️ auto setting: drink a blood potion when HP is low
+    G.autoMpPot = false;   // ⚙️ auto setting: drink a mana potion when MP is low
     G.toggleAuto = () => {
       G.auto = !G.auto;
       setUi((u) => ({ ...u, auto: G.auto }));
       toast(G.auto ? "🤖 เปิดโหมดต่อสู้อัตโนมัติ" : "🎮 กลับมาบังคับเอง");
+    };
+    const AUTO_CFG_LABEL = {
+      autoNoBoss:  (v) => v ? "🚫👹 ออโต้จะไม่ตีบอส" : "👹 ออโต้จะตีบอสด้วย",
+      autoNoEvent: (v) => v ? "🚫✨ ออโต้จะไม่เก็บ event" : "✨ ออโต้จะเก็บ event",
+      autoHpPot:   (v) => v ? "🧪 ออโต้จะเติมเลือดเอง" : "🚫🧪 ออโต้จะไม่เติมเลือด",
+      autoMpPot:   (v) => v ? "💧 ออโต้จะเติมมานาเอง" : "🚫💧 ออโต้จะไม่เติมมานา",
+    };
+    G.setAutoCfg = (key, val) => {
+      G[key] = !!val;
+      setUi((u) => ({ ...u, [key]: G[key] }));
+      if (AUTO_CFG_LABEL[key]) toast(AUTO_CFG_LABEL[key](G[key]));
+      if (G.saveGame) G.saveGame();
     };
     // ⏩ battle speed: cycle 1x → 2x → 3x
     G.battleSpeed = 1;
@@ -15918,8 +15934,9 @@ export default function CherryAdventure() {
       // 🔒 the AI may only use skills the player has actually unlocked
       const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
       const hpPct = G.player.hp / effMaxHp();
-      // 1) very low HP → drink a potion
-      if (hpPct < 0.3 && G.potions > 0) { G.usePotion(); return; }
+      // 1) very low HP → drink a potion (⚙️ togglable)
+      if (G.autoHpPot && hpPct < 0.3 && G.potions > 0) { G.usePotion(); return; }
+      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(); return; }
       // 2) mage with a heal skill and hurt → heal
       if (hpPct < 0.55) {
         const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
@@ -15968,8 +15985,9 @@ export default function CherryAdventure() {
     const autoWorldAct = () => {
       if (G.mode !== "explore" || G.banim) return;
       const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
-      // top up HP with a potion when low
-      if (G.player.hp < effMaxHp() * 0.35 && G.potions > 0) { G.usePotion(); return; }
+      // top up HP/MP with a potion when low (⚙️ togglable)
+      if (G.autoHpPot && G.player.hp < effMaxHp() * 0.35 && G.potions > 0) { G.usePotion(); return; }
+      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(); return; }
       // a mage/priest with a heal skill & hurt → heal (cast targets self-safely via the arena FX path)
       if (G.player.hp < effMaxHp() * 0.5) {
         const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && (sk.cost || 8) <= G.player.mp && unlocked(sk));
@@ -16170,7 +16188,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -17541,6 +17559,8 @@ export default function CherryAdventure() {
       G.dressRotY = d.dressRotY != null ? d.dressRotY : null;
       G.dressHideGear = !!d.dressHideGear;
       G._gearHidden = G.dressHideGear; // 🙈 apply saved hide-gear on load (before visuals render)
+      G.autoNoBoss = !!d.autoNoBoss; G.autoNoEvent = !!d.autoNoEvent; // ⚙️ auto-battle preferences
+      G.autoHpPot = d.autoHpPot !== false; G.autoMpPot = !!d.autoMpPot; // ⚙️ auto potion prefs (HP defaults on)
       G.wpMastery = d.wpMastery || {};
       G.weaponSkin = d.weaponSkin || "none";
       G.activeSet = d.activeSet || null;
@@ -18629,26 +18649,29 @@ export default function CherryAdventure() {
           G.keys["arrowup"] || G.keys["w"] || G.keys["arrowdown"] || G.keys["s"] ||
           G.keys["arrowleft"] || G.keys["a"] || G.keys["arrowright"] || G.keys["d"];
         if (G.auto && !manualInput) {
-          // top up HP before charging in
-          if (G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion();
+          // top up HP/MP before charging in (⚙️ togglable in auto settings)
+          if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion();
+          if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && (G.mpPotions || 0) > 0) G.useManaPotion();
           G.huntT = (G.huntT || 0) + dt;
           if (G.huntT > 0.35) { // re-aim often since things move & wander
             G.huntT = 0;
-            const avoidBoss = G.player.hp < effMaxHp() * 0.6; // too risky when hurt
+            const avoidBoss = G.autoNoBoss || G.player.hp < effMaxHp() * 0.6; // ⚙️ setting or too risky when hurt
             let target = null;
 
-            // 1) ☄️ grab landed meteor crystals nearby (free loot!)
-            let mBest = null, mbd = Infinity;
-            meteors.forEach((mt) => {
-              if (!mt.userData.landed) return;
-              const d = Math.hypot(mt.position.x - char.position.x, mt.position.z - char.position.z);
-              if (d < mbd) { mbd = d; mBest = mt; }
-            });
-            if (mBest) target = { x: mBest.position.x, z: mBest.position.z };
+            if (!G.autoNoEvent) { // ⚙️ setting: skip events entirely
+              // 1) ☄️ grab landed meteor crystals nearby (free loot!)
+              let mBest = null, mbd = Infinity;
+              meteors.forEach((mt) => {
+                if (!mt.userData.landed) return;
+                const d = Math.hypot(mt.position.x - char.position.x, mt.position.z - char.position.z);
+                if (d < mbd) { mbd = d; mBest = mt; }
+              });
+              if (mBest) target = { x: mBest.position.x, z: mBest.position.z };
 
-            // 2) 🌟 chase the golden monster (short-lived jackpot) — top priority
-            const golden = wilds.find((m) => m.userData.golden && m.userData.shy <= 0);
-            if (golden) target = { x: golden.position.x, z: golden.position.z };
+              // 2) 🌟 chase the golden monster (short-lived jackpot) — top priority
+              const golden = wilds.find((m) => m.userData.golden && m.userData.shy <= 0);
+              if (golden) target = { x: golden.position.x, z: golden.position.z };
+            }
 
             // 3) otherwise hunt the NEAREST monster — pure distance, no cleverness
             let targetMesh = null;
@@ -18656,7 +18679,8 @@ export default function CherryAdventure() {
               let best = null, bestD = Infinity;
               wilds.forEach((m) => {
                 if (m.userData.shy > 0) return;
-                if (avoidBoss && m.userData.boss) return; // too risky while hurt
+                if (avoidBoss && m.userData.boss) return; // 🚫👹 skip bosses (setting or too risky while hurt)
+                if (G.autoNoEvent && m.userData.golden) return; // 🚫✨ skip event golden monster
                 const d = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
                 if (d < bestD) { bestD = d; best = m; }
               });
@@ -18943,6 +18967,7 @@ export default function CherryAdventure() {
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
+          if (G.auto && G.autoNoBoss && m.userData.boss) continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
           const dd = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
           if (dd < 0.95 && (!G.actionMode || isArenaFoe(m))) { startBattle(m); break; }
         }
@@ -25431,7 +25456,36 @@ export default function CherryAdventure() {
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
             </div>
             <button onClick={() => G.toggleAuto()} style={{ padding: "6px 13px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: ui.auto ? "#fff" : "#59a0e8", background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff", boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>🤖 {ui.auto ? "ON" : "OFF"}</button>
+            <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen }))} title="ตั้งค่าออโต้" style={{ position: "relative", width: 34, height: 30, borderRadius: 999, border: "none", cursor: "pointer", fontSize: 15, fontFamily: font, color: "#59a0e8", background: ui.autoCfgOpen ? "#e8f1ff" : "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.24)" }}>⚙️</button>
           </div>
+          {/* ⚙️ auto-battle settings popup */}
+          {ui.autoCfgOpen && (
+            <div style={{ position: "absolute", bottom: 62, right: 0, width: "min(88vw, 300px)", background: "rgba(255,255,255,0.97)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 14, padding: "10px 12px", boxShadow: "0 8px 24px rgba(60,80,120,0.35)", pointerEvents: "auto", fontFamily: font }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: "#4a6a9a" }}>⚙️ ตั้งค่าต่อสู้ออโต้</span>
+                <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: false }))} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 15, color: "#9aa" }}>✕</button>
+              </div>
+              {[
+                { key: "autoNoBoss", label: "🚫👹 ไม่ตีบอส", desc: "ออโต้จะเลี่ยงบอส ไม่เข้าอารีน่า" },
+                { key: "autoNoEvent", label: "🚫✨ ไม่เก็บ event", desc: "ไม่ไล่มอนทอง/ไม่เก็บคริสตัลดาวตก" },
+                { key: "autoHpPot", label: "🧪 เติมเลือดออโต้", desc: "ดื่มน้ำยาเลือดเมื่อเลือดต่ำ" },
+                { key: "autoMpPot", label: "💧 เติมมานาออโต้", desc: "ดื่มน้ำยามานาเมื่อมานาต่ำ" },
+              ].map((o) => {
+                const on = !!ui[o.key];
+                return (
+                  <button key={o.key} onClick={() => G.setAutoCfg(o.key, !on)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "7px 9px", marginBottom: 5, borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, textAlign: "left", background: on ? "#e6f2ff" : "#f4f4ef" }}>
+                    <span style={{ width: 40, height: 22, borderRadius: 999, background: on ? "#59a0e8" : "#cfcfc6", position: "relative", flexShrink: 0, transition: "background 0.15s" }}>
+                      <span style={{ position: "absolute", top: 2, left: on ? 20 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.3)", transition: "left 0.15s" }} />
+                    </span>
+                    <span style={{ minWidth: 0, flex: 1 }}>
+                      <span style={{ display: "block", fontSize: 12, fontWeight: 800, color: on ? "#2f6ab0" : "#6a6a5a" }}>{o.label}</span>
+                      <span style={{ display: "block", fontSize: 9.5, color: "#9a9a8a" }}>{o.desc}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
