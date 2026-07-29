@@ -271,6 +271,7 @@
 
   <section id="mine"></section>
 
+  <div id="dash">
   <section class="kpis" id="kpis"></section>
 
   <div class="grid2">
@@ -316,6 +317,7 @@
     <h2>🏆 ตารางอันดับผู้เล่น</h2>
     <p class="csub">25 อันดับแรก จัดเรียงตามค่าพลังรวม (ATK×4 + DEF×3 + HP×0.05 + CRIT×8) · 🟢 = ออนไลน์ตอนนี้</p>
     <div id="leaderboard"></div>
+  </div>
   </div>
 
   <footer>
@@ -646,6 +648,13 @@
       el.innerHTML = '<button class="authbtn" id="loginBtn">🔑 เข้าสู่ระบบ</button>';
       document.getElementById("loginBtn").addEventListener("click", openModal);
     }
+    // 🔒 logged in → show only the player's own character data; hide the aggregate dashboard + its feed controls
+    var on = !!(session && session.email);
+    var dash = document.getElementById("dash"); if (dash) dash.style.display = on ? "none" : "";
+    var chip = document.getElementById("statusChip"); if (chip) chip.style.display = on ? "none" : "";
+    var iv = document.getElementById("intervalSel"); if (iv) iv.style.display = on ? "none" : "";
+    var sub = document.querySelector(".titles p");
+    if (sub) sub.textContent = on ? "ข้อมูลตัวละครของคุณ" : "สถิติผู้เล่นออนไลน์ · เลือกช่วงเวลารีเฟรชอัตโนมัติได้เอง";
   }
   function openModal() { document.getElementById("lgErr").textContent = ""; document.getElementById("loginModal").classList.add("open"); setTimeout(function(){ document.getElementById("lgEmail").focus(); }, 50); }
   function closeModal() { document.getElementById("loginModal").classList.remove("open"); }
