@@ -7218,48 +7218,61 @@ export default function CherryAdventure() {
       g.userData.crownStar = crownStar;
       outfitModels.oS = g;
     }
-    { // oD 🐉 dragon scale armor
+    { // oD 🐉 dragon scale armor — dark-green + black scale, gold trim, emerald glow
       const g = new THREE.Group();
       const scaleMat = new THREE.MeshStandardMaterial({
-        color: 0x6a2018, metalness: 0.65, roughness: 0.3,
-        emissive: 0x2a0a05, emissiveIntensity: 0.7, side: THREE.DoubleSide,
+        color: 0x14201a, metalness: 0.7, roughness: 0.32,
+        emissive: 0x081410, emissiveIntensity: 0.45, side: THREE.DoubleSide,
       });
+      const scaleGreen = new THREE.MeshStandardMaterial({
+        color: 0x1e3a24, metalness: 0.6, roughness: 0.36,
+        emissive: 0x0a2416, emissiveIntensity: 0.4, side: THREE.DoubleSide,
+      });
+      const emeraldMat = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.3 });
       const chest = new THREE.Mesh(
         new THREE.CylinderGeometry(0.47, 0.55, 0.66, 20, 1, true, -Math.PI * 0.38, Math.PI * 0.76),
         scaleMat
       );
       chest.position.y = 1.62;
       g.add(chest);
-      // scale rows
+      // overlapping dark-green scale rows
       for (let row = 0; row < 3; row++) {
         for (let c2 = -1; c2 <= 1; c2++) {
-          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 4), scaleMat);
+          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 4), scaleGreen);
           sc.position.set(c2 * 0.22, 1.42 + row * 0.2, 0.5);
           sc.rotation.x = Math.PI;
           g.add(sc);
         }
       }
+      // 🐉 polish: gold trim + spiked gold pauldrons + swept spine ridge
+      const scaleGold = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
       for (const sx of [-0.62, 0.62]) {
         const pad = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.3, 6), scaleMat);
         pad.position.set(sx, 2.12, 0);
         pad.rotation.z = sx > 0 ? -0.5 : 0.5;
         g.add(pad);
+        // gold pauldron spike
+        const pspk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.24, 6), scaleGold);
+        pspk.position.set(sx * 1.02, 2.28, 0); pspk.rotation.z = sx > 0 ? -0.5 : 0.5; g.add(pspk);
       }
-      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.3 }));
+      // emerald glowing core gem inside a gold ring
+      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.02, 8, 20), scaleGold); coreRing.position.set(0, 1.72, 0.5); g.add(coreRing);
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), emeraldMat);
       core.position.set(0, 1.72, 0.52);
       g.add(core);
-      // 🐉 polish: extra front scale rows + gold trim belt + swept back spine ridge
-      const scaleGold = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.8, roughness: 0.3, emissive: 0x5a3808, emissiveIntensity: 0.35 });
+      // extra front dark-green scale rows
       for (let row = 0; row < 2; row++) {
         for (let c2 = -1; c2 <= 1; c2++) {
-          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.12, 4), scaleMat);
+          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.12, 4), scaleGreen);
           sc.position.set(c2 * 0.13, 1.5 + row * 0.2, 0.55); sc.rotation.x = Math.PI; g.add(sc);
         }
       }
+      // gold filigree belt + emerald belt gem
       const belt = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.045, 8, 24, Math.PI * 1.3), scaleGold);
       belt.position.set(0, 1.36, 0.02); belt.rotation.set(Math.PI / 2, 0, -Math.PI * 0.65); g.add(belt);
-      const beltGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0xff8a3a, emissive: 0xd0500a, emissiveIntensity: 1.2 }));
+      const beltGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.2 }));
       beltGem.position.set(0, 1.36, 0.5); g.add(beltGem);
+      // swept gold spine ridge
       for (let i = 0; i < 4; i++) { const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16 - i * 0.02, 4), scaleGold); spike.position.set(0, 2.0 - i * 0.16, -0.42 - i * 0.03); spike.rotation.x = -0.5; g.add(spike); }
       outfitModels.oD = g;
     }
@@ -7268,21 +7281,22 @@ export default function CherryAdventure() {
       const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.5, roughness: 0.35, emissive: 0x6a5824, emissiveIntensity: 0.35, side: THREE.DoubleSide });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.25, emissive: 0x7a5810, emissiveIntensity: 0.45, side: THREE.DoubleSide });
       const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.15 });
+      const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.35, roughness: 0.14, metalness: 0.2 });
       const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.75, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
       // pearl breastplate
       const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.66, 24, 1, true, -Math.PI * 0.4, Math.PI * 0.8), plateMat);
       chest.position.y = 1.62; g.add(chest);
       // gold layered abdominal bands
       for (let k = 0; k < 3; k++) { const ab = new THREE.Mesh(new THREE.TorusGeometry(0.4 - k * 0.03, 0.03, 6, 20, Math.PI * 1.1), goldMat); ab.position.set(0, 1.42 - k * 0.11, 0.06); ab.rotation.set(Math.PI / 2, 0, -Math.PI * 0.55); g.add(ab); }
-      // gold pauldrons with light gems
+      // gold pauldrons with red gems
       for (const sx of [-0.62, 0.62]) {
         const pad = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 14), goldMat); pad.scale.set(1, 0.65, 1); pad.position.set(sx, 2.1, 0); g.add(pad);
-        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), lightMat); gem.position.set(sx, 2.16, 0.08); g.add(gem);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), redGem); gem.position.set(sx, 2.16, 0.08); g.add(gem);
       }
-      // radiant sun-halo core on the chest
+      // radiant gold sun-halo around a red sternum gem
       const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 24), goldMat); coreRing.position.set(0, 1.78, 0.5); g.add(coreRing);
       for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.07, 4), goldMat); ray.position.set(Math.cos(a) * 0.17, 1.78 + Math.sin(a) * 0.17, 0.5); ray.rotation.z = -a - Math.PI / 2; g.add(ray); }
-      const core = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), lightMat); core.position.set(0, 1.78, 0.5); g.add(core);
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), redGem); core.position.set(0, 1.78, 0.52); core.scale.set(1, 1.3, 0.7); g.add(core);
       g.userData.crownStar = core;
       // 🕊️ big radiant feather wings fanning out to the sides (clear of the big chibi head)
       for (const sx of [-1, 1]) {
@@ -8295,11 +8309,13 @@ export default function CherryAdventure() {
       g.add(star);
       hatModels.hS = g;
     }
-    { // hD 🐉 dragon-head helm — snout, glowing eyes, fangs, swept horns
+    { // hD 🐉 dragon-horn helm — dark scaled dome, gold brow trim, curved green+gold horns, faint green glow
       const g = new THREE.Group();
-      const scaleM = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.55, roughness: 0.35, emissive: 0x3a0a05, emissiveIntensity: 0.6 });
-      const boneM = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
-      // skull cap over the head
+      const scaleM = new THREE.MeshStandardMaterial({ color: 0x14201a, metalness: 0.62, roughness: 0.34, emissive: 0x081410, emissiveIntensity: 0.5 });
+      const goldM = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
+      const hornM = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.5, roughness: 0.4, emissive: 0x0a2416, emissiveIntensity: 0.45 });
+      const glowM = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.5 });
+      // scaled dome over the head
       const cap = new THREE.Mesh(new THREE.SphereGeometry(0.66, 22, 22, 0, Math.PI * 2, 0, Math.PI * 0.5), scaleM);
       cap.position.y = 0.16;
       g.add(cap);
@@ -8312,38 +8328,44 @@ export default function CherryAdventure() {
       const upperJaw = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.36), scaleM);
       upperJaw.position.set(0, 0.34, 0.5);
       g.add(upperJaw);
+      // gold brow trim band across the front of the dome
+      const browBand = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.03, 8, 24, Math.PI), goldM);
+      browBand.position.set(0, 0.42, 0.06); browBand.rotation.set(Math.PI / 2, 0, 0); g.add(browBand);
       // fangs
       for (const sx of [-1, 1]) {
-        const fang = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 6), boneM);
+        const fang = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 6), goldM);
         fang.rotation.x = Math.PI;
         fang.position.set(0.1 * sx, 0.27, 0.62);
         g.add(fang);
       }
-      // glowing eyes
+      // faint green glowing eyes + gold brow crest
       for (const sx of [-1, 1]) {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xe0a020, emissiveIntensity: 1.5 }));
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), glowM);
         eye.position.set(0.18 * sx, 0.5, 0.42);
         g.add(eye);
-        const brow = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.14, 5), scaleM);
+        const brow = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.14, 5), goldM);
         brow.position.set(0.18 * sx, 0.6, 0.36);
         brow.rotation.x = -0.5;
         g.add(brow);
       }
-      // swept-back horns
+      // large curved green dragon horns sweeping back, gold-ringed base + gold tips
       for (const sx of [-0.4, 0.4]) {
-        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.6, 8), boneM);
-        horn.position.set(sx, 0.62, -0.12);
+        const hornBase = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 16), goldM);
+        hornBase.position.set(sx, 0.58, -0.08); hornBase.rotation.x = Math.PI / 2; g.add(hornBase);
+        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.72, 8), hornM);
+        horn.position.set(sx, 0.66, -0.16);
         horn.rotation.z = sx > 0 ? -0.6 : 0.6;
-        horn.rotation.x = -0.5;
+        horn.rotation.x = -0.55;
         g.add(horn);
-        const horn2 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.3, 6), boneM);
-        horn2.position.set(sx * 1.6, 0.5, -0.2);
-        horn2.rotation.z = sx > 0 ? -0.9 : 0.9;
+        const horn2 = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.34, 6), goldM);
+        horn2.position.set(sx * 1.7, 0.52, -0.32);
+        horn2.rotation.z = sx > 0 ? -0.95 : 0.95;
+        horn2.rotation.x = -0.7;
         g.add(horn2);
       }
-      // spine ridge
+      // gold spine ridge
       for (let i = 0; i < 4; i++) {
-        const ridge = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 4), boneM);
+        const ridge = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 4), goldM);
         ridge.position.set(0, 0.7 - i * 0.14, -0.3 - i * 0.12);
         ridge.rotation.x = -0.4;
         g.add(ridge);
@@ -8355,13 +8377,14 @@ export default function CherryAdventure() {
       const goldM = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, emissive: 0x7a5810, emissiveIntensity: 0.5, metalness: 0.85, roughness: 0.22 });
       const goldBright = new THREE.MeshStandardMaterial({ color: 0xffe89a, emissive: 0xb08420, emissiveIntensity: 0.6, metalness: 0.8, roughness: 0.25 });
       const lightM = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.6, roughness: 0.15 });
+      const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.4, roughness: 0.14, metalness: 0.2 });
       // base band hugging the head
       const band = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 10, 26), goldM);
       band.rotation.x = Math.PI / 2; band.position.y = 0.5; g.add(band);
-      // front tall central spire + gem
+      // front tall central spire + red gem
       const spire = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.34, 6), goldBright);
       spire.position.set(0, 0.82, 0.36); g.add(spire);
-      const spireGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), lightM); spireGem.position.set(0, 0.66, 0.44); g.add(spireGem);
+      const spireGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), redGem); spireGem.position.set(0, 0.66, 0.44); spireGem.scale.set(1, 1.3, 0.7); g.add(spireGem);
       // side spikes (decreasing outward) with gems
       for (const sx of [-1, 1]) {
         for (let k = 0; k < 3; k++) {
@@ -8379,12 +8402,12 @@ export default function CherryAdventure() {
       halo.rotation.x = Math.PI / 2 - 0.35; halo.position.y = 1.12; g.add(halo);
       const halo2 = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.008, 6, 30), goldBright);
       halo2.rotation.x = Math.PI / 2 - 0.35; halo2.position.y = 1.12; g.add(halo2);
-      // little feather wings on the sides of the crown
-      const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.7, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
-      for (const sx of [-1, 1]) for (let f = 0; f < 3; f++) {
-        const feather = new THREE.Mesh(new THREE.ConeGeometry(0.05 - f * 0.008, 0.28 - f * 0.05, 4), wingMat);
-        feather.position.set(sx * (0.44 + f * 0.09), 0.6 + f * 0.06, -0.05);
-        feather.rotation.z = sx > 0 ? -1.3 - f * 0.18 : 1.3 + f * 0.18; feather.scale.set(1, 1, 0.3); g.add(feather);
+      // upward gold wing-crest fanning off the sides of the crown
+      const wingMat = new THREE.MeshStandardMaterial({ color: 0xffe89a, emissive: 0xc09420, emissiveIntensity: 0.7, metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide });
+      for (const sx of [-1, 1]) for (let f = 0; f < 4; f++) {
+        const feather = new THREE.Mesh(new THREE.ConeGeometry(0.055 - f * 0.008, 0.34 - f * 0.05, 4), wingMat);
+        feather.position.set(sx * (0.28 + f * 0.11), 0.72 + f * 0.08, -0.02);
+        feather.rotation.z = sx > 0 ? -0.55 - f * 0.24 : 0.55 + f * 0.24; feather.scale.set(1, 1, 0.32); g.add(feather);
       }
       g.userData.crownStar = spireGem;
       hatModels.lg_hat = g;
@@ -8422,25 +8445,43 @@ export default function CherryAdventure() {
       g.add(plate, ear, mark);
       maskModels.m2 = g;
     }
-    { // mD 🐉 dragon oni half-mask
+    { // mD 🐉 dragon scale mask — lower-face scaled muzzle, gold edge, green glow slits
       const g = new THREE.Group();
-      const dm = new THREE.MeshStandardMaterial({ color: 0x8a2018, roughness: 0.45, emissive: 0x300a05, emissiveIntensity: 0.6 });
-      const plate = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 14), dm);
-      plate.scale.set(1, 1.2, 0.42);
-      plate.position.set(-0.45, 0.36, 0.32);
-      plate.rotation.y = -0.5;
-      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.24, 6), new THREE.MeshStandardMaterial({ color: 0xe8d8b0 }));
-      horn.position.set(-0.55, 0.7, 0.26);
-      horn.rotation.z = 0.3;
-      const eyeGlow = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xd08a20, emissiveIntensity: 1.3 }));
-      eyeGlow.position.set(-0.48, 0.38, 0.47);
-      g.add(plate, horn, eyeGlow);
+      const dm = new THREE.MeshStandardMaterial({ color: 0x14201a, metalness: 0.6, roughness: 0.36, emissive: 0x081410, emissiveIntensity: 0.5, side: THREE.DoubleSide });
+      const scaleGreen = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.5, roughness: 0.4, emissive: 0x0a2416, emissiveIntensity: 0.4 });
+      const goldM = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
+      const glowM = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.4 });
+      // curved scaled plate across the lower face (nose + mouth) — sits proud on the front face surface
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.48, 0.44, 24, 1, true, -0.66, 1.32), dm);
+      plate.position.set(0, -0.08, 0.06); g.add(plate);
+      // gold top edge trim across the bridge of the mask
+      const topRim = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.025, 8, 24, 1.32), goldM);
+      topRim.position.set(0, 0.12, 0.06); topRim.rotation.set(Math.PI / 2, 0, -0.66); g.add(topRim);
+      // overlapping green scale rows down the muzzle (protruding forward)
+      for (let row = 0; row < 3; row++) {
+        for (const c2 of [-1, 0, 1]) {
+          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.11, 4), scaleGreen);
+          sc.position.set(c2 * 0.15, 0.02 - row * 0.12, 0.62 - row * 0.05); sc.rotation.x = Math.PI; g.add(sc);
+        }
+      }
+      // gold fangs at the lower edge
+      for (const sx of [-1, 1]) {
+        const fang = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.13, 6), goldM);
+        fang.position.set(0.12 * sx, -0.3, 0.54); fang.rotation.x = Math.PI; g.add(fang);
+      }
+      // green glowing nostril/vent slits
+      for (const sx of [-1, 1]) {
+        const slit = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.025, 0.04), glowM);
+        slit.position.set(0.1 * sx, 0.06, 0.66); slit.rotation.z = sx > 0 ? -0.3 : 0.3; g.add(slit);
+      }
       maskModels.mD = g;
     }
-    { // ⭐ lg_msk — radiant sun visor: gold half-visor across the eyes + sunburst brow crest
+    { // ⭐ lg_msk — divine sun crest: ornate gold brow visor + red brow gem + sunburst rays + pearl accents
       const g = new THREE.Group();
       const goldM = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x6a4a10, emissiveIntensity: 0.45 });
       const lightM = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.16 });
+      const pearlM = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.4, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.25 });
+      const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.4, roughness: 0.14, metalness: 0.2 });
       const visorMat = new THREE.MeshStandardMaterial({ color: 0xffe89a, emissive: 0xffcf60, emissiveIntensity: 0.9, transparent: true, opacity: 0.6, roughness: 0.15, metalness: 0.3 });
       // slim visor band across the eyes, curved to the face front
       const visor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.13, 24, 1, true, -0.62, 1.24), visorMat);
@@ -8449,8 +8490,10 @@ export default function CherryAdventure() {
       visorRim.position.set(0, 0.36, 0.02); visorRim.rotation.set(Math.PI / 2, 0, -0.62); g.add(visorRim);
       // glowing eye slits
       for (const sx of [-1, 1]) { const slit = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.03, 0.02), lightM); slit.position.set(0.16 * sx, 0.42, 0.49); slit.rotation.z = sx > 0 ? -0.15 : 0.15; g.add(slit); }
-      // sunburst crest on the forehead
-      const crestGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), lightM); crestGem.position.set(0, 0.62, 0.44); g.add(crestGem);
+      // pearl accents flanking the visor
+      for (const sx of [-1, 1]) { const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 10), pearlM); pearl.position.set(0.34 * sx, 0.46, 0.4); g.add(pearl); }
+      // red brow gem + gold sunburst crest on the forehead
+      const crestGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.065), redGem); crestGem.position.set(0, 0.62, 0.44); crestGem.scale.set(1, 1.25, 0.7); g.add(crestGem);
       for (let i = 0; i < 7; i++) { const a = (i / 6) * Math.PI - Math.PI; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.11, 4), goldM); ray.position.set(Math.cos(a) * 0.13, 0.62 + Math.sin(a) * 0.11 + 0.03, 0.42); ray.rotation.z = a + Math.PI / 2; g.add(ray); }
       // cheek fangs of gold (small)
       for (const sx of [-1, 1]) { const stud = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 5), goldM); stud.position.set(0.3 * sx, 0.28, 0.4); stud.rotation.x = Math.PI; g.add(stud); }
@@ -8462,10 +8505,10 @@ export default function CherryAdventure() {
     const gloveFluffMat = new THREE.MeshStandardMaterial({ color: 0xf6b8c8, roughness: 0.95 });
     const gloveBoxMat = new THREE.MeshStandardMaterial({ color: 0xd9333f, roughness: 0.5 });
     const gloveStormMat = new THREE.MeshStandardMaterial({ color: 0xb8e8c0, roughness: 0.4, emissive: 0x3a7a4a, emissiveIntensity: 0.6 });
-    const gloveDragonMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.6, roughness: 0.35, emissive: 0x5a1508, emissiveIntensity: 0.8 });
+    const gloveDragonMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.6, roughness: 0.35, emissive: 0x0a2416, emissiveIntensity: 0.7 });
     const shoePinkMat = new THREE.MeshStandardMaterial({ color: 0xf28ba8, roughness: 0.5 });
     const shoeBoltMat = new THREE.MeshStandardMaterial({ color: 0x3a3f4a, roughness: 0.3, emissive: 0x2a5a8a, emissiveIntensity: 0.5 });
-    const shoeDragonMat = new THREE.MeshStandardMaterial({ color: 0x5a1f1a, metalness: 0.55, roughness: 0.3, emissive: 0x7a2008, emissiveIntensity: 0.7 });
+    const shoeDragonMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.55, roughness: 0.3, emissive: 0x0a2416, emissiveIntensity: 0.7 });
     const gloveLegendMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.8, roughness: 0.26, emissive: 0x7a5810, emissiveIntensity: 0.5 }); // ⭐ celestial gold gauntlet skin
     const shoeLegendMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.7, roughness: 0.28, emissive: 0x7a5810, emissiveIntensity: 0.5 });
     let basePantsColor = 0xf7f5f0; // starting-outfit pants color (customizable)
@@ -8480,66 +8523,69 @@ export default function CherryAdventure() {
     const mkLimbPair = (dict, id, anchors, buildFn) => {
       dict[id] = anchors.map((a) => { const grp = new THREE.Group(); buildFn(grp); grp.visible = false; a.add(grp); return grp; });
     };
-    // 🐉 gD — dragon claw gauntlet (forearm plate + bone claws over the fist)
+    // 🐉 gD — dragon claw gauntlet (dark-green scaled forearm + gold claws + green knuckle glow)
     mkLimbPair(glovesModels, "gD", _armEls, (grp) => {
-      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.6, roughness: 0.34, emissive: 0x3a0a05, emissiveIntensity: 0.6 });
-      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
-      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.1 });
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.6, roughness: 0.34, emissive: 0x0a2416, emissiveIntensity: 0.5 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
+      const glowMat = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.2 });
       const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.094, 0.076, 0.28, 12), scaleMat); gaunt.position.y = -0.3; grp.add(gaunt);
-      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 16), boneMat); cuff.position.y = -0.17; cuff.rotation.x = Math.PI / 2; grp.add(cuff);
-      const vein = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.01), emberMat); vein.position.set(0, -0.3, 0.09); grp.add(vein);
+      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 16), goldMat); cuff.position.y = -0.17; cuff.rotation.x = Math.PI / 2; grp.add(cuff);
+      const vein = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.01), glowMat); vein.position.set(0, -0.3, 0.09); grp.add(vein);
       const knuckle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.13), scaleMat); knuckle.position.set(0, -0.55, 0.06); grp.add(knuckle);
-      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.16, 5), boneMat); claw.position.set(kx * 0.07, -0.63, 0.12); claw.rotation.x = 2.4; grp.add(claw); }
-      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 4), scaleMat); spike.position.set(0, -0.28, -0.1); spike.rotation.x = -1.9; grp.add(spike);
+      const knuckleGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035), glowMat); knuckleGem.position.set(0, -0.55, 0.13); grp.add(knuckleGem);
+      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.16, 5), goldMat); claw.position.set(kx * 0.07, -0.63, 0.12); claw.rotation.x = 2.4; grp.add(claw); }
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 4), goldMat); spike.position.set(0, -0.28, -0.1); spike.rotation.x = -1.9; grp.add(spike);
     });
-    // ⭐ lg_glv — divine gauntlet (pearl+gold plate, light gem, radiant claws)
+    // ⭐ lg_glv — divine gauntlet (pearl+gold plate, red knuckle gem, radiant claws)
     mkLimbPair(glovesModels, "lg_glv", _armEls, (grp) => {
       const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.55, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.3 });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
       const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
+      const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.3, roughness: 0.14, metalness: 0.2 });
       const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.096, 0.078, 0.3, 12), plateMat); gaunt.position.y = -0.3; grp.add(gaunt);
       const cuffTop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.096, 0.08, 12), goldMat); cuffTop.position.y = -0.17; grp.add(cuffTop);
       const trim = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 16), goldMat); trim.position.y = -0.42; trim.rotation.x = Math.PI / 2; grp.add(trim);
-      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.04), lightMat); gem.position.set(0, -0.3, 0.095); grp.add(gem);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045), redGem); gem.position.set(0, -0.55, 0.11); grp.add(gem);
       const plate = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.1, 0.04), goldMat); plate.position.set(0, -0.55, 0.07); grp.add(plate);
       for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.11, 5), lightMat); claw.position.set(kx * 0.06, -0.63, 0.12); claw.rotation.x = 2.4; grp.add(claw); }
     });
-    // 🐉 pD — dragon-scale greaves (thigh plate + knee guard + scaled shin)
+    // 🐉 pD — dragon-scale greaves (dark-green scaled leg + gold knee guard + green knee gem)
     mkLimbPair(pantsModels, "pD", _kneeEls, (grp) => {
-      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x5a1f1a, metalness: 0.55, roughness: 0.32, emissive: 0x5a1508, emissiveIntensity: 0.6 });
-      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
-      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.0 });
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.55, roughness: 0.32, emissive: 0x0a2416, emissiveIntensity: 0.5 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
+      const glowMat = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.1 });
       const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.15, 0.34, 16), scaleMat); thigh.position.set(0, 0.2, 0); grp.add(thigh);
-      const kg = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), scaleMat); kg.scale.set(1, 0.8, 1); kg.position.y = -0.02; grp.add(kg);
-      const kSpike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 5), boneMat); kSpike.position.set(0, -0.02, 0.14); kSpike.rotation.x = 1.4; grp.add(kSpike);
+      const kg = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), goldMat); kg.scale.set(1, 0.8, 1); kg.position.y = -0.02; grp.add(kg);
+      const kGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), glowMat); kGem.position.set(0, -0.02, 0.14); grp.add(kGem);
       const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.42, 16), scaleMat); shin.position.set(0, -0.24, 0); grp.add(shin);
       for (let r = 0; r < 3; r++) { const sc = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.09, 4), scaleMat); sc.position.set(0, -0.12 - r * 0.11, 0.13); sc.rotation.x = 1.2; grp.add(sc); }
-      const vein = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 16), emberMat); vein.position.y = -0.06; vein.rotation.x = Math.PI / 2; grp.add(vein);
+      const vein = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 16), goldMat); vein.position.y = -0.06; vein.rotation.x = Math.PI / 2; grp.add(vein);
     });
-    // ⭐ lg_pnt — divine greaves (pearl+gold plate, light knee gem, gold trim)
+    // ⭐ lg_pnt — divine greaves (pearl+gold plate, red knee gem, gold trim)
     mkLimbPair(pantsModels, "lg_pnt", _kneeEls, (grp) => {
       const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.5, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.3 });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
       const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
+      const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.3, roughness: 0.14, metalness: 0.2 });
       const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.15, 0.34, 16), plateMat); thigh.position.set(0, 0.2, 0); grp.add(thigh);
       const thighTrim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.014, 6, 18), goldMat); thighTrim.position.y = 0.36; thighTrim.rotation.x = Math.PI / 2; grp.add(thighTrim);
       const kg = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), goldMat); kg.scale.set(1, 0.8, 1); kg.position.y = -0.02; grp.add(kg);
-      const kGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), lightMat); kGem.position.set(0, -0.02, 0.13); grp.add(kGem);
+      const kGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), redGem); kGem.position.set(0, -0.02, 0.13); grp.add(kGem);
       const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.42, 16), plateMat); shin.position.set(0, -0.24, 0); grp.add(shin);
       for (const sy of [-0.12, -0.3]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.132, 0.012, 6, 18), goldMat); band.position.y = sy; band.rotation.x = Math.PI / 2; grp.add(band); }
       const vein = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.34, 0.01), lightMat); vein.position.set(0, -0.24, 0.12); grp.add(vein);
     });
-    // 🐉 sD — dragon boots (ankle cuff + claw toes + ember sole, wrapping the shoe)
+    // 🐉 sD — dragon boots (dark-green scaled boot + gold clawed toe + green glow sole)
     mkLimbPair(shoeModels3D, "sD", _kneeEls, (grp) => {
-      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x5a1f1a, metalness: 0.55, roughness: 0.3, emissive: 0x7a2008, emissiveIntensity: 0.6 });
-      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
-      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.1 });
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.55, roughness: 0.3, emissive: 0x0a2416, emissiveIntensity: 0.5 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
+      const glowMat = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.2 });
       const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.16, 12), scaleMat); cuff.position.set(0, -0.34, 0.02); grp.add(cuff);
-      const cuffRim = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 8, 16), boneMat); cuffRim.position.set(0, -0.27, 0.02); cuffRim.rotation.x = Math.PI / 2; grp.add(cuffRim);
-      const toe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), scaleMat); toe.scale.set(1, 0.7, 1.15); toe.position.set(0, -0.5, 0.22); grp.add(toe);
-      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.13, 5), boneMat); claw.position.set(kx * 0.055, -0.52, 0.34); claw.rotation.x = 1.75; grp.add(claw); }
-      const heel = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 5), boneMat); heel.position.set(0, -0.44, -0.18); heel.rotation.x = -2.1; grp.add(heel);
-      const sole = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.42), emberMat); sole.position.set(0, -0.6, 0.08); grp.add(sole);
+      const cuffRim = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 8, 16), goldMat); cuffRim.position.set(0, -0.27, 0.02); cuffRim.rotation.x = Math.PI / 2; grp.add(cuffRim);
+      const toe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), goldMat); toe.scale.set(1, 0.7, 1.15); toe.position.set(0, -0.5, 0.22); grp.add(toe);
+      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.13, 5), goldMat); claw.position.set(kx * 0.055, -0.52, 0.34); claw.rotation.x = 1.75; grp.add(claw); }
+      const heel = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 5), goldMat); heel.position.set(0, -0.44, -0.18); heel.rotation.x = -2.1; grp.add(heel);
+      const sole = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.42), glowMat); sole.position.set(0, -0.6, 0.08); grp.add(sole);
     });
     // ⭐ lg_sho — heaven-soaring boots (gold boot + light sole + winged ankles)
     mkLimbPair(shoeModels3D, "lg_sho", _kneeEls, (grp) => {
@@ -8547,11 +8593,12 @@ export default function CherryAdventure() {
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
       const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
       const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.8, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
+      const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.3, roughness: 0.14, metalness: 0.2 });
       const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.16, 12), plateMat); cuff.position.set(0, -0.34, 0.02); grp.add(cuff);
       const cuffRim = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.016, 8, 16), goldMat); cuffRim.position.set(0, -0.27, 0.02); cuffRim.rotation.x = Math.PI / 2; grp.add(cuffRim);
       const toe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), goldMat); toe.scale.set(1, 0.7, 1.15); toe.position.set(0, -0.5, 0.22); grp.add(toe);
       const sole = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.42), lightMat); sole.position.set(0, -0.6, 0.08); grp.add(sole);
-      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035), lightMat); gem.position.set(0, -0.34, 0.14); grp.add(gem);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035), redGem); gem.position.set(0, -0.34, 0.14); grp.add(gem);
       // 🕊️ ankle wings
       for (const sx of [-1, 1]) for (let f = 0; f < 3; f++) {
         const feather = new THREE.Mesh(new THREE.ConeGeometry(0.04 - f * 0.006, 0.24 - f * 0.05, 4), wingMat);
@@ -8672,7 +8719,7 @@ export default function CherryAdventure() {
       const pa = look("pants");
       const bareLegs = !!G.heroId && !pa; // 🦵 ขาเรียวสีผิวเดียวกับใบหน้า (ทุกฮีโร่)
       legSkinMeshes.forEach(m => m.material = bareLegs ? skinMat : pantsMat);
-      pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x5a1f1a : pa === "lg_pnt" ? 0xf0cf6a : basePantsColor);
+      pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x1e3a24 : pa === "lg_pnt" ? 0xf0cf6a : basePantsColor);
       pantsMat.metalness = pa === "p2" || pa === "pD" || pa === "lg_pnt" ? 0.55 : 0;
       const sh = look("shoes");
       shoeMeshes.forEach((s) => {
