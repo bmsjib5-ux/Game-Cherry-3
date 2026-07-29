@@ -1328,7 +1328,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
@@ -13356,7 +13356,7 @@ export default function CherryAdventure() {
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
+      costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
     }));
 
     // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
@@ -13366,6 +13366,7 @@ export default function CherryAdventure() {
     G.HP_POT = HP_POT; G.MP_POT = MP_POT;
     G.hpPots = G.hpPots || { s: 0, m: 0, l: 0 };
     G.mpPots = G.mpPots || { s: 0, m: 0, l: 0 };
+    G.hpPotUse = G.hpPotUse || "s"; G.mpPotUse = G.mpPotUse || "s"; // ⚙️ preferred size the HUD quick-use buttons + auto drink
     const potTotal = (o) => (o.s || 0) + (o.m || 0) + (o.l || 0);
     G.hpPotTotal = () => potTotal(G.hpPots);
     G.mpPotTotal = () => potTotal(G.mpPots);
@@ -14446,6 +14447,14 @@ export default function CherryAdventure() {
       syncPotions(); syncPlayer();
     };
     G.sellPotAll = (type, size) => { const inv = type === "hp" ? G.hpPots : G.mpPots; G.sellPot(type, size, (inv && inv[size]) || 0); };
+    // ⚙️ pick which potion size the on-screen quick-use buttons (and auto-drink) consume
+    G.setPotUse = (type, size) => {
+      if (type === "hp") G.hpPotUse = size; else G.mpPotUse = size;
+      const P = (type === "hp" ? HP_POT : MP_POT)[size];
+      if (P) toast(`⚙️ ปุ่ม${type === "hp" ? "🧪เลือด" : "💧มานา"} ใช้ขนาด${P.name}`);
+      setUi((u) => ({ ...u, hpPotUse: G.hpPotUse, mpPotUse: G.mpPotUse }));
+      if (G.saveGame) G.saveGame();
+    };
     // 🔴🟡🔵 buy a catch ball — the ONLY way to get balls (no drops)
     G.BALL_PRICE = 1000;
     G.buyBall = (qty) => {
@@ -16007,8 +16016,8 @@ export default function CherryAdventure() {
       const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
       const hpPct = G.player.hp / effMaxHp();
       // 1) very low HP → drink a potion (⚙️ togglable)
-      if (G.autoHpPot && hpPct < 0.3 && G.potions > 0) { G.usePotion(); return; }
-      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(); return; }
+      if (G.autoHpPot && hpPct < 0.3 && G.potions > 0) { G.usePotion(G.hpPotUse); return; }
+      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(G.mpPotUse); return; }
       // 2) mage with a heal skill and hurt → heal
       if (hpPct < 0.55) {
         const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
@@ -16058,8 +16067,8 @@ export default function CherryAdventure() {
       if (G.mode !== "explore" || G.banim) return;
       const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
       // top up HP/MP with a potion when low (⚙️ togglable)
-      if (G.autoHpPot && G.player.hp < effMaxHp() * 0.35 && G.potions > 0) { G.usePotion(); return; }
-      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(); return; }
+      if (G.autoHpPot && G.player.hp < effMaxHp() * 0.35 && G.potions > 0) { G.usePotion(G.hpPotUse); return; }
+      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(G.mpPotUse); return; }
       // a mage/priest with a heal skill & hurt → heal (cast targets self-safely via the arena FX path)
       if (G.player.hp < effMaxHp() * 0.5) {
         const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
@@ -16269,7 +16278,7 @@ export default function CherryAdventure() {
         window.localStorage.setItem(slotKey(), JSON.stringify({
           v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated,
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
-          potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, gold: G.gold, buddy: G.buddy,
+          potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
@@ -17672,6 +17681,7 @@ export default function CherryAdventure() {
       G.hpPots = d.hpPots ? { s: d.hpPots.s || 0, m: d.hpPots.m || 0, l: d.hpPots.l || 0 } : { s: d.potions == null ? 1 : d.potions, m: 0, l: 0 };
       G.mpPots = d.mpPots ? { s: d.mpPots.s || 0, m: d.mpPots.m || 0, l: d.mpPots.l || 0 } : { s: d.mpPotions == null ? 1 : d.mpPotions, m: 0, l: 0 };
       G.potions = G.hpPotTotal(); G.mpPotions = G.mpPotTotal();
+      G.hpPotUse = d.hpPotUse || "s"; G.mpPotUse = d.mpPotUse || "s"; // ⚙️ preferred quick-use sizes
       G.player.maxMp = effMaxMp();
       if (G.player.mp == null) G.player.mp = G.player.maxMp;
       G.gold = d.gold == null ? 0 : d.gold;
@@ -18750,8 +18760,8 @@ export default function CherryAdventure() {
           G.keys["arrowleft"] || G.keys["a"] || G.keys["arrowright"] || G.keys["d"];
         if (G.auto && !manualInput) {
           // top up HP/MP before charging in (⚙️ togglable in auto settings)
-          if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion();
-          if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && (G.mpPotions || 0) > 0) G.useManaPotion();
+          if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion(G.hpPotUse);
+          if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && (G.mpPotions || 0) > 0) G.useManaPotion(G.mpPotUse);
           G.huntT = (G.huntT || 0) + dt;
           if (G.huntT > 0.35) { // re-aim often since things move & wander
             G.huntT = 0;
@@ -25595,6 +25605,15 @@ export default function CherryAdventure() {
                   </button>
                 );
               })}
+              {/* 🧪💧 which potion size the on-screen buttons + auto use */}
+              {[["hp", "🧪 ยาเลือดที่ใช้", "hpPotUse", G.HP_POT], ["mp", "💧 ยามานาที่ใช้", "mpPotUse", G.MP_POT]].map(([type, label, key, META]) => (
+                <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 9px", marginBottom: 5, borderRadius: 10, background: type === "hp" ? "#eef7ee" : "#eaf2fb" }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 800, color: type === "hp" ? "#4a8a5a" : "#3a70a8", flex: 1 }}>{label}</span>
+                  {["s", "m", "l"].map((sz) => { const on = (ui[key] || "s") === sz; const p = (META || {})[sz] || {}; return (
+                    <button key={sz} onClick={() => G.setPotUse(type, sz)} title={`${p.name} (+${type === "hp" ? p.heal : p.rest})`} style={{ width: 34, height: 28, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: on ? "#fff" : "#7a8a7a", background: on ? (type === "hp" ? "linear-gradient(90deg,#5aa06a,#7ac088)" : "linear-gradient(90deg,#4a90c0,#6ab8e0)") : "#fff", boxShadow: on ? "0 2px 6px rgba(90,140,90,0.35)" : "inset 0 0 0 1px #d8d8cc" }}>{({ s: "S", m: "M", l: "L" })[sz]}</button>
+                  ); })}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -25815,11 +25834,11 @@ export default function CherryAdventure() {
         <button onClick={() => G.toggleSocial()} title="เพื่อน & สู้ผี" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 268, width: 42, height: 42 } : { bottom: 216, width: 48, height: 48 }), borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.usePotion()} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 256, width: 44, height: 44 } : { bottom: 150, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
+        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 256, width: 44, height: 44 } : { bottom: 150, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
       )}
       {/* 💧 mana potion — ใต้ปุ่มเลือด */}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.useManaPotion()} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 304, width: 44, height: 44 } : { bottom: 84, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>💧<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.mpPotions || 0}</span></button>
+        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 304, width: 44, height: 44 } : { bottom: 84, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>💧<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.mpPotions || 0}</span></button>
       )}
       {/* 🐎 ride / dismount — one tap */}
       {ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (
@@ -26456,7 +26475,7 @@ export default function CherryAdventure() {
 
           {/* potion button */}
           <button
-            onClick={() => G.usePotion()}
+            onClick={() => G.usePotion(G.hpPotUse)}
             style={{
               position: "absolute", right: 12, bottom: 82,
               width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
@@ -28641,8 +28660,8 @@ export default function CherryAdventure() {
                   {/* มุมล่างซ้าย: จับ / เลือด / มานา / หนี */}
                   <div style={cornerStyle("left")}>
                     {!(ui.enemy && ui.enemy.worldBoss) && iconBtn(catchBallIcon, "#f5f0e8", () => G.act("catch"), ui.balls, { title: "จับ (ลูกบอล)", badgeBg: "#c05878" })}
-                    {iconBtn("🧪", "#5aa06a", () => G.usePotion(), ui.potions, { title: "น้ำยาเพิ่มเลือด", badgeBg: "#3a8050" })}
-                    {iconBtn("💧", "#4a90c0", () => G.useManaPotion(), ui.mpPotions, { title: "น้ำยาเพิ่มมานา", badgeBg: "#3a70a0" })}
+                    {iconBtn(<span style={{ position: "relative", display: "inline-block" }}>🧪<span style={{ position: "absolute", bottom: -9, left: -13, fontSize: 9, fontWeight: 900, color: "#fff", background: "#3a8050", borderRadius: 5, padding: "0 3px" }}>{({ s: "S", m: "M", l: "L" })[ui.hpPotUse || "s"]}</span></span>, "#5aa06a", () => G.usePotion(G.hpPotUse), ui.potions, { title: `น้ำยาเพิ่มเลือด (ขนาด ${(G.HP_POT && G.HP_POT[ui.hpPotUse] || {}).name || ""})`, badgeBg: "#3a8050" })}
+                    {iconBtn(<span style={{ position: "relative", display: "inline-block" }}>💧<span style={{ position: "absolute", bottom: -9, left: -13, fontSize: 9, fontWeight: 900, color: "#fff", background: "#3a70a0", borderRadius: 5, padding: "0 3px" }}>{({ s: "S", m: "M", l: "L" })[ui.mpPotUse || "s"]}</span></span>, "#4a90c0", () => G.useManaPotion(G.mpPotUse), ui.mpPotions, { title: `น้ำยาเพิ่มมานา (ขนาด ${(G.MP_POT && G.MP_POT[ui.mpPotUse] || {}).name || ""})`, badgeBg: "#3a70a0" })}
                     {iconBtn("🏃", "#8a9aa8", () => G.act("run"), null, { title: "หนี" })}
                   </div>
                   {/* มุมล่างขวา: skill ต่อสู้ (โจมตี / ท่าไม้ตาย / สกิลอาชีพ) */}
