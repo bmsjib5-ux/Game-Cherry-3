@@ -13370,7 +13370,9 @@ export default function CherryAdventure() {
     const potTotal = (o) => (o.s || 0) + (o.m || 0) + (o.l || 0);
     G.hpPotTotal = () => potTotal(G.hpPots);
     G.mpPotTotal = () => potTotal(G.mpPots);
-    const pickSize = (o, want) => (want && o[want] > 0) ? want : (o.s > 0 ? "s" : o.m > 0 ? "m" : o.l > 0 ? "l" : null);
+    // 🧪 pick the chosen size when available; otherwise fall back to the LARGEST one you own
+    // (so choosing "ใหญ่" never silently drinks a small one while bigger potions exist)
+    const pickSize = (o, want) => (want && o[want] > 0) ? want : (o.l > 0 ? "l" : o.m > 0 ? "m" : o.s > 0 ? "s" : null);
     const syncPotions = () => { // keep the legacy totals in sync so HUD badges + auto checks keep working
       G.potions = G.hpPotTotal(); G.mpPotions = G.mpPotTotal();
       setUi((u) => ({ ...u, potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots } }));
@@ -13381,6 +13383,7 @@ export default function CherryAdventure() {
       if (!use) { toast("น้ำยาเลือดหมด! ซื้อที่ร้านค้า 🧪 (100/500/1000💰)"); return; }
       if (G.player.hp >= effMaxHp()) { toast("เลือดเต็มอยู่แล้ว!"); return; }
       if (G.mode === "battle" && (G.banim || !G.enemy)) return;
+      const fell = size && use !== size; // ⚠️ chosen size was out of stock
       G.hpPots[use]--;
       const heal = HP_POT[use].heal;
       const before = G.player.hp;
@@ -13389,11 +13392,12 @@ export default function CherryAdventure() {
       burst(char.position, 0x8ae0a0, 1.2);
       setMouth("laugh");
       syncPotions(); syncPlayer();
+      const note = fell ? ` · ไม่มีขนาด${HP_POT[size].name} ใช้${HP_POT[use].name}แทน` : ` (${HP_POT[use].name})`;
       if (G.mode === "battle") {
-        setUi((u) => ({ ...u, msg: `🧪 ฟื้นฟู +${got} HP! (${HP_POT[use].name})` }));
+        setUi((u) => ({ ...u, msg: `🧪 ฟื้นฟู +${got} HP!${note}` }));
         enemyTurn(); // healing uses your turn
       } else {
-        toast(`🧪 ฟื้นฟู +${got} HP! (${HP_POT[use].name})`);
+        toast(`🧪 ฟื้นฟู +${got} HP!${note}`);
         setTimeout(() => setMouth("smile"), 800);
       }
     };
@@ -13402,6 +13406,7 @@ export default function CherryAdventure() {
       if (!use) { toast("น้ำยามานาหมด! ซื้อที่ร้านค้า 💧 (100/500/1000💰)"); return; }
       if (G.player.mp >= effMaxMp()) { toast("มานาเต็มอยู่แล้ว!"); return; }
       if (G.mode === "battle" && (G.banim || !G.enemy)) return;
+      const fell = size && use !== size;
       G.mpPots[use]--;
       const restore = MP_POT[use].rest;
       const before = G.player.mp;
@@ -13409,11 +13414,12 @@ export default function CherryAdventure() {
       const got = Math.round(G.player.mp - before);
       burst(char.position, 0x6ac0f0, 1.2);
       syncPotions(); syncPlayer();
+      const note = fell ? ` · ไม่มีขนาด${MP_POT[size].name} ใช้${MP_POT[use].name}แทน` : ` (${MP_POT[use].name})`;
       if (G.mode === "battle") {
-        setUi((u) => ({ ...u, msg: `💧 ฟื้นมานา +${got}! (${MP_POT[use].name})` }));
+        setUi((u) => ({ ...u, msg: `💧 ฟื้นมานา +${got}!${note}` }));
         enemyTurn(); // uses your turn
       } else {
-        toast(`💧 ฟื้นมานา +${got}! (${MP_POT[use].name})`);
+        toast(`💧 ฟื้นมานา +${got}!${note}`);
       }
     };
 
