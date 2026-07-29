@@ -17746,6 +17746,11 @@ export default function CherryAdventure() {
           armR.rotation.set(-0.6, -0.05, -0.02); if (armR.userData.elbow) armR.userData.elbow.rotation.set(-0.55, 0, 0);
           armL.rotation.set(-0.2, 0, 0.18); if (armL.userData.elbow) armL.userData.elbow.rotation.set(-0.15, 0, 0);
           wand.position.set(0.13, -0.52, 0.28); wand.rotation.set(0.0, 0, 0.02);
+        } else if (G.equipOpen && G.cls === "aegis" && !G.heroId) {
+          // 🤖 present the equipped weapon forward so it's clearly visible in the dressing room (the mech's rest pose hides a back-held blade)
+          armR.rotation.set(-0.62, -0.05, 0.06); if (armR.userData.elbow) armR.userData.elbow.rotation.set(-0.5, 0, 0);
+          armL.rotation.set(-0.1, 0, 0.14); if (armL.userData.elbow) armL.userData.elbow.rotation.set(-0.12, 0, 0);
+          wand.position.set(0.1, -0.5, 0.26); wand.rotation.set(0.15, 0, 0.05); // present the weapon upright & forward so it's clearly visible
         }
       } else if (G.mode === "explore") {
         // ---------- ⏰ random event scheduler ----------
