@@ -19500,8 +19500,8 @@ function CherryAdventure() {
         const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
         const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
         const effAtk = () => Math.round((G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK
-        const effDef = () => Math.round((G.player.def + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100));
-        const effMaxHp = () => Math.round(3 * (G.player.maxHp + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100));
+        const effDef = () => Math.round((G.player.def + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล
+        const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100)); // ⚖️ +3 HP ฐานต่อเลเวล (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
         const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
         const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
         const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
@@ -22006,7 +22006,7 @@ function CherryAdventure() {
                 spId: wild.userData.spId,
                 hp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
                 maxHp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
-                atk: Math.round(sp.atk * (1 + (lv - 1) * 0.18) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul),
+                atk: Math.round(sp.atk * (1 + (lv - 1) * 0.15) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul), // ⚖️ 0.18→0.15 มอนตีเบาลงเล็กน้อย
                 lv, boss, ghost, golden,
                 enraged: false, rageAura: null, shiny,
                 name: sp.name, biomeBoss: wild.userData.biomeBoss || null,
@@ -22241,7 +22241,7 @@ function CherryAdventure() {
             const scale = (1 + (lv - 1) * 0.9) * 1.4 * (m.userData.shiny ? 1.3 : 1);
             m.userData.wmaxhp = Math.max(12, Math.round(sp.hp * scale * ng * 0.55)); // 0.55 → snappy open-world fights
             m.userData.whp = m.userData.wmaxhp;
-            m.userData.watk = Math.round(sp.atk * (1 + (lv - 1) * 0.18) * ng * (m.userData.shiny ? 1.2 : 1));
+            m.userData.watk = Math.round(sp.atk * (1 + (lv - 1) * 0.15) * ng * (m.userData.shiny ? 1.2 : 1)); // ⚖️ 0.18→0.15 มอนตีเบาลงเล็กน้อย
             m.userData.wcd = 0.5 + Math.random();
         };
         const wildBar = (m) => {
