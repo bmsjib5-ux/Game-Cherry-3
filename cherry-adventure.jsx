@@ -16190,6 +16190,17 @@ export default function CherryAdventure() {
           return await res.json();
         } catch (e) { this.status = "error"; return null; }
       },
+      // 🪪 is this character name already used by another player? (network error → returns false = don't block)
+      async nameTaken(name, myPid) {
+        if (!this.enabled() || !name) return false;
+        try {
+          const res = await fetch(this._url(`players?n=eq.${encodeURIComponent(name)}&select=pid&limit=5`), { headers: this._headers() });
+          if (!res.ok) { this.status = "error"; return false; }
+          this.status = "ok";
+          const rows = await res.json();
+          return (rows || []).some((r) => r.pid !== myPid);
+        } catch (e) { this.status = "error"; return false; }
+      },
     };
     G.net = CN;
     // ---------- 🔐 Account & cross-device login (Supabase Auth + cloud full-save) ----------
@@ -16437,6 +16448,19 @@ export default function CherryAdventure() {
       if (!force && G._lastPub && now - G._lastPub < 20000) return;
       G._lastPub = now;
       CN.publish(G.cloudProfile()).then((ok) => { if (ok) setUi((u) => ({ ...u, netStatus: "ok" })); });
+    };
+    // ➜ leave the character-creator for the class picker — but first require a non-empty, non-duplicate name
+    G.proceedToClass = async () => {
+      const nm = (G.pendingName || "").trim();
+      if (!nm) { setUi((u) => ({ ...u, customTab: "char", nameErr: "⚠️ กรุณาตั้งชื่อตัวละครก่อน" })); return; }
+      if (G.ensurePid) G.ensurePid();
+      setUi((u) => ({ ...u, nameErr: "", nameChecking: true }));
+      let taken = false;
+      try { if (CN.enabled()) taken = await CN.nameTaken(nm, G.pid); } catch (e) { taken = false; }
+      if (taken) { setUi((u) => ({ ...u, customTab: "char", nameChecking: false, nameErr: "❌ ชื่อ \"" + nm + "\" มีคนใช้แล้ว ลองตั้งชื่ออื่นนะ" })); return; }
+      G.pendingName = nm;
+      G.mode = "class";
+      setUi((u) => ({ ...u, nameChecking: false, nameErr: "", pendingName: nm, mode: "class" }));
     };
     G.addFriendOnline = async (pid) => {
       pid = (pid || "").trim();
@@ -24652,33 +24676,20 @@ export default function CherryAdventure() {
         {ui.customTab === "char" && (
           <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🦸 ตัวละครสำเร็จรูป</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 }}>
-                {CHAR_PRESETS.map((p, i) => (
-                  <button key={i} onClick={() => G.applyCharPreset(i)} style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 2px",
-                    borderRadius: 10, cursor: "pointer", fontFamily: font,
-                    border: ui.charPreset === i ? "2px solid #e0788a" : "2px solid #ece0d8",
-                    background: ui.charPreset === i ? "#fff0f4" : "#faf6f2",
-                  }}>
-                    <span style={{ fontSize: 18 }}>{p.emoji}</span>
-                    <span style={{ fontSize: 8.5, fontWeight: 800, color: "#8a5a4a" }}>{p.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>✏️ ตั้งชื่อตัวละคร</div>
               <input
                 key={"nm-" + (ui.pendingName || "")}
-                type="text" maxLength={12} defaultValue={ui.pendingName || ""} placeholder="เชอร์รี่"
-                onChange={(e) => { G.pendingName = e.target.value; }}
+                type="text" maxLength={12} defaultValue={ui.pendingName || ""} placeholder="ตั้งชื่อของคุณ..."
+                onChange={(e) => { G.pendingName = e.target.value; if (ui.nameErr) setUi((u) => ({ ...u, nameErr: "" })); }}
                 style={{
                   width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 10,
-                  border: "2px solid #e5d5cc", fontSize: 13, fontFamily: font, color: "#5a5a4a",
+                  border: ui.nameErr ? "2px solid #e0788a" : "2px solid #e5d5cc", fontSize: 13, fontFamily: font, color: "#5a5a4a",
                   outline: "none", background: "#fff",
                 }}
               />
+              {ui.nameErr
+                ? <div style={{ marginTop: 5, fontSize: 10.5, fontWeight: 800, color: "#d9536b" }}>{ui.nameErr}</div>
+                : <div style={{ marginTop: 5, fontSize: 10, color: "#a58a7a" }}>ชื่อต้องไม่ซ้ำกับผู้เล่นคนอื่น 🌐</div>}
             </div>
           </>
         )}
@@ -24853,9 +24864,10 @@ export default function CherryAdventure() {
           }}>🎲</button>
         </div>
         <button
-          onClick={() => { gameRef.current.mode = "title"; setUi((u) => ({ ...u, mode: "title" })); }}
-          style={{ ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%" }}
-        >ถัดไป ➜ อาชีพ</button>
+          onClick={() => G.proceedToClass()}
+          disabled={ui.nameChecking}
+          style={{ ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%", opacity: ui.nameChecking ? 0.6 : 1 }}
+        >{ui.nameChecking ? "⏳ กำลังตรวจชื่อ..." : "ถัดไป ➜ อาชีพ"}</button>
       </div>
     </div>
   </>
@@ -25317,13 +25329,13 @@ export default function CherryAdventure() {
               fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
               background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.25)",
             }}>← กลับ</button>
-            <button onClick={() => setUi((u) => ({ ...u, mode: "class" }))} style={{
+            <button onClick={() => G.proceedToClass()} disabled={ui.nameChecking} style={{
               padding: "12px 42px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 15.5, fontWeight: 800, fontFamily: font, color: "#fff",
               background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
-              boxShadow: "0 5px 16px rgba(90,160,106,0.5)",
+              boxShadow: "0 5px 16px rgba(90,160,106,0.5)", opacity: ui.nameChecking ? 0.6 : 1,
             }}>
-              เลือกอาชีพ →
+              {ui.nameChecking ? "⏳ ตรวจชื่อ..." : "เลือกอาชีพ →"}
             </button>
           </div>
         </div>

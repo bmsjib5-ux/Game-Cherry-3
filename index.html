@@ -23583,6 +23583,25 @@ function CherryAdventure() {
                     return null;
                 }
             },
+            // 🪪 is this character name already used by another player? (network error → returns false = don't block)
+            async nameTaken(name, myPid) {
+                if (!this.enabled() || !name)
+                    return false;
+                try {
+                    const res = await fetch(this._url(`players?n=eq.${encodeURIComponent(name)}&select=pid&limit=5`), { headers: this._headers() });
+                    if (!res.ok) {
+                        this.status = "error";
+                        return false;
+                    }
+                    this.status = "ok";
+                    const rows = await res.json();
+                    return (rows || []).some((r) => r.pid !== myPid);
+                }
+                catch (e) {
+                    this.status = "error";
+                    return false;
+                }
+            },
         };
         G.net = CN;
         // ---------- 🔐 Account & cross-device login (Supabase Auth + cloud full-save) ----------
@@ -24017,6 +24036,32 @@ function CherryAdventure() {
             G._lastPub = now;
             CN.publish(G.cloudProfile()).then((ok) => { if (ok)
                 setUi((u) => ({ ...u, netStatus: "ok" })); });
+        };
+        // ➜ leave the character-creator for the class picker — but first require a non-empty, non-duplicate name
+        G.proceedToClass = async () => {
+            const nm = (G.pendingName || "").trim();
+            if (!nm) {
+                setUi((u) => ({ ...u, customTab: "char", nameErr: "⚠️ กรุณาตั้งชื่อตัวละครก่อน" }));
+                return;
+            }
+            if (G.ensurePid)
+                G.ensurePid();
+            setUi((u) => ({ ...u, nameErr: "", nameChecking: true }));
+            let taken = false;
+            try {
+                if (CN.enabled())
+                    taken = await CN.nameTaken(nm, G.pid);
+            }
+            catch (e) {
+                taken = false;
+            }
+            if (taken) {
+                setUi((u) => ({ ...u, customTab: "char", nameChecking: false, nameErr: "❌ ชื่อ \"" + nm + "\" มีคนใช้แล้ว ลองตั้งชื่ออื่นนะ" }));
+                return;
+            }
+            G.pendingName = nm;
+            G.mode = "class";
+            setUi((u) => ({ ...u, nameChecking: false, nameErr: "", pendingName: nm, mode: "class" }));
         };
         G.addFriendOnline = async (pid) => {
             pid = (pid || "").trim();
@@ -36716,22 +36761,16 @@ function CherryAdventure() {
                 React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "10px 12px", display: "flex", flexDirection: "column", gap: 12 } },
                     ui.customTab === "char" && (React.createElement(React.Fragment, null,
                         React.createElement("div", null,
-                            React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\uD83E\uDDB8 \u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08\u0E23\u0E39\u0E1B"),
-                            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 } }, CHAR_PRESETS.map((p, i) => (React.createElement("button", { key: i, onClick: () => G.applyCharPreset(i), style: {
-                                    display: "flex", flexDirection: "column", alignItems: "center", gap: 1, padding: "6px 2px",
-                                    borderRadius: 10, cursor: "pointer", fontFamily: font,
-                                    border: ui.charPreset === i ? "2px solid #e0788a" : "2px solid #ece0d8",
-                                    background: ui.charPreset === i ? "#fff0f4" : "#faf6f2",
-                                } },
-                                React.createElement("span", { style: { fontSize: 18 } }, p.emoji),
-                                React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, color: "#8a5a4a" } }, p.name)))))),
-                        React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\u270F\uFE0F \u0E15\u0E31\u0E49\u0E07\u0E0A\u0E37\u0E48\u0E2D\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23"),
-                            React.createElement("input", { key: "nm-" + (ui.pendingName || ""), type: "text", maxLength: 12, defaultValue: ui.pendingName || "", placeholder: "\u0E40\u0E0A\u0E2D\u0E23\u0E4C\u0E23\u0E35\u0E48", onChange: (e) => { G.pendingName = e.target.value; }, style: {
+                            React.createElement("input", { key: "nm-" + (ui.pendingName || ""), type: "text", maxLength: 12, defaultValue: ui.pendingName || "", placeholder: "\u0E15\u0E31\u0E49\u0E07\u0E0A\u0E37\u0E48\u0E2D\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13...", onChange: (e) => { G.pendingName = e.target.value; if (ui.nameErr)
+                                    setUi((u) => ({ ...u, nameErr: "" })); }, style: {
                                     width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 10,
-                                    border: "2px solid #e5d5cc", fontSize: 13, fontFamily: font, color: "#5a5a4a",
+                                    border: ui.nameErr ? "2px solid #e0788a" : "2px solid #e5d5cc", fontSize: 13, fontFamily: font, color: "#5a5a4a",
                                     outline: "none", background: "#fff",
-                                } })))),
+                                } }),
+                            ui.nameErr
+                                ? React.createElement("div", { style: { marginTop: 5, fontSize: 10.5, fontWeight: 800, color: "#d9536b" } }, ui.nameErr)
+                                : React.createElement("div", { style: { marginTop: 5, fontSize: 10, color: "#a58a7a" } }, "\u0E0A\u0E37\u0E48\u0E2D\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E0B\u0E49\u0E33\u0E01\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E04\u0E19\u0E2D\u0E37\u0E48\u0E19 \uD83C\uDF10")))),
                     ui.customTab === "body" && (React.createElement(React.Fragment, null,
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\uD83E\uDDCD \u0E40\u0E1E\u0E28"),
@@ -36837,7 +36876,7 @@ function CherryAdventure() {
                                 padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
                                 fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
                             } }, "\uD83C\uDFB2")),
-                    React.createElement("button", { onClick: () => { gameRef.current.mode = "title"; setUi((u) => ({ ...u, mode: "title" })); }, style: { ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%" } }, "\u0E16\u0E31\u0E14\u0E44\u0E1B \u279C \u0E2D\u0E32\u0E0A\u0E35\u0E1E"))))),
+                    React.createElement("button", { onClick: () => G.proceedToClass(), disabled: ui.nameChecking, style: { ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%", opacity: ui.nameChecking ? 0.6 : 1 } }, ui.nameChecking ? "⏳ กำลังตรวจชื่อ..." : "ถัดไป ➜ อาชีพ"))))),
         ui.mode === "create" && (React.createElement("div", { style: { position: "absolute", right: 12, bottom: 138, display: "flex", flexDirection: "column", gap: 8 } }, [["＋", -1.2], ["－", 1.2]].map(([sym, d]) => (React.createElement("button", { key: sym, onClick: () => G.zoom(d), style: {
                 width: 42, height: 42, borderRadius: "50%", border: "none", cursor: "pointer",
                 fontSize: 20, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.9)",
@@ -37190,12 +37229,12 @@ function CherryAdventure() {
                         fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
                         background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.25)",
                     } }, "\u2190 \u0E01\u0E25\u0E31\u0E1A"),
-                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mode: "class" })), style: {
+                React.createElement("button", { onClick: () => G.proceedToClass(), disabled: ui.nameChecking, style: {
                         padding: "12px 42px", borderRadius: 999, border: "none", cursor: "pointer",
                         fontSize: 15.5, fontWeight: 800, fontFamily: font, color: "#fff",
                         background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
-                        boxShadow: "0 5px 16px rgba(90,160,106,0.5)",
-                    } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2D\u0E32\u0E0A\u0E35\u0E1E \u2192")))),
+                        boxShadow: "0 5px 16px rgba(90,160,106,0.5)", opacity: ui.nameChecking ? 0.6 : 1,
+                    } }, ui.nameChecking ? "⏳ ตรวจชื่อ..." : "เลือกอาชีพ →")))),
         (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, marginBottom: 4 } },
                 React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#ffd76a" } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
