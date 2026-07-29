@@ -13286,7 +13286,7 @@ export default function CherryAdventure() {
     // active buddy buffs the character — grows every pet level, jumps at evolution
     // 🐾 pet team (up to 3) — all members contribute buffs; slot 0 walks with you
     G.team = [];
-    G.petBox = []; G._petSeq = 1;
+    G.petBox = []; G._petSeq = 1; G.ranch = G.ranch || { slots: [], happy: {}, last: Date.now(), pending: 0 };
     const petBuffOne = (iid) => {
       const p = G.petAt ? G.petAt(iid) : null;
       if (!p || !SPECIES[p.sp]) return { atk: 0, hp: 0, def: 0 };
@@ -14964,6 +14964,86 @@ export default function CherryAdventure() {
       syncPlayer(); // pet buffs affect character stats
     };
 
+    // ---------- 🐄 PET RANCH — idle pet farm (assign pets → passive gold + EXP, even offline) ----------
+    const RANCH_SLOTS = 6;                 // คอกฟาร์ม 6 ช่อง
+    const RANCH_CAP_MS = 8 * 3600 * 1000;  // สะสมผลผลิตออฟไลน์สูงสุด 8 ชม.
+    const FEED_COST = 60, FEED_HAPPY = 34; // ให้อาหาร: จ่ายทอง → ความสุขเพิ่ม
+    if (!G.ranch) G.ranch = { slots: [], happy: {}, last: Date.now(), pending: 0 };
+    const ranchHappy = (iid) => Math.max(0, Math.min(100, G.ranch.happy[iid] != null ? G.ranch.happy[iid] : 60));
+    // ผลผลิตต่อชั่วโมงของเพ็ต 1 ตัว (ทอง, EXP) — ยิ่ง tier/เลเวล/ความสุขสูง ยิ่งได้เยอะ
+    const ranchRate = (p) => {
+      const tier = (SPECIES[p.sp] || {}).tier || 1;
+      const hf = 0.3 + 0.7 * (ranchHappy(p.i) / 100); // happiness 0→×0.3, 100→×1.0
+      const gold = (5 + tier * 5) * (1 + (p.lv || 1) * 0.03) * (1 + (p.plus || 0) * 0.15) * hf;
+      const exp = (4 + tier * 2) * hf;
+      return { gold, exp };
+    };
+    // accrue everything since last visit (capped), decay happiness by real time
+    const ranchTick = () => {
+      const R = G.ranch; if (!R) return;
+      const now = Date.now();
+      const dt = now - (R.last || now);
+      R.last = now;
+      if (dt <= 0) return;
+      const prodHrs = Math.min(dt, RANCH_CAP_MS) / 3600000; // production is capped
+      const decayHrs = dt / 3600000;                        // happiness decays uncapped
+      let gold = 0;
+      (R.slots || []).forEach((iid) => {
+        if (iid == null) return;
+        const p = G.petAt(iid); if (!p) return;
+        const r = ranchRate(p);
+        gold += r.gold * prodHrs;
+        const xp = Math.floor(r.exp * prodHrs);
+        if (xp >= 1) petGain(iid, xp);
+        R.happy[iid] = Math.max(0, ranchHappy(iid) - 4 * decayHrs); // 😴 -4 ความสุข/ชม.
+      });
+      R.pending = (R.pending || 0) + gold;
+    };
+    const ranchUiSnap = () => {
+      const R = G.ranch;
+      const slots = [];
+      for (let k = 0; k < RANCH_SLOTS; k++) {
+        const iid = (R.slots || [])[k];
+        const p = iid != null ? G.petAt(iid) : null;
+        if (!p) { slots.push(null); continue; }
+        const r = ranchRate(p), sp = SPECIES[p.sp] || {};
+        slots.push({ i: iid, sp: p.sp, lv: p.lv, plus: p.plus || 0, stage: p.stage, emoji: sp.emoji, name: sp.name, happy: Math.round(ranchHappy(iid)), goldHr: Math.round(r.gold), expHr: Math.round(r.exp) });
+      }
+      return { slots, slotsMax: RANCH_SLOTS, pending: Math.floor(R.pending || 0), feedCost: FEED_COST };
+    };
+    G.ranchUi = ranchUiSnap;
+    G.ranchTickPublic = ranchTick;
+    G.openRanch = () => { ranchTick(); setUi((u) => ({ ...u, ranchOpen: true, ranchPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
+    G.ranchAssign = (iid, slot) => {
+      ranchTick();
+      const R = G.ranch; R.slots = R.slots || [];
+      for (let k = 0; k < RANCH_SLOTS; k++) if (R.slots[k] === iid) R.slots[k] = null; // ย้ายออกจากช่องเดิมก่อน
+      R.slots[slot] = iid;
+      if (R.happy[iid] == null) R.happy[iid] = 60;
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      setUi((u) => ({ ...u, ranch: ranchUiSnap(), ranchPick: null }));
+    };
+    G.ranchRemove = (slot) => { ranchTick(); const R = G.ranch; if (R.slots) R.slots[slot] = null; setUi((u) => ({ ...u, ranch: ranchUiSnap() })); };
+    G.feedRanch = (iid) => {
+      if ((G.gold || 0) < FEED_COST) { toast("💰 ทองไม่พอให้อาหาร (ต้องมี " + FEED_COST + ")"); return; }
+      ranchTick();
+      G.gold -= FEED_COST;
+      G.ranch.happy[iid] = Math.min(100, ranchHappy(iid) + FEED_HAPPY);
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      syncPlayer();
+      setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
+    };
+    G.claimRanch = () => {
+      ranchTick();
+      const amt = Math.floor(G.ranch.pending || 0);
+      if (amt <= 0) { toast("🐄 ยังไม่มีผลผลิตให้เก็บ — ปล่อยเพ็ตไว้ในคอกสักพัก"); return; }
+      G.gold += amt; G.ranch.pending = 0;
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🐄 เก็บผลผลิตฟาร์ม +${amt.toLocaleString()} ทอง!`);
+      syncPlayer();
+      setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
+    };
+
     // ♾️ ENDLESS SURVIVAL: fight escalating waves; a loss ends the run
     G.startEndless = () => {
       if (G.mode !== "explore") { toast("♾️ เริ่มโหมดเอาชีวิตรอดได้จากโลกกว้างเท่านั้น"); return; }
@@ -16459,7 +16539,7 @@ export default function CherryAdventure() {
       G.achUnlocked = {};
       G.combo = 0;
       G.team = [];
-      G.petBox = []; G._petSeq = 1; G.dexSeen = {};
+      G.petBox = []; G._petSeq = 1; G.dexSeen = {}; G.ranch = { slots: [], happy: {}, last: Date.now(), pending: 0 };
       G.mountsOwned = {}; if (G.setMount) G.setMount(null, true);
       G.petSp = 0;
       G.petSkillLv = {};
@@ -16507,7 +16587,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -17939,6 +18019,9 @@ export default function CherryAdventure() {
       G.petBox = Array.isArray(d.petBox) ? d.petBox.filter((p) => p && SPECIES[p.sp]) : null;
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
+      G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
+        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 6) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0 }
+        : { slots: [], happy: {}, last: Date.now(), pending: 0 };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -24766,7 +24849,7 @@ export default function CherryAdventure() {
   const totalCaught = Object.values(ui.col).reduce((a, b) => a + b, 0);
 
   // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen"];
+  const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen"];
   // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
   const _uiWideModal = window.innerWidth > 820;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
@@ -24840,7 +24923,7 @@ export default function CherryAdventure() {
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
-      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen"].some((f) => ui[f]) && (
+      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
@@ -28481,6 +28564,92 @@ export default function CherryAdventure() {
             </div>
           )}
 
+          {/* 🐄 pet ranch (idle farm) */}
+          {ui.ranchOpen && ui.ranch && (
+            <div style={{
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "96%", maxWidth: 460,
+              maxHeight: "84vh", overflowY: "auto", display: "flex", flexDirection: "column",
+              background: "#fff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+            }}>
+              {closeBtn("ranchOpen")}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, color: "#b0702a" }}>🐄 ฟาร์มสัตว์เลี้ยง</div>
+                <div style={{ flex: 1 }} />
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
+              </div>
+              {/* pending + claim */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#fff6e8,#fdeccf)", border: "1px solid #f0dcc0", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#a9885a" }}>ผลผลิตรอเก็บ (สะสมได้แม้ปิดเกม · สูงสุด 8 ชม.)</div>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: "#c9843e" }}>💰 {(ui.ranch.pending || 0).toLocaleString()}</div>
+                </div>
+                <button onClick={() => G.claimRanch && G.claimRanch()} disabled={(ui.ranch.pending || 0) <= 0} style={{
+                  padding: "10px 18px", borderRadius: 999, border: "none", cursor: (ui.ranch.pending || 0) > 0 ? "pointer" : "default", fontFamily: font,
+                  fontSize: 13, fontWeight: 900, color: "#fff", background: (ui.ranch.pending || 0) > 0 ? "linear-gradient(90deg,#5aa06a,#7ac08a)" : "#cdd3c8", boxShadow: (ui.ranch.pending || 0) > 0 ? "0 4px 12px rgba(90,160,106,0.45)" : "none",
+                }}>เก็บผลผลิต</button>
+              </div>
+              {/* slot grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, flexShrink: 0 }}>
+                {ui.ranch.slots.map((s, k) => s ? (
+                  <div key={k} style={{ background: "#f7f9f0", border: "1px solid #e4ecd6", borderRadius: 12, padding: "9px 10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <div style={{ fontSize: 26 }}>{s.emoji}</div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#8aa070" }}>Lv.{s.lv}{s.plus ? ` +${s.plus}` : ""} · ร่าง {s.stage}</div>
+                      </div>
+                    </div>
+                    {/* happiness bar */}
+                    <div style={{ marginTop: 7, marginBottom: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontWeight: 800, color: "#c98a3a", marginBottom: 2 }}><span>😊 ความสุข</span><span>{s.happy}%</span></div>
+                      <div style={{ height: 6, borderRadius: 999, background: "#eadfce", overflow: "hidden" }}><div style={{ height: "100%", width: s.happy + "%", borderRadius: 999, background: s.happy >= 60 ? "#5aa06a" : s.happy >= 30 ? "#e0a83a" : "#d9536b" }} /></div>
+                    </div>
+                    <div style={{ fontSize: 9.5, fontWeight: 700, color: "#8a9a70", marginBottom: 7 }}>💰 {s.goldHr}/ชม. · ⭐ {s.expHr} EXP/ชม.</div>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      <button onClick={() => G.feedRanch && G.feedRanch(s.i)} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", background: "#e0a83a" }}>🍖 ให้อาหาร ({ui.ranch.feedCost})</button>
+                      <button onClick={() => G.ranchRemove && G.ranchRemove(k)} style={{ padding: "6px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#a06a6a", background: "#f0e6e0" }}>เอาออก</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button key={k} onClick={() => setUi((u) => ({ ...u, ranchPick: k }))} style={{
+                    minHeight: 118, borderRadius: 12, border: "2px dashed #d8ceb8", cursor: "pointer", fontFamily: font,
+                    background: "#fcfaf3", color: "#b8a888", fontSize: 12.5, fontWeight: 800, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                  }}><span style={{ fontSize: 24 }}>＋</span>ปล่อยเพ็ตลงคอก</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 10, color: "#a99", marginTop: 10, lineHeight: 1.5, background: "#faf6ef", borderRadius: 10, padding: "8px 10px" }}>
+                🐾 เพ็ตในคอกจะหาทองและได้ EXP ให้เองตลอดเวลา · ให้อาหารเพื่อเพิ่มความสุข → ผลผลิตไวขึ้น · ความสุขจะค่อยๆ ลดถ้าไม่ดูแล
+              </div>
+              {/* pet picker overlay */}
+              {ui.ranchPick != null && (() => {
+                const inRanch = new Set((ui.ranch.slots || []).filter(Boolean).map((s) => s.i));
+                const avail = (ui.petBox || []).filter((p) => !inRanch.has(p.i));
+                return (
+                  <div style={{ marginTop: 10, borderTop: "1px solid #eee", paddingTop: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#7a5a3a" }}>เลือกเพ็ตปล่อยลงคอกช่อง {ui.ranchPick + 1}</div>
+                      <div style={{ flex: 1 }} />
+                      <button onClick={() => setUi((u) => ({ ...u, ranchPick: null }))} style={{ padding: "4px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#a06a6a", background: "#f0e6e0" }}>ยกเลิก</button>
+                    </div>
+                    {avail.length ? (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, maxHeight: "34vh", overflowY: "auto" }}>
+                        {avail.map((p) => { const sp = SPECIES[p.sp] || {}; return (
+                          <button key={p.i} onClick={() => G.ranchAssign && G.ranchAssign(p.i, ui.ranchPick)} style={{ padding: "7px 4px", borderRadius: 10, border: "1px solid #e4ecd6", cursor: "pointer", fontFamily: font, background: "#f7f9f0", textAlign: "center" }}>
+                            <div style={{ fontSize: 22 }}>{sp.emoji}</div>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sp.name}</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: "#8aa070" }}>Lv.{p.lv}{p.plus ? ` +${p.plus}` : ""}</div>
+                          </button>
+                        ); })}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 11, color: "#a99", textAlign: "center", padding: "10px 0" }}>ไม่มีเพ็ตว่าง — จับเพ็ตเพิ่มหรือเอาตัวอื่นออกจากคอกก่อน</div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* collection panel */}
           {ui.panelOpen && (
             <div style={{
@@ -28502,6 +28671,11 @@ export default function CherryAdventure() {
                   background: ui.dexTab ? "#7ba05b" : "#eaf5e0",
                 }}>📖 สมุดภาพ</button>
               </div>
+              {/* 🐄 ranch entry */}
+              <button onClick={() => G.openRanch && G.openRanch()} style={{
+                flexShrink: 0, width: "100%", padding: "8px 0", marginBottom: 6, borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
+                fontSize: 12.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e0a86a,#c9843e)", boxShadow: "0 3px 10px rgba(201,132,62,0.4)",
+              }}>🐄 ฟาร์มสัตว์เลี้ยง — ปล่อยเพ็ตหาทอง/EXP อัตโนมัติ</button>
               {/* 📖 DEX tab: all species, caught or not */}
               {ui.dexTab ? (
                 <div style={{ overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" }}>
