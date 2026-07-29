@@ -3094,7 +3094,7 @@ function CherryAdventure() {
                 return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
             if (id === "ragAxe")
                 return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
-            if (id === "cx" || cls === "aegis")
+            if (id === "cx")
                 return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 laser blaster — muzzle levelled forward (barrel faces ahead)
             // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
             if (cls === "archer" || id === "ca" || id === "wDa")
@@ -3113,6 +3113,8 @@ function CherryAdventure() {
                 return { x: 0.55, y: 0, z: -0.25 }; // 🖊️ pen held like a stylus, nib angled down-forward
             if (cls === "coder" || id === "cc")
                 return { x: -1.35, y: 0, z: 0 }; // ⌨️ keyboard held flat, ready to type
+            if (cls === "aegis")
+                return { x: 1.5, y: 0, z: 0 }; // 🤖 non-laser weapons held blade-backward so the mech grips them like a melee fighter
             return { x: -0.5, y: 0, z: 0 };
         };
         const weaponModels = {};
