@@ -247,6 +247,7 @@ const LOOT = [
     { id: "wDl", slot: "weapon", name: "หอกเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 22, def: 5, crit: 8, elem: "dragon", cls: "lancer", req: 30 },
     { id: "wDo", slot: "weapon", name: "ปากกามังกร CEO", emoji: "🐉", rarity: "dragon", atk: 21, mp: 10, crit: 12, elem: "dragon", cls: "office", req: 30 },
     { id: "wDc", slot: "weapon", name: "คีย์บอร์ดมังกรดิจิทัล", emoji: "🐉", rarity: "dragon", atk: 21, mp: 12, crit: 14, elem: "dragon", cls: "coder", req: 30 },
+    { id: "wDx", slot: "weapon", name: "แคนนอนเขี้ยวมังกร", emoji: "🐉", rarity: "dragon", atk: 21, crit: 12, def: 4, elem: "dragon", cls: "aegis", req: 30 },
     { id: "oD", slot: "outfit", name: "เกราะเกล็ดมังกร", emoji: "🐉", rarity: "dragon", hp: 70, def: 12, atk: 6, elem: "dragon" },
     { id: "hD", slot: "hat", name: "หมวกเขามังกร", emoji: "🐉", rarity: "dragon", atk: 8, hp: 30, def: 6, elem: "dragon" },
     { id: "mD", slot: "mask", name: "หน้ากากอสุรมังกร", emoji: "🐉", rarity: "dragon", atk: 10, def: 4, crit: 10, eva: 4, elem: "dragon" },
@@ -274,6 +275,7 @@ const LOOT = [
     { id: "lg_ok", slot: "weapon", name: "ดาบเทพอสนีบาต", emoji: "⭐", rarity: "legend", atk: 40, crit: 18, spd: 8, elem: "light", cls: "samurai", req: 60, set: "legend" },
     { id: "lg_oo", slot: "weapon", name: "ปากกาจักรพรรดิ", emoji: "⭐", rarity: "legend", atk: 38, mp: 18, crit: 16, hp: 25, elem: "light", cls: "office", req: 60, set: "legend" },
     { id: "lg_oc", slot: "weapon", name: "คีย์บอร์ดซิงกูลาริตี้", emoji: "⭐", rarity: "legend", atk: 38, mp: 22, crit: 18, elem: "light", cls: "coder", req: 60, set: "legend" },
+    { id: "lg_ox", slot: "weapon", name: "ปืนใหญ่สุริยเทพ", emoji: "⭐", rarity: "legend", atk: 38, crit: 16, def: 8, mp: 12, elem: "light", cls: "aegis", req: 60, set: "legend" },
     { id: "lg_out", slot: "outfit", name: "อาภรณ์เทพโลกันตร์", emoji: "⭐", rarity: "legend", hp: 120, def: 22, atk: 12, elem: "light", set: "legend" },
     { id: "lg_hat", slot: "hat", name: "มงกุฎเทพโลกันตร์", emoji: "⭐", rarity: "legend", atk: 14, hp: 50, def: 10, crit: 6, elem: "light", set: "legend" },
     { id: "lg_msk", slot: "mask", name: "หน้ากากสุริยเทพ", emoji: "⭐", rarity: "legend", atk: 16, crit: 14, eva: 6, def: 6, elem: "light", set: "legend" },
@@ -1038,6 +1040,7 @@ const CRAFT_RECIPES = {
     samurai: { itemId: "kd", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
     office: { itemId: "wDo", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
     coder: { itemId: "wDc", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
+    aegis: { itemId: "wDx", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
 };
 // 🌳 Skill tree: each node can be leveled up (rank 1..max). Bonuses are PER RANK.
 // Conditions: reqLv = min player level, req = prerequisite node id (must have ≥1 rank).
@@ -3094,8 +3097,8 @@ function CherryAdventure() {
                 return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
             if (id === "ragAxe")
                 return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
-            if (id === "cx")
-                return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 laser blaster — muzzle levelled forward (barrel faces ahead)
+            if (id === "cx" || id === "wDx" || id === "lg_ox")
+                return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
             // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
             if (cls === "archer" || id === "ca" || id === "wDa" || id === "lg_oa")
                 return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
@@ -5483,6 +5486,125 @@ function CherryAdventure() {
             g.userData.gripZ = 0.06; // seat the pistol grip in the palm, nudge forward
             g.scale.setScalar(1.3);
             weaponModels.cx = g;
+        }
+        { // 🐉🔫 wDx — Dragon Fang Plasma Cannon (aegis dragon weapon): dark-red scale housing, ember bore, dragon-jaw muzzle
+            const g = new THREE.Group();
+            const scaleMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.72, roughness: 0.3, emissive: 0x3a0a05, emissiveIntensity: 0.5 });
+            const dark = new THREE.MeshStandardMaterial({ color: 0x2a1210, metalness: 0.7, roughness: 0.42 });
+            const bone = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
+            const ember = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.4, roughness: 0.25 });
+            const emberGlow = new THREE.MeshBasicMaterial({ color: 0xff7a2a, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.11), dark);
+            grip.position.set(0, -0.1, -0.02);
+            grip.rotation.x = 0.32;
+            g.add(grip);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.22), scaleMat);
+            body.position.set(0, 0.16, 0);
+            g.add(body);
+            const brow = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.08, 0.2), dark);
+            brow.position.set(0, 0.32, 0);
+            g.add(brow);
+            const cell = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.07), ember);
+            cell.position.set(0, 0.06, -0.15);
+            cell.rotation.x = 0.32;
+            g.add(cell);
+            const cellGlow = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.24, 0.1), emberGlow);
+            cellGlow.position.copy(cell.position);
+            cellGlow.rotation.x = 0.32;
+            g.add(cellGlow);
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.052, 0.6, 12), scaleMat);
+            barrel.position.set(0, 0.56, 0.02);
+            g.add(barrel);
+            const channel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.62, 8), ember);
+            channel.position.set(0, 0.56, 0.02);
+            g.add(channel);
+            for (let k = 0; k < 4; k++) {
+                const sc = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.09, 4), scaleMat);
+                sc.position.set(0, 0.36 + k * 0.11, 0.09);
+                sc.rotation.x = 1.2;
+                g.add(sc);
+            }
+            const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.08, 8), dark);
+            muzzle.position.set(0, 0.86, 0.02);
+            g.add(muzzle);
+            for (const sx of [-1, 1]) {
+                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 5), bone);
+                fang.position.set(sx * 0.05, 0.93, 0.02);
+                fang.rotation.z = sx * 0.32;
+                g.add(fang);
+            }
+            const muzzleGlow = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), emberGlow);
+            muzzleGlow.position.set(0, 0.9, 0.02);
+            g.add(muzzleGlow);
+            const glow = new THREE.PointLight(0xff5a2a, 0.5, 2.4);
+            glow.position.set(0, 0.9, 0.02);
+            g.add(glow);
+            g.userData.muzzleGlow = muzzleGlow;
+            g.userData.channel = channel;
+            g.userData.glow = glow;
+            g.userData.gripY = 0.12;
+            g.userData.gripZ = 0.06;
+            g.scale.setScalar(1.32);
+            weaponModels.wDx = g;
+        }
+        { // ⭐🔫 lg_ox — Celestial Plasma Cannon (aegis legend weapon): pearl+gold housing, light bore, sun-ring muzzle
+            const g = new THREE.Group();
+            const plate = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.6, roughness: 0.26, emissive: 0x6a5824, emissiveIntensity: 0.3 });
+            const gold = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.88, roughness: 0.22, emissive: 0x7a5810, emissiveIntensity: 0.45 });
+            const dark = new THREE.MeshStandardMaterial({ color: 0x3a3020, metalness: 0.6, roughness: 0.4 });
+            const light = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.6, roughness: 0.15 });
+            const lightGlow = new THREE.MeshBasicMaterial({ color: 0xffe8a0, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.11), dark);
+            grip.position.set(0, -0.1, -0.02);
+            grip.rotation.x = 0.32;
+            g.add(grip);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.22), plate);
+            body.position.set(0, 0.16, 0);
+            g.add(body);
+            const bodyTrim = new THREE.Mesh(new THREE.BoxGeometry(0.152, 0.1, 0.205), gold);
+            bodyTrim.position.set(0, 0.32, 0);
+            g.add(bodyTrim);
+            const cell = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), light);
+            cell.scale.set(1, 1.3, 1);
+            cell.position.set(0, 0.1, -0.14);
+            g.add(cell);
+            const cellGlow = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), lightGlow);
+            cellGlow.position.copy(cell.position);
+            g.add(cellGlow);
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.052, 0.6, 12), plate);
+            barrel.position.set(0, 0.56, 0.02);
+            g.add(barrel);
+            const barrelGold = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.054, 0.16, 12), gold);
+            barrelGold.position.set(0, 0.44, 0.02);
+            g.add(barrelGold);
+            const channel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.62, 8), light);
+            channel.position.set(0, 0.56, 0.02);
+            g.add(channel);
+            const sunRing = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.015, 8, 20), gold);
+            sunRing.position.set(0, 0.86, 0.02);
+            sunRing.rotation.x = Math.PI / 2;
+            g.add(sunRing);
+            for (let k = 0; k < 8; k++) {
+                const a = (k / 8) * Math.PI * 2;
+                const ray = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.07, 4), light);
+                ray.position.set(Math.cos(a) * 0.11, 0.86, 0.02 + Math.sin(a) * 0.11);
+                ray.rotation.x = Math.PI / 2;
+                ray.rotation.z = -a;
+                g.add(ray);
+            }
+            const muzzleGlow = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), lightGlow);
+            muzzleGlow.position.set(0, 0.88, 0.02);
+            g.add(muzzleGlow);
+            const glow = new THREE.PointLight(0xffe08a, 0.6, 2.6);
+            glow.position.set(0, 0.88, 0.02);
+            g.add(glow);
+            g.userData.muzzleGlow = muzzleGlow;
+            g.userData.channel = channel;
+            g.userData.glow = glow;
+            g.userData.gripY = 0.12;
+            g.userData.gripZ = 0.06;
+            g.scale.setScalar(1.34);
+            weaponModels.lg_ox = g;
         }
         Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
         weaponModels.default.visible = true;
