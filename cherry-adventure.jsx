@@ -15154,6 +15154,11 @@ export default function CherryAdventure() {
     const enemyDefend = (raw) => {
       const e = G.enemy;
       if (!e) return { dmg: raw, note: "" };
+      // ⚖️ level-gap penalty — a foe far above your level shrugs off part of your damage (world boss exempt: it's a timed check)
+      if (!e.worldBoss) {
+        const lvGap = Math.max(0, (e.lv || 1) - (G.player ? G.player.level : 1));
+        raw = raw * Math.max(0.4, 1 - lvGap * 0.03);
+      }
       const r = Math.random();
       if (r < e.evaChance) {
         // 💨 full dodge — sidestep, no damage
@@ -15178,7 +15183,7 @@ export default function CherryAdventure() {
         }
         return { dmg: Math.max(1, Math.round(raw * 0.6)), note: " — ศัตรูตั้งการ์ด! 🪨" };
       }
-      return { dmg: raw, note: "" };
+      return { dmg: Math.max(1, Math.round(raw)), note: "" };
     };
 
     // ---------- 🗺️⚔️ OPEN-WORLD ACTION COMBAT (hybrid) — walk & hit normal monsters; bosses still enter the arena ----------
@@ -15255,6 +15260,9 @@ export default function CherryAdventure() {
     const hurtWild = (m, dmg, opts) => {
       opts = opts || {};
       initWildHp(m);
+      // ⚖️ level-gap penalty — hitting monsters far above your level deals less (mirrors the EXP relMul)
+      const lvGap = Math.max(0, (m.userData.lv || 1) - (G.player ? G.player.level : 1));
+      dmg = dmg * Math.max(0.4, 1 - lvGap * 0.03);
       dmg = Math.max(1, Math.round(dmg));
       m.userData.whp -= dmg;
       popDamage(m.position, dmg, opts.crit ? "crit" : "hit");
