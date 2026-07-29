@@ -2790,14 +2790,14 @@ export default function CherryAdventure() {
       if (id === "ragAxe") return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
       if (id === "cx") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 laser blaster — muzzle levelled forward (barrel faces ahead)
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
-      if (cls === "archer" || id === "ca" || id === "wDa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
-      if (cls === "mage" || id === "cm" || id === "wDm") return { x: -0.15, y: 0, z: 0 };
-      if (id === "cw" || id === "wDw" || id === "wS" || cls === "warrior") return { x: 1.55, y: 0, z: 0 }; // blade points backward
-      if (cls === "assassin" || id === "cs" || id === "wDs") return { x: 1.4, y: 0, z: 0 }; // daggers point backward
-      if (cls === "lancer" || id === "cl") return { x: Math.PI / 4, y: 0, z: 0 }; // spear tilted 45° forward
-      if (cls === "samurai" || id === "ck") return { x: 1.5, y: 0, z: 0 }; // katana points backward
-      if (cls === "office" || id === "co") return { x: 0.55, y: 0, z: -0.25 }; // 🖊️ pen held like a stylus, nib angled down-forward
-      if (cls === "coder" || id === "cc") return { x: -1.35, y: 0, z: 0 }; // ⌨️ keyboard held flat, ready to type
+      if (cls === "archer" || id === "ca" || id === "wDa" || id === "lg_oa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
+      if (cls === "mage" || id === "cm" || id === "wDm" || id === "lg_om") return { x: -0.15, y: 0, z: 0 };
+      if (id === "cw" || id === "wDw" || id === "wS" || id === "lg_ow" || cls === "warrior") return { x: 1.55, y: 0, z: 0 }; // blade points backward
+      if (cls === "assassin" || id === "cs" || id === "wDs" || id === "lg_os") return { x: 1.4, y: 0, z: 0 }; // daggers point backward
+      if (cls === "lancer" || id === "cl" || id === "wDl" || id === "lg_ol") return { x: Math.PI / 4, y: 0, z: 0 }; // spear tilted 45° forward
+      if (cls === "samurai" || id === "ck" || id === "kd" || id === "lg_ok") return { x: 1.5, y: 0, z: 0 }; // katana points backward
+      if (cls === "office" || id === "co" || id === "wDo" || id === "lg_oo") return { x: 0.55, y: 0, z: -0.25 }; // 🖊️ pen held like a stylus, nib angled down-forward
+      if (cls === "coder" || id === "cc" || id === "wDc" || id === "lg_oc") return { x: -1.35, y: 0, z: 0 }; // ⌨️ keyboard held flat, ready to type
       if (cls === "aegis") return { x: 1.5, y: 0, z: 0 }; // 🤖 non-laser weapons held blade-backward so the mech grips them like a melee fighter
       return { x: -0.5, y: 0, z: 0 };
     };
@@ -3857,6 +3857,179 @@ export default function CherryAdventure() {
       g.userData.flame = embers[0];
       g.userData.gripY = 0.12;
       weaponModels.wDs = g;
+    }
+    // ═══════════ 🐉 dragon spear/pen/keyboard + ⭐ LEGENDARY celestial arsenal ═══════════
+    { // 🐉 wDl — dragon fang spear: dark shaft, dragon-jaw socket, burning blade + wing fins
+      const g = new THREE.Group();
+      const shaftMat = new THREE.MeshStandardMaterial({ color: 0x3a1610, metalness: 0.5, roughness: 0.4, emissive: 0x1a0402, emissiveIntensity: 0.4 });
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x8a2a1a, metalness: 0.55, roughness: 0.35, emissive: 0x3a0a05, emissiveIntensity: 0.6 });
+      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.3 });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 1.5, 10), shaftMat);
+      shaft.position.y = 0.1; g.add(shaft);
+      for (let k = 0; k < 4; k++) { const cord = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.008, 6, 12), emberMat); cord.rotation.x = Math.PI / 2; cord.position.y = -0.42 + k * 0.06; g.add(cord); }
+      const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 12), scaleMat); jaw.scale.set(1.25, 0.9, 1); jaw.position.y = 0.72; g.add(jaw);
+      for (const sx of [-1, 1]) { const fang = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.1, 6), boneMat); fang.rotation.x = Math.PI; fang.position.set(0.055 * sx, 0.66, 0.07); g.add(fang); }
+      const blade = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.52, 4), scaleMat); blade.position.y = 1.03; g.add(blade);
+      const bEdge = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.52, 4), emberMat); bEdge.position.set(0.02, 1.03, 0); g.add(bEdge);
+      for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 3), scaleMat); fin.position.set(0.09 * sx, 0.84, 0); fin.rotation.z = sx > 0 ? -1.15 : 1.15; fin.scale.set(1, 1, 0.4); g.add(fin); }
+      const pom = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 6), boneMat); pom.rotation.x = Math.PI; pom.position.y = -0.68; g.add(pom);
+      g.userData.flame = bEdge; g.userData.tint = bEdge; g.userData.baseTint = 0xff6a2a;
+      g.userData.gripY = 0.42;
+      weaponModels.wDl = g;
+    }
+    { // 🐉 wDo — dragon CEO pen: obsidian barrel, gold scale rings, ember nib
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x241012, metalness: 0.6, roughness: 0.3, emissive: 0x1a0402, emissiveIntensity: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b040, metalness: 0.9, roughness: 0.24, emissive: 0x4a2c08, emissiveIntensity: 0.35 });
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.5, roughness: 0.2 });
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.031, 0.46, 10), bodyMat); barrel.position.y = 0.06; g.add(barrel);
+      for (const y of [-0.08, 0.06, 0.2]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.009, 6, 12), goldMat); band.position.y = y; band.rotation.x = Math.PI / 2; g.add(band); }
+      const clip = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.18, 0.014), goldMat); clip.position.set(0.034, 0.2, 0); clip.rotation.z = 0.12; g.add(clip);
+      const capGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), emberMat); capGem.position.y = 0.32; g.add(capGem);
+      const nib = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 8), goldMat); nib.position.y = -0.24; g.add(nib);
+      const inkTip = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.07, 6), emberMat); inkTip.position.y = -0.31; g.add(inkTip);
+      const motes = []; for (let k = 0; k < 5; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.011, 5, 5), new THREE.MeshBasicMaterial({ color: 0xffb060, transparent: true, opacity: 0.85 })); m.userData = { a: Math.random() * Math.PI * 2, r: 0.07 + Math.random() * 0.06, y: -0.31 + Math.random() * 0.14, sp: 0.6 + Math.random() }; g.add(m); motes.push(m); }
+      g.userData.motes = motes; g.userData.flame = inkTip; g.userData.tint = inkTip; g.userData.baseTint = 0xff6a2a;
+      g.userData.gripY = 0.18; g.userData.glow = true;
+      weaponModels.wDo = g;
+    }
+    { // 🐉 wDc — dragon digital keyboard: dark case, ember underglow, gold trim, fire AI-cube
+      const g = new THREE.Group();
+      const caseMat = new THREE.MeshStandardMaterial({ color: 0x241014, metalness: 0.6, roughness: 0.4 });
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc83a10, emissiveIntensity: 1.5, roughness: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xe0b040, metalness: 0.85, roughness: 0.3, emissive: 0x3a2408, emissiveIntensity: 0.3 });
+      const keyMat = new THREE.MeshStandardMaterial({ color: 0x3a2018, roughness: 0.7 });
+      const board = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.035, 0.19), caseMat); g.add(board);
+      const glow = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.012, 0.21), emberMat); glow.position.y = -0.026; g.add(glow);
+      for (const sx of [-1, 1]) { const trim = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.2), goldMat); trim.position.set(sx * 0.235, 0.006, 0); g.add(trim); }
+      const keys = [];
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) { const k = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.014, 0.035), keyMat); k.position.set(-0.19 + c * 0.048, 0.026, -0.05 + r * 0.05); k.userData = { phase: (c + r) * 0.4 }; g.add(k); keys.push(k); }
+      g.userData.keys = keys; g.userData.rgb = glow;
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.11), new THREE.MeshStandardMaterial({ color: 0xff8a3a, emissive: 0xd0500a, emissiveIntensity: 1.3, transparent: true, opacity: 0.85, roughness: 0.2 }));
+      cube.position.set(0, 0.22, 0);
+      const cage = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), new THREE.MeshBasicMaterial({ color: 0xffb060, wireframe: true, transparent: true, opacity: 0.7 }));
+      cage.position.copy(cube.position); g.add(cube, cage);
+      g.userData.cube = cube; g.userData.cage = cage;
+      g.userData.tint = glow; g.userData.baseTint = 0xff6a2a;
+      g.userData.gripY = 0.05; g.userData.glow = true;
+      weaponModels.wDc = g;
+    }
+    // ─────────── ⭐ LEGENDARY (light element) — radiant gold + white + halo glow ───────────
+    { // ⭐ lg_ow — celestial greatsword: radiant holy blade + winged crossguard
+      const g = mkElemSword({ shape: "holy", blade: 0xfffbe8, glow: 0xffe08a, glowI: 1.5, edge: 0xfff0b0, guard: 0xf0cf72, guardGlow: 0x9a7010, handle: 0xc9a24a });
+      const featherMat = new THREE.MeshStandardMaterial({ color: 0xfff6d8, emissive: 0xffd870, emissiveIntensity: 0.9, roughness: 0.35, side: THREE.DoubleSide });
+      for (const sx of [-1, 1]) for (const off of [0, 1]) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.045 - off * 0.012, 0.2 - off * 0.05, 4), featherMat); f.position.set((0.11 + off * 0.07) * sx, -0.02 + off * 0.02, 0); f.rotation.z = sx > 0 ? -1.35 : 1.35; f.scale.set(1, 1, 0.4); g.add(f); }
+      g.userData.tint = g.userData.flame; g.userData.baseTint = 0xfffbe8;
+      g.userData.gripY = 0.42;
+      weaponModels.lg_ow = g;
+    }
+    { // ⭐ lg_ok — celestial katana: bright hamon + radiant halo tsuba
+      const g = mkKatana({ blade: 0xfffbe8, glow: 0xffe08a, glowI: 1.1, edge: 0xfff2b0, guard: 0xf0cf72, guardGlow: 0x9a7010, wrap: 0xf5e6b0, roundGuard: true, animGlow: true });
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.014, 8, 22), new THREE.MeshStandardMaterial({ color: 0xfff2b0, emissive: 0xffd870, emissiveIntensity: 1.2 }));
+      halo.position.y = 0.12; halo.rotation.x = Math.PI / 2; g.add(halo);
+      g.userData.baseTint = 0xfffbe8;
+      g.userData.gripY = 0.15;
+      weaponModels.lg_ok = g;
+    }
+    { // ⭐ lg_om — cosmos staff: gold shaft, sun-ring holding a radiant orb, feather wings
+      const g = new THREE.Group();
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.8, roughness: 0.25, emissive: 0x7a5810, emissiveIntensity: 0.4 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.6, roughness: 0.15 });
+      const featherMat = new THREE.MeshStandardMaterial({ color: 0xfffbe8, emissive: 0xffd870, emissiveIntensity: 0.8, transparent: true, opacity: 0.9, roughness: 0.35, side: THREE.DoubleSide });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.04, 1.02, 10), goldMat); g.add(shaft);
+      for (const y of [-0.36, 0.32]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.01, 6, 14), lightMat); ring.rotation.x = Math.PI / 2; ring.position.y = y; g.add(ring); }
+      const sunRing = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.022, 10, 28), goldMat); sunRing.position.y = 0.66; g.add(sunRing);
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.09, 4), goldMat); ray.position.set(Math.cos(a) * 0.19, 0.66, Math.sin(a) * 0.19); ray.rotation.z = -a + Math.PI / 2; ray.rotation.x = Math.PI / 2; g.add(ray); }
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 18), lightMat); orb.position.y = 0.66; g.add(orb);
+      for (const sx of [-1, 1]) { const wing = new THREE.Mesh(new THREE.CircleGeometry(0.17, 10, 0, Math.PI), featherMat); wing.position.set(0.14 * sx, 0.62, -0.02); wing.rotation.z = sx > 0 ? -0.5 : Math.PI + 0.5; wing.scale.set(1, 0.7, 1); g.add(wing); }
+      const pom = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 8), goldMat); pom.rotation.x = Math.PI; pom.position.y = -0.56; g.add(pom);
+      g.userData.orb = orb; g.userData.flame = orb; g.userData.tint = orb; g.userData.baseTint = 0xfff6d0;
+      g.userData.gripY = 0.42;
+      weaponModels.lg_om = g;
+    }
+    { // ⭐ lg_oa — sun bow: gold radiant arcs, light string, blazing sun emblem
+      const g = new THREE.Group();
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.8, roughness: 0.25, emissive: 0x7a5810, emissiveIntensity: 0.45 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.15 });
+      for (const sy of [1, -1]) {
+        const limb = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.03, 8, 22, Math.PI * 0.62), goldMat);
+        limb.position.y = 0.34 * sy; limb.rotation.z = sy > 0 ? -Math.PI * 0.19 : Math.PI * 0.19 + Math.PI; g.add(limb);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.13, 6), lightMat); tip.position.set(0.17, 0.58 * sy, 0); tip.rotation.z = sy > 0 ? -0.5 : 0.5; g.add(tip);
+      }
+      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.3, 8), goldMat); g.add(grip);
+      const str = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.9, 6), lightMat); str.position.x = 0.15; g.add(str);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 14), lightMat); sun.position.set(-0.02, 0, 0); g.add(sun);
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.05, 4), goldMat); ray.position.set(-0.02 + Math.cos(a) * 0.09, Math.sin(a) * 0.09, 0); ray.rotation.z = -a - Math.PI / 2; g.add(ray); }
+      g.userData.flame = str; g.userData.tint = str; g.userData.baseTint = 0xfff6d0;
+      g.userData.gripY = 0.0;
+      weaponModels.lg_oa = g;
+    }
+    { // ⭐ lg_os — eternal-night dagger: radiant white blade, gold guard, light edge
+      const g = new THREE.Group();
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.8, roughness: 0.28, emissive: 0x6a4a10, emissiveIntensity: 0.4 });
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0xfffbe8, metalness: 0.6, roughness: 0.2, emissive: 0xffe08a, emissiveIntensity: 0.9 });
+      const edgeMat = new THREE.MeshStandardMaterial({ color: 0xfff2b0, emissive: 0xffd870, emissiveIntensity: 1.4 });
+      const grip = mkStick(0xc9a24a, 0.2); grip.position.y = -0.08; g.add(grip);
+      const guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.05), goldMat); guard.position.y = 0.03; g.add(guard);
+      const blade = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.44, 4), bladeMat); blade.position.y = 0.27; blade.scale.set(1, 1, 0.45); g.add(blade);
+      const edge = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.44, 4), edgeMat); edge.position.set(0.02, 0.27, 0); g.add(edge);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), edgeMat); gem.position.y = 0.03; gem.position.z = 0.04; g.add(gem);
+      g.userData.flame = edge; g.userData.tint = edge; g.userData.baseTint = 0xfff2b0;
+      g.userData.gripY = 0.12;
+      weaponModels.lg_os = g;
+    }
+    { // ⭐ lg_ol — heaven's spear: gold shaft, radiant leaf-blade + sun collar + wing fins
+      const g = new THREE.Group();
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.82, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.45 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfffbe8, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 1.5, 10), goldMat); shaft.position.y = 0.1; g.add(shaft);
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.016, 8, 16), lightMat); collar.position.y = 0.72; collar.rotation.x = Math.PI / 2; g.add(collar);
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.06, 4), goldMat); ray.position.set(Math.cos(a) * 0.08, 0.72, Math.sin(a) * 0.08); ray.rotation.z = -a + Math.PI / 2; ray.rotation.x = Math.PI / 2; g.add(ray); }
+      const blade = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.54, 4), lightMat); blade.position.y = 1.04; g.add(blade);
+      const edge = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.54, 4), new THREE.MeshStandardMaterial({ color: 0xfff2b0, emissive: 0xffd870, emissiveIntensity: 1.3 })); edge.position.set(0.02, 1.04, 0); g.add(edge);
+      for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 3), goldMat); fin.position.set(0.085 * sx, 0.86, 0); fin.rotation.z = sx > 0 ? -1.15 : 1.15; fin.scale.set(1, 1, 0.4); g.add(fin); }
+      const pom = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.16, 8), lightMat); pom.rotation.x = Math.PI; pom.position.y = -0.68; g.add(pom);
+      g.userData.flame = edge; g.userData.tint = edge; g.userData.baseTint = 0xfff2b0;
+      g.userData.gripY = 0.42;
+      weaponModels.lg_ol = g;
+    }
+    { // ⭐ lg_oo — emperor pen: pearl-white barrel, gold radiant rings, light nib
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xfaf4e6, metalness: 0.3, roughness: 0.3, emissive: 0x5a4a20, emissiveIntensity: 0.15 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.9, roughness: 0.22, emissive: 0x6a4a10, emissiveIntensity: 0.4 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.6, roughness: 0.18 });
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.031, 0.46, 10), bodyMat); barrel.position.y = 0.06; g.add(barrel);
+      for (const y of [-0.08, 0.06, 0.2]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.009, 6, 12), goldMat); band.position.y = y; band.rotation.x = Math.PI / 2; g.add(band); }
+      const clip = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.18, 0.014), goldMat); clip.position.set(0.034, 0.2, 0); g.add(clip);
+      const capGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), lightMat); capGem.position.y = 0.32; g.add(capGem);
+      const nib = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 8), goldMat); nib.position.y = -0.24; g.add(nib);
+      const inkTip = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.07, 6), lightMat); inkTip.position.y = -0.31; g.add(inkTip);
+      const motes = []; for (let k = 0; k < 5; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.011, 5, 5), new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.85 })); m.userData = { a: Math.random() * Math.PI * 2, r: 0.07 + Math.random() * 0.06, y: -0.31 + Math.random() * 0.14, sp: 0.6 + Math.random() }; g.add(m); motes.push(m); }
+      g.userData.motes = motes; g.userData.flame = inkTip; g.userData.tint = inkTip; g.userData.baseTint = 0xfff6d0;
+      g.userData.gripY = 0.18; g.userData.glow = true;
+      weaponModels.lg_oo = g;
+    }
+    { // ⭐ lg_oc — singularity keyboard: white case, gold trim, radiant light-cube
+      const g = new THREE.Group();
+      const caseMat = new THREE.MeshStandardMaterial({ color: 0xf2ecdc, metalness: 0.35, roughness: 0.4 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff2b0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.88, roughness: 0.28, emissive: 0x5a3e08, emissiveIntensity: 0.3 });
+      const keyMat = new THREE.MeshStandardMaterial({ color: 0xe4dcc4, roughness: 0.6 });
+      const board = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.035, 0.19), caseMat); g.add(board);
+      const glow = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.012, 0.21), lightMat); glow.position.y = -0.026; g.add(glow);
+      for (const sx of [-1, 1]) { const trim = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.2), goldMat); trim.position.set(sx * 0.235, 0.006, 0); g.add(trim); }
+      const keys = [];
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) { const k = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.014, 0.035), keyMat); k.position.set(-0.19 + c * 0.048, 0.026, -0.05 + r * 0.05); k.userData = { phase: (c + r) * 0.4 }; g.add(k); keys.push(k); }
+      g.userData.keys = keys; g.userData.rgb = glow;
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.11), new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffdf80, emissiveIntensity: 1.3, transparent: true, opacity: 0.85, roughness: 0.2 }));
+      cube.position.set(0, 0.22, 0);
+      const cage = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), new THREE.MeshBasicMaterial({ color: 0xfff0b0, wireframe: true, transparent: true, opacity: 0.7 }));
+      cage.position.copy(cube.position); g.add(cube, cage);
+      g.userData.cube = cube; g.userData.cage = cage;
+      g.userData.tint = glow; g.userData.baseTint = 0xfff2b0;
+      g.userData.gripY = 0.05; g.userData.glow = true;
+      weaponModels.lg_oc = g;
     }
     {
       // 🌸 haruStaff — Sacred Sakura Staff (ตามภาพ concept): ลูกแก้วชมพูในกรอบทองประดับเม็ดทอง
@@ -6843,13 +7016,66 @@ export default function CherryAdventure() {
       const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.3 }));
       core.position.set(0, 1.72, 0.52);
       g.add(core);
+      // 🐉 polish: extra front scale rows + gold trim belt + swept back spine ridge
+      const scaleGold = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.8, roughness: 0.3, emissive: 0x5a3808, emissiveIntensity: 0.35 });
+      for (let row = 0; row < 2; row++) {
+        for (let c2 = -1; c2 <= 1; c2++) {
+          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.12, 4), scaleMat);
+          sc.position.set(c2 * 0.13, 1.5 + row * 0.2, 0.55); sc.rotation.x = Math.PI; g.add(sc);
+        }
+      }
+      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.045, 8, 24, Math.PI * 1.3), scaleGold);
+      belt.position.set(0, 1.36, 0.02); belt.rotation.set(Math.PI / 2, 0, -Math.PI * 0.65); g.add(belt);
+      const beltGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0xff8a3a, emissive: 0xd0500a, emissiveIntensity: 1.2 }));
+      beltGem.position.set(0, 1.36, 0.5); g.add(beltGem);
+      for (let i = 0; i < 4; i++) { const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16 - i * 0.02, 4), scaleGold); spike.position.set(0, 2.0 - i * 0.16, -0.42 - i * 0.03); spike.rotation.x = -0.5; g.add(spike); }
       outfitModels.oD = g;
+    }
+    { // ⭐ lg_out — celestial divine armor: radiant gold+white plate, halo core, feathered light-wings
+      const g = new THREE.Group();
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.5, roughness: 0.35, emissive: 0x6a5824, emissiveIntensity: 0.35, side: THREE.DoubleSide });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.25, emissive: 0x7a5810, emissiveIntensity: 0.45, side: THREE.DoubleSide });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.15 });
+      const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.75, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
+      // pearl breastplate
+      const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.66, 24, 1, true, -Math.PI * 0.4, Math.PI * 0.8), plateMat);
+      chest.position.y = 1.62; g.add(chest);
+      // gold layered abdominal bands
+      for (let k = 0; k < 3; k++) { const ab = new THREE.Mesh(new THREE.TorusGeometry(0.4 - k * 0.03, 0.03, 6, 20, Math.PI * 1.1), goldMat); ab.position.set(0, 1.42 - k * 0.11, 0.06); ab.rotation.set(Math.PI / 2, 0, -Math.PI * 0.55); g.add(ab); }
+      // gold pauldrons with light gems
+      for (const sx of [-0.62, 0.62]) {
+        const pad = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 14), goldMat); pad.scale.set(1, 0.65, 1); pad.position.set(sx, 2.1, 0); g.add(pad);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), lightMat); gem.position.set(sx, 2.16, 0.08); g.add(gem);
+      }
+      // radiant sun-halo core on the chest
+      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 24), goldMat); coreRing.position.set(0, 1.78, 0.5); g.add(coreRing);
+      for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.07, 4), goldMat); ray.position.set(Math.cos(a) * 0.17, 1.78 + Math.sin(a) * 0.17, 0.5); ray.rotation.z = -a - Math.PI / 2; g.add(ray); }
+      const core = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), lightMat); core.position.set(0, 1.78, 0.5); g.add(core);
+      g.userData.crownStar = core;
+      // 🕊️ big radiant feather wings fanning out to the sides (clear of the big chibi head)
+      for (const sx of [-1, 1]) {
+        const wing = new THREE.Group();
+        for (let f = 0; f < 6; f++) {
+          const t = 1.15 - f * 0.33;               // fan direction: up-out → down-out
+          const len = 0.92 - f * 0.08;
+          const feather = new THREE.Mesh(new THREE.ConeGeometry(0.095 - f * 0.006, len, 4), wingMat);
+          feather.position.set(Math.cos(t) * len / 2, Math.sin(t) * len / 2, 0);
+          feather.rotation.z = t - Math.PI / 2; feather.scale.set(1, 1, 0.3);
+          wing.add(feather);
+          const gtip = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.1, 4), goldMat);
+          gtip.position.set(Math.cos(t) * len, Math.sin(t) * len, 0); gtip.rotation.z = t - Math.PI / 2; gtip.scale.set(1, 1, 0.3);
+          wing.add(gtip);
+        }
+        wing.position.set(sx * 0.42, 1.92, -0.34); wing.scale.x = sx;
+        g.add(wing);
+      }
+      outfitModels.lg_out = g;
     }
     Object.values(outfitModels).forEach((m) => { m.visible = false; char.add(m); });
     let curOutfit = null;
     // 👗 the generated archetype outfits have no bespoke mesh, so borrow a model of the
     // matching tier and RE-TINT it per archetype — every outfit you equip still looks different.
-    const OUTFIT_FALLBACK = { rare: "o2", epic: "o3", secret: "oS", dragon: "oD", common: "o1" };
+    const OUTFIT_FALLBACK = { rare: "o2", epic: "o3", secret: "oS", dragon: "oD", legend: "lg_out", common: "o1" };
     const ARCH_TINT = { atk: 0xd9536b, def: 0x3a7ac0, agi: 0x4aa06a };
     G.setOutfitVisual = (id) => {
       // 🙈 hide-gear hides the worn outfit everywhere; 👗 else a costume outfit overrides the look
@@ -7892,6 +8118,45 @@ export default function CherryAdventure() {
       }
       hatModels.hD = g;
     }
+    { // ⭐ lg_hat — divine crown of the world-ender: ornate gold crown + gems + floating radiant halo
+      const g = new THREE.Group();
+      const goldM = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, emissive: 0x7a5810, emissiveIntensity: 0.5, metalness: 0.85, roughness: 0.22 });
+      const goldBright = new THREE.MeshStandardMaterial({ color: 0xffe89a, emissive: 0xb08420, emissiveIntensity: 0.6, metalness: 0.8, roughness: 0.25 });
+      const lightM = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.6, roughness: 0.15 });
+      // base band hugging the head
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 10, 26), goldM);
+      band.rotation.x = Math.PI / 2; band.position.y = 0.5; g.add(band);
+      // front tall central spire + gem
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.34, 6), goldBright);
+      spire.position.set(0, 0.82, 0.36); g.add(spire);
+      const spireGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), lightM); spireGem.position.set(0, 0.66, 0.44); g.add(spireGem);
+      // side spikes (decreasing outward) with gems
+      for (const sx of [-1, 1]) {
+        for (let k = 0; k < 3; k++) {
+          const h = 0.26 - k * 0.06;
+          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05 - k * 0.008, h, 5), goldM);
+          const a = (0.32 + k * 0.34) * sx;
+          spike.position.set(Math.sin(a) * 0.46, 0.6 + h * 0.4, Math.cos(a) * 0.46 * 0.7 + 0.12);
+          spike.rotation.z = -a * 0.6; g.add(spike);
+          const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03), lightM);
+          gem.position.set(Math.sin(a) * 0.46, 0.56, Math.cos(a) * 0.46 * 0.7 + 0.12); g.add(gem);
+        }
+      }
+      // 😇 floating radiant halo above the head
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.026, 10, 30), lightM);
+      halo.rotation.x = Math.PI / 2 - 0.35; halo.position.y = 1.12; g.add(halo);
+      const halo2 = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.008, 6, 30), goldBright);
+      halo2.rotation.x = Math.PI / 2 - 0.35; halo2.position.y = 1.12; g.add(halo2);
+      // little feather wings on the sides of the crown
+      const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.7, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
+      for (const sx of [-1, 1]) for (let f = 0; f < 3; f++) {
+        const feather = new THREE.Mesh(new THREE.ConeGeometry(0.05 - f * 0.008, 0.28 - f * 0.05, 4), wingMat);
+        feather.position.set(sx * (0.44 + f * 0.09), 0.6 + f * 0.06, -0.05);
+        feather.rotation.z = sx > 0 ? -1.3 - f * 0.18 : 1.3 + f * 0.18; feather.scale.set(1, 1, 0.3); g.add(feather);
+      }
+      g.userData.crownStar = spireGem;
+      hatModels.lg_hat = g;
+    }
     Object.values(hatModels).forEach((m) => { m.visible = false; headG.add(m); });
 
     const maskModels = {};
@@ -7940,6 +8205,25 @@ export default function CherryAdventure() {
       g.add(plate, horn, eyeGlow);
       maskModels.mD = g;
     }
+    { // ⭐ lg_msk — radiant sun visor: gold half-visor across the eyes + sunburst brow crest
+      const g = new THREE.Group();
+      const goldM = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x6a4a10, emissiveIntensity: 0.45 });
+      const lightM = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.16 });
+      const visorMat = new THREE.MeshStandardMaterial({ color: 0xffe89a, emissive: 0xffcf60, emissiveIntensity: 0.9, transparent: true, opacity: 0.6, roughness: 0.15, metalness: 0.3 });
+      // slim visor band across the eyes, curved to the face front
+      const visor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.13, 24, 1, true, -0.62, 1.24), visorMat);
+      visor.position.set(0, 0.42, 0.02); g.add(visor);
+      const visorRim = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.014, 6, 24, 1.24), goldM);
+      visorRim.position.set(0, 0.36, 0.02); visorRim.rotation.set(Math.PI / 2, 0, -0.62); g.add(visorRim);
+      // glowing eye slits
+      for (const sx of [-1, 1]) { const slit = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.03, 0.02), lightM); slit.position.set(0.16 * sx, 0.42, 0.49); slit.rotation.z = sx > 0 ? -0.15 : 0.15; g.add(slit); }
+      // sunburst crest on the forehead
+      const crestGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), lightM); crestGem.position.set(0, 0.62, 0.44); g.add(crestGem);
+      for (let i = 0; i < 7; i++) { const a = (i / 6) * Math.PI - Math.PI; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.11, 4), goldM); ray.position.set(Math.cos(a) * 0.13, 0.62 + Math.sin(a) * 0.11 + 0.03, 0.42); ray.rotation.z = a + Math.PI / 2; g.add(ray); }
+      // cheek fangs of gold (small)
+      for (const sx of [-1, 1]) { const stud = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 5), goldM); stud.position.set(0.3 * sx, 0.28, 0.4); stud.rotation.x = Math.PI; g.add(stud); }
+      maskModels.lg_msk = g;
+    }
     Object.values(maskModels).forEach((m) => { m.visible = false; headG.add(m); });
 
     // gear materials for gloves/pants/shoes
@@ -7950,7 +8234,99 @@ export default function CherryAdventure() {
     const shoePinkMat = new THREE.MeshStandardMaterial({ color: 0xf28ba8, roughness: 0.5 });
     const shoeBoltMat = new THREE.MeshStandardMaterial({ color: 0x3a3f4a, roughness: 0.3, emissive: 0x2a5a8a, emissiveIntensity: 0.5 });
     const shoeDragonMat = new THREE.MeshStandardMaterial({ color: 0x5a1f1a, metalness: 0.55, roughness: 0.3, emissive: 0x7a2008, emissiveIntensity: 0.7 });
+    const gloveLegendMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.8, roughness: 0.26, emissive: 0x7a5810, emissiveIntensity: 0.5 }); // ⭐ celestial gold gauntlet skin
+    const shoeLegendMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.7, roughness: 0.28, emissive: 0x7a5810, emissiveIntensity: 0.5 });
     let basePantsColor = 0xf7f5f0; // starting-outfit pants color (customizable)
+
+    // ───────── 🧤🦵👢 real 3D limb gear (dragon + legend) — anchored to the arm/leg joints so they bend with the limb ─────────
+    // NOTE: these dicts are local to the singleton char and are NOT cloned by buildFullAvatar (remote avatars keep the material-only look). Additive & safe.
+    const glovesModels = {}; // id -> [groupL, groupR] on each arm forearm
+    const pantsModels = {};  // id -> [groupL, groupR] on each knee (thigh+shin greaves)
+    const shoeModels3D = {}; // id -> [groupL, groupR] on each knee (boot ornaments over the shoe)
+    const _armEls = [armL.userData.elbow || armL, armR.userData.elbow || armR];
+    const _kneeEls = [legL.userData.knee || legL, legR.userData.knee || legR];
+    const mkLimbPair = (dict, id, anchors, buildFn) => {
+      dict[id] = anchors.map((a) => { const grp = new THREE.Group(); buildFn(grp); grp.visible = false; a.add(grp); return grp; });
+    };
+    // 🐉 gD — dragon claw gauntlet (forearm plate + bone claws over the fist)
+    mkLimbPair(glovesModels, "gD", _armEls, (grp) => {
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x6a2018, metalness: 0.6, roughness: 0.34, emissive: 0x3a0a05, emissiveIntensity: 0.6 });
+      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.1 });
+      const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.094, 0.076, 0.28, 12), scaleMat); gaunt.position.y = -0.3; grp.add(gaunt);
+      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 8, 16), boneMat); cuff.position.y = -0.17; cuff.rotation.x = Math.PI / 2; grp.add(cuff);
+      const vein = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.01), emberMat); vein.position.set(0, -0.3, 0.09); grp.add(vein);
+      const knuckle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.06, 0.13), scaleMat); knuckle.position.set(0, -0.55, 0.06); grp.add(knuckle);
+      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.16, 5), boneMat); claw.position.set(kx * 0.07, -0.63, 0.12); claw.rotation.x = 2.4; grp.add(claw); }
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 4), scaleMat); spike.position.set(0, -0.28, -0.1); spike.rotation.x = -1.9; grp.add(spike);
+    });
+    // ⭐ lg_glv — divine gauntlet (pearl+gold plate, light gem, radiant claws)
+    mkLimbPair(glovesModels, "lg_glv", _armEls, (grp) => {
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.55, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
+      const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.096, 0.078, 0.3, 12), plateMat); gaunt.position.y = -0.3; grp.add(gaunt);
+      const cuffTop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.096, 0.08, 12), goldMat); cuffTop.position.y = -0.17; grp.add(cuffTop);
+      const trim = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 16), goldMat); trim.position.y = -0.42; trim.rotation.x = Math.PI / 2; grp.add(trim);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.04), lightMat); gem.position.set(0, -0.3, 0.095); grp.add(gem);
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.1, 0.04), goldMat); plate.position.set(0, -0.55, 0.07); grp.add(plate);
+      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.11, 5), lightMat); claw.position.set(kx * 0.06, -0.63, 0.12); claw.rotation.x = 2.4; grp.add(claw); }
+    });
+    // 🐉 pD — dragon-scale greaves (thigh plate + knee guard + scaled shin)
+    mkLimbPair(pantsModels, "pD", _kneeEls, (grp) => {
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x5a1f1a, metalness: 0.55, roughness: 0.32, emissive: 0x5a1508, emissiveIntensity: 0.6 });
+      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.0 });
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.15, 0.34, 16), scaleMat); thigh.position.set(0, 0.2, 0); grp.add(thigh);
+      const kg = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), scaleMat); kg.scale.set(1, 0.8, 1); kg.position.y = -0.02; grp.add(kg);
+      const kSpike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 5), boneMat); kSpike.position.set(0, -0.02, 0.14); kSpike.rotation.x = 1.4; grp.add(kSpike);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.42, 16), scaleMat); shin.position.set(0, -0.24, 0); grp.add(shin);
+      for (let r = 0; r < 3; r++) { const sc = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.09, 4), scaleMat); sc.position.set(0, -0.12 - r * 0.11, 0.13); sc.rotation.x = 1.2; grp.add(sc); }
+      const vein = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 16), emberMat); vein.position.y = -0.06; vein.rotation.x = Math.PI / 2; grp.add(vein);
+    });
+    // ⭐ lg_pnt — divine greaves (pearl+gold plate, light knee gem, gold trim)
+    mkLimbPair(pantsModels, "lg_pnt", _kneeEls, (grp) => {
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.5, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.15, 0.34, 16), plateMat); thigh.position.set(0, 0.2, 0); grp.add(thigh);
+      const thighTrim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.014, 6, 18), goldMat); thighTrim.position.y = 0.36; thighTrim.rotation.x = Math.PI / 2; grp.add(thighTrim);
+      const kg = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), goldMat); kg.scale.set(1, 0.8, 1); kg.position.y = -0.02; grp.add(kg);
+      const kGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), lightMat); kGem.position.set(0, -0.02, 0.13); grp.add(kGem);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.42, 16), plateMat); shin.position.set(0, -0.24, 0); grp.add(shin);
+      for (const sy of [-0.12, -0.3]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.132, 0.012, 6, 18), goldMat); band.position.y = sy; band.rotation.x = Math.PI / 2; grp.add(band); }
+      const vein = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.34, 0.01), lightMat); vein.position.set(0, -0.24, 0.12); grp.add(vein);
+    });
+    // 🐉 sD — dragon boots (ankle cuff + claw toes + ember sole, wrapping the shoe)
+    mkLimbPair(shoeModels3D, "sD", _kneeEls, (grp) => {
+      const scaleMat = new THREE.MeshStandardMaterial({ color: 0x5a1f1a, metalness: 0.55, roughness: 0.3, emissive: 0x7a2008, emissiveIntensity: 0.6 });
+      const boneMat = new THREE.MeshStandardMaterial({ color: 0xe8d8b0, roughness: 0.5 });
+      const emberMat = new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xc03a10, emissiveIntensity: 1.1 });
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.16, 12), scaleMat); cuff.position.set(0, -0.34, 0.02); grp.add(cuff);
+      const cuffRim = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 8, 16), boneMat); cuffRim.position.set(0, -0.27, 0.02); cuffRim.rotation.x = Math.PI / 2; grp.add(cuffRim);
+      const toe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), scaleMat); toe.scale.set(1, 0.7, 1.15); toe.position.set(0, -0.5, 0.22); grp.add(toe);
+      for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.13, 5), boneMat); claw.position.set(kx * 0.055, -0.52, 0.34); claw.rotation.x = 1.75; grp.add(claw); }
+      const heel = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 5), boneMat); heel.position.set(0, -0.44, -0.18); heel.rotation.x = -2.1; grp.add(heel);
+      const sole = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.42), emberMat); sole.position.set(0, -0.6, 0.08); grp.add(sole);
+    });
+    // ⭐ lg_sho — heaven-soaring boots (gold boot + light sole + winged ankles)
+    mkLimbPair(shoeModels3D, "lg_sho", _kneeEls, (grp) => {
+      const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.5, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
+      const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.8, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.16, 12), plateMat); cuff.position.set(0, -0.34, 0.02); grp.add(cuff);
+      const cuffRim = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.016, 8, 16), goldMat); cuffRim.position.set(0, -0.27, 0.02); cuffRim.rotation.x = Math.PI / 2; grp.add(cuffRim);
+      const toe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), goldMat); toe.scale.set(1, 0.7, 1.15); toe.position.set(0, -0.5, 0.22); grp.add(toe);
+      const sole = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.03, 0.42), lightMat); sole.position.set(0, -0.6, 0.08); grp.add(sole);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.035), lightMat); gem.position.set(0, -0.34, 0.14); grp.add(gem);
+      // 🕊️ ankle wings
+      for (const sx of [-1, 1]) for (let f = 0; f < 3; f++) {
+        const feather = new THREE.Mesh(new THREE.ConeGeometry(0.04 - f * 0.006, 0.24 - f * 0.05, 4), wingMat);
+        feather.position.set(sx * (0.12 + f * 0.06), -0.34 + f * 0.03, -0.02);
+        feather.rotation.z = sx > 0 ? -1.3 - f * 0.2 : 1.3 + f * 0.2; feather.scale.set(1, 1, 0.3); grp.add(feather);
+      }
+    });
 
     // 🎀 white collar + red ribbon set (part of the black-gold dress outfit)
     const collarSet = new THREE.Group();
@@ -8054,6 +8430,7 @@ export default function CherryAdventure() {
         else if (gl === "g2") { gmat = gloveBoxMat; sc = 1.4; }
         else if (gl === "gS") { gmat = gloveStormMat; sc = 1.3; }
         else if (gl === "gD") { gmat = gloveDragonMat; sc = 1.5; }
+        else if (gl === "lg_glv") { gmat = gloveLegendMat; sc = 1.45; }
         else { gmat = skinMat; sc = 1; }
         if (gl && dye.gloves) gmat = dyedMat(gmat, dye.gloves); // 🎨 dye covers gloves, not bare skin
         h.material = gmat; h.scale.setScalar(sc);
@@ -8061,16 +8438,20 @@ export default function CherryAdventure() {
       const pa = look("pants");
       const bareLegs = !!G.heroId && !pa; // 🦵 ขาเรียวสีผิวเดียวกับใบหน้า (ทุกฮีโร่)
       legSkinMeshes.forEach(m => m.material = bareLegs ? skinMat : pantsMat);
-      pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x5a1f1a : basePantsColor);
-      pantsMat.metalness = pa === "p2" || pa === "pD" ? 0.55 : 0;
+      pantsMat.color.setHex(dye.pants != null ? dye.pants : pa === "p1" ? 0x5a7ab0 : pa === "p2" ? 0x44445a : pa === "pD" ? 0x5a1f1a : pa === "lg_pnt" ? 0xf0cf6a : basePantsColor);
+      pantsMat.metalness = pa === "p2" || pa === "pD" || pa === "lg_pnt" ? 0.55 : 0;
       const sh = look("shoes");
       shoeMeshes.forEach((s) => {
-        let smat = sh === "s1" ? shoePinkMat : sh === "s2" ? shoeBoltMat : sh === "sD" ? shoeDragonMat : whiteMat;
+        let smat = sh === "s1" ? shoePinkMat : sh === "s2" ? shoeBoltMat : sh === "sD" ? shoeDragonMat : sh === "lg_sho" ? shoeLegendMat : whiteMat;
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
       const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : null;
       if (heroShoe && !sh) shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
+      // 🧤🦵👢 toggle the real 3D limb gear (each id → [L,R] group on the arm/leg joint)
+      Object.entries(glovesModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === gl)));
+      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === pa)));
+      Object.entries(shoeModels3D).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === sh)));
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
     };
