@@ -16795,7 +16795,7 @@ export default function CherryAdventure() {
       G.player = { ...d.player };
       G.col = d.col || {};
       G.pets = d.pets || {};
-      G.inv = d.inv || [];
+      G.inv = (d.inv || []).filter((id) => LOOT.find((x) => x.id === id)); // 🧹 drop stale item ids removed in past updates (they'd crash menus that look them up)
       G.equip = { ...EMPTY_EQUIP(), ...(d.equip || {}) };
       G.accEquip = { ...EMPTY_ACC(), ...(d.accEquip || {}) }; // 💍 worn accessories
       G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
@@ -26365,7 +26365,7 @@ export default function CherryAdventure() {
                 fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#59a0e8,#7ad0e8)",
               }}>⚒️ ตีบวกออโต้ทั้งหมด (ถึงเพดาน +{G.enhanceCap ? G.enhanceCap() : 1})</button>
               {(() => {
-                const enhanceable = [...new Set(ui.inv)].filter((id) => { const c = ui.inv.filter((x) => x === id).length; const p = ui.plus[id] || 0; return c >= 1 && p < 20; })
+                const enhanceable = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); if (!it) return false; const c = ui.inv.filter((x) => x === id).length; const p = ui.plus[id] || 0; return c >= 1 && p < 20; }) // 🛡️ skip stale ids not in LOOT (old saves) so the forge never crashes
                   .sort((a, b) => { const ia = LOOT.find((x) => x.id === a), ib = LOOT.find((x) => x.id === b); return TIER[ib.rarity] - TIER[ia.rarity] || (ui.plus[b] || 0) - (ui.plus[a] || 0); });
                 if (!enhanceable.length) return <div style={{ fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0", marginBottom: 4 }}>ยังไม่มีของซ้ำให้ตีบวก · ล่ามอนสเตอร์เก็บของซ้ำ</div>;
                 return enhanceable.map((id) => {

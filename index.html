@@ -24252,7 +24252,7 @@ function CherryAdventure() {
             G.player = { ...d.player };
             G.col = d.col || {};
             G.pets = d.pets || {};
-            G.inv = d.inv || [];
+            G.inv = (d.inv || []).filter((id) => LOOT.find((x) => x.id === id)); // 🧹 drop stale item ids removed in past updates (they'd crash menus that look them up)
             G.equip = { ...EMPTY_EQUIP(), ...(d.equip || {}) };
             G.accEquip = { ...EMPTY_ACC(), ...(d.accEquip || {}) }; // 💍 worn accessories
             G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
@@ -37121,7 +37121,8 @@ function CherryAdventure() {
                     G.enhanceCap ? G.enhanceCap() : 1,
                     ")"),
                 (() => {
-                    const enhanceable = [...new Set(ui.inv)].filter((id) => { const c = ui.inv.filter((x) => x === id).length; const p = ui.plus[id] || 0; return c >= 1 && p < 20; })
+                    const enhanceable = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); if (!it)
+                        return false; const c = ui.inv.filter((x) => x === id).length; const p = ui.plus[id] || 0; return c >= 1 && p < 20; }) // 🛡️ skip stale ids not in LOOT (old saves) so the forge never crashes
                         .sort((a, b) => { const ia = LOOT.find((x) => x.id === a), ib = LOOT.find((x) => x.id === b); return TIER[ib.rarity] - TIER[ia.rarity] || (ui.plus[b] || 0) - (ui.plus[a] || 0); });
                     if (!enhanceable.length)
                         return React.createElement("div", { style: { fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0", marginBottom: 4 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33\u0E43\u0E2B\u0E49\u0E15\u0E35\u0E1A\u0E27\u0E01 \u00B7 \u0E25\u0E48\u0E32\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33");
