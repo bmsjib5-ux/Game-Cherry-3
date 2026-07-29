@@ -2225,7 +2225,23 @@ export default function CherryAdventure() {
     skinGrad.needsUpdate = true;
     const skinMat = new THREE.MeshToonMaterial({ color: 0xffe0c8, gradientMap: skinGrad });
     G._skinBase = 0xffe0c8; // 🤖 remember base skin tone (aegis recolors it metallic, restores on class change)
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x3f2517, roughness: 0.6, metalness: 0.08, emissive: 0x1a0f08, emissiveIntensity: 0.15 }); // smooth shading for rounded strands
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x3f2517, roughness: 0.48, metalness: 0.12, emissive: 0x120a05, emissiveIntensity: 0.1 }); // silky sheen: soft specular highlight on scalp & caps (not a hot metallic blob)
+    // 💇 strand material with a baked root→tip gradient (vertexColors multiply the dye colour → depth + a glossy highlight band)
+    const hairMatV = hairMat.clone(); hairMatV.vertexColors = true;
+    const setHairColorHex = (hex) => { hairMat.color.setHex(hex); hairMatV.color.setHex(hex); };
+    // bake a root(dark)→tip(bright) gradient with a highlight band near the crown, using each vertex's normalised height
+    const bakeHairGrad = (geo) => {
+      const pos = geo.attributes.position, n = pos.count; let minY = Infinity, maxY = -Infinity;
+      for (let i = 0; i < n; i++) { const y = pos.getY(i); if (y < minY) minY = y; if (y > maxY) maxY = y; }
+      const span = (maxY - minY) || 1, col = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const u = (maxY - pos.getY(i)) / span; // 0 = root/top, 1 = tip/bottom
+        let b = 0.74 + u * 0.28 + 0.34 * Math.exp(-Math.pow((u - 0.24) / 0.16, 2)); // depth ramp + a shine band high on the strand
+        if (b < 0.62) b = 0.62; else if (b > 1.28) b = 1.28;
+        col[i * 3] = b; col[i * 3 + 1] = b; col[i * 3 + 2] = b;
+      }
+      geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    };
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x33241f, roughness: 0.4 });
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 });
     const blushMat = new THREE.MeshBasicMaterial({ color: 0xf7b2ba, transparent: true, opacity: 0.75 });
@@ -4911,8 +4927,8 @@ export default function CherryAdventure() {
           pos.setZ(idx, c.z + (pos.getZ(idx) - c.z) * sc);
         }
       }
-      pos.needsUpdate = true; geo.computeVertexNormals();
-      const m = new THREE.Mesh(geo, hairMat);
+      pos.needsUpdate = true; geo.computeVertexNormals(); bakeHairGrad(geo);
+      const m = new THREE.Mesh(geo, hairMatV);
       m.scale.set(1, 1, 0.6);
       pv.add(m);
       return pv;
@@ -4968,8 +4984,8 @@ export default function CherryAdventure() {
           pos.setZ(idx, center.z + (pz - center.z) * taper);
         }
       }
-      pos.needsUpdate = true; geo.computeVertexNormals();
-      const m = new THREE.Mesh(geo, hairMat);
+      pos.needsUpdate = true; geo.computeVertexNormals(); bakeHairGrad(geo);
+      const m = new THREE.Mesh(geo, hairMatV);
       m.scale.set(1, 1, 0.5); // flatten front-to-back so it reads as a hair sheet
       m.userData.curl = curl;
       return m;
@@ -5004,8 +5020,8 @@ export default function CherryAdventure() {
           pos.setZ(idx, c.z + (pos.getZ(idx) - c.z) * sc);
         }
       }
-      pos.needsUpdate = true; geo.computeVertexNormals();
-      const m = new THREE.Mesh(geo, hairMat);
+      pos.needsUpdate = true; geo.computeVertexNormals(); bakeHairGrad(geo);
+      const m = new THREE.Mesh(geo, hairMatV);
       m.scale.set(1, 1, 0.55);
       pv.add(m);
       return pv;
@@ -5099,8 +5115,8 @@ export default function CherryAdventure() {
           pos.setZ(idx, center.z + (pz - center.z) * scale);
         }
       }
-      pos.needsUpdate = true; geo.computeVertexNormals();
-      const strand = new THREE.Mesh(geo, hairMat);
+      pos.needsUpdate = true; geo.computeVertexNormals(); bakeHairGrad(geo);
+      const strand = new THREE.Mesh(geo, hairMatV);
       strand.scale.set(1, 1, 0.7); // slightly flatten so locks read as sheets
       pv.add(strand);
       pv.userData.sway = { amp: opts.amp != null ? opts.amp : 0.16, phase: opts.phase || 0 };
@@ -5212,8 +5228,8 @@ export default function CherryAdventure() {
           for (let v = 0; v <= 10; v++) { const idx = r * rv + v; if (idx >= pos.count) continue;
             pos.setX(idx, c.x + (pos.getX(idx) - c.x) * sc); pos.setY(idx, c.y + (pos.getY(idx) - c.y) * sc); pos.setZ(idx, c.z + (pos.getZ(idx) - c.z) * sc); }
         }
-        pos.needsUpdate = true; geo.computeVertexNormals();
-        const wisp = new THREE.Mesh(geo, hairMat);
+        pos.needsUpdate = true; geo.computeVertexNormals(); bakeHairGrad(geo);
+        const wisp = new THREE.Mesh(geo, hairMatV);
         wisp.scale.set(1, 1, dep / (w / wisps) * 0.9);
         wisp.position.set(tx, -h * 0.82 + 0.02, (curl || 0) * h * 0.4);
         pv.add(wisp);
@@ -8248,7 +8264,7 @@ export default function CherryAdventure() {
     // 🦸 expose the singleton rig pivots so remote avatars can clone hero signature parts onto matching anchors
     G._charRig = { root: char, head: headG, armL, armR, legL, legR };
     // 💇 expose the hair rig so remote avatars can clone the exact hair style + colour
-    G._hairRig = { mat: hairMat, styles: hairStyles, baseHair, ahoge, backGroup: hairBackGroup };
+    G._hairRig = { mat: hairMat, matV: hairMatV, setColor: setHairColorHex, styles: hairStyles, baseHair, ahoge, backGroup: hairBackGroup };
     // 🤖 AEGIS-X full-body mech armor — covers arms, hands, legs, feet, torso so the whole character is a robot
     {
       const white = new THREE.MeshStandardMaterial({ color: 0xeef1f7, metalness: 0.55, roughness: 0.28 });
@@ -8918,7 +8934,7 @@ export default function CherryAdventure() {
       } else if (cat === "skin") {
         skinMat.color.setHex(CUSTOM.skins[i].c);
       } else if (cat === "hairColor") {
-        hairMat.color.setHex(CUSTOM.hairColors[i].c);
+        setHairColorHex(CUSTOM.hairColors[i].c);
       } else if (cat === "hairStyle") {
         hairStyles.forEach((h, k) => (h.visible = k === i));
         // styles 5-8 are self-contained (full cap + own bangs) → hide the shared base hair
@@ -17252,8 +17268,8 @@ export default function CherryAdventure() {
           if (!sigHairHero && !aegisHelmOn && hr && hr.styles && hr.styles.length) {
             const hs = Math.max(0, Math.min(hr.styles.length - 1, info.hair != null ? info.hair : 0));
             const hcol = (CUSTOM.hairColors[info.hc] || CUSTOM.hairColors[0]).c;
-            const prev = hr.mat.color.getHex();
-            hr.mat.color.setHex(hcol); // temporarily tint the shared hair material so clones capture the right colour, then restore
+            const prev = hr.mat.color.getHex(), prevV = hr.matV ? hr.matV.color.getHex() : null;
+            if (hr.setColor) hr.setColor(hcol); else hr.mat.color.setHex(hcol); // temporarily tint the shared hair materials so clones capture the right colour, then restore
             try {
               const pieces = [hr.styles[hs]];
               if (hs < 5) { if (hr.baseHair) pieces.push(hr.baseHair); if (hr.ahoge) pieces.push(hr.ahoge); } // scalp/bangs/ahoge only for the shorter styles (matches setHero)
@@ -17261,7 +17277,7 @@ export default function CherryAdventure() {
               pieces.forEach((pc) => { if (!pc) return; const c = cloneCosmetic(pc); if (c) headAnchor.add(c); });
               hair.visible = false; // hide the generic brown dome — the real style replaces it
             } catch (e) { try { console.warn("hair clone failed", e); } catch (_) {} }
-            finally { hr.mat.color.setHex(prev); }
+            finally { hr.mat.color.setHex(prev); if (hr.matV && prevV != null) hr.matV.color.setHex(prevV); }
           }
         }
         // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
