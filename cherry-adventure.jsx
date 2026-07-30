@@ -15310,7 +15310,7 @@ export default function CherryAdventure() {
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
-    G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: tab === "breed" ? "breed" : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
+    G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: (tab === "breed" || tab === "garden") ? tab : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
     G.ranchAssign = (iid, slot) => {
       ranchTick();
       const R = G.ranch; R.slots = R.slots || [];
@@ -28988,6 +28988,9 @@ export default function CherryAdventure() {
               <button onClick={() => G.openRanch && G.openRanch("breed")} title="เพาะพันธุ์" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#b06ad0,#8a4ac0)", color: "#fff", boxShadow: "0 4px 14px rgba(138,74,192,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🥚</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>เพาะพันธุ์</span>
               </button>
+              <button onClick={() => G.openRanch && G.openRanch("garden")} title="ปลูกผัก" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#7ac06a,#4f9a3f)", color: "#fff", boxShadow: "0 4px 14px rgba(79,154,63,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                <span style={{ fontSize: 25 }}>🌾</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ปลูกผัก</span>
+              </button>
             </div>
           )}
 
@@ -29004,12 +29007,13 @@ export default function CherryAdventure() {
                 <div style={{ flex: 1 }} />
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
               </div>
-              {/* 🗂️ tabs: farm / breed */}
+              {/* 🗂️ tabs: farm / breed / garden */}
               <div style={{ display: "flex", gap: 6, marginBottom: 10, flexShrink: 0 }}>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#8a7a5a" : "#fff", background: ui.ranchTab === "breed" ? "#f0e6d6" : "linear-gradient(90deg,#e0a86a,#c9843e)" }}>🐄 ฟาร์มสัตว์เลี้ยง</button>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "breed" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#fff" : "#8a6a9a", background: ui.ranchTab === "breed" ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#f2ecf8" }}>🥚 เพาะพันธุ์</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "farm" ? "#fff" : "#8a7a5a", background: ui.ranchTab === "farm" ? "linear-gradient(90deg,#e0a86a,#c9843e)" : "#f0e6d6" }}>🐄 ฟาร์ม</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "breed" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#fff" : "#8a6a9a", background: ui.ranchTab === "breed" ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#f2ecf8" }}>🥚 เพาะพันธุ์</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "garden" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "garden" ? "#fff" : "#6a8a4a", background: ui.ranchTab === "garden" ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#e8f2dc" }}>🌾 ปลูกผัก</button>
               </div>
-              {ui.ranchTab !== "breed" && (<React.Fragment>
+              {ui.ranchTab === "farm" && (<React.Fragment>
               {/* pending + claim */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#fff6e8,#fdeccf)", border: "1px solid #f0dcc0", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
                 <div style={{ flex: 1 }}>
@@ -29101,9 +29105,9 @@ export default function CherryAdventure() {
               </div>
 
               </React.Fragment>)}
-              {ui.ranchTab !== "breed" && (<React.Fragment>
+              {ui.ranchTab === "garden" && (<React.Fragment>
               {/* 🌾 garden */}
-              <div style={{ marginTop: 12, borderTop: "1px solid #eaf0dc", paddingTop: 10 }}>
+              <div style={{ paddingTop: 2 }}>
                 <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 900, color: "#5a9a4a" }}>🌾 สวนพืช (อาหารสัตว์)</div>
                   <div style={{ flex: 1 }} />
