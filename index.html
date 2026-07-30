@@ -17121,20 +17121,31 @@ function CherryAdventure() {
             }
             const pens = G._ranchPens || [];
             slots.forEach((iid, idx) => {
-                const p = G.petAt ? G.petAt(iid) : null;
-                if (!p || !SPECIES[p.sp])
-                    return;
-                const m = buildMonster(p.sp, p.stage || 1);
-                m.scale.multiplyScalar(0.6); // 🐣 ลูกสัตว์น่ารักในคอก
-                const pen = pens[idx % Math.max(1, pens.length)] || { minX: -2, maxX: 2, minZ: 2, maxZ: 6, cx: 0, cz: 4 };
-                const cx = pen.minX + Math.random() * (pen.maxX - pen.minX);
-                const cz = pen.minZ + Math.random() * (pen.maxZ - pen.minZ);
-                m.position.set(cx, 0, cz);
-                m.userData.zwander = { cx, cz, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 0.5, sp: 0.25 + Math.random() * 0.2, penMinX: pen.minX, penMaxX: pen.maxX, penMinZ: pen.minZ, penMaxZ: pen.maxZ };
-                zone.add(m);
-                G.ranchZonePets.push(m);
+                try { // 🛟 สัตว์ตัวเดียวพังต้องไม่ทำทั้งฉากค้าง
+                    const p = G.petAt ? G.petAt(iid) : null;
+                    if (!p || !SPECIES[p.sp])
+                        return;
+                    const m = buildMonster(p.sp, p.stage || 1);
+                    m.scale.multiplyScalar(0.6); // 🐣 ลูกสัตว์น่ารักในคอก
+                    const pen = pens[idx % Math.max(1, pens.length)] || { minX: -2, maxX: 2, minZ: 2, maxZ: 6, cx: 0, cz: 4 };
+                    const cx = pen.minX + Math.random() * (pen.maxX - pen.minX);
+                    const cz = pen.minZ + Math.random() * (pen.maxZ - pen.minZ);
+                    m.position.set(cx, 0, cz);
+                    m.userData.zwander = { cx, cz, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 0.5, sp: 0.25 + Math.random() * 0.2, penMinX: pen.minX, penMaxX: pen.maxX, penMinZ: pen.minZ, penMaxZ: pen.maxZ };
+                    zone.add(m);
+                    G.ranchZonePets.push(m);
+                }
+                catch (err) {
+                    try {
+                        console.warn("ranch pet build failed", iid, err);
+                    }
+                    catch (_) { }
+                }
             });
-            // 🌱 อัปเดตแปลงพืชจาก G.ranch.garden
+            G.refreshRanchTimers(); // 🌱🥚 อัปเดตพืช+ไข่ (แยกออกมาให้เรียกถี่ได้โดยไม่ต้องสร้างสัตว์ใหม่)
+        };
+        // ⏱️ อัปเดตแค่สถานะพืช/ไข่ (เบา ไม่ rebuild สัตว์) — เรียกทุก ~2 วิให้ตัวนับเดินสด
+        G.refreshRanchTimers = () => {
             (G._ranchPlots || []).forEach((plot, k) => {
                 const g = (G.ranch && G.ranch.garden) ? G.ranch.garden[k] : null;
                 const ripeNow = g && (!g.readyAt || g.readyAt <= Date.now());
@@ -17145,7 +17156,6 @@ function CherryAdventure() {
                     plot.ripe.draw(cd.emoji, null, true);
                 }
             });
-            // 🥚 อัปเดตแท่นไข่จาก G.ranch.egg
             const ep = G._ranchEggPed;
             const e = G.ranch && G.ranch.egg;
             if (ep) {
@@ -28302,102 +28312,103 @@ function CherryAdventure() {
                     }
                 }
                 // wild monster idle/wander (both modes; battle enemy excluded since removed from wilds)
-                wilds.forEach((m, i) => {
-                    const w = m.userData.wander;
-                    if (m.userData.shy > 0)
-                        m.userData.shy -= dt;
-                    if (m.userData.shinyRing) {
-                        m.userData.shinyRing.rotation.z = t * 2;
-                        m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4;
-                    }
-                    drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
-                    if (G.actionMode)
-                        updateWildBar(m); // ⚔️ open-world HP bar
-                    // ⚔️ open-world action: normal monsters aggro → chase → hit the player
-                    let aggroHandled = false;
-                    if (G.actionMode && G.mode === "explore" && !isArenaFoe(m) && !m.userData.golden) {
-                        initWildHp(m);
-                        const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
-                        const pdist = Math.hypot(pdx, pdz) || 0.001;
-                        const playerSafe = inSafeZone(char.position.x, char.position.z); // 🛡️ standing on a warp = untouchable
-                        if (playerSafe) {
-                            m.userData.aggro = false; // 🌀 drop the chase — can't follow into the safe zone
+                if (!G.inRanchZone)
+                    wilds.forEach((m, i) => {
+                        const w = m.userData.wander;
+                        if (m.userData.shy > 0)
+                            m.userData.shy -= dt;
+                        if (m.userData.shinyRing) {
+                            m.userData.shinyRing.rotation.z = t * 2;
+                            m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4;
                         }
-                        else if (m.userData.aggro || pdist < WILD_AGGRO) {
-                            m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
-                            aggroHandled = true;
-                            if (pdist > WILD_MELEE) {
-                                m.position.x += (pdx / pdist) * 1.9 * dt;
-                                m.position.z += (pdz / pdist) * 1.9 * dt;
-                                clampOutOfSafe(m); // 🛡️ never chase into the safe bubble
-                                pushOut(m, 0.6);
-                                m.rotation.y = Math.atan2(pdx, pdz);
+                        drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
+                        if (G.actionMode)
+                            updateWildBar(m); // ⚔️ open-world HP bar
+                        // ⚔️ open-world action: normal monsters aggro → chase → hit the player
+                        let aggroHandled = false;
+                        if (G.actionMode && G.mode === "explore" && !isArenaFoe(m) && !m.userData.golden) {
+                            initWildHp(m);
+                            const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
+                            const pdist = Math.hypot(pdx, pdz) || 0.001;
+                            const playerSafe = inSafeZone(char.position.x, char.position.z); // 🛡️ standing on a warp = untouchable
+                            if (playerSafe) {
+                                m.userData.aggro = false; // 🌀 drop the chase — can't follow into the safe zone
                             }
-                            else {
-                                m.rotation.y = Math.atan2(pdx, pdz);
-                                m.userData.wcd = (m.userData.wcd || 0) - dt;
-                                if (m.userData.wcd <= 0) {
-                                    m.userData.wcd = 1.3;
-                                    const raw = Math.max(1, Math.round((m.userData.watk || 8) - effDef() * 0.4));
-                                    G.player.hp = Math.max(0, G.player.hp - raw);
-                                    popDamage(char.position, raw, "hit");
-                                    burst(char.position, 0xff5a5a, 0.5);
-                                    if (G.sfx)
-                                        G.sfx.hit && G.sfx.hit();
-                                    syncPlayer();
-                                    if (G.player.hp <= 0)
-                                        G.worldFaint();
+                            else if (m.userData.aggro || pdist < WILD_AGGRO) {
+                                m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
+                                aggroHandled = true;
+                                if (pdist > WILD_MELEE) {
+                                    m.position.x += (pdx / pdist) * 1.9 * dt;
+                                    m.position.z += (pdz / pdist) * 1.9 * dt;
+                                    clampOutOfSafe(m); // 🛡️ never chase into the safe bubble
+                                    pushOut(m, 0.6);
+                                    m.rotation.y = Math.atan2(pdx, pdz);
+                                }
+                                else {
+                                    m.rotation.y = Math.atan2(pdx, pdz);
+                                    m.userData.wcd = (m.userData.wcd || 0) - dt;
+                                    if (m.userData.wcd <= 0) {
+                                        m.userData.wcd = 1.3;
+                                        const raw = Math.max(1, Math.round((m.userData.watk || 8) - effDef() * 0.4));
+                                        G.player.hp = Math.max(0, G.player.hp - raw);
+                                        popDamage(char.position, raw, "hit");
+                                        burst(char.position, 0xff5a5a, 0.5);
+                                        if (G.sfx)
+                                            G.sfx.hit && G.sfx.hit();
+                                        syncPlayer();
+                                        if (G.player.hp <= 0)
+                                            G.worldFaint();
+                                    }
                                 }
                             }
                         }
-                    }
-                    let dx, dz;
-                    if (aggroHandled) {
-                        dx = 0;
-                        dz = 0;
-                    }
-                    else if (m.userData.golden && G.mode === "explore") {
-                        // 🌟 golden monster runs away from Cherry!
-                        const fx2 = m.position.x - char.position.x, fz2 = m.position.z - char.position.z;
-                        const fd = Math.max(0.001, Math.hypot(fx2, fz2));
-                        dx = (fx2 / fd) * 2.4 * dt * 10;
-                        dz = (fz2 / fd) * 2.4 * dt * 10;
-                        m.position.x += (fx2 / fd) * 2.4 * dt;
-                        m.position.z += (fz2 / fd) * 2.4 * dt;
-                        pushOut(m, 0.6); // 🏠 fleeing golden monsters stay out of solid objects
-                        m.rotation.y = Math.atan2(fx2, fz2);
-                    }
-                    else {
-                        const a = w.ph + t * w.sp;
-                        const tx = w.cx + Math.cos(a) * w.r;
-                        const tz = w.cz + Math.sin(a) * w.r;
-                        dx = tx - m.position.x;
-                        dz = tz - m.position.z;
-                        m.position.x += dx * dt * 1.5;
-                        m.position.z += dz * dt * 1.5;
-                        pushOut(m, 0.6); // 🏠 monsters can't drift inside the house/pond/warp either
-                        if (Math.hypot(dx, dz) > 0.05)
-                            m.rotation.y = Math.atan2(dx, dz);
-                    }
-                    // hop
-                    m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
-                    if (m.userData.star)
-                        m.userData.star.rotation.y = t * 3;
-                    // 🐙 octopus tentacles undulate · 🦈 shark tail swishes
-                    if (m.userData.tentacles)
-                        m.userData.tentacles.forEach((tn, k) => { tn.rotation.y = Math.sin(t * 2 + k * 0.8) * 0.12; tn.position.y = Math.sin(t * 2.6 + k) * 0.03; });
-                    if (m.userData.tail && m.userData.spId === "chalam")
-                        m.userData.tail.rotation.y = Math.sin(t * 4 + i) * 0.5;
-                    // keep in field & out of obstacles
-                    const rr = Math.hypot(m.position.x, m.position.z);
-                    if (rr > FIELD_R - 0.4) {
-                        m.position.x *= (FIELD_R - 0.4) / rr;
-                        m.position.z *= (FIELD_R - 0.4) / rr;
-                    }
-                    pushOut(m, 0.3);
-                    if (!isArenaFoe(m))
-                        clampOutOfSafe(m); // 🛡️🌀 keep the warp-portal safe zones monster-free
-                });
+                        let dx, dz;
+                        if (aggroHandled) {
+                            dx = 0;
+                            dz = 0;
+                        }
+                        else if (m.userData.golden && G.mode === "explore") {
+                            // 🌟 golden monster runs away from Cherry!
+                            const fx2 = m.position.x - char.position.x, fz2 = m.position.z - char.position.z;
+                            const fd = Math.max(0.001, Math.hypot(fx2, fz2));
+                            dx = (fx2 / fd) * 2.4 * dt * 10;
+                            dz = (fz2 / fd) * 2.4 * dt * 10;
+                            m.position.x += (fx2 / fd) * 2.4 * dt;
+                            m.position.z += (fz2 / fd) * 2.4 * dt;
+                            pushOut(m, 0.6); // 🏠 fleeing golden monsters stay out of solid objects
+                            m.rotation.y = Math.atan2(fx2, fz2);
+                        }
+                        else {
+                            const a = w.ph + t * w.sp;
+                            const tx = w.cx + Math.cos(a) * w.r;
+                            const tz = w.cz + Math.sin(a) * w.r;
+                            dx = tx - m.position.x;
+                            dz = tz - m.position.z;
+                            m.position.x += dx * dt * 1.5;
+                            m.position.z += dz * dt * 1.5;
+                            pushOut(m, 0.6); // 🏠 monsters can't drift inside the house/pond/warp either
+                            if (Math.hypot(dx, dz) > 0.05)
+                                m.rotation.y = Math.atan2(dx, dz);
+                        }
+                        // hop
+                        m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
+                        if (m.userData.star)
+                            m.userData.star.rotation.y = t * 3;
+                        // 🐙 octopus tentacles undulate · 🦈 shark tail swishes
+                        if (m.userData.tentacles)
+                            m.userData.tentacles.forEach((tn, k) => { tn.rotation.y = Math.sin(t * 2 + k * 0.8) * 0.12; tn.position.y = Math.sin(t * 2.6 + k) * 0.03; });
+                        if (m.userData.tail && m.userData.spId === "chalam")
+                            m.userData.tail.rotation.y = Math.sin(t * 4 + i) * 0.5;
+                        // keep in field & out of obstacles
+                        const rr = Math.hypot(m.position.x, m.position.z);
+                        if (rr > FIELD_R - 0.4) {
+                            m.position.x *= (FIELD_R - 0.4) / rr;
+                            m.position.z *= (FIELD_R - 0.4) / rr;
+                        }
+                        pushOut(m, 0.3);
+                        if (!isArenaFoe(m))
+                            clampOutOfSafe(m); // 🛡️🌀 keep the warp-portal safe zones monster-free
+                    });
                 // respawn wilds (rejoin a random camp)
                 if (wilds.length < TARGET_WILDS) {
                     G.respawnT += dt;
@@ -28876,59 +28887,75 @@ function CherryAdventure() {
                         const rpd = Math.hypot(char.position.x - G._ranchPad.position.x, char.position.z - G._ranchPad.position.z);
                         if (rpd < 1.5 && !G.ranchPadShy) {
                             G.ranchPadShy = true;
-                            G.enterRanchZone();
+                            try {
+                                G.enterRanchZone();
+                            }
+                            catch (err) {
+                                G.inRanchZone = false;
+                                try {
+                                    console.warn("enterRanchZone failed", err);
+                                }
+                                catch (_) { }
+                            }
                         }
                         else if (rpd > 3)
                             G.ranchPadShy = false; // เดินห่างแล้วค่อยเข้าได้อีก
                     }
-                    if (G.inRanchZone) {
-                        // 🐾 สัตว์ในคอกเดินวนเบา ๆ คุมให้อยู่ในขอบคอก + เด้งตัว
-                        (G.ranchZonePets || []).forEach((m, i) => {
-                            const w = m.userData.zwander;
-                            if (!w)
-                                return;
-                            const a = w.ph + t * w.sp;
-                            let tx = w.cx + Math.cos(a) * w.r, tz = w.cz + Math.sin(a) * w.r;
-                            tx = Math.max(w.penMinX, Math.min(w.penMaxX, tx));
-                            tz = Math.max(w.penMinZ, Math.min(w.penMaxZ, tz));
-                            const ddx = tx - m.position.x, ddz = tz - m.position.z;
-                            m.position.x += ddx * dt * 1.4;
-                            m.position.z += ddz * dt * 1.4;
-                            if (Math.hypot(ddx, ddz) > 0.03)
-                                m.rotation.y = Math.atan2(ddx, ddz);
-                            if (m.userData.body)
-                                m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
-                        });
-                        wilds.forEach((m) => (m.visible = false)); // กันมอนสเตอร์ที่เพิ่ง respawn โผล่
-                        if (G._ranchReturnRing)
-                            G._ranchReturnRing.rotation.z = t * 1.3;
-                        if (G._ranchEggPed && G._ranchEggPed.egg && G._ranchEggPed.egg.visible) {
-                            G._ranchEggPed.egg.position.y = 1.15 + Math.sin(t * 2) * 0.05;
-                            G._ranchEggPed.egg.rotation.y = t * 0.6;
-                        }
-                        // ⏱️ รีเฟรชสถานะทุก ~2 วิ ให้ตัวนับเวลาไข่/พืชเดินสด
-                        G._ranchRefreshT = (G._ranchRefreshT || 0) + dt;
-                        if (G._ranchRefreshT > 2) {
-                            G._ranchRefreshT = 0;
-                            G.refreshRanchZone();
-                        }
-                        // ⬅️ ใกล้แท่นกลับ → ออกจากโซน
-                        if (Math.hypot(char.position.x - 0, char.position.z - 12) < 1.5)
-                            G.exitRanchZone();
-                        // 🥚 ยืนใกล้แท่นไข่ที่พร้อมฟัก → ฟักอัตโนมัติ (debounce ครั้งเดียว)
-                        else {
-                            const e = G.ranch && G.ranch.egg;
-                            if (e && (!e.readyAt || e.readyAt <= Date.now())) {
-                                if (Math.hypot(char.position.x - 0, char.position.z - 8) < 1.8 && !G._ranchEggClaiming) {
-                                    G._ranchEggClaiming = true;
-                                    G.claimEgg();
-                                    G.refreshRanchZone();
-                                }
+                    if (G.inRanchZone)
+                        try { // 🛟 กันเฟรมเดียวพังทั้งลูป (ภาพค้าง) — ห่อ try/catch ไว้
+                            // 🐾 สัตว์ในคอกเดินวนเบา ๆ คุมให้อยู่ในขอบคอก + เด้งตัว
+                            (G.ranchZonePets || []).forEach((m, i) => {
+                                const w = m.userData.zwander;
+                                if (!w)
+                                    return;
+                                const a = w.ph + t * w.sp;
+                                let tx = w.cx + Math.cos(a) * w.r, tz = w.cz + Math.sin(a) * w.r;
+                                tx = Math.max(w.penMinX, Math.min(w.penMaxX, tx));
+                                tz = Math.max(w.penMinZ, Math.min(w.penMaxZ, tz));
+                                const ddx = tx - m.position.x, ddz = tz - m.position.z;
+                                m.position.x += ddx * dt * 1.4;
+                                m.position.z += ddz * dt * 1.4;
+                                if (Math.hypot(ddx, ddz) > 0.03)
+                                    m.rotation.y = Math.atan2(ddx, ddz);
+                                if (m.userData.body)
+                                    m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
+                            });
+                            if (G._ranchReturnRing)
+                                G._ranchReturnRing.rotation.z = t * 1.3;
+                            if (G._ranchEggPed && G._ranchEggPed.egg && G._ranchEggPed.egg.visible) {
+                                G._ranchEggPed.egg.position.y = 1.15 + Math.sin(t * 2) * 0.05;
+                                G._ranchEggPed.egg.rotation.y = t * 0.6;
                             }
-                            else
-                                G._ranchEggClaiming = false;
+                            // ⏱️ รีเฟรช "แค่ตัวนับ" ทุก ~2 วิ (ไม่ rebuild สัตว์ → ไม่กระตุก/ค้าง)
+                            G._ranchRefreshT = (G._ranchRefreshT || 0) + dt;
+                            if (G._ranchRefreshT > 2) {
+                                G._ranchRefreshT = 0;
+                                G.refreshRanchTimers();
+                            }
+                            // ⬅️ ใกล้แท่นกลับ → ออกจากโซน
+                            if (Math.hypot(char.position.x - 0, char.position.z - 12) < 1.5)
+                                G.exitRanchZone();
+                            // 🥚 ยืนใกล้แท่นไข่ที่พร้อมฟัก → ฟักอัตโนมัติ (debounce ครั้งเดียว)
+                            else {
+                                const e = G.ranch && G.ranch.egg;
+                                if (e && (!e.readyAt || e.readyAt <= Date.now())) {
+                                    if (Math.hypot(char.position.x - 0, char.position.z - 8) < 1.8 && !G._ranchEggClaiming) {
+                                        G._ranchEggClaiming = true;
+                                        if (G.claimEgg)
+                                            G.claimEgg();
+                                        G.refreshRanchTimers();
+                                    }
+                                }
+                                else
+                                    G._ranchEggClaiming = false;
+                            }
                         }
-                    }
+                        catch (err) {
+                            try {
+                                console.warn("ranch zone frame error", err);
+                            }
+                            catch (_) { }
+                        }
                     // 💾 autosave every few seconds
                     G.saveT = (G.saveT || 0) + dt;
                     if (G.achStats)

@@ -11362,18 +11362,23 @@ export default function CherryAdventure() {
       }
       const pens = G._ranchPens || [];
       slots.forEach((iid, idx) => {
-        const p = G.petAt ? G.petAt(iid) : null; if (!p || !SPECIES[p.sp]) return;
-        const m = buildMonster(p.sp, p.stage || 1);
-        m.scale.multiplyScalar(0.6); // 🐣 ลูกสัตว์น่ารักในคอก
-        const pen = pens[idx % Math.max(1, pens.length)] || { minX: -2, maxX: 2, minZ: 2, maxZ: 6, cx: 0, cz: 4 };
-        const cx = pen.minX + Math.random() * (pen.maxX - pen.minX);
-        const cz = pen.minZ + Math.random() * (pen.maxZ - pen.minZ);
-        m.position.set(cx, 0, cz);
-        m.userData.zwander = { cx, cz, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 0.5, sp: 0.25 + Math.random() * 0.2, penMinX: pen.minX, penMaxX: pen.maxX, penMinZ: pen.minZ, penMaxZ: pen.maxZ };
-        zone.add(m);
-        G.ranchZonePets.push(m);
+        try { // 🛟 สัตว์ตัวเดียวพังต้องไม่ทำทั้งฉากค้าง
+          const p = G.petAt ? G.petAt(iid) : null; if (!p || !SPECIES[p.sp]) return;
+          const m = buildMonster(p.sp, p.stage || 1);
+          m.scale.multiplyScalar(0.6); // 🐣 ลูกสัตว์น่ารักในคอก
+          const pen = pens[idx % Math.max(1, pens.length)] || { minX: -2, maxX: 2, minZ: 2, maxZ: 6, cx: 0, cz: 4 };
+          const cx = pen.minX + Math.random() * (pen.maxX - pen.minX);
+          const cz = pen.minZ + Math.random() * (pen.maxZ - pen.minZ);
+          m.position.set(cx, 0, cz);
+          m.userData.zwander = { cx, cz, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 0.5, sp: 0.25 + Math.random() * 0.2, penMinX: pen.minX, penMaxX: pen.maxX, penMinZ: pen.minZ, penMaxZ: pen.maxZ };
+          zone.add(m);
+          G.ranchZonePets.push(m);
+        } catch (err) { try { console.warn("ranch pet build failed", iid, err); } catch (_) {} }
       });
-      // 🌱 อัปเดตแปลงพืชจาก G.ranch.garden
+      G.refreshRanchTimers(); // 🌱🥚 อัปเดตพืช+ไข่ (แยกออกมาให้เรียกถี่ได้โดยไม่ต้องสร้างสัตว์ใหม่)
+    };
+    // ⏱️ อัปเดตแค่สถานะพืช/ไข่ (เบา ไม่ rebuild สัตว์) — เรียกทุก ~2 วิให้ตัวนับเดินสด
+    G.refreshRanchTimers = () => {
       (G._ranchPlots || []).forEach((plot, k) => {
         const g = (G.ranch && G.ranch.garden) ? G.ranch.garden[k] : null;
         const ripeNow = g && (!g.readyAt || g.readyAt <= Date.now());
@@ -11384,7 +11389,6 @@ export default function CherryAdventure() {
           plot.ripe.draw(cd.emoji, null, true);
         }
       });
-      // 🥚 อัปเดตแท่นไข่จาก G.ranch.egg
       const ep = G._ranchEggPed; const e = G.ranch && G.ranch.egg;
       if (ep) {
         if (e) {
@@ -19033,7 +19037,7 @@ export default function CherryAdventure() {
       }
 
       // wild monster idle/wander (both modes; battle enemy excluded since removed from wilds)
-      wilds.forEach((m, i) => {
+      if (!G.inRanchZone) wilds.forEach((m, i) => { // 🏡 หยุดมอนสเตอร์ป่าทั้งหมดตอนอยู่ในฟาร์ม (ไม่ไล่/ไม่ตี/ไม่วาดป้าย)
         const w = m.userData.wander;
         if (m.userData.shy > 0) m.userData.shy -= dt;
         if (m.userData.shinyRing) { m.userData.shinyRing.rotation.z = t * 2; m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4; }
@@ -19432,10 +19436,10 @@ export default function CherryAdventure() {
         }
         if (!G.inRanchZone && G.curBiome === 0 && G._ranchPad && G._ranchPad.visible) {
           const rpd = Math.hypot(char.position.x - G._ranchPad.position.x, char.position.z - G._ranchPad.position.z);
-          if (rpd < 1.5 && !G.ranchPadShy) { G.ranchPadShy = true; G.enterRanchZone(); }
+          if (rpd < 1.5 && !G.ranchPadShy) { G.ranchPadShy = true; try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } }
           else if (rpd > 3) G.ranchPadShy = false; // เดินห่างแล้วค่อยเข้าได้อีก
         }
-        if (G.inRanchZone) {
+        if (G.inRanchZone) try { // 🛟 กันเฟรมเดียวพังทั้งลูป (ภาพค้าง) — ห่อ try/catch ไว้
           // 🐾 สัตว์ในคอกเดินวนเบา ๆ คุมให้อยู่ในขอบคอก + เด้งตัว
           (G.ranchZonePets || []).forEach((m, i) => {
             const w = m.userData.zwander; if (!w) return;
@@ -19448,22 +19452,21 @@ export default function CherryAdventure() {
             if (Math.hypot(ddx, ddz) > 0.03) m.rotation.y = Math.atan2(ddx, ddz);
             if (m.userData.body) m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
           });
-          wilds.forEach((m) => (m.visible = false)); // กันมอนสเตอร์ที่เพิ่ง respawn โผล่
           if (G._ranchReturnRing) G._ranchReturnRing.rotation.z = t * 1.3;
           if (G._ranchEggPed && G._ranchEggPed.egg && G._ranchEggPed.egg.visible) { G._ranchEggPed.egg.position.y = 1.15 + Math.sin(t * 2) * 0.05; G._ranchEggPed.egg.rotation.y = t * 0.6; }
-          // ⏱️ รีเฟรชสถานะทุก ~2 วิ ให้ตัวนับเวลาไข่/พืชเดินสด
+          // ⏱️ รีเฟรช "แค่ตัวนับ" ทุก ~2 วิ (ไม่ rebuild สัตว์ → ไม่กระตุก/ค้าง)
           G._ranchRefreshT = (G._ranchRefreshT || 0) + dt;
-          if (G._ranchRefreshT > 2) { G._ranchRefreshT = 0; G.refreshRanchZone(); }
+          if (G._ranchRefreshT > 2) { G._ranchRefreshT = 0; G.refreshRanchTimers(); }
           // ⬅️ ใกล้แท่นกลับ → ออกจากโซน
           if (Math.hypot(char.position.x - 0, char.position.z - 12) < 1.5) G.exitRanchZone();
           // 🥚 ยืนใกล้แท่นไข่ที่พร้อมฟัก → ฟักอัตโนมัติ (debounce ครั้งเดียว)
           else {
             const e = G.ranch && G.ranch.egg;
             if (e && (!e.readyAt || e.readyAt <= Date.now())) {
-              if (Math.hypot(char.position.x - 0, char.position.z - 8) < 1.8 && !G._ranchEggClaiming) { G._ranchEggClaiming = true; G.claimEgg(); G.refreshRanchZone(); }
+              if (Math.hypot(char.position.x - 0, char.position.z - 8) < 1.8 && !G._ranchEggClaiming) { G._ranchEggClaiming = true; if (G.claimEgg) G.claimEgg(); G.refreshRanchTimers(); }
             } else G._ranchEggClaiming = false;
           }
-        }
+        } catch (err) { try { console.warn("ranch zone frame error", err); } catch (_) {} }
 
         // 💾 autosave every few seconds
         G.saveT = (G.saveT || 0) + dt;
