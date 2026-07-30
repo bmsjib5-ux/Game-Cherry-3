@@ -19272,9 +19272,9 @@ export default function CherryAdventure() {
         }
       } else if (G.mode === "explore") {
         // ---------- ⏰ random event scheduler ----------
-        if (!G.event && !G.inRanchZone) {
+        if (!G.event) {
           G.eventT -= dt;
-          if (G.eventT <= 0) {
+          if (G.eventT <= 0 && !G.inRanchZone) { // 🏡 ไม่สุ่มอีเวนต์ตอนอยู่ในฟาร์ม (แต่ยังคง if/else invariant ไว้)
             G.eventT = 45 + Math.random() * 30; // next one later
             const roll2 = Math.random();
             startEvent(roll2 < 0.34 ? "meteor" : roll2 < 0.67 ? "horde" : "golden");
