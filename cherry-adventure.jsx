@@ -27197,12 +27197,12 @@ export default function CherryAdventure() {
                     return (
                       <button key={sk.id} onClick={() => G.worldSkill(sk.id)} title={`${sk.name} · 💧${cost}`} style={{
                         width: 46, height: 46, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
-                        cursor: ready ? "pointer" : "not-allowed", position: "relative", overflow: "hidden",
+                        cursor: ready ? "pointer" : "not-allowed", position: "relative",
                         background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: ready ? 1 : 0.45,
                         boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: 20, color: "#fff", fontFamily: font,
                       }}>
                         {sk.emoji || "✨"}
-                        {cdLeft > 0 && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,12,20,0.62)", color: "#fff", fontSize: 14, fontWeight: 800 }}>{cdLeft.toFixed(1)}</span>}
+                        {cdLeft > 0 && <span style={{ position: "absolute", inset: 0, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,12,20,0.62)", color: "#fff", fontSize: 14, fontWeight: 800 }}>{cdLeft.toFixed(1)}</span>}
                         <span style={{ position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>{cost}</span>
                         {aoe && <span style={{ position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>หมู่</span>}
                       </button>
