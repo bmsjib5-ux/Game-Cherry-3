@@ -349,3 +349,57 @@ grant execute on function public.boss_hit(bigint, bigint, text) to anon, authent
 > หมายเหตุ: ถ้าเคยรัน `boss_hit` เวอร์ชันเก่า ให้รัน SQL นี้ทับได้เลย (create or replace) — โครงสร้างผลลัพธ์เพิ่มคอลัมน์ `scores`
 >
 > ถ้าไม่ตั้งค่า Supabase เกมจะเล่นบอสโลกแบบ **เดี่ยว (ออฟไลน์)** ได้ตามปกติ — เลือดบอสเก็บในเซฟเครื่องตัวเอง รีเซ็ตรายวัน ส่วนระบบปาร์ตี้เพื่อนจะเปิดใช้เมื่อเชื่อมต่อออนไลน์แล้ว
+
+---
+
+## 8) ตลาดออนไลน์ผู้เล่น (ซื้อขายพืชผลฟาร์ม & สัตว์เลี้ยง) — ตาราง `market` + RPC
+
+ตลาดแบบ "ฝากขาย" (async escrow bazaar): ผู้ขายลงประกาศ → ของถูกยกออกจากคลัง/กล่องทันที (escrow ในเครื่อง) → ผู้เล่นอื่นซื้อด้วยทอง (RPC atomic กันซื้อซ้ำ) → ผู้ขายกลับมากด "เก็บทอง" ทีหลัง (ทองอยู่ในเซฟของแต่ละเครื่อง เกมแคชชวลจึงใช้กระเป๋าเงินฝั่งไคลเอนต์)
+
+รันใน Supabase → SQL Editor:
+
+```sql
+create table if not exists public.market (
+  id          bigint generated always as identity primary key,
+  seller      text not null,                       -- pid ผู้ขาย
+  seller_name text,
+  kind        text not null,                       -- 'produce' | 'pet'
+  item        jsonb not null,                      -- produce: {crop,name,emoji,qty} · pet: {sp,lv,exp,stage,plus,iv,name,emoji,tier}
+  price       bigint not null,
+  status      text not null default 'open',        -- open | sold | cancelled
+  buyer       text,
+  buyer_name  text,
+  collected   boolean not null default false,      -- ผู้ขายเก็บทองแล้วหรือยัง
+  sold_ts     bigint,
+  ts          bigint not null
+);
+create index if not exists market_open_idx on public.market (status, ts desc);
+create index if not exists market_seller_idx on public.market (seller, status, ts desc);
+
+alter table public.market enable row level security;
+drop policy if exists "market read"   on public.market;
+drop policy if exists "market insert" on public.market;
+drop policy if exists "market update" on public.market;
+create policy "market read"   on public.market for select using (true);
+create policy "market insert" on public.market for insert with check (true);
+create policy "market update" on public.market for update using (true) with check (true);
+
+-- 🛒 ซื้อแบบ atomic: เปลี่ยน open→sold เฉพาะตอนยังเปิดอยู่ แล้วคืนแถวเฉพาะเมื่อ "ผู้ซื้อคนนี้" คว้าได้ (กันซื้อชนกัน)
+drop function if exists public.market_buy(bigint, text, text);
+create or replace function public.market_buy(p_id bigint, p_buyer text, p_name text)
+returns setof public.market
+language plpgsql security definer as $$
+begin
+  update public.market
+    set status = 'sold', buyer = p_buyer, buyer_name = p_name,
+        sold_ts = (extract(epoch from now()) * 1000)::bigint
+    where id = p_id and status = 'open';
+  return query select * from public.market where id = p_id and buyer = p_buyer and status = 'sold';
+end; $$;
+
+grant execute on function public.market_buy(bigint, text, text) to anon, authenticated;
+```
+
+> ทำงานยังไง: `market_buy` ทำ `update ... where status='open'` เป็นคำสั่งเดียว (atomic) — ถ้ามีคนซื้อไปก่อน คำสั่งจะไม่แมตช์ และ query คืนค่าว่าง ไคลเอนต์จึงรู้ว่า "ช้าไป" และไม่หักทอง · การ "เก็บทอง" และ "ยกเลิก" ใช้ PATCH แบบมีเงื่อนไข (`collected=false` / `status=open`) จึงกันเก็บซ้ำ/ยกเลิกทับการขายได้ในตัว
+>
+> ถ้าไม่ตั้งค่า Supabase ปุ่ม 🌐 ตลาดออนไลน์ จะแจ้งว่ายังไม่ได้ตั้งค่า และส่วนอื่นของฟาร์ม (คลัง/ปลูก/เพาะพันธุ์) ยังเล่นออฟไลน์ได้ตามปกติ
