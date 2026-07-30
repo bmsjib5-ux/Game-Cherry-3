@@ -11418,6 +11418,7 @@ export default function CherryAdventure() {
       if (G._ranchPad) G._ranchPad.visible = false;
       G._ranchZone.visible = true;
       G.refreshRanchZone();
+      if (G.buildRanchDecor) G.buildRanchDecor(); // 🌻 วางของตกแต่งที่ซื้อไว้
       if (G.sfx && G.sfx.warp) G.sfx.warp();
       if (G.toast) G.toast("🏡 ยินดีต้อนรับสู่ฟาร์มของคุณ!");
       setUi((u) => ({ ...u, inRanchZone: true }));
@@ -15306,11 +15307,11 @@ export default function CherryAdventure() {
         const remain = Math.max(0, (g.readyAt || 0) - Date.now());
         garden.push({ crop: g.crop, emoji: c.emoji, name: c.name, ready: remain <= 0, remainMin: Math.ceil(remain / 60000) });
       }
-      return { slots, slotsMax: RANCH_SLOTS, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, food: R.food || 0, garden, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })) };
+      return { slots, slotsMax: RANCH_SLOTS, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })) };
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
-    G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: (tab === "breed" || tab === "garden") ? tab : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
+    G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: ["breed", "garden", "market"].indexOf(tab) >= 0 ? tab : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
     G.ranchAssign = (iid, slot) => {
       ranchTick();
       const R = G.ranch; R.slots = R.slots || [];
@@ -15392,8 +15393,9 @@ export default function CherryAdventure() {
       const c = CROP_BY[cropId]; if (!c) return;
       const R = G.ranch; R.garden = R.garden || [];
       if (R.garden[plot]) { toast("🌱 แปลงนี้มีพืชอยู่แล้ว"); return; }
-      if ((G.gold || 0) < c.seed) { toast("💰 ทองไม่พอซื้อเมล็ด (ต้องมี " + c.seed + ")"); return; }
-      G.gold -= c.seed;
+      const useSeed = (R.seeds || 0) > 0; // 🌱 ใช้เมล็ดที่ซื้อจากตลาดก่อน (ปลูกฟรี) ไม่มีค่อยจ่ายทอง
+      if (!useSeed && (G.gold || 0) < c.seed) { toast("💰 ทองไม่พอ — ซื้อเมล็ดจากตลาด หรือหาเงินเพิ่ม (ต้องมี " + c.seed + ")"); return; }
+      if (useSeed) R.seeds -= 1; else G.gold -= c.seed;
       R.garden[plot] = { crop: cropId, readyAt: Date.now() + c.grow * 60000 };
       if (G.sfx) G.sfx.button && G.sfx.button();
       syncPlayer();
@@ -15419,6 +15421,60 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
     };
     G.feedBest = (iid) => { if ((G.ranch.food || 0) > 0) G.feedRanchFood(iid); else G.feedRanch(iid); }; // 🍽️ ให้พืชผลก่อน (ฟรี) ไม่มีค่อยจ่ายทอง
+
+    // 🌳 ornament for the garden decor (varies by index)
+    const mkRanchOrnament = (i) => {
+      const g = new THREE.Group(); const type = i % 4;
+      if (type === 0) { // 🌳 ต้นไม้
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 1.1, 8), rzWoodMat); trunk.position.y = 0.55; g.add(trunk);
+        const fol = new THREE.Mesh(new THREE.SphereGeometry(0.78, 12, 10), new THREE.MeshStandardMaterial({ color: 0x5aa84a, roughness: 0.9 })); fol.position.y = 1.5; fol.scale.set(1, 0.9, 1); g.add(fol);
+      } else if (type === 1) { // 🌸 พุ่มดอกไม้
+        const bush = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), new THREE.MeshStandardMaterial({ color: 0x6ac05a, roughness: 0.9 })); bush.position.y = 0.4; bush.scale.set(1.2, 0.8, 1.2); g.add(bush);
+        for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; const fc = [0xff8ab0, 0xffd86a, 0xb08aff][k % 3]; const fl = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshStandardMaterial({ color: fc, emissive: fc, emissiveIntensity: 0.15 })); fl.position.set(Math.cos(a) * 0.42, 0.62, Math.sin(a) * 0.42); g.add(fl); }
+      } else if (type === 2) { // 🏮 เสาโคมไฟ
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.2, 8), rzWoodMat); post.position.y = 0.6; g.add(post);
+        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xf0b040, emissiveIntensity: 0.7 })); lamp.position.y = 1.3; g.add(lamp);
+      } else { // 🍄 เห็ดยักษ์
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.6, 8), new THREE.MeshStandardMaterial({ color: 0xf0e6d0, roughness: 0.9 })); stem.position.y = 0.3; g.add(stem);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), new THREE.MeshStandardMaterial({ color: 0xe05a5a, roughness: 0.8 })); cap.position.y = 0.6; cap.scale.set(1, 0.7, 1); g.add(cap);
+      }
+      return g;
+    };
+    // 🌻 rebuild the placed decorations from G.ranch.decorCount (spawn in a ring around the homestead)
+    G.buildRanchDecor = () => {
+      const zone = G._ranchZone; if (!zone) return;
+      G._ranchDecorItems = G._ranchDecorItems || [];
+      G._ranchDecorItems.forEach((o) => { zone.remove(o); ranchDispose(o); });
+      G._ranchDecorItems = [];
+      const n = Math.max(0, Math.min(24, (G.ranch && G.ranch.decorCount) || 0));
+      for (let i = 0; i < n; i++) {
+        const ang = (i / Math.max(1, n)) * Math.PI * 2 + i * 0.7;
+        const rad = 9.5 + (i % 3) * 1.2;
+        const o = mkRanchOrnament(i);
+        o.position.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad - 1);
+        o.rotation.y = Math.random() * Math.PI * 2;
+        zone.add(o); G._ranchDecorItems.push(o);
+      }
+    };
+    // 🛒 MARKET — buy things with gold (seeds / feed / fertilizer / egg-rush / level-food / decor / saw)
+    G.buyMarket = (id) => {
+      const COST = { seed: 90, food: 100, fert: 80, egg: 150, lvl: 200, decor: 120, saw: 60 };
+      const cost = COST[id]; if (cost == null) return;
+      if (id === "saw" && ((G.ranch.decorCount || 0) <= 0)) { toast("🪚 ไม่มีต้นไม้/ของตกแต่งให้ตัด"); return; }
+      if ((G.gold || 0) < cost) { toast("💰 ทองไม่พอ (ต้องมี " + cost + ")"); return; }
+      ranchTick();
+      G.gold -= cost;
+      if (id === "seed") { G.ranch.seeds = (G.ranch.seeds || 0) + 3; toast("🌱 ซื้อเมล็ดพืชผัก +3 (ปลูกฟรีในสวน)"); }
+      else if (id === "food") { G.ranch.food = (G.ranch.food || 0) + 5; toast("🌾 ซื้ออาหารสัตว์ +5 (คลัง " + G.ranch.food + ")"); }
+      else if (id === "fert") { let k = 0; (G.ranch.garden || []).forEach((g) => { if (g && g.readyAt > Date.now()) { g.readyAt = Date.now(); k++; } }); if (G.refreshRanchTimers) G.refreshRanchTimers(); toast(k ? `💩 ใส่ปุ๋ย! พืช ${k} แปลงพร้อมเก็บทันที` : "💩 ยังไม่มีพืชกำลังโต — ปลูกก่อนแล้วค่อยใส่ปุ๋ย"); }
+      else if (id === "egg") { if (G.ranch.egg) { G.ranch.egg.readyAt = Date.now(); if (G.refreshRanchTimers) G.refreshRanchTimers(); toast("⚡ เร่งฟักไข่! พร้อมฟักทันที"); } else toast("⚡ ยังไม่มีไข่กำลังฟัก"); }
+      else if (id === "lvl") { const ids = (G.ranch.slots || []).filter((x) => x != null); if (!ids.length) { toast("⭐ ยังไม่มีเพ็ตในคอก — เอาเพ็ตลงคอกก่อน"); G.gold += cost; return; } ids.forEach((iid) => petGain(iid, 60)); toast(`⭐ อาหารเร่งเลเวล! เพ็ตในคอก ${ids.length} ตัว +60 EXP`); }
+      else if (id === "decor") { G.ranch.decorCount = Math.min(24, (G.ranch.decorCount || 0) + 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🌻 ซื้อของตกแต่งสวน +1 ชิ้น"); }
+      else if (id === "saw") { G.ranch.decorCount = Math.max(0, (G.ranch.decorCount || 0) - 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🪚 ตัด/เก็บของตกแต่งออก 1 ชิ้น"); }
+      if (G.sfx) (id === "saw" ? (G.sfx.button && G.sfx.button()) : (G.sfx.coin && G.sfx.coin()));
+      syncPlayer();
+      setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
+    };
 
     // ♾️ ENDLESS SURVIVAL: fight escalating waves; a loss ends the run
     G.startEndless = () => {
@@ -18396,8 +18452,8 @@ export default function CherryAdventure() {
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
       G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
-        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 6) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 4) : [], food: d.ranch.food || 0 }
-        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0 };
+        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 6) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 4) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0 }
+        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0 };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -26542,7 +26598,7 @@ export default function CherryAdventure() {
       )}
 
       {/* ☰ combined menu */}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
         <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title="เมนู" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 130, width: 44, height: 44 } : { bottom: 414, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
@@ -26551,13 +26607,13 @@ export default function CherryAdventure() {
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 112, width: 44, height: 44 } : { bottom: 348, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
       )}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
         <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 176, width: 42, height: 42 } : { bottom: 348, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
       )}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
         <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 222, width: 42, height: 42 } : { bottom: 282, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>⚡{((ui.sp || 0) + (ui.statPts || 0)) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>}</button>
       )}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
         <button onClick={() => G.toggleSocial()} title="เพื่อน & สู้ผี" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 268, width: 42, height: 42 } : { bottom: 216, width: 48, height: 48 }), borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
@@ -28981,7 +29037,7 @@ export default function CherryAdventure() {
 
           {/* 🏡 in-zone quick buttons: ฟาร์ม / เพาะพันธุ์ (แยกไอคอนโชว์ข้างนอกตอนอยู่ในฟาร์ม) */}
           {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && (
-            <div style={{ position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "29%", display: "flex", flexDirection: "column", gap: 12, zIndex: 34 }}>
+            <div style={{ position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "42%", display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
               <button onClick={() => G.openRanch && G.openRanch("farm")} title="ฟาร์มสัตว์เลี้ยง" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🐄</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ฟาร์ม</span>
               </button>
@@ -28990,6 +29046,9 @@ export default function CherryAdventure() {
               </button>
               <button onClick={() => G.openRanch && G.openRanch("garden")} title="ปลูกผัก" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#7ac06a,#4f9a3f)", color: "#fff", boxShadow: "0 4px 14px rgba(79,154,63,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🌾</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ปลูกผัก</span>
+              </button>
+              <button onClick={() => G.openRanch && G.openRanch("market")} title="ตลาด" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                <span style={{ fontSize: 25 }}>🛒</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ตลาด</span>
               </button>
             </div>
           )}
@@ -29011,7 +29070,8 @@ export default function CherryAdventure() {
               <div style={{ display: "flex", gap: 6, marginBottom: 10, flexShrink: 0 }}>
                 <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "farm" ? "#fff" : "#8a7a5a", background: ui.ranchTab === "farm" ? "linear-gradient(90deg,#e0a86a,#c9843e)" : "#f0e6d6" }}>🐄 ฟาร์ม</button>
                 <button onClick={() => setUi((u) => ({ ...u, ranchTab: "breed" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#fff" : "#8a6a9a", background: ui.ranchTab === "breed" ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#f2ecf8" }}>🥚 เพาะพันธุ์</button>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "garden" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "garden" ? "#fff" : "#6a8a4a", background: ui.ranchTab === "garden" ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#e8f2dc" }}>🌾 ปลูกผัก</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "garden" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "garden" ? "#fff" : "#6a8a4a", background: ui.ranchTab === "garden" ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#e8f2dc" }}>🌾 ปลูกผัก</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "market" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "market" ? "#fff" : "#a08040", background: ui.ranchTab === "market" ? "linear-gradient(90deg,#f0c060,#d9a020)" : "#f7eecf" }}>🛒 ตลาด</button>
               </div>
               {ui.ranchTab === "farm" && (<React.Fragment>
               {/* pending + claim */}
@@ -29152,6 +29212,36 @@ export default function CherryAdventure() {
               </div>
 
               </React.Fragment>)}
+
+              {/* 🛒 market */}
+              {ui.ranchTab === "market" && (
+                <div style={{ paddingTop: 2 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 900, color: "#c9843e", marginBottom: 2 }}>🛒 ตลาด (ซื้อด้วยทอง)</div>
+                  <div style={{ fontSize: 10, color: "#a99", marginBottom: 9 }}>คลัง — 🌱 เมล็ด {ui.ranch.seeds || 0} · 🌾 อาหารสัตว์ {ui.ranch.food || 0} · 🌻 ตกแต่ง {ui.ranch.decorCount || 0}</div>
+                  {[
+                    { id: "seed", emoji: "🌱", name: "เมล็ดพืชผัก ×3", cost: 90, desc: "ปลูกในสวนได้ฟรี (ไม่เสียทองตอนปลูก)" },
+                    { id: "food", emoji: "🌾", name: "อาหารสัตว์ ×5", cost: 100, desc: "เติมคลังอาหารเลี้ยงเพ็ตในคอก" },
+                    { id: "fert", emoji: "💩", name: "ปุ๋ย", cost: 80, desc: "ทำให้พืชที่กำลังโตพร้อมเก็บทันที" },
+                    { id: "egg", emoji: "⚡", name: "ตัวเร่งฟักไข่", cost: 150, desc: "ไข่ที่กำลังฟัก → พร้อมฟักทันที" },
+                    { id: "lvl", emoji: "⭐", name: "อาหารเร่งเลเวล", cost: 200, desc: "เพ็ตในคอกทุกตัว +60 EXP" },
+                    { id: "decor", emoji: "🌻", name: "ของตกแต่งสวน", cost: 120, desc: "เพิ่มต้นไม้/ดอกไม้/โคมประดับในสวน" },
+                    { id: "saw", emoji: "🪚", name: "เลื่อย (ตัดต้นไม้)", cost: 60, desc: "ตัด/เก็บของตกแต่งออก 1 ชิ้น" },
+                  ].map((it) => {
+                    const poor = (ui.gold || 0) < it.cost;
+                    return (
+                      <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 9, background: "#fdf7ee", border: "1px solid #f0e0c8", borderRadius: 11, padding: "8px 10px", marginBottom: 7 }}>
+                        <div style={{ fontSize: 24, flexShrink: 0 }}>{it.emoji}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 800, color: "#8a5a2a" }}>{it.name}</div>
+                          <div style={{ fontSize: 9.5, color: "#b09a80", fontWeight: 600, lineHeight: 1.4 }}>{it.desc}</div>
+                        </div>
+                        <button onClick={() => G.buyMarket && G.buyMarket(it.id)} disabled={poor} style={{ flexShrink: 0, padding: "8px 12px", borderRadius: 999, border: "none", cursor: poor ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: poor ? "#cdd3c8" : "linear-gradient(90deg,#e0a86a,#c9843e)" }}>💰 {it.cost}</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* 🥚 breeding parent picker */}
               {ui.ranchTab === "breed" && ui.breedPick != null && (() => {
                 const other = ui.breedPick === "a" ? ui.breedB : ui.breedA;
