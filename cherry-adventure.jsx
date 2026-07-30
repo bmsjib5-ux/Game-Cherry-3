@@ -15310,7 +15310,7 @@ export default function CherryAdventure() {
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
-    G.openRanch = () => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
+    G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: tab === "breed" ? "breed" : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
     G.ranchAssign = (iid, slot) => {
       ranchTick();
       const R = G.ranch; R.slots = R.slots || [];
@@ -28979,6 +28979,18 @@ export default function CherryAdventure() {
             </div>
           )}
 
+          {/* 🏡 in-zone quick buttons: ฟาร์ม / เพาะพันธุ์ (แยกไอคอนโชว์ข้างนอกตอนอยู่ในฟาร์ม) */}
+          {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && (
+            <div style={{ position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "29%", display: "flex", flexDirection: "column", gap: 12, zIndex: 34 }}>
+              <button onClick={() => G.openRanch && G.openRanch("farm")} title="ฟาร์มสัตว์เลี้ยง" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                <span style={{ fontSize: 25 }}>🐄</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ฟาร์ม</span>
+              </button>
+              <button onClick={() => G.openRanch && G.openRanch("breed")} title="เพาะพันธุ์" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#b06ad0,#8a4ac0)", color: "#fff", boxShadow: "0 4px 14px rgba(138,74,192,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                <span style={{ fontSize: 25 }}>🥚</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>เพาะพันธุ์</span>
+              </button>
+            </div>
+          )}
+
           {/* 🐄 pet ranch (idle farm) */}
           {ui.ranchOpen && ui.ranch && (
             <div style={{
@@ -28992,6 +29004,12 @@ export default function CherryAdventure() {
                 <div style={{ flex: 1 }} />
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
               </div>
+              {/* 🗂️ tabs: farm / breed */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 10, flexShrink: 0 }}>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#8a7a5a" : "#fff", background: ui.ranchTab === "breed" ? "#f0e6d6" : "linear-gradient(90deg,#e0a86a,#c9843e)" }}>🐄 ฟาร์มสัตว์เลี้ยง</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "breed" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#fff" : "#8a6a9a", background: ui.ranchTab === "breed" ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#f2ecf8" }}>🥚 เพาะพันธุ์</button>
+              </div>
+              {ui.ranchTab !== "breed" && (<React.Fragment>
               {/* pending + claim */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#fff6e8,#fdeccf)", border: "1px solid #f0dcc0", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
                 <div style={{ flex: 1 }}>
@@ -29036,8 +29054,10 @@ export default function CherryAdventure() {
                 🐾 เพ็ตในคอกจะหาทองและได้ EXP ให้เองตลอดเวลา · ให้อาหารเพื่อเพิ่มความสุข → ผลผลิตไวขึ้น · ความสุขจะค่อยๆ ลดถ้าไม่ดูแล
               </div>
 
+              </React.Fragment>)}
+              {ui.ranchTab === "breed" && (<React.Fragment>
               {/* 🥚 breeding pen */}
-              <div style={{ marginTop: 12, borderTop: "1px solid #f0e6da", paddingTop: 10 }}>
+              <div style={{ paddingTop: 2 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 900, color: "#a06ac0", marginBottom: 2 }}>🥚 เพาะพันธุ์ (สืบทอด IV)</div>
                 <div style={{ fontSize: 10, color: "#a99", marginBottom: 8 }}>จับคู่พ่อแม่ → ได้ไข่ที่สืบทอด IV ที่ดีที่สุดของทั้งคู่ (มักดีขึ้นทุกรุ่น) แล้วฟักตามเวลา (ได้แม้ปิดเกม)</div>
                 {ui.ranch.egg ? (
@@ -29080,6 +29100,8 @@ export default function CherryAdventure() {
                 })()}
               </div>
 
+              </React.Fragment>)}
+              {ui.ranchTab !== "breed" && (<React.Fragment>
               {/* 🌾 garden */}
               <div style={{ marginTop: 12, borderTop: "1px solid #eaf0dc", paddingTop: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
@@ -29125,8 +29147,9 @@ export default function CherryAdventure() {
                 )}
               </div>
 
+              </React.Fragment>)}
               {/* 🥚 breeding parent picker */}
-              {ui.breedPick != null && (() => {
+              {ui.ranchTab === "breed" && ui.breedPick != null && (() => {
                 const other = ui.breedPick === "a" ? ui.breedB : ui.breedA;
                 const avail = (ui.petBox || []).filter((p) => p.i !== other && !(G.petInUse && G.petInUse(p.i)));
                 return (
