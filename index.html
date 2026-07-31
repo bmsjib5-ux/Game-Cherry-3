@@ -22592,6 +22592,27 @@ function CherryAdventure() {
         const STOCK_SELL = { seeds: 20, food: 12, decorCount: 50 }; // 📦 ราคาขายคืนของในคลัง (ต่อชิ้น)
         const CROP_BY = {};
         CROPS.forEach((c) => (CROP_BY[c.id] = c));
+        // 🏭 แปรรูปผลผลิต — ใช้พืชผลในคลัง → สินค้ามูลค่าสูงกว่า (ตามเวลา)
+        const PROCESS = [
+            { id: "juice", name: "น้ำแครอท", emoji: "🥤", from: "carrot", need: 3, mins: 15, sell: 70 },
+            { id: "popcorn", name: "ป๊อปคอร์น", emoji: "🍿", from: "corn", need: 3, mins: 25, sell: 120 },
+            { id: "jam", name: "แยมเบอร์รี่", emoji: "🍯", from: "berry", need: 3, mins: 40, sell: 240 },
+        ];
+        const PROCESS_BY = {};
+        PROCESS.forEach((p) => (PROCESS_BY[p.id] = p));
+        const CRAFT_SLOTS = 3;
+        // 🌳 ต้นไม้ผล — ซื้อครั้งเดียว ออกผลเรื่อยๆ ตามคูลดาวน์ (เก็บเข้าคลังสินค้า)
+        const TREES = [
+            { id: "apple", name: "ต้นแอปเปิล", emoji: "🍎", cd: 20, sell: 20, cost: 500 },
+            { id: "mango", name: "ต้นมะม่วง", emoji: "🥭", cd: 45, sell: 45, cost: 1400 },
+        ];
+        const TREE_BY = {};
+        TREES.forEach((t) => (TREE_BY[t.id] = t));
+        const TREES_MAX = 6;
+        // 🏷️ ตารางมูลค่าสินค้าทุกชิ้น (แปรรูป + ผลไม้) สำหรับขายในคลัง
+        const GOODS_BY = {};
+        PROCESS.forEach((p) => (GOODS_BY[p.id] = { name: p.name, emoji: p.emoji, sell: p.sell }));
+        TREES.forEach((t) => (GOODS_BY["fruit_" + t.id] = { name: t.name.replace("ต้น", ""), emoji: t.emoji, sell: t.sell }));
         if (!G.ranch)
             G.ranch = { slots: [], happy: {}, last: Date.now(), pending: 0 };
         const ranchHappy = (iid) => Math.max(0, Math.min(100, G.ranch.happy[iid] != null ? G.ranch.happy[iid] : 60));
@@ -22706,6 +22727,34 @@ function CherryAdventure() {
                 R.happy[iid] = Math.max(0, ranchHappy(iid) - 4 * decayHrs); // 😴 -4 ความสุข/ชม.
             });
             R.pending = (R.pending || 0) + gold * farmIncomeMult(); // 🌟 โบนัสรายได้ตามเลเวลฟาร์ม
+            // 🌳 ต้นไม้ผล — ออกผลตามคูลดาวน์ (สะสมออฟไลน์ สูงสุด 8 ผล/ต้น)
+            if (Array.isArray(R.trees) && R.trees.length) {
+                R.goods = R.goods || {};
+                R.trees.forEach((t) => {
+                    const td = TREE_BY[t.kind];
+                    if (!td)
+                        return;
+                    const cdMs = td.cd * 60000;
+                    const elapsed = now - (t.lastAt || now);
+                    let n = Math.floor(elapsed / cdMs);
+                    if (n > 0) {
+                        n = Math.min(8, n);
+                        const gid = "fruit_" + t.kind;
+                        R.goods[gid] = (R.goods[gid] || 0) + n;
+                        t.lastAt = now;
+                    }
+                    else if (t.lastAt == null)
+                        t.lastAt = now;
+                });
+            }
+            // 🏭 เก็บสินค้าแปรรูปที่เสร็จแล้วเข้าคลังอัตโนมัติ
+            if (Array.isArray(R.craft)) {
+                R.goods = R.goods || {};
+                R.craft.forEach((c, i) => { if (c && c.readyAt <= now) {
+                    R.goods[c.id] = (R.goods[c.id] || 0) + 1;
+                    R.craft[i] = null;
+                } });
+            }
         };
         const ranchUiSnap = () => {
             const R = G.ranch;
@@ -22743,7 +22792,19 @@ function CherryAdventure() {
             const lb = R.lastHatched;
             const lbSp = lb && SPECIES[lb.sp];
             const lastBred = lbSp ? { sp: lb.sp, emoji: lbSp.emoji, name: lbSp.name, lv: lb.lv || 5, iv: lb.iv || { a: 0, h: 0, d: 0 }, total: lb.iv ? (lb.iv.a + lb.iv.h + lb.iv.d) : 0 } : null;
-            return { slots, slotsMax: ranchSlotsMax(), pens: (R.pens || 2), penMax: PENS_MAX, penCost: 400 + ((R.pens || 2) - 2) * 300, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, lastBred, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, plots: (R.plots || 4), plotMax: PLOTS_MAX, plotCost: 150 + ((R.plots || 4) - 4) * 100, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })), produce: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (R.produce && R.produce[c.id]) || 0, sell: c.sell })), stockSell: { seeds: STOCK_SELL.seeds, food: STOCK_SELL.food, decorCount: STOCK_SELL.decorCount }, fert: R.fert || 0, eggb: R.eggb || 0, lvlf: R.lvlf || 0, farmLv: fl.lv, farmXp: fl.cur, farmNeed: fl.need, farmMult: Math.round((farmIncomeMult() - 1) * 100), quests: (R.quests || []).map((q) => ({ ...q })) };
+            return { slots, slotsMax: ranchSlotsMax(), pens: (R.pens || 2), penMax: PENS_MAX, penCost: 400 + ((R.pens || 2) - 2) * 300, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, lastBred, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, plots: (R.plots || 4), plotMax: PLOTS_MAX, plotCost: 150 + ((R.plots || 4) - 4) * 100, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })), produce: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (R.produce && R.produce[c.id]) || 0, sell: c.sell })), stockSell: { seeds: STOCK_SELL.seeds, food: STOCK_SELL.food, decorCount: STOCK_SELL.decorCount }, fert: R.fert || 0, eggb: R.eggb || 0, lvlf: R.lvlf || 0, farmLv: fl.lv, farmXp: fl.cur, farmNeed: fl.need, farmMult: Math.round((farmIncomeMult() - 1) * 100), quests: (R.quests || []).map((q) => ({ ...q })),
+                craft: (() => { const a = []; for (let i = 0; i < CRAFT_SLOTS; i++) {
+                    const c = (R.craft || [])[i];
+                    if (!c) {
+                        a.push(null);
+                        continue;
+                    }
+                    const rec = PROCESS_BY[c.id] || {};
+                    a.push({ id: c.id, emoji: rec.emoji, name: rec.name, ready: c.readyAt <= Date.now(), remainMin: Math.max(0, Math.ceil((c.readyAt - Date.now()) / 60000)) });
+                } return a; })(),
+                processOpts: PROCESS.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, fromName: (CROP_BY[p.from] || {}).name, fromEmoji: (CROP_BY[p.from] || {}).emoji, need: p.need, mins: p.mins, have: (R.produce && R.produce[p.from]) || 0, sell: p.sell })),
+                goods: Object.keys(GOODS_BY).map((gid) => ({ id: gid, emoji: GOODS_BY[gid].emoji, name: GOODS_BY[gid].name, n: (R.goods && R.goods[gid]) || 0, sell: GOODS_BY[gid].sell })).filter((g) => g.n > 0),
+                treeCount: (R.trees || []).length, treesMax: TREES_MAX, treeOpts: TREES.map((t) => ({ id: t.id, name: t.name, emoji: t.emoji, cd: t.cd, sell: t.sell, cost: t.cost, owned: (R.trees || []).filter((x) => x.kind === t.id).length })) };
         };
         G.ranchUi = ranchUiSnap;
         G.ranchTickPublic = ranchTick;
@@ -23245,6 +23306,89 @@ function CherryAdventure() {
             if (G.saveGame)
                 G.saveGame();
             setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
+        };
+        // 🏭 เริ่มแปรรูป — ใช้พืชผลในคลัง → ลงคิวผลิต (เก็บอัตโนมัติเมื่อครบเวลา)
+        G.startProcess = (pid) => {
+            const R = G.ranch;
+            const rec = PROCESS_BY[pid];
+            if (!rec)
+                return;
+            ranchTick();
+            R.craft = R.craft || [];
+            const free = (() => { for (let i = 0; i < CRAFT_SLOTS; i++)
+                if (!R.craft[i])
+                    return i; return -1; })();
+            if (free < 0) {
+                toast("🏭 โรงงานเต็มทุกช่อง — รอของเสร็จก่อน");
+                return;
+            }
+            if (((R.produce && R.produce[rec.from]) || 0) < rec.need) {
+                const c = CROP_BY[rec.from] || {};
+                toast(`📦 ${c.name || rec.from} ในคลังไม่พอ (ต้องใช้ ${rec.need})`);
+                return;
+            }
+            R.produce[rec.from] -= rec.need;
+            R.craft[free] = { id: pid, readyAt: Date.now() + rec.mins * 60000 };
+            if (G.farmXp)
+                G.farmXp(6);
+            if (G.sfx)
+                G.sfx.button && G.sfx.button();
+            toast(`🏭 เริ่มแปรรูป ${rec.emoji} ${rec.name} — เสร็จใน ${rec.mins} นาที`);
+            if (G.saveGame)
+                G.saveGame();
+            setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
+        };
+        // 🌳 ซื้อต้นไม้ผล (ออกผลเรื่อยๆ เก็บเข้าคลังสินค้า)
+        G.buyTree = (tid) => {
+            const R = G.ranch;
+            const td = TREE_BY[tid];
+            if (!td)
+                return;
+            R.trees = R.trees || [];
+            if (R.trees.length >= TREES_MAX) {
+                toast(`🌳 สวนผลไม้เต็มแล้ว (สูงสุด ${TREES_MAX} ต้น)`);
+                return;
+            }
+            if ((G.gold || 0) < td.cost) {
+                toast("💰 ทองไม่พอ (ต้องมี " + td.cost + ")");
+                return;
+            }
+            ranchTick();
+            G.gold -= td.cost;
+            R.trees.push({ kind: tid, lastAt: Date.now() });
+            if (G.farmXp)
+                G.farmXp(12);
+            if (G.sfx)
+                G.sfx.coin && G.sfx.coin();
+            toast(`🌳 ปลูก${td.name}แล้ว! จะออก ${td.emoji} ทุก ${td.cd} นาที`);
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+            setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
+        };
+        // 💰 ขายสินค้าในคลัง (แปรรูป/ผลไม้) เป็นทอง — ทั้งหมดของชนิดนั้น
+        G.sellGood = (gid) => {
+            const R = G.ranch;
+            const gd = GOODS_BY[gid];
+            if (!gd)
+                return;
+            const n = (R.goods && R.goods[gid]) || 0;
+            if (n <= 0) {
+                toast("📦 ไม่มีสินค้านี้ในคลัง");
+                return;
+            }
+            const amt = n * gd.sell;
+            R.goods[gid] = 0;
+            G.gold = (G.gold || 0) + amt;
+            if (G.farmXp)
+                G.farmXp(Math.min(30, n));
+            if (G.sfx)
+                G.sfx.coin && G.sfx.coin();
+            toast(`💰 ขาย ${gd.emoji} ${gd.name} ×${n} — ได้ ${amt.toLocaleString()} ทอง`);
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+            setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
         };
         // ♾️ ENDLESS SURVIVAL: fight escalating waves; a loss ends the run
         G.startEndless = () => {
@@ -28103,8 +28247,8 @@ function CherryAdventure() {
             G._petSeq = d.petSeq || 1;
             G.petSlotsBought = d.petSlotsBought || 0;
             G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
-                ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0, xp: d.ranch.xp || 0, qday: d.ranch.qday || null, quests: Array.isArray(d.ranch.quests) ? d.ranch.quests : [] }
-                : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0, xp: 0, qday: null, quests: [] };
+                ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0, xp: d.ranch.xp || 0, qday: d.ranch.qday || null, quests: Array.isArray(d.ranch.quests) ? d.ranch.quests : [], goods: (d.ranch.goods && typeof d.ranch.goods === "object") ? d.ranch.goods : {}, trees: Array.isArray(d.ranch.trees) ? d.ranch.trees.slice(0, 6) : [], craft: Array.isArray(d.ranch.craft) ? d.ranch.craft.slice(0, 3) : [] }
+                : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0, xp: 0, qday: null, quests: [], goods: {}, trees: [], craft: [] };
             G.goldExch = d.goldExch || null;
             G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
             if (!G.petBox) {
@@ -41994,7 +42138,10 @@ function CherryAdventure() {
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E40\u0E1E\u0E32\u0E30\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C")),
                     React.createElement("button", { onClick: () => G.openRanch && G.openRanch("garden"), title: "\u0E1B\u0E25\u0E39\u0E01\u0E1C\u0E31\u0E01", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#7ac06a,#4f9a3f)", color: "#fff", boxShadow: "0 4px 14px rgba(79,154,63,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83C\uDF3E"),
-                        React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E1B\u0E25\u0E39\u0E01\u0E1C\u0E31\u0E01"))),
+                        React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E1B\u0E25\u0E39\u0E01\u0E1C\u0E31\u0E01")),
+                    !ui.fishing && React.createElement("button", { onClick: () => G.startFishing && G.startFishing(), title: "\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E48\u0E2D", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#5aa0d0,#3a78b0)", color: "#fff", boxShadow: "0 4px 14px rgba(58,120,176,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
+                        React.createElement("span", { style: { fontSize: 25 } }, "\uD83C\uDFA3"),
+                        React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E01\u0E1B\u0E25\u0E32"))),
                 React.createElement("div", { style: { position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
                     React.createElement("button", { onClick: () => G.openRanch && G.openRanch("market"), title: "\u0E15\u0E25\u0E32\u0E14", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83D\uDED2"),
@@ -42214,7 +42361,34 @@ function CherryAdventure() {
                                     c.grow,
                                     "\u0E19. \u00B7 +",
                                     c.yield,
-                                    "\uD83C\uDF3E")))))))))),
+                                    "\uD83C\uDF3E"))))))),
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#6a9a4a", margin: "12px 0 5px" } },
+                            "\uD83C\uDF33 \u0E2A\u0E27\u0E19\u0E1C\u0E25\u0E44\u0E21\u0E49 ",
+                            React.createElement("span", { style: { fontSize: 9, fontWeight: 700, color: "#a99" } },
+                                "(\u0E1B\u0E25\u0E39\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E40\u0E14\u0E35\u0E22\u0E27 \u0E2D\u0E2D\u0E01\u0E1C\u0E25\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E22\u0E46 \u00B7 ",
+                                ui.ranch.treeCount || 0,
+                                "/",
+                                ui.ranch.treesMax || 6,
+                                " \u0E15\u0E49\u0E19)")),
+                        React.createElement("div", { style: { fontSize: 9.5, color: "#a99", marginBottom: 6 } }, "\u0E1C\u0E25\u0E44\u0E21\u0E49\u0E08\u0E30\u0E40\u0E02\u0E49\u0E32\u0E04\u0E25\u0E31\u0E07\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E40\u0E2D\u0E07 (\u0E44\u0E14\u0E49\u0E41\u0E21\u0E49\u0E1B\u0E34\u0E14\u0E40\u0E01\u0E21 \u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 8 \u0E1C\u0E25/\u0E15\u0E49\u0E19) \u2192 \u0E02\u0E32\u0E22\u0E43\u0E19\u0E41\u0E17\u0E47\u0E1A \uD83D\uDCE6 \u0E04\u0E25\u0E31\u0E07"),
+                        (ui.ranch.treeOpts || []).map((t) => (React.createElement("div", { key: t.id, style: { display: "flex", alignItems: "center", gap: 9, background: "#f2f8ec", border: "1px solid #d8ecc4", borderRadius: 11, padding: "8px 10px", marginBottom: 6 } },
+                            React.createElement("div", { style: { fontSize: 24, flexShrink: 0 } }, t.emoji),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#4f7a3a" } },
+                                    t.name,
+                                    " ",
+                                    t.owned > 0 && React.createElement("span", { style: { color: "#8aa070" } },
+                                        "\u00D7",
+                                        t.owned)),
+                                React.createElement("div", { style: { fontSize: 9, color: "#9ab080", fontWeight: 600 } },
+                                    "\u0E2D\u0E2D\u0E01\u0E1C\u0E25\u0E17\u0E38\u0E01 ",
+                                    t.cd,
+                                    " \u0E19\u0E32\u0E17\u0E35 \u00B7 \u0E1C\u0E25\u0E02\u0E32\u0E22\u0E44\u0E14\u0E49 ",
+                                    t.sell,
+                                    "\uD83D\uDCB0")),
+                            React.createElement("button", { onClick: () => G.buyTree && G.buyTree(t.id), disabled: (ui.gold || 0) < t.cost || (ui.ranch.treeCount || 0) >= (ui.ranch.treesMax || 6), style: { flexShrink: 0, padding: "8px 12px", borderRadius: 999, border: "none", cursor: ((ui.gold || 0) >= t.cost && (ui.ranch.treeCount || 0) < (ui.ranch.treesMax || 6)) ? "pointer" : "default", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: ((ui.gold || 0) >= t.cost && (ui.ranch.treeCount || 0) < (ui.ranch.treesMax || 6)) ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#cdd3c8" } },
+                                "\uD83C\uDF33 ",
+                                t.cost.toLocaleString()))))))),
                 ui.ranchTab === "market" && (React.createElement("div", { style: { paddingTop: 2 } },
                     React.createElement("div", { style: { fontSize: 13.5, fontWeight: 900, color: "#c9843e", marginBottom: 2 } }, "\uD83D\uDED2 \u0E15\u0E25\u0E32\u0E14 (\u0E0B\u0E37\u0E49\u0E2D\u0E14\u0E49\u0E27\u0E22\u0E17\u0E2D\u0E07)"),
                     React.createElement("div", { style: { fontSize: 10, color: "#a99", marginBottom: 9 } },
@@ -42299,7 +42473,55 @@ function CherryAdventure() {
                                     "\u00D7",
                                     it.n)),
                             React.createElement("div", { style: { fontSize: 9.5, color: "#a0aab8", fontWeight: 600, lineHeight: 1.4 } }, it.desc)),
-                        React.createElement("button", { onClick: () => G.useRanchItem && G.useRanchItem(it.kind), disabled: it.n <= 0, style: { flexShrink: 0, padding: "8px 14px", borderRadius: 999, border: "none", cursor: it.n > 0 ? "pointer" : "default", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: it.n > 0 ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#cdd3d0" } }, "\u0E43\u0E0A\u0E49")))))),
+                        React.createElement("button", { onClick: () => G.useRanchItem && G.useRanchItem(it.kind), disabled: it.n <= 0, style: { flexShrink: 0, padding: "8px 14px", borderRadius: 999, border: "none", cursor: it.n > 0 ? "pointer" : "default", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: it.n > 0 ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#cdd3d0" } }, "\u0E43\u0E0A\u0E49")))),
+                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#a06a4a", margin: "10px 0 5px" } }, "\uD83C\uDFED \u0E42\u0E23\u0E07\u0E07\u0E32\u0E19\u0E41\u0E1B\u0E23\u0E23\u0E39\u0E1B"),
+                    React.createElement("div", { style: { fontSize: 9, color: "#a99", marginBottom: 6 } },
+                        "\u0E43\u0E0A\u0E49\u0E1E\u0E37\u0E0A\u0E1C\u0E25\u0E43\u0E19\u0E04\u0E25\u0E31\u0E07 \u2192 \u0E41\u0E1B\u0E23\u0E23\u0E39\u0E1B\u0E40\u0E1B\u0E47\u0E19\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E23\u0E32\u0E04\u0E32\u0E2A\u0E39\u0E07\u0E01\u0E27\u0E48\u0E32 (\u0E21\u0E35 ",
+                        (ui.ranch.craft || []).filter(Boolean).length,
+                        "/3 \u0E0A\u0E48\u0E2D\u0E07\u0E01\u0E33\u0E25\u0E31\u0E07\u0E1C\u0E25\u0E34\u0E15 \u00B7 \u0E40\u0E01\u0E47\u0E1A\u0E40\u0E02\u0E49\u0E32\u0E04\u0E25\u0E31\u0E07\u0E40\u0E2D\u0E07\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E40\u0E2A\u0E23\u0E47\u0E08)"),
+                    (ui.ranch.processOpts || []).map((p) => {
+                        const slotFree = (ui.ranch.craft || []).filter(Boolean).length < 3;
+                        return (React.createElement("div", { key: p.id, style: { display: "flex", alignItems: "center", gap: 9, background: "#fbf3ee", border: "1px solid #ecd9c8", borderRadius: 11, padding: "8px 10px", marginBottom: 6 } },
+                            React.createElement("div", { style: { fontSize: 24, flexShrink: 0 } }, p.emoji),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#8a5a3a" } }, p.name),
+                                React.createElement("div", { style: { fontSize: 9, color: "#b09a80", fontWeight: 600 } },
+                                    "\u0E43\u0E0A\u0E49 ",
+                                    p.fromEmoji,
+                                    " ",
+                                    p.fromName,
+                                    " \u00D7",
+                                    p.need,
+                                    " (\u0E21\u0E35 ",
+                                    p.have,
+                                    ") \u00B7 ",
+                                    p.mins,
+                                    " \u0E19\u0E32\u0E17\u0E35 \u00B7 \u0E02\u0E32\u0E22 ",
+                                    p.sell,
+                                    "\uD83D\uDCB0")),
+                            React.createElement("button", { onClick: () => G.startProcess && G.startProcess(p.id), disabled: p.have < p.need || !slotFree, style: { flexShrink: 0, padding: "8px 12px", borderRadius: 999, border: "none", cursor: (p.have >= p.need && slotFree) ? "pointer" : "default", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: (p.have >= p.need && slotFree) ? "linear-gradient(90deg,#e0a86a,#c9843e)" : "#cdd3c8" } }, "\u0E41\u0E1B\u0E23\u0E23\u0E39\u0E1B")));
+                    }),
+                    (ui.ranch.craft || []).some((c) => c) && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 2, marginBottom: 4 } }, (ui.ranch.craft || []).map((c, i) => (React.createElement("div", { key: i, style: { flex: 1, textAlign: "center", background: c ? (c.ready ? "#eef7e4" : "#fbf3ee") : "#f4f2ee", border: "1px dashed #e0d0bc", borderRadius: 9, padding: "5px 2px" } },
+                        React.createElement("div", { style: { fontSize: 18 } }, c ? c.emoji : "·"),
+                        React.createElement("div", { style: { fontSize: 8, fontWeight: 700, color: c ? (c.ready ? "#5aa06a" : "#b09a80") : "#c0b8a8" } }, c ? (c.ready ? "เสร็จ!" : c.remainMin + " น.") : "ว่าง")))))),
+                    (ui.ranch.goods || []).length > 0 && (React.createElement(React.Fragment, null,
+                        React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#c9843e", margin: "10px 0 5px" } }, "\uD83C\uDFED \u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E41\u0E1B\u0E23\u0E23\u0E39\u0E1B / \u0E1C\u0E25\u0E44\u0E21\u0E49"),
+                        (ui.ranch.goods || []).map((g) => (React.createElement("div", { key: g.id, style: { display: "flex", alignItems: "center", gap: 9, background: "#fff6ea", border: "1px solid #f0dcc0", borderRadius: 11, padding: "8px 10px", marginBottom: 6 } },
+                            React.createElement("div", { style: { fontSize: 24, flexShrink: 0 } }, g.emoji),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#a06a2a" } },
+                                    g.name,
+                                    " ",
+                                    React.createElement("span", { style: { color: "#c0a880" } },
+                                        "\u00D7",
+                                        g.n)),
+                                React.createElement("div", { style: { fontSize: 9.5, color: "#c0a880", fontWeight: 600 } },
+                                    "\u0E0A\u0E34\u0E49\u0E19\u0E25\u0E30 ",
+                                    g.sell,
+                                    "\uD83D\uDCB0 \u00B7 \u0E23\u0E27\u0E21 ",
+                                    (g.n * g.sell).toLocaleString(),
+                                    "\uD83D\uDCB0")),
+                            React.createElement("button", { onClick: () => G.sellGood && G.sellGood(g.id), style: { flexShrink: 0, padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e0a86a,#c9843e)" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22")))))))),
                 ui.ranchTab === "breed" && ui.breedPick != null && (() => {
                     const other = ui.breedPick === "a" ? ui.breedB : ui.breedA;
                     const avail = (ui.petBox || []).filter((p) => p.i !== other && !(G.petInUse && G.petInUse(p.i)));
