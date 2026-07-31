@@ -4401,40 +4401,37 @@ export default function CherryAdventure() {
       g.userData.gripY = 0.3; g.userData.gripZ = 0.3; g.scale.setScalar(1.35);
       weaponModels.yukiBow = g;
     }
-    { // ☀️ roseSword — Divine Light Katana (ตามภาพอ้างอิง)
+    { // 🌹 roseSword — Princess Knight rose sword (ดาบเจ้าหญิงอัศวิน ตามภาพ)
       const g = new THREE.Group();
-      const sWhite = new THREE.MeshStandardMaterial({ color: 0xf4f0e4, roughness: 0.38, metalness: 0.25 });
+      const sWhite = new THREE.MeshStandardMaterial({ color: 0xf6f2ec, roughness: 0.3, metalness: 0.35 });
       const sGold = new THREE.MeshStandardMaterial({ color: 0xe6c46a, roughness: 0.26, metalness: 0.88, emissive: 0x7a5410, emissiveIntensity: 0.42 });
-      const sBlue = new THREE.MeshStandardMaterial({ color: 0x3a6ae0, emissive: 0x1a3ac0, emissiveIntensity: 1.15, roughness: 0.08, metalness: 0.2 });
-      const sBladeMat = new THREE.MeshStandardMaterial({ color: 0xfff0c0, emissive: 0xf0c040, emissiveIntensity: 1.4, roughness: 0.12, metalness: 0.35 });
-      const sEdge = new THREE.MeshBasicMaterial({ color: 0xfffbe8 });
-      const sRune = new THREE.MeshBasicMaterial({ color: 0xfff4d0, transparent: true, opacity: 0.9 });
-      // ปลายด้าม (pommel) — blue diamond in gold
-      const pomFrame = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), sGold); pomFrame.scale.set(1, 1.15, 0.6); pomFrame.position.y = -0.04; g.add(pomFrame);
-      const pomGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), sBlue); pomGem.scale.set(1, 1.2, 0.7); pomGem.position.y = -0.04; pomGem.position.z = 0.012; g.add(pomGem);
-      // ด้าม (hilt) — white grip with gold diamond lattice + blue gems
-      const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.037, 0.27, 12), sWhite); hilt.position.y = 0.11; g.add(hilt);
-      for (let k = 0; k < 5; k++) { for (const dir of [1, -1]) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.0035, 4, 16), sGold); r.position.y = 0.0 + k * 0.056; r.rotation.set(dir * 0.55, 0, 0); g.add(r); } } // ลายทองตาข่ายข้าวหลามตัด
-      for (const yy of [0.04, 0.13, 0.21]) { const bg = new THREE.Mesh(new THREE.OctahedronGeometry(0.015, 0), sBlue); bg.scale.set(1, 1.25, 0.5); bg.position.set(0, yy, 0.038); g.add(bg); }
-      // การ์ดคาบ (guard) — ornate gold winged crossguard + big blue diamond
-      const guardBar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.05), sGold); guardBar.position.y = 0.26; g.add(guardBar);
-      for (const s of [-1, 1]) { const wf = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.16, 4), sGold); wf.position.set(s * 0.1, 0.29, 0); wf.rotation.z = s * 1.35; wf.scale.z = 0.4; g.add(wf); const wf2 = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.1, 4), sGold); wf2.position.set(s * 0.075, 0.23, 0); wf2.rotation.z = s * 1.9; wf2.scale.z = 0.4; g.add(wf2); }
-      const gDiaFrame = new THREE.Mesh(new THREE.OctahedronGeometry(0.065, 0), sGold); gDiaFrame.scale.set(1, 1.2, 0.45); gDiaFrame.position.set(0, 0.26, 0.03); g.add(gDiaFrame);
-      const gDia = new THREE.Mesh(new THREE.OctahedronGeometry(0.042, 0), sBlue); gDia.scale.set(1, 1.25, 0.6); gDia.position.set(0, 0.26, 0.05); g.add(gDia);
-      const habaki = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.055, 8), sGold); habaki.position.y = 0.31; g.add(habaki);
-      // ตัวคาบ (blade) — golden glowing curved katana with rune inscriptions
-      const bendR = geo => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const u = Math.max(0, (p.getY(i) + 0.55)); p.setX(i, p.getX(i) + u * u * 0.1); } p.needsUpdate = true; geo.computeVertexNormals(); };
-      const bladeGeo = new THREE.BoxGeometry(0.052, 1.1, 0.015, 1, 12, 1); bendR(bladeGeo);
-      const blade = new THREE.Mesh(bladeGeo, sBladeMat); blade.position.y = 0.88; g.add(blade);
-      const edgeGeo = new THREE.BoxGeometry(0.014, 1.1, 0.009, 1, 12, 1); bendR(edgeGeo);
-      const edge = new THREE.Mesh(edgeGeo, sEdge); edge.position.set(0.028, 0.88, 0); g.add(edge);
-      for (let k = 0; k < 8; k++) { const u = (k + 0.5) / 8; const yy = 0.4 + u * 0.95; const rr = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.018, 0.004), sRune); rr.position.set((u + 0.36) * (u + 0.36) * 0.1 - 0.083 - 0.01, yy, 0.01); rr.rotation.z = 0.12; g.add(rr); } // อักขระรูนบนใบดาบ
-      const swTip = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.16, 4), sBladeMat); swTip.position.set(0.13, 1.44, 0); swTip.rotation.z = -0.5; swTip.scale.z = 0.32; g.add(swTip);
-      // ✨ light aura feathers at the guard + holy glow
-      const auraMat = new THREE.MeshStandardMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.4, emissive: 0xe0a830, emissiveIntensity: 0.6, side: THREE.DoubleSide, depthWrite: false });
-      for (const s of [-1, 1]) { const wingF = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.3, 4), auraMat); wingF.position.set(s * 0.12, 0.28, -0.01); wingF.rotation.z = s * 1.2; g.add(wingF); }
-      const swGlow = new THREE.PointLight(0xffe0a0, 0.65, 2.6); swGlow.position.y = 0.85; g.add(swGlow);
-      g.userData.blade = blade; g.userData.glow = swGlow;
+      const sPink = new THREE.MeshStandardMaterial({ color: 0xf2a4b8, emissive: 0xc86a86, emissiveIntensity: 0.9, roughness: 0.15, metalness: 0.1 });
+      const sPetal = new THREE.MeshStandardMaterial({ color: 0xf0a8ba, roughness: 0.6 });
+      const sPetalC = new THREE.MeshStandardMaterial({ color: 0xd9808f, roughness: 0.55, emissive: 0x8a3a4a, emissiveIntensity: 0.35 });
+      // ปลายด้าม (pommel) — gold crown tip
+      const pom = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), sGold); pom.position.y = -0.05; g.add(pom);
+      const pomSpike = new THREE.Mesh(new THREE.ConeGeometry(0.026, 0.09, 5), sGold); pomSpike.position.y = -0.13; pomSpike.rotation.x = Math.PI; g.add(pomSpike);
+      // ด้าม — gold-wrapped grip
+      const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.037, 0.27, 12), sGold); hilt.position.y = 0.11; g.add(hilt);
+      for (let k = 0; k < 4; k++) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.006, 4, 14), sPetal); r.position.y = 0.02 + k * 0.06; r.rotation.x = Math.PI / 2; g.add(r); } // เกลียวชมพูพันด้าม
+      // การ์ด — gold thorn-vine crossguard + rose at the center (ตามภาพ)
+      const guardBar = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.05), sGold); guardBar.position.y = 0.27; g.add(guardBar);
+      for (const s of [-1, 1]) {
+        const thorn = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.016, 6, 14, Math.PI * 0.9), sGold); thorn.position.set(s * 0.13, 0.3, 0); thorn.rotation.z = s > 0 ? -0.5 : Math.PI + 0.5; g.add(thorn); // เถาหนามโค้งขึ้น
+        const thornTip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.1, 4), sGold); thornTip.position.set(s * 0.2, 0.4, 0); thornTip.rotation.z = -s * 0.5; g.add(thornTip);
+        const bud = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 6), sPetalC); bud.position.set(s * 0.21, 0.45, 0); g.add(bud); // ดอกตูมปลายเถา
+      }
+      { const swRose = new THREE.Group(); const core = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), sPetalC); core.scale.z = 0.7; swRose.add(core);
+        for (let pi = 0; pi < 7; pi++) { const a = pi / 7 * Math.PI * 2; const pet = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), sPetal); pet.scale.set(1, 1, 0.45); pet.position.set(Math.cos(a) * 0.052, Math.sin(a) * 0.052, -0.005); swRose.add(pet); }
+        swRose.position.set(0, 0.27, 0.045); g.add(swRose); } // 🌹 กุหลาบกลางการ์ด
+      // ใบดาบ — white blade + pink core + gold edges, tapered point
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.085, 1.15, 0.018), sWhite); blade.position.y = 0.92; g.add(blade);
+      const bCore = new THREE.Mesh(new THREE.BoxGeometry(0.028, 1.12, 0.024), sPink); bCore.position.y = 0.92; g.add(bCore);
+      for (const s of [-1, 1]) { const eg = new THREE.Mesh(new THREE.BoxGeometry(0.012, 1.15, 0.022), sGold); eg.position.set(s * 0.045, 0.92, 0); g.add(eg); }
+      const swTip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 4), sWhite); swTip.position.y = 1.59; swTip.scale.z = 0.3; g.add(swTip);
+      const swTipC = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.18, 4), sPink); swTipC.position.y = 1.59; swTipC.scale.z = 0.35; g.add(swTipC);
+      const swGlow = new THREE.PointLight(0xffc0d0, 0.55, 2.6); swGlow.position.y = 0.9; g.add(swGlow);
+      g.userData.blade = bCore; g.userData.glow = swGlow;
       g.scale.setScalar(1.25);
       weaponModels.roseSword = g;
     }
@@ -6569,26 +6566,34 @@ export default function CherryAdventure() {
       const rWhiteL = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: 0.42, metalness: 0.12 });
       const rCryst = new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe0a830, emissiveIntensity: 1.25, roughness: 0.08, metalness: 0.1 });
       const rRune = new THREE.MeshStandardMaterial({ color: 0xffe9a0, emissive: 0xc89020, emissiveIntensity: 0.8, roughness: 0.3, metalness: 0.4 });
-      const rBlueGem = new THREE.MeshStandardMaterial({ color: 0x7ab4ff, emissive: 0x2a62d8, emissiveIntensity: 1.15, roughness: 0.08, metalness: 0.1 }); // 💠 พลอยน้ำเงินในกรอบทอง (ตามภาพ)
+      const rBlueGem = new THREE.MeshStandardMaterial({ color: 0xf29ab2, emissive: 0xc85a7a, emissiveIntensity: 0.75, roughness: 0.15, metalness: 0.1 }); // 💗 พลอยชมพูในกรอบทอง (ธีมเจ้าหญิงอัศวิน)
       const rSoftCloth = new THREE.MeshStandardMaterial({ color: 0xf8f5ee, roughness: 0.88, metalness: 0.0 }); // 🤍 เนื้อผ้านุ่ม ไม่แข็ง
+      const rRoseP = new THREE.MeshStandardMaterial({ color: 0xf0a8ba, roughness: 0.62 });                       // 🌹 กลีบกุหลาบชมพู
+      const rRoseC = new THREE.MeshStandardMaterial({ color: 0xd9808f, roughness: 0.55, emissive: 0x8a3a4a, emissiveIntensity: 0.35 }); // 🌹 ใจกลางกุหลาบ (เข้ม+เรือง)
+      const rPinkCloth = new THREE.MeshStandardMaterial({ color: 0xf3b6c4, roughness: 0.82, side: THREE.DoubleSide }); // 🎀 ผ้าชมพู
+      // 🌹 กุหลาบจิ๋ว (ใช้ซ้ำ: มงกุฎ/อก/เข็มขัด/ไหล่/บูท/โล่/ชายกระโปรง) — หน้าดอกหันทาง +z
+      const mkRose = (s) => { const g = new THREE.Group(); const core = new THREE.Mesh(new THREE.SphereGeometry(s * 0.44, 10, 8), rRoseC); core.scale.z = 0.7; g.add(core); for (let pi = 0; pi < 9; pi++) { const inner = pi < 4; const a = (pi / (inner ? 4 : 5)) * Math.PI * 2 + (inner ? 0.5 : 0); const rr = inner ? s * 0.5 : s * 0.85; const pet = new THREE.Mesh(new THREE.SphereGeometry(inner ? s * 0.34 : s * 0.44, 8, 6), inner ? rRoseC : rRoseP); pet.scale.set(1, 1, 0.45); pet.position.set(Math.cos(a) * rr, Math.sin(a) * rr, inner ? s * 0.06 : -s * 0.04); g.add(pet); } return g; };
 
       // ===== hair — golden high ponytail + layered bangs + gold circlet =====
-      const rhRoot = new THREE.MeshStandardMaterial({ color: 0xf0cd74, roughness: 0.58 });
-      const rhMid = new THREE.MeshStandardMaterial({ color: 0xf6dc94, roughness: 0.55 });
-      const rhTip = new THREE.MeshStandardMaterial({ color: 0xfae8b8, roughness: 0.5, transparent: true, opacity: 0.95 });
+      const rhRoot = new THREE.MeshStandardMaterial({ color: 0xe4bb7d, roughness: 0.6 });  // 🍯 บลอนด์น้ำผึ้ง (ตามภาพ)
+      const rhMid = new THREE.MeshStandardMaterial({ color: 0xeec98e, roughness: 0.57 });
+      const rhTip = new THREE.MeshStandardMaterial({ color: 0xf6dcae, roughness: 0.52, transparent: true, opacity: 0.95 });
       const rHair = new THREE.Group();
       const mkLockR = (pts, r, mat, tipLen) => { const v = pts.map(p => new THREE.Vector3(p[0], p[1], p[2])); const curve = new THREE.CatmullRomCurve3(v); const gp = new THREE.Group(); gp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 12, r, 6, false), mat)); const end = v[v.length - 1], prev = v[v.length - 2], dir = end.clone().sub(prev).normalize(); const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.9, tipLen, 6), rhTip); tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); tip.position.copy(end).addScaledVector(dir, tipLen * 0.42); gp.add(tip); return gp; };
       const rhCap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 26, 20), rhRoot); rhCap.scale.set(1.04, 0.98, 1.0); rhCap.position.set(0, 0.15, -0.04); rHair.add(rhCap);
       [-0.38, -0.26, -0.14, -0.04, 0.06, 0.16, 0.28, 0.4].forEach((azf, bi) => { const az = azf * Math.PI; const bl = 0.3 + (bi % 3) * 0.05; const b = new THREE.Mesh(new THREE.ConeGeometry(0.075 - (bi % 2) * 0.012, bl, 6), bi % 2 ? rhMid : rhRoot); b.position.set(Math.sin(az) * 0.58, 0.36 - bl / 2, Math.cos(az) * 0.58); b.rotation.set(Math.PI - Math.cos(az) * 0.15, 0, Math.sin(az) * 0.3); rHair.add(b); });
       for (const sx of [-1, 1]) rHair.add(mkLockR([[sx * 0.42, 0.4, 0.22], [sx * 0.6, -0.05, 0.26], [sx * 0.55, -0.5, 0.22]], 0.055, rhRoot, 0.18));
       for (let i = 0; i < 7; i++) { const az = -Math.PI * 0.3 + (i / 6) * Math.PI * 0.6; const x0 = Math.sin(az), z0 = -Math.cos(az) * 0.9; rHair.add(mkLockR([[x0 * 0.32, 0.42, z0 * 0.3], [x0 * 0.55, 0.05, z0 * 0.55], [x0 * 0.45, -0.3, z0 * 0.45]], 0.05, i % 2 ? rhMid : rhRoot, 0.16)); }
-      // ✨ high ponytail (หางม้าสูง) — flowing golden tail
-      const rTail = new THREE.Group();
-      rTail.add(mkLockR([[0, 0.05, -0.1], [0.02, -0.15, -0.5], [0, -0.75, -0.62], [0, -1.3, -0.5]], 0.1, rhRoot, 0.3));
-      rTail.add(mkLockR([[0.06, 0.02, -0.12], [0.16, -0.3, -0.48], [0.1, -0.9, -0.56]], 0.06, rhMid, 0.22));
-      rTail.add(mkLockR([[-0.06, 0.02, -0.12], [-0.16, -0.4, -0.46], [-0.1, -1.0, -0.52]], 0.06, rhMid, 0.22));
-      rTail.position.set(0, 0.52, -0.28); rHair.add(rTail); G._roseTail = rTail;
-      const rTie = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.03, 8, 14), rGold); rTie.position.set(0, 0.5, -0.36); rTie.rotation.x = 0.5; rHair.add(rTie);
+      // 🍞 มวยผมถักก้อนใหญ่บนศีรษะ (ตามภาพด้านหลัง) + โบว์ชมพูใต้มวย
+      const rBun = new THREE.Group();
+      const bunBall = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), rhRoot); bunBall.scale.set(1.05, 0.9, 1.0); rBun.add(bunBall);
+      for (let bi = 0; bi < 3; bi++) { const br = new THREE.Mesh(new THREE.TorusGeometry(0.24 - bi * 0.07, 0.045, 8, 22), bi % 2 ? rhMid : rhRoot); br.position.y = 0.06 + bi * 0.1; br.rotation.x = Math.PI / 2 - 0.1; rBun.add(br); } // เกลียวถักพันมวย
+      const bunTop = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), rhMid); bunTop.position.y = 0.3; rBun.add(bunTop);
+      rBun.position.set(0, 0.74, -0.3); rBun.scale.setScalar(1.15); rHair.add(rBun);
+      const rHairBow = new THREE.Group(); // 🎀 โบว์ผมชมพู
+      for (const sx of [-1, 1]) { const lp = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.032, 8, 14), rPinkCloth); lp.scale.set(1.25, 0.75, 0.5); lp.position.set(sx * 0.1, 0.01, 0); lp.rotation.y = sx * 0.45; rHairBow.add(lp); }
+      const hbKnot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), rPinkCloth); hbKnot.scale.set(1, 0.8, 0.7); rHairBow.add(hbKnot);
+      rHairBow.position.set(0, 0.34, -0.6); rHairBow.rotation.x = 0.4; rHair.add(rHairBow);
       // 👑 gold circlet + kingdom emblem (ตราอาณาจักร) + crystal earrings
       const rCirc = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.022, 8, 40), rGold); rCirc.position.set(0, 0.3, 0); rCirc.rotation.x = Math.PI / 2 + 0.12; rHair.add(rCirc);
       // 👑 มงกุฎทองบนหัว — วงแหวนฐาน + ยอดแหลมสลับสูงต่ำ + พลอยน้ำเงินยอดกลาง
@@ -6598,7 +6603,7 @@ export default function CherryAdventure() {
       const cbB = new THREE.Mesh(new THREE.TorusGeometry(0.482, 0.012, 6, 34), rGold); cbB.position.y = -0.05; cbB.rotation.x = Math.PI / 2; rCrown.add(cbB);
       for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const tall = k % 2 === 0; const sp = new THREE.Mesh(new THREE.ConeGeometry(tall ? 0.05 : 0.034, tall ? 0.22 : 0.12, 4), rGold); const r = 0.485; sp.position.set(Math.cos(a) * r, 0.05 + (tall ? 0.11 : 0.06), Math.sin(a) * r); rCrown.add(sp); const gem = new THREE.Mesh(new THREE.OctahedronGeometry(tall ? 0.026 : 0.017, 0), rBlueGem.clone()); gem.scale.set(0.9, 1.2, 0.6); gem.position.set(Math.cos(a) * r, 0.05 + (tall ? 0.21 : 0.11), Math.sin(a) * r); rCrown.add(gem); }
       const cFront = new THREE.Mesh(new THREE.ConeGeometry(0.058, 0.28, 4), rGold); cFront.position.set(0, 0.21, 0.485); rCrown.add(cFront);
-      const cFrontGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.036, 0), rBlueGem.clone()); cFrontGem.scale.set(0.9, 1.3, 0.6); cFrontGem.position.set(0, 0.16, 0.53); rCrown.add(cFrontGem);
+      const crownRose = mkRose(0.085); crownRose.position.set(0, 0.12, 0.52); rCrown.add(crownRose); // 🌹 กุหลาบชมพูกลางมงกุฎ (ตามภาพ)
       rCrown.position.set(0, 0.52, 0.0); rCrown.rotation.x = -0.08; rHair.add(rCrown);
       const rEmb = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), rGold); rEmb.scale.set(0.9, 1.2, 0.35); rEmb.position.set(0, 0.37, 0.57); rHair.add(rEmb);
       const rEmbGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), rBlueGem.clone()); rEmbGem.scale.set(0.9, 1.2, 0.5); rEmbGem.position.set(0, 0.37, 0.61); rHair.add(rEmbGem);
@@ -6627,29 +6632,27 @@ export default function CherryAdventure() {
       for (const sx of [-1, 1]) { const sv = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.005, 5, 12, Math.PI * 1.3), rGold); sv.position.set(sx * 0.4, 1.62, 0.02); sv.rotation.set(0.2, sx * 1.35, sx * 1.9); rOutfit.add(sv); }
       for (const sx of [-1, 1]) { const ub = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.005, 5, 12, Math.PI * 1.15), rGold); ub.position.set(sx * 0.21, 1.55, 0.3); ub.rotation.set(0.1, sx * 0.6, -sx * 2.4); rOutfit.add(ub); }
       { const bk = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.005, 5, 12, Math.PI * 1.4), rGold); bk.position.set(0, 1.68, -0.2); bk.rotation.set(-0.15, Math.PI, 1.1); rOutfit.add(bk); }
-      // 💠 chest light crystal (ผลึกแสงกลางอก)
-      const chestGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), rBlueGem.clone()); chestGem.scale.set(0.85, 1.25, 0.5); chestGem.position.set(0, 1.76, 0.37); rOutfit.add(chestGem); G._roseCrystal = chestGem;
-      const gemRing = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.01, 6, 16), rGold); gemRing.position.set(0, 1.76, 0.355); rOutfit.add(gemRing);
+      // 🌹 chest rose emblem in gold frame (ตรากุหลาบกลางอก)
+      const chestRose = mkRose(0.075); chestRose.position.set(0, 1.73, 0.38); rOutfit.add(chestRose); G._roseCrystal = chestRose.children[0];
+      const gemRing = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.011, 6, 18), rGold); gemRing.position.set(0, 1.73, 0.36); rOutfit.add(gemRing);
       // 📿 Holy Crystal necklace
       const rChain = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.008, 6, 24), rGold); rChain.position.set(0, 1.97, 0.06); rChain.rotation.x = Math.PI / 2 - 0.35; rOutfit.add(rChain);
       const tFrame = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.009, 4, 4), rGold); tFrame.rotation.z = Math.PI / 4; tFrame.position.set(0, 1.95, 0.28); rOutfit.add(tFrame); // กรอบทองที่ลำคอ
       const rPend = new THREE.Mesh(new THREE.OctahedronGeometry(0.034, 0), rBlueGem.clone()); rPend.scale.set(0.85, 1.2, 0.5); rPend.position.set(0, 1.95, 0.295); rOutfit.add(rPend);
       const tDrop = new THREE.Mesh(new THREE.OctahedronGeometry(0.019, 0), rBlueGem.clone()); tDrop.scale.set(0.8, 1.4, 0.5); tDrop.position.set(0, 1.86, 0.315); rOutfit.add(tDrop);
-      // 🛡️ asymmetric pauldrons — right big + gold wing, left small
+      // 🛡️ symmetric layered white pauldrons + gold rims + roses (ตามภาพ — เท่ากันสองข้าง)
       const mkPlateR = (rad, sc) => { const m = new THREE.Mesh(new THREE.SphereGeometry(rad, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), rPearl); m.scale.set(sc, 0.8, sc); return m; };
-      const pauldR = new THREE.Group();
-      for (let k = 0; k < 3; k++) { const pl = mkPlateR(0.17 - k * 0.03, 1.1); pl.position.y = -k * 0.055; pauldR.add(pl); const tr = new THREE.Mesh(new THREE.TorusGeometry((0.17 - k * 0.03) * 1.04, 0.008, 6, 18), rGold); tr.position.y = -k * 0.055 + 0.03; tr.rotation.x = Math.PI / 2; pauldR.add(tr); }
-      for (let k = 0; k < 3; k++) { const fe = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.2 + k * 0.06, 5), rGold); fe.position.set(0.1 + k * 0.045, 0.12 + k * 0.04, 0); fe.rotation.z = -0.7 - k * 0.22; pauldR.add(fe); }
-      const pGemR = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), rBlueGem.clone()); pGemR.scale.set(0.9, 1.2, 0.6); pGemR.position.set(0, 0.14, 0.13); pauldR.add(pGemR);
-      pauldR.position.set(0.5, 1.93, 0); rOutfit.add(pauldR);
-      const pauldL = new THREE.Group(); pauldL.add(mkPlateR(0.12, 1.05));
-      const plTrim = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.007, 6, 16), rGold); plTrim.position.y = 0.025; plTrim.rotation.x = Math.PI / 2; pauldL.add(plTrim);
-      const pGemL = new THREE.Mesh(new THREE.OctahedronGeometry(0.024, 0), rBlueGem.clone()); pGemL.scale.set(0.9, 1.2, 0.6); pGemL.position.set(0, 0.09, 0.11); pauldL.add(pGemL);
-      pauldL.position.set(-0.5, 1.91, 0); rOutfit.add(pauldL);
+      for (const psx of [-1, 1]) {
+        const pauld = new THREE.Group();
+        for (let k = 0; k < 3; k++) { const pl = mkPlateR(0.17 - k * 0.03, 1.1); pl.position.y = -k * 0.055; pauld.add(pl); const tr = new THREE.Mesh(new THREE.TorusGeometry((0.17 - k * 0.03) * 1.04, 0.008, 6, 18), rGold); tr.position.y = -k * 0.055 + 0.03; tr.rotation.x = Math.PI / 2; pauld.add(tr); }
+        const pRose = mkRose(0.045); pRose.position.set(0, 0.13, 0.14); pRose.rotation.x = -0.35; pauld.add(pRose);
+        const pDrape = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 10, 1, true), rPinkCloth); pDrape.position.set(psx * 0.05, -0.2, 0); pDrape.rotation.z = psx * 0.25; pauld.add(pDrape); // 🎀 ผ้าชมพูบางห้อยใต้ไหล่
+        pauld.position.set(psx * 0.5, 1.93, 0); rOutfit.add(pauld);
+      }
       // 🤍 white leather belt + crystal buckle + rune side cloth + kingdom badge
       const rBelt = new THREE.Mesh(new THREE.CylinderGeometry(0.345, 0.36, 0.075, 26, 1, true), rWhiteL); rBelt.position.y = 1.32; rBelt.scale.set(1.02, 1, 0.9); rOutfit.add(rBelt);
       [1.36, 1.285].forEach(ty => { const bt = new THREE.Mesh(new THREE.TorusGeometry(0.352, 0.006, 6, 30), rGold); bt.position.y = ty; bt.rotation.x = Math.PI / 2; bt.scale.set(1.02, 0.9, 1); rOutfit.add(bt); });
-      const buckGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), rBlueGem.clone()); buckGem.scale.set(0.85, 1.15, 0.45); buckGem.position.set(0, 1.32, 0.335); rOutfit.add(buckGem);
+      const buckRose = mkRose(0.05); buckRose.position.set(0, 1.32, 0.345); rOutfit.add(buckRose); // 🌹 หัวเข็มขัดกุหลาบ
       for (let k = -1; k <= 1; k++) { const sp = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.05, 4), rGold); sp.position.set(k * 0.05, 1.38, 0.315); sp.rotation.x = 0.15; sp.rotation.z = -k * 0.4; rOutfit.add(sp); } // มงกุฎทองเหนือหัวเข็มขัด
       for (const gx of [-0.22, -0.11, 0.11, 0.22]) { const bg = new THREE.Mesh(new THREE.OctahedronGeometry(0.019, 0), rBlueGem.clone()); bg.scale.set(0.9, 1.2, 0.5); const bz = Math.sqrt(Math.max(0.001, 0.354 * 0.354 - gx * gx)) * 0.92; bg.position.set(gx, 1.32, bz); bg.rotation.y = Math.atan2(gx, bz); rOutfit.add(bg); const bfr = new THREE.Mesh(new THREE.TorusGeometry(0.024, 0.005, 4, 4), rGold); bfr.rotation.z = Math.PI / 4; bfr.position.set(gx, 1.32, bz - 0.005); bfr.rotation.y = Math.atan2(gx, bz); rOutfit.add(bfr); } // แถวพลอยน้ำเงินรอบเข็มขัด
       const buckFrame = new THREE.Mesh(new THREE.TorusGeometry(0.052, 0.01, 4, 4), rGold); buckFrame.rotation.z = Math.PI / 4; buckFrame.position.set(0, 1.32, 0.325); rOutfit.add(buckFrame);
@@ -6659,13 +6662,13 @@ export default function CherryAdventure() {
       for (let k = 0; k < 2; k++) { const rn = new THREE.Mesh(new THREE.OctahedronGeometry(0.018, 0), rRune.clone()); rn.scale.set(1, 1.3, 0.4); rn.position.set(0, -0.12 - k * 0.11, 0.015); rCloth.add(rn); }
       rCloth.position.set(0.3, 1.32, 0.16); rCloth.rotation.y = 0.5; rOutfit.add(rCloth);
       const rBadge = new THREE.Mesh(new THREE.OctahedronGeometry(0.034, 0), rGold); rBadge.scale.set(0.9, 1.15, 0.4); rBadge.position.set(-0.3, 1.32, 0.22); rBadge.rotation.y = -0.4; rOutfit.add(rBadge);
-      // 🖤 fitted black leather pants + silver thigh guards
-      const rHips = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 18), rBlack); rHips.scale.set(1.02, 0.6, 0.88); rHips.position.y = 1.2;
+      // 🤍 white under-shorts + white thigh stockings (ตามภาพ)
+      const rHips = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 18), rSoftCloth); rHips.scale.set(1.02, 0.6, 0.88); rHips.position.y = 1.2;
       { const pos = rHips.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { let z = pos.getZ(i); if (z > 0.05) z = 0.05 + (z - 0.05) * 0.62; pos.setZ(i, z); } pos.needsUpdate = true; rHips.geometry.computeVertexNormals(); }
       rOutfit.add(rHips);
       // 👗 กระโปรงสั้น 2 ชั้น จีบ พริ้วตามลม — ชั้นนอกขาว ชั้นในน้ำเงินยาวกว่า
       const rSkirtWhite = new THREE.MeshStandardMaterial({ color: 0xf8f5ee, roughness: 0.85, metalness: 0.0, side: THREE.DoubleSide });
-      const rSkirtNavy = new THREE.MeshStandardMaterial({ color: 0x22407e, roughness: 0.6, metalness: 0.05, side: THREE.DoubleSide });
+      const rSkirtNavy = new THREE.MeshStandardMaterial({ color: 0xf0a8ba, roughness: 0.75, metalness: 0.0, side: THREE.DoubleSide }); // 🌸 ชั้นในชมพู (ตามภาพ)
       G._roseSkirts = [];
       const mkPleatSkirt = (rTop, rBot, h, py, mat, pleats, amp) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 48, 6, true); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const ang = Math.atan2(z, x); const low = Math.max(0, (h / 2 - y) / h); const f = 1 + Math.sin(ang * pleats) * amp * low; p.setX(i, x * f); p.setZ(i, z * f); } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.y = py; char.add(m); G._roseSkirts.push({ m, base: Float32Array.from(p.array), h }); return m; };
       const rSkirtW = mkPleatSkirt(0.355, 0.5, 0.26, 1.16, rSkirtWhite, 14, 0.05);
@@ -6678,9 +6681,21 @@ export default function CherryAdventure() {
       mkHemTrim(0.56, 14, 0.05, 0.38, 0.89);
       for (const a of [-1.1, -0.55, 0, 0.55, 1.1]) { const cu = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.005, 5, 12, Math.PI * 1.25), rGold); cu.position.set(Math.sin(a) * 0.48, 1.14, Math.cos(a) * 0.48); cu.rotation.set(0, a, a * 1.7 + 0.6); char.add(cu); rSkirtDeco.push(cu); }
       for (const a of [-0.7, 0, 0.7]) { const cu = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.005, 5, 12, Math.PI * 1.1), rGold); cu.position.set(Math.sin(a) * 0.565, 0.97, Math.cos(a) * 0.565); cu.rotation.set(0, a, -a * 1.3 - 0.4); char.add(cu); rSkirtDeco.push(cu); }
+      // 👗 กระโปรงยาวด้านหลังแบบเจ้าหญิง (สั้นหน้า-ยาวหลัง) + แผงขาว + ตรากุหลาบทองกลางหลัง
+      const gownG = new THREE.Group();
+      { const geo = new THREE.CylinderGeometry(0.35, 0.95, 1.15, 40, 8, true, Math.PI * 0.58, Math.PI * 0.84);
+        const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const ang = Math.atan2(z, x); const low = Math.max(0, (1.15 / 2 - y) / 1.15); const f = 1 + Math.sin(ang * 9) * 0.04 * low; p.setX(i, x * f); p.setZ(i, z * f); } p.needsUpdate = true; geo.computeVertexNormals();
+        const gm = new THREE.Mesh(geo, rSkirtNavy); gm.position.y = 0.72; gownG.add(gm); G._roseSkirts.push({ m: gm, base: Float32Array.from(p.array), h: 1.15 });
+        const hem = new THREE.Mesh(new THREE.TorusGeometry(0.93, 0.014, 6, 44, Math.PI * 0.84), rGoldHem); hem.position.y = 0.17; hem.rotation.x = Math.PI / 2; hem.rotation.z = Math.PI * 0.58; gownG.add(hem); }
+      for (const gsx of [-1, 1]) { const sidePanel = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.85, 0.03), rSkirtWhite); sidePanel.position.set(gsx * 0.48, 0.72, -0.42); sidePanel.rotation.order = "YXZ"; sidePanel.rotation.y = gsx * 0.85 + Math.PI; sidePanel.rotation.x = 0.3; gownG.add(sidePanel); const spt = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.05, 0.035), rGold); spt.position.set(gsx * 0.56, 0.32, -0.53); spt.rotation.order = "YXZ"; spt.rotation.y = gsx * 0.85 + Math.PI; spt.rotation.x = 0.3; gownG.add(spt); } // แผงผ้าขาวข้างชุด
+      { const backRoseFrame = new THREE.Mesh(new THREE.OctahedronGeometry(0.15, 0), rGold); backRoseFrame.scale.set(0.9, 1.2, 0.28); backRoseFrame.position.set(0, 0.72, -0.66); backRoseFrame.rotation.x = 0.22; gownG.add(backRoseFrame);
+        const backRose = mkRose(0.1); backRose.position.set(0, 0.72, -0.7); backRose.rotation.y = Math.PI; backRose.rotation.x = -0.22; gownG.add(backRose); } // 🌹 ตรากุหลาบทองกลางกระโปรงหลัง (ตามภาพ)
+      char.add(gownG); rSkirtDeco.push(gownG);
+      // 🤍 แผงเกราะผ้าขาวหน้ากระโปรง (tabard) ขอบทอง
+      for (const [fpx, fpa] of [[0, 0], [-0.3, 0.55], [0.3, -0.55]]) { const fp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.3, 0.03), rSkirtWhite); fp.position.set(fpx, 1.06, Math.cos(fpa) * 0.42 * (fpx === 0 ? 1.06 : 1)); fp.rotation.order = "YXZ"; fp.rotation.y = fpa * 0.8; fp.rotation.x = 0.24; char.add(fp); rSkirtDeco.push(fp); const fpt = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.045, 0.035), rGold); fpt.position.set(fpx * 1.08, 0.92, Math.cos(fpa) * 0.47 * (fpx === 0 ? 1.06 : 1)); fpt.rotation.order = "YXZ"; fpt.rotation.y = fpa * 0.8; fpt.rotation.x = 0.24; char.add(fpt); rSkirtDeco.push(fpt); }
       const rLegParts = [];
       for (const leg of [legL, legR]) { const sxg = leg === legL ? -1 : 1;
-        const th = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.135, 0.34, 14), rBlack); th.position.set(0, -0.17, 0.01); leg.add(th); rLegParts.push(th);
+        const th = new THREE.Mesh(new THREE.CylinderGeometry(0.155, 0.135, 0.34, 14), rWhiteL); th.position.set(0, -0.17, 0.01); leg.add(th); rLegParts.push(th);
         const guard = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), rSilver); guard.scale.set(1.2, 0.7, 1.2); guard.position.set(sxg * 0.05, -0.1, 0.06); guard.rotation.z = -sxg * 0.5; leg.add(guard); rLegParts.push(guard);
         const gtr = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.006, 6, 14, Math.PI * 1.2), rGold); gtr.position.set(sxg * 0.055, -0.08, 0.06); gtr.rotation.x = Math.PI / 2; leg.add(gtr); rLegParts.push(gtr);
       }
@@ -6691,11 +6706,12 @@ export default function CherryAdventure() {
         const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.136, 0.022, 6, 18), rGold); cuff.position.y = 0.1; cuff.rotation.x = Math.PI / 2; kn.add(cuff); grp.push(cuff); // ขอบทองที่เข่า
         const vtip = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.07, 4), rGold); vtip.position.set(0, 0.14, 0.11); vtip.scale.z = 0.5; kn.add(vtip); grp.push(vtip); // ยอดแหลมทองหน้าเข่า
         const band = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.007, 6, 18), rGold); band.position.y = -0.3; band.rotation.x = Math.PI / 2; kn.add(band); grp.push(band);
+        const shinRose = mkRose(0.036); shinRose.position.set(0, -0.06, 0.14); kn.add(shinRose); grp.push(shinRose); // 🌹 กุหลาบหน้าบูท (ตามภาพ)
         const toe = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), rWhiteL); toe.scale.set(1, 0.6, 1.45); toe.position.set(0, -0.5, 0.1); kn.add(toe); grp.push(toe);
         const toeTrim = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.007, 6, 16), rGold); toeTrim.position.set(0, -0.46, 0.06); toeTrim.rotation.x = Math.PI / 2 - 0.25; kn.add(toeTrim); grp.push(toeTrim); // ขลิบทองหัวรองเท้า
         const heel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.27, 10), rGold); heel.position.set(0, -0.65, -0.078); kn.add(heel); grp.push(heel); // 👠 ส้นสูงทอง
         const heelCap = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.03, 0.032, 8), rGold); heelCap.position.set(0, -0.795, -0.078); kn.add(heelCap); grp.push(heelCap);
-        const sole = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.11, 0.035, 14), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8b040, emissiveIntensity: 0.9, roughness: 0.3 })); sole.scale.z = 1.5; sole.position.set(0, -0.545, 0.08); kn.add(sole); grp.push(sole); rSoles.push(sole);
+        const sole = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.11, 0.035, 14), new THREE.MeshStandardMaterial({ color: 0xfff0f4, emissive: 0xe8a0b8, emissiveIntensity: 0.45, roughness: 0.3 })); sole.scale.z = 1.5; sole.position.set(0, -0.545, 0.08); kn.add(sole); grp.push(sole); rSoles.push(sole); // 🌸 พื้นเรืองชมพูอ่อน
         return grp; };
       const rBootL = mkBootR(legL), rBootR2 = mkBootR(legR);
       G._roseSoles = rSoles; G._roseShoeMat = rWhiteL;
@@ -6706,17 +6722,32 @@ export default function CherryAdventure() {
         const gloveArm = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.09, 0.46, 14), rWhiteL); gloveArm.position.y = -0.25; el.add(gloveArm); rArmParts.push(gloveArm); // 🧤 ถุงมือยาวถึงศอก สีขาว
         const gTop = new THREE.Mesh(new THREE.TorusGeometry(0.076, 0.012, 6, 16), rGold); gTop.position.y = -0.04; gTop.rotation.x = Math.PI / 2; el.add(gTop); rArmParts.push(gTop); // ขอบทองที่ศอก
         const gLine = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.006, 6, 16), rGold); gLine.position.y = -0.44; gLine.rotation.x = Math.PI / 2; el.add(gLine); rArmParts.push(gLine); // เส้นทองข้อมือ
-        const glove = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), rWhiteL); glove.scale.set(0.95, 0.75, 0.85); glove.position.y = -0.47; el.add(glove); rArmParts.push(glove);
+        const glove = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), rBlack); glove.scale.set(0.95, 0.75, 0.85); glove.position.y = -0.47; el.add(glove); rArmParts.push(glove); // 🖤 ถุงมือหนังเข้ม (ตามภาพ)
         const mCirc = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.006, 6, 16), rRune.clone()); mCirc.position.set(0, -0.455, 0.055); mCirc.rotation.x = 0.5; el.add(mCirc); rArmParts.push(mCirc);
       }
       const rRing = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 6, 10), rGold); rRing.position.set(0.04, -0.55, 0.03); rRing.rotation.x = Math.PI / 2; (armR.userData.elbow || armR).add(rRing); rArmParts.push(rRing); // 💍 แหวนผู้พิทักษ์
-      // 🦋 ผ้าคลุมทรงปีกผีเสื้อ — ผืนนอกขาว ผืนในน้ำเงิน สองปีกกางออก
+      // 🎀 ผ้าคลุมหลังชมพู + โบว์ใหญ่กลางหลัง + ริบบิ้นยาว (ตามภาพ)
       const rCape = new THREE.Group();
-      const wingShape = new THREE.Shape(); wingShape.moveTo(0, 0.28); wingShape.bezierCurveTo(0.32, 0.92, 0.8, 0.98, 0.94, 0.5); wingShape.bezierCurveTo(1.04, 0.16, 0.78, 0.1, 0.57, 0.03); wingShape.bezierCurveTo(0.88, -0.24, 0.84, -0.78, 0.5, -1.04); wingShape.bezierCurveTo(0.32, -1.16, 0.2, -0.64, 0.12, -0.26); wingShape.bezierCurveTo(0.07, -0.1, 0.03, 0.08, 0, 0.28);
-      const wingGeo = new THREE.ShapeGeometry(wingShape, 26);
-      const mkWing = sideSign => { const wg = new THREE.Group(); const white = new THREE.Mesh(wingGeo, rSkirtWhite); const navy = new THREE.Mesh(wingGeo, rSkirtNavy); navy.scale.set(1.05, 1.05, 1); navy.position.z = 0.02; wg.add(navy, white); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.013, 6, 44, Math.PI * 1.25), rGold); rim.position.set(0.48, 0.34, -0.012); rim.scale.set(1, 1.45, 1); rim.rotation.z = -0.3; wg.add(rim); for (const [vx, vy, vr] of [[0.46, 0.42, -0.5], [0.42, -0.42, 0.45], [0.3, -0.78, 0.2]]) { const v = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.5, 5), rGold); v.position.set(vx, vy, -0.012); v.rotation.z = vr; wg.add(v); } for (const [gx, gy, gs] of [[0.74, 0.52, 0.05], [0.5, -0.58, 0.045], [0.3, -0.12, 0.035]]) { const gm = new THREE.Mesh(new THREE.OctahedronGeometry(gs, 0), rBlueGem.clone()); gm.scale.set(1, 1.2, 0.5); gm.position.set(gx, gy, -0.02); wg.add(gm); } wg.scale.x = sideSign; wg.rotation.y = sideSign * 0.2; wg.rotation.z = sideSign * -0.12; return wg; };
-      const wingL = mkWing(-1), wingR = mkWing(1); rCape.add(wingL, wingR);
-      rCape.position.set(0, 1.66, -0.2); rCape.scale.setScalar(0.95); char.add(rCape); G._roseCape = rCape; G._roseWings = [wingL, wingR];
+      { const geo = new THREE.CylinderGeometry(0.28, 0.52, 0.9, 28, 5, true, Math.PI * 0.64, Math.PI * 0.72);
+        const cm = new THREE.Mesh(geo, rPinkCloth); cm.position.set(0, 1.5, -0.04); rCape.add(cm);
+        const ct = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.012, 6, 30, Math.PI * 0.72), rGold); ct.position.set(0, 1.06, -0.04); ct.rotation.x = Math.PI / 2; ct.rotation.z = Math.PI * 0.64; rCape.add(ct); }
+      const mkBowLoop = sideSign => { const wg = new THREE.Group(); const lp = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.045, 8, 18), rPinkCloth); lp.scale.set(1.3, 0.85, 0.5); lp.position.set(sideSign * 0.15, 0.01, 0); lp.rotation.y = sideSign * 0.45; wg.add(lp); return wg; };
+      const wingL = mkBowLoop(-1), wingR = mkBowLoop(1);
+      const bowKnot = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), rPinkCloth); bowKnot.scale.set(1, 0.8, 0.7);
+      const bowG = new THREE.Group(); bowG.add(wingL, wingR, bowKnot); bowG.position.set(0, 1.88, -0.34); rCape.add(bowG);
+      const rTails = new THREE.Group(); // ริบบิ้นยาว 2 เส้น (แกว่งเบาๆ)
+      for (const tsx of [-1, 1]) { const tl = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.8, 0.02), rPinkCloth); tl.position.set(tsx * 0.1, -0.44, 0); tl.rotation.z = tsx * 0.12; rTails.add(tl); const tp = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.12, 4), rPinkCloth); tp.position.set(tsx * 0.155, -0.88, 0); tp.rotation.z = Math.PI + tsx * 0.12; tp.scale.z = 0.4; rTails.add(tp); }
+      rTails.position.set(0, 1.86, -0.37); rCape.add(rTails);
+      char.add(rCape); G._roseCape = rCape; G._roseWings = [wingL, wingR]; G._roseTail = rTails;
+      // 🛡️ โล่กุหลาบที่แขนซ้าย — โล่ขาวขอบทอง ลายทอง + กุหลาบกลางโล่ (ตามภาพ)
+      { const shld = new THREE.Group();
+        const shBack = new THREE.Mesh(new THREE.ConeGeometry(0.27, 0.56, 4), rGold); shBack.scale.z = 0.12; shBack.rotation.z = Math.PI; shld.add(shBack);
+        const shFace = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.52, 4), rPearl); shFace.scale.z = 0.16; shFace.position.z = 0.015; shFace.rotation.z = Math.PI; shld.add(shFace);
+        const shRim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.014, 6, 22), rGold); shRim.position.set(0, 0.06, 0.04); shld.add(shRim);
+        const shRose = mkRose(0.06); shRose.position.set(0, 0.06, 0.06); shld.add(shRose);
+        for (const [vy, vs] of [[0.2, 1], [-0.1, -1]]) { const v = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.006, 5, 12, Math.PI), rGold); v.position.set(0, vy, 0.05); v.rotation.z = vs > 0 ? 0 : Math.PI; shld.add(v); } // ลายเถาทอง
+        shld.position.set(0, -0.3, 0.13); shld.rotation.x = -0.15;
+        (armL.userData.elbow || armL).add(shld); rArmParts.push(shld); }
       // ✨ floating light motes + holy glow
       const rMotesG = new THREE.Group(); const rMotes = [];
       for (let i = 0; i < 12; i++) { const mo = new THREE.Mesh(new THREE.OctahedronGeometry(0.022 + (i % 3) * 0.008, 0), rRune.clone()); const ang = i / 12 * Math.PI * 2, rad = 0.6 + (i % 4) * 0.16, y0 = 0.4 + (i % 5) * 0.45; mo.position.set(Math.cos(ang) * rad, y0, Math.sin(ang) * rad); mo.userData = { ang, rad, y0, rise: 0.16 + (i % 3) * 0.07, spin: 0.5 + (i % 3) * 0.3 }; rMotesG.add(mo); rMotes.push(mo); }
