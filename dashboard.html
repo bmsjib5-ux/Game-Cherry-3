@@ -6,6 +6,12 @@
 <title>🍒 Cherry Adventure — Insight Dashboard</title>
 <meta name="description" content="สถิติผู้เล่นเกม Cherry Adventure แบบเรียลไทม์" />
 <link rel="icon" href="./icon-192.png" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#eef2df" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Cherry" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
 <style>
   /* ---------- theme tokens (light + dark, per the data-viz palette) ---------- */
   :root {
@@ -91,6 +97,12 @@
     display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #5bbf7a, #3a9a5a);
     border: none; border-radius: 999px; padding: 9px 18px; box-shadow: 0 5px 16px rgba(58,154,90,.4); }
   a.playbtn:active { transform: translateY(1px); }
+  button.installbtn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 900; color: #fff;
+    display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #5a8ad0, #3a6ab0);
+    border: none; border-radius: 999px; padding: 9px 16px; box-shadow: 0 5px 16px rgba(58,106,176,.4); }
+  button.installbtn:active { transform: translateY(1px); }
+  #lgInstall { width: 100%; margin-top: 8px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 900; color: #fff;
+    background: linear-gradient(135deg, #5a8ad0, #3a6ab0); border: none; border-radius: 12px; padding: 12px; }
 
   /* ---------- KPI tiles ---------- */
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 18px; }
@@ -273,6 +285,7 @@
       <option value="300000">⏱️ ทุก 5 นาที</option>
     </select>
     <span id="authArea"></span>
+    <button class="installbtn" id="installBtn" title="ติดตั้งเป็นแอปบนหน้าจอโฮม" style="display:none">📲 ติดตั้งแอป</button>
     <a class="playbtn" href="./index.html" title="เข้าเล่นเกม">▶ เข้าเล่นเกม</a>
     <a class="linkbtn" href="./items.html" title="เปิดคลังไอเทมทั้งหมด">🍒 คลังไอเทม</a>
     <a class="linkbtn" href="./classes.html" title="คู่มืออาชีพตัวละคร">⚔️ อาชีพ</a>
@@ -350,6 +363,7 @@
     <button class="go2" id="lgSignup">สมัครสมาชิกใหม่</button>
     <div class="orline">หรือ</div>
     <button class="google" id="lgGoogle">🇬 เข้าสู่ระบบด้วย Google</button>
+    <button id="lgInstall" style="display:none">📲 ติดตั้งเป็นแอป (PWA)</button>
     <button class="cancel" id="lgCancel">ยกเลิก</button>
     <div class="err" id="lgErr"></div>
     <div class="note">ใช้อีเมล/รหัสผ่านหรือ Google เดียวกับตอนเข้าเกม · ระบบอ่านข้อมูลเซฟของคุณอย่างเดียว (read-only)</div>
@@ -858,6 +872,36 @@
   handleOAuthReturn().then(function(handled){ if (!handled && session) loadMine(); }); // 🇬 finish a Google redirect, else resume saved session
 
   document.getElementById("refreshBtn").addEventListener("click", load);
+
+  // register service worker so the dashboard is installable as a PWA
+  if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("./sw.js").catch(function () {}); } catch (e) {} }
+
+  // ---------- 📲 PWA install ----------
+  (function () {
+    var deferred = null;
+    var hdr = document.getElementById("installBtn");
+    var modalBtn = document.getElementById("lgInstall");
+    var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    function showBtns(on) { var d = on ? "" : "none"; if (hdr) hdr.style.display = d; if (modalBtn) modalBtn.style.display = d; }
+    function doInstall() {
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (c) { if (c && c.outcome === "accepted") showBtns(false); deferred = null; });
+      } else if (isIOS) {
+        alert("ติดตั้งบน iPhone/iPad:\nแตะปุ่ม แชร์ ⬆️ ด้านล่าง แล้วเลือก \"เพิ่มไปยังหน้าจอโฮม\" (Add to Home Screen)");
+      } else {
+        alert("ถ้ายังไม่เห็นตัวเลือกติดตั้ง ลองเปิดเมนูเบราว์เซอร์ แล้วเลือก \"ติดตั้งแอป\" / \"เพิ่มไปยังหน้าจอโฮม\"");
+      }
+    }
+    window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; if (!standalone) showBtns(true); });
+    window.addEventListener("appinstalled", function () { showBtns(false); deferred = null; });
+    if (hdr) hdr.addEventListener("click", doInstall);
+    if (modalBtn) modalBtn.addEventListener("click", doInstall);
+    // iOS ไม่มี beforeinstallprompt → โชว์ปุ่มพร้อมคำแนะนำเลย (ถ้ายังไม่ได้ติดตั้ง)
+    if (isIOS && !standalone) showBtns(true);
+  })();
+
   skeletons();
   load();
   armTimer(parseInt(sel.value, 10) || 0);
