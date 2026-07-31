@@ -39062,8 +39062,9 @@ function CherryAdventure() {
         document.addEventListener("visibilitychange", onVisBg);
         animate();
         const onResize = () => {
-            // 📱 track the REAL visible viewport height (mobile URL bar / notches) so nothing is cut off
-            document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+            // 📱 track the REAL visible viewport height (URL bar / Dynamic Island / home indicator) so nothing is cut off
+            const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+            document.documentElement.style.setProperty("--app-height", Math.round(vh) + "px");
             const w = mount.clientWidth, h = mount.clientHeight;
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
@@ -39071,6 +39072,11 @@ function CherryAdventure() {
         };
         window.addEventListener("resize", onResize);
         window.addEventListener("orientationchange", onResize);
+        if (window.visualViewport)
+            window.visualViewport.addEventListener("resize", onResize);
+        window.addEventListener("pageshow", onResize);
+        setTimeout(onResize, 300);
+        setTimeout(onResize, 1200); // 📱 iOS (จอเว้า/PWA) รายงานความสูงจริงช้า — วัดซ้ำให้เต็มจอพอดี
         onResize();
         return () => {
             cancelAnimationFrame(raf);
@@ -39079,6 +39085,9 @@ function CherryAdventure() {
             document.removeEventListener("visibilitychange", onVisBg);
             window.removeEventListener("resize", onResize);
             window.removeEventListener("orientationchange", onResize);
+            if (window.visualViewport)
+                window.visualViewport.removeEventListener("resize", onResize);
+            window.removeEventListener("pageshow", onResize);
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
             renderer.domElement.removeEventListener("wheel", onWheel);
@@ -39181,7 +39190,7 @@ function CherryAdventure() {
                 color: "#a06a6a", background: "#f3ede4", padding: 0, fontFamily: font,
                 boxShadow: "0 2px 6px rgba(0,0,0,0.22)", pointerEvents: "auto", flexShrink: 0,
             } }, "\u2715")));
-    return (React.createElement("div", { style: { width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box" } },
+    return (React.createElement("div", { style: { width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box" } },
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`),
         React.createElement("div", { ref: mountRef, style: { width: "100%", height: "100%" } }),
         ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
@@ -39871,7 +39880,7 @@ function CherryAdventure() {
         ui.secretNear && ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: "26%", left: "50%", transform: "translateX(-50%)", zIndex: 34, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", fontFamily: font } },
             React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(40,24,20,0.7)", borderRadius: 999, padding: "3px 12px", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "\uD83D\uDC24\u2728 \u0E40\u0E08\u0E2D\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07\u0E25\u0E31\u0E1A! \u0E44\u0E01\u0E48\u0E19\u0E49\u0E2D\u0E22\u0E2B\u0E31\u0E27\u0E43\u0E08"),
             React.createElement("button", { onClick: () => G.catchSecret && G.catchSecret(), style: { pointerEvents: "auto", padding: "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(135deg,#ff9ec8,#f5a623)", boxShadow: "0 4px 16px rgba(245,120,80,0.55)", animation: "pulse 0.8s ease-in-out infinite alternate" } }, "\uD83C\uDFA3 \u0E08\u0E31\u0E1A\u0E44\u0E01\u0E48\u0E19\u0E49\u0E2D\u0E22"))),
-        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
+        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: "env(safe-area-inset-bottom, 0px)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 11, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" } },
                 React.createElement("span", { style: { color: "#c04a5a" } },
                     "\uD83D\uDC97",

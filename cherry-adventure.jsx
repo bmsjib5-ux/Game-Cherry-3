@@ -25783,8 +25783,9 @@ export default function CherryAdventure() {
     animate();
 
     const onResize = () => {
-      // 📱 track the REAL visible viewport height (mobile URL bar / notches) so nothing is cut off
-      document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+      // 📱 track the REAL visible viewport height (URL bar / Dynamic Island / home indicator) so nothing is cut off
+      const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      document.documentElement.style.setProperty("--app-height", Math.round(vh) + "px");
       const w = mount.clientWidth, h = mount.clientHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -25792,6 +25793,9 @@ export default function CherryAdventure() {
     };
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
+    window.addEventListener("pageshow", onResize);
+    setTimeout(onResize, 300); setTimeout(onResize, 1200); // 📱 iOS (จอเว้า/PWA) รายงานความสูงจริงช้า — วัดซ้ำให้เต็มจอพอดี
     onResize();
 
     return () => {
@@ -25800,6 +25804,8 @@ export default function CherryAdventure() {
       document.removeEventListener("visibilitychange", onVisBg);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
+      if (window.visualViewport) window.visualViewport.removeEventListener("resize", onResize);
+      window.removeEventListener("pageshow", onResize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       renderer.domElement.removeEventListener("wheel", onWheel);
@@ -25906,7 +25912,7 @@ export default function CherryAdventure() {
   );
 
   return (
-    <div style={{ width: "100%", height: "var(--app-height, 100vh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box" }}>
+    <div style={{ width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box" }}>
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
@@ -26850,7 +26856,7 @@ export default function CherryAdventure() {
       )}
       {/* ⭐ bottom status bar — long, 2 lines (stats / EXP + AUTO) */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+        <div style={{ position: "absolute", bottom: "env(safe-area-inset-bottom, 0px)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 11, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "4px 12px", fontSize: 12, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "wrap" }}>
             <span style={{ color: "#c04a5a" }}>💗{ui.hp}/{ui.maxHp}</span>
             <span>⚔️{ui.atk}</span>
