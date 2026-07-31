@@ -27282,8 +27282,9 @@ function CherryAdventure() {
             },
         });
         // sellable-item snapshots for the sell tab
-        const mktProduceOpts = () => CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (G.ranch && G.ranch.produce && G.ranch.produce[c.id]) || 0, base: c.sell })).filter((p) => p.n > 0);
-        const mktPetOpts = () => (G.petBox || []).filter((p) => !G.petInUse(p.i) && !((G.ranch && G.ranch.slots) || []).includes(p.i)).map((p) => { const sp = SPECIES[p.sp] || {}; return { i: p.i, sp: p.sp, name: sp.name, emoji: sp.emoji, tier: sp.tier || 1, lv: p.lv, plus: p.plus || 0, stage: p.stage || 1, iv: p.iv || { a: 0, h: 0, d: 0 }, suggest: G.petSellPrice(p) * 2 }; });
+        const MKT_PRODUCE_MAXMUL = 10, MKT_PET_MAXMUL = 20; // 🔒 เพดานราคาขาย = มูลค่าฐาน × ตัวคูณ (กันตั้งราคาเว่อร์)
+        const mktProduceOpts = () => CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (G.ranch && G.ranch.produce && G.ranch.produce[c.id]) || 0, base: c.sell, max: (c.sell || 10) * MKT_PRODUCE_MAXMUL })).filter((p) => p.n > 0);
+        const mktPetOpts = () => (G.petBox || []).filter((p) => !G.petInUse(p.i) && !((G.ranch && G.ranch.slots) || []).includes(p.i)).map((p) => { const sp = SPECIES[p.sp] || {}; const base = G.petSellPrice(p); return { i: p.i, sp: p.sp, name: sp.name, emoji: sp.emoji, tier: sp.tier || 1, lv: p.lv, plus: p.plus || 0, stage: p.stage || 1, iv: p.iv || { a: 0, h: 0, d: 0 }, suggest: base * 2, max: base * MKT_PET_MAXMUL }; });
         G.openMarket = (tab) => {
             if (G.ensurePid)
                 G.ensurePid();
@@ -27305,7 +27306,7 @@ function CherryAdventure() {
                 setUi((u) => ({ ...u, mktListings: rows || [], mktErr: rows ? null : "err" }));
             }
         };
-        G.marketSellProduce = async (cropId, price) => {
+        G.marketSellProduce = async (cropId, qty, price) => {
             if (!CN.enabled()) {
                 toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)");
                 return;
@@ -27318,21 +27319,23 @@ function CherryAdventure() {
                 toast("📦 ไม่มีพืชผลชนิดนี้ในคลัง");
                 return;
             }
-            price = Math.max(1, Math.min(9999999, price | 0));
+            qty = Math.max(1, Math.min(have, qty | 0)); // 🔢 ขายตามจำนวนที่เลือก
+            const maxPrice = qty * (c.sell || 10) * MKT_PRODUCE_MAXMUL; // 🔒 เพดานราคาต่อกอง = จำนวน × มูลค่า × ตัวคูณ
+            price = Math.max(1, Math.min(maxPrice, price | 0));
             if (G.ensurePid)
                 G.ensurePid();
-            G.ranch.produce[cropId] = 0; // 🔒 escrow: ยกทั้งกองออกจากคลังก่อนลงขาย
-            const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "produce", item: { crop: cropId, name: c.name, emoji: c.emoji, qty: have }, price, status: "open", collected: false, ts: Date.now() };
+            G.ranch.produce[cropId] = have - qty; // 🔒 escrow: ยกเฉพาะจำนวนที่ขายออกจากคลัง
+            const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "produce", item: { crop: cropId, name: c.name, emoji: c.emoji, qty }, price, status: "open", collected: false, ts: Date.now() };
             const created = await CN.marketPost(row);
             if (!created) {
-                G.ranch.produce[cropId] = (G.ranch.produce[cropId] || 0) + have;
+                G.ranch.produce[cropId] = (G.ranch.produce[cropId] || 0) + qty;
                 toast("🌐 ลงขายไม่สำเร็จ (ตรวจสอบตาราง market)");
                 setUi((u) => ({ ...u, ranch: ranchUiSnap(), mktProduce: mktProduceOpts() }));
                 return;
             }
             if (G.sfx)
                 G.sfx.coin && G.sfx.coin();
-            toast(`🏷️ ลงขาย ${c.emoji} ${c.name} ×${have} ราคา ${price}💰`);
+            toast(`🏷️ ลงขาย ${c.emoji} ${c.name} ×${qty} ราคา ${price}💰`);
             if (G.saveGame)
                 G.saveGame();
             setUi((u) => ({ ...u, ranch: ranchUiSnap(), mktProduce: mktProduceOpts() }));
@@ -27350,7 +27353,8 @@ function CherryAdventure() {
                 toast("⛔ ตัวในทีม/บัดดี้/คอกฟาร์ม ขายไม่ได้ — ถอดออกก่อน");
                 return;
             }
-            price = Math.max(1, Math.min(9999999, price | 0));
+            const maxPetPrice = G.petSellPrice(p) * MKT_PET_MAXMUL; // 🔒 เพดานราคาขายเพ็ต
+            price = Math.max(1, Math.min(maxPetPrice, price | 0));
             if (G.ensurePid)
                 G.ensurePid();
             const sp = SPECIES[p.sp] || {};
@@ -42228,30 +42232,42 @@ function CherryAdventure() {
                             React.createElement("button", { onClick: () => !mine && G.marketBuyListing(L), disabled: mine || poor || ui.mktBusy, style: { flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(90deg,#5ab0a0,#2f8f9a)" } }, mine ? "ของคุณ" : "ซื้อ")));
                     })) : (React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E25\u0E07\u0E02\u0E32\u0E22\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 \u2014 \u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32\u0E14\u0E39\u0E43\u0E2B\u0E21\u0E48\u0E20\u0E32\u0E22\u0E2B\u0E25\u0E31\u0E07")))),
                 ui.mktTab === "sell" && (React.createElement(React.Fragment, null,
-                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#5a9a4a", marginBottom: 6 } }, "\uD83E\uDD55 \u0E25\u0E07\u0E02\u0E32\u0E22\u0E1E\u0E37\u0E0A\u0E1C\u0E25 (\u0E17\u0E31\u0E49\u0E07\u0E01\u0E2D\u0E07)"),
+                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#5a9a4a", marginBottom: 6 } }, "\uD83E\uDD55 \u0E25\u0E07\u0E02\u0E32\u0E22\u0E1E\u0E37\u0E0A\u0E1C\u0E25 (\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E08\u0E33\u0E19\u0E27\u0E19 + \u0E23\u0E32\u0E04\u0E32)"),
                     (ui.mktProduce || []).length ? (ui.mktProduce || []).map((p) => {
-                        const key = "p:" + p.id;
-                        const def = Math.max(1, Math.round(p.n * p.base * 1.3));
-                        const val = (ui.mktPrices && ui.mktPrices[key] != null) ? ui.mktPrices[key] : def;
-                        return (React.createElement("div", { key: p.id, style: { display: "flex", alignItems: "center", gap: 8, background: "#f4f9ee", border: "1px solid #dcecc8", borderRadius: 11, padding: "7px 9px", marginBottom: 6 } },
-                            React.createElement("div", { style: { fontSize: 22, flexShrink: 0 } }, p.emoji),
-                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                                React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#4f7a3a" } },
-                                    p.name,
-                                    " \u00D7",
-                                    p.n),
-                                React.createElement("div", { style: { fontSize: 8.5, color: "#9ab080" } },
-                                    "\u0E41\u0E19\u0E30\u0E19\u0E33 ~",
-                                    def,
-                                    "\uD83D\uDCB0")),
-                            React.createElement("input", { type: "number", value: val, onChange: (e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [key]: Math.max(1, e.target.value | 0) } })), style: { width: 64, padding: "6px 6px", borderRadius: 8, border: "1px solid #cdd8c0", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#4f7a3a" } }),
-                            React.createElement("button", { onClick: () => G.marketSellProduce(p.id, val), style: { flexShrink: 0, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#5ab0a0,#2f8f9a)" } }, "\u0E25\u0E07\u0E02\u0E32\u0E22")));
+                        const qkey = "q:" + p.id, pkey = "p:" + p.id;
+                        const qty = Math.max(1, Math.min(p.n, (ui.mktQty && ui.mktQty[qkey] != null) ? ui.mktQty[qkey] : p.n));
+                        const maxPrice = qty * p.max; // 🔒 เพดานราคาต่อกอง
+                        const def = Math.min(maxPrice, Math.max(1, Math.round(qty * p.base * 1.3)));
+                        const price = Math.min(maxPrice, Math.max(1, (ui.mktPrices && ui.mktPrices[pkey] != null) ? ui.mktPrices[pkey] : def));
+                        return (React.createElement("div", { key: p.id, style: { background: "#f4f9ee", border: "1px solid #dcecc8", borderRadius: 11, padding: "8px 9px", marginBottom: 6 } },
+                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } },
+                                React.createElement("div", { style: { fontSize: 22, flexShrink: 0 } }, p.emoji),
+                                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#4f7a3a" } },
+                                        p.name,
+                                        " ",
+                                        React.createElement("span", { style: { color: "#9ab080" } },
+                                            "(\u0E21\u0E35\u0E43\u0E19\u0E04\u0E25\u0E31\u0E07 ",
+                                            p.n,
+                                            ")")),
+                                    React.createElement("div", { style: { fontSize: 8.5, color: "#9ab080" } },
+                                        "\u0E23\u0E32\u0E04\u0E32\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 ",
+                                        maxPrice.toLocaleString(),
+                                        "\uD83D\uDCB0 \u00B7 \u0E41\u0E19\u0E30\u0E19\u0E33 ~",
+                                        def.toLocaleString(),
+                                        "\uD83D\uDCB0"))),
+                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } },
+                                React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: "#6a8a4a" } }, "\u0E08\u0E33\u0E19\u0E27\u0E19"),
+                                React.createElement("input", { type: "number", value: qty, min: 1, max: p.n, onChange: (e) => setUi((u) => ({ ...u, mktQty: { ...(u.mktQty || {}), [qkey]: Math.max(1, Math.min(p.n, e.target.value | 0)) } })), style: { width: 50, padding: "6px 5px", borderRadius: 8, border: "1px solid #cdd8c0", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#4f7a3a" } }),
+                                React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: "#6a8a4a" } }, "\u0E23\u0E32\u0E04\u0E32"),
+                                React.createElement("input", { type: "number", value: price, min: 1, max: maxPrice, onChange: (e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [pkey]: Math.max(1, Math.min(maxPrice, e.target.value | 0)) } })), style: { flex: 1, minWidth: 0, padding: "6px 6px", borderRadius: 8, border: "1px solid #cdd8c0", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#4f7a3a" } }),
+                                React.createElement("button", { onClick: () => G.marketSellProduce(p.id, qty, price), style: { flexShrink: 0, padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#5ab0a0,#2f8f9a)" } }, "\u0E25\u0E07\u0E02\u0E32\u0E22"))));
                     }) : (React.createElement("div", { style: { fontSize: 10.5, color: "#a99", textAlign: "center", padding: "8px 0", background: "#f6f8f2", borderRadius: 10, marginBottom: 8 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1E\u0E37\u0E0A\u0E1C\u0E25\u0E43\u0E19\u0E04\u0E25\u0E31\u0E07")),
                     React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#8a6a9a", margin: "10px 0 6px" } }, "\uD83D\uDC3E \u0E25\u0E07\u0E02\u0E32\u0E22\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07"),
                     (ui.mktPets || []).length ? (ui.mktPets || []).map((p) => {
                         const key = "pet:" + p.i;
-                        const def = Math.max(1, p.suggest);
-                        const val = (ui.mktPrices && ui.mktPrices[key] != null) ? ui.mktPrices[key] : def;
+                        const def = Math.min(p.max, Math.max(1, p.suggest));
+                        const val = Math.min(p.max, Math.max(1, (ui.mktPrices && ui.mktPrices[key] != null) ? ui.mktPrices[key] : def));
                         return (React.createElement("div", { key: p.i, style: { display: "flex", alignItems: "center", gap: 8, background: "#f7f2fb", border: "1px solid #e3d0f2", borderRadius: 11, padding: "7px 9px", marginBottom: 6 } },
                             React.createElement("div", { style: { fontSize: 22, flexShrink: 0 } }, p.emoji),
                             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
@@ -42261,12 +42277,12 @@ function CherryAdventure() {
                                     p.lv,
                                     p.plus ? ` +${p.plus}` : ""),
                                 React.createElement("div", { style: { fontSize: 8.5, color: "#a07ac0" } },
-                                    "\u0E1E\u0E23\u0E2A\u0E27\u0E23\u0E23\u0E04\u0E4C ",
-                                    p.iv.a + p.iv.h + p.iv.d,
-                                    " \u00B7 \u0E41\u0E19\u0E30\u0E19\u0E33 ~",
-                                    def,
+                                    "\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 ",
+                                    p.max.toLocaleString(),
+                                    "\uD83D\uDCB0 \u00B7 \u0E41\u0E19\u0E30\u0E19\u0E33 ~",
+                                    def.toLocaleString(),
                                     "\uD83D\uDCB0")),
-                            React.createElement("input", { type: "number", value: val, onChange: (e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [key]: Math.max(1, e.target.value | 0) } })), style: { width: 64, padding: "6px 6px", borderRadius: 8, border: "1px solid #d6c0ea", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#7a4a9a" } }),
+                            React.createElement("input", { type: "number", value: val, min: 1, max: p.max, onChange: (e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [key]: Math.max(1, Math.min(p.max, e.target.value | 0)) } })), style: { width: 72, padding: "6px 6px", borderRadius: 8, border: "1px solid #d6c0ea", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#7a4a9a" } }),
                             React.createElement("button", { onClick: () => G.marketSellPet(p.i, val), style: { flexShrink: 0, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#b06ad0,#8a4ac0)" } }, "\u0E25\u0E07\u0E02\u0E32\u0E22")));
                     }) : (React.createElement("div", { style: { fontSize: 10.5, color: "#a99", textAlign: "center", padding: "8px 0", background: "#f8f4fb", borderRadius: 10 } }, "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07\u0E27\u0E48\u0E32\u0E07\u0E43\u0E2B\u0E49\u0E02\u0E32\u0E22 (\u0E15\u0E31\u0E27\u0E43\u0E19\u0E17\u0E35\u0E21/\u0E1A\u0E31\u0E14\u0E14\u0E35\u0E49/\u0E04\u0E2D\u0E01\u0E1F\u0E32\u0E23\u0E4C\u0E21 \u0E02\u0E32\u0E22\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49)")),
                     React.createElement("div", { style: { fontSize: 9.5, color: "#a99", marginTop: 8, lineHeight: 1.5, background: "#f4f8f7", borderRadius: 10, padding: "8px 10px" } }, "\uD83D\uDCA1 \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E25\u0E07\u0E02\u0E32\u0E22 \u0E02\u0E2D\u0E07\u0E08\u0E30\u0E16\u0E39\u0E01\u0E22\u0E01\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E04\u0E25\u0E31\u0E07/\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E17\u0E31\u0E19\u0E17\u0E35 \u00B7 \u0E40\u0E21\u0E37\u0E48\u0E2D\u0E21\u0E35\u0E04\u0E19\u0E0B\u0E37\u0E49\u0E2D \u0E44\u0E1B\u0E01\u0E14 \"\u0E40\u0E01\u0E47\u0E1A\u0E17\u0E2D\u0E07\" \u0E17\u0E35\u0E48\u0E41\u0E17\u0E47\u0E1A \uD83D\uDCCB \u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19 \u00B7 \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E02\u0E32\u0E22\u0E01\u0E47\u0E01\u0E14\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E2D\u0E32\u0E02\u0E2D\u0E07\u0E04\u0E37\u0E19\u0E44\u0E14\u0E49"))),
