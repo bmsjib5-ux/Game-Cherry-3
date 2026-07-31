@@ -404,6 +404,21 @@ Object.assign(EVOLVED, { chickpet: "ไก่ทองเทวะ" });
 Object.assign(WEAK, { chickpet: "arcane" });
 Object.assign(PET_ELEM, { chickpet: "light" });
 Object.assign(PET_SKILL, { chickpet: "จิกหัวใจ" });
+// 🥚 EGG-EXCLUSIVE PETS — ฟักจากไข่เพาะพันธุ์เท่านั้น (ไม่เกิดในป่า/ไม่ได้จากผสม/ไม่ได้จากบอส)
+Object.assign(SPECIES, {
+  eggdrake:   { name: "มังกรไข่ทอง",   emoji: "🐲", color: 0xf5b13a, hp: 260, atk: 30, catch: 0, tier: 6, desc: "มังกรน้อยในตำนาน ฟักจากไข่ทองคำล้ำค่า", eggOnly: 1, weak: "arcane" },
+  eggpeacock: { name: "นกยูงทิพย์",     emoji: "🦚", color: 0x35c0b0, hp: 175, atk: 23, catch: 0, tier: 5, desc: "นกยูงเทพหางเจ็ดสี ฟักได้จากไข่เท่านั้น", eggOnly: 1, weak: "earth" },
+  eggunicorn: { name: "ยูนิคอร์นจิ๋ว",  emoji: "🦄", color: 0xf0c0e8, hp: 120, atk: 18, catch: 0, tier: 4, desc: "ม้าเขาเดียวศักดิ์สิทธิ์ตัวจิ๋ว", eggOnly: 1, weak: "light" },
+  eggdino:    { name: "ไดโนน้อย",      emoji: "🦕", color: 0x7ec86a, hp: 110, atk: 17, catch: 0, tier: 4, desc: "ไดโนเสาร์คอยาวยุคดึกดำบรรพ์ตัวน้อย", eggOnly: 1, weak: "ice" },
+  eggowl:     { name: "นกฮูกเวท",      emoji: "🦉", color: 0xb99a6a, hp: 78,  atk: 13, catch: 0, tier: 3, desc: "นกฮูกนักเวท ตาโตเปล่งประกายเวทมนตร์", eggOnly: 1, weak: "wind" },
+  egggecko:   { name: "กิ้งก่าแก้ว",    emoji: "🦎", color: 0x6fd08a, hp: 72,  atk: 12, catch: 0, tier: 3, desc: "กิ้งก่าผลึกใสเปลี่ยนสีได้", eggOnly: 1, weak: "fire" },
+  eggturtle:  { name: "เต่ามงคล",      emoji: "🐢", color: 0x6abf6a, hp: 60,  atk: 9,  catch: 0, tier: 2, desc: "เต่าน้อยกระดองมงคล นำโชคลาภ", eggOnly: 1, weak: "wind" },
+  egghog:     { name: "เม่นจิ๋ว",       emoji: "🦔", color: 0xc09a70, hp: 52,  atk: 8,  catch: 0, tier: 2, desc: "เม่นตัวจิ๋วขนแหลม ขี้อายน่ารัก", eggOnly: 1, weak: "fire" },
+  eggchick:   { name: "ลูกเจี๊ยบทอง",   emoji: "🐥", color: 0xf5d84a, hp: 38,  atk: 6,  catch: 0, tier: 1, desc: "ลูกเจี๊ยบขนทองอ่อนนุ่ม เพิ่งฟักจากไข่", eggOnly: 1, weak: "water" },
+  eggduck:    { name: "ลูกเป็ดน้อย",    emoji: "🐤", color: 0xf5c84a, hp: 34,  atk: 5,  catch: 0, tier: 1, desc: "ลูกเป็ดปากเหลืองเดินต้วมเตี้ยม", eggOnly: 1, weak: "wind" },
+});
+Object.assign(PET_ELEM,  { eggdrake: "arcane", eggpeacock: "light", eggunicorn: "light", eggdino: "earth", eggowl: "wind", egggecko: "fire", eggturtle: "water", egghog: "earth", eggchick: "light", eggduck: "water" });
+Object.assign(PET_SKILL, { eggdrake: "ลมหายใจมังกร", eggpeacock: "พัดหางเจ็ดสี", eggunicorn: "แสงเขาศักดิ์สิทธิ์", eggdino: "กระทืบปฐพี", eggowl: "คลื่นปัญญา", egggecko: "ลิ้นสายฟ้า", eggturtle: "โล่กระดองมงคล", egghog: "ขนแหลมพุ่ง", eggchick: "จิกน้อย", eggduck: "ปีกกระพือ" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow")  || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert")  || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
@@ -11887,8 +11902,8 @@ export default function CherryAdventure() {
       const bothHigh = SPECIES[idA].tier >= 4 && SPECIES[idB].tier >= 4;
       const froll = Math.random();
       let rt = bothHigh && froll < 0.30 ? 6 : (maxTier >= 4 && froll < 0.55) ? 5 : Math.min(6, maxTier + (froll < 0.45 ? 1 : 0));
-      let pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt);
-      while (!pool.length && rt > 1) { rt--; pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt); }
+      let pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt && !SPECIES[k].eggOnly);
+      while (!pool.length && rt > 1) { rt--; pool = Object.keys(SPECIES).filter((k) => SPECIES[k].tier === rt && !SPECIES[k].eggOnly); }
       const result = pool[Math.floor(Math.random() * pool.length)];
       G.dexSeen = G.dexSeen || {};
       G.dexSeen[idA] = 1; G.dexSeen[idB] = 1; G.dexSeen[result] = 1;
@@ -15341,7 +15356,7 @@ export default function CherryAdventure() {
       }
       const lb = R.lastHatched; const lbSp = lb && SPECIES[lb.sp];
       const lastBred = lbSp ? { sp: lb.sp, emoji: lbSp.emoji, name: lbSp.name, lv: lb.lv || 5, iv: lb.iv || { a: 0, h: 0, d: 0 }, total: lb.iv ? (lb.iv.a + lb.iv.h + lb.iv.d) : 0 } : null;
-      return { slots, slotsMax: ranchSlotsMax(), pens: (R.pens || 2), penMax: PENS_MAX, penCost: 400 + ((R.pens || 2) - 2) * 300, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, lastBred, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, plots: (R.plots || 4), plotMax: PLOTS_MAX, plotCost: 150 + ((R.plots || 4) - 4) * 100, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })), produce: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (R.produce && R.produce[c.id]) || 0, sell: c.sell })), stockSell: { seeds: STOCK_SELL.seeds, food: STOCK_SELL.food, decorCount: STOCK_SELL.decorCount } };
+      return { slots, slotsMax: ranchSlotsMax(), pens: (R.pens || 2), penMax: PENS_MAX, penCost: 400 + ((R.pens || 2) - 2) * 300, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, lastBred, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, plots: (R.plots || 4), plotMax: PLOTS_MAX, plotCost: 150 + ((R.plots || 4) - 4) * 100, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })), produce: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (R.produce && R.produce[c.id]) || 0, sell: c.sell })), stockSell: { seeds: STOCK_SELL.seeds, food: STOCK_SELL.food, decorCount: STOCK_SELL.decorCount }, fert: R.fert || 0, eggb: R.eggb || 0, lvlf: R.lvlf || 0 };
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
@@ -15387,6 +15402,15 @@ export default function CherryAdventure() {
       };
       return { a: one("a"), h: one("h"), d: one("d") };
     };
+    // 🥚 pets you can ONLY get by hatching a bred egg (never wild/fusion/boss)
+    const EGG_ONLY_POOL = ["eggdrake", "eggpeacock", "eggunicorn", "eggdino", "eggowl", "egggecko", "eggturtle", "egghog", "eggchick", "eggduck"];
+    const rollEggOnly = (avgTier) => {
+      const bias = Math.max(0, (avgTier || 1) - 2); // พ่อแม่ระดับสูง → ลุ้นตัวหายากง่ายขึ้น
+      let total = 0; const w = EGG_ONLY_POOL.map((id) => { const t = SPECIES[id].tier; const ww = Math.max(0.3, (7 - t) + (t >= 5 ? bias * 0.9 : 0)); total += ww; return ww; });
+      let r = Math.random() * total;
+      for (let i = 0; i < EGG_ONLY_POOL.length; i++) { r -= w[i]; if (r <= 0) return EGG_ONLY_POOL[i]; }
+      return EGG_ONLY_POOL[EGG_ONLY_POOL.length - 1];
+    };
     G.breedPets = (iidA, iidB) => {
       if (G.ranch.egg) { toast("🥚 มีไข่กำลังฟักอยู่แล้ว — รอฟักตัวนี้ก่อน"); return; }
       const pa = G.petAt(iidA), pb = G.petAt(iidB);
@@ -15397,14 +15421,17 @@ export default function CherryAdventure() {
       G.gold -= BREED_COST;
       // offspring species = one of the parents (มักเป็นสายที่หายากกว่า) → เพาะสายที่ต้องการต่อได้
       const ta = SPECIES[pa.sp].tier, tb = SPECIES[pb.sp].tier;
-      const sp = (pa.sp === pb.sp) ? pa.sp : (Math.random() < (ta >= tb ? 0.65 : 0.35) ? pa.sp : pb.sp);
+      const avgT = (ta + tb) / 2;
+      const eggChance = 0.12 + Math.min(0.18, avgT * 0.02); // 🥚 12%..~24% ลุ้นสายพันธุ์ลับที่ฟักได้จากไข่เท่านั้น (สูงขึ้นตามระดับพ่อแม่)
+      const rareEgg = Math.random() < eggChance;
+      const sp = rareEgg ? rollEggOnly(avgT) : ((pa.sp === pb.sp) ? pa.sp : (Math.random() < (ta >= tb ? 0.65 : 0.35) ? pa.sp : pb.sp));
       const iv = inheritIv(pa, pb, sp);
       const t = SPECIES[sp].tier || 1;
       const mins = 20 + t * 8; // ฟักนานตาม tier
       G.ranch.egg = { sp, iv, stage: 1, readyAt: Date.now() + mins * 60000 };
       G.dexSeen = G.dexSeen || {}; G.dexSeen[sp] = 1;
       if (G.sfx) G.sfx.button && G.sfx.button();
-      toast(`🥚 เพาะพันธุ์สำเร็จ! ได้ไข่ ${SPECIES[sp].emoji} ${SPECIES[sp].name} (IV รวม ${iv.a + iv.h + iv.d}) — ฟักในอีก ${mins} นาที`);
+      toast(`${rareEgg ? "🌟 ไข่สายพันธุ์ลับ! " : "🥚 เพาะพันธุ์สำเร็จ! ได้ไข่ "}${SPECIES[sp].emoji} ${SPECIES[sp].name} (IV รวม ${iv.a + iv.h + iv.d}) — ฟักในอีก ${mins} นาที`);
       syncPlayer();
       setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap(), breedA: null, breedB: null, breedPick: null }));
     };
@@ -15549,9 +15576,9 @@ export default function CherryAdventure() {
       G.gold -= cost;
       if (id === "seed") { G.ranch.seeds = (G.ranch.seeds || 0) + 3; toast("🌱 ซื้อเมล็ดพืชผัก +3 (ปลูกฟรีในสวน)"); }
       else if (id === "food") { G.ranch.food = (G.ranch.food || 0) + 5; toast("🌾 ซื้ออาหารสัตว์ +5 (คลัง " + G.ranch.food + ")"); }
-      else if (id === "fert") { let k = 0; (G.ranch.garden || []).forEach((g) => { if (g && g.readyAt > Date.now()) { g.readyAt = Date.now(); k++; } }); if (G.refreshRanchTimers) G.refreshRanchTimers(); toast(k ? `💩 ใส่ปุ๋ย! พืช ${k} แปลงพร้อมเก็บทันที` : "💩 ยังไม่มีพืชกำลังโต — ปลูกก่อนแล้วค่อยใส่ปุ๋ย"); }
-      else if (id === "egg") { if (G.ranch.egg) { G.ranch.egg.readyAt = Date.now(); if (G.refreshRanchTimers) G.refreshRanchTimers(); toast("⚡ เร่งฟักไข่! พร้อมฟักทันที"); } else toast("⚡ ยังไม่มีไข่กำลังฟัก"); }
-      else if (id === "lvl") { const ids = (G.ranch.slots || []).filter((x) => x != null); if (!ids.length) { toast("⭐ ยังไม่มีเพ็ตในคอก — เอาเพ็ตลงคอกก่อน"); G.gold += cost; return; } ids.forEach((iid) => petGain(iid, 60)); toast(`⭐ อาหารเร่งเลเวล! เพ็ตในคอก ${ids.length} ตัว +60 EXP`); }
+      else if (id === "fert") { G.ranch.fert = (G.ranch.fert || 0) + 1; toast(`💩 ซื้อปุ๋ย +1 — เก็บเข้าคลัง (มี ${G.ranch.fert}) กด "ใช้" ที่คลัง`); }
+      else if (id === "egg") { G.ranch.eggb = (G.ranch.eggb || 0) + 1; toast(`⚡ ซื้อตัวเร่งฟักไข่ +1 — เก็บเข้าคลัง (มี ${G.ranch.eggb})`); }
+      else if (id === "lvl") { G.ranch.lvlf = (G.ranch.lvlf || 0) + 1; toast(`⭐ ซื้ออาหารเร่งเลเวล +1 — เก็บเข้าคลัง (มี ${G.ranch.lvlf})`); }
       else if (id === "decor") { G.ranch.decorCount = Math.min(24, (G.ranch.decorCount || 0) + 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🌻 ซื้อของตกแต่งสวน +1 ชิ้น"); }
       else if (id === "saw") { G.ranch.decorCount = Math.max(0, (G.ranch.decorCount || 0) - 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🪚 ตัด/เก็บของตกแต่งออก 1 ชิ้น"); }
       else if (id === "pen") { G.ranch.pens = Math.min(PENS_MAX, (G.ranch.pens || 2) + 1); if (G.buildRanchPens) G.buildRanchPens(G.ranch.pens); toast(`🐄 ซื้อคอกสัตว์เพิ่ม! ตอนนี้ ${G.ranch.pens} คอก (${G.ranch.pens * PEN_SIZE} ช่อง)`); }
@@ -15559,6 +15586,31 @@ export default function CherryAdventure() {
       if (G.sfx) (id === "saw" ? (G.sfx.button && G.sfx.button()) : (G.sfx.coin && G.sfx.coin()));
       syncPlayer();
       setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
+    };
+    // 📦 ใช้ไอเทมที่เก็บในคลัง (ซื้อจากตลาดแล้วมากดใช้ทีหลัง)
+    G.useRanchItem = (kind) => {
+      const R = G.ranch;
+      if (kind === "fert") {
+        if ((R.fert || 0) <= 0) { toast("💩 ไม่มีปุ๋ยในคลัง"); return; }
+        let k = 0; (R.garden || []).forEach((g) => { if (g && g.readyAt > Date.now()) { g.readyAt = Date.now(); k++; } });
+        if (!k) { toast("💩 ยังไม่มีพืชกำลังโต — ปลูกก่อนแล้วค่อยใส่ปุ๋ย"); return; }
+        R.fert -= 1; if (G.refreshRanchTimers) G.refreshRanchTimers();
+        toast(`💩 ใส่ปุ๋ย! พืช ${k} แปลงพร้อมเก็บทันที (เหลือปุ๋ย ${R.fert})`);
+      } else if (kind === "eggb") {
+        if ((R.eggb || 0) <= 0) { toast("⚡ ไม่มีตัวเร่งฟักไข่ในคลัง"); return; }
+        if (!R.egg) { toast("⚡ ยังไม่มีไข่กำลังฟัก — ไปเพาะพันธุ์ก่อน"); return; }
+        R.eggb -= 1; R.egg.readyAt = Date.now(); if (G.refreshRanchTimers) G.refreshRanchTimers();
+        toast(`⚡ เร่งฟักไข่! พร้อมฟักทันที (เหลือ ${R.eggb})`);
+      } else if (kind === "lvlf") {
+        if ((R.lvlf || 0) <= 0) { toast("⭐ ไม่มีอาหารเร่งเลเวลในคลัง"); return; }
+        const ids = (R.slots || []).filter((x) => x != null);
+        if (!ids.length) { toast("⭐ ยังไม่มีเพ็ตในคอก — เอาเพ็ตลงคอกก่อน"); return; }
+        R.lvlf -= 1; ids.forEach((iid) => petGain(iid, 60));
+        toast(`⭐ อาหารเร่งเลเวล! เพ็ตในคอก ${ids.length} ตัว +60 EXP (เหลือ ${R.lvlf})`);
+      } else return;
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
     };
 
     // ♾️ ENDLESS SURVIVAL: fight escalating waves; a loss ends the run
@@ -15575,7 +15627,7 @@ export default function CherryAdventure() {
       const wave = G.endlessWave || 1;
       const lv = Math.max(1, Math.round(G.player.level * 0.7 + wave * 1.5));
       const isBoss = wave % 5 === 0;
-      const spIds = Object.keys(SPECIES);
+      const spIds = Object.keys(SPECIES).filter((k) => !SPECIES[k].eggOnly); // 🥚 กันสายพันธุ์ไข่ลับโผล่ในโหมดไม่สิ้นสุด
       const spId = spIds[Math.floor(Math.random() * spIds.length)];
       const m = buildMonster(spId);
       m.userData.lv = lv;
@@ -18676,8 +18728,8 @@ export default function CherryAdventure() {
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
       G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
-        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {} }
-        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {} };
+        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0 }
+        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0 };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -27308,7 +27360,7 @@ export default function CherryAdventure() {
           </div>
 
           {/* ⚔️ open-world action bar — attack + class skills (walk up & hit normal monsters; bosses still enter the arena) */}
-          {G.actionMode && !ui.equipScreen && (() => {
+          {G.actionMode && !ui.equipScreen && !ui.inRanchZone && (() => {
             const list = skillsOf(ui.cls, ui.pathId) || [];
             const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
             return (
@@ -29259,8 +29311,8 @@ export default function CherryAdventure() {
             </div>
           )}
 
-          {/* 🏡 in-zone quick buttons: ฟาร์ม / เพาะพันธุ์ (แยกไอคอนโชว์ข้างนอกตอนอยู่ในฟาร์ม) */}
-          {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && (
+          {/* 🏡 in-zone quick buttons — ซ้าย: ฟาร์ม/เพาะพันธุ์/ปลูกผัก · ขวา: ตลาด/คลัง/ตลาดออนไลน์ (ตรงที่เคยเป็นปุ่มต่อสู้) */}
+          {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && (<React.Fragment>
             <div style={{ position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "42%", display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
               <button onClick={() => G.openRanch && G.openRanch("farm")} title="ฟาร์มสัตว์เลี้ยง" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🐄</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ฟาร์ม</span>
@@ -29271,6 +29323,8 @@ export default function CherryAdventure() {
               <button onClick={() => G.openRanch && G.openRanch("garden")} title="ปลูกผัก" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#7ac06a,#4f9a3f)", color: "#fff", boxShadow: "0 4px 14px rgba(79,154,63,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🌾</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ปลูกผัก</span>
               </button>
+            </div>
+            <div style={{ position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
               <button onClick={() => G.openRanch && G.openRanch("market")} title="ตลาด" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🛒</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ตลาด</span>
               </button>
@@ -29281,7 +29335,7 @@ export default function CherryAdventure() {
                 <span style={{ fontSize: 24 }}>🌐</span><span style={{ fontSize: 8, fontWeight: 800, marginTop: 2 }}>ตลาดออนไลน์</span>
               </button>
             </div>
-          )}
+          </React.Fragment>)}
 
           {/* 🐄 pet ranch (idle farm) */}
           {ui.ranchOpen && ui.ranch && (
@@ -29465,9 +29519,9 @@ export default function CherryAdventure() {
                     { id: "plot", emoji: "🪴", name: "ซื้อแปลงผัก (+1 แปลง)", cost: ui.ranch.plotCost, desc: `เพิ่มแปลงปลูกอีก 1 แปลง (มี ${ui.ranch.plots || 4}/${ui.ranch.plotMax || 8} แปลง)`, max: (ui.ranch.plots || 4) >= (ui.ranch.plotMax || 8) },
                     { id: "seed", emoji: "🌱", name: "เมล็ดพืชผัก ×3", cost: 90, desc: "ปลูกในสวนได้ฟรี (ไม่เสียทองตอนปลูก)" },
                     { id: "food", emoji: "🌾", name: "อาหารสัตว์ ×5", cost: 100, desc: "เติมคลังอาหารเลี้ยงเพ็ตในคอก" },
-                    { id: "fert", emoji: "💩", name: "ปุ๋ย", cost: 80, desc: "ทำให้พืชที่กำลังโตพร้อมเก็บทันที" },
-                    { id: "egg", emoji: "⚡", name: "ตัวเร่งฟักไข่", cost: 150, desc: "ไข่ที่กำลังฟัก → พร้อมฟักทันที" },
-                    { id: "lvl", emoji: "⭐", name: "อาหารเร่งเลเวล", cost: 200, desc: "เพ็ตในคอกทุกตัว +60 EXP" },
+                    { id: "fert", emoji: "💩", name: "ปุ๋ย", cost: 80, desc: "เก็บเข้าคลัง → กดใช้ให้พืชพร้อมเก็บทันที" },
+                    { id: "egg", emoji: "⚡", name: "ตัวเร่งฟักไข่", cost: 150, desc: "เก็บเข้าคลัง → กดใช้ให้ไข่พร้อมฟักทันที" },
+                    { id: "lvl", emoji: "⭐", name: "อาหารเร่งเลเวล", cost: 200, desc: "เก็บเข้าคลัง → กดใช้ให้เพ็ตในคอก +60 EXP" },
                     { id: "decor", emoji: "🌻", name: "ของตกแต่งสวน", cost: 120, desc: "เพิ่มต้นไม้/ดอกไม้/โคมประดับในสวน" },
                     { id: "saw", emoji: "🪚", name: "เลื่อย (ตัดต้นไม้)", cost: 60, desc: "ตัด/เก็บของตกแต่งออก 1 ชิ้น" },
                   ].map((it) => {
@@ -29523,6 +29577,22 @@ export default function CherryAdventure() {
                         <div style={{ fontSize: 9.5, color: "#b0a488", fontWeight: 600 }}>ขายคืนชิ้นละ {it.sell}💰</div>
                       </div>
                       <button onClick={() => G.sellStock && G.sellStock(it.kind)} disabled={it.n <= 0} style={{ flexShrink: 0, padding: "8px 12px", borderRadius: 999, border: "none", cursor: it.n > 0 ? "pointer" : "default", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: it.n > 0 ? "linear-gradient(90deg,#e0a86a,#c9843e)" : "#cdd3c8" }}>💰 ขาย 1</button>
+                    </div>
+                  ))}
+                  {/* 🧰 ไอเทมใช้งาน (ซื้อจากตลาด → เก็บที่นี่ → กดใช้) */}
+                  <div style={{ fontSize: 11.5, fontWeight: 900, color: "#6a7688", margin: "10px 0 6px" }}>🧰 ไอเทมใช้งาน</div>
+                  {[
+                    { kind: "fert", emoji: "💩", name: "ปุ๋ย", n: ui.ranch.fert || 0, desc: "พืชที่กำลังโตพร้อมเก็บทันที" },
+                    { kind: "eggb", emoji: "⚡", name: "ตัวเร่งฟักไข่", n: ui.ranch.eggb || 0, desc: "ไข่ที่กำลังฟัก → พร้อมฟักทันที" },
+                    { kind: "lvlf", emoji: "⭐", name: "อาหารเร่งเลเวล", n: ui.ranch.lvlf || 0, desc: "เพ็ตในคอกทุกตัว +60 EXP" },
+                  ].map((it) => (
+                    <div key={it.kind} style={{ display: "flex", alignItems: "center", gap: 9, background: "#f2f4f7", border: "1px solid #dde2e8", borderRadius: 11, padding: "8px 10px", marginBottom: 7, opacity: it.n > 0 ? 1 : 0.55 }}>
+                      <div style={{ fontSize: 24, flexShrink: 0 }}>{it.emoji}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: "#5a6678" }}>{it.name} <span style={{ color: "#95a0b0" }}>×{it.n}</span></div>
+                        <div style={{ fontSize: 9.5, color: "#a0aab8", fontWeight: 600, lineHeight: 1.4 }}>{it.desc}</div>
+                      </div>
+                      <button onClick={() => G.useRanchItem && G.useRanchItem(it.kind)} disabled={it.n <= 0} style={{ flexShrink: 0, padding: "8px 14px", borderRadius: 999, border: "none", cursor: it.n > 0 ? "pointer" : "default", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: it.n > 0 ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#cdd3d0" }}>ใช้</button>
                     </div>
                   ))}
                 </div>
