@@ -25745,7 +25745,8 @@ export default function CherryAdventure() {
         camera.position.x += (camX - camera.position.x) * 0.1;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (camZ - camera.position.z) * 0.1;
-        camera.lookAt(char.position.x, 0.8, char.position.z);
+        // 🎯 มองจุดเหนือหัวตัวละคร (สเกลตามซูม) → ตัวละครยืนค่อนลงล่างจอ เห็นฉากด้านหน้ามากขึ้น
+        camera.lookAt(char.position.x, 0.8 + camDist * 0.15, char.position.z);
       }
 
       if (dtForce == null) renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
