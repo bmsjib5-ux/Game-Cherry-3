@@ -15309,6 +15309,60 @@ export default function CherryAdventure() {
       const exp = (4 + tier * 2) * hf;
       return { gold, exp };
     };
+    // ---------- 🌟 FARM LEVEL + 📋 DAILY QUESTS ----------
+    const FARM_XP_PER = (lv) => 120 + (lv - 1) * 80;              // xp ที่ต้องใช้ต่อเลเวล (ยากขึ้นเรื่อยๆ)
+    const farmLevel = () => { let xp = (G.ranch.xp || 0), lv = 1; while (lv < 99 && xp >= FARM_XP_PER(lv)) { xp -= FARM_XP_PER(lv); lv++; } return { lv, cur: Math.floor(xp), need: FARM_XP_PER(lv) }; };
+    const farmIncomeMult = () => 1 + (farmLevel().lv - 1) * 0.03;  // 💰 +3% รายได้ฟาร์มต่อเลเวล
+    G.farmXp = (amt) => {
+      if (!G.ranch || !(amt > 0)) return;
+      const before = farmLevel().lv;
+      G.ranch.xp = (G.ranch.xp || 0) + amt;
+      const after = farmLevel().lv;
+      if (after > before) { toast(`🌟🎉 ฟาร์มเลเวลอัป! Lv.${after} — โบนัสรายได้ฟาร์ม +${(after - 1) * 3}%`); if (G.sfx) G.sfx.coin && G.sfx.coin(); }
+    };
+    const farmDayKey = () => { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); };
+    const FARM_QTPL = [
+      { type: "harvest", emoji: "🌾", label: (n) => `เก็บเกี่ยวพืชผล ${n} ครั้ง`, targets: [4, 6, 8] },
+      { type: "feed",    emoji: "🍽️", label: (n) => `ให้อาหารเพ็ตในคอก ${n} ครั้ง`, targets: [4, 6] },
+      { type: "plant",   emoji: "🌱", label: (n) => `ปลูกพืช ${n} แปลง`, targets: [3, 5] },
+      { type: "hatch",   emoji: "🐣", label: (n) => `ฟักไข่ ${n} ฟอง`, targets: [1, 2] },
+      { type: "claim",   emoji: "💰", label: (n) => `เก็บผลผลิตฟาร์ม ${n} ครั้ง`, targets: [2, 3] },
+      { type: "sell",    emoji: "🏷️", label: (n) => `ลงขายตลาดออนไลน์ ${n} ครั้ง`, targets: [1, 2] },
+    ];
+    const genFarmQuests = () => {
+      const pool = FARM_QTPL.slice(), out = [], flv = farmLevel().lv;
+      for (let i = 0; i < 3 && pool.length; i++) {
+        const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+        const target = t.targets[Math.floor(Math.random() * t.targets.length)];
+        out.push({ type: t.type, emoji: t.emoji, label: t.label(target), target, prog: 0, claimed: false, gold: target * (40 + flv * 8), xp: target * 12, gem: (t.type === "hatch" || t.type === "sell") ? 1 : 0 });
+      }
+      return out;
+    };
+    G.farmQuestEnsure = () => {
+      if (!G.ranch) return;
+      const dk = farmDayKey();
+      if (G.ranch.qday !== dk || !Array.isArray(G.ranch.quests) || !G.ranch.quests.length) { G.ranch.qday = dk; G.ranch.quests = genFarmQuests(); }
+    };
+    G.farmQuestProg = (type, n) => {
+      if (!G.ranch) return;
+      G.farmQuestEnsure();
+      let any = false;
+      (G.ranch.quests || []).forEach((q) => { if (q.type === type && !q.claimed && q.prog < q.target) { q.prog = Math.min(q.target, q.prog + (n || 1)); any = true; } });
+      if (any) setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
+    };
+    G.claimFarmQuest = (idx) => {
+      G.farmQuestEnsure();
+      const q = (G.ranch.quests || [])[idx];
+      if (!q || q.claimed || q.prog < q.target) return;
+      q.claimed = true;
+      G.gold = (G.gold || 0) + q.gold;
+      if (q.gem) G.diamonds = (G.diamonds || 0) + q.gem;
+      G.farmXp(q.xp);
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`✅ ภารกิจสำเร็จ! +${q.gold.toLocaleString()}💰${q.gem ? ` +${q.gem}💎` : ""} · +${q.xp} XP ฟาร์ม`);
+      syncPlayer(); if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, gold: G.gold, diamonds: G.diamonds, ranch: ranchUiSnap() }));
+    };
     // accrue everything since last visit (capped), decay happiness by real time
     const ranchTick = () => {
       const R = G.ranch; if (!R) return;
@@ -15328,10 +15382,12 @@ export default function CherryAdventure() {
         if (xp >= 1) petGain(iid, xp);
         R.happy[iid] = Math.max(0, ranchHappy(iid) - 4 * decayHrs); // 😴 -4 ความสุข/ชม.
       });
-      R.pending = (R.pending || 0) + gold;
+      R.pending = (R.pending || 0) + gold * farmIncomeMult(); // 🌟 โบนัสรายได้ตามเลเวลฟาร์ม
     };
     const ranchUiSnap = () => {
       const R = G.ranch;
+      if (G.farmQuestEnsure) G.farmQuestEnsure();
+      const fl = farmLevel();
       const slots = [];
       for (let k = 0; k < ranchSlotsMax(); k++) {
         const iid = (R.slots || [])[k];
@@ -15356,7 +15412,7 @@ export default function CherryAdventure() {
       }
       const lb = R.lastHatched; const lbSp = lb && SPECIES[lb.sp];
       const lastBred = lbSp ? { sp: lb.sp, emoji: lbSp.emoji, name: lbSp.name, lv: lb.lv || 5, iv: lb.iv || { a: 0, h: 0, d: 0 }, total: lb.iv ? (lb.iv.a + lb.iv.h + lb.iv.d) : 0 } : null;
-      return { slots, slotsMax: ranchSlotsMax(), pens: (R.pens || 2), penMax: PENS_MAX, penCost: 400 + ((R.pens || 2) - 2) * 300, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, lastBred, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, plots: (R.plots || 4), plotMax: PLOTS_MAX, plotCost: 150 + ((R.plots || 4) - 4) * 100, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })), produce: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (R.produce && R.produce[c.id]) || 0, sell: c.sell })), stockSell: { seeds: STOCK_SELL.seeds, food: STOCK_SELL.food, decorCount: STOCK_SELL.decorCount }, fert: R.fert || 0, eggb: R.eggb || 0, lvlf: R.lvlf || 0 };
+      return { slots, slotsMax: ranchSlotsMax(), pens: (R.pens || 2), penMax: PENS_MAX, penCost: 400 + ((R.pens || 2) - 2) * 300, pending: Math.floor(R.pending || 0), feedCost: FEED_COST, egg, breedCost: BREED_COST, lastBred, food: R.food || 0, seeds: R.seeds || 0, decorCount: R.decorCount || 0, garden, plots: (R.plots || 4), plotMax: PLOTS_MAX, plotCost: 150 + ((R.plots || 4) - 4) * 100, crops: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, grow: c.grow, yield: c.yield, seed: c.seed })), produce: CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (R.produce && R.produce[c.id]) || 0, sell: c.sell })), stockSell: { seeds: STOCK_SELL.seeds, food: STOCK_SELL.food, decorCount: STOCK_SELL.decorCount }, fert: R.fert || 0, eggb: R.eggb || 0, lvlf: R.lvlf || 0, farmLv: fl.lv, farmXp: fl.cur, farmNeed: fl.need, farmMult: Math.round((farmIncomeMult() - 1) * 100), quests: (R.quests || []).map((q) => ({ ...q })) };
     };
     G.ranchUi = ranchUiSnap;
     G.ranchTickPublic = ranchTick;
@@ -15385,6 +15441,7 @@ export default function CherryAdventure() {
       const amt = Math.floor(G.ranch.pending || 0);
       if (amt <= 0) { toast("🐄 ยังไม่มีผลผลิตให้เก็บ — ปล่อยเพ็ตไว้ในคอกสักพัก"); return; }
       G.gold += amt; G.ranch.pending = 0;
+      if (G.farmXp) G.farmXp(5); if (G.farmQuestProg) G.farmQuestProg("claim", 1);
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       toast(`🐄 เก็บผลผลิตฟาร์ม +${amt.toLocaleString()} ทอง!`);
       syncPlayer();
@@ -15429,6 +15486,7 @@ export default function CherryAdventure() {
       const t = SPECIES[sp].tier || 1;
       const mins = 20 + t * 8; // ฟักนานตาม tier
       G.ranch.egg = { sp, iv, stage: 1, readyAt: Date.now() + mins * 60000 };
+      if (G.farmXp) G.farmXp(10);
       G.dexSeen = G.dexSeen || {}; G.dexSeen[sp] = 1;
       if (G.sfx) G.sfx.button && G.sfx.button();
       toast(`${rareEgg ? "🌟 ไข่สายพันธุ์ลับ! " : "🥚 เพาะพันธุ์สำเร็จ! ได้ไข่ "}${SPECIES[sp].emoji} ${SPECIES[sp].name} (IV รวม ${iv.a + iv.h + iv.d}) — ฟักในอีก ${mins} นาที`);
@@ -15443,6 +15501,7 @@ export default function CherryAdventure() {
       G.ranch.egg = null;
       if (!inst) return;
       G.ranch.lastHatched = { sp: e.sp, iv: e.iv, lv: inst.lv || 5 }; // 🐣 จำตัวที่เพิ่งเพาะได้ → โชว์ในหน้าเพาะพันธุ์
+      if (G.farmXp) G.farmXp(15); if (G.farmQuestProg) G.farmQuestProg("hatch", 1);
       G.col[e.sp] = (G.col[e.sp] || 0) + 1;
       if (G.sfx) G.sfx.catch && G.sfx.catch();
       const tot = e.iv.a + e.iv.h + e.iv.d;
@@ -15459,6 +15518,7 @@ export default function CherryAdventure() {
       if (!useSeed && (G.gold || 0) < c.seed) { toast("💰 ทองไม่พอ — ซื้อเมล็ดจากตลาด หรือหาเงินเพิ่ม (ต้องมี " + c.seed + ")"); return; }
       if (useSeed) R.seeds -= 1; else G.gold -= c.seed;
       R.garden[plot] = { crop: cropId, readyAt: Date.now() + c.grow * 60000 };
+      if (G.farmXp) G.farmXp(2); if (G.farmQuestProg) G.farmQuestProg("plant", 1);
       if (G.sfx) G.sfx.button && G.sfx.button();
       if (G.refreshRanchTimers) G.refreshRanchTimers(); // 🌱 อัปเดตต้นกล้าในโซน 3D ทันที
       syncPlayer();
@@ -15471,6 +15531,7 @@ export default function CherryAdventure() {
       R.produce = R.produce || {};
       R.produce[c.id] = (R.produce[c.id] || 0) + c.yield; // 📦 เก็บพืชผลเข้าคลัง (นำไปขาย/ให้สัตว์ได้)
       R.garden[plot] = null;
+      if (G.farmXp) G.farmXp(8); if (G.farmQuestProg) G.farmQuestProg("harvest", 1);
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       if (G.refreshRanchTimers) G.refreshRanchTimers(); // 🌾 อัปเดตแปลงในโซน 3D ทันที
       toast(`🌾 เก็บเกี่ยว ${c.emoji} ${c.name} +${c.yield} — เก็บเข้าคลังแล้ว (📦 ${R.produce[c.id]})`);
@@ -15523,6 +15584,7 @@ export default function CherryAdventure() {
       ranchTick();
       R.food -= 1;
       R.happy[iid] = Math.min(100, ranchHappy(iid) + FOOD_HAPPY);
+      if (G.farmXp) G.farmXp(3); if (G.farmQuestProg) G.farmQuestProg("feed", 1);
       if (G.sfx) G.sfx.button && G.sfx.button();
       setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
     };
@@ -18315,6 +18377,7 @@ export default function CherryAdventure() {
       const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "produce", item: { crop: cropId, name: c.name, emoji: c.emoji, qty }, price, status: "open", collected: false, ts: Date.now() };
       const created = await CN.marketPost(row);
       if (!created) { G.ranch.produce[cropId] = (G.ranch.produce[cropId] || 0) + qty; toast("🌐 ลงขายไม่สำเร็จ (ตรวจสอบตาราง market)"); setUi((u) => ({ ...u, ranch: ranchUiSnap(), mktProduce: mktProduceOpts() })); return; }
+      if (G.farmXp) G.farmXp(5); if (G.farmQuestProg) G.farmQuestProg("sell", 1);
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       toast(`🏷️ ลงขาย ${c.emoji} ${c.name} ×${qty} ราคา ${price}💰`);
       if (G.saveGame) G.saveGame();
@@ -18334,6 +18397,7 @@ export default function CherryAdventure() {
       const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "pet", item: snap, price, status: "open", collected: false, ts: Date.now() };
       const created = await CN.marketPost(row);
       if (!created) { G.addPetInstance(snap.sp, { lv: snap.lv, exp: snap.exp, stage: snap.stage, plus: snap.plus, iv: snap.iv }); toast("🌐 ลงขายไม่สำเร็จ (ตรวจสอบตาราง market)"); setUi((u) => ({ ...u, petBox: (G.petBox || []).map((x) => ({ ...x })), mktPets: mktPetOpts() })); return; }
+      if (G.farmXp) G.farmXp(5); if (G.farmQuestProg) G.farmQuestProg("sell", 1);
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       toast(`🏷️ ลงขาย ${snap.emoji} ${snap.name} Lv.${snap.lv} ราคา ${price}💰`);
       if (G.saveGame) G.saveGame();
@@ -18733,8 +18797,8 @@ export default function CherryAdventure() {
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
       G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
-        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0 }
-        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0 };
+        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0, xp: d.ranch.xp || 0, qday: d.ranch.qday || null, quests: Array.isArray(d.ranch.quests) ? d.ranch.quests : [] }
+        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0, xp: 0, qday: null, quests: [] };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -29355,6 +29419,15 @@ export default function CherryAdventure() {
                 <div style={{ flex: 1 }} />
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
               </div>
+              {/* 🌟 farm level bar */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(90deg,#fff6df,#fdeecb)", border: "1px solid #f0dcae", borderRadius: 11, padding: "6px 10px", marginBottom: 9, flexShrink: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 900, color: "#c98a2a", whiteSpace: "nowrap" }}>🌟 ฟาร์ม Lv.{ui.ranch.farmLv || 1}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ height: 8, borderRadius: 999, background: "#efe0c4", overflow: "hidden" }}><div style={{ height: "100%", width: Math.min(100, Math.round(((ui.ranch.farmXp || 0) / (ui.ranch.farmNeed || 1)) * 100)) + "%", borderRadius: 999, background: "linear-gradient(90deg,#f5c04a,#e0902a)" }} /></div>
+                  <div style={{ fontSize: 8.5, color: "#b0904a", fontWeight: 700, marginTop: 1 }}>XP {ui.ranch.farmXp || 0}/{ui.ranch.farmNeed || 0}</div>
+                </div>
+                <div style={{ fontSize: 10.5, fontWeight: 800, color: "#5aa06a", background: "#eaf7e4", borderRadius: 8, padding: "3px 8px", whiteSpace: "nowrap" }}>รายได้ +{ui.ranch.farmMult || 0}%</div>
+              </div>
               {/* 🗂️ tabs: farm / breed / garden */}
               <div style={{ display: "flex", gap: 6, marginBottom: 10, flexShrink: 0 }}>
                 <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "farm" ? "#fff" : "#8a7a5a", background: ui.ranchTab === "farm" ? "linear-gradient(90deg,#e0a86a,#c9843e)" : "#f0e6d6" }}>🐄 ฟาร์ม</button>
@@ -29364,6 +29437,24 @@ export default function CherryAdventure() {
                 <button onClick={() => setUi((u) => ({ ...u, ranchTab: "storage" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "storage" ? "#fff" : "#6a7688", background: ui.ranchTab === "storage" ? "linear-gradient(90deg,#8a9ab0,#5f7088)" : "#eceff4" }}>📦 คลัง</button>
               </div>
               {ui.ranchTab === "farm" && (<React.Fragment>
+              {/* 📋 daily farm quests */}
+              <div style={{ background: "#f7f4fb", border: "1px solid #e6ddf2", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 900, color: "#8a6aa8", marginBottom: 6 }}>📋 ภารกิจฟาร์มวันนี้ <span style={{ fontSize: 9, fontWeight: 700, color: "#a99" }}>(รีเซ็ตทุกวัน)</span></div>
+                {(ui.ranch.quests || []).length ? (ui.ranch.quests || []).map((q, i) => { const done = q.prog >= q.target; return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ fontSize: 18, flexShrink: 0 }}>{q.emoji}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, color: q.claimed ? "#a8b0a0" : "#6a5a7a", textDecoration: q.claimed ? "line-through" : "none" }}>{q.label}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+                        <div style={{ flex: 1, height: 5, borderRadius: 999, background: "#e6ddf2", overflow: "hidden" }}><div style={{ height: "100%", width: Math.round(Math.min(1, q.prog / q.target) * 100) + "%", borderRadius: 999, background: done ? "#5aa06a" : "#b08ad0" }} /></div>
+                        <span style={{ fontSize: 8.5, fontWeight: 800, color: "#a08ab0" }}>{Math.min(q.prog, q.target)}/{q.target}</span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 8.5, fontWeight: 700, color: "#b09a5a", textAlign: "right", whiteSpace: "nowrap" }}>+{q.gold}💰{q.gem ? ` +${q.gem}💎` : ""}<br/>+{q.xp}XP</div>
+                    <button onClick={() => G.claimFarmQuest && G.claimFarmQuest(i)} disabled={!done || q.claimed} style={{ flexShrink: 0, padding: "6px 9px", borderRadius: 8, border: "none", cursor: (done && !q.claimed) ? "pointer" : "default", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: "#fff", background: q.claimed ? "#cdd3c8" : (done ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#d8cfe6") }}>{q.claimed ? "รับแล้ว" : "รับ"}</button>
+                  </div>
+                ); }) : (<div style={{ fontSize: 10, color: "#a99", textAlign: "center", padding: "4px 0" }}>กำลังโหลดภารกิจ...</div>)}
+              </div>
               {/* pending + claim */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#fff6e8,#fdeccf)", border: "1px solid #f0dcc0", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
                 <div style={{ flex: 1 }}>
