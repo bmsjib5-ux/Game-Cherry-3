@@ -28535,13 +28535,14 @@ export default function CherryAdventure() {
                   const count = ui.inv.filter((x) => x === id).length;
                   const plus = ui.plus[id] || 0;
                   const rate = plus < 3 ? 100 : plus === 3 ? 70 : 50;
+                  const eq = !!(ui.equip && ui.equip[it.slot] === id); // 🟢 ชิ้นนี้กำลังสวมใส่อยู่หรือไม่
                   return (
-                    <div key={id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, background: "#f2f8fd", borderRadius: 9, padding: "5px 8px", border: "1px solid #cfe4f4" }}>
+                    <div key={id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, background: eq ? "#e8f7ec" : "#f2f8fd", borderRadius: 9, padding: "5px 8px", border: "1px solid " + (eq ? "#a8dcb4" : "#cfe4f4") }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 11.5, fontWeight: 700, color: RARITY[it.rarity].color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {it.emoji} {it.name}{plus > 0 && <span style={{ color: "#e0a020" }}> +{plus}</span>} <span style={{ color: "#8a9aa8", fontSize: 10 }}>×{count}</span>
                         </div>
-                        <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>{SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}</div>
+                        <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>{SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}{eq && <span style={{ marginLeft: 6, color: "#3f9a54", fontWeight: 800, background: "#d6f0dc", borderRadius: 999, padding: "1px 7px" }}>🟢 กำลังใส่</span>}</div>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4, marginLeft: 6 }}>
                         {count >= 2 && <button onClick={() => { G.enhance(id); }} style={{
