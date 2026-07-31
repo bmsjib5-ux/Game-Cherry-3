@@ -2833,7 +2833,7 @@ export default function CherryAdventure() {
       const cls = G.cls;
       if (id === "haruStaff" || id === "lunaStaff") return { x: -0.12, y: 0, z: -0.45 }; // 🦸 signature staff tilted outward so the head-piece clears the chibi head
       if (id === "yukiBow") return { x: -0.15, y: 0, z: Math.PI / 2 }; // 🏹 signature bow held sideways
-      if (id === "roseSword") return { x: -0.3, y: 0, z: 0.5 }; // ☀️ Lightblade katana angled up-forward
+      if (id === "roseSword") return { x: -0.5, y: 0, z: 0.12 }; // 🌹 ดาบเจ้าหญิง — ปลายชี้ไปหน้า เฉียงขึ้น ไม่พาดเข้าลำตัว/กระโปรง
       if (id === "kenKatana") return { x: -0.55, y: 0, z: -0.1 }; // 🗡️ katana angled down-forward
       if (id === "kotDaggerR") return { x: -0.5, y: 0, z: 0.12 }; // 🦂 scorpion dagger, forward grip
       if (id === "kairiBlade") return { x: -0.42, y: 0, z: 0.32 }; // ⚡ thunder blade up-forward
