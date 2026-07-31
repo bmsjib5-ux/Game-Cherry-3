@@ -720,7 +720,8 @@
     finally { go2.disabled = false; go2.textContent = "สมัครสมาชิกใหม่"; }
   }
   function googleLogin() {
-    location.href = CFG.url + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(location.href.split("#")[0]);
+    // prompt=select_account → บังคับหน้าเลือกบัญชี Google ทุกครั้ง (หลัง logout เลือกเมลใหม่ได้)
+    location.href = CFG.url + "/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=" + encodeURIComponent(location.href.split("#")[0]);
   }
   async function handleOAuthReturn() {
     if (!(location.hash && location.hash.indexOf("access_token=") >= 0)) return false;

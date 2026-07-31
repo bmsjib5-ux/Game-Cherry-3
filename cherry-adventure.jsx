@@ -17426,7 +17426,8 @@ export default function CherryAdventure() {
     G.accountSignInGoogle = () => {
       if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ (ONLINE_SETUP.md)"); return; }
       const redirect = location.href.split("#")[0];
-      location.href = CN._authUrl("authorize?provider=google&redirect_to=" + encodeURIComponent(redirect));
+      // prompt=select_account → บังคับให้ Google แสดงหน้าเลือกบัญชีทุกครั้ง (หลัง logout จะได้เลือกเมลใหม่ได้)
+      location.href = CN._authUrl("authorize?provider=google&prompt=select_account&redirect_to=" + encodeURIComponent(redirect));
     };
     G.accountSignOut = async () => {
       const t = G._session && G._session.access_token;
