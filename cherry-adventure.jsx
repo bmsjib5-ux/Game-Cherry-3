@@ -18431,6 +18431,12 @@ export default function CherryAdventure() {
         if (!this.enabled()) return null;
         try { const res = await fetch(this._url("market?id=eq." + id + "&seller=eq." + encodeURIComponent(pid) + "&status=eq.open"), { method: "PATCH", headers: this._headers({ Prefer: "return=representation" }), body: JSON.stringify({ status: "cancelled" }) }); if (!res.ok) return null; return await res.json(); } catch (e) { return null; }
       },
+      // 🏆 pet contest leaderboard — submit best score per day, fetch top
+      async contestSubmit(pid, day, name, pet, score, ts) { return await this._rpc("contest_submit", { p_pid: pid, p_day: day, p_name: name, p_pet: pet, p_score: score, p_ts: ts }); },
+      async contestTop(day, limit) {
+        if (!this.enabled()) return null;
+        try { const res = await fetch(this._url("contest?day=eq." + encodeURIComponent(day) + "&select=pid,name,pet,score&order=score.desc&limit=" + (limit || 20)), { headers: this._headers() }); if (!res.ok) { this.status = "error"; return null; } this.status = "ok"; return await res.json(); } catch (e) { this.status = "error"; return null; }
+      },
     });
     // sellable-item snapshots for the sell tab
     const MKT_PRODUCE_MAXMUL = 10, MKT_PET_MAXMUL = 20; // 🔒 เพดานราคาขาย = มูลค่าฐาน × ตัวคูณ (กันตั้งราคาเว่อร์)
@@ -18438,9 +18444,11 @@ export default function CherryAdventure() {
     const mktPetOpts = () => (G.petBox || []).filter((p) => !G.petInUse(p.i) && !((G.ranch && G.ranch.slots) || []).includes(p.i)).map((p) => { const sp = SPECIES[p.sp] || {}; const base = G.petSellPrice(p); return { i: p.i, sp: p.sp, name: sp.name, emoji: sp.emoji, tier: sp.tier || 1, lv: p.lv, plus: p.plus || 0, stage: p.stage || 1, iv: p.iv || { a: 0, h: 0, d: 0 }, suggest: base * 2, max: base * MKT_PET_MAXMUL }; });
     G.openMarket = (tab) => {
       if (G.ensurePid) G.ensurePid();
-      setUi((u) => ({ ...u, panelOpen: false, ranchOpen: false, mktOpen: true, mktTab: (["sell", "mine"].indexOf(tab) >= 0 ? tab : "buy"), gold: G.gold, pid: G.pid || null,
-        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktListings: null, mktMine: null, mktBusy: false, mktPrices: {}, mktErr: CN.enabled() ? null : "offline" }));
+      setUi((u) => ({ ...u, panelOpen: false, ranchOpen: false, mktOpen: true, mktTab: (["sell", "mine", "contest", "board"].indexOf(tab) >= 0 ? tab : "buy"), gold: G.gold, pid: G.pid || null,
+        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktListings: null, mktMine: null, mktBusy: false, mktPrices: {}, mktErr: CN.enabled() ? null : "offline",
+        contestPets: G.contestPetOpts ? G.contestPetOpts() : [], contestUsed: contestUsedToday(), contestMax: CONTEST_MAX, contestBest: (G.ranch && G.ranch.contestBest) || 0, contestTop: null, contestErr: CN.enabled() ? null : "offline" }));
       G.marketRefresh("buy");
+      if (G.contestBoard) G.contestBoard();
     };
     G.marketRefresh = async (tab) => {
       if (!CN.enabled()) { setUi((u) => ({ ...u, mktListings: [], mktMine: [], mktErr: "offline" })); return; }
@@ -18531,6 +18539,40 @@ export default function CherryAdventure() {
       if (G.saveGame) G.saveGame();
       setUi((u) => ({ ...u, ranch: ranchUiSnap(), petBox: (G.petBox || []).map((x) => ({ ...x })), mktProduce: mktProduceOpts(), mktPets: mktPetOpts() }));
       G.marketRefresh("mine");
+    };
+    // ---------- 🏆 PET CONTEST + FARM LEADERBOARD ----------
+    const petPower = (p) => { const t = (SPECIES[p.sp] || {}).tier || 1; const iv = p.iv || { a: 0, h: 0, d: 0 }; return Math.round(t * 40 + (p.lv || 1) * 8 + (p.stage || 1) * 30 + (p.plus || 0) * 25 + (iv.a + iv.h + iv.d) * 4); };
+    const contestDayKey = () => { const d = new Date(); return "c" + d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); };
+    const CONTEST_MAX = 3; // เข้าประกวดได้วันละ 3 ครั้ง
+    const contestUsedToday = () => { const R = G.ranch; return (R && R.contestDay === contestDayKey()) ? (R.contestUsed || 0) : 0; };
+    G.contestPetOpts = () => (G.petBox || []).map((p) => { const sp = SPECIES[p.sp] || {}; return { i: p.i, name: sp.name, emoji: sp.emoji, tier: sp.tier || 1, lv: p.lv, plus: p.plus || 0, stage: p.stage || 1, power: petPower(p) }; }).sort((a, b) => b.power - a.power);
+    G.enterContest = async (iid) => {
+      const p = G.petAt(iid); if (!p) { toast("เลือกสัตว์เลี้ยงก่อน"); return; }
+      const R = G.ranch; if (!R) return;
+      const dk = contestDayKey();
+      if (R.contestDay !== dk) { R.contestDay = dk; R.contestUsed = 0; }
+      if ((R.contestUsed || 0) >= CONTEST_MAX) { toast(`🏆 วันนี้เข้าประกวดครบ ${CONTEST_MAX} ครั้งแล้ว — พรุ่งนี้มาใหม่`); return; }
+      R.contestUsed = (R.contestUsed || 0) + 1;
+      const score = petPower(p) + Math.floor(Math.random() * 20);
+      R.contestBest = Math.max(R.contestBest || 0, score);
+      const gold = score * 3, xp = Math.round(score / 8), gem = score >= 400 ? 2 : (score >= 200 ? 1 : 0);
+      G.gold = (G.gold || 0) + gold; if (gem) G.diamonds = (G.diamonds || 0) + gem;
+      if (G.farmXp) G.farmXp(xp);
+      const sp = SPECIES[p.sp] || {};
+      const rank = score >= 400 ? "🥇 ยอดเยี่ยม!" : score >= 250 ? "🥈 เยี่ยมมาก" : score >= 120 ? "🥉 ดี" : "เข้าร่วม";
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏆 ${rank} ${sp.emoji} ${sp.name} ได้ ${score} คะแนน! +${gold}💰${gem ? ` +${gem}💎` : ""} +${xp}XP`);
+      if (G.farmQuestProg) G.farmQuestProg("contest", 1);
+      // 🌐 submit best score to the online board
+      if (CN.enabled()) { if (G.ensurePid) G.ensurePid(); try { await CN.contestSubmit(G.pid, dk, (G.playerName || "เชอร์รี่").slice(0, 14), { sp: p.sp, emoji: sp.emoji, name: sp.name, lv: p.lv, power: petPower(p) }, R.contestBest, Date.now()); } catch (e) {} }
+      syncPlayer(); if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, gold: G.gold, diamonds: G.diamonds, contestPets: G.contestPetOpts(), contestUsed: contestUsedToday(), contestMax: CONTEST_MAX, contestBest: R.contestBest || 0 }));
+      G.contestBoard();
+    };
+    G.contestBoard = async () => {
+      if (!CN.enabled()) { setUi((u) => ({ ...u, contestTop: [], contestErr: "offline" })); return; }
+      const rows = await CN.contestTop(contestDayKey(), 20);
+      setUi((u) => ({ ...u, contestTop: rows || [], contestErr: rows ? null : "err" }));
     };
     // 🤝 my party snapshot member object
     G.wbMember = () => ({ pid: G.ensurePid ? G.ensurePid() : (G.pid || "?"), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls || null, lv: G.player ? G.player.level : 1 });
@@ -18880,8 +18922,8 @@ export default function CherryAdventure() {
       G._petSeq = d.petSeq || 1;
       G.petSlotsBought = d.petSlotsBought || 0;
       G.ranch = (d.ranch && typeof d.ranch === "object") // 🐄 pet ranch (idle farm) — restore slots/happiness/pending + last-seen for offline earnings
-        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0, xp: d.ranch.xp || 0, qday: d.ranch.qday || null, quests: Array.isArray(d.ranch.quests) ? d.ranch.quests : [], goods: (d.ranch.goods && typeof d.ranch.goods === "object") ? d.ranch.goods : {}, trees: Array.isArray(d.ranch.trees) ? d.ranch.trees.slice(0, 6) : [], craft: Array.isArray(d.ranch.craft) ? d.ranch.craft.slice(0, 3) : [] }
-        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0, xp: 0, qday: null, quests: [], goods: {}, trees: [], craft: [] };
+        ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0, xp: d.ranch.xp || 0, qday: d.ranch.qday || null, quests: Array.isArray(d.ranch.quests) ? d.ranch.quests : [], goods: (d.ranch.goods && typeof d.ranch.goods === "object") ? d.ranch.goods : {}, trees: Array.isArray(d.ranch.trees) ? d.ranch.trees.slice(0, 6) : [], craft: Array.isArray(d.ranch.craft) ? d.ranch.craft.slice(0, 3) : [], contestBest: d.ranch.contestBest || 0, contestDay: d.ranch.contestDay || null, contestUsed: d.ranch.contestUsed || 0 }
+        : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0, xp: 0, qday: null, quests: [], goods: {}, trees: [], craft: [], contestBest: 0, contestDay: null, contestUsed: 0 };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -29905,9 +29947,9 @@ export default function CherryAdventure() {
                 <div style={{ flex: 1 }} />
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
               </div>
-              <div style={{ display: "flex", gap: 6, marginBottom: 10, flexShrink: 0 }}>
-                {[["buy", "🛒 ซื้อ"], ["sell", "🏷️ ขาย"], ["mine", "📋 ของฉัน"]].map(([id, label]) => (
-                  <button key={id} onClick={() => { setUi((u) => ({ ...u, mktTab: id })); if (id !== "sell") G.marketRefresh(id); }} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: ui.mktTab === id ? "#fff" : "#5a8088", background: ui.mktTab === id ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#e8f2f0" }}>{label}</button>
+              <div style={{ display: "flex", gap: 4, marginBottom: 10, flexShrink: 0 }}>
+                {[["buy", "🛒 ซื้อ"], ["sell", "🏷️ ขาย"], ["mine", "📋 ของฉัน"], ["contest", "🏆 ประกวด"], ["board", "📊 อันดับ"]].map(([id, label]) => (
+                  <button key={id} onClick={() => { setUi((u) => ({ ...u, mktTab: id })); if (id === "buy" || id === "mine") G.marketRefresh(id); if (id === "board") G.contestBoard(); }} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800, color: ui.mktTab === id ? "#fff" : "#5a8088", background: ui.mktTab === id ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#e8f2f0" }}>{label}</button>
                 ))}
               </div>
               {ui.mktErr === "offline" && (<div style={{ fontSize: 11, color: "#a06a6a", background: "#fbeeee", borderRadius: 10, padding: "9px 11px", marginBottom: 8, lineHeight: 1.5 }}>🌐 ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ออนไลน์ — ดูวิธีตั้งค่าใน ONLINE_SETUP.md (ต้องสร้างตาราง market)</div>)}
@@ -30005,6 +30047,56 @@ export default function CherryAdventure() {
                 ) : (
                   <div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>คุณยังไม่มีประกาศขาย — ไปแท็บ 🏷️ ขาย เพื่อลงขาย</div>
                 )}
+              </React.Fragment>)}
+
+              {/* 🏆 CONTEST — enter a pet, scored by power → rewards + online board */}
+              {ui.mktTab === "contest" && (<React.Fragment>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(90deg,#fff3e0,#ffe8c8)", border: "1px solid #f0d8b0", borderRadius: 11, padding: "8px 11px", marginBottom: 9 }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "#c9843e" }}>🏆 ประกวดสัตว์เลี้ยง</div>
+                  <div style={{ flex: 1 }} />
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#a06a2a" }}>สถิติสูงสุด {ui.contestBest || 0} · วันนี้ {ui.contestUsed || 0}/{ui.contestMax || 3}</div>
+                </div>
+                <div style={{ fontSize: 9.5, color: "#a99", marginBottom: 8 }}>เลือกเพ็ตส่งประกวด — คะแนนคิดจากระดับหายาก · เลเวล · ร่าง · ตีบวก · พรสวรรค์ (เข้าได้วันละ {ui.contestMax || 3} ครั้ง) รับทอง/เพชร/XP ฟาร์ม + ส่งขึ้นกระดานอันดับ</div>
+                {(ui.contestPets || []).length ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+                    {(ui.contestPets || []).slice(0, 12).map((p) => { const full = (ui.contestUsed || 0) >= (ui.contestMax || 3); return (
+                      <div key={p.i} style={{ background: "#fbf7f0", border: "1px solid #ecdcc4", borderRadius: 11, padding: "8px 9px", display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 24, flexShrink: 0 }}>{p.emoji}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: "#8a5a3a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name} Lv.{p.lv}{p.plus ? ` +${p.plus}` : ""}</div>
+                          <div style={{ fontSize: 9, color: "#b09a80", fontWeight: 700 }}>💪 พลัง {p.power}</div>
+                        </div>
+                        <button onClick={() => !full && G.enterContest && G.enterContest(p.i)} disabled={full} style={{ flexShrink: 0, padding: "7px 10px", borderRadius: 999, border: "none", cursor: full ? "default" : "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", background: full ? "#cdd3c8" : "linear-gradient(90deg,#f0b050,#d9862a)" }}>ส่ง</button>
+                      </div>
+                    ); })}
+                  </div>
+                ) : (<div style={{ fontSize: 11, color: "#a99", textAlign: "center", padding: "16px 0" }}>ยังไม่มีสัตว์เลี้ยง — จับหรือฟักเพ็ตก่อน</div>)}
+              </React.Fragment>)}
+
+              {/* 📊 BOARD — daily contest leaderboard */}
+              {ui.mktTab === "board" && (<React.Fragment>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "#2f8f9a" }}>📊 อันดับประกวดวันนี้</div>
+                  <div style={{ flex: 1 }} />
+                  <button onClick={() => G.contestBoard && G.contestBoard()} style={{ padding: "5px 11px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#2f8f9a", background: "#e0f0ee" }}>🔄 รีเฟรช</button>
+                </div>
+                {ui.contestErr === "offline" ? (
+                  <div style={{ fontSize: 11, color: "#a06a6a", background: "#fbeeee", borderRadius: 10, padding: "9px 11px", lineHeight: 1.5 }}>🌐 ต้องตั้งค่าออนไลน์เพื่อดูกระดานอันดับ (ดู ONLINE_SETUP.md — ตาราง contest)</div>
+                ) : ui.contestTop == null ? (
+                  <div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>⏳ กำลังโหลด...</div>
+                ) : ui.contestTop.length ? (
+                  ui.contestTop.map((r, i) => { const me = r.pid === ui.pid; const pet = r.pet || {}; return (
+                    <div key={r.pid + i} style={{ display: "flex", alignItems: "center", gap: 9, background: me ? "#e0f7f2" : "#f6faf9", border: "1px solid " + (me ? "#a8e0d4" : "#e0ebe8"), borderRadius: 11, padding: "7px 10px", marginBottom: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: i === 0 ? "#f0a020" : i === 1 ? "#9aa8b0" : i === 2 ? "#c08a4a" : "#8aa0a4", width: 26, textAlign: "center", flexShrink: 0 }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + (i + 1)}</div>
+                      <div style={{ fontSize: 20, flexShrink: 0 }}>{pet.emoji || "🐾"}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 800, color: "#2f7a80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name || "?"}{me ? " (คุณ)" : ""}</div>
+                        <div style={{ fontSize: 9, color: "#8aa8a4", fontWeight: 600 }}>{pet.name || ""}{pet.lv ? " Lv." + pet.lv : ""}</div>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 900, color: "#c9843e", flexShrink: 0 }}>{(r.score || 0).toLocaleString()}</div>
+                    </div>
+                  ); })
+                ) : (<div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>ยังไม่มีใครส่งประกวดวันนี้ — เป็นคนแรกสิ!</div>)}
               </React.Fragment>)}
             </div>
           )}

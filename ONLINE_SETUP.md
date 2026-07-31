@@ -403,3 +403,52 @@ grant execute on function public.market_buy(bigint, text, text) to anon, authent
 > ทำงานยังไง: `market_buy` ทำ `update ... where status='open'` เป็นคำสั่งเดียว (atomic) — ถ้ามีคนซื้อไปก่อน คำสั่งจะไม่แมตช์ และ query คืนค่าว่าง ไคลเอนต์จึงรู้ว่า "ช้าไป" และไม่หักทอง · การ "เก็บทอง" และ "ยกเลิก" ใช้ PATCH แบบมีเงื่อนไข (`collected=false` / `status=open`) จึงกันเก็บซ้ำ/ยกเลิกทับการขายได้ในตัว
 >
 > ถ้าไม่ตั้งค่า Supabase ปุ่ม 🌐 ตลาดออนไลน์ จะแจ้งว่ายังไม่ได้ตั้งค่า และส่วนอื่นของฟาร์ม (คลัง/ปลูก/เพาะพันธุ์) ยังเล่นออฟไลน์ได้ตามปกติ
+
+---
+
+## 9) ประกวดสัตว์เลี้ยง + กระดานอันดับ — ตาราง `contest` + RPC
+
+กระดานอันดับรายวัน: ผู้เล่นส่งเพ็ตเข้าประกวด (คะแนนคิดจากพลังเพ็ต) → เก็บ "คะแนนสูงสุดต่อวัน" ต่อผู้เล่น แล้วจัดอันดับ
+
+รันใน Supabase → SQL Editor:
+
+```sql
+create table if not exists public.contest (
+  pid   text not null,
+  day   text not null,                 -- คีย์รายวัน เช่น "c2026-8-1"
+  name  text,
+  pet   jsonb,                          -- {sp,emoji,name,lv,power}
+  score bigint not null default 0,
+  ts    bigint not null,
+  primary key (pid, day)
+);
+create index if not exists contest_day_idx on public.contest (day, score desc);
+
+alter table public.contest enable row level security;
+drop policy if exists "contest read"   on public.contest;
+drop policy if exists "contest insert" on public.contest;
+drop policy if exists "contest update" on public.contest;
+create policy "contest read"   on public.contest for select using (true);
+create policy "contest insert" on public.contest for insert with check (true);
+create policy "contest update" on public.contest for update using (true) with check (true);
+
+-- 🏆 ส่งคะแนน: เก็บคะแนน "สูงสุด" ต่อ (pid, day) แบบ atomic
+drop function if exists public.contest_submit(text, text, text, jsonb, bigint, bigint);
+create or replace function public.contest_submit(p_pid text, p_day text, p_name text, p_pet jsonb, p_score bigint, p_ts bigint)
+returns setof public.contest
+language plpgsql security definer as $$
+begin
+  insert into public.contest(pid, day, name, pet, score, ts)
+    values (p_pid, p_day, p_name, p_pet, p_score, p_ts)
+  on conflict (pid, day) do update
+    set name = excluded.name,
+        pet  = case when excluded.score > public.contest.score then excluded.pet else public.contest.pet end,
+        score = greatest(public.contest.score, excluded.score),
+        ts = excluded.ts;
+  return query select * from public.contest where pid = p_pid and day = p_day;
+end; $$;
+
+grant execute on function public.contest_submit(text, text, text, jsonb, bigint, bigint) to anon, authenticated;
+```
+
+> ทำงานยังไง: `contest_submit` ใช้ upsert (`on conflict (pid,day)`) + `greatest(...)` จึงเก็บเฉพาะคะแนนที่ดีที่สุดของแต่ละคนในวันนั้น · กระดานดึงด้วย `order=score.desc` · ถ้าไม่ตั้งค่าออนไลน์ ยังเล่นประกวดแบบรับรางวัลในเครื่องได้ แต่แท็บ 📊 อันดับ จะแจ้งให้ตั้งค่าก่อน
