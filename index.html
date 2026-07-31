@@ -5775,65 +5775,70 @@ function CherryAdventure() {
             g.scale.setScalar(1.15);
             weaponModels.kotDaggerR = g;
         }
-        { // ⚡ kairiBlade — Divine Thunder Blade (Kairi's main hand)
+        { // ⚡ kairiBlade — Divine Thunder Spear (Kairi's main hand — crystal-tip lance from the art)
             const g = new THREE.Group();
-            const sil = new THREE.MeshStandardMaterial({ color: 0xd8dce6, roughness: 0.2, metalness: 0.92 });
             const core = new THREE.MeshStandardMaterial({ color: 0x9ad8ff, roughness: 0.3, emissive: 0x60b0ff, emissiveIntensity: 0.9 });
             const gold = new THREE.MeshStandardMaterial({ color: 0xecc45a, roughness: 0.3, metalness: 0.82, emissive: 0x4a3808, emissiveIntensity: 0.2 });
-            const cry = new THREE.MeshStandardMaterial({ color: 0x4a9aff, roughness: 0.2, emissive: 0x2a6ae0, emissiveIntensity: 0.85 });
+            const cry = new THREE.MeshStandardMaterial({ color: 0x4a9aff, roughness: 0.2, emissive: 0x2a6ae0, emissiveIntensity: 0.9 });
+            const shaftM = new THREE.MeshStandardMaterial({ color: 0x2a54c0, roughness: 0.45, metalness: 0.35 });
             const dk = new THREE.MeshStandardMaterial({ color: 0x1a2a5a, roughness: 0.5, metalness: 0.4 });
-            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.3, 10), dk);
-            handle.position.y = 0.06;
-            g.add(handle);
-            for (let k = 0; k < 5; k++) {
-                const w = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.006, 4, 10), gold);
-                w.position.y = -0.06 + k * 0.06;
+            // long royal-blue shaft + gold rings + dark grip
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 1.9, 10), shaftM);
+            shaft.position.y = 0.55;
+            g.add(shaft);
+            for (const wy of [-0.3, 0.0, 0.55, 1.1]) {
+                const w = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.008, 5, 12), gold);
+                w.position.y = wy;
                 w.rotation.x = Math.PI / 2;
                 g.add(w);
             }
-            const pommel = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), cry);
-            pommel.position.y = -0.13;
-            g.add(pommel);
-            // wing-shaped guard
+            const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.34, 10), dk);
+            grip.position.y = 0.16;
+            g.add(grip);
+            const butt = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.16, 6), gold);
+            butt.position.y = -0.48;
+            butt.rotation.x = Math.PI;
+            g.add(butt);
+            // golden winged guard + gems
+            const guard = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), gold);
+            guard.scale.set(1, 0.6, 1);
+            guard.position.y = 1.5;
+            g.add(guard);
             for (const sx of [-1, 1]) {
-                for (let k = 0; k < 3; k++) {
-                    const feath = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16 - k * 0.03, 4), k % 2 ? sil : gold);
-                    feath.position.set(sx * (0.05 + k * 0.05), 0.24 - k * 0.015, 0);
-                    feath.rotation.z = sx * (1.1 + k * 0.2);
-                    feath.scale.z = 0.4;
-                    g.add(feath);
-                }
+                const prong = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.3, 4), gold);
+                prong.position.set(sx * 0.11, 1.6, 0);
+                prong.rotation.z = sx * 0.55;
+                prong.scale.z = 0.5;
+                g.add(prong);
+                const pt = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), cry);
+                pt.position.set(sx * 0.19, 1.73, 0);
+                g.add(pt);
             }
-            const guardGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), cry);
-            guardGem.scale.set(1, 1.3, 0.4);
-            guardGem.position.y = 0.26;
+            const guardGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), cry);
+            guardGem.scale.set(1, 1.3, 0.55);
+            guardGem.position.set(0, 1.52, 0.06);
             g.add(guardGem);
-            // straight blade with glowing blue core + gold edges
-            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.075, 1.35, 0.02), sil);
-            blade.position.y = 1.0;
-            g.add(blade);
-            const coreM = new THREE.Mesh(new THREE.BoxGeometry(0.022, 1.3, 0.026), core);
-            coreM.position.y = 1.0;
-            g.add(coreM);
-            for (const sx of [-1, 1]) {
-                const edge = new THREE.Mesh(new THREE.BoxGeometry(0.01, 1.35, 0.024), gold);
-                edge.position.set(sx * 0.04, 1.0, 0);
-                g.add(edge);
+            // grand blue crystal spearhead framed in gold + lightning jags
+            const headC = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), cry);
+            headC.scale.set(0.85, 2.5, 0.45);
+            headC.position.y = 1.95;
+            g.add(headC);
+            const headEdge = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), gold);
+            headEdge.scale.set(0.6, 2.3, 0.22);
+            headEdge.position.set(0, 1.95, -0.02);
+            g.add(headEdge);
+            for (const [jy, jx] of [[1.78, 1], [1.95, -1], [2.1, 1]]) {
+                const jag = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.1, 4), core);
+                jag.position.set(jx * 0.1, jy, 0.03);
+                jag.rotation.z = jx * -1.6;
+                g.add(jag);
             }
-            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.22, 4), sil);
-            tip.position.y = 1.78;
-            tip.scale.z = 0.28;
-            g.add(tip);
-            const tipCore = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.2, 4), core);
-            tipCore.position.y = 1.78;
-            tipCore.scale.z = 0.28;
-            g.add(tipCore);
-            const glow = new THREE.PointLight(0x60b0ff, 0.5, 2.4);
-            glow.position.y = 1.1;
+            const glow = new THREE.PointLight(0x60b0ff, 0.6, 2.6);
+            glow.position.y = 1.95;
             g.add(glow);
-            g.userData.blade = coreM;
+            g.userData.blade = headC;
             g.userData.glow = glow;
-            g.scale.setScalar(1.15);
+            g.scale.setScalar(1.02);
             weaponModels.kairiBlade = g;
         }
         { // ⚜️ aurSword — Dawnbringer holy greatsword (Aurelius' main hand)
@@ -10115,75 +10120,104 @@ function CherryAdventure() {
             const kBolt = new THREE.MeshStandardMaterial({ color: 0x9ad8ff, roughness: 0.3, emissive: 0x60b0ff, emissiveIntensity: 1.0 });
             const kHairM = new THREE.MeshStandardMaterial({ color: 0xe8eaf4, roughness: 0.5 });
             const kHairTip = new THREE.MeshStandardMaterial({ color: 0x3a86e0, roughness: 0.5, emissive: 0x1a4aa0, emissiveIntensity: 0.28 });
-            // ===== silver-white wind-swept hair with electric-blue tips =====
+            // ===== fluffy silver-white cloud curls (soft — matches the art) =====
             const kHair = new THREE.Group();
-            const kCap = new THREE.Mesh(new THREE.SphereGeometry(0.63, 24, 20), kHairM);
-            kCap.scale.set(1.03, 0.98, 1.02);
-            kCap.position.set(0, 0.14, -0.02);
+            const kCap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 20), kHairM);
+            kCap.scale.set(1.04, 0.98, 1.02);
+            kCap.position.set(0, 0.15, -0.02);
             kHair.add(kCap);
-            // swept spikes all around — upper silver, tips fade to blue
-            const spikes = [[-0.5, 0.34, 0.16, 0.34, 1.15, 0.55], [-0.36, 0.5, 0.3, 0.3, 0.7, 0.35], [-0.18, 0.58, 0.42, 0.28, 0.5, 0.2], [0.02, 0.6, 0.46, 0.3, 0.42, 0.15], [0.2, 0.58, 0.42, 0.28, 0.5, -0.2], [0.38, 0.5, 0.3, 0.3, 0.7, -0.35], [0.52, 0.34, 0.16, 0.34, 1.15, -0.55], [-0.28, 0.2, -0.4, 0.36, 2.2, 0.4], [0.28, 0.22, -0.4, 0.34, 2.2, -0.4], [0.0, 0.28, -0.5, 0.4, 2.4, 0.0]];
-            for (const [sx, sy, sz, ln, tilt, roll] of spikes) {
-                const s = new THREE.Mesh(new THREE.ConeGeometry(0.075, ln, 5), kHairM);
-                s.position.set(sx, sy, sz);
-                s.rotation.set(tilt, 0, roll);
-                kHair.add(s);
-                const tip = new THREE.Mesh(new THREE.ConeGeometry(0.048, ln * 0.42, 5), kHairTip);
-                tip.position.set(sx + Math.sin(roll) * ln * 0.34, sy + Math.cos(tilt) * ln * 0.34, sz - Math.sin(tilt) * ln * 0.2);
-                tip.rotation.set(tilt, 0, roll);
-                kHair.add(tip);
+            const curls = [[0, 0.52, 0.28, 0.26], [-0.3, 0.48, 0.3, 0.24], [0.3, 0.48, 0.3, 0.24], [-0.5, 0.3, 0.18, 0.24], [0.5, 0.3, 0.18, 0.24], [-0.55, 0.1, -0.1, 0.22], [0.55, 0.1, -0.1, 0.22], [-0.36, 0.42, -0.34, 0.26], [0.36, 0.42, -0.34, 0.26], [0, 0.5, -0.4, 0.28], [-0.16, 0.58, 0.42, 0.2], [0.18, 0.58, 0.42, 0.2], [-0.44, 0.34, 0.4, 0.18], [0.44, 0.34, 0.4, 0.18], [0, 0.34, 0.56, 0.17]];
+            for (const [ccx, ccy, ccz, ccr] of curls) {
+                const c = new THREE.Mesh(new THREE.SphereGeometry(ccr, 12, 10), kHairM);
+                c.position.set(ccx, ccy, ccz);
+                kHair.add(c);
             }
-            // swept front bangs
-            for (const [sx, roll] of [[-0.22, 0.5], [-0.05, 0.2], [0.13, -0.15], [0.3, -0.5]]) {
-                const b = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 5), kHairM);
-                b.position.set(sx, 0.42, 0.5);
-                b.rotation.set(0.8, 0, roll);
-                kHair.add(b);
-                const bt = new THREE.Mesh(new THREE.ConeGeometry(0.036, 0.16, 5), kHairTip);
-                bt.position.set(sx + roll * 0.12, 0.28, 0.56);
-                bt.rotation.set(0.9, 0, roll);
-                kHair.add(bt);
+            for (const sx of [-1, 1]) {
+                const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 6), kHairM);
+                tuft.position.set(sx * 0.58, -0.05, 0.1);
+                tuft.rotation.z = sx * 2.6;
+                kHair.add(tuft);
             }
             headG.add(kHair);
             G._kaiHair = kHair;
-            // ===== golden lightning crown/tiara + blue crystal + floating halo =====
+            // ===== golden winged tiara + grand blue diamond on the brow =====
             const crown = new THREE.Group();
-            const band = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.03, 8, 24, 2.2), kGold);
-            band.position.set(0, 0.42, 0.16);
-            band.rotation.set(1.35, 0, 0);
+            const band = new THREE.Mesh(new THREE.TorusGeometry(0.54, 0.035, 8, 26, 2.4), kGold);
+            band.position.set(0, 0.34, 0.2);
+            band.rotation.set(1.42, 0, 0);
             crown.add(band);
-            for (const [px, ph] of [[-0.34, 0.12], [-0.16, 0.2], [0.0, 0.28], [0.16, 0.2], [0.34, 0.12]]) {
-                const jag = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16 + ph, 4), kGoldE);
-                jag.position.set(px, 0.56 + ph * 0.5, 0.4);
-                jag.rotation.z = px * 0.5;
-                crown.add(jag);
-            }
-            const crownGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.075, 0), kCry);
-            crownGem.scale.set(1, 1.5, 0.5);
-            crownGem.position.set(0, 0.5, 0.52);
+            const gemFrame = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), kGold);
+            gemFrame.scale.set(0.85, 1.25, 0.4);
+            gemFrame.position.set(0, 0.46, 0.6);
+            crown.add(gemFrame);
+            const crownGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.095, 0), kCry);
+            crownGem.scale.set(0.85, 1.3, 0.5);
+            crownGem.position.set(0, 0.46, 0.65);
             crown.add(crownGem);
+            for (const sx of [-1, 1]) { // swept gold wing flares at the temples
+                for (let k = 0; k < 3; k++) {
+                    const w = new THREE.Mesh(new THREE.ConeGeometry(0.05 - k * 0.008, 0.34 - k * 0.06, 4), k % 2 ? kGoldE : kGold);
+                    w.position.set(sx * (0.52 + k * 0.09), 0.36 + k * 0.09, 0.34 - k * 0.05);
+                    w.rotation.set(0.2, 0, sx * (1.9 - k * 0.22));
+                    w.scale.z = 0.4;
+                    crown.add(w);
+                }
+                const wingGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), kCry);
+                wingGem.position.set(sx * 0.54, 0.34, 0.42);
+                crown.add(wingGem);
+            }
             headG.add(crown);
             G._kaiCrown = crown;
-            const halo = new THREE.Group();
-            const haloRing = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.028, 8, 32), kGoldE);
-            haloRing.rotation.x = Math.PI / 2 - 0.25;
-            halo.add(haloRing);
-            for (let i = 0; i < 8; i++) {
-                const a = i / 8 * Math.PI * 2;
-                const jz = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 4), kBolt);
-                jz.position.set(Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42);
-                jz.rotation.set(Math.PI / 2 - 0.25, a, 0);
-                halo.add(jz);
+            // ===== vertical golden lightning-blade crest piercing the halo =====
+            const crest = new THREE.Group();
+            for (const [ox, oy, rz] of [[0.035, 0.68, -0.24], [-0.035, 0.95, 0.24], [0.03, 1.2, -0.22]]) {
+                const seg = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.32, 0.05), kGold);
+                seg.position.set(ox, oy, 0.05);
+                seg.rotation.z = rz;
+                crest.add(seg);
+                const core = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.3, 0.056), kCry);
+                core.position.set(ox, oy, 0.05);
+                core.rotation.z = rz;
+                crest.add(core);
             }
-            halo.position.set(0, 1.02, -0.05);
+            const crestTip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 4), kGoldE);
+            crestTip.position.set(0, 1.44, 0.04);
+            crest.add(crestTip);
+            for (const [jy, jx] of [[0.82, 1], [1.08, -1]]) {
+                const jag = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 4), kGoldE);
+                jag.position.set(jx * 0.09, jy, 0.05);
+                jag.rotation.z = jx * -1.9;
+                crest.add(jag);
+            }
+            headG.add(crest);
+            // ===== double golden halos — one high, one ringing the hair =====
+            const halo = new THREE.Group();
+            const haloRing = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.035, 10, 36), kGoldE);
+            halo.add(haloRing);
+            halo.rotation.x = Math.PI / 2 - 0.12;
+            halo.position.set(0, 1.18, -0.04);
+            halo.userData.baseY = 1.18;
             headG.add(halo);
             G._kaiHalo = halo;
+            const halo2 = new THREE.Group();
+            const halo2Ring = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.032, 10, 44), kGoldE);
+            halo2.add(halo2Ring);
+            for (let i = 0; i < 4; i++) {
+                const a = i / 4 * Math.PI * 2 + 0.4;
+                const hg = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), kCry);
+                hg.position.set(Math.cos(a) * 0.72, 0, Math.sin(a) * 0.72);
+                halo2.add(hg);
+            }
+            halo2.rotation.x = Math.PI / 2 - 0.08;
+            halo2.position.set(0, 0.68, -0.05);
+            headG.add(halo2);
+            G._kaiHalo2 = halo2;
             // ===== white & gold celestial armor + blue accents =====
             const kOutfit = new THREE.Group();
             const chest = new THREE.Mesh(new THREE.LatheGeometry([[0.34, 1.5], [0.4, 1.66], [0.4, 1.82], [0.36, 1.96], [0.32, 2.04]].map(([r, y]) => new THREE.Vector2(r, y)), 28), kWhite);
             chest.scale.set(1.08, 1, 0.98);
             kOutfit.add(chest);
-            const under = new THREE.Mesh(new THREE.LatheGeometry([[0.33, 1.26], [0.35, 1.46], [0.36, 1.66], [0.34, 1.84]].map(([r, y]) => new THREE.Vector2(r, y)), 24), kBlue);
+            const under = new THREE.Mesh(new THREE.LatheGeometry([[0.33, 1.26], [0.35, 1.46], [0.36, 1.66], [0.34, 1.84]].map(([r, y]) => new THREE.Vector2(r, y)), 24), kBlueD);
             under.scale.set(1.04, 1, 0.96);
             kOutfit.add(under);
             // gold trims + central star crystal
@@ -10214,68 +10248,107 @@ function CherryAdventure() {
             }
             char.add(kOutfit);
             G._kaiOutfit = kOutfit;
-            // ===== wing-shaped pauldrons (feathered) =====
+            // ===== rounded white-gold pauldrons + blue gems =====
             const kWings = [];
-            const mkWing = sx => { const grp = new THREE.Group(); for (let k = 0; k < 4; k++) {
-                const fl = 0.34 - k * 0.05;
-                const f = new THREE.Mesh(new THREE.ConeGeometry(0.06, fl + 0.12, 4), k % 2 ? kWhiteD : kWhite);
-                f.position.set(sx * (0.02 + k * 0.05), 0.04 + k * 0.06, -0.02 - k * 0.04);
-                f.rotation.set(0.15, 0, sx * (0.55 + k * 0.16));
-                f.scale.z = 0.45;
-                grp.add(f);
-                const gt = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.12, 4), kGold);
-                gt.position.set(sx * (0.02 + k * 0.05) + sx * (fl + 0.12) * 0.42 * 0.55, 0.04 + k * 0.06 + (fl + 0.12) * 0.42 * 0.8, -0.02 - k * 0.04);
-                gt.rotation.set(0.15, 0, sx * (0.55 + k * 0.16));
-                gt.scale.z = 0.45;
-                grp.add(gt);
-            } const base = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), kGold); base.scale.set(1, 0.7, 1); grp.add(base); const bgem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), kCry); bgem.position.set(0, 0.02, 0.1); grp.add(bgem); grp.position.set(sx * 0.5, 1.95, -0.02); char.add(grp); kWings.push(grp); return grp; };
-            mkWing(-1);
-            mkWing(1);
-            // ===== golden belt with floating chains =====
-            const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.38, 0.1, 22, 1, true), kGold);
-            belt.position.y = 1.28;
-            belt.scale.set(1.05, 1, 0.96);
-            kOutfit.add(belt);
+            const mkPauld = sx => { const grp = new THREE.Group(); const dome = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), kWhite); grp.add(dome); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.02, 6, 18), kGold); rim.rotation.x = Math.PI / 2; grp.add(rim); const plate2 = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), kWhiteD); plate2.position.y = -0.07; grp.add(plate2); const pg = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), kCry); pg.position.set(0, 0.1, 0.08); grp.add(pg); const spike = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.16, 4), kGoldE); spike.position.set(sx * 0.12, 0.14, 0); spike.rotation.z = sx * 1.0; grp.add(spike); grp.position.set(sx * 0.52, 1.96, -0.02); grp.rotation.z = sx * 0.16; char.add(grp); kWings.push(grp); return grp; };
+            mkPauld(-1);
+            mkPauld(1);
+            // ===== royal-blue sash belt + golden diamond buckle =====
+            const sash = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.385, 0.13, 22, 1, true), kBlue);
+            sash.position.y = 1.28;
+            sash.scale.set(1.05, 1, 0.96);
+            kOutfit.add(sash);
+            for (const sy of [1.345, 1.215]) {
+                const tr = new THREE.Mesh(new THREE.TorusGeometry(0.385, 0.012, 6, 26), kGold);
+                tr.position.y = sy;
+                tr.rotation.x = Math.PI / 2;
+                tr.scale.set(1.05, 0.96, 1);
+                kOutfit.add(tr);
+            }
+            const buckleF = new THREE.Mesh(new THREE.OctahedronGeometry(0.085, 0), kGold);
+            buckleF.scale.set(1, 1.15, 0.4);
+            buckleF.position.set(0, 1.28, 0.38);
+            kOutfit.add(buckleF);
             const buckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), kCry);
-            buckle.scale.set(1, 1, 0.5);
-            buckle.position.set(0, 1.28, 0.39);
+            buckle.scale.set(1, 1.2, 0.5);
+            buckle.position.set(0, 1.28, 0.41);
             kOutfit.add(buckle);
-            const kChains = [];
             for (const sx of [-1, 1]) {
-                for (let k = 0; k < 4; k++) {
-                    const link = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.007, 5, 10), kGoldE);
-                    link.position.set(sx * 0.3, 1.22 - k * 0.07, 0.24);
-                    link.rotation.x = Math.PI / 2;
-                    kOutfit.add(link);
-                    kChains.push({ m: link, sx, base: 1.22 - k * 0.07, k });
-                }
+                const bg = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), kCry);
+                bg.position.set(sx * 0.2, 1.28, 0.35);
+                kOutfit.add(bg);
             }
-            G._kaiChains = kChains;
-            // ===== royal cape (blue outer, gold-trimmed, lightning embroidery) =====
+            // ===== white tasset skirt + gold trim + lightning emblem =====
+            const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.48, 0.32, 24, 1, true), kWhite);
+            skirt.position.y = 1.06;
+            kOutfit.add(skirt);
+            const skirtTrim = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.016, 6, 26), kGold);
+            skirtTrim.position.y = 0.9;
+            skirtTrim.rotation.x = Math.PI / 2;
+            kOutfit.add(skirtTrim);
+            for (let i = 0; i < 5; i++) {
+                const a = -Math.PI / 2 + (i - 2) * 0.62;
+                const plate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.035), kWhite);
+                plate.position.set(Math.sin(a) * 0.42, 1.02, Math.cos(a) * 0.42);
+                plate.rotation.order = "YXZ";
+                plate.rotation.y = a;
+                plate.rotation.x = 0.22;
+                kOutfit.add(plate);
+                const ptrim = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.045, 0.04), kGold);
+                ptrim.position.set(Math.sin(a) * 0.46, 0.9, Math.cos(a) * 0.46);
+                ptrim.rotation.order = "YXZ";
+                ptrim.rotation.y = a;
+                ptrim.rotation.x = 0.22;
+                kOutfit.add(ptrim);
+            }
+            for (const [ey, ex] of [[1.06, 0.02], [0.98, -0.02]]) {
+                const em = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.1, 0.02), kBolt);
+                em.position.set(ex, ey, 0.47);
+                em.rotation.z = ex > 0 ? -0.5 : 0.5;
+                kOutfit.add(em);
+            }
+            // ===== crystal wing-cape — fan of angular blue blades w/ gold edges & gem tips =====
             const kCape = new THREE.Group();
-            const capeParts = [];
-            G._kaiCapeCloth = [];
-            const mkCapePanel = (rTop, rBot, h, py) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 30, 6, true, -1.15, 2.3); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) {
-                const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-                const ang = Math.atan2(z, x);
-                const low = Math.max(0, (h / 2 - y) / h);
-                const f = 1 + Math.sin(ang * 7) * 0.05 * low;
-                p.setX(i, x * f);
-                p.setZ(i, z * f - 0.12 * low);
-            } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, kBlue); m.position.set(0, py, -0.12); m.rotation.y = Math.PI; kCape.add(m); capeParts.push(m); G._kaiCapeCloth.push({ m, base: Float32Array.from(p.array), h }); return m; };
-            mkCapePanel(0.42, 0.66, 1.5, 1.3);
-            const capeTrim = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.02, 6, 24, 3.4), kGold);
-            capeTrim.position.set(0, 2.0, -0.16);
-            capeTrim.rotation.set(1.4, 0, 0);
-            kCape.add(capeTrim);
-            for (let i = 0; i < 3; i++) {
-                const emb = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.4 - i * 0.06, 4), kBolt);
-                emb.position.set((i - 1) * 0.2, 1.5, -0.62);
-                emb.rotation.set(0.1, 0, (i - 1) * 0.3);
-                kCape.add(emb);
-            }
+            G._kaiCapeCloth = []; // blade cape — no cloth sim needed
+            const kWingBlades = [];
+            const bladeSpec = [[0.66, 0.65], [1.05, 0.78], [1.45, 0.65], [1.88, 0.92], [2.24, 1.08]];
+            for (const sx of [-1, 1])
+                for (let i = 0; i < bladeSpec.length; i++) {
+                    const [angZ, len] = bladeSpec[i];
+                    const b = new THREE.Group();
+                    const edge = new THREE.Mesh(new THREE.ConeGeometry(0.135, len, 4), kGold);
+                    edge.scale.z = 0.08;
+                    edge.position.y = len / 2;
+                    b.add(edge);
+                    const panelM = i % 2 ? kBlue : kBlueD;
+                    for (const pz of [0.012, -0.012]) {
+                        const panel = new THREE.Mesh(new THREE.ConeGeometry(0.115, len * 0.96, 4), panelM);
+                        panel.scale.z = 0.12;
+                        panel.position.set(0, len * 0.47, pz);
+                        b.add(panel);
+                    } // 🔵 หน้า-หลังเป็นน้ำเงิน ขอบทองโผล่เป็นกรอบ
+                    const bolt = new THREE.Mesh(new THREE.ConeGeometry(0.035, len * 0.3, 4), kBolt);
+                    bolt.scale.z = 0.3;
+                    bolt.position.set(0, len * 0.42, 0.032);
+                    b.add(bolt);
+                    const tipGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.055, 0), kCry);
+                    tipGem.position.y = len + 0.04;
+                    b.add(tipGem);
+                    b.position.set(sx * 0.2, 1.72, -0.34);
+                    b.rotation.order = "ZXY";
+                    b.rotation.z = sx * angZ;
+                    b.rotation.x = -0.42 - i * 0.05;
+                    b.userData.bz = sx * angZ;
+                    kCape.add(b);
+                    kWingBlades.push(b);
+                }
             char.add(kCape);
             G._kaiCape = kCape;
+            G._kaiWings = kWingBlades;
+            // ===== floating blue diamonds drifting beside the wings =====
+            const kChains = [];
+            [[-0.55, 2.05, -0.25], [0.55, 2.05, -0.25], [-0.78, 1.6, -0.32], [0.78, 1.6, -0.32], [-0.62, 1.1, -0.36], [0.62, 1.1, -0.36]].forEach(([gx, gy, gz], k) => { const dg = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), kCry); dg.scale.set(1, 1.4, 1); dg.position.set(gx, gy, gz); kCape.add(dg); const link = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 5, 10), kGoldE); link.position.set(gx, gy + 0.09, gz); kCape.add(link); kChains.push({ m: dg, sx: Math.sign(gx), base: gy, k, z0: gz }); kChains.push({ m: link, sx: Math.sign(gx), base: gy + 0.09, k: k + 0.5, z0: gz }); });
+            G._kaiChains = kChains;
             // ===== white armored legs + boots =====
             const kLegParts = [];
             for (const leg of [legL, legR]) {
@@ -10295,22 +10368,24 @@ function CherryAdventure() {
                 kLegParts.push(bd);
             }
             const kBootParts = [];
-            const mkBootK = leg => { const grp = []; const kn = leg.userData.knee || leg; const foot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), kWhite); foot.scale.set(1, 0.6, 1.55); foot.position.set(0, -0.5, 0.08); kn.add(foot); grp.push(foot); const toe = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), kGold); toe.scale.set(1, 0.7, 1.2); toe.position.set(0, -0.52, 0.2); kn.add(toe); grp.push(toe); const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.016, 6, 14), kGold); cuff.position.set(0, -0.42, 0.05); cuff.rotation.x = Math.PI / 2 - 0.3; kn.add(cuff); grp.push(cuff); return grp; };
+            const mkBootK = leg => { const grp = []; const kn = leg.userData.knee || leg; const foot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), kWhite); foot.scale.set(1, 0.6, 1.55); foot.position.set(0, -0.5, 0.08); kn.add(foot); grp.push(foot); const toe = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), kGold); toe.scale.set(1, 0.7, 1.2); toe.position.set(0, -0.52, 0.2); kn.add(toe); grp.push(toe); const sole = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), kBlueD); sole.scale.set(1, 0.32, 1.5); sole.position.set(0, -0.57, 0.08); kn.add(sole); grp.push(sole); const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.016, 6, 14), kGold); cuff.position.set(0, -0.42, 0.05); cuff.rotation.x = Math.PI / 2 - 0.3; kn.add(cuff); grp.push(cuff); return grp; };
             const kBootL = mkBootK(legL), kBootR = mkBootK(legR);
             G._kaiShoeMat = kWhite;
             // ===== white gauntlets + gold trim =====
             const kArmParts = [];
             for (const arm of [armL, armR]) {
                 const fore = arm.userData.elbow || arm;
-                const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.08, 0.26, 10), kWhite);
+                const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.08, 0.26, 10), kSilver);
                 gaunt.position.set(0, -0.27, 0);
                 fore.add(gaunt);
                 kArmParts.push(gaunt);
-                const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.014, 6, 12), kGold);
-                cuff.position.set(0, -0.16, 0);
-                cuff.rotation.x = Math.PI / 2;
-                fore.add(cuff);
-                kArmParts.push(cuff);
+                for (const sy of [-0.16, -0.38]) {
+                    const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.014, 6, 12), kGold);
+                    cuff.position.set(0, sy, 0);
+                    cuff.rotation.x = Math.PI / 2;
+                    fore.add(cuff);
+                    kArmParts.push(cuff);
+                }
                 const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), kCry);
                 gem.position.set(0, -0.27, 0.09);
                 fore.add(gem);
@@ -10330,23 +10405,20 @@ function CherryAdventure() {
                 kFxG.add(s);
                 kSparks.push(s);
             }
-            // jagged lightning arcs around the body
+            // jagged lightning arcs — around the body AND crackling through the hair (like the art)
             const kArcs = [];
-            for (let i = 0; i < 4; i++) {
-                const arc = new THREE.Group();
-                const a0 = i / 4 * Math.PI * 2;
-                let py = 0.6;
-                for (let seg = 0; seg < 4; seg++) {
-                    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.28, 5), kBolt);
-                    const jx = (seg % 2 ? 0.08 : -0.08);
-                    bolt.position.set(Math.cos(a0) * 0.5 + jx, py, Math.sin(a0) * 0.5);
-                    bolt.rotation.z = (seg % 2 ? 0.4 : -0.4);
-                    arc.add(bolt);
-                    py += 0.26;
-                }
-                kFxG.add(arc);
-                kArcs.push({ g: arc, a0 });
-            }
+            const mkArc = (a0, rad, py0, nseg) => { const arc = new THREE.Group(); let py = py0; for (let seg = 0; seg < nseg; seg++) {
+                const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.26, 5), kBolt);
+                const jx = (seg % 2 ? 0.08 : -0.08);
+                bolt.position.set(Math.cos(a0) * rad + jx, py, Math.sin(a0) * rad);
+                bolt.rotation.z = (seg % 2 ? 0.4 : -0.4);
+                arc.add(bolt);
+                py += 0.24;
+            } kFxG.add(arc); kArcs.push({ g: arc, a0 }); };
+            for (let i = 0; i < 4; i++)
+                mkArc(i / 4 * Math.PI * 2, 0.52, 0.6, 4);
+            mkArc(0.8, 0.62, 2.35, 3);
+            mkArc(3.9, 0.62, 2.4, 3);
             char.add(kFxG);
             G._kaiSparks = kSparks;
             G._kaiArcs = kArcs;
@@ -10357,6 +10429,9 @@ function CherryAdventure() {
             const rc2 = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.014, 6, 32), kGoldE);
             rc2.rotation.x = Math.PI / 2;
             kRuneG.add(rc2);
+            const rc0 = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.012, 6, 28), kBolt);
+            rc0.rotation.x = Math.PI / 2;
+            kRuneG.add(rc0);
             for (let i = 0; i < 6; i++) {
                 const a = i / 6 * Math.PI * 2;
                 const gl = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), kCry);
@@ -10372,7 +10447,7 @@ function CherryAdventure() {
             const kAura2 = new THREE.PointLight(0xffd070, 0.3, 3.5);
             kAura2.position.set(0, 2.4, 0);
             char.add(kAura2);
-            const kaiParts = [kHair, crown, halo, kOutfit, kCape, ...kWings, kFxG, kRuneG, kAura, kAura2, ...capeParts, ...kLegParts, ...kBootL, ...kBootR, ...kArmParts];
+            const kaiParts = [kHair, crown, crest, halo, halo2, kOutfit, kCape, ...kWings, kFxG, kRuneG, kAura, kAura2, ...kLegParts, ...kBootL, ...kBootR, ...kArmParts];
             kaiParts.forEach(p => p.visible = false);
             G._kaiParts = kaiParts;
         }
@@ -29146,12 +29221,16 @@ function CherryAdventure() {
                         G._kaiArcs.forEach((a, i) => { a.g.visible = Math.sin(t * 6 + i * 1.7) > 0.2; a.g.rotation.y = t * 0.6 + a.a0; });
                     if (G._kaiHalo) {
                         G._kaiHalo.rotation.y = t * 0.9;
-                        G._kaiHalo.position.y = 1.02 + Math.sin(t * 1.6) * 0.03;
+                        G._kaiHalo.position.y = (G._kaiHalo.userData.baseY || 1.02) + Math.sin(t * 1.6) * 0.03;
                     }
+                    if (G._kaiHalo2)
+                        G._kaiHalo2.rotation.y = -t * 0.45;
+                    if (G._kaiWings)
+                        G._kaiWings.forEach((w, i) => { w.rotation.z = w.userData.bz + Math.sin(t * 1.5 + i * 0.7) * 0.045; });
                     if (G._kaiRuneG)
                         G._kaiRuneG.rotation.y = -t * 0.5;
                     if (G._kaiChains)
-                        G._kaiChains.forEach(c => { c.m.position.y = c.base + Math.sin(t * 2 + c.sx + c.k) * 0.02; c.m.position.z = 0.24 + Math.sin(t * 1.5 + c.k) * 0.015; });
+                        G._kaiChains.forEach(c => { c.m.position.y = c.base + Math.sin(t * 2 + c.sx + c.k) * 0.03; c.m.position.z = (c.z0 != null ? c.z0 : 0.24) + Math.sin(t * 1.5 + c.k) * 0.015; c.m.rotation.y += dt * 1.2; });
                     const kaSpd = G.vel ? Math.min(1, Math.hypot(G.vel.x || 0, G.vel.z || 0) * 0.35) : 0;
                     if (G._kaiCapeCloth) {
                         for (const ck of G._kaiCapeCloth) {
