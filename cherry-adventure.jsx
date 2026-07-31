@@ -11435,10 +11435,10 @@ export default function CherryAdventure() {
       if (ep) {
         if (e) {
           ep.egg.visible = true;
-          const nm = (e.sp && SPECIES[e.sp]) ? SPECIES[e.sp].name : "ไข่ปริศนา";
           const ready = !e.readyAt || e.readyAt <= Date.now();
           const mins = ready ? 0 : Math.ceil((e.readyAt - Date.now()) / 60000);
-          ep.label.draw(ready ? `🥚 ${nm} · 🐣 พร้อมฟัก!` : `🥚 ${nm} · อีก ${mins} นาที`, ready ? "#fff0b0" : "#fff4e0");
+          // 🤫 ไม่เผยชนิดจนกว่าจะฟัก
+          ep.label.draw(ready ? "🥚 ไข่ปริศนา · 🐣 พร้อมฟัก!" : `🥚 ไข่ปริศนา · อีก ${mins} นาที`, ready ? "#fff0b0" : "#fff4e0");
         } else {
           ep.egg.visible = false;
           ep.label.draw("ยังไม่มีไข่", "#e8e0d0");
@@ -15434,9 +15434,9 @@ export default function CherryAdventure() {
       }
       let egg = null;
       if (R.egg) {
-        const sp = SPECIES[R.egg.sp] || {};
         const remain = Math.max(0, (R.egg.readyAt || 0) - Date.now());
-        egg = { sp: R.egg.sp, emoji: sp.emoji, name: sp.name, iv: R.egg.iv, total: (R.egg.iv.a + R.egg.iv.h + R.egg.iv.d), ready: remain <= 0, remainMin: Math.ceil(remain / 60000) };
+        // 🥚 ปิดชนิด/พรสวรรค์ไว้เป็นปริศนา จนกว่าจะฟัก (เผยตอน claimEgg)
+        egg = { mystery: true, ready: remain <= 0, remainMin: Math.ceil(remain / 60000) };
       }
       const garden = [];
       for (let k = 0; k < ranchPlotsMax(); k++) {
@@ -15525,11 +15525,10 @@ export default function CherryAdventure() {
       const iv = inheritIv(pa, pb, sp);
       const t = SPECIES[sp].tier || 1;
       const mins = 20 + t * 8; // ฟักนานตาม tier
-      G.ranch.egg = { sp, iv, stage: 1, readyAt: Date.now() + mins * 60000 };
+      G.ranch.egg = { sp, iv, stage: 1, readyAt: Date.now() + mins * 60000 }; // 🤫 เก็บชนิดไว้ลับ — เผยตอนฟัก
       if (G.farmXp) G.farmXp(10);
-      G.dexSeen = G.dexSeen || {}; G.dexSeen[sp] = 1;
       if (G.sfx) G.sfx.button && G.sfx.button();
-      toast(`${rareEgg ? "🌟 ไข่สายพันธุ์ลับ! " : "🥚 เพาะพันธุ์สำเร็จ! ได้ไข่ "}${SPECIES[sp].emoji} ${SPECIES[sp].name} (IV รวม ${iv.a + iv.h + iv.d}) — ฟักในอีก ${mins} นาที`);
+      toast(`🥚 เพาะพันธุ์สำเร็จ! ได้ไข่ปริศนา — ฟักในอีก ${mins} นาที รอลุ้นตอนฟัก! 🤫`);
       syncPlayer();
       setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap(), breedA: null, breedB: null, breedPick: null }));
     };
@@ -15542,10 +15541,14 @@ export default function CherryAdventure() {
       if (!inst) return;
       G.ranch.lastHatched = { sp: e.sp, iv: e.iv, lv: inst.lv || 5 }; // 🐣 จำตัวที่เพิ่งเพาะได้ → โชว์ในหน้าเพาะพันธุ์
       if (G.farmXp) G.farmXp(15); if (G.farmQuestProg) G.farmQuestProg("hatch", 1);
+      G.dexSeen = G.dexSeen || {}; G.dexSeen[e.sp] = 1; // 📖 เพิ่งเผยชนิดตอนนี้ (ตอนฟัก)
       G.col[e.sp] = (G.col[e.sp] || 0) + 1;
-      if (G.sfx) G.sfx.catch && G.sfx.catch();
-      const tot = e.iv.a + e.iv.h + e.iv.d;
-      toast(`🐣✨ ฟักไข่สำเร็จ! ได้ ${SPECIES[e.sp].emoji} ${SPECIES[e.sp].name} Lv.5 · พรสวรรค์ ${tot} ✨`);
+      const sp = SPECIES[e.sp] || {}; const tier = sp.tier || 1; const tot = e.iv.a + e.iv.h + e.iv.d;
+      const special = tier >= 5 || sp.eggOnly; // 🌟 หายาก/สายพันธุ์ลับ → ฉลองใหญ่
+      if (G.sfx) { if (special && G.sfx.levelup) G.sfx.levelup(); else G.sfx.catch && G.sfx.catch(); }
+      try { const fp = char.position; if (fp) { spawnSkillFx("evolve", fp, special ? 0xffd76a : 0xbfe8ff); burst(fp, special ? 0xfff2b0 : 0xd8f0ff, special ? 1.8 : 1.2); } } catch (_) {}
+      toast(`🎉🐣 ยินดีด้วย! ฟักไข่ได้ ${sp.emoji} ${sp.name} Lv.5 · พรสวรรค์ ${tot} ${special ? "🌟 สายพันธุ์หายาก!" : "✨"}`);
+      if (special && G.showAnnounce) { try { G.showAnnounce(`🎉🌟 ฟักไข่หายาก! ${sp.emoji} ${sp.name} เข้าร่วมฟาร์มแล้ว!`); } catch (_) {} }
       syncPlayer(); if (G.saveGame) G.saveGame();
       setUi((u) => ({ ...u, col: { ...G.col }, petBox: (G.petBox || []).map((x) => ({ ...x })), ranch: ranchUiSnap() }));
     };
@@ -29646,10 +29649,10 @@ export default function CherryAdventure() {
                 )}
                 {ui.ranch.egg ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#f6ecfb,#efe0fa)", border: "1px solid #e3d0f2", borderRadius: 12, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 30, animation: ui.ranch.egg.ready ? "pulse 0.7s ease-in-out infinite alternate" : "none" }}>🥚</div>
+                    <div style={{ fontSize: 30, animation: ui.ranch.egg.ready ? "pulse 0.7s ease-in-out infinite alternate" : "none" }}>{ui.ranch.egg.ready ? "🥚" : "❓"}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a4a9a" }}>{ui.ranch.egg.emoji} {ui.ranch.egg.name}</div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: "#a07ac0" }}>พรสวรรค์ (IV) รวม {ui.ranch.egg.total} · {ui.ranch.egg.ready ? "🐣 พร้อมฟักแล้ว!" : `⏳ อีก ${ui.ranch.egg.remainMin} นาที`}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a4a9a" }}>🥚 ไข่ปริศนา</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#a07ac0" }}>{ui.ranch.egg.ready ? "🐣 พร้อมฟักแล้ว — กดฟักเพื่อลุ้นชนิด!" : `⏳ อีก ${ui.ranch.egg.remainMin} นาที · รอลุ้นตอนฟัก 🤫`}</div>
                     </div>
                     <button onClick={() => G.claimEgg && G.claimEgg()} disabled={!ui.ranch.egg.ready} style={{
                       padding: "9px 15px", borderRadius: 999, border: "none", cursor: ui.ranch.egg.ready ? "pointer" : "default", fontFamily: font,
