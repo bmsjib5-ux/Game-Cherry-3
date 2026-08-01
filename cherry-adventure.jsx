@@ -2307,8 +2307,8 @@ export default function CherryAdventure() {
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const calf = new THREE.Mesh(new THREE.LatheGeometry(calfProfile, 30), pantsMat);
       calf.position.y = -0.42; calf.scale.set(1, 1, 0.9); calf.castShadow = true;
-      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.135, 16, 14), pantsMat);
-      kneeCap.scale.set(0.98, 0.85, 0.9); // ✏️ ขนาดเท่าท่อขา — มองไม่เห็นตอนยืดตรง แค่อุดรอยต่อตอนงอ
+      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.138, 18, 16), pantsMat);
+      kneeCap.scale.set(1, 0.96, 0.9); // ✏️ ขนาดเท่าท่อขา — กลมพอปิดรอยต่อท่อนบน/ล่างทุกท่างอ ไม่นูนตอนยืดตรง
       const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 24), whiteMat);
       shoe.scale.set(1, 0.6, 1.4);
       shoe.position.set(0, -0.46, 0.06);
@@ -7332,7 +7332,10 @@ export default function CherryAdventure() {
       G._ragCapeCloth = []; // ชุดนี้ไม่มีผ้าคลุม — ใช้ปีกปีศาจแทน
       // ===== ถุงเท้าดำยาว + รองเท้าบูทส้นตึกหัวใจ (ตามภาพ) =====
       const rLegParts = [];
-      for (const leg of [legL, legR]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.125, 0.4, 12), rBlackL); sock.position.set(0, -0.24, 0.01); leg.add(sock); rLegParts.push(sock); const sockT = new THREE.Mesh(new THREE.TorusGeometry(0.146, 0.012, 6, 14), rBlackL); sockT.position.set(0, -0.05, 0.01); sockT.rotation.x = Math.PI / 2; leg.add(sockT); rLegParts.push(sockT); }
+      for (const leg of [legL, legR]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.138, 0.56, 14), rBlackL); sock.position.set(0, -0.3, 0.01); leg.add(sock); rLegParts.push(sock); const sockT = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.014, 6, 16), rBlackL); sockT.position.set(0, -0.04, 0.01); sockT.rotation.x = Math.PI / 2; leg.add(sockT); rLegParts.push(sockT);
+        const kn2 = leg.userData.knee || leg; // 🦵 ถุงเท้าต่อเนื่องคลุมเข่าถึงบูท — ลูกกลมหัวเข่าปิดรอยต่อตอนงอ + ท่อนน่องตามขาท่อนล่าง
+        const kneeBall = new THREE.Mesh(new THREE.SphereGeometry(0.142, 16, 14), rBlackL); kneeBall.scale.set(1, 0.9, 0.95); kn2.add(kneeBall); rLegParts.push(kneeBall);
+        const calfSock = new THREE.Mesh(new THREE.CylinderGeometry(0.138, 0.126, 0.32, 14), rBlackL); calfSock.position.set(0, -0.16, 0.005); kn2.add(calfSock); rLegParts.push(calfSock); }
       const mkRBoot = leg => { const grp = []; const kn = leg.userData.knee || leg;
         const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.155, 0.26, 12), rBow); shaft.position.y = -0.36; kn.add(shaft); grp.push(shaft);
         const foot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), rBow); foot.scale.set(1, 0.62, 1.5); foot.position.set(0, -0.5, 0.08); kn.add(foot); grp.push(foot);
