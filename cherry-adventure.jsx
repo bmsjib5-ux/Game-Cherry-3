@@ -7290,8 +7290,7 @@ export default function CherryAdventure() {
       const rOut = new THREE.Group();
       const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.29, 2.0]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin); bare.scale.set(1.06, 1, 0.95); rOut.add(bare); // 🧡 ลำตัวสโลปเรียว — แคบกว่าขอบเกาะอกบน/ล่าง ไม่ปูดเป็นชั้นเหนืออก/ข้างเอว
       const top = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.58], [0.378, 1.66], [0.382, 1.74], [0.36, 1.82], [0.335, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rMaroon); top.scale.set(1.07, 1, 0.96); rOut.add(top); // 👙 เสื้อเกาะอกแถบอก — เปิดไหล่/บ่า ไม่มีเสื้อด้านใน
-      const topT = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.014, 6, 26), rBlackL); topT.position.y = 1.58; topT.rotation.x = Math.PI / 2; topT.scale.set(1.07, 0.96, 1); rOut.add(topT);
-      const topT2 = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.014, 6, 26), rBlackL); topT2.position.y = 1.85; topT2.rotation.x = Math.PI / 2; topT2.scale.set(1.05, 0.94, 1); rOut.add(topT2); // ขอบบนเกาะอก
+      // (เอาเส้นขอบดำบน-ล่างของเกาะอกออก — ให้ขอบผ้าโค้งนุ่มไม่แข็ง)
       { // 🦋 อกเสื้อทรงปีกผีเสื้อสองข้าง ขนาบหัวใจกลางอก (ขอบดำรอง + แผ่นแดงเข้มหน้า)
         const bwShape = new THREE.Shape();
         bwShape.moveTo(0, 0.01);
