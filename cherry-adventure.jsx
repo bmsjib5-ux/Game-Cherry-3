@@ -2588,8 +2588,8 @@ export default function CherryAdventure() {
       p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
       // 💪 หัวไหล่ทรงเดลทอยด์ — ฝังลึกเข้าลำตัวและกลืนลงต้นแขน ให้ไหล่/บ่า/แขนเป็นเนื้อเดียว (จุดหมุนเดิม ขยับได้ปกติ)
       const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 22), shirtMat);
-      sleeve.scale.set(1.18, 1.22, 1.04);
-      sleeve.position.set(-0.03 * side, -0.05, 0);
+      sleeve.scale.set(1.08, 1.16, 1.0);
+      sleeve.position.set(-0.025 * side, -0.05, 0);
       // ✨ upper arm (shoulder → elbow)
       const upperProfile = [
         [0.082, 0.00],  // shoulder/upper arm
@@ -7293,7 +7293,7 @@ export default function CherryAdventure() {
       headG.add(rHead);
       // ===== เสื้อปีศาจน้อย: เอวลอย + ท็อปแดงเข้ม + สายรัดไขว้ + ปกคอหัวใจ + ปีกปีศาจ (ตามภาพ) =====
       const rOut = new THREE.Group();
-      const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.295, 1.95], [0.26, 2.0], [0.21, 2.045], [0.155, 2.08], [0.1, 2.11]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin); bare.scale.set(1.06, 1, 0.95); rOut.add(bare); // 🧡 ลำตัวสโลปเรียวชิ้นเดียวถึงคอ — แทนลำตัวฐานทั้งชิ้น ไม่มีผิวซ้อนเป็นสัน
+      const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.28, 1.94], [0.235, 1.99], [0.18, 2.03], [0.125, 2.06], [0.08, 2.09]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin); bare.scale.set(1.06, 1, 0.95); rOut.add(bare); // 🧡 ลำตัวสโลปเรียวชิ้นเดียวถึงคอ — แทนลำตัวฐานทั้งชิ้น ไม่มีผิวซ้อนเป็นสัน
       const top = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.58], [0.378, 1.66], [0.382, 1.74], [0.36, 1.82], [0.335, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rMaroon); top.scale.set(1.07, 1, 0.96); rOut.add(top); // 👙 เสื้อเกาะอกแถบอก — เปิดไหล่/บ่า ไม่มีเสื้อด้านใน
       // (เอาเส้นขอบดำบน-ล่างของเกาะอกออก — ให้ขอบผ้าโค้งนุ่มไม่แข็ง)
       { // 🦋 อกเสื้อทรงปีกผีเสื้อสองข้าง ขนาบหัวใจกลางอก (ขอบดำรอง + แผ่นแดงเข้มหน้า)
