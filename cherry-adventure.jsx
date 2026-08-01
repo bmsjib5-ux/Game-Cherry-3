@@ -7245,7 +7245,7 @@ export default function CherryAdventure() {
       const rWingM = new THREE.MeshStandardMaterial({ color: 0x7a2030, roughness: 0.65, side: THREE.DoubleSide }); // 🦇 ปีกแดงเข้ม
       const rBow = new THREE.MeshStandardMaterial({ color: 0xa02838, roughness: 0.65 });                   // 🎀 โบว์แดงเข้ม
       const rGoldS = new THREE.MeshStandardMaterial({ color: 0xd8a850, roughness: 0.35, metalness: 0.75 }); // ✨ หมุดทอง
-      const rSkin = new THREE.MeshStandardMaterial({ color: 0xf5cbaa, roughness: 0.7 });                   // 🧡 ผิว
+      const rSkin = skinMat; // 🧡 ใช้วัสดุผิวจริงของตัวละคร — ลำตัว/หูเอลฟ์กลืนกับแขนขาทุกโทนผิว ไม่ดูเป็นเสื้อด้านใน
       const rRune = new THREE.MeshStandardMaterial({ color: 0xf05a94, emissive: 0xd0246a, emissiveIntensity: 1.0, roughness: 0.3 });
       // 💗 หัวใจจิ๋ว (โบว์/อก/กำไล/รองเท้า/หางปีศาจ) — หน้าหัวใจหันทาง +z
       const mkHeart = (s, mat) => { const g = new THREE.Group(); const m = mat || rHeart; for (const hx of [-1, 1]) { const lobe = new THREE.Mesh(new THREE.SphereGeometry(s * 0.42, 10, 8), m); lobe.scale.z = 0.55; lobe.position.set(hx * s * 0.3, s * 0.22, 0); g.add(lobe); } const vee = new THREE.Mesh(new THREE.ConeGeometry(s * 0.62, s * 0.9, 4), m); vee.scale.z = 0.5; vee.position.y = -s * 0.28; vee.rotation.x = Math.PI; vee.rotation.y = Math.PI / 4; g.add(vee); return g; };
