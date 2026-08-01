@@ -7313,7 +7313,7 @@ export default function CherryAdventure() {
           const bk = new THREE.Mesh(bwGeo, bwDark); bk.scale.set(1.12, 1.12, 1); bk.position.z = -0.006; wgp.add(bk);
           const fr = new THREE.Mesh(bwGeo, bwMar); wgp.add(fr);
           const dotH = mkHeart(0.032); dotH.position.set(0.15, 0.04, 0.004); wgp.add(dotH); // 💗 ลายหัวใจจิ๋วบนปีก
-          wgp.position.set(s * 0.03, 1.76, 0.372); wgp.scale.x *= s; wgp.rotation.y = s * 0.45; rOut.add(wgp);
+          wgp.position.set(s * 0.03, 1.76, 0.372); wgp.scale.x *= s; wgp.rotation.y = s * 0.45; rOut.add(wgp); // (ปีกผีเสื้อหน้าอก)
         }
       }
       const chestHeart = mkHeart(0.1); chestHeart.position.set(0, 1.755, 0.405); rOut.add(chestHeart); // 💗 หัวใจใหญ่กลางอก
@@ -7340,7 +7340,7 @@ export default function CherryAdventure() {
         const claw = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.09, 8), rHeart); claw.position.set(0.6, 0.4, 0); claw.rotation.z = -0.9; wg.add(claw); // เล็บปลายปีกชมพู
         if (sx < 0) wg.scale.x = -1;
         wg.scale.multiplyScalar(1.35); wg.scale.y = 1.35;
-        wg.position.set(sx * 0.24, 1.74, -0.42); wg.userData.by = sx * 0.55; wg.rotation.y = sx * 0.55; rOut.add(wg); rWings.push(wg); return wg;
+        wg.position.set(sx * 0.32, 1.6, -0.5); wg.userData.by = sx * 0.78; wg.rotation.y = sx * 0.78; rOut.add(wg); rWings.push(wg); return wg; // 🦇 โคนปีกซ่อนหลังบ่า ไม่โผล่ข้างคอ
       };
       mkBatWing(-1); mkBatWing(1); G._ragWings = rWings;
       const backHeart = mkHeart(0.095); backHeart.position.set(0, 1.78, -0.41); backHeart.rotation.y = Math.PI; rOut.add(backHeart); // 💗 หัวใจเรืองกลางหลังระหว่างปีก

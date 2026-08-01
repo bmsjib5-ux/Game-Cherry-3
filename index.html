@@ -11064,7 +11064,7 @@ function CherryAdventure() {
                     wgp.position.set(s * 0.03, 1.76, 0.372);
                     wgp.scale.x *= s;
                     wgp.rotation.y = s * 0.45;
-                    rOut.add(wgp);
+                    rOut.add(wgp); // (ปีกผีเสื้อหน้าอก)
                 }
             }
             const chestHeart = mkHeart(0.1);
@@ -11115,12 +11115,12 @@ function CherryAdventure() {
                     wg.scale.x = -1;
                 wg.scale.multiplyScalar(1.35);
                 wg.scale.y = 1.35;
-                wg.position.set(sx * 0.24, 1.74, -0.42);
-                wg.userData.by = sx * 0.55;
-                wg.rotation.y = sx * 0.55;
+                wg.position.set(sx * 0.32, 1.6, -0.5);
+                wg.userData.by = sx * 0.78;
+                wg.rotation.y = sx * 0.78;
                 rOut.add(wg);
                 rWings.push(wg);
-                return wg;
+                return wg; // 🦇 โคนปีกซ่อนหลังบ่า ไม่โผล่ข้างคอ
             };
             mkBatWing(-1);
             mkBatWing(1);
