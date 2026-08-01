@@ -2883,9 +2883,10 @@ function CherryAdventure() {
         const makeArm = (side) => {
             const p = new THREE.Group();
             p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
-            const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 22, 22), shirtMat);
-            sleeve.scale.set(1.0, 1.2, 1.0);
-            sleeve.position.y = -0.06;
+            // 💪 หัวไหล่ทรงเดลทอยด์ — ฝังลึกเข้าลำตัวและกลืนลงต้นแขน ให้ไหล่/บ่า/แขนเป็นเนื้อเดียว (จุดหมุนเดิม ขยับได้ปกติ)
+            const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 22), shirtMat);
+            sleeve.scale.set(1.32, 1.3, 1.08);
+            sleeve.position.set(-0.045 * side, -0.045, 0);
             // ✨ upper arm (shoulder → elbow)
             const upperProfile = [
                 [0.082, 0.00], // shoulder/upper arm
@@ -10960,19 +10961,40 @@ function CherryAdventure() {
                 rHead.add(ah);
             } // อาโฮเกะ
             const rHornT = new THREE.MeshStandardMaterial({ color: 0x8a2438, roughness: 0.3, metalness: 0.25, emissive: 0x40101e, emissiveIntensity: 0.35 }); // 😈 ปลายเขาแดงอมชมพูเงา
-            for (const sx of [-1, 1]) { // 😈 เขาโค้งใหญ่เงาสวย ดำไล่แดงที่ปลาย (ทรงเขาแกะปีศาจตามภาพ)
-                const hornG = new THREE.Group();
+            const rHornGloss = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.24, metalness: 0.35 }); // ✨ ผิวเขามันเงา ไล่สีในเนื้อ geometry
+            const mkHorn = (sx) => {
                 const hc = new THREE.CatmullRomCurve3([[0, 0, 0], [sx * 0.12, 0.24, -0.03], [sx * 0.3, 0.46, -0.02], [sx * 0.4, 0.72, 0.05], [sx * 0.3, 0.94, 0.14]].map(p => new THREE.Vector3(p[0], p[1], p[2])));
-                for (let k = 0; k <= 16; k++) {
-                    const tt = k / 16;
-                    const p = hc.getPoint(tt);
-                    const seg = new THREE.Mesh(new THREE.SphereGeometry(0.1 * (1 - tt * 0.85) + 0.012, 14, 12), tt > 0.68 ? rHornT : rHornM);
-                    seg.position.copy(p);
-                    hornG.add(seg);
+                const segs = 36, rad = 18, r0 = 0.104, r1 = 0.014;
+                const geo = new THREE.TubeGeometry(hc, segs, 1, rad, false);
+                const pos = geo.attributes.position;
+                const cols = [];
+                const cBase = new THREE.Color(0x2a2030), cTip = new THREE.Color(0x9a2a40);
+                const v = new THREE.Vector3();
+                const per = rad + 1;
+                for (let i = 0; i <= segs; i++) {
+                    const t = i / segs;
+                    const ctr = hc.getPoint(t);
+                    const rr = r0 * Math.pow(1 - t, 0.85) + r1; // ไล่เรียวโคน→ปลายโค้งนุ่ม
+                    const cc = cBase.clone().lerp(cTip, Math.max(0, (t - 0.5) * 2));
+                    for (let j = 0; j < per; j++) {
+                        const idx = i * per + j;
+                        v.set(pos.getX(idx), pos.getY(idx), pos.getZ(idx)).sub(ctr).multiplyScalar(rr).add(ctr);
+                        pos.setXYZ(idx, v.x, v.y, v.z);
+                        cols.push(cc.r, cc.g, cc.b);
+                    }
                 }
-                hornG.position.set(sx * 0.26, 0.36, -0.05);
-                rHead.add(hornG);
-            }
+                geo.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+                geo.computeVertexNormals();
+                const g = new THREE.Group();
+                g.add(new THREE.Mesh(geo, rHornGloss));
+                const tip = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 8), rHornT);
+                tip.position.copy(hc.getPoint(1));
+                g.add(tip); // ปลายมน
+                g.position.set(sx * 0.26, 0.36, -0.05);
+                return g;
+            };
+            rHead.add(mkHorn(-1));
+            rHead.add(mkHorn(1));
             for (const sx of [-1, 1]) {
                 const ear = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.28, 10), rSkin);
                 ear.scale.z = 0.55;

@@ -2586,9 +2586,10 @@ export default function CherryAdventure() {
     const makeArm = (side) => {
       const p = new THREE.Group();
       p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
-      const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 22, 22), shirtMat);
-      sleeve.scale.set(1.0, 1.2, 1.0);
-      sleeve.position.y = -0.06;
+      // 💪 หัวไหล่ทรงเดลทอยด์ — ฝังลึกเข้าลำตัวและกลืนลงต้นแขน ให้ไหล่/บ่า/แขนเป็นเนื้อเดียว (จุดหมุนเดิม ขยับได้ปกติ)
+      const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 22), shirtMat);
+      sleeve.scale.set(1.32, 1.3, 1.08);
+      sleeve.position.set(-0.045 * side, -0.045, 0);
       // ✨ upper arm (shoulder → elbow)
       const upperProfile = [
         [0.082, 0.00],  // shoulder/upper arm
@@ -7259,12 +7260,28 @@ export default function CherryAdventure() {
       for (const sx of [-1, 1]) { const sl = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 12), rHairP); sl.scale.set(0.6, 1.5, 0.72); sl.position.set(sx * 0.58, -0.14, 0.14); sl.rotation.z = sx * 0.28; rHead.add(sl); const bk = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 12), rHairP2); bk.scale.set(0.7, 1.35, 0.7); bk.position.set(sx * 0.42, -0.12, -0.42); bk.rotation.set(-0.2, 0, sx * 0.25); rHead.add(bk); } // ปอยข้าง/หลังโค้งมน
       { const ah = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.026, 8, 18, Math.PI * 1.25), rHairP); ah.position.set(0.03, 0.68, 0.06); ah.rotation.set(0.25, 0.35, 1.05); rHead.add(ah); } // อาโฮเกะ
       const rHornT = new THREE.MeshStandardMaterial({ color: 0x8a2438, roughness: 0.3, metalness: 0.25, emissive: 0x40101e, emissiveIntensity: 0.35 }); // 😈 ปลายเขาแดงอมชมพูเงา
-      for (const sx of [-1, 1]) { // 😈 เขาโค้งใหญ่เงาสวย ดำไล่แดงที่ปลาย (ทรงเขาแกะปีศาจตามภาพ)
-        const hornG = new THREE.Group();
+      const rHornGloss = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.24, metalness: 0.35 }); // ✨ ผิวเขามันเงา ไล่สีในเนื้อ geometry
+      const mkHorn = (sx) => { // 😈 เขาโค้งชิ้นเดียวเงาเรียบสมูท — ท่อเรียวตามเส้นโค้ง + ไล่สีดำ→แดงอมชมพูที่ปลาย
         const hc = new THREE.CatmullRomCurve3([[0, 0, 0], [sx * 0.12, 0.24, -0.03], [sx * 0.3, 0.46, -0.02], [sx * 0.4, 0.72, 0.05], [sx * 0.3, 0.94, 0.14]].map(p => new THREE.Vector3(p[0], p[1], p[2])));
-        for (let k = 0; k <= 16; k++) { const tt = k / 16; const p = hc.getPoint(tt); const seg = new THREE.Mesh(new THREE.SphereGeometry(0.1 * (1 - tt * 0.85) + 0.012, 14, 12), tt > 0.68 ? rHornT : rHornM); seg.position.copy(p); hornG.add(seg); }
-        hornG.position.set(sx * 0.26, 0.36, -0.05); rHead.add(hornG);
-      }
+        const segs = 36, rad = 18, r0 = 0.104, r1 = 0.014;
+        const geo = new THREE.TubeGeometry(hc, segs, 1, rad, false);
+        const pos = geo.attributes.position; const cols = [];
+        const cBase = new THREE.Color(0x2a2030), cTip = new THREE.Color(0x9a2a40);
+        const v = new THREE.Vector3(); const per = rad + 1;
+        for (let i = 0; i <= segs; i++) {
+          const t = i / segs; const ctr = hc.getPoint(t);
+          const rr = r0 * Math.pow(1 - t, 0.85) + r1; // ไล่เรียวโคน→ปลายโค้งนุ่ม
+          const cc = cBase.clone().lerp(cTip, Math.max(0, (t - 0.5) * 2));
+          for (let j = 0; j < per; j++) { const idx = i * per + j; v.set(pos.getX(idx), pos.getY(idx), pos.getZ(idx)).sub(ctr).multiplyScalar(rr).add(ctr); pos.setXYZ(idx, v.x, v.y, v.z); cols.push(cc.r, cc.g, cc.b); }
+        }
+        geo.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+        geo.computeVertexNormals();
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(geo, rHornGloss));
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 8), rHornT); tip.position.copy(hc.getPoint(1)); g.add(tip); // ปลายมน
+        g.position.set(sx * 0.26, 0.36, -0.05); return g;
+      };
+      rHead.add(mkHorn(-1)); rHead.add(mkHorn(1));
       for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.28, 10), rSkin); ear.scale.z = 0.55; ear.position.set(sx * 0.64, -0.08, 0.02); ear.rotation.z = sx * 1.72; rHead.add(ear); } // 🧝 หูแหลมเอลฟ์
       for (const sx of [-1, 1]) { const lk = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), rGoldS); lk.position.set(sx * 0.61, -0.14, 0.08); rHead.add(lk); const er = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), rHeart); er.scale.set(0.72, 1.5, 0.72); er.position.set(sx * 0.61, -0.24, 0.08); rHead.add(er); } // 💎 ต่างหูคริสตัลชมพูห้อยระย้า
       for (const sx of [-1, 1]) { const eh = mkHeart(0.055, new THREE.MeshBasicMaterial({ color: 0xffffff })); eh.scale.z = 0.3; eh.position.set(sx * 0.2, -0.02, 0.594); rHead.add(eh); } // 💗 ไฮไลท์ตารูปหัวใจ (ตาหัวใจตามภาพ)
