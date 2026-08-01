@@ -5738,6 +5738,10 @@ export default function CherryAdventure() {
         (G._aurParts || []).forEach(p => p.visible = id === "aurelius");
         (G._ragParts || []).forEach(p => p.visible = id === "ragnar");
         if (typeof torso !== "undefined") torso.visible = id !== "ragnar"; // 🦸 รักนาร์ใช้ลำตัวผิวของชุดเอง — กันผิวสองชั้นซ้อนเป็นสันที่ไหล่/อก
+        if (typeof skinMat !== "undefined") { // 💜 ผิวรักนาร์อมม่วงแบบปีศาจน้อย — คืนโทนเดิมเมื่อสลับร่าง
+          if (id === "ragnar") { const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex()); c.lerp(new THREE.Color(0xa77fd4), 0.32); skinMat.color.copy(c); }
+          else if (G._skinBase != null && G.cls !== "aegis") skinMat.color.setHex(G._skinBase);
+        }
         (G._dressButtons || []).forEach(b => b.visible = !id);
         if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro" && id !== "kotaro" && id !== "kairi" && id !== "aurelius" && id !== "ragnar"; } // 👸🌙❄️ ฮีโร่ใช้ผมประจำตัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = true; } // คืนทรงผมปกติเมื่อสลับตัวละคร
@@ -7315,10 +7319,7 @@ export default function CherryAdventure() {
       const chestHeart = mkHeart(0.1); chestHeart.position.set(0, 1.755, 0.405); rOut.add(chestHeart); // 💗 หัวใจใหญ่กลางอก
       for (const s of [1, -1]) { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.72, 0.025), rLeather); strap.position.set(0, 1.4, 0.315); strap.rotation.z = s * 0.55; strap.rotation.x = -0.08; rOut.add(strap); for (const sy of [-0.2]) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), rGoldS); st.position.set(-s * sy * 1.3, 1.4 + sy, 0.34); rOut.add(st); } } // ⛓️ สายรัดไขว้ + หมุดทอง (ตัดหมุดคู่บนบนผิวออก)
       // (ตัดปกคอ/เสื้อคลุมไหล่ออก — เกาะอกล้วน เปิดไหล่เปิดหลัง เหลือแค่โช้กเกอร์โบว์)
-      const colT = new THREE.Mesh(new THREE.TorusGeometry(0.175, 0.022, 8, 22), rBow); colT.position.y = 2.07; colT.rotation.x = Math.PI / 2; colT.scale.set(1, 0.95, 1); rOut.add(colT); // 🎀 สายโช้กเกอร์แนบโคนคอ
-      // 🎀 โช้กเกอร์โบว์แดงเข้ม + หัวใจเรืองกลางคอ (ตามภาพ)
-      for (const s of [-1, 1]) { const loop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 12), rBow); loop.scale.set(1.5, 0.75, 0.5); loop.position.set(s * 0.1, 2.04, 0.22); loop.rotation.z = s * 0.45; rOut.add(loop); const tl = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.17, 8), rBow); tl.scale.z = 0.55; tl.position.set(s * 0.08, 1.92, 0.26); tl.rotation.set(0.12, 0, s * 0.3); rOut.add(tl); }
-      const neckHeart = mkHeart(0.06); neckHeart.position.set(0, 2.02, 0.24); rOut.add(neckHeart);
+      // (เอาโบว์/สายโช้กเกอร์/หัวใจที่คอออก — โชว์คอบ่าเปลือยเรียบ)
       // 🦇 ปีกค้างคาวพังผืดเรียบสมูท (ShapeGeometry) + กระพือได้
       const rWings = [];
       const rWingD = new THREE.MeshStandardMaterial({ color: 0x481018, roughness: 0.6, side: THREE.DoubleSide });
@@ -7363,8 +7364,9 @@ export default function CherryAdventure() {
       // 😈 หางปีศาจ โค้งยาว ปลายหัวใจ
       const rTail = new THREE.Group();
       const tCurve = new THREE.CatmullRomCurve3([[0, 1.1, -0.3], [0.08, 0.86, -0.56], [0.02, 0.68, -0.8], [-0.08, 0.9, -0.98], [-0.05, 1.14, -1.06]].map(p => new THREE.Vector3(p[0], p[1], p[2])));
-      const tTube = new THREE.Mesh(new THREE.TubeGeometry(tCurve, 16, 0.034, 6, false), rBlackL); rTail.add(tTube);
-      const tailHeart = mkHeart(0.075); tailHeart.position.set(-0.05, 1.24, -1.06); tailHeart.rotation.x = -0.35; rTail.add(tailHeart);
+      const tTube = new THREE.Mesh(new THREE.TubeGeometry(tCurve, 24, 0.034, 6, false), rBlackL); rTail.add(tTube);
+      tTube.userData.base = tTube.geometry.attributes.position.array.slice(); G._ragTailTube = tTube; // 🌊 เก็บตำแหน่งฐานไว้ทำคลื่นพริ้ว
+      const tailHeart = mkHeart(0.09); tailHeart.position.set(-0.05, 1.24, -1.06); tailHeart.rotation.x = -0.35; rTail.add(tailHeart); G._ragTailHeart = tailHeart; // 💗 หัวใจปลายหาง
       char.add(rTail); G._ragTail = rTail;
       G._ragCapeCloth = []; // ชุดนี้ไม่มีผ้าคลุม — ใช้ปีกปีศาจแทน
       // ===== ถุงเท้าดำยาว + รองเท้าบูทส้นตึกหัวใจ (ตามภาพ) =====
@@ -9174,6 +9176,7 @@ export default function CherryAdventure() {
         applyGender(i);
       } else if (cat === "skin") {
         skinMat.color.setHex(CUSTOM.skins[i].c);
+        G._skinBase = CUSTOM.skins[i].c; // 💜 จำโทนผิวที่เลือก — ใช้คืนค่าหลังร่างฮีโร่ที่ย้อมผิว (aegis/ragnar)
       } else if (cat === "hairColor") {
         setHairColorHex(CUSTOM.hairColors[i].c);
       } else if (cat === "hairStyle") {
@@ -19689,7 +19692,26 @@ export default function CherryAdventure() {
         if (G._ragEmbers && G._ragEmbers.length && G._ragEmbers[0].parent && G._ragEmbers[0].parent.visible) {
           G._ragEmbers.forEach(p => { const u = p.userData; u.ang += dt * u.spin * 0.4; p.position.x = Math.cos(u.ang) * u.rad; p.position.z = Math.sin(u.ang) * u.rad; p.position.y += dt * u.rise; if (p.position.y > 2.4) p.position.y = 0.2; p.rotation.y += dt * u.spin * 2; });
           if (G._ragWings) G._ragWings.forEach((w, i) => { w.rotation.y = w.userData.by + Math.sin(t * 5 + i * Math.PI) * 0.22 * (i ? 1 : -1); }); // 🦇 ปีกกระพือ
-          if (G._ragTail) { G._ragTail.rotation.y = Math.sin(t * 1.4) * 0.14; } // 😈 หางแกว่ง
+          if (G._ragTail) { // 😈🌊 หางพริ้วเป็นคลื่นไล่จากโคนถึงปลาย + หัวใจปลายหางแกว่งตาม
+            G._ragTail.rotation.y = Math.sin(t * 1.2) * 0.1;
+            const tb = G._ragTailTube;
+            if (tb && tb.userData.base) {
+              const pos = tb.geometry.attributes.position; const base = tb.userData.base;
+              const rings = 25, per = 7;
+              for (let ri = 0; ri < rings; ri++) {
+                const pr = ri / (rings - 1); const w = pr * pr; // ปลายหางแกว่งแรงกว่าโคน
+                const dx = Math.sin(t * 2.4 + pr * 4.4) * 0.1 * w;
+                const dy = Math.cos(t * 1.8 + pr * 3.2) * 0.055 * w;
+                for (let vj = 0; vj < per; vj++) { const k = (ri * per + vj) * 3; pos.array[k] = base[k] + dx; pos.array[k + 1] = base[k + 1] + dy; }
+              }
+              pos.needsUpdate = true;
+            }
+            if (G._ragTailHeart) {
+              G._ragTailHeart.position.x = -0.05 + Math.sin(t * 2.4 + 4.4) * 0.1;
+              G._ragTailHeart.position.y = 1.24 + Math.cos(t * 1.8 + 3.2) * 0.055;
+              G._ragTailHeart.rotation.z = Math.sin(t * 2.4 + 4.4) * 0.25;
+            }
+          }
         }
         const rax = weaponModels.ragAxe;
         if (rax && rax.visible) { if (rax.userData.blade) rax.userData.blade.material.emissiveIntensity = 0.8 + Math.abs(Math.sin(t * 3.4)) * 0.6; if (rax.userData.glow) rax.userData.glow.intensity = 0.45 + Math.abs(Math.sin(t * 3.4)) * 0.4; }
