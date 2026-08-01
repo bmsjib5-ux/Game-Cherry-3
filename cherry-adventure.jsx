@@ -2603,10 +2603,10 @@ export default function CherryAdventure() {
       const elbow = new THREE.Group();
       elbow.position.y = -0.5; // elbow height, relative to shoulder
       const foreProfile = [
-        [0.078, 0.00], // elbow
-        [0.072, 0.16], // forearm
-        [0.062, 0.34],
-        [0.055, 0.42], // slim wrist
+        [0.058, 0.00], // 🖐️ slim wrist (ปลายล่าง ชนมือ)
+        [0.066, 0.14],
+        [0.073, 0.30],
+        [0.0757, 0.42], // ข้อศอก — รัศมีเท่าปลายท่อนบน (0.076) → แขนไล่เรียวเป็นท่อนเดียว ไม่เห็นรอยต่อ
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const forearm = new THREE.Mesh(new THREE.LatheGeometry(foreProfile, 20), skinMat);
       forearm.position.y = -0.42;
@@ -2614,8 +2614,8 @@ export default function CherryAdventure() {
       hand.scale.set(0.9, 1.15, 0.8);
       hand.position.y = -0.52;
       handMeshes.push(hand);
-      // 🦴 ทรงกลมผิวคลุมจุดหมุนศอก — ปิดรอยต่อท่อนบน/ท่อนล่างตอนงอแขน ไม่ให้เห็นเป็นข้อไม้
-      const elbowBall = new THREE.Mesh(new THREE.SphereGeometry(0.084, 16, 14), skinMat);
+      // 🦴 ทรงกลมผิวจุดหมุนศอก — รัศมีเท่าท่อแขนพอดี: มองไม่เห็นตอนเหยียดตรง แค่อุดรอยต่อตอนงอ
+      const elbowBall = new THREE.Mesh(new THREE.SphereGeometry(0.0765, 18, 16), skinMat);
       elbow.add(forearm, hand, elbowBall);
       p.add(elbow);
       p.userData.elbow = elbow; // 💪 expose the joint for bending
