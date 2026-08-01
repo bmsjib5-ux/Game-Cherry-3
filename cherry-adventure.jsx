@@ -5740,6 +5740,7 @@ export default function CherryAdventure() {
         if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro" && id !== "kotaro" && id !== "kairi" && id !== "aurelius" && id !== "ragnar"; } // 👸🌙❄️ ฮีโร่ใช้ผมประจำตัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = true; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
+        if (G.setOutfitVisual) G.setOutfitVisual(G.equip ? G.equip.outfit : null); // 🦸 ซ่อน/คืนโมเดลชุดสวมตามลุคฮีโร่
         if (G.applyGear) G.applyGear();
         if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null); // swap to/from the signature staff
         haruIrises.forEach((m, i) => {
@@ -7677,8 +7678,8 @@ export default function CherryAdventure() {
     const OUTFIT_FALLBACK = { rare: "o2", epic: "o3", secret: "oS", dragon: "oD", legend: "lg_out", common: "o1" };
     const ARCH_TINT = { atk: 0xd9536b, def: 0x3a7ac0, agi: 0x4aa06a };
     G.setOutfitVisual = (id) => {
-      // 🙈 hide-gear hides the worn outfit everywhere; 👗 else a costume outfit overrides the look
-      if (G._gearHidden) id = null;
+      // 🦸 ลุคฮีโร่ประจำตัวแทนที่ชุดสวมทั้งชิ้น (กันเสื้อเกราะ/ผ้าพันคอโผล่ทับผิว) · 🙈 hide-gear hides the worn outfit; 👗 else a costume outfit overrides the look
+      if (G.heroId || G._gearHidden) id = null;
       else if (G.costume && G.costume.outfit) id = G.costume.outfit;
       const it = LOOT.find((x) => x.id === id);
       // 👗 per-class outfit look for generated archetype pieces (chosen by wearer's class + tier)

@@ -7540,6 +7540,8 @@ function CherryAdventure() {
                 } // คืนทรงผมปกติเมื่อสลับตัวละคร
                 if (G.reconcileClassPieces)
                     G.reconcileClassPieces(); // hero look replaces the class armor
+                if (G.setOutfitVisual)
+                    G.setOutfitVisual(G.equip ? G.equip.outfit : null); // 🦸 ซ่อน/คืนโมเดลชุดสวมตามลุคฮีโร่
                 if (G.applyGear)
                     G.applyGear();
                 if (G.setWeaponVisual)
@@ -11855,8 +11857,8 @@ function CherryAdventure() {
         const OUTFIT_FALLBACK = { rare: "o2", epic: "o3", secret: "oS", dragon: "oD", legend: "lg_out", common: "o1" };
         const ARCH_TINT = { atk: 0xd9536b, def: 0x3a7ac0, agi: 0x4aa06a };
         G.setOutfitVisual = (id) => {
-            // 🙈 hide-gear hides the worn outfit everywhere; 👗 else a costume outfit overrides the look
-            if (G._gearHidden)
+            // 🦸 ลุคฮีโร่ประจำตัวแทนที่ชุดสวมทั้งชิ้น (กันเสื้อเกราะ/ผ้าพันคอโผล่ทับผิว) · 🙈 hide-gear hides the worn outfit; 👗 else a costume outfit overrides the look
+            if (G.heroId || G._gearHidden)
                 id = null;
             else if (G.costume && G.costume.outfit)
                 id = G.costume.outfit;
