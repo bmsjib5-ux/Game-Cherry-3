@@ -2285,10 +2285,10 @@ export default function CherryAdventure() {
       hip.scale.set(1, 1.18, 1); // 🦵 ขายาวขึ้น (ยืดแนวตั้ง เท้ายังอยู่พื้น)
       // ✨ thigh (upper leg) — from hip down to the knee
       const thighProfile = [
-        [0.162, 0.00], // ✏️ pencil leg — smooth continuous taper hip → knee
-        [0.152, 0.20],
-        [0.142, 0.42],
-        [0.135, 0.56],
+        [0.1352, 0.00], // 🦵 หัวเข่า (ปลายล่าง) — รัศมีเท่าหัวน่อง → ต่อเนื่องไม่เห็นรอย
+        [0.145, 0.20],
+        [0.157, 0.42],
+        [0.165, 0.56], // โคนขากว้างสุดชนสะโพก แล้วไล่ระดับแคบลงถึงข้อเท้า
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const thigh = new THREE.Mesh(new THREE.LatheGeometry(thighProfile, 30), pantsMat);
       thigh.position.y = -0.56; thigh.scale.set(1, 1, 0.9); thigh.castShadow = true;
@@ -2300,15 +2300,15 @@ export default function CherryAdventure() {
       const knee = new THREE.Group();
       knee.position.y = -0.56; // knee height, relative to hip
       const calfProfile = [
-        [0.135, 0.00], // ✏️ pencil leg — no calf bulge, straight taper knee → ankle
-        [0.123, 0.12],
-        [0.108, 0.30],
-        [0.095, 0.42],
+        [0.095, 0.00], // 🦶 ข้อเท้าเรียว (ปลายล่าง ชนรองเท้า)
+        [0.108, 0.12],
+        [0.123, 0.30],
+        [0.1348, 0.42], // หัวเข่า — รัศมีเท่าปลายต้นขา (0.135) → ขาไล่เรียวเป็นท่อนเดียว ไม่เห็นรอยต่อ
       ].map(([r, y]) => new THREE.Vector2(r, y));
       const calf = new THREE.Mesh(new THREE.LatheGeometry(calfProfile, 30), pantsMat);
       calf.position.y = -0.42; calf.scale.set(1, 1, 0.9); calf.castShadow = true;
-      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.138, 18, 16), pantsMat);
-      kneeCap.scale.set(1, 0.96, 0.9); // ✏️ ขนาดเท่าท่อขา — กลมพอปิดรอยต่อท่อนบน/ล่างทุกท่างอ ไม่นูนตอนยืดตรง
+      const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.1352, 18, 16), pantsMat);
+      kneeCap.scale.set(1, 0.98, 0.9); // ✏️ รัศมีเท่าท่อขาพอดี — มองไม่เห็นตอนยืดตรง แค่อุดรอยต่อตอนงอเข่า
       const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.17, 24, 24), whiteMat);
       shoe.scale.set(1, 0.6, 1.4);
       shoe.position.set(0, -0.46, 0.06);
@@ -7332,7 +7332,7 @@ export default function CherryAdventure() {
       G._ragCapeCloth = []; // ชุดนี้ไม่มีผ้าคลุม — ใช้ปีกปีศาจแทน
       // ===== ถุงเท้าดำยาว + รองเท้าบูทส้นตึกหัวใจ (ตามภาพ) =====
       const rLegParts = [];
-      for (const leg of [legL, legR]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.138, 0.56, 14), rBlackL); sock.position.set(0, -0.3, 0.01); leg.add(sock); rLegParts.push(sock); const sockT = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.014, 6, 16), rBlackL); sockT.position.set(0, -0.04, 0.01); sockT.rotation.x = Math.PI / 2; leg.add(sockT); rLegParts.push(sockT);
+      for (const leg of [legL, legR]) { const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.172, 0.14, 0.56, 14), rBlackL); sock.position.set(0, -0.3, 0.01); leg.add(sock); rLegParts.push(sock); const sockT = new THREE.Mesh(new THREE.TorusGeometry(0.168, 0.014, 6, 16), rBlackL); sockT.position.set(0, -0.06, 0.01); sockT.rotation.x = Math.PI / 2; leg.add(sockT); rLegParts.push(sockT);
         const kn2 = leg.userData.knee || leg; // 🦵 ถุงเท้าต่อเนื่องคลุมเข่าถึงบูท — ลูกกลมหัวเข่าปิดรอยต่อตอนงอ + ท่อนน่องตามขาท่อนล่าง
         const kneeBall = new THREE.Mesh(new THREE.SphereGeometry(0.142, 16, 14), rBlackL); kneeBall.scale.set(1, 0.9, 0.95); kn2.add(kneeBall); rLegParts.push(kneeBall);
         const calfSock = new THREE.Mesh(new THREE.CylinderGeometry(0.138, 0.126, 0.32, 14), rBlackL); calfSock.position.set(0, -0.16, 0.005); kn2.add(calfSock); rLegParts.push(calfSock); }
