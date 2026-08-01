@@ -7289,7 +7289,7 @@ export default function CherryAdventure() {
       headG.add(rHead);
       // ===== เสื้อปีศาจน้อย: เอวลอย + ท็อปแดงเข้ม + สายรัดไขว้ + ปกคอหัวใจ + ปีกปีศาจ (ตามภาพ) =====
       const rOut = new THREE.Group();
-      const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.285, 1.98], [0.22, 2.08], [0.13, 2.16]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin); bare.scale.set(1.06, 1, 0.95); rOut.add(bare); // 🧡 ลำตัวสโลปเรียวชิ้นเดียวถึงคอ — แทนลำตัวฐานทั้งชิ้น ไม่มีผิวซ้อนเป็นสัน
+      const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.27, 1.98], [0.16, 2.05], [0.105, 2.1], [0.095, 2.2]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin); bare.scale.set(1.06, 1, 0.95); rOut.add(bare); // 🧡 ลำตัวสโลปเรียวชิ้นเดียวถึงคอ — แทนลำตัวฐานทั้งชิ้น ไม่มีผิวซ้อนเป็นสัน
       const top = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.58], [0.378, 1.66], [0.382, 1.74], [0.36, 1.82], [0.335, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rMaroon); top.scale.set(1.07, 1, 0.96); rOut.add(top); // 👙 เสื้อเกาะอกแถบอก — เปิดไหล่/บ่า ไม่มีเสื้อด้านใน
       // (เอาเส้นขอบดำบน-ล่างของเกาะอกออก — ให้ขอบผ้าโค้งนุ่มไม่แข็ง)
       { // 🦋 อกเสื้อทรงปีกผีเสื้อสองข้าง ขนาบหัวใจกลางอก (ขอบดำรอง + แผ่นแดงเข้มหน้า)
@@ -7315,7 +7315,7 @@ export default function CherryAdventure() {
       const chestHeart = mkHeart(0.1); chestHeart.position.set(0, 1.755, 0.405); rOut.add(chestHeart); // 💗 หัวใจใหญ่กลางอก
       for (const s of [1, -1]) { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.72, 0.025), rLeather); strap.position.set(0, 1.4, 0.315); strap.rotation.z = s * 0.55; strap.rotation.x = -0.08; rOut.add(strap); for (const sy of [-0.2]) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), rGoldS); st.position.set(-s * sy * 1.3, 1.4 + sy, 0.34); rOut.add(st); } } // ⛓️ สายรัดไขว้ + หมุดทอง (ตัดหมุดคู่บนบนผิวออก)
       // (ตัดปกคอ/เสื้อคลุมไหล่ออก — เกาะอกล้วน เปิดไหล่เปิดหลัง เหลือแค่โช้กเกอร์โบว์)
-      const colT = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.024, 8, 20), rBow); colT.position.y = 2.06; colT.rotation.x = Math.PI / 2; rOut.add(colT); // 🎀 สายโช้กเกอร์รัดรอบคอ
+      const colT = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.024, 8, 20), rBow); colT.position.y = 2.1; colT.rotation.x = Math.PI / 2; rOut.add(colT); // 🎀 สายโช้กเกอร์รัดรอบคอเรียว
       // 🎀 โช้กเกอร์โบว์แดงเข้ม + หัวใจเรืองกลางคอ (ตามภาพ)
       for (const s of [-1, 1]) { const loop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 12), rBow); loop.scale.set(1.5, 0.75, 0.5); loop.position.set(s * 0.1, 2.04, 0.22); loop.rotation.z = s * 0.45; rOut.add(loop); const tl = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.17, 8), rBow); tl.scale.z = 0.55; tl.position.set(s * 0.08, 1.92, 0.26); tl.rotation.set(0.12, 0, s * 0.3); rOut.add(tl); }
       const neckHeart = mkHeart(0.06); neckHeart.position.set(0, 2.02, 0.24); rOut.add(neckHeart);
