@@ -7364,8 +7364,10 @@ export default function CherryAdventure() {
       // ===== กระโปรงสายรัด: กางเกงหนังดำ + เข็มขัดคู่ + จี้หัวใจ + หางปีศาจ (ตามภาพ) =====
       const rLow = new THREE.Group();
       const rHips = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 18), rBlackL); rHips.scale.set(1.03, 0.62, 0.9); rHips.position.y = 1.18; rLow.add(rHips);
-      const shorts = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.42, 0.28, 22, 1, true), rBlackL); shorts.position.y = 1.06; rLow.add(shorts);
-      const shortsHem = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.012, 6, 24), rHeart); shortsHem.position.y = 0.93; shortsHem.rotation.x = Math.PI / 2; rLow.add(shortsHem);
+      // 👖 กางเกงผ้านุ่ม: ทรงระฆังโค้งมน (ไม่ใช่กระบอกตรง) + ชายผ้าพลิ้วไหวได้
+      const shortsGeo = new THREE.LatheGeometry([[0.432, 0.885], [0.421, 0.93], [0.407, 0.99], [0.396, 1.06], [0.382, 1.14], [0.355, 1.24]].map(([r, y]) => new THREE.Vector2(r, y)), 36);
+      const shorts = new THREE.Mesh(shortsGeo, rBlackL); rLow.add(shorts);
+      G._ragShorts = { m: shorts, base: Float32Array.from(shortsGeo.attributes.position.array) };
       const rbelt = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.39, 0.11, 22, 1, true), rLeather); rbelt.position.y = 1.28; rbelt.scale.set(1.05, 1, 1); rLow.add(rbelt);
       const rbelt2 = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.03, 8, 26), rLeather); rbelt2.position.y = 1.17; rbelt2.rotation.x = Math.PI / 2 - 0.18; rLow.add(rbelt2); // เข็มขัดเส้นที่สองคาดเฉียง
       const rbuck = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.03), new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.3, metalness: 0.85 })); rbuck.position.set(0, 1.28, 0.4); rLow.add(rbuck); // เข็มขัดหัวเงิน
@@ -19707,6 +19709,17 @@ export default function CherryAdventure() {
         if (G._ragEmbers && G._ragEmbers.length && G._ragEmbers[0].parent && G._ragEmbers[0].parent.visible) {
           G._ragEmbers.forEach(p => { const u = p.userData; u.ang += dt * u.spin * 0.4; p.position.x = Math.cos(u.ang) * u.rad; p.position.z = Math.sin(u.ang) * u.rad; p.position.y += dt * u.rise; if (p.position.y > 2.4) p.position.y = 0.2; p.rotation.y += dt * u.spin * 2; });
           if (G._ragWings) G._ragWings.forEach((w, i) => { w.rotation.y = w.userData.by + Math.sin(t * 5 + i * Math.PI) * 0.22 * (i ? 1 : -1); }); // 🦇 ปีกกระพือ
+          if (G._ragShorts) { // 👖🌊 ชายกางเกงผ้าพลิ้วเป็นคลื่นรอบตัว (แรงขึ้นทางชายล่าง)
+            const sk = G._ragShorts; const gp = sk.m.geometry.attributes.position, bb = sk.base;
+            for (let i = 0; i < gp.count; i++) {
+              const bx = bb[i * 3], by = bb[i * 3 + 1], bz = bb[i * 3 + 2];
+              const low = Math.max(0, (1.24 - by) / 0.36); if (low < 0.08) continue;
+              const ph = Math.atan2(bz, bx);
+              const wave = (Math.sin(t * 2.1 + ph * 5) + 0.5 * Math.sin(t * 1.5 + ph * 8)) * 0.028 * low;
+              gp.setX(i, bx + Math.cos(ph) * wave); gp.setZ(i, bz + Math.sin(ph) * wave); gp.setY(i, by - Math.abs(wave) * 0.25);
+            }
+            gp.needsUpdate = true;
+          }
           if (G._ragTail) { // 😈🌊 หางพริ้วเป็นคลื่นไล่จากโคนถึงปลาย + หัวใจปลายหางแกว่งตาม
             G._ragTail.rotation.y = Math.sin(t * 1.2) * 0.1;
             const tb = G._ragTailTube;
