@@ -2885,8 +2885,8 @@ function CherryAdventure() {
             p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
             // 💪 หัวไหล่ทรงเดลทอยด์ — ฝังลึกเข้าลำตัวและกลืนลงต้นแขน ให้ไหล่/บ่า/แขนเป็นเนื้อเดียว (จุดหมุนเดิม ขยับได้ปกติ)
             const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 22), shirtMat);
-            sleeve.scale.set(1.32, 1.3, 1.08);
-            sleeve.position.set(-0.045 * side, -0.045, 0);
+            sleeve.scale.set(1.18, 1.22, 1.04);
+            sleeve.position.set(-0.03 * side, -0.05, 0);
             // ✨ upper arm (shoulder → elbow)
             const upperProfile = [
                 [0.082, 0.00], // shoulder/upper arm
@@ -7519,6 +7519,8 @@ function CherryAdventure() {
                 (G._kaiParts || []).forEach(p => p.visible = id === "kairi");
                 (G._aurParts || []).forEach(p => p.visible = id === "aurelius");
                 (G._ragParts || []).forEach(p => p.visible = id === "ragnar");
+                if (typeof torso !== "undefined")
+                    torso.visible = id !== "ragnar"; // 🦸 รักนาร์ใช้ลำตัวผิวของชุดเอง — กันผิวสองชั้นซ้อนเป็นสันที่ไหล่/อก
                 (G._dressButtons || []).forEach(b => b.visible = !id);
                 if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar") {
                     hairStyles.forEach(h => h.visible = false);
@@ -11020,9 +11022,9 @@ function CherryAdventure() {
             headG.add(rHead);
             // ===== เสื้อปีศาจน้อย: เอวลอย + ท็อปแดงเข้ม + สายรัดไขว้ + ปกคอหัวใจ + ปีกปีศาจ (ตามภาพ) =====
             const rOut = new THREE.Group();
-            const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.29, 2.0]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin);
+            const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.325, 1.4], [0.335, 1.6], [0.33, 1.75], [0.315, 1.88], [0.285, 1.98], [0.22, 2.08], [0.13, 2.16]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rSkin);
             bare.scale.set(1.06, 1, 0.95);
-            rOut.add(bare); // 🧡 ลำตัวสโลปเรียว — แคบกว่าขอบเกาะอกบน/ล่าง ไม่ปูดเป็นชั้นเหนืออก/ข้างเอว
+            rOut.add(bare); // 🧡 ลำตัวสโลปเรียวชิ้นเดียวถึงคอ — แทนลำตัวฐานทั้งชิ้น ไม่มีผิวซ้อนเป็นสัน
             const top = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.58], [0.378, 1.66], [0.382, 1.74], [0.36, 1.82], [0.335, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rMaroon);
             top.scale.set(1.07, 1, 0.96);
             rOut.add(top); // 👙 เสื้อเกาะอกแถบอก — เปิดไหล่/บ่า ไม่มีเสื้อด้านใน
