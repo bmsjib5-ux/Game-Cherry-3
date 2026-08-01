@@ -2914,7 +2914,22 @@ function CherryAdventure() {
             handMeshes.push(hand);
             // 🦴 ทรงกลมผิวจุดหมุนศอก — รัศมีเท่าท่อแขนพอดี: มองไม่เห็นตอนเหยียดตรง แค่อุดรอยต่อตอนงอ
             const elbowBall = new THREE.Mesh(new THREE.SphereGeometry(0.0765, 18, 16), skinMat);
-            elbow.add(forearm, hand, elbowBall);
+            // ✋ นิ้วมือสไตล์ชิบิ — ปุ่มนิ้วมน 4 นิ้วโผล่จากปลายมือ + นิ้วโป้งด้านใน (ติดกับมือ ตามทุกท่าจับอาวุธ)
+            const fingers = new THREE.Group();
+            for (let fi = 0; fi < 4; fi++) {
+                const f = new THREE.Mesh(new THREE.SphereGeometry(0.027, 10, 8), skinMat);
+                f.scale.set(0.82, 1.45, 0.82);
+                f.position.set((fi - 1.5) * 0.05, -0.105, 0.012);
+                f.rotation.z = (fi - 1.5) * 0.1;
+                fingers.add(f);
+            }
+            const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.031, 10, 8), skinMat);
+            thumb.scale.set(0.85, 1.25, 0.85);
+            thumb.position.set(-side * 0.092, -0.04, 0.03);
+            thumb.rotation.z = -side * 0.5;
+            fingers.add(thumb);
+            fingers.position.set(0, -0.52, 0);
+            elbow.add(forearm, hand, elbowBall, fingers);
             p.add(elbow);
             p.userData.elbow = elbow; // 💪 expose the joint for bending
             char.add(p);
