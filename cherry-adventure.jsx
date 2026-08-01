@@ -2612,7 +2612,7 @@ export default function CherryAdventure() {
       const forearm = new THREE.Mesh(new THREE.LatheGeometry(foreProfile, 20), skinMat);
       forearm.position.y = -0.42;
       const hand = new THREE.Mesh(new THREE.SphereGeometry(0.115, 22, 22), skinMat);
-      hand.scale.set(0.9, 1.15, 0.8);
+      hand.scale.set(0.86, 1.05, 0.52); // ✋ ฝ่ามือแบน (ไม่เป็นลูกบอล)
       hand.position.y = -0.52;
       handMeshes.push(hand);
       // 🦴 ทรงกลมผิวจุดหมุนศอก — รัศมีเท่าท่อแขนพอดี: มองไม่เห็นตอนเหยียดตรง แค่อุดรอยต่อตอนงอ
@@ -2620,16 +2620,16 @@ export default function CherryAdventure() {
       // ✋ นิ้วมือสไตล์ชิบิ — ปุ่มนิ้วมน 4 นิ้วโผล่จากปลายมือ + นิ้วโป้งด้านใน (ติดกับมือ ตามทุกท่าจับอาวุธ)
       const fingers = new THREE.Group();
       for (let fi = 0; fi < 4; fi++) {
-        const f = new THREE.Mesh(new THREE.SphereGeometry(0.027, 10, 8), skinMat);
-        f.scale.set(0.82, 1.45, 0.82);
-        f.position.set((fi - 1.5) * 0.05, -0.105, 0.012);
-        f.rotation.z = (fi - 1.5) * 0.1;
+        const f = new THREE.Mesh(new THREE.SphereGeometry(0.0205, 10, 8), skinMat);
+        f.scale.set(0.72, 3.1, 0.72); // 🖐️ นิ้วเรียวยาว
+        f.position.set((fi - 1.5) * 0.044, -0.146 - (fi === 1 || fi === 2 ? 0.012 : 0), 0.012);
+        f.rotation.z = (fi - 1.5) * 0.07;
         fingers.add(f);
       }
-      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.031, 10, 8), skinMat);
-      thumb.scale.set(0.85, 1.25, 0.85);
-      thumb.position.set(-side * 0.092, -0.04, 0.03);
-      thumb.rotation.z = -side * 0.5;
+      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), skinMat);
+      thumb.scale.set(0.72, 2.3, 0.72);
+      thumb.position.set(-side * 0.096, -0.06, 0.028);
+      thumb.rotation.z = -side * 0.55;
       fingers.add(thumb);
       fingers.position.set(0, -0.52, 0);
       elbow.add(forearm, hand, elbowBall, fingers);
