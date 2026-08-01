@@ -7269,15 +7269,17 @@ export default function CherryAdventure() {
       // ===== เสื้อปีศาจน้อย: เอวลอย + ท็อปแดงเข้ม + สายรัดไขว้ + ปกคอหัวใจ + ปีกปีศาจ (ตามภาพ) =====
       const rOut = new THREE.Group();
       const bare = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.18], [0.34, 1.4], [0.36, 1.66], [0.34, 1.86], [0.3, 2.0]].map(([r, y]) => new THREE.Vector2(r, y)), 24), rSkin); bare.scale.set(1.06, 1, 0.95); rOut.add(bare);
-      const top = new THREE.Mesh(new THREE.LatheGeometry([[0.335, 1.6], [0.37, 1.72], [0.37, 1.84], [0.33, 1.94]].map(([r, y]) => new THREE.Vector2(r, y)), 24), rMaroon); top.scale.set(1.07, 1, 0.96); rOut.add(top);
-      const topT = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.014, 6, 26), rBlackL); topT.position.y = 1.6; topT.rotation.x = Math.PI / 2; topT.scale.set(1.07, 0.96, 1); rOut.add(topT);
+      const top = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.58], [0.378, 1.66], [0.382, 1.74], [0.36, 1.82], [0.335, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rMaroon); top.scale.set(1.07, 1, 0.96); rOut.add(top); // 👙 เสื้อเกาะอกแถบอก — เปิดไหล่/บ่า ไม่มีเสื้อด้านใน
+      const topT = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.014, 6, 26), rBlackL); topT.position.y = 1.58; topT.rotation.x = Math.PI / 2; topT.scale.set(1.07, 0.96, 1); rOut.add(topT);
+      const topT2 = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.014, 6, 26), rBlackL); topT2.position.y = 1.85; topT2.rotation.x = Math.PI / 2; topT2.scale.set(1.05, 0.94, 1); rOut.add(topT2); // ขอบบนเกาะอก
+      for (const s of [-1, 1]) { const cup = new THREE.Mesh(new THREE.SphereGeometry(0.115, 16, 14), rMaroon); cup.scale.set(1, 0.85, 0.6); cup.position.set(s * 0.155, 1.78, 0.33); rOut.add(cup); } // ทรงเกาะอกอกคู่ (sweetheart)
       const chestHeart = mkHeart(0.07); chestHeart.position.set(0, 1.76, 0.4); rOut.add(chestHeart);
       for (const s of [1, -1]) { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.72, 0.025), rLeather); strap.position.set(0, 1.4, 0.315); strap.rotation.z = s * 0.55; strap.rotation.x = -0.08; rOut.add(strap); for (const sy of [-0.2, 0.16]) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), rGoldS); st.position.set(-s * sy * 1.3, 1.4 + sy, 0.34); rOut.add(st); } } // ⛓️ สายรัดไขว้ + หมุดทอง
-      const cape2 = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.24, 18, 1, true), rMaroon); cape2.position.set(0, 1.96, -0.02); cape2.rotation.x = Math.PI; rOut.add(cape2);
-      const colT = new THREE.Mesh(new THREE.TorusGeometry(0.335, 0.02, 6, 22), rBow); colT.position.y = 2.04; colT.rotation.x = Math.PI / 2; rOut.add(colT);
+      // (ตัดปกคอ/เสื้อคลุมไหล่ออก — เกาะอกล้วน เปิดไหล่เปิดหลัง เหลือแค่โช้กเกอร์โบว์)
+      const colT = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.024, 8, 20), rBow); colT.position.y = 2.06; colT.rotation.x = Math.PI / 2; rOut.add(colT); // 🎀 สายโช้กเกอร์รัดรอบคอ
       // 🎀 โช้กเกอร์โบว์แดงเข้ม + หัวใจเรืองกลางคอ (ตามภาพ)
-      for (const s of [-1, 1]) { const loop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 12), rBow); loop.scale.set(1.5, 0.75, 0.5); loop.position.set(s * 0.1, 2.02, 0.3); loop.rotation.z = s * 0.45; rOut.add(loop); const tl = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.17, 8), rBow); tl.scale.z = 0.55; tl.position.set(s * 0.08, 1.88, 0.32); tl.rotation.set(0.12, 0, s * 0.3); rOut.add(tl); }
-      const neckHeart = mkHeart(0.06); neckHeart.position.set(0, 2.0, 0.335); rOut.add(neckHeart);
+      for (const s of [-1, 1]) { const loop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 12), rBow); loop.scale.set(1.5, 0.75, 0.5); loop.position.set(s * 0.1, 2.04, 0.22); loop.rotation.z = s * 0.45; rOut.add(loop); const tl = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.17, 8), rBow); tl.scale.z = 0.55; tl.position.set(s * 0.08, 1.92, 0.26); tl.rotation.set(0.12, 0, s * 0.3); rOut.add(tl); }
+      const neckHeart = mkHeart(0.06); neckHeart.position.set(0, 2.02, 0.24); rOut.add(neckHeart);
       // 🦇 ปีกค้างคาวพังผืดเรียบสมูท (ShapeGeometry) + กระพือได้
       const rWings = [];
       const rWingD = new THREE.MeshStandardMaterial({ color: 0x481018, roughness: 0.6, side: THREE.DoubleSide });
