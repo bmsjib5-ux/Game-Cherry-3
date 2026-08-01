@@ -2614,7 +2614,9 @@ export default function CherryAdventure() {
       hand.scale.set(0.9, 1.15, 0.8);
       hand.position.y = -0.52;
       handMeshes.push(hand);
-      elbow.add(forearm, hand);
+      // 🦴 ทรงกลมผิวคลุมจุดหมุนศอก — ปิดรอยต่อท่อนบน/ท่อนล่างตอนงอแขน ไม่ให้เห็นเป็นข้อไม้
+      const elbowBall = new THREE.Mesh(new THREE.SphereGeometry(0.084, 16, 14), skinMat);
+      elbow.add(forearm, hand, elbowBall);
       p.add(elbow);
       p.userData.elbow = elbow; // 💪 expose the joint for bending
       char.add(p);
