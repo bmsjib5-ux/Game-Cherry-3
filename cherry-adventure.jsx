@@ -7292,8 +7292,27 @@ export default function CherryAdventure() {
       const top = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.58], [0.378, 1.66], [0.382, 1.74], [0.36, 1.82], [0.335, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), rMaroon); top.scale.set(1.07, 1, 0.96); rOut.add(top); // 👙 เสื้อเกาะอกแถบอก — เปิดไหล่/บ่า ไม่มีเสื้อด้านใน
       const topT = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.014, 6, 26), rBlackL); topT.position.y = 1.58; topT.rotation.x = Math.PI / 2; topT.scale.set(1.07, 0.96, 1); rOut.add(topT);
       const topT2 = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.014, 6, 26), rBlackL); topT2.position.y = 1.85; topT2.rotation.x = Math.PI / 2; topT2.scale.set(1.05, 0.94, 1); rOut.add(topT2); // ขอบบนเกาะอก
-      for (const s of [-1, 1]) { const cup = new THREE.Mesh(new THREE.SphereGeometry(0.115, 16, 14), rMaroon); cup.scale.set(1, 0.85, 0.6); cup.position.set(s * 0.155, 1.78, 0.33); rOut.add(cup); } // ทรงเกาะอกอกคู่ (sweetheart)
-      const chestHeart = mkHeart(0.07); chestHeart.position.set(0, 1.76, 0.4); rOut.add(chestHeart);
+      { // 🦋 อกเสื้อทรงปีกผีเสื้อสองข้าง ขนาบหัวใจกลางอก (ขอบดำรอง + แผ่นแดงเข้มหน้า)
+        const bwShape = new THREE.Shape();
+        bwShape.moveTo(0, 0.01);
+        bwShape.quadraticCurveTo(0.03, 0.105, 0.11, 0.128);  // โค้งขึ้นจากกลางอก
+        bwShape.quadraticCurveTo(0.21, 0.138, 0.25, 0.06);   // ปีกบนใหญ่
+        bwShape.quadraticCurveTo(0.262, 0.002, 0.19, -0.018); // รอยหยักเอวปีก
+        bwShape.quadraticCurveTo(0.235, -0.072, 0.168, -0.108); // ปีกล่างเล็ก
+        bwShape.quadraticCurveTo(0.08, -0.132, 0.02, -0.078); // กลับเข้ากลางอก
+        bwShape.closePath();
+        const bwGeo = new THREE.ShapeGeometry(bwShape, 12);
+        const bwDark = new THREE.MeshStandardMaterial({ color: 0x2a1016, roughness: 0.6, side: THREE.DoubleSide });
+        const bwMar = new THREE.MeshStandardMaterial({ color: 0x6a2a38, roughness: 0.62, side: THREE.DoubleSide });
+        for (const s of [-1, 1]) {
+          const wgp = new THREE.Group();
+          const bk = new THREE.Mesh(bwGeo, bwDark); bk.scale.set(1.12, 1.12, 1); bk.position.z = -0.006; wgp.add(bk);
+          const fr = new THREE.Mesh(bwGeo, bwMar); wgp.add(fr);
+          const dotH = mkHeart(0.032); dotH.position.set(0.15, 0.04, 0.004); wgp.add(dotH); // 💗 ลายหัวใจจิ๋วบนปีก
+          wgp.position.set(s * 0.03, 1.76, 0.372); wgp.scale.x *= s; wgp.rotation.y = s * 0.45; rOut.add(wgp);
+        }
+      }
+      const chestHeart = mkHeart(0.1); chestHeart.position.set(0, 1.755, 0.405); rOut.add(chestHeart); // 💗 หัวใจใหญ่กลางอก
       for (const s of [1, -1]) { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.72, 0.025), rLeather); strap.position.set(0, 1.4, 0.315); strap.rotation.z = s * 0.55; strap.rotation.x = -0.08; rOut.add(strap); for (const sy of [-0.2, 0.16]) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), rGoldS); st.position.set(-s * sy * 1.3, 1.4 + sy, 0.34); rOut.add(st); } } // ⛓️ สายรัดไขว้ + หมุดทอง
       // (ตัดปกคอ/เสื้อคลุมไหล่ออก — เกาะอกล้วน เปิดไหล่เปิดหลัง เหลือแค่โช้กเกอร์โบว์)
       const colT = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.024, 8, 20), rBow); colT.position.y = 2.06; colT.rotation.x = Math.PI / 2; rOut.add(colT); // 🎀 สายโช้กเกอร์รัดรอบคอ
