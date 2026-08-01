@@ -7332,7 +7332,7 @@ export default function CherryAdventure() {
         }
       }
       const chestHeart = mkHeart(0.1); chestHeart.position.set(0, 1.755, 0.405); rOut.add(chestHeart); // 💗 หัวใจใหญ่กลางอก
-      for (const s of [1, -1]) { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.72, 0.025), rLeather); strap.position.set(0, 1.4, 0.315); strap.rotation.z = s * 0.55; strap.rotation.x = -0.08; rOut.add(strap); for (const sy of [-0.2]) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), rGoldS); st.position.set(-s * sy * 1.3, 1.4 + sy, 0.34); rOut.add(st); } } // ⛓️ สายรัดไขว้ + หมุดทอง (ตัดหมุดคู่บนบนผิวออก)
+      for (const s of [1, -1]) { const strap = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.5, 0.018), rLeather); strap.position.set(0, 1.47, 0.318); strap.rotation.z = s * 0.55; strap.rotation.x = -0.08; rOut.add(strap); } // ⛓️ สายรัดไขว้บาง ปลายสอดใต้เข็มขัด (ไม่ห้อยเป็นแผ่นแข็ง)
       // (ตัดปกคอ/เสื้อคลุมไหล่ออก — เกาะอกล้วน เปิดไหล่เปิดหลัง เหลือแค่โช้กเกอร์โบว์)
       // (เอาโบว์/สายโช้กเกอร์/หัวใจที่คอออก — โชว์คอบ่าเปลือยเรียบ)
       // 🦇 ปีกค้างคาวพังผืดเรียบสมูท (ShapeGeometry) + กระพือได้
@@ -7368,10 +7368,10 @@ export default function CherryAdventure() {
       const shortsGeo = new THREE.LatheGeometry([[0.432, 0.885], [0.421, 0.93], [0.407, 0.99], [0.396, 1.06], [0.382, 1.14], [0.355, 1.24]].map(([r, y]) => new THREE.Vector2(r, y)), 36);
       const shorts = new THREE.Mesh(shortsGeo, rBlackL); rLow.add(shorts);
       G._ragShorts = { m: shorts, base: Float32Array.from(shortsGeo.attributes.position.array) };
-      const rbelt = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.39, 0.11, 22, 1, true), rLeather); rbelt.position.y = 1.28; rbelt.scale.set(1.05, 1, 1); rLow.add(rbelt);
+      const rbelt = new THREE.Mesh(new THREE.LatheGeometry([[0.383, 1.225], [0.396, 1.25], [0.402, 1.285], [0.397, 1.32], [0.385, 1.345]].map(([r, y]) => new THREE.Vector2(r, y)), 30), rLeather); rbelt.scale.set(1.05, 1, 0.98); rbelt.rotation.z = 0.035; rbelt.rotation.x = 0.03; rLow.add(rbelt); // 🧵 เข็มขัดหนังนิ่ม — แถบโค้งมนขอบกลม เอียงหย่อนตามสรีระ ไม่ใช่กระบอกขอบคม
       const rbelt2 = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.03, 8, 26), rLeather); rbelt2.position.y = 1.17; rbelt2.rotation.x = Math.PI / 2 - 0.18; rLow.add(rbelt2); // เข็มขัดเส้นที่สองคาดเฉียง
       const rbuck = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.03), new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.3, metalness: 0.85 })); rbuck.position.set(0, 1.28, 0.4); rLow.add(rbuck); // เข็มขัดหัวเงิน
-      for (let i = 0; i < 6; i++) { const a = -0.9 + i * 0.36; const st = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), rGoldS); st.position.set(Math.sin(a) * 0.41, 1.28, Math.cos(a) * 0.41); rLow.add(st); }
+      for (let i = 0; i < 6; i++) { const a = -0.9 + i * 0.36; const st = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), rGoldS); st.position.set(Math.sin(a) * 0.437, 1.285 - Math.sin(a) * 0.015, Math.cos(a) * 0.408); rLow.add(st); }
       for (const [cx2, cz2] of [[0.24, 0.32], [-0.28, 0.28]]) { const link = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 5, 10), rGoldS); link.position.set(cx2, 1.2, cz2); rLow.add(link); const ch2 = mkHeart(0.04); ch2.position.set(cx2, 1.12, cz2); ch2.rotation.y = Math.atan2(cx2, cz2); rLow.add(ch2); } // 💗 จี้หัวใจห้อยเข็มขัด
       { const rSilver = new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.28, metalness: 0.85 }); // 🔒 จี้แม่กุญแจหัวใจเงินห้อยหน้าเข็มขัด (ตามภาพ)
         const shk = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.009, 6, 14, Math.PI), rSilver); shk.position.set(0.08, 1.2, 0.41); rLow.add(shk);
