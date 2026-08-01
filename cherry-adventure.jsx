@@ -7313,7 +7313,7 @@ export default function CherryAdventure() {
           const bk = new THREE.Mesh(bwGeo, bwDark); bk.scale.set(1.12, 1.12, 1); bk.position.z = -0.006; wgp.add(bk);
           const fr = new THREE.Mesh(bwGeo, bwMar); wgp.add(fr);
           const dotH = mkHeart(0.032); dotH.position.set(0.15, 0.04, 0.004); wgp.add(dotH); // 💗 ลายหัวใจจิ๋วบนปีก
-          wgp.position.set(s * 0.03, 1.76, 0.372); wgp.scale.x *= s; wgp.rotation.y = s * 0.45; rOut.add(wgp); // (ปีกผีเสื้อหน้าอก)
+          wgp.position.set(s * 0.03, 1.76, 0.398); wgp.scale.x *= s; wgp.rotation.y = s * 0.2; rOut.add(wgp); // 🦋 ปีกลอยหน้าเกาะอก ปลายไม่จมเข้าตัว
         }
       }
       const chestHeart = mkHeart(0.1); chestHeart.position.set(0, 1.755, 0.405); rOut.add(chestHeart); // 💗 หัวใจใหญ่กลางอก
