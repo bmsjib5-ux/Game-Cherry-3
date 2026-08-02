@@ -1689,8 +1689,8 @@ export default function CherryAdventure() {
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const FIELD_R = 28; // 🗺️ playable field radius — ~3× the area (was 16)
-    const TARGET_WILDS = 24; // 🐾 how many wild monsters populate the map (grouped into camps)
+    const FIELD_R = 34; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
+    const TARGET_WILDS = 48; // 🐾 มอนสเตอร์ในแมพ ×2 (กระจายตามแคมป์มากขึ้น)
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(FIELD_R - 0.08, FIELD_R + 0.08, 72),
       new THREE.MeshBasicMaterial({ color: 0x7ba05b, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
@@ -10172,18 +10172,20 @@ export default function CherryAdventure() {
     const wilds = [];
     // 🏕️ MONSTER CAMPS — group monsters into a handful of camps spread across the map, each owning a
     // level band (lower Lv near the middle, higher Lv further out) so they cluster by level at points.
-    const CAMP_COUNT = 6;
+    const CAMP_COUNT = 12; // 🏕️ จุดแคมป์มอนสเตอร์ ×2 — กระจายทั่วแมพมากขึ้น
     const makeCamps = () => {
       const lo = G.biomeLvMin != null ? G.biomeLvMin : 1;
       const hi = G.biomeLvMax != null ? G.biomeLvMax : lo + 9;
       const span = Math.max(1, hi - lo + 1);
       const camps = [];
       for (let i = 0; i < CAMP_COUNT; i++) {
-        const a = i / CAMP_COUNT * Math.PI * 2 + Math.random() * 0.5;
+        let a = i / CAMP_COUNT * Math.PI * 2 + Math.random() * 0.5;
         const rr = FIELD_R * (0.32 + 0.6 * (i / (CAMP_COUNT - 1)));
+        let cx = Math.cos(a) * rr, cz = Math.sin(a) * rr, guard = 0;
+        while (G.inSafeZone && G.inSafeZone(cx, cz) && guard++ < 10) { a += 0.35; cx = Math.cos(a) * rr; cz = Math.sin(a) * rr; } // 🛡️ แคมป์ไม่ทับพื้นที่ปลอดภัย
         const bandLo = Math.round(lo + span * (i / CAMP_COUNT));
         const bandHi = Math.round(lo + span * ((i + 1) / CAMP_COUNT)) - 1;
-        camps.push({ x: Math.cos(a) * rr, z: Math.sin(a) * rr, lvMin: bandLo, lvMax: Math.max(bandLo, bandHi) });
+        camps.push({ x: cx, z: cz, lvMin: bandLo, lvMax: Math.max(bandLo, bandHi) });
       }
       G.camps = camps;
       return camps;
@@ -10214,6 +10216,7 @@ export default function CherryAdventure() {
         m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * Math.PI * 2, r: 0.8 + Math.random() * 1.2, sp: 0.3 + Math.random() * 0.4 };
       }
       pushOut(m, 0.6); // don't spawn inside a tree or building
+      if (G.clampOutOfSafe) G.clampOutOfSafe(m); // 🛡️ ไม่เกิดในพื้นที่ปลอดภัย
       applyMenace(m); // 😱 scarier at higher level
       // ✨ shiny: rare special variant (4% chance) — golden sparkle, stronger, better rewards
       if (Math.random() < 0.04) {
@@ -11309,7 +11312,7 @@ export default function CherryAdventure() {
     };
     // 🌀 rifts sit at opposite edges of the map — LEFT far-west, RIGHT far-east
     const warpPair = new THREE.Group(); warpPair.position.set(0, 0, 0);
-    const WARP_LX = -24.0, WARP_RX = 24.0, WARP_PZ = 0;
+    const WARP_LX = -30.0, WARP_RX = 30.0, WARP_PZ = 0; // 🌀 ขยับตามขอบแมพใหม่ (FIELD_R 34)
     const warpL = makeDimPortal(); warpL.position.set(WARP_LX, 0, WARP_PZ); warpL.rotation.y = Math.PI / 2; warpPair.add(warpL);
     const warpR = makeDimPortal(); warpR.position.set(WARP_RX, 0, WARP_PZ); warpR.rotation.y = -Math.PI / 2; warpPair.add(warpR);
     const warpLabL = makeWarpLabel(3.05); warpL.add(warpLabL.sp);
@@ -11318,6 +11321,24 @@ export default function CherryAdventure() {
     G.warpGate = warpPair; // 🌀 reference for hiding during battle
     G._warpL = warpL; G._warpR = warpR; G._warpLabL = warpLabL; G._warpLabR = warpLabR;
     G._warpPts = { LX: WARP_LX, RX: WARP_RX, Z: WARP_PZ };
+    // 🛡️ พื้นที่ปลอดภัยทั้งหมด (มอนสเตอร์ไม่เข้า/ไม่เกิด/เลิกไล่): วาร์ปซ้าย-ขวา · หมู่บ้าน (บ้าน+NPC+บ่อน้ำ) · โรงตีเหล็ก · หอคอยมิติ
+    G._safePts = [
+      { x: WARP_LX, z: WARP_PZ, r: 4.2 },
+      { x: WARP_RX, z: WARP_PZ, r: 4.2 },
+      { x: -9.5, z: -8, r: 5.5 },  // 🏡 จุดบ้าน + NPC เฒ่าผู้วิเศษ + บ่อน้ำ
+      { x: 8.5, z: -7, r: 3.4 },   // ⚒️ จุดช่างตีเหล็ก
+      { x: -6.6, z: 7.0, r: 3.6 }, // 🗼 จุดวาร์ปหอคอยมิติ
+    ];
+    { // วงแสดงเขตปลอดภัยบนพื้น (เห็นทุกด่าน)
+      const safeMarks = new THREE.Group();
+      for (const sp of G._safePts) {
+        const rg = new THREE.Mesh(new THREE.RingGeometry(sp.r - 0.09, sp.r + 0.09, 48), new THREE.MeshBasicMaterial({ color: 0x8adf9a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+        rg.rotation.x = -Math.PI / 2; rg.position.set(sp.x, 0.02, sp.z); safeMarks.add(rg);
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(sp.r, 40), new THREE.MeshBasicMaterial({ color: 0xbaf5c4, transparent: true, opacity: 0.09, depthWrite: false }));
+        disc.rotation.x = -Math.PI / 2; disc.position.set(sp.x, 0.015, sp.z); safeMarks.add(disc);
+      }
+      scene.add(safeMarks); G._safeMarks = safeMarks;
+    }
     // 🌀 zigzag loop over all 13 maps: advance one stage at a time (1→2→…→13→1); the FORWARD
     //    side alternates — reaching an EVEN-numbered stage is the RIGHT warp, ODD is the LEFT warp;
     //    the opposite warp steps back one stage.
@@ -16560,15 +16581,22 @@ export default function CherryAdventure() {
     const WILD_AGGRO = 6.0, WILD_MELEE = 2.1; // monsters notice from further, stop & strike at arm's length
     // 🛡️🌀 SAFE ZONE — a no-monster bubble around each warp portal; monsters can't enter or attack here
     const SAFE_R = 4.2;
-    const inSafeZone = (x, z) => { const P = G._warpPts; if (!P) return false; return Math.hypot(x - P.LX, z - P.Z) < SAFE_R || Math.hypot(x - P.RX, z - P.Z) < SAFE_R; };
+    const inSafeZone = (x, z) => { // 🛡️ ทุกจุดปลอดภัย: วาร์ป/บ้าน/NPC/โรงตีเหล็ก/หอคอย
+      const pts = G._safePts;
+      if (pts) { for (const p of pts) if (Math.hypot(x - p.x, z - p.z) < p.r) return true; return false; }
+      const P = G._warpPts; if (!P) return false;
+      return Math.hypot(x - P.LX, z - P.Z) < SAFE_R || Math.hypot(x - P.RX, z - P.Z) < SAFE_R;
+    };
     G.inSafeZone = inSafeZone;
     const clampOutOfSafe = (m) => { // push a monster back to the safe-zone boundary if it drifted inside
-      const P = G._warpPts; if (!P) return;
-      for (const cx of [P.LX, P.RX]) {
-        const dx = m.position.x - cx, dz = m.position.z - P.Z, d = Math.hypot(dx, dz);
-        if (d < SAFE_R) { const k = (SAFE_R + 0.05) / (d || 0.001); m.position.x = cx + dx * k; m.position.z = P.Z + dz * k; }
+      const pts = G._safePts;
+      if (!pts) return;
+      for (const p of pts) {
+        const dx = m.position.x - p.x, dz = m.position.z - p.z, d = Math.hypot(dx, dz);
+        if (d < p.r) { const k = (p.r + 0.05) / (d || 0.001); m.position.x = p.x + dx * k; m.position.z = p.z + dz * k; }
       }
     };
+    G.clampOutOfSafe = clampOutOfSafe;
     const isArenaFoe = (m) => !!(m.userData.boss || m.userData.biomeBoss || m.userData.dungeon || m.userData.golden || m.userData.ghost || m.userData.horde);
     const initWildHp = (m) => {
       if (m.userData.whp != null) return;
