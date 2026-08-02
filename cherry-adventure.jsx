@@ -11860,16 +11860,16 @@ export default function CherryAdventure() {
     homeZone.visible = false;
     scene.add(homeZone);
     { // พื้นไม้ + ผนัง 3 ด้าน + หน้าต่าง + เสื่อทางออก
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 13), hWood); floor.position.y = -0.05; homeZone.add(floor);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 13), hWood); floor.position.y = -0.02; homeZone.add(floor); // ผิวบน y=0.03 — ลอยพ้นพื้นโลก/เงาตัวละคร กัน z-fighting กระพริบ
       const wallM = new THREE.MeshStandardMaterial({ color: 0xf3e2c8, roughness: 0.9 });
       const wb = new THREE.Mesh(new THREE.BoxGeometry(16, 3.4, 0.3), wallM); wb.position.set(0, 1.7, -6.5); homeZone.add(wb);
       for (const sx of [-1, 1]) { const ws = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 13), wallM); ws.position.set(sx * 8, 1.7, 0); homeZone.add(ws); }
       for (const wx of [-4, 4]) { const win = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xbfe0ff, emissive: 0x86b4e8, emissiveIntensity: 0.45 })); win.position.set(wx, 1.9, -6.32); homeZone.add(win); const wf = new THREE.Mesh(new THREE.BoxGeometry(1.75, 1.35, 0.06), hWoodD); wf.position.set(wx, 1.9, -6.36); homeZone.add(wf); }
-      const exitMat = new THREE.Mesh(new THREE.CircleGeometry(0.95, 26), new THREE.MeshStandardMaterial({ color: 0xd9ecd0, emissive: 0x8ab87a, emissiveIntensity: 0.35, side: THREE.DoubleSide })); exitMat.rotation.x = -Math.PI / 2; exitMat.position.set(0, 0.02, 5.6); homeZone.add(exitMat);
+      const exitMat = new THREE.Mesh(new THREE.CircleGeometry(0.95, 26), new THREE.MeshStandardMaterial({ color: 0xd9ecd0, emissive: 0x8ab87a, emissiveIntensity: 0.35, side: THREE.DoubleSide })); exitMat.rotation.x = -Math.PI / 2; exitMat.position.set(0, 0.055, 5.6); homeZone.add(exitMat);
       const exLab = ranchLabel(2.4, 0.9); exLab.draw("🚪 ออกจากบ้าน", "#f2fbe8"); exLab.sprite.position.set(0, 1.5, 5.6); homeZone.add(exLab.sprite);
       const warm = new THREE.PointLight(0xffe0b0, 0.55, 18); warm.position.set(0, 3, 0); homeZone.add(warm);
     }
-    const homeFurniG = new THREE.Group(); homeZone.add(homeFurniG);
+    const homeFurniG = new THREE.Group(); homeFurniG.position.y = 0.032; homeZone.add(homeFurniG); // ยกเฟอร์นิเจอร์พ้นผิวพื้นไม้ กันกระพริบ
     G._homeZone = homeZone;
     G.buildHomeFurni = (list) => { // 🛋️ สร้างเฟอร์นิเจอร์ตามผัง (ของเราหรือของเพื่อน)
       while (homeFurniG.children.length) { const c = homeFurniG.children[0]; homeFurniG.remove(c); ranchDispose(c); }
