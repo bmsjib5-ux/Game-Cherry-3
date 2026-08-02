@@ -14339,11 +14339,8 @@ function CherryAdventure() {
                 cr.rotation.z = off * 1.1;
                 body.add(cr);
             }
-            // 🌈 ออร่าเรืองแสงกลายพันธุ์
-            const aura = tier >= 3 ? 0xffd24a : tier === 2 ? 0xba5af5 : 0x5adcf5;
-            if (monGlow)
-                monGlow(g, aura, 0.35 + tier * 0.1);
-            g.scale.multiplyScalar(1 + tier * 0.5); // 📏 ตัวใหญ่ขึ้น +0.5 เท่าต่อระดับกลายพันธุ์
+            // 🎨 สีตัวคงเดิมตามสายพันธุ์ (ไม่ย้อมออร่าทั้งตัว) — คริสตัลปริซึมบนหลังบอกระดับกลายพันธุ์แทน
+            g.scale.multiplyScalar(1 + tier * 0.25); // 📏 ตัวใหญ่ขึ้น +0.25 เท่าต่อระดับ (ลดการขยายลงครึ่งหนึ่ง)
             g.userData.mutated = tier;
             return g;
         };
