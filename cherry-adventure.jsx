@@ -2277,6 +2277,9 @@ export default function CherryAdventure() {
     // ---------- Cherry ----------
     const char = new THREE.Group();
     scene.add(char);
+    // 🏡 จุดเกิด/จุดฟื้น: หน้าบ้านในเขตปลอดภัยหมู่บ้าน (มอนสเตอร์เข้าไม่ได้/ตีไม่ได้)
+    G.spawnAtVillage = () => { char.position.set(-9.5, 0, -5.5); char.rotation.y = Math.PI / 2; };
+    G.spawnAtVillage(); // ⭐ ตำแหน่งเริ่มต้นทุกครั้งที่เข้าเกม
     const shoeMeshes = [];
     const legSkinMeshes = []; // 🦵 ขาเปลี่ยนเป็นสีผิวได้ (ฮารุ)
     const makeLeg = (side) => {
@@ -16990,7 +16993,7 @@ export default function CherryAdventure() {
       setTimeout(() => {
         if (G.mode !== "fainted") return;
         G.player.hp = effMaxHp();
-        char.position.set(0, 0, 0);
+        G.spawnAtVillage(); // 🏡 ฟื้นที่หน้าบ้านในเขตปลอดภัย
         if (G.restoreScenery) G.restoreScenery();
         G.mode = "explore";
         if (setMouth) setMouth("smile");
@@ -17532,7 +17535,7 @@ export default function CherryAdventure() {
       G.combo = 0;
       toast(`⚡✨ ตื่นพลังครั้งที่ ${G.ngPlus}! รีเซ็ตกลับ Lv.${m.to} · +5% ทุกสเตตัสถาวร (รวม +${G.ngPlus * 5}%) · เก็บของ/สกิล/สัตว์เลี้ยงไว้ครบ`);
       setUi((u) => ({ ...u, ngPlus: G.ngPlus, level: G.player.level, mode: "explore", homeOpen: false }));
-      char.position.set(0, 0, 0);
+      G.spawnAtVillage(); // 🏡 เกิดใหม่ที่หน้าบ้านในเขตปลอดภัย
       G.mode = "explore"; // ให้ saveGame ผ่านการ์ดโหมดแน่นอน
       syncPlayer();
       saveGame && saveGame();
@@ -17788,7 +17791,7 @@ export default function CherryAdventure() {
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // ❤️💧 เริ่มเกมเลือด/มานาเต็มหลอด (maxHp จริง = 3× ค่าฐาน)
       G.refreshShop(true); // stock the shop for free
       G.setBuddy(null);
-      char.position.set(0, 0, 0);
+      G.spawnAtVillage(); // 🏡 เริ่มเกมใหม่ที่หน้าบ้านในเขตปลอดภัย
       toast(`${C.emoji} เริ่มต้นการผจญภัยในสาย${C.name}!`);
       G.tutStep = 0; // 📖 start tutorial for new players
       if (G.computeTitle) G.computeTitle();
@@ -26047,7 +26050,7 @@ export default function CherryAdventure() {
                 }
                 setTimeout(() => {
                   G.player.hp = effMaxHp();
-                  char.position.set(0, 0, 0);
+                  G.spawnAtVillage(); // 🏡 ฟื้นที่หน้าบ้านในเขตปลอดภัย
                   if (G.restoreScenery) G.restoreScenery();
                   G.mode = "explore";
                   setMouth("smile");
