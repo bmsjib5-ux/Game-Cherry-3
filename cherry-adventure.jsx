@@ -1706,7 +1706,7 @@ export default function CherryAdventure() {
     const rnd = (a, b) => a + Math.random() * (b - a);
     // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
     G.biomeColliders = [];
-    const activeColliders = () => G.inHomeZone ? [] : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠 ในบ้านพื้นเรียบโล่ง ไม่มีสิ่งกีดขวางจากโลกภายนอก
+    const activeColliders = () => G.inHomeZone ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠 ในบ้านพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
     G.activeColliders = activeColliders;
     // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
     // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -11327,6 +11327,7 @@ export default function CherryAdventure() {
       { x: -9.5, z: -8, r: 5.5 },  // 🏡 จุดบ้าน + NPC เฒ่าผู้วิเศษ + บ่อน้ำ
       { x: 8.5, z: -7, r: 3.4 },   // ⚒️ จุดช่างตีเหล็ก
       { x: -6.6, z: 7.0, r: 3.6 }, // 🗼 จุดวาร์ปหอคอยมิติ
+      { x: -6, z: -3, r: 2.4 },    // 🐄 แท่นวาร์ปฟาร์ม (ยืนชาร์จวาร์ปได้ปลอดภัย)
     ];
     { // วงแสดงเขตปลอดภัยบนพื้น (เห็นทุกด่าน)
       const safeMarks = new THREE.Group();
@@ -11766,6 +11767,8 @@ export default function CherryAdventure() {
       wilds.forEach((m) => (m.visible = false)); // 👻 ซ่อนมอนสเตอร์ป่า
       if (portal) portal.visible = false;         // 🗼 ซ่อนพอร์ทัลหอคอย
       if (G.warpGate) G.warpGate.visible = false; // 🌀 ซ่อนแท่นวาร์ปแมป
+      if (G._homePad) G._homePad.visible = false;
+      if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน
       if (G._ranchPad) G._ranchPad.visible = false;
       G._ranchZone.visible = true;
       if (G.buildRanchPens) G.buildRanchPens((G.ranch && G.ranch.pens) || 2);   // 🐄 คอกตามจำนวนที่ซื้อ
@@ -11785,6 +11788,7 @@ export default function CherryAdventure() {
       wilds.forEach((m) => (m.visible = true));   // 🐾 คืนมอนสเตอร์ป่า
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
+      if (G._restoreBiomeDecor) G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
       const r = G._ranchReturn || { x: -6, z: -1 };
       char.position.set(r.x, char.position.y, r.z);
       G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
@@ -11795,6 +11799,10 @@ export default function CherryAdventure() {
     };
     // ================= 🏠 MY HOME ZONE — บ้านส่วนตัว: แต่งบ้าน + นอนพักรับบัฟ + เยี่ยมบ้านเพื่อน =================
     G.inHomeZone = false;
+    // 🌵 ซ่อน/คืนฉากประจำด่าน (ทะเลทราย หิมะ ฯลฯ) ตอนวาร์ปเข้าโซนฟาร์ม/บ้านจากด่านไหนก็ได้
+    const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor"];
+    G._hideBiomeDecor = () => { G._decorPrev = {}; BIOME_DECOR_KEYS.forEach((k) => { if (G[k]) { G._decorPrev[k] = G[k].visible; G[k].visible = false; } }); };
+    G._restoreBiomeDecor = () => { if (!G._decorPrev) return; BIOME_DECOR_KEYS.forEach((k) => { if (G[k] && G._decorPrev[k] != null) G[k].visible = G._decorPrev[k]; }); G._decorPrev = null; };
     if (!G.home) G.home = { owned: {}, furni: [] };
     const HOME_FURNI = [
       { id: "bed", name: "เตียงนุ่ม", emoji: "🛏️", price: 800, desc: "นอนพัก: ฟื้น HP/MP เต็ม + บัฟ XP +15% (10 นาที)" },
@@ -11887,6 +11895,7 @@ export default function CherryAdventure() {
       if (G._homePad) G._homePad.visible = false;
       if (G._safeMarks) G._safeMarks.visible = false;
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false)); // 🌳 ซ่อนต้นไม้/หิน/ของประดับโลก — พื้นบ้านเรียบโล่ง
+      if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน (เข้าบ้านได้จากทุกด่าน)
       homeZone.visible = true;
       G.buildHomeFurni(G._homeVisit ? G._homeVisit.furni : null);
       if (G.sfx && G.sfx.warp) G.sfx.warp();
@@ -11902,6 +11911,7 @@ export default function CherryAdventure() {
       if (G.warpGate) G.warpGate.visible = true;
       if (G._safeMarks) G._safeMarks.visible = true;
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true)); // 🌳 คืนฉากทุ่งซากุระ
+      if (G._restoreBiomeDecor) G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
       const r = G._homeReturn || { x: -13, z: -3 };
       char.position.set(r.x, char.position.y, r.z);
       G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
@@ -20635,23 +20645,31 @@ export default function CherryAdventure() {
 
         // ---------- 🏡 MY RANCH: pad visibility + enter/exit + in-zone life ----------
         if (G._ranchPad) {
-          G._ranchPad.visible = (G.curBiome === 0 && !G.inRanchZone); // โผล่เฉพาะทุ่งซากุระ
-          if (G._ranchPadRing) G._ranchPadRing.rotation.z = t * 1.2;
+          G._ranchPad.visible = (!G.inRanchZone && !G.inHomeZone); // 🐄 โผล่ทุกด่าน — วาร์ปเข้าฟาร์มได้จากทุกที่
+          if (G._ranchPadRing && !G._ranchPadT) G._ranchPadRing.rotation.z = t * 1.2;
         }
-        if (!G.inRanchZone && G.curBiome === 0 && G._ranchPad && G._ranchPad.visible) {
-          const rpd = Math.hypot(char.position.x - G._ranchPad.position.x, char.position.z - G._ranchPad.position.z);
-          if (rpd < 1.5 && !G.ranchPadShy) { G.ranchPadShy = true; try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } }
-          else if (rpd > 3) G.ranchPadShy = false; // เดินห่างแล้วค่อยเข้าได้อีก
-        }
-        // 🏠 แท่นวาร์ปบ้าน: โผล่เฉพาะทุ่งซากุระ + เข้าเมื่อเดินถึง / ในบ้าน: ออกเมื่อเหยียบเสื่อทางออก
         if (G._homePad) {
-          G._homePad.visible = (G.curBiome === 0 && !G.inRanchZone && !G.inHomeZone);
-          if (G._homePadRing) G._homePadRing.rotation.z = t * 1.2;
-          if (!G.inHomeZone && !G.inRanchZone && G.curBiome === 0 && G._homePad.visible) {
-            const hpd = Math.hypot(char.position.x - G._homePad.position.x, char.position.z - G._homePad.position.z);
-            if (hpd < 1.5 && !G.homePadShy) { G.homePadShy = true; try { G.enterHomeZone(); } catch (err) { G.inHomeZone = false; try { console.warn("enterHomeZone failed", err); } catch (_) {} } }
-            else if (hpd > 3) G.homePadShy = false;
+          G._homePad.visible = (!G.inRanchZone && !G.inHomeZone); // 🏠 โผล่ทุกด่าน
+          if (G._homePadRing && !G._homePadT) G._homePadRing.rotation.z = t * 1.2;
+        }
+        // ⏳ ยืนบนแท่นค้าง 2 วิ แล้วค่อยวาร์ป (วงแหวนหมุนเร็ว+ขยายบอกความคืบหน้า)
+        const padChargeStep = (pad, ring, shyKey, tKey, go) => {
+          if (!pad || !pad.visible) { G[tKey] = 0; if (ring) ring.scale.setScalar(1); return; }
+          const pd2 = Math.hypot(char.position.x - pad.position.x, char.position.z - pad.position.z);
+          if (pd2 < 1.5 && !G[shyKey]) {
+            G[tKey] = (G[tKey] || 0) + dt;
+            const cp = Math.min(1, G[tKey] / 2);
+            if (ring) { ring.rotation.z = t * (1.2 + cp * 7); ring.scale.setScalar(1 + cp * 0.4); }
+            if (G[tKey] >= 2) { G[shyKey] = true; G[tKey] = 0; if (ring) ring.scale.setScalar(1); go(); }
+          } else {
+            if (G[tKey] > 0 && ring) ring.scale.setScalar(1);
+            G[tKey] = 0;
+            if (pd2 > 3) G[shyKey] = false; // เดินห่างแล้วค่อยเข้าได้อีก
           }
+        };
+        if (!G.inRanchZone && !G.inHomeZone && G.mode === "explore" && !G.banim) {
+          padChargeStep(G._ranchPad, G._ranchPadRing, "ranchPadShy", "_ranchPadT", () => { try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } });
+          padChargeStep(G._homePad, G._homePadRing, "homePadShy", "_homePadT", () => { try { G.enterHomeZone(); } catch (err) { G.inHomeZone = false; try { console.warn("enterHomeZone failed", err); } catch (_) {} } });
         }
         if (G.inHomeZone) {
           const exd = Math.hypot(char.position.x - 0, char.position.z - 5.6);
