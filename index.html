@@ -1839,7 +1839,7 @@ function CherryAdventure() {
         const rnd = (a, b) => a + Math.random() * (b - a);
         // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
         G.biomeColliders = [];
-        const activeColliders = () => G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders;
+        const activeColliders = () => G.inHomeZone ? [] : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠 ในบ้านพื้นเรียบโล่ง ไม่มีสิ่งกีดขวางจากโลกภายนอก
         G.activeColliders = activeColliders;
         // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
         // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -18294,6 +18294,8 @@ function CherryAdventure() {
                 G._homePad.visible = false;
             if (G._safeMarks)
                 G._safeMarks.visible = false;
+            if (G.sceneryObjects)
+                G.sceneryObjects.forEach((o) => (o.visible = false)); // 🌳 ซ่อนต้นไม้/หิน/ของประดับโลก — พื้นบ้านเรียบโล่ง
             homeZone.visible = true;
             G.buildHomeFurni(G._homeVisit ? G._homeVisit.furni : null);
             if (G.sfx && G.sfx.warp)
@@ -18313,6 +18315,8 @@ function CherryAdventure() {
                 G.warpGate.visible = true;
             if (G._safeMarks)
                 G._safeMarks.visible = true;
+            if (G.sceneryObjects && G.curBiome === 0)
+                G.sceneryObjects.forEach((o) => (o.visible = true)); // 🌳 คืนฉากทุ่งซากุระ
             const r = G._homeReturn || { x: -13, z: -3 };
             char.position.set(r.x, char.position.y, r.z);
             G.vel.x = 0;
@@ -31706,10 +31710,16 @@ function CherryAdventure() {
                     const moveAmt = Math.min(1, spd / 3.4); // 0..1 blend between idle & full stride
                     if (spd > 0.25)
                         yaw = Math.atan2(G.vel.x, G.vel.z);
-                    const rr = Math.hypot(char.position.x, char.position.z);
-                    if (rr > FIELD_R - 0.3) {
-                        char.position.x *= (FIELD_R - 0.3) / rr;
-                        char.position.z *= (FIELD_R - 0.3) / rr;
+                    if (G.inHomeZone) { // 🏠 เดินได้เฉพาะในห้อง (กำแพง 3 ด้าน + หน้าเปิดถึงเสื่อทางออก)
+                        char.position.x = Math.max(-7.3, Math.min(7.3, char.position.x));
+                        char.position.z = Math.max(-5.8, Math.min(6.2, char.position.z));
+                    }
+                    else {
+                        const rr = Math.hypot(char.position.x, char.position.z);
+                        if (rr > FIELD_R - 0.3) {
+                            char.position.x *= (FIELD_R - 0.3) / rr;
+                            char.position.z *= (FIELD_R - 0.3) / rr;
+                        }
                     }
                     pushOut(char, 0.45); // can't walk through trees/buildings
                     // facing with a lean into turns
