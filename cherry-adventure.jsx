@@ -14668,6 +14668,11 @@ export default function CherryAdventure() {
     };
 
     const gainExp = (amt) => {
+      // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
+      if (!G._partyShareGrant && G.partyCode && G.partyActiveOthers) {
+        const others = G.partyActiveOthers();
+        if (others > 0) { amt = Math.round(amt * (1 + Math.min(0.45, others * 0.15))); G._partyXpg = (G._partyXpg || 0) + amt * 0.1; }
+      }
       G.player.exp += amt;
       toast(`+${amt} EXP`);
       let leveled = false;
@@ -17685,6 +17690,49 @@ export default function CherryAdventure() {
           return await res.json();
         } catch (e) { this.status = "error"; return null; }
       },
+      // 🏟️ หาคู่ประลอง PvP อันดับใกล้เคียง (สุ่มจากผู้เล่นจริงในเซิร์ฟเวอร์)
+      async findOpponent(rank, myPid) {
+        if (!this.enabled()) return null;
+        try {
+          const r = rank || 1000;
+          let res = await fetch(this._url(`players?pid=neq.${encodeURIComponent(myPid || "-")}&rank=gte.${r - 300}&rank=lte.${r + 300}&select=pid,n,c,lv,atk,def,hp,crit,rank,ng&limit=25`), { headers: this._headers() });
+          let rows = res.ok ? await res.json() : [];
+          if (!rows || !rows.length) { res = await fetch(this._url(`players?pid=neq.${encodeURIComponent(myPid || "-")}&select=pid,n,c,lv,atk,def,hp,crit,rank,ng&order=t.desc&limit=25`), { headers: this._headers() }); rows = res.ok ? await res.json() : []; }
+          if (!rows || !rows.length) return null;
+          return rows[Math.floor(Math.random() * rows.length)];
+        } catch (e) { return null; }
+      },
+      async rankBoard(limit) { // 🏅 กระดานอันดับ PvP
+        if (!this.enabled()) return null;
+        try {
+          const res = await fetch(this._url(`players?select=pid,n,c,lv,rank,ng&order=rank.desc,lv.desc&limit=${limit || 20}`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      // 🤝 ปาร์ตี้เก็บเลเวล — สมาชิกอัปเดตแถวตัวเอง / อ่านแถวเพื่อนร่วมปาร์ตี้
+      async partyUpsert(row) {
+        if (!this.enabled() || !row || !row.party || !row.pid) return false;
+        try {
+          const res = await fetch(this._url("party_member?on_conflict=party,pid"), { method: "POST", headers: this._headers({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify(row) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async partyMembers(code) {
+        if (!this.enabled() || !code) return null;
+        try {
+          const res = await fetch(this._url(`party_member?party=eq.${encodeURIComponent(code)}&select=*&order=seen.desc&limit=8`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      async partyLeave(code, pid) {
+        if (!this.enabled() || !code || !pid) return false;
+        try {
+          const res = await fetch(this._url(`party_member?party=eq.${encodeURIComponent(code)}&pid=eq.${encodeURIComponent(pid)}`), { method: "DELETE", headers: this._headers({ Prefer: "return=minimal" }) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
       // 🪪 is this character name already used by another player? (network error → returns false = don't block)
       async nameTaken(name, myPid) {
         if (!this.enabled() || !name) return false;
@@ -19090,6 +19138,75 @@ export default function CherryAdventure() {
       // build a "ghost enemy" from the friend's profile and start a special battle
       startGhostBattle(f);
       setUi((u) => ({ ...u, socialOpen: false }));
+    };
+    // ================= 🏟️ PVP ARENA — จับคู่ประลองจัดอันดับกับผู้เล่นจริง (อันดับใกล้เคียง) =================
+    G.pvpArena = async () => {
+      if (!CN.enabled()) { toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)"); return; }
+      if (G.mode !== "explore") { toast("ต้องอยู่ในโลกกว้างก่อนเข้าประลอง"); return; }
+      toast("🏟️ กำลังหาคู่ประลองอันดับใกล้เคียง...");
+      const foe = await CN.findOpponent(G.pvpRank || 1000, G.ensurePid());
+      if (!foe) { toast("ยังไม่พบคู่ประลอง — ลองใหม่อีกครั้ง"); return; }
+      G.socialOpen = false;
+      setUi((u) => ({ ...u, socialOpen: false }));
+      const tier = pvpTier(foe.rank || 1000);
+      toast(`⚔️ พบคู่ประลอง: ${foe.n} Lv.${foe.lv} · ${tier.emoji} อันดับ ${foe.rank || 1000}`);
+      startGhostBattle(foe);
+    };
+    G.loadPvpBoard = async () => {
+      const rows = await CN.rankBoard(15);
+      if (rows) setUi((u) => ({ ...u, pvpBoard: rows }));
+      else toast("🌐 โหลดกระดาน PvP ไม่ได้");
+    };
+    // ================= 🤝 PARTY — ปาร์ตี้เก็บเลเวลร่วมกัน (โบนัส XP + แชร์ XP ให้กันข้ามเครื่อง) =================
+    G.partyCode = null; G.partyMembers = []; G._partyXpg = 0; G._partyXpgSeen = null;
+    G.partyActiveOthers = () => (G.partyMembers || []).filter(r => r.pid !== G.pid && Date.now() - (r.seen || 0) < 90000).length;
+    const partyBeat = async () => {
+      if (!G.partyCode || !CN.enabled()) return;
+      await CN.partyUpsert({ party: G.partyCode, pid: G.ensurePid(), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls, lv: G.player ? G.player.level : 1, seen: Date.now(), xpg: Math.round(G._partyXpg || 0) });
+      const rows = await CN.partyMembers(G.partyCode);
+      if (!rows) return;
+      G.partyMembers = rows;
+      if (!G._partyXpgSeen) { G._partyXpgSeen = {}; rows.forEach(r => { if (r.pid !== G.pid) G._partyXpgSeen[r.pid] = r.xpg || 0; }); }
+      let share = 0;
+      rows.forEach(r => {
+        if (r.pid === G.pid) return;
+        const prev = G._partyXpgSeen[r.pid] != null ? G._partyXpgSeen[r.pid] : (r.xpg || 0);
+        if ((r.xpg || 0) > prev) share += (r.xpg || 0) - prev;
+        G._partyXpgSeen[r.pid] = r.xpg || 0;
+      });
+      if (share > 0 && G.player) { G._partyShareGrant = true; try { gainExp(Math.round(share)); } catch (e) {} G._partyShareGrant = false; toast(`🤝 XP แบ่งจากเพื่อนร่วมปาร์ตี้ +${Math.round(share)}`); }
+      setUi(u => ({ ...u, partyCode: G.partyCode, partyMembers: rows.map(r => ({ pid: r.pid, n: r.n, c: r.c, lv: r.lv, online: Date.now() - (r.seen || 0) < 90000 })) }));
+    };
+    const startPartyTimer = () => { if (!G._partyT) G._partyT = setInterval(partyBeat, 12000); };
+    const stopPartyTimer = () => { if (G._partyT) { clearInterval(G._partyT); G._partyT = null; } };
+    G.partyCreate = async () => {
+      if (!CN.enabled()) { toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)"); return; }
+      const code = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 5).toUpperCase() || "CHRY1";
+      G.partyCode = code; G._partyXpg = 0; G._partyXpgSeen = {};
+      await partyBeat(); startPartyTimer();
+      toast(`🤝 สร้างปาร์ตี้แล้ว! รหัส: ${code} — ส่งรหัสให้เพื่อนกดเข้าร่วม`);
+    };
+    G.partyJoin = async (code) => {
+      code = String(code || "").trim().toUpperCase();
+      if (!code) return;
+      if (!CN.enabled()) { toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)"); return; }
+      const rows = await CN.partyMembers(code);
+      if (!rows) { toast("🌐 เชื่อมต่อไม่ได้ ลองใหม่"); return; }
+      const others = rows.filter(r => r.pid !== G.pid);
+      if (!others.length) { toast("ไม่พบปาร์ตี้รหัสนี้ — เช็ครหัสอีกครั้ง"); return; }
+      if (others.length >= 4) { toast("ปาร์ตี้เต็มแล้ว (สูงสุด 4 คน)"); return; }
+      G.partyCode = code; G._partyXpg = 0; G._partyXpgSeen = {};
+      await partyBeat(); startPartyTimer();
+      toast(`🤝 เข้าร่วมปาร์ตี้ ${code} แล้ว! ล่ามอนสเตอร์ใกล้กันเพื่อโบนัส XP`);
+    };
+    G.partyLeaveNow = async () => {
+      if (!G.partyCode) return;
+      const c = G.partyCode;
+      G.partyCode = null; stopPartyTimer();
+      G.partyMembers = []; G._partyXpgSeen = null;
+      setUi(u => ({ ...u, partyCode: null, partyMembers: [] }));
+      await CN.partyLeave(c, G.pid);
+      toast("👋 ออกจากปาร์ตี้แล้ว");
     };
     const loadSave = (i) => {
       try {
@@ -28733,20 +28850,76 @@ export default function CherryAdventure() {
               {closeBtn("socialOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a7ad0", marginBottom: 6 }}>👥 เพื่อน & สู้ผี</div>
 
-              {/* 🏅 my PvP rank */}
+              {/* 🏅 my PvP rank + 🏟️ arena matchmaking */}
               {(() => {
                 const rank = ui.pvpRank || 1000;
                 const tier = pvpTier(rank);
                 return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#fef6ff,#f0e8fb)", borderRadius: 12, padding: "8px 10px", marginBottom: 10, border: "1.5px solid " + tier.color }}>
-                    <div style={{ fontSize: 26 }}>{tier.emoji}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: tier.color }}>{tier.name}</div>
-                      <div style={{ fontSize: 10.5, color: "#8a7aa0" }}>อันดับ PvP: <b>{rank}</b></div>
+                  <div style={{ background: "linear-gradient(135deg,#fef6ff,#f0e8fb)", borderRadius: 12, padding: "8px 10px", marginBottom: 10, border: "1.5px solid " + tier.color }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontSize: 26 }}>{tier.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: tier.color }}>{tier.name}</div>
+                        <div style={{ fontSize: 10.5, color: "#8a7aa0" }}>อันดับ PvP: <b>{rank}</b></div>
+                      </div>
                     </div>
+                    <div style={{ display: "flex", gap: 6, marginTop: 7 }}>
+                      <button onClick={() => G.pvpArena()} style={{ flex: 1, border: "none", borderRadius: 9, padding: "8px 0", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#d9536b,#b04ad0)" }}>🏟️ หาคู่ประลองจัดอันดับ</button>
+                      <button onClick={() => G.loadPvpBoard()} style={{ border: "none", borderRadius: 9, padding: "0 10px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#8a4ab0", background: "#fff" }}>🏅 อันดับ</button>
+                    </div>
+                    <div style={{ fontSize: 9, color: "#a08ab8", marginTop: 4 }}>ชนะ = อันดับขึ้น · แพ้ = อันดับลง · สุ่มเจอผู้เล่นจริงอันดับใกล้เคียง</div>
+                    {ui.pvpBoard && ui.pvpBoard.length > 0 && (
+                      <div style={{ marginTop: 5, background: "#fff", borderRadius: 9, padding: "4px 6px" }}>
+                        {ui.pvpBoard.map((p, i) => { const pt = pvpTier(p.rank || 1000); return (
+                          <div key={p.pid || i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "2px 2px", borderBottom: "1px solid #f4eefb" }}>
+                            <b style={{ width: 20, color: i === 0 ? "#e0a020" : i === 1 ? "#9aa0b0" : i === 2 ? "#c08050" : "#8a8a9a" }}>#{i + 1}</b>
+                            <span style={{ flex: 1, fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</span>
+                            <span style={{ fontSize: 9.5 }}>{pt.emoji}</span>
+                            <b style={{ color: pt.color }}>{p.rank || 1000}</b>
+                          </div>
+                        ); })}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
+
+              {/* 🤝 party — เก็บเลเวลร่วมกัน */}
+              <div style={{ background: "linear-gradient(135deg,#eefbf1,#e2f5ea)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #a8dcc0" }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#2a8a5a", marginBottom: 4 }}>🤝 ปาร์ตี้เก็บเลเวลร่วมกัน</div>
+                {!ui.partyCode ? (
+                  <>
+                    <div style={{ fontSize: 9.5, color: "#5a8a70", lineHeight: 1.5, marginBottom: 6 }}>ตั้งปาร์ตี้กับเพื่อน (สูงสุด 4 คน) — ออนไลน์พร้อมกันรับโบนัส XP +15%/คน และแบ่ง XP 10% ของที่แต่ละคนเก็บได้ให้กันอัตโนมัติ</div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => G.partyCreate()} style={{ flex: 1, border: "none", borderRadius: 9, padding: "8px 0", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3a9a5a,#2a8ab0)" }}>➕ สร้างปาร์ตี้</button>
+                      <input id="partyCodeInput" placeholder="รหัสปาร์ตี้" maxLength={8} style={{ width: 84, fontSize: 12, fontFamily: "monospace", borderRadius: 8, border: "1px solid #a8dcc0", padding: "6px 8px", outline: "none", textTransform: "uppercase" }} />
+                      <button onClick={() => { const el = document.getElementById("partyCodeInput"); if (el && el.value) { G.partyJoin(el.value); el.value = ""; } }} style={{ border: "none", borderRadius: 9, padding: "0 10px", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>เข้าร่วม</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                      <div style={{ fontSize: 9.5, color: "#5a8a70" }}>รหัสปาร์ตี้:</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, fontFamily: "monospace", color: "#2a8a5a", background: "#fff", borderRadius: 8, padding: "3px 10px", letterSpacing: 2 }}>{ui.partyCode}</div>
+                      <button onClick={() => { try { navigator.clipboard && navigator.clipboard.writeText(ui.partyCode); G.toast("📋 คัดลอกรหัสปาร์ตี้แล้ว!"); } catch (e) {} }} style={{ border: "none", borderRadius: 8, padding: "4px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#4a7ad0" }}>คัดลอก</button>
+                      <div style={{ flex: 1 }} />
+                      <button onClick={() => G.partyLeaveNow()} style={{ border: "none", borderRadius: 8, padding: "4px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#c05a5a" }}>ออก</button>
+                    </div>
+                    {(ui.partyMembers || []).map((m) => (
+                      <div key={m.pid} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #ddf0e4" }}>
+                        <span style={{ fontSize: 8, color: m.online ? "#3ac06a" : "#b8c4bc" }}>●</span>
+                        <span style={{ flex: 1, fontWeight: 700, color: "#3a6a4e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[m.c] && CLASSES[m.c].emoji) || ""} {m.n}{m.pid === ui.pid ? " (ฉัน)" : ""}</span>
+                        <b style={{ color: "#5a8a70" }}>Lv.{m.lv}</b>
+                      </div>
+                    ))}
+                    {(() => { const act = (ui.partyMembers || []).filter(m => m.online && m.pid !== ui.pid).length; return (
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: act > 0 ? "#2a8a5a" : "#8aa090", marginTop: 4 }}>
+                        {act > 0 ? `🔥 โบนัส XP +${Math.min(45, act * 15)}% (เพื่อนออนไลน์ ${act} คน) + แบ่ง XP ให้กัน 10%` : "รอเพื่อนออนไลน์... (โบนัสเริ่มเมื่อออนไลน์พร้อมกัน)"}
+                      </div>
+                    ); })()}
+                  </>
+                )}
+              </div>
 
               {/* 🌐 online (async multiplayer) */}
               {(() => {

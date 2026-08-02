@@ -452,3 +452,37 @@ grant execute on function public.contest_submit(text, text, text, jsonb, bigint,
 ```
 
 > ทำงานยังไง: `contest_submit` ใช้ upsert (`on conflict (pid,day)`) + `greatest(...)` จึงเก็บเฉพาะคะแนนที่ดีที่สุดของแต่ละคนในวันนั้น · กระดานดึงด้วย `order=score.desc` · ถ้าไม่ตั้งค่าออนไลน์ ยังเล่นประกวดแบบรับรางวัลในเครื่องได้ แต่แท็บ 📊 อันดับ จะแจ้งให้ตั้งค่าก่อน
+
+---
+
+## 10) 🤝 ปาร์ตี้เก็บเลเวลร่วมกัน — ตาราง `party_member`
+
+รัน SQL นี้ใน Supabase (SQL Editor) เพื่อเปิดระบบปาร์ตี้:
+
+```sql
+-- 🤝 สมาชิกปาร์ตี้: แต่ละคนอัปเดตแถวของตัวเอง (เลเวล/ออนไลน์ล่าสุด/XP ที่แบ่งสะสม)
+create table if not exists public.party_member (
+  party text not null,
+  pid   text not null,
+  n     text,
+  c     text,
+  lv    integer default 1,
+  seen  bigint default 0,
+  xpg   bigint default 0,
+  t     timestamptz default now(),
+  primary key (party, pid)
+);
+create index if not exists party_member_party_idx on public.party_member (party, seen desc);
+
+alter table public.party_member enable row level security;
+drop policy if exists "party read"   on public.party_member;
+drop policy if exists "party insert" on public.party_member;
+drop policy if exists "party update" on public.party_member;
+drop policy if exists "party delete" on public.party_member;
+create policy "party read"   on public.party_member for select using (true);
+create policy "party insert" on public.party_member for insert with check (true);
+create policy "party update" on public.party_member for update using (true) with check (true);
+create policy "party delete" on public.party_member for delete using (true);
+```
+
+> ทำงานยังไง: สร้างปาร์ตี้ได้รหัส 5 ตัว ส่งให้เพื่อน (สูงสุด 4 คน) · ทุก 12 วิ แต่ละเครื่องอัปเดตแถวตัวเอง (เลเวล, เวลาออนไลน์, `xpg` = XP สะสมที่แบ่งให้ปาร์ตี้ 10% ของที่เก็บได้) แล้วอ่านแถวเพื่อน — ส่วนต่าง `xpg` ของเพื่อนจะถูกมอบเป็น XP ให้เราอัตโนมัติ · ออนไลน์พร้อมกันยังได้โบนัส XP +15%/คน (สูงสุด +45%)
