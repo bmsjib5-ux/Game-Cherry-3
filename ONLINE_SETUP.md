@@ -486,3 +486,27 @@ create policy "party delete" on public.party_member for delete using (true);
 ```
 
 > ทำงานยังไง: สร้างปาร์ตี้ได้รหัส 5 ตัว ส่งให้เพื่อน (สูงสุด 4 คน) · ทุก 12 วิ แต่ละเครื่องอัปเดตแถวตัวเอง (เลเวล, เวลาออนไลน์, `xpg` = XP สะสมที่แบ่งให้ปาร์ตี้ 10% ของที่เก็บได้) แล้วอ่านแถวเพื่อน — ส่วนต่าง `xpg` ของเพื่อนจะถูกมอบเป็น XP ให้เราอัตโนมัติ · ออนไลน์พร้อมกันยังได้โบนัส XP +15%/คน (สูงสุด +45%)
+
+---
+
+## 11) 🏠 บ้าน + เยี่ยมบ้านเพื่อน — ตาราง `homes`
+
+```sql
+-- 🏠 ผังบ้านของผู้เล่น (เฟอร์นิเจอร์ที่วาง) — เพื่อนดึงไปดูตอนกดเยี่ยมบ้าน
+create table if not exists public.homes (
+  pid   text primary key,
+  n     text,
+  furni jsonb default '[]'::jsonb,
+  t     bigint default 0
+);
+
+alter table public.homes enable row level security;
+drop policy if exists "homes read"   on public.homes;
+drop policy if exists "homes insert" on public.homes;
+drop policy if exists "homes update" on public.homes;
+create policy "homes read"   on public.homes for select using (true);
+create policy "homes insert" on public.homes for insert with check (true);
+create policy "homes update" on public.homes for update using (true) with check (true);
+```
+
+> ทำงานยังไง: ทุกครั้งที่ออกจากบ้านตัวเอง เกมจะอัปโหลดผังเฟอร์นิเจอร์ขึ้นตาราง `homes` อัตโนมัติ · เพื่อนกดปุ่ม 🏠 ในลิสต์เพื่อนเพื่อวาร์ปไปเดินชมบ้านเรา (ดูอย่างเดียว แก้ไขไม่ได้)
