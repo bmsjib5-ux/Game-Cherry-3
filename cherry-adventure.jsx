@@ -9421,8 +9421,8 @@ export default function CherryAdventure() {
       }
       if (lv >= 30) for (const sx of [-1, 1]) { const wing = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.62, 3), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.88, roughness: 0.4 })); wing.position.set(sx * 0.34, 0.36, -0.16); wing.rotation.z = sx > 0 ? -1.75 : 1.75; wing.scale.set(1, 1, 0.22); body.add(wing); }
       if (lv >= 40) for (let k = 0; k < 3; k++) { const ice = new THREE.Mesh(new THREE.OctahedronGeometry(0.09 - k * 0.015, 0), new THREE.MeshStandardMaterial({ color: 0x9adcf5, transparent: true, opacity: 0.85, emissive: 0x6ac0f0, emissiveIntensity: 0.4, roughness: 0.2 })); ice.scale.y = 1.9; ice.position.set(0, 0.32 - k * 0.05, -0.25 - k * 0.12); body.add(ice); }
-      if (lv >= 100) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 10, 36), gold); ring.rotation.x = Math.PI / 2; ring.position.y = 0.06; g.add(ring); monGlow(g, 0xf5c542, 0.35); }
-      g.scale.multiplyScalar(1 + Math.min(0.45, lv * 0.0045)); // 📏 ตัวใหญ่ขึ้นตามเลเวล
+      if (lv >= 100) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 10, 36), gold); ring.rotation.x = Math.PI / 2; ring.position.y = 0.06; g.add(ring); } // 🎨 สีตัวคงเดิม (ไม่ย้อมทอง) — มีวงแหวนทองบอกแทน
+      g.scale.multiplyScalar(1 + Math.min(0.225, lv * 0.00225)); // 📏 ตัวใหญ่ขึ้นตามเลเวล (ลดอัตราขยายลงครึ่งหนึ่ง)
       return g;
     };
     G.applyEvoParts = applyEvoParts;
@@ -10078,8 +10078,7 @@ export default function CherryAdventure() {
         const front = new THREE.Mesh(new THREE.OctahedronGeometry(cr * 0.17, 0), gem(0xff3a6a)); front.scale.set(1, 1.35, 0.6); front.position.set(0, 0, cr); crownG.add(front);
         crownG.position.set(0, headY + headR + cr * 0.28, headZ * 0.1);
         body.add(crownG);
-        mat.emissive = new THREE.Color(sp.color).multiplyScalar(0.18);
-        g.scale.setScalar(1.15);
+        g.scale.setScalar(1.075); // 📏 โตขึ้นครึ่งเดียวของเดิม · 🎨 สีตัวคงเดิมไม่ย้อม
       }
       // 😇 ultimate form: halo + intense glow
       if (stage >= 3) {
@@ -10090,8 +10089,7 @@ export default function CherryAdventure() {
         halo.rotation.x = Math.PI / 2;
         halo.position.y = headY + headR + 0.4;
         body.add(halo);
-        mat.emissive = new THREE.Color(sp.color).multiplyScalar(0.35);
-        g.scale.multiplyScalar(1.12);
+        g.scale.multiplyScalar(1.06); // 📏 โตขึ้นครึ่งเดียวของเดิม · 🎨 สีตัวคงเดิมไม่ย้อม
       }
       g.userData.body = body;
       g.userData.spId = spId;

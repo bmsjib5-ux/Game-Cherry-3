@@ -14304,9 +14304,8 @@ function CherryAdventure() {
                 ring.rotation.x = Math.PI / 2;
                 ring.position.y = 0.06;
                 g.add(ring);
-                monGlow(g, 0xf5c542, 0.35);
-            }
-            g.scale.multiplyScalar(1 + Math.min(0.45, lv * 0.0045)); // 📏 ตัวใหญ่ขึ้นตามเลเวล
+            } // 🎨 สีตัวคงเดิม (ไม่ย้อมทอง) — มีวงแหวนทองบอกแทน
+            g.scale.multiplyScalar(1 + Math.min(0.225, lv * 0.00225)); // 📏 ตัวใหญ่ขึ้นตามเลเวล (ลดอัตราขยายลงครึ่งหนึ่ง)
             return g;
         };
         G.applyEvoParts = applyEvoParts;
@@ -15755,8 +15754,7 @@ function CherryAdventure() {
                 crownG.add(front);
                 crownG.position.set(0, headY + headR + cr * 0.28, headZ * 0.1);
                 body.add(crownG);
-                mat.emissive = new THREE.Color(sp.color).multiplyScalar(0.18);
-                g.scale.setScalar(1.15);
+                g.scale.setScalar(1.075); // 📏 โตขึ้นครึ่งเดียวของเดิม · 🎨 สีตัวคงเดิมไม่ย้อม
             }
             // 😇 ultimate form: halo + intense glow
             if (stage >= 3) {
@@ -15764,8 +15762,7 @@ function CherryAdventure() {
                 halo.rotation.x = Math.PI / 2;
                 halo.position.y = headY + headR + 0.4;
                 body.add(halo);
-                mat.emissive = new THREE.Color(sp.color).multiplyScalar(0.35);
-                g.scale.multiplyScalar(1.12);
+                g.scale.multiplyScalar(1.06); // 📏 โตขึ้นครึ่งเดียวของเดิม · 🎨 สีตัวคงเดิมไม่ย้อม
             }
             g.userData.body = body;
             g.userData.spId = spId;
