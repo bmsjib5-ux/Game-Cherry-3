@@ -18944,6 +18944,7 @@ function CherryAdventure() {
         G.PETBOX_MAX = 30; // 📦 ช่องเริ่มต้น
         G.petSlotsBought = G.petSlotsBought || 0; // 🛒 ช่องที่ซื้อเพิ่ม
         G.petCap = () => G.PETBOX_MAX + (G.petSlotsBought || 0); // ความจุกล่องรวม
+        G.petBagUsed = () => (G.petBox || []).filter((p) => !(((G.ranch && G.ranch.slots) || []).includes(p.i))).length; // 🏡 ตัวที่อยู่ฟาร์มไม่กินช่องกระเป๋า
         // 💰 5 ช่องแรกช่องละ 10,000 ทอง · หลังจากนั้นช่องละ 10 เพชร
         G.petSlotCost = () => (G.petSlotsBought || 0) < 5 ? { kind: "gold", amount: 10000 } : { kind: "diamond", amount: 10 };
         G.buyPetSlot = () => {
@@ -18974,7 +18975,7 @@ function CherryAdventure() {
         G._petSeq = G._petSeq || 1;
         const rollIv = (spId) => { const t = (SPECIES[spId] && SPECIES[spId].tier) || 1; return { a: Math.floor(Math.random() * (3 + t * 2)), h: Math.floor(Math.random() * (5 + t * 3)), d: Math.floor(Math.random() * (2 + t)) }; };
         G.addPetInstance = (spId, base) => {
-            if ((G.petBox || []).length >= G.petCap()) {
+            if (G.petBagUsed() >= G.petCap()) {
                 toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.petCap()} ช่อง) — ซื้อช่องเพิ่ม/ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`);
                 return null;
             }
@@ -24224,7 +24225,7 @@ function CherryAdventure() {
                 toast("🥚 ไข่ยังฟักไม่เสร็จ — รออีกสักครู่");
                 return;
             }
-            if ((G.petBox || []).length >= G.petCap()) {
+            if (G.petBagUsed() >= G.petCap()) {
                 toast(`📦 กล่องเต็ม (${G.petCap()}) — เคลียร์ที่ก่อนฟักไข่`);
                 return;
             }
@@ -29160,7 +29161,7 @@ function CherryAdventure() {
                 toast("💰 ทองไม่พอ (ต้องมี " + listing.price + ")");
                 return;
             }
-            if (listing.kind === "pet" && (G.petBox || []).length >= G.petCap()) {
+            if (listing.kind === "pet" && G.petBagUsed() >= G.petCap()) {
                 toast("📦 กล่องสัตว์เลี้ยงเต็ม — เคลียร์ที่ก่อนซื้อ");
                 return;
             }
@@ -29218,7 +29219,7 @@ function CherryAdventure() {
         G.marketCancel = async (listing) => {
             if (!listing || listing.status !== "open")
                 return;
-            if (listing.kind === "pet" && (G.petBox || []).length >= G.petCap()) {
+            if (listing.kind === "pet" && G.petBagUsed() >= G.petCap()) {
                 toast("📦 กล่องเต็ม — เคลียร์ที่ก่อนยกเลิก (ของจะคืนเข้ากล่อง)");
                 return;
             }
@@ -44675,7 +44676,7 @@ function CherryAdventure() {
                             background: !ui.dexTab ? "#7ba05b" : "#eaf5e0",
                         } },
                         "\uD83D\uDCE6 \u0E01\u0E25\u0E48\u0E2D\u0E07 (",
-                        (ui.petBox || []).length,
+                        G.petBagUsed(),
                         "/",
                         G.petCap(),
                         ")"),
@@ -44729,7 +44730,7 @@ function CherryAdventure() {
                         (ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม",
                         React.createElement("span", { style: { float: "right", color: "#7a9a5a" } },
                             "\uD83D\uDCE6 ",
-                            (ui.petBox || []).length,
+                            G.petBagUsed(),
                             "/",
                             G.petCap(),
                             " \u0E0A\u0E48\u0E2D\u0E07"),

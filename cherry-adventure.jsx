@@ -12337,6 +12337,7 @@ export default function CherryAdventure() {
     G.PETBOX_MAX = 30; // 📦 ช่องเริ่มต้น
     G.petSlotsBought = G.petSlotsBought || 0; // 🛒 ช่องที่ซื้อเพิ่ม
     G.petCap = () => G.PETBOX_MAX + (G.petSlotsBought || 0); // ความจุกล่องรวม
+    G.petBagUsed = () => (G.petBox || []).filter((p) => !(((G.ranch && G.ranch.slots) || []).includes(p.i))).length; // 🏡 ตัวที่อยู่ฟาร์มไม่กินช่องกระเป๋า
     // 💰 5 ช่องแรกช่องละ 10,000 ทอง · หลังจากนั้นช่องละ 10 เพชร
     G.petSlotCost = () => (G.petSlotsBought || 0) < 5 ? { kind: "gold", amount: 10000 } : { kind: "diamond", amount: 10 };
     G.buyPetSlot = () => {
@@ -12358,7 +12359,7 @@ export default function CherryAdventure() {
     G._petSeq = G._petSeq || 1;
     const rollIv = (spId) => { const t = (SPECIES[spId] && SPECIES[spId].tier) || 1; return { a: Math.floor(Math.random() * (3 + t * 2)), h: Math.floor(Math.random() * (5 + t * 3)), d: Math.floor(Math.random() * (2 + t)) }; };
     G.addPetInstance = (spId, base) => {
-      if ((G.petBox || []).length >= G.petCap()) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.petCap()} ช่อง) — ซื้อช่องเพิ่ม/ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
+      if (G.petBagUsed() >= G.petCap()) { toast(`📦 กล่องสัตว์เลี้ยงเต็ม (${G.petCap()} ช่อง) — ซื้อช่องเพิ่ม/ขาย/ผสม/ตีบวกเพื่อเคลียร์ที่`); return null; }
       const inst = Object.assign({ i: G._petSeq++, sp: spId, lv: 1, exp: 0, stage: 1, plus: 0, fresh: 1, iv: rollIv(spId) }, base || {}); // 🆕 ติดป้าย "ใหม่" จนกว่าจะเปิดดู
       G.dexSeen = G.dexSeen || {}; G.dexSeen[spId] = 1; // 📖 สมุดภาพจารึกถาวร — ผสม/ขายภายหลังก็ไม่หาย
       G.petBox.push(inst);
@@ -16103,7 +16104,7 @@ export default function CherryAdventure() {
     G.claimEgg = () => {
       const e = G.ranch.egg; if (!e) return;
       if (Date.now() < (e.readyAt || 0)) { toast("🥚 ไข่ยังฟักไม่เสร็จ — รออีกสักครู่"); return; }
-      if ((G.petBox || []).length >= G.petCap()) { toast(`📦 กล่องเต็ม (${G.petCap()}) — เคลียร์ที่ก่อนฟักไข่`); return; }
+      if (G.petBagUsed() >= G.petCap()) { toast(`📦 กล่องเต็ม (${G.petCap()}) — เคลียร์ที่ก่อนฟักไข่`); return; }
       const inst = G.addPetInstance(e.sp, { lv: 5, stage: e.stage || 1, iv: e.iv });
       G.ranch.egg = null;
       if (!inst) return;
@@ -19192,7 +19193,7 @@ export default function CherryAdventure() {
       if (!listing || listing.status !== "open") return;
       if (listing.seller === G.pid) { toast("นั่นคือประกาศขายของคุณเอง 😅"); return; }
       if ((G.gold || 0) < listing.price) { toast("💰 ทองไม่พอ (ต้องมี " + listing.price + ")"); return; }
-      if (listing.kind === "pet" && (G.petBox || []).length >= G.petCap()) { toast("📦 กล่องสัตว์เลี้ยงเต็ม — เคลียร์ที่ก่อนซื้อ"); return; }
+      if (listing.kind === "pet" && G.petBagUsed() >= G.petCap()) { toast("📦 กล่องสัตว์เลี้ยงเต็ม — เคลียร์ที่ก่อนซื้อ"); return; }
       setUi((u) => ({ ...u, mktBusy: true }));
       const rows = await CN.marketBuy(listing.id, (G.ensurePid ? G.ensurePid() : G.pid), (G.playerName || "เชอร์รี่").slice(0, 14));
       const bought = rows && rows[0];
@@ -19220,7 +19221,7 @@ export default function CherryAdventure() {
     };
     G.marketCancel = async (listing) => {
       if (!listing || listing.status !== "open") return;
-      if (listing.kind === "pet" && (G.petBox || []).length >= G.petCap()) { toast("📦 กล่องเต็ม — เคลียร์ที่ก่อนยกเลิก (ของจะคืนเข้ากล่อง)"); return; }
+      if (listing.kind === "pet" && G.petBagUsed() >= G.petCap()) { toast("📦 กล่องเต็ม — เคลียร์ที่ก่อนยกเลิก (ของจะคืนเข้ากล่อง)"); return; }
       const rows = await CN.marketCancel(listing.id, G.pid);
       if (!rows) { toast("🌐 ยกเลิกไม่สำเร็จ ลองใหม่"); return; }
       if (!rows.length) { toast("ยกเลิกไม่ได้ — อาจถูกซื้อไปแล้ว"); G.marketRefresh("mine"); return; }
@@ -31073,7 +31074,7 @@ export default function CherryAdventure() {
                   flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
                   fontSize: 12, fontWeight: 800, color: !ui.dexTab ? "#fff" : "#5a7a4a",
                   background: !ui.dexTab ? "#7ba05b" : "#eaf5e0",
-                }}>📦 กล่อง ({(ui.petBox || []).length}/{G.petCap()})</button>
+                }}>📦 กล่อง ({G.petBagUsed()}/{G.petCap()})</button>
                 <button onClick={() => setUi((u) => ({ ...u, dexTab: true }))} style={{
                   flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
                   fontSize: 12, fontWeight: 800, color: ui.dexTab ? "#fff" : "#5a7a4a",
@@ -31132,7 +31133,7 @@ export default function CherryAdventure() {
               {(ui.petBox || []).length > 0 && (
                 <div style={{ background: "#eaf5e0", borderRadius: 10, padding: "6px 9px", marginBottom: 8, fontSize: 11, fontWeight: 700, color: "#5a7a4a" }}>
                   👥 ทีม ({(ui.team || []).length}/3): {(ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม"}
-                  <span style={{ float: "right", color: "#7a9a5a" }}>📦 {(ui.petBox || []).length}/{G.petCap()} ช่อง</span>
+                  <span style={{ float: "right", color: "#7a9a5a" }}>📦 {G.petBagUsed()}/{G.petCap()} ช่อง</span>
                   <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 }}>ทุกตัวในทีมช่วยบัฟ · ตัวแรกเดินตาม · แต่ละตัวมี "พรสวรรค์" ประจำตัวไม่ซ้ำกัน</div>
                 </div>
               )}
