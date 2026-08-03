@@ -11873,13 +11873,15 @@ export default function CherryAdventure() {
     G._homeZone = homeZone;
     G.buildHomeFurni = (list) => { // 🛋️ สร้างเฟอร์นิเจอร์ตามผัง (ของเราหรือของเพื่อน)
       while (homeFurniG.children.length) { const c = homeFurniG.children[0]; homeFurniG.remove(c); ranchDispose(c); }
-      (list || (G.home && G.home.furni) || []).forEach((f) => {
+      (list || (G.home && G.home.furni) || []).forEach((f, idx) => {
         if (!HOME_FURNI.find((x) => x.id === f.id)) return;
         const m = buildFurniMesh(f.id);
         m.position.set(f.x || 0, 0, f.z || 0); m.rotation.y = f.rot || 0;
+        m.userData.furniIdx = idx; // 🖐️ ใช้ตอนลากย้าย — ชี้กลับ index ในผังบ้าน
         homeFurniG.add(m);
       });
     };
+    G._homeFurniG = homeFurniG;
     G.enterHomeZone = (opts) => {
       if (G.mode !== "explore" || G.inHomeZone || G.inRanchZone) return;
       G.inHomeZone = true;
@@ -17653,6 +17655,23 @@ export default function CherryAdventure() {
       pointer.x = ((cx - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((cy - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
+      // 🛋️🖐️ ในบ้าน: แตะโดนเฟอร์นิเจอร์ = จับขึ้นมาลากย้ายได้ตามใจ (ปล่อยนิ้ว = วาง)
+      if (G.inHomeZone && !G._homeVisit && G._homeFurniG) {
+        const fMeshes = [];
+        G._homeFurniG.children.forEach((fg) => fg.traverse((o) => { if (o.isMesh) { o.userData._furniRoot = fg; fMeshes.push(o); } }));
+        const fHits = raycaster.intersectObjects(fMeshes, false);
+        if (fHits.length) {
+          let root = fHits[0].object;
+          while (root && !root.userData._furniRoot) root = root.parent;
+          const fg = root ? root.userData._furniRoot : null;
+          if (fg && fg.userData.furniIdx != null && G.home.furni[fg.userData.furniIdx]) {
+            G._dragFurni = { g: fg, idx: fg.userData.furniIdx };
+            G.moveTarget = null; G.huntTarget = null;
+            if (G.sfx && G.sfx.button) G.sfx.button();
+            return;
+          }
+        }
+      }
       // 🌾 ในโซนฟาร์ม: แตะแปลงผักเพื่อปลูก/เก็บเกี่ยว
       if (G.inRanchZone && G._ranchPlots && G._ranchPlots.length && !G.ranchOpen) {
         const plotMeshes = [];
@@ -17698,11 +17717,40 @@ export default function CherryAdventure() {
       }
     };
     const onPinchEnd = () => (pinchDist = 0);
+    // 🛋️🖐️ ลากเฟอร์นิเจอร์ตามนิ้ว/เมาส์ บนระนาบพื้นบ้าน แล้วบันทึกตำแหน่งตอนปล่อย
+    const onFurniDrag = (e) => {
+      if (!G._dragFurni) return;
+      if (e.touches && e.touches.length !== 1) return;
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((cx - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((cy - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hit = new THREE.Vector3();
+      raycaster.ray.intersectPlane(floorPlane, hit);
+      if (!hit) return;
+      G._dragFurni.g.position.x = Math.max(-7.3, Math.min(7.3, hit.x));
+      G._dragFurni.g.position.z = Math.max(-5.8, Math.min(4.6, hit.z)); // กันไปทับเสื่อทางออก
+    };
+    const onFurniDrop = () => {
+      if (!G._dragFurni) return;
+      const f = G.home.furni[G._dragFurni.idx];
+      if (f) { f.x = Math.round(G._dragFurni.g.position.x * 100) / 100; f.z = Math.round(G._dragFurni.g.position.z * 100) / 100; }
+      G._dragFurni = null;
+      if (G.toast) G.toast("📍 วางเฟอร์นิเจอร์ตรงนี้แล้ว");
+      setUi((u) => ({ ...u, homeFurni: (G.home.furni || []).slice() }));
+    };
     const onWheel = (e) => { e.preventDefault(); G.zoom(e.deltaY * 0.01); };
     renderer.domElement.addEventListener("mousedown", onTap);
     renderer.domElement.addEventListener("touchstart", onTap, { passive: true });
     renderer.domElement.addEventListener("touchmove", onPinchMove, { passive: true });
     renderer.domElement.addEventListener("touchend", onPinchEnd);
+    renderer.domElement.addEventListener("mousemove", onFurniDrag);
+    renderer.domElement.addEventListener("touchmove", onFurniDrag, { passive: true });
+    window.addEventListener("mouseup", onFurniDrop);
+    renderer.domElement.addEventListener("touchend", onFurniDrop);
+    renderer.domElement.addEventListener("touchcancel", onFurniDrop);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     const SKILL_KEYS = { a: 0, s: 1, d: 2, f: 3, g: 4 }; // ⌨️ battle skill hotkeys → skill slot index
     G.SKILL_KEYS = ["A", "S", "D", "F", "G"];
