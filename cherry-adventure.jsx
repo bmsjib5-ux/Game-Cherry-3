@@ -14399,7 +14399,7 @@ export default function CherryAdventure() {
         atk: effAtk(), def: effDef(), crit: Math.round(effCrit()), eva: Math.round(effEva()), luck: Math.round(effLuck()), spd: +effSpd().toFixed(1),
         power: powerOf({ atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()) }),
         gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0,
-        pid: G.pid || null, code: (G.pid && G.makeFriendCode) ? G.makeFriendCode() : null,
+        pid: G.pid || null,
         pvpRank: G.pvpRank || 1000, pvpTier: tier ? (tier.emoji + " " + tier.name) : null,
         endlessBest: G.endlessBest || 0, ngPlus: G.ngPlus || 0,
         wins: a.wins || 0, bosses: a.bosses || 0, catches: a.catches || 0, crits: a.crits || 0, wbKills: a.wbKills || 0,
@@ -31990,7 +31990,15 @@ export default function CherryAdventure() {
               {/* online + records */}
               <div style={{ marginTop: 10, background: "rgba(0,0,0,0.25)", borderRadius: 12, padding: "8px 12px" }}>
                 <div style={{ fontSize: 11.5, fontWeight: 900, color: "#9ec0ff", marginBottom: 4 }}>📊 สถิติ & ออนไลน์</div>
-                {p.code && stat("🆔 รหัสเพื่อน", p.code, "#9ec0ff")}
+                {p.pid && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, fontSize: 12, padding: "3px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <span style={{ color: "#b8c0cf", fontWeight: 700 }}>🪪 ID ผู้เล่น</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                      <span style={{ color: "#9ec0ff", fontWeight: 900, fontFamily: "monospace", letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.pid}</span>
+                      <button onClick={() => { try { if (navigator.clipboard) { navigator.clipboard.writeText(p.pid); G.toast("📋 คัดลอก ID แล้ว! ส่งให้เพื่อนได้เลย"); } } catch (e) {} }} style={{ border: "none", borderRadius: 7, padding: "2px 8px", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800, color: "#fff", background: "#5a78c0", flexShrink: 0 }}>คัดลอก</button>
+                    </span>
+                  </div>
+                )}
                 {stat("🏅 อันดับ PvP", `${p.pvpRank}${p.pvpTier ? ` (${p.pvpTier})` : ""}`, "#f5c542")}
                 {stat("♾️ เอาชีวิตรอด (เวฟดีสุด)", p.endlessBest, "#c0f08a")}
                 {stat("🏆 ชนะศึก", p.wins.toLocaleString())}
