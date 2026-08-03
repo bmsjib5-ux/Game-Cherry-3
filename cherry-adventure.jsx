@@ -1557,7 +1557,7 @@ export default function CherryAdventure() {
       } else if (G.mode === "create" || G.mode === "class") {
         camDist = Math.min(24, Math.max(5.2, camDist + d)); // ซูมหน้าแต่งตัว (ซูมออกได้ไกลขึ้น)
       } else {
-        camDist = Math.min(24, Math.max(6, camDist + d));
+        camDist = Math.min(G.inHomeZone ? 36 : 24, Math.max(6, camDist + d)); // 🏠 ในบ้านซูมออกได้ไกลขึ้น เห็นทั้งห้อง
       }
       saveZoom(); // 🔍 remember zoom level
     };
@@ -20375,7 +20375,7 @@ export default function CherryAdventure() {
           initWildHp(m);
           const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
           const pdist = Math.hypot(pdx, pdz) || 0.001;
-          const playerSafe = inSafeZone(char.position.x, char.position.z); // 🛡️ standing on a warp = untouchable
+          const playerSafe = G.inHomeZone || G.inRanchZone || inSafeZone(char.position.x, char.position.z); // 🛡️ ในบ้าน/ฟาร์ม/บนเขตปลอดภัย = มอนสเตอร์แตะไม่ได้
           if (playerSafe) {
             m.userData.aggro = false; // 🌀 drop the chase — can't follow into the safe zone
           } else if (m.userData.aggro || pdist < WILD_AGGRO) {
@@ -20747,7 +20747,7 @@ export default function CherryAdventure() {
         }
         {
           const pd = Math.hypot(char.position.x - portal.position.x, char.position.z - portal.position.z);
-          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone) {
+          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone && !G.inHomeZone) {
             G.dungeonAskShown = true;
             setUi((u) => ({ ...u, dungeonAsk: true, dungeonProgress: G.dungeonProgress || 1 }));
           }
@@ -20786,7 +20786,11 @@ export default function CherryAdventure() {
         if (G.inHomeZone) {
           const exd = Math.hypot(char.position.x - 0, char.position.z - 5.6);
           if (exd < 1.1) try { G.exitHomeZone(); } catch (err) { try { console.warn("exitHomeZone failed", err); } catch (_) {} }
-          if (G._homeZone) G._homeZone.children.forEach((c) => { if (c === undefined) return; }); // (no-op guard)
+          // 🛡️ กันหลุดทุกเฟรม: ของโลกภายนอกต้องไม่โผล่/ไม่ทำงานในบ้าน
+          if (portal) portal.visible = false;
+          if (G.warpGate) G.warpGate.visible = false;
+          if (G._safeMarks) G._safeMarks.visible = false;
+          wilds.forEach((m) => { if (m.visible) m.visible = false; m.userData.aggro = false; });
         }
         if (G.inRanchZone) try { // 🛟 กันเฟรมเดียวพังทั้งลูป (ภาพค้าง) — ห่อ try/catch ไว้
           // 🐾 สัตว์ในคอกเดินวนเบา ๆ คุมให้อยู่ในขอบคอก + เด้งตัว
@@ -21156,7 +21160,7 @@ export default function CherryAdventure() {
         }
 
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
-        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone) // 🛡️🌀 no encounters in a warp safe zone or the ranch
+        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone) // 🛡️🌀🏠 no encounters in a warp safe zone, the ranch, or the home
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
           if (G.auto && G.autoNoBoss && m.userData.boss) continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
