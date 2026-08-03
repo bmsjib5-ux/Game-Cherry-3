@@ -11840,8 +11840,60 @@ export default function CherryAdventure() {
       else if (id === "paint") { hbx(g, 0.8, 0.6, 0.05, hWoodD, 0, 1.35); hbx(g, 0.7, 0.5, 0.06, hPink, 0, 1.35); const ch = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshStandardMaterial({ color: 0xd9536b })); ch.position.set(0, 1.35, 0.09); ch.scale.z = 0.4; g.add(ch); }
       else if (id === "teddy") { const bd = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), hWood.clone()); bd.position.y = 0.32; bd.scale.y = 1.1; g.add(bd); const hd = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), hWood.clone()); hd.position.y = 0.78; g.add(hd); for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), hWoodD.clone()); ear.position.set(sx * 0.18, 0.98, 0); g.add(ear); const arm = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), hWood.clone()); arm.scale.set(1, 1.5, 1); arm.position.set(sx * 0.32, 0.35, 0.05); g.add(arm); } const mz = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), hWhite.clone()); mz.position.set(0, 0.72, 0.2); mz.scale.z = 0.7; g.add(mz); }
       g.userData.furniId = id;
+      g.scale.setScalar(1.35); // 📏 เฟอร์นิเจอร์ขนาดใหญ่ขึ้น
       return g;
     };
+    // 🎨 สไตล์พื้น/ผนัง — สีและลวดลาย (วาดเป็นเท็กซ์เจอร์)
+    const homeStyleTex = (base, accent, kind, repX, repY) => {
+      const cv = document.createElement("canvas"); cv.width = 128; cv.height = 128;
+      const cx = cv.getContext("2d");
+      cx.fillStyle = base; cx.fillRect(0, 0, 128, 128);
+      cx.fillStyle = accent;
+      if (kind === "checker") { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if ((x + y) % 2) cx.fillRect(x * 32, y * 32, 32, 32); }
+      else if (kind === "stripe") { for (let i = 0; i < 4; i++) cx.fillRect(i * 32, 0, 16, 128); }
+      else if (kind === "dots") { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { cx.beginPath(); cx.arc(x * 32 + 16, y * 32 + 16, 7, 0, Math.PI * 2); cx.fill(); } }
+      else if (kind === "plank") { for (let i = 0; i < 4; i++) { cx.fillRect(0, i * 32, 128, 3); cx.fillRect(((i % 2) * 64), i * 32, 3, 32); } }
+      else if (kind === "heart") { for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) { const hx = x * 64 + 32, hy = y * 64 + 30; cx.beginPath(); cx.arc(hx - 7, hy, 8, 0, Math.PI * 2); cx.arc(hx + 7, hy, 8, 0, Math.PI * 2); cx.fill(); cx.beginPath(); cx.moveTo(hx - 14, hy + 3); cx.lineTo(hx + 14, hy + 3); cx.lineTo(hx, hy + 20); cx.closePath(); cx.fill(); } }
+      const tex = new THREE.CanvasTexture(cv);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(repX || 4, repY || 4);
+      return tex;
+    };
+    const HOME_FLOORS = [
+      { id: "oak", name: "ไม้โอ๊ค", sw: "#a87a4e", base: "#a87a4e", accent: "#8a6038", kind: "plank" },
+      { id: "dark", name: "ไม้เข้ม", sw: "#6e4e30", base: "#6e4e30", accent: "#54381e", kind: "plank" },
+      { id: "marble", name: "หินอ่อนขาว", sw: "#eee9e2", base: "#eee9e2", accent: "#d8d2c8", kind: "checker" },
+      { id: "pinkTile", name: "กระเบื้องชมพู", sw: "#f5c8da", base: "#fdeef5", accent: "#f5c0d6", kind: "checker" },
+      { id: "mint", name: "พรมมิ้นท์", sw: "#bfe4c8", base: "#bfe4c8", accent: "#a8d4b4", kind: "dots" },
+      { id: "sky", name: "กระเบื้องฟ้า", sw: "#bcd8f2", base: "#e8f2fc", accent: "#b4d2ee", kind: "checker" },
+    ];
+    const HOME_WALLS = [
+      { id: "cream", name: "ครีม", sw: "#f3e2c8", base: "#f3e2c8", accent: "#f3e2c8", kind: "plain" },
+      { id: "pink", name: "ชมพูพาสเทล", sw: "#f8d8e4", base: "#f8d8e4", accent: "#f8d8e4", kind: "plain" },
+      { id: "blue", name: "ฟ้าอ่อน", sw: "#d8e8f6", base: "#d8e8f6", accent: "#d8e8f6", kind: "plain" },
+      { id: "stripePink", name: "ลายทางชมพู", sw: "#f8c8d8", base: "#fdf2f6", accent: "#f8c8d8", kind: "stripe" },
+      { id: "dotMint", name: "ลายจุดมิ้นท์", sw: "#cdeed6", base: "#f2fbf4", accent: "#b8e4c4", kind: "dots" },
+      { id: "heart", name: "ลายหัวใจ", sw: "#f8b8cc", base: "#fdf0f4", accent: "#f6aac4", kind: "heart" },
+      { id: "wood", name: "ผนังไม้", sw: "#b08a5e", base: "#b08a5e", accent: "#966e46", kind: "plank" },
+    ];
+    G.HOME_FLOORS = HOME_FLOORS; G.HOME_WALLS = HOME_WALLS;
+    G.applyHomeStyles = () => {
+      const fs = HOME_FLOORS[(G.home && G.home.floor) || 0] || HOME_FLOORS[0];
+      const ws = HOME_WALLS[(G.home && G.home.wall) || 0] || HOME_WALLS[0];
+      if (G._homeFloorMat) {
+        if (G._homeFloorMat.map && G._homeFloorMat.map.dispose) G._homeFloorMat.map.dispose();
+        G._homeFloorMat.map = homeStyleTex(fs.base, fs.accent, fs.kind, 6, 5);
+        G._homeFloorMat.color.setHex(0xffffff);
+        G._homeFloorMat.needsUpdate = true;
+      }
+      if (G._homeWallMat) {
+        if (ws.kind === "plain") { if (G._homeWallMat.map) { G._homeWallMat.map.dispose && G._homeWallMat.map.dispose(); G._homeWallMat.map = null; } G._homeWallMat.color.set(ws.base); }
+        else { if (G._homeWallMat.map && G._homeWallMat.map.dispose) G._homeWallMat.map.dispose(); G._homeWallMat.map = homeStyleTex(ws.base, ws.accent, ws.kind, 6, 2); G._homeWallMat.color.setHex(0xffffff); }
+        G._homeWallMat.needsUpdate = true;
+      }
+    };
+    G.setHomeFloor = (i) => { G.home.floor = i; G.applyHomeStyles(); setUi((u) => ({ ...u, homeFloor: i })); if (G.toast) G.toast(`🧱 เปลี่ยนพื้นเป็น ${(HOME_FLOORS[i] || {}).name || ""}`); };
+    G.setHomeWall = (i) => { G.home.wall = i; G.applyHomeStyles(); setUi((u) => ({ ...u, homeWall: i })); if (G.toast) G.toast(`🎨 เปลี่ยนผนังเป็น ${(HOME_WALLS[i] || {}).name || ""}`); };
     // 🚪 แท่นวาร์ปหน้าบ้าน (โผล่เฉพาะทุ่งซากุระ ข้างกระท่อม — อยู่ในเขตปลอดภัยหมู่บ้าน)
     const homePad = new THREE.Group();
     const hpDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xffe9c8, emissive: 0xf0c078, emissiveIntensity: 0.4, roughness: 0.7, side: THREE.DoubleSide }));
@@ -11860,8 +11912,9 @@ export default function CherryAdventure() {
     homeZone.visible = false;
     scene.add(homeZone);
     { // พื้นไม้ + ผนัง 3 ด้าน + หน้าต่าง + เสื่อทางออก
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 13), hWood); floor.position.y = -0.02; homeZone.add(floor); // ผิวบน y=0.03 — ลอยพ้นพื้นโลก/เงาตัวละคร กัน z-fighting กระพริบ
-      const wallM = new THREE.MeshStandardMaterial({ color: 0xf3e2c8, roughness: 0.9 });
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0xa87a4e, roughness: 0.85 }); G._homeFloorMat = floorMat; // 🧱 วัสดุพื้นแยก (เปลี่ยนสี/ลายได้)
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.1, 13), floorMat); floor.position.y = -0.02; homeZone.add(floor); // ผิวบน y=0.03 — ลอยพ้นพื้นโลก/เงาตัวละคร กัน z-fighting กระพริบ
+      const wallM = new THREE.MeshStandardMaterial({ color: 0xf3e2c8, roughness: 0.9 }); G._homeWallMat = wallM; // 🎨 วัสดุผนัง (เปลี่ยนสี/ลายได้)
       const wb = new THREE.Mesh(new THREE.BoxGeometry(16, 3.4, 0.3), wallM); wb.position.set(0, 1.7, -6.5); homeZone.add(wb);
       for (const sx of [-1, 1]) { const ws = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 13), wallM); ws.position.set(sx * 8, 1.7, 0); homeZone.add(ws); }
       for (const wx of [-4, 4]) { const win = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.1), new THREE.MeshStandardMaterial({ color: 0xbfe0ff, emissive: 0x86b4e8, emissiveIntensity: 0.45 })); win.position.set(wx, 1.9, -6.32); homeZone.add(win); const wf = new THREE.Mesh(new THREE.BoxGeometry(1.75, 1.35, 0.06), hWoodD); wf.position.set(wx, 1.9, -6.36); homeZone.add(wf); }
@@ -11899,6 +11952,7 @@ export default function CherryAdventure() {
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false)); // 🌳 ซ่อนต้นไม้/หิน/ของประดับโลก — พื้นบ้านเรียบโล่ง
       if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน (เข้าบ้านได้จากทุกด่าน)
       homeZone.visible = true;
+      if (G.applyHomeStyles) G.applyHomeStyles(); // 🎨 พื้น/ผนังตามสไตล์ที่เลือกไว้
       G.buildHomeFurni(G._homeVisit ? G._homeVisit.furni : null);
       if (G.sfx && G.sfx.warp) G.sfx.warp();
       toast(G._homeVisit ? `🏠 เยี่ยมบ้านของ ${G._homeVisit.owner}!` : "🏠 ยินดีต้อนรับกลับบ้าน!");
@@ -17666,7 +17720,7 @@ export default function CherryAdventure() {
           while (root && !root.userData._furniRoot) root = root.parent;
           const fg = root ? root.userData._furniRoot : null;
           if (fg && fg.userData.furniIdx != null && G.home.furni[fg.userData.furniIdx]) {
-            G._dragFurni = { g: fg, idx: fg.userData.furniIdx };
+            G._dragFurni = { g: fg, idx: fg.userData.furniIdx, sx: fg.position.x, sz: fg.position.z }; // จำจุดเริ่ม — ปล่อยโดยไม่ลาก = หมุน
             G.moveTarget = null; G.huntTarget = null;
             if (G.sfx && G.sfx.button) G.sfx.button();
             return;
@@ -17736,10 +17790,18 @@ export default function CherryAdventure() {
     };
     const onFurniDrop = () => {
       if (!G._dragFurni) return;
-      const f = G.home.furni[G._dragFurni.idx];
-      if (f) { f.x = Math.round(G._dragFurni.g.position.x * 100) / 100; f.z = Math.round(G._dragFurni.g.position.z * 100) / 100; }
-      G._dragFurni = null;
-      if (G.toast) G.toast("📍 วางเฟอร์นิเจอร์ตรงนี้แล้ว");
+      const d = G._dragFurni; G._dragFurni = null;
+      const f = G.home.furni[d.idx];
+      if (!f) return;
+      const moved = Math.hypot(d.g.position.x - d.sx, d.g.position.z - d.sz);
+      if (moved < 0.12) { // 🔄 แตะเฉยๆ (ไม่ได้ลาก) = หมุน 90°
+        f.rot = ((f.rot || 0) + Math.PI / 2) % (Math.PI * 2);
+        d.g.rotation.y = f.rot;
+        if (G.toast) G.toast("🔄 หมุนเฟอร์นิเจอร์");
+      } else {
+        f.x = Math.round(d.g.position.x * 100) / 100; f.z = Math.round(d.g.position.z * 100) / 100;
+        if (G.toast) G.toast("📍 วางเฟอร์นิเจอร์ตรงนี้แล้ว");
+      }
       setUi((u) => ({ ...u, homeFurni: (G.home.furni || []).slice() }));
     };
     const onWheel = (e) => { e.preventDefault(); G.zoom(e.deltaY * 0.01); };
@@ -19624,9 +19686,9 @@ export default function CherryAdventure() {
         ? { slots: Array.isArray(d.ranch.slots) ? d.ranch.slots.slice(0, 20) : [], happy: d.ranch.happy || {}, last: d.ranch.last || Date.now(), pending: d.ranch.pending || 0, egg: d.ranch.egg || null, garden: Array.isArray(d.ranch.garden) ? d.ranch.garden.slice(0, 8) : [], food: d.ranch.food || 0, seeds: d.ranch.seeds || 0, decorCount: d.ranch.decorCount || 0, pens: d.ranch.pens || 2, plots: d.ranch.plots || 4, lastHatched: d.ranch.lastHatched || null, produce: (d.ranch.produce && typeof d.ranch.produce === "object") ? d.ranch.produce : {}, fert: d.ranch.fert || 0, eggb: d.ranch.eggb || 0, lvlf: d.ranch.lvlf || 0, xp: d.ranch.xp || 0, qday: d.ranch.qday || null, quests: Array.isArray(d.ranch.quests) ? d.ranch.quests : [], goods: (d.ranch.goods && typeof d.ranch.goods === "object") ? d.ranch.goods : {}, trees: Array.isArray(d.ranch.trees) ? d.ranch.trees.slice(0, 6) : [], craft: Array.isArray(d.ranch.craft) ? d.ranch.craft.slice(0, 3) : [], contestBest: d.ranch.contestBest || 0, contestDay: d.ranch.contestDay || null, contestUsed: d.ranch.contestUsed || 0 }
         : { slots: [], happy: {}, last: Date.now(), pending: 0, egg: null, garden: [], food: 0, seeds: 0, decorCount: 0, pens: 2, plots: 4, lastHatched: null, produce: {}, fert: 0, eggb: 0, lvlf: 0, xp: 0, qday: null, quests: [], goods: {}, trees: [], craft: [], contestBest: 0, contestDay: null, contestUsed: 0 };
       G.goldExch = d.goldExch || null; G.goldShop = d.goldShop || null; // 🏛️ ตลาดทองคำ (ตู้แลก + ร้านพรีเมียม)
-      G.home = (d.home && typeof d.home === "object") // 🏠 บ้าน + เฟอร์นิเจอร์
-        ? { owned: (d.home.owned && typeof d.home.owned === "object") ? d.home.owned : {}, furni: Array.isArray(d.home.furni) ? d.home.furni.slice(0, 60) : [] }
-        : { owned: {}, furni: [] };
+      G.home = (d.home && typeof d.home === "object") // 🏠 บ้าน + เฟอร์นิเจอร์ + สไตล์พื้น/ผนัง
+        ? { owned: (d.home.owned && typeof d.home.owned === "object") ? d.home.owned : {}, furni: Array.isArray(d.home.furni) ? d.home.furni.slice(0, 60) : [], floor: d.home.floor || 0, wall: d.home.wall || 0 }
+        : { owned: {}, furni: [], floor: 0, wall: 0 };
       G.restBuffUntil = d.restBuffUntil || 0;
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
@@ -27897,6 +27959,18 @@ export default function CherryAdventure() {
                 </button>
               );
             })}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#b0742a", marginBottom: 4 }}>🧱 ปูพื้น</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+            {(G.HOME_FLOORS || []).map((s, i) => (
+              <button key={s.id} onClick={() => G.setHomeFloor(i)} title={s.name} style={{ width: 42, height: 34, borderRadius: 8, cursor: "pointer", background: s.sw, border: ((ui.homeFloor != null ? ui.homeFloor : (G.home && G.home.floor) || 0) === i) ? "3px solid #e0862f" : "2px solid #e4d4bc", fontSize: 8, fontFamily: font, color: "#0006", fontWeight: 800, padding: 0 }}>{s.name}</button>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#b0742a", marginBottom: 4 }}>🎨 ผนัง</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+            {(G.HOME_WALLS || []).map((s, i) => (
+              <button key={s.id} onClick={() => G.setHomeWall(i)} title={s.name} style={{ width: 42, height: 34, borderRadius: 8, cursor: "pointer", background: s.sw, border: ((ui.homeWall != null ? ui.homeWall : (G.home && G.home.wall) || 0) === i) ? "3px solid #e0862f" : "2px solid #e4d4bc", fontSize: 8, fontFamily: font, color: "#0006", fontWeight: 800, padding: 0 }}>{s.name}</button>
+            ))}
           </div>
           <div style={{ fontSize: 12, fontWeight: 800, color: "#b0742a", marginBottom: 4 }}>🛒 ร้านเฟอร์นิเจอร์</div>
           {(G.HOME_FURNI || []).map((it) => (
