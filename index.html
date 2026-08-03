@@ -23991,6 +23991,10 @@ function CherryAdventure() {
         G.ranchTickPublic = ranchTick;
         G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: ["breed", "garden", "market", "storage"].indexOf(tab) >= 0 ? tab : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
         G.ranchAssign = (iid, slot) => {
+            if (G.petInUse && G.petInUse(iid)) {
+                toast("⛔ ตัวที่เป็นบัดดี้/อยู่ในทีม ห้ามนำลงฟาร์ม — ถอดออกจากทีมก่อน");
+                return;
+            }
             ranchTick();
             const R = G.ranch;
             R.slots = R.slots || [];
@@ -44349,7 +44353,7 @@ function CherryAdventure() {
                 const RARC = { 1: "#9aa89a", 2: "#5fc06a", 3: "#4a9ae8", 4: "#b060e0", 5: "#f5a623", 6: "#ff4a8a" };
                 const RARN = { 1: "สามัญ", 2: "ไม่ธรรมดา", 3: "หายาก", 4: "มหากาพย์", 5: "ตำนาน", 6: "เทพนิยาย" };
                 const tierOf = (p) => (SPECIES[p.sp] || {}).tier || 1;
-                const avail = (ui.petBox || []).filter((p) => !inRanch.has(p.i))
+                const avail = (ui.petBox || []).filter((p) => !inRanch.has(p.i) && !(G.petInUse && G.petInUse(p.i))) // ⛔ ตัวบัดดี้/ทีม ไม่ให้ลงฟาร์ม
                     .slice().sort((a, b) => { const d = tierOf(b) - tierOf(a); return d !== 0 ? d : (b.lv || 0) - (a.lv || 0); }); // 🌟 หายากสุด → เลเวลสูงสุดก่อน
                 return (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ranchPick: null })), style: { position: "absolute", inset: 0, zIndex: 70, background: "rgba(40,28,18,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 14 } },
                     React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "94%", maxWidth: 430, maxHeight: "82vh", overflowY: "auto", background: "#fff", borderRadius: 16, padding: 13, boxShadow: "0 14px 44px rgba(0,0,0,0.32)", display: "flex", flexDirection: "column" } },
@@ -44679,88 +44683,97 @@ function CherryAdventure() {
                                 React.createElement("button", { onClick: () => G.sellPet(ui.sellPetAsk), style: { flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "#d9536b" } }, "\u2705 \u0E02\u0E32\u0E22\u0E40\u0E25\u0E22"),
                                 React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellPetAsk: null })), style: { flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#6a5a7a", background: "#eee" } }, "\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01"))));
                     })(),
-                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 } }, (ui.petBox || []).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
-                        const sp = SPECIES[p.sp];
-                        const rr = petRarity(p.sp);
-                        const isBuddy = ui.buddy === p.i;
-                        const inTeam = (ui.team || []).includes(p.i);
-                        const dispName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]}` : p.stage === 2 ? EVOLVED[p.sp] : sp.name;
-                        const skLv = (ui.petSkillLv && ui.petSkillLv[p.sp]) || 1;
-                        const iv = p.iv || { a: 0, h: 0, d: 0 };
-                        const _mt = p.mut || 0; // 🧬 tier กลายพันธุ์ (เก็บในตัวสัตว์)
-                        const _mm = G.mutMul ? G.mutMul(_mt) : 1;
-                        const buff = { atk: Math.round((sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3) * _mm), hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5) * _mm), def: Math.round(((p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2) * _mm) };
-                        const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
-                        const selFuse = (ui.fuseSel || []).includes(p.i);
-                        return (React.createElement("div", { key: p.i, style: { position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font } },
-                            p.fresh && React.createElement("span", { style: { position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 } }, "\u0E43\u0E2B\u0E21\u0E48 \u2728"),
-                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } },
-                                React.createElement("span", { style: { fontSize: 19 } }, sp.emoji),
-                                React.createElement("div", { style: { minWidth: 0, flex: 1 } },
-                                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#c09020" : "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
-                                        dispName,
-                                        p.plus ? React.createElement("b", { style: { color: "#e0862f" } },
-                                            " +",
-                                            p.plus) : null),
-                                    React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, color: rr.color } },
-                                        "\u25C6 ",
-                                        rr.name,
-                                        " \u00B7 Lv.",
-                                        p.lv,
-                                        " \u00B7 \u0E23\u0E48\u0E32\u0E07 ",
-                                        p.stage,
-                                        _mt ? React.createElement("span", { style: { color: _mt >= 3 ? "#e0a020" : _mt === 2 ? "#ba5af5" : "#3ab0d0" } },
-                                            " \u00B7 \uD83E\uDDEC",
-                                            _mt) : null)),
-                                isBuddy && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#7ba05b" } }, "\u0E1A\u0E31\u0E14\u0E14\u0E35\u0E49"),
-                                !isBuddy && inTeam && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#5a8ad0" } }, "\u0E17\u0E35\u0E21")),
-                            React.createElement("div", { style: { background: "#e5e5da", borderRadius: 99, height: 4, marginTop: 3, overflow: "hidden" } },
-                                React.createElement("div", { style: { width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "#b07ae0", borderRadius: 99 } })),
-                            React.createElement("div", { style: { fontSize: 8.5, color: "#7a9a5a", fontWeight: 700, marginTop: 2 } },
-                                "\u2694\uFE0F+",
-                                buff.atk,
-                                " \u2764\uFE0F+",
-                                buff.hp,
-                                " \uD83D\uDEE1\uFE0F+",
-                                buff.def),
-                            React.createElement("div", { style: { fontSize: 8, color: "#b0526a", fontWeight: 700 } },
-                                (ELEM_META[PET_ELEM[p.sp]] || {}).emoji || "",
-                                " ",
-                                PET_SKILL[p.sp],
-                                " Lv.",
-                                skLv,
-                                " \u00B7 \u2728 \u0E1E\u0E23\u0E2A\u0E27\u0E23\u0E23\u0E04\u0E4C ",
-                                iv.a + iv.h + iv.d),
-                            React.createElement("div", { style: { display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" } },
-                                React.createElement("button", { onClick: () => G.setBuddy(isBuddy ? null : p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: isBuddy ? "#d9536b" : "#7ba05b" } }, isBuddy ? "ถอดบัดดี้" : "🐾 บัดดี้"),
-                                React.createElement("button", { onClick: () => G.toggleTeam(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: inTeam ? "#d9536b" : "#5a8ad0" } }, inTeam ? "ออกทีม" : "➕ ทีม"),
-                                React.createElement("button", { onClick: () => G.rankPetSkill(p.sp), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: (ui.petSp || 0) > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.petSp || 0) > 0 ? "#9a6ad0" : "#ccc" } },
-                                    "\u26A1 (",
-                                    ui.petSp || 0,
-                                    ")"),
-                                React.createElement("button", { onClick: () => G.toggleFuse(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" } },
-                                    "\uD83D\uDD2E ",
-                                    selFuse ? "เลือกแล้ว ✓" : "ผสม"),
-                                React.createElement("button", { onClick: () => G.enhancePet(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: dupes > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: dupes > 0 ? "#e0862f" : "#ccc" } },
-                                    "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 (",
-                                    dupes,
-                                    ")"),
-                                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellPetAsk: p.i })), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22"),
-                                (() => {
-                                    const mcur = p.mut || 0;
-                                    if (mcur >= (G.MUT_MAX || 3))
-                                        return React.createElement("button", { disabled: true, style: { flex: "1 1 63%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0a020,#f5c542)" } }, "\uD83E\uDDEC \u0E01\u0E25\u0E32\u0E22\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 \u2B50");
-                                    const mcost = G.mutCost(mcur), mreq = G.mutReqLv(mcur);
-                                    const lvOk = p.lv >= mreq, goldOk = (ui.gold || 0) >= mcost, can = lvOk && goldOk;
-                                    return React.createElement("button", { onClick: () => G.mutatePet(p.i), disabled: !can, title: !lvOk ? `ต้อง Lv.${mreq}` : !goldOk ? "ทองไม่พอ" : "", style: { flex: "1 1 63%", padding: "4px 0", borderRadius: 6, border: "none", cursor: can ? "pointer" : "not-allowed", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: can ? "#fff" : "#9a8fa5", background: can ? "linear-gradient(90deg,#3ab0d0,#9a6ad0)" : "#ddd8e5" } },
-                                        "\uD83E\uDDEC \u0E01\u0E25\u0E32\u0E22\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C Lv.",
-                                        mcur + 1,
-                                        " \u00B7 ",
-                                        (mcost / 100000),
-                                        "\u0E41\u0E2A\u0E19\uD83D\uDCB0",
-                                        !lvOk ? ` 🔒Lv.${mreq}` : "");
-                                })())));
-                    })))))))),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 } },
+                        (() => {
+                            const inFarm = new Set(((G.ranch && G.ranch.slots) || []).filter((x) => x != null));
+                            const farmN = (ui.petBox || []).filter((p) => inFarm.has(p.i)).length;
+                            return farmN > 0 ? (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#7a9a5a", background: "#eef8e4", borderRadius: 9, padding: "5px 9px", marginBottom: 6 } },
+                                "\uD83C\uDFE1 \u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E1F\u0E32\u0E23\u0E4C\u0E21 ",
+                                farmN,
+                                " \u0E15\u0E31\u0E27 \u2014 \u0E16\u0E39\u0E01\u0E1E\u0E31\u0E01\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27 \u0E08\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E19\u0E33\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E04\u0E2D\u0E01\u0E1F\u0E32\u0E23\u0E4C\u0E21")) : null;
+                        })(),
+                        (ui.petBox || []).filter((p) => !(((G.ranch && G.ranch.slots) || []).includes(p.i))).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
+                            const sp = SPECIES[p.sp];
+                            const rr = petRarity(p.sp);
+                            const isBuddy = ui.buddy === p.i;
+                            const inTeam = (ui.team || []).includes(p.i);
+                            const dispName = p.stage >= 3 ? `อัลติเมท${EVOLVED[p.sp]}` : p.stage === 2 ? EVOLVED[p.sp] : sp.name;
+                            const skLv = (ui.petSkillLv && ui.petSkillLv[p.sp]) || 1;
+                            const iv = p.iv || { a: 0, h: 0, d: 0 };
+                            const _mt = p.mut || 0; // 🧬 tier กลายพันธุ์ (เก็บในตัวสัตว์)
+                            const _mm = G.mutMul ? G.mutMul(_mt) : 1;
+                            const buff = { atk: Math.round((sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3) * _mm), hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5) * _mm), def: Math.round(((p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2) * _mm) };
+                            const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
+                            const selFuse = (ui.fuseSel || []).includes(p.i);
+                            return (React.createElement("div", { key: p.i, style: { position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font } },
+                                p.fresh && React.createElement("span", { style: { position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 } }, "\u0E43\u0E2B\u0E21\u0E48 \u2728"),
+                                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } },
+                                    React.createElement("span", { style: { fontSize: 19 } }, sp.emoji),
+                                    React.createElement("div", { style: { minWidth: 0, flex: 1 } },
+                                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#c09020" : "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+                                            dispName,
+                                            p.plus ? React.createElement("b", { style: { color: "#e0862f" } },
+                                                " +",
+                                                p.plus) : null),
+                                        React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, color: rr.color } },
+                                            "\u25C6 ",
+                                            rr.name,
+                                            " \u00B7 Lv.",
+                                            p.lv,
+                                            " \u00B7 \u0E23\u0E48\u0E32\u0E07 ",
+                                            p.stage,
+                                            _mt ? React.createElement("span", { style: { color: _mt >= 3 ? "#e0a020" : _mt === 2 ? "#ba5af5" : "#3ab0d0" } },
+                                                " \u00B7 \uD83E\uDDEC",
+                                                _mt) : null)),
+                                    isBuddy && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#7ba05b" } }, "\u0E1A\u0E31\u0E14\u0E14\u0E35\u0E49"),
+                                    !isBuddy && inTeam && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#5a8ad0" } }, "\u0E17\u0E35\u0E21")),
+                                React.createElement("div", { style: { background: "#e5e5da", borderRadius: 99, height: 4, marginTop: 3, overflow: "hidden" } },
+                                    React.createElement("div", { style: { width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "#b07ae0", borderRadius: 99 } })),
+                                React.createElement("div", { style: { fontSize: 8.5, color: "#7a9a5a", fontWeight: 700, marginTop: 2 } },
+                                    "\u2694\uFE0F+",
+                                    buff.atk,
+                                    " \u2764\uFE0F+",
+                                    buff.hp,
+                                    " \uD83D\uDEE1\uFE0F+",
+                                    buff.def),
+                                React.createElement("div", { style: { fontSize: 8, color: "#b0526a", fontWeight: 700 } },
+                                    (ELEM_META[PET_ELEM[p.sp]] || {}).emoji || "",
+                                    " ",
+                                    PET_SKILL[p.sp],
+                                    " Lv.",
+                                    skLv,
+                                    " \u00B7 \u2728 \u0E1E\u0E23\u0E2A\u0E27\u0E23\u0E23\u0E04\u0E4C ",
+                                    iv.a + iv.h + iv.d),
+                                React.createElement("div", { style: { display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" } },
+                                    React.createElement("button", { onClick: () => G.setBuddy(isBuddy ? null : p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: isBuddy ? "#d9536b" : "#7ba05b" } }, isBuddy ? "ถอดบัดดี้" : "🐾 บัดดี้"),
+                                    React.createElement("button", { onClick: () => G.toggleTeam(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: inTeam ? "#d9536b" : "#5a8ad0" } }, inTeam ? "ออกทีม" : "➕ ทีม"),
+                                    React.createElement("button", { onClick: () => G.rankPetSkill(p.sp), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: (ui.petSp || 0) > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.petSp || 0) > 0 ? "#9a6ad0" : "#ccc" } },
+                                        "\u26A1 (",
+                                        ui.petSp || 0,
+                                        ")"),
+                                    React.createElement("button", { onClick: () => G.toggleFuse(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: selFuse ? "#fff" : "#6a4a8a", background: selFuse ? "#9a6ad0" : "#e8ddf5" } },
+                                        "\uD83D\uDD2E ",
+                                        selFuse ? "เลือกแล้ว ✓" : "ผสม"),
+                                    React.createElement("button", { onClick: () => G.enhancePet(p.i), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: dupes > 0 ? "pointer" : "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: dupes > 0 ? "#e0862f" : "#ccc" } },
+                                        "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 (",
+                                        dupes,
+                                        ")"),
+                                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellPetAsk: p.i })), style: { flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#a5762a", background: "#f8edd8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22"),
+                                    (() => {
+                                        const mcur = p.mut || 0;
+                                        if (mcur >= (G.MUT_MAX || 3))
+                                            return React.createElement("button", { disabled: true, style: { flex: "1 1 63%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "default", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0a020,#f5c542)" } }, "\uD83E\uDDEC \u0E01\u0E25\u0E32\u0E22\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 \u2B50");
+                                        const mcost = G.mutCost(mcur), mreq = G.mutReqLv(mcur);
+                                        const lvOk = p.lv >= mreq, goldOk = (ui.gold || 0) >= mcost, can = lvOk && goldOk;
+                                        return React.createElement("button", { onClick: () => G.mutatePet(p.i), disabled: !can, title: !lvOk ? `ต้อง Lv.${mreq}` : !goldOk ? "ทองไม่พอ" : "", style: { flex: "1 1 63%", padding: "4px 0", borderRadius: 6, border: "none", cursor: can ? "pointer" : "not-allowed", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: can ? "#fff" : "#9a8fa5", background: can ? "linear-gradient(90deg,#3ab0d0,#9a6ad0)" : "#ddd8e5" } },
+                                            "\uD83E\uDDEC \u0E01\u0E25\u0E32\u0E22\u0E1E\u0E31\u0E19\u0E18\u0E38\u0E4C Lv.",
+                                            mcur + 1,
+                                            " \u00B7 ",
+                                            (mcost / 100000),
+                                            "\u0E41\u0E2A\u0E19\uD83D\uDCB0",
+                                            !lvOk ? ` 🔒Lv.${mreq}` : "");
+                                    })())));
+                        })))))))),
         ui.mode === "battle" && ui.enemy && (React.createElement(React.Fragment, null,
             React.createElement("div", { style: { position: "absolute", left: 12, top: "30%", display: "flex", flexDirection: "column", gap: 8 } }, [["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (React.createElement("button", { key: sym, onClick: () => G.zoom(d), style: {
                     width: 44, height: 44, borderRadius: "50%", border: "none", cursor: "pointer",

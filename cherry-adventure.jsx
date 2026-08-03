@@ -15971,6 +15971,7 @@ export default function CherryAdventure() {
     G.ranchTickPublic = ranchTick;
     G.openRanch = (tab) => { ranchTick(); setUi((u) => ({ ...u, panelOpen: false, ranchOpen: true, ranchTab: ["breed", "garden", "market", "storage"].indexOf(tab) >= 0 ? tab : "farm", ranchPick: null, breedPick: null, plotPick: null, ranch: ranchUiSnap(), gold: G.gold, petBox: (G.petBox || []).map((x) => ({ ...x })) })); };
     G.ranchAssign = (iid, slot) => {
+      if (G.petInUse && G.petInUse(iid)) { toast("⛔ ตัวที่เป็นบัดดี้/อยู่ในทีม ห้ามนำลงฟาร์ม — ถอดออกจากทีมก่อน"); return; }
       ranchTick();
       const R = G.ranch; R.slots = R.slots || [];
       for (let k = 0; k < ranchSlotsMax(); k++) if (R.slots[k] === iid) R.slots[k] = null; // ย้ายออกจากช่องเดิมก่อน
@@ -30791,7 +30792,7 @@ export default function CherryAdventure() {
             const RARC = { 1: "#9aa89a", 2: "#5fc06a", 3: "#4a9ae8", 4: "#b060e0", 5: "#f5a623", 6: "#ff4a8a" };
             const RARN = { 1: "สามัญ", 2: "ไม่ธรรมดา", 3: "หายาก", 4: "มหากาพย์", 5: "ตำนาน", 6: "เทพนิยาย" };
             const tierOf = (p) => (SPECIES[p.sp] || {}).tier || 1;
-            const avail = (ui.petBox || []).filter((p) => !inRanch.has(p.i))
+            const avail = (ui.petBox || []).filter((p) => !inRanch.has(p.i) && !(G.petInUse && G.petInUse(p.i))) // ⛔ ตัวบัดดี้/ทีม ไม่ให้ลงฟาร์ม
               .slice().sort((a, b) => { const d = tierOf(b) - tierOf(a); return d !== 0 ? d : (b.lv || 0) - (a.lv || 0); }); // 🌟 หายากสุด → เลเวลสูงสุดก่อน
             return (
               <div onClick={() => setUi((u) => ({ ...u, ranchPick: null }))} style={{ position: "absolute", inset: 0, zIndex: 70, background: "rgba(40,28,18,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
@@ -31119,7 +31120,10 @@ export default function CherryAdventure() {
                 </div>
               ); })()}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              {(ui.petBox || []).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
+              {(() => { const inFarm = new Set(((G.ranch && G.ranch.slots) || []).filter((x) => x != null)); const farmN = (ui.petBox || []).filter((p) => inFarm.has(p.i)).length; return farmN > 0 ? (
+                <div style={{ fontSize: 10.5, fontWeight: 800, color: "#7a9a5a", background: "#eef8e4", borderRadius: 9, padding: "5px 9px", marginBottom: 6 }}>🏡 อยู่ในฟาร์ม {farmN} ตัว — ถูกพักจากกระเป๋าชั่วคราว จนกว่าจะนำออกจากคอกฟาร์ม</div>
+              ) : null; })()}
+              {(ui.petBox || []).filter((p) => !(((G.ranch && G.ranch.slots) || []).includes(p.i))).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
                 const sp = SPECIES[p.sp];
                 const rr = petRarity(p.sp);
                 const isBuddy = ui.buddy === p.i;
