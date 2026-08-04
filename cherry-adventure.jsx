@@ -14920,6 +14920,7 @@ export default function CherryAdventure() {
     };
 
     const gainExp = (amt) => {
+      if (G.expBoostUntil && Date.now() < G.expBoostUntil) amt *= 2; // 📜 ใบประสบการณ์ x2
       if (G.restBuffUntil && Date.now() < G.restBuffUntil) amt = Math.round(amt * 1.15); // 😴 บัฟนอนพักจากบ้าน +15% XP
       // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
       if (!G._partyShareGrant && G.partyCode && G.partyActiveOthers) {
@@ -15562,6 +15563,23 @@ export default function CherryAdventure() {
       syncPotions(); syncPlayer();
     };
     G.sellPotAll = (type, size) => { const inv = type === "hp" ? G.hpPots : G.mpPots; G.sellPot(type, size, (inv && inv[size]) || 0); };
+    // 📜 ใบประสบการณ์ x2 — timed double-EXP buff; buying again extends the timer
+    G.EXP_SCROLLS = { h: { name: "1 ชั่วโมง", ms: 3600000, price: 10000 }, d: { name: "1 วัน", ms: 86400000, price: 100000 } };
+    G.expBoostLeftText = () => {
+      if (!G.expBoostUntil || G.expBoostUntil <= Date.now()) return null;
+      const mins = Math.ceil((G.expBoostUntil - Date.now()) / 60000);
+      return mins >= 60 ? `${Math.floor(mins / 60)} ชม. ${mins % 60} นาที` : `${mins} นาที`;
+    };
+    G.buyExpScroll = (kind) => {
+      const s = G.EXP_SCROLLS[kind]; if (!s) return;
+      if (G.gold < s.price) { toast(`ทองไม่พอ! ต้องมี ${s.price.toLocaleString()}💰`); return; }
+      G.gold -= s.price;
+      G.expBoostUntil = Math.max(Date.now(), G.expBoostUntil || 0) + s.ms;
+      if (G.sfx) G.sfx.coin();
+      toast(`📜 ใช้ใบประสบการณ์ x2 (${s.name}) แล้ว! เหลือเวลา ${G.expBoostLeftText()}`);
+      syncPlayer();
+      if (G.saveGame) G.saveGame();
+    };
     // ⚙️ pick which potion size the on-screen quick-use buttons (and auto-drink) consume
     G.setPotUse = (type, size) => {
       if (type === "hp") G.hpPotUse = size; else G.mpPotUse = size;
@@ -17945,7 +17963,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -19691,6 +19709,7 @@ export default function CherryAdventure() {
         ? { owned: (d.home.owned && typeof d.home.owned === "object") ? d.home.owned : {}, furni: Array.isArray(d.home.furni) ? d.home.furni.slice(0, 60) : [], floor: d.home.floor || 0, wall: d.home.wall || 0 }
         : { owned: {}, furni: [], floor: 0, wall: 0 };
       G.restBuffUntil = d.restBuffUntil || 0;
+      G.expBoostUntil = d.expBoostUntil || 0;
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
         const mids = Object.keys(d.col || {}).filter((k) => SPECIES[k]).sort((a, b) => SPECIES[b].tier - SPECIES[a].tier);
@@ -28577,6 +28596,20 @@ export default function CherryAdventure() {
                   <span style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>{total}💰 (มี {ui.balls || 0})</span>
                 </button> ); })()}
               </div>
+              {/* 📜 EXP x2 scrolls */}
+              {(() => { const left = G.expBoostLeftText ? G.expBoostLeftText() : null; return (
+                <>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: "#a05ac0", marginBottom: 3 }}>📜 ใบประสบการณ์ x2 {left ? `· ⏳ กำลังใช้งาน เหลือ ${left}` : "(EXP คูณ 2 · ซื้อซ้ำต่อเวลาได้)"}</div>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                    {[["h", "1 ชั่วโมง", 10000], ["d", "1 วัน", 100000]].map(([k, nm, pr]) => { const afford = (ui.gold || 0) >= pr; return (
+                      <button key={k} disabled={!afford} onClick={() => G.buyExpScroll(k)} style={{ flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#f6ecfb" : "#eee", opacity: afford ? 1 : 0.55 }}>
+                        <div style={{ fontSize: 16 }}>📜</div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: "#a05ac0" }}>x2 EXP · {nm}</div>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c09020" }}>{pr.toLocaleString()}💰</div>
+                      </button> ); })}
+                  </div>
+                </>
+              ); })()}
               <div style={{ fontSize: 11, fontWeight: 800, color: "#8a8a7a", marginBottom: 4 }}>อุปกรณ์</div>
               {ui.shop.length === 0 && (
                 <div style={{ fontSize: 12.5, color: "#a3a396" }}>สินค้าหมดแล้ว กดสุ่มใหม่ได้เลย</div>
