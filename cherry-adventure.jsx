@@ -12584,7 +12584,7 @@ export default function CherryAdventure() {
     const dmgPool = [];
     for (let i = 0; i < DMG_POOL; i++) {
       const cv = document.createElement("canvas");
-      cv.width = 256; cv.height = 128;
+      cv.width = 512; cv.height = 128; // กว้างพอสำหรับดาเมจหลักแสน/ล้าน ไม่โดนตัดขอบ
       const tex = new THREE.CanvasTexture(cv);
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
       sp.renderOrder = 1000;
@@ -12596,33 +12596,37 @@ export default function CherryAdventure() {
     // kind: "hit" | "crit" | "heal" | "weak"
     const popDamage = (pos, amount, kind = "hit") => {
       const d = dmgPool[dmgIdx = (dmgIdx + 1) % DMG_POOL];
-      const txt = (kind === "heal" ? "+" : "") + Math.round(amount);
+      const txt = (kind === "heal" ? "+" : "") + Math.round(amount).toLocaleString("en-US");
       const key = txt + kind;
       if (d.last !== key) { // only repaint when the text actually changes
         d.last = key;
         const ctx = d.cv.getContext("2d");
-        ctx.clearRect(0, 0, 256, 128);
+        ctx.clearRect(0, 0, 512, 128);
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
         const crit = kind === "crit", weak = kind === "weak", heal = kind === "heal";
-        const size = crit ? 76 : weak ? 62 : 56;
+        let size = crit ? 76 : weak ? 62 : 56;
         ctx.font = `900 ${size}px system-ui, sans-serif`;
+        // 🔢 เลขยาว (หลักแสน/ล้าน) ย่อฟอนต์อัตโนมัติให้พอดีความกว้าง ไม่โดนตัด
+        const maxW = 490;
+        const tw = ctx.measureText(txt).width;
+        if (tw > maxW) { size = Math.max(28, Math.floor(size * maxW / tw)); ctx.font = `900 ${size}px system-ui, sans-serif`; }
         // heavy outline keeps it readable over any monster colour
         ctx.lineWidth = crit ? 12 : 9;
         ctx.strokeStyle = "rgba(0,0,0,0.9)";
-        ctx.strokeText(txt, 128, 70);
+        ctx.strokeText(txt, 256, 70);
         const grad = ctx.createLinearGradient(0, 30, 0, 110);
         if (crit)      { grad.addColorStop(0, "#fff3a0"); grad.addColorStop(0.5, "#ffb020"); grad.addColorStop(1, "#e8402a"); }
         else if (weak) { grad.addColorStop(0, "#fff0b0"); grad.addColorStop(1, "#f5a020"); }
         else if (heal) { grad.addColorStop(0, "#d8ffd0"); grad.addColorStop(1, "#3aa04a"); }
         else           { grad.addColorStop(0, "#ffffff"); grad.addColorStop(1, "#dfe6ee"); }
         ctx.fillStyle = grad;
-        ctx.fillText(txt, 128, 70);
+        ctx.fillText(txt, 256, 70);
         if (crit) { // ✨ CRITICAL! tag above the number
           ctx.font = "900 26px system-ui, sans-serif";
           ctx.lineWidth = 6; ctx.strokeStyle = "rgba(0,0,0,0.9)";
-          ctx.strokeText("CRITICAL!", 128, 22);
+          ctx.strokeText("CRITICAL!", 256, 22);
           ctx.fillStyle = "#ffd84a";
-          ctx.fillText("CRITICAL!", 128, 22);
+          ctx.fillText("CRITICAL!", 256, 22);
         }
         d.tex.needsUpdate = true;
       }
@@ -12634,7 +12638,7 @@ export default function CherryAdventure() {
       d.vx = (Math.random() - 0.5) * 0.5;
       d.kind = kind;
       d.baseScale = kind === "crit" ? 1.5 : 1.15;
-      d.sp.scale.set(d.baseScale, d.baseScale * 0.5, 1);
+      d.sp.scale.set(d.baseScale * 2, d.baseScale * 0.5, 1); // ×2 กว้างตามสัดส่วน canvas 512:128
     };
     G.popDamage = popDamage;
     // called every frame from animate()
@@ -12646,7 +12650,7 @@ export default function CherryAdventure() {
         if (p >= 1) { d.sp.visible = false; continue; }
         // pop out, then drift up and fade
         const pop = p < 0.18 ? 1 + Math.sin((p / 0.18) * Math.PI) * (d.kind === "crit" ? 0.5 : 0.28) : 1;
-        d.sp.scale.set(d.baseScale * pop, d.baseScale * 0.5 * pop, 1);
+        d.sp.scale.set(d.baseScale * 2 * pop, d.baseScale * 0.5 * pop, 1);
         d.sp.position.y += (1.5 - p * 0.7) * dt;
         d.sp.position.x += d.vx * dt;
         d.sp.material.opacity = p < 0.65 ? 1 : 1 - (p - 0.65) / 0.35;
