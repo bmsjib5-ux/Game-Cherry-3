@@ -11415,6 +11415,7 @@ export default function CherryAdventure() {
         toast(`${b.emoji} วาร์ปสู่ ${b.name}! มอนสเตอร์ประจำถิ่นปรากฏตัว`);
       }
       setUi((u) => ({ ...u, biomeName: `${b.emoji} ${b.name}`, biomeIdx: G.curBiome }));
+      if (G.storyEvent) G.storyEvent("visit", 1, { biome: b.id }); // 📖
       if (G.updateWarpLabels) G.updateWarpLabels(); // 🏷️ refresh the ◀ prev / next ▶ rift labels
       G._warpLock = true; // 🔒 don't instantly re-warp — player must step off the rift first
       if (G.rtChannel && G.rtJoinBiome) G.rtJoinBiome(G.curBiome); // 🌐 move to this map's realtime room
@@ -12283,6 +12284,93 @@ export default function CherryAdventure() {
       G.quests = G.quests.filter((x) => !x.claimed);
       refreshQuests();
       syncPlayer();
+    };
+
+    // ---------- 📖 STORY QUESTLINE — ภารกิจเนื้อเรื่องต่อเนื่อง ไล่ตามเลเวลและด่านทั้ง 14 แดน ----------
+    // เนื้อเรื่องผู้เฒ่าประจำหมู่บ้านพาไล่ด่าน: เก็บเลเวล → วาร์ปไปด่านใหม่ → กวาดล้างมอน → โค่นเจ้าถิ่น วนไปจนจบตำนาน
+    const STORY_NARR = {
+      desert:  { a: "ผู้เฒ่า: \"พลังมืดแผ่ไปถึงทะเลทรายเพลิงแล้ว จงก้าวผ่านประตูวาร์ปไปที่นั่นเถิดผู้กล้า\"", h: "ฝูงอสูรทรายอาละวาดใส่กองคาราวานพ่อค้า จัดการพวกมันให้ราบคาบ", b: "ราชาเสือสมิงคือผู้คุมผืนทรายอันเดือดพล่าน โค่นมันเพื่อคลายคำสาปแห่งทะเลทราย" },
+      snow:    { a: "ผู้เฒ่า: \"เสียงร่ำไห้ดังมาจากทุ่งหิมะเยือก... ออกเดินทางต่อเถิด อย่าให้ความหนาวหยุดเจ้า\"", h: "วิญญาณน้ำแข็งจับชาวบ้านแช่แข็งไว้ทั่วทุ่ง ปราบพวกมันให้สิ้นซาก", b: "พญาอินทรีเยือกแข็งครองน่านฟ้าแดนนี้มาช้านาน สอยมันลงมาจากบัลลังก์เมฆ!" },
+      cave:    { a: "ผู้เฒ่า: \"ลึกลงไปในถ้ำมรกตมีแสงประหลาดเรืองรอง ไปสืบให้รู้ว่ามันคืออะไร\"", h: "ฝูงอสูรเงาซุ่มอยู่ทุกซอกหลืบหิน กวาดล้างให้ถ้ำกลับมาสงบ", b: "อสูรครุฑเงามืดคือต้นตอความมืดมิดในถ้ำ ปราบมันแล้วแสงมรกตจะกลับคืน" },
+      volcano: { a: "ผู้เฒ่า: \"ภูเขาไฟอสูรกำลังคุกรุ่น หากปล่อยไว้ลาวาจะท่วมทั้งแผ่นดิน!\"", h: "เหล่าอสูรเพลิงกำลังประกอบพิธีปลุกภูเขาไฟ หยุดพวกมันก่อนสายเกินไป", b: "พญาอัคคีอสูรหลับใหลอยู่ใจกลางปล่องลาวา ปลุกมันขึ้นมา...แล้วโค่นมันซะ!" },
+      sky:     { a: "ผู้เฒ่า: \"เกาะลอยสวรรค์ปรากฏบนฟากฟ้า นั่นคือหนทางสู่ความจริงของตำนาน\"", h: "ผู้พิทักษ์แห่งเวหาถูกมนตร์มืดควบคุม ปลดปล่อยพวกเขาด้วยกำปั้นแห่งเมตตา", b: "เทพเจ้าดวงดาวรอคอยผู้กล้าตัวจริงมาเนิ่นนาน จงพิสูจน์ตัวเจ้าต่อหน้าดวงดาว!" },
+      hell:    { a: "ผู้เฒ่า: \"ประตูขุมนรกันตร์เปิดออกแล้ว... ที่นั่นคือแดนวิญญาณที่ไม่มีวันหลับ\"", h: "ฝูงภูตปีศาจทะลักออกจากเหวลึก ผลักพวกมันกลับสู่ความมืด", b: "ยมทูตมัจจุราชกุมบัญชีวิญญาณของทุกชีวิต โค่นมันเพื่อคืนสมดุลแห่งโลก" },
+      heaven:  { a: "ผู้เฒ่า: \"ผู้ผ่านนรกได้เท่านั้น...ที่สรวงสวรรค์ชั้นฟ้าจะเปิดประตูต้อนรับ\"", h: "แม้แต่เหล่าเทวดาก็ถูกพลังมืดแทรกซึม ช่วยพวกเขาให้พ้นจากมนตร์ร้าย", b: "พระโพธิสัตว์จะทดสอบจิตใจเจ้าเป็นครั้งสุดท้าย จงตั้งมั่นแล้วเข้าประลอง!" },
+      moon:    { a: "ผู้เฒ่า: \"สัญญาณประหลาดส่งมาจากดวงจันทร์ ยานเอเลี่ยนลงจอดแล้ว!\"", h: "กองทัพเอเลี่ยนบุกยึดพื้นผิวจันทรา ขับไล่พวกมันออกไปจากหลุมอุกกาบาต", b: "จักรพรรดิเอเลี่ยนคือผู้บงการเบื้องหลังทุกสิ่ง จบสงครามดวงดาวนี้ซะ!" },
+      candy:   { a: "ผู้เฒ่า: \"หลังม่านดวงดาวมีแดนประหลาดหอมหวานซ่อนอยู่... แดนขนมหวาน!\"", h: "เหล่ากัมมี่คลั่งน้ำตาลกำลังอาละวาดทั่วเมืองคุกกี้ หยุดพวกมันให้ได้", b: "ราชาขนมหวานหวงบัลลังก์ลูกกวาดยิ่งชีพ โค่นมันอย่างนุ่มนวล...แต่เด็ดขาด!" },
+      beach:   { a: "ผู้เฒ่า: \"ได้ยินไหม เสียงคลื่นกำลังเรียกหาเจ้า หาดทะเลทรายซ่อนความลับไว้ใต้น้ำ\"", h: "ปูยักษ์กับฉลามอันธพาลป่วนชายหาดจนไม่มีใครกล้าลงเล่นน้ำ จัดระเบียบซะ", b: "คราเคนเจ้าสมุทรลากเรือลงเหวลึกมานักต่อนัก ปราบมันให้ท้องทะเลสงบ!" },
+      titan:   { a: "ผู้เฒ่า: \"ลานประลองไททันโบราณตื่นขึ้นอีกครั้ง เสียงหินลั่นสะเทือนถึงหมู่บ้าน\"", h: "เหล่าไททันหินตื่นจากหลับใหลนับพันปีด้วยความเกรี้ยวกราด สยบพวกมัน", b: "จอมไททันบรรพกาลรอผู้ท้าชิงอยู่กลางลานประลอง จงประกาศศักดาของเจ้า!" },
+      amazon:  { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
+    };
+    const MSQ = [];
+    MSQ.push({ t: "win", n: 5, title: "ก้าวแรกของผู้กล้า", txt: "ผู้เฒ่า: \"ยินดีต้อนรับสู่ทุ่งซากุระ เจ้าหนู! ช่วงนี้มอนสเตอร์คึกคะนองผิดปกติ ช่วยข้าปราบพวกมันสัก 5 ตัวเถิด\"" });
+    MSQ.push({ t:"catch", n: 1, title: "เพื่อนร่วมทาง", txt: "ผู้เฒ่า: \"การเดินทางไกลต้องมีเพื่อน ลองใช้ลูกบอลจับมอนสเตอร์มาเป็นเพื่อนสักตัวสิ\"" });
+    MSQ.push({ t:"tower", n: 3, title: "บททดสอบหอคอย", txt: "ผู้เฒ่า: \"หอคอยมิติคือบททดสอบของผู้กล้าทุกยุค จงพิชิตให้ถึงชั้น 3 เพื่อพิสูจน์ตัวเจ้า\"" });
+    MSQ.push({ t:"bboss", biome: "meadow", title: "ราชินีบุปผาคลั่ง", txt: "ผู้เฒ่า: \"ราชินีบุปผาผู้เคยปกปักษ์ทุ่งนี้ถูกพลังมืดครอบงำ กดปุ่มท้าดวลเจ้าถิ่นแล้วปลดปล่อยนางด้วยเถิด!\"" });
+    BIOMES.slice(1).forEach((b, k) => {
+      const NR = STORY_NARR[b.id] || {};
+      MSQ.push({ t:"level", n: b.lvMin, title: `เตรียมพร้อมสู่${b.name}`, txt: `ผู้เฒ่า: "ศัตรูเบื้องหน้าแข็งแกร่งขึ้นทุกก้าว ฝึกฝนให้ถึงเลเวล ${b.lvMin} ก่อนออกเดินทางสู่${b.name}"` });
+      MSQ.push({ t:"visit", biome: b.id, title: `เดินทางสู่${b.name}`, txt: NR.a || `เดินทางผ่านประตูวาร์ปไปยัง ${b.emoji} ${b.name}` });
+      MSQ.push({ t:"winB", biome: b.id, n: 10 + k * 2, title: `กวาดล้าง${b.name}`, txt: NR.h || `ปราบมอนสเตอร์ประจำถิ่นใน${b.name}` });
+      MSQ.push({ t:"bboss", biome: b.id, title: `โค่น${b.bossName}`, txt: NR.b || `ท้าดวลเจ้าถิ่นแห่ง${b.name}` });
+    });
+    MSQ.push({ t:"tower", n: 100, title: "สุดยอดตำนานเชอร์รี่", txt: "ผู้เฒ่า: \"บทสุดท้ายแล้ว ผู้กล้า... พิชิตหอคอยมิติให้ครบ 100 ชั้น แล้วชื่อของเจ้าจะถูกจารึกในตำนานตลอดกาล\"" });
+    G.MSQ = MSQ;
+    G.storyCh = 0; G.storyProg = 0;
+    const bNameOf = (id) => { const b = BIOMES.find((x) => x.id === id); return b ? `${b.emoji} ${b.name}` : id; };
+    G.storyTarget = (c) => (c && (c.t === "visit" || c.t === "bboss")) ? 1 : (c ? c.n : 1);
+    G.storyLabel = (c) => !c ? "" :
+      c.t === "win" ? `ปราบมอนสเตอร์ ${c.n} ตัว` :
+      c.t === "winB" ? `ปราบมอนสเตอร์ใน${bNameOf(c.biome)} ${c.n} ตัว` :
+      c.t === "catch" ? `จับมอนสเตอร์เป็นเพื่อน ${c.n} ตัว` :
+      c.t === "level" ? `เก็บเลเวลให้ถึง ${c.n}` :
+      c.t === "tower" ? `พิชิตหอคอยมิติถึงชั้น ${c.n}` :
+      c.t === "visit" ? `วาร์ปไปยัง ${bNameOf(c.biome)}` :
+      c.t === "bboss" ? `ท้าดวลเจ้าถิ่น ${(BIOMES.find((x) => x.id === c.biome) || {}).bossName || ""}` : "";
+    G.storyReward = (i) => { const c = MSQ[i]; const boss = c && c.t === "bboss"; return { gold: (400 + i * 180) * (boss ? 2 : 1), dia: 3 + Math.floor(i / 4) + (boss ? 5 : 0) }; };
+    const storySync = () => setUi((u) => ({ ...u, storyCh: G.storyCh, storyProg: G.storyProg }));
+    G.storySync = storySync;
+    G.storyEvent = (type, n = 1, meta = {}) => {
+      const c = MSQ[G.storyCh]; if (!c) return;
+      const tgt = G.storyTarget(c);
+      if (G.storyProg >= tgt) return; // รอกดรับรางวัลอยู่
+      const before = G.storyProg;
+      if (c.t === "level") G.storyProg = Math.min(tgt, G.player ? G.player.level : 1);
+      else if (c.t === "tower") G.storyProg = Math.min(tgt, Math.max(G.storyProg, Math.max(0, (G.dungeonProgress || 1) - 1)));
+      else if (c.t === "win" && type === "win") G.storyProg = Math.min(tgt, G.storyProg + n);
+      else if (c.t === "winB" && type === "win" && meta.biome === c.biome) G.storyProg = Math.min(tgt, G.storyProg + n);
+      else if (c.t === "catch" && type === "catch") G.storyProg = Math.min(tgt, G.storyProg + n);
+      else if (c.t === "visit" && type === "visit" && meta.biome === c.biome) G.storyProg = tgt;
+      else if (c.t === "bboss" && type === "bboss" && meta.biome === c.biome) G.storyProg = tgt;
+      if (G.storyProg !== before) {
+        if (G.storyProg >= tgt) { toast(`📖 เนื้อเรื่องบทที่ ${G.storyCh + 1} "${c.title}" สำเร็จ! เปิดเมนูภารกิจ 📜 กดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); }
+        storySync();
+      }
+    };
+    // เช็คเงื่อนไขที่อาจสำเร็จอยู่แล้ว (เลเวล/ชั้นหอคอย/ด่านที่ยืนอยู่) ตอนโหลดเซฟหรือขึ้นบทใหม่
+    G.storySeed = () => {
+      G.storyEvent("seed");
+      const b = BIOMES[G.curBiome];
+      if (b) G.storyEvent("visit", 1, { biome: b.id });
+    };
+    G.storyClaim = () => {
+      const c = MSQ[G.storyCh]; if (!c) return;
+      if (G.storyProg < G.storyTarget(c)) { toast("ยังทำภารกิจบทนี้ไม่สำเร็จนะ"); return; }
+      const r = G.storyReward(G.storyCh);
+      G.gold += r.gold;
+      G.achStats.goldEarned = (G.achStats.goldEarned || 0) + r.gold;
+      if (G.gainDiamonds) G.gainDiamonds(r.dia, `เนื้อเรื่องบทที่ ${G.storyCh + 1}`);
+      const xp = Math.round(expForLevel(G.player.level) * 0.35);
+      toast(`📖✨ จบบทที่ ${G.storyCh + 1} "${c.title}"! +${r.gold.toLocaleString()}💰`);
+      gainExp(xp);
+      if (G.sfx) G.sfx.levelup();
+      G.storyCh++; G.storyProg = 0;
+      G.storySeed();
+      storySync(); syncPlayer();
+      if (G.saveGame) G.saveGame();
+      const nx = MSQ[G.storyCh];
+      if (nx) toast(`📖 บทที่ ${G.storyCh + 1}: "${nx.title}" — ${G.storyLabel(nx)}`);
+      else toast("🏆 จบเนื้อเรื่องครบทุกบทแล้ว! เจ้าคือสุดยอดตำนานแห่งเชอร์รี่!");
     };
 
     // ---------- Buddy (caught pet following) ----------
@@ -14957,6 +15045,7 @@ export default function CherryAdventure() {
         toast(`🎉 เลเวลอัพ! Lv.${G.player.level} — ได้แต้มสกิล เลือกอัพเกรดเลย!`);
         if (G.sfx) G.sfx.levelup();
         checkBoss();
+        if (G.storyEvent) G.storyEvent("level"); // 📖
       }
       syncPlayer();
     };
@@ -16920,6 +17009,7 @@ export default function CherryAdventure() {
       burst(m.position, 0xf5d05a, 1.0);
       if (G.sfx) G.sfx.win && G.sfx.win();
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
+      if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id }); // 📖
       G.combo = (G.combo || 0) + 1;
       const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
       const ngRew = 1 + (G.ngPlus || 0) * 0.5;
@@ -17122,11 +17212,13 @@ export default function CherryAdventure() {
         if (ghostLv >= myLv) toast(`💰 โบนัสล้มเพื่อนแกร่ง! +${ghostLv * 5}G +1💗`);
       }
       questProgress("win", 1); // 📜 quest tracking
+      if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id }); // 📖
       G.achStats.wins = (G.achStats.wins || 0) + 1;
       if (wasBoss) { questProgress("boss", 1); G.achStats.bosses = (G.achStats.bosses || 0) + 1; }
       // 🏰 biome boss extra reward (first time)
       if (G.enemy.biomeBoss) {
         const bid = G.enemy.biomeBoss;
+        if (G.storyEvent) G.storyEvent("bboss", 1, { biome: bid }); // 📖
         if (!G.biomeBossDefeated[bid]) {
           G.biomeBossDefeated[bid] = true;
           G.gold += 500;
@@ -17210,6 +17302,7 @@ export default function CherryAdventure() {
         // 💾 remember the deepest floor we've cleared → resume at next
         G.dungeonProgress = Math.max(G.dungeonProgress || 1, fl + 1);
         questProgress("floor", 1); // 📜
+        if (G.storyEvent) G.storyEvent("tower"); // 📖
         G.achStats.floor = Math.max(G.achStats.floor || 0, fl);
         checkAchievements();
         const bossCleared = fl % 10 === 0;
@@ -17941,6 +18034,8 @@ export default function CherryAdventure() {
       if (G.computeTitle) G.computeTitle();
       setTimeout(() => setUi((u) => ({ ...u, tutStep: 0 })), 600);
       G.quests = []; refreshQuests(); // 📜 initial quests
+      G.storyCh = 0; G.storyProg = 0; if (G.storySync) G.storySync(); // 📖 เริ่มเนื้อเรื่องบทที่ 1
+      setTimeout(() => toast(`📖 เนื้อเรื่องบทที่ 1: "${(G.MSQ[0] || {}).title}" — ${G.storyLabel(G.MSQ[0])}`), 1500);
       if (G.checkDailyReward) G.checkDailyReward(); // 📅 daily login bonus
       setTimeout(() => G.saveGame && G.saveGame(), 100); // 💾 save the fresh start
       setUi((u) => ({ ...u, mode: "explore", cls: G.cls, col: {}, pets: {}, inv: [], equip: EMPTY_EQUIP(), msg: "" }));
@@ -17967,7 +18062,7 @@ export default function CherryAdventure() {
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
+          petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
           mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
@@ -19714,6 +19809,7 @@ export default function CherryAdventure() {
         : { owned: {}, furni: [], floor: 0, wall: 0 };
       G.restBuffUntil = d.restBuffUntil || 0;
       G.expBoostUntil = d.expBoostUntil || 0;
+      G.storyCh = d.storyCh || 0; G.storyProg = d.storyProg || 0; // 📖 เนื้อเรื่องหลัก
       if (!G.petBox) {
         G.petBox = []; G._petSeq = 1;
         const mids = Object.keys(d.col || {}).filter((k) => SPECIES[k]).sort((a, b) => SPECIES[b].tier - SPECIES[a].tier);
@@ -19750,6 +19846,7 @@ export default function CherryAdventure() {
       if (G.switchBiome) G.switchBiome(d.curBiome || 0, true);
       if (d.pos) char.position.set(d.pos.x || 0, 0, d.pos.z || 0);
       G.quests = []; refreshQuests(); // 📜
+      if (G.storySeed) { G.storySeed(); G.storySync(); } // 📖 เช็คเงื่อนไขเนื้อเรื่องที่สำเร็จแล้ว + sync UI
       if (G.checkDailyReward) G.checkDailyReward(); // 📅 daily login bonus
       if (G.checkAchievements) G.checkAchievements();
       if (G.computeTitle) G.computeTitle();
@@ -26262,6 +26359,7 @@ export default function CherryAdventure() {
                 const petInst = G.addPetInstance ? G.addPetInstance(cid, { lv: Math.max(1, Math.round(G.enemy.lv * 0.6)) }) : null;
                 if (G.sfx) G.sfx.catch();
                 questProgress("catch", 1); // 📜
+                if (G.storyEvent) G.storyEvent("catch", 1); // 📖
                 G.achStats.catches = (G.achStats.catches || 0) + 1;
                 checkAchievements();
                 if (isNew) G.pets[cid] = { lv: 1, exp: 0, stage: 1 };
@@ -27266,6 +27364,24 @@ export default function CherryAdventure() {
           👹 บอสโลก (ปาร์ตี้)
         </button>
       )}
+      {/* 📖 story tracker chip — เกาะติดบทเนื้อเรื่องปัจจุบัน กดเพื่อเปิดเมนูภารกิจ */}
+      {ui.mode === "explore" && !ui.equipScreen && (() => {
+        const S = G.MSQ || []; const c = S[ui.storyCh || 0];
+        if (!c) return null;
+        const tgt = G.storyTarget(c);
+        const prog = Math.min(tgt, ui.storyProg || 0); const done = prog >= tgt;
+        return (
+          <button onClick={() => setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false }))} style={{
+            position: "absolute", top: 104, left: "50%", transform: "translateX(-50%)",
+            background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.82)", borderRadius: 999,
+            padding: "4px 12px", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
+            border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
+            maxWidth: "86%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", zIndex: 21,
+          }}>
+            📖 บท {(ui.storyCh || 0) + 1}: {done ? "สำเร็จ! แตะรับรางวัล ✨" : `${G.storyLabel(c)} (${prog}/${tgt})`}
+          </button>
+        );
+      })()}
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (
@@ -29263,6 +29379,36 @@ export default function CherryAdventure() {
                 </div>
               ) : (
               <>
+              {/* 📖 เนื้อเรื่องหลัก — story questline card */}
+              {(() => {
+                const S = G.MSQ || [];
+                const ch = ui.storyCh != null ? ui.storyCh : (G.storyCh || 0);
+                const c = S[ch];
+                if (!c) return (
+                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "10px 12px", background: "linear-gradient(135deg,#3a2a5a,#6a4a9a)", color: "#ffd84a", fontSize: 12.5, fontWeight: 800, textAlign: "center" }}>🏆 จบเนื้อเรื่องครบ {S.length} บทแล้ว! สุดยอดตำนานนักผจญภัย</div>
+                );
+                const tgt = G.storyTarget(c);
+                const prog = Math.min(tgt, ui.storyProg || 0);
+                const done = prog >= tgt;
+                const r = G.storyReward(ch);
+                return (
+                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "10px 12px", background: "linear-gradient(135deg,#2a2248,#4a3a7a)", border: done ? "2px solid #ffd84a" : "2px solid transparent" }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: "#b8a8e8" }}>📖 เนื้อเรื่องหลัก · บทที่ {ch + 1}/{S.length}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 900, color: "#fff", margin: "2px 0" }}>{c.title}</div>
+                    <div style={{ fontSize: 10.5, color: "#cfc4ee", lineHeight: 1.55, marginBottom: 6 }}>{c.txt}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#ffd84a" }}>🎯 {G.storyLabel(c)}</div>
+                    <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 999, height: 8, overflow: "hidden", margin: "5px 0" }}>
+                      <div style={{ width: `${(prog / tgt) * 100}%`, height: "100%", background: done ? "#ffd84a" : "linear-gradient(90deg,#8a6ae0,#c09aff)", transition: "width 0.3s" }} />
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 10.5, color: "#b8a8e8", fontWeight: 700 }}>{prog}/{tgt} · 🎁 {r.gold.toLocaleString()}💰 + {r.dia}💎 + EXP</span>
+                      {done && (
+                        <button onClick={() => G.storyClaim()} style={{ padding: "5px 14px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#3a2a10", background: "linear-gradient(90deg,#ffd84a,#ffb020)" }}>รับรางวัล</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
               <div style={{ fontSize: 10.5, color: "#a3a396", marginBottom: 8 }}>
                 ทำภารกิจสำเร็จแล้วกดรับ EXP + ทองก้อนโต
               </div>
