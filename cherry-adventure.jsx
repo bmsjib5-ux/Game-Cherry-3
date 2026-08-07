@@ -45,6 +45,8 @@ const BIOMES = [
   // 🌴 ด่านป่าอเมซอน — Lv 600-750 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
   { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 600, lvMax: 750, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
 ];
+// 📱 กันรอยบาก/กล้องหน้า (Dynamic Island): เลื่อน UI ขอบบนลงตาม safe-area ของเครื่อง
+const ST = (px) => `calc(env(safe-area-inset-top, 0px) + ${px}px)`;
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "พายุเทพเจ้า", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
@@ -26927,13 +26929,13 @@ export default function CherryAdventure() {
       {ui.mode === "class" && (
         <>
           <div style={{
-            position: "absolute", top: 20, left: 0, right: 0, textAlign: "center", pointerEvents: "none",
+            position: "absolute", top: ST(20), left: 0, right: 0, textAlign: "center", pointerEvents: "none",
           }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#8a5a4a" }}>⚔️ เลือกสายอาชีพ</div>
             <div style={{ fontSize: 12, color: "#a3796a", marginTop: 3 }}>แตะการ์ดเพื่อดูตัวละครในชุดอาชีพ · ลากหมุน/ซูมได้</div>
           </div>
           {/* back to customize */}
-          <div style={{ position: "absolute", top: 14, right: 12 }}>
+          <div style={{ position: "absolute", top: ST(14), right: 12 }}>
             <button onClick={() => setUi((u) => ({ ...u, mode: "create" }))} style={{
               padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
@@ -26943,7 +26945,7 @@ export default function CherryAdventure() {
           {/* selected class info + confirm */}
           {ui.chosenClass && CLASSES[ui.chosenClass] && (
             <div style={{
-              position: "absolute", top: 74, left: "50%", transform: "translateX(-50%)",
+              position: "absolute", top: ST(74), left: "50%", transform: "translateX(-50%)",
               background: "rgba(255,255,255,0.95)", borderRadius: 14, padding: "10px 16px", maxWidth: 320,
               textAlign: "center", boxShadow: "0 4px 14px rgba(90,120,70,0.25)",
             }}>
@@ -27020,11 +27022,11 @@ export default function CherryAdventure() {
 
       {ui.mode === "create" && (
   <>
-    <div style={{ position: "absolute", top: 14, left: 202, right: 12, textAlign: "center", pointerEvents: "none" }}>
+    <div style={{ position: "absolute", top: ST(14), left: 202, right: 12, textAlign: "center", pointerEvents: "none" }}>
       <div style={{ fontSize: 18, fontWeight: 800, color: "#8a5a4a" }}>🎀 ออกแบบตัวละคร</div>
       <div style={{ fontSize: 11, color: "#a3796a", marginTop: 2 }}>เลือกหมวดทางซ้าย · ลาก/บีบเพื่อหมุน–ซูม</div>
     </div>
-    <div style={{ position: "absolute", top: 12, right: 12 }}>
+    <div style={{ position: "absolute", top: ST(12), right: 12 }}>
       <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots() }))} style={{
         padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
         fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
@@ -27036,7 +27038,7 @@ export default function CherryAdventure() {
       position: "absolute", top: 0, left: 0, bottom: 118, width: 192,
       background: "#fffdfb", borderRadius: "0 22px 22px 0",
       boxShadow: "8px 0 28px rgba(90,120,70,0.28)",
-      display: "flex", flexDirection: "column",
+      display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)",
     }}>
       <div style={{ padding: "12px 12px 8px", fontSize: 15, fontWeight: 800, color: "#8a5a4a", textAlign: "center" }}>🎀 แต่งตัว</div>
       {/* category tabs */}
@@ -27270,7 +27272,7 @@ export default function CherryAdventure() {
       {/* 📅 daily login reward */}
       {ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && (
         <div style={{
-          position: "absolute", top: 70, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", top: ST(70), left: "50%", transform: "translateX(-50%)",
           background: "linear-gradient(135deg,#fff2c8,#ffe0a0)", borderRadius: 16, padding: "12px 16px",
           boxShadow: "0 6px 20px rgba(200,150,40,0.4)", border: "2px solid #f5c542",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 6, zIndex: 50, maxWidth: 280,
@@ -27328,7 +27330,7 @@ export default function CherryAdventure() {
       {/* 🗺️ biome name badge */}
       {ui.mode === "explore" && !ui.equipScreen && (
         <div style={{
-          position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", top: ST(12), left: "50%", transform: "translateX(-50%)",
           background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
           fontSize: 12.5, fontWeight: 800, color: "#5a5a4a", pointerEvents: "none",
           boxShadow: "0 2px 8px rgba(90,120,70,0.2)",
@@ -27341,7 +27343,7 @@ export default function CherryAdventure() {
         <button
           onClick={() => G.challengeBiomeBoss()}
           style={{
-            position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", top: ST(40), left: "50%", transform: "translateX(-50%)",
             background: "linear-gradient(90deg,#b03060,#e0708a)", borderRadius: 999,
             padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
             border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(176,48,96,0.4)",
@@ -27355,7 +27357,7 @@ export default function CherryAdventure() {
         <button
           onClick={() => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }}
           style={{
-            position: "absolute", top: 72, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", top: ST(72), left: "50%", transform: "translateX(-50%)",
             background: "linear-gradient(90deg,#5a1a2a,#c0392b)", borderRadius: 999,
             padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
             border: "1px solid #f5a623", cursor: "pointer", boxShadow: "0 3px 10px rgba(192,57,43,0.5)",
@@ -27372,7 +27374,7 @@ export default function CherryAdventure() {
         const prog = Math.min(tgt, ui.storyProg || 0); const done = prog >= tgt;
         return (
           <button onClick={() => setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false }))} style={{
-            position: "absolute", top: 104, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", top: ST(104), left: "50%", transform: "translateX(-50%)",
             background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.82)", borderRadius: 999,
             padding: "4px 12px", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
             border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
@@ -27385,7 +27387,7 @@ export default function CherryAdventure() {
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (
-        <div style={{ position: "absolute", top: (ui.globalBoard && ui.globalBoard.length) ? 250 : 92, left: 12, display: "flex", gap: 6, zIndex: 27 }}>
+        <div style={{ position: "absolute", top: (ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 }}>
           <button onClick={() => G.toggleSound()} title="เสียงเอฟเฟกต์" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
             fontSize: 15, background: ui.soundOn ? "#fff" : "#d8d8d0", opacity: ui.soundOn ? 1 : 0.6,
@@ -27915,7 +27917,7 @@ export default function CherryAdventure() {
       {/* 🗼 dungeon floor pill */}
       {ui.mode === "battle" && ui.dungeonFloor > 0 && (
         <div style={{
-          position: "absolute", top: 160, left: 0, right: 0,
+          position: "absolute", top: ST(160), left: 0, right: 0,
           display: "flex", justifyContent: "center", pointerEvents: "none",
         }}>
           <div style={{
@@ -28076,7 +28078,7 @@ export default function CherryAdventure() {
         </>
       )}
       {ui.mode === "explore" && ui.inHomeZone && ui.homeVisitOwner && (
-        <div style={{ position: "absolute", top: 96, left: "50%", transform: "translateX(-50%)", background: "rgba(70,48,34,0.72)", color: "#ffeede", borderRadius: 999, padding: "6px 16px", fontSize: 12.5, fontWeight: 800, fontFamily: font, zIndex: 26 }}>🏠 บ้านของ {ui.homeVisitOwner} · เดินไปเสื่อเขียวเพื่อกลับ</div>
+        <div style={{ position: "absolute", top: ST(96), left: "50%", transform: "translateX(-50%)", background: "rgba(70,48,34,0.72)", color: "#ffeede", borderRadius: 999, padding: "6px 16px", fontSize: 12.5, fontWeight: 800, fontFamily: font, zIndex: 26 }}>🏠 บ้านของ {ui.homeVisitOwner} · เดินไปเสื่อเขียวเพื่อกลับ</div>
       )}
       {/* 🛋️ แผงแต่งบ้าน: วาง/หมุน/เก็บ + ร้านเฟอร์นิเจอร์ */}
       {ui.homeDecorOpen && ui.inHomeZone && (
@@ -28539,7 +28541,7 @@ export default function CherryAdventure() {
       )}
 
       {ui.mode === "explore" && !ui.equipScreen && (
-        <div style={{ position: "absolute", right: 14, ...(_shortHud ? { top: 46 } : { top: "30%" }), display: "grid", gridTemplateColumns: "repeat(3, 34px)", gridTemplateRows: "repeat(3, 34px)", gap: 3, zIndex: 24 }}>
+        <div style={{ position: "absolute", right: 14, ...(_shortHud ? { top: ST(46) } : { top: "30%" }), display: "grid", gridTemplateColumns: "repeat(3, 34px)", gridTemplateRows: "repeat(3, 34px)", gap: 3, zIndex: 24 }}>
           {[
             ["", null],
             ["▲", () => G.rotateCam(0, 0.12)],
@@ -28564,7 +28566,7 @@ export default function CherryAdventure() {
           {/* AUTO toggle now lives on the bottom status bar */}
           {ui.auto && (
             <div style={{
-              position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
+              position: "absolute", top: ST(10), left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
               background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
               fontSize: 11.5, fontWeight: 700, color: "#59a0e8", whiteSpace: "nowrap",
             }}>
@@ -28633,7 +28635,7 @@ export default function CherryAdventure() {
           })()}
 
           {/* zoom */}
-          <div style={{ position: "absolute", left: 14, ...(_shortHud ? { top: 48 } : { top: "32%" }), display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ position: "absolute", left: 14, ...(_shortHud ? { top: ST(48) } : { top: "32%" }), display: "flex", flexDirection: "column", gap: 8 }}>
             {[["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (
               <button key={sym} onClick={() => G.zoom(d)} style={{
                 width: 44, height: 44, borderRadius: "50%", border: "none", cursor: "pointer",
@@ -31497,7 +31499,7 @@ export default function CherryAdventure() {
           {/* 🔥 combo streak */}
           {ui.endlessWave > 0 && ui.mode === "battle" && (
             <div style={{
-              position: "absolute", top: 58, right: 12, pointerEvents: "none",
+              position: "absolute", top: ST(58), right: 12, pointerEvents: "none",
               background: "linear-gradient(90deg,#3a9a5a,#5ab87a)", borderRadius: 999,
               padding: "3px 12px", fontSize: 12, fontWeight: 800, color: "#fff",
               boxShadow: "0 3px 10px rgba(58,154,90,0.5)",
@@ -31507,7 +31509,7 @@ export default function CherryAdventure() {
           )}
           {ui.combo >= 2 && (
             <div style={{
-              position: "absolute", top: 88, right: 12, pointerEvents: "none",
+              position: "absolute", top: ST(88), right: 12, pointerEvents: "none",
               background: "linear-gradient(90deg,#f5652e,#f5a623)", borderRadius: 999,
               padding: "3px 12px", fontSize: 12.5, fontWeight: 800, color: "#fff",
               boxShadow: "0 3px 10px rgba(245,101,46,0.5)",
@@ -31517,7 +31519,7 @@ export default function CherryAdventure() {
           )}
           {ui.chainLen >= 2 && (
             <div style={{
-              position: "absolute", top: 118, right: 12, pointerEvents: "none",
+              position: "absolute", top: ST(118), right: 12, pointerEvents: "none",
               background: "linear-gradient(90deg,#7a4ad0,#4a90e0)", borderRadius: 999,
               padding: "3px 12px", fontSize: 12, fontWeight: 800, color: "#fff",
               boxShadow: "0 3px 10px rgba(90,74,208,0.5)",
@@ -31528,7 +31530,7 @@ export default function CherryAdventure() {
 
           {/* 🐍💫 player status inflicted by monsters */}
           {((ui.pPoison || 0) > 0 || (ui.pStun || 0) > 0) && (
-            <div style={{ position: "absolute", top: 58, left: 12, display: "flex", flexDirection: "column", gap: 5, pointerEvents: "none", zIndex: 8 }}>
+            <div style={{ position: "absolute", top: ST(58), left: 12, display: "flex", flexDirection: "column", gap: 5, pointerEvents: "none", zIndex: 8 }}>
               {(ui.pPoison || 0) > 0 && (
                 <div style={{ background: "linear-gradient(90deg,#4a9a3a,#7ac04a)", borderRadius: 999, padding: "3px 11px", fontSize: 11.5, fontWeight: 800, color: "#fff", boxShadow: "0 3px 10px rgba(74,154,58,0.5)" }}>☠️ ติดพิษ ×{ui.pPoison}</div>
               )}
@@ -31750,7 +31752,7 @@ export default function CherryAdventure() {
       {/* 👹 World Boss — 60s round timer overlay */}
       {ui.wbActive && ui.mode === "battle" && (
         <div style={{
-          position: "absolute", top: 96, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", top: ST(96), left: "50%", transform: "translateX(-50%)",
           display: "flex", alignItems: "center", gap: 8, pointerEvents: "none",
           background: (ui.wbTime <= 10 ? "rgba(192,40,40,0.92)" : "rgba(30,20,30,0.82)"),
           borderRadius: 999, padding: "5px 16px", border: "1px solid #f5a623",
@@ -31764,7 +31766,7 @@ export default function CherryAdventure() {
 
       {/* 🏆 World Boss — live party scoreboard (damage contribution) */}
       {ui.wbActive && ui.mode === "battle" && (ui.wbBoard || []).length > 0 && (
-        <div style={{ position: "absolute", top: 44, right: 8, minWidth: 128, maxWidth: 176, background: "rgba(20,12,18,0.8)", border: "1px solid #f5a62388", borderRadius: 10, padding: "6px 8px", pointerEvents: "none", fontFamily: font, zIndex: 28 }}>
+        <div style={{ position: "absolute", top: ST(44), right: 8, minWidth: 128, maxWidth: 176, background: "rgba(20,12,18,0.8)", border: "1px solid #f5a62388", borderRadius: 10, padding: "6px 8px", pointerEvents: "none", fontFamily: font, zIndex: 28 }}>
           <div style={{ fontSize: 9.5, fontWeight: 900, color: "#f5c542", marginBottom: 3 }}>🏆 คะแนนปาร์ตี้ (ดาเมจ)</div>
           {(ui.wbBoard || []).slice(0, 6).map((r, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10, padding: "1px 0", color: r.me ? "#8ae0ff" : "#e8dcc8", fontWeight: r.me ? 900 : 700 }}>
