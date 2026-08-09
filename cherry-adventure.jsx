@@ -7543,7 +7543,7 @@ export default function CherryAdventure() {
       g.userData.crownStar = crownStar;
       outfitModels.oS = g;
     }
-    { // oD 🐉 dragon scale armor — dark-green + black scale, gold trim, emerald glow
+    { // oD 🐉 dragon scale armor — ชุดรัดรูปเกล็ดมังกรเต็มตัว 360° แนบทรงลำตัว (ไม่จม ไม่เปิดหลัง)
       const g = new THREE.Group();
       const scaleMat = new THREE.MeshStandardMaterial({
         color: 0x14201a, metalness: 0.7, roughness: 0.32,
@@ -7554,51 +7554,37 @@ export default function CherryAdventure() {
         emissive: 0x0a2416, emissiveIntensity: 0.4, side: THREE.DoubleSide,
       });
       const emeraldMat = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.3 });
-      const chest = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.47, 0.55, 0.66, 20, 1, true, -Math.PI * 0.38, Math.PI * 0.76),
-        scaleMat
-      );
-      chest.position.y = 1.62;
-      g.add(chest);
-      // overlapping dark-green scale rows
-      for (let row = 0; row < 3; row++) {
-        for (let c2 = -1; c2 <= 1; c2++) {
-          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 4), scaleGreen);
-          sc.position.set(c2 * 0.22, 1.42 + row * 0.2, 0.5);
-          sc.rotation.x = Math.PI;
-          g.add(sc);
-        }
-      }
-      // 🐉 polish: gold trim + spiked gold pauldrons + swept spine ridge
       const scaleGold = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
-      for (const sx of [-0.62, 0.62]) {
-        const pad = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.3, 6), scaleMat);
-        pad.position.set(sx, 2.12, 0);
-        pad.rotation.z = sx > 0 ? -0.5 : 0.5;
-        g.add(pad);
-        // gold pauldron spike
-        const pspk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.24, 6), scaleGold);
-        pspk.position.set(sx * 1.02, 2.28, 0); pspk.rotation.z = sx > 0 ? -0.5 : 0.5; g.add(pspk);
+      // 👕 เสื้อเต็มตัวรัดรูป — lathe รอบทิศตามทรงลำตัว ใหญ่กว่าผิวเล็กน้อยทุกจุด จึงไม่จมหาย
+      const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.37, 1.22], [0.35, 1.34], [0.345, 1.48], [0.37, 1.62], [0.385, 1.76], [0.36, 1.88], [0.295, 1.97], [0.2, 2.05]].map(([r, y]) => new THREE.Vector2(r, y)), 30), scaleMat);
+      suit.scale.set(1.06, 1, 0.84);
+      g.add(suit);
+      const frontZ = (R, x) => Math.sqrt(Math.max(0.001, R * R - (x / 1.06) * (x / 1.06))) * 0.84; // ระยะผิวเสื้อด้านหน้า ณ ความกว้าง x
+      // คอเสื้อขลิบทอง
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.018, 8, 26), scaleGold); collar.position.y = 2.05; collar.rotation.x = Math.PI / 2; collar.scale.set(1.06, 0.84, 1); g.add(collar);
+      // แขนเสื้อสั้นเกล็ด + หนามทองปลายไหล่
+      for (const sx of [-1, 1]) {
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), scaleGreen); cap.scale.set(1.05, 0.9, 1.05); cap.position.set(sx * 0.5, 1.92, 0); g.add(cap);
+        const pspk = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.2, 6), scaleGold); pspk.position.set(sx * 0.6, 2.06, 0); pspk.rotation.z = sx > 0 ? -0.55 : 0.55; g.add(pspk);
       }
-      // emerald glowing core gem inside a gold ring
-      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.02, 8, 20), scaleGold); coreRing.position.set(0, 1.72, 0.5); g.add(coreRing);
-      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), emeraldMat);
-      core.position.set(0, 1.72, 0.52);
+      // เกล็ดมังกรเรียงแถวแนบผิวเสื้อ อก-หน้าท้อง
+      for (let row = 0; row < 4; row++) for (let c2 = -1; c2 <= 1; c2++) {
+        const x = c2 * (0.16 - row * 0.014), y = 1.36 + row * 0.17;
+        const R = row >= 2 ? 0.385 : 0.36;
+        const sc = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.11, 4), scaleGreen);
+        sc.position.set(x, y, frontZ(R, x) + 0.015); sc.rotation.x = Math.PI; g.add(sc);
+      }
+      // แกนมรกตเรืองแสงกลางอกในวงแหวนทอง (แนบผิวเสื้อ)
+      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.018, 8, 20), scaleGold); coreRing.position.set(0, 1.74, frontZ(0.385, 0) + 0.01); g.add(coreRing);
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), emeraldMat);
+      core.position.set(0, 1.74, frontZ(0.385, 0) + 0.03);
       g.add(core);
-      // extra front dark-green scale rows
-      for (let row = 0; row < 2; row++) {
-        for (let c2 = -1; c2 <= 1; c2++) {
-          const sc = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.12, 4), scaleGreen);
-          sc.position.set(c2 * 0.13, 1.5 + row * 0.2, 0.55); sc.rotation.x = Math.PI; g.add(sc);
-        }
-      }
-      // gold filigree belt + emerald belt gem
-      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.045, 8, 24, Math.PI * 1.3), scaleGold);
-      belt.position.set(0, 1.36, 0.02); belt.rotation.set(Math.PI / 2, 0, -Math.PI * 0.65); g.add(belt);
-      const beltGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.2 }));
-      beltGem.position.set(0, 1.36, 0.5); g.add(beltGem);
-      // swept gold spine ridge
-      for (let i = 0; i < 4; i++) { const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16 - i * 0.02, 4), scaleGold); spike.position.set(0, 2.0 - i * 0.16, -0.42 - i * 0.03); spike.rotation.x = -0.5; g.add(spike); }
+      // เข็มขัดทองเต็มวงรอบเอว + พลอยมรกต
+      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.355, 0.04, 8, 26), scaleGold); belt.position.y = 1.3; belt.rotation.x = Math.PI / 2; belt.scale.set(1.06, 0.86, 1); g.add(belt);
+      const beltGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.055), emeraldMat.clone());
+      beltGem.position.set(0, 1.3, frontZ(0.37, 0) + 0.03); g.add(beltGem);
+      // สันหนามทองไล่กลางแผ่นหลัง
+      for (let i = 0; i < 4; i++) { const spike = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.15 - i * 0.02, 4), scaleGold); spike.position.set(0, 1.98 - i * 0.17, -frontZ(i < 2 ? 0.36 : 0.385, 0) - 0.02); spike.rotation.x = -0.6; g.add(spike); }
       outfitModels.oD = g;
     }
     { // ⭐ lg_out — celestial divine armor: radiant gold+white plate, halo core, feathered light-wings
@@ -7608,20 +7594,24 @@ export default function CherryAdventure() {
       const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.5, roughness: 0.15 });
       const redGem = new THREE.MeshStandardMaterial({ color: 0xe23a3a, emissive: 0xa01020, emissiveIntensity: 1.35, roughness: 0.14, metalness: 0.2 });
       const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.75, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
-      // pearl breastplate
-      const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.66, 24, 1, true, -Math.PI * 0.4, Math.PI * 0.8), plateMat);
-      chest.position.y = 1.62; g.add(chest);
-      // gold layered abdominal bands
-      for (let k = 0; k < 3; k++) { const ab = new THREE.Mesh(new THREE.TorusGeometry(0.4 - k * 0.03, 0.03, 6, 20, Math.PI * 1.1), goldMat); ab.position.set(0, 1.42 - k * 0.11, 0.06); ab.rotation.set(Math.PI / 2, 0, -Math.PI * 0.55); g.add(ab); }
-      // gold pauldrons with red gems
-      for (const sx of [-0.62, 0.62]) {
-        const pad = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 14), goldMat); pad.scale.set(1, 0.65, 1); pad.position.set(sx, 2.1, 0); g.add(pad);
-        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), redGem); gem.position.set(sx, 2.16, 0.08); g.add(gem);
+      // 👕 เสื้อเต็มตัวรัดรูปขาวมุก — lathe รอบทิศตามทรงลำตัว ใหญ่กว่าผิวเล็กน้อยทุกจุด จึงไม่จมหาย
+      const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.37, 1.22], [0.35, 1.34], [0.345, 1.48], [0.37, 1.62], [0.385, 1.76], [0.36, 1.88], [0.295, 1.97], [0.2, 2.05]].map(([r, y]) => new THREE.Vector2(r, y)), 30), plateMat);
+      suit.scale.set(1.06, 1, 0.84); g.add(suit);
+      const frontZ = (R, x) => Math.sqrt(Math.max(0.001, R * R - (x / 1.06) * (x / 1.06))) * 0.84; // ระยะผิวเสื้อด้านหน้า ณ ความกว้าง x
+      // คอเสื้อทอง
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.018, 8, 26), goldMat); collar.position.y = 2.05; collar.rotation.x = Math.PI / 2; collar.scale.set(1.06, 0.84, 1); g.add(collar);
+      // แถบทองรัดหน้าท้องเต็มวงรอบตัว
+      for (let k = 0; k < 3; k++) { const ab = new THREE.Mesh(new THREE.TorusGeometry(0.352 - k * 0.005, 0.022, 6, 26), goldMat); ab.position.y = 1.46 - k * 0.11; ab.rotation.x = Math.PI / 2; ab.scale.set(1.06, 0.86, 1); g.add(ab); }
+      // แขนเสื้อสั้นทอง + พลอยแดงบนไหล่
+      for (const sx of [-1, 1]) {
+        const pad = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.6), goldMat); pad.scale.set(1.05, 0.9, 1.05); pad.position.set(sx * 0.5, 1.92, 0); g.add(pad);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.055), redGem); gem.position.set(sx * 0.5, 2.06, 0.04); g.add(gem);
       }
-      // radiant gold sun-halo around a red sternum gem
-      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.02, 8, 24), goldMat); coreRing.position.set(0, 1.78, 0.5); g.add(coreRing);
-      for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.07, 4), goldMat); ray.position.set(Math.cos(a) * 0.17, 1.78 + Math.sin(a) * 0.17, 0.5); ray.rotation.z = -a - Math.PI / 2; g.add(ray); }
-      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), redGem); core.position.set(0, 1.78, 0.52); core.scale.set(1, 1.3, 0.7); g.add(core);
+      // radiant gold sun-halo around a red sternum gem — แนบผิวเสื้อ
+      const chestZ = frontZ(0.385, 0);
+      const coreRing = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 8, 24), goldMat); coreRing.position.set(0, 1.76, chestZ + 0.01); g.add(coreRing);
+      for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const ray = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.065, 4), goldMat); ray.position.set(Math.cos(a) * 0.16, 1.76 + Math.sin(a) * 0.16, chestZ + 0.01); ray.rotation.z = -a - Math.PI / 2; g.add(ray); }
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), redGem); core.position.set(0, 1.76, chestZ + 0.03); core.scale.set(1, 1.3, 0.7); g.add(core);
       g.userData.crownStar = core;
       // 🕊️ big radiant feather wings fanning out to the sides (clear of the big chibi head)
       for (const sx of [-1, 1]) {
