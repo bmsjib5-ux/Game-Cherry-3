@@ -11802,140 +11802,158 @@ function CherryAdventure() {
         const buildClassOutfit = (cfg) => {
             const g = new THREE.Group();
             const hard = cfg.body === "plate" || cfg.body === "mech";
-            const baseMat = new THREE.MeshStandardMaterial({ color: cfg.base, roughness: 0.6, metalness: hard ? 0.6 : 0.25, side: THREE.DoubleSide });
-            const trimMat = new THREE.MeshStandardMaterial({ color: cfg.trim, roughness: 0.5, metalness: hard ? 0.75 : 0.3, side: THREE.DoubleSide });
+            // 🧵 ผ้าด้านนุ่ม + ลายทอผ้า — ชุดทุกอาชีพเป็นผ้าจริง ไม่แข็งเงาเหมือนเหล็ก
+            const baseMat = new THREE.MeshStandardMaterial({ color: cfg.base, roughness: 0.62, metalness: hard ? 0.2 : 0.12, side: THREE.DoubleSide });
+            baseMat.bumpMap = clothBumpTex(6, "weave");
+            baseMat.bumpScale = 0.008;
+            const trimMat = new THREE.MeshStandardMaterial({ color: cfg.trim, roughness: 0.5, metalness: hard ? 0.5 : 0.3, side: THREE.DoubleSide });
             const accMat = new THREE.MeshStandardMaterial({ color: cfg.accent, roughness: 0.4, metalness: 0.5, emissive: cfg.glow ? cfg.glowCol : 0x000000, emissiveIntensity: cfg.glow ? 0.9 : 0 });
             const glowMat = new THREE.MeshStandardMaterial({ color: cfg.glowCol, emissive: cfg.glowCol, emissiveIntensity: 1.2, roughness: 0.3 });
             const B = cfg.body;
+            // 👕 เสื้อรัดรูปเต็มตัว 360° ตามทรงลำตัว (ทุกแบบชุด) — สวมจริง ไม่จมหาย ไม่เปิดหลัง
+            const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.37, 1.22], [0.35, 1.34], [0.345, 1.48], [0.37, 1.62], [0.385, 1.76], [0.36, 1.88], [0.295, 1.97], [0.2, 2.05]].map(([r, y]) => new THREE.Vector2(r, y)), 30), baseMat);
+            suit.scale.set(1.06, 1, 0.84);
+            clothFolds(suit, 0.006);
+            g.add(suit);
+            G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 });
+            const fz = (R, x) => Math.sqrt(Math.max(0.001, R * R - (x / 1.06) * (x / 1.06))) * 0.84; // ระยะผิวเสื้อด้านหน้า
+            const zc = fz(0.385, 0);
+            // 🌊 ชายเสื้อบานพริ้วรอบสะโพก (robe ใช้กระโปรงยาวของตัวเองแทน)
+            if (B !== "robe") {
+                const hem = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.5, 0.3, 40, 4, true), baseMat);
+                hem.position.y = 1.13;
+                hem.scale.set(1.03, 1, 0.85);
+                clothFolds(hem, 0.012);
+                g.add(hem);
+                G._outfitCloth.push({ grp: g, m: hem, base: Float32Array.from(hem.geometry.attributes.position.array), top: 0.15, h: 0.3, amp: 0.055 });
+            }
             if (B === "robe") {
-                const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.72, 1.5, 20, 1, true), baseMat);
-                skirt.position.y = 1.35;
+                const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.72, 0.78, 30, 6, true), baseMat);
+                skirt.position.y = 0.97;
+                clothFolds(skirt, 0.012);
                 g.add(skirt);
-                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.5, 0.5, 20, 1, true, -Math.PI * 0.4, Math.PI * 0.8), baseMat);
-                chest.position.y = 1.9;
-                g.add(chest);
-                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 8, 20, Math.PI * 1.2), trimMat);
-                collar.position.set(0, 2.05, 0.02);
-                collar.rotation.set(Math.PI / 2, 0, -Math.PI * 0.6);
+                G._outfitCloth.push({ grp: g, m: skirt, base: Float32Array.from(skirt.geometry.attributes.position.array), top: 0.39, h: 0.78, amp: 0.05 });
+                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.032, 8, 26), trimMat);
+                collar.position.y = 2.05;
+                collar.rotation.x = Math.PI / 2;
+                collar.scale.set(1.06, 0.84, 1);
                 g.add(collar);
-                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.04), trimMat);
-                stripe.position.set(0, 1.5, 0.5);
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 0.03), trimMat);
+                stripe.position.set(0, 1.62, zc + 0.005);
+                stripe.rotation.x = 0.05;
                 g.add(stripe);
             }
             else if (B === "suit") {
-                const jacket = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.54, 0.78, 20, 1, true, -Math.PI * 0.42, Math.PI * 0.84), baseMat);
-                jacket.position.y = 1.6;
-                g.add(jacket);
-                const shirt = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 3), trimMat);
-                shirt.position.set(0, 1.7, 0.46);
+                // 👔 สูท: เชิ้ต + ปกเสื้อ + เนคไท แนบบนเสื้อรัดรูป
+                const shirt = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.38, 3), trimMat);
+                shirt.position.set(0, 1.83, zc - 0.05);
                 shirt.rotation.x = Math.PI;
                 g.add(shirt);
                 for (const sx of [-1, 1]) {
-                    const lp = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.04), baseMat);
-                    lp.position.set(sx * 0.13, 1.78, 0.48);
+                    const lp = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.03), baseMat);
+                    lp.position.set(sx * 0.12, 1.82, zc + 0.01);
                     lp.rotation.z = sx * 0.25;
+                    lp.rotation.x = 0.05;
                     g.add(lp);
                 }
-                const tie = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.42, 0.04), accMat);
-                tie.position.set(0, 1.62, 0.5);
+                const tie = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.4, 0.03), accMat);
+                tie.position.set(0, 1.68, zc + 0.02);
+                tie.rotation.x = 0.04;
                 g.add(tie);
             }
             else if (B === "hood") {
-                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.72, 20, 1, true, -Math.PI * 0.42, Math.PI * 0.84), baseMat);
-                chest.position.y = 1.6;
-                g.add(chest);
                 const hood = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 14, 0, Math.PI * 2, 0, Math.PI * 0.6), baseMat);
-                hood.position.set(0, 2.02, -0.14);
+                hood.position.set(0, 2.0, -0.12);
                 hood.scale.set(1.1, 1, 1.1);
                 g.add(hood);
-                const pk = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.16, 0.05), trimMat);
-                pk.position.set(0, 1.4, 0.5);
+                const pk = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.14, 0.04), trimMat);
+                pk.position.set(0, 1.42, fz(0.35, 0) + 0.01);
                 g.add(pk);
                 for (const sx of [-1, 1]) {
-                    const str = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.24, 6), trimMat);
-                    str.position.set(sx * 0.08, 1.78, 0.5);
+                    const str = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.22, 6), trimMat);
+                    str.position.set(sx * 0.08, 1.86, fz(0.33, 0.08) + 0.01);
                     g.add(str);
                 }
             }
             else if (B === "tunic") {
-                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.66, 18, 1, true, -Math.PI * 0.4, Math.PI * 0.8), baseMat);
-                chest.position.y = 1.62;
-                g.add(chest);
                 for (const sx of [-1, 1]) {
-                    const v = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.04), trimMat);
-                    v.position.set(sx * 0.1, 1.7, 0.48);
+                    const v = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.36, 0.03), trimMat);
+                    v.position.set(sx * 0.1, 1.76, zc + 0.005);
                     v.rotation.z = sx * 0.3;
+                    v.rotation.x = 0.05;
                     g.add(v);
                 }
-                const belt = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.04, 8, 22, Math.PI * 1.3), trimMat);
-                belt.position.set(0, 1.38, 0.02);
-                belt.rotation.set(Math.PI / 2, 0, -Math.PI * 0.65);
+                const belt = new THREE.Mesh(new THREE.TorusGeometry(0.352, 0.035, 8, 26), trimMat);
+                belt.position.y = 1.32;
+                belt.rotation.x = Math.PI / 2;
+                belt.scale.set(1.06, 0.86, 1);
                 g.add(belt);
             }
             else if (B === "mech") {
-                const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.16, 16), trimMat);
-                collar.position.y = 2.12;
+                const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.14, 16), trimMat);
+                collar.position.y = 2.1;
                 g.add(collar);
-                const reactor = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.03, 8, 20), trimMat);
-                reactor.position.set(0, 1.7, 0.54);
+                const reactor = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.025, 8, 20), trimMat);
+                reactor.position.set(0, 1.74, zc + 0.01);
                 g.add(reactor);
-                const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), glowMat);
-                core.position.set(0, 1.7, 0.56);
+                const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), glowMat);
+                core.position.set(0, 1.74, zc + 0.03);
                 g.add(core);
                 for (const sx of [-1, 1]) {
-                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.06), baseMat);
-                    fin.position.set(sx * 0.36, 1.98, -0.42);
-                    fin.rotation.z = sx * 0.3;
+                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.44, 0.05), baseMat);
+                    fin.position.set(sx * 0.3, 1.9, -zc - 0.03);
+                    fin.rotation.z = sx * 0.25;
                     g.add(fin);
-                    const ft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.04), glowMat);
-                    ft.position.set(sx * 0.36, 1.76, -0.44);
+                    const ft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.18, 0.035), glowMat);
+                    ft.position.set(sx * 0.3, 1.7, -zc - 0.04);
                     g.add(ft);
                 }
             }
             else { // plate
-                const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.55, 0.64, 20, 1, true, -Math.PI * 0.38, Math.PI * 0.76), baseMat);
-                chest.position.y = 1.62;
-                g.add(chest);
                 for (let k = 0; k < 2; k++) {
-                    const ab = new THREE.Mesh(new THREE.TorusGeometry(0.42 - k * 0.03, 0.03, 6, 20, Math.PI * 1.1), trimMat);
-                    ab.position.set(0, 1.44 - k * 0.11, 0.06);
-                    ab.rotation.set(Math.PI / 2, 0, -Math.PI * 0.55);
+                    const ab = new THREE.Mesh(new THREE.TorusGeometry(0.35 - k * 0.005, 0.024, 6, 26), trimMat);
+                    ab.position.y = 1.46 - k * 0.11;
+                    ab.rotation.x = Math.PI / 2;
+                    ab.scale.set(1.06, 0.86, 1);
                     g.add(ab);
                 }
-                const em = new THREE.Mesh(new THREE.OctahedronGeometry(0.08), accMat);
-                em.position.set(0, 1.74, 0.5);
+                const em = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), accMat);
+                em.position.set(0, 1.74, zc + 0.03);
                 g.add(em);
             }
+            // 💪 แขนเสื้อสั้นคลุมหัวไหล่ (แนบตัว ไม่ลอยกลางอากาศ)
             if (B !== "suit") {
-                for (const sx of [-0.6, 0.6]) {
+                for (const sx of [-1, 1]) {
                     let pad;
                     if (B === "plate" || B === "mech") {
-                        pad = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), trimMat);
-                        pad.scale.set(1, 0.62, 1);
+                        pad = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.6), trimMat);
+                        pad.scale.set(1.05, 0.75, 1.05);
                     }
                     else {
-                        pad = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), baseMat);
-                        pad.scale.set(1.4, 0.5, 1);
+                        pad = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), baseMat);
+                        pad.scale.set(1.25, 0.6, 1.05);
                     }
-                    pad.position.set(sx, 2.08, 0);
+                    pad.position.set(sx * 0.5, 1.94, 0);
                     g.add(pad);
                     if (cfg.ornate) {
-                        const spk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 6), accMat);
-                        spk.position.set(sx * 1.04, 2.24, 0);
-                        spk.rotation.z = sx > 0 ? -0.4 : 0.4;
+                        const spk = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 6), accMat);
+                        spk.position.set(sx * 0.62, 2.06, 0);
+                        spk.rotation.z = sx > 0 ? -0.45 : 0.45;
                         g.add(spk);
                     }
                 }
             }
-            if (cfg.cape) {
-                const cape = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.74, 1.4, 18, 1, true, Math.PI * 0.64, Math.PI * 0.72), trimMat);
+            if (cfg.cape) { // 🧣 ผ้าคลุมหลังพริ้วเป็นคลื่นทั้งผืน
+                const cape = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.74, 1.4, 22, 8, true, Math.PI * 0.64, Math.PI * 0.72), trimMat);
                 cape.position.set(0, 1.4, -0.06);
                 g.add(cape);
+                G._outfitCloth.push({ grp: g, m: cape, base: Float32Array.from(cape.geometry.attributes.position.array), top: 0.7, h: 1.4, amp: 0.06 });
             }
             if (cfg.glow && B !== "mech" && B !== "robe") {
-                const gline = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.02, 6, 24, Math.PI * 1.2), glowMat);
-                gline.position.set(0, 1.36, 0.04);
-                gline.rotation.set(Math.PI / 2, 0, -Math.PI * 0.6);
+                const gline = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.016, 6, 26), glowMat);
+                gline.position.y = 1.36;
+                gline.rotation.x = Math.PI / 2;
+                gline.scale.set(1.06, 0.86, 1);
                 g.add(gline);
             }
             return g;
