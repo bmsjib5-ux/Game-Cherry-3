@@ -7581,6 +7581,8 @@ function CherryAdventure() {
             const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ
             G.setHero = id => {
                 G.heroId = id || null;
+                if (id)
+                    G.heroPick = id; // 🦸 จำฮีโร่ที่เลือกไว้ เพื่อสลับซ่อน/แสดงชุดฮีโร่ได้
                 (G._haruParts || []).forEach(p => p.visible = id === "haru");
                 (G._lunaParts || []).forEach(p => p.visible = id === "luna");
                 (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
@@ -22418,7 +22420,7 @@ function CherryAdventure() {
             inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
             titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
             rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
-            costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
+            costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
         }));
         // 🧪 potion: heals 40% of max HP — instant in explore, consumes your turn in battle
         // 🧪💧 SIZED POTIONS — เล็ก/กลาง/ใหญ่ (flat heal, bought at the shop)
@@ -22793,7 +22795,7 @@ function CherryAdventure() {
             }
             G.moveTarget = null;
             G.equipScreen = true;
-            setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, gold: G.gold }));
+            setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
             syncPlayer();
         };
         G.closeEquip = () => {
@@ -24244,9 +24246,28 @@ function CherryAdventure() {
                 toast("🔒 ต้องปลดล็อกฮีโร่นี้ก่อน");
                 return;
             }
+            if (id)
+                G.heroHide = false; // 🦸 เลือกฮีโร่ใหม่ = เลิกซ่อนชุดฮีโร่ให้อัตโนมัติ
             if (G.setHero)
                 G.setHero(id);
-            setUi((u) => ({ ...u, heroId: id }));
+            if (!id)
+                G.heroPick = null;
+            setUi((u) => ({ ...u, heroId: id, hideHero: !!G.heroHide }));
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 🦸🙈 ซ่อน/แสดงชุดฮีโร่ในตำนาน — ซ่อนแล้วกลับไปใช้ลุคตัวละครปกติ + ชุดที่สวมอยู่ (ฮีโร่ยังถูกเลือกไว้เหมือนเดิม)
+        G.setHeroHidden = (on) => {
+            on = !!on;
+            if (on && !(G.heroPick || G.heroId)) {
+                toast("🦸 ยังไม่ได้สวมชุดฮีโร่ในตำนาน");
+                return;
+            }
+            G.heroHide = on;
+            if (G.setHero)
+                G.setHero(on ? null : (G.heroPick || null));
+            toast(on ? "🙈 ซ่อนชุดฮีโร่ในตำนานแล้ว — ใส่ชุดปกติ" : "🦸 แสดงชุดฮีโร่ในตำนานอีกครั้ง");
+            setUi((u) => ({ ...u, hideHero: on, heroId: G.heroId || null }));
             if (G.saveGame)
                 G.saveGame();
         };
@@ -27508,7 +27529,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -30419,8 +30440,12 @@ function CherryAdventure() {
                     if (G.heroTemp[k] <= now)
                         delete G.heroTemp[k];
             } // prune expired temp unlocks
+            // 🦸 คืนฮีโร่ที่เลือกไว้ + สถานะซ่อนชุดฮีโร่ (ซ่อนอยู่ = ใส่ลุคปกติ แต่ยังจำฮีโร่ไว้)
+            G.heroHide = !!d.heroHide;
+            const savedPick = d.heroPick || d.heroId || null;
+            G.heroPick = (savedPick && G.heroUnlocked && G.heroUnlocked(savedPick)) ? savedPick : null;
             if (G.setHero)
-                G.setHero(G.heroUnlocked && G.heroUnlocked(d.heroId) ? (d.heroId || null) : null); // 🌸 restore hero look only if still unlocked
+                G.setHero(G.heroHide ? null : G.heroPick);
             G.player = { ...d.player };
             G.col = d.col || {};
             G.pets = d.pets || {};
@@ -44456,7 +44481,8 @@ function CherryAdventure() {
                                 "\u21C5 ",
                                 sortLabel),
                             React.createElement("button", { key: "eqhide", onClick: () => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden)
-                                    G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }, title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" } }, ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด")),
+                                    G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }, title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" } }, ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"),
+                            (ui.heroPick || ui.heroId) && (React.createElement("button", { key: "eqhero", onClick: () => G.setHeroHidden(!ui.hideHero), title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19 (\u0E0B\u0E48\u0E2D\u0E19\u0E41\u0E25\u0E49\u0E27\u0E43\u0E2A\u0E48\u0E0A\u0E38\u0E14\u0E1B\u0E01\u0E15\u0E34 \u0E2E\u0E35\u0E42\u0E23\u0E48\u0E22\u0E31\u0E07\u0E16\u0E39\u0E01\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E27\u0E49)", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(255,255,255,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" } }, ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"))),
                         React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 } },
                             React.createElement("button", { onClick: () => G.autoSell(), title: "\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E40\u0E01\u0E34\u0E19\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07\u0E14\u0E35\u0E2A\u0E38\u0E14 + \u0E2A\u0E33\u0E23\u0E2D\u0E07 1 \u0E0A\u0E34\u0E49\u0E19\u0E44\u0E27\u0E49\u0E15\u0E35\u0E1A\u0E27\u0E01)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49"),
                             React.createElement("button", { onClick: () => G.cycleSellRarity(), title: "\u0E02\u0E32\u0E22\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19\u0E19\u0E35\u0E49 (\u0E41\u0E15\u0E30\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(255,255,255,0.08)", color: "#e0d0a0" } },
