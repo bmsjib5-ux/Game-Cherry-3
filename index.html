@@ -11468,6 +11468,20 @@ function CherryAdventure() {
             p.needsUpdate = true;
             mesh.geometry.computeVertexNormals();
         };
+        // ✨ ออร่าประจำชุดระดับสูง — เม็ดแสงลอยวน + วงแหวนหมุน (อลังการไล่ตามคุณภาพชุด)
+        G._outfitFx = [];
+        const outfitMotes = (g, count, color, size, radMin, radMax, yMin, yMax) => {
+            const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.7, transparent: true, opacity: 0.88, roughness: 0.2 });
+            for (let i = 0; i < count; i++) {
+                const p = new THREE.Mesh(new THREE.OctahedronGeometry(size * (0.7 + Math.random() * 0.7), 0), mat);
+                const ang = (i / count) * Math.PI * 2, rad = radMin + Math.random() * (radMax - radMin);
+                p.position.set(Math.cos(ang) * rad, yMin + Math.random() * (yMax - yMin), Math.sin(ang) * rad);
+                g.add(p);
+                G._outfitFx.push({ grp: g, o: p, kind: "mote", ang, rad, spin: 0.45 + Math.random() * 0.75, rise: 0.14 + Math.random() * 0.24, yMin, yMax });
+            }
+        };
+        const outfitRing = (g, mesh, spin) => { g.add(mesh); G._outfitFx.push({ grp: g, o: mesh, kind: "spin", spin }); };
+        const outfitPulse = (g, mesh, lo, hi, rate) => { g.add(mesh); G._outfitFx.push({ grp: g, o: mesh, kind: "pulse", lo, hi, rate }); };
         { // o1 ผ้าพันคอนุ่มฟู : cozy scarf
             const g = new THREE.Group();
             const scarfMat = new THREE.MeshStandardMaterial({ color: 0xe06070, roughness: 0.85 });
@@ -11541,6 +11555,41 @@ function CherryAdventure() {
                 g.add(tail);
                 G._outfitCloth.push({ grp: g, m: tail, base: Float32Array.from(tail.geometry.attributes.position.array), top: 0.22, h: 0.44, amp: 0.07 });
             }
+            // ⚡✨ ยกระดับ EPIC — ผ้าคลุมไหล่พายุ · ลายสายฟ้าบนอก · คริสตัลบ่า · ขลิบเรืองแสง · ประกายลอยรอบตัว
+            const mantle = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.66, 0.62, 26, 5, true, Math.PI * 0.55, Math.PI * 0.9), armorMat);
+            mantle.position.set(0, 1.7, -0.02);
+            clothFolds(mantle, 0.01);
+            g.add(mantle);
+            G._outfitCloth.push({ grp: g, m: mantle, base: Float32Array.from(mantle.geometry.attributes.position.array), top: 0.31, h: 0.62, amp: 0.05 });
+            {
+                const mt = new THREE.Mesh(new THREE.TorusGeometry(0.435, 0.014, 6, 30, Math.PI * 0.9), stormTrim);
+                mt.position.set(0, 1.4, -0.02);
+                mt.rotation.set(Math.PI / 2, 0, -Math.PI * 0.05);
+                g.add(mt);
+            } // ขลิบชายผ้าคลุม
+            for (const sx of [-1, 1]) { // ⚡ ลายสายฟ้าทองฟ้าไล่จากไหล่ลงอก
+                for (let k = 0; k < 3; k++) {
+                    const fl = new THREE.Mesh(new THREE.TorusGeometry(0.05 + k * 0.026, 0.0055, 5, 12, Math.PI * 0.75), stormTrim);
+                    const px = sx * (0.1 + k * 0.02);
+                    fl.position.set(px, 1.84 - k * 0.055, o3FrontZ(0.383, px) + 0.008);
+                    fl.rotation.set(0.1, sx * 0.3, sx > 0 ? -0.6 : Math.PI + 0.6);
+                    g.add(fl);
+                }
+                const csp = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), stormTrim);
+                csp.scale.set(0.7, 1.5, 0.7);
+                csp.position.set(sx * 0.53, 2.08, 0);
+                csp.rotation.z = sx * 0.35;
+                g.add(csp); // คริสตัลพายุบนบ่า
+            }
+            {
+                const glowHem = new THREE.Mesh(new THREE.TorusGeometry(0.485, 0.012, 6, 34), stormTrim);
+                glowHem.position.y = 1.0;
+                glowHem.rotation.x = Math.PI / 2;
+                glowHem.scale.set(1.03, 0.86, 1);
+                g.add(glowHem);
+            } // ขลิบชายเสื้อเรืองแสง
+            outfitPulse(g, bolt, 0.8, 1.9, 2.4); // เพชรสายฟ้ากลางอกเต้นจังหวะ
+            outfitMotes(g, 5, 0x8fd0f5, 0.026, 0.62, 0.82, 1.05, 2.15); // ⚡ ประกายพายุลอยวน
             outfitModels.o3 = g;
         }
         { // oS อาภรณ์ดวงดาว (SECRET) — ชุดรัดรูปผ้าทองเต็มตัว + ผ้าคลุมพริ้ว + มงกุฎดาว
@@ -11591,6 +11640,52 @@ function CherryAdventure() {
             crownStar.position.set(0, 3.62, 0.2);
             g.add(band, crownStar);
             g.userData.crownStar = crownStar;
+            // ⭐✨ ยกระดับ SECRET — ผ้าคลุมไหล่ดาว · หมุดดาวกลุ่มดาว · ผ้าคาดเอวพลิ้ว · ขลิบดาวชายผ้าคลุม · ประกายดาวลอยรอบ
+            const sMantle = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.62, 0.5, 26, 5, true), goldMatFx);
+            sMantle.position.set(0, 1.78, 0);
+            clothFolds(sMantle, 0.01);
+            g.add(sMantle);
+            G._outfitCloth.push({ grp: g, m: sMantle, base: Float32Array.from(sMantle.geometry.attributes.position.array), top: 0.25, h: 0.5, amp: 0.045 });
+            {
+                const mt = new THREE.Mesh(new THREE.TorusGeometry(0.625, 0.013, 6, 34), starTrim);
+                mt.position.y = 1.53;
+                mt.rotation.x = Math.PI / 2;
+                g.add(mt);
+            } // ขลิบชายผ้าคลุมไหล่
+            for (const [sx, sy, ss] of [[-0.15, 1.66, 1], [0.17, 1.58, 0.8], [0, 1.46, 0.65], [-0.09, 1.36, 0.55], [0.12, 1.3, 0.5]]) { // 🌌 หมุดดาวกลุ่มดาวบนเสื้อ
+                const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.022 * (1 + ss), 0), starTrim);
+                st.scale.set(0.8, 1.5, 0.5);
+                st.position.set(sx, sy, oSFrontZ(sy > 1.5 ? 0.37 : 0.35, sx) + 0.012);
+                g.add(st);
+            }
+            {
+                const sash = new THREE.Mesh(new THREE.TorusGeometry(0.358, 0.032, 8, 28), goldMatFx);
+                sash.position.y = 1.3;
+                sash.rotation.x = Math.PI / 2;
+                sash.scale.set(1.06, 0.86, 1);
+                g.add(sash); // 🎀 ผ้าคาดเอวทอง
+                const knot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), starTrim);
+                knot.scale.set(1.3, 0.9, 0.7);
+                knot.position.set(0, 1.3, oSFrontZ(0.37, 0) + 0.02);
+                g.add(knot);
+                for (const sx of [-1, 1]) {
+                    const sTail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.42, 0.018, 1, 6, 1), goldMatFx);
+                    sTail.position.set(sx * 0.11, 1.09, oSFrontZ(0.37, 0) + 0.01);
+                    sTail.rotation.z = sx * 0.12;
+                    g.add(sTail);
+                    G._outfitCloth.push({ grp: g, m: sTail, base: Float32Array.from(sTail.geometry.attributes.position.array), top: 0.21, h: 0.42, amp: 0.06 });
+                }
+            }
+            for (let i = 0; i < 7; i++) {
+                const a = -Math.PI * 0.28 + (i / 6) * Math.PI * 0.56;
+                const hs = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), starTrim);
+                hs.scale.set(0.8, 1.4, 0.5);
+                hs.position.set(Math.sin(a) * 0.78, 0.62, -Math.cos(a) * 0.78);
+                g.add(hs);
+            } // ⭐ ดาวขลิบชายผ้าคลุมยาว
+            outfitRing(g, (() => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.012, 6, 32), starTrim); r.position.y = 3.42; r.rotation.x = Math.PI / 2 - 0.22; return r; })(), 0.6); // วงแหวนดาวหมุนรอบมงกุฎ
+            outfitPulse(g, crownStar, 0.9, 2.1, 2.0);
+            outfitMotes(g, 9, 0xfff2b0, 0.03, 0.6, 0.9, 1.0, 2.6); // ⭐ ละอองดาวลอยวนรอบตัว
             outfitModels.oS = g;
         }
         { // oD 🐉 dragon scale armor — ชุดรัดรูปเกล็ดมังกรเต็มตัว 360° แนบทรงลำตัว (ไม่จม ไม่เปิดหลัง)
@@ -11682,6 +11777,70 @@ function CherryAdventure() {
                 spike.rotation.x = -0.6;
                 g.add(spike);
             }
+            // 🐉✨ ยกระดับ DRAGON — เขามังกรบนบ่า · ผ้าคลุมเกล็ดหลัง · แผงเกล็ดหน้าขา · รอยกรงเล็บทอง · ไฟมรกตลอยรอบ
+            const mkHornD = (len, rad) => { const pts = []; for (let i = 0; i <= 8; i++) {
+                const p = i / 8;
+                pts.push(new THREE.Vector3(Math.sin(p * 1.15) * len * 0.5, p * len, -Math.sin(p * 0.9) * len * 0.28));
+            } return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, rad, 7, false), scaleGold); };
+            for (const sx of [-1, 1]) { // 🐲 เขามังกรโค้งคู่บนบ่า + เกล็ดซ้อนชั้น
+                const horn = mkHornD(0.34, 0.032);
+                horn.scale.x = sx;
+                horn.position.set(sx * 0.55, 1.98, -0.02);
+                horn.rotation.z = sx * -0.32;
+                g.add(horn);
+                for (let k = 0; k < 3; k++) {
+                    const lay = new THREE.Mesh(new THREE.SphereGeometry(0.19 - k * 0.035, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), scaleGreen);
+                    lay.scale.set(1.06, 0.75, 1.06);
+                    lay.position.set(sx * 0.5, 1.9 - k * 0.06, 0);
+                    g.add(lay);
+                }
+            }
+            {
+                const dCape = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.78, 1.15, 24, 7, true, Math.PI * 0.6, Math.PI * 0.8), scaleMat); // 🧣 ผ้าคลุมเกล็ดหลังยาว
+                dCape.position.set(0, 1.42, -0.05);
+                clothFolds(dCape, 0.012);
+                g.add(dCape);
+                G._outfitCloth.push({ grp: g, m: dCape, base: Float32Array.from(dCape.geometry.attributes.position.array), top: 0.575, h: 1.15, amp: 0.065 });
+                for (let i = 0; i < 6; i++) {
+                    const a = Math.PI * 0.64 + (i / 5) * Math.PI * 0.72;
+                    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.16, 4), scaleGreen);
+                    tip.position.set(Math.cos(a) * 0.78, 0.8, Math.sin(a) * 0.78);
+                    tip.rotation.x = Math.PI;
+                    g.add(tip);
+                }
+            } // ชายผ้าหยักเกล็ด
+            for (const [px, pa] of [[0, 0], [-0.32, 0.6], [0.32, -0.6]]) { // 🛡️ แผงเกล็ดหน้าขา ขลิบทอง
+                const pl = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.32, 0.03), scaleGreen);
+                pl.position.set(px, 1.02, Math.cos(pa) * 0.42);
+                pl.rotation.order = "YXZ";
+                pl.rotation.y = pa * 0.85;
+                pl.rotation.x = 0.2;
+                g.add(pl);
+                const pt = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.035), scaleGold);
+                pt.position.set(px * 1.05, 0.87, Math.cos(pa) * 0.46);
+                pt.rotation.order = "YXZ";
+                pt.rotation.y = pa * 0.85;
+                pt.rotation.x = 0.2;
+                g.add(pt);
+            }
+            for (const sx of [-1, 1])
+                for (let k = 0; k < 3; k++) {
+                    const cl = new THREE.Mesh(new THREE.TorusGeometry(0.07 + k * 0.022, 0.006, 5, 12, Math.PI * 0.5), scaleGold);
+                    const px = sx * (0.13 + k * 0.02);
+                    cl.position.set(px, 1.62, frontZ(0.372, px) + 0.008);
+                    cl.rotation.set(0.1, sx * 0.3, sx > 0 ? -1.1 : Math.PI + 1.1);
+                    g.add(cl);
+                } // 🐾 รอยกรงเล็บทองบนอก
+            {
+                const uGlow = new THREE.Mesh(new THREE.TorusGeometry(0.49, 0.013, 6, 36), emeraldMat.clone());
+                uGlow.position.y = 1.0;
+                uGlow.rotation.x = Math.PI / 2;
+                uGlow.scale.set(1.03, 0.86, 1);
+                g.add(uGlow);
+            } // ขลิบมรกตเรืองใต้ชายเสื้อ
+            outfitPulse(g, core, 0.9, 2.2, 2.2);
+            outfitPulse(g, beltGem, 0.8, 1.8, 1.7);
+            outfitMotes(g, 11, 0x3ad06a, 0.03, 0.6, 0.92, 0.95, 2.4); // 🔥 ไฟมรกตมังกรลอยวน
             outfitModels.oD = g;
         }
         { // ⭐ lg_out — celestial divine armor: radiant gold+white plate, halo core, feathered light-wings
@@ -11778,6 +11937,93 @@ function CherryAdventure() {
                 wing.scale.x = sx;
                 g.add(wing);
             }
+            // 👑✨ ยกระดับ LEGEND — รัศมีทองเหนือหัว · ปีกเล็กคู่บน · ชายพระคลุมยาว · บ่าลอเรลทอง · แถวพลอยเข็มขัด · ละอองแสงศักดิ์สิทธิ์
+            {
+                const halo = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.022, 8, 40), lightMat);
+                halo.position.set(0, 3.78, -0.05);
+                halo.rotation.x = Math.PI / 2 - 0.16;
+                outfitRing(g, halo, 0.5);
+                const haloIn = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.01, 6, 32), goldMat);
+                haloIn.position.set(0, 3.78, -0.05);
+                haloIn.rotation.x = Math.PI / 2 - 0.16;
+                outfitRing(g, haloIn, -0.8);
+                for (let i = 0; i < 8; i++) {
+                    const a = (i / 8) * Math.PI * 2;
+                    const ry = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.12, 4), lightMat);
+                    ry.position.set(Math.cos(a) * 0.52, 3.78 + Math.sin(a) * 0.09, -0.05 + Math.sin(a) * 0.5);
+                    ry.rotation.z = -a - Math.PI / 2;
+                    g.add(ry);
+                }
+            } // รัศมีแฉกรอบวงแหวน
+            for (const sx of [-1, 1]) { // 🕊️ ปีกแสงคู่เล็กด้านบน — ซ้อนเป็นปีกสองชั้น
+                const w2 = new THREE.Group();
+                for (let f = 0; f < 4; f++) {
+                    const t2 = 1.35 - f * 0.28, ln = 0.52 - f * 0.05;
+                    const fe = new THREE.Mesh(new THREE.ConeGeometry(0.06 - f * 0.005, ln, 4), wingMat);
+                    fe.position.set(Math.cos(t2) * ln / 2, Math.sin(t2) * ln / 2, 0);
+                    fe.rotation.z = t2 - Math.PI / 2;
+                    fe.scale.set(1, 1, 0.3);
+                    w2.add(fe);
+                }
+                w2.position.set(sx * 0.34, 2.34, -0.36);
+                w2.scale.x = sx;
+                g.add(w2);
+            }
+            {
+                const train = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 1.02, 1.5, 30, 8, true, Math.PI * 0.6, Math.PI * 0.8), plateMat); // 👘 ชายพระคลุมยาวลากพื้น
+                train.position.set(0, 1.06, -0.06);
+                clothFolds(train, 0.01);
+                g.add(train);
+                G._outfitCloth.push({ grp: g, m: train, base: Float32Array.from(train.geometry.attributes.position.array), top: 0.75, h: 1.5, amp: 0.07 });
+                const th = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.016, 6, 44, Math.PI * 0.8), goldMat);
+                th.position.set(0, 0.32, -0.06);
+                th.rotation.set(Math.PI / 2, 0, Math.PI * 0.6);
+                g.add(th);
+                for (let i = 0; i < 7; i++) {
+                    const a = Math.PI * 0.64 + (i / 6) * Math.PI * 0.72;
+                    const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), lightMat);
+                    st.scale.set(0.8, 1.4, 0.5);
+                    st.position.set(Math.cos(a) * 1.0, 0.4, Math.sin(a) * 1.0);
+                    g.add(st);
+                }
+            }
+            for (const sx of [-1, 1]) { // 🏵️ บ่าลอเรลทองซ้อนชั้น + ใบทอง
+                for (let k = 0; k < 3; k++) {
+                    const lay = new THREE.Mesh(new THREE.SphereGeometry(0.185 - k * 0.032, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), goldMat);
+                    lay.scale.set(1.06, 0.75, 1.06);
+                    lay.position.set(sx * 0.5, 1.9 - k * 0.055, 0);
+                    g.add(lay);
+                }
+                for (let k = 0; k < 3; k++) {
+                    const lf = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.14, 4), goldMat);
+                    lf.scale.set(1, 1, 0.35);
+                    lf.position.set(sx * (0.6 + k * 0.02), 2.02 - k * 0.09, 0.02);
+                    lf.rotation.z = sx * (-0.5 - k * 0.25);
+                    g.add(lf);
+                }
+            }
+            for (const gx of [-0.24, -0.12, 0, 0.12, 0.24]) {
+                const bz = frontZ(0.352, gx);
+                const bg = new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), redGem);
+                bg.scale.set(0.9, 1.25, 0.5);
+                bg.position.set(gx, 1.24, bz + 0.02);
+                bg.rotation.y = Math.atan2(gx, bz);
+                g.add(bg);
+                const bf = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 4, 4), goldMat);
+                bf.rotation.z = Math.PI / 4;
+                bf.position.set(gx, 1.24, bz + 0.012);
+                bf.rotation.y = Math.atan2(gx, bz);
+                g.add(bf);
+            } // 💎 แถวพลอยแดงกรอบทองรอบเข็มขัด
+            {
+                const beltR = new THREE.Mesh(new THREE.TorusGeometry(0.352, 0.03, 8, 28), goldMat);
+                beltR.position.y = 1.24;
+                beltR.rotation.x = Math.PI / 2;
+                beltR.scale.set(1.06, 0.86, 1);
+                g.add(beltR);
+            }
+            outfitPulse(g, core, 1.0, 2.4, 2.1);
+            outfitMotes(g, 14, 0xffe8a8, 0.032, 0.62, 1.0, 0.9, 2.9); // ✨ ละอองแสงศักดิ์สิทธิ์ลอยวนรอบตัว
             outfitModels.lg_out = g;
         }
         // ---------- 👗🎩 PER-CLASS class outfits + hats (data-driven, 9 classes × 3 tiers) ----------
@@ -31166,6 +31412,31 @@ function CherryAdventure() {
                             gp.setY(i, by - Math.abs(wave) * 0.2);
                         }
                         gp.needsUpdate = true;
+                    }
+                }
+                // ✨ ออร่าชุดระดับสูง — เม็ดแสงลอยวนขึ้น · วงแหวน/รัศมีหมุน · แกนพลอยเต้นตามจังหวะ
+                if (G._outfitFx && G._outfitFx.length) {
+                    for (const f of G._outfitFx) {
+                        if (!f.grp.visible)
+                            continue;
+                        if (f.kind === "mote") {
+                            f.ang += dt * f.spin * 0.5;
+                            f.o.position.x = Math.cos(f.ang) * f.rad;
+                            f.o.position.z = Math.sin(f.ang) * f.rad;
+                            f.o.position.y += dt * f.rise;
+                            if (f.o.position.y > f.yMax)
+                                f.o.position.y = f.yMin;
+                            f.o.rotation.y += dt * f.spin * 2.2;
+                        }
+                        else if (f.kind === "spin") {
+                            f.o.rotation.z += dt * f.spin;
+                        }
+                        else if (f.kind === "pulse") {
+                            const k = f.lo + (f.hi - f.lo) * (0.5 + 0.5 * Math.sin(t * f.rate));
+                            f.o.material.emissiveIntensity = k;
+                            const s = 1 + (k - f.lo) * 0.08;
+                            f.o.scale.setScalar(s);
+                        }
                     }
                 }
                 const aus = weaponModels.aurSword;
