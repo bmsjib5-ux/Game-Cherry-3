@@ -3191,6 +3191,23 @@ function CherryAdventure() {
                 return { x: 1.55, y: 0, z: 0 }; // blade points backward
             if (cls === "assassin" || id === "cs" || id === "wDs" || id === "lg_os")
                 return { x: 1.4, y: 0, z: 0 }; // daggers point backward
+            if (typeof id === "string" && id.startsWith("w_")) { // ⚔️ โมเดลอาวุธตามระดับ — จับตามชนิดอาวุธ
+                if (id.startsWith("w_bow"))
+                    return { x: -0.15, y: 0, z: Math.PI / 2 };
+                if (id.startsWith("w_staff"))
+                    return { x: -0.15, y: 0, z: 0 };
+                if (id.startsWith("w_spear"))
+                    return { x: (Math.PI / 2) + 0.15, y: 0, z: 0 };
+                if (id.startsWith("w_keyboard"))
+                    return { x: -1.35, y: 0, z: 0 };
+                if (id.startsWith("w_blaster"))
+                    return { x: 1.42, y: 0, z: 0 };
+                if (id.startsWith("w_pen"))
+                    return { x: 0.55, y: 0, z: -0.25 };
+                if (id.startsWith("w_dagger"))
+                    return { x: 1.4, y: 0, z: 0 };
+                return { x: 1.52, y: 0, z: 0 }; // sword / katana — ปลายชี้ไปหลัง
+            }
             if (cls === "lancer" || id === "cl" || id === "wDl" || id === "lg_ol")
                 return { x: (Math.PI / 2) + 0.15, y: 0, z: 0 }; // 🔱 หอกขนานพื้น ปลายชี้ไปหน้าตามทิศตัวละคร เอียงลงเล็กน้อย
             if (cls === "samurai" || id === "ck" || id === "kd" || id === "lg_ok")
@@ -6323,6 +6340,431 @@ function CherryAdventure() {
             g.scale.setScalar(1.34);
             weaponModels.lg_ox = g;
         }
+        // ---------- ⚔️ TIERED LOOT WEAPONS — ตระกูลอาวุธตามอาชีพ × ระดับคุณภาพ (ยิ่งสูงยิ่งใหญ่/วิจิตร) ----------
+        // อาวุธ loot ทุกชิ้นเคยใช้โมเดลประจำอาชีพร่วมกัน ต่างแค่สี — ตอนนี้แยกรูปทรงจริงตามคุณภาพ
+        // และมีเครื่องประดับตามธาตุในชื่อไอเทม (เพลิง/น้ำแข็ง/พสุธา/วายุ/จันทรา/มังกร)
+        const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster" };
+        const wpnTierOf = (r) => (r === "legend" || r === "dragon") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
+        {
+            const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
+            const goldOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf5cf6a : 0xd8ab4e, metalness: 0.9, roughness: 0.24, emissive: t === 2 ? 0x6a4a08 : 0x3a2a06, emissiveIntensity: t === 2 ? 0.5 : 0.25 });
+            const woodOf = () => new THREE.MeshStandardMaterial({ color: 0x6a4a2e, roughness: 0.82, metalness: 0.05 });
+            const buildTierWeapon = (fam, t) => {
+                const g = new THREE.Group();
+                const steel = steelOf(t), gold = goldOf(t), wood = woodOf();
+                const wrap = new THREE.MeshStandardMaterial({ color: t === 2 ? 0x5a1a24 : t === 1 ? 0x2a3a6a : 0x3a3a42, roughness: 0.9 });
+                const gemMat = new THREE.MeshStandardMaterial({ color: 0x8fd0f5, emissive: 0x2a6a9a, emissiveIntensity: 0.9 + t * 0.5, roughness: 0.15, metalness: 0.3 });
+                const tintParts = []; // ชิ้นที่รับสีธาตุ/ย้อมสี
+                const gem = (r, x, y, z) => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(r, 0), gemMat.clone()); m.scale.set(0.85, 1.35, 0.55); m.position.set(x, y, z); g.add(m); return m; };
+                // ✨ เกล็ดพลังลอยรอบคมอาวุธ (เฉพาะระดับสูง) — ยิ่งสูงยิ่งเยอะ
+                const shards = (n, cy, rad) => { for (let k = 0; k < n; k++) {
+                    const sh = new THREE.Mesh(new THREE.OctahedronGeometry(0.017, 0), gemMat.clone());
+                    sh.userData = { a: (k / n) * Math.PI * 2, r: rad, y: cy + (k % 3) * 0.12, sp: 0.7 + (k % 4) * 0.2 };
+                    g.add(sh);
+                    tintParts.push(sh);
+                    (g.userData.motes = g.userData.motes || []).push(sh);
+                } };
+                if (fam === "sword" || fam === "katana") {
+                    const kat = fam === "katana";
+                    const L = [0.74, 0.98, 1.24][t], W = [0.075, 0.095, 0.115][t];
+                    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, 0.34 + t * 0.05, 10), wrap);
+                    hilt.position.y = -0.26;
+                    g.add(hilt);
+                    for (let k = 0; k < 4 + t; k++) {
+                        const b = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.006, 4, 10), gold);
+                        b.position.y = -0.4 + k * 0.07;
+                        b.rotation.x = Math.PI / 2;
+                        g.add(b);
+                    }
+                    const guard = kat
+                        ? new THREE.Mesh(new THREE.CylinderGeometry(0.085 + t * 0.02, 0.085 + t * 0.02, 0.022, 14), gold)
+                        : new THREE.Mesh(new THREE.BoxGeometry(0.2 + t * 0.09, 0.045, 0.07), gold);
+                    guard.position.y = -0.06;
+                    g.add(guard);
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(W, L, 0.028), steel);
+                    blade.position.y = -0.04 + L / 2;
+                    g.add(blade);
+                    tintParts.push(blade);
+                    const tip = new THREE.Mesh(new THREE.ConeGeometry(W * 0.72, 0.16 + t * 0.05, 4), steel);
+                    tip.position.y = -0.04 + L + 0.07;
+                    tip.rotation.y = Math.PI / 4;
+                    tip.scale.set(1, 1, 0.35);
+                    g.add(tip);
+                    tintParts.push(tip);
+                    if (t >= 1) {
+                        const fuller = new THREE.Mesh(new THREE.BoxGeometry(W * 0.3, L * 0.86, 0.033), gold);
+                        fuller.position.y = -0.04 + L / 2;
+                        g.add(fuller);
+                    } // ร่องเลือดทอง
+                    if (t >= 1)
+                        gem(0.038, 0, -0.06, 0.045);
+                    if (t >= 2) {
+                        for (const sx of [-1, 1]) {
+                            const wing = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.26, 4), gold);
+                            wing.scale.set(1, 1, 0.3);
+                            wing.position.set(sx * 0.16, 0.02, 0);
+                            wing.rotation.z = sx * -1.9;
+                            g.add(wing);
+                        }
+                        gem(0.05, 0, -0.48, 0);
+                        shards(6, 0.35, 0.13);
+                    }
+                    const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.04 + t * 0.008, 10, 8), gold);
+                    pommel.position.y = -0.46 - t * 0.03;
+                    g.add(pommel);
+                    g.userData.gripY = 0.3;
+                }
+                else if (fam === "spear") {
+                    const SL = [1.5, 1.8, 2.1][t];
+                    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, SL, 10), t === 0 ? wood : steel);
+                    shaft.position.y = SL / 2 - 0.62;
+                    g.add(shaft);
+                    for (let k = 0; k < 2 + t * 2; k++) {
+                        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.007, 5, 12), gold);
+                        ring.position.y = -0.5 + k * (SL / (3 + t * 2));
+                        ring.rotation.x = Math.PI / 2;
+                        g.add(ring);
+                    }
+                    const hy = SL - 0.62;
+                    const head = new THREE.Mesh(new THREE.ConeGeometry(0.062 + t * 0.014, 0.34 + t * 0.1, 4), steel);
+                    head.position.y = hy + 0.16 + t * 0.05;
+                    head.scale.set(1, 1, 0.42);
+                    g.add(head);
+                    tintParts.push(head);
+                    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.09, 10), gold);
+                    collar.position.y = hy - 0.02;
+                    g.add(collar);
+                    if (t >= 1)
+                        for (const sx of [-1, 1]) {
+                            const wing = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.2, 4), steel);
+                            wing.scale.set(1, 1, 0.35);
+                            wing.position.set(sx * 0.07, hy + 0.08, 0);
+                            wing.rotation.z = sx * -0.55;
+                            g.add(wing);
+                            tintParts.push(wing);
+                        } // ปีกข้างหัวหอก
+                    if (t >= 2) {
+                        for (const sx of [-1, 1]) {
+                            const pr = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.3, 4), steel);
+                            pr.scale.set(1, 1, 0.4);
+                            pr.position.set(sx * 0.11, hy + 0.2, 0);
+                            pr.rotation.z = sx * -0.22;
+                            g.add(pr);
+                            tintParts.push(pr);
+                        }
+                        gem(0.045, 0, hy - 0.02, 0.05);
+                        shards(6, hy + 0.1, 0.15);
+                    } // 🔱 หัวสามแฉก
+                    if (t >= 1)
+                        gem(0.036, 0, hy - 0.02, 0.05);
+                    for (let k = 0; k < 3 + t; k++) {
+                        const a = (k / (3 + t)) * Math.PI * 2;
+                        const str = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.16 + t * 0.05, 4), wrap);
+                        str.position.set(Math.cos(a) * 0.02, -0.72, Math.sin(a) * 0.02);
+                        str.rotation.x = Math.PI;
+                        g.add(str);
+                    } // พู่ท้ายด้าม
+                    g.userData.gripY = 0.42;
+                }
+                else if (fam === "bow") {
+                    const R = [0.5, 0.62, 0.76][t];
+                    for (const sy of [1, -1]) {
+                        const limb = new THREE.Mesh(new THREE.TorusGeometry(R, 0.026 + t * 0.005, 7, 22, Math.PI * 0.52), t === 0 ? wood : steel);
+                        limb.position.y = 0;
+                        limb.rotation.z = sy > 0 ? Math.PI * 0.24 : -Math.PI * 0.76;
+                        g.add(limb);
+                        tintParts.push(limb);
+                        const tipC = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.11, 6), gold);
+                        tipC.position.set(Math.cos(sy > 0 ? 0.76 : -0.76) * R * 0.02, sy * (R + 0.03), 0);
+                        tipC.rotation.z = sy > 0 ? 0 : Math.PI;
+                        g.add(tipC);
+                        if (t >= 2) {
+                            const rec = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.02, 6, 12, Math.PI * 0.8), gold);
+                            rec.position.set(0.04, sy * (R - 0.04), 0);
+                            rec.rotation.z = sy > 0 ? -0.6 : 0.6 + Math.PI;
+                            g.add(rec);
+                        } // ปลายรีเคิร์ฟ
+                    }
+                    const grip2 = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.26 + t * 0.04, 10), wrap);
+                    grip2.position.set(-0.02, 0, 0);
+                    g.add(grip2);
+                    const str2 = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, R * 2, 6), gemMat.clone());
+                    str2.position.set(R * 0.42, 0, 0);
+                    g.add(str2);
+                    tintParts.push(str2);
+                    if (t >= 1)
+                        gem(0.04, -0.06, 0, 0.04);
+                    if (t >= 2)
+                        shards(6, 0, R * 0.55);
+                    g.userData.gripY = 0.0;
+                }
+                else if (fam === "staff") {
+                    const SL = [1.15, 1.45, 1.75][t];
+                    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.032, SL, 10), t === 0 ? wood : steel);
+                    rod.position.y = SL / 2 - 0.5;
+                    g.add(rod);
+                    for (let k = 0; k < 2 + t; k++) {
+                        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.007, 5, 12), gold);
+                        ring.position.y = -0.36 + k * (SL / (2.6 + t));
+                        ring.rotation.x = Math.PI / 2;
+                        g.add(ring);
+                    }
+                    const hy = SL - 0.5;
+                    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.062 + t * 0.022, 14, 12), gemMat.clone());
+                    orb.position.y = hy + 0.13 + t * 0.03;
+                    g.add(orb);
+                    tintParts.push(orb);
+                    g.userData.orb = orb;
+                    if (t === 0) {
+                        const cap = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 8), gold);
+                        cap.position.y = hy + 0.03;
+                        g.add(cap);
+                    }
+                    if (t >= 1)
+                        for (let k = 0; k < 3 + t; k++) {
+                            const a = (k / (3 + t)) * Math.PI * 2;
+                            const claw = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.19, 4), gold);
+                            claw.position.set(Math.cos(a) * 0.07, hy + 0.06, Math.sin(a) * 0.07);
+                            claw.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5);
+                            g.add(claw);
+                        } // กรงเล็บจับลูกแก้ว
+                    if (t >= 2) {
+                        const halo = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.014, 6, 26), gold);
+                        halo.position.y = hy + 0.16;
+                        halo.rotation.x = Math.PI / 2 - 0.3;
+                        g.add(halo);
+                        g.userData.halo = halo;
+                        shards(7, hy + 0.05, 0.2);
+                        for (const sx of [-1, 1]) {
+                            const wg = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.24, 4), gold);
+                            wg.scale.set(1, 1, 0.3);
+                            wg.position.set(sx * 0.13, hy + 0.14, 0);
+                            wg.rotation.z = sx * -1.05;
+                            g.add(wg);
+                        }
+                    }
+                    g.userData.gripY = 0.3;
+                }
+                else if (fam === "dagger") {
+                    const L = [0.34, 0.44, 0.56][t];
+                    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.2, 10), wrap);
+                    hilt.position.y = -0.14;
+                    g.add(hilt);
+                    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.12 + t * 0.05, 0.03, 0.05), gold);
+                    guard.position.y = -0.02;
+                    g.add(guard);
+                    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.05 + t * 0.012, L, t >= 2 ? 6 : 4), steel);
+                    blade.position.y = -0.02 + L / 2;
+                    blade.scale.set(1, 1, 0.42);
+                    g.add(blade);
+                    tintParts.push(blade);
+                    if (t >= 1) {
+                        for (const sx of [-1, 1]) {
+                            const barb = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.11, 4), steel);
+                            barb.scale.set(1, 1, 0.4);
+                            barb.position.set(sx * 0.045, 0.08, 0);
+                            barb.rotation.z = sx * -0.9;
+                            g.add(barb);
+                            tintParts.push(barb);
+                        }
+                        gem(0.03, 0, -0.02, 0.04);
+                    }
+                    if (t >= 2) {
+                        shards(5, 0.2, 0.1);
+                        const pom = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), gold);
+                        pom.position.y = -0.26;
+                        g.add(pom);
+                    }
+                    g.userData.gripY = 0.16;
+                }
+                else if (fam === "pen") {
+                    const L = [0.5, 0.62, 0.76][t];
+                    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.036, L, 12), t >= 1 ? gold : steel);
+                    barrel.position.y = L / 2 - 0.24;
+                    g.add(barrel);
+                    const nib = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16 + t * 0.04, 8), steel);
+                    nib.position.y = L - 0.24 + 0.08;
+                    g.add(nib);
+                    tintParts.push(nib);
+                    const clip = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.2 + t * 0.04, 0.02), gold);
+                    clip.position.set(0, -0.06, 0.04);
+                    g.add(clip);
+                    for (let k = 0; k < 2 + t; k++) {
+                        const bnd = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.006, 5, 12), gold);
+                        bnd.position.y = -0.18 + k * 0.09;
+                        bnd.rotation.x = Math.PI / 2;
+                        g.add(bnd);
+                    }
+                    if (t >= 1)
+                        gem(0.032, 0, -0.24, 0);
+                    if (t >= 2) {
+                        shards(5, 0.3, 0.09);
+                        for (const sx of [-1, 1]) {
+                            const fin = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.2, 4), gold);
+                            fin.scale.set(1, 1, 0.3);
+                            fin.position.set(sx * 0.06, L - 0.34, 0);
+                            fin.rotation.z = sx * -1.0;
+                            g.add(fin);
+                        }
+                    }
+                    g.userData.gripY = 0.1;
+                }
+                else if (fam === "keyboard") {
+                    const W = [0.46, 0.56, 0.68][t], D = [0.2, 0.24, 0.28][t];
+                    const board = new THREE.Mesh(new THREE.BoxGeometry(W, 0.035, D), t >= 1 ? gold : steel);
+                    g.add(board);
+                    const cols = 6 + t, rows = 2 + (t >= 2 ? 1 : 0);
+                    for (let r2 = 0; r2 < rows; r2++)
+                        for (let c2 = 0; c2 < cols; c2++) {
+                            const key = new THREE.Mesh(new THREE.BoxGeometry(W / cols * 0.66, 0.016, D / (rows + 1) * 0.6), gemMat.clone());
+                            key.position.set(-W / 2 + (c2 + 0.5) * (W / cols), 0.026, -D / 2 + (r2 + 0.7) * (D / (rows + 1)));
+                            g.add(key);
+                            tintParts.push(key);
+                        }
+                    if (t >= 1) {
+                        const rim = new THREE.Mesh(new THREE.BoxGeometry(W + 0.03, 0.012, D + 0.03), gold);
+                        rim.position.y = -0.024;
+                        g.add(rim);
+                        gem(0.03, 0, 0.05, -D / 2 - 0.02);
+                    }
+                    if (t >= 2) {
+                        shards(6, 0.16, 0.28);
+                        const holo = new THREE.Mesh(new THREE.TorusGeometry(W * 0.44, 0.01, 6, 30), gold);
+                        holo.position.y = 0.1;
+                        holo.rotation.x = Math.PI / 2;
+                        g.add(holo);
+                        g.userData.halo = holo;
+                    }
+                    g.userData.gripY = 0.05;
+                }
+                else { // blaster
+                    const L = [0.44, 0.56, 0.72][t];
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(0.13 + t * 0.03, 0.16, 0.3 + t * 0.06), t >= 1 ? gold : steel);
+                    body.position.y = 0.05;
+                    g.add(body);
+                    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.045 + t * 0.01, 0.052 + t * 0.012, L, 14), steel);
+                    barrel.position.y = 0.06 + L / 2;
+                    g.add(barrel);
+                    tintParts.push(barrel);
+                    const gripB = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.24, 0.09), wrap);
+                    gripB.position.set(0, -0.12, -0.03);
+                    gripB.rotation.x = 0.18;
+                    g.add(gripB);
+                    for (let k = 0; k < 2 + t; k++) {
+                        const vent = new THREE.Mesh(new THREE.TorusGeometry(0.055 + t * 0.012, 0.008, 5, 14), gold);
+                        vent.position.y = 0.2 + k * 0.12;
+                        vent.rotation.x = Math.PI / 2;
+                        g.add(vent);
+                    }
+                    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.045 + t * 0.014, 0), gemMat.clone());
+                    core.position.set(0, 0.06, 0.14 + t * 0.02);
+                    g.add(core);
+                    tintParts.push(core);
+                    g.userData.orb = core;
+                    if (t >= 2) {
+                        for (const sx of [-1, 1]) {
+                            const fin = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.3, 4), gold);
+                            fin.scale.set(1, 1, 0.3);
+                            fin.position.set(sx * 0.11, 0.3, -0.02);
+                            fin.rotation.z = sx * -0.35;
+                            g.add(fin);
+                        }
+                        shards(6, 0.4, 0.16);
+                    }
+                    g.userData.gripY = 0.12;
+                    g.userData.gripZ = 0.05;
+                }
+                g.userData.tintParts = tintParts;
+                g.userData.baseTint = t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8;
+                if (t >= 1)
+                    g.userData.glow = true;
+                if (t === 2)
+                    g.scale.setScalar(1.08);
+                return g;
+            };
+            // 🔥❄️🌍🌪️🌙 เครื่องประดับตามธาตุในชื่ออาวุธ — ติดที่คมอาวุธตอนสวม (เพลิง/น้ำแข็ง/พสุธา/วายุ/แสง/มังกร)
+            const FX_ANCHOR = { sword: [0.55, 0.11], katana: [0.55, 0.11], spear: [1.0, 0.12], bow: [0.0, 0.34], staff: [0.78, 0.14], dagger: [0.2, 0.09], pen: [0.34, 0.09], keyboard: [0.12, 0.24], blaster: [0.4, 0.11] };
+            G.applyWpnElem = (model, fam, tier, elem) => {
+                if (!model)
+                    return;
+                if (model.userData.elemFx) {
+                    model.remove(model.userData.elemFx);
+                    (G._disposeObj3D && G._disposeObj3D(model.userData.elemFx));
+                    model.userData.elemFx = null;
+                }
+                if (!elem)
+                    return;
+                const A = FX_ANCHOR[fam] || [0.5, 0.12];
+                const y0 = A[0] + (fam === "spear" || fam === "staff" ? tier * 0.32 : tier * 0.14), R = A[1] + tier * 0.02;
+                const col = ELEM_GLOW[elem] || 0xffffff;
+                const em = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.2 + tier * 0.4, roughness: 0.28, metalness: 0.2, transparent: true, opacity: 0.92 });
+                const fx = new THREE.Group();
+                const n = 3 + tier; // ยิ่งระดับสูงยิ่งเยอะ
+                if (elem === "fire" || elem === "dragon") { // 🔥 เปลวไฟ / เขี้ยวมังกร ไล่ขึ้นตามคม
+                    for (let k = 0; k < n; k++) {
+                        const a = (k / n) * Math.PI * 2;
+                        const fl = new THREE.Mesh(new THREE.ConeGeometry(0.03 + tier * 0.006, 0.16 + tier * 0.05, 4), em);
+                        fl.position.set(Math.cos(a) * R, y0 + (k % 2) * 0.14, Math.sin(a) * R * 0.5);
+                        fl.rotation.z = Math.cos(a) * 0.4;
+                        fx.add(fl);
+                    }
+                }
+                else if (elem === "ice" || elem === "water") { // ❄️ ผลึกน้ำแข็ง / หยดน้ำ
+                    for (let k = 0; k < n; k++) {
+                        const a = (k / n) * Math.PI * 2;
+                        const cr = new THREE.Mesh(new THREE.OctahedronGeometry(0.035 + tier * 0.008, 0), em);
+                        cr.scale.set(0.6, 1.7, 0.6);
+                        cr.position.set(Math.cos(a) * R, y0 + (k % 3) * 0.12, Math.sin(a) * R * 0.5);
+                        cr.rotation.z = Math.cos(a) * 0.7;
+                        fx.add(cr);
+                    }
+                }
+                else if (elem === "earth") { // 🌍 ก้อนหินลอยรอบคม
+                    for (let k = 0; k < n; k++) {
+                        const a = (k / n) * Math.PI * 2;
+                        const rk = new THREE.Mesh(new THREE.DodecahedronGeometry(0.035 + tier * 0.008, 0), em);
+                        rk.scale.set(1, 0.8, 0.9);
+                        rk.position.set(Math.cos(a) * R * 1.15, y0 + (k % 2) * 0.13, Math.sin(a) * R * 0.6);
+                        fx.add(rk);
+                    }
+                }
+                else if (elem === "wind") { // 🌪️ วงลมหมุนรอบคม
+                    for (let k = 0; k < 2 + tier; k++) {
+                        const sw = new THREE.Mesh(new THREE.TorusGeometry(R * 1.25, 0.009 + tier * 0.002, 5, 20, Math.PI * 1.4), em);
+                        sw.position.y = y0 + k * 0.16;
+                        sw.rotation.set(Math.PI / 2 - 0.25, 0, k * 0.9);
+                        fx.add(sw);
+                    }
+                }
+                else if (elem === "light") { // 🌙 รัศมีแฉกกระจายจากคม
+                    for (let k = 0; k < 4 + tier * 2; k++) {
+                        const a = (k / (4 + tier * 2)) * Math.PI * 2;
+                        const ry = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.14 + tier * 0.05, 4), em);
+                        ry.position.set(Math.cos(a) * R * 1.1, y0 + 0.06, Math.sin(a) * R * 0.55);
+                        ry.rotation.z = -a - Math.PI / 2;
+                        fx.add(ry);
+                    }
+                }
+                else { // ✨ arcane ฯลฯ — วงรูนเรืองแสง
+                    for (let k = 0; k < 2 + tier; k++) {
+                        const rn = new THREE.Mesh(new THREE.TorusGeometry(R * 1.1, 0.008, 5, 14), em);
+                        rn.position.y = y0 + k * 0.15;
+                        rn.rotation.x = Math.PI / 2;
+                        fx.add(rn);
+                    }
+                }
+                model.add(fx);
+                model.userData.elemFx = fx;
+            };
+            G._tierWpnKeys = [];
+            ["sword", "bow", "staff", "dagger", "spear", "katana", "pen", "keyboard", "blaster"].forEach((fam) => {
+                for (let t = 0; t < 3; t++) {
+                    const k = `w_${fam}_${t}`;
+                    weaponModels[k] = buildTierWeapon(fam, t);
+                    G._tierWpnKeys.push(k);
+                }
+            });
+        }
         Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
         weaponModels.default.visible = true;
         let curWeapon = "default";
@@ -6351,7 +6793,15 @@ function CherryAdventure() {
                 id = "aurSword";
             else if (G.heroId === "ragnar" && weaponModels.ragAxe)
                 id = "ragAxe";
-            curWeapon = id && weaponModels[id] ? id : (CLASS_WEAPON[G.cls] || "default"); // class weapons share the class model
+            // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
+            let famKey = null;
+            if (!(id && weaponModels[id])) {
+                const wit = LOOT.find((x) => x.id === id);
+                const fam = WPN_FAMILY[(wit && wit.cls) || G.cls];
+                if (wit && fam)
+                    famKey = `w_${fam}_${wpnTierOf(wit.rarity)}`;
+            }
+            curWeapon = id && weaponModels[id] ? id : (famKey && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
             Object.entries(weaponModels).forEach(([k, m]) => (m.visible = k === curWeapon));
             // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
             const skin = WEAPON_SKINS.find((s) => s.id === (G.weaponSkin || "none")) || WEAPON_SKINS[0];
@@ -6373,6 +6823,11 @@ function CherryAdventure() {
                 const gy = model.userData.gripY != null ? model.userData.gripY : 0.28;
                 model.position.y = gy; // raise weapon so grip point is at the hand
                 model.position.z = model.userData.gripZ != null ? model.userData.gripZ : 0; // push away from the body if set
+            }
+            if (famKey && G.applyWpnElem) { // 🔥 ติดเครื่องประดับธาตุตามชื่ออาวุธ
+                const wit2 = LOOT.find((x) => x.id === id);
+                const parts = famKey.split("_");
+                G.applyWpnElem(model, parts[1], +parts[2], (wit2 && wit2.elem) || null);
             }
             if (model && model.userData.tint) {
                 const it = LOOT.find((x) => x.id === id);
@@ -41427,6 +41882,24 @@ function CherryAdventure() {
                             m.position.set(Math.cos(m.userData.a) * m.userData.r, m.userData.y + Math.sin(t * m.userData.sp + m.userData.a) * 0.05, Math.sin(m.userData.a) * m.userData.r);
                             m.material.opacity = 0.5 + Math.sin(t * 2 + m.userData.a) * 0.3;
                         });
+                }
+                // ⚔️✨ อาวุธตามระดับคุณภาพ — เกล็ดพลังลอยวน · วงแหวนหมุน · แกนพลอยเต้น (เฉพาะชิ้นที่ถืออยู่)
+                if (weaponModels && G._tierWpnKeys) {
+                    for (const k of G._tierWpnKeys) {
+                        const wm = weaponModels[k];
+                        if (!wm || !wm.visible)
+                            continue;
+                        const wu = wm.userData;
+                        if (wu.motes)
+                            wu.motes.forEach((m) => { m.userData.a += 0.022 * m.userData.sp; m.position.set(Math.cos(m.userData.a) * m.userData.r, m.userData.y + Math.sin(t * m.userData.sp + m.userData.a) * 0.05, Math.sin(m.userData.a) * m.userData.r); m.rotation.y += 0.05; });
+                        if (wu.halo)
+                            wu.halo.rotation.z += 0.02;
+                        if (wu.orb) {
+                            wu.orb.material.emissiveIntensity = 1.1 + Math.sin(t * 3) * 0.45;
+                            wu.orb.scale.setScalar(1 + Math.sin(t * 3) * 0.07);
+                        }
+                        break;
+                    }
                 }
                 // 🌑 Shadow Reaper Daggers / Shadow Dragon Spear: drifting motes + pulsing runes + crystal
                 if (weaponModels && (G.cls === "assassin" || G.cls === "lancer")) {
