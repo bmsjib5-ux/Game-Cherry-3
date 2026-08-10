@@ -11484,31 +11484,150 @@ function CherryAdventure() {
         };
         const outfitRing = (g, mesh, spin) => { g.add(mesh); G._outfitFx.push({ grp: g, o: mesh, kind: "spin", spin }); };
         const outfitPulse = (g, mesh, lo, hi, rate) => { g.add(mesh); G._outfitFx.push({ grp: g, o: mesh, kind: "pulse", lo, hi, rate }); };
-        { // o1 ผ้าพันคอนุ่มฟู : cozy scarf
+        { // o1 ผ้าพันคอนุ่มฟู (COMMON) — เสื้อไหมพรมทรงหลวมสบาย + ผ้าพันคอฟูพลิ้วปลายปอมปอม (ตามชื่อ)
             const g = new THREE.Group();
-            const scarfMat = new THREE.MeshStandardMaterial({ color: 0xe06070, roughness: 0.85 });
-            const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.1, 10, 20), scarfMat);
-            scarf.position.y = 2.12;
-            scarf.rotation.x = Math.PI / 2;
-            const tail = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.42, 0.06), scarfMat);
-            tail.position.set(0.2, 1.85, 0.42);
-            tail.rotation.z = -0.15;
-            g.add(scarf, tail);
+            const knitMat = new THREE.MeshStandardMaterial({ color: 0xd8737f, roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide });
+            knitMat.bumpMap = clothBumpTex(9, "weave");
+            knitMat.bumpScale = 0.014; // 🧶 ผิวไหมพรมถักหยาบ
+            const scarfMat = new THREE.MeshStandardMaterial({ color: 0xe8828e, roughness: 0.98, metalness: 0.0, side: THREE.DoubleSide });
+            scarfMat.bumpMap = clothBumpTex(6, "weave");
+            scarfMat.bumpScale = 0.018;
+            const creamMat = new THREE.MeshStandardMaterial({ color: 0xf7e9d8, roughness: 0.95, metalness: 0.0 });
+            // 👕 ทรงเฉพาะ COMMON — สเวตเตอร์ตัวหลวมทรงกล่อง ไม่เข้ารูป (ต่างจากชุดระดับสูงที่รัดรูป)
+            const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.415, 1.3], [0.418, 1.44], [0.42, 1.58], [0.422, 1.72], [0.412, 1.85], [0.35, 1.95], [0.22, 2.04]].map(([r, y]) => new THREE.Vector2(r, y)), 28), knitMat);
+            suit.scale.set(0.935, 1, 0.9);
+            clothFolds(suit, 0.009);
+            g.add(suit);
+            G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.04, h: 0.74, amp: 0.01 });
+            for (let k = 0; k < 3; k++) {
+                const rib = new THREE.Mesh(new THREE.TorusGeometry(0.418 - k * 0.004, 0.016, 6, 26), knitMat);
+                rib.position.y = 1.3 + k * 0.045;
+                rib.rotation.x = Math.PI / 2;
+                rib.scale.set(1.05, 0.86, 1);
+                g.add(rib);
+            } // ขอบยางยืดชายเสื้อ
+            for (const sx of [-1, 1]) { // 🧶 แขนสเวตเตอร์ตุ่ยๆ + ขอบข้อมือ
+                const slv = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), knitMat);
+                slv.scale.set(1.1, 1.0, 1.1);
+                slv.position.set(sx * 0.5, 1.9, 0);
+                g.add(slv);
+                const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.018, 6, 20), creamMat);
+                cuff.position.set(sx * 0.51, 1.72, 0);
+                cuff.rotation.x = Math.PI / 2;
+                g.add(cuff);
+            }
+            // 🧣 ผ้าพันคอฟู — พันรอบคอ 2 รอบ + ก้อนฟูรอบวง + ชายผ้ายาว 2 เส้นปลายปอมปอม
+            for (let k = 0; k < 2; k++) {
+                const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.29 + k * 0.015, 0.075, 10, 22), scarfMat);
+                wrap.position.y = 2.06 + k * 0.1;
+                wrap.rotation.x = Math.PI / 2 + (k ? 0.08 : -0.05);
+                wrap.scale.set(1.06, 0.88, 1);
+                g.add(wrap);
+            }
+            for (let i = 0; i < 10; i++) {
+                const a = (i / 10) * Math.PI * 2;
+                const fl = new THREE.Mesh(new THREE.SphereGeometry(0.052 + (i % 3) * 0.012, 8, 7), scarfMat);
+                fl.position.set(Math.cos(a) * 0.31, 2.1 + Math.sin(i * 1.7) * 0.05, Math.sin(a) * 0.27);
+                g.add(fl);
+            } // ขนฟูรอบผ้าพันคอ
+            for (const sx of [-1, 1]) {
+                const tail = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.05, 1, 8, 1), scarfMat);
+                tail.position.set(sx * 0.17, 1.68, 0.3);
+                tail.rotation.z = sx * 0.14;
+                tail.rotation.x = 0.08;
+                g.add(tail);
+                G._outfitCloth.push({ grp: g, m: tail, base: Float32Array.from(tail.geometry.attributes.position.array), top: 0.31, h: 0.62, amp: 0.075 });
+                const pom = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), creamMat);
+                pom.position.set(sx * 0.19, 1.36, 0.31);
+                g.add(pom); // ปอมปอมปลายผ้าพันคอ
+            }
             outfitModels.o1 = g;
         }
-        { // o2 ชุดใบไม้พราย : leaf hat + shoulder leaves
+        { // o2 ชุดใบไม้พราย (RARE) — ชุดภูตไม้: กระโปรงใบไม้ซ้อนแฉก + ปกใบไม้ + เถาวัลย์คาดเอว + หมวกใบไม้ (ตามชื่อ)
             const g = new THREE.Group();
-            const leafMat = new THREE.MeshStandardMaterial({ color: 0x5a9a45, roughness: 0.7 });
-            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.36, 8), leafMat);
-            hat.position.set(0.1, 3.55, 0);
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x5a9a45, roughness: 0.82, metalness: 0.0, side: THREE.DoubleSide });
+            leafMat.bumpMap = clothBumpTex(7, "weave");
+            leafMat.bumpScale = 0.01;
+            const leafDark = new THREE.MeshStandardMaterial({ color: 0x3f7a32, roughness: 0.85, metalness: 0.0, side: THREE.DoubleSide });
+            const vineMat = new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.9, metalness: 0.02 });
+            const dewMat = new THREE.MeshStandardMaterial({ color: 0xbdf0a0, emissive: 0x5ac04a, emissiveIntensity: 1.1, roughness: 0.25 });
+            // 👕 ทรงเฉพาะ RARE — ทูนิคภูตไม้เข้ารูปช่วงบน แล้วผายเป็นแฉกใบไม้ (ไม่ใช่ชายเสื้อกลมเรียบ)
+            const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.372, 1.3], [0.352, 1.42], [0.348, 1.56], [0.372, 1.7], [0.382, 1.83], [0.335, 1.93], [0.21, 2.03]].map(([r, y]) => new THREE.Vector2(r, y)), 28), leafMat);
+            suit.scale.set(1.03, 1, 0.88);
+            clothFolds(suit, 0.008);
+            g.add(suit);
+            G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.03, h: 0.73, amp: 0.011 });
+            const mkLeaf = (len, wid, mat) => { const m = new THREE.Mesh(new THREE.ConeGeometry(wid, len, 4), mat); m.scale.set(1, 1, 0.3); return m; };
+            // 🍃 กระโปรงใบไม้ซ้อนแฉก 12 ใบ ยาวสลับ — ซิลูเอตหยักไม่กลมเรียบ
+            for (let i = 0; i < 12; i++) {
+                const a = (i / 12) * Math.PI * 2, ln = i % 2 ? 0.34 : 0.5;
+                const lf = mkLeaf(ln, 0.13, i % 2 ? leafDark : leafMat);
+                lf.position.set(Math.sin(a) * 0.352, 1.3 - ln / 2, Math.cos(a) * 0.3);
+                lf.rotation.order = "YXZ";
+                lf.rotation.y = a;
+                lf.rotation.x = Math.PI - 0.16;
+                g.add(lf);
+                const vein = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, ln * 0.8, 4), vineMat);
+                vein.position.set(Math.sin(a) * 0.37, 1.3 - ln / 2, Math.cos(a) * 0.315);
+                vein.rotation.order = "YXZ";
+                vein.rotation.y = a;
+                vein.rotation.x = 0.16;
+                g.add(vein);
+            }
+            // 🍃 ปกใบไม้รอบคอ + ใบไม้ใหญ่บนบ่า
+            for (let i = 0; i < 8; i++) {
+                const a = (i / 8) * Math.PI * 2;
+                const cl = mkLeaf(0.2, 0.075, leafDark);
+                cl.position.set(Math.sin(a) * 0.24, 1.98, Math.cos(a) * 0.2);
+                cl.rotation.order = "YXZ";
+                cl.rotation.y = a;
+                cl.rotation.x = -0.5;
+                g.add(cl);
+            }
+            for (const sx of [-1, 1]) {
+                const big = mkLeaf(0.36, 0.17, leafMat);
+                big.position.set(sx * 0.5, 1.92, 0);
+                big.rotation.set(0, 0, sx * 2.1);
+                g.add(big);
+                const big2 = mkLeaf(0.26, 0.12, leafDark);
+                big2.position.set(sx * 0.47, 1.84, 0.1);
+                big2.rotation.set(0.4, 0, sx * 1.7);
+                g.add(big2);
+            }
+            // 🌿 เถาวัลย์คาดเอว + ใบเล็กประดับ
+            {
+                const vine = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.022, 7, 26), vineMat);
+                vine.position.y = 1.36;
+                vine.rotation.x = Math.PI / 2;
+                vine.scale.set(1.05, 0.86, 1);
+                g.add(vine);
+                for (let i = 0; i < 5; i++) {
+                    const a = -0.6 + i * 0.3;
+                    const sl = mkLeaf(0.12, 0.05, leafMat);
+                    sl.position.set(Math.sin(a) * 0.4, 1.4, Math.cos(a) * 0.35);
+                    sl.rotation.order = "YXZ";
+                    sl.rotation.y = a;
+                    sl.rotation.x = -0.7;
+                    g.add(sl);
+                }
+            }
+            // 🎩 หมวกใบไม้ (คงเอกลักษณ์เดิม) + หยดน้ำค้างเรืองแสง
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.4, 6), leafMat);
+            hat.scale.set(1, 1, 0.6);
+            hat.position.set(0.1, 3.56, 0);
             hat.rotation.z = 0.3;
             g.add(hat);
-            for (const sx of [-0.56, 0.56]) {
-                const sh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), leafMat);
-                sh.scale.set(1.6, 0.5, 1);
-                sh.position.set(sx, 2.12, 0);
-                g.add(sh);
+            const hatStem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 5), vineMat);
+            hatStem.position.set(0.15, 3.8, 0);
+            hatStem.rotation.z = 0.5;
+            g.add(hatStem);
+            for (const [dx, dy, dz] of [[0.2, 1.62, 0.3], [-0.22, 1.5, 0.28], [0.05, 1.86, 0.34]]) {
+                const dw = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 7), dewMat);
+                dw.scale.set(1, 1.3, 1);
+                dw.position.set(dx, dy, dz);
+                g.add(dw);
             }
+            outfitMotes(g, 3, 0x9ae86a, 0.022, 0.55, 0.72, 1.1, 2.1); // 🌱 ละอองภูตไม้ลอยวน (น้อยกว่าระดับสูง)
             outfitModels.o2 = g;
         }
         { // o3 เกราะเมฆานิล — ชุดรัดรูปผ้าพายุเต็มตัว 360° นุ่มพริ้ว (ไม่จม ไม่เปิดหลัง)
@@ -11521,7 +11640,7 @@ function CherryAdventure() {
             armorMat.bumpScale = 0.008;
             const stormTrim = new THREE.MeshStandardMaterial({ color: 0x8fd0f5, metalness: 0.4, roughness: 0.35, emissive: 0x2a6a9a, emissiveIntensity: 0.5 });
             const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.352, 1.22], [0.332, 1.36], [0.332, 1.5], [0.36, 1.64], [0.372, 1.78], [0.348, 1.9], [0.288, 1.98], [0.2, 2.06]].map(([r, y]) => new THREE.Vector2(r, y)), 30), armorMat);
-            suit.scale.set(1.06, 1, 0.84);
+            suit.scale.set(1.06, 1, 0.86);
             clothFolds(suit, 0.006);
             g.add(suit);
             G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 });
@@ -11559,14 +11678,14 @@ function CherryAdventure() {
             bolt.position.set(0, 1.74, o3FrontZ(0.385, 0) + 0.03);
             g.add(bolt);
             // 🧥 ทรงเฉพาะ EPIC — โค้ทพายุเปิดหน้า ชายยาวถึงเข่า + คอตั้งสูงด้านหลัง + สายสะพายเฉียงอก
-            const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.66, 0.82, 34, 6, true, Math.PI * 0.16, Math.PI * 1.68), armorMat);
+            const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.58, 0.82, 34, 6, true, Math.PI * 0.16, Math.PI * 1.68), armorMat);
             coat.position.y = 0.92;
             coat.scale.set(1.04, 1, 0.88);
             clothFolds(coat, 0.012);
             g.add(coat);
             G._outfitCloth.push({ grp: g, m: coat, base: Float32Array.from(coat.geometry.attributes.position.array), top: 0.41, h: 0.82, amp: 0.06 });
             {
-                const ct2 = new THREE.Mesh(new THREE.TorusGeometry(0.655, 0.014, 6, 36, Math.PI * 1.68), stormTrim);
+                const ct2 = new THREE.Mesh(new THREE.TorusGeometry(0.575, 0.014, 6, 36, Math.PI * 1.68), stormTrim);
                 ct2.position.y = 0.51;
                 ct2.rotation.set(Math.PI / 2, 0, -Math.PI * 0.16);
                 ct2.scale.set(1.04, 0.88, 1);
@@ -11654,7 +11773,7 @@ function CherryAdventure() {
             suitMat.bumpMap = clothBumpTex(7, "weave");
             suitMat.bumpScale = 0.007;
             const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.4, 1.22], [0.326, 1.36], [0.312, 1.48], [0.352, 1.62], [0.396, 1.77], [0.364, 1.89], [0.292, 1.97], [0.2, 2.05]].map(([r, y]) => new THREE.Vector2(r, y)), 30), suitMat);
-            suit.scale.set(1.06, 1, 0.84);
+            suit.scale.set(0.995, 1, 0.88);
             clothFolds(suit, 0.006);
             g.add(suit);
             G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 });
@@ -11670,20 +11789,26 @@ function CherryAdventure() {
             chestStar.position.set(0, 1.74, oSFrontZ(0.385, 0) + 0.03);
             g.add(chestStar);
             // 👗 ทรงเฉพาะ SECRET — ชุดกระโปรงยาวทรงเอ + แขนผ้าบานยาวห้อยลงจากไหล่ (ทรงเทพธิดา)
-            const gown = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.92, 1.06, 40, 8, true), suitMat);
-            gown.position.y = 0.8;
+            const gown = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.46, 0.5, 40, 5, true), suitMat);
+            gown.position.y = 1.08;
             gown.scale.set(1.04, 1, 0.9);
             clothFolds(gown, 0.014);
             g.add(gown);
-            G._outfitCloth.push({ grp: g, m: gown, base: Float32Array.from(gown.geometry.attributes.position.array), top: 0.53, h: 1.06, amp: 0.075 });
+            G._outfitCloth.push({ grp: g, m: gown, base: Float32Array.from(gown.geometry.attributes.position.array), top: 0.25, h: 0.5, amp: 0.04 });
+            const gownLo = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.88, 0.62, 40, 6, true), suitMat);
+            gownLo.position.y = 0.52;
+            gownLo.scale.set(1.04, 1, 0.9);
+            clothFolds(gownLo, 0.014);
+            g.add(gownLo);
+            G._outfitCloth.push({ grp: g, m: gownLo, base: Float32Array.from(gownLo.geometry.attributes.position.array), top: 0.31, h: 0.62, amp: 0.08 });
             {
-                const gh = new THREE.Mesh(new THREE.TorusGeometry(0.915, 0.015, 6, 44), starTrim);
-                gh.position.y = 0.29;
+                const gh = new THREE.Mesh(new THREE.TorusGeometry(0.875, 0.015, 6, 44), starTrim);
+                gh.position.y = 0.22;
                 gh.rotation.x = Math.PI / 2;
                 gh.scale.set(1.04, 0.9, 1);
                 g.add(gh); // ขลิบดาวชายกระโปรง
-                const gm2 = new THREE.Mesh(new THREE.TorusGeometry(0.63, 0.011, 6, 40), starTrim);
-                gm2.position.y = 0.72;
+                const gm2 = new THREE.Mesh(new THREE.TorusGeometry(0.475, 0.011, 6, 40), starTrim);
+                gm2.position.y = 0.83;
                 gm2.rotation.x = Math.PI / 2;
                 gm2.scale.set(1.04, 0.9, 1);
                 g.add(gm2);
@@ -11778,7 +11903,7 @@ function CherryAdventure() {
             scaleGreen.bumpScale = 0.01;
             // 👕 เสื้อเต็มตัวรัดรูป — lathe รอบทิศตามทรงลำตัว ใหญ่กว่าผิวเล็กน้อยทุกจุด จึงไม่จมหาย
             const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.4, 1.2], [0.382, 1.34], [0.376, 1.48], [0.408, 1.63], [0.432, 1.78], [0.402, 1.9], [0.316, 1.99], [0.21, 2.06]].map(([r, y]) => new THREE.Vector2(r, y)), 30), scaleMat);
-            suit.scale.set(1.09, 1, 0.88);
+            suit.scale.set(0.915, 1, 0.92);
             clothFolds(suit, 0.006); // 👗 รอยจีบผ้าแนวตั้ง
             g.add(suit);
             G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 }); // 🌊 ผืนเสื้อกระเพื่อมเบาๆ เหมือนผ้า
@@ -11788,13 +11913,13 @@ function CherryAdventure() {
                 const a = (i / 10) * Math.PI * 2;
                 const long = (i === 0 || i === 5) ? 0.44 : (i % 2 ? 0.3 : 0.36);
                 const tas = new THREE.Mesh(new THREE.BoxGeometry(0.19, long, 0.05), i % 2 ? scaleGreen : scaleMat);
-                tas.position.set(Math.sin(a) * 0.4, 1.14 - long / 2, Math.cos(a) * 0.34);
+                tas.position.set(Math.sin(a) * 0.355, 1.14 - long / 2, Math.cos(a) * 0.3);
                 tas.rotation.order = "YXZ";
                 tas.rotation.y = a;
                 tas.rotation.x = -0.13;
                 g.add(tas);
                 const tt = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.035, 0.055), scaleGold);
-                tt.position.set(Math.sin(a) * 0.425, 1.14 - long + 0.02, Math.cos(a) * 0.362);
+                tt.position.set(Math.sin(a) * 0.378, 1.14 - long + 0.02, Math.cos(a) * 0.32);
                 tt.rotation.order = "YXZ";
                 tt.rotation.y = a;
                 tt.rotation.x = -0.13;
@@ -11944,12 +12069,12 @@ function CherryAdventure() {
             const wingMat = new THREE.MeshStandardMaterial({ color: 0xfffbf0, emissive: 0xffe6a0, emissiveIntensity: 0.75, transparent: true, opacity: 0.92, roughness: 0.4, side: THREE.DoubleSide });
             // 👕 เสื้อเต็มตัวรัดรูปขาวมุก — lathe รอบทิศตามทรงลำตัว ใหญ่กว่าผิวเล็กน้อยทุกจุด จึงไม่จมหาย
             const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.376, 1.22], [0.352, 1.34], [0.346, 1.48], [0.376, 1.63], [0.396, 1.78], [0.368, 1.91], [0.302, 2.01], [0.2, 2.11]].map(([r, y]) => new THREE.Vector2(r, y)), 30), plateMat);
-            suit.scale.set(1.06, 1, 0.84);
+            suit.scale.set(0.995, 1, 0.88);
             clothFolds(suit, 0.006);
             g.add(suit);
             G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 }); // 🌊 ผืนเสื้อกระเพื่อมเบาๆ เหมือนผ้า
             // 👑 ทรงเฉพาะ LEGEND — กระโปรงซ้อน 3 ชั้นบานลดหลั่น + คอปีกทองตั้งสูง (ทรงราชสำนักสวรรค์)
-            [[0.38, 0.62, 0.3, 1.1], [0.5, 0.78, 0.34, 0.84], [0.66, 0.98, 0.38, 0.56]].forEach(([rt, rb, hh, py], ti) => {
+            [[0.38, 0.45, 0.3, 1.1], [0.46, 0.7, 0.34, 0.78], [0.7, 0.98, 0.36, 0.44]].forEach(([rt, rb, hh, py], ti) => {
                 const tier = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, hh, 38, 4, true), plateMat);
                 tier.position.y = py;
                 tier.scale.set(1.03, 1, 0.9);
@@ -12168,7 +12293,7 @@ function CherryAdventure() {
             const B = cfg.body;
             // 👕 เสื้อรัดรูปเต็มตัว 360° ตามทรงลำตัว (ทุกแบบชุด) — สวมจริง ไม่จมหาย ไม่เปิดหลัง
             const suit = new THREE.Mesh(new THREE.LatheGeometry([[0.37, 1.22], [0.35, 1.34], [0.345, 1.48], [0.37, 1.62], [0.385, 1.76], [0.36, 1.88], [0.295, 1.97], [0.2, 2.05]].map(([r, y]) => new THREE.Vector2(r, y)), 30), baseMat);
-            suit.scale.set(1.06, 1, 0.84);
+            suit.scale.set(1.025, 1, 0.87);
             clothFolds(suit, 0.006);
             g.add(suit);
             G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 });
@@ -12177,7 +12302,7 @@ function CherryAdventure() {
             // 🌊 ชายเสื้อบานพริ้วรอบสะโพก (robe ใช้กระโปรงยาวของตัวเองแทน)
             if (B !== "robe") {
                 // 👗 ชายเสื้อยาวขึ้นตามระดับ: ชั้นดี = สั้นแค่สะโพก · ชั้นเลิศ = คลุมต้นขา · ตำนาน = ยาวถึงเข่า
-                const HL = [[0.4, 0.48, 0.24, 1.16], [0.39, 0.6, 0.46, 1.05], [0.38, 0.74, 0.68, 0.94]][tier];
+                const HL = [[0.4, 0.46, 0.24, 1.16], [0.39, 0.5, 0.46, 1.05], [0.38, 0.55, 0.68, 0.94]][tier];
                 const hem = new THREE.Mesh(new THREE.CylinderGeometry(HL[0], HL[1], HL[2], 40, 5, true), baseMat);
                 hem.position.y = HL[3];
                 hem.scale.set(1.03, 1, 0.85);
