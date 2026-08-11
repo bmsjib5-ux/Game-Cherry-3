@@ -4857,10 +4857,20 @@ export default function CherryAdventure() {
         }
         model.add(fx); model.userData.elemFx = fx;
       };
+      // 🚀 PERF: อาวุธ 27 แบบสร้างเมื่อถูกถือครั้งแรก (lazy) — ไม่แบกติดตัวตั้งแต่เข้าเกม
       G._tierWpnKeys = [];
+      G._wpnFactories = {};
       ["sword", "bow", "staff", "dagger", "spear", "katana", "pen", "keyboard", "blaster"].forEach((fam) => {
-        for (let t = 0; t < 3; t++) { const k = `w_${fam}_${t}`; weaponModels[k] = buildTierWeapon(fam, t); G._tierWpnKeys.push(k); }
+        for (let t = 0; t < 3; t++) { const k = `w_${fam}_${t}`; G._wpnFactories[k] = () => buildTierWeapon(fam, t); G._tierWpnKeys.push(k); }
       });
+      G.ensureWeaponModel = (k) => {
+        if (!k || weaponModels[k]) return weaponModels[k] || null;
+        const f = G._wpnFactories && G._wpnFactories[k]; if (!f) return null;
+        const m = f(); m.visible = false; wand.add(m);
+        if (G.freezeStatic) { G.freezeStatic(m, 0); m.userData._frzM = 1; }
+        weaponModels[k] = m;
+        return m;
+      };
     }
     // 🚀 PERF — ตัวละครแบกคลังโมเดลชุด/อาวุธ/กางเกงทั้งหมดติดตัว (หลายพันชิ้น) แม้ซ่อนอยู่
     // three.js ยังคิดเมทริกซ์ให้ทุกชิ้นทุกเฟรม → ตรึงชิ้นที่ซ่อน ปลดเฉพาะชิ้นที่กำลังสวม
@@ -4895,6 +4905,7 @@ export default function CherryAdventure() {
         const fam = WPN_FAMILY[(wit && wit.cls) || G.cls];
         if (wit && fam) famKey = `w_${fam}_${wpnTierOf(wit.rarity)}`;
       }
+      if (famKey && G.ensureWeaponModel) G.ensureWeaponModel(famKey); // 🚀 สร้างโมเดลตระกูลอาวุธเมื่อใช้จริง
       curWeapon = id && weaponModels[id] ? id : (famKey && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
       Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
@@ -8224,7 +8235,18 @@ export default function CherryAdventure() {
       return g;
     };
     const CLASS_TIER_IDX = { r: 0, e: 1, s: 2 };
-    Object.keys(CLASS_LOOKS).forEach((cls) => { ["r", "e", "s"].forEach((tl) => { outfitModels[`cls_${cls}_${tl}`] = buildClassOutfit(CLASS_LOOKS[cls].t[CLASS_TIER_IDX[tl]], CLASS_TIER_IDX[tl]); }); });
+    // 🚀 PERF: ชุดประจำอาชีพ 27 แบบสร้างเมื่อถูกสวมครั้งแรก (lazy)
+    const outfitFactories = {};
+    Object.keys(CLASS_LOOKS).forEach((cls) => { ["r", "e", "s"].forEach((tl) => { outfitFactories[`cls_${cls}_${tl}`] = () => buildClassOutfit(CLASS_LOOKS[cls].t[CLASS_TIER_IDX[tl]], CLASS_TIER_IDX[tl]); }); });
+    G.ensureOutfitModel = (k) => {
+      if (!k || outfitModels[k]) return outfitModels[k] || null;
+      if (!outfitFactories[k]) return null;
+      const m = outfitFactories[k]();
+      m.visible = false; char.add(m);
+      if (G.freezeStatic) { G.freezeStatic(m, 0); m.userData._frzM = 1; }
+      outfitModels[k] = m;
+      return m;
+    };
     Object.values(outfitModels).forEach((m) => { m.visible = false; char.add(m); });
     let curOutfit = null;
     // 👗 the generated archetype outfits have no bespoke mesh, so borrow a model of the
@@ -9326,16 +9348,27 @@ export default function CherryAdventure() {
       hatModels.lg_hat = g;
     }
     // 🎩 PER-CLASS hats (9 classes × 3 tiers) — same CLASS_LOOKS config, built by buildClassHat
-    Object.keys(CLASS_LOOKS).forEach((cls) => { ["r", "e", "s"].forEach((tl) => { hatModels[`cls_${cls}_${tl}`] = buildClassHat(CLASS_LOOKS[cls].t[CLASS_TIER_IDX[tl]]); }); });
+    // 🚀 PERF: หมวกประจำอาชีพ 27 แบบสร้างเมื่อถูกสวมครั้งแรก (lazy)
+    const hatFactories = {};
+    Object.keys(CLASS_LOOKS).forEach((cls) => { ["r", "e", "s"].forEach((tl) => { hatFactories[`cls_${cls}_${tl}`] = () => buildClassHat(CLASS_LOOKS[cls].t[CLASS_TIER_IDX[tl]]); }); });
+    G.ensureHatModel = (k) => {
+      if (!k || hatModels[k]) return hatModels[k] || null;
+      if (!hatFactories[k]) return null;
+      const m = hatFactories[k]();
+      m.visible = false; headG.add(m);
+      if (G.freezeStatic) { G.freezeStatic(m, 0); m.userData._frzM = 1; }
+      hatModels[k] = m;
+      return m;
+    };
     Object.values(hatModels).forEach((m) => { m.visible = false; headG.add(m); });
     // 👗🎩 resolvers — a generated archetype OUTFIT/HAT id (o[res](atk|def|agi) / h[res]…) maps to the
     // wearer's class look at that tier (cls_<class>_<r|e|s>); everything else passes through unchanged.
     G.resolveOutfitKey = (id, cls) => {
-      if (id && cls && /^o[res](atk|def|agi)$/.test(id)) { const k = `cls_${cls}_${id[1]}`; if (outfitModels[k]) return k; }
+      if (id && cls && /^o[res](atk|def|agi)$/.test(id)) { const k = `cls_${cls}_${id[1]}`; if (G.ensureOutfitModel ? G.ensureOutfitModel(k) : outfitModels[k]) return k; }
       return id;
     };
     G.resolveHatKey = (id, cls) => {
-      if (id && cls && /^h[res](atk|def|agi)$/.test(id)) { const k = `cls_${cls}_${id[1]}`; if (hatModels[k]) return k; }
+      if (id && cls && /^h[res](atk|def|agi)$/.test(id)) { const k = `cls_${cls}_${id[1]}`; if (G.ensureHatModel ? G.ensureHatModel(k) : hatModels[k]) return k; }
       return id;
     };
 
@@ -9673,8 +9706,8 @@ export default function CherryAdventure() {
       const dye = G.dye || {};
       const look = (s) => (G._gearHidden && s !== "weapon") ? null : (cos[s] || eq[s]); // 🙈 hidden = base body; 👗 else transmog overrides the LOOK, stats stay from eq
       const hatKey = G.resolveHatKey ? G.resolveHatKey(look("hat"), G.cls) : look("hat"); // 🎩 archetype hats → class look
-      Object.entries(hatModels).forEach(([k, m]) => (m.visible = k === hatKey));
-      Object.entries(maskModels).forEach(([k, m]) => (m.visible = k === look("mask")));
+      Object.entries(hatModels).forEach(([k, m]) => (G._setVisFrozen ? G._setVisFrozen(m, k === hatKey) : (m.visible = k === hatKey)));
+      Object.entries(maskModels).forEach(([k, m]) => (G._setVisFrozen ? G._setVisFrozen(m, k === look("mask")) : (m.visible = k === look("mask"))));
       const gl = look("gloves");
       handMeshes.forEach((h) => {
         let gmat, sc;
@@ -11934,6 +11967,88 @@ export default function CherryAdventure() {
     };
     G.unfreezeStatic = (root) => { if (root) root.traverse((o) => { o.matrixAutoUpdate = true; }); };
     G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor"];
+    // 🚀 PERF ② — รวม material ที่คุณสมบัติเหมือนกันเป็นตัวเดียว (ประหยัดหน่วยความจำ + สลับ uniform)
+    // ปลอดภัยเฉพาะวัสดุทึบไม่มีเท็กซ์เจอร์ (ของโปร่งใส/มีลาย มักถูกอนิเมตแยกชิ้น — ไม่ยุ่ง)
+    G.dedupeMaterials = (root) => {
+      const cache = G._matCache = G._matCache || new Map();
+      let removed = 0;
+      root.traverse((o) => {
+        if (!o.isMesh || Array.isArray(o.material)) return;
+        const m = o.material;
+        if (!m || !m.isMeshStandardMaterial || m.transparent || m.map || m.bumpMap || m.emissiveMap || m.normalMap || m.alphaMap) return;
+        const key = [m.color.getHex(), m.roughness.toFixed(3), m.metalness.toFixed(3), m.emissive.getHex(), (m.emissiveIntensity || 0).toFixed(3), m.side, m.flatShading ? 1 : 0].join("|");
+        const canon = cache.get(key);
+        if (!canon) cache.set(key, m);
+        else if (canon !== m) { o.material = canon; if (m.dispose) m.dispose(); removed++; }
+      });
+      return removed;
+    };
+    // 🚀 PERF ③ — รวม mesh นิ่งที่ใช้ material เดียวกันในฉากประกอบเป็น mesh เดียว (ลด object + draw call)
+    G._mergeBucket = (meshes, root) => {
+      const geoms = [];
+      let total = 0;
+      for (const m of meshes) {
+        let gg = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+        const rel = new THREE.Matrix4(); const chain = [];
+        let o = m; while (o && o !== root) { chain.push(o); o = o.parent; }
+        if (!o) continue; // ไม่ได้อยู่ใต้ root แล้ว
+        for (let i = chain.length - 1; i >= 0; i--) rel.multiply(chain[i].matrix);
+        gg.applyMatrix4(rel);
+        total += gg.attributes.position.count;
+        geoms.push(gg);
+      }
+      if (!geoms.length) return null;
+      const merged = new THREE.BufferGeometry();
+      for (const nm of Object.keys(geoms[0].attributes)) {
+        const itemSize = geoms[0].attributes[nm].itemSize;
+        const arr = new Float32Array(total * itemSize);
+        let off = 0;
+        for (const gg of geoms) { arr.set(gg.attributes[nm].array, off); off += gg.attributes[nm].array.length; }
+        merged.setAttribute(nm, new THREE.BufferAttribute(arr, itemSize));
+      }
+      const mm = new THREE.Mesh(merged, meshes[0].material);
+      mm.castShadow = meshes[0].castShadow; mm.receiveShadow = meshes[0].receiveShadow;
+      mm.matrixAutoUpdate = false; mm.updateMatrix();
+      root.add(mm);
+      for (const m of meshes) { if (m.parent) m.parent.remove(m); if (m.geometry && m.geometry.dispose) m.geometry.dispose(); }
+      for (const gg of geoms) { if (gg.dispose) gg.dispose(); }
+      return mm;
+    };
+    // รันครั้งเดียวหลังฉากสร้างเสร็จ — dedupe ก่อน (ให้กลุ่ม material ใหญ่ขึ้น) แล้ว merge
+    G.optimizeStaticScene = () => {
+      if (G._optimized) return G._optStats; G._optimized = 1;
+      let mergedAway = 0, dedup = 0;
+      const excl = new Set(G.sandParticles || []);
+      try {
+        for (const k of G._decorKeys) {
+          const root = G[k]; if (!root) continue;
+          dedup += G.dedupeMaterials(root);
+          const buckets = new Map();
+          const walk = (o, d) => {
+            const kids = o.children.slice();
+            if (d >= 2 && o.isMesh && o.visible && !excl.has(o) && !o.isSkinnedMesh && o.material && !Array.isArray(o.material)
+              && o.material.isMeshStandardMaterial && !o.material.transparent && !o.material.map && !o.material.bumpMap
+              && o.geometry && o.geometry.attributes.position && (!o.geometry.groups || !o.geometry.groups.length)
+              && !Object.keys(o.geometry.morphAttributes || {}).length) {
+              const sig = Object.keys(o.geometry.attributes).map((n) => n + o.geometry.attributes[n].itemSize).sort().join(",");
+              const bk = o.material.uuid + "|" + sig + "|" + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0);
+              if (!buckets.has(bk)) buckets.set(bk, []);
+              buckets.get(bk).push(o);
+            }
+            for (const c of kids) walk(c, d + 1);
+          };
+          walk(root, 0);
+          for (const arr of buckets.values()) {
+            if (arr.length < 6) continue;
+            if (G._mergeBucket(arr, root)) mergedAway += arr.length - 1;
+          }
+          root.userData._frz = null; // ให้รอบกวาดตรึงคิดสถานะกลุ่มนี้ใหม่
+        }
+      } catch (e) { G._optErr = String((e && e.message) || e); }
+      if (G.refreshDecorFreeze) G.refreshDecorFreeze();
+      G._optStats = { mergedAway, dedup };
+      return G._optStats;
+    };
     G.refreshDecorFreeze = () => {
       let frozen = 0;
       for (const k of G._decorKeys) {
@@ -20947,6 +21062,17 @@ export default function CherryAdventure() {
         }
         // ✨ ออร่าชุดระดับสูง — เม็ดแสงลอยวนขึ้น · วงแหวน/รัศมีหมุน · แกนพลอยเต้นตามจังหวะ
         if ((G._frzTick = (G._frzTick || 0) + 1) % 120 === 0 && G.refreshDecorFreeze) G.refreshDecorFreeze(); // 🚀 ตรึงฉากนิ่งที่เพิ่งถูกสร้าง
+        if (G._frzTick % 60 === 0) { // 🚀 กวาดตรึงชิ้นที่ซ่อนบนตัวละคร (ผม/ของสะสม/ยานพาหนะที่ไม่ได้ใช้) — ปลดเองเมื่อถูกโชว์
+          const unfreezeKeepM = (root) => root.traverse((o) => { if (!(o.userData && o.userData._frzM)) { o.matrixAutoUpdate = true; if (o.userData) delete o.userData._frzS; } });
+          const sweep = (o) => {
+            if (o.userData && o.userData._frzM) return;
+            if (o.userData && o.userData._frzS) { if (o.visible) unfreezeKeepM(o); else return; }
+            else if (!o.visible) { let n = 0; o.traverse(() => n++); if (n > 12) { G.freezeStatic(o, 0); o.userData._frzS = 1; return; } }
+            for (let ci = 0; ci < o.children.length; ci++) sweep(o.children[ci]);
+          };
+          try { sweep(char); } catch (e) {}
+        }
+        if (G._frzTick === 240 && G.optimizeStaticScene) { try { G.optimizeStaticScene(); } catch (e) {} } // 🚀 dedupe+merge ฉากประกอบ ครั้งเดียวหลังโหลดนิ่งแล้ว
         if (G._outfitFx && G._outfitFx.length) {
           for (const f of G._outfitFx) {
             if (!f.grp.visible) continue;
