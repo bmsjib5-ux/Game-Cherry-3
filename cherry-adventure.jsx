@@ -9490,6 +9490,51 @@ export default function CherryAdventure() {
       for (const sy of [-0.12, -0.3]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.132, 0.012, 6, 18), goldMat); band.position.y = sy; band.rotation.x = Math.PI / 2; grp.add(band); }
       const vein = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.34, 0.01), lightMat); vein.position.set(0, -0.24, 0.12); grp.add(vein);
     });
+    // 👖 กางเกงตามชื่อ + ระดับคุณภาพ — ทุกชิ้นมีทรง 3D จริง ไม่ใช่แค่เปลี่ยนสีขา
+    // p1 กางเกงยีนส์ฟ้า (common) — ยีนส์เดนิม เย็บตะเข็บ กระเป๋าหลัง ปลายขาพับ
+    mkLimbPair(pantsModels, "p1", _kneeEls, (grp) => {
+      const denim = new THREE.MeshStandardMaterial({ color: 0x4a72b0, roughness: 0.95, metalness: 0.0 });
+      const denimD = new THREE.MeshStandardMaterial({ color: 0x3a5d94, roughness: 0.95, metalness: 0.0 });
+      const stitch = new THREE.MeshStandardMaterial({ color: 0xe8c98a, roughness: 0.85 });
+      const rivet = new THREE.MeshStandardMaterial({ color: 0xd8b878, metalness: 0.8, roughness: 0.3 });
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.172, 0.155, 0.36, 16), denim); thigh.position.y = 0.19; grp.add(thigh);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.148, 0.152, 0.4, 16), denim); shin.position.y = -0.23; grp.add(shin);
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.158, 0.162, 0.09, 16), denimD); cuff.position.y = -0.46; grp.add(cuff); // ปลายขาพับ
+      for (const sz of [1, -1]) { const sm = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.74, 0.008), stitch); sm.position.set(sz * 0.16, -0.04, 0.02); grp.add(sm); } // ตะเข็บข้าง
+      const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.012), denimD); pocket.position.set(0, 0.24, -0.16); grp.add(pocket);
+      const pStitch = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.008, 0.014), stitch); pStitch.position.set(0, 0.3, -0.165); grp.add(pStitch);
+      for (const rx of [-0.055, 0.055]) { const rv = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.012, 8), rivet); rv.position.set(rx, 0.3, 0.168); rv.rotation.x = Math.PI / 2; grp.add(rv); } // หมุดทองแดง
+      const knee = new THREE.Mesh(new THREE.TorusGeometry(0.152, 0.014, 6, 18), denimD); knee.position.y = -0.01; knee.rotation.x = Math.PI / 2; grp.add(knee);
+    });
+    // p2 กางเกงเกราะนิล (epic) — แผ่นเกราะสีนิล + สนับเข่า + พลอยนิลน้ำเงินเข้ม
+    mkLimbPair(pantsModels, "p2", _kneeEls, (grp) => {
+      const nil = new THREE.MeshStandardMaterial({ color: 0x2a3a6e, metalness: 0.55, roughness: 0.36, emissive: 0x101a3a, emissiveIntensity: 0.4 });
+      const nilD = new THREE.MeshStandardMaterial({ color: 0x1c2850, metalness: 0.6, roughness: 0.34 });
+      const silver = new THREE.MeshStandardMaterial({ color: 0xc4ccd8, metalness: 0.85, roughness: 0.26 });
+      const gemN = new THREE.MeshStandardMaterial({ color: 0x2a44b0, emissive: 0x1a2e8a, emissiveIntensity: 1.1, roughness: 0.18, metalness: 0.35 });
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.172, 0.155, 0.34, 16), nil); thigh.position.y = 0.2; grp.add(thigh);
+      for (let k = 0; k < 3; k++) { const plate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.09, 0.05), nilD); plate.position.set(0, 0.3 - k * 0.1, 0.14); plate.rotation.x = 0.16; grp.add(plate); const tr = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.012, 0.055), silver); tr.position.set(0, 0.255 - k * 0.1, 0.147); tr.rotation.x = 0.16; grp.add(tr); } // แผ่นเกราะซ้อนหน้าขา
+      const kg = new THREE.Mesh(new THREE.SphereGeometry(0.152, 14, 12), nilD); kg.scale.set(1, 0.82, 1); kg.position.y = -0.02; grp.add(kg);
+      const kRim = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.014, 6, 18), silver); kRim.position.y = -0.02; kRim.rotation.x = Math.PI / 2; grp.add(kRim);
+      const kGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), gemN); kGem.scale.set(0.9, 1.3, 0.6); kGem.position.set(0, -0.02, 0.14); grp.add(kGem);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.115, 0.42, 16), nil); shin.position.y = -0.24; grp.add(shin);
+      for (const sy of [-0.14, -0.32]) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.136, 0.013, 6, 18), silver); band.position.y = sy; band.rotation.x = Math.PI / 2; grp.add(band); }
+      for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 4), silver); fin.scale.set(1, 1, 0.4); fin.position.set(sx * 0.15, 0.02, 0); fin.rotation.z = sx * -1.5; grp.add(fin); } // ครีบข้างเข่า
+    });
+    // 🦵 กางเกงทั่วไปตามระดับคุณภาพ (ใช้กับกางเกงที่ไม่มีทรงเฉพาะ) — ยิ่งสูงยิ่งมีเกราะ/ขลิบ/พลอย
+    for (let t = 0; t < 3; t++) {
+      mkLimbPair(pantsModels, `pnt_${t}`, _kneeEls, (grp) => {
+        const cloth = new THREE.MeshStandardMaterial({ color: [0x5a6070, 0x46506e, 0x3c4668][t], roughness: [0.95, 0.8, 0.66][t], metalness: [0.0, 0.25, 0.45][t] });
+        const trimM = new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0cf6a : 0xc4ccd8, metalness: 0.85, roughness: t === 2 ? 0.24 : 0.3, emissive: t === 2 ? 0x6a4a08 : 0x000000, emissiveIntensity: t === 2 ? 0.45 : 0 });
+        const gemM = new THREE.MeshStandardMaterial({ color: 0x8fd0f5, emissive: 0x2a6a9a, emissiveIntensity: 1.0 + t * 0.3, roughness: 0.18, metalness: 0.3 });
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.153, 0.34, 16), cloth); thigh.position.y = 0.2; grp.add(thigh);
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.143, 0.115, 0.42, 16), cloth); shin.position.y = -0.24; grp.add(shin);
+        for (let k = 0; k <= t; k++) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.15 - k * 0.006, 0.012, 6, 18), trimM); band.position.y = -0.1 - k * 0.14; band.rotation.x = Math.PI / 2; grp.add(band); }
+        if (t >= 1) { const kg = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), trimM); kg.scale.set(1, 0.8, 1); kg.position.y = -0.02; grp.add(kg); const kGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.042 + t * 0.008, 0), gemM); kGem.scale.set(0.9, 1.3, 0.6); kGem.position.set(0, -0.02, 0.14); grp.add(kGem); }
+        if (t >= 1) for (let k = 0; k < 1 + t; k++) { const pl = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.085, 0.045), trimM); pl.position.set(0, 0.3 - k * 0.11, 0.14); pl.rotation.x = 0.16; grp.add(pl); } // แผ่นเกราะหน้าขา
+        if (t >= 2) { for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.18, 4), trimM); fin.scale.set(1, 1, 0.35); fin.position.set(sx * 0.155, 0.02, 0); fin.rotation.z = sx * -1.45; grp.add(fin); } const glowV = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.34, 0.01), gemM); glowV.position.set(0, -0.24, 0.12); grp.add(glowV); } // ครีบเข่า + เส้นเรืองแสง
+      });
+    }
     // 🐉 sD — dragon boots (dark-green scaled boot + gold clawed toe + green glow sole)
     mkLimbPair(shoeModels3D, "sD", _kneeEls, (grp) => {
       const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.55, roughness: 0.3, emissive: 0x0a2416, emissiveIntensity: 0.5 });
@@ -9647,7 +9692,9 @@ export default function CherryAdventure() {
       if (heroShoe && !sh) shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
       // 🧤🦵👢 toggle the real 3D limb gear (each id → [L,R] group on the arm/leg joint)
       Object.entries(glovesModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === gl)));
-      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === pa)));
+      let paKey = pa;
+      if (pa && !pantsModels[pa]) { const pit = LOOT.find((x) => x.id === pa); if (pit) paKey = `pnt_${wpnTierOf(pit.rarity)}`; } // 👖 ไม่มีทรงเฉพาะ → ใช้ทรงตามระดับคุณภาพ
+      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === paKey)));
       Object.entries(shoeModels3D).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === sh)));
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
