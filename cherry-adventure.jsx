@@ -4862,6 +4862,15 @@ export default function CherryAdventure() {
         for (let t = 0; t < 3; t++) { const k = `w_${fam}_${t}`; weaponModels[k] = buildTierWeapon(fam, t); G._tierWpnKeys.push(k); }
       });
     }
+    // 🚀 PERF — ตัวละครแบกคลังโมเดลชุด/อาวุธ/กางเกงทั้งหมดติดตัว (หลายพันชิ้น) แม้ซ่อนอยู่
+    // three.js ยังคิดเมทริกซ์ให้ทุกชิ้นทุกเฟรม → ตรึงชิ้นที่ซ่อน ปลดเฉพาะชิ้นที่กำลังสวม
+    const setVisFrozen = (m, on) => {
+      if (!m) return;
+      m.visible = on;
+      if (on) { if (m.userData._frzM) { if (G.unfreezeStatic) G.unfreezeStatic(m); m.userData._frzM = 0; } }
+      else if (!m.userData._frzM && G.freezeStatic) { G.freezeStatic(m, 0); m.userData._frzM = 1; }
+    };
+    G._setVisFrozen = setVisFrozen;
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
     weaponModels.default.visible = true;
     let curWeapon = "default";
@@ -4887,7 +4896,7 @@ export default function CherryAdventure() {
         if (wit && fam) famKey = `w_${fam}_${wpnTierOf(wit.rarity)}`;
       }
       curWeapon = id && weaponModels[id] ? id : (famKey && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
-      Object.entries(weaponModels).forEach(([k, m]) => (m.visible = k === curWeapon));
+      Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
       const skin = WEAPON_SKINS.find((s) => s.id === (G.weaponSkin || "none")) || WEAPON_SKINS[0];
       const skinTint = skin && skin.tint;
@@ -5938,16 +5947,17 @@ export default function CherryAdventure() {
       G.setHero = id => {
         G.heroId = id || null;
         if (id) G.heroPick = id; // 🦸 จำฮีโร่ที่เลือกไว้ เพื่อสลับซ่อน/แสดงชุดฮีโร่ได้
-        (G._haruParts || []).forEach(p => p.visible = id === "haru");
-        (G._lunaParts || []).forEach(p => p.visible = id === "luna");
-        (G._celestiaParts || []).forEach(p => p.visible = id === "celestia");
-        (G._yukiParts || []).forEach(p => p.visible = id === "yuki");
-        (G._roseParts || []).forEach(p => p.visible = id === "rose");
-        (G._kenParts || []).forEach(p => p.visible = id === "kentaro");
-        (G._kotParts || []).forEach(p => p.visible = id === "kotaro");
-        (G._kaiParts || []).forEach(p => p.visible = id === "kairi");
-        (G._aurParts || []).forEach(p => p.visible = id === "aurelius");
-        (G._ragParts || []).forEach(p => p.visible = id === "ragnar");
+        const heroVis = (arr, on) => (arr || []).forEach(p => { if (G._setVisFrozen) G._setVisFrozen(p, on); else p.visible = on; });
+        heroVis(G._haruParts, id === "haru");
+        heroVis(G._lunaParts, id === "luna");
+        heroVis(G._celestiaParts, id === "celestia");
+        heroVis(G._yukiParts, id === "yuki");
+        heroVis(G._roseParts, id === "rose");
+        heroVis(G._kenParts, id === "kentaro");
+        heroVis(G._kotParts, id === "kotaro");
+        heroVis(G._kaiParts, id === "kairi");
+        heroVis(G._aurParts, id === "aurelius");
+        heroVis(G._ragParts, id === "ragnar");
         if (typeof torso !== "undefined") torso.visible = id !== "ragnar" && id !== "celestia"; // 🦸 ฮีโร่ที่มีลำตัวของชุดเอง — กันลำตัวฐานทะลุ/ซ้อนเสื้อ
         if (typeof skinMat !== "undefined") { // 💜 ผิวรักนาร์อมม่วงแบบปีศาจน้อย — คืนโทนเดิมเมื่อสลับร่าง
           if (id === "ragnar") { const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex()); c.lerp(new THREE.Color(0xa77fd4), 0.32); skinMat.color.copy(c); }
@@ -8233,7 +8243,7 @@ export default function CherryAdventure() {
       if (classKey && classKey !== id && outfitModels[classKey]) modelKey = classKey;
       else { modelKey = id && outfitModels[id] ? id : (it ? OUTFIT_FALLBACK[it.rarity] : null); if (modelKey && !outfitModels[modelKey]) modelKey = null; }
       curOutfit = modelKey || null;
-      Object.entries(outfitModels).forEach(([k, m]) => (m.visible = k === curOutfit));
+      Object.entries(outfitModels).forEach(([k, m]) => setVisFrozen(m, k === curOutfit));
       // 🎨 recolour the stand-in so each archetype reads differently (dye still wins).
       // 👗 class models are already coloured per class/tier — never archetype-tint them (dye only).
       if (curOutfit && outfitModels[curOutfit]) {
@@ -9691,11 +9701,11 @@ export default function CherryAdventure() {
       const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : null;
       if (heroShoe && !sh) shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
       // 🧤🦵👢 toggle the real 3D limb gear (each id → [L,R] group on the arm/leg joint)
-      Object.entries(glovesModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === gl)));
+      Object.entries(glovesModels).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === gl)));
       let paKey = pa;
       if (pa && !pantsModels[pa]) { const pit = LOOT.find((x) => x.id === pa); if (pit) paKey = `pnt_${wpnTierOf(pit.rarity)}`; } // 👖 ไม่มีทรงเฉพาะ → ใช้ทรงตามระดับคุณภาพ
-      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === paKey)));
-      Object.entries(shoeModels3D).forEach(([k, pr]) => pr.forEach((m) => (m.visible = k === sh)));
+      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === paKey)));
+      Object.entries(shoeModels3D).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === sh)));
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
       updateAura();
     };
@@ -11879,6 +11889,7 @@ export default function CherryAdventure() {
       if (G.titanDecor) G.titanDecor.visible = isTitan;
       if (G.candyDecor) G.candyDecor.visible = isCandy;
       G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
+      if (G.refreshDecorFreeze) G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isEndgame));
       // 🧭 obstacles the player must walk around in this biome (for collision + auto-steer)
       G.biomeColliders = isDesert ? (G.desertColliders || [])
@@ -11908,6 +11919,47 @@ export default function CherryAdventure() {
       if (G.updateWarpLabels) G.updateWarpLabels(); // 🏷️ refresh the ◀ prev / next ▶ rift labels
       G._warpLock = true; // 🔒 don't instantly re-warp — player must step off the rift first
       if (G.rtChannel && G.rtJoinBiome) G.rtJoinBiome(G.curBiome); // 🌐 move to this map's realtime room
+    };
+    // 🚀 PERF — ฉากประกอบ (ต้นไม้/ก้อนหิน/บ้าน) เป็นของนิ่ง แต่ three.js คำนวณเมทริกซ์ให้ทุกชิ้นทุกเฟรม
+    // เกมนี้มี object ในฉากราวหมื่นชิ้น → คิดเมทริกซ์หมื่นครั้ง/เฟรม = ต้นเหตุภาพกระตุกบนมือถือ
+    // ตรึง matrixAutoUpdate ของชิ้นที่ไม่ขยับ (คำนวณครั้งเดียวจบ) — ด่านที่ไม่ได้อยู่ ตรึงทั้งก้อน
+    // ด่านปัจจุบันตรึงเฉพาะชิ้นย่อยลึก ๆ (เว้นระดับบนไว้ให้แอนิเมชันไหว/แกว่งทำงานได้ตามเดิม)
+    G.freezeStatic = (root, minDepth) => {
+      if (!root) return 0;
+      const md = minDepth == null ? 0 : minDepth;
+      let n = 0;
+      const walk = (o, d) => { if (d >= md && o.matrixAutoUpdate) { o.updateMatrix(); o.matrixAutoUpdate = false; n++; } for (let i = 0; i < o.children.length; i++) walk(o.children[i], d + 1); };
+      walk(root, 0);
+      return n;
+    };
+    G.unfreezeStatic = (root) => { if (root) root.traverse((o) => { o.matrixAutoUpdate = true; }); };
+    G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor"];
+    G.refreshDecorFreeze = () => {
+      let frozen = 0;
+      for (const k of G._decorKeys) {
+        const grp = G[k]; if (!grp) continue;
+        const want = grp.visible ? "on" : "off"; // on = ด่านปัจจุบัน (ตรึงเฉพาะชิ้นลึก) · off = ตรึงทั้งก้อน
+        if (grp.userData._frz === want) continue;
+        G.unfreezeStatic(grp);
+        frozen += G.freezeStatic(grp, grp.visible ? 3 : 0);
+        grp.userData._frz = want;
+      }
+      // 🌳 ฉากประกอบทั้งฉาก (ต้นไม้/พุ่ม/ก้อนหิน/อาคาร) — ตรึงชิ้นย่อยของแต่ละชิ้นงาน
+      // เว้นตัวละคร/มอนสเตอร์/เอฟเฟกต์ไว้ และเว้น "ระดับบนสุดของแต่ละชิ้น" ให้แอนิเมชันแกว่งทำงานได้
+      try {
+        for (const c of scene.children) {
+          if (c === char || c === G._mountMesh) continue;
+          if (c.userData && c.userData._frzW) continue;
+          let n = 0; c.traverse(() => n++);
+          if (n < 30) continue;                       // ก้อนเล็ก/ของที่ขยับ ปล่อยไว้
+          if (G._decorKeys.some((k) => G[k] === c)) continue; // จัดการไปแล้วด้านบน
+          frozen += G.freezeStatic(c, 2);             // ตรึงตั้งแต่ลูกของแต่ละชิ้นงานลงไป
+          c.userData._frzW = 1;
+        }
+      } catch (e) { G._frzErr = String(e && e.message || e); }
+      if (G.sceneryObjects) for (const o of G.sceneryObjects) { if (o && o.userData._frz !== "on") { frozen += G.freezeStatic(o, 2); o.userData._frz = "on"; } }
+      G._frozenParts = (G._frozenParts || 0) + frozen;
+      return frozen;
     };
     G.switchBiome = switchBiome;
     G.warpNext = () => switchBiome(G.curBiome + 1);
@@ -20894,6 +20946,7 @@ export default function CherryAdventure() {
           }
         }
         // ✨ ออร่าชุดระดับสูง — เม็ดแสงลอยวนขึ้น · วงแหวน/รัศมีหมุน · แกนพลอยเต้นตามจังหวะ
+        if ((G._frzTick = (G._frzTick || 0) + 1) % 120 === 0 && G.refreshDecorFreeze) G.refreshDecorFreeze(); // 🚀 ตรึงฉากนิ่งที่เพิ่งถูกสร้าง
         if (G._outfitFx && G._outfitFx.length) {
           for (const f of G._outfitFx) {
             if (!f.grp.visible) continue;
