@@ -1578,6 +1578,7 @@ export default function CherryAdventure() {
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3)); // คมชัดขึ้น
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.autoUpdate = false; // 🌡️ เงาอัปเดตเฟรมเว้นเฟรมใน animate (ลดงาน GPU ราวครึ่ง) — ตาเปล่าแยกไม่ออก
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputEncoding = THREE.sRGBEncoding;
     mount.appendChild(renderer.domElement);
@@ -1620,7 +1621,7 @@ export default function CherryAdventure() {
       key.shadow.mapSize.set(ps ? 512 : 1536, ps ? 512 : 1536); // 🌑 ลด shadow map (เดิม 2048 → 1536 เพื่อประหยัดทั่วไป)
       renderer.shadowMap.needsUpdate = true;
       try { scene.traverse((o) => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (m) m.needsUpdate = true; }); }); } catch (e) {} // รีคอมไพล์วัสดุให้เพิ่ม/ตัด shadow sampling
-      G._fpsInterval = ps ? (1000 / 30) : 0; // ⏱️ จำกัด 30fps ในโหมดประหยัด (ปกติไม่จำกัด)
+      G._fpsInterval = ps ? (1000 / 30) : (1000 / 60); // ⏱️ ประหยัด 30fps · ปกติ 60fps (จอ 90/120Hz ไม่ต้องวาดทิ้ง = ลดความร้อน)
     };
     G.applyQuality = applyQuality;
     G.togglePowerSave = () => {
@@ -21046,7 +21047,7 @@ export default function CherryAdventure() {
           G._aurMotes.forEach(p => { const u = p.userData; u.ang += dt * u.spin * 0.4; p.position.x = Math.cos(u.ang) * u.rad; p.position.z = Math.sin(u.ang) * u.rad; p.position.y += dt * u.rise; if (p.position.y > 2.5) p.position.y = 0.25; p.rotation.y += dt * u.spin * 2; });
         }
         // 🌊👗 ชุดสวม (มังกร/ตำนาน): ผืนเสื้อ ชายผ้า และสายคาดพริ้วเป็นคลื่นตลอดเวลาที่สวมอยู่
-        if (G._outfitCloth && G._outfitCloth.length) {
+        if (G._outfitCloth && G._outfitCloth.length && (G._frzTick & 1) === 0) {
           for (const c of G._outfitCloth) {
             if (!c.grp.visible) continue;
             const gp = c.m.geometry.attributes.position, bb = c.base;
@@ -21073,7 +21074,7 @@ export default function CherryAdventure() {
           try { sweep(char); } catch (e) {}
         }
         if (G._frzTick === 240 && G.optimizeStaticScene) { try { G.optimizeStaticScene(); } catch (e) {} } // 🚀 dedupe+merge ฉากประกอบ ครั้งเดียวหลังโหลดนิ่งแล้ว
-        if (G._outfitFx && G._outfitFx.length) {
+        if (G._outfitFx && G._outfitFx.length && (G._frzTick & 1) === 1) {
           for (const f of G._outfitFx) {
             if (!f.grp.visible) continue;
             if (f.kind === "mote") {
@@ -27247,7 +27248,7 @@ export default function CherryAdventure() {
         });
       }
       // ⚔️✨ อาวุธตามระดับคุณภาพ — เกล็ดพลังลอยวน · วงแหวนหมุน · แกนพลอยเต้น (เฉพาะชิ้นที่ถืออยู่)
-      if (weaponModels && G._tierWpnKeys) {
+      if (weaponModels && G._tierWpnKeys && (G._frzTick & 1) === 0) {
         for (const k of G._tierWpnKeys) {
           const wm = weaponModels[k];
           if (!wm || !wm.visible) continue;
@@ -27452,6 +27453,23 @@ export default function CherryAdventure() {
         camera.lookAt(char.position.x, 0.8 + camDist * 0.15, char.position.z);
       }
 
+      if (dtForce == null && renderer.shadowMap.enabled && ((G._shTick = (G._shTick || 0) + 1) & 1) === 0) renderer.shadowMap.needsUpdate = true; // 🌑 เงา ~30Hz
+      // 🌡️ auto-cool — เฟรมช้าต่อเนื่อง (เครื่องร้อน/ไม่ไหว) → ลดความละเอียดเรนเดอร์ทีละขั้นอัตโนมัติ
+      if (dtForce == null) {
+        const nowH = performance.now();
+        if (G._heatLast) {
+          G._heatAvg = (G._heatAvg || 16.7) * 0.95 + (nowH - G._heatLast) * 0.05;
+          if (G._heatAvg > 45 && nowH - (G._heatCoolAt || 0) > 6000) {
+            const cur = renderer.getPixelRatio();
+            if (cur > 1.01) {
+              renderer.setPixelRatio(Math.max(1, cur - 0.25));
+              G._heatCoolAt = nowH; G._heatAvg = 16.7;
+              if (!G._heatToast && G.toast) { G._heatToast = 1; G.toast("🌡️ เครื่องทำงานหนัก — ลดความละเอียดอัตโนมัติเพื่อลดความร้อน"); }
+            }
+          }
+        }
+        G._heatLast = nowH;
+      }
       if (dtForce == null) renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
       } catch (err) {
         if (!G._loggedErr) { G._loggedErr = true; console.error("animate loop error:", err); }
