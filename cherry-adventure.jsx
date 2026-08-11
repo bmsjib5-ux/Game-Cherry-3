@@ -16647,6 +16647,29 @@ export default function CherryAdventure() {
       if (G.sfx) G.sfx.button && G.sfx.button();
       setUi((u) => ({ ...u, ranch: ranchUiSnap(), ranchPick: null }));
     };
+    // 🐾 ปล่อยลงคอกทีละหลายตัว — ไล่ลงช่องว่างเรียงจากช่องที่เลือก
+    G.ranchAssignMany = (iids, startSlot) => {
+      iids = (iids || []).filter(Boolean);
+      if (!iids.length) { toast("เลือกสัตว์ที่จะปล่อยลงคอกก่อนนะ"); return; }
+      ranchTick();
+      const R = G.ranch; R.slots = R.slots || [];
+      const maxS = ranchSlotsMax();
+      let placed = 0, blocked = 0;
+      const freeFrom = (from) => { for (let k = from; k < maxS; k++) if (!R.slots[k]) return k; for (let k = 0; k < maxS; k++) if (!R.slots[k]) return k; return -1; };
+      for (const iid of iids) {
+        if (G.petInUse && G.petInUse(iid)) { blocked++; continue; }
+        for (let k = 0; k < maxS; k++) if (R.slots[k] === iid) R.slots[k] = null; // ย้ายออกจากช่องเดิมก่อน
+        const slot = (placed === 0 && startSlot != null && !R.slots[startSlot]) ? startSlot : freeFrom(startSlot != null ? startSlot : 0);
+        if (slot < 0) break;
+        R.slots[slot] = iid;
+        if (R.happy[iid] == null) R.happy[iid] = 60;
+        placed++;
+      }
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      if (placed) toast(`🐾 ปล่อยลงคอก ${placed} ตัวแล้ว${blocked ? ` (ข้าม ${blocked} ตัวที่อยู่ในทีม)` : ""}`);
+      else toast(blocked ? "⛔ ตัวที่เลือกอยู่ในทีม/บัดดี้ทั้งหมด" : "🐾 คอกเต็มแล้ว");
+      setUi((u) => ({ ...u, ranch: ranchUiSnap(), ranchPick: null, ranchSel: [] }));
+    };
     G.ranchRemove = (slot) => { ranchTick(); const R = G.ranch; if (R.slots) R.slots[slot] = null; setUi((u) => ({ ...u, ranch: ranchUiSnap() })); };
     G.feedRanch = (iid) => {
       if ((G.gold || 0) < FEED_COST) { toast("💰 ทองไม่พอให้อาหาร (ต้องมี " + FEED_COST + ")"); return; }
@@ -16737,7 +16760,14 @@ export default function CherryAdventure() {
     G.plantCrop = (plot, cropId) => {
       const c = CROP_BY[cropId]; if (!c) return;
       const R = G.ranch; R.garden = R.garden || [];
-      if (R.garden[plot]) { toast("🌱 แปลงนี้มีพืชอยู่แล้ว"); return; }
+      // 🌱 ไม่ระบุแปลง (แตะที่ผักตรงๆ) → ลงแปลงว่างแรกอัตโนมัติ
+      if (plot == null || R.garden[plot]) {
+        const maxP = ranchPlotsMax();
+        let free = -1;
+        for (let k = 0; k < maxP; k++) if (!R.garden[k]) { free = k; break; }
+        if (free < 0) { toast("🌱 แปลงเต็มแล้ว — เก็บเกี่ยวก่อนหรือขยายแปลงเพิ่ม"); return; }
+        plot = free;
+      }
       const useSeed = (R.seeds || 0) > 0; // 🌱 ใช้เมล็ดที่ซื้อจากตลาดก่อน (ปลูกฟรี) ไม่มีค่อยจ่ายทอง
       if (!useSeed && (G.gold || 0) < c.seed) { toast("💰 ทองไม่พอ — ซื้อเมล็ดจากตลาด หรือหาเงินเพิ่ม (ต้องมี " + c.seed + ")"); return; }
       if (useSeed) R.seeds -= 1; else G.gold -= c.seed;
@@ -31446,12 +31476,12 @@ export default function CherryAdventure() {
                   ))}
                 </div>
                 {/* seed picker */}
-                {ui.plotPick != null && (
+                {(
                   <div style={{ marginTop: 8, background: "#f8fbf2", border: "1px solid #e4ecd6", borderRadius: 11, padding: "8px 9px" }}>
                     <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#5a7a3a" }}>เลือกเมล็ดปลูกในแปลง {ui.plotPick + 1}</div>
+                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#5a7a3a" }}>{ui.plotPick != null ? `เลือกเมล็ดปลูกในแปลง ${ui.plotPick + 1}` : "🌱 แตะผักที่ต้องการ → ลงแปลงว่างอัตโนมัติ"}</div>
                       <div style={{ flex: 1 }} />
-                      <button onClick={() => setUi((u) => ({ ...u, plotPick: null }))} style={{ padding: "3px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#a06a6a", background: "#f0e6e0" }}>ยกเลิก</button>
+                      {ui.plotPick != null && <button onClick={() => setUi((u) => ({ ...u, plotPick: null }))} style={{ padding: "3px 9px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#a06a6a", background: "#f0e6e0" }}>ยกเลิกเลือกแปลง</button>}
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
                       {ui.ranch.crops.map((c) => (
@@ -31651,13 +31681,21 @@ export default function CherryAdventure() {
                   <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
                     <div style={{ fontSize: 14, fontWeight: 900, color: "#7a5a3a" }}>🐾 เลือกเพ็ตลงคอก · ช่อง {ui.ranchPick + 1}</div>
                     <div style={{ flex: 1 }} />
-                    <button onClick={() => setUi((u) => ({ ...u, ranchPick: null }))} style={{ width: 30, height: 30, borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 15, fontWeight: 900, color: "#a06a6a", background: "#f0e6e0" }}>✕</button>
+                    <button onClick={() => setUi((u) => ({ ...u, ranchPick: null, ranchSel: [] }))} style={{ width: 30, height: 30, borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 15, fontWeight: 900, color: "#a06a6a", background: "#f0e6e0" }}>✕</button>
                   </div>
-                  <div style={{ fontSize: 10, color: "#a99", marginBottom: 9 }}>เรียงตามความหายาก · แตะเพื่อปล่อยลงคอก</div>
+                  <div style={{ fontSize: 10, color: "#a99", marginBottom: 7 }}>เรียงตามความหายาก · แตะเลือกได้หลายตัว แล้วกดปุ่มปล่อยลงคอก</div>
+                  {(() => { const sel = ui.ranchSel || []; const freeN = Math.max(0, (ui.ranch.slotsMax || 0) - (ui.ranch.slots || []).filter(Boolean).length); return (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <button onClick={() => setUi((u) => ({ ...u, ranchSel: sel.length ? [] : avail.slice(0, freeN).map((p) => p.i) }))} style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid #cfe0b8", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#5a7a3a", background: "#eef7e2" }}>{sel.length ? "ล้างที่เลือก" : `เลือกทั้งหมด (${Math.min(avail.length, freeN)})`}</button>
+                      <div style={{ flex: 1, fontSize: 10, fontWeight: 800, color: sel.length ? "#5a7a3a" : "#a99" }}>เลือกแล้ว {sel.length} ตัว · ช่องว่าง {freeN}</div>
+                      <button disabled={!sel.length} onClick={() => G.ranchAssignMany && G.ranchAssignMany(sel, ui.ranchPick)} style={{ padding: "6px 14px", borderRadius: 999, border: "none", cursor: sel.length ? "pointer" : "default", fontFamily: font, fontSize: 11.5, fontWeight: 900, color: "#fff", background: sel.length ? "linear-gradient(135deg,#6aab52,#4a8a3a)" : "#cfd6c4" }}>🐾 ปล่อยลงคอก</button>
+                    </div>
+                  ); })()}
                   {avail.length ? (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
                       {avail.map((p) => { const sp = SPECIES[p.sp] || {}; const t = tierOf(p); const rc = RARC[t] || RARC[1]; return (
-                        <button key={p.i} onClick={() => G.ranchAssign && G.ranchAssign(p.i, ui.ranchPick)} style={{ padding: "8px 4px", borderRadius: 11, border: "2px solid " + rc, cursor: "pointer", fontFamily: font, background: "#fbfdf6", textAlign: "center" }}>
+                        <button key={p.i} onClick={() => setUi((u) => { const cur = u.ranchSel || []; return { ...u, ranchSel: cur.indexOf(p.i) >= 0 ? cur.filter((x) => x !== p.i) : cur.concat([p.i]) }; })} style={{ position: "relative", padding: "8px 4px", borderRadius: 11, border: ((ui.ranchSel || []).indexOf(p.i) >= 0 ? "3px solid #4a8a3a" : "2px solid " + rc), cursor: "pointer", fontFamily: font, background: ((ui.ranchSel || []).indexOf(p.i) >= 0 ? "#e6f6dc" : "#fbfdf6"), textAlign: "center" }}>
+                          {(ui.ranchSel || []).indexOf(p.i) >= 0 && <span style={{ position: "absolute", top: 3, right: 4, fontSize: 12, fontWeight: 900, color: "#3a7a2a" }}>✓</span>}
                           <div style={{ fontSize: 24 }}>{sp.emoji}</div>
                           <div style={{ fontSize: 10, fontWeight: 800, color: "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sp.name}</div>
                           <div style={{ fontSize: 8.5, fontWeight: 900, color: rc }}>{RARN[t] || ""}</div>
