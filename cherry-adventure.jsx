@@ -1559,7 +1559,7 @@ export default function CherryAdventure() {
       } else if (G.mode === "create" || G.mode === "class") {
         camDist = Math.min(24, Math.max(5.2, camDist + d)); // ซูมหน้าแต่งตัว (ซูมออกได้ไกลขึ้น)
       } else {
-        camDist = Math.min(G.inHomeZone ? 36 : 24, Math.max(6, camDist + d)); // 🏠 ในบ้านซูมออกได้ไกลขึ้น เห็นทั้งห้อง
+        camDist = Math.min((G.inHomeZone || G.inTownZone) ? 36 : 24, Math.max(6, camDist + d)); // 🏠🏰 ในบ้าน/ในเมืองซูมออกได้ไกลขึ้น
       }
       saveZoom(); // 🔍 remember zoom level
     };
@@ -1709,7 +1709,7 @@ export default function CherryAdventure() {
     const rnd = (a, b) => a + Math.random() * (b - a);
     // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
     G.biomeColliders = [];
-    const activeColliders = () => G.inHomeZone ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠 ในบ้านพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
+    const activeColliders = () => (G.inHomeZone || G.inTownZone) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
     G.activeColliders = activeColliders;
     // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
     // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -12135,7 +12135,7 @@ export default function CherryAdventure() {
     };
     G.switchBiome = switchBiome;
     G.warpNext = () => switchBiome(G.curBiome + 1);
-    G.warpTo = (i) => switchBiome(i);
+    G.warpTo = (i) => { if (G.inTownZone && G.exitTownZone) G.exitTownZone(); switchBiome(i); }; // 🏰 วาร์ปจากในเมือง = ออกเมืองก่อนอัตโนมัติ
     G.warpAsk = false;
     // 🏰 biome boss challenge
     G.biomeBossDefeated = {};
@@ -12472,7 +12472,7 @@ export default function CherryAdventure() {
 
     // 🚪 เข้าโซนฟาร์ม
     G.enterRanchZone = () => {
-      if (G.mode !== "explore" || G.inRanchZone) return;
+      if (G.mode !== "explore" || G.inRanchZone || G.inTownZone) return;
       G.inRanchZone = true;
       G.vel = G.vel || { x: 0, z: 0 };
       G._ranchReturn = { x: char.position.x, z: char.position.z }; // 💾 จำจุดกลับ
@@ -12650,7 +12650,7 @@ export default function CherryAdventure() {
     };
     G._homeFurniG = homeFurniG;
     G.enterHomeZone = (opts) => {
-      if (G.mode !== "explore" || G.inHomeZone || G.inRanchZone) return;
+      if (G.mode !== "explore" || G.inHomeZone || G.inRanchZone || G.inTownZone) return;
       G.inHomeZone = true;
       G._homeVisit = (opts && opts.visitFurni) ? { furni: opts.visitFurni, owner: opts.owner || "เพื่อน" } : null;
       G.vel = G.vel || { x: 0, z: 0 };
@@ -12751,7 +12751,7 @@ export default function CherryAdventure() {
     G.visitHome = async (friend) => {
       if (!friend || !friend.pid) return;
       if (!G.net || !G.net.enabled()) { toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน"); return; }
-      if (G.mode !== "explore" || G.inRanchZone || G.inHomeZone) { toast("ออกจากโซน/การต่อสู้ก่อนไปเยี่ยมบ้าน"); return; }
+      if (G.mode !== "explore" || G.inRanchZone || G.inHomeZone || G.inTownZone) { toast("ออกจากโซน/การต่อสู้ก่อนไปเยี่ยมบ้าน"); return; }
       toast("🏠 กำลังเดินทางไปบ้านเพื่อน...");
       const row = await G.net.homeGet(friend.pid);
       if (!row || !Array.isArray(row.furni) || !row.furni.length) { toast("เพื่อนยังไม่ได้แต่งบ้าน (ต้องเข้า-ออกบ้านตัวเองอย่างน้อย 1 ครั้ง)"); return; }
@@ -12759,6 +12759,177 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, socialOpen: false }));
       G.enterHomeZone({ visitFurni: row.furni, owner: row.n || friend.n || "เพื่อน" });
     };
+    // ================= 🏰 CHERRY TOWN — เมืองเริ่มต้น: ศูนย์รวมผู้เล่น ไม่มีมอนสเตอร์ =================
+    G.inTownZone = false;
+    const townZone = new THREE.Group(); townZone.visible = false; scene.add(townZone);
+    G._townZone = townZone;
+    const tStone = new THREE.MeshStandardMaterial({ color: 0xb9b2a6, roughness: 0.9 });
+    const tStoneD = new THREE.MeshStandardMaterial({ color: 0x8f887c, roughness: 0.9 });
+    const tWood = new THREE.MeshStandardMaterial({ color: 0xa87a4e, roughness: 0.85 });
+    const tWoodD2 = new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.85 });
+    const tLeafP = new THREE.MeshStandardMaterial({ color: 0xf2b8d0, roughness: 0.8 }); // 🌸 พุ่มซากุระ
+    { // 🧱 ลานหินกลางเมือง + ขอบลาน
+      const cv = document.createElement("canvas"); cv.width = cv.height = 128; const cx = cv.getContext("2d");
+      cx.fillStyle = "#cfc8ba"; cx.fillRect(0, 0, 128, 128); cx.strokeStyle = "#b3ac9e"; cx.lineWidth = 3;
+      for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) cx.strokeRect(x * 32 + 2, y * 32 + 2, 28, 28);
+      cx.fillStyle = "rgba(160,150,135,0.35)"; for (let n = 0; n < 40; n++) cx.fillRect((n * 53) % 128, (n * 31) % 128, 3, 3);
+      const tex = new THREE.CanvasTexture(cv); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(12, 12);
+      const plaza = new THREE.Mesh(new THREE.CircleGeometry(17, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92 }));
+      plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.03; townZone.add(plaza);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(17, 0.22, 8, 48), tStoneD); rim.rotation.x = Math.PI / 2; rim.position.y = 0.06; townZone.add(rim);
+    }
+    { // ⛲ น้ำพุกลางเมือง + ม้านั่งรอบ
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.5, 0.5, 22), tStone); base.position.y = 0.28; townZone.add(base);
+      const rim2 = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.16, 10, 26), tStoneD); rim2.rotation.x = Math.PI / 2; rim2.position.y = 0.56; townZone.add(rim2);
+      const water = new THREE.Mesh(new THREE.CircleGeometry(2.12, 24), new THREE.MeshStandardMaterial({ color: 0x8fd0f0, emissive: 0x4a9ad0, emissiveIntensity: 0.35, roughness: 0.25, transparent: true, opacity: 0.9 }));
+      water.rotation.x = -Math.PI / 2; water.position.y = 0.52; townZone.add(water); G._townWater = water;
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 1.3, 12), tStone); pillar.position.y = 1.1; townZone.add(pillar);
+      const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.7, 0.3, 16), tStoneD); bowl.position.y = 1.8; townZone.add(bowl);
+      const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), new THREE.MeshStandardMaterial({ color: 0xe86a8a, emissive: 0xb03050, emissiveIntensity: 0.4, roughness: 0.4 })); cherry.position.y = 2.3; townZone.add(cherry);
+      const tLab = ranchLabel(3.0, 1.0); tLab.draw("🏰 เมืองเชอร์รี่", "#fff0f5"); tLab.sprite.position.set(0, 3.4, 0); townZone.add(tLab.sprite);
+      for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; const bench = new THREE.Group(); const seat = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.12, 0.5), tWood); seat.position.y = 0.5; bench.add(seat); for (const lx of [-0.7, 0.7]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.5, 0.5), tWoodD2); leg.position.set(lx, 0.25, 0); bench.add(leg); } const back = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, 0.1), tWood); back.position.set(0, 0.85, -0.22); bench.add(back); bench.position.set(Math.cos(a) * 4.6, 0, Math.sin(a) * 4.6); bench.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a)); townZone.add(bench); }
+    }
+    { // 🏘️ บ้านเรือนรอบเมือง (หันหน้าเข้าลาน)
+      const mkHouse = (hue, a) => {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.4, 3), new THREE.MeshStandardMaterial({ color: hue, roughness: 0.85 })); body.position.y = 1.2; g.add(body);
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(2.75, 1.7, 4), new THREE.MeshStandardMaterial({ color: 0xc0574e, roughness: 0.8 })); roof.position.y = 3.25; roof.rotation.y = Math.PI / 4; g.add(roof);
+        const door = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.3, 0.1), tWoodD2); door.position.set(0, 0.68, 1.53); g.add(door);
+        for (const wx of [-1.05, 1.05]) { const win = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.08), new THREE.MeshStandardMaterial({ color: 0xfff2c8, emissive: 0xd0a850, emissiveIntensity: 0.5 })); win.position.set(wx, 1.5, 1.52); g.add(win); }
+        g.position.set(Math.cos(a) * 13.8, 0, Math.sin(a) * 13.8);
+        g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+        townZone.add(g);
+      };
+      [[0xf2d8c0, -2.55], [0xd8e8f2, -1.95], [0xf8e2ee, -1.35], [0xe2f2d8, -0.75], [0xf2ecd0, -0.15], [0xe8d8f2, 2.5], [0xd8f2ea, 3.35]].forEach(([c, a]) => mkHouse(c, a));
+    }
+    { // 🌸 ต้นซากุระ + โคมไฟ + แผงตลาด + ป้ายเมือง
+      for (const [a, rr] of [[-2.25, 11], [-1.05, 11], [0.2, 11], [2.9, 11], [3.9, 11.5]]) {
+        const tr = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.6, 8), tWoodD2); trunk.position.y = 0.8; tr.add(trunk);
+        const c1 = new THREE.Mesh(new THREE.SphereGeometry(1.05, 12, 10), tLeafP); c1.position.y = 2.1; tr.add(c1);
+        const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), tLeafP); c2.position.set(0.6, 1.75, 0.25); tr.add(c2);
+        const c3 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 8), tLeafP); c3.position.set(-0.55, 1.8, -0.2); tr.add(c3);
+        tr.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr); townZone.add(tr);
+      }
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 2.6, 8), tStoneD); pole.position.y = 1.3; lp.add(pole); const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8c060, emissiveIntensity: 0.9 })); head.position.y = 2.7; lp.add(head); lp.position.set(Math.cos(a) * 7.5, 0, Math.sin(a) * 7.5); townZone.add(lp); }
+      const mkStall = (a, awnBase, awnAcc, goods) => {
+        const st = new THREE.Group();
+        for (const [px, pz] of [[-1.1, -0.8], [1.1, -0.8], [-1.1, 0.8], [1.1, 0.8]]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.2, 8), tWoodD2); post.position.set(px, 1.1, pz); st.add(post); }
+        const awn = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.1, 2.1), new THREE.MeshStandardMaterial({ map: homeStyleTex(awnBase, awnAcc, "stripe", 3, 1), roughness: 0.8 })); awn.position.y = 2.25; awn.rotation.z = 0.06; st.add(awn);
+        const counter = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.75, 1.1), tWood); counter.position.y = 0.55; st.add(counter);
+        goods.forEach((gc, gi) => { const box = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.4), new THREE.MeshStandardMaterial({ color: gc, roughness: 0.8 })); box.position.set(-0.7 + gi * 0.7, 1.08, 0); st.add(box); });
+        st.position.set(Math.cos(a) * 10, 0, Math.sin(a) * 10);
+        st.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+        townZone.add(st);
+      };
+      mkStall(2.1, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
+      mkStall(2.75, "#eef4fd", "#6a90d8", [0x6a90d8, 0xd8d0c8, 0xb083d8]);
+      mkStall(-2.7, "#f4fdee", "#6ab86a", [0x8ac06a, 0xf2d83a, 0xe89a4a]);
+      const bb = new THREE.Group();
+      for (const px of [-0.65, 0.65]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.9, 8), tWoodD2); post.position.set(px, 0.95, 0); bb.add(post); }
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.0, 0.1), tWood); panel.position.y = 1.5; bb.add(panel);
+      const bLab = ranchLabel(3.4, 1.0); bLab.draw("🏰 เมืองเชอร์รี่ · เขตปลอดภัย 100%", "#fff4e0"); bLab.sprite.position.set(0, 2.6, 0); bb.add(bLab.sprite);
+      bb.position.set(3.4, 0, 7.2); bb.rotation.y = Math.PI + 0.5; townZone.add(bb);
+      const warm = new THREE.PointLight(0xfff0d0, 0.45, 40); warm.position.set(0, 8, 0); townZone.add(warm);
+    }
+    { // 🌸 ซุ้มประตูออกผจญภัย (ทิศใต้) + แท่นวาร์ปออก
+      for (const sx of [-1, 1]) { const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 3.6, 10), tStone); pil.position.set(sx * 2.2, 1.8, 13.2); townZone.add(pil); const cap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.3, 1.1), tStoneD); cap.position.set(sx * 2.2, 3.75, 13.2); townZone.add(cap); }
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.5, 0.8), tStoneD); beam.position.set(0, 4.1, 13.2); townZone.add(beam);
+      const gLab = ranchLabel(3.4, 1.1); gLab.draw("🌸 ออกผจญภัย", "#ffe9d0"); gLab.sprite.position.set(0, 5.0, 13.2); townZone.add(gLab.sprite);
+      const exDisc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 26), new THREE.MeshStandardMaterial({ color: 0xd9ecd0, emissive: 0x8ab87a, emissiveIntensity: 0.4, side: THREE.DoubleSide })); exDisc.rotation.x = -Math.PI / 2; exDisc.position.set(0, 0.06, 11.9); townZone.add(exDisc);
+      const exRing = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.07, 10, 26), new THREE.MeshStandardMaterial({ color: 0xaad890, emissive: 0x6a9a4a, emissiveIntensity: 0.7 })); exRing.rotation.x = -Math.PI / 2; exRing.position.set(0, 0.1, 11.9); townZone.add(exRing); G._townExitRing = exRing;
+    }
+    if (G.freezeStatic) { try { G.freezeStatic(townZone, 0); [G._townWater, G._townExitRing].forEach((m) => { if (m) m.matrixAutoUpdate = true; }); } catch (e) {} } // 🧊 ฉากเมืองนิ่ง — หยุดคำนวณ matrix (ยกเว้นชิ้นที่ขยับ)
+    // 🧑‍🤝‍🧑 ชาวเมือง + ผู้เล่นออนไลน์จริง (จากลีดเดอร์บอร์ด)
+    const townFolkG = new THREE.Group(); townZone.add(townFolkG);
+    G._townFolk = [];
+    const TCLS_COLOR = { warrior: 0xd9536b, archer: 0x5a9a4e, mage: 0x6a7ae0, assassin: 0x5a5a6a, lancer: 0x3a8ad0, samurai: 0xb04a3a, office: 0x8a6ad0, coder: 0x3aa89a, aegis: 0xd0a83a };
+    const tSkinM = new THREE.MeshStandardMaterial({ color: 0xffe2cc, roughness: 0.65 });
+    const buildTownFolk = (label, clsId, px, pz, isPlayer, wanderR) => {
+      const g = new THREE.Group();
+      const col = TCLS_COLOR[clsId] || 0xb99a6a;
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.9, 12), new THREE.MeshStandardMaterial({ color: col, roughness: 0.75 })); body.position.y = 0.85; g.add(body); g.userData.body = body;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.38, 14, 12), tSkinM); head.position.y = 1.62; g.add(head);
+      const hairC = [0x6a4a30, 0x2a2a34, 0xd8b060, 0xb0644a, 0x8a8a94][Math.floor(Math.random() * 5)];
+      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 10), new THREE.MeshStandardMaterial({ color: hairC, roughness: 0.7 })); hair.scale.set(1, 0.78, 1); hair.position.y = 1.74; g.add(hair);
+      const lab = ranchLabel(2.8, 0.8); lab.draw(label, isPlayer ? "#d0ffd8" : "#fff2da"); lab.sprite.position.y = 2.5; g.add(lab.sprite);
+      g.position.set(px, 0, pz);
+      g.userData.wander = { cx: px, cz: pz, r: wanderR == null ? 1.6 : wanderR, ph: Math.random() * 6.28, sp: 0.1 + Math.random() * 0.16 };
+      townFolkG.add(g); G._townFolk.push(g);
+      return g;
+    };
+    G.refreshTownFolk = async () => {
+      while (townFolkG.children.length) { const c = townFolkG.children[0]; townFolkG.remove(c); try { ranchDispose(c); } catch (e) {} }
+      G._townFolk = [];
+      buildTownFolk("🧺 ป้าแดง แม่ค้าผลไม้", null, Math.cos(2.1) * 8.4, Math.sin(2.1) * 8.4, false, 1.0);
+      buildTownFolk("💂 ลุงมี ยามเมือง", null, 2.4, 10.4, false, 0.7);
+      buildTownFolk("🌼 น้องจูน", null, -3.6, 5.4, false, 2.0);
+      if (!G.net || !G.net.enabled()) return;
+      try {
+        const rows = (await G.net.leaderboard(16)) || [];
+        let n = 0;
+        rows.filter((r) => r && r.pid && r.pid !== G.pid && r.n).slice(0, 10).forEach((r, i) => {
+          const a = (i / 10) * Math.PI * 2 + 0.3, rr = 4.6 + (i % 3) * 1.7;
+          buildTownFolk(`🟢 ${String(r.n).slice(0, 12)} · Lv.${r.lv || 1}`, r.c, Math.cos(a) * rr, Math.sin(a) * rr, true, 2.4);
+          n++;
+        });
+        if (G.inTownZone && n && G.toast) G.toast(`👥 มีนักผจญภัยในเมือง ${n} คน`);
+      } catch (e) {}
+    };
+    G.enterTownZone = () => {
+      if (G.mode !== "explore" || G.inTownZone || G.inHomeZone || G.inRanchZone) return;
+      G.inTownZone = true;
+      G.vel = G.vel || { x: 0, z: 0 };
+      G._townReturn = { x: char.position.x, z: char.position.z };
+      char.position.set(0, char.position.y, 8.5);
+      char.rotation.y = Math.PI; // หันหน้าเข้าน้ำพุ
+      G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
+      wilds.forEach((m) => (m.visible = false));
+      if (portal) portal.visible = false;
+      if (G.warpGate) G.warpGate.visible = false;
+      if (G._ranchPad) G._ranchPad.visible = false;
+      if (G._homePad) G._homePad.visible = false;
+      if (G._townPad) G._townPad.visible = false;
+      if (G._safeMarks) G._safeMarks.visible = false;
+      if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false));
+      if (G._hideBiomeDecor) G._hideBiomeDecor();
+      townZone.visible = true;
+      G.refreshTownFolk();
+      if (G.sfx && G.sfx.warp) G.sfx.warp();
+      toast("🏰 ยินดีต้อนรับสู่เมืองเชอร์รี่ — ศูนย์รวมนักผจญภัย · ไม่มีมอนสเตอร์ 100%");
+      setUi((u) => ({ ...u, inTownZone: true }));
+    };
+    G.exitTownZone = () => {
+      if (!G.inTownZone) return;
+      G.inTownZone = false;
+      townZone.visible = false;
+      wilds.forEach((m) => (m.visible = true));
+      if (portal) portal.visible = true;
+      if (G.warpGate) G.warpGate.visible = true;
+      if (G._safeMarks) G._safeMarks.visible = true;
+      if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true));
+      if (G._restoreBiomeDecor) G._restoreBiomeDecor();
+      const r = G._townReturn || { x: -9.5, z: -5.5 };
+      char.position.set(r.x, char.position.y, r.z);
+      G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
+      G.townPadShy = true;
+      if (G.sfx && G.sfx.warp) G.sfx.warp();
+      toast("🌸 ออกผจญภัยแล้ว — โชคดีนะ!");
+      setUi((u) => ({ ...u, inTownZone: false }));
+    };
+    // 🏰 แท่นวาร์ปเข้าเมือง (โผล่ทุกด่าน เหมือนแท่นบ้าน/ฟาร์ม)
+    const townPad = new THREE.Group();
+    const tpDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xead0f5, emissive: 0xb080e0, emissiveIntensity: 0.4, roughness: 0.7, side: THREE.DoubleSide }));
+    tpDisc.rotation.x = -Math.PI / 2; tpDisc.position.y = 0.05;
+    const tpRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 12, 30), new THREE.MeshStandardMaterial({ color: 0xcf9df0, emissive: 0x9a5ad0, emissiveIntensity: 0.8 }));
+    tpRing.rotation.x = -Math.PI / 2; tpRing.position.y = 0.12;
+    const tpLabel = ranchLabel(2.6, 0.98);
+    tpLabel.draw("🏰 เมืองเชอร์รี่", "#f5ecff");
+    tpLabel.sprite.position.y = 1.7;
+    townPad.add(tpDisc, tpRing, tpLabel.sprite);
+    townPad.position.set(-13, 0, -8.2);
+    scene.add(townPad);
+    G._townPad = townPad; G._townPadRing = tpRing;
     // ================= 🏡 END MY RANCH ZONE =================
 
     // ---------- 🎣 Fishing minigame ----------
@@ -18785,6 +18956,7 @@ export default function CherryAdventure() {
       G.refreshShop(true); // stock the shop for free
       G.setBuddy(null);
       G.spawnAtVillage(); // 🏡 เริ่มเกมใหม่ที่หน้าบ้านในเขตปลอดภัย
+      if (G.enterTownZone) G.enterTownZone(); // 🏰 ตัวละครใหม่เริ่มที่เมืองเชอร์รี่ก่อนออกผจญภัย
       toast(`${C.emoji} เริ่มต้นการผจญภัยในสาย${C.name}!`);
       G.tutStep = 0; // 📖 start tutorial for new players
       if (G.computeTitle) G.computeTitle();
@@ -18827,7 +18999,7 @@ export default function CherryAdventure() {
           rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
           costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
           profile: (G.profileInfo ? G.profileInfo() : null), // 📊 computed profile snapshot (for the web dashboard's character detail)
-          pos: { x: char.position.x, z: char.position.z },
+          pos: (G.inTownZone && G._townReturn) ? { x: G._townReturn.x, z: G._townReturn.z } : { x: char.position.x, z: char.position.z }, // 🏰 เซฟระหว่างอยู่ในเมือง = จำจุดผจญภัยเดิมไว้แทน
         }));
       } catch (e) { /* storage unavailable — keep playing without saves */ }
       // 🌐 push my latest profile to the cloud (throttled, no-op when offline)
@@ -20605,6 +20777,7 @@ export default function CherryAdventure() {
       // Must run BEFORE the position restore — switchBiome respawns monsters & rebuilds the nav grid.
       if (G.switchBiome) G.switchBiome(d.curBiome || 0, true);
       if (d.pos) char.position.set(d.pos.x || 0, 0, d.pos.z || 0);
+      if (G.enterTownZone) G.enterTownZone(); // 🏰 ล็อกอินแล้วแวะเมืองเชอร์รี่ก่อน — เดินออกประตูเพื่อไปผจญภัยต่อจากจุดเดิม
       G.quests = []; refreshQuests(); // 📜
       if (G.storySeed) { G.storySeed(); G.storySync(); } // 📖 เช็คเงื่อนไขเนื้อเรื่องที่สำเร็จแล้ว + sync UI
       if (G.checkDailyReward) G.checkDailyReward(); // 📅 daily login bonus
@@ -21300,7 +21473,7 @@ export default function CherryAdventure() {
           initWildHp(m);
           const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
           const pdist = Math.hypot(pdx, pdz) || 0.001;
-          const playerSafe = G.inHomeZone || G.inRanchZone || inSafeZone(char.position.x, char.position.z); // 🛡️ ในบ้าน/ฟาร์ม/บนเขตปลอดภัย = มอนสเตอร์แตะไม่ได้
+          const playerSafe = G.inHomeZone || G.inRanchZone || G.inTownZone || inSafeZone(char.position.x, char.position.z); // 🛡️ ในบ้าน/ฟาร์ม/เมือง/เขตปลอดภัย = มอนสเตอร์แตะไม่ได้
           if (playerSafe) {
             m.userData.aggro = false; // 🌀 drop the chase — can't follow into the safe zone
           } else if (m.userData.aggro || pdist < WILD_AGGRO) {
@@ -21672,7 +21845,7 @@ export default function CherryAdventure() {
         }
         {
           const pd = Math.hypot(char.position.x - portal.position.x, char.position.z - portal.position.z);
-          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone && !G.inHomeZone) {
+          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) {
             G.dungeonAskShown = true;
             setUi((u) => ({ ...u, dungeonAsk: true, dungeonProgress: G.dungeonProgress || 1 }));
           }
@@ -21682,12 +21855,16 @@ export default function CherryAdventure() {
 
         // ---------- 🏡 MY RANCH: pad visibility + enter/exit + in-zone life ----------
         if (G._ranchPad) {
-          G._ranchPad.visible = (!G.inRanchZone && !G.inHomeZone); // 🐄 โผล่ทุกด่าน — วาร์ปเข้าฟาร์มได้จากทุกที่
+          G._ranchPad.visible = (!G.inRanchZone && !G.inHomeZone && !G.inTownZone); // 🐄 โผล่ทุกด่าน — วาร์ปเข้าฟาร์มได้จากทุกที่
           if (G._ranchPadRing && !G._ranchPadT) G._ranchPadRing.rotation.z = t * 1.2;
         }
         if (G._homePad) {
-          G._homePad.visible = (!G.inRanchZone && !G.inHomeZone); // 🏠 โผล่ทุกด่าน
+          G._homePad.visible = (!G.inRanchZone && !G.inHomeZone && !G.inTownZone); // 🏠 โผล่ทุกด่าน
           if (G._homePadRing && !G._homePadT) G._homePadRing.rotation.z = t * 1.2;
+        }
+        if (G._townPad) {
+          G._townPad.visible = (!G.inRanchZone && !G.inHomeZone && !G.inTownZone); // 🏰 โผล่ทุกด่าน — วาร์ปเข้าเมืองได้จากทุกที่
+          if (G._townPadRing && !G._townPadT) G._townPadRing.rotation.z = t * 1.2;
         }
         // ⏳ ยืนบนแท่นค้าง 2 วิ แล้วค่อยวาร์ป (วงแหวนหมุนเร็ว+ขยายบอกความคืบหน้า)
         const padChargeStep = (pad, ring, shyKey, tKey, go) => {
@@ -21704,9 +21881,28 @@ export default function CherryAdventure() {
             if (pd2 > 3) G[shyKey] = false; // เดินห่างแล้วค่อยเข้าได้อีก
           }
         };
-        if (!G.inRanchZone && !G.inHomeZone && G.mode === "explore" && !G.banim) {
+        if (!G.inRanchZone && !G.inHomeZone && !G.inTownZone && G.mode === "explore" && !G.banim) {
           padChargeStep(G._ranchPad, G._ranchPadRing, "ranchPadShy", "_ranchPadT", () => { try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } });
           padChargeStep(G._homePad, G._homePadRing, "homePadShy", "_homePadT", () => { try { G.enterHomeZone(); } catch (err) { G.inHomeZone = false; try { console.warn("enterHomeZone failed", err); } catch (_) {} } });
+          padChargeStep(G._townPad, G._townPadRing, "townPadShy", "_townPadT", () => { try { G.enterTownZone(); } catch (err) { G.inTownZone = false; try { console.warn("enterTownZone failed", err); } catch (_) {} } });
+        }
+        if (G.inTownZone) { // 🏰 ในเมือง: ประตูออก + กันของโลกภายนอกโผล่ + ชาวเมือง/ผู้เล่นเดินเล่น
+          if (Math.hypot(char.position.x - 0, char.position.z - 11.9) < 1.2) try { G.exitTownZone(); } catch (err) { try { console.warn("exitTownZone failed", err); } catch (_) {} }
+          if (portal) portal.visible = false;
+          if (G.warpGate) G.warpGate.visible = false;
+          if (G._safeMarks) G._safeMarks.visible = false;
+          wilds.forEach((m) => { if (m.visible) m.visible = false; m.userData.aggro = false; });
+          if (G._townWater) G._townWater.material.emissiveIntensity = 0.3 + Math.sin(t * 2) * 0.12; // 💧 น้ำพุระยิบ
+          if (G._townExitRing) G._townExitRing.rotation.z = t * 1.3;
+          (G._townFolk || []).forEach((f, i) => {
+            const w = f.userData.wander; if (!w) return;
+            const a = w.ph + t * w.sp;
+            const tx = w.cx + Math.cos(a) * w.r, tz = w.cz + Math.sin(a) * w.r;
+            const ddx = tx - f.position.x, ddz = tz - f.position.z;
+            f.position.x += ddx * dt * 0.8; f.position.z += ddz * dt * 0.8;
+            if (Math.hypot(ddx, ddz) > 0.05) f.rotation.y = Math.atan2(ddx, ddz);
+            if (f.userData.body) f.userData.body.position.y = 0.85 + Math.abs(Math.sin(t * 3 + i * 1.7)) * 0.05;
+          });
         }
         if (G.inHomeZone) {
           const exd = Math.hypot(char.position.x - 0, char.position.z - 5.6);
@@ -21937,6 +22133,10 @@ export default function CherryAdventure() {
         if (G.inHomeZone) { // 🏠 เดินได้เฉพาะในห้อง (กำแพง 3 ด้าน + หน้าเปิดถึงเสื่อทางออก)
           char.position.x = Math.max(-7.3, Math.min(7.3, char.position.x));
           char.position.z = Math.max(-5.8, Math.min(6.2, char.position.z));
+        } else if (G.inTownZone) { // 🏰 เดินในลานเมือง + กันทะลุน้ำพุกลาง
+          const rr = Math.hypot(char.position.x, char.position.z);
+          if (rr > 12.3) { char.position.x *= 12.3 / rr; char.position.z *= 12.3 / rr; }
+          else if (rr < 3.0 && rr > 0.001) { char.position.x *= 3.0 / rr; char.position.z *= 3.0 / rr; }
         } else {
           const rr = Math.hypot(char.position.x, char.position.z);
           if (rr > FIELD_R - 0.3) { char.position.x *= (FIELD_R - 0.3) / rr; char.position.z *= (FIELD_R - 0.3) / rr; }
@@ -22120,7 +22320,7 @@ export default function CherryAdventure() {
         }
 
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
-        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone) // 🛡️🌀🏠 no encounters in a warp safe zone, the ranch, or the home
+        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) // 🛡️🌀🏠🏰 no encounters in a warp safe zone, the ranch, the home, or the town
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
           if (G.auto && G.autoNoBoss && m.userData.boss) continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
