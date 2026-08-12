@@ -6713,15 +6713,16 @@ export default function CherryAdventure() {
       { const band = new THREE.Mesh(new THREE.CylinderGeometry(0.146, 0.152, 0.086, 24, 1, true), yChoker); band.position.y = 1.95; yOutfit.add(band); [1.99, 1.906].forEach(ey => { const tr = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.008, 6, 30), yGoldTrim); tr.position.y = ey; tr.rotation.x = Math.PI / 2; yOutfit.add(tr); }); const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.038, 0), yIce.clone()); cg.scale.set(0.85, 1.25, 0.6); cg.position.set(0, 1.95, 0.148); yOutfit.add(cg); const cr = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.007, 6, 14), yGoldTrim); cr.position.set(0, 1.95, 0.132); cr.rotation.x = Math.PI / 2; yOutfit.add(cr); }
       // 👙 ornate white bustier (เสื้อเกาะอก) — wraps OUTSIDE the torso so nothing clips through
       const yCorsetY = new THREE.MeshStandardMaterial({ color: 0x141620, roughness: 0.5, metalness: 0.22 }); // black corset cincher
-      const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.315, 1.5], [0.36, 1.6], [0.375, 1.72], [0.37, 1.84], [0.34, 1.96]].map(([r, y]) => new THREE.Vector2(r, y)), 32), ySatin);
-      bodice.scale.set(1.08, 1, 0.99);
+      // 👗 ผ้ารัดรูปแนบเนื้อ — รัศมีตามโปรไฟล์ลำตัวจริง +0.02 (ไม่ใช่เปลือกแข็งลอยจากตัว) และบีบแกน z ตามทรงตัวแบน
+      const bodice = new THREE.Mesh(new THREE.LatheGeometry([[0.31, 1.5], [0.364, 1.6], [0.408, 1.72], [0.383, 1.84], [0.296, 1.96]].map(([r, y]) => new THREE.Vector2(r, y)), 32), ySatin);
+      bodice.scale.set(1.0, 1, 0.8);
       // 👗 ยกเสื้อขึ้นถึงไหล่ + คอวีลึกเซ็กซี่ขึ้น — เว้าขอบบนด้านหน้ากลางอกลงเป็นตัว V จากระดับไหล่
-      { const pos = bodice.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); let y = pos.getY(i); let z = pos.getZ(i); if (y > 1.72 && z > 0) { const cen = Math.max(0, 1 - Math.abs(x) / 0.3); const front = Math.min(1, z / 0.28); const upper = Math.min(1, (y - 1.72) / 0.22); y -= 0.36 * cen * front * upper; pos.setY(i, y); } /* 📐 มุมข้าง: หลังแบน หน้าโค้งตามอก */ if (z < -0.14) z = -0.14 - (Math.abs(z) - 0.14) * 0.82 - 0.045 * Math.max(0, 1 - Math.abs(y - 1.7) / 0.24); else if (z > 0 && y > 1.54 && y < 1.86) { const bst = Math.max(0, 1 - Math.abs(y - 1.7) / 0.17); z *= 1.06 + 0.24 * bst; /* 🍒 อกอิ่มขึ้น */ } else if (z > 0 && y <= 1.54) z *= 0.9; if (z > 0 && Math.abs(x) < 0.11 && y > 1.5 && y < 1.86) z *= 0.78; /* 🫧 ร่องกลางอกชัดขึ้น */ pos.setZ(i, z); } pos.needsUpdate = true; bodice.geometry.computeVertexNormals(); }
-      yFold(bodice, 0.006); yOutfit.add(bodice); yCloth(yOutfit, bodice, 1.9, 0.42, 0.007); // 🌊 ผืนเสื้อนุ่มกระเพื่อมเบาๆ
+      { const pos = bodice.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); let y = pos.getY(i); let z = pos.getZ(i); if (y > 1.72 && z > 0) { const cen = Math.max(0, 1 - Math.abs(x) / 0.3); const front = Math.min(1, z / 0.28); const upper = Math.min(1, (y - 1.72) / 0.22); y -= 0.36 * cen * front * upper; pos.setY(i, y); } /* 📐 มุมข้าง: หลังแบน หน้าโค้งตามอก */ if (z < -0.14) z = -0.14 - (Math.abs(z) - 0.14) * 0.95 - 0.045 * Math.max(0, 1 - Math.abs(y - 1.7) / 0.24); else if (z > 0 && y > 1.54 && y < 1.86) { const bst = Math.max(0, 1 - Math.abs(y - 1.7) / 0.17); z *= 1.08 + 0.38 * bst; /* 🍒 อกอิ่มเด่นบนผ้าแนบเนื้อ */ } else if (z > 0 && y <= 1.54) z *= 0.98; if (z > 0 && Math.abs(x) < 0.11 && y > 1.5 && y < 1.86) z *= 0.78; /* 🫧 ร่องกลางอกชัดขึ้น */ pos.setZ(i, z); } pos.needsUpdate = true; bodice.geometry.computeVertexNormals(); }
+      yFold(bodice, 0.009); yOutfit.add(bodice); yCloth(yOutfit, bodice, 1.9, 0.42, 0.007); // 🌊 ผ้ายืดมีรอยย่นแนบตัว กระเพื่อมเบาๆ
       // 🎀 เชือกร้อยไขว้ข้างลำตัว (side lacing) — ริบบิ้นน้ำเงิน + ตาไก่ทอง เผยแนวข้าง
       const yRibbonB = new THREE.MeshStandardMaterial({ color: 0x3a6ad0, roughness: 0.55, side: THREE.DoubleSide }); yRibbonB.bumpMap = yBumpTex(4); yRibbonB.bumpScale = 0.006;
       for (const sx of [-1, 1]) {
-        [[1.56, 0.398], [1.69, 0.412], [1.82, 0.406]].forEach(([yy, rr]) => {
+        [[1.56, 0.35], [1.69, 0.405], [1.82, 0.395]].forEach(([yy, rr]) => {
           for (const dd of [-1, 1]) { const lc = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0075, 0.15, 5), yRibbonB); lc.position.set(sx * rr, yy, 0); lc.rotation.x = dd * 0.72; yOutfit.add(lc); }
           for (const ez of [-0.052, 0.052]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), yGoldTrim); eye.position.set(sx * (rr - 0.004), yy + 0.065, ez); yOutfit.add(eye); }
         });
@@ -6730,22 +6731,22 @@ export default function CherryAdventure() {
       const archTorus = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setZ(i, p.getZ(i) - amt * (gy / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
       const archCyl = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gz = p.getZ(i); if (gz > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setY(i, p.getY(i) + amt * (gz / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
       // ✨ เส้นทองขอบบนของเสื้อ — เส้นเดียวโค้งเนียนไล่ตามแนวคอ (V ด้านหน้า, สูงข้าง–หลัง)
-      const topTrim = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.015, 10, 84), yGoldTrim);
+      const topTrim = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.015, 10, 84), yGoldTrim);
       { const p = topTrim.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const t = Math.max(0, 1 - Math.abs(gx) / 0.35); const dip = 0.44 * Math.pow(t, 1.5) * Math.min(1, gy / 0.16); p.setZ(i, p.getZ(i) + dip); } } p.needsUpdate = true; topTrim.geometry.computeVertexNormals(); }
-      topTrim.position.y = 1.95; topTrim.rotation.x = Math.PI / 2; topTrim.scale.set(1.03, 0.99, 1); yOutfit.add(topTrim);
-      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.017, 6, 34), yGoldTrim); archTorus(bTrim, 0.11); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.0, 0.99, 1); yOutfit.add(bTrim);
+      topTrim.position.y = 1.95; topTrim.rotation.x = Math.PI / 2; topTrim.scale.set(1.0, 0.8, 1); yOutfit.add(topTrim);
+      const bTrim = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.017, 6, 34), yGoldTrim); archTorus(bTrim, 0.11); bTrim.position.y = 1.5; bTrim.rotation.x = Math.PI / 2; bTrim.scale.set(1.02, 0.8, 1); yOutfit.add(bTrim);
       // 🌀 gold scroll ornaments on each cup + tiny blue gems (on the outer surface)
       for (const sx of [-1, 1]) {
         const scroll = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.011, 6, 14, Math.PI * 1.1), yGoldTrim); scroll.position.set(sx * 0.17, 1.7, 0.41); scroll.rotation.set(0.3, sx * 0.3, sx * 1.4); yOutfit.add(scroll);
-        const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.024, 0), yIce.clone()); cg.position.set(sx * 0.25, 1.75, 0.37); yOutfit.add(cg);
+        const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.024, 0), yIce.clone()); cg.position.set(sx * 0.25, 1.75, 0.33); yOutfit.add(cg);
       }
       // ⛓️ central blue-crystal harness strap down the sternum (proud of the bustier front)
       const harness = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.48, 0.03), yBlue); harness.position.set(0, 1.68, 0.42); yOutfit.add(harness);
       [1.87, 1.73, 1.59].forEach((hy, k) => { const hg = new THREE.Mesh(new THREE.OctahedronGeometry(0.045 - k * 0.004, 0), yIce.clone()); hg.scale.set(0.85, 1.3, 0.6); hg.position.set(0, hy, 0.44); yOutfit.add(hg); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 6, 14), yGoldTrim); ring.position.set(0, hy, 0.42); yOutfit.add(ring); });
       // 🖤 black-and-gold corset cincher just under the bust + blue gems (wraps outside)
-      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.12, 32, 1, true), yCorsetY); archCyl(cincher, 0.11); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.92); yOutfit.add(cincher); // 🖤 วงดำเพรียวลง เผยหน้าท้องมากขึ้น
-      [1.512, 1.408].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 34), yGoldTrim); archTorus(ct, 0.11); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.92, 1); yOutfit.add(ct); });
-      for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.305, 1.46, Math.cos(a) * 0.285); yOutfit.add(cg); }
+      const cincher = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.315, 0.12, 32, 1, true), yCorsetY); archCyl(cincher, 0.11); cincher.position.y = 1.46; cincher.scale.set(1, 1, 0.78); yOutfit.add(cincher); // 🖤 วงดำเพรียวรัดแนบเอวจริง
+      [1.512, 1.408].forEach(cy => { const ct = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.013, 6, 34), yGoldTrim); archTorus(ct, 0.11); ct.position.y = cy; ct.rotation.x = Math.PI / 2; ct.scale.set(1, 0.78, 1); yOutfit.add(ct); });
+      for (let i = 0; i < 5; i++) { const a = -0.55 + i * 0.275; const cg = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), yIce.clone()); cg.scale.set(0.8, 1, 0.5); cg.position.set(Math.sin(a) * 0.308, 1.46, Math.cos(a) * 0.246); yOutfit.add(cg); }
       // 🩳 short pants (กางเกงขาสั้น) — snug hip shell + upper-thigh legs that follow the walk
       const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 26, 20), yShorts); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2;
       { const pos = hipShort.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); let y = pos.getY(i); let z = pos.getZ(i); if (z > 0.04) z = 0.04 + (z - 0.04) * 0.6; if (z < -0.06) { const rr = Math.min(1, (-z - 0.06) / 0.22); const roundY = Math.max(0, 1 - Math.abs(y + 0.05) / 0.28); z *= 1 + (0.26 + 0.1 * roundY) * rr; /* 🍑 ก้นกลมใหญ่ขึ้น */ } if (y > 0.0 && z > 0.05) { const cen = Math.max(0, 1 - Math.abs(x) / 0.27); const front = Math.min(1, z / 0.16); y -= 0.3 * cen * front; } pos.setZ(i, z); pos.setY(i, y); } pos.needsUpdate = true; hipShort.geometry.computeVertexNormals(); } // 🍑 หน้าแบน + ขอบบนเว้าตามเข็มขัด + ก้นเด้งกลม
