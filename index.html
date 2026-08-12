@@ -9369,18 +9369,8 @@ function CherryAdventure() {
             } // 🍑 หน้าแบน + ขอบบนเว้าตามเข็มขัด + ก้นเด้งกลม
             yFold(hipShort, 0.007);
             yOutfit.add(hipShort); // 🌊 ผ้ากางเกงมีรอยหยักนุ่ม
-            // 🎗️ V-shaped belt on the shorts (เข็มขัดตัว V) — two straps dipping to a centre point + side straps
-            for (const sx of [-1, 1]) {
-                const strap = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.058, 0.05), yBelt);
-                strap.position.set(sx * 0.17, 1.29, 0.27);
-                strap.rotation.z = sx * 0.5;
-                yOutfit.add(strap);
-                [1.318, 1.262].forEach(gy => { const gt = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.013, 0.053), yGoldTrim); gt.position.set(sx * 0.17, gy, 0.276); gt.rotation.z = sx * 0.5; yOutfit.add(gt); });
-                const sideBelt = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.058, 0.32), yBelt);
-                sideBelt.position.set(sx * 0.345, 1.31, -0.06);
-                yOutfit.add(sideBelt); // แนบข้างสะโพก
-            }
-            // 💎 คริสตัลน้ำเงินเจียระไนในกรอบทองที่หัวเข็มขัด + คริสตัลห้อย (ตามภาพ)
+            // (เอาสายเข็มขัดหนังน้ำตาลตัว V + สายข้างสะโพกออกแล้ว — เหลือคริสตัลเป็นเข็มกลัดบนกางเกง)
+            // 💎 คริสตัลน้ำเงินเจียระไนในกรอบทอง + คริสตัลห้อย (เข็มกลัดหน้ากางเกง)
             const vGemMat = new THREE.MeshStandardMaterial({ color: 0x7ab8ff, emissive: 0x2a6ae0, emissiveIntensity: 1.35, roughness: 0.08, metalness: 0.15 });
             const vGem = new THREE.Group();
             const bigGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.078, 0), vGemMat);
@@ -9403,8 +9393,8 @@ function CherryAdventure() {
             dropGem.scale.set(0.7, 1.5, 0.4);
             dropGem.position.y = -0.17;
             vGem.add(dropGem);
-            vGem.position.set(0, 1.18, 0.33);
-            yOutfit.add(vGem);
+            vGem.position.set(0, 1.19, 0.27);
+            yOutfit.add(vGem); // แนบหน้ากางเกงขึ้น ไม่ลอยค้างหลังถอดเข็มขัด
             const inseam = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.26), yShorts);
             inseam.position.set(0, 1.02, 0);
             yOutfit.add(inseam); // ตะเข็บเป้ากางเกงแยกสองขา

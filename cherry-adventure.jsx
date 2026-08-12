@@ -6749,13 +6749,8 @@ export default function CherryAdventure() {
       const hipShort = new THREE.Mesh(new THREE.SphereGeometry(0.36, 26, 20), yShorts); hipShort.scale.set(1.04, 0.66, 0.94); hipShort.position.y = 1.2;
       { const pos = hipShort.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const x = pos.getX(i); let y = pos.getY(i); let z = pos.getZ(i); if (z > 0.04) z = 0.04 + (z - 0.04) * 0.6; if (z < -0.06) { const rr = Math.min(1, (-z - 0.06) / 0.22); const roundY = Math.max(0, 1 - Math.abs(y + 0.05) / 0.28); z *= 1 + (0.26 + 0.1 * roundY) * rr; /* 🍑 ก้นกลมใหญ่ขึ้น */ } if (y > 0.0 && z > 0.05) { const cen = Math.max(0, 1 - Math.abs(x) / 0.27); const front = Math.min(1, z / 0.16); y -= 0.3 * cen * front; } pos.setZ(i, z); pos.setY(i, y); } pos.needsUpdate = true; hipShort.geometry.computeVertexNormals(); } // 🍑 หน้าแบน + ขอบบนเว้าตามเข็มขัด + ก้นเด้งกลม
       yFold(hipShort, 0.007); yOutfit.add(hipShort); // 🌊 ผ้ากางเกงมีรอยหยักนุ่ม
-      // 🎗️ V-shaped belt on the shorts (เข็มขัดตัว V) — two straps dipping to a centre point + side straps
-      for (const sx of [-1, 1]) {
-        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.058, 0.05), yBelt); strap.position.set(sx * 0.17, 1.29, 0.27); strap.rotation.z = sx * 0.5; yOutfit.add(strap);
-        [1.318, 1.262].forEach(gy => { const gt = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.013, 0.053), yGoldTrim); gt.position.set(sx * 0.17, gy, 0.276); gt.rotation.z = sx * 0.5; yOutfit.add(gt); });
-        const sideBelt = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.058, 0.32), yBelt); sideBelt.position.set(sx * 0.345, 1.31, -0.06); yOutfit.add(sideBelt); // แนบข้างสะโพก
-      }
-      // 💎 คริสตัลน้ำเงินเจียระไนในกรอบทองที่หัวเข็มขัด + คริสตัลห้อย (ตามภาพ)
+      // (เอาสายเข็มขัดหนังน้ำตาลตัว V + สายข้างสะโพกออกแล้ว — เหลือคริสตัลเป็นเข็มกลัดบนกางเกง)
+      // 💎 คริสตัลน้ำเงินเจียระไนในกรอบทอง + คริสตัลห้อย (เข็มกลัดหน้ากางเกง)
       const vGemMat = new THREE.MeshStandardMaterial({ color: 0x7ab8ff, emissive: 0x2a6ae0, emissiveIntensity: 1.35, roughness: 0.08, metalness: 0.15 });
       const vGem = new THREE.Group();
       const bigGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.078, 0), vGemMat); bigGem.scale.set(0.9, 1.1, 0.42); vGem.add(bigGem);
@@ -6763,7 +6758,7 @@ export default function CherryAdventure() {
       for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + k * Math.PI / 2; const spike = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.055, 4), yGoldTrim); spike.position.set(Math.cos(a) * 0.11, Math.sin(a) * 0.12, 0); spike.rotation.z = a - Math.PI / 2; vGem.add(spike); }
       const dropLink = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.055, 4), yGoldTrim); dropLink.position.y = -0.115; vGem.add(dropLink);
       const dropGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.033, 0), vGemMat); dropGem.scale.set(0.7, 1.5, 0.4); dropGem.position.y = -0.17; vGem.add(dropGem);
-      vGem.position.set(0, 1.18, 0.33); yOutfit.add(vGem);
+      vGem.position.set(0, 1.19, 0.27); yOutfit.add(vGem); // แนบหน้ากางเกงขึ้น ไม่ลอยค้างหลังถอดเข็มขัด
       const inseam = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.26), yShorts); inseam.position.set(0, 1.02, 0); yOutfit.add(inseam); // ตะเข็บเป้ากางเกงแยกสองขา
       const shortsLegs = [];
       for (const leg of [legL, legR]) {
