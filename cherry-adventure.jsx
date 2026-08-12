@@ -6727,6 +6727,13 @@ export default function CherryAdventure() {
           for (const ez of [-0.052, 0.052]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), yGoldTrim); eye.position.set(sx * (rr - 0.004), yy + 0.065, ez); yOutfit.add(eye); }
         });
       }
+      // 📏 เส้นเนินอก — ตะเข็บโค้งรับทรงอกสองข้าง บรรจบกลางแล้วลากลงตามร่องอก (จุดคำนวณบนผิวเสื้อจริง)
+      const ySeamB = new THREE.MeshStandardMaterial({ color: 0xaebdd6, roughness: 0.85, metalness: 0.03 });
+      const yProf = [[0.31, 1.5], [0.364, 1.6], [0.408, 1.72], [0.383, 1.84], [0.296, 1.96]];
+      const ySurfZ = (x, y) => { let r = yProf[0][0]; for (let k = 0; k < yProf.length - 1; k++) { const [r0, y0] = yProf[k], [r1, y1] = yProf[k + 1]; if (y >= y0 && y <= y1) { r = r0 + (r1 - r0) * (y - y0) / (y1 - y0); break; } } let z = Math.sqrt(Math.max(0.0001, r * r - x * x)); const bst = Math.max(0, 1 - Math.abs(y - 1.7) / 0.17); if (y > 1.54 && y < 1.86) z *= 1.08 + 0.38 * bst; if (y > 1.56 && y < 1.88) { const gv = Math.max(0, 1 - Math.abs(x) / 0.15); z *= 1 - (0.12 + 0.18 * bst) * Math.pow(gv, 1.4); } return z * 0.8 + 0.012; };
+      const mkBustSeam = (pts, rad) => { const v = pts.map(([px, py]) => new THREE.Vector3(px, py, ySurfZ(px, py))); const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(v), 20, rad, 6, false), ySeamB); yOutfit.add(tube); return tube; };
+      for (const sx of [-1, 1]) mkBustSeam([[sx * 0.33, 1.71], [sx * 0.26, 1.775], [sx * 0.17, 1.8], [sx * 0.09, 1.755], [sx * 0.03, 1.63], [sx * 0.012, 1.575]], 0.0085);
+      mkBustSeam([[0, 1.578], [0, 1.545], [0, 1.512]], 0.0085);
       // ⌃ helpers — โค้งขอบด้านหน้ากลางให้ขึ้นเป็นตัว v คว่ำ (ตื้น ๆ)
       const archTorus = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gy = p.getY(i); if (gy > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setZ(i, p.getZ(i) - amt * (gy / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
       const archCyl = (m, amt) => { const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const gx = p.getX(i), gz = p.getZ(i); if (gz > 0) { const cen = Math.max(0, 1 - Math.abs(gx) / 0.34); p.setY(i, p.getY(i) + amt * (gz / 0.34) * cen); } } p.needsUpdate = true; m.geometry.computeVertexNormals(); };
