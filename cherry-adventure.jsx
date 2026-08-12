@@ -12803,13 +12803,14 @@ export default function CherryAdventure() {
       [[0xf2d8c0, -2.55], [0xd8e8f2, -1.95], [0xf8e2ee, -1.35], [0xe2f2d8, -0.75], [0xf2ecd0, -0.15], [0xe8d8f2, 2.5], [0xd8f2ea, 3.35]].forEach(([c, a]) => mkHouse(c, a));
     }
     { // 🌸 ต้นซากุระ + โคมไฟ + แผงตลาด + ป้ายเมือง
+      // 🌷 กระถางดอกไม้เตี้ยแทนต้นไม้ใหญ่ — ลานเมืองโล่ง มองเห็นทั่วถึง
       for (const [a, rr] of [[-2.25, 11], [-1.05, 11], [0.2, 11], [2.9, 11], [3.9, 11.5]]) {
-        const tr = new THREE.Group();
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.6, 8), tWoodD2); trunk.position.y = 0.8; tr.add(trunk);
-        const c1 = new THREE.Mesh(new THREE.SphereGeometry(1.05, 12, 10), tLeafP); c1.position.y = 2.1; tr.add(c1);
-        const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.7, 10, 8), tLeafP); c2.position.set(0.6, 1.75, 0.25); tr.add(c2);
-        const c3 = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 8), tLeafP); c3.position.set(-0.55, 1.8, -0.2); tr.add(c3);
-        tr.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr); townZone.add(tr);
+        const pl = new THREE.Group();
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.42, 0.46, 12), tStoneD); pot.position.y = 0.23; pl.add(pot);
+        const lip = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.05, 6, 16), tStone); lip.rotation.x = Math.PI / 2; lip.position.y = 0.45; pl.add(lip);
+        const soil = new THREE.Mesh(new THREE.CircleGeometry(0.48, 14), new THREE.MeshStandardMaterial({ color: 0x5a4530, roughness: 0.95 })); soil.rotation.x = -Math.PI / 2; soil.position.y = 0.47; pl.add(soil);
+        for (let f = 0; f < 5; f++) { const fa = f / 5 * Math.PI * 2; const bud = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), f % 2 ? tLeafP : new THREE.MeshStandardMaterial({ color: 0xf6ea9a, roughness: 0.8 })); bud.position.set(Math.cos(fa) * 0.26, 0.62, Math.sin(fa) * 0.26); pl.add(bud); }
+        pl.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr); townZone.add(pl);
       }
       for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 + Math.PI / 6; const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 2.6, 8), tStoneD); pole.position.y = 1.3; lp.add(pole); const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8c060, emissiveIntensity: 0.9 })); head.position.y = 2.7; lp.add(head); lp.position.set(Math.cos(a) * 7.5, 0, Math.sin(a) * 7.5); townZone.add(lp); }
       const mkStall = (a, awnBase, awnAcc, goods) => {
@@ -12876,6 +12877,21 @@ export default function CherryAdventure() {
         if (G.inTownZone && n && G.toast) G.toast(`👥 มีนักผจญภัยในเมือง ${n} คน`);
       } catch (e) {}
     };
+    // 🌳🚫 ซ่อน "ของสูง" ของโลกภายนอกรอบเมือง (ต้นไม้/อาคารหมู่บ้าน/ป้าย) — เว้นพื้น ท้องฟ้า และของไกล ๆ
+    const townWorldHide = () => {
+      const list = []; const bb = new THREE.Box3();
+      for (const c of scene.children) {
+        if (!c.visible || c === townZone || c === char || c === G._mountMesh || c === buddyMesh) continue;
+        if (c.isLight || c.isCamera || c.type === "Sprite") continue;
+        if (Math.hypot(c.position.x, c.position.z) > 34) continue; // ของไกลลิบ ปล่อยเป็นฉากหลัง
+        try { bb.setFromObject(c); } catch (e) { continue; }
+        const h = bb.max.y - bb.min.y, w = bb.max.x - bb.min.x;
+        if (!isFinite(h) || h < 1.2 || w > 60) continue; // พื้น/เงา/โดมฟ้า ไม่ยุ่ง
+        c.visible = false; list.push(c);
+      }
+      G._townHidden = list;
+    };
+    const townWorldShow = () => { (G._townHidden || []).forEach((o) => { o.visible = true; }); G._townHidden = null; };
     G.enterTownZone = () => {
       if (G.mode !== "explore" || G.inTownZone || G.inHomeZone || G.inRanchZone) return;
       G.inTownZone = true;
@@ -12893,6 +12909,7 @@ export default function CherryAdventure() {
       if (G._safeMarks) G._safeMarks.visible = false;
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false));
       if (G._hideBiomeDecor) G._hideBiomeDecor();
+      townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
       townZone.visible = true;
       G.refreshTownFolk();
       if (G.sfx && G.sfx.warp) G.sfx.warp();
@@ -12903,6 +12920,7 @@ export default function CherryAdventure() {
       if (!G.inTownZone) return;
       G.inTownZone = false;
       townZone.visible = false;
+      townWorldShow(); // 🌳 คืนต้นไม้/อาคารของโลกภายนอก
       wilds.forEach((m) => (m.visible = true));
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
@@ -18032,6 +18050,7 @@ export default function CherryAdventure() {
     };
     G.worldAttack = () => {
       if (G.mode !== "explore" || G.banim) return;
+      if (G.inTownZone || G.inHomeZone || G.inRanchZone) return; // 🕊️ โซนปลอดภัย: โจมตีไม่ได้เลย
       const m = nearestWild(worldRange());
       if (!m) return;
       char.rotation.y = Math.atan2(m.position.x - char.position.x, m.position.z - char.position.z);
@@ -18783,6 +18802,7 @@ export default function CherryAdventure() {
       }
       // 🎯 first, check if the player tapped directly on a wild monster — if so, walk over to fight it
       const wildMeshes = [];
+      if (!G.inTownZone && !G.inHomeZone && !G.inRanchZone) // 🕊️ ในโซนปลอดภัย แตะโดนมอนสเตอร์ที่ซ่อนอยู่ไม่ได้
       for (const w of wilds) { if (w.userData.shy > 0) continue; w.traverse((o) => { if (o.isMesh) { o.userData._wildRoot = w; wildMeshes.push(o); } }); }
       const wildHits = raycaster.intersectObjects(wildMeshes, false);
       if (wildHits.length) {
@@ -20872,7 +20892,8 @@ export default function CherryAdventure() {
       // 🎬 clean backdrop on the character screens (class picker / dress-up): hide trees, monsters, decor
       {
         const preview = G.mode === "class" || G.mode === "create";
-        if (preview !== G._prevPreview) {
+        if (preview !== G._prevPreview && (G.inTownZone || G.inHomeZone || G.inRanchZone)) G._prevPreview = preview; // 🏰🏠🏡 อยู่ในโซนพิเศษ — โซนคุมการมองเห็นเอง ห้ามคืนต้นไม้/มอนสเตอร์ทับ
+        else if (preview !== G._prevPreview) {
           G._prevPreview = preview;
           const b = BIOMES[G.curBiome || 0] || BIOMES[0];
           const isDesert = !preview && b.id === "desert";
@@ -21888,10 +21909,16 @@ export default function CherryAdventure() {
         }
         if (G.inTownZone) { // 🏰 ในเมือง: ประตูออก + กันของโลกภายนอกโผล่ + ชาวเมือง/ผู้เล่นเดินเล่น
           if (Math.hypot(char.position.x - 0, char.position.z - 11.9) < 1.2) try { G.exitTownZone(); } catch (err) { try { console.warn("exitTownZone failed", err); } catch (_) {} }
+        }
+        if (G.inTownZone) { // ⚠️ ต้องเช็คซ้ำ — ถ้าเพิ่งออกเมืองไปเฟรมนี้ ห้ามสั่งซ่อนมอนสเตอร์ทับของที่คืนไปแล้ว
           if (portal) portal.visible = false;
           if (G.warpGate) G.warpGate.visible = false;
           if (G._safeMarks) G._safeMarks.visible = false;
           wilds.forEach((m) => { if (m.visible) m.visible = false; m.userData.aggro = false; });
+          if ((G._frzTick % 30) === 0) { // 🛟 กันของโลกภายนอกแอบโผล่กลางเมือง (ต้นไม้/มอนสเตอร์/ฉากด่าน)
+            if (G.sceneryObjects) for (const o of G.sceneryObjects) if (o.visible) o.visible = false;
+            if (G._townHidden) for (const o of G._townHidden) if (o.visible) o.visible = false;
+          }
           if (G._townWater) G._townWater.material.emissiveIntensity = 0.3 + Math.sin(t * 2) * 0.12; // 💧 น้ำพุระยิบ
           if (G._townExitRing) G._townExitRing.rotation.z = t * 1.3;
           (G._townFolk || []).forEach((f, i) => {
@@ -21907,11 +21934,17 @@ export default function CherryAdventure() {
         if (G.inHomeZone) {
           const exd = Math.hypot(char.position.x - 0, char.position.z - 5.6);
           if (exd < 1.1) try { G.exitHomeZone(); } catch (err) { try { console.warn("exitHomeZone failed", err); } catch (_) {} }
+        }
+        if (G.inHomeZone) { // ⚠️ เช็คซ้ำ — ถ้าเพิ่งออกจากบ้านเฟรมนี้ ห้ามซ่อนมอนสเตอร์ทับของที่คืนไปแล้ว
           // 🛡️ กันหลุดทุกเฟรม: ของโลกภายนอกต้องไม่โผล่/ไม่ทำงานในบ้าน
           if (portal) portal.visible = false;
           if (G.warpGate) G.warpGate.visible = false;
           if (G._safeMarks) G._safeMarks.visible = false;
           wilds.forEach((m) => { if (m.visible) m.visible = false; m.userData.aggro = false; });
+        }
+        // 🛟 ตาข่ายกันพลาด: อยู่นอกโซนพิเศษแล้ว มอนสเตอร์ต้องมองเห็นเสมอ (กันค้างซ่อนจากการเข้า-ออกโซน)
+        if (!G.inTownZone && !G.inHomeZone && !G.inRanchZone && (G._frzTick % 30) === 0) {
+          for (const m of wilds) if (!m.visible) m.visible = true;
         }
         if (G.inRanchZone) try { // 🛟 กันเฟรมเดียวพังทั้งลูป (ภาพค้าง) — ห่อ try/catch ไว้
           // 🐾 สัตว์ในคอกเดินวนเบา ๆ คุมให้อยู่ในขอบคอก + เด้งตัว
@@ -21959,7 +21992,7 @@ export default function CherryAdventure() {
           Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12 ||
           G.keys["arrowup"] || G.keys["w"] || G.keys["arrowdown"] || G.keys["s"] ||
           G.keys["arrowleft"] || G.keys["a"] || G.keys["arrowright"] || G.keys["d"];
-        if (G.auto && !manualInput && !G.inRanchZone) {
+        if (G.auto && !manualInput && !G.inRanchZone && !G.inTownZone && !G.inHomeZone) { // 🏰🏠 ในเมือง/ในบ้าน = ห้ามออกล่ามอนสเตอร์
           // top up HP/MP before charging in (⚙️ togglable in auto settings)
           if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion(G.hpPotUse);
           if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && (G.mpPotions || 0) > 0) G.useManaPotion(G.mpPotUse);
