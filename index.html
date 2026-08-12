@@ -11234,7 +11234,37 @@ function CherryAdventure() {
         }
         // ---------- ⚜️ AURELIUS signature look (Holy Paladin — ครูเสดแห่งสวรรค์) ----------
         {
-            const aWhite = new THREE.MeshStandardMaterial({ color: 0xf2f3f7, roughness: 0.35, metalness: 0.5 });
+            // 🧵 ตัวช่วยผ้าเฉพาะบล็อก (รอยหยัก + ลายทอ) — บล็อกนี้รันก่อน clothFolds/clothBumpTex กลาง
+            const aFold = (mesh, amp) => { const p = mesh.geometry.attributes.position; for (let i = 0; i < p.count; i++) {
+                const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+                const ang = Math.atan2(z, x);
+                const f = 1 + Math.sin(ang * 9 + y * 6) * amp + Math.sin(ang * 15 + y * 12) * amp * 0.5;
+                p.setX(i, x * f);
+                p.setZ(i, z * f);
+            } p.needsUpdate = true; mesh.geometry.computeVertexNormals(); };
+            const aBumpTex = (rep) => { const cv2 = document.createElement("canvas"); cv2.width = 64; cv2.height = 64; const cx2 = cv2.getContext("2d"); cx2.fillStyle = "#808080"; cx2.fillRect(0, 0, 64, 64); for (let i = 0; i < 64; i += 3) {
+                cx2.fillStyle = "rgba(0,0,0,0.15)";
+                cx2.fillRect(0, i, 64, 1);
+                cx2.fillStyle = "rgba(255,255,255,0.11)";
+                cx2.fillRect(i, 0, 1, 64);
+            } for (let n = 0; n < 260; n++) {
+                cx2.fillStyle = n % 2 ? "rgba(0,0,0,0.09)" : "rgba(255,255,255,0.07)";
+                cx2.fillRect(Math.floor(Math.random() * 64), Math.floor(Math.random() * 64), 1, 1);
+            } const tx = new THREE.CanvasTexture(cv2); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(rep, rep); return tx; };
+            const aCloth = (grp, m, top, h, amp) => { (G._outfitCloth = G._outfitCloth || []).push({ grp, m, base: Float32Array.from(m.geometry.attributes.position.array), top, h, amp }); }; // 🌊 ต่อเข้าระบบผ้าพริ้วกลาง
+            const aWhite = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.68, metalness: 0.05 }); // 🧵 ผ้าขาวนวลด้าน (เลิกเงาโลหะ)
+            aWhite.bumpMap = aBumpTex(6);
+            aWhite.bumpScale = 0.008;
+            const aCream = new THREE.MeshStandardMaterial({ color: 0xefe2c4, roughness: 0.72, metalness: 0.04 });
+            aCream.bumpMap = aBumpTex(6);
+            aCream.bumpScale = 0.008; // 🍦 ครีมทอง
+            const aRoyal = new THREE.MeshStandardMaterial({ color: 0x2f57b8, roughness: 0.64, metalness: 0.06 });
+            aRoyal.bumpMap = aBumpTex(6);
+            aRoyal.bumpScale = 0.008; // 💙 น้ำเงินรอยัล
+            const aSkyCloth = new THREE.MeshStandardMaterial({ color: 0x9cc6ea, roughness: 0.66, metalness: 0.05, side: THREE.DoubleSide });
+            aSkyCloth.bumpMap = aBumpTex(6);
+            aSkyCloth.bumpScale = 0.007; // 🩵 ซับในฟ้า
+            const aSeam = new THREE.MeshStandardMaterial({ color: 0xcabfa6, roughness: 0.82, metalness: 0.02 }); // 🪡 เส้นร่องตะเข็บ (เข้มกว่าผ้า)
             const aGold = new THREE.MeshStandardMaterial({ color: 0xecc45a, roughness: 0.3, metalness: 0.85, emissive: 0x5a4208, emissiveIntensity: 0.3 });
             const aGoldE = new THREE.MeshStandardMaterial({ color: 0xffe89a, emissive: 0xffc040, emissiveIntensity: 0.85, roughness: 0.3 });
             const aBlue = new THREE.MeshStandardMaterial({ color: 0x2a5ac0, roughness: 0.6 });
@@ -11311,15 +11341,35 @@ function CherryAdventure() {
             headG.add(aHead);
             // ===== white + gold cuirass =====
             const aOut = new THREE.Group();
-            const cuir = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.28], [0.37, 1.5], [0.39, 1.72], [0.36, 1.9], [0.3, 2.0]].map(([r, y]) => new THREE.Vector2(r, y)), 28), aWhite);
+            const cuir = new THREE.Mesh(new THREE.LatheGeometry([[0.3, 1.28], [0.34, 1.4], [0.37, 1.5], [0.385, 1.62], [0.39, 1.72], [0.375, 1.82], [0.36, 1.9], [0.3, 2.0]].map(([r, y]) => new THREE.Vector2(r, y)), 34), aWhite);
             cuir.scale.set(1.32, 1, 1.02);
+            aFold(cuir, 0.007);
             aOut.add(cuir);
-            for (const yy of [1.4, 1.6, 1.8]) {
-                const t = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.012, 6, 26), aGold);
+            aCloth(aOut, cuir, 2.0, 0.72, 0.011); // 🌊 ผืนเสื้อกระเพื่อม + รอยหยักถาวร
+            // 💙 แถบอกบนน้ำเงินรอยัล + 🍦 แถบใต้อกครีม — ชุดหลากสีเป็นชั้นๆ
+            {
+                const yoke = new THREE.Mesh(new THREE.LatheGeometry([[0.372, 1.8], [0.362, 1.88], [0.305, 1.99]].map(([r, y]) => new THREE.Vector2(r, y)), 30), aRoyal);
+                yoke.scale.set(1.34, 1, 1.04);
+                aFold(yoke, 0.006);
+                aOut.add(yoke);
+                const band = new THREE.Mesh(new THREE.LatheGeometry([[0.372, 1.5], [0.383, 1.56], [0.385, 1.62]].map(([r, y]) => new THREE.Vector2(r, y)), 30), aCream);
+                band.scale.set(1.34, 1, 1.04);
+                aOut.add(band);
+            }
+            // 🪡 ร่องตะเข็บระหว่างชิ้น (เส้นเข้มบาง) สลับกับขลิบทอง
+            for (const [yy, mt] of [[1.44, aSeam], [1.5, aGold], [1.63, aSeam], [1.79, aGold], [1.86, aSeam]]) {
+                const t = new THREE.Mesh(new THREE.TorusGeometry(mt === aGold ? 0.385 : 0.378, mt === aGold ? 0.011 : 0.007, 6, 30), mt);
                 t.position.y = yy;
                 t.rotation.x = Math.PI / 2;
                 t.scale.set(1.32, 1.02, 1);
                 aOut.add(t);
+            }
+            // 🪡 ตะเข็บแนวตั้งข้างลำตัว + กลางหลัง
+            for (const az of [Math.PI / 2, -Math.PI / 2, Math.PI]) {
+                const vs = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.5, 0.012), aSeam);
+                vs.position.set(Math.sin(az) * 0.5, 1.62, Math.cos(az) * 0.385);
+                vs.rotation.y = az;
+                aOut.add(vs);
             }
             const cv = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.32, 0.02), aGoldE);
             cv.position.set(0, 1.68, 0.4);
@@ -11363,13 +11413,27 @@ function CherryAdventure() {
             const tch = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.045, 0.02), aGoldE);
             tch.position.set(0, 1.41, 0.375);
             aOut.add(tch);
-            const aSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.47, 0.3, 24, 1, true), aWhite);
-            aSkirt.position.y = 1.07;
-            aOut.add(aSkirt);
-            const aSkirtHem = new THREE.Mesh(new THREE.TorusGeometry(0.47, 0.016, 6, 26), aGold);
-            aSkirtHem.position.y = 0.92;
+            // 👗 กระโปรงจีบ 2 ชั้น (นอกขาว/ในน้ำเงิน) — จีบลึกขึ้นทางชายล่าง + พริ้วตามลม
+            const mkAPleat = (rt, rb, h, py, mat, pleats, amp, wamp) => { const geo = new THREE.CylinderGeometry(rt, rb, h, 36, 5, true); const pp = geo.attributes.position; for (let i = 0; i < pp.count; i++) {
+                const x = pp.getX(i), y = pp.getY(i), z = pp.getZ(i);
+                const ang = Math.atan2(z, x);
+                const low = Math.max(0, (h / 2 - y) / h);
+                const f = 1 + Math.sin(ang * pleats) * amp * (0.3 + low * 0.7);
+                pp.setX(i, x * f);
+                pp.setZ(i, z * f);
+            } pp.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.y = py; aOut.add(m); aCloth(aOut, m, h / 2, h, wamp); return m; };
+            mkAPleat(0.37, 0.5, 0.3, 1.08, aWhite, 12, 0.06, 0.05);
+            mkAPleat(0.36, 0.57, 0.42, 1.0, aRoyal, 12, 0.05, 0.06);
+            const aSkirtHem = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.015, 6, 30), aGold);
+            aSkirtHem.position.y = 0.94;
             aSkirtHem.rotation.x = Math.PI / 2;
             aOut.add(aSkirtHem);
+            {
+                const sk2 = new THREE.Mesh(new THREE.TorusGeometry(0.565, 0.012, 6, 30), aGoldE);
+                sk2.position.y = 0.8;
+                sk2.rotation.x = Math.PI / 2;
+                aOut.add(sk2);
+            } // ขลิบทองชายชั้นใน
             // 💙 เข็มขัดน้ำเงินเข้ม + หัวเข็มขัดเพชรทอง (ตามภาพ)
             const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.38, 0.11, 22, 1, true), aNavy);
             belt.position.y = 1.28;
@@ -11390,6 +11454,21 @@ function CherryAdventure() {
             buckle.scale.set(0.9, 1.25, 0.5);
             buckle.position.set(0, 1.28, 0.41);
             aOut.add(buckle);
+            // ❤️ สายคาดแดงผูกข้างเอว ปลายห้อยพริ้ว 2 ชาย (เพิ่มสีสัน + ความเคลื่อนไหว)
+            {
+                const knot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), aRed);
+                knot.scale.set(1.25, 0.85, 0.75);
+                knot.position.set(0.42, 1.27, 0.1);
+                aOut.add(knot);
+                for (const [dx, rz, ln] of [[0.0, 0.12, 0.4], [0.05, -0.1, 0.32]]) {
+                    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.085, ln, 0.016, 1, 6, 1), aRed);
+                    tail.position.set(0.43 + dx, 1.26 - ln / 2 - 0.03, 0.1);
+                    tail.rotation.z = rz;
+                    tail.rotation.y = 0.5;
+                    aOut.add(tail);
+                    aCloth(aOut, tail, ln / 2, ln, 0.07);
+                }
+            }
             const mkPauldron = (sx) => { const grp = new THREE.Group(); const dome = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), aWhite); grp.add(dome); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.016, 6, 18), aGold); rim.rotation.x = Math.PI / 2; grp.add(rim); for (let k = 0; k < 4; k++) {
                 const fe = new THREE.Mesh(new THREE.ConeGeometry(0.05 - k * 0.006, 0.34 - k * 0.055, 4), k % 2 ? aGoldE : aWhite);
                 fe.position.set(sx * (0.06 + k * 0.075), 0.1 + k * 0.055, -0.02);
@@ -11403,15 +11482,16 @@ function CherryAdventure() {
             // ===== white cape (gold-trimmed) =====
             const aCape = new THREE.Group();
             const aCapeCloth = [];
-            const mkACape = (rTop, rBot, h, py) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 28, 6, true, -1.15, 2.3); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) {
+            const mkACape = (rTop, rBot, h, py, mat, wamp) => { const geo = new THREE.CylinderGeometry(rTop, rBot, h, 30, 7, true, -1.15, 2.3); const p = geo.attributes.position; for (let i = 0; i < p.count; i++) {
                 const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
                 const ang = Math.atan2(z, x);
                 const low = Math.max(0, (h / 2 - y) / h);
-                const f = 1 + Math.sin(ang * 6) * 0.05 * low;
+                const f = 1 + (Math.sin(ang * 6) * 0.06 + Math.sin(ang * 13) * 0.028) * low;
                 p.setX(i, x * f);
                 p.setZ(i, z * f - 0.1 * low);
-            } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, aWhite); m.position.set(0, py, -0.14); m.rotation.y = Math.PI; aCape.add(m); aCapeCloth.push({ m, base: Float32Array.from(p.array), h }); return m; };
-            mkACape(0.4, 0.62, 1.42, 1.28);
+            } p.needsUpdate = true; geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.set(0, py, -0.14); m.rotation.y = Math.PI; aCape.add(m); aCapeCloth.push({ m, base: Float32Array.from(p.array), h }); aCloth(aCape, m, h / 2, h, wamp); return m; };
+            mkACape(0.4, 0.62, 1.42, 1.28, aWhite, 0.055); // ผืนนอกขาว — พริ้วจริงแล้ว
+            mkACape(0.375, 0.565, 1.3, 1.3, aSkyCloth, 0.05); // 🩵 ซับในฟ้า โผล่ตามชายที่พลิ้ว
             const aCapeTrim = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.016, 6, 24, 3.4), aGold);
             aCapeTrim.position.set(0, 1.94, -0.18);
             aCapeTrim.rotation.set(1.4, 0, 0);
@@ -11441,10 +11521,18 @@ function CherryAdventure() {
             // ===== white greaves + boots =====
             const aLegParts = [];
             for (const leg of [legL, legR]) {
-                const greave = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.34, 12), aWhite);
+                const greave = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.34, 14), aWhite);
                 greave.position.set(0, -0.26, 0.01);
+                aFold(greave, 0.01);
                 leg.add(greave);
                 aLegParts.push(greave);
+                for (const gy of [-0.18, -0.3]) {
+                    const gr2 = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.006, 5, 14), aSeam);
+                    gr2.position.set(0, gy, 0.01);
+                    gr2.rotation.x = Math.PI / 2;
+                    leg.add(gr2);
+                    aLegParts.push(gr2);
+                }
                 const knee = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), aGold);
                 knee.scale.set(1, 0.8, 1);
                 knee.position.set(0, -0.12, 0.04);
@@ -11467,8 +11555,9 @@ function CherryAdventure() {
             const aArmParts = [];
             for (const arm of [armL, armR]) {
                 const fore = arm.userData.elbow || arm;
-                const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.08, 0.26, 10), aWhite);
+                const gaunt = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.08, 0.26, 12), aWhite);
                 gaunt.position.set(0, -0.27, 0);
+                aFold(gaunt, 0.012);
                 fore.add(gaunt);
                 aArmParts.push(gaunt);
                 const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.014, 6, 12), aGold);
@@ -11476,6 +11565,13 @@ function CherryAdventure() {
                 cuff.rotation.x = Math.PI / 2;
                 fore.add(cuff);
                 aArmParts.push(cuff);
+                for (const wy of [-0.24, -0.31]) {
+                    const wr = new THREE.Mesh(new THREE.TorusGeometry(0.086, 0.006, 5, 12), aSeam);
+                    wr.position.set(0, wy, 0);
+                    wr.rotation.x = Math.PI / 2;
+                    fore.add(wr);
+                    aArmParts.push(wr);
+                }
                 const glove = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), new THREE.MeshStandardMaterial({ color: 0x3a3a42, roughness: 0.6, metalness: 0.2 }));
                 glove.scale.set(0.95, 0.75, 0.85);
                 glove.position.y = -0.47;
