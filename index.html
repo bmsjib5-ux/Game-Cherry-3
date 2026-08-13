@@ -1682,7 +1682,7 @@ function CherryAdventure() {
                 camDist = Math.min(24, Math.max(5.2, camDist + d)); // ซูมหน้าแต่งตัว (ซูมออกได้ไกลขึ้น)
             }
             else {
-                camDist = Math.min((G.inHomeZone || G.inTownZone) ? 36 : 24, Math.max(6, camDist + d)); // 🏠🏰 ในบ้าน/ในเมืองซูมออกได้ไกลขึ้น
+                camDist = Math.min(G.inTownZone ? 52 : G.inHomeZone ? 36 : 24, Math.max(6, camDist + d)); // 🏠 ในบ้านซูมออกไกลขึ้น · 🏰 ในเมืองใหญ่ซูมออกได้ไกลสุด
             }
             saveZoom(); // 🔍 remember zoom level
         };
@@ -20406,6 +20406,7 @@ function CherryAdventure() {
         const tWood = new THREE.MeshStandardMaterial({ color: 0xa87a4e, roughness: 0.85 });
         const tWoodD2 = new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.85 });
         const tLeafP = new THREE.MeshStandardMaterial({ color: 0xf2b8d0, roughness: 0.8 }); // 🌸 พุ่มซากุระ
+        const TR = 38; // 📏 รัศมีลานเมือง (เดิม 17 → พื้นที่กว้างขึ้น ~5 เท่า)
         { // 🧱 ลานหินกลางเมือง + ขอบลาน
             const cv = document.createElement("canvas");
             cv.width = cv.height = 128;
@@ -20422,186 +20423,260 @@ function CherryAdventure() {
                 cx.fillRect((n * 53) % 128, (n * 31) % 128, 3, 3);
             const tex = new THREE.CanvasTexture(cv);
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            tex.repeat.set(12, 12);
-            const plaza = new THREE.Mesh(new THREE.CircleGeometry(17, 40), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92 }));
+            tex.repeat.set(27, 27);
+            const plaza = new THREE.Mesh(new THREE.CircleGeometry(TR, 56), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92 }));
             plaza.rotation.x = -Math.PI / 2;
             plaza.position.y = 0.03;
             townZone.add(plaza);
-            const rim = new THREE.Mesh(new THREE.TorusGeometry(17, 0.22, 8, 48), tStoneD);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(TR, 0.34, 8, 64), tStoneD);
             rim.rotation.x = Math.PI / 2;
-            rim.position.y = 0.06;
+            rim.position.y = 0.08;
             townZone.add(rim);
+            // 🛣️ ถนนหินไล่จากน้ำพุออกไป 8 ทิศ — ช่วยให้ลานกว้างไม่โล่งเวิ้งว้าง
+            const roadMat = new THREE.MeshStandardMaterial({ color: 0xbdb5a6, roughness: 0.95 });
+            for (let k = 0; k < 8; k++) {
+                const a = k * Math.PI / 4;
+                const road = new THREE.Mesh(new THREE.PlaneGeometry(3.2, TR - 7), roadMat);
+                road.rotation.x = -Math.PI / 2;
+                road.rotation.z = -a;
+                road.position.set(Math.cos(a) * (TR / 2 + 3), 0.045, Math.sin(a) * (TR / 2 + 3));
+                townZone.add(road);
+            }
         }
-        { // ⛲ น้ำพุกลางเมือง + ม้านั่งรอบ
-            const base = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.5, 0.5, 22), tStone);
-            base.position.y = 0.28;
+        { // ⛲ น้ำพุใหญ่กลางเมือง + ม้านั่งรอบ
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.8, 0.95, 28), tStone);
+            base.position.y = 0.5;
             townZone.add(base);
-            const rim2 = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.16, 10, 26), tStoneD);
+            const rim2 = new THREE.Mesh(new THREE.TorusGeometry(4.4, 0.3, 10, 34), tStoneD);
             rim2.rotation.x = Math.PI / 2;
-            rim2.position.y = 0.56;
+            rim2.position.y = 1.05;
             townZone.add(rim2);
-            const water = new THREE.Mesh(new THREE.CircleGeometry(2.12, 24), new THREE.MeshStandardMaterial({ color: 0x8fd0f0, emissive: 0x4a9ad0, emissiveIntensity: 0.35, roughness: 0.25, transparent: true, opacity: 0.9 }));
+            const water = new THREE.Mesh(new THREE.CircleGeometry(4.1, 30), new THREE.MeshStandardMaterial({ color: 0x8fd0f0, emissive: 0x4a9ad0, emissiveIntensity: 0.35, roughness: 0.25, transparent: true, opacity: 0.9 }));
             water.rotation.x = -Math.PI / 2;
-            water.position.y = 0.52;
+            water.position.y = 0.98;
             townZone.add(water);
             G._townWater = water;
-            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 1.3, 12), tStone);
-            pillar.position.y = 1.1;
+            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.82, 2.5, 14), tStone);
+            pillar.position.y = 2.2;
             townZone.add(pillar);
-            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.7, 0.3, 16), tStoneD);
-            bowl.position.y = 1.8;
+            const bowl = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.35, 0.58, 18), tStoneD);
+            bowl.position.y = 3.5;
             townZone.add(bowl);
-            const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), new THREE.MeshStandardMaterial({ color: 0xe86a8a, emissive: 0xb03050, emissiveIntensity: 0.4, roughness: 0.4 }));
-            cherry.position.y = 2.3;
+            const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 14), new THREE.MeshStandardMaterial({ color: 0xe86a8a, emissive: 0xb03050, emissiveIntensity: 0.4, roughness: 0.4 }));
+            cherry.position.y = 4.5;
             townZone.add(cherry);
-            const tLab = ranchLabel(3.0, 1.0);
+            const tLab = ranchLabel(5.0, 1.6);
             tLab.draw("🏰 เมืองเชอร์รี่", "#fff0f5");
-            tLab.sprite.position.set(0, 3.4, 0);
+            tLab.sprite.position.set(0, 6.4, 0);
             townZone.add(tLab.sprite);
-            for (let k = 0; k < 4; k++) {
-                const a = k * Math.PI / 2 + Math.PI / 4;
+            for (let k = 0; k < 8; k++) {
+                const a = k * Math.PI / 4 + Math.PI / 8;
                 const bench = new THREE.Group();
-                const seat = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.12, 0.5), tWood);
-                seat.position.y = 0.5;
+                const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 0.7), tWood);
+                seat.position.y = 0.62;
                 bench.add(seat);
-                for (const lx of [-0.7, 0.7]) {
-                    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.5, 0.5), tWoodD2);
-                    leg.position.set(lx, 0.25, 0);
+                for (const lx of [-1.0, 1.0]) {
+                    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.62, 0.7), tWoodD2);
+                    leg.position.set(lx, 0.31, 0);
                     bench.add(leg);
                 }
-                const back = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.5, 0.1), tWood);
-                back.position.set(0, 0.85, -0.22);
+                const back = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.66, 0.13), tWood);
+                back.position.set(0, 1.05, -0.3);
                 bench.add(back);
-                bench.position.set(Math.cos(a) * 4.6, 0, Math.sin(a) * 4.6);
+                bench.position.set(Math.cos(a) * 7.2, 0, Math.sin(a) * 7.2);
                 bench.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(bench);
             }
         }
         { // 🏘️ บ้านเรือนรอบเมือง (หันหน้าเข้าลาน)
-            const mkHouse = (hue, a) => {
+            // 🏠 บ้านหลังใหญ่ — สูงราว 6.4 หน่วย ≈ 2.5 เท่าของตัวละคร (ตัวละครสูง ~2.5 หน่วย)
+            const tRoof = new THREE.MeshStandardMaterial({ color: 0xc0574e, roughness: 0.8 });
+            const tRoof2 = new THREE.MeshStandardMaterial({ color: 0x7a8fb0, roughness: 0.8 });
+            const tWin = new THREE.MeshStandardMaterial({ color: 0xfff2c8, emissive: 0xd0a850, emissiveIntensity: 0.5 });
+            const mkHouse = (hue, a, rr, big) => {
                 const g = new THREE.Group();
-                const body = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.4, 3), new THREE.MeshStandardMaterial({ color: hue, roughness: 0.85 }));
-                body.position.y = 1.2;
+                const w = big ? 7.0 : 5.4, h = big ? 5.0 : 3.8, d = big ? 6.0 : 4.6;
+                const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: hue, roughness: 0.85 }));
+                body.position.y = h / 2;
                 g.add(body);
-                const roof = new THREE.Mesh(new THREE.ConeGeometry(2.75, 1.7, 4), new THREE.MeshStandardMaterial({ color: 0xc0574e, roughness: 0.8 }));
-                roof.position.y = 3.25;
+                const beamY = new THREE.Mesh(new THREE.BoxGeometry(w + 0.16, 0.3, d + 0.16), tWoodD2);
+                beamY.position.y = h - 0.15;
+                g.add(beamY); // คานไม้ใต้ชายคา
+                const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.86, big ? 3.4 : 2.6, 4), big ? tRoof2 : tRoof);
+                roof.position.y = h + (big ? 1.7 : 1.3);
                 roof.rotation.y = Math.PI / 4;
                 g.add(roof);
-                const door = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.3, 0.1), tWoodD2);
-                door.position.set(0, 0.68, 1.53);
+                const door = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.4, 0.14), tWoodD2);
+                door.position.set(0, 1.2, d / 2 + 0.05);
                 g.add(door);
-                for (const wx of [-1.05, 1.05]) {
-                    const win = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.08), new THREE.MeshStandardMaterial({ color: 0xfff2c8, emissive: 0xd0a850, emissiveIntensity: 0.5 }));
-                    win.position.set(wx, 1.5, 1.52);
+                const knob = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), tStone);
+                knob.position.set(0.45, 1.2, d / 2 + 0.14);
+                g.add(knob);
+                const step = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 0.9), tStone);
+                step.position.set(0, 0.11, d / 2 + 0.5);
+                g.add(step);
+                for (const wx of [-w * 0.3, w * 0.3]) { // หน้าต่างชั้นล่าง + กรอบไม้
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.15, 0.1), tWin);
+                    win.position.set(wx, 2.5, d / 2 + 0.04);
                     g.add(win);
+                    const fr = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.35, 0.07), tWoodD2);
+                    fr.position.set(wx, 2.5, d / 2 + 0.01);
+                    g.add(fr);
                 }
-                g.position.set(Math.cos(a) * 13.8, 0, Math.sin(a) * 13.8);
+                if (big) {
+                    const win2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.1, 0.1), tWin);
+                    win2.position.set(0, h + 0.9, d * 0.32);
+                    g.add(win2);
+                } // หน้าต่างจั่วชั้นบน
+                const chim = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.6, 0.7), tStoneD);
+                chim.position.set(w * 0.28, h + 1.6, -d * 0.2);
+                g.add(chim);
+                g.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(g);
             };
-            [[0xf2d8c0, -2.55], [0xd8e8f2, -1.95], [0xf8e2ee, -1.35], [0xe2f2d8, -0.75], [0xf2ecd0, -0.15], [0xe8d8f2, 2.5], [0xd8f2ea, 3.35]].forEach(([c, a]) => mkHouse(c, a));
+            // วงนอก — บ้านเรียงรอบเมือง (เว้นช่องประตูทิศใต้)
+            const HUES = [0xf2d8c0, 0xd8e8f2, 0xf8e2ee, 0xe2f2d8, 0xf2ecd0, 0xe8d8f2, 0xd8f2ea, 0xfce4d0, 0xdde4f6, 0xf6e0e8];
+            for (let k = 0; k < 16; k++) {
+                const a = (k / 16) * Math.PI * 2;
+                const towardGate = Math.abs(Math.sin(a) - 1) < 0.16 && Math.abs(Math.cos(a)) < 0.35; // เว้นทางออกทิศ +z
+                if (towardGate)
+                    continue;
+                mkHouse(HUES[k % HUES.length], a, 33 + (k % 3) * 1.6, k % 4 === 0);
+            }
+            // แถวหลัง — อาคารอีกชั้นถัดออกไป ให้เมืองดูมีย่านลึก (อยู่นอกเขตเดิน ไม่ทับตัวละคร)
+            for (let k = 0; k < 10; k++) {
+                const a = (k / 10) * Math.PI * 2 + 0.32;
+                if (Math.abs(Math.sin(a) - 1) < 0.3 && Math.abs(Math.cos(a)) < 0.5)
+                    continue;
+                mkHouse(HUES[(k + 3) % HUES.length], a, 40 + (k % 2) * 1.8, k % 3 === 0);
+            }
         }
         { // 🌸 ต้นซากุระ + โคมไฟ + แผงตลาด + ป้ายเมือง
             // 🌷 กระถางดอกไม้เตี้ยแทนต้นไม้ใหญ่ — ลานเมืองโล่ง มองเห็นทั่วถึง
-            for (const [a, rr] of [[-2.25, 11], [-1.05, 11], [0.2, 11], [2.9, 11], [3.9, 11.5]]) {
+            const tBud = new THREE.MeshStandardMaterial({ color: 0xf6ea9a, roughness: 0.8 });
+            const mkPlanter = (px, pz) => {
                 const pl = new THREE.Group();
-                const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.42, 0.46, 12), tStoneD);
-                pot.position.y = 0.23;
+                const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.62, 0.68, 12), tStoneD);
+                pot.position.y = 0.34;
                 pl.add(pot);
-                const lip = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.05, 6, 16), tStone);
+                const lip = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.07, 6, 18), tStone);
                 lip.rotation.x = Math.PI / 2;
-                lip.position.y = 0.45;
+                lip.position.y = 0.66;
                 pl.add(lip);
-                const soil = new THREE.Mesh(new THREE.CircleGeometry(0.48, 14), new THREE.MeshStandardMaterial({ color: 0x5a4530, roughness: 0.95 }));
+                const soil = new THREE.Mesh(new THREE.CircleGeometry(0.72, 14), new THREE.MeshStandardMaterial({ color: 0x5a4530, roughness: 0.95 }));
                 soil.rotation.x = -Math.PI / 2;
-                soil.position.y = 0.47;
+                soil.position.y = 0.69;
                 pl.add(soil);
-                for (let f = 0; f < 5; f++) {
-                    const fa = f / 5 * Math.PI * 2;
-                    const bud = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), f % 2 ? tLeafP : new THREE.MeshStandardMaterial({ color: 0xf6ea9a, roughness: 0.8 }));
-                    bud.position.set(Math.cos(fa) * 0.26, 0.62, Math.sin(fa) * 0.26);
+                for (let f = 0; f < 6; f++) {
+                    const fa = f / 6 * Math.PI * 2;
+                    const bud = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), f % 2 ? tLeafP : tBud);
+                    bud.position.set(Math.cos(fa) * 0.4, 0.9, Math.sin(fa) * 0.4);
                     pl.add(bud);
                 }
-                pl.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
+                pl.position.set(px, 0, pz);
                 townZone.add(pl);
+            };
+            for (let k = 0; k < 14; k++) {
+                const a = (k / 14) * Math.PI * 2 + 0.22;
+                mkPlanter(Math.cos(a) * 19.5, Math.sin(a) * 19.5);
             }
-            for (let k = 0; k < 6; k++) {
-                const a = k * Math.PI / 3 + Math.PI / 6;
+            for (let k = 0; k < 8; k++) {
+                const a = (k / 8) * Math.PI * 2;
+                mkPlanter(Math.cos(a) * 9.5, Math.sin(a) * 9.5);
+            }
+            for (let k = 0; k < 12; k++) {
+                const a = k * Math.PI / 6 + Math.PI / 12;
+                const rr = k % 2 ? 28 : 15;
                 const lp = new THREE.Group();
-                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 2.6, 8), tStoneD);
-                pole.position.y = 1.3;
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 4.2, 8), tStoneD);
+                pole.position.y = 2.1;
                 lp.add(pole);
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8c060, emissiveIntensity: 0.9 }));
-                head.position.y = 2.7;
+                const arm = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 6, 12, Math.PI), tStoneD);
+                arm.position.y = 4.2;
+                lp.add(arm);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8c060, emissiveIntensity: 0.9 }));
+                head.position.y = 4.35;
                 lp.add(head);
-                lp.position.set(Math.cos(a) * 7.5, 0, Math.sin(a) * 7.5);
+                lp.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 townZone.add(lp);
             }
-            const mkStall = (a, awnBase, awnAcc, goods) => {
+            const mkStall = (a, rr, awnBase, awnAcc, goods) => {
                 const st = new THREE.Group();
-                for (const [px, pz] of [[-1.1, -0.8], [1.1, -0.8], [-1.1, 0.8], [1.1, 0.8]]) {
-                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.2, 8), tWoodD2);
-                    post.position.set(px, 1.1, pz);
+                for (const [px, pz] of [[-1.9, -1.4], [1.9, -1.4], [-1.9, 1.4], [1.9, 1.4]]) {
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 3.4, 8), tWoodD2);
+                    post.position.set(px, 1.7, pz);
                     st.add(post);
                 }
-                const awn = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.1, 2.1), new THREE.MeshStandardMaterial({ map: homeStyleTex(awnBase, awnAcc, "stripe", 3, 1), roughness: 0.8 }));
-                awn.position.y = 2.25;
+                const awn = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.16, 3.6), new THREE.MeshStandardMaterial({ map: homeStyleTex(awnBase, awnAcc, "stripe", 4, 1), roughness: 0.8 }));
+                awn.position.y = 3.5;
                 awn.rotation.z = 0.06;
                 st.add(awn);
-                const counter = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.75, 1.1), tWood);
-                counter.position.y = 0.55;
+                const counter = new THREE.Mesh(new THREE.BoxGeometry(4.1, 1.15, 1.8), tWood);
+                counter.position.y = 0.85;
                 st.add(counter);
-                goods.forEach((gc, gi) => { const box = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.4), new THREE.MeshStandardMaterial({ color: gc, roughness: 0.8 })); box.position.set(-0.7 + gi * 0.7, 1.08, 0); st.add(box); });
-                st.position.set(Math.cos(a) * 10, 0, Math.sin(a) * 10);
+                goods.forEach((gc, gi) => { const box = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.5, 0.66), new THREE.MeshStandardMaterial({ color: gc, roughness: 0.8 })); box.position.set(-1.2 + gi * 1.2, 1.67, 0); st.add(box); });
+                st.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 st.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(st);
             };
-            mkStall(2.1, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
-            mkStall(2.75, "#eef4fd", "#6a90d8", [0x6a90d8, 0xd8d0c8, 0xb083d8]);
-            mkStall(-2.7, "#f4fdee", "#6ab86a", [0x8ac06a, 0xf2d83a, 0xe89a4a]);
+            mkStall(2.1, 15.5, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
+            mkStall(2.75, 15.5, "#eef4fd", "#6a90d8", [0x6a90d8, 0xd8d0c8, 0xb083d8]);
+            mkStall(-2.7, 15.5, "#f4fdee", "#6ab86a", [0x8ac06a, 0xf2d83a, 0xe89a4a]);
+            mkStall(-1.35, 15.5, "#fdf2fb", "#d87ac0", [0xd87ac0, 0xf6c8e2, 0xa86ad0]);
+            mkStall(0.55, 15.5, "#fdfaea", "#d8a83a", [0xf2d83a, 0xe8b06a, 0xd8d0c8]);
             const bb = new THREE.Group();
-            for (const px of [-0.65, 0.65]) {
-                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.9, 8), tWoodD2);
-                post.position.set(px, 0.95, 0);
+            for (const px of [-1.1, 1.1]) {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 3.0, 8), tWoodD2);
+                post.position.set(px, 1.5, 0);
                 bb.add(post);
             }
-            const panel = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.0, 0.1), tWood);
-            panel.position.y = 1.5;
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.7, 0.16), tWood);
+            panel.position.y = 2.4;
             bb.add(panel);
-            const bLab = ranchLabel(3.4, 1.0);
+            const bLab = ranchLabel(5.0, 1.4);
             bLab.draw("🏰 เมืองเชอร์รี่ · เขตปลอดภัย 100%", "#fff4e0");
-            bLab.sprite.position.set(0, 2.6, 0);
+            bLab.sprite.position.set(0, 4.2, 0);
             bb.add(bLab.sprite);
-            bb.position.set(3.4, 0, 7.2);
+            bb.position.set(7.6, 0, 16);
             bb.rotation.y = Math.PI + 0.5;
             townZone.add(bb);
-            const warm = new THREE.PointLight(0xfff0d0, 0.45, 40);
-            warm.position.set(0, 8, 0);
+            const warm = new THREE.PointLight(0xfff0d0, 0.5, 95);
+            warm.position.set(0, 14, 0);
             townZone.add(warm);
+            for (const [lx, lz] of [[-20, -20], [20, -20], [-20, 20], [20, 20]]) {
+                const l2 = new THREE.PointLight(0xffeccc, 0.28, 46);
+                l2.position.set(lx, 7, lz);
+                townZone.add(l2);
+            } // 💡 ไฟมุมเมือง ให้สว่างทั่วลานใหญ่
         }
         { // 🌸 ซุ้มประตูออกผจญภัย (ทิศใต้) + แท่นวาร์ปออก
+            const GZ = 33; // ระยะประตูเมืองทิศใต้
             for (const sx of [-1, 1]) {
-                const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 3.6, 10), tStone);
-                pil.position.set(sx * 2.2, 1.8, 13.2);
+                const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 7.2, 12), tStone);
+                pil.position.set(sx * 4.4, 3.6, GZ);
                 townZone.add(pil);
-                const cap = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.3, 1.1), tStoneD);
-                cap.position.set(sx * 2.2, 3.75, 13.2);
+                const cap = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.6, 2.1), tStoneD);
+                cap.position.set(sx * 4.4, 7.5, GZ);
                 townZone.add(cap);
+                const orb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), new THREE.MeshStandardMaterial({ color: 0xffe9b0, emissive: 0xe0a840, emissiveIntensity: 0.9 }));
+                orb.position.set(sx * 4.4, 8.1, GZ);
+                townZone.add(orb);
             }
-            const beam = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.5, 0.8), tStoneD);
-            beam.position.set(0, 4.1, 13.2);
+            const beam = new THREE.Mesh(new THREE.BoxGeometry(11.2, 1.0, 1.6), tStoneD);
+            beam.position.set(0, 8.2, GZ);
             townZone.add(beam);
-            const gLab = ranchLabel(3.4, 1.1);
+            const gLab = ranchLabel(5.0, 1.6);
             gLab.draw("🌸 ออกผจญภัย", "#ffe9d0");
-            gLab.sprite.position.set(0, 5.0, 13.2);
+            gLab.sprite.position.set(0, 10.0, GZ);
             townZone.add(gLab.sprite);
-            const exDisc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 26), new THREE.MeshStandardMaterial({ color: 0xd9ecd0, emissive: 0x8ab87a, emissiveIntensity: 0.4, side: THREE.DoubleSide }));
+            const exDisc = new THREE.Mesh(new THREE.CircleGeometry(2.1, 30), new THREE.MeshStandardMaterial({ color: 0xd9ecd0, emissive: 0x8ab87a, emissiveIntensity: 0.4, side: THREE.DoubleSide }));
             exDisc.rotation.x = -Math.PI / 2;
-            exDisc.position.set(0, 0.06, 11.9);
+            exDisc.position.set(0, 0.06, 29.8);
             townZone.add(exDisc);
-            const exRing = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.07, 10, 26), new THREE.MeshStandardMaterial({ color: 0xaad890, emissive: 0x6a9a4a, emissiveIntensity: 0.7 }));
+            const exRing = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.13, 10, 30), new THREE.MeshStandardMaterial({ color: 0xaad890, emissive: 0x6a9a4a, emissiveIntensity: 0.7 }));
             exRing.rotation.x = -Math.PI / 2;
-            exRing.position.set(0, 0.1, 11.9);
+            exRing.position.set(0, 0.12, 29.8);
             townZone.add(exRing);
             G._townExitRing = exRing;
         }
@@ -20654,17 +20729,19 @@ function CherryAdventure() {
                 catch (e) { }
             }
             G._townFolk = [];
-            buildTownFolk("🧺 ป้าแดง แม่ค้าผลไม้", null, Math.cos(2.1) * 8.4, Math.sin(2.1) * 8.4, false, 1.0);
-            buildTownFolk("💂 ลุงมี ยามเมือง", null, 2.4, 10.4, false, 0.7);
-            buildTownFolk("🌼 น้องจูน", null, -3.6, 5.4, false, 2.0);
+            buildTownFolk("🧺 ป้าแดง แม่ค้าผลไม้", null, Math.cos(2.1) * 13.4, Math.sin(2.1) * 13.4, false, 1.4);
+            buildTownFolk("💂 ลุงมี ยามเมือง", null, 5.0, 27.5, false, 1.0);
+            buildTownFolk("🌼 น้องจูน", null, -7.5, 11.5, false, 3.0);
+            buildTownFolk("🔨 ช่างต้อม", null, Math.cos(-2.7) * 13.4, Math.sin(-2.7) * 13.4, false, 1.2);
+            buildTownFolk("📖 ครูฝน", null, -13.5, -6.5, false, 2.4);
             if (!G.net || !G.net.enabled())
                 return;
             try {
                 const rows = (await G.net.leaderboard(16)) || [];
                 let n = 0;
                 rows.filter((r) => r && r.pid && r.pid !== G.pid && r.n).slice(0, 10).forEach((r, i) => {
-                    const a = (i / 10) * Math.PI * 2 + 0.3, rr = 4.6 + (i % 3) * 1.7;
-                    buildTownFolk(`🟢 ${String(r.n).slice(0, 12)} · Lv.${r.lv || 1}`, r.c, Math.cos(a) * rr, Math.sin(a) * rr, true, 2.4);
+                    const a = (i / 10) * Math.PI * 2 + 0.3, rr = 8.5 + (i % 3) * 3.6;
+                    buildTownFolk(`🟢 ${String(r.n).slice(0, 12)} · Lv.${r.lv || 1}`, r.c, Math.cos(a) * rr, Math.sin(a) * rr, true, 4.0);
                     n++;
                 });
                 if (G.inTownZone && n && G.toast)
@@ -20681,7 +20758,7 @@ function CherryAdventure() {
                     continue;
                 if (c.isLight || c.isCamera || c.type === "Sprite")
                     continue;
-                if (Math.hypot(c.position.x, c.position.z) > 34)
+                if (Math.hypot(c.position.x, c.position.z) > TR + 26)
                     continue; // ของไกลลิบ ปล่อยเป็นฉากหลัง
                 try {
                     bb.setFromObject(c);
@@ -20704,7 +20781,7 @@ function CherryAdventure() {
             G.inTownZone = true;
             G.vel = G.vel || { x: 0, z: 0 };
             G._townReturn = { x: char.position.x, z: char.position.z };
-            char.position.set(0, char.position.y, 8.5);
+            char.position.set(0, char.position.y, 24);
             char.rotation.y = Math.PI; // หันหน้าเข้าน้ำพุ
             G.vel.x = 0;
             G.vel.z = 0;
@@ -20729,6 +20806,11 @@ function CherryAdventure() {
             if (G._hideBiomeDecor)
                 G._hideBiomeDecor();
             townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
+            if (scene.fog) {
+                G._townFogPrev = { near: scene.fog.near, far: scene.fog.far };
+                scene.fog.near = 78;
+                scene.fog.far = 210;
+            } // 🌫️ เมืองกว้าง — ดันหมอกออกไป ให้เห็นทั่วทั้งเมือง
             townZone.visible = true;
             G.refreshTownFolk();
             if (G.sfx && G.sfx.warp)
@@ -20742,6 +20824,11 @@ function CherryAdventure() {
             G.inTownZone = false;
             townZone.visible = false;
             townWorldShow(); // 🌳 คืนต้นไม้/อาคารของโลกภายนอก
+            if (scene.fog && G._townFogPrev) {
+                scene.fog.near = G._townFogPrev.near;
+                scene.fog.far = G._townFogPrev.far;
+                G._townFogPrev = null;
+            } // 🌫️ คืนหมอกปกติ
             wilds.forEach((m) => (m.visible = true));
             if (portal)
                 portal.visible = true;
@@ -34194,7 +34281,7 @@ function CherryAdventure() {
                         } });
                     }
                     if (G.inTownZone) { // 🏰 ในเมือง: ประตูออก + กันของโลกภายนอกโผล่ + ชาวเมือง/ผู้เล่นเดินเล่น
-                        if (Math.hypot(char.position.x - 0, char.position.z - 11.9) < 1.2)
+                        if (Math.hypot(char.position.x - 0, char.position.z - 29.8) < 2.3)
                             try {
                                 G.exitTownZone();
                             }
@@ -34223,6 +34310,10 @@ function CherryAdventure() {
                                 for (const o of G._townHidden)
                                     if (o.visible)
                                         o.visible = false;
+                            if (scene.fog && scene.fog.far < 200) {
+                                scene.fog.near = 78;
+                                scene.fog.far = 210;
+                            } // 🌫️ กันระบบกลางวัน-กลางคืนดึงหมอกกลับมาบัง
                         }
                         if (G._townWater)
                             G._townWater.material.emissiveIntensity = 0.3 + Math.sin(t * 2) * 0.12; // 💧 น้ำพุระยิบ
@@ -34568,15 +34659,15 @@ function CherryAdventure() {
                         char.position.x = Math.max(-7.3, Math.min(7.3, char.position.x));
                         char.position.z = Math.max(-5.8, Math.min(6.2, char.position.z));
                     }
-                    else if (G.inTownZone) { // 🏰 เดินในลานเมือง + กันทะลุน้ำพุกลาง
+                    else if (G.inTownZone) { // 🏰 เดินในลานเมืองกว้าง + กันทะลุน้ำพุกลาง
                         const rr = Math.hypot(char.position.x, char.position.z);
-                        if (rr > 12.3) {
-                            char.position.x *= 12.3 / rr;
-                            char.position.z *= 12.3 / rr;
+                        if (rr > 31) {
+                            char.position.x *= 31 / rr;
+                            char.position.z *= 31 / rr;
                         }
-                        else if (rr < 3.0 && rr > 0.001) {
-                            char.position.x *= 3.0 / rr;
-                            char.position.z *= 3.0 / rr;
+                        else if (rr < 5.4 && rr > 0.001) {
+                            char.position.x *= 5.4 / rr;
+                            char.position.z *= 5.4 / rr;
                         }
                     }
                     else {
