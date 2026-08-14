@@ -2376,8 +2376,8 @@ export default function CherryAdventure() {
     G.hips = hips;
     G._chibiBody = [torso, pelvis, ...hips.children, ...legSkinMeshes, ...shoeMeshes]; // 🤖 base garment/skin — hidden under the aegis mech armor
     // neck connects head and body naturally
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.39, 22), skinMat);
-    neck.position.y = 1.98; // 🦢 คอสั้นลงอีกครึ่ง — ส่วนที่โผล่พ้นไหล่เหลือ ~1/6 ของต้นฉบับ (โคนยังฝังในลำตัว)
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.37, 22), skinMat);
+    neck.position.y = 1.97; // 🦢 คอสั้นสุด — คางแทบแตะไหล่ (โคนยังฝังในลำตัว ไม่มีช่องโหว่)
     char.add(neck);
     // 🏷️ player name + level + title label floating above the head
     const nameCanvas = document.createElement("canvas");
@@ -5025,7 +5025,7 @@ export default function CherryAdventure() {
     };
 
     const headG = new THREE.Group();
-    headG.position.y = 2.734; // วางหัวลงให้คอสั้นกระชับ (คางเกือบชิดไหล่)
+    headG.position.y = 2.698; // วางหัวลงต่ำสุด — คอโผล่พ้นไหล่แค่เส้นบาง ๆ
     headG.scale.setScalar(0.97); // 🎌 chibi proportions: หัวเล็กลงจากเดิม (1.3) ให้ได้สัดส่วนหัว:ตัว ≈ 1:3.2 — ผม/หมวก/หน้าย่อตามทั้งชุด
     char.add(headG);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
@@ -5725,6 +5725,17 @@ export default function CherryAdventure() {
     const setMouth = (n) => Object.entries(mouths).forEach(([k, m]) => (m.visible = k === n));
     setMouth("smile");
     G._chibiFace = [head, eyes, browL, browR, nose, cheekL, cheekR]; G._chibiMouths = mouths; // 🤖 hidden under the aegis helmet
+    // ---------- 🖤 เส้นขอบดำบาง ๆ สไตล์การ์ตูน (inverted-hull outline) ----------
+    {
+      const outlineMat = new THREE.MeshBasicMaterial({ color: 0x2a2430, side: THREE.BackSide, toneMapped: false });
+      const addOutline = (m, s) => { if (!m || !m.isMesh || m.userData._outl) return; const o = new THREE.Mesh(m.geometry, outlineMat); o.scale.setScalar(s); o.raycast = () => {}; o.userData._outl = 1; m.userData._outl = 1; m.add(o); };
+      addOutline(head, 1.025); // ขอบรอบใบหน้า/หัว
+      addOutline(neck, 1.09);
+      [armL, armR].forEach((a) => a.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.07); }));
+      [legL, legR].forEach((l) => l.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.05); }));
+      if (typeof baseHair !== "undefined" && baseHair) baseHair.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.03); }); // ขอบรอบทรงผมหลัก
+      G._outlineMat = outlineMat;
+    }
 
     // ---------- 🌸 HARU signature look (sakura & moon hero) ----------
     // A distinctive accessory + aura set shown when the Haru character is active.
