@@ -5031,6 +5031,22 @@ export default function CherryAdventure() {
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
     head.scale.set(1, 1.02, 0.95);
     head.castShadow = true;
+    // 💠 หน้าวีเชฟ — เรียวเฉพาะกราม→คาง (ใต้โหนกแก้มลงไป) โหนกแก้ม/ตา/ปาก คงเดิม
+    {
+      const p = head.geometry.attributes.position;
+      const yTop = -0.10, span = 0.62 + yTop; // เริ่มเรียวใต้แก้ม ไล่ถึงปลายคาง
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+        if (y >= yTop) continue;
+        const t = Math.min(1, (yTop - y) / span);
+        const k = Math.pow(t, 1.45);              // ค่อย ๆ สอบเข้า ไม่หักมุม
+        p.setX(i, x * (1 - 0.30 * k));            // กรามแคบลง
+        p.setZ(i, z * (1 - 0.15 * k));            // ด้านลึกสอบเล็กน้อย
+        p.setY(i, y - 0.03 * Math.pow(t, 2.4));   // ปลายคางแหลมยื่นลงนิด
+      }
+      p.needsUpdate = true;
+      head.geometry.computeVertexNormals();
+    }
     headG.add(head);
     // ⛑️ silver open-face knight helmet (shows the face) — only visible for the warrior class
     {
