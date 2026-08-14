@@ -5040,9 +5040,9 @@ export default function CherryAdventure() {
         if (y >= yTop) continue;
         const t = Math.min(1, (yTop - y) / span);
         const k = Math.pow(t, 1.45);              // ค่อย ๆ สอบเข้า ไม่หักมุม
-        p.setX(i, x * (1 - 0.30 * k));            // กรามแคบลง
-        p.setZ(i, z * (1 - 0.15 * k));            // ด้านลึกสอบเล็กน้อย
-        p.setY(i, y - 0.03 * Math.pow(t, 2.4));   // ปลายคางแหลมยื่นลงนิด
+        p.setX(i, x * (1 - 0.44 * k));            // กรามแคบลง (เรียวขึ้นอีก)
+        p.setZ(i, z * (1 - 0.22 * k));            // ด้านลึกสอบตาม
+        p.setY(i, y - 0.05 * Math.pow(t, 2.4));   // ปลายคางแหลมยื่นลง
       }
       p.needsUpdate = true;
       head.geometry.computeVertexNormals();
@@ -5739,22 +5739,13 @@ export default function CherryAdventure() {
     G._chibiFace = [head, eyes, browL, browR, nose, cheekL, cheekR]; G._chibiMouths = mouths; // 🤖 hidden under the aegis helmet
     // ---------- 🖤 เส้นขอบดำบาง ๆ สไตล์การ์ตูน (inverted-hull outline) ----------
     {
-      const outlineMat = new THREE.MeshBasicMaterial({ color: 0x191320, side: THREE.BackSide, toneMapped: false }); // เข้มขึ้น ตัดกับผิวชัด
+      const outlineMat = new THREE.MeshBasicMaterial({ color: 0x2a2430, side: THREE.BackSide, toneMapped: false });
       const addOutline = (m, s) => { if (!m || !m.isMesh || m.userData._outl) return; const o = new THREE.Mesh(m.geometry, outlineMat); o.scale.setScalar(s); o.raycast = () => {}; o.userData._outl = 1; m.userData._outl = 1; m.add(o); };
-      // 🖊️ ขอบกรอบหน้า — ดันผิวออกตามเส้นตั้งฉาก หนาเต็มที่ช่วงแก้ม/กราม/คาง แล้วจางเป็น 0 ที่กระหม่อม
-      { const d = 0.062, g = head.geometry.clone(), p = g.attributes.position, n = g.attributes.normal;
-        for (let i = 0; i < p.count; i++) {
-          const y = p.getY(i);
-          const w = y <= 0.08 ? 1 : Math.max(0, 1 - (y - 0.08) / 0.30); // กันขอบโผล่ทะลุผม
-          p.setXYZ(i, p.getX(i) + n.getX(i) * d * w, y + n.getY(i) * d * w, p.getZ(i) + n.getZ(i) * d * w);
-        }
-        p.needsUpdate = true;
-        const o = new THREE.Mesh(g, outlineMat); o.raycast = () => {}; o.userData._outl = 1; head.userData._outl = 1; head.add(o);
-      }
+      addOutline(head, 1.025); // ขอบรอบใบหน้า/หัว — เส้นบางแบบเดิม
       addOutline(neck, 1.09);
       [armL, armR].forEach((a) => a.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.07); }));
       [legL, legR].forEach((l) => l.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.05); }));
-      if (typeof baseHair !== "undefined" && baseHair) baseHair.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.045); }); // ขอบรอบทรงผมหลัก (หนาพอ ๆ กับขอบหน้า ไม่ให้ขอบหัวโผล่ทะลุผม)
+      if (typeof baseHair !== "undefined" && baseHair) baseHair.traverse((o) => { if (o.isMesh && !o.userData._outl) addOutline(o, 1.03); }); // ขอบรอบทรงผมหลัก
       G._outlineMat = outlineMat;
     }
 
