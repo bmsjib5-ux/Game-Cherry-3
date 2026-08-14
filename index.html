@@ -2594,8 +2594,8 @@ function CherryAdventure() {
         G.hips = hips;
         G._chibiBody = [torso, pelvis, ...hips.children, ...legSkinMeshes, ...shoeMeshes]; // 🤖 base garment/skin — hidden under the aegis mech armor
         // neck connects head and body naturally
-        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.43, 22), skinMat);
-        neck.position.y = 2.0; // 🦢 คอสั้นลง — ส่วนที่โผล่พ้นไหล่เหลือ 1 ใน 3 ของเดิม (โคนยังฝังในลำตัวเท่าเดิม)
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.39, 22), skinMat);
+        neck.position.y = 1.98; // 🦢 คอสั้นลงอีกครึ่ง — ส่วนที่โผล่พ้นไหล่เหลือ ~1/6 ของต้นฉบับ (โคนยังฝังในลำตัว)
         char.add(neck);
         // 🏷️ player name + level + title label floating above the head
         const nameCanvas = document.createElement("canvas");
@@ -6966,7 +6966,7 @@ function CherryAdventure() {
             updateAura();
         };
         const headG = new THREE.Group();
-        headG.position.y = 2.77; // วางหัวลงให้คอสั้นกระชับ (คางห่างจากไหล่ ~1/3 ของเดิม)
+        headG.position.y = 2.734; // วางหัวลงให้คอสั้นกระชับ (คางเกือบชิดไหล่)
         headG.scale.setScalar(0.97); // 🎌 chibi proportions: หัวเล็กลงจากเดิม (1.3) ให้ได้สัดส่วนหัว:ตัว ≈ 1:3.2 — ผม/หมวก/หน้าย่อตามทั้งชุด
         char.add(headG);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
@@ -7621,27 +7621,30 @@ function CherryAdventure() {
             const e = new THREE.Group();
             // sclera: soft white behind the iris (hand-drawn depth)
             const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 18), new THREE.MeshBasicMaterial({ color: 0xfdfbf6 }));
-            sclera.scale.set(0.9, 1.3, 0.3);
+            sclera.scale.set(1.0, 1.4, 0.3); // ⚪ ตาขาวกว้างขึ้น ตาดูโตกลมเหมือนภาพอ้างอิง
             // big colored iris — slightly narrower, sits a touch low (natural anime gaze)
             const iris = new THREE.Mesh(new THREE.SphereGeometry(0.082, 18, 18), irisMat);
-            iris.scale.set(0.78, 1.2, 0.3);
+            iris.scale.set(0.95, 1.37, 0.3); // 👁️ ม่านตาเต็มตา เหลือขอบขาวบาง ๆ (ตามภาพอ้างอิง)
             iris.position.set(0, -0.012, 0.02);
             // dark pupil inside the iris = depth, ไม่ใช่ตาแบนๆ
-            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 12), darkMat);
-            pupil.scale.set(0.85, 1.25, 0.3);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 12), darkMat);
+            pupil.scale.set(0.9, 1.3, 0.3);
             pupil.position.set(0, -0.015, 0.045);
             // upper eyelid line: bold dark arc over the eye (เส้นเปลือกตาแบบลายเส้น)
-            const lid = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.02, 8, 18, Math.PI * 0.95), darkMat);
-            lid.position.set(0, 0.015, 0.05);
+            const lid = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.02, 8, 18, Math.PI * 0.95), darkMat);
+            lid.position.set(0, 0.032, 0.05); // ยกเส้นเปลือกตาขึ้น เปิดตาให้เห็นตาขาว/ม่านตามากขึ้น
             lid.rotation.z = Math.PI * 0.025 * side;
             lid.scale.set(1.05, 1.15, 0.6);
-            // highlights: one big soft + one tiny
-            const hi1 = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), whiteMat);
-            hi1.position.set(-0.03 * side, 0.045, 0.055);
+            // ✨ highlights: ประกายตาใหญ่ + ประกายรอง + ดาวเล็กมุมบน — ตาแวววาวขึ้น
+            const hi1 = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), whiteMat);
+            hi1.position.set(-0.03 * side, 0.05, 0.06);
             hi1.scale.z = 0.4;
-            const hi2 = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), whiteMat);
-            hi2.position.set(0.032 * side, -0.05, 0.055);
+            const hi2 = new THREE.Mesh(new THREE.SphereGeometry(0.019, 8, 8), whiteMat);
+            hi2.position.set(0.034 * side, -0.055, 0.06);
             hi2.scale.z = 0.4;
+            const hi3 = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), whiteMat);
+            hi3.position.set(0.045 * side, 0.075, 0.058);
+            hi3.scale.z = 0.4;
             // lashes: two flicks, different sizes (asymmetry = natural)
             const lash = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.085, 6), darkMat);
             lash.position.set(0.078 * side, 0.115, 0.03);
@@ -7649,8 +7652,9 @@ function CherryAdventure() {
             const lash2 = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.055, 6), darkMat);
             lash2.position.set(0.052 * side, 0.135, 0.028);
             lash2.rotation.z = -0.55 * side;
-            e.add(sclera, iris, pupil, lid, hi1, hi2, lash, lash2);
-            e.position.set(0.2 * side, -0.03, 0.52);
+            e.add(sclera, iris, pupil, lid, hi1, hi2, hi3, lash, lash2);
+            e.position.set(0.21 * side, -0.09, 0.52);
+            e.scale.setScalar(1.45); // 👀 ขยายดวงตาทั้งชุดบนหัวที่เล็กลง — หน้าเด่นเหมือนภาพอ้างอิง
             return e;
         };
         const eyeL = makeAnimeEye(-1);
@@ -7658,7 +7662,7 @@ function CherryAdventure() {
         // extra sparkles for "big sparkly" style
         const bigSpark = new THREE.Group();
         for (const sx of [-0.17, 0.23]) {
-            const sp2 = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), whiteMat);
+            const sp2 = new THREE.Mesh(new THREE.SphereGeometry(0.034, 8, 8), whiteMat);
             sp2.position.set(sx, 0.09, 0.6);
             bigSpark.add(sp2);
         }
@@ -7666,7 +7670,7 @@ function CherryAdventure() {
         // smiling closed-eye arcs
         const smileEyes = new THREE.Group();
         for (const sx of [-0.2, 0.2]) {
-            const arc = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.022, 8, 16, Math.PI), darkMat);
+            const arc = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.026, 8, 16, Math.PI), darkMat);
             arc.position.set(sx, 0.0, 0.53);
             smileEyes.add(arc);
         }
@@ -7674,7 +7678,7 @@ function CherryAdventure() {
         // ✨ four-point star highlights (for the green sparkle style)
         const starSparks = new THREE.Group();
         for (const sx of [-0.2, 0.2]) {
-            const st1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), new THREE.MeshBasicMaterial({ color: 0xeafff0 }));
+            const st1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), new THREE.MeshBasicMaterial({ color: 0xeafff0 }));
             st1.scale.set(0.6, 1.5, 0.25);
             st1.position.set(sx, 0.02, 0.63);
             const st2 = st1.clone();
@@ -7699,45 +7703,45 @@ function CherryAdventure() {
             eyeR.scale.setScalar(s3);
         };
         // 🖌️ eyebrows (มีคิ้ว = หน้ามีชีวิต) — thin arcs, slightly uneven like hand-drawn
-        const browMat = new THREE.MeshBasicMaterial({ color: 0x6a4530 });
-        const browL = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 14, Math.PI * 0.7), browMat);
-        browL.position.set(-0.2, 0.17, 0.55);
+        const browMat = new THREE.MeshBasicMaterial({ color: 0x513222 }); // 🖌️ เข้มขึ้น เห็นคิ้วชัด
+        const browL = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.019, 6, 16, Math.PI * 0.72), browMat); // ยาว+หนาขึ้น
+        browL.position.set(-0.215, 0.178, 0.555);
         browL.rotation.z = Math.PI * 0.16;
-        const browR = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 14, Math.PI * 0.7), browMat);
-        browR.position.set(0.2, 0.175, 0.55);
+        const browR = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.019, 6, 16, Math.PI * 0.72), browMat);
+        browR.position.set(0.215, 0.183, 0.555);
         browR.rotation.z = Math.PI * 0.12; // ← คิ้วสองข้างเอียงไม่เท่ากันนิดๆ
         headG.add(browL, browR);
         // tiny nose dot
         const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), new THREE.MeshBasicMaterial({ color: 0xe8a988 }));
-        nose.position.set(0.015, -0.1, 0.585);
+        nose.position.set(0.015, -0.215, 0.585);
         nose.scale.set(1, 0.7, 0.5);
         headG.add(nose);
         // blush: soft wide ovals right under the eyes (ตำแหน่งอนิเมะแท้)
         const cheekL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), blushMat);
-        cheekL.scale.set(1.6, 0.55, 0.4);
-        cheekL.position.set(-0.33, -0.15, 0.48);
+        cheekL.scale.set(1.95, 0.68, 0.4); // 🌸 ปัดแก้มกว้างขึ้น เห็นชัดบนหัวที่เล็กลง
+        cheekL.position.set(-0.355, -0.265, 0.47);
         cheekL.rotation.z = 0.12;
         const cheekR = cheekL.clone();
-        cheekR.position.x = 0.33;
+        cheekR.position.x = 0.355;
         cheekR.rotation.z = -0.12;
         headG.add(cheekL, cheekR);
         const mouths = {};
-        const mSmile = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.018, 10, 20, Math.PI), darkMat);
-        mSmile.position.set(0, -0.21, 0.545);
+        const mSmile = new THREE.Mesh(new THREE.TorusGeometry(0.083, 0.022, 10, 20, Math.PI), darkMat); // 😊 ปากยิ้มใหญ่ขึ้น
+        mSmile.position.set(0, -0.36, 0.525);
         mSmile.rotation.z = Math.PI;
         mouths.smile = mSmile;
         const mLaugh = new THREE.Group();
         const mo2 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshStandardMaterial({ color: 0x6e2f38 }));
-        mo2.scale.set(1.25, 0.95, 0.4);
-        mo2.position.set(0, -0.21, 0.5);
+        mo2.scale.set(1.45, 1.1, 0.4);
+        mo2.position.set(0, -0.36, 0.485);
         mLaugh.add(mo2);
         mouths.laugh = mLaugh;
-        const mSad = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.022, 10, 20, Math.PI), darkMat);
-        mSad.position.set(0, -0.24, 0.53);
+        const mSad = new THREE.Mesh(new THREE.TorusGeometry(0.094, 0.026, 10, 20, Math.PI), darkMat);
+        mSad.position.set(0, -0.39, 0.515);
         mouths.sad = mSad;
-        const mOw = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), new THREE.MeshStandardMaterial({ color: 0x6e2f38 }));
+        const mOw = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), new THREE.MeshStandardMaterial({ color: 0x6e2f38 }));
         mOw.scale.set(1, 1.2, 0.4);
-        mOw.position.set(0, -0.2, 0.53);
+        mOw.position.set(0, -0.355, 0.515);
         mouths.ow = mOw;
         Object.values(mouths).forEach((m) => { m.visible = false; headG.add(m); });
         const setMouth = (n) => Object.entries(mouths).forEach(([k, m]) => (m.visible = k === n));
