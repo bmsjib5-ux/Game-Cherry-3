@@ -2480,7 +2480,7 @@ function CherryAdventure() {
         // ---------- Cherry ----------
         const char = new THREE.Group();
         // 📏 สัดส่วนตัวละคร: ขยายทั้งตัวเล็กน้อย (สูงขึ้น) — หัวถูกย่อแยกที่ headG ให้ได้สัดส่วนหัว:ตัวสวยขึ้น
-        const CHAR_S = 1.06;
+        const CHAR_S = 1.13;
         char.scale.setScalar(CHAR_S);
         scene.add(char);
         // 🏡 จุดเกิด/จุดฟื้น: หน้าบ้านในเขตปลอดภัยหมู่บ้าน (มอนสเตอร์เข้าไม่ได้/ตีไม่ได้)
@@ -2490,8 +2490,8 @@ function CherryAdventure() {
         const legSkinMeshes = []; // 🦵 ขาเปลี่ยนเป็นสีผิวได้ (ฮารุ)
         const makeLeg = (side) => {
             const hip = new THREE.Group();
-            hip.position.set(0.165 * side, 1.325, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
-            hip.scale.set(1, 1.24, 1); // 🦵 ขายาวขึ้นอีกเล็กน้อย (ยืดแนวตั้ง เท้ายังแตะพื้นเท่าเดิม)
+            hip.position.set(0.165 * side, 1.393, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
+            hip.scale.set(1, 1.30, 1); // 🦵 ขายาวขึ้นอีกเล็กน้อย (ยืดแนวตั้ง เท้ายังแตะพื้นเท่าเดิม)
             // ✨ thigh (upper leg) — from hip down to the knee
             const thighProfile = [
                 [0.1352, 0.00], // 🦵 หัวเข่า (ปลายล่าง) — รัศมีเท่าหัวน่อง → ต่อเนื่องไม่เห็นรอย
@@ -2904,11 +2904,12 @@ function CherryAdventure() {
                 [0.076, 0.5], // elbow
             ].map(([r, y]) => new THREE.Vector2(r, y));
             const upperArm = new THREE.Mesh(new THREE.LatheGeometry(upperProfile, 20), skinMat);
-            upperArm.position.y = -0.5;
+            upperArm.position.y = -0.53;
+            upperArm.scale.y = 1.06; // 💪 ท่อนบนยาวขึ้น
             p.add(sleeve, upperArm);
             // 💪 ELBOW JOINT — pivot at the elbow; the forearm + hand bend from here
             const elbow = new THREE.Group();
-            elbow.position.y = -0.5; // elbow height, relative to shoulder
+            elbow.position.y = -0.53; // elbow height, relative to shoulder (แขนยาวขึ้น)
             const foreProfile = [
                 [0.058, 0.00], // 🖐️ slim wrist (ปลายล่าง ชนมือ)
                 [0.066, 0.14],
@@ -2916,10 +2917,11 @@ function CherryAdventure() {
                 [0.0757, 0.42], // ข้อศอก — รัศมีเท่าปลายท่อนบน (0.076) → แขนไล่เรียวเป็นท่อนเดียว ไม่เห็นรอยต่อ
             ].map(([r, y]) => new THREE.Vector2(r, y));
             const forearm = new THREE.Mesh(new THREE.LatheGeometry(foreProfile, 20), skinMat);
-            forearm.position.y = -0.42;
+            forearm.position.y = -0.445;
+            forearm.scale.y = 1.06; // ท่อนล่างยาวขึ้น
             const hand = new THREE.Mesh(new THREE.SphereGeometry(0.115, 22, 22), skinMat);
             hand.scale.set(0.86, 1.05, 0.52); // ✋ ฝ่ามือแบน (ไม่เป็นลูกบอล)
-            hand.position.y = -0.52;
+            hand.position.y = -0.551;
             handMeshes.push(hand);
             // 🦴 ทรงกลมผิวจุดหมุนศอก — รัศมีเท่าท่อแขนพอดี: มองไม่เห็นตอนเหยียดตรง แค่อุดรอยต่อตอนงอ
             const elbowBall = new THREE.Mesh(new THREE.SphereGeometry(0.0765, 18, 16), skinMat);
@@ -2937,7 +2939,7 @@ function CherryAdventure() {
             thumb.position.set(-side * 0.096, -0.06, 0.028);
             thumb.rotation.z = -side * 0.55;
             fingers.add(thumb);
-            fingers.position.set(0, -0.52, 0);
+            fingers.position.set(0, -0.551, 0);
             elbow.add(forearm, hand, elbowBall, fingers);
             p.add(elbow);
             p.userData.elbow = elbow; // 💪 expose the joint for bending
@@ -2951,7 +2953,7 @@ function CherryAdventure() {
         // ---------- Weapons: visual model swaps with equipped item ----------
         let updateAura = () => { }; // assigned after outfit section
         const wand = new THREE.Group();
-        wand.position.set(0.02, -0.56, 0.12); // sits in the palm (relative to the elbow joint)
+        wand.position.set(0.02, -0.59, 0.12); // sits in the palm (relative to the elbow joint)
         wand.rotation.x = -0.5;
         (armR.userData.elbow || armR).add(wand); // 💪 follows the forearm/hand when the elbow bends
         // 🗡️✨ weapon-skin glow — soft additive halos trailing up the blade (color set per skin)
@@ -7766,7 +7768,21 @@ function CherryAdventure() {
             const outlineMat = new THREE.MeshBasicMaterial({ color: 0x2a2430, side: THREE.BackSide, toneMapped: false });
             const addOutline = (m, s) => { if (!m || !m.isMesh || m.userData._outl)
                 return; const o = new THREE.Mesh(m.geometry, outlineMat); o.scale.setScalar(s); o.raycast = () => { }; o.userData._outl = 1; m.userData._outl = 1; m.add(o); };
-            addOutline(head, 1.025); // ขอบรอบใบหน้า/หัว — เส้นบางแบบเดิม
+            addOutline(head, 1.025); // ขอบรอบใบหน้า/หัว
+            // 🖊️ เส้นขอบบาง ๆ เน้นเฉพาะแนวกราม–คาง (ไล่จาง 0 ที่ระดับแก้ม → เต็มที่ปลายคาง)
+            {
+                const d = 0.028, g = head.geometry.clone(), pos = g.attributes.position, nrm = g.attributes.normal;
+                for (let i = 0; i < pos.count; i++) {
+                    const y = pos.getY(i);
+                    const w = Math.max(0, Math.min(1, (-0.18 - y) / 0.22));
+                    pos.setXYZ(i, pos.getX(i) + nrm.getX(i) * d * w, y + nrm.getY(i) * d * w, pos.getZ(i) + nrm.getZ(i) * d * w);
+                }
+                pos.needsUpdate = true;
+                const chinLine = new THREE.Mesh(g, outlineMat);
+                chinLine.raycast = () => { };
+                chinLine.userData._outl = 1;
+                head.add(chinLine);
+            }
             addOutline(neck, 1.09);
             [armL, armR].forEach((a) => a.traverse((o) => { if (o.isMesh && !o.userData._outl)
                 addOutline(o, 1.07); }));
