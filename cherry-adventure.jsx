@@ -2376,8 +2376,8 @@ export default function CherryAdventure() {
     G.hips = hips;
     G._chibiBody = [torso, pelvis, ...hips.children, ...legSkinMeshes, ...shoeMeshes]; // 🤖 base garment/skin — hidden under the aegis mech armor
     // neck connects head and body naturally
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.62, 22), skinMat);
-    neck.position.y = 2.1; // คอยาวขึ้น เชื่อมไหล่→หัว
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.43, 22), skinMat);
+    neck.position.y = 2.0; // 🦢 คอสั้นลง — ส่วนที่โผล่พ้นไหล่เหลือ 1 ใน 3 ของเดิม (โคนยังฝังในลำตัวเท่าเดิม)
     char.add(neck);
     // 🏷️ player name + level + title label floating above the head
     const nameCanvas = document.createElement("canvas");
@@ -5025,7 +5025,7 @@ export default function CherryAdventure() {
     };
 
     const headG = new THREE.Group();
-    headG.position.y = 2.95; // ยกหัวขึ้นให้เห็นคอ (หัวเล็กลง → เผยคอชัดขึ้น)
+    headG.position.y = 2.77; // วางหัวลงให้คอสั้นกระชับ (คางห่างจากไหล่ ~1/3 ของเดิม)
     headG.scale.setScalar(0.97); // 🎌 chibi proportions: หัวเล็กลงจากเดิม (1.3) ให้ได้สัดส่วนหัว:ตัว ≈ 1:3.2 — ผม/หมวก/หน้าย่อตามทั้งชุด
     char.add(headG);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
