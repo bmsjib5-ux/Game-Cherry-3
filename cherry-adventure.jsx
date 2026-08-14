@@ -5609,8 +5609,8 @@ export default function CherryAdventure() {
       pupil.scale.set(0.9, 1.3, 0.3);
       pupil.position.set(0, -0.015, 0.045);
       // upper eyelid line: bold dark arc over the eye (เส้นเปลือกตาแบบลายเส้น)
-      const lid = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.02, 8, 18, Math.PI * 0.95), darkMat);
-      lid.position.set(0, 0.032, 0.05); // ยกเส้นเปลือกตาขึ้น เปิดตาให้เห็นตาขาว/ม่านตามากขึ้น
+      const lid = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.015, 8, 18, Math.PI * 0.95), darkMat);
+      lid.position.set(0, 0.032, 0.05); // เส้นเปลือกตาบนบางลง เล็กลงรับกับตา
       lid.rotation.z = Math.PI * 0.025 * side;
       lid.scale.set(1.05, 1.15, 0.6);
       // ✨ highlights: ประกายตาใหญ่ + ประกายรอง + ดาวเล็กมุมบน — ตาแวววาวขึ้น
@@ -5632,7 +5632,7 @@ export default function CherryAdventure() {
       lash2.rotation.z = -0.55 * side;
       e.add(sclera, iris, pupil, lid, hi1, hi2, hi3, lash, lash2);
       e.position.set(0.21 * side, -0.09, 0.52);
-      e.scale.setScalar(1.45); // 👀 ขยายดวงตาทั้งชุดบนหัวที่เล็กลง — หน้าเด่นเหมือนภาพอ้างอิง
+      e.scale.setScalar(1.28); // 👀 ตาย่อลงรับสัดส่วนหัวเล็ก (ยังโตกว่าเดิมแต่ไม่ล้นหน้า)
       return e;
     };
     const eyeL = makeAnimeEye(-1);
@@ -5704,20 +5704,20 @@ export default function CherryAdventure() {
     cheekR.rotation.z = -0.12;
     headG.add(cheekL, cheekR);
     const mouths = {};
-    const mSmile = new THREE.Mesh(new THREE.TorusGeometry(0.083, 0.022, 10, 20, Math.PI), darkMat); // 😊 ปากยิ้มใหญ่ขึ้น
+    const mSmile = new THREE.Mesh(new THREE.TorusGeometry(0.066, 0.016, 10, 20, Math.PI), darkMat); // 😊 ปากยิ้มเล็กพอดีหน้า
     mSmile.position.set(0, -0.36, 0.525);
     mSmile.rotation.z = Math.PI;
     mouths.smile = mSmile;
     const mLaugh = new THREE.Group();
     const mo2 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), new THREE.MeshStandardMaterial({ color: 0x6e2f38 }));
-    mo2.scale.set(1.45, 1.1, 0.4);
+    mo2.scale.set(1.15, 0.9, 0.4);
     mo2.position.set(0, -0.36, 0.485);
     mLaugh.add(mo2);
     mouths.laugh = mLaugh;
-    const mSad = new THREE.Mesh(new THREE.TorusGeometry(0.094, 0.026, 10, 20, Math.PI), darkMat);
+    const mSad = new THREE.Mesh(new THREE.TorusGeometry(0.074, 0.019, 10, 20, Math.PI), darkMat);
     mSad.position.set(0, -0.39, 0.515);
     mouths.sad = mSad;
-    const mOw = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), new THREE.MeshStandardMaterial({ color: 0x6e2f38 }));
+    const mOw = new THREE.Mesh(new THREE.SphereGeometry(0.056, 12, 12), new THREE.MeshStandardMaterial({ color: 0x6e2f38 }));
     mOw.scale.set(1, 1.2, 0.4);
     mOw.position.set(0, -0.355, 0.515);
     mouths.ow = mOw;
