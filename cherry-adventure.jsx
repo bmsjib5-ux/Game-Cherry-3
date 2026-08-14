@@ -2279,6 +2279,9 @@ export default function CherryAdventure() {
 
     // ---------- Cherry ----------
     const char = new THREE.Group();
+    // 📏 สัดส่วนตัวละคร: ขยายทั้งตัวเล็กน้อย (สูงขึ้น) — หัวถูกย่อแยกที่ headG ให้ได้สัดส่วนหัว:ตัวสวยขึ้น
+    const CHAR_S = 1.06;
+    char.scale.setScalar(CHAR_S);
     scene.add(char);
     // 🏡 จุดเกิด/จุดฟื้น: หน้าบ้านในเขตปลอดภัยหมู่บ้าน (มอนสเตอร์เข้าไม่ได้/ตีไม่ได้)
     G.spawnAtVillage = () => { char.position.set(-9.5, 0, -5.5); char.rotation.y = Math.PI / 2; };
@@ -2287,8 +2290,8 @@ export default function CherryAdventure() {
     const legSkinMeshes = []; // 🦵 ขาเปลี่ยนเป็นสีผิวได้ (ฮารุ)
     const makeLeg = (side) => {
       const hip = new THREE.Group();
-      hip.position.set(0.165 * side, 1.26, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
-      hip.scale.set(1, 1.18, 1); // 🦵 ขายาวขึ้น (ยืดแนวตั้ง เท้ายังอยู่พื้น)
+      hip.position.set(0.165 * side, 1.325, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
+      hip.scale.set(1, 1.24, 1); // 🦵 ขายาวขึ้นอีกเล็กน้อย (ยืดแนวตั้ง เท้ายังแตะพื้นเท่าเดิม)
       // ✨ thigh (upper leg) — from hip down to the knee
       const thighProfile = [
         [0.1352, 0.00], // 🦵 หัวเข่า (ปลายล่าง) — รัศมีเท่าหัวน่อง → ต่อเนื่องไม่เห็นรอย
@@ -5022,8 +5025,8 @@ export default function CherryAdventure() {
     };
 
     const headG = new THREE.Group();
-    headG.position.y = 2.92; // ยกหัวขึ้นให้เห็นคอ
-    headG.scale.setScalar(1.3); // 🎌 chibi proportions: big cute head
+    headG.position.y = 2.95; // ยกหัวขึ้นให้เห็นคอ (หัวเล็กลง → เผยคอชัดขึ้น)
+    headG.scale.setScalar(0.97); // 🎌 chibi proportions: หัวเล็กลงจากเดิม (1.3) ให้ได้สัดส่วนหัว:ตัว ≈ 1:3.2 — ผม/หมวก/หน้าย่อตามทั้งชุด
     char.add(headG);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
     head.scale.set(1, 1.02, 0.95);
@@ -25445,7 +25448,7 @@ export default function CherryAdventure() {
               char.rotation.y = Math.PI / 2;
               char.rotation.z = 0;
               char.rotation.y = Math.PI / 2;
-              char.scale.setScalar(1);
+              char.scale.setScalar(CHAR_S);
               char.visible = true; // (ระบำเงา flickers visibility)
               armR.rotation.z = 0.12;
               armR.rotation.x = G.cls === "archer" ? -1.4 : 0; // 🏹 bow hand steady forward
@@ -25498,7 +25501,7 @@ export default function CherryAdventure() {
               if (A.sxBars) { A.sxBars.forEach((b) => { scene.remove(b); disposeObj3D(b); }); A.sxBars = null; }
               if (A.dClones) { A.dClones.forEach((c) => { scene.remove(c); disposeObj3D(c); }); A.dClones = null; } // 🌪️ remove dance clones
               char.visible = true;
-              char.scale.setScalar(1);
+              char.scale.setScalar(CHAR_S);
               char.rotation.y = Math.PI / 2;
               char.traverse((o) => { if (o.isMesh && o.material && o.material.transparent) o.material.opacity = 1; });
               if (scene.fog && G.biomeFog) scene.fog.color.copy(G.biomeFog);
