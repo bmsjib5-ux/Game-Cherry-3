@@ -7792,6 +7792,41 @@ function CherryAdventure() {
                 baseHair.traverse((o) => { if (o.isMesh && !o.userData._outl)
                     addOutline(o, 1.03); }); // ขอบรอบทรงผมหลัก
             G._outlineMat = outlineMat;
+            // 🖋️ เส้นตัดขอบอนิเมะทั้งตัว — กวาดเติมเปลือกขอบให้ชิ้นที่มองเห็น (ชุด/เกราะ/อาวุธ/ของสวม) อัตโนมัติ
+            // เว้นชิ้นเล็กจิ๋ว (เพชร/หมุด — เส้นจะรก), ผ้าโปร่ง/สองหน้า (เปลือกจะซ้อนเพี้ยน) และเอฟเฟกต์เรืองแสง
+            const wsc = new THREE.Vector3();
+            G._toonSweep = () => {
+                const walk = (o) => {
+                    if (!o.visible)
+                        return;
+                    if (o.isMesh && !o.userData._outl && o.type !== "Sprite") {
+                        const mt = o.material;
+                        if (mt && !Array.isArray(mt) && !mt.transparent && mt.depthWrite !== false && mt.side !== THREE.DoubleSide && !mt.isMeshBasicMaterial && o.geometry) {
+                            const g = o.geometry;
+                            if (!g.boundingSphere)
+                                g.computeBoundingSphere();
+                            o.getWorldScale(wsc);
+                            const r = (g.boundingSphere ? g.boundingSphere.radius : 0) * Math.max(Math.abs(wsc.x), Math.abs(wsc.y), Math.abs(wsc.z));
+                            if (r > 0.14) {
+                                const sh = new THREE.Mesh(g, outlineMat); // ใช้ geometry ตัวเดียวกัน → ผ้าที่พริ้ว เส้นขอบพริ้วตาม
+                                sh.scale.setScalar(1.03);
+                                sh.raycast = () => { };
+                                sh.userData._outl = 1;
+                                o.userData._outl = 1;
+                                o.add(sh);
+                            }
+                            else
+                                o.userData._outl = 2; // เล็กเกิน — จำไว้ ไม่เช็คซ้ำ
+                        }
+                        else
+                            o.userData._outl = 2;
+                    }
+                    for (const c of o.children)
+                        walk(c);
+                };
+                walk(char);
+            };
+            G._toonSweep();
         }
         // ---------- 🌸 HARU signature look (sakura & moon hero) ----------
         // A distinctive accessory + aura set shown when the Haru character is active.
@@ -33485,6 +33520,12 @@ function CherryAdventure() {
                 // ✨ ออร่าชุดระดับสูง — เม็ดแสงลอยวนขึ้น · วงแหวน/รัศมีหมุน · แกนพลอยเต้นตามจังหวะ
                 if ((G._frzTick = (G._frzTick || 0) + 1) % 120 === 0 && G.refreshDecorFreeze)
                     G.refreshDecorFreeze(); // 🚀 ตรึงฉากนิ่งที่เพิ่งถูกสร้าง
+                if (G._frzTick % 60 === 20 && G._toonSweep) {
+                    try {
+                        G._toonSweep();
+                    }
+                    catch (e) { }
+                } // 🖋️ เติมเส้นขอบอนิเมะให้ชุด/อาวุธที่เพิ่งถูกสวม/แสดง
                 if (G._frzTick % 60 === 0) { // 🚀 กวาดตรึงชิ้นที่ซ่อนบนตัวละคร (ผม/ของสะสม/ยานพาหนะที่ไม่ได้ใช้) — ปลดเองเมื่อถูกโชว์
                     const unfreezeKeepM = (root) => root.traverse((o) => { if (!(o.userData && o.userData._frzM)) {
                         o.matrixAutoUpdate = true;
