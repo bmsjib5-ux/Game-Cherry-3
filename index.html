@@ -2562,7 +2562,7 @@ function CherryAdventure() {
         }
         const torso = new THREE.Mesh(torsoGeoF, shirtMat); // female curves by default
         torso.position.y = 1.14;
-        torso.scale.set(1.0, 0.8, 0.72); // 📏 ช่วงตัวสั้นลง (ย่อแนวตั้ง), flatter front-to-back
+        torso.scale.set(0.98, 0.85, 0.705); // 📏 ลำตัวยาวขึ้น (ยืดแนวตั้ง) + เพรียวลงเล็กน้อยให้ชุดยังคลุมพอดี
         torso.castShadow = true;
         char.add(torso);
         // pelvis: hip mass connecting the legs (flatter, wider than deep)
@@ -2595,7 +2595,7 @@ function CherryAdventure() {
         G._chibiBody = [torso, pelvis, ...hips.children, ...legSkinMeshes, ...shoeMeshes]; // 🤖 base garment/skin — hidden under the aegis mech armor
         // neck connects head and body naturally
         const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.37, 22), skinMat);
-        neck.position.y = 1.97; // 🦢 คอสั้นสุด — คางแทบแตะไหล่ (โคนยังฝังในลำตัว ไม่มีช่องโหว่)
+        neck.position.y = 2.02; // 🦢 คอสั้นสุด — คางแทบแตะไหล่ (โคนยังฝังในลำตัว ไม่มีช่องโหว่)
         char.add(neck);
         // 🏷️ player name + level + title label floating above the head
         const nameCanvas = document.createElement("canvas");
@@ -2891,7 +2891,7 @@ function CherryAdventure() {
         const handMeshes = [];
         const makeArm = (side) => {
             const p = new THREE.Group();
-            p.position.set(0.46 * side, 1.8, 0); // shoulders sit a touch narrower on the slimmer torso
+            p.position.set(0.46 * side, 1.85, 0); // ไหล่ยกตามลำตัวที่ยาวขึ้น
             // 💪 หัวไหล่ทรงเดลทอยด์ — ฝังลึกเข้าลำตัวและกลืนลงต้นแขน ให้ไหล่/บ่า/แขนเป็นเนื้อเดียว (จุดหมุนเดิม ขยับได้ปกติ)
             const sleeve = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 22), shirtMat);
             sleeve.scale.set(1.08, 1.16, 1.0);
@@ -6968,7 +6968,7 @@ function CherryAdventure() {
             updateAura();
         };
         const headG = new THREE.Group();
-        headG.position.y = 2.698; // วางหัวลงต่ำสุด — คอโผล่พ้นไหล่แค่เส้นบาง ๆ
+        headG.position.y = 2.748; // วางหัวลงต่ำสุด — คอโผล่พ้นไหล่แค่เส้นบาง ๆ
         headG.scale.setScalar(0.97); // 🎌 chibi proportions: หัวเล็กลงจากเดิม (1.3) ให้ได้สัดส่วนหัว:ตัว ≈ 1:3.2 — ผม/หมวก/หน้าย่อตามทั้งชุด
         char.add(headG);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), skinMat);
@@ -15720,9 +15720,9 @@ function CherryAdventure() {
             const male = g === 1;
             // male: broader shoulders, straighter/boxier torso; female: hourglass curves (โค้งเว้า)
             torso.geometry = male ? torsoGeoM : torsoGeoF;
-            torso.scale.set(male ? 1.14 : 0.93, 0.8, male ? 0.8 : 0.72); // 📏 y=0.8 ช่วงตัวสั้นลง
-            armL.position.y = 1.8;
-            armR.position.y = 1.8; // keep shoulders at the shorter torso height
+            torso.scale.set(male ? 1.12 : 0.912, 0.85, male ? 0.784 : 0.706); // 📏 y=0.85 ลำตัวยาวขึ้น + เพรียวลง 2%
+            armL.position.y = 1.85;
+            armR.position.y = 1.85; // ไหล่ยกตามลำตัวที่ยาวขึ้น
             pelvis.scale.set(male ? 0.98 : 1.16, 0.6, male ? 0.78 : 0.84); // ♀ เชิงกรานกว้างขึ้นรับส่วนโค้ง
             armL.position.x = -0.46 * (male ? 1.18 : 0.92); // shoulders wider apart for male
             armR.position.x = 0.46 * (male ? 1.18 : 0.92);
