@@ -2333,9 +2333,9 @@ export default function CherryAdventure() {
     const legR = makeLeg(1);
     // ✨ human-proportioned torso: broad chest → narrow waist → hips, with sloped shoulders
     // ♂ straight athletic profile
-    const torsoProfileM = [[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.34], [0.37, 0.48], [0.405, 0.62], [0.415, 0.74], [0.40, 0.86], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y));
+    const torsoProfileM = [[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.37], [0.37, 0.545], [0.405, 0.685], [0.415, 0.805], [0.40, 0.925], [0.35, 1.035], [0.24, 1.145], [0.12, 1.225]].map(([r, y]) => new THREE.Vector2(r, y));
     // ♀ hourglass profile — hip flare → pinched waist → soft bust swell (ส่วนโค้งเว้า)
-    const torsoProfileF = [[0.315, 0.00], [0.33, 0.08], [0.302, 0.20], [0.29, 0.32], [0.312, 0.46], [0.38, 0.60], [0.415, 0.72], [0.402, 0.84], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
+    const torsoProfileF = [[0.315, 0.00], [0.33, 0.08], [0.302, 0.20], [0.29, 0.35], [0.312, 0.525], [0.38, 0.665], [0.415, 0.785], [0.402, 0.905], [0.35, 1.035], [0.24, 1.145], [0.12, 1.225]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
     const torsoGeoM = new THREE.LatheGeometry(torsoProfileM, 44);
     const torsoGeoF = new THREE.LatheGeometry(torsoProfileF, 44);
     // 📐 side-view shaping (หน้านูน หลังตรง): flatten the back to a near-straight wall, puff the chest slightly
@@ -2344,16 +2344,16 @@ export default function CherryAdventure() {
       for (let i = 0; i < pos.count; i++) {
         let z = pos.getZ(i);
         const y = pos.getY(i);
-        if (z < -0.17) z = -0.17 - (Math.abs(z) - 0.17) * 0.80 - 0.055 * Math.max(0, 1 - Math.abs(y - 0.55) / 0.55);
-        else if (z > 0 && y > 0.5 && y < 1.0) z *= 1.08;
-        else if (z > 0 && y >= 0.05 && y <= 0.5) z *= 0.76; // 🫃 หน้าท้องแบนราบในมุมข้าง
+        if (z < -0.17) z = -0.17 - (Math.abs(z) - 0.17) * 0.80 - 0.055 * Math.max(0, 1 - Math.abs(y - 0.615) / 0.55);
+        else if (z > 0 && y > 0.565 && y < 1.065) z *= 1.08;
+        else if (z > 0 && y >= 0.05 && y <= 0.565) z *= 0.76; // 🫃 หน้าท้องแบนราบในมุมข้าง
         pos.setZ(i, z);
       }
       pos.needsUpdate = true;
       torsoGeoF.computeVertexNormals();
     }
     const torso = new THREE.Mesh(torsoGeoF, shirtMat); // female curves by default
-    torso.position.y = 1.14;
+    torso.position.y = 1.085; // ฐานลำตัวลงเท่าที่ยืดเอว → อก/ไหล่/คอ คงระดับเดิม ชุดยังตรงตำแหน่ง
     torso.scale.set(0.98, 0.85, 0.705); // 📏 ลำตัวยาวขึ้น (ยืดแนวตั้ง) + เพรียวลงเล็กน้อยให้ชุดยังคลุมพอดี
     torso.castShadow = true;
     char.add(torso);
