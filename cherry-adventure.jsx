@@ -15802,6 +15802,42 @@ export default function CherryAdventure() {
       if (char) char.rotation.y = Math.PI / 2; // face walking direction again
       setUi((u) => ({ ...u, equipScreen: false })); // 🙈 hide-gear preference persists into the world/battle
     };
+    // 💇 ศัลยกรรมรูปลักษณ์ — เปิดหน้าออกแบบตัวละคร (🎀) ให้เซฟเดิม แก้เสร็จบันทึกทับ ไม่กระทบเลเวล/ไอเทม/ภารกิจ
+    G.openEditLook = () => {
+      if (G.mode !== "explore") { toast("แก้ไขรูปลักษณ์ได้จากโลกกว้าง"); return; }
+      G._editLook = { custom: JSON.parse(JSON.stringify(G.custom || {})), name: G.playerName || "" }; // 🧷 สแนปช็อตไว้ให้กดยกเลิกคืนได้
+      G._editPrevPos = char ? { x: char.position.x, z: char.position.z, ry: char.rotation.y } : null;
+      if (char) char.rotation.y = 0; // 🧍 ยืนที่เดิม แค่หันหน้าเข้ากล้อง (+z) — ไม่วาร์ปไปกลางเมือง/กลางน้ำพุ
+      if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
+      G.moveTarget = null; G.huntTarget = null; G.path = null;
+      G.pendingName = G.playerName || "";
+      G.equipOpen = false; G.equipScreen = false;
+      G.mode = "create";
+      setUi((u) => ({ ...u, mode: "create", editLook: true, equipScreen: false, pendingName: G.pendingName, custom: { ...G.custom }, customTab: "char", nameErr: "", panelOpen: false, invOpen: false, shopOpen: false, questOpen: false, skillPanel: false, homeOpen: false, socialOpen: false }));
+    };
+    G.finishEditLook = async (save) => {
+      if (!G._editLook) return;
+      if (save) {
+        const nm = (G.pendingName || "").trim();
+        if (nm && nm !== G._editLook.name) { // 🪪 เปลี่ยนชื่อพร้อมกันได้ — เช็คชื่อซ้ำออนไลน์ก่อน
+          setUi((u) => ({ ...u, nameChecking: true }));
+          let taken = false;
+          try { if (G.net && G.net.enabled()) taken = await G.net.nameTaken(nm, G.pid); } catch (e) { taken = false; }
+          if (taken) { setUi((u) => ({ ...u, customTab: "char", nameChecking: false, nameErr: "❌ ชื่อ \"" + nm + "\" มีคนใช้แล้ว ลองตั้งชื่ออื่นนะ" })); return; }
+          G.playerName = nm;
+        }
+      } else {
+        Object.entries(G._editLook.custom).forEach(([k, v]) => G.setCustom(k, v)); // ↩️ คืนรูปลักษณ์เดิมทุกหมวด (ลำดับเดียวกับตอนโหลดเซฟ)
+        G.pendingName = G._editLook.name;
+      }
+      G._editLook = null;
+      G.mode = "explore";
+      if (char && G._editPrevPos) { char.position.set(G._editPrevPos.x, 0, G._editPrevPos.z); char.rotation.y = G._editPrevPos.ry != null ? G._editPrevPos.ry : Math.PI / 2; }
+      setUi((u) => ({ ...u, mode: "explore", editLook: false, nameChecking: false, nameErr: "", playerName: G.playerName, pendingName: G.pendingName }));
+      if (save) { if (G.saveGame) G.saveGame(); if (G.publishProfile) G.publishProfile(true); toast("💇✨ บันทึกรูปลักษณ์ใหม่แล้ว!"); }
+      else toast("↩️ ยกเลิกแล้ว — กลับรูปลักษณ์เดิม");
+      syncPlayer();
+    };
 
     // 🎽 auto-equip: put on the strongest item in every slot
     const itemPower = (id) => {
@@ -27764,17 +27800,20 @@ export default function CherryAdventure() {
         // 🧍 equip screen pulls the camera back so the whole body is visible
         // 🖥️ คอม (จอกว้าง): ถอยกล้องออกอีก + ยกตัวละครขึ้นให้พอดีช่องว่างระหว่างหัวเรื่องกับกระเป๋าด้านล่าง
         const wideEquip = G.equipOpen && window.innerWidth > 620;
-        const cd = G.equipOpen ? (wideEquip ? 16.5 : 9.4) : Math.max(2.6, Math.min(11, camDist * 0.5));
-        const camY = G.equipOpen ? (wideEquip ? 2.05 : 1.62) : 1.55 + cd * 0.14;
-        const lookY = G.equipOpen ? (wideEquip ? 0.30 : 1.02) : 1.35;
+        const cd = G.equipOpen ? (wideEquip ? 16.5 : 9.4) : G._editLook ? Math.max(6.5, Math.min(11, camDist * 0.62)) : Math.max(2.6, Math.min(11, camDist * 0.5));
+        const camY = G.equipOpen ? (wideEquip ? 2.05 : 1.62) : G._editLook ? 2.5 : 1.55 + cd * 0.14;
+        const lookY = G.equipOpen ? (wideEquip ? 0.30 : 1.02) : G._editLook ? 1.9 : 1.35;
         // 🖥️ หน้าแต่งตัว: คอม = แผงครึ่งจอฝั่งซ้าย → เลื่อนตัวละครไปอยู่กึ่งกลางแผงซ้าย · มือถือ = กลางจอ
         const panX = !G.equipOpen && window.innerWidth < 640 ? -cd * 0.11 : 0;
         const camX = wideEquip ? cd * 0.03 : panX;
         const lookX = wideEquip ? cd * 0.25 : panX;
-        camera.position.x += (camX - camera.position.x) * 0.08;
+        // 💇 โหมดแก้รูปลักษณ์: ตัวละครยืนที่เดิมในโลก — เลื่อนแท่นกล้องทั้งชุดไปหาตัวละคร
+        const ex = (G._editLook && char) ? char.position.x : 0;
+        const ez = (G._editLook && char) ? char.position.z : 0;
+        camera.position.x += (ex + camX - camera.position.x) * 0.08;
         camera.position.y += (camY - camera.position.y) * 0.08;
-        camera.position.z += (cd - camera.position.z) * 0.08;
-        camera.lookAt(lookX, lookY, 0);
+        camera.position.z += (ez + cd - camera.position.z) * 0.08;
+        camera.lookAt(ex + lookX, lookY, ez);
       } else if (G.mode === "battle" || G.mode === "fainted") {
         const wb = G.enemy && G.enemy.worldBoss; // 👹 world boss = ตัวใหญ่มาก ต้องซูมออกไกล
         // 👹 กึ่งกลางระหว่างตัวละคร (-1.9) กับบอส (+3.0) = +0.55 → ทั้งคู่อยู่สมมาตรกลางเฟรม
@@ -28209,11 +28248,11 @@ export default function CherryAdventure() {
       <div style={{ fontSize: 11, color: "#a3796a", marginTop: 2 }}>เลือกหมวดทางซ้าย · ลาก/บีบเพื่อหมุน–ซูม</div>
     </div>
     <div style={{ position: "absolute", top: ST(12), right: 12 }}>
-      <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots() }))} style={{
+      <button onClick={() => { if (ui.editLook) G.finishEditLook(false); else setUi((u) => ({ ...u, mode: "title", slots: G.readSlots() })); }} style={{
         padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
         fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
         background: "#fff", boxShadow: "0 3px 10px rgba(90,120,70,0.25)",
-      }}>← ช่องเซฟ</button>
+      }}>{ui.editLook ? "↩️ ยกเลิก" : "← ช่องเซฟ"}</button>
     </div>
     {/* left dressing card — fixed proportions, opaque, never overlaps the model on the right */}
     <div style={{
@@ -28429,10 +28468,10 @@ export default function CherryAdventure() {
           }}>🎲</button>
         </div>
         <button
-          onClick={() => G.proceedToClass()}
+          onClick={() => { if (ui.editLook) G.finishEditLook(true); else G.proceedToClass(); }}
           disabled={ui.nameChecking}
           style={{ ...bigBtn, padding: "10px 0", fontSize: 13.5, width: "100%", opacity: ui.nameChecking ? 0.6 : 1 }}
-        >{ui.nameChecking ? "⏳ กำลังตรวจชื่อ..." : "ถัดไป ➜ อาชีพ"}</button>
+        >{ui.nameChecking ? "⏳ กำลังตรวจชื่อ..." : ui.editLook ? "💾 บันทึกรูปลักษณ์" : "ถัดไป ➜ อาชีพ"}</button>
       </div>
     </div>
   </>
@@ -28907,18 +28946,18 @@ export default function CherryAdventure() {
           background: "linear-gradient(180deg,rgba(238,242,223,0),rgba(238,242,223,0.9) 40%)",
         }}>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", pointerEvents: "auto" }}>
-            <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots }))} style={{
+            <button onClick={() => { if (ui.editLook) G.finishEditLook(false); else setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots })); }} style={{
               padding: "12px 22px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
               background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.25)",
-            }}>← กลับ</button>
-            <button onClick={() => G.proceedToClass()} disabled={ui.nameChecking} style={{
+            }}>{ui.editLook ? "↩️ ยกเลิก" : "← กลับ"}</button>
+            <button onClick={() => { if (ui.editLook) G.finishEditLook(true); else G.proceedToClass(); }} disabled={ui.nameChecking} style={{
               padding: "12px 42px", borderRadius: 999, border: "none", cursor: "pointer",
               fontSize: 15.5, fontWeight: 800, fontFamily: font, color: "#fff",
-              background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
-              boxShadow: "0 5px 16px rgba(90,160,106,0.5)", opacity: ui.nameChecking ? 0.6 : 1,
+              background: ui.editLook ? "linear-gradient(90deg,#d06ab0,#e88ac8)" : "linear-gradient(90deg,#5aa06a,#7ac08a)",
+              boxShadow: ui.editLook ? "0 5px 16px rgba(208,106,176,0.5)" : "0 5px 16px rgba(90,160,106,0.5)", opacity: ui.nameChecking ? 0.6 : 1,
             }}>
-              {ui.nameChecking ? "⏳ ตรวจชื่อ..." : "เลือกอาชีพ →"}
+              {ui.nameChecking ? "⏳ ตรวจชื่อ..." : ui.editLook ? "💾 บันทึกรูปลักษณ์" : "เลือกอาชีพ →"}
             </button>
           </div>
         </div>
@@ -31388,6 +31427,7 @@ export default function CherryAdventure() {
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡ ออโต้</button>
                     <button key="eqsort" onClick={() => setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 }))} style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>⇅ {sortLabel}</button>
+                    <button key="eqlook" onClick={() => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }} title="แก้หน้า ทรงผม สีผม สีผิว ของตัวละครเดิม — ไม่กระทบเลเวล/ไอเทม" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" }}>💇 รูปลักษณ์</button>
                     <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
                     {(ui.heroPick || ui.heroId) && (
                       <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(255,255,255,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
