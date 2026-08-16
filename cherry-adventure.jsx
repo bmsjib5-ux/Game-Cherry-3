@@ -676,7 +676,7 @@ const CLASS_SKILLS = {
   assassin: [
     { id: "s_double", cost: 7, name: "รัวมีดคู่", emoji: "🗡️", color: 0xc4102a, mult: 1.8, perLv: 0.35, hits: 2, bleed: 6, buffCrit: 15, fx: "stab", desc: "พุ่งฟันไขว้ 2 ครั้ง ×1.8 · เลือดไหล 6 เทิร์น + คริ +15% 🩸" },
     { id: "s_poison", cost: 9, name: "มีดอาบยาพิษ", emoji: "☠️", color: 0x9a4ad0, mult: 1.65, perLv: 0.3, hits: 3, poison: 5, poisonChance: 0.3, fx: "stab", desc: "ปามีดพิษหมุน 3 เล่ม ×1.65 · โอกาสติดพิษ 30% นาน 5 เทิร์น 🟣" },
-    { id: "s_shadow", cost: 13, name: "ลอบสังหาร", emoji: "🌑", color: 0x4a4a5a, mult: 2.2, perLv: 0.5, critBonus: 1.0, pierce: true, fx: "shadow", desc: "หายในควันดำ เทเลพอร์ตหลังเป้า ×2.2 · คริ 100% · เจาะเกราะ 🎯" },
+    { id: "s_shadow", cost: 13, name: "ลอบสังหาร", emoji: "🌑", color: 0x4a4a5a, mult: 2.2, perLv: 0.5, critBonus: 1.0, pierce: true, fx: "shadow", desc: "เรียกกะโหลกเงา 3 ร่างลอยขึ้น แล้วพุ่งเข้าใส่จากระยะไกล ×2.2 · คริ 100% · เจาะเกราะ 💀" },
     { id: "s_evade", cost: 8, name: "ระบำเงา", emoji: "🌪️", color: 0x4a7ad0, mult: 1.8, perLv: 0.35, hits: 4, buffEva: true, buffSpd: true, fx: "stab", desc: "หมุนเร็ว โคลนเงา 4 ตัวฟันพร้อมกัน ×1.8 · หลบ +20% + เร็วขึ้น 🌪️" },
   ],
   lancer: [
@@ -886,7 +886,7 @@ const SK_ARCH = {
   w_cleave: "spin", w_bash: "bash", w_rage: "buff", w_quake: "smash",                          // ⚔️ นักรบ
   a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe",     // 🏹 นักธนู
   m_fire: "cast", m_ice: "cast", m_bolt: "beam", m_heal: "buff",                                // 🔮 เวทมนตร์
-  s_double: "stab", s_poison: "throw", s_shadow: "backstab", s_evade: "star",                   // 🗡️ อัสแซสซิน
+  s_double: "stab", s_poison: "throw", s_shadow: "shadow3", s_evade: "star",                   // 🗡️ อัสแซสซิน
   l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash",                        // 🔱 หอก
   k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin",                            // 🗡️ ซามูไร
   o_coffee: "buff", o_paper: "throw", o_smash: "bash", o_deadline: "buff", o_ceo: "beam",       // 🏢 ออฟฟิศ
@@ -18273,6 +18273,66 @@ export default function CherryAdventure() {
         scene.add(g); wpnGhosts.push(g);
       } catch (e) {}
     };
+    // 🥷 เงาพุ่ง — ร่างเงาของตัวละครทะยานจากตัวไปหาเป้า แล้วสลายเป็นควันตอนถึง (ท่าประหารเงา)
+    const shadowBolts = [];
+    const spawnShadowBolt = (idx, target, col, onHit) => {
+      try {
+        // 💀 ร่างเงารูปหัวกะโหลก — กะโหลกดำโปร่ง ตาเรืองแสง มีหางควันลากท้าย
+        const boneMat = new THREE.MeshBasicMaterial({ color: 0x2a1240, transparent: true, opacity: 0, depthWrite: false });
+        const eyeMat = new THREE.MeshBasicMaterial({ color: col || 0x9a40ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const g = new THREE.Group();
+        const cran = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), boneMat);
+        cran.scale.set(1, 1.06, 1.12);
+        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.26), boneMat);
+        muzzle.position.set(0, -0.19, 0.30);
+        const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.16, 0.30), boneMat);
+        jaw.position.set(0, -0.36, 0.10);
+        const teeth = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.07, 0.22), eyeMat);
+        teeth.position.set(0, -0.30, 0.28);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.30, 0.95, 10, 1, true), boneMat);
+        tail.position.set(0, -0.06, -0.60); tail.rotation.x = -Math.PI / 2;
+        g.add(cran, muzzle, jaw, teeth, tail);
+        for (const sx of [-0.16, 0.16]) {
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.10, 10, 8), eyeMat);
+          eye.scale.set(1, 0.85, 0.6); eye.position.set(sx, 0.05, 0.35);
+          g.add(eye);
+        }
+        g.traverse((o) => { o.raycast = () => {}; });
+        g.scale.setScalar(1.15);
+        const OFF = [[-1.6, 1.9, -0.15], [1.6, 2.2, -0.05], [0, 2.6, -1.3]][idx % 3]; // จุดลอยรอบตัว เหนือไหล่ ให้เห็นชัด
+        g.position.set(char.position.x + OFF[0], OFF[1], char.position.z + OFF[2]);
+        g.userData = { boneMat, eyeMat, t: 0, hold: 0.18, dur: 0.17, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: OFF[1], oz: OFF[2], target, onHit };
+        scene.add(g); shadowBolts.push(g);
+      } catch (e) {}
+    };
+    G._animShadowBolts = (d) => {
+      for (let i = shadowBolts.length - 1; i >= 0; i--) {
+        const b = shadowBolts[i], u = b.userData;
+        u.t += d;
+        const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+        const tx = tp ? tp.x : u.sx, tz = tp ? tp.z : u.sz;
+        const face = (px, pz) => { b.rotation.y = Math.atan2(tx - px, tz - pz); }; // หันหน้ากะโหลกเข้าหาเป้าเสมอ
+        if (u.t < u.hold) {                                     // 👻 ช่วงลอยรอ — โผล่ขึ้นมาลอยเอื่อย ๆ รอบตัวผู้เล่น
+          const h = u.t / u.hold;
+          const px = u.sx + u.ox, pz = u.sz + u.oz;
+          b.position.set(px, u.oy + Math.sin(h * Math.PI * 2) * 0.12, pz);
+          face(px, pz);
+          const o = Math.min(1, h * 2.5);
+          u.boneMat.opacity = 0.72 * o; u.eyeMat.opacity = 0.95 * o;
+        } else {                                                // 💨 ช่วงพุ่งเข้าใส่เป้า
+          const p = Math.min(1, (u.t - u.hold) / u.dur);
+          const e = p * p;
+          const px = (u.sx + u.ox) + (tx - u.sx - u.ox) * e, pz = (u.sz + u.oz) + (tz - u.sz - u.oz) * e;
+          b.position.set(px, u.oy + (0.95 - u.oy) * e, pz);
+          face(px, pz);
+          u.boneMat.opacity = 0.72 * (1 - e); u.eyeMat.opacity = 0.95 * (1 - e * 0.7);
+          if (p >= 1) {
+            if (u.onHit) { try { u.onHit(tx, tz); } catch (e2) {} }
+            scene.remove(b); u.boneMat.dispose(); u.eyeMat.dispose(); shadowBolts.splice(i, 1);
+          }
+        }
+      }
+    };
     G._animWpnGhosts = (d) => { for (let i = wpnGhosts.length - 1; i >= 0; i--) { const g = wpnGhosts[i]; g.userData.life -= d; const k = Math.max(0, g.userData.life / g.userData.max); g.userData.mat.opacity = (g.userData.base || 0.45) * k * k; if (g.userData.life <= 0) { scene.remove(g); g.userData.mat.dispose(); wpnGhosts.splice(i, 1); } } };
     // 🎬 map a skill to its signature battle FX so open-world casts look like the 1-v-1 arena
     const worldFxFor = (sk) => {
@@ -18391,16 +18451,16 @@ export default function CherryAdventure() {
       return "cleave";
     };
     // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
-    const startSkillCast = (arch, col, focus, fire, starHit) => {
+    const startSkillCast = (arch, col, focus, fire, starHit, shadowFire) => {
       // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18 };
-      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14 };
+      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22 };
+      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46 };
       const chg = CHG[arch] != null ? CHG[arch] : 0.15;
       const rel = REL[arch] != null ? REL[arch] : 0.16;
       const rush = !!ARCH_RUSH[arch] || arch === "star";                                                                    // สายประชิดเท่านั้นที่พุ่งเข้าหา
       const dsh = arch === "star" ? 0.5 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                    // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
       const hold = 0.14, rec = 0.06;                                                                                        // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
-      G._skCast = { arch, col, fire, starHit, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0 };
+      G._skCast = { arch, col, fire, starHit, shadowFire, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0 };
       ensureCastFx();
       worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
       G._worldSwingT = 0;
@@ -18416,22 +18476,34 @@ export default function CherryAdventure() {
       const cost = G.mpCostOf(sk);
       if ((G.player.mp || 0) < cost) { toast("💧 มานาไม่พอ!"); return; }
       const aoe = isAoeSkill(sk);
-      const focus = nearestWild(worldRange() + (aoe ? 3 : 2));
+      const fk0 = worldFxFor(sk), arch0 = skillArch(sk, fk0);
+      // 🥷 ประหารเงา = ท่าระยะไกล — เล็งได้ไกลกว่าสกิลประชิดของนักฆ่ามาก
+      const focus = nearestWild(worldRange() + (arch0 === "shadow3" ? 8 : aoe ? 3 : 2));
       if (!focus) return;
       G.player.mp -= cost;
       G.startCd(sk); // ⏳ begin cooldown
       char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
       const base = (effAtk() + Math.random() * 4) * (sk.mult || 1) * (1 + ((rank - 1) * (sk.perLv || 0)));
       const col = sk.color || 0xffd24a;
-      const applyDmg = (m) => {
+      const applyDmg = (m, scale) => {
         const crit = !!sk.guaranteedCrit || Math.random() < (0.08 + effCrit() / 100 + (sk.critBonus || 0));
         let d = base;
         if (sk.hits && sk.hits > 1 && !aoe) d = base * sk.hits; // multi-hit lands on the one target
-        d *= (crit ? 2 : 1);
+        d *= (crit ? 2 : 1) * (scale || 1);
         hurtWild(m, d, { crit, color: col });
       };
-      const fk = worldFxFor(sk);
-      const arch = skillArch(sk, fk);
+      const fk = fk0, arch = arch0;
+      // 🥷 ส่งเงาออกไปทีละร่าง — ดาเมจรวมเท่าเดิม หารเป็น 3 ครั้ง
+      const shadowFire = arch !== "shadow3" ? null : (idx) => {
+        const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 8);
+        if (!tgt) return;
+        spawnShadowBolt(idx, tgt, col, (hx, hz) => {
+          const at = new THREE.Vector3(hx, 0.9, hz);
+          applyDmg(tgt, 1 / 3);
+          fireSlash(at, col); spawnSkillFx("shadow", at, col); burst(at, col, 0.7);
+          G._camShake = Math.max(G._camShake || 0, 0.22);
+        });
+      };
       // 🌟 ท่าดาว 5 แฉก: ฟันกวาดทีละแฉก — ลงดาเมจรอบจุดที่วิ่งผ่าน ไม่รอจบท่า
       const starHit = arch !== "star" ? null : (hx, hz) => {
         const at = new THREE.Vector3(hx, 0.9, hz);
@@ -18450,6 +18522,8 @@ export default function CherryAdventure() {
         G._camShake = Math.max(G._camShake || 0, aoe ? 0.35 : 0.22);
         if (arch === "star") {
           toast(`${sk.emoji || "✨"} ${sk.name} — ฟันหมู่รูปดาว 5 แฉก!`); // ดาเมจลงไปแล้วทีละแฉกระหว่างวิ่ง
+        } else if (arch === "shadow3") {
+          toast(`${sk.emoji || "✨"} ${sk.name} — ส่งเงา 3 ร่างพุ่งเข้าใส่!`); // ดาเมจลงตอนเงาแต่ละร่างถึงตัว
         } else if (tgt) {
           if (aoe) {
             const targets = wildsInRadius(at.x, at.z, 3.4);
@@ -18459,7 +18533,7 @@ export default function CherryAdventure() {
         }
         if (G.sfx) G.sfx.skill && G.sfx.skill();
         syncPlayer();
-      }, starHit);
+      }, starHit, shadowFire);
     };
     // player fell in the open world
     G.worldFaint = () => {
@@ -22725,6 +22799,7 @@ export default function CherryAdventure() {
         }
         // ⚔️🎬 open-world attack swing — overrides the walk pose for a brief strike (mirrors the arena tell)
         if (G._animWpnGhosts) G._animWpnGhosts(dt);           // 👻 เฟดเงาอาวุธ
+        if (G._animShadowBolts) G._animShadowBolts(dt);       // 💀 กะโหลกเงาลอย → พุ่งเข้าใส่เป้า
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
         if (G._comboRe > 0) G._comboRe = Math.max(0, G._comboRe - dt);          // 🥊 หน้าต่างต่อคอมโบ
         if (G._camPunch > 0) G._camPunch = Math.max(0, G._camPunch - dt * 2.6); // 🎥 กล้องคืนระยะหลังท่าจบ
@@ -23013,7 +23088,16 @@ export default function CherryAdventure() {
           wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
           if (char.rotation.order !== "YXZ") char.rotation.order = "YXZ";
           let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0;
-          if (arch === "star") {
+          if (arch === "shadow3") {
+            // 🥷 ประหารเงา — ยกสองมือเรียกเงาขึ้นมาลอยรอบตัว แล้วผลักส่งออกไปทีละร่าง
+            const push = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 3));
+            armR.rotation.x = (-1.12 - 0.5 * ce - 0.55 * push) * ease;
+            armR.rotation.z = (0.36 - 0.14 * ce + 0.2 * push) * ease;
+            armL.rotation.x = (-1.12 - 0.5 * ce - 0.55 * push) * ease;
+            armL.rotation.z = (-0.36 + 0.14 * ce - 0.2 * push) * ease;
+            rise = 0.12 * ce * ease;
+            lean = (-0.07 * ce + 0.13 * rel) * ease;
+          } else if (arch === "star") {
             // 🌟 พุ่งฟันหมู่เป็นดาว 5 แฉก — ย่อเก็บแรง แล้วกางมีดคู่ออกสองข้าง สะบัดฟันทุกครั้งที่ถึงแฉก
             const fl = Math.sin(Math.min(1, dp) * Math.PI * 5);
             armR.rotation.x = (-0.2 - 0.5 * ce - 1.55 * Math.max(0, fl)) * ease;
@@ -23149,6 +23233,11 @@ export default function CherryAdventure() {
             const fx2 = Math.sin(char.rotation.y), fz2 = Math.cos(char.rotation.y);
             char.position.x += fx2 * (lunge - S.lunge); char.position.z += fz2 * (lunge - S.lunge);
             S.lunge = lunge;
+          }
+          // 🥷 ประหารเงา — ปล่อยเงาทีละร่างระหว่างช่วงปล่อยพลัง (ตัวจริงยืนอยู่กับที่)
+          if (arch === "shadow3" && S.t >= S.chg && S.shN < 3) {
+            const beats = [0, 0.3, 0.6];
+            while (S.shN < 3 && rp >= beats[S.shN]) { if (S.shadowFire) S.shadowFire(S.shN); S.shN++; }
           }
           // 💥 ดาเมจ + เอฟเฟกต์ลงตอนพุ่งถึงตัว · ④ หยุดนิ่ง 2-3 เฟรม + ฝุ่นฟุ้งจากการเบรก
           if (!S.fired && S.t >= S.fireT) {
