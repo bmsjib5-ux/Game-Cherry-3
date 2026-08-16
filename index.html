@@ -28391,11 +28391,46 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        // 👤 เงาซ้อนทั้งตัว (after-image) — ทิ้งร่างจาง ๆ ไว้ตามแนวพุ่ง แบบตัวละครอนิเมะเคลื่อนที่เร็ว
+        const spawnBodyGhost = (life, col) => {
+            try {
+                char.updateWorldMatrix(true, true);
+                const gm = new THREE.MeshBasicMaterial({ color: col || 0x9fd0ff, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false });
+                const g = new THREE.Group();
+                let n = 0;
+                char.traverse((o) => {
+                    if (n > 34 || !o.isMesh || (o.userData && o.userData._outl) || !o.geometry)
+                        return;
+                    let p = o, vis = o.visible;
+                    while (vis && p && p !== char) {
+                        if (!p.visible)
+                            vis = false;
+                        p = p.parent;
+                    }
+                    if (!vis)
+                        return;
+                    const mm = new THREE.Mesh(o.geometry, gm);
+                    mm.matrixAutoUpdate = false;
+                    mm.matrix.copy(o.matrixWorld);
+                    mm.raycast = () => { };
+                    g.add(mm);
+                    n++;
+                });
+                if (!n) {
+                    gm.dispose();
+                    return;
+                }
+                g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.32 };
+                scene.add(g);
+                wpnGhosts.push(g);
+            }
+            catch (e) { }
+        };
         G._animWpnGhosts = (d) => { for (let i = wpnGhosts.length - 1; i >= 0; i--) {
             const g = wpnGhosts[i];
             g.userData.life -= d;
             const k = Math.max(0, g.userData.life / g.userData.max);
-            g.userData.mat.opacity = 0.45 * k * k;
+            g.userData.mat.opacity = (g.userData.base || 0.45) * k * k;
             if (g.userData.life <= 0) {
                 scene.remove(g);
                 g.userData.mat.dispose();
@@ -28506,12 +28541,21 @@ function CherryAdventure() {
                 orbs.push(o);
             }
             G._castOrbs = orbs;
+            // ➡️ เส้นบอกทิศพุ่งบนพื้น — โผล่ตอนย่อเก็บแรง แล้วดับเมื่อพุ่งจบ
+            const line = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 1), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+            line.rotation.x = -Math.PI / 2;
+            line.visible = false;
+            line.raycast = () => { };
+            scene.add(line);
+            G._dashLine = line;
         };
         const hideCastFx = () => {
             if (G._castRing)
                 G._castRing.visible = false;
             if (G._castOrbs)
                 G._castOrbs.forEach((o) => (o.visible = false));
+            if (G._dashLine)
+                G._dashLine.visible = false;
         };
         // 🎭 จัดสกิลเข้ากลุ่มท่า — สกิลคนละแบบต้องร่ายคนละท่า ไม่ใช่ท่าตีธรรมดาเหมือนกันหมด
         const skillArch = (sk, fk) => {
@@ -28529,11 +28573,13 @@ function CherryAdventure() {
                 return "stab";
             return "cleave";
         };
-        // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง → ปล่อย → ④ ค้างท่าจบ → คืนท่ายืน
-        const startSkillCast = (arch, col, fire) => {
+        // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
+        const startSkillCast = (arch, col, focus, fire) => {
             const chg = arch === "cast" ? 0.42 : arch === "buff" ? 0.36 : arch === "smash" ? 0.34 : arch === "shot" ? 0.3 : 0.26; // ช่วงสะสมพลัง
             const rel = arch === "smash" ? 0.16 : arch === "stab" ? 0.34 : 0.24; // ช่วงปล่อยพลัง (เร็วจี๋)
-            G._skCast = { arch, col, fire, chg, rel, dur: chg + rel + 0.44, t: 0, fired: false, lunge: 0 }; // +0.30 ค้างท่า +0.14 คืนท่า
+            const rush = arch === "cleave" || arch === "smash" || arch === "dash" || arch === "stab"; // สายประชิดเท่านั้นที่พุ่งเข้าหา
+            const dsh = rush ? 0.15 : 0; // ช่วงพุ่ง (สั้น เร็ว)
+            G._skCast = { arch, col, fire, focus, chg, dsh, rel, fireT: chg + dsh, dur: chg + dsh + rel + 0.44, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0 };
             ensureCastFx();
             worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
             G._worldSwingT = 0;
@@ -28577,7 +28623,7 @@ function CherryAdventure() {
             };
             const fk = worldFxFor(sk);
             // 🎬 ปล่อยพลังจริงตอนจบช่วงสะสม — ท่าร่ายมาก่อน ดาเมจตามหลัง (anticipation → release)
-            startSkillCast(skillArch(sk, fk), col, () => {
+            startSkillCast(skillArch(sk, fk), col, focus, () => {
                 const alive = wilds.indexOf(focus) >= 0;
                 const tgt = alive ? focus : nearestWild(worldRange() + (aoe ? 3 : 2)); // 🎯 เป้าอาจตาย/หนีระหว่างร่าย
                 const at = tgt ? tgt.position : focus.position;
@@ -35458,12 +35504,42 @@ function CherryAdventure() {
                         const arch = S.arch;
                         const cp = Math.min(1, S.t / S.chg); // 0→1 ช่วงสะสมพลัง
                         const ce = cp * cp; // เข้าช้า-เร่งท้าย
-                        const rt = Math.max(0, S.t - S.chg);
+                        const dp = S.dsh ? Math.max(0, Math.min(1, (S.t - S.chg) / S.dsh)) : 1; // 0→1 ช่วงพุ่งเข้าหาเป้า
+                        const rt = Math.max(0, S.t - S.chg - S.dsh);
                         const rp = Math.min(1, rt / S.rel); // 0→1 ช่วงปล่อยพลัง
                         const rel = 1 - Math.pow(1 - rp, 3); // ปล่อยแบบพุ่งแล้วหน่วง
                         const back = Math.max(0, Math.min(1, (S.t - (S.dur - 0.14)) / 0.14)); // 0→1 ช่วงคืนท่า
                         const ease = 1 - back; // ค่าคูณให้ท่าคลายกลับนุ่ม ๆ
                         const charging = S.t < S.chg;
+                        const prep = S.dsh ? Math.max(0, (cp - 0.55) / 0.45) : 0; // ② ย่อเก็บแรงช่วงท้ายของการสะสม (เหมือนสปริง)
+                        // ① พุ่งเข้าหามอนสเตอร์ — ล็อกระยะปลายทางตอนเริ่มพุ่ง แล้วเลื่อนตัวไปตามเส้นนั้น
+                        if (S.dsh && S.t >= S.chg && !S.dashed) {
+                            S.dashed = true;
+                            const tp = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus.position : null;
+                            S.sx = char.position.x;
+                            S.sz = char.position.z;
+                            S.tx = 0;
+                            S.tz = 0;
+                            if (tp) {
+                                const ddx = tp.x - char.position.x, ddz = tp.z - char.position.z;
+                                const dd = Math.hypot(ddx, ddz) || 1;
+                                const travel = Math.max(0, Math.min(dd - 1.15, 7)); // หยุดหน้ามอนสเตอร์ ~1.15 หน่วย (พุ่งไกลสุด 7)
+                                S.tx = (ddx / dd) * travel;
+                                S.tz = (ddz / dd) * travel;
+                                char.rotation.y = Math.atan2(ddx, ddz); // หันหน้าเข้าหาเป้าก่อนพุ่ง
+                            }
+                        }
+                        if (S.dsh && S.dashed && dp < 1) {
+                            const de = 1 - Math.pow(1 - dp, 3); // ออกตัวแรงแล้วค่อยเบรก
+                            char.position.x = S.sx + S.tx * de;
+                            char.position.z = S.sz + S.tz * de;
+                            pushOut(char, 0.35); // 🧱 กันพุ่งทะลุหิน/ต้นไม้
+                            S.ghT -= dt;
+                            if (S.ghT <= 0 && (S.tx || S.tz)) {
+                                S.ghT = 0.035;
+                                spawnBodyGhost(0.24, S.col);
+                            } // ③ เงาซ้อนทั้งตัว
+                        }
                         // ✨ วงเวทย์ + ประกายพลังหดเข้าหาตัว (เฉพาะช่วงสะสม)
                         if (G._castRing) {
                             const rg = G._castRing;
@@ -35487,6 +35563,23 @@ function CherryAdventure() {
                                 o.position.set(char.position.x + Math.cos(a) * r, 0.55 + ce * 1.45, char.position.z + Math.sin(a) * r);
                                 o.material.opacity = 0.95 * cp;
                             });
+                        // ➡️ เส้นบอกทิศพุ่ง — ขึ้นตอนย่อเก็บแรง ยาวถึงเป้า แล้วดับเมื่อพุ่งจบ
+                        if (G._dashLine) {
+                            const ln = G._dashLine;
+                            const showLn = S.dsh && (prep > 0 || (S.dashed && dp < 1));
+                            ln.visible = !!showLn;
+                            if (showLn) {
+                                const tp = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus.position : null;
+                                const ddx = tp ? tp.x - char.position.x : Math.sin(char.rotation.y) * 3;
+                                const ddz = tp ? tp.z - char.position.z : Math.cos(char.rotation.y) * 3;
+                                const dd = Math.max(0.6, Math.hypot(ddx, ddz) - 0.9);
+                                ln.material.color.setHex(S.col);
+                                ln.position.set(char.position.x + (ddx / (Math.hypot(ddx, ddz) || 1)) * dd * 0.5, 0.05, char.position.z + (ddz / (Math.hypot(ddx, ddz) || 1)) * dd * 0.5);
+                                ln.scale.set(1, dd, 1);
+                                ln.rotation.z = -Math.atan2(ddx, ddz);
+                                ln.material.opacity = 0.5 * (S.dashed ? 1 - dp : prep);
+                            }
+                        }
                         wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
                         if (char.rotation.order !== "YXZ")
                             char.rotation.order = "YXZ";
@@ -35522,7 +35615,7 @@ function CherryAdventure() {
                             armL.rotation.z = 0.4 * ease;
                             lean = (-0.14 * ce + 0.3 * rel) * ease;
                             rise = -0.1 * ce * ease;
-                            lunge = (0.62 * rel - 0.12 * ce) * ease;
+                            lunge = (0.3 * rel - 0.12 * ce) * ease; // ระยะเข้าหาเป้าให้ช่วงพุ่งจัดการ เหลือแค่ดันตัวตอนแทง
                         }
                         else if (arch === "cast") {
                             // 🔮 ร่ายเวท: ประคองพลังไว้หน้าอก ลอยตัวเบา ๆ → ผลักพลังออกไปข้างหน้า
@@ -35548,7 +35641,7 @@ function CherryAdventure() {
                             armL.rotation.x = (-0.15 - 0.5 * ce - 1.9 * Math.max(0, -j)) * ease;
                             rise = -0.13 * ce * ease;
                             lean = (0.06 + 0.12 * rel) * ease;
-                            lunge = 0.22 * rel * ease;
+                            lunge = 0.14 * rel * ease;
                         }
                         else {
                             // 💫 บัฟตัวเอง: กำหมัดสะสมพลัง ลอยตัวขึ้น → กางแขนปลดปล่อยออกรอบตัว
@@ -35557,6 +35650,19 @@ function CherryAdventure() {
                             armL.rotation.x = (-0.5 - 1.9 * ce + 1.1 * rel) * ease;
                             armL.rotation.z = (-0.25 - 0.3 * ce - 0.65 * rel) * ease;
                             rise = (0.3 * ce + 0.14 * rel) * ease;
+                        }
+                        // ② ย่อเก็บแรงก่อนดีดตัว: ย่อลง เอนหลัง งอเข่าทั้งสองข้าง แล้วเหยียดออกตอนพุ่ง
+                        if (S.dsh) {
+                            const spring = prep * (1 - dp) + (S.dashed ? 0 : 0);
+                            rise -= 0.2 * spring * ease;
+                            lean -= 0.16 * spring * ease;
+                            const kb = 0.75 * spring + 0.35 * (S.dashed && dp < 1 ? 1 - dp : 0);
+                            legL.rotation.x = (0.2 * spring - 0.5 * (S.dashed ? 1 - dp : 0)) * ease;
+                            legR.rotation.x = (0.2 * spring + 0.45 * (S.dashed ? 1 - dp : 0)) * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = kb * ease;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = kb * 0.5 * ease;
                         }
                         torso.rotation.y = -twist * 0.45;
                         headG.rotation.y = -twist * 0.6; // 🌀 ลำตัว/หัวตามการบิดแบบหน่วง
@@ -35568,13 +35674,19 @@ function CherryAdventure() {
                             char.position.z += fz2 * (lunge - S.lunge);
                             S.lunge = lunge;
                         }
-                        if (!S.fired && S.t >= S.chg) {
+                        // 💥 ดาเมจ + เอฟเฟกต์ลงตอนพุ่งถึงตัว · ④ หยุดนิ่ง 2-3 เฟรม + ฝุ่นฟุ้งจากการเบรก
+                        if (!S.fired && S.t >= S.fireT) {
                             S.fired = true;
+                            if (S.dsh) {
+                                G._hitStop = Math.max(G._hitStop || 0, 0.07);
+                                G._camShake = Math.max(G._camShake || 0, 0.32);
+                                burst(new THREE.Vector3(char.position.x, 0.18, char.position.z), 0xdccfae, 0.85); // 🌫️ ฝุ่นตอนเบรก
+                            }
                             try {
                                 S.fire();
                             }
                             catch (e) { }
-                        } // 💥 ดาเมจ + เอฟเฟกต์ลงตอนปล่อย
+                        }
                         if (S.t >= S.dur || G.mode !== "explore") {
                             if (!S.fired) {
                                 S.fired = true;
