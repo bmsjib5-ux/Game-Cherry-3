@@ -942,6 +942,21 @@ const skillsOf = (cls, pathId) => {
 const AOE_FX = { quake: 1, poison: 1 };
 const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1 };
 const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
+// 🎭 ท่าร่ายประจำสกิล — แมปทีละสกิลให้ท่าตรงกับชื่อ/ความหมายของมันจริง ๆ
+// (สกิลที่ไม่อยู่ในตารางจะถูกเดาให้จากอาชีพ + ชนิดเอฟเฟกต์)
+const SK_ARCH = {
+    w_cleave: "spin", w_bash: "bash", w_rage: "buff", w_quake: "smash", // ⚔️ นักรบ
+    a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe", // 🏹 นักธนู
+    m_fire: "cast", m_ice: "cast", m_bolt: "beam", m_heal: "buff", // 🔮 เวทมนตร์
+    s_double: "stab", s_poison: "throw", s_shadow: "backstab", s_evade: "buff", // 🗡️ อัสแซสซิน
+    l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash", // 🔱 หอก
+    k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin", // 🗡️ ซามูไร
+    o_coffee: "buff", o_paper: "throw", o_smash: "bash", o_deadline: "buff", o_ceo: "beam", // 🏢 ออฟฟิศ
+    c_inject: "throw", c_wall: "bash", c_drone: "summon", c_crash: "beam", c_matrix: "beam", // 💻 โปรแกรมเมอร์
+    g_dash: "dash", g_drone: "summon", g_grav: "beam", g_over: "buff", // 🤖 AI Mecha
+};
+// สายที่ "พุ่งเข้าหาเป้า" ก่อนออกท่า (ที่เหลือร่ายอยู่กับที่)
+const ARCH_RUSH = { cleave: 1, spin: 1, bash: 1, smash: 1, dash: 1, stab: 1, twin: 1, iai: 1, backstab: 1 };
 // 🔒 SKILL UNLOCK CONDITIONS — every class gates skills 2..5 behind level, the previous
 // skill's rank, and an allocated base stat. Skill 1 is always free so you can always fight.
 // slot = index in CLASS_SKILLS[cls]; stat keys match G.baseStats (atk/hp/def/crit/luck/mp)
@@ -28559,6 +28574,8 @@ function CherryAdventure() {
         };
         // 🎭 จัดสกิลเข้ากลุ่มท่า — สกิลคนละแบบต้องร่ายคนละท่า ไม่ใช่ท่าตีธรรมดาเหมือนกันหมด
         const skillArch = (sk, fk) => {
+            if (sk && SK_ARCH[sk.id])
+                return SK_ARCH[sk.id]; // 🎯 ท่าประจำสกิลนั้นโดยตรง
             if (fk === "healbless" || fk === "warfrenzy" || fk === "overclock" || fk === "shadowdance")
                 return "buff";
             if (G.cls === "archer")
@@ -28575,10 +28592,13 @@ function CherryAdventure() {
         };
         // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
         const startSkillCast = (arch, col, focus, fire) => {
-            const chg = arch === "cast" ? 0.42 : arch === "buff" ? 0.36 : arch === "smash" ? 0.34 : arch === "shot" ? 0.3 : 0.26; // ช่วงสะสมพลัง
-            const rel = arch === "smash" ? 0.16 : arch === "stab" ? 0.34 : 0.24; // ช่วงปล่อยพลัง (เร็วจี๋)
-            const rush = arch === "cleave" || arch === "smash" || arch === "dash" || arch === "stab"; // สายประชิดเท่านั้นที่พุ่งเข้าหา
-            const dsh = rush ? 0.15 : 0; // ช่วงพุ่ง (สั้น เร็ว)
+            // ⏱️ จังหวะเฉพาะท่า: สายเวท/เล็งสะสมนาน · อิไอนิ่งนานแล้วฟันแวบเดียว · รัวแทงปล่อยยาว
+            const CHG = { cast: 0.42, beam: 0.46, buff: 0.36, summon: 0.38, snipe: 0.5, smash: 0.34, shot: 0.3, volley: 0.3, throw: 0.28, iai: 0.44, backstab: 0.3 };
+            const REL = { smash: 0.16, stab: 0.34, volley: 0.4, iai: 0.12, twin: 0.2, spin: 0.32, backstab: 0.26 };
+            const chg = CHG[arch] != null ? CHG[arch] : 0.26;
+            const rel = REL[arch] != null ? REL[arch] : 0.24;
+            const rush = !!ARCH_RUSH[arch]; // สายประชิดเท่านั้นที่พุ่งเข้าหา
+            const dsh = rush ? (arch === "backstab" ? 0.13 : 0.15) : 0; // ช่วงพุ่ง (สั้น เร็ว)
             G._skCast = { arch, col, fire, focus, chg, dsh, rel, fireT: chg + dsh, dur: chg + dsh + rel + 0.44, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0 };
             ensureCastFx();
             worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
@@ -35523,7 +35543,8 @@ function CherryAdventure() {
                             if (tp) {
                                 const ddx = tp.x - char.position.x, ddz = tp.z - char.position.z;
                                 const dd = Math.hypot(ddx, ddz) || 1;
-                                const travel = Math.max(0, Math.min(dd - 1.15, 7)); // หยุดหน้ามอนสเตอร์ ~1.15 หน่วย (พุ่งไกลสุด 7)
+                                // 🥷 ลอบสังหารพุ่งทะลุไปโผล่ "หลัง" เป้า · ท่าอื่นหยุดหน้ามอนสเตอร์ ~1.15 หน่วย (พุ่งไกลสุด 7)
+                                const travel = arch === "backstab" ? Math.min(dd + 1.15, 8) : Math.max(0, Math.min(dd - 1.15, 7));
                                 S.tx = (ddx / dd) * travel;
                                 S.tz = (ddz / dd) * travel;
                                 char.rotation.y = Math.atan2(ddx, ddz); // หันหน้าเข้าหาเป้าก่อนพุ่ง
@@ -35583,8 +35604,101 @@ function CherryAdventure() {
                         wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
                         if (char.rotation.order !== "YXZ")
                             char.rotation.order = "YXZ";
-                        let twist = 0, lean = 0, rise = 0, lunge = 0;
-                        if (arch === "cleave") {
+                        let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0;
+                        if (arch === "spin") {
+                            // 🌀 ฟันวงกว้าง/กวาดหอก/เพลงดาบจันทรา — กางอาวุธออกข้าง แล้วหมุนตัวครบรอบ
+                            armR.rotation.x = (-0.15 - 0.5 * ce - 0.3 * rel) * ease;
+                            armR.rotation.z = (0.3 + 0.95 * ce + 0.45 * rel) * ease;
+                            armL.rotation.x = (-0.15 - 0.3 * ce) * ease;
+                            armL.rotation.z = (-0.3 - 0.75 * ce - 0.35 * rel) * ease;
+                            spinTurn = rel * Math.PI * 2;
+                            rise = -0.1 * ce * ease;
+                        }
+                        else if (arch === "bash") {
+                            // 🛡️ โล่กระแทก/โน้ตบุ๊กทุบ/ไฟร์วอลล์ — ยกของหนักชิดตัว ย่อไหล่ แล้วกระแทกออกไปหน้า
+                            armL.rotation.x = (-1.5 - 0.35 * ce + 0.4 * rel) * ease;
+                            armL.rotation.z = (0.15 + 0.28 * ce - 0.55 * rel) * ease;
+                            armR.rotation.x = (-0.5 - 0.5 * ce + 0.25 * rel) * ease;
+                            armR.rotation.z = -0.15 * ease;
+                            lean = (-0.12 * ce + 0.28 * rel) * ease;
+                            rise = -0.08 * ce * ease;
+                            lunge = 0.2 * rel * ease;
+                        }
+                        else if (arch === "iai") {
+                            // ⚡ ชักดาบสายฟ้า — ย่อต่ำ มือแตะฝักนิ่งสนิท → ชักฟันพรืดเดียวแล้วค้างปลายดาบ
+                            armR.rotation.x = (0.55 - 0.25 * ce - 2.35 * rel) * ease;
+                            armR.rotation.z = (-0.5 + 0.15 * ce + 1.4 * rel) * ease;
+                            armL.rotation.x = (0.3 - 0.15 * ce - 0.4 * rel) * ease;
+                            armL.rotation.z = (0.35 - 0.5 * rel) * ease;
+                            twist = (0.8 * ce - 1.55 * rel) * ease;
+                            rise = (-0.26 * ce + 0.07 * rel) * ease;
+                        }
+                        else if (arch === "twin") {
+                            // ⚔️⚔️ ดาบคู่ฟ้า — กางดาบสองข้างเป็นกรรไกร แล้วหุบเข้าหากันกลางลำตัว
+                            armR.rotation.x = (-0.4 - 1.5 * ce + 1.25 * rel) * ease;
+                            armR.rotation.z = (0.5 + 0.62 * ce - 1.0 * rel) * ease;
+                            armL.rotation.x = (-0.4 - 1.5 * ce + 1.25 * rel) * ease;
+                            armL.rotation.z = (-0.5 - 0.62 * ce + 1.0 * rel) * ease;
+                            lean = 0.16 * rel * ease;
+                            rise = -0.06 * ce * ease;
+                        }
+                        else if (arch === "backstab") {
+                            // 🥷 ลอบสังหาร — ย่อต่ำเงียบ ๆ → วาร์ปข้ามไปหลังเป้า แล้วแทงย้อนกลับ
+                            armR.rotation.x = (-0.1 - 0.55 * ce - 1.9 * rel) * ease;
+                            armR.rotation.z = (0.2 - 0.35 * rel) * ease;
+                            armL.rotation.x = (-0.1 - 0.4 * ce - 0.7 * rel) * ease;
+                            rise = -0.22 * ce * ease;
+                            lean = (0.1 + 0.16 * rel) * ease;
+                        }
+                        else if (arch === "throw") {
+                            // 🎯 ลูกศรพิษ/มีดอาบยา/ฉีดโค้ด/พายุเอกสาร — เงื้อขึ้นเหนือไหล่ บิดตัว → สะบัดขว้างออก
+                            armR.rotation.x = (-1.6 - 0.7 * ce + 2.25 * rel) * ease;
+                            armR.rotation.z = (0.35 + 0.32 * ce - 0.5 * rel) * ease;
+                            armL.rotation.x = (-0.6 - 0.3 * ce + 0.3 * rel) * ease;
+                            armL.rotation.z = -0.35 * ease;
+                            twist = (0.55 * ce - 1.05 * rel) * ease;
+                            lean = 0.12 * rel * ease;
+                        }
+                        else if (arch === "volley") {
+                            // 🏹🏹🏹 ยิงสามนัด — ค้างคันธนูไว้ แล้วสะบัดมือดึงสาย 3 ครั้งถี่ ๆ
+                            const v = Math.max(0, Math.sin(rp * Math.PI * 3));
+                            armR.rotation.x = (-1.4 - 0.2 * ce) * ease;
+                            armR.rotation.z = 0.16 * ease;
+                            armL.rotation.x = (-1.25 - 0.55 * ce + 0.95 * v) * ease;
+                            armL.rotation.z = (-0.3 - 0.25 * ce) * ease;
+                            twist = (0.2 * ce - 0.1 * rel) * ease;
+                        }
+                        else if (arch === "snipe") {
+                            // 🎯 นัดสุดท้าย/ยิงจุดอ่อน — คุกเข่าเล็งนิ่งสนิท → ปล่อยแล้วสะเทือนถอย
+                            armR.rotation.x = (-1.5 - 0.1 * ce + 0.08 * rel) * ease;
+                            armR.rotation.z = 0.1 * ease;
+                            armL.rotation.x = (-1.35 - 0.55 * ce + 1.0 * rel) * ease;
+                            armL.rotation.z = (-0.25 - 0.25 * ce) * ease;
+                            rise = -0.3 * ce * ease;
+                            lean = (-0.06 * ce + 0.12 * rel) * ease;
+                            legL.rotation.x = -0.5 * ce * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 1.15 * ce * ease; // คุกเข่าข้างเดียว
+                        }
+                        else if (arch === "beam") {
+                            // ⚡ สายฟ้าฟาด/ระบบล่ม/แรงโน้มถ่วง — ชูสองมือขึ้นสุดสะสมพลัง → ฟาดลงมาข้างหน้า
+                            armR.rotation.x = (-1.2 - 1.5 * ce + 2.15 * rel) * ease;
+                            armR.rotation.z = (0.2 + 0.15 * ce) * ease;
+                            armL.rotation.x = (-1.2 - 1.5 * ce + 2.15 * rel) * ease;
+                            armL.rotation.z = (-0.2 - 0.15 * ce) * ease;
+                            rise = (0.22 * ce - 0.16 * rel) * ease;
+                            lean = 0.14 * rel * ease;
+                        }
+                        else if (arch === "summon") {
+                            // 🛸 โดรน AI/โดรนนาโน — ชูมือข้างเดียวเรียกหน่วยรบ → เหวี่ยงชี้ไปที่เป้า
+                            armR.rotation.x = (-1.0 - 1.4 * ce + 1.65 * rel) * ease;
+                            armR.rotation.z = (0.3 + 0.35 * ce - 0.15 * rel) * ease;
+                            armL.rotation.x = (-0.35 - 0.2 * ce) * ease;
+                            armL.rotation.z = -0.3 * ease;
+                            rise = 0.1 * ce * ease;
+                            lean = 0.08 * rel * ease;
+                        }
+                        else if (arch === "cleave") {
                             // ⚔️ ฟันกวาดครึ่งวง: ง้างดาบไปหลังสุดตัว → กวาดข้ามลำตัวเร็วจี๋
                             armR.rotation.x = (0.35 + 0.95 * ce - 2.7 * rel) * ease;
                             armR.rotation.z = (0.1 - 0.85 * ce + 1.6 * rel) * ease;
@@ -35664,6 +35778,10 @@ function CherryAdventure() {
                             if (legR.userData.knee)
                                 legR.userData.knee.rotation.x = kb * 0.5 * ease;
                         }
+                        if (spinTurn !== (S.spun || 0)) {
+                            char.rotation.y += spinTurn - (S.spun || 0);
+                            S.spun = spinTurn;
+                        } // 🌀 หมุนตัวครบรอบ (ใส่เป็นส่วนต่าง)
                         torso.rotation.y = -twist * 0.45;
                         headG.rotation.y = -twist * 0.6; // 🌀 ลำตัว/หัวตามการบิดแบบหน่วง
                         char.rotation.x = lean;
@@ -35677,6 +35795,9 @@ function CherryAdventure() {
                         // 💥 ดาเมจ + เอฟเฟกต์ลงตอนพุ่งถึงตัว · ④ หยุดนิ่ง 2-3 เฟรม + ฝุ่นฟุ้งจากการเบรก
                         if (!S.fired && S.t >= S.fireT) {
                             S.fired = true;
+                            if (arch === "backstab" && S.focus && wilds.indexOf(S.focus) >= 0) { // 🥷 โผล่หลังเป้าแล้วหันกลับมาแทง
+                                char.rotation.y = Math.atan2(S.focus.position.x - char.position.x, S.focus.position.z - char.position.z);
+                            }
                             if (S.dsh) {
                                 G._hitStop = Math.max(G._hitStop || 0, 0.07);
                                 G._camShake = Math.max(G._camShake || 0, 0.32);
