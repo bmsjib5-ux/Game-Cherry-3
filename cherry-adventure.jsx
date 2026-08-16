@@ -3469,89 +3469,80 @@ export default function CherryAdventure() {
       const crystalMat = new THREE.MeshStandardMaterial({ color: 0xb040f8, emissive: 0x9020e0, emissiveIntensity: 1.3, roughness: 0.1, metalness: 0.2 }); // purple gem
       const cordMat = new THREE.MeshStandardMaterial({ color: 0x8a1030, roughness: 0.75, metalness: 0.05 }); // crimson wrapped cord
       const dg = new THREE.Group();
-      // 🪢 crimson cord-wrapped grip (stacked wraps like the reference)
-      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.033, 0.26, 8), cordMat);
-      grip.position.y = -0.13;
+      // 🪢 ด้ามจับ "ชิ้นเดียว" — กลึงเป็นทรงเดียว ร่องพันเชือกอยู่ในเนื้อผิว ไม่ใช่ห่วงซ้อนกันหลายวง
+      const gripProf = [];
+      for (let i = 0; i <= 26; i++) {
+        const u = i / 26;
+        gripProf.push(new THREE.Vector2(0.030 + u * 0.006 + Math.sin(u * Math.PI * 6) * 0.0038, -0.278 + u * 0.298));
+      }
+      const grip = new THREE.Mesh(new THREE.LatheGeometry(gripProf, 14), cordMat);
       dg.add(grip);
-      for (let k = 0; k < 6; k++) {
-        const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.008, 5, 10), cordMat);
-        wrap.position.y = -0.03 - k * 0.042; wrap.rotation.x = Math.PI / 2; wrap.rotation.y = 0.35;
-        dg.add(wrap);
-      }
-      // 👑 ornate gold guard with a purple diamond gem at the center
-      const guardBase = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.05, 8), goldMat);
-      guardBase.position.y = 0.03;
-      dg.add(guardBase);
-      // gold prongs sweeping up around the blade base
-      for (const side of [-1, 1]) {
-        for (let k = 0; k < 2; k++) {
-          const prong = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.1 - k * 0.03, 4), goldMat);
-          prong.position.set(side * (0.05 + k * 0.028), 0.05 + k * 0.02, 0);
-          prong.rotation.z = side * (0.9 + k * 0.4);
-          prong.scale.set(1, 1, 0.5);
-          dg.add(prong);
-        }
-      }
+      // 👑 การ์ด "ชิ้นเดียว" — บานออกจากด้ามต่อเนื่อง แทนฐาน + เขี้ยวทอง 4 อันที่เคยแยกกัน
+      const guard = new THREE.Mesh(new THREE.LatheGeometry(
+        [[0.033, 0.008], [0.050, 0.024], [0.074, 0.038], [0.080, 0.050], [0.058, 0.060], [0.038, 0.068], [0.026, 0.080]]
+          .map(([r, y]) => new THREE.Vector2(r, y)), 16), goldMat);
+      dg.add(guard);
       const guardGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), crystalMat);
-      guardGem.position.set(0, 0.035, 0.032); guardGem.scale.set(1, 1.25, 0.55);
-      const guardGemB = guardGem.clone(); guardGemB.position.z = -0.032;
+      guardGem.position.set(0, 0.042, 0.030); guardGem.scale.set(1, 1.25, 0.55);
+      const guardGemB = guardGem.clone(); guardGemB.position.z = -0.030;
       dg.add(guardGem, guardGemB);
-      // 🌙 LARGE curved fang blade — sweeping segments, wide near the base, tapering to a razor tip
-      const segs = [
-        { pos: [0.01, 0.2, 0], rot: -0.06, r: 0.075, h: 0.3 },
-        { pos: [0.06, 0.46, 0], rot: -0.3, r: 0.062, h: 0.28 },
-        { pos: [0.16, 0.68, 0], rot: -0.58, r: 0.046, h: 0.26 },
-        { pos: [0.32, 0.85, 0], rot: -0.95, r: 0.028, h: 0.22 },
-      ];
-      segs.forEach((s) => {
-        const b = new THREE.Mesh(new THREE.ConeGeometry(s.r, s.h, 4), obsidian.clone());
-        b.position.set(...s.pos); b.rotation.z = s.rot; b.scale.set(1, 1, 0.42);
-        // mirror-polished silver edge along the outer curve
-        const edge = new THREE.Mesh(new THREE.ConeGeometry(s.r * 0.4, s.h * 0.97, 4), silverEdge);
-        edge.position.set(s.pos[0] + 0.02, s.pos[1], s.pos[2]); edge.rotation.z = s.rot; edge.scale.set(1, 1, 0.48);
-        // 💜 purple energy vein glowing inside the blade (the cutouts in the reference)
-        const vein = new THREE.Mesh(new THREE.ConeGeometry(s.r * 0.3, s.h * 0.72, 4), purpleCore);
-        vein.position.set(s.pos[0] - 0.008, s.pos[1], s.pos[2]); vein.rotation.z = s.rot; vein.scale.set(1, 1, 0.62);
-        dg.add(b, edge, vein);
-        tintParts.push(b);
-      });
-      // 🪚 serrated inner edge near the handle
-      for (let k = 0; k < 3; k++) {
-        const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.036, 3), silverEdge);
-        tooth.position.set(-0.052, 0.12 + k * 0.055, 0);
-        tooth.rotation.z = 2.0; tooth.scale.set(1, 1, 0.4);
-        dg.add(tooth);
-      }
-      // ✨ ancient runes engraved on both faces
+      // 🌙 ใบมีด "ชิ้นเดียวตลอดใบ" — ร่างเส้นขอบโค้ง (คมนอกโป่ง · สันในเว้า · รอยหยักอยู่ในรูปทรง) แล้ว extrude ทีเดียว
+      const bladeShape = new THREE.Shape();
+      bladeShape.moveTo(0.060, 0.050);
+      bladeShape.bezierCurveTo(0.190, 0.330, 0.300, 0.680, 0.330, 1.000);   // คมนอกโค้งขึ้นหาปลาย
+      bladeShape.lineTo(0.296, 0.992);                                       // ปลายแหลม
+      bladeShape.bezierCurveTo(0.190, 0.700, 0.020, 0.400, -0.020, 0.150);   // สันหลังโค้งกลับลงโคน
+      bladeShape.lineTo(-0.048, 0.138); bladeShape.lineTo(-0.030, 0.116);    // 🪚 รอยหยักสันใน — เป็นเนื้อเดียวกับใบ
+      bladeShape.lineTo(-0.050, 0.096); bladeShape.lineTo(-0.032, 0.074);
+      bladeShape.lineTo(-0.052, 0.052);
+      bladeShape.closePath();
+      const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, { depth: 0.052, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.013, bevelSegments: 2, curveSegments: 20 });
+      bladeGeo.translate(0, 0, -0.026);
+      const blade = new THREE.Mesh(bladeGeo, obsidian.clone());
+      dg.add(blade); tintParts.push(blade);
+      // ✨ คมเงิน — แถบต่อเนื่องเส้นเดียวเลียบคมนอก (เดิมเป็นกรวย 4 ท่อน)
+      const edgeShape = new THREE.Shape();
+      edgeShape.moveTo(0.060, 0.050);
+      edgeShape.bezierCurveTo(0.190, 0.330, 0.300, 0.680, 0.330, 1.000);
+      edgeShape.lineTo(0.300, 0.986);
+      edgeShape.bezierCurveTo(0.264, 0.672, 0.158, 0.330, 0.030, 0.058);
+      edgeShape.closePath();
+      const edgeGeo = new THREE.ExtrudeGeometry(edgeShape, { depth: 0.056, bevelEnabled: false, curveSegments: 20 });
+      edgeGeo.translate(0, 0, -0.028);
+      dg.add(new THREE.Mesh(edgeGeo, silverEdge));
+      // 💜 เส้นพลังม่วง — เส้นเดียวยาวตลอดกลางใบ (เดิมเป็นกรวย 4 ท่อน)
+      const veinShape = new THREE.Shape();
+      veinShape.moveTo(0.010, 0.135);
+      veinShape.bezierCurveTo(0.120, 0.360, 0.212, 0.630, 0.262, 0.880);
+      veinShape.lineTo(0.222, 0.898);
+      veinShape.bezierCurveTo(0.170, 0.634, 0.074, 0.372, -0.014, 0.158);
+      veinShape.closePath();
+      const veinGeo = new THREE.ExtrudeGeometry(veinShape, { depth: 0.060, bevelEnabled: false, curveSegments: 18 });
+      veinGeo.translate(0, 0, -0.030);
+      dg.add(new THREE.Mesh(veinGeo, purpleCore));
+      // ✨ รูนสลักบนใบ (จุดตกแต่ง ไม่ใช่รอยต่อ)
       const runes = [];
-      for (let k = 0; k < 3; k++) {
-        for (const z of [0.03, -0.03]) {
+      for (let k = 0; k < 2; k++) {
+        for (const z of [0.032, -0.032]) {
           const rune = new THREE.Mesh(new THREE.TorusGeometry(0.017, 0.004, 4, 8, Math.PI * 1.4), purpleCore);
-          rune.position.set(0.02 + k * 0.05, 0.25 + k * 0.16, z);
+          rune.position.set(0.05 + k * 0.075, 0.34 + k * 0.24, z);
           rune.rotation.z = k % 2 ? 0.5 : -0.5;
           dg.add(rune); runes.push(rune);
         }
       }
-      // ⭐ 4-point purple star pommel with a hanging tassel (พู่เงา)
-      const pommelCap = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.028, 0.024, 8), goldMat);
-      pommelCap.position.y = -0.265;
+      // ⭐ ท้ายด้าม — ฝาครอบกลึงชิ้นเดียว + แก้วดาวชิ้นเดียว (เดิมเป็นแฉก 4 ชิ้นแยก)
+      const pommelCap = new THREE.Mesh(new THREE.LatheGeometry(
+        [[0.031, -0.278], [0.036, -0.292], [0.030, -0.306], [0.018, -0.316]].map(([r, y]) => new THREE.Vector2(r, y)), 12), goldMat);
       dg.add(pommelCap);
-      const starPts = [];
-      for (let k = 0; k < 4; k++) {
-        const pt = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.06, 4), crystalMat);
-        pt.position.y = -0.31; pt.rotation.z = k * Math.PI / 2; pt.scale.set(1, 1, 0.5);
-        pt.position.x = Math.sin(k * Math.PI / 2) * 0.03; pt.position.y = -0.31 + Math.cos(k * Math.PI / 2) * -0.03;
-        dg.add(pt); starPts.push(pt);
-      }
-      const starCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), crystalMat);
-      starCore.position.y = -0.31;
+      const starCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.034, 0), crystalMat);
+      starCore.position.y = -0.336; starCore.scale.set(1.35, 1, 0.5);
       dg.add(starCore);
-      // hanging crimson tassel
-      const tCord = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.08, 4), cordMat);
-      tCord.position.set(0.02, -0.37, 0.01);
-      const tTip = new THREE.Mesh(new THREE.ConeGeometry(0.019, 0.06, 5), cordMat);
-      tTip.position.set(0.02, -0.435, 0.01); tTip.rotation.x = Math.PI;
-      dg.add(tCord, tTip);
+      const starPts = [starCore];
+      // 🧶 พู่เงา — กลึงชิ้นเดียว (เดิมเป็นเชือก + ปลายพู่แยกกัน)
+      const tassel = new THREE.Mesh(new THREE.LatheGeometry(
+        [[0.004, -0.340], [0.004, -0.400], [0.020, -0.414], [0.016, -0.452], [0.0, -0.470]].map(([r, y]) => new THREE.Vector2(r, y)), 8), cordMat);
+      tassel.position.set(0.02, 0, 0.01);
+      dg.add(tassel);
       g.add(dg);
       // 🌑 purple shadow aura motes drifting around the blade
       const motes = [];
