@@ -886,7 +886,7 @@ const SK_ARCH = {
   w_cleave: "spin", w_bash: "bash", w_rage: "buff", w_quake: "smash",                          // ⚔️ นักรบ
   a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe",     // 🏹 นักธนู
   m_fire: "cast", m_ice: "cast", m_bolt: "beam", m_heal: "buff",                                // 🔮 เวทมนตร์
-  s_double: "stab", s_poison: "throw", s_shadow: "shadow3", s_evade: "star",                   // 🗡️ อัสแซสซิน
+  s_double: "stab", s_poison: "knives", s_shadow: "shadow3", s_evade: "star",                  // 🗡️ อัสแซสซิน
   l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash",                        // 🔱 หอก
   k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin",                            // 🗡️ ซามูไร
   o_coffee: "buff", o_paper: "throw", o_smash: "bash", o_deadline: "buff", o_ceo: "beam",       // 🏢 ออฟฟิศ
@@ -3557,7 +3557,8 @@ export default function CherryAdventure() {
         g.userData.starPts = starPts;
         g.userData.tintParts = tintParts;
         g.userData.baseTint = 0x1e1a26;
-        g.userData.gripY = 0.16;
+        g.scale.setScalar(0.5);   // 🔪 ย่อมีดสั้นลงครึ่งหนึ่ง — ให้ได้ขนาด "มีดสั้น" จริง ๆ ไม่ใช่ดาบใหญ่
+        g.userData.gripY = 0.08;  // จุดจับเลื่อนตามสเกล มือยังกำที่ด้ามพอดี
         g.userData.glow = true;
         return g;
       };
@@ -3566,7 +3567,7 @@ export default function CherryAdventure() {
       // 🗡️🗡️ TWIN: an independent off-hand dagger carried on the LEFT arm (mirrored)
       const gL = makeReaper();
       gL.visible = false;
-      gL.scale.x = -1;                 // mirror the curve
+      gL.scale.set(-0.5, 0.5, 0.5);    // mirror the curve (คงขนาดครึ่งเดียวเหมือนมือขวา)
       gL.position.set(-0.02, -0.5, 0.12); // sit in the left palm
       gL.rotation.set(1.4, 0, 0);      // match the dagger grip angle
       (armL.userData.elbow || armL).add(gL);
@@ -18333,6 +18334,63 @@ export default function CherryAdventure() {
         }
       }
     };
+    // 🗡️☠️ มีดพิษที่ขว้างออกไป + กลุ่มควันม่วงที่ลอยขึ้นตรงจุดที่มีดปัก
+    const poisonFx = [];
+    const spawnPoisonKnife = (target, col, onHit) => {
+      try {
+        const bladeMat = new THREE.MeshStandardMaterial({ color: col || 0x9a4ad0, metalness: 0.7, roughness: 0.25, emissive: 0x4a1080, emissiveIntensity: 0.8 });
+        const gripMat = new THREE.MeshStandardMaterial({ color: 0x2a1a30, roughness: 0.85 });
+        const g = new THREE.Group();
+        const blade = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.44, 4), bladeMat);
+        blade.position.y = 0.15; blade.scale.set(1, 1, 0.3);
+        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.033, 0.17, 6), gripMat);
+        grip.position.y = -0.12;
+        g.add(blade, grip);
+        g.traverse((o) => { o.raycast = () => {}; });
+        const sx = char.position.x + Math.sin(char.rotation.y) * 0.35, sz = char.position.z + Math.cos(char.rotation.y) * 0.35;
+        g.position.set(sx, 1.55, sz);
+        g.userData = { kind: "knife", t: 0, dur: 0.24, sx, sz, sy: 1.55, target, onHit, mats: [bladeMat, gripMat] };
+        scene.add(g); poisonFx.push(g);
+      } catch (e) {}
+    };
+    const spawnPoisonCloud = (x, z, col, big) => {
+      try {
+        const n = big ? 9 : 4;
+        for (let k = 0; k < n; k++) {
+          const m = new THREE.MeshBasicMaterial({ color: col || 0x9a4ad0, transparent: true, opacity: 0, depthWrite: false });
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(big ? 0.4 : 0.26, 8, 6), m);
+          const a = Math.random() * Math.PI * 2, r = Math.random() * (big ? 1.1 : 0.45);
+          puff.position.set(x + Math.cos(a) * r, 0.22 + Math.random() * 0.3, z + Math.sin(a) * r);
+          puff.raycast = () => {};
+          puff.userData = { kind: "puff", t: 0, dur: big ? 1.5 : 0.95, mats: [m], rise: 0.85 + Math.random() * 0.8, spin: (Math.random() - 0.5) * 2, gro: big ? 2.1 : 1.5 };
+          scene.add(puff); poisonFx.push(puff);
+        }
+      } catch (e) {}
+    };
+    G._animPoisonFx = (d) => {
+      for (let i = poisonFx.length - 1; i >= 0; i--) {
+        const o = poisonFx[i], u = o.userData;
+        u.t += d;
+        const p = Math.min(1, u.t / u.dur);
+        if (u.kind === "knife") {
+          const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+          const tx = tp ? tp.x : u.sx, tz = tp ? tp.z : u.sz;
+          o.position.set(u.sx + (tx - u.sx) * p, u.sy + (0.9 - u.sy) * p + Math.sin(p * Math.PI) * 0.4, u.sz + (tz - u.sz) * p);
+          o.rotation.y = Math.atan2(tx - u.sx, tz - u.sz);
+          o.rotation.z += d * 26;                                   // 🔪 หมุนคว้างกลางอากาศ
+          if (p >= 1) {
+            if (u.onHit) { try { u.onHit(tx, tz); } catch (e) {} }
+            scene.remove(o); u.mats.forEach((m) => m.dispose()); poisonFx.splice(i, 1);
+          }
+        } else {                                                     // 🟣 ควันพิษ — ลอยขึ้น บานออก แล้วจางหาย
+          o.position.y += u.rise * d;
+          o.rotation.y += u.spin * d;
+          o.scale.setScalar(0.5 + p * u.gro);
+          u.mats[0].opacity = 0.5 * Math.sin(Math.min(1, p * 1.15) * Math.PI);
+          if (p >= 1) { scene.remove(o); u.mats.forEach((m) => m.dispose()); poisonFx.splice(i, 1); }
+        }
+      }
+    };
     G._animWpnGhosts = (d) => { for (let i = wpnGhosts.length - 1; i >= 0; i--) { const g = wpnGhosts[i]; g.userData.life -= d; const k = Math.max(0, g.userData.life / g.userData.max); g.userData.mat.opacity = (g.userData.base || 0.45) * k * k; if (g.userData.life <= 0) { scene.remove(g); g.userData.mat.dispose(); wpnGhosts.splice(i, 1); } } };
     // 🎬 map a skill to its signature battle FX so open-world casts look like the 1-v-1 arena
     const worldFxFor = (sk) => {
@@ -18451,16 +18509,17 @@ export default function CherryAdventure() {
       return "cleave";
     };
     // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
-    const startSkillCast = (arch, col, focus, fire, starHit, shadowFire) => {
+    const startSkillCast = (arch, col, focus, fire, beats) => {
       // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22 };
-      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46 };
+      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16 };
+      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34 };
       const chg = CHG[arch] != null ? CHG[arch] : 0.15;
       const rel = REL[arch] != null ? REL[arch] : 0.16;
       const rush = !!ARCH_RUSH[arch] || arch === "star";                                                                    // สายประชิดเท่านั้นที่พุ่งเข้าหา
       const dsh = arch === "star" ? 0.5 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                    // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
       const hold = 0.14, rec = 0.06;                                                                                        // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
-      G._skCast = { arch, col, fire, starHit, shadowFire, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0 };
+      const B = beats || {};
+      G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
       ensureCastFx();
       worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
       G._worldSwingT = 0;
@@ -18478,7 +18537,7 @@ export default function CherryAdventure() {
       const aoe = isAoeSkill(sk);
       const fk0 = worldFxFor(sk), arch0 = skillArch(sk, fk0);
       // 🥷 ประหารเงา = ท่าระยะไกล — เล็งได้ไกลกว่าสกิลประชิดของนักฆ่ามาก
-      const focus = nearestWild(worldRange() + (arch0 === "shadow3" ? 8 : aoe ? 3 : 2));
+      const focus = nearestWild(worldRange() + (arch0 === "shadow3" ? 8 : arch0 === "knives" ? 5 : aoe ? 3 : 2));
       if (!focus) return;
       G.player.mp -= cost;
       G.startCd(sk); // ⏳ begin cooldown
@@ -18511,6 +18570,18 @@ export default function CherryAdventure() {
         fireSlash(at, col);
         spawnSkillFx("bleedstab", at, col);
       };
+      // 🔪☠️ ปามีดพิษทีละเล่ม — ปักแล้วพ่นควันม่วงลอยขึ้น เล่มสุดท้ายควันฟุ้งใหญ่
+      const knifeFire = arch !== "knives" ? null : (idx) => {
+        const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 5);
+        if (!tgt) return;
+        spawnPoisonKnife(tgt, col, (hx, hz) => {
+          const at = new THREE.Vector3(hx, 0.9, hz);
+          applyDmg(tgt, 1 / 3);
+          burst(at, col, 0.55);
+          spawnPoisonCloud(hx, hz, col, idx >= 2);
+          G._camShake = Math.max(G._camShake || 0, 0.12);
+        });
+      };
       // 🎬 ปล่อยพลังจริงตอนจบช่วงสะสม — ท่าร่ายมาก่อน ดาเมจตามหลัง (anticipation → release)
       startSkillCast(arch, col, focus, () => {
         const alive = wilds.indexOf(focus) >= 0;
@@ -18524,6 +18595,8 @@ export default function CherryAdventure() {
           toast(`${sk.emoji || "✨"} ${sk.name} — ฟันหมู่รูปดาว 5 แฉก!`); // ดาเมจลงไปแล้วทีละแฉกระหว่างวิ่ง
         } else if (arch === "shadow3") {
           toast(`${sk.emoji || "✨"} ${sk.name} — ส่งเงา 3 ร่างพุ่งเข้าใส่!`); // ดาเมจลงตอนเงาแต่ละร่างถึงตัว
+        } else if (arch === "knives") {
+          toast(`${sk.emoji || "✨"} ${sk.name} — ปามีดพิษ 3 เล่ม!`); // ดาเมจลงตอนมีดแต่ละเล่มปัก
         } else if (tgt) {
           if (aoe) {
             const targets = wildsInRadius(at.x, at.z, 3.4);
@@ -18533,7 +18606,7 @@ export default function CherryAdventure() {
         }
         if (G.sfx) G.sfx.skill && G.sfx.skill();
         syncPlayer();
-      }, starHit, shadowFire);
+      }, { starHit, shadowFire, knifeFire });
     };
     // player fell in the open world
     G.worldFaint = () => {
@@ -22807,6 +22880,7 @@ export default function CherryAdventure() {
         // ⚔️🎬 open-world attack swing — overrides the walk pose for a brief strike (mirrors the arena tell)
         if (G._animWpnGhosts) G._animWpnGhosts(dt);           // 👻 เฟดเงาอาวุธ
         if (G._animShadowBolts) G._animShadowBolts(dt);       // 💀 กะโหลกเงาลอย → พุ่งเข้าใส่เป้า
+        if (G._animPoisonFx) G._animPoisonFx(dt);             // 🔪🟣 มีดพิษที่ขว้าง + ควันม่วงลอยขึ้น
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
         if (G._comboRe > 0) G._comboRe = Math.max(0, G._comboRe - dt);          // 🥊 หน้าต่างต่อคอมโบ
         if (G._camPunch > 0) G._camPunch = Math.max(0, G._camPunch - dt * 2.6); // 🎥 กล้องคืนระยะหลังท่าจบ
@@ -23096,7 +23170,14 @@ export default function CherryAdventure() {
           wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
           if (char.rotation.order !== "YXZ") char.rotation.order = "YXZ";
           let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0;
-          if (arch === "shadow3") {
+          if (arch === "knives") {
+            // ☠️ ปามีดพิษ — เงื้อมีดเหนือไหล่ บิดตัว แล้วสะบัดขว้างออกไปทีละเล่ม 3 ครั้ง
+            const fl = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 3));
+            armR.rotation.x = (-1.55 - 0.6 * ce + 2.15 * fl) * ease;
+            armR.rotation.z = (0.35 + 0.3 * ce - 0.45 * fl) * ease;
+            armL.rotation.x = (-0.55 - 0.3 * ce + 0.25 * fl) * ease; armL.rotation.z = -0.35 * ease;
+            twist = (0.5 * ce - 0.95 * fl) * ease; lean = 0.1 * fl * ease;
+          } else if (arch === "shadow3") {
             // 🥷 ประหารเงา — ยกสองมือเรียกเงาขึ้นมาลอยรอบตัว แล้วผลักส่งออกไปทีละร่าง
             const push = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 3));
             armR.rotation.x = (-1.12 - 0.5 * ce - 0.55 * push) * ease;
@@ -23241,6 +23322,11 @@ export default function CherryAdventure() {
             const fx2 = Math.sin(char.rotation.y), fz2 = Math.cos(char.rotation.y);
             char.position.x += fx2 * (lunge - S.lunge); char.position.z += fz2 * (lunge - S.lunge);
             S.lunge = lunge;
+          }
+          // 🔪 ปามีดพิษ 3 เล่ม — สะบัดขว้างทีละเล่มระหว่างช่วงปล่อย
+          if (arch === "knives" && S.t >= S.chg && S.kN < 3) {
+            const kb = [0, 0.32, 0.64];
+            while (S.kN < 3 && rp >= kb[S.kN]) { if (S.knifeFire) S.knifeFire(S.kN); S.kN++; }
           }
           // 🥷 ประหารเงา — ปล่อยเงาทีละร่างระหว่างช่วงปล่อยพลัง (ตัวจริงยืนอยู่กับที่)
           if (arch === "shadow3" && S.t >= S.chg && S.shN < 3) {
