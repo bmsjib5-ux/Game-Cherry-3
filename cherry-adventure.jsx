@@ -21296,11 +21296,18 @@ export default function CherryAdventure() {
         }
       }
       // 🛟 ออกจากโหมดสำรวจกลางคันตอนร่ายสกิล — ปล่อยพลังทิ้งแล้วเคลียร์คิว ไม่ให้ค้างจนร่ายสกิลต่อไม่ได้
+      // 🎥 น้ำหนักการล็อกกล้อง — เข้าเร็ว (ให้จอนิ่งทันที) แล้วค่อย ๆ คลายกลับมาเกาะตัวละคร
+      if (G._camLock) {
+        const L = G._camLock;
+        L.w = L.off ? Math.max(0, L.w - dt * 2.2) : Math.min(1, L.w + dt * 12);
+        if (L.off && L.w <= 0) G._camLock = null;
+      }
       if (G._hopT != null && G.mode !== "explore") { G._hopT = null; char.rotation.x = 0; } // 🛟 ออกจากโหมดสำรวจกลางอากาศ — เคลียร์ท่ากระโดด
       if (G._skCast && G.mode !== "explore") {
         if (!G._skCast.fired) { G._skCast.fired = true; try { G._skCast.fire(); } catch (e) {} }
         hideCastFx();
         torso.rotation.y = 0; headG.rotation.y = 0; char.rotation.x = 0; wand.scale.set(1, 1, 1);
+        if (G._camLock) G._camLock.off = true;
         G._skCast = null;
       }
       // ⏳ skill-cooldown HUD sync — push remaining times at ~6fps while any skill cools (+ one final clear)
@@ -23000,6 +23007,8 @@ export default function CherryAdventure() {
               const vtx = [0, 2, 4, 1, 3].map((k) => { const a = a0 + k * (Math.PI * 2 / 5); return [cx + Math.sin(a) * R, cz + Math.cos(a) * R]; });
               S.path = [[char.position.x, char.position.z]].concat(vtx, [vtx[0]]); // 6 ช่วงวิ่ง
               S.cx = cx; S.cz = cz; S.leg = 0;
+              // 🎥 ตรึงจอไว้ระหว่างจุดยืนกับใจกลางดาว — เห็นรูปดาวครบโดยที่กล้องแทบไม่ขยับเลย
+              G._camLock = { x: char.position.x + (cx - char.position.x) * 0.45, z: char.position.z + (cz - char.position.z) * 0.45, w: 0, off: false };
               ensureStarFx();
               G._starLines.forEach((l) => { l.visible = false; l.material.color.setHex(S.col); });
             } else if (tp) {
@@ -23037,7 +23046,6 @@ export default function CherryAdventure() {
                   ln.scale.set(1, L, 1); ln.rotation.z = -Math.atan2(dxl, dzl);
                 }
               }
-              G._camShake = Math.max(G._camShake || 0, 0.16);
             }
             if (G._starLines) G._starLines.forEach((l) => { if (l.visible) l.material.opacity = Math.max(0, l.material.opacity - dt * 0.7); });
           } else if (S.dsh && S.dashed && dp < 1) {
@@ -23256,6 +23264,7 @@ export default function CherryAdventure() {
             if (!S.fired) { S.fired = true; try { S.fire(); } catch (e) {} }     // 🛟 โหมดเปลี่ยนกลางคัน — อย่าให้มานาที่จ่ายไปสูญเปล่า
             hideCastFx();
             torso.rotation.y = 0; headG.rotation.y = 0; char.rotation.x = 0; wand.scale.set(1, 1, 1);
+            if (G._camLock) G._camLock.off = true;   // 🎥 คลายล็อกกล้อง แล้วค่อย ๆ กลับมาเกาะตัวละคร
             G._skCast = null;
           }
         }
@@ -28663,14 +28672,18 @@ export default function CherryAdventure() {
         const camDistE = camDist * (1 - (G._camPunch || 0) * 0.13); // 🎬 กล้องกระชากเข้าใกล้ตอนท่าจบคอมโบ แล้วคืนระยะ
         const hd = camDistE * 0.8;
         const yaw = G.camYaw || 0;
-        const camX = char.position.x + Math.sin(yaw) * hd;
+        // 🎥 จุดที่กล้องเกาะ — ปกติคือตัวละคร แต่ถ้ามี "ล็อกกล้อง" (เช่นท่าฟันรูปดาว) จะยึดจุดนิ่งไว้แทน
+        const LK = G._camLock;
+        const fx = LK ? char.position.x + (LK.x - char.position.x) * LK.w : char.position.x;
+        const fz = LK ? char.position.z + (LK.z - char.position.z) * LK.w : char.position.z;
+        const camX = fx + Math.sin(yaw) * hd;
         const camY = camDistE * (G.camPitch != null ? G.camPitch : 0.77);
-        const camZ = char.position.z + Math.cos(yaw) * hd;
+        const camZ = fz + Math.cos(yaw) * hd;
         camera.position.x += (camX - camera.position.x) * 0.1;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (camZ - camera.position.z) * 0.1;
         // 🎯 มองจุดเหนือหัวตัวละคร (สเกลตามซูม) → ตัวละครยืนค่อนลงล่างจอ เห็นฉากด้านหน้ามากขึ้น
-        camera.lookAt(char.position.x, 0.8 + camDistE * 0.15, char.position.z);
+        camera.lookAt(fx, 0.8 + camDistE * 0.15, fz);
       }
 
       if (dtForce == null && renderer.shadowMap.enabled && ((G._shTick = (G._shTick || 0) + 1) & 1) === 0) renderer.shadowMap.needsUpdate = true; // 🌑 เงา ~30Hz
