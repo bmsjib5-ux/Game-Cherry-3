@@ -5737,6 +5737,17 @@ export default function CherryAdventure() {
     const setMouth = (n) => Object.entries(mouths).forEach(([k, m]) => (m.visible = k === n));
     setMouth("smile");
     G._chibiFace = [head, eyes, browL, browR, nose, cheekL, cheekR]; G._chibiMouths = mouths; // 🤖 hidden under the aegis helmet
+    // 😰 หยดเหงื่อข้างหัว — โชว์อัตโนมัติตอนเลือดใกล้หมด (ไหลลง+จางแล้ววนใหม่)
+    {
+      const sweatG = new THREE.Group();
+      [[0.54, 0.34, 0.3], [-0.5, 0.46, 0.22]].forEach(([sx, sy, sz], i) => {
+        const d = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), new THREE.MeshBasicMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.9 }));
+        d.scale.set(0.7, 1.15, 0.5); d.position.set(sx, sy, sz); d.userData.ph = i * 0.8; sweatG.add(d);
+      });
+      sweatG.visible = false;
+      headG.add(sweatG);
+      G._sweatG = sweatG;
+    }
     // ---------- 🖤 เส้นขอบดำบาง ๆ สไตล์การ์ตูน (inverted-hull outline) ----------
     {
       const outlineMat = new THREE.MeshBasicMaterial({ color: 0x2a2430, side: THREE.BackSide, toneMapped: false });
@@ -13066,6 +13077,11 @@ export default function CherryAdventure() {
       sl.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:9996;opacity:0;background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0) 0deg 5deg, rgba(255,255,255,0.5) 5.6deg 6.4deg, rgba(255,255,255,0) 7deg 12deg);mask-image:radial-gradient(circle at 50% 50%, transparent 0 34%, black 62%);-webkit-mask-image:radial-gradient(circle at 50% 50%, transparent 0 34%, black 62%);";
       document.body.appendChild(sl);
       G.speedLines = (dur) => { try { sl.style.transition = "none"; sl.style.opacity = "0.85"; setTimeout(() => { sl.style.transition = "opacity " + (dur || 700) + "ms ease-out"; sl.style.opacity = "0"; }, 60); } catch (e) {} };
+      // 🩸 ขอบจอแดงระเรื่อตอนเลือดใกล้หมด — เฟดนุ่มตามเปอร์เซ็นต์เลือด (ไม่ใช่แฟลชกระพริบ)
+      const vg = document.createElement("div");
+      vg.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:9995;opacity:0;background:radial-gradient(ellipse at 50% 50%, rgba(200,0,20,0) 52%, rgba(190,0,25,0.55) 82%, rgba(150,0,20,0.85) 100%);";
+      document.body.appendChild(vg);
+      G._vignEl = vg;
       const bn = document.createElement("div");
       bn.style.cssText = "position:fixed;left:0;right:0;top:24%;pointer-events:none;z-index:9998;display:none;overflow:hidden;";
       bn.innerHTML = '<div data-cutbar style="transform:skewY(-3deg) translateX(-110%);background:linear-gradient(90deg,rgba(10,8,16,0),rgba(10,8,16,0.92) 16%,rgba(10,8,16,0.92) 84%,rgba(10,8,16,0));padding:13px 0;text-align:center;"><div data-cutname style="font-weight:900;font-size:32px;color:#ffe9b0;text-shadow:0 0 18px #ffb03a,0 2px 0 #000;letter-spacing:2px;white-space:nowrap;"></div><div data-cutsub style="font-size:11px;color:#ffd9e8;letter-spacing:7px;margin-top:2px;">— ULTIMATE —</div></div>';
@@ -15469,6 +15485,7 @@ export default function CherryAdventure() {
     const effAtk = () => Math.round((G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK
     const effDef = () => Math.round((G.player.def + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล
     const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100)); // ⚖️ +3 HP ฐานต่อเลเวล (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+    G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
@@ -21044,6 +21061,26 @@ export default function CherryAdventure() {
       if (G._hitStop > 0 && dtForce == null) { G._hitStop -= dtReal; dt *= 0.06; }
       dtGlobal = dt;
       const t = clock.getElapsedTime();
+      // 🩸😰 เตือนเลือดใกล้หมด — ขอบจอแดงเต้นตามหัวใจ + เหงื่อออก (ทำงานทุกโหมด ทั้งเดินและต่อสู้)
+      if (dtForce == null) {
+        if ((G._frzTick % 6) === 0 || G._lowHpR == null) {
+          const mx = G.effMaxHp ? G.effMaxHp() : (G.player ? G.player.maxHp : 1);
+          G._lowHpR = (G.player && mx) ? Math.max(0, Math.min(1, G.player.hp / mx)) : 1;
+          G._lowK = Math.max(0, Math.min(1, (0.3 - G._lowHpR) / 0.3)); // 0 ที่ HP 30% → 1 ตอนใกล้ตาย
+        }
+        const lowK = G._lowK || 0;
+        const alive = (G.mode === "explore" || G.mode === "battle") && G.player && G.player.hp > 0;
+        if (G._vignEl && (G._frzTick & 1) === 0) { // เต้นตุบนุ่ม ๆ ตามจังหวะหัวใจ (ไม่ใช่แฟลชกระพริบ)
+          const pulse = lowK > 0.5 ? 1 + 0.25 * Math.sin(t * 6.5) : 1;
+          const op = alive ? lowK * 0.85 * pulse : 0;
+          if (Math.abs(op - (G._vignOp || 0)) > 0.004) { G._vignOp = op; G._vignEl.style.opacity = op.toFixed(3); }
+        }
+        if (G._sweatG) { // 💦 หยดเหงื่อไหลลงข้างหัวแล้ววนใหม่
+          const on = lowK > 0.25 && alive;
+          if (G._sweatG.visible !== on) G._sweatG.visible = on;
+          if (on) G._sweatG.children.forEach((d, i) => { const ph = (t * 0.9 + d.userData.ph) % 1; d.position.y = (i ? 0.46 : 0.34) - ph * 0.5; d.material.opacity = 0.9 * Math.min(1, (1 - ph) * 2.2) * lowK; });
+        }
+      }
       // ⏳ skill-cooldown HUD sync — push remaining times at ~6fps while any skill cools (+ one final clear)
       G._cdSyncT = (G._cdSyncT || 0) + dt;
       if (G._cdSyncT > 0.16) {
@@ -22428,8 +22465,9 @@ export default function CherryAdventure() {
           wand.position.set(0.06, -0.5, 0.16);             // out in front of the hip
           wand.rotation.set(-0.75, 0.15, -0.1);            // blade sweeps down & forward
         }
-        // grounded bounce blends into idle breathing
-        char.position.y = Math.abs(swing) * 0.07 * moveAmt + Math.sin(t * 2) * 0.03 * (1 - moveAmt);
+        // grounded bounce blends into idle breathing (หอบแรงขึ้นตอนเลือดใกล้หมด)
+        const bK = G._lowK || 0;
+        char.position.y = Math.abs(swing) * 0.07 * moveAmt + Math.sin(t * (2 + bK * 3.4)) * (0.03 + bK * 0.035) * (1 - moveAmt);
         // 🐎 RIDING — ตัวละครนั่งค่อมบนหลัง สัตว์ขี่เป็นฝ่ายเดิน (ขา/หาง/ปีกขยับแทน)
         if (G.mountId && G._mountMesh) {
           const M = G._mountMesh;
