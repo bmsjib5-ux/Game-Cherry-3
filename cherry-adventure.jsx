@@ -668,8 +668,8 @@ const CLASS_SKILLS = {
     { id: "a_weak", cost: 14, name: "ยิงจุดอ่อน", emoji: "🦅", color: 0xf5d24a, mult: 2.2, perLv: 0.55, pierce: true, guaranteedCrit: true, weakPoint: true, stun: true, fx: "shot", desc: "เล็งจุดอ่อน คริการันตี เจาะเกราะ ดาเมจ×3 + สตัน 💫" },
   ],
   mage: [
-    { id: "m_fire", cost: 9, name: "เพลิงนรก", emoji: "🔥", color: 0xf5652e, mult: 1.8, perLv: 0.4, burn: 2, fx: "orb", desc: "ลูกไฟนรกยักษ์ ระเบิดรุนแรง + เผาไหม้ 5 เทิร์น 🔥" },
-    { id: "m_ice", cost: 9, name: "หอกน้ำแข็ง", emoji: "❄️", color: 0x9adcf5, mult: 1.6, perLv: 0.38, freeze: true, fx: "orb", desc: "หอกคริสตัลทะลุ แช่แข็ง + ลดความเร็ว ❄️" },
+    { id: "m_fire", cost: 9, name: "เพลิงนรก", emoji: "🔥", color: 0xf5652e, mult: 1.8, perLv: 0.4, burn: 2, fx: "orb", desc: "เรียกดวงไฟลอยขึ้นแล้วพุ่งใส่ศัตรูทั้งกลุ่ม เสาไฟผุดจากพื้น + เผาไหม้ 🔥" },
+    { id: "m_ice", cost: 9, name: "หอกน้ำแข็ง", emoji: "❄️", color: 0x9adcf5, mult: 1.6, perLv: 0.38, freeze: true, fx: "orb", desc: "แท่งน้ำแข็งผุดจากพื้นทั้งกลุ่ม แช่แข็งอยู่กับที่ 1 วิ แล้วแตกเข้าดาเมจ ❄️" },
     { id: "m_bolt", cost: 12, name: "สายฟ้าฟาด", emoji: "⚡", color: 0xf5e042, mult: 2.0, perLv: 0.45, fx: "bolt", desc: "เรียกพายุฟ้าผ่า AoE + อัมพาต + สายฟ้าลูกโซ่ ⚡" },
     { id: "m_heal", cost: 10, name: "แสงเยียวยา", emoji: "✨", color: 0xffe9a0, mult: 1.0, perLv: 0.2, heal: 0.4, fx: "heal", desc: "ฟื้น HP + ฟื้นต่อเนื่อง + ล้างสถานะ + ป้องกันเวท ✨" },
   ],
@@ -878,14 +878,14 @@ const skillsOf = (cls, pathId) => {
 // Ground-slam (quake) and poison-cloud (poison) effects blanket an area; a few signature
 // wide swings are AoE too. Everything else (incl. multi-hit combos) focuses one target.
 const AOE_FX = { quake: 1, poison: 1 };
-const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1 }; // 🌟 ระบำเงา = พุ่งฟันหมู่เป็นรูปดาว
+const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
 const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
 // 🎭 ท่าร่ายประจำสกิล — แมปทีละสกิลให้ท่าตรงกับชื่อ/ความหมายของมันจริง ๆ
 // (สกิลที่ไม่อยู่ในตารางจะถูกเดาให้จากอาชีพ + ชนิดเอฟเฟกต์)
 const SK_ARCH = {
   w_cleave: "spin", w_bash: "bash", w_rage: "buff", w_quake: "smash",                          // ⚔️ นักรบ
   a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe",     // 🏹 นักธนู
-  m_fire: "cast", m_ice: "cast", m_bolt: "beam", m_heal: "buff",                                // 🔮 เวทมนตร์
+  m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff",                       // 🔮 เวทมนตร์
   s_double: "stab", s_poison: "knives", s_shadow: "shadow3", s_evade: "star",                  // 🗡️ อัสแซสซิน
   l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash",                        // 🔱 หอก
   k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin",                            // 🗡️ ซามูไร
@@ -18392,6 +18392,101 @@ export default function CherryAdventure() {
         }
       }
     };
+    // 🔥❄️ เอฟเฟกต์เวทหมู่ — ดวงไฟลอยขึ้นแล้วพุ่งใส่ · เสาไฟผุดจากพื้น · แท่งน้ำแข็งผุดขึ้นแช่แข็งแล้วแตก
+    const magicFx = [];
+    const spawnFirePillar = (x, z, col) => {
+      try {
+        const g = new THREE.Group(); const mats = [];
+        for (let k = 0; k < 3; k++) {
+          const mm = new THREE.MeshBasicMaterial({ color: k === 0 ? 0xfff2c0 : (col || 0xff7a2a), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+          const h = 2.7 - k * 0.55;
+          const cone = new THREE.Mesh(new THREE.ConeGeometry(0.28 + k * 0.16, h, 10, 1, true), mm);
+          cone.position.y = h / 2; cone.raycast = () => {};
+          g.add(cone); mats.push(mm);
+        }
+        g.position.set(x, 0, z); g.scale.set(1, 0.05, 1);
+        g.userData = { kind: "pillar", t: 0, dur: 0.65, mats };
+        scene.add(g); magicFx.push(g);
+      } catch (e) {}
+    };
+    const spawnFireOrb = (idx, target, col, onHit) => {
+      try {
+        const mm = new THREE.MeshBasicMaterial({ color: col || 0xff7a2a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const core = new THREE.MeshBasicMaterial({ color: 0xfff2c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const g = new THREE.Group();
+        const outer = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 10), mm);
+        const inner = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), core);
+        outer.raycast = () => {}; inner.raycast = () => {};
+        g.add(outer, inner);
+        const a = idx * 1.9 + 0.4;
+        const sx = char.position.x + Math.cos(a) * 1.25, sz = char.position.z + Math.sin(a) * 1.25;
+        g.position.set(sx, 0.5, sz);
+        g.userData = { kind: "orb", t: 0, rise: 0.3 + idx * 0.05, fly: 0.26, sx, sz, target, onHit, col, mats: [mm, core] };
+        scene.add(g); magicFx.push(g);
+      } catch (e) {}
+    };
+    const spawnIceSpike = (target, col, onShatter) => {
+      try {
+        const ice = new THREE.MeshStandardMaterial({ color: col || 0x9fe4ff, transparent: true, opacity: 0.75, roughness: 0.08, metalness: 0.15, emissive: 0x2a6a9a, emissiveIntensity: 0.6 });
+        const g = new THREE.Group();
+        for (let k = 0; k < 5; k++) {
+          const a = (k / 5) * Math.PI * 2;
+          const h = k === 0 ? 2.4 : 1.1 + (k % 3) * 0.35;
+          const sp = new THREE.Mesh(new THREE.ConeGeometry(k === 0 ? 0.44 : 0.22, h, 6), ice);
+          sp.position.set(k === 0 ? 0 : Math.cos(a) * 0.6, h / 2, k === 0 ? 0 : Math.sin(a) * 0.6);
+          if (k) { sp.rotation.z = -Math.cos(a) * 0.28; sp.rotation.x = Math.sin(a) * 0.28; }
+          sp.raycast = () => {};
+          g.add(sp);
+        }
+        const tp = target ? target.position : char.position;
+        g.position.set(tp.x, 0, tp.z); g.scale.set(1, 0.02, 1);
+        g.userData = { kind: "spike", t: 0, up: 0.16, hold: 1.0, out: 0.3, target, onShatter, col, mats: [ice], done: false };
+        scene.add(g); magicFx.push(g);
+      } catch (e) {}
+    };
+    G._animMagicFx = (d) => {
+      for (let i = magicFx.length - 1; i >= 0; i--) {
+        const o = magicFx[i], u = o.userData;
+        u.t += d;
+        const kill = () => { scene.remove(o); u.mats.forEach((m) => m.dispose()); magicFx.splice(i, 1); };
+        if (u.kind === "orb") {
+          const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+          const tx = tp ? tp.x : u.sx, tz = tp ? tp.z : u.sz;
+          if (u.t < u.rise) {                                   // 🔺 ลอยขึ้นรอบตัวผู้ร่าย
+            const h = u.t / u.rise;
+            o.position.set(u.sx, 0.5 + h * 1.9 + Math.sin(h * Math.PI * 2) * 0.12, u.sz);
+            o.scale.setScalar(0.5 + h * 0.6);
+            u.mats.forEach((m) => (m.opacity = Math.min(1, h * 2.2) * 0.9));
+          } else {                                              // 💨 พุ่งเข้าใส่มอนสเตอร์
+            const p = Math.min(1, (u.t - u.rise) / u.fly), e = p * p;
+            o.position.set(u.sx + (tx - u.sx) * e, 2.4 + (0.9 - 2.4) * e, u.sz + (tz - u.sz) * e);
+            o.scale.setScalar(1.1 + p * 0.3);
+            if (p >= 1) { if (u.onHit) { try { u.onHit(tx, tz); } catch (e2) {} } kill(); }
+          }
+        } else if (u.kind === "pillar") {                       // 🔥 เสาไฟพุ่งขึ้นจากพื้น
+          const p = Math.min(1, u.t / u.dur);
+          o.scale.set(1 + p * 0.25, p < 0.22 ? 0.05 + (p / 0.22) * 1.15 : 1.2 - (p - 0.22) * 0.25, 1 + p * 0.25);
+          o.rotation.y += d * 3.2;
+          u.mats.forEach((m, k) => (m.opacity = (0.9 - k * 0.15) * Math.sin(Math.min(1, p * 1.1) * Math.PI)));
+          if (p >= 1) kill();
+        } else {                                                // 🧊 แท่งน้ำแข็ง: ผุดขึ้น → ค้างแช่แข็ง → แตก
+          if (u.t < u.up) {
+            const h = u.t / u.up;
+            o.scale.set(1, 0.02 + h * 1.08, 1);
+          } else if (u.t < u.up + u.hold) {
+            o.scale.set(1, 1.0 + Math.sin(u.t * 9) * 0.02, 1);
+            u.mats[0].emissiveIntensity = 0.5 + Math.abs(Math.sin(u.t * 5)) * 0.5;
+            if (u.target && wilds.indexOf(u.target) >= 0) u.target.userData.frzT = Math.max(u.target.userData.frzT || 0, 0.2); // ❄️ ตรึงไว้ตลอดที่น้ำแข็งยังอยู่
+          } else {
+            if (!u.done) { u.done = true; if (u.onShatter) { try { u.onShatter(o.position.x, o.position.z); } catch (e2) {} } }
+            const p = Math.min(1, (u.t - u.up - u.hold) / u.out);
+            o.scale.set(1 + p * 0.5, 1 - p * 0.7, 1 + p * 0.5);
+            u.mats[0].opacity = 0.75 * (1 - p);
+            if (p >= 1) kill();
+          }
+        }
+      }
+    };
     G._animWpnGhosts = (d) => { for (let i = wpnGhosts.length - 1; i >= 0; i--) { const g = wpnGhosts[i]; g.userData.life -= d; const k = Math.max(0, g.userData.life / g.userData.max); g.userData.mat.opacity = (g.userData.base || 0.45) * k * k; if (g.userData.life <= 0) { scene.remove(g); g.userData.mat.dispose(); wpnGhosts.splice(i, 1); } } };
     // 🎬 map a skill to its signature battle FX so open-world casts look like the 1-v-1 arena
     const worldFxFor = (sk) => {
@@ -18512,15 +18607,15 @@ export default function CherryAdventure() {
     // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
     const startSkillCast = (arch, col, focus, fire, beats) => {
       // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16 };
-      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34 };
+      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28 };
+      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18 };
       const chg = CHG[arch] != null ? CHG[arch] : 0.15;
       const rel = REL[arch] != null ? REL[arch] : 0.16;
       const rush = !!ARCH_RUSH[arch] || arch === "star";                                                                    // สายประชิดเท่านั้นที่พุ่งเข้าหา
       const dsh = arch === "star" ? 0.5 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                    // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
       const hold = 0.14, rec = 0.06;                                                                                        // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
       const B = beats || {};
-      G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
+      G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
       ensureCastFx();
       worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
       G._worldSwingT = 0;
@@ -18583,6 +18678,32 @@ export default function CherryAdventure() {
           G._camShake = Math.max(G._camShake || 0, 0.12);
         });
       };
+      // 🔥❄️ เวทหมู่ของนักเวท — เก็บเป้าทั้งกลุ่มแล้วปล่อยเอฟเฟกต์ ดาเมจลงตามจังหวะของเอฟเฟกต์เอง
+      const magicFire = (arch !== "firestorm" && arch !== "icefreeze") ? null : () => {
+        const at = wilds.indexOf(focus) >= 0 ? focus.position : focus.position;
+        let group = wildsInRadius(at.x, at.z, 3.4);
+        if (!group.length) group = wilds.indexOf(focus) >= 0 ? [focus] : [];
+        group = group.slice(0, 6);
+        if (arch === "firestorm") {
+          group.forEach((m, i) => spawnFireOrb(i, m, col, (hx, hz) => {   // 🔥 ดวงไฟลอยขึ้น → พุ่งใส่ → เสาไฟผุดจากพื้น
+            applyDmg(m);
+            spawnFirePillar(hx, hz, col);
+            burst(new THREE.Vector3(hx, 0.9, hz), col, 0.9);
+            G._camShake = Math.max(G._camShake || 0, 0.2);
+          }));
+        } else {
+          group.forEach((m) => {                                          // ❄️ แท่งน้ำแข็งผุดขึ้น → แช่แข็ง 1 วิ → แตกแล้วเข้าดาเมจ
+            m.userData.frzT = Math.max(m.userData.frzT || 0, 1.2);
+            monGlow(m, 0x9fe4ff, 1.2);
+            spawnIceSpike(m, col, (hx, hz) => {
+              applyDmg(m);
+              burst(new THREE.Vector3(hx, 1.0, hz), col, 1.1);
+              G._camShake = Math.max(G._camShake || 0, 0.24);
+            });
+          });
+        }
+        toast(`${sk.emoji || "✨"} ${sk.name} — โจมตีหมู่ ${group.length} ตัว!`);
+      };
       // 🎬 ปล่อยพลังจริงตอนจบช่วงสะสม — ท่าร่ายมาก่อน ดาเมจตามหลัง (anticipation → release)
       startSkillCast(arch, col, focus, () => {
         const alive = wilds.indexOf(focus) >= 0;
@@ -18598,6 +18719,8 @@ export default function CherryAdventure() {
           toast(`${sk.emoji || "✨"} ${sk.name} — ส่งเงา 3 ร่างพุ่งเข้าใส่!`); // ดาเมจลงตอนเงาแต่ละร่างถึงตัว
         } else if (arch === "knives") {
           toast(`${sk.emoji || "✨"} ${sk.name} — ปามีดพิษ 3 เล่ม!`); // ดาเมจลงตอนมีดแต่ละเล่มปัก
+        } else if (arch === "firestorm" || arch === "icefreeze") {
+          /* ดาเมจลงตามจังหวะของดวงไฟ/น้ำแข็ง — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
         } else if (tgt) {
           if (aoe) {
             const targets = wildsInRadius(at.x, at.z, 3.4);
@@ -18607,7 +18730,7 @@ export default function CherryAdventure() {
         }
         if (G.sfx) G.sfx.skill && G.sfx.skill();
         syncPlayer();
-      }, { starHit, shadowFire, knifeFire });
+      }, { starHit, shadowFire, knifeFire, magicFire });
     };
     // player fell in the open world
     G.worldFaint = () => {
@@ -22050,6 +22173,12 @@ export default function CherryAdventure() {
         if (m.userData.shinyRing) { m.userData.shinyRing.rotation.z = t * 2; m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4; }
         drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
         if (G.actionMode) updateWildBar(m); // ⚔️ open-world HP bar
+        // 🧊 โดนแช่แข็ง — หยุดนิ่งสนิท ไม่เดิน ไม่ไล่ ไม่ตี จนกว่าน้ำแข็งจะแตก
+        if (m.userData.frzT > 0) {
+          m.userData.frzT = Math.max(0, m.userData.frzT - dt);
+          m.userData.wcd = Math.max(m.userData.wcd || 0, 0.4); // กันไม่ให้ตีทันทีที่หลุดน้ำแข็ง
+          return;
+        }
         // ⚔️ open-world action: normal monsters aggro → chase → hit the player
         let aggroHandled = false;
         if (G.actionMode && G.mode === "explore" && !isArenaFoe(m) && !m.userData.golden) {
@@ -22883,6 +23012,7 @@ export default function CherryAdventure() {
         if (G._animWpnGhosts) G._animWpnGhosts(dt);           // 👻 เฟดเงาอาวุธ
         if (G._animShadowBolts) G._animShadowBolts(dt);       // 💀 กะโหลกเงาลอย → พุ่งเข้าใส่เป้า
         if (G._animPoisonFx) G._animPoisonFx(dt);             // 🔪🟣 มีดพิษที่ขว้าง + ควันม่วงลอยขึ้น
+        if (G._animMagicFx) G._animMagicFx(dt);               // 🔥❄️ ดวงไฟ/เสาไฟ + แท่งน้ำแข็งแช่แข็ง
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
         if (G._comboRe > 0) G._comboRe = Math.max(0, G._comboRe - dt);          // 🥊 หน้าต่างต่อคอมโบ
         if (G._camPunch > 0) G._camPunch = Math.max(0, G._camPunch - dt * 2.6); // 🎥 กล้องคืนระยะหลังท่าจบ
@@ -23172,7 +23302,17 @@ export default function CherryAdventure() {
           wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
           if (char.rotation.order !== "YXZ") char.rotation.order = "YXZ";
           let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0;
-          if (arch === "knives") {
+          if (arch === "firestorm") {
+            // 🔥 ร่ายเพลิง — กางมือขึ้นเรียกดวงไฟให้ลอยรอบตัว แล้วผลักส่งออกไปพร้อมกัน
+            armR.rotation.x = (-1.25 - 0.75 * ce + 0.7 * rel) * ease; armR.rotation.z = (0.45 + 0.3 * ce - 0.35 * rel) * ease;
+            armL.rotation.x = (-1.25 - 0.75 * ce + 0.7 * rel) * ease; armL.rotation.z = (-0.45 - 0.3 * ce + 0.35 * rel) * ease;
+            rise = (0.18 * ce - 0.04 * rel) * ease; lean = (-0.1 * ce + 0.18 * rel) * ease;
+          } else if (arch === "icefreeze") {
+            // ❄️ ร่ายน้ำแข็ง — ชูมือขึ้นสะสมความเย็น แล้วฟาดลงพื้นให้แท่งน้ำแข็งผุดขึ้น
+            armR.rotation.x = (-1.1 - 1.35 * ce + 2.35 * rel) * ease; armR.rotation.z = (0.3 + 0.2 * ce - 0.15 * rel) * ease;
+            armL.rotation.x = (-1.1 - 1.35 * ce + 2.35 * rel) * ease; armL.rotation.z = (-0.3 - 0.2 * ce + 0.15 * rel) * ease;
+            rise = (0.2 * ce - 0.26 * rel) * ease; lean = (-0.08 * ce + 0.16 * rel) * ease;
+          } else if (arch === "knives") {
             // ☠️ ปามีดพิษ — เงื้อมีดเหนือไหล่ บิดตัว แล้วสะบัดขว้างออกไปทีละเล่ม 3 ครั้ง
             const fl = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 3));
             armR.rotation.x = (-1.55 - 0.6 * ce + 2.15 * fl) * ease;
@@ -23324,6 +23464,10 @@ export default function CherryAdventure() {
             const fx2 = Math.sin(char.rotation.y), fz2 = Math.cos(char.rotation.y);
             char.position.x += fx2 * (lunge - S.lunge); char.position.z += fz2 * (lunge - S.lunge);
             S.lunge = lunge;
+          }
+          // 🔥❄️ เวทหมู่ — ปล่อยตอนเริ่มช่วงปล่อยพลัง ครั้งเดียว
+          if ((arch === "firestorm" || arch === "icefreeze") && S.t >= S.chg && !S.magicDone) {
+            S.magicDone = true; if (S.magicFire) S.magicFire();
           }
           // 🔪 ปามีดพิษ 3 เล่ม — สะบัดขว้างทีละเล่มระหว่างช่วงปล่อย
           if (arch === "knives" && S.t >= S.chg && S.kN < 3) {
