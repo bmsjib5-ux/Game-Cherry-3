@@ -28356,7 +28356,9 @@ function CherryAdventure() {
             // 🥊 คอมโบ 3 ไม้ — ต่อไม้ได้ถ้าตีซ้ำภายใน 1.2 วิ (สกิลตัดคอมโบเสมอ)
             G._combo3 = isSkill ? 0 : (G._comboRe > 0 ? ((G._combo3 || 0) + 1) % 3 : 0);
             G._comboRe = isSkill ? 0 : 1.2;
-            let dur = slow ? 0.30 : 0.19; // ⚡ จังหวะฟันกระชับ — ตีรัวได้ลื่นขึ้น
+            if (G.cls === "archer")
+                G._bowReady = 2.2; // 🏹 เข้าโหมดจ่อธนู — ยกคันธนูค้างไว้จนพ้นการต่อสู้
+            let dur = G.cls === "archer" ? 0.13 : slow ? 0.30 : 0.19; // ⚡ จังหวะกระชับ · นักธนูยิงรัวเร็วสุด
             if (G._combo3 === 1)
                 dur *= 0.9; // ไม้ 2 ฟันย้อนกลับเร็วกว่า
             if (G._combo3 === 2)
@@ -28595,8 +28597,8 @@ function CherryAdventure() {
         // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
         const startSkillCast = (arch, col, focus, fire) => {
             // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.28, smash: 0.20, shot: 0.18, volley: 0.18, throw: 0.16, iai: 0.24, backstab: 0.17 };
-            const REL = { smash: 0.11, stab: 0.22, volley: 0.26, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17 };
+            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17 };
+            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17 };
             const chg = CHG[arch] != null ? CHG[arch] : 0.15;
             const rel = REL[arch] != null ? REL[arch] : 0.16;
             const rush = !!ARCH_RUSH[arch]; // สายประชิดเท่านั้นที่พุ่งเข้าหา
@@ -35061,10 +35063,10 @@ function CherryAdventure() {
                                     G.huntTarget = null;
                                 } // stand off at attack range
                                 G.autoWT = (G.autoWT || 0) + dt;
-                                if (G.autoWT > 0.34 / (G.battleSpeed || 1)) {
+                                if (G.autoWT > (G.cls === "archer" ? 0.24 : 0.34) / (G.battleSpeed || 1)) {
                                     G.autoWT = 0;
                                     autoWorldAct();
-                                } // ⏩ ออโต้ตีถี่ขึ้นให้เข้ากับจังหวะฟันที่กระชับแล้ว
+                                } // ⏩ ออโต้ตีถี่ขึ้นให้เข้ากับจังหวะที่กระชับ · 🏹 นักธนูยิงรัวถี่สุด
                             }
                         }
                     }
@@ -35353,6 +35355,22 @@ function CherryAdventure() {
                             mecha.userData.jetCores.forEach((fc, i) => { fc.scale.set(1, clen, 1); fc.position.y = fc.userData.baseY - (clen - 1) * 0.12; fc.material.emissiveIntensity = 1.5 + moveAmt * 0.7; });
                         }
                     }
+                    // 🏹 ท่าจ่อธนู — หลังยิงนัดแรกให้ยกคันธนูเล็งค้างไว้ตลอดการต่อสู้ แล้วค่อยลดลงเองเมื่อหยุดยิง
+                    if (G.cls === "archer") {
+                        if (G._bowReady > 0)
+                            G._bowReady = Math.max(0, G._bowReady - dt);
+                        const bk = smK(Math.min(1, (G._bowReady || 0) / 0.35)); // เฟดเข้า/ออกนุ่ม ไม่กระตุก
+                        if (bk > 0) {
+                            armR.rotation.x += (-1.38 - armR.rotation.x) * bk;
+                            armR.rotation.z += (0.16 - armR.rotation.z) * bk;
+                            armL.rotation.x += (-1.12 - armL.rotation.x) * bk;
+                            armL.rotation.z += (-0.3 - armL.rotation.z) * bk;
+                            if (armR.userData.elbow)
+                                armR.userData.elbow.rotation.x += (-0.12 - armR.userData.elbow.rotation.x) * bk;
+                            if (armL.userData.elbow)
+                                armL.userData.elbow.rotation.x += (-0.5 - armL.userData.elbow.rotation.x) * bk;
+                        }
+                    }
                     // ⚔️🎬 open-world attack swing — overrides the walk pose for a brief strike (mirrors the arena tell)
                     if (G._animWpnGhosts)
                         G._animWpnGhosts(dt); // 👻 เฟดเงาอาวุธ
@@ -35420,9 +35438,16 @@ function CherryAdventure() {
                         const impK = melee && s > 0.42 && s < 0.56 ? 1 : 0;
                         wand.scale.set(1 - impK * 0.12, 1 + impK * 0.22, 1 - impK * 0.12);
                         if (G.cls === "archer") {
-                            armR.rotation.x = -0.3 - 1.3 * sw; // draw the bow
+                            // 🏹 ค้างคันธนูเล็งไว้นิ่ง ๆ — ขยับแค่มือน้าวสายแล้วปล่อย (ไม่ยกแขนขึ้น-ลงทุกนัด)
+                            const draw = s < 0.42 ? smK(s / 0.42) : smK(1 - (s - 0.42) / 0.58);
+                            armR.rotation.x = -1.38;
+                            armR.rotation.z = 0.16;
+                            armL.rotation.x = -1.12 - 0.6 * draw;
+                            armL.rotation.z = -0.3 - 0.16 * draw;
                             if (armR.userData.elbow)
-                                armR.userData.elbow.rotation.x = -0.35 * sw;
+                                armR.userData.elbow.rotation.x = -0.12;
+                            if (armL.userData.elbow)
+                                armL.userData.elbow.rotation.x = -0.5 - 0.35 * draw;
                         }
                         else if (G.cls === "lancer") {
                             // 🔱 แทงพุ่ง thrust → recoil: พุ่งเร็วช่วงแรกแล้วดึงกลับ + โน้มตัว/ขยับตัวไปหน้าเล็กน้อย
