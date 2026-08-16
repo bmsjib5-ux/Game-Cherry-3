@@ -28521,6 +28521,22 @@ function CherryAdventure() {
             if (!m)
                 return;
             char.rotation.y = Math.atan2(m.position.x - char.position.x, m.position.z - char.position.z);
+            // 🏹💨 กระโดดถอยหลังยิง — ศัตรูเข้ามาใกล้เมื่อไหร่ นักธนูจะถีบตัวถอยพร้อมยิงสวน (คูลดาวน์กันกระโดดรัว)
+            if (G.cls === "archer" && !G._skCast && (G._hopCd || 0) <= 0) {
+                const hd = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
+                if (hd < 3.2) {
+                    const bx = char.position.x - m.position.x, bz = char.position.z - m.position.z;
+                    const bl = Math.hypot(bx, bz) || 1;
+                    G._hopSx = char.position.x;
+                    G._hopSz = char.position.z;
+                    G._hopTx = (bx / bl) * 1.75;
+                    G._hopTz = (bz / bl) * 1.75;
+                    G._hopT = 0;
+                    G._hopDur = 0.36;
+                    G._hopCd = 0.8;
+                    G._hopGh = 0;
+                }
+            }
             worldSwing();
             const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
             const dmg = (effAtk() + Math.random() * 4) * (crit ? 2 : 1);
@@ -33098,6 +33114,10 @@ function CherryAdventure() {
                     }
                 }
                 // 🛟 ออกจากโหมดสำรวจกลางคันตอนร่ายสกิล — ปล่อยพลังทิ้งแล้วเคลียร์คิว ไม่ให้ค้างจนร่ายสกิลต่อไม่ได้
+                if (G._hopT != null && G.mode !== "explore") {
+                    G._hopT = null;
+                    char.rotation.x = 0;
+                } // 🛟 ออกจากโหมดสำรวจกลางอากาศ — เคลียร์ท่ากระโดด
                 if (G._skCast && G.mode !== "explore") {
                     if (!G._skCast.fired) {
                         G._skCast.fired = true;
@@ -35362,13 +35382,22 @@ function CherryAdventure() {
                         const bk = smK(Math.min(1, (G._bowReady || 0) / 0.35)); // เฟดเข้า/ออกนุ่ม ไม่กระตุก
                         if (bk > 0) {
                             armR.rotation.x += (-1.38 - armR.rotation.x) * bk;
-                            armR.rotation.z += (0.16 - armR.rotation.z) * bk;
+                            armR.rotation.z += (0 - armR.rotation.z) * bk;
                             armL.rotation.x += (-1.12 - armL.rotation.x) * bk;
                             armL.rotation.z += (-0.3 - armL.rotation.z) * bk;
                             if (armR.userData.elbow)
                                 armR.userData.elbow.rotation.x += (-0.12 - armR.userData.elbow.rotation.x) * bk;
                             if (armL.userData.elbow)
                                 armL.userData.elbow.rotation.x += (-0.5 - armL.userData.elbow.rotation.x) * bk;
+                            // 🏹 คันธนูตั้งฉากกับพื้น — หักล้างมุมแขน+ข้อศอกให้แกนคันธนูชี้ขึ้นตรงเสมอ ไม่ว่าแขนจะอยู่มุมไหน
+                            const elx = armR.userData.elbow ? armR.userData.elbow.rotation.x : 0;
+                            const tx = -(armR.rotation.x + elx), ty = -Math.PI / 2;
+                            wand.rotation.x += (tx - wand.rotation.x) * bk;
+                            wand.rotation.y += (ty - wand.rotation.y) * bk;
+                            wand.rotation.z += (0 - wand.rotation.z) * bk;
+                            wand.position.x += (0.04 - wand.position.x) * bk;
+                            wand.position.y += (-0.5 - wand.position.y) * bk;
+                            wand.position.z += (0.22 - wand.position.z) * bk;
                         }
                     }
                     // ⚔️🎬 open-world attack swing — overrides the walk pose for a brief strike (mirrors the arena tell)
@@ -35424,7 +35453,7 @@ function CherryAdventure() {
                             headG.rotation.y = lag * 0.75; // หัวยังจ้องเป้าจนวินาทีสุดท้าย
                         }
                         // 🦶 ก้าวเท้า/ถ่ายน้ำหนัก — เท้าหน้าลงพร้อมจังหวะฟัน ไม่ให้ตัวลอย
-                        if (G.cls !== "aegis") {
+                        if (G.cls !== "aegis" && G.cls !== "archer") {
                             const stepK = s < 0.3 ? 0.35 * smK(s / 0.3) : s < 0.55 ? 0.35 + 0.65 * smK((s - 0.3) / 0.25) : smK(1 - (s - 0.55) / 0.45);
                             legR.rotation.x = -0.44 * stepK;
                             legL.rotation.x = 0.32 * stepK;
@@ -35441,7 +35470,7 @@ function CherryAdventure() {
                             // 🏹 ค้างคันธนูเล็งไว้นิ่ง ๆ — ขยับแค่มือน้าวสายแล้วปล่อย (ไม่ยกแขนขึ้น-ลงทุกนัด)
                             const draw = s < 0.42 ? smK(s / 0.42) : smK(1 - (s - 0.42) / 0.58);
                             armR.rotation.x = -1.38;
-                            armR.rotation.z = 0.16;
+                            armR.rotation.z = 0; // คงมุมแขนเดิม → คันธนูยังตั้งฉากกับพื้น
                             armL.rotation.x = -1.12 - 0.6 * draw;
                             armL.rotation.z = -0.3 - 0.16 * draw;
                             if (armR.userData.elbow)
@@ -35561,6 +35590,39 @@ function CherryAdventure() {
                         G._swActive = 0;
                         torso.rotation.y = 0;
                         wand.scale.set(1, 1, 1); // 🧹 คลายการบิดตัวครั้งเดียวตอนจบท่า (ปล่อยให้หัวกลับไปมองรอบ ๆ เองต่อ)
+                    }
+                    // 🏹💨 ท่ากระโดดถอยหลังยิง — ถีบตัวลอยถอยเป็นเส้นโค้ง เก็บเข่า เอนหลัง แล้วลงพื้นย่อรับแรง (หน้ายังหันเข้าหาเป้า)
+                    if (G._hopCd > 0)
+                        G._hopCd = Math.max(0, G._hopCd - dt);
+                    if (G._hopT != null) {
+                        G._hopT += dt;
+                        const hp = Math.min(1, G._hopT / (G._hopDur || 0.36));
+                        const he = 1 - Math.pow(1 - hp, 2); // ถีบออกแรงแล้วค่อยชะลอ
+                        const air = Math.sin(hp * Math.PI); // 0→1→0 ความสูงจากพื้น
+                        char.position.x = G._hopSx + G._hopTx * he;
+                        char.position.z = G._hopSz + G._hopTz * he;
+                        pushOut(char, 0.35); // 🧱 ไม่ให้ถอยทะลุหิน/ต้นไม้
+                        char.position.y += 0.55 * air;
+                        if (char.rotation.order !== "YXZ")
+                            char.rotation.order = "YXZ";
+                        char.rotation.x = -0.16 * air; // เอนหลังตอนลอย
+                        legL.rotation.x = -0.6 * air;
+                        legR.rotation.x = -0.3 * air;
+                        if (legL.userData.knee)
+                            legL.userData.knee.rotation.x = 1.2 * air; // เก็บเข่าเข้าอก
+                        if (legR.userData.knee)
+                            legR.userData.knee.rotation.x = 0.8 * air;
+                        G._hopGh -= dt;
+                        if (G._hopGh <= 0 && hp < 0.75) {
+                            G._hopGh = 0.05;
+                            spawnBodyGhost(0.2, 0x9fe4ff);
+                        } // 👤 เงาซ้อนตอนลอย
+                        if (hp >= 1) { // 🌫️ ลงพื้น — ฝุ่นฟุ้ง + กล้องสะเทือนเบา ๆ
+                            char.rotation.x = 0;
+                            G._hopT = null;
+                            burst(new THREE.Vector3(char.position.x, 0.16, char.position.z), 0xdccfae, 0.7);
+                            G._camShake = Math.max(G._camShake || 0, 0.12);
+                        }
                     }
                     // ✨🎬 ท่าร่ายสกิล — ② สะสมพลัง → ปล่อย → ④ ค้างท่าจบ → คืนท่า (ท่าต่างกันตามชนิดสกิล)
                     if (G._skCast) {
