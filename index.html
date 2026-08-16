@@ -18529,6 +18529,7 @@ function CherryAdventure() {
         scene.add(amazonDecor);
         const amazonColliders = [];
         const amazonTrees = []; // 🌳 big canopy trees — faded/hidden when the player is behind them
+        const amazonBush = []; // 🌿 เฟิร์น/พุ่มเตี้ย — ซ่อนเมื่อมาขวางแนวกล้อง→ตัวละคร
         // 🟢 green wet ground overlay (darker jungle floor over the base ground)
         const jungleFloor = new THREE.Mesh(new THREE.CircleGeometry(FIELD_R + 4, 48), new THREE.MeshStandardMaterial({ color: 0x244a28, roughness: 1 }));
         jungleFloor.rotation.x = -Math.PI / 2;
@@ -18627,6 +18628,7 @@ function CherryAdventure() {
             g.scale.setScalar(rnd(0.9, 1.4));
             amazonDecor.add(g);
             amazonColliders.push({ x, z, r: 0.5 });
+            amazonBush.push(g); // 🌿 เฟิร์นสูงเกือบเท่าตัวละคร — ต้องหลบกล้องด้วย
         };
         // 🌱 grass tufts on the green floor
         const grassMat = new THREE.MeshStandardMaterial({ color: 0x3f8a40, roughness: 0.9, side: THREE.DoubleSide });
@@ -18687,6 +18689,7 @@ function CherryAdventure() {
         G.amazonColliders = amazonColliders;
         G.amazonMist = amazonMist;
         G.amazonTrees = amazonTrees;
+        G.amazonBush = amazonBush;
         // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
         const titanDecor = new THREE.Group();
         titanDecor.visible = false;
@@ -34123,189 +34126,208 @@ function CherryAdventure() {
                         G.respawnT = 0;
                         spawnWild();
                     }
-                    // ☁️ sky islands: drifting clouds + rising star motes (sky biome only)
-                    if (G.skyDecor && G.skyDecor.visible) {
-                        if (G.skyClouds)
-                            G.skyClouds.forEach((c) => {
-                                c.position.x += c.userData.sp * dt;
-                                if (c.position.x > FIELD_R + 5) {
-                                    c.position.x = -FIELD_R - 5;
-                                    c.position.z = rnd(-FIELD_R, FIELD_R);
-                                }
-                            });
-                        if (G.skyMotes)
-                            G.skyMotes.forEach((m) => {
-                                m.position.y += m.userData.rise * dt;
-                                m.rotation.y += m.userData.spin * dt;
-                                m.position.x += Math.sin(t + m.userData.sway) * 0.005;
-                                if (m.position.y > 4.5) {
-                                    m.position.y = 0.3;
-                                    m.position.x = rnd(-FIELD_R, FIELD_R);
-                                    m.position.z = rnd(-FIELD_R, FIELD_R);
-                                }
-                            });
+                } // 🔚 จบบล็อกเกิดมอนสเตอร์ — เอฟเฟกต์บรรยากาศของแต่ละด่านต้องทำงานทุกเฟรม ไม่ใช่เฉพาะตอนมอนสเตอร์ไม่เต็ม
+                // ☁️ sky islands: drifting clouds + rising star motes (sky biome only)
+                if (G.skyDecor && G.skyDecor.visible) {
+                    if (G.skyClouds)
+                        G.skyClouds.forEach((c) => {
+                            c.position.x += c.userData.sp * dt;
+                            if (c.position.x > FIELD_R + 5) {
+                                c.position.x = -FIELD_R - 5;
+                                c.position.z = rnd(-FIELD_R, FIELD_R);
+                            }
+                        });
+                    if (G.skyMotes)
+                        G.skyMotes.forEach((m) => {
+                            m.position.y += m.userData.rise * dt;
+                            m.rotation.y += m.userData.spin * dt;
+                            m.position.x += Math.sin(t + m.userData.sway) * 0.005;
+                            if (m.position.y > 4.5) {
+                                m.position.y = 0.3;
+                                m.position.x = rnd(-FIELD_R, FIELD_R);
+                                m.position.z = rnd(-FIELD_R, FIELD_R);
+                            }
+                        });
+                }
+                // 🔥 hell: rising embers (hell biome only)
+                if (G.hellDecor && G.hellDecor.visible && G.hellEmbers) {
+                    G.hellEmbers.forEach((e) => {
+                        e.position.y += e.userData.rise * dt;
+                        e.position.x += Math.sin(t * 2 + e.userData.sway) * 0.012;
+                        if (e.position.y > 3.6) {
+                            e.position.y = 0.15;
+                            e.position.x = rnd(-FIELD_R, FIELD_R);
+                            e.position.z = rnd(-FIELD_R, FIELD_R);
+                        }
+                    });
+                }
+                // ☀️ heaven: drifting golden clouds + rising motes (heaven biome only)
+                if (G.heavenDecor && G.heavenDecor.visible) {
+                    if (G.heavenClouds)
+                        G.heavenClouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > FIELD_R + 5) {
+                            c.position.x = -FIELD_R - 5;
+                            c.position.z = rnd(-FIELD_R, FIELD_R);
+                        } });
+                    if (G.heavenMotes)
+                        G.heavenMotes.forEach((m) => {
+                            m.position.y += m.userData.rise * dt;
+                            m.rotation.y += m.userData.spin * dt;
+                            m.position.x += Math.sin(t + m.userData.sway) * 0.005;
+                            if (m.position.y > 4.5) {
+                                m.position.y = 0.3;
+                                m.position.x = rnd(-FIELD_R, FIELD_R);
+                                m.position.z = rnd(-FIELD_R, FIELD_R);
+                            }
+                        });
+                }
+                // 🌑 moon: twinkling stars + shooting-star meteors (moon biome only)
+                if (G.moonDecor && G.moonDecor.visible) {
+                    if (G.moonStars)
+                        G.moonStars.forEach((s) => { s.material.opacity = 0.55 + Math.sin(t * 2.2 + s.userData.tw) * 0.4; });
+                    if (G.moonMeteors)
+                        G.moonMeteors.forEach((mt) => {
+                            mt.userData.t += dt;
+                            const cyc = mt.userData.dur + 2.4; // ตกแล้วรอสักครู่ค่อยเกิดใหม่
+                            if (mt.userData.t > cyc) {
+                                mt.userData.t = 0;
+                                mt.userData.ox = rnd(-FIELD_R, FIELD_R);
+                                mt.userData.oz = rnd(-FIELD_R, FIELD_R);
+                                mt.userData.dur = rnd(1.4, 2.6);
+                            }
+                            const fp = mt.userData.t / mt.userData.dur;
+                            if (fp <= 1) {
+                                mt.visible = true;
+                                mt.position.set(mt.userData.ox + fp * 6, 13 - fp * 12, mt.userData.oz + fp * 3);
+                                mt.rotation.z = 0.9;
+                                mt.material.opacity = Math.sin(fp * Math.PI) * 0.9;
+                            }
+                            else
+                                mt.visible = false;
+                        });
+                }
+                // 🏖️ beach: lapping foam + drifting clouds + gentle palm sway (beach biome only)
+                if (G.beachDecor && G.beachDecor.visible) {
+                    if (G.beachFoam)
+                        G.beachFoam.material.opacity = 0.4 + Math.abs(Math.sin(t * 1.3)) * 0.35;
+                    if (G.beachSea)
+                        G.beachSea.material.opacity = 0.9 + Math.sin(t * 0.9) * 0.04;
+                    if (G.beachClouds)
+                        G.beachClouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > FIELD_R + 6) {
+                            c.position.x = -FIELD_R - 6;
+                            c.position.z = rnd(-FIELD_R, FIELD_R);
+                        } });
+                    if (G.palmCrowns)
+                        G.palmCrowns.forEach((cr) => { cr.rotation.z = Math.sin(t * 1.1 + cr.userData.ph) * 0.05; cr.rotation.x = Math.cos(t * 0.9 + cr.userData.ph) * 0.04; });
+                }
+                // 🌴 amazon: river shimmer + drifting mist (amazon biome only)
+                if (G.amazonDecor && G.amazonDecor.visible) {
+                    if (G.amazonRiver)
+                        G.amazonRiver.material.opacity = 0.85 + Math.sin(t * 1.2) * 0.08;
+                    if (G.amazonMist)
+                        G.amazonMist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) {
+                            m.position.x = -FIELD_R - 4;
+                            m.position.z = rnd(-FIELD_R, FIELD_R);
+                        } });
+                    // 🌳🌿 ซ่อนต้นไม้/เฟิร์นที่ขวางแนวสายตา "กล้อง → ตัวละคร" (ไม่ใช่แค่ที่อยู่ติดตัว) — เดินหรือสู้ก็ไม่มีใบไม้บัง
+                    {
+                        const ax = camera.position.x, az = camera.position.z;
+                        const dx = char.position.x - ax, dz = char.position.z - az;
+                        const L2 = dx * dx + dz * dz || 1;
+                        const clearLine = (list, rad) => {
+                            if (!list)
+                                return;
+                            const r2 = rad * rad;
+                            for (const o of list) {
+                                const px = o.position.x - ax, pz = o.position.z - az;
+                                let u = (px * dx + pz * dz) / L2;
+                                u = u < 0 ? 0 : u > 1 ? 1 : u; // จุดใกล้สุดบนเส้น (หนีบไว้ระหว่างกล้องกับตัวละคร)
+                                const qx = ax + dx * u - o.position.x, qz = az + dz * u - o.position.z;
+                                const vis = (qx * qx + qz * qz) > r2;
+                                if (o.visible !== vis)
+                                    o.visible = vis;
+                            }
+                        };
+                        clearLine(G.amazonTrees, 3.0); // ต้นไม้ใหญ่ — เผื่อรัศมีพุ่มใบที่แผ่ออกจากลำต้น
+                        clearLine(G.amazonBush, 1.7); // เฟิร์นยักษ์ — สูงเกือบเท่าตัวละคร บังหนักสุด
                     }
-                    // 🔥 hell: rising embers (hell biome only)
-                    if (G.hellDecor && G.hellDecor.visible && G.hellEmbers) {
-                        G.hellEmbers.forEach((e) => {
+                }
+                // 🗿 titan: fade the ring wall when the player is near the edge + hide giant weapons walked past (so nothing blocks the view)
+                if (G.titanDecor && G.titanDecor.visible) {
+                    const pr2 = Math.hypot(char.position.x, char.position.z);
+                    const targetOp = pr2 > FIELD_R - 8 ? 0.16 : 1;
+                    if (G._titanWallMats)
+                        G._titanWallMats.forEach((mm) => { mm.opacity += (targetOp - mm.opacity) * Math.min(1, dt * 6); });
+                    if (G.mode === "explore" && G.titanWeapons)
+                        G.titanWeapons.forEach((w) => { const d = Math.hypot(w.position.x - char.position.x, w.position.z - char.position.z); w.visible = d > 2.6; });
+                }
+                // 🌪️ sandstorm drift (desert only)
+                if (G.desertDecor && G.desertDecor.visible && G.sandParticles) {
+                    G.sandParticles.forEach((p) => {
+                        p.position.x += p.userData.sp * dt; // blow along +x
+                        p.position.y += Math.sin(t * 2 + p.userData.sway) * 0.01;
+                        if (p.position.x > FIELD_R) {
+                            p.position.x = -FIELD_R;
+                            p.position.z = rnd(-FIELD_R, FIELD_R);
+                            p.position.y = rnd(0.1, 3.5);
+                        }
+                    });
+                }
+                // 🌋 volcano: eruption blobs, smoke plume, rising embers, pulsing lava (volcano biome only)
+                if (G.volcanoDecor && G.volcanoDecor.visible) {
+                    if (G.volcanoEruptBlobs)
+                        G.volcanoEruptBlobs.forEach((b) => {
+                            b.userData.t += dt * 0.5;
+                            if (b.userData.t > 1) {
+                                b.userData.t = 0;
+                                b.userData.vy = rnd(2.5, 5);
+                                b.userData.vx = rnd(-2, 2);
+                                b.userData.vz = rnd(-2, 2);
+                            }
+                            const tt2 = b.userData.t;
+                            b.position.set(b.userData.vx * tt2 * 2, b.userData.base + b.userData.vy * tt2 - tt2 * tt2 * 9, b.userData.vz * tt2 * 2);
+                            b.material.opacity = 1 - tt2;
+                            b.material.transparent = true;
+                        });
+                    if (G.volcanoSmoke)
+                        G.volcanoSmoke.forEach((sm) => {
+                            sm.userData.t += dt * sm.userData.sp * 0.3;
+                            if (sm.userData.t > 1)
+                                sm.userData.t = 0;
+                            const tt2 = sm.userData.t;
+                            sm.position.set(Math.sin(tt2 * 4) * 1.2, 9 + tt2 * 6, Math.cos(tt2 * 3) * 1.2);
+                            sm.material.opacity = 0.5 * (1 - tt2);
+                            sm.scale.setScalar(1 + tt2 * 1.5);
+                        });
+                    if (G.volcanoEmbers)
+                        G.volcanoEmbers.forEach((e) => {
                             e.position.y += e.userData.rise * dt;
-                            e.position.x += Math.sin(t * 2 + e.userData.sway) * 0.012;
-                            if (e.position.y > 3.6) {
-                                e.position.y = 0.15;
+                            e.position.x += Math.sin(t * 2 + e.userData.sway) * 0.01;
+                            if (e.position.y > 3.5) {
+                                e.position.y = 0.2;
                                 e.position.x = rnd(-FIELD_R, FIELD_R);
                                 e.position.z = rnd(-FIELD_R, FIELD_R);
                             }
                         });
-                    }
-                    // ☀️ heaven: drifting golden clouds + rising motes (heaven biome only)
-                    if (G.heavenDecor && G.heavenDecor.visible) {
-                        if (G.heavenClouds)
-                            G.heavenClouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > FIELD_R + 5) {
-                                c.position.x = -FIELD_R - 5;
-                                c.position.z = rnd(-FIELD_R, FIELD_R);
-                            } });
-                        if (G.heavenMotes)
-                            G.heavenMotes.forEach((m) => {
-                                m.position.y += m.userData.rise * dt;
-                                m.rotation.y += m.userData.spin * dt;
-                                m.position.x += Math.sin(t + m.userData.sway) * 0.005;
-                                if (m.position.y > 4.5) {
-                                    m.position.y = 0.3;
-                                    m.position.x = rnd(-FIELD_R, FIELD_R);
-                                    m.position.z = rnd(-FIELD_R, FIELD_R);
-                                }
-                            });
-                    }
-                    // 🌑 moon: twinkling stars + shooting-star meteors (moon biome only)
-                    if (G.moonDecor && G.moonDecor.visible) {
-                        if (G.moonStars)
-                            G.moonStars.forEach((s) => { s.material.opacity = 0.55 + Math.sin(t * 2.2 + s.userData.tw) * 0.4; });
-                        if (G.moonMeteors)
-                            G.moonMeteors.forEach((mt) => {
-                                mt.userData.t += dt;
-                                const cyc = mt.userData.dur + 2.4; // ตกแล้วรอสักครู่ค่อยเกิดใหม่
-                                if (mt.userData.t > cyc) {
-                                    mt.userData.t = 0;
-                                    mt.userData.ox = rnd(-FIELD_R, FIELD_R);
-                                    mt.userData.oz = rnd(-FIELD_R, FIELD_R);
-                                    mt.userData.dur = rnd(1.4, 2.6);
-                                }
-                                const fp = mt.userData.t / mt.userData.dur;
-                                if (fp <= 1) {
-                                    mt.visible = true;
-                                    mt.position.set(mt.userData.ox + fp * 6, 13 - fp * 12, mt.userData.oz + fp * 3);
-                                    mt.rotation.z = 0.9;
-                                    mt.material.opacity = Math.sin(fp * Math.PI) * 0.9;
-                                }
-                                else
-                                    mt.visible = false;
-                            });
-                    }
-                    // 🏖️ beach: lapping foam + drifting clouds + gentle palm sway (beach biome only)
-                    if (G.beachDecor && G.beachDecor.visible) {
-                        if (G.beachFoam)
-                            G.beachFoam.material.opacity = 0.4 + Math.abs(Math.sin(t * 1.3)) * 0.35;
-                        if (G.beachSea)
-                            G.beachSea.material.opacity = 0.9 + Math.sin(t * 0.9) * 0.04;
-                        if (G.beachClouds)
-                            G.beachClouds.forEach((c) => { c.position.x += c.userData.sp * dt; if (c.position.x > FIELD_R + 6) {
-                                c.position.x = -FIELD_R - 6;
-                                c.position.z = rnd(-FIELD_R, FIELD_R);
-                            } });
-                        if (G.palmCrowns)
-                            G.palmCrowns.forEach((cr) => { cr.rotation.z = Math.sin(t * 1.1 + cr.userData.ph) * 0.05; cr.rotation.x = Math.cos(t * 0.9 + cr.userData.ph) * 0.04; });
-                    }
-                    // 🌴 amazon: river shimmer + drifting mist (amazon biome only)
-                    if (G.amazonDecor && G.amazonDecor.visible) {
-                        if (G.amazonRiver)
-                            G.amazonRiver.material.opacity = 0.85 + Math.sin(t * 1.2) * 0.08;
-                        if (G.amazonMist)
-                            G.amazonMist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) {
-                                m.position.x = -FIELD_R - 4;
-                                m.position.z = rnd(-FIELD_R, FIELD_R);
-                            } });
-                        // 🌳 hide big trees the player is walking past so they never block the view
-                        if (G.mode === "explore" && G.amazonTrees)
-                            G.amazonTrees.forEach((tr) => { const d = Math.hypot(tr.position.x - char.position.x, tr.position.z - char.position.z); tr.visible = d > 2.8; });
-                    }
-                    // 🗿 titan: fade the ring wall when the player is near the edge + hide giant weapons walked past (so nothing blocks the view)
-                    if (G.titanDecor && G.titanDecor.visible) {
-                        const pr2 = Math.hypot(char.position.x, char.position.z);
-                        const targetOp = pr2 > FIELD_R - 8 ? 0.16 : 1;
-                        if (G._titanWallMats)
-                            G._titanWallMats.forEach((mm) => { mm.opacity += (targetOp - mm.opacity) * Math.min(1, dt * 6); });
-                        if (G.mode === "explore" && G.titanWeapons)
-                            G.titanWeapons.forEach((w) => { const d = Math.hypot(w.position.x - char.position.x, w.position.z - char.position.z); w.visible = d > 2.6; });
-                    }
-                    // 🌪️ sandstorm drift (desert only)
-                    if (G.desertDecor && G.desertDecor.visible && G.sandParticles) {
-                        G.sandParticles.forEach((p) => {
-                            p.position.x += p.userData.sp * dt; // blow along +x
-                            p.position.y += Math.sin(t * 2 + p.userData.sway) * 0.01;
-                            if (p.position.x > FIELD_R) {
-                                p.position.x = -FIELD_R;
-                                p.position.z = rnd(-FIELD_R, FIELD_R);
-                                p.position.y = rnd(0.1, 3.5);
-                            }
-                        });
-                    }
-                    // 🌋 volcano: eruption blobs, smoke plume, rising embers, pulsing lava (volcano biome only)
-                    if (G.volcanoDecor && G.volcanoDecor.visible) {
-                        if (G.volcanoEruptBlobs)
-                            G.volcanoEruptBlobs.forEach((b) => {
-                                b.userData.t += dt * 0.5;
-                                if (b.userData.t > 1) {
-                                    b.userData.t = 0;
-                                    b.userData.vy = rnd(2.5, 5);
-                                    b.userData.vx = rnd(-2, 2);
-                                    b.userData.vz = rnd(-2, 2);
-                                }
-                                const tt2 = b.userData.t;
-                                b.position.set(b.userData.vx * tt2 * 2, b.userData.base + b.userData.vy * tt2 - tt2 * tt2 * 9, b.userData.vz * tt2 * 2);
-                                b.material.opacity = 1 - tt2;
-                                b.material.transparent = true;
-                            });
-                        if (G.volcanoSmoke)
-                            G.volcanoSmoke.forEach((sm) => {
-                                sm.userData.t += dt * sm.userData.sp * 0.3;
-                                if (sm.userData.t > 1)
-                                    sm.userData.t = 0;
-                                const tt2 = sm.userData.t;
-                                sm.position.set(Math.sin(tt2 * 4) * 1.2, 9 + tt2 * 6, Math.cos(tt2 * 3) * 1.2);
-                                sm.material.opacity = 0.5 * (1 - tt2);
-                                sm.scale.setScalar(1 + tt2 * 1.5);
-                            });
-                        if (G.volcanoEmbers)
-                            G.volcanoEmbers.forEach((e) => {
-                                e.position.y += e.userData.rise * dt;
-                                e.position.x += Math.sin(t * 2 + e.userData.sway) * 0.01;
-                                if (e.position.y > 3.5) {
-                                    e.position.y = 0.2;
-                                    e.position.x = rnd(-FIELD_R, FIELD_R);
-                                    e.position.z = rnd(-FIELD_R, FIELD_R);
-                                }
-                            });
-                        if (G.volcanoCraterLight)
-                            G.volcanoCraterLight.intensity = 2.5 + Math.sin(t * 4) * 0.8;
-                        if (G.lavaPools)
-                            G.lavaPools.forEach((p, i) => { p.material.emissiveIntensity = 1.1 + Math.sin(t * 3 + i) * 0.4; });
-                    }
-                    // 💎 cave crystals pulse/flicker softly
-                    if (G.caveDecor && G.caveDecor.visible && G.caveLights) {
-                        G.caveLights.forEach((L, i) => { L.intensity = (L.userData && L.userData.base || 1) * (0.75 + Math.sin(t * 2.5 + i * 1.3) * 0.25); });
-                    }
-                    // 🌨️ falling snow (snow biome only)
-                    if (G.snowDecor && G.snowDecor.visible && G.snowFlakes) {
-                        G.snowFlakes.forEach((f) => {
-                            f.position.y -= f.userData.fall * dt; // fall down
-                            f.position.x += Math.sin(t * 1.5 + f.userData.sway) * f.userData.drift * dt; // gentle drift
-                            if (f.position.y < 0.1) {
-                                f.position.y = rnd(4, 6);
-                                f.position.x = rnd(-FIELD_R, FIELD_R);
-                                f.position.z = rnd(-FIELD_R, FIELD_R);
-                            }
-                        });
-                    }
+                    if (G.volcanoCraterLight)
+                        G.volcanoCraterLight.intensity = 2.5 + Math.sin(t * 4) * 0.8;
+                    if (G.lavaPools)
+                        G.lavaPools.forEach((p, i) => { p.material.emissiveIntensity = 1.1 + Math.sin(t * 3 + i) * 0.4; });
+                }
+                // 💎 cave crystals pulse/flicker softly
+                if (G.caveDecor && G.caveDecor.visible && G.caveLights) {
+                    G.caveLights.forEach((L, i) => { L.intensity = (L.userData && L.userData.base || 1) * (0.75 + Math.sin(t * 2.5 + i * 1.3) * 0.25); });
+                }
+                // 🌨️ falling snow (snow biome only)
+                if (G.snowDecor && G.snowDecor.visible && G.snowFlakes) {
+                    G.snowFlakes.forEach((f) => {
+                        f.position.y -= f.userData.fall * dt; // fall down
+                        f.position.x += Math.sin(t * 1.5 + f.userData.sway) * f.userData.drift * dt; // gentle drift
+                        if (f.position.y < 0.1) {
+                            f.position.y = rnd(4, 6);
+                            f.position.x = rnd(-FIELD_R, FIELD_R);
+                            f.position.z = rnd(-FIELD_R, FIELD_R);
+                        }
+                    });
                 }
                 // 🌐 realtime shared world — broadcast my position + move everyone else's avatar (every frame)
                 if (G.mode === "explore" && G.rtSendPos)
