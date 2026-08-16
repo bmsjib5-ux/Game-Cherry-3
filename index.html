@@ -28288,6 +28288,15 @@ function CherryAdventure() {
             if (opts.color != null)
                 burst(m.position, opts.color, 0.5);
             monGlow(m, 0xffffff, 0.5);
+            // 💢 สะดุ้ง + เด้งถอยตามทิศที่โดนตี (บอส/ตัวใหญ่เด้งน้อยกว่า)
+            {
+                const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
+                const dl = Math.hypot(dx, dz) || 1;
+                const kb = (opts.crit ? 0.9 : 0.5) * (m.userData.boss ? 0.3 : 1) / Math.max(1, m.scale.x || 1);
+                m.userData.kbx = (dx / dl) * kb;
+                m.userData.kbz = (dz / dl) * kb;
+                m.userData.flinch = 1;
+            }
             m.userData.aggro = true;
             wildBar(m);
             updateWildBar(m);
@@ -28322,7 +28331,26 @@ function CherryAdventure() {
         };
         const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 9.0 : 3.6;
         // ⚔️ จังหวะสวิงแบบอนิเมะ: นักรบ/ซามูไรได้ท่า 3 จังหวะ (ง้าง→ฟันเร็ว→ค้างโพส) เลยใช้เวลานานขึ้น
-        const worldSwing = () => { const slow = G.cls === "warrior" || G.cls === "samurai"; G._worldSwingDur = slow ? 0.46 : 0.28; G._worldSwingT = G._worldSwingDur; G._swPrevS = 0; G._clothBurst = 0.5; };
+        const worldSwing = (isSkill) => {
+            const slow = G.cls === "warrior" || G.cls === "samurai";
+            // 🥊 คอมโบ 3 ไม้ — ต่อไม้ได้ถ้าตีซ้ำภายใน 1.2 วิ (สกิลตัดคอมโบเสมอ)
+            G._combo3 = isSkill ? 0 : (G._comboRe > 0 ? ((G._combo3 || 0) + 1) % 3 : 0);
+            G._comboRe = isSkill ? 0 : 1.2;
+            let dur = slow ? 0.46 : 0.28;
+            if (G._combo3 === 1)
+                dur *= 0.9; // ไม้ 2 ฟันย้อนกลับเร็วกว่า
+            if (G._combo3 === 2)
+                dur *= 1.45; // ไม้ 3 ท่าจบ หนักและค้างโพสนานกว่า
+            G._worldSwingDur = dur;
+            G._worldSwingT = dur;
+            G._swPrevS = 0;
+            G._swYawApplied = 0;
+            G._clothBurst = G._combo3 === 2 ? 0.85 : 0.5;
+            if (G._combo3 === 2) {
+                G._camPunch = 1;
+                G._camShake = Math.max(G._camShake || 0, 0.28);
+            } // 🎥 กล้องกระชากเข้าตอนท่าจบ
+        };
         // 👻 เงาอาวุธ (smear frame) — ก๊อปท่าอาวุธ ณ เฟรมนั้นเป็นเงาแสงจาง ๆ ค้างไว้ครู่เดียว
         const wpnGhosts = [];
         const spawnWpnGhost = (life) => {
@@ -28481,7 +28509,7 @@ function CherryAdventure() {
             G.player.mp -= cost;
             G.startCd(sk); // ⏳ begin cooldown
             char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
-            worldSwing();
+            worldSwing(true);
             const base = (effAtk() + Math.random() * 4) * (sk.mult || 1) * (1 + ((rank - 1) * (sk.perLv || 0)));
             const col = sk.color || 0xffd24a;
             const applyDmg = (m) => {
@@ -33973,6 +34001,29 @@ function CherryAdventure() {
                         const w = m.userData.wander;
                         if (m.userData.shy > 0)
                             m.userData.shy -= dt;
+                        // 💢 อาการสะดุ้ง: เด้งถอย + ย่อตัวหดแล้วเด้งกลับ + เงยหน้าหงายเล็กน้อย
+                        if (m.userData.flinch > 0) {
+                            m.userData.flinch = Math.max(0, m.userData.flinch - dt * 4.2);
+                            const fk = m.userData.flinch;
+                            m.position.x += (m.userData.kbx || 0) * dt * 6 * fk;
+                            m.position.z += (m.userData.kbz || 0) * dt * 6 * fk;
+                            clampOutOfSafe(m);
+                            pushOut(m, 0.6);
+                            const bd = m.userData.body;
+                            if (bd) {
+                                if (!bd.userData.bScl) {
+                                    bd.userData.bScl = bd.scale.clone();
+                                    bd.userData.bRotX = bd.rotation.x;
+                                }
+                                const b = bd.userData.bScl, sq = 1 + 0.18 * fk;
+                                bd.scale.set(b.x * sq, b.y / sq, b.z * sq);
+                                bd.rotation.x = bd.userData.bRotX - 0.3 * fk;
+                                if (fk === 0) {
+                                    bd.scale.copy(b);
+                                    bd.rotation.x = bd.userData.bRotX;
+                                }
+                            }
+                        }
                         if (m.userData.shinyRing) {
                             m.userData.shinyRing.rotation.z = t * 2;
                             m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4;
@@ -35140,19 +35191,63 @@ function CherryAdventure() {
                         G._animWpnGhosts(dt); // 👻 เฟดเงาอาวุธ
                     if (G._clothBurst > 0)
                         G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
+                    if (G._comboRe > 0)
+                        G._comboRe = Math.max(0, G._comboRe - dt); // 🥊 หน้าต่างต่อคอมโบ
+                    if (G._camPunch > 0)
+                        G._camPunch = Math.max(0, G._camPunch - dt * 2.6); // 🎥 กล้องคืนระยะหลังท่าจบ
                     if (G._worldSwingT > 0) {
                         G._worldSwingT = Math.max(0, G._worldSwingT - dt);
                         const swDur = G._worldSwingDur || 0.28;
                         const s = Math.min(1, 1 - G._worldSwingT / swDur); // 0→1 across the swing
                         const sw = Math.sin(s * Math.PI); // ease up then back down
-                        // 👻 วางเงาอาวุธ 2 จังหวะช่วงหวด (เฉพาะสายประชิด)
-                        if (!(G.cls === "archer" || G.cls === "mage" || G.cls === "coder" || G.cls === "office")) {
+                        const cb = G._combo3 || 0; // 🥊 ไม้ที่ 1/2/3 ของคอมโบ
+                        G._swActive = 1; // 🏳️ กำลังอยู่ในท่าฟัน — ใช้เคลียร์ค่าครั้งเดียวตอนจบ
+                        const melee = !(G.cls === "archer" || G.cls === "mage" || G.cls === "coder" || G.cls === "office");
+                        // 👻 วางเงาอาวุธช่วงหวด (เฉพาะสายประชิด · ท่าจบวาง 3 จังหวะ)
+                        if (melee) {
                             const pv = G._swPrevS || 0;
-                            const pts = (G.cls === "warrior" || G.cls === "samurai") ? [0.38, 0.48] : [0.3, 0.55];
+                            const pts = cb === 2 ? [0.3, 0.42, 0.54] : (G.cls === "warrior" || G.cls === "samurai") ? [0.38, 0.48] : [0.3, 0.55];
                             pts.forEach((pp, pi) => { if (pv < pp && s >= pp)
                                 spawnWpnGhost(0.15 + pi * 0.03); });
                             G._swPrevS = s;
                         }
+                        // 🌀 หมุนแบบหน่วง (overlapping action): สะโพก/แขนนำ → ลำตัวตาม → หัวตามท้ายสุด
+                        {
+                            const dir = cb === 1 ? -1 : 1; // ไม้ 2 ฟันย้อนกลับ → หมุนสวนทาง
+                            const spin = cb === 2 && melee && moveAmt < 0.25; // ไม้ 3 หมุนตัวรอบเดียวตอนยืนอยู่กับที่
+                            let tw;
+                            if (spin)
+                                tw = s < 0.25 ? 0.5 * (s / 0.25) : s < 0.72 ? 0.5 - (0.5 + Math.PI * 2) * ((s - 0.25) / 0.47) : -Math.PI * 2;
+                            else if (s < 0.3)
+                                tw = 0.45 * (s / 0.3) * dir;
+                            else if (s < 0.52)
+                                tw = (0.45 - 1.05 * ((s - 0.3) / 0.22)) * dir;
+                            else if (s < 0.8)
+                                tw = -0.6 * dir;
+                            else
+                                tw = -0.6 * dir * (1 - (s - 0.8) / 0.2);
+                            if (!spin)
+                                tw *= G.cls === "lancer" ? 0.25 : melee ? 1 : 0.35; // สายแทง/สายไกลบิดตัวน้อยกว่า
+                            char.rotation.y += tw - (G._swYawApplied || 0); // ใส่เป็นส่วนต่าง → คลายเองเมื่อจบท่า
+                            G._swYawApplied = tw;
+                            const lag = spin ? 0 : -tw;
+                            torso.rotation.y = lag * 0.5; // ลำตัวตามสะโพกช้ากว่า
+                            headG.rotation.y = lag * 0.75; // หัวยังจ้องเป้าจนวินาทีสุดท้าย
+                        }
+                        // 🦶 ก้าวเท้า/ถ่ายน้ำหนัก — เท้าหน้าลงพร้อมจังหวะฟัน ไม่ให้ตัวลอย
+                        if (G.cls !== "aegis") {
+                            const stepK = s < 0.3 ? 0.35 * (s / 0.3) : s < 0.55 ? 0.35 + 0.65 * ((s - 0.3) / 0.25) : Math.max(0, 1 - (s - 0.55) / 0.45);
+                            legR.rotation.x = -0.44 * stepK;
+                            legL.rotation.x = 0.32 * stepK;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = 0.5 * stepK;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 0.14 * stepK;
+                            char.position.y -= 0.06 * stepK; // ย่อตัวลงตอนลงน้ำหนัก
+                        }
+                        // 💥 เฟรมกระแทก — ยืดอาวุธสั้น ๆ ตอนถึงจุดปะทะ (stretch แบบอนิเมะ)
+                        const impK = melee && s > 0.42 && s < 0.56 ? 1 : 0;
+                        wand.scale.set(1 - impK * 0.12, 1 + impK * 0.22, 1 - impK * 0.12);
                         if (G.cls === "archer") {
                             armR.rotation.x = -0.3 - 1.3 * sw; // draw the bow
                             if (armR.userData.elbow)
@@ -35203,21 +35298,60 @@ function CherryAdventure() {
                             armL.rotation.x = -1.35 - 0.35 * sw;
                         }
                         else if (G.cls === "samurai") {
-                            // 🗡️ อนิเมะ 4 จังหวะ: ยกดาบเหนือหัว → ฟันลงเร็วจี๋ → ค้างโพสปลายดาบ → คืนท่า
-                            armR.rotation.z = 0.1;
-                            armR.rotation.x = s < 0.35 ? -2.1 * (s / 0.35) : s < 0.5 ? -2.1 + 3.3 * ((s - 0.35) / 0.15) : s < 0.85 ? 1.2 : 1.2 * (1 - (s - 0.85) / 0.15);
+                            // 🗡️ คอมโบ 3 ไม้: ① ยกเหนือหัวฟันลง ② ฟันย้อนเฉียงขึ้น ③ อิไอ ฟันขวางแล้วค้างโพส
+                            if (cb === 1) {
+                                armR.rotation.z = -0.25 + 0.7 * Math.min(1, Math.max(0, (s - 0.2) / 0.18));
+                                armR.rotation.x = s < 0.2 ? -1.8 * (s / 0.2) : s < 0.38 ? -1.8 + 2.5 * ((s - 0.2) / 0.18) : s < 0.85 ? 0.7 : 0.7 * (1 - (s - 0.85) / 0.15);
+                            }
+                            else if (cb === 2) {
+                                armR.rotation.z = 0.1 + 0.9 * Math.min(1, Math.max(0, (s - 0.28) / 0.16));
+                                armR.rotation.x = s < 0.28 ? -2.4 * (s / 0.28) : s < 0.44 ? -2.4 + 3.9 * ((s - 0.28) / 0.16) : s < 0.88 ? 1.5 : 1.5 * (1 - (s - 0.88) / 0.12);
+                            }
+                            else {
+                                armR.rotation.z = 0.1;
+                                armR.rotation.x = s < 0.35 ? -2.1 * (s / 0.35) : s < 0.5 ? -2.1 + 3.3 * ((s - 0.35) / 0.15) : s < 0.85 ? 1.2 : 1.2 * (1 - (s - 0.85) / 0.15);
+                            }
                         }
                         else if (G.cls === "assassin") {
-                            // 🗡️🗡️ รัวมีดคู่แทงไปข้างหน้า สลับซ้าย-ขวา — ไม่เอียงตัว
-                            armR.rotation.x = -1.7 * sw;
-                            armL.rotation.x = -1.7 * Math.sin(Math.min(1, s + 0.28) * Math.PI);
+                            // 🗡️🗡️ รัวมีดคู่ — สลับมือนำตามไม้คอมโบ · ไม้ 3 แทงพร้อมกันสองมือ
+                            if (cb === 2) {
+                                armR.rotation.x = -2.05 * sw;
+                                armL.rotation.x = -2.05 * sw;
+                            }
+                            else if (cb === 1) {
+                                armL.rotation.x = -1.7 * sw;
+                                armR.rotation.x = -1.7 * Math.sin(Math.min(1, s + 0.28) * Math.PI);
+                            }
+                            else {
+                                armR.rotation.x = -1.7 * sw;
+                                armL.rotation.x = -1.7 * Math.sin(Math.min(1, s + 0.28) * Math.PI);
+                            }
                         }
                         else {
-                            // ⚔️ อนิเมะ 4 จังหวะ: เงื้อไปหลัง → ผ่าลงหน้าเร็ว → ค้างโพสท้ายฟัน → คืนท่า
-                            const ax = s < 0.22 ? 0.55 * (s / 0.22) : s < 0.4 ? 0.55 - 2.5 * ((s - 0.22) / 0.18) : s < 0.8 ? -1.95 : -1.95 * (1 - (s - 0.8) / 0.2);
+                            // ⚔️ คอมโบ 3 ไม้: ① ผ่าลงหน้า ② ฟันย้อนกลับขึ้น ③ เงื้อสุดแล้วทุบลง (ท่าจบ)
+                            let ax, az;
+                            if (cb === 1) {
+                                ax = s < 0.22 ? -1.9 * (s / 0.22) : s < 0.42 ? -1.9 + 2.6 * ((s - 0.22) / 0.2) : s < 0.8 ? 0.7 : 0.7 * (1 - (s - 0.8) / 0.2);
+                                az = -0.3 + 0.8 * Math.min(1, Math.max(0, (s - 0.22) / 0.2));
+                            }
+                            else if (cb === 2) {
+                                ax = s < 0.3 ? 0.95 * (s / 0.3) : s < 0.46 ? 0.95 - 3.4 * ((s - 0.3) / 0.16) : s < 0.85 ? -2.45 : -2.45 * (1 - (s - 0.85) / 0.15);
+                                az = 0.12 - 0.34 * Math.min(1, Math.max(0, (s - 0.3) / 0.16));
+                            }
+                            else {
+                                ax = s < 0.22 ? 0.55 * (s / 0.22) : s < 0.4 ? 0.55 - 2.5 * ((s - 0.22) / 0.18) : s < 0.8 ? -1.95 : -1.95 * (1 - (s - 0.8) / 0.2);
+                                az = 0.12 - 0.5 * Math.min(1, Math.max(0, (s - 0.22) / 0.18));
+                            }
                             armR.rotation.x = ax;
-                            armR.rotation.z = 0.12 - 0.5 * Math.min(1, Math.max(0, (s - 0.22) / 0.18));
+                            armR.rotation.z = az;
+                            armL.rotation.x = -0.25 - 0.5 * sw;
+                            armL.rotation.z = -0.18 - 0.25 * sw; // แขนซ้ายเหวี่ยงถ่วงน้ำหนัก
                         }
+                    }
+                    else if (G._swActive) {
+                        G._swActive = 0;
+                        torso.rotation.y = 0;
+                        wand.scale.set(1, 1, 1); // 🧹 คลายการบิดตัวครั้งเดียวตอนจบท่า (ปล่อยให้หัวกลับไปมองรอบ ๆ เองต่อ)
                     }
                     // buddy follows with its own inertia
                     if (buddyMesh) {
@@ -43779,16 +43913,17 @@ function CherryAdventure() {
                 }
                 else {
                     // 🎥 follow the character + orbit (yaw left/right, pitch up/down)
-                    const hd = camDist * 0.8;
+                    const camDistE = camDist * (1 - (G._camPunch || 0) * 0.13); // 🎬 กล้องกระชากเข้าใกล้ตอนท่าจบคอมโบ แล้วคืนระยะ
+                    const hd = camDistE * 0.8;
                     const yaw = G.camYaw || 0;
                     const camX = char.position.x + Math.sin(yaw) * hd;
-                    const camY = camDist * (G.camPitch != null ? G.camPitch : 0.77);
+                    const camY = camDistE * (G.camPitch != null ? G.camPitch : 0.77);
                     const camZ = char.position.z + Math.cos(yaw) * hd;
                     camera.position.x += (camX - camera.position.x) * 0.1;
                     camera.position.y += (camY - camera.position.y) * 0.08;
                     camera.position.z += (camZ - camera.position.z) * 0.1;
                     // 🎯 มองจุดเหนือหัวตัวละคร (สเกลตามซูม) → ตัวละครยืนค่อนลงล่างจอ เห็นฉากด้านหน้ามากขึ้น
-                    camera.lookAt(char.position.x, 0.8 + camDist * 0.15, char.position.z);
+                    camera.lookAt(char.position.x, 0.8 + camDistE * 0.15, char.position.z);
                 }
                 if (dtForce == null && renderer.shadowMap.enabled && ((G._shTick = (G._shTick || 0) + 1) & 1) === 0)
                     renderer.shadowMap.needsUpdate = true; // 🌑 เงา ~30Hz
