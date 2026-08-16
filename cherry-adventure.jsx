@@ -878,7 +878,7 @@ const skillsOf = (cls, pathId) => {
 // Ground-slam (quake) and poison-cloud (poison) effects blanket an area; a few signature
 // wide swings are AoE too. Everything else (incl. multi-hit combos) focuses one target.
 const AOE_FX = { quake: 1, poison: 1 };
-const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1 };
+const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1 }; // 🌟 ระบำเงา = พุ่งฟันหมู่เป็นรูปดาว
 const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
 // 🎭 ท่าร่ายประจำสกิล — แมปทีละสกิลให้ท่าตรงกับชื่อ/ความหมายของมันจริง ๆ
 // (สกิลที่ไม่อยู่ในตารางจะถูกเดาให้จากอาชีพ + ชนิดเอฟเฟกต์)
@@ -886,7 +886,7 @@ const SK_ARCH = {
   w_cleave: "spin", w_bash: "bash", w_rage: "buff", w_quake: "smash",                          // ⚔️ นักรบ
   a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe",     // 🏹 นักธนู
   m_fire: "cast", m_ice: "cast", m_bolt: "beam", m_heal: "buff",                                // 🔮 เวทมนตร์
-  s_double: "stab", s_poison: "throw", s_shadow: "backstab", s_evade: "buff",                   // 🗡️ อัสแซสซิน
+  s_double: "stab", s_poison: "throw", s_shadow: "backstab", s_evade: "star",                   // 🗡️ อัสแซสซิน
   l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash",                        // 🔱 หอก
   k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin",                            // 🗡️ ซามูไร
   o_coffee: "buff", o_paper: "throw", o_smash: "bash", o_deadline: "buff", o_ceo: "beam",       // 🏢 ออฟฟิศ
@@ -18370,10 +18370,23 @@ export default function CherryAdventure() {
       );
       line.rotation.x = -Math.PI / 2; line.visible = false; line.raycast = () => {}; scene.add(line); G._dashLine = line;
     };
+    // 🌟 เส้นดาว 5 แฉกบนพื้น — วาดทีละเส้นตามที่ตัวละครวิ่งผ่าน
+    const ensureStarFx = () => {
+      if (G._starLines) return;
+      G._starLines = [];
+      for (let i = 0; i < 5; i++) {
+        const ln = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.2, 1),
+          new THREE.MeshBasicMaterial({ color: 0x6ad0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
+        );
+        ln.rotation.x = -Math.PI / 2; ln.visible = false; ln.raycast = () => {}; scene.add(ln); G._starLines.push(ln);
+      }
+    };
     const hideCastFx = () => {
       if (G._castRing) G._castRing.visible = false;
       if (G._castOrbs) G._castOrbs.forEach((o) => (o.visible = false));
       if (G._dashLine) G._dashLine.visible = false;
+      if (G._starLines) G._starLines.forEach((l) => (l.visible = false));
     };
     // 🎭 จัดสกิลเข้ากลุ่มท่า — สกิลคนละแบบต้องร่ายคนละท่า ไม่ใช่ท่าตีธรรมดาเหมือนกันหมด
     const skillArch = (sk, fk) => {
@@ -18387,16 +18400,16 @@ export default function CherryAdventure() {
       return "cleave";
     };
     // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
-    const startSkillCast = (arch, col, focus, fire) => {
+    const startSkillCast = (arch, col, focus, fire, starHit) => {
       // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17 };
-      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17 };
+      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18 };
+      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14 };
       const chg = CHG[arch] != null ? CHG[arch] : 0.15;
       const rel = REL[arch] != null ? REL[arch] : 0.16;
-      const rush = !!ARCH_RUSH[arch];                                                                                       // สายประชิดเท่านั้นที่พุ่งเข้าหา
-      const dsh = rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                                           // ช่วงพุ่ง (สั้น เร็ว)
+      const rush = !!ARCH_RUSH[arch] || arch === "star";                                                                    // สายประชิดเท่านั้นที่พุ่งเข้าหา
+      const dsh = arch === "star" ? 0.5 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                    // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
       const hold = 0.14, rec = 0.06;                                                                                        // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
-      G._skCast = { arch, col, fire, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0 };
+      G._skCast = { arch, col, fire, starHit, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0 };
       ensureCastFx();
       worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
       G._worldSwingT = 0;
@@ -18427,8 +18440,16 @@ export default function CherryAdventure() {
         hurtWild(m, d, { crit, color: col });
       };
       const fk = worldFxFor(sk);
+      const arch = skillArch(sk, fk);
+      // 🌟 ท่าดาว 5 แฉก: ฟันกวาดทีละแฉก — ลงดาเมจรอบจุดที่วิ่งผ่าน ไม่รอจบท่า
+      const starHit = arch !== "star" ? null : (hx, hz) => {
+        const at = new THREE.Vector3(hx, 0.9, hz);
+        wildsInRadius(hx, hz, 2.5).forEach(applyDmg);
+        fireSlash(at, col);
+        spawnSkillFx("bleedstab", at, col);
+      };
       // 🎬 ปล่อยพลังจริงตอนจบช่วงสะสม — ท่าร่ายมาก่อน ดาเมจตามหลัง (anticipation → release)
-      startSkillCast(skillArch(sk, fk), col, focus, () => {
+      startSkillCast(arch, col, focus, () => {
         const alive = wilds.indexOf(focus) >= 0;
         const tgt = alive ? focus : nearestWild(worldRange() + (aoe ? 3 : 2)); // 🎯 เป้าอาจตาย/หนีระหว่างร่าย
         const at = tgt ? tgt.position : focus.position;
@@ -18436,7 +18457,9 @@ export default function CherryAdventure() {
         worldGestureFx(at, col);
         spawnSkillFx(fk, selfFx ? char.position : at, col);
         G._camShake = Math.max(G._camShake || 0, aoe ? 0.35 : 0.22);
-        if (tgt) {
+        if (arch === "star") {
+          toast(`${sk.emoji || "✨"} ${sk.name} — ฟันหมู่รูปดาว 5 แฉก!`); // ดาเมจลงไปแล้วทีละแฉกระหว่างวิ่ง
+        } else if (tgt) {
           if (aoe) {
             const targets = wildsInRadius(at.x, at.z, 3.4);
             (targets.length ? targets : [tgt]).forEach(applyDmg);
@@ -18445,7 +18468,7 @@ export default function CherryAdventure() {
         }
         if (G.sfx) G.sfx.skill && G.sfx.skill();
         syncPlayer();
-      });
+      }, starHit);
     };
     // player fell in the open world
     G.worldFaint = () => {
@@ -22902,7 +22925,18 @@ export default function CherryAdventure() {
             S.dashed = true;
             const tp = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus.position : null;
             S.sx = char.position.x; S.sz = char.position.z; S.tx = 0; S.tz = 0;
-            if (tp) {
+            if (arch === "star") {
+              // 🌟 วางเส้นทางดาว 5 แฉกรอบกลุ่มศัตรู: ตัวละคร → แฉก 1 → 3 → 5 → 2 → 4 → กลับแฉก 1
+              const cx = tp ? tp.x : char.position.x + Math.sin(char.rotation.y) * 2.4;
+              const cz = tp ? tp.z : char.position.z + Math.cos(char.rotation.y) * 2.4;
+              const R = 2.7;
+              const a0 = Math.atan2(char.position.x - cx, char.position.z - cz);
+              const vtx = [0, 2, 4, 1, 3].map((k) => { const a = a0 + k * (Math.PI * 2 / 5); return [cx + Math.sin(a) * R, cz + Math.cos(a) * R]; });
+              S.path = [[char.position.x, char.position.z]].concat(vtx, [vtx[0]]); // 6 ช่วงวิ่ง
+              S.cx = cx; S.cz = cz; S.leg = 0;
+              ensureStarFx();
+              G._starLines.forEach((l) => { l.visible = false; l.material.color.setHex(S.col); });
+            } else if (tp) {
               const ddx = tp.x - char.position.x, ddz = tp.z - char.position.z;
               const dd = Math.hypot(ddx, ddz) || 1;
               // 🥷 ลอบสังหารพุ่งทะลุไปโผล่ "หลัง" เป้า · ท่าอื่นหยุดหน้ามอนสเตอร์ ~1.15 หน่วย (พุ่งไกลสุด 7)
@@ -22911,7 +22945,36 @@ export default function CherryAdventure() {
               char.rotation.y = Math.atan2(ddx, ddz);                            // หันหน้าเข้าหาเป้าก่อนพุ่ง
             }
           }
-          if (S.dsh && S.dashed && dp < 1) {
+          if (S.dsh && S.dashed && arch === "star" && S.path && S.leg < S.path.length - 1) {
+            // 🌟 วิ่งไล่ตามเส้นดาว — ถึงแฉกไหนก็ฟันกวาดตรงนั้นทันที
+            const legs = S.path.length - 1;
+            const g = Math.min(legs - 0.0001, dp * legs);
+            const li = Math.floor(g), lp = g - li;
+            const A = S.path[li], B = S.path[li + 1];
+            char.position.x = A[0] + (B[0] - A[0]) * lp;
+            char.position.z = A[1] + (B[1] - A[1]) * lp;
+            pushOut(char, 0.3);
+            char.rotation.y = Math.atan2(B[0] - A[0], B[1] - A[1]);   // หันตามทิศที่พุ่ง
+            S.ghT -= dt;
+            if (S.ghT <= 0 && dp < 1) { S.ghT = 0.03; spawnBodyGhost(0.26, S.col); }
+            const upto = dp >= 1 ? legs : li;                         // จบท่าแล้วต้องปิดแฉกสุดท้ายให้ครบรูปดาว
+            while (S.leg < upto) {                                    // ✂️ จบหนึ่งช่วง = ฟันกวาดหนึ่งครั้ง
+              S.leg++;
+              const P = S.path[S.leg - 1], Q = S.path[S.leg];
+              if (S.leg > 1 && S.starHit) S.starHit((P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2); // ช่วงแรกเป็นการพุ่งเข้าหา ยังไม่ฟัน
+              if (S.leg >= 2 && G._starLines) {                       // ✨ เส้นดาวสว่างขึ้นทีละเส้น
+                const ln = G._starLines[S.leg - 2];
+                if (ln) {
+                  const dxl = Q[0] - P[0], dzl = Q[1] - P[1], L = Math.hypot(dxl, dzl) || 1;
+                  ln.visible = true; ln.material.opacity = 0.85;
+                  ln.position.set((P[0] + Q[0]) / 2, 0.05, (P[1] + Q[1]) / 2);
+                  ln.scale.set(1, L, 1); ln.rotation.z = -Math.atan2(dxl, dzl);
+                }
+              }
+              G._camShake = Math.max(G._camShake || 0, 0.16);
+            }
+            if (G._starLines) G._starLines.forEach((l) => { if (l.visible) l.material.opacity = Math.max(0, l.material.opacity - dt * 0.7); });
+          } else if (S.dsh && S.dashed && dp < 1) {
             const de = 1 - Math.pow(1 - dp, 3);                                  // ออกตัวแรงแล้วค่อยเบรก
             char.position.x = S.sx + S.tx * de; char.position.z = S.sz + S.tz * de;
             pushOut(char, 0.35);                                                 // 🧱 กันพุ่งทะลุหิน/ต้นไม้
@@ -22959,7 +23022,16 @@ export default function CherryAdventure() {
           wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
           if (char.rotation.order !== "YXZ") char.rotation.order = "YXZ";
           let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0;
-          if (arch === "spin") {
+          if (arch === "star") {
+            // 🌟 พุ่งฟันหมู่เป็นดาว 5 แฉก — ย่อเก็บแรง แล้วกางมีดคู่ออกสองข้าง สะบัดฟันทุกครั้งที่ถึงแฉก
+            const fl = Math.sin(Math.min(1, dp) * Math.PI * 5);
+            armR.rotation.x = (-0.2 - 0.5 * ce - 1.55 * Math.max(0, fl)) * ease;
+            armR.rotation.z = (0.5 + 0.55 * ce) * ease;
+            armL.rotation.x = (-0.2 - 0.5 * ce - 1.55 * Math.max(0, -fl)) * ease;
+            armL.rotation.z = (-0.5 - 0.55 * ce) * ease;
+            rise = (-0.18 * ce + 0.1 * (S.dashed ? 1 : 0)) * ease;
+            lean = (0.08 + 0.2 * (S.dashed ? 1 : 0)) * ease;
+          } else if (arch === "spin") {
             // 🌀 ฟันวงกว้าง/กวาดหอก/เพลงดาบจันทรา — กางอาวุธออกข้าง แล้วหมุนตัวครบรอบ
             armR.rotation.x = (-0.15 - 0.5 * ce - 0.3 * rel) * ease;
             armR.rotation.z = (0.3 + 0.95 * ce + 0.45 * rel) * ease;
