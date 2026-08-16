@@ -21040,7 +21040,7 @@ export default function CherryAdventure() {
       const dtReal = Math.min(clock.getDelta(), 0.05);
       let dt = dtForce != null ? dtForce : dtReal; // 🤖💤 forced dt while background-farming
       // ⏸️ HIT-STOP สไตล์อนิเมะ — แช่ภาพเสี้ยววินาทีตอนอาวุธกินเนื้อ (นับเวลาจริง ไม่ทำงานตอนซิมพื้นหลัง)
-      if (G._hitStopIn > 0 && dtForce == null) { G._hitStopIn -= dtReal; if (G._hitStopIn <= 0) { G._hitStop = Math.max(G._hitStop || 0, G._hitStopAmt || 0); G._hitStopAmt = 0; if (G._hitStopFlash && G.flashScreen && !document.hidden) { G.flashScreen("#ffffff", 0.5); G._camShake = Math.max(G._camShake || 0, 0.22); } G._hitStopFlash = 0; } }
+      if (G._hitStopIn > 0 && dtForce == null) { G._hitStopIn -= dtReal; if (G._hitStopIn <= 0) { G._hitStop = Math.max(G._hitStop || 0, G._hitStopAmt || 0); G._hitStopAmt = 0; if (G._hitStopFlash) G._camShake = Math.max(G._camShake || 0, 0.22); G._hitStopFlash = 0; } } // 🚫 ไม่มีแฟลชเต็มจอตอนตี (จอกระพริบ) — คงไว้แค่กล้องสั่น
       if (G._hitStop > 0 && dtForce == null) { G._hitStop -= dtReal; dt *= 0.06; }
       dtGlobal = dt;
       const t = clock.getElapsedTime();

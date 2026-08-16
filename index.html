@@ -32879,13 +32879,11 @@ function CherryAdventure() {
                     if (G._hitStopIn <= 0) {
                         G._hitStop = Math.max(G._hitStop || 0, G._hitStopAmt || 0);
                         G._hitStopAmt = 0;
-                        if (G._hitStopFlash && G.flashScreen && !document.hidden) {
-                            G.flashScreen("#ffffff", 0.5);
+                        if (G._hitStopFlash)
                             G._camShake = Math.max(G._camShake || 0, 0.22);
-                        }
                         G._hitStopFlash = 0;
                     }
-                }
+                } // 🚫 ไม่มีแฟลชเต็มจอตอนตี (จอกระพริบ) — คงไว้แค่กล้องสั่น
                 if (G._hitStop > 0 && dtForce == null) {
                     G._hitStop -= dtReal;
                     dt *= 0.06;
