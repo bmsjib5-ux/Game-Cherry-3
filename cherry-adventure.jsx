@@ -17995,9 +17995,10 @@ export default function CherryAdventure() {
         buddyMesh.rotation.y = Math.PI / 2;
       }
       setMouth("smile");
+      const eHp0 = G.enemy.hp, eMax0 = G.enemy.maxHp, eSpId0 = G.enemy.spId; // 📸 ถ่ายค่าไว้ก่อน — setUi ทำงานทีหลัง ตอนนั้น G.enemy อาจถูกเคลียร์แล้ว
       setUi((u) => ({
         ...u, mode: "battle", bstate: "choose", ultUsed: false, tfGauge: Math.round(G.tfGauge || 0), tfActive: false, tfTurns: 0, tfReady: (G.tfGauge || 0) >= 100,
-        enemy: { name: sp.name, emoji: sp.emoji, hp: G.enemy.hp, maxHp: G.enemy.maxHp, lv, boss, desc: sp.desc, spId: G.enemy.spId, shiny },
+        enemy: { name: sp.name, emoji: sp.emoji, hp: eHp0, maxHp: eMax0, lv, boss, desc: sp.desc, spId: eSpId0, shiny },
         msg: ghost ? `👻 ผีราตรี Lv.${lv} ลอยเข้าหา... หนาวเยือกไปทั้งตัว!!`
           : golden ? `🌟 จับมอนสเตอร์ทองให้ได้!! (จับติดง่ายมาก)`
           : G.dungeon ? `🗼 ชั้น ${G.dungeon.floor}/10 — ${sp.emoji} ${sp.name} Lv.${lv}!`
@@ -18638,11 +18639,12 @@ export default function CherryAdventure() {
       const wasBoss = G.enemy.boss;
       burst(em.position, 0xf5d05a);
       setMouth("laugh");
+      const eLv = G.enemy.lv; // 📸 อ่านเลเวลไว้ก่อน — ข้อความนี้ถูกประกอบทีหลังตอน React เรนเดอร์
       setUi((u) => ({
         ...u,
         msg: wasBoss
-          ? `🏆 ปราบบอส Lv.${G.enemy.lv} สำเร็จ!!`
-          : `ชนะ! ${sp.name} Lv.${G.enemy.lv} วิ่งหนีไป`,
+          ? `🏆 ปราบบอส Lv.${eLv} สำเร็จ!!`
+          : `ชนะ! ${sp.name} Lv.${eLv} วิ่งหนีไป`,
       }));
       const isGhost = G.enemy.ghost;
       const isGolden = G.enemy.golden;
@@ -18894,14 +18896,14 @@ export default function CherryAdventure() {
         G.enemy.rageAura = aura;
         burst(em.position, 0xff2a2a, 1.5);
         if (G.sfx) G.sfx.crit();
-        setUi((u) => ({ ...u, enemy: { ...u.enemy, enraged: true }, msg: `🐲🔥 ${G.enemy.name} โกรธจัด! เข้าสู่เฟส 2 — พลังโจมตีเพิ่มขึ้น!` }));
+        setUi((u) => ({ ...u, enemy: { ...u.enemy, enraged: true }, msg: `🐲🔥 ${(G.enemy || u.enemy || {}).name} โกรธจัด! เข้าสู่เฟส 2 — พลังโจมตีเพิ่มขึ้น!` }));
       }
       // 🔥 burn ticks at the start of the enemy's turn
       if (G.est.burn > 0) {
         G.est.burn--;
         G.enemy.hp = Math.max(0, G.enemy.hp - 4);
         burst(G.enemy.mesh.position, 0xf5652e);
-        setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp }, msg: `🔥 ไฟเผาไหม้! -4 HP (เหลือ ${G.est.burn} เทิร์น)` }));
+        setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp }, msg: `🔥 ไฟเผาไหม้! -4 HP (เหลือ ${G.est.burn} เทิร์น)` }));
         if (G.enemy.hp <= 0) { winBattle(); return; }
       }
       // ☠️ poison ticks (scales with enemy max HP, more than burn)
@@ -18910,7 +18912,7 @@ export default function CherryAdventure() {
         const pd = Math.max(5, Math.round(G.enemy.maxHp * 0.06));
         G.enemy.hp = Math.max(0, G.enemy.hp - pd);
         burst(G.enemy.mesh.position, 0x6ab04a);
-        setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp }, msg: `☠️ พิษกัดกร่อน! -${pd} HP (เหลือ ${G.est.poison} เทิร์น)` }));
+        setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp }, msg: `☠️ พิษกัดกร่อน! -${pd} HP (เหลือ ${G.est.poison} เทิร์น)` }));
         if (G.enemy.hp <= 0) { winBattle(); return; }
       }
       // 🩸 bleed ticks (physical, ignores nothing)
@@ -18919,7 +18921,7 @@ export default function CherryAdventure() {
         const bd = Math.max(4, Math.round(G.enemy.maxHp * 0.045));
         G.enemy.hp = Math.max(0, G.enemy.hp - bd);
         burst(G.enemy.mesh.position, 0xd9536b);
-        setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp }, msg: `🩸 เลือดไหล! -${bd} HP (เหลือ ${G.est.bleed} เทิร์น)` }));
+        setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp }, msg: `🩸 เลือดไหล! -${bd} HP (เหลือ ${G.est.bleed} เทิร์น)` }));
         if (G.enemy.hp <= 0) { winBattle(); return; }
       }
       // ❄️ frozen enemies skip their turn
@@ -18935,7 +18937,7 @@ export default function CherryAdventure() {
         if (Math.random() < 0.5) {
           burst(G.enemy.mesh.position, 0xf5c542, 1.0);
           G.player.mp = Math.min(effMaxMp(), G.player.mp + (6 + (G.cls === "mage" ? 4 : 0) + (G.cls === "office" ? 3 : 0)) * (((curPath() && curPath().mpRegenMul)) || 1));
-          setUi((u) => ({ ...u, bstate: "choose", mp: Math.ceil(G.player.mp), msg: `😵‍💫 ${G.enemy.name} สับสน โจมตีพลาด! (เหลือ ${G.est.confused} เทิร์น)` }));
+          setUi((u) => ({ ...u, bstate: "choose", mp: Math.ceil(G.player.mp), msg: `😵‍💫 ${(G.enemy || u.enemy || {}).name} สับสน โจมตีพลาด! (เหลือ ${G.est.confused} เทิร์น)` }));
           return;
         }
       }
@@ -26414,7 +26416,7 @@ export default function CherryAdventure() {
               monGlow(em, 0x661122, 0.7);
               setTimeout(() => monGlow(em, 0x000000, null), 180);
               setUi((u) => ({
-                ...u, enemy: { ...u.enemy, hp: G.enemy.hp },
+                ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp },
                 msg: `โจมตีเข้าเป้า! -${dmg} HP${fxMsg}`,
               }));
             }
@@ -26553,7 +26555,7 @@ export default function CherryAdventure() {
               monGlow(em, 0x661122, 0.7);
               setTimeout(() => monGlow(em, 0x000000, null), 150);
               setUi((u) => ({
-                ...u, enemy: { ...u.enemy, hp: G.enemy.hp },
+                ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp },
                 msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.pathId)) ? advUltOf(G.pathId).name : ultOf(G.cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
               }));
             };
@@ -28265,14 +28267,15 @@ export default function CherryAdventure() {
               popDamage(em.position, dmg, weak ? "weak" : "hit"); // 💢 pet damage number
               burst(em.position, (ELEMENTS[elem] || { color: 0xc0a0f5 }).color, 0.6);
               setUi((u) => ({
-                ...u, enemy: { ...u.enemy, hp: G.enemy.hp },
+                ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp },
                 msg: `🐾 ${PET_SKILL[pet.sp] || "โจมตี"} -${dmg} HP${petNote}`,
               }));
             }
             if (p >= 1) {
               buddyMesh.position.set(battleCenter.x - 2.2, 0, battleCenter.z + 0.7);
               G.banim = null;
-              if (G.enemy.hp <= 0) winBattle();
+              if (!G.enemy) { /* 🛡️ ศึกจบไปแล้วระหว่างท่า — ไม่ต้องทำอะไรต่อ */ }
+              else if (G.enemy.hp <= 0) winBattle();
               else enemyTurn();
             }
           } else if (A.type === "enemyAttack") {
@@ -28305,7 +28308,7 @@ export default function CherryAdventure() {
                     const rf = Math.max(1, Math.round(dmg * 0.12 * AF.thorns));
                     G.enemy.hp = Math.max(0, G.enemy.hp - rf);
                     burst(G.enemy.mesh.position, 0x4aa04a, 0.6);
-                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp } }));
+                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp } }));
                   } }
                 // 🌟 path perk: thorns — reflect damage back (Guardian)
                 { const P = curPath();
@@ -28314,7 +28317,7 @@ export default function CherryAdventure() {
                     G.enemy.hp = Math.max(0, G.enemy.hp - rf);
                     burst(G.enemy.mesh.position, 0x8a6a3a, 0.7);
                     toast(`🛡️ สะท้อนดาเมจ ${rf}!`);
-                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp } }));
+                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp } }));
                   } }
                 if (G.player.hp > 0 && G.enemy) { // 🐍💫🧛 มอนสเตอร์ปล่อยสถานะ
                   const eboss = G.enemy.boss; G.pst = G.pst || { poison: 0, stun: 0, poisonDmg: 0 };
@@ -28334,7 +28337,7 @@ export default function CherryAdventure() {
                     const drain = Math.max(1, Math.round(dmg * 0.4));
                     G.enemy.hp = Math.min(G.enemy.maxHp, G.enemy.hp + drain);
                     burst(G.enemy.mesh.position, 0xd94a6a, 0.6);
-                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: G.enemy.hp }, msg: `🧛 ${G.enemy.name} ดูดเลือด +${drain}!` }));
+                    setUi((u) => ({ ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp }, msg: `🧛 ${(G.enemy || u.enemy || {}).name} ดูดเลือด +${drain}!` }));
                   }
                 }
                 setMouth("ow");
