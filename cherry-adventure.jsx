@@ -1414,8 +1414,11 @@ export default function CherryAdventure() {
       if (actx) return;
       try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
     };
-    G.soundOn = true;
-    G.musicOn = true;
+    // 🔊 การตั้งค่าเสียง — จำค่าไว้ข้ามรอบเล่น
+    const prefBool = (k, dflt) => { try { const v = window.localStorage.getItem(k); return v == null ? dflt : v === "1"; } catch (e) { return dflt; } };
+    G.soundOn = prefBool("cherry-sound", true);
+    G.musicOn = prefBool("cherry-music", true);
+    G.battleSfxOn = prefBool("cherry-battlesfx", true);
     // one-shot blip: freq(s), type, duration, gain
     const sfx = (freqs, type = "sine", dur = 0.12, gain = 0.18, slide = 0) => {
       if (!actx || !G.soundOn) return;
@@ -1464,18 +1467,19 @@ export default function CherryAdventure() {
       o.start(now); o.stop(now + dur + 0.02);
     };
     // named sound effects — layered (tone + noise + sub) so hits actually land
+    const bsx = () => G.battleSfxOn !== false; // ⚔️ เปิด/ปิดเสียงต่อสู้แยกจากเสียงอื่น
     G.sfx = {
       // ⚔️ sword: a bright metallic shing over an air-cutting whoosh
-      slash: () => { sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
+      slash: () => { if (!bsx()) return; sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
       // 👊 hit: crunchy impact + sub thump
-      hit: () => { noise(0.09, 0.16, 1500, 0.8, 300); thump(110, 0.14, 0.22); sfx([200, 130], "square", 0.07, 0.08, -70); },
-      guard: () => { sfx([1200, 1800, 900], "square", 0.09, 0.13, 140); noise(0.09, 0.12, 5000, 2); }, // 🛡️ metallic clang
+      hit: () => { if (!bsx()) return; noise(0.09, 0.16, 1500, 0.8, 300); thump(110, 0.14, 0.22); sfx([200, 130], "square", 0.07, 0.08, -70); },
+      guard: () => { if (!bsx()) return; sfx([1200, 1800, 900], "square", 0.09, 0.13, 140); noise(0.09, 0.12, 5000, 2); }, // 🛡️ metallic clang
       // 💥 crit: rising stab + bright noise crack + sub
-      crit: () => { sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28); },
+      crit: () => { if (!bsx()) return; sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28); },
       // 💣 big explosion (ults / heavy skills)
-      boom: () => { noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); },
+      boom: () => { if (!bsx()) return; noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); },
       // ⚡ charging hum for ultimates
-      charge: () => { if (!actx || !G.soundOn) return; const now = actx.currentTime; const o = actx.createOscillator(), g = actx.createGain();
+      charge: () => { if (!actx || !G.soundOn || !bsx()) return; const now = actx.currentTime; const o = actx.createOscillator(), g = actx.createGain();
         o.type = "sawtooth"; o.frequency.setValueAtTime(120, now); o.frequency.exponentialRampToValueAtTime(900, now + 0.9);
         g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.14, now + 0.75); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
         o.connect(g); g.connect(actx.destination); o.start(now); o.stop(now + 1.05); },
@@ -1542,8 +1546,12 @@ export default function CherryAdventure() {
       };
       musicTimer = setInterval(tick, curTempo);
     };
-    G.toggleSound = () => { G.soundOn = !G.soundOn; setUi((u) => ({ ...u, soundOn: G.soundOn })); if (G.soundOn) { initAudio(); G.sfx.button(); } };
-    G.toggleMusic = () => { G.musicOn = !G.musicOn; setUi((u) => ({ ...u, musicOn: G.musicOn })); if (G.musicOn) { initAudio(); startMusic(); } };
+    const savePref = (k, v) => { try { window.localStorage.setItem(k, v ? "1" : "0"); } catch (e) {} };
+    G.toggleSound = () => { G.soundOn = !G.soundOn; savePref("cherry-sound", G.soundOn); setUi((u) => ({ ...u, soundOn: G.soundOn })); if (G.soundOn) { initAudio(); G.sfx.button(); } };
+    G.toggleMusic = () => { G.musicOn = !G.musicOn; savePref("cherry-music", G.musicOn); setUi((u) => ({ ...u, musicOn: G.musicOn })); if (G.musicOn) { initAudio(); startMusic(); } };
+    // ⚔️🔇 ปิดเฉพาะเสียงต่อสู้ (ฟัน/กระแทก/คริ/ระเบิด) — เสียงปุ่ม เหรียญ ชนะ ยังดังตามปกติ
+    G.toggleBattleSfx = () => { G.battleSfxOn = !G.battleSfxOn; savePref("cherry-battlesfx", G.battleSfxOn); setUi((u) => ({ ...u, battleSfxOn: G.battleSfxOn })); if (G.battleSfxOn) { initAudio(); G.sfx.slash(); } };
+    setUi((u) => ({ ...u, soundOn: G.soundOn, musicOn: G.musicOn, battleSfxOn: G.battleSfxOn }));
     // unlock audio on first interaction (browser autoplay policy)
     const unlockAudio = () => {
       initAudio();
@@ -20059,6 +20067,14 @@ export default function CherryAdventure() {
         if (G.saveGame) G.saveGame();
       }
     };
+    // 🏆👁️ ซ่อน/แสดงป้ายอันดับโลก — จำค่าไว้ข้ามรอบเล่น
+    try { G.boardHidden = window.localStorage.getItem("cherry-board-hide") === "1"; } catch (e) { G.boardHidden = false; }
+    G.toggleBoard = () => {
+      G.boardHidden = !G.boardHidden;
+      try { window.localStorage.setItem("cherry-board-hide", G.boardHidden ? "1" : "0"); } catch (e) {}
+      setUi((u) => ({ ...u, boardHidden: G.boardHidden }));
+    };
+    setUi((u) => ({ ...u, boardHidden: G.boardHidden }));
     // 🏆 lightweight world-board fetch for the top-left widget (silent; auto-reload every 10 min)
     G.refreshBoard = async () => {
       if (!CN.enabled()) { setUi((u) => ({ ...u, netEnabled: false, myRank: 0 })); return; }
@@ -29664,34 +29680,56 @@ export default function CherryAdventure() {
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (
-        <div style={{ position: "absolute", top: (ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 }}>
-          <button onClick={() => G.toggleSound()} title="เสียงเอฟเฟกต์" style={{
+        <div style={{ position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 }}>
+          <button onClick={() => setUi((u) => ({ ...u, settingsOpen: true }))} title="ตั้งค่าเกม" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
-            fontSize: 15, background: ui.soundOn ? "#fff" : "#d8d8d0", opacity: ui.soundOn ? 1 : 0.6,
-            boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-          }}>{ui.soundOn ? "🔊" : "🔇"}</button>
-          <button onClick={() => G.toggleMusic()} title="เพลงประกอบ" style={{
-            width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
-            fontSize: 15, background: ui.musicOn ? "#fff" : "#d8d8d0", opacity: ui.musicOn ? 1 : 0.6,
-            boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-          }}>{ui.musicOn ? "🎵" : "🎜"}</button>
+            fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
+          }}>⚙️</button>
           {ui.mode === "explore" && (
-            <button onClick={() => setUi((u) => ({ ...u, ...closeAllMenus(), homeOpen: true, achUnlocked: { ...G.achUnlocked } }))} title="บ้านถ้วยรางวัล" style={{
-              width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
-              fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-            }}>🏠</button>
-          )}
-          {ui.mode === "explore" && (
-            <button onClick={() => { if (G.ensurePid) G.ensurePid(); setUi((u) => ({ ...u, ...closeAllMenus(), profileOpen: true, profileInfo: G.profileInfo(), profileNameEdit: null })); }} title="โปรไฟล์" style={{
+            <button onClick={() => { if (G.ensurePid) G.ensurePid(); setUi((u) => ({ ...u, ...closeAllMenus(), profileOpen: true, profileInfo: G.profileInfo(), profileNameEdit: null })); }} title="โปรไฟล์ · บ้านถ้วยรางวัล" style={{
               width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
               fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
             }}>👤</button>
           )}
-          <button onClick={() => G.togglePowerSave()} title="โหมดประหยัดพลังงาน (ยืดแบต)" style={{
-            width: 34, height: 34, borderRadius: "50%", border: ui.powerSave ? "2px solid #3ac06a" : "none", cursor: "pointer",
-            fontSize: 15, background: ui.powerSave ? "#d6f5df" : "#fff", opacity: ui.powerSave ? 1 : 0.72,
-            boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-          }}>🔋</button>
+        </div>
+      )}
+
+      {/* ⚙️ ตั้งค่าเกม — รวมสวิตช์เสียง/เพลง/เสียงต่อสู้/ประหยัดพลังงาน (จำค่าอัตโนมัติ) */}
+      {ui.settingsOpen && (
+        <div onClick={() => setUi((u) => ({ ...u, settingsOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(12,14,22,0.82)", zIndex: 64, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(88vw, 340px)", background: "linear-gradient(160deg,#241f36,#191426)", borderRadius: 18, padding: 16, border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 14px 40px rgba(0,0,0,0.5)" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 15, fontWeight: 900, color: "#ffd76a" }}>⚙️ ตั้งค่าเกม</span>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setUi((u) => ({ ...u, settingsOpen: false }))} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.35)", color: "#dfe6f5", fontSize: 15, cursor: "pointer" }}>✕</button>
+            </div>
+            {[
+              { k: "soundOn", on: ui.soundOn, emoji: "🔊", label: "เสียงเอฟเฟกต์", sub: "เสียงปุ่ม เหรียญ ชนะ", act: () => G.toggleSound() },
+              { k: "musicOn", on: ui.musicOn, emoji: "🎵", label: "เพลงประกอบ", sub: "เพลงสำรวจ + เพลงต่อสู้", act: () => G.toggleMusic() },
+              { k: "battleSfxOn", on: ui.battleSfxOn !== false, emoji: "⚔️", label: "เสียงต่อสู้", sub: "เสียงฟัน กระแทก คริ ระเบิด", act: () => G.toggleBattleSfx() },
+              { k: "powerSave", on: !!ui.powerSave, emoji: "🔋", label: "ประหยัดพลังงาน", sub: "ลดความคมชัด/เงา ยืดแบต", act: () => G.togglePowerSave() },
+            ].map((row) => (
+              <button key={row.k} onClick={row.act} style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 10, marginBottom: 8, padding: "10px 12px",
+                borderRadius: 12, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", textAlign: "left",
+                background: row.on ? "rgba(90,200,140,0.16)" : "rgba(255,255,255,0.05)", fontFamily: font,
+              }}>
+                <span style={{ fontSize: 19, opacity: row.on ? 1 : 0.45 }}>{row.emoji}</span>
+                <span style={{ flex: 1 }}>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#eee6ff" }}>{row.label}</span>
+                  <span style={{ display: "block", fontSize: 10, color: "#a898c8" }}>{row.sub}</span>
+                </span>
+                <span style={{
+                  width: 44, height: 24, borderRadius: 999, flexShrink: 0, position: "relative",
+                  background: row.on ? "linear-gradient(90deg,#3ac06a,#6ae0a0)" : "rgba(255,255,255,0.18)",
+                  transition: "background 0.15s",
+                }}>
+                  <span style={{ position: "absolute", top: 3, left: row.on ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.35)", transition: "left 0.15s" }} />
+                </span>
+              </button>
+            ))}
+            <div style={{ fontSize: 10, color: "#8a7aa8", textAlign: "center", marginTop: 6 }}>ค่าที่ตั้งไว้จะถูกจำไว้ให้อัตโนมัติ</div>
+          </div>
         </div>
       )}
 
@@ -30021,7 +30059,15 @@ export default function CherryAdventure() {
 
       {/* ===== explore HUD ===== */}
       {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch; hidden during battle so it doesn't clutter combat */}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && (
+        <button onClick={() => G.toggleBoard && G.toggleBoard()} title="แสดงป้ายอันดับโลก" style={{
+          position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", zIndex: 26,
+          border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", borderRadius: 999, padding: "4px 10px",
+          background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+          color: "#ffd76a", fontSize: 12, fontWeight: 800, fontFamily: font, boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
+        }}>🏆</button>
+      )}
+      {ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && (
         <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
@@ -30033,6 +30079,7 @@ export default function CherryAdventure() {
             )}
             <div style={{ flex: 1 }} />
             <button onClick={() => G.refreshBoard && G.refreshBoard()} title="รีเฟรช" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 11, lineHeight: 1, padding: 0 }}>🔄</button>
+            <button onClick={() => G.toggleBoard && G.toggleBoard()} title="ซ่อนป้ายอันดับโลก" style={{ width: 20, height: 20, borderRadius: 6, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 12, lineHeight: 1, padding: 0, marginLeft: 3 }}>✕</button>
           </div>
           {(ui.globalBoard && ui.globalBoard.length) ? ui.globalBoard.slice(0, 3).map((r, i) => (
             <div key={r.pid || i} style={{ marginBottom: 4, color: (ui.pid && r.pid === ui.pid) ? "#ffe08a" : "#e2daee" }}>
@@ -34483,7 +34530,8 @@ export default function CherryAdventure() {
                 {stat("🐾 สัตว์เลี้ยง / สายพันธุ์", `${p.pets} / ${p.species}`)}
                 {stat("🎒 ไอเทมในกระเป๋า", p.items.toLocaleString())}
               </div>
-              <button onClick={() => setUi((u) => ({ ...u, profileOpen: false, profileNameEdit: null }))} style={{ width: "100%", marginTop: 12, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 13, fontWeight: 800, color: "#dfe6f5", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
+              <button onClick={() => setUi((u) => ({ ...u, ...closeAllMenus(), homeOpen: true, achUnlocked: { ...G.achUnlocked } }))} title="บ้านถ้วยรางวัล" style={{ width: "100%", marginTop: 12, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 13, fontWeight: 800, color: "#3a2a10", background: "linear-gradient(90deg,#ffd84a,#ffb020)" }}>🏠 บ้านถ้วยรางวัล</button>
+              <button onClick={() => setUi((u) => ({ ...u, profileOpen: false, profileNameEdit: null }))} style={{ width: "100%", marginTop: 8, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 13, fontWeight: 800, color: "#dfe6f5", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
             </div>
           </div>
         );
