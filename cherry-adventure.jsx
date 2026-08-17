@@ -24,26 +24,26 @@ const SPAWN_POOL = ["mochi", "mochi", "baibua", "baibua", "mekha", "plerng", "na
 const FLOATY = { mekha: true, phi: true, paksi: true, wayu: true, taara: true }; // species that hover
 // 🗺️ multiple adventure maps (biomes) — warp between them
 const BIOMES = [
-  { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 10, ground: 0xa8c98a, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸" },
-  { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 20, lvMax: 40, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
-  { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 40, lvMax: 60, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
-  { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 60, lvMax: 80, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
-  { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 80, lvMax: 99, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
-  { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 99, lvMax: 120, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
-  // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 150-200 · โทนดำแดงมืด กลางคืนตลอด
-  { id: "hell", name: "ขุมนรกันตร์", emoji: "🔥", lvMin: 150, lvMax: 200, ground: 0x2a0a12, sky: 0x160406, fog: 0x2a0a0c, pool: ["winyan", "pisaj"], tree: "dead", boss: "yommathut", bossName: "ยมทูตมัจจุราช ☠️", night: true },
-  // ☀️ ด่านสวรรค์ — เทพ เทวดา บอสพระโพธิสัตว์ Lv 200-250 · โทนครีมเหลืองทองส้ม สว่างตลอด
-  { id: "heaven", name: "สรวงสวรรค์ชั้นฟ้า", emoji: "☀️", lvMin: 200, lvMax: 250, ground: 0xf2e2ac, sky: 0xfff0c8, fog: 0xffe6ac, pool: ["thewada", "kinnara"], tree: "none", boss: "phothisat", bossName: "พระโพธิสัตว์ 🧘", bright: true },
-  // 🌑 ด่านดวงจันทร์ — เอเลี่ยน สัตว์ต่างดาว บอสจักรพรรดิเอเลี่ยน Lv 250-300 · พื้นเทาขรุขระ ฟ้ามืดมีดาว+ดาวตก
-  { id: "moon", name: "พื้นผิวดวงจันทร์", emoji: "🌑", lvMin: 250, lvMax: 300, ground: 0x8a8a94, sky: 0x05060f, fog: 0x0a0c1a, pool: ["alienpet", "alien"], tree: "none", boss: "ufoboss", bossName: "จักรพรรดิเอเลี่ยน 🪐", night: true, moon: true },
-  // 🍬 ด่านขนมหวาน — Lv 300-400 · โทนพาสเทลหวานแหวว สว่างสดใส
-  { id: "candy", name: "แดนขนมหวาน", emoji: "🍬", lvMin: 300, lvMax: 400, ground: 0xf7c8e0, sky: 0xfff2fa, fog: 0xffe4f2, pool: ["gummy", "cupcake"], tree: "none", boss: "candyking", bossName: "ราชาขนมหวาน 🍭", bright: true },
-  // 🏖️ ด่านหาดทะเลทราย — Lv 400-500 · หาดทราย + ทะเลคราม
-  { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 400, lvMax: 500, ground: 0xf3e0a8, sky: 0x4aa8ee, fog: 0x9fd4f5, pool: ["pooyak", "chalam"], tree: "none", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
-  // 🗿 ด่านไททัน — Lv 500-600 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
-  { id: "titan", name: "ลานประลองไททัน", emoji: "🗿", lvMin: 500, lvMax: 600, ground: 0x46592c, sky: 0x8a8c78, fog: 0x9a9c86, pool: ["stonetitan", "cyclops"], tree: "none", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️" },
-  // 🌴 ด่านป่าอเมซอน — Lv 600-750 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
-  { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 600, lvMax: 750, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
+  { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 50, ground: 0xa8c98a, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸" },
+  { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
+  { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
+  { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
+  { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 250, lvMax: 350, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
+  { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
+  // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 450-550 · โทนดำแดงมืด กลางคืนตลอด
+  { id: "hell", name: "ขุมนรกันตร์", emoji: "🔥", lvMin: 450, lvMax: 550, ground: 0x2a0a12, sky: 0x160406, fog: 0x2a0a0c, pool: ["winyan", "pisaj"], tree: "dead", boss: "yommathut", bossName: "ยมทูตมัจจุราช ☠️", night: true },
+  // ☀️ ด่านสวรรค์ — เทพ เทวดา บอสพระโพธิสัตว์ Lv 550-650 · โทนครีมเหลืองทองส้ม สว่างตลอด
+  { id: "heaven", name: "สรวงสวรรค์ชั้นฟ้า", emoji: "☀️", lvMin: 550, lvMax: 650, ground: 0xf2e2ac, sky: 0xfff0c8, fog: 0xffe6ac, pool: ["thewada", "kinnara"], tree: "none", boss: "phothisat", bossName: "พระโพธิสัตว์ 🧘", bright: true },
+  // 🌑 ด่านดวงจันทร์ — เอเลี่ยน สัตว์ต่างดาว บอสจักรพรรดิเอเลี่ยน Lv 650-750 · พื้นเทาขรุขระ ฟ้ามืดมีดาว+ดาวตก
+  { id: "moon", name: "พื้นผิวดวงจันทร์", emoji: "🌑", lvMin: 650, lvMax: 750, ground: 0x8a8a94, sky: 0x05060f, fog: 0x0a0c1a, pool: ["alienpet", "alien"], tree: "none", boss: "ufoboss", bossName: "จักรพรรดิเอเลี่ยน 🪐", night: true, moon: true },
+  // 🍬 ด่านขนมหวาน — Lv 750-850 · โทนพาสเทลหวานแหวว สว่างสดใส
+  { id: "candy", name: "แดนขนมหวาน", emoji: "🍬", lvMin: 750, lvMax: 850, ground: 0xf7c8e0, sky: 0xfff2fa, fog: 0xffe4f2, pool: ["gummy", "cupcake"], tree: "none", boss: "candyking", bossName: "ราชาขนมหวาน 🍭", bright: true },
+  // 🏖️ ด่านหาดทะเลทราย — Lv 850-950 · หาดทราย + ทะเลคราม
+  { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 850, lvMax: 950, ground: 0xf3e0a8, sky: 0x4aa8ee, fog: 0x9fd4f5, pool: ["pooyak", "chalam"], tree: "none", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
+  // 🗿 ด่านไททัน — Lv 950-1000 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
+  { id: "titan", name: "ลานประลองไททัน", emoji: "🗿", lvMin: 950, lvMax: 1000, ground: 0x46592c, sky: 0x8a8c78, fog: 0x9a9c86, pool: ["stonetitan", "cyclops"], tree: "none", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️" },
+  // 🌴 ด่านป่าอเมซอน — Lv 1000-1100 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
+  { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 1000, lvMax: 1100, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
 ];
 // 📱 กันรอยบาก/กล้องหน้า (Dynamic Island): เลื่อน UI ขอบบนลงตาม safe-area ของเครื่อง
 const ST = (px) => `calc(env(safe-area-inset-top, 0px) + ${px}px)`;
@@ -391,7 +391,7 @@ Object.assign(SPECIES, {
   stonetitan: { name: "ไททันกล้ามเหล็ก",  emoji: "🗿", color: 0xb03a2c, hp: 380, atk: 39, catch: 0.02, tier: 7, desc: "ยักษ์กล้ามเนื้อ กายสีเลือด หัวกะโหลกอสูร", animal: "beast", weak: "arcane" },
   cyclops:    { name: "ยักษ์กะโหลก",       emoji: "👹", color: 0x9a2f8a, hp: 420, atk: 43, catch: 0.02, tier: 7, desc: "อสูรยักษ์กล้ามเนื้อ ตาเพลิงสีคราม", animal: "beast", weak: "light" },
   titanlord:  { name: "จอมไททันบรรพกาล", emoji: "⛰️", color: 0x7a1e18, hp: 580, atk: 50, catch: 0.01, tier: 8, desc: "ราชันยักษ์กล้ามเหล็ก หัวกะโหลกจอมมาร", animal: "beast", weak: "light" },
-  // 🌴 ป่าอเมซอน (Lv 600-750) — ป่าดิบชื้น
+  // 🌴 ป่าอเมซอน (Lv 1000-1100) — ป่าดิบชื้น
   amzmonkey:  { name: "ลิงจอมโจร",        emoji: "🐒", color: 0x8a5a34, hp: 560, atk: 52, catch: 0.02, tier: 8, desc: "ลิงป่าดิบว่องไว ปีนต้นไม้ใหญ่แห่งอเมซอน", animal: "beast", weak: "arcane" },
   piranha:    { name: "ปลาปิรันย่า",      emoji: "🐟", color: 0xc0503a, hp: 500, atk: 58, catch: 0.02, tier: 8, desc: "ฝูงปลากินเนื้อจอมดุแห่งแม่น้ำอเมซอน", animal: "fish", weak: "ice" },
   crocodile:  { name: "จระเข้ยักษ์",      emoji: "🐊", color: 0x4a6a3a, hp: 680, atk: 60, catch: 0.015, tier: 8, desc: "จระเข้ยักษ์ขากรรไกรเหล็กแห่งลุ่มน้ำ", animal: "beast", weak: "wind" },
@@ -10932,7 +10932,7 @@ export default function CherryAdventure() {
       scene.add(m);
       wilds.push(m);
     };
-    G.biomeLvMin = BIOMES[0].lvMin; G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-10
+    G.biomeLvMin = BIOMES[0].lvMin; G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-50
     // 🏕️ populate the map by camp: several groups, each clustered by level at its own spot
     makeCamps();
     for (const c of G.camps) { const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnWild(c); }
@@ -11945,7 +11945,7 @@ export default function CherryAdventure() {
 
     // ---------- 🌀 Dimension rifts: LEFT = back a stage · RIGHT = forward a stage ----------
     G.curBiome = 0;
-    G.biomeLvMin = BIOMES[0].lvMin; G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-10
+    G.biomeLvMin = BIOMES[0].lvMin; G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-50
     // 🌀 a tall spinning oval rift standing on the ground — black void + blue energy swirl
     const makeDimPortal = () => {
       const g = new THREE.Group();
@@ -17920,7 +17920,7 @@ export default function CherryAdventure() {
         spId: wild.userData.spId,
         hp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
         maxHp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
-        atk: Math.round(sp.atk * (1 + (lv - 1) * 0.15) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul), // ⚖️ 0.18→0.15 มอนตีเบาลงเล็กน้อย
+        atk: Math.round(sp.atk * (1 + (lv - 1) * 0.13) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul), // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
         lv, boss, ghost, golden,
         enraged: false, rageAura: null, shiny,
         name: sp.name, biomeBoss: wild.userData.biomeBoss || null,
@@ -18137,7 +18137,7 @@ export default function CherryAdventure() {
       const scale = (1 + (lv - 1) * 0.9) * 1.4 * (m.userData.shiny ? 1.3 : 1);
       m.userData.wmaxhp = Math.max(12, Math.round(sp.hp * scale * ng * 0.55)); // 0.55 → snappy open-world fights
       m.userData.whp = m.userData.wmaxhp;
-      m.userData.watk = Math.round(sp.atk * (1 + (lv - 1) * 0.15) * ng * (m.userData.shiny ? 1.2 : 1)); // ⚖️ 0.18→0.15 มอนตีเบาลงเล็กน้อย
+      m.userData.watk = Math.round(sp.atk * (1 + (lv - 1) * 0.13) * ng * (m.userData.shiny ? 1.2 : 1)); // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
       m.userData.wcd = 0.5 + Math.random();
     };
     const wildBar = (m) => {
