@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>🍒 น้องเชอร์รี่ 2D — แดนมอนสเตอร์</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&display=swap" rel="stylesheet" />
+
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: #101a0c;
+    font-family: 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
+    /* กันการเลือกข้อความ/ซูมสองนิ้วตอนกดปุ่มบนมือถือ */
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none; touch-action: none;
+  }
+  #game { width: 100%; height: 100%; }
+  #game canvas { display: block; }
+  #loading {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    color: #cfe0b8; background: #101a0c; z-index: 99;
+  }
+  .spin { font-size: 52px; animation: bounce 0.8s infinite alternate ease-in-out; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-16px); } }
+  #fatal {
+    position: fixed; inset: 0; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px; padding: 24px;
+    text-align: center; color: #ffd0c0; background: #1a0c0c; z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spin">🍒</div>
+  <div>กำลังเตรียมแดนมอนสเตอร์...</div>
+</div>
+
+<div id="fatal">
+  <div style="font-size:44px">🕸️</div>
+  <div style="font-size:19px;font-weight:700">โหลดเกมไม่สำเร็จ</div>
+  <div id="fatal-msg" style="font-size:14px;opacity:.85;max-width:560px"></div>
+  <div style="font-size:13px;opacity:.7">ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ (เช่น GitHub Pages หรือ <code>npx serve</code>)<br />
+  เปิดไฟล์ด้วย file:// โดยตรงจะติดข้อจำกัด CORS ของ ES module</div>
+</div>
+
+<div id="game"></div>
+
+<!-- Phaser 3 จาก CDN — ปักเวอร์ชันไว้ ไม่ให้อัปเดตอัตโนมัติมาทำเกมพัง -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+<script>
+  // แสดงข้อผิดพลาดให้เห็นบนจอ ไม่ต้องเปิด devtools หา
+  function fatal(msg) {
+    const el = document.getElementById('fatal');
+    document.getElementById('fatal-msg').textContent = msg;
+    const load = document.getElementById('loading');
+    if (load) load.remove();
+    el.style.display = 'flex';
+  }
+  window.addEventListener('error', (e) => fatal(e.message || String(e.error)));
+  window.addEventListener('unhandledrejection', (e) => fatal(String(e.reason)));
+  if (!window.Phaser) fatal('โหลด Phaser จาก CDN ไม่ได้ — ตรวจการเชื่อมต่ออินเทอร์เน็ต');
+</script>
+
+<script type="module" src="./src/main.js"></script>
+
+</body>
+</html>
