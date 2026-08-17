@@ -1,0 +1,3 @@
+# Phaser ที่ดาวน์โหลดมาแคชไว้สำหรับ build — สคริปต์ดึงใหม่เองถ้าไม่มี
+# ตัว Phaser ฝังอยู่ใน maple/standalone.html แล้ว ไม่ต้องคอมมิตซ้ำ
+maple/vendor/

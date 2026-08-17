@@ -12,7 +12,13 @@ import { mobSize } from './textures.js';
 const HP_BAR_W = 46;
 
 export class Mob {
-  constructor(scene, x, y, speciesKey, lv, foothold) {
+  // group = กลุ่ม physics ที่ใช้ทำ collider กับ foothold
+  //
+  // ต้องเพิ่มสไปรต์เข้ากลุ่ม "ก่อน" ตั้งค่า body เพราะ Phaser.Physics.Arcade.Group
+  // มีค่าตั้งต้นของตัวเอง (gravityY: 0, allowGravity: true) ที่จะถูกยัดใส่ body
+  // ทุกครั้งที่มีลูกเข้ากลุ่ม ถ้าตั้งค่าก่อนแล้วเพิ่มเข้ากลุ่มทีหลัง แรงโน้มถ่วงที่ตั้งไว้
+  // จะถูกล้างเป็น 0 มอนทุกตัวเลยลอยนิ่งอยู่ที่จุดเกิด และถ้าถูกตีกระเด็นขึ้นก็ไม่ตกกลับ
+  constructor(scene, x, y, speciesKey, lv, foothold, group = null) {
     this.scene = scene;
     this.stats = mobStats(speciesKey, lv);
     this.hp = this.stats.hpMax;
@@ -22,6 +28,7 @@ export class Mob {
     // เท็กซ์เจอร์ถูกสร้างมาที่ขนาดสุดท้ายแล้ว จึงไม่ setScale() — กล่องชนตรงกับภาพ 1:1
     const size = mobSize(this.stats.tier);
     const sp = scene.physics.add.sprite(x, y, `mob_${speciesKey}`).setOrigin(0.5, 1);
+    if (group) group.add(sp);
     const bw = Math.round(size * 0.6);
     const bh = Math.round(size * 0.72);
     sp.body.setSize(bw, bh, false);

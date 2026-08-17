@@ -5,14 +5,30 @@
 
 ## วิธีเล่น
 
-ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ (เพราะใช้ ES module ซึ่งเปิดด้วย `file://` ตรง ๆ จะติด CORS)
+มีสองเวอร์ชัน เนื้อเกมเดียวกันเป๊ะ
+
+### 1. `maple/standalone.html` — เอาไปเล่น (ง่ายสุด)
+
+ไฟล์เดียว 1.3MB ฝัง Phaser กับโค้ดเกมไว้ในตัว **ดับเบิลคลิกเปิดได้เลย**
+ไม่ต้องมีเซิร์ฟเวอร์ ไม่ต้องต่อเน็ต ส่งต่อให้คนอื่นเป็นไฟล์เดียวได้
+
+สร้างใหม่หลังแก้โค้ดด้วย:
+
+```bash
+node maple/build-standalone.mjs
+```
+
+### 2. `maple/index.html` — ใช้พัฒนา
+
+ใช้ ES module โหลดตรงในเบราว์เซอร์ + Phaser จาก CDN แก้ไฟล์แล้วรีเฟรชเห็นผลทันที ไม่มี build step
+แต่ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ (เปิดด้วย `file://` ตรง ๆ จะติด CORS ของ ES module)
 
 ```bash
 npx http-server -p 8080 .      # รันที่โฟลเดอร์ราก repo
 # แล้วเปิด http://localhost:8080/maple/
 ```
 
-บน GitHub Pages เข้าที่ `https://<user>.github.io/<repo>/maple/` ได้เลย ไม่ต้อง build
+บน GitHub Pages เข้าที่ `https://<user>.github.io/<repo>/maple/` ได้เลย
 
 ## ปุ่ม
 
@@ -49,7 +65,10 @@ npx http-server -p 8080 .      # รันที่โฟลเดอร์ร�
 ```
 shared/gamedata.js        ตารางข้อมูลเกมกลาง (สกัดจาก cherry-adventure.jsx)
 maple/
-  index.html              เชลล์ + โหลด Phaser จาก CDN + แสดงข้อผิดพลาดบนจอ
+  index.html              เวอร์ชันพัฒนา — โหลด Phaser จาก CDN + แสดงข้อผิดพลาดบนจอ
+  standalone.html         เวอร์ชันไฟล์เดียว (สร้างอัตโนมัติ ห้ามแก้มือ)
+  build-standalone.mjs    สคริปต์รวมไฟล์ — ตัด import/export แล้วต่อกันในสโคปเดียว
+  vendor/                 Phaser ที่ดาวน์โหลดมาเก็บไว้สำหรับ build
   src/main.js             ตั้งค่า Phaser และลงทะเบียนฉาก
   src/maps.js             โครงแมพ: foothold / เชือก / พอร์ทัล / จุดสปอว์น
   src/rng.js              สุ่มแบบมี seed (แมพ procedural ต้องออกมาเหมือนเดิมทุกครั้ง)
@@ -62,9 +81,15 @@ maple/
   src/hud.js              แถบสถานะบนจอ
   src/input.js            รวมคีย์บอร์ด + ปุ่มจอสัมผัส
   src/fx.js               ตัวเลขดาเมจ · เอฟเฟกต์ฟัน · ประกาย
+  src/color.js            ยูทิลสี (ใช้ร่วมกันระหว่าง rig กับ FieldScene)
   src/save.js             localStorage (คีย์ `cherry-maple-save-v1` แยกจากเกม 3D)
   src/scenes/             BootScene · TitleScene · FieldScene
 ```
+
+**หมายเหตุเรื่องการรวมไฟล์:** สคริปต์ build ใช้วิธีต่อไฟล์ในสโคปเดียว จึงต้องไม่มีชื่อ
+top-level ซ้ำกันข้ามโมดูล (ตอนนี้มี 147 ชื่อ ไม่ซ้ำเลย) สคริปต์ตรวจให้อัตโนมัติและจะหยุด
+พร้อมบอกชื่อที่ซ้ำถ้าเผลอตั้งชื่อทับกัน ถ้าเพิ่มโมดูลใหม่ต้องเติมชื่อไฟล์ใน `ORDER`
+ของ `build-standalone.mjs` ตามลำดับ dependency ด้วย
 
 ## ข้อมูลเกมใช้ร่วมกับเกม 3D
 

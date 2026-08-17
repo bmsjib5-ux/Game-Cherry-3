@@ -10,6 +10,7 @@
 
 import { CLASSES, CLASS_OUTFIT } from '../../shared/gamedata.js';
 import { WEAPON_SHAPE } from './textures.js';
+import { shade } from './color.js';
 
 const HIP_Y = -26;
 const SHOULDER_Y = -54;
@@ -178,10 +179,3 @@ export class Rig {
 
 const ease = (k) => 1 - Math.pow(1 - Math.min(1, Math.max(0, k)), 2.2);
 
-// คูณความสว่างของสี hex — ใช้ทำเงาชิ้นส่วนที่อยู่ด้านหลัง
-function shade(hex, k) {
-  const r = Math.min(255, Math.round(((hex >> 16) & 0xff) * k));
-  const g = Math.min(255, Math.round(((hex >> 8) & 0xff) * k));
-  const b = Math.min(255, Math.round((hex & 0xff) * k));
-  return (r << 16) | (g << 8) | b;
-}

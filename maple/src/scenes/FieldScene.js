@@ -15,6 +15,7 @@ import { Input } from '../input.js';
 import { rollDamage, mobDamage } from '../stats.js';
 import { popDamage, popText, slashFx, sparks, ring, FONT } from '../fx.js';
 import { writeSave } from '../save.js';
+import { shade, luma } from '../color.js';
 import { MATERIALS } from '../../../shared/gamedata.js';
 
 const RESPAWN_MS = 4200;
@@ -258,9 +259,8 @@ export class FieldScene extends Phaser.Scene {
       const x = Phaser.Math.Clamp(
         s.x + Phaser.Math.Between(-70, 70), fh.x + 30, fh.x + fh.w - 30
       );
-      const m = new Mob(this, x, s.y, s.species, lv, fh);
+      const m = new Mob(this, x, s.y, s.species, lv, fh, this.mobGroup);
       m.sprite.setDepth(200);
-      this.mobGroup.add(m.sprite);
       this.mobs.push(m);
       s.alive.push(m);
       s.nextAt = 0;              // ตัวถัดไป (ถ้ายังไม่ครบ n) เริ่มนับเวลาใหม่ → โผล่ทีละตัว
@@ -482,18 +482,3 @@ export class FieldScene extends Phaser.Scene {
   }
 }
 
-// ความสว่างที่ตาคนรับรู้ (0–1) — ถ่วงน้ำหนักเขียวมากสุดตามการมองเห็นจริง
-function luma(hex) {
-  const r = (hex >> 16) & 0xff;
-  const g = (hex >> 8) & 0xff;
-  const b = hex & 0xff;
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-}
-
-// คูณความสว่างของสี hex (k > 1 = สว่างขึ้น, ตัดที่ 255)
-function shade(hex, k) {
-  const r = Math.min(255, Math.round(((hex >> 16) & 0xff) * k));
-  const g = Math.min(255, Math.round(((hex >> 8) & 0xff) * k));
-  const b = Math.min(255, Math.round((hex & 0xff) * k));
-  return (r << 16) | (g << 8) | b;
-}
