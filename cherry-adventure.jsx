@@ -891,14 +891,15 @@ const SK_ARCH = {
   x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse",            // 🌿🏹 เรนเจอร์พงไพร
   m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff",                       // 🔮 เวทมนตร์
   s_double: "stab", s_poison: "knives", s_shadow: "shadow3", s_evade: "star",                  // 🗡️ อัสแซสซิน
-  l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash",                        // 🔱 หอก
+  l_thrust: "spearpierce", l_sweep: "spearstorm", l_quake: "earthspear", l_charge: "dragoncharge", // 🔱 หอก
+  p_frostpierce: "frostlance",                                                                   // 🧊🔱 อัศวินน้ำแข็งดำ
   k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin",                            // 🗡️ ซามูไร
   o_coffee: "buff", o_paper: "throw", o_smash: "bash", o_deadline: "buff", o_ceo: "beam",       // 🏢 ออฟฟิศ
   c_inject: "throw", c_wall: "bash", c_drone: "summon", c_crash: "beam", c_matrix: "beam",      // 💻 โปรแกรมเมอร์
   g_dash: "dash", g_drone: "summon", g_grav: "beam", g_over: "buff",                            // 🤖 AI Mecha
 };
 // สายที่ "พุ่งเข้าหาเป้า" ก่อนออกท่า (ที่เหลือร่ายอยู่กับที่)
-const ARCH_RUSH = { cleave: 1, spin: 1, bash: 1, smash: 1, dash: 1, stab: 1, twin: 1, iai: 1, backstab: 1, crusade: 1, shieldangel: 1, axecombo: 1 };
+const ARCH_RUSH = { cleave: 1, spin: 1, bash: 1, smash: 1, dash: 1, stab: 1, twin: 1, iai: 1, backstab: 1, crusade: 1, shieldangel: 1, axecombo: 1, spearpierce: 1, dragoncharge: 1 };
 // 🔒 SKILL UNLOCK CONDITIONS — every class gates skills 2..5 behind level, the previous
 // skill's rank, and an allocated base stat. Skill 1 is always free so you can always fight.
 // slot = index in CLASS_SKILLS[cls]; stat keys match G.baseStats (atk/hp/def/crit/luck/mp)
@@ -18857,6 +18858,88 @@ export default function CherryAdventure() {
         scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
+    // 🔱 คลื่นลมจากการจ้วง — เสี้ยวลมซ้อนกันพุ่งไปตามแนวแทง
+    const spawnThrustWind = (x, y, z, dirY, len, col) => {
+      try {
+        const g = new THREE.Group(); const mats = [];
+        for (let k = 0; k < 3; k++) {
+          const mm = new THREE.MeshBasicMaterial({ color: k === 0 ? 0xeaf6ff : (col || 0x6ab0d0), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+          const w = 0.5 - k * 0.13;
+          const pl = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mm);
+          pl.position.z = len / 2; pl.rotation.z = (k - 1) * 0.55;        // ซ้อนไขว้กันเป็นเสี้ยวลม
+          pl.raycast = () => {};
+          g.add(pl); mats.push(mm);
+        }
+        g.position.set(x, y, z); g.rotation.y = dirY;
+        g.userData = { kind: "wind", t: 0, dur: 0.34, mats };
+        scene.add(g); archerFx.push(g);
+      } catch (e) {}
+    };
+    // 🌍 เสาหินปฐพี — แท่งหินทะลุพื้นขึ้นมาแล้วยุบกลับ
+    const spawnStonePillar = (x, z, col, h) => {
+      try {
+        const rm = new THREE.MeshStandardMaterial({ color: col || 0x8a6a3a, roughness: 0.95, flatShading: true });
+        const H = h || (1.5 + Math.random() * 1.2);
+        const g = new THREE.Group();
+        const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.46, H, 6), rm);
+        pil.position.y = H / 2; pil.rotation.y = Math.random() * 3; pil.raycast = () => {};
+        g.add(pil);
+        for (let k = 0; k < 3; k++) {                                     // 🪨 สะเก็ดหินรอบโคน
+          const ch = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.44, 5), rm);
+          const a = Math.random() * Math.PI * 2;
+          ch.position.set(Math.cos(a) * 0.55, 0.18, Math.sin(a) * 0.55);
+          ch.rotation.z = Math.cos(a) * 0.6; ch.rotation.x = -Math.sin(a) * 0.6; ch.raycast = () => {};
+          g.add(ch);
+        }
+        g.position.set(x, 0, z); g.scale.set(1, 0.02, 1);
+        g.userData = { kind: "pillar2", t: 0, up: 0.14, hold: 0.7, out: 0.35, mats: [rm] };
+        scene.add(g); archerFx.push(g);
+      } catch (e) {}
+    };
+    // ⚡🐉 มังกรสายฟ้า — หัวมีเขา ลำตัวเป็นปล้อง ทะยานเป็นคลื่นไปตามแนวพุ่ง
+    const spawnDragonRush = (sx, sz, tx, tz, col) => {
+      try {
+        const bm = new THREE.MeshBasicMaterial({ color: col || 0x4a9ae8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const cm = new THREE.MeshBasicMaterial({ color: 0xeaf6ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const g = new THREE.Group(); const segs = [];
+        for (let k = 0; k < 9; k++) {
+          const sp = new THREE.Mesh(new THREE.SphereGeometry(0.36 - k * 0.032, 10, 8), k === 0 ? cm : bm);
+          sp.raycast = () => {}; g.add(sp); segs.push(sp);
+        }
+        const head = new THREE.Group();
+        const skull = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.78, 7), cm); skull.rotation.x = Math.PI / 2; skull.raycast = () => {};
+        head.add(skull);
+        for (const hx of [-1, 1]) {                                       // 🐉 เขาสองข้าง
+          const hn = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.42, 5), bm);
+          hn.position.set(hx * 0.16, 0.16, -0.16); hn.rotation.x = -0.8; hn.rotation.z = hx * 0.4; hn.raycast = () => {};
+          head.add(hn);
+        }
+        g.add(head);
+        g.userData = { kind: "dragon", t: 0, dur: 0.46, sx, sz, tx, tz, segs, head, mats: [bm, cm] };
+        scene.add(g); archerFx.push(g);
+      } catch (e) {}
+    };
+    // 🧊 ทวนน้ำแข็งดำ — ทวนน้ำแข็งเหลี่ยมยาวพุ่งไปตามแนวแทง พร้อมไอเย็นฟุ้ง
+    const spawnFrostLance = (x, y, z, dirY, len, col) => {
+      try {
+        const im = new THREE.MeshStandardMaterial({ color: col || 0x66ccff, transparent: true, opacity: 0, roughness: 0.1, metalness: 0.2, emissive: 0x123a5a, emissiveIntensity: 0.9, flatShading: true });
+        const dm = new THREE.MeshBasicMaterial({ color: 0x1a0e2a, transparent: true, opacity: 0, depthWrite: false });
+        const g = new THREE.Group(); 
+        const core = new THREE.Mesh(new THREE.ConeGeometry(0.3, len, 6), im);
+        core.rotation.x = Math.PI / 2; core.position.z = len / 2; core.raycast = () => {};
+        g.add(core);
+        for (let k = 0; k < 5; k++) {                                     // 🖤 เกล็ดน้ำแข็งดำเกาะรอบแกน
+          const sh = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.7 + Math.random() * 0.5, 5), dm);
+          const a = (k / 5) * Math.PI * 2;
+          sh.position.set(Math.cos(a) * 0.24, Math.sin(a) * 0.24, 0.7 + k * (len / 7));
+          sh.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.5; sh.rotation.z = a; sh.raycast = () => {};
+          g.add(sh);
+        }
+        g.position.set(x, y, z); g.rotation.y = dirY; g.scale.set(1, 1, 0.05);
+        g.userData = { kind: "frost", t: 0, up: 0.1, dur: 0.5, mats: [im, dm] };
+        scene.add(g); archerFx.push(g);
+      } catch (e) {}
+    };
     G._animArcherFx = (d) => {
       for (let i = archerFx.length - 1; i >= 0; i--) {
         const o = archerFx[i], u = o.userData;
@@ -18887,6 +18970,42 @@ export default function CherryAdventure() {
           const fade = Math.max(0, Math.min(1, (u.t - u.step * u.segs.length) / 0.32));
           u.mats.forEach((m) => (m.opacity = (0.55 + Math.random() * 0.45) * (1 - fade)));
           if (u.t >= u.dur) kill();
+        } else if (u.kind === "wind") {                          // 🔱 เสี้ยวลมยืดออกแล้วจางไว
+          const pw2 = Math.min(1, u.t / u.dur);
+          o.scale.set(1 + pw2 * 0.7, 1 + pw2 * 0.7, pw2 < 0.16 ? pw2 / 0.16 : 1);
+          o.children.forEach((c, k) => (c.rotation.z += d * (k - 1) * 2.4));
+          u.mats.forEach((m, k) => (m.opacity = (0.9 - k * 0.22) * (1 - Math.pow(pw2, 1.5))));
+          if (pw2 >= 1) kill();
+        } else if (u.kind === "pillar2") {                       // 🌍 เสาหินผุดขึ้น → ค้าง → ยุบกลับ
+          if (u.t < u.up) o.scale.set(1, 0.02 + (u.t / u.up) * 1.06, 1);
+          else if (u.t < u.up + u.hold) o.scale.set(1, 1.03 + Math.sin(u.t * 8) * 0.02, 1);
+          else {
+            const pp2 = Math.min(1, (u.t - u.up - u.hold) / u.out);
+            o.scale.set(1 - pp2 * 0.2, 1.03 - pp2 * 1.01, 1 - pp2 * 0.2);
+            if (pp2 >= 1) kill();
+          }
+        } else if (u.kind === "dragon") {                        // ⚡🐉 ทะยานเป็นคลื่นตามแนวพุ่ง ปล้องลากตามหัว
+          const pd2 = Math.min(1, u.t / u.dur);
+          const dxg = u.tx - u.sx, dzg = u.tz - u.sz;
+          const nx = -dzg, nz = dxg, nl = Math.hypot(nx, nz) || 1;
+          const at = (q) => {
+            const e6 = Math.max(0, Math.min(1, q));
+            const wv = Math.sin(e6 * Math.PI * 2.2) * 0.55;              // ส่ายเป็นคลื่นงู
+            return [u.sx + dxg * e6 + (nx / nl) * wv, 0.85 + Math.sin(e6 * Math.PI * 1.6) * 0.5, u.sz + dzg * e6 + (nz / nl) * wv];
+          };
+          const hp2 = at(pd2);
+          u.head.position.set(hp2[0], hp2[1], hp2[2]);
+          u.head.rotation.y = Math.atan2(dxg, dzg);
+          u.segs.forEach((sg, k) => { const q = at(pd2 - (k + 1) * 0.055); sg.position.set(q[0], q[1], q[2]); });
+          u.mats.forEach((m) => (m.opacity = 0.9 * Math.sin(Math.min(1, pd2 * 1.05) * Math.PI)));
+          if (pd2 >= 1) kill();
+        } else if (u.kind === "frost") {                         // 🧊 ทวนน้ำแข็งยืดพุ่งออกแล้วแตกสลาย
+          const pf = Math.min(1, u.t / u.dur);
+          o.scale.set(1, 1, u.t < u.up ? 0.05 + (u.t / u.up) * 0.95 : 1);
+          o.rotation.z += d * 3.2;
+          u.mats[0].opacity = 0.85 * (1 - Math.pow(pf, 2.2));
+          u.mats[1].opacity = 0.9 * (1 - Math.pow(pf, 2.2));
+          if (pf >= 1) kill();
         } else if (u.kind === "crack") {                         // 💢 รอยแยกฉีกออกไปข้างหน้าแล้วค่อยดับ
           const pk = Math.min(1, u.t / u.dur);
           o.scale.set(1, 1, 0.02 + (u.t < u.up ? u.t / u.up : 1) * 0.98);   // ฉีกยาวออกไปข้างหน้า
@@ -19135,15 +19254,15 @@ export default function CherryAdventure() {
     // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
     const startSkillCast = (arch, col, focus, fire, beats) => {
       // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26 };
-      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70 };
+      const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26 };
+      const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70, spearpierce: 0.18, spearstorm: 0.36, earthspear: 0.22, dragoncharge: 0.20, frostlance: 0.24 };
       const chg = CHG[arch] != null ? CHG[arch] : 0.15;
       const rel = REL[arch] != null ? REL[arch] : 0.16;
       const rush = !!ARCH_RUSH[arch] || arch === "star";                                                                    // สายประชิดเท่านั้นที่พุ่งเข้าหา
-      const dsh = arch === "star" ? 0.5 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                    // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
+      const dsh = arch === "star" ? 0.5 : arch === "dragoncharge" ? 0.16 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0;                                    // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
       const hold = 0.14, rec = 0.06;                                                                                        // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
       const B = beats || {};
-      G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, crusadeFire: B.crusadeFire, cuN: 0, judgeFire: B.judgeFire, jdN: 0, armyFire: B.armyFire, hyN: 0, axeComboFire: B.axeComboFire, axN: 0, bloodFire: B.bloodFire, blN: 0, splitFire: B.splitFire, spN: 0, stormFire: B.stormFire, stN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
+      G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, crusadeFire: B.crusadeFire, cuN: 0, judgeFire: B.judgeFire, jdN: 0, armyFire: B.armyFire, hyN: 0, axeComboFire: B.axeComboFire, axN: 0, bloodFire: B.bloodFire, blN: 0, splitFire: B.splitFire, spN: 0, stormFire: B.stormFire, stN: 0, sweepFire: B.sweepFire, swN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
       ensureCastFx();
       worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
       G._worldSwingT = 0;
@@ -19310,6 +19429,112 @@ export default function CherryAdventure() {
           spawnRainArrow(cx + Math.cos(a) * r, cz + Math.sin(a) * r, col, Math.random() * 0.55, null);
         }
         toast(`${sk.emoji || "💥"} ${sk.name} — ฝนลูกธนูถล่ม ${group.length} ตัว!`);
+      };
+      // 🔱 เก็บทุกตัวที่ยืนขวางแนวแทง (ใช้ร่วมกันทั้งจ้วงทะลวง / พุ่งทะยาน / ทวนน้ำแข็งดำ)
+      const lineTargets = (dirY, len, wide) => {
+        const fxl = Math.sin(dirY), fzl = Math.cos(dirY), out = [];
+        for (const m of wilds) {
+          if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+          const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
+          const along = dx * fxl + dz * fzl;
+          if (along < -1.2 || along > len) continue;
+          if (Math.abs(dx * fzl - dz * fxl) > (wide || 1.3)) continue;
+          out.push(m);
+        }
+        if (!out.length && wilds.indexOf(focus) >= 0) out.push(focus);
+        return out;
+      };
+      // 🔱 จ้วงทะลวง — จ้วงเดียวทะลุเป็นแนวตรง เจาะเกราะ + ติดคริให้ตัวเองต่อ
+      const thrustFire = arch !== "spearpierce" ? null : () => {
+        const dy3 = char.rotation.y;
+        spawnThrustWind(char.position.x, 1.15, char.position.z, dy3, 5.6, col);
+        spawnWpnGhost(0.22);
+        const line = lineTargets(dy3, 5.6, 1.25);
+        line.forEach((m) => {
+          applyDmg(m);
+          m.userData.vuln = Math.max(m.userData.vulnT > 0 ? (m.userData.vuln || 0) : 0, 0.25); // 🔱 เจาะเกราะ/การ์ด
+          m.userData.vulnT = 6;
+          burst(new THREE.Vector3(m.position.x, 0.95, m.position.z), col, 0.8);
+        });
+        G.wCrit = Math.max(G.wCrit || 0, 15); G.wCritT = 10;                     // 🎯 คริ +15% นาน 10 วิ
+        G._camShake = Math.max(G._camShake || 0, 0.3);
+        G._hitStop = Math.max(G._hitStop || 0, 0.05);
+        toast(`${sk.emoji || "🔱"} ${sk.name} — ทะลุ ${line.length} ตัว · คริ +15%!`);
+      };
+      // 🌪️ กวาดหอก — หมุนหอกเป็นพายุ ดูดเข้ากลาง กวาด 2 ครั้ง
+      const sweepFire = arch !== "spearstorm" ? null : (idx) => {
+        if (idx === 0) {
+          spawnAxeTornado(char.position.x, char.position.z, col, 0.75, 3.0);     // 🌀 พายุลมรอบตัว ดูดเข้ากลาง
+          toast(`${sk.emoji || "🌪️"} ${sk.name} — กวาดหอกเป็นพายุ ×2 ดูดเข้ากลาง!`);
+        }
+        const hit = wildsInRadius(char.position.x, char.position.z, 3.2);
+        hit.forEach((m) => {
+          applyDmg(m, 1 / 2);
+          const kx = m.position.x - char.position.x, kz = m.position.z - char.position.z;
+          const kl = Math.hypot(kx, kz) || 1;
+          if (idx >= 1) { m.userData.kbx = (kx / kl) * 1.6; m.userData.kbz = (kz / kl) * 1.6; } // ไม้สองสะบัดกระเด็น
+          burst(new THREE.Vector3(m.position.x, 0.95, m.position.z), col, 0.7);
+        });
+        spawnWpnGhost(0.2);
+        G._camShake = Math.max(G._camShake || 0, idx >= 1 ? 0.36 : 0.2);
+      };
+      // 🌍 หอกปฐพี — กระแทกด้ามหอกลงพื้น เสาหินผุดเป็นวง + สตัน
+      const quakeFire = arch !== "earthspear" ? null : () => {
+        const R = 3.8;
+        for (let k = 0; k < 7; k++) {                                            // 🪨 เสาหินผุดเป็นวงรอบตัว
+          const a = (k / 7) * Math.PI * 2 + Math.random() * 0.4, rr = 1.3 + Math.random() * (R - 1.4);
+          spawnStonePillar(char.position.x + Math.cos(a) * rr, char.position.z + Math.sin(a) * rr, col);
+        }
+        spawnGroundCrack(char.position.x, char.position.z, char.rotation.y, 0xb08a4a, 4.0);
+        spawnHolyRing(char.position.x, char.position.z, col, 3.6);
+        const hit = wildsInRadius(char.position.x, char.position.z, R);
+        hit.forEach((m) => {
+          applyDmg(m);
+          m.userData.frzT = Math.max(m.userData.frzT || 0, 1.6);                 // 💫 สตัน
+          monGlow(m, 0xd8b878, 0.8);
+          burst(new THREE.Vector3(m.position.x, 0.9, m.position.z), col, 0.9);
+        });
+        G._camShake = Math.max(G._camShake || 0, 0.55);
+        G._hitStop = Math.max(G._hitStop || 0, 0.07);
+        toast(`${sk.emoji || "🌍"} ${sk.name} — กระแทกพื้น! สตัน ${hit.length} ตัว`);
+      };
+      // ⚡ พุ่งทะยาน — มังกรสายฟ้าทะยานทะลุเป็นแนว ทำลายเกราะ + น็อคถอย
+      const chargeFire = arch !== "dragoncharge" ? null : () => {
+        const dy3 = char.rotation.y;
+        const tx3 = char.position.x + Math.sin(dy3) * 7.0, tz3 = char.position.z + Math.cos(dy3) * 7.0;
+        spawnDragonRush(char.position.x, char.position.z, tx3, tz3, col);
+        spawnThrustWind(char.position.x, 1.15, char.position.z, dy3, 6.4, col);
+        const line = lineTargets(dy3, 7.0, 1.6);
+        line.forEach((m) => {
+          applyDmg(m);
+          m.userData.vuln = 0.4; m.userData.vulnT = 7;                           // 🛡️💥 ทำลายเกราะหนัก
+          const kx = m.position.x - char.position.x, kz = m.position.z - char.position.z;
+          const kl = Math.hypot(kx, kz) || 1;
+          m.userData.kbx = (kx / kl) * 2.6; m.userData.kbz = (kz / kl) * 2.6;    // 💥 น็อคถอย
+          m.userData.frzT = Math.max(m.userData.frzT || 0, 0.8);
+          monGlow(m, 0x9fd0ff, 0.9);
+          burst(new THREE.Vector3(m.position.x, 1.0, m.position.z), col, 1.0);
+        });
+        G._camShake = Math.max(G._camShake || 0, 0.5);
+        G._hitStop = Math.max(G._hitStop || 0, 0.06);
+        toast(`${sk.emoji || "⚡"} ${sk.name} — มังกรสายฟ้าทะลุ ${line.length} ตัว!`);
+      };
+      // 🧊 ทวนน้ำแข็งดำ — แทงทวนน้ำแข็งทะลุแนว แช่แข็ง + เดินช้าลง
+      const frostFire = arch !== "frostlance" ? null : () => {
+        const dy3 = char.rotation.y;
+        spawnFrostLance(char.position.x, 1.15, char.position.z, dy3, 6.2, col);
+        const line = lineTargets(dy3, 6.2, 1.4);
+        line.forEach((m) => {
+          applyDmg(m);
+          m.userData.vuln = Math.max(m.userData.vulnT > 0 ? (m.userData.vuln || 0) : 0, 0.28); // 🧊 เจาะเกราะ
+          m.userData.vulnT = 6;
+          m.userData.frzT = Math.max(m.userData.frzT || 0, 1.5);                 // ❄️ แช่แข็งอยู่กับที่
+          m.userData.slow = 0.45; m.userData.slowT = 8;                          // 🐌 หลุดน้ำแข็งแล้วยังเดินช้า
+          monGlow(m, 0x9fe4ff, 1.2);
+          spawnIceSpike(m, col, (hx, hz) => { burst(new THREE.Vector3(hx, 1.0, hz), col, 0.95); });
+        });
+        G._camShake = Math.max(G._camShake || 0, 0.34);
+        toast(`${sk.emoji || "🧊"} ${sk.name} — ทะลุ ${line.length} ตัว · แช่แข็ง + ช้าลง!`);
       };
       // 🪓 ขวานเดือด — สับรัว 6 ไม้ ไม้สุดท้ายฟาดล้ม (Knockdown) + ลดเกราะสะสม
       const axeComboFire = arch !== "axecombo" ? null : (idx) => {
@@ -19576,6 +19801,14 @@ export default function CherryAdventure() {
           if (boltFire) boltFire();                                      // ⚡ ดาเมจลงตอนสายฟ้ากระโดดถึงแต่ละตัว
         } else if (arch === "arrowrain") {
           if (rainFire) rainFire();                                      // 💥 ดาเมจลงตอนลูกธนูแต่ละดอกปัก
+        } else if (arch === "spearpierce") {
+          if (thrustFire) thrustFire();                                  // 🔱 ดาเมจทั้งแนวที่จ้วงผ่าน
+        } else if (arch === "earthspear") {
+          if (quakeFire) quakeFire();                                    // 🌍 ดาเมจ + สตันทั้งวง
+        } else if (arch === "dragoncharge") {
+          if (chargeFire) chargeFire();                                  // ⚡ ดาเมจทั้งแนวที่มังกรพุ่งผ่าน
+        } else if (arch === "frostlance") {
+          if (frostFire) frostFire();                                    // 🧊 ดาเมจ + แช่แข็งทั้งแนว
         } else if (arch === "shieldangel") {
           if (shieldFire) shieldFire();                                  // 🛡️ กระแทก + เกราะ + ฟื้นต่อเนื่อง
         } else if (arch === "vine") {
@@ -19583,7 +19816,7 @@ export default function CherryAdventure() {
         } else if (arch === "rootcurse") {
           if (rootCurseFire) rootCurseFire();                            // 🌳 ดาเมจ + ตรึง + เกราะแตกทั้งวง
         } else if (arch === "hawk" || arch === "poisonvolley" || arch === "wolfcall" || arch === "crusade" || arch === "judgement" || arch === "holyarmy"
-                   || arch === "axecombo" || arch === "bloodrage" || arch === "groundsplit" || arch === "axestorm") {
+                   || arch === "axecombo" || arch === "bloodrage" || arch === "groundsplit" || arch === "axestorm" || arch === "spearstorm") {
           /* 🦅🍃🐺✝️🌟👼🪓🩸💢🌪️ ดาเมจลงทีละชุดตามจังหวะของท่า — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
         } else if (tgt) {
           if (aoe) {
@@ -19594,7 +19827,7 @@ export default function CherryAdventure() {
         }
         if (G.sfx) G.sfx.skill && G.sfx.skill();
         syncPlayer();
-      }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire, crusadeFire, judgeFire, armyFire, axeComboFire, bloodFire, splitFire, stormFire });
+      }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire, crusadeFire, judgeFire, armyFire, axeComboFire, bloodFire, splitFire, stormFire, sweepFire });
     };
     // player fell in the open world
     G.worldFaint = () => {
@@ -23048,6 +23281,7 @@ export default function CherryAdventure() {
         // 🌿🩸 พิษ/เลือดไหล — ดาเมจต่อเนื่องทุก 0.5 วิ (ยังกัดต่อแม้จะถูกตรึงอยู่)
         if (m.userData.vulnT > 0) m.userData.vulnT = Math.max(0, m.userData.vulnT - dt);
         if (m.userData.weakT > 0) m.userData.weakT = Math.max(0, m.userData.weakT - dt); // 🛡️ โดนโล่เทวฑูตทุบจนตีเบาลง
+        if (m.userData.slowT > 0) m.userData.slowT = Math.max(0, m.userData.slowT - dt);  // 🧊 โดนความเย็นเกาะจนเดินช้า
         if (m.userData.dot) {
           const D = m.userData.dot;
           D.t -= dt; D.next -= dt;
@@ -23082,8 +23316,9 @@ export default function CherryAdventure() {
             m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
             aggroHandled = true;
             if (pdist > WILD_MELEE) {
-              m.position.x += (pdx / pdist) * 1.9 * dt;
-              m.position.z += (pdz / pdist) * 1.9 * dt;
+              const sl = m.userData.slowT > 0 ? 1 - (m.userData.slow || 0) : 1;   // 🧊 ติดความเย็น → ไล่ช้าลง
+              m.position.x += (pdx / pdist) * 1.9 * sl * dt;
+              m.position.z += (pdz / pdist) * 1.9 * sl * dt;
               clampOutOfSafe(m); // 🛡️ never chase into the safe bubble
               pushOut(m, 0.6);
               m.rotation.y = Math.atan2(pdx, pdz);
@@ -24392,6 +24627,50 @@ export default function CherryAdventure() {
             spinTurn = rel * Math.PI * 8;                                   // หมุน 4 รอบเต็ม
             headPitch = -0.2 * ce * ease;
             rise = (-0.14 * ce + 0.12 * rel) * ease; lean = 0.06 * rel * ease;
+          } else if (arch === "spearpierce") {
+            // 🔱 จ้วงทะลวง — ดึงหอกกลับมาชิดสะโพก บิดตัวเก็บแรง → จ้วงทะลุออกไปสุดแขนแล้วค้างปลายหอก
+            armR.rotation.x = (0.15 + 0.45 * ce - 1.85 * rel) * ease; armR.rotation.z = (-0.15 - 0.1 * ce + 0.05 * rel) * ease;
+            armL.rotation.x = (-0.55 - 0.35 * ce - 0.95 * rel) * ease; armL.rotation.z = (0.42 - 0.2 * rel) * ease;
+            twist = (0.72 * ce - 1.15 * rel) * ease;
+            headPitch = -0.08 * ce * ease;
+            lean = (-0.12 * ce + 0.26 * rel) * ease; rise = -0.1 * ce * ease;
+            lunge = 0.3 * rel * ease;
+          } else if (arch === "spearstorm") {
+            // 🌪️ กวาดหอก — กางหอกออกสุดแขนระดับเอว ย่อตัว แล้วกวาดหมุนรอบตัว 2 รอบเต็ม
+            armR.rotation.x = (-1.45 - 0.15 * ce) * ease; armR.rotation.z = (0.45 + 1.05 * ce + 0.3 * rel) * ease;
+            armL.rotation.x = (-1.35 - 0.15 * ce) * ease; armL.rotation.z = (-0.45 - 0.85 * ce - 0.25 * rel) * ease;
+            spinTurn = rel * Math.PI * 4;                                   // กวาด 2 รอบ = 2 ครั้ง
+            headPitch = -0.12 * ce * ease;
+            rise = (-0.16 * ce + 0.1 * rel) * ease; lean = 0.08 * rel * ease;
+          } else if (arch === "earthspear") {
+            // 🌍 หอกปฐพี — ชูหอกตั้งฉากขึ้นสองมือ ลอยตัว → กระทืบด้ามหอกลงพื้นเต็มแรง ย่อเข่ารับแรงสะท้อน
+            const slam = smK(Math.min(1, rp * 1.5));
+            armR.rotation.x = (-2.7 * (1 - slam) + 1.15 * slam - 0.3 * ce) * ease; armR.rotation.z = (0.22 + 0.08 * ce) * ease;
+            armL.rotation.x = (-2.5 * (1 - slam) + 1.0 * slam - 0.3 * ce) * ease; armL.rotation.z = (-0.22 - 0.08 * ce) * ease;
+            headPitch = (-0.34 * ce + 0.46 * slam) * ease;
+            rise = (0.38 * ce - 0.66 * slam) * ease;
+            lean = (-0.12 * ce + 0.3 * slam) * ease;
+            legL.rotation.x = -0.42 * slam * ease; legR.rotation.x = 0.3 * slam * ease;
+            if (legL.userData.knee) legL.userData.knee.rotation.x = 1.25 * slam * ease;
+            if (rp > 0 && !S.shook) { S.shook = 1; G._camShake = Math.max(G._camShake || 0, 0.55); }
+          } else if (arch === "dragoncharge") {
+            // ⚡ พุ่งทะยาน — หนีบหอกใต้รักแร้แบบทวนประลอง ย่อต่ำสุด แล้วทะยานไปข้างหน้าตัวเกือบขนานพื้น
+            armR.rotation.x = (-0.35 - 0.6 * ce - 0.85 * rel) * ease; armR.rotation.z = (-0.28 - 0.12 * ce) * ease;
+            armL.rotation.x = (-0.7 - 0.4 * ce - 0.5 * rel) * ease; armL.rotation.z = (0.35 - 0.1 * rel) * ease;
+            twist = (0.35 * ce - 0.3 * rel) * ease;
+            headPitch = (0.12 * ce - 0.24 * rel) * ease;
+            lean = (-0.2 * ce + 0.46 * rel) * ease;                          // พุ่งตัวเกือบขนานพื้น
+            rise = (-0.22 * ce + 0.16 * rel) * ease;
+            lunge = 0.22 * rel * ease;
+          } else if (arch === "frostlance") {
+            // 🧊 ทวนน้ำแข็งดำ — ตั้งทวนขนานพื้นสองมือ สะสมไอเย็นที่ปลาย → แทงทะลุออกไปช้า ๆ หนักแน่น
+            const push = smK(Math.min(1, rp * 1.25));
+            armR.rotation.x = (-1.15 - 0.55 * ce - 0.55 * push) * ease; armR.rotation.z = (-0.1 - 0.06 * ce + 0.16 * push) * ease;
+            armL.rotation.x = (-1.3 - 0.45 * ce - 0.7 * push) * ease; armL.rotation.z = (0.32 - 0.16 * push) * ease;
+            twist = (0.5 * ce - 0.72 * push) * ease;
+            headPitch = (-0.18 * ce + 0.1 * push) * ease;
+            lean = (-0.14 * ce + 0.24 * push) * ease; rise = (-0.06 * ce + 0.04 * push) * ease;
+            lunge = 0.18 * push * ease;
           } else if (arch === "spin") {
             // 🌀 ฟันวงกว้าง/กวาดหอก/เพลงดาบจันทรา — กางอาวุธออกข้าง แล้วหมุนตัวครบรอบ
             armR.rotation.x = (-0.15 - 0.5 * ce - 0.3 * rel) * ease;
@@ -24529,6 +24808,11 @@ export default function CherryAdventure() {
           if (arch === "knives" && S.t >= S.chg && S.kN < 3) {
             const kb = [0, 0.32, 0.64];
             while (S.kN < 3 && rp >= kb[S.kN]) { if (S.knifeFire) S.knifeFire(S.kN); S.kN++; }
+          }
+          // 🌪️ กวาดหอก — กวาด 2 ครั้งระหว่างหมุน
+          if (arch === "spearstorm" && S.t >= S.chg && S.swN < 2) {
+            const sb = [0, 0.45];
+            while (S.swN < 2 && rp >= sb[S.swN]) { if (S.sweepFire) S.sweepFire(S.swN); S.swN++; }
           }
           // 🪓 ขวานเดือด — สับ 6 ไม้รัวระหว่างช่วงปล่อยพลัง
           if (arch === "axecombo" && S.t >= S.chg + S.dsh && S.axN < 6) {
