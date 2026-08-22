@@ -942,7 +942,7 @@ const skillsOf = (cls, pathId) => {
 // Ground-slam (quake) and poison-cloud (poison) effects blanket an area; a few signature
 // wide swings are AoE too. Everything else (incl. multi-hit combos) focuses one target.
 const AOE_FX = { quake: 1, poison: 1 };
-const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1, x_shp_4: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
+const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1, x_shp_4: 1, x_rng_2: 1, x_rng_4: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
 const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
 // 🎭 ท่าร่ายประจำสกิล — แมปทีละสกิลให้ท่าตรงกับชื่อ/ความหมายของมันจริง ๆ
 // (สกิลที่ไม่อยู่ในตารางจะถูกเดาให้จากอาชีพ + ชนิดเอฟเฟกต์)
@@ -950,6 +950,7 @@ const SK_ARCH = {
     w_cleave: "spin", w_bash: "bash", w_rage: "buff", w_quake: "smash", // ⚔️ นักรบ
     a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe", // 🏹 นักธนู
     x_shp_1: "pierce", x_shp_2: "hawk", x_shp_3: "kneel", x_shp_4: "arrowrain", // 🎯💫 จอมแม่นปืน
+    x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse", // 🌿🏹 เรนเจอร์พงไพร
     m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff", // 🔮 เวทมนตร์
     s_double: "stab", s_poison: "knives", s_shadow: "shadow3", s_evade: "star", // 🗡️ อัสแซสซิน
     l_thrust: "dash", l_sweep: "spin", l_quake: "smash", l_charge: "dash", // 🔱 หอก
@@ -28308,6 +28309,8 @@ function CherryAdventure() {
             // ⚖️ level-gap penalty — hitting monsters far above your level deals less (mirrors the EXP relMul)
             const lvGap = Math.max(0, (m.userData.lv || 1) - (G.player ? G.player.level : 1));
             dmg = dmg * Math.max(0.4, 1 - lvGap * 0.03);
+            if (m.userData.vulnT > 0)
+                dmg = dmg * (1 + (m.userData.vuln || 0)); // 🌳 เกราะแตก — รับดาเมจเพิ่มตลอดที่ยังติดคำสาป
             dmg = Math.max(1, Math.round(dmg));
             m.userData.whp -= dmg;
             popDamage(m.position, dmg, opts.crit ? "crit" : "hit");
@@ -28341,6 +28344,14 @@ function CherryAdventure() {
             if (m.userData.whp <= 0)
                 killWild(m);
             return m.userData.whp <= 0;
+        };
+        // 🌿🩸 พิษ/เลือดไหล — ดาเมจต่อเนื่องบนมอนสเตอร์โลกกว้าง (ซ้อนได้: ยิงซ้ำ = พิษสะสมแรงขึ้น)
+        const applyDot = (m, kind, dmg, dur, col) => {
+            if (!m || !m.userData || !dmg)
+                return;
+            const d = m.userData.dot;
+            const stack = d && d.kind === kind ? d.dmg + dmg * 0.5 : dmg; // ☠️ พิษสะสม — ต่อยอดจากกองเดิม
+            m.userData.dot = { kind, dmg: Math.max(1, Math.round(stack)), t: Math.max(d ? d.t : 0, dur), iv: 0.5, next: 0.5, col: col || 0x7ad04a };
         };
         const nearestWild = (range) => {
             let best = null, bd = range * range;
@@ -28879,6 +28890,133 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        // 🌿 เถาวัลย์ยักษ์ — งอกทะลุพื้นขึ้นมาพันรอบตัวมอนสเตอร์ ตรึงไว้จนกว่าจะเหี่ยว
+        const spawnVineBind = (target, col, onBind) => {
+            try {
+                const vm = new THREE.MeshStandardMaterial({ color: col || 0x4aa04a, roughness: 0.88 });
+                const lm = new THREE.MeshStandardMaterial({ color: 0x8ad85a, roughness: 0.8, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                for (let k = 0; k < 5; k++) {
+                    const a = (k / 5) * Math.PI * 2 + 0.3;
+                    for (let j = 0; j < 4; j++) {
+                        const h = 0.46;
+                        const c = new THREE.Mesh(new THREE.CylinderGeometry(0.1 - j * 0.014, 0.125 - j * 0.014, h, 6), vm);
+                        const rr = 0.66 - j * 0.14, aa = a + j * 0.5; // 🌀 พันเป็นเกลียวขึ้นไป
+                        c.position.set(Math.cos(aa) * rr, 0.2 + j * h, Math.sin(aa) * rr);
+                        c.rotation.z = Math.cos(aa) * (0.34 - j * 0.07);
+                        c.rotation.x = -Math.sin(aa) * (0.34 - j * 0.07);
+                        g.add(c);
+                        if (j % 2 === 0) {
+                            const lf = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 4), lm);
+                            lf.position.set(c.position.x * 1.25, c.position.y + 0.16, c.position.z * 1.25);
+                            lf.rotation.z = Math.cos(aa) * 1.15;
+                            lf.rotation.x = -Math.sin(aa) * 1.15;
+                            lf.scale.set(1, 1, 0.28);
+                            g.add(lf);
+                        }
+                    }
+                }
+                g.traverse((o) => { o.raycast = () => { }; });
+                const tp = target ? target.position : char.position;
+                g.position.set(tp.x, 0, tp.z);
+                g.scale.set(1, 0.02, 1);
+                g.userData = { kind: "vine", t: 0, up: 0.2, hold: 2.2, out: 0.45, target, onBind, done: false, mats: [vm, lm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🍃 แอ่งพิษบนพื้น — ใครยืนอยู่ในวงโดนพิษสะสมเรื่อย ๆ จนกว่าจะจาง
+        const spawnPoisonPool = (x, z, col, r, dur, dmg) => {
+            try {
+                const g = new THREE.Group();
+                const mats = [];
+                for (let k = 0; k < 2; k++) {
+                    const mm = new THREE.MeshBasicMaterial({ color: k ? 0xd8ff9a : (col || 0x7ad04a), transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+                    const disc = new THREE.Mesh(new THREE.CircleGeometry(r * (k ? 0.6 : 1), 24), mm);
+                    disc.rotation.x = -Math.PI / 2;
+                    disc.position.y = 0.05 + k * 0.012;
+                    disc.raycast = () => { };
+                    g.add(disc);
+                    mats.push(mm);
+                }
+                g.position.set(x, 0, z);
+                g.userData = { kind: "pool", t: 0, dur: dur || 4.5, r, dmg, col: col || 0x7ad04a, next: 0.6, puff: 0, mats };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🐺 หมาป่าวิญญาณ — ร่างโปร่งแสงผุดข้างตัวผู้ร่าย ย่อตัวเตรียมพุ่ง แล้วทะยานขย้ำเป้า
+        const spawnSpiritWolf = (idx, target, col, onBite) => {
+            try {
+                const fur = new THREE.MeshBasicMaterial({ color: col || 0x4ad07a, transparent: true, opacity: 0, depthWrite: false });
+                const eye = new THREE.MeshBasicMaterial({ color: 0xeaffd0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                const g = new THREE.Group();
+                const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), fur);
+                body.scale.set(0.72, 0.68, 1.5);
+                const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.19, 0.3, 8), fur);
+                neck.position.set(0, 0.14, 0.34);
+                neck.rotation.x = 1.15;
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 12, 10), fur);
+                head.position.set(0, 0.24, 0.55);
+                head.scale.set(0.9, 0.85, 1.12);
+                const snout = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.34, 7), fur);
+                snout.rotation.x = Math.PI / 2;
+                snout.position.set(0, 0.17, 0.79);
+                const tail = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.62, 7), fur);
+                tail.rotation.x = -2.35;
+                tail.position.set(0, 0.24, -0.62);
+                g.add(body, neck, head, snout, tail);
+                for (const sx of [-1, 1]) {
+                    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.23, 5), fur);
+                    ear.position.set(sx * 0.1, 0.4, 0.5);
+                    ear.rotation.z = sx * 0.3;
+                    g.add(ear);
+                    const ey = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), eye);
+                    ey.position.set(sx * 0.09, 0.27, 0.69);
+                    g.add(ey);
+                    for (const pz of [0.32, -0.34]) {
+                        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.44, 6), fur);
+                        leg.position.set(sx * 0.17, -0.24, pz);
+                        g.add(leg);
+                    }
+                }
+                g.traverse((o) => { o.raycast = () => { }; });
+                const off = -0.85 + idx * 0.85;
+                const sx0 = char.position.x + Math.sin(char.rotation.y + off) * 1.5;
+                const sz0 = char.position.z + Math.cos(char.rotation.y + off) * 1.5;
+                g.position.set(sx0, 0.5, sz0);
+                g.userData = { kind: "wolf", t: 0, hold: 0.16 + idx * 0.02, dur: 0.24, sx: sx0, sz: sz0, target, onBite, mats: [fur, eye] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🌳 รากไม้โบราณ — ผุดทะลุพื้นเป็นวงกว้าง โก่งค้างไว้แล้วมุดกลับลงดิน
+        const spawnRootField = (x, z, col, r, n) => {
+            try {
+                const rm = new THREE.MeshStandardMaterial({ color: col || 0x3a7a3a, roughness: 0.95 });
+                const bm = new THREE.MeshStandardMaterial({ color: 0x2a5a2a, roughness: 0.95 });
+                const g = new THREE.Group();
+                for (let k = 0; k < (n || 14); k++) {
+                    const a = (k / (n || 14)) * Math.PI * 2 + Math.random() * 0.6, rr = 0.6 + Math.random() * r;
+                    const h = 1.3 + Math.random() * 1.7;
+                    const root = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.22, h, 6), k % 2 ? rm : bm);
+                    root.position.set(Math.cos(a) * rr, h / 2, Math.sin(a) * rr);
+                    root.rotation.z = (Math.random() - 0.5) * 1.0;
+                    root.rotation.x = (Math.random() - 0.5) * 1.0;
+                    root.raycast = () => { };
+                    g.add(root);
+                }
+                g.position.set(x, 0, z);
+                g.scale.set(1, 0.02, 1);
+                g.userData = { kind: "roots", t: 0, up: 0.24, hold: 1.7, out: 0.5, mats: [rm, bm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
         G._animArcherFx = (d) => {
             for (let i = archerFx.length - 1; i >= 0; i--) {
                 const o = archerFx[i], u = o.userData;
@@ -28919,6 +29057,95 @@ function CherryAdventure() {
                     u.mats.forEach((m) => (m.opacity = (0.55 + Math.random() * 0.45) * (1 - fade)));
                     if (u.t >= u.dur)
                         kill();
+                }
+                else if (u.kind === "vine") { // 🌿 เถาวัลย์งอกขึ้นพัน → ตรึงไว้ → เหี่ยวมุดลงดิน
+                    const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+                    if (tp)
+                        o.position.set(tp.x, 0, tp.z);
+                    if (u.t < u.up) {
+                        o.scale.set(1, 0.02 + (u.t / u.up) * 1.06, 1);
+                        o.rotation.y += d * 2.4;
+                    }
+                    else if (u.t < u.up + u.hold) {
+                        if (!u.done) {
+                            u.done = true;
+                            if (u.onBind && u.target) {
+                                try {
+                                    u.onBind(u.target);
+                                }
+                                catch (e2) { }
+                            }
+                        }
+                        o.scale.set(1, 1 + Math.sin(u.t * 7) * 0.02, 1);
+                        o.rotation.y += d * 0.5;
+                        if (u.target && wilds.indexOf(u.target) >= 0)
+                            u.target.userData.frzT = Math.max(u.target.userData.frzT || 0, 0.25); // 🌿 ตรึงไว้ตลอดที่เถาวัลย์ยังพันอยู่
+                    }
+                    else {
+                        const pv = Math.min(1, (u.t - u.up - u.hold) / u.out);
+                        o.scale.set(1 - pv * 0.4, 1 - pv, 1 - pv * 0.4);
+                        if (pv >= 1)
+                            kill();
+                    }
+                }
+                else if (u.kind === "pool") { // 🍃 แอ่งพิษ — กัดทุกตัวที่ยืนอยู่ในวง
+                    const pp = Math.min(1, u.t / u.dur);
+                    const grow = Math.min(1, u.t / 0.25);
+                    o.scale.setScalar(grow);
+                    o.children.forEach((c, k) => { c.rotation.z += d * (k ? -0.5 : 0.3); });
+                    u.mats.forEach((m, k) => (m.opacity = (k ? 0.3 : 0.44) * grow * (1 - Math.pow(pp, 2.4))));
+                    u.puff -= d;
+                    if (u.puff <= 0) {
+                        u.puff = 0.3;
+                        const a = Math.random() * Math.PI * 2, rr = Math.random() * u.r;
+                        spawnPoisonCloud(o.position.x + Math.cos(a) * rr, o.position.z + Math.sin(a) * rr, u.col, false);
+                    }
+                    u.next -= d;
+                    if (u.next <= 0) {
+                        u.next = 0.6;
+                        wildsInRadius(o.position.x, o.position.z, u.r).forEach((m) => applyDot(m, "poison", u.dmg, 1.4, u.col));
+                    }
+                    if (pp >= 1)
+                        kill();
+                }
+                else if (u.kind === "wolf") { // 🐺 ผุดข้างตัว → ทะยานเป็นเส้นโค้งเข้าขย้ำ
+                    const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+                    const tx = tp ? tp.x : u.sx, tz = tp ? tp.z : u.sz;
+                    o.rotation.y = Math.atan2(tx - o.position.x, tz - o.position.z);
+                    if (u.t < u.hold) {
+                        const h = u.t / u.hold;
+                        o.position.set(u.sx, 0.5 - 0.1 * h, u.sz); // ย่อตัวเตรียมพุ่ง
+                        u.mats.forEach((m, k) => (m.opacity = (k ? 0.95 : 0.62) * Math.min(1, h * 2.4)));
+                    }
+                    else {
+                        const pw = Math.min(1, (u.t - u.hold) / u.dur), e2 = pw * pw;
+                        o.position.set(u.sx + (tx - u.sx) * e2, 0.4 + Math.sin(pw * Math.PI) * 1.0, u.sz + (tz - u.sz) * e2);
+                        o.rotation.x = -Math.sin(pw * Math.PI) * 0.35;
+                        u.mats.forEach((m, k) => (m.opacity = (k ? 0.95 : 0.62) * (1 - e2 * 0.85)));
+                        if (pw >= 1) {
+                            if (u.onBite) {
+                                try {
+                                    u.onBite(tx, tz);
+                                }
+                                catch (e3) { }
+                            }
+                            kill();
+                        }
+                    }
+                }
+                else if (u.kind === "roots") { // 🌳 รากผุดขึ้นทั้งวง → ค้าง → มุดกลับลงดิน
+                    if (u.t < u.up)
+                        o.scale.set(1, 0.02 + (u.t / u.up) * 1.1, 1);
+                    else if (u.t < u.up + u.hold) {
+                        o.scale.set(1, 1.05 + Math.sin(u.t * 6) * 0.03, 1);
+                        o.rotation.y += d * 0.25;
+                    }
+                    else {
+                        const pr = Math.min(1, (u.t - u.up - u.hold) / u.out);
+                        o.scale.set(1, 1.05 - pr * 1.03, 1);
+                        if (pr >= 1)
+                            kill();
+                    }
                 }
                 else { // 🏹 ลูกธนูวิ่งเข้าเป้า / ร่วงจากฟ้า
                     if (u.t < u.delay)
@@ -29123,15 +29350,15 @@ function CherryAdventure() {
         // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
         const startSkillCast = (arch, col, focus, fire, beats) => {
             // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32 };
-            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50 };
+            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32 };
+            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30 };
             const chg = CHG[arch] != null ? CHG[arch] : 0.15;
             const rel = REL[arch] != null ? REL[arch] : 0.16;
             const rush = !!ARCH_RUSH[arch] || arch === "star"; // สายประชิดเท่านั้นที่พุ่งเข้าหา
             const dsh = arch === "star" ? 0.5 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0; // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
             const hold = 0.14, rec = 0.06; // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
             const B = beats || {};
-            G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
+            G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
             ensureCastFx();
             worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
             G._worldSwingT = 0;
@@ -29334,6 +29561,86 @@ function CherryAdventure() {
                 }
                 toast(`${sk.emoji || "💥"} ${sk.name} — ฝนลูกธนูถล่ม ${group.length} ตัว!`);
             };
+            // 🌿 ศรเถาวัลย์ — ยิงศรลงพื้นตรงเท้าเป้า แล้วเถาวัลย์ยักษ์งอกขึ้นพันตรึงไว้ + พิษ
+            const vineFire = arch !== "vine" ? null : () => {
+                const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 2);
+                if (!tgt)
+                    return;
+                spawnArrow(bowMuzzle(), new THREE.Vector3(tgt.position.x, 0.25, tgt.position.z), col, 0.13, (hx, hz) => {
+                    burst(new THREE.Vector3(hx, 0.3, hz), col, 0.7);
+                    spawnVineBind(tgt, col, (m) => {
+                        applyDmg(m);
+                        applyDot(m, "poison", Math.max(2, Math.round(base * 0.06)), 3.2, col);
+                        burst(new THREE.Vector3(m.position.x, 1.0, m.position.z), col, 0.95);
+                        G._camShake = Math.max(G._camShake || 0, 0.26);
+                    });
+                    toast(`${sk.emoji || "🌿"} ${sk.name} — เถาวัลย์ตรึงไว้ + พิษ!`);
+                });
+            };
+            // 🍃 ฝนศรพิษไพร — ยิงขึ้นฟ้าทีละชุด 5 ชุด ตกลงมาเป็นฝนศรพิษ แล้วทิ้งแอ่งพิษไว้บนพื้น
+            const poisonRainFire = arch !== "poisonvolley" ? null : (idx) => {
+                const at = focus.position, cx = at.x, cz = at.z;
+                let group = wildsInRadius(cx, cz, 4.0);
+                if (!group.length)
+                    group = wilds.indexOf(focus) >= 0 ? [focus] : [];
+                const m = group.length ? group[idx % group.length] : null;
+                const tx = m ? m.position.x : cx + (Math.random() - 0.5) * 3;
+                const tz = m ? m.position.z : cz + (Math.random() - 0.5) * 3;
+                spawnRainArrow(tx, tz, col, 0, (hx, hz) => {
+                    if (m && wilds.indexOf(m) >= 0) {
+                        applyDmg(m);
+                        applyDot(m, "poison", Math.max(2, Math.round(base * 0.05)), 3.5, col);
+                    }
+                    spawnPoisonCloud(hx, hz, col, false);
+                    burst(new THREE.Vector3(hx, 0.8, hz), col, 0.7);
+                    G._camShake = Math.max(G._camShake || 0, 0.14);
+                });
+                for (let k = 0; k < 4; k++) { // 🏹 ดอกประดับ — ปักรอบ ๆ ให้เห็นเป็นฝนจริง
+                    const a = Math.random() * Math.PI * 2, r = Math.random() * 3.8;
+                    spawnRainArrow(cx + Math.cos(a) * r, cz + Math.sin(a) * r, col, Math.random() * 0.2, null);
+                }
+                if (idx >= 4) { // ☠️ ชุดสุดท้าย — พื้นอาบพิษเป็นแอ่ง
+                    spawnPoisonPool(cx, cz, col, 4.0, 5.0, Math.max(2, Math.round(base * 0.05)));
+                    toast(`${sk.emoji || "🍃"} ${sk.name} — ฝนศรพิษ ×5 อาบพื้นที่!`);
+                }
+            };
+            // 🐺 วิญญาณหมาป่า — ปล่อยหมาป่าวิญญาณทีละตัว 3 ตัว ขย้ำแล้วทิ้งแผลเลือดไหล
+            const wolfFire = arch !== "wolfcall" ? null : (idx) => {
+                const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 4);
+                if (!tgt)
+                    return;
+                spawnSpiritWolf(idx, tgt, col, (hx, hz) => {
+                    const at = new THREE.Vector3(hx, 0.95, hz);
+                    applyDmg(tgt, 1 / 3);
+                    applyDot(tgt, "bleed", Math.max(2, Math.round(base * 0.05)), 3.0, 0xe0506a);
+                    fireSlash(at, col);
+                    burst(at, 0xe0506a, 0.75);
+                    G._camShake = Math.max(G._camShake || 0, 0.2);
+                });
+                if (idx === 0)
+                    toast(`${sk.emoji || "🐺"} ${sk.name} — ฝูงหมาป่าวิญญาณขย้ำ ×3 + เลือดไหล!`);
+            };
+            // 🌳 คำสาปพงไพร — รากไม้โบราณผุดทั้งวง ตรึงทุกตัว เกราะแตก + พิษต่อเนื่อง
+            const rootCurseFire = arch !== "rootcurse" ? null : () => {
+                const at = focus.position, cx = at.x, cz = at.z, R = 5.0;
+                spawnRootField(cx, cz, col, R * 0.85, 16);
+                let group = wildsInRadius(cx, cz, R);
+                if (!group.length)
+                    group = wilds.indexOf(focus) >= 0 ? [focus] : [];
+                group = group.slice(0, 10);
+                group.forEach((m) => {
+                    m.userData.frzT = Math.max(m.userData.frzT || 0, 2.6); // 🌳 รากตรึงไว้ ขยับไม่ได้
+                    m.userData.vuln = 0.3;
+                    m.userData.vulnT = 6.0; // 🛡️💥 เกราะแตก — รับดาเมจ +30% นาน 6 วิ
+                    applyDmg(m);
+                    applyDot(m, "poison", Math.max(2, Math.round(base * 0.07)), 4.5, col);
+                    monGlow(m, 0x9ae06a, 1.0);
+                    burst(new THREE.Vector3(m.position.x, 0.9, m.position.z), col, 0.9);
+                });
+                spawnPoisonPool(cx, cz, col, R, 5.5, Math.max(2, Math.round(base * 0.04)));
+                G._camShake = Math.max(G._camShake || 0, 0.5);
+                toast(`${sk.emoji || "🌳"} ${sk.name} — รากไม้ตรึง ${group.length} ตัว · เกราะแตก + พิษ!`);
+            };
             if (arch === "hawk")
                 spawnHawk(focus, col, 0.95); // 🦅 ปล่อยเหยี่ยวออกไปวนตั้งแต่เริ่มร่าย
             // 🎬 ปล่อยพลังจริงตอนจบช่วงสะสม — ท่าร่ายมาก่อน ดาเมจตามหลัง (anticipation → release)
@@ -29369,8 +29676,16 @@ function CherryAdventure() {
                     if (rainFire)
                         rainFire(); // 💥 ดาเมจลงตอนลูกธนูแต่ละดอกปัก
                 }
-                else if (arch === "hawk") {
-                    /* 🦅 ดาเมจลงทีละนัดตอนลูกธนูถึงตัว — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
+                else if (arch === "vine") {
+                    if (vineFire)
+                        vineFire(); // 🌿 ดาเมจลงตอนเถาวัลย์งอกขึ้นพัน
+                }
+                else if (arch === "rootcurse") {
+                    if (rootCurseFire)
+                        rootCurseFire(); // 🌳 ดาเมจ + ตรึง + เกราะแตกทั้งวง
+                }
+                else if (arch === "hawk" || arch === "poisonvolley" || arch === "wolfcall") {
+                    /* 🦅🍃🐺 ดาเมจลงทีละชุดตอนลูกศร/หมาป่าถึงตัว — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
                 }
                 else if (tgt) {
                     if (aoe) {
@@ -29384,7 +29699,7 @@ function CherryAdventure() {
                 if (G.sfx)
                     G.sfx.skill && G.sfx.skill();
                 syncPlayer();
-            }, { starHit, shadowFire, knifeFire, magicFire, hawkFire });
+            }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire });
         };
         // player fell in the open world
         G.worldFaint = () => {
@@ -34927,6 +35242,30 @@ function CherryAdventure() {
                         drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
                         if (G.actionMode)
                             updateWildBar(m); // ⚔️ open-world HP bar
+                        // 🌿🩸 พิษ/เลือดไหล — ดาเมจต่อเนื่องทุก 0.5 วิ (ยังกัดต่อแม้จะถูกตรึงอยู่)
+                        if (m.userData.vulnT > 0)
+                            m.userData.vulnT = Math.max(0, m.userData.vulnT - dt);
+                        if (m.userData.dot) {
+                            const D = m.userData.dot;
+                            D.t -= dt;
+                            D.next -= dt;
+                            if (D.next <= 0) {
+                                D.next = D.iv;
+                                if (m.userData.whp != null) {
+                                    m.userData.whp -= D.dmg;
+                                    popDamage(m.position, D.dmg, "hit");
+                                    monGlow(m, D.col, 0.35);
+                                    wildBar(m);
+                                    updateWildBar(m);
+                                    if (m.userData.whp <= 0) {
+                                        killWild(m);
+                                        return;
+                                    }
+                                }
+                            }
+                            if (D.t <= 0)
+                                m.userData.dot = null;
+                        }
                         // 🧊 โดนแช่แข็ง — หยุดนิ่งสนิท ไม่เดิน ไม่ไล่ ไม่ตี จนกว่าน้ำแข็งจะแตก
                         if (m.userData.frzT > 0) {
                             m.userData.frzT = Math.max(0, m.userData.frzT - dt);
@@ -36509,7 +36848,7 @@ function CherryAdventure() {
                         wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
                         if (char.rotation.order !== "YXZ")
                             char.rotation.order = "YXZ";
-                        let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0;
+                        let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0, headPitch = 0;
                         if (arch === "firestorm") {
                             // 🔥 ร่ายเพลิง — กางมือขึ้นเรียกดวงไฟให้ลอยรอบตัว แล้วผลักส่งออกไปพร้อมกัน
                             armR.rotation.x = (-1.25 - 0.75 * ce + 0.7 * rel) * ease;
@@ -36619,6 +36958,64 @@ function CherryAdventure() {
                             if (rp > 0 && !S.shook) {
                                 S.shook = 1;
                                 G._camShake = Math.max(G._camShake || 0, 0.45);
+                            }
+                        }
+                        else if (arch === "vine") {
+                            // 🌿 ศรเถาวัลย์ — ย่อเข่าเล็งลงพื้นตรงเท้าเป้า ปล่อยศร แล้วแบมือกางนิ้วเรียกเถาวัลย์ให้งอกขึ้นพัน
+                            const call = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 1.2));
+                            armR.rotation.x = (-1.18 - 0.16 * ce + 0.42 * call) * ease;
+                            armR.rotation.z = (0.2 + 0.06 * ce - 0.3 * call) * ease;
+                            armL.rotation.x = (-1.0 - 0.62 * ce + 1.5 * call) * ease;
+                            armL.rotation.z = (-0.24 - 0.3 * ce + 0.5 * call) * ease;
+                            twist = (0.3 * ce - 0.2 * call) * ease;
+                            headPitch = (0.24 * ce - 0.1 * call) * ease; // ก้มมองเป้าที่พื้น
+                            lean = (0.14 * ce + 0.06 * call) * ease;
+                            rise = (-0.16 * ce - 0.04 * call) * ease;
+                            legL.rotation.x = -0.34 * ce * ease;
+                            legR.rotation.x = 0.2 * ce * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 0.72 * ce * ease;
+                        }
+                        else if (arch === "poisonvolley") {
+                            // 🍃 ฝนศรพิษไพร — เงยคันธนูทำมุมสูง แล้วน้าวสายยิงรัวขึ้นฟ้า 5 ชุดติด ๆ ให้ตกลงมาเป็นฝน
+                            const v = Math.max(0, Math.sin(rp * Math.PI * 5));
+                            armR.rotation.x = (-2.0 - 0.14 * ce) * ease;
+                            armR.rotation.z = (0.22 + 0.06 * ce) * ease;
+                            armL.rotation.x = (-1.75 - 0.5 * ce + 1.0 * v) * ease;
+                            armL.rotation.z = (-0.3 - 0.24 * ce) * ease;
+                            twist = (0.2 * ce - 0.14 * v) * ease;
+                            headPitch = -0.24 * ce * ease; // เงยหน้ามองปลายศร
+                            lean = (-0.2 * ce + 0.05 * v) * ease;
+                            rise = 0.06 * ce * ease;
+                        }
+                        else if (arch === "wolfcall") {
+                            // 🐺 วิญญาณหมาป่า — ชูมือขึ้นฟ้าเงยหน้าหอนเรียกฝูง → ฟาดมือลงหน้าสั่งให้พุ่งขย้ำ
+                            const send = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 1.25));
+                            armR.rotation.x = (-1.6 - 1.3 * ce + 2.5 * send) * ease;
+                            armR.rotation.z = (0.34 + 0.24 * ce - 0.3 * send) * ease;
+                            armL.rotation.x = (-0.7 - 0.35 * ce + 0.6 * send) * ease;
+                            armL.rotation.z = (-0.4 - 0.16 * ce) * ease;
+                            headPitch = (-0.62 * ce + 0.72 * send) * ease; // 🐺 เงยหน้าหอนตอนเรียก แล้วก้มลงตอนสั่งพุ่ง
+                            rise = (0.14 * ce - 0.1 * send) * ease;
+                            lean = (-0.2 * ce + 0.28 * send) * ease;
+                        }
+                        else if (arch === "rootcurse") {
+                            // 🌳 คำสาปพงไพร — ยกสองมือขึ้นสูงร่ายคำสาป → ทรุดเข่าฟาดฝ่ามือลงพื้น ปลุกรากไม้โบราณทั้งวง
+                            const slam = Math.max(0, Math.sin(Math.min(1, rp) * Math.PI * 1.15));
+                            armR.rotation.x = (-1.3 - 1.45 * ce + 3.0 * slam) * ease;
+                            armR.rotation.z = (0.26 + 0.2 * ce - 0.12 * slam) * ease;
+                            armL.rotation.x = (-1.3 - 1.45 * ce + 3.0 * slam) * ease;
+                            armL.rotation.z = (-0.26 - 0.2 * ce + 0.12 * slam) * ease;
+                            headPitch = (-0.34 * ce + 0.5 * slam) * ease;
+                            rise = (0.24 * ce - 0.66 * slam) * ease; // ลอยขึ้นตอนร่าย แล้วทรุดลงตอนฟาดพื้น
+                            lean = (-0.14 * ce + 0.34 * slam) * ease;
+                            legL.rotation.x = -0.5 * slam * ease;
+                            legR.rotation.x = 0.3 * slam * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 1.3 * slam * ease;
+                            if (rp > 0 && !S.shook) {
+                                S.shook = 1;
+                                G._camShake = Math.max(G._camShake || 0, 0.5);
                             }
                         }
                         else if (arch === "spin") {
@@ -36814,6 +37211,7 @@ function CherryAdventure() {
                         torso.rotation.y = Q0[8] + (torso.rotation.y - Q0[8]) * cbw;
                         headG.rotation.y = Q0[9] + (headG.rotation.y - Q0[9]) * cbw;
                         char.rotation.x = lean * cbw;
+                        headG.rotation.x = headPitch * cbw; // 🙆 ก้ม/เงยหน้าตามท่า (หอน · ก้มมองพื้น · แหงนร่ายคำสาป)
                         char.position.y += rise * cbw;
                         if (lunge !== (S.lunge || 0)) { // 🏃 พุ่งตัวไปหน้า (ใส่เป็นส่วนต่าง)
                             const fx2 = Math.sin(char.rotation.y), fz2 = Math.cos(char.rotation.y);
@@ -36834,6 +37232,24 @@ function CherryAdventure() {
                                 if (S.knifeFire)
                                     S.knifeFire(S.kN);
                                 S.kN++;
+                            }
+                        }
+                        // 🍃 ฝนศรพิษไพร — ยิงขึ้นฟ้าทีละชุด 5 ชุดระหว่างช่วงปล่อยพลัง
+                        if (arch === "poisonvolley" && S.t >= S.chg && S.pvN < 5) {
+                            const pb = [0, 0.16, 0.32, 0.48, 0.64];
+                            while (S.pvN < 5 && rp >= pb[S.pvN]) {
+                                if (S.poisonRainFire)
+                                    S.poisonRainFire(S.pvN);
+                                S.pvN++;
+                            }
+                        }
+                        // 🐺 วิญญาณหมาป่า — ปล่อยหมาป่าทีละตัว 3 ตัวระหว่างช่วงปล่อยพลัง
+                        if (arch === "wolfcall" && S.t >= S.chg && S.wfN < 3) {
+                            const wb = [0, 0.28, 0.56];
+                            while (S.wfN < 3 && rp >= wb[S.wfN]) {
+                                if (S.wolfFire)
+                                    S.wolfFire(S.wfN);
+                                S.wfN++;
                             }
                         }
                         // 🦅 ตาเหยี่ยวล็อกเป้า — ยิงรัวทีละนัดระหว่างช่วงปล่อยพลัง
@@ -36881,6 +37297,7 @@ function CherryAdventure() {
                             hideCastFx();
                             torso.rotation.y = 0;
                             headG.rotation.y = 0;
+                            headG.rotation.x = 0;
                             char.rotation.x = 0;
                             wand.scale.set(1, 1, 1);
                             if (G._camLock)
