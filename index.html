@@ -958,6 +958,7 @@ const SK_ARCH = {
     l_thrust: "spearpierce", l_sweep: "spearstorm", l_quake: "earthspear", l_charge: "dragoncharge", // 🔱 หอก
     p_frostpierce: "frostlance", // 🧊🔱 อัศวินน้ำแข็งดำ
     x_drg_1: "skyleap", x_drg_2: "dragonbreath", x_drg_3: "shadowspears", x_drg_4: "meteordive", // 🐉🔱 ดราก้อนไนท์
+    x_grd_1: "stonepillar", x_grd_2: "mountainarmor", x_grd_3: "quakespear", x_grd_4: "golemjudge", // 🛡️🌍 ผู้พิทักษ์ปฐพี
     k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin", // 🗡️ ซามูไร
     o_coffee: "buff", o_paper: "throw", o_smash: "bash", o_deadline: "buff", o_ceo: "beam", // 🏢 ออฟฟิศ
     c_inject: "throw", c_wall: "bash", c_drone: "summon", c_crash: "beam", c_matrix: "beam", // 💻 โปรแกรมเมอร์
@@ -24314,7 +24315,7 @@ function CherryAdventure() {
         const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
         const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
         const effAtk = () => Math.round((G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK
-        const effDef = () => Math.round((G.player.def + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล
+        const effDef = () => Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล
         const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100)); // ⚖️ +3 HP ฐานต่อเลเวล (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
         G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
         const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
@@ -29366,6 +29367,71 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        // ⛰️ เกราะภูผา — แผ่นหินโบราณลอยหมุนประกบรอบตัว เกาะติดผู้เล่นตลอดที่บัฟยังอยู่
+        const spawnStoneArmor = (col, dur) => {
+            try {
+                const rm = new THREE.MeshStandardMaterial({ color: col || 0x8a6a3a, roughness: 0.95, flatShading: true, transparent: true, opacity: 0 });
+                const gm = new THREE.MeshBasicMaterial({ color: 0xd8b878, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                const plates = [];
+                for (let k = 0; k < 6; k++) {
+                    const pl = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.62, 0.16), rm);
+                    pl.raycast = () => { };
+                    g.add(pl);
+                    plates.push({ o: pl, a: (k / 6) * Math.PI * 2, y: 0.7 + (k % 3) * 0.55, r: 0.78 });
+                }
+                const ring = new THREE.Mesh(new THREE.RingGeometry(0.72, 0.95, 24), gm);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.07;
+                ring.raycast = () => { };
+                g.add(ring);
+                g.userData = { kind: "stonearmor", t: 0, dur: dur || 12, plates, ring, mats: [rm, gm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🗿 โกเลมโบราณ — หินยักษ์ผุดขึ้นจากพื้น ยกหมัดสองข้างแล้วทุบลงสนาม
+        const spawnGolem = (idx, x, z, col, onSmash) => {
+            try {
+                const rm = new THREE.MeshStandardMaterial({ color: col || 0x6a5a3a, roughness: 0.98, flatShading: true });
+                const em = new THREE.MeshBasicMaterial({ color: 0xd8b878, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+                const g = new THREE.Group();
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.7, 1.0), rm);
+                torso.position.y = 2.0;
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.75, 0.75), rm);
+                head.position.y = 3.2;
+                g.add(torso, head);
+                for (const sx of [-1, 1]) {
+                    const eye = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.06), em);
+                    eye.position.set(sx * 0.2, 3.28, 0.4);
+                    g.add(eye);
+                    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.2, 0.6), rm);
+                    leg.position.set(sx * 0.44, 0.6, 0);
+                    g.add(leg);
+                }
+                const arms = [];
+                for (const sx of [-1, 1]) { // 🤜 หมัดหินสองข้าง หมุนที่หัวไหล่
+                    const piv = new THREE.Group();
+                    piv.position.set(sx * 0.95, 2.7, 0);
+                    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.5, 0.55), rm);
+                    arm.position.y = -0.7;
+                    const fist = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.62, 0.72), rm);
+                    fist.position.y = -1.6;
+                    piv.add(arm, fist);
+                    g.add(piv);
+                    arms.push(piv);
+                }
+                g.traverse((o) => { o.raycast = () => { }; });
+                g.position.set(x, 0, z);
+                g.rotation.y = Math.atan2(char.position.x - x, char.position.z - z) + Math.PI;
+                g.scale.set(1, 0.02, 1);
+                g.userData = { kind: "golem", t: 0, up: 0.2, wind: 0.24, smash: 0.14, hold: 0.5, out: 0.35, arms, onSmash, done: false, mats: [rm, em] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
         G._animArcherFx = (d) => {
             for (let i = archerFx.length - 1; i >= 0; i--) {
                 const o = archerFx[i], u = o.userData;
@@ -29406,6 +29472,54 @@ function CherryAdventure() {
                     u.mats.forEach((m) => (m.opacity = (0.55 + Math.random() * 0.45) * (1 - fade)));
                     if (u.t >= u.dur)
                         kill();
+                }
+                else if (u.kind === "stonearmor") { // ⛰️ แผ่นหินลอยหมุนประกบรอบตัวผู้เล่น
+                    const pa2 = Math.min(1, u.t / u.dur);
+                    o.position.set(char.position.x, 0, char.position.z);
+                    u.plates.forEach((pl) => {
+                        pl.a += d * 1.15;
+                        pl.o.position.set(Math.cos(pl.a) * pl.r, pl.y + Math.sin(u.t * 2 + pl.a) * 0.06, Math.sin(pl.a) * pl.r);
+                        pl.o.rotation.y = -pl.a;
+                    });
+                    u.ring.rotation.z += d * 0.9;
+                    const fade = Math.min(1, u.t / 0.3) * (1 - Math.pow(pa2, 4));
+                    u.mats[0].opacity = 0.95 * fade;
+                    u.mats[1].opacity = 0.4 * fade;
+                    if (pa2 >= 1)
+                        kill();
+                }
+                else if (u.kind === "golem") { // 🗿 ผุดขึ้น → เงื้อหมัด → ทุบลงสนาม → จมกลับดิน
+                    const T1 = u.up, T2 = T1 + u.wind, T3 = T2 + u.smash, T4 = T3 + u.hold;
+                    if (u.t < T1)
+                        o.scale.set(1, 0.02 + (u.t / T1) * 1.04, 1);
+                    else if (u.t < T2) {
+                        o.scale.set(1, 1.06, 1);
+                        const w = (u.t - T1) / u.wind;
+                        u.arms.forEach((a2) => (a2.rotation.x = -2.2 * smK(w)));
+                    }
+                    else if (u.t < T3) {
+                        const w = (u.t - T2) / u.smash;
+                        u.arms.forEach((a2) => (a2.rotation.x = -2.2 + 2.6 * smK(w)));
+                    }
+                    else if (u.t < T4) {
+                        if (!u.done) {
+                            u.done = true;
+                            if (u.onSmash) {
+                                try {
+                                    u.onSmash(o.position.x, o.position.z);
+                                }
+                                catch (e9) { }
+                            }
+                        }
+                        u.arms.forEach((a2) => (a2.rotation.x = 0.4));
+                        o.scale.set(1, 1.06 + Math.sin(u.t * 12) * 0.015, 1);
+                    }
+                    else {
+                        const pgl = Math.min(1, (u.t - T4) / u.out);
+                        o.scale.set(1, 1.06 - pgl * 1.04, 1);
+                        if (pgl >= 1)
+                            kill();
+                    }
                 }
                 else if (u.kind === "sspear") { // 🔱 ลอยรอเล็งครู่หนึ่ง แล้วพุ่งเสียบเข้าใส่
                     const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
@@ -29874,15 +29988,15 @@ function CherryAdventure() {
         // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
         const startSkillCast = (arch, col, focus, fire, beats) => {
             // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26, skyleap: 0.20, dragonbreath: 0.26, shadowspears: 0.20, meteordive: 0.28 };
-            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70, spearpierce: 0.18, spearstorm: 0.36, earthspear: 0.22, dragoncharge: 0.20, frostlance: 0.24, skyleap: 0.20, dragonbreath: 0.30, shadowspears: 0.46, meteordive: 0.24 };
+            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26, skyleap: 0.20, dragonbreath: 0.26, shadowspears: 0.20, meteordive: 0.28, stonepillar: 0.22, mountainarmor: 0.28, quakespear: 0.24, golemjudge: 0.30 };
+            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70, spearpierce: 0.18, spearstorm: 0.36, earthspear: 0.22, dragoncharge: 0.20, frostlance: 0.24, skyleap: 0.20, dragonbreath: 0.30, shadowspears: 0.46, meteordive: 0.24, stonepillar: 0.22, mountainarmor: 0.26, quakespear: 0.40, golemjudge: 0.55 };
             const chg = CHG[arch] != null ? CHG[arch] : 0.15;
             const rel = REL[arch] != null ? REL[arch] : 0.16;
             const rush = !!ARCH_RUSH[arch] || arch === "star"; // สายประชิดเท่านั้นที่พุ่งเข้าหา
             const dsh = arch === "star" ? 0.5 : arch === "meteordive" ? 0.30 : arch === "skyleap" ? 0.26 : arch === "dragoncharge" ? 0.16 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0; // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
             const hold = 0.14, rec = 0.06; // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
             const B = beats || {};
-            G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, crusadeFire: B.crusadeFire, cuN: 0, judgeFire: B.judgeFire, jdN: 0, armyFire: B.armyFire, hyN: 0, axeComboFire: B.axeComboFire, axN: 0, bloodFire: B.bloodFire, blN: 0, splitFire: B.splitFire, spN: 0, stormFire: B.stormFire, stN: 0, sweepFire: B.sweepFire, swN: 0, spearsFire: B.spearsFire, ssN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
+            G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, crusadeFire: B.crusadeFire, cuN: 0, judgeFire: B.judgeFire, jdN: 0, armyFire: B.armyFire, hyN: 0, axeComboFire: B.axeComboFire, axN: 0, bloodFire: B.bloodFire, blN: 0, splitFire: B.splitFire, spN: 0, stormFire: B.stormFire, stN: 0, sweepFire: B.sweepFire, swN: 0, spearsFire: B.spearsFire, ssN: 0, quake2Fire: B.quake2Fire, qkN: 0, golemFire: B.golemFire, glN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
             ensureCastFx();
             worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
             G._worldSwingT = 0;
@@ -30102,6 +30216,130 @@ function CherryAdventure() {
                 if (!out.length && wilds.indexOf(focus) >= 0)
                     out.push(focus);
                 return out;
+            };
+            // 🪨 ทุบศิลา — ทุบด้ามหอกลงพื้น เสาหินพุ่งขึ้นใต้เท้าเป้า ทุ่มลอย + สตัน + ช้าลง + ป้องกันตัวเอง
+            const stoneFire = arch !== "stonepillar" ? null : () => {
+                const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 2);
+                const list = tgt ? wildsInRadius(tgt.position.x, tgt.position.z, 2.4) : [];
+                const hit = list.length ? list : (tgt ? [tgt] : []);
+                hit.forEach((m) => {
+                    spawnStonePillar(m.position.x, m.position.z, col, 2.3); // 🪨 เสาหินผุดใต้เท้า
+                    applyDmg(m);
+                    m.userData.popH = 1.7;
+                    m.userData.popD = 0.9;
+                    m.userData.popT = 0.9; // 🌀 ทุ่มลอย
+                    m.userData.frzT = Math.max(m.userData.frzT || 0, 1.3); // 💫 สตัน
+                    m.userData.slow = 0.35;
+                    m.userData.slowT = 7; // 🐌 ช้าลง
+                    monGlow(m, 0xd8b878, 0.9);
+                    burst(new THREE.Vector3(m.position.x, 1.0, m.position.z), col, 0.95);
+                });
+                const lv2 = G.player.level || 1;
+                G.wDef = Math.max(G.wDef || 0, Math.round(6 * (1 + lv2 * 0.3)));
+                G.wDefT = 10; // 🛡️ ป้องกัน +6 (โตตามเลเวล)
+                spawnHolyRing(char.position.x, char.position.z, 0xd8b878, 2.0);
+                G._camShake = Math.max(G._camShake || 0, 0.45);
+                syncPlayer();
+                toast(`${sk.emoji || "🪨"} ${sk.name} — เสาหินทุ่มลอย ${hit.length} ตัว · ป้องกัน +${G.wDef}`);
+            };
+            // ⛰️ เกราะภูผา — เรียกแผ่นหินโบราณประกบตัว ป้องกันสูง สะท้อนแรง ล้างสถานะ + ฟื้นต่อเนื่อง
+            const armorFire = arch !== "mountainarmor" ? null : () => {
+                const lv2 = G.player.level || 1, mx = effMaxHp();
+                G.wDef = Math.max(G.wDef || 0, Math.round(18 * (1 + lv2 * 0.3)));
+                G.wDefT = 14; // 🛡️ ป้องกัน +18
+                G.wShield = Math.max(G.wShield || 0, Math.round(10 * (1 + lv2 * 0.3)));
+                G.wShieldT = 14;
+                G.wThorns = 0.4;
+                G.wThornsT = 14; // 🔁 สะท้อนแรง 40% กลับใส่ผู้ตี
+                G.wRegen = { t: 12, hp: Math.max(3, Math.round(mx * 0.025)), next: 1.0 }; // 💚 ฟื้นต่อเนื่อง 12 วิ
+                const hl = Math.round(mx * 0.15);
+                G.player.hp = Math.min(mx, G.player.hp + hl);
+                popDamage(char.position, hl, "heal");
+                let cleaned = 0; // 🧹 ล้างสถานะติดตัว
+                if (G.wbAtkDebuff) {
+                    G.wbAtkDebuff = 0;
+                    cleaned++;
+                }
+                if (G.wbCritDebuff) {
+                    G.wbCritDebuff = 0;
+                    cleaned++;
+                }
+                spawnStoneArmor(col, 14);
+                spawnHolyRing(char.position.x, char.position.z, 0xd8b878, 2.4);
+                for (let k = 0; k < 5; k++) { // 🪨 หินผุดรอบตัวตอนเรียกเกราะ
+                    const a = (k / 5) * Math.PI * 2;
+                    spawnStonePillar(char.position.x + Math.cos(a) * 1.5, char.position.z + Math.sin(a) * 1.5, col, 1.1);
+                }
+                burst(new THREE.Vector3(char.position.x, 1.2, char.position.z), col, 1.2);
+                G._camShake = Math.max(G._camShake || 0, 0.3);
+                syncPlayer();
+                toast(`${sk.emoji || "⛰️"} ${sk.name} — ป้องกัน +${G.wDef} · สะท้อน 40% · ฟื้น 12 วิ${cleaned ? " · ล้างสถานะ" : ""}`);
+            };
+            // 🌍 หอกแผ่นดินไหว — แทงหอกลงพื้น แรงสั่นแผ่เป็นวง ×2 ทุ่มล้ม ลดเกราะ + ตีช้าลง
+            const quake2Fire = arch !== "quakespear" ? null : (idx) => {
+                const R = 4.2 + idx * 0.8;
+                spawnHolyRing(char.position.x, char.position.z, col, R);
+                for (let k = 0; k < 5; k++) {
+                    spawnGroundCrack(char.position.x, char.position.z, (k / 5) * Math.PI * 2 + idx * 0.6, 0xb08a4a, 3.6);
+                }
+                for (let k = 0; k < 4; k++) {
+                    const a = Math.random() * Math.PI * 2, rr = 1.4 + Math.random() * (R - 1.6);
+                    spawnStonePillar(char.position.x + Math.cos(a) * rr, char.position.z + Math.sin(a) * rr, col, 1.4);
+                }
+                const hit = wildsInRadius(char.position.x, char.position.z, R);
+                hit.forEach((m) => {
+                    applyDmg(m, 1 / 2);
+                    m.userData.vuln = Math.max(m.userData.vulnT > 0 ? (m.userData.vuln || 0) : 0, 0.3); // 🛡️💥 ลดเกราะ
+                    m.userData.vulnT = 8;
+                    m.userData.atkSlow = 0.6;
+                    m.userData.atkSlowT = 9; // 🐢 เงื้อนานขึ้น 60% = ตีช้าลง
+                    m.userData.frzT = Math.max(m.userData.frzT || 0, 1.2); // 💫 ทุ่มล้ม
+                    if (idx >= 1) {
+                        m.userData.popH = 1.2;
+                        m.userData.popD = 0.8;
+                        m.userData.popT = 0.8;
+                    }
+                    monGlow(m, 0xd8b878, 0.8);
+                    burst(new THREE.Vector3(m.position.x, 0.9, m.position.z), col, 0.85);
+                });
+                G._camShake = Math.max(G._camShake || 0, idx >= 1 ? 0.6 : 0.4);
+                if (idx === 0)
+                    toast(`${sk.emoji || "🌍"} ${sk.name} — แผ่นดินไหว ×2! ตีช้าลง + ลดเกราะ`);
+            };
+            // 🗿 พิพากษาปฐพี — อัญเชิญโกเลมโบราณ 2 ตน ทุบสนาม ดึงความสนใจ (Taunt) + เสริมเกราะตัวเอง
+            const golemFire = arch !== "golemjudge" ? null : (idx) => {
+                const at = focus.position;
+                const a2 = idx ? -1.1 : 1.1;
+                const gx = at.x + Math.sin(char.rotation.y + a2) * 2.6, gz = at.z + Math.cos(char.rotation.y + a2) * 2.6;
+                spawnGolem(idx, gx, gz, col, (hx, hz) => {
+                    spawnHolyRing(hx, hz, 0xd8b878, 3.4);
+                    for (let k = 0; k < 3; k++)
+                        spawnGroundCrack(hx, hz, (k / 3) * Math.PI * 2, 0xb08a4a, 3.0);
+                    const hit = wildsInRadius(hx, hz, 3.6);
+                    hit.forEach((m) => {
+                        applyDmg(m, 1 / 2);
+                        m.userData.vuln = 0.45;
+                        m.userData.vulnT = 9; // 🛡️💥 ทำลายเกราะหนัก
+                        m.userData.slow = 0.45;
+                        m.userData.slowT = 9; // 🐌 ช้าลง
+                        m.userData.aggro = true; // 😡 Taunt — ดึงความสนใจเข้าหา
+                        m.userData.frzT = Math.max(m.userData.frzT || 0, 0.9);
+                        monGlow(m, 0xd8b878, 1.0);
+                        burst(new THREE.Vector3(m.position.x, 1.0, m.position.z), col, 1.0);
+                    });
+                    G._camShake = Math.max(G._camShake || 0, 0.6);
+                    G._hitStop = Math.max(G._hitStop || 0, 0.07);
+                });
+                if (idx === 0) {
+                    const lv2 = G.player.level || 1;
+                    G.wDef = Math.max(G.wDef || 0, Math.round(8 * (1 + lv2 * 0.3)));
+                    G.wDefT = 12; // 🛡️ เสริมเกราะ +8
+                    G.wShield = Math.max(G.wShield || 0, Math.round(8 * (1 + lv2 * 0.3)));
+                    G.wShieldT = 12;
+                    spawnHolyRing(char.position.x, char.position.z, 0xd8b878, 2.0);
+                    syncPlayer();
+                    toast(`${sk.emoji || "🗿"} ${sk.name} — โกเลมโบราณทุบสนาม ×2 · ป้องกัน +${G.wDef}`);
+                }
             };
             // 🐉 ทะยานเสียดฟ้า — ดิ่งแทงจากเบื้องบน ทุ่มเป้าลอยกลางอากาศ ลดเกราะ + ติดคริให้ตัวเอง
             const skyFire = arch !== "skyleap" ? null : () => {
@@ -30615,6 +30853,14 @@ function CherryAdventure() {
                     if (rainFire)
                         rainFire(); // 💥 ดาเมจลงตอนลูกธนูแต่ละดอกปัก
                 }
+                else if (arch === "stonepillar") {
+                    if (stoneFire)
+                        stoneFire(); // 🪨 เสาหินทุ่มลอย + ป้องกัน
+                }
+                else if (arch === "mountainarmor") {
+                    if (armorFire)
+                        armorFire(); // ⛰️ เกราะหิน + สะท้อน + ฟื้น
+                }
                 else if (arch === "skyleap") {
                     if (skyFire)
                         skyFire(); // 🐉 ดาเมจ + ทุ่มลอยตอนดิ่งถึงพื้น
@@ -30656,7 +30902,7 @@ function CherryAdventure() {
                         rootCurseFire(); // 🌳 ดาเมจ + ตรึง + เกราะแตกทั้งวง
                 }
                 else if (arch === "hawk" || arch === "poisonvolley" || arch === "wolfcall" || arch === "crusade" || arch === "judgement" || arch === "holyarmy"
-                    || arch === "axecombo" || arch === "bloodrage" || arch === "groundsplit" || arch === "axestorm" || arch === "spearstorm" || arch === "shadowspears") {
+                    || arch === "axecombo" || arch === "bloodrage" || arch === "groundsplit" || arch === "axestorm" || arch === "spearstorm" || arch === "shadowspears" || arch === "quakespear" || arch === "golemjudge") {
                     /* 🦅🍃🐺✝️🌟👼🪓🩸💢🌪️ ดาเมจลงทีละชุดตามจังหวะของท่า — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
                 }
                 else if (tgt) {
@@ -30671,7 +30917,7 @@ function CherryAdventure() {
                 if (G.sfx)
                     G.sfx.skill && G.sfx.skill();
                 syncPlayer();
-            }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire, crusadeFire, judgeFire, armyFire, axeComboFire, bloodFire, splitFire, stormFire, sweepFire, spearsFire });
+            }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire, crusadeFire, judgeFire, armyFire, axeComboFire, bloodFire, splitFire, stormFire, sweepFire, spearsFire, quake2Fire, golemFire });
         };
         // player fell in the open world
         G.worldFaint = () => {
@@ -36221,6 +36467,8 @@ function CherryAdventure() {
                             m.userData.weakT = Math.max(0, m.userData.weakT - dt); // 🛡️ โดนโล่เทวฑูตทุบจนตีเบาลง
                         if (m.userData.slowT > 0)
                             m.userData.slowT = Math.max(0, m.userData.slowT - dt); // 🧊 โดนความเย็นเกาะจนเดินช้า
+                        if (m.userData.atkSlowT > 0)
+                            m.userData.atkSlowT = Math.max(0, m.userData.atkSlowT - dt); // 🌍 โดนแผ่นดินไหวจนเงื้อช้าลง
                         if (m.userData.popT > 0) { // 🐉 ถูกทุ่มลอยขึ้นกลางอากาศ
                             m.userData.popT = Math.max(0, m.userData.popT - dt);
                             const pq = 1 - m.userData.popT / (m.userData.popD || 1);
@@ -36280,11 +36528,12 @@ function CherryAdventure() {
                                     m.rotation.y = Math.atan2(pdx, pdz);
                                     m.userData.wcd = (m.userData.wcd || 0) - dt;
                                     if (m.userData.wcd <= 0) {
-                                        m.userData.wcd = 1.3;
+                                        m.userData.wcd = 1.3 * (m.userData.atkSlowT > 0 ? 1 + (m.userData.atkSlow || 0) : 1); // 🌍 เงื้อนานขึ้น = ตีถี่น้อยลง
                                         const wk = m.userData.weakT > 0 ? 1 - (m.userData.weak || 0) : 1; // 🛡️ ศัตรูที่โดนลดพลังโจมตี
                                         let raw = Math.max(1, Math.round((m.userData.watk || 8) * wk - effDef() * 0.4));
+                                        let ab = 0; // แต้มที่เกราะกินไว้ (ใช้คิดแรงสะท้อนด้วย)
                                         if (G.wShield > 0) { // 🛡️✨ เกราะเทวฑูตกันไว้ก่อน แล้วค่อยเข้าเลือด
-                                            const ab = Math.min(G.wShield, raw);
+                                            ab = Math.min(G.wShield, raw);
                                             G.wShield -= ab;
                                             raw -= ab;
                                             if (ab > 0) {
@@ -36298,6 +36547,10 @@ function CherryAdventure() {
                                             burst(char.position, 0xff5a5a, 0.5);
                                             if (G.sfx)
                                                 G.sfx.hit && G.sfx.hit();
+                                        }
+                                        if (G.wThornsT > 0 && G.wThorns > 0) { // ⛰️ เกราะภูผาสะท้อนแรงกลับใส่ผู้ตี
+                                            hurtWild(m, Math.max(1, Math.round((raw + ab) * G.wThorns)), { color: 0xc09a5a });
+                                            burst(new THREE.Vector3(m.position.x, 0.9, m.position.z), 0xc09a5a, 0.6);
                                         }
                                         syncPlayer();
                                         if (G.player.hp <= 0)
@@ -37679,6 +37932,18 @@ function CherryAdventure() {
                         G.wCritT = Math.max(0, G.wCritT - dt);
                     if (G.wHasteT > 0)
                         G.wHasteT = Math.max(0, G.wHasteT - dt);
+                    if (G.wDefT > 0) {
+                        G.wDefT = Math.max(0, G.wDefT - dt);
+                        if (!G.wDefT) {
+                            G.wDef = 0;
+                            syncPlayer();
+                        }
+                    } // 🛡️ ป้องกันเสริมหมดอายุ
+                    if (G.wThornsT > 0) {
+                        G.wThornsT = Math.max(0, G.wThornsT - dt);
+                        if (!G.wThornsT)
+                            G.wThorns = 0;
+                    } // ⛰️ เกราะสะท้อนหมดอายุ
                     if (G.wRegen && G.wRegen.t > 0) {
                         G.wRegen.t -= dt;
                         G.wRegen.next -= dt;
@@ -38279,6 +38544,71 @@ function CherryAdventure() {
                                 G._camShake = Math.max(G._camShake || 0, 0.7);
                             }
                         }
+                        else if (arch === "stonepillar") {
+                            // 🪨 ทุบศิลา — ยกหอกขึ้นสองมือแล้วทุบด้ามลงพื้นเต็มแรง ย่อเข่ารับแรงสะท้อน
+                            const slam = smK(Math.min(1, rp * 1.6));
+                            armR.rotation.x = (-2.5 * (1 - slam) + 1.1 * slam - 0.35 * ce) * ease;
+                            armR.rotation.z = (0.24 + 0.08 * ce) * ease;
+                            armL.rotation.x = (-2.3 * (1 - slam) + 0.95 * slam - 0.35 * ce) * ease;
+                            armL.rotation.z = (-0.24 - 0.08 * ce) * ease;
+                            headPitch = (-0.28 * ce + 0.42 * slam) * ease;
+                            rise = (0.32 * ce - 0.58 * slam) * ease;
+                            lean = (-0.1 * ce + 0.28 * slam) * ease;
+                            legL.rotation.x = -0.38 * slam * ease;
+                            legR.rotation.x = 0.26 * slam * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 1.1 * slam * ease;
+                            if (rp > 0 && !S.shook) {
+                                S.shook = 1;
+                                G._camShake = Math.max(G._camShake || 0, 0.45);
+                            }
+                        }
+                        else if (arch === "mountainarmor") {
+                            // ⛰️ เกราะภูผา — ปักหอกลงข้างตัวยืนตั้งมั่น กางแขนกอดอก เรียกแผ่นหินมาประกบรอบตัว
+                            const set2 = smK(Math.min(1, rp * 1.3));
+                            armR.rotation.x = (-1.05 - 0.75 * ce + 0.35 * set2) * ease;
+                            armR.rotation.z = (0.9 + 0.5 * ce - 0.55 * set2) * ease;
+                            armL.rotation.x = (-1.05 - 0.75 * ce + 0.35 * set2) * ease;
+                            armL.rotation.z = (-0.9 - 0.5 * ce + 0.55 * set2) * ease;
+                            headPitch = (-0.22 * ce + 0.14 * set2) * ease;
+                            rise = (0.12 * ce - 0.14 * set2) * ease; // ตั้งมั่นลงน้ำหนักตอนเกราะเข้าที่
+                            lean = (-0.08 * ce + 0.06 * set2) * ease;
+                            legL.rotation.x = 0.2 * set2 * ease;
+                            legR.rotation.x = -0.2 * set2 * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 0.4 * set2 * ease;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = 0.4 * set2 * ease;
+                        }
+                        else if (arch === "quakespear") {
+                            // 🌍 หอกแผ่นดินไหว — ตั้งหอกตรงสองมือแล้วแทงปักลงพื้น ทิ้งน้ำหนักย่อลงต่ำ ส่งแรงสั่นออกไป ×2
+                            const bt2 = rp * 2, bi2 = Math.floor(bt2), bf2 = bt2 - bi2;
+                            const st2 = smK(Math.min(1, bf2 * 1.9)), up2 = 1 - st2;
+                            armR.rotation.x = (-2.35 * up2 + 1.25 * st2 - 0.3 * ce) * ease;
+                            armR.rotation.z = (0.2 + 0.08 * ce) * ease;
+                            armL.rotation.x = (-2.15 * up2 + 1.1 * st2 - 0.3 * ce) * ease;
+                            armL.rotation.z = (-0.2 - 0.08 * ce) * ease;
+                            headPitch = (-0.24 * up2 + 0.44 * st2) * ease;
+                            rise = (0.26 * up2 - 0.6 * st2) * ease;
+                            lean = (-0.08 * up2 + 0.3 * st2) * ease;
+                            legL.rotation.x = -0.44 * st2 * ease;
+                            legR.rotation.x = 0.3 * st2 * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 1.3 * st2 * ease;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = 0.5 * st2 * ease;
+                        }
+                        else if (arch === "golemjudge") {
+                            // 🗿 พิพากษาปฐพี — ชูสองแขนขึ้นสุดอัญเชิญโกเลม แหงนหน้า → ผายมือชี้สั่งให้ทุบสนาม
+                            const call2 = smK(Math.min(1, rp * 1.1));
+                            armR.rotation.x = (-1.4 - 1.5 * ce + 1.15 * call2) * ease;
+                            armR.rotation.z = (0.4 + 0.45 * ce + 0.35 * call2) * ease;
+                            armL.rotation.x = (-1.4 - 1.5 * ce + 1.15 * call2) * ease;
+                            armL.rotation.z = (-0.4 - 0.45 * ce - 0.35 * call2) * ease;
+                            headPitch = (-0.48 * ce + 0.3 * call2) * ease;
+                            rise = (0.28 * ce - 0.16 * call2) * ease;
+                            lean = (-0.22 * ce + 0.16 * call2) * ease;
+                        }
                         else if (arch === "spin") {
                             // 🌀 ฟันวงกว้าง/กวาดหอก/เพลงดาบจันทรา — กางอาวุธออกข้าง แล้วหมุนตัวครบรอบ
                             armR.rotation.x = (-0.15 - 0.5 * ce - 0.3 * rel) * ease;
@@ -38493,6 +38823,24 @@ function CherryAdventure() {
                                 if (S.knifeFire)
                                     S.knifeFire(S.kN);
                                 S.kN++;
+                            }
+                        }
+                        // 🌍 หอกแผ่นดินไหว — แรงสั่นแผ่ออก 2 ระลอก
+                        if (arch === "quakespear" && S.t >= S.chg && S.qkN < 2) {
+                            const qb = [0, 0.5];
+                            while (S.qkN < 2 && rp >= qb[S.qkN]) {
+                                if (S.quake2Fire)
+                                    S.quake2Fire(S.qkN);
+                                S.qkN++;
+                            }
+                        }
+                        // 🗿 พิพากษาปฐพี — อัญเชิญโกเลมทีละตน 2 ตน
+                        if (arch === "golemjudge" && S.t >= S.chg && S.glN < 2) {
+                            const gb = [0, 0.26];
+                            while (S.glN < 2 && rp >= gb[S.glN]) {
+                                if (S.golemFire)
+                                    S.golemFire(S.glN);
+                                S.glN++;
                             }
                         }
                         // 🔱 หอกร้อยเงา — เสียบทีละชุด 5 ชุดระหว่างช่วงปล่อยพลัง
