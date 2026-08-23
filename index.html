@@ -37947,7 +37947,7 @@ function CherryAdventure() {
                 G.ultUsed = true;
                 const U = ultOf(G.cls, G.ultAlt);
                 const altUlt = !!(G.ultAlt && ULT_ALT[G.cls]); // 👑 alternate ultimate selected
-                G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
+                G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : G.cls === "boxer" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
                 if (G.sfx && G.sfx.charge)
                     G.sfx.charge(); // ⚡ rising hum as the ultimate winds up
                 if (G.showSkillBanner) {
@@ -37969,7 +37969,7 @@ function CherryAdventure() {
                 }
                 G.advUltUsed = true;
                 const altUlt2 = false;
-                G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : 2.4, hits: 0, total: 0, altUlt: altUlt2, advU: true };
+                G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : G.cls === "boxer" ? 6.0 : 2.4, hits: 0, total: 0, altUlt: altUlt2, advU: true };
                 if (G.sfx && G.sfx.charge)
                     G.sfx.charge();
                 if (G.showSkillBanner) {
@@ -52251,7 +52251,7 @@ function CherryAdventure() {
                             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
                             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
                             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
-                            const CAST_SEC = (cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" || cls === "mage") ? 0 : 1.0;
+                            const CAST_SEC = (cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" || cls === "mage" || cls === "boxer") ? 0 : 1.0;
                             const castP = CAST_SEC > 0 ? Math.min(1, A.t / CAST_SEC) : 1;
                             const casting = A.t < CAST_SEC;
                             // remap post-cast progress so attack motions play at normal speed
@@ -52283,7 +52283,7 @@ function CherryAdventure() {
                                 magicCircle.scale.setScalar(1.4 + (A.t - CAST_SEC) * 5);
                                 magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => { c.material.opacity = Math.max(0, 0.85 - (A.t - CAST_SEC) * 8); }));
                                 // ⚔️☁️ release: a giant blade of light plunges from the sky onto the enemy (once)
-                                if (!A.beamFired && !["warrior", "archer", "assassin", "lancer", "samurai", "coder", "mage", "office"].includes(cls)) {
+                                if (!A.beamFired && !["warrior", "archer", "assassin", "lancer", "samurai", "coder", "mage", "office", "boxer"].includes(cls)) {
                                     A.beamFired = true;
                                     const bc = (CLASSES[cls] && CLASSES[cls].color) || 0xfff2c0;
                                     spawnSkillFx("swordbeam", em.position, bc);
@@ -54561,6 +54561,273 @@ function CherryAdventure() {
                                         sl.visible = false;
                                 } });
                             }
+                            else if (cls === "boxer") {
+                                // 🥊💥 มหาหัตถ์อสูรทลายฟ้า — รวมลมปราณ → พุ่งรัวหมัด/ศอก/เข่า → หมัดทลายฟ้าปิดท้าย
+                                const ember = 0xff5a1a, gold = 0xf5c542, white = 0xffffff, blood = 0xe0304a, aura = 0xffb84a;
+                                const EP = em.position;
+                                const CX = () => battleCenter.x - 1.3, CZ = () => battleCenter.z;
+                                if (!A.bx) {
+                                    A.bx = { fx: new THREE.Group(), rings: [], shocks: [], sparks: [], struck: 0, lastBeat: -1 };
+                                    scene.add(A.bx.fx);
+                                    // 🌀 วงลมปราณรอบตัวตอนรวมพลัง
+                                    for (let i = 0; i < 4; i++) {
+                                        const r = new THREE.Mesh(new THREE.TorusGeometry(0.9 + i * 0.28, 0.055 - i * 0.008, 10, 40), new THREE.MeshBasicMaterial({ color: i % 2 ? gold : ember, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                                        r.rotation.x = Math.PI / 2;
+                                        r.visible = false;
+                                        A.bx.fx.add(r);
+                                        A.bx.rings.push(r);
+                                    }
+                                    // 👊 คลื่นกระแทกหมัด — หมุนเวียนใช้ตลอดคอมโบ
+                                    for (let i = 0; i < 8; i++) {
+                                        const sh = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.09, 8, 24), new THREE.MeshBasicMaterial({ color: i % 3 ? white : ember, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                                        sh.visible = false;
+                                        A.bx.fx.add(sh);
+                                        A.bx.shocks.push(sh);
+                                    }
+                                    // ✨ สะเก็ดพลังลอยรอบตัว
+                                    for (let i = 0; i < 18; i++) {
+                                        const sp = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), new THREE.MeshBasicMaterial({ color: i % 2 ? aura : white, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                                        sp.userData.ph = Math.random() * Math.PI * 2;
+                                        sp.userData.sp = 0.7 + Math.random() * 1.4;
+                                        sp.visible = false;
+                                        A.bx.fx.add(sp);
+                                        A.bx.sparks.push(sp);
+                                    }
+                                    // 🗿 กำปั้นยักษ์สำหรับหมัดปิดท้าย
+                                    const fist = new THREE.Group();
+                                    const knuck = new THREE.Mesh(new THREE.SphereGeometry(1.15, 18, 14), new THREE.MeshBasicMaterial({ color: ember, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+                                    knuck.scale.set(1, 1.05, 1.2);
+                                    fist.add(knuck);
+                                    const coreF = new THREE.Mesh(new THREE.SphereGeometry(0.72, 16, 12), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
+                                    fist.add(coreF);
+                                    for (let k = 0; k < 5; k++) { // สันหมัดยักษ์
+                                        const kn = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+                                        kn.position.set(-0.7 + k * 0.35, 0.42, 0.9);
+                                        fist.add(kn);
+                                    }
+                                    fist.visible = false;
+                                    A.bx.fx.add(fist);
+                                    A.bx.fist = fist;
+                                    if (G.sfx && G.sfx.charge)
+                                        G.sfx.charge();
+                                }
+                                const BX = A.bx;
+                                char.rotation.y = Math.PI / 2;
+                                const punchFx = (col, big) => {
+                                    const sh = BX.shocks[BX.struck % BX.shocks.length];
+                                    sh.visible = true;
+                                    sh.position.set(EP.x + (Math.random() - 0.5) * 0.5, 0.8 + Math.random() * 1.1, EP.z + (Math.random() - 0.5) * 0.5);
+                                    sh.rotation.set(0, Math.PI / 2, (Math.random() - 0.5) * 1.2);
+                                    sh.scale.setScalar(big ? 2.2 : 0.9 + Math.random() * 0.5);
+                                    sh.material.opacity = 1;
+                                    sh.material.color.setHex(col);
+                                };
+                                // ============ 🧘 ช่วงที่ 1 — รวมลมปราณ (p 0 → 0.20) ============
+                                if (p < 0.20) {
+                                    const cp = p / 0.20;
+                                    G._ultCamOrbit = cp * 0.25;
+                                    char.position.set(CX(), 0, CZ());
+                                    armR.rotation.x = -1.45 - cp * 0.15;
+                                    armR.rotation.z = 0.5 - cp * 0.12; // 🥊 ตั้งการ์ดแน่น
+                                    armL.rotation.x = -1.45 - cp * 0.15;
+                                    armL.rotation.z = -0.5 + cp * 0.12;
+                                    if (armR.userData.elbow)
+                                        armR.userData.elbow.rotation.x = -1.2;
+                                    if (armL.userData.elbow)
+                                        armL.userData.elbow.rotation.x = -1.2;
+                                    legL.rotation.x = 0.26 * cp;
+                                    legR.rotation.x = -0.24 * cp; // 🦵 ย่อเข่าอัดพลัง
+                                    if (legL.userData.knee)
+                                        legL.userData.knee.rotation.x = 0.6 * cp;
+                                    if (legR.userData.knee)
+                                        legR.userData.knee.rotation.x = 0.64 * cp;
+                                    char.position.y = -0.16 * cp + Math.sin(t * 26) * 0.02 * cp; // ย่อลง + ตัวสั่นเพราะอัดแรง
+                                    char.rotation.z = Math.sin(t * 30) * 0.03 * cp;
+                                    BX.rings.forEach((r, i) => {
+                                        r.visible = true;
+                                        const k = Math.max(0, Math.min(1, cp * 1.5 - i * 0.12));
+                                        r.position.set(CX(), 0.4 + i * 0.45 + (1 - k) * 1.4, CZ());
+                                        r.scale.setScalar(0.4 + (1 - k) * 1.6);
+                                        r.rotation.z = t * (1.4 + i * 0.5) * (i % 2 ? -1 : 1);
+                                        r.material.opacity = k * 0.85;
+                                    });
+                                    BX.sparks.forEach((sp) => {
+                                        sp.visible = true;
+                                        const a = sp.userData.ph + t * sp.userData.sp;
+                                        const rr = (1 - cp) * 2.6 + 0.5;
+                                        sp.position.set(CX() + Math.cos(a) * rr, 0.4 + ((a * 1.7) % 2.4), CZ() + Math.sin(a) * rr);
+                                        sp.rotation.set(t, a, t);
+                                        sp.material.opacity = cp;
+                                    });
+                                    magicCircle.visible = true;
+                                    magicCircle.position.set(CX(), 0.06, CZ());
+                                    magicCircle.rotation.x = Math.PI / 2;
+                                    magicCircle.scale.setScalar(1.1 + cp * 1.5);
+                                    magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.3 + si) * (si % 2 ? -1 : 1); st.children.forEach((c) => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? ember : gold); }); });
+                                    if (Math.random() < 0.55)
+                                        burst(new THREE.Vector3(CX() + (Math.random() - 0.5) * 2.2, Math.random() * 2.2, CZ() + (Math.random() - 0.5) * 2.2), Math.random() < 0.5 ? ember : gold, 0.4 + Math.random() * 1.6);
+                                    G._camShake = Math.max(G._camShake || 0, cp * 0.3);
+                                    // ============ 💨 ช่วงที่ 2 — พุ่งเข้าประชิด (p 0.20 → 0.30) ============
+                                }
+                                else if (p < 0.30) {
+                                    const cp = (p - 0.20) / 0.10, e = 1 - Math.pow(1 - cp, 3);
+                                    magicCircle.visible = false;
+                                    BX.rings.forEach((r) => (r.material.opacity = Math.max(0, r.material.opacity - 0.12)));
+                                    char.position.x = CX() + e * (EP.x - CX() - 1.15);
+                                    char.position.y = 0;
+                                    char.rotation.z = -0.16 * cp;
+                                    armR.rotation.x = -1.5;
+                                    armL.rotation.x = -1.5; // 🥊 การ์ดสูงตอนพุ่งเข้า
+                                    legL.rotation.x = -0.5 * cp;
+                                    legR.rotation.x = 0.4 * cp;
+                                    if (Math.random() < 0.8)
+                                        burst(new THREE.Vector3(char.position.x - 0.5, 0.5 + Math.random() * 1.2, CZ()), Math.random() < 0.5 ? aura : white, 0.4);
+                                    BX.sparks.forEach((sp, i) => { sp.position.set(char.position.x - 0.3 - (i % 5) * 0.3, 0.4 + (i % 4) * 0.4, CZ() + ((i % 3) - 1) * 0.3); sp.material.opacity = 0.8 * (1 - cp); });
+                                    // ============ 👊 ช่วงที่ 3 — รัวหมัด/ศอก/เข่า (p 0.30 → 0.74) ============
+                                }
+                                else if (p < 0.74) {
+                                    const cp = (p - 0.30) / 0.44;
+                                    const N = 11; // 11 จังหวะ: หมัด-หมัด-ศอก-เข่า วนไป
+                                    const bt = cp * N, bi = Math.min(N - 1, Math.floor(bt)), bf = bt - bi;
+                                    const u = Math.min(1, bf * 2.4);
+                                    const kind = bi % 4; // 0,1 = หมัด · 2 = ศอก · 3 = เข่า
+                                    const side = bi % 2 ? -1 : 1;
+                                    char.position.x = EP.x - 1.15 + Math.sin(bt * Math.PI) * 0.1;
+                                    char.position.y = kind === 3 ? u * 0.42 : 0; // เข่า = ลอยตัวขึ้น
+                                    char.rotation.z = side * 0.1 * (1 - u);
+                                    const AR = side > 0 ? armR : armL, AL = side > 0 ? armL : armR;
+                                    AL.rotation.x = -1.5;
+                                    AL.rotation.z = side > 0 ? -0.48 : 0.48; // มืออีกข้างการ์ดไว้เสมอ
+                                    if (kind === 2) { // 💥 ศอก — กางออกข้างแล้วกระแทก
+                                        AR.rotation.x = -1.55 - 0.4 * u;
+                                        AR.rotation.z = (side > 0 ? 0.9 + 0.9 * u : -0.9 - 0.9 * u);
+                                        char.rotation.y = Math.PI / 2 + side * u * 0.5;
+                                    }
+                                    else if (kind === 3) { // 🦵 เข่า — ดึงเข่าขึ้นสุด
+                                        AR.rotation.x = -1.9 + u * 0.7;
+                                        AR.rotation.z = (side > 0 ? 0.6 : -0.6);
+                                        legR.rotation.x = -2.0 * u;
+                                        if (legR.userData.knee)
+                                            legR.userData.knee.rotation.x = 0.5 + 1.5 * u;
+                                    }
+                                    else { // 👊 หมัดตรง
+                                        AR.rotation.x = -1.45 - 1.05 * u;
+                                        AR.rotation.z = (side > 0 ? 0.44 - 0.4 * u : -0.44 + 0.4 * u);
+                                        legR.rotation.x = 0;
+                                        if (legR.userData.knee)
+                                            legR.userData.knee.rotation.x = 0.2;
+                                    }
+                                    if (u > 0.55 && BX.lastBeat !== bi) { // 💢 ลงดาเมจทีละจังหวะ
+                                        BX.lastBeat = bi;
+                                        BX.struck++;
+                                        punchFx(kind === 3 ? gold : kind === 2 ? ember : white, false);
+                                        applyHit(roll() * 0.17, kind === 3 ? gold : ember);
+                                        spawnSkillFx(kind === 3 || kind === 2 ? "kneeburst" : "punchwave", EP, kind === 2 ? ember : white);
+                                        G._camShake = Math.max(G._camShake || 0, 0.3);
+                                        if (G.sfx && G.sfx.hit)
+                                            G.sfx.hit();
+                                        em.position.x = EP.x + 0.06 * side; // ศัตรูสะบัดตามแรง
+                                    }
+                                    BX.sparks.forEach((sp, i) => { sp.position.set(EP.x + (Math.random() - 0.5) * 2, Math.random() * 2.4, EP.z + (Math.random() - 0.5) * 2); sp.material.opacity = 0.5; });
+                                    // ============ 🗿 ช่วงที่ 4 — ถอยเก็บแรงหมัดสุดท้าย (p 0.74 → 0.86) ============
+                                }
+                                else if (p < 0.86) {
+                                    const cp = (p - 0.74) / 0.12;
+                                    BX.shocks.forEach((sh) => (sh.material.opacity = Math.max(0, sh.material.opacity - 0.08)));
+                                    char.position.x = EP.x - 1.15 - cp * 0.9; // ถอยตั้งหลัก
+                                    char.position.y = 0;
+                                    char.rotation.y = Math.PI / 2 + cp * 1.0; // บิดตัวเก็บแรงสุดตัว
+                                    char.rotation.z = 0.1 * cp;
+                                    armR.rotation.x = -0.55 - 1.0 * cp;
+                                    armR.rotation.z = 0.9 + 0.4 * cp;
+                                    armL.rotation.x = -1.5;
+                                    armL.rotation.z = -0.5;
+                                    legL.rotation.x = 0.3 * cp;
+                                    legR.rotation.x = -0.3 * cp;
+                                    if (legL.userData.knee)
+                                        legL.userData.knee.rotation.x = 0.7 * cp;
+                                    BX.fist.visible = true; // 🗿 กำปั้นยักษ์ก่อตัวขึ้น
+                                    BX.fist.position.set(char.position.x - 0.6 - cp * 0.5, 1.2 + cp * 0.5, CZ());
+                                    BX.fist.scale.setScalar(0.2 + cp * 0.85);
+                                    BX.fist.rotation.y = Math.PI / 2;
+                                    BX.fist.rotation.z = cp * 0.3;
+                                    BX.fist.children.forEach((c) => (c.material.opacity = Math.min(1, cp * 1.3) * 0.9));
+                                    BX.rings.forEach((r, i) => { r.visible = true; r.position.set(char.position.x, 0.6 + i * 0.4, CZ()); r.scale.setScalar(0.5 + cp * 0.7); r.rotation.z = t * 4 * (i % 2 ? -1 : 1); r.material.opacity = cp * 0.7; });
+                                    if (Math.random() < 0.8)
+                                        burst(new THREE.Vector3(char.position.x - 0.5, 0.8 + Math.random() * 1.4, CZ()), Math.random() < 0.5 ? ember : gold, 0.5 + Math.random());
+                                    G._camShake = Math.max(G._camShake || 0, 0.25 + cp * 0.35);
+                                    if (cp > 0.6 && !A._boxLine && G.speedLines) {
+                                        A._boxLine = true;
+                                        G.speedLines(900);
+                                    }
+                                    // ============ 💥 ช่วงที่ 5 — หมัดทลายฟ้า (p 0.86 → 1.0) ============
+                                }
+                                else {
+                                    const cp = (p - 0.86) / 0.14, e = 1 - Math.pow(1 - Math.min(1, cp * 2.2), 3);
+                                    char.position.x = (EP.x - 2.05) + e * 0.95; // พุ่งอัดหมัดเดียวเข้าเป้า
+                                    char.position.y = 0;
+                                    char.rotation.y = Math.PI / 2 + 1.0 - e * 1.7; // สะบัดเอวสุดแรง
+                                    char.rotation.z = 0.1 - e * 0.2;
+                                    armR.rotation.x = -1.55 + e * 0.35;
+                                    armR.rotation.z = 1.3 - e * 1.35;
+                                    armL.rotation.x = -1.3 + e * 0.2;
+                                    armL.rotation.z = -0.5;
+                                    legL.rotation.x = 0.3 - e * 0.5;
+                                    legR.rotation.x = -0.3 + e * 0.45;
+                                    if (legL.userData.knee)
+                                        legL.userData.knee.rotation.x = 0.7 * (1 - e);
+                                    BX.fist.visible = true; // 🗿 กำปั้นยักษ์พุ่งตามหมัด
+                                    BX.fist.position.set(char.position.x + 0.6 + e * (EP.x - char.position.x), 1.25, CZ());
+                                    BX.fist.scale.setScalar(1.05 + e * 0.7);
+                                    BX.fist.rotation.y = Math.PI / 2;
+                                    BX.fist.rotation.z = 0.3 - e * 0.3;
+                                    BX.fist.children.forEach((c) => (c.material.opacity = 0.9 * (1 - Math.max(0, cp - 0.45) / 0.55)));
+                                    BX.rings.forEach((r, i) => { r.position.set(EP.x, 0.5 + i * 0.5, EP.z); r.scale.setScalar(1 + e * (2.4 + i * 0.8)); r.material.opacity = Math.max(0, 0.9 - cp * 1.1); });
+                                    if (e > 0.55 && !A._boxKO) { // 💢 หมัดปิดท้าย — ดาเมจก้อนใหญ่
+                                        A._boxKO = true;
+                                        BX.struck++;
+                                        punchFx(white, true);
+                                        punchFx(ember, true);
+                                        // 💢 ผลของหมัดปิดท้ายตามคำบรรยาย — ทะลุเกราะ + สตัน + เลือดไหล
+                                        let koMsg = " 🥊 ทลายฟ้า!";
+                                        try {
+                                            if (G.enemy) {
+                                                G.enemy.def = Math.max(0, (G.enemy.def || 0) - 12);
+                                                koMsg += " ป้องกัน -12 🛡️💔";
+                                            } // 🛡️ ทะลุเกราะ
+                                            if (G.est) {
+                                                G.est.frozen = true;
+                                                koMsg += " สตัน 💫"; // 💫 สตันข้ามเทิร์น
+                                                G.est.bleed = (G.est.bleed || 0) + 5;
+                                                koMsg += " เลือดไหล 🩸";
+                                            } // 🩸 เลือดไหล 5 เทิร์น
+                                        }
+                                        catch (e2) { }
+                                        applyHit(roll() * 1.7, white, koMsg);
+                                        spawnSkillFx("punchwave", EP, white);
+                                        spawnSkillFx("punchwave", EP, ember);
+                                        spawnSkillFx("kneeburst", EP, gold);
+                                        G._camShake = 1.1;
+                                        G._hitStop = Math.max(G._hitStop || 0, 0.16);
+                                        if (G.speedLines)
+                                            G.speedLines(700);
+                                        if (G.sfx && G.sfx.hit)
+                                            G.sfx.hit();
+                                        for (let k = 0; k < 26; k++)
+                                            burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4.4, Math.random() * 3.6, EP.z + (Math.random() - 0.5) * 4.4), [white, ember, gold, blood][k % 4], 0.6 + Math.random() * 2.2);
+                                    }
+                                    BX.sparks.forEach((sp, i) => { sp.position.set(EP.x + (Math.random() - 0.5) * 4, Math.random() * 3.2, EP.z + (Math.random() - 0.5) * 4); sp.material.opacity = Math.max(0, 0.9 - cp); });
+                                    if (cp > 0.5) {
+                                        BX.shocks.forEach((sh) => (sh.material.opacity = Math.max(0, sh.material.opacity - 0.06)));
+                                    }
+                                    G._camShake = Math.max(G._camShake || 0, 1.0 * (1 - cp));
+                                }
+                                // เก็บคลื่นหมัดที่ค้างอยู่ให้จางลงทุกเฟรม
+                                BX.shocks.forEach((sh) => { if (sh.material.opacity > 0) {
+                                    sh.material.opacity -= 0.055;
+                                    sh.scale.multiplyScalar(1.09);
+                                } });
+                            }
                             else if (cls === "mage") {
                                 // ☄️🌌 COSMIC CATACLYSM — open a galaxy, converge the elements, rain meteors, then collapse a star
                                 const cosmic = 0x9a4ad0, arc = 0x4a6aff, starl = 0xeaf0ff, fire = 0xff6a3a, ice = 0x6ae0ff;
@@ -54872,6 +55139,13 @@ function CherryAdventure() {
                                         o.material.dispose(); });
                                     A.dj = null;
                                 }
+                                if (A.bx) {
+                                    scene.remove(A.bx.fx);
+                                    A.bx.fx.traverse(o => { if (o.geometry)
+                                        o.geometry.dispose(); if (o.material)
+                                        o.material.dispose(); });
+                                    A.bx = null;
+                                } // 🥊 เก็บเอฟเฟกต์มหาหัตถ์อสูร
                                 if (A.se) {
                                     scene.remove(A.se.fx);
                                     A.se.fx.traverse(o => { if (o.geometry)
