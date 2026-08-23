@@ -964,7 +964,7 @@ const skillsOf = (cls, pathId) => {
 // Ground-slam (quake) and poison-cloud (poison) effects blanket an area; a few signature
 // wide swings are AoE too. Everything else (incl. multi-hit combos) focuses one target.
 const AOE_FX = { quake: 1, poison: 1 };
-const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1, x_shp_4: 1, x_rng_2: 1, x_rng_4: 1, x_pal_3: 1, x_ttn_3: 1, x_nov_2: 1, x_elm_1: 1, x_elm_2: 1, x_elm_3: 1, x_pri_1: 1, x_pri_4: 1, o_paper: 1, o_ceo: 1, x_ceo_1: 1, x_ceo_2: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
+const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1, x_shp_4: 1, x_rng_2: 1, x_rng_4: 1, x_pal_3: 1, x_ttn_3: 1, x_nov_2: 1, x_elm_1: 1, x_elm_2: 1, x_elm_3: 1, x_pri_1: 1, x_pri_4: 1, o_paper: 1, o_ceo: 1, x_ceo_1: 1, x_ceo_2: 1, c_crash: 1, c_drone: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
 const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
 // 🎭 ท่าร่ายประจำสกิล — แมปทีละสกิลให้ท่าตรงกับชื่อ/ความหมายของมันจริง ๆ
 // (สกิลที่ไม่อยู่ในตารางจะถูกเดาให้จากอาชีพ + ชนิดเอฟเฟกต์)
@@ -986,7 +986,7 @@ const SK_ARCH = {
     x_grd_1: "stonepillar", x_grd_2: "mountainarmor", x_grd_3: "quakespear", x_grd_4: "golemjudge", // 🛡️🌍 ผู้พิทักษ์ปฐพี
     k_slash: "cleave", k_double: "twin", k_iai: "iai", k_moon: "spin", // 🗡️ ซามูไร
     o_coffee: "coffee", o_paper: "papertornado", o_smash: "laptopsmash", o_deadline: "overtime", o_ceo: "ceoorder", // 🏢 ออฟฟิศ       // 🏢 ออฟฟิศ
-    c_inject: "throw", c_wall: "bash", c_drone: "summon", c_crash: "beam", c_matrix: "beam", // 💻 โปรแกรมเมอร์
+    c_inject: "codeinject", c_wall: "firewall", c_drone: "aidrone", c_crash: "systemcrash", c_matrix: "matrixrain", // 💻 โปรแกรมเมอร์      // 💻 โปรแกรมเมอร์
     g_dash: "dash", g_drone: "summon", g_grav: "beam", g_over: "buff", // 🤖 จักรกลพิทักษ์
     x_ttn_1: "rocketfist", x_ttn_2: "energyshield", x_ttn_3: "shouldercannon", x_ttn_4: "titanstomp", // 🦾⚙️ ไททันเหล็กกล้า
     x_nov_1: "railgun", x_nov_2: "dronelock", x_nov_3: "blackhole", x_nov_4: "satellite", // 🛰️🔫 โนวาสไตรก์                            // 🤖 AI Mecha
@@ -30036,6 +30036,125 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        // ⌨️ แพ็กเก็ตโค้ด — บล็อกโค้ดเรืองแสงพร้อมเข็มฉีดข้อมูล พุ่งเจาะเข้าระบบเป้า
+        const spawnCodeBolt = (idx, target, col, onHit) => {
+            try {
+                const gm = new THREE.MeshBasicMaterial({ color: col || 0x2ad0e8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const cm = new THREE.MeshBasicMaterial({ color: 0xeaffff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                const core = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), gm);
+                const tip = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.5, 6), cm);
+                tip.rotation.x = Math.PI / 2;
+                tip.position.z = 0.42;
+                g.add(core, tip);
+                for (let k = 0; k < 5; k++) { // 0️⃣1️⃣ แถบบิตวิ่งรอบแพ็กเก็ต
+                    const bar = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.05), cm);
+                    bar.position.set((Math.random() - 0.5) * 0.3, 0.22 - k * 0.1, 0.19);
+                    g.add(bar);
+                }
+                g.traverse((o) => { o.raycast = () => { }; });
+                const sxc = char.position.x + Math.sin(char.rotation.y) * 0.5 + Math.cos(char.rotation.y) * (idx % 2 ? 0.3 : -0.3);
+                const szc = char.position.z + Math.cos(char.rotation.y) * 0.5 - Math.sin(char.rotation.y) * (idx % 2 ? 0.3 : -0.3);
+                g.position.set(sxc, 1.3, szc);
+                g.userData = { kind: "codebolt", t: 0, dur: 0.17, sx: sxc, sy: 1.3, sz: szc, target, onHit, mats: [gm, cm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🛡️ ไฟร์วอลล์ — กำแพงอิฐพลังงานหกเหลี่ยมตั้งล้อมรอบตัว หมุนช้า ๆ ตามผู้เล่นไป
+        const spawnFirewall = (col, dur) => {
+            try {
+                const bm = new THREE.MeshBasicMaterial({ color: col || 0x4ae8c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const lm = new THREE.MeshBasicMaterial({ color: 0xeafff8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                const bricks = [];
+                for (let row = 0; row < 3; row++) { // 🧱 อิฐไฟร์วอลล์สลับฟันปลา 3 ชั้น
+                    const n = 10;
+                    for (let k = 0; k < n; k++) {
+                        const a = (k / n) * Math.PI * 2 + (row % 2 ? Math.PI / n : 0);
+                        const br = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.5), bm);
+                        br.position.set(Math.cos(a) * 1.5, 0.4 + row * 0.55, Math.sin(a) * 1.5);
+                        br.rotation.y = -a + Math.PI / 2;
+                        br.raycast = () => { };
+                        g.add(br);
+                        bricks.push({ o: br, ph: (row * n + k) * 0.35 });
+                    }
+                }
+                const ring = new THREE.Mesh(new THREE.RingGeometry(1.36, 1.62, 30), lm);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.07;
+                ring.raycast = () => { };
+                g.add(ring);
+                g.userData = { kind: "firewall", t: 0, dur: dur || 14, bricks, ring, mats: [bm, lm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 💥 ระบบล่ม — หน้าต่าง ERROR สีแดงเด้งรัวรอบตัวเป้า พร้อมภาพกระตุกแตก
+        const spawnGlitchBurst = (x, z, col, onHit) => {
+            try {
+                const wm = new THREE.MeshBasicMaterial({ color: 0x14161c, transparent: true, opacity: 0.95, depthWrite: false, side: THREE.DoubleSide });
+                const rm = new THREE.MeshBasicMaterial({ color: col || 0xe84a7a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                const panes = [];
+                for (let k = 0; k < 9; k++) { // 🪟 หน้าต่าง ERROR เด้งซ้อนกัน
+                    const pg = new THREE.Group();
+                    const pane = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.6), wm);
+                    const bar = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.14), rm);
+                    bar.position.set(0, 0.23, 0.01);
+                    const x1 = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.07), rm);
+                    x1.position.z = 0.02;
+                    x1.rotation.z = 0.7;
+                    const x2 = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.07), rm);
+                    x2.position.z = 0.02;
+                    x2.rotation.z = -0.7;
+                    pg.add(pane, bar, x1, x2);
+                    pg.traverse((o) => { o.raycast = () => { }; });
+                    g.add(pg);
+                    panes.push({ o: pg, a: Math.random() * Math.PI * 2, r: 0.6 + Math.random() * 1.6, y: 0.5 + Math.random() * 2.2, dl: k * 0.028 });
+                }
+                g.position.set(x, 0, z);
+                g.userData = { kind: "glitch", t: 0, dur: 0.75, x, z, panes, onHit, done: false, mats: [wm, rm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🟩 ฝนโค้ดเขียว — เสาอักขระเขียวไหลลงจากฟ้าแบบเมทริกซ์
+        const spawnCodeRain = (x, z, col, onHit) => {
+            try {
+                const gm = new THREE.MeshBasicMaterial({ color: col || 0x2ae84a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const wm = new THREE.MeshBasicMaterial({ color: 0xdcffdc, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                const cols = [];
+                for (let k = 0; k < 12; k++) { // 🟩 คอลัมน์อักขระไหลลงคนละจังหวะ
+                    const cg = new THREE.Group();
+                    const n = 5;
+                    for (let j = 0; j < n; j++) {
+                        const ch = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.24), j === 0 ? wm : gm);
+                        ch.position.y = -j * 0.3;
+                        cg.add(ch);
+                    }
+                    cg.traverse((o) => { o.raycast = () => { }; });
+                    const a = Math.random() * Math.PI * 2, rr = Math.random() * 2.3;
+                    cg.position.set(Math.cos(a) * rr, 4 + Math.random() * 2.5, Math.sin(a) * rr);
+                    g.add(cg);
+                    cols.push({ o: cg, sp: 5.5 + Math.random() * 4.5, y0: cg.position.y });
+                }
+                const pool = new THREE.Mesh(new THREE.CircleGeometry(2.6, 26), gm);
+                pool.rotation.x = -Math.PI / 2;
+                pool.position.y = 0.06;
+                pool.raycast = () => { };
+                g.add(pool);
+                g.position.set(x, 0, z);
+                g.userData = { kind: "coderain", t: 0, dur: 0.62, x, z, cols, onHit, done: false, mats: [gm, wm] };
+                scene.add(g);
+                archerFx.push(g);
+            }
+            catch (e) { }
+        };
         G._animArcherFx = (d) => {
             for (let i = archerFx.length - 1; i >= 0; i--) {
                 const o = archerFx[i], u = o.userData;
@@ -30075,6 +30194,81 @@ function CherryAdventure() {
                     const fade = Math.max(0, Math.min(1, (u.t - u.step * u.segs.length) / 0.32));
                     u.mats.forEach((m) => (m.opacity = (0.55 + Math.random() * 0.45) * (1 - fade)));
                     if (u.t >= u.dur)
+                        kill();
+                }
+                else if (u.kind === "codebolt") { // ⌨️ แพ็กเก็ตโค้ดพุ่งเจาะเข้าเป้า
+                    const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+                    const tx = tp ? tp.x : u.sx, tz = tp ? tp.z : u.sz;
+                    const pcb = Math.min(1, u.t / u.dur), e31 = pcb * pcb;
+                    o.position.set(u.sx + (tx - u.sx) * e31, u.sy + (0.95 - u.sy) * e31, u.sz + (tz - u.sz) * e31);
+                    o.rotation.set(u.t * 9, Math.atan2(tx - u.sx, tz - u.sz), u.t * 6);
+                    if (pcb >= 1) {
+                        if (u.onHit) {
+                            try {
+                                u.onHit(tx, tz);
+                            }
+                            catch (e32) { }
+                        }
+                        kill();
+                    }
+                }
+                else if (u.kind === "firewall") { // 🛡️ กำแพงอิฐพลังงานล้อมตัว อิฐกะพริบไล่กัน
+                    const pfw = Math.min(1, u.t / u.dur);
+                    o.position.set(char.position.x, 0, char.position.z);
+                    o.rotation.y += d * 0.35;
+                    u.ring.rotation.z += d * 0.9;
+                    const f7 = Math.min(1, u.t / 0.25) * (1 - Math.pow(pfw, 4));
+                    u.bricks.forEach((br) => { br.o.scale.setScalar(0.92 + Math.sin(u.t * 3 + br.ph) * 0.08); });
+                    u.mats[0].opacity = 0.42 * f7 * (0.85 + Math.sin(u.t * 2.5) * 0.15);
+                    u.mats[1].opacity = 0.6 * f7;
+                    if (pfw >= 1)
+                        kill();
+                }
+                else if (u.kind === "glitch") { // 💥 หน้าต่าง ERROR เด้งรัวแล้วดับพร้อมกัน
+                    const pgl = Math.min(1, u.t / u.dur);
+                    if (!u.done && pgl >= 0.3) {
+                        u.done = true;
+                        if (u.onHit) {
+                            try {
+                                u.onHit(u.x, u.z);
+                            }
+                            catch (e33) { }
+                        }
+                    }
+                    u.panes.forEach((pn) => {
+                        const lp = Math.max(0, Math.min(1, (u.t - pn.dl) / 0.16));
+                        pn.a += d * 0.9;
+                        pn.o.scale.setScalar(lp * (0.85 + Math.sin(u.t * 26 + pn.dl * 40) * 0.15));
+                        pn.o.position.set(Math.cos(pn.a) * pn.r + (Math.random() - 0.5) * 0.12, pn.y + (Math.random() - 0.5) * 0.1, Math.sin(pn.a) * pn.r);
+                        pn.o.rotation.y = -pn.a + Math.PI / 2;
+                    });
+                    const f8 = 1 - Math.pow(pgl, 3);
+                    u.mats[0].opacity = 0.95 * f8;
+                    u.mats[1].opacity = 0.95 * f8;
+                    if (pgl >= 1)
+                        kill();
+                }
+                else if (u.kind === "coderain") { // 🟩 คอลัมน์อักขระไหลลงจนถึงพื้น
+                    const pcr = Math.min(1, u.t / u.dur);
+                    if (!u.done && pcr >= 0.45) {
+                        u.done = true;
+                        if (u.onHit) {
+                            try {
+                                u.onHit(u.x, u.z);
+                            }
+                            catch (e34) { }
+                        }
+                    }
+                    u.cols.forEach((cl) => {
+                        cl.o.position.y -= cl.sp * d;
+                        if (cl.o.position.y < 0.2)
+                            cl.o.position.y = cl.y0;
+                        cl.o.rotation.y = -Math.atan2(cl.o.position.x, cl.o.position.z) + Math.PI;
+                    });
+                    const f9 = Math.min(1, u.t / 0.12) * (1 - Math.pow(pcr, 2.6));
+                    u.mats[0].opacity = 0.85 * f9;
+                    u.mats[1].opacity = 0.95 * f9;
+                    if (pcr >= 1)
                         kill();
                 }
                 else if (u.kind === "stamp") { // 🖋️ ตราหมุนแล้วกระแทกประทับลงพื้น
@@ -30987,15 +31181,15 @@ function CherryAdventure() {
         // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
         const startSkillCast = (arch, col, focus, fire, beats) => {
             // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26, skyleap: 0.20, dragonbreath: 0.26, shadowspears: 0.20, meteordive: 0.28, stonepillar: 0.22, mountainarmor: 0.28, quakespear: 0.24, golemjudge: 0.30, rocketfist: 0.18, energyshield: 0.26, shouldercannon: 0.22, titanstomp: 0.26, railgun: 0.34, dronelock: 0.22, blackhole: 0.28, satellite: 0.36, meteorcall: 0.34, frostrain: 0.24, thunderjudge: 0.30, naturecata: 0.30, lightjudge: 0.28, blessing: 0.30, bindchain: 0.26, holytide: 0.28, coffee: 0.24, papertornado: 0.26, laptopsmash: 0.22, overtime: 0.26, ceoorder: 0.30, signorder: 0.26, boardmeeting: 0.22, pinkslip: 0.26, corptitan: 0.30 };
-            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70, spearpierce: 0.18, spearstorm: 0.36, earthspear: 0.22, dragoncharge: 0.20, frostlance: 0.24, skyleap: 0.20, dragonbreath: 0.30, shadowspears: 0.46, meteordive: 0.24, stonepillar: 0.22, mountainarmor: 0.26, quakespear: 0.40, golemjudge: 0.55, rocketfist: 0.42, energyshield: 0.24, shouldercannon: 0.52, titanstomp: 0.24, railgun: 0.18, dronelock: 0.50, blackhole: 0.30, satellite: 0.42, meteorcall: 0.30, frostrain: 0.46, thunderjudge: 0.55, naturecata: 0.52, lightjudge: 0.44, blessing: 0.26, bindchain: 0.28, holytide: 0.48, coffee: 0.30, papertornado: 0.46, laptopsmash: 0.16, overtime: 0.28, ceoorder: 0.46, signorder: 0.28, boardmeeting: 0.46, pinkslip: 0.24, corptitan: 0.46 };
+            const CHG = { cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26, skyleap: 0.20, dragonbreath: 0.26, shadowspears: 0.20, meteordive: 0.28, stonepillar: 0.22, mountainarmor: 0.28, quakespear: 0.24, golemjudge: 0.30, rocketfist: 0.18, energyshield: 0.26, shouldercannon: 0.22, titanstomp: 0.26, railgun: 0.34, dronelock: 0.22, blackhole: 0.28, satellite: 0.36, meteorcall: 0.34, frostrain: 0.24, thunderjudge: 0.30, naturecata: 0.30, lightjudge: 0.28, blessing: 0.30, bindchain: 0.26, holytide: 0.28, coffee: 0.24, papertornado: 0.26, laptopsmash: 0.22, overtime: 0.26, ceoorder: 0.30, signorder: 0.26, boardmeeting: 0.22, pinkslip: 0.26, corptitan: 0.30, codeinject: 0.18, firewall: 0.26, aidrone: 0.22, systemcrash: 0.28, matrixrain: 0.26 };
+            const REL = { smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70, spearpierce: 0.18, spearstorm: 0.36, earthspear: 0.22, dragoncharge: 0.20, frostlance: 0.24, skyleap: 0.20, dragonbreath: 0.30, shadowspears: 0.46, meteordive: 0.24, stonepillar: 0.22, mountainarmor: 0.26, quakespear: 0.40, golemjudge: 0.55, rocketfist: 0.42, energyshield: 0.24, shouldercannon: 0.52, titanstomp: 0.24, railgun: 0.18, dronelock: 0.50, blackhole: 0.30, satellite: 0.42, meteorcall: 0.30, frostrain: 0.46, thunderjudge: 0.55, naturecata: 0.52, lightjudge: 0.44, blessing: 0.26, bindchain: 0.28, holytide: 0.48, coffee: 0.30, papertornado: 0.46, laptopsmash: 0.16, overtime: 0.28, ceoorder: 0.46, signorder: 0.28, boardmeeting: 0.46, pinkslip: 0.24, corptitan: 0.46, codeinject: 0.30, firewall: 0.24, aidrone: 0.48, systemcrash: 0.28, matrixrain: 0.50 };
             const chg = CHG[arch] != null ? CHG[arch] : 0.15;
             const rel = REL[arch] != null ? REL[arch] : 0.16;
             const rush = !!ARCH_RUSH[arch] || arch === "star"; // สายประชิดเท่านั้นที่พุ่งเข้าหา
             const dsh = arch === "star" ? 0.5 : arch === "meteordive" ? 0.30 : arch === "titanstomp" ? 0.28 : arch === "skyleap" ? 0.26 : arch === "dragoncharge" ? 0.16 : rush ? (arch === "backstab" ? 0.10 : 0.11) : 0; // ช่วงพุ่ง · ดาว 5 แฉกใช้เวลาวิ่งครบรูป
             const hold = 0.14, rec = 0.06; // ค้างท่าจบ + คืนท่า (สั้นลงให้ต่อท่าถัดไปได้ไว)
             const B = beats || {};
-            G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, crusadeFire: B.crusadeFire, cuN: 0, judgeFire: B.judgeFire, jdN: 0, armyFire: B.armyFire, hyN: 0, axeComboFire: B.axeComboFire, axN: 0, bloodFire: B.bloodFire, blN: 0, splitFire: B.splitFire, spN: 0, stormFire: B.stormFire, stN: 0, sweepFire: B.sweepFire, swN: 0, spearsFire: B.spearsFire, ssN: 0, quake2Fire: B.quake2Fire, qkN: 0, golemFire: B.golemFire, glN: 0, fistFire: B.fistFire, rfN: 0, cannonFire: B.cannonFire, mcN: 0, droneFire: B.droneFire, drN: 0, frostRainFire: B.frostRainFire, frN: 0, thunderFire: B.thunderFire, thN: 0, cataFire: B.cataFire, ctN: 0, judgeLightFire: B.judgeLightFire, jlN: 0, tideFire: B.tideFire, tdN: 0, paperFire: B.paperFire, ppN: 0, ceoFire: B.ceoFire, ceN: 0, boardFire: B.boardFire, bmN: 0, titanFire: B.titanFire, ctnN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
+            G._skCast = { arch, col, fire, starHit: B.starHit, shadowFire: B.shadowFire, knifeFire: B.knifeFire, magicFire: B.magicFire, hawkFire: B.hawkFire, hkN: 0, poisonRainFire: B.poisonRainFire, pvN: 0, wolfFire: B.wolfFire, wfN: 0, crusadeFire: B.crusadeFire, cuN: 0, judgeFire: B.judgeFire, jdN: 0, armyFire: B.armyFire, hyN: 0, axeComboFire: B.axeComboFire, axN: 0, bloodFire: B.bloodFire, blN: 0, splitFire: B.splitFire, spN: 0, stormFire: B.stormFire, stN: 0, sweepFire: B.sweepFire, swN: 0, spearsFire: B.spearsFire, ssN: 0, quake2Fire: B.quake2Fire, qkN: 0, golemFire: B.golemFire, glN: 0, fistFire: B.fistFire, rfN: 0, cannonFire: B.cannonFire, mcN: 0, droneFire: B.droneFire, drN: 0, frostRainFire: B.frostRainFire, frN: 0, thunderFire: B.thunderFire, thN: 0, cataFire: B.cataFire, ctN: 0, judgeLightFire: B.judgeLightFire, jlN: 0, tideFire: B.tideFire, tdN: 0, paperFire: B.paperFire, ppN: 0, ceoFire: B.ceoFire, ceN: 0, boardFire: B.boardFire, bmN: 0, titanFire: B.titanFire, ctnN: 0, injectFire: B.injectFire, ciN: 0, aiDroneFire: B.aiDroneFire, adN: 0, matrixFire: B.matrixFire, mxN: 0, magicDone: false, focus, chg, dsh, rel, rec, fireT: chg + dsh, dur: chg + dsh + rel + hold + rec, t: 0, fired: false, lunge: 0, dashed: false, ghT: 0, leg: 0, shN: 0, kN: 0 };
             ensureCastFx();
             worldSwing(true); // รีเซ็ตคอมโบ + แรงปลิวผ้า (ไม่ใช้ท่าฟันของมันแล้ว)
             G._worldSwingT = 0;
@@ -31215,6 +31409,112 @@ function CherryAdventure() {
                 if (!out.length && wilds.indexOf(focus) >= 0)
                     out.push(focus);
                 return out;
+            };
+            // ⌨️ ฉีดโค้ด — ยิงแพ็กเก็ตโค้ดเจาะระบบทีละนัด 2 นัด ลดป้องกันเป้า
+            const injectFire = arch !== "codeinject" ? null : (idx) => {
+                const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 3);
+                if (!tgt)
+                    return;
+                spawnCodeBolt(idx, tgt, col, (hx, hz) => {
+                    const at = new THREE.Vector3(hx, 0.95, hz);
+                    applyDmg(tgt, 1 / 2);
+                    tgt.userData.vuln = Math.min(0.4, (tgt.userData.vulnT > 0 ? (tgt.userData.vuln || 0) : 0) + 0.15); // 🔓 ลดป้องกันสะสม
+                    tgt.userData.vulnT = 8;
+                    monGlow(tgt, 0x9fe8ff, 0.8);
+                    fireSlash(at, col);
+                    burst(at, col, 0.75);
+                    G._camShake = Math.max(G._camShake || 0, 0.18);
+                });
+                if (idx === 0)
+                    toast(`${sk.emoji || "⌨️"} ${sk.name} — ฉีดโค้ดเจาะระบบ ×2 · ลดป้องกัน!`);
+            };
+            // 🛡️ ไฟร์วอลล์ — ตั้งกำแพงอิฐพลังงานล้อมตัว ป้องกัน + ฟื้นต่อเนื่อง
+            const wallFire = arch !== "firewall" ? null : () => {
+                const lvc = G.player.level || 1, mx = effMaxHp();
+                G.wDef = Math.max(G.wDef || 0, Math.round(7 * (1 + lvc * 0.3)));
+                G.wDefT = 14;
+                G.wShield = Math.max(G.wShield || 0, Math.round(14 * (1 + lvc * 0.3)));
+                G.wShieldT = 14;
+                G.wRegen = { t: 12, hp: Math.max(3, Math.round(mx * 0.025)), next: 1.0 };
+                const hl = Math.round(mx * 0.2);
+                G.player.hp = Math.min(mx, G.player.hp + hl);
+                popDamage(char.position, hl, "heal");
+                spawnFirewall(col, 14);
+                spawnHolyRing(char.position.x, char.position.z, col, 2.4);
+                burst(new THREE.Vector3(char.position.x, 1.2, char.position.z), col, 1.1);
+                syncPlayer();
+                toast(`${sk.emoji || "🛡️"} ${sk.name} — ตั้งไฟร์วอลล์! ป้องกัน +${G.wDef} · ฟื้นต่อเนื่อง 12 วิ`);
+            };
+            // 🤖 โดรน AI — ปล่อยโดรนบินล้อมยิงเลเซอร์รัว 4 ชุด + เพิ่มคริ
+            const aiDroneFire = arch !== "aidrone" ? null : (idx) => {
+                const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 4);
+                if (!tgt)
+                    return;
+                if (idx === 0) {
+                    for (let k = 0; k < 4; k++)
+                        spawnCombatDrone(k, tgt, col, 1.3);
+                    G.wCrit = Math.max(G.wCrit || 0, 10);
+                    G.wCritT = 12;
+                    toast(`${sk.emoji || "🤖"} ${sk.name} — โดรน AI ยิงเลเซอร์ ×4 · คริ +10%!`);
+                }
+                const grp = wildsInRadius(tgt.position.x, tgt.position.z, 2.5);
+                (grp.length ? grp : [tgt]).forEach((m) => {
+                    applyDmg(m, 1 / 4);
+                    fireSlash(new THREE.Vector3(m.position.x, 0.95, m.position.z), col);
+                    burst(new THREE.Vector3(m.position.x, 0.95, m.position.z), col, 0.55);
+                });
+                spawnHolyRing(tgt.position.x, tgt.position.z, col, 1.6);
+                G._camShake = Math.max(G._camShake || 0, 0.15);
+            };
+            // 💥 ระบบล่ม — ยิงคำสั่งล่มระบบ หน้าต่าง ERROR เด้งรัว แช่แข็ง + สตัน + สับสน
+            const crashFire = arch !== "systemcrash" ? null : () => {
+                const at = focus.position;
+                spawnGlitchBurst(at.x, at.z, col, (hx, hz) => {
+                    spawnHolyRing(hx, hz, col, 3.8);
+                    const hit = wildsInRadius(hx, hz, 3.6);
+                    hit.forEach((m) => {
+                        applyDmg(m);
+                        m.userData.frzT = Math.max(m.userData.frzT || 0, 2.2); // 🧊 แช่แข็ง + สตัน (ระบบค้าง)
+                        m.userData.slow = 0.5;
+                        m.userData.slowT = 8;
+                        m.userData.blind = 0.45;
+                        m.userData.blindT = 9; // 😵 สับสน — เล็งพลาด
+                        m.userData.atkSlow = 0.7;
+                        m.userData.atkSlowT = 9;
+                        m.userData.vuln = Math.max(m.userData.vulnT > 0 ? (m.userData.vuln || 0) : 0, 0.3);
+                        m.userData.vulnT = 8;
+                        monGlow(m, 0xff8ab0, 1.1);
+                        burst(new THREE.Vector3(m.position.x, 1.0, m.position.z), col, 1.05);
+                    });
+                    G._camShake = Math.max(G._camShake || 0, 0.6);
+                    G._hitStop = Math.max(G._hitStop || 0, 0.08);
+                    toast(`${sk.emoji || "💥"} ${sk.name} — ระบบล่ม ${hit.length} ตัว! แช่แข็ง + สตัน + สับสน`);
+                });
+            };
+            // 🟩 เมทริกซ์ — ฝนโค้ดเขียวถล่มทีละระลอก 5 ระลอก ช้าลง + กัดกร่อนระบบ
+            const matrixFire = arch !== "matrixrain" ? null : (idx) => {
+                const at = focus.position, cxe = at.x, cze = at.z;
+                let group = wildsInRadius(cxe, cze, 4.2);
+                if (!group.length)
+                    group = wilds.indexOf(focus) >= 0 ? [focus] : [];
+                const m = group.length ? group[idx % group.length] : null;
+                const txe = m ? m.position.x : cxe + (Math.random() - 0.5) * 3;
+                const tze = m ? m.position.z : cze + (Math.random() - 0.5) * 3;
+                spawnCodeRain(txe, tze, col, (hx, hz) => {
+                    wildsInRadius(hx, hz, 2.6).forEach((mm11) => {
+                        applyDmg(mm11, 1 / 5);
+                        applyDot(mm11, "corrode", Math.max(2, Math.round(base * 0.05)), 4.0, 0x2ae84a); // 🟩 กัดกร่อนระบบ
+                        mm11.userData.slow = 0.45;
+                        mm11.userData.slowT = 9; // 🐌 ช้าลง
+                        mm11.userData.vuln = Math.max(mm11.userData.vulnT > 0 ? (mm11.userData.vuln || 0) : 0, 0.28);
+                        mm11.userData.vulnT = 9;
+                        monGlow(mm11, 0x8affa0, 0.9);
+                        burst(new THREE.Vector3(mm11.position.x, 0.95, mm11.position.z), col, 0.8);
+                    });
+                    G._camShake = Math.max(G._camShake || 0, 0.22);
+                });
+                if (idx === 0)
+                    toast(`${sk.emoji || "🟩"} ${sk.name} — ฝนโค้ดถล่ม ×5 · ช้าลง + กัดกร่อนระบบ!`);
             };
             // 🖋️ เซ็นคำสั่งฟ้าผ่า — เซ็นกลางอากาศ ตราสายฟ้าทองประทับลงทัณฑ์ AoE + เพิ่มพลังโจมตีให้ตัวเอง
             const signFire = arch !== "signorder" ? null : () => {
@@ -32525,6 +32825,14 @@ function CherryAdventure() {
                     if (rainFire)
                         rainFire(); // 💥 ดาเมจลงตอนลูกธนูแต่ละดอกปัก
                 }
+                else if (arch === "firewall") {
+                    if (wallFire)
+                        wallFire(); // 🛡️ ตั้งกำแพง + ฟื้นต่อเนื่อง
+                }
+                else if (arch === "systemcrash") {
+                    if (crashFire)
+                        crashFire(); // 💥 ระบบล่มทั้งวง
+                }
                 else if (arch === "signorder") {
                     if (signFire)
                         signFire(); // 🖋️ ตราประทับลงทัณฑ์ + บัฟพลังโจมตี
@@ -32628,7 +32936,7 @@ function CherryAdventure() {
                 else if (arch === "hawk" || arch === "poisonvolley" || arch === "wolfcall" || arch === "crusade" || arch === "judgement" || arch === "holyarmy"
                     || arch === "axecombo" || arch === "bloodrage" || arch === "groundsplit" || arch === "axestorm" || arch === "spearstorm" || arch === "shadowspears" || arch === "quakespear" || arch === "golemjudge" || arch === "rocketfist" || arch === "shouldercannon" || arch === "dronelock"
                     || arch === "frostrain" || arch === "thunderjudge" || arch === "naturecata"
-                    || arch === "lightjudge" || arch === "holytide" || arch === "papertornado" || arch === "ceoorder" || arch === "boardmeeting" || arch === "corptitan") {
+                    || arch === "lightjudge" || arch === "holytide" || arch === "papertornado" || arch === "ceoorder" || arch === "boardmeeting" || arch === "corptitan" || arch === "codeinject" || arch === "aidrone" || arch === "matrixrain") {
                     /* 🦅🍃🐺✝️🌟👼🪓🩸💢🌪️ ดาเมจลงทีละชุดตามจังหวะของท่า — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
                 }
                 else if (tgt) {
@@ -32643,7 +32951,7 @@ function CherryAdventure() {
                 if (G.sfx)
                     G.sfx.skill && G.sfx.skill();
                 syncPlayer();
-            }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire, crusadeFire, judgeFire, armyFire, axeComboFire, bloodFire, splitFire, stormFire, sweepFire, spearsFire, quake2Fire, golemFire, fistFire, cannonFire, droneFire, frostRainFire, thunderFire, cataFire, judgeLightFire, tideFire, paperFire, ceoFire, boardFire, titanFire });
+            }, { starHit, shadowFire, knifeFire, magicFire, hawkFire, poisonRainFire, wolfFire, crusadeFire, judgeFire, armyFire, axeComboFire, bloodFire, splitFire, stormFire, sweepFire, spearsFire, quake2Fire, golemFire, fistFire, cannonFire, droneFire, frostRainFire, thunderFire, cataFire, judgeLightFire, tideFire, paperFire, ceoFire, boardFire, titanFire, injectFire, aiDroneFire, matrixFire });
         };
         // player fell in the open world
         G.worldFaint = () => {
@@ -40713,6 +41021,73 @@ function CherryAdventure() {
                             legL.rotation.x = 0.16 * ce * ease;
                             legR.rotation.x = -0.16 * ce * ease;
                         }
+                        else if (arch === "codeinject") {
+                            // ⌨️ ฉีดโค้ด — ยกคีย์บอร์ดขึ้นระดับอก รัวนิ้วพิมพ์ แล้วสะบัดข้อมือยิงแพ็กเก็ตออกไปสลับข้าง 2 นัด
+                            const bt5 = rp * 2, bi5 = Math.floor(bt5), bf5 = bt5 - bi5;
+                            const push2 = smK(Math.min(1, bf5 * 2.0)), sd5 = bi5 % 2 ? -1 : 1;
+                            armR.rotation.x = (-1.32 - 0.22 * ce - (sd5 > 0 ? 0.5 * push2 : 0)) * ease;
+                            armR.rotation.z = (0.26 + 0.12 * ce - (sd5 > 0 ? 0.36 * push2 : 0)) * ease;
+                            armL.rotation.x = (-1.32 - 0.22 * ce - (sd5 < 0 ? 0.5 * push2 : 0)) * ease;
+                            armL.rotation.z = (-0.26 - 0.12 * ce + (sd5 < 0 ? 0.36 * push2 : 0)) * ease;
+                            twist = (sd5 * 0.22 * push2) * ease;
+                            headPitch = (0.2 * ce - 0.14 * push2) * ease; // ก้มจ้องจอ
+                            rise = -0.06 * ce * ease;
+                            lean = (0.08 * ce + 0.12 * push2) * ease;
+                        }
+                        else if (arch === "firewall") {
+                            // 🛡️ ไฟร์วอลล์ — พิมพ์คำสั่งรัว แล้วผายมือสองข้างลงกางกำแพงล้อมตัว ยืนลงน้ำหนักมั่นคง
+                            const up3 = smK(Math.min(1, rp * 1.4));
+                            armR.rotation.x = (-1.3 - 0.7 * ce + 0.75 * up3) * ease;
+                            armR.rotation.z = (0.34 + 0.5 * ce + 0.5 * up3) * ease;
+                            armL.rotation.x = (-1.3 - 0.7 * ce + 0.75 * up3) * ease;
+                            armL.rotation.z = (-0.34 - 0.5 * ce - 0.5 * up3) * ease;
+                            headPitch = (-0.2 * ce + 0.16 * up3) * ease;
+                            rise = (0.14 * ce - 0.16 * up3) * ease;
+                            lean = (-0.08 * ce + 0.06 * up3) * ease;
+                            legL.rotation.x = 0.2 * up3 * ease;
+                            legR.rotation.x = -0.2 * up3 * ease;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 0.45 * up3 * ease;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = 0.45 * up3 * ease;
+                        }
+                        else if (arch === "aidrone") {
+                            // 🤖 โดรน AI — ชูมือขึ้นปล่อยโดรนออกไป แล้วยกมือค้างล็อกเป้า เคาะนิ้วสั่งยิงเป็นจังหวะ
+                            const v9 = Math.max(0, Math.sin(rp * Math.PI * 4));
+                            armR.rotation.x = (-1.6 - 0.55 * ce - 0.18 * v9) * ease;
+                            armR.rotation.z = (0.3 + 0.32 * ce - 0.2 * v9) * ease;
+                            armL.rotation.x = (-1.15 - 0.3 * ce) * ease;
+                            armL.rotation.z = (-0.45 - 0.14 * ce) * ease;
+                            headPitch = (-0.32 * ce - 0.06 * v9) * ease;
+                            rise = (0.14 * ce + 0.04 * v9) * ease;
+                            lean = -0.08 * ce * ease;
+                        }
+                        else if (arch === "systemcrash") {
+                            // 💥 ระบบล่ม — รัวคีย์บอร์ดเร็วขึ้นเรื่อย ๆ แล้วกระแทกปุ่ม ENTER ทีเดียวจบ เอนตัวรับแรงระบบพัง
+                            const ent = smK(Math.min(1, rp * 1.9));
+                            armR.rotation.x = (-1.25 - 0.45 * ce + 0.95 * ent) * ease;
+                            armR.rotation.z = (0.24 + 0.14 * ce - 0.2 * ent) * ease;
+                            armL.rotation.x = (-1.25 - 0.45 * ce + 0.35 * ent) * ease;
+                            armL.rotation.z = (-0.24 - 0.14 * ce) * ease;
+                            headPitch = (0.18 * ce - 0.4 * ent) * ease; // ก้มจ้องจอ แล้วเงยตอนระบบล่ม
+                            rise = (-0.1 * ce + 0.16 * ent) * ease;
+                            lean = (0.14 * ce - 0.28 * ent) * ease;
+                            if (rp > 0 && !S.shook) {
+                                S.shook = 1;
+                                G._camShake = Math.max(G._camShake || 0, 0.5);
+                            }
+                        }
+                        else if (arch === "matrixrain") {
+                            // 🟩 เมทริกซ์ — ผายมือขึ้นฟ้าเปิดสตรีมข้อมูล แหงนหน้ามองโค้ดไหลลง แล้วกวาดมือส่งฝนโค้ดทีละระลอก
+                            const v10 = Math.max(0, Math.sin(rp * Math.PI * 5));
+                            armR.rotation.x = (-1.62 - 1.15 * ce + 0.4 * v10) * ease;
+                            armR.rotation.z = (0.3 + 0.28 * ce - 0.3 * v10) * ease;
+                            armL.rotation.x = (-1.62 - 1.15 * ce + 0.4 * v10) * ease;
+                            armL.rotation.z = (-0.3 - 0.28 * ce + 0.3 * v10) * ease;
+                            headPitch = (-0.5 * ce - 0.08 * v10) * ease;
+                            rise = (0.24 * ce + 0.05 * v10) * ease;
+                            lean = (-0.24 * ce + 0.1 * v10) * ease;
+                        }
                         else if (arch === "spin") {
                             // 🌀 ฟันวงกว้าง/กวาดหอก/เพลงดาบจันทรา — กางอาวุธออกข้าง แล้วหมุนตัวครบรอบ
                             armR.rotation.x = (-0.15 - 0.5 * ce - 0.3 * rel) * ease;
@@ -40927,6 +41302,31 @@ function CherryAdventure() {
                                 if (S.knifeFire)
                                     S.knifeFire(S.kN);
                                 S.kN++;
+                            }
+                        }
+                        // ⌨️ ฉีดโค้ด — ยิงแพ็กเก็ต 2 นัดสลับข้าง
+                        if (arch === "codeinject" && S.t >= S.chg && S.ciN < 2) {
+                            const ib = [0, 0.45];
+                            while (S.ciN < 2 && rp >= ib[S.ciN]) {
+                                if (S.injectFire)
+                                    S.injectFire(S.ciN);
+                                S.ciN++;
+                            }
+                        }
+                        // 🤖 โดรน AI — ยิงเลเซอร์รัวทีละชุด 4 ชุด
+                        if (arch === "aidrone" && S.t >= S.chg && S.adN < 4) {
+                            while (S.adN < 4 && rp >= S.adN * 0.22) {
+                                if (S.aiDroneFire)
+                                    S.aiDroneFire(S.adN);
+                                S.adN++;
+                            }
+                        }
+                        // 🟩 เมทริกซ์ — ฝนโค้ดถล่มทีละระลอก 5 ระลอก
+                        if (arch === "matrixrain" && S.t >= S.chg && S.mxN < 5) {
+                            while (S.mxN < 5 && rp >= S.mxN * 0.17) {
+                                if (S.matrixFire)
+                                    S.matrixFire(S.mxN);
+                                S.mxN++;
                             }
                         }
                         // 📊 ประชุมด่วนนรก — วาระประชุมทีละวาระ 4 วาระ
