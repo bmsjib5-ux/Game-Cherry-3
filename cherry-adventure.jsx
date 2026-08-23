@@ -35598,6 +35598,255 @@ export default function CherryAdventure() {
                 sh.scale.setScalar(big ? 2.2 : 0.9 + Math.random() * 0.5);
                 sh.material.opacity = 1; sh.material.color.setHex(col);
               };
+              // 👑 อัลติขั้นสูงประจำสาย — คนละซีนีมาติกกับท่าไม้ตายพื้นฐาน
+              const ultKind = A.advU ? (G.pathId === "b_muay" ? "muay" : "king") : "base";
+              if (ultKind === "king") {
+                // 🥊👑 หมัดสังหารราชันสังเวียน — เปิดสังเวียนทองคำ รัวหมัดเป็นพันนัดจนอากาศแตก ปิดด้วยหมัดน็อกเอาต์
+                if (!BX.king) {
+                  const K = { fx: new THREE.Group(), posts: [], ropes: [], ghosts: [], lastBeat: -1 };
+                  const kMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                  for (let i = 0; i < 4; i++) {                                              // 🏟️ เสามุมสังเวียน 4 ต้น
+                    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 2.3, 8), kMat(gold));
+                    const a = Math.PI / 4 + i * (Math.PI / 2);
+                    post.position.set(battleCenter.x + Math.cos(a) * 3.5, 1.15, battleCenter.z + Math.sin(a) * 3.5);
+                    K.fx.add(post); K.posts.push(post);
+                  }
+                  for (let i = 0; i < 3; i++) {                                              // 🪢 เชือกสังเวียน 3 ชั้น
+                    const rope = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.05, 8, 44), kMat(i === 1 ? white : gold));
+                    rope.rotation.x = Math.PI / 2; rope.position.set(battleCenter.x, 0.72 + i * 0.55, battleCenter.z);
+                    K.fx.add(rope); K.ropes.push(rope);
+                  }
+                  const crown = new THREE.Group();                                           // 👑 มงกุฎแชมป์ลอยเหนือหัว
+                  const band = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.085, 8, 22), kMat(gold)); band.rotation.x = Math.PI / 2; crown.add(band);
+                  for (let k = 0; k < 5; k++) { const a2 = (k / 5) * Math.PI * 2; const sp2 = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.38, 6), kMat(k % 2 ? white : gold)); sp2.position.set(Math.cos(a2) * 0.4, 0.26, Math.sin(a2) * 0.4); crown.add(sp2); }
+                  K.fx.add(crown); K.crown = crown;
+                  const spot = new THREE.Mesh(new THREE.ConeGeometry(1.9, 7, 18, 1, true), kMat(0xfff6d0)); // 🔦 สปอตไลต์กลางเวที
+                  spot.material.side = THREE.DoubleSide;
+                  K.fx.add(spot); K.spot = spot;
+                  for (let i = 0; i < 10; i++) { const gh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), kMat(i % 2 ? white : gold)); gh.scale.set(1, 1.05, 1.3); K.fx.add(gh); K.ghosts.push(gh); }
+                  BX.fx.add(K.fx); BX.king = K;
+                }
+                const K = BX.king;
+                const crownAll = (fn) => K.crown.children.forEach(fn);
+                char.rotation.y = Math.PI / 2;
+                if (p < 0.14) {
+                  // ============ 🏟️ เปิดสังเวียนทองคำ (0 → 14%) ============
+                  const cp = p / 0.14; G._ultCamOrbit = cp * 0.25;
+                  char.position.set(CX(), 0, CZ()); char.rotation.z = 0;
+                  armR.rotation.x = -1.45; armR.rotation.z = 0.48; armL.rotation.x = -1.45; armL.rotation.z = -0.48; // 🥊 การ์ดแชมป์
+                  legL.rotation.x = 0.2 * cp; legR.rotation.x = -0.2 * cp;
+                  K.posts.forEach((po) => { po.material.opacity = cp * 0.85; po.scale.y = cp; po.position.y = 1.15 * cp; });
+                  K.ropes.forEach((r, i) => { r.material.opacity = Math.max(0, cp * 1.4 - i * 0.2) * 0.8; r.scale.setScalar(0.6 + Math.min(1, cp * 1.3) * 0.4); });
+                  K.spot.position.set(CX(), 3.4, CZ()); K.spot.material.opacity = cp * 0.24;
+                  K.crown.position.set(CX(), 2.6 + Math.sin(t * 2) * 0.1, CZ()); K.crown.rotation.y = t * 1.6;
+                  crownAll((c) => (c.material.opacity = cp * 0.9));
+                  magicCircle.visible = true; magicCircle.position.set(CX(), 0.06, CZ()); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.2 + cp * 1.4);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.4 + si) * (si % 2 ? -1 : 1); st.children.forEach((c) => { c.material.opacity = Math.min(1, cp * 1.6); c.material.color.setHex(si === 0 ? gold : white); }); });
+                  if (Math.random() < 0.4) burst(new THREE.Vector3(battleCenter.x + (Math.random() - 0.5) * 6, 0, battleCenter.z + (Math.random() - 0.5) * 6), gold, 0.4 + Math.random() * 1.4);
+                } else if (p < 0.24) {
+                  // ============ 💨 พุ่งเข้ากลางเวที (14 → 24%) ============
+                  const cp = (p - 0.14) / 0.10, e = 1 - Math.pow(1 - cp, 3);
+                  magicCircle.visible = false;
+                  char.position.x = CX() + e * (EP.x - CX() - 1.15); char.position.y = 0; char.rotation.z = -0.14 * cp;
+                  armR.rotation.x = -1.5; armL.rotation.x = -1.5;
+                  K.spot.position.x = char.position.x;
+                  K.crown.position.set(char.position.x, 2.6, CZ());
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(char.position.x - 0.5, 0.5 + Math.random(), CZ()), gold, 0.4);
+                } else if (p < 0.78) {
+                  // ============ 👊 รัวหมัดเป็นพันนัดจนอากาศแตก (24 → 78%) ============
+                  const cp = (p - 0.24) / 0.54;
+                  const N = 24, bt = cp * N, bi = Math.min(N - 1, Math.floor(bt)), u = Math.min(1, (bt - bi) * 2.6), side = bi % 2 ? -1 : 1;
+                  char.position.x = EP.x - 1.15; char.position.y = Math.abs(Math.sin(t * 12)) * 0.04; char.rotation.z = side * 0.05;
+                  const AR = side > 0 ? armR : armL, AL = side > 0 ? armL : armR;
+                  AL.rotation.x = -1.5; AL.rotation.z = side > 0 ? -0.46 : 0.46;               // มืออีกข้างการ์ดตลอด
+                  AR.rotation.x = -1.45 - 1.08 * u; AR.rotation.z = side > 0 ? 0.44 - 0.4 * u : -0.44 + 0.4 * u;
+                  K.ghosts.forEach((gh) => {                                                   // 👊 หมัดเร็วจนเห็นเป็นเงาเต็มอากาศ
+                    gh.position.set(EP.x - 0.5 + (Math.random() - 0.5) * 1.3, 0.6 + Math.random() * 1.6, EP.z + (Math.random() - 0.5) * 1.1);
+                    gh.rotation.z = Math.PI / 2; gh.material.opacity = 0.25 + Math.random() * 0.55;
+                  });
+                  K.crown.position.set(char.position.x, 2.55, CZ()); K.crown.rotation.y = t * 2.2;
+                  K.ropes.forEach((r, i) => { r.material.opacity = 0.55 + Math.sin(t * 6 + i) * 0.15; });
+                  if (u > 0.5 && K.lastBeat !== bi) {
+                    K.lastBeat = bi;
+                    punchFx(bi % 3 === 2 ? gold : white, bi % 6 === 5);                        // 💥 อากาศแตกเป็นคลื่น
+                    if (bi % 2 === 0) { BX.struck++; applyHit(roll() * 0.11, gold); em.position.x = EP.x + 0.05 * side; }
+                    if (bi % 4 === 0 && G.sfx && G.sfx.hit) G.sfx.hit();
+                    G._camShake = Math.max(G._camShake || 0, 0.2 + cp * 0.25);
+                  }
+                } else if (p < 0.88) {
+                  // ============ 👑 มงกุฎลงสวมหัว — บิดตัวเก็บหมัดน็อก (78 → 88%) ============
+                  const cp = (p - 0.78) / 0.10;
+                  K.ghosts.forEach((gh) => (gh.material.opacity = Math.max(0, gh.material.opacity - 0.08)));
+                  char.position.x = EP.x - 1.15 - cp * 0.8; char.position.y = 0;
+                  char.rotation.y = Math.PI / 2 + cp * 1.0; char.rotation.z = 0.08 * cp;
+                  armR.rotation.x = -0.6 - 0.9 * cp; armR.rotation.z = 0.9 + 0.35 * cp;
+                  armL.rotation.x = -1.5; armL.rotation.z = -0.5;
+                  legL.rotation.x = 0.3 * cp; if (legL.userData.knee) legL.userData.knee.rotation.x = 0.6 * cp;
+                  K.crown.position.set(char.position.x, 2.55 - cp * 0.5, CZ());
+                  crownAll((c) => (c.material.opacity = 0.9 + cp * 0.1));
+                  if (Math.random() < 0.7) burst(new THREE.Vector3(char.position.x, 1 + Math.random() * 1.4, CZ()), Math.random() < 0.5 ? gold : white, 0.5 + Math.random());
+                  G._camShake = Math.max(G._camShake || 0, 0.2 + cp * 0.3);
+                  if (cp > 0.5 && !A._kingLine && G.speedLines) { A._kingLine = true; G.speedLines(850); }
+                } else {
+                  // ============ 💥 หมัดน็อกเอาต์ราชันสังเวียน (88 → 100%) ============
+                  const cp = (p - 0.88) / 0.12, e = 1 - Math.pow(1 - Math.min(1, cp * 2.1), 3);
+                  char.position.x = (EP.x - 1.95) + e * 1.15; char.position.y = 0;
+                  char.rotation.y = Math.PI / 2 + 1.0 - e * 1.75; char.rotation.z = 0.08 - e * 0.2;
+                  armR.rotation.x = -1.5 + e * 0.3; armR.rotation.z = 1.25 - e * 1.3;
+                  armL.rotation.x = -1.35; armL.rotation.z = -0.5;
+                  K.crown.position.set(char.position.x, 2.1, CZ());
+                  BX.fist.visible = true;                                                      // 🥊 กำปั้นยักษ์สีทองพุ่งตามหมัด
+                  BX.fist.position.set(char.position.x + 0.5 + e * (EP.x - char.position.x), 1.2, CZ());
+                  BX.fist.scale.setScalar(0.9 + e * 0.9); BX.fist.rotation.y = Math.PI / 2;
+                  BX.fist.children.forEach((c) => { c.material.color.setHex(gold); c.material.opacity = 0.9 * (1 - Math.max(0, cp - 0.5) / 0.5); });
+                  if (e > 0.55 && !A._kingKO) {
+                    A._kingKO = true; BX.struck++;
+                    punchFx(gold, true); punchFx(white, true);
+                    applyHit(roll() * 1.95, gold, " 👑 น็อกเอาต์!");
+                    spawnSkillFx("punchwave", EP, gold); spawnSkillFx("punchwave", EP, white); spawnSkillFx("kneeburst", EP, gold);
+                    G._camShake = 1.15; G._hitStop = Math.max(G._hitStop || 0, 0.16);
+                    if (G.speedLines) G.speedLines(700);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
+                    for (let k = 0; k < 30; k++) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 5, Math.random() * 3.8, EP.z + (Math.random() - 0.5) * 5), k % 2 ? gold : white, 0.6 + Math.random() * 2.4); // 🎊 คอนเฟตตีทองทั้งเวที
+                  }
+                  K.ropes.forEach((r, i) => { r.scale.setScalar(1 + e * (0.5 + i * 0.2)); r.material.opacity = Math.max(0, 0.7 - cp * 0.9); }); // 🪢 แรงหมัดดันเชือกสังเวียนแตกกระจาย
+                  K.posts.forEach((po) => (po.material.opacity = Math.max(0, 0.85 - cp * 1.1)));
+                  K.spot.material.opacity = Math.max(0, 0.24 - cp * 0.3);
+                  crownAll((c) => (c.material.opacity = Math.max(0, 1 - cp * 1.2)));
+                  G._camShake = Math.max(G._camShake || 0, 0.9 * (1 - cp));
+                }
+              } else if (ultKind === "muay") {
+                // 🐒🔥 หนุมานถวายแหวน — ไหว้ครู → ศอกเพลิงเปิดทาง → ทะยานขึ้นฟ้า → ดิ่งเข่าคู่ → ลงพื้นสะเทือนทั้งสนาม
+                if (!BX.muay) {
+                  const M = { fx: new THREE.Group(), pillars: [], lastBeat: -1 };
+                  const mMat = (c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                  const auraG = new THREE.Group();                                             // 🐒 ออร่าหนุมานทองหุ้มร่าง
+                  const bodyA = new THREE.Mesh(new THREE.ConeGeometry(1.0, 2.6, 12), mMat(aura)); bodyA.position.y = 1.3; auraG.add(bodyA);
+                  const halo = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.06, 8, 26), mMat(gold)); halo.rotation.x = Math.PI / 2; halo.position.y = 2.5; auraG.add(halo);
+                  for (const sx of [-1, 1]) { const wing = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.9, 4), mMat(ember)); wing.position.set(0, 1.5, sx * 0.8); wing.rotation.x = sx * 0.9; wing.scale.set(0.3, 1, 1); auraG.add(wing); } // 🔥 เปลวเพลิงกางสองข้าง
+                  M.fx.add(auraG); M.aura = auraG;
+                  for (let i = 0; i < 8; i++) {                                                // 🔥 เสาเพลิง 8 ต้นตอนลงพื้น
+                    const pil = new THREE.Mesh(new THREE.ConeGeometry(0.34, 2.6, 8), mMat(i % 2 ? ember : gold));
+                    pil.visible = false; M.fx.add(pil); M.pillars.push(pil);
+                  }
+                  const ringG = new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 8, 40), mMat(ember)); // 🌊 คลื่นกระแทกแผ่ตามพื้น
+                  ringG.rotation.x = Math.PI / 2; ringG.position.y = 0.1; M.fx.add(ringG); M.ring = ringG;
+                  BX.fx.add(M.fx); BX.muay = M;
+                }
+                const M = BX.muay;
+                if (p < 0.16) {
+                  // ============ 🙏 ไหว้ครูมวยไทย (0 → 16%) ============
+                  const cp = p / 0.16; G._ultCamOrbit = cp * 0.25;
+                  char.position.set(CX(), -0.3 * cp, CZ()); char.rotation.y = Math.PI / 2; char.rotation.z = 0; // คุกเข่าลง
+                  legL.rotation.x = -1.0 * cp; legR.rotation.x = 0.35 * cp;
+                  if (legL.userData.knee) legL.userData.knee.rotation.x = 1.5 * cp;
+                  if (legR.userData.knee) legR.userData.knee.rotation.x = 0.6 * cp;
+                  armR.rotation.x = -2.6 * cp; armR.rotation.z = 0.2;                          // 🙏 พนมมือเหนือหัว
+                  armL.rotation.x = -2.6 * cp; armL.rotation.z = -0.2;
+                  M.aura.position.set(CX(), 0, CZ()); M.aura.rotation.y = t * 1.2;
+                  M.aura.children.forEach((c) => (c.material.opacity = cp * 0.5));
+                  magicCircle.visible = true; magicCircle.position.set(CX(), 0.06, CZ()); magicCircle.rotation.x = Math.PI / 2; magicCircle.scale.setScalar(1.1 + cp * 1.3);
+                  magicCircle.userData.stars.forEach((st, si) => { st.rotation.z = t * (1.2 + si) * (si % 2 ? -1 : 1); st.children.forEach((c) => { c.material.opacity = Math.min(1, cp * 1.5); c.material.color.setHex(si === 0 ? ember : gold); }); });
+                  if (Math.random() < 0.5) burst(new THREE.Vector3(CX() + (Math.random() - 0.5) * 2, Math.random() * 2.4, CZ() + (Math.random() - 0.5) * 2), Math.random() < 0.5 ? gold : ember, 0.4 + Math.random() * 1.2);
+                } else if (p < 0.30) {
+                  // ============ 🔥 ศอกกลับเพลิงเปิดทาง ×3 (16 → 30%) ============
+                  const cp = (p - 0.16) / 0.14;
+                  magicCircle.visible = false;
+                  const ein = Math.min(1, cp * 2.5);
+                  char.position.x = CX() + ein * (EP.x - CX() - 1.1); char.position.y = 0;
+                  const bt = Math.max(0, cp - 0.35) / 0.65 * 3, bi = Math.min(2, Math.floor(bt)), u = Math.min(1, (bt - bi) * 2.2), side = bi % 2 ? -1 : 1;
+                  const AR = side > 0 ? armR : armL, AL2 = side > 0 ? armL : armR;
+                  AL2.rotation.x = -1.5; AL2.rotation.z = side > 0 ? -0.48 : 0.48;
+                  AR.rotation.x = -1.55 - 0.4 * u; AR.rotation.z = side > 0 ? 0.9 + 0.9 * u : -0.9 - 0.9 * u;   // 💥 ศอกกางกระแทกสลับข้าง
+                  char.rotation.y = Math.PI / 2 + side * u * 0.6;
+                  M.aura.position.set(char.position.x, 0, CZ()); M.aura.children.forEach((c) => (c.material.opacity = 0.4));
+                  if (cp > 0.35 && u > 0.55 && M.lastBeat !== bi) {
+                    M.lastBeat = bi; BX.struck++;
+                    punchFx(ember, false);
+                    applyHit(roll() * 0.15, ember);
+                    spawnSkillFx("kneeburst", EP, ember);
+                    G._camShake = Math.max(G._camShake || 0, 0.3);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
+                  }
+                } else if (p < 0.50) {
+                  // ============ 🐒 ทะยานขึ้นฟ้าพร้อมออร่าหนุมานเพลิง (30 → 50%) ============
+                  const cp = (p - 0.30) / 0.20, e = cp * cp * (3 - 2 * cp);
+                  G._ultCamOrbit = 0.25 + cp * 0.3;
+                  char.position.x = EP.x - 1.1 - cp * 0.4;
+                  char.position.y = e * 3.6; char.rotation.y = Math.PI / 2; char.rotation.z = -0.1 * cp;   // ⬆️ ลอยขึ้นสูง
+                  armR.rotation.x = -2.5 * e; armR.rotation.z = 0.26;                          // 🙏 พนมมือทะยาน
+                  armL.rotation.x = -2.5 * e; armL.rotation.z = -0.26;
+                  legL.rotation.x = -0.8 * e; legR.rotation.x = -0.8 * e;
+                  if (legL.userData.knee) legL.userData.knee.rotation.x = 1.2 * e;
+                  if (legR.userData.knee) legR.userData.knee.rotation.x = 1.2 * e;
+                  M.aura.position.set(char.position.x, char.position.y, CZ()); M.aura.rotation.y = t * 3;
+                  M.aura.children.forEach((c) => (c.material.opacity = 0.55 + Math.sin(t * 8) * 0.15));
+                  if (Math.random() < 0.85) burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 0.8, Math.max(0.2, char.position.y - 0.5 - Math.random()), CZ() + (Math.random() - 0.5) * 0.8), Math.random() < 0.5 ? ember : gold, 0.5); // 🔥 หางเพลิงตามตัว
+                } else if (p < 0.68) {
+                  // ============ 🦶 ดิ่งเข่าคู่ + ควงตัวกลางอากาศ (50 → 68%) ============
+                  const cp = (p - 0.50) / 0.18, e = 1 - Math.pow(1 - cp, 2);
+                  char.position.x = (EP.x - 1.5) + e * 0.9;
+                  char.position.y = 3.6 * (1 - e);                                             // ⬇️ ดิ่งลงใส่เป้า
+                  char.rotation.y = Math.PI / 2 + e * Math.PI * 2;                              // 🌀 ควงตัวหนึ่งรอบ
+                  char.rotation.z = 0.2 * (1 - e);
+                  armR.rotation.x = -1.9 + e * 0.6; armR.rotation.z = 0.9;
+                  armL.rotation.x = -1.9 + e * 0.6; armL.rotation.z = -0.9;
+                  legL.rotation.x = -2.1; legR.rotation.x = -2.1;                               // 🦵 เข่าคู่นำลง
+                  if (legL.userData.knee) legL.userData.knee.rotation.x = 1.7;
+                  if (legR.userData.knee) legR.userData.knee.rotation.x = 1.7;
+                  M.aura.position.set(char.position.x, char.position.y, CZ()); M.aura.rotation.y = t * 6;
+                  M.aura.children.forEach((c) => (c.material.opacity = 0.6));
+                  if (Math.random() < 0.9) burst(new THREE.Vector3(char.position.x, char.position.y + 0.6 + Math.random(), CZ()), ember, 0.6);
+                  if (e > 0.8 && !A._muayKnee) {
+                    A._muayKnee = true; BX.struck++;
+                    punchFx(ember, true);
+                    applyHit(roll() * 1.1, ember, " 🦶 เข่าคู่ถวายแหวน!");
+                    spawnSkillFx("kneeburst", EP, ember); spawnSkillFx("kneeburst", EP, gold);
+                    G._camShake = 0.9; G._hitStop = Math.max(G._hitStop || 0, 0.12);
+                    if (G.speedLines) G.speedLines(750);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
+                  }
+                } else {
+                  // ============ 🌋 ลงพื้นสะเทือนทั้งสนาม + ศอกกลับเพลิงปิดท้าย (68 → 100%) ============
+                  const cp = (p - 0.68) / 0.32;
+                  char.position.x = EP.x - 0.9; char.position.y = Math.max(0, 0.2 * (1 - cp * 3)); char.rotation.z = 0;
+                  const el = Math.min(1, Math.max(0, (cp - 0.25) / 0.35));
+                  char.rotation.y = Math.PI / 2 + el * Math.PI * 0.9;                           // 💥 หมุนศอกกลับปิดท้าย
+                  armR.rotation.x = -1.55 - 0.4 * el; armR.rotation.z = 0.9 + 0.9 * el;
+                  armL.rotation.x = -1.4; armL.rotation.z = -0.5;
+                  legL.rotation.x = 0.3 * (1 - cp); legR.rotation.x = -0.28 * (1 - cp);
+                  if (legL.userData.knee) legL.userData.knee.rotation.x = 0.8 * (1 - cp);
+                  if (legR.userData.knee) legR.userData.knee.rotation.x = 0.8 * (1 - cp);
+                  M.aura.children.forEach((c) => (c.material.opacity = Math.max(0, 0.6 - cp * 0.8)));
+                  M.pillars.forEach((pil, i) => {                                               // 🔥 วงเสาเพลิงผุดรอบจุดกระแทก
+                    const a = (i / 8) * Math.PI * 2;
+                    pil.visible = true;
+                    const k = Math.max(0, Math.min(1, cp * 2.4 - i * 0.1));
+                    pil.position.set(EP.x + Math.cos(a) * 1.8, 1.3 * k, EP.z + Math.sin(a) * 1.8);
+                    pil.scale.set(1, Math.max(0.001, k), 1);
+                    pil.material.opacity = k * Math.max(0, 1 - cp * 1.1) * 0.85;
+                  });
+                  M.ring.position.set(EP.x, 0.1, EP.z);
+                  M.ring.scale.setScalar(0.5 + cp * 4.2);
+                  M.ring.material.opacity = Math.max(0, 0.85 - cp * 1.0);
+                  if (cp < 0.2 && !A._muayLand) {
+                    A._muayLand = true; BX.struck++;
+                    applyHit(roll() * 0.75, gold, " 🌋 สะเทือนทั้งสนาม!");
+                    spawnSkillFx("kneeburst", EP, gold);
+                    G._camShake = 1.1;
+                    for (let k = 0; k < 22; k++) burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4.6, Math.random() * 3, EP.z + (Math.random() - 0.5) * 4.6), k % 2 ? ember : gold, 0.6 + Math.random() * 2);
+                  }
+                  if (el > 0.6 && !A._muayElbow) {
+                    A._muayElbow = true; BX.struck++;
+                    punchFx(gold, true);
+                    applyHit(roll() * 1.35, ember, " 🔥 ศอกกลับเพลิง!");
+                    spawnSkillFx("punchwave", EP, ember);
+                    G._camShake = Math.max(G._camShake || 0, 0.8); G._hitStop = Math.max(G._hitStop || 0, 0.1);
+                    if (G.sfx && G.sfx.hit) G.sfx.hit();
+                  }
+                  G._camShake = Math.max(G._camShake || 0, 0.6 * (1 - cp));
+                }
+              } else
               // ============ 🧘 ช่วงที่ 1 — รวมลมปราณ (p 0 → 0.20) ============
               if (p < 0.20) {
                 const cp = p / 0.20; G._ultCamOrbit = cp * 0.25;
