@@ -24185,7 +24185,70 @@ function CherryAdventure() {
             scene.add(g);
             let dur = 0.7, update = null;
             const col = color || 0xffffff;
-            if (fxType === "fire" || fxType === "orb") {
+            if (fxType === "punchwave") {
+                // 👊 คลื่นหมัด — วงแหวนกระแทกซ้อนพุ่งออก + ดาวกระแทกตรงกลาง + สะเก็ดพลัง
+                const rings = [], sparks2 = [];
+                for (let k = 0; k < 4; k++) {
+                    const r = new THREE.Mesh(new THREE.TorusGeometry(0.3 + k * 0.12, 0.075 - k * 0.012, 8, 24), new THREE.MeshStandardMaterial({ color: k % 2 ? 0xffffff : col, emissive: k % 2 ? 0xffffff : col, emissiveIntensity: 1.3, transparent: true }));
+                    r.position.set(0, 1.0, 0);
+                    r.rotation.y = Math.PI / 2;
+                    g.add(r);
+                    rings.push(r);
+                }
+                const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.34, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: col, emissiveIntensity: 1.6, transparent: true }));
+                star.position.set(0, 1.0, 0);
+                g.add(star);
+                for (let k = 0; k < 10; k++) {
+                    const sp = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.3, 4), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.2, transparent: true }));
+                    const a = (k / 10) * Math.PI * 2;
+                    sp.position.set(Math.cos(a) * 0.3, 1.0 + Math.sin(a) * 0.3, 0);
+                    sp.rotation.z = a - Math.PI / 2;
+                    g.add(sp);
+                    sparks2.push({ o: sp, a });
+                }
+                dur = 0.55;
+                update = (pr) => {
+                    rings.forEach((r, k) => { const rp2 = Math.max(0, Math.min(1, (pr - k * 0.1) / 0.75)); r.scale.setScalar(0.3 + rp2 * 2.6); r.material.opacity = (1 - rp2) * 0.9; });
+                    star.scale.setScalar(1 + pr * 1.8);
+                    star.rotation.z = pr * 4;
+                    star.material.opacity = 1 - Math.pow(pr, 0.7);
+                    sparks2.forEach((sp) => { const d2 = 0.3 + pr * 1.9; sp.o.position.set(Math.cos(sp.a) * d2, 1.0 + Math.sin(sp.a) * d2, 0); sp.o.material.opacity = 1 - pr; });
+                };
+            }
+            else if (fxType === "kneeburst") {
+                // 🦶 แรงกระแทกเข่า/ศอก — ลำพลังพุ่งขึ้น + วงแหวนแผ่ที่พื้น + เศษพลังลอยขึ้น
+                const cm2 = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.35, transparent: true });
+                const wm2 = new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffe0a0, emissiveIntensity: 1.5, transparent: true });
+                const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.66, 2.6, 16, 1, true), cm2);
+                shaft.position.y = 1.3;
+                g.add(shaft);
+                const core2 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 2.4, 12, 1, true), wm2);
+                core2.position.y = 1.2;
+                g.add(core2);
+                const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.09, 8, 26), cm2);
+                ring2.rotation.x = Math.PI / 2;
+                ring2.position.y = 0.1;
+                g.add(ring2);
+                const bits = [];
+                for (let k = 0; k < 9; k++) {
+                    const b2 = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), k % 2 ? wm2 : cm2);
+                    const a = (k / 9) * Math.PI * 2;
+                    b2.position.set(Math.cos(a) * 0.5, 0.3, Math.sin(a) * 0.5);
+                    g.add(b2);
+                    bits.push({ o: b2, a });
+                }
+                dur = 0.7;
+                update = (pr) => {
+                    const rise = pr < 0.22 ? pr / 0.22 : 1;
+                    shaft.scale.set(1 + pr * 0.7, rise, 1 + pr * 0.7);
+                    shaft.material.opacity = 0.75 * (1 - pr);
+                    core2.scale.set(1 - pr * 0.35, rise, 1 - pr * 0.35);
+                    core2.material.opacity = 0.95 * (1 - Math.pow(pr, 0.8));
+                    ring2.scale.setScalar(0.5 + pr * 3.4);
+                    bits.forEach((b2, k) => { b2.o.position.set(Math.cos(b2.a) * (0.5 + pr * 1.1), 0.3 + pr * (1.7 + (k % 3) * 0.5), Math.sin(b2.a) * (0.5 + pr * 1.1)); b2.o.rotation.y = pr * 6; });
+                };
+            }
+            else if (fxType === "fire" || fxType === "orb") {
                 // 🔥 rising fireballs + embers
                 const balls = [];
                 for (let i = 0; i < 7; i++) {
@@ -34102,6 +34165,10 @@ function CherryAdventure() {
                 a_power: "arrowpierce", a_snipe: "arrowsnipe", a_multi: "arrowmulti", a_poison: "arrowpoison", a_weak: "arrowsnipe",
                 s_double: "bleedstab", s_poison: "poisonknives", s_shadow: "shadow", s_evade: "shadowdance",
                 l_thrust: "pierce", l_sweep: "multi", l_quake: "earthsplit",
+                // 🥊 นักมวย — หมัดใช้คลื่นหมัด · เข่า/ศอก/อัปเปอร์ใช้ลำพลังพุ่งขึ้น
+                b_jab: "punchwave", b_kick: "punchwave", b_knee: "kneeburst", b_combo: "punchwave", b_iron: "punchwave",
+                x_box_1: "punchwave", x_box_2: "punchwave", x_box_3: "kneeburst", x_box_4: "punchwave", p_koblow: "punchwave",
+                x_mua_1: "punchwave", x_mua_2: "kneeburst", x_mua_3: "punchwave", x_mua_4: "kneeburst", p_tiger: "punchwave",
             };
             if (sk.id === "g_dash")
                 return "plasmadash"; // 🤖⚡ AI Mecha plasma dash
@@ -37819,8 +37886,12 @@ function CherryAdventure() {
                 const ceoCommand = G.cls === "office" && sk.id === "o_ceo"; // 🏆 CEO → junk rain → HQ drop
                 const coderSkill = G.cls === "coder"; // 💻 all coder skills need room to breathe
                 const coderDur = { c_inject: 1.2, c_wall: 1.3, c_drone: 1.7, c_crash: 1.6, c_matrix: 1.8 }[sk.id];
+                // 🥊 นักมวย — แต่ละท่ามีจังหวะของตัวเอง (แย็บสั้น · คอมโบยาว · น็อกเอาต์ต้องเก็บแรง)
+                const boxDur = G.cls === "boxer" ? ({ b_jab: 1.1, b_kick: 1.2, b_knee: 1.4, b_combo: 1.9, b_iron: 1.7,
+                    x_box_1: 1.7, x_box_2: 1.3, x_box_3: 1.5, x_box_4: 2.0, p_koblow: 2.0,
+                    x_mua_1: 1.3, x_mua_2: 1.7, x_mua_3: 1.8, x_mua_4: 2.2, p_tiger: 1.8 }[sk.id] || 1.2) : null;
                 const aegisDur = G.cls === "aegis" ? ({ g_dash: 0.95, g_drone: 1.25, g_grav: 1.4, g_over: 1.1 }[sk.id] || 0.85) : null; // 🤖 room for the AAA plasma FX
-                G.banim = { type: "playerAttack", t: 0, dur: (lastBullet || weakPoint) ? 2.0 : poisonArrow ? 1.6 : chargeSkill ? 1.75 : tripleShot ? 1.0 : mageSpell ? mageDur : twinRush ? 1.2 : poisonBarrage ? 1.4 : shadowKill ? 2.2 : shadowDance ? 1.5 : pierceThrust ? 1.1 : cycloneSweep ? 1.4 : earthBreak ? 1.5 : dragonCharge ? 1.8 : swiftSlash ? 1.1 : twinSky ? 1.3 : thunderDraw ? 1.9 : moonDance ? 2.6 : paperStorm ? 1.9 : laptopSmash ? 1.7 : coffeeBoost ? 1.6 : deadlineRush ? 1.9 : ceoCommand ? 3.2 : (coderSkill && coderDur) ? coderDur : aegisDur ? aegisDur : 0.6, mult: 1, skill: sk, chargeSkill, lastBullet, weakPoint, poisonArrow, mageSpell, twinRush, poisonBarrage, shadowKill, shadowDance, pierceThrust, cycloneSweep, earthBreak, dragonCharge, swiftSlash, twinSky, thunderDraw, moonDance, paperStorm, laptopSmash, coffeeBoost, deadlineRush, ceoCommand, coderSkill };
+                G.banim = { type: "playerAttack", t: 0, dur: (lastBullet || weakPoint) ? 2.0 : poisonArrow ? 1.6 : chargeSkill ? 1.75 : tripleShot ? 1.0 : mageSpell ? mageDur : twinRush ? 1.2 : poisonBarrage ? 1.4 : shadowKill ? 2.2 : shadowDance ? 1.5 : pierceThrust ? 1.1 : cycloneSweep ? 1.4 : earthBreak ? 1.5 : dragonCharge ? 1.8 : swiftSlash ? 1.1 : twinSky ? 1.3 : thunderDraw ? 1.9 : moonDance ? 2.6 : paperStorm ? 1.9 : laptopSmash ? 1.7 : coffeeBoost ? 1.6 : deadlineRush ? 1.9 : ceoCommand ? 3.2 : (coderSkill && coderDur) ? coderDur : boxDur ? boxDur : aegisDur ? aegisDur : 0.6, mult: 1, skill: sk, boxDur, chargeSkill, lastBullet, weakPoint, poisonArrow, mageSpell, twinRush, poisonBarrage, shadowKill, shadowDance, pierceThrust, cycloneSweep, earthBreak, dragonCharge, swiftSlash, twinSky, thunderDraw, moonDance, paperStorm, laptopSmash, coffeeBoost, deadlineRush, ceoCommand, coderSkill };
                 setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: `${sk.emoji} ${sk.name}! (-${cost}💧)` }));
                 syncPlayer();
             }
@@ -46889,7 +46960,7 @@ function CherryAdventure() {
                                 spawnSkillFx("omega", _op, 0x3ad0ff);
                             } // 👑 Omega Judgment Protocol cinematic overlay
                             const skFx = A.skill ? A.skill.fx : null;
-                            const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
+                            const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : A.boxDur ? 0.62 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
                             if (G.cls === "aegis") {
                                 // 🤖 AEGIS-X — arena skill choreography reusing the AAA plasma-dash / drone-barrage FX
                                 const EP = em.position;
@@ -46963,6 +47034,211 @@ function CherryAdventure() {
                                         A._aegHit = true;
                                         spawnSkillFx("overclock", new THREE.Vector3(char.position.x, 0, char.position.z), col);
                                         G._camShake = 0.4;
+                                    }
+                                }
+                            }
+                            else if (cls === "boxer") {
+                                // 🥊 BOXER — ท่ามวยในสังเวียน: การ์ดสูง เข้าวง ออกหมัด/เท้า/เข่า/ศอก แล้วถอยกลับเข้าการ์ด
+                                const EP = em.position;
+                                const bx = battleCenter.x - 1.3;
+                                const col = (A.skill && A.skill.color) || 0xe8622a;
+                                const sid = A.skill ? A.skill.id : null;
+                                const reach = EP.x - bx - 0.95; // ระยะที่ต้องเข้าไปให้ถึงตัว
+                                const guard = () => {
+                                    armR.rotation.x = -1.5;
+                                    armR.rotation.z = 0.42;
+                                    armL.rotation.x = -1.5;
+                                    armL.rotation.z = -0.42;
+                                };
+                                const bob = Math.sin(t * 9) * 0.03; // เต้นฟุตเวิร์กเบาๆ ตลอดท่า
+                                guard();
+                                char.position.y = bob;
+                                char.rotation.z = 0;
+                                // เข้าวง (in) → ออกอาวุธ (act) → ถอยกลับ (out)
+                                const inP = 0.3, outP = 0.82;
+                                let adv = 0;
+                                if (p < inP)
+                                    adv = (p / inP) * reach;
+                                else if (p < outP)
+                                    adv = reach;
+                                else
+                                    adv = reach * (1 - (p - outP) / (1 - outP));
+                                const noRush = sid === "b_iron" || sid === "x_box_3" || sid === "x_mua_3"; // ท่าที่ยืนกับที่
+                                char.position.x = bx + (noRush ? Math.min(adv, 0.5) : adv);
+                                const act = Math.max(0, Math.min(1, (p - inP) / (outP - inP))); // 0→1 ช่วงออกอาวุธ
+                                const punch = (u, side) => {
+                                    const A2 = side > 0 ? armR : armL;
+                                    A2.rotation.x = -1.5 - 1.05 * u;
+                                    A2.rotation.z = (side > 0 ? 0.42 : -0.42) * (1 - u * 0.85);
+                                    char.rotation.y = side * (0.3 - 0.6 * u) * 0.5;
+                                };
+                                const kneeUp = (u) => {
+                                    legR.rotation.x = -2.0 * u;
+                                    if (legR.userData.knee)
+                                        legR.userData.knee.rotation.x = 0.5 + 1.5 * u;
+                                };
+                                const kickOut = (u) => {
+                                    legR.rotation.x = -1.7 * u;
+                                    legR.rotation.z = -0.85 * u;
+                                    if (legR.userData.knee)
+                                        legR.userData.knee.rotation.x = 1.0 - 0.9 * u;
+                                };
+                                const beat = (n) => { const b2 = act * n, i2 = Math.floor(b2); return { i: Math.min(n - 1, i2), u: Math.min(1, (b2 - i2) * 2.2) }; };
+                                const boom = (kind, at, c2, shake) => { spawnSkillFx(kind, at || EP, c2 || col); G._camShake = Math.max(G._camShake || 0, shake || 0.45); };
+                                if (sid === "b_jab" || sid === "x_box_1" || sid === "b_combo") {
+                                    // 👊 แย็บ/คอมโบ — สลับหมัดซ้าย-ขวารัว (คอมโบแทรกเข่าที่จังหวะ 3 และ 5)
+                                    const n = sid === "x_box_1" ? 6 : sid === "b_combo" ? 5 : 2;
+                                    const bt = beat(n), side = bt.i % 2 ? -1 : 1;
+                                    const isKnee = sid === "b_combo" && (bt.i === 2 || bt.i === 4);
+                                    if (isKnee) {
+                                        kneeUp(bt.u);
+                                        char.position.y = bob + bt.u * 0.16;
+                                    }
+                                    else
+                                        punch(bt.u, side);
+                                    if (bt.u > 0.6 && A._boxN !== bt.i) {
+                                        A._boxN = bt.i;
+                                        boom(isKnee ? "kneeburst" : "punchwave", EP, bt.i === n - 1 ? 0xffffff : col, bt.i === n - 1 ? 0.6 : 0.24);
+                                    }
+                                }
+                                else if (sid === "b_kick" || sid === "x_mua_1") {
+                                    // 🦵 เตะตัดวงเดือน / เตะเหล็กไหล — บิดสะโพกแล้วเหวี่ยงแข้งเข้าลำตัว
+                                    kickOut(act);
+                                    char.rotation.y = -act * 0.7;
+                                    char.rotation.z = act * 0.2;
+                                    if (act > 0.55 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("punchwave", EP, col, 0.55);
+                                    }
+                                }
+                                else if (sid === "b_knee") {
+                                    // 🦶 เข่าลอยฟ้า — ทะยานขึ้นแล้วอัดเข่าลง
+                                    const up = Math.sin(Math.min(1, act) * Math.PI);
+                                    char.position.y = bob + up * 0.75;
+                                    kneeUp(Math.min(1, act * 1.6));
+                                    armR.rotation.x = -1.9 + act * 1.0;
+                                    armL.rotation.x = -1.9 + act * 1.0;
+                                    if (act > 0.55 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("kneeburst", EP, col, 0.65);
+                                    }
+                                }
+                                else if (sid === "b_iron") {
+                                    // 🔥 หมัดเหล็กเดือด — กำหมัดสั่นสะสมพลัง แล้วอัดหมัดเดียว
+                                    const chg = Math.min(1, act / 0.6), fire2 = Math.max(0, (act - 0.6) / 0.4);
+                                    armR.rotation.x = -0.85 - 0.7 * chg + Math.sin(t * 40) * 0.06 * (1 - fire2) - 0.9 * fire2;
+                                    armR.rotation.z = 0.72 - 0.68 * fire2;
+                                    char.rotation.y = 0.5 * chg - 0.8 * fire2;
+                                    char.position.x = bx + Math.min(adv, 0.5) + fire2 * Math.max(0, reach - 0.5);
+                                    if (act < 0.6 && Math.random() < 0.5)
+                                        burst(new THREE.Vector3(char.position.x + 0.4, 1.1, battleCenter.z), Math.random() < 0.5 ? 0xff7020 : 0xffd24a, 0.35);
+                                    if (fire2 > 0.4 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("punchwave", EP, 0xff5a1a, 0.7);
+                                        spawnSkillFx("fire", EP, 0xff7020);
+                                    }
+                                }
+                                else if (sid === "x_box_2") {
+                                    // 💥 ฮุกทลายกำแพง — ฮุกโค้งกว้างสองหมัดสลับข้าง
+                                    const bt = beat(2), side = bt.i % 2 ? -1 : 1;
+                                    const A2 = side > 0 ? armR : armL;
+                                    A2.rotation.x = -1.35 - 0.5 * bt.u;
+                                    A2.rotation.z = (side > 0 ? 0.5 + 1.5 * bt.u : -0.5 - 1.5 * bt.u);
+                                    char.rotation.y = side * (0.55 - 1.4 * bt.u) * 0.6;
+                                    if (bt.u > 0.6 && A._boxN !== bt.i) {
+                                        A._boxN = bt.i;
+                                        boom("punchwave", EP, bt.i ? 0xffffff : col, bt.i ? 0.65 : 0.3);
+                                    }
+                                }
+                                else if (sid === "x_box_3") {
+                                    // 💫 อัปเปอร์สอยดาว — ย่อต่ำเก็บแรงแล้วสปริงชกขึ้น
+                                    const dip = Math.min(1, act / 0.42), up = Math.max(0, (act - 0.42) / 0.58);
+                                    armR.rotation.x = -0.5 - 0.55 * dip + 2.3 * up;
+                                    armR.rotation.z = 0.62 - 0.3 * up;
+                                    char.position.y = bob - dip * 0.2 + up * 0.42;
+                                    if (legL.userData.knee)
+                                        legL.userData.knee.rotation.x = 0.9 * dip - 0.7 * up;
+                                    if (legR.userData.knee)
+                                        legR.userData.knee.rotation.x = 0.9 * dip - 0.7 * up;
+                                    if (up > 0.35 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("kneeburst", EP, 0xffd24a, 0.7);
+                                    }
+                                }
+                                else if (sid === "x_box_4" || sid === "p_koblow") {
+                                    // 🥊 หมัดน็อกเอาต์ — บิดตัวเก็บแรงนิ่งสนิท แล้วปล่อยหมัดเดียว
+                                    const wind = Math.min(1, act / 0.55), fire2 = Math.max(0, (act - 0.55) / 0.45);
+                                    armR.rotation.x = -0.55 - 0.95 * wind - 0.9 * fire2;
+                                    armR.rotation.z = 0.9 + 0.35 * wind - 1.05 * fire2;
+                                    char.rotation.y = 0.95 * wind - 1.6 * fire2;
+                                    char.position.x = bx + reach * (0.35 + 0.65 * fire2);
+                                    if (wind > 0.4 && fire2 <= 0 && Math.random() < 0.35)
+                                        burst(new THREE.Vector3(char.position.x, 1.2, battleCenter.z), 0xfff2b0, 0.4);
+                                    if (fire2 > 0.35 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("punchwave", EP, 0xffffff, 0.95);
+                                        boom("punchwave", EP, col, 0.95);
+                                        if (G.speedLines)
+                                            G.speedLines(600);
+                                    }
+                                }
+                                else if (sid === "x_mua_2") {
+                                    // 🔥 ศอกกลับอัคคี — หมุนตัวกลับหลังกระแทกศอก 3 ครั้ง
+                                    const bt = beat(3), side = bt.i % 2 ? -1 : 1;
+                                    const A2 = side > 0 ? armR : armL;
+                                    A2.rotation.x = -1.55 - 0.45 * bt.u;
+                                    A2.rotation.z = (side > 0 ? 0.85 + 0.95 * bt.u : -0.85 - 0.95 * bt.u);
+                                    char.rotation.y = (bt.i + bt.u) * Math.PI * 0.9; // 🌀 หมุนกลับหลังทุกครั้ง
+                                    if (bt.u > 0.6 && A._boxN !== bt.i) {
+                                        A._boxN = bt.i;
+                                        boom("kneeburst", EP, 0xff5a1a, bt.i === 2 ? 0.6 : 0.28);
+                                        spawnSkillFx("fire", EP, 0xff7020);
+                                    }
+                                }
+                                else if (sid === "x_mua_3" || sid === "p_tiger") {
+                                    // 🐯 เสือลากหาง — เหวี่ยงส้นเท้าเพลิงสับลงเป็นวง 4 ครั้ง
+                                    const bt = beat(4);
+                                    legR.rotation.x = -2.0 * bt.u;
+                                    if (legR.userData.knee)
+                                        legR.userData.knee.rotation.x = 0.4 + 0.5 * (1 - bt.u);
+                                    char.rotation.y = (bt.i + bt.u) * Math.PI * 0.55;
+                                    char.position.y = bob + bt.u * 0.2;
+                                    if (bt.u > 0.6 && A._boxN !== bt.i) {
+                                        A._boxN = bt.i;
+                                        boom("punchwave", EP, 0xe8842a, bt.i === 3 ? 0.6 : 0.26);
+                                        spawnSkillFx("fire", EP, 0xff7020);
+                                    }
+                                }
+                                else if (sid === "x_mua_4") {
+                                    // 🐒 หนุมานถวายแหวน — ทะยานสูง ยกเข่าคู่ พนมมือ แล้วกระแทกลง
+                                    const soar = Math.min(1, act / 0.58), slam = Math.max(0, (act - 0.58) / 0.42);
+                                    char.position.y = bob + soar * 1.25 - slam * 1.3;
+                                    armR.rotation.x = -2.5 * soar + 1.9 * slam;
+                                    armR.rotation.z = 0.24 - 0.44 * slam;
+                                    armL.rotation.x = -2.5 * soar + 1.9 * slam;
+                                    armL.rotation.z = -0.24 + 0.44 * slam;
+                                    legR.rotation.x = -2.1 * soar + 1.5 * slam;
+                                    legL.rotation.x = -2.1 * soar + 1.5 * slam;
+                                    if (legR.userData.knee)
+                                        legR.userData.knee.rotation.x = 1.7 * soar - 1.2 * slam;
+                                    if (legL.userData.knee)
+                                        legL.userData.knee.rotation.x = 1.7 * soar - 1.2 * slam;
+                                    if (soar > 0.5 && Math.random() < 0.4)
+                                        burst(new THREE.Vector3(char.position.x, 0.6 + Math.random() * 1.6, battleCenter.z), 0xffd76a, 0.4);
+                                    if (slam > 0.4 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("kneeburst", EP, 0xffb84a, 0.9);
+                                        boom("kneeburst", new THREE.Vector3(EP.x + 0.5, EP.y, EP.z), 0xfff2b0, 0.9);
+                                        if (G.speedLines)
+                                            G.speedLines(600);
+                                    }
+                                }
+                                else {
+                                    // 👊 ท่าอื่นๆ ของนักมวย — หมัดตรงมาตรฐาน
+                                    punch(act, 1);
+                                    if (act > 0.55 && !A._boxHit) {
+                                        A._boxHit = true;
+                                        boom("punchwave", EP, col, 0.5);
                                     }
                                 }
                             }
