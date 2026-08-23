@@ -147,6 +147,12 @@ const LOOT = [
   { id: "kl", slot: "weapon", name: "คาตานะฟ้าสวรรค์", emoji: "🌟", rarity: "secret", atk: 16, def: 3, elem: "light", cls: "samurai", req: 22 },
   { id: "kl2", slot: "weapon", name: "ดาบซากุระราตรี", emoji: "🌸", rarity: "secret", atk: 17, crit: 12, spd: 6, elem: "wind", cls: "samurai", req: 25, affix: "double" },
   { id: "kd", slot: "weapon", name: "คาตานะมังกร", emoji: "⚔️", rarity: "dragon", atk: 110, def: 24, hp: 100, elem: "fire", cls: "samurai", req: 100, set: "dragon" },
+  // 🥊 นวมมวยไล่ระดับของนักมวย
+  { id: "bxr",  slot: "weapon", name: "นวมหนังแท้",      emoji: "🥊", rarity: "rare",   atk: 7,  crit: 4,  cls: "boxer", req: 5 },
+  { id: "bxe",  slot: "weapon", name: "นวมสายฟ้า",       emoji: "⚡", rarity: "epic",   atk: 11, spd: 5,  elem: "wind",  cls: "boxer", req: 10 },
+  { id: "bxw",  slot: "weapon", name: "นวมวายุ",          emoji: "💨", rarity: "epic",   atk: 13, crit: 8,  elem: "wind",  cls: "boxer", req: 15 },
+  { id: "bxs",  slot: "weapon", name: "นวมแสงสวรรค์",     emoji: "🌟", rarity: "secret", atk: 16, def: 3,   elem: "light", cls: "boxer", req: 22 },
+  { id: "bxs2", slot: "weapon", name: "นวมเงามัจจุราช",   emoji: "🌑", rarity: "secret", atk: 17, crit: 14, spd: 6, elem: "arcane", cls: "boxer", req: 25, affix: "double" },
   // ⚔️ warrior elemental swords
   // ⚔️ WARRIOR swords — unlock every 5 levels (req)
   { id: "wfw", slot: "weapon", name: "ดาบเพลิงอัคคี", emoji: "🔥", rarity: "rare", atk: 6, elem: "fire", cls: "warrior", req: 5 },
@@ -231,6 +237,7 @@ const LOOT = [
 { id: "fg_mace", slot: "weapon", name: "กระบองยาวสังหาร", emoji: "🔨", rarity: "epic", atk: 27, cls: "lancer", forge: true },
 { id: "fg_saber", slot: "weapon", name: "กระบี่พริ้วลม", emoji: "🤺", rarity: "rare", atk: 17, spd: 8, cls: "assassin", forge: true },
 { id: "fg_katana", slot: "weapon", name: "ดาบคาตานะเหล็กกล้า", emoji: "⚔️", rarity: "rare", atk: 20, crit: 5, cls: "samurai", forge: true },
+{ id: "fg_glove", slot: "weapon", name: "นวมเหล็กกล้า", emoji: "🥊", rarity: "rare", atk: 20, crit: 6, cls: "boxer", forge: true },
 { id: "fg_staff", slot: "weapon", name: "คทาเวทมนตร์", emoji: "🪄", rarity: "rare", atk: 17, cls: "mage", forge: true },
 { id: "fg_book", slot: "weapon", name: "หนังสือเวทโบราณ", emoji: "📖", rarity: "epic", atk: 24, cls: "mage", forge: true },
 { id: "fg_orb", slot: "weapon", name: "ลูกแก้ววิเศษ", emoji: "🔮", rarity: "epic", atk: 25, cls: "mage", forge: true },
@@ -987,6 +994,8 @@ const SK_ARCH = {
   x_nov_1: "railgun", x_nov_2: "dronelock", x_nov_3: "blackhole", x_nov_4: "satellite",             // 🛰️🔫 โนวาสไตรก์                            // 🤖 AI Mecha
 };
 // สายที่ "พุ่งเข้าหาเป้า" ก่อนออกท่า (ที่เหลือร่ายอยู่กับที่)
+// 🥊 ท่าตระกูลมวย — ใช้ฐานท่าเดียวกัน (ตั้งการ์ด → ย่อ → โยก → ออกอาวุธ)
+const BOX_ARCH = { jabcross: 1, roundkick: 1, flyknee: 1, comborush: 1, ironfist: 1, lightjab: 1, wallhook: 1, staruppercut: 1, koblow: 1, ironshin: 1, fireelbow: 1, tigertail: 1, hanumanknee: 1 };
 const ARCH_RUSH = { cleave: 1, spin: 1, bash: 1, smash: 1, dash: 1, stab: 1, twin: 1, iai: 1, backstab: 1, crusade: 1, shieldangel: 1, axecombo: 1, spearpierce: 1, dragoncharge: 1, skyleap: 1, meteordive: 1, titanstomp: 1, laptopsmash: 1, shadowcut: 1, cobraclaw: 1, frozenpierce: 1, formless: 1, iaifirst: 1, coffeedash: 1, jabcross: 1, flyknee: 1, comborush: 1, wallhook: 1, koblow: 1, ironshin: 1, hanumanknee: 1 };
 // 🔒 SKILL UNLOCK CONDITIONS — every class gates skills 2..5 behind level, the previous
 // skill's rank, and an allocated base stat. Skill 1 is always free so you can always fight.
@@ -2777,6 +2786,12 @@ export default function CherryAdventure() {
     wand.position.set(0.02, -0.59, 0.12); // sits in the palm (relative to the elbow joint)
     wand.rotation.x = -0.5;
     (armR.userData.elbow || armR).add(wand); // 💪 follows the forearm/hand when the elbow bends
+    // 🥊 ช่องมือซ้าย — อาวุธส่วนใหญ่ถือมือเดียว แต่ "นวมมวย" ต้องสวมทั้งสองข้าง
+    const wandL = new THREE.Group();
+    wandL.position.set(-0.02, -0.59, 0.12);                 // กระจกกับมือขวา
+    (armL.userData.elbow || armL).add(wandL);
+    const gloveLModels = {};                                 // นวมข้างซ้าย (คนละโมเดลกับข้างขวา — กลับด้านนิ้วโป้ง)
+    G._wandL = wandL;
     // 🗡️✨ weapon-skin glow — soft additive halos trailing up the blade (color set per skin)
     const wpGlowTex = (() => {
       const cv = document.createElement("canvas");
@@ -4734,54 +4749,71 @@ export default function CherryAdventure() {
       weaponModels.ragAxe = g;
     }
     // 🥊 นวมมวย — สร้างครั้งเดียวใช้ได้ทั้ง 3 ระดับ (ซ้อม / มังกร / ตำนาน)
-    const mkGlove = (opt) => {
+    // 🧭 ทิศทางในโมเดล: ช่องสวมข้อมืออยู่ทาง +Y (ด้านข้อศอก) · กำปั้นยื่นออกทาง -Y (พ้นมือ)
+    //    สันหมัดที่ใช้ต่อยหันไปทาง +Z (ด้านหน้าตัว) · side = 1 มือขวา / -1 มือซ้าย (กลับด้านนิ้วโป้ง)
+    const mkGlove = (opt, side) => {
+      const sx = side || 1;
       const g = new THREE.Group();
       const skin = new THREE.MeshStandardMaterial({ color: opt.main, roughness: opt.rough != null ? opt.rough : 0.42, metalness: opt.metal || 0.08 });
       const trim = new THREE.MeshStandardMaterial({ color: opt.trim, roughness: 0.4, metalness: opt.trimMetal || 0.5 });
       const lace = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 0.85 });
-      // 👊 หมัดหลัก — ทรงกลมรีของนวม
-      const mitt = new THREE.Mesh(new THREE.SphereGeometry(0.2, 22, 18), skin);
-      mitt.scale.set(1, 1.12, 1.2); mitt.position.set(0, 0.06, 0.05); g.add(mitt);
-      // 👍 ส่วนนิ้วหัวแม่มือแยกออกมาข้าง
-      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 12), skin);
-      thumb.scale.set(1, 1.35, 1.1); thumb.position.set(-0.16, 0.02, 0.1); thumb.rotation.z = 0.5; g.add(thumb);
-      // 🧤 ปากนวม + สายรัดข้อมือ
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.16, 0.22, 16), skin);
-      cuff.position.set(0, -0.17, -0.02); g.add(cuff);
-      const band = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.028, 8, 20), trim);
-      band.rotation.x = Math.PI / 2; band.position.set(0, -0.1, -0.02); g.add(band);
-      const band2 = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.022, 8, 20), trim);
-      band2.rotation.x = Math.PI / 2; band2.position.set(0, -0.26, -0.02); g.add(band2);
-      // 👟 เชือกผูกหน้านวม
-      for (let k = 0; k < 3; k++) {
-        const l = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.016, 0.016), lace);
-        l.position.set(0, -0.02 - k * 0.05, -0.16); l.rotation.z = k % 2 ? 0.35 : -0.35; g.add(l);
+      // 👊 กำปั้น — ทรงกลมรีอ้วน ยื่นพ้นมือออกไป
+      const mitt = new THREE.Mesh(new THREE.SphereGeometry(0.19, 22, 18), skin);
+      mitt.scale.set(1, 1.15, 1.15); mitt.position.set(0, -0.17, 0.03); g.add(mitt);
+      // 👍 นิ้วโป้งแยกออกด้านใน (สลับข้างตามมือ)
+      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 12), skin);
+      thumb.scale.set(1, 1.3, 1.05); thumb.position.set(-0.15 * sx, -0.12, 0.09);
+      thumb.rotation.z = -0.5 * sx; g.add(thumb);
+      // 🧤 ปากนวมสวมข้อมือ — อยู่ฝั่งข้อศอกเสมอ
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.128, 0.22, 16), skin);
+      cuff.position.set(0, 0.06, -0.01); g.add(cuff);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.026, 8, 20), trim);
+      band.rotation.x = Math.PI / 2; band.position.set(0, 0.0, -0.01); g.add(band);
+      const band2 = new THREE.Mesh(new THREE.TorusGeometry(0.152, 0.02, 8, 20), trim);
+      band2.rotation.x = Math.PI / 2; band2.position.set(0, 0.15, -0.01); g.add(band2);
+      // 👟 เชือกผูกอยู่หลังมือ (ฝั่งตรงข้ามสันหมัด)
+      for (let n = 0; n < 3; n++) {
+        const l = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.015, 0.015), lace);
+        l.position.set(0, -0.04 - n * 0.05, -0.15); l.rotation.z = n % 2 ? 0.35 : -0.35; g.add(l);
       }
-      // 💥 แถบสีคาดหน้าหมัด — จุดที่กระแทกโดน
-      const knuckle = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.026, 8, 18, Math.PI), trim);
-      knuckle.rotation.set(Math.PI / 2, 0, 0); knuckle.position.set(0, 0.09, 0.16); g.add(knuckle);
-      if (opt.glowCol) {                                                    // ✨ แกนพลังเรืองแสงกลางหมัด (นวมระดับสูง)
+      // 💥 สันหมัด — แถบสีคาดด้านหน้า จุดที่กระแทกโดน
+      const knuckle = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.026, 8, 18, Math.PI), trim);
+      knuckle.rotation.set(Math.PI / 2, 0, 0); knuckle.position.set(0, -0.2, 0.14); g.add(knuckle);
+      if (opt.glowCol) {                                                    // ✨ แกนพลังเรืองแสงกลางสันหมัด (นวมระดับสูง)
         const gm = new THREE.MeshStandardMaterial({ color: opt.glowCol, emissive: opt.glowCol, emissiveIntensity: 1.3, roughness: 0.2 });
-        const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.062, 0), gm);
-        core.position.set(0, 0.08, 0.21); g.add(core);
-        for (let k = 0; k < 3; k++) { const rg = new THREE.Mesh(new THREE.TorusGeometry(0.09 + k * 0.03, 0.012, 6, 16), gm); rg.rotation.x = Math.PI / 2; rg.position.set(0, 0.02 + k * 0.06, 0.06); g.add(rg); }
+        const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.058, 0), gm);
+        core.position.set(0, -0.2, 0.19); g.add(core);
+        for (let n = 0; n < 3; n++) { const rg = new THREE.Mesh(new THREE.TorusGeometry(0.085 + n * 0.028, 0.011, 6, 16), gm); rg.rotation.x = Math.PI / 2; rg.position.set(0, -0.06 - n * 0.06, 0.03); g.add(rg); }
         g.userData.core = core;
       }
-      if (opt.spikes) for (let k = 0; k < 4; k++) {                          // 🐉 หนามเกล็ดมังกรบนสันหมัด
-        const sp = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.1, 6), trim);
-        sp.position.set(-0.09 + k * 0.06, 0.16, 0.1); sp.rotation.x = -0.5; g.add(sp);
+      if (opt.spikes) for (let n = 0; n < 4; n++) {                          // 🐉 หนามเกล็ดมังกรบนสันหมัด
+        const sp = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.1, 6), trim);
+        sp.position.set(-0.085 + n * 0.057, -0.26, 0.07); sp.rotation.x = 0.6; g.add(sp);
       }
-      if (opt.wrap) for (let k = 0; k < 4; k++) {                            // 👑 ผ้าคาดทองพันข้อมือ (นวมตำนาน)
-        const w = new THREE.Mesh(new THREE.TorusGeometry(0.145 - k * 0.004, 0.014, 6, 18), trim);
-        w.rotation.x = Math.PI / 2; w.rotation.z = k * 0.4; w.position.set(0, -0.14 - k * 0.055, -0.02); g.add(w);
+      if (opt.wrap) for (let n = 0; n < 4; n++) {                            // 👑 ผ้าคาดทองพันข้อมือ (นวมตำนาน)
+        const w = new THREE.Mesh(new THREE.TorusGeometry(0.142 - n * 0.004, 0.013, 6, 18), trim);
+        w.rotation.x = Math.PI / 2; w.rotation.z = n * 0.4; w.position.set(0, 0.04 + n * 0.05, -0.01); g.add(w);
       }
-      g.userData.gripY = -0.24; g.userData.gripZ = 0.0;                      // เสียบข้อมือให้พอดีฝ่ามือ
-      g.scale.setScalar(1.15);
+      g.userData.gripY = 0.02; g.userData.gripZ = 0;                         // ปากนวมนั่งพอดีข้อมือ
+      g.scale.setScalar(1.1);
       return g;
     };
-    weaponModels.cb   = mkGlove({ main: 0xc4302a, trim: 0xf5c542 });                                                    // 🥊 นวมซ้อมมือ — หนังแดงขลิบทอง
-    weaponModels.wDb  = mkGlove({ main: 0x8a1a12, trim: 0xe8622a, glowCol: 0xff5a1a, spikes: true, metal: 0.35, rough: 0.35 }); // 🐉 นวมเกล็ดมังกรเพลิง
-    weaponModels.lg_ob = mkGlove({ main: 0xf0ead8, trim: 0xf5c542, glowCol: 0xffe9a0, wrap: true, metal: 0.3, trimMetal: 0.85 }); // ⭐ นวมมงคลเทพอสูร
+    // 🥊 นวมทั้งสามระดับ — สร้างคู่ ซ้าย/ขวา
+    const GLOVE_SPEC = {
+      cb:    { main: 0xc4302a, trim: 0xf5c542 },                                                                   // นวมซ้อมมือ — หนังแดงขลิบทอง
+      wDb:   { main: 0x8a1a12, trim: 0xe8622a, glowCol: 0xff5a1a, spikes: true, metal: 0.35, rough: 0.35 },        // 🐉 นวมเกล็ดมังกรเพลิง
+      lg_ob: { main: 0xf0ead8, trim: 0xf5c542, glowCol: 0xffe9a0, wrap: true, metal: 0.3, trimMetal: 0.85 },       // ⭐ นวมมงคลเทพอสูร
+      bxr:   { main: 0xd0562a, trim: 0xf0e0c0 },                                                                    // นวมหนังแท้
+      bxe:   { main: 0x2a6ad0, trim: 0xbfe4ff, glowCol: 0x6ad8ff, metal: 0.2 },                                    // นวมสายฟ้า
+      bxw:   { main: 0x3aa06a, trim: 0xd8f5c0, glowCol: 0x8af59a, metal: 0.2 },                                    // นวมวายุ
+      bxs:   { main: 0xf0e0a0, trim: 0xf5c542, glowCol: 0xfff2b0, wrap: true, metal: 0.25, trimMetal: 0.8 },       // นวมแสงสวรรค์
+      bxs2:  { main: 0x2a2038, trim: 0xc060f0, glowCol: 0xc060f0, spikes: true, metal: 0.35 },                     // นวมเงามัจจุราช
+      fg_glove: { main: 0x9aa2ac, trim: 0xd8dce4, metal: 0.6, rough: 0.3 },                                        // ⚒️ นวมเหล็กกล้า (ตีบวก)
+    };
+    Object.entries(GLOVE_SPEC).forEach(([k2, spec]) => {
+      weaponModels[k2] = mkGlove(spec, 1);                                   // ขวา — เข้ากองอาวุธปกติ
+      gloveLModels[k2] = mkGlove(spec, -1);                                  // ซ้าย — เข้าช่องมือซ้าย
+    });
     { // 🤖🔫 cx — Plasma Laser Blaster (AI Mecha Guardian's class weapon: sci-fi energy rifle)
       //   built barrel-along-+Y (muzzle up in model space) with a pistol grip at the base;
       //   the grip rotation (see gripFor) swings the muzzle to point forward.
@@ -5048,6 +5080,7 @@ export default function CherryAdventure() {
     };
     G._setVisFrozen = setVisFrozen;
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
+    Object.values(gloveLModels).forEach((m) => { m.visible = false; wandL.add(m); });   // 🥊 นวมข้างซ้ายอยู่คนละช่องมือ
     weaponModels.default.visible = true;
     let curWeapon = "default";
     G.setWeaponVisual = (id) => {
@@ -5074,6 +5107,11 @@ export default function CherryAdventure() {
       if (famKey && G.ensureWeaponModel) G.ensureWeaponModel(famKey); // 🚀 สร้างโมเดลตระกูลอาวุธเมื่อใช้จริง
       curWeapon = id && weaponModels[id] ? id : (famKey && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
       Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
+      // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา อาวุธอื่นซ่อนหมด
+      Object.entries(gloveLModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
+      { const gL = gloveLModels[curWeapon];
+        wandL.rotation.set(0, 0, 0);
+        if (gL) { gL.position.y = gL.userData.gripY != null ? gL.userData.gripY : 0; gL.position.z = gL.userData.gripZ != null ? gL.userData.gripZ : 0; } }
       // 🗡️✨ active weapon skin (cosmetic tint + glow) — overrides the normal tint
       const skin = WEAPON_SKINS.find((s) => s.id === (G.weaponSkin || "none")) || WEAPON_SKINS[0];
       const skinTint = skin && skin.tint;
@@ -22447,7 +22485,7 @@ export default function CherryAdventure() {
       const kickFire = arch !== "roundkick" ? null : () => {
         const dyk = char.rotation.y;
         spawnCrescentWave(dyk, col, 4.2, false, null);                             // 🌙 รอยเตะโค้งพุ่งออก
-        const hit = wildsInRadius(char.position.x, char.position.z, 3.2);
+        const hit = wildsInRadius(char.position.x, char.position.z, 3.8);          // 🦵 ระยะเตะกวาดให้พอดีกับรอยเตะที่เห็น
         hit.forEach((m) => {
           applyDmg(m);
           m.userData.frzT = Math.max(m.userData.frzT || 0, 1.3);                   // 💫 เสียหลัก/มึน
@@ -28808,6 +28846,27 @@ export default function CherryAdventure() {
           wand.position.set(0.02, -0.56, 0.12);                  // ถือในมือระดับเอว
           wand.rotation.set(2.12, 0, 0);                         // ปลายชี้ไปหน้า เอียงลงนิดหน่อย
         }
+        if (G.cls === "boxer") {
+          // 🥊 ท่ามวย — นักมวยไม่ปล่อยมือห้อยข้างตัว ต้องยกการ์ดชิดคางตลอดเวลา
+          //    แล้วโยกตัวหลบซ้าย-ขวา (bob & weave) พร้อมย่อเข่าเบาๆ เป็นฟุตเวิร์ก
+          const wv = Math.sin(t * 2.6), wv2 = Math.sin(t * 5.2);      // จังหวะโยก 2 ชั้น (ช้า+เร็ว)
+          const gk = 1 - moveAmt * 0.35;                              // ตอนวิ่งลดการ์ดลงนิดหน่อยให้ดูวิ่งได้
+          armR.rotation.x = (-1.42 + swing * 0.1 * moveAmt) * gk;
+          armR.rotation.z = (0.44 + wv * 0.05) * gk;
+          armL.rotation.x = (-1.42 + swing2 * 0.1 * moveAmt) * gk;
+          armL.rotation.z = (-0.44 - wv * 0.05) * gk;
+          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -1.15 * gk;   // ศอกพับเก็บชิดลำตัว
+          if (armL.userData.elbow) armL.userData.elbow.rotation.x = -1.15 * gk;
+          torso.rotation.y = wv * 0.12;                               // ลำตัวโยกตามจังหวะ
+          char.rotation.z += (wv * 0.05 - char.rotation.z) * Math.min(1, dt * 6); // เอียงตัวหลบ
+          if (moveAmt < 0.3) {                                        // 🦶 ยืนอยู่กับที่ = ย่อเข่าเด้งเป็นฟุตเวิร์ก
+            const fw = Math.abs(Math.sin(t * 5.2));
+            legL.rotation.x = 0.16 + wv2 * 0.06; legR.rotation.x = -0.14 - wv2 * 0.06;
+            if (legL.userData.knee) legL.userData.knee.rotation.x = 0.26 + fw * 0.1;
+            if (legR.userData.knee) legR.userData.knee.rotation.x = 0.3 + (1 - fw) * 0.1;
+          }
+          G._boxWeave = wv;                                           // ส่งจังหวะโยกให้ท่าสกิลใช้ต่อ
+        }
         if (G.cls === "samurai") {
           // ⚔️ carry the katana low & forward, tip angled toward the ground (relaxed ready stance)
           armR.rotation.x = 0.35 + swing * 0.08 * moveAmt; // arm hangs slightly forward
@@ -28909,7 +28968,7 @@ export default function CherryAdventure() {
           // 🌊 เก็บท่าเดิน ณ เฟรมนี้ไว้ก่อน แล้วค่อยผสมเข้า/ออกกับท่าฟัน — ไม่ให้แขนขากระตุกตอนเริ่มและตอนจบท่า
           const bw = smK(s / 0.14) * smK((1 - s) / 0.16);
           const kL0 = legL.userData.knee ? legL.userData.knee.rotation.x : 0, kR0 = legR.userData.knee ? legR.userData.knee.rotation.x : 0;
-          const P0 = [armR.rotation.x, armR.rotation.z, armL.rotation.x, armL.rotation.z, legL.rotation.x, legR.rotation.x, kL0, kR0, torso.rotation.y, headG.rotation.y];
+          const P0 = [armR.rotation.x, armR.rotation.z, armL.rotation.x, armL.rotation.z, legL.rotation.x, legR.rotation.x, kL0, kR0, torso.rotation.y, headG.rotation.y, legL.rotation.z, legR.rotation.z];
           const melee = !(G.cls === "archer" || G.cls === "mage" || G.cls === "coder" || G.cls === "office");
           // 👻 วางเงาอาวุธช่วงหวด (เฉพาะสายประชิด · ท่าจบวาง 3 จังหวะ)
           if (melee) {
@@ -29033,8 +29092,11 @@ export default function CherryAdventure() {
           if (legR.userData.knee) legR.userData.knee.rotation.x = P0[7] + (legR.userData.knee.rotation.x - P0[7]) * bw;
           torso.rotation.y = P0[8] + (torso.rotation.y - P0[8]) * bw;
           headG.rotation.y = P0[9] + (headG.rotation.y - P0[9]) * bw;
+          legL.rotation.z = P0[10] + (legL.rotation.z - P0[10]) * bw;   // 🦵 ท่าเตะบิดขาออกข้าง — ต้องผสมกลับด้วย
+          legR.rotation.z = P0[11] + (legR.rotation.z - P0[11]) * bw;
         } else if (G._swActive) {
           G._swActive = 0; torso.rotation.y = 0; wand.scale.set(1, 1, 1); // 🧹 คลายการบิดตัวครั้งเดียวตอนจบท่า (ปล่อยให้หัวกลับไปมองรอบ ๆ เองต่อ)
+          legL.rotation.z = 0; legR.rotation.z = 0;                       // 🦵 คืนขาให้ตรง — ท่าเตะเคยค้างเพราะไม่มีใครรีเซ็ตแกนนี้
         }
 
         // 🏹💨 ท่ากระโดดถอยหลังยิง — ถีบตัวลอยถอยเป็นเส้นโค้ง เก็บเข่า เอนหลัง แล้วลงพื้นย่อรับแรง (หน้ายังหันเข้าหาเป้า)
@@ -29204,6 +29266,22 @@ export default function CherryAdventure() {
           wand.scale.setScalar(1 + (charging ? 0.3 * ce : 0.3 * (1 - rel)) * ease); // 🗡️ อาวุธเรืองพลังตอนสะสม แล้วคลายตอนปล่อย
           if (char.rotation.order !== "YXZ") char.rotation.order = "YXZ";
           let twist = 0, lean = 0, rise = 0, lunge = 0, spinTurn = 0, headPitch = 0;
+          if (BOX_ARCH[arch]) {
+            // 🥊 ฐานท่ามวย — ตั้งการ์ดชิดคางก่อน → ย่อเข่าเก็บแรง → โยกหลบ แล้วค่อยออกอาวุธ
+            const gUp = smK(Math.min(1, ce * 1.6));                    // ยกการ์ดขึ้นนำเสมอ
+            const bobT = Math.sin(rp * Math.PI * 6) * 0.5 + Math.sin(ce * Math.PI * 3) * 0.5;
+            armR.rotation.x = (-1.42 * gUp) * ease; armR.rotation.z = (0.44 * gUp) * ease;
+            armL.rotation.x = (-1.42 * gUp) * ease; armL.rotation.z = (-0.44 * gUp) * ease;
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = -1.15 * gUp * ease;   // ศอกพับเก็บชิดลำตัว
+            if (armL.userData.elbow) armL.userData.elbow.rotation.x = -1.15 * gUp * ease;
+            const crouch = gUp * 0.7 + Math.max(0, 1 - rp * 2) * 0.3;   // 🦵 ย่อเข่าเก็บแรงตอนตั้งการ์ด
+            legL.rotation.x = (0.2 * crouch) * ease; legR.rotation.x = (-0.18 * crouch) * ease;
+            if (legL.userData.knee) legL.userData.knee.rotation.x = (0.42 * crouch) * ease;
+            if (legR.userData.knee) legR.userData.knee.rotation.x = (0.46 * crouch) * ease;
+            rise = -0.16 * crouch * ease;                              // ย่อตัวลงจริง
+            twist = bobT * 0.14 * ease;                                // โยกหลบซ้าย-ขวา
+            lean = 0.08 * ease;
+          }
           if (arch === "firestorm") {
             // 🔥 ร่ายเพลิง — กางมือขึ้นเรียกดวงไฟให้ลอยรอบตัว แล้วผลักส่งออกไปพร้อมกัน
             armR.rotation.x = (-1.25 - 0.75 * ce + 0.7 * rel) * ease; armR.rotation.z = (0.45 + 0.3 * ce - 0.35 * rel) * ease;
@@ -30857,17 +30935,24 @@ export default function CherryAdventure() {
                 armR.rotation.x = -1.5; armR.rotation.z = 0.42;
                 armL.rotation.x = -1.5; armL.rotation.z = -0.42;
               };
-              const bob = Math.sin(t * 9) * 0.03;                               // เต้นฟุตเวิร์กเบาๆ ตลอดท่า
+              // 🦶 ฟุตเวิร์กมวย — เด้งตัวเบาๆ + โยกหลบซ้ายขวา + ย่อเข่าตลอดเวลา (นักมวยไม่เคยยืนนิ่ง)
+              const bob = Math.abs(Math.sin(t * 9)) * 0.05;                    // เด้งขึ้น-ลงตามจังหวะเท้า
+              const weave = Math.sin(t * 3.4);                                 // โยกหลบซ้าย-ขวา
               guard();
               char.position.y = bob;
-              char.rotation.z = 0;
+              char.rotation.z = weave * 0.07;                                  // เอียงตัวหลบ
+              torso.rotation.y = weave * 0.14;                                 // ลำตัวโยกตาม
+              { const fw = Math.abs(Math.sin(t * 9));                          // 🦵 ย่อเข่าสลับหน้า-หลัง = ฟุตเวิร์ก
+                legL.rotation.x = 0.2 + fw * 0.08; legR.rotation.x = -0.18 - fw * 0.08;
+                if (legL.userData.knee) legL.userData.knee.rotation.x = 0.3 + fw * 0.14;
+                if (legR.userData.knee) legR.userData.knee.rotation.x = 0.34 + (1 - fw) * 0.14; }
               // เข้าวง (in) → ออกอาวุธ (act) → ถอยกลับ (out)
               const inP = 0.3, outP = 0.82;
               let adv = 0;
               if (p < inP) adv = (p / inP) * reach;
               else if (p < outP) adv = reach;
               else adv = reach * (1 - (p - outP) / (1 - outP));
-              const noRush = sid === "b_iron" || sid === "x_box_3" || sid === "x_mua_3";  // ท่าที่ยืนกับที่
+              const noRush = sid === "b_iron" || sid === "x_box_3" || sid === "x_mua_3";  // ท่าที่ยืนกับที่ (ยังก้าวสั้นๆ ตามจังหวะ)
               char.position.x = bx + (noRush ? Math.min(adv, 0.5) : adv);
               const act = Math.max(0, Math.min(1, (p - inP) / (outP - inP)));   // 0→1 ช่วงออกอาวุธ
               const punch = (u, side) => {                                      // 👊 ยิงหมัดข้างที่กำหนด
