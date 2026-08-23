@@ -28832,6 +28832,8 @@ export default function CherryAdventure() {
         const swing2 = Math.sin(G.walkPhase + Math.PI);
         legL.rotation.x = swing * 0.8 * moveAmt;
         legR.rotation.x = swing2 * 0.8 * moveAmt;
+        legL.rotation.z += (0 - legL.rotation.z) * Math.min(1, dt * 10);   // 🦵 คลายแกนบิดข้างเสมอ (กันขาค้างข้ามโหมดจากท่าเตะ — ขี่สัตว์/ท่าสกิลเขียนทับทีหลังได้ตามปกติ)
+        legR.rotation.z += (0 - legR.rotation.z) * Math.min(1, dt * 10);
         armR.rotation.x = swing * 0.55 * moveAmt;  // 🔮 นักเวทแกว่งแขนตามจังหวะเดิน (ไม่ยกค้าง)
         armL.rotation.x = swing2 * 0.55 * moveAmt;
         // 🦵💪 bend knees & elbows through the stride so limbs don't stay stiff
@@ -30805,6 +30807,10 @@ export default function CherryAdventure() {
           if (legR.userData.knee) legR.userData.knee.rotation.x = 0.08;
           if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.15;
           if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.15;
+          const rlx = Math.min(1, dt * 10);                       // 🦵 คลายขากลับตรงเสมอ — ท่าเตะ/เข่าเคยทิ้งขาค้างไว้เพราะไม่มีใครเขียนแกนนี้ตอนยืนรอ
+          legL.rotation.x += (0 - legL.rotation.x) * rlx; legR.rotation.x += (0 - legR.rotation.x) * rlx;
+          legL.rotation.z += (0 - legL.rotation.z) * rlx; legR.rotation.z += (0 - legR.rotation.z) * rlx;
+          torso.rotation.y += (0 - torso.rotation.y) * rlx;       // ลำตัวที่โยกค้างจากฟุตเวิร์กก็คลายกลับ
         }
         // 🏹 archer battle-ready stance while waiting: hold the bow at a diagonal
         if (G.cls === "archer" && !G.banim) {
@@ -30941,6 +30947,8 @@ export default function CherryAdventure() {
               const bx = battleCenter.x - 1.3;
               const col = (A.skill && A.skill.color) || 0xe8622a;
               const sid = A.skill ? A.skill.id : null;
+              if (A._face0 == null) A._face0 = char.rotation.y;   // 🧭 จำทิศหันเดิมไว้ก่อนออกท่า — คืนให้ตรงตอนจบ
+              const face0 = A._face0;
               const reach = EP.x - bx - 0.95;                                   // ระยะที่ต้องเข้าไปให้ถึงตัว
               const guard = () => {                                             // 🥊 การ์ดสูงชิดคาง — ท่ายืนพื้นฐานของนักมวย
                 armR.rotation.x = -1.5; armR.rotation.z = 0.42;
@@ -30969,7 +30977,7 @@ export default function CherryAdventure() {
               const punch = (u, side) => {                                      // 👊 ยิงหมัดข้างที่กำหนด
                 const A2 = side > 0 ? armR : armL;
                 A2.rotation.x = -1.5 - 1.05 * u; A2.rotation.z = (side > 0 ? 0.42 : -0.42) * (1 - u * 0.85);
-                char.rotation.y = side * (0.3 - 0.6 * u) * 0.5;
+                char.rotation.y = face0 + side * (0.3 - 0.6 * u) * 0.5;
               };
               const kneeUp = (u) => {                                           // 🦵 ยกเข่า
                 legR.rotation.x = -2.0 * u;
@@ -30990,7 +30998,7 @@ export default function CherryAdventure() {
                 if (bt.u > 0.6 && A._boxN !== bt.i) { A._boxN = bt.i; boom(isKnee ? "kneeburst" : "punchwave", EP, bt.i === n - 1 ? 0xffffff : col, bt.i === n - 1 ? 0.6 : 0.24); }
               } else if (sid === "b_kick" || sid === "x_mua_1") {
                 // 🦵 เตะตัดวงเดือน / เตะเหล็กไหล — บิดสะโพกแล้วเหวี่ยงแข้งเข้าลำตัว
-                kickOut(act); char.rotation.y = -act * 0.7; char.rotation.z = act * 0.2;
+                kickOut(act); char.rotation.y = face0 - act * 0.7; char.rotation.z = act * 0.2;
                 if (act > 0.55 && !A._boxHit) { A._boxHit = true; boom("punchwave", EP, col, 0.55); }
               } else if (sid === "b_knee") {
                 // 🦶 เข่าลอยฟ้า — ทะยานขึ้นแล้วอัดเข่าลง
@@ -31012,7 +31020,7 @@ export default function CherryAdventure() {
                 const bt = beat(2), side = bt.i % 2 ? -1 : 1;
                 const A2 = side > 0 ? armR : armL;
                 A2.rotation.x = -1.35 - 0.5 * bt.u; A2.rotation.z = (side > 0 ? 0.5 + 1.5 * bt.u : -0.5 - 1.5 * bt.u);
-                char.rotation.y = side * (0.55 - 1.4 * bt.u) * 0.6;
+                char.rotation.y = face0 + side * (0.55 - 1.4 * bt.u) * 0.6;
                 if (bt.u > 0.6 && A._boxN !== bt.i) { A._boxN = bt.i; boom("punchwave", EP, bt.i ? 0xffffff : col, bt.i ? 0.65 : 0.3); }
               } else if (sid === "x_box_3") {
                 // 💫 อัปเปอร์สอยดาว — ย่อต่ำเก็บแรงแล้วสปริงชกขึ้น
@@ -31027,7 +31035,7 @@ export default function CherryAdventure() {
                 const wind = Math.min(1, act / 0.55), fire2 = Math.max(0, (act - 0.55) / 0.45);
                 armR.rotation.x = -0.55 - 0.95 * wind - 0.9 * fire2;
                 armR.rotation.z = 0.9 + 0.35 * wind - 1.05 * fire2;
-                char.rotation.y = 0.95 * wind - 1.6 * fire2;
+                char.rotation.y = face0 + 0.95 * wind - 1.6 * fire2;
                 char.position.x = bx + reach * (0.35 + 0.65 * fire2);
                 if (wind > 0.4 && fire2 <= 0 && Math.random() < 0.35) burst(new THREE.Vector3(char.position.x, 1.2, battleCenter.z), 0xfff2b0, 0.4);
                 if (fire2 > 0.35 && !A._boxHit) { A._boxHit = true; boom("punchwave", EP, 0xffffff, 0.95); boom("punchwave", EP, col, 0.95); if (G.speedLines) G.speedLines(600); }
@@ -31036,14 +31044,14 @@ export default function CherryAdventure() {
                 const bt = beat(3), side = bt.i % 2 ? -1 : 1;
                 const A2 = side > 0 ? armR : armL;
                 A2.rotation.x = -1.55 - 0.45 * bt.u; A2.rotation.z = (side > 0 ? 0.85 + 0.95 * bt.u : -0.85 - 0.95 * bt.u);
-                char.rotation.y = (bt.i + bt.u) * Math.PI * 0.9;                // 🌀 หมุนกลับหลังทุกครั้ง
+                char.rotation.y = face0 + (bt.i + bt.u) * Math.PI * 0.9;        // 🌀 หมุนกลับหลังทุกครั้ง
                 if (bt.u > 0.6 && A._boxN !== bt.i) { A._boxN = bt.i; boom("kneeburst", EP, 0xff5a1a, bt.i === 2 ? 0.6 : 0.28); spawnSkillFx("fire", EP, 0xff7020); }
               } else if (sid === "x_mua_3" || sid === "p_tiger") {
                 // 🐯 เสือลากหาง — เหวี่ยงส้นเท้าเพลิงสับลงเป็นวง 4 ครั้ง
                 const bt = beat(4);
                 legR.rotation.x = -2.0 * bt.u;
                 if (legR.userData.knee) legR.userData.knee.rotation.x = 0.4 + 0.5 * (1 - bt.u);
-                char.rotation.y = (bt.i + bt.u) * Math.PI * 0.55;
+                char.rotation.y = face0 + (bt.i + bt.u) * Math.PI * 0.55;
                 char.position.y = bob + bt.u * 0.2;
                 if (bt.u > 0.6 && A._boxN !== bt.i) { A._boxN = bt.i; boom("punchwave", EP, 0xe8842a, bt.i === 3 ? 0.6 : 0.26); spawnSkillFx("fire", EP, 0xff7020); }
               } else if (sid === "x_mua_4") {
@@ -31061,6 +31069,21 @@ export default function CherryAdventure() {
                 // 👊 ท่าอื่นๆ ของนักมวย — หมัดตรงมาตรฐาน
                 punch(act, 1);
                 if (act > 0.55 && !A._boxHit) { A._boxHit = true; boom("punchwave", EP, col, 0.5); }
+              }
+              if (p >= outP) {
+                // 🧹 ช่วงถอยกลับ — เดิม act ค้างที่ 1 ตลอดช่วงถอย ท่าเตะ/เข่าเลยค้างสุดขาจนจบแล้วไม่คืน
+                //    ผสมทุกส่วนกลับเข้าท่าการ์ด+ฟุตเวิร์กก่อนจบท่า ให้ขาลงพื้น แขนกลับการ์ด หันทิศเดิม
+                const rb = Math.min(1, (p - outP) / (1 - outP) * 1.15), gsn = 1 - rb;
+                legR.rotation.x = legR.rotation.x * gsn + (-0.18) * rb;
+                legL.rotation.x = legL.rotation.x * gsn + 0.2 * rb;
+                legR.rotation.z *= gsn; legL.rotation.z *= gsn;
+                if (legR.userData.knee) legR.userData.knee.rotation.x = legR.userData.knee.rotation.x * gsn + 0.34 * rb;
+                if (legL.userData.knee) legL.userData.knee.rotation.x = legL.userData.knee.rotation.x * gsn + 0.3 * rb;
+                armR.rotation.x = armR.rotation.x * gsn + (-1.5) * rb; armR.rotation.z = armR.rotation.z * gsn + 0.42 * rb;
+                armL.rotation.x = armL.rotation.x * gsn + (-1.5) * rb; armL.rotation.z = armL.rotation.z * gsn + (-0.42) * rb;
+                char.rotation.y = face0 + (char.rotation.y - face0) * gsn;
+                char.rotation.z = char.rotation.z * gsn + (weave * 0.07) * rb;
+                char.position.y = char.position.y * gsn + bob * rb;
               }
             } else if (cls === "warrior") {
               // ⚔️ WARRIOR — melee skills with real FX rigs (AAA)
@@ -36132,6 +36155,9 @@ export default function CherryAdventure() {
               char.position.y = 0;
               char.position.z = battleCenter.z;
               wand.scale.setScalar(1); // ⚔️ reset giant-sword scale (Titan's Judgment)
+              legL.rotation.x = 0; legR.rotation.x = 0; legL.rotation.z = 0; legR.rotation.z = 0;   // 🦵 ขาคืนตรง (อัลติมวยยกเข่า/ควงขา)
+              if (legL.userData.knee) legL.userData.knee.rotation.x = 0.08;
+              if (legR.userData.knee) legR.userData.knee.rotation.x = 0.08;
               { const gr = gripFor(curWeapon); wand.rotation.set(gr.x, gr.y, gr.z); wand.position.set(0.02, -0.56, 0.12); } // 🔱 restore the weapon grip
               arrowFx.visible = false; arrowFx.scale.setScalar(1);
               // ✨ clean up Divine Judgment wings + guardian
