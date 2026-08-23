@@ -19619,6 +19619,44 @@ function CherryAdventure() {
             lbl.position.y = (FLOATY[spId] ? 1.7 : 1.35) * g.scale.y;
             g.add(lbl);
             g.userData.lbl = { sprite: lbl, canvas: lblCanvas, tex: lblTex, drawn: null };
+            // 🖤 เส้นขอบดำสไตล์อนิเมะ — เปลือกกลับด้าน (inverted hull) เทคนิคเดียวกับตัวละครหลัก
+            //    ใช้ geometry ตัวเดียวกับชิ้นจริง (ชิ้นขยับ/เด้ง เส้นขอบขยับตาม) + วัสดุดำแชร์ร่วมทุกตัวทั้งเกม
+            {
+                if (!G._monOutlineMat) {
+                    G._monOutlineMat = new THREE.MeshBasicMaterial({ color: 0x181622, side: THREE.BackSide, toneMapped: false });
+                    G._monOutlineMat.userData._shared = 1; // 🛡️ ห้าม disposeObj3D ทำลาย — ใช้ร่วมกันทุกตัว
+                }
+                const targets = [];
+                g.traverse((o) => {
+                    if (!o.isMesh || o.type === "Sprite" || o.userData._outl || o.userData._outlShell)
+                        return;
+                    const mt = o.material;
+                    // เฉพาะชิ้นทึบผิวปกติ — ข้ามของโปร่งแสง/เรืองแสง/สองหน้า (ออร่า วงแหวน ควัน ฯลฯ)
+                    if (!mt || Array.isArray(mt) || mt.transparent || mt.depthWrite === false || mt.side !== THREE.FrontSide || mt.isMeshBasicMaterial || !o.geometry) {
+                        o.userData._outl = 2;
+                        return;
+                    }
+                    const gg = o.geometry;
+                    if (!gg.boundingSphere)
+                        gg.computeBoundingSphere();
+                    const wsc2 = new THREE.Vector3();
+                    o.getWorldScale(wsc2);
+                    const r = (gg.boundingSphere ? gg.boundingSphere.radius : 0) * Math.max(Math.abs(wsc2.x), Math.abs(wsc2.y), Math.abs(wsc2.z));
+                    if (r > 0.09)
+                        targets.push(o);
+                    else
+                        o.userData._outl = 2; // ชิ้นจิ๋ว (หนวด เล็บ ประกาย) ไม่ต้องตีเส้น
+                });
+                targets.forEach((o) => {
+                    const sh = new THREE.Mesh(o.geometry, G._monOutlineMat);
+                    sh.scale.setScalar(1.07);
+                    sh.raycast = () => { };
+                    sh.userData._outl = 1;
+                    sh.userData._outlShell = 1;
+                    o.userData._outl = 1;
+                    o.add(sh);
+                });
+            }
             return g;
         };
         // draw/refresh a monster's level tag (red if higher than player)
@@ -25951,11 +25989,13 @@ function CherryAdventure() {
         // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
         const disposeObj3D = (grp) => {
             grp.traverse((o) => {
-                if (o.geometry && o.geometry.dispose)
-                    o.geometry.dispose();
+                if (o.geometry && o.geometry.dispose && !(o.userData && o.userData._outlShell))
+                    o.geometry.dispose(); // 🖤 เปลือกเส้นขอบยืม geometry ของชิ้นจริง — เจ้าของเป็นคน dispose อยู่แล้ว
                 const m = o.material;
                 if (m)
                     (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm) {
+                        if (mm.userData && mm.userData._shared)
+                            return;
                         if (mm.map && mm.map.dispose)
                             mm.map.dispose();
                         if (mm.dispose)
