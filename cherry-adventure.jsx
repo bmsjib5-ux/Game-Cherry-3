@@ -2488,7 +2488,14 @@ export default function CherryAdventure() {
     char.add(torso);
     // pelvis: hip mass connecting the legs (flatter, wider than deep)
     const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 26, 26), pantsMat);
-    { const pos = pelvis.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { let z = pos.getZ(i); if (z > 0.04) z = 0.04 + (z - 0.04) * 0.55; pos.setZ(i, z); } pos.needsUpdate = true; pelvis.geometry.computeVertexNormals(); } // 🍑 สะโพกด้านหน้าแบนราบ (มุมข้าง)
+    { const pos = pelvis.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let z = pos.getZ(i);
+        if (z > 0.04) z = 0.04 + (z - 0.04) * 0.55;          // 🍑 สะโพกด้านหน้าแบนราบ (มุมข้าง)
+        else if (z < -0.05) z = -0.05 + (z + 0.05) * 0.5;    // ✂️ ตัดก้นด้านหลังให้ลึกเท่าขา ไม่ยื่นโป่งออกไปเป็นก้อนแยก
+        pos.setZ(i, z);
+      }
+      pos.needsUpdate = true; pelvis.geometry.computeVertexNormals(); }
     pelvis.scale.set(1.06, 0.6, 0.78);
     pelvis.position.y = 1.14;
     pelvis.castShadow = true;
@@ -2498,7 +2505,7 @@ export default function CherryAdventure() {
     for (const side of [-1, 1]) {
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 18), pantsMat);
       h.position.set(side * 0.175, 1.14, 0);
-      h.scale.set(1.08, 0.78, 0.9); // 📏 สะโพกผายรับกับเอวคอด
+      h.scale.set(1.08, 0.78, 0.7); // 📏 สะโพกผายรับกับเอวคอด (ลดความลึกให้เสมอแนวขา ไม่ยื่นเลยก้น)
       hips.add(h);
     }
     char.add(hips);
@@ -26163,7 +26170,11 @@ export default function CherryAdventure() {
         // ---- torso / pelvis / neck at char's real Y anchors ----
         const torso = latheOf([[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.34], [0.37, 0.48], [0.405, 0.62], [0.415, 0.74], [0.40, 0.86], [0.35, 0.97], [0.24, 1.08], [0.12, 1.16]], shirtMatA, 28);
         torso.position.y = 1.14; torso.scale.set(1.0, 0.8, 0.72); torso.castShadow = true; body.add(torso); baseHide.push(torso);
-        const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), pantsMatA); pelvis.scale.set(1.06, 0.6, 0.78); pelvis.position.y = 1.14; body.add(pelvis); baseHide.push(pelvis);
+        const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.34, 20, 18), pantsMatA);
+        { const pz = pelvis.geometry.attributes.position;   // ✂️ ตัดก้นให้ตรงกับร่างผู้เล่นเอง
+          for (let i = 0; i < pz.count; i++) { let z = pz.getZ(i); if (z > 0.04) z = 0.04 + (z - 0.04) * 0.55; else if (z < -0.05) z = -0.05 + (z + 0.05) * 0.5; pz.setZ(i, z); }
+          pz.needsUpdate = true; pelvis.geometry.computeVertexNormals(); }
+        pelvis.scale.set(1.06, 0.6, 0.78); pelvis.position.y = 1.14; body.add(pelvis); baseHide.push(pelvis);
         const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.155, 0.62, 16), skinMatA); neck.position.y = 2.1; body.add(neck);
         // ---- legs: hip pivots at char anchors (±0.165, 1.26), scale (1,1.18,1) ----
         const mkLeg = (sx) => {
