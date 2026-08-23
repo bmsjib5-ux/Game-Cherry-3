@@ -463,6 +463,14 @@ Object.assign(SPECIES, {
     eggduck: { name: "ลูกเป็ดน้อย", emoji: "🐤", color: 0xf5c84a, hp: 34, atk: 5, catch: 0, tier: 1, desc: "ลูกเป็ดปากเหลืองเดินต้วมเตี้ยม", eggOnly: 1, weak: "wind" },
 });
 Object.assign(PET_ELEM, { eggdrake: "arcane", eggpeacock: "light", eggunicorn: "light", eggdino: "earth", eggowl: "wind", egggecko: "fire", eggturtle: "water", egghog: "earth", eggchick: "light", eggduck: "water" });
+// 🐾 แยกรูปร่างให้ตรงกับชื่อ — เดิมหลายสายพันธุ์ใช้ทรงกลางร่วมกัน (beast/bird/fish/wisp/star)
+// จนจิ้งจอก เสือ ช้าง ลิง ปีศาจ และเอเลี่ยนออกมาเป็นสัตว์สี่ขาหน้าตาเดียวกันหมด
+Object.assign(MON_SHAPE_EXTRA, {
+    plerng: "fox", saming: "tiger", erawan: "elephant", hanuman: "monkey", pisaj: "demon", alien: "alien",
+    ngueak: "mermaid", piranha: "piranha", thewada: "angel", kinnara: "kinnari", yommathut: "reaper",
+    winyan: "ghost", wayu: "tornado", phothisat: "buddha", ufoboss: "ufo", alienpet: "alienpet", cyclops: "cyclops",
+    mangkorn: "drake", // 🐲 มังกรเยาว์เป็นมังกร ไม่ใช่งูขนด — นาคเจ็ดเศียรยังใช้ทรงงูขนดตามเดิม
+});
 // 🥚🐾 รูปร่างเฉพาะตัวของสัตว์เลี้ยงจากไข่ — เดิมไม่ได้แม็ปไว้เลย ทุกตัวจึงออกมาเป็นก้อนสไลม์เหมือนกันหมด
 Object.assign(MON_SHAPE_EXTRA, { eggdrake: "drake", eggpeacock: "peacock", eggunicorn: "unicorn", eggdino: "dino", eggowl: "owl", egggecko: "gecko", eggturtle: "turtle", egghog: "hedgehog", eggchick: "chicklet", eggduck: "duck" });
 Object.assign(PET_SKILL, { eggdrake: "ลมหายใจมังกร", eggpeacock: "พัดหางเจ็ดสี", eggunicorn: "แสงเขาศักดิ์สิทธิ์", eggdino: "กระทืบปฐพี", eggowl: "คลื่นปัญญา", egggecko: "ลิ้นสายฟ้า", eggturtle: "โล่กระดองมงคล", egghog: "ขนแหลมพุ่ง", eggchick: "จิกน้อย", eggduck: "ปีกกระพือ" });
@@ -16026,9 +16034,9 @@ function CherryAdventure() {
         // real parts (head / legs / tail / fins), all parented to one `body` group so the whole
         // creature bobs together (previously the ball bobbed and the eyes stayed put).
         const MON_SHAPE = {
-            mochi: "bunny", baibua: "slime", mekha: "cloud", plerng: "beast", kirara: "star",
+            mochi: "bunny", baibua: "slime", mekha: "cloud", kirara: "star",
             phi: "wisp", nam: "fish", khiao: "beast", ngu: "serpent", paksi: "bird",
-            saming: "beast", garuda: "bird", wayu: "wisp", taara: "star",
+            garuda: "garuda", taara: "star", // 🦊🐯🌪️ plerng/saming/wayu ย้ายไปใช้ทรงเฉพาะตัวใน MON_SHAPE_EXTRA
         };
         // spin a 2D outline into a 3D body — the trick used for the character's limbs
         // spin a 2D outline into a 3D body — the trick used for the character's limbs.
@@ -16645,6 +16653,7 @@ function CherryAdventure() {
                 mtail.rotation.x = 0.4;
                 mtail.rotation.y = Math.PI / 2;
                 body.add(mtail);
+                g.userData.tail = mtail;
                 headY = 0.6;
                 headZ = 0.34;
                 headR = 0.28;
@@ -17117,6 +17126,1184 @@ function CherryAdventure() {
                 headY = 0.44;
                 headZ = 0.3;
                 headR = 0.3;
+            }
+            else if (shape === "fox") {
+                // 🦊 จิ้งจอก — ลำตัวเพรียว จมูกแหลมยาว หูสามเหลี่ยมใหญ่ หางฟูใหญ่ปลายขาว
+                const tip = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xffffff), 0.72).getHex(), roughness: 0.72 });
+                const torso = latheOf([[0, -0.42], [0.18, -0.36], [0.25, -0.08], [0.24, 0.2], [0.15, 0.4], [0, 0.46]], mat, 26);
+                torso.rotation.x = Math.PI / 2;
+                torso.scale.set(1, 1.25, 0.9);
+                torso.position.set(0, 0.0, -0.04);
+                torso.castShadow = true;
+                body.add(torso);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 20), mat);
+                head.position.set(0, 0.24, 0.42);
+                head.castShadow = true;
+                body.add(head);
+                const snout = latheOf([[0, 0], [0.11, 0.04], [0.06, 0.24], [0, 0.3]], tip, 20); // 🐽 จมูกแหลมเรียวยาวแบบจิ้งจอก
+                snout.rotation.x = Math.PI / 2;
+                snout.position.set(0, 0.17, 0.6);
+                body.add(snout);
+                const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 16, 14), dark);
+                nose.position.set(0, 0.18, 0.88);
+                body.add(nose);
+                for (const sx of [-1, 1]) { // 👂 หูสามเหลี่ยมใหญ่ตั้งชัน
+                    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.32, 4), mat);
+                    ear.position.set(sx * 0.15, 0.5, 0.36);
+                    ear.rotation.z = sx * -0.2;
+                    ear.scale.set(1, 1, 0.5);
+                    body.add(ear);
+                    const ei = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.2, 4), dark);
+                    ei.position.set(sx * 0.15, 0.48, 0.4);
+                    ei.rotation.z = sx * -0.2;
+                    ei.scale.set(1, 1, 0.4);
+                    body.add(ei);
+                }
+                const ruff = latheOf([[0, -0.1], [0.14, 0], [0.16, 0.12], [0, 0.2]], tip, 20);
+                ruff.position.set(0, 0.06, 0.32);
+                ruff.scale.z = 0.55;
+                body.add(ruff);
+                for (const sx of [-1, 1])
+                    for (const pz of [0.26, -0.28]) { // 🦵 ขาเรียวเล็ก ถุงเท้าดำ
+                        const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.042, 0.38, 12), mat);
+                        lg.position.set(sx * 0.17, -0.4, pz);
+                        body.add(lg);
+                        legs.push(lg);
+                        const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.14, 10), dark);
+                        sock.position.set(sx * 0.17, -0.58, pz);
+                        body.add(sock);
+                    }
+                const tail = new THREE.Group(); // 🧣 หางฟูใหญ่ ปลายสีอ่อน
+                for (let k = 0; k < 5; k++) {
+                    const puff = new THREE.Mesh(new THREE.SphereGeometry(0.19 - k * 0.012, 16, 14), k >= 3 ? tip : mat);
+                    puff.scale.set(1, 1, 1.15);
+                    puff.position.set(0, 0.06 + k * 0.07, -0.14 - k * 0.16);
+                    tail.add(puff);
+                }
+                tail.position.set(0, 0.06, -0.36);
+                tail.rotation.x = -0.34;
+                body.add(tail);
+                g.userData.tail = tail;
+                headY = 0.28;
+                headZ = 0.72;
+                headR = 0.24;
+            }
+            else if (shape === "tiger") {
+                // 🐯 เสือ — ตัวใหญ่ล่ำ อกกว้าง หัวโต แก้มขนฟู เขี้ยว ลายพาดกลอนทั้งตัว หางยาวเป็นปล้อง
+                const stripe = new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: 0.8 });
+                const pale = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xfff4d8), 0.62).getHex(), roughness: 0.78 });
+                const torso = latheOf([[0, -0.48], [0.26, -0.42], [0.36, -0.06], [0.35, 0.22], [0.22, 0.44], [0, 0.5]], mat, 28);
+                torso.rotation.x = Math.PI / 2;
+                torso.scale.set(1.08, 1.2, 1);
+                torso.position.set(0, 0.04, -0.06);
+                torso.castShadow = true;
+                body.add(torso);
+                const chest = latheOf([[0, -0.16], [0.17, -0.05], [0.19, 0.12], [0, 0.22]], pale, 20);
+                chest.position.set(0, -0.04, 0.34);
+                chest.scale.z = 0.5;
+                body.add(chest);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 26, 22), mat); // 🦁 หัวโตกว่าหมาป่า
+                head.scale.set(1.1, 1, 1);
+                head.position.set(0, 0.28, 0.44);
+                head.castShadow = true;
+                body.add(head);
+                for (const sx of [-1, 1]) { // 🧔 แก้มขนฟูสองข้าง
+                    const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 14), pale);
+                    cheek.scale.set(0.85, 1, 0.6);
+                    cheek.position.set(sx * 0.24, 0.2, 0.54);
+                    body.add(cheek);
+                    for (let k = 0; k < 3; k++) {
+                        const wk = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.26, 4), whiteMat);
+                        wk.position.set(sx * 0.3, 0.18 - k * 0.035, 0.6);
+                        wk.rotation.z = Math.PI / 2 + sx * (0.15 + k * 0.16);
+                        body.add(wk);
+                    }
+                }
+                const muz = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 16), pale);
+                muz.scale.set(1.2, 0.85, 0.9);
+                muz.position.set(0, 0.16, 0.68);
+                body.add(muz);
+                const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 14), new THREE.MeshStandardMaterial({ color: 0xd06a70, roughness: 0.6 }));
+                nose.position.set(0, 0.2, 0.76);
+                body.add(nose);
+                for (const sx of [-1, 1]) {
+                    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 12), mat);
+                    ear.scale.set(1, 1, 0.45);
+                    ear.position.set(sx * 0.2, 0.55, 0.4);
+                    body.add(ear);
+                    const ei = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), stripe);
+                    ei.scale.set(1, 1, 0.4);
+                    ei.position.set(sx * 0.2, 0.55, 0.44);
+                    body.add(ei);
+                }
+                for (let k = 0; k < 7; k++) { // 🏷️ ลายพาดกลอนพาดหลัง
+                    const st = new THREE.Mesh(new THREE.TorusGeometry(0.35 - Math.abs(k - 3) * 0.02, 0.022, 6, 18, Math.PI * 0.55), stripe);
+                    st.rotation.y = Math.PI / 2;
+                    st.rotation.z = -Math.PI / 2 + (k % 2 ? 0.14 : -0.14);
+                    st.position.set(0, 0.06, 0.22 - k * 0.15);
+                    body.add(st);
+                }
+                for (const sx of [-1, 1])
+                    for (const pz of [0.3, -0.32]) { // 🐾 ขาล่ำ อุ้งเท้าใหญ่ เล็บแหลม
+                        const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.08, 0.4, 14), mat);
+                        lg.position.set(sx * 0.24, -0.42, pz);
+                        body.add(lg);
+                        legs.push(lg);
+                        const paw = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 14), pale);
+                        paw.scale.set(1, 0.66, 1.25);
+                        paw.position.set(sx * 0.24, -0.6, pz + 0.04);
+                        body.add(paw);
+                        for (const cx of [-0.05, 0, 0.05]) {
+                            const cl = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.07, 5), whiteMat);
+                            cl.position.set(sx * 0.24 + cx, -0.63, pz + 0.14);
+                            cl.rotation.x = 1.35;
+                            body.add(cl);
+                        }
+                    }
+                const tail = new THREE.Group(); // 🦴 หางยาวเป็นปล้องลาย
+                for (let k = 0; k < 6; k++) {
+                    const seg = new THREE.Mesh(new THREE.SphereGeometry(0.085 - k * 0.006, 12, 10), k % 2 ? stripe : mat);
+                    seg.scale.set(1, 1, 1.4);
+                    seg.position.set(0, k * 0.05, -0.12 - k * 0.17);
+                    tail.add(seg);
+                }
+                tail.position.set(0, 0.1, -0.44);
+                tail.rotation.x = -0.5;
+                body.add(tail);
+                g.userData.tail = tail;
+                headY = 0.32;
+                headZ = 0.78;
+                headR = 0.32;
+            }
+            else if (shape === "elephant") {
+                // 🐘 ช้าง — ตัวใหญ่มหึมา งวงยาวห้อย หูใบพัดกางใหญ่ งาโค้งขาว ขาเสาสี่ต้น
+                const tusk = new THREE.MeshStandardMaterial({ color: 0xfff4e0, roughness: 0.35, metalness: 0.1 });
+                const torso = latheOf([[0, -0.44], [0.32, -0.4], [0.44, -0.04], [0.42, 0.24], [0.26, 0.46], [0, 0.5]], mat, 30);
+                torso.rotation.x = Math.PI / 2;
+                torso.scale.set(1.05, 1.15, 1.05);
+                torso.position.set(0, 0.12, -0.1);
+                torso.castShadow = true;
+                body.add(torso);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 26, 22), mat);
+                head.scale.set(1, 1.05, 0.9);
+                head.position.set(0, 0.34, 0.46);
+                head.castShadow = true;
+                body.add(head);
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 16), mat); // 🧠 โหนกหัวช้าง
+                dome.scale.set(1.1, 0.8, 0.9);
+                dome.position.set(0, 0.62, 0.42);
+                body.add(dome);
+                const trunk = new THREE.Group(); // 🐘 งวงยาวห้อยลงโค้งเข้า
+                for (let k = 0; k < 8; k++) {
+                    const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.115 - k * 0.011, 0.105 - k * 0.011, 0.14, 14), mat);
+                    seg.position.set(0, -k * 0.125, Math.sin(k * 0.3) * 0.07);
+                    seg.rotation.x = 0.12 * Math.cos(k * 0.3);
+                    trunk.add(seg);
+                    if (k % 2) {
+                        const rg = new THREE.Mesh(new THREE.TorusGeometry(0.112 - k * 0.011, 0.012, 6, 14), dark);
+                        rg.rotation.x = Math.PI / 2;
+                        rg.position.copy(seg.position);
+                        trunk.add(rg);
+                    }
+                }
+                trunk.position.set(0, 0.24, 0.72);
+                body.add(trunk);
+                g.userData.tail = trunk;
+                for (const sx of [-1, 1]) { // 🐾 หูใบพัดกางใหญ่
+                    const ear = latheOf([[0, -0.3], [0.24, -0.14], [0.28, 0.1], [0.16, 0.28], [0, 0.34]], belly, 22);
+                    ear.position.set(sx * 0.38, 0.36, 0.28);
+                    ear.rotation.z = sx * 0.34;
+                    ear.rotation.y = sx * 0.5;
+                    ear.scale.set(1, 1.15, 0.14);
+                    body.add(ear);
+                }
+                for (const sx of [-1, 1]) { // 🦷 งาโค้งขาว
+                    const tk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.42, 10), tusk);
+                    tk.position.set(sx * 0.17, 0.1, 0.68);
+                    tk.rotation.x = 2.2;
+                    tk.rotation.z = sx * 0.22;
+                    body.add(tk);
+                }
+                for (const sx of [-1, 1])
+                    for (const pz of [0.26, -0.32]) { // 🦵 ขาเสาหนา เล็บสี่กีบ
+                        const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.17, 0.46, 16), mat);
+                        lg.position.set(sx * 0.3, -0.4, pz);
+                        body.add(lg);
+                        legs.push(lg);
+                        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.2, 0.1, 16), belly);
+                        foot.position.set(sx * 0.3, -0.66, pz);
+                        body.add(foot);
+                        for (let n = -1; n <= 1; n++) {
+                            const nail = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.04, 10), tusk);
+                            nail.position.set(sx * 0.3 + n * 0.075, -0.68, pz + 0.16);
+                            body.add(nail);
+                        }
+                    }
+                const tl = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.02, 0.36, 8), mat);
+                tl.position.set(0, -0.06, -0.62);
+                tl.rotation.x = 0.3;
+                body.add(tl);
+                headY = 0.4;
+                headZ = 0.74;
+                headR = 0.32;
+            }
+            else if (shape === "demon") {
+                // 😈 ปีศาจ — ยืนสองขา กล้ามล่ำ เขาโค้งใหญ่ เขี้ยวโง้ง กรงเล็บ ปีกหนัง หางปลายสามง่าม
+                const horn = new THREE.MeshStandardMaterial({ color: 0x241018, roughness: 0.55, metalness: 0.2 });
+                const glow = new THREE.MeshStandardMaterial({ color: 0xffb020, emissive: 0xff6a10, emissiveIntensity: 1.2 });
+                const torso = latheOf([[0, -0.32], [0.28, -0.26], [0.34, -0.02], [0.3, 0.22], [0.24, 0.42], [0.16, 0.5]], mat, 24);
+                torso.scale.set(1.15, 1, 0.76);
+                torso.position.y = 0.16;
+                torso.castShadow = true;
+                body.add(torso);
+                for (const sx of [-1, 1]) {
+                    const pec = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 14), mat);
+                    pec.scale.set(1, 0.78, 0.65);
+                    pec.position.set(sx * 0.14, 0.28, 0.22);
+                    body.add(pec);
+                }
+                for (let r = 0; r < 2; r++)
+                    for (const sx of [-0.5, 0.5]) {
+                        const ab = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), mat);
+                        ab.position.set(sx * 0.11, 0.08 - r * 0.11, 0.24);
+                        body.add(ab);
+                    }
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 24, 20), mat);
+                head.position.set(0, 0.76, 0.04);
+                head.castShadow = true;
+                body.add(head);
+                for (const sx of [-1, 1]) { // 😈 เขาโค้งใหญ่สองข้าง
+                    const hn = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.4, 10), horn);
+                    hn.position.set(sx * 0.19, 0.98, -0.04);
+                    hn.rotation.z = sx * -0.62;
+                    hn.rotation.x = -0.34;
+                    body.add(hn);
+                    const hb = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), horn);
+                    hb.position.set(sx * 0.16, 0.86, 0.0);
+                    body.add(hb);
+                }
+                g.userData.customFace = true;
+                for (const sx of [-0.1, 0.1]) { // 🔥 ตาเพลิงเรืองแสง
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 12), glow);
+                    eye.scale.set(1.3, 0.8, 1);
+                    eye.position.set(sx, 0.8, 0.21);
+                    body.add(eye);
+                }
+                const grin = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.045, 0.05), darkMat);
+                grin.position.set(0, 0.66, 0.22);
+                body.add(grin);
+                for (const sx of [-0.07, 0.07]) {
+                    const fg = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.11, 6), whiteMat);
+                    fg.rotation.x = Math.PI;
+                    fg.position.set(sx, 0.63, 0.22);
+                    body.add(fg);
+                }
+                for (const sx of [-1, 1]) { // 💪 แขนล่ำ กรงเล็บแหลม
+                    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.36, 12), mat);
+                    up.position.set(sx * 0.44, 0.28, 0);
+                    up.rotation.z = sx * 0.24;
+                    body.add(up);
+                    const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.34, 12), mat);
+                    fore.position.set(sx * 0.52, -0.04, 0.04);
+                    body.add(fore);
+                    legs.push(fore);
+                    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), mat);
+                    hand.position.set(sx * 0.54, -0.24, 0.06);
+                    body.add(hand);
+                    for (let cI = -1; cI <= 1; cI++) {
+                        const cl = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.13, 6), horn);
+                        cl.position.set(sx * 0.54 + cI * 0.06, -0.36, 0.1);
+                        cl.rotation.x = 0.25;
+                        body.add(cl);
+                    }
+                    const wing = new THREE.Group(); // 🦇 ปีกหนังพับข้างหลัง
+                    for (let k = 0; k < 3; k++) {
+                        const memb = new THREE.Mesh(new THREE.ConeGeometry(0.15 - k * 0.025, 0.56 - k * 0.09, 3), new THREE.MeshStandardMaterial({ color: 0x2a0f1a, roughness: 0.7, side: THREE.DoubleSide }));
+                        memb.position.set(0, -0.2 - k * 0.05, -k * 0.1);
+                        memb.rotation.z = Math.PI / 2;
+                        memb.scale.set(1, 1, 0.14);
+                        wing.add(memb);
+                    }
+                    wing.position.set(sx * 0.24, 0.42, -0.24);
+                    wing.rotation.z = sx > 0 ? -0.7 : 0.7;
+                    wing.scale.x = sx;
+                    body.add(wing);
+                    g.userData.wing = g.userData.wing || wing;
+                }
+                for (const sx of [-1, 1]) { // 🦵 ขาสองข้าง กีบเท้าดำ
+                    const th = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.32, 12), mat);
+                    th.position.set(sx * 0.18, -0.26, 0);
+                    body.add(th);
+                    legs.push(th);
+                    const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.28, 12), mat);
+                    sh.position.set(sx * 0.18, -0.52, 0.02);
+                    body.add(sh);
+                    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.12, 10), horn);
+                    hoof.position.set(sx * 0.18, -0.68, 0.04);
+                    body.add(hoof);
+                }
+                const tail = new THREE.Group(); // 😈 หางเรียวปลายสามง่าม
+                for (let k = 0; k < 5; k++) {
+                    const seg = new THREE.Mesh(new THREE.SphereGeometry(0.06 - k * 0.007, 10, 8), mat);
+                    seg.position.set(0, -0.1 - k * 0.02, -0.1 - k * 0.14);
+                    tail.add(seg);
+                }
+                for (let n = -1; n <= 1; n++) {
+                    const bl = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.18, 4), horn);
+                    bl.position.set(n * 0.06, -0.2, -0.78);
+                    bl.rotation.x = -1.9;
+                    bl.rotation.z = n * 0.4;
+                    tail.add(bl);
+                }
+                tail.position.set(0, -0.1, -0.24);
+                body.add(tail);
+                g.userData.tail = tail;
+                headY = 0.78;
+                headZ = 0.24;
+                headR = 0.25;
+            }
+            else if (shape === "alien") {
+                // 👽 เอเลี่ยน — หัวโตทรงหยดน้ำ ตาดำรีใหญ่ ตัวผอมบาง แขนขายาวเก้งก้าง
+                const suit = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).multiplyScalar(0.6).getHex(), roughness: 0.4, metalness: 0.35 });
+                const glow = new THREE.MeshStandardMaterial({ color: 0x9affe0, emissive: 0x3ad0a0, emissiveIntensity: 1.1 });
+                const torso = latheOf([[0, -0.34], [0.15, -0.28], [0.2, -0.02], [0.17, 0.2], [0.1, 0.34], [0, 0.38]], suit, 22);
+                torso.scale.set(1, 1, 0.72);
+                torso.position.y = 0.06;
+                torso.castShadow = true;
+                body.add(torso);
+                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.03, 8, 18), glow);
+                collar.rotation.x = Math.PI / 2;
+                collar.position.y = 0.42;
+                body.add(collar);
+                const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), glow);
+                core.position.set(0, 0.14, 0.17);
+                body.add(core);
+                const head = latheOf([[0, -0.3], [0.2, -0.14], [0.3, 0.06], [0.26, 0.24], [0.12, 0.36], [0, 0.4]], mat, 26); // 👽 หัวโตทรงหยดน้ำกลับหัว
+                head.scale.set(1, 1.05, 0.86);
+                head.position.set(0, 0.76, 0.02);
+                head.castShadow = true;
+                body.add(head);
+                g.userData.customFace = true;
+                for (const sx of [-1, 1]) { // 🖤 ตาดำรีเฉียงใหญ่
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.115, 18, 14), darkMat);
+                    eye.scale.set(1.15, 0.62, 0.42);
+                    eye.position.set(sx * 0.14, 0.76, 0.24);
+                    eye.rotation.z = sx * -0.45;
+                    body.add(eye);
+                    const gl = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), whiteMat);
+                    gl.position.set(sx * 0.16, 0.8, 0.3);
+                    body.add(gl);
+                }
+                const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), darkMat);
+                mouth.scale.set(1.4, 0.6, 0.4);
+                mouth.position.set(0, 0.58, 0.25);
+                body.add(mouth);
+                for (const sx of [-1, 1]) { // 🦴 แขนยาวเรียว นิ้วสามนิ้ว
+                    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.36, 10), mat);
+                    up.position.set(sx * 0.26, 0.2, 0);
+                    up.rotation.z = sx * 0.3;
+                    body.add(up);
+                    const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.032, 0.34, 10), mat);
+                    fore.position.set(sx * 0.34, -0.14, 0.02);
+                    body.add(fore);
+                    legs.push(fore);
+                    for (let fI = -1; fI <= 1; fI++) {
+                        const fg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.009, 0.14, 6), mat);
+                        fg.position.set(sx * 0.34 + fI * 0.04, -0.36, 0.03);
+                        fg.rotation.z = fI * 0.28;
+                        body.add(fg);
+                    }
+                }
+                for (const sx of [-1, 1]) {
+                    const th = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.32, 10), suit);
+                    th.position.set(sx * 0.11, -0.36, 0);
+                    body.add(th);
+                    legs.push(th);
+                    const boot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), suit);
+                    boot.scale.set(1, 0.6, 1.4);
+                    boot.position.set(sx * 0.11, -0.54, 0.05);
+                    body.add(boot);
+                }
+                headY = 0.76;
+                headZ = 0.3;
+                headR = 0.3;
+            }
+            else if (shape === "mermaid") {
+                // 🐠 เงือก — ท่อนบนคน ท่อนล่างหางปลา ครีบข้าง ผมยาวสยาย เกล็ดเรืองแสง
+                const skin = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xffe0c0), 0.68).getHex(), roughness: 0.6 });
+                const fin = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0x60f0e0), 0.5).getHex(), roughness: 0.35, transparent: true, opacity: 0.9, side: THREE.DoubleSide, emissive: new THREE.Color(sp.color).multiplyScalar(0.25) });
+                const hair = new THREE.MeshStandardMaterial({ color: 0x2a6a7a, roughness: 0.55 });
+                const bust = latheOf([[0, -0.16], [0.16, -0.08], [0.19, 0.1], [0.14, 0.28], [0, 0.34]], skin, 22);
+                bust.position.y = 0.3;
+                bust.castShadow = true;
+                body.add(bust);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 20), skin);
+                head.position.set(0, 0.76, 0.02);
+                head.castShadow = true;
+                body.add(head);
+                for (let k = 0; k < 9; k++) { // 💧 ผมยาวสยายไหล่
+                    const a = (k / 9) * Math.PI * 2;
+                    const str = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.44, 5), hair);
+                    str.position.set(Math.cos(a) * 0.17, 0.66, Math.sin(a) * 0.15 - 0.05);
+                    str.rotation.x = 0.2 + Math.sin(a) * 0.2;
+                    str.rotation.z = Math.cos(a) * 0.3;
+                    body.add(str);
+                }
+                const bang = new THREE.Mesh(new THREE.SphereGeometry(0.21, 20, 16), hair);
+                bang.scale.set(1, 0.75, 1);
+                bang.position.set(0, 0.84, -0.02);
+                body.add(bang);
+                for (const sx of [-1, 1]) { // 💪 แขนเรียว
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.036, 0.4, 10), skin);
+                    arm.position.set(sx * 0.25, 0.3, 0.04);
+                    arm.rotation.z = sx * 0.34;
+                    body.add(arm);
+                    legs.push(arm);
+                    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), skin);
+                    hand.position.set(sx * 0.32, 0.1, 0.06);
+                    body.add(hand);
+                }
+                const shell = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 14), fin); // 🐚 เปลือกหอยคาดอก
+                shell.scale.set(1.5, 0.8, 0.4);
+                shell.position.set(0, 0.42, 0.16);
+                body.add(shell);
+                for (let k = 0; k < 6; k++) { // 🐟 ท่อนหางปลาเรียวลง
+                    const seg = new THREE.Mesh(new THREE.SphereGeometry(0.19 - k * 0.021, 18, 14), k % 2 ? fin : mat);
+                    seg.scale.set(1, 1, 0.85);
+                    seg.position.set(Math.sin(k * 0.7) * 0.06, 0.1 - k * 0.15, -0.02 - k * 0.03);
+                    body.add(seg);
+                }
+                const fluke = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.36, 4), fin); // 🌊 ครีบหางแฉก
+                fluke.rotation.x = -Math.PI / 2;
+                fluke.rotation.y = Math.PI / 4;
+                fluke.position.set(0, -0.82, -0.06);
+                fluke.scale.set(1, 0.32, 1);
+                body.add(fluke);
+                g.userData.tail = fluke;
+                for (const sx of [-1, 1]) {
+                    const sf = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.26, 3), fin);
+                    sf.position.set(sx * 0.2, -0.2, -0.04);
+                    sf.rotation.z = sx * -1.4;
+                    sf.scale.set(1, 1, 0.25);
+                    body.add(sf);
+                }
+                headY = 0.76;
+                headZ = 0.22;
+                headR = 0.2;
+            }
+            else if (shape === "piranha") {
+                // 🐟 ปิรันย่า — ตัวสั้นป้อมแบนข้าง หัวโต ขากรรไกรฟันเลื่อยยื่น ท้องแดง
+                const red = new THREE.MeshStandardMaterial({ color: 0xe04a3a, roughness: 0.55 });
+                const hull = latheOf([[0, -0.4], [0.24, -0.24], [0.34, 0.04], [0.28, 0.28], [0.12, 0.44], [0, 0.5]], mat, 26);
+                hull.rotation.x = Math.PI / 2;
+                hull.scale.set(0.62, 1.05, 1.3);
+                hull.castShadow = true;
+                body.add(hull); // 🐟 แบนข้าง ตัวสูง
+                const bel = latheOf([[0, -0.3], [0.16, -0.12], [0.18, 0.12], [0, 0.3]], red, 20);
+                bel.rotation.x = Math.PI / 2;
+                bel.position.set(0, -0.2, 0.02);
+                bel.scale.set(0.5, 1, 0.9);
+                body.add(bel);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 22, 18), mat);
+                head.scale.set(0.68, 1.05, 0.9);
+                head.position.set(0, 0.04, 0.36);
+                body.add(head);
+                g.userData.customFace = true;
+                const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.13, 0.22), red); // 🦷 ขากรรไกรล่างยื่น
+                jaw.position.set(0, -0.14, 0.5);
+                body.add(jaw);
+                for (let k = 0; k < 7; k++) { // 🔺 ฟันเลื่อยบน-ล่าง
+                    const tx = (k - 3) * 0.045;
+                    const tp = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.1, 4), whiteMat);
+                    tp.rotation.x = Math.PI;
+                    tp.position.set(tx, 0.0, 0.56);
+                    body.add(tp);
+                    const bt = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.1, 4), whiteMat);
+                    bt.position.set(tx, -0.1, 0.58);
+                    body.add(bt);
+                }
+                for (const sx of [-1, 1]) {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 12), whiteMat);
+                    eye.position.set(sx * 0.15, 0.14, 0.44);
+                    body.add(eye);
+                    const pup = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 10), darkMat);
+                    pup.position.set(sx * 0.17, 0.14, 0.48);
+                    body.add(pup);
+                }
+                const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.3, 3), mat);
+                dorsal.position.set(0, 0.42, -0.06);
+                dorsal.scale.set(1, 1, 0.2);
+                body.add(dorsal);
+                const anal = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 3), red);
+                anal.rotation.z = Math.PI;
+                anal.position.set(0, -0.4, -0.1);
+                anal.scale.set(1, 1, 0.2);
+                body.add(anal);
+                const tail = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.3, 4), mat);
+                tail.rotation.x = -Math.PI / 2;
+                tail.rotation.y = Math.PI / 4;
+                tail.position.set(0, 0, -0.56);
+                tail.scale.set(0.3, 1, 1);
+                body.add(tail);
+                g.userData.tail = tail;
+                for (const sx of [-1, 1]) {
+                    const pf = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 3), red);
+                    pf.position.set(sx * 0.17, -0.1, 0.16);
+                    pf.rotation.z = sx * -1.3;
+                    pf.scale.set(1, 1, 0.3);
+                    body.add(pf);
+                }
+                headY = 0.06;
+                headZ = 0.5;
+                headR = 0.24;
+            }
+            else if (shape === "angel") {
+                // 👼 เทวดา — ร่างเด็กลอยได้ วงแหวนแสงเหนือหัว ปีกขนนกขาว ผ้าคลุมทอง
+                const robe = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xffffff), 0.55).getHex(), roughness: 0.55, emissive: new THREE.Color(sp.color).multiplyScalar(0.18) });
+                const halo = new THREE.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xf5c542, emissiveIntensity: 1.3, metalness: 0.4, roughness: 0.2 });
+                const feather = new THREE.MeshStandardMaterial({ color: 0xfffdf5, roughness: 0.5, emissive: 0xf0e8c0, emissiveIntensity: 0.25 });
+                const gown = latheOf([[0, -0.44], [0.3, -0.4], [0.26, -0.14], [0.19, 0.1], [0.13, 0.28], [0, 0.34]], robe, 26);
+                gown.position.y = 0.04;
+                gown.castShadow = true;
+                body.add(gown);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 20), mat);
+                head.position.set(0, 0.6, 0.02);
+                head.castShadow = true;
+                body.add(head);
+                const hair = new THREE.Mesh(new THREE.SphereGeometry(0.25, 20, 16), new THREE.MeshStandardMaterial({ color: 0xf5d88a, roughness: 0.6 }));
+                hair.scale.set(1, 0.72, 1);
+                hair.position.set(0, 0.68, -0.03);
+                body.add(hair);
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.028, 12, 26), halo); // 😇 วงแหวนแสงลอยเหนือหัว
+                ring.rotation.x = Math.PI / 2;
+                ring.position.set(0, 0.96, -0.02);
+                body.add(ring);
+                for (const sx of [-1, 1]) { // 🪶 ปีกขนนกขาวสามชั้น
+                    const wing = new THREE.Group();
+                    for (let k = 0; k < 5; k++) {
+                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.075 - k * 0.008, 0.5 - k * 0.055, 5), feather);
+                        f.position.set(0, -0.1 - k * 0.075, -k * 0.055);
+                        f.rotation.z = Math.PI / 2;
+                        f.rotation.y = k * 0.13;
+                        f.scale.set(1, 1, 0.3);
+                        wing.add(f);
+                    }
+                    wing.position.set(sx * 0.22, 0.34, -0.16);
+                    wing.rotation.z = sx > 0 ? -0.42 : 0.42;
+                    wing.scale.x = sx;
+                    body.add(wing);
+                    g.userData.wing = g.userData.wing || wing;
+                }
+                for (const sx of [-1, 1]) {
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.34, 10), mat);
+                    arm.position.set(sx * 0.25, 0.24, 0.06);
+                    arm.rotation.z = sx * 0.42;
+                    body.add(arm);
+                    legs.push(arm);
+                    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), mat);
+                    hand.position.set(sx * 0.34, 0.06, 0.08);
+                    body.add(hand);
+                }
+                const sash = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.028, 8, 20), halo);
+                sash.rotation.x = Math.PI / 2.6;
+                sash.position.set(0, 0.14, 0.02);
+                body.add(sash);
+                headY = 0.6;
+                headZ = 0.24;
+                headR = 0.24;
+            }
+            else if (shape === "kinnari") {
+                // 🕊️ กินรี — ครึ่งบนเป็นคน ครึ่งล่างเป็นหงส์ มงกุฎยอดแหลม ปีกทอง หางขนยาว
+                const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.6, roughness: 0.28, emissive: 0x8a6410, emissiveIntensity: 0.4 });
+                const skin = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xfff0d0), 0.6).getHex(), roughness: 0.6 });
+                const plume = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xffffff), 0.4).getHex(), roughness: 0.5 });
+                const bust = latheOf([[0, -0.14], [0.16, -0.06], [0.18, 0.12], [0.13, 0.28], [0, 0.34]], skin, 22);
+                bust.position.y = 0.38;
+                bust.castShadow = true;
+                body.add(bust);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 22, 18), skin);
+                head.position.set(0, 0.82, 0.02);
+                head.castShadow = true;
+                body.add(head);
+                const crown = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.34, 10), gold); // 👑 มงกุฎยอดแหลมแบบไทย
+                crown.position.set(0, 1.02, 0);
+                body.add(crown);
+                for (let k = 0; k < 6; k++) {
+                    const a = (k / 6) * Math.PI * 2;
+                    const pt = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 5), gold);
+                    pt.position.set(Math.cos(a) * 0.13, 0.9, Math.sin(a) * 0.13);
+                    pt.rotation.z = -Math.cos(a) * 0.4;
+                    pt.rotation.x = Math.sin(a) * 0.4;
+                    body.add(pt);
+                }
+                for (const sx of [-1, 1]) {
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.034, 0.36, 10), skin);
+                    arm.position.set(sx * 0.24, 0.4, 0.05);
+                    arm.rotation.z = sx * 0.4;
+                    body.add(arm);
+                    legs.push(arm);
+                    const bangle = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 8, 14), gold);
+                    bangle.position.set(sx * 0.31, 0.24, 0.06);
+                    bangle.rotation.z = sx * 0.4;
+                    body.add(bangle);
+                }
+                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 10, 22), gold);
+                collar.rotation.x = Math.PI / 2.5;
+                collar.position.set(0, 0.58, 0.03);
+                body.add(collar);
+                const hull = latheOf([[0, -0.36], [0.26, -0.3], [0.32, -0.04], [0.26, 0.16], [0, 0.28]], mat, 26); // 🦢 ท่อนล่างลำตัวหงส์
+                hull.scale.set(1, 1, 1.25);
+                hull.position.y = -0.02;
+                body.add(hull);
+                for (const sx of [-1, 1]) { // 🪶 ปีกทองกาง
+                    const wing = new THREE.Group();
+                    for (let k = 0; k < 4; k++) {
+                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.08 - k * 0.01, 0.56 - k * 0.07, 4), k % 2 ? gold : plume);
+                        f.position.set(0, -0.14 - k * 0.08, -k * 0.07);
+                        f.rotation.z = Math.PI / 2;
+                        f.rotation.y = k * 0.14;
+                        f.scale.set(1, 1, 0.26);
+                        wing.add(f);
+                    }
+                    wing.position.set(sx * 0.3, 0.16, -0.1);
+                    wing.rotation.z = sx > 0 ? -0.4 : 0.4;
+                    wing.scale.x = sx;
+                    body.add(wing);
+                    g.userData.wing = g.userData.wing || wing;
+                }
+                const tail = new THREE.Group(); // 🪺 หางขนยาวเชิดขึ้น
+                for (let k = 0; k < 5; k++) {
+                    const q = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.6 - Math.abs(k - 2) * 0.09, 4), k % 2 ? gold : plume);
+                    q.position.set((k - 2) * 0.075, 0.08, -0.06);
+                    q.rotation.x = -2.3;
+                    q.rotation.z = (k - 2) * 0.16;
+                    q.scale.set(1, 1, 0.25);
+                    tail.add(q);
+                }
+                tail.position.set(0, -0.04, -0.34);
+                body.add(tail);
+                g.userData.tail = tail;
+                for (const sx of [-0.1, 0.1]) {
+                    const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.024, 0.2, 10), gold);
+                    lg.position.set(sx, -0.44, 0.03);
+                    body.add(lg);
+                }
+                headY = 0.82;
+                headZ = 0.22;
+                headR = 0.19;
+            }
+            else if (shape === "reaper") {
+                // ☠️ ยมทูต — ผ้าคลุมดำยาวคลุมทั้งตัว ใต้ฮู้ดเป็นกะโหลก ตาเพลิงแดง ถือเคียวมรณะ
+                const cloak = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).multiplyScalar(0.55).getHex(), roughness: 0.85 });
+                const bone = new THREE.MeshStandardMaterial({ color: 0xe8e0d0, roughness: 0.55 });
+                const ember = new THREE.MeshStandardMaterial({ color: 0xff2a2a, emissive: 0xff1010, emissiveIntensity: 1.5 });
+                const steel = new THREE.MeshStandardMaterial({ color: 0xb0b8c0, metalness: 0.85, roughness: 0.25 });
+                const robe = latheOf([[0, -0.72], [0.34, -0.6], [0.32, -0.2], [0.26, 0.14], [0.2, 0.4], [0.12, 0.52]], cloak, 26);
+                robe.position.y = 0.06;
+                robe.castShadow = true;
+                body.add(robe);
+                for (let k = 0; k < 7; k++) { // 🧥 ชายผ้าขาดรุ่งริ่ง
+                    const a = (k / 7) * Math.PI * 2;
+                    const rag = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.3 + (k % 3) * 0.12, 4), cloak);
+                    rag.position.set(Math.cos(a) * 0.3, -0.78, Math.sin(a) * 0.3);
+                    rag.rotation.x = Math.PI;
+                    rag.scale.set(1, 1, 0.5);
+                    body.add(rag);
+                }
+                const hood = latheOf([[0, -0.24], [0.24, -0.12], [0.28, 0.08], [0.2, 0.26], [0, 0.34]], cloak, 24); // 🧢 ฮู้ดคลุมหัว
+                hood.position.set(0, 0.66, -0.04);
+                hood.scale.set(1, 1, 1.1);
+                body.add(hood);
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 18), bone);
+                skull.position.set(0, 0.64, 0.1);
+                body.add(skull);
+                const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.07, 0.13), bone);
+                jaw.position.set(0, 0.5, 0.13);
+                body.add(jaw);
+                for (let k = 0; k < 4; k++) {
+                    const th = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.045, 4), bone);
+                    th.rotation.x = Math.PI;
+                    th.position.set(-0.045 + k * 0.03, 0.53, 0.18);
+                    body.add(th);
+                }
+                g.userData.customFace = true;
+                for (const sx of [-0.06, 0.06]) { // 🔥 เบ้าตาเพลิงแดง
+                    const sock = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), darkMat);
+                    sock.position.set(sx, 0.68, 0.19);
+                    body.add(sock);
+                    const em = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 10), ember);
+                    em.position.set(sx, 0.68, 0.22);
+                    body.add(em);
+                }
+                for (const sx of [-1, 1]) { // 🦴 แขนโครงกระดูกโผล่จากผ้า
+                    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.06, 0.32, 10), cloak);
+                    sleeve.position.set(sx * 0.3, 0.22, 0.04);
+                    sleeve.rotation.z = sx * 0.36;
+                    body.add(sleeve);
+                    legs.push(sleeve);
+                    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), bone);
+                    hand.position.set(sx * 0.4, 0.02, 0.06);
+                    body.add(hand);
+                }
+                const scythe = new THREE.Group(); // 🗡️ เคียวมรณะ
+                const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 1.5, 10), new THREE.MeshStandardMaterial({ color: 0x3a2a20, roughness: 0.8 }));
+                scythe.add(shaft);
+                const blade = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 8, 20, Math.PI * 0.62), steel);
+                blade.position.set(0.26, 0.7, 0);
+                blade.rotation.z = -0.5;
+                scythe.add(blade);
+                const edge = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.24, 6), steel);
+                edge.position.set(0.54, 0.5, 0);
+                edge.rotation.z = -1.4;
+                scythe.add(edge);
+                scythe.position.set(0.46, 0.16, 0.08);
+                scythe.rotation.z = 0.16;
+                body.add(scythe);
+                headY = 0.68;
+                headZ = 0.22;
+                headR = 0.17;
+            }
+            else if (shape === "ghost") {
+                // 👻 วิญญาณเร่ร่อน — ร่างโปร่งแสง ชายล่างสลายเป็นควัน แขนยาวห้อย โซ่ตรวนพันตัว
+                mat.transparent = true;
+                mat.opacity = 0.7;
+                const wisp2 = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xffffff), 0.4).getHex(), transparent: true, opacity: 0.35, roughness: 0.9, depthWrite: false });
+                const chain = new THREE.MeshStandardMaterial({ color: 0x8a8a92, metalness: 0.7, roughness: 0.4 });
+                const torso = latheOf([[0, -0.72], [0.12, -0.5], [0.26, -0.16], [0.3, 0.12], [0.24, 0.34], [0.14, 0.46]], mat, 28);
+                torso.castShadow = true;
+                body.add(torso);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 22, 18), mat);
+                head.scale.set(1, 1.1, 0.95);
+                head.position.set(0, 0.62, 0.02);
+                body.add(head);
+                for (let k = 0; k < 5; k++) { // 💨 ชายล่างสลายเป็นควัน
+                    const tr = new THREE.Mesh(new THREE.SphereGeometry(0.16 - k * 0.02, 12, 10), wisp2);
+                    tr.scale.set(1, 1.5, 1);
+                    tr.position.set(Math.sin(k * 1.5) * 0.12, -0.84 - k * 0.1, Math.cos(k * 1.5) * 0.1);
+                    body.add(tr);
+                }
+                for (const sx of [-1, 1]) { // 🦴 แขนยาวห้อยนิ่ง
+                    const arm = latheOf([[0, -0.42], [0.06, -0.2], [0.075, 0.1], [0, 0.24]], mat, 14);
+                    arm.position.set(sx * 0.34, 0.06, 0.04);
+                    arm.rotation.z = sx * 0.24;
+                    body.add(arm);
+                    legs.push(arm);
+                    const claw = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), mat);
+                    claw.position.set(sx * 0.4, -0.36, 0.06);
+                    body.add(claw);
+                }
+                for (let k = 0; k < 7; k++) { // ⛓️ โซ่ตรวนพันรอบตัว
+                    const a = (k / 7) * Math.PI * 2 + 0.4;
+                    const lnk = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.016, 6, 12), chain);
+                    lnk.position.set(Math.cos(a) * 0.3, -0.06 + Math.sin(a * 2) * 0.18, Math.sin(a) * 0.28);
+                    lnk.rotation.set(a, a * 1.3, 0);
+                    body.add(lnk);
+                }
+                g.userData.customFace = true;
+                for (const sx of [-0.09, 0.09]) { // 👁️ เบ้าตากลวงเรืองแสง
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), new THREE.MeshStandardMaterial({ color: 0xfff0f5, emissive: 0xc060a0, emissiveIntensity: 1.2 }));
+                    eye.scale.set(1, 1.4, 0.7);
+                    eye.position.set(sx, 0.64, 0.2);
+                    body.add(eye);
+                }
+                const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), darkMat);
+                mouth.scale.set(0.8, 1.3, 0.5);
+                mouth.position.set(0, 0.48, 0.2);
+                body.add(mouth);
+                headY = 0.64;
+                headZ = 0.24;
+                headR = 0.24;
+            }
+            else if (shape === "tornado") {
+                // 🌪️ วายุเทพ — พายุหมุนทรงกรวยกลับหัว วงลมซ้อนชั้น เศษใบไม้ปลิววน
+                mat.transparent = true;
+                mat.opacity = 0.55;
+                const airMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xffffff), 0.55).getHex(), transparent: true, opacity: 0.38, roughness: 0.9, depthWrite: false, emissive: new THREE.Color(sp.color).multiplyScalar(0.3) });
+                const funnel = latheOf([[0, -0.8], [0.1, -0.6], [0.2, -0.2], [0.32, 0.2], [0.46, 0.55], [0.5, 0.72]], mat, 32); // 🌀 กรวยพายุกลับหัว
+                funnel.castShadow = true;
+                body.add(funnel);
+                for (let k = 0; k < 6; k++) { // 💨 วงลมซ้อนไล่ขนาด
+                    const r = 0.14 + k * 0.085;
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.028 + k * 0.004, 8, 26), airMat);
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.y = -0.66 + k * 0.26;
+                    body.add(ring);
+                }
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), airMat);
+                cap.scale.set(1.15, 0.5, 1.15);
+                cap.position.y = 0.78;
+                body.add(cap);
+                for (let k = 0; k < 8; k++) { // 🍂 เศษใบไม้ปลิววน
+                    const a = (k / 8) * Math.PI * 2 * 1.6, r = 0.22 + (k % 4) * 0.1;
+                    const lf = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.11, 3), new THREE.MeshStandardMaterial({ color: 0x7ab04a, roughness: 0.8, side: THREE.DoubleSide }));
+                    lf.position.set(Math.cos(a) * r, -0.6 + k * 0.17, Math.sin(a) * r);
+                    lf.rotation.set(a, a * 1.4, k * 0.7);
+                    lf.scale.set(1, 1, 0.3);
+                    body.add(lf);
+                }
+                g.userData.customFace = true;
+                for (const sx of [-0.11, 0.11]) { // 👁️ ตาพายุเรืองแสงกลางกรวย
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 12), new THREE.MeshStandardMaterial({ color: 0xeaffff, emissive: 0x6ac0f0, emissiveIntensity: 1.3 }));
+                    eye.scale.set(1, 1.25, 0.7);
+                    eye.position.set(sx, 0.38, 0.34);
+                    body.add(eye);
+                }
+                headY = 0.38;
+                headZ = 0.4;
+                headR = 0.3;
+            }
+            else if (shape === "buddha") {
+                // 🧘 พระโพธิสัตว์ — นั่งสมาธิขัดสมาธิ มืออยู่บนตัก รัศมีวงกลมหลังหัว เกศโมลี ดอกบัวรอง
+                const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.55, roughness: 0.28, emissive: 0x8a6410, emissiveIntensity: 0.5 });
+                const auraMat = new THREE.MeshStandardMaterial({ color: 0xfff0b0, emissive: 0xf5c542, emissiveIntensity: 1.1, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
+                const lotusMat = new THREE.MeshStandardMaterial({ color: 0xf5a0c0, roughness: 0.6, emissive: 0xc06a90, emissiveIntensity: 0.25, side: THREE.DoubleSide });
+                for (let k = 0; k < 10; k++) { // 🪷 ดอกบัวรองนั่ง
+                    const a = (k / 10) * Math.PI * 2;
+                    const pt = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 4), lotusMat);
+                    pt.position.set(Math.cos(a) * 0.34, -0.6, Math.sin(a) * 0.34);
+                    pt.rotation.z = -Math.cos(a) * 1.1;
+                    pt.rotation.x = Math.sin(a) * 1.1;
+                    pt.scale.set(1, 1, 0.35);
+                    body.add(pt);
+                }
+                const cushion = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.12, 20), lotusMat);
+                cushion.position.y = -0.6;
+                body.add(cushion);
+                const lap = latheOf([[0, -0.2], [0.32, -0.16], [0.36, -0.02], [0.2, 0.1], [0, 0.14]], mat, 24); // 🧎 ขาขัดสมาธิ
+                lap.scale.set(1.1, 1, 1);
+                lap.position.y = -0.4;
+                lap.castShadow = true;
+                body.add(lap);
+                for (const sx of [-1, 1]) {
+                    const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.07, 0.34, 12), mat);
+                    shin.rotation.z = Math.PI / 2;
+                    shin.position.set(sx * 0.06, -0.44, 0.24);
+                    shin.rotation.y = sx * 0.5;
+                    body.add(shin);
+                }
+                const torso = latheOf([[0, -0.24], [0.24, -0.16], [0.26, 0.08], [0.18, 0.28], [0, 0.34]], mat, 24);
+                torso.position.y = -0.06;
+                torso.castShadow = true;
+                body.add(torso);
+                const sash = latheOf([[0, -0.2], [0.2, -0.1], [0.16, 0.14], [0, 0.24]], gold, 20); // 🧣 จีวรทองพาดไหล่
+                sash.scale.set(1.06, 1, 0.62);
+                sash.position.set(0.04, -0.04, 0.06);
+                sash.rotation.z = -0.16;
+                body.add(sash);
+                for (const sx of [-1, 1]) { // 🙏 มือวางบนตักท่าสมาธิ
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.34, 10), mat);
+                    arm.position.set(sx * 0.24, -0.14, 0.06);
+                    arm.rotation.z = sx * 0.85;
+                    arm.rotation.x = -0.4;
+                    body.add(arm);
+                    legs.push(arm);
+                }
+                const hands = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), mat);
+                hands.scale.set(1.5, 0.5, 1);
+                hands.position.set(0, -0.28, 0.18);
+                body.add(hands);
+                const orb = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 14), gold);
+                orb.position.set(0, -0.2, 0.2);
+                body.add(orb);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 20), mat);
+                head.position.set(0, 0.42, 0.02);
+                head.castShadow = true;
+                body.add(head);
+                const hairB = new THREE.Mesh(new THREE.SphereGeometry(0.215, 20, 16), new THREE.MeshStandardMaterial({ color: 0x2a2038, roughness: 0.85 }));
+                hairB.scale.set(1, 0.8, 1);
+                hairB.position.set(0, 0.48, -0.01);
+                body.add(hairB);
+                const ushnisha = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 14), new THREE.MeshStandardMaterial({ color: 0x2a2038, roughness: 0.85 }));
+                ushnisha.position.set(0, 0.64, -0.01);
+                body.add(ushnisha);
+                const flame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 8), gold); // 🔥 เกศโมลีเปลวทอง
+                flame.position.set(0, 0.8, -0.01);
+                body.add(flame);
+                for (const sx of [-1, 1]) {
+                    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), mat);
+                    ear.scale.set(0.5, 1.9, 0.6);
+                    ear.position.set(sx * 0.2, 0.36, 0);
+                    body.add(ear);
+                }
+                const aura = new THREE.Mesh(new THREE.RingGeometry(0.34, 0.44, 40), auraMat); // ☀️ รัศมีวงกลมหลังหัว
+                aura.position.set(0, 0.44, -0.2);
+                body.add(aura);
+                for (let k = 0; k < 12; k++) {
+                    const a = (k / 12) * Math.PI * 2;
+                    const ray = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.16, 4), auraMat);
+                    ray.position.set(Math.cos(a) * 0.5, 0.44 + Math.sin(a) * 0.5, -0.21);
+                    ray.rotation.z = a - Math.PI / 2;
+                    body.add(ray);
+                }
+                headY = 0.42;
+                headZ = 0.22;
+                headR = 0.21;
+            }
+            else if (shape === "ufo") {
+                // 🪐 จานบิน — ตัวจานโลหะวงรี โดมแก้วใส ไฟรอบขอบ ลำแสงดูดใต้ท้อง
+                const hull2 = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color).lerp(new THREE.Color(0xd0e8f5), 0.35).getHex(), metalness: 0.85, roughness: 0.22 });
+                const glass = new THREE.MeshStandardMaterial({ color: 0xbff0ff, transparent: true, opacity: 0.45, roughness: 0.1, metalness: 0.2, emissive: 0x4ac0e0, emissiveIntensity: 0.35 });
+                const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffc61a, emissiveIntensity: 1.5 });
+                const beamMat = new THREE.MeshStandardMaterial({ color: 0x9af0d0, emissive: 0x3ad0a0, emissiveIntensity: 0.9, transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false });
+                const disc = latheOf([[0, -0.2], [0.32, -0.14], [0.72, 0.0], [0.5, 0.14], [0.22, 0.2], [0, 0.22]], hull2, 34);
+                disc.castShadow = true;
+                body.add(disc);
+                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.06, 12, 34), hull2);
+                rim.rotation.x = Math.PI / 2;
+                body.add(rim);
+                for (let k = 0; k < 10; k++) { // 💡 ไฟกระพริบรอบขอบจาน
+                    const a = (k / 10) * Math.PI * 2;
+                    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), lampMat);
+                    lamp.position.set(Math.cos(a) * 0.68, -0.06, Math.sin(a) * 0.68);
+                    body.add(lamp);
+                }
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), glass);
+                dome.position.y = 0.2;
+                body.add(dome);
+                const pilot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 18, 14), new THREE.MeshStandardMaterial({ color: 0x7ae0c0, roughness: 0.5 })); // 👽 นักบินในโดม
+                pilot.scale.set(1, 1.15, 0.9);
+                pilot.position.y = 0.34;
+                body.add(pilot);
+                g.userData.customFace = true;
+                for (const sx of [-1, 1]) {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), darkMat);
+                    eye.scale.set(1.1, 0.7, 0.4);
+                    eye.position.set(sx * 0.07, 0.36, 0.14);
+                    eye.rotation.z = sx * -0.4;
+                    body.add(eye);
+                }
+                const beam = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.8, 20, 1, true), beamMat); // 💡 ลำแสงดูดใต้ท้อง
+                beam.position.y = -0.6;
+                body.add(beam);
+                const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.02, 8, 28), beamMat);
+                ring2.rotation.x = Math.PI / 2;
+                ring2.position.y = -0.98;
+                body.add(ring2);
+                headY = 0.34;
+                headZ = 0.2;
+                headR = 0.2;
+            }
+            else if (shape === "alienpet") {
+                // 🛸 สัตว์ต่างดาว — ตัวกลมวุ้นโปร่งแสง หนวดเสาอากาศ ตาเดี่ยวโต หนวดสั้นใต้ตัว
+                mat.transparent = true;
+                mat.opacity = 0.86;
+                mat.roughness = 0.25;
+                const glow = new THREE.MeshStandardMaterial({ color: 0xaeffe0, emissive: 0x3ad0a0, emissiveIntensity: 1.2 });
+                const core = new THREE.Mesh(new THREE.SphereGeometry(0.42, 26, 22), mat);
+                core.scale.set(1.1, 0.94, 1);
+                core.castShadow = true;
+                body.add(core);
+                const inner = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), glow); // ✨ แกนเรืองแสงข้างใน
+                inner.scale.set(1, 0.8, 1);
+                inner.position.y = -0.04;
+                body.add(inner);
+                for (const sx of [-1, 1]) { // 📡 หนวดเสาอากาศปลายเรืองแสง
+                    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.012, 0.34, 8), mat);
+                    st.position.set(sx * 0.14, 0.5, -0.02);
+                    st.rotation.z = sx * -0.34;
+                    body.add(st);
+                    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), glow);
+                    bulb.position.set(sx * 0.24, 0.66, -0.02);
+                    body.add(bulb);
+                }
+                g.userData.customFace = true;
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.19, 22, 18), whiteMat); // 👁️ ตาเดี่ยวดวงโต
+                eye.scale.set(1, 1, 0.6);
+                eye.position.set(0, 0.06, 0.32);
+                body.add(eye);
+                const pup = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 14), darkMat);
+                pup.scale.set(1, 1, 0.6);
+                pup.position.set(0, 0.06, 0.42);
+                body.add(pup);
+                const gl2 = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 10), whiteMat);
+                gl2.position.set(0.06, 0.13, 0.46);
+                body.add(gl2);
+                for (let k = 0; k < 6; k++) { // 🐙 หนวดสั้นใต้ตัว
+                    const a = (k / 6) * Math.PI * 2;
+                    const tent = new THREE.Group();
+                    for (let j = 0; j < 3; j++) {
+                        const seg = new THREE.Mesh(new THREE.SphereGeometry(0.06 - j * 0.014, 10, 8), j === 2 ? glow : mat);
+                        seg.position.set(0, -j * 0.11, 0);
+                        tent.add(seg);
+                    }
+                    tent.position.set(Math.cos(a) * 0.26, -0.34, Math.sin(a) * 0.26);
+                    tent.rotation.z = -Math.cos(a) * 0.4;
+                    tent.rotation.x = Math.sin(a) * 0.4;
+                    body.add(tent);
+                    legs.push(tent);
+                }
+                headY = 0.06;
+                headZ = 0.44;
+                headR = 0.34;
+            }
+            else if (shape === "cyclops") {
+                // 👹 ยักษ์ตาเดียว — ร่างยักษ์ล่ำเตี้ยกว้าง ตาเดียวดวงโต เขาสั้นคู่ เขี้ยวล่างยื่น ถือกระบองหิน
+                const rock = new THREE.MeshStandardMaterial({ color: 0x6a6068, roughness: 0.95 });
+                const nail = new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.5 });
+                const iris = new THREE.MeshStandardMaterial({ color: 0x2a8af5, emissive: 0x1a5ad0, emissiveIntensity: 1.1 });
+                const torso = latheOf([[0, -0.32], [0.36, -0.26], [0.44, 0.0], [0.4, 0.24], [0.32, 0.44], [0.22, 0.54]], mat, 26);
+                torso.scale.set(1.15, 0.95, 0.82);
+                torso.position.y = 0.14;
+                torso.castShadow = true;
+                body.add(torso);
+                for (const sx of [-1, 1]) {
+                    const pec = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 14), mat);
+                    pec.scale.set(1, 0.75, 0.62);
+                    pec.position.set(sx * 0.18, 0.3, 0.28);
+                    body.add(pec);
+                }
+                const gut = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 16), belly);
+                gut.scale.set(1.2, 0.85, 0.6);
+                gut.position.set(0, -0.06, 0.24);
+                body.add(gut);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 20), mat); // 🧠 หัวใหญ่ไม่มีคอ
+                head.scale.set(1.1, 0.95, 1);
+                head.position.set(0, 0.78, 0.04);
+                head.castShadow = true;
+                body.add(head);
+                g.userData.customFace = true;
+                const socket = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 16), belly); // 👁️ ตาเดียวดวงโต
+                socket.scale.set(1, 1, 0.5);
+                socket.position.set(0, 0.8, 0.24);
+                body.add(socket);
+                const eyeball = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 16), whiteMat);
+                eyeball.position.set(0, 0.8, 0.26);
+                body.add(eyeball);
+                const ir = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 14), iris);
+                ir.position.set(0, 0.8, 0.35);
+                body.add(ir);
+                const pu = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 12), darkMat);
+                pu.position.set(0, 0.8, 0.4);
+                body.add(pu);
+                const brow = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.08), dark);
+                brow.position.set(0, 0.98, 0.22);
+                brow.rotation.x = 0.2;
+                body.add(brow);
+                for (const sx of [-1, 1]) {
+                    const hn = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.22, 8), nail);
+                    hn.position.set(sx * 0.22, 1.0, -0.02);
+                    hn.rotation.z = sx * -0.5;
+                    body.add(hn);
+                }
+                const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.06), darkMat);
+                mouth.position.set(0, 0.6, 0.26);
+                body.add(mouth);
+                for (const sx of [-0.08, 0.08]) {
+                    const fg = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.13, 6), nail);
+                    fg.position.set(sx, 0.66, 0.26);
+                    body.add(fg);
+                }
+                for (const sx of [-1, 1]) { // 💪 แขนใหญ่ยาวถึงเข่า
+                    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.4, 12), mat);
+                    up.position.set(sx * 0.56, 0.26, 0);
+                    up.rotation.z = sx * 0.2;
+                    body.add(up);
+                    const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.38, 12), mat);
+                    fore.position.set(sx * 0.64, -0.1, 0.02);
+                    body.add(fore);
+                    legs.push(fore);
+                    const fist = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), mat);
+                    fist.position.set(sx * 0.66, -0.34, 0.04);
+                    body.add(fist);
+                }
+                const club = new THREE.Group(); // 🪨 กระบองหิน
+                const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.5, 10), new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: 0.9 }));
+                club.add(handle);
+                const headC = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), rock);
+                headC.position.y = 0.42;
+                club.add(headC);
+                for (let k = 0; k < 5; k++) {
+                    const a = (k / 5) * Math.PI * 2;
+                    const sk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 5), rock);
+                    sk.position.set(Math.cos(a) * 0.2, 0.42, Math.sin(a) * 0.2);
+                    sk.rotation.z = -Math.cos(a) * 1.4;
+                    sk.rotation.x = Math.sin(a) * 1.4;
+                    club.add(sk);
+                }
+                club.position.set(0.72, -0.3, 0.1);
+                club.rotation.z = 0.28;
+                body.add(club);
+                for (const sx of [-1, 1]) { // 🦵 ขาสั้นล่ำ
+                    const th = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.15, 0.3, 12), mat);
+                    th.position.set(sx * 0.22, -0.34, 0);
+                    body.add(th);
+                    legs.push(th);
+                    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12), mat);
+                    foot.scale.set(1, 0.6, 1.25);
+                    foot.position.set(sx * 0.22, -0.58, 0.06);
+                    body.add(foot);
+                    for (let n = -1; n <= 1; n++) {
+                        const tn = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 5), nail);
+                        tn.position.set(sx * 0.22 + n * 0.08, -0.6, 0.22);
+                        tn.rotation.x = 1.4;
+                        body.add(tn);
+                    }
+                }
+                headY = 0.8;
+                headZ = 0.3;
+                headR = 0.3;
+            }
+            else if (shape === "garuda") {
+                // 🦁 ครุฑ — ครึ่งนกครึ่งสิงห์ ปากครุฑงุ้ม แผงคอสิงโต ปีกใหญ่กางกว้าง กรงเล็บใหญ่
+                const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.55, roughness: 0.3, emissive: 0x8a6410, emissiveIntensity: 0.35 });
+                const torso = latheOf([[0, -0.46], [0.26, -0.38], [0.36, -0.04], [0.32, 0.2], [0.2, 0.4], [0, 0.46]], mat, 28);
+                torso.castShadow = true;
+                body.add(torso);
+                const chest = latheOf([[0, -0.36], [0.2, -0.2], [0.22, 0.08], [0, 0.3]], belly, 22);
+                chest.position.z = 0.16;
+                chest.scale.z = 0.55;
+                body.add(chest);
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 26, 22), mat);
+                head.position.set(0, 0.62, 0.06);
+                head.castShadow = true;
+                body.add(head);
+                const beak = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 12), gold); // 🦅 ปากครุฑงุ้มแหลม
+                beak.rotation.x = 2.35;
+                beak.position.set(0, 0.56, 0.32);
+                body.add(beak);
+                const lower = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 10), gold);
+                lower.rotation.x = 2.6;
+                lower.position.set(0, 0.48, 0.28);
+                body.add(lower);
+                for (const sx of [-1, 1]) { // 🪶 ปีกใหญ่กางกว้างสามชั้น
+                    const wing = new THREE.Group();
+                    for (let k = 0; k < 4; k++) {
+                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.1 - k * 0.012, 0.66 - k * 0.08, 4), k % 2 ? belly : mat);
+                        f.position.set(0, -0.16 - k * 0.08, -k * 0.1);
+                        f.rotation.z = Math.PI / 2;
+                        f.rotation.y = k * 0.12;
+                        f.scale.set(1, 1, 0.3);
+                        wing.add(f);
+                    }
+                    wing.position.set(sx * 0.32, 0.18, -0.06);
+                    wing.rotation.z = sx > 0 ? -0.3 : 0.3;
+                    wing.scale.x = sx;
+                    body.add(wing);
+                    g.userData.wing = g.userData.wing || wing;
+                }
+                for (let k = -1; k <= 1; k++) {
+                    const tf = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.42, 3), mat);
+                    tf.rotation.x = 2.5;
+                    tf.position.set(k * 0.11, -0.36, -0.32);
+                    tf.rotation.z = k * 0.26;
+                    tf.scale.set(1, 1, 0.3);
+                    body.add(tf);
+                }
+                for (const sx of [-0.13, 0.13]) { // 🦵 ขาสิงห์ กรงเล็บทองใหญ่
+                    const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.28, 12), gold);
+                    lg.position.set(sx, -0.56, 0.04);
+                    body.add(lg);
+                    legs.push(lg);
+                    for (const cx of [-0.05, 0, 0.05]) {
+                        const tal = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.12, 6), gold);
+                        tal.position.set(sx + cx, -0.7, 0.12);
+                        tal.rotation.x = 1.35;
+                        body.add(tal);
+                    }
+                }
+                headY = 0.64;
+                headZ = 0.28;
+                headR = 0.26;
             }
             else if (shape === "duck") {
                 // 🐤 ลูกเป็ด — ตัวกลมป้อม คอสั้น ปากแบนกว้าง ตีนพังผืด หางกระดกเล็ก
@@ -17765,8 +18952,20 @@ function CherryAdventure() {
                 const flame = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 14), new THREE.MeshStandardMaterial({ color: 0xf5652e, emissive: 0xa03510, emissiveIntensity: 0.7, flatShading: false }));
                 flame.position.set(0, 0.62, 0.34);
                 body.add(flame);
-                if (g.userData.tail)
-                    g.userData.tail.material = new THREE.MeshStandardMaterial({ color: 0xf5652e, emissive: 0x8a2a08, emissiveIntensity: 0.5, flatShading: false });
+                // 🔥 หางไฟ — ทรง fox ใช้หางเป็น Group หลายก้อน ต้องไล่ย้อมทุกก้อน ไม่ใช่ตั้ง .material ก้อนเดียว
+                if (g.userData.tail) {
+                    const fireMat = new THREE.MeshStandardMaterial({ color: 0xf5652e, emissive: 0x8a2a08, emissiveIntensity: 0.5, flatShading: false });
+                    const tipMat = new THREE.MeshStandardMaterial({ color: 0xffd24a, emissive: 0xff8a10, emissiveIntensity: 0.9, flatShading: false });
+                    let ti = 0, tn = 0;
+                    g.userData.tail.traverse((o) => { if (o.isMesh)
+                        tn++; });
+                    g.userData.tail.traverse((o) => { if (o.isMesh) {
+                        o.material = ti >= tn - 2 ? tipMat : fireMat;
+                        ti++;
+                    } });
+                    if (g.userData.tail.isMesh)
+                        g.userData.tail.material = fireMat;
+                }
             }
             else if (spId === "khiao" || spId === "saming") {
                 for (const sx of [-0.05, 0.05]) {
@@ -17979,18 +19178,20 @@ function CherryAdventure() {
                 }
                 // 🌟 legendary/mythic signature parts
                 if (spId === "mangkorn") {
+                    // 🐉 ยอดเขาทองคู่ — ทรง drake มีเขาและปีกหนังของตัวเองแล้ว จึงเติมแค่ยอดทองกับหนวดมังกร
                     for (const sx of [-0.08, 0.08]) {
-                        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.2, 8), gold);
-                        horn.position.set(sx, 0.76, 0.04);
+                        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 8), gold);
+                        horn.position.set(sx, 0.9, 0.24);
                         horn.rotation.z = sx > 0 ? -0.35 : 0.35;
+                        horn.rotation.x = -0.5;
                         body.add(horn);
                     }
-                    for (const sx of [-1, 1]) {
-                        const wing = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 3), new THREE.MeshStandardMaterial({ color: dkHex, transparent: true, opacity: 0.85 }));
-                        wing.position.set(sx * 0.3, 0.3, -0.1);
-                        wing.rotation.z = sx > 0 ? -1.9 : 1.9;
-                        wing.scale.set(1, 1, 0.25);
-                        body.add(wing);
+                    for (const sx of [-1, 1]) { // 💨 หนวดมังกรยาวสองเส้น
+                        const whisk = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.006, 0.44, 6), gold);
+                        whisk.position.set(sx * 0.13, 0.44, 0.74);
+                        whisk.rotation.x = 1.3;
+                        whisk.rotation.z = sx * 0.4;
+                        body.add(whisk);
                     }
                 }
                 else if (spId === "hanuman") {
@@ -18036,32 +19237,43 @@ function CherryAdventure() {
                     body.add(crest2);
                 }
                 else if (spId === "erawan") {
-                    // 🐘 งวง + งา + เศียรข้าง + หูใหญ่ + เครื่องทรงทอง
-                    const trunk = latheOf([[0.05, 0], [0.07, 0.14], [0.05, 0.3], [0.035, 0.44]], mat, 16);
-                    trunk.position.set(0, 0.2, 0.62);
-                    trunk.rotation.x = 2.5;
-                    body.add(trunk);
-                    for (const sx of [-0.1, 0.1]) {
-                        const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.2, 8), whiteMat);
-                        tusk.position.set(sx, 0.1, 0.6);
-                        tusk.rotation.x = 1.9;
-                        tusk.rotation.z = sx * 1.2;
-                        body.add(tusk);
-                    }
+                    // 🐘 ช้างสามเศียร — ทรง elephant มีงวง/งา/หูของตัวเองแล้ว เติมเศียรซ้าย-ขวา + เครื่องทรงทอง
                     for (const sx of [-1, 1]) {
-                        const sh = new THREE.Mesh(new THREE.SphereGeometry(0.17, 18, 16), mat);
-                        sh.position.set(sx * 0.3, 0.22, 0.34);
+                        const sh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 20, 18), mat); // 🧠 เศียรข้าง
+                        sh.scale.set(1, 1.05, 0.9);
+                        sh.position.set(sx * 0.42, 0.26, 0.36);
                         body.add(sh);
+                        const sd = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 14), mat); // โหนกเศียรข้าง
+                        sd.scale.set(1.05, 0.75, 0.85);
+                        sd.position.set(sx * 0.42, 0.46, 0.33);
+                        body.add(sd);
+                        const strunk = latheOf([[0.06, 0], [0.075, 0.16], [0.05, 0.34], [0.032, 0.5]], mat, 14); // งวงเศียรข้าง
+                        strunk.position.set(sx * 0.42, 0.2, 0.56);
+                        strunk.rotation.x = 2.45;
+                        strunk.rotation.z = sx * 0.2;
+                        body.add(strunk);
+                        for (const tx of [-0.08, 0.08]) {
+                            const st = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.2, 8), whiteMat);
+                            st.position.set(sx * 0.42 + tx, 0.08, 0.54);
+                            st.rotation.x = 2.1;
+                            st.rotation.z = tx * 3;
+                            body.add(st);
+                        }
+                        const sear = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 14), belly);
+                        sear.scale.set(0.2, 1.1, 0.9);
+                        sear.position.set(sx * 0.62, 0.3, 0.28);
+                        body.add(sear);
+                        const scap = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.16, 10, 1, true), gold);
+                        scap.position.set(sx * 0.42, 0.58, 0.34);
+                        body.add(scap);
                     }
-                    for (const sx of [-0.24, 0.24]) {
-                        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 14), belly);
-                        ear.scale.set(0.22, 1.15, 0.9);
-                        ear.position.set(sx, 0.3, 0.3);
-                        body.add(ear);
-                    }
-                    const dress = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.2, 12, 1, true), gold);
-                    dress.position.set(0, 0.5, 0.4);
+                    const dress = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.26, 12, 1, true), gold); // 👑 เครื่องทรงเศียรกลาง
+                    dress.position.set(0, 0.72, 0.42);
                     body.add(dress);
+                    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.045, 10, 26), gold); // 📿 สร้อยคอทอง
+                    collar.rotation.x = Math.PI / 2.5;
+                    collar.position.set(0, 0.12, 0.3);
+                    body.add(collar);
                 }
                 else if (spId === "ngueak") {
                     mat.metalness = 0.35;
@@ -18076,6 +19288,41 @@ function CherryAdventure() {
                         body.add(flake);
                     }
                     mat.emissive = new THREE.Color(0x9adcf5).multiplyScalar(0.1);
+                }
+                else if (spId === "titanlord") {
+                    // ⛰️ ราชันไททัน — มงกุฎหนามเหล็ก ผ้าคลุมไหล่ โซ่ตรวน และรอยแตกเรืองแสงบนกล้ามเนื้อ
+                    const iron = new THREE.MeshStandardMaterial({ color: 0x2a2228, metalness: 0.75, roughness: 0.35 });
+                    const lava = new THREE.MeshStandardMaterial({ color: 0xff6a20, emissive: 0xff3a08, emissiveIntensity: 1.3 });
+                    const band = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.035, 10, 24), iron);
+                    band.rotation.x = Math.PI / 2;
+                    band.position.set(0, 1.0, 0.02);
+                    body.add(band);
+                    for (let k = 0; k < 7; k++) { // 👑 มงกุฎหนามเหล็ก
+                        const a = (k / 7) * Math.PI * 2;
+                        const sp3 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.26 - (k % 2) * 0.08, 6), iron);
+                        sp3.position.set(Math.cos(a) * 0.25, 1.14, Math.sin(a) * 0.25);
+                        sp3.rotation.z = -Math.cos(a) * 0.22;
+                        sp3.rotation.x = Math.sin(a) * 0.22;
+                        body.add(sp3);
+                    }
+                    const cape = latheOf([[0.3, 0.6], [0.42, 0.2], [0.46, -0.3], [0.4, -0.7]], iron, 22); // 🧥 ผ้าคลุมไหล่
+                    cape.position.set(0, 0.1, -0.16);
+                    cape.scale.set(1.1, 1, 0.5);
+                    body.add(cape);
+                    for (let k = 0; k < 6; k++) { // 🔥 รอยแตกลาวาบนกล้ามเนื้อ
+                        const cr2 = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.16 + (k % 3) * 0.06, 0.03), lava);
+                        cr2.position.set(-0.24 + (k % 3) * 0.24, 0.34 - Math.floor(k / 3) * 0.26, 0.3);
+                        cr2.rotation.z = (k % 2 ? 0.5 : -0.5);
+                        body.add(cr2);
+                    }
+                    for (let k = 0; k < 5; k++) { // ⛓️ โซ่ตรวนคล้องอก
+                        const a = -0.9 + k * 0.45;
+                        const lnk = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.018, 6, 12), iron);
+                        lnk.position.set(Math.sin(a) * 0.36, 0.42 - Math.abs(a) * 0.16, 0.3);
+                        lnk.rotation.set(1.2, a, 0);
+                        body.add(lnk);
+                    }
+                    g.scale.multiplyScalar(1.12); // 📏 ตัวใหญ่กว่าไททันทั่วไป
                 }
                 else if (spId === "pikul") {
                     const bloomC = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), gold);
