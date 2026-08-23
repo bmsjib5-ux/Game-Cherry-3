@@ -139,6 +139,7 @@ const LOOT = [
   { id: "st_o", slot: "weapon", name: "ปากกาฝึกงาน", emoji: "🖊️", rarity: "common", atk: 3, cls: "office", starter: true },
   { id: "st_c", slot: "weapon", name: "คีย์บอร์ดฝึกหัด", emoji: "⌨️", rarity: "common", atk: 3, cls: "coder", starter: true },
   { id: "st_x", slot: "weapon", name: "ปืนเลเซอร์ฝึก", emoji: "🔫", rarity: "common", atk: 3, cls: "aegis", starter: true },
+  { id: "st_b", slot: "weapon", name: "นวมซ้อมมือ", emoji: "🥊", rarity: "common", atk: 3, cls: "boxer", starter: true },
   // ⚔️ samurai katanas — multiple tiers, each with a distinct look
   { id: "kf", slot: "weapon", name: "คาตานะเพลิง", emoji: "🔥", rarity: "rare", atk: 7, elem: "fire", cls: "samurai", req: 5 },
   { id: "ki", slot: "weapon", name: "คาตานะเยือกเย็น", emoji: "❄️", rarity: "epic", atk: 11, def: 2, elem: "ice", cls: "samurai", req: 10 },
@@ -214,6 +215,7 @@ const LOOT = [
   { id: "wDo", slot: "weapon", name: "ปากกามังกร CEO", emoji: "🖊️", rarity: "dragon", atk: 105, mp: 48, crit: 20, elem: "dragon", cls: "office", req: 100, set: "dragon" },
   { id: "wDc", slot: "weapon", name: "คีย์บอร์ดมังกรดิจิทัล", emoji: "⌨️", rarity: "dragon", atk: 105, mp: 56, crit: 22, elem: "dragon", cls: "coder", req: 100, set: "dragon" },
   { id: "wDx", slot: "weapon", name: "แคนนอนเขี้ยวมังกร", emoji: "🔫", rarity: "dragon", atk: 105, crit: 20, def: 20, elem: "dragon", cls: "aegis", req: 100, set: "dragon" },
+  { id: "wDb", slot: "weapon", name: "นวมเกล็ดมังกรเพลิง", emoji: "🥊", rarity: "dragon", atk: 105, crit: 24, def: 16, elem: "dragon", cls: "boxer", req: 100, set: "dragon" },
   { id: "oD", slot: "outfit", name: "เกราะเกล็ดมังกร", emoji: "🐲", rarity: "dragon", hp: 70, def: 12, atk: 6, elem: "dragon", set: "dragon" },
   { id: "hD", slot: "hat", name: "หมวกเขามังกร", emoji: "👹", rarity: "dragon", atk: 8, hp: 30, def: 6, elem: "dragon", set: "dragon" },
   { id: "mD", slot: "mask", name: "หน้ากากอสุรมังกร", emoji: "😈", rarity: "dragon", atk: 10, def: 4, crit: 10, eva: 4, elem: "dragon", set: "dragon" },
@@ -242,6 +244,7 @@ const LOOT = [
 { id: "lg_oo", slot: "weapon", name: "ปากกาจักรพรรดิ", emoji: "🖊️", rarity: "legend", atk: 200, mp: 88, crit: 24, hp: 120, elem: "light", cls: "office", req: 200, set: "legend" },
 { id: "lg_oc", slot: "weapon", name: "คีย์บอร์ดซิงกูลาริตี้", emoji: "⌨️", rarity: "legend", atk: 200, mp: 104, crit: 28, elem: "light", cls: "coder", req: 200, set: "legend" },
 { id: "lg_ox", slot: "weapon", name: "ปืนใหญ่สุริยเทพ", emoji: "🔫", rarity: "legend", atk: 200, crit: 26, def: 40, mp: 60, elem: "light", cls: "aegis", req: 200, set: "legend" },
+{ id: "lg_ob", slot: "weapon", name: "นวมมงคลเทพอสูร", emoji: "🥊", rarity: "legend", atk: 200, crit: 32, def: 34, mp: 60, elem: "light", cls: "boxer", req: 200, set: "legend" },
 { id: "lg_out", slot: "outfit", name: "อาภรณ์เทพโลกันตร์", emoji: "👼", rarity: "legend", hp: 120, def: 22, atk: 12, elem: "light", set: "legend" },
 { id: "lg_hat", slot: "hat", name: "มงกุฎเทพโลกันตร์", emoji: "👑", rarity: "legend", atk: 14, hp: 50, def: 10, crit: 6, elem: "light", set: "legend" },
 { id: "lg_msk", slot: "mask", name: "หน้ากากสุริยเทพ", emoji: "🌞", rarity: "legend", atk: 16, crit: 14, eva: 6, def: 6, elem: "light", set: "legend" },
@@ -513,6 +516,12 @@ const CLASSES = {
     desc: "หุ่นยนต์ AI จากอารยธรรมโบราณ ใช้พลังงานพลาสมา+นาโนเทค อาวุธแปลงร่างและโดรนอัตโนมัติ",
     perk: "เทคโนโลยีแม่นยำ — คริ +10% · เจาะเกราะศัตรู -1 DEF",
   },
+  boxer: {
+    name: "นักมวย", emoji: "🥊", color: 0xe8622a,
+    hp: 52, atk: 10, def: 2,
+    desc: "นักสู้มือเปล่า หมัด เท้า เข่า ศอก — เข้าประชิดแล้วรัวคอมโบไม่ให้ตั้งตัว",
+    perk: "ต่อคอมโบสะสมพลัง — โจมตีติดกันแรงขึ้นเรื่อยๆ · หลบหลีก +8%",
+  },
 };
 // 📊 role ratings (0–5) shown as a stat graph on the class picker
 const RATING_CATS = [["single", "โจมตีเดี่ยว"], ["control", "ควบคุม"], ["aoe", "โจมตีกลุ่ม"], ["def", "ป้องกัน"], ["heal", "ฟื้นฟู"]];
@@ -526,6 +535,7 @@ const CLASS_RATINGS = {
   coder:    { single: 4, control: 4, aoe: 3, def: 2, heal: 4 },
   office:   { single: 3, control: 3, aoe: 2, def: 3, heal: 5 },
   aegis:    { single: 4, control: 5, aoe: 4, def: 3, heal: 1 },
+  boxer:    { single: 5, control: 4, aoe: 2, def: 3, heal: 2 },
 };
 // 💡 quick playstyle guidance per class
 const CLASS_TIP = {
@@ -538,8 +548,9 @@ const CLASS_TIP = {
   coder:    "สายไฮบริดรอบด้าน คริ + มานาฟื้นไว",
   office:   "อึดยาว ยิ่งเลือดน้อยยิ่งแรง — สายอดทนสู้ยืดเยื้อ",
   aegis:    "หุ่นรบไซไฟ คุมพื้นที่+เบิร์สต์ ผสมโดรน/พลาสมา/แรงโน้มถ่วง รอบด้าน",
+  boxer:    "สายประชิดคอมโบ ยิ่งต่อยติดกันยิ่งแรง เข้าใกล้แล้วรัวยาวไม่ให้หยุด",
 };
-const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx" };
+const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" };
 // 👗 per-class outfit look: shirt/pants/trim colors + which accessory to show
 const CLASS_OUTFIT = {
   warrior:  { shirt: 0x5a4a4a, pants: 0x4a4038, trim: 0xe8c848, acc: "cape",     accColor: 0xc41a2a }, // 🛡️ steel plate armor + red cape
@@ -550,7 +561,8 @@ const CLASS_OUTFIT = {
   samurai:  { shirt: 0x2a3450, pants: 0x3a3830, trim: 0xbfa055, acc: "kimono",   accColor: 0x2a3450 }, // ⚔️ ronin indigo kimono + gold
   office:   { shirt: 0x1c1c22, pants: 0x18181e, trim: 0xd8dce4, acc: "tie",      accColor: 0xc4102a }, // 💼 black suit + red necktie
   coder:    { shirt: 0x14161c, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "hoodie",   accColor: 0x2ad0e8 }, // 💻 black hoodie + neon circuits
-  aegis:    { shirt: 0xe8ecf2, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "mecha",    accColor: 0x2ad0e8 }, // 🤖 pearl-white + black mechanical armor, electric-blue energy lines
+  aegis:    { shirt: 0xe8ecf2, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "mecha",    accColor: 0x2ad0e8 },
+  boxer:    { shirt: 0xc4302a, pants: 0x14141a, trim: 0xf5c542, acc: "mongkol",  accColor: 0xf5c542 }, // 🥊 เสื้อกล้ามแดง กางเกงมวยดำขลิบทอง + มงคลสวมหัว // 🤖 pearl-white + black mechanical armor, electric-blue energy lines
 };
 const ULTS = {
   warrior: { name: "คำพิพากษาศักดิ์สิทธิ์", emoji: "⚔️✨", desc: "พาลาดินอัญเชิญผู้พิทักษ์ ฟาดดาบศักดิ์สิทธิ์ ×4 + สตัน + ทำลายเกราะ + ฟื้น HP" },
@@ -561,6 +573,7 @@ const ULTS = {
   coder: { name: "เขียนความจริงใหม่", emoji: "💻🔮", desc: "คอมไพล์โลกใหม่ 100% · ศัตรูสลายเป็นพิกเซล ×3.6 + เจาะเกราะ + แช่แข็ง + สับสน" },
   office: { name: "โอทีล้นทะลัก", emoji: "💻⚡", desc: "เอกสารถล่มฟ้า โน้ตบุ๊กยักษ์ทุบ ระเบิดดิจิทัล ×3.5 + สตัน + ทำลายเกราะ" },
   samurai: { name: "ฟันฟ้าแยก", emoji: "⚔️🌸", desc: "เวลาหยุด ชักดาบเสี้ยววินาที ฟันฟ้าแยก ×3.6 · เจาะเกราะ + เลือดไหล + หวาดกลัว" },
+  boxer: { name: "มหาหัตถ์อสูรทลายฟ้า", emoji: "🥊💥", desc: "รวมลมปราณทั้งร่างลงหมัดเดียว — พุ่งรัวหมัด/ศอก/เข่า ×3.6 ปิดท้ายด้วยหมัดทลายฟ้าที่สะเทือนทั้งสังเวียน · ทะลุเกราะ + สตัน + เลือดไหล" },
   aegis: { name: "โอเมกาจัดจ์เมนต์ โปรโตคอล", emoji: "🤖⚡", desc: "AI เปิดโปรโตคอลสูงสุด ลอยขึ้นฟ้า ดาวเทียมล็อกเป้า ยิงลำแสงอวกาศ + ดาบพลาสมายักษ์ฟันพื้น ระเบิด EMP ×3.6 · เจาะเกราะ + สตัน" },
 };
 // 👑 alternate ultimates — unlocked classes can switch between two ults (toggled in the skill panel)
@@ -571,6 +584,16 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+  b_king: { ult: { name: "หมัดสังหารราชันสังเวียน", emoji: "🥊👑", mul: 1.7, stun: true, defDown: 14, bleed: 4, buffTeam: true, desc: "ขึ้นสังเวียนครั้งสุดท้าย — รัวหมัดเป็นพันนัดจนอากาศแตก ปิดท้ายหมัดน็อกทะลุเกราะ สตัน + เลือดไหล + Champion's Aura (คริ/ความเร็ว/ดาเมจคริให้ทีม)" }, skills: [
+    { id: "x_box_1", cost: 7,  name: "หมัดสายฟ้าแลบ",  emoji: "👊", color: 0xf5d24a, mult: 0.68, perLv: 0.15, hits: 6, buffSpd: true, critBonus: 0.25, fx: "multi", desc: "แย็บสายฟ้ารัว ×6 เร็วจนเห็นเป็นเงา · เร่งความเร็ว + คริ" },
+    { id: "x_box_2", cost: 10, name: "ฮุกทลายกำแพง",   emoji: "💥", color: 0xe8622a, mult: 1.9, perLv: 0.4,  stun: true, defDown: 10, fx: "bash",  desc: "ฮุกซ้าย-ขวาทลายการ์ด กระแทกถอยหลัง · สตัน + ทำลายเกราะ" },
+    { id: "x_box_3", cost: 13, name: "อัปเปอร์สอยดาว", emoji: "💫", color: 0xffd24a, mult: 2.3, perLv: 0.48, critBonus: 0.4, stun: true, defDown: 6, fx: "quake", desc: "อัปเปอร์คัตจากใต้คาง ทุ่มลอยขึ้นฟ้า · คริสูง + สตัน" },
+    { id: "x_box_4", cost: 16, name: "หมัดน็อกเอาต์",   emoji: "🥊", color: 0xfff2b0, mult: 3.2, perLv: 0.66, guaranteedCrit: true, stun: true, defDown: 12, fx: "bolt", desc: "หมัดเดียวจบ คริการันตี ทะลุเกราะ · สตันยาว + จอสั่นทั้งสังเวียน" } ] },
+  b_muay: { ult: { name: "หนุมานถวายแหวน", emoji: "🐒🔥", mul: 1.65, burn: 5, defDown: 14, stun: true, heal: 0.3, buffTeam: true, desc: "ไม้ตายมวยไทยโบราณ — ทะยานขึ้นฟ้าอัดเข่าคู่พร้อมศอกกลับเพลิง ลงพื้นสะเทือนทั้งสนาม เผาไหม้ ทะลุเกราะ ดูด HP + พรครูมวย (ATK/ป้องกันให้ทีม)" }, skills: [
+    { id: "x_mua_1", cost: 7,  name: "เตะเหล็กไหล",    emoji: "🦵", color: 0xd93a2a, mult: 1.8, perLv: 0.38, stun: true, slow: true, defDown: 6, fx: "slash", desc: "เตะแข้งเหล็กไหลเข้าลำตัว เสียหลัก · ช้าลง + ลดเกราะ" },
+    { id: "x_mua_2", cost: 10, name: "ศอกกลับอัคคี",    emoji: "🔥", color: 0xff5a1a, mult: 1.3, perLv: 0.28, hits: 3, burn: 4, critBonus: 0.3, fx: "multi", desc: "หมุนตัวศอกกลับติดไฟ ×3 · เผาไหม้ต่อเนื่อง + คริ" },
+    { id: "x_mua_3", cost: 13, name: "เสือลากหางพิฆาต", emoji: "🐯", color: 0xe8842a, mult: 1.1, perLv: 0.24, hits: 4, burn: 3, defDown: 8, slow: true, fx: "quake", desc: "เหวี่ยงส้นเท้าเพลิงกวาดทั้งวง ×4 · เผา + ทำลายเกราะ + ช้าลง" },
+    { id: "x_mua_4", cost: 16, name: "หนุมานถวายแหวน",  emoji: "🐒", color: 0xffb84a, mult: 2.9, perLv: 0.6,  stun: true, defDown: 10, bleed: 4, heal: 0.18, fx: "bolt", desc: "ทะยานขึ้นอัดเข่าคู่กลางอก ลงพื้นสะเทือน · สตัน ทะลุเกราะ + ดูด HP" } ] },
   w_pal: { ult: { name: "ศาลเทพพิพากษา", emoji: "⚖️✨", mul: 1.6, stun: true, defDown: 12, heal: 0.3, regen: 3, buffTeam: true, desc: "อัญเชิญบัลลังก์พิพากษา — ตรึงศัตรู (Bind) ลดเกราะ+เวทป้องกัน ล้างบัฟ ฟื้น HP + พรพิพากษา (เพิ่มคริ/ความเร็วให้ทีม)" }, skills: [
     { id: "x_pal_1", cost: 7,  name: "ดาบครูเสด",     emoji: "✝️", color: 0xf5d24a, mult: 0.62, perLv: 0.14, hits: 5,  stun: true, fx: "multi", desc: "คอมโบดาบแสง 5 ครั้ง มีโอกาสสตัน" },
     { id: "x_pal_2", cost: 10, name: "โล่เทวฑูต",      emoji: "🛡️", color: 0xffe9a0, mult: 1.3,  perLv: 0.26, buffDef: 12, defDown: 6, stun: true, regen: 3, fx: "bash", desc: "โล่เทวฑูตกระแทก (Knockback) ลดพลังโจมตีศัตรู สร้างเกราะ+12 + ฟื้นต่อเนื่อง" },
@@ -730,6 +753,13 @@ const CLASS_SKILLS = {
     { id: "g_drone", cost: 11, name: "โดรนนาโนบุก",    emoji: "🤖", color: 0x2ab0f5, mult: 0.62, perLv: 0.16, hits: 6, stun: true, buffCrit: 10, fx: "multi", desc: "ปล่อยโดรน 6 ตัว บินล้อมยิงเลเซอร์พร้อมกัน · โฮโลแกรม + โอกาสสตัน 🔵" },
     { id: "g_grav",  cost: 12, name: "แรงโน้มถ่วง",     emoji: "🌌", color: 0x6a5ad0, mult: 1.7, perLv: 0.38, stun: true, slow: true, fx: "quake", desc: "สร้างแกนแรงโน้มถ่วง ดูดศัตรูเข้าศูนย์กลาง แล้วระเบิดพลาสมา · สตัน + ช้าลง 🌌" },
     { id: "g_over",  cost: 13, name: "โอเวอร์คล็อก",    emoji: "🚀", color: 0x2ad0e8, mult: 1.95, perLv: 0.44, buffSpd: true, buffCrit: 18, buffCritDmg: 20, fx: "rage", desc: "AI โอเวอร์คล็อก! เร็วขึ้น + คริ+18% + ดาเมจคริ+20% ร่างแยกดิจิทัลรัวโจมตี 🚀" },
+  ],
+  boxer: [
+    { id: "b_jab",   cost: 6,  name: "หมัดตรงทะลวง",  emoji: "👊", color: 0xe8622a, mult: 1.5, perLv: 0.32, hits: 2, pierce: true, fx: "stab",  desc: "แย็บนำแล้วอัดหมัดตรงเต็มแรง ×2 · ทะลุการ์ด/บล็อก 👊" },
+    { id: "b_kick",  cost: 8,  name: "เตะตัดวงเดือน",  emoji: "🦵", color: 0xf5a623, mult: 1.7, perLv: 0.36, stun: true, slow: true, fx: "slash", desc: "เหวี่ยงเตะตัดขาเป็นวงกว้าง ล้มเสียหลัก · มึน + ช้าลง 💨" },
+    { id: "b_knee",  cost: 10, name: "เข่าลอยฟ้า",     emoji: "🦶", color: 0xd93a2a, mult: 2.0, perLv: 0.42, critBonus: 0.3, stun: true, fx: "quake", desc: "กระโดดอัดเข่าลอยเข้ากลางลำตัว · คริสูง + สตัน 💥" },
+    { id: "b_combo", cost: 11, name: "คอมโบสายฟ้า",   emoji: "💨", color: 0xf5d24a, mult: 0.8, perLv: 0.18, hits: 5, buffSpd: true, buffCrit: 12, fx: "multi", desc: "รัวหมัด-ศอก-เข่าติดกัน 5 ครั้ง · เร่งความเร็ว + คริเพิ่ม ⚡" },
+    { id: "b_iron",  cost: 12, name: "หมัดเหล็กเดือด", emoji: "🔥", color: 0xff5a1a, mult: 2.2, perLv: 0.48, rage: true, burn: 3, buffCrit: 15, fx: "rage", desc: "อัดลมปราณลงนวมจนแดงฉาน ยิ่งเลือดน้อยยิ่งแรง + เผาไหม้ 🔥" },
   ],
 };
 // 🏅 TITLES — earned by playing, each grants a real bonus and you pick which one to wear.
@@ -893,6 +923,16 @@ const CLASS_PATHS = {
       desc: "สายปืนใหญ่ระยะไกล — คริโหด เจาะเกราะทะลุแนว", perk: "คริ +16% · เจาะเกราะทุกนัด",
       mul: { atk: 1.34, def: 0.95, hp: 1.0, crit: 16 }, alwaysPierce: true,
       skill: { id: "p_railgun", cost: 14, name: "เรลกันโนวา", emoji: "🛰️💠", color: 0x6ad8ff, mult: 2.9, perLv: 0.6, pierce: true, critBonus: 0.45, defDown: 8, fx: "shot", desc: "ชาร์จเรลกันเต็มแม็ก ยิงทะลุทุกเป้าเป็นแนวตรง 💠" } },
+  ],
+  boxer: [
+    { id: "b_king", name: "ราชาสังเวียน", emoji: "🥊👑", tint: 0xf5d24a,
+      desc: "สายหมัดสากล — เร็ว แม่น คริโหด ต่อยรัวจนน็อก", perk: "คริ +16% · ดาเมจคริ +25%",
+      mul: { atk: 1.28, def: 1.0, hp: 1.05, crit: 16 }, critDmg: 25,
+      skill: { id: "p_koblow", cost: 13, name: "หมัดน็อกเอาต์", emoji: "🥊👑", color: 0xf5d24a, mult: 2.8, perLv: 0.58, critBonus: 0.55, stun: true, fx: "bash", desc: "เก็บแรงทั้งตัวลงหมัดเดียว คริสูงมาก + น็อกสตัน 👑" } },
+    { id: "b_muay", name: "มวยไทยโบราณ", emoji: "🐯🔥", tint: 0xd93a2a,
+      desc: "สายไม้มวยไทย — ศอก เข่า เตะเหล็กไหล ดูดพลังคู่ต่อสู้", perk: "ดูดเลือด 18% ของดาเมจ",
+      mul: { atk: 1.24, def: 1.12, hp: 1.14, crit: 8 }, lifesteal: 0.18,
+      skill: { id: "p_tiger", cost: 13, name: "เสือลากหาง", emoji: "🐯🔥", color: 0xd93a2a, mult: 1.2, perLv: 0.28, hits: 3, burn: 3, defDown: 6, fx: "slash", desc: "ไม้มวยไทยเสือลากหาง เหวี่ยงส้นเท้าเพลิง ×3 · เผาไหม้ + ลดเกราะ 🐯" } },
   ],
 };
 // resolve the player's chosen path object (null until they pick one)
@@ -1060,6 +1100,7 @@ const CRAFT_RECIPES = {
   office:   { itemId: "wDo", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
   coder:    { itemId: "wDc", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
   aegis:    { itemId: "wDx", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
+  boxer:    { itemId: "wDb", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
 };
 
 // 🌳 Skill tree: each node can be leveled up (rank 1..max). Bonuses are PER RANK.
@@ -2942,6 +2983,7 @@ export default function CherryAdventure() {
       if (id === "kairiBlade") return { x: -0.42, y: 0, z: 0.32 }; // ⚡ thunder blade up-forward
       if (id === "aurSword") return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
       if (id === "ragAxe") return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
+      if (id === "cb" || id === "wDb" || id === "lg_ob") return { x: 0, y: 0, z: 0 };   // 🥊 นวมมวย — สวมทับกำปั้น ไม่ได้ถือด้าม
       if (id === "cx" || id === "wDx" || id === "lg_ox") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa" || id === "lg_oa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
@@ -4688,6 +4730,55 @@ export default function CherryAdventure() {
       g.scale.setScalar(1.05);
       weaponModels.ragAxe = g;
     }
+    // 🥊 นวมมวย — สร้างครั้งเดียวใช้ได้ทั้ง 3 ระดับ (ซ้อม / มังกร / ตำนาน)
+    const mkGlove = (opt) => {
+      const g = new THREE.Group();
+      const skin = new THREE.MeshStandardMaterial({ color: opt.main, roughness: opt.rough != null ? opt.rough : 0.42, metalness: opt.metal || 0.08 });
+      const trim = new THREE.MeshStandardMaterial({ color: opt.trim, roughness: 0.4, metalness: opt.trimMetal || 0.5 });
+      const lace = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 0.85 });
+      // 👊 หมัดหลัก — ทรงกลมรีของนวม
+      const mitt = new THREE.Mesh(new THREE.SphereGeometry(0.2, 22, 18), skin);
+      mitt.scale.set(1, 1.12, 1.2); mitt.position.set(0, 0.06, 0.05); g.add(mitt);
+      // 👍 ส่วนนิ้วหัวแม่มือแยกออกมาข้าง
+      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 12), skin);
+      thumb.scale.set(1, 1.35, 1.1); thumb.position.set(-0.16, 0.02, 0.1); thumb.rotation.z = 0.5; g.add(thumb);
+      // 🧤 ปากนวม + สายรัดข้อมือ
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.16, 0.22, 16), skin);
+      cuff.position.set(0, -0.17, -0.02); g.add(cuff);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.028, 8, 20), trim);
+      band.rotation.x = Math.PI / 2; band.position.set(0, -0.1, -0.02); g.add(band);
+      const band2 = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.022, 8, 20), trim);
+      band2.rotation.x = Math.PI / 2; band2.position.set(0, -0.26, -0.02); g.add(band2);
+      // 👟 เชือกผูกหน้านวม
+      for (let k = 0; k < 3; k++) {
+        const l = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.016, 0.016), lace);
+        l.position.set(0, -0.02 - k * 0.05, -0.16); l.rotation.z = k % 2 ? 0.35 : -0.35; g.add(l);
+      }
+      // 💥 แถบสีคาดหน้าหมัด — จุดที่กระแทกโดน
+      const knuckle = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.026, 8, 18, Math.PI), trim);
+      knuckle.rotation.set(Math.PI / 2, 0, 0); knuckle.position.set(0, 0.09, 0.16); g.add(knuckle);
+      if (opt.glowCol) {                                                    // ✨ แกนพลังเรืองแสงกลางหมัด (นวมระดับสูง)
+        const gm = new THREE.MeshStandardMaterial({ color: opt.glowCol, emissive: opt.glowCol, emissiveIntensity: 1.3, roughness: 0.2 });
+        const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.062, 0), gm);
+        core.position.set(0, 0.08, 0.21); g.add(core);
+        for (let k = 0; k < 3; k++) { const rg = new THREE.Mesh(new THREE.TorusGeometry(0.09 + k * 0.03, 0.012, 6, 16), gm); rg.rotation.x = Math.PI / 2; rg.position.set(0, 0.02 + k * 0.06, 0.06); g.add(rg); }
+        g.userData.core = core;
+      }
+      if (opt.spikes) for (let k = 0; k < 4; k++) {                          // 🐉 หนามเกล็ดมังกรบนสันหมัด
+        const sp = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.1, 6), trim);
+        sp.position.set(-0.09 + k * 0.06, 0.16, 0.1); sp.rotation.x = -0.5; g.add(sp);
+      }
+      if (opt.wrap) for (let k = 0; k < 4; k++) {                            // 👑 ผ้าคาดทองพันข้อมือ (นวมตำนาน)
+        const w = new THREE.Mesh(new THREE.TorusGeometry(0.145 - k * 0.004, 0.014, 6, 18), trim);
+        w.rotation.x = Math.PI / 2; w.rotation.z = k * 0.4; w.position.set(0, -0.14 - k * 0.055, -0.02); g.add(w);
+      }
+      g.userData.gripY = -0.24; g.userData.gripZ = 0.0;                      // เสียบข้อมือให้พอดีฝ่ามือ
+      g.scale.setScalar(1.15);
+      return g;
+    };
+    weaponModels.cb   = mkGlove({ main: 0xc4302a, trim: 0xf5c542 });                                                    // 🥊 นวมซ้อมมือ — หนังแดงขลิบทอง
+    weaponModels.wDb  = mkGlove({ main: 0x8a1a12, trim: 0xe8622a, glowCol: 0xff5a1a, spikes: true, metal: 0.35, rough: 0.35 }); // 🐉 นวมเกล็ดมังกรเพลิง
+    weaponModels.lg_ob = mkGlove({ main: 0xf0ead8, trim: 0xf5c542, glowCol: 0xffe9a0, wrap: true, metal: 0.3, trimMetal: 0.85 }); // ⭐ นวมมงคลเทพอสูร
     { // 🤖🔫 cx — Plasma Laser Blaster (AI Mecha Guardian's class weapon: sci-fi energy rifle)
       //   built barrel-along-+Y (muzzle up in model space) with a pistol grip at the base;
       //   the grip rotation (see gripFor) swings the muzzle to point forward.
@@ -4795,7 +4886,7 @@ export default function CherryAdventure() {
     // ---------- ⚔️ TIERED LOOT WEAPONS — ตระกูลอาวุธตามอาชีพ × ระดับคุณภาพ (ยิ่งสูงยิ่งใหญ่/วิจิตร) ----------
     // อาวุธ loot ทุกชิ้นเคยใช้โมเดลประจำอาชีพร่วมกัน ต่างแค่สี — ตอนนี้แยกรูปทรงจริงตามคุณภาพ
     // และมีเครื่องประดับตามธาตุในชื่อไอเทม (เพลิง/น้ำแข็ง/พสุธา/วายุ/จันทรา/มังกร)
-    const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster" };
+    const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster", boxer: "glove" };
     const wpnTierOf = (r) => (r === "legend" || r === "dragon") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
     {
       const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
@@ -8756,6 +8847,38 @@ export default function CherryAdventure() {
       G.officeGlasses = glasses;
       headG.add(glasses); // 👓 rides on the head
       classAccessories.tie = g;
+    }
+    { // 🥊 mongkol — มงคลสวมหัวแบบมวยไทย + ประเจียดรัดต้นแขน (เครื่องรางนักมวย)
+      const g = new THREE.Group();
+      const cord = new THREE.MeshStandardMaterial({ color: 0xf5c542, roughness: 0.55, metalness: 0.25 });
+      const cloth = new THREE.MeshStandardMaterial({ color: 0xc4302a, roughness: 0.75 });
+      const gold = new THREE.MeshStandardMaterial({ color: 0xffd76a, metalness: 0.7, roughness: 0.25, emissive: 0x8a6410, emissiveIntensity: 0.3 });
+      // 👑 วงมงคลรอบศีรษะ (สองชั้นพันเกลียว)
+      for (let k = 0; k < 2; k++) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3 - k * 0.012, 0.032, 8, 26), k ? cloth : cord);
+        ring.rotation.x = Math.PI / 2; ring.position.set(0, 1.92 + k * 0.045, 0.02); g.add(ring);
+      }
+      // 🧶 ปมผูกด้านหน้า + หางมงคลห้อยไปข้างหลัง
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), gold);
+      knot.position.set(0, 1.98, -0.3); g.add(knot);
+      for (const sx of [-1, 1]) {
+        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.014, 0.34, 8), cord);
+        tail.position.set(sx * 0.05, 1.82, -0.34); tail.rotation.x = -0.32; tail.rotation.z = sx * 0.14; g.add(tail);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 8), gold);
+        tip.position.set(sx * 0.08, 1.65, -0.4); tip.rotation.x = 2.8; g.add(tip);
+      }
+      // 📿 จี้มงคลกลางหน้าผาก
+      const charm = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), gold);
+      charm.scale.set(0.8, 1.3, 0.5); charm.position.set(0, 1.94, 0.31); g.add(charm);
+      // 🧵 ประเจียดรัดต้นแขนสองข้าง
+      for (const sx of [-1, 1]) {
+        const arm = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.026, 8, 18), cloth);
+        arm.rotation.y = Math.PI / 2; arm.rotation.z = 0.12; arm.position.set(sx * 0.31, 1.34, 0); g.add(arm);
+        const armGold = new THREE.Mesh(new THREE.TorusGeometry(0.118, 0.012, 6, 18), gold);
+        armGold.rotation.y = Math.PI / 2; armGold.position.set(sx * 0.31, 1.29, 0); g.add(armGold);
+      }
+      g.traverse((o) => { o.raycast = () => {}; });
+      classAccessories.mongkol = g;
     }
     { // 💻 arcane coder — black hoodie, glasses, circuit tattoos
       const g = new THREE.Group();
@@ -14002,7 +14125,7 @@ export default function CherryAdventure() {
     // 🧑‍🤝‍🧑 ชาวเมือง + ผู้เล่นออนไลน์จริง (จากลีดเดอร์บอร์ด)
     const townFolkG = new THREE.Group(); townZone.add(townFolkG);
     G._townFolk = [];
-    const TCLS_COLOR = { warrior: 0xd9536b, archer: 0x5a9a4e, mage: 0x6a7ae0, assassin: 0x5a5a6a, lancer: 0x3a8ad0, samurai: 0xb04a3a, office: 0x8a6ad0, coder: 0x3aa89a, aegis: 0xd0a83a };
+    const TCLS_COLOR = { warrior: 0xd9536b, archer: 0x5a9a4e, mage: 0x6a7ae0, assassin: 0x5a5a6a, lancer: 0x3a8ad0, samurai: 0xb04a3a, office: 0x8a6ad0, coder: 0x3aa89a, aegis: 0xd0a83a, boxer: 0xe8622a };
     const tSkinM = new THREE.MeshStandardMaterial({ color: 0xffe2cc, roughness: 0.65 });
     const buildTownFolk = (label, clsId, px, pz, isPlayer, wanderR) => {
       const g = new THREE.Group();
@@ -24875,7 +24998,7 @@ export default function CherryAdventure() {
       G.petSkillLv = {};
       G.ngPlus = 0;
       G.storyChapter = 0;
-      const starter = { warrior: "st_w", archer: "st_a", mage: "st_m", assassin: "st_s", lancer: "st_l", samurai: "st_k", office: "st_o", coder: "st_c", aegis: "st_x" }[G.cls];
+      const starter = { warrior: "st_w", archer: "st_a", mage: "st_m", assassin: "st_s", lancer: "st_l", samurai: "st_k", office: "st_o", coder: "st_c", aegis: "st_x", boxer: "st_b" }[G.cls];
       G.inv = [starter];
       G.equip.weapon = starter; // 🗡️ starting weapon of your class
       G.setWeaponVisual(starter);
@@ -25489,7 +25612,7 @@ export default function CherryAdventure() {
       // ⚔️ the player's REAL class weapon in the right hand (clone the actual model)
       try {
         let wm = info.w && weaponModels[info.w];
-        if (!wm) { const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx" }[info.c]; wm = (dflt && weaponModels[dflt]) || weaponModels.default; }
+        if (!wm) { const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c]; wm = (dflt && weaponModels[dflt]) || weaponModels.default; }
         if (wm) { const w = wm.clone(true); w.scale.multiplyScalar(0.8); w.position.set(0.12, -0.36, 0.14); w.rotation.set(0.4, 0, -0.5); grp.userData.armR.add(w); }
       } catch (e) {}
       // 🏷️ floating nameplate
@@ -25773,7 +25896,7 @@ export default function CherryAdventure() {
         try {
           const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe" };
           let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
-          if (!wid) { const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx" }[info.c]; wid = (dflt && weaponModels[dflt]) ? dflt : "default"; }
+          if (!wid) { const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c]; wid = (dflt && weaponModels[dflt]) ? dflt : "default"; }
           const wm = weaponModels[wid] || weaponModels.default;
           if (wm) {
             const wand = new THREE.Group(); wand.position.set(0.02, -0.56, 0.12);
