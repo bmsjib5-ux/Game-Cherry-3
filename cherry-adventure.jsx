@@ -19280,8 +19280,8 @@ export default function CherryAdventure() {
             setUi((u) => ({ ...u, dungeonFloor: 0 }));
             toast("🗼 ออกจากหอคอยมิติแล้ว");
           }
-        } else {
-          // enemy stays in the world, walks away
+        } else if (mm2.parent && !G.enemy.dead) {
+          // enemy stays in the world, walks away — เฉพาะตัวที่ยังมีชีวิตและยังอยู่ในฉากเท่านั้น
           mm2.userData.wander = {
             cx: mm2.position.x, cz: mm2.position.z,
             ph: Math.random() * 6, r: 1.5, sp: mm2.userData.ghost ? 0.35 : 0.5,
@@ -19289,6 +19289,10 @@ export default function CherryAdventure() {
           mm2.userData.shy = 3; // can't be re-encountered briefly
           if (mm2.userData.lbl) mm2.userData.lbl.sprite.visible = true;
           wilds.push(mm2);
+        } else {
+          // 💀 ตัวที่ตาย/ถูกจับ/หลุดจากฉากไปแล้ว — ห้ามคืนชีพเข้า wilds เด็ดขาด
+          //    (เดิมกด "หนี" แทรกช่วงรอหลังชนะ จะดันศพกลับเข้าโลกเป็นมอนผี ซ้อนเป็นหอคอยตรงจุดที่สู้)
+          scene.remove(mm2); (G._disposeObj3D && G._disposeObj3D(mm2));
         }
       }
       G.enemy = null;
@@ -24721,6 +24725,8 @@ export default function CherryAdventure() {
       if (G.gainMastery) G.gainMastery(Math.round((6 + G.enemy.lv * 2) * (wasBoss ? 3 : isGhost ? 2 : 1)));
       if (em.userData.ghost) ghostMesh = null;
       scene.remove(em);
+      (G._disposeObj3D && G._disposeObj3D(em));
+      G.enemy.dead = true;      // 💀 ประทับว่าศึกนี้จบด้วยความตาย — ห้ามใครปล่อยศพกลับเข้าโลกอีก
       G.banim = { type: "wait", t: 0, dur: 1.2 };
       // 🗼 dungeon: chain to the next floor instead of leaving battle
       if (G.dungeon) {
@@ -24765,7 +24771,7 @@ export default function CherryAdventure() {
         }, 1300);
         return;
       }
-      setTimeout(() => endBattle(false), 1200);
+      setTimeout(() => { if (G.enemy && G.enemy.dead) endBattle(false); }, 1200);   // 🛡️ ยิงเฉพาะศึกที่จบแล้วจริง — กันไปลบมอนของศึกถัดไป
     };
 
     // ⚡ TRANSFORMATION MODE (ร่างพลัง) — power gauge fills through battle, then a temporary super-form
@@ -25038,6 +25044,7 @@ export default function CherryAdventure() {
         syncPlayer();
       } else if (kind === "run") {
         if (G.enemy && G.enemy.worldBoss) { G.wbEndRound("flee"); return; } // fleeing the boss saves its HP + shows the round result
+        if (G.enemy && G.enemy.dead) return;                  // 💀 ศึกจบไปแล้ว (กำลังฉลองชัย) — ไม่มีอะไรให้หนี
         setUi((u) => ({ ...u, msg: "วิ่งหนีสำเร็จ!" }));
         endBattle(true);
       }
@@ -28173,6 +28180,27 @@ export default function CherryAdventure() {
         if (!isArenaFoe(m)) clampOutOfSafe(m); // 🛡️🌀 keep the warp-portal safe zones monster-free
       });
 
+      // 🧹 กวาดซากทุก 3 วิ — แยกอิสระจากเงื่อนไข respawn เพราะ "มอนผี" ทำให้ wilds.length บวมจนระบบคิดว่าโลกเต็ม
+      //    มอนผี = อยู่ใน wilds แต่หลุดจากฉาก (มองไม่เห็นแต่ไล่ตีเราได้) · มอนกำพร้า = อยู่ในฉากแต่ไม่อยู่ใน wilds (มองเห็นแต่ตีไม่ตาย)
+      G._sweepT = (G._sweepT || 0) + dt;
+      if (G._sweepT > 3) {
+        G._sweepT = 0;
+        for (let zi = wilds.length - 1; zi >= 0; zi--) {
+          const zm = wilds[zi];
+          if (!zm.parent) { wilds.splice(zi, 1); (G._disposeObj3D && G._disposeObj3D(zm)); }
+          else if (zm.userData.whp != null && zm.userData.whp <= 0) { killWild(zm); }
+        }
+        { const inW = new Set(wilds);
+          const orphans = [];
+          scene.children.forEach((o) => {
+            if (!o.userData || o.userData.spId == null || !o.userData.wander || inW.has(o)) return;
+            if (o.userData.worldBoss || o.userData.golden || o.userData.ghost || o.userData.horde || o.userData.dungeon || o.userData.secret) return;
+            if (G.enemy && G.enemy.mesh === o) return;
+            orphans.push(o);
+          });
+          orphans.forEach((o) => { scene.remove(o); (G._disposeObj3D && G._disposeObj3D(o)); });
+        }
+      }
       // respawn wilds (rejoin a random camp)
       if (wilds.length < TARGET_WILDS) {
         G.respawnT += dt;
@@ -36460,8 +36488,10 @@ export default function CherryAdventure() {
                 }));
                 gainExp(30 + sp.tier * 10 + G.enemy.lv * 3);
                 scene.remove(em);
+                (G._disposeObj3D && G._disposeObj3D(em));
+                G.enemy.dead = true;                                   // 🎯 จับสำเร็จ = ตัวในโลกหายไปแล้วเช่นกัน
                 if (!G.buddy && petInst) G.setBuddy(petInst.i);
-                setTimeout(() => endBattle(false), 1400);
+                setTimeout(() => { if (G.enemy && G.enemy.dead) endBattle(false); }, 1400);
                 G.banim = { type: "wait", t: 0, dur: 1.4 };
               } else {
                 em.visible = true;
