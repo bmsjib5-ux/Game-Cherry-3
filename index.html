@@ -28804,6 +28804,54 @@ function CherryAdventure() {
         };
         // 🎯💫 จอมแม่นปืน — ลำแสงเจาะแนวตรง · เหยี่ยวล็อกเป้า · ลูกธนู · สายฟ้าลูกโซ่ · ฝนลูกธนู
         const archerFx = [];
+        // 🧹 ล้างเอฟเฟกต์สกิลโลกกว้างทั้งหมดทันที
+        // ตัวอนิเมเตอร์ของ FX พวกนี้เดินเฉพาะตอน G.mode === "explore" เท่านั้น ถ้าหลุดโหมดกลางคัน
+        // (โดนมอนชนเข้าสู้ · เป็นลม · กลับหน้าแรก) เอฟเฟกต์จะค้างแช่อยู่ในฉากตลอดไปเพราะไม่มีใครนับเวลาให้
+        const clearWorldFx = () => {
+            let n = 0;
+            const drop = (o, mats) => {
+                scene.remove(o);
+                try {
+                    (mats || []).forEach((m) => { if (m && m.dispose)
+                        m.dispose(); });
+                }
+                catch (e) { }
+                try {
+                    if (G._disposeObj3D)
+                        G._disposeObj3D(o);
+                }
+                catch (e) { }
+                n++;
+            };
+            for (let i = archerFx.length - 1; i >= 0; i--) {
+                const o = archerFx[i];
+                drop(o, (o.userData || {}).mats);
+                archerFx.splice(i, 1);
+            }
+            for (let i = magicFx.length - 1; i >= 0; i--) {
+                const o = magicFx[i];
+                drop(o, (o.userData || {}).mats);
+                magicFx.splice(i, 1);
+            }
+            for (let i = poisonFx.length - 1; i >= 0; i--) {
+                const o = poisonFx[i];
+                drop(o, (o.userData || {}).mats);
+                poisonFx.splice(i, 1);
+            }
+            for (let i = shadowBolts.length - 1; i >= 0; i--) {
+                const o = shadowBolts[i], u = o.userData || {};
+                drop(o, [u.boneMat, u.eyeMat]);
+                shadowBolts.splice(i, 1);
+            }
+            for (let i = wpnGhosts.length - 1; i >= 0; i--) {
+                const o = wpnGhosts[i], u = o.userData || {};
+                drop(o, [u.mat]);
+                wpnGhosts.splice(i, 1);
+            }
+            return n;
+        };
+        G._clearWorldFx = clearWorldFx;
+        G._worldFxCount = () => archerFx.length + magicFx.length + poisonFx.length + shadowBolts.length + wpnGhosts.length;
         const bowMuzzle = () => {
             const s = Math.sin(char.rotation.y), c = Math.cos(char.rotation.y);
             return new THREE.Vector3(char.position.x + s * 0.5 + c * 0.24, 1.45, char.position.z + c * 0.5 - s * 0.24);
@@ -30668,6 +30716,12 @@ function CherryAdventure() {
                 const o = archerFx[i], u = o.userData;
                 u.t += d;
                 const kill = () => { scene.remove(o); u.mats.forEach((m) => m.dispose()); archerFx.splice(i, 1); };
+                // ⏳ กันเหนียว — ถ้าเอฟเฟกต์ไหนอยู่เกินอายุที่ควรจะเป็นมากๆ (คอลแบ็กไม่ยิง/เป้าหายกลางคัน) ลบทิ้งเลย
+                u.age = (u.age || 0) + d;
+                if (u.age > (u.delay || 0) + (u.blowAt || 0) + (u.dur || 0) + 6) {
+                    kill();
+                    continue;
+                }
                 if (u.kind === "beam") { // 🎯 ลำแสงยืดออกวาบเดียวแล้วจาง
                     const pb = Math.min(1, u.t / u.dur);
                     o.scale.set(1 + pb * 0.6, 1 + pb * 0.6, pb < 0.13 ? pb / 0.13 : 1);
@@ -40741,6 +40795,14 @@ function CherryAdventure() {
                         G._secretNear = false;
                         setUi((u) => ({ ...u, secretNear: false }));
                     }
+                }
+                // 🧹 หลุดจากโหมดสำรวจเมื่อไหร่ (เข้าสู้ · เป็นลม · กลับหน้าแรก) เก็บกวาดเอฟเฟกต์สกิลที่ค้างอยู่ทิ้งทันที
+                // ไม่งั้นมันจะแช่แข็งกลางจอค้างอยู่อย่างนั้น เพราะอนิเมเตอร์ที่คอยนับเวลา/ลบให้อยู่ในสาขา explore เท่านั้น
+                if (G.mode !== "explore") {
+                    if (G._worldFxCount && G._worldFxCount() > 0 && G._clearWorldFx)
+                        G._clearWorldFx();
+                    if (G._skCast)
+                        G._skCast = null; // ⏹️ ยกเลิกท่าที่ร่ายค้างไว้ ไม่ให้ค้างท่าหรือยิงต่อ
                 }
                 if (G.mode === "create" || G.mode === "class") {
                     // 🎀 turntable preview in the character creator / class picker (frozen while equip screen open so manual rotate works)
