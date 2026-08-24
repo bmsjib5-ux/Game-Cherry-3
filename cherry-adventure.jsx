@@ -1427,8 +1427,8 @@ const HERO_GALLERY = [
   { id: "ragnar",   name: "รักนาร์",    emoji: "🪓", title: "นักรบโทสะปีศาจ",         c1: "#e05a4a", c2: "#7a1410", price: 300 },
   { id: "khaosai",  name: "เขาทราย",   emoji: "🥊", title: "ราชันมวยไทย",            c1: "#f0a04a", c2: "#b02020", price: 300 },
   { id: "fenrir",   name: "เฟนริร",    emoji: "🐺", title: "นักล่าเผ่ามนุษย์หมาป่า",   c1: "#b8c4d8", c2: "#3a4a6a", price: 300 },
-  { id: "neko",     name: "เนโกะ",     emoji: "🐱", title: "จอมตบเผ่าแมวเหมียว",     c1: "#f8d8a0", c2: "#c07830", price: 300 },
-  { id: "usagi",    name: "อุซางิ",    emoji: "🐰", title: "จอมกระโดดเผ่ากระต่าย",   c1: "#fce8f0", c2: "#e06a9a", price: 300 },
+  { id: "neko",     name: "เนโกะ",     emoji: "🐱", title: "จอมตบเผ่าแมวเหมียว",     c1: "#ffbe70", c2: "#e06818", price: 300 },
+  { id: "usagi",    name: "อุซางิ",    emoji: "🐰", title: "จอมกระโดดเผ่ากระต่าย",   c1: "#ffffff", c2: "#e06a9a", price: 300 },
 ];
 
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
@@ -4852,8 +4852,8 @@ export default function CherryAdventure() {
     { // 🐱 nekoPaw — อุ้งมือแมวนุ่มฟู (สวมทับกำปั้นทั้งสองข้าง): มิตเทนครีม + นิ้วป้อม + เล็บจิ๋ว + ปุ่มนิ้วชมพูหลังมือ
       const mkNekoPaw = () => {
         const g = new THREE.Group();
-        const cream = new THREE.MeshStandardMaterial({ color: 0xf6dfb2, roughness: 0.8 });
-        const ginger = new THREE.MeshStandardMaterial({ color: 0xe0a860, roughness: 0.8 });
+        const cream = new THREE.MeshStandardMaterial({ color: 0xf8c88a, roughness: 0.8 });
+        const ginger = new THREE.MeshStandardMaterial({ color: 0xf07828, roughness: 0.8 });
         const pink = new THREE.MeshStandardMaterial({ color: 0xf2a0b8, roughness: 0.6 });
         const bone = new THREE.MeshStandardMaterial({ color: 0xfff6ea, roughness: 0.45 });
         const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.115, 0.2, 14), ginger); cuff.position.y = 0.05; g.add(cuff);
@@ -8197,9 +8197,9 @@ export default function CherryAdventure() {
 
     // ---------- 🐱 NEKO signature look (จอมตบเผ่าแมวเหมียว) ----------
     {
-      const nGinger = new THREE.MeshStandardMaterial({ color: 0xe8b06a, roughness: 0.8 });                  // 🐱 ขนแมวส้มลายสลิด
-      const nCream = new THREE.MeshStandardMaterial({ color: 0xf6dfb2, roughness: 0.8 });                   // ขนครีม
-      const nStripe = new THREE.MeshStandardMaterial({ color: 0xb87838, roughness: 0.8 });                  // ลายสลิดเข้ม
+      const nGinger = new THREE.MeshStandardMaterial({ color: 0xf07828, roughness: 0.8 });                  // 🐱 ขนแมวส้มลายสลิด
+      const nCream = new THREE.MeshStandardMaterial({ color: 0xf8c88a, roughness: 0.8 });                   // ขนครีม
+      const nStripe = new THREE.MeshStandardMaterial({ color: 0xb85818, roughness: 0.8 });                  // ลายสลิดเข้ม
       const nWhite = new THREE.MeshStandardMaterial({ color: 0xfff4e0, roughness: 0.75 });                  // ขนขาวปลายหาง
       const nPink = new THREE.MeshStandardMaterial({ color: 0xf2a0b8, roughness: 0.65 });                   // 👂 ในใบหู/ปุ่มเนื้อ
       const nRibbon = new THREE.MeshStandardMaterial({ color: 0xe04858, roughness: 0.55 });                 // 🎀 ริบบิ้นแดง
@@ -8262,8 +8262,8 @@ export default function CherryAdventure() {
 
     // ---------- 🐰 USAGI signature look (จอมกระโดดเผ่ากระต่าย) ----------
     {
-      const uWhite = new THREE.MeshStandardMaterial({ color: 0xf8f4ec, roughness: 0.8 });                  // 🐰 ขนกระต่ายขาว
-      const uCream = new THREE.MeshStandardMaterial({ color: 0xefe6d6, roughness: 0.8 });                  // ขนครีมอ่อน
+      const uWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });                  // 🐰 ขนกระต่ายขาว
+      const uCream = new THREE.MeshStandardMaterial({ color: 0xf4f1ec, roughness: 0.8 });                  // ขนครีมอ่อน
       const uPink = new THREE.MeshStandardMaterial({ color: 0xf2b0c4, roughness: 0.65 });                  // 👂 ในใบหู/ชมพู
       const uPinkD = new THREE.MeshStandardMaterial({ color: 0xe06a9a, roughness: 0.55 });                 // 🎀 ชมพูเข้ม
       const uOrange = new THREE.MeshStandardMaterial({ color: 0xf07a28, roughness: 0.55 });                // 🥕 แครอท
