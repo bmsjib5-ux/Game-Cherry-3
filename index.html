@@ -12885,12 +12885,14 @@ function CherryAdventure() {
             char.add(fChest);
             // ===== 🧣 สร้อยขนสัตว์รอบไหล่ (fur mantle) =====
             const fMantle = new THREE.Group();
+            const fFurPuffs = [];
             for (let i = 0; i < 10; i++) {
                 const a = i / 10 * Math.PI * 2;
                 const puff = new THREE.Mesh(new THREE.SphereGeometry(0.105 + (i % 2) * 0.03, 12, 10), i % 2 ? fFurD : fFur);
                 puff.scale.y = 0.8;
                 puff.position.set(Math.sin(a) * 0.33, 1.98 + Math.cos(a * 2) * 0.02, Math.cos(a) * 0.3);
                 fMantle.add(puff);
+                fFurPuffs.push(puff);
             }
             for (const sx of [-1, 1]) {
                 const sh2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), fFur);
@@ -12916,6 +12918,7 @@ function CherryAdventure() {
                 const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? fFurD : fFur);
                 hemP.position.set(Math.sin(a) * 0.435, 0.85, Math.cos(a) * 0.435);
                 fLow.add(hemP);
+                fFurPuffs.push(hemP);
             } // 🧶 ชายขนฟูรอบขา
             const fBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.39, 1.3], [0.402, 1.35], [0.408, 1.41], [0.396, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), fLeatherD);
             fLow.add(fBelt);
@@ -12932,15 +12935,20 @@ function CherryAdventure() {
             char.add(fLow);
             // ===== 🐺 หางหมาป่าฟูโค้งขึ้น ปลายขาว =====
             const fTail = new THREE.Group();
+            fTail.position.set(0, 1.22, -0.3);
+            const fTailSegs = []; // 🌊 จุดหมุนที่โคนหาง — แกว่งทั้งท่อนได้
             {
-                const tc = new THREE.CatmullRomCurve3([[0, 1.22, -0.3], [0, 1.02, -0.56], [0, 1.06, -0.8], [0, 1.3, -0.96], [0, 1.56, -1.0]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
+                const tc = new THREE.CatmullRomCurve3([[0, 0, 0], [0, -0.2, -0.26], [0, -0.16, -0.5], [0, 0.08, -0.66], [0, 0.34, -0.7]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
                 for (let i = 0; i < 8; i++) {
                     const tt = i / 7;
                     const pos2 = tc.getPoint(tt);
                     const rr = 0.085 + Math.sin(tt * Math.PI) * 0.065;
                     const seg = new THREE.Mesh(new THREE.SphereGeometry(rr, 12, 10), tt > 0.82 ? fFurW : (i % 2 ? fFurD : fFur));
                     seg.position.copy(pos2);
+                    seg.userData.bp = pos2.clone();
+                    seg.userData.ti = tt;
                     fTail.add(seg);
+                    fTailSegs.push(seg);
                 }
             }
             char.add(fTail);
@@ -12971,6 +12979,8 @@ function CherryAdventure() {
             const fenParts = [fEars, fChest, fMantle, fLow, fTail, ...fLegParts];
             fenParts.forEach(q => q.visible = false);
             G._fenParts = fenParts;
+            fFurPuffs.forEach(pf => pf.userData.bs = pf.scale.clone());
+            G._fenFur = { ears: fEars, tail: fTail, tailSegs: fTailSegs, puffs: fFurPuffs, earSway: 0.04, wagHz: 2.4, wagAmp: 0.1, ph: 0 }; // 🌊 ชุดข้อมูลขนพลิ้ว
             G._fenShoeMat = fFurD; // 🐾 เท้ากลายเป็นอุ้งขนสีเข้ม
         }
         // ---------- 🐱 NEKO signature look (จอมตบเผ่าแมวเหมียว) ----------
@@ -13017,11 +13027,13 @@ function CherryAdventure() {
             const nTop = new THREE.Group();
             const band = new THREE.Mesh(new THREE.LatheGeometry([[0.43, 1.55], [0.465, 1.64], [0.472, 1.72], [0.455, 1.8], [0.43, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), nCream);
             nTop.add(band);
+            const nFurPuffs = [];
             for (let i = 0; i < 10; i++) {
                 const a = i / 10 * Math.PI * 2;
                 const puff = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? nGinger : nCream);
                 puff.position.set(Math.sin(a) * 0.43, 1.86, Math.cos(a) * 0.43);
                 nTop.add(puff);
+                nFurPuffs.push(puff);
             } // ปุยขอบบน
             for (const sa of [-0.55, 0.55]) {
                 const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.26, 0.1), nStripe);
@@ -13062,6 +13074,7 @@ function CherryAdventure() {
                 const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? nCream : nWhite);
                 hemP.position.set(Math.sin(a) * 0.435, 0.85, Math.cos(a) * 0.435);
                 nLow.add(hemP);
+                nFurPuffs.push(hemP);
             } // ชายปุยรอบขา
             for (let i = 0; i < 5; i++) {
                 const a = -Math.PI * 0.55 + i * (Math.PI * 1.1 / 4);
@@ -13088,15 +13101,20 @@ function CherryAdventure() {
             char.add(nLow);
             // ===== 🐈 หางแมวเรียวโค้งสูง ปล้องลาย ปลายขาว =====
             const nTail = new THREE.Group();
+            nTail.position.set(0, 1.2, -0.3);
+            const nTailSegs = []; // 🌊 จุดหมุนที่โคนหาง
             {
-                const tc = new THREE.CatmullRomCurve3([[0, 1.2, -0.3], [0.06, 1.45, -0.52], [0.02, 1.75, -0.6], [-0.06, 2.0, -0.5], [-0.08, 2.12, -0.36]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
+                const tc = new THREE.CatmullRomCurve3([[0, 0, 0], [0.06, 0.25, -0.22], [0.02, 0.55, -0.3], [-0.06, 0.8, -0.2], [-0.08, 0.92, -0.06]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
                 for (let i = 0; i < 10; i++) {
                     const tt = i / 9;
                     const pos2 = tc.getPoint(tt);
                     const rr = 0.055 + Math.sin(tt * Math.PI) * 0.02;
                     const seg = new THREE.Mesh(new THREE.SphereGeometry(rr, 10, 8), tt > 0.85 ? nWhite : (i === 3 || i === 6 ? nStripe : nGinger));
                     seg.position.copy(pos2);
+                    seg.userData.bp = pos2.clone();
+                    seg.userData.ti = tt;
                     nTail.add(seg);
+                    nTailSegs.push(seg);
                 }
             }
             char.add(nTail);
@@ -13129,6 +13147,8 @@ function CherryAdventure() {
             const nekoParts = [nEars, nCollar, nTop, nLow, nTail, ...nLegParts];
             nekoParts.forEach(q => q.visible = false);
             G._nekoParts = nekoParts;
+            nFurPuffs.forEach(pf => pf.userData.bs = pf.scale.clone());
+            G._nekoFur = { ears: nEars, tail: nTail, tailSegs: nTailSegs, puffs: nFurPuffs, earSway: 0.055, wagHz: 3.0, wagAmp: 0.12, ph: 2 }; // 🌊 ชุดข้อมูลขนพลิ้ว
             G._nekoShoeMat = nCream; // 🐾 เท้ากลายเป็นอุ้งขนครีม
         }
         // ---------- 🐰 USAGI signature look (จอมกระโดดเผ่ากระต่าย) ----------
@@ -13164,11 +13184,13 @@ function CherryAdventure() {
             headG.add(uEars);
             // ===== 🧣 ปกขนฟูรอบคอ + โบว์ชมพูหน้าอก =====
             const uCollar = new THREE.Group();
+            const uFurPuffs = [];
             for (let i = 0; i < 9; i++) {
                 const a = i / 9 * Math.PI * 2;
                 const puff = new THREE.Mesh(new THREE.SphereGeometry(0.075 + (i % 2) * 0.02, 10, 8), i % 2 ? uCream : uWhite);
                 puff.position.set(Math.sin(a) * 0.27, 2.02, Math.cos(a) * 0.25);
                 uCollar.add(puff);
+                uFurPuffs.push(puff);
             }
             {
                 const bow = new THREE.Group();
@@ -13211,6 +13233,7 @@ function CherryAdventure() {
                 const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? uPink : uWhite);
                 hemP.position.set(Math.sin(a) * 0.435, 0.85, Math.cos(a) * 0.435);
                 uLow.add(hemP);
+                uFurPuffs.push(hemP);
             } // ชายปุยสลับชมพู
             const uBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.39, 1.3], [0.402, 1.35], [0.408, 1.41], [0.396, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), uPinkD);
             uLow.add(uBelt);
@@ -13237,13 +13260,15 @@ function CherryAdventure() {
                 const c0 = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), uWhite);
                 c0.position.set(0, 1.22, -0.42);
                 uTail.add(c0);
+                uFurPuffs.push(c0);
                 for (let i = 0; i < 5; i++) {
                     const a = i / 5 * Math.PI * 2;
                     const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), i % 2 ? uCream : uWhite);
                     c2.position.set(Math.cos(a) * 0.1, 1.22 + Math.sin(a) * 0.1, -0.47);
                     uTail.add(c2);
+                    uFurPuffs.push(c2);
                 }
-            }
+            } // 🍡 ก้อนหางเข้าชุดจิ้กเกิลด้วย
             char.add(uTail);
             // ===== 🧤 ปลอกขนข้อมือสองข้าง =====
             const uArmParts = [];
@@ -13284,6 +13309,8 @@ function CherryAdventure() {
             const usaParts = [uEars, uCollar, uTop, uLow, uTail, ...uArmParts, ...uLegParts];
             usaParts.forEach(q => q.visible = false);
             G._usaParts = usaParts;
+            uFurPuffs.forEach(pf => pf.userData.bs = pf.scale.clone());
+            G._usaFur = { ears: uEars, tail: uTail, puffs: uFurPuffs, earSway: 0.085, ph: 4 }; // 🌊 หูยาวโอนเอนมากหน่อย · หางปุยเด้งแบบจิ้กเกิล
             G._usaShoeMat = uWhite; // 🐾 เท้ากลายเป็นอุ้งขนขาว
         }
         // ---------- Outfits: visible on Cherry when equipped ----------
@@ -43597,6 +43624,27 @@ function CherryAdventure() {
                             G._ragTailHeart.position.y = 1.24 + Math.cos(t * 1.8 + 3.2) * 0.055;
                             G._ragTailHeart.rotation.z = Math.sin(t * 2.4 + 4.4) * 0.25;
                         }
+                    }
+                }
+                // 🐾🌊 ขนสัตว์พลิ้วไหวมีชีวิต (เผ่าหมาป่า/แมว/กระต่าย) — หูกระดิก+สะบัดเป็นพักๆ หางแกว่งเป็นคลื่นแรงขึ้นทางปลาย ขนปุยพองยุบเหมือนหายใจ
+                {
+                    const beast = G.heroId === "fenrir" ? G._fenFur : G.heroId === "neko" ? G._nekoFur : G.heroId === "usagi" ? G._usaFur : null;
+                    if (beast && beast.tail && beast.tail.visible) {
+                        const flick = Math.pow(Math.max(0, Math.sin(t * 0.53 + beast.ph)), 24); // สะบัดหูไวๆ เป็นพักๆ ราวโดนแมลงตอม
+                        if (beast.ears) {
+                            beast.ears.rotation.z = Math.sin(t * 1.4 + beast.ph) * beast.earSway;
+                            beast.ears.rotation.x = Math.sin(t * 2.1 + beast.ph + 1) * beast.earSway * 0.7 + flick * Math.sin(t * 26) * 0.12;
+                        }
+                        if (beast.tailSegs) {
+                            beast.tailSegs.forEach((sg) => {
+                                const u2 = sg.userData, w2 = u2.ti * u2.ti; // ปลายหางแกว่งแรงกว่าโคน
+                                sg.position.x = u2.bp.x + Math.sin(t * beast.wagHz + u2.ti * 3.6 + beast.ph) * beast.wagAmp * w2;
+                                sg.position.y = u2.bp.y + Math.cos(t * beast.wagHz * 0.7 + u2.ti * 2.6) * beast.wagAmp * 0.45 * w2;
+                            });
+                            beast.tail.rotation.y = Math.sin(t * beast.wagHz * 0.5 + beast.ph) * 0.16; // แกว่งทั้งท่อนจากโคน
+                        }
+                        if (beast.puffs)
+                            beast.puffs.forEach((pf, i2) => { const s2 = 1 + Math.sin(t * 2.8 + i2 * 1.1 + beast.ph) * 0.07; pf.scale.copy(pf.userData.bs).multiplyScalar(s2); });
                     }
                 }
                 const rax = weaponModels.ragAxe;
