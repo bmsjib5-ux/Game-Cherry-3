@@ -1463,6 +1463,7 @@ const CHAR_PRESETS = [
     { name: "ออเรลิอุส", emoji: "⚜️", gender: 1, skin: 1, hairColor: 3, hairStyle: 1, eyes: 0, outfit: 0, hero: "aurelius" },
     { name: "รักนาร์", emoji: "🪓", gender: 1, skin: 2, hairColor: 1, hairStyle: 2, eyes: 2, outfit: 1, hero: "ragnar" },
     { name: "เขาทราย", emoji: "🥊", gender: 1, skin: 2, hairColor: 0, hairStyle: 1, eyes: 2, outfit: 1, hero: "khaosai" },
+    { name: "เฟนริร", emoji: "🐺", gender: 1, skin: 0, hairColor: 5, hairStyle: 2, eyes: 2, outfit: 3, hero: "fenrir" },
     { name: "ลูน่า", emoji: "🌙", gender: 0, skin: 0, hairColor: 5, hairStyle: 6, eyes: 0, outfit: 0, hero: "luna" },
     { name: "ยูกิ", emoji: "❄️", gender: 0, skin: 2, hairColor: 5, hairStyle: 6, eyes: 3, outfit: 0, hero: "yuki" },
     { name: "โรส", emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 3, outfit: 0, hero: "rose" },
@@ -1485,6 +1486,7 @@ const HERO_GALLERY = [
     { id: "aurelius", name: "ออเรลิอุส", emoji: "⚜️", title: "ครูเสดแห่งสวรรค์", c1: "#ffe9a0", c2: "#c8961e", price: 300 },
     { id: "ragnar", name: "รักนาร์", emoji: "🪓", title: "นักรบโทสะปีศาจ", c1: "#e05a4a", c2: "#7a1410", price: 300 },
     { id: "khaosai", name: "เขาทราย", emoji: "🥊", title: "ราชันมวยไทย", c1: "#f0a04a", c2: "#b02020", price: 300 },
+    { id: "fenrir", name: "เฟนริร", emoji: "🐺", title: "นักล่าเผ่ามนุษย์หมาป่า", c1: "#b8c4d8", c2: "#3a4a6a", price: 300 },
 ];
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
 const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
@@ -3346,8 +3348,8 @@ function CherryAdventure() {
                 return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
             if (id === "ragAxe")
                 return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
-            if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove")
-                return { x: 0, y: 0, z: 0 }; // 🥊 นวมมวย — สวมทับกำปั้น ไม่ได้ถือด้าม
+            if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove" || id === "fenClaw")
+                return { x: 0, y: 0, z: 0 }; // 🥊🐺 นวม/กรงเล็บ — สวมทับกำปั้น ไม่ได้ถือด้าม
             if (id === "cx" || id === "wDx" || id === "lg_ox")
                 return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
             // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
@@ -6316,6 +6318,44 @@ function CherryAdventure() {
         });
         weaponModels.khGlove.scale.setScalar(1.35);
         gloveLModels.khGlove.scale.setScalar(1.35); // 🥊 นวมเขาทรายใหญ่พิเศษ — ใหญ่กว่านวมปกติราวเท่าตัว
+        { // 🐺 fenClaw — กรงเล็บเผ่าหมาป่า (สวมทับกำปั้นทั้งสองข้างแบบนวม): ปลอกขนฟู + อุ้งเท้า + เล็บเหล็กโค้ง 4 เล่ม
+            const mkFenClaw = () => {
+                const g = new THREE.Group();
+                const fur = new THREE.MeshStandardMaterial({ color: 0x8a94a8, roughness: 0.85 });
+                const furD = new THREE.MeshStandardMaterial({ color: 0x5a6478, roughness: 0.85 });
+                const steel = new THREE.MeshStandardMaterial({ color: 0xd8dce4, metalness: 0.85, roughness: 0.25 });
+                const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.125, 0.24, 14), fur);
+                cuff.position.y = 0.05;
+                g.add(cuff);
+                for (let i = 0; i < 6; i++) {
+                    const a = i / 6 * Math.PI * 2;
+                    const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.15, 6), i % 2 ? furD : fur);
+                    tuft.position.set(Math.cos(a) * 0.135, 0.2, Math.sin(a) * 0.135);
+                    g.add(tuft);
+                } // ขนฟูรอบปากปลอกชี้ขึ้นแขน
+                const paw = new THREE.Mesh(new THREE.SphereGeometry(0.16, 18, 14), fur);
+                paw.scale.set(1, 1.1, 1.15);
+                paw.position.set(0, -0.14, 0.02);
+                g.add(paw);
+                const pawTop = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), furD);
+                pawTop.scale.set(1.15, 0.7, 1);
+                pawTop.position.set(0, -0.06, -0.09);
+                g.add(pawTop); // หลังอุ้งสีเข้ม
+                for (let i = 0; i < 4; i++) {
+                    const cx = -0.09 + i * 0.06;
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.26, 8), steel);
+                    claw.position.set(cx, -0.27, 0.13);
+                    claw.rotation.x = Math.PI - 0.38;
+                    g.add(claw);
+                } // 🗡️ เล็บโค้งงุ้มไปหน้า-ลง พ้นสันหมัด
+                g.userData.gripY = 0.02;
+                g.userData.gripZ = 0;
+                g.scale.setScalar(1.14);
+                return g;
+            };
+            weaponModels.fenClaw = mkFenClaw();
+            gloveLModels.fenClaw = mkFenClaw();
+        }
         { // 🤖🔫 cx — Plasma Laser Blaster (AI Mecha Guardian's class weapon: sci-fi energy rifle)
             //   built barrel-along-+Y (muzzle up in model space) with a pistol grip at the base;
             //   the grip rotation (see gripFor) swings the muzzle to point forward.
@@ -7076,6 +7116,8 @@ function CherryAdventure() {
                 id = "ragAxe";
             else if (G.heroId === "khaosai" && weaponModels.khGlove)
                 id = "khGlove";
+            else if (G.heroId === "fenrir" && weaponModels.fenClaw)
+                id = "fenClaw";
             // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
             let famKey = null;
             if (!(id && weaponModels[id])) {
@@ -8426,7 +8468,7 @@ function CherryAdventure() {
             G._irisBase = irisBase;
             G.heroId = G.heroId || null;
             // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ · 🥊 ตาอำพันนักสู้
+            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xe8a020, 0x9a5c08] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ · 🥊 ตาอำพันนักสู้ · 🐺 ตาทองหมาป่า
             G.setHero = id => {
                 G.heroId = id || null;
                 if (id)
@@ -8446,6 +8488,7 @@ function CherryAdventure() {
                 heroVis(G._aurParts, id === "aurelius");
                 heroVis(G._ragParts, id === "ragnar");
                 heroVis(G._khaoParts, id === "khaosai");
+                heroVis(G._fenParts, id === "fenrir");
                 if (typeof torso !== "undefined")
                     torso.visible = id !== "ragnar" && id !== "celestia" && id !== "khaosai"; // 🦸 ฮีโร่ที่มีลำตัวของชุดเอง — กันลำตัวฐานทะลุ/ซ้อนเสื้อ
                 if (typeof skinMat !== "undefined") { // 💜 ผิวรักนาร์อมม่วงแบบปีศาจน้อย — คืนโทนเดิมเมื่อสลับร่าง
@@ -12691,6 +12734,150 @@ function CherryAdventure() {
             G._khaoParts = khaoParts;
             G._khaoShoeMat = skinMat; // 🦶 เท้าเปล่า — รองเท้าฐานกลายเป็นสีผิว
         }
+        // ---------- 🐺 FENRIR signature look (นักล่าเผ่ามนุษย์หมาป่า) ----------
+        {
+            const fFur = new THREE.MeshStandardMaterial({ color: 0x8a94a8, roughness: 0.85 }); // 🐺 ขนหมาป่าเทาเงิน
+            const fFurD = new THREE.MeshStandardMaterial({ color: 0x5a6478, roughness: 0.85 }); // ขนเทาเข้ม
+            const fFurW = new THREE.MeshStandardMaterial({ color: 0xe8ecf4, roughness: 0.8 }); // ขนขาวปลายหาง
+            const fPink = new THREE.MeshStandardMaterial({ color: 0xe8b0bc, roughness: 0.7 }); // 👂 ในใบหู
+            const fLeather = new THREE.MeshStandardMaterial({ color: 0x4a3424, roughness: 0.8 }); // 🟤 หนังสัตว์
+            const fLeatherD = new THREE.MeshStandardMaterial({ color: 0x32241a, roughness: 0.75 }); // หนังเข้ม (เข็มขัด)
+            const fBone = new THREE.MeshStandardMaterial({ color: 0xf0ece0, roughness: 0.5 }); // 🦴 เขี้ยว/กระดูก
+            const fScar = new THREE.MeshStandardMaterial({ color: 0x7a2a2a, roughness: 0.85 }); // 🩸 รอยเล็บบนอก
+            // ===== 👂 หูหมาป่าคู่บนหัว (คงทรงผมผู้เล่นไว้) =====
+            const fEars = new THREE.Group();
+            for (const sx of [-1, 1]) {
+                const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.36, 10), fFur);
+                ear.position.set(sx * 0.3, 0.56, 0.0);
+                ear.rotation.z = -sx * 0.3;
+                fEars.add(ear);
+                const inner = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.22, 8), fPink);
+                inner.position.set(sx * 0.285, 0.53, 0.055);
+                inner.rotation.z = -sx * 0.3;
+                inner.scale.z = 0.5;
+                fEars.add(inner);
+                const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 6), fFurD);
+                tuft.position.set(sx * 0.38, 0.44, 0.0);
+                tuft.rotation.z = -sx * 0.75;
+                fEars.add(tuft); // ขนแซมโคนหู
+            }
+            headG.add(fEars);
+            // ===== 🦴 สร้อยเขี้ยวหมาป่า + สายหนังพาดอก + รอยเล็บสามเส้น =====
+            const fChest = new THREE.Group();
+            const cord = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.016, 6, 24), fLeatherD);
+            cord.position.y = 1.9;
+            cord.rotation.x = Math.PI / 2 - 0.55;
+            fChest.add(cord); // เชือกคล้องคอ
+            for (const [fx, fy] of [[0, 1.7], [-0.11, 1.74], [0.11, 1.74]]) {
+                const fang = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.11, 6), fBone);
+                fang.position.set(fx, fy, 0.315);
+                fang.rotation.x = Math.PI + 0.12;
+                fChest.add(fang);
+            } // 🦷 เขี้ยวห้อย 3 ซี่
+            const strap = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.035, 8, 30), fLeather);
+            strap.position.set(0, 1.58, 0);
+            strap.rotation.set(0.32, 0, 0.85);
+            fChest.add(strap); // สายหนังพาดไหล่ขวา-สะโพกซ้าย
+            const buck = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), fBone);
+            buck.position.set(-0.2, 1.72, 0.3);
+            fChest.add(buck); // หมุดกระดูกบนสาย
+            for (let i = 0; i < 3; i++) {
+                const scar = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.24, 0.006), fScar);
+                scar.position.set(0.06 + i * 0.08, 1.62 - i * 0.015, 0.325);
+                scar.rotation.z = 0.5;
+                fChest.add(scar);
+            } // 🩸 รอยเล็บสามเส้นพาดอก
+            char.add(fChest);
+            // ===== 🧣 สร้อยขนสัตว์รอบไหล่ (fur mantle) =====
+            const fMantle = new THREE.Group();
+            for (let i = 0; i < 10; i++) {
+                const a = i / 10 * Math.PI * 2;
+                const puff = new THREE.Mesh(new THREE.SphereGeometry(0.105 + (i % 2) * 0.03, 12, 10), i % 2 ? fFurD : fFur);
+                puff.scale.y = 0.8;
+                puff.position.set(Math.sin(a) * 0.33, 1.98 + Math.cos(a * 2) * 0.02, Math.cos(a) * 0.3);
+                fMantle.add(puff);
+            }
+            for (const sx of [-1, 1]) {
+                const sh2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), fFur);
+                sh2.scale.set(1.1, 0.75, 1);
+                sh2.position.set(sx * 0.43, 1.94, 0);
+                fMantle.add(sh2);
+                const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 6), fFurW);
+                tip.position.set(sx * 0.55, 1.86, 0);
+                tip.rotation.z = sx * 2.6;
+                fMantle.add(tip);
+            } // ไหล่ขนฟู + ปลายขนขาว
+            char.add(fMantle);
+            // ===== 🩳 กางเกงหนังสัตว์ ชายขนฟู + เข็มขัดเขี้ยว =====
+            const fLow = new THREE.Group();
+            const fHips = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), fLeather);
+            fHips.scale.set(1.05, 0.62, 0.85);
+            fHips.position.y = 1.17;
+            fLow.add(fHips);
+            const fShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.44, 0.85], [0.43, 0.95], [0.415, 1.06], [0.4, 1.17], [0.39, 1.28], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), fLeather);
+            fLow.add(fShorts);
+            for (let i = 0; i < 12; i++) {
+                const a = i / 12 * Math.PI * 2;
+                const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? fFurD : fFur);
+                hemP.position.set(Math.sin(a) * 0.435, 0.85, Math.cos(a) * 0.435);
+                fLow.add(hemP);
+            } // 🧶 ชายขนฟูรอบขา
+            const fBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.39, 1.3], [0.402, 1.35], [0.408, 1.41], [0.396, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), fLeatherD);
+            fLow.add(fBelt);
+            const fSkull = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), fBone);
+            fSkull.scale.set(1, 0.85, 0.7);
+            fSkull.position.set(0, 1.39, 0.39);
+            fLow.add(fSkull); // 🦴 หัวเข็มขัดกระดูก
+            for (const fx of [-0.09, 0.09]) {
+                const fg2 = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.09, 6), fBone);
+                fg2.position.set(fx, 1.31, 0.39);
+                fg2.rotation.x = Math.PI + 0.1;
+                fLow.add(fg2);
+            } // เขี้ยวห้อยเข็มขัด
+            char.add(fLow);
+            // ===== 🐺 หางหมาป่าฟูโค้งขึ้น ปลายขาว =====
+            const fTail = new THREE.Group();
+            {
+                const tc = new THREE.CatmullRomCurve3([[0, 1.22, -0.3], [0, 1.02, -0.56], [0, 1.06, -0.8], [0, 1.3, -0.96], [0, 1.56, -1.0]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
+                for (let i = 0; i < 8; i++) {
+                    const tt = i / 7;
+                    const pos2 = tc.getPoint(tt);
+                    const rr = 0.085 + Math.sin(tt * Math.PI) * 0.065;
+                    const seg = new THREE.Mesh(new THREE.SphereGeometry(rr, 12, 10), tt > 0.82 ? fFurW : (i % 2 ? fFurD : fFur));
+                    seg.position.copy(pos2);
+                    fTail.add(seg);
+                }
+            }
+            char.add(fTail);
+            // ===== 🦵 ปลอกขนแข้งสองข้าง + เล็บเท้า (เท้ากลายเป็นอุ้งขนผ่าน G._fenShoeMat) =====
+            const fLegParts = [];
+            for (const leg of [legL, legR]) {
+                const kn = leg.userData.knee || leg;
+                const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.155, 0.34, 12), fFur);
+                shin.position.set(0, -0.22, 0.005);
+                kn.add(shin);
+                fLegParts.push(shin);
+                for (let i = 0; i < 5; i++) {
+                    const a = -Math.PI * 0.5 + i * (Math.PI / 4);
+                    const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.13, 6), i % 2 ? fFurD : fFur);
+                    tuft.position.set(Math.sin(a) * 0.145, -0.06, Math.cos(a) * 0.145 + 0.005);
+                    tuft.rotation.x = 0.15;
+                    kn.add(tuft);
+                    fLegParts.push(tuft);
+                } // ขนฟูปากปลอกใต้เข่า
+                for (const cx of [-0.06, 0, 0.06]) {
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.08, 6), fBone);
+                    claw.position.set(cx, -0.52, 0.22);
+                    claw.rotation.x = 1.35;
+                    kn.add(claw);
+                    fLegParts.push(claw);
+                } // 🐾 เล็บอุ้งเท้า 3 เล่ม
+            }
+            const fenParts = [fEars, fChest, fMantle, fLow, fTail, ...fLegParts];
+            fenParts.forEach(q => q.visible = false);
+            G._fenParts = fenParts;
+            G._fenShoeMat = fFurD; // 🐾 เท้ากลายเป็นอุ้งขนสีเข้ม
+        }
         // ---------- Outfits: visible on Cherry when equipped ----------
         const outfitModels = {};
         G._outfitCloth = G._outfitCloth || []; // 🌊 ชิ้นผ้าของชุดสวมที่พริ้วไหวใน animate loop ({grp, m, base, top, h, amp}) — คงรายการที่ฮีโร่ลงทะเบียนไว้ก่อนหน้า
@@ -16220,7 +16407,7 @@ function CherryAdventure() {
                     smat = dyedMat(smat, dye.shoes);
                 s.material = smat;
             });
-            const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : G.heroId === "khaosai" ? G._khaoShoeMat : null;
+            const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : G.heroId === "khaosai" ? G._khaoShoeMat : G.heroId === "fenrir" ? G._fenShoeMat : null;
             if (heroShoe && !sh)
                 shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
             // 🧤🦵👢 toggle the real 3D limb gear (each id → [L,R] group on the arm/leg joint)
@@ -28693,7 +28880,7 @@ function CherryAdventure() {
                 G.saveGame();
         };
         // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
-        G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500 }; // 💎 ชุดฮีโร่ 1000++ เพชร
+        G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600 }; // 💎 ชุดฮีโร่ 1000++ เพชร
         G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
         G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now())
             return 0; return Math.ceil((t - Date.now()) / 86400000); };
@@ -38091,8 +38278,8 @@ function CherryAdventure() {
                 return;
             }
             if (kind === "attack") {
-                G.banim = { type: "playerAttack", t: 0, dur: G.cls === "warrior" ? 0.5 : 0.65, mult: 1 };
-                const atkMsg = G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
+                G.banim = { type: "playerAttack", t: 0, dur: G.heroId === "fenrir" ? 1.3 : G.cls === "warrior" ? 0.5 : 0.65, mult: 1, basic: true };
+                const atkMsg = G.heroId === "fenrir" ? "เชอร์รี่พุ่งตะครุบ! กรงเล็บหมาป่าฟาดไขว้ 🐺" : G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
                 setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: atkMsg }));
             }
             else if (kind === "skill") {
@@ -40261,8 +40448,8 @@ function CherryAdventure() {
                 // ---- 🦸 HERO signature look: clone every part of the hero's rig onto matching remote anchors (mirrors setHero exactly) ----
                 if (info.hero && G._charRig) {
                     try {
-                        const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts", khaosai: "_khaoParts" };
-                        const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808] };
+                        const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts", khaosai: "_khaoParts", fenrir: "_fenParts" };
+                        const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xe8a020, 0x9a5c08] };
                         const SIG_HAIR = new Set(["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "aurelius", "ragnar"]); // heroes that replace the base hair with a signature style
                         const parts = G[HERO_PARTS[info.hero]];
                         const rig = G._charRig;
@@ -40373,7 +40560,7 @@ function CherryAdventure() {
                 }
                 // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
                 try {
-                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove" };
+                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw" };
                     let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
                     if (!wid) {
                         const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c];
@@ -47345,7 +47532,116 @@ function CherryAdventure() {
                             } // 👑 Omega Judgment Protocol cinematic overlay
                             const skFx = A.skill ? A.skill.fx : null;
                             const hitP = A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : A.boxDur ? 0.62 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
-                            if (G.cls === "aegis") {
+                            if (G.heroId === "fenrir" && A.basic) {
+                                // 🐺 FENRIR — ท่าโจมตีพิเศษเผ่ามนุษย์หมาป่า: หมอบเก็บตัว → พุ่งตะครุบ → กรงเล็บฟาดไขว้ X → ตีลังกากลับ
+                                const EP = em.position;
+                                const bx = battleCenter.x - 1.3;
+                                if (!A.wfx) {
+                                    A.wfx = new THREE.Group();
+                                    scene.add(A.wfx);
+                                    A.wfxParts = {};
+                                }
+                                const ensureC = (key, n, make) => { if (!A.wfxParts[key]) {
+                                    A.wfxParts[key] = [];
+                                    for (let i = 0; i < n; i++) {
+                                        const m = make(i);
+                                        A.wfx.add(m);
+                                        A.wfxParts[key].push(m);
+                                    }
+                                } return A.wfxParts[key]; };
+                                const cMat = (cc) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+                                const claws = ensureC("claws", 6, (i) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.62, 22, 1, Math.PI * 0.2, Math.PI * 0.6), cMat(i < 3 ? 0xff5a3a : 0xffb03a)); m.visible = false; return m; });
+                                const kneeB = (v) => { if (legL.userData.knee)
+                                    legL.userData.knee.rotation.x = v; if (legR.userData.knee)
+                                    legR.userData.knee.rotation.x = v; };
+                                if (p < 0.22) {
+                                    // 😾 หมอบเก็บตัวต่ำ กางเล็บรอจังหวะ
+                                    const u = p / 0.22;
+                                    char.position.x = bx - u * 0.3;
+                                    char.rotation.z = 0.3 * u;
+                                    kneeB(0.08 + 0.9 * u);
+                                    legL.rotation.x = -0.5 * u;
+                                    legR.rotation.x = 0.35 * u;
+                                    armR.rotation.x = 0.55 * u;
+                                    armL.rotation.x = 0.55 * u;
+                                    armR.rotation.z = 0.3 * u;
+                                    armL.rotation.z = -0.3 * u;
+                                }
+                                else if (p < 0.5) {
+                                    // 🐺 พุ่งตะครุบกลางอากาศ เหยียดเล็บไปหน้า
+                                    const e = smK((p - 0.22) / 0.28);
+                                    char.position.x = (bx - 0.3) + e * (EP.x - 0.8 - (bx - 0.3));
+                                    char.position.y = Math.sin(e * Math.PI) * 0.85;
+                                    char.rotation.z = 0.3 + e * 0.4;
+                                    armR.rotation.x = 0.55 - e * 2.4;
+                                    armL.rotation.x = 0.55 - e * 2.4;
+                                    armR.rotation.z = 0.3 + e * 0.2;
+                                    armL.rotation.z = -0.3 - e * 0.2;
+                                    kneeB(0.98 - e * 0.5);
+                                    if (Math.random() < 0.5)
+                                        burst(new THREE.Vector3(char.position.x - 0.3, 0.6 + char.position.y, battleCenter.z), 0xaab8d0, 0.35);
+                                }
+                                else if (p < 0.78) {
+                                    // ⚔️ กรงเล็บฟาดไขว้สองจังหวะเป็นรูป X
+                                    const u = (p - 0.5) / 0.28;
+                                    char.position.x = EP.x - 0.8;
+                                    char.position.y = Math.max(0, 0.25 - u * 0.25);
+                                    char.rotation.z = 0.7 - u * 0.4;
+                                    const s1 = smK(Math.min(1, u / 0.45));
+                                    const s2 = smK(Math.max(0, (u - 0.45) / 0.55));
+                                    armR.rotation.x = -1.85 + s1 * 2.1;
+                                    armR.rotation.z = 0.5 - s1 * 0.9;
+                                    armL.rotation.x = -1.85 + s2 * 2.1;
+                                    armL.rotation.z = -0.5 + s2 * 0.9;
+                                    kneeB(0.4);
+                                    if (s1 > 0.5 && !A._fenH1) {
+                                        A._fenH1 = true;
+                                        G._camShake = Math.max(G._camShake || 0, 0.5);
+                                        spawnSkillFx("punchwave", EP, 0xff5a3a);
+                                        for (let i2 = 0; i2 < 5; i2++)
+                                            burst(EP.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.8, 0.4 + Math.random() * 1.4, (Math.random() - 0.5) * 0.8)), Math.random() < 0.5 ? 0xff5a3a : 0xffd0a0, 0.4 + Math.random() * 0.8);
+                                    }
+                                    if (s2 > 0.5 && !A._fenH2) {
+                                        A._fenH2 = true;
+                                        G._camShake = Math.max(G._camShake || 0, 0.6);
+                                        spawnSkillFx("punchwave", EP, 0xffb03a);
+                                        if (G.speedLines)
+                                            G.speedLines(350);
+                                    }
+                                    // 🌶️ รอยกรีดเล็บสามเส้นคู่ ไขว้ค้างบนตัวศัตรู
+                                    claws.forEach((c, i) => {
+                                        const set2 = i >= 3, off = (i % 3) - 1;
+                                        const sv = set2 ? s2 : s1;
+                                        c.visible = sv > 0.05;
+                                        if (!c.visible)
+                                            return;
+                                        c.position.set(EP.x + off * 0.14, 1.15 + off * 0.1, EP.z + 0.3 + (set2 ? 0.02 : 0));
+                                        c.rotation.z = (set2 ? 2.4 : 0.7) + sv * 0.5 * (set2 ? -1 : 1);
+                                        c.scale.setScalar(0.6 + sv * 0.9);
+                                        c.material.opacity = Math.max(0, Math.sin(Math.min(1, sv) * Math.PI)) * 0.95;
+                                    });
+                                }
+                                else {
+                                    // 🤸 ตีลังกาหลังหนึ่งรอบกลับเข้าตำแหน่ง
+                                    const e = smK((p - 0.78) / 0.22);
+                                    char.position.x = (EP.x - 0.8) + (bx - (EP.x - 0.8)) * e;
+                                    char.position.y = Math.sin(e * Math.PI) * 0.7;
+                                    char.rotation.z = 0.3 - e * (Math.PI * 2 + 0.3);
+                                    armR.rotation.x = 0.25 - e * 0.4;
+                                    armL.rotation.x = 0.25 - e * 0.4;
+                                    armR.rotation.z = 0.3 * (1 - e) + 0.12;
+                                    armL.rotation.z = -0.3 * (1 - e) - 0.12;
+                                    kneeB(0.9 - e * 0.82);
+                                    legL.rotation.x = -0.5 * (1 - e);
+                                    legR.rotation.x = 0.35 * (1 - e);
+                                    claws.forEach((c) => { c.material.opacity *= 0.88; });
+                                    if (p >= 0.99) {
+                                        char.rotation.z = 0;
+                                        char.position.y = 0;
+                                    }
+                                }
+                            }
+                            else if (G.cls === "aegis") {
                                 // 🤖 AEGIS-X — arena skill choreography reusing the AAA plasma-dash / drone-barrage FX
                                 const EP = em.position;
                                 const bx = battleCenter.x - 1.3;
