@@ -13211,34 +13211,45 @@ function CherryAdventure() {
             char.add(uCollar);
             // ===== 👗 เสื้อขนขาวรัดอกขอบชมพู =====
             const uTop = new THREE.Group();
-            const band = new THREE.Mesh(new THREE.LatheGeometry([[0.43, 1.55], [0.465, 1.64], [0.472, 1.72], [0.455, 1.8], [0.43, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), uWhite);
-            uTop.add(band);
-            const trimT = new THREE.Mesh(new THREE.TorusGeometry(0.435, 0.022, 6, 28), uPink);
-            trimT.position.y = 1.855;
+            const band = new THREE.Mesh(new THREE.LatheGeometry([[0.405, 1.5], [0.44, 1.6], [0.468, 1.7], [0.455, 1.79], [0.428, 1.88]].map(([r, y]) => new THREE.Vector2(r, y)), 30), uWhite);
+            band.scale.z = 0.74;
+            uTop.add(band); // 👗 บอดี้สูทรัดรูป — เว้าเอวคอด บีบความลึกให้แนบแผ่นอก-แผ่นหลัง
+            const trimT = new THREE.Mesh(new THREE.TorusGeometry(0.432, 0.02, 6, 30), uPinkD);
+            trimT.position.y = 1.875;
             trimT.rotation.x = Math.PI / 2;
+            trimT.scale.y = 0.74;
             uTop.add(trimT);
-            const trimB = new THREE.Mesh(new THREE.TorusGeometry(0.437, 0.022, 6, 28), uPink);
-            trimB.position.y = 1.565;
+            const trimB = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.02, 6, 30), uPinkD);
+            trimB.position.y = 1.505;
             trimB.rotation.x = Math.PI / 2;
-            uTop.add(trimB); // ขอบชมพูบน-ล่าง
+            trimB.scale.y = 0.74;
+            uTop.add(trimB); // ขอบชมพูรัดบน-ล่าง
+            for (const [by, br] of [[1.6, 0.44], [1.7, 0.468], [1.79, 0.455]]) {
+                const btn = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 6), uPinkD);
+                btn.scale.z = 0.55;
+                btn.position.set(0, by, br * 0.74 + 0.012);
+                uTop.add(btn);
+            } // 🩷 กระดุมชมพูเรียงกลางอก
             char.add(uTop);
             // ===== 🩳 กางเกงขนขาวชายปุยชมพู + เข็มขัด + พวงแครอท =====
             const uLow = new THREE.Group();
             const uHips = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), uWhite);
-            uHips.scale.set(1.05, 0.62, 0.85);
-            uHips.position.y = 1.17;
+            uHips.scale.set(1.0, 0.6, 0.76);
+            uHips.position.y = 1.16;
             uLow.add(uHips);
-            const uShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.44, 0.85], [0.43, 0.95], [0.415, 1.06], [0.4, 1.17], [0.39, 1.28], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), uWhite);
-            uLow.add(uShorts);
+            const uShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.41, 0.98], [0.403, 1.08], [0.4, 1.18], [0.39, 1.27], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), uWhite);
+            uShorts.scale.z = 0.88;
+            uLow.add(uShorts); // 🩳 ทรงรัดรูปเว้าสูง — ชายขาสูงขึ้นโชว์ต้นขาเรียว
             for (let i = 0; i < 12; i++) {
                 const a = i / 12 * Math.PI * 2;
-                const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? uPink : uWhite);
-                hemP.position.set(Math.sin(a) * 0.435, 0.85, Math.cos(a) * 0.435);
+                const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.032 + (i % 2) * 0.01, 8, 6), i % 2 ? uPink : uWhite);
+                hemP.position.set(Math.sin(a) * 0.405, 0.985, Math.cos(a) * 0.405 * 0.88);
                 uLow.add(hemP);
                 uFurPuffs.push(hemP);
-            } // ชายปุยสลับชมพู
-            const uBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.39, 1.3], [0.402, 1.35], [0.408, 1.41], [0.396, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), uPinkD);
-            uLow.add(uBelt);
+            } // ขลิบปุยจิ๋วชายขาสูง
+            const uBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.378, 1.3], [0.39, 1.35], [0.396, 1.41], [0.384, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), uPinkD);
+            uBelt.scale.z = 0.88;
+            uLow.add(uBelt); // เข็มขัดรัดเอวเข้ารูป
             {
                 const carrot = new THREE.Group();
                 const cb2 = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.16, 8), uOrange);
