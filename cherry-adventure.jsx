@@ -8149,9 +8149,9 @@ export default function CherryAdventure() {
       // ===== 👂 หูหมาป่าคู่บนหัว (คงทรงผมผู้เล่นไว้) =====
       const fEars = new THREE.Group();
       for (const sx of [-1, 1]) {
-        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.36, 10), fFur); ear.position.set(sx * 0.3, 0.56, 0.0); ear.rotation.z = -sx * 0.3; fEars.add(ear);
-        const inner = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.22, 8), fPink); inner.position.set(sx * 0.285, 0.53, 0.055); inner.rotation.z = -sx * 0.3; inner.scale.z = 0.5; fEars.add(inner);
-        const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 6), fFurD); tuft.position.set(sx * 0.38, 0.44, 0.0); tuft.rotation.z = -sx * 0.75; fEars.add(tuft); // ขนแซมโคนหู
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.21, 0.6, 10), fFur); ear.position.set(sx * 0.33, 0.7, 0.0); ear.rotation.z = -sx * 0.3; fEars.add(ear);
+        const inner = new THREE.Mesh(new THREE.ConeGeometry(0.115, 0.38, 8), fPink); inner.position.set(sx * 0.315, 0.66, 0.085); inner.rotation.z = -sx * 0.3; inner.scale.z = 0.5; fEars.add(inner);
+        const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 6), fFurD); tuft.position.set(sx * 0.44, 0.5, 0.0); tuft.rotation.z = -sx * 0.75; fEars.add(tuft); // ขนแซมโคนหู
       }
       headG.add(fEars);
       // ===== 🦴 สร้อยเขี้ยวหมาป่า + สายหนังพาดอก + รอยเล็บสามเส้น =====
@@ -8180,6 +8180,7 @@ export default function CherryAdventure() {
       const fTail = new THREE.Group(); fTail.position.set(0, 1.22, -0.3); const fTailSegs = []; // 🌊 จุดหมุนที่โคนหาง — แกว่งทั้งท่อนได้
       { const tc = new THREE.CatmullRomCurve3([[0, 0, 0], [0, -0.2, -0.26], [0, -0.16, -0.5], [0, 0.08, -0.66], [0, 0.34, -0.7]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
         for (let i = 0; i < 8; i++) { const tt = i / 7; const pos2 = tc.getPoint(tt); const rr = 0.085 + Math.sin(tt * Math.PI) * 0.065; const seg = new THREE.Mesh(new THREE.SphereGeometry(rr, 12, 10), tt > 0.82 ? fFurW : (i % 2 ? fFurD : fFur)); seg.position.copy(pos2); seg.userData.bp = pos2.clone(); seg.userData.ti = tt; fTail.add(seg); fTailSegs.push(seg); } }
+      fTail.scale.setScalar(1.35); // 🐺 หางใหญ่ยาวขึ้น
       char.add(fTail);
       // ===== 🦵 ปลอกขนแข้งสองข้าง + เล็บเท้า (เท้ากลายเป็นอุ้งขนผ่าน G._fenShoeMat) =====
       const fLegParts = [];
@@ -8209,9 +8210,9 @@ export default function CherryAdventure() {
       // ===== 👂 หูแมวคู่บนหัว (คงทรงผมผู้เล่นไว้) =====
       const nEars = new THREE.Group();
       for (const sx of [-1, 1]) {
-        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 10), nGinger); ear.position.set(sx * 0.28, 0.56, 0.02); ear.rotation.z = -sx * 0.24; nEars.add(ear);
-        const inner = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.19, 8), nPink); inner.position.set(sx * 0.27, 0.54, 0.07); inner.rotation.z = -sx * 0.24; inner.scale.z = 0.5; nEars.add(inner);
-        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.1, 8), nStripe); tip.position.set(sx * 0.315, 0.685, 0.02); tip.rotation.z = -sx * 0.24; nEars.add(tip); // ปลายหูสีเข้ม
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 10), nGinger); ear.position.set(sx * 0.3, 0.68, 0.02); ear.rotation.z = -sx * 0.24; nEars.add(ear);
+        const inner = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.32, 8), nPink); inner.position.set(sx * 0.29, 0.65, 0.095); inner.rotation.z = -sx * 0.24; inner.scale.z = 0.5; nEars.add(inner);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 8), nStripe); tip.position.set(sx * 0.355, 0.89, 0.02); tip.rotation.z = -sx * 0.24; nEars.add(tip); // ปลายหูสีเข้ม
       }
       headG.add(nEars);
       // ===== 🔔 ปลอกคอริบบิ้นแดง + กระดิ่งทอง =====
@@ -8247,6 +8248,7 @@ export default function CherryAdventure() {
       const nTail = new THREE.Group(); nTail.position.set(0, 1.2, -0.3); const nTailSegs = []; // 🌊 จุดหมุนที่โคนหาง
       { const tc = new THREE.CatmullRomCurve3([[0, 0, 0], [0.06, 0.25, -0.22], [0.02, 0.55, -0.3], [-0.06, 0.8, -0.2], [-0.08, 0.92, -0.06]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
         for (let i = 0; i < 10; i++) { const tt = i / 9; const pos2 = tc.getPoint(tt); const rr = 0.055 + Math.sin(tt * Math.PI) * 0.02; const seg = new THREE.Mesh(new THREE.SphereGeometry(rr, 10, 8), tt > 0.85 ? nWhite : (i === 3 || i === 6 ? nStripe : nGinger)); seg.position.copy(pos2); seg.userData.bp = pos2.clone(); seg.userData.ti = tt; nTail.add(seg); nTailSegs.push(seg); } }
+      nTail.scale.setScalar(1.3); // 🐱 หางยาวขึ้น
       char.add(nTail);
       // ===== 🦵 ถุงขาขนแมว + ปุ่มนิ้วเท้าชมพู (เท้ากลายเป็นอุ้งครีมผ่าน G._nekoShoeMat) =====
       const nLegParts = [];
@@ -8277,9 +8279,9 @@ export default function CherryAdventure() {
       const uEars = new THREE.Group();
       for (const sx of [-1, 1]) {
         const bent = sx < 0;
-        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 16), uWhite); ear.scale.set(0.55, bent ? 2.0 : 2.4, 0.6); ear.position.set(sx * 0.2, bent ? 0.72 : 0.78, -0.02); ear.rotation.z = -sx * 0.14; uEars.add(ear);
-        const inner = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 14), uPink); inner.scale.set(0.34, bent ? 1.5 : 1.9, 0.3); inner.position.set(sx * 0.19, bent ? 0.7 : 0.76, 0.05); inner.rotation.z = -sx * 0.14; uEars.add(inner);
-        if (bent) { const tip = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 12), uWhite); tip.scale.set(0.52, 1.05, 0.55); tip.position.set(sx * 0.31, 1.0, -0.02); tip.rotation.z = -sx * 0.95; uEars.add(tip); } // ปลายหูซ้ายพับ
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 16), uWhite); ear.scale.set(0.62, bent ? 2.1 : 2.5, 0.66); ear.position.set(sx * 0.24, bent ? 0.84 : 0.94, -0.02); ear.rotation.z = -sx * 0.14; uEars.add(ear);
+        const inner = new THREE.Mesh(new THREE.SphereGeometry(0.118, 10, 14), uPink); inner.scale.set(0.38, bent ? 1.6 : 2.0, 0.3); inner.position.set(sx * 0.23, bent ? 0.82 : 0.92, 0.075); inner.rotation.z = -sx * 0.14; uEars.add(inner);
+        if (bent) { const tip = new THREE.Mesh(new THREE.SphereGeometry(0.125, 10, 12), uWhite); tip.scale.set(0.55, 1.1, 0.58); tip.position.set(sx * 0.43, 1.22, -0.02); tip.rotation.z = -sx * 0.95; uEars.add(tip); } // ปลายหูซ้ายพับ
       }
       headG.add(uEars);
       // ===== 🧣 ปกขนฟูรอบคอ + โบว์ชมพูหน้าอก =====
@@ -8309,8 +8311,8 @@ export default function CherryAdventure() {
       char.add(uLow);
       // ===== 🍡 หางปุยกลมฟู =====
       const uTail = new THREE.Group();
-      { const c0 = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), uWhite); c0.position.set(0, 1.22, -0.42); uTail.add(c0); uFurPuffs.push(c0);
-        for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), i % 2 ? uCream : uWhite); c2.position.set(Math.cos(a) * 0.1, 1.22 + Math.sin(a) * 0.1, -0.47); uTail.add(c2); uFurPuffs.push(c2); } } // 🍡 ก้อนหางเข้าชุดจิ้กเกิลด้วย
+      { const c0 = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), uWhite); c0.position.set(0, 1.24, -0.46); uTail.add(c0); uFurPuffs.push(c0);
+        for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.105, 10, 8), i % 2 ? uCream : uWhite); c2.position.set(Math.cos(a) * 0.14, 1.24 + Math.sin(a) * 0.14, -0.52); uTail.add(c2); uFurPuffs.push(c2); } } // 🍡 หางปุยใหญ่ฟู เข้าชุดจิ้กเกิลด้วย
       char.add(uTail);
       // ===== 🧤 ปลอกขนข้อมือสองข้าง =====
       const uArmParts = [];
