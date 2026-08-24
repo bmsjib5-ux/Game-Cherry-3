@@ -1462,6 +1462,7 @@ const CHAR_PRESETS = [
     { name: "ฮารุ", emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
     { name: "ออเรลิอุส", emoji: "⚜️", gender: 1, skin: 1, hairColor: 3, hairStyle: 1, eyes: 0, outfit: 0, hero: "aurelius" },
     { name: "รักนาร์", emoji: "🪓", gender: 1, skin: 2, hairColor: 1, hairStyle: 2, eyes: 2, outfit: 1, hero: "ragnar" },
+    { name: "เขาทราย", emoji: "🥊", gender: 1, skin: 2, hairColor: 0, hairStyle: 1, eyes: 2, outfit: 1, hero: "khaosai" },
     { name: "ลูน่า", emoji: "🌙", gender: 0, skin: 0, hairColor: 5, hairStyle: 6, eyes: 0, outfit: 0, hero: "luna" },
     { name: "ยูกิ", emoji: "❄️", gender: 0, skin: 2, hairColor: 5, hairStyle: 6, eyes: 3, outfit: 0, hero: "yuki" },
     { name: "โรส", emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 3, outfit: 0, hero: "rose" },
@@ -1483,6 +1484,7 @@ const HERO_GALLERY = [
     { id: "haru", name: "ฮารุ", emoji: "🌸", title: "จอมเวทซากุระ", c1: "#f2a8d0", c2: "#c05a9a", price: 80 },
     { id: "aurelius", name: "ออเรลิอุส", emoji: "⚜️", title: "ครูเสดแห่งสวรรค์", c1: "#ffe9a0", c2: "#c8961e", price: 300 },
     { id: "ragnar", name: "รักนาร์", emoji: "🪓", title: "นักรบโทสะปีศาจ", c1: "#e05a4a", c2: "#7a1410", price: 300 },
+    { id: "khaosai", name: "เขาทราย", emoji: "🥊", title: "ราชันมวยไทย", c1: "#f0a04a", c2: "#b02020", price: 300 },
 ];
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
 const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
@@ -3344,7 +3346,7 @@ function CherryAdventure() {
                 return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
             if (id === "ragAxe")
                 return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
-            if (id === "cb" || id === "wDb" || id === "lg_ob")
+            if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove")
                 return { x: 0, y: 0, z: 0 }; // 🥊 นวมมวย — สวมทับกำปั้น ไม่ได้ถือด้าม
             if (id === "cx" || id === "wDx" || id === "lg_ox")
                 return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
@@ -6306,11 +6308,14 @@ function CherryAdventure() {
             bxs: { main: 0xf0e0a0, trim: 0xf5c542, glowCol: 0xfff2b0, wrap: true, metal: 0.25, trimMetal: 0.8 }, // นวมแสงสวรรค์
             bxs2: { main: 0x2a2038, trim: 0xc060f0, glowCol: 0xc060f0, spikes: true, metal: 0.35 }, // นวมเงามัจจุราช
             fg_glove: { main: 0x9aa2ac, trim: 0xd8dce4, metal: 0.6, rough: 0.3 }, // ⚒️ นวมเหล็กกล้า (ตีบวก)
+            khGlove: { main: 0xd01a24, trim: 0xf5c542, wrap: true }, // 🥊 นวมเขาทราย — หนังแดงสดขลิบทอง พันข้อมือทอง
         };
         Object.entries(GLOVE_SPEC).forEach(([k2, spec]) => {
             weaponModels[k2] = mkGlove(spec, 1); // ขวา — เข้ากองอาวุธปกติ
             gloveLModels[k2] = mkGlove(spec, -1); // ซ้าย — เข้าช่องมือซ้าย
         });
+        weaponModels.khGlove.scale.setScalar(1.35);
+        gloveLModels.khGlove.scale.setScalar(1.35); // 🥊 นวมเขาทรายใหญ่พิเศษ — ใหญ่กว่านวมปกติราวเท่าตัว
         { // 🤖🔫 cx — Plasma Laser Blaster (AI Mecha Guardian's class weapon: sci-fi energy rifle)
             //   built barrel-along-+Y (muzzle up in model space) with a pistol grip at the base;
             //   the grip rotation (see gripFor) swings the muzzle to point forward.
@@ -7069,6 +7074,8 @@ function CherryAdventure() {
                 id = "aurSword";
             else if (G.heroId === "ragnar" && weaponModels.ragAxe)
                 id = "ragAxe";
+            else if (G.heroId === "khaosai" && weaponModels.khGlove)
+                id = "khGlove";
             // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
             let famKey = null;
             if (!(id && weaponModels[id])) {
@@ -8419,7 +8426,7 @@ function CherryAdventure() {
             G._irisBase = irisBase;
             G.heroId = G.heroId || null;
             // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ
+            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ · 🥊 ตาอำพันนักสู้
             G.setHero = id => {
                 G.heroId = id || null;
                 if (id)
@@ -8438,8 +8445,9 @@ function CherryAdventure() {
                 heroVis(G._kaiParts, id === "kairi");
                 heroVis(G._aurParts, id === "aurelius");
                 heroVis(G._ragParts, id === "ragnar");
+                heroVis(G._khaoParts, id === "khaosai");
                 if (typeof torso !== "undefined")
-                    torso.visible = id !== "ragnar" && id !== "celestia"; // 🦸 ฮีโร่ที่มีลำตัวของชุดเอง — กันลำตัวฐานทะลุ/ซ้อนเสื้อ
+                    torso.visible = id !== "ragnar" && id !== "celestia" && id !== "khaosai"; // 🦸 ฮีโร่ที่มีลำตัวของชุดเอง — กันลำตัวฐานทะลุ/ซ้อนเสื้อ
                 if (typeof skinMat !== "undefined") { // 💜 ผิวรักนาร์อมม่วงแบบปีศาจน้อย — คืนโทนเดิมเมื่อสลับร่าง
                     if (id === "ragnar") {
                         const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex());
@@ -12506,6 +12514,183 @@ function CherryAdventure() {
             ragParts.forEach(p => p.visible = false);
             G._ragParts = ragParts;
         }
+        // ---------- 🥊 KHAOSAI signature look (ราชันมวยไทย — เขาทราย) ----------
+        {
+            const kSatin = new THREE.MeshStandardMaterial({ color: 0xc01822, roughness: 0.3, metalness: 0.2 }); // 🩳 ผ้าซาตินแดงเงา
+            const kGold = new THREE.MeshStandardMaterial({ color: 0xe8b84a, roughness: 0.3, metalness: 0.65 }); // ✨ ขลิบทอง
+            const kNavy = new THREE.MeshStandardMaterial({ color: 0x1c2440, roughness: 0.5 }); // 🔵 ขอบเอวน้ำเงินเข้ม
+            const kRope = new THREE.MeshStandardMaterial({ color: 0xb02424, roughness: 0.75 }); // 🪢 เชือกมงคล/ประเจียดแดง
+            const kRope2 = new THREE.MeshStandardMaterial({ color: 0xe4dcc8, roughness: 0.8 }); // เชือกถักสีงาช้าง
+            const kInk = new THREE.MeshStandardMaterial({ color: 0x26333f, roughness: 0.9 }); // 🖋️ หมึกสักยันต์น้ำเงินเข้ม
+            const kSkin = skinMat; // 🧡 ผิวจริงของตัวละคร
+            // ===== 👑 มงคล (รัดเกล้า) — ห่วงเชือกถักคาดหัว + ไส้ทองพัน + หางมงคลห้อยท้ายทอย =====
+            const kMong = new THREE.Group();
+            const mBand = new THREE.Mesh(new THREE.TorusGeometry(0.615, 0.055, 10, 30), kRope);
+            mBand.rotation.x = Math.PI / 2;
+            kMong.add(mBand);
+            for (let i = 0; i < 10; i++) {
+                const a = i / 10 * Math.PI * 2;
+                const wrap = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.014, 6, 12), i % 2 ? kGold : kRope2);
+                wrap.position.set(Math.sin(a) * 0.615, 0, Math.cos(a) * 0.615);
+                wrap.rotation.y = a + Math.PI / 2;
+                kMong.add(wrap);
+            } // 🪢 เกลียวเชือกพันรอบวง
+            const mGem = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), kGold);
+            mGem.position.set(0, 0.015, 0.635);
+            kMong.add(mGem); // ✨ ตุ้มทองหน้าผาก
+            {
+                const tail = new THREE.Group();
+                const t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.027, 0.3, 8), kRope);
+                t1.position.set(0, -0.06, -0.1);
+                t1.rotation.x = 1.05;
+                tail.add(t1);
+                const tKnot = new THREE.Mesh(new THREE.SphereGeometry(0.046, 10, 8), kGold);
+                tKnot.position.set(0, -0.12, -0.23);
+                tail.add(tKnot);
+                const tTas = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.17, 8), kRope);
+                tTas.position.set(0, -0.22, -0.28);
+                tTas.rotation.x = 0.45;
+                tail.add(tTas); // 🎗️ พู่หางมงคล
+                tail.position.set(0, 0, -0.58);
+                kMong.add(tail);
+            }
+            kMong.position.set(0, 0.34, -0.02);
+            kMong.rotation.x = -0.08;
+            headG.add(kMong);
+            // ===== 💪 ลำตัวนักมวยเปลือยอก — แทนลำตัวฐานทั้งชิ้น (อกผายไหล่ผึ่ง รูปทรงคงที่ทุกเพศ ลายสักไม่คลาดตำแหน่ง) =====
+            const kBody = new THREE.Group();
+            const kTorso = new THREE.Mesh(new THREE.LatheGeometry([[0.345, 1.18], [0.35, 1.3], [0.345, 1.42], [0.355, 1.54], [0.375, 1.64], [0.4, 1.74], [0.412, 1.84], [0.375, 1.93], [0.29, 2.0], [0.17, 2.05], [0.09, 2.08]].map(([r, y]) => new THREE.Vector2(r, y)), 32), kSkin);
+            kTorso.scale.set(1.06, 1, 0.82);
+            kBody.add(kTorso);
+            // 🖋️ สักลายไทย — ยันต์กลางอก (วงเกราะเพชร + อุณาโลม)
+            {
+                const yant = new THREE.Group();
+                yant.add(new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.008, 6, 26), kInk));
+                yant.add(new THREE.Mesh(new THREE.TorusGeometry(0.054, 0.006, 6, 20), kInk));
+                for (let i = 0; i < 8; i++) {
+                    const a = i / 8 * Math.PI * 2;
+                    const sp = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.052, 0.005), kInk);
+                    sp.position.set(Math.sin(a) * 0.112, Math.cos(a) * 0.112, 0);
+                    sp.rotation.z = -a;
+                    yant.add(sp);
+                    const dt = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 5), kInk);
+                    dt.scale.z = 0.4;
+                    dt.position.set(Math.sin(a + Math.PI / 8) * 0.135, Math.cos(a + Math.PI / 8) * 0.135, 0);
+                    yant.add(dt);
+                }
+                const una = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 6, 14, Math.PI * 1.6), kInk);
+                una.position.set(0, 0.175, 0);
+                yant.add(una); // 🌀 ก้นหอยอุณาโลม
+                const unaS = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.07, 0.005), kInk);
+                unaS.position.set(0, 0.235, 0);
+                yant.add(unaS);
+                yant.position.set(0, 1.72, 0.335);
+                kBody.add(yant);
+            }
+            // 🖋️ ยันต์ห้าแถวพาดบ่าซ้าย (เส้นอักขระเรียงเฉียง โอบตามผิวอก)
+            for (let i = 0; i < 5; i++) {
+                const th = 0.3 + i * 0.105;
+                const ln = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.125 - i * 0.012, 0.005), kInk);
+                ln.position.set(Math.sin(th) * 0.41, 1.875, Math.cos(th) * 0.318);
+                ln.rotation.y = th;
+                ln.rotation.z = -0.12;
+                kBody.add(ln);
+            }
+            // 🖋️ ยันต์แปดทิศเต็มแผ่นหลัง
+            {
+                const by = new THREE.Group();
+                by.add(new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.008, 6, 28), kInk));
+                by.add(new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.006, 6, 22), kInk));
+                for (let i = 0; i < 8; i++) {
+                    const a = i / 8 * Math.PI * 2;
+                    const sp = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.085, 0.005), kInk);
+                    sp.position.set(Math.sin(a) * 0.162, Math.cos(a) * 0.162, 0);
+                    sp.rotation.z = -a;
+                    by.add(sp);
+                    const dt = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 5), kInk);
+                    dt.scale.z = 0.4;
+                    dt.position.set(Math.sin(a) * 0.208, Math.cos(a) * 0.208, 0);
+                    by.add(dt);
+                }
+                by.position.set(0, 1.74, -0.345);
+                by.rotation.y = Math.PI;
+                kBody.add(by);
+            }
+            char.add(kBody);
+            // ===== 🩳 กางเกงมวยไทย — ซาตินแดงบานปลายขา ขอบเอวน้ำเงิน-ทอง + แถบทองข้างขา =====
+            const kLow = new THREE.Group();
+            const kHips = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), kSatin);
+            kHips.scale.set(1.05, 0.62, 0.85);
+            kHips.position.y = 1.17;
+            kLow.add(kHips);
+            const kShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.46, 0.8], [0.446, 0.88], [0.43, 0.97], [0.414, 1.07], [0.4, 1.18], [0.39, 1.28], [0.386, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 32), kSatin);
+            kLow.add(kShorts);
+            const kWaist = new THREE.Mesh(new THREE.LatheGeometry([[0.39, 1.3], [0.404, 1.35], [0.41, 1.41], [0.398, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 32), kNavy);
+            kLow.add(kWaist);
+            const kWaistG = new THREE.Mesh(new THREE.TorusGeometry(0.408, 0.014, 6, 30), kGold);
+            kWaistG.position.y = 1.415;
+            kWaistG.rotation.x = Math.PI / 2;
+            kLow.add(kWaistG); // ✨ เส้นทองคาดเอว
+            const kHem = new THREE.Mesh(new THREE.TorusGeometry(0.455, 0.02, 6, 32), kGold);
+            kHem.position.y = 0.812;
+            kHem.rotation.x = Math.PI / 2;
+            kLow.add(kHem); // ✨ ขลิบทองปลายขา
+            for (const sx of [-1, 1]) {
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.1), kGold);
+                stripe.position.set(sx * 0.43, 1.06, 0);
+                stripe.rotation.z = sx * 0.15;
+                kLow.add(stripe);
+            } // ✨ แถบทองข้างขาสองฝั่ง
+            const kTag = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.085, 0.02), kGold);
+            kTag.position.set(0, 1.4, 0.393);
+            kTag.rotation.x = -0.1;
+            kLow.add(kTag); // 🏷️ แผ่นป้ายหน้าเอว
+            char.add(kLow);
+            // ===== 🎗️ ประเจียดต้นแขนสองข้าง + ลายสักวงรอบแขน =====
+            const kArmParts = [];
+            for (const arm of [armL, armR]) {
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.03, 8, 18), kRope);
+                band.position.y = -0.1;
+                band.rotation.x = Math.PI / 2;
+                arm.add(band);
+                kArmParts.push(band);
+                const band2 = new THREE.Mesh(new THREE.TorusGeometry(0.106, 0.013, 6, 18), kGold);
+                band2.position.y = -0.14;
+                band2.rotation.x = Math.PI / 2;
+                arm.add(band2);
+                kArmParts.push(band2);
+                const tas = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.09, 6), kRope);
+                tas.position.set(0, -0.155, -0.1);
+                tas.rotation.x = -0.3;
+                arm.add(tas);
+                kArmParts.push(tas); // 🎗️ พู่ประเจียดห้อยหลังแขน
+                for (const ty of [-0.2, -0.235]) {
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.006, 5, 16), kInk);
+                    ring.position.y = ty;
+                    ring.rotation.x = Math.PI / 2;
+                    arm.add(ring);
+                    kArmParts.push(ring);
+                } // 🖋️ สักวงรอบต้นแขน
+            }
+            // ===== 🦶 ผ้าพันข้อเท้าแดงขลิบทอง (ชกเท้าเปล่า — รองเท้าฐานย้อมเป็นสีผิวผ่าน G._khaoShoeMat) =====
+            const kLegParts = [];
+            for (const leg of [legL, legR]) {
+                const kn = leg.userData.knee || leg;
+                const wrapC = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.115, 0.16, 12), kRope);
+                wrapC.position.set(0, -0.33, 0.005);
+                kn.add(wrapC);
+                kLegParts.push(wrapC);
+                const wrapT = new THREE.Mesh(new THREE.TorusGeometry(0.122, 0.012, 6, 16), kGold);
+                wrapT.position.set(0, -0.26, 0.005);
+                wrapT.rotation.x = Math.PI / 2;
+                kn.add(wrapT);
+                kLegParts.push(wrapT);
+            }
+            const khaoParts = [kMong, kBody, kLow, ...kArmParts, ...kLegParts];
+            khaoParts.forEach(p => p.visible = false);
+            G._khaoParts = khaoParts;
+            G._khaoShoeMat = skinMat; // 🦶 เท้าเปล่า — รองเท้าฐานกลายเป็นสีผิว
+        }
         // ---------- Outfits: visible on Cherry when equipped ----------
         const outfitModels = {};
         G._outfitCloth = G._outfitCloth || []; // 🌊 ชิ้นผ้าของชุดสวมที่พริ้วไหวใน animate loop ({grp, m, base, top, h, amp}) — คงรายการที่ฮีโร่ลงทะเบียนไว้ก่อนหน้า
@@ -16035,7 +16220,7 @@ function CherryAdventure() {
                     smat = dyedMat(smat, dye.shoes);
                 s.material = smat;
             });
-            const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : null;
+            const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : G.heroId === "khaosai" ? G._khaoShoeMat : null;
             if (heroShoe && !sh)
                 shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
             // 🧤🦵👢 toggle the real 3D limb gear (each id → [L,R] group on the arm/leg joint)
@@ -28508,7 +28693,7 @@ function CherryAdventure() {
                 G.saveGame();
         };
         // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
-        G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800 }; // 💎 ชุดฮีโร่ 1000++ เพชร
+        G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500 }; // 💎 ชุดฮีโร่ 1000++ เพชร
         G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
         G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now())
             return 0; return Math.ceil((t - Date.now()) / 86400000); };
@@ -40076,8 +40261,8 @@ function CherryAdventure() {
                 // ---- 🦸 HERO signature look: clone every part of the hero's rig onto matching remote anchors (mirrors setHero exactly) ----
                 if (info.hero && G._charRig) {
                     try {
-                        const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts" };
-                        const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a] };
+                        const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts", khaosai: "_khaoParts" };
+                        const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808] };
                         const SIG_HAIR = new Set(["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "aurelius", "ragnar"]); // heroes that replace the base hair with a signature style
                         const parts = G[HERO_PARTS[info.hero]];
                         const rig = G._charRig;
@@ -40188,7 +40373,7 @@ function CherryAdventure() {
                 }
                 // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
                 try {
-                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe" };
+                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove" };
                     let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
                     if (!wid) {
                         const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c];
