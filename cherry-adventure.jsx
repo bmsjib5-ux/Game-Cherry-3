@@ -1412,6 +1412,8 @@ const CHAR_PRESETS = [
   { name: "ลูมิเนีย", emoji: "🧝‍♀️", gender: 0, skin: 0, hairColor: 5, hairStyle: 8, eyes: 0, outfit: 0, hero: "luminia" },
   { name: "อัปสรา",  emoji: "👼", gender: 0, skin: 0, hairColor: 4, hairStyle: 8, eyes: 3, outfit: 0, hero: "apsara" },
   { name: "อสูรา",   emoji: "😈", gender: 1, skin: 0, hairColor: 1, hairStyle: 2, eyes: 2, outfit: 3, hero: "asura" },
+  { name: "หนุมาน",  emoji: "🐒", gender: 1, skin: 0, hairColor: 5, hairStyle: 1, eyes: 0, outfit: 1, hero: "hanuman" },
+  { name: "ครุฑ",    emoji: "🦅", gender: 1, skin: 1, hairColor: 0, hairStyle: 1, eyes: 2, outfit: 0, hero: "garuda" },
   { name: "ลูน่า",   emoji: "🌙", gender: 0, skin: 0, hairColor: 5, hairStyle: 6, eyes: 0, outfit: 0, hero: "luna" },
   { name: "ยูกิ",    emoji: "❄️", gender: 0, skin: 2, hairColor: 5, hairStyle: 6, eyes: 3, outfit: 0, hero: "yuki" },
   { name: "โรส",     emoji: "👑", gender: 0, skin: 2, hairColor: 1, hairStyle: 8, eyes: 3, outfit: 0, hero: "rose" },
@@ -1445,6 +1447,8 @@ const HERO_GALLERY = [
   { id: "luminia",  name: "ลูมิเนีย",   emoji: "🧝‍♀️", title: "เอลฟ์สาวพราวเสน่ห์",       c1: "#8ee8b4", c2: "#1e7a4e", price: 300 },
   { id: "apsara",   name: "อัปสรา",    emoji: "👼", title: "นางฟ้าอัปสรแห่งสรวงสวรรค์", c1: "#fff6d8", c2: "#d8a828", price: 300 },
   { id: "asura",    name: "อสูรา",     emoji: "😈", title: "ราชันอสูรนรกานต์",        c1: "#c0407a", c2: "#2a0a1e", price: 300 },
+  { id: "hanuman",  name: "หนุมาน",    emoji: "🐒", title: "ทหารเอกวานรเผือก",       c1: "#ffffff", c2: "#d8a828", price: 300 },
+  { id: "garuda",   name: "ครุฑ",      emoji: "🦅", title: "พญาปักษินทองคำ",         c1: "#ffcf60", c2: "#a03818", price: 300 },
 ];
 
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
@@ -6319,7 +6323,7 @@ export default function CherryAdventure() {
       G._irisBase = irisBase;
       G.heroId = G.heroId || null;
       // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
-      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xf07818, 0xa83008], neko: [0x5ae082, 0x1a8a40], usagi: [0xf05a6a, 0xb01828], ryujin: [0xffb020, 0xb05808], ignis: [0x6ad8ff, 0x2a6ae0], captain: [0x7ab0e8, 0x2a5ac0], thunder: [0xb0e0ff, 0x4a8ae0], yaksa: [0xffe08a, 0xc08010], luminia: [0xd8a0f0, 0x8a3ac0], apsara: [0xfff0b0, 0xd0a020], asura: [0xff3a5a, 0xa00820] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ · 🥊 ตาอำพันนักสู้ · 🐺 ตาอำพันเลือดดุดัน · 🐱 ตามรกตแมว · 🐰 ตาทับทิมกระต่าย · 🐉 ตาทองมังกร · 🦸 ทีมผู้พิทักษ์ตาฟ้า · 👹 ตาทองยักษ์ถลึง
+      const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xf07818, 0xa83008], neko: [0x5ae082, 0x1a8a40], usagi: [0xf05a6a, 0xb01828], ryujin: [0xffb020, 0xb05808], ignis: [0x6ad8ff, 0x2a6ae0], captain: [0x7ab0e8, 0x2a5ac0], thunder: [0xb0e0ff, 0x4a8ae0], yaksa: [0xffe08a, 0xc08010], luminia: [0xd8a0f0, 0x8a3ac0], apsara: [0xfff0b0, 0xd0a020], asura: [0xff3a5a, 0xa00820], hanuman: [0xff6a2a, 0xb03808], garuda: [0xffd24a, 0xc07808] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ · 🥊 ตาอำพันนักสู้ · 🐺 ตาอำพันเลือดดุดัน · 🐱 ตามรกตแมว · 🐰 ตาทับทิมกระต่าย · 🐉 ตาทองมังกร · 🦸 ทีมผู้พิทักษ์ตาฟ้า · 👹 ตาทองยักษ์ถลึง
       G.setHero = id => {
         G.heroId = id || null;
         if (id) G.heroPick = id; // 🦸 จำฮีโร่ที่เลือกไว้ เพื่อสลับซ่อน/แสดงชุดฮีโร่ได้
@@ -6346,15 +6350,19 @@ export default function CherryAdventure() {
         heroVis(G._lumParts, id === "luminia");
         heroVis(G._apsParts, id === "apsara");
         heroVis(G._asuParts, id === "asura");
+        heroVis(G._hanParts, id === "hanuman");
+        heroVis(G._garParts, id === "garuda");
         if (typeof torso !== "undefined") torso.visible = id !== "ragnar" && id !== "celestia" && id !== "khaosai"; // 🦸 ฮีโร่ที่มีลำตัวของชุดเอง — กันลำตัวฐานทะลุ/ซ้อนเสื้อ
         if (typeof skinMat !== "undefined") { // 💜 ผิวรักนาร์อมม่วงแบบปีศาจน้อย — คืนโทนเดิมเมื่อสลับร่าง
           if (id === "ragnar") { const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex()); c.lerp(new THREE.Color(0xa77fd4), 0.32); skinMat.color.copy(c); }
           else if (id === "yaksa") { const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex()); c.lerp(new THREE.Color(0x2a9a5a), 0.6); skinMat.color.copy(c); } // 👹 ผิวกายเขียวยักษ์ทั้งตัว
           else if (id === "asura") { const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex()); c.lerp(new THREE.Color(0x8a5a78), 0.45); skinMat.color.copy(c); } // 😈 ผิวอสูรซีดอมม่วงเทา
+          else if (id === "hanuman") { skinMat.color.setHex(0xf6f4ee); }   // 🐒 ขนวานรเผือกขาวทั้งกาย
+          else if (id === "garuda") { const c = new THREE.Color(G._skinBase != null ? G._skinBase : skinMat.color.getHex()); c.lerp(new THREE.Color(0xe8a848), 0.55); skinMat.color.copy(c); } // 🦅 ผิวทองแดงพญาครุฑ
           else if (G._skinBase != null && G.cls !== "aegis") skinMat.color.setHex(G._skinBase);
         }
         (G._dressButtons || []).forEach(b => b.visible = !id);
-        if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar" || id === "ryujin" || id === "ignis" || id === "captain" || id === "thunder" || id === "yaksa" || id === "luminia" || id === "apsara" || id === "asura") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro" && id !== "kotaro" && id !== "kairi" && id !== "aurelius" && id !== "ragnar" && id !== "ryujin" && id !== "ignis" && id !== "captain" && id !== "thunder" && id !== "yaksa" && id !== "luminia" && id !== "apsara" && id !== "asura"; } // 👸🌙❄️🐲🦸👹🧝👼😈 ฮีโร่ใช้ผมประจำตัว / หมวกครอบเต็มหัว
+        if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar" || id === "ryujin" || id === "ignis" || id === "captain" || id === "thunder" || id === "yaksa" || id === "luminia" || id === "apsara" || id === "asura" || id === "hanuman" || id === "garuda") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro" && id !== "kotaro" && id !== "kairi" && id !== "aurelius" && id !== "ragnar" && id !== "ryujin" && id !== "ignis" && id !== "captain" && id !== "thunder" && id !== "yaksa" && id !== "luminia" && id !== "apsara" && id !== "asura" && id !== "hanuman" && id !== "garuda"; } // 👸🌙❄️🐲🦸👹🧝👼😈🐒🦅 ฮีโร่ใช้ผมประจำตัว / หมวกครอบเต็มหัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = true; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.setOutfitVisual) G.setOutfitVisual(G.equip ? G.equip.outfit : null); // 🦸 ซ่อน/คืนโมเดลชุดสวมตามลุคฮีโร่
@@ -8989,15 +8997,15 @@ export default function CherryAdventure() {
       const mkWing = () => {
         const g3 = new THREE.Group();
         for (let row = 0; row < 3; row++) {
-          const n = 6 - row, rad = 0.1 + row * 0.09;
+          const n = 6 - row, rad = 0.12 + row * 0.12;
           for (let i = 0; i < n; i++) {
             const t3 = n === 1 ? 0 : i / (n - 1);
-            const a = -0.18 + t3 * 2.05;                                   // กางจากบน-ใน ไล่ไปนอก-ล่าง
-            const len = (0.66 + row * 0.3) * (0.7 + 0.3 * Math.sin(t3 * Math.PI));
-            const f = new THREE.Mesh(new THREE.ConeGeometry(0.062 - row * 0.008, len, 6), row === 1 ? aFeatherD : aFeather);
-            f.scale.z = 0.26;
-            f.rotation.z = -a;                                              // ยอดขนชี้ออกตามแนวรัศมี
-            f.position.set(Math.sin(a) * (rad + len * 0.5), Math.cos(a) * (rad + len * 0.5), -row * 0.05);
+            const a = 0.28 + t3 * 1.46;                                     // กางแคบลง — ขนซ้อนกันเป็นแผงปีกนุ่ม
+            const len = (0.66 + row * 0.32) * (0.75 + 0.25 * Math.sin(t3 * Math.PI));
+            const f = new THREE.Mesh(new THREE.ConeGeometry(0.16 - row * 0.02, len, 5), row === 1 ? aFeatherD : aFeather);
+            f.scale.z = 0.15;                                               // แบนเป็นแผ่นขนจริง
+            f.rotation.z = -a;
+            f.position.set(Math.sin(a) * (rad + len * 0.47), Math.cos(a) * (rad + len * 0.47), -row * 0.045);
             g3.add(f);
           }
         }
@@ -9235,6 +9243,195 @@ export default function CherryAdventure() {
       G._asuParts = asuParts;
       G._asuShoeMat = dPlateD; // 🥾 บู๊ตเกราะดำ
       G._asuFur = { tail: asuAura, tailTube: { m: asuTube, rings: 25, per: 9 }, tailTip: asuBarb, tailTipB: asuBarbB, tailRoot: asuTail, wings: asuStrands.concat(asuWings), cloth: asuCloth, puffs: asuMotes, spin: [asuSigil], wagHz: 2.2, wagAmp: 0.1, wingAmp: 0.2, ph: 9 };
+    }
+
+    // ---------- 🐒 HANUMAN signature look (ทหารเอกวานรเผือก) ----------
+    {
+      const hFur = new THREE.MeshStandardMaterial({ color: 0xf8f6f0, roughness: 0.72 });                     // 🤍 ขนวานรเผือก
+      const hFurD = new THREE.MeshStandardMaterial({ color: 0xe0dcd0, roughness: 0.72 });                    // ขนเงาลึก
+      const hSkinF = new THREE.MeshStandardMaterial({ color: 0xf2d8c8, roughness: 0.6 });                    // หน้า/ปากวานร
+      const hGold = new THREE.MeshStandardMaterial({ color: 0xf0c23a, roughness: 0.28, metalness: 0.75 });   // ✨ ทองเครื่องทรง
+      const hGreen = new THREE.MeshStandardMaterial({ color: 0x2a8a5a, roughness: 0.5 });                    // 💚 ผ้านุ่งเขียว (สีประจำหนุมาน)
+      const hRed = new THREE.MeshStandardMaterial({ color: 0xb02030, roughness: 0.5 });                      // ผ้าแดง
+      const hBone = new THREE.MeshStandardMaterial({ color: 0xfffdf2, roughness: 0.35 });                    // 🦷 เขี้ยวแก้ว
+      const hDark = new THREE.MeshStandardMaterial({ color: 0x2a1a18, roughness: 0.65 });                    // ตา/ในปาก
+      const hGem2 = new THREE.MeshStandardMaterial({ color: 0x50e0a0, emissive: 0x14a060, emissiveIntensity: 0.7, roughness: 0.3 });
+      // ===== 🐵 หัววานรเผือกครอบเต็มหัว — ปากยื่น เขี้ยวแก้ว ขนแก้มฟู =====
+      const hanHead = new THREE.Group();
+      const hSh = new THREE.Mesh(new THREE.SphereGeometry(0.68, 26, 20), hFur); hSh.scale.set(1.02, 0.98, 1.0); hSh.position.set(0, 0.05, 0); hanHead.add(hSh);
+      const hFace = new THREE.Mesh(new THREE.SphereGeometry(0.5, 20, 16), hSkinF); hFace.scale.set(0.85, 0.82, 0.5); hFace.position.set(0, -0.02, 0.42); hanHead.add(hFace); // หน้าสีเนื้อ
+      for (const sx of [-1, 1]) {
+        const eyeW2 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), hBone); eyeW2.scale.z = 0.55; eyeW2.position.set(sx * 0.22, 0.14, 0.58); hanHead.add(eyeW2);
+        const iris2 = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), hDark); iris2.scale.z = 0.5; iris2.position.set(sx * 0.215, 0.13, 0.64); hanHead.add(iris2);
+        const brow3 = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.024, 8, 12, Math.PI * 0.8), hGold); brow3.position.set(sx * 0.23, 0.26, 0.56); brow3.rotation.z = sx * 0.2; hanHead.add(brow3); // คิ้วทอง
+        const cheek2 = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), hFur); cheek2.scale.set(0.75, 0.95, 0.6); cheek2.position.set(sx * 0.52, -0.06, 0.24); hanHead.add(cheek2); // ขนแก้มฟู
+        const kun = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.26, 6), hGold); kun.scale.z = 0.4; kun.position.set(sx * 0.66, -0.02, 0.0); kun.rotation.z = sx * 2.3; hanHead.add(kun); // 👂 กุณฑลทองข้างหู
+      }
+      const hMuz = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 14), hSkinF); hMuz.scale.set(0.95, 0.62, 0.85); hMuz.position.set(0, -0.2, 0.56); hanHead.add(hMuz); // 👄 ปากยื่นวานร
+      const hNose = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), hSkinF); hNose.scale.set(1.4, 0.7, 0.8); hNose.position.set(0, -0.06, 0.66); hanHead.add(hNose);
+      const hMouth = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.075, 0.05), hDark); hMouth.position.set(0, -0.27, 0.71); hanHead.add(hMouth);
+      const hTeeth = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.038, 0.045), hBone); hTeeth.position.set(0, -0.25, 0.72); hanHead.add(hTeeth);
+      for (const sx of [-1, 1]) { const fang2 = new THREE.Mesh(new THREE.ConeGeometry(0.036, 0.15, 7), hBone); fang2.position.set(sx * 0.13, -0.185, 0.71); fang2.rotation.x = 0.1; hanHead.add(fang2); } // 🦷 เขี้ยวแก้วโง้งขึ้น
+      { // 👑 มงกุฎยอดชัยทอง
+        const cb3 = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.042, 8, 28), hGold); cb3.position.y = 0.5; cb3.rotation.x = Math.PI / 2; hanHead.add(cb3);
+        for (const [cy2, cr4, chh2] of [[0.7, 0.44, 0.28], [0.9, 0.31, 0.24], [1.07, 0.19, 0.2]]) { const tier2 = new THREE.Mesh(new THREE.ConeGeometry(cr4, chh2, 12), hGold); tier2.position.y = cy2; hanHead.add(tier2); }
+        const spire2 = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.3, 8), hGold); spire2.position.y = 1.3; hanHead.add(spire2);
+        for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const gm4 = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), hGem2); gm4.position.set(Math.sin(a) * 0.52, 0.58, Math.cos(a) * 0.52); hanHead.add(gm4); } }
+      headG.add(hanHead);
+      // ===== ✨ กรองศอ + สังวาลไขว้ทอง (แบบตัวละครโขน) =====
+      const hanTop = new THREE.Group();
+      const hkSo = new THREE.Mesh(new THREE.LatheGeometry([[0.24, 2.06], [0.34, 1.98], [0.42, 1.9], [0.44, 1.84]].map(([r, y]) => new THREE.Vector2(r, y)), 26), hGold); hanTop.add(hkSo);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const pt3 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 6), hGold); pt3.position.set(Math.sin(a) * 0.42, 1.79, Math.cos(a) * 0.4); pt3.rotation.x = Math.PI; hanTop.add(pt3); }
+      for (const sx of [-1, 1]) { const sw3 = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.024, 8, 30), hGold); sw3.position.set(0, 1.58, 0); sw3.rotation.set(0.32, 0, sx * 0.85); hanTop.add(sw3); }
+      const htt = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), hGem2); htt.position.set(0, 1.62, 0.36); hanTop.add(htt);
+      for (const sx of [-1, 1]) { const pd4 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), hGold); pd4.scale.set(1.15, 0.55, 1); pd4.position.set(sx * 0.45, 1.96, 0); hanTop.add(pd4); const spk3 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 6), hGold); spk3.position.set(sx * 0.57, 2.03, 0); spk3.rotation.z = sx * 2.3; hanTop.add(spk3); }
+      char.add(hanTop);
+      // ===== 🩳 โจงกระเบนเขียวลายทอง + ผ้าห้อยหน้า =====
+      const hanLow = new THREE.Group();
+      const hHips = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), hGreen); hHips.scale.set(1.0, 0.6, 0.76); hHips.position.y = 1.16; hanLow.add(hHips);
+      const hSho = new THREE.Mesh(new THREE.LatheGeometry([[0.41, 0.98], [0.403, 1.08], [0.4, 1.18], [0.39, 1.27], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), hGreen); hSho.scale.z = 0.88; hanLow.add(hSho);
+      for (let i = 0; i < 7; i++) { const a = -0.85 + i * 0.283; const st6 = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.24, 0.09), hGold); st6.position.set(Math.sin(a) * 0.4, 1.12, Math.cos(a) * 0.4 * 0.88); st6.rotation.y = a; hanLow.add(st6); }
+      const hBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.378, 1.3], [0.39, 1.35], [0.396, 1.41], [0.384, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), hGold); hBelt.scale.z = 0.88; hanLow.add(hBelt);
+      { const pan2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.4, 0.03), hRed); pan2.position.set(0, 1.12, 0.34); pan2.rotation.x = -0.08; hanLow.add(pan2);
+        const panG2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.035), hGold); panG2.position.set(0, 1.3, 0.35); hanLow.add(panG2);
+        const panT2 = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 4), hGold); panT2.position.set(0, 0.89, 0.315); panT2.rotation.x = Math.PI + 0.08; hanLow.add(panT2); }
+      char.add(hanLow);
+      // ===== 🐒 หางวานรยาวโค้ง (ท่อพลิ้ว ปลายเป็นพู่ขน) =====
+      const hanTail = new THREE.Group(); hanTail.position.set(0, 1.16, -0.3);
+      let hanTube = null, hanTuft = null, hanTuftB = null;
+      { const tc3 = new THREE.CatmullRomCurve3([[0, 0, 0], [0.02, -0.24, -0.34], [0.02, -0.06, -0.74], [-0.02, 0.36, -0.94], [-0.04, 0.74, -0.86]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
+        const tg3 = new THREE.TubeGeometry(tc3, 24, 0.055, 8, false);
+        { const pos9 = tg3.attributes.position; const v9 = new THREE.Vector3(); const per9 = 9;
+          for (let ri = 0; ri <= 24; ri++) { const tt = ri / 24, ctr = tc3.getPoint(tt), rr = (0.072 - tt * 0.026) / 0.055;
+            for (let vj = 0; vj < per9; vj++) { const idx = ri * per9 + vj; v9.set(pos9.getX(idx), pos9.getY(idx), pos9.getZ(idx)).sub(ctr).multiplyScalar(rr).add(ctr); pos9.setXYZ(idx, v9.x, v9.y, v9.z); } }
+          tg3.computeVertexNormals(); }
+        hanTube = new THREE.Mesh(tg3, hFur); hanTail.add(hanTube);
+        hanTube.userData.base = tg3.attributes.position.array.slice();
+        hanTuftB = tc3.getPoint(1).clone();
+        hanTuft = new THREE.Group();
+        for (let k = 0; k < 5; k++) { const a5 = k / 5 * Math.PI * 2; const tf = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 6), k % 2 ? hFurD : hFur); tf.position.set(Math.cos(a5) * 0.05, 0.07, Math.sin(a5) * 0.05); tf.rotation.z = Math.cos(a5) * 0.5; tf.rotation.x = -Math.sin(a5) * 0.5; hanTuft.add(tf); }
+        hanTuft.position.copy(hanTuftB); hanTail.add(hanTuft); }
+      hanTail.scale.setScalar(1.15);
+      char.add(hanTail);
+      // ===== 🔱 ตรีเพชรสะพายหลัง =====
+      const hanTri = new THREE.Group();
+      { const shaft2 = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.042, 1.1, 8), hRed); hanTri.add(shaft2);
+        for (const by3 of [-0.35, 0.0, 0.35]) { const rg4 = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.014, 6, 14), hGold); rg4.position.y = by3; rg4.rotation.x = Math.PI / 2; hanTri.add(rg4); }
+        const mid2 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.34, 7), hGold); mid2.position.y = 0.72; hanTri.add(mid2);
+        for (const sx of [-1, 1]) { const pr = new THREE.Mesh(new THREE.ConeGeometry(0.038, 0.26, 7), hGold); pr.position.set(sx * 0.11, 0.66, 0); pr.rotation.z = -sx * 0.24; hanTri.add(pr); }
+        const cw = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), hGold); cw.scale.y = 0.6; cw.position.y = 0.52; hanTri.add(cw);
+        const pom2 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), hGold); pom2.position.y = -0.6; hanTri.add(pom2); }
+      hanTri.position.set(-0.26, 1.52, -0.42); hanTri.rotation.z = -0.5; hanTri.rotation.x = 0.1;
+      char.add(hanTri);
+      G._hanTri = hanTri;
+      // ===== 💪 กำไลทอง + ขนปุยข้อมือ · 🦵 กำไลข้อเท้า =====
+      const hanArmParts = [];
+      for (const arm of [armL, armR]) { const fore = arm.userData.elbow || arm;
+        const ab5 = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.026, 8, 18), hGold); ab5.position.y = -0.1; ab5.rotation.x = Math.PI / 2; arm.add(ab5); hanArmParts.push(ab5);
+        const wb4 = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.024, 8, 16), hGold); wb4.position.y = -0.36; wb4.rotation.x = Math.PI / 2; fore.add(wb4); hanArmParts.push(wb4);
+        for (let k = 0; k < 5; k++) { const a6 = k / 5 * Math.PI * 2; const tu = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.13, 5), hFur); tu.position.set(Math.cos(a6) * 0.1, -0.24, Math.sin(a6) * 0.1); tu.rotation.z = -Math.cos(a6) * 1.1; tu.rotation.x = Math.sin(a6) * 1.1; fore.add(tu); hanArmParts.push(tu); } }
+      const hanLegParts = [];
+      for (const leg of [legL, legR]) { const kn6 = leg.userData.knee || leg;
+        const kb3 = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.024, 8, 16), hGold); kb3.position.set(0, -0.3, 0.005); kb3.rotation.x = Math.PI / 2; kn6.add(kb3); hanLegParts.push(kb3);
+        for (let k = 0; k < 5; k++) { const a7 = -Math.PI * 0.5 + k * (Math.PI / 4); const tu2 = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.13, 5), hFur); tu2.position.set(Math.sin(a7) * 0.14, -0.18, Math.cos(a7) * 0.14 + 0.005); tu2.rotation.x = 0.2; kn6.add(tu2); hanLegParts.push(tu2); } }
+      const hanParts = [hanHead, hanTop, hanLow, hanTail, hanTri, ...hanArmParts, ...hanLegParts];
+      hanParts.forEach(q => q.visible = false);
+      G._hanParts = hanParts;
+      G._hanShoeMat = hFur; // 🐾 เท้าขนขาว
+      G._hanFur = { tail: hanTail, tailTube: { m: hanTube, rings: 25, per: 9 }, tailTip: hanTuft, tailTipB: hanTuftB, wagHz: 2.6, wagAmp: 0.11, ph: 11 };
+    }
+
+    // ---------- 🦅 GARUDA signature look (พญาปักษินทองคำ) ----------
+    {
+      const gGold = new THREE.MeshStandardMaterial({ color: 0xf0b23a, roughness: 0.32, metalness: 0.7 });    // ✨ ทองครุฑ
+      const gGoldD = new THREE.MeshStandardMaterial({ color: 0xb87818, roughness: 0.36, metalness: 0.65 });
+      const gRed = new THREE.MeshStandardMaterial({ color: 0xa83018, roughness: 0.5 });                      // 🟥 แดงอิฐ
+      const gRedD = new THREE.MeshStandardMaterial({ color: 0x701a0c, roughness: 0.55 });
+      const gPlume = new THREE.MeshStandardMaterial({ color: 0xf6c85a, roughness: 0.6, side: THREE.DoubleSide });  // 🪶 ขนปีกทอง
+      const gPlumeD = new THREE.MeshStandardMaterial({ color: 0xc4761c, roughness: 0.6, side: THREE.DoubleSide });
+      const gBeakM = new THREE.MeshStandardMaterial({ color: 0xffd76a, roughness: 0.26, metalness: 0.72 });  // ปากจะงอยทอง
+      const gDark2 = new THREE.MeshStandardMaterial({ color: 0x2a1408, roughness: 0.6 });
+      const gEye = new THREE.MeshStandardMaterial({ color: 0xffe07a, emissive: 0xd08810, emissiveIntensity: 0.9, roughness: 0.25 });
+      // ===== 🦅 หัวครุฑครอบเต็มหัว — ปากจะงอยทอง ตาเพลิง ชฎาครุฑ =====
+      const garHead = new THREE.Group();
+      const gSh = new THREE.Mesh(new THREE.SphereGeometry(0.68, 26, 20), gRed); gSh.scale.set(1.02, 0.98, 1.0); gSh.position.set(0, 0.05, 0); garHead.add(gSh);
+      for (const sx of [-1, 1]) {
+        const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.105, 14, 12), gEye); eyeR.scale.z = 0.6; eyeR.position.set(sx * 0.26, 0.16, 0.56); garHead.add(eyeR);
+        const pupG = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), gDark2); pupG.scale.z = 0.5; pupG.position.set(sx * 0.255, 0.15, 0.63); garHead.add(pupG);
+        const browG = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.24, 5), gGold); browG.scale.z = 0.35; browG.position.set(sx * 0.3, 0.32, 0.5); browG.rotation.z = -sx * 0.5; browG.rotation.x = -0.3; garHead.add(browG); // คิ้วทองแหลม
+        const cheekG = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.3, 6), gGold); cheekG.scale.z = 0.35; cheekG.position.set(sx * 0.64, 0.0, 0.06); cheekG.rotation.z = sx * 2.2; garHead.add(cheekG); // ครีบแก้มทอง
+      }
+      { const bTop = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 10), gBeakM); bTop.scale.set(1, 1, 0.85); bTop.position.set(0, -0.02, 0.68); bTop.rotation.x = Math.PI / 2 + 0.28; garHead.add(bTop);   // 🦆 ปากจะงอยบนยาวโค้งลง
+        const bHook = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.26, 8), gBeakM); bHook.position.set(0, -0.24, 0.92); bHook.rotation.x = Math.PI - 0.5; garHead.add(bHook);                                // ปลายจะงอยงุ้ม
+        const bLow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.4, 8), gGoldD); bLow.scale.set(1, 1, 0.7); bLow.position.set(0, -0.26, 0.62); bLow.rotation.x = Math.PI / 2 + 0.1; garHead.add(bLow);      // ปากล่าง
+        for (const sx of [-1, 1]) { const nos2 = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), gDark2); nos2.position.set(sx * 0.07, 0.06, 0.78); garHead.add(nos2); } }
+      { // 👑 ชฎาครุฑ — ยอดแหลมสามชั้น + ขนกระหม่อม
+        const cbG = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.038, 8, 28), gGold); cbG.position.y = 0.46; cbG.rotation.x = Math.PI / 2; garHead.add(cbG);
+        for (const [cy3, cr5, chh3] of [[0.66, 0.44, 0.28], [0.86, 0.31, 0.24], [1.03, 0.19, 0.2]]) { const tier3 = new THREE.Mesh(new THREE.ConeGeometry(cr5, chh3, 12), gGold); tier3.position.y = cy3; garHead.add(tier3); }
+        const spireG = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.32, 8), gGold); spireG.position.y = 1.26; garHead.add(spireG);
+        for (let i = 0; i < 5; i++) { const a = -0.7 + i * 0.35; const pl2 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.36 - Math.abs(i - 2) * 0.06, 6), i % 2 ? gPlumeD : gPlume); pl2.scale.z = 0.3; pl2.position.set(Math.sin(a) * 0.42, 0.72, -0.3 + Math.cos(a) * 0.1); pl2.rotation.x = -0.7; pl2.rotation.z = Math.sin(a) * 0.4; garHead.add(pl2); } } // 🪶 ขนกระหม่อมสร้อยหลัง
+      headG.add(garHead);
+      // ===== 🪶 ปีกครุฑคู่ใหญ่ (ขนทองสามแถว) กระพือ =====
+      const garWings = [];
+      const mkGWing = () => {
+        const g5 = new THREE.Group();
+        const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.03, 1.12, 8), gGoldD); arm2.position.set(0.38, 0.5, 0.01); arm2.rotation.z = -0.7; g5.add(arm2); // 🦴 กระดูกปีกทองตามขอบนำ
+        for (let row = 0; row < 3; row++) {
+          const n = 6 - row, rad = 0.14 + row * 0.13;
+          for (let i = 0; i < n; i++) {
+            const t4 = n === 1 ? 0 : i / (n - 1);
+            const a = 0.3 + t4 * 1.5;                                          // กางแคบลง ไล่จากบนลงล่าง — ขนซ้อนกันเป็นแผง
+            const len = (0.74 + row * 0.36) * (0.75 + 0.25 * Math.sin(t4 * Math.PI));
+            const f2 = new THREE.Mesh(new THREE.ConeGeometry(0.175 - row * 0.022, len, 5), row === 1 ? gPlumeD : gPlume);
+            f2.scale.z = 0.15; f2.rotation.z = -a;                             // แบนเป็นแผ่นขนจริง ไม่ใช่หนามแหลม
+            f2.position.set(Math.sin(a) * (rad + len * 0.47), Math.cos(a) * (rad + len * 0.47), -row * 0.045);
+            g5.add(f2);
+          }
+        }
+        return g5;
+      };
+      for (const sx of [-1, 1]) {
+        const wg = mkGWing(); wg.position.set(sx * 0.24, 1.92, -0.34); wg.scale.set(sx * 1.2, 1.2, 1.2); wg.rotation.y = 0.48; wg.userData.by = 0.48; char.add(wg); garWings.push(wg);
+      }
+      // ===== 🛡️ เกราะอกทองลายครุฑ + กรองศอ + สังวาล =====
+      const garTop = new THREE.Group();
+      const gBandGeo = new THREE.LatheGeometry([[0.4, 1.5], [0.436, 1.6], [0.466, 1.68], [0.478, 1.745], [0.462, 1.81], [0.428, 1.89]].map(([r, y]) => new THREE.Vector2(r, y)), 32);
+      const gBand = new THREE.Mesh(gBandGeo, gRed); gBand.scale.z = 0.74; garTop.add(gBand);
+      for (const [gy, gr] of [[1.56, 0.44], [1.86, 0.432]]) { const tr4 = new THREE.Mesh(new THREE.TorusGeometry(gr, 0.021, 6, 30), gGold); tr4.position.y = gy; tr4.rotation.x = Math.PI / 2; tr4.scale.y = 0.74; garTop.add(tr4); }
+      for (let i = 0; i < 9; i++) { const a = -0.9 + i * 0.225; const sc2 = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.12, 6), i % 2 ? gGoldD : gGold); sc2.scale.z = 0.35; sc2.position.set(Math.sin(a) * 0.46, 1.7, Math.cos(a) * 0.46 * 0.74); sc2.rotation.y = a; sc2.rotation.x = Math.PI; garTop.add(sc2); } // เกล็ดทองหน้าอก
+      const gkSo = new THREE.Mesh(new THREE.LatheGeometry([[0.24, 2.06], [0.34, 1.98], [0.42, 1.9], [0.44, 1.84]].map(([r, y]) => new THREE.Vector2(r, y)), 26), gGold); garTop.add(gkSo);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const pt4 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 6), gGold); pt4.position.set(Math.sin(a) * 0.42, 1.79, Math.cos(a) * 0.4); pt4.rotation.x = Math.PI; garTop.add(pt4); }
+      const gtt = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), gEye); gtt.position.set(0, 1.62, 0.37); garTop.add(gtt);
+      for (const sx of [-1, 1]) { const pd5 = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), gGold); pd5.scale.set(1.12, 0.58, 1); pd5.position.set(sx * 0.45, 1.96, 0); garTop.add(pd5); const spk4 = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 6), gGold); spk4.position.set(sx * 0.58, 2.03, 0); spk4.rotation.z = sx * 2.3; garTop.add(spk4); }
+      char.add(garTop);
+      // ===== 🩳 ผ้านุ่งแดงลายทอง + หางขนนกทอง =====
+      const garLow = new THREE.Group();
+      const gHips = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), gRedD); gHips.scale.set(1.0, 0.6, 0.76); gHips.position.y = 1.16; garLow.add(gHips);
+      const gSho = new THREE.Mesh(new THREE.LatheGeometry([[0.41, 0.98], [0.403, 1.08], [0.4, 1.18], [0.39, 1.27], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), gRed); gSho.scale.z = 0.88; garLow.add(gSho);
+      for (let i = 0; i < 7; i++) { const a = -0.85 + i * 0.283; const st7 = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.24, 0.09), gGold); st7.position.set(Math.sin(a) * 0.4, 1.12, Math.cos(a) * 0.4 * 0.88); st7.rotation.y = a; garLow.add(st7); }
+      const gBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.378, 1.3], [0.39, 1.35], [0.396, 1.41], [0.384, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), gGold); gBelt.scale.z = 0.88; garLow.add(gBelt);
+      const garTail = [];
+      for (let i = 0; i < 7; i++) { const a = -0.72 + i * 0.24; const len2 = 1.15 - Math.abs(i - 3) * 0.13;   // 🪶 หางขนนกทองแผ่เป็นพัด
+        const pf2 = new THREE.Mesh(new THREE.ConeGeometry(0.09, len2, 6), i % 2 ? gPlumeD : gPlume); pf2.scale.z = 0.24;
+        pf2.position.set(Math.sin(a) * 0.3, 1.05 - len2 * 0.42, -0.42 - Math.cos(a) * 0.06);
+        pf2.rotation.x = Math.PI - 0.45; pf2.rotation.z = Math.sin(a) * 0.6; pf2.userData.by = 0;
+        garLow.add(pf2); garTail.push(pf2); }
+      char.add(garLow);
+      // ===== 💪 กำไล+เล็บทอง · 🦵 กรงเล็บครุฑ =====
+      const garArmParts = [];
+      for (const arm of [armL, armR]) { const fore = arm.userData.elbow || arm;
+        const ab6 = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.026, 8, 18), gGold); ab6.position.y = -0.1; ab6.rotation.x = Math.PI / 2; arm.add(ab6); garArmParts.push(ab6);
+        const wb5 = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.024, 8, 16), gGold); wb5.position.y = -0.34; wb5.rotation.x = Math.PI / 2; fore.add(wb5); garArmParts.push(wb5);
+        for (const cx4 of [-0.05, 0.0, 0.05]) { const cl2 = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.13, 6), gBeakM); cl2.position.set(cx4, -0.5, 0.06); cl2.rotation.x = Math.PI - 0.3; fore.add(cl2); garArmParts.push(cl2); } } // 🦅 เล็บทองปลายมือ
+      const garLegParts = [];
+      for (const leg of [legL, legR]) { const kn7 = leg.userData.knee || leg;
+        const gsc = new THREE.Mesh(new THREE.CylinderGeometry(0.142, 0.152, 0.3, 12), gGoldD); gsc.position.set(0, -0.22, 0.005); kn7.add(gsc); garLegParts.push(gsc);
+        for (let k = 0; k < 4; k++) { const a8 = -Math.PI * 0.35 + k * (Math.PI * 0.7 / 3); const tal = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.17, 6), gBeakM); tal.position.set(Math.sin(a8) * 0.13, -0.5, Math.cos(a8) * 0.16); tal.rotation.x = 1.35; kn7.add(tal); garLegParts.push(tal); } } // 🦶 กรงเล็บครุฑสี่นิ้ว
+      const garParts = [garHead, garTop, garLow, ...garWings, ...garArmParts, ...garLegParts];
+      garParts.forEach(q => q.visible = false);
+      G._garParts = garParts;
+      G._garShoeMat = gGoldD; // 🦶 ตีนครุฑทองเข้ม
+      G._garFur = { tail: garLow, wings: garWings.concat(garTail), wingAmp: 0.19, ph: 13 };
     }
 
     // ---------- Outfits: visible on Cherry when equipped ----------
@@ -10745,6 +10942,8 @@ export default function CherryAdventure() {
         if (G.heroId === "ragnar") { const c = new THREE.Color(G._skinBase); c.lerp(new THREE.Color(0xa77fd4), 0.32); skinMat.color.copy(c); }
         else if (G.heroId === "yaksa") { const c = new THREE.Color(G._skinBase); c.lerp(new THREE.Color(0x2a9a5a), 0.6); skinMat.color.copy(c); }
         else if (G.heroId === "asura") { const c = new THREE.Color(G._skinBase); c.lerp(new THREE.Color(0x8a5a78), 0.45); skinMat.color.copy(c); }
+        else if (G.heroId === "hanuman") { skinMat.color.setHex(0xf6f4ee); }
+        else if (G.heroId === "garuda") { const c = new THREE.Color(G._skinBase); c.lerp(new THREE.Color(0xe8a848), 0.55); skinMat.color.copy(c); }
       }
       if (showHelm) { // 🤖 hide the chibi hair + face — the helmet covers the head
         if (typeof hairStyles !== "undefined") hairStyles.forEach((h) => (h.visible = false));
@@ -11353,7 +11552,7 @@ export default function CherryAdventure() {
         if (dye.shoes != null) smat = dyedMat(smat, dye.shoes);
         s.material = smat;
       });
-      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : G.heroId === "khaosai" ? G._khaoShoeMat : G.heroId === "fenrir" ? G._fenShoeMat : G.heroId === "neko" ? G._nekoShoeMat : G.heroId === "usagi" ? G._usaShoeMat : G.heroId === "ryujin" ? G._ryuShoeMat : G.heroId === "ignis" ? G._igShoeMat : G.heroId === "captain" ? G._capShoeMat : G.heroId === "thunder" ? G._thdShoeMat : G.heroId === "yaksa" ? G._yakShoeMat : G.heroId === "luminia" ? G._lumShoeMat : G.heroId === "apsara" ? G._apsShoeMat : G.heroId === "asura" ? G._asuShoeMat : null;
+      const heroShoe = G.heroId === "haru" ? G._haruShoeMat : G.heroId === "luna" ? G._lunaShoeMat : G.heroId === "celestia" ? G._celShoeMat : G.heroId === "yuki" ? G._yukiShoeMat : G.heroId === "rose" ? G._roseShoeMat : G.heroId === "kentaro" ? G._kenShoeMat : G.heroId === "kotaro" ? G._kotShoeMat : G.heroId === "kairi" ? G._kaiShoeMat : G.heroId === "aurelius" ? G._aurShoeMat : G.heroId === "ragnar" ? G._ragShoeMat : G.heroId === "khaosai" ? G._khaoShoeMat : G.heroId === "fenrir" ? G._fenShoeMat : G.heroId === "neko" ? G._nekoShoeMat : G.heroId === "usagi" ? G._usaShoeMat : G.heroId === "ryujin" ? G._ryuShoeMat : G.heroId === "ignis" ? G._igShoeMat : G.heroId === "captain" ? G._capShoeMat : G.heroId === "thunder" ? G._thdShoeMat : G.heroId === "yaksa" ? G._yakShoeMat : G.heroId === "luminia" ? G._lumShoeMat : G.heroId === "apsara" ? G._apsShoeMat : G.heroId === "asura" ? G._asuShoeMat : G.heroId === "hanuman" ? G._hanShoeMat : G.heroId === "garuda" ? G._garShoeMat : null;
       if (heroShoe && !sh) shoeMeshes.forEach((s) => (s.material = heroShoe)); // 🦸 hero signature shoes
       // 🧤🦵👢 toggle the real 3D limb gear (each id → [L,R] group on the arm/leg joint)
       Object.entries(glovesModels).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === gl)));
@@ -19447,7 +19646,7 @@ export default function CherryAdventure() {
       if (G.saveGame) G.saveGame();
     };
     // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
-    G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000 }; // 💎 ชุดฮีโร่ 1000++ เพชร
+    G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200 }; // 💎 ชุดฮีโร่ 1000++ เพชร
     G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
     G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now()) return 0; return Math.ceil((t - Date.now()) / 86400000); };
     G.buyHero = (id) => {
@@ -26215,8 +26414,8 @@ export default function CherryAdventure() {
         return;
       }
       if (kind === "attack") {
-        G.banim = { type: "playerAttack", t: 0, dur: G.heroId === "fenrir" ? 1.3 : G.heroId === "neko" ? 1.25 : G.heroId === "usagi" ? 1.35 : G.heroId === "ryujin" ? 1.4 : G.heroId === "ignis" ? 1.35 : G.heroId === "captain" ? 1.35 : G.heroId === "thunder" ? 1.4 : G.heroId === "yaksa" ? 1.4 : G.heroId === "luminia" ? 1.45 : G.heroId === "apsara" ? 1.5 : G.heroId === "asura" ? 1.45 : G.cls === "warrior" ? 0.5 : 0.65, mult: 1, basic: true };
-        const atkMsg = G.heroId === "fenrir" ? "เชอร์รี่พุ่งตะครุบ! กรงเล็บหมาป่าฟาดไขว้ 🐺" : G.heroId === "neko" ? "เชอร์รี่ตบแมวรัวสามจังหวะ! 🐱🐾" : G.heroId === "usagi" ? "เชอร์รี่เผ่นฟ้า! ค้อนแครอทถล่มลงมา 🐰🥕" : G.heroId === "ryujin" ? "เชอร์รี่พ่นลมหายใจมังกรเพลิง! 🐉🔥" : G.heroId === "ignis" ? "เชอร์รี่ลอยตัวระดมยิงลำแสงฝ่ามือ! 🤖✨" : G.heroId === "captain" ? "เชอร์รี่ขว้างโล่เพชรสะท้อนสองเด้ง! 🛡️" : G.heroId === "thunder" ? "เชอร์รี่เรียกสายฟ้าฟาด ปิดท้ายขว้างค้อนพายุ! ⚡🔨" : G.heroId === "yaksa" ? "เชอร์รี่กระทืบสะเทือนดิน! กระบองยักษ์ถล่มปฐพีสองจังหวะ 👹" : G.heroId === "luminia" ? "เชอร์รี่ร่ายระบำเถาวัลย์ต้องมนตร์! 🧝‍♀️🌸" : G.heroId === "apsara" ? "เชอร์รี่เรียกลำแสงสวรรค์ปลิดบาป! 👼✨" : G.heroId === "asura" ? "เชอร์รี่ปลดผนึกอสูร! ขวากนรกทลายวิญญาณ 😈🔥" : G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
+        G.banim = { type: "playerAttack", t: 0, dur: G.heroId === "fenrir" ? 1.3 : G.heroId === "neko" ? 1.25 : G.heroId === "usagi" ? 1.35 : G.heroId === "ryujin" ? 1.4 : G.heroId === "ignis" ? 1.35 : G.heroId === "captain" ? 1.35 : G.heroId === "thunder" ? 1.4 : G.heroId === "yaksa" ? 1.4 : G.heroId === "luminia" ? 1.45 : G.heroId === "apsara" ? 1.5 : G.heroId === "asura" ? 1.45 : G.heroId === "hanuman" ? 1.6 : G.heroId === "garuda" ? 1.5 : G.cls === "warrior" ? 0.5 : 0.65, mult: 1, basic: true };
+        const atkMsg = G.heroId === "fenrir" ? "เชอร์รี่พุ่งตะครุบ! กรงเล็บหมาป่าฟาดไขว้ 🐺" : G.heroId === "neko" ? "เชอร์รี่ตบแมวรัวสามจังหวะ! 🐱🐾" : G.heroId === "usagi" ? "เชอร์รี่เผ่นฟ้า! ค้อนแครอทถล่มลงมา 🐰🥕" : G.heroId === "ryujin" ? "เชอร์รี่พ่นลมหายใจมังกรเพลิง! 🐉🔥" : G.heroId === "ignis" ? "เชอร์รี่ลอยตัวระดมยิงลำแสงฝ่ามือ! 🤖✨" : G.heroId === "captain" ? "เชอร์รี่ขว้างโล่เพชรสะท้อนสองเด้ง! 🛡️" : G.heroId === "thunder" ? "เชอร์รี่เรียกสายฟ้าฟาด ปิดท้ายขว้างค้อนพายุ! ⚡🔨" : G.heroId === "yaksa" ? "เชอร์รี่กระทืบสะเทือนดิน! กระบองยักษ์ถล่มปฐพีสองจังหวะ 👹" : G.heroId === "luminia" ? "เชอร์รี่ร่ายระบำเถาวัลย์ต้องมนตร์! 🧝‍♀️🌸" : G.heroId === "apsara" ? "เชอร์รี่เรียกลำแสงสวรรค์ปลิดบาป! 👼✨" : G.heroId === "asura" ? "เชอร์รี่ปลดผนึกอสูร! ขวากนรกทลายวิญญาณ 😈🔥" : G.heroId === "hanuman" ? "เชอร์รี่หาวเป็นดาวเป็นเดือน! ร่างใหญ่ฟาดตรีเพชร 🐒⭐" : G.heroId === "garuda" ? "เชอร์รี่โฉบพญาครุฑ! กรงเล็บฉีกลมพายุ 🦅💨" : G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: atkMsg }));
       } else if (kind === "skill") {
         const sk = skillsOf(G.cls, G.pathId).find((s) => s.id === arg);
@@ -27574,9 +27773,9 @@ export default function CherryAdventure() {
         // ---- 🦸 HERO signature look: clone every part of the hero's rig onto matching remote anchors (mirrors setHero exactly) ----
         if (info.hero && G._charRig) {
           try {
-            const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts", khaosai: "_khaoParts", fenrir: "_fenParts", neko: "_nekoParts", usagi: "_usaParts", ryujin: "_ryuParts", ignis: "_igParts", captain: "_capParts", thunder: "_thdParts", yaksa: "_yakParts", luminia: "_lumParts", apsara: "_apsParts", asura: "_asuParts" };
-            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xf07818, 0xa83008], neko: [0x5ae082, 0x1a8a40], usagi: [0xf05a6a, 0xb01828], ryujin: [0xffb020, 0xb05808], ignis: [0x6ad8ff, 0x2a6ae0], captain: [0x7ab0e8, 0x2a5ac0], thunder: [0xb0e0ff, 0x4a8ae0], yaksa: [0xffe08a, 0xc08010], luminia: [0xd8a0f0, 0x8a3ac0], apsara: [0xfff0b0, 0xd0a020], asura: [0xff3a5a, 0xa00820] };
-            const SIG_HAIR = new Set(["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "aurelius", "ragnar", "ryujin", "ignis", "captain", "thunder", "yaksa", "luminia", "apsara", "asura"]); // heroes that replace the base hair with a signature style
+            const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts", khaosai: "_khaoParts", fenrir: "_fenParts", neko: "_nekoParts", usagi: "_usaParts", ryujin: "_ryuParts", ignis: "_igParts", captain: "_capParts", thunder: "_thdParts", yaksa: "_yakParts", luminia: "_lumParts", apsara: "_apsParts", asura: "_asuParts", hanuman: "_hanParts", garuda: "_garParts" };
+            const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xf07818, 0xa83008], neko: [0x5ae082, 0x1a8a40], usagi: [0xf05a6a, 0xb01828], ryujin: [0xffb020, 0xb05808], ignis: [0x6ad8ff, 0x2a6ae0], captain: [0x7ab0e8, 0x2a5ac0], thunder: [0xb0e0ff, 0x4a8ae0], yaksa: [0xffe08a, 0xc08010], luminia: [0xd8a0f0, 0x8a3ac0], apsara: [0xfff0b0, 0xd0a020], asura: [0xff3a5a, 0xa00820], hanuman: [0xff6a2a, 0xb03808], garuda: [0xffd24a, 0xc07808] };
+            const SIG_HAIR = new Set(["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "aurelius", "ragnar", "ryujin", "ignis", "captain", "thunder", "yaksa", "luminia", "apsara", "asura", "hanuman", "garuda"]); // heroes that replace the base hair with a signature style
             const parts = G[HERO_PARTS[info.hero]];
             const rig = G._charRig;
             if (parts && parts.length && rig) {
@@ -27615,7 +27814,7 @@ export default function CherryAdventure() {
         }
         // ---- 💇 real hair style + colour (mirrors the singleton): normal classes + heroes that keep normal hair (haru/aurelius/ragnar) ----
         {
-          const sigHairHero = info.hero && ["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "ryujin", "ignis", "captain", "thunder", "yaksa", "luminia", "apsara", "asura"].indexOf(info.hero) >= 0; // these bring signature hair via hero parts (หัวมังกร/หมวกครอบ/ผมเอลฟ์/ผมนางฟ้า/ผมอสูร)
+          const sigHairHero = info.hero && ["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "ryujin", "ignis", "captain", "thunder", "yaksa", "luminia", "apsara", "asura", "hanuman", "garuda"].indexOf(info.hero) >= 0; // these bring signature hair via hero parts (หัวมังกร/หมวกครอบ/ผมเอลฟ์/ผมนางฟ้า/ผมอสูร/หัววานร/หัวครุฑ)
           const aegisHelmOn = (info.c === "aegis" && !info.hero && !info.hat); // the mech helmet covers the head
           const hr = G._hairRig;
           if (!sigHairHero && !aegisHelmOn && hr && hr.styles && hr.styles.length) {
@@ -29202,7 +29401,7 @@ export default function CherryAdventure() {
         }
         // 🐾🌊 ขนสัตว์พลิ้วไหวมีชีวิต (เผ่าหมาป่า/แมว/กระต่าย) — หูกระดิก+สะบัดเป็นพักๆ หางแกว่งเป็นคลื่นแรงขึ้นทางปลาย ขนปุยพองยุบเหมือนหายใจ
         {
-          const beast = G.heroId === "fenrir" ? G._fenFur : G.heroId === "neko" ? G._nekoFur : G.heroId === "usagi" ? G._usaFur : G.heroId === "ryujin" ? G._ryuFur : G.heroId === "thunder" ? G._thdFur : G.heroId === "luminia" ? G._lumFur : G.heroId === "apsara" ? G._apsFur : G.heroId === "asura" ? G._asuFur : null;
+          const beast = G.heroId === "fenrir" ? G._fenFur : G.heroId === "neko" ? G._nekoFur : G.heroId === "usagi" ? G._usaFur : G.heroId === "ryujin" ? G._ryuFur : G.heroId === "thunder" ? G._thdFur : G.heroId === "luminia" ? G._lumFur : G.heroId === "apsara" ? G._apsFur : G.heroId === "asura" ? G._asuFur : G.heroId === "hanuman" ? G._hanFur : G.heroId === "garuda" ? G._garFur : null;
           if (beast && beast.tail && beast.tail.visible) {
             const flick = Math.pow(Math.max(0, Math.sin(t * 0.53 + beast.ph)), 24); // สะบัดหูไวๆ เป็นพักๆ ราวโดนแมลงตอม
             if (beast.ears) {
@@ -32261,8 +32460,182 @@ export default function CherryAdventure() {
             const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
             if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
             const skFx = A.skill ? A.skill.fx : null;
-            const hitP = (G.heroId === "asura" && A.basic) ? 0.58 : (G.heroId === "apsara" && A.basic) ? 0.52 : (G.heroId === "luminia" && A.basic) ? 0.62 : (G.heroId === "ryujin" && A.basic) ? 0.5 : (G.heroId === "usagi" && A.basic) ? 0.76 : A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : A.boxDur ? 0.62 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
-            if (G.heroId === "asura" && A.basic) {
+            const hitP = (G.heroId === "hanuman" && A.basic) ? 0.66 : (G.heroId === "garuda" && A.basic) ? 0.6 : (G.heroId === "asura" && A.basic) ? 0.58 : (G.heroId === "apsara" && A.basic) ? 0.52 : (G.heroId === "luminia" && A.basic) ? 0.62 : (G.heroId === "ryujin" && A.basic) ? 0.5 : (G.heroId === "usagi" && A.basic) ? 0.76 : A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : A.boxDur ? 0.62 : cls === "warrior" ? 0.5 : cls === "assassin" ? 0.45 : 0.6;
+            if (G.heroId === "hanuman" && A.basic) {
+              // 🐒 HANUMAN — ท่าโจมตีพิเศษวานรเผือก: ควงตรีเพชรตั้งท่า → หาวเป็นดาวเป็นเดือน (ร่างใหญ่ขึ้นเท่าตัว) → ฟาดตรีเพชรยักษ์ลงเต็มแรง → ดาวเดือนโปรยลง → ย่อร่างกลับ
+              const EP = em.position;
+              const bx = battleCenter.x - 1.3;
+              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              const ensureH = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
+              const hMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+              const stars = ensureH("stars", 10, (i) => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.13 + (i % 3) * 0.04, 0), hMat(i % 3 === 0 ? 0xfff4b0 : 0xffe07a, 0.95)); m.visible = false; return m; });
+              const moon = ensureH("moon", 1, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 14), hMat(0xfff8d0, 0.95)); m.visible = false; return m; })[0];
+              const shock = ensureH("shock", 3, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.1 - i * 0.02, 10, 30), hMat(i === 2 ? 0xffd24a : 0xf0e0b0)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
+              const kneeB = (v) => { if (legL.userData.knee) legL.userData.knee.rotation.x = v; if (legR.userData.knee) legR.userData.knee.rotation.x = v; };
+              const CS = (typeof CHAR_S !== "undefined" ? CHAR_S : char.scale.x) || 1;
+              if (p < 0.2) {
+                // 🔱 ตั้งท่าควงตรีเพชร
+                const u = p / 0.2;
+                char.position.x = bx;
+                char.rotation.z = 0.14 * Math.sin(u * Math.PI * 2);
+                kneeB(0.08 + u * 0.6);
+                armR.rotation.x = 0.4 - u * 2.6; armR.rotation.z = 0.3 * u;
+                armL.rotation.x = 0.3 - u * 1.0; armL.rotation.z = -0.5 * u;
+                if (Math.random() < 0.5) burst(new THREE.Vector3(bx + (Math.random() - 0.5) * 0.8, 0.4 + Math.random() * 1.4, battleCenter.z), 0xffe07a, 0.3);
+              } else if (p < 0.46) {
+                // ⭐🌙 หาวเป็นดาวเป็นเดือน — ร่างใหญ่ขึ้น ดาวและเดือนพรั่งพรูออกจากปาก
+                const u = (p - 0.2) / 0.26, e = smK(u);
+                char.position.x = bx;
+                char.scale.setScalar(CS * (1 + e * 0.95));                          // 🐒 ร่างใหญ่ขึ้นเกือบเท่าตัว
+                char.position.y = e * 0.16;
+                char.rotation.z = 0;
+                headG.rotation.x = -0.45 * Math.sin(u * Math.PI);                    // เงยหน้าหาว
+                armR.rotation.x = -2.6 + e * 0.5; armR.rotation.z = 0.3 + e * 0.4;
+                armL.rotation.x = -0.7 - e * 0.6; armL.rotation.z = -0.5 - e * 0.3;
+                kneeB(0.68 - e * 0.3);
+                moon.visible = true;
+                moon.position.set(bx + 0.6 + e * 1.1, 2.5 + e * 0.9, battleCenter.z + 0.2);
+                moon.scale.setScalar(0.4 + e * 1.15);
+                moon.material.opacity = 0.95 * Math.min(1, u * 2.4);
+                stars.forEach((st8, i) => {
+                  const age = Math.max(0, Math.min(1, u * 1.8 - i * 0.08));
+                  st8.visible = age > 0;
+                  if (!st8.visible) return;
+                  const a9 = -0.5 + i * 0.24;
+                  st8.position.set(bx + 0.5 + Math.cos(a9) * age * 2.6, 1.9 + Math.sin(a9 * 1.3) * age * 1.5 + age * 0.6, battleCenter.z + Math.sin(a9) * 0.5);
+                  st8.rotation.set(t * 2 + i, t * 1.6, 0);
+                  st8.material.opacity = 0.95 * (1 - age * 0.25);
+                });
+                if (u > 0.3 && !A._hanRoar) { A._hanRoar = true; G._camShake = Math.max(G._camShake || 0, 0.5); spawnSkillFx("healbless", new THREE.Vector3(bx, 0, battleCenter.z), 0xffe07a); }
+              } else if (p < 0.76) {
+                // 💥 ก้าวเข้าไปฟาดตรีเพชรยักษ์ลงเต็มแรง
+                const u = (p - 0.46) / 0.3;
+                const up3 = smK(Math.min(1, u / 0.45)), dn3 = smK(Math.max(0, (u - 0.45) / 0.5));
+                char.scale.setScalar(CS * 1.95);
+                char.position.x = bx + smK(Math.min(1, u * 1.6)) * (EP.x - 1.45 - bx);
+                char.position.y = 0.16 - dn3 * 0.16;
+                headG.rotation.x = 0;
+                char.rotation.z = 0.1 - up3 * 0.32 + dn3 * 0.5;
+                armR.rotation.x = -2.1 - up3 * 1.1 + dn3 * 3.6; armR.rotation.z = 0.7 - dn3 * 0.5;
+                armL.rotation.x = -1.3 - up3 * 0.6 + dn3 * 2.2; armL.rotation.z = -0.8 + dn3 * 0.5;
+                kneeB(0.38 + dn3 * 0.3);
+                moon.material.opacity *= 0.94; if (moon.material.opacity < 0.05) moon.visible = false;
+                stars.forEach((st8) => { st8.material.opacity *= 0.95; if (st8.material.opacity < 0.05) st8.visible = false; });
+                if (dn3 > 0.88 && !A._hanHit) { A._hanHit = true; G._camShake = Math.max(G._camShake || 0, 1.0); spawnSkillFx("kneeburst", EP, 0xffd24a); spawnSkillFx("punchwave", EP, 0xfff4b0); if (G.speedLines) G.speedLines(460); A._hanRP = p;
+                  for (let i2 = 0; i2 < 8; i2++) burst(EP.clone().add(new THREE.Vector3((Math.random() - 0.5) * 1.5, 0.2 + Math.random() * 1.6, (Math.random() - 0.5) * 1.2)), Math.random() < 0.5 ? 0xffd24a : 0xf0e0b0, 0.5 + Math.random() * 0.9); }
+                if (A._hanRP != null) { const sp8 = (p - A._hanRP) / 0.2; shock.forEach((sk5, i) => { if (sp8 >= 1) { sk5.visible = false; return; } sk5.visible = true; sk5.position.set(EP.x, 0.12 + i * 0.07, EP.z); sk5.scale.setScalar((0.5 + sp8 * 4.0) * (1 - i * 0.16)); sk5.material.opacity = Math.max(0, 0.95 * (1 - sp8)); }); }
+              } else if (p < 0.92) {
+                // ⭐ ดาวเดือนโปรยลงซ้ำบนเป้า
+                const u = (p - 0.76) / 0.16;
+                char.scale.setScalar(CS * (1.95 - smK(u) * 0.95));                   // ย่อร่างกลับ
+                char.position.x = EP.x - 1.45;
+                char.rotation.z = 0.6 * (1 - smK(u));
+                armR.rotation.x = 1.5 - u * 1.9; armR.rotation.z = 0.2;
+                armL.rotation.x = 0.9 - u * 1.0; armL.rotation.z = -0.3;
+                kneeB(0.68 - u * 0.4);
+                shock.forEach((sk5) => { sk5.material.opacity *= 0.86; if (sk5.material.opacity < 0.04) sk5.visible = false; });
+                stars.forEach((st8, i) => {
+                  const age = Math.max(0, Math.min(1, u * 1.9 - i * 0.08));
+                  st8.visible = age > 0 && age < 1;
+                  if (!st8.visible) return;
+                  const ox2 = ((i % 4) - 1.5) * 0.34;
+                  st8.position.set(EP.x + ox2, 3.0 - age * 2.8, EP.z + (Math.floor(i / 4) - 1) * 0.3);
+                  st8.rotation.set(t * 3 + i, t * 2, 0);
+                  st8.material.opacity = 0.95 * (1 - Math.max(0, age - 0.7) / 0.3);
+                  if (age > 0.85 && (A._hanN || 0) <= i) { A._hanN = i + 1; G._camShake = Math.max(G._camShake || 0, 0.2); burst(new THREE.Vector3(EP.x + ox2, 0.4, EP.z), 0xfff4b0, 0.35); }
+                });
+              } else {
+                // 🐒 กระโดดกลับที่ ร่างกลับปกติ
+                const e = smK((p - 0.92) / 0.08);
+                char.scale.setScalar(CS);
+                stars.forEach((st8) => { st8.visible = false; }); moon.visible = false; shock.forEach((sk5) => { sk5.visible = false; });
+                char.position.x = (EP.x - 1.45) + (bx - (EP.x - 1.45)) * e;
+                char.position.y = Math.sin(e * Math.PI) * 0.45;
+                char.rotation.z = 0;
+                armR.rotation.x = -0.4 + e * 0.52; armR.rotation.z = 0.2 - e * 0.08;
+                armL.rotation.x = -0.1 + e * 0.1; armL.rotation.z = -0.3 + e * 0.18;
+                kneeB(0.28 - e * 0.2);
+                if (p >= 0.99) { char.rotation.z = 0; char.position.y = 0; headG.rotation.x = 0; char.scale.setScalar(CS); }
+              }
+            } else if (G.heroId === "garuda" && A.basic) {
+              // 🦅 GARUDA — ท่าโจมตีพิเศษพญาปักษิน: กระพือปีกทะยานขึ้นฟ้า → โฉบดิ่งฉีกด้วยกรงเล็บ → ตวัดปีกเป็นพายุลม → ร่อนกลับที่
+              const EP = em.position;
+              const bx = battleCenter.x - 1.3;
+              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              const ensureG2 = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
+              const gMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+              const gash = ensureG2("gash", 3, (i) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.66, 22, 1, Math.PI * 0.15, Math.PI * 0.62), gMat(i === 1 ? 0xfff0b0 : 0xffc24a)); m.visible = false; return m; });
+              const gusts = ensureG2("gusts", 4, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.06, 8, 28), gMat(0xffe8a0)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
+              const feath = ensureG2("feath", 7, () => { const m = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.42, 6), gMat(0xf6c85a, 0.9)); m.scale.z = 0.3; m.visible = false; return m; });
+              const kneeB = (v) => { if (legL.userData.knee) legL.userData.knee.rotation.x = v; if (legR.userData.knee) legR.userData.knee.rotation.x = v; };
+              if (p < 0.24) {
+                // 🪶 กระพือปีกทะยานขึ้นฟ้า
+                const e = smK(p / 0.24);
+                char.position.x = bx; char.position.y = e * 2.3;
+                char.rotation.z = -0.12 * e;
+                kneeB(0.08 + e * 0.5);
+                legL.rotation.x = e * 0.3; legR.rotation.x = e * 0.15;
+                armR.rotation.x = -e * 1.3; armR.rotation.z = 0.3 + e * 0.5;
+                armL.rotation.x = -e * 1.3; armL.rotation.z = -0.3 - e * 0.5;
+                if (Math.random() < 0.7) burst(new THREE.Vector3(bx + (Math.random() - 0.5) * 1.1, 0.2 + Math.random() * 1.2, battleCenter.z + (Math.random() - 0.5) * 0.8), 0xffe8a0, 0.35);
+                gusts.forEach((gu, i) => { const sp9 = (e * 1.4 - i * 0.18) % 1; gu.visible = sp9 > 0 && e > 0.15; if (!gu.visible) return; gu.position.set(bx, 0.15 + i * 0.1, battleCenter.z); gu.scale.setScalar(0.5 + sp9 * 2.2); gu.material.opacity = Math.max(0, 0.6 * (1 - sp9)); });
+              } else if (p < 0.5) {
+                // 🦅 โฉบดิ่งลงฉีกด้วยกรงเล็บ
+                const e = smK((p - 0.24) / 0.26);
+                char.position.x = bx + e * (EP.x + 0.9 - bx);
+                char.position.y = 2.3 * (1 - e * e);
+                char.rotation.z = -0.55 + e * 0.35;
+                armR.rotation.x = -0.4; armR.rotation.z = 1.25;                        // เหยียดกรงเล็บนำหน้า
+                armL.rotation.x = -0.4; armL.rotation.z = -1.25;
+                legL.rotation.x = -0.4; legR.rotation.x = -0.55;                       // ตีนครุฑงุ้มไปหน้า
+                kneeB(0.75);
+                gusts.forEach((gu) => { gu.material.opacity *= 0.88; if (gu.material.opacity < 0.04) gu.visible = false; });
+                if (e > 0.62 && !A._garHit) { A._garHit = true; G._camShake = Math.max(G._camShake || 0, 0.8); spawnSkillFx("punchwave", EP, 0xffc24a); if (G.speedLines) G.speedLines(420); A._garGP = p;
+                  for (let i2 = 0; i2 < 7; i2++) burst(EP.clone().add(new THREE.Vector3((Math.random() - 0.5) * 1.2, 0.4 + Math.random() * 1.5, (Math.random() - 0.5) * 1.0)), Math.random() < 0.5 ? 0xffc24a : 0xfff0b0, 0.45 + Math.random() * 0.8); }
+                if (A._garGP != null) { const sg2 = (p - A._garGP) / 0.16; gash.forEach((ga, i) => { if (sg2 >= 1) { ga.visible = false; return; } ga.visible = true; ga.position.set(EP.x + (i - 1) * 0.13, 1.25 + (i - 1) * 0.16, EP.z + 0.3); ga.rotation.z = 0.75 + i * 0.35 + sg2 * 0.4; ga.scale.setScalar(0.65 + sg2 * 0.9); ga.material.opacity = Math.max(0, Math.sin(Math.min(1, sg2) * Math.PI)) * 0.95; }); }
+              } else if (p < 0.8) {
+                // 🌪️ ตวัดปีกเป็นพายุลมซัดซ้ำ
+                const u = (p - 0.5) / 0.3;
+                char.position.x = EP.x + 0.9; char.position.y = 0.32 + Math.sin(t * 4) * 0.05;
+                char.rotation.z = -0.2 + Math.sin(u * Math.PI * 2) * 0.14;
+                armR.rotation.x = -1.5 + Math.sin(u * Math.PI * 3) * 0.6; armR.rotation.z = 0.8;
+                armL.rotation.x = -1.5 - Math.sin(u * Math.PI * 3) * 0.6; armL.rotation.z = -0.8;
+                legL.rotation.x = 0.2; legR.rotation.x = 0.1;
+                kneeB(0.4);
+                gash.forEach((ga) => { ga.material.opacity *= 0.9; if (ga.material.opacity < 0.04) ga.visible = false; });
+                gusts.forEach((gu, i) => {
+                  const sp10 = Math.max(0, Math.min(1, u * 1.6 - i * 0.16));
+                  gu.visible = sp10 > 0 && sp10 < 1;
+                  if (!gu.visible) return;
+                  gu.position.set(EP.x, 0.2 + i * 0.55 + sp10 * 0.5, EP.z);
+                  gu.scale.setScalar(0.6 + sp10 * 2.6);
+                  gu.material.opacity = Math.max(0, 0.85 * (1 - sp10));
+                  if (sp10 > 0.5 && (A._garN || 0) <= i) { A._garN = i + 1; G._camShake = Math.max(G._camShake || 0, 0.3); }
+                });
+                feath.forEach((fe, i) => {
+                  const age2 = Math.max(0, Math.min(1, u * 1.5 - i * 0.09));
+                  fe.visible = age2 > 0 && age2 < 1;
+                  if (!fe.visible) return;
+                  const a10 = i / feath.length * Math.PI * 2 + t * 1.2;
+                  fe.position.set(EP.x + Math.cos(a10) * (0.5 + age2 * 0.8), 2.6 - age2 * 2.2, EP.z + Math.sin(a10) * (0.45 + age2 * 0.7));
+                  fe.rotation.set(Math.PI * 0.8, a10, Math.sin(t * 4 + i) * 0.4);
+                  fe.material.opacity = 0.9 * (1 - age2);
+                });
+                if (em.userData.body) em.position.x = EP.x + Math.sin(t * 34) * 0.04;
+              } else {
+                // 🕊️ ร่อนกลับที่
+                const e = smK((p - 0.8) / 0.2);
+                gusts.forEach((gu) => { gu.visible = false; }); feath.forEach((fe) => { fe.visible = false; });
+                char.position.x = (EP.x + 0.9) + (bx - (EP.x + 0.9)) * e;
+                char.position.y = (0.32 + Math.sin(e * Math.PI) * 0.5) * (1 - e * 0.9);
+                char.rotation.z = -0.16 * (1 - e);
+                armR.rotation.x = -1.4 + e * 1.52; armR.rotation.z = 0.8 - e * 0.68;
+                armL.rotation.x = -1.4 + e * 1.52; armL.rotation.z = -0.8 + e * 0.68;
+                legL.rotation.x = 0.2 * (1 - e); legR.rotation.x = 0.1 * (1 - e);
+                kneeB(0.4 - e * 0.32);
+                if (p >= 0.99) { char.rotation.z = 0; char.position.y = 0; }
+              }
+            } else if (G.heroId === "asura" && A.basic) {
               // 😈 ASURA — ท่าโจมตีพิเศษเผ่าปีศาจ: ปลดผนึกอสูรพลังดำระเบิด → พุ่งทะลุตัวศัตรูทิ้งเงาไว้ → ขวากนรกผุดเสียบจากพื้น → เพลิงวิญญาณระเบิดปิดท้าย → ผงาดกลับที่
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
