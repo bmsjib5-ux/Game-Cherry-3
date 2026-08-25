@@ -6331,7 +6331,7 @@ export default function CherryAdventure() {
           else if (G._skinBase != null && G.cls !== "aegis") skinMat.color.setHex(G._skinBase);
         }
         (G._dressButtons || []).forEach(b => b.visible = !id);
-        if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro" && id !== "kotaro" && id !== "kairi" && id !== "aurelius" && id !== "ragnar"; } // 👸🌙❄️ ฮีโร่ใช้ผมประจำตัว
+        if (id === "celestia" || id === "luna" || id === "yuki" || id === "rose" || id === "kentaro" || id === "kotaro" || id === "kairi" || id === "aurelius" || id === "ragnar" || id === "ryujin") { hairStyles.forEach(h => h.visible = false); if (baseHair) baseHair.visible = false; if (ahoge) ahoge.visible = false; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = id !== "rose" && id !== "kentaro" && id !== "kotaro" && id !== "kairi" && id !== "aurelius" && id !== "ragnar" && id !== "ryujin"; } // 👸🌙❄️🐲 ฮีโร่ใช้ผมประจำตัว / หัวมังกรครอบเต็มหัว
         else { const hs = (G.custom && G.custom.hairStyle) || 0; hairStyles.forEach((h, k) => h.visible = k === hs); if (baseHair) baseHair.visible = hs < 5; if (ahoge) ahoge.visible = hs < 5; if (typeof hairBackGroup !== "undefined") hairBackGroup.visible = true; } // คืนทรงผมปกติเมื่อสลับตัวละคร
         if (G.reconcileClassPieces) G.reconcileClassPieces(); // hero look replaces the class armor
         if (G.setOutfitVisual) G.setOutfitVisual(G.equip ? G.equip.outfit : null); // 🦸 ซ่อน/คืนโมเดลชุดสวมตามลุคฮีโร่
@@ -8384,6 +8384,23 @@ export default function CherryAdventure() {
         const hb = new THREE.Mesh(new THREE.ConeGeometry(0.095, 0.36, 10), rHornM); hb.position.set(sx * 0.3, 0.62, -0.06); hb.rotation.z = -sx * 0.42; hb.rotation.x = -0.35; ryuHorns.add(hb);
         const ht = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.28, 8), rHornM); ht.position.set(sx * 0.4, 0.84, -0.16); ht.rotation.z = -sx * 0.8; ht.rotation.x = -0.55; ryuHorns.add(ht); // ปลายเขาโค้งออก
         if (sx > 0) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.016, 6, 14), rGld); ring.position.set(0.32, 0.68, -0.09); ring.rotation.x = 1.15; ring.rotation.z = -0.4; ryuHorns.add(ring); } // 💍 วงแหวนทองคาดเขาขวา
+      }
+      // ===== 🐲 หัวมังกรสวมเต็มหัว — กะโหลกเกล็ดครอบทั้งหัว + ปากยื่นยาวอ้าเขี้ยว =====
+      { const shell = new THREE.Mesh(new THREE.SphereGeometry(0.68, 26, 22), rScl); shell.scale.set(1.02, 0.98, 1.02); shell.position.set(0, 0.06, -0.02); ryuHorns.add(shell); // กะโหลกเกล็ดครอบ
+        for (let i = 0; i < 5; i++) { const cr = new THREE.Mesh(new THREE.ConeGeometry(0.055 - i * 0.006, 0.17 - i * 0.016, 6), rSclD); cr.position.set(0, 0.64 - i * 0.17, -0.28 - i * 0.1); cr.rotation.x = -0.5 - i * 0.13; ryuHorns.add(cr); } // 🔺 แผงหนามสันกลางหัวไล่ลงท้ายทอย
+        for (const sx of [-1, 1]) {
+          const brow = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), rSclD); brow.scale.set(1.3, 0.5, 0.8); brow.position.set(sx * 0.3, 0.3, 0.5); brow.rotation.z = -sx * 0.25; ryuHorns.add(brow); // คิ้วเกล็ดนูนดุ
+          const dEye = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), rEmber); dEye.position.set(sx * 0.28, 0.15, 0.57); ryuHorns.add(dEye); // 👁️ ตามังกรเรืองเพลิง
+          const cheek = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 6), rSclD); cheek.position.set(sx * 0.63, -0.02, 0.08); cheek.rotation.z = sx * 1.9; ryuHorns.add(cheek); // ครีบแก้มแหลม
+        }
+        const muz = new THREE.Mesh(new THREE.SphereGeometry(0.32, 18, 14), rScl); muz.scale.set(0.95, 0.62, 1.35); muz.position.set(0, -0.04, 0.72); ryuHorns.add(muz); // 👄 ปากบนยื่นยาวออกหน้า
+        const muzTop = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), rSclD); muzTop.scale.set(0.85, 0.45, 1.0); muzTop.position.set(0, 0.13, 0.78); ryuHorns.add(muzTop); // สันจมูกเกล็ดเข้ม
+        for (const sx of [-1, 1]) { const nos = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), rHornM); nos.scale.z = 0.5; nos.position.set(sx * 0.1, 0.06, 1.06); ryuHorns.add(nos); } // 👃 รูจมูกปลายปาก
+        const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.27, 16, 12), rSclD); jaw.scale.set(0.85, 0.42, 1.25); jaw.position.set(0, -0.36, 0.58); jaw.rotation.x = 0.22; ryuHorns.add(jaw); // 🦴 กรามล่างอ้าเล็กน้อย
+        const jawIn = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), new THREE.MeshStandardMaterial({ color: 0x8a2030, roughness: 0.7 })); jawIn.scale.set(0.75, 0.3, 1.1); jawIn.position.set(0, -0.27, 0.6); ryuHorns.add(jawIn); // ในปากแดงเข้ม
+        const rBone = new THREE.MeshStandardMaterial({ color: 0xfff2dc, roughness: 0.4 });
+        for (let i = 0; i < 5; i++) { const fx2 = -0.16 + i * 0.08; const big = i === 0 || i === 4; const th = new THREE.Mesh(new THREE.ConeGeometry(big ? 0.04 : 0.028, big ? 0.16 : 0.1, 6), rBone); th.position.set(fx2, -0.21, 0.93 - Math.abs(fx2) * 0.35); th.rotation.x = Math.PI + 0.1; ryuHorns.add(th); } // 🦷 ฟันบน — คู่ริมเป็นเขี้ยวโง้งใหญ่
+        for (let i = 0; i < 4; i++) { const fx2 = -0.12 + i * 0.08; const th = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.08, 6), rBone); th.position.set(fx2, -0.34, 0.87 - Math.abs(fx2) * 0.3); th.rotation.x = -0.15; ryuHorns.add(th); } // 🦷 ฟันล่าง
       }
       headG.add(ryuHorns);
       // ===== 🛡️ เกราะเกล็ดอกรัดรูป + แก่นเพลิงกลางอก + บ่าเกล็ด =====
@@ -26803,7 +26820,7 @@ export default function CherryAdventure() {
           try {
             const HERO_PARTS = { haru: "_haruParts", luna: "_lunaParts", celestia: "_celestiaParts", yuki: "_yukiParts", rose: "_roseParts", kentaro: "_kenParts", kotaro: "_kotParts", kairi: "_kaiParts", aurelius: "_aurParts", ragnar: "_ragParts", khaosai: "_khaoParts", fenrir: "_fenParts", neko: "_nekoParts", usagi: "_usaParts", ryujin: "_ryuParts" };
             const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xf07818, 0xa83008], neko: [0x5ae082, 0x1a8a40], usagi: [0xf05a6a, 0xb01828], ryujin: [0xffb020, 0xb05808] };
-            const SIG_HAIR = new Set(["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "aurelius", "ragnar"]); // heroes that replace the base hair with a signature style
+            const SIG_HAIR = new Set(["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "aurelius", "ragnar", "ryujin"]); // heroes that replace the base hair with a signature style
             const parts = G[HERO_PARTS[info.hero]];
             const rig = G._charRig;
             if (parts && parts.length && rig) {
@@ -26842,7 +26859,7 @@ export default function CherryAdventure() {
         }
         // ---- 💇 real hair style + colour (mirrors the singleton): normal classes + heroes that keep normal hair (haru/aurelius/ragnar) ----
         {
-          const sigHairHero = info.hero && ["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi"].indexOf(info.hero) >= 0; // these bring signature hair via hero parts
+          const sigHairHero = info.hero && ["celestia", "luna", "yuki", "rose", "kentaro", "kotaro", "kairi", "ryujin"].indexOf(info.hero) >= 0; // these bring signature hair via hero parts (ryujin = หัวมังกรครอบเต็มหัว)
           const aegisHelmOn = (info.c === "aegis" && !info.hero && !info.hat); // the mech helmet covers the head
           const hr = G._hairRig;
           if (!sigHairHero && !aegisHelmOn && hr && hr.styles && hr.styles.length) {
