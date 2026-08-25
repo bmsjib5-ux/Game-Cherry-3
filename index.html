@@ -7205,12 +7205,7 @@ function CherryAdventure() {
                 id = "ragAxe";
             else if (G.heroId === "khaosai" && weaponModels.khGlove)
                 id = "khGlove";
-            else if (G.heroId === "fenrir" && weaponModels.fenClaw)
-                id = "fenClaw";
-            else if (G.heroId === "neko" && weaponModels.nekoPaw)
-                id = "nekoPaw";
-            else if (G.heroId === "usagi" && weaponModels.usaCarrot)
-                id = "usaCarrot";
+            // 🐺🐱🐰 ฮีโร่เผ่าสัตว์ไม่บังคับอาวุธประจำชุด — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง (กรงเล็บ/อุ้งมือย้ายไปมือซ้ายเป็นส่วนของชุด)
             // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
             let famKey = null;
             if (!(id && weaponModels[id])) {
@@ -7223,10 +7218,11 @@ function CherryAdventure() {
                 G.ensureWeaponModel(famKey); // 🚀 สร้างโมเดลตระกูลอาวุธเมื่อใช้จริง
             curWeapon = id && weaponModels[id] ? id : (famKey && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
             Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
-            // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา อาวุธอื่นซ่อนหมด
-            Object.entries(gloveLModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
+            // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา · 🐺🐱 เผ่าสัตว์สวมกรงเล็บ/อุ้งมือข้างซ้ายเป็นส่วนของชุดเสมอ
+            const lKey = G.heroId === "fenrir" ? "fenClaw" : G.heroId === "neko" ? "nekoPaw" : curWeapon;
+            Object.entries(gloveLModels).forEach(([k, m]) => setVisFrozen(m, k === lKey));
             {
-                const gL = gloveLModels[curWeapon];
+                const gL = gloveLModels[lKey];
                 wandL.rotation.set(0, 0, 0);
                 if (gL) {
                     gL.position.y = gL.userData.gripY != null ? gL.userData.gripY : 0;
@@ -41109,7 +41105,7 @@ function CherryAdventure() {
                 }
                 // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
                 try {
-                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot" };
+                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove" }; // 🐺🐱🐰 เผ่าสัตว์ถืออาวุธตามอาชีพ/ของที่สวมจริง
                     let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
                     if (!wid) {
                         const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c];
