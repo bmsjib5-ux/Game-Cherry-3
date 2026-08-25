@@ -13026,22 +13026,40 @@ function CherryAdventure() {
             char.add(nCollar);
             // ===== 🧥 เสื้อขนแมวรัดอก + ปุยขอบบน + โบว์หลังเอว =====
             const nTop = new THREE.Group();
-            const band = new THREE.Mesh(new THREE.LatheGeometry([[0.43, 1.55], [0.465, 1.64], [0.472, 1.72], [0.455, 1.8], [0.43, 1.86]].map(([r, y]) => new THREE.Vector2(r, y)), 28), nCream);
-            nTop.add(band);
+            const band = new THREE.Mesh(new THREE.LatheGeometry([[0.405, 1.5], [0.44, 1.6], [0.468, 1.7], [0.455, 1.79], [0.428, 1.88]].map(([r, y]) => new THREE.Vector2(r, y)), 30), nCream);
+            band.scale.z = 0.74;
+            nTop.add(band); // 👗 บอดี้สูทรัดรูป — เว้าเอวคอด บีบความลึกให้แนบแผ่นอก-แผ่นหลัง
+            const nTrimT = new THREE.Mesh(new THREE.TorusGeometry(0.432, 0.02, 6, 30), nGinger);
+            nTrimT.position.y = 1.875;
+            nTrimT.rotation.x = Math.PI / 2;
+            nTrimT.scale.y = 0.74;
+            nTop.add(nTrimT);
+            const nTrimB = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.02, 6, 30), nGinger);
+            nTrimB.position.y = 1.505;
+            nTrimB.rotation.x = Math.PI / 2;
+            nTrimB.scale.y = 0.74;
+            nTop.add(nTrimB); // ขอบส้มรัดบน-ล่าง
             const nFurPuffs = [];
             for (let i = 0; i < 10; i++) {
                 const a = i / 10 * Math.PI * 2;
-                const puff = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? nGinger : nCream);
-                puff.position.set(Math.sin(a) * 0.43, 1.86, Math.cos(a) * 0.43);
+                const puff = new THREE.Mesh(new THREE.SphereGeometry(0.032 + (i % 2) * 0.01, 8, 6), i % 2 ? nGinger : nCream);
+                puff.position.set(Math.sin(a) * 0.425, 1.885, Math.cos(a) * 0.425 * 0.74);
                 nTop.add(puff);
                 nFurPuffs.push(puff);
-            } // ปุยขอบบน
+            } // ขลิบปุยจิ๋วขอบบน
+            for (const [by, br] of [[1.6, 0.44], [1.7, 0.468], [1.79, 0.455]]) {
+                const btn = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 6), nStripe);
+                btn.scale.z = 0.55;
+                btn.position.set(0, by, br * 0.74 + 0.012);
+                nTop.add(btn);
+            } // 🟠 กระดุมเรียงกลางอก
             for (const sa of [-0.55, 0.55]) {
-                const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.26, 0.1), nStripe);
-                st.position.set(Math.sin(sa + Math.PI / 2) * 0.45, 1.7, Math.cos(sa + Math.PI / 2) * 0.2);
-                st.rotation.y = sa + Math.PI / 2;
+                const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.3, 0.1), nStripe);
+                const b2 = sa + Math.PI / 2;
+                st.position.set(Math.sin(b2) * 0.455, 1.7, Math.cos(b2) * 0.455 * 0.74);
+                st.rotation.y = b2;
                 nTop.add(st);
-            } // ลายสลิดข้างเสื้อ
+            } // ลายสลิดข้างเสื้อแนบทรง
             {
                 const bow = new THREE.Group();
                 for (const sx of [-1, 1]) {
@@ -13065,27 +13083,29 @@ function CherryAdventure() {
             // ===== 🩳 กางเกงขนแมว ชายปุย + เข็มขัด + พวงปลาทอง =====
             const nLow = new THREE.Group();
             const nHips = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), nGinger);
-            nHips.scale.set(1.05, 0.62, 0.85);
-            nHips.position.y = 1.17;
+            nHips.scale.set(1.0, 0.6, 0.76);
+            nHips.position.y = 1.16;
             nLow.add(nHips);
-            const nShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.44, 0.85], [0.43, 0.95], [0.415, 1.06], [0.4, 1.17], [0.39, 1.28], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), nGinger);
-            nLow.add(nShorts);
+            const nShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.41, 0.98], [0.403, 1.08], [0.4, 1.18], [0.39, 1.27], [0.385, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 30), nGinger);
+            nShorts.scale.z = 0.88;
+            nLow.add(nShorts); // 🩳 ทรงรัดรูปเว้าสูง — โชว์ต้นขาเรียว
             for (let i = 0; i < 12; i++) {
                 const a = i / 12 * Math.PI * 2;
-                const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.055 + (i % 2) * 0.015, 8, 6), i % 2 ? nCream : nWhite);
-                hemP.position.set(Math.sin(a) * 0.435, 0.85, Math.cos(a) * 0.435);
+                const hemP = new THREE.Mesh(new THREE.SphereGeometry(0.032 + (i % 2) * 0.01, 8, 6), i % 2 ? nCream : nWhite);
+                hemP.position.set(Math.sin(a) * 0.405, 0.985, Math.cos(a) * 0.405 * 0.88);
                 nLow.add(hemP);
                 nFurPuffs.push(hemP);
-            } // ชายปุยรอบขา
+            } // ขลิบปุยจิ๋วชายขาสูง
             for (let i = 0; i < 5; i++) {
                 const a = -Math.PI * 0.55 + i * (Math.PI * 1.1 / 4);
-                const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.2, 0.09), nStripe);
-                st.position.set(Math.sin(a) * 0.42, 1.06, Math.cos(a) * 0.42);
+                const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.09), nStripe);
+                st.position.set(Math.sin(a) * 0.4, 1.12, Math.cos(a) * 0.4 * 0.88);
                 st.rotation.y = a;
                 nLow.add(st);
-            } // ลายสลิดรอบกางเกง
-            const nBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.39, 1.3], [0.402, 1.35], [0.408, 1.41], [0.396, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), nRibbon);
-            nLow.add(nBelt);
+            } // ลายสลิดแนบทรงรอบกางเกง
+            const nBelt = new THREE.Mesh(new THREE.LatheGeometry([[0.378, 1.3], [0.39, 1.35], [0.396, 1.41], [0.384, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), nRibbon);
+            nBelt.scale.z = 0.88;
+            nLow.add(nBelt); // เข็มขัดรัดเอวเข้ารูป
             {
                 const fish = new THREE.Group();
                 const fb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), nGold);
@@ -13102,22 +13122,35 @@ function CherryAdventure() {
             char.add(nLow);
             // ===== 🐈 หางแมวเรียวโค้งสูง ปล้องลาย ปลายขาว =====
             const nTail = new THREE.Group();
-            nTail.position.set(0, 1.2, -0.3);
-            const nTailSegs = []; // 🌊 จุดหมุนที่โคนหาง
+            nTail.position.set(0, 1.2, -0.3); // 🌊 จุดหมุนที่โคนหาง
+            let nTailTube = null, nTailTip = null, nTailTipB = null;
             {
                 const tc = new THREE.CatmullRomCurve3([[0, 0, 0], [0.06, 0.25, -0.22], [0.02, 0.55, -0.3], [-0.06, 0.8, -0.2], [-0.08, 0.92, -0.06]].map(q => new THREE.Vector3(q[0], q[1], q[2])));
-                for (let i = 0; i < 10; i++) {
-                    const tt = i / 9;
-                    const pos2 = tc.getPoint(tt);
-                    const rr = 0.055 + Math.sin(tt * Math.PI) * 0.02;
-                    const seg = new THREE.Mesh(new THREE.SphereGeometry(rr, 10, 8), tt > 0.85 ? nWhite : (i === 3 || i === 6 ? nStripe : nGinger));
-                    seg.position.copy(pos2);
-                    seg.userData.bp = pos2.clone();
-                    seg.userData.ti = tt;
-                    nTail.add(seg);
-                    nTailSegs.push(seg);
+                const tGeo = new THREE.TubeGeometry(tc, 24, 0.05, 8, false); // 🐈 ท่อเส้นเดียวตลอดหาง — ผิวเรียบไม่เป็นข้อปล้อง
+                {
+                    const pos3 = tGeo.attributes.position;
+                    const v3 = new THREE.Vector3();
+                    const per3 = 9; // เรียวจากโคนหนาไปปลายบาง
+                    for (let ri = 0; ri <= 24; ri++) {
+                        const tt = ri / 24;
+                        const ctr = tc.getPoint(tt);
+                        const rr = (0.064 - tt * 0.026) / 0.05;
+                        for (let vj = 0; vj < per3; vj++) {
+                            const idx = ri * per3 + vj;
+                            v3.set(pos3.getX(idx), pos3.getY(idx), pos3.getZ(idx)).sub(ctr).multiplyScalar(rr).add(ctr);
+                            pos3.setXYZ(idx, v3.x, v3.y, v3.z);
+                        }
+                    }
+                    tGeo.computeVertexNormals();
                 }
-            }
+                nTailTube = new THREE.Mesh(tGeo, nGinger);
+                nTail.add(nTailTube);
+                nTailTube.userData.base = tGeo.attributes.position.array.slice(); // เก็บฐานไว้ให้คลื่นแกว่ง
+                nTailTipB = tc.getPoint(1).clone();
+                nTailTip = new THREE.Mesh(new THREE.SphereGeometry(0.058, 12, 10), nWhite);
+                nTailTip.position.copy(nTailTipB);
+                nTail.add(nTailTip);
+            } // 🤍 ปลายหางขาวกลมมน
             nTail.scale.setScalar(1.3); // 🐱 หางยาวขึ้น
             char.add(nTail);
             // ===== 🦵 ถุงขาขนแมว + ปุ่มนิ้วเท้าชมพู (เท้ากลายเป็นอุ้งครีมผ่าน G._nekoShoeMat) =====
@@ -13150,7 +13183,7 @@ function CherryAdventure() {
             nekoParts.forEach(q => q.visible = false);
             G._nekoParts = nekoParts;
             nFurPuffs.forEach(pf => pf.userData.bs = pf.scale.clone());
-            G._nekoFur = { ears: nEars, tail: nTail, tailSegs: nTailSegs, puffs: nFurPuffs, earSway: 0.055, wagHz: 3.0, wagAmp: 0.12, ph: 2 }; // 🌊 ชุดข้อมูลขนพลิ้ว
+            G._nekoFur = { ears: nEars, tail: nTail, tailTube: { m: nTailTube, rings: 25, per: 9 }, tailTip: nTailTip, tailTipB: nTailTipB, puffs: nFurPuffs, earSway: 0.055, wagHz: 3.0, wagAmp: 0.12, ph: 2 }; // 🌊 ชุดข้อมูลขนพลิ้ว (หางท่อเส้นเดียว)
             G._nekoShoeMat = nCream; // 🐾 เท้ากลายเป็นอุ้งขนครีม
         }
         // ---------- 🐰 USAGI signature look (จอมกระโดดเผ่ากระต่าย) ----------
@@ -43655,6 +43688,28 @@ function CherryAdventure() {
                                 sg.position.y = u2.bp.y + Math.cos(t * beast.wagHz * 0.7 + u2.ti * 2.6) * beast.wagAmp * 0.45 * w2;
                             });
                             beast.tail.rotation.y = Math.sin(t * beast.wagHz * 0.5 + beast.ph) * 0.16; // แกว่งทั้งท่อนจากโคน
+                        }
+                        if (beast.tailTube) { // 🐈🌊 หางท่อเส้นเดียว — บิดผิวท่อเป็นคลื่น ปลายสะบัดแรงกว่าโคน
+                            const tb = beast.tailTube, pos4 = tb.m.geometry.attributes.position, base4 = tb.m.userData.base;
+                            let dx1 = 0, dy1 = 0;
+                            for (let ri = 0; ri < tb.rings; ri++) {
+                                const pr = ri / (tb.rings - 1), w2 = pr * pr;
+                                const dx = Math.sin(t * beast.wagHz + pr * 4.2 + beast.ph) * beast.wagAmp * 1.35 * w2;
+                                const dy = Math.cos(t * beast.wagHz * 0.7 + pr * 3.0) * beast.wagAmp * 0.55 * w2;
+                                if (ri === tb.rings - 1) {
+                                    dx1 = dx;
+                                    dy1 = dy;
+                                }
+                                for (let vj = 0; vj < tb.per; vj++) {
+                                    const k = (ri * tb.per + vj) * 3;
+                                    pos4.array[k] = base4[k] + dx;
+                                    pos4.array[k + 1] = base4[k + 1] + dy;
+                                }
+                            }
+                            pos4.needsUpdate = true;
+                            if (beast.tailTip && beast.tailTipB)
+                                beast.tailTip.position.set(beast.tailTipB.x + dx1, beast.tailTipB.y + dy1, beast.tailTipB.z);
+                            beast.tail.rotation.y = Math.sin(t * beast.wagHz * 0.5 + beast.ph) * 0.16;
                         }
                         if (beast.puffs)
                             beast.puffs.forEach((pf, i2) => { const s2 = 1 + Math.sin(t * 2.8 + i2 * 1.1 + beast.ph) * 0.07; pf.scale.copy(pf.userData.bs).multiplyScalar(s2); });
