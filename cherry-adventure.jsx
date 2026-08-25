@@ -8835,13 +8835,14 @@ export default function CherryAdventure() {
       headG.add(lumCrown);
       // ===== 👗 บอดี้สูทไหมรัดรูป + ใบไม้ทองคลุมไหล่ + เถาทองพันเอว =====
       const lumTop = new THREE.Group();
-      const eBandGeo = new THREE.LatheGeometry([[0.4, 1.48], [0.436, 1.58], [0.462, 1.665], [0.478, 1.735], [0.466, 1.8], [0.43, 1.89]].map(([r, y]) => new THREE.Vector2(r, y)), 34);
+      // 👗 ทรงนาฬิกาทราย: เอวคอดสุดที่ 1.44 → ผายรับอกที่ 1.74 → สอบเข้าที่ขอบบน (ชิ้นเดียวยาวคลุมถึงเอว = รัดรูปทั้งท่อน)
+      const eBandGeo = new THREE.LatheGeometry([[0.352, 1.31], [0.358, 1.38], [0.362, 1.44], [0.378, 1.51], [0.408, 1.59], [0.446, 1.67], [0.475, 1.735], [0.478, 1.765], [0.458, 1.822], [0.424, 1.89]].map(([r, y]) => new THREE.Vector2(r, y)), 34);
       { // 👗 ทรงอกอิ่มมีร่องเว้ากลาง — ดันผิวด้านหน้าให้นูนสองข้าง แล้วกดร่องตรงแนวกลางอก
         const pos5 = eBandGeo.attributes.position;
         for (let i = 0; i < pos5.count; i++) {
           const vx = pos5.getX(i), vy = pos5.getY(i), vz = pos5.getZ(i);
           if (vz <= 0.02) continue;                                                  // เฉพาะซีกหน้า
-          const bust = Math.exp(-Math.pow((vy - 1.735) / 0.085, 2));                 // ระฆังความสูงระดับอก
+          const bust = Math.exp(-Math.pow((vy - 1.745) / 0.08, 2));                  // ระฆังความสูงระดับอก
           if (bust < 0.02) continue;
           const side = Math.min(1, Math.abs(vx) / 0.17);                             // ยิ่งห่างแนวกลางยิ่งนูน
           const swell = bust * 0.2 * (0.28 + 0.72 * side);
@@ -8854,41 +8855,42 @@ export default function CherryAdventure() {
       const eBand = new THREE.Mesh(eBandGeo, eSilk); eBand.scale.z = 0.72; lumTop.add(eBand);
       const eBust = new THREE.Mesh(new THREE.TorusGeometry(0.428, 0.022, 6, 30), eGold); eBust.position.y = 1.888; eBust.rotation.x = Math.PI / 2; eBust.scale.y = 0.72; lumTop.add(eBust);
       { const uw = new THREE.Mesh(new THREE.TorusGeometry(0.452, 0.016, 6, 34, Math.PI * 1.05), eGold); uw.position.set(0, 1.655, 0.012); uw.rotation.set(Math.PI / 2, 0, -Math.PI * 0.53); uw.scale.y = 0.78; lumTop.add(uw); } // ✨ ขลิบทองใต้อกเน้นทรง
-      const eWaistG = new THREE.Mesh(new THREE.TorusGeometry(0.402, 0.02, 6, 30), eGold); eWaistG.position.y = 1.485; eWaistG.rotation.x = Math.PI / 2; eWaistG.scale.y = 0.72; lumTop.add(eWaistG);
+      const eWaistG = new THREE.Mesh(new THREE.TorusGeometry(0.368, 0.018, 6, 30), eGold); eWaistG.position.y = 1.44; eWaistG.rotation.x = Math.PI / 2; eWaistG.scale.y = 0.72; lumTop.add(eWaistG); // ✨ เส้นทองรัดเอวคอด
+      { const wl = new THREE.Mesh(new THREE.TorusGeometry(0.383, 0.014, 6, 30), eGold); wl.position.y = 1.53; wl.rotation.x = Math.PI / 2; wl.scale.y = 0.72; lumTop.add(wl); } // เส้นทองเหนือเอวเน้นส่วนคอด
       for (let i = 0; i < 8; i++) { const a = -0.9 + i * 0.257; const lf = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.17, 5), eLeaf); lf.scale.z = 0.3; lf.position.set(Math.sin(a) * 0.44, 1.9 + Math.cos(a * 2) * 0.015, Math.cos(a) * 0.44 * 0.72); lf.rotation.y = a; lf.rotation.x = -0.35; lumTop.add(lf); } // 🌿 ปกใบไม้เขียวรอบอก
-      { const vg = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.012, 6, 40), eGold); vg.position.set(0, 1.68, 0); vg.rotation.set(0.3, 0, 0.7); vg.scale.z = 0.75; lumTop.add(vg);
-        const vg2 = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.012, 6, 40), eGold); vg2.position.set(0, 1.68, 0); vg2.rotation.set(-0.3, 0, -0.7); vg2.scale.z = 0.75; lumTop.add(vg2); } // เถาทองไขว้พันลำตัว
+      { const vg = new THREE.Mesh(new THREE.TorusGeometry(0.474, 0.012, 6, 40), eGold); vg.position.set(0, 1.665, 0); vg.rotation.set(0.3, 0, 0.7); vg.scale.z = 0.72; lumTop.add(vg);
+        const vg2 = new THREE.Mesh(new THREE.TorusGeometry(0.474, 0.012, 6, 40), eGold); vg2.position.set(0, 1.665, 0); vg2.rotation.set(-0.3, 0, -0.7); vg2.scale.z = 0.72; lumTop.add(vg2); } // เถาทองไขว้พันลำตัว (แนบทรงใหม่)
       const eBrooch = new THREE.Mesh(new THREE.OctahedronGeometry(0.058, 0), eGem); eBrooch.position.set(0, 1.735, 0.33); lumTop.add(eBrooch); // 💜 มณีประดับตรงร่องกลางอก
       for (const sx of [-1, 1]) { const pd = new THREE.Mesh(new THREE.SphereGeometry(0.135, 14, 12), eSilkD); pd.scale.set(1.05, 0.5, 0.95); pd.position.set(sx * 0.43, 1.93, 0); lumTop.add(pd); const lf2 = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 5), eLeaf); lf2.scale.z = 0.3; lf2.position.set(sx * 0.55, 1.9, 0); lf2.rotation.z = sx * 2.4; lumTop.add(lf2); } // บ่าผ้าไหมปลายใบไม้
       char.add(lumTop);
       // ===== 🌸 กระโปรงกลีบดอกซ้อนชั้น (พลิ้วไหวผ่านระบบขนพลิ้ว) =====
       const lumSkirt = new THREE.Group();
-      const eHips = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 18), eSilkD); eHips.scale.set(0.98, 0.58, 0.74); eHips.position.y = 1.16; lumSkirt.add(eHips);
-      const eShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.4, 1.02], [0.396, 1.1], [0.393, 1.19], [0.386, 1.28], [0.382, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 28), eSilkD); eShorts.scale.z = 0.86; lumSkirt.add(eShorts);
-      const eSash = new THREE.Mesh(new THREE.LatheGeometry([[0.375, 1.3], [0.388, 1.35], [0.394, 1.41], [0.382, 1.46]].map(([r, y]) => new THREE.Vector2(r, y)), 30), eMint); eSash.scale.z = 0.86; lumSkirt.add(eSash);
-      const eSashG = new THREE.Mesh(new THREE.TorusGeometry(0.386, 0.014, 6, 30), eGold); eSashG.position.y = 1.38; eSashG.rotation.x = Math.PI / 2; eSashG.scale.y = 0.86; lumSkirt.add(eSashG);
+      const eHips = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 18), eSilkD); eHips.scale.set(1.14, 0.58, 0.78); eHips.position.y = 1.15; lumSkirt.add(eHips); // สะโพกผายรับเอวคอด + คลุมสะโพกฐานมิด
+      const eShorts = new THREE.Mesh(new THREE.LatheGeometry([[0.398, 1.0], [0.396, 1.08], [0.392, 1.17], [0.378, 1.26], [0.362, 1.34]].map(([r, y]) => new THREE.Vector2(r, y)), 28), eSilkD); eShorts.scale.z = 0.86; lumSkirt.add(eShorts); // สอบเข้าหาเอว
+      const eSash = new THREE.Mesh(new THREE.LatheGeometry([[0.372, 1.24], [0.386, 1.29], [0.39, 1.34], [0.376, 1.39]].map(([r, y]) => new THREE.Vector2(r, y)), 30), eMint); eSash.scale.z = 0.86; lumSkirt.add(eSash); // ผ้าคาดสะโพกต่ำ เผยเอวคอด
+      const eSashG = new THREE.Mesh(new THREE.TorusGeometry(0.382, 0.014, 6, 30), eGold); eSashG.position.y = 1.315; eSashG.rotation.x = Math.PI / 2; eSashG.scale.y = 0.86; lumSkirt.add(eSashG);
       const lumPanels = [], lumCloth = [];
       for (let i = 0; i < 8; i++) {   // 🌸 กลีบกระโปรงแปดกลีบไล่สีชมพู-ขาว
         const a = i / 8 * Math.PI * 2;
-        const pShape = new THREE.Shape();
-        pShape.moveTo(-0.17, 0);
-        pShape.quadraticCurveTo(-0.23, -0.4, -0.1, -0.72);
-        pShape.quadraticCurveTo(0, -0.82, 0.1, -0.72);
-        pShape.quadraticCurveTo(0.23, -0.4, 0.17, 0);
+        const pShape = new THREE.Shape();   // 👗 กลีบทรงสอบ — โคนกว้างพอดีสะโพก ปลายเรียวแนบขา ไม่บานเป็นระฆัง
+        pShape.moveTo(-0.145, 0);
+        pShape.quadraticCurveTo(-0.132, -0.42, -0.082, -0.76);
+        pShape.quadraticCurveTo(0, -0.86, 0.082, -0.76);
+        pShape.quadraticCurveTo(0.132, -0.42, 0.145, 0);
         pShape.closePath();
         const pnl = new THREE.Mesh(new THREE.ShapeGeometry(pShape, 8), i % 2 ? ePetal : eSilk);
-        pnl.position.set(Math.sin(a) * 0.35, 1.34, Math.cos(a) * 0.32);
-        pnl.rotation.y = a; pnl.rotation.x = -0.12; pnl.userData.by = a;
+        pnl.position.set(Math.sin(a) * 0.315, 1.3, Math.cos(a) * 0.295);
+        pnl.rotation.y = a; pnl.rotation.x = -0.03; pnl.userData.by = a;
         pnl.userData.base = pnl.geometry.attributes.position.array.slice();  // 🌊 เก็บจุดยอดฐานไว้ทำคลื่นผ้า
         lumSkirt.add(pnl); lumPanels.push(pnl); lumCloth.push(pnl);
       }
       for (let i = 0; i < 8; i++) {   // กลีบชั้นในสั้นกว่า
         const a = (i + 0.5) / 8 * Math.PI * 2;
-        const pnl = new THREE.Mesh(new THREE.CircleGeometry(0.17, 10, 0, Math.PI), i % 2 ? ePetalD : eSilkD);
-        pnl.position.set(Math.sin(a) * 0.33, 1.32, Math.cos(a) * 0.3);
-        pnl.rotation.y = a; pnl.rotation.z = Math.PI; pnl.rotation.x = 0.12; pnl.userData.by = a;
+        const pnl = new THREE.Mesh(new THREE.CircleGeometry(0.135, 10, 0, Math.PI), i % 2 ? ePetalD : eSilkD);
+        pnl.position.set(Math.sin(a) * 0.3, 1.29, Math.cos(a) * 0.282);
+        pnl.rotation.y = a; pnl.rotation.z = Math.PI; pnl.rotation.x = 0.04; pnl.userData.by = a;
         lumSkirt.add(pnl); lumPanels.push(pnl);
-        pnl.scale.y = 1.15;
+        pnl.scale.y = 1.3;
       }
       char.add(lumSkirt);
       // ===== ✨ ละอองแสงหิ่งห้อยลอยรอบตัว (ต้นทางความ "พราวเสน่ห์") =====
