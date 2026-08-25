@@ -1502,7 +1502,7 @@ const HERO_GALLERY = [
     { id: "captain", name: "กัปตันเชอร์รี่", emoji: "🛡️", title: "ผู้กองโล่เพชรหมู่พิทักษ์", c1: "#6a9ae0", c2: "#1e3a7a", price: 300 },
     { id: "thunder", name: "อัสนี", emoji: "⚡", title: "เทพอัสนีค้อนพายุ", c1: "#c8dff2", c2: "#3a4a8a", price: 300 },
     { id: "yaksa", name: "ยักษา", emoji: "👹", title: "ยักษ์เฝ้าประตูพันปี", c1: "#4ac07a", c2: "#0e5a30", price: 300 },
-    { id: "luminia", name: "ลูมิเนีย", emoji: "🧝‍♀️", title: "เอลฟ์สาวพราวเสน่ห์", c1: "#f6e6fa", c2: "#8a5ac0", price: 300 },
+    { id: "luminia", name: "ลูมิเนีย", emoji: "🧝‍♀️", title: "เอลฟ์สาวพราวเสน่ห์", c1: "#8ee8b4", c2: "#1e7a4e", price: 300 },
 ];
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
 const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
@@ -14435,29 +14435,42 @@ function CherryAdventure() {
         }
         // ---------- 🧝‍♀️ LUMINIA signature look (เอลฟ์สาวพราวเสน่ห์) ----------
         {
-            const eSilk = new THREE.MeshStandardMaterial({ color: 0xf6eefa, roughness: 0.6 }); // 🤍 ผ้าไหมสีจันทร์
-            const eSilkD = new THREE.MeshStandardMaterial({ color: 0xd8c8ec, roughness: 0.6 }); // ผ้าเงาม่วงอ่อน
+            const eSilk = new THREE.MeshStandardMaterial({ color: 0x3fa870, roughness: 0.52 }); // 💚 ผ้าไหมเขียวใบไม้ (ชุดหลัก)
+            const eSilkD = new THREE.MeshStandardMaterial({ color: 0x24784e, roughness: 0.55 }); // เขียวเข้มเงาลึก
             const eMint = new THREE.MeshStandardMaterial({ color: 0x9ce0c0, roughness: 0.55 }); // 🌿 เขียวมิ้นต์
             const eLeaf = new THREE.MeshStandardMaterial({ color: 0x4aa878, roughness: 0.6, side: THREE.DoubleSide }); // ใบไม้
             const eGold = new THREE.MeshStandardMaterial({ color: 0xe8c86a, roughness: 0.28, metalness: 0.72 }); // ✨ ทองเถาวัลย์
             const eHair = new THREE.MeshStandardMaterial({ color: 0xe4eee4, roughness: 0.5 }); // 💇 ผมเงินมิ้นต์
+            const eHairS = new THREE.MeshStandardMaterial({ color: 0xe4eee4, roughness: 0.5, side: THREE.DoubleSide }); // ช่อผมแบบแผ่น (พลิ้วได้)
+            const eHairS2 = new THREE.MeshStandardMaterial({ color: 0xc8ded0, roughness: 0.5, side: THREE.DoubleSide });
             const eHair2 = new THREE.MeshStandardMaterial({ color: 0xc8ded0, roughness: 0.5 }); // ผมเงาลึก
             const eGem = new THREE.MeshStandardMaterial({ color: 0xd8a0f0, emissive: 0x9a3ad0, emissiveIntensity: 0.9, roughness: 0.2 }); // 💜 มณีอเมทิสต์เรือง
-            const ePetal = new THREE.MeshStandardMaterial({ color: 0xf8bcd8, roughness: 0.55, side: THREE.DoubleSide }); // 🌸 กลีบดอก
-            const ePetalD = new THREE.MeshStandardMaterial({ color: 0xe894be, roughness: 0.55, side: THREE.DoubleSide });
+            const ePetal = new THREE.MeshStandardMaterial({ color: 0x74d4a0, roughness: 0.5, side: THREE.DoubleSide }); // 🍃 กลีบผ้าเขียวอ่อน
+            const ePetalD = new THREE.MeshStandardMaterial({ color: 0x3c9c6c, roughness: 0.5, side: THREE.DoubleSide }); // กลีบผ้าเขียวเข้ม
+            const eBloom = new THREE.MeshStandardMaterial({ color: 0xfdf6e4, roughness: 0.55, side: THREE.DoubleSide }); // 🤍 ดอกไม้ครีมขาว (ตัดกับชุดเขียว)
+            const eBloomD = new THREE.MeshStandardMaterial({ color: 0xf2e2c0, roughness: 0.55, side: THREE.DoubleSide });
             // ===== 👂 หูเอลฟ์ยาวเรียว + ห่วงทองคล้องปลายหู =====
             const lumEars = new THREE.Group();
             for (const sx of [-1, 1]) {
-                const ear = new THREE.Mesh(new THREE.ConeGeometry(0.105, 0.6, 10), skinMat);
-                ear.scale.z = 0.45;
-                ear.position.set(sx * 0.76, 0.2, 0.04);
-                ear.rotation.z = sx * 0.95;
-                ear.rotation.y = -sx * 0.32;
-                lumEars.add(ear); // 🧝 หูเอลฟ์ยาวชี้เฉียงขึ้น พ้นทรงผมชัดเจน
-                const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.013, 6, 14), eGold);
-                cuff.position.set(sx * 0.87, 0.36, 0.02);
-                cuff.rotation.set(0.25, sx * 0.55, sx * 0.9);
-                lumEars.add(cuff); // ห่วงทองคล้องปลายหู
+                // 🧝 หูเอลฟ์กรวยยาว — ปลายเรียวแหลม "ชี้ออกนอกหัว" (หมุน -sx เพื่อให้ยอดกรวยพุ่งออกด้านข้าง ไม่ทิ่มเข้าหัว)
+                const ear = new THREE.Mesh(new THREE.ConeGeometry(0.082, 1.0, 12), skinMat);
+                ear.scale.z = 0.4;
+                ear.position.set(sx * 0.66, 0.14, 0.04);
+                ear.rotation.z = -sx * 0.95;
+                ear.rotation.y = sx * 0.32;
+                lumEars.add(ear);
+                {
+                    const rim = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.66, 10), skinMat);
+                    rim.scale.z = 0.28;
+                    rim.position.set(sx * 0.8, 0.25, 0.075);
+                    rim.rotation.z = -sx * 0.95;
+                    rim.rotation.y = sx * 0.32;
+                    lumEars.add(rim);
+                } // ขอบในใบหูบางซ้อนให้ดูเป็นแผ่น ไม่ใช่เขา
+                const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.012, 6, 14), eGold);
+                cuff.position.set(sx * 0.78, 0.22, 0.02);
+                cuff.rotation.set(0.25, -sx * 0.55, -sx * 0.9);
+                lumEars.add(cuff); // ห่วงทองคล้องกลางใบหู (ปลายหูโล่งเห็นความแหลม)
                 const drop = new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), eGem);
                 drop.scale.set(0.7, 1.5, 0.7);
                 drop.position.set(sx * 0.66, -0.12, 0.1);
@@ -14479,16 +14492,35 @@ function CherryAdventure() {
                 bang.rotation.z = bx2 * 0.5;
                 lumHair.add(bang);
             } // หน้าม้าปลายแหลมนุ่ม
-            const lumStrands = [];
+            const lumStrands = [], lumHairCloth = [];
+            // 💇 แม่แบบช่อผม — แผ่นผ้าไหมปลายเรียวแหลม ใช้ทั้งผมข้างและผมหลัง
+            const mkHairRib = (len, w) => {
+                const sh2 = new THREE.Shape();
+                sh2.moveTo(-w, 0.06);
+                sh2.quadraticCurveTo(-w * 1.18, -len * 0.5, -w * 0.34, -len * 0.9);
+                sh2.lineTo(0, -len);
+                sh2.lineTo(w * 0.34, -len * 0.9);
+                sh2.quadraticCurveTo(w * 1.18, -len * 0.5, w, 0.06);
+                sh2.closePath();
+                return new THREE.ShapeGeometry(sh2, 10);
+            };
+            const addHairRib = (geo, mat, px, py, pz, ry, len, amp) => {
+                const rib = new THREE.Mesh(geo, mat);
+                rib.position.set(px, py, pz);
+                rib.rotation.y = ry;
+                rib.rotation.x = -0.04;
+                rib.userData.by = ry;
+                rib.userData.base = rib.geometry.attributes.position.array.slice(); // 🌬️ ฐานจุดยอดไว้คำนวณคลื่นลม
+                rib.userData.cTop = 0.06;
+                rib.userData.cLen = len;
+                rib.userData.cAmp = amp;
+                lumHair.add(rib);
+                lumStrands.push(rib);
+                lumHairCloth.push(rib);
+                return rib;
+            };
             for (const sx of [-1, 1]) {
-                const side = new THREE.Mesh(new THREE.ConeGeometry(0.13, 1.25, 8), eHair);
-                side.scale.z = 0.55;
-                side.position.set(sx * 0.5, -0.42, 0.2);
-                side.rotation.z = sx * 0.1;
-                side.rotation.x = -0.06;
-                side.userData.by = 0;
-                lumHair.add(side);
-                lumStrands.push(side); // ปอยข้างยาวคลุมไหล่
+                addHairRib(mkHairRib(1.18, 0.155), eHairS, sx * 0.54, 0.2, 0.26, sx * 0.52, 1.18, 0.7); // 💇 ปอยข้างพาดไหล่ — อยู่นอกแนวลำตัว ไม่จมอก
                 const braid = new THREE.Group(); // 🎀 เปียเล็กคล้องทองสองข้าง
                 for (let i = 0; i < 5; i++) {
                     const bead = new THREE.Mesh(new THREE.SphereGeometry(0.045 - i * 0.004, 10, 8), i % 2 ? eHair2 : eHair);
@@ -14511,22 +14543,15 @@ function CherryAdventure() {
                 const back = new THREE.Mesh(new THREE.SphereGeometry(0.62, 22, 18), eHair);
                 back.scale.set(1.0, 1.05, 0.92);
                 back.position.set(0, 0.04, -0.12);
-                lumHair.add(back);
-                const fall = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.34, 1.5, 18, 1, true), eHair);
-                fall.position.set(0, -0.62, -0.16);
-                fall.rotation.x = 0.05;
-                lumHair.add(fall); // ผมสยายยาวกลางหลัง
-                const tip = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.42, 16), eHair2);
-                tip.position.set(0, -1.53, -0.18);
-                lumHair.add(tip);
-                for (let i = 0; i < 5; i++) {
-                    const a = -0.8 + i * 0.4;
-                    const lock = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.5, 6), i % 2 ? eHair2 : eHair);
-                    lock.position.set(Math.sin(a) * 0.42, -1.62, -0.2 + Math.cos(a) * 0.12);
-                    lock.rotation.x = Math.PI + 0.1;
-                    lumHair.add(lock);
+                lumHair.add(back); // กะโหลกผมท้ายทอย
+                // 🌬️ ผมยาวสยายหลัง = ช่อผ้าไหม 7 ช่อเรียงเป็นม่านรอบแนวหลัง รัศมี 0.56 (กว้างกว่าลำตัวทุกจุด จึงไม่จมทะลุตัว)
+                //    แต่ละช่อพลิ้วเป็นคลื่นอิสระ ปลายสะบัดแรงกว่าโคน — ปลิวไสวเหมือนโดนลมจริง
+                for (let i = 0; i < 7; i++) {
+                    const a = Math.PI * 0.62 + i * (Math.PI * 0.76 / 6);
+                    const len = 1.5 + Math.sin(i / 6 * Math.PI) * 0.44; // ช่อกลางหลังยาวสุด ไล่สั้นลงทางข้าง
+                    addHairRib(mkHairRib(len, 0.175), i % 2 ? eHairS2 : eHairS, Math.sin(a) * 0.56, 0.16, Math.cos(a) * 0.56, a, len, 1.0);
                 }
-            } // ปลายผมเป็นช่อ
+            }
             headG.add(lumHair);
             // ===== 🌸 มงกุฎดอกไม้เถาทอง + มณีกลางหน้าผาก =====
             const lumCrown = new THREE.Group();
@@ -14539,7 +14564,7 @@ function CherryAdventure() {
                 const fl = new THREE.Group();
                 for (let k = 0; k < 5; k++) {
                     const pa = k / 5 * Math.PI * 2;
-                    const pt = new THREE.Mesh(new THREE.CircleGeometry(0.045, 8), k % 2 ? ePetalD : ePetal);
+                    const pt = new THREE.Mesh(new THREE.CircleGeometry(0.045, 8), k % 2 ? eBloomD : eBloom);
                     pt.position.set(Math.cos(pa) * 0.042, Math.sin(pa) * 0.042, 0);
                     fl.add(pt);
                 }
@@ -14564,14 +14589,40 @@ function CherryAdventure() {
             headG.add(lumCrown);
             // ===== 👗 บอดี้สูทไหมรัดรูป + ใบไม้ทองคลุมไหล่ + เถาทองพันเอว =====
             const lumTop = new THREE.Group();
-            const eBand = new THREE.Mesh(new THREE.LatheGeometry([[0.4, 1.48], [0.438, 1.59], [0.468, 1.7], [0.452, 1.8], [0.424, 1.89]].map(([r, y]) => new THREE.Vector2(r, y)), 30), eSilk);
+            const eBandGeo = new THREE.LatheGeometry([[0.4, 1.48], [0.436, 1.58], [0.462, 1.665], [0.478, 1.735], [0.466, 1.8], [0.43, 1.89]].map(([r, y]) => new THREE.Vector2(r, y)), 34);
+            { // 👗 ทรงอกอิ่มมีร่องเว้ากลาง — ดันผิวด้านหน้าให้นูนสองข้าง แล้วกดร่องตรงแนวกลางอก
+                const pos5 = eBandGeo.attributes.position;
+                for (let i = 0; i < pos5.count; i++) {
+                    const vx = pos5.getX(i), vy = pos5.getY(i), vz = pos5.getZ(i);
+                    if (vz <= 0.02)
+                        continue; // เฉพาะซีกหน้า
+                    const bust = Math.exp(-Math.pow((vy - 1.735) / 0.085, 2)); // ระฆังความสูงระดับอก
+                    if (bust < 0.02)
+                        continue;
+                    const side = Math.min(1, Math.abs(vx) / 0.17); // ยิ่งห่างแนวกลางยิ่งนูน
+                    const swell = bust * 0.2 * (0.28 + 0.72 * side);
+                    const groove = bust * 0.135 * Math.exp(-Math.pow(vx / 0.07, 2)); // ร่องเว้าแนวกลางลึกขึ้น
+                    pos5.setZ(i, vz + swell - groove);
+                    pos5.setY(i, vy - bust * 0.02 * (1 - side)); // ไล่โค้งใต้อกให้รับน้ำหนัก
+                }
+                pos5.needsUpdate = true;
+                eBandGeo.computeVertexNormals();
+            }
+            const eBand = new THREE.Mesh(eBandGeo, eSilk);
             eBand.scale.z = 0.72;
             lumTop.add(eBand);
-            const eBust = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.022, 6, 30), eGold);
-            eBust.position.y = 1.885;
+            const eBust = new THREE.Mesh(new THREE.TorusGeometry(0.428, 0.022, 6, 30), eGold);
+            eBust.position.y = 1.888;
             eBust.rotation.x = Math.PI / 2;
             eBust.scale.y = 0.72;
             lumTop.add(eBust);
+            {
+                const uw = new THREE.Mesh(new THREE.TorusGeometry(0.452, 0.016, 6, 34, Math.PI * 1.05), eGold);
+                uw.position.set(0, 1.655, 0.012);
+                uw.rotation.set(Math.PI / 2, 0, -Math.PI * 0.53);
+                uw.scale.y = 0.78;
+                lumTop.add(uw);
+            } // ✨ ขลิบทองใต้อกเน้นทรง
             const eWaistG = new THREE.Mesh(new THREE.TorusGeometry(0.402, 0.02, 6, 30), eGold);
             eWaistG.position.y = 1.485;
             eWaistG.rotation.x = Math.PI / 2;
@@ -14598,9 +14649,9 @@ function CherryAdventure() {
                 vg2.scale.z = 0.75;
                 lumTop.add(vg2);
             } // เถาทองไขว้พันลำตัว
-            const eBrooch = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), eGem);
-            eBrooch.position.set(0, 1.72, 0.35);
-            lumTop.add(eBrooch); // 💜 เข็มกลัดมณีกลางอก
+            const eBrooch = new THREE.Mesh(new THREE.OctahedronGeometry(0.058, 0), eGem);
+            eBrooch.position.set(0, 1.735, 0.33);
+            lumTop.add(eBrooch); // 💜 มณีประดับตรงร่องกลางอก
             for (const sx of [-1, 1]) {
                 const pd = new THREE.Mesh(new THREE.SphereGeometry(0.135, 14, 12), eSilkD);
                 pd.scale.set(1.05, 0.5, 0.95);
@@ -14630,7 +14681,7 @@ function CherryAdventure() {
             eSashG.rotation.x = Math.PI / 2;
             eSashG.scale.y = 0.86;
             lumSkirt.add(eSashG);
-            const lumPanels = [];
+            const lumPanels = [], lumCloth = [];
             for (let i = 0; i < 8; i++) { // 🌸 กลีบกระโปรงแปดกลีบไล่สีชมพู-ขาว
                 const a = i / 8 * Math.PI * 2;
                 const pShape = new THREE.Shape();
@@ -14644,8 +14695,10 @@ function CherryAdventure() {
                 pnl.rotation.y = a;
                 pnl.rotation.x = -0.12;
                 pnl.userData.by = a;
+                pnl.userData.base = pnl.geometry.attributes.position.array.slice(); // 🌊 เก็บจุดยอดฐานไว้ทำคลื่นผ้า
                 lumSkirt.add(pnl);
                 lumPanels.push(pnl);
+                lumCloth.push(pnl);
             }
             for (let i = 0; i < 8; i++) { // กลีบชั้นในสั้นกว่า
                 const a = (i + 0.5) / 8 * Math.PI * 2;
@@ -14657,12 +14710,13 @@ function CherryAdventure() {
                 pnl.userData.by = a;
                 lumSkirt.add(pnl);
                 lumPanels.push(pnl);
+                pnl.scale.y = 1.15;
             }
             char.add(lumSkirt);
             // ===== ✨ ละอองแสงหิ่งห้อยลอยรอบตัว (ต้นทางความ "พราวเสน่ห์") =====
             const lumAura = new THREE.Group();
             const lumMotes = [];
-            const moteMat = new THREE.MeshBasicMaterial({ color: 0xf8d8ff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+            const moteMat = new THREE.MeshBasicMaterial({ color: 0xc8ffdc, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
             for (let i = 0; i < 10; i++) {
                 const mo = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), moteMat);
                 const a = i / 10 * Math.PI * 2, rad = 0.5 + (i % 3) * 0.12;
@@ -14721,7 +14775,7 @@ function CherryAdventure() {
             lumParts.forEach(q => q.visible = false);
             G._lumParts = lumParts;
             G._lumShoeMat = eSilk; // 👡 รองเท้าไหมสีจันทร์
-            G._lumFur = { tail: lumAura, wings: lumPanels.concat(lumStrands), puffs: lumMotes, ears: lumEars, earSway: 0.045, wingAmp: 0.07, ph: 5 }; // 🌊 กลีบกระโปรง/ปอยผมพลิ้ว + ละอองแสงเต้น + หูเอลฟ์ไหวเบาๆ
+            G._lumFur = { tail: lumAura, wings: lumPanels.concat(lumStrands), cloth: lumCloth.concat(lumHairCloth), puffs: lumMotes, ears: lumEars, earSway: 0.045, wingAmp: 0.09, ph: 5 }; // 🌊 ชายผ้าพลิ้วเป็นคลื่น + กลีบ/ปอยผมแกว่ง + ละอองแสงเต้น + หูไหวเบาๆ
         }
         // ---------- Outfits: visible on Cherry when equipped ----------
         const outfitModels = {};
@@ -45093,6 +45147,27 @@ function CherryAdventure() {
                             beast.puffs.forEach((pf, i2) => { const s2 = 1 + Math.sin(t * 2.8 + i2 * 1.1 + beast.ph) * 0.07; pf.scale.copy(pf.userData.bs).multiplyScalar(s2); });
                         if (beast.wings)
                             beast.wings.forEach((w4, i2) => { w4.rotation.y = w4.userData.by + Math.sin(t * 1.7 + beast.ph + (i2 ? Math.PI : 0)) * (beast.wingAmp != null ? beast.wingAmp : 0.26); }); // 🦇 ปีกกระพือ/ผ้าคลุมพลิ้ว สลับจังหวะ
+                        if (beast.cloth)
+                            beast.cloth.forEach((cm, ci) => {
+                                const gp2 = cm.geometry.attributes.position, bb2 = cm.userData.base;
+                                if (!bb2)
+                                    return;
+                                const cTop = cm.userData.cTop != null ? cm.userData.cTop : 0;
+                                const cLen = cm.userData.cLen || 0.8;
+                                const cAmp = cm.userData.cAmp != null ? cm.userData.cAmp : 1;
+                                for (let i3 = 0; i3 < gp2.count; i3++) {
+                                    const vx2 = bb2[i3 * 3], vy2 = bb2[i3 * 3 + 1];
+                                    const dn = Math.min(1, Math.max(0, (cTop - vy2) / cLen)); // 0 ที่โคน → 1 ที่ปลาย
+                                    if (dn < 0.02)
+                                        continue;
+                                    const w5 = Math.sin(t * 2.7 + ci * 0.85 + vy2 * 7.5) * 0.075 * cAmp * dn * dn; // คลื่นหลักพัดออก-เข้า
+                                    const w6 = Math.cos(t * 1.9 + ci * 1.35 + vx2 * 5.5) * 0.035 * cAmp * dn; // คลื่นข้างสะบัดเบาๆ
+                                    gp2.setZ(i3, bb2[i3 * 3 + 2] + w5);
+                                    gp2.setX(i3, vx2 + w6);
+                                    gp2.setY(i3, vy2 + Math.abs(w5) * 0.18); // ชายผ้ายกตัวตอนพลิ้ว
+                                }
+                                gp2.needsUpdate = true;
+                            });
                     }
                 }
                 const rax = weaponModels.ragAxe;
