@@ -3040,6 +3040,9 @@ export default function CherryAdventure() {
       if (id === "kairiBlade") return { x: -0.42, y: 0, z: 0.32 }; // ⚡ thunder blade up-forward
       if (id === "aurSword") return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
       if (id === "ragAxe") return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
+      if (id === "hanTriW") return { x: -0.3, y: 0, z: 0.16 };  // 🔱 ตรีเพชรหนุมาน — ปลายสามง่ามชี้ขึ้นหน้า
+      if (id === "yakClubW") return { x: -0.36, y: 0, z: 0.2 }; // 🏏 กระบองยักษ์ — หัวกระบองพาดขึ้น
+      if (id === "thdHammerW") return { x: -0.34, y: 0, z: 0.18 }; // 🔨 ค้อนพายุ — หัวค้อนพาดขึ้น
       if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove" || id === "fenClaw" || id === "nekoPaw") return { x: 0, y: 0, z: 0 };   // 🥊🐺🐱 นวม/กรงเล็บ/อุ้งมือ — สวมทับกำปั้น ไม่ได้ถือด้าม
       if (id === "usaCarrot") return { x: -0.35, y: 0, z: 0.15 }; // 🐰🥕 ค้อนแครอทพาดไหล่เฉียงหน้า
       if (id === "cx" || id === "wDx" || id === "lg_ox") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
@@ -5171,6 +5174,8 @@ export default function CherryAdventure() {
     };
     G._setVisFrozen = setVisFrozen;
     Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
+    // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
+    G._regHeroWeapon = (key, mesh) => { if (!key || !mesh || weaponModels[key]) return; mesh.visible = false; wand.add(mesh); weaponModels[key] = mesh; };
     Object.values(gloveLModels).forEach((m) => { m.visible = false; wandL.add(m); });   // 🥊 นวมข้างซ้ายอยู่คนละช่องมือ
     weaponModels.default.visible = true;
     let curWeapon = "default";
@@ -5189,7 +5194,13 @@ export default function CherryAdventure() {
       else if (G.heroId === "aurelius" && weaponModels.aurSword) id = "aurSword";
       else if (G.heroId === "ragnar" && weaponModels.ragAxe) id = "ragAxe";
       else if (G.heroId === "khaosai" && weaponModels.khGlove) id = "khGlove";
-      // 🐺🐱🐰 ฮีโร่เผ่าสัตว์ไม่บังคับอาวุธประจำชุด — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง (กรงเล็บ/อุ้งมือย้ายไปมือซ้ายเป็นส่วนของชุด)
+      else if (G.heroId === "fenrir" && weaponModels.fenClaw) id = "fenClaw";           // 🐺 กรงเล็บหมาป่า
+      else if (G.heroId === "neko" && weaponModels.nekoPaw) id = "nekoPaw";             // 🐱 อุ้งมือแมว
+      else if (G.heroId === "usagi" && weaponModels.usaCarrot) id = "usaCarrot";        // 🐰 ค้อนแครอท
+      else if (G.heroId === "hanuman" && weaponModels.hanTriW) id = "hanTriW";          // 🐒 ตรีเพชร
+      else if (G.heroId === "yaksa" && weaponModels.yakClubW) id = "yakClubW";          // 👹 กระบองยักษ์
+      else if (G.heroId === "thunder" && weaponModels.thdHammerW) id = "thdHammerW";    // ⚡ ค้อนพายุ
+      // 🐉😈🦅🐍🕊️👼🧝🦸 ฮีโร่ที่ไม่มีอาวุธประจำตัว — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง
       // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
       let famKey = null;
       if (!(id && weaponModels[id])) {
@@ -8685,9 +8696,9 @@ export default function CherryAdventure() {
         const hbolt = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.09, 0.02), tBoltM); hbolt.position.set(0, 0, 0.1); hbolt.rotation.z = 0.4; thdHammer.add(hbolt);
         const hh = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.48, 8), tLeather); hh.position.y = -0.3; thdHammer.add(hh);
         const hp2 = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), tGold); hp2.position.y = -0.54; thdHammer.add(hp2); }
-      thdHammer.position.set(0.24, 1.5, -0.42); thdHammer.rotation.z = 0.55; thdHammer.rotation.x = 0.1;
-      char.add(thdHammer);
-      G._thdHammer = thdHammer; // อ้างอิงไว้ซ่อนตอนขว้างในท่าพิเศษ
+      thdHammer.position.y = 0.2;                                  // 🔨 ย้ายเป็นอาวุธถือในมือขวา
+      if (G._regHeroWeapon) G._regHeroWeapon("thdHammerW", thdHammer);
+      G._thdHammer = thdHammer;
       // ===== 💪 ปลอกแขนเงินหมุดทอง + 🦵 สนับแข้งเงิน =====
       const thdArmParts = [];
       for (const arm of [armL, armR]) { const fore = arm.userData.elbow || arm;
@@ -8696,7 +8707,7 @@ export default function CherryAdventure() {
       const thdLegParts = [];
       for (const leg of [legL, legR]) { const kn = leg.userData.knee || leg;
         const sh5 = new THREE.Mesh(new THREE.CylinderGeometry(0.142, 0.152, 0.3, 12), tSilver); sh5.position.set(0, -0.22, 0.005); kn.add(sh5); thdLegParts.push(sh5); }
-      const thdParts = [thdHead, thdTop, thdCapeG, thdLow, thdHammer, ...thdArmParts, ...thdLegParts];
+      const thdParts = [thdHead, thdTop, thdCapeG, thdLow, ...thdArmParts, ...thdLegParts];   // ค้อนพายุอยู่ในระบบอาวุธแล้ว
       thdParts.forEach(q => q.visible = false);
       G._thdParts = thdParts;
       G._thdShoeMat = tLeather; // 🥾 บู๊ตหนังเข้ม
@@ -8759,9 +8770,9 @@ export default function CherryAdventure() {
         for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const stud2 = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.07, 5), yGold); stud2.position.set(Math.cos(a) * 0.15, 0.13, Math.sin(a) * 0.15); stud2.rotation.z = -Math.cos(a) * 1.5; stud2.rotation.x = Math.sin(a) * 1.5; yakClub.add(stud2); } // หมุดทองรอบหัว
         const hd3 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.5, 8), yDark); hd3.position.y = -0.32; yakClub.add(hd3);
         const pom = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), yGold); pom.position.y = -0.58; yakClub.add(pom); }
-      yakClub.position.set(-0.24, 1.52, -0.42); yakClub.rotation.z = -0.55; yakClub.rotation.x = 0.1;
-      char.add(yakClub);
-      G._yakClub = yakClub; // อ้างอิงไว้ซ่อนตอนควงในท่าพิเศษ
+      yakClub.position.y = 0.2;                                    // 🏏 ย้ายเป็นอาวุธถือในมือขวา
+      if (G._regHeroWeapon) G._regHeroWeapon("yakClubW", yakClub);
+      G._yakClub = yakClub;
       // ===== 💪 กำไลต้นแขน+ข้อมือทอง · 🦵 กำไลข้อเท้าทอง =====
       const yakArmParts = [];
       for (const arm of [armL, armR]) {
@@ -8772,7 +8783,7 @@ export default function CherryAdventure() {
       const yakLegParts = [];
       for (const leg of [legL, legR]) { const kn = leg.userData.knee || leg;
         const kb2 = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.024, 8, 16), yGold); kb2.position.set(0, -0.3, 0.005); kb2.rotation.x = Math.PI / 2; kn.add(kb2); yakLegParts.push(kb2); } // กำไลข้อเท้า
-      const yakParts = [yakHead, yakTop, yakLow, yakClub, ...yakArmParts, ...yakLegParts];
+      const yakParts = [yakHead, yakTop, yakLow, ...yakArmParts, ...yakLegParts];   // กระบองอยู่ในระบบอาวุธแล้ว
       yakParts.forEach(q => q.visible = false);
       G._yakParts = yakParts;
       G._yakShoeMat = yGreenD; // 🦶 เท้ายักษ์เขียวเข้ม
@@ -9328,8 +9339,8 @@ export default function CherryAdventure() {
         for (const sx of [-1, 1]) { const pr = new THREE.Mesh(new THREE.ConeGeometry(0.038, 0.26, 7), hGold); pr.position.set(sx * 0.11, 0.66, 0); pr.rotation.z = -sx * 0.24; hanTri.add(pr); }
         const cw = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), hGold); cw.scale.y = 0.6; cw.position.y = 0.52; hanTri.add(cw);
         const pom2 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), hGold); pom2.position.y = -0.6; hanTri.add(pom2); }
-      hanTri.position.set(-0.26, 1.52, -0.42); hanTri.rotation.z = -0.5; hanTri.rotation.x = 0.1;
-      char.add(hanTri);
+      hanTri.position.y = 0.16;                                    // 🔱 ย้ายเป็นอาวุธถือในมือขวา (จุดจับกลางด้าม)
+      if (G._regHeroWeapon) G._regHeroWeapon("hanTriW", hanTri);
       G._hanTri = hanTri;
       // ===== 💪 กำไลทอง + ขนปุยข้อมือ · 🦵 กำไลข้อเท้า =====
       const hanArmParts = [];
@@ -9341,7 +9352,7 @@ export default function CherryAdventure() {
       for (const leg of [legL, legR]) { const kn6 = leg.userData.knee || leg;
         const kb3 = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.024, 8, 16), hGold); kb3.position.set(0, -0.3, 0.005); kb3.rotation.x = Math.PI / 2; kn6.add(kb3); hanLegParts.push(kb3);
         for (let k = 0; k < 5; k++) { const a7 = -Math.PI * 0.5 + k * (Math.PI / 4); const tu2 = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.13, 5), hFur); tu2.position.set(Math.sin(a7) * 0.14, -0.18, Math.cos(a7) * 0.14 + 0.005); tu2.rotation.x = 0.2; kn6.add(tu2); hanLegParts.push(tu2); } }
-      const hanParts = [hanHead, hanTop, hanLow, hanTail, hanTri, ...hanArmParts, ...hanLegParts];
+      const hanParts = [hanHead, hanTop, hanLow, hanTail, ...hanArmParts, ...hanLegParts];   // ตรีเพชรอยู่ในระบบอาวุธแล้ว ไม่ต้องคุมการมองเห็นที่นี่
       hanParts.forEach(q => q.visible = false);
       G._hanParts = hanParts;
       G._hanShoeMat = hFur; // 🐾 เท้าขนขาว
@@ -28108,7 +28119,7 @@ export default function CherryAdventure() {
         }
         // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
         try {
-          const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove" }; // 🐺🐱🐰 เผ่าสัตว์ถืออาวุธตามอาชีพ/ของที่สวมจริง
+          const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW" }; // ⚔️ ฮีโร่ที่มีอาวุธประจำตัวถืออาวุธนั้น · ที่เหลือถืออาวุธตามอาชีพ/ของที่สวมจริง
           let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
           if (!wid) { const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c]; wid = (dflt && weaponModels[dflt]) ? dflt : "default"; }
           const wm = weaponModels[wid] || weaponModels.default;
@@ -33430,7 +33441,7 @@ export default function CherryAdventure() {
               } else if (p < 0.4) {
                 // 😤 คว้ากระบองจากหลัง บุกอาดๆ เข้าใส่
                 const e = smK((p - 0.2) / 0.2);
-                if (!A._yakGrab) { A._yakGrab = true; if (G._yakClub) G._yakClub.visible = false; yClub.visible = true; }
+                if (!A._yakGrab) { A._yakGrab = true; wand.visible = false; yClub.visible = true; }   // 🏏 ซ่อนกระบองในมือ แล้วใช้ตัวจำลองยักษ์แทน
                 char.position.x = bx + e * (EP.x - 0.95 - bx);
                 char.position.y = Math.abs(Math.sin(e * Math.PI * 2)) * 0.12;           // ย่ำอาดๆ สองก้าว
                 char.rotation.z = 0.14;
@@ -33471,8 +33482,8 @@ export default function CherryAdventure() {
                 kneeB(0.95 - e * 0.87);
                 yClub.position.set(char.position.x + 0.3, 1.75, battleCenter.z);
                 yClub.rotation.z = -0.7 * (1 - e) - 0.5;
-                if (p > 0.94) { yClub.visible = false; if (G._yakClub) G._yakClub.visible = true; }
-                if (p >= 0.99) { char.rotation.z = 0; char.position.y = 0; legR.rotation.x = 0; if (G._yakClub) G._yakClub.visible = true; }
+                if (p > 0.94) { yClub.visible = false; wand.visible = true; }
+                if (p >= 0.99) { char.rotation.z = 0; char.position.y = 0; legR.rotation.x = 0; wand.visible = true; }
               }
             } else if (G.heroId === "ignis" && A.basic) {
               // 🤖 IGNIS — ท่าโจมตีพิเศษเกราะเหล็ก: เจ็ตชาร์จ → ลอยตัวกลางอากาศ → ระดมยิงลำแสงฝ่ามือ 5 นัด → ลำแสงคู่เต็มกำลัง → ร่อนลงจอด
@@ -33664,7 +33675,7 @@ export default function CherryAdventure() {
               } else if (p < 0.8) {
                 // 🔨 ขว้างค้อนพายุหมุนติ้ว
                 const e = smK((p - 0.55) / 0.25);
-                if (!A._thTh) { A._thTh = true; if (G._thdHammer) G._thdHammer.visible = false; ham.visible = true; }
+                if (!A._thTh) { A._thTh = true; wand.visible = false; ham.visible = true; }   // 🔨 ขว้างค้อน — ซ่อนค้อนในมือระหว่างลอย
                 char.rotation.z = -0.08 + e * 0.26;
                 armR.rotation.x = -2.9 + e * 2.6; armR.rotation.z = 0.12;
                 armL.rotation.x = 0.3 - e * 0.5;
@@ -33679,12 +33690,12 @@ export default function CherryAdventure() {
                 const h1x = bx + 0.35;
                 ham.position.set(EP.x + (h1x - EP.x) * e, 1.5 + Math.sin(e * Math.PI) * 0.8, EP.z);
                 ham.rotation.z = -t * 18;
-                if (p > 0.93) { ham.visible = false; if (G._thdHammer) G._thdHammer.visible = true; }
+                if (p > 0.93) { ham.visible = false; wand.visible = true; }
                 char.rotation.z = 0.18 * (1 - e);
                 armR.rotation.x = -0.3 - e * 0.9 + e * e * 1.05; armR.rotation.z = 0.12;
                 armL.rotation.x = -0.2 * (1 - e); armL.rotation.z = -0.35 * (1 - e) - 0.12 * e;
                 kneeB(0.45 - e * 0.37);
-                if (p >= 0.99) { char.rotation.z = 0; char.position.y = 0; ham.visible = false; if (G._thdHammer) G._thdHammer.visible = true; }
+                if (p >= 0.99) { char.rotation.z = 0; char.position.y = 0; ham.visible = false; wand.visible = true; }
               }
             } else if (G.heroId === "ryujin" && A.basic) {
               // 🐉 RYUJIN — ท่าโจมตีพิเศษเผ่ามังกร: กางปีกรวมเพลิงเข้าแก่นอก → โผเข้าใกล้ → พ่นลมหายใจมังกรเพลิงท่วมศัตรู → เล็บเพลิงฟาดปิดท้าย → ร่อนถอยกลับ

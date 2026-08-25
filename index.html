@@ -3376,6 +3376,12 @@ function CherryAdventure() {
                 return { x: -0.32, y: 0, z: 0.42 }; // ⚜️ holy greatsword up-forward
             if (id === "ragAxe")
                 return { x: -0.42, y: 0, z: 0.18 }; // 🪓 demon battle axe forward
+            if (id === "hanTriW")
+                return { x: -0.3, y: 0, z: 0.16 }; // 🔱 ตรีเพชรหนุมาน — ปลายสามง่ามชี้ขึ้นหน้า
+            if (id === "yakClubW")
+                return { x: -0.36, y: 0, z: 0.2 }; // 🏏 กระบองยักษ์ — หัวกระบองพาดขึ้น
+            if (id === "thdHammerW")
+                return { x: -0.34, y: 0, z: 0.18 }; // 🔨 ค้อนพายุ — หัวค้อนพาดขึ้น
             if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove" || id === "fenClaw" || id === "nekoPaw")
                 return { x: 0, y: 0, z: 0 }; // 🥊🐺🐱 นวม/กรงเล็บ/อุ้งมือ — สวมทับกำปั้น ไม่ได้ถือด้าม
             if (id === "usaCarrot")
@@ -7199,6 +7205,9 @@ function CherryAdventure() {
         };
         G._setVisFrozen = setVisFrozen;
         Object.values(weaponModels).forEach((m) => { m.visible = false; wand.add(m); });
+        // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
+        G._regHeroWeapon = (key, mesh) => { if (!key || !mesh || weaponModels[key])
+            return; mesh.visible = false; wand.add(mesh); weaponModels[key] = mesh; };
         Object.values(gloveLModels).forEach((m) => { m.visible = false; wandL.add(m); }); // 🥊 นวมข้างซ้ายอยู่คนละช่องมือ
         weaponModels.default.visible = true;
         let curWeapon = "default";
@@ -7229,7 +7238,19 @@ function CherryAdventure() {
                 id = "ragAxe";
             else if (G.heroId === "khaosai" && weaponModels.khGlove)
                 id = "khGlove";
-            // 🐺🐱🐰 ฮีโร่เผ่าสัตว์ไม่บังคับอาวุธประจำชุด — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง (กรงเล็บ/อุ้งมือย้ายไปมือซ้ายเป็นส่วนของชุด)
+            else if (G.heroId === "fenrir" && weaponModels.fenClaw)
+                id = "fenClaw"; // 🐺 กรงเล็บหมาป่า
+            else if (G.heroId === "neko" && weaponModels.nekoPaw)
+                id = "nekoPaw"; // 🐱 อุ้งมือแมว
+            else if (G.heroId === "usagi" && weaponModels.usaCarrot)
+                id = "usaCarrot"; // 🐰 ค้อนแครอท
+            else if (G.heroId === "hanuman" && weaponModels.hanTriW)
+                id = "hanTriW"; // 🐒 ตรีเพชร
+            else if (G.heroId === "yaksa" && weaponModels.yakClubW)
+                id = "yakClubW"; // 👹 กระบองยักษ์
+            else if (G.heroId === "thunder" && weaponModels.thdHammerW)
+                id = "thdHammerW"; // ⚡ ค้อนพายุ
+            // 🐉😈🦅🐍🕊️👼🧝🦸 ฮีโร่ที่ไม่มีอาวุธประจำตัว — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง
             // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
             let famKey = null;
             if (!(id && weaponModels[id])) {
@@ -14220,11 +14241,10 @@ function CherryAdventure() {
                 hp2.position.y = -0.54;
                 thdHammer.add(hp2);
             }
-            thdHammer.position.set(0.24, 1.5, -0.42);
-            thdHammer.rotation.z = 0.55;
-            thdHammer.rotation.x = 0.1;
-            char.add(thdHammer);
-            G._thdHammer = thdHammer; // อ้างอิงไว้ซ่อนตอนขว้างในท่าพิเศษ
+            thdHammer.position.y = 0.2; // 🔨 ย้ายเป็นอาวุธถือในมือขวา
+            if (G._regHeroWeapon)
+                G._regHeroWeapon("thdHammerW", thdHammer);
+            G._thdHammer = thdHammer;
             // ===== 💪 ปลอกแขนเงินหมุดทอง + 🦵 สนับแข้งเงิน =====
             const thdArmParts = [];
             for (const arm of [armL, armR]) {
@@ -14248,7 +14268,7 @@ function CherryAdventure() {
                 kn.add(sh5);
                 thdLegParts.push(sh5);
             }
-            const thdParts = [thdHead, thdTop, thdCapeG, thdLow, thdHammer, ...thdArmParts, ...thdLegParts];
+            const thdParts = [thdHead, thdTop, thdCapeG, thdLow, ...thdArmParts, ...thdLegParts]; // ค้อนพายุอยู่ในระบบอาวุธแล้ว
             thdParts.forEach(q => q.visible = false);
             G._thdParts = thdParts;
             G._thdShoeMat = tLeather; // 🥾 บู๊ตหนังเข้ม
@@ -14435,11 +14455,10 @@ function CherryAdventure() {
                 pom.position.y = -0.58;
                 yakClub.add(pom);
             }
-            yakClub.position.set(-0.24, 1.52, -0.42);
-            yakClub.rotation.z = -0.55;
-            yakClub.rotation.x = 0.1;
-            char.add(yakClub);
-            G._yakClub = yakClub; // อ้างอิงไว้ซ่อนตอนควงในท่าพิเศษ
+            yakClub.position.y = 0.2; // 🏏 ย้ายเป็นอาวุธถือในมือขวา
+            if (G._regHeroWeapon)
+                G._regHeroWeapon("yakClubW", yakClub);
+            G._yakClub = yakClub;
             // ===== 💪 กำไลต้นแขน+ข้อมือทอง · 🦵 กำไลข้อเท้าทอง =====
             const yakArmParts = [];
             for (const arm of [armL, armR]) {
@@ -14464,7 +14483,7 @@ function CherryAdventure() {
                 kn.add(kb2);
                 yakLegParts.push(kb2);
             } // กำไลข้อเท้า
-            const yakParts = [yakHead, yakTop, yakLow, yakClub, ...yakArmParts, ...yakLegParts];
+            const yakParts = [yakHead, yakTop, yakLow, ...yakArmParts, ...yakLegParts]; // กระบองอยู่ในระบบอาวุธแล้ว
             yakParts.forEach(q => q.visible = false);
             G._yakParts = yakParts;
             G._yakShoeMat = yGreenD; // 🦶 เท้ายักษ์เขียวเข้ม
@@ -15769,10 +15788,9 @@ function CherryAdventure() {
                 pom2.position.y = -0.6;
                 hanTri.add(pom2);
             }
-            hanTri.position.set(-0.26, 1.52, -0.42);
-            hanTri.rotation.z = -0.5;
-            hanTri.rotation.x = 0.1;
-            char.add(hanTri);
+            hanTri.position.y = 0.16; // 🔱 ย้ายเป็นอาวุธถือในมือขวา (จุดจับกลางด้าม)
+            if (G._regHeroWeapon)
+                G._regHeroWeapon("hanTriW", hanTri);
             G._hanTri = hanTri;
             // ===== 💪 กำไลทอง + ขนปุยข้อมือ · 🦵 กำไลข้อเท้า =====
             const hanArmParts = [];
@@ -15815,7 +15833,7 @@ function CherryAdventure() {
                     hanLegParts.push(tu2);
                 }
             }
-            const hanParts = [hanHead, hanTop, hanLow, hanTail, hanTri, ...hanArmParts, ...hanLegParts];
+            const hanParts = [hanHead, hanTop, hanLow, hanTail, ...hanArmParts, ...hanLegParts]; // ตรีเพชรอยู่ในระบบอาวุธแล้ว ไม่ต้องคุมการมองเห็นที่นี่
             hanParts.forEach(q => q.visible = false);
             G._hanParts = hanParts;
             G._hanShoeMat = hFur; // 🐾 เท้าขนขาว
@@ -44418,7 +44436,7 @@ function CherryAdventure() {
                 }
                 // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
                 try {
-                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove" }; // 🐺🐱🐰 เผ่าสัตว์ถืออาวุธตามอาชีพ/ของที่สวมจริง
+                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW" }; // ⚔️ ฮีโร่ที่มีอาวุธประจำตัวถืออาวุธนั้น · ที่เหลือถืออาวุธตามอาชีพ/ของที่สวมจริง
                     let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
                     if (!wid) {
                         const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c];
@@ -52671,10 +52689,9 @@ function CherryAdventure() {
                                     const e = smK((p - 0.2) / 0.2);
                                     if (!A._yakGrab) {
                                         A._yakGrab = true;
-                                        if (G._yakClub)
-                                            G._yakClub.visible = false;
+                                        wand.visible = false;
                                         yClub.visible = true;
-                                    }
+                                    } // 🏏 ซ่อนกระบองในมือ แล้วใช้ตัวจำลองยักษ์แทน
                                     char.position.x = bx + e * (EP.x - 0.95 - bx);
                                     char.position.y = Math.abs(Math.sin(e * Math.PI * 2)) * 0.12; // ย่ำอาดๆ สองก้าว
                                     char.rotation.z = 0.14;
@@ -52746,15 +52763,13 @@ function CherryAdventure() {
                                     yClub.rotation.z = -0.7 * (1 - e) - 0.5;
                                     if (p > 0.94) {
                                         yClub.visible = false;
-                                        if (G._yakClub)
-                                            G._yakClub.visible = true;
+                                        wand.visible = true;
                                     }
                                     if (p >= 0.99) {
                                         char.rotation.z = 0;
                                         char.position.y = 0;
                                         legR.rotation.x = 0;
-                                        if (G._yakClub)
-                                            G._yakClub.visible = true;
+                                        wand.visible = true;
                                     }
                                 }
                             }
@@ -53110,10 +53125,9 @@ function CherryAdventure() {
                                     const e = smK((p - 0.55) / 0.25);
                                     if (!A._thTh) {
                                         A._thTh = true;
-                                        if (G._thdHammer)
-                                            G._thdHammer.visible = false;
+                                        wand.visible = false;
                                         ham.visible = true;
-                                    }
+                                    } // 🔨 ขว้างค้อน — ซ่อนค้อนในมือระหว่างลอย
                                     char.rotation.z = -0.08 + e * 0.26;
                                     armR.rotation.x = -2.9 + e * 2.6;
                                     armR.rotation.z = 0.12;
@@ -53139,8 +53153,7 @@ function CherryAdventure() {
                                     ham.rotation.z = -t * 18;
                                     if (p > 0.93) {
                                         ham.visible = false;
-                                        if (G._thdHammer)
-                                            G._thdHammer.visible = true;
+                                        wand.visible = true;
                                     }
                                     char.rotation.z = 0.18 * (1 - e);
                                     armR.rotation.x = -0.3 - e * 0.9 + e * e * 1.05;
@@ -53152,8 +53165,7 @@ function CherryAdventure() {
                                         char.rotation.z = 0;
                                         char.position.y = 0;
                                         ham.visible = false;
-                                        if (G._thdHammer)
-                                            G._thdHammer.visible = true;
+                                        wand.visible = true;
                                     }
                                 }
                             }
