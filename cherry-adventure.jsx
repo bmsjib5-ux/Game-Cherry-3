@@ -1904,9 +1904,14 @@ export default function CherryAdventure() {
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
     key.shadow.radius = 5; // softer shadow edges
-    key.shadow.camera.left = -12; key.shadow.camera.right = 12;
-    key.shadow.camera.top = 12; key.shadow.camera.bottom = -12;
+    key.shadow.camera.left = -19; key.shadow.camera.right = 19;   // 🌑 กรอบเงากว้างขึ้น ครอบของรอบตัวได้มากขึ้น
+    key.shadow.camera.top = 19; key.shadow.camera.bottom = -19;
+    key.shadow.camera.near = 1; key.shadow.camera.far = 74;
+    key.shadow.bias = -0.0008; key.shadow.normalBias = 0.03;      // กันลายเงาลายทางบนพื้นเหลี่ยม
     scene.add(key);
+    const keyTarget = new THREE.Object3D();   // 🎯 เป้าของแสงหลัก — เดินตามผู้เล่น เงาจึงมีทั่วทั้งแมพ ไม่ใช่แค่กลางแมพ
+    scene.add(keyTarget);
+    key.target = keyTarget;
     // 🌙 ไฟขอบจากด้านหลัง-เยื้องข้าง — ตัวละคร/มอนสเตอร์ได้เส้นขอบเรือง แยกตัวออกจากฉากแบบอนิเมะ
     const rimL = new THREE.DirectionalLight(0xcfe0ff, 0.5);
     rimL.position.set(-8, 5.5, -10);
@@ -2046,8 +2051,9 @@ export default function CherryAdventure() {
 
     // ---------- World: sculpted terrain ----------
     // 🏔️ พื้นเป็นตาข่ายวงกลมที่ดันความสูงตามภูมิประเทศของแมพ + ระบายสีตามความสูง/ความชัน
-    const TERR_R = 54, TERR_TH = 144, TERR_RA = 64;
-    const groundGeo = new THREE.RingGeometry(0.02, TERR_R, TERR_TH, TERR_RA);
+    const TERR_R = 54, TERR_TH = 120, TERR_RA = 54;
+    // 🪨 แยกจุดยอดออกจากกัน (non-indexed) → แต่ละหน้าสามเหลี่ยมมีเวกเตอร์ปกติและสีของตัวเอง = ลุค low-poly เหลี่ยม
+    const groundGeo = new THREE.RingGeometry(0.02, TERR_R, TERR_TH, TERR_RA).toNonIndexed();
     groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(groundGeo.attributes.position.count * 3).fill(1), 3));
     {   // 🗺️ UV แบบระนาบตามพิกัดโลก — ลายพื้นไม่บิดวนตามวงแหวน
       const gp = groundGeo.attributes.position, guv = groundGeo.attributes.uv;
@@ -2076,7 +2082,7 @@ export default function CherryAdventure() {
       tx.anisotropy = 4;
       return tx;
     })();
-    const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, vertexColors: true, map: groundTex, bumpMap: groundTex, bumpScale: 0.4 }));
+    const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, vertexColors: true, map: groundTex, bumpMap: groundTex, bumpScale: 0.16 }));
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
@@ -12779,6 +12785,10 @@ export default function CherryAdventure() {
       });
     };
 
+    // 🌑 เงาสัมผัสร่วม — ใช้รูปทรง/วัสดุชิ้นเดียวกันทุกตัว (สำคัญมากในโหมดประหยัดแบตที่ปิดเงาจริง ของจะได้ไม่ดูลอย)
+    G._blobGeo = new THREE.CircleGeometry(0.6, 22);
+    G._blobMat = new THREE.MeshBasicMaterial({ color: 0x2e3a26, transparent: true, opacity: 0.24, depthWrite: false });
+    G._blobMat.userData.vivid = true;   // ไม่ต้องให้ตัวเร่งสีไปแตะ
     const blobShadow = new THREE.Mesh(
       new THREE.CircleGeometry(0.7, 32),
       new THREE.MeshBasicMaterial({ color: 0x4f6440, transparent: true, opacity: 0.3 })
@@ -14517,6 +14527,12 @@ export default function CherryAdventure() {
           o.add(sh);
         });
       }
+      if (G._blobGeo) {   // 🌑 เงาสัมผัสใต้ตัว — ตัวมอนจะได้ไม่ดูลอยเหนือพื้น
+        const bl = new THREE.Mesh(G._blobGeo, G._blobMat);
+        bl.rotation.x = -Math.PI / 2; bl.position.y = 0.03;
+        bl.raycast = () => {}; bl.userData._outl = 2;
+        g.add(bl); g.userData.blob = bl;
+      }
       return g;
     };
 
@@ -15779,20 +15795,27 @@ export default function CherryAdventure() {
       const cMid = new THREE.Color(b.ground), cLo = new THREE.Color(P.lo != null ? P.lo : b.ground);
       const cHi = new THREE.Color(P.hi != null ? P.hi : b.ground), cRk = new THREE.Color(P.rock != null ? P.rock : b.ground);
       const pos = groundGeo.attributes.position, col = groundGeo.attributes.color, tmpC = new THREE.Color();
-      const e = 0.9;
-      for (let i = 0; i < pos.count; i++) {
-        const wx = pos.getX(i), wz = -pos.getY(i);      // แผ่นถูกหมุน -90° รอบแกน X → (x, -y) คือ (x, z) ของโลก
-        const h = terrainAt(wx, wz);
-        pos.setZ(i, h);
-        const sl = Math.min(1, (Math.abs(terrainAt(wx + e, wz) - terrainAt(wx - e, wz)) + Math.abs(terrainAt(wx, wz + e) - terrainAt(wx, wz - e))) / (4 * e) * 1.7);
+      const pa = pos.array;
+      for (let i = 0; i < pos.count; i++) pa[i * 3 + 2] = terrainAt(pa[i * 3], -pa[i * 3 + 1]);   // แผ่นถูกหมุน -90° รอบแกน X → (x, -y) คือ (x, z) ของโลก · แกน z คือความสูง
+      const ca = col.array;
+      for (let f = 0; f < pos.count; f += 3) {          // 🪨 ทีละหน้าสามเหลี่ยม — ทั้งหน้าใช้สีเดียวกัน
+        const i0 = f * 3, i1 = i0 + 3, i2 = i0 + 6;
+        const h = (pa[i0 + 2] + pa[i1 + 2] + pa[i2 + 2]) / 3;
+        const ax = pa[i1] - pa[i0], ay = pa[i1 + 1] - pa[i0 + 1], az = pa[i1 + 2] - pa[i0 + 2];
+        const bx = pa[i2] - pa[i0], by = pa[i2 + 1] - pa[i0 + 1], bz = pa[i2 + 2] - pa[i0 + 2];
+        const nz = ax * by - ay * bx;                    // องค์ประกอบ "ขึ้น" ของเวกเตอร์ปกติ (แกน z ในพิกัดแผ่น)
+        const nl = Math.hypot(ay * bz - az * by, az * bx - ax * bz, nz) || 1;
+        const sl = Math.min(1, (1 - Math.abs(nz) / nl) * 2.1);   // 0 = ราบ · 1 = ผาชัน
         const u = Math.max(-1, Math.min(1, h / hN));
         tmpC.copy(cMid);
         if (u > 0) tmpC.lerp(cHi, u * 0.9); else if (u < 0) tmpC.lerp(cLo, -u * 0.9);
         tmpC.lerp(cRk, sl * rockK);
-        col.setXYZ(i, tmpC.r, tmpC.g, tmpC.b);
+        ca[i0] = ca[i1] = ca[i2] = tmpC.r;
+        ca[i0 + 1] = ca[i1 + 1] = ca[i2 + 1] = tmpC.g;
+        ca[i0 + 2] = ca[i1 + 2] = ca[i2 + 2] = tmpC.b;
       }
       pos.needsUpdate = true; col.needsUpdate = true;
-      groundGeo.computeVertexNormals();
+      groundGeo.computeVertexNormals();   // จุดยอดไม่แชร์กันแล้ว → ได้เวกเตอร์ปกติต่อหน้า = เหลี่ยมคม
       const rp = ring.geometry.attributes.position;     // 🔵 เส้นขอบสนามไต่ไปตามพื้น
       for (let i = 0; i < rp.count; i++) rp.setZ(i, terrainAt(ringPos0[i * 3], -ringPos0[i * 3 + 1]) + 0.012);
       rp.needsUpdate = true;
@@ -30186,7 +30209,10 @@ export default function CherryAdventure() {
         key.intensity = 0.16 + 0.30 * dayAmt; // ☀️ แดดกลางวันนุ่มลง
         key.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
         // sun/moon travels across the sky → shadows move through the day
-        key.position.set(Math.cos(sunA) * 9, 4 + Math.max(0.1, sunH) * 8, 7);
+        // 🎯 ยึดแสงไว้กับตัวผู้เล่น กรอบเงาจึงตามไปด้วยทุกที่ที่เดินไป
+        keyTarget.position.set(char.position.x, 0, char.position.z);
+        keyTarget.updateMatrixWorld();
+        key.position.set(char.position.x + Math.cos(sunA) * 9, 4 + Math.max(0.1, sunH) * 8, char.position.z + 7);
         // stars fade in at night
         starMat.opacity = Math.max(0, 1 - dayAmt * 2.2);
         // fireflies drift at night
@@ -40975,8 +41001,8 @@ export default function CherryAdventure() {
         });
       }
 
-      blobShadow.position.x = char.position.x;
-      blobShadow.position.z = char.position.z;
+      // 🌑 เงาสัมผัสใต้เท้า — วางบนผิวพื้นตามความสูงจริง (กลุ่มโลกถูกยกลง จึงต้องบวกความสูงพื้นกลับเข้าไป)
+      blobShadow.position.set(char.position.x, terrainAt(char.position.x, char.position.z) + 0.03, char.position.z);
 
       // camera
       if (G.mode === "create" || G.mode === "class") {
