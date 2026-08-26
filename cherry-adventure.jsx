@@ -45,6 +45,143 @@ const BIOMES = [
   // 🌴 ด่านป่าอเมซอน — Lv 1000-1100 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
   { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 1000, lvMax: 1100, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
 ];
+// ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
+// พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
+const TERR_FLAT_R = 15;   // รัศมีลานกลางแมพที่พื้นเรียบสนิท
+const TERR_RAMP = 8;      // ระยะไล่ระดับจากลานกลางออกไปหาภูมิประเทศเต็มรูป
+// รูปทรงพื้นฐานที่เอามาบวกกันเป็นภูมิประเทศ
+//  hill=เนินกลม · ridge=สันเขายาว · mesa=ที่ราบสูงยอดตัด(ขอบเป็นหน้าผา) · drop=ขอบที่ราบดิ่งลง
+//  crater=หลุมอุกกาบาต · tilt=พื้นเอียงทั้งผืน · wave=ผิวขรุขระ
+const terrFeat = (f, x, z) => {
+  const dx = x - (f.x || 0), dz = z - (f.z || 0);
+  if (f.t === "hill") { const d = Math.hypot(dx, dz) / f.r; if (d >= 1) return 0; const c = Math.cos(d * Math.PI * 0.5); return f.h * c * c; }
+  if (f.t === "ridge") { const ca = Math.cos(f.a), sa = Math.sin(f.a);
+    const u = Math.abs((dx * ca + dz * sa) / f.len), v = Math.abs((-dx * sa + dz * ca) / f.w);
+    if (u >= 1 || v >= 1) return 0;
+    const cu = Math.cos(u * Math.PI * 0.5), cv = Math.cos(v * Math.PI * 0.5);
+    return f.h * cu * cu * cv * cv; }
+  if (f.t === "mesa") { const d = Math.hypot(dx, dz), e = f.e || 3;
+    if (d <= f.r) return f.h; if (d >= f.r + e) return 0;
+    const u = (d - f.r) / e; return f.h * (1 - u * u * (3 - 2 * u)); }
+  if (f.t === "drop") { const d = Math.hypot(dx, dz); if (d <= f.r0) return 0;
+    const u = Math.min(1, (d - f.r0) / f.w); return f.h * u * u * (3 - 2 * u); }
+  if (f.t === "crater") { const d = Math.hypot(dx, dz) / f.r; if (d >= 1.45) return 0;
+    const bowl = d < 1 ? -f.h * (1 - d * d) : 0;                       // ก้นหลุมยุบ
+    return bowl + (f.rim || 0) * Math.exp(-Math.pow((d - 1.02) / 0.26, 2)); }   // ขอบปากหลุมนูน
+  if (f.t === "tilt") return (dx * Math.cos(f.a) + dz * Math.sin(f.a)) * f.g;
+  if (f.t === "wave") return Math.sin(x * f.fx + (f.p || 0)) * Math.cos(z * f.fz + (f.q || 0)) * f.h;
+  return 0;
+};
+const TERRAIN = {
+  // 🌸 ทุ่งซากุระ — เนินหญ้าลูกคลื่นนุ่ม ภูเขาเขียวล้อมไกล ๆ
+  meadow:  { lo: 0x83a566, hi: 0xd2e2a6, rock: 0x8e9a86, hN: 7, rockK: 0.45, f: [
+    { t: "wave", fx: 0.075, fz: 0.062, h: 0.95, p: 0.6, q: 1.3 },
+    { t: "hill", x: -25, z: -15, r: 15, h: 6.5 },
+    { t: "hill", x: 23, z: 19, r: 13, h: 5.2 },
+    { t: "hill", x: 6, z: 27, r: 10, h: 3.2 },
+    { t: "ridge", x: 0, z: -34, a: 0.1, len: 30, w: 12, h: 7.5 } ], rim: { r0: 40, w: 14, h: 16, jag: 0.22, k: 6 } },
+  // 🏜️ ทะเลทรายเพลิง — สันทรายลูกใหญ่ + เมซาที่ราบสูงยอดตัด ขอบเป็นหน้าผาชัน
+  desert:  { lo: 0xd5ac66, hi: 0xf9e6b6, rock: 0xa87c4c, hN: 8, rockK: 0.7, f: [
+    { t: "wave", fx: 0.1, fz: 0.055, h: 1.6, p: 0.2, q: 0.9 },
+    { t: "mesa", x: -23, z: 12, r: 7.5, h: 10.0, e: 2.6 },
+    { t: "mesa", x: 18, z: -21, r: 5.5, h: 7.0, e: 2.0 },
+    { t: "ridge", x: 25, z: 13, a: -0.7, len: 18, w: 8, h: 6.5 },
+    { t: "ridge", x: -4, z: 27, a: 0.35, len: 16, w: 7, h: 4.5 } ], rim: { r0: 40, w: 15, h: 13, jag: 0.3, k: 5 } },
+  // ❄️ ทุ่งหิมะเยือก — เทือกเขาหิมะสูงชัน + แอ่งหุบเขา
+  snow:    { lo: 0xb6cce2, hi: 0xffffff, rock: 0x8794a8, hN: 10, rockK: 0.5, f: [
+    { t: "ridge", x: -6, z: -30, a: 0.15, len: 32, w: 13, h: 14 },
+    { t: "ridge", x: 22, z: 18, a: 1.05, len: 20, w: 9, h: 9 },
+    { t: "hill", x: -24, z: 20, r: 13, h: -2.6 },
+    { t: "wave", fx: 0.09, fz: 0.07, h: 0.8, p: 1.1, q: 0.3 } ], rim: { r0: 38, w: 16, h: 22, jag: 0.28, k: 7 } },
+  // 🕳️ ถ้ำมรกต — พื้นถ้ำขรุขระ ชะง่อนหินยอดตัด แอ่งลึก ผนังถ้ำบีบเข้ามาใกล้
+  cave:    { lo: 0x2f3b2c, hi: 0x93a380, rock: 0x4a5548, hN: 5, rockK: 0.8, f: [
+    { t: "wave", fx: 0.16, fz: 0.13, h: 0.95, p: 0.4, q: 2.1 },
+    { t: "mesa", x: -21, z: -19, r: 5, h: 4.5, e: 1.5 },
+    { t: "mesa", x: 23, z: 12, r: 4.2, h: 3.6, e: 1.3 },
+    { t: "hill", x: 8, z: 26, r: 9, h: -2.2 } ], rim: { r0: 35, w: 9, h: 20, jag: 0.35, k: 9 } },
+  // 🌋 ภูเขาไฟอสูร — พื้นเอียงไต่ขึ้นหาปากปล่อง + ร่องลาวายุบ
+  volcano: { lo: 0x36190f, hi: 0x8e4a2e, rock: 0x2a1610, hN: 10, rockK: 0.55, f: [
+    { t: "tilt", a: -1.5708, g: 0.13 },
+    { t: "hill", x: 0, z: -46, r: 34, h: 20 },
+    { t: "ridge", x: 14, z: 8, a: 0.9, len: 24, w: 4.5, h: -2.4 },
+    { t: "wave", fx: 0.13, fz: 0.11, h: 0.85, p: 2.0, q: 0.5 } ], rim: { r0: 42, w: 14, h: 15, jag: 0.4, k: 8 } },
+  // ☁️ เกาะลอยสวรรค์ — ที่ราบลอยฟ้า ขอบเกาะดิ่งหายไปในหมู่เมฆ (ไม่มีภูเขาล้อม)
+  sky:     { lo: 0x9cc2df, hi: 0xf4fbff, rock: 0x8ea6c4, hN: 4, rockK: 0.45, f: [
+    { t: "hill", x: -21, z: 15, r: 9, h: 3.4 },
+    { t: "hill", x: 19, z: -17, r: 8, h: 2.8 },
+    { t: "mesa", x: 4, z: 24, r: 5, h: 2.6, e: 1.6 },
+    { t: "wave", fx: 0.08, fz: 0.09, h: 0.5, p: 0.7, q: 1.7 },
+    { t: "drop", r0: 35.5, w: 7, h: -30 } ] },
+  // 🔥 ขุมนรกันตร์ — ที่ราบหินหลายชั้น คั่นด้วยเหวแยกยาว
+  hell:    { lo: 0x12040a, hi: 0x70141e, rock: 0x2a0810, hN: 8, rockK: 0.7, f: [
+    { t: "mesa", x: -22, z: -14, r: 7, h: 7.5, e: 1.5 },
+    { t: "mesa", x: 20, z: 16, r: 6, h: 5.0, e: 1.3 },
+    { t: "mesa", x: -8, z: 26, r: 5, h: 3.4, e: 1.2 },
+    { t: "ridge", x: 6, z: -4, a: 0.5, len: 30, w: 3.6, h: -4.5 },
+    { t: "wave", fx: 0.14, fz: 0.12, h: 0.75, p: 1.4, q: 2.4 } ], rim: { r0: 38, w: 13, h: 18, jag: 0.45, k: 11 } },
+  // ☀️ สรวงสวรรค์ — ลานเมฆยกระดับเป็นชั้นบันไดซ้อนกัน
+  heaven:  { lo: 0xe4d193, hi: 0xfff9e0, rock: 0xd6c07c, hN: 7, rockK: 0.25, f: [
+    { t: "mesa", x: -20, z: -18, r: 9, h: 3.0, e: 2.4 },
+    { t: "mesa", x: -20, z: -18, r: 5, h: 3.0, e: 2.0 },
+    { t: "mesa", x: 22, z: 16, r: 8, h: 2.6, e: 2.2 },
+    { t: "mesa", x: 22, z: 16, r: 4, h: 2.6, e: 1.8 } ], rim: { r0: 40, w: 12, h: 9, jag: 0.1, k: 5 } },
+  // 🌑 ดวงจันทร์ — หลุมอุกกาบาตน้อยใหญ่ ขอบปากหลุมนูน
+  moon:    { lo: 0x5b5c64, hi: 0xccd0da, rock: 0x74777f, hN: 4, rockK: 0.5, f: [
+    { t: "crater", x: -22, z: -14, r: 10, h: 3.4, rim: 1.8 },
+    { t: "crater", x: 20, z: 18, r: 8, h: 2.6, rim: 1.4 },
+    { t: "crater", x: -6, z: 28, r: 6, h: 1.8, rim: 1.0 },
+    { t: "crater", x: 28, z: -8, r: 5, h: 1.5, rim: 0.9 },
+    { t: "wave", fx: 0.19, fz: 0.17, h: 0.35, p: 0.9, q: 1.9 } ], rim: { r0: 40, w: 14, h: 11, jag: 0.3, k: 8 } },
+  // 🍬 แดนขนมหวาน — เนินครีมกลมนุ่มลูกโต ๆ
+  candy:   { lo: 0xeda4cb, hi: 0xfff2fa, rock: 0xe58ac0, hN: 5, rockK: 0.18, f: [
+    { t: "hill", x: -22, z: -16, r: 11, h: 5.0 },
+    { t: "hill", x: 21, z: 14, r: 9, h: 4.0 },
+    { t: "hill", x: -4, z: 27, r: 8, h: 3.4 },
+    { t: "hill", x: 27, z: -16, r: 7, h: 2.8 },
+    { t: "wave", fx: 0.11, fz: 0.1, h: 0.6, p: 0.5, q: 1.2 } ], rim: { r0: 40, w: 13, h: 10, jag: 0.16, k: 6 } },
+  // 🏖️ หาดทะเลทราย — หาดลาดต่ำลงหาทะเล + สันทราย + หน้าผาหินริมฝั่ง
+  beach:   { lo: 0xe3cd92, hi: 0xfff6d4, rock: 0xa39a86, hN: 6, rockK: 0.55, f: [
+    { t: "tilt", a: 0, g: -0.06 },
+    { t: "mesa", x: -25, z: -18, r: 6, h: 6.5, e: 1.9 },
+    { t: "ridge", x: -20, z: 14, a: 0.6, len: 16, w: 7, h: 3.4 },
+    { t: "wave", fx: 0.1, fz: 0.08, h: 0.65, p: 1.6, q: 0.4 } ], rim: { r0: 42, w: 12, h: 8, jag: 0.2, k: 5 } },
+  // 🗿 ลานประลองไททัน — ลานที่ราบสูงยกพื้น ขอบตกเป็นคู แล้วล้อมด้วยกำแพงผาสูง
+  titan:   { lo: 0x36461f, hi: 0x8e9e6e, rock: 0x6a6a5a, hN: 8, rockK: 0.65, f: [
+    { t: "drop", r0: 27, w: 5, h: -5 },
+    { t: "mesa", x: -20, z: 15, r: 5, h: 3.2, e: 1.4 },
+    { t: "mesa", x: 19, z: -16, r: 4.5, h: 2.6, e: 1.2 },
+    { t: "wave", fx: 0.12, fz: 0.1, h: 0.45, p: 0.3, q: 1.5 } ], rim: { r0: 35, w: 9, h: 24, jag: 0.12, k: 4 } },
+  // 🌴 ป่าดิบอเมซอน — พื้นป่าขรุขระ เนินดินใหญ่ ล้อมด้วยสันเขาชื้น
+  amazon:  { lo: 0x18321d, hi: 0x5e8e4a, rock: 0x35402c, hN: 6, rockK: 0.55, f: [
+    { t: "wave", fx: 0.13, fz: 0.11, h: 1.15, p: 0.8, q: 1.9 },
+    { t: "hill", x: -24, z: -18, r: 12, h: 6.0 },
+    { t: "hill", x: 22, z: 20, r: 10, h: 4.5 },
+    { t: "hill", x: 4, z: 28, r: 8, h: 3.2 } ], rim: { r0: 38, w: 14, h: 17, jag: 0.3, k: 7 } },
+};
+let TERR_CUR = null;      // โปรไฟล์ภูมิประเทศของแมพปัจจุบัน
+let TERR_FLATTEN = false; // 🏰 ในเมือง/บ้าน/ฟาร์ม — พื้นราบสนิท (ลานเมืองใช้พิกัดเดียวกับสนามนอก)
+let TERR_SAFE = null;     // จุดปลอดภัย (แท่นวาร์ป/หมู่บ้าน) — บังคับให้พื้นเรียบ
+// ความสูงพื้นที่พิกัดใด ๆ ของแมพปัจจุบัน
+const terrainAt = (x, z) => {
+  const P = TERR_CUR;
+  if (!P || TERR_FLATTEN) return 0;
+  const d = Math.hypot(x, z);
+  let k = d <= TERR_FLAT_R ? 0 : Math.min(1, (d - TERR_FLAT_R) / TERR_RAMP);
+  k = k * k * (3 - 2 * k);
+  if (TERR_SAFE) for (let i = 0; i < TERR_SAFE.length; i++) {   // 🛡️ รอบแท่นวาร์ป/หมู่บ้านต้องเรียบ ยืนได้สนิท
+    const sp = TERR_SAFE[i], sd = Math.hypot(x - sp.x, z - sp.z), pad = 3.5;
+    if (sd < sp.r + pad) { let u = sd <= sp.r ? 0 : (sd - sp.r) / pad; u = u * u * (3 - 2 * u); if (u < k) k = u; }
+  }
+  if (k <= 0) return 0;
+  let h = 0;
+  for (let i = 0; i < P.f.length; i++) h += terrFeat(P.f[i], x, z);
+  if (P.rim && d > P.rim.r0) {   // 🏔️ เทือกเขาล้อมขอบแมพ — ยอดหยักไม่เท่ากันให้ดูเป็นธรรมชาติ
+    const u = Math.min(1, (d - P.rim.r0) / P.rim.w);
+    h += P.rim.h * Math.pow(u, 1.6) * (1 + (P.rim.jag || 0) * Math.sin(Math.atan2(z, x) * (P.rim.k || 7)));
+  }
+  return h * k;
+};
+
 // 📱 กันรอยบาก/กล้องหน้า (Dynamic Island): เลื่อน UI ขอบบนลงตาม safe-area ของเครื่อง
 const ST = (px) => `calc(env(safe-area-inset-top, 0px) + ${px}px)`;
 // 🌊 smoothstep — ไล่ค่าแบบเข้า-ออกนุ่ม (ใช้ลบมุมหักของคีย์เฟรม ให้ท่าลื่นไม่กระตุก)
@@ -1855,19 +1992,21 @@ export default function CherryAdventure() {
       });
     };
 
-    // ---------- World: big meadow ----------
-    const ground = new THREE.Mesh(
-      new THREE.CircleGeometry(50, 56),
-      new THREE.MeshStandardMaterial({ color: 0xa8c98a, roughness: 1 })
-    );
+    // ---------- World: sculpted terrain ----------
+    // 🏔️ พื้นเป็นตาข่ายวงกลมที่ดันความสูงตามภูมิประเทศของแมพ + ระบายสีตามความสูง/ความชัน
+    const TERR_R = 54, TERR_TH = 144, TERR_RA = 64;
+    const groundGeo = new THREE.RingGeometry(0.02, TERR_R, TERR_TH, TERR_RA);
+    groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(groundGeo.attributes.position.count * 3).fill(1), 3));
+    const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, vertexColors: true }));
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
+    G._ground = ground;
 
     const FIELD_R = 34; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
     const TARGET_WILDS = 48; // 🐾 มอนสเตอร์ในแมพ ×2 (กระจายตามแคมป์มากขึ้น)
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(FIELD_R - 0.08, FIELD_R + 0.08, 72),
+      new THREE.RingGeometry(FIELD_R - 0.08, FIELD_R + 0.08, 168),
       new THREE.MeshBasicMaterial({ color: 0x7ba05b, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
     );
     ring.rotation.x = -Math.PI / 2;
@@ -15551,11 +15690,49 @@ export default function CherryAdventure() {
     };
     G.updateWarpLabels();
 
+    // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
+    const ringPos0 = ring.geometry.attributes.position.array.slice();
+    G.rebuildTerrain = (b) => {
+      TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
+      TERR_FLATTEN = !!G._terrFlatMode;
+      TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }]);   // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
+      const P = TERR_CUR, hN = P.hN || 8, rockK = P.rockK != null ? P.rockK : 0.6;
+      const cMid = new THREE.Color(b.ground), cLo = new THREE.Color(P.lo != null ? P.lo : b.ground);
+      const cHi = new THREE.Color(P.hi != null ? P.hi : b.ground), cRk = new THREE.Color(P.rock != null ? P.rock : b.ground);
+      const pos = groundGeo.attributes.position, col = groundGeo.attributes.color, tmpC = new THREE.Color();
+      const e = 0.9;
+      for (let i = 0; i < pos.count; i++) {
+        const wx = pos.getX(i), wz = -pos.getY(i);      // แผ่นถูกหมุน -90° รอบแกน X → (x, -y) คือ (x, z) ของโลก
+        const h = terrainAt(wx, wz);
+        pos.setZ(i, h);
+        const sl = Math.min(1, (Math.abs(terrainAt(wx + e, wz) - terrainAt(wx - e, wz)) + Math.abs(terrainAt(wx, wz + e) - terrainAt(wx, wz - e))) / (4 * e) * 1.7);
+        const u = Math.max(-1, Math.min(1, h / hN));
+        tmpC.copy(cMid);
+        if (u > 0) tmpC.lerp(cHi, u * 0.9); else if (u < 0) tmpC.lerp(cLo, -u * 0.9);
+        tmpC.lerp(cRk, sl * rockK);
+        col.setXYZ(i, tmpC.r, tmpC.g, tmpC.b);
+      }
+      pos.needsUpdate = true; col.needsUpdate = true;
+      groundGeo.computeVertexNormals();
+      const rp = ring.geometry.attributes.position;     // 🔵 เส้นขอบสนามไต่ไปตามพื้น
+      for (let i = 0; i < rp.count; i++) rp.setZ(i, terrainAt(ringPos0[i * 3], -ringPos0[i * 3 + 1]) + 0.012);
+      rp.needsUpdate = true;
+      if (G.snapWorldDecor) G.snapWorldDecor();
+    };
+    // 🌳 วางของประดับฉากให้แนบพื้นที่สูงต่ำไม่เท่ากัน (เก็บความสูงเดิมไว้ แล้วบวกความสูงพื้นเข้าไป)
+    G.snapWorldDecor = () => {
+      const snap = (o) => { if (!o) return; if (o.userData._y0 == null) o.userData._y0 = o.position.y; o.position.y = o.userData._y0 + terrainAt(o.position.x, o.position.z); };
+      (G.sceneryObjects || []).forEach(snap);
+      (G.biomeDecorGroups || []).forEach((grp) => { if (grp && grp.children) grp.children.forEach(snap); });
+      if (G.warpGate && G.warpGate.children) G.warpGate.children.forEach(snap);
+    };
+    G.rebuildTerrain(BIOMES[G.curBiome || 0] || BIOMES[0]);   // 🏔️ ปั้นภูมิประเทศแมพเริ่มต้น
+
     // decorations we can toggle per biome (trees/bushes already added get a tag)
     const switchBiome = (idx, quiet) => {
       const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
       G.curBiome = BIOMES.indexOf(b);
-      ground.material.color.setHex(b.ground);
+      G.rebuildTerrain(b);   // 🏔️ ปั้นภูเขา/ที่ราบสูง/หน้าผาประจำแมพนี้
       G.biomeSky = new THREE.Color(b.sky);
       G.biomeFog = new THREE.Color(b.fog);
       // clear current wild monsters and respawn from this biome's pool
@@ -16526,7 +16703,8 @@ export default function CherryAdventure() {
     // 🌳🚫 ซ่อน "ของสูง" ของโลกภายนอกรอบเมือง (ต้นไม้/อาคารหมู่บ้าน/ป้าย) — เว้นพื้น ท้องฟ้า และของไกล ๆ
     const townWorldHide = () => {
       const list = []; const bb = new THREE.Box3();
-      for (const c of scene.children) {
+      const kids = scene.children.concat(G._worldRoot ? G._worldRoot.children : []);   // 🏔️ ของฉากถูกย้ายเข้ากลุ่มโลกแล้ว
+      for (const c of kids) {
         if (!c.visible || c === townZone || c === char || c === G._mountMesh || c === buddyMesh) continue;
         if (c.isLight || c.isCamera || c.type === "Sprite") continue;
         if (Math.hypot(c.position.x, c.position.z) > TR + 26) continue; // ของไกลลิบ ปล่อยเป็นฉากหลัง
@@ -29652,6 +29830,16 @@ export default function CherryAdventure() {
 
     const animate = () => {
       if (dtForce == null) raf = requestAnimationFrame(animate);
+      // 🏔️ ครั้งแรกสุด: ย้ายของฉากกลางแจ้งทั้งหมดเข้ากลุ่มเดียว เพื่อเลื่อนตามความสูงพื้นได้ทีเดียว
+      if (!G._worldRoot) {
+        const wr = new THREE.Group(); scene.add(wr); G._worldRoot = wr;
+        const keep = new Set([wr, char, buddyMesh, G._mountMesh, townZone, homeZone, ranchZone]);
+        for (let i = 0; i < wilds.length; i++) keep.add(wilds[i]);
+        for (const o of scene.children.slice()) {
+          if (o === wr || o.isLight || o.isCamera || o.type === "Sprite" || keep.has(o)) continue;
+          wr.add(o);
+        }
+      }
       // ⏱️🔋 frame cap (power-save mode) — skip this rAF tick if it's too soon
       if (dtForce == null && G._fpsInterval) {
         const nowF = performance.now();
@@ -30418,6 +30606,7 @@ export default function CherryAdventure() {
             if (fk === 0) { bd.scale.copy(b); bd.rotation.x = bd.userData.bRotX; }
           }
         }
+        m.position.y = terrainAt(m.position.x, m.position.z) - (G._gy || 0);   // 🏔️ เหยียบพื้นตามความสูงจริงของภูมิประเทศ
         if (m.userData.shinyRing) { m.userData.shinyRing.rotation.z = t * 2; m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4; }
         drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
         if (G.actionMode) updateWildBar(m); // ⚔️ open-world HP bar
@@ -33163,6 +33352,7 @@ export default function CherryAdventure() {
           );
           buddyMesh.position.x += (behind.x - buddyMesh.position.x) * Math.min(1, dt * 4);
           buddyMesh.position.z += (behind.z - buddyMesh.position.z) * Math.min(1, dt * 4);
+          buddyMesh.position.y = terrainAt(buddyMesh.position.x, buddyMesh.position.z) - (G._gy || 0);   // 🐾 เกาะพื้นตามภูมิประเทศ
           const bd = Math.atan2(char.position.x - buddyMesh.position.x, char.position.z - buddyMesh.position.z);
           let bdd = bd - buddyMesh.rotation.y;
           while (bdd > Math.PI) bdd -= Math.PI * 2;
@@ -40765,6 +40955,14 @@ export default function CherryAdventure() {
         camera.lookAt(fx, 0.8 + camDistE * 0.15, fz);
       }
 
+      // 🏔️ ยกพื้นทั้งผืนให้จุดที่ตัวละครยืนอยู่ตรงระดับ 0 พอดี — เดินขึ้นเขา/ลงหุบได้จริง
+      if (G._worldRoot) {
+        const inFlatZone = !!(G.inTownZone || G.inHomeZone || G.inRanchZone);
+        if (!!G._terrFlatMode !== inFlatZone) { G._terrFlatMode = inFlatZone; G.rebuildTerrain(BIOMES[G.curBiome || 0] || BIOMES[0]); }   // 🏰 เข้า/ออกเมือง → สลับพื้นราบ-พื้นภูมิประเทศ
+        if (G.mode === "explore" && !inFlatZone) G._gy = terrainAt(char.position.x, char.position.z);
+        else if (inFlatZone || G.mode === "create") G._gy = 0;
+        G._worldRoot.position.y = -(G._gy || 0);
+      }
       if (dtForce == null && renderer.shadowMap.enabled && ((G._shTick = (G._shTick || 0) + 1) & 1) === 0) renderer.shadowMap.needsUpdate = true; // 🌑 เงา ~30Hz
       // 🌡️ auto-cool — เฟรมช้าต่อเนื่อง (เครื่องร้อน/ไม่ไหว) → ลดความละเอียดเรนเดอร์ทีละขั้นอัตโนมัติ
       if (dtForce == null) {
