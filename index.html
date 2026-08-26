@@ -234,6 +234,40 @@ const TERRAIN = {
             { t: "hill", x: 4, z: 28, r: 8, h: 3.2 }
         ], rim: { r0: 38, w: 14, h: 17, jag: 0.3, k: 7 } },
 };
+// ✨ ละอองบรรยากาศประจำแมพ — ลอยอยู่รอบตัวผู้เล่นตลอด ทำให้อากาศ "มีของ" ไม่โล่ง
+//   kind petal = กลีบ/ขนนกร่วง (ทึบแสง) · mote = เม็ดแสงลอย (เรืองแสงซ้อนแสง)
+//   fall > 0 = ร่วงลง · fall < 0 = ลอยขึ้น · sway = แกว่งข้าง
+const AMBIENT = {
+    meadow: { n: 88, kind: "petal", c: [0xffc2dc, 0xffe6f2, 0xfff0cc], size: 0.4, fall: 0.5, sway: 1.0 }, // 🌸 กลีบซากุระปลิว
+    desert: { n: 46, kind: "mote", c: [0xf2e0ae, 0xe8c98a], size: 0.24, fall: 0.1, sway: 2.6 }, // 🏜️ ฝุ่นทรายพัด
+    snow: { n: 0 }, // ❄️ มีหิมะตกอยู่แล้ว
+    cave: { n: 54, kind: "mote", c: [0x9ff5c0, 0x6ae0a0], size: 0.3, fall: -0.3, sway: 0.5, glow: 1 }, // 🕳️ สปอร์เรืองแสงลอยขึ้น
+    volcano: { n: 44, kind: "mote", c: [0xff9a3a, 0xffd070], size: 0.28, fall: -0.7, sway: 0.7, glow: 1 }, // 🌋 สะเก็ดไฟลอยขึ้น
+    sky: { n: 64, kind: "petal", c: [0xffffff, 0xdff0ff], size: 0.46, fall: 0.22, sway: 1.4 }, // ☁️ ปุยเมฆ/ขนนกร่วง
+    hell: { n: 58, kind: "mote", c: [0xff4a3a, 0xffa050], size: 0.3, fall: -0.85, sway: 0.6, glow: 1 }, // 🔥 ถ่านไฟลอยขึ้น
+    heaven: { n: 72, kind: "mote", c: [0xfff0b0, 0xffd76a], size: 0.34, fall: -0.28, sway: 0.55, glow: 1 }, // ☀️ ละอองทองลอยขึ้น
+    moon: { n: 40, kind: "mote", c: [0xc8d0e0, 0x94a0b4], size: 0.2, fall: 0.05, sway: 0.35 }, // 🌑 ฝุ่นจันทร์
+    candy: { n: 72, kind: "mote", c: [0xffd0ea, 0xfff6b0, 0xd0f0ff], size: 0.3, fall: 0.4, sway: 0.9, glow: 1 }, // 🍬 เกล็ดน้ำตาลโปรย
+    beach: { n: 52, kind: "mote", c: [0xffffff, 0xdff4ff], size: 0.26, fall: 0.14, sway: 2.2 }, // 🏖️ ละอองน้ำทะเล
+    titan: { n: 46, kind: "mote", c: [0xcfc8a8, 0xaaa68a], size: 0.24, fall: 0.12, sway: 1.2 }, // 🗿 ฝุ่นลานประลอง
+    amazon: { n: 66, kind: "mote", c: [0x9ae06a, 0xfff2a0], size: 0.28, fall: -0.16, sway: 0.7, glow: 1 }, // 🌴 เกสร/หิ่งห้อยป่า
+};
+// 🌿 ของประดับพื้นประจำแมพ — กอหญ้า/พุ่มเล็ก และก้อนกรวด กระจายเต็มสนามให้พื้นไม่โล่ง
+const DETAIL = {
+    meadow: { g: 2300, gc: [0x74a047, 0x8cb857, 0xa6cd6c, 0xd8e07a], gs: 1.0, r: 220, rc: 0x8e9484 },
+    desert: { g: 260, gc: [0x9aa060, 0xb0b070], gs: 0.85, r: 420, rc: 0xb08c5c },
+    snow: { g: 220, gc: [0xcfe0ea, 0xeef6ff], gs: 0.8, r: 300, rc: 0x9aa8b8 },
+    cave: { g: 620, gc: [0x4e7a48, 0x6a9a5a, 0x8ad07a], gs: 0.9, r: 480, rc: 0x55604f },
+    volcano: { g: 120, gc: [0x6a4030, 0x8a5038], gs: 0.7, r: 520, rc: 0x3a221a },
+    sky: { g: 900, gc: [0x8ec8a0, 0xbfe8c8, 0xe6f6ee], gs: 0.95, r: 140, rc: 0x9aa8c0 },
+    hell: { g: 260, gc: [0x6a1420, 0x8a2028], gs: 0.75, r: 460, rc: 0x2e0c12 },
+    heaven: { g: 700, gc: [0xf2e2a0, 0xfff2c4, 0xffffe4], gs: 0.9, r: 120, rc: 0xd8c68a },
+    moon: { g: 0, gc: [0x8a8a94], gs: 0.7, r: 560, rc: 0x7c7f88 },
+    candy: { g: 1100, gc: [0xf7b0d6, 0xffd0e8, 0xfff0b8, 0xc8ecff], gs: 1.0, r: 260, rc: 0xefa8cf },
+    beach: { g: 380, gc: [0x9ab86a, 0xbccb7c], gs: 0.9, r: 340, rc: 0xa89f8c },
+    titan: { g: 1300, gc: [0x5c7a38, 0x74924a, 0x8ba85c], gs: 0.95, r: 380, rc: 0x6e6e5e },
+    amazon: { g: 1900, gc: [0x2e5c2e, 0x3f7a3a, 0x58974a, 0x76b055], gs: 1.15, r: 260, rc: 0x3a4230 },
+};
 let TERR_CUR = null; // โปรไฟล์ภูมิประเทศของแมพปัจจุบัน
 let TERR_FLATTEN = false; // 🏰 ในเมือง/บ้าน/ฟาร์ม — พื้นราบสนิท (ลานเมืองใช้พิกัดเดียวกับสนามนอก)
 let TERR_SAFE = null; // จุดปลอดภัย (แท่นวาร์ป/หมู่บ้าน) — บังคับให้พื้นเรียบ
@@ -2171,6 +2205,90 @@ function CherryAdventure() {
         })();
         scene.add(sunSpr);
         G._sunSpr = sunSpr;
+        // ---------- ✨ ละอองบรรยากาศ — จุดกระจายรอบตัวผู้เล่น วาดครั้งเดียวจบทั้งชุด ----------
+        const AMB_MAX = 96;
+        const ambTex = (kind) => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 48;
+            const c2 = cv.getContext("2d");
+            if (kind === "petal") { // 🌸 กลีบทรงหยดน้ำปลายมน
+                const g3 = c2.createRadialGradient(24, 22, 2, 24, 24, 22);
+                g3.addColorStop(0, "rgba(255,255,255,1)");
+                g3.addColorStop(0.55, "rgba(255,255,255,0.92)");
+                g3.addColorStop(0.85, "rgba(255,255,255,0.35)");
+                g3.addColorStop(1, "rgba(255,255,255,0)");
+                c2.fillStyle = g3;
+                c2.save();
+                c2.translate(24, 24);
+                c2.scale(1, 0.62);
+                c2.beginPath();
+                c2.arc(0, 0, 22, 0, Math.PI * 2);
+                c2.fill();
+                c2.restore();
+                c2.globalCompositeOperation = "destination-out"; // เว้ารอยหยักปลายกลีบ
+                c2.beginPath();
+                c2.arc(24, 40, 9, 0, Math.PI * 2);
+                c2.fill();
+            }
+            else { // ✨ เม็ดแสงกลมฟุ้ง
+                const g3 = c2.createRadialGradient(24, 24, 0, 24, 24, 24);
+                g3.addColorStop(0, "rgba(255,255,255,1)");
+                g3.addColorStop(0.28, "rgba(255,255,255,0.72)");
+                g3.addColorStop(0.66, "rgba(255,255,255,0.18)");
+                g3.addColorStop(1, "rgba(255,255,255,0)");
+                c2.fillStyle = g3;
+                c2.fillRect(0, 0, 48, 48);
+            }
+            return new THREE.CanvasTexture(cv);
+        };
+        const mkAmb = (kind) => {
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(AMB_MAX * 3), 3));
+            geo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(AMB_MAX * 3).fill(1), 3));
+            geo.setDrawRange(0, 0);
+            const mat = new THREE.PointsMaterial({ map: ambTex(kind), size: 0.4, sizeAttenuation: true, vertexColors: true,
+                transparent: true, depthWrite: false, opacity: kind === "petal" ? 0.95 : 0.8,
+                blending: kind === "petal" ? THREE.NormalBlending : THREE.AdditiveBlending });
+            const pts = new THREE.Points(geo, mat);
+            pts.frustumCulled = false;
+            pts.visible = false;
+            pts.renderOrder = 3;
+            scene.add(pts);
+            return pts;
+        };
+        const ambPetal = mkAmb("petal"), ambMote = mkAmb("mote");
+        G._ambPetal = ambPetal;
+        G._ambMote = ambMote;
+        // เริ่มชุดละอองใหม่เมื่อเปลี่ยนแมพ — สุ่มตำแหน่งและสีใหม่ทั้งชุด
+        G.resetAmbient = (bid, cx, cz) => {
+            const A = AMBIENT[bid] || null;
+            G._ambCfg = A && A.n ? A : null;
+            ambPetal.visible = false;
+            ambMote.visible = false;
+            if (!G._ambCfg)
+                return;
+            const sys = A.kind === "petal" ? ambPetal : ambMote;
+            const pa = sys.geometry.attributes.position.array, ca = sys.geometry.attributes.color.array;
+            const tmp = new THREE.Color();
+            const n = Math.min(AMB_MAX, A.n);
+            for (let i = 0; i < n; i++) {
+                const a2 = Math.random() * Math.PI * 2, r2 = Math.random() * 14;
+                pa[i * 3] = (cx || 0) + Math.cos(a2) * r2;
+                pa[i * 3 + 1] = Math.random() * 9;
+                pa[i * 3 + 2] = (cz || 0) + Math.sin(a2) * r2;
+                tmp.setHex(A.c[i % A.c.length]);
+                const k = 0.72 + Math.random() * 0.35;
+                ca[i * 3] = tmp.r * k;
+                ca[i * 3 + 1] = tmp.g * k;
+                ca[i * 3 + 2] = tmp.b * k;
+            }
+            sys.geometry.attributes.position.needsUpdate = true;
+            sys.geometry.attributes.color.needsUpdate = true;
+            sys.geometry.setDrawRange(0, n);
+            sys.material.size = A.size;
+            sys.visible = true;
+            G._ambSys = sys;
+        };
         // ---------- 🔋 POWER-SAVING MODE — ยืดแบต: ลด pixel ratio + ปิดเงา + จำกัด 30fps ----------
         // จุดที่กินแบตมากสุด: (1) pixel ratio สูง (วาดพิกเซลมากถึง 9 เท่า) (2) เงานุ่ม 2048² ทุกเฟรม (3) เฟรมเรตไม่จำกัด (90/120Hz)
         let powerSave = false, psExplicit = false;
@@ -2245,6 +2363,7 @@ function CherryAdventure() {
         const dayColors = {
             skyDay: new THREE.Color(0xf0fae2), skyNight: new THREE.Color(0x1c2440),
             sunDay: new THREE.Color(0xfff8e8), sunNight: new THREE.Color(0x8fa8e0), // moonlight blue
+            sunGold: new THREE.Color(0xffab52), skyGold: new THREE.Color(0xffc98a), // 🌅 แดดเย็น/รุ่งอรุณ
             hemiSkyDay: new THREE.Color(0xfff6e6), hemiSkyNight: new THREE.Color(0x3a4a7a),
             rimDay: new THREE.Color(0xd4e4ff), rimNight: new THREE.Color(0x7a9ae0), // 🌙 สีไฟขอบ
         };
@@ -2320,6 +2439,85 @@ function CherryAdventure() {
         ground.receiveShadow = true;
         scene.add(ground);
         G._ground = ground;
+        // ---------- 🌿 กอหญ้า + ก้อนกรวด กระจายเต็มสนาม (วาดชุดละครั้งเดียวด้วย InstancedMesh) ----------
+        const mergeGeos = (list) => {
+            const flat = list.map((g) => (g.index ? g.toNonIndexed() : g));
+            let pc = 0;
+            flat.forEach((g) => (pc += g.attributes.position.count));
+            const pos = new Float32Array(pc * 3), nor = new Float32Array(pc * 3), uvs = new Float32Array(pc * 2);
+            let o = 0;
+            for (const g of flat) {
+                pos.set(g.attributes.position.array, o * 3);
+                nor.set(g.attributes.normal.array, o * 3);
+                if (g.attributes.uv)
+                    uvs.set(g.attributes.uv.array, o * 2);
+                o += g.attributes.position.count;
+            }
+            const out = new THREE.BufferGeometry();
+            out.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+            out.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+            out.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+            return out;
+        };
+        const GRASS_MAX = 2400, ROCK_MAX = 600;
+        const tuftGeo = (() => {
+            const blade = (rz, ry, px, pz, h) => { const g = new THREE.CylinderGeometry(0.004, 0.05, h, 3, 1, false); g.translate(0, h / 2, 0); g.rotateZ(rz); g.rotateY(ry); g.translate(px, 0, pz); return g; };
+            return mergeGeos([blade(0.05, 0, 0, 0, 0.42), blade(0.4, 1.1, 0.055, 0.03, 0.34), blade(-0.36, 2.3, -0.05, -0.035, 0.3)]);
+        })();
+        const grassIM = new THREE.InstancedMesh(tuftGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 }), GRASS_MAX);
+        grassIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        grassIM.receiveShadow = true;
+        grassIM.frustumCulled = false;
+        grassIM.count = 0;
+        scene.add(grassIM);
+        const rockIM = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.13, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true }), ROCK_MAX);
+        rockIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        rockIM.receiveShadow = true;
+        rockIM.frustumCulled = false;
+        rockIM.count = 0;
+        scene.add(rockIM);
+        G._grassIM = grassIM;
+        G._rockIM = rockIM;
+        // โปรยของประดับใหม่ทุกครั้งที่เปลี่ยนแมพ/สลับพื้นราบ — เกาะความสูงพื้นจริง เว้นเขตปลอดภัย
+        G.scatterDetail = (bid) => {
+            const D = DETAIL[bid];
+            const flatZone = !!G._terrFlatMode;
+            const mtx = new THREE.Matrix4(), qt = new THREE.Quaternion(), euler = new THREE.Euler(), sc = new THREE.Vector3(), pv = new THREE.Vector3(), tmpC2 = new THREE.Color();
+            const sPts = G._safePts || [];
+            const inSafe = (x, z) => { for (let i = 0; i < sPts.length; i++) {
+                const q = sPts[i];
+                if (Math.hypot(x - q.x, z - q.z) < q.r + 0.6)
+                    return true;
+            } return false; };
+            const fill = (im, cnt, max, sizeF, colors, jitter) => {
+                const n = Math.min(max, flatZone ? 0 : cnt || 0);
+                im.count = n;
+                im.visible = n > 0;
+                for (let i = 0; i < n; i++) {
+                    let x = 0, z = 0, guard = 0;
+                    do {
+                        const a2 = Math.random() * Math.PI * 2, r2 = 2 + Math.sqrt(Math.random()) * (FIELD_R - 2.5);
+                        x = Math.cos(a2) * r2;
+                        z = Math.sin(a2) * r2;
+                    } while (inSafe(x, z) && guard++ < 6);
+                    euler.set(jitter * (Math.random() - 0.5), Math.random() * Math.PI * 2, jitter * (Math.random() - 0.5));
+                    qt.setFromEuler(euler);
+                    const k = sizeF * (0.7 + Math.random() * 0.7);
+                    sc.set(k, k * (0.75 + Math.random() * 0.6), k);
+                    pv.set(x, terrainAt(x, z) - 0.02, z);
+                    mtx.compose(pv, qt, sc);
+                    im.setMatrixAt(i, mtx);
+                    tmpC2.setHex(colors[(Math.random() * colors.length) | 0]);
+                    const sh = 0.78 + Math.random() * 0.34;
+                    im.setColorAt(i, tmpC2.multiplyScalar(sh));
+                }
+                im.instanceMatrix.needsUpdate = true;
+                if (im.instanceColor)
+                    im.instanceColor.needsUpdate = true;
+            };
+            fill(grassIM, D && D.g, GRASS_MAX, (D && D.gs) || 1, (D && D.gc) || [0x88aa55], 0.28);
+            fill(rockIM, D && D.r, ROCK_MAX, 1, [(D && D.rc) || 0x8a8a80], 1.6);
+        };
         const FIELD_R = 34; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
         const TARGET_WILDS = 48; // 🐾 มอนสเตอร์ในแมพ ×2 (กระจายตามแคมป์มากขึ้น)
         const ring = new THREE.Mesh(new THREE.RingGeometry(FIELD_R - 0.08, FIELD_R + 0.08, 168), new THREE.MeshBasicMaterial({ color: 0x7ba05b, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
@@ -2840,7 +3038,9 @@ function CherryAdventure() {
         // 🎣 fishing pond (southwest)
         {
             const pondG = new THREE.Group();
-            const water = new THREE.Mesh(new THREE.CircleGeometry(2.2, 32), new THREE.MeshStandardMaterial({ color: 0x4a90c0, transparent: true, opacity: 0.85, roughness: 0.2, metalness: 0.3 }));
+            const water = new THREE.Mesh(new THREE.RingGeometry(0.02, 2.2, 30, 6), new THREE.MeshStandardMaterial({ color: 0x4a90c0, transparent: true, opacity: 0.85, roughness: 0.2, metalness: 0.3 }));
+            G._waterSurf = G._waterSurf || [];
+            G._waterSurf.push({ m: water, base: water.geometry.attributes.position.array.slice(), amp: 0.045, hz: 1.9, k: 2.6 });
             water.rotation.x = -Math.PI / 2;
             water.position.y = 0.05;
             pondG.add(water);
@@ -26460,7 +26660,8 @@ function CherryAdventure() {
         const beachColliders = [];
         // 🌊 the sea — a wide azure ring around the sandy island, out to the horizon
         const seaMat = new THREE.MeshStandardMaterial({ color: 0x1f8fd8, roughness: 0.28, metalness: 0.12, transparent: true, opacity: 0.94 });
-        const sea = new THREE.Mesh(new THREE.RingGeometry(28.5, 230, 84, 1), seaMat);
+        const sea = new THREE.Mesh(new THREE.RingGeometry(28.5, 230, 84, 10), seaMat);
+        (G._waterSurf = G._waterSurf || []).push({ m: sea, base: sea.geometry.attributes.position.array.slice(), amp: 0.16, hz: 0.85, k: 0.24 }); // 🌊 คลื่นทะเลม้วนเข้าหาฝั่ง
         sea.rotation.x = -Math.PI / 2;
         sea.position.y = 0.06;
         sea.userData.noHide = true;
@@ -26669,7 +26870,8 @@ function CherryAdventure() {
         amazonDecor.add(jungleFloor);
         // 🏞️ Amazon river — a wide winding water band crossing the map (murky green-brown)
         const riverMat = new THREE.MeshStandardMaterial({ color: 0x2a5a52, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.9 });
-        const river = new THREE.Mesh(new THREE.PlaneGeometry(9, 130, 1, 24), riverMat);
+        const river = new THREE.Mesh(new THREE.PlaneGeometry(9, 130, 4, 40), riverMat);
+        (G._waterSurf = G._waterSurf || []).push({ m: river, base: river.geometry.attributes.position.array.slice(), amp: 0.07, hz: 1.2, k: 0.8 }); // 🌊 กระแสน้ำไหลเป็นลอน
         river.rotation.x = -Math.PI / 2;
         river.rotation.z = 0.5;
         river.position.set(4, 0.05, -2);
@@ -27389,6 +27591,8 @@ function CherryAdventure() {
             rp.needsUpdate = true;
             if (G.snapWorldDecor)
                 G.snapWorldDecor();
+            if (G.scatterDetail)
+                G.scatterDetail(b.id); // 🌿 โปรยหญ้า/ก้อนกรวดใหม่ให้เกาะพื้นชุดนี้
         };
         // 🌳 วางของประดับฉากให้แนบพื้นที่สูงต่ำไม่เท่ากัน (เก็บความสูงเดิมไว้ แล้วบวกความสูงพื้นเข้าไป)
         G.snapWorldDecor = () => {
@@ -27402,11 +27606,15 @@ function CherryAdventure() {
                 G.warpGate.children.forEach(snap);
         };
         G.rebuildTerrain(BIOMES[G.curBiome || 0] || BIOMES[0]); // 🏔️ ปั้นภูมิประเทศแมพเริ่มต้น
+        if (G.resetAmbient)
+            G.resetAmbient((BIOMES[G.curBiome || 0] || BIOMES[0]).id, 0, 0); // ✨ ละอองบรรยากาศแมพเริ่มต้น
         // decorations we can toggle per biome (trees/bushes already added get a tag)
         const switchBiome = (idx, quiet) => {
             const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
             G.curBiome = BIOMES.indexOf(b);
             G.rebuildTerrain(b); // 🏔️ ปั้นภูเขา/ที่ราบสูง/หน้าผาประจำแมพนี้
+            if (G.resetAmbient)
+                G.resetAmbient(b.id, char.position.x, char.position.z); // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
             { // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
                 const FOG_D = { cave: [12, 52], hell: [26, 78], amazon: [22, 66], volcano: [32, 86], snow: [40, 96], moon: [40, 98] };
                 const fd = FOG_D[b.id] || [46, 98];
@@ -48232,6 +48440,38 @@ function CherryAdventure() {
                         }
                     }
                 }
+                // ---------- ✨ ละอองบรรยากาศ: ร่วง/ลอยขึ้น + แกว่งตามลม + วนกลับเมื่อหลุดกรอบรอบตัวผู้เล่น ----------
+                if (G._ambCfg && G._ambSys && G._ambSys.visible && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
+                    const A = G._ambCfg, sys = G._ambSys, pa = sys.geometry.attributes.position.array;
+                    const cx = char.position.x, cz = char.position.z, R2 = 15 * 15, HI = 9;
+                    const n = Math.min(AMB_MAX, A.n);
+                    for (let i = 0; i < n; i++) {
+                        const k = i * 3;
+                        pa[k + 1] -= A.fall * dt;
+                        pa[k] += Math.sin(t * 0.7 + i * 0.9) * A.sway * dt;
+                        pa[k + 2] += Math.cos(t * 0.55 + i * 1.7) * A.sway * dt * 0.7;
+                        if (pa[k + 1] < -0.4)
+                            pa[k + 1] = HI;
+                        else if (pa[k + 1] > HI + 0.4)
+                            pa[k + 1] = 0;
+                        const dx2 = pa[k] - cx, dz2 = pa[k + 2] - cz;
+                        const ex = pa[k] - camera.position.x, ey = pa[k + 1] - camera.position.y, ez = pa[k + 2] - camera.position.z;
+                        // หลุดกรอบรอบตัวผู้เล่น หรือลอยจ่อหน้าเลนส์จนบานเป็นแผ่นใหญ่ → ย้ายไปเกิดใหม่รอบตัวผู้เล่น
+                        if (dx2 * dx2 + dz2 * dz2 > R2 || ex * ex + ey * ey + ez * ez < 20) {
+                            const a2 = Math.random() * Math.PI * 2, r2 = 6 + Math.random() * 8;
+                            pa[k] = cx + Math.cos(a2) * r2;
+                            pa[k + 2] = cz + Math.sin(a2) * r2;
+                            pa[k + 1] = A.fall > 0 ? 8.4 : 0.3;
+                        }
+                    }
+                    sys.geometry.attributes.position.needsUpdate = true;
+                }
+                else if (G._ambSys && G._ambSys.visible && (G.inTownZone || G.inHomeZone || G.inRanchZone)) {
+                    G._ambSys.visible = false; // 🏰 ในเมือง/บ้าน/ฟาร์ม ไม่ต้องมีละอองกลางแจ้ง
+                }
+                else if (G._ambSys && !G._ambSys.visible && G._ambCfg && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
+                    G._ambSys.visible = true;
+                }
                 // ---------- 🌗 day/night update ----------
                 {
                     const dayT = (t % DAY_CYCLE) / DAY_CYCLE;
@@ -48249,9 +48489,14 @@ function CherryAdventure() {
                             dayAmt = Math.min(dayAmt, 0.4);
                     } // 🌴 ป่าดิบ = แสงสลัวใต้เรือนยอด ไร้แดดจ้า
                     G.dayPhaseAmt = dayAmt;
+                    // 🌅 ช่วงเวลาทอง — แรงสุดตอนดวงตะวันอยู่ต่ำใกล้ขอบฟ้า (รุ่งเช้า/เย็นย่ำ)
+                    const gold = Math.max(0, 1 - Math.abs(sunH - 0.2) / 0.34) * Math.min(1, dayAmt * 2.2);
+                    G.goldenAmt = gold;
                     // sky & fog (day color tinted by the current biome)
                     const daySky = G.biomeSky || dayColors.skyDay;
                     skyTmp.lerpColors(dayColors.skyNight, daySky, dayAmt);
+                    if (gold > 0.01)
+                        skyTmp.lerp(dayColors.skyGold, gold * 0.34); // ฟ้าอมส้มทอง
                     scene.background.copy(skyTmp);
                     const fogSky = G.biomeFog || daySky;
                     scene.fog.color.copy(skyTmp).lerp(fogSky, dayAmt * 0.5);
@@ -48269,13 +48514,15 @@ function CherryAdventure() {
                     amb.intensity = 0.13 + 0.19 * dayAmt; // ☀️ ลดแดดจ้ากลางวัน
                     hemi.intensity = 0.12 + 0.22 * dayAmt;
                     hemi.color.lerpColors(dayColors.hemiSkyNight, dayColors.hemiSkyDay, dayAmt);
-                    key.intensity = 0.16 + 0.30 * dayAmt; // ☀️ แดดกลางวันนุ่มลง
+                    key.intensity = (0.16 + 0.30 * dayAmt) * (1 + gold * 0.34); // 🌅 แดดเย็นแรงขึ้นนิด ให้เงาเข้ม
                     key.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
+                    if (gold > 0.01)
+                        key.color.lerp(dayColors.sunGold, gold * 0.78); // แสงส้มทองอาบทั้งฉาก
                     // sun/moon travels across the sky → shadows move through the day
                     // 🎯 ยึดแสงไว้กับตัวผู้เล่น กรอบเงาจึงตามไปด้วยทุกที่ที่เดินไป
                     keyTarget.position.set(char.position.x, 0, char.position.z);
                     keyTarget.updateMatrixWorld();
-                    key.position.set(char.position.x + Math.cos(sunA) * 9, 4 + Math.max(0.1, sunH) * 8, char.position.z + 7);
+                    key.position.set(char.position.x + Math.cos(sunA) * 9, 2.1 + Math.max(0.06, sunH) * 9.6, char.position.z + 7); // 🌅 ตะวันต่ำตอนเช้า-เย็น → เงาทอดยาว
                     // stars fade in at night
                     starMat.opacity = Math.max(0, 1 - dayAmt * 2.2);
                     // fireflies drift at night
@@ -49775,6 +50022,17 @@ function CherryAdventure() {
                     // 🎣 pond: animate water + proximity prompt + fishing state machine
                     if (G.pondWater)
                         G.pondWater.material.opacity = 0.8 + Math.sin(t * 2) * 0.08;
+                    if (G._waterSurf)
+                        for (const w2 of G._waterSurf) { // 🌊 ผิวน้ำเป็นระลอก — ดันจุดยอดตามคลื่นสองทิศซ้อนกัน
+                            if (!w2.m.visible || (w2.m.parent && !w2.m.parent.visible))
+                                continue;
+                            const at = w2.m.geometry.attributes.position, ar = at.array, bs = w2.base;
+                            for (let i = 0; i < at.count; i++) {
+                                const ix = i * 3, vx = bs[ix], vy = bs[ix + 1];
+                                ar[ix + 2] = bs[ix + 2] + Math.sin(vx * w2.k + t * w2.hz) * w2.amp + Math.cos(vy * w2.k * 0.8 - t * w2.hz * 0.7) * w2.amp * 0.7;
+                            }
+                            at.needsUpdate = true;
+                        }
                     // 👤 NPC: bob the marker + proximity
                     if (G.npc) {
                         if (G.npc.userData.mark) {
@@ -65725,6 +65983,8 @@ function CherryAdventure() {
             paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" } },
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`),
         React.createElement("div", { ref: mountRef, style: { position: "absolute", top: 0, bottom: 0, left: "calc(-1 * env(safe-area-inset-left, 0px))", right: "calc(-1 * env(safe-area-inset-right, 0px))" } }),
+        React.createElement("div", { style: { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+                background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" } }),
         ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
         ui.announce && ui.announce.text && (React.createElement("div", { key: ui.announce.key, style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center" } },
             React.createElement("div", { style: { whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform", background: "rgba(40,20,60,0.74)", padding: "4px 18px", borderRadius: 999, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" } },
