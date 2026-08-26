@@ -137,7 +137,7 @@ const terrFeat = (f, x, z) => {
 };
 const TERRAIN = {
     // 🌸 ทุ่งซากุระ — เนินหญ้าลูกคลื่นนุ่ม ภูเขาเขียวล้อมไกล ๆ
-    meadow: { lo: 0x83a566, hi: 0xd2e2a6, rock: 0x8e9a86, hN: 7, rockK: 0.45, f: [
+    meadow: { lo: 0x76a054, hi: 0xd8ea9e, rock: 0x93a077, hN: 7, rockK: 0.26, f: [
             { t: "wave", fx: 0.075, fz: 0.062, h: 0.95, p: 0.6, q: 1.3 },
             { t: "hill", x: -25, z: -15, r: 15, h: 6.5 },
             { t: "hill", x: 23, z: 19, r: 13, h: 5.2 },
@@ -190,7 +190,7 @@ const TERRAIN = {
             { t: "wave", fx: 0.14, fz: 0.12, h: 0.75, p: 1.4, q: 2.4 }
         ], rim: { r0: 38, w: 13, h: 18, jag: 0.45, k: 11 } },
     // ☀️ สรวงสวรรค์ — ลานเมฆยกระดับเป็นชั้นบันไดซ้อนกัน
-    heaven: { lo: 0xe4d193, hi: 0xfff9e0, rock: 0xd6c07c, hN: 7, rockK: 0.25, f: [
+    heaven: { lo: 0xecd894, hi: 0xfffbe8, rock: 0xe2ce8e, hN: 7, rockK: 0.16, f: [
             { t: "mesa", x: -20, z: -18, r: 9, h: 3.0, e: 2.4 },
             { t: "mesa", x: -20, z: -18, r: 5, h: 3.0, e: 2.0 },
             { t: "mesa", x: 22, z: 16, r: 8, h: 2.6, e: 2.2 },
@@ -205,7 +205,7 @@ const TERRAIN = {
             { t: "wave", fx: 0.19, fz: 0.17, h: 0.35, p: 0.9, q: 1.9 }
         ], rim: { r0: 40, w: 14, h: 11, jag: 0.3, k: 8 } },
     // 🍬 แดนขนมหวาน — เนินครีมกลมนุ่มลูกโต ๆ
-    candy: { lo: 0xeda4cb, hi: 0xfff2fa, rock: 0xe58ac0, hN: 5, rockK: 0.18, f: [
+    candy: { lo: 0xf29ecb, hi: 0xfff2fa, rock: 0xf0a8d4, hN: 5, rockK: 0.12, f: [
             { t: "hill", x: -22, z: -16, r: 11, h: 5.0 },
             { t: "hill", x: 21, z: 14, r: 9, h: 4.0 },
             { t: "hill", x: -4, z: 27, r: 8, h: 3.4 },
@@ -227,7 +227,7 @@ const TERRAIN = {
             { t: "wave", fx: 0.12, fz: 0.1, h: 0.45, p: 0.3, q: 1.5 }
         ], rim: { r0: 35, w: 9, h: 24, jag: 0.12, k: 4 } },
     // 🌴 ป่าดิบอเมซอน — พื้นป่าขรุขระ เนินดินใหญ่ ล้อมด้วยสันเขาชื้น
-    amazon: { lo: 0x18321d, hi: 0x5e8e4a, rock: 0x35402c, hN: 6, rockK: 0.55, f: [
+    amazon: { lo: 0x14301a, hi: 0x63984c, rock: 0x35402c, hN: 6, rockK: 0.38, f: [
             { t: "wave", fx: 0.13, fz: 0.11, h: 1.15, p: 0.8, q: 1.9 },
             { t: "hill", x: -24, z: -18, r: 12, h: 6.0 },
             { t: "hill", x: 22, z: 20, r: 10, h: 4.5 },
@@ -2033,7 +2033,7 @@ function CherryAdventure() {
         // ---------- Scene ----------
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xf0fae2);
-        scene.fog = new THREE.Fog(0xf0fae2, 30, 78);
+        scene.fog = new THREE.Fog(0xf0fae2, 46, 98); // 🌫️ หมอกจับเฉพาะระยะไกล — สันเขาไกลจางเป็นชั้น ๆ ของใกล้ยังสีจัด
         const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
         let camDist = 8; // explore zoom 6..24 (also drives creator zoom)
         let bZoom = 1; // battle zoom factor 0.6..1.8
@@ -2080,6 +2080,8 @@ function CherryAdventure() {
         renderer.shadowMap.autoUpdate = false; // 🌡️ เงาอัปเดตเฟรมเว้นเฟรมใน animate (ลดงาน GPU ราวครึ่ง) — ตาเปล่าแยกไม่ออก
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; // 🎬 ไล่โทนแบบฟิล์ม — สีอิ่มขึ้น ส่วนสว่างนวลไม่ไหม้ขาว
+        renderer.toneMappingExposure = 0.82; // ACES ยกโทนกลางขึ้นเองราว 1.5 เท่า → ตั้งต่ำกว่า 1 ภาพถึงไม่ขาวโพลน
         mount.appendChild(renderer.domElement);
         const amb = new THREE.AmbientLight(0xffffff, 0.32);
         scene.add(amb);
@@ -2096,6 +2098,72 @@ function CherryAdventure() {
         key.shadow.camera.top = 12;
         key.shadow.camera.bottom = -12;
         scene.add(key);
+        // 🌙 ไฟขอบจากด้านหลัง-เยื้องข้าง — ตัวละคร/มอนสเตอร์ได้เส้นขอบเรือง แยกตัวออกจากฉากแบบอนิเมะ
+        const rimL = new THREE.DirectionalLight(0xcfe0ff, 0.5);
+        rimL.position.set(-8, 5.5, -10);
+        scene.add(rimL);
+        // ---------- 🌤️ โดมท้องฟ้าไล่เฉด + เมฆบาง + ดวงตะวัน ----------
+        // ลายเป็น "ความสว่าง" ล้วน แล้วค่อยคูณสีฟ้าประจำแมพ/ช่วงเวลาทีหลัง → ใช้ลายเดียวได้ทุกแมพ
+        const skyTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = 256;
+            cv.height = 256;
+            const g2 = cv.getContext("2d");
+            const gr = g2.createLinearGradient(0, 0, 0, 256); // y 0 = ยอดฟ้า · y 128 = เส้นขอบฟ้า
+            gr.addColorStop(0.0, "#5c6f8c");
+            gr.addColorStop(0.24, "#7b8ea8");
+            gr.addColorStop(0.41, "#aebdce");
+            gr.addColorStop(0.5, "#ffffff");
+            gr.addColorStop(0.58, "#f3f4f0");
+            gr.addColorStop(1.0, "#c0c2bd");
+            g2.fillStyle = gr;
+            g2.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 34; i++) { // ☁️ แถบเมฆบาง ๆ ครึ่งบนของฟ้า
+                const cx = Math.random() * 256, cy = 16 + Math.random() * 104;
+                const rw = 14 + Math.random() * 46, rh = rw * (0.14 + Math.random() * 0.16);
+                const rg = g2.createRadialGradient(cx, cy, 0, cx, cy, rw);
+                rg.addColorStop(0, "rgba(255,255,255," + (0.22 + Math.random() * 0.3).toFixed(2) + ")");
+                rg.addColorStop(0.55, "rgba(255,255,255,0.1)");
+                rg.addColorStop(1, "rgba(255,255,255,0)");
+                g2.save();
+                g2.translate(cx, cy);
+                g2.scale(1, rh / rw);
+                g2.translate(-cx, -cy);
+                g2.fillStyle = rg;
+                g2.beginPath();
+                g2.arc(cx, cy, rw, 0, Math.PI * 2);
+                g2.fill();
+                g2.restore();
+            }
+            const tx = new THREE.CanvasTexture(cv);
+            tx.wrapS = THREE.RepeatWrapping;
+            tx.wrapT = THREE.ClampToEdgeWrapping;
+            return tx;
+        })();
+        const skyDome = new THREE.Mesh(new THREE.SphereGeometry(82, 40, 24), new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false, depthWrite: false }));
+        skyDome.renderOrder = -2;
+        scene.add(skyDome);
+        G._skyDome = skyDome;
+        G._skyTex = skyTex;
+        const sunSpr = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 128;
+            const c2 = cv.getContext("2d");
+            const rg = c2.createRadialGradient(64, 64, 0, 64, 64, 64);
+            rg.addColorStop(0.0, "rgba(255,255,255,1)");
+            rg.addColorStop(0.13, "rgba(255,250,228,0.95)");
+            rg.addColorStop(0.3, "rgba(255,232,168,0.4)");
+            rg.addColorStop(0.62, "rgba(255,214,132,0.13)");
+            rg.addColorStop(1.0, "rgba(255,200,110,0)");
+            c2.fillStyle = rg;
+            c2.fillRect(0, 0, 128, 128);
+            const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0.85 }));
+            sp.scale.set(28, 28, 1);
+            sp.renderOrder = -1;
+            return sp;
+        })();
+        scene.add(sunSpr);
+        G._sunSpr = sunSpr;
         // ---------- 🔋 POWER-SAVING MODE — ยืดแบต: ลด pixel ratio + ปิดเงา + จำกัด 30fps ----------
         // จุดที่กินแบตมากสุด: (1) pixel ratio สูง (วาดพิกเซลมากถึง 9 เท่า) (2) เงานุ่ม 2048² ทุกเฟรม (3) เฟรมเรตไม่จำกัด (90/120Hz)
         let powerSave = false, psExplicit = false;
@@ -2171,6 +2239,7 @@ function CherryAdventure() {
             skyDay: new THREE.Color(0xf0fae2), skyNight: new THREE.Color(0x1c2440),
             sunDay: new THREE.Color(0xfff8e8), sunNight: new THREE.Color(0x8fa8e0), // moonlight blue
             hemiSkyDay: new THREE.Color(0xfff6e6), hemiSkyNight: new THREE.Color(0x3a4a7a),
+            rimDay: new THREE.Color(0xd4e4ff), rimNight: new THREE.Color(0x7a9ae0), // 🌙 สีไฟขอบ
         };
         const skyTmp = new THREE.Color();
         const windowMats = []; // cottage windows glow at night
@@ -2206,7 +2275,39 @@ function CherryAdventure() {
         const TERR_R = 54, TERR_TH = 144, TERR_RA = 64;
         const groundGeo = new THREE.RingGeometry(0.02, TERR_R, TERR_TH, TERR_RA);
         groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(groundGeo.attributes.position.count * 3).fill(1), 3));
-        const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, vertexColors: true }));
+        { // 🗺️ UV แบบระนาบตามพิกัดโลก — ลายพื้นไม่บิดวนตามวงแหวน
+            const gp = groundGeo.attributes.position, guv = groundGeo.attributes.uv;
+            for (let i = 0; i < gp.count; i++)
+                guv.setXY(i, gp.getX(i) * 0.1, gp.getY(i) * 0.1);
+            guv.needsUpdate = true;
+        }
+        // 🪨 ลายผิวดิน — เกล็ดหยาบละเอียด + ร่องดินจาง ๆ (สีเฉลี่ยเกือบขาว จึงไม่ไปกลบสีที่ไล่ตามความสูง)
+        const groundTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 128;
+            const c2 = cv.getContext("2d");
+            c2.fillStyle = "#ffffff";
+            c2.fillRect(0, 0, 128, 128);
+            for (let i = 0; i < 3000; i++) {
+                c2.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.075)" : "rgba(255,255,255,0.11)";
+                const sz = 1 + Math.random() * 2.3;
+                c2.fillRect(Math.random() * 128, Math.random() * 128, sz, sz);
+            }
+            for (let i = 0; i < 26; i++) {
+                c2.strokeStyle = "rgba(0,0,0,0.05)";
+                c2.lineWidth = 1 + Math.random() * 2.2;
+                const x0 = Math.random() * 128, y0 = Math.random() * 128;
+                c2.beginPath();
+                c2.moveTo(x0, y0);
+                c2.bezierCurveTo(x0 + 22, y0 + 12, x0 + 44, y0 - 16, x0 + 66, y0 + 8);
+                c2.stroke();
+            }
+            const tx = new THREE.CanvasTexture(cv);
+            tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+            tx.anisotropy = 4;
+            return tx;
+        })();
+        const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, vertexColors: true, map: groundTex, bumpMap: groundTex, bumpScale: 0.4 }));
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
@@ -27277,6 +27378,20 @@ function CherryAdventure() {
             const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
             G.curBiome = BIOMES.indexOf(b);
             G.rebuildTerrain(b); // 🏔️ ปั้นภูเขา/ที่ราบสูง/หน้าผาประจำแมพนี้
+            { // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
+                const FOG_D = { cave: [12, 52], hell: [26, 78], amazon: [22, 66], volcano: [32, 86], snow: [40, 96], moon: [40, 98] };
+                const fd = FOG_D[b.id] || [46, 98];
+                if (scene.fog && !G._townFogPrev) {
+                    scene.fog.near = fd[0];
+                    scene.fog.far = fd[1];
+                }
+                const indoor = b.id === "cave"; // 🕳️ ในถ้ำไม่มีฟ้า ไม่มีเมฆ ไม่มีตะวัน
+                if (G._skyDome) {
+                    G._skyDome.material.map = indoor ? null : G._skyTex;
+                    G._skyDome.material.needsUpdate = true;
+                }
+                G._skyNoSun = indoor || b.id === "hell";
+            }
             G.biomeSky = new THREE.Color(b.sky);
             G.biomeFog = new THREE.Color(b.fog);
             // clear current wild monsters and respawn from this biome's pool
@@ -47767,7 +47882,7 @@ function CherryAdventure() {
                 const wr = new THREE.Group();
                 scene.add(wr);
                 G._worldRoot = wr;
-                const keep = new Set([wr, char, buddyMesh, G._mountMesh, townZone, homeZone, ranchZone]);
+                const keep = new Set([wr, char, buddyMesh, G._mountMesh, townZone, homeZone, ranchZone, G._skyDome, G._sunSpr]);
                 for (let i = 0; i < wilds.length; i++)
                     keep.add(wilds[i]);
                 for (const o of scene.children.slice()) {
@@ -48111,6 +48226,16 @@ function CherryAdventure() {
                     scene.background.copy(skyTmp);
                     const fogSky = G.biomeFog || daySky;
                     scene.fog.color.copy(skyTmp).lerp(fogSky, dayAmt * 0.5);
+                    // 🌤️ โดมฟ้าเกาะกล้องเสมอ แล้วคูณสีฟ้าของแมพ/ช่วงเวลาเข้ากับลายไล่เฉด
+                    skyDome.position.copy(camera.position);
+                    skyDome.material.color.copy(skyTmp);
+                    // ☀️🌑 ดวงตะวันลอยตามทิศแสงหลัก — กลางวันเป็นดวงอาทิตย์อุ่น กลางคืนเป็นดวงจันทร์เย็น
+                    sunSpr.position.copy(key.position).normalize().multiplyScalar(66).add(camera.position);
+                    sunSpr.material.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
+                    sunSpr.material.opacity = (0.22 + 0.62 * dayAmt) * (G._skyNoSun ? 0 : 1);
+                    sunSpr.visible = !G._skyNoSun;
+                    rimL.intensity = 0.26 + 0.34 * dayAmt; // 🌙 ไฟขอบแรงขึ้นตอนกลางวัน
+                    rimL.color.lerpColors(dayColors.rimNight, dayColors.rimDay, dayAmt);
                     // lights (soft, no glare)
                     amb.intensity = 0.13 + 0.19 * dayAmt; // ☀️ ลดแดดจ้ากลางวัน
                     hemi.intensity = 0.12 + 0.22 * dayAmt;
