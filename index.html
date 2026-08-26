@@ -1524,6 +1524,9 @@ const HERO_GALLERY = [
     { id: "kitsune", name: "ทามะโมะ", emoji: "🦊", title: "จิ้งจอกเก้าหางจอมมายา", c1: "#ffd6a0", c2: "#c4302a", price: 300 },
     { id: "phoenix", name: "เพลิงฟ้า", emoji: "🔥", title: "วิหคเพลิงคืนชีพ", c1: "#ffd76a", c2: "#c42a10", price: 300 },
 ];
+// 💎 ราคาเพชรชุดฮีโร่ — แหล่งข้อมูลเดียว ทั้งการ์ดในร้านและตอนหักเพชรจริงอ่านจากตารางนี้
+const HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200, naki: 2200, kinnaree: 2200, mermaid: 2400, lich: 2400, kitsune: 2500, phoenix: 2500 };
+HERO_GALLERY.forEach((h) => { h.price = HERO_PRICE[h.id] || h.price || 1000; });
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
 const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
 const GACHA_POOL = [
@@ -34173,7 +34176,7 @@ function CherryAdventure() {
                 G.saveGame();
         };
         // 🦸 hero unlock economy — buy permanent with diamonds, or redeem temporary passes (boss drops)
-        G.HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200, naki: 2200, kinnaree: 2200, mermaid: 2400, lich: 2400, kitsune: 2500, phoenix: 2500 }; // 💎 ชุดฮีโร่ 1000++ เพชร
+        G.HERO_PRICE = HERO_PRICE; // 💎 ชุดฮีโร่ 1000++ เพชร (ตารางเดียวกับที่การ์ดในร้านใช้)
         G.heroUnlocked = (id) => !id || !!(G.heroesOwned && G.heroesOwned[id]) || !!(G.heroTemp && G.heroTemp[id] && G.heroTemp[id] > Date.now());
         G.heroTempDays = (id) => { const t = G.heroTemp && G.heroTemp[id]; if (!t || t <= Date.now())
             return 0; return Math.ceil((t - Date.now()) / 86400000); };
