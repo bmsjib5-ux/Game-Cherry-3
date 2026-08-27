@@ -1452,6 +1452,24 @@ const BUFF_LABEL = {
 };
 // 🐟 ปลาที่ตกได้เก็บเข้าถัง แยกตามระดับ
 const FISH_TIER = { common: { name: "ปลาธรรมดา", emoji: "🐟" }, rare: { name: "ปลาหายาก", emoji: "🐠" }, epic: { name: "ปลาในตำนาน", emoji: "🐉" } };
+
+// ---------- 🧱 ขอบแมพ — ป่า / แม่น้ำ / กำแพง / รั้ว / เหว แทนเส้นวงกลมบาง ๆ ----------
+// kind: forest=ป่าทึบ · river=แม่น้ำล้อมเกาะ · wall=กำแพงหิน · fence=รั้ว · cliff=หน้าผา
+const BORDER = {
+  meadow:  { kind: "forest", a: 0x4a7a3a, b: 0x6a9a4a, c: 0x8a6a4a },
+  desert:  { kind: "cliff",  a: 0xc9a86a, b: 0xa88a52 },
+  snow:    { kind: "cliff",  a: 0xd8e8f5, b: 0xa8c0d8 },
+  cave:    { kind: "wall",   a: 0x6a6e78, b: 0x4a4e58 },
+  volcano: { kind: "cliff",  a: 0x5a3a32, b: 0x3a2420 },
+  sky:     { kind: "fence",  a: 0xdfe8f5, b: 0xa0c8e8 },
+  hell:    { kind: "wall",   a: 0x4a2028, b: 0x2a1016 },
+  heaven:  { kind: "fence",  a: 0xfff0b0, b: 0xe8c86a },
+  moon:    { kind: "cliff",  a: 0x8a90a0, b: 0x5a6070 },
+  candy:   { kind: "fence",  a: 0xffd0e8, b: 0xf58ac0 },
+  beach:   { kind: "river",  a: 0x4ab0e0, b: 0x8ae0e0, c: 0xe8d8a8 },
+  titan:   { kind: "wall",   a: 0x7a7060, b: 0x5a5040 },
+  amazon:  { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
+};
 const MINE_NODES = 5;          // 🪨 สายแร่ที่โผล่พร้อมกันในแมพ
 const MINE_SWINGS = 3;         // 🔨 ต้องตีให้เข้าเป้ากี่ครั้งกว่าสายแร่จะแตก
 const MINE_LV_EXP = (lv) => 60 + lv * 45;   // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
@@ -2587,15 +2605,16 @@ export default function CherryAdventure() {
       fill(rockIM, D && D.r, ROCK_MAX, 1, [(D && D.rc) || 0x8a8a80], 1.6);
     };
 
+    // 🚪 ประตูโซนกระจายคนละมุมของแมพ (หันหน้าเข้ากลางแมพ) — ไม่กระจุกอยู่กลางแมพแล้ว
+    const GATE_POS = {
+      town:  { x: 0,     z: -27.5, ry: 0 },            // 🏰 ทิศเหนือ
+      home:  { x: -19.5, z: 19.5,  ry: -Math.PI * 0.75 }, // 🏠 ตะวันตกเฉียงใต้
+      ranch: { x: 19.5,  z: 19.5,  ry: Math.PI * 0.75 },  // 🐄 ตะวันออกเฉียงใต้
+    };
+    G.GATE_POS = GATE_POS;
     const FIELD_R = 34; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
     const TARGET_WILDS = 48; // 🐾 มอนสเตอร์ในแมพ ×2 (กระจายตามแคมป์มากขึ้น)
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(FIELD_R - 0.08, FIELD_R + 0.08, 168),
-      new THREE.MeshBasicMaterial({ color: 0x7ba05b, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.012;
-    scene.add(ring);
+    // 🌲 ขอบแมพไม่ใช้เส้นวงกลมแล้ว — สร้างเป็นป่า/แม่น้ำ/กำแพง/รั้ว/เหว ตามแต่ละแมพ (ดู G.buildBorder)
 
     // ---------- World decorations + colliders ----------
     const colliders = []; // { x, z, r } — solid objects
@@ -16260,13 +16279,14 @@ export default function CherryAdventure() {
       { x: -9.5, z: -8, r: 5.5 },  // 🏡 จุดบ้าน + NPC เฒ่าผู้วิเศษ + บ่อน้ำ
       { x: 8.5, z: -7, r: 3.4 },   // ⚒️ จุดช่างตีเหล็ก
       { x: -6.6, z: 7.0, r: 3.6 }, // 🗼 จุดวาร์ปหอคอยมิติ
-      { x: -6, z: -3, r: 2.4 },    // 🐄 แท่นวาร์ปฟาร์ม (ยืนชาร์จวาร์ปได้ปลอดภัย)
+      { x: GATE_POS.town.x,  z: GATE_POS.town.z,  r: 3.6 },  // 🏰 ประตูเมือง
+      { x: GATE_POS.home.x,  z: GATE_POS.home.z,  r: 3.6 },  // 🏠 ประตูบ้าน
+      { x: GATE_POS.ranch.x, z: GATE_POS.ranch.z, r: 3.6 },  // 🐄 ประตูฟาร์ม
     ];
     { // วงแสดงเขตปลอดภัยบนพื้น (เห็นทุกด่าน)
       const safeMarks = new THREE.Group();
       for (const sp of G._safePts) {
-        const rg = new THREE.Mesh(new THREE.RingGeometry(sp.r - 0.09, sp.r + 0.09, 48), new THREE.MeshBasicMaterial({ color: 0x8adf9a, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
-        rg.rotation.x = -Math.PI / 2; rg.position.set(sp.x, 0.02, sp.z); safeMarks.add(rg);
+        // 🚫 ไม่วาดเส้นวงกลมเขตปลอดภัยแล้ว — เหลือแค่แผ่นแสงจาง ๆ ด้านล่าง (พื้นที่ยังทำงานเหมือนเดิม)
         const disc = new THREE.Mesh(new THREE.CircleGeometry(sp.r, 40), new THREE.MeshBasicMaterial({ color: 0xbaf5c4, transparent: true, opacity: 0.09, depthWrite: false }));
         disc.rotation.x = -Math.PI / 2; disc.position.set(sp.x, 0.015, sp.z); safeMarks.add(disc);
       }
@@ -16289,7 +16309,6 @@ export default function CherryAdventure() {
     G.updateWarpLabels();
 
     // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
-    const ringPos0 = ring.geometry.attributes.position.array.slice();
     G.rebuildTerrain = (b) => {
       TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
       TERR_FLATTEN = !!G._terrFlatMode;
@@ -16319,21 +16338,139 @@ export default function CherryAdventure() {
       }
       pos.needsUpdate = true; col.needsUpdate = true;
       groundGeo.computeVertexNormals();   // จุดยอดไม่แชร์กันแล้ว → ได้เวกเตอร์ปกติต่อหน้า = เหลี่ยมคม
-      const rp = ring.geometry.attributes.position;     // 🔵 เส้นขอบสนามไต่ไปตามพื้น
-      for (let i = 0; i < rp.count; i++) rp.setZ(i, terrainAt(ringPos0[i * 3], -ringPos0[i * 3 + 1]) + 0.012);
-      rp.needsUpdate = true;
       if (G.snapWorldDecor) G.snapWorldDecor();
       if (G.scatterDetail) G.scatterDetail(b.id);   // 🌿 โปรยหญ้า/ก้อนกรวดใหม่ให้เกาะพื้นชุดนี้
     };
     // 🌳 วางของประดับฉากให้แนบพื้นที่สูงต่ำไม่เท่ากัน (เก็บความสูงเดิมไว้ แล้วบวกความสูงพื้นเข้าไป)
+    // ================= 🧱 ขอบแมพ — สร้างแนวกั้นจริงแทนเส้นวงกลม =================
+    const borderGrp = new THREE.Group();
+    scene.add(borderGrp);
+    G._borderGrp = borderGrp;
+    const borderClear = () => {
+      for (let i = borderGrp.children.length - 1; i >= 0; i--) {
+        const o = borderGrp.children[i];
+        borderGrp.remove(o);
+        if (G._disposeObj3D) G._disposeObj3D(o);
+      }
+    };
+    // มุมที่เว้นไว้ให้ประตูโซนกับแท่นมิติ — แนวกั้นจะไม่ไปบังทางเข้า
+    const borderGaps = () => {
+      const gs = [Math.atan2(0, -30), Math.atan2(0, 30)];   // 🌀 แท่นมิติซ้าย/ขวา
+      for (const k of ["town", "home", "ranch"]) { const g = G.GATE_POS[k]; gs.push(Math.atan2(g.z, g.x)); }
+      return gs;
+    };
+    G.buildBorder = (bid) => {
+      borderClear();
+      const B = BORDER[bid] || BORDER.meadow;
+      const R = FIELD_R + 1.4;
+      const gaps = borderGaps();
+      const nearGap = (a) => gaps.some((g) => { let d = Math.abs(((a - g + Math.PI * 3) % (Math.PI * 2)) - Math.PI); return d > Math.PI - 0.2; });
+      const matA = new THREE.MeshLambertMaterial({ color: B.a, flatShading: true });
+      const matB = new THREE.MeshLambertMaterial({ color: B.b, flatShading: true });
+      const matC = B.c != null ? new THREE.MeshLambertMaterial({ color: B.c, flatShading: true }) : matB;
+      const put = (m, x, z, extraY) => { m.position.set(x, (extraY || 0) + terrainAt(x, z), z); borderGrp.add(m); };
+
+      if (B.kind === "forest") {          // 🌲 ป่าทึบสองแถว
+        const N = 62;
+        for (let i = 0; i < N; i++) {
+          const a = (i / N) * Math.PI * 2 + 0.03;
+          if (nearGap(a)) continue;
+          for (const [rr, sc] of [[R, 1], [R + 2.4, 1.25]]) {
+            const h = (3.4 + Math.random() * 2.6) * sc;
+            const x = Math.cos(a + (Math.random() - 0.5) * 0.05) * rr, z = Math.sin(a + (Math.random() - 0.5) * 0.05) * rr;
+            const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * sc, 0.34 * sc, h, 6), matC);
+            put(tr, x, z, h / 2);
+            const cw = new THREE.Mesh(new THREE.IcosahedronGeometry((1.5 + Math.random() * 0.8) * sc, 0), Math.random() < 0.5 ? matA : matB);
+            cw.scale.y = 0.85; put(cw, x, z, h + 0.5 * sc);
+          }
+        }
+      } else if (B.kind === "river") {    // 🌊 แม่น้ำล้อมรอบ + หาดทราย
+        const sand = new THREE.Mesh(new THREE.RingGeometry(R - 1.6, R + 0.6, 72), matC);
+        sand.rotation.x = -Math.PI / 2; sand.position.y = 0.05; borderGrp.add(sand);
+        const water = new THREE.Mesh(
+          new THREE.RingGeometry(R + 0.4, R + 16, 72),
+          new THREE.MeshStandardMaterial({ color: B.a, transparent: true, opacity: 0.86, roughness: 0.18, metalness: 0.25, side: THREE.DoubleSide })
+        );
+        water.rotation.x = -Math.PI / 2; water.position.y = -0.12; borderGrp.add(water);
+        G._borderWater = water;
+        for (let i = 0; i < 46; i++) {   // ก้อนหินริมน้ำ
+          const a = (i / 46) * Math.PI * 2;
+          if (nearGap(a)) continue;
+          const rr = R + 0.3 + Math.random() * 1.2;
+          const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4 + Math.random() * 0.7, 0), matB);
+          put(rk, Math.cos(a) * rr, Math.sin(a) * rr, 0.18);
+        }
+      } else if (B.kind === "wall") {     // 🧱 กำแพงหินก้อนใหญ่ + ป้อม
+        const N = 76;
+        for (let i = 0; i < N; i++) {
+          const a = (i / N) * Math.PI * 2;
+          if (nearGap(a)) continue;
+          const x = Math.cos(a) * R, z = Math.sin(a) * R;
+          for (let k = 0; k < 3; k++) {
+            const blk = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.5, 1.3), k % 2 ? matB : matA);
+            blk.rotation.y = -a - Math.PI / 2;   // วางขนานแนวกำแพง (แนวสัมผัสวง) ไม่ใช่ชี้ออกนอก
+            put(blk, x + (k % 2 ? 0.12 : -0.1) * Math.cos(a), z + (k % 2 ? 0.12 : -0.1) * Math.sin(a), 0.75 + k * 1.5);
+          }
+        }
+        for (let i = 0; i < 12; i++) {   // ป้อมมุม
+          const a = (i / 12) * Math.PI * 2 + 0.26;
+          if (nearGap(a)) continue;
+          const t = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.6, 7.4, 8), matB);
+          put(t, Math.cos(a) * R, Math.sin(a) * R, 3.7);
+          const cap = new THREE.Mesh(new THREE.ConeGeometry(1.7, 1.5, 8), matA);
+          put(cap, Math.cos(a) * R, Math.sin(a) * R, 8.1);
+        }
+      } else if (B.kind === "fence") {   // 🚧 รั้วเสา + ราวสองชั้น
+        const N = 88;
+        for (let i = 0; i < N; i++) {
+          const a = (i / N) * Math.PI * 2;
+          if (nearGap(a)) continue;
+          const x = Math.cos(a) * R, z = Math.sin(a) * R;
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.24, 2.3, 6), matB);
+          put(post, x, z, 1.1);
+          const seg = (Math.PI * 2 / N) * R * 1.02;
+          for (const hy of [0.8, 1.55]) {
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(seg, 0.2, 0.2), matA);
+            rail.rotation.y = -a - Math.PI / 2;   // ราวรั้วต้องพาดตามแนวรั้ว
+            const a2 = a + Math.PI / N;
+            put(rail, Math.cos(a2) * R, Math.sin(a2) * R, hy);
+          }
+        }
+      } else {                            // ⛰️ เหว/หน้าผา — แผ่นหินสูงเอียงสลับ
+        const N = 70;
+        for (let i = 0; i < N; i++) {
+          const a = (i / N) * Math.PI * 2;
+          if (nearGap(a)) continue;
+          const h = 5.5 + Math.random() * 4.5;
+          const w = 2.2 + Math.random() * 1.4;
+          const x = Math.cos(a) * (R + Math.random() * 0.8), z = Math.sin(a) * (R + Math.random() * 0.8);
+          const slab = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.72, w, h, 5), i % 2 ? matA : matB);
+          slab.rotation.y = Math.random() * 3;
+          slab.rotation.z = (Math.random() - 0.5) * 0.14;
+          put(slab, x, z, h / 2 - 0.6);
+        }
+        // ร่องเหวมืด ๆ ด้านนอก
+        const pit = new THREE.Mesh(
+          new THREE.RingGeometry(R + 2.2, R + 14, 64),
+          new THREE.MeshBasicMaterial({ color: 0x0d1014, transparent: true, opacity: 0.82, side: THREE.DoubleSide })
+        );
+        pit.rotation.x = -Math.PI / 2; pit.position.y = -1.2; borderGrp.add(pit);
+      }
+      borderGrp.children.forEach((o) => { o.userData.noHide = true; if (o.userData._y0 == null) o.userData._y0 = o.position.y - terrainAt(o.position.x, o.position.z); });
+      G._borderKind = B.kind;
+    };
+    // ================= 🧱 END BORDER =================
+
     G.snapWorldDecor = () => {
       const snap = (o) => { if (!o) return; if (o.userData._y0 == null) o.userData._y0 = o.position.y; o.position.y = o.userData._y0 + terrainAt(o.position.x, o.position.z); };
       (G.sceneryObjects || []).forEach(snap);
       (G.biomeDecorGroups || []).forEach((grp) => { if (grp && grp.children) grp.children.forEach(snap); });
       if (G.mineSnapAll) G.mineSnapAll();   // ⛏️ สายแร่เกาะพื้นใหม่ด้วย
+      if (G._borderGrp) G._borderGrp.children.forEach(snap);   // 🧱 แนวกั้นขอบแมพเกาะพื้นด้วย
       if (G.warpGate && G.warpGate.children) G.warpGate.children.forEach(snap);
     };
     G.rebuildTerrain(BIOMES[G.curBiome || 0] || BIOMES[0]);   // 🏔️ ปั้นภูมิประเทศแมพเริ่มต้น
+    G.buildBorder((BIOMES[G.curBiome || 0] || BIOMES[0]).id);   // 🧱 แนวกั้นขอบแมพเริ่มต้น
     if (G.resetAmbient) G.resetAmbient((BIOMES[G.curBiome || 0] || BIOMES[0]).id, 0, 0);   // ✨ ละอองบรรยากาศแมพเริ่มต้น
     { const b0 = BIOMES[G.curBiome || 0] || BIOMES[0]; const fd0 = { meadow: [46, 98] }[b0.id] || [46, 98]; G._fogBase = { near: fd0[0], far: fd0[1] }; if (G.rollWeather) G.rollWeather(b0.id, "clear"); }   // 🌦️ เริ่มเกมด้วยฟ้าโปร่ง
 
@@ -16342,6 +16479,7 @@ export default function CherryAdventure() {
       const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
       G.curBiome = BIOMES.indexOf(b);
       G.rebuildTerrain(b);   // 🏔️ ปั้นภูเขา/ที่ราบสูง/หน้าผาประจำแมพนี้
+      if (G.buildBorder) G.buildBorder(b.id);   // 🧱 แนวกั้นขอบแมพประจำแมพนี้ (ป่า/แม่น้ำ/กำแพง/รั้ว/เหว)
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
@@ -16667,17 +16805,59 @@ export default function CherryAdventure() {
       });
     };
 
-    // 🐄 แท่นวาร์ปเข้าฟาร์ม (โผล่เฉพาะทุ่งซากุระ ใกล้กระท่อม)
-    const ranchPad = new THREE.Group();
-    const rpDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xffd9ec, emissive: 0xf0a8cc, emissiveIntensity: 0.4, roughness: 0.7, side: THREE.DoubleSide }));
-    rpDisc.rotation.x = -Math.PI / 2; rpDisc.position.y = 0.05;
-    const rpRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 12, 30), new THREE.MeshStandardMaterial({ color: 0xffb0d8, emissive: 0xe07ab0, emissiveIntensity: 0.8 }));
-    rpRing.rotation.x = -Math.PI / 2; rpRing.position.y = 0.12;
-    const rpLabel = ranchLabel(2.6, 0.98);
-    rpLabel.draw("🐄 ฟาร์มของฉัน", "#fff4fb");
-    rpLabel.sprite.position.y = 1.7;
-    ranchPad.add(rpDisc, rpRing, rpLabel.sprite);
-    ranchPad.position.set(-6, 0, -3);
+    // 🚪 ประตูโซน — ซุ้มหินสองเสา + ม่านมิติเรืองแสง วางไว้ริมแมพคนละมุม (แทนแท่นวงกลมกลางแมพ)
+    const makeZoneGate = (stoneCol, glowCol, capCol, text) => {
+      const g = new THREE.Group();
+      const stone = new THREE.MeshLambertMaterial({ color: stoneCol, flatShading: true });
+      const cap = new THREE.MeshStandardMaterial({ color: capCol, roughness: 0.55, metalness: 0.15 });
+      // เสาสองข้าง (ก้อนหินซ้อนกัน ดูเป็นซุ้มโบราณ)
+      for (const sx of [-1.55, 1.55]) {
+        for (let k = 0; k < 4; k++) {
+          const w = 0.92 - k * 0.06;
+          const blk = new THREE.Mesh(new THREE.BoxGeometry(w, 0.86, w), stone);
+          blk.position.set(sx + (k % 2 ? 0.05 : -0.04), 0.43 + k * 0.86, 0);
+          blk.rotation.y = (k % 2 ? 0.08 : -0.06);
+          blk.castShadow = true;
+          g.add(blk);
+        }
+        const top = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.3, 1.12), cap);
+        top.position.set(sx, 3.62, 0); g.add(top);
+      }
+      // คานบน + ยอดแหลม
+      const lintel = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.5, 1.0), stone);
+      lintel.position.y = 4.02; lintel.castShadow = true; g.add(lintel);
+      const crown = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.8, 6), cap);
+      crown.position.y = 4.66; g.add(crown);
+      // 🌀 ม่านมิติตรงกลาง — เรืองแสง โปร่งแสง หมุนวนได้
+      const veil = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.5, 3.5, 1, 1),
+        new THREE.MeshBasicMaterial({ color: glowCol, transparent: true, opacity: 0.34, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })
+      );
+      veil.position.y = 1.85; g.add(veil);
+      // วงแหวนพลังในกรอบประตู (ใช้เป็นตัวบอกว่ากำลังชาร์จเข้าโซน)
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.05, 0.09, 10, 26),
+        new THREE.MeshStandardMaterial({ color: glowCol, emissive: glowCol, emissiveIntensity: 0.9, roughness: 0.3 })
+      );
+      ring.position.y = 1.85; g.add(ring);
+      // แสงนวลกองที่พื้นใต้ประตู (ไม่ใช่เส้นวงกลม — เป็นแสงจาง ๆ)
+      const pool = new THREE.Mesh(
+        new THREE.CircleGeometry(1.9, 26),
+        new THREE.MeshBasicMaterial({ color: glowCol, transparent: true, opacity: 0.16, depthWrite: false })
+      );
+      pool.rotation.x = -Math.PI / 2; pool.position.y = 0.02; g.add(pool);
+      const lab = ranchLabel(3.0, 1.0);
+      lab.draw(text, "#fff8f2");
+      lab.sprite.position.y = 5.5;
+      g.add(lab.sprite);
+      g.userData.veil = veil; g.userData.pool = pool;
+      return { group: g, ring, veil };
+    };
+    // 🐄 ประตูเข้าฟาร์ม — ริมแมพฝั่งตะวันออกเฉียงใต้
+    const _rGate = makeZoneGate(0xb98fa8, 0xffb0d8, 0xf5d0e4, "🐄 ฟาร์มของฉัน");
+    const ranchPad = _rGate.group, rpRing = _rGate.ring;
+    ranchPad.position.set(GATE_POS.ranch.x, 0, GATE_POS.ranch.z);
+    ranchPad.rotation.y = GATE_POS.ranch.ry;
     scene.add(ranchPad);
     G._ranchPad = ranchPad;
     G._ranchPadRing = rpRing;
@@ -16895,6 +17075,7 @@ export default function CherryAdventure() {
       wilds.forEach((m) => (m.visible = false)); // 👻 ซ่อนมอนสเตอร์ป่า
       if (portal) portal.visible = false;         // 🗼 ซ่อนพอร์ทัลหอคอย
       if (G.warpGate) G.warpGate.visible = false; // 🌀 ซ่อนแท่นวาร์ปแมป
+      if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 ซ่อนแนวกั้นขอบแมพ
       if (G._homePad) G._homePad.visible = false;
       if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน
       if (G._ranchPad) G._ranchPad.visible = false;
@@ -16913,6 +17094,7 @@ export default function CherryAdventure() {
       G.inRanchZone = false;
       G.vel = G.vel || { x: 0, z: 0 };
       if (G._ranchZone) G._ranchZone.visible = false;
+      if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 คืนแนวกั้นขอบแมพ
       wilds.forEach((m) => (m.visible = true));   // 🐾 คืนมอนสเตอร์ป่า
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
@@ -17023,16 +17205,10 @@ export default function CherryAdventure() {
     G.setHomeFloor = (i) => { G.home.floor = i; G.applyHomeStyles(); setUi((u) => ({ ...u, homeFloor: i })); if (G.toast) G.toast(`🧱 เปลี่ยนพื้นเป็น ${(HOME_FLOORS[i] || {}).name || ""}`); };
     G.setHomeWall = (i) => { G.home.wall = i; G.applyHomeStyles(); setUi((u) => ({ ...u, homeWall: i })); if (G.toast) G.toast(`🎨 เปลี่ยนผนังเป็น ${(HOME_WALLS[i] || {}).name || ""}`); };
     // 🚪 แท่นวาร์ปหน้าบ้าน (โผล่เฉพาะทุ่งซากุระ ข้างกระท่อม — อยู่ในเขตปลอดภัยหมู่บ้าน)
-    const homePad = new THREE.Group();
-    const hpDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xffe9c8, emissive: 0xf0c078, emissiveIntensity: 0.4, roughness: 0.7, side: THREE.DoubleSide }));
-    hpDisc.rotation.x = -Math.PI / 2; hpDisc.position.y = 0.05;
-    const hpRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 12, 30), new THREE.MeshStandardMaterial({ color: 0xffca7a, emissive: 0xe0983a, emissiveIntensity: 0.8 }));
-    hpRing.rotation.x = -Math.PI / 2; hpRing.position.y = 0.12;
-    const hpLabel = ranchLabel(2.6, 0.98);
-    hpLabel.draw("🏠 บ้านของฉัน", "#fff8ec");
-    hpLabel.sprite.position.y = 1.7;
-    homePad.add(hpDisc, hpRing, hpLabel.sprite);
-    homePad.position.set(-13, 0, -5.2);
+    const _hGate = makeZoneGate(0xb59a72, 0xffca7a, 0xf0dcb0, "🏠 บ้านของฉัน");
+    const homePad = _hGate.group, hpRing = _hGate.ring;
+    homePad.position.set(GATE_POS.home.x, 0, GATE_POS.home.z);
+    homePad.rotation.y = GATE_POS.home.ry;
     scene.add(homePad);
     G._homePad = homePad; G._homePadRing = hpRing;
     // 🏠 ห้องภายในบ้าน (สร้างครั้งเดียว ซ่อนไว้)
@@ -17077,6 +17253,7 @@ export default function CherryAdventure() {
       if (G._ranchPad) G._ranchPad.visible = false;
       if (G._homePad) G._homePad.visible = false;
       if (G._safeMarks) G._safeMarks.visible = false;
+      if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false)); // 🌳 ซ่อนต้นไม้/หิน/ของประดับโลก — พื้นบ้านเรียบโล่ง
       if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน (เข้าบ้านได้จากทุกด่าน)
       homeZone.visible = true;
@@ -17094,6 +17271,7 @@ export default function CherryAdventure() {
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
       if (G._safeMarks) G._safeMarks.visible = true;
+      if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true)); // 🌳 คืนฉากทุ่งซากุระ
       if (G._restoreBiomeDecor) G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
       const r = G._homeReturn || { x: -13, z: -3 };
@@ -17361,6 +17539,7 @@ export default function CherryAdventure() {
       if (G._homePad) G._homePad.visible = false;
       if (G._townPad) G._townPad.visible = false;
       if (G._safeMarks) G._safeMarks.visible = false;
+      if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false));
       if (G._hideBiomeDecor) G._hideBiomeDecor();
       townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
@@ -17381,6 +17560,7 @@ export default function CherryAdventure() {
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
       if (G._safeMarks) G._safeMarks.visible = true;
+      if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true));
       if (G._restoreBiomeDecor) G._restoreBiomeDecor();
       const r = G._townReturn || { x: -9.5, z: -5.5 };
@@ -17392,16 +17572,10 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, inTownZone: false }));
     };
     // 🏰 แท่นวาร์ปเข้าเมือง (โผล่ทุกด่าน เหมือนแท่นบ้าน/ฟาร์ม)
-    const townPad = new THREE.Group();
-    const tpDisc = new THREE.Mesh(new THREE.CircleGeometry(1.0, 28), new THREE.MeshStandardMaterial({ color: 0xead0f5, emissive: 0xb080e0, emissiveIntensity: 0.4, roughness: 0.7, side: THREE.DoubleSide }));
-    tpDisc.rotation.x = -Math.PI / 2; tpDisc.position.y = 0.05;
-    const tpRing = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.08, 12, 30), new THREE.MeshStandardMaterial({ color: 0xcf9df0, emissive: 0x9a5ad0, emissiveIntensity: 0.8 }));
-    tpRing.rotation.x = -Math.PI / 2; tpRing.position.y = 0.12;
-    const tpLabel = ranchLabel(2.6, 0.98);
-    tpLabel.draw("🏰 เมืองเชอร์รี่", "#f5ecff");
-    tpLabel.sprite.position.y = 1.7;
-    townPad.add(tpDisc, tpRing, tpLabel.sprite);
-    townPad.position.set(-13, 0, -8.2);
+    const _tGate = makeZoneGate(0x9a86b8, 0xcf9df0, 0xe4d0f5, "🏰 เมืองเชอร์รี่");
+    const townPad = _tGate.group, tpRing = _tGate.ring;
+    townPad.position.set(GATE_POS.town.x, 0, GATE_POS.town.z);
+    townPad.rotation.y = GATE_POS.town.ry;
     scene.add(townPad);
     G._townPad = townPad; G._townPadRing = tpRing;
     // ================= 🎬 ANIME FX LAYERS — แฟลชกระแทก + ป้ายชื่อสกิล + เส้นสปีด =================
@@ -32695,20 +32869,23 @@ export default function CherryAdventure() {
         if (G._ranchPad) {
           G._ranchPad.visible = (!G.inRanchZone && !G.inHomeZone && !G.inTownZone); // 🐄 โผล่ทุกด่าน — วาร์ปเข้าฟาร์มได้จากทุกที่
           if (G._ranchPadRing && !G._ranchPadT) G._ranchPadRing.rotation.z = t * 1.2;
+          if (G._ranchPad.userData.veil) G._ranchPad.userData.veil.material.opacity = 0.26 + Math.sin(t * 1.7) * 0.12;
         }
         if (G._homePad) {
           G._homePad.visible = (!G.inRanchZone && !G.inHomeZone && !G.inTownZone); // 🏠 โผล่ทุกด่าน
           if (G._homePadRing && !G._homePadT) G._homePadRing.rotation.z = t * 1.2;
+          if (G._homePad.userData.veil) G._homePad.userData.veil.material.opacity = 0.26 + Math.sin(t * 1.7 + 2) * 0.12;
         }
         if (G._townPad) {
           G._townPad.visible = (!G.inRanchZone && !G.inHomeZone && !G.inTownZone); // 🏰 โผล่ทุกด่าน — วาร์ปเข้าเมืองได้จากทุกที่
           if (G._townPadRing && !G._townPadT) G._townPadRing.rotation.z = t * 1.2;
+          if (G._townPad.userData.veil) G._townPad.userData.veil.material.opacity = 0.26 + Math.sin(t * 1.7 + 4) * 0.12;
         }
         // ⏳ ยืนบนแท่นค้าง 2 วิ แล้วค่อยวาร์ป (วงแหวนหมุนเร็ว+ขยายบอกความคืบหน้า)
         const padChargeStep = (pad, ring, shyKey, tKey, go) => {
           if (!pad || !pad.visible) { G[tKey] = 0; if (ring) ring.scale.setScalar(1); return; }
           const pd2 = Math.hypot(char.position.x - pad.position.x, char.position.z - pad.position.z);
-          if (pd2 < 1.5 && !G[shyKey]) {
+          if (pd2 < 2.4 && !G[shyKey]) {
             G[tKey] = (G[tKey] || 0) + dt;
             const cp = Math.min(1, G[tKey] / 2);
             if (ring) { ring.rotation.z = t * (1.2 + cp * 7); ring.scale.setScalar(1 + cp * 0.4); }
@@ -32716,7 +32893,7 @@ export default function CherryAdventure() {
           } else {
             if (G[tKey] > 0 && ring) ring.scale.setScalar(1);
             G[tKey] = 0;
-            if (pd2 > 3) G[shyKey] = false; // เดินห่างแล้วค่อยเข้าได้อีก
+            if (pd2 > 4) G[shyKey] = false; // เดินห่างแล้วค่อยเข้าได้อีก
           }
         };
         if (!G.inRanchZone && !G.inHomeZone && !G.inTownZone && G.mode === "explore" && !G.banim) {
@@ -32731,6 +32908,7 @@ export default function CherryAdventure() {
           if (portal) portal.visible = false;
           if (G.warpGate) G.warpGate.visible = false;
           if (G._safeMarks) G._safeMarks.visible = false;
+      if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 แนวกั้นขอบแมพ
           wilds.forEach((m) => { if (m.visible) m.visible = false; m.userData.aggro = false; });
           if ((G._frzTick % 30) === 0) { // 🛟 กันของโลกภายนอกแอบโผล่กลางเมือง (ต้นไม้/มอนสเตอร์/ฉากด่าน)
             if (G.sceneryObjects) for (const o of G.sceneryObjects) if (o.visible) o.visible = false;
@@ -32758,6 +32936,7 @@ export default function CherryAdventure() {
           if (portal) portal.visible = false;
           if (G.warpGate) G.warpGate.visible = false;
           if (G._safeMarks) G._safeMarks.visible = false;
+      if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 แนวกั้นขอบแมพ
           wilds.forEach((m) => { if (m.visible) m.visible = false; m.userData.aggro = false; });
         }
         // 🛟 ตาข่ายกันพลาด: อยู่นอกโซนพิเศษแล้ว มอนสเตอร์ต้องมองเห็นเสมอ (กันค้างซ่อนจากการเข้า-ออกโซน)
