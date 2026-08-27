@@ -555,6 +555,7 @@ const MISSION_DAILY = [
   { id: "d_forge3", t: "forge",    n: 3,  emoji: "⛏️", name: "ตีบวก/หลอมของ 3 ครั้ง",  exp: 500,  gold: 3000, pt: 10 },
   { id: "d_skill8", t: "skill",    n: 8,  emoji: "✨", name: "ใช้สกิล 8 ครั้ง",         exp: 480,  gold: 2600, pt: 10 },
   { id: "d_mine6",  t: "mine",     n: 6,  emoji: "⛏️", name: "ขุดสายแร่ 6 ก้อน",        exp: 520,  gold: 3000, pt: 10 },
+  { id: "d_cook2",  t: "cook",     n: 2,  emoji: "🍳", name: "ทำอาหาร 2 จาน",           exp: 500,  gold: 2800, pt: 10 },
 ];
 const MISSION_WEEKLY = [
   { id: "w_win150", t: "win",   n: 150, emoji: "⚔️", name: "ล่ามอนสเตอร์ 150 ตัว",  exp: 6000,  gold: 34000, dia: 60,  pt: 40 },
@@ -564,6 +565,7 @@ const MISSION_WEEKLY = [
   { id: "w_tower5", t: "tower", n: 5,   emoji: "🗼", name: "ผ่านหอคอย 5 ชั้น",       exp: 7000,  gold: 38000, dia: 70,  pt: 42 },
   { id: "w_fish30", t: "fish",  n: 30,  emoji: "🎣", name: "ตกปลา 30 ตัว",           exp: 4800,  gold: 27000, dia: 45,  pt: 34 },
   { id: "w_mine40", t: "mine",  n: 40,  emoji: "⛏️", name: "ขุดสายแร่ 40 ก้อน",       exp: 5400,  gold: 30000, dia: 50,  pt: 36 },
+  { id: "w_cook15", t: "cook",  n: 15,  emoji: "🍳", name: "ทำอาหาร 15 จาน",           exp: 5000,  gold: 28000, dia: 48,  pt: 34 },
 ];
 const PASS_TIERS = 30;      // 🎫 จำนวนขั้นของแทร็กรางวัล
 const PASS_STEP = 100;      // แต้มต่อหนึ่งขั้น
@@ -1408,6 +1410,48 @@ const ORE_LOOK = {
   beach:   { rock: 0xd8c8a0, gem: 0x8ae0e0 }, titan:  { rock: 0x7a7060, gem: 0xd0a060 },
   amazon:  { rock: 0x6a7a58, gem: 0x9ae86a },
 };
+
+// ---------- 🍳 ครัว — เอาผลผลิตฟาร์ม ปลา และแร่มาทำอาหาร ได้บัฟติดตัวตามเวลาจริง ----------
+// need: produce=พืชผลจากไร่ · goods=ของแปรรูป/ผลไม้ · fish=ปลาที่ตกได้ · mats=วัตถุดิบคราฟต์
+// buff: atkPct/defPct/hpPct=% · crit/luck=แต้มตรง ๆ · expPct/goldPct/dropPct=%
+const RECIPES = [
+  { id: "salad",   name: "สลัดแครอทกรอบ",   emoji: "🥗", lv: 1, mins: 30, exp: 10,
+    need: { produce: { carrot: 3 } }, buff: { hpPct: 12 } },
+  { id: "grill",   name: "ปลาย่างเกลือ",     emoji: "🐟", lv: 1, mins: 30, exp: 10,
+    need: { fish: { common: 3 } }, buff: { atkPct: 10 } },
+  { id: "popbtr",  name: "ป๊อปคอร์นเนย",     emoji: "🍿", lv: 1, mins: 30, exp: 12,
+    need: { goods: { popcorn: 1 }, produce: { corn: 2 } }, buff: { expPct: 25 } },
+  { id: "soup",    name: "ซุปข้าวโพดข้น",    emoji: "🍲", lv: 2, mins: 45, exp: 18,
+    need: { produce: { corn: 4, carrot: 2 } }, buff: { defPct: 18 } },
+  { id: "dango",   name: "ดังโงะเบอร์รี่",    emoji: "🍡", lv: 2, mins: 45, exp: 18,
+    need: { produce: { berry: 4 } }, buff: { luck: 12 } },
+  { id: "tempura", name: "ปลาชุบแป้งทอด",    emoji: "🍤", lv: 2, mins: 45, exp: 20,
+    need: { fish: { common: 4 }, produce: { corn: 3 } }, buff: { crit: 12 } },
+  { id: "ramen",   name: "ราเมงทะเลเดือด",   emoji: "🍜", lv: 3, mins: 60, exp: 32,
+    need: { fish: { rare: 2 }, produce: { corn: 3, carrot: 3 } }, buff: { atkPct: 18, crit: 8 } },
+  { id: "pie",     name: "พายเบอร์รี่อบ",     emoji: "🥧", lv: 3, mins: 60, exp: 32,
+    need: { goods: { jam: 1 }, produce: { berry: 5 } }, buff: { expPct: 45 } },
+  { id: "bento",   name: "เบนโตะนักผจญภัย",  emoji: "🍱", lv: 4, mins: 60, exp: 48,
+    need: { produce: { carrot: 5, corn: 5, berry: 5 }, fish: { common: 5 } }, buff: { goldPct: 50 } },
+  { id: "steak",   name: "สเต๊กเกล็ดมังกร",   emoji: "🍖", lv: 4, mins: 60, exp: 52,
+    need: { fish: { epic: 1 }, mats: { dragonScale: 1 } }, buff: { atkPct: 28, hpPct: 18 } },
+  { id: "pudding", name: "พุดดิ้งคริสตัล",    emoji: "🍮", lv: 5, mins: 75, exp: 70,
+    need: { mats: { crystal: 4 }, goods: { juice: 2 } }, buff: { luck: 20, dropPct: 25 } },
+  { id: "feast",   name: "สำรับเทพเจ้า",      emoji: "🌟", lv: 5, mins: 90, exp: 120,
+    need: { fish: { epic: 2 }, mats: { dragonScale: 2, crystal: 6 }, produce: { berry: 10 } },
+    buff: { atkPct: 25, defPct: 25, hpPct: 25, expPct: 60, crit: 15 } },
+];
+const RECIPE_BY = {}; RECIPES.forEach((r) => (RECIPE_BY[r.id] = r));
+const COOK_LV_EXP = (lv) => 40 + lv * 55;      // 🍳 EXP ที่ต้องใช้ขึ้นเลเวลทำอาหาร
+const COOK_LV_MAX = 5;
+// 🏷️ ชื่อบัฟที่โชว์บนจอ
+const BUFF_LABEL = {
+  atkPct: ["⚔️ พลังโจมตี", "%"], defPct: ["🛡️ ป้องกัน", "%"], hpPct: ["❤️ พลังชีวิต", "%"],
+  crit: ["🎯 คริติคอล", "%"], luck: ["🍀 โชค", ""], expPct: ["⭐ EXP", "%"],
+  goldPct: ["💰 ทองที่ได้", "%"], dropPct: ["🎁 โอกาสดรอป", "%"],
+};
+// 🐟 ปลาที่ตกได้เก็บเข้าถัง แยกตามระดับ
+const FISH_TIER = { common: { name: "ปลาธรรมดา", emoji: "🐟" }, rare: { name: "ปลาหายาก", emoji: "🐠" }, epic: { name: "ปลาในตำนาน", emoji: "🐉" } };
 const MINE_NODES = 5;          // 🪨 สายแร่ที่โผล่พร้อมกันในแมพ
 const MINE_SWINGS = 3;         // 🔨 ต้องตีให้เข้าเป้ากี่ครั้งกว่าสายแร่จะแตก
 const MINE_LV_EXP = (lv) => 60 + lv * 45;   // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
@@ -1883,6 +1927,7 @@ export default function CherryAdventure() {
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
+    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
     eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
@@ -17694,6 +17739,11 @@ export default function CherryAdventure() {
         setUi((u) => ({ ...u, fishing: null }));
         if (G.sfx) G.sfx.fish();
         if (fish.rarity !== "junk") questProgress("collect", 1);
+        if (fish.rarity !== "junk") {   // 🐟 เก็บปลาเข้าถังไว้ทำอาหาร
+          G.fishBag = G.fishBag || { common: 0, rare: 0, epic: 0 };
+          G.fishBag[fish.rarity] = (G.fishBag[fish.rarity] || 0) + 1;
+          setUi((u) => ({ ...u, fishBag: { ...G.fishBag } }));
+        }
         if (G.mbEvent) G.mbEvent("fish");   // 📖 นับภารกิจ "ตกปลา"
         toast(`${fish.emoji} จับ${fish.name}ได้! +${fish.gold}💰 +${fish.exp}EXP`);
       }
@@ -20287,16 +20337,16 @@ export default function CherryAdventure() {
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-    const effAtk = () => Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0); // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์
-    const effDef = () => Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล
-    const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100)) + (G.guild ? G.guildBuff().hp : 0); // ⚖️ +3 HP ฐานต่อเลเวล · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+    const effAtk = () => Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0)) * (1 + (G.foodB ? G.foodB("atkPct") : 0) / 100)) + (G.guild ? G.guildBuff().atk : 0); // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
+    const effDef = () => Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100) * (1 + (G.foodB ? G.foodB("defPct") : 0) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
+    const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100) * (1 + (G.foodB ? G.foodB("hpPct") : 0) / 100)) + (G.guild ? G.guildBuff().hp : 0); // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
-    const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0); // 🎯 crit · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
-    const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck"); // 🍀 luck: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
+    const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0) + (G.foodB ? G.foodB("crit") : 0); // 🎯 crit · 🍳 บัฟอาหาร · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
+    const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck") + (G.foodB ? G.foodB("luck") : 0); // 🍀 luck · 🍳 บัฟอาหาร: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     // 🐤✨ SECRET RARE PET — a shy chick that hides in the world; can't be attacked, walk up & catch only
     G.secretPet = null; G.secretTimer = 0;
     G.trySpawnSecret = () => {
@@ -20352,6 +20402,7 @@ export default function CherryAdventure() {
         power: powerOf({ atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()) }),
         gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, warpScrolls: G.warpScrolls || 0,
         mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0,
+        cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null),
         pid: G.pid || null,
         pvpRank: G.pvpRank || 1000, pvpTier: tier ? (tier.emoji + " " + tier.name) : null,
         endlessBest: G.endlessBest || 0, ngPlus: G.ngPlus || 0,
@@ -20402,7 +20453,7 @@ export default function CherryAdventure() {
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0,
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -20911,6 +20962,7 @@ export default function CherryAdventure() {
     const gainExp = (amt) => {
       if (G.weather && G.weather.exp) amt = Math.round(amt * (1 + G.weather.exp));   // 🌦️ อากาศบางแบบให้ EXP มากขึ้น
       if (G.guild) amt = Math.round(amt * (1 + G.guildBuff().exp));   // 🏰 บัฟกิลด์ EXP
+      if (G.foodB && G.foodB("expPct")) amt = Math.round(amt * (1 + G.foodB("expPct") / 100));   // 🍳 บัฟอาหาร EXP
       if (G.expBoostUntil && Date.now() < G.expBoostUntil) amt *= 2; // 📜 ใบประสบการณ์ x2
       if (G.restBuffUntil && Date.now() < G.restBuffUntil) amt = Math.round(amt * 1.15); // 😴 บัฟนอนพักจากบ้าน +15% XP
       // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
@@ -22296,6 +22348,123 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, gold: G.gold, ranch: ranchUiSnap() }));
     };
     // 🐾 แปลงพืชผลในคลังเป็นอาหารสัตว์ (ทั้งหมดของชนิดนั้น)
+    // ================= 🍳 ครัว — ทำอาหารจากผลผลิตไร่/ปลา/แร่ ได้บัฟตามเวลาจริง =================
+    G.cookLv = G.cookLv || 1; G.cookExp = G.cookExp || 0; G.cookTotal = G.cookTotal || 0;
+    G.fishBag = G.fishBag || { common: 0, rare: 0, epic: 0 };
+    G.foodBuff = G.foodBuff || null;
+    G.cookExpNeed = () => COOK_LV_EXP(G.cookLv || 1);
+
+    // 🍽️ บัฟอาหารที่กินอยู่ตอนนี้ให้ค่าอะไรบ้าง (หมดอายุแล้ว = 0)
+    const foodB = (k) => {
+      const f = G.foodBuff;
+      if (!f || !f.id || f.until <= Date.now()) return 0;
+      const R = RECIPE_BY[f.id];
+      return (R && R.buff && R.buff[k]) || 0;
+    };
+    G.foodB = foodB;
+    G.foodBuffInfo = () => {
+      const f = G.foodBuff;
+      if (!f || !f.id || f.until <= Date.now()) return null;
+      const R = RECIPE_BY[f.id];
+      if (!R) return null;
+      return { id: R.id, name: R.name, emoji: R.emoji, buff: R.buff, left: Math.max(0, f.until - Date.now()) };
+    };
+    G.foodLeftText = () => {
+      const i = G.foodBuffInfo();
+      if (!i) return null;
+      const m = Math.floor(i.left / 60000), sec = Math.floor((i.left % 60000) / 1000);
+      return m > 0 ? `${m} นาที` : `${sec} วิ`;
+    };
+
+    // 📦 นับวัตถุดิบที่มีอยู่จริงในคลังแต่ละแหล่ง
+    const cookHave = (kind, id) => {
+      const R = G.ranch || {};
+      if (kind === "produce") return (R.produce && R.produce[id]) || 0;
+      if (kind === "goods") return (R.goods && R.goods[id]) || 0;
+      if (kind === "fish") return (G.fishBag && G.fishBag[id]) || 0;
+      if (kind === "mats") return (G.mats && G.mats[id]) || 0;
+      return 0;
+    };
+    G.cookHave = cookHave;
+    const cookTake = (kind, id, n) => {
+      const R = G.ranch || {};
+      if (kind === "produce") { R.produce = R.produce || {}; R.produce[id] = Math.max(0, (R.produce[id] || 0) - n); }
+      else if (kind === "goods") { R.goods = R.goods || {}; R.goods[id] = Math.max(0, (R.goods[id] || 0) - n); }
+      else if (kind === "fish") { G.fishBag = G.fishBag || {}; G.fishBag[id] = Math.max(0, (G.fishBag[id] || 0) - n); }
+      else if (kind === "mats") { G.mats = G.mats || {}; G.mats[id] = Math.max(0, (G.mats[id] || 0) - n); }
+    };
+    // 🏷️ ชื่อ/อีโมจิของวัตถุดิบแต่ละชิ้น เอาไว้โชว์ในสูตร
+    G.cookIngName = (kind, id) => {
+      if (kind === "produce") { const c = CROP_BY[id]; return c ? `${c.emoji}${c.name}` : id; }
+      if (kind === "goods") { const g = GOODS_BY[id]; return g ? `${g.emoji}${g.name}` : id; }
+      if (kind === "fish") { const f = FISH_TIER[id]; return f ? `${f.emoji}${f.name}` : id; }
+      if (kind === "mats") { const m = MATERIALS[id]; return m ? `${m.emoji}${m.name}` : id; }
+      return id;
+    };
+    // ✅ ทำสูตรนี้ได้ไหม + ขาดอะไรบ้าง
+    G.cookCheck = (rid) => {
+      const R = RECIPE_BY[rid];
+      if (!R) return null;
+      const rows = [];
+      let ok = (G.cookLv || 1) >= R.lv;
+      Object.keys(R.need).forEach((kind) => {
+        Object.keys(R.need[kind]).forEach((id) => {
+          const want = R.need[kind][id], have = cookHave(kind, id);
+          if (have < want) ok = false;
+          rows.push({ kind, id, want, have, label: G.cookIngName(kind, id) });
+        });
+      });
+      return { ok, lvOk: (G.cookLv || 1) >= R.lv, rows };
+    };
+
+    // 🍳 ทำอาหาร — หักวัตถุดิบ ติดบัฟทันที (บัฟใหม่แทนที่บัฟเก่า)
+    G.cook = (rid) => {
+      const R = RECIPE_BY[rid];
+      if (!R) return;
+      const chk = G.cookCheck(rid);
+      if (!chk.lvOk) { toast(`🍳 ต้องเลเวลทำอาหาร ${R.lv} ก่อนนะ (ตอนนี้ Lv.${G.cookLv || 1})`); return; }
+      if (!chk.ok) {
+        const miss = chk.rows.filter((r) => r.have < r.want).map((r) => `${r.label} ${r.have}/${r.want}`).join(" · ");
+        toast(`🍳 วัตถุดิบไม่พอ — ${miss}`);
+        return;
+      }
+      Object.keys(R.need).forEach((kind) => Object.keys(R.need[kind]).forEach((id) => cookTake(kind, id, R.need[kind][id])));
+      const prev = G.foodBuffInfo();
+      G.foodBuff = { id: R.id, until: Date.now() + R.mins * 60000 };
+      G.cookExp = (G.cookExp || 0) + R.exp;
+      let lvUp = 0;
+      while ((G.cookLv || 1) < COOK_LV_MAX && G.cookExp >= COOK_LV_EXP(G.cookLv || 1)) { G.cookExp -= COOK_LV_EXP(G.cookLv || 1); G.cookLv = (G.cookLv || 1) + 1; lvUp++; }
+      if ((G.cookLv || 1) >= COOK_LV_MAX) G.cookExp = Math.min(G.cookExp, COOK_LV_EXP(COOK_LV_MAX));
+      G.cookTotal = (G.cookTotal || 0) + 1;
+      if (G.sfx) G.sfx.fish && G.sfx.fish();
+      if (G.mbEvent) G.mbEvent("cook");
+      if (G.storyEvent) { try { G.storyEvent("cook", 1); } catch (e) {} }
+      const bt = Object.keys(R.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${R.buff[k]}${L[1]}`; }).join(" · ");
+      toast(`${R.emoji} ทำ${R.name}สำเร็จ! ${bt} นาน ${R.mins} นาที${prev ? " (แทนที่บัฟเดิม)" : ""}`);
+      if (lvUp) toast(`🍳 เลเวลทำอาหารเพิ่ม! Lv.${G.cookLv} — ปลดล็อกสูตรใหม่`);
+      G.syncCookUi();
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // 📦 รายการวัตถุดิบทั้งหมดพร้อมจำนวน — ให้ JSX เรียกได้ (CROPS อยู่นอกสโคปของ JSX)
+    G.cookStock = () => [
+      ...CROPS.map((c) => ({ emoji: c.emoji, name: c.name, n: cookHave("produce", c.id) })),
+      ...Object.keys(GOODS_BY).map((gid) => ({ emoji: GOODS_BY[gid].emoji, name: GOODS_BY[gid].name, n: cookHave("goods", gid) })).filter((g) => g.n > 0),
+      ...["common", "rare", "epic"].map((k) => ({ emoji: FISH_TIER[k].emoji, name: FISH_TIER[k].name, n: cookHave("fish", k) })),
+      ...["crystal", "dragonScale"].map((k) => ({ emoji: MATERIALS[k].emoji, name: MATERIALS[k].name, n: cookHave("mats", k) })),
+    ];
+    G.syncCookUi = () => {
+      setUi((u) => ({ ...u, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0,
+        foodBuff: G.foodBuffInfo(), fishBag: { ...(G.fishBag || {}) }, ranch: (typeof ranchUiSnap === "function" ? ranchUiSnap() : u.ranch),
+        mats: { ...(G.mats || {}) }, cookTick: (u.cookTick || 0) + 1 }));
+    };
+    G.toggleKitchen = () => {
+      const willOpen = !G._kitchenOpen;
+      G._kitchenOpen = willOpen;
+      if (willOpen) G.syncCookUi();
+      setUi((u) => ({ ...u, kitchenOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false }));
+    };
+    // ================= 🍳 END KITCHEN =================
+
     G.produceToFood = (cropId) => {
       const R = G.ranch; const c = CROP_BY[cropId]; if (!c) return;
       const n = (R.produce && R.produce[cropId]) || 0;
@@ -23127,6 +23296,7 @@ export default function CherryAdventure() {
       let goldGain = Math.round((8 + lv * 2) * comboMult * ngRew * (1 + effLuck() * 0.02));
       { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); }
       if (tB("gold")) goldGain = Math.round(goldGain * (1 + tB("gold") / 100));
+      if (G.foodB && G.foodB("goldPct")) goldGain = Math.round(goldGain * (1 + G.foodB("goldPct") / 100));   // 🍳 บัฟอาหาร ทอง
       if (shiny) goldGain += 100;
       G.gold += goldGain;
       const expRelMul = Math.max(0.35, Math.min(1.6, 1 + (lv - G.player.level) * 0.06));
@@ -28375,7 +28545,9 @@ export default function CherryAdventure() {
       { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); } // 👑 CEO path earns more
       { const AF = G.equipAffixes ? G.equipAffixes() : {}; if (AF.gold) goldGain = Math.round(goldGain * (1 + 0.25 * AF.gold)); } // 💰 ล่าสมบัติ affix
       if (tB("gold")) goldGain = Math.round(goldGain * (1 + tB("gold") / 100)); // 🏅 title gold bonus
+      if (G.foodB && G.foodB("goldPct")) goldGain = Math.round(goldGain * (1 + G.foodB("goldPct") / 100));   // 🍳 บัฟอาหาร ทอง
       if (tB("gold")) goldGain = Math.round(goldGain * (1 + tB("gold") / 100)); // 🏅 เศรษฐีทอง title
+      if (G.foodB && G.foodB("goldPct")) goldGain = Math.round(goldGain * (1 + G.foodB("goldPct") / 100));   // 🍳 บัฟอาหาร ทอง
       if (G.enemy.shiny) { goldGain += 150; toast("✨ โบนัสมอนสเตอร์ประกาย! +150💰"); } // ✨ shiny bonus
       G.gold += goldGain;
       toast(`💰 +${goldGain} ทอง`);
@@ -29151,6 +29323,7 @@ export default function CherryAdventure() {
       G.guildId = null; G.guild = null; G.guildRows = [];   // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
       G.warpScrolls = 0;   // 📜 ตัวละครใหม่ยังไม่มีใบวาร์ป
       G.mineLv = 1; G.mineExp = 0; G.pickLv = 1; G.mineTotal = 0;   // ⛏️ เริ่มด้วยอีเต้อไม้
+      G.cookLv = 1; G.cookExp = 0; G.cookTotal = 0; G.fishBag = { common: 0, rare: 0, epic: 0 }; G.foodBuff = null;   // 🍳 ครัวเปล่า
       G.pathId = null; // 🌟 fresh character has no path yet
       G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
@@ -29225,7 +29398,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -30989,6 +31162,9 @@ export default function CherryAdventure() {
       G.mbook = d.mbook || null;   // 📖 สมุดภารกิจ
       G.warpScrolls = d.warpScrolls || 0;   // 📜 ใบวาร์ปข้ามแดน
       G.mineLv = d.mineLv || 1; G.mineExp = d.mineExp || 0; G.pickLv = d.pickLv || 1; G.mineTotal = d.mineTotal || 0;   // ⛏️ เหมืองแร่
+      G.cookLv = d.cookLv || 1; G.cookExp = d.cookExp || 0; G.cookTotal = d.cookTotal || 0;   // 🍳 ครัว
+      G.fishBag = d.fishBag || { common: 0, rare: 0, epic: 0 };
+      G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now()) ? { id: d.foodBuff.id, until: d.foodBuff.until } : null;
       G.guildId = d.guildId || null;   // 🏰 กิลด์ที่สังกัด
       if (G.guildId && G.guildRefresh) { try { G.guildRefresh(); } catch (e) {} }
       if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
@@ -31144,6 +31320,16 @@ export default function CherryAdventure() {
       if (G._hitStop > 0 && dtForce == null) { G._hitStop -= dtReal; dt *= 0.06; }
       dtGlobal = dt;
       const t = clock.getElapsedTime();
+      // 🍽️ นับถอยหลังบัฟอาหาร — เดินนาฬิกาบนจอ และล้างป้ายเองเมื่อหมดอายุ
+      if (dtForce == null) {
+        G._foodAcc = (G._foodAcc || 0) + dtReal;
+        if (G._foodAcc > 2) {
+          G._foodAcc = 0;
+          const on = !!(G.foodBuff && G.foodBuff.until > Date.now());
+          if (on !== !!G._foodOn) { G._foodOn = on; if (!on) G.foodBuff = null; setUi((u) => ({ ...u, foodBuff: G.foodBuffInfo ? G.foodBuffInfo() : null })); }
+          else if (on) setUi((u) => ({ ...u, foodBuff: G.foodBuffInfo ? G.foodBuffInfo() : null }));
+        }
+      }
       // 🩸😰 เตือนเลือดใกล้หมด — ขอบจอแดงเต้นตามหัวใจ + เหงื่อออก (ทำงานทุกโหมด ทั้งเดินและต่อสู้)
       if (dtForce == null) {
         if ((G._frzTick % 6) === 0 || G._lowHpR == null) {
@@ -42974,6 +43160,105 @@ export default function CherryAdventure() {
           </div>
         </div>
       )}
+          {/* 🍳 ครัว — ทำอาหารจากผลผลิตไร่/ปลา/แร่ ได้บัฟติดตัวตามเวลาจริง */}
+          {ui.kitchenOpen && (
+            <div style={{
+              position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "86vh", overflowY: "auto",
+              background: "linear-gradient(180deg,#fff8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+            }}>
+              {closeBtn("kitchenOpen")}
+              <div style={{ fontSize: 15, fontWeight: 900, color: "#c06a2a", marginBottom: 3 }}>🍳 ครัวเชอร์รี่</div>
+              <div style={{ fontSize: 10, color: "#a08a70", marginBottom: 8 }}>เอาผลผลิตจากไร่ · ปลาที่ตกได้ · แร่ที่ขุดมา ทำอาหารกินก่อนออกลุย</div>
+
+              {/* 🍽️ บัฟที่กินอยู่ */}
+              {ui.foodBuff ? (
+                <div style={{ background: "linear-gradient(135deg,#fff0d8,#ffe4c0)", border: "1px solid #f0c890", borderRadius: 12, padding: "8px 10px", marginBottom: 9 }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "#a05a20" }}>
+                    {ui.foodBuff.emoji} {ui.foodBuff.name} <span style={{ color: "#c08a40" }}>· เหลือ {G.foodLeftText ? G.foodLeftText() : ""}</span>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#8a6a40", marginTop: 2 }}>
+                    {Object.keys(ui.foodBuff.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${ui.foodBuff.buff[k]}${L[1]}`; }).join(" · ")}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: "#f7f3ec", borderRadius: 12, padding: "7px 10px", marginBottom: 9, fontSize: 10.5, color: "#a08a70" }}>
+                  ยังไม่ได้กินอะไร — ทำอาหารสักจานก่อนออกลุยสิ! (กินได้ทีละจาน จานใหม่แทนที่จานเก่า)
+                </div>
+              )}
+
+              {/* 🍳 เลเวลทำอาหาร */}
+              {(() => {
+                const lv = ui.cookLv || 1, max = lv >= COOK_LV_MAX;
+                const need = COOK_LV_EXP(lv), pct = max ? 100 : Math.min(100, Math.round((ui.cookExp || 0) / need * 100));
+                return (
+                  <div style={{ marginBottom: 9 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, fontWeight: 800, color: "#a06a30", marginBottom: 3 }}>
+                      <span>🍳 เลเวลทำอาหาร {lv}{max ? " (สูงสุด)" : ""}</span>
+                      <span>{max ? `ทำมาแล้ว ${ui.cookTotal || 0} จาน` : `${ui.cookExp || 0} / ${need}`}</span>
+                    </div>
+                    <div style={{ height: 8, background: "#f0e4d4", borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg,#e0a050,#f5c878)" }} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 📦 วัตถุดิบที่มี */}
+              <div style={{ background: "#f7f3ec", borderRadius: 12, padding: "8px 10px", marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#8a7a5a", marginBottom: 5 }}>📦 วัตถุดิบในคลัง</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {(G.cookStock ? G.cookStock() : []).map((it, i) => (
+                    <span key={i} style={{ fontSize: 10.5, fontWeight: 800, borderRadius: 999, padding: "3px 9px", background: it.n > 0 ? "#fff" : "#efe8dc", color: it.n > 0 ? "#6a5a3a" : "#b0a690", border: "1px solid #e4dccc" }}>
+                      {it.emoji} {it.name} ×{it.n}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ fontSize: 9, color: "#a89a80", marginTop: 5 }}>🌾 พืชผล/ของแปรรูปมาจากไร่ · 🐟 ปลามาจากการตกปลา · 💎🐉 มาจากการขุด/ล่ามอน</div>
+              </div>
+
+              {/* 📜 สูตรอาหาร */}
+              {RECIPES.map((R) => {
+                const chk = G.cookCheck ? G.cookCheck(R.id) : null;
+                if (!chk) return null;
+                const locked = !chk.lvOk;
+                return (
+                  <div key={R.id} style={{
+                    background: locked ? "#f2eee6" : chk.ok ? "#fff" : "#faf6ef",
+                    border: `1px solid ${locked ? "#e0d8c8" : chk.ok ? "#e8c890" : "#eee4d4"}`,
+                    borderRadius: 12, padding: "9px 10px", marginBottom: 7, opacity: locked ? 0.72 : 1,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                      <span style={{ fontSize: 26 }}>{R.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 900, color: locked ? "#a09880" : "#8a5a2a" }}>
+                          {R.name} {locked && <span style={{ fontSize: 10, color: "#b08a5a" }}>🔒 ต้อง Lv.{R.lv}</span>}
+                        </div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: "#5a9a5a" }}>
+                          {Object.keys(R.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${R.buff[k]}${L[1]}`; }).join(" · ")}
+                          <span style={{ color: "#a08a60" }}> · {R.mins} นาที</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                      {chk.rows.map((r, i) => (
+                        <span key={i} style={{
+                          fontSize: 10, fontWeight: 800, borderRadius: 999, padding: "2px 8px",
+                          background: r.have >= r.want ? "#e8f5e0" : "#fde8e0",
+                          color: r.have >= r.want ? "#4a7a3a" : "#b05a3a",
+                        }}>{r.label} {r.have}/{r.want}</span>
+                      ))}
+                    </div>
+                    <button onClick={() => G.cook(R.id)} disabled={!chk.ok} style={{
+                      width: "100%", marginTop: 7, padding: "8px 0", borderRadius: 10, border: "none",
+                      cursor: chk.ok ? "pointer" : "not-allowed", fontFamily: font, fontSize: 12, fontWeight: 900,
+                      color: chk.ok ? "#fff" : "#a89a84",
+                      background: chk.ok ? "linear-gradient(90deg,#e08a3a,#f5b45a)" : "#e8e0d4",
+                    }}>{locked ? `🔒 ปลดล็อกที่เลเวลทำอาหาร ${R.lv}` : chk.ok ? "🍳 ลงมือทำ" : "วัตถุดิบไม่พอ"}</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
       {ui.announce && ui.announce.text && (
         <div key={ui.announce.key} style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center" }}>
@@ -43847,6 +44132,14 @@ export default function CherryAdventure() {
       )}
 
       {/* 🎣 fishing UI */}
+      {/* 🍽️ ป้ายบัฟอาหารที่กินอยู่ */}
+      {(ui.mode === "explore" || ui.mode === "battle") && ui.foodBuff && !ui.equipScreen && (
+        <div style={{
+          position: "absolute", top: 96, right: 10, zIndex: 20, pointerEvents: "none",
+          background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
+          fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
+        }}>{ui.foodBuff.emoji} {G.foodLeftText ? G.foodLeftText() : ""}</div>
+      )}
       {/* ⛏️ ยืนใกล้สายแร่ = กดขุดได้ */}
       {ui.mode === "explore" && ui.mineNear && !ui.mining && !ui.fishing && !ui.equipScreen && (
         <div style={{ position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)", textAlign: "center" }}>
@@ -44386,6 +44679,7 @@ export default function CherryAdventure() {
               ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
               ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
+            ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
