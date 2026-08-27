@@ -510,3 +510,61 @@ create policy "homes update" on public.homes for update using (true) with check 
 ```
 
 > ทำงานยังไง: ทุกครั้งที่ออกจากบ้านตัวเอง เกมจะอัปโหลดผังเฟอร์นิเจอร์ขึ้นตาราง `homes` อัตโนมัติ · เพื่อนกดปุ่ม 🏠 ในลิสต์เพื่อนเพื่อวาร์ปไปเดินชมบ้านเรา (ดูอย่างเดียว แก้ไขไม่ได้)
+
+---
+
+## 🏰 ตาราง `guilds` + `guild_members` (ระบบกิลด์)
+
+ระบบกิลด์ต้องมีสองตารางนี้ เปิด **SQL Editor** → **New query** → วางแล้วกด **Run**
+
+```sql
+-- 🏰 กิลด์
+create table if not exists public.guilds (
+  gid        text primary key,        -- รหัสกิลด์ (G______)
+  name       text not null,           -- ชื่อกิลด์
+  emoji      text default '🏰',
+  leader     text,                    -- pid ของหัวหน้ากิลด์
+  notice     text default '',         -- ประกาศกิลด์
+  exp        bigint default 0,        -- คลังสะสม (ใช้คิดเลเวลกิลด์)
+  bank_gold  bigint default 0,        -- ทองในคลัง
+  boss_id    text,                    -- บอสกิลด์สัปดาห์นี้
+  boss_hp    bigint default 0,        -- เลือดคงเหลือ (กองกลาง)
+  boss_max   bigint default 0,
+  boss_week  text,                    -- สัปดาห์ของบอสตัวนี้ (YYYY-Wnn)
+  updated_at timestamptz default now()
+);
+alter table public.guilds enable row level security;
+create policy "guild read"   on public.guilds for select using (true);
+create policy "guild insert" on public.guilds for insert with check (true);
+create policy "guild update" on public.guilds for update using (true) with check (true);
+
+-- 👥 สมาชิกกิลด์
+create table if not exists public.guild_members (
+  gid        text not null,
+  pid        text not null,
+  n          text,                    -- ชื่อผู้เล่น
+  lv         int  default 1,
+  cls        text,                    -- อาชีพ
+  contrib    bigint default 0,        -- แต้มสมทบสะสม (ทองที่บริจาค)
+  boss_dmg   bigint default 0,        -- ดาเมจบอสกิลด์สัปดาห์นี้
+  boss_tries int default 0,           -- จำนวนครั้งที่ฟาดสัปดาห์นี้
+  boss_week  text,
+  role       text default 'member',   -- leader / member
+  joined_at  timestamptz default now(),
+  primary key (gid, pid)
+);
+alter table public.guild_members enable row level security;
+create policy "gm read"   on public.guild_members for select using (true);
+create policy "gm insert" on public.guild_members for insert with check (true);
+create policy "gm update" on public.guild_members for update using (true) with check (true);
+create policy "gm delete" on public.guild_members for delete using (true);
+create index if not exists guild_members_gid_idx on public.guild_members (gid);
+```
+
+เสร็จแล้วเข้าเกม → เมนู ☰ → 🏰 **กิลด์** → ก่อตั้งกิลด์ (ค่าก่อตั้ง 50,000 ทอง) หรือค้นหาเข้าร่วมได้เลย
+
+**สิ่งที่กิลด์ให้:**
+- 💪 **บัฟทีม** ตามเลเวลกิลด์ — ATK +2.5/เลเวล · HP +3/เลเวล · EXP +2%/เลเวล (สูงสุด Lv.20)
+- 💰 **คลังกิลด์** — บริจาคทองเพื่อดันเลเวลกิลด์และสะสมแต้มสมทบของตัวเอง
+- 👹 **บอสกิลด์รายสัปดาห์** — เลือดกองกลางก้อนเดียว ทุกคนช่วยกันฟาดคนละ 5 ครั้ง/สัปดาห์
+  มีอันดับดาเมจให้แข่งกันในกิลด์ · เกิดใหม่ทุกสัปดาห์ แรงขึ้นตามเลเวลกิลด์

@@ -578,6 +578,22 @@ const passReward = (tier, prem) => {
   if (k % 5 === 0)  return { dia: 60,  gold: 11000, exp: 2400, label: "💎60 · 💰" + (11000).toLocaleString() };
   return { gold: 3200 + k * 320, exp: 700 + k * 90, label: "💰" + (3200 + k * 320).toLocaleString() };
 };
+
+// ============ 🏰 กิลด์ — สร้างร่วมกัน แล้วแข็งแกร่งขึ้นด้วยกัน ============
+const GUILD_CREATE_COST = 50000;      // 💰 ค่าก่อตั้งกิลด์
+const GUILD_MAX = 30;                 // จำนวนสมาชิกสูงสุด
+const GUILD_EMOJI = ["🏰", "⚔️", "🐉", "🌸", "🔥", "🌟", "🐺", "👑", "🌊", "🦊"];
+const guildLvOf = (exp) => Math.min(20, 1 + Math.floor(Math.sqrt((exp || 0) / 26000)));   // เลเวลกิลด์จากคลังสะสม
+const guildNextExp = (lv) => Math.round(Math.pow(Math.min(20, lv), 2) * 26000);
+// 💪 บัฟที่สมาชิกทุกคนได้รับตามเลเวลกิลด์
+const guildBuff = (lv) => ({ atk: Math.round(lv * 2.5), hp: lv * 3, exp: lv * 0.02, gold: lv * 0.02 });
+// 👹 บอสกิลด์รายสัปดาห์ — เลือดกองกลาง ทุกคนช่วยกันฟาด
+const GUILD_BOSS = [
+  { id: "gb_naga",  name: "พญานาคเจ็ดเศียรอาถรรพ์", emoji: "🐍", hp: 900000 },
+  { id: "gb_titan", name: "ไททันบรรพกาลผู้หลับใหล", emoji: "🗿", hp: 1200000 },
+  { id: "gb_drake", name: "มังกรเพลิงราชันเถ้าธุลี", emoji: "🐉", hp: 1500000 },
+  { id: "gb_reaper",name: "ยมทูตผู้เก็บเกี่ยววิญญาณ", emoji: "☠️", hp: 1800000 },
+];
 const WEAK = { mochi: "wind", baibua: "fire", mekha: "earth", plerng: "water", kirara: "ice", phi: "fire", nam: "wind", khiao: "fire", ngu: "earth", paksi: "ice", saming: "water", garuda: "light", wayu: "earth", taara: "arcane" };
 const PET_ELEM = { mochi: "wind", baibua: "earth", mekha: "water", plerng: "fire", kirara: "ice", phi: "ice", nam: "water", khiao: "wind", ngu: "earth", paksi: "wind", saming: "fire", garuda: "light", wayu: "wind", taara: "arcane" };
 const PET_SKILL = { mochi: "ลมกระต่ายหมุน", baibua: "หินใบไม้ถล่ม", mekha: "ระเบิดหยดน้ำ", plerng: "เพลิงจิ้งจอก", kirara: "ดาวน้ำแข็ง", phi: "วิญญาณเยือกแข็ง", nam: "คลื่นวารี", khiao: "ตะปบพายุ", ngu: "พ่นพิษพสุธา", paksi: "โฉบเวหา", saming: "ตะปบเพลิง", garuda: "ปีกแสงสวรรค์", wayu: "พายุหมุนเทพ", taara: "แสงจักรวาล" };
@@ -1778,7 +1794,7 @@ export default function CherryAdventure() {
     balls: 3, specials: 2,
     enemy: null, // {id,name,emoji,hp,maxHp,lv}
     bstate: "choose", // choose | busy
-    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily",
+    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
@@ -17563,6 +17579,129 @@ export default function CherryAdventure() {
     G.storyReward = (i) => { const c = MSQ[i]; const boss = c && c.t === "bboss"; return { gold: (400 + i * 180) * (boss ? 2 : 1), dia: 3 + Math.floor(i / 4) + (boss ? 5 : 0) }; };
     const storySync = () => setUi((u) => ({ ...u, storyCh: G.storyCh, storyProg: G.storyProg }));
     G.storySync = storySync;
+    // ---------- 🏰 กิลด์ — สร้าง/เข้าร่วม · คลัง · บัฟ · บอสรายสัปดาห์ ----------
+    G.guild = null;        // { gid, name, emoji, leader, notice, exp, bank_gold, boss_* }
+    G.guildId = null;      // gid ที่ตัวเองสังกัด (เซฟไว้)
+    G.guildRows = [];      // รายชื่อสมาชิกล่าสุด
+    const guildWeek = () => { const d = new Date(); const y = d.getFullYear(); const st = new Date(y, 0, 1);
+      return y + "-W" + Math.floor(((d - st) / 86400000 + st.getDay() + 1) / 7); };
+    const guildOnline = () => !!(G.net && G.net.enabled && G.net.enabled() && G.pid);
+    G.guildLv = () => guildLvOf(G.guild ? G.guild.exp : 0);
+    G.guildBuff = () => (G.guild ? guildBuff(G.guildLv()) : { atk: 0, hp: 0, exp: 0, gold: 0 });
+    G.guildSync = () => {
+      setUi((u) => ({ ...u, guild: G.guild ? { ...G.guild, lv: G.guildLv(), buff: G.guildBuff() } : null, guildRows: G.guildRows.map((r) => ({ ...r })) }));
+    };
+    G.guildRefresh = async () => {
+      if (!guildOnline() || !G.guildId) { G.guild = null; G.guildRows = []; G.guildSync(); return; }
+      const g = await G.net.guildGet(G.guildId);
+      if (!g) { G.guild = null; G.guildRows = []; G.guildSync(); return; }
+      // 👹 ขึ้นสัปดาห์ใหม่ → เกิดบอสกิลด์ตัวใหม่ (เลือดตามเลเวลกิลด์)
+      const wk = guildWeek();
+      if (g.boss_week !== wk) {
+        const lv = guildLvOf(g.exp);
+        const B = GUILD_BOSS[Math.min(GUILD_BOSS.length - 1, Math.floor(lv / 5))];
+        const mx = Math.round(B.hp * (1 + lv * 0.18));
+        await G.net.guildPatch(g.gid, { boss_week: wk, boss_id: B.id, boss_hp: mx, boss_max: mx });
+        g.boss_week = wk; g.boss_id = B.id; g.boss_hp = mx; g.boss_max = mx;
+      }
+      G.guild = g;
+      G.guildRows = (await G.net.guildMembers(G.guildId)) || [];
+      G.guildSync();
+    };
+    G.guildCreate = async (name, emoji) => {
+      if (!guildOnline()) { toast("🏰 ต้องเชื่อมต่อเซิร์ฟเวอร์ก่อน (ดู ONLINE_SETUP.md)"); return; }
+      if (G.guildId) { toast("ออกจากกิลด์เดิมก่อนนะ"); return; }
+      const nm = String(name || "").trim().slice(0, 18);
+      if (nm.length < 2) { toast("ตั้งชื่อกิลด์อย่างน้อย 2 ตัวอักษร"); return; }
+      if ((G.gold || 0) < GUILD_CREATE_COST) { toast(`💰 ทองไม่พอ — ต้องมี ${GUILD_CREATE_COST.toLocaleString()}`); return; }
+      const gid = "G" + Math.random().toString(36).slice(2, 8).toUpperCase();
+      const wk = guildWeek();
+      const B = GUILD_BOSS[0];
+      const row = { gid, name: nm, emoji: emoji || GUILD_EMOJI[0], leader: G.pid, notice: "ยินดีต้อนรับสู่กิลด์! 🎉", exp: 0, bank_gold: 0, boss_week: wk, boss_id: B.id, boss_hp: B.hp, boss_max: B.hp };
+      const made = await G.net.guildCreate(row);
+      if (!made) { toast("สร้างกิลด์ไม่สำเร็จ — ตาราง guilds อาจยังไม่ถูกสร้าง (ดู ONLINE_SETUP.md)"); return; }
+      G.gold -= GUILD_CREATE_COST;
+      await G.net.guildMemberUpsert({ gid, pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), lv: G.player ? G.player.level : 1, cls: G.cls || "warrior", contrib: 0, boss_dmg: 0, boss_week: wk, role: "leader" });
+      G.guildId = gid;
+      toast(`🏰 ก่อตั้งกิลด์ "${nm}" สำเร็จ! รหัสกิลด์ ${gid}`);
+      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      syncPlayer(); if (G.saveGame) G.saveGame();
+      await G.guildRefresh();
+    };
+    G.guildJoin = async (gid) => {
+      if (!guildOnline()) { toast("🏰 ต้องเชื่อมต่อเซิร์ฟเวอร์ก่อน (ดู ONLINE_SETUP.md)"); return; }
+      if (G.guildId) { toast("ออกจากกิลด์เดิมก่อนนะ"); return; }
+      const g = await G.net.guildGet(gid);
+      if (!g) { toast("ไม่พบกิลด์รหัสนี้"); return; }
+      const rows = (await G.net.guildMembers(gid)) || [];
+      if (rows.length >= GUILD_MAX) { toast(`กิลด์เต็มแล้ว (${GUILD_MAX} คน)`); return; }
+      const ok = await G.net.guildMemberUpsert({ gid, pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), lv: G.player ? G.player.level : 1, cls: G.cls || "warrior", contrib: 0, boss_dmg: 0, boss_week: guildWeek(), role: "member" });
+      if (!ok) { toast("เข้ากิลด์ไม่สำเร็จ"); return; }
+      G.guildId = gid;
+      toast(`🏰 เข้าร่วมกิลด์ ${g.emoji} ${g.name} แล้ว!`);
+      if (G.saveGame) G.saveGame();
+      await G.guildRefresh();
+    };
+    G.guildLeave = async () => {
+      if (!G.guildId) return;
+      const gid = G.guildId;
+      if (guildOnline()) await G.net.guildMemberLeave(gid, G.pid);
+      G.guildId = null; G.guild = null; G.guildRows = [];
+      toast("👋 ออกจากกิลด์แล้ว");
+      if (G.saveGame) G.saveGame();
+      G.guildSync();
+    };
+    G.guildDonate = async (amt) => {
+      if (!G.guild || !guildOnline()) return;
+      amt = Math.max(0, Math.floor(amt || 0));
+      if ((G.gold || 0) < amt || amt <= 0) { toast("💰 ทองไม่พอ"); return; }
+      G.gold -= amt;
+      const me = G.guildRows.find((r) => r.pid === G.pid);
+      const contrib = ((me && me.contrib) || 0) + amt;
+      await G.net.guildPatch(G.guild.gid, { exp: (G.guild.exp || 0) + amt, bank_gold: (G.guild.bank_gold || 0) + amt });
+      await G.net.guildMemberUpsert({ gid: G.guild.gid, pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), lv: G.player ? G.player.level : 1, cls: G.cls || "warrior", contrib, boss_dmg: (me && me.boss_dmg) || 0, boss_week: (me && me.boss_week) || guildWeek(), role: (me && me.role) || "member" });
+      const before = G.guildLv();
+      G.guild.exp = (G.guild.exp || 0) + amt;
+      const after = G.guildLv();
+      toast(after > before ? `🏰⬆️ กิลด์เลื่อนเป็นเลเวล ${after}! บัฟทีมแรงขึ้น` : `💰 บริจาคเข้าคลังกิลด์ ${amt.toLocaleString()} · แต้มสมทบรวม ${contrib.toLocaleString()}`);
+      if (G.sfx && G.sfx.coin) G.sfx.coin();
+      syncPlayer(); if (G.saveGame) G.saveGame();
+      await G.guildRefresh();
+    };
+    G.guildNotice = async (text) => {
+      if (!G.guild || !guildOnline()) return;
+      if (G.guild.leader !== G.pid) { toast("เฉพาะหัวหน้ากิลด์เท่านั้น"); return; }
+      const t2 = String(text || "").slice(0, 90);
+      await G.net.guildPatch(G.guild.gid, { notice: t2 });
+      G.guild.notice = t2; toast("📢 อัปเดตประกาศกิลด์แล้ว"); G.guildSync();
+    };
+    // ⚔️ ฟาดบอสกิลด์ — ใช้พลังโจมตีจริงของตัวเอง สะสมดาเมจลงกองกลาง
+    G.guildBossHit = async () => {
+      if (!G.guild || !guildOnline()) { toast("🏰 ต้องอยู่ในกิลด์ก่อน"); return; }
+      if ((G.guild.boss_hp || 0) <= 0) { toast("👹 บอสกิลด์สัปดาห์นี้ถูกปราบแล้ว!"); return; }
+      const wk = guildWeek();
+      const me = G.guildRows.find((r) => r.pid === G.pid) || {};
+      const used = (me.boss_week === wk) ? (me.boss_tries || 0) : 0;
+      if (used >= 5) { toast("⏳ ฟาดบอสกิลด์ครบ 5 ครั้งของสัปดาห์นี้แล้ว"); return; }
+      const atk = (typeof effAtk === "function" ? effAtk() : 20);
+      const dmg = Math.round(atk * (140 + Math.random() * 90) * (1 + G.guildLv() * 0.06));
+      const left = Math.max(0, (G.guild.boss_hp || 0) - dmg);
+      await G.net.guildPatch(G.guild.gid, { boss_hp: left });
+      await G.net.guildMemberUpsert({ gid: G.guild.gid, pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), lv: G.player ? G.player.level : 1, cls: G.cls || "warrior", contrib: me.contrib || 0, boss_dmg: (me.boss_week === wk ? (me.boss_dmg || 0) : 0) + dmg, boss_week: wk, boss_tries: used + 1, role: me.role || "member" });
+      const B = GUILD_BOSS.find((b) => b.id === G.guild.boss_id) || GUILD_BOSS[0];
+      const gold = Math.round(dmg / 60), exp2 = Math.round(dmg / 90);
+      G.gold = (G.gold || 0) + gold;
+      if (typeof gainExp === "function") gainExp(exp2);
+      toast(left <= 0
+        ? `🏆 กิลด์ปราบ ${B.emoji} ${B.name} สำเร็จ! (ฟาดครั้งนี้ ${dmg.toLocaleString()})`
+        : `⚔️ ฟาด ${B.emoji} ${B.name} -${dmg.toLocaleString()} · เหลือ ${left.toLocaleString()} · +💰${gold.toLocaleString()}`);
+      if (G.sfx) { G.sfx.crit && G.sfx.crit(); if (left <= 0 && G.sfx.win) G.sfx.win(); }
+      syncPlayer(); if (G.saveGame) G.saveGame();
+      await G.guildRefresh();
+    };
+    G.toggleGuild = () => { setUi((u) => ({ ...u, guildOpen: !u.guildOpen })); if (!G.guild && G.guildId) G.guildRefresh(); if (G.guildId) G.guildRefresh(); else G.guildSync(); };
+    G.guildSearch = async (q) => { const rows = (await G.net.guildList(q)) || []; setUi((u) => ({ ...u, guildFound: rows.map((r) => ({ gid: r.gid, name: r.name, emoji: r.emoji, lv: guildLvOf(r.exp) })) })); };
+
     // ---------- 📖 สมุดภารกิจ — รีเซ็ตรายวัน/รายสัปดาห์ · นับความคืบหน้า · รับรางวัล ----------
     const weekStamp = () => { const d = new Date(); const y = d.getFullYear(); const st = new Date(y, 0, 1);
       const w = Math.floor(((d - st) / 86400000 + st.getDay() + 1) / 7); return y + "-W" + w; };
@@ -19789,9 +19928,9 @@ export default function CherryAdventure() {
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-    const effAtk = () => Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))); // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว
+    const effAtk = () => Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0); // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์
     const effDef = () => Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล
-    const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100)); // ⚖️ +3 HP ฐานต่อเลเวล (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+    const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100)) + (G.guild ? G.guildBuff().hp : 0); // ⚖️ +3 HP ฐานต่อเลเวล · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
@@ -19903,7 +20042,7 @@ export default function CherryAdventure() {
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null,
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -20411,6 +20550,7 @@ export default function CherryAdventure() {
 
     const gainExp = (amt) => {
       if (G.weather && G.weather.exp) amt = Math.round(amt * (1 + G.weather.exp));   // 🌦️ อากาศบางแบบให้ EXP มากขึ้น
+      if (G.guild) amt = Math.round(amt * (1 + G.guildBuff().exp));   // 🏰 บัฟกิลด์ EXP
       if (G.expBoostUntil && Date.now() < G.expBoostUntil) amt *= 2; // 📜 ใบประสบการณ์ x2
       if (G.restBuffUntil && Date.now() < G.restBuffUntil) amt = Math.round(amt * 1.15); // 😴 บัฟนอนพักจากบ้าน +15% XP
       // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
@@ -28485,6 +28625,7 @@ export default function CherryAdventure() {
       if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.ultAlt = false;
       G.mbook = null; if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // 📖 ตัวละครใหม่ = สมุดภารกิจชุดใหม่
+      G.guildId = null; G.guild = null; G.guildRows = [];   // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
       G.pathId = null; // 🌟 fresh character has no path yet
       G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
@@ -28559,7 +28700,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -28632,6 +28773,63 @@ export default function CherryAdventure() {
         } catch (e) { return null; }
       },
       // 🤝 ปาร์ตี้เก็บเลเวล — สมาชิกอัปเดตแถวตัวเอง / อ่านแถวเพื่อนร่วมปาร์ตี้
+      // 🏰 กิลด์ — ตาราง guilds / guild_members (SQL อยู่ใน ONLINE_SETUP.md)
+      async guildCreate(row) {
+        if (!this.enabled() || !row || !row.gid) return null;
+        try {
+          const res = await fetch(this._url("guilds"), { method: "POST", headers: this._headers({ Prefer: "return=representation" }), body: JSON.stringify(row) });
+          if (!res.ok) return null;
+          const j = await res.json().catch(() => null);
+          return (j && j[0]) || row;
+        } catch (e) { return null; }
+      },
+      async guildGet(gid) {
+        if (!this.enabled() || !gid) return null;
+        try {
+          const res = await fetch(this._url(`guilds?gid=eq.${encodeURIComponent(gid)}&select=*&limit=1`), { headers: this._headers() });
+          if (!res.ok) return null;
+          const j = await res.json().catch(() => null);
+          return (j && j[0]) || null;
+        } catch (e) { return null; }
+      },
+      async guildList(q) {
+        if (!this.enabled()) return null;
+        try {
+          const flt = q ? `&name=ilike.*${encodeURIComponent(q)}*` : "";
+          const res = await fetch(this._url(`guilds?select=*${flt}&order=lv.desc&limit=20`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      async guildPatch(gid, patch) {
+        if (!this.enabled() || !gid) return false;
+        try {
+          const res = await fetch(this._url(`guilds?gid=eq.${encodeURIComponent(gid)}`), { method: "PATCH", headers: this._headers({ Prefer: "return=minimal" }), body: JSON.stringify(patch) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async guildMemberUpsert(row) {
+        if (!this.enabled() || !row || !row.gid || !row.pid) return false;
+        try {
+          const res = await fetch(this._url("guild_members?on_conflict=gid,pid"), { method: "POST", headers: this._headers({ Prefer: "resolution=merge-duplicates,return=minimal" }), body: JSON.stringify(row) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async guildMembers(gid) {
+        if (!this.enabled() || !gid) return null;
+        try {
+          const res = await fetch(this._url(`guild_members?gid=eq.${encodeURIComponent(gid)}&select=*&order=contrib.desc&limit=${GUILD_MAX}`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      async guildMemberLeave(gid, pid) {
+        if (!this.enabled() || !gid || !pid) return false;
+        try {
+          const res = await fetch(this._url(`guild_members?gid=eq.${encodeURIComponent(gid)}&pid=eq.${encodeURIComponent(pid)}`), { method: "DELETE", headers: this._headers({ Prefer: "return=minimal" }) });
+          return res.ok;
+        } catch (e) { return false; }
+      },
       async partyUpsert(row) {
         if (!this.enabled() || !row || !row.party || !row.pid) return false;
         try {
@@ -30264,6 +30462,8 @@ export default function CherryAdventure() {
       G.weaponEnchant = d.weaponEnchant || "none";
       G.ultAlt = !!d.ultAlt;
       G.mbook = d.mbook || null;   // 📖 สมุดภารกิจ
+      G.guildId = d.guildId || null;   // 🏰 กิลด์ที่สังกัด
+      if (G.guildId && G.guildRefresh) { try { G.guildRefresh(); } catch (e) {} }
       if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
       G.pathId = d.pathId || null;
       G.skillMode = d.skillMode === "adv" && G.pathId ? "adv" : "basic";
@@ -42062,6 +42262,120 @@ export default function CherryAdventure() {
       {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
+      {/* 🏰 กิลด์ */}
+      {ui.guildOpen && (
+        <div onClick={() => setUi((u) => ({ ...u, guildOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(10,14,26,0.58)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 96vw)", maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(160deg,#16243c,#0f1726)", border: "1px solid #2f4a6a", borderRadius: 18, padding: 14, fontFamily: font, color: "#fff", boxShadow: "0 18px 50px rgba(0,0,0,0.5)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{ fontSize: 17, fontWeight: 900 }}>🏰 กิลด์</div>
+              {ui.guild && <div style={{ marginLeft: "auto", fontSize: 11.5, color: "#9fd0ff" }}>Lv.{ui.guild.lv} · 💪 ATK+{ui.guild.buff.atk} HP+{ui.guild.buff.hp} EXP+{Math.round(ui.guild.buff.exp * 100)}%</div>}
+              <button onClick={() => setUi((u) => ({ ...u, guildOpen: false }))} style={{ marginLeft: ui.guild ? 0 : "auto", border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 }}>✕</button>
+            </div>
+            {!ui.guild && (
+              <div>
+                <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #2f4a6a", borderRadius: 12, padding: 11, marginBottom: 9 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6 }}>✨ ก่อตั้งกิลด์ใหม่ · 💰 {GUILD_CREATE_COST.toLocaleString()}</div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input id="gdName" placeholder="ชื่อกิลด์" maxLength={18} style={{ flex: 1, minWidth: 0, padding: "8px 10px", borderRadius: 9, border: "1px solid #3a5a7a", background: "rgba(0,0,0,0.3)", color: "#fff", fontFamily: font, fontSize: 12 }} />
+                    <button onClick={() => { const el = document.getElementById("gdName"); G.guildCreate(el ? el.value : "", GUILD_EMOJI[Math.floor(Math.random() * GUILD_EMOJI.length)]); }} style={{ padding: "8px 13px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#4a86e0,#6a5ad0)" }}>ก่อตั้ง</button>
+                  </div>
+                </div>
+                <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #2f4a6a", borderRadius: 12, padding: 11 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 6 }}>🔍 ค้นหา / เข้าร่วมกิลด์</div>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                    <input id="gdFind" placeholder="ชื่อกิลด์ หรือรหัสกิลด์ (G......)" style={{ flex: 1, minWidth: 0, padding: "8px 10px", borderRadius: 9, border: "1px solid #3a5a7a", background: "rgba(0,0,0,0.3)", color: "#fff", fontFamily: font, fontSize: 12 }} />
+                    <button onClick={() => { const el = document.getElementById("gdFind"); const v = el ? el.value.trim() : ""; if (/^G[A-Z0-9]{6}$/i.test(v)) G.guildJoin(v.toUpperCase()); else G.guildSearch(v); }} style={{ padding: "8px 13px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#2a2416", background: "linear-gradient(90deg,#8fd0ff,#5aa8e0)" }}>ค้นหา</button>
+                  </div>
+                  {(ui.guildFound || []).map((g) => (
+                    <div key={g.gid} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 9, background: "rgba(255,255,255,0.05)", marginBottom: 5 }}>
+                      <span style={{ fontSize: 19 }}>{g.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 12, fontWeight: 800 }}>{g.name}</div><div style={{ fontSize: 9.5, color: "#9fb8d0" }}>Lv.{g.lv} · {g.gid}</div></div>
+                      <button onClick={() => G.guildJoin(g.gid)} style={{ padding: "6px 11px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#3ac06a,#2a9a55)" }}>เข้าร่วม</button>
+                    </div>
+                  ))}
+                  <div style={{ fontSize: 9.5, color: "#7f96ad", marginTop: 6 }}>* ระบบกิลด์ต้องเชื่อมต่อเซิร์ฟเวอร์ (ดูวิธีตั้งค่าในไฟล์ ONLINE_SETUP.md)</div>
+                </div>
+              </div>
+            )}
+            {ui.guild && (
+              <div>
+                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                  {[["info", "📋 ข้อมูล"], ["boss", "👹 บอสกิลด์"], ["mem", "👥 สมาชิก"]].map(([k, lb]) => (
+                    <button key={k} onClick={() => setUi((u) => ({ ...u, guildTab: k }))} style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.guildTab === k ? "#12202f" : "#cfe0f0", background: ui.guildTab === k ? "linear-gradient(90deg,#8fd0ff,#5aa8e0)" : "rgba(255,255,255,0.08)" }}>{lb}</button>
+                  ))}
+                </div>
+                {ui.guildTab === "info" && (
+                  <div>
+                    <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #2f4a6a", borderRadius: 12, padding: 11, marginBottom: 9 }}>
+                      <div style={{ fontSize: 15, fontWeight: 900 }}>{ui.guild.emoji} {ui.guild.name} <span style={{ fontSize: 10.5, color: "#9fb8d0", fontWeight: 700 }}>({ui.guild.gid})</span></div>
+                      <div style={{ fontSize: 11, color: "#cfe0f0", marginTop: 5 }}>📢 {ui.guild.notice}</div>
+                      <div style={{ height: 7, borderRadius: 99, background: "rgba(0,0,0,0.35)", margin: "8px 0 4px" }}>
+                        <div style={{ width: Math.min(100, (ui.guild.exp || 0) / Math.max(1, guildNextExp(ui.guild.lv)) * 100) + "%", height: "100%", borderRadius: 99, background: "linear-gradient(90deg,#8fd0ff,#5a86e0)" }} />
+                      </div>
+                      <div style={{ fontSize: 9.5, color: "#9fb8d0" }}>คลังสะสม 💰{(ui.guild.exp || 0).toLocaleString()} / {guildNextExp(ui.guild.lv).toLocaleString()} → Lv.{Math.min(20, ui.guild.lv + 1)}</div>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #2f4a6a", borderRadius: 12, padding: 11, marginBottom: 9 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, marginBottom: 7 }}>💰 บริจาคเข้าคลังกิลด์ (เพิ่มเลเวลกิลด์ + แต้มสมทบ)</div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {[10000, 50000, 200000].map((v) => (
+                          <button key={v} onClick={() => G.guildDonate(v)} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#2a2416", background: "linear-gradient(90deg,#f5d24a,#e0a83a)" }}>{v.toLocaleString()}</button>
+                        ))}
+                      </div>
+                    </div>
+                    {ui.guild.leader === G.pid && (
+                      <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
+                        <input id="gdNotice" placeholder="แก้ประกาศกิลด์ (หัวหน้าเท่านั้น)" maxLength={90} style={{ flex: 1, minWidth: 0, padding: "8px 10px", borderRadius: 9, border: "1px solid #3a5a7a", background: "rgba(0,0,0,0.3)", color: "#fff", fontFamily: font, fontSize: 11.5 }} />
+                        <button onClick={() => { const el = document.getElementById("gdNotice"); G.guildNotice(el ? el.value : ""); }} style={{ padding: "8px 12px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: "rgba(255,255,255,0.14)" }}>บันทึก</button>
+                      </div>
+                    )}
+                    <button onClick={() => G.guildLeave()} style={{ width: "100%", padding: "8px 0", borderRadius: 10, border: "1px solid #6a3a4a", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#ff9aa8", background: "rgba(255,90,110,0.1)" }}>👋 ออกจากกิลด์</button>
+                  </div>
+                )}
+                {ui.guildTab === "boss" && (
+                  <div>
+                    {(() => { const B = GUILD_BOSS.find((x) => x.id === ui.guild.boss_id) || GUILD_BOSS[0];
+                      const hp = ui.guild.boss_hp || 0, mx = ui.guild.boss_max || B.hp;
+                      return (
+                        <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #6a3a4a", borderRadius: 12, padding: 12, marginBottom: 9, textAlign: "center" }}>
+                          <div style={{ fontSize: 40 }}>{B.emoji}</div>
+                          <div style={{ fontSize: 14, fontWeight: 900, marginTop: 3 }}>{B.name}</div>
+                          <div style={{ height: 12, borderRadius: 99, background: "rgba(0,0,0,0.4)", margin: "9px 0 5px", overflow: "hidden" }}>
+                            <div style={{ width: Math.max(0, hp / Math.max(1, mx) * 100) + "%", height: "100%", background: "linear-gradient(90deg,#ff5a6a,#c02040)" }} />
+                          </div>
+                          <div style={{ fontSize: 10.5, color: "#ffb0bc" }}>{hp.toLocaleString()} / {mx.toLocaleString()}{hp <= 0 ? " · 🏆 ปราบสำเร็จ!" : ""}</div>
+                          <button onClick={() => G.guildBossHit()} disabled={hp <= 0} style={{ marginTop: 10, width: "100%", padding: "10px 0", borderRadius: 11, border: "none", cursor: hp > 0 ? "pointer" : "not-allowed", fontFamily: font, fontSize: 13, fontWeight: 900, color: hp > 0 ? "#fff" : "#8a7f8f", background: hp > 0 ? "linear-gradient(90deg,#e0405a,#a01838)" : "rgba(255,255,255,0.07)" }}>⚔️ ฟาดบอสกิลด์ (สัปดาห์ละ 5 ครั้ง)</button>
+                          <div style={{ fontSize: 9.5, color: "#9fb8d0", marginTop: 6 }}>ทุกคนในกิลด์ช่วยกันฟาดจากเลือดกองกลางเดียวกัน · เกิดใหม่ทุกสัปดาห์ แรงขึ้นตามเลเวลกิลด์</div>
+                        </div>
+                      ); })()}
+                    <div style={{ fontSize: 12, fontWeight: 800, margin: "4px 0 6px" }}>🏅 อันดับดาเมจสัปดาห์นี้</div>
+                    {(ui.guildRows || []).slice().sort((a, b) => (b.boss_dmg || 0) - (a.boss_dmg || 0)).slice(0, 12).map((r, i) => (
+                      <div key={r.pid} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 9px", borderRadius: 9, background: r.pid === G.pid ? "rgba(143,208,255,0.14)" : "rgba(255,255,255,0.05)", marginBottom: 4 }}>
+                        <div style={{ width: 20, fontSize: 11, fontWeight: 900, color: i < 3 ? "#f5d24a" : "#7f96ad" }}>{i + 1}</div>
+                        <div style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.n} <span style={{ color: "#7f96ad", fontSize: 9.5 }}>Lv.{r.lv}</span></div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#ff9aa8" }}>{(r.boss_dmg || 0).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ui.guildTab === "mem" && (
+                  <div>
+                    <div style={{ fontSize: 10.5, color: "#9fb8d0", marginBottom: 6 }}>สมาชิก {(ui.guildRows || []).length}/{GUILD_MAX} · เรียงตามแต้มสมทบ</div>
+                    {(ui.guildRows || []).map((r) => (
+                      <div key={r.pid} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", borderRadius: 9, background: r.pid === G.pid ? "rgba(143,208,255,0.14)" : "rgba(255,255,255,0.05)", marginBottom: 4 }}>
+                        <span style={{ fontSize: 17 }}>{(CLASSES[r.cls] || {}).emoji || "🧑"}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.n}{r.role === "leader" ? " 👑" : ""}</div>
+                          <div style={{ fontSize: 9.5, color: "#9fb8d0" }}>Lv.{r.lv} · สมทบ 💰{(r.contrib || 0).toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* 📖 สมุดภารกิจ — รายวัน / รายสัปดาห์ / แทร็กรางวัล */}
       {ui.mbookOpen && ui.mbook && (
         <div onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(12,8,22,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
@@ -43487,6 +43801,7 @@ export default function CherryAdventure() {
               ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
               ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
               ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a"],
+              ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
