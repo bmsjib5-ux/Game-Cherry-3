@@ -1794,7 +1794,7 @@ export default function CherryAdventure() {
     balls: 3, specials: 2,
     enemy: null, // {id,name,emoji,hp,maxHp,lv}
     bstate: "choose", // choose | busy
-    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info",
+    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info", warpScrolls: 0,
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
@@ -16467,10 +16467,20 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, dungeonAsk: false }));
     };
     G.closeWarp = () => {
+      G._warpByScroll = false;   // 📜 ปิดหน้าต่างเฉย ๆ ไม่เสียใบวาร์ป
       G.warpShy = true;
       setUi((u) => ({ ...u, warpAsk: false }));
     };
     G.doWarp = (i) => {
+      if (G._warpByScroll) {   // 📜 วาร์ปด้วยใบวาร์ป — ใช้ไป 1 ใบ แล้ววาร์ปจากตรงไหนก็ได้
+        if ((G.warpScrolls || 0) <= 0) { G._warpByScroll = false; toast("📜 ไม่มีใบวาร์ปแล้ว"); setUi((u) => ({ ...u, warpAsk: false })); return; }
+        G.warpScrolls -= 1;
+        G._warpByScroll = false;
+        if (G.inTownZone && G.exitTownZone) { try { G.exitTownZone(); } catch (e) {} }
+        toast(`📜 ใช้ใบวาร์ป 1 ใบ (เหลือ ${G.warpScrolls} ใบ)`);
+        setUi((u) => ({ ...u, warpScrolls: G.warpScrolls }));
+        if (G.saveGame) G.saveGame();
+      }
       G.warpShy = true;
       switchBiome(i);
       setUi((u) => ({ ...u, warpAsk: false }));
@@ -19719,6 +19729,7 @@ export default function CherryAdventure() {
         rarity: it.rarity, rarityName: (RARITY[it.rarity] || {}).name || it.rarity, rarityColor: (RARITY[it.rarity] || {}).color || "#8a9aa8",
         stats: itemStats(id), elem: it.elem || null, req: it.req || 0, cls: it.cls || null, locked, count, equipped, plus, cap,
         prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.WB_DUST_COST || 30,
+        starter: !!it.starter, salvage: G.salvageYield ? G.salvageYield(id) : 0,   // 💠 แยกชิ้นส่วนได้กี่ผง
       };
     };
     // 🎁 THE one way items enter the bag — guarantees every drop gets a quality roll
@@ -19991,7 +20002,7 @@ export default function CherryAdventure() {
         hp: Math.round(G.player.hp), maxHp: effMaxHp(), mp: Math.round(G.player.mp), maxMp: effMaxMp(),
         atk: effAtk(), def: effDef(), crit: Math.round(effCrit()), eva: Math.round(effEva()), luck: Math.round(effLuck()), spd: +effSpd().toFixed(1),
         power: powerOf({ atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()) }),
-        gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0,
+        gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, warpScrolls: G.warpScrolls || 0,
         pid: G.pid || null,
         pvpRank: G.pvpRank || 1000, pvpTier: tier ? (tier.emoji + " " + tier.name) : null,
         endlessBest: G.endlessBest || 0, ngPlus: G.ngPlus || 0,
@@ -20042,7 +20053,7 @@ export default function CherryAdventure() {
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null,
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -20309,7 +20320,7 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      setUi((u) => ({ ...u, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
+      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
       syncPlayer();
     };
     G.closeEquip = () => {
@@ -21470,6 +21481,79 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, diamonds: G.diamonds, gold: G.gold, heroesOwned: { ...(G.heroesOwned || {}) }, diaSkins: { ...(G.diaSkins || {}) }, heroPasses: { ...(G.heroPasses || {}) }, gachaResult: results, gachaPity: G.gachaPity || 0 }));
       if (G.saveGame) G.saveGame();
     };
+    // ---------- 📜 ใบวาร์ปข้ามแดน — เปิดแผนที่วาร์ปได้จากตรงไหนก็ได้ ไม่ต้องเดินไปแท่น ----------
+    G.WARP_SCROLL_PRICE = 12000;
+    G.warpScrolls = G.warpScrolls || 0;
+    G.buyWarpScroll = (qty) => {
+      qty = Math.max(1, Math.floor(qty || 1));
+      const total = G.WARP_SCROLL_PRICE * qty;
+      if ((G.gold || 0) < total) { toast(`ทองไม่พอ! ต้องมี ${total.toLocaleString()}💰 (ใบวาร์ป ×${qty})`); return; }
+      G.gold -= total;
+      G.warpScrolls = (G.warpScrolls || 0) + qty;
+      if (G.sfx) G.sfx.coin();
+      toast(`📜 ซื้อใบวาร์ปข้ามแดน ×${qty}! (มี ${G.warpScrolls} ใบ)`);
+      setUi((u) => ({ ...u, gold: G.gold, warpScrolls: G.warpScrolls }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.useWarpScroll = () => {
+      if ((G.warpScrolls || 0) <= 0) { toast("📜 ไม่มีใบวาร์ป — ซื้อได้ที่ร้านค้า 🏪"); return; }
+      if (G.mode !== "explore") { toast("ใช้ได้เฉพาะตอนเดินสำรวจ"); return; }
+      if (G.inHomeZone || G.inRanchZone) { toast("ออกจากพื้นที่ส่วนตัวก่อนนะ"); return; }
+      G._warpByScroll = true;
+      setUi((u) => ({ ...u, warpAsk: true, menuOpen: false }));
+    };
+
+    // ---------- 💠 แยกชิ้นส่วนอาวุธ/ชุด — ทุบเป็นผงเพชรไว้ตีบวกการันตี ----------
+    const SALVAGE_DUST = { common: 1, rare: 3, epic: 8, secret: 20, dragon: 45, legend: 90 };
+    G.salvageYield = (id) => {
+      const it = LOOT.find((x) => x.id === id);
+      if (!it || it.starter) return 0;
+      return Math.max(1, Math.round((SALVAGE_DUST[it.rarity] || 1) * (1 + 0.35 * (G.plus[id] || 0))));
+    };
+    G.salvageItem = (id) => {
+      const idx = G.inv.indexOf(id);
+      if (idx < 0) return;
+      const it = LOOT.find((x) => x.id === id);
+      if (!it) return;
+      if (it.starter) { toast("อาวุธฝึกหัดแยกชิ้นส่วนไม่ได้นะ!"); return; }
+      if (it.slot !== "weapon" && it.slot !== "outfit") { toast("แยกชิ้นส่วนได้เฉพาะ 🗡️ อาวุธ กับ 👗 ชุดเท่านั้น"); return; }
+      const dust = G.salvageYield(id);
+      G.inv.splice(idx, 1);
+      G.gemDust = (G.gemDust || 0) + dust;
+      if (G.equip[it.slot] === id && !G.inv.includes(id)) {   // ถอดออกถ้าแยกชิ้นสุดท้ายที่ใส่อยู่
+        G.equip[it.slot] = null;
+        if (it.slot === "weapon") G.setWeaponVisual(null); else G.setOutfitVisual(null);
+        G.player.hp = Math.min(G.player.hp, effMaxHp());
+      }
+      if (!G.inv.includes(id)) { if (G.plus) delete G.plus[id]; }   // ไม่เหลือชิ้นไหนแล้ว = ล้างระดับตีบวกทิ้ง
+      if (G.sfx) G.sfx.guard && G.sfx.guard();
+      toast(`💠 แยก ${it.emoji} ${it.name} → ผงเพชร +${dust} (มี ${G.gemDust})`);
+      setUi((u) => ({ ...u, gemDust: G.gemDust, inv: [...G.inv], plus: { ...G.plus } }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // 💠 แยกของซ้ำทั้งหมด — เก็บชิ้นที่ดีที่สุดไว้ชิ้นเดียวต่อแบบ ที่เหลือทุบเป็นผง
+    G.salvageDupes = () => {
+      const seen = {}, kill = [];
+      G.inv.forEach((id) => {
+        const it = LOOT.find((x) => x.id === id);
+        if (!it || it.starter || (it.slot !== "weapon" && it.slot !== "outfit")) return;
+        if (seen[id]) kill.push(id); else seen[id] = 1;
+      });
+      if (!kill.length) { toast("💠 ไม่มีของซ้ำให้แยก"); return; }
+      let dust = 0;
+      kill.forEach((id) => {
+        const i2 = G.inv.indexOf(id);
+        if (i2 < 0) return;
+        G.inv.splice(i2, 1);
+        dust += G.salvageYield(id);
+      });
+      G.gemDust = (G.gemDust || 0) + dust;
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`💠 แยกของซ้ำ ${kill.length} ชิ้น → ผงเพชร +${dust} (มี ${G.gemDust})`);
+      setUi((u) => ({ ...u, gemDust: G.gemDust, inv: [...G.inv] }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+
     G.sellItem = (id) => {
       const idx = G.inv.indexOf(id);
       if (idx < 0) return;
@@ -28626,6 +28710,7 @@ export default function CherryAdventure() {
       G.ultAlt = false;
       G.mbook = null; if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // 📖 ตัวละครใหม่ = สมุดภารกิจชุดใหม่
       G.guildId = null; G.guild = null; G.guildRows = [];   // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
+      G.warpScrolls = 0;   // 📜 ตัวละครใหม่ยังไม่มีใบวาร์ป
       G.pathId = null; // 🌟 fresh character has no path yet
       G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
@@ -28700,7 +28785,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -30462,6 +30547,7 @@ export default function CherryAdventure() {
       G.weaponEnchant = d.weaponEnchant || "none";
       G.ultAlt = !!d.ultAlt;
       G.mbook = d.mbook || null;   // 📖 สมุดภารกิจ
+      G.warpScrolls = d.warpScrolls || 0;   // 📜 ใบวาร์ปข้ามแดน
       G.guildId = d.guildId || null;   // 🏰 กิลด์ที่สังกัด
       if (G.guildId && G.guildRefresh) { try { G.guildRefresh(); } catch (e) {} }
       if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
@@ -43802,6 +43888,7 @@ export default function CherryAdventure() {
               ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
               ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a"],
               ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
+              ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
@@ -44362,6 +44449,27 @@ export default function CherryAdventure() {
                   <span style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>{total}💰 (มี {ui.balls || 0})</span>
                 </button> ); })()}
               </div>
+              {/* 📜 ใบวาร์ปข้ามแดน — วาร์ปไปแมพไหนก็ได้จากตรงไหนก็ได้ */}
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#3a86c0", marginBottom: 3 }}>📜 ใบวาร์ปข้ามแดน (มี {ui.warpScrolls || 0} ใบ)</div>
+              <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                {(() => { const q = ui.shopQty || 1; const total = (G.WARP_SCROLL_PRICE || 12000) * q; const afford = (ui.gold || 0) >= total; return (
+                <button onClick={() => G.buyWarpScroll(ui.shopQty || 1)} disabled={!afford} style={{
+                  flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
+                  cursor: afford ? "pointer" : "not-allowed", fontFamily: font,
+                  background: afford ? "#eaf2fd" : "#eee", opacity: afford ? 1 : 0.6,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}>
+                  <span style={{ fontSize: 17 }}>📜</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#3a6ac0" }}>วาร์ปไปแมพไหนก็ได้ ทันที</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#c09020" }}>{total.toLocaleString()}💰</span>
+                </button> ); })()}
+              </div>
+              {(ui.warpScrolls || 0) > 0 && (
+                <button onClick={() => { setUi((u) => ({ ...u, shopOpen: false })); G.useWarpScroll(); }} style={{
+                  width: "100%", padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
+                  fontSize: 11.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#4a86e0,#6a5ad0)", marginBottom: 8,
+                }}>🌀 ใช้ใบวาร์ปเดี๋ยวนี้ (เหลือ {ui.warpScrolls} ใบ)</button>
+              )}
               {/* 📜 EXP x2 scrolls */}
               {(() => { const left = G.expBoostLeftText ? G.expBoostLeftText() : null; return (
                 <>
@@ -45869,6 +45977,7 @@ export default function CherryAdventure() {
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, marginBottom: 7 }}>
                     <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
+                    <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }} title="ทุบอาวุธ/ชุดที่ซ้ำกันทั้งหมดเป็นผงเพชร (เก็บไว้แบบละ 1 ชิ้น)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" }}>💠 แยกของซ้ำ {ui.gemDust || 0}</button>
                     <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(255,255,255,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
                     <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(255,255,255,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
                   </div>
@@ -45953,6 +46062,17 @@ export default function CherryAdventure() {
                   fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                   background: "linear-gradient(90deg,#c0902a,#e0b850)",
                 }}>⛏️ ไปโรงตีเหล็ก</button>
+              </div>
+              {/* 💠 แยกของซ้ำทั้งหมดทีเดียว */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}>
+                <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, invSel: G.inv.includes(u.invSel) ? u.invSel : null })); }} style={{
+                  flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
+                  fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
+                  background: "linear-gradient(90deg,#7a6ad0,#4a86e0)",
+                }}>💠 แยกของซ้ำ → ผงเพชร</button>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#3a72b0", background: "#eaf3fd", borderRadius: 999, padding: "6px 11px", border: "1px solid #c4ddf2", whiteSpace: "nowrap" }}>
+                  💠 {ui.gemDust || 0}
+                </div>
               </div>
               {/* 💰 auto-sell row */}
               <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
@@ -46301,6 +46421,13 @@ export default function CherryAdventure() {
                         }}>💰 ขาย {G.sellPrice ? G.sellPrice(id) : 0}</button>
                       )}
                     </div>
+                    {/* 💠 แยกชิ้นส่วน — เฉพาะอาวุธกับชุด ได้ผงเพชรไว้ตีบวกการันตี */}
+                    {!it.starter && (it.slot === "weapon" || it.slot === "outfit") && (
+                      <button onClick={() => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} style={{
+                        width: "100%", marginTop: 5, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
+                        color: "#fff", background: "linear-gradient(90deg,#7a6ad0,#4a86e0)",
+                      }}>💠 แยกชิ้นส่วน → ผงเพชร +{G.salvageYield ? G.salvageYield(id) : 0}</button>
+                    )}
                     {count >= 2 && plus < 5 && (
                       <div style={{ fontSize: 9.5, color: "#7a9ac0", marginTop: 6, textAlign: "center", background: "#f2f8fd", borderRadius: 8, padding: "4px 6px" }}>
                         ⚒️ ตีบวกได้ที่ <b>โรงตีเหล็ก</b> (มีของซ้ำ ×{count})
@@ -47759,6 +47886,13 @@ export default function CherryAdventure() {
                   background: (info.plus >= 5 || info.plus >= info.cap) ? "#5a6450" : "linear-gradient(90deg,#c0392b,#f5a623)",
                 }}>💠 การันตี ({info.dustCost})</button>
               </div>
+              {/* 💠 แยกชิ้นส่วน — เฉพาะอาวุธกับชุด ทุบเป็นผงเพชรไว้ตีบวกการันตี */}
+              {!info.starter && (info.slot === "weapon" || info.slot === "outfit") && (
+                <button onClick={() => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} title="ทุบของชิ้นนี้เป็นผงเพชร (ถ้าเป็นชิ้นสุดท้ายที่ใส่อยู่จะถอดออกให้)" style={{
+                  width: "100%", marginTop: 6, padding: "9px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
+                  fontSize: 11.5, fontWeight: 900, color: "#fff", background: "linear-gradient(90deg,#7a6ad0,#4a86e0)",
+                }}>💠 แยกชิ้นส่วน → ผงเพชร +{info.salvage}</button>
+              )}
               <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
             </div>
           </div>
