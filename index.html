@@ -68131,10 +68131,26 @@ function CherryAdventure() {
             const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
             document.documentElement.style.setProperty("--app-height", Math.round(vh) + "px");
             const w = mount.clientWidth, h = mount.clientHeight;
+            if (!w || !h)
+                return;
+            if (w === G._viewW && h === G._viewH)
+                return; // ขนาดเท่าเดิม ไม่ต้องทำอะไร
+            G._viewW = w;
+            G._viewH = h;
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
             renderer.setSize(w, h);
         };
+        G.fitView = onResize;
+        // 👀 กรอบภาพเปลี่ยนขนาดเมื่อไหร่ (หมุนจอ / สลับโหมดแนวนอน) ปรับกล้องตามทันที
+        if (typeof ResizeObserver !== "undefined") {
+            try {
+                const ro = new ResizeObserver(() => onResize());
+                ro.observe(mount);
+                G._viewRO = ro;
+            }
+            catch (e) { }
+        }
         window.addEventListener("resize", onResize);
         window.addEventListener("orientationchange", onResize);
         if (window.visualViewport)
@@ -68187,6 +68203,54 @@ function CherryAdventure() {
     // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
     const _uiWideModal = window.innerWidth > 820;
     const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
+    // ---------- 🎛️ ผังปุ่มบนจอ — คิดช่องวางทีเดียวจากขนาดจอจริง ทุกปุ่มอ้างตารางนี้ จะได้ไม่ทับกันและไม่บังตัวละคร ----------
+    const _vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const HUD_HIDE = !!ui.mining; // ⛏️ กำลังขุดแร่ = ซ่อนปุ่มบนจอทั้งหมด เหลือแต่แผงขุด
+    const HUD_BTN_L = _shortHud ? 42 : 48; // ขนาดปุ่มคอลัมน์ซ้าย
+    const HUD_BTN_R = _shortHud ? 42 : 52; // ขนาดปุ่มคอลัมน์ขวา
+    const HUD_BASE_L = _shortHud ? 78 : 150; // ช่องล่างสุดคอลัมน์ซ้าย (พ้นมินิแมพ)
+    const HUD_BASE_R = _shortHud ? 70 : 84; // ช่องล่างสุดคอลัมน์ขวา
+    const HUD_TOPSAFE = _shortHud ? 140 : 132; // เขตหวงห้ามด้านบน — ป้ายชื่อแมพ/ปุ่มบอส/อันดับโลก/ปุ่มตั้งค่า
+    const HUD_CELL = _shortHud ? 28 : 34; // ขนาดปุ่มในแป้นหมุนกล้อง
+    const HUD_PAD = HUD_CELL * 3 + 6; // ความสูง/กว้างแป้นหมุนกล้อง
+    // 📱 แนวนอน: กันขอบซ้าย-ขวาไว้ให้แถบปุ่มโดยเฉพาะ ภาพ 3D จะหยุดก่อนถึงปุ่ม ไม่ล้ำไปบังกัน
+    const HUD_GUTTER = _shortHud ? Math.max(HUD_PAD + 16, 100) : 0;
+    // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
+    const _fitCol = (want, base, size, reserveTop) => {
+        const room = _vh - HUD_TOPSAFE - base - reserveTop;
+        let n = want;
+        while (n > 1 && size + (n - 1) * (size + 2) > room)
+            n--;
+        const pitch = n > 1 ? Math.max(size + 2, Math.min(size + 8, Math.floor((room - size) / (n - 1)))) : size + 8;
+        return { n, pitch };
+    };
+    const _colL = _fitCol(6, HUD_BASE_L, HUD_BTN_L, 0);
+    const _colR = _fitCol(5, HUD_BASE_R, HUD_BTN_R, HUD_PAD + 14);
+    // ช่องที่ i นับจากล่างขึ้นบน (i = 0 คือช่องล่างสุด นิ้วถึงง่ายสุด)
+    const Lslot = (i) => ({ left: 12, bottom: HUD_BASE_L + i * _colL.pitch, width: HUD_BTN_L, height: HUD_BTN_L });
+    const Rslot = (i) => ({ right: 12, bottom: HUD_BASE_R + i * _colR.pitch, width: HUD_BTN_R, height: HUD_BTN_R });
+    const Lfit = (i) => !HUD_HIDE && i < _colL.n; // ช่องนี้มีที่พอไหม
+    const Rfit = (i) => !HUD_HIDE && i < _colR.n;
+    // 🎮 แป้นหมุนกล้อง วางเหนือคอลัมน์ขวาเสมอ
+    const HUD_PAD_BOTTOM = HUD_BASE_R + (_colR.n - 1) * _colR.pitch + HUD_BTN_R + 12;
+    // 🎯 ปุ่มคำสั่งกลางล่าง (ขุด/ตกปลา/คุย/ตีเหล็ก/จับ) — โชว์ทีละอันตามลำดับความสำคัญ ไม่ซ้อนกัน
+    // 🎯 จอสูง = วางไว้ล่างกลาง (นิ้วถึงง่าย) · จอเตี้ยแนวนอน = ขึ้นไปบนกลางจอ ไม่งั้นทับตัวละคร
+    const PROMPT_POS = _shortHud
+        ? { top: ST(36), left: "50%", transform: "translateX(-50%)" }
+        : { bottom: 196, left: "50%", transform: "translateX(-50%)" };
+    const PROMPT_W = { maxWidth: 152, textAlign: "center" }; // แคบพอให้ไม่ชนจอยด้านซ้ายกับแถบสกิลด้านขวา
+    const _boardOn = !ui.boardHidden && !ui.equipScreen && ui.mode === "explore" && !HUD_HIDE; // 🏆 แผงอันดับโลกกินมุมซ้ายบน — แบนเนอร์ต้องเลี่ยง
+    // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
+    const _bannerSide = _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
+    const _bannerDrop = _boardOn && !_bannerSide ? 104 : 0;
+    const bannerPos = (base) => ({
+        top: ST(base + _bannerDrop),
+        left: _bannerSide ? "calc(50% + 100px)" : "50%",
+        transform: "translateX(-50%)",
+    });
+    const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
+        : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : null;
+    const isPrompt = (name) => _promptTop === name;
     const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
     const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
     const closeAllMenus = (extra = {}) => {
@@ -68259,8 +68323,17 @@ function CherryAdventure() {
             /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
             paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" } },
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`),
-        React.createElement("div", { ref: mountRef, style: { position: "absolute", top: 0, bottom: 0, left: "calc(-1 * env(safe-area-inset-left, 0px))", right: "calc(-1 * env(safe-area-inset-right, 0px))" } }),
-        React.createElement("div", { style: { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+        React.createElement("div", { ref: mountRef, style: { position: "absolute", top: 0, bottom: 0,
+                left: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-left, 0px))",
+                right: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-right, 0px))" } }),
+        HUD_GUTTER > 0 && ["left", "right"].map((side) => (React.createElement("div", { key: side, style: {
+                position: "absolute", top: 0, bottom: 0, [side]: "calc(-1 * env(safe-area-inset-" + side + ", 0px))",
+                width: `calc(${HUD_GUTTER}px + env(safe-area-inset-${side}, 0px))`, zIndex: 0, pointerEvents: "none",
+                background: side === "left"
+                    ? "linear-gradient(90deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)"
+                    : "linear-gradient(270deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)",
+            } }))),
+        React.createElement("div", { style: { position: "absolute", top: 0, bottom: 0, left: HUD_GUTTER, right: HUD_GUTTER, pointerEvents: "none", zIndex: 0,
                 background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" } }),
         ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
         ui.guildOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, guildOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(10,14,26,0.58)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 } },
@@ -68824,7 +68897,7 @@ function CherryAdventure() {
                 fontSize: 20, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.9)",
                 boxShadow: "0 3px 9px rgba(90,120,70,0.3)", fontFamily: font,
             } }, sym))))),
-        ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: {
+        ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: {
                 position: "absolute", top: ST(70), left: "50%", transform: "translateX(-50%)",
                 background: "linear-gradient(135deg,#fff2c8,#ffe0a0)", borderRadius: 16, padding: "12px 16px",
                 boxShadow: "0 6px 20px rgba(200,150,40,0.4)", border: "2px solid #f5c542",
@@ -68875,28 +68948,28 @@ function CherryAdventure() {
                         marginTop: 9, padding: "7px 20px", borderRadius: 999, border: "none", cursor: "pointer",
                         fontSize: 12.5, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
                     } }, "\u0E1B\u0E34\u0E14")))),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: {
-                position: "absolute", top: ST(12), left: "50%", transform: "translateX(-50%)",
+        ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: {
+                position: "absolute", ...bannerPos(12), whiteSpace: "nowrap",
                 background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
                 fontSize: 12.5, fontWeight: 800, color: "#5a5a4a", pointerEvents: "none",
                 boxShadow: "0 2px 8px rgba(90,120,70,0.2)",
             } },
             ui.biomeName,
             ui.weather ? ` · ${ui.weather}` : "")),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.challengeBiomeBoss(), style: {
-                position: "absolute", top: ST(40), left: "50%", transform: "translateX(-50%)",
+        ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !_shortHud && (React.createElement("button", { onClick: () => G.challengeBiomeBoss(), style: {
+                position: "absolute", ...bannerPos(40), whiteSpace: "nowrap",
                 background: "linear-gradient(90deg,#b03060,#e0708a)", borderRadius: 999,
                 padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                 border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(176,48,96,0.4)",
             } }, "\u2694\uFE0F \u0E17\u0E49\u0E32\u0E14\u0E27\u0E25\u0E40\u0E08\u0E49\u0E32\u0E16\u0E34\u0E48\u0E19")),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty)
+        ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !_shortHud && (React.createElement("button", { onClick: () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty)
                 G.wbRefreshParty(); }, style: {
-                position: "absolute", top: ST(72), left: "50%", transform: "translateX(-50%)",
+                position: "absolute", ...bannerPos(72), whiteSpace: "nowrap",
                 background: "linear-gradient(90deg,#5a1a2a,#c0392b)", borderRadius: 999,
                 padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                 border: "1px solid #f5a623", cursor: "pointer", boxShadow: "0 3px 10px rgba(192,57,43,0.5)",
             } }, "\uD83D\uDC79 \u0E1A\u0E2D\u0E2A\u0E42\u0E25\u0E01 (\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49)")),
-        ui.mode === "explore" && !ui.equipScreen && (() => {
+        ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (() => {
             const S = G.MSQ || [];
             const c = S[ui.storyCh || 0];
             if (!c)
@@ -68916,7 +68989,7 @@ function CherryAdventure() {
                 ": ",
                 done ? "สำเร็จ! แตะรับรางวัล ✨" : `${G.storyLabel(c)} (${prog}/${tgt})`));
         })(),
-        ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 } },
+        ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 } },
             React.createElement("button", { onClick: () => setUi((u) => ({ ...u, settingsOpen: true })), title: "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E40\u0E01\u0E21", style: {
                     width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
                     fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
@@ -68953,9 +69026,9 @@ function CherryAdventure() {
                         } },
                         React.createElement("span", { style: { position: "absolute", top: 3, left: row.on ? 23 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.35)", transition: "left 0.15s" } }))))),
                 React.createElement("div", { style: { fontSize: 10, color: "#8a7aa8", textAlign: "center", marginTop: 6 } }, "\u0E04\u0E48\u0E32\u0E17\u0E35\u0E48\u0E15\u0E31\u0E49\u0E07\u0E44\u0E27\u0E49\u0E08\u0E30\u0E16\u0E39\u0E01\u0E08\u0E33\u0E44\u0E27\u0E49\u0E43\u0E2B\u0E49\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34")))),
-        ui.mode === "explore" && ui.npcNear && !ui.npcTalk && (React.createElement("div", { style: { position: "absolute", bottom: 160, left: "50%", transform: "translateX(-50%)" } },
+        ui.mode === "explore" && isPrompt("npc") && !ui.npcTalk && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
             React.createElement("button", { onClick: () => G.talkNPC(), style: {
-                    padding: "10px 24px", borderRadius: 999, border: "none", cursor: "pointer",
+                    padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
                     fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
                     background: "linear-gradient(90deg,#6a8ac0,#8aacd0)",
                     boxShadow: "0 5px 16px rgba(106,138,192,0.5)",
@@ -69169,7 +69242,7 @@ function CherryAdventure() {
                     fontSize: 14, fontWeight: 800, fontFamily: font, color: "#8a3a5a",
                     background: "linear-gradient(90deg,#f5c542,#f5a0b8)", boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
                 } }, "\uD83D\uDD04 \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E01\u0E21\u0E43\u0E2B\u0E21\u0E48"))),
-        (ui.mode === "explore" || ui.mode === "battle") && ui.foodBuff && !ui.equipScreen && (React.createElement("div", { style: {
+        (ui.mode === "explore" || ui.mode === "battle") && ui.foodBuff && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: {
                 position: "absolute", top: 96, right: 10, zIndex: 20, pointerEvents: "none",
                 background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
                 fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
@@ -69177,24 +69250,23 @@ function CherryAdventure() {
             ui.foodBuff.emoji,
             " ",
             G.foodLeftText ? G.foodLeftText() : "")),
-        ui.mode === "explore" && ui.mineNear && !ui.mining && !ui.fishing && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)", textAlign: "center" } },
+        ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
             React.createElement("button", { onClick: () => G.startMining(), style: {
-                    padding: "12px 26px", borderRadius: 999, border: "none", cursor: "pointer",
-                    fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
+                    padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+                    fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.25,
                     background: "linear-gradient(90deg,#8a6a3a,#c09a4a)",
-                    boxShadow: "0 5px 16px rgba(138,106,58,0.5)",
+                    boxShadow: "0 5px 16px rgba(138,106,58,0.5)", whiteSpace: "nowrap",
                 } },
                 (G.pickOf ? G.pickOf().emoji : "⛏️"),
                 " \u0E02\u0E38\u0E14\u0E2A\u0E32\u0E22\u0E41\u0E23\u0E48",
-                ui.mineOre && MATERIALS[ui.mineOre] ? React.createElement("span", { style: { fontSize: 12, opacity: 0.9 } },
-                    " \u00B7 \u0E40\u0E2B\u0E47\u0E19 ",
+                ui.mineOre && MATERIALS[ui.mineOre] ? React.createElement("span", { style: { display: "block", fontSize: 10.5, opacity: 0.92 } },
                     MATERIALS[ui.mineOre].emoji,
                     MATERIALS[ui.mineOre].name) : null))),
         ui.mode === "explore" && ui.mining && (() => {
             const m = ui.mining;
             const zL = Math.max(0, (m.zc - m.zone / 2) * 100), zW = m.zone * 100;
             const cW = m.zone * 0.34 * 100;
-            return (React.createElement("div", { style: { position: "absolute", bottom: 92, left: "50%", transform: "translateX(-50%)", width: "88%", maxWidth: 400, fontFamily: font } },
+            return (React.createElement("div", { style: { position: "absolute", bottom: _shortHud ? 6 : 24, left: "50%", transform: "translateX(-50%)", width: "88%", maxWidth: 400, zIndex: 40, fontFamily: font } },
                 React.createElement("div", { style: { background: "rgba(28,24,18,0.92)", borderRadius: 16, padding: "12px 14px", border: "2px solid #c09a4a", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" } },
                     React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } },
                         React.createElement("span", { style: { fontSize: 12.5, fontWeight: 900, color: "#f5d08a" } },
@@ -69224,18 +69296,18 @@ function CherryAdventure() {
                             fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#d8ccb0", background: "rgba(255,255,255,0.12)",
                         } }, "\u0E40\u0E25\u0E34\u0E01\u0E02\u0E38\u0E14"))));
         })(),
-        ui.mode === "explore" && ui.pondNear && !ui.fishing && (React.createElement("div", { style: {
-                position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)",
+        ui.mode === "explore" && isPrompt("fish") && !ui.fishing && (React.createElement("div", { style: {
+                position: "absolute", ...PROMPT_POS, ...PROMPT_W,
             } },
             React.createElement("button", { onClick: () => G.startFishing(), style: {
-                    padding: "12px 28px", borderRadius: 999, border: "none", cursor: "pointer",
+                    padding: "11px 18px", borderRadius: 999, border: "none", cursor: "pointer",
                     fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
                     background: "linear-gradient(90deg,#4a90c0,#6ac0e0)",
                     boxShadow: "0 5px 16px rgba(74,144,192,0.5)",
                 } }, "\uD83C\uDFA3 \u0E15\u0E01\u0E1B\u0E25\u0E32"))),
         ui.mode === "explore" && ui.fishing && (React.createElement("div", { style: {
-                position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)",
-                textAlign: "center",
+                position: "absolute", ...PROMPT_POS,
+                ...PROMPT_W,
             } }, ui.fishing.phase === "waiting" ? (React.createElement("button", { onClick: () => G.reelFishing(), style: {
                 background: "rgba(255,255,255,0.92)", borderRadius: 16, padding: "12px 22px",
                 fontSize: 14, fontWeight: 700, color: "#4a90c0", border: "none", cursor: "pointer", fontFamily: font,
@@ -69272,13 +69344,13 @@ function CherryAdventure() {
                         background: ui.editLook ? "linear-gradient(90deg,#d06ab0,#e88ac8)" : "linear-gradient(90deg,#5aa06a,#7ac08a)",
                         boxShadow: ui.editLook ? "0 5px 16px rgba(208,106,176,0.5)" : "0 5px 16px rgba(90,160,106,0.5)", opacity: ui.nameChecking ? 0.6 : 1,
                     } }, ui.nameChecking ? "⏳ ตรวจชื่อ..." : ui.editLook ? "💾 บันทึกรูปลักษณ์" : "เลือกอาชีพ →")))),
-        ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && (React.createElement("button", { onClick: () => G.toggleBoard && G.toggleBoard(), title: "\u0E41\u0E2A\u0E14\u0E07\u0E1B\u0E49\u0E32\u0E22\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01", style: {
+        ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && !HUD_HIDE && (React.createElement("button", { onClick: () => G.toggleBoard && G.toggleBoard(), title: "\u0E41\u0E2A\u0E14\u0E07\u0E1B\u0E49\u0E32\u0E22\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01", style: {
                 position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", zIndex: 26,
                 border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", borderRadius: 999, padding: "4px 10px",
                 background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
                 color: "#ffd76a", fontSize: 12, fontWeight: 800, fontFamily: font, boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
             } }, "\uD83C\uDFC6")),
-        ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && (React.createElement("div", { style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
+        ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, marginBottom: 4 } },
                 React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#ffd76a" } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
                 ui.netEnabled !== false && (React.createElement("span", { title: ui.rtStatus === "SUBSCRIBED" ? "เชื่อมต่อเรียลไทม์แล้ว" : ("เรียลไทม์: " + (ui.rtStatus || "…")), style: { display: "inline-flex", alignItems: "center", gap: 2, fontSize: 9, fontWeight: 800, color: "#cfeaff", background: "rgba(60,120,180,0.28)", borderRadius: 7, padding: "1px 5px", lineHeight: 1.4 } },
@@ -69307,10 +69379,10 @@ function CherryAdventure() {
                     React.createElement("span", { style: { fontSize: 8.5, color: "#b8a8d0", whiteSpace: "nowrap" } },
                         "\u2694\uFE0F ",
                         powerOf(r).toLocaleString()))))) : (React.createElement("div", { style: { fontSize: 9.5, color: "#a898c8", textAlign: "center", padding: "5px 0" } }, ui.netEnabled === false ? "🌐 ออฟไลน์" : "กด 🔄 เพื่อโหลด")))),
-        ui.secretNear && ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: "26%", left: "50%", transform: "translateX(-50%)", zIndex: 34, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", fontFamily: font } },
+        isPrompt("secret") && ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W, zIndex: 34, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", fontFamily: font } },
             React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(40,24,20,0.7)", borderRadius: 999, padding: "3px 12px", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "\uD83D\uDC24\u2728 \u0E40\u0E08\u0E2D\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07\u0E25\u0E31\u0E1A! \u0E44\u0E01\u0E48\u0E19\u0E49\u0E2D\u0E22\u0E2B\u0E31\u0E27\u0E43\u0E08"),
             React.createElement("button", { onClick: () => G.catchSecret && G.catchSecret(), style: { pointerEvents: "auto", padding: "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(135deg,#ff9ec8,#f5a623)", boxShadow: "0 4px 16px rgba(245,120,80,0.55)", animation: "pulse 0.8s ease-in-out infinite alternate" } }, "\uD83C\uDFA3 \u0E08\u0E31\u0E1A\u0E44\u0E01\u0E48\u0E19\u0E49\u0E2D\u0E22"))),
-        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
+        (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute", bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: _shortHud ? "min(56vw, 470px)" : "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 7, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "3px 10px", fontSize: 11, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" } },
                 React.createElement("span", { style: { color: "#c04a5a" } },
                     "\uD83D\uDC97",
@@ -69514,7 +69586,7 @@ function CherryAdventure() {
                     React.createElement("button", { onClick: () => G.accountSignUp(ui.authEmail || "", ui.authPass || ""), style: { flex: 1, padding: "11px", borderRadius: 12, border: "1px solid #c9b6f0", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#6a5ac0", background: "#f3eeff" } }, "\u0E2A\u0E21\u0E31\u0E04\u0E23\u0E43\u0E2B\u0E21\u0E48")),
                 React.createElement("button", { onClick: () => G.accountSignInGoogle(), style: { width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff" } }, "\uD83C\uDDEC \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22 Google"),
                 React.createElement("div", { style: { fontSize: 9.5, color: "#c0b0a4", marginTop: 12, lineHeight: 1.5 } }, "\u0E15\u0E49\u0E2D\u0E07\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32 Supabase (url + anonKey \u0E43\u0E19 ONLINE_CONFIG) \u0E41\u0E25\u0E30\u0E40\u0E1B\u0E34\u0E14 Auth \u0E01\u0E48\u0E2D\u0E19 \u2014 \u0E14\u0E39 ONLINE_SETUP.md")))),
-        ui.mode === "explore" && ui.auth && ui.auth.status === "in" && !ui.equipScreen && (React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, style: { position: "absolute", left: 12, ...(_shortHud ? { top: 130, width: 42, height: 42 } : { bottom: 150, width: 46, height: 46 }), borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 20, background: "linear-gradient(135deg,#5a8ae0,#7b6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(60,60,120,0.35)", zIndex: 25 } },
+        ui.mode === "explore" && ui.auth && ui.auth.status === "in" && !ui.equipScreen && !HUD_HIDE && (React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, style: { position: "absolute", ...Lslot(5), display: Lfit(5) ? "block" : "none", borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 20, background: "linear-gradient(135deg,#5a8ae0,#7b6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(60,60,120,0.35)", zIndex: 25 } },
             "\uD83D\uDCAC",
             ui.onlineCount > 0 ? React.createElement("span", { style: { position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "16px", padding: "0 3px" } }, ui.onlineCount) : null)),
         ui.chatOpen && (React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(20,16,24,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }, onClick: () => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); } },
@@ -69553,25 +69625,25 @@ function CherryAdventure() {
                             setUi((u) => ({ ...u, chatInput: "" }));
                         } }, style: { flex: 1, boxSizing: "border-box", padding: "11px 13px", borderRadius: 999, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font } }),
                     React.createElement("button", { onClick: () => { G.chatSend(ui.chatInput || ""); setUi((u) => ({ ...u, chatInput: "" })); }, style: { padding: "0 18px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" } }, "\u0E2A\u0E48\u0E07"))))),
-        ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement("button", { onClick: () => setUi((u) => ({ ...u, menuOpen: true })), title: "\u0E40\u0E21\u0E19\u0E39", style: { position: "absolute", left: 12, ...(_shortHud ? { top: 136, width: 44, height: 44 } : { bottom: 432, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 } }, "\u2630")),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => toggleMenu("questOpen"), title: "\u0E40\u0E04\u0E27\u0E2A & \u0E20\u0E32\u0E23\u0E01\u0E34\u0E08", style: { position: "absolute", right: 12, ...(_shortHud ? { top: 184, width: 44, height: 44 } : { bottom: 258, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement("button", { onClick: () => setUi((u) => ({ ...u, menuOpen: true })), title: "\u0E40\u0E21\u0E19\u0E39", style: { position: "absolute", ...Lslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 } }, "\u2630")),
+        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => toggleMenu("questOpen"), title: "\u0E40\u0E04\u0E27\u0E2A & \u0E20\u0E32\u0E23\u0E01\u0E34\u0E08", style: { position: "absolute", ...Rslot(3), display: Rfit(3) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 } },
             "\uD83D\uDCDC",
             (() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, active) : null; })())),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => toggleMenu("panelOpen"), title: "\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07", style: { position: "absolute", right: 12, ...(_shortHud ? { top: 136, width: 44, height: 44 } : { bottom: 316, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => toggleMenu("panelOpen"), title: "\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07", style: { position: "absolute", ...Rslot(2), display: Rfit(2) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 } },
             "\uD83D\uDC3E",
             (ui.petBox || []).length > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, (ui.petBox || []).length))),
-        ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement("button", { onClick: () => G.openEquip(), title: "\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 & \u0E41\u0E15\u0E48\u0E07\u0E15\u0E31\u0E27", style: { position: "absolute", left: 12, ...(_shortHud ? { top: 184, width: 42, height: 42 } : { bottom: 378, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement("button", { onClick: () => G.openEquip(), title: "\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 & \u0E41\u0E15\u0E48\u0E07\u0E15\u0E31\u0E27", style: { position: "absolute", ...Lslot(1), display: Lfit(1) ? "block" : "none", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 } },
             "\uD83C\uDF92",
             ui.inv && ui.inv.length > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, ui.inv.length))),
-        ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement("button", { onClick: () => toggleMenu("skillPanel"), title: "\u0E2A\u0E01\u0E34\u0E25 & \u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A", style: { position: "absolute", left: 12, ...(_shortHud ? { top: 232, width: 42, height: 42 } : { bottom: 324, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement("button", { onClick: () => toggleMenu("skillPanel"), title: "\u0E2A\u0E01\u0E34\u0E25 & \u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A", style: { position: "absolute", ...Lslot(2), display: Lfit(2) ? "block" : "none", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 } },
             "\u26A1",
             ((ui.sp || 0) + (ui.statPts || 0)) > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, (ui.sp || 0) + (ui.statPts || 0)))),
         ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (React.createElement(React.Fragment, null,
-            React.createElement("button", { onClick: () => G.togglePvp(), title: "\u0E1B\u0E23\u0E30\u0E25\u0E2D\u0E07 PvP", style: { position: "absolute", left: 12, ...(_shortHud ? { top: 280, width: 42, height: 42 } : { bottom: 270, width: 48, height: 48 }), borderRadius: 15, border: "none", cursor: "pointer", fontSize: 22, background: "linear-gradient(135deg,#d9536b,#b04ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(176,74,208,0.42)", zIndex: 24 } }, "\u2694\uFE0F"),
-            React.createElement("button", { onClick: () => G.toggleSocial(), title: "\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19", style: { position: "absolute", left: 12, ...(_shortHud ? { top: 328, width: 42, height: 42 } : { bottom: 216, width: 48, height: 48 }), borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 } },
+            React.createElement("button", { onClick: () => G.togglePvp(), title: "\u0E1B\u0E23\u0E30\u0E25\u0E2D\u0E07 PvP", style: { position: "absolute", ...Lslot(3), display: Lfit(3) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 22, background: "linear-gradient(135deg,#d9536b,#b04ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(176,74,208,0.42)", zIndex: 24 } }, "\u2694\uFE0F"),
+            React.createElement("button", { onClick: () => G.toggleSocial(), title: "\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19", style: { position: "absolute", ...Lslot(4), display: Lfit(4) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 } },
                 "\uD83D\uDC65",
                 (ui.onlineCount || 0) > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, ui.onlineCount)))),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.usePotion(G.hpPotUse), title: "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E25\u0E37\u0E2D\u0E14", style: { position: "absolute", right: 12, ...(_shortHud ? { top: 280, width: 44, height: 44 } : { bottom: 142, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.usePotion(G.hpPotUse), title: "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E25\u0E37\u0E2D\u0E14", style: { position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 } },
             "\uD83E\uDDEA",
             React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" } }, ui.potions || 0))),
         ui.mode === "explore" && !ui.equipScreen && ui.inHomeZone && !ui.homeVisitOwner && (React.createElement(React.Fragment, null,
@@ -69622,10 +69694,10 @@ function CherryAdventure() {
                 React.createElement("button", { onClick: () => G.homeBuy(it.id), style: { border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: (ui.gold || 0) >= it.price ? "linear-gradient(90deg,#e0a04a,#c8783a)" : "#c8bca8" } },
                     "\uD83D\uDCB0 ",
                     it.price.toLocaleString())))))),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.useManaPotion(G.mpPotUse), title: "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E21\u0E32\u0E19\u0E32", style: { position: "absolute", right: 12, ...(_shortHud ? { top: 328, width: 44, height: 44 } : { bottom: 84, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.useManaPotion(G.mpPotUse), title: "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E21\u0E32\u0E19\u0E32", style: { position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 } },
             "\uD83D\uDCA7",
             React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" } }, ui.mpPotions || 0))),
-        ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (React.createElement("button", { onClick: () => G.toggleMount(), title: ui.mountId ? "ลงจากหลัง" : "ขี่สัตว์ขี่", style: { position: "absolute", right: 12, ...(_shortHud ? { top: 232, width: 44, height: 44 } : { bottom: 200, width: 52, height: 52 }), borderRadius: 16, border: ui.mountId ? "2px solid #ffd76a" : "none", cursor: "pointer", fontSize: 24, background: ui.mountId ? "linear-gradient(135deg,#5a8ad0,#7b6ad0)" : "#fff", boxShadow: ui.mountId ? "0 4px 14px rgba(90,110,210,0.5)" : "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 } },
+        ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (React.createElement("button", { onClick: () => G.toggleMount(), title: ui.mountId ? "ลงจากหลัง" : "ขี่สัตว์ขี่", style: { position: "absolute", ...Rslot(4), display: Rfit(4) ? "block" : "none", borderRadius: 16, border: ui.mountId ? "2px solid #ffd76a" : "none", cursor: "pointer", fontSize: 24, background: ui.mountId ? "linear-gradient(135deg,#5a8ad0,#7b6ad0)" : "#fff", boxShadow: ui.mountId ? "0 4px 14px rgba(90,110,210,0.5)" : "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 } },
             ui.mountId ? ((MOUNTS.find((m) => m.id === ui.mountId) || {}).emoji || "🐎") : "🐎",
             ui.mountId && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "18px", padding: "0 3px" } }, "\u2713"))),
         ui.menuOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, menuOpen: false })), style: { position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", zIndex: 66 } },
@@ -69649,6 +69721,15 @@ function CherryAdventure() {
                 ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
                 ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
                 ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
+                ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
+                ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty)
+                        G.wbRefreshParty(); }, "#c0392b"],
+                ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
+                ["📜", "เควส & ภารกิจ", () => toggleMenu("questOpen"), "#f2b24d"],
+                ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
+                ["⚔️", "ประลอง PvP", () => G.togglePvp(), "#d9536b"],
+                ["👥", "เพื่อน", () => G.toggleSocial(), "#5fb0f0"],
+                ["💬", "แชทโลก", () => { setUi((u) => ({ ...u, menuOpen: false, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, "#5a8ae0"],
             ].map((it) => (React.createElement("button", { key: it[1], title: it[1], onClick: () => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }, style: { width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" } }, it[0])))))),
         ui.goldMarketOpen && (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#2a2416,#20190e)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, border: "1.5px solid #f5c542" } },
             closeBtn("goldMarketOpen"),
@@ -69802,8 +69883,8 @@ function CherryAdventure() {
             React.createElement("button", { onClick: () => G.pickHero(null), style: { width: "100%", marginTop: 12, padding: "9px 0", borderRadius: 12, border: ui.heroId ? "1px solid #6a5a8a" : "2px solid #ffd76a", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: ui.heroId ? "#c8b8e0" : "#ffd76a", background: "rgba(255,255,255,0.06)" } },
                 "\uD83E\uDDCD \u0E01\u0E25\u0E31\u0E1A\u0E40\u0E1B\u0E47\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E02\u0E2D\u0E07\u0E40\u0E23\u0E32",
                 !ui.heroId ? " ✓" : ""))),
-        ui.mode === "explore" && ui.smithNear && !ui.smithOpen && (React.createElement("div", { style: { position: "absolute", bottom: 218, left: "50%", transform: "translateX(-50%)" } },
-            React.createElement("button", { onClick: () => G.openSmith(), style: { padding: "10px 24px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.5)" } }, "\u2692\uFE0F \u0E15\u0E35\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E01\u0E31\u0E1A\u0E0A\u0E48\u0E32\u0E07\u0E15\u0E35\u0E40\u0E2B\u0E25\u0E47\u0E01"))),
+        ui.mode === "explore" && isPrompt("smith") && !ui.smithOpen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
+            React.createElement("button", { onClick: () => G.openSmith(), style: { padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.5)" } }, "\u2692\uFE0F \u0E15\u0E35\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E01\u0E31\u0E1A\u0E0A\u0E48\u0E32\u0E07\u0E15\u0E35\u0E40\u0E2B\u0E25\u0E47\u0E01"))),
         ui.smithOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, smithOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(20,14,10,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 } },
             React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 470, maxHeight: "84%", overflowY: "auto", background: "#fbf6ef", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px" } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 4 } },
@@ -69996,18 +70077,18 @@ function CherryAdventure() {
                                 React.createElement("span", { style: { fontSize: 12, fontWeight: 800, color: "#e6eefc", lineHeight: 1.2 } }, it.name)),
                             React.createElement("button", { onClick: () => G.buyDiamond(it.id), disabled: owned || !afford, style: { marginTop: 2, padding: "7px 0", borderRadius: 10, border: "none", cursor: owned || !afford ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: owned ? "#8fe0b0" : afford ? "#fff" : "#7f8aa5", background: owned ? "rgba(90,220,150,0.15)" : afford ? "linear-gradient(90deg,#4a86e0,#6a5ad0)" : "rgba(255,255,255,0.06)" } }, owned ? "✓ มีแล้ว" : `💎 ${it.price}`)));
                     })))))))),
-        ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", right: 14, ...(_shortHud ? { top: ST(46) } : { top: "30%" }), display: "grid", gridTemplateColumns: "repeat(3, 34px)", gridTemplateRows: "repeat(3, 34px)", gap: 3, zIndex: 24 } }, [
-            ["", null],
+        ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", right: 14, bottom: HUD_PAD_BOTTOM, display: HUD_HIDE ? "none" : "grid", gridTemplateColumns: `repeat(3, ${HUD_CELL}px)`, gridTemplateRows: `repeat(3, ${HUD_CELL}px)`, gap: 3, zIndex: 24 } }, [
+            ["＋", () => G.zoom(-1.6)],
             ["▲", () => G.rotateCam(0, 0.12)],
-            ["", null],
+            ["－", () => G.zoom(1.6)],
             ["◀", () => G.rotateCam(0.22, 0)],
             ["🔄", () => G.resetCam()],
             ["▶", () => G.rotateCam(-0.22, 0)],
             ["", null],
             ["▼", () => G.rotateCam(0, -0.12)],
             ["", null],
-        ].map((c, i) => c[1] ? (React.createElement("button", { key: i, onClick: c[1], style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? 14 : 15, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font } }, c[0])) : (React.createElement("span", { key: i }))))),
-        ui.mode === "explore" && (React.createElement(React.Fragment, null,
+        ].map((c, i) => c[1] ? (React.createElement("button", { key: i, onClick: c[1], style: { width: HUD_CELL, height: HUD_CELL, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? HUD_CELL * 0.42 : HUD_CELL * 0.45, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font } }, c[0])) : (React.createElement("span", { key: i }))))),
+        ui.mode === "explore" && !HUD_HIDE && (React.createElement(React.Fragment, null,
             ui.auto && (React.createElement("div", { style: {
                     position: "absolute", top: ST(10), left: "50%", transform: "translateX(-50%)", pointerEvents: "none",
                     background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
@@ -70028,7 +70109,7 @@ function CherryAdventure() {
             G.actionMode && !ui.equipScreen && !ui.inRanchZone && (() => {
                 const list = skillsOf(ui.cls, ui.pathId) || [];
                 const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
-                return (React.createElement("div", { style: { position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
+                return (React.createElement("div", { style: { position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" } }, skills.map((sk) => {
                         const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
                         const afford = (ui.mp || 0) >= cost;
@@ -70052,11 +70133,6 @@ function CherryAdventure() {
                             boxShadow: "0 5px 16px rgba(217,54,74,0.55)", fontFamily: font, pointerEvents: "auto",
                         } }, "\u2694\uFE0F")));
             })(),
-            React.createElement("div", { style: { position: "absolute", left: 14, ...(_shortHud ? { top: ST(48) } : { top: "32%" }), display: "flex", flexDirection: "column", gap: 8 } }, [["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (React.createElement("button", { key: sym, onClick: () => G.zoom(d), style: {
-                    width: 44, height: 44, borderRadius: "50%", border: "none", cursor: "pointer",
-                    fontSize: 20, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.85)",
-                    boxShadow: "0 3px 9px rgba(90,120,70,0.3)", fontFamily: font,
-                } }, sym)))),
             React.createElement("button", { onClick: () => toggleMenu("shopOpen"), style: {
                     position: "absolute", right: 12, bottom: 28,
                     width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
@@ -72003,7 +72079,7 @@ function CherryAdventure() {
                             count,
                             ")"))));
                 })())),
-            ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && (React.createElement(React.Fragment, null,
+            ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && !HUD_HIDE && (React.createElement(React.Fragment, null,
                 React.createElement("div", { style: { position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "42%", display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
                     React.createElement("button", { onClick: () => G.openRanch && G.openRanch("farm"), title: "\u0E1F\u0E32\u0E23\u0E4C\u0E21\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83D\uDC04"),
@@ -72017,7 +72093,7 @@ function CherryAdventure() {
                     !ui.fishing && React.createElement("button", { onClick: () => G.startFishing && G.startFishing(), title: "\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E48\u0E2D", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#5aa0d0,#3a78b0)", color: "#fff", boxShadow: "0 4px 14px rgba(58,120,176,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83C\uDFA3"),
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E01\u0E1B\u0E25\u0E32"))),
-                React.createElement("div", { style: { position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
+                React.createElement("div", { style: { position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
                     React.createElement("button", { onClick: () => G.openRanch && G.openRanch("market"), title: "\u0E15\u0E25\u0E32\u0E14", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83D\uDED2"),
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E25\u0E32\u0E14")),
@@ -72850,8 +72926,8 @@ function CherryAdventure() {
                                     })())));
                         })))))))),
         ui.mode === "battle" && ui.enemy && (React.createElement(React.Fragment, null,
-            React.createElement("div", { style: { position: "absolute", left: 12, top: "30%", display: "flex", flexDirection: "column", gap: 8 } }, [["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (React.createElement("button", { key: sym, onClick: () => G.zoom(d), style: {
-                    width: 44, height: 44, borderRadius: "50%", border: "none", cursor: "pointer",
+            React.createElement("div", { style: { position: "absolute", left: 12, top: ST(HUD_TOPSAFE), display: "flex", flexDirection: "row", gap: 8, zIndex: 26 } }, [["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (React.createElement("button", { key: sym, onClick: () => G.zoom(d), style: {
+                    width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
                     fontSize: 20, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.85)",
                     boxShadow: "0 3px 9px rgba(90,120,70,0.3)", fontFamily: font,
                 } }, sym)))),

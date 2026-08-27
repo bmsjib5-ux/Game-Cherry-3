@@ -42845,10 +42845,18 @@ export default function CherryAdventure() {
       const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
       document.documentElement.style.setProperty("--app-height", Math.round(vh) + "px");
       const w = mount.clientWidth, h = mount.clientHeight;
+      if (!w || !h) return;
+      if (w === G._viewW && h === G._viewH) return;   // ขนาดเท่าเดิม ไม่ต้องทำอะไร
+      G._viewW = w; G._viewH = h;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+    G.fitView = onResize;
+    // 👀 กรอบภาพเปลี่ยนขนาดเมื่อไหร่ (หมุนจอ / สลับโหมดแนวนอน) ปรับกล้องตามทันที
+    if (typeof ResizeObserver !== "undefined") {
+      try { const ro = new ResizeObserver(() => onResize()); ro.observe(mount); G._viewRO = ro; } catch (e) {}
+    }
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
     if (window.visualViewport) window.visualViewport.addEventListener("resize", onResize);
@@ -42904,6 +42912,53 @@ export default function CherryAdventure() {
   // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
   const _uiWideModal = window.innerWidth > 820;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
+  // ---------- 🎛️ ผังปุ่มบนจอ — คิดช่องวางทีเดียวจากขนาดจอจริง ทุกปุ่มอ้างตารางนี้ จะได้ไม่ทับกันและไม่บังตัวละคร ----------
+  const _vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const HUD_HIDE = !!ui.mining;                       // ⛏️ กำลังขุดแร่ = ซ่อนปุ่มบนจอทั้งหมด เหลือแต่แผงขุด
+  const HUD_BTN_L = _shortHud ? 42 : 48;              // ขนาดปุ่มคอลัมน์ซ้าย
+  const HUD_BTN_R = _shortHud ? 42 : 52;              // ขนาดปุ่มคอลัมน์ขวา
+  const HUD_BASE_L = _shortHud ? 78 : 150;            // ช่องล่างสุดคอลัมน์ซ้าย (พ้นมินิแมพ)
+  const HUD_BASE_R = _shortHud ? 70 : 84;             // ช่องล่างสุดคอลัมน์ขวา
+  const HUD_TOPSAFE = _shortHud ? 140 : 132;          // เขตหวงห้ามด้านบน — ป้ายชื่อแมพ/ปุ่มบอส/อันดับโลก/ปุ่มตั้งค่า
+  const HUD_CELL = _shortHud ? 28 : 34;               // ขนาดปุ่มในแป้นหมุนกล้อง
+  const HUD_PAD = HUD_CELL * 3 + 6;                  // ความสูง/กว้างแป้นหมุนกล้อง
+  // 📱 แนวนอน: กันขอบซ้าย-ขวาไว้ให้แถบปุ่มโดยเฉพาะ ภาพ 3D จะหยุดก่อนถึงปุ่ม ไม่ล้ำไปบังกัน
+  const HUD_GUTTER = _shortHud ? Math.max(HUD_PAD + 16, 100) : 0;
+  // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
+  const _fitCol = (want, base, size, reserveTop) => {
+    const room = _vh - HUD_TOPSAFE - base - reserveTop;
+    let n = want;
+    while (n > 1 && size + (n - 1) * (size + 2) > room) n--;
+    const pitch = n > 1 ? Math.max(size + 2, Math.min(size + 8, Math.floor((room - size) / (n - 1)))) : size + 8;
+    return { n, pitch };
+  };
+  const _colL = _fitCol(6, HUD_BASE_L, HUD_BTN_L, 0);
+  const _colR = _fitCol(5, HUD_BASE_R, HUD_BTN_R, HUD_PAD + 14);
+  // ช่องที่ i นับจากล่างขึ้นบน (i = 0 คือช่องล่างสุด นิ้วถึงง่ายสุด)
+  const Lslot = (i) => ({ left: 12, bottom: HUD_BASE_L + i * _colL.pitch, width: HUD_BTN_L, height: HUD_BTN_L });
+  const Rslot = (i) => ({ right: 12, bottom: HUD_BASE_R + i * _colR.pitch, width: HUD_BTN_R, height: HUD_BTN_R });
+  const Lfit = (i) => !HUD_HIDE && i < _colL.n;        // ช่องนี้มีที่พอไหม
+  const Rfit = (i) => !HUD_HIDE && i < _colR.n;
+  // 🎮 แป้นหมุนกล้อง วางเหนือคอลัมน์ขวาเสมอ
+  const HUD_PAD_BOTTOM = HUD_BASE_R + (_colR.n - 1) * _colR.pitch + HUD_BTN_R + 12;
+  // 🎯 ปุ่มคำสั่งกลางล่าง (ขุด/ตกปลา/คุย/ตีเหล็ก/จับ) — โชว์ทีละอันตามลำดับความสำคัญ ไม่ซ้อนกัน
+  // 🎯 จอสูง = วางไว้ล่างกลาง (นิ้วถึงง่าย) · จอเตี้ยแนวนอน = ขึ้นไปบนกลางจอ ไม่งั้นทับตัวละคร
+  const PROMPT_POS = _shortHud
+    ? { top: ST(36), left: "50%", transform: "translateX(-50%)" }
+    : { bottom: 196, left: "50%", transform: "translateX(-50%)" };
+  const PROMPT_W = { maxWidth: 152, textAlign: "center" };   // แคบพอให้ไม่ชนจอยด้านซ้ายกับแถบสกิลด้านขวา
+  const _boardOn = !ui.boardHidden && !ui.equipScreen && ui.mode === "explore" && !HUD_HIDE;   // 🏆 แผงอันดับโลกกินมุมซ้ายบน — แบนเนอร์ต้องเลี่ยง
+  // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
+  const _bannerSide = _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
+  const _bannerDrop = _boardOn && !_bannerSide ? 104 : 0;
+  const bannerPos = (base) => ({
+    top: ST(base + _bannerDrop),
+    left: _bannerSide ? "calc(50% + 100px)" : "50%",
+    transform: "translateX(-50%)",
+  });
+  const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
+    : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : null;
+  const isPrompt = (name) => _promptTop === name;
   const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
   const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
   const closeAllMenus = (extra = {}) => {
@@ -42975,9 +43030,21 @@ export default function CherryAdventure() {
       paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
-      <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0, left: "calc(-1 * env(safe-area-inset-left, 0px))", right: "calc(-1 * env(safe-area-inset-right, 0px))" }} />
+      <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
+        left: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-left, 0px))",
+        right: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-right, 0px))" }} />
+      {/* 📱 แนวนอน: แถบขอบซ้าย-ขวาที่กันไว้ให้ปุ่ม — ภาพ 3D ไม่ล้ำเข้ามา ปุ่มเลยไม่ทับฉาก */}
+      {HUD_GUTTER > 0 && ["left", "right"].map((side) => (
+        <div key={side} style={{
+          position: "absolute", top: 0, bottom: 0, [side]: "calc(-1 * env(safe-area-inset-" + side + ", 0px))",
+          width: `calc(${HUD_GUTTER}px + env(safe-area-inset-${side}, 0px))`, zIndex: 0, pointerEvents: "none",
+          background: side === "left"
+            ? "linear-gradient(90deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)"
+            : "linear-gradient(270deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)",
+        }} />
+      ))}
       {/* 🎞️ ขอบจอมืดจาง ๆ — ดึงสายตาเข้ากลางจอ ภาพดูเป็นเกมจริงจังขึ้น (ไม่กินการแตะ) */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0,
+      <div style={{ position: "absolute", top: 0, bottom: 0, left: HUD_GUTTER, right: HUD_GUTTER, pointerEvents: "none", zIndex: 0,
         background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
       {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
@@ -43700,7 +43767,7 @@ export default function CherryAdventure() {
       )}
 
       {/* 📅 daily login reward */}
-      {ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && (
+      {ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (
         <div style={{
           position: "absolute", top: ST(70), left: "50%", transform: "translateX(-50%)",
           background: "linear-gradient(135deg,#fff2c8,#ffe0a0)", borderRadius: 16, padding: "12px 16px",
@@ -43758,9 +43825,9 @@ export default function CherryAdventure() {
       )}
 
       {/* 🗺️ biome name badge */}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (
         <div style={{
-          position: "absolute", top: ST(12), left: "50%", transform: "translateX(-50%)",
+          position: "absolute", ...bannerPos(12), whiteSpace: "nowrap",
           background: "rgba(255,255,255,0.85)", borderRadius: 999, padding: "4px 14px",
           fontSize: 12.5, fontWeight: 800, color: "#5a5a4a", pointerEvents: "none",
           boxShadow: "0 2px 8px rgba(90,120,70,0.2)",
@@ -43769,11 +43836,11 @@ export default function CherryAdventure() {
         </div>
       )}
       {/* 🏰 biome boss challenge button */}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !_shortHud && (
         <button
           onClick={() => G.challengeBiomeBoss()}
           style={{
-            position: "absolute", top: ST(40), left: "50%", transform: "translateX(-50%)",
+            position: "absolute", ...bannerPos(40), whiteSpace: "nowrap",
             background: "linear-gradient(90deg,#b03060,#e0708a)", borderRadius: 999,
             padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
             border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(176,48,96,0.4)",
@@ -43783,11 +43850,11 @@ export default function CherryAdventure() {
         </button>
       )}
       {/* 👹 World Boss entry */}
-      {ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !_shortHud && (
         <button
           onClick={() => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }}
           style={{
-            position: "absolute", top: ST(72), left: "50%", transform: "translateX(-50%)",
+            position: "absolute", ...bannerPos(72), whiteSpace: "nowrap",
             background: "linear-gradient(90deg,#5a1a2a,#c0392b)", borderRadius: 999,
             padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
             border: "1px solid #f5a623", cursor: "pointer", boxShadow: "0 3px 10px rgba(192,57,43,0.5)",
@@ -43797,7 +43864,7 @@ export default function CherryAdventure() {
         </button>
       )}
       {/* 📖 story tracker chip — เกาะติดบทเนื้อเรื่องปัจจุบัน กดเพื่อเปิดเมนูภารกิจ */}
-      {ui.mode === "explore" && !ui.equipScreen && (() => {
+      {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (() => {
         const S = G.MSQ || []; const c = S[ui.storyCh || 0];
         if (!c) return null;
         const tgt = G.storyTarget(c);
@@ -43816,7 +43883,7 @@ export default function CherryAdventure() {
       })()}
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
-      {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && (
+      {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && !HUD_HIDE && (
         <div style={{ position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 }}>
           <button onClick={() => setUi((u) => ({ ...u, settingsOpen: true }))} title="ตั้งค่าเกม" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
@@ -43871,10 +43938,10 @@ export default function CherryAdventure() {
       )}
 
       {/* 👤 NPC talk button */}
-      {ui.mode === "explore" && ui.npcNear && !ui.npcTalk && (
-        <div style={{ position: "absolute", bottom: 160, left: "50%", transform: "translateX(-50%)" }}>
+      {ui.mode === "explore" && isPrompt("npc") && !ui.npcTalk && (
+        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
           <button onClick={() => G.talkNPC()} style={{
-            padding: "10px 24px", borderRadius: 999, border: "none", cursor: "pointer",
+            padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
             fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
             background: "linear-gradient(90deg,#6a8ac0,#8aacd0)",
             boxShadow: "0 5px 16px rgba(106,138,192,0.5)",
@@ -44133,7 +44200,7 @@ export default function CherryAdventure() {
 
       {/* 🎣 fishing UI */}
       {/* 🍽️ ป้ายบัฟอาหารที่กินอยู่ */}
-      {(ui.mode === "explore" || ui.mode === "battle") && ui.foodBuff && !ui.equipScreen && (
+      {(ui.mode === "explore" || ui.mode === "battle") && ui.foodBuff && !ui.equipScreen && !HUD_HIDE && (
         <div style={{
           position: "absolute", top: 96, right: 10, zIndex: 20, pointerEvents: "none",
           background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
@@ -44141,16 +44208,16 @@ export default function CherryAdventure() {
         }}>{ui.foodBuff.emoji} {G.foodLeftText ? G.foodLeftText() : ""}</div>
       )}
       {/* ⛏️ ยืนใกล้สายแร่ = กดขุดได้ */}
-      {ui.mode === "explore" && ui.mineNear && !ui.mining && !ui.fishing && !ui.equipScreen && (
-        <div style={{ position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)", textAlign: "center" }}>
+      {ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (
+        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
           <button onClick={() => G.startMining()} style={{
-            padding: "12px 26px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
+            padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.25,
             background: "linear-gradient(90deg,#8a6a3a,#c09a4a)",
-            boxShadow: "0 5px 16px rgba(138,106,58,0.5)",
+            boxShadow: "0 5px 16px rgba(138,106,58,0.5)", whiteSpace: "nowrap",
           }}>
             {(G.pickOf ? G.pickOf().emoji : "⛏️")} ขุดสายแร่
-            {ui.mineOre && MATERIALS[ui.mineOre] ? <span style={{ fontSize: 12, opacity: 0.9 }}> · เห็น {MATERIALS[ui.mineOre].emoji}{MATERIALS[ui.mineOre].name}</span> : null}
+            {ui.mineOre && MATERIALS[ui.mineOre] ? <span style={{ display: "block", fontSize: 10.5, opacity: 0.92 }}>{MATERIALS[ui.mineOre].emoji}{MATERIALS[ui.mineOre].name}</span> : null}
           </button>
         </div>
       )}
@@ -44160,7 +44227,7 @@ export default function CherryAdventure() {
         const zL = Math.max(0, (m.zc - m.zone / 2) * 100), zW = m.zone * 100;
         const cW = m.zone * 0.34 * 100;
         return (
-          <div style={{ position: "absolute", bottom: 92, left: "50%", transform: "translateX(-50%)", width: "88%", maxWidth: 400, fontFamily: font }}>
+          <div style={{ position: "absolute", bottom: _shortHud ? 6 : 24, left: "50%", transform: "translateX(-50%)", width: "88%", maxWidth: 400, zIndex: 40, fontFamily: font }}>
             <div style={{ background: "rgba(28,24,18,0.92)", borderRadius: 16, padding: "12px 14px", border: "2px solid #c09a4a", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 900, color: "#f5d08a" }}>
@@ -44187,12 +44254,12 @@ export default function CherryAdventure() {
           </div>
         );
       })()}
-      {ui.mode === "explore" && ui.pondNear && !ui.fishing && (
+      {ui.mode === "explore" && isPrompt("fish") && !ui.fishing && (
         <div style={{
-          position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)",
+          position: "absolute", ...PROMPT_POS, ...PROMPT_W,
         }}>
           <button onClick={() => G.startFishing()} style={{
-            padding: "12px 28px", borderRadius: 999, border: "none", cursor: "pointer",
+            padding: "11px 18px", borderRadius: 999, border: "none", cursor: "pointer",
             fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
             background: "linear-gradient(90deg,#4a90c0,#6ac0e0)",
             boxShadow: "0 5px 16px rgba(74,144,192,0.5)",
@@ -44201,8 +44268,8 @@ export default function CherryAdventure() {
       )}
       {ui.mode === "explore" && ui.fishing && (
         <div style={{
-          position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)",
-          textAlign: "center",
+          position: "absolute", ...PROMPT_POS,
+          ...PROMPT_W,
         }}>
           {ui.fishing.phase === "waiting" ? (
             <button onClick={() => G.reelFishing()} style={{
@@ -44251,7 +44318,7 @@ export default function CherryAdventure() {
 
       {/* ===== explore HUD ===== */}
       {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch; hidden during battle so it doesn't clutter combat */}
-      {ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && (
+      {ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && !HUD_HIDE && (
         <button onClick={() => G.toggleBoard && G.toggleBoard()} title="แสดงป้ายอันดับโลก" style={{
           position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", zIndex: 26,
           border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", borderRadius: 999, padding: "4px 10px",
@@ -44259,7 +44326,7 @@ export default function CherryAdventure() {
           color: "#ffd76a", fontSize: 12, fontWeight: 800, fontFamily: font, boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
         }}>🏆</button>
       )}
-      {ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && (
+      {ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && !HUD_HIDE && (
         <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
@@ -44292,15 +44359,15 @@ export default function CherryAdventure() {
       )}
 
       {/* 🐤 secret pet catch prompt — appears when the player walks up to the hidden chick */}
-      {ui.secretNear && ui.mode === "explore" && !ui.equipScreen && (
-        <div style={{ position: "absolute", bottom: "26%", left: "50%", transform: "translateX(-50%)", zIndex: 34, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", fontFamily: font }}>
+      {isPrompt("secret") && ui.mode === "explore" && !ui.equipScreen && (
+        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W, zIndex: 34, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", fontFamily: font }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "rgba(40,24,20,0.7)", borderRadius: 999, padding: "3px 12px", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" }}>🐤✨ เจอสัตว์เลี้ยงลับ! ไก่น้อยหัวใจ</div>
           <button onClick={() => G.catchSecret && G.catchSecret()} style={{ pointerEvents: "auto", padding: "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(135deg,#ff9ec8,#f5a623)", boxShadow: "0 4px 16px rgba(245,120,80,0.55)", animation: "pulse 0.8s ease-in-out infinite alternate" }}>🎣 จับไก่น้อย</button>
         </div>
       )}
       {/* ⭐ bottom status bar — long, 2 lines (stats / EXP + AUTO) */}
-      {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && (
-        <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+      {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && !HUD_HIDE && (
+        <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: _shortHud ? "min(56vw, 470px)" : "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "3px 10px", fontSize: 11, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
             <span style={{ color: "#c04a5a" }}>💗{ui.hp}/{ui.maxHp}</span>
@@ -44524,8 +44591,8 @@ export default function CherryAdventure() {
       )}
 
       {/* 💬 online chat */}
-      {ui.mode === "explore" && ui.auth && ui.auth.status === "in" && !ui.equipScreen && (
-        <button onClick={() => { setUi((u) => ({ ...u, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }} style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 130, width: 42, height: 42 } : { bottom: 150, width: 46, height: 46 }), borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 20, background: "linear-gradient(135deg,#5a8ae0,#7b6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(60,60,120,0.35)", zIndex: 25 }}>💬{ui.onlineCount > 0 ? <span style={{ position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "16px", padding: "0 3px" }}>{ui.onlineCount}</span> : null}</button>
+      {ui.mode === "explore" && ui.auth && ui.auth.status === "in" && !ui.equipScreen && !HUD_HIDE && (
+        <button onClick={() => { setUi((u) => ({ ...u, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }} style={{ position: "absolute", ...Lslot(5), display: Lfit(5) ? "block" : "none", borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 20, background: "linear-gradient(135deg,#5a8ae0,#7b6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(60,60,120,0.35)", zIndex: 25 }}>💬{ui.onlineCount > 0 ? <span style={{ position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "16px", padding: "0 3px" }}>{ui.onlineCount}</span> : null}</button>
       )}
       {ui.chatOpen && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.5)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }} onClick={() => { setUi((u) => ({ ...u, chatOpen: false })); G.chatStop && G.chatStop(); }}>
@@ -44566,26 +44633,26 @@ export default function CherryAdventure() {
 
       {/* ☰ combined menu */}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title="เมนู" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 136, width: 44, height: 44 } : { bottom: 432, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰</button>
+        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title="เมนู" style={{ position: "absolute", ...Lslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("questOpen")} title="เควส & ภารกิจ" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 184, width: 44, height: 44 } : { bottom: 258, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null; })()}</button>
+        <button onClick={() => toggleMenu("questOpen")} title="เควส & ภารกิจ" style={{ position: "absolute", ...Rslot(3), display: Rfit(3) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null; })()}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 136, width: 44, height: 44 } : { bottom: 316, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
+        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", ...Rslot(2), display: Rfit(2) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 184, width: 42, height: 42 } : { bottom: 378, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
+        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", ...Lslot(1), display: Lfit(1) ? "block" : "none", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 232, width: 42, height: 42 } : { bottom: 324, width: 48, height: 48 }), borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>⚡{((ui.sp || 0) + (ui.statPts || 0)) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>}</button>
+        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", ...Lslot(2), display: Lfit(2) ? "block" : "none", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>⚡{((ui.sp || 0) + (ui.statPts || 0)) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (<>
-        <button onClick={() => G.togglePvp()} title="ประลอง PvP" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 280, width: 42, height: 42 } : { bottom: 270, width: 48, height: 48 }), borderRadius: 15, border: "none", cursor: "pointer", fontSize: 22, background: "linear-gradient(135deg,#d9536b,#b04ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(176,74,208,0.42)", zIndex: 24 }}>⚔️</button>
-        <button onClick={() => G.toggleSocial()} title="เพื่อน" style={{ position: "absolute", left: 12, ...(_shortHud ? { top: 328, width: 42, height: 42 } : { bottom: 216, width: 48, height: 48 }), borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
+        <button onClick={() => G.togglePvp()} title="ประลอง PvP" style={{ position: "absolute", ...Lslot(3), display: Lfit(3) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 22, background: "linear-gradient(135deg,#d9536b,#b04ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(176,74,208,0.42)", zIndex: 24 }}>⚔️</button>
+        <button onClick={() => G.toggleSocial()} title="เพื่อน" style={{ position: "absolute", ...Lslot(4), display: Lfit(4) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
       </>)}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 280, width: 44, height: 44 } : { bottom: 142, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
+        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
       )}
       {/* 🏠 ปุ่มในบ้าน: แต่งบ้าน + นอนพัก (โหมดเยี่ยมบ้านเพื่อน = ดูอย่างเดียว) */}
       {ui.mode === "explore" && !ui.equipScreen && ui.inHomeZone && !ui.homeVisitOwner && (
@@ -44650,11 +44717,11 @@ export default function CherryAdventure() {
       )}
       {/* 💧 mana potion — ใต้ปุ่มเลือด */}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 328, width: 44, height: 44 } : { bottom: 84, width: 52, height: 52 }), borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>💧<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.mpPotions || 0}</span></button>
+        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>💧<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.mpPotions || 0}</span></button>
       )}
       {/* 🐎 ride / dismount — one tap */}
       {ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (
-        <button onClick={() => G.toggleMount()} title={ui.mountId ? "ลงจากหลัง" : "ขี่สัตว์ขี่"} style={{ position: "absolute", right: 12, ...(_shortHud ? { top: 232, width: 44, height: 44 } : { bottom: 200, width: 52, height: 52 }), borderRadius: 16, border: ui.mountId ? "2px solid #ffd76a" : "none", cursor: "pointer", fontSize: 24, background: ui.mountId ? "linear-gradient(135deg,#5a8ad0,#7b6ad0)" : "#fff", boxShadow: ui.mountId ? "0 4px 14px rgba(90,110,210,0.5)" : "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>
+        <button onClick={() => G.toggleMount()} title={ui.mountId ? "ลงจากหลัง" : "ขี่สัตว์ขี่"} style={{ position: "absolute", ...Rslot(4), display: Rfit(4) ? "block" : "none", borderRadius: 16, border: ui.mountId ? "2px solid #ffd76a" : "none", cursor: "pointer", fontSize: 24, background: ui.mountId ? "linear-gradient(135deg,#5a8ad0,#7b6ad0)" : "#fff", boxShadow: ui.mountId ? "0 4px 14px rgba(90,110,210,0.5)" : "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>
           {ui.mountId ? ((MOUNTS.find((m) => m.id === ui.mountId) || {}).emoji || "🐎") : "🐎"}
           {ui.mountId && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "18px", padding: "0 3px" }}>✓</span>}
         </button>
@@ -44680,6 +44747,14 @@ export default function CherryAdventure() {
               ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
+            ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
+            ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#c0392b"],
+            ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
+            ["📜", "เควส & ภารกิจ", () => toggleMenu("questOpen"), "#f2b24d"],
+            ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
+            ["⚔️", "ประลอง PvP", () => G.togglePvp(), "#d9536b"],
+            ["👥", "เพื่อน", () => G.toggleSocial(), "#5fb0f0"],
+            ["💬", "แชทโลก", () => { setUi((u) => ({ ...u, menuOpen: false, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, "#5a8ae0"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
@@ -44847,9 +44922,9 @@ export default function CherryAdventure() {
         </div>
       )}
 
-      {ui.mode === "explore" && ui.smithNear && !ui.smithOpen && (
-        <div style={{ position: "absolute", bottom: 218, left: "50%", transform: "translateX(-50%)" }}>
-          <button onClick={() => G.openSmith()} style={{ padding: "10px 24px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.5)" }}>⚒️ ตีอาวุธกับช่างตีเหล็ก</button>
+      {ui.mode === "explore" && isPrompt("smith") && !ui.smithOpen && (
+        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
+          <button onClick={() => G.openSmith()} style={{ padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.5)" }}>⚒️ ตีอาวุธกับช่างตีเหล็ก</button>
         </div>
       )}
       {ui.smithOpen && (
@@ -45063,11 +45138,11 @@ export default function CherryAdventure() {
       )}
 
       {ui.mode === "explore" && !ui.equipScreen && (
-        <div style={{ position: "absolute", right: 14, ...(_shortHud ? { top: ST(46) } : { top: "30%" }), display: "grid", gridTemplateColumns: "repeat(3, 34px)", gridTemplateRows: "repeat(3, 34px)", gap: 3, zIndex: 24 }}>
+        <div style={{ position: "absolute", right: 14, bottom: HUD_PAD_BOTTOM, display: HUD_HIDE ? "none" : "grid", gridTemplateColumns: `repeat(3, ${HUD_CELL}px)`, gridTemplateRows: `repeat(3, ${HUD_CELL}px)`, gap: 3, zIndex: 24 }}>
           {[
-            ["", null],
+            ["＋", () => G.zoom(-1.6)],
             ["▲", () => G.rotateCam(0, 0.12)],
-            ["", null],
+            ["－", () => G.zoom(1.6)],
             ["◀", () => G.rotateCam(0.22, 0)],
             ["🔄", () => G.resetCam()],
             ["▶", () => G.rotateCam(-0.22, 0)],
@@ -45075,7 +45150,7 @@ export default function CherryAdventure() {
             ["▼", () => G.rotateCam(0, -0.12)],
             ["", null],
           ].map((c, i) => c[1] ? (
-            <button key={i} onClick={c[1]} style={{ width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? 14 : 15, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font }}>{c[0]}</button>
+            <button key={i} onClick={c[1]} style={{ width: HUD_CELL, height: HUD_CELL, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? HUD_CELL * 0.42 : HUD_CELL * 0.45, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font }}>{c[0]}</button>
           ) : (
             <span key={i} />
           ))}
@@ -45083,7 +45158,7 @@ export default function CherryAdventure() {
       )}
 
       {/* ===== explore controls ===== */}
-      {ui.mode === "explore" && (
+      {ui.mode === "explore" && !HUD_HIDE && (
         <>
           {/* AUTO toggle now lives on the bottom status bar */}
           {ui.auto && (
@@ -45124,7 +45199,7 @@ export default function CherryAdventure() {
             return (
               // anchored to the LEFT of the right-edge utility column (potion/mount/quest/pet) so the
               // skill buttons never sit on top of them while roaming
-              <div style={{ position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" }}>
                   {skills.map((sk) => {
                     const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
@@ -45156,16 +45231,7 @@ export default function CherryAdventure() {
             );
           })()}
 
-          {/* zoom */}
-          <div style={{ position: "absolute", left: 14, ...(_shortHud ? { top: ST(48) } : { top: "32%" }), display: "flex", flexDirection: "column", gap: 8 }}>
-            {[["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (
-              <button key={sym} onClick={() => G.zoom(d)} style={{
-                width: 44, height: 44, borderRadius: "50%", border: "none", cursor: "pointer",
-                fontSize: 20, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.85)",
-                boxShadow: "0 3px 9px rgba(90,120,70,0.3)", fontFamily: font,
-              }}>{sym}</button>
-            ))}
-          </div>
+          {/* 🔍 ปุ่มซูมย้ายไปอยู่มุมบนของแป้นหมุนกล้องแล้ว — ไม่ทับปุ่มเมนูอีก */}
 
           {/* shop button */}
           <button
@@ -47258,7 +47324,7 @@ export default function CherryAdventure() {
           )}
 
           {/* 🏡 in-zone quick buttons — ซ้าย: ฟาร์ม/เพาะพันธุ์/ปลูกผัก · ขวา: ตลาด/คลัง/ตลาดออนไลน์ (ตรงที่เคยเป็นปุ่มต่อสู้) */}
-          {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && (<React.Fragment>
+          {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && !HUD_HIDE && (<React.Fragment>
             <div style={{ position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "42%", display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
               <button onClick={() => G.openRanch && G.openRanch("farm")} title="ฟาร์มสัตว์เลี้ยง" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🐄</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ฟาร์ม</span>
@@ -47273,7 +47339,7 @@ export default function CherryAdventure() {
                 <span style={{ fontSize: 25 }}>🎣</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ตกปลา</span>
               </button>}
             </div>
-            <div style={{ position: "absolute", ...(_shortHud ? { right: 68, bottom: 8 } : { right: 76, bottom: 84 }), display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
+            <div style={{ position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
               <button onClick={() => G.openRanch && G.openRanch("market")} title="ตลาด" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🛒</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ตลาด</span>
               </button>
@@ -48058,11 +48124,11 @@ export default function CherryAdventure() {
       {/* ===== battle UI ===== */}
       {ui.mode === "battle" && ui.enemy && (
         <>
-          {/* zoom buttons in battle */}
-          <div style={{ position: "absolute", left: 12, top: "30%", display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* 🔍 ปุ่มซูมตอนสู้ — วางเป็นแถวนอนใต้เขตหวงห้ามด้านบน ไม่ทับปุ่มคำสั่งข้างจอ */}
+          <div style={{ position: "absolute", left: 12, top: ST(HUD_TOPSAFE), display: "flex", flexDirection: "row", gap: 8, zIndex: 26 }}>
             {[["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (
               <button key={sym} onClick={() => G.zoom(d)} style={{
-                width: 44, height: 44, borderRadius: "50%", border: "none", cursor: "pointer",
+                width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
                 fontSize: 20, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.85)",
                 boxShadow: "0 3px 9px rgba(90,120,70,0.3)", fontFamily: font,
               }}>{sym}</button>
