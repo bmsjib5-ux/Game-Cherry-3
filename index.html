@@ -1441,6 +1441,47 @@ const SKILL_ELEM = {
     p_frostpierce: "ice", x_frz_1: "ice", x_frz_2: "ice", x_frz_3: "ice", x_frz_4: "ice", // 🧊 อัศวินน้ำแข็งดำ
     x_elm_1: "fire", x_elm_2: "ice", x_elm_3: "arcane", x_elm_4: "earth", // 🌈 จอมเวทธาตุ (ไฟ/น้ำแข็ง/สายฟ้า/ธรรมชาติ)
 };
+// ---------- ⚡ ปฏิกิริยาธาตุ (Elemental Reaction) ----------
+// ตีศัตรูด้วยธาตุ = ธาตุนั้น "เกาะ" ไว้ 3 เทิร์น · ตีซ้ำด้วยธาตุอื่น = ธาตุชนกัน ระเบิดเป็นปฏิกิริยา
+const REACT_ORDER = ["arcane", "dragon", "earth", "fire", "ice", "light", "water", "wind"];
+const reactKey = (a, b) => (REACT_ORDER.indexOf(a) <= REACT_ORDER.indexOf(b) ? a + "|" + b : b + "|" + a);
+// mult=ตัวคูณดาเมจ · col=สีเอฟเฟกต์ · fx=ท่าเอฟเฟกต์ · shake=สั่นจอ
+// ผลข้างเคียง: burn/poison/bleed/confuse=เทิร์น · freeze/slow/pierce=จริงเท็จ · defBreak=เทิร์น · heal/mp=%สูงสุด · crit=%
+const REACT = {
+    "arcane|dragon": { name: "มนตร์มังกรโบราณ", emoji: "🐉🔮", mult: 2.15, col: 0xb06aff, fx: "dragon", shake: 0.7, pierce: true, burn: 3 },
+    "arcane|earth": { name: "ธรณีเวทแตกร้าว", emoji: "🔮🪨", mult: 1.75, col: 0x9a7ad0, fx: "earthsplit", shake: 0.5, defBreak: 3 },
+    "arcane|fire": { name: "เพลิงเวทระเบิด", emoji: "🔮🔥", mult: 1.95, col: 0xff6ad0, fx: "hellfire", shake: 0.6, burn: 3 },
+    "arcane|ice": { name: "เวทเยือกแข็ง", emoji: "🔮❄️", mult: 1.75, col: 0x9ad0ff, fx: "icespear", shake: 0.45, freeze: true },
+    "arcane|light": { name: "แสงจักรวาล", emoji: "🌟", mult: 2.25, col: 0xffe89a, fx: "omega", shake: 0.8, pierce: true, crit: 15 },
+    "arcane|water": { name: "คลื่นมนตรา", emoji: "🔮💧", mult: 1.7, col: 0x7ac8ff, fx: "orb", shake: 0.4, mp: 0.25 },
+    "arcane|wind": { name: "พายุมนตรา", emoji: "🔮🌪️", mult: 1.8, col: 0xc0a0ff, fx: "gravitycore", shake: 0.5, confuse: 2 },
+    "dragon|earth": { name: "เกล็ดพสุธา", emoji: "🐉🪨", mult: 1.85, col: 0xc08a4a, fx: "quake", shake: 0.65, defBreak: 3 },
+    "dragon|fire": { name: "ลมหายใจมังกร", emoji: "🐉🔥", mult: 2.1, col: 0xff5a2a, fx: "hellfire", shake: 0.75, burn: 4 },
+    "dragon|ice": { name: "เกล็ดเยือกแข็ง", emoji: "🐉❄️", mult: 1.95, col: 0x8ae0ff, fx: "ice", shake: 0.6, freeze: true },
+    "dragon|light": { name: "มังกรศักดิ์สิทธิ์", emoji: "🐉✨", mult: 2.2, col: 0xffd86a, fx: "healbless", shake: 0.7, pierce: true, heal: 0.12 },
+    "dragon|water": { name: "มังกรวารี", emoji: "🐉💧", mult: 1.9, col: 0x4ac8e0, fx: "swordbeam", shake: 0.55, bleed: 3, slow: true },
+    "dragon|wind": { name: "มังกรพายุ", emoji: "🐉🌪️", mult: 2.0, col: 0x9ae0d0, fx: "thunderstorm", shake: 0.65, confuse: 2 },
+    "earth|fire": { name: "หินหลอมเหลว", emoji: "🌋", mult: 1.65, col: 0xff7a3a, fx: "earthsplit", shake: 0.6, defBreak: 3, burn: 2 },
+    "earth|ice": { name: "ธารน้ำแข็ง", emoji: "🧊🪨", mult: 1.7, col: 0xa0d8f0, fx: "quake", shake: 0.55, freeze: true },
+    "earth|light": { name: "ผลึกศักดิ์สิทธิ์", emoji: "✨🪨", mult: 1.7, col: 0xffe0a0, fx: "healbless", shake: 0.4, heal: 0.1 },
+    "earth|water": { name: "โคลนดูด", emoji: "🟤", mult: 1.45, col: 0x8a6a3a, fx: "quake", shake: 0.35, slow: true, confuse: 2 },
+    "earth|wind": { name: "พายุทราย", emoji: "🏜️", mult: 1.55, col: 0xe0c080, fx: "thunderstorm", shake: 0.45, confuse: 2, crit: 12 },
+    "fire|ice": { name: "ระเบิดไอน้ำ", emoji: "💥", mult: 2.05, col: 0xffffff, fx: "punchwave", shake: 0.85, bleed: 2 },
+    "fire|light": { name: "เปลวสุริยะ", emoji: "☀️", mult: 1.9, col: 0xffc84a, fx: "healbless", shake: 0.6, heal: 0.1, burn: 2 },
+    "fire|water": { name: "ไอน้ำร้อน", emoji: "🌫️", mult: 1.55, col: 0xd0e8f0, fx: "orb", shake: 0.35, confuse: 2 },
+    "fire|wind": { name: "พายุเพลิง", emoji: "🔥🌪️", mult: 1.85, col: 0xff9a3a, fx: "hellfire", shake: 0.6, burn: 4 },
+    "ice|light": { name: "ปริซึมน้ำแข็ง", emoji: "💎", mult: 1.8, col: 0xd0f0ff, fx: "ice", shake: 0.45, crit: 18 },
+    "ice|water": { name: "น้ำแข็งจับ", emoji: "🧊", mult: 1.5, col: 0x8ac8ff, fx: "ice", shake: 0.35, freeze: true, slow: true },
+    "ice|wind": { name: "พายุหิมะ", emoji: "❄️🌪️", mult: 1.8, col: 0xbfe8ff, fx: "icespear", shake: 0.55, freeze: true, bleed: 2 },
+    "light|water": { name: "รุ้งวารี", emoji: "🌈", mult: 1.6, col: 0x8ae0c0, fx: "healbless", shake: 0.35, heal: 0.14, mp: 0.2 },
+    "light|wind": { name: "ลมศักดิ์สิทธิ์", emoji: "✨🌪️", mult: 1.75, col: 0xfff0b0, fx: "crescent", shake: 0.45, mp: 0.25, crit: 10 },
+    "water|wind": { name: "ไซโคลนวารี", emoji: "💧🌪️", mult: 1.7, col: 0x6ad0e8, fx: "swordbeam", shake: 0.5, bleed: 3, slow: true },
+};
+// 🌟 ธาตุประจำท่าไม้ตายของแต่ละอาชีพ
+const ULT_ELEM = {
+    warrior: "fire", archer: "wind", mage: "arcane", assassin: "arcane", lancer: "dragon",
+    samurai: "ice", coder: "light", office: "earth", aegis: "light", boxer: "earth",
+};
 // ---------- ⛏️ Crafting materials (drop from monsters, used at the forge) ----------
 const MATERIALS = {
     ironOre: { name: "แร่เหล็ก", emoji: "⛏️", color: 0x9aa0a8, desc: "แร่พื้นฐาน ใช้ตีบวกอาวุธ" },
@@ -1907,7 +1948,7 @@ function CherryAdventure() {
         inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
         gold: 80, shop: [], shopOpen: false,
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
-        warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
+        eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
         toast: "", toastAt: 0,
         inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
     });
@@ -37216,7 +37257,14 @@ function CherryAdventure() {
             if (wild.userData.lbl)
                 wild.userData.lbl.sprite.visible = false; // hide floating tag in battle
             // status effects & battle buffs
-            G.est = { burn: 0, frozen: false, poison: 0, bleed: 0, confused: 0 };
+            G.est = { burn: 0, frozen: false, poison: 0, bleed: 0, confused: 0, aura: null, defBreak: 0 };
+            if (G.auraRingHide)
+                G.auraRingHide();
+            { // 🌦️ อากาศทาธาตุให้ศัตรูตั้งแต่เริ่มสู้ — ฝนตกอยู่ = ศัตรูติดธาตุน้ำ ยิงไฟใส่ทันทีได้ปฏิกิริยาเลย
+                const wEl = (G.weather && G.weather.boost) || null;
+                if (wEl && Math.random() < 0.55)
+                    G.est.aura = { el: wEl, turns: 3 };
+            }
             G.pst = { poison: 0, stun: 0, poisonDmg: 0 }; // 🐍💫 สถานะที่มอนสเตอร์ทำใส่ผู้เล่น
             G.comboSeq = [];
             G.chainMult = 1;
@@ -37381,6 +37429,113 @@ function CherryAdventure() {
         };
         // shared victory routine (used by attacks, pet strikes, and burn ticks)
         // 🎲 enemy defensive skills: returns { dmg, note } after a random dodge/block/guard roll
+        // ---------- ⚡ ปฏิกิริยาธาตุ — ธาตุเกาะศัตรู แล้วธาตุใหม่มาชน = ระเบิด ----------
+        const AURA_COL = { fire: 0xff6a2a, ice: 0x8ad8ff, wind: 0x9ae0c0, water: 0x4aa8e8, earth: 0xc09050, light: 0xffe08a, arcane: 0xb07aff, dragon: 0xff4a8a };
+        const auraRingShow = (el) => {
+            const e = G.enemy;
+            if (!e || !e.mesh)
+                return;
+            auraRingHide();
+            const ring = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.92, 40), new THREE.MeshBasicMaterial({ color: AURA_COL[el] || 0xffffff, transparent: true, opacity: 0.72, side: THREE.DoubleSide, depthWrite: false }));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.04;
+            e.mesh.add(ring);
+            G._auraRing = ring;
+        };
+        const auraRingHide = () => {
+            const r = G._auraRing;
+            if (!r)
+                return;
+            if (r.parent)
+                r.parent.remove(r);
+            if (r.geometry)
+                r.geometry.dispose();
+            if (r.material)
+                r.material.dispose();
+            G._auraRing = null;
+        };
+        G.auraRingHide = auraRingHide;
+        const syncAuraUi = () => {
+            const a = (G.est && G.est.aura) || null;
+            setUi((u) => ({ ...u, eAura: a ? { el: a.el, turns: a.turns } : null, eDefBreak: (G.est && G.est.defBreak) || 0 }));
+        };
+        G.syncAuraUi = syncAuraUi;
+        // ทาธาตุ / จุดปฏิกิริยา — คืน { dmg, msg, pierce }
+        G.applyElem = (el, dmg) => {
+            if (!el || !G.est || !G.enemy)
+                return { dmg, msg: "", pierce: false };
+            const meta = ELEM_META[el] || {};
+            const A = G.est.aura;
+            if (!A || !A.el) { // 🎨 ยังไม่มีธาตุเกาะ — ทาไว้ก่อน
+                G.est.aura = { el, turns: 3 };
+                auraRingShow(el);
+                syncAuraUi();
+                return { dmg, msg: ` ${meta.emoji || ""}ธาตุเกาะ`, pierce: false };
+            }
+            if (A.el === el) { // ♻️ ธาตุเดิมซ้ำ — ต่ออายุ + แรงขึ้นนิดหน่อย
+                A.turns = 3;
+                syncAuraUi();
+                return { dmg: dmg * 1.12, msg: ` ${meta.emoji || ""}ธาตุสะสม +12%`, pierce: false };
+            }
+            const R = REACT[reactKey(A.el, el)];
+            G.est.aura = null;
+            auraRingHide();
+            if (!R) {
+                syncAuraUi();
+                return { dmg, msg: "", pierce: false };
+            }
+            const pos = G.enemy.mesh ? G.enemy.mesh.position : null;
+            if (pos) {
+                burst(pos, R.col, 1.7);
+                try {
+                    spawnSkillFx(R.fx, pos, R.col);
+                }
+                catch (e) { }
+            }
+            G._camShake = Math.max(G._camShake || 0, R.shake || 0.4);
+            if (R.burn)
+                G.est.burn = Math.max(G.est.burn || 0, R.burn);
+            if (R.poison)
+                G.est.poison = Math.min(5, (G.est.poison || 0) + R.poison);
+            if (R.bleed)
+                G.est.bleed = Math.max(G.est.bleed || 0, R.bleed);
+            if (R.freeze)
+                G.est.frozen = true;
+            if (R.confuse)
+                G.est.confused = Math.max(G.est.confused || 0, R.confuse);
+            if (R.slow)
+                G.enemy.slowed = true;
+            if (R.defBreak)
+                G.est.defBreak = Math.max(G.est.defBreak || 0, R.defBreak);
+            if (R.crit)
+                G.battleCrit = (G.battleCrit || 0) + R.crit;
+            let extra = "";
+            if (R.heal) {
+                const h = Math.round(effMaxHp() * R.heal);
+                G.player.hp = Math.min(effMaxHp(), G.player.hp + h);
+                extra += ` +${h}HP`;
+            }
+            if (R.mp) {
+                const m = Math.round(effMaxMp() * R.mp);
+                G.player.mp = Math.min(effMaxMp(), G.player.mp + m);
+                extra += ` +${m}MP`;
+            }
+            if (R.heal || R.mp)
+                syncPlayer();
+            G.achStats = G.achStats || {};
+            G.achStats.reactions = (G.achStats.reactions || 0) + 1;
+            if (G.storyEvent) {
+                try {
+                    G.storyEvent("react", 1, { id: reactKey(A.el, el) });
+                }
+                catch (e) { }
+            }
+            if (G.sfx)
+                G.sfx.crit && G.sfx.crit();
+            G._rxHit = true; // 💥 หมัดที่จุดปฏิกิริยาได้ ศัตรูหลบ/บล็อกยากมาก (ใช้ครั้งเดียวแล้วล้าง)
+            syncAuraUi();
+            return { dmg: dmg * R.mult, msg: ` ⚡${R.emoji} ${R.name}!${extra}`, pierce: !!R.pierce };
+        };
         const enemyDefend = (raw) => {
             const e = G.enemy;
             if (!e)
@@ -37390,8 +37545,13 @@ function CherryAdventure() {
                 const lvGap = Math.max(0, (e.lv || 1) - (G.player ? G.player.level : 1));
                 raw = raw * Math.max(0.4, 1 - lvGap * 0.03);
             }
+            // 🌋 เกราะแตก — หลบ/บล็อก/การ์ดยากขึ้นมาก · ⚡ หมัดที่จุดปฏิกิริยาธาตุยิ่งหลบยากกว่า
+            const rxK = G._rxHit ? 0.25 : 1;
+            G._rxHit = false;
+            const dbK = ((G.est && G.est.defBreak > 0) ? 0.4 : 1) * rxK;
+            const evaChance = e.evaChance * dbK, blockChance = e.blockChance * dbK, guardChance = e.guardChance * dbK;
             const r = Math.random();
-            if (r < e.evaChance) {
+            if (r < evaChance) {
                 // 💨 full dodge — sidestep, no damage
                 if (e.mesh) {
                     e.mesh.position.z = battleCenter.z - 0.5;
@@ -37400,11 +37560,11 @@ function CherryAdventure() {
                 }
                 return { dmg: 0, note: " — ศัตรูหลบได้! 💨" };
             }
-            if (r < e.evaChance + e.blockChance) {
+            if (r < evaChance + blockChance) {
                 // 🛡️ block — absorbs ~70%
                 return { dmg: Math.max(1, Math.round(raw * 0.3)), note: " — ศัตรูบล็อก! 🛡️" };
             }
-            if (r < e.evaChance + e.blockChance + e.guardChance) {
+            if (r < evaChance + blockChance + guardChance) {
                 // 🪨 guard — reduces ~40%, มีโอกาสสวนกลับ
                 if (Math.random() < (e.boss ? 0.4 : 0.25)) {
                     const cd = Math.max(1, Math.round(e.atk * 0.5 - effDef() * 0.4));
@@ -44884,6 +45044,19 @@ function CherryAdventure() {
                     G.sfx.crit();
                 setUi((u) => ({ ...u, enemy: { ...u.enemy, enraged: true }, msg: `🐲🔥 ${(G.enemy || u.enemy || {}).name} โกรธจัด! เข้าสู่เฟส 2 — พลังโจมตีเพิ่มขึ้น!` }));
             }
+            // ⚡ ธาตุที่เกาะอยู่จางลงทุกเทิร์น · 🌋 เกราะแตกก็หมดอายุ
+            if (G.est.aura) {
+                G.est.aura.turns--;
+                if (G.est.aura.turns <= 0) {
+                    G.est.aura = null;
+                    if (G.auraRingHide)
+                        G.auraRingHide();
+                }
+            }
+            if (G.est.defBreak > 0)
+                G.est.defBreak--;
+            if (G.syncAuraUi)
+                G.syncAuraUi();
             // 🔥 burn ticks at the start of the enemy's turn
             if (G.est.burn > 0) {
                 G.est.burn--;
@@ -62173,7 +62346,12 @@ function CherryAdventure() {
                                             dmg *= wxm;
                                             fxMsg += wxm > 1 ? ` ${(G.weather || {}).emoji || ""}อากาศหนุน` : ` ${(G.weather || {}).emoji || ""}อากาศต้าน`;
                                         }
-                                    } // 🎡 วงล้อธาตุ + 🌦️ สภาพอากาศ
+                                        const rx = G.applyElem(skEl, dmg);
+                                        dmg = rx.dmg;
+                                        fxMsg += rx.msg;
+                                        if (rx.pierce)
+                                            A.pierce = true;
+                                    } // 🎡 วงล้อธาตุ + 🌦️ สภาพอากาศ + ⚡ ปฏิกิริยาธาตุ
                                 }
                                 else {
                                     // basic attack
@@ -62196,7 +62374,12 @@ function CherryAdventure() {
                                                 dmg *= wxm2;
                                                 fxMsg += wxm2 > 1 ? ` ${(G.weather || {}).emoji || ""}อากาศหนุน` : ` ${(G.weather || {}).emoji || ""}อากาศต้าน`;
                                             }
-                                        } // 🎡 วงล้อธาตุ + 🌦️ สภาพอากาศ
+                                            const rx2 = G.applyElem(wl, dmg);
+                                            dmg = rx2.dmg;
+                                            fxMsg += rx2.msg;
+                                            if (rx2.pierce)
+                                                A.pierce = true;
+                                        } // 🎡 วงล้อธาตุ + 🌦️ สภาพอากาศ + ⚡ ปฏิกิริยาธาตุ
                                         if (wl === "fire" && Math.random() < 0.3) {
                                             G.est.burn = 2;
                                             fxMsg += " เผาไหม้ 🔥";
@@ -62694,6 +62877,16 @@ function CherryAdventure() {
                                 magicCircle.scale.setScalar(1);
                             }
                             const applyHit = (dmg, fxColor, extraMsg = "") => {
+                                if (!A._rxDone) { // ⚡ ท่าไม้ตายจุดปฏิกิริยาธาตุครั้งเดียวที่หมัดแรก
+                                    A._rxDone = true;
+                                    const ue = ULT_ELEM[cls];
+                                    if (ue && G.applyElem) {
+                                        const rxu = G.applyElem(ue, dmg);
+                                        dmg = rxu.dmg;
+                                        if (rxu.msg)
+                                            extraMsg += rxu.msg;
+                                    }
+                                }
                                 dmg = Math.round(dmg);
                                 A.total += dmg;
                                 G.enemy.hp = Math.max(0, G.enemy.hp - dmg);
@@ -71847,6 +72040,29 @@ function CherryAdventure() {
                     ui.enemy.hp,
                     "/",
                     ui.enemy.maxHp),
+                ui.eAura && ELEM_META[ui.eAura.el] && (() => {
+                    const wl2 = G && G.weaponElem ? G.weaponElem() : null;
+                    const R2 = wl2 && wl2 !== ui.eAura.el ? REACT[reactKey(ui.eAura.el, wl2)] : null;
+                    return (React.createElement("div", { style: { marginTop: 4, display: "block" } },
+                        React.createElement("span", { style: { display: "inline-block", background: "linear-gradient(90deg,rgba(120,80,220,0.95),rgba(70,140,220,0.95))", borderRadius: 999, padding: "2px 9px", fontSize: 10, fontWeight: 800, color: "#fff" } },
+                            "\u26A1 \u0E18\u0E32\u0E15\u0E38\u0E40\u0E01\u0E32\u0E30 ",
+                            ELEM_META[ui.eAura.el].emoji,
+                            ELEM_META[ui.eAura.el].name,
+                            " (",
+                            ui.eAura.turns,
+                            ")"),
+                        R2 && (React.createElement("span", { style: { display: "inline-block", marginLeft: 4, background: "rgba(245,180,40,0.95)", borderRadius: 999, padding: "2px 9px", fontSize: 10, fontWeight: 800, color: "#4a3000" } },
+                            "\u0E15\u0E35\u0E14\u0E49\u0E27\u0E22\u0E2D\u0E32\u0E27\u0E38\u0E18 = ",
+                            R2.emoji,
+                            " ",
+                            R2.name,
+                            " \u00D7",
+                            R2.mult))));
+                })(),
+                (ui.eDefBreak || 0) > 0 && (React.createElement("div", { style: { marginTop: 3, display: "inline-block", background: "rgba(220,90,50,0.95)", borderRadius: 999, padding: "2px 9px", fontSize: 10, fontWeight: 800, color: "#fff" } },
+                    "\uD83C\uDF0B \u0E40\u0E01\u0E23\u0E32\u0E30\u0E41\u0E15\u0E01 (",
+                    ui.eDefBreak,
+                    ") \u2014 \u0E2B\u0E25\u0E1A/\u0E1A\u0E25\u0E47\u0E2D\u0E01\u0E22\u0E32\u0E01\u0E02\u0E36\u0E49\u0E19")),
                 ui.enemy.spId && WEAK[ui.enemy.spId] && ELEM_META[WEAK[ui.enemy.spId]] && (React.createElement("div", { style: {
                         marginTop: 4, display: "inline-block",
                         background: "rgba(245,101,46,0.92)",
