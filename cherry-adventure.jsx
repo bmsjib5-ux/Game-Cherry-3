@@ -1457,12 +1457,16 @@ const MINE_SWINGS = 3;         // 🔨 ต้องตีให้เข้า�
 const MINE_LV_EXP = (lv) => 60 + lv * 45;   // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
 // ⛏️ พลั่ว/อีเต้อ — ซื้อที่ร้านค้า ยิ่งดี ยิ่งได้แร่เยอะ + เป้ากว้างขึ้น (ตีง่ายขึ้น)
 const PICKS = [
-  { lv: 1, name: "อีเต้อไม้",     emoji: "🪵", cost: 0,      yield: 1.0, zone: 0.26, desc: "ของติดตัวตั้งแต่เริ่ม" },
-  { lv: 2, name: "อีเต้อเหล็ก",   emoji: "⛏️", cost: 18000,  yield: 1.35, zone: 0.30, desc: "ได้แร่เพิ่ม 35% · เป้ากว้างขึ้น" },
-  { lv: 3, name: "อีเต้อคริสตัล", emoji: "💎", cost: 65000,  yield: 1.8,  zone: 0.34, desc: "ได้แร่เพิ่ม 80% · โอกาสได้ของหายากขึ้น" },
-  { lv: 4, name: "อีเต้อมังกร",   emoji: "🐉", cost: 220000, yield: 2.4,  zone: 0.38, desc: "ได้แร่เพิ่ม 140% · เกล็ดมังกรออกบ่อยขึ้นมาก" },
-  { lv: 5, name: "อีเต้อจักรวาล", emoji: "🌌", cost: 700000, yield: 3.2,  zone: 0.44, desc: "ได้แร่เพิ่ม 220% · เป้ากว้างสุด" },
+  { lv: 1, name: "อีเต้อไม้",     emoji: "🪵", cost: 0,      yield: 1.0, zone: 0.36, desc: "ของติดตัวตั้งแต่เริ่ม" },
+  { lv: 2, name: "อีเต้อเหล็ก",   emoji: "⛏️", cost: 18000,  yield: 1.35, zone: 0.41, desc: "ได้แร่เพิ่ม 35% · เป้ากว้างขึ้น" },
+  { lv: 3, name: "อีเต้อคริสตัล", emoji: "💎", cost: 65000,  yield: 1.8,  zone: 0.46, desc: "ได้แร่เพิ่ม 80% · โอกาสได้ของหายากขึ้น" },
+  { lv: 4, name: "อีเต้อมังกร",   emoji: "🐉", cost: 220000, yield: 2.4,  zone: 0.52, desc: "ได้แร่เพิ่ม 140% · เกล็ดมังกรออกบ่อยขึ้นมาก" },
+  { lv: 5, name: "อีเต้อจักรวาล", emoji: "🌌", cost: 700000, yield: 3.2,  zone: 0.60, desc: "ได้แร่เพิ่ม 220% · เป้ากว้างสุด" },
 ];
+const MINE_SPEED0 = 0.62;      // 🏃 ความเร็วตัววิ่งตอนเริ่ม (รอบต่อวินาที)
+const MINE_SPEED_UP = 0.12;    // ตีติดแล้วเร็วขึ้นทีละเท่านี้
+const MINE_ZONE_K = 0.94;      // ตีติดแล้วเป้าแคบลงเหลือกี่เท่า
+const MINE_CORE = 0.46;        // แกน "เป๊ะ" กินกี่ส่วนของครึ่งช่องเป้า
 // forge recipes: infuse an element onto the equipped weapon
 const ELEM_INFUSE = {
   fire:   { cost: { fireEss: 3 },              name: "ธาตุไฟ",     emoji: "🔥" },
@@ -17572,7 +17576,7 @@ export default function CherryAdventure() {
       const n = i != null ? G.mineNodes[i] : null;
       if (!n || n.dead) { toast("⛏️ ไม่มีสายแร่อยู่ใกล้ ๆ"); return; }
       const P = pickOf();
-      G.mining = { i, pos: 0, dir: 1, speed: 0.82, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
+      G.mining = { i, pos: 0, dir: 1, speed: MINE_SPEED0, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
       if (G.sfx) G.sfx.hit && G.sfx.hit();
       setUi((u) => ({ ...u, mining: { pos: 0, zone: G.mining.zone, zc: G.mining.zc, hits: 0, need: MINE_SWINGS, perfect: 0, miss: 0 }, menuOpen: false }));
       toast(`${P.emoji} ขุดด้วย${P.name} — แตะตอนตัววิ่งอยู่ในช่องเป้า!`);
@@ -17588,18 +17592,18 @@ export default function CherryAdventure() {
       const d = Math.abs(m.pos - m.zc);
       if (d <= half) {
         m.hits++;
-        const perfect = d <= half * 0.34;
+        const perfect = d <= half * MINE_CORE;
         if (perfect) m.perfect++;
         if (n && n.mesh) { burst(n.mesh.position, perfect ? 0xffe06a : 0xd8d8c8, 0.9); }
         G._camShake = Math.max(G._camShake || 0, perfect ? 0.3 : 0.16);
         if (G.sfx) { if (perfect) G.sfx.crit && G.sfx.crit(); else G.sfx.hit && G.sfx.hit(); }
         if (m.hits >= MINE_SWINGS) { G.finishMining(); return; }
-        m.speed += 0.36; m.zone = Math.max(0.11, m.zone * 0.84); m.zc = 0.28 + Math.random() * 0.44;
+        m.speed += MINE_SPEED_UP; m.zone = Math.max(0.2, m.zone * MINE_ZONE_K); m.zc = 0.3 + Math.random() * 0.4;
       } else {
         m.miss++;
         if (G.sfx) G.sfx.reel && G.sfx.reel();
-        if (m.miss >= 3) {
-          toast("💨 พลาดสามครั้ง — สายแร่ร่วนหลุดมือ ลองใหม่นะ");
+        if (m.miss >= 4) {
+          toast("💨 พลาดสี่ครั้ง — สายแร่ร่วนหลุดมือ ลองใหม่ได้เลย");
           G.stopMining();
           return;
         }
@@ -17707,8 +17711,8 @@ export default function CherryAdventure() {
         m.pos += m.dir * m.speed * dt;
         if (m.pos >= 1) { m.pos = 1; m.dir = -1; }
         if (m.pos <= 0) { m.pos = 0; m.dir = 1; }
-        G._mineUiAcc = (G._mineUiAcc || 0) + dt;
-        if (G._mineUiAcc > 0.03) { G._mineUiAcc = 0; setUi((u) => (u.mining ? { ...u, mining: { ...u.mining, pos: m.pos } } : u)); }
+        // 🎯 ขยับตัววิ่งที่ DOM ตรง ๆ ทุกเฟรม — ไม่ผ่าน React state ภาพที่เห็นจึงตรงกับที่เกมเช็คเป๊ะ ๆ
+        if (G._mineMarkEl) G._mineMarkEl.style.left = (m.pos * 100).toFixed(2) + "%";
       }
     };
     // ================= ⛏️ END MINING =================
@@ -20402,7 +20406,6 @@ export default function CherryAdventure() {
         power: powerOf({ atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()) }),
         gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, warpScrolls: G.warpScrolls || 0,
         mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0,
-        cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null),
         pid: G.pid || null,
         pvpRank: G.pvpRank || 1000, pvpTier: tier ? (tier.emoji + " " + tier.name) : null,
         endlessBest: G.endlessBest || 0, ngPlus: G.ngPlus || 0,
@@ -20453,7 +20456,7 @@ export default function CherryAdventure() {
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, 
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -43241,10 +43244,10 @@ export default function CherryAdventure() {
               {ui.foodBuff ? (
                 <div style={{ background: "linear-gradient(135deg,#fff0d8,#ffe4c0)", border: "1px solid #f0c890", borderRadius: 12, padding: "8px 10px", marginBottom: 9 }}>
                   <div style={{ fontSize: 12, fontWeight: 900, color: "#a05a20" }}>
-                    {ui.foodBuff.emoji} {ui.foodBuff.name} <span style={{ color: "#c08a40" }}>· เหลือ {G.foodLeftText ? G.foodLeftText() : ""}</span>
+                    {ui.foodBuff.emoji || "🍽️"} {ui.foodBuff.name || "อาหาร"} <span style={{ color: "#c08a40" }}>· เหลือ {G.foodLeftText ? G.foodLeftText() : ""}</span>
                   </div>
                   <div style={{ fontSize: 10.5, color: "#8a6a40", marginTop: 2 }}>
-                    {Object.keys(ui.foodBuff.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${ui.foodBuff.buff[k]}${L[1]}`; }).join(" · ")}
+                    {Object.keys(ui.foodBuff.buff || {}).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${ui.foodBuff.buff[k]}${L[1]}`; }).join(" · ")}
                   </div>
                 </div>
               ) : (
@@ -44205,7 +44208,7 @@ export default function CherryAdventure() {
           position: "absolute", top: 96, right: 10, zIndex: 20, pointerEvents: "none",
           background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
           fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
-        }}>{ui.foodBuff.emoji} {G.foodLeftText ? G.foodLeftText() : ""}</div>
+        }}>{ui.foodBuff.emoji || "🍽️"} {G.foodLeftText ? G.foodLeftText() : ""}</div>
       )}
       {/* ⛏️ ยืนใกล้สายแร่ = กดขุดได้ */}
       {ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (
@@ -44234,19 +44237,20 @@ export default function CherryAdventure() {
                   {(G.pickOf ? G.pickOf().emoji : "⛏️")} ตีให้เข้าเป้า {m.hits}/{m.need}
                   {m.perfect > 0 && <span style={{ color: "#ffe06a" }}> · 🎯 เป๊ะ {m.perfect}</span>}
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: m.miss >= 2 ? "#ff8a8a" : "#c8bca0" }}>พลาด {m.miss}/3</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: m.miss >= 3 ? "#ff8a8a" : "#c8bca0" }}>พลาด {m.miss}/4</span>
               </div>
-              <div style={{ position: "relative", height: 30, background: "rgba(0,0,0,0.5)", borderRadius: 9, overflow: "hidden", border: "1px solid rgba(255,255,255,0.16)" }}>
-                <div style={{ position: "absolute", left: zL + "%", width: zW + "%", top: 0, bottom: 0, background: "linear-gradient(180deg,rgba(120,220,120,0.5),rgba(60,180,80,0.5))" }} />
-                <div style={{ position: "absolute", left: (m.zc * 100 - cW / 2) + "%", width: cW + "%", top: 0, bottom: 0, background: "rgba(255,224,106,0.75)" }} />
-                <div style={{ position: "absolute", left: `calc(${m.pos * 100}% - 2px)`, top: -2, bottom: -2, width: 4, background: "#fff", boxShadow: "0 0 10px #fff" }} />
+              {/* 🎯 แตะที่แถบก็ตีได้ ไม่ต้องเล็งปุ่ม · ตัววิ่งขยับด้วย DOM ตรง ๆ ไม่หน่วง */}
+              <div onPointerDown={(e) => { e.preventDefault(); G.mineTap(); }} style={{ position: "relative", height: 38, background: "rgba(0,0,0,0.5)", borderRadius: 9, overflow: "hidden", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer", touchAction: "manipulation" }}>
+                <div style={{ position: "absolute", left: zL + "%", width: zW + "%", top: 0, bottom: 0, background: "linear-gradient(180deg,rgba(120,220,120,0.55),rgba(60,180,80,0.55))" }} />
+                <div style={{ position: "absolute", left: (m.zc * 100 - cW / 2) + "%", width: cW + "%", top: 0, bottom: 0, background: "rgba(255,224,106,0.8)" }} />
+                <div ref={(el) => { G._mineMarkEl = el; }} style={{ position: "absolute", left: (m.pos * 100) + "%", top: -3, bottom: -3, width: 5, marginLeft: -2.5, background: "#fff", boxShadow: "0 0 12px #fff", borderRadius: 3 }} />
               </div>
-              <button onClick={() => G.mineTap()} style={{
-                width: "100%", marginTop: 9, padding: "13px 0", borderRadius: 12, border: "none", cursor: "pointer",
-                fontFamily: font, fontSize: 17, fontWeight: 900, color: "#3a2a10",
+              <button onPointerDown={(e) => { e.preventDefault(); G.mineTap(); }} style={{
+                width: "100%", marginTop: 9, padding: "15px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                fontFamily: font, fontSize: 18, fontWeight: 900, color: "#3a2a10", touchAction: "manipulation", userSelect: "none",
                 background: "linear-gradient(90deg,#ffd84a,#ffb020)", boxShadow: "0 4px 14px rgba(255,180,32,0.45)",
               }}>🔨 ตี!</button>
-              <button onClick={() => G.stopMining()} style={{
+              <button onPointerDown={(e) => { e.preventDefault(); G.stopMining(); }} style={{
                 width: "100%", marginTop: 6, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
                 fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#d8ccb0", background: "rgba(255,255,255,0.12)",
               }}>เลิกขุด</button>
