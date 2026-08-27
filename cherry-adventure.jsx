@@ -504,6 +504,43 @@ const ELEMENTS = {
   earth: { name: "กำแพงปฐพี", emoji: "🌍", lv: 9, color: 0xc09a5a, desc: "×1.5 + ป้องกัน +4 ทั้งศึก" },
   light: { name: "แสงสวรรค์", emoji: "🌟", lv: 11, color: 0xffe9a0, desc: "×1.8 + ล้างสถานะร้าย" },
 };
+
+// ============ 🌦️ สภาพอากาศ — เปลี่ยนทั้งภาพและกติกา ============
+//  boost = ธาตุที่แรงขึ้น · weak = ธาตุที่อ่อนลง · fogK = ตัวคูณระยะหมอก · dim = ตัวคูณความสว่าง
+//  part = ชนิดอนุภาค (streak เส้นฝน · soft เกล็ดนุ่ม · mist ม่านหมอก · ember สะเก็ดไฟ) · drop/exp = โบนัส
+const WEATHER = {
+  clear:    { name: "ฟ้าโปร่ง", emoji: "☀️", fogK: 1.0, dim: 1.0, n: 0 },
+  rain:     { name: "ฝนตก", emoji: "🌧️", boost: "water", weak: "fire", fogK: 0.74, dim: 0.84, tint: 0x8fa8c0,
+              part: "streak", n: 300, c: [0x9fc8e8, 0xd8ecff], size: 0.5, fall: 13, sway: 0.5, drop: 0.10 },
+  storm:    { name: "พายุฝนฟ้าคะนอง", emoji: "⛈️", boost: "wind", weak: "fire", fogK: 0.56, dim: 0.6, tint: 0x5a6a86,
+              part: "streak", n: 380, c: [0x8fb8e0, 0xcfe4ff], size: 0.58, fall: 19, sway: 2.6, bolt: true, drop: 0.15, exp: 0.10 },
+  snowfall: { name: "หิมะโปรยหนัก", emoji: "🌨️", boost: "ice", weak: "fire", fogK: 0.62, dim: 0.9, tint: 0xd8e8f5,
+              part: "soft", n: 300, c: [0xffffff, 0xe2f0ff], size: 0.32, fall: 1.5, sway: 1.5, drop: 0.10 },
+  sand:     { name: "พายุทราย", emoji: "🏜️", boost: "earth", weak: "wind", fogK: 0.44, dim: 0.78, tint: 0xd8b878,
+              part: "soft", n: 340, c: [0xe8cf9a, 0xf5e2b8], size: 0.34, fall: 0.6, sway: 9, drop: 0.12 },
+  fog:      { name: "หมอกลงจัด", emoji: "🌫️", boost: "arcane", weak: "light", fogK: 0.34, dim: 0.9, tint: 0xc8d0d8,
+              part: "mist", n: 70, c: [0xdfe8f0, 0xffffff], size: 3.4, fall: 0.05, sway: 0.7, drop: 0.22 },
+  heat:     { name: "คลื่นความร้อน", emoji: "🔥", boost: "fire", weak: "water", fogK: 1.12, dim: 1.08, tint: 0xffc890,
+              part: "ember", n: 130, c: [0xffb85a, 0xffe0a0], size: 0.3, fall: -1.3, sway: 1.1, exp: 0.08 },
+  aurora:   { name: "แสงเหนือ", emoji: "🌌", boost: "light", fogK: 1.0, dim: 0.92, tint: 0x9ad8e0,
+              part: "soft", n: 90, c: [0x8affd0, 0xb0a0ff, 0x9adcff], size: 0.36, fall: -0.25, sway: 0.5, curtain: true, exp: 0.20 },
+};
+// 🗺️ สภาพอากาศที่เป็นไปได้ของแต่ละแมพ (ใส่ซ้ำ = โอกาสเจอมากขึ้น)
+const WEATHER_POOL = {
+  meadow:  ["clear", "clear", "clear", "rain", "fog", "storm"],
+  desert:  ["clear", "clear", "heat", "heat", "sand", "sand"],
+  snow:    ["clear", "snowfall", "snowfall", "fog", "aurora"],
+  cave:    ["clear", "clear", "fog", "fog"],
+  volcano: ["clear", "heat", "heat", "storm"],
+  sky:     ["clear", "clear", "storm", "aurora"],
+  hell:    ["clear", "heat", "heat", "storm"],
+  heaven:  ["clear", "clear", "clear", "aurora"],
+  moon:    ["clear", "clear", "clear", "aurora"],
+  candy:   ["clear", "clear", "clear", "rain"],
+  beach:   ["clear", "clear", "rain", "storm", "heat"],
+  titan:   ["clear", "clear", "storm", "fog", "rain"],
+  amazon:  ["rain", "rain", "storm", "fog", "clear"],
+};
 const WEAK = { mochi: "wind", baibua: "fire", mekha: "earth", plerng: "water", kirara: "ice", phi: "fire", nam: "wind", khiao: "fire", ngu: "earth", paksi: "ice", saming: "water", garuda: "light", wayu: "earth", taara: "arcane" };
 const PET_ELEM = { mochi: "wind", baibua: "earth", mekha: "water", plerng: "fire", kirara: "ice", phi: "ice", nam: "water", khiao: "wind", ngu: "earth", paksi: "wind", saming: "fire", garuda: "light", wayu: "wind", taara: "arcane" };
 const PET_SKILL = { mochi: "ลมกระต่ายหมุน", baibua: "หินใบไม้ถล่ม", mekha: "ระเบิดหยดน้ำ", plerng: "เพลิงจิ้งจอก", kirara: "ดาวน้ำแข็ง", phi: "วิญญาณเยือกแข็ง", nam: "คลื่นวารี", khiao: "ตะปบพายุ", ngu: "พ่นพิษพสุธา", paksi: "โฉบเวหา", saming: "ตะปบเพลิง", garuda: "ปีกแสงสวรรค์", wayu: "พายุหมุนเทพ", taara: "แสงจักรวาล" };
@@ -1704,7 +1741,7 @@ export default function CherryAdventure() {
     balls: 3, specials: 2,
     enemy: null, // {id,name,emoji,hp,maxHp,lv}
     bstate: "choose", // choose | busy
-    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "",
+    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
@@ -2057,6 +2094,93 @@ export default function CherryAdventure() {
       return pts;
     };
     const ambPetal = mkAmb("petal"), ambMote = mkAmb("mote");
+
+    // ---------- 🌦️ สภาพอากาศ: อนุภาคชุดใหญ่ + ม่านแสงเหนือ ----------
+    const WX_MAX = 400;
+    const wxTex = (kind) => {
+      const cv = document.createElement("canvas"); cv.width = 32; cv.height = 64;
+      const c2 = cv.getContext("2d");
+      if (kind === "streak") {                       // 🌧️ เส้นฝนยาว
+        const g3 = c2.createLinearGradient(0, 0, 0, 64);
+        g3.addColorStop(0, "rgba(255,255,255,0)"); g3.addColorStop(0.4, "rgba(255,255,255,0.9)");
+        g3.addColorStop(0.8, "rgba(255,255,255,0.95)"); g3.addColorStop(1, "rgba(255,255,255,0)");
+        c2.fillStyle = g3; c2.fillRect(12, 0, 8, 64);
+      } else if (kind === "mist") {                  // 🌫️ ม่านหมอกฟุ้ง
+        const g3 = c2.createRadialGradient(16, 32, 0, 16, 32, 16);
+        g3.addColorStop(0, "rgba(255,255,255,0.42)"); g3.addColorStop(0.6, "rgba(255,255,255,0.16)"); g3.addColorStop(1, "rgba(255,255,255,0)");
+        c2.fillStyle = g3; c2.fillRect(0, 0, 32, 64);
+      } else {                                       // ❄️✨ เกล็ด/สะเก็ดกลมนุ่ม
+        const g3 = c2.createRadialGradient(16, 32, 0, 16, 32, 15);
+        g3.addColorStop(0, "rgba(255,255,255,1)"); g3.addColorStop(0.35, "rgba(255,255,255,0.7)");
+        g3.addColorStop(1, "rgba(255,255,255,0)");
+        c2.fillStyle = g3; c2.fillRect(0, 0, 32, 64);
+      }
+      return new THREE.CanvasTexture(cv);
+    };
+    const WX_TEX = { streak: wxTex("streak"), soft: wxTex("soft"), mist: wxTex("mist"), ember: wxTex("soft") };
+    const wxPts = (() => {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(WX_MAX * 3), 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(WX_MAX * 3).fill(1), 3));
+      geo.setDrawRange(0, 0);
+      const m = new THREE.Points(geo, new THREE.PointsMaterial({ map: WX_TEX.soft, size: 0.4, sizeAttenuation: true, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.9 }));
+      m.frustumCulled = false; m.visible = false; m.renderOrder = 4;
+      scene.add(m); return m;
+    })();
+    const wxCurtain = (() => {   // 🌌 ม่านแสงเหนือพาดฟ้า
+      const g = new THREE.Group();
+      for (let i = 0; i < 3; i++) {
+        const cv = document.createElement("canvas"); cv.width = 8; cv.height = 128;
+        const c2 = cv.getContext("2d");
+        const gr = c2.createLinearGradient(0, 0, 0, 128);
+        gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.35, "rgba(255,255,255,0.55)");
+        gr.addColorStop(0.75, "rgba(255,255,255,0.22)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+        c2.fillStyle = gr; c2.fillRect(0, 0, 8, 128);
+        const mat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), color: [0x6affc0, 0xa090ff, 0x7ad0ff][i], transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false, fog: false });
+        const pl = new THREE.Mesh(new THREE.PlaneGeometry(46, 26, 12, 1), mat);
+        pl.userData.base = pl.geometry.attributes.position.array.slice();
+        pl.userData.ph = i * 2.1; pl.position.set(0, 15 + i * 2.2, -26 - i * 4); pl.rotation.y = i * 0.16 - 0.16; pl.rotation.x = -0.22;
+        g.add(pl);
+      }
+      g.visible = false; scene.add(g); return g;
+    })();
+    G._wxPts = wxPts; G._wxCurtain = wxCurtain;
+    // 🎲 สุ่มสภาพอากาศของแมพนี้ (เรียกตอนวาร์ปและทุก ๆ ไม่กี่นาที)
+    G.rollWeather = (bid, force) => {
+      const pool = WEATHER_POOL[bid] || ["clear"];
+      const id = force || pool[Math.floor(Math.random() * pool.length)];
+      G.setWeather(id);
+      G._wxNext = 170 + Math.random() * 150;   // เปลี่ยนอีกครั้งใน ~3–5 นาที
+    };
+    G.setWeather = (id) => {
+      const W = WEATHER[id] || WEATHER.clear;
+      const prev = G.weatherId;
+      G.weatherId = id; G.weather = W;
+      const n = Math.min(WX_MAX, W.n || 0);
+      wxPts.visible = n > 0;
+      wxCurtain.visible = !!W.curtain;
+      if (n > 0) {
+        wxPts.material.map = WX_TEX[W.part] || WX_TEX.soft;
+        wxPts.material.size = W.size;
+        wxPts.material.blending = (W.part === "ember" || W.curtain) ? THREE.AdditiveBlending : THREE.NormalBlending;
+        wxPts.material.needsUpdate = true;
+        const pa = wxPts.geometry.attributes.position.array, ca = wxPts.geometry.attributes.color.array, tc = new THREE.Color();
+        const cx = char ? char.position.x : 0, cz = char ? char.position.z : 0;
+        for (let i = 0; i < n; i++) {
+          const a2 = Math.random() * Math.PI * 2, r2 = Math.random() * 17;
+          pa[i * 3] = cx + Math.cos(a2) * r2; pa[i * 3 + 1] = Math.random() * 13; pa[i * 3 + 2] = cz + Math.sin(a2) * r2;
+          tc.setHex(W.c[i % W.c.length]); const k = 0.75 + Math.random() * 0.35;
+          ca[i * 3] = tc.r * k; ca[i * 3 + 1] = tc.g * k; ca[i * 3 + 2] = tc.b * k;
+        }
+        wxPts.geometry.attributes.position.needsUpdate = true;
+        wxPts.geometry.attributes.color.needsUpdate = true;
+        wxPts.geometry.setDrawRange(0, n);
+      }
+      if (prev !== id && G.toast && G.mode === "explore") G.toast(`${W.emoji} ${W.name}` + (W.boost ? ` — ธาตุ${(ELEM_META[W.boost] || {}).name || ""}แรงขึ้น` : ""));
+      setUi((u) => ({ ...u, weather: `${W.emoji} ${W.name}` }));
+    };
+    // ⚗️ ตัวคูณธาตุตามอากาศ — ธาตุที่อากาศหนุนแรงขึ้น ธาตุที่ถูกกดอ่อนลง
+    G.wxElem = (el) => { const W = G.weather; if (!W || !el) return 1; if (W.boost === el) return 1.25; if (W.weak === el) return 0.82; return 1; };
     G._ambPetal = ambPetal; G._ambMote = ambMote;
     // เริ่มชุดละอองใหม่เมื่อเปลี่ยนแมพ — สุ่มตำแหน่งและสีใหม่ทั้งชุด
     G.resetAmbient = (bid, cx, cz) => {
@@ -16024,6 +16148,7 @@ export default function CherryAdventure() {
     };
     G.rebuildTerrain(BIOMES[G.curBiome || 0] || BIOMES[0]);   // 🏔️ ปั้นภูมิประเทศแมพเริ่มต้น
     if (G.resetAmbient) G.resetAmbient((BIOMES[G.curBiome || 0] || BIOMES[0]).id, 0, 0);   // ✨ ละอองบรรยากาศแมพเริ่มต้น
+    { const b0 = BIOMES[G.curBiome || 0] || BIOMES[0]; const fd0 = { meadow: [46, 98] }[b0.id] || [46, 98]; G._fogBase = { near: fd0[0], far: fd0[1] }; if (G.rollWeather) G.rollWeather(b0.id, "clear"); }   // 🌦️ เริ่มเกมด้วยฟ้าโปร่ง
 
     // decorations we can toggle per biome (trees/bushes already added get a tag)
     const switchBiome = (idx, quiet) => {
@@ -16031,9 +16156,11 @@ export default function CherryAdventure() {
       G.curBiome = BIOMES.indexOf(b);
       G.rebuildTerrain(b);   // 🏔️ ปั้นภูเขา/ที่ราบสูง/หน้าผาประจำแมพนี้
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
+      if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
         const FOG_D = { cave: [12, 52], hell: [26, 78], amazon: [22, 66], volcano: [32, 86], snow: [40, 96], moon: [40, 98] };
         const fd = FOG_D[b.id] || [46, 98];
+        G._fogBase = { near: fd[0], far: fd[1] };   // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
         if (scene.fog && !G._townFogPrev) { scene.fog.near = fd[0]; scene.fog.far = fd[1]; }
         const indoor = b.id === "cave";                       // 🕳️ ในถ้ำไม่มีฟ้า ไม่มีเมฆ ไม่มีตะวัน
         if (G._skyDome) { G._skyDome.material.map = indoor ? null : G._skyTex; G._skyDome.material.needsUpdate = true; }
@@ -20161,6 +20288,7 @@ export default function CherryAdventure() {
     };
 
     const gainExp = (amt) => {
+      if (G.weather && G.weather.exp) amt = Math.round(amt * (1 + G.weather.exp));   // 🌦️ อากาศบางแบบให้ EXP มากขึ้น
       if (G.expBoostUntil && Date.now() < G.expBoostUntil) amt *= 2; // 📜 ใบประสบการณ์ x2
       if (G.restBuffUntil && Date.now() < G.restBuffUntil) amt = Math.round(amt * 1.15); // 😴 บัฟนอนพักจากบ้าน +15% XP
       // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
@@ -30400,6 +30528,49 @@ export default function CherryAdventure() {
         G._ambSys.visible = true;
       }
 
+      // ---------- 🌦️ สภาพอากาศ: ขยับอนุภาค · ฟ้าผ่า · นับเวลาเปลี่ยนอากาศ ----------
+      if (G.weather && G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
+        const W = G.weather;
+        G._wxNext = (G._wxNext || 200) - dt;
+        if (G._wxNext <= 0) G.rollWeather((BIOMES[G.curBiome] || BIOMES[0]).id);
+        const n = Math.min(WX_MAX, W.n || 0);
+        if (n > 0 && wxPts.visible) {
+          const pa = wxPts.geometry.attributes.position.array;
+          const cx = char.position.x, cz = char.position.z, R2 = 18 * 18, HI = 13;
+          for (let i = 0; i < n; i++) {
+            const k = i * 3;
+            pa[k + 1] -= W.fall * dt;
+            pa[k] += Math.sin(t * 0.9 + i * 0.7) * W.sway * dt + W.sway * dt * 0.5;
+            pa[k + 2] += Math.cos(t * 0.6 + i * 1.3) * W.sway * dt * 0.6;
+            if (pa[k + 1] < -0.3) pa[k + 1] = HI; else if (pa[k + 1] > HI + 0.5) pa[k + 1] = 0;
+            const dx2 = pa[k] - cx, dz2 = pa[k + 2] - cz;
+            if (dx2 * dx2 + dz2 * dz2 > R2) { const a2 = Math.random() * Math.PI * 2, r2 = 4 + Math.random() * 12;
+              pa[k] = cx + Math.cos(a2) * r2; pa[k + 2] = cz + Math.sin(a2) * r2; pa[k + 1] = W.fall > 0 ? HI : 0.3; }
+          }
+          wxPts.geometry.attributes.position.needsUpdate = true;
+        }
+        if (W.curtain && wxCurtain.visible) {   // 🌌 ม่านแสงเหนือพลิ้วเป็นคลื่น
+          wxCurtain.position.set(char.position.x, 0, char.position.z);
+          wxCurtain.children.forEach((pl, i) => {
+            pl.material.opacity = 0.34 + Math.sin(t * 0.5 + pl.userData.ph) * 0.16;
+            const ap = pl.geometry.attributes.position, bs = pl.userData.base;
+            for (let v = 0; v < ap.count; v++) ap.setZ(v, bs[v * 3 + 2] + Math.sin(bs[v * 3] * 0.16 + t * 0.7 + pl.userData.ph) * 2.2);
+            ap.needsUpdate = true;
+          });
+        }
+        if (W.bolt) {   // ⛈️ ฟ้าผ่าสุ่ม — จอสว่างวาบ + เสียงฟ้าร้อง
+          G._wxBolt = (G._wxBolt || 3) - dt;
+          if (G._wxBolt <= 0) {
+            G._wxBolt = 3 + Math.random() * 7;
+            G._wxFlash = 1;
+            if (G.sfx && G.sfx.boom) G.sfx.boom();
+            const bx2 = char.position.x + (Math.random() - 0.5) * 22, bz2 = char.position.z + (Math.random() - 0.5) * 22;
+            try { spawnSkillFx("thunderstorm", new THREE.Vector3(bx2, 0.4, bz2), 0xdfe8ff); } catch (e) {}
+          }
+        }
+      }
+      if (G._wxFlash > 0) G._wxFlash = Math.max(0, G._wxFlash - dt * 3.2);
+
       // ---------- 🌗 day/night update ----------
       {
         const dayT = (t % DAY_CYCLE) / DAY_CYCLE;
@@ -30419,7 +30590,16 @@ export default function CherryAdventure() {
         scene.background.copy(skyTmp);
         const fogSky = G.biomeFog || daySky;
         scene.fog.color.copy(skyTmp).lerp(fogSky, dayAmt * 0.5);
+        {   // 🌫️ อากาศบีบ/คลายระยะหมอก (เก็บระยะฐานของแมพไว้ครั้งแรก)
+          const W = G.weather, fk = (W && W.fogK) || 1;
+          if (G._fogBase && !G._townFogPrev) { scene.fog.near = G._fogBase.near * fk; scene.fog.far = G._fogBase.far * fk; }
+        }
         // 🌤️ โดมฟ้าเกาะกล้องเสมอ แล้วคูณสีฟ้าของแมพ/ช่วงเวลาเข้ากับลายไล่เฉด
+        {   // 🌦️ อากาศย้อมฟ้า/หมอก และหรี่-เร่งแสงทั้งฉาก
+          const W = G.weather;
+          if (W && W.tint != null) skyTmp.lerp(new THREE.Color(W.tint), 0.42);
+          if (G._wxFlash > 0) skyTmp.lerp(new THREE.Color(0xffffff), G._wxFlash * 0.55);   // ⚡ แสงฟ้าผ่าวาบ
+        }
         skyDome.position.copy(camera.position);
         skyDome.material.color.copy(skyTmp);
         // ☀️🌑 ดวงตะวันลอยตามทิศแสงหลัก — กลางวันเป็นดวงอาทิตย์อุ่น กลางคืนเป็นดวงจันทร์เย็น
@@ -30433,7 +30613,10 @@ export default function CherryAdventure() {
         amb.intensity = 0.13 + 0.19 * dayAmt; // ☀️ ลดแดดจ้ากลางวัน
         hemi.intensity = 0.12 + 0.22 * dayAmt;
         hemi.color.lerpColors(dayColors.hemiSkyNight, dayColors.hemiSkyDay, dayAmt);
-        key.intensity = (0.16 + 0.30 * dayAmt) * (1 + gold * 0.34);   // 🌅 แดดเย็นแรงขึ้นนิด ให้เงาเข้ม
+        const wxDim = (G.weather && G.weather.dim) || 1;   // 🌦️ เมฆครึ้มหรี่แสง · แดดจ้าเร่งแสง
+        amb.intensity *= wxDim; hemi.intensity *= wxDim;
+        if (G._wxFlash > 0) { amb.intensity += G._wxFlash * 0.9; hemi.intensity += G._wxFlash * 0.5; }   // ⚡ ฟ้าผ่าสว่างวาบ
+        key.intensity = (0.16 + 0.30 * dayAmt) * (1 + gold * 0.34) * wxDim;   // 🌅 แดดเย็นแรงขึ้นนิด ให้เงาเข้ม
         key.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
         if (gold > 0.01) key.color.lerp(dayColors.sunGold, gold * 0.78);   // แสงส้มทองอาบทั้งฉาก
         // sun/moon travels across the sky → shadows move through the day
@@ -38346,7 +38529,8 @@ export default function CherryAdventure() {
                 // ⚡ weakness advantage
                 const skEl = SKILL_ELEM[sk.id];
                 if (skEl && WEAK[G.enemy.spId] === skEl) { dmg *= 1.5; fxMsg += " โดนจุดอ่อน!! ⚡💢"; weakHit = true; }
-                if (skEl) { const adv = elemAdv(skEl, PET_ELEM[G.enemy.spId]); if (adv !== 1) { dmg *= adv; fxMsg += adv > 1 ? " ได้เปรียบธาตุ 🔺" : " เสียเปรียบธาตุ 🔻"; } } // 🎡 element wheel
+                if (skEl) { const adv = elemAdv(skEl, PET_ELEM[G.enemy.spId]); if (adv !== 1) { dmg *= adv; fxMsg += adv > 1 ? " ได้เปรียบธาตุ 🔺" : " เสียเปรียบธาตุ 🔻"; }
+                  const wxm = G.wxElem ? G.wxElem(skEl) : 1; if (wxm !== 1) { dmg *= wxm; fxMsg += wxm > 1 ? ` ${(G.weather || {}).emoji || ""}อากาศหนุน` : ` ${(G.weather || {}).emoji || ""}อากาศต้าน`; } } // 🎡 วงล้อธาตุ + 🌦️ สภาพอากาศ
               } else {
                 // basic attack
                 dmg = roll() * A.mult;
@@ -38354,7 +38538,8 @@ export default function CherryAdventure() {
                 if (wl) {
                   dmg *= 1.15;
                   if (WEAK[G.enemy.spId] === wl) { dmg *= 1.5; fxMsg += " โดนจุดอ่อน!! 💢"; }
-                  { const adv = elemAdv(wl, PET_ELEM[G.enemy.spId]); if (adv !== 1) { dmg *= adv; fxMsg += adv > 1 ? " ได้เปรียบธาตุ 🔺" : " เสียเปรียบธาตุ 🔻"; } } // 🎡 element wheel
+                  { const adv = elemAdv(wl, PET_ELEM[G.enemy.spId]); if (adv !== 1) { dmg *= adv; fxMsg += adv > 1 ? " ได้เปรียบธาตุ 🔺" : " เสียเปรียบธาตุ 🔻"; }
+                    const wxm2 = G.wxElem ? G.wxElem(wl) : 1; if (wxm2 !== 1) { dmg *= wxm2; fxMsg += wxm2 > 1 ? ` ${(G.weather || {}).emoji || ""}อากาศหนุน` : ` ${(G.weather || {}).emoji || ""}อากาศต้าน`; } } // 🎡 วงล้อธาตุ + 🌦️ สภาพอากาศ
                   if (wl === "fire" && Math.random() < 0.3) { G.est.burn = 2; fxMsg += " เผาไหม้ 🔥"; }
                   else if (wl === "ice" && Math.random() < 0.22) { G.est.frozen = true; fxMsg += " แช่แข็ง ❄️"; }
                   else if (wl === "dragon") { dmg *= 1.2; if (Math.random() < 0.35) { G.est.burn = 2; fxMsg += " เพลิงมังกร 🐉"; } }
@@ -42254,7 +42439,7 @@ export default function CherryAdventure() {
           fontSize: 12.5, fontWeight: 800, color: "#5a5a4a", pointerEvents: "none",
           boxShadow: "0 2px 8px rgba(90,120,70,0.2)",
         }}>
-          {ui.biomeName}
+          {ui.biomeName}{ui.weather ? ` · ${ui.weather}` : ""}
         </div>
       )}
       {/* 🏰 biome boss challenge button */}
