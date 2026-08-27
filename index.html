@@ -982,6 +982,31 @@ let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสล�
 const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
 const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls]; // ท่าไม้ตายทั่วไป (ขั้นสูงแยกเป็นปุ่ม/แอ็กชันต่างหาก)
 const advUltOf = (pathId) => (pathId && PATH_ADV[pathId]) ? PATH_ADV[pathId].ult : null;
+// 👑 เอกลักษณ์ท่าไม้ตายขั้นสูงประจำสาย — สี · ทรงออร่า · เอฟเฟกต์ 3 จังหวะ (เลือกให้ตรงชื่อท่าและคุณสมบัติ)
+//    aura: ring=วงแหวนหมุนรอบตัว · pillar=ลำแสงพุ่งขึ้นฟ้า · orbs=ลูกแก้วโคจร · spikes=ขวากแทงขึ้นจากพื้น
+const ADV_SIG = {
+    b_king: { c: 0xf5d24a, c2: 0xffffff, aura: "ring", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🥊👑 ราชันสังเวียน
+    b_muay: { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] }, // 🐒🔥 หนุมานถวายแหวน
+    w_pal: { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring", fx: ["healbless", "swordbeam", "shieldbash"] }, // ⚖️✨ ศาลเทพพิพากษา
+    w_ber: { c: 0xff3a3a, c2: 0x8a0e14, aura: "spikes", fx: ["warfrenzy", "hellfire", "crossslash"] }, // 😈🔥 วิญญาณอสูรคลั่ง
+    a_sharp: { c: 0x8fd0ff, c2: 0xffffff, aura: "orbs", fx: ["arrowsnipe", "snipe", "arrowpierce"] }, // 🎯🌠 กระสุนเทพเจาะฟ้า
+    a_range: { c: 0x7ada6a, c2: 0xd8f0a0, aura: "orbs", fx: ["arrowmulti", "arrowpoison", "poison"] }, // 🌿🏹 พงไพรพิโรธ
+    m_elem: { c: 0xb06aff, c2: 0x6ae0ff, aura: "orbs", fx: ["fire", "ice", "thunderstorm"] }, // 🌈☄️ มหาวิบัติหกธาตุ
+    m_priest: { c: 0xfff0b0, c2: 0xffffff, aura: "pillar", fx: ["healbless", "swordbeam", "healbless"] }, // ⛩️✨ ประตูสวรรค์เบิกฟ้า
+    s_shade: { c: 0x7a3ad0, c2: 0x2a1840, aura: "spikes", fx: ["shadow", "shadowdance", "crossslash"] }, // 🌑⚰️ ราตรีนิรันดร์
+    s_venom: { c: 0x6ad04a, c2: 0x2a6a2a, aura: "ring", fx: ["poison", "poisonknives", "poison"] }, // ☠️🌊 มหาสมุทรพิษ
+    l_dragoon: { c: 0xff8a2a, c2: 0xffd76a, aura: "pillar", fx: ["pierce", "thunderstorm", "hellfire"] }, // 🐉🌩️ จ้าวเวหามังกรราช
+    l_guard: { c: 0x8aa8c8, c2: 0xd8e4f0, aura: "ring", fx: ["shieldbash", "earthsplit", "quake"] }, // 🏰🌍 ปราการนิรันดร์กาล
+    l_frost: { c: 0x6ae0ff, c2: 0xeaffff, aura: "spikes", fx: ["ice", "icespear", "ice"] }, // 🧊🌌 ธารน้ำแข็งดำ
+    k_kensei: { c: 0xe8e8f8, c2: 0x9aa8ff, aura: "spikes", fx: ["crescent", "crossslash", "swordbeam"] }, // ⚔️🌌 หมื่นดาบไร้เงา
+    k_iai: { c: 0xffe24a, c2: 0xffffff, aura: "pillar", fx: ["bolt", "thunderstorm", "crescent"] }, // ⚡👹 ชักดาบเทพสายฟ้า
+    c_hacker: { c: 0x38f08a, c2: 0x2fe0ff, aura: "orbs", fx: ["overclock", "gravitycore", "omega"] }, // 🕶️🌐 ล่มระบบทั้งจักรวาล
+    c_ai: { c: 0x9a6aff, c2: 0x3ad0ff, aura: "ring", fx: ["gravitycore", "omega", "plasmadash"] }, // 🤖🌌 ซิงกูลาริตี้
+    o_ceo: { c: 0xf5c542, c2: 0xffffff, aura: "ring", fx: ["dronebarrage", "omega", "shieldbash"] }, // 👑🌐 เทคโอเวอร์จักรวาล
+    o_work: { c: 0xff9a4a, c2: 0xffd9a0, aura: "pillar", fx: ["multi", "fire", "healbless"] }, // 🌅💻 คืนนี้ไม่กลับบ้าน
+    g_titan: { c: 0x8ab0ff, c2: 0xe0f0ff, aura: "spikes", fx: ["shieldbash", "quake", "earthsplit"] }, // 🦾⚙️ ไททันโปรโตคอล
+    g_nova: { c: 0x3ad0ff, c2: 0xffffff, aura: "orbs", fx: ["snipe", "dronebarrage", "plasmadash"] }, // 🛰️🔫 ออร์บิทัลจัดจ์เมนต์
+};
 // 🎯 4 signature skills per class — level up gives skill points to rank them up (max Lv.100, gated by character level)
 // dmg = base attack × (mult + perLv×(rank-1)); each skill costs "cost" mana 💧
 const CLASS_SKILLS = {
@@ -61632,7 +61657,7 @@ function CherryAdventure() {
                             }
                         }
                         else if (A.type === "ult") {
-                            const cls = (G.cls === "aegis") ? "coder" : (G.cls || "warrior"); // 🤖 aegis ยืมอัลติสายดิจิทัลของ coder (ธีมตรงกัน)
+                            const cls = G.cls || "warrior"; // 🤖 ทุกอาชีพมีท่าไม้ตายเป็นของตัวเอง (aegis ไม่ยืมของ coder แล้ว)
                             if (G.cls === "aegis" && !A._omega) {
                                 A._omega = true;
                                 const _op = char.position;
@@ -61642,7 +61667,7 @@ function CherryAdventure() {
                             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
                             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
                             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
-                            const CAST_SEC = (cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" || cls === "mage" || cls === "boxer") ? 0 : 1.0;
+                            const CAST_SEC = (cls === "warrior" || cls === "assassin" || cls === "lancer" || cls === "samurai" || cls === "archer" || cls === "coder" || cls === "office" || cls === "mage" || cls === "boxer" || cls === "aegis") ? 0 : 1.0;
                             const castP = CAST_SEC > 0 ? Math.min(1, A.t / CAST_SEC) : 1;
                             const casting = A.t < CAST_SEC;
                             // remap post-cast progress so attack motions play at normal speed
@@ -61674,7 +61699,7 @@ function CherryAdventure() {
                                 magicCircle.scale.setScalar(1.4 + (A.t - CAST_SEC) * 5);
                                 magicCircle.userData.stars.forEach((st) => st.children.forEach((c) => { c.material.opacity = Math.max(0, 0.85 - (A.t - CAST_SEC) * 8); }));
                                 // ⚔️☁️ release: a giant blade of light plunges from the sky onto the enemy (once)
-                                if (!A.beamFired && !["warrior", "archer", "assassin", "lancer", "samurai", "coder", "mage", "office", "boxer"].includes(cls)) {
+                                if (!A.beamFired && !["warrior", "archer", "assassin", "lancer", "samurai", "coder", "mage", "office", "boxer", "aegis"].includes(cls)) {
                                     A.beamFired = true;
                                     const bc = (CLASSES[cls] && CLASSES[cls].color) || 0xfff2c0;
                                     spawnSkillFx("swordbeam", em.position, bc);
@@ -61699,6 +61724,110 @@ function CherryAdventure() {
                                     msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.pathId)) ? advUltOf(G.pathId).name : ultOf(G.cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
                                 }));
                             };
+                            // 👑 ชั้นเอกลักษณ์ของท่าไม้ตายขั้นสูง — ซ้อนออร่า/สี/เอฟเฟกต์ประจำสายทับลีลาของอาชีพพื้นฐาน
+                            //    ทำให้ทั้ง 21 สายมีหน้าตาต่างกันชัดเจน ตรงกับชื่อท่าและคุณสมบัติของสายนั้น ๆ
+                            if (A.advU && G.pathId && ADV_SIG[G.pathId]) {
+                                const SG = ADV_SIG[G.pathId];
+                                const sMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+                                if (!A.sg) {
+                                    A.sg = { fx: new THREE.Group(), parts: [], motes: [], beat: 0 };
+                                    scene.add(A.sg.fx);
+                                    if (SG.aura === "ring") {
+                                        for (let i = 0; i < 3; i++) {
+                                            const rg = new THREE.Mesh(new THREE.TorusGeometry(1.1 + i * 0.34, 0.06 - i * 0.012, 8, 34), sMat(i % 2 ? SG.c : SG.c2));
+                                            rg.rotation.x = Math.PI / 2;
+                                            A.sg.fx.add(rg);
+                                            A.sg.parts.push(rg);
+                                        }
+                                    }
+                                    else if (SG.aura === "pillar") {
+                                        for (let i = 0; i < 2; i++) {
+                                            const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.75 - i * 0.3, 1.15 - i * 0.4, 9, 18, 1, true), sMat(i ? SG.c2 : SG.c));
+                                            pl.position.y = 4.5;
+                                            A.sg.fx.add(pl);
+                                            A.sg.parts.push(pl);
+                                        }
+                                    }
+                                    else if (SG.aura === "orbs") {
+                                        for (let i = 0; i < 6; i++) {
+                                            const ob = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), sMat(i % 2 ? SG.c : SG.c2));
+                                            ob.userData.ph = i / 6 * Math.PI * 2;
+                                            A.sg.fx.add(ob);
+                                            A.sg.parts.push(ob);
+                                        }
+                                    }
+                                    else { // spikes
+                                        for (let i = 0; i < 8; i++) {
+                                            const sp2 = new THREE.Mesh(new THREE.ConeGeometry(0.19, 1.5, 5), sMat(i % 2 ? SG.c : SG.c2));
+                                            sp2.userData.ph = i / 8 * Math.PI * 2;
+                                            A.sg.fx.add(sp2);
+                                            A.sg.parts.push(sp2);
+                                        }
+                                    }
+                                    for (let i = 0; i < 14; i++) {
+                                        const mo = new THREE.Mesh(new THREE.SphereGeometry(0.07 + (i % 3) * 0.02, 8, 6), sMat(i % 3 ? SG.c : SG.c2, 0.85));
+                                        mo.userData.ph = Math.random() * Math.PI * 2;
+                                        mo.userData.rr = 1.1 + Math.random() * 1.5;
+                                        mo.userData.yy = Math.random() * 2.4;
+                                        A.sg.fx.add(mo);
+                                        A.sg.motes.push(mo);
+                                    }
+                                }
+                                const SGX = A.sg, pcx = char.position.x, pcz = char.position.z;
+                                const fade = p < 0.08 ? p / 0.08 : p > 0.92 ? Math.max(0, (1 - p) / 0.08) : 1;
+                                SGX.parts.forEach((o, i) => {
+                                    if (SG.aura === "ring") {
+                                        o.position.set(pcx, 0.16 + i * 0.5 + Math.sin(t * 1.6 + i) * 0.12, pcz);
+                                        o.rotation.z = t * (i % 2 ? -1.9 : 1.5);
+                                        o.scale.setScalar(0.9 + Math.sin(t * 2.2 + i) * 0.06);
+                                        o.material.opacity = 0.7 * fade;
+                                    }
+                                    else if (SG.aura === "pillar") {
+                                        o.position.set(pcx, 4.5, pcz);
+                                        o.rotation.y = t * (i ? -0.9 : 0.7);
+                                        o.scale.set(1 + Math.sin(t * 3 + i) * 0.05, 1, 1 + Math.cos(t * 3 + i) * 0.05);
+                                        o.material.opacity = (i ? 0.3 : 0.2) * fade;
+                                    }
+                                    else if (SG.aura === "orbs") {
+                                        const a2 = o.userData.ph + t * 1.5;
+                                        o.position.set(pcx + Math.cos(a2) * 1.5, 0.7 + Math.sin(a2 * 2 + t) * 0.5, pcz + Math.sin(a2) * 1.5);
+                                        o.material.opacity = 0.85 * fade;
+                                    }
+                                    else {
+                                        const a2 = o.userData.ph;
+                                        const rr = 1.5 + Math.sin(t * 2 + a2 * 3) * 0.18;
+                                        o.position.set(pcx + Math.cos(a2) * rr, 0.55 + Math.sin(t * 2.6 + a2) * 0.16, pcz + Math.sin(a2) * rr);
+                                        o.rotation.z = -Math.cos(a2) * 0.42;
+                                        o.rotation.x = Math.sin(a2) * 0.42;
+                                        o.material.opacity = 0.75 * fade;
+                                    }
+                                });
+                                SGX.motes.forEach((mo, i) => {
+                                    const a2 = mo.userData.ph + t * (0.8 + (i % 4) * 0.25);
+                                    mo.position.set(pcx + Math.cos(a2) * mo.userData.rr, 0.25 + ((mo.userData.yy + t * 0.7) % 2.6), pcz + Math.sin(a2) * mo.userData.rr);
+                                    mo.material.opacity = 0.8 * fade;
+                                });
+                                // 3 จังหวะเอฟเฟกต์ประจำสาย — เปิดฉาก · กลางท่า · จังหวะปิด
+                                const beats = [0.14, 0.52, 0.86];
+                                while (SGX.beat < 3 && p >= beats[SGX.beat]) {
+                                    const bi = SGX.beat;
+                                    const kindS = SG.fx[bi] || "omega";
+                                    const at = bi === 0 ? new THREE.Vector3(pcx, 0.9, pcz) : em.position;
+                                    try {
+                                        spawnSkillFx(kindS, at, bi % 2 ? SG.c2 : SG.c);
+                                    }
+                                    catch (e) { }
+                                    for (let k = 0; k < 12; k++)
+                                        burst(at.clone().add(new THREE.Vector3((Math.random() - 0.5) * 3, 0.2 + Math.random() * 2, (Math.random() - 0.5) * 3)), k % 2 ? SG.c : SG.c2, 0.4 + Math.random() * 1.6);
+                                    G._camShake = Math.max(G._camShake || 0, bi === 2 ? 1.0 : 0.5);
+                                    if (bi === 2) {
+                                        G.speedLines && G.speedLines(360);
+                                        if (G.sfx)
+                                            G.sfx.boom && G.sfx.boom();
+                                    }
+                                    SGX.beat++;
+                                }
+                            }
                             // ⏳ hold the strike until casting is done — the char just charges during the cast
                             if (casting) {
                                 // (charging — attack motions below are skipped this frame)
@@ -61930,6 +62059,292 @@ function CherryAdventure() {
                                     if (scene.fog && G.biomeFog)
                                         scene.fog.color.lerp(G.biomeFog, 0.08);
                                     G._camShake = Math.max(0, 0.2 * (1 - cp));
+                                }
+                            }
+                            else if (cls === "aegis") {
+                                // 🤖⚡ OMEGA JUDGMENT PROTOCOL — บูตโปรโตคอลสูงสุด → ดาวเทียมล็อกเป้า → ลำแสงจากวงโคจร
+                                //                                        → ดาบพลาสมายักษ์ฟันพื้น → คลื่น EMP · เจาะเกราะ + สตัน
+                                const cyanA = 0x3ad0ff, deepA = 0x1060c0, whiteA = 0xeaf8ff, warnA = 0xff5a3a, plasA = 0x8ae8ff;
+                                const EP = em.position;
+                                const CX = () => battleCenter.x - 1.3, CZ = () => battleCenter.z;
+                                const aMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+                                if (!A.og) {
+                                    A.og = { fx: new THREE.Group(), rings: [], panels: [], recs: [], beams: [], emp: [], struck: 0 };
+                                    scene.add(A.og.fx);
+                                    for (let i = 0; i < 4; i++) { // 🔵 วงแหวนโปรโตคอลรอบตัว
+                                        const rg = new THREE.Mesh(new THREE.TorusGeometry(0.9 + i * 0.26, 0.035, 8, 6), aMat(i % 2 ? cyanA : whiteA));
+                                        rg.rotation.x = Math.PI / 2;
+                                        rg.visible = false;
+                                        A.og.fx.add(rg);
+                                        A.og.rings.push(rg);
+                                    }
+                                    for (let i = 0; i < 5; i++) { // 🖥️ แผงข้อมูลโฮโลแกรมลอยรอบตัว
+                                        const pn = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.42), aMat(cyanA, 0));
+                                        const br = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.05), aMat(whiteA, 0.9));
+                                        br.position.y = 0.15;
+                                        pn.add(br);
+                                        pn.userData.ph = i / 5 * Math.PI * 2;
+                                        pn.visible = false;
+                                        A.og.fx.add(pn);
+                                        A.og.panels.push(pn);
+                                    }
+                                    for (let i = 0; i < 3; i++) { // 🎯 วงเล็งเป้าซ้อนกันเหนือศัตรู
+                                        const rc = new THREE.Mesh(new THREE.TorusGeometry(1.5 - i * 0.42, 0.05, 8, 4), aMat(i === 1 ? warnA : cyanA));
+                                        rc.rotation.x = Math.PI / 2;
+                                        rc.visible = false;
+                                        A.og.fx.add(rc);
+                                        A.og.recs.push(rc);
+                                    }
+                                    for (let i = 0; i < 5; i++) { // 🔫 ลำแสงจากวงโคจร
+                                        const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.16, 24, 12, 1, true), aMat(cyanA, 0.9));
+                                        bm.visible = false;
+                                        A.og.fx.add(bm);
+                                        A.og.beams.push(bm);
+                                    }
+                                    for (let i = 0; i < 3; i++) { // 💥 คลื่น EMP
+                                        const ep2 = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.2 - i * 0.05, 10, 30), aMat(i === 1 ? whiteA : plasA));
+                                        ep2.rotation.x = Math.PI / 2;
+                                        ep2.visible = false;
+                                        A.og.fx.add(ep2);
+                                        A.og.emp.push(ep2);
+                                    }
+                                    { // 🛰️ โครงดาวเทียมยิงจากวงโคจร
+                                        const sat = new THREE.Group();
+                                        const hull = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 0.7), new THREE.MeshStandardMaterial({ color: 0x9aa8bc, metalness: 0.8, roughness: 0.3 }));
+                                        sat.add(hull);
+                                        for (const sx of [-1, 1]) {
+                                            const wing = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.05, 0.5), new THREE.MeshStandardMaterial({ color: 0x2a5a9a, metalness: 0.6, roughness: 0.35 }));
+                                            wing.position.x = sx * 1.25;
+                                            sat.add(wing);
+                                        }
+                                        const lens = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 12), aMat(cyanA, 0.95));
+                                        lens.position.y = -0.3;
+                                        sat.add(lens);
+                                        sat.visible = false;
+                                        A.og.fx.add(sat);
+                                        A.og.sat = sat;
+                                        A.og.lens = lens;
+                                    }
+                                    { // ⚔️ ดาบพลาสมายักษ์
+                                        const bl = new THREE.Group();
+                                        const core = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.16), aMat(whiteA, 0.95));
+                                        core.position.y = 3.2;
+                                        bl.add(core);
+                                        const glow = new THREE.Mesh(new THREE.BoxGeometry(1.05, 6.6, 0.4), aMat(plasA, 0.42));
+                                        glow.position.y = 3.2;
+                                        bl.add(glow);
+                                        const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.17, 0.9, 10), new THREE.MeshStandardMaterial({ color: 0x6a7688, metalness: 0.85, roughness: 0.25 }));
+                                        hilt.position.y = -0.4;
+                                        bl.add(hilt);
+                                        bl.visible = false;
+                                        A.og.fx.add(bl);
+                                        A.og.blade = bl;
+                                    }
+                                }
+                                const OG = A.og;
+                                const kneeA = (v) => { if (legL.userData.knee)
+                                    legL.userData.knee.rotation.x = v; if (legR.userData.knee)
+                                    legR.userData.knee.rotation.x = v; };
+                                // ===== PHASE 1 — BOOT PROTOCOL (p 0 → 0.18) : ลอยขึ้น วงแหวนโปรโตคอลกาง =====
+                                if (p < 0.18) {
+                                    const cp = smK(p / 0.18);
+                                    char.position.set(CX(), 0.4 + cp * 1.5, CZ());
+                                    char.rotation.z = 0;
+                                    armR.rotation.x = -cp * 0.7;
+                                    armR.rotation.z = 0.3 + cp * 0.75;
+                                    armL.rotation.x = -cp * 0.7;
+                                    armL.rotation.z = -0.3 - cp * 0.75;
+                                    kneeA(0.25 + cp * 0.5);
+                                    headG.rotation.x = -cp * 0.24;
+                                    OG.rings.forEach((rg, i) => {
+                                        rg.visible = cp > 0.1;
+                                        rg.position.set(char.position.x, char.position.y + 0.6 + i * 0.34, char.position.z);
+                                        rg.rotation.z = t * (i % 2 ? -2.2 : 1.8);
+                                        rg.scale.setScalar(0.3 + cp * (1.15 - i * 0.12));
+                                        rg.material.opacity = 0.85 * cp;
+                                    });
+                                    OG.panels.forEach((pn, i) => {
+                                        pn.visible = cp > 0.25;
+                                        const a2 = pn.userData.ph + t * 1.4;
+                                        pn.position.set(char.position.x + Math.cos(a2) * 1.5, char.position.y + 0.7 + Math.sin(a2 * 1.7) * 0.5, char.position.z + Math.sin(a2) * 1.5);
+                                        pn.lookAt(camera.position);
+                                        pn.material.opacity = 0.72 * cp;
+                                        pn.children[0].material.opacity = 0.9 * cp;
+                                    });
+                                    if (!A._ogBoot && cp > 0.5) {
+                                        A._ogBoot = true;
+                                        if (G.sfx && G.sfx.charge)
+                                            G.sfx.charge();
+                                    }
+                                    if (Math.random() < 0.6)
+                                        burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 2, char.position.y + Math.random() * 1.6, char.position.z + (Math.random() - 0.5) * 2), cyanA, 0.4);
+                                    G._camShake = Math.max(G._camShake || 0, 0.2 * cp);
+                                }
+                                // ===== PHASE 2 — SATELLITE LOCK (p 0.18 → 0.38) : ดาวเทียมลงมา วงเล็งบีบเข้าหาเป้า =====
+                                else if (p < 0.38) {
+                                    const u2 = (p - 0.18) / 0.2, e2 = smK(u2);
+                                    char.position.set(CX(), 1.9 + Math.sin(t * 2.4) * 0.05, CZ());
+                                    armR.rotation.x = -1.9;
+                                    armR.rotation.z = 0.4; // ชี้มือสั่งการไปที่ศัตรู
+                                    armL.rotation.z = -1.0;
+                                    OG.rings.forEach((rg, i) => { rg.position.set(char.position.x, char.position.y + 0.6 + i * 0.34, char.position.z); rg.rotation.z = t * (i % 2 ? -2.8 : 2.3); rg.material.opacity = 0.85; });
+                                    OG.panels.forEach((pn, i) => {
+                                        const a2 = pn.userData.ph + t * 1.9;
+                                        pn.position.set(char.position.x + Math.cos(a2) * 1.5, char.position.y + 0.7 + Math.sin(a2 * 1.7) * 0.5, char.position.z + Math.sin(a2) * 1.5);
+                                        pn.lookAt(camera.position);
+                                    });
+                                    OG.sat.visible = true;
+                                    OG.sat.position.set(EP.x, 16 - e2 * 6.5, EP.z - 1.2);
+                                    OG.sat.rotation.y = t * 0.7;
+                                    OG.lens.material.opacity = 0.5 + Math.abs(Math.sin(t * 7)) * 0.5;
+                                    OG.recs.forEach((rc, i) => {
+                                        rc.visible = e2 > 0.15;
+                                        rc.position.set(EP.x, 0.1 + i * 0.06, EP.z);
+                                        rc.rotation.z = t * (i % 2 ? -3.2 : 2.6) + i;
+                                        rc.scale.setScalar((2.4 - e2 * 1.35) * (1 - i * 0.06));
+                                        rc.material.opacity = 0.9 * Math.min(1, e2 * 2);
+                                    });
+                                    if (!A._ogLock && u2 > 0.72) {
+                                        A._ogLock = true;
+                                        G._camShake = Math.max(G._camShake || 0, 0.4);
+                                        if (G.sfx)
+                                            G.sfx.guard && G.sfx.guard();
+                                    }
+                                    if (Math.random() < 0.5)
+                                        burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 2.4, 0.15 + Math.random() * 0.6, EP.z + (Math.random() - 0.5) * 2.4), warnA, 0.35);
+                                }
+                                // ===== PHASE 3 — ORBITAL BARRAGE (p 0.38 → 0.62) : ลำแสงจากวงโคจรถล่ม 5 นัด =====
+                                else if (p < 0.62) {
+                                    const u2 = (p - 0.38) / 0.24;
+                                    char.position.set(CX(), 1.9 + Math.sin(t * 2.4) * 0.05, CZ());
+                                    armR.rotation.x = -2.1 + Math.sin(t * 9) * 0.08;
+                                    OG.sat.position.set(EP.x, 9.5 + Math.sin(t * 1.6) * 0.2, EP.z - 1.2);
+                                    OG.sat.rotation.y = t * 1.1;
+                                    OG.lens.material.opacity = 0.6 + Math.abs(Math.sin(t * 12)) * 0.4;
+                                    OG.recs.forEach((rc, i) => { rc.rotation.z = t * (i % 2 ? -4.4 : 3.6) + i; rc.scale.setScalar((1.05 - i * 0.06) * (1 + Math.sin(t * 8 + i) * 0.05)); });
+                                    const want = Math.min(5, Math.floor(u2 * 5.6));
+                                    while (OG.struck < want) {
+                                        const bi = OG.struck;
+                                        const bm = OG.beams[bi];
+                                        const ox = (Math.random() - 0.5) * 1.5, oz = (Math.random() - 0.5) * 1.5;
+                                        bm.visible = true;
+                                        bm.position.set(EP.x + ox, 12, EP.z + oz);
+                                        bm.material.opacity = 0.95;
+                                        bm.userData.tt = 0;
+                                        applyHit(roll() * 0.42, cyanA, bi === 4 ? " 🛰️ ลำแสงวงโคจร!" : "");
+                                        spawnSkillFx("plasmadash", new THREE.Vector3(EP.x + ox, EP.y + 0.3, EP.z + oz), cyanA);
+                                        for (let k = 0; k < 7; k++)
+                                            burst(new THREE.Vector3(EP.x + ox + (Math.random() - 0.5) * 1.6, 0.1 + Math.random() * 1.6, EP.z + oz + (Math.random() - 0.5) * 1.6), k % 2 ? whiteA : cyanA, 0.4 + Math.random() * 1.1);
+                                        G._camShake = Math.max(G._camShake || 0, 0.55);
+                                        if (G.sfx)
+                                            G.sfx.crit && G.sfx.crit();
+                                        OG.struck++;
+                                    }
+                                    OG.beams.forEach((bm) => { if (!bm.visible)
+                                        return; bm.userData.tt += dt; bm.scale.x = bm.scale.z = Math.max(0.05, 1 - bm.userData.tt * 2.2); bm.material.opacity = Math.max(0, 0.95 - bm.userData.tt * 3); if (bm.material.opacity <= 0.02)
+                                        bm.visible = false; });
+                                    if (em.userData.body)
+                                        em.position.x = EP.x + Math.sin(t * 26) * 0.09;
+                                }
+                                // ===== PHASE 4 — PLASMA BLADE (p 0.62 → 0.84) : พุ่งขึ้นสร้างดาบพลาสมายักษ์ ฟันลงพื้น =====
+                                else if (p < 0.84) {
+                                    const u2 = (p - 0.62) / 0.22;
+                                    OG.sat.position.y = 9.5 + u2 * 8;
+                                    OG.lens.material.opacity = Math.max(0, 0.9 - u2 * 2);
+                                    OG.recs.forEach((rc) => { rc.material.opacity = Math.max(0, rc.material.opacity - dt * 3); });
+                                    if (u2 < 0.45) { // ยกดาบขึ้นเหนือหัวศัตรู
+                                        const e3 = smK(u2 / 0.45);
+                                        char.position.set(CX() + e3 * (EP.x - CX() - 1.6), 1.9 + e3 * 2.6, CZ());
+                                        char.rotation.z = -e3 * 0.3;
+                                        armR.rotation.x = -2.7;
+                                        armR.rotation.z = 0.16;
+                                        armL.rotation.x = -2.4;
+                                        armL.rotation.z = -0.3;
+                                        kneeA(0.7);
+                                        OG.blade.visible = true;
+                                        OG.blade.position.set(char.position.x + 0.5, char.position.y + 0.4, char.position.z);
+                                        OG.blade.rotation.z = -0.5 - e3 * 0.5;
+                                        OG.blade.scale.setScalar(0.3 + e3 * 0.75);
+                                        if (Math.random() < 0.8)
+                                            burst(new THREE.Vector3(OG.blade.position.x + (Math.random() - 0.5) * 1.2, OG.blade.position.y + Math.random() * 4, OG.blade.position.z), plasA, 0.5 + Math.random() * 0.8);
+                                        G._camShake = Math.max(G._camShake || 0, 0.35);
+                                    }
+                                    else { // ฟันลง
+                                        const e3 = smK(Math.min(1, (u2 - 0.45) / 0.32));
+                                        char.position.set(CX() + (EP.x - CX() - 1.6) + e3 * 0.5, 4.5 - e3 * 4.5, CZ());
+                                        char.rotation.z = -0.8 + e3 * 1.7;
+                                        armR.rotation.x = -2.7 + e3 * 3.6;
+                                        armL.rotation.x = -2.4 + e3 * 3.0;
+                                        kneeA(0.7 - e3 * 0.4);
+                                        OG.blade.visible = e3 < 0.94;
+                                        OG.blade.position.set(char.position.x + 0.5, char.position.y + 0.4, char.position.z);
+                                        OG.blade.rotation.z = -1.0 + e3 * 2.5;
+                                        OG.blade.scale.setScalar(1.05);
+                                        if (!A._ogSlam && e3 > 0.72) {
+                                            A._ogSlam = true;
+                                            G._camShake = 1.15;
+                                            G.speedLines && G.speedLines(420);
+                                            if (G.sfx) {
+                                                G.sfx.crit && G.sfx.crit();
+                                                G.sfx.boom && G.sfx.boom();
+                                            }
+                                            applyHit(roll() * 1.9, plasA, " ⚔️ ดาบพลาสมาผ่าสนาม!");
+                                            G.enemy.def = Math.max(0, (G.enemy.def || 0) - 6); // เจาะเกราะ
+                                            spawnSkillFx("plasmadash", EP, plasA);
+                                            for (let k = 0; k < 24; k++)
+                                                setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 5, 0.05 + Math.random() * 2.4, EP.z + (Math.random() - 0.5) * 5), [plasA, whiteA, cyanA, deepA][k % 4], 0.3 + Math.random() * 2.6), k * 18);
+                                        }
+                                    }
+                                }
+                                // ===== PHASE 5 — EMP BLAST (p 0.84 → 0.94) : คลื่น EMP แผ่ออก · สตัน =====
+                                else if (p < 0.94) {
+                                    const u2 = (p - 0.84) / 0.1;
+                                    char.position.set(CX() + (EP.x - CX() - 1.6) + 0.5, 0, CZ());
+                                    char.rotation.z = 0.9 - smK(u2) * 0.9;
+                                    armR.rotation.x = 0.9 - u2 * 0.6;
+                                    armL.rotation.x = 0.6 - u2 * 0.4;
+                                    kneeA(0.3 * (1 - u2));
+                                    OG.blade.visible = false;
+                                    OG.rings.forEach((rg) => { rg.material.opacity = Math.max(0, rg.material.opacity - dt * 3); });
+                                    OG.panels.forEach((pn) => { pn.material.opacity = Math.max(0, pn.material.opacity - dt * 3); pn.children[0].material.opacity = pn.material.opacity; });
+                                    if (!A._ogEmp) {
+                                        A._ogEmp = true;
+                                        G._camShake = 1.0;
+                                        applyHit(roll() * 1.25, whiteA, " 💥 คลื่น EMP! ระบบศัตรูล่ม");
+                                        G.est.frozen = true; // สตัน
+                                        G.enemy.def = Math.max(0, (G.enemy.def || 0) - 4);
+                                        spawnSkillFx("overclock", EP, cyanA);
+                                        if (G.sfx)
+                                            G.sfx.boom && G.sfx.boom();
+                                    }
+                                    OG.emp.forEach((ep2, i) => {
+                                        ep2.visible = true;
+                                        ep2.position.set(EP.x, 0.14 + i * 0.3, EP.z);
+                                        ep2.scale.setScalar(0.4 + u2 * (3.4 + i * 0.7));
+                                        ep2.material.opacity = 0.9 * (1 - u2);
+                                    });
+                                    if (Math.random() < 0.8)
+                                        burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 4, 0.1 + Math.random() * 2, EP.z + (Math.random() - 0.5) * 4), Math.random() < 0.5 ? cyanA : whiteA, 0.4 + Math.random() * 1.6);
+                                }
+                                // ===== PHASE 6 — AFTERMATH (p 0.94 → 1) =====
+                                else {
+                                    const u2 = (p - 0.94) / 0.06;
+                                    char.position.set(CX() + (1 - smK(u2)) * (EP.x - CX() - 1.1), 0, CZ());
+                                    char.rotation.z = 0;
+                                    armR.rotation.x = 0.3 * (1 - u2);
+                                    armR.rotation.z = 0.23;
+                                    armL.rotation.x = 0.2 * (1 - u2);
+                                    armL.rotation.z = -0.23;
+                                    kneeA(0);
+                                    OG.fx.children.forEach((o) => { if (o.material && o.material.opacity != null)
+                                        o.material.opacity = Math.max(0, o.material.opacity - dt * 3); });
+                                    OG.sat.visible = false;
+                                    OG.blade.visible = false;
+                                    G._camShake = Math.max(0, 0.25 * (1 - u2));
+                                    if (em.userData.body) {
+                                        em.position.x = EP.x;
+                                        em.rotation.z = 0;
+                                    }
                                 }
                             }
                             else if (cls === "assassin") {
@@ -64949,6 +65364,20 @@ function CherryAdventure() {
                                         o.material.dispose(); });
                                     A.se = null;
                                 }
+                                if (A.og) {
+                                    scene.remove(A.og.fx);
+                                    A.og.fx.traverse(o => { if (o.geometry)
+                                        o.geometry.dispose(); if (o.material)
+                                        o.material.dispose(); });
+                                    A.og = null;
+                                } // 🤖 เก็บเอฟเฟกต์โอเมกาโปรโตคอล
+                                if (A.sg) {
+                                    scene.remove(A.sg.fx);
+                                    A.sg.fx.traverse(o => { if (o.geometry)
+                                        o.geometry.dispose(); if (o.material)
+                                        o.material.dispose(); });
+                                    A.sg = null;
+                                } // 👑 เก็บออร่าเอกลักษณ์สายขั้นสูง
                                 if (A.mg) {
                                     scene.remove(A.mg.fx);
                                     A.mg.fx.traverse(o => { if (o.geometry)
