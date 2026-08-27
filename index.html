@@ -640,6 +640,7 @@ const MISSION_DAILY = [
     { id: "d_boss1", t: "bboss", n: 1, emoji: "👹", name: "ล้มบอสประจำถิ่น 1 ตัว", exp: 1200, gold: 6000, pt: 15 },
     { id: "d_forge3", t: "forge", n: 3, emoji: "⛏️", name: "ตีบวก/หลอมของ 3 ครั้ง", exp: 500, gold: 3000, pt: 10 },
     { id: "d_skill8", t: "skill", n: 8, emoji: "✨", name: "ใช้สกิล 8 ครั้ง", exp: 480, gold: 2600, pt: 10 },
+    { id: "d_mine6", t: "mine", n: 6, emoji: "⛏️", name: "ขุดสายแร่ 6 ก้อน", exp: 520, gold: 3000, pt: 10 },
 ];
 const MISSION_WEEKLY = [
     { id: "w_win150", t: "win", n: 150, emoji: "⚔️", name: "ล่ามอนสเตอร์ 150 ตัว", exp: 6000, gold: 34000, dia: 60, pt: 40 },
@@ -648,6 +649,7 @@ const MISSION_WEEKLY = [
     { id: "w_ult25", t: "ult", n: 25, emoji: "🌟", name: "ปล่อยท่าไม้ตาย 25 ครั้ง", exp: 5600, gold: 31000, dia: 55, pt: 38 },
     { id: "w_tower5", t: "tower", n: 5, emoji: "🗼", name: "ผ่านหอคอย 5 ชั้น", exp: 7000, gold: 38000, dia: 70, pt: 42 },
     { id: "w_fish30", t: "fish", n: 30, emoji: "🎣", name: "ตกปลา 30 ตัว", exp: 4800, gold: 27000, dia: 45, pt: 34 },
+    { id: "w_mine40", t: "mine", n: 40, emoji: "⛏️", name: "ขุดสายแร่ 40 ก้อน", exp: 5400, gold: 30000, dia: 50, pt: 36 },
 ];
 const PASS_TIERS = 30; // 🎫 จำนวนขั้นของแทร็กรางวัล
 const PASS_STEP = 100; // แต้มต่อหนึ่งขั้น
@@ -1492,6 +1494,44 @@ const MATERIALS = {
     earthEss: { name: "แก่นปฐพี", emoji: "🌍", color: 0xc9a86a, desc: "พลังดิน ใส่ธาตุดิน" },
     dragonScale: { name: "เกล็ดมังกร", emoji: "🐉", color: 0xd94a4a, desc: "หายากสุด เพิ่มพลังโจมตีถาวร" },
 };
+// ---------- ⛏️ เหมืองแร่ — สายแร่โผล่ตามภูมิประเทศ ขุดเอาวัตถุดิบมาคราฟต์/ตีบวก ----------
+// น้ำหนักการออกของแต่ละแมพ (ยิ่งเลขมาก ยิ่งออกบ่อย) — แมพยากออกของแพงกว่า
+const ORE_TABLE = {
+    meadow: { ironOre: 100, crystal: 22, earthEss: 30, windEss: 18 },
+    desert: { ironOre: 82, crystal: 26, earthEss: 52, fireEss: 24 },
+    snow: { ironOre: 74, crystal: 40, iceEss: 62, windEss: 20 },
+    cave: { ironOre: 130, crystal: 66, earthEss: 40, dragonScale: 5 },
+    volcano: { ironOre: 70, crystal: 34, fireEss: 78, dragonScale: 12 },
+    sky: { ironOre: 52, crystal: 62, windEss: 76, iceEss: 20 },
+    hell: { ironOre: 60, crystal: 44, fireEss: 82, dragonScale: 20 },
+    heaven: { ironOre: 46, crystal: 86, windEss: 40, dragonScale: 16 },
+    moon: { ironOre: 56, crystal: 92, iceEss: 46, dragonScale: 14 },
+    candy: { ironOre: 64, crystal: 58, earthEss: 34, windEss: 34 },
+    beach: { ironOre: 88, crystal: 30, iceEss: 26, windEss: 40 },
+    titan: { ironOre: 62, crystal: 56, earthEss: 74, dragonScale: 22 },
+    amazon: { ironOre: 70, crystal: 38, earthEss: 70, windEss: 42 },
+};
+// 🪨 หน้าตาสายแร่ประจำแมพ (สีหิน + สีผลึกที่โผล่ออกมา)
+const ORE_LOOK = {
+    meadow: { rock: 0x8f9488, gem: 0x9adcf5 }, desert: { rock: 0xc0a878, gem: 0xf5c06a },
+    snow: { rock: 0xa8bcc8, gem: 0xc8f0ff }, cave: { rock: 0x6a6e78, gem: 0x8ad0ff },
+    volcano: { rock: 0x6a4a42, gem: 0xff7a3a }, sky: { rock: 0xb0c4d8, gem: 0xa0ffd8 },
+    hell: { rock: 0x5a3038, gem: 0xff4a5a }, heaven: { rock: 0xe0d8c0, gem: 0xfff0a0 },
+    moon: { rock: 0x8a90a0, gem: 0xc0a8ff }, candy: { rock: 0xe0a8c8, gem: 0xffd0e8 },
+    beach: { rock: 0xd8c8a0, gem: 0x8ae0e0 }, titan: { rock: 0x7a7060, gem: 0xd0a060 },
+    amazon: { rock: 0x6a7a58, gem: 0x9ae86a },
+};
+const MINE_NODES = 5; // 🪨 สายแร่ที่โผล่พร้อมกันในแมพ
+const MINE_SWINGS = 3; // 🔨 ต้องตีให้เข้าเป้ากี่ครั้งกว่าสายแร่จะแตก
+const MINE_LV_EXP = (lv) => 60 + lv * 45; // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
+// ⛏️ พลั่ว/อีเต้อ — ซื้อที่ร้านค้า ยิ่งดี ยิ่งได้แร่เยอะ + เป้ากว้างขึ้น (ตีง่ายขึ้น)
+const PICKS = [
+    { lv: 1, name: "อีเต้อไม้", emoji: "🪵", cost: 0, yield: 1.0, zone: 0.26, desc: "ของติดตัวตั้งแต่เริ่ม" },
+    { lv: 2, name: "อีเต้อเหล็ก", emoji: "⛏️", cost: 18000, yield: 1.35, zone: 0.30, desc: "ได้แร่เพิ่ม 35% · เป้ากว้างขึ้น" },
+    { lv: 3, name: "อีเต้อคริสตัล", emoji: "💎", cost: 65000, yield: 1.8, zone: 0.34, desc: "ได้แร่เพิ่ม 80% · โอกาสได้ของหายากขึ้น" },
+    { lv: 4, name: "อีเต้อมังกร", emoji: "🐉", cost: 220000, yield: 2.4, zone: 0.38, desc: "ได้แร่เพิ่ม 140% · เกล็ดมังกรออกบ่อยขึ้นมาก" },
+    { lv: 5, name: "อีเต้อจักรวาล", emoji: "🌌", cost: 700000, yield: 3.2, zone: 0.44, desc: "ได้แร่เพิ่ม 220% · เป้ากว้างสุด" },
+];
 // forge recipes: infuse an element onto the equipped weapon
 const ELEM_INFUSE = {
     fire: { cost: { fireEss: 3 }, name: "ธาตุไฟ", emoji: "🔥" },
@@ -1948,6 +1988,7 @@ function CherryAdventure() {
         inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
         gold: 80, shop: [], shopOpen: false,
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
+        mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
         eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
         toast: "", toastAt: 0,
         inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
@@ -27881,6 +27922,8 @@ function CherryAdventure() {
             (G.sceneryObjects || []).forEach(snap);
             (G.biomeDecorGroups || []).forEach((grp) => { if (grp && grp.children)
                 grp.children.forEach(snap); });
+            if (G.mineSnapAll)
+                G.mineSnapAll(); // ⛏️ สายแร่เกาะพื้นใหม่ด้วย
             if (G.warpGate && G.warpGate.children)
                 G.warpGate.children.forEach(snap);
         };
@@ -29760,6 +29803,365 @@ function CherryAdventure() {
             }
             return FISH_TYPES[0];
         };
+        // ================= ⛏️ MINING — สายแร่โผล่ตามภูมิประเทศ ขุดเอาวัตถุดิบ =================
+        G.mineLv = 1;
+        G.mineExp = 0;
+        G.pickLv = 1;
+        G.mineTotal = 0;
+        G.mineNodes = [];
+        G.mining = null;
+        G._mineNear = null;
+        G._mineBiome = null;
+        const pickOf = () => PICKS[Math.min(PICKS.length, Math.max(1, G.pickLv || 1)) - 1];
+        G.pickOf = pickOf;
+        G.mineExpNeed = () => MINE_LV_EXP(G.mineLv || 1);
+        // 🎲 สุ่มชนิดแร่ตามน้ำหนักของแมพ (อีเต้อดี = เกล็ดมังกรออกบ่อยขึ้น)
+        const oreRoll = (bid) => {
+            const tb = ORE_TABLE[bid] || ORE_TABLE.meadow;
+            const pk = pickOf();
+            const keys = Object.keys(tb);
+            let tot = 0;
+            const w = keys.map((k) => { const v = tb[k] * (k === "dragonScale" ? (0.6 + pk.lv * 0.5) : 1); tot += v; return v; });
+            let r = Math.random() * tot;
+            for (let i = 0; i < keys.length; i++) {
+                r -= w[i];
+                if (r <= 0)
+                    return keys[i];
+            }
+            return keys[0];
+        };
+        // 🪨 ปั้นก้อนสายแร่ — หินหยาบ + ผลึกเรืองแสงโผล่ออกมา + วงแหวนบอกจุด
+        const buildOreNode = (bid) => {
+            const look = ORE_LOOK[bid] || ORE_LOOK.meadow;
+            const g = new THREE.Group();
+            // 🪨 กองหินหยาบ — ใหญ่พอให้เห็นชัดว่าไม่ใช่หินประดับฉาก
+            const rockMat = new THREE.MeshLambertMaterial({ color: look.rock, flatShading: true });
+            for (let i = 0; i < 5; i++) {
+                const r = 0.42 + Math.random() * 0.34;
+                const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), rockMat);
+                const a = (i / 5) * Math.PI * 2 + Math.random() * 0.5;
+                const rr = i === 0 ? 0 : 0.42;
+                m.position.set(Math.cos(a) * rr, r * 0.58, Math.sin(a) * rr);
+                m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+                m.castShadow = true;
+                g.add(m);
+            }
+            // 💎 ผลึกเรืองแสงโผล่ทะลุออกมา
+            const gemMat = new THREE.MeshStandardMaterial({ color: look.gem, emissive: look.gem, emissiveIntensity: 1.1, roughness: 0.2, metalness: 0.1 });
+            const shards = [];
+            for (let i = 0; i < 4; i++) {
+                const h = 0.5 + Math.random() * 0.4;
+                const m = new THREE.Mesh(new THREE.OctahedronGeometry(h * 0.36, 0), gemMat);
+                m.scale.y = 2.3;
+                const a = (i / 4) * Math.PI * 2 + Math.random() * 0.8;
+                m.position.set(Math.cos(a) * 0.3, 0.78 + Math.random() * 0.3, Math.sin(a) * 0.3);
+                m.rotation.set((Math.random() - 0.5) * 0.5, 0, (Math.random() - 0.5) * 0.8);
+                g.add(m);
+                shards.push(m);
+            }
+            // 🔆 ลำแสงตั้งขึ้นฟ้า — มองเห็นได้จากอีกฟากของแมพ
+            const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.44, 6, 12, 1, true), new THREE.MeshBasicMaterial({ color: look.gem, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+            beam.position.y = 3.0;
+            g.add(beam);
+            // 💍 วงแหวนบนพื้นบอกจุดขุด
+            const ring = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.24, 34), new THREE.MeshBasicMaterial({ color: look.gem, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.04;
+            g.add(ring);
+            // ✨ ประกายลอยรอบ ๆ
+            const spark = new THREE.Points((() => {
+                const gg = new THREE.BufferGeometry();
+                const a = new Float32Array(18 * 3);
+                for (let i = 0; i < 18; i++) {
+                    const an = Math.random() * Math.PI * 2, rr = 0.5 + Math.random() * 0.7;
+                    a[i * 3] = Math.cos(an) * rr;
+                    a[i * 3 + 1] = 0.3 + Math.random() * 1.5;
+                    a[i * 3 + 2] = Math.sin(an) * rr;
+                }
+                gg.setAttribute("position", new THREE.BufferAttribute(a, 3));
+                return gg;
+            })(), new THREE.PointsMaterial({ color: look.gem, size: 0.13, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }));
+            g.add(spark);
+            g.userData.shards = shards;
+            g.userData.ring = ring;
+            g.userData.beam = beam;
+            g.userData.spark = spark;
+            return g;
+        };
+        // 📍 หาที่วางสายแร่ — เลี่ยงกลางแมพ (เมือง/บ้าน/ไร่) และเลี่ยงซ้อนกันเอง
+        const minePlace = () => {
+            for (let tries = 0; tries < 30; tries++) {
+                const a = Math.random() * Math.PI * 2;
+                const r = 11 + Math.random() * 19;
+                const x = Math.cos(a) * r, z = Math.sin(a) * r;
+                let clash = false;
+                for (const n of G.mineNodes) {
+                    if (n && Math.hypot(n.x - x, n.z - z) < 5) {
+                        clash = true;
+                        break;
+                    }
+                }
+                if (!clash)
+                    return { x, z };
+            }
+            const a = Math.random() * Math.PI * 2;
+            return { x: Math.cos(a) * 18, z: Math.sin(a) * 18 };
+        };
+        const mineNodeSnap = (n) => { if (n && n.mesh)
+            n.mesh.position.set(n.x, terrainAt(n.x, n.z), n.z); };
+        G.mineSnapAll = () => (G.mineNodes || []).forEach(mineNodeSnap);
+        // 🗺️ วางสายแร่ชุดใหม่เมื่อเปลี่ยนแมพ
+        G.mineRespawnAll = (bid) => {
+            for (const n of G.mineNodes) {
+                if (n && n.mesh) {
+                    if (n.mesh.parent)
+                        n.mesh.parent.remove(n.mesh);
+                    if (G._disposeObj3D)
+                        G._disposeObj3D(n.mesh);
+                }
+            }
+            G.mineNodes = [];
+            G._mineNear = null;
+            if (G.mining) {
+                G.mining = null;
+                setUi((u) => ({ ...u, mining: null }));
+            }
+            const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
+            if (indoor) {
+                setUi((u) => ({ ...u, mineNear: false }));
+                return;
+            }
+            const root = G._worldRoot || scene;
+            for (let i = 0; i < MINE_NODES; i++) {
+                const pos = minePlace();
+                const mesh = buildOreNode(bid);
+                const n = { x: pos.x, z: pos.z, mesh, ore: oreRoll(bid), dead: false, respawn: 0, bob: Math.random() * 6 };
+                mineNodeSnap(n);
+                root.add(mesh);
+                G.mineNodes.push(n);
+            }
+            setUi((u) => ({ ...u, mineNear: false }));
+        };
+        // 🔨 เริ่มขุด — มินิเกมจับจังหวะ ตีให้เข้าเป้า 3 ครั้ง
+        G.startMining = () => {
+            if (G.mining)
+                return;
+            if (G.mode !== "explore") {
+                toast("ขุดได้เฉพาะตอนเดินสำรวจ");
+                return;
+            }
+            const i = G._mineNear;
+            const n = i != null ? G.mineNodes[i] : null;
+            if (!n || n.dead) {
+                toast("⛏️ ไม่มีสายแร่อยู่ใกล้ ๆ");
+                return;
+            }
+            const P = pickOf();
+            G.mining = { i, pos: 0, dir: 1, speed: 0.82, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
+            if (G.sfx)
+                G.sfx.hit && G.sfx.hit();
+            setUi((u) => ({ ...u, mining: { pos: 0, zone: G.mining.zone, zc: G.mining.zc, hits: 0, need: MINE_SWINGS, perfect: 0, miss: 0 }, menuOpen: false }));
+            toast(`${P.emoji} ขุดด้วย${P.name} — แตะตอนตัววิ่งอยู่ในช่องเป้า!`);
+        };
+        G.stopMining = () => { G.mining = null; setUi((u) => ({ ...u, mining: null })); };
+        // 🔨 ตีหนึ่งครั้ง
+        G.mineTap = () => {
+            const m = G.mining;
+            if (!m)
+                return;
+            const n = G.mineNodes[m.i];
+            const half = m.zone / 2;
+            const d = Math.abs(m.pos - m.zc);
+            if (d <= half) {
+                m.hits++;
+                const perfect = d <= half * 0.34;
+                if (perfect)
+                    m.perfect++;
+                if (n && n.mesh) {
+                    burst(n.mesh.position, perfect ? 0xffe06a : 0xd8d8c8, 0.9);
+                }
+                G._camShake = Math.max(G._camShake || 0, perfect ? 0.3 : 0.16);
+                if (G.sfx) {
+                    if (perfect)
+                        G.sfx.crit && G.sfx.crit();
+                    else
+                        G.sfx.hit && G.sfx.hit();
+                }
+                if (m.hits >= MINE_SWINGS) {
+                    G.finishMining();
+                    return;
+                }
+                m.speed += 0.36;
+                m.zone = Math.max(0.11, m.zone * 0.84);
+                m.zc = 0.28 + Math.random() * 0.44;
+            }
+            else {
+                m.miss++;
+                if (G.sfx)
+                    G.sfx.reel && G.sfx.reel();
+                if (m.miss >= 3) {
+                    toast("💨 พลาดสามครั้ง — สายแร่ร่วนหลุดมือ ลองใหม่นะ");
+                    G.stopMining();
+                    return;
+                }
+            }
+            setUi((u) => ({ ...u, mining: { pos: m.pos, zone: m.zone, zc: m.zc, hits: m.hits, need: MINE_SWINGS, perfect: m.perfect, miss: m.miss } }));
+        };
+        // 💎 ขุดสำเร็จ — แจกแร่ + EXP ขุด + เลเวลอัพ
+        G.finishMining = () => {
+            const m = G.mining;
+            if (!m)
+                return;
+            const n = G.mineNodes[m.i];
+            const P = pickOf();
+            const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
+            const base = 2 + Math.floor((G.mineLv || 1) / 2) + m.perfect;
+            const qty = Math.max(1, Math.round(base * P.yield));
+            G.mats = G.mats || {};
+            const got = {};
+            for (let i = 0; i < qty; i++) {
+                const k = n && n.ore && Math.random() < 0.65 ? n.ore : oreRoll(bid);
+                G.mats[k] = (G.mats[k] || 0) + 1;
+                got[k] = (got[k] || 0) + 1;
+            }
+            // 💠 ตีเข้าเป้าเป๊ะทุกครั้ง = โบนัสผงเพชร
+            let dustMsg = "";
+            if (m.perfect >= MINE_SWINGS) {
+                const dust = 2 + Math.floor((G.mineLv || 1) / 2);
+                G.gemDust = (G.gemDust || 0) + dust;
+                dustMsg = ` · 🎯 เป๊ะทุกครั้ง! 💠+${dust}`;
+            }
+            // ⛏️ EXP ขุด
+            G.mineExp = (G.mineExp || 0) + 8 + m.perfect * 5;
+            let lvUp = 0;
+            while (G.mineExp >= MINE_LV_EXP(G.mineLv || 1)) {
+                G.mineExp -= MINE_LV_EXP(G.mineLv || 1);
+                G.mineLv = (G.mineLv || 1) + 1;
+                lvUp++;
+            }
+            G.mineTotal = (G.mineTotal || 0) + 1;
+            if (n) {
+                n.dead = true;
+                n.respawn = 22 + Math.random() * 26;
+                if (n.mesh)
+                    n.mesh.visible = false;
+                if (n.mesh)
+                    burst(n.mesh.position, 0xfff0b0, 1.4);
+            }
+            G._mineNear = null;
+            G.mining = null;
+            if (G.sfx)
+                G.sfx.coin && G.sfx.coin();
+            if (G.mbEvent)
+                G.mbEvent("mine");
+            if (G.storyEvent) {
+                try {
+                    G.storyEvent("mine", 1);
+                }
+                catch (e) { }
+            }
+            const txt = Object.keys(got).map((k) => `${(MATERIALS[k] || {}).emoji || ""}${(MATERIALS[k] || {}).name || k} ×${got[k]}`).join(" · ");
+            toast(`⛏️ ขุดสำเร็จ! ${txt}${dustMsg}`);
+            if (lvUp)
+                toast(`⛏️ เลเวลขุดเพิ่ม! Lv.${G.mineLv} — ได้แร่ต่อครั้งมากขึ้น`);
+            setUi((u) => ({ ...u, mining: null, mineNear: false, mats: { ...G.mats }, gemDust: G.gemDust || 0, ore: (G.mats && G.mats.ironOre) || 0, mineLv: G.mineLv, mineExp: G.mineExp, mineTotal: G.mineTotal }));
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // ⛏️ ซื้ออีเต้อขั้นถัดไป
+        G.buyPick = () => {
+            const nx = PICKS[Math.min(PICKS.length - 1, (G.pickLv || 1))];
+            if (!nx || nx.lv <= (G.pickLv || 1)) {
+                toast("⛏️ อีเต้อขั้นสูงสุดแล้ว!");
+                return;
+            }
+            if ((G.gold || 0) < nx.cost) {
+                toast(`ทองไม่พอ! ต้องมี ${nx.cost.toLocaleString()}💰`);
+                return;
+            }
+            G.gold -= nx.cost;
+            G.pickLv = nx.lv;
+            if (G.sfx)
+                G.sfx.coin && G.sfx.coin();
+            toast(`${nx.emoji} อัปเกรดเป็น${nx.name}! ${nx.desc}`);
+            setUi((u) => ({ ...u, gold: G.gold, pickLv: G.pickLv }));
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // ⏱️ เรียกจากลูปภาพทุกเฟรม — เด้งผลึก · นับเวลาเกิดใหม่ · เช็กระยะ · เดินตัววิ่งมินิเกม
+        G.mineTick = (dt, t) => {
+            const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
+            const zoneNow = !!(G.inTownZone || G.inHomeZone || G.inRanchZone);
+            const key = bid + "|" + (zoneNow ? "in" : "out");
+            if (G._mineBiome !== key) {
+                G._mineBiome = key;
+                G.mineRespawnAll(bid);
+                return;
+            }
+            let near = null, nd = 2.7;
+            for (let i = 0; i < G.mineNodes.length; i++) {
+                const n = G.mineNodes[i];
+                if (!n)
+                    continue;
+                if (n.dead) {
+                    n.respawn -= dt;
+                    if (n.respawn <= 0) { // 🔁 สายแร่ใหม่โผล่ที่อื่น
+                        const pos = minePlace();
+                        n.x = pos.x;
+                        n.z = pos.z;
+                        n.ore = oreRoll(bid);
+                        n.dead = false;
+                        mineNodeSnap(n);
+                        if (n.mesh)
+                            n.mesh.visible = true;
+                    }
+                    continue;
+                }
+                if (n.mesh) {
+                    const sh = n.mesh.userData.shards;
+                    if (sh)
+                        for (let k = 0; k < sh.length; k++)
+                            sh[k].material.emissiveIntensity = 0.85 + Math.sin(t * 2.2 + n.bob + k) * 0.45;
+                    if (n.mesh.userData.ring)
+                        n.mesh.userData.ring.material.opacity = 0.38 + Math.sin(t * 2 + n.bob) * 0.2;
+                    if (n.mesh.userData.beam)
+                        n.mesh.userData.beam.material.opacity = 0.10 + Math.sin(t * 1.6 + n.bob) * 0.055;
+                    if (n.mesh.userData.spark)
+                        n.mesh.userData.spark.rotation.y = t * 0.5 + n.bob;
+                }
+                const d = Math.hypot(char.position.x - n.x, char.position.z - n.z);
+                if (d < nd) {
+                    nd = d;
+                    near = i;
+                }
+            }
+            if (near !== G._mineNear) {
+                G._mineNear = near;
+                const n2 = near != null ? G.mineNodes[near] : null;
+                setUi((u) => ({ ...u, mineNear: near != null, mineOre: n2 ? n2.ore : null }));
+                if (near == null && G.mining)
+                    G.stopMining();
+            }
+            const m = G.mining;
+            if (m) {
+                m.pos += m.dir * m.speed * dt;
+                if (m.pos >= 1) {
+                    m.pos = 1;
+                    m.dir = -1;
+                }
+                if (m.pos <= 0) {
+                    m.pos = 0;
+                    m.dir = 1;
+                }
+                G._mineUiAcc = (G._mineUiAcc || 0) + dt;
+                if (G._mineUiAcc > 0.03) {
+                    G._mineUiAcc = 0;
+                    setUi((u) => (u.mining ? { ...u, mining: { ...u.mining, pos: m.pos } } : u));
+                }
+            }
+        };
+        // ================= ⛏️ END MINING =================
         G.startFishing = () => {
             if (G.fishing)
                 return;
@@ -33561,6 +33963,7 @@ function CherryAdventure() {
                 atk: effAtk(), def: effDef(), crit: Math.round(effCrit()), eva: Math.round(effEva()), luck: Math.round(effLuck()), spd: +effSpd().toFixed(1),
                 power: powerOf({ atk: effAtk(), def: effDef(), hp: effMaxHp(), crit: Math.round(effCrit()) }),
                 gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, stardust: G.stardust || 0, warpScrolls: G.warpScrolls || 0,
+                mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0,
                 pid: G.pid || null,
                 pvpRank: G.pvpRank || 1000, pvpTier: tier ? (tier.emoji + " " + tier.name) : null,
                 endlessBest: G.endlessBest || 0, ngPlus: G.ngPlus || 0,
@@ -33618,7 +34021,7 @@ function CherryAdventure() {
             col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
             team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
             playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
-            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0,
+            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0,
             titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
             rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
             costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -45820,6 +46223,10 @@ function CherryAdventure() {
             G.guild = null;
             G.guildRows = []; // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
             G.warpScrolls = 0; // 📜 ตัวละครใหม่ยังไม่มีใบวาร์ป
+            G.mineLv = 1;
+            G.mineExp = 0;
+            G.pickLv = 1;
+            G.mineTotal = 0; // ⛏️ เริ่มด้วยอีเต้อไม้
             G.pathId = null; // 🌟 fresh character has no path yet
             G.skillMode = "basic";
             setSkillModeGlobals(false, null);
@@ -45920,7 +46327,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -49022,6 +49429,10 @@ function CherryAdventure() {
             G.ultAlt = !!d.ultAlt;
             G.mbook = d.mbook || null; // 📖 สมุดภารกิจ
             G.warpScrolls = d.warpScrolls || 0; // 📜 ใบวาร์ปข้ามแดน
+            G.mineLv = d.mineLv || 1;
+            G.mineExp = d.mineExp || 0;
+            G.pickLv = d.pickLv || 1;
+            G.mineTotal = d.mineTotal || 0; // ⛏️ เหมืองแร่
             G.guildId = d.guildId || null; // 🏰 กิลด์ที่สังกัด
             if (G.guildId && G.guildRefresh) {
                 try {
@@ -51227,6 +51638,14 @@ function CherryAdventure() {
                             setUi((u) => ({ ...u, smithNear: snear }));
                         }
                     }
+                    if (G.mineTick) {
+                        try {
+                            G.mineTick(dt, t);
+                        }
+                        catch (e) {
+                            G._mineErr = String(e && e.message || e);
+                        }
+                    } // ⛏️ สายแร่
                     if (G.pondPos) {
                         const fd = Math.hypot(char.position.x - G.pondPos.x, char.position.z - G.pondPos.z);
                         const near = fd < 3.4;
@@ -68415,6 +68834,53 @@ function CherryAdventure() {
                     fontSize: 14, fontWeight: 800, fontFamily: font, color: "#8a3a5a",
                     background: "linear-gradient(90deg,#f5c542,#f5a0b8)", boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
                 } }, "\uD83D\uDD04 \u0E40\u0E1B\u0E34\u0E14\u0E40\u0E01\u0E21\u0E43\u0E2B\u0E21\u0E48"))),
+        ui.mode === "explore" && ui.mineNear && !ui.mining && !ui.fishing && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)", textAlign: "center" } },
+            React.createElement("button", { onClick: () => G.startMining(), style: {
+                    padding: "12px 26px", borderRadius: 999, border: "none", cursor: "pointer",
+                    fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
+                    background: "linear-gradient(90deg,#8a6a3a,#c09a4a)",
+                    boxShadow: "0 5px 16px rgba(138,106,58,0.5)",
+                } },
+                (G.pickOf ? G.pickOf().emoji : "⛏️"),
+                " \u0E02\u0E38\u0E14\u0E2A\u0E32\u0E22\u0E41\u0E23\u0E48",
+                ui.mineOre && MATERIALS[ui.mineOre] ? React.createElement("span", { style: { fontSize: 12, opacity: 0.9 } },
+                    " \u00B7 \u0E40\u0E2B\u0E47\u0E19 ",
+                    MATERIALS[ui.mineOre].emoji,
+                    MATERIALS[ui.mineOre].name) : null))),
+        ui.mode === "explore" && ui.mining && (() => {
+            const m = ui.mining;
+            const zL = Math.max(0, (m.zc - m.zone / 2) * 100), zW = m.zone * 100;
+            const cW = m.zone * 0.34 * 100;
+            return (React.createElement("div", { style: { position: "absolute", bottom: 92, left: "50%", transform: "translateX(-50%)", width: "88%", maxWidth: 400, fontFamily: font } },
+                React.createElement("div", { style: { background: "rgba(28,24,18,0.92)", borderRadius: 16, padding: "12px 14px", border: "2px solid #c09a4a", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" } },
+                    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } },
+                        React.createElement("span", { style: { fontSize: 12.5, fontWeight: 900, color: "#f5d08a" } },
+                            (G.pickOf ? G.pickOf().emoji : "⛏️"),
+                            " \u0E15\u0E35\u0E43\u0E2B\u0E49\u0E40\u0E02\u0E49\u0E32\u0E40\u0E1B\u0E49\u0E32 ",
+                            m.hits,
+                            "/",
+                            m.need,
+                            m.perfect > 0 && React.createElement("span", { style: { color: "#ffe06a" } },
+                                " \u00B7 \uD83C\uDFAF \u0E40\u0E1B\u0E4A\u0E30 ",
+                                m.perfect)),
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: m.miss >= 2 ? "#ff8a8a" : "#c8bca0" } },
+                            "\u0E1E\u0E25\u0E32\u0E14 ",
+                            m.miss,
+                            "/3")),
+                    React.createElement("div", { style: { position: "relative", height: 30, background: "rgba(0,0,0,0.5)", borderRadius: 9, overflow: "hidden", border: "1px solid rgba(255,255,255,0.16)" } },
+                        React.createElement("div", { style: { position: "absolute", left: zL + "%", width: zW + "%", top: 0, bottom: 0, background: "linear-gradient(180deg,rgba(120,220,120,0.5),rgba(60,180,80,0.5))" } }),
+                        React.createElement("div", { style: { position: "absolute", left: (m.zc * 100 - cW / 2) + "%", width: cW + "%", top: 0, bottom: 0, background: "rgba(255,224,106,0.75)" } }),
+                        React.createElement("div", { style: { position: "absolute", left: `calc(${m.pos * 100}% - 2px)`, top: -2, bottom: -2, width: 4, background: "#fff", boxShadow: "0 0 10px #fff" } })),
+                    React.createElement("button", { onClick: () => G.mineTap(), style: {
+                            width: "100%", marginTop: 9, padding: "13px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                            fontFamily: font, fontSize: 17, fontWeight: 900, color: "#3a2a10",
+                            background: "linear-gradient(90deg,#ffd84a,#ffb020)", boxShadow: "0 4px 14px rgba(255,180,32,0.45)",
+                        } }, "\uD83D\uDD28 \u0E15\u0E35!"),
+                    React.createElement("button", { onClick: () => G.stopMining(), style: {
+                            width: "100%", marginTop: 6, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
+                            fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#d8ccb0", background: "rgba(255,255,255,0.12)",
+                        } }, "\u0E40\u0E25\u0E34\u0E01\u0E02\u0E38\u0E14"))));
+        })(),
         ui.mode === "explore" && ui.pondNear && !ui.fishing && (React.createElement("div", { style: {
                 position: "absolute", bottom: 110, left: "50%", transform: "translateX(-50%)",
             } },
@@ -68838,6 +69304,7 @@ function CherryAdventure() {
                 ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a"],
                 ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
                 ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
+                ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
             ].map((it) => (React.createElement("button", { key: it[1], title: it[1], onClick: () => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }, style: { width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" } }, it[0])))))),
         ui.goldMarketOpen && (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(180deg,#2a2416,#20190e)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, border: "1.5px solid #f5c542" } },
             closeBtn("goldMarketOpen"),
@@ -69339,6 +69806,34 @@ function CherryAdventure() {
                             ui.balls || 0,
                             ")")));
                 })()),
+                (() => {
+                    const cur = PICKS[Math.min(PICKS.length, Math.max(1, ui.pickLv || 1)) - 1];
+                    const nx = PICKS[Math.min(PICKS.length - 1, ui.pickLv || 1)];
+                    const top = !nx || nx.lv <= (ui.pickLv || 1);
+                    const afford = (ui.gold || 0) >= (nx ? nx.cost : 0);
+                    return (React.createElement(React.Fragment, null,
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#a07a3a", marginBottom: 3 } },
+                            "\u26CF\uFE0F \u0E2D\u0E35\u0E40\u0E15\u0E49\u0E2D\u0E02\u0E38\u0E14\u0E41\u0E23\u0E48 (\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 ",
+                            cur.emoji,
+                            " ",
+                            cur.name,
+                            " \u00B7 \u0E41\u0E23\u0E48 \u00D7",
+                            cur.yield,
+                            ")"),
+                        React.createElement("button", { onClick: () => G.buyPick(), disabled: top || !afford, style: {
+                                width: "100%", marginBottom: 8, padding: "8px 10px", borderRadius: 10, border: "none",
+                                cursor: (top || !afford) ? "not-allowed" : "pointer", fontFamily: font,
+                                background: top ? "#eee" : afford ? "#fdf3e2" : "#eee", opacity: (top || !afford) ? 0.62 : 1,
+                                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, textAlign: "left",
+                            } },
+                            React.createElement("span", { style: { fontSize: 17 } }, top ? cur.emoji : nx.emoji),
+                            React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("span", { style: { display: "block", fontSize: 11.5, fontWeight: 800, color: "#8a5a20" } }, top ? "ขั้นสูงสุดแล้ว" : `อัปเกรดเป็น${nx.name}`),
+                                React.createElement("span", { style: { display: "block", fontSize: 9.5, color: "#a08a6a" } }, top ? cur.desc : nx.desc)),
+                            !top && React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c09020", whiteSpace: "nowrap" } },
+                                nx.cost.toLocaleString(),
+                                "\uD83D\uDCB0"))));
+                })(),
                 React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#3a86c0", marginBottom: 3 } },
                     "\uD83D\uDCDC \u0E43\u0E1A\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E02\u0E49\u0E32\u0E21\u0E41\u0E14\u0E19 (\u0E21\u0E35 ",
                     ui.warpScrolls || 0,
