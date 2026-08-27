@@ -541,6 +541,43 @@ const WEATHER_POOL = {
   titan:   ["clear", "clear", "storm", "fog", "rain"],
   amazon:  ["rain", "rain", "storm", "fog", "clear"],
 };
+
+// ============ 📖 สมุดภารกิจ — รายวัน · รายสัปดาห์ · แทร็กรางวัลฤดูกาล ============
+//  t = ชนิดเหตุการณ์ที่นับ · n = จำนวนที่ต้องทำ · pt = แต้มแทร็กที่ได้
+const MISSION_DAILY = [
+  { id: "d_win12",  t: "win",      n: 12, emoji: "⚔️", name: "ล่ามอนสเตอร์ 12 ตัว",     exp: 500,  gold: 3000, pt: 10 },
+  { id: "d_win25",  t: "win",      n: 25, emoji: "🗡️", name: "ล่ามอนสเตอร์ 25 ตัว",     exp: 900,  gold: 5200, pt: 12 },
+  { id: "d_ult3",   t: "ult",      n: 3,  emoji: "🌟", name: "ปล่อยท่าไม้ตาย 3 ครั้ง",  exp: 600,  gold: 2600, pt: 10 },
+  { id: "d_catch2", t: "catch",    n: 2,  emoji: "🔴", name: "จับสัตว์เลี้ยง 2 ตัว",    exp: 700,  gold: 3400, pt: 12 },
+  { id: "d_fish5",  t: "fish",     n: 5,  emoji: "🎣", name: "ตกปลา 5 ตัว",            exp: 450,  gold: 2800, pt: 10 },
+  { id: "d_warp3",  t: "visitAny", n: 3,  emoji: "🌀", name: "วาร์ปข้ามแมพ 3 ครั้ง",    exp: 400,  gold: 2400, pt: 8 },
+  { id: "d_boss1",  t: "bboss",    n: 1,  emoji: "👹", name: "ล้มบอสประจำถิ่น 1 ตัว",   exp: 1200, gold: 6000, pt: 15 },
+  { id: "d_forge3", t: "forge",    n: 3,  emoji: "⛏️", name: "ตีบวก/หลอมของ 3 ครั้ง",  exp: 500,  gold: 3000, pt: 10 },
+  { id: "d_skill8", t: "skill",    n: 8,  emoji: "✨", name: "ใช้สกิล 8 ครั้ง",         exp: 480,  gold: 2600, pt: 10 },
+];
+const MISSION_WEEKLY = [
+  { id: "w_win150", t: "win",   n: 150, emoji: "⚔️", name: "ล่ามอนสเตอร์ 150 ตัว",  exp: 6000,  gold: 34000, dia: 60,  pt: 40 },
+  { id: "w_boss5",  t: "bboss", n: 5,   emoji: "👹", name: "ล้มบอสประจำถิ่น 5 ตัว",  exp: 8000,  gold: 42000, dia: 80,  pt: 45 },
+  { id: "w_catch12",t: "catch", n: 12,  emoji: "🔴", name: "จับสัตว์เลี้ยง 12 ตัว",  exp: 5200,  gold: 30000, dia: 55,  pt: 38 },
+  { id: "w_ult25",  t: "ult",   n: 25,  emoji: "🌟", name: "ปล่อยท่าไม้ตาย 25 ครั้ง", exp: 5600, gold: 31000, dia: 55, pt: 38 },
+  { id: "w_tower5", t: "tower", n: 5,   emoji: "🗼", name: "ผ่านหอคอย 5 ชั้น",       exp: 7000,  gold: 38000, dia: 70,  pt: 42 },
+  { id: "w_fish30", t: "fish",  n: 30,  emoji: "🎣", name: "ตกปลา 30 ตัว",           exp: 4800,  gold: 27000, dia: 45,  pt: 34 },
+];
+const PASS_TIERS = 30;      // 🎫 จำนวนขั้นของแทร็กรางวัล
+const PASS_STEP = 100;      // แต้มต่อหนึ่งขั้น
+const PASS_PREMIUM_COST = 4500;   // 💎 ราคาปลดแทร็กพรีเมียม
+// รางวัลแต่ละขั้น — ฟรีทุกคน / พรีเมียมสำหรับคนที่ปลดแทร็ก
+const passReward = (tier, prem) => {
+  const k = tier + 1;
+  if (prem) {
+    if (k % 10 === 0) return { dia: 500, gold: 60000, exp: 12000, label: "💎500 · 💰" + (60000).toLocaleString() };
+    if (k % 5 === 0)  return { dia: 220, gold: 28000, exp: 6000,  label: "💎220 · 💰" + (28000).toLocaleString() };
+    return { dia: 90 + k * 4, gold: 9000 + k * 900, exp: 1800 + k * 220, label: "💎" + (90 + k * 4) + " · 💰" + (9000 + k * 900).toLocaleString() };
+  }
+  if (k % 10 === 0) return { dia: 150, gold: 22000, exp: 4500, label: "💎150 · 💰" + (22000).toLocaleString() };
+  if (k % 5 === 0)  return { dia: 60,  gold: 11000, exp: 2400, label: "💎60 · 💰" + (11000).toLocaleString() };
+  return { gold: 3200 + k * 320, exp: 700 + k * 90, label: "💰" + (3200 + k * 320).toLocaleString() };
+};
 const WEAK = { mochi: "wind", baibua: "fire", mekha: "earth", plerng: "water", kirara: "ice", phi: "fire", nam: "wind", khiao: "fire", ngu: "earth", paksi: "ice", saming: "water", garuda: "light", wayu: "earth", taara: "arcane" };
 const PET_ELEM = { mochi: "wind", baibua: "earth", mekha: "water", plerng: "fire", kirara: "ice", phi: "ice", nam: "water", khiao: "wind", ngu: "earth", paksi: "wind", saming: "fire", garuda: "light", wayu: "wind", taara: "arcane" };
 const PET_SKILL = { mochi: "ลมกระต่ายหมุน", baibua: "หินใบไม้ถล่ม", mekha: "ระเบิดหยดน้ำ", plerng: "เพลิงจิ้งจอก", kirara: "ดาวน้ำแข็ง", phi: "วิญญาณเยือกแข็ง", nam: "คลื่นวารี", khiao: "ตะปบพายุ", ngu: "พ่นพิษพสุธา", paksi: "โฉบเวหา", saming: "ตะปบเพลิง", garuda: "ปีกแสงสวรรค์", wayu: "พายุหมุนเทพ", taara: "แสงจักรวาล" };
@@ -1741,7 +1778,7 @@ export default function CherryAdventure() {
     balls: 3, specials: 2,
     enemy: null, // {id,name,emoji,hp,maxHp,lv}
     bstate: "choose", // choose | busy
-    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "",
+    msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily",
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
@@ -17283,6 +17320,7 @@ export default function CherryAdventure() {
         setUi((u) => ({ ...u, fishing: null }));
         if (G.sfx) G.sfx.fish();
         if (fish.rarity !== "junk") questProgress("collect", 1);
+        if (G.mbEvent) G.mbEvent("fish");   // 📖 นับภารกิจ "ตกปลา"
         toast(`${fish.emoji} จับ${fish.name}ได้! +${fish.gold}💰 +${fish.exp}EXP`);
       }
     };
@@ -17354,6 +17392,7 @@ export default function CherryAdventure() {
       { gold: 1000, potion: 3, emoji: "🎁", label: "1000 ทอง + ยา 3 (โบนัสใหญ่!)" },
     ];
     const todayStamp = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+    G.mbBoot = () => { try { G.mbRefresh(); } catch (e) {} };   // 📖 เตรียมสมุดภารกิจตอนเข้าเกม
     G.checkDailyReward = () => {
       const today = todayStamp();
       if (G.lastDaily === today) { setUi((u) => ({ ...u, dailyReady: false })); return; } // already claimed today
@@ -17524,7 +17563,89 @@ export default function CherryAdventure() {
     G.storyReward = (i) => { const c = MSQ[i]; const boss = c && c.t === "bboss"; return { gold: (400 + i * 180) * (boss ? 2 : 1), dia: 3 + Math.floor(i / 4) + (boss ? 5 : 0) }; };
     const storySync = () => setUi((u) => ({ ...u, storyCh: G.storyCh, storyProg: G.storyProg }));
     G.storySync = storySync;
+    // ---------- 📖 สมุดภารกิจ — รีเซ็ตรายวัน/รายสัปดาห์ · นับความคืบหน้า · รับรางวัล ----------
+    const weekStamp = () => { const d = new Date(); const y = d.getFullYear(); const st = new Date(y, 0, 1);
+      const w = Math.floor(((d - st) / 86400000 + st.getDay() + 1) / 7); return y + "-W" + w; };
+    const pickN = (pool, n) => { const a = pool.slice(); const out = [];
+      while (out.length < n && a.length) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]);
+      return out.map((m) => ({ id: m.id, p: 0, claimed: false })); };
+    G.mbook = G.mbook || null;
+    G.mbRefresh = () => {   // 🗓️ ถึงวัน/สัปดาห์ใหม่ → สุ่มภารกิจชุดใหม่ (แต้มแทร็กสะสมต่อ ไม่รีเซ็ต)
+      const today = todayStamp(), wk = weekStamp();
+      if (!G.mbook) G.mbook = { day: "", week: "", daily: [], weekly: [], pts: 0, claimedF: {}, claimedP: {}, prem: false };
+      const Q = G.mbook;
+      let changed = false;
+      if (Q.day !== today) { Q.day = today; Q.daily = pickN(MISSION_DAILY, 5); changed = true; }
+      if (Q.week !== wk) { Q.week = wk; Q.weekly = pickN(MISSION_WEEKLY, 4); changed = true; }
+      if (changed && G.saveGame) G.saveGame();
+      G.mbSync();
+    };
+    G.mbSync = () => {
+      const Q = G.mbook; if (!Q) return;
+      const tier = Math.min(PASS_TIERS, Math.floor((Q.pts || 0) / PASS_STEP));
+      const readyN = [...(Q.daily || []), ...(Q.weekly || [])].filter((r) => { const M = mbMeta(r.id); return M && r.p >= M.n && !r.claimed; }).length
+        + (() => { let c = 0; for (let i = 0; i < tier; i++) { if (!Q.claimedF[i]) c++; if (Q.prem && !Q.claimedP[i]) c++; } return c; })();
+      setUi((u) => ({ ...u, mbook: { day: Q.day, week: Q.week, daily: [...(Q.daily || [])], weekly: [...(Q.weekly || [])], pts: Q.pts || 0, tier, prem: !!Q.prem, claimedF: { ...Q.claimedF }, claimedP: { ...Q.claimedP } }, mbookReady: readyN }));
+    };
+    const mbMeta = (id) => MISSION_DAILY.find((m) => m.id === id) || MISSION_WEEKLY.find((m) => m.id === id) || null;
+    G.mbMeta = mbMeta;
+    // 📡 ตัวรับเหตุการณ์กลาง — ทุกอย่างที่ผู้เล่นทำวิ่งผ่านตรงนี้
+    G.mbEvent = (type, n = 1, meta = {}) => {
+      if (!G.mbook) { try { G.mbRefresh(); } catch (e) { return; } }   // 📖 ยังไม่มีสมุด (เซฟเก่า/เกมใหม่) → สร้างให้อัตโนมัติ
+      const Q = G.mbook; if (!Q) return;
+      let hit = false;
+      const bump = (row) => { const M = mbMeta(row.id); if (!M || M.t !== type || row.p >= M.n) return;
+        row.p = Math.min(M.n, row.p + n); hit = true;
+        if (row.p >= M.n) { toast(`📖 ภารกิจสำเร็จ! ${M.emoji} ${M.name} — เปิดสมุดภารกิจกดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); } };
+      (Q.daily || []).forEach(bump); (Q.weekly || []).forEach(bump);
+      if (hit) G.mbSync();
+    };
+    G.mbClaim = (id) => {
+      const Q = G.mbook; if (!Q) return;
+      const row = [...(Q.daily || []), ...(Q.weekly || [])].find((r) => r.id === id);
+      const M = mbMeta(id);
+      if (!row || !M) return;
+      if (row.p < M.n) { toast("ยังทำภารกิจนี้ไม่ครบนะ"); return; }
+      if (row.claimed) { toast("รับรางวัลภารกิจนี้ไปแล้ว"); return; }
+      row.claimed = true;
+      Q.pts = (Q.pts || 0) + (M.pt || 0);
+      if (M.gold) G.gold = (G.gold || 0) + M.gold;
+      if (M.dia) G.diamonds = (G.diamonds || 0) + M.dia;
+      if (M.exp && typeof gainExp === "function") gainExp(M.exp);
+      toast(`🎁 รับรางวัล ${M.emoji} ${M.name} · +${M.pt} แต้มแทร็ก`);
+      if (G.sfx && G.sfx.coin) G.sfx.coin();
+      G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.mbPassClaim = (tier, prem) => {
+      const Q = G.mbook; if (!Q) return;
+      const cur = Math.min(PASS_TIERS, Math.floor((Q.pts || 0) / PASS_STEP));
+      if (tier >= cur) { toast(`ต้องสะสมให้ถึงขั้น ${tier + 1} ก่อน (${(tier + 1) * PASS_STEP} แต้ม)`); return; }
+      if (prem && !Q.prem) { toast("🔒 ต้องปลดแทร็กพรีเมียมก่อน"); return; }
+      const book = prem ? Q.claimedP : Q.claimedF;
+      if (book[tier]) { toast("รับรางวัลขั้นนี้ไปแล้ว"); return; }
+      book[tier] = 1;
+      const R = passReward(tier, prem);
+      if (R.gold) G.gold = (G.gold || 0) + R.gold;
+      if (R.dia) G.diamonds = (G.diamonds || 0) + R.dia;
+      if (R.exp && typeof gainExp === "function") gainExp(R.exp);
+      toast(`🎁 รับรางวัลแทร็กขั้น ${tier + 1} — ${R.label}`);
+      if (G.sfx && G.sfx.coin) G.sfx.coin();
+      G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.mbPassBuy = () => {
+      const Q = G.mbook; if (!Q) return;
+      if (Q.prem) { toast("ปลดแทร็กพรีเมียมไว้แล้ว 🎫"); return; }
+      if ((G.diamonds || 0) < PASS_PREMIUM_COST) { toast(`💎 เพชรไม่พอ — ต้องมี ${PASS_PREMIUM_COST}`); return; }
+      G.diamonds -= PASS_PREMIUM_COST; Q.prem = true;
+      toast("🎫 ปลดแทร็กพรีเมียมแล้ว! ย้อนกดรับรางวัลขั้นที่ผ่านมาได้ทั้งหมด");
+      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.toggleMbook = () => { G.mbRefresh(); setUi((u) => ({ ...u, mbookOpen: !u.mbookOpen })); };
+    try { G.mbRefresh(); } catch (e) {}   // 📖 มีสมุดภารกิจพร้อมนับตั้งแต่วินาทีแรก (เซฟที่โหลดทีหลังจะเขียนทับแล้วรีเฟรชอีกรอบ)
+
     G.storyEvent = (type, n = 1, meta = {}) => {
+      if (G.mbEvent) { G.mbEvent(type, n, meta); if (type === "visit") G.mbEvent("visitAny", n, meta); }   // 📖 ส่งต่อให้สมุดภารกิจนับด้วย
       const c = MSQ[G.storyCh]; if (!c) return;
       const tgt = G.storyTarget(c);
       if (G.storyProg >= tgt) return; // รอกดรับรางวัลอยู่
@@ -17672,6 +17793,7 @@ export default function CherryAdventure() {
       p.plus = (p.plus || 0) + 1;
       if (G.sfx) G.sfx.levelup();
       burst(char.position, 0xf5c542, 1.2);
+      if (G.mbEvent) G.mbEvent("forge");   // 📖 นับภารกิจ "ตีบวก/หลอมของ"
       toast(`⚒️ ตีบวกสำเร็จ! ${SPECIES[p.sp].emoji} ${SPECIES[p.sp].name} → +${p.plus} (ใช้ตัวซ้ำ Lv.${fodder.lv})`);
       setUi((u) => ({ ...u, petBox: G.petBox.map((x) => ({ ...x })) }));
       syncPlayer(); if (G.saveGame) G.saveGame();
@@ -19781,7 +19903,7 @@ export default function CherryAdventure() {
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null,
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null,
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -27871,6 +27993,7 @@ export default function CherryAdventure() {
         const atkMsg = G.heroId === "fenrir" ? "เชอร์รี่พุ่งตะครุบ! กรงเล็บหมาป่าฟาดไขว้ 🐺" : G.heroId === "neko" ? "เชอร์รี่ตบแมวรัวสามจังหวะ! 🐱🐾" : G.heroId === "usagi" ? "เชอร์รี่เผ่นฟ้า! ค้อนแครอทถล่มลงมา 🐰🥕" : G.heroId === "ryujin" ? "เชอร์รี่พ่นลมหายใจมังกรเพลิง! 🐉🔥" : G.heroId === "ignis" ? "เชอร์รี่ลอยตัวระดมยิงลำแสงฝ่ามือ! 🤖✨" : G.heroId === "captain" ? "เชอร์รี่ขว้างโล่เพชรสะท้อนสองเด้ง! 🛡️" : G.heroId === "thunder" ? "เชอร์รี่เรียกสายฟ้าฟาด ปิดท้ายขว้างค้อนพายุ! ⚡🔨" : G.heroId === "yaksa" ? "เชอร์รี่กระทืบสะเทือนดิน! กระบองยักษ์ถล่มปฐพีสองจังหวะ 👹" : G.heroId === "luminia" ? "เชอร์รี่ร่ายระบำเถาวัลย์ต้องมนตร์! 🧝‍♀️🌸" : G.heroId === "apsara" ? "เชอร์รี่เรียกลำแสงสวรรค์ปลิดบาป! 👼✨" : G.heroId === "asura" ? "เชอร์รี่ปลดผนึกอสูร! ขวากนรกทลายวิญญาณ 😈🔥" : G.heroId === "hanuman" ? "เชอร์รี่หาวเป็นดาวเป็นเดือน! ร่างใหญ่ฟาดตรีเพชร 🐒⭐" : G.heroId === "garuda" ? "เชอร์รี่โฉบพญาครุฑ! กรงเล็บฉีกลมพายุ 🦅💨" : G.heroId === "naki" ? "เชอร์รี่พ่นพิษนาคี! เจ็ดเศียรผุดจากบาดาล 🐍💧" : G.heroId === "kinnaree" ? "เชอร์รี่ร่ายระบำกินรี! ขนหงส์คมปลิวเป็นวง 🕊️🌸" : G.heroId === "mermaid" ? "เชอร์รี่เรียกวังวนบาดาล! ไตรศูลซัดคลื่นยักษ์ 🧜‍♀️🌊" : G.heroId === "lich" ? "เชอร์รี่เรียกกองทัพกระดูก! วิญญาณผุดจากปฐพี 💀👻" : G.heroId === "kitsune" ? "เชอร์รี่สะบัดเก้าหาง! ไฟจิ้งจอกเก้าดวงพุ่งพร้อมกัน 🦊🔥" : G.heroId === "phoenix" ? "เชอร์รี่เผาตัวเองแล้วเกิดใหม่! ระเบิดเพลิงกลางสนาม 🔥🐦‍🔥" : G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: atkMsg }));
       } else if (kind === "skill") {
+        if (G.mbEvent) G.mbEvent("skill");   // 📖 นับภารกิจ "ใช้สกิล"
         const sk = skillsOf(G.cls, G.pathId).find((s) => s.id === arg);
         if (!sk) return;
         // 🔒 gate: level + previous skill's rank + allocated stat
@@ -27943,6 +28066,7 @@ export default function CherryAdventure() {
         const U = ultOf(G.cls, G.ultAlt);
         const altUlt = !!(G.ultAlt && ULT_ALT[G.cls]); // 👑 alternate ultimate selected
         G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? (altUlt ? 6.5 : 6.0) : G.cls === "samurai" ? (altUlt ? 4.6 : 6.0) : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : G.cls === "boxer" ? 6.0 : 2.4, hits: 0, total: 0, altUlt };
+        if (G.mbEvent) G.mbEvent("ult");   // 📖 นับภารกิจ "ปล่อยท่าไม้ตาย"
         if (G.sfx && G.sfx.charge) G.sfx.charge(); // ⚡ rising hum as the ultimate winds up
         if (G.showSkillBanner) { G.showSkillBanner(`${U.emoji} ${U.name}`); G.speedLines && G.speedLines(950); } // 🎬 ป้ายชื่อท่า cut-in แบบอนิเมะ
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
@@ -28360,6 +28484,7 @@ export default function CherryAdventure() {
       if (G.startPresence) G.startPresence(); // 🟢 go online (presence + incoming-duel poller) even without an account
       if (G.startBoardPoll) G.startBoardPoll(); // 🏆 world leaderboard widget
       G.ultAlt = false;
+      G.mbook = null; if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // 📖 ตัวละครใหม่ = สมุดภารกิจชุดใหม่
       G.pathId = null; // 🌟 fresh character has no path yet
       G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
@@ -28407,6 +28532,7 @@ export default function CherryAdventure() {
       G.storyCh = 0; G.storyProg = 0; if (G.storySync) G.storySync(); // 📖 เริ่มเนื้อเรื่องบทที่ 1
       setTimeout(() => toast(`📖 เนื้อเรื่องบทที่ 1: "${(G.MSQ[0] || {}).title}" — ${G.storyLabel(G.MSQ[0])}`), 1500);
       if (G.checkDailyReward) G.checkDailyReward(); // 📅 daily login bonus
+      if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // 📖 เตรียมสมุดภารกิจ (สุ่มชุดใหม่ถ้าข้ามวัน/สัปดาห์)
       setTimeout(() => G.saveGame && G.saveGame(), 100); // 💾 save the fresh start
       setUi((u) => ({ ...u, mode: "explore", cls: G.cls, col: {}, pets: {}, inv: [], equip: EMPTY_EQUIP(), msg: "" }));
       syncPlayer();
@@ -28433,7 +28559,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -30137,6 +30263,8 @@ export default function CherryAdventure() {
       G.activeAura = d.activeAura || "none";
       G.weaponEnchant = d.weaponEnchant || "none";
       G.ultAlt = !!d.ultAlt;
+      G.mbook = d.mbook || null;   // 📖 สมุดภารกิจ
+      if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
       G.pathId = d.pathId || null;
       G.skillMode = d.skillMode === "adv" && G.pathId ? "adv" : "basic";
       setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 คืนโหมดสกิลที่ใช้อยู่
@@ -30235,6 +30363,7 @@ export default function CherryAdventure() {
       G.quests = []; refreshQuests(); // 📜
       if (G.storySeed) { G.storySeed(); G.storySync(); } // 📖 เช็คเงื่อนไขเนื้อเรื่องที่สำเร็จแล้ว + sync UI
       if (G.checkDailyReward) G.checkDailyReward(); // 📅 daily login bonus
+      if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // 📖 เตรียมสมุดภารกิจ (สุ่มชุดใหม่ถ้าข้ามวัน/สัปดาห์)
       if (G.checkAchievements) G.checkAchievements();
       if (G.computeTitle) G.computeTitle();
       toast(`▶ ยินดีต้อนรับกลับ! ${CLASSES[G.cls].emoji} เชอร์รี่สาย${CLASSES[G.cls].name} Lv.${G.player.level} · ${BIOMES[G.curBiome || 0].emoji} ${BIOMES[G.curBiome || 0].name}`);
@@ -41933,6 +42062,69 @@ export default function CherryAdventure() {
       {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
+      {/* 📖 สมุดภารกิจ — รายวัน / รายสัปดาห์ / แทร็กรางวัล */}
+      {ui.mbookOpen && ui.mbook && (
+        <div onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(12,8,22,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 96vw)", maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(160deg,#241b3c,#171125)", border: "1px solid #4a3a6a", borderRadius: 18, padding: 14, fontFamily: font, color: "#fff", boxShadow: "0 18px 50px rgba(0,0,0,0.5)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{ fontSize: 17, fontWeight: 900 }}>📖 สมุดภารกิจ</div>
+              <div style={{ marginLeft: "auto", fontSize: 11.5, color: "#c9b8ff" }}>แต้มแทร็ก {ui.mbook.pts} · ขั้น {ui.mbook.tier}/{PASS_TIERS}</div>
+              <button onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 }}>✕</button>
+            </div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {[["daily", "🗓️ รายวัน"], ["weekly", "📅 รายสัปดาห์"], ["pass", "🎫 แทร็กรางวัล"]].map(([k, lb]) => (
+                <button key={k} onClick={() => setUi((u) => ({ ...u, mbTab: k }))} style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.mbTab === k ? "#2a2416" : "#d8cff0", background: ui.mbTab === k ? "linear-gradient(90deg,#f5d24a,#e0a83a)" : "rgba(255,255,255,0.08)" }}>{lb}</button>
+              ))}
+            </div>
+            {ui.mbTab !== "pass" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {(ui.mbTab === "daily" ? ui.mbook.daily : ui.mbook.weekly).map((r) => {
+                  const M = G.mbMeta ? G.mbMeta(r.id) : null; if (!M) return null;
+                  const full = r.p >= M.n;
+                  return (
+                    <div key={r.id} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid " + (full && !r.claimed ? "#f5d24a" : "#3a2f52"), borderRadius: 12, padding: "9px 11px", display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 22 }}>{M.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 800 }}>{M.name}</div>
+                        <div style={{ height: 6, borderRadius: 99, background: "rgba(0,0,0,0.35)", margin: "5px 0 3px" }}>
+                          <div style={{ width: Math.min(100, r.p / M.n * 100) + "%", height: "100%", borderRadius: 99, background: full ? "linear-gradient(90deg,#8fe0b0,#3ac06a)" : "linear-gradient(90deg,#f5d24a,#e0883a)" }} />
+                        </div>
+                        <div style={{ fontSize: 9.5, color: "#bdb0d8" }}>{r.p}/{M.n} · รางวัล 💰{(M.gold || 0).toLocaleString()}{M.dia ? ` 💎${M.dia}` : ""} · +{M.pt} แต้ม</div>
+                      </div>
+                      <button disabled={!full || r.claimed} onClick={() => G.mbClaim(r.id)} style={{ padding: "7px 11px", borderRadius: 9, border: "none", cursor: full && !r.claimed ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11, fontWeight: 800, color: r.claimed ? "#8a7fa5" : full ? "#2a2416" : "#8a7fa5", background: r.claimed ? "rgba(255,255,255,0.06)" : full ? "linear-gradient(90deg,#f5d24a,#e0a83a)" : "rgba(255,255,255,0.07)" }}>{r.claimed ? "✓ รับแล้ว" : full ? "รับรางวัล" : "ยังไม่ครบ"}</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {ui.mbTab === "pass" && (
+              <div>
+                <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #3a2f52", borderRadius: 12, padding: "9px 11px", marginBottom: 9, display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800 }}>{ui.mbook.prem ? "🎫 แทร็กพรีเมียม — ปลดแล้ว" : "🔒 แทร็กพรีเมียม — ยังไม่ปลด"}</div>
+                    <div style={{ fontSize: 9.5, color: "#bdb0d8", marginTop: 3 }}>ปลดแล้วย้อนกดรับรางวัลพรีเมียมทุกขั้นที่ผ่านมาได้</div>
+                  </div>
+                  {!ui.mbook.prem && <button onClick={() => G.mbPassBuy()} style={{ padding: "8px 12px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#4a86e0,#6a5ad0)" }}>💎 {PASS_PREMIUM_COST}</button>}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {Array.from({ length: PASS_TIERS }, (_, i) => i).map((i) => {
+                    const open = i < ui.mbook.tier;
+                    const RF = passReward(i, false), RP = passReward(i, true);
+                    const cf = !!ui.mbook.claimedF[i], cp = !!ui.mbook.claimedP[i];
+                    return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, background: open ? "rgba(245,210,74,0.09)" : "rgba(255,255,255,0.04)", border: "1px solid " + (open ? "#6a5a2a" : "#332a48"), borderRadius: 10, padding: "6px 8px" }}>
+                        <div style={{ width: 34, fontSize: 11, fontWeight: 900, color: open ? "#f5d24a" : "#7a6f92" }}>{i + 1}</div>
+                        <button disabled={!open || cf} onClick={() => G.mbPassClaim(i, false)} style={{ flex: 1, padding: "6px 4px", borderRadius: 8, border: "none", cursor: open && !cf ? "pointer" : "not-allowed", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: cf ? "#8a7fa5" : open ? "#2a2416" : "#7a6f92", background: cf ? "rgba(255,255,255,0.05)" : open ? "linear-gradient(90deg,#cfe0a0,#9ac86a)" : "rgba(255,255,255,0.05)" }}>{cf ? "✓" : RF.label}</button>
+                        <button disabled={!open || cp || !ui.mbook.prem} onClick={() => G.mbPassClaim(i, true)} style={{ flex: 1.15, padding: "6px 4px", borderRadius: 8, border: "none", cursor: open && !cp && ui.mbook.prem ? "pointer" : "not-allowed", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: cp ? "#8a7fa5" : (open && ui.mbook.prem) ? "#2a2416" : "#7a6f92", background: cp ? "rgba(255,255,255,0.05)" : (open && ui.mbook.prem) ? "linear-gradient(90deg,#f5d24a,#e0883a)" : "rgba(255,255,255,0.05)" }}>{cp ? "✓" : (ui.mbook.prem ? RP.label : "🔒 " + RP.label)}</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* 📢 ประกาศเกม — ตัววิ่งบนจอทุกคน ~10 วิ */}
       {ui.announce && ui.announce.text && (
         <div key={ui.announce.key} style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 6px)", left: 0, right: 0, height: 30, overflow: "hidden", zIndex: 46, pointerEvents: "none", display: "flex", alignItems: "center" }}>
@@ -43294,6 +43486,7 @@ export default function CherryAdventure() {
               ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
               ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
               ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
+              ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a"],
             ].map((it) => (
               <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
             ))}
