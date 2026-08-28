@@ -30392,6 +30392,38 @@ export default function CherryAdventure() {
           return { ok: true, session: j };
         } catch (e) { return { ok: false, err: "เชื่อมต่อไม่ได้" }; }
       },
+      // 🔑 ลืมรหัสผ่าน — ให้ Supabase ส่งเมลลิงก์รีเซ็ตมาให้ (รหัสเดิมไม่มีใครอ่านได้ ต้องตั้งใหม่เท่านั้น)
+      async resetPassword(email) {
+        if (!this.enabled()) return { ok: false, err: "ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์" };
+        if (!email || email.indexOf("@") < 0) return { ok: false, err: "กรอกอีเมลที่ใช้สมัครก่อน" };
+        try {
+          const back = (typeof location !== "undefined" ? location.href.split("#")[0] : "");
+          const res = await fetch(this._authUrl("recover" + (back ? "?redirect_to=" + encodeURIComponent(back) : "")), {
+            method: "POST",
+            headers: { apikey: this.cfg.anonKey, "Content-Type": "application/json" },
+            body: JSON.stringify({ email, gotrue_meta_security: {} }),
+          });
+          if (!res.ok) {
+            const j = await res.json().catch(() => ({}));
+            return { ok: false, err: (j && (j.msg || j.error_description || j.message)) || "ส่งเมลไม่สำเร็จ (ลองใหม่อีกครั้งภายหลัง)" };
+          }
+          return { ok: true, back };
+        } catch (e) { return { ok: false, err: "เชื่อมต่อไม่ได้" }; }
+      },
+      // 🔒 ตั้งรหัสผ่านใหม่ (ต้องมี token จากลิงก์ในเมล หรือกำลังล็อกอินอยู่)
+      async setPassword(access_token, password) {
+        if (!this.enabled() || !access_token) return { ok: false, err: "ลิงก์หมดอายุ — ขอเมลรีเซ็ตใหม่อีกครั้ง" };
+        try {
+          const res = await fetch(this._authUrl("user"), {
+            method: "PUT",
+            headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + access_token, "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          const j = await res.json().catch(() => ({}));
+          if (!res.ok) return { ok: false, err: (j && (j.msg || j.error_description || j.message)) || "ตั้งรหัสใหม่ไม่สำเร็จ" };
+          return { ok: true, user: j };
+        } catch (e) { return { ok: false, err: "เชื่อมต่อไม่ได้" }; }
+      },
       async refresh(refresh_token) {
         if (!this.enabled() || !refresh_token) return null;
         try {
@@ -30557,6 +30589,27 @@ export default function CherryAdventure() {
       else toast("บัญชีนี้ยังไม่มีเซฟบนคลาวด์ — เริ่มเล่นได้เลย");
       return r;
     };
+    // 🔑 ลืมรหัสผ่าน → ส่งลิงก์ไปที่อีเมลที่กรอก
+    G.accountForgot = async (email) => {
+      const em = (email || "").trim();
+      if (!em || em.indexOf("@") < 0) { toast("⚠️ กรอกอีเมลที่ใช้สมัครก่อน แล้วกดลืมรหัสผ่านอีกครั้ง"); return { ok: false }; }
+      toast("📨 กำลังส่งลิงก์รีเซ็ต...");
+      const r = await CN.resetPassword(em);
+      if (!r.ok) { toast("⚠️ " + r.err); return r; }
+      toast("📧 ส่งลิงก์ตั้งรหัสใหม่ไปที่ " + em + " แล้ว — เปิดเมลแล้วกดลิงก์ (เช็คในถังขยะ/สแปมด้วย)");
+      return r;
+    };
+    // 🔒 ตั้งรหัสผ่านใหม่หลังกดลิงก์จากเมล
+    G.accountSetPassword = async (pw1, pw2) => {
+      if (!pw1 || pw1.length < 6) { toast("⚠️ รหัสใหม่ต้องยาวอย่างน้อย 6 ตัว"); return { ok: false }; }
+      if (pw1 !== pw2) { toast("⚠️ รหัสใหม่สองช่องไม่ตรงกัน"); return { ok: false }; }
+      const t = G._session && G._session.access_token;
+      const r = await CN.setPassword(t, pw1);
+      if (!r.ok) { toast("⚠️ " + r.err); return r; }
+      toast("✅ ตั้งรหัสผ่านใหม่แล้ว — ครั้งหน้าเข้าสู่ระบบด้วยรหัสนี้");
+      setUi((u) => ({ ...u, pwReset: false, pwNew1: "", pwNew2: "" }));
+      return r;
+    };
     G.accountSignInGoogle = () => {
       if (!CN.enabled()) { toast("🌐 ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ (ONLINE_SETUP.md)"); return; }
       const redirect = location.href.split("#")[0];
@@ -30583,9 +30636,11 @@ export default function CherryAdventure() {
           if (at) {
             let uid = null, email = null;
             try { const ur = await fetch(CN._authUrl("user"), { headers: { apikey: CN.cfg.anonKey, Authorization: "Bearer " + at } }); if (ur.ok) { const u = await ur.json(); uid = u.id; email = u.email; } } catch (e) {}
+            const isRecover = (h.get("type") || "") === "recovery";
             _applySession({ access_token: at, refresh_token: rt, expires_in: ei, user: { id: uid, email } });
             try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
-            toast("✅ เข้าสู่ระบบด้วย Google แล้ว");
+            if (isRecover) { setUi((u) => ({ ...u, pwReset: true, pwNew1: "", pwNew2: "" })); toast("🔑 ยืนยันตัวตนแล้ว — ตั้งรหัสผ่านใหม่ได้เลย"); }
+            else toast("✅ เข้าสู่ระบบด้วย Google แล้ว");
           }
         } else {
           const raw = window.localStorage.getItem(AUTH_KEY);
@@ -44584,6 +44639,7 @@ export default function CherryAdventure() {
                   <button onClick={() => G.accountSync()} style={{ flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #cfe6d2", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#4a9a5e", background: "#f2fbf4" }}>☁️ ซิงค์</button>
                   <button onClick={() => G.accountSignOut()} style={{ flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a06a6a", background: "#fff" }}>ออกจากระบบ</button>
                 </div>
+                <button onClick={() => setUi((u) => ({ ...u, pwReset: true, pwNew1: "", pwNew2: "" }))} style={{ width: "100%", padding: "9px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "#fff", marginBottom: 16 }}>🔑 เปลี่ยนรหัสผ่าน</button>
               </>
             ) : (
               <>
@@ -44593,6 +44649,7 @@ export default function CherryAdventure() {
                   <button onClick={() => G.accountSignIn(ui.authEmail || "", ui.authPass || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0709a,#c05a86)" }}>เข้าสู่ระบบ</button>
                   <button onClick={() => G.accountSignUp(ui.authEmail || "", ui.authPass || "")} style={{ padding: "11px 14px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "#fff" }}>สมัคร</button>
                 </div>
+                <button onClick={() => G.accountForgot(ui.authEmail || "")} style={{ width: "100%", padding: "8px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "transparent", textDecoration: "underline", marginBottom: 6 }}>🔑 ลืมรหัสผ่าน? — ส่งลิงก์ตั้งรหัสใหม่ไปที่อีเมล</button>
                 <button onClick={() => G.accountSignInGoogle()} style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff", marginBottom: 14 }}>🇬 เข้าสู่ระบบด้วย Google</button>
               </>
             )}
@@ -45820,6 +45877,24 @@ export default function CherryAdventure() {
         </div>
       )}
 
+      {/* 🔑 ตั้งรหัสผ่านใหม่ — เปิดเองเมื่อผู้เล่นกดลิงก์รีเซ็ตจากอีเมล */}
+      {ui.pwReset && (
+        <div style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 90, fontFamily: font }}>
+          <div style={{ width: "100%", maxWidth: 340, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.34)" }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: "#5a4a6a", marginBottom: 6 }}>🔑 ตั้งรหัสผ่านใหม่</div>
+            <div style={{ fontSize: 11.5, color: "#9a8a7a", marginBottom: 14, lineHeight: 1.55 }}>
+              บัญชี <b style={{ color: "#6a5ac0" }}>{(ui.auth && ui.auth.email) || "-"}</b><br />ตั้งรหัสใหม่แล้วใช้เข้าสู่ระบบได้ทันที (เซฟบนคลาวด์ไม่หาย)
+            </div>
+            <input type="password" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)" value={ui.pwNew1 || ""} onChange={(e) => setUi((u) => ({ ...u, pwNew1: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: 12, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font, marginBottom: 9 }} />
+            <input type="password" placeholder="พิมพ์รหัสใหม่อีกครั้ง" value={ui.pwNew2 || ""} onChange={(e) => setUi((u) => ({ ...u, pwNew2: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: 12, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font, marginBottom: 12 }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => G.accountSetPassword(ui.pwNew1 || "", ui.pwNew2 || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" }}>บันทึกรหัสใหม่</button>
+              <button onClick={() => setUi((u) => ({ ...u, pwReset: false, pwNew1: "", pwNew2: "" }))} style={{ padding: "11px 14px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#9a8a7a", background: "#fff" }}>ไว้ก่อน</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {ui.accountOpen && (
         <div onClick={() => setUi((u) => ({ ...u, accountOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,16,24,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 340, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
@@ -45834,6 +45909,7 @@ export default function CherryAdventure() {
               <button onClick={() => G.accountSignIn(ui.authEmail || "", ui.authPass || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" }}>เข้าสู่ระบบ</button>
               <button onClick={() => G.accountSignUp(ui.authEmail || "", ui.authPass || "")} style={{ flex: 1, padding: "11px", borderRadius: 12, border: "1px solid #c9b6f0", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#6a5ac0", background: "#f3eeff" }}>สมัครใหม่</button>
             </div>
+            <button onClick={() => G.accountForgot(ui.authEmail || "")} style={{ width: "100%", padding: "8px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#6a5ac0", background: "transparent", textDecoration: "underline", marginBottom: 8 }}>🔑 ลืมรหัสผ่าน? — ส่งลิงก์ตั้งรหัสใหม่ไปที่อีเมล</button>
             <button onClick={() => G.accountSignInGoogle()} style={{ width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff" }}>🇬 เข้าสู่ระบบด้วย Google</button>
             <div style={{ fontSize: 9.5, color: "#c0b0a4", marginTop: 12, lineHeight: 1.5 }}>ต้องตั้งค่า Supabase (url + anonKey ใน ONLINE_CONFIG) และเปิด Auth ก่อน — ดู ONLINE_SETUP.md</div>
           </div>

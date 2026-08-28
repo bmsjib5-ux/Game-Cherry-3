@@ -47930,6 +47930,48 @@ function CherryAdventure() {
                     return { ok: false, err: "เชื่อมต่อไม่ได้" };
                 }
             },
+            // 🔑 ลืมรหัสผ่าน — ให้ Supabase ส่งเมลลิงก์รีเซ็ตมาให้ (รหัสเดิมไม่มีใครอ่านได้ ต้องตั้งใหม่เท่านั้น)
+            async resetPassword(email) {
+                if (!this.enabled())
+                    return { ok: false, err: "ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์" };
+                if (!email || email.indexOf("@") < 0)
+                    return { ok: false, err: "กรอกอีเมลที่ใช้สมัครก่อน" };
+                try {
+                    const back = (typeof location !== "undefined" ? location.href.split("#")[0] : "");
+                    const res = await fetch(this._authUrl("recover" + (back ? "?redirect_to=" + encodeURIComponent(back) : "")), {
+                        method: "POST",
+                        headers: { apikey: this.cfg.anonKey, "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, gotrue_meta_security: {} }),
+                    });
+                    if (!res.ok) {
+                        const j = await res.json().catch(() => ({}));
+                        return { ok: false, err: (j && (j.msg || j.error_description || j.message)) || "ส่งเมลไม่สำเร็จ (ลองใหม่อีกครั้งภายหลัง)" };
+                    }
+                    return { ok: true, back };
+                }
+                catch (e) {
+                    return { ok: false, err: "เชื่อมต่อไม่ได้" };
+                }
+            },
+            // 🔒 ตั้งรหัสผ่านใหม่ (ต้องมี token จากลิงก์ในเมล หรือกำลังล็อกอินอยู่)
+            async setPassword(access_token, password) {
+                if (!this.enabled() || !access_token)
+                    return { ok: false, err: "ลิงก์หมดอายุ — ขอเมลรีเซ็ตใหม่อีกครั้ง" };
+                try {
+                    const res = await fetch(this._authUrl("user"), {
+                        method: "PUT",
+                        headers: { apikey: this.cfg.anonKey, Authorization: "Bearer " + access_token, "Content-Type": "application/json" },
+                        body: JSON.stringify({ password }),
+                    });
+                    const j = await res.json().catch(() => ({}));
+                    if (!res.ok)
+                        return { ok: false, err: (j && (j.msg || j.error_description || j.message)) || "ตั้งรหัสใหม่ไม่สำเร็จ" };
+                    return { ok: true, user: j };
+                }
+                catch (e) {
+                    return { ok: false, err: "เชื่อมต่อไม่ได้" };
+                }
+            },
             async refresh(refresh_token) {
                 if (!this.enabled() || !refresh_token)
                     return null;
@@ -48229,6 +48271,42 @@ function CherryAdventure() {
                 toast("บัญชีนี้ยังไม่มีเซฟบนคลาวด์ — เริ่มเล่นได้เลย");
             return r;
         };
+        // 🔑 ลืมรหัสผ่าน → ส่งลิงก์ไปที่อีเมลที่กรอก
+        G.accountForgot = async (email) => {
+            const em = (email || "").trim();
+            if (!em || em.indexOf("@") < 0) {
+                toast("⚠️ กรอกอีเมลที่ใช้สมัครก่อน แล้วกดลืมรหัสผ่านอีกครั้ง");
+                return { ok: false };
+            }
+            toast("📨 กำลังส่งลิงก์รีเซ็ต...");
+            const r = await CN.resetPassword(em);
+            if (!r.ok) {
+                toast("⚠️ " + r.err);
+                return r;
+            }
+            toast("📧 ส่งลิงก์ตั้งรหัสใหม่ไปที่ " + em + " แล้ว — เปิดเมลแล้วกดลิงก์ (เช็คในถังขยะ/สแปมด้วย)");
+            return r;
+        };
+        // 🔒 ตั้งรหัสผ่านใหม่หลังกดลิงก์จากเมล
+        G.accountSetPassword = async (pw1, pw2) => {
+            if (!pw1 || pw1.length < 6) {
+                toast("⚠️ รหัสใหม่ต้องยาวอย่างน้อย 6 ตัว");
+                return { ok: false };
+            }
+            if (pw1 !== pw2) {
+                toast("⚠️ รหัสใหม่สองช่องไม่ตรงกัน");
+                return { ok: false };
+            }
+            const t = G._session && G._session.access_token;
+            const r = await CN.setPassword(t, pw1);
+            if (!r.ok) {
+                toast("⚠️ " + r.err);
+                return r;
+            }
+            toast("✅ ตั้งรหัสผ่านใหม่แล้ว — ครั้งหน้าเข้าสู่ระบบด้วยรหัสนี้");
+            setUi((u) => ({ ...u, pwReset: false, pwNew1: "", pwNew2: "" }));
+            return r;
+        };
         G.accountSignInGoogle = () => {
             if (!CN.enabled()) {
                 toast("🌐 ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ (ONLINE_SETUP.md)");
@@ -48275,12 +48353,18 @@ function CherryAdventure() {
                             }
                         }
                         catch (e) { }
+                        const isRecover = (h.get("type") || "") === "recovery";
                         _applySession({ access_token: at, refresh_token: rt, expires_in: ei, user: { id: uid, email } });
                         try {
                             history.replaceState(null, "", location.pathname + location.search);
                         }
                         catch (e) { }
-                        toast("✅ เข้าสู่ระบบด้วย Google แล้ว");
+                        if (isRecover) {
+                            setUi((u) => ({ ...u, pwReset: true, pwNew1: "", pwNew2: "" }));
+                            toast("🔑 ยืนยันตัวตนแล้ว — ตั้งรหัสผ่านใหม่ได้เลย");
+                        }
+                        else
+                            toast("✅ เข้าสู่ระบบด้วย Google แล้ว");
                     }
                 }
                 else {
@@ -70088,12 +70172,14 @@ function CherryAdventure() {
                         React.createElement("span", { style: { fontSize: 11, color: "#6a8a6a", fontWeight: 700 } }, ui.auth.email)),
                     React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16 } },
                         React.createElement("button", { onClick: () => G.accountSync(), style: { flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #cfe6d2", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#4a9a5e", background: "#f2fbf4" } }, "\u2601\uFE0F \u0E0B\u0E34\u0E07\u0E04\u0E4C"),
-                        React.createElement("button", { onClick: () => G.accountSignOut(), style: { flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a06a6a", background: "#fff" } }, "\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E23\u0E30\u0E1A\u0E1A")))) : (React.createElement(React.Fragment, null,
+                        React.createElement("button", { onClick: () => G.accountSignOut(), style: { flex: 1, padding: "9px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a06a6a", background: "#fff" } }, "\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E23\u0E30\u0E1A\u0E1A")),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, pwReset: true, pwNew1: "", pwNew2: "" })), style: { width: "100%", padding: "9px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "#fff", marginBottom: 16 } }, "\uD83D\uDD11 \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19"))) : (React.createElement(React.Fragment, null,
                     React.createElement("input", { type: "email", value: ui.authEmail || "", onChange: (e) => setUi((u) => ({ ...u, authEmail: e.target.value })), placeholder: "\u0E2D\u0E35\u0E40\u0E21\u0E25", style: { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 8, fontFamily: font } }),
                     React.createElement("input", { type: "password", value: ui.authPass || "", onChange: (e) => setUi((u) => ({ ...u, authPass: e.target.value })), placeholder: "\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19", style: { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: 12, border: "1px solid #e6d6de", fontSize: 13, marginBottom: 10, fontFamily: font } }),
                     React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8 } },
                         React.createElement("button", { onClick: () => G.accountSignIn(ui.authEmail || "", ui.authPass || ""), style: { flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0709a,#c05a86)" } }, "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A"),
                         React.createElement("button", { onClick: () => G.accountSignUp(ui.authEmail || "", ui.authPass || ""), style: { padding: "11px 14px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "#fff" } }, "\u0E2A\u0E21\u0E31\u0E04\u0E23")),
+                    React.createElement("button", { onClick: () => G.accountForgot(ui.authEmail || ""), style: { width: "100%", padding: "8px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#a05a7a", background: "transparent", textDecoration: "underline", marginBottom: 6 } }, "\uD83D\uDD11 \u0E25\u0E37\u0E21\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19? \u2014 \u0E2A\u0E48\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E15\u0E31\u0E49\u0E07\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2D\u0E35\u0E40\u0E21\u0E25"),
                     React.createElement("button", { onClick: () => G.accountSignInGoogle(), style: { width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e6d6de", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff", marginBottom: 14 } }, "\uD83C\uDDEC \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22 Google"))),
                 React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots })), style: { width: "100%", padding: "13px", borderRadius: 14, border: "none", cursor: "pointer", fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ac08a)", boxShadow: "0 5px 16px rgba(90,160,106,0.4)" } }, ui.auth && ui.auth.status === "in" ? "เข้าเกม →" : "เข้าเกมเลย (ไม่ล็อกอิน) →")))),
         ui.mode === "title" && (React.createElement("div", { style: {
@@ -71053,6 +71139,19 @@ function CherryAdventure() {
                     boxShadow: "0 5px 14px rgba(90,120,70,0.3)",
                     animation: "toastUp 1.7s ease forwards",
                 } }, ui.toast))),
+        ui.pwReset && (React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(20,16,24,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 90, fontFamily: font } },
+            React.createElement("div", { style: { width: "100%", maxWidth: 340, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.34)" } },
+                React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#5a4a6a", marginBottom: 6 } }, "\uD83D\uDD11 \u0E15\u0E31\u0E49\u0E07\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19\u0E43\u0E2B\u0E21\u0E48"),
+                React.createElement("div", { style: { fontSize: 11.5, color: "#9a8a7a", marginBottom: 14, lineHeight: 1.55 } },
+                    "\u0E1A\u0E31\u0E0D\u0E0A\u0E35 ",
+                    React.createElement("b", { style: { color: "#6a5ac0" } }, (ui.auth && ui.auth.email) || "-"),
+                    React.createElement("br", null),
+                    "\u0E15\u0E31\u0E49\u0E07\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48\u0E41\u0E25\u0E49\u0E27\u0E43\u0E0A\u0E49\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35 (\u0E40\u0E0B\u0E1F\u0E1A\u0E19\u0E04\u0E25\u0E32\u0E27\u0E14\u0E4C\u0E44\u0E21\u0E48\u0E2B\u0E32\u0E22)"),
+                React.createElement("input", { type: "password", placeholder: "\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19\u0E43\u0E2B\u0E21\u0E48 (\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22 6 \u0E15\u0E31\u0E27)", value: ui.pwNew1 || "", onChange: (e) => setUi((u) => ({ ...u, pwNew1: e.target.value })), style: { width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: 12, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font, marginBottom: 9 } }),
+                React.createElement("input", { type: "password", placeholder: "\u0E1E\u0E34\u0E21\u0E1E\u0E4C\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48\u0E2D\u0E35\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07", value: ui.pwNew2 || "", onChange: (e) => setUi((u) => ({ ...u, pwNew2: e.target.value })), style: { width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: 12, border: "1px solid #e0d6ca", fontSize: 14, fontFamily: font, marginBottom: 12 } }),
+                React.createElement("div", { style: { display: "flex", gap: 8 } },
+                    React.createElement("button", { onClick: () => G.accountSetPassword(ui.pwNew1 || "", ui.pwNew2 || ""), style: { flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" } }, "\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48"),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, pwReset: false, pwNew1: "", pwNew2: "" })), style: { padding: "11px 14px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#9a8a7a", background: "#fff" } }, "\u0E44\u0E27\u0E49\u0E01\u0E48\u0E2D\u0E19"))))),
         ui.accountOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, accountOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(20,16,24,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, zIndex: 60 } },
             React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 340, background: "#fff", borderRadius: 20, padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 } },
@@ -71064,6 +71163,7 @@ function CherryAdventure() {
                 React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10 } },
                     React.createElement("button", { onClick: () => G.accountSignIn(ui.authEmail || "", ui.authPass || ""), style: { flex: 1, padding: "11px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#7b6ad0,#5a8ae0)" } }, "\u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A"),
                     React.createElement("button", { onClick: () => G.accountSignUp(ui.authEmail || "", ui.authPass || ""), style: { flex: 1, padding: "11px", borderRadius: 12, border: "1px solid #c9b6f0", cursor: "pointer", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#6a5ac0", background: "#f3eeff" } }, "\u0E2A\u0E21\u0E31\u0E04\u0E23\u0E43\u0E2B\u0E21\u0E48")),
+                React.createElement("button", { onClick: () => G.accountForgot(ui.authEmail || ""), style: { width: "100%", padding: "8px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#6a5ac0", background: "transparent", textDecoration: "underline", marginBottom: 8 } }, "\uD83D\uDD11 \u0E25\u0E37\u0E21\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19? \u2014 \u0E2A\u0E48\u0E07\u0E25\u0E34\u0E07\u0E01\u0E4C\u0E15\u0E31\u0E49\u0E07\u0E23\u0E2B\u0E31\u0E2A\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E1B\u0E17\u0E35\u0E48\u0E2D\u0E35\u0E40\u0E21\u0E25"),
                 React.createElement("button", { onClick: () => G.accountSignInGoogle(), style: { width: "100%", padding: "11px", borderRadius: 12, border: "1px solid #e0d6ca", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#5a5a5a", background: "#fff" } }, "\uD83C\uDDEC \u0E40\u0E02\u0E49\u0E32\u0E2A\u0E39\u0E48\u0E23\u0E30\u0E1A\u0E1A\u0E14\u0E49\u0E27\u0E22 Google"),
                 React.createElement("div", { style: { fontSize: 9.5, color: "#c0b0a4", marginTop: 12, lineHeight: 1.5 } }, "\u0E15\u0E49\u0E2D\u0E07\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32 Supabase (url + anonKey \u0E43\u0E19 ONLINE_CONFIG) \u0E41\u0E25\u0E30\u0E40\u0E1B\u0E34\u0E14 Auth \u0E01\u0E48\u0E2D\u0E19 \u2014 \u0E14\u0E39 ONLINE_SETUP.md")))),
         ui.mode === "explore" && ui.auth && ui.auth.status === "in" && !ui.equipScreen && !HUD_HIDE && (React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, style: { position: "absolute", ...Lslot(5), display: Lfit(5) ? "block" : "none", borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 20, background: "linear-gradient(135deg,#5a8ae0,#7b6ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(60,60,120,0.35)", zIndex: 25 } },
