@@ -1566,6 +1566,64 @@ const RECIPES = [
 ];
 const RECIPE_BY = {};
 RECIPES.forEach((r) => (RECIPE_BY[r.id] = r));
+// ---------- 🍱 คุณภาพอาหาร — สุ่มตอนทำ ยิ่งเลเวลทำอาหารสูง ยิ่งออกจานดี ----------
+const FOOD_Q = [
+    { id: "burnt", name: "ไหม้นิด ๆ", emoji: "🥄", mul: 0.70, col: "#9a8a72", bg: "#f3efe6", bd: "#e2d9c8" },
+    { id: "normal", name: "ธรรมดา", emoji: "🍽️", mul: 1.00, col: "#7a7368", bg: "#f7f4ef", bd: "#e6e0d4" },
+    { id: "good", name: "อร่อย", emoji: "🟢", mul: 1.35, col: "#3f8a52", bg: "#ecf8ec", bd: "#bfe3c4" },
+    { id: "great", name: "เลิศรส", emoji: "🔵", mul: 1.75, col: "#3a7ac0", bg: "#eaf2fd", bd: "#bcd6f2" },
+    { id: "chef", name: "ฝีมือเชฟ", emoji: "🟣", mul: 2.25, col: "#7a4ac0", bg: "#f2ecfd", bd: "#d5c4f2" },
+    { id: "legend", name: "ระดับตำนาน", emoji: "🌟", mul: 3.00, col: "#bd7d16", bg: "#fff4da", bd: "#f0d493" },
+];
+const FOOD_Q_BY = {};
+FOOD_Q.forEach((q, i) => { q.i = i; FOOD_Q_BY[q.id] = q; });
+// 🎲 น้ำหนักสุ่มคุณภาพตามเลเวลทำอาหาร (แถวที่ 1 = Lv.1 … แถวที่ 5 = Lv.5)
+const FOOD_Q_W = [
+    [30, 44, 20, 5, 1, 0],
+    [18, 42, 27, 10, 3, 0],
+    [9, 34, 32, 18, 6, 1],
+    [3, 24, 33, 26, 12, 2],
+    [0, 14, 30, 32, 19, 5],
+];
+// ✨ บัฟเสริมที่สุ่มติดมาได้ นอกเหนือจากบัฟหลักของสูตร (เพดานค่าต่อชิ้น)
+const FOOD_EXTRA_MAX = { atkPct: 14, defPct: 14, hpPct: 14, crit: 9, luck: 12, expPct: 30, goldPct: 30, dropPct: 18 };
+const FOOD_EXTRA = Object.keys(FOOD_EXTRA_MAX);
+const FOOD_BAG_MAX = 30; // 🎒 ช่องเก็บอาหารในกระเป๋า
+// 🎲 สุ่มผลลัพธ์ของอาหาร 1 จาน — คุณภาพคูณบัฟหลัก + อาจแถมบัฟเสริม + เวลายาวขึ้นตามเลเวล
+const foodRoll = (R, lv) => {
+    const L = Math.max(1, Math.min(FOOD_Q_W.length, lv | 0 || 1));
+    const w = FOOD_Q_W[L - 1];
+    let tot = 0;
+    for (let i = 0; i < w.length; i++)
+        tot += w[i];
+    let r = Math.random() * tot, qi = 0;
+    for (let i = 0; i < w.length; i++) {
+        r -= w[i];
+        if (r < 0) {
+            qi = i;
+            break;
+        }
+        qi = i;
+    }
+    const Q = FOOD_Q[qi];
+    const buff = {}, base = {};
+    Object.keys(R.buff).forEach((k) => { const v = Math.max(1, Math.round(R.buff[k] * Q.mul)); base[k] = v; buff[k] = v; });
+    // ✨ บัฟเสริม: คุณภาพยิ่งดี + เลเวลยิ่งสูง ยิ่งมีโอกาสติด (สูงสุด 2 อย่าง)
+    const chance = Math.min(0.9, 0.14 + qi * 0.13 + (L - 1) * 0.06);
+    const pool = FOOD_EXTRA.filter((k) => !R.buff[k]);
+    const extra = {};
+    for (let i = 0; i < 2 && pool.length; i++) {
+        if (Math.random() >= chance)
+            continue;
+        const k = pool.splice((Math.random() * pool.length) | 0, 1)[0];
+        const cap = FOOD_EXTRA_MAX[k] || 10;
+        const v = Math.max(1, Math.round(cap * (0.3 + Math.random() * 0.5) * (0.62 + qi * 0.13) * (0.76 + (L - 1) * 0.09)));
+        extra[k] = v;
+        buff[k] = (buff[k] || 0) + v;
+    }
+    const mins = Math.max(1, Math.round(R.mins * (1 + (L - 1) * 0.12) * (0.86 + qi * 0.08)));
+    return { rid: R.id, q: Q.id, qi, buff, base, extra, mins, lv: L };
+};
 const COOK_LV_EXP = (lv) => 40 + lv * 55; // 🍳 EXP ที่ต้องใช้ขึ้นเลเวลทำอาหาร
 const COOK_LV_MAX = 5;
 // 🏷️ ชื่อบัฟที่โชว์บนจอ
@@ -2183,7 +2241,7 @@ function CherryAdventure() {
         gold: 80, shop: [], shopOpen: false,
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
         mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
-        kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
+        kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
         expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
         repOpen: false, rep: [], repShop: [], repTick: 0,
         wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
@@ -34547,7 +34605,7 @@ function CherryAdventure() {
             team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
             playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
             guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null, // 🏰 โชว์บนป้ายเหนือหัว
-            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null),
+            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []),
             titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
             rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
             costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -37341,14 +37399,26 @@ function CherryAdventure() {
         G.cookTotal = G.cookTotal || 0;
         G.fishBag = G.fishBag || { common: 0, rare: 0, epic: 0 };
         G.foodBuff = G.foodBuff || null;
+        G.foodBag = Array.isArray(G.foodBag) ? G.foodBag : []; // 🎒 อาหารที่ทำเก็บไว้ ยังไม่ได้กิน
         G.cookExpNeed = () => COOK_LV_EXP(G.cookLv || 1);
+        G._foodUid = G._foodUid || 1;
+        const foodUid = () => "f" + (G._foodUid++) + "_" + Date.now().toString(36).slice(-4);
         // 🍽️ บัฟอาหารที่กินอยู่ตอนนี้ให้ค่าอะไรบ้าง (หมดอายุแล้ว = 0)
+        // จานที่ทำใหม่จะมีค่าบัฟติดมากับจานเอง (สุ่มตอนทำ) — ของเซฟเก่าที่ไม่มี ให้ใช้ค่าจากสูตรแทน
+        const foodBuffOf = (f) => {
+            if (!f)
+                return null;
+            if (f.buff && typeof f.buff === "object")
+                return f.buff;
+            const R = RECIPE_BY[f.id];
+            return (R && R.buff) || null;
+        };
         const foodB = (k) => {
             const f = G.foodBuff;
             if (!f || !f.id || f.until <= Date.now())
                 return 0;
-            const R = RECIPE_BY[f.id];
-            return (R && R.buff && R.buff[k]) || 0;
+            const b = foodBuffOf(f);
+            return (b && b[k]) || 0;
         };
         G.foodB = foodB;
         G.foodBuffInfo = () => {
@@ -37358,8 +37428,19 @@ function CherryAdventure() {
             const R = RECIPE_BY[f.id];
             if (!R)
                 return null;
-            return { id: R.id, name: R.name, emoji: R.emoji, buff: R.buff, left: Math.max(0, f.until - Date.now()) };
+            const Q = FOOD_Q_BY[f.q] || FOOD_Q_BY.normal;
+            return { id: R.id, name: R.name, emoji: R.emoji, buff: foodBuffOf(f) || {}, extra: f.extra || {},
+                q: Q.id, qName: Q.name, qEmoji: Q.emoji, qCol: Q.col, left: Math.max(0, f.until - Date.now()) };
         };
+        // 🎒 อาหารในกระเป๋า — ให้ JSX เรียกได้ (FOOD_Q/RECIPE_BY อยู่ระดับโมดูลอยู่แล้ว แต่รวมข้อมูลให้ครบทีเดียว)
+        G.foodBagList = () => (G.foodBag || []).map((it) => {
+            const R = RECIPE_BY[it.rid] || {};
+            const Q = FOOD_Q_BY[it.q] || FOOD_Q_BY.normal;
+            return { uid: it.uid, rid: it.rid, name: R.name || it.rid, emoji: R.emoji || "🍽️",
+                q: Q.id, qName: Q.name, qEmoji: Q.emoji, qCol: Q.col, qBg: Q.bg, qBd: Q.bd, qi: Q.i,
+                buff: it.buff || {}, extra: it.extra || {}, mins: it.mins || (R.mins || 30), lv: it.lv || 1 };
+        });
+        G.foodBagCount = () => (G.foodBag || []).length;
         G.foodLeftText = () => {
             const i = G.foodBuffInfo();
             if (!i)
@@ -37452,9 +37533,16 @@ function CherryAdventure() {
                 toast(`🍳 วัตถุดิบไม่พอ — ${miss}`);
                 return;
             }
+            if ((G.foodBag || []).length >= FOOD_BAG_MAX) {
+                toast(`🎒 กระเป๋าอาหารเต็มแล้ว (${FOOD_BAG_MAX} จาน) — กินหรือทิ้งบางจานก่อนนะ`);
+                return;
+            }
             Object.keys(R.need).forEach((kind) => Object.keys(R.need[kind]).forEach((id) => cookTake(kind, id, R.need[kind][id])));
-            const prev = G.foodBuffInfo();
-            G.foodBuff = { id: R.id, until: Date.now() + R.mins * 60000 };
+            // 🎲 สุ่มคุณภาพ + บัฟเสริม ตามเลเวลทำอาหารตอนนี้ แล้วเก็บเข้ากระเป๋า (ยังไม่กิน)
+            const rolled = foodRoll(R, G.cookLv || 1);
+            const dish = { uid: foodUid(), ...rolled };
+            G.foodBag = G.foodBag || [];
+            G.foodBag.push(dish);
             G.cookExp = (G.cookExp || 0) + R.exp;
             let lvUp = 0;
             while ((G.cookLv || 1) < COOK_LV_MAX && G.cookExp >= COOK_LV_EXP(G.cookLv || 1)) {
@@ -37475,14 +37563,61 @@ function CherryAdventure() {
                 }
                 catch (e) { }
             }
-            const bt = Object.keys(R.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${R.buff[k]}${L[1]}`; }).join(" · ");
-            toast(`${R.emoji} ทำ${R.name}สำเร็จ! ${bt} นาน ${R.mins} นาที${prev ? " (แทนที่บัฟเดิม)" : ""}`);
+            const Q = FOOD_Q_BY[dish.q] || FOOD_Q_BY.normal;
+            const bt = Object.keys(dish.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.buff[k]}${L[1]}`; }).join(" · ");
+            const ex = Object.keys(dish.extra || {});
+            toast(`${R.emoji} ทำ${R.name}สำเร็จ! ${Q.emoji} ${Q.name} — ${bt} · ${dish.mins} นาที → เก็บเข้ากระเป๋าแล้ว`);
+            if (ex.length)
+                toast(`✨ ได้บัฟเสริมติดจานมาด้วย! ${ex.map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.extra[k]}${L[1]}`; }).join(" · ")}`);
             if (lvUp)
-                toast(`🍳 เลเวลทำอาหารเพิ่ม! Lv.${G.cookLv} — ปลดล็อกสูตรใหม่`);
+                toast(`🍳 เลเวลทำอาหารเพิ่ม! Lv.${G.cookLv} — สูตรใหม่ + โอกาสได้จานคุณภาพสูงขึ้น`);
             G.syncCookUi();
             syncPlayer();
             if (G.saveGame)
                 G.saveGame();
+            return dish;
+        };
+        // 🍽️ กินอาหารจากกระเป๋า — ติดบัฟตามค่าที่สุ่มไว้ตอนทำ (จานใหม่แทนที่จานเดิม)
+        G.eatFood = (uid) => {
+            const bag = G.foodBag || [];
+            const i = bag.findIndex((f) => f.uid === uid);
+            if (i < 0) {
+                toast("🍽️ ไม่เจอจานนี้ในกระเป๋าแล้ว");
+                return false;
+            }
+            const dish = bag[i];
+            const R = RECIPE_BY[dish.rid];
+            if (!R) {
+                bag.splice(i, 1);
+                return false;
+            }
+            const Q = FOOD_Q_BY[dish.q] || FOOD_Q_BY.normal;
+            const prev = G.foodBuffInfo();
+            bag.splice(i, 1);
+            G.foodBuff = { id: dish.rid, q: dish.q, buff: { ...dish.buff }, extra: { ...(dish.extra || {}) }, mins: dish.mins, until: Date.now() + dish.mins * 60000 };
+            if (G.sfx && G.sfx.coin)
+                G.sfx.coin();
+            const bt = Object.keys(dish.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.buff[k]}${L[1]}`; }).join(" · ");
+            toast(`${R.emoji} กิน${R.name} (${Q.emoji}${Q.name}) — ${bt} นาน ${dish.mins} นาที${prev ? " · แทนที่บัฟเดิม" : ""}`);
+            G.syncCookUi();
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+            return true;
+        };
+        // 🗑️ ทิ้งจานที่ไม่เอา (ไว้เคลียร์ที่ตอนกระเป๋าเต็ม)
+        G.dropFood = (uid) => {
+            const bag = G.foodBag || [];
+            const i = bag.findIndex((f) => f.uid === uid);
+            if (i < 0)
+                return false;
+            const R = RECIPE_BY[bag[i].rid] || {};
+            bag.splice(i, 1);
+            toast(`🗑️ ทิ้ง${R.name || "อาหาร"}แล้ว`);
+            G.syncCookUi();
+            if (G.saveGame)
+                G.saveGame();
+            return true;
         };
         // 📦 รายการวัตถุดิบทั้งหมดพร้อมจำนวน — ให้ JSX เรียกได้ (CROPS อยู่นอกสโคปของ JSX)
         G.cookStock = () => [
@@ -37493,7 +37628,7 @@ function CherryAdventure() {
         ];
         G.syncCookUi = () => {
             setUi((u) => ({ ...u, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0,
-                foodBuff: G.foodBuffInfo(), fishBag: { ...(G.fishBag || {}) }, ranch: (typeof ranchUiSnap === "function" ? ranchUiSnap() : u.ranch),
+                foodBuff: G.foodBuffInfo(), foodBag: G.foodBagList(), fishBag: { ...(G.fishBag || {}) }, ranch: (typeof ranchUiSnap === "function" ? ranchUiSnap() : u.ranch),
                 mats: { ...(G.mats || {}) }, cookTick: (u.cookTick || 0) + 1 }));
         };
         G.toggleKitchen = () => {
@@ -47466,7 +47601,8 @@ function CherryAdventure() {
             G.cookExp = 0;
             G.cookTotal = 0;
             G.fishBag = { common: 0, rare: 0, epic: 0 };
-            G.foodBuff = null; // 🍳 ครัวเปล่า
+            G.foodBuff = null;
+            G.foodBag = []; // 🍳 ครัวเปล่า
             G.exped = [];
             G.expedDone = 0; // 🗺️ ยังไม่เคยส่งทีมสำรวจ
             G.rushOn = false;
@@ -47584,7 +47720,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -50807,7 +50943,14 @@ function CherryAdventure() {
             G.cookExp = d.cookExp || 0;
             G.cookTotal = d.cookTotal || 0; // 🍳 ครัว
             G.fishBag = d.fishBag || { common: 0, rare: 0, epic: 0 };
-            G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now()) ? { id: d.foodBuff.id, until: d.foodBuff.until } : null;
+            G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now())
+                ? { id: d.foodBuff.id, q: d.foodBuff.q || "normal", buff: d.foodBuff.buff || null, extra: d.foodBuff.extra || {}, mins: d.foodBuff.mins || 0, until: d.foodBuff.until }
+                : null;
+            // 🎒 อาหารที่เก็บไว้ยังไม่ได้กิน — ไม่มีวันหมดอายุ นับเวลาเมื่อกินเท่านั้น
+            G.foodBag = Array.isArray(d.foodBag)
+                ? d.foodBag.filter((f) => f && f.rid && RECIPE_BY[f.rid]).slice(0, FOOD_BAG_MAX)
+                    .map((f) => ({ uid: f.uid || ("f" + Math.random().toString(36).slice(2, 8)), rid: f.rid, q: f.q || "normal", qi: FOOD_Q_BY[f.q] ? FOOD_Q_BY[f.q].i : 1, buff: { ...(f.buff || RECIPE_BY[f.rid].buff) }, base: { ...(f.base || {}) }, extra: { ...(f.extra || {}) }, mins: f.mins || RECIPE_BY[f.rid].mins, lv: f.lv || 1 }))
+                : [];
             G.exped = Array.isArray(d.exped) ? d.exped.map((e) => (e && e.id && Array.isArray(e.pets) ? { ...e } : null)) : []; // 🗺️ ทีมสำรวจ (นับเวลาจริงต่อแม้ปิดเกม)
             G.expedDone = d.expedDone || 0;
             G.rushBest = d.rushBest || null;
@@ -70078,17 +70221,23 @@ function CherryAdventure() {
             } },
             closeBtn("kitchenOpen"),
             React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#c06a2a", marginBottom: 3 } }, "\uD83C\uDF73 \u0E04\u0E23\u0E31\u0E27\u0E40\u0E0A\u0E2D\u0E23\u0E4C\u0E23\u0E35\u0E48"),
-            React.createElement("div", { style: { fontSize: 10, color: "#a08a70", marginBottom: 8 } }, "\u0E40\u0E2D\u0E32\u0E1C\u0E25\u0E1C\u0E25\u0E34\u0E15\u0E08\u0E32\u0E01\u0E44\u0E23\u0E48 \u00B7 \u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E15\u0E01\u0E44\u0E14\u0E49 \u00B7 \u0E41\u0E23\u0E48\u0E17\u0E35\u0E48\u0E02\u0E38\u0E14\u0E21\u0E32 \u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E01\u0E34\u0E19\u0E01\u0E48\u0E2D\u0E19\u0E2D\u0E2D\u0E01\u0E25\u0E38\u0E22"),
+            React.createElement("div", { style: { fontSize: 10, color: "#a08a70", marginBottom: 8 } }, "\u0E40\u0E2D\u0E32\u0E1C\u0E25\u0E1C\u0E25\u0E34\u0E15\u0E08\u0E32\u0E01\u0E44\u0E23\u0E48 \u00B7 \u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E15\u0E01\u0E44\u0E14\u0E49 \u00B7 \u0E41\u0E23\u0E48\u0E17\u0E35\u0E48\u0E02\u0E38\u0E14\u0E21\u0E32 \u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E40\u0E01\u0E47\u0E1A\u0E43\u0E2A\u0E48\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 \u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E2D\u0E22\u0E01\u0E34\u0E19\u0E15\u0E2D\u0E19\u0E08\u0E30\u0E2D\u0E2D\u0E01\u0E25\u0E38\u0E22"),
             ui.foodBuff ? (React.createElement("div", { style: { background: "linear-gradient(135deg,#fff0d8,#ffe4c0)", border: "1px solid #f0c890", borderRadius: 12, padding: "8px 10px", marginBottom: 9 } },
                 React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#a05a20" } },
                     ui.foodBuff.emoji || "🍽️",
                     " ",
                     ui.foodBuff.name || "อาหาร",
-                    " ",
+                    ui.foodBuff.qName && React.createElement("span", { style: { color: ui.foodBuff.qCol || "#c08a40" } },
+                        " \u00B7 ",
+                        ui.foodBuff.qEmoji,
+                        ui.foodBuff.qName),
                     React.createElement("span", { style: { color: "#c08a40" } },
-                        "\u00B7 \u0E40\u0E2B\u0E25\u0E37\u0E2D ",
+                        " \u00B7 \u0E40\u0E2B\u0E25\u0E37\u0E2D ",
                         G.foodLeftText ? G.foodLeftText() : "")),
-                React.createElement("div", { style: { fontSize: 10.5, color: "#8a6a40", marginTop: 2 } }, Object.keys(ui.foodBuff.buff || {}).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${ui.foodBuff.buff[k]}${L[1]}`; }).join(" · ")))) : (React.createElement("div", { style: { background: "#f7f3ec", borderRadius: 12, padding: "7px 10px", marginBottom: 9, fontSize: 10.5, color: "#a08a70" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E01\u0E34\u0E19\u0E2D\u0E30\u0E44\u0E23 \u2014 \u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E2A\u0E31\u0E01\u0E08\u0E32\u0E19\u0E01\u0E48\u0E2D\u0E19\u0E2D\u0E2D\u0E01\u0E25\u0E38\u0E22\u0E2A\u0E34! (\u0E01\u0E34\u0E19\u0E44\u0E14\u0E49\u0E17\u0E35\u0E25\u0E30\u0E08\u0E32\u0E19 \u0E08\u0E32\u0E19\u0E43\u0E2B\u0E21\u0E48\u0E41\u0E17\u0E19\u0E17\u0E35\u0E48\u0E08\u0E32\u0E19\u0E40\u0E01\u0E48\u0E32)")),
+                React.createElement("div", { style: { fontSize: 10.5, color: "#8a6a40", marginTop: 2 } }, Object.keys(ui.foodBuff.buff || {}).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${ui.foodBuff.buff[k]}${L[1]}`; }).join(" · ")),
+                Object.keys(ui.foodBuff.extra || {}).length > 0 && (React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#8a5ad0", marginTop: 2 } },
+                    "\u2728 \u0E1A\u0E31\u0E1F\u0E40\u0E2A\u0E23\u0E34\u0E21: ",
+                    Object.keys(ui.foodBuff.extra).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${ui.foodBuff.extra[k]}${L[1]}`; }).join(" · "))))) : (React.createElement("div", { style: { background: "#f7f3ec", borderRadius: 12, padding: "7px 10px", marginBottom: 9, fontSize: 10.5, color: "#a08a70" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E01\u0E34\u0E19\u0E2D\u0E30\u0E44\u0E23 \u2014 \u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E27\u0E49\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E2D\u0E22\u0E01\u0E34\u0E19\u0E15\u0E2D\u0E19\u0E08\u0E30\u0E2D\u0E2D\u0E01\u0E25\u0E38\u0E22\u0E01\u0E47\u0E44\u0E14\u0E49 (\u0E01\u0E34\u0E19\u0E44\u0E14\u0E49\u0E17\u0E35\u0E25\u0E30\u0E08\u0E32\u0E19 \u0E08\u0E32\u0E19\u0E43\u0E2B\u0E21\u0E48\u0E41\u0E17\u0E19\u0E17\u0E35\u0E48\u0E08\u0E32\u0E19\u0E40\u0E01\u0E48\u0E32)")),
             (() => {
                 const lv = ui.cookLv || 1, max = lv >= COOK_LV_MAX;
                 const need = COOK_LV_EXP(lv), pct = max ? 100 : Math.min(100, Math.round((ui.cookExp || 0) / need * 100));
@@ -70100,7 +70249,20 @@ function CherryAdventure() {
                             max ? " (สูงสุด)" : ""),
                         React.createElement("span", null, max ? `ทำมาแล้ว ${ui.cookTotal || 0} จาน` : `${ui.cookExp || 0} / ${need}`)),
                     React.createElement("div", { style: { height: 8, background: "#f0e4d4", borderRadius: 999, overflow: "hidden" } },
-                        React.createElement("div", { style: { width: pct + "%", height: "100%", background: "linear-gradient(90deg,#e0a050,#f5c878)" } }))));
+                        React.createElement("div", { style: { width: pct + "%", height: "100%", background: "linear-gradient(90deg,#e0a050,#f5c878)" } })),
+                    (() => {
+                        const w = FOOD_Q_W[Math.max(0, Math.min(FOOD_Q_W.length - 1, lv - 1))];
+                        const tot = w.reduce((a, b) => a + b, 0) || 1;
+                        return (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { display: "flex", height: 7, borderRadius: 999, overflow: "hidden", marginTop: 5, background: "#f0e4d4" } }, FOOD_Q.map((q, i) => w[i] > 0 ? React.createElement("div", { key: q.id, title: q.name, style: { width: (w[i] / tot * 100) + "%", background: q.col } }) : null)),
+                            React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 } }, FOOD_Q.map((q, i) => w[i] > 0 ? (React.createElement("span", { key: q.id, style: { fontSize: 9, fontWeight: 800, color: q.col } },
+                                q.emoji,
+                                q.name,
+                                " ",
+                                Math.round(w[i] / tot * 100),
+                                "%")) : null)),
+                            React.createElement("div", { style: { fontSize: 9, color: "#a89a80", marginTop: 3 } }, "\u0E04\u0E38\u0E13\u0E20\u0E32\u0E1E\u0E22\u0E34\u0E48\u0E07\u0E2A\u0E39\u0E07 = \u0E1A\u0E31\u0E1F\u0E41\u0E23\u0E07\u0E02\u0E36\u0E49\u0E19 \u0E40\u0E27\u0E25\u0E32\u0E19\u0E32\u0E19\u0E02\u0E36\u0E49\u0E19 \u0E41\u0E25\u0E30\u0E21\u0E35\u0E42\u0E2D\u0E01\u0E32\u0E2A\u0E44\u0E14\u0E49\u0E1A\u0E31\u0E1F\u0E40\u0E2A\u0E23\u0E34\u0E21\u0E21\u0E32\u0E01\u0E02\u0E36\u0E49\u0E19")));
+                    })()));
             })(),
             React.createElement("div", { style: { background: "#f7f3ec", borderRadius: 12, padding: "8px 10px", marginBottom: 10 } },
                 React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#8a7a5a", marginBottom: 5 } }, "\uD83D\uDCE6 \u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E43\u0E19\u0E04\u0E25\u0E31\u0E07"),
@@ -70111,7 +70273,52 @@ function CherryAdventure() {
                     " \u00D7",
                     it.n)))),
                 React.createElement("div", { style: { fontSize: 9, color: "#a89a80", marginTop: 5 } }, "\uD83C\uDF3E \u0E1E\u0E37\u0E0A\u0E1C\u0E25/\u0E02\u0E2D\u0E07\u0E41\u0E1B\u0E23\u0E23\u0E39\u0E1B\u0E21\u0E32\u0E08\u0E32\u0E01\u0E44\u0E23\u0E48 \u00B7 \uD83D\uDC1F \u0E1B\u0E25\u0E32\u0E21\u0E32\u0E08\u0E32\u0E01\u0E01\u0E32\u0E23\u0E15\u0E01\u0E1B\u0E25\u0E32 \u00B7 \uD83D\uDC8E\uD83D\uDC09 \u0E21\u0E32\u0E08\u0E32\u0E01\u0E01\u0E32\u0E23\u0E02\u0E38\u0E14/\u0E25\u0E48\u0E32\u0E21\u0E2D\u0E19")),
-            RECIPES.map((R) => {
+            (() => {
+                const bag = ui.foodBag || [];
+                const tab = ui.cookTab === "cook" ? "cook" : "bag";
+                return (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 9 } }, [["bag", `🎒 อาหารในกระเป๋า (${bag.length}/${FOOD_BAG_MAX})`], ["cook", "📜 สูตรอาหาร"]].map(([k, label]) => (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, cookTab: k })), style: {
+                        flex: 1, padding: "8px 0", borderRadius: 10, cursor: "pointer", fontFamily: font,
+                        fontSize: 11.5, fontWeight: 900, border: tab === k ? "none" : "1px solid #e8ddc8",
+                        color: tab === k ? "#fff" : "#a08a60",
+                        background: tab === k ? "linear-gradient(90deg,#e08a3a,#f5b45a)" : "#fff",
+                    } }, label)))));
+            })(),
+            ui.cookTab !== "cook" && ((ui.foodBag || []).length === 0 ? (React.createElement("div", { style: { background: "#f7f3ec", borderRadius: 12, padding: "14px 12px", fontSize: 11, color: "#a08a70", textAlign: "center", lineHeight: 1.6 } },
+                "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E27\u0E49\u0E40\u0E25\u0E22",
+                React.createElement("br", null),
+                React.createElement("span", { style: { fontSize: 10 } }, "\u0E44\u0E1B\u0E41\u0E17\u0E47\u0E1A \uD83D\uDCDC \u0E2A\u0E39\u0E15\u0E23\u0E2D\u0E32\u0E2B\u0E32\u0E23 \u0E41\u0E25\u0E49\u0E27\u0E25\u0E07\u0E21\u0E37\u0E2D\u0E17\u0E33\u0E2A\u0E31\u0E01\u0E08\u0E32\u0E19 \u2014 \u0E17\u0E33\u0E40\u0E2A\u0E23\u0E47\u0E08\u0E08\u0E30\u0E40\u0E01\u0E47\u0E1A\u0E40\u0E02\u0E49\u0E32\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E43\u0E2B\u0E49\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34"))) : ([...(ui.foodBag || [])].sort((a, b) => (b.qi - a.qi) || a.name.localeCompare(b.name)).map((f) => (React.createElement("div", { key: f.uid, style: { background: f.qBg, border: `1px solid ${f.qBd}`, borderRadius: 12, padding: "9px 10px", marginBottom: 7 } },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 9 } },
+                    React.createElement("span", { style: { fontSize: 26 } }, f.emoji),
+                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                        React.createElement("div", { style: { fontSize: 12.5, fontWeight: 900, color: "#7a5a2a" } },
+                            f.name,
+                            " ",
+                            React.createElement("span", { style: { color: f.qCol } },
+                                f.qEmoji,
+                                f.qName)),
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#5a9a5a" } },
+                            Object.keys(f.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${f.buff[k]}${L[1]}`; }).join(" · "),
+                            React.createElement("span", { style: { color: "#a08a60" } },
+                                " \u00B7 ",
+                                f.mins,
+                                " \u0E19\u0E32\u0E17\u0E35")),
+                        Object.keys(f.extra || {}).length > 0 && (React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: "#8a5ad0", marginTop: 1 } },
+                            "\u2728 ",
+                            Object.keys(f.extra).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${f.extra[k]}${L[1]}`; }).join(" · "))),
+                        React.createElement("div", { style: { fontSize: 9, color: "#b0a084", marginTop: 1 } },
+                            "\u0E17\u0E33\u0E15\u0E2D\u0E19\u0E40\u0E25\u0E40\u0E27\u0E25\u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23 ",
+                            f.lv))),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 7 } },
+                    React.createElement("button", { onClick: () => G.eatFood(f.uid), style: {
+                            flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
+                            fontFamily: font, fontSize: 12, fontWeight: 900, color: "#fff",
+                            background: "linear-gradient(90deg,#e08a3a,#f5b45a)",
+                        } }, "\uD83C\uDF7D\uFE0F \u0E01\u0E34\u0E19\u0E08\u0E32\u0E19\u0E19\u0E35\u0E49"),
+                    React.createElement("button", { onClick: () => G.dropFood(f.uid), style: {
+                            padding: "8px 12px", borderRadius: 10, border: "1px solid #e4d8c4", cursor: "pointer",
+                            fontFamily: font, fontSize: 11.5, fontWeight: 900, color: "#b08a70", background: "#fff",
+                        } }, "\uD83D\uDDD1\uFE0F"))))))),
+            ui.cookTab === "cook" && RECIPES.map((R) => {
                 const chk = G.cookCheck ? G.cookCheck(R.id) : null;
                 if (!chk)
                     return null;
@@ -70135,7 +70342,8 @@ function CherryAdventure() {
                                 React.createElement("span", { style: { color: "#a08a60" } },
                                     " \u00B7 ",
                                     R.mins,
-                                    " \u0E19\u0E32\u0E17\u0E35")))),
+                                    " \u0E19\u0E32\u0E17\u0E35")),
+                            React.createElement("div", { style: { fontSize: 9, color: "#a89a80", marginTop: 1 } }, "\u0E04\u0E48\u0E32\u0E1E\u0E37\u0E49\u0E19\u0E10\u0E32\u0E19 \u2014 \u0E15\u0E2D\u0E19\u0E17\u0E33\u0E08\u0E30\u0E2A\u0E38\u0E48\u0E21\u0E04\u0E38\u0E13\u0E20\u0E32\u0E1E \u00D70.7\u20133.0 \u0E40\u0E17\u0E48\u0E32 \u0E41\u0E25\u0E30\u0E2D\u0E32\u0E08\u0E41\u0E16\u0E21\u0E1A\u0E31\u0E1F\u0E40\u0E2A\u0E23\u0E34\u0E21"))),
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 } }, chk.rows.map((r, i) => (React.createElement("span", { key: i, style: {
                             fontSize: 10, fontWeight: 800, borderRadius: 999, padding: "2px 8px",
                             background: r.have >= r.want ? "#e8f5e0" : "#fde8e0",
@@ -70814,8 +71022,17 @@ function CherryAdventure() {
                 fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
             } },
             ui.foodBuff.emoji || "🍽️",
+            ui.foodBuff.qEmoji || "",
             " ",
             G.foodLeftText ? G.foodLeftText() : "")),
+        ui.mode === "explore" && !ui.foodBuff && (ui.foodBag || []).length > 0 && !ui.equipScreen && !HUD_HIDE && (React.createElement("button", { onClick: () => G.toggleKitchen(), style: {
+                position: "absolute", top: 96, right: 10, zIndex: 20, border: "none", cursor: "pointer",
+                background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
+                fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
+            } },
+            "\uD83C\uDF71 \u0E21\u0E35\u0E2D\u0E32\u0E2B\u0E32\u0E23 ",
+            (ui.foodBag || []).length,
+            " \u0E08\u0E32\u0E19")),
         ui.rushOn && !ui.equipScreen && (React.createElement("div", { style: {
                 position: "absolute", ...bannerPos(_shortHud ? 4 : 100), zIndex: 30, pointerEvents: "none",
                 background: "linear-gradient(90deg,rgba(150,30,40,0.94),rgba(210,70,60,0.94))", borderRadius: 999,
