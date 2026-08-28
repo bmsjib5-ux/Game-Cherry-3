@@ -354,3 +354,21 @@ create policy "gm update" on public.guild_members for update using (true) with c
 drop policy if exists "gm delete" on public.guild_members;
 create policy "gm delete" on public.guild_members for delete using (true);
 create index if not exists guild_members_gid_idx on public.guild_members (gid);
+
+-- 👹 boss_rush : กระดานอันดับบอสรัชรายสัปดาห์ (เวลาน้อยสุดชนะ)
+create table if not exists public.boss_rush (
+  pid  text not null,          -- ID ผู้เล่น
+  week text not null,          -- สัปดาห์ (YYYY-Wnn) — ขึ้นสัปดาห์ใหม่เริ่มนับใหม่
+  n    text,                   -- ชื่อผู้เล่น
+  ms   bigint not null,        -- เวลาที่ใช้ (มิลลิวินาที)
+  ts   bigint,
+  primary key (pid, week)
+);
+alter table public.boss_rush enable row level security;
+drop policy if exists "rush read" on public.boss_rush;
+create policy "rush read"   on public.boss_rush for select using (true);
+drop policy if exists "rush insert" on public.boss_rush;
+create policy "rush insert" on public.boss_rush for insert with check (true);
+drop policy if exists "rush update" on public.boss_rush;
+create policy "rush update" on public.boss_rush for update using (true) with check (true);
+create index if not exists boss_rush_week_ms on public.boss_rush (week, ms);

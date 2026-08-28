@@ -567,6 +567,7 @@ const MISSION_WEEKLY = [
   { id: "w_fish30", t: "fish",  n: 30,  emoji: "🎣", name: "ตกปลา 30 ตัว",           exp: 4800,  gold: 27000, dia: 45,  pt: 34 },
   { id: "w_mine40", t: "mine",  n: 40,  emoji: "⛏️", name: "ขุดสายแร่ 40 ก้อน",       exp: 5400,  gold: 30000, dia: 50,  pt: 36 },
   { id: "w_cook15", t: "cook",  n: 15,  emoji: "🍳", name: "ทำอาหาร 15 จาน",           exp: 5000,  gold: 28000, dia: 48,  pt: 34 },
+  { id: "w_rush1",  t: "rush",  n: 1,   emoji: "👹", name: "จบบอสรัชครบ 13 ตน 1 รอบ",   exp: 9000,  gold: 48000, dia: 90,  pt: 50 },
 ];
 const PASS_TIERS = 30;      // 🎫 จำนวนขั้นของแทร็กรางวัล
 const PASS_STEP = 100;      // แต้มต่อหนึ่งขั้น
@@ -1497,6 +1498,31 @@ const EXPED_BY = {}; EXPEDS.forEach((e) => (EXPED_BY[e.id] = e));
 const EXPED_SLOTS = 2;        // 🗺️ ส่งออกสำรวจพร้อมกันได้กี่ทีม
 const EXPED_TEAM = 3;         // 🐾 สัตว์เลี้ยงต่อทีม
 const EXPED_ELEM_BONUS = 0.25; // ธาตุตรงพื้นที่ = ได้เพิ่มตัวละ 25%
+
+// ---------- 👹 บอสรัช — สู้เจ้าถิ่นทั้ง 13 แดนรวดเดียว จับเวลา ----------
+const RUSH_HEAL = 0.3;          // ❤️ ฟื้น HP กี่ส่วนหลังล้มบอสแต่ละตัว
+const RUSH_MP = 0.4;            // 💧 ฟื้น MP กี่ส่วน
+const RUSH_MIN_LV = 25;         // 🔒 เลเวลขั้นต่ำถึงเข้าได้
+// 🏅 รางวัลตามจำนวนบอสที่ล้มได้ (สะสม ยิ่งไปไกลยิ่งได้เยอะ)
+const rushReward = (n, done) => ({
+  gold: n * 4200 + (done ? 60000 : 0),
+  dia: n * 3 + (done ? 60 : 0),
+  dust: n * 4 + (done ? 50 : 0),
+});
+// 📅 รหัสสัปดาห์ (ISO-ish) ใช้รีเซ็ตกระดานอันดับรายสัปดาห์
+const rushWeek = () => {
+  const d = new Date();
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil(((t - y0) / 86400000 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(wk).padStart(2, "0")}`;
+};
+const rushTimeText = (ms) => {
+  if (ms == null) return "-";
+  const s2 = Math.floor(ms / 1000), m = Math.floor(s2 / 60);
+  return `${m}:${String(s2 % 60).padStart(2, "0")}`;
+};
 const MINE_NODES = 5;          // 🪨 สายแร่ที่โผล่พร้อมกันในแมพ
 const MINE_SWINGS = 3;         // 🔨 ต้องตีให้เข้าเป้ากี่ครั้งกว่าสายแร่จะแตก
 const MINE_LV_EXP = (lv) => 60 + lv * 45;   // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
@@ -1978,6 +2004,7 @@ export default function CherryAdventure() {
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
     kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
+    rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
     eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
@@ -22966,6 +22993,122 @@ export default function CherryAdventure() {
     };
 
     // ♾️ ENDLESS SURVIVAL: fight escalating waves; a loss ends the run
+    // ================= 👹 บอสรัช — เจ้าถิ่น 13 แดนรวดเดียว จับเวลา =================
+    G.rushOn = false; G.rushIdx = 0; G.rushStart = 0; G.rushKills = 0;
+    G.rushBest = G.rushBest || null;      // { ms, week, kills } สถิติดีที่สุดของสัปดาห์นี้
+    G.rushAllTime = G.rushAllTime || null; // สถิติดีที่สุดตลอดกาล
+    // 🗺️ ลำดับบอส: ไล่ตามแดนที่มีเจ้าถิ่นจริง
+    G.rushList = () => BIOMES.map((b, i) => ({ i, id: b.id, name: b.name, emoji: b.emoji, boss: b.boss, bossName: b.bossName, lv: b.lvMax }))
+      .filter((x) => !!x.boss);
+    G.rushElapsed = () => (G.rushOn ? Date.now() - G.rushStart : 0);
+    // 🧹 รีเซ็ตสถิติเมื่อขึ้นสัปดาห์ใหม่
+    G.rushSyncWeek = () => {
+      const w = rushWeek();
+      if (G.rushBest && G.rushBest.week !== w) G.rushBest = null;
+      return w;
+    };
+    // ▶️ เริ่มรอบใหม่
+    G.rushStartRun = () => {
+      if (G.rushOn) { toast("👹 กำลังอยู่ในบอสรัชอยู่แล้ว"); return; }
+      if (G.mode !== "explore") { toast("👹 เริ่มบอสรัชได้จากตอนเดินสำรวจเท่านั้น"); return; }
+      if (G.inTownZone || G.inHomeZone || G.inRanchZone) { toast("👹 ออกจากพื้นที่ส่วนตัวก่อนนะ"); return; }
+      if ((G.player.level || 1) < RUSH_MIN_LV) { toast(`👹 ต้องเลเวล ${RUSH_MIN_LV} ขึ้นไปถึงจะลงบอสรัชได้`); return; }
+      if (G.endlessMode || G.dungeon) { toast("👹 จบโหมดที่ค้างอยู่ก่อนนะ"); return; }
+      G.rushSyncWeek();
+      G.rushOn = true; G.rushIdx = 0; G.rushKills = 0; G.rushStart = Date.now();
+      G.player.hp = effMaxHp(); G.player.mp = effMaxMp();
+      syncPlayer();
+      toast("👹 บอสรัชเริ่ม! ล้มเจ้าถิ่นทั้ง 13 แดนให้ไวที่สุด 🔥");
+      G.syncRushUi();
+      G.rushSpawn();
+    };
+    // 👾 ปล่อยบอสตัวถัดไป
+    G.rushSpawn = () => {
+      const list = G.rushList();
+      if (!G.rushOn) return;
+      if (G.rushIdx >= list.length) { G.rushFinish(true); return; }
+      const cur = list[G.rushIdx];
+      const m = buildMonster(cur.boss, 3);
+      m.scale.multiplyScalar(1.7);
+      m.userData.lv = cur.lv != null ? cur.lv : (G.player.level + 4);
+      m.userData.boss = true;
+      m.userData.rush = true;
+      m.userData.rushBiome = cur.id;
+      applyMenace(m); vivify(m);
+      m.position.set(char.position.x + 2, 0, char.position.z);
+      scene.add(m);
+      toast(`👹 ตนที่ ${G.rushIdx + 1}/${list.length} — ${cur.bossName} แห่ง${cur.name}!`);
+      G.syncRushUi();
+      startBattle(m);
+    };
+    // ✅ ล้มบอสตัวหนึ่งได้ → ฟื้นเลือดนิดหน่อยแล้วไปต่อ
+    G.rushNext = () => {
+      if (!G.rushOn) return;
+      G.rushKills++;
+      G.rushIdx++;
+      G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.round(effMaxHp() * RUSH_HEAL));
+      G.player.mp = Math.min(effMaxMp(), G.player.mp + Math.round(effMaxMp() * RUSH_MP));
+      syncPlayer();
+      const list = G.rushList();
+      if (G.rushIdx >= list.length) { G.rushFinish(true); return; }
+      toast(`👹 ล้มไปแล้ว ${G.rushKills}/${list.length} · ⏱️ ${rushTimeText(G.rushElapsed())} (ฟื้น HP ${Math.round(RUSH_HEAL * 100)}%)`);
+      G.syncRushUi();
+      setTimeout(() => { if (G.rushOn) G.rushSpawn(); }, 700);
+    };
+    // 🏁 จบรอบ (ครบ 13 หรือแพ้/ยอมแพ้)
+    G.rushFinish = (cleared) => {
+      if (!G.rushOn) return;
+      const ms = G.rushElapsed();
+      const n = G.rushKills;
+      G.rushOn = false;
+      const R = rushReward(n, cleared);
+      G.gold = (G.gold || 0) + R.gold;
+      G.diamonds = (G.diamonds || 0) + R.dia;
+      G.gemDust = (G.gemDust || 0) + R.dust;
+      const w = G.rushSyncWeek();
+      let record = false;
+      if (cleared) {
+        if (!G.rushBest || ms < G.rushBest.ms) { G.rushBest = { ms, week: w, kills: n }; record = true; }
+        if (!G.rushAllTime || ms < G.rushAllTime) G.rushAllTime = ms;
+        G.rushClears = (G.rushClears || 0) + 1;
+        if (G.mbEvent) G.mbEvent("rush");
+        toast(`🏆 จบบอสรัชครบ ${n} ตน! ⏱️ ${rushTimeText(ms)}${record ? " · สถิติใหม่ประจำสัปดาห์!" : ""}`);
+      } else {
+        toast(`👹 บอสรัชจบที่ตนที่ ${n + 1} — ล้มได้ ${n} ตน ⏱️ ${rushTimeText(ms)}`);
+      }
+      toast(`🎁 รางวัล: 💰${R.gold.toLocaleString()} · 💎${R.dia} · 💠${R.dust}`);
+      G.rushIdx = 0; G.rushKills = 0;
+      if (G.rushPush) G.rushPush();
+      G.syncRushUi();
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.rushQuit = () => { if (!G.rushOn) return; G.rushFinish(false); };
+    // 🌐 ส่งสถิติขึ้นกระดานอันดับ (ถ้าฐานข้อมูลรองรับ — ไม่รองรับก็เล่นออฟไลน์ได้ปกติ)
+    G.rushPush = async () => {
+      try {
+        if (!G.net || !G.net.enabled() || !G.pid || !G.rushBest) return;
+        await G.net.rushSubmit(G.pid, G.playerName || "ผู้เล่น", G.rushBest.ms, G.rushBest.week);
+      } catch (e) {}
+    };
+    G.rushBoardLoad = async () => {
+      setUi((u) => ({ ...u, rushBoard: null, rushBoardErr: null }));
+      try {
+        if (!G.net || !G.net.enabled()) { setUi((u) => ({ ...u, rushBoard: [], rushBoardErr: "offline" })); return; }
+        const rows = await G.net.rushBoard(rushWeek());
+        setUi((u) => ({ ...u, rushBoard: rows || [], rushBoardErr: rows ? null : "nocol" }));
+      } catch (e) { setUi((u) => ({ ...u, rushBoard: [], rushBoardErr: "nocol" })); }
+    };
+    G.syncRushUi = () => setUi((u) => ({ ...u, rushOn: G.rushOn, rushIdx: G.rushIdx, rushKills: G.rushKills,
+      rushTotal: G.rushList().length, rushMs: G.rushElapsed(),
+      rushBest: G.rushBest ? { ...G.rushBest } : null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0 }));
+    G.toggleRush = () => {
+      const willOpen = !G._rushOpen;
+      G._rushOpen = willOpen;
+      if (willOpen) { G.rushSyncWeek(); G.syncRushUi(); G.rushBoardLoad(); }
+      setUi((u) => ({ ...u, rushOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, kitchenOpen: false, expedOpen: false, equipScreen: false }));
+    };
+    // ================= 👹 END BOSS RUSH =================
+
     G.startEndless = () => {
       if (G.mode !== "explore") { toast("♾️ เริ่มโหมดเอาชีวิตรอดได้จากโลกกว้างเท่านั้น"); return; }
       G.endlessMode = true;
@@ -23434,6 +23577,7 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, mode: "explore", enemy: null, tfActive: false, tfGauge: Math.round(G.tfGauge || 0), tfReady: (G.tfGauge || 0) >= 100, msg: "" }));
       setTimeout(() => saveGame(), 50); // 💾 save after every battle
       // ♾️ endless mode: heal a little and roll into the next wave
+      if (G.rushOn) { G.rushNext(); return; }   // 👹 บอสรัช: ไปเจ้าถิ่นตัวถัดไปทันที
       if (G.endlessMode) {
         G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.round(effMaxHp() * 0.25)); // 25% heal between waves
         G.player.mp = Math.min(effMaxMp(), G.player.mp + Math.round(effMaxMp() * 0.3));
@@ -29657,6 +29801,7 @@ export default function CherryAdventure() {
       G.mineLv = 1; G.mineExp = 0; G.pickLv = 1; G.mineTotal = 0;   // ⛏️ เริ่มด้วยอีเต้อไม้
       G.cookLv = 1; G.cookExp = 0; G.cookTotal = 0; G.fishBag = { common: 0, rare: 0, epic: 0 }; G.foodBuff = null;   // 🍳 ครัวเปล่า
       G.exped = []; G.expedDone = 0;   // 🗺️ ยังไม่เคยส่งทีมสำรวจ
+      G.rushOn = false; G.rushIdx = 0; G.rushKills = 0; G.rushBest = null; G.rushAllTime = null; G.rushClears = 0;   // 👹 บอสรัช
       G.pathId = null; // 🌟 fresh character has no path yet
       G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
@@ -29731,7 +29876,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -29860,6 +30005,26 @@ export default function CherryAdventure() {
           const res = await fetch(this._url(`guild_members?gid=eq.${encodeURIComponent(gid)}&pid=eq.${encodeURIComponent(pid)}`), { method: "DELETE", headers: this._headers({ Prefer: "return=minimal" }) });
           return res.ok;
         } catch (e) { return false; }
+      },
+      // 👹 กระดานบอสรัชรายสัปดาห์ — ต้องมีตาราง boss_rush (ถ้ายังไม่มี เกมจะเล่นออฟไลน์ได้ปกติ)
+      async rushSubmit(pid, name, ms, week) {
+        if (!this.enabled() || !pid || !ms || !week) return false;
+        try {
+          const res = await fetch(this._url("boss_rush?on_conflict=pid,week"), {
+            method: "POST",
+            headers: this._headers({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+            body: JSON.stringify({ pid, n: name || "ผู้เล่น", ms: Math.round(ms), week, ts: Date.now() }),
+          });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async rushBoard(week) {
+        if (!this.enabled() || !week) return null;
+        try {
+          const res = await fetch(this._url(`boss_rush?week=eq.${encodeURIComponent(week)}&select=pid,n,ms&order=ms.asc&limit=20`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
       },
       async partyUpsert(row) {
         if (!this.enabled() || !row || !row.party || !row.pid) return false;
@@ -31500,6 +31665,7 @@ export default function CherryAdventure() {
       G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now()) ? { id: d.foodBuff.id, until: d.foodBuff.until } : null;
       G.exped = Array.isArray(d.exped) ? d.exped.map((e) => (e && e.id && Array.isArray(e.pets) ? { ...e } : null)) : [];   // 🗺️ ทีมสำรวจ (นับเวลาจริงต่อแม้ปิดเกม)
       G.expedDone = d.expedDone || 0;
+      G.rushBest = d.rushBest || null; G.rushAllTime = d.rushAllTime || null; G.rushClears = d.rushClears || 0;   // 👹 บอสรัช
       G.guildId = d.guildId || null;   // 🏰 กิลด์ที่สังกัด
       if (G.guildId && G.guildRefresh) { try { G.guildRefresh(); } catch (e) {} }
       if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
@@ -31671,6 +31837,9 @@ export default function CherryAdventure() {
               if (G.exped.some((e) => e && Date.now() >= e.endAt)) toast("🗺️ ทีมสำรวจกลับถึงบ้านแล้ว — ไปรับของได้เลย!");
             }
             if (G._expedOpen && G.syncExpedUi) G.syncExpedUi();
+          }
+          if (G.rushOn && G.syncRushUi) G.syncRushUi();   // 👹 นาฬิกาบอสรัชเดินบนจอ
+          {
           }
         }
       }
@@ -42737,6 +42906,7 @@ export default function CherryAdventure() {
                   toast(`💔 แพ้ผี ${G.enemy.name}! อันดับ -${loss} → ${G.pvpRank}`);
                 }
                 // ♾️ endless mode: a loss ends the run, record the best wave
+                if (G.rushOn) { G.rushFinish(false); }   // 👹 บอสรัช: แพ้ = จบรอบ นับเท่าที่ล้มได้
                 if (G.endlessMode) {
                   if ((G.endlessWave || 0) > (G.endlessBest || 0)) { G.endlessBest = G.endlessWave; toast(`♾️ สถิติใหม่! รอด ${G.endlessWave} เวฟ`); }
                   G.endlessMode = false; G.endlessWave = 0;
@@ -43576,6 +43746,97 @@ export default function CherryAdventure() {
           </div>
         </div>
       )}
+          {/* 👹 บอสรัช */}
+          {ui.rushOpen && (
+            <div style={{
+              position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "86vh", overflowY: "auto",
+              background: "linear-gradient(180deg,#fff2f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+            }}>
+              {closeBtn("rushOpen")}
+              <div style={{ fontSize: 15, fontWeight: 900, color: "#c0392b", marginBottom: 3 }}>👹 บอสรัช 13 แดน</div>
+              <div style={{ fontSize: 10, color: "#b08a86", marginBottom: 9 }}>
+                ล้มเจ้าถิ่นทุกแดนรวดเดียวโดยไม่พัก · จับเวลา · แพ้เมื่อไหร่จบรอบทันที (ได้รางวัลตามจำนวนที่ล้มได้)
+              </div>
+
+              {/* 🏅 สถิติ */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
+                {[["🏆 สัปดาห์นี้", ui.rushBest ? rushTimeText(ui.rushBest.ms) : "ยังไม่มี"],
+                  ["⭐ ดีสุดตลอดกาล", ui.rushAllTime ? rushTimeText(ui.rushAllTime) : "ยังไม่มี"],
+                  ["✅ จบครบ", (ui.rushClears || 0) + " รอบ"]].map(([k, v], i) => (
+                  <div key={i} style={{ flex: 1, background: "#fdeeec", borderRadius: 10, padding: "6px 7px", textAlign: "center" }}>
+                    <div style={{ fontSize: 9, color: "#b08a86", fontWeight: 800 }}>{k}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 900, color: "#c0392b" }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+
+              {ui.rushOn ? (
+                <>
+                  <div style={{ background: "linear-gradient(135deg,#ffe0dc,#ffd0ca)", border: "1px solid #f0a09a", borderRadius: 12, padding: "9px 10px", marginBottom: 8 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 900, color: "#a02a20" }}>⚔️ กำลังลุยอยู่ — ล้มไปแล้ว {ui.rushKills}/{ui.rushTotal}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#b0554a", marginTop: 2 }}>⏱️ {rushTimeText(ui.rushMs)}</div>
+                  </div>
+                  <button onClick={() => G.rushQuit()} style={{
+                    width: "100%", padding: "9px 0", borderRadius: 11, border: "none", cursor: "pointer",
+                    fontFamily: font, fontSize: 12, fontWeight: 900, color: "#8a4a44", background: "#f5dcd8",
+                  }}>🏳️ ยอมแพ้ (รับรางวัลเท่าที่ล้มได้)</button>
+                </>
+              ) : (
+                <>
+                  {/* 🗺️ รายชื่อเจ้าถิ่น */}
+                  <div style={{ fontSize: 10.5, fontWeight: 900, color: "#c0392b", marginBottom: 5 }}>🗺️ ลำดับเจ้าถิ่นที่ต้องล้ม</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 9 }}>
+                    {(G.rushList ? G.rushList() : []).map((x, i) => (
+                      <span key={x.id} style={{ fontSize: 10, fontWeight: 800, background: "#fff", border: "1px solid #f0d8d4", borderRadius: 999, padding: "3px 8px", color: "#a0554a" }}>
+                        {i + 1}. {x.emoji} {x.bossName} <span style={{ color: "#c8a8a4" }}>Lv.{x.lv}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#b08a86", background: "#fdf2f0", borderRadius: 10, padding: "7px 9px", marginBottom: 9 }}>
+                    ❤️ ฟื้น HP {Math.round(RUSH_HEAL * 100)}% · MP {Math.round(RUSH_MP * 100)}% หลังล้มแต่ละตน ·
+                    🎁 รางวัลสะสมตามจำนวนที่ล้ม (จบครบมีโบนัสก้อนใหญ่) · 🔒 ต้องเลเวล {RUSH_MIN_LV} ขึ้นไป
+                  </div>
+                  {(() => {
+                    const ok = (ui.level || 1) >= RUSH_MIN_LV;
+                    return (
+                      <button onClick={() => { setUi((u) => ({ ...u, rushOpen: false })); G._rushOpen = false; G.rushStartRun(); }} disabled={!ok} style={{
+                        width: "100%", padding: "11px 0", borderRadius: 12, border: "none",
+                        cursor: ok ? "pointer" : "not-allowed", fontFamily: font, fontSize: 14, fontWeight: 900,
+                        color: ok ? "#fff" : "#c8b0ac", background: ok ? "linear-gradient(90deg,#c0392b,#f0705a)" : "#f0e4e2",
+                      }}>{ok ? "🔥 เริ่มบอสรัช!" : `🔒 ต้องเลเวล ${RUSH_MIN_LV}`}</button>
+                    );
+                  })()}
+                </>
+              )}
+
+              {/* 🏆 กระดานอันดับรายสัปดาห์ */}
+              <div style={{ fontSize: 10.5, fontWeight: 900, color: "#c0392b", margin: "12px 0 5px" }}>🏆 อันดับโลกสัปดาห์นี้ (เวลาน้อยสุดชนะ)</div>
+              {ui.rushBoard == null ? (
+                <div style={{ fontSize: 10.5, color: "#b08a86" }}>กำลังโหลด...</div>
+              ) : ui.rushBoardErr === "offline" ? (
+                <div style={{ fontSize: 10.5, color: "#b08a86", background: "#fdf2f0", borderRadius: 10, padding: "7px 9px" }}>
+                  ยังไม่ได้เชื่อมออนไลน์ — สถิติเก็บไว้ในเครื่องอยู่นะ
+                </div>
+              ) : ui.rushBoardErr === "nocol" ? (
+                <div style={{ fontSize: 10, color: "#b08a86", background: "#fdf2f0", borderRadius: 10, padding: "7px 9px" }}>
+                  ยังไม่มีตาราง <b>boss_rush</b> ในฐานข้อมูล — ดู SQL ที่ไฟล์ supabase-setup.sql แล้วรันเพิ่ม (เล่นออฟไลน์ได้ตามปกติ)
+                </div>
+              ) : ui.rushBoard.length === 0 ? (
+                <div style={{ fontSize: 10.5, color: "#b08a86" }}>สัปดาห์นี้ยังไม่มีใครจบเลย — เป็นคนแรกสิ!</div>
+              ) : (
+                ui.rushBoard.map((r, i) => (
+                  <div key={i} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    background: r.pid === ui.pid ? "#ffe8e2" : "#fff", border: "1px solid #f2e0dc",
+                    borderRadius: 9, padding: "5px 9px", marginBottom: 3, fontSize: 11,
+                  }}>
+                    <span style={{ fontWeight: 900, color: i < 3 ? "#c0392b" : "#a0857f" }}>{["🥇", "🥈", "🥉"][i] || (i + 1 + ".")} {r.n}</span>
+                    <span style={{ fontWeight: 900, color: "#7a5a54" }}>⏱️ {rushTimeText(r.ms)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
           {/* 🗺️ ส่งทีมสัตว์เลี้ยงออกสำรวจ */}
           {ui.expedOpen && (
             <div style={{
@@ -44695,6 +44956,15 @@ export default function CherryAdventure() {
           fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
         }}>{ui.foodBuff.emoji || "🍽️"} {G.foodLeftText ? G.foodLeftText() : ""}</div>
       )}
+      {/* 👹 แถบบอสรัช — โชว์ตนที่เท่าไหร่ + เวลาที่ใช้ */}
+      {ui.rushOn && !ui.equipScreen && (
+        <div style={{
+          position: "absolute", ...bannerPos(_shortHud ? 4 : 100), zIndex: 30, pointerEvents: "none",
+          background: "linear-gradient(90deg,rgba(150,30,40,0.94),rgba(210,70,60,0.94))", borderRadius: 999,
+          padding: "4px 14px", fontSize: 11.5, fontWeight: 900, fontFamily: font, color: "#fff", whiteSpace: "nowrap",
+          boxShadow: "0 3px 12px rgba(180,40,50,0.5)",
+        }}>👹 บอสรัช {ui.rushKills}/{ui.rushTotal} · ⏱️ {rushTimeText(ui.rushMs)}</div>
+      )}
       {/* ⛏️ ยืนใกล้สายแร่ = กดขุดได้ */}
       {ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (
         <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
@@ -45237,6 +45507,7 @@ export default function CherryAdventure() {
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
             ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0"],
+            ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
             ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
             ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#c0392b"],
             ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
