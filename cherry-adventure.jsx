@@ -1451,6 +1451,23 @@ const RECIPES = [
   { id: "feast",   name: "สำรับเทพเจ้า",      emoji: "🌟", lv: 5, mins: 90, exp: 120,
     need: { fish: { epic: 2 }, mats: { dragonScale: 2, crystal: 6 }, produce: { berry: 10 } },
     buff: { atkPct: 25, defPct: 25, hpPct: 25, expPct: 60, crit: 15 } },
+  // ---------- 🍳 สูตรขั้นสูง Lv.7–20 ----------
+  { id: "curry",   name: "แกงเผ็ดแก่นเพลิง",  emoji: "🍛", lv: 7, mins: 90, exp: 190,
+    need: { mats: { fireEss: 4 }, produce: { carrot: 8, corn: 8 } }, buff: { atkPct: 34, crit: 12 } },
+  { id: "sashimi", name: "ซาชิมิเยือกแข็ง",   emoji: "🍣", lv: 9, mins: 100, exp: 260,
+    need: { fish: { rare: 6 }, mats: { iceEss: 4 } }, buff: { crit: 24, luck: 16 } },
+  { id: "hotpot",  name: "หม้อไฟรวมมิตร",     emoji: "🍲", lv: 11, mins: 110, exp: 360,
+    need: { fish: { rare: 4, common: 10 }, produce: { corn: 10, carrot: 10, berry: 10 } },
+    buff: { hpPct: 40, defPct: 34, goldPct: 45 } },
+  { id: "cake",    name: "เค้กชั้นดาวตก",     emoji: "🍰", lv: 13, mins: 120, exp: 480,
+    need: { goods: { jam: 3, juice: 3 }, mats: { crystal: 10 }, produce: { berry: 16 } },
+    buff: { expPct: 95, luck: 22, dropPct: 30 } },
+  { id: "roast",   name: "มังกรอบสมุนไพร",    emoji: "🍗", lv: 16, mins: 140, exp: 660,
+    need: { mats: { dragonScale: 5, fireEss: 6 }, fish: { epic: 3 } },
+    buff: { atkPct: 52, hpPct: 34, crit: 18 } },
+  { id: "ambro",   name: "น้ำอมฤตจักรวาล",   emoji: "🏆", lv: 20, mins: 180, exp: 900,
+    need: { mats: { dragonScale: 8, crystal: 20, fireEss: 8, iceEss: 8 }, fish: { epic: 5 }, produce: { berry: 30 } },
+    buff: { atkPct: 60, defPct: 55, hpPct: 55, crit: 28, luck: 30, expPct: 120, goldPct: 100, dropPct: 45 } },
 ];
 const RECIPE_BY = {}; RECIPES.forEach((r) => (RECIPE_BY[r.id] = r));
 // ---------- 🍱 คุณภาพอาหาร — สุ่มตอนทำ ยิ่งเลเวลทำอาหารสูง ยิ่งออกจานดี ----------
@@ -1463,22 +1480,33 @@ const FOOD_Q = [
   { id: "legend", name: "ระดับตำนาน",   emoji: "🌟", mul: 3.00, col: "#bd7d16", bg: "#fff4da", bd: "#f0d493" },
 ];
 const FOOD_Q_BY = {}; FOOD_Q.forEach((q, i) => { q.i = i; FOOD_Q_BY[q.id] = q; });
-// 🎲 น้ำหนักสุ่มคุณภาพตามเลเวลทำอาหาร (แถวที่ 1 = Lv.1 … แถวที่ 5 = Lv.5)
-const FOOD_Q_W = [
-  [30, 44, 20,  5,  1,  0],
-  [18, 42, 27, 10,  3,  0],
-  [ 9, 34, 32, 18,  6,  1],
-  [ 3, 24, 33, 26, 12,  2],
-  [ 0, 14, 30, 32, 19,  5],
-];
+// 🎲 น้ำหนักสุ่มคุณภาพ — กำหนดเป็นจุดหมุดที่ Lv.1/5/10/15/20 แล้วไล่ค่าระหว่างจุด
+const FOOD_Q_ANCHOR = {
+  1:  [30, 44, 20,  5,  1,  0],
+  5:  [ 0, 14, 30, 32, 19,  5],
+  10: [ 0,  6, 22, 34, 27, 11],
+  15: [ 0,  2, 14, 32, 34, 18],
+  20: [ 0,  0,  7, 26, 40, 27],
+};
+const FOOD_Q_KEY = [1, 5, 10, 15, 20];
+const FOOD_Q_W = (lv) => {
+  const L = Math.max(1, Math.min(FOOD_Q_KEY[FOOD_Q_KEY.length - 1], lv | 0 || 1));
+  let a = FOOD_Q_KEY[0], b = FOOD_Q_KEY[FOOD_Q_KEY.length - 1];
+  for (let i = 0; i < FOOD_Q_KEY.length - 1; i++) {
+    if (L >= FOOD_Q_KEY[i] && L <= FOOD_Q_KEY[i + 1]) { a = FOOD_Q_KEY[i]; b = FOOD_Q_KEY[i + 1]; break; }
+  }
+  if (a === b) return FOOD_Q_ANCHOR[a].slice();
+  const t = (L - a) / (b - a);
+  return FOOD_Q_ANCHOR[a].map((v, i) => v + (FOOD_Q_ANCHOR[b][i] - v) * t);
+};
 // ✨ บัฟเสริมที่สุ่มติดมาได้ นอกเหนือจากบัฟหลักของสูตร (เพดานค่าต่อชิ้น)
 const FOOD_EXTRA_MAX = { atkPct: 14, defPct: 14, hpPct: 14, crit: 9, luck: 12, expPct: 30, goldPct: 30, dropPct: 18 };
 const FOOD_EXTRA = Object.keys(FOOD_EXTRA_MAX);
 const FOOD_BAG_MAX = 30;                        // 🎒 ช่องเก็บอาหารในกระเป๋า
 // 🎲 สุ่มผลลัพธ์ของอาหาร 1 จาน — คุณภาพคูณบัฟหลัก + อาจแถมบัฟเสริม + เวลายาวขึ้นตามเลเวล
 const foodRoll = (R, lv) => {
-  const L = Math.max(1, Math.min(FOOD_Q_W.length, lv | 0 || 1));
-  const w = FOOD_Q_W[L - 1];
+  const L = Math.max(1, Math.min(COOK_LV_MAX, lv | 0 || 1));
+  const w = FOOD_Q_W(L);
   let tot = 0; for (let i = 0; i < w.length; i++) tot += w[i];
   let r = Math.random() * tot, qi = 0;
   for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) { qi = i; break; } qi = i; }
@@ -1486,22 +1514,22 @@ const foodRoll = (R, lv) => {
   const buff = {}, base = {};
   Object.keys(R.buff).forEach((k) => { const v = Math.max(1, Math.round(R.buff[k] * Q.mul)); base[k] = v; buff[k] = v; });
   // ✨ บัฟเสริม: คุณภาพยิ่งดี + เลเวลยิ่งสูง ยิ่งมีโอกาสติด (สูงสุด 2 อย่าง)
-  const chance = Math.min(0.9, 0.14 + qi * 0.13 + (L - 1) * 0.06);
+  const chance = Math.min(0.92, 0.14 + qi * 0.13 + (L - 1) * 0.022);
   const pool = FOOD_EXTRA.filter((k) => !R.buff[k]);
   const extra = {};
   for (let i = 0; i < 2 && pool.length; i++) {
     if (Math.random() >= chance) continue;
     const k = pool.splice((Math.random() * pool.length) | 0, 1)[0];
     const cap = FOOD_EXTRA_MAX[k] || 10;
-    const v = Math.max(1, Math.round(cap * (0.3 + Math.random() * 0.5) * (0.62 + qi * 0.13) * (0.76 + (L - 1) * 0.09)));
+    const v = Math.max(1, Math.round(cap * (0.3 + Math.random() * 0.5) * (0.62 + qi * 0.13) * (0.76 + (L - 1) * 0.032)));
     extra[k] = v; buff[k] = (buff[k] || 0) + v;
   }
-  const mins = Math.max(1, Math.round(R.mins * (1 + (L - 1) * 0.12) * (0.86 + qi * 0.08)));
+  const mins = Math.max(1, Math.min(300, Math.round(R.mins * (1 + (L - 1) * 0.045) * (0.86 + qi * 0.08))));   // ⏳ ยาวสุด 5 ชม.
   return { rid: R.id, q: Q.id, qi, buff, base, extra, mins, lv: L };
 };
 
-const COOK_LV_EXP = (lv) => 40 + lv * 55;      // 🍳 EXP ที่ต้องใช้ขึ้นเลเวลทำอาหาร
-const COOK_LV_MAX = 5;
+const COOK_LV_EXP = (lv) => Math.round(40 + lv * 46 + Math.pow(Math.max(0, lv - 5), 2) * 7);   // 🍳 EXP ขึ้นเลเวลทำอาหาร (ชันขึ้นหลัง Lv.5)
+const COOK_LV_MAX = 20;
 // 🏷️ ชื่อบัฟที่โชว์บนจอ
 const BUFF_LABEL = {
   atkPct: ["⚔️ พลังโจมตี", "%"], defPct: ["🛡️ ป้องกัน", "%"], hpPct: ["❤️ พลังชีวิต", "%"],
@@ -1647,7 +1675,8 @@ const rushTimeText = (ms) => {
 };
 const MINE_NODES = 5;          // 🪨 สายแร่ที่โผล่พร้อมกันในแมพ
 const MINE_SWINGS = 3;         // 🔨 ต้องตีให้เข้าเป้ากี่ครั้งกว่าสายแร่จะแตก
-const MINE_LV_EXP = (lv) => 60 + lv * 45;   // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
+const MINE_LV_MAX = 20;                    // ⛏️ เพดานเลเวลขุด
+const MINE_LV_EXP = (lv) => Math.round(60 + lv * 38 + Math.pow(Math.max(0, lv - 5), 2) * 6);   // ⛏️ EXP ขึ้นเลเวลขุด (ชันขึ้นหลัง Lv.5)
 // ⛏️ พลั่ว/อีเต้อ — ซื้อที่ร้านค้า ยิ่งดี ยิ่งได้แร่เยอะ + เป้ากว้างขึ้น (ตีง่ายขึ้น)
 const PICKS = [
   { lv: 1, name: "อีเต้อไม้",     emoji: "🪵", cost: 0,      yield: 1.0, zone: 0.36, desc: "ของติดตัวตั้งแต่เริ่ม" },
@@ -2123,7 +2152,7 @@ export default function CherryAdventure() {
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
-    mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
+    mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
     kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
     repOpen: false, rep: [], repShop: [], repTick: 0,
@@ -17822,6 +17851,39 @@ export default function CherryAdventure() {
     const pickOf = () => PICKS[Math.min(PICKS.length, Math.max(1, G.pickLv || 1)) - 1];
     G.pickOf = pickOf;
     G.mineExpNeed = () => MINE_LV_EXP(G.mineLv || 1);
+    G.mineLast = G.mineLast || null;              // 📦 ผลขุดครั้งล่าสุด เอาไว้โชว์ในแผง
+
+    // 📊 สรุปข้อมูลเหมืองของแมพที่ยืนอยู่ — เลเวล · อีเต้อ · แร่ที่ออกได้ + โอกาส + จำนวนที่มีอยู่
+    G.mineInfo = () => {
+      const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
+      const tb = ORE_TABLE[bid] || ORE_TABLE.meadow;
+      const P = pickOf();
+      const keys = Object.keys(tb);
+      let tot = 0;
+      const rare = 1 + ((G.mineLv || 1) - 1) * 0.045;   // ต้องตรงกับ oreRoll เป๊ะ ๆ ไม่งั้น % ที่โชว์จะหลอกตา
+      const w = keys.map((k) => {
+        let v = tb[k];
+        if (k === "dragonScale") v *= (0.6 + P.lv * 0.5) * rare;
+        else if (k === "crystal") v *= rare;
+        tot += v; return v;
+      });
+      const lv = G.mineLv || 1;
+      const bmin = 2 + Math.floor(lv / 2), bmax = bmin + MINE_SWINGS;
+      const need = MINE_LV_EXP(lv), exp = G.mineExp || 0, max = lv >= MINE_LV_MAX;
+      return {
+        lv, exp, need, max, lvMax: MINE_LV_MAX, pct: max ? 100 : Math.min(100, Math.round(exp / need * 100)), total: G.mineTotal || 0,
+        pick: { name: P.name, emoji: P.emoji, lv: P.lv, yield: P.yield },
+        qtyMin: Math.max(1, Math.round(bmin * P.yield)),
+        qtyMax: Math.max(1, Math.round(bmax * P.yield)),
+        dustMax: 2 + Math.floor(lv / 2),
+        dust: G.gemDust || 0,
+        ores: keys.map((k, i) => ({
+          id: k, emoji: (MATERIALS[k] || {}).emoji || "🪨", name: (MATERIALS[k] || {}).name || k,
+          chance: Math.round(w[i] / (tot || 1) * 100), have: (G.mats && G.mats[k]) || 0,
+        })).sort((a, b) => b.chance - a.chance),
+        last: G.mineLast,
+      };
+    };
 
     // 🎲 สุ่มชนิดแร่ตามน้ำหนักของแมพ (อีเต้อดี = เกล็ดมังกรออกบ่อยขึ้น)
     const oreRoll = (bid) => {
@@ -17829,7 +17891,14 @@ export default function CherryAdventure() {
       const pk = pickOf();
       const keys = Object.keys(tb);
       let tot = 0;
-      const w = keys.map((k) => { const v = tb[k] * (k === "dragonScale" ? (0.6 + pk.lv * 0.5) : 1); tot += v; return v; });
+      // 💎 เลเวลขุดสูงขึ้น ของหายาก (คริสตัล/เกล็ดมังกร) ออกบ่อยขึ้นเรื่อย ๆ
+      const rare = 1 + ((G.mineLv || 1) - 1) * 0.045;
+      const w = keys.map((k) => {
+        let v = tb[k];
+        if (k === "dragonScale") v *= (0.6 + pk.lv * 0.5) * rare;
+        else if (k === "crystal") v *= rare;
+        tot += v; return v;
+      });
       let r = Math.random() * tot;
       for (let i = 0; i < keys.length; i++) { r -= w[i]; if (r <= 0) return keys[i]; }
       return keys[0];
@@ -17935,9 +18004,11 @@ export default function CherryAdventure() {
       const n = i != null ? G.mineNodes[i] : null;
       if (!n || n.dead) { toast("⛏️ ไม่มีสายแร่อยู่ใกล้ ๆ"); return; }
       const P = pickOf();
-      G.mining = { i, pos: 0, dir: 1, speed: MINE_SPEED0, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
+      const mm = { i, pos: 0, dir: 1, speed: MINE_SPEED0, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
+      G.mining = mm;
       if (G.sfx) G.sfx.hit && G.sfx.hit();
-      setUi((u) => ({ ...u, mining: { pos: 0, zone: G.mining.zone, zc: G.mining.zc, hits: 0, need: MINE_SWINGS, perfect: 0, miss: 0 }, menuOpen: false }));
+      // ⚠️ อ่านค่าจาก mm ที่จับไว้ ไม่ใช่ G.mining — ถ้าเดินหลุดระยะก่อน React เรนเดอร์ G.mining จะเป็น null แล้วเกมจะพัง
+      setUi((u) => (G.mining !== mm ? u : { ...u, mining: { pos: 0, zone: mm.zone, zc: mm.zc, hits: 0, need: MINE_SWINGS, perfect: 0, miss: 0, ore: n.ore || null }, mineOre: n.ore || null, menuOpen: false }));
       toast(`${P.emoji} ขุดด้วย${P.name} — แตะตอนตัววิ่งอยู่ในช่องเป้า!`);
     };
     G.stopMining = () => { G.mining = null; setUi((u) => ({ ...u, mining: null })); };
@@ -17967,7 +18038,7 @@ export default function CherryAdventure() {
           return;
         }
       }
-      setUi((u) => ({ ...u, mining: { pos: m.pos, zone: m.zone, zc: m.zc, hits: m.hits, need: MINE_SWINGS, perfect: m.perfect, miss: m.miss } }));
+      setUi((u) => ({ ...u, mining: { pos: m.pos, zone: m.zone, zc: m.zc, hits: m.hits, need: MINE_SWINGS, perfect: m.perfect, miss: m.miss, ore: (n && n.ore) || null } }));
     };
 
     // 💎 ขุดสำเร็จ — แจกแร่ + EXP ขุด + เลเวลอัพ
@@ -17987,16 +18058,17 @@ export default function CherryAdventure() {
         got[k] = (got[k] || 0) + 1;
       }
       // 💠 ตีเข้าเป้าเป๊ะทุกครั้ง = โบนัสผงเพชร
-      let dustMsg = "";
+      let dustMsg = "", dustGot = 0;
       if (m.perfect >= MINE_SWINGS) {
-        const dust = 2 + Math.floor((G.mineLv || 1) / 2);
-        G.gemDust = (G.gemDust || 0) + dust;
-        dustMsg = ` · 🎯 เป๊ะทุกครั้ง! 💠+${dust}`;
+        dustGot = 2 + Math.floor((G.mineLv || 1) / 2);
+        G.gemDust = (G.gemDust || 0) + dustGot;
+        dustMsg = ` · 🎯 เป๊ะทุกครั้ง! 💠+${dustGot}`;
       }
       // ⛏️ EXP ขุด
       G.mineExp = (G.mineExp || 0) + 8 + m.perfect * 5;
       let lvUp = 0;
-      while (G.mineExp >= MINE_LV_EXP(G.mineLv || 1)) { G.mineExp -= MINE_LV_EXP(G.mineLv || 1); G.mineLv = (G.mineLv || 1) + 1; lvUp++; }
+      while ((G.mineLv || 1) < MINE_LV_MAX && G.mineExp >= MINE_LV_EXP(G.mineLv || 1)) { G.mineExp -= MINE_LV_EXP(G.mineLv || 1); G.mineLv = (G.mineLv || 1) + 1; lvUp++; }
+      if ((G.mineLv || 1) >= MINE_LV_MAX) G.mineExp = Math.min(G.mineExp, MINE_LV_EXP(MINE_LV_MAX));
       G.mineTotal = (G.mineTotal || 0) + 1;
       if (n) {
         n.dead = true;
@@ -18010,9 +18082,15 @@ export default function CherryAdventure() {
       if (G.mbEvent) G.mbEvent("mine");
       if (G.storyEvent) { try { G.storyEvent("mine", 1); } catch (e) {} }
       const txt = Object.keys(got).map((k) => `${(MATERIALS[k] || {}).emoji || ""}${(MATERIALS[k] || {}).name || k} ×${got[k]}`).join(" · ");
+      // 📦 เก็บผลขุดครั้งล่าสุดไว้โชว์ในแผงรอบหน้า
+      G.mineLast = {
+        at: Date.now(),
+        dust: dustGot,
+        items: Object.keys(got).map((k) => ({ id: k, emoji: (MATERIALS[k] || {}).emoji || "🪨", name: (MATERIALS[k] || {}).name || k, n: got[k] })),
+      };
       toast(`⛏️ ขุดสำเร็จ! ${txt}${dustMsg}`);
       if (lvUp) toast(`⛏️ เลเวลขุดเพิ่ม! Lv.${G.mineLv} — ได้แร่ต่อครั้งมากขึ้น`);
-      setUi((u) => ({ ...u, mining: null, mineNear: false, mats: { ...G.mats }, gemDust: G.gemDust || 0, ore: (G.mats && G.mats.ironOre) || 0, mineLv: G.mineLv, mineExp: G.mineExp, mineTotal: G.mineTotal }));
+      setUi((u) => ({ ...u, mining: null, mineNear: false, mats: { ...G.mats }, gemDust: G.gemDust || 0, ore: (G.mats && G.mats.ironOre) || 0, mineLv: G.mineLv, mineExp: G.mineExp, mineTotal: G.mineTotal, mineLast: G.mineLast }));
       if (G.saveGame) G.saveGame();
     };
 
@@ -18025,7 +18103,7 @@ export default function CherryAdventure() {
       G.pickLv = nx.lv;
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       toast(`${nx.emoji} อัปเกรดเป็น${nx.name}! ${nx.desc}`);
-      setUi((u) => ({ ...u, gold: G.gold, pickLv: G.pickLv }));
+      setUi((u) => ({ ...u, gold: G.gold, pickLv: G.pickLv, mineTick: (u.mineTick || 0) + 1 }));
       syncPlayer(); if (G.saveGame) G.saveGame();
     };
 
@@ -18769,6 +18847,13 @@ export default function CherryAdventure() {
     };
     G.petAt = (iid) => (G.petBox || []).find((p) => p.i === iid) || null;
     G.petInUse = (iid) => (G.team || []).includes(iid) || G.buddy === iid || (G.petAway ? G.petAway(iid) : false);   // 🗺️ ตัวที่ออกสำรวจอยู่ก็ถือว่าไม่ว่าง
+    // 🚧 เพ็ตตัวนี้ติดอะไรอยู่ ถึงลงคอกฟาร์มไม่ได้ (null = ว่าง ลงได้)
+    G.petBusyWhy = (iid) => {
+      if ((G.team || []).includes(iid)) return { k: "team", emoji: "⚔️", label: "อยู่ในทีมสู้" };
+      if (G.buddy === iid) return { k: "buddy", emoji: "💞", label: "เป็นเพื่อนซี้" };
+      if (G.petAway && G.petAway(iid)) return { k: "exped", emoji: "🗺️", label: "ออกสำรวจอยู่" };
+      return null;
+    };
     G.petSellPrice = (p) => { const t = SPECIES[p.sp].tier; return t * 90 + p.lv * 15 + (p.plus || 0) * 120 + (p.stage - 1) * 150; };
     G.sellPet = (iid) => {
       const p = G.petAt(iid); if (!p) return;
@@ -22657,8 +22742,10 @@ export default function CherryAdventure() {
       const maxS = ranchSlotsMax();
       let placed = 0, blocked = 0;
       const freeFrom = (from) => { for (let k = from; k < maxS; k++) if (!R.slots[k]) return k; for (let k = 0; k < maxS; k++) if (!R.slots[k]) return k; return -1; };
+      const why = {};
       for (const iid of iids) {
-        if (G.petInUse && G.petInUse(iid)) { blocked++; continue; }
+        const b = G.petBusyWhy && G.petBusyWhy(iid);
+        if (b) { blocked++; why[b.k] = (why[b.k] || 0) + 1; continue; }
         for (let k = 0; k < maxS; k++) if (R.slots[k] === iid) R.slots[k] = null; // ย้ายออกจากช่องเดิมก่อน
         const slot = (placed === 0 && startSlot != null && !R.slots[startSlot]) ? startSlot : freeFrom(startSlot != null ? startSlot : 0);
         if (slot < 0) break;
@@ -22667,8 +22754,13 @@ export default function CherryAdventure() {
         placed++;
       }
       if (G.sfx) G.sfx.button && G.sfx.button();
-      if (placed) toast(`🐾 ปล่อยลงคอก ${placed} ตัวแล้ว${blocked ? ` (ข้าม ${blocked} ตัวที่อยู่ในทีม)` : ""}`);
-      else toast(blocked ? "⛔ ตัวที่เลือกอยู่ในทีม/บัดดี้ทั้งหมด" : "🐾 คอกเต็มแล้ว");
+      const whyTxt = [["team", "⚔️ อยู่ในทีมสู้"], ["buddy", "💞 เป็นเพื่อนซี้"], ["exped", "🗺️ ออกสำรวจอยู่"]]
+        .filter(([k]) => why[k]).map(([k, t]) => `${t} ${why[k]} ตัว`).join(" · ");
+      const freeSlots = maxS - R.slots.filter(Boolean).length;
+      if (placed) toast(`🐾 ปล่อยลงคอก ${placed} ตัวแล้ว${blocked ? ` (ข้าม ${blocked} ตัว — ${whyTxt})` : ""}`);
+      else if (blocked) toast(`⛔ ปล่อยไม่ได้เลย — ${whyTxt} · ถอดออกจากทีม/เรียกกลับจากสำรวจก่อนนะ`);
+      else if (freeSlots <= 0) toast(`🐾 คอกเต็มแล้ว (${maxS}/${maxS} ช่อง) — ซื้อคอกเพิ่มที่แท็บ 🛒 ตลาด หรือเอาตัวเดิมออกก่อน`);
+      else toast("🐾 ไม่มีตัวไหนถูกปล่อยลงคอก");
       setUi((u) => ({ ...u, ranch: ranchUiSnap(), ranchPick: null, ranchSel: [] }));
     };
     G.ranchRemove = (slot) => { ranchTick(); const R = G.ranch; if (R.slots) R.slots[slot] = null; setUi((u) => ({ ...u, ranch: ranchUiSnap() })); };
@@ -44669,7 +44761,7 @@ export default function CherryAdventure() {
                 return (
                   <div style={{ marginBottom: 9 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, fontWeight: 800, color: "#a06a30", marginBottom: 3 }}>
-                      <span>🍳 เลเวลทำอาหาร {lv}{max ? " (สูงสุด)" : ""}</span>
+                      <span>🍳 เลเวลทำอาหาร {lv}/{COOK_LV_MAX}{max ? " (สูงสุด)" : ""}</span>
                       <span>{max ? `ทำมาแล้ว ${ui.cookTotal || 0} จาน` : `${ui.cookExp || 0} / ${need}`}</span>
                     </div>
                     <div style={{ height: 8, background: "#f0e4d4", borderRadius: 999, overflow: "hidden" }}>
@@ -44677,19 +44769,22 @@ export default function CherryAdventure() {
                     </div>
                     {/* 🎲 โอกาสได้คุณภาพแต่ละระดับที่เลเวลนี้ — เลเวลสูงขึ้น แถบสีดี ๆ จะยาวขึ้น */}
                     {(() => {
-                      const w = FOOD_Q_W[Math.max(0, Math.min(FOOD_Q_W.length - 1, lv - 1))];
+                      const w = FOOD_Q_W(lv);
                       const tot = w.reduce((a, b) => a + b, 0) || 1;
                       return (
                         <>
                           <div style={{ display: "flex", height: 7, borderRadius: 999, overflow: "hidden", marginTop: 5, background: "#f0e4d4" }}>
                             {FOOD_Q.map((q, i) => w[i] > 0 ? <div key={q.id} title={q.name} style={{ width: (w[i] / tot * 100) + "%", background: q.col }} /> : null)}
                           </div>
+                          <div style={{ fontSize: 9, color: "#a89a80", marginTop: 3 }}>
+                            🍳 เลเวลสูงสุด {COOK_LV_MAX} — ทุกเลเวลที่ขึ้น จานคุณภาพต่ำจะหายไป จานคุณภาพสูงจะออกบ่อยขึ้น
+                          </div>
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
                             {FOOD_Q.map((q, i) => w[i] > 0 ? (
-                              <span key={q.id} style={{ fontSize: 9, fontWeight: 800, color: q.col }}>{q.emoji}{q.name} {Math.round(w[i] / tot * 100)}%</span>
+                              <span key={q.id} style={{ fontSize: 9, fontWeight: 800, color: q.col }}>{q.emoji}{q.name} {(w[i] / tot * 100).toFixed(w[i] / tot * 100 < 10 ? 1 : 0)}%</span>
                             ) : null)}
                           </div>
-                          <div style={{ fontSize: 9, color: "#a89a80", marginTop: 3 }}>คุณภาพยิ่งสูง = บัฟแรงขึ้น เวลานานขึ้น และมีโอกาสได้บัฟเสริมมากขึ้น</div>
+                          <div style={{ fontSize: 9, color: "#a89a80", marginTop: 2 }}>คุณภาพยิ่งสูง = บัฟแรงขึ้น เวลานานขึ้น และมีโอกาสได้บัฟเสริมมากขึ้น</div>
                         </>
                       );
                     })()}
@@ -45727,6 +45822,7 @@ export default function CherryAdventure() {
           }}>
             {(G.pickOf ? G.pickOf().emoji : "⛏️")} ขุดสายแร่
             {ui.mineOre && MATERIALS[ui.mineOre] ? <span style={{ display: "block", fontSize: 10.5, opacity: 0.92 }}>{MATERIALS[ui.mineOre].emoji}{MATERIALS[ui.mineOre].name}</span> : null}
+            <span style={{ display: "block", fontSize: 9.5, opacity: 0.85 }}>⛏️ เลเวลขุด {ui.mineLv || 1}/{MINE_LV_MAX} · {(G.pickOf ? G.pickOf().name : "")}</span>
           </button>
         </div>
       )}
@@ -45737,7 +45833,46 @@ export default function CherryAdventure() {
         const cW = m.zone * 0.34 * 100;
         return (
           <div style={{ position: "absolute", bottom: _shortHud ? 6 : 24, left: "50%", transform: "translateX(-50%)", width: "88%", maxWidth: 400, zIndex: 40, fontFamily: font }}>
-            <div style={{ background: "rgba(28,24,18,0.92)", borderRadius: 16, padding: "12px 14px", border: "2px solid #c09a4a", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}>
+            <div style={{ background: "rgba(28,24,18,0.92)", borderRadius: 16, padding: _shortHud ? "8px 12px" : "12px 14px", border: "2px solid #c09a4a", boxShadow: "0 8px 28px rgba(0,0,0,0.5)" }}>
+              {/* 📊 เลเวลขุด · อีเต้อ · แร่ของสายนี้ · ของที่ได้ล่าสุด · แร่ที่ออกได้ในแมพนี้ */}
+              {(() => {
+                const MI = G.mineInfo ? G.mineInfo() : null;
+                if (!MI) return null;
+                const oreCur = m.ore && MATERIALS[m.ore] ? MATERIALS[m.ore] : null;
+                return (
+                  <div style={{ marginBottom: 9 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: 11, fontWeight: 900, color: "#f5d08a", marginBottom: 3 }}>
+                      <span>⛏️ เลเวลขุด {MI.lv}/{MI.lvMax}{MI.max ? " (สูงสุด)" : ""} <span style={{ color: "#c8bca0", fontWeight: 800 }}>· {MI.pick.emoji}{MI.pick.name} (แร่ ×{MI.pick.yield})</span></span>
+                      <span style={{ fontSize: 9.5, color: "#c8bca0", fontWeight: 800 }}>{MI.max ? `ขุดแล้ว ${MI.total} ก้อน` : `${MI.exp}/${MI.need} EXP`}</span>
+                    </div>
+                    <div style={{ height: 5, background: "rgba(255,255,255,0.14)", borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ width: MI.pct + "%", height: "100%", background: "linear-gradient(90deg,#c09a4a,#ffd84a)" }} />
+                    </div>
+                    <div style={{ fontSize: 9.5, color: "#c8bca0", fontWeight: 800, marginTop: 4 }}>
+                      🪨 สายแร่นี้: <span style={{ color: "#ffe0a0" }}>{oreCur ? `${oreCur.emoji}${oreCur.name}` : "แร่ผสม"}</span>
+                      {" · "}คาดว่าได้ <span style={{ color: "#ffe0a0" }}>{MI.qtyMin}–{MI.qtyMax} ชิ้น</span>
+                      {" · "}ตีเป๊ะครบ 💠+{MI.dustMax}
+                      {" · "}ขุดมาแล้ว {MI.total} ก้อน
+                    </div>
+                    {MI.last && MI.last.items && MI.last.items.length > 0 && (
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: "#9ad8a0", marginTop: 3 }}>
+                        📦 ก้อนที่แล้วได้ {MI.last.items.map((it) => `${it.emoji}${it.name} ×${it.n}`).join(" · ")}{MI.last.dust ? ` · 💠+${MI.last.dust}` : ""}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", flexWrap: _shortHud ? "nowrap" : "wrap", overflowX: _shortHud ? "auto" : "visible", gap: 4, marginTop: 5 }}>
+                      {MI.ores.map((o) => (
+                        <span key={o.id} style={{
+                          fontSize: 9.5, fontWeight: 800, borderRadius: 999, padding: "2px 7px",
+                          background: m.ore === o.id ? "rgba(255,216,74,0.22)" : "rgba(255,255,255,0.09)",
+                          border: `1px solid ${m.ore === o.id ? "rgba(255,216,74,0.6)" : "rgba(255,255,255,0.14)"}`,
+                          color: m.ore === o.id ? "#ffe0a0" : "#d8ccb0", whiteSpace: "nowrap", flexShrink: 0,
+                        }}>{o.emoji}{o.name} {o.chance}% <span style={{ color: "#9aa89a" }}>· มี {o.have}</span></span>
+                      ))}
+                      <span style={{ fontSize: 9.5, fontWeight: 800, borderRadius: 999, padding: "2px 7px", background: "rgba(127,208,245,0.14)", border: "1px solid rgba(127,208,245,0.3)", color: "#a8e0ff", whiteSpace: "nowrap", flexShrink: 0 }}>💠 ผงเพชร · มี {MI.dust}</span>
+                    </div>
+                  </div>
+                );
+              })()}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 900, color: "#f5d08a" }}>
                   {(G.pickOf ? G.pickOf().emoji : "⛏️")} ตีให้เข้าเป้า {m.hits}/{m.need}
@@ -45746,18 +45881,18 @@ export default function CherryAdventure() {
                 <span style={{ fontSize: 11, fontWeight: 800, color: m.miss >= 3 ? "#ff8a8a" : "#c8bca0" }}>พลาด {m.miss}/4</span>
               </div>
               {/* 🎯 แตะที่แถบก็ตีได้ ไม่ต้องเล็งปุ่ม · ตัววิ่งขยับด้วย DOM ตรง ๆ ไม่หน่วง */}
-              <div onPointerDown={(e) => { e.preventDefault(); G.mineTap(); }} style={{ position: "relative", height: 38, background: "rgba(0,0,0,0.5)", borderRadius: 9, overflow: "hidden", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer", touchAction: "manipulation" }}>
+              <div onPointerDown={(e) => { e.preventDefault(); G.mineTap(); }} style={{ position: "relative", height: _shortHud ? 30 : 38, background: "rgba(0,0,0,0.5)", borderRadius: 9, overflow: "hidden", border: "1px solid rgba(255,255,255,0.16)", cursor: "pointer", touchAction: "manipulation" }}>
                 <div style={{ position: "absolute", left: zL + "%", width: zW + "%", top: 0, bottom: 0, background: "linear-gradient(180deg,rgba(120,220,120,0.55),rgba(60,180,80,0.55))" }} />
                 <div style={{ position: "absolute", left: (m.zc * 100 - cW / 2) + "%", width: cW + "%", top: 0, bottom: 0, background: "rgba(255,224,106,0.8)" }} />
                 <div ref={(el) => { G._mineMarkEl = el; }} style={{ position: "absolute", left: (m.pos * 100) + "%", top: -3, bottom: -3, width: 5, marginLeft: -2.5, background: "#fff", boxShadow: "0 0 12px #fff", borderRadius: 3 }} />
               </div>
               <button onPointerDown={(e) => { e.preventDefault(); G.mineTap(); }} style={{
-                width: "100%", marginTop: 9, padding: "15px 0", borderRadius: 12, border: "none", cursor: "pointer",
-                fontFamily: font, fontSize: 18, fontWeight: 900, color: "#3a2a10", touchAction: "manipulation", userSelect: "none",
+                width: "100%", marginTop: _shortHud ? 7 : 9, padding: _shortHud ? "10px 0" : "15px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                fontFamily: font, fontSize: _shortHud ? 16 : 18, fontWeight: 900, color: "#3a2a10", touchAction: "manipulation", userSelect: "none",
                 background: "linear-gradient(90deg,#ffd84a,#ffb020)", boxShadow: "0 4px 14px rgba(255,180,32,0.45)",
               }}>🔨 ตี!</button>
               <button onPointerDown={(e) => { e.preventDefault(); G.stopMining(); }} style={{
-                width: "100%", marginTop: 6, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
+                width: "100%", marginTop: _shortHud ? 4 : 6, padding: _shortHud ? "5px 0" : "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
                 fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#d8ccb0", background: "rgba(255,255,255,0.12)",
               }}>เลิกขุด</button>
             </div>
@@ -48950,6 +49085,12 @@ export default function CherryAdventure() {
               </div>
               {/* slot grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, flexShrink: 0 }}>
+                {ui.ranch.slots.every(Boolean) && (
+                  <button onClick={() => setUi((u) => ({ ...u, ranchTab: "market" }))} style={{
+                    gridColumn: "1 / -1", padding: "10px", borderRadius: 12, border: "2px dashed #e0c8a8", cursor: "pointer",
+                    fontFamily: font, background: "#fdf7ee", color: "#b08a5a", fontSize: 11.5, fontWeight: 800, lineHeight: 1.5,
+                  }}>🐄 คอกเต็มแล้ว ({ui.ranch.slots.length}/{ui.ranch.slots.length} ช่อง)<br /><span style={{ fontSize: 10, color: "#c0a080" }}>แตะเพื่อไปแท็บ 🛒 ตลาด ซื้อคอกเพิ่ม หรือกด "เอาออก" ที่ตัวใดตัวหนึ่งก่อน</span></button>
+                )}
                 {ui.ranch.slots.map((s, k) => s ? (
                   <div key={k} style={{ background: "#f7f9f0", border: "1px solid #e4ecd6", borderRadius: 12, padding: "9px 10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -49262,8 +49403,11 @@ export default function CherryAdventure() {
             const RARC = { 1: "#9aa89a", 2: "#5fc06a", 3: "#4a9ae8", 4: "#b060e0", 5: "#f5a623", 6: "#ff4a8a" };
             const RARN = { 1: "สามัญ", 2: "ไม่ธรรมดา", 3: "หายาก", 4: "มหากาพย์", 5: "ตำนาน", 6: "เทพนิยาย" };
             const tierOf = (p) => (SPECIES[p.sp] || {}).tier || 1;
-            const avail = (ui.petBox || []).filter((p) => !inRanch.has(p.i) && !(G.petInUse && G.petInUse(p.i))) // ⛔ ตัวบัดดี้/ทีม ไม่ให้ลงฟาร์ม
-              .slice().sort((a, b) => { const d = tierOf(b) - tierOf(a); return d !== 0 ? d : (b.lv || 0) - (a.lv || 0); }); // 🌟 หายากสุด → เลเวลสูงสุดก่อน
+            const notInPen = (ui.petBox || []).filter((p) => !inRanch.has(p.i));
+            const byRare = (a, b) => { const d = tierOf(b) - tierOf(a); return d !== 0 ? d : (b.lv || 0) - (a.lv || 0); }; // 🌟 หายากสุด → เลเวลสูงสุดก่อน
+            const avail = notInPen.filter((p) => !(G.petBusyWhy && G.petBusyWhy(p.i))).slice().sort(byRare);
+            // 🚧 ตัวที่ติดทีม/บัดดี้/สำรวจ — โชว์ไว้ให้เห็นว่ามีอยู่ พร้อมบอกว่าติดอะไร จะได้รู้ว่าต้องไปแก้ตรงไหน
+            const busy = notInPen.map((p) => ({ p, why: G.petBusyWhy && G.petBusyWhy(p.i) })).filter((x) => x.why).sort((a, b) => byRare(a.p, b.p));
             return (
               <div onClick={() => setUi((u) => ({ ...u, ranchPick: null }))} style={{ position: "absolute", inset: 0, zIndex: 70, background: "rgba(40,28,18,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
                 <div onClick={(e) => e.stopPropagation()} style={{ width: "94%", maxWidth: 430, maxHeight: "82vh", overflowY: "auto", background: "#fff", borderRadius: 16, padding: 13, boxShadow: "0 14px 44px rgba(0,0,0,0.32)", display: "flex", flexDirection: "column" }}>
@@ -49293,7 +49437,27 @@ export default function CherryAdventure() {
                       ); })}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 11, color: "#a99", textAlign: "center", padding: "16px 0" }}>ไม่มีเพ็ตว่าง — จับเพ็ตเพิ่มหรือเอาตัวอื่นออกจากคอกก่อน</div>
+                    <div style={{ fontSize: 11, color: "#a99", textAlign: "center", padding: "14px 0", lineHeight: 1.6 }}>
+                      {busy.length
+                        ? <>ไม่มีเพ็ตว่างให้ปล่อย — ที่เหลือ {busy.length} ตัวติดอยู่ (ดูข้างล่าง)<br /><span style={{ fontSize: 10 }}>ถอดออกจากทีมสู้ / เลิกเป็นเพื่อนซี้ / เรียกกลับจากการสำรวจ แล้วค่อยมาปล่อยลงคอก</span></>
+                        : <>ยังไม่มีเพ็ตเลย — ไปจับเพ็ตด้วยลูกบอลก่อนนะ<br /><span style={{ fontSize: 10 }}>(หรือเพาะพันธุ์ที่แท็บ 💞 เพาะพันธุ์)</span></>}
+                    </div>
+                  )}
+                  {/* 🚧 ตัวที่ปล่อยไม่ได้ตอนนี้ — เห็นเหตุผลชัด ๆ ว่าติดอะไร */}
+                  {busy.length > 0 && (
+                    <>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "#b08a6a", marginTop: 10, marginBottom: 5 }}>🚧 ปล่อยลงคอกไม่ได้ตอนนี้ ({busy.length} ตัว)</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
+                        {busy.map(({ p, why }) => { const sp = SPECIES[p.sp] || {}; return (
+                          <div key={p.i} style={{ padding: "8px 4px", borderRadius: 11, border: "2px dashed #ddd2c4", background: "#f7f4ee", textAlign: "center", opacity: 0.85 }}>
+                            <div style={{ fontSize: 24, filter: "grayscale(0.7)" }}>{sp.emoji}</div>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: "#a09080", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sp.name}</div>
+                            <div style={{ fontSize: 9, fontWeight: 900, color: "#c08a5a" }}>{why.emoji} {why.label}</div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: "#b0a494" }}>Lv.{p.lv}</div>
+                          </div>
+                        ); })}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
