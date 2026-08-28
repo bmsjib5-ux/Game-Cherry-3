@@ -1667,6 +1667,76 @@ const BUFF_LABEL = {
 };
 // 🐟 ปลาที่ตกได้เก็บเข้าถัง แยกตามระดับ
 const FISH_TIER = { common: { name: "ปลาธรรมดา", emoji: "🐟" }, rare: { name: "ปลาหายาก", emoji: "🐠" }, epic: { name: "ปลาในตำนาน", emoji: "🐉" } };
+// ---------- 🎣 ตกปลา — ชนิดปลา · เลเวลตกปลา · โอกาสได้ปลาหายากตามเลเวล ----------
+const FISH_LV_MAX = 20;
+const FISH_LV_EXP = (lv) => Math.round(50 + lv * 40 + Math.pow(Math.max(0, lv - 5), 2) * 6); // 🎣 EXP ขึ้นเลเวลตกปลา
+const FISH_EXP_GAIN = { junk: 1, common: 7, rare: 18, epic: 45 }; // ได้ EXP ตกปลาต่อ 1 ตัว
+// lv = เลเวลตกปลาขั้นต่ำที่ปลาตัวนี้จะเริ่มติดเบ็ด · w = น้ำหนักสุ่มพื้นฐาน
+const FISH_TYPES = [
+    { id: "boot", name: "รองเท้าเก่า", emoji: "🥾", rarity: "junk", gold: 1, exp: 1, w: 12, lv: 1 },
+    { id: "can", name: "กระป๋องสนิม", emoji: "🥫", rarity: "junk", gold: 2, exp: 1, w: 8, lv: 1 },
+    { id: "weed", name: "สาหร่ายพันเบ็ด", emoji: "🌿", rarity: "junk", gold: 2, exp: 2, w: 6, lv: 1 },
+    { id: "minnow", name: "ปลาซิว", emoji: "🐟", rarity: "common", gold: 8, exp: 5, w: 40, lv: 1 },
+    { id: "gold", name: "ปลาทอง", emoji: "🐠", rarity: "common", gold: 12, exp: 8, w: 30, lv: 1 },
+    { id: "tilapia", name: "ปลานิล", emoji: "🐟", rarity: "common", gold: 20, exp: 12, w: 26, lv: 3 },
+    { id: "snake", name: "ปลาช่อนยักษ์", emoji: "🐊", rarity: "common", gold: 30, exp: 17, w: 22, lv: 6 },
+    { id: "carp", name: "ปลาคาร์ปนำโชค", emoji: "🎏", rarity: "common", gold: 44, exp: 24, w: 18, lv: 10 },
+    { id: "puffer", name: "ปลาปักเป้า", emoji: "🐡", rarity: "rare", gold: 25, exp: 15, w: 15, lv: 1 },
+    { id: "squid", name: "ปลาหมึกยักษ์", emoji: "🦑", rarity: "rare", gold: 35, exp: 20, w: 9, lv: 4 },
+    { id: "ray", name: "กระเบนเรืองแสง", emoji: "🪼", rarity: "rare", gold: 60, exp: 32, w: 8, lv: 8 },
+    { id: "lion", name: "ปลาสิงโตไฟ", emoji: "🦁", rarity: "rare", gold: 92, exp: 46, w: 7, lv: 12 },
+    { id: "sword", name: "ปลาดาบเงิน", emoji: "🗡️", rarity: "rare", gold: 130, exp: 62, w: 6, lv: 15 },
+    { id: "wyrm", name: "มังกรน้ำ", emoji: "🐉", rarity: "epic", gold: 80, exp: 50, w: 4, lv: 1 },
+    { id: "whale", name: "วาฬจิ๋วเรืองแสง", emoji: "🐳", rarity: "epic", gold: 190, exp: 95, w: 3, lv: 10 },
+    { id: "mermaid", name: "เงือกน้อยหลงทาง", emoji: "🧜", rarity: "epic", gold: 300, exp: 150, w: 2, lv: 14 },
+    { id: "cosmic", name: "ปลาทองจักรวาล", emoji: "🌌", rarity: "epic", gold: 480, exp: 230, w: 1.5, lv: 18 },
+    { id: "king", name: "ราชาปลามังกร", emoji: "👑", rarity: "epic", gold: 800, exp: 380, w: 1, lv: 20 },
+];
+const FISH_BY = {};
+FISH_TYPES.forEach((f) => (FISH_BY[f.id] = f));
+const FISH_RAR = {
+    junk: { name: "ขยะ", emoji: "🗑️", col: "#9a9188" },
+    common: { name: "ปลาธรรมดา", emoji: "🐟", col: "#4a90c0" },
+    rare: { name: "ปลาหายาก", emoji: "🐠", col: "#7a4ac0" },
+    epic: { name: "ปลาในตำนาน", emoji: "🐉", col: "#d98a20" },
+};
+const FISH_RAR_ORDER = ["epic", "rare", "common", "junk"];
+// 🎲 น้ำหนักสุ่มของปลาตัวหนึ่ง — เลเวลตกปลาสูงขึ้น ขยะ/ปลาธรรมดาน้อยลง ปลาหายาก/ตำนานมากขึ้น
+// k = โบนัสความสนิทกับลุงชาวประมง (repFishLuck)
+// สัดส่วนของ "ระดับ" กำหนดจากเลเวลล้วน ๆ — ปลดล็อกปลาชนิดใหม่แล้วสัดส่วนระดับไม่เพี้ยน
+// (ถ้าคิดน้ำหนักรายตัวตรง ๆ พอปลดล็อกปลาธรรมดาตัวใหม่ โอกาสได้ปลาตำนานจะ "ลดลง" ซึ่งขัดกับที่ควรเป็น)
+const FISH_RAR_BASE = { junk: 22, common: 61, rare: 13, epic: 3.5 };
+const FISH_RAR_CURVE = (t, kk) => ({
+    junk: FISH_RAR_BASE.junk * (1 - 0.92 * t) * (1 - kk * 0.13),
+    common: FISH_RAR_BASE.common * (1 - 0.62 * t),
+    rare: FISH_RAR_BASE.rare * (1 + 2.7 * t) * (1 + kk * 0.24),
+    epic: FISH_RAR_BASE.epic * (1 + 6.5 * t) * (1 + kk * 0.5),
+});
+const fishWeight = (f, lv, k) => {
+    const L = Math.max(1, Math.min(FISH_LV_MAX, lv | 0 || 1));
+    if (L < (f.lv || 1))
+        return 0; // 🔒 ยังไม่ถึงเลเวลที่ปลาตัวนี้จะติดเบ็ด
+    const t = (L - 1) / (FISH_LV_MAX - 1); // 0 → 1
+    const RW = FISH_RAR_CURVE(t, k || 0);
+    let sum = 0;
+    for (let i = 0; i < FISH_TYPES.length; i++) {
+        const x = FISH_TYPES[i];
+        if (x.rarity === f.rarity && L >= (x.lv || 1))
+            sum += x.w;
+    }
+    if (sum <= 0)
+        return 0;
+    return Math.max(0, RW[f.rarity]) * (f.w / sum); // แบ่งสัดส่วนของระดับนั้นตามน้ำหนักปลาแต่ละตัว
+};
+// 📊 โอกาสได้แต่ละระดับที่เลเวลนี้ (รวมเป็น 100)
+const fishOdds = (lv, k) => {
+    const w = {};
+    let tot = 0;
+    FISH_TYPES.forEach((f) => { const v = fishWeight(f, lv, k); w[f.rarity] = (w[f.rarity] || 0) + v; tot += v; });
+    const out = {};
+    FISH_RAR_ORDER.forEach((r) => (out[r] = tot > 0 ? (w[r] || 0) / tot * 100 : 0));
+    return out;
+};
 // ---------- 🧱 ขอบแมพ — ป่า / แม่น้ำ / กำแพง / รั้ว / เหว แทนเส้นวงกลมบาง ๆ ----------
 // kind: forest=ป่าทึบ · river=แม่น้ำล้อมเกาะ · wall=กำแพงหิน · fence=รั้ว · cliff=หน้าผา
 const BORDER = {
@@ -2275,7 +2345,7 @@ function CherryAdventure() {
         gold: 80, shop: [], shopOpen: false,
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
         mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
-        kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
+        kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishBagOpen: false, cookTick: 0,
         expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
         repOpen: false, rep: [], repShop: [], repTick: 0,
         wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
@@ -30249,29 +30319,53 @@ function CherryAdventure() {
         }
         // ================= 🏡 END MY RANCH ZONE =================
         // ---------- 🎣 Fishing minigame ----------
-        const FISH_TYPES = [
-            { name: "ปลาซิว", emoji: "🐟", rarity: "common", gold: 8, exp: 5, w: 40 },
-            { name: "ปลาทอง", emoji: "🐠", rarity: "common", gold: 12, exp: 8, w: 30 },
-            { name: "ปลาปักเป้า", emoji: "🐡", rarity: "rare", gold: 25, exp: 15, w: 15 },
-            { name: "ปลาหมึก", emoji: "🦑", rarity: "rare", gold: 35, exp: 20, w: 9 },
-            { name: "มังกรน้ำ", emoji: "🐉", rarity: "epic", gold: 80, exp: 50, w: 4 },
-            { name: "รองเท้าเก่า", emoji: "🥾", rarity: "junk", gold: 1, exp: 1, w: 12 },
-        ];
+        // 🎣 เลเวลตกปลา — ยิ่งสูง ปลาหายากยิ่งติดเบ็ดบ่อย + ปลดล็อกปลาชนิดใหม่
+        G.fishLv = G.fishLv || 1;
+        G.fishExp = G.fishExp || 0;
+        G.fishTotal = G.fishTotal || 0;
+        G.fishCaught = G.fishCaught || {}; // 📖 สมุดปลา: id → จำนวนที่เคยจับได้
+        G.fishExpNeed = () => FISH_LV_EXP(G.fishLv || 1);
         const rollFish = () => {
-            // 🤝 ยิ่งสนิทกับลุงชาวประมง ปลาดี ๆ ยิ่งออกบ่อย · ขยะยิ่งออกน้อย
+            // 🤝 ยิ่งสนิทกับลุงชาวประมง + เลเวลตกปลายิ่งสูง ปลาดี ๆ ยิ่งออกบ่อย · ขยะยิ่งออกน้อย
             const k = G.repFishLuck ? G.repFishLuck() : 0;
-            const wOf = (f) => f.rarity === "junk" ? f.w * (1 - k * 0.13)
-                : f.rarity === "epic" ? f.w * (1 + k * 0.5)
-                    : f.rarity === "rare" ? f.w * (1 + k * 0.24) : f.w;
-            const total = FISH_TYPES.reduce((s2, f) => s2 + wOf(f), 0);
+            const lv = G.fishLv || 1;
+            let total = 0;
+            const w = FISH_TYPES.map((f) => { const v = fishWeight(f, lv, k); total += v; return v; });
+            if (total <= 0)
+                return FISH_TYPES[3];
             let r = Math.random() * total;
-            for (const f of FISH_TYPES) {
-                r -= wOf(f);
+            for (let i = 0; i < FISH_TYPES.length; i++) {
+                r -= w[i];
                 if (r <= 0)
-                    return f;
+                    return FISH_TYPES[i];
             }
-            return FISH_TYPES[0];
+            return FISH_TYPES[3];
         };
+        // 📊 สรุปข้อมูลตกปลาให้ JSX เรียกทีเดียว
+        G.fishInfo = () => {
+            const lv = G.fishLv || 1, max = lv >= FISH_LV_MAX;
+            const need = FISH_LV_EXP(lv), exp = G.fishExp || 0;
+            const k = G.repFishLuck ? G.repFishLuck() : 0;
+            const odds = fishOdds(lv, k);
+            const caught = G.fishCaught || {};
+            return {
+                lv, exp, need, max, lvMax: FISH_LV_MAX, pct: max ? 100 : Math.min(100, Math.round(exp / need * 100)),
+                total: G.fishTotal || 0, luck: k, odds,
+                bag: ["common", "rare", "epic"].map((r) => ({ id: r, emoji: FISH_TIER[r].emoji, name: FISH_TIER[r].name, n: (G.fishBag && G.fishBag[r]) || 0 })),
+                kinds: FISH_TYPES.map((f) => ({
+                    id: f.id, name: f.name, emoji: f.emoji, rarity: f.rarity, gold: f.gold, lv: f.lv,
+                    rarName: FISH_RAR[f.rarity].name, rarCol: FISH_RAR[f.rarity].col,
+                    n: caught[f.id] || 0, locked: lv < (f.lv || 1),
+                    chance: (() => { let tot = 0; FISH_TYPES.forEach((x) => (tot += fishWeight(x, lv, k))); const v = fishWeight(f, lv, k); return tot > 0 ? v / tot * 100 : 0; })(),
+                })),
+                seen: FISH_TYPES.filter((f) => (caught[f.id] || 0) > 0).length,
+                kindsTotal: FISH_TYPES.length,
+            };
+        };
+        G.toggleFishBag = () => setUi((u) => (u.fishBagOpen
+            ? { ...u, fishBagOpen: false }
+            : { ...u, fishBagOpen: true, menuOpen: false, kitchenOpen: false, shopOpen: false, panelOpen: false, equipScreen: false, fishInfo: G.fishInfo() }));
+        G.syncFishUi = () => setUi((u) => ({ ...u, fishInfo: G.fishInfo(), fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1 }));
         // ================= ⛏️ MINING — สายแร่โผล่ตามภูมิประเทศ ขุดเอาวัตถุดิบ =================
         G.mineLv = 1;
         G.mineExp = 0;
@@ -30712,19 +30806,41 @@ function CherryAdventure() {
                 G.gold += fish.gold;
                 gainExp(fish.exp);
                 G.fishing = null;
-                setUi((u) => ({ ...u, fishing: null }));
                 if (G.sfx)
                     G.sfx.fish();
+                // 📖 สมุดปลา — นับทุกชนิดที่เคยจับได้ (ขยะก็นับ จะได้รู้ว่าเจอครบหรือยัง)
+                G.fishCaught = G.fishCaught || {};
+                const firstTime = !(G.fishCaught[fish.id] > 0);
+                G.fishCaught[fish.id] = (G.fishCaught[fish.id] || 0) + 1;
+                G.fishTotal = (G.fishTotal || 0) + 1;
+                // 🎣 EXP ตกปลา + เลเวลอัพ
+                const before = G.fishLv || 1;
+                G.fishExp = (G.fishExp || 0) + (FISH_EXP_GAIN[fish.rarity] || 1);
+                let lvUp = 0;
+                while ((G.fishLv || 1) < FISH_LV_MAX && G.fishExp >= FISH_LV_EXP(G.fishLv || 1)) {
+                    G.fishExp -= FISH_LV_EXP(G.fishLv || 1);
+                    G.fishLv = (G.fishLv || 1) + 1;
+                    lvUp++;
+                }
+                if ((G.fishLv || 1) >= FISH_LV_MAX)
+                    G.fishExp = Math.min(G.fishExp, FISH_LV_EXP(FISH_LV_MAX));
                 if (fish.rarity !== "junk")
                     questProgress("collect", 1);
                 if (fish.rarity !== "junk") { // 🐟 เก็บปลาเข้าถังไว้ทำอาหาร
                     G.fishBag = G.fishBag || { common: 0, rare: 0, epic: 0 };
                     G.fishBag[fish.rarity] = (G.fishBag[fish.rarity] || 0) + 1;
-                    setUi((u) => ({ ...u, fishBag: { ...G.fishBag } }));
                 }
+                setUi((u) => ({ ...u, fishing: null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: G.fishInfo() }));
                 if (G.mbEvent)
                     G.mbEvent("fish"); // 📖 นับภารกิจ "ตกปลา"
-                toast(`${fish.emoji} จับ${fish.name}ได้! +${fish.gold}💰 +${fish.exp}EXP`);
+                const R = FISH_RAR[fish.rarity] || FISH_RAR.common;
+                toast(`${fish.emoji} จับ${fish.name}ได้! (${R.name}) +${fish.gold}💰 +${fish.exp}EXP${firstTime ? " · ✨ ชนิดใหม่!" : ""}`);
+                if (lvUp) {
+                    const unlocked = FISH_TYPES.filter((f) => f.lv > before && f.lv <= (G.fishLv || 1));
+                    toast(`🎣 เลเวลตกปลาเพิ่ม! Lv.${G.fishLv} — ปลาหายากติดเบ็ดบ่อยขึ้น${unlocked.length ? ` · ปลาชนิดใหม่: ${unlocked.map((f) => f.emoji + f.name).join(" · ")}` : ""}`);
+                }
+                if (G.saveGame)
+                    G.saveGame();
             }
         };
         G.stopFishing = () => {
@@ -34704,7 +34820,7 @@ function CherryAdventure() {
             team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
             playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
             guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null, // 🏰 โชว์บนป้ายเหนือหัว
-            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []),
+            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []),
             titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
             rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
             costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -37740,13 +37856,19 @@ function CherryAdventure() {
                 foodBuff: G.foodBuffInfo(), foodBag: G.foodBagList(), fishBag: { ...(G.fishBag || {}) }, ranch: (typeof ranchUiSnap === "function" ? ranchUiSnap() : u.ranch),
                 mats: { ...(G.mats || {}) }, cookTick: (u.cookTick || 0) + 1 }));
         };
-        G.toggleKitchen = () => {
-            const willOpen = !G._kitchenOpen;
-            G._kitchenOpen = willOpen;
-            if (willOpen)
-                G.syncCookUi();
-            setUi((u) => ({ ...u, kitchenOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false }));
-        };
+        G.toggleKitchen = () => setUi((u) => {
+            if (u.kitchenOpen) {
+                G._kitchenOpen = false;
+                return { ...u, kitchenOpen: false };
+            }
+            G._kitchenOpen = true;
+            // เปิดครัว = รีเฟรชวัตถุดิบ/กระเป๋าอาหารก่อนเสมอ
+            return { ...u, kitchenOpen: true, fishBagOpen: false, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false,
+                cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0,
+                foodBuff: G.foodBuffInfo(), foodBag: G.foodBagList(), fishBag: { ...(G.fishBag || {}) },
+                ranch: (typeof ranchUiSnap === "function" ? ranchUiSnap() : u.ranch),
+                mats: { ...(G.mats || {}) }, cookTick: (u.cookTick || 0) + 1 };
+        });
         // ================= 🍳 END KITCHEN =================
         // ================= 🗺️ ส่งทีมสัตว์เลี้ยงออกสำรวจ =================
         G.exped = G.exped || [];
@@ -47712,6 +47834,10 @@ function CherryAdventure() {
             G.fishBag = { common: 0, rare: 0, epic: 0 };
             G.foodBuff = null;
             G.foodBag = []; // 🍳 ครัวเปล่า
+            G.fishLv = 1;
+            G.fishExp = 0;
+            G.fishTotal = 0;
+            G.fishCaught = {}; // 🎣 เริ่มตกปลาใหม่
             G.exped = [];
             G.expedDone = 0; // 🗺️ ยังไม่เคยส่งทีมสำรวจ
             G.rushOn = false;
@@ -47829,7 +47955,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -51052,6 +51178,10 @@ function CherryAdventure() {
             G.cookExp = d.cookExp || 0;
             G.cookTotal = d.cookTotal || 0; // 🍳 ครัว
             G.fishBag = d.fishBag || { common: 0, rare: 0, epic: 0 };
+            G.fishLv = Math.max(1, Math.min(FISH_LV_MAX, d.fishLv || 1));
+            G.fishExp = d.fishExp || 0;
+            G.fishTotal = d.fishTotal || 0; // 🎣 เลเวลตกปลา
+            G.fishCaught = (d.fishCaught && typeof d.fishCaught === "object") ? { ...d.fishCaught } : {};
             G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now())
                 ? { id: d.foodBuff.id, q: d.foodBuff.q || "normal", buff: d.foodBuff.buff || null, extra: d.foodBuff.extra || {}, mins: d.foodBuff.mins || 0, until: d.foodBuff.until }
                 : null;
@@ -70324,6 +70454,95 @@ function CherryAdventure() {
                         "\uD83D\uDE80 \u0E2A\u0E48\u0E07\u0E17\u0E35\u0E21\u0E2D\u0E2D\u0E01\u0E40\u0E14\u0E34\u0E19\u0E17\u0E32\u0E07",
                         D ? ` (${D.hrs} ชม.)` : "")));
             })())),
+        ui.fishBagOpen && (() => {
+            const FI = ui.fishInfo || (G.fishInfo ? G.fishInfo() : null);
+            if (!FI)
+                return null;
+            return (React.createElement("div", { style: {
+                    position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "86vh", overflowY: "auto",
+                    background: "linear-gradient(180deg,#f2f8fd,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+                } },
+                closeBtn("fishBagOpen"),
+                React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#2a6a9a", marginBottom: 3 } }, "\uD83C\uDFA3 \u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E15\u0E01\u0E1B\u0E25\u0E32"),
+                React.createElement("div", { style: { fontSize: 10, color: "#7a94a8", marginBottom: 9 } }, "\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E48\u0E2D\u0E43\u0E19\u0E41\u0E21\u0E1E \u00B7 \u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E44\u0E14\u0E49\u0E40\u0E2D\u0E32\u0E44\u0E1B\u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E43\u0E19\u0E04\u0E23\u0E31\u0E27\u0E44\u0E14\u0E49 \u00B7 \u0E40\u0E25\u0E40\u0E27\u0E25\u0E22\u0E34\u0E48\u0E07\u0E2A\u0E39\u0E07 \u0E1B\u0E25\u0E32\u0E2B\u0E32\u0E22\u0E32\u0E01\u0E22\u0E34\u0E48\u0E07\u0E15\u0E34\u0E14\u0E40\u0E1A\u0E47\u0E14"),
+                React.createElement("div", { style: { marginBottom: 10 } },
+                    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 10.5, fontWeight: 800, color: "#2a6a9a", marginBottom: 3 } },
+                        React.createElement("span", null,
+                            "\uD83C\uDFA3 \u0E40\u0E25\u0E40\u0E27\u0E25\u0E15\u0E01\u0E1B\u0E25\u0E32 ",
+                            FI.lv,
+                            "/",
+                            FI.lvMax,
+                            FI.max ? " (สูงสุด)" : ""),
+                        React.createElement("span", null, FI.max ? `ตกมาแล้ว ${FI.total} ตัว` : `${FI.exp} / ${FI.need}`)),
+                    React.createElement("div", { style: { height: 8, background: "#dde8f0", borderRadius: 999, overflow: "hidden" } },
+                        React.createElement("div", { style: { width: FI.pct + "%", height: "100%", background: "linear-gradient(90deg,#4a90c0,#7fd0f0)" } })),
+                    React.createElement("div", { style: { display: "flex", height: 7, borderRadius: 999, overflow: "hidden", marginTop: 5, background: "#dde8f0" } }, FISH_RAR_ORDER.map((r) => FI.odds[r] > 0 ? React.createElement("div", { key: r, title: FISH_RAR[r].name, style: { width: FI.odds[r] + "%", background: FISH_RAR[r].col } }) : null)),
+                    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5, marginTop: 4 } }, FISH_RAR_ORDER.map((r) => FI.odds[r] > 0 ? (React.createElement("span", { key: r, style: { fontSize: 9, fontWeight: 800, color: FISH_RAR[r].col } },
+                        FISH_RAR[r].emoji,
+                        FISH_RAR[r].name,
+                        " ",
+                        FI.odds[r].toFixed(FI.odds[r] < 10 ? 1 : 0),
+                        "%")) : null)),
+                    React.createElement("div", { style: { fontSize: 9, color: "#93a8b8", marginTop: 3 } },
+                        "\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E44\u0E14\u0E49 EXP: \uD83D\uDC09\u0E15\u0E33\u0E19\u0E32\u0E19 ",
+                        FISH_EXP_GAIN.epic,
+                        " \u00B7 \uD83D\uDC20\u0E2B\u0E32\u0E22\u0E32\u0E01 ",
+                        FISH_EXP_GAIN.rare,
+                        " \u00B7 \uD83D\uDC1F\u0E18\u0E23\u0E23\u0E21\u0E14\u0E32 ",
+                        FISH_EXP_GAIN.common,
+                        " \u00B7 \uD83D\uDDD1\uFE0F\u0E02\u0E22\u0E30 ",
+                        FISH_EXP_GAIN.junk,
+                        FI.luck > 0 ? ` · 🤝 ลุงชาวประมงช่วยอีก +${FI.luck}` : "")),
+                React.createElement("div", { style: { background: "#eef6fc", borderRadius: 12, padding: "8px 10px", marginBottom: 10 } },
+                    React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#5a86a4", marginBottom: 5 } }, "\uD83E\uDEA3 \u0E1B\u0E25\u0E32\u0E43\u0E19\u0E16\u0E31\u0E07 \u2014 \u0E43\u0E0A\u0E49\u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E17\u0E35\u0E48\u0E04\u0E23\u0E31\u0E27"),
+                    React.createElement("div", { style: { display: "flex", gap: 6 } }, FI.bag.map((b) => (React.createElement("div", { key: b.id, style: { flex: 1, textAlign: "center", background: "#fff", borderRadius: 10, border: "1px solid #d6e6f2", padding: "6px 2px" } },
+                        React.createElement("div", { style: { fontSize: 20 } }, b.emoji),
+                        React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: "#5a86a4" } }, b.name),
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 900, color: b.n > 0 ? "#2a6a9a" : "#b8c8d4" } },
+                            "\u00D7",
+                            b.n))))),
+                    React.createElement("button", { onClick: () => G.toggleKitchen(), style: {
+                            width: "100%", marginTop: 7, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
+                            fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e08a3a,#f5b45a)",
+                        } }, "\uD83C\uDF73 \u0E44\u0E1B\u0E04\u0E23\u0E31\u0E27 \u0E17\u0E33\u0E2D\u0E32\u0E2B\u0E32\u0E23\u0E08\u0E32\u0E01\u0E1B\u0E25\u0E32")),
+                React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 } },
+                    React.createElement("span", { style: { fontSize: 11.5, fontWeight: 900, color: "#2a6a9a" } }, "\uD83D\uDCD6 \u0E2A\u0E21\u0E38\u0E14\u0E1B\u0E25\u0E32"),
+                    React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "#7a94a8" } },
+                        "\u0E40\u0E08\u0E2D\u0E41\u0E25\u0E49\u0E27 ",
+                        FI.seen,
+                        "/",
+                        FI.kindsTotal,
+                        " \u0E0A\u0E19\u0E34\u0E14 \u00B7 \u0E15\u0E01\u0E44\u0E1B\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14 ",
+                        FI.total,
+                        " \u0E15\u0E31\u0E27")),
+                FISH_RAR_ORDER.map((r) => {
+                    const list = FI.kinds.filter((f) => f.rarity === r);
+                    if (!list.length)
+                        return null;
+                    return (React.createElement("div", { key: r, style: { marginBottom: 8 } },
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 900, color: FISH_RAR[r].col, marginBottom: 4 } },
+                            FISH_RAR[r].emoji,
+                            " ",
+                            FISH_RAR[r].name),
+                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 } }, list.map((f) => (React.createElement("div", { key: f.id, style: {
+                                borderRadius: 10, padding: "7px 3px", textAlign: "center",
+                                background: f.locked ? "#f2f4f6" : f.n > 0 ? "#fff" : "#f7fafd",
+                                border: `1px solid ${f.locked ? "#e2e6ea" : f.n > 0 ? FISH_RAR[r].col + "55" : "#e2ecf4"}`,
+                                opacity: f.locked ? 0.75 : 1,
+                            } },
+                            React.createElement("div", { style: { fontSize: 22, filter: f.n > 0 ? "none" : "grayscale(1)", opacity: f.n > 0 ? 1 : 0.5 } }, f.locked ? "🔒" : f.emoji),
+                            React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: f.locked ? "#a8b2ba" : "#4a6a80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, f.locked ? "???" : f.name),
+                            f.locked ? (React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#a8b2ba" } },
+                                "\u0E1B\u0E25\u0E14\u0E25\u0E47\u0E2D\u0E01 Lv.",
+                                f.lv)) : (React.createElement(React.Fragment, null,
+                                React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: f.n > 0 ? FISH_RAR[r].col : "#b8c8d4" } }, f.n > 0 ? `จับได้ ${f.n} ตัว` : "ยังไม่เคยเจอ"),
+                                React.createElement("div", { style: { fontSize: 8.5, fontWeight: 700, color: "#93a8b8" } },
+                                    f.chance.toFixed(f.chance < 10 ? 1 : 0),
+                                    "% \u00B7 ",
+                                    f.gold,
+                                    "\uD83D\uDCB0")))))))));
+                })));
+        })(),
         ui.kitchenOpen && (React.createElement("div", { style: {
                 position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "86vh", overflowY: "auto",
                 background: "linear-gradient(180deg,#fff8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
@@ -71285,7 +71504,13 @@ function CherryAdventure() {
                     fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
                     background: "linear-gradient(90deg,#4a90c0,#6ac0e0)",
                     boxShadow: "0 5px 16px rgba(74,144,192,0.5)",
-                } }, "\uD83C\uDFA3 \u0E15\u0E01\u0E1B\u0E25\u0E32"))),
+                } },
+                "\uD83C\uDFA3 \u0E15\u0E01\u0E1B\u0E25\u0E32",
+                React.createElement("span", { style: { display: "block", fontSize: 9.5, opacity: 0.88 } },
+                    "\u0E40\u0E25\u0E40\u0E27\u0E25\u0E15\u0E01\u0E1B\u0E25\u0E32 ",
+                    ui.fishLv || 1,
+                    "/",
+                    FISH_LV_MAX)))),
         ui.mode === "explore" && ui.fishing && (React.createElement("div", { style: {
                 position: "absolute", ...PROMPT_POS,
                 ...PROMPT_W,
@@ -71704,6 +71929,7 @@ function CherryAdventure() {
                 ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
                 ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
                 ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
+                ["🎣", "กระเป๋าตกปลา", () => G.toggleFishBag(), "#4a90c0"],
                 ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0"],
                 ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
                 ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a"],
