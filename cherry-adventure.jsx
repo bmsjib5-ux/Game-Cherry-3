@@ -1086,6 +1086,15 @@ const TITLES = [
   { id: "t_lnw300", name: "Lnwจุติมาเกิด", emoji: "🐉", desc: "ถึงเลเวล 300",  cond: (s) => (s.level || 1) >= 300, bonus: { atk: 33, crit: 12, hp: 18, critDmg: 20 },
     fancy: { grad: ["#fff27a", "#ff5a2a", "#ff2a7a", "#a04aff"], glow: "#ff5a2a", font: "'Impact', 'Georgia', fantasy", lIcon: "🔥🐉", rIcon: "🐉🔥", weight: 900, italic: true, rainbow: true } },
 ];
+// 🤝 ฉายาที่ปลดล็อกจากความสนิทกับ NPC (สนิทเต็ม 5 ระดับ)
+[["t_rep_elder", "ศิษย์เอกผู้เฒ่า", "🧙", "สนิทกับผู้เฒ่าผู้วิเศษเต็มขั้น", { exp: 6 }],
+ ["t_rep_smith", "สหายช่างเหล็ก", "⚒️", "สนิทกับช่างตีเหล็กเต็มขั้น", { atk: 8 }],
+ ["t_rep_merchant", "ขาประจำร้านค้า", "🏪", "สนิทกับแม่ค้าประจำเมืองเต็มขั้น", { gold: 10 }],
+ ["t_rep_angler", "เกลอลุงชาวประมง", "🎣", "สนิทกับลุงชาวประมงเต็มขั้น", { luck: 8 }],
+ ["t_rep_rancher", "มิตรแห่งไร่", "🐄", "สนิทกับคนเลี้ยงสัตว์เต็มขั้น", { hp: 60 }],
+].forEach(([id, name, emoji, desc, bonus]) => {
+  TITLES.push({ id, name, emoji, desc, bonus, cond: (st) => (st.repMax || 0) >= 1 && (st.repFull || []).includes(id) });
+});
 const titleOf = (id) => TITLES.find((t) => t.id === id) || TITLES[0];
 const TITLE_LABEL = { atk: "โจมตี", def: "ป้องกัน", hp: "พลังชีวิต", crit: "คริ", critDmg: "ดาเมจคริ", luck: "โชค", gold: "ทอง" };
 const TITLE_ICON = { atk: "⚔️", def: "🛡️", hp: "❤️", crit: "🎯", critDmg: "💥", luck: "🍀", gold: "💰" };
@@ -1499,6 +1508,52 @@ const EXPED_SLOTS = 2;        // 🗺️ ส่งออกสำรวจพร
 const EXPED_TEAM = 3;         // 🐾 สัตว์เลี้ยงต่อทีม
 const EXPED_ELEM_BONUS = 0.25; // ธาตุตรงพื้นที่ = ได้เพิ่มตัวละ 25%
 
+
+// ---------- 🤝 ชื่อเสียงกับ NPC — สนิทมากขึ้นแล้วปลดล็อกของดี ----------
+// like = ของที่ NPC คนนั้นชอบ (ให้แล้วได้แต้มสนิท) · act = การกระทำที่ทำให้สนิทขึ้นเอง
+// perk = สิ่งที่ได้ต่อระดับ (index 0 = ระดับ 1) · shop = ของลับที่ขายเมื่อสนิทถึงระดับที่กำหนด
+const REP_MAX = 5;
+const REP_NEED = [0, 60, 160, 340, 620, 1000];   // แต้มสะสมที่ต้องใช้ถึงแต่ละระดับ
+const REP_GIFT_DAY = 3;                          // ให้ของได้กี่ครั้งต่อคนต่อวัน
+const NPCS = [
+  { id: "elder", name: "ผู้เฒ่าผู้วิเศษ", emoji: "🧙", color: "#8a6ad0",
+    desc: "ผู้เฒ่าประจำหมู่บ้าน รู้เรื่องดินแดนทุกซอกทุกมุม",
+    like: { crystal: 26, dragonScale: 70 }, act: { bboss: 22, rush: 90 },
+    perk: ["EXP ที่ได้ +3%", "EXP ที่ได้ +5%", "EXP ที่ได้ +8%", "EXP ที่ได้ +11%", "EXP ที่ได้ +15%"],
+    title: "t_rep_elder" },
+  { id: "smith", name: "ช่างตีเหล็กใหญ่", emoji: "⚒️", color: "#c0703a",
+    desc: "มือหนักที่สุดในเมือง ตีเหล็กมาสามสิบปี",
+    like: { ironOre: 7, crystal: 22 }, act: { forge: 14, mine: 4 },
+    perk: ["ตีบวกการันตีถูกลง 6%", "ถูกลง 12%", "ถูกลง 18%", "ถูกลง 24%", "ถูกลง 30%"],
+    title: "t_rep_smith" },
+  { id: "merchant", name: "แม่ค้าประจำเมือง", emoji: "🏪", color: "#3aa06a",
+    desc: "ขายทุกอย่างที่นักผจญภัยต้องใช้ ต่อราคาเก่งมาก",
+    like: { ironOre: 5, iceEss: 16, fireEss: 16 }, act: { win: 1 },
+    perk: ["ของในร้านถูกลง 3%", "ถูกลง 6%", "ถูกลง 9%", "ถูกลง 12%", "ถูกลง 16%"],
+    title: "t_rep_merchant" },
+  { id: "angler", name: "ลุงชาวประมง", emoji: "🎣", color: "#3a86c0",
+    desc: "นั่งตกปลาอยู่ริมบ่อทั้งวัน รู้จักปลาทุกชนิด",
+    like: { windEss: 16, earthEss: 16 }, act: { fish: 9, cook: 12 },
+    perk: ["ตกปลาได้ปลาดีขึ้นเล็กน้อย", "ดีขึ้นปานกลาง", "ดีขึ้นมาก", "ดีขึ้นมากมาย", "ปลาในตำนานออกบ่อยสุด"],
+    title: "t_rep_angler" },
+  { id: "rancher", name: "คนเลี้ยงสัตว์", emoji: "🐄", color: "#c09a3a",
+    desc: "ดูแลสัตว์เลี้ยงทุกตัวในไร่เหมือนลูกหลาน",
+    like: { earthEss: 15, crystal: 22 }, act: { exped: 40, catch: 12 },
+    perk: ["ทีมสำรวจกลับไวขึ้น 5%", "ไวขึ้น 10%", "ไวขึ้น 15%", "ไวขึ้น 20%", "ไวขึ้น 26%"],
+    title: "t_rep_rancher" },
+];
+const NPC_BY = {}; NPCS.forEach((n) => (NPC_BY[n.id] = n));
+// 🛒 ร้านลับ — เปิดขายเมื่อสนิทถึงระดับที่กำหนด (ซื้อได้วันละ 1 ชิ้นต่อรายการ)
+const REP_SHOP = [
+  { npc: "smith",    lv: 3, id: "rs_dust",  emoji: "💠", name: "ผงเพชรก้อนใหญ่", give: { gemDust: 40 },  gold: 26000 },
+  { npc: "smith",    lv: 5, id: "rs_scale", emoji: "🐉", name: "เกล็ดมังกรคัดพิเศษ", give: { mats: { dragonScale: 3 } }, gold: 90000 },
+  { npc: "merchant", lv: 3, id: "rs_warp",  emoji: "📜", name: "ใบวาร์ปราคามิตรภาพ", give: { warpScrolls: 3 }, gold: 22000 },
+  { npc: "merchant", lv: 5, id: "rs_dia",   emoji: "💎", name: "เพชรจากสายส่งลับ",  give: { diamonds: 25 },  gold: 140000 },
+  { npc: "elder",    lv: 4, id: "rs_star",  emoji: "🌟", name: "ผงดาวโบราณ",       give: { stardust: 30 },  gold: 48000 },
+  { npc: "angler",   lv: 3, id: "rs_fish",  emoji: "🐉", name: "ปลาในตำนานสด ๆ",    give: { fish: { epic: 3 } }, gold: 30000 },
+  { npc: "rancher",  lv: 4, id: "rs_crop",  emoji: "🌾", name: "ผลผลิตคัดเกรด",     give: { produce: { carrot: 20, corn: 20, berry: 20 } }, gold: 36000 },
+];
+const repLv = (pt) => { let l = 0; for (let i = 1; i <= REP_MAX; i++) if ((pt || 0) >= REP_NEED[i]) l = i; return l; };
 // ---------- 👹 บอสรัช — สู้เจ้าถิ่นทั้ง 13 แดนรวดเดียว จับเวลา ----------
 const RUSH_HEAL = 0.3;          // ❤️ ฟื้น HP กี่ส่วนหลังล้มบอสแต่ละตัว
 const RUSH_MP = 0.4;            // 💧 ฟื้น MP กี่ส่วน
@@ -2004,6 +2059,7 @@ export default function CherryAdventure() {
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
     kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
+    repOpen: false, rep: [], repShop: [], repTick: 0,
     rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
     eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
     toast: "", toastAt: 0,
@@ -17678,9 +17734,14 @@ export default function CherryAdventure() {
       { name: "รองเท้าเก่า", emoji: "🥾", rarity: "junk", gold: 1, exp: 1, w: 12 },
     ];
     const rollFish = () => {
-      const total = FISH_TYPES.reduce((s, f) => s + f.w, 0);
+      // 🤝 ยิ่งสนิทกับลุงชาวประมง ปลาดี ๆ ยิ่งออกบ่อย · ขยะยิ่งออกน้อย
+      const k = G.repFishLuck ? G.repFishLuck() : 0;
+      const wOf = (f) => f.rarity === "junk" ? f.w * (1 - k * 0.13)
+        : f.rarity === "epic" ? f.w * (1 + k * 0.5)
+        : f.rarity === "rare" ? f.w * (1 + k * 0.24) : f.w;
+      const total = FISH_TYPES.reduce((s2, f) => s2 + wOf(f), 0);
       let r = Math.random() * total;
-      for (const f of FISH_TYPES) { r -= f.w; if (r <= 0) return f; }
+      for (const f of FISH_TYPES) { r -= wOf(f); if (r <= 0) return f; }
       return FISH_TYPES[0];
     };
     // ================= ⛏️ MINING — สายแร่โผล่ตามภูมิประเทศ ขุดเอาวัตถุดิบ =================
@@ -18371,6 +18432,7 @@ export default function CherryAdventure() {
     G.mbMeta = mbMeta;
     // 📡 ตัวรับเหตุการณ์กลาง — ทุกอย่างที่ผู้เล่นทำวิ่งผ่านตรงนี้
     G.mbEvent = (type, n = 1, meta = {}) => {
+      if (G.repEvent) { try { G.repEvent(type, n); } catch (e) {} }   // 🤝 การกระทำเดียวกันนี้ทำให้สนิทกับ NPC ขึ้นด้วย
       if (!G.mbook) { try { G.mbRefresh(); } catch (e) { return; } }   // 📖 ยังไม่มีสมุด (เซฟเก่า/เกมใหม่) → สร้างให้อัตโนมัติ
       const Q = G.mbook; if (!Q) return;
       let hit = false;
@@ -18425,6 +18487,7 @@ export default function CherryAdventure() {
     try { G.mbRefresh(); } catch (e) {}   // 📖 มีสมุดภารกิจพร้อมนับตั้งแต่วินาทีแรก (เซฟที่โหลดทีหลังจะเขียนทับแล้วรีเฟรชอีกรอบ)
 
     G.storyEvent = (type, n = 1, meta = {}) => {
+      if (G.repEvent) { try { G.repEvent(type, n); } catch (e) {} }   // 🤝 ปราบบอส/บอสรัช/สำรวจ ก็ทำให้สนิทขึ้น
       if (G.mbEvent) { G.mbEvent(type, n, meta); if (type === "visit") G.mbEvent("visitAny", n, meta); }   // 📖 ส่งต่อให้สมุดภารกิจนับด้วย
       const c = MSQ[G.storyCh]; if (!c) return;
       const tgt = G.storyTarget(c);
@@ -20359,7 +20422,7 @@ export default function CherryAdventure() {
         id, name: it.name, emoji: it.emoji, slot: it.slot, slotName: SLOT_NAMES[it.slot] || it.slot, slotIcon: SLOT_ICON[it.slot] || "",
         rarity: it.rarity, rarityName: (RARITY[it.rarity] || {}).name || it.rarity, rarityColor: (RARITY[it.rarity] || {}).color || "#8a9aa8",
         stats: itemStats(id), elem: it.elem || null, req: it.req || 0, cls: it.cls || null, locked, count, equipped, plus, cap,
-        prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.WB_DUST_COST || 30,
+        prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.dustCostNow ? G.dustCostNow() : (G.WB_DUST_COST || 30),
         starter: !!it.starter, salvage: G.salvageYield ? G.salvageYield(id) : 0,   // 💠 แยกชิ้นส่วนได้กี่ผง
       };
     };
@@ -20557,6 +20620,8 @@ export default function CherryAdventure() {
       crits: (G.achStats && G.achStats.crits) || 0,
       gold: (G.achStats && G.achStats.goldEarned) || 0,
       species: Object.keys(G.col || {}).length,
+      repMax: G.repMaxLv ? G.repMaxLv() : 0,                 // 🤝 ระดับสนิทสูงสุดที่มี
+      repFull: G.repFullTitles ? G.repFullTitles() : [],     // 🤝 ฉายาที่ปลดล็อกแล้วจากความสนิท
       ngPlus: G.ngPlus || 0,
       level: (G.player && G.player.level) || 1,
     });
@@ -20781,6 +20846,8 @@ export default function CherryAdventure() {
     };
     // 💠 guaranteed enhance using World-Boss gem dust (no duplicate needed, never fails)
     G.WB_DUST_COST = 30;
+    // 🤝 ช่างตีเหล็กสนิทมาก = ตีบวกการันตีถูกลง
+    G.dustCostNow = () => Math.max(5, Math.round((G.WB_DUST_COST || 30) * (1 - (G.repForgeCut ? G.repForgeCut() : 0))));
     // 💠 guaranteed enhance — consumes 💠ผงเพชร + 🌟ผงดาว + ⛏️แร่ scaling with the enhance level (no duplicate needed)
     G.enhanceDust = (id) => {
       const it = LOOT.find((x) => x.id === id);
@@ -21195,6 +21262,7 @@ export default function CherryAdventure() {
       if (G.weather && G.weather.exp) amt = Math.round(amt * (1 + G.weather.exp));   // 🌦️ อากาศบางแบบให้ EXP มากขึ้น
       if (G.guild) amt = Math.round(amt * (1 + G.guildBuff().exp));   // 🏰 บัฟกิลด์ EXP
       if (G.foodB && G.foodB("expPct")) amt = Math.round(amt * (1 + G.foodB("expPct") / 100));   // 🍳 บัฟอาหาร EXP
+      if (G.repExpBonus && G.repExpBonus()) amt = Math.round(amt * (1 + G.repExpBonus()));   // 🤝 ผู้เฒ่าผู้วิเศษสอนพิเศษ
       if (G.expBoostUntil && Date.now() < G.expBoostUntil) amt *= 2; // 📜 ใบประสบการณ์ x2
       if (G.restBuffUntil && Date.now() < G.restBuffUntil) amt = Math.round(amt * 1.15); // 😴 บัฟนอนพักจากบ้าน +15% XP
       // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
@@ -21949,8 +22017,9 @@ export default function CherryAdventure() {
       const it = shop.items[idx]; if (!it) return;
       const bought = shop.bought[idx] || 0;
       if (bought >= it.stock) { toast("สินค้าชิ้นนี้หมดแล้ววันนี้ — พรุ่งนี้สุ่มใหม่"); return; }
-      if ((G.gold || 0) < it.price) { toast(`ทองไม่พอ! ต้องมี ${it.price.toLocaleString()}💰`); return; }
-      G.gold -= it.price;
+      const _p = G.repPrice ? G.repPrice(it.price) : it.price;   // 🤝 แม่ค้าสนิทแล้วลดราคาให้
+      if ((G.gold || 0) < _p) { toast(`ทองไม่พอ! ต้องมี ${_p.toLocaleString()}💰`); return; }
+      G.gold -= _p;
       if (it.t === "gear") gainItem(it.id);
       else if (it.t === "gem") G.gemDust = (G.gemDust || 0) + it.amount;
       else if (it.t === "star") G.stardust = (G.stardust || 0) + it.amount;
@@ -22119,7 +22188,7 @@ export default function CherryAdventure() {
     G.warpScrolls = G.warpScrolls || 0;
     G.buyWarpScroll = (qty) => {
       qty = Math.max(1, Math.floor(qty || 1));
-      const total = G.WARP_SCROLL_PRICE * qty;
+      const total = (G.repPrice ? G.repPrice(G.WARP_SCROLL_PRICE) : G.WARP_SCROLL_PRICE) * qty;   // 🤝 ส่วนลดแม่ค้า
       if ((G.gold || 0) < total) { toast(`ทองไม่พอ! ต้องมี ${total.toLocaleString()}💰 (ใบวาร์ป ×${qty})`); return; }
       G.gold -= total;
       G.warpScrolls = (G.warpScrolls || 0) + qty;
@@ -22736,10 +22805,11 @@ export default function CherryAdventure() {
       const info = G.expedTeamInfo(uniq, destId);
       if (!info.lvOk) { toast(`🗺️ ทีมยังอ่อนไป — ${D.name} ต้องเลเวลเฉลี่ย ${D.lv} (ตอนนี้ ${info.avgLv})`); return; }
       const now = Date.now();
-      G.exped[slot] = { id: destId, pets: uniq, startAt: now, endAt: now + D.hrs * 3600000 };
+      const cut = G.repExpedCut ? G.repExpedCut() : 0;   // 🤝 คนเลี้ยงสัตว์แนะทางลัดให้
+      G.exped[slot] = { id: destId, pets: uniq, startAt: now, endAt: now + Math.round(D.hrs * 3600000 * (1 - cut)) };
       if (G.sfx) G.sfx.button && G.sfx.button();
       if (G.mbEvent) G.mbEvent("exped");
-      toast(`${D.emoji} ส่งทีมไป${D.name}แล้ว! กลับมาใน ${D.hrs} ชั่วโมง (แรงทีม ×${info.power})`);
+      toast(`${D.emoji} ส่งทีมไป${D.name}แล้ว! กลับมาใน ${(D.hrs * (1 - cut)).toFixed(1)} ชั่วโมง (แรงทีม ×${info.power})`);
       G.syncExpedUi();
       if (G.saveGame) G.saveGame();
     };
@@ -29484,6 +29554,114 @@ export default function CherryAdventure() {
       floor: Math.max((G.achStats && G.achStats.floor) || 0, (G.dungeonProgress || 1) - 1),
       biomeBoss: Object.keys(G.biomeBossDefeated || {}).length,
     });
+    // ================= 🤝 ชื่อเสียงกับ NPC =================
+    G.rep = G.rep || {};          // { npcId: { pt, gifts, day } }
+    const repRow = (id) => {
+      G.rep = G.rep || {};
+      if (!G.rep[id]) G.rep[id] = { pt: 0, gifts: 0, day: "" };
+      const r = G.rep[id];
+      const today = todayStamp();
+      if (r.day !== today) { r.day = today; r.gifts = 0; r.acts = 0; }
+      return r;
+    };
+    G.repRow = repRow;
+    G.repLvOf = (id) => repLv(repRow(id).pt);
+    G.repMaxLv = () => NPCS.reduce((m, n) => Math.max(m, repLv(repRow(n.id).pt)), 0);
+    G.repFullTitles = () => NPCS.filter((n) => repLv(repRow(n.id).pt) >= REP_MAX).map((n) => n.title);
+    // 🎁 ให้ของ NPC → ได้แต้มสนิท (จำกัดวันละ REP_GIFT_DAY ครั้งต่อคน)
+    G.repGive = (npcId, matId) => {
+      const N = NPC_BY[npcId];
+      if (!N) return;
+      const r = repRow(npcId);
+      if (repLv(r.pt) >= REP_MAX) { toast(`${N.emoji} สนิทกับ${N.name}เต็มขั้นแล้ว!`); return; }
+      if (r.gifts >= REP_GIFT_DAY) { toast(`${N.emoji} วันนี้ให้ของ${N.name}ครบ ${REP_GIFT_DAY} ครั้งแล้ว — พรุ่งนี้มาใหม่นะ`); return; }
+      const worth = N.like[matId];
+      if (!worth) { toast(`${N.emoji} ${N.name}ไม่ได้อยากได้ของชิ้นนี้`); return; }
+      if (((G.mats || {})[matId] || 0) < 1) { toast(`ไม่มี${(MATERIALS[matId] || {}).name || matId}ในคลัง`); return; }
+      G.mats[matId] -= 1;
+      const before = repLv(r.pt);
+      r.pt += worth; r.gifts++;
+      const after = repLv(r.pt);
+      if (G.sfx) G.sfx.button && G.sfx.button();
+      toast(`${N.emoji} ให้${(MATERIALS[matId] || {}).emoji || ""}${(MATERIALS[matId] || {}).name || matId}กับ${N.name} · ความสนิท +${worth}`);
+      if (after > before) toast(`💛 สนิทกับ${N.name}ขึ้นระดับ ${after}! — ${N.perk[after - 1]}`);
+      if (after >= REP_MAX && after > before) toast(`🏅 ปลดล็อกฉายาใหม่จาก${N.name}!`);
+      G.syncRepUi();
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // ⚙️ การกระทำในเกมทำให้สนิทขึ้นเอง (มีเพดานต่อวันกันฟาร์มรัว)
+    G.repEvent = (type, n) => {
+      let touched = false;
+      NPCS.forEach((N) => {
+        const w = N.act[type];
+        if (!w) return;
+        const r = repRow(N.id);
+        if (repLv(r.pt) >= REP_MAX) return;
+        if ((r.acts || 0) >= 220) return;   // เพดานแต้มจากการกระทำต่อวัน
+        const add = w * (n || 1);
+        r.pt += add; r.acts = (r.acts || 0) + add;
+        touched = true;
+      });
+      if (touched && G._repOpen) G.syncRepUi();
+    };
+    // 🎖️ ค่าโบนัสจากความสนิท (ใช้จริงในสูตรต่าง ๆ)
+    G.repPerk = (npcId) => repLv(repRow(npcId).pt);
+    G.repExpBonus = () => [0, 3, 5, 8, 11, 15][G.repPerk("elder")] / 100;
+    G.repForgeCut = () => [0, 6, 12, 18, 24, 30][G.repPerk("smith")] / 100;
+    G.repShopCut = () => [0, 3, 6, 9, 12, 16][G.repPerk("merchant")] / 100;
+    G.repFishLuck = () => G.repPerk("angler");
+    G.repExpedCut = () => [0, 5, 10, 15, 20, 26][G.repPerk("rancher")] / 100;
+    G.repPrice = (n) => Math.max(1, Math.round((n || 0) * (1 - G.repShopCut())));   // 🤝 ราคาหลังส่วนลดแม่ค้า
+    // 🛒 ร้านลับ — ซื้อได้วันละ 1 ชิ้นต่อรายการ
+    G.repShopList = () => REP_SHOP.map((it) => ({ ...it,
+      open: G.repPerk(it.npc) >= it.lv,
+      bought: ((G.repShopDay === todayStamp()) && (G.repShopBought || {})[it.id]) ? true : false,
+      npcName: (NPC_BY[it.npc] || {}).name, npcEmoji: (NPC_BY[it.npc] || {}).emoji }));
+    G.repBuy = (itemId) => {
+      const it = REP_SHOP.find((x) => x.id === itemId);
+      if (!it) return;
+      if (G.repPerk(it.npc) < it.lv) { toast(`🔒 ต้องสนิทกับ${(NPC_BY[it.npc] || {}).name}ระดับ ${it.lv} ก่อน`); return; }
+      if (G.repShopDay !== todayStamp()) { G.repShopDay = todayStamp(); G.repShopBought = {}; }
+      G.repShopBought = G.repShopBought || {};
+      if (G.repShopBought[itemId]) { toast("🛒 วันนี้ซื้อรายการนี้ไปแล้ว — พรุ่งนี้มาใหม่"); return; }
+      if ((G.gold || 0) < it.gold) { toast(`ทองไม่พอ! ต้องมี ${it.gold.toLocaleString()}💰`); return; }
+      G.gold -= it.gold;
+      const gv = it.give || {};
+      if (gv.gemDust) G.gemDust = (G.gemDust || 0) + gv.gemDust;
+      if (gv.stardust) G.stardust = (G.stardust || 0) + gv.stardust;
+      if (gv.diamonds) G.diamonds = (G.diamonds || 0) + gv.diamonds;
+      if (gv.warpScrolls) G.warpScrolls = (G.warpScrolls || 0) + gv.warpScrolls;
+      if (gv.mats) { G.mats = G.mats || {}; Object.keys(gv.mats).forEach((k) => (G.mats[k] = (G.mats[k] || 0) + gv.mats[k])); }
+      if (gv.fish) { G.fishBag = G.fishBag || {}; Object.keys(gv.fish).forEach((k) => (G.fishBag[k] = (G.fishBag[k] || 0) + gv.fish[k])); }
+      if (gv.produce) { G.ranch = G.ranch || {}; G.ranch.produce = G.ranch.produce || {}; Object.keys(gv.produce).forEach((k) => (G.ranch.produce[k] = (G.ranch.produce[k] || 0) + gv.produce[k])); }
+      G.repShopBought[itemId] = 1;
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`${it.emoji} ซื้อ${it.name}จากร้านลับแล้ว!`);
+      G.syncRepUi();
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.repSnap = () => NPCS.map((N) => {
+      const r = repRow(N.id);
+      const lv = repLv(r.pt);
+      const next = lv >= REP_MAX ? null : REP_NEED[lv + 1];
+      const base = REP_NEED[lv];
+      return { id: N.id, name: N.name, emoji: N.emoji, color: N.color, desc: N.desc,
+        pt: r.pt, lv, next, pct: next ? Math.min(100, Math.round(((r.pt - base) / (next - base)) * 100)) : 100,
+        giftsLeft: Math.max(0, REP_GIFT_DAY - (r.gifts || 0)),
+        perkNow: lv > 0 ? N.perk[lv - 1] : null, perkNext: lv < REP_MAX ? N.perk[lv] : null,
+        likes: Object.keys(N.like).map((m) => ({ id: m, worth: N.like[m],
+          emoji: (MATERIALS[m] || {}).emoji || "", name: (MATERIALS[m] || {}).name || m, have: (G.mats || {})[m] || 0 })) };
+    });
+    G.syncRepUi = () => setUi((u) => ({ ...u, rep: G.repSnap(), repShop: G.repShopList(),
+      mats: { ...(G.mats || {}) }, gold: G.gold || 0, repTick: (u.repTick || 0) + 1 }));
+    G.toggleRep = () => {
+      const willOpen = !G._repOpen;
+      G._repOpen = willOpen;
+      if (willOpen) G.syncRepUi();
+      setUi((u) => ({ ...u, repOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, kitchenOpen: false, expedOpen: false, rushOpen: false, equipScreen: false }));
+    };
+    // ================= 🤝 END REPUTATION =================
+
     G.talkNPC = () => {
       const ch = G.storyChapter || 0;
       if (ch >= STORY.length) { setUi((u) => ({ ...u, npcTalk: { text: "ขอบใจนะเจ้าหนู เจ้าคือความภูมิใจของหมู่บ้าน! 🌸", done: true, last: true } })); return; }
@@ -29802,6 +29980,7 @@ export default function CherryAdventure() {
       G.cookLv = 1; G.cookExp = 0; G.cookTotal = 0; G.fishBag = { common: 0, rare: 0, epic: 0 }; G.foodBuff = null;   // 🍳 ครัวเปล่า
       G.exped = []; G.expedDone = 0;   // 🗺️ ยังไม่เคยส่งทีมสำรวจ
       G.rushOn = false; G.rushIdx = 0; G.rushKills = 0; G.rushBest = null; G.rushAllTime = null; G.rushClears = 0;   // 👹 บอสรัช
+      G.rep = {}; G.repShopDay = null; G.repShopBought = {};   // 🤝 เริ่มจากคนแปลกหน้า
       G.pathId = null; // 🌟 fresh character has no path yet
       G.skillMode = "basic"; setSkillModeGlobals(false, null);
       G.titleId = "t_none";
@@ -29876,7 +30055,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -31666,6 +31845,7 @@ export default function CherryAdventure() {
       G.exped = Array.isArray(d.exped) ? d.exped.map((e) => (e && e.id && Array.isArray(e.pets) ? { ...e } : null)) : [];   // 🗺️ ทีมสำรวจ (นับเวลาจริงต่อแม้ปิดเกม)
       G.expedDone = d.expedDone || 0;
       G.rushBest = d.rushBest || null; G.rushAllTime = d.rushAllTime || null; G.rushClears = d.rushClears || 0;   // 👹 บอสรัช
+      G.rep = d.rep || {}; G.repShopDay = d.repShopDay || null; G.repShopBought = d.repShopBought || {};   // 🤝 ชื่อเสียง NPC
       G.guildId = d.guildId || null;   // 🏰 กิลด์ที่สังกัด
       if (G.guildId && G.guildRefresh) { try { G.guildRefresh(); } catch (e) {} }
       if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
@@ -43746,6 +43926,92 @@ export default function CherryAdventure() {
           </div>
         </div>
       )}
+          {/* 🤝 ชื่อเสียงกับ NPC */}
+          {ui.repOpen && (
+            <div style={{
+              position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 410, maxHeight: "86vh", overflowY: "auto",
+              background: "linear-gradient(180deg,#fdf8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+            }}>
+              {closeBtn("repOpen")}
+              <div style={{ fontSize: 15, fontWeight: 900, color: "#a06a2a", marginBottom: 3 }}>🤝 ชื่อเสียงกับชาวเมือง</div>
+              <div style={{ fontSize: 10, color: "#b09a80", marginBottom: 9 }}>
+                เอาของที่เขาชอบไปให้ (วันละ {REP_GIFT_DAY} ครั้งต่อคน) หรือทำกิจกรรมที่เขาสนใจ · สนิทขึ้นแล้วได้โบนัสถาวร ปลดร้านลับ และฉายาเฉพาะตัว
+              </div>
+
+              {(ui.rep || []).map((N) => (
+                <div key={N.id} style={{
+                  background: "#fff", border: `1px solid ${N.lv >= REP_MAX ? "#f0c860" : "#eee0cc"}`,
+                  borderRadius: 12, padding: "9px 10px", marginBottom: 7,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <span style={{ fontSize: 26 }}>{N.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 900, color: N.color }}>
+                        {N.name} <span style={{ color: "#c8a860" }}>{"💛".repeat(N.lv)}{"🤍".repeat(REP_MAX - N.lv)}</span>
+                      </div>
+                      <div style={{ fontSize: 9.5, color: "#b09a80" }}>{N.desc}</div>
+                    </div>
+                  </div>
+                  <div style={{ height: 7, background: "#f2e8dc", borderRadius: 999, overflow: "hidden", marginTop: 6 }}>
+                    <div style={{ width: N.pct + "%", height: "100%", background: `linear-gradient(90deg,${N.color},#f5d08a)` }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: "#b09a80", marginTop: 2 }}>
+                    <span>ระดับ {N.lv}/{REP_MAX}</span>
+                    <span>{N.next ? `${N.pt} / ${N.next} แต้ม` : "สนิทเต็มขั้นแล้ว 🏅"}</span>
+                  </div>
+                  {N.perkNow && <div style={{ fontSize: 10, fontWeight: 800, color: "#5a9a5a", marginTop: 4 }}>✅ ได้อยู่: {N.perkNow}</div>}
+                  {N.perkNext && <div style={{ fontSize: 10, color: "#b09a80" }}>⬆️ ระดับหน้า: {N.perkNext}</div>}
+                  {N.lv < REP_MAX && (
+                    <>
+                      <div style={{ fontSize: 9.5, color: "#a08a70", marginTop: 6 }}>
+                        🎁 ของที่ชอบ · ให้ได้อีก {N.giftsLeft} ครั้งวันนี้
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 4 }}>
+                        {N.likes.map((L) => {
+                          const can = L.have > 0 && N.giftsLeft > 0;
+                          return (
+                            <button key={L.id} onClick={() => G.repGive(N.id, L.id)} disabled={!can} style={{
+                              padding: "5px 9px", borderRadius: 999, cursor: can ? "pointer" : "not-allowed",
+                              fontFamily: font, fontSize: 10, fontWeight: 800,
+                              border: `1px solid ${can ? "#e0c890" : "#eee4d8"}`,
+                              background: can ? "#fff8e8" : "#f6f2ec", color: can ? "#a07a2a" : "#c0b4a4",
+                            }}>{L.emoji} {L.name} <span style={{ color: can ? "#5a9a5a" : "#c0b4a4" }}>+{L.worth}</span> <span style={{ color: "#c0b4a4" }}>(มี {L.have})</span></button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {/* 🛒 ร้านลับ */}
+              <div style={{ fontSize: 11, fontWeight: 900, color: "#a06a2a", margin: "11px 0 5px" }}>🛒 ร้านลับ (ซื้อได้วันละ 1 ชิ้นต่อรายการ)</div>
+              {(ui.repShop || []).map((it) => {
+                const price = G.repPrice ? G.repPrice(it.gold) : it.gold;
+                const can = it.open && !it.bought && (ui.gold || 0) >= price;
+                return (
+                  <div key={it.id} style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    background: it.open ? "#fff" : "#f6f2ec", border: "1px solid #eee0cc",
+                    borderRadius: 11, padding: "7px 9px", marginBottom: 5, opacity: it.open ? 1 : 0.65,
+                  }}>
+                    <span style={{ fontSize: 20 }}>{it.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 900, color: "#8a6a30" }}>{it.name}</div>
+                      <div style={{ fontSize: 9.5, color: "#b09a80" }}>
+                        {it.npcEmoji} {it.npcName} · {it.open ? (it.bought ? "วันนี้ซื้อแล้ว" : `${price.toLocaleString()}💰`) : `🔒 ต้องสนิทระดับ ${it.lv}`}
+                      </div>
+                    </div>
+                    <button onClick={() => G.repBuy(it.id)} disabled={!can} style={{
+                      padding: "7px 12px", borderRadius: 9, border: "none", cursor: can ? "pointer" : "not-allowed",
+                      fontFamily: font, fontSize: 11, fontWeight: 900,
+                      color: can ? "#fff" : "#c0b4a4", background: can ? "linear-gradient(90deg,#c09030,#f0b850)" : "#efe8de",
+                    }}>{it.bought ? "✓" : "ซื้อ"}</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {/* 👹 บอสรัช */}
           {ui.rushOpen && (
             <div style={{
@@ -45508,6 +45774,7 @@ export default function CherryAdventure() {
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
             ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0"],
             ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
+            ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a"],
             ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
             ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#c0392b"],
             ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
