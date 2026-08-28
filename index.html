@@ -642,6 +642,7 @@ const MISSION_DAILY = [
     { id: "d_skill8", t: "skill", n: 8, emoji: "✨", name: "ใช้สกิล 8 ครั้ง", exp: 480, gold: 2600, pt: 10 },
     { id: "d_mine6", t: "mine", n: 6, emoji: "⛏️", name: "ขุดสายแร่ 6 ก้อน", exp: 520, gold: 3000, pt: 10 },
     { id: "d_cook2", t: "cook", n: 2, emoji: "🍳", name: "ทำอาหาร 2 จาน", exp: 500, gold: 2800, pt: 10 },
+    { id: "d_exped1", t: "exped", n: 1, emoji: "🗺️", name: "ส่งสัตว์เลี้ยงออกสำรวจ 1 ทีม", exp: 450, gold: 2600, pt: 9 },
 ];
 const MISSION_WEEKLY = [
     { id: "w_win150", t: "win", n: 150, emoji: "⚔️", name: "ล่ามอนสเตอร์ 150 ตัว", exp: 6000, gold: 34000, dia: 60, pt: 40 },
@@ -1582,6 +1583,32 @@ const BORDER = {
     titan: { kind: "wall", a: 0x7a7060, b: 0x5a5040 },
     amazon: { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
 };
+// ---------- 🗺️ ส่งทีมสัตว์เลี้ยงออกสำรวจ — เลือก 3 ตัวส่งไป แล้วกลับมาพร้อมของ ----------
+// elem = ธาตุประจำพื้นที่ · สัตว์ที่ธาตุตรงกันได้ผลตอบแทนเพิ่มตัวละ 25%
+// loot = [ต่ำสุด, สูงสุด] ของวัตถุดิบที่จะได้ · lv = เลเวลเฉลี่ยของทีมที่ต้องมี
+const EXPEDS = [
+    { id: "grove", name: "ป่าละเมาะใกล้บ้าน", emoji: "🌳", hrs: 2, elem: "earth", lv: 1,
+        loot: { ironOre: [5, 10], earthEss: [1, 3] }, dust: [1, 3], gold: [900, 1800], exp: [90, 180] },
+    { id: "brook", name: "ลำธารใสกลางหุบ", emoji: "🏞️", hrs: 2, elem: "water", lv: 1,
+        loot: { ironOre: [4, 9], crystal: [1, 2] }, dust: [1, 3], gold: [1000, 2000], exp: [90, 190] },
+    { id: "cavern", name: "ถ้ำร้างใต้ภูผา", emoji: "🕳️", hrs: 4, elem: "earth", lv: 5,
+        loot: { ironOre: [12, 22], crystal: [3, 6] }, dust: [4, 8], gold: [2600, 5200], exp: [260, 520] },
+    { id: "frost", name: "ที่ราบเยือกแข็ง", emoji: "🧊", hrs: 4, elem: "ice", lv: 5,
+        loot: { iceEss: [4, 9], crystal: [2, 5] }, dust: [4, 8], gold: [2500, 5000], exp: [260, 520] },
+    { id: "crater", name: "ปากปล่องไฟ", emoji: "🌋", hrs: 6, elem: "fire", lv: 12,
+        loot: { fireEss: [7, 14], ironOre: [10, 18], dragonScale: [0, 1] }, dust: [8, 15], gold: [5000, 9500], exp: [520, 980] },
+    { id: "gale", name: "หน้าผาลมกรรโชก", emoji: "🌪️", hrs: 6, elem: "wind", lv: 12,
+        loot: { windEss: [7, 14], crystal: [4, 9] }, dust: [8, 15], gold: [4800, 9200], exp: [520, 980] },
+    { id: "shrine", name: "วิหารร้างเหนือเมฆ", emoji: "⛩️", hrs: 8, elem: "light", lv: 20,
+        loot: { crystal: [10, 20], windEss: [5, 11], dragonScale: [1, 2] }, dust: [15, 26], gold: [9000, 17000], exp: [1000, 1900] },
+    { id: "abyss", name: "เหวลึกไร้แสง", emoji: "🕯️", hrs: 8, elem: "arcane", lv: 20,
+        loot: { crystal: [9, 18], ironOre: [16, 30], dragonScale: [1, 3] }, dust: [15, 26], gold: [9500, 18000], exp: [1000, 1900] },
+];
+const EXPED_BY = {};
+EXPEDS.forEach((e) => (EXPED_BY[e.id] = e));
+const EXPED_SLOTS = 2; // 🗺️ ส่งออกสำรวจพร้อมกันได้กี่ทีม
+const EXPED_TEAM = 3; // 🐾 สัตว์เลี้ยงต่อทีม
+const EXPED_ELEM_BONUS = 0.25; // ธาตุตรงพื้นที่ = ได้เพิ่มตัวละ 25%
 const MINE_NODES = 5; // 🪨 สายแร่ที่โผล่พร้อมกันในแมพ
 const MINE_SWINGS = 3; // 🔨 ต้องตีให้เข้าเป้ากี่ครั้งกว่าสายแร่จะแตก
 const MINE_LV_EXP = (lv) => 60 + lv * 45; // ⛏️ EXP ที่ต้องใช้ขึ้นเลเวลขุด
@@ -2055,6 +2082,7 @@ function CherryAdventure() {
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
         mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1,
         kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
+        expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
         eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
         toast: "", toastAt: 0,
         inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
@@ -31308,7 +31336,7 @@ function CherryAdventure() {
             return inst;
         };
         G.petAt = (iid) => (G.petBox || []).find((p) => p.i === iid) || null;
-        G.petInUse = (iid) => (G.team || []).includes(iid) || G.buddy === iid;
+        G.petInUse = (iid) => (G.team || []).includes(iid) || G.buddy === iid || (G.petAway ? G.petAway(iid) : false); // 🗺️ ตัวที่ออกสำรวจอยู่ก็ถือว่าไม่ว่าง
         G.petSellPrice = (p) => { const t = SPECIES[p.sp].tier; return t * 90 + p.lv * 15 + (p.plus || 0) * 120 + (p.stage - 1) * 150; };
         G.sellPet = (iid) => {
             const p = G.petAt(iid);
@@ -37214,6 +37242,189 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, kitchenOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false }));
         };
         // ================= 🍳 END KITCHEN =================
+        // ================= 🗺️ ส่งทีมสัตว์เลี้ยงออกสำรวจ =================
+        G.exped = G.exped || [];
+        const expedNorm = () => { while (G.exped.length < EXPED_SLOTS)
+            G.exped.push(null); G.exped.length = EXPED_SLOTS; };
+        expedNorm();
+        // 🐾 สัตว์ตัวนี้ออกสำรวจอยู่ไหม
+        G.petAway = (iid) => (G.exped || []).some((e) => e && e.pets && e.pets.includes(iid));
+        // ✅ ตัวที่ส่งไปได้: ไม่อยู่ในทีมสู้ · ไม่ใช่เพื่อนซี้ · ไม่ได้อยู่คอกฟาร์ม · ไม่ได้ออกสำรวจอยู่
+        G.expedPickable = () => (G.petBox || []).filter((p) => !G.petInUse(p.i) && !((G.ranch && G.ranch.slots) || []).includes(p.i) && !G.petAway(p.i));
+        // 📊 แรงของทีม → ตัวคูณของที่ได้
+        G.expedTeamInfo = (ids, destId) => {
+            const D = EXPED_BY[destId];
+            const pets = (ids || []).map((i) => G.petAt(i)).filter(Boolean);
+            let lvSum = 0, tierSum = 0, match = 0;
+            pets.forEach((p) => {
+                lvSum += p.lv || 1;
+                tierSum += (SPECIES[p.sp] || {}).tier || 1;
+                if (D && PET_ELEM[p.sp] === D.elem)
+                    match++;
+            });
+            const avgLv = pets.length ? lvSum / pets.length : 0;
+            const power = 1 + (avgLv - 1) * 0.05 + (tierSum / Math.max(1, pets.length) - 1) * 0.12 + match * EXPED_ELEM_BONUS;
+            return { pets, avgLv: Math.round(avgLv * 10) / 10, match, power: Math.round(power * 100) / 100,
+                lvOk: !D || avgLv >= D.lv };
+        };
+        // 🚀 ส่งทีมออกเดินทาง
+        G.expedSend = (slot, destId, ids) => {
+            expedNorm();
+            const D = EXPED_BY[destId];
+            if (!D)
+                return;
+            if (G.exped[slot]) {
+                toast("🗺️ ช่องนี้มีทีมออกสำรวจอยู่แล้ว");
+                return;
+            }
+            const uniq = [...new Set((ids || []).filter((i) => i != null))];
+            if (uniq.length !== EXPED_TEAM) {
+                toast(`🐾 ต้องเลือกสัตว์เลี้ยงให้ครบ ${EXPED_TEAM} ตัว`);
+                return;
+            }
+            for (const i of uniq) {
+                if (!G.petAt(i)) {
+                    toast("🐾 ไม่พบสัตว์เลี้ยงตัวนี้");
+                    return;
+                }
+                if (G.petInUse(i) || ((G.ranch && G.ranch.slots) || []).includes(i) || G.petAway(i)) {
+                    toast("🐾 มีตัวที่ติดภารกิจอื่นอยู่");
+                    return;
+                }
+            }
+            const info = G.expedTeamInfo(uniq, destId);
+            if (!info.lvOk) {
+                toast(`🗺️ ทีมยังอ่อนไป — ${D.name} ต้องเลเวลเฉลี่ย ${D.lv} (ตอนนี้ ${info.avgLv})`);
+                return;
+            }
+            const now = Date.now();
+            G.exped[slot] = { id: destId, pets: uniq, startAt: now, endAt: now + D.hrs * 3600000 };
+            if (G.sfx)
+                G.sfx.button && G.sfx.button();
+            if (G.mbEvent)
+                G.mbEvent("exped");
+            toast(`${D.emoji} ส่งทีมไป${D.name}แล้ว! กลับมาใน ${D.hrs} ชั่วโมง (แรงทีม ×${info.power})`);
+            G.syncExpedUi();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // ⏳ เหลืออีกนานไหม
+        G.expedLeftText = (slot) => {
+            const e = (G.exped || [])[slot];
+            if (!e)
+                return null;
+            const ms = e.endAt - Date.now();
+            if (ms <= 0)
+                return "พร้อมรับของแล้ว!";
+            const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+            return h > 0 ? `อีก ${h} ชม. ${m} นาที` : `อีก ${m} นาที`;
+        };
+        // 🎁 รับของเมื่อทีมกลับถึงบ้าน
+        G.expedClaim = (slot) => {
+            expedNorm();
+            const e = (G.exped || [])[slot];
+            if (!e)
+                return;
+            const D = EXPED_BY[e.id];
+            if (!D) {
+                G.exped[slot] = null;
+                G.syncExpedUi();
+                return;
+            }
+            if (Date.now() < e.endAt) {
+                toast(`⏳ ทีมยังไม่กลับ — ${G.expedLeftText(slot)}`);
+                return;
+            }
+            const info = G.expedTeamInfo(e.pets, e.id);
+            const k = info.power;
+            const roll = ([a, b]) => a + Math.random() * (b - a);
+            G.mats = G.mats || {};
+            const got = [];
+            Object.keys(D.loot).forEach((m) => {
+                const n = Math.round(roll(D.loot[m]) * k);
+                if (n > 0) {
+                    G.mats[m] = (G.mats[m] || 0) + n;
+                    got.push(`${(MATERIALS[m] || {}).emoji || ""}${(MATERIALS[m] || {}).name || m} ×${n}`);
+                }
+            });
+            const dust = Math.round(roll(D.dust) * k);
+            const gold = Math.round(roll(D.gold) * k);
+            G.gemDust = (G.gemDust || 0) + dust;
+            G.gold = (G.gold || 0) + gold;
+            if (dust > 0)
+                got.push(`💠 ผงเพชร ×${dust}`);
+            // 🐾 สัตว์ที่ไปด้วยได้ EXP กันทุกตัว
+            const pexp = Math.round(roll(D.exp) * k);
+            let lvUps = 0;
+            (e.pets || []).forEach((i) => {
+                const pt = G.petAt(i);
+                if (!pt)
+                    return;
+                pt.exp = (pt.exp || 0) + pexp;
+                while (pt.exp >= pt.lv * 30) {
+                    pt.exp -= pt.lv * 30;
+                    pt.lv++;
+                    lvUps++;
+                }
+            });
+            G.exped[slot] = null;
+            G.expedDone = (G.expedDone || 0) + 1;
+            if (G.sfx)
+                G.sfx.coin && G.sfx.coin();
+            if (G.storyEvent) {
+                try {
+                    G.storyEvent("exped", 1);
+                }
+                catch (err) { }
+            }
+            toast(`${D.emoji} ทีมกลับจาก${D.name}แล้ว! ${got.join(" · ")} · 💰${gold.toLocaleString()}`);
+            if (lvUps)
+                toast(`🐾 สัตว์เลี้ยงเลเวลอัพรวม ${lvUps} ครั้งจากการเดินทาง!`);
+            G.syncExpedUi();
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 🏳️ ยกเลิกกลางทาง (ไม่ได้ของ แต่ได้สัตว์คืน)
+        G.expedCancel = (slot) => {
+            expedNorm();
+            if (!G.exped[slot])
+                return;
+            G.exped[slot] = null;
+            toast("🗺️ เรียกทีมกลับแล้ว — ไม่ได้ของติดมือนะ");
+            G.syncExpedUi();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 📸 ก้อนข้อมูลให้หน้าจอใช้
+        G.expedSnap = () => {
+            expedNorm();
+            return (G.exped || []).map((e, i) => {
+                if (!e)
+                    return null;
+                const D = EXPED_BY[e.id] || {};
+                return { id: e.id, name: D.name, emoji: D.emoji, endAt: e.endAt, ready: Date.now() >= e.endAt,
+                    left: G.expedLeftText(i),
+                    pets: (e.pets || []).map((pi) => {
+                        const pt = G.petAt(pi);
+                        const sp = pt ? SPECIES[pt.sp] : null;
+                        return { i: pi, emoji: sp ? sp.emoji : "🐾", name: sp ? sp.name : "?", lv: pt ? pt.lv : 1 };
+                    }) };
+            });
+        };
+        G.syncExpedUi = () => setUi((u) => ({ ...u, exped: G.expedSnap(), expedTick: (u.expedTick || 0) + 1,
+            mats: { ...(G.mats || {}) }, gemDust: G.gemDust || 0, gold: G.gold || 0,
+            petBox: (G.petBox || []).map((x) => ({ ...x })) }));
+        G.toggleExped = () => {
+            const willOpen = !G._expedOpen;
+            G._expedOpen = willOpen;
+            if (willOpen) {
+                G.syncExpedUi();
+                setUi((u) => ({ ...u, expedPick: [], expedDest: u.expedDest || EXPEDS[0].id }));
+            }
+            setUi((u) => ({ ...u, expedOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, kitchenOpen: false, equipScreen: false }));
+        };
+        // ================= 🗺️ END EXPEDITION =================
         G.produceToFood = (cropId) => {
             const R = G.ranch;
             const c = CROP_BY[cropId];
@@ -46650,6 +46861,8 @@ function CherryAdventure() {
             G.cookTotal = 0;
             G.fishBag = { common: 0, rare: 0, epic: 0 };
             G.foodBuff = null; // 🍳 ครัวเปล่า
+            G.exped = [];
+            G.expedDone = 0; // 🗺️ ยังไม่เคยส่งทีมสำรวจ
             G.pathId = null; // 🌟 fresh character has no path yet
             G.skillMode = "basic";
             setSkillModeGlobals(false, null);
@@ -46750,7 +46963,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -49861,6 +50074,8 @@ function CherryAdventure() {
             G.cookTotal = d.cookTotal || 0; // 🍳 ครัว
             G.fishBag = d.fishBag || { common: 0, rare: 0, epic: 0 };
             G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now()) ? { id: d.foodBuff.id, until: d.foodBuff.until } : null;
+            G.exped = Array.isArray(d.exped) ? d.exped.map((e) => (e && e.id && Array.isArray(e.pets) ? { ...e } : null)) : []; // 🗺️ ทีมสำรวจ (นับเวลาจริงต่อแม้ปิดเกม)
+            G.expedDone = d.expedDone || 0;
             G.guildId = d.guildId || null; // 🏰 กิลด์ที่สังกัด
             if (G.guildId && G.guildRefresh) {
                 try {
@@ -50101,6 +50316,17 @@ function CherryAdventure() {
                         }
                         else if (on)
                             setUi((u) => ({ ...u, foodBuff: G.foodBuffInfo ? G.foodBuffInfo() : null }));
+                        // 🗺️ นับถอยหลังทีมสำรวจ + เด้งเตือนตอนทีมกลับถึงบ้าน
+                        if (G.exped && G.exped.length) {
+                            const rdy = G.exped.map((e) => !!(e && Date.now() >= e.endAt)).join(",");
+                            if (rdy !== G._expedRdy) {
+                                G._expedRdy = rdy;
+                                if (G.exped.some((e) => e && Date.now() >= e.endAt))
+                                    toast("🗺️ ทีมสำรวจกลับถึงบ้านแล้ว — ไปรับของได้เลย!");
+                            }
+                            if (G._expedOpen && G.syncExpedUi)
+                                G.syncExpedUi();
+                        }
                     }
                 }
                 // 🩸😰 เตือนเลือดใกล้หมด — ขอบจอแดงเต้นตามหัวใจ + เหงื่อออก (ทำงานทุกโหมด ทั้งเดินและต่อสู้)
@@ -68708,6 +68934,134 @@ function CherryAdventure() {
                             React.createElement("button", { disabled: !open || cf, onClick: () => G.mbPassClaim(i, false), style: { flex: 1, padding: "6px 4px", borderRadius: 8, border: "none", cursor: open && !cf ? "pointer" : "not-allowed", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: cf ? "#8a7fa5" : open ? "#2a2416" : "#7a6f92", background: cf ? "rgba(255,255,255,0.05)" : open ? "linear-gradient(90deg,#cfe0a0,#9ac86a)" : "rgba(255,255,255,0.05)" } }, cf ? "✓" : RF.label),
                             React.createElement("button", { disabled: !open || cp || !ui.mbook.prem, onClick: () => G.mbPassClaim(i, true), style: { flex: 1.15, padding: "6px 4px", borderRadius: 8, border: "none", cursor: open && !cp && ui.mbook.prem ? "pointer" : "not-allowed", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: cp ? "#8a7fa5" : (open && ui.mbook.prem) ? "#2a2416" : "#7a6f92", background: cp ? "rgba(255,255,255,0.05)" : (open && ui.mbook.prem) ? "linear-gradient(90deg,#f5d24a,#e0883a)" : "rgba(255,255,255,0.05)" } }, cp ? "✓" : (ui.mbook.prem ? RP.label : "🔒 " + RP.label))));
                     }))))))),
+        ui.expedOpen && (React.createElement("div", { style: {
+                position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 410, maxHeight: "86vh", overflowY: "auto",
+                background: "linear-gradient(180deg,#f2fbf7,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+            } },
+            closeBtn("expedOpen"),
+            React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#2a8a72", marginBottom: 3 } }, "\uD83D\uDDFA\uFE0F \u0E2A\u0E48\u0E07\u0E17\u0E35\u0E21\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07\u0E2D\u0E2D\u0E01\u0E2A\u0E33\u0E23\u0E27\u0E08"),
+            React.createElement("div", { style: { fontSize: 10, color: "#7aa89a", marginBottom: 9 } },
+                "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07 ",
+                EXPED_TEAM,
+                " \u0E15\u0E31\u0E27\u0E2A\u0E48\u0E07\u0E2D\u0E2D\u0E01\u0E44\u0E1B \u00B7 \u0E18\u0E32\u0E15\u0E38\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E44\u0E14\u0E49\u0E02\u0E2D\u0E07\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E15\u0E31\u0E27\u0E25\u0E30 ",
+                Math.round(EXPED_ELEM_BONUS * 100),
+                "% \u00B7 \u0E40\u0E25\u0E40\u0E27\u0E25\u0E2A\u0E39\u0E07\u0E22\u0E34\u0E48\u0E07\u0E44\u0E14\u0E49\u0E40\u0E22\u0E2D\u0E30"),
+            (ui.exped || []).map((e, i) => (React.createElement("div", { key: "s" + i, style: {
+                    background: e ? (e.ready ? "linear-gradient(135deg,#e2f8e8,#d0f0dc)" : "#eef7f3") : "#f4f7f5",
+                    border: `1px solid ${e && e.ready ? "#8ad0a0" : "#dce8e2"}`, borderRadius: 12, padding: "9px 10px", marginBottom: 7,
+                } },
+                React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#2a7a64" } },
+                    "\u0E17\u0E35\u0E21\u0E17\u0E35\u0E48 ",
+                    i + 1,
+                    e ? ` · ${e.emoji} ${e.name}` : " · ว่างอยู่"),
+                e ? (React.createElement(React.Fragment, null,
+                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: e.ready ? "#3a9a5a" : "#8aa89a", marginTop: 2 } }, e.ready ? "🎁 กลับถึงบ้านแล้ว — รับของได้เลย" : "⏳ " + (e.left || "")),
+                    React.createElement("div", { style: { display: "flex", gap: 5, marginTop: 5, flexWrap: "wrap" } }, (e.pets || []).map((pt, k) => (React.createElement("span", { key: k, style: { fontSize: 10.5, fontWeight: 800, background: "#fff", border: "1px solid #d8e8e0", borderRadius: 999, padding: "2px 8px", color: "#4a7a6a" } },
+                        pt.emoji,
+                        " ",
+                        pt.name,
+                        " Lv.",
+                        pt.lv)))),
+                    React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 7 } },
+                        React.createElement("button", { onClick: () => G.expedClaim(i), disabled: !e.ready, style: {
+                                flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: e.ready ? "pointer" : "not-allowed",
+                                fontFamily: font, fontSize: 12, fontWeight: 900, color: e.ready ? "#fff" : "#a8b8b0",
+                                background: e.ready ? "linear-gradient(90deg,#3aa06a,#6ac89a)" : "#e4ece8",
+                            } }, "\uD83C\uDF81 \u0E23\u0E31\u0E1A\u0E02\u0E2D\u0E07"),
+                        !e.ready && (React.createElement("button", { onClick: () => G.expedCancel(i), style: {
+                                padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                                fontFamily: font, fontSize: 11, fontWeight: 800, color: "#8a6a6a", background: "#f0e4e4",
+                            } }, "\u0E40\u0E23\u0E35\u0E22\u0E01\u0E01\u0E25\u0E31\u0E1A"))))) : (React.createElement("div", { style: { fontSize: 10, color: "#a8bcb4", marginTop: 2 } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E01\u0E31\u0E1A\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07 \u0E41\u0E25\u0E49\u0E27\u0E01\u0E14\u0E2A\u0E48\u0E07\u0E2D\u0E2D\u0E01\u0E44\u0E1B"))))),
+            (() => {
+                const freeSlot = (ui.exped || []).findIndex((e) => !e);
+                if (freeSlot < 0)
+                    return (React.createElement("div", { style: { fontSize: 10.5, color: "#8aa89a", background: "#eef7f3", borderRadius: 10, padding: "8px 10px", marginTop: 4 } }, "\u0E17\u0E35\u0E21\u0E2D\u0E2D\u0E01\u0E2A\u0E33\u0E23\u0E27\u0E08\u0E04\u0E23\u0E1A\u0E17\u0E38\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E41\u0E25\u0E49\u0E27 \u2014 \u0E23\u0E2D\u0E17\u0E35\u0E21\u0E01\u0E25\u0E31\u0E1A\u0E01\u0E48\u0E2D\u0E19\u0E19\u0E30"));
+                const destId = ui.expedDest || EXPEDS[0].id;
+                const D = EXPED_BY[destId];
+                const pick = ui.expedPick || [];
+                const info = G.expedTeamInfo ? G.expedTeamInfo(pick, destId) : { avgLv: 0, match: 0, power: 1, lvOk: true };
+                const ready = pick.length === EXPED_TEAM && info.lvOk;
+                const avail = G.expedPickable ? G.expedPickable() : [];
+                return (React.createElement(React.Fragment, null,
+                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#2a7a64", margin: "10px 0 5px" } }, "\uD83E\uDDED \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E2A\u0E33\u0E23\u0E27\u0E08"),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 } }, EXPEDS.map((d) => {
+                        const on = d.id === destId;
+                        return (React.createElement("button", { key: d.id, onClick: () => setUi((u) => ({ ...u, expedDest: d.id })), style: {
+                                padding: "7px 8px", borderRadius: 10, cursor: "pointer", fontFamily: font, textAlign: "left",
+                                border: on ? "2px solid #3aa06a" : "1px solid #dce8e2", background: on ? "#e4f7ec" : "#fff",
+                            } },
+                            React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#2a7a64" } },
+                                d.emoji,
+                                " ",
+                                d.name),
+                            React.createElement("div", { style: { fontSize: 9.5, color: "#7aa89a" } },
+                                d.hrs,
+                                " \u0E0A\u0E21. \u00B7 \u0E18\u0E32\u0E15\u0E38",
+                                (ELEM_META[d.elem] || {}).emoji,
+                                (ELEM_META[d.elem] || {}).name,
+                                " \u00B7 \u0E15\u0E49\u0E2D\u0E07 Lv.",
+                                d.lv)));
+                    })),
+                    D && (React.createElement("div", { style: { fontSize: 10, color: "#6a9a88", background: "#eef9f4", borderRadius: 10, padding: "7px 9px", marginTop: 6 } },
+                        "\uD83C\uDF81 \u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E08\u0E30\u0E44\u0E14\u0E49: ",
+                        Object.keys(D.loot).map((m) => `${(MATERIALS[m] || {}).emoji || ""}${(MATERIALS[m] || {}).name || m} ${D.loot[m][0]}-${D.loot[m][1]}`).join(" · "),
+                        " \u00B7 \uD83D\uDCA0 ",
+                        D.dust[0],
+                        "-",
+                        D.dust[1],
+                        " \u00B7 \uD83D\uDCB0 ",
+                        D.gold[0].toLocaleString(),
+                        "-",
+                        D.gold[1].toLocaleString())),
+                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#2a7a64", margin: "10px 0 5px" } },
+                        "\uD83D\uDC3E \u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07 (",
+                        pick.length,
+                        "/",
+                        EXPED_TEAM,
+                        ")",
+                        pick.length > 0 && React.createElement("span", { style: { color: "#6a9a88", fontWeight: 800 } },
+                            " \u00B7 \u0E40\u0E25\u0E40\u0E27\u0E25\u0E40\u0E09\u0E25\u0E35\u0E48\u0E22 ",
+                            info.avgLv,
+                            " \u00B7 \u0E18\u0E32\u0E15\u0E38\u0E15\u0E23\u0E07 ",
+                            info.match,
+                            " \u0E15\u0E31\u0E27 \u00B7 \u0E41\u0E23\u0E07\u0E17\u0E35\u0E21 \u00D7",
+                            info.power)),
+                    avail.length === 0 ? (React.createElement("div", { style: { fontSize: 10.5, color: "#a8bcb4", background: "#f4f7f5", borderRadius: 10, padding: "8px 10px" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07\u0E17\u0E35\u0E48\u0E27\u0E48\u0E32\u0E07 \u2014 \u0E15\u0E31\u0E27\u0E17\u0E35\u0E48\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E17\u0E35\u0E21\u0E2A\u0E39\u0E49 \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E0B\u0E35\u0E49 \u0E04\u0E2D\u0E01\u0E1F\u0E32\u0E23\u0E4C\u0E21 \u0E2B\u0E23\u0E37\u0E2D\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2A\u0E33\u0E23\u0E27\u0E08 \u0E2A\u0E48\u0E07\u0E44\u0E1B\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49")) : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5, maxHeight: 168, overflowY: "auto" } }, avail.map((pt) => {
+                        const sp = SPECIES[pt.sp] || {};
+                        const on = pick.includes(pt.i);
+                        const el = PET_ELEM[pt.sp];
+                        const good = D && el === D.elem;
+                        return (React.createElement("button", { key: pt.i, onClick: () => setUi((u) => {
+                                const cur = u.expedPick || [];
+                                if (cur.includes(pt.i))
+                                    return { ...u, expedPick: cur.filter((x) => x !== pt.i) };
+                                if (cur.length >= EXPED_TEAM)
+                                    return u;
+                                return { ...u, expedPick: [...cur, pt.i] };
+                            }), style: {
+                                padding: "6px 2px", borderRadius: 10, cursor: "pointer", fontFamily: font,
+                                border: on ? "2px solid #3aa06a" : good ? "1px solid #f0c060" : "1px solid #e0e8e4",
+                                background: on ? "#dff5e8" : good ? "#fffaec" : "#fff",
+                            } },
+                            React.createElement("div", { style: { fontSize: 19 } }, sp.emoji),
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#4a7a6a" } },
+                                "Lv.",
+                                pt.lv),
+                            React.createElement("div", { style: { fontSize: 8.5, color: good ? "#c08a20" : "#a8bcb4" } },
+                                (ELEM_META[el] || {}).emoji,
+                                good ? " ตรง!" : "")));
+                    }))),
+                    !info.lvOk && pick.length === EXPED_TEAM && (React.createElement("div", { style: { fontSize: 10, color: "#c07a4a", marginTop: 5 } },
+                        "\u26A0\uFE0F \u0E17\u0E35\u0E21\u0E22\u0E31\u0E07\u0E2D\u0E48\u0E2D\u0E19\u0E44\u0E1B \u2014 \u0E1E\u0E37\u0E49\u0E19\u0E17\u0E35\u0E48\u0E19\u0E35\u0E49\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25\u0E40\u0E09\u0E25\u0E35\u0E48\u0E22 ",
+                        D.lv)),
+                    React.createElement("button", { onClick: () => { G.expedSend(freeSlot, destId, ui.expedPick || []); setUi((u) => ({ ...u, expedPick: [] })); }, disabled: !ready, style: {
+                            width: "100%", marginTop: 9, padding: "10px 0", borderRadius: 11, border: "none",
+                            cursor: ready ? "pointer" : "not-allowed", fontFamily: font, fontSize: 13, fontWeight: 900,
+                            color: ready ? "#fff" : "#a8b8b0", background: ready ? "linear-gradient(90deg,#2a9a72,#5ac8a0)" : "#e4ece8",
+                        } },
+                        "\uD83D\uDE80 \u0E2A\u0E48\u0E07\u0E17\u0E35\u0E21\u0E2D\u0E2D\u0E01\u0E40\u0E14\u0E34\u0E19\u0E17\u0E32\u0E07",
+                        D ? ` (${D.hrs} ชม.)` : "")));
+            })())),
         ui.kitchenOpen && (React.createElement("div", { style: {
                 position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "86vh", overflowY: "auto",
                 background: "linear-gradient(180deg,#fff8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
@@ -69921,6 +70275,7 @@ function CherryAdventure() {
                 ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
                 ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
                 ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
+                ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0"],
                 ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
                 ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty)
                         G.wbRefreshParty(); }, "#c0392b"],
