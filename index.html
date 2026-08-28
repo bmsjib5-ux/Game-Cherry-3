@@ -1619,6 +1619,25 @@ EXPEDS.forEach((e) => (EXPED_BY[e.id] = e));
 const EXPED_SLOTS = 2; // 🗺️ ส่งออกสำรวจพร้อมกันได้กี่ทีม
 const EXPED_TEAM = 3; // 🐾 สัตว์เลี้ยงต่อทีม
 const EXPED_ELEM_BONUS = 0.25; // ธาตุตรงพื้นที่ = ได้เพิ่มตัวละ 25%
+// ---------- 🎡 กงล้อเสี่ยงโชค ----------
+// w = น้ำหนักการออก (ยิ่งมากยิ่งออกบ่อย) · big = ถือเป็นรางวัลใหญ่ (ใช้กับระบบการันตี)
+const WHEEL = [
+    { id: "g1", emoji: "💰", name: "ทอง 3,000", col: "#f0c040", w: 150, give: { gold: 3000 } },
+    { id: "g2", emoji: "💰", name: "ทอง 8,000", col: "#e8b030", w: 100, give: { gold: 8000 } },
+    { id: "g3", emoji: "💰", name: "ทอง 25,000", col: "#d89820", w: 40, give: { gold: 25000 }, big: true },
+    { id: "dust", emoji: "💠", name: "ผงเพชร 15", col: "#7ac8f0", w: 90, give: { gemDust: 15 } },
+    { id: "star", emoji: "🌟", name: "ผงดาว 12", col: "#f5c542", w: 80, give: { stardust: 12 } },
+    { id: "ore", emoji: "⛏️", name: "แร่เหล็ก 25", col: "#a0a8b0", w: 90, give: { mats: { ironOre: 25 } } },
+    { id: "cry", emoji: "💎", name: "คริสตัล 8", col: "#6ac0f0", w: 60, give: { mats: { crystal: 8 } } },
+    { id: "pot", emoji: "🧪", name: "ยาฟื้นพลัง 5", col: "#6ace9a", w: 90, give: { potion: 5 } },
+    { id: "ball", emoji: "🔴", name: "ลูกบอลจับ 5", col: "#f08a9a", w: 70, give: { balls: 5 } },
+    { id: "warp", emoji: "📜", name: "ใบวาร์ป 2 ใบ", col: "#7ab0e8", w: 45, give: { warpScrolls: 2 } },
+    { id: "dia", emoji: "💎", name: "เพชร 20", col: "#b07ae0", w: 25, give: { diamonds: 20 }, big: true },
+    { id: "jack", emoji: "🎰", name: "แจ็กพอต! เพชร 80", col: "#ff6a9a", w: 6, give: { diamonds: 80, gold: 50000, gemDust: 40 }, big: true },
+];
+const WHEEL_FREE_DAY = 1; // 🎡 หมุนฟรีวันละกี่ครั้ง
+const WHEEL_DIA_COST = [30, 45, 70, 110, 160]; // 💎 ราคาหมุนเพิ่มครั้งที่ 1,2,3... (เกินนั้นใช้ราคาสุดท้าย)
+const WHEEL_PITY = 10; // 🎁 หมุนครบกี่ครั้งแล้วการันตีรางวัลใหญ่
 // ---------- 🤝 ชื่อเสียงกับ NPC — สนิทมากขึ้นแล้วปลดล็อกของดี ----------
 // like = ของที่ NPC คนนั้นชอบ (ให้แล้วได้แต้มสนิท) · act = การกระทำที่ทำให้สนิทขึ้นเอง
 // perk = สิ่งที่ได้ต่อระดับ (index 0 = ระดับ 1) · shop = ของลับที่ขายเมื่อสนิทถึงระดับที่กำหนด
@@ -2167,6 +2186,7 @@ function CherryAdventure() {
         kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, fishBag: { common: 0, rare: 0, epic: 0 }, cookTick: 0,
         expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
         repOpen: false, rep: [], repShop: [], repTick: 0,
+        wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
         rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
         eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
         toast: "", toastAt: 0,
@@ -30663,6 +30683,135 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, diamonds: G.diamonds }));
             return n;
         };
+        // ================= 🎡 กงล้อเสี่ยงโชค + 📅 ปฏิทิน 7 วัน =================
+        G.wheelSpins = G.wheelSpins || 0; // หมุนไปแล้วกี่ครั้งวันนี้
+        G.wheelPity = G.wheelPity || 0; // นับสะสมเพื่อการันตีรางวัลใหญ่
+        G.wheelDay = G.wheelDay || "";
+        G.wheelBuys = G.wheelBuys || 0; // ซื้อหมุนเพิ่มไปแล้วกี่ครั้งวันนี้
+        const wheelRoll = () => {
+            const forceBig = (G.wheelPity || 0) + 1 >= WHEEL_PITY;
+            const pool = forceBig ? WHEEL.filter((x) => x.big) : WHEEL;
+            const tot = pool.reduce((s2, x) => s2 + x.w, 0);
+            let r = Math.random() * tot;
+            for (const x of pool) {
+                r -= x.w;
+                if (r <= 0)
+                    return x;
+            }
+            return pool[0];
+        };
+        const wheelDayCheck = () => {
+            const t = todayStamp();
+            if (G.wheelDay !== t) {
+                G.wheelDay = t;
+                G.wheelSpins = 0;
+                G.wheelBuys = 0;
+            }
+        };
+        G.wheelFreeLeft = () => { wheelDayCheck(); return Math.max(0, WHEEL_FREE_DAY - (G.wheelSpins || 0)); };
+        G.wheelDiaCost = () => WHEEL_DIA_COST[Math.min(WHEEL_DIA_COST.length - 1, G.wheelBuys || 0)];
+        // 🎡 หมุน — paid=true คือจ่ายเพชรหมุนเพิ่ม
+        G.wheelSpin = (paid) => {
+            wheelDayCheck();
+            if (G.wheelBusy)
+                return;
+            if (!paid) {
+                if (G.wheelFreeLeft() <= 0) {
+                    toast("🎡 หมุนฟรีวันนี้หมดแล้ว — ใช้เพชรหมุนเพิ่มได้");
+                    return;
+                }
+            }
+            else {
+                const c = G.wheelDiaCost();
+                if ((G.diamonds || 0) < c) {
+                    toast(`💎 เพชรไม่พอ! ต้องมี ${c} เพชร`);
+                    return;
+                }
+                G.diamonds -= c;
+                G.wheelBuys = (G.wheelBuys || 0) + 1;
+            }
+            G.wheelSpins = (G.wheelSpins || 0) + 1;
+            const prize = wheelRoll();
+            const idx = WHEEL.findIndex((x) => x.id === prize.id);
+            G.wheelPity = prize.big ? 0 : (G.wheelPity || 0) + 1;
+            // 🌀 หมุนกงล้อให้หยุดตรงช่องที่ออก (หมุนเกิน 5 รอบก่อนแล้วค่อยหยุด)
+            const seg = 360 / WHEEL.length;
+            const target = 360 * 5 + (360 - (idx * seg + seg / 2));
+            G.wheelBusy = true;
+            G.wheelAngle = (G.wheelAngle || 0) + target;
+            setUi((u) => ({ ...u, wheelAngle: G.wheelAngle, wheelBusy: true, wheelResult: null,
+                diamonds: G.diamonds || 0, wheelFree: G.wheelFreeLeft(), wheelCost: G.wheelDiaCost() }));
+            if (G.sfx)
+                G.sfx.button && G.sfx.button();
+            setTimeout(() => {
+                G.wheelBusy = false;
+                const gv = prize.give || {};
+                if (gv.gold) {
+                    G.gold = (G.gold || 0) + gv.gold;
+                    G.achStats.goldEarned = (G.achStats.goldEarned || 0) + gv.gold;
+                }
+                if (gv.gemDust)
+                    G.gemDust = (G.gemDust || 0) + gv.gemDust;
+                if (gv.stardust)
+                    G.stardust = (G.stardust || 0) + gv.stardust;
+                if (gv.diamonds && G.gainDiamonds)
+                    G.gainDiamonds(gv.diamonds, "กงล้อเสี่ยงโชค");
+                else if (gv.diamonds)
+                    G.diamonds = (G.diamonds || 0) + gv.diamonds;
+                if (gv.balls)
+                    G.balls = (G.balls || 0) + gv.balls;
+                if (gv.warpScrolls)
+                    G.warpScrolls = (G.warpScrolls || 0) + gv.warpScrolls;
+                if (gv.potion) {
+                    G.hpPots.s = (G.hpPots.s || 0) + gv.potion;
+                    if (G.syncPotions)
+                        G.syncPotions();
+                }
+                if (gv.mats) {
+                    G.mats = G.mats || {};
+                    Object.keys(gv.mats).forEach((k) => (G.mats[k] = (G.mats[k] || 0) + gv.mats[k]));
+                }
+                if (G.sfx) {
+                    if (prize.big)
+                        G.sfx.levelup && G.sfx.levelup();
+                    else
+                        G.sfx.coin && G.sfx.coin();
+                }
+                toast(`🎡 ${prize.emoji} ได้ ${prize.name}!${prize.big ? " 🎉" : ""}`);
+                G.wheelTotal = (G.wheelTotal || 0) + 1;
+                G.syncWheelUi();
+                setUi((u) => ({ ...u, wheelResult: { emoji: prize.emoji, name: prize.name, big: !!prize.big } }));
+                syncPlayer();
+                if (G.saveGame)
+                    G.saveGame();
+            }, 3200);
+        };
+        // 📅 ปฏิทิน 7 วัน — รางวัลของแต่ละวันในรอบ
+        G.calSnap = () => {
+            const cur = (G.dailyStreak || 0) % 7;
+            const claimedToday = G.lastDaily === todayStamp();
+            return DAILY_REWARDS.map((r, i) => ({
+                day: i + 1, emoji: r.emoji, label: r.label,
+                dia: i === 6 ? 8 : 3,
+                current: i === cur, past: i < cur, claimedToday: i === cur && claimedToday,
+            }));
+        };
+        G.syncWheelUi = () => {
+            wheelDayCheck();
+            setUi((u) => ({ ...u,
+                wheelFree: G.wheelFreeLeft(), wheelCost: G.wheelDiaCost(), wheelPity: G.wheelPity || 0,
+                wheelTotal: G.wheelTotal || 0, wheelBusy: !!G.wheelBusy, wheelAngle: G.wheelAngle || 0,
+                cal: G.calSnap(), dailyStreak: G.dailyStreak || 0, dailyReady: G.lastDaily !== todayStamp(),
+                gold: G.gold || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0 }));
+        };
+        G.toggleWheel = () => {
+            const willOpen = !G._wheelOpen;
+            G._wheelOpen = willOpen;
+            if (willOpen)
+                G.syncWheelUi();
+            setUi((u) => ({ ...u, wheelOpen: willOpen, menuOpen: false, shopOpen: false, invOpen: false, panelOpen: false, kitchenOpen: false, expedOpen: false, rushOpen: false, repOpen: false, equipScreen: false, wheelResult: null }));
+        };
+        // ================= 🎡 END WHEEL =================
         G.claimDaily = () => {
             const today = todayStamp();
             if (G.lastDaily === today) {
@@ -30688,6 +30837,8 @@ function CherryAdventure() {
                 G.sfx.levelup();
             toast(`📅✨ รางวัลล็อกอินวันที่ ${day + 1}! ได้ ${r.label} (ต่อเนื่อง ${G.dailyStreak} วัน)`);
             setUi((u) => ({ ...u, dailyReady: false, dailyStreak: G.dailyStreak, gold: G.gold }));
+            if (G._wheelOpen && G.syncWheelUi)
+                G.syncWheelUi(); // 📅 ปฏิทินขยับตามทันที
             syncPlayer();
             if (G.saveGame)
                 G.saveGame();
@@ -47325,6 +47476,12 @@ function CherryAdventure() {
             G.rep = {};
             G.repShopDay = null;
             G.repShopBought = {}; // 🤝 เริ่มจากคนแปลกหน้า
+            G.wheelDay = "";
+            G.wheelSpins = 0;
+            G.wheelBuys = 0;
+            G.wheelPity = 0;
+            G.wheelTotal = 0;
+            G.wheelAngle = 0; // 🎡 กงล้อยังไม่เคยหมุน
             G.pathId = null; // 🌟 fresh character has no path yet
             G.skillMode = "basic";
             setSkillModeGlobals(false, null);
@@ -47425,7 +47582,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: G.foodBuff || null, exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -50573,6 +50730,11 @@ function CherryAdventure() {
             G.rep = d.rep || {};
             G.repShopDay = d.repShopDay || null;
             G.repShopBought = d.repShopBought || {}; // 🤝 ชื่อเสียง NPC
+            G.wheelDay = d.wheelDay || "";
+            G.wheelSpins = d.wheelSpins || 0;
+            G.wheelBuys = d.wheelBuys || 0; // 🎡 กงล้อ
+            G.wheelPity = d.wheelPity || 0;
+            G.wheelTotal = d.wheelTotal || 0;
             G.guildId = d.guildId || null; // 🏰 กิลด์ที่สังกัด
             if (G.guildId && G.guildRefresh) {
                 try {
@@ -69438,6 +69600,106 @@ function CherryAdventure() {
                             React.createElement("button", { disabled: !open || cf, onClick: () => G.mbPassClaim(i, false), style: { flex: 1, padding: "6px 4px", borderRadius: 8, border: "none", cursor: open && !cf ? "pointer" : "not-allowed", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: cf ? "#8a7fa5" : open ? "#2a2416" : "#7a6f92", background: cf ? "rgba(255,255,255,0.05)" : open ? "linear-gradient(90deg,#cfe0a0,#9ac86a)" : "rgba(255,255,255,0.05)" } }, cf ? "✓" : RF.label),
                             React.createElement("button", { disabled: !open || cp || !ui.mbook.prem, onClick: () => G.mbPassClaim(i, true), style: { flex: 1.15, padding: "6px 4px", borderRadius: 8, border: "none", cursor: open && !cp && ui.mbook.prem ? "pointer" : "not-allowed", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: cp ? "#8a7fa5" : (open && ui.mbook.prem) ? "#2a2416" : "#7a6f92", background: cp ? "rgba(255,255,255,0.05)" : (open && ui.mbook.prem) ? "linear-gradient(90deg,#f5d24a,#e0883a)" : "rgba(255,255,255,0.05)" } }, cp ? "✓" : (ui.mbook.prem ? RP.label : "🔒 " + RP.label))));
                     }))))))),
+        ui.wheelOpen && (React.createElement("div", { style: {
+                position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "86vh", overflowY: "auto",
+                background: "linear-gradient(180deg,#fff4f8,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+            } },
+            closeBtn("wheelOpen"),
+            React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#c0407a", marginBottom: 8 } }, "\uD83C\uDFA1 \u0E01\u0E07\u0E25\u0E49\u0E2D\u0E40\u0E2A\u0E35\u0E48\u0E22\u0E07\u0E42\u0E0A\u0E04"),
+            (() => {
+                const seg = 360 / WHEEL.length;
+                const stops = WHEEL.map((w, i) => `${w.col} ${i * seg}deg ${(i + 1) * seg}deg`).join(", ");
+                return (React.createElement("div", { style: { position: "relative", width: 232, height: 232, margin: "0 auto 8px" } },
+                    React.createElement("div", { style: {
+                            position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", zIndex: 3,
+                            width: 0, height: 0, borderLeft: "11px solid transparent", borderRight: "11px solid transparent",
+                            borderTop: "20px solid #c0407a", filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.3))",
+                        } }),
+                    React.createElement("div", { style: {
+                            width: "100%", height: "100%", borderRadius: "50%",
+                            background: `conic-gradient(${stops})`,
+                            border: "5px solid #fff", boxShadow: "0 6px 20px rgba(192,64,122,0.35), inset 0 0 0 3px rgba(0,0,0,0.06)",
+                            transform: `rotate(${ui.wheelAngle || 0}deg)`,
+                            transition: ui.wheelBusy ? "transform 3.1s cubic-bezier(0.17,0.67,0.15,1)" : "none",
+                            position: "relative",
+                        } }, WHEEL.map((w, i) => (React.createElement("div", { key: w.id, style: {
+                            position: "absolute", left: "50%", top: "50%", width: 0, height: 0,
+                            transform: `rotate(${i * seg + seg / 2}deg)`,
+                        } },
+                        React.createElement("div", { style: {
+                                position: "absolute", left: -14, top: -101, width: 28, textAlign: "center",
+                                fontSize: 17, filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))",
+                            } }, w.emoji))))),
+                    React.createElement("div", { style: {
+                            position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+                            width: 54, height: 54, borderRadius: "50%", background: "linear-gradient(135deg,#fff,#ffe4ee)",
+                            border: "3px solid #f0a0c0", display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 22, boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 2,
+                        } }, "\uD83C\uDF52")));
+            })(),
+            ui.wheelResult && !ui.wheelBusy && (React.createElement("div", { style: {
+                    textAlign: "center", marginBottom: 8, padding: "7px 10px", borderRadius: 12,
+                    background: ui.wheelResult.big ? "linear-gradient(135deg,#fff0c0,#ffe08a)" : "#fdeef4",
+                    border: `1px solid ${ui.wheelResult.big ? "#f0c860" : "#f5d0e0"}`,
+                    fontSize: 13, fontWeight: 900, color: ui.wheelResult.big ? "#a06a10" : "#c0407a",
+                } },
+                ui.wheelResult.emoji,
+                " \u0E44\u0E14\u0E49 ",
+                ui.wheelResult.name,
+                ui.wheelResult.big ? " 🎉" : "")),
+            React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 6 } },
+                React.createElement("button", { onClick: () => G.wheelSpin(false), disabled: ui.wheelBusy || (ui.wheelFree || 0) <= 0, style: {
+                        flex: 1, padding: "11px 0", borderRadius: 12, border: "none",
+                        cursor: (ui.wheelBusy || (ui.wheelFree || 0) <= 0) ? "not-allowed" : "pointer",
+                        fontFamily: font, fontSize: 13.5, fontWeight: 900,
+                        color: (ui.wheelBusy || (ui.wheelFree || 0) <= 0) ? "#c8b0bc" : "#fff",
+                        background: (ui.wheelBusy || (ui.wheelFree || 0) <= 0) ? "#f2e6ec" : "linear-gradient(90deg,#e0407a,#f5809a)",
+                    } }, ui.wheelBusy ? "กำลังหมุน..." : (ui.wheelFree || 0) > 0 ? `🎡 หมุนฟรี (${ui.wheelFree})` : "หมุนฟรีหมดแล้ว"),
+                React.createElement("button", { onClick: () => G.wheelSpin(true), disabled: ui.wheelBusy || (ui.diamonds || 0) < (ui.wheelCost || 30), style: {
+                        padding: "11px 13px", borderRadius: 12, border: "none",
+                        cursor: (ui.wheelBusy || (ui.diamonds || 0) < (ui.wheelCost || 30)) ? "not-allowed" : "pointer",
+                        fontFamily: font, fontSize: 12, fontWeight: 900,
+                        color: (ui.wheelBusy || (ui.diamonds || 0) < (ui.wheelCost || 30)) ? "#c8b0bc" : "#fff",
+                        background: (ui.wheelBusy || (ui.diamonds || 0) < (ui.wheelCost || 30)) ? "#f2e6ec" : "linear-gradient(90deg,#8a6ad0,#b090e8)",
+                    } },
+                    "\uD83D\uDC8E ",
+                    ui.wheelCost || 30)),
+            React.createElement("div", { style: { fontSize: 9.5, color: "#b08a9a", textAlign: "center", marginBottom: 10 } },
+                "\uD83C\uDF81 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25\u0E43\u0E2B\u0E0D\u0E48\u0E17\u0E38\u0E01 ",
+                WHEEL_PITY,
+                " \u0E04\u0E23\u0E31\u0E49\u0E07 \u2014 \u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 ",
+                ui.wheelPity || 0,
+                "/",
+                WHEEL_PITY,
+                " \u00B7 \u0E2B\u0E21\u0E38\u0E19\u0E21\u0E32\u0E41\u0E25\u0E49\u0E27 ",
+                ui.wheelTotal || 0,
+                " \u0E04\u0E23\u0E31\u0E49\u0E07"),
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 900, color: "#c0407a", marginBottom: 5 } },
+                "\uD83D\uDCC5 \u0E1B\u0E0F\u0E34\u0E17\u0E34\u0E19\u0E25\u0E47\u0E2D\u0E01\u0E2D\u0E34\u0E19 7 \u0E27\u0E31\u0E19 ",
+                React.createElement("span", { style: { fontSize: 10, color: "#b08a9a" } },
+                    "\u00B7 \u0E15\u0E48\u0E2D\u0E40\u0E19\u0E37\u0E48\u0E2D\u0E07 ",
+                    ui.dailyStreak || 0,
+                    " \u0E27\u0E31\u0E19")),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5, marginBottom: 7 } }, (ui.cal || []).map((c) => (React.createElement("div", { key: c.day, style: {
+                    borderRadius: 10, padding: "7px 3px", textAlign: "center",
+                    border: c.current ? "2px solid #e0407a" : "1px solid #f2dce6",
+                    background: c.claimedToday ? "#e8f5e0" : c.current ? "#ffe8f0" : c.past ? "#f7f2f5" : "#fff",
+                    opacity: c.past && !c.current ? 0.7 : 1,
+                } },
+                React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#b08a9a" } },
+                    "\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48 ",
+                    c.day),
+                React.createElement("div", { style: { fontSize: 19 } }, c.claimedToday ? "✅" : c.emoji),
+                React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, color: "#a06a80", lineHeight: 1.25 } }, c.label),
+                React.createElement("div", { style: { fontSize: 8.5, color: "#8a6ad0", fontWeight: 800 } },
+                    "\uD83D\uDC8E ",
+                    c.dia))))),
+            React.createElement("button", { onClick: () => G.claimDaily(), disabled: !ui.dailyReady, style: {
+                    width: "100%", padding: "10px 0", borderRadius: 12, border: "none",
+                    cursor: ui.dailyReady ? "pointer" : "not-allowed", fontFamily: font, fontSize: 13, fontWeight: 900,
+                    color: ui.dailyReady ? "#fff" : "#c8b0bc",
+                    background: ui.dailyReady ? "linear-gradient(90deg,#3aa06a,#6ac89a)" : "#f2e6ec",
+                } }, ui.dailyReady ? "🎁 รับรางวัลวันนี้" : "✅ วันนี้รับไปแล้ว — พรุ่งนี้มาใหม่"))),
         ui.repOpen && (React.createElement("div", { style: {
                 position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 410, maxHeight: "86vh", overflowY: "auto",
                 background: "linear-gradient(180deg,#fdf8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
@@ -70952,6 +71214,7 @@ function CherryAdventure() {
                 ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0"],
                 ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
                 ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a"],
+                ["🎡", "กงล้อ & ปฏิทิน", () => G.toggleWheel(), "#f07aa0"],
                 ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
                 ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty)
                         G.wbRefreshParty(); }, "#c0392b"],
