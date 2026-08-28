@@ -2082,6 +2082,7 @@ export default function CherryAdventure() {
     repOpen: false, rep: [], repShop: [], repTick: 0,
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
     rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
+    guildName: null, guildEmoji: null,
     eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
@@ -20857,6 +20858,7 @@ export default function CherryAdventure() {
       col: { ...G.col }, pets: { ...G.pets }, petBox: (G.petBox || []).map((x) => ({ ...x })), dexSeen: { ...(G.dexSeen || {}) }, mountsOwned: { ...(G.mountsOwned || {}) }, mountId: G.mountId || null,
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
+      guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null,   // 🏰 โชว์บนป้ายเหนือหัว
       inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
@@ -45615,16 +45617,27 @@ export default function CherryAdventure() {
         <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: _shortHud ? "min(56vw, 470px)" : "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "3px 10px", fontSize: 11, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
-            <span style={{ color: "#c04a5a" }}>💗{ui.hp}/{ui.maxHp}</span>
             <span>⚔️{ui.atk}</span>
             <span>🛡️{ui.def}</span>
             <span style={{ color: "#c99a2e" }}>💰{(ui.gold || 0) >= 1000000 ? ((ui.gold / 1000000).toFixed(1) + "M") : (ui.gold != null ? ui.gold.toLocaleString() : 0)}</span>
             <span style={{ color: "#3a86c0" }}>💎{(ui.diamonds || 0) >= 1000000 ? (((ui.diamonds || 0) / 1000000).toFixed(1) + "M") : ((ui.diamonds || 0).toLocaleString())}</span>
             <span>🐾×{totalCaught}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 5, pointerEvents: "auto" }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
-            <div style={{ flex: 1, position: "relative", height: 16, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
+          {/* ❤️💧 หลอดเลือด + มานา — ย้ายลงมาจากเหนือหัวตัวละคร ทำให้เล็กลง */}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 4 }}>
+            {[["hp", "❤️", ui.hp, ui.maxHp, (ui.maxHp && ui.hp / ui.maxHp > 0.35) ? "linear-gradient(90deg,#4aa86a,#7fd08a)" : "linear-gradient(90deg,#c03a3a,#e05555)", 1.5],
+              ["mp", "💧", ui.mp, ui.maxMp, "linear-gradient(90deg,#3a80d0,#6ac0f0)", 1]].map(([k, em, cur, max, col, fl]) => (
+              <div key={k} style={{ flex: fl, position: "relative", height: 12, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
+                <div style={{ width: `${max ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0}%`, height: "100%", background: col, transition: "width 0.25s" }} />
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)", whiteSpace: "nowrap" }}>
+                  {em} {Math.max(0, Math.round(cur || 0)).toLocaleString()}/{Math.round(max || 0).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4, pointerEvents: "auto" }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "2px 9px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
+            <div style={{ flex: 1, position: "relative", height: 12, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
               <div style={{ width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" }}/>
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
             </div>
@@ -45706,23 +45719,15 @@ export default function CherryAdventure() {
               </div>
             );
           })()}
+          {/* 🏰 ชื่อกิลด์ — อยู่ระหว่างฉายากับชื่อตัวละคร */}
+          {ui.guildName && (
+            <div style={{ marginBottom: 1, fontSize: 11, fontWeight: 800, fontFamily: font, color: "#9fd8ff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {ui.guildEmoji || "🏰"} {ui.guildName}
+            </div>
+          )}
           <div style={{ fontSize: 13, fontWeight: 800, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {ui.playerName || "เชอร์รี่"} <span style={{ color: "#ffd0a0" }}>Lv.{ui.level}</span>
           </div>
-          <div style={{ background: "rgba(0,0,0,0.38)", borderRadius: 999, height: 9, overflow: "hidden", marginTop: 3, border: "1px solid rgba(255,255,255,0.55)" }}>
-            <div style={{
-              width: `${ui.maxHp ? Math.max(0, (ui.hp / ui.maxHp) * 100) : 0}%`, height: "100%",
-              background: ui.hp / ui.maxHp > 0.35 ? "#7fd08a" : "#e05555", borderRadius: 999, transition: "width 0.3s",
-            }}/>
-          </div>
-          <div style={{ fontSize: 10, color: "#ffffff", fontWeight: 700, marginTop: 1 }}>HP {ui.hp}/{ui.maxHp}</div>
-          <div style={{ background: "rgba(0,0,0,0.38)", borderRadius: 999, height: 7, overflow: "hidden", marginTop: 2, border: "1px solid rgba(255,255,255,0.5)" }}>
-            <div style={{
-              width: `${ui.maxMp ? Math.min(100, (ui.mp / ui.maxMp) * 100) : 0}%`, height: "100%",
-              background: "linear-gradient(90deg,#4a90e0,#6ac0f0)", borderRadius: 999, transition: "width 0.3s",
-            }}/>
-          </div>
-          <div style={{ fontSize: 9.5, color: "#bfe0ff", fontWeight: 700, marginTop: 1 }}>💧 {ui.mp || 0}/{ui.maxMp || 0}</div>
         </div>
       )}
 
