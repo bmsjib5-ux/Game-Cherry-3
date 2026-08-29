@@ -72281,10 +72281,23 @@ function CherryAdventure() {
     const isPrompt = (name) => _promptTop === name;
     const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
     const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
+    // 🖼️ กรอบมาตรฐานของกลุ่มเมนูสกิล — ทุกแท็บใช้ตำแหน่ง/ขนาด/พื้นหลังชุดเดียวกัน
+    //     สลับแท็บแล้วกรอบจะอยู่นิ่ง ไม่เด้งไปมาหรือเปลี่ยนขนาดกะทันหัน
+    const SKILL_SHELL = {
+        position: "absolute", ...MODAL_POS, zIndex: 58,
+        width: "92%", maxWidth: _uiWideModal ? 470 : 400,
+        height: "min(80vh, 580px)", overflowY: "auto", // 📏 สูงคงที่ทุกแท็บ — สลับแล้วกรอบอยู่นิ่ง ไม่ขยับขึ้นลง
+        background: "#fff", borderRadius: 18, padding: 13,
+        boxShadow: MODAL_SHADOW, fontFamily: font,
+    };
+    // 🌑 กล่องเนื้อหาธีมเข้ม — ใช้กับแท็บที่ออกแบบมาบนพื้นเข้ม (วิชาสกิล · วิชาตัวเบา)
+    //     ห่อไว้ข้างในกรอบขาวเดียวกัน ตัวหนังสือเลยยังอ่านออกเหมือนเดิม
+    const SKILL_DARK = { borderRadius: 13, padding: "11px 12px 12px", color: "#e6f0e2" };
     // 🧩 แถบแท็บกลุ่มเมนูสกิล — ใส่ไว้หัวทุกหน้าในกลุ่ม สลับไปมาได้เลยไม่ต้องกลับเมนู ☰
     //    dark = ธีมเข้ม (หน้าวิชาตัวเบา) · ปกติ = ธีมการ์ดขาว
     const skillTabs = (active, dark) => (React.createElement("div", { style: {
             display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
+            position: "sticky", top: 0, zIndex: 11,
             background: dark ? "rgba(0,0,0,0.24)" : "#f1eef8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #e2dcf0",
         } }, (G.SKILL_TABS || []).map((t) => {
         const on = t.k === active;
@@ -72409,7 +72422,7 @@ function CherryAdventure() {
             } }))),
         React.createElement("div", { style: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0, pointerEvents: "none", zIndex: 2,
                 background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" } }),
-        ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
+        ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "skillBoardOpen", "mbookOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
         ui.guildOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, guildOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(10,14,26,0.58)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 } },
             React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "min(560px, 96vw)", maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(160deg,#16243c,#0f1726)", border: "1px solid #2f4a6a", borderRadius: 18, padding: 14, fontFamily: font, color: "#fff", boxShadow: "0 18px 50px rgba(0,0,0,0.5)" } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 } },
@@ -72529,8 +72542,10 @@ function CherryAdventure() {
                                     r.lv,
                                     " \u00B7 \u0E2A\u0E21\u0E17\u0E1A \uD83D\uDCB0",
                                     (r.contrib || 0).toLocaleString())))))))))))),
-        ui.mbookOpen && ui.mbook && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, mbookOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(12,8,22,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 } },
-            React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "min(560px, 96vw)", maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(160deg,#241b3c,#171125)", border: "1px solid #4a3a6a", borderRadius: 18, padding: 14, fontFamily: font, color: "#fff", boxShadow: "0 18px 50px rgba(0,0,0,0.5)" } },
+        ui.mbookOpen && ui.mbook && (React.createElement("div", { style: SKILL_SHELL },
+            closeBtn("mbookOpen"),
+            questTabs("mbook"),
+            React.createElement("div", { style: { ...SKILL_DARK, background: "linear-gradient(160deg,#241b3c,#171125)", border: "1px solid #4a3a6a", color: "#fff" } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 } },
                     React.createElement("div", { style: { fontSize: 17, fontWeight: 900 } }, "\uD83D\uDCD6 \u0E2A\u0E21\u0E38\u0E14\u0E20\u0E32\u0E23\u0E01\u0E34\u0E08"),
                     React.createElement("div", { style: { marginLeft: "auto", fontSize: 11.5, color: "#c9b8ff" } },
@@ -72540,8 +72555,7 @@ function CherryAdventure() {
                         ui.mbook.tier,
                         "/",
                         PASS_TIERS),
-                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mbookOpen: false })), style: { border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 } }, "\u2715")),
-                questTabs("mbook", true),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mbookOpen: false })), style: { display: "none", border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 } }, "\u2715")),
                 React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 10 } }, [["daily", "🗓️ รายวัน"], ["weekly", "📅 รายสัปดาห์"], ["pass", "🎫 แทร็กรางวัล"]].map(([k, lb]) => (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, mbTab: k })), style: { flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.mbTab === k ? "#2a2416" : "#d8cff0", background: ui.mbTab === k ? "linear-gradient(90deg,#f5d24a,#e0a83a)" : "rgba(255,255,255,0.08)" } }, lb)))),
                 ui.mbTab !== "pass" && (React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, (ui.mbTab === "daily" ? ui.mbook.daily : ui.mbook.weekly).map((r) => {
                     const M = G.mbMeta ? G.mbMeta(r.id) : null;
@@ -73020,96 +73034,92 @@ function CherryAdventure() {
                     if (c.open)
                         return c.id; return (rows[0] && rows[0].cards[0] && rows[0].cards[0].id) || null; })();
             const D = pickId && G.skillDetail ? G.skillDetail(pickId) : null;
-            const wide = window.innerWidth >= 720;
-            return (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 58, width: wide ? "94%" : "94%", maxWidth: wide ? 720 : 430,
-                    maxHeight: "88vh", overflowY: "auto",
-                    background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e",
-                    borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, fontFamily: font,
-                } },
+            const wide = _uiWideModal; // อิงความกว้างของกรอบมาตรฐาน ไม่ใช่ความกว้างจอ
+            return (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("skillBoardOpen"),
-                skillTabs("skillBoardOpen", true),
-                React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 } }, "\uD83D\uDCD6 \u0E27\u0E34\u0E0A\u0E32\u0E2A\u0E01\u0E34\u0E25"),
-                React.createElement("div", { style: { fontSize: 10, color: "#7fae97", marginBottom: 9 } },
-                    "\u0E1B\u0E25\u0E14\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E25\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E31\u0E49\u0E19 \u2014 \u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19 \u00B7 \u0E41\u0E15\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14 \u00B7 \u26A1 \u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25 ",
-                    ui.sp || 0),
-                React.createElement("div", { style: { display: wide ? "flex" : "block", gap: 12, alignItems: "flex-start" } },
-                    React.createElement("div", { style: { flex: wide ? 1.25 : "none", minWidth: 0 } },
-                        rows.map((row) => {
-                            const T = SKILL_TIER_BY[row.tier] || SKILL_TIERS[0];
-                            return (React.createElement("div", { key: row.tier, style: { marginBottom: 10 } },
-                                React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 6, marginBottom: 5 } },
-                                    React.createElement("span", { style: { fontSize: 11.5, fontWeight: 900, color: row.open ? "#f5d24a" : "#6a8a7a" } },
-                                        T.emoji,
-                                        " \u0E02\u0E31\u0E49\u0E19 ",
-                                        row.tier,
-                                        " \u00B7 ",
-                                        T.name),
-                                    React.createElement("span", { style: { fontSize: 9, color: "#6a8a7a" } }, T.desc)),
-                                row.note && (React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: "#e0a05a", background: "rgba(224,160,90,0.10)", border: "1px solid rgba(224,160,90,0.28)", borderRadius: 8, padding: "5px 8px", marginBottom: 5 } }, row.note)),
-                                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 } },
-                                    row.cards.length === 0 && (React.createElement("div", { style: { gridColumn: "1 / -1", fontSize: 9.5, color: "#5f7f6f", textAlign: "center", padding: "10px 0" } }, "\u2014 \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E17\u0E48\u0E32\u0E43\u0E19\u0E02\u0E31\u0E49\u0E19\u0E19\u0E35\u0E49 \u2014")),
-                                    row.cards.map((c) => {
-                                        const on = c.id === pickId;
-                                        return (React.createElement("button", { key: c.id, onClick: () => setUi((u) => ({ ...u, boardPick: c.id })), style: {
-                                                position: "relative", padding: "8px 3px 6px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "center",
-                                                border: on ? "2px solid #ffd76a" : c.open ? "1.5px solid #4f9a76" : "1.5px dashed #35594a",
-                                                background: c.open ? (on ? "linear-gradient(180deg,#2c4a38,#1c3227)" : "rgba(79,154,118,0.14)") : "rgba(255,255,255,0.03)",
-                                                opacity: c.open ? 1 : 0.62,
-                                            } },
-                                            React.createElement("span", { style: { position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#0d2018", background: "#f5d24a", borderRadius: 5, padding: "0 4px" } },
-                                                "\u0E02\u0E31\u0E49\u0E19 ",
-                                                c.tier),
-                                            React.createElement("div", { style: { fontSize: 25, marginTop: 7, filter: c.open ? "none" : "grayscale(1)" } }, c.open ? c.sk.emoji : "🔒"),
-                                            React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: c.open ? "#d8f0e2" : "#7f9d8e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" } }, c.sk.name),
-                                            React.createElement("div", { style: { fontSize: 9, fontWeight: 900, color: c.open ? "#9fe8c0" : "#e0a05a" } }, c.open ? `Lv.${c.rank}`
-                                                : ((ui.level || 1) >= c.needLv ? "🔗 ยังไม่ครบเงื่อนไข" : `Lv.${c.needLv}`))));
-                                    }))));
-                        }),
-                        G.setSkillMode && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4, marginBottom: wide ? 0 : 10 } }, [["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].map(([k, lbl]) => {
-                            const on = (ui.skillMode || "basic") === k;
-                            return React.createElement("button", { key: k, onClick: () => { G.setSkillMode(k); setUi((u) => ({ ...u, boardTick: (u.boardTick || 0) + 1, boardPick: null })); }, style: {
-                                    flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-                                    fontSize: 11, fontWeight: 800, color: on ? "#0d2018" : "#8fbfa6",
-                                    background: on ? "linear-gradient(90deg,#7fd0a0,#4f9a76)" : "rgba(255,255,255,0.06)",
-                                } }, lbl);
-                        })))),
-                    React.createElement("div", { style: { flex: wide ? 1 : "none", minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid #35594a", borderRadius: 13, padding: "10px 11px" } }, !D ? (React.createElement("div", { style: { fontSize: 11, color: "#7fae97", textAlign: "center", padding: "18px 0" } }, "\u0E41\u0E15\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E17\u0E48\u0E32\u0E17\u0E32\u0E07\u0E0B\u0E49\u0E32\u0E22\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14")) : (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { textAlign: "center", marginBottom: 7 } },
-                            React.createElement("div", { style: { fontSize: 30 } }, D.open ? D.emoji : "🔒"),
-                            React.createElement("div", { style: { fontSize: 13.5, fontWeight: 900, color: "#ffe9a0" } }, D.name),
-                            React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: "#7fae97" } },
-                                D.tierEmoji,
-                                " \u0E02\u0E31\u0E49\u0E19 ",
-                                D.tier,
-                                " \u00B7 ",
-                                D.tierName)),
-                        React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3, fontSize: 10.5, marginBottom: 8 } }, [["เลเวลวิชา", D.open ? `Lv.${D.rank} / ${D.maxR}` : `ต้องเลเวลตัวละคร ${D.needLv}`],
-                            ["ค่ามานา", D.kind === "ult" || D.kind === "advult" ? "ใช้เกจท่าไม้ตาย" : `${D.mp}`],
-                            ["ธาตุ", D.elem && ELEM_META[D.elem] ? `${ELEM_META[D.elem].emoji} ${ELEM_META[D.elem].name}` : "ไร้ธาตุ"]].map(([k, v]) => (React.createElement("div", { key: k, style: { display: "flex", justifyContent: "space-between" } },
-                            React.createElement("span", { style: { color: "#7fae97" } }, k),
-                            React.createElement("span", { style: { fontWeight: 800, color: "#d8f0e2" } }, v))))),
-                        D.desc && (React.createElement("div", { style: { fontSize: 10, color: "#c8e4d6", lineHeight: 1.6, background: "rgba(0,0,0,0.22)", borderRadius: 9, padding: "7px 9px", marginBottom: 8 } }, D.desc)),
-                        D.tags.length > 0 && (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 } }, D.tags.map((t, i) => (React.createElement("span", { key: i, style: { fontSize: 9, fontWeight: 800, color: "#9fe8c0", background: "rgba(79,154,118,0.2)", border: "1px solid #3f7a5e", borderRadius: 999, padding: "2px 7px" } }, t))))),
-                        React.createElement("div", { style: { background: "rgba(0,0,0,0.24)", borderRadius: 9, padding: "7px 9px", marginBottom: 8 } }, [["ดาเมจ", D.dmg + "%", D.dmgNext != null ? D.dmgNext + "%" : null],
-                            ["ค่ามานา", D.kind === "ult" || D.kind === "advult" ? null : D.mp, D.mpNext]].filter((r) => r[1] != null).map(([k, a, bnext]) => (React.createElement("div", { key: k, style: { display: "flex", alignItems: "center", fontSize: 10.5, marginBottom: 2 } },
-                            React.createElement("span", { style: { flex: 1, color: "#7fae97" } }, k),
-                            React.createElement("span", { style: { fontWeight: 800, color: "#d8f0e2" } }, a),
-                            bnext != null && !D.maxed && React.createElement(React.Fragment, null,
-                                React.createElement("span", { style: { margin: "0 6px", color: "#f5d24a" } }, "\u00BB"),
-                                React.createElement("span", { style: { fontWeight: 900, color: "#7fe8a0" } }, bnext)))))),
-                        !D.open && (React.createElement("div", { style: { fontSize: 9.5, marginBottom: 8 } }, D.reasons.map((r, i) => (React.createElement("div", { key: i, style: { color: r.ok ? "#7fe8a0" : "#f09a6a", fontWeight: 800 } },
-                            r.ok ? "✓" : "✕",
-                            " ",
-                            r.text))))),
-                        React.createElement("button", { onClick: () => G.boardUpgrade(D.id), disabled: !D.open || D.maxed || D.atCap || !D.canPay, style: {
-                                width: "100%", padding: "10px 0", borderRadius: 11, border: "none", fontFamily: font,
-                                cursor: (D.open && !D.maxed && !D.atCap && D.canPay) ? "pointer" : "not-allowed",
-                                fontSize: 12.5, fontWeight: 900,
-                                color: (D.open && !D.maxed && !D.atCap && D.canPay) ? "#0d2018" : "#6f8f7f",
-                                background: (D.open && !D.maxed && !D.atCap && D.canPay) ? "linear-gradient(90deg,#ffd76a,#f0a83a)" : "rgba(255,255,255,0.06)",
-                            } }, !D.open ? `🔒 ต้องเลเวล ${D.needLv}` : D.maxed ? `⭐ เต็ม Lv.${D.maxR}` : D.atCap ? "🔒 อัพเลเวลตัวละครก่อน"
-                            : !D.canPay ? `⚡ แต้มสกิลไม่พอ (ต้อง ${D.cost})` : `⬆️ อัปเกรดเป็น Lv.${D.rank + 1} (⚡ ${D.cost})`)))))));
+                skillTabs("skillBoardOpen"),
+                React.createElement("div", { style: { ...SKILL_DARK, background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e" } },
+                    React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 } }, "\uD83D\uDCD6 \u0E27\u0E34\u0E0A\u0E32\u0E2A\u0E01\u0E34\u0E25"),
+                    React.createElement("div", { style: { fontSize: 10, color: "#7fae97", marginBottom: 9 } },
+                        "\u0E1B\u0E25\u0E14\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E25\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E31\u0E49\u0E19 \u2014 \u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19 \u00B7 \u0E41\u0E15\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14 \u00B7 \u26A1 \u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25 ",
+                        ui.sp || 0),
+                    React.createElement("div", { style: { display: wide ? "flex" : "block", gap: 12, alignItems: "flex-start" } },
+                        React.createElement("div", { style: { flex: wide ? 1.25 : "none", minWidth: 0 } },
+                            rows.map((row) => {
+                                const T = SKILL_TIER_BY[row.tier] || SKILL_TIERS[0];
+                                return (React.createElement("div", { key: row.tier, style: { marginBottom: 10 } },
+                                    React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 6, marginBottom: 5 } },
+                                        React.createElement("span", { style: { fontSize: 11.5, fontWeight: 900, color: row.open ? "#f5d24a" : "#6a8a7a" } },
+                                            T.emoji,
+                                            " \u0E02\u0E31\u0E49\u0E19 ",
+                                            row.tier,
+                                            " \u00B7 ",
+                                            T.name),
+                                        React.createElement("span", { style: { fontSize: 9, color: "#6a8a7a" } }, T.desc)),
+                                    row.note && (React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: "#e0a05a", background: "rgba(224,160,90,0.10)", border: "1px solid rgba(224,160,90,0.28)", borderRadius: 8, padding: "5px 8px", marginBottom: 5 } }, row.note)),
+                                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 } },
+                                        row.cards.length === 0 && (React.createElement("div", { style: { gridColumn: "1 / -1", fontSize: 9.5, color: "#5f7f6f", textAlign: "center", padding: "10px 0" } }, "\u2014 \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E17\u0E48\u0E32\u0E43\u0E19\u0E02\u0E31\u0E49\u0E19\u0E19\u0E35\u0E49 \u2014")),
+                                        row.cards.map((c) => {
+                                            const on = c.id === pickId;
+                                            return (React.createElement("button", { key: c.id, onClick: () => setUi((u) => ({ ...u, boardPick: c.id })), style: {
+                                                    position: "relative", padding: "8px 3px 6px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "center",
+                                                    border: on ? "2px solid #ffd76a" : c.open ? "1.5px solid #4f9a76" : "1.5px dashed #35594a",
+                                                    background: c.open ? (on ? "linear-gradient(180deg,#2c4a38,#1c3227)" : "rgba(79,154,118,0.14)") : "rgba(255,255,255,0.03)",
+                                                    opacity: c.open ? 1 : 0.62,
+                                                } },
+                                                React.createElement("span", { style: { position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#0d2018", background: "#f5d24a", borderRadius: 5, padding: "0 4px" } },
+                                                    "\u0E02\u0E31\u0E49\u0E19 ",
+                                                    c.tier),
+                                                React.createElement("div", { style: { fontSize: 25, marginTop: 7, filter: c.open ? "none" : "grayscale(1)" } }, c.open ? c.sk.emoji : "🔒"),
+                                                React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: c.open ? "#d8f0e2" : "#7f9d8e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" } }, c.sk.name),
+                                                React.createElement("div", { style: { fontSize: 9, fontWeight: 900, color: c.open ? "#9fe8c0" : "#e0a05a" } }, c.open ? `Lv.${c.rank}`
+                                                    : ((ui.level || 1) >= c.needLv ? "🔗 ยังไม่ครบเงื่อนไข" : `Lv.${c.needLv}`))));
+                                        }))));
+                            }),
+                            G.setSkillMode && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4, marginBottom: wide ? 0 : 10 } }, [["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].map(([k, lbl]) => {
+                                const on = (ui.skillMode || "basic") === k;
+                                return React.createElement("button", { key: k, onClick: () => { G.setSkillMode(k); setUi((u) => ({ ...u, boardTick: (u.boardTick || 0) + 1, boardPick: null })); }, style: {
+                                        flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
+                                        fontSize: 11, fontWeight: 800, color: on ? "#0d2018" : "#8fbfa6",
+                                        background: on ? "linear-gradient(90deg,#7fd0a0,#4f9a76)" : "rgba(255,255,255,0.06)",
+                                    } }, lbl);
+                            })))),
+                        React.createElement("div", { style: { flex: wide ? 1 : "none", minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid #35594a", borderRadius: 13, padding: "10px 11px" } }, !D ? (React.createElement("div", { style: { fontSize: 11, color: "#7fae97", textAlign: "center", padding: "18px 0" } }, "\u0E41\u0E15\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E17\u0E48\u0E32\u0E17\u0E32\u0E07\u0E0B\u0E49\u0E32\u0E22\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14")) : (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { textAlign: "center", marginBottom: 7 } },
+                                React.createElement("div", { style: { fontSize: 30 } }, D.open ? D.emoji : "🔒"),
+                                React.createElement("div", { style: { fontSize: 13.5, fontWeight: 900, color: "#ffe9a0" } }, D.name),
+                                React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: "#7fae97" } },
+                                    D.tierEmoji,
+                                    " \u0E02\u0E31\u0E49\u0E19 ",
+                                    D.tier,
+                                    " \u00B7 ",
+                                    D.tierName)),
+                            React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3, fontSize: 10.5, marginBottom: 8 } }, [["เลเวลวิชา", D.open ? `Lv.${D.rank} / ${D.maxR}` : `ต้องเลเวลตัวละคร ${D.needLv}`],
+                                ["ค่ามานา", D.kind === "ult" || D.kind === "advult" ? "ใช้เกจท่าไม้ตาย" : `${D.mp}`],
+                                ["ธาตุ", D.elem && ELEM_META[D.elem] ? `${ELEM_META[D.elem].emoji} ${ELEM_META[D.elem].name}` : "ไร้ธาตุ"]].map(([k, v]) => (React.createElement("div", { key: k, style: { display: "flex", justifyContent: "space-between" } },
+                                React.createElement("span", { style: { color: "#7fae97" } }, k),
+                                React.createElement("span", { style: { fontWeight: 800, color: "#d8f0e2" } }, v))))),
+                            D.desc && (React.createElement("div", { style: { fontSize: 10, color: "#c8e4d6", lineHeight: 1.6, background: "rgba(0,0,0,0.22)", borderRadius: 9, padding: "7px 9px", marginBottom: 8 } }, D.desc)),
+                            D.tags.length > 0 && (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 } }, D.tags.map((t, i) => (React.createElement("span", { key: i, style: { fontSize: 9, fontWeight: 800, color: "#9fe8c0", background: "rgba(79,154,118,0.2)", border: "1px solid #3f7a5e", borderRadius: 999, padding: "2px 7px" } }, t))))),
+                            React.createElement("div", { style: { background: "rgba(0,0,0,0.24)", borderRadius: 9, padding: "7px 9px", marginBottom: 8 } }, [["ดาเมจ", D.dmg + "%", D.dmgNext != null ? D.dmgNext + "%" : null],
+                                ["ค่ามานา", D.kind === "ult" || D.kind === "advult" ? null : D.mp, D.mpNext]].filter((r) => r[1] != null).map(([k, a, bnext]) => (React.createElement("div", { key: k, style: { display: "flex", alignItems: "center", fontSize: 10.5, marginBottom: 2 } },
+                                React.createElement("span", { style: { flex: 1, color: "#7fae97" } }, k),
+                                React.createElement("span", { style: { fontWeight: 800, color: "#d8f0e2" } }, a),
+                                bnext != null && !D.maxed && React.createElement(React.Fragment, null,
+                                    React.createElement("span", { style: { margin: "0 6px", color: "#f5d24a" } }, "\u00BB"),
+                                    React.createElement("span", { style: { fontWeight: 900, color: "#7fe8a0" } }, bnext)))))),
+                            !D.open && (React.createElement("div", { style: { fontSize: 9.5, marginBottom: 8 } }, D.reasons.map((r, i) => (React.createElement("div", { key: i, style: { color: r.ok ? "#7fe8a0" : "#f09a6a", fontWeight: 800 } },
+                                r.ok ? "✓" : "✕",
+                                " ",
+                                r.text))))),
+                            React.createElement("button", { onClick: () => G.boardUpgrade(D.id), disabled: !D.open || D.maxed || D.atCap || !D.canPay, style: {
+                                    width: "100%", padding: "10px 0", borderRadius: 11, border: "none", fontFamily: font,
+                                    cursor: (D.open && !D.maxed && !D.atCap && D.canPay) ? "pointer" : "not-allowed",
+                                    fontSize: 12.5, fontWeight: 900,
+                                    color: (D.open && !D.maxed && !D.atCap && D.canPay) ? "#0d2018" : "#6f8f7f",
+                                    background: (D.open && !D.maxed && !D.atCap && D.canPay) ? "linear-gradient(90deg,#ffd76a,#f0a83a)" : "rgba(255,255,255,0.06)",
+                                } }, !D.open ? `🔒 ต้องเลเวล ${D.needLv}` : D.maxed ? `⭐ เต็ม Lv.${D.maxR}` : D.atCap ? "🔒 อัพเลเวลตัวละครก่อน"
+                                : !D.canPay ? `⚡ แต้มสกิลไม่พอ (ต้อง ${D.cost})` : `⬆️ อัปเกรดเป็น Lv.${D.rank + 1} (⚡ ${D.cost})`))))))));
         })(),
         ui.fishBagOpen && (() => {
             const FI = ui.fishInfo || (G.fishInfo ? G.fishInfo() : null);
@@ -73862,7 +73872,7 @@ function CherryAdventure() {
         })(),
         ui.qingOpen && (() => {
             const QI = ui.qing || { step: 0, list: [] };
-            const wide = window.innerWidth > 660;
+            const wide = _uiWideModal; // อิงความกว้างของกรอบมาตรฐาน ไม่ใช่ความกว้างจอ
             const tile = (q) => {
                 const st = q.learned ? "learned" : q.done && q.taken ? "ready" : q.taken ? "doing" : q.ready ? "open" : "locked";
                 const col = { learned: "#f5d24a", ready: "#7cf0b0", doing: "#8fd0ff", open: "#c8d0c0", locked: "#5a6a58" }[st];
@@ -73890,18 +73900,12 @@ function CherryAdventure() {
                     React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: q.learned ? "#ffe9a8" : col, maxWidth: "100%", textAlign: "center", lineHeight: 1.25 } }, q.name)));
             };
             const sel = QI.list.find((x) => x.id === ui.qingSel) || QI.list.find((x) => !x.learned) || QI.list[QI.list.length - 1];
-            return (React.createElement("div", { onClick: () => G.toggleQing(), style: {
-                    position: "absolute", inset: 0, zIndex: 52, display: "flex", alignItems: "center", justifyContent: "center",
-                    padding: 8, fontFamily: font,
-                    background: "radial-gradient(125% 95% at 50% 22%, rgba(46,86,66,0.42), rgba(7,12,10,0.88))",
-                    backdropFilter: "blur(9px)", WebkitBackdropFilter: "blur(9px)",
-                } },
-                React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
-                        width: wide ? "min(96vw, 660px)" : "min(96vw, 420px)", maxHeight: "94vh", overflowY: "auto",
-                        borderRadius: 22, color: "#e6f0e2", padding: "12px 14px 14px",
+            return (React.createElement("div", { style: SKILL_SHELL },
+                closeBtn("qingOpen"),
+                skillTabs("qingOpen"),
+                React.createElement("div", { style: { ...SKILL_DARK,
                         background: "linear-gradient(168deg,#2f4a3c 0%,#1c2e26 46%,#141f1a 100%)",
                         border: "1px solid rgba(160,220,180,0.28)",
-                        boxShadow: "0 28px 70px rgba(0,0,0,0.65), 0 2px 0 rgba(255,255,255,0.05) inset",
                     } },
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 } },
                         React.createElement("span", { style: { fontSize: 15, fontWeight: 900, color: "#bff0cf" } }, "\uD83C\uDF43 \u0E27\u0E34\u0E0A\u0E32\u0E15\u0E31\u0E27\u0E40\u0E1A\u0E32"),
@@ -73910,9 +73914,7 @@ function CherryAdventure() {
                         React.createElement("span", { style: { fontSize: 10.5, fontWeight: 800, color: "#f5d24a" } },
                             "\u0E02\u0E31\u0E49\u0E19 ",
                             QI.step,
-                            "/3"),
-                        React.createElement("button", { onClick: () => G.toggleQing(), title: "\u0E1B\u0E34\u0E14", style: { width: 28, height: 28, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.34)", color: "#e6f0e2", fontSize: 14, cursor: "pointer", padding: 0 } }, "\u2715")),
-                    skillTabs("qingOpen", true),
+                            "/3")),
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: wide ? 12 : 7, padding: "11px 10px", borderRadius: 16, marginBottom: 10,
                             background: "linear-gradient(170deg, rgba(255,255,255,0.05), rgba(0,0,0,0.22))", border: "1px solid rgba(255,255,255,0.09)" } },
                         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 } },
@@ -75859,12 +75861,7 @@ function CherryAdventure() {
                     display: "none",
                     fontSize: 24, background: "linear-gradient(145deg,#6a8cc0,#8aa8e0)", boxShadow: "0 4px 12px rgba(90,120,180,0.4)",
                 } }, "\uD83E\uDDCD"),
-            ui.skillPanel && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50,
-                    width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-                    background: "#fff", borderRadius: 20, padding: 16,
-                    boxShadow: MODAL_SHADOW,
-                } },
+            ui.skillPanel && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("skillPanel"),
                 skillTabs("skillPanel"),
                 React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 } }, "\uD83D\uDCAA \u0E04\u0E48\u0E32\u0E2A\u0E16\u0E32\u0E19\u0E30 \u00B7 \u0E09\u0E32\u0E22\u0E32 \u00B7 \u0E2A\u0E32\u0E22\u0E2D\u0E32\u0E0A\u0E35\u0E1E"),
@@ -76135,11 +76132,7 @@ function CherryAdventure() {
                         borderRadius: 10, background: "#d9536b", color: "#fff",
                         fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center",
                     } }, ui.inv.length))),
-            ui.questOpen && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-                    background: "#fff", borderRadius: 16, padding: 12,
-                    boxShadow: MODAL_SHADOW,
-                } },
+            ui.questOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("questOpen"),
                 questTabs(ui.achTab ? "ach" : "quest"),
                 ui.achTab ? (React.createElement("div", null,
@@ -76631,11 +76624,7 @@ function CherryAdventure() {
                                     } }, canCraft ? (owned > 0 ? "🔨 คราฟต์อีกชิ้น" : "🔨 คราฟต์เลย!") : "วัตถุดิบไม่พอ")));
                         })));
                 })())),
-            ui.treeOpen && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-                    background: "#fff", borderRadius: 16, padding: 12,
-                    boxShadow: MODAL_SHADOW,
-                } },
+            ui.treeOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("treeOpen"),
                 skillTabs("treeOpen"),
                 React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#4a9a5a", marginBottom: 2 } }, "\uD83C\uDF33 \u0E2A\u0E01\u0E34\u0E25\u0E15\u0E49\u0E19\u0E44\u0E21\u0E49 (\u0E1E\u0E32\u0E2A\u0E0B\u0E35\u0E1F)"),
@@ -76694,10 +76683,7 @@ function CherryAdventure() {
                     });
                 })(),
                 React.createElement("div", { style: { fontSize: 10, color: "#a3a396", marginTop: 6, textAlign: "center" } }, "\u0E2D\u0E31\u0E1E\u0E0B\u0E49\u0E33\u0E44\u0E14\u0E49\u0E08\u0E19\u0E40\u0E15\u0E47\u0E21 \u00B7 \u0E42\u0E2B\u0E19\u0E14 \u2B50 \u0E1B\u0E23\u0E30\u0E08\u0E33\u0E2D\u0E32\u0E0A\u0E35\u0E1E \u00B7 \u0E1A\u0E32\u0E07\u0E42\u0E2B\u0E19\u0E14\u0E15\u0E49\u0E2D\u0E07\u0E1B\u0E25\u0E14\u0E42\u0E2B\u0E19\u0E14\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"))),
-            ui.constOpen && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-                    background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
-                } },
+            ui.constOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("constOpen"),
                 skillTabs("constOpen"),
                 (() => {
@@ -76752,10 +76738,7 @@ function CherryAdventure() {
                         }),
                         React.createElement("div", { style: { fontSize: 10, color: "#a99ac0", marginTop: 6, textAlign: "center" } }, "\u0E23\u0E31\u0E1A \u2728 \u0E1C\u0E07\u0E14\u0E32\u0E27 \u0E08\u0E32\u0E01\u0E01\u0E32\u0E23\u0E0A\u0E19\u0E30\u0E28\u0E36\u0E01 (\u0E1A\u0E2D\u0E2A\u0E43\u0E2B\u0E49\u0E40\u0E22\u0E2D\u0E30) \u00B7 \u0E14\u0E32\u0E27 C6 \u0E04\u0E37\u0E2D\u0E1E\u0E25\u0E31\u0E07\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E1B\u0E23\u0E30\u0E08\u0E33\u0E2D\u0E32\u0E0A\u0E35\u0E1E")));
                 })())),
-            ui.masteryOpen && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-                    background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
-                } },
+            ui.masteryOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("masteryOpen"),
                 skillTabs("masteryOpen"),
                 (() => {

@@ -45986,11 +45986,24 @@ export default function CherryAdventure() {
   const isPrompt = (name) => _promptTop === name;
   const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
   const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
+  // 🖼️ กรอบมาตรฐานของกลุ่มเมนูสกิล — ทุกแท็บใช้ตำแหน่ง/ขนาด/พื้นหลังชุดเดียวกัน
+  //     สลับแท็บแล้วกรอบจะอยู่นิ่ง ไม่เด้งไปมาหรือเปลี่ยนขนาดกะทันหัน
+  const SKILL_SHELL = {
+    position: "absolute", ...MODAL_POS, zIndex: 58,
+    width: "92%", maxWidth: _uiWideModal ? 470 : 400,
+    height: "min(80vh, 580px)", overflowY: "auto",   // 📏 สูงคงที่ทุกแท็บ — สลับแล้วกรอบอยู่นิ่ง ไม่ขยับขึ้นลง
+    background: "#fff", borderRadius: 18, padding: 13,
+    boxShadow: MODAL_SHADOW, fontFamily: font,
+  };
+  // 🌑 กล่องเนื้อหาธีมเข้ม — ใช้กับแท็บที่ออกแบบมาบนพื้นเข้ม (วิชาสกิล · วิชาตัวเบา)
+  //     ห่อไว้ข้างในกรอบขาวเดียวกัน ตัวหนังสือเลยยังอ่านออกเหมือนเดิม
+  const SKILL_DARK = { borderRadius: 13, padding: "11px 12px 12px", color: "#e6f0e2" };
   // 🧩 แถบแท็บกลุ่มเมนูสกิล — ใส่ไว้หัวทุกหน้าในกลุ่ม สลับไปมาได้เลยไม่ต้องกลับเมนู ☰
   //    dark = ธีมเข้ม (หน้าวิชาตัวเบา) · ปกติ = ธีมการ์ดขาว
   const skillTabs = (active, dark) => (
     <div style={{
       display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
+      position: "sticky", top: 0, zIndex: 11,
       background: dark ? "rgba(0,0,0,0.24)" : "#f1eef8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #e2dcf0",
     }}>
       {(G.SKILL_TABS || []).map((t) => {
@@ -46133,7 +46146,7 @@ export default function CherryAdventure() {
       <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, pointerEvents: "none", zIndex: 2,
         background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
-      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
+      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "skillBoardOpen", "mbookOpen"].some((f) => ui[f]) && (
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
       {/* 🏰 กิลด์ */}
@@ -46252,14 +46265,15 @@ export default function CherryAdventure() {
       )}
       {/* 📖 สมุดภารกิจ — รายวัน / รายสัปดาห์ / แทร็กรางวัล */}
       {ui.mbookOpen && ui.mbook && (
-        <div onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(12,8,22,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(560px, 96vw)", maxHeight: "86vh", overflowY: "auto", background: "linear-gradient(160deg,#241b3c,#171125)", border: "1px solid #4a3a6a", borderRadius: 18, padding: 14, fontFamily: font, color: "#fff", boxShadow: "0 18px 50px rgba(0,0,0,0.5)" }}>
+        <div style={SKILL_SHELL}>
+          {closeBtn("mbookOpen")}
+          {questTabs("mbook")}
+          <div style={{ ...SKILL_DARK, background: "linear-gradient(160deg,#241b3c,#171125)", border: "1px solid #4a3a6a", color: "#fff" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <div style={{ fontSize: 17, fontWeight: 900 }}>📖 สมุดภารกิจ</div>
               <div style={{ marginLeft: "auto", fontSize: 11.5, color: "#c9b8ff" }}>แต้มแทร็ก {ui.mbook.pts} · ขั้น {ui.mbook.tier}/{PASS_TIERS}</div>
-              <button onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 }}>✕</button>
+              <button onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ display: "none", border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 }}>✕</button>
             </div>
-            {questTabs("mbook", true)}
             <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
               {[["daily", "🗓️ รายวัน"], ["weekly", "📅 รายสัปดาห์"], ["pass", "🎫 แทร็กรางวัล"]].map(([k, lb]) => (
                 <button key={k} onClick={() => setUi((u) => ({ ...u, mbTab: k }))} style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.mbTab === k ? "#2a2416" : "#d8cff0", background: ui.mbTab === k ? "linear-gradient(90deg,#f5d24a,#e0a83a)" : "rgba(255,255,255,0.08)" }}>{lb}</button>
@@ -46770,16 +46784,12 @@ export default function CherryAdventure() {
             const rows = G.skillBoard ? G.skillBoard() : [];
             const pickId = ui.boardPick || (() => { for (const r of rows) for (const c of r.cards) if (c.open) return c.id; return (rows[0] && rows[0].cards[0] && rows[0].cards[0].id) || null; })();
             const D = pickId && G.skillDetail ? G.skillDetail(pickId) : null;
-            const wide = window.innerWidth >= 720;
+            const wide = _uiWideModal;   // อิงความกว้างของกรอบมาตรฐาน ไม่ใช่ความกว้างจอ
             return (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 58, width: wide ? "94%" : "94%", maxWidth: wide ? 720 : 430,
-              maxHeight: "88vh", overflowY: "auto",
-              background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e",
-              borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, fontFamily: font,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("skillBoardOpen")}
-              {skillTabs("skillBoardOpen", true)}
+              {skillTabs("skillBoardOpen")}
+              <div style={{ ...SKILL_DARK, background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e" }}>
               <div style={{ fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 }}>📖 วิชาสกิล</div>
               <div style={{ fontSize: 10, color: "#7fae97", marginBottom: 9 }}>
                 ปลดล็อกไล่เป็นขั้น — ขั้นสูงขึ้นต้องเลเวลสูงขึ้น · แตะการ์ดเพื่อดูรายละเอียด · ⚡ แต้มสกิล {ui.sp || 0}
@@ -46907,6 +46917,7 @@ export default function CherryAdventure() {
                     </>
                   )}
                 </div>
+              </div>
               </div>
             </div>
             );
@@ -47856,7 +47867,7 @@ export default function CherryAdventure() {
       {/* 🍃 วิชาตัวเบา — สายวิชาเคลื่อนไหว 3 ขั้น ฝึกได้จากเควสพิเศษเท่านั้น */}
       {ui.qingOpen && (() => {
         const QI = ui.qing || { step: 0, list: [] };
-        const wide = window.innerWidth > 660;
+        const wide = _uiWideModal;   // อิงความกว้างของกรอบมาตรฐาน ไม่ใช่ความกว้างจอ
         const tile = (q) => {
           const st = q.learned ? "learned" : q.done && q.taken ? "ready" : q.taken ? "doing" : q.ready ? "open" : "locked";
           const col = { learned: "#f5d24a", ready: "#7cf0b0", doing: "#8fd0ff", open: "#c8d0c0", locked: "#5a6a58" }[st];
@@ -47889,27 +47900,19 @@ export default function CherryAdventure() {
         };
         const sel = QI.list.find((x) => x.id === ui.qingSel) || QI.list.find((x) => !x.learned) || QI.list[QI.list.length - 1];
         return (
-          <div onClick={() => G.toggleQing()} style={{
-            position: "absolute", inset: 0, zIndex: 52, display: "flex", alignItems: "center", justifyContent: "center",
-            padding: 8, fontFamily: font,
-            background: "radial-gradient(125% 95% at 50% 22%, rgba(46,86,66,0.42), rgba(7,12,10,0.88))",
-            backdropFilter: "blur(9px)", WebkitBackdropFilter: "blur(9px)",
-          }}>
-            <div onClick={(e) => e.stopPropagation()} style={{
-              width: wide ? "min(96vw, 660px)" : "min(96vw, 420px)", maxHeight: "94vh", overflowY: "auto",
-              borderRadius: 22, color: "#e6f0e2", padding: "12px 14px 14px",
+          <div style={SKILL_SHELL}>
+            {closeBtn("qingOpen")}
+            {skillTabs("qingOpen")}
+            <div style={{ ...SKILL_DARK,
               background: "linear-gradient(168deg,#2f4a3c 0%,#1c2e26 46%,#141f1a 100%)",
               border: "1px solid rgba(160,220,180,0.28)",
-              boxShadow: "0 28px 70px rgba(0,0,0,0.65), 0 2px 0 rgba(255,255,255,0.05) inset",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <span style={{ fontSize: 15, fontWeight: 900, color: "#bff0cf" }}>🍃 วิชาตัวเบา</span>
                 <span style={{ fontSize: 9.5, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.24)", borderRadius: 7, padding: "2px 7px" }}>ฝึกได้จากเควสพิเศษเท่านั้น</span>
                 <div style={{ flex: 1 }} />
                 <span style={{ fontSize: 10.5, fontWeight: 800, color: "#f5d24a" }}>ขั้น {QI.step}/3</span>
-                <button onClick={() => G.toggleQing()} title="ปิด" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.34)", color: "#e6f0e2", fontSize: 14, cursor: "pointer", padding: 0 }}>✕</button>
               </div>
-              {skillTabs("qingOpen", true)}
 
               {/* ตำรา → ขั้นวิชา */}
               <div style={{ display: "flex", alignItems: "center", gap: wide ? 12 : 7, padding: "11px 10px", borderRadius: 16, marginBottom: 10,
@@ -50163,12 +50166,7 @@ export default function CherryAdventure() {
 
           {/* ⚡ skill upgrade panel */}
           {ui.skillPanel && (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50,
-              width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fff", borderRadius: 20, padding: 16,
-              boxShadow: MODAL_SHADOW,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("skillPanel")}
               {skillTabs("skillPanel")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
@@ -50458,11 +50456,7 @@ export default function CherryAdventure() {
           {/* equipment panel */}
           {/* 📜 quest panel */}
           {ui.questOpen && (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: MODAL_SHADOW,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("questOpen")}
               {questTabs(ui.achTab ? "ach" : "quest")}
               {ui.achTab ? (
@@ -50956,11 +50950,7 @@ export default function CherryAdventure() {
 
           {/* 🌳 SKILL TREE panel — passive nodes */}
           {ui.treeOpen && (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: MODAL_SHADOW,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("treeOpen")}
               {skillTabs("treeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a9a5a", marginBottom: 2 }}>🌳 สกิลต้นไม้ (พาสซีฟ)</div>
@@ -51016,10 +51006,7 @@ export default function CherryAdventure() {
 
           {/* ✨ constellation board */}
           {ui.constOpen && (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("constOpen")}
               {skillTabs("constOpen")}
               {(() => {
@@ -51069,10 +51056,7 @@ export default function CherryAdventure() {
 
           {/* ⚔️ weapon mastery panel */}
           {ui.masteryOpen && (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("masteryOpen")}
               {skillTabs("masteryOpen")}
               {(() => {
