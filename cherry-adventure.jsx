@@ -1732,27 +1732,33 @@ const fishOdds = (lv, k, spotBonus) => {
 
 // ---------- 🛣️ เส้นทางเชื่อมด่าน — ด่านในสายเดียวกันต่อกันเป็นทางยาว เดินตามถนนข้ามได้เลย ----------
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
-// links[i] = ทิศที่เดินออกจาก biomes[i] ไป biomes[i+1] — E ตะวันออก · W ตะวันตก · N เหนือ · S ใต้
-// (เส้นทางไม่จำเป็นต้องตรงเสมอ หักเลี้ยวได้)
+// 🗺️ โลกเดียวต่อกันหมด — เดินจากด่าน 1 ไปถึงด่าน 13 ได้โดยไม่ต้องวาร์ป
+// ทางเดินงูเลื้อยเป็นแถว ๆ ตามกลุ่มที่ตั้งไว้ (1+2+3 / 4+5+6 / 7+8+9 / 10+11 / 12+13)
+const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon"];
+//                          1→2  2→3  3→4  4→5  5→6  6→7  7→8  8→9  9→10 10→11 11→12 12→13
+const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E"];
+// แถว/โซนของโลก — เอาไว้โชว์ว่าตอนนี้อยู่ช่วงไหนของเส้นทาง
 const ROUTES = [
-  { id: "r1", name: "เส้นทางต้นทาง",     emoji: "🌸", biomes: ["meadow", "desert", "snow"],  links: ["E", "N"] },
-  { id: "r2", name: "เส้นทางใต้พิภพ",    emoji: "🕳️", biomes: ["cave", "volcano", "sky"],    links: ["E", "N"] },
-  { id: "r3", name: "เส้นทางสวรรค์-นรก", emoji: "🔥", biomes: ["hell", "heaven", "moon"],    links: ["N", "E"] },
-  { id: "r4", name: "เส้นทางชายทะเล",    emoji: "🍬", biomes: ["candy", "beach"],            links: ["S"] },
-  { id: "r5", name: "เส้นทางไททัน",      emoji: "🗿", biomes: ["titan", "amazon"],           links: ["W"] },
+  { id: "r1", name: "แถวต้นทาง",      emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
+  { id: "r2", name: "แถวใต้พิภพ",     emoji: "🕳️", biomes: ["cave", "volcano", "sky"] },
+  { id: "r3", name: "แถวสวรรค์-นรก",  emoji: "🔥", biomes: ["hell", "heaven", "moon"] },
+  { id: "r4", name: "แถวชายทะเล",     emoji: "🍬", biomes: ["candy", "beach"] },
+  { id: "r5", name: "แถวไททัน",       emoji: "🗿", biomes: ["titan", "amazon"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
+const CHAIN_OF = {}; WORLD_CHAIN.forEach((b, i) => (CHAIN_OF[b] = i));
 const DIR_VEC = { E: [1, 0], W: [-1, 0], N: [0, -1], S: [0, 1] };
 const DIR_OPP = { E: "W", W: "E", N: "S", S: "N" };
 const DIR_TH  = { E: "ทางตะวันออก", W: "ทางตะวันตก", N: "ทางเหนือ", S: "ทางใต้" };
 const DIR_ARROW = { E: "▶", W: "◀", N: "▲", S: "▼" };
-// ทางออกทั้งหมดของด่านนี้ → [{ dir: "E", to: "desert" }]
+// ทางออกทั้งหมดของด่านนี้ (เดินได้ทั้งไปข้างหน้าและย้อนกลับ)
 const routeExits = (bid) => {
-  const e = ROUTE_OF[bid]; if (!e) return [];
-  const r = e.route, out = [];
-  if (e.i + 1 < r.biomes.length) out.push({ dir: r.links[e.i], to: r.biomes[e.i + 1] });        // ไปข้างหน้า
-  if (e.i - 1 >= 0) out.push({ dir: DIR_OPP[r.links[e.i - 1]], to: r.biomes[e.i - 1] });        // ย้อนกลับ
+  const i = CHAIN_OF[bid];
+  if (i == null) return [];
+  const out = [];
+  if (i + 1 < WORLD_CHAIN.length) out.push({ dir: WORLD_LINKS[i], to: WORLD_CHAIN[i + 1] });
+  if (i - 1 >= 0) out.push({ dir: DIR_OPP[WORLD_LINKS[i - 1]], to: WORLD_CHAIN[i - 1] });
   return out;
 };
 const biomeById = (bid) => BIOMES.find((b) => b.id === bid) || null;
@@ -16679,8 +16685,8 @@ export default function CherryAdventure() {
       const c = lab.cv.getContext("2d"); c.clearRect(0, 0, 360, 150);
       c.textAlign = "center"; c.textBaseline = "middle"; c.lineJoin = "round";
       c.strokeStyle = "#04102e"; c.lineWidth = 7;
-      c.font = "800 30px system-ui, sans-serif"; c.fillStyle = dir < 0 ? "#9ab4ff" : "#8affd0";
-      const hint = dir < 0 ? "◀ ย้อนด่านก่อน" : "ด่านถัดไป ▶";
+      c.font = "800 30px system-ui, sans-serif"; c.fillStyle = dir < 0 ? "#9ab4ff" : "#ffd9a0";
+      const hint = dir < 0 ? "◀ ย้อนกลับ" : "🪧 เดินต่อไป";
       c.strokeText(hint, 180, 26); c.fillText(hint, 180, 26);
       c.font = "900 36px system-ui, sans-serif"; c.fillStyle = "#ffffff";
       const nm = `${biome.emoji} ${biome.name}`;
@@ -16697,14 +16703,17 @@ export default function CherryAdventure() {
     const warpR = makeDimPortal(); warpR.position.set(WARP_RX, 0, WARP_PZ); warpR.rotation.y = -Math.PI / 2; warpPair.add(warpR);
     const warpLabL = makeWarpLabel(3.05); warpL.add(warpLabL.sp);
     const warpLabR = makeWarpLabel(3.05); warpR.add(warpLabR.sp);
-    scene.add(warpPair);
-    G.warpGate = warpPair; // 🌀 reference for hiding during battle
+    // 🚫🌀 เลิกใช้แท่นมิติแล้ว — ทุกด่านเดินเชื่อมถึงกันด้วยทางดิน มีป้ายบอกทางที่ปลายทางแทน
+    // (เก็บ object ไว้เฉย ๆ ไม่ได้ add เข้าฉาก เพื่อไม่ต้องรื้อโค้ดที่อ้างถึงทั้งหมด)
+    warpPair.visible = false;
+    G.warpGate = null;   // ไม่มีแท่นวาร์ปในฉากแล้ว — ที่อื่นเช็ค if (G.warpGate) จึงข้ามไปเอง
     G._warpL = warpL; G._warpR = warpR; G._warpLabL = warpLabL; G._warpLabR = warpLabR;
     G._warpPts = { LX: WARP_LX, RX: WARP_RX, Z: WARP_PZ };
     // 🛡️ พื้นที่ปลอดภัยทั้งหมด (มอนสเตอร์ไม่เข้า/ไม่เกิด/เลิกไล่): วาร์ปซ้าย-ขวา · หมู่บ้าน (บ้าน+NPC+บ่อน้ำ) · โรงตีเหล็ก · หอคอยมิติ
     G._safePts = [
-      { x: WARP_LX, z: WARP_PZ, r: 4.2 },
-      { x: WARP_RX, z: WARP_PZ, r: 4.2 },
+      // 🪧 ปลายทางดินสองฝั่ง — เขตปลอดภัยเล็ก ๆ ตรงป้ายบอกทาง (เดิมเป็นแท่นวาร์ป)
+      { x: WARP_LX, z: WARP_PZ, r: 3.2 },
+      { x: WARP_RX, z: WARP_PZ, r: 3.2 },
       { x: -9.5, z: -8, r: 5.5 },  // 🏡 จุดบ้าน + NPC เฒ่าผู้วิเศษ + บ่อน้ำ
       { x: 8.5, z: -7, r: 3.4 },   // ⚒️ จุดช่างตีเหล็ก
       { x: -6.6, z: 7.0, r: 3.6 }, // 🗼 จุดวาร์ปหอคอยมิติ
@@ -16784,7 +16793,7 @@ export default function CherryAdventure() {
     };
     // มุมที่เว้นไว้ให้ประตูโซนกับแท่นมิติ — แนวกั้นจะไม่ไปบังทางเข้า
     const borderGaps = () => {
-      const gs = [Math.atan2(0, -30), Math.atan2(0, 30)];   // 🌀 แท่นมิติซ้าย/ขวา
+      const gs = [];
       for (const k of ["town", "home", "ranch"]) { const g = G.GATE_POS[k]; gs.push(Math.atan2(g.z, g.x)); }
       // 🛣️ เว้นช่องตรงปากทางดินทุกทิศ ไม่ให้ป่า/กำแพงมาปิดทาง
       const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
@@ -16869,6 +16878,15 @@ export default function CherryAdventure() {
         board.position.set(sp[0], sy + 2.15, sp[1]);
         board.rotation.y = Math.atan2(dx, dz) + Math.PI / 2;
         g.add(board);
+        // 🪧 ป้ายชื่อด่านถัดไป + ช่วงเลเวล (ลอยเหนือป้ายไม้ หันเข้าหากล้องเสมอ)
+        {
+          const B = biomeById(ex.id);
+          const lab = makeWarpLabel(0);
+          drawWarpLabel(lab, 1, B || { emoji: "🗺️", name: ex.name, lvMin: ex.lvMin, lvMax: ex.lvMin });
+          lab.sp.position.set(sp[0], sy + 3.5, sp[1]);
+          lab.sp.scale.set(3.2, 1.32, 1);
+          g.add(lab.sp);
+        }
         const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 4), new THREE.MeshLambertMaterial({ color: 0xe8c05a }));
         arrow.position.set(sp[0] + dx * 1.35, sy + 2.15, sp[1] + dz * 1.35);
         arrow.rotation.set(dz ? (dz > 0 ? Math.PI / 2 : -Math.PI / 2) : 0, 0, dx ? (dx > 0 ? -Math.PI / 2 : Math.PI / 2) : 0);
@@ -33469,7 +33487,13 @@ export default function CherryAdventure() {
         scene.fog.color.copy(skyTmp).lerp(fogSky, dayAmt * 0.5);
         {   // 🌫️ อากาศบีบ/คลายระยะหมอก (เก็บระยะฐานของแมพไว้ครั้งแรก)
           const W = G.weather, fk = (W && W.fogK) || 1;
-          if (G._fogBase && !G._townFogPrev) { scene.fog.near = G._fogBase.near * fk; scene.fog.far = G._fogBase.far * fk; }
+          if (G._fogBase && !G._townFogPrev) {
+            // 👀 เว้นวงรอบตัวละครไว้เสมอ — หมอกเริ่มจับหลังกล้องพ้นตัวละครไปแล้ว
+            // (เดิม "หมอกลงจัด" บีบระยะเหลือ ~16 ซึ่งสั้นกว่าระยะกล้อง ตัวละครเลยจมหมอก)
+            const clear = (typeof camDist === "number" ? camDist : 8) + 11;
+            scene.fog.near = Math.max(clear, G._fogBase.near * fk);
+            scene.fog.far = Math.max(scene.fog.near + 20, G._fogBase.far * fk);
+          }
         }
         // 🌤️ โดมฟ้าเกาะกล้องเสมอ แล้วคูณสีฟ้าของแมพ/ช่วงเวลาเข้ากับลายไล่เฉด
         {   // 🌦️ อากาศย้อมฟ้า/หมอก และหรี่-เร่งแสงทั้งฉาก
@@ -34425,7 +34449,7 @@ export default function CherryAdventure() {
         pDisc.material.opacity = 0.62 + Math.sin(t * 1.5) * 0.1;
         // 🌀 dimension rifts: swirl spin + stand-still-3s charge → warp (◀ back / next ▶)
         {
-          const WL = G._warpL, WR = G._warpR, P = G._warpPts;
+          const WL = null, WR = null, P = null;   // 🚫🌀 เลิกใช้แท่นมิติ — เดินตามทางดินแทน
           if (WL && WR && P) {
             WL.userData.swirls.forEach((s, k) => (s.rotation.z = t * (0.9 + k * 0.5)));
             WR.userData.swirls.forEach((s, k) => (s.rotation.z = -t * (0.9 + k * 0.5)));
