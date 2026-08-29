@@ -2484,7 +2484,7 @@ export default function CherryAdventure() {
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
     rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
     guildName: null, guildEmoji: null,
-    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false,
+    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false, forgeTab: "enh",
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
   });
@@ -51054,11 +51054,7 @@ export default function CherryAdventure() {
 
           {/* ⛏️ FORGE panel — craft with materials */}
           {ui.forgeOpen && (
-            <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
-              boxShadow: MODAL_SHADOW,
-            }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("forgeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 }}>⛏️ โรงตีเหล็ก (คราฟต์)</div>
               {/* 💠🌟⛏️ enhancement resources on hand */}
@@ -51085,6 +51081,38 @@ export default function CherryAdventure() {
                   })}
                 </div>
               </div>
+              {/* 🗂️ แยกเป็นแท็บ — งานหลอมมีหลายอย่าง แยกทีละส่วนจะได้ไม่ตาลาย */}
+              {(() => {
+                const FT = ui.forgeTab || "enh";
+                const T = [
+                  ["enh", "⚒️", "ตีบวก"],
+                  ["roll", "🎲", "สุ่มคุณภาพ"],
+                  ["elem", "🔥", "เสริมธาตุ"],
+                  ["dragon", "🐉", "คราฟต์มังกร"],
+                ];
+                return (
+                  <div style={{ display: "flex", gap: 4, padding: 3, borderRadius: 11, marginBottom: 9,
+                    position: "sticky", top: 0, zIndex: 11,
+                    background: "#fdf0dc", border: "1px solid #f0dcb8" }}>
+                    {T.map(([k, ic, nm]) => {
+                      const on = FT === k;
+                      return (
+                        <button key={k} onClick={() => setUi((u) => ({ ...u, forgeTab: k }))} title={nm} style={{
+                          flex: 1, minWidth: 0, padding: "5px 3px", borderRadius: 9, cursor: on ? "default" : "pointer",
+                          border: "none", fontFamily: font, lineHeight: 1.15,
+                          background: on ? "linear-gradient(135deg,#f5b93a,#d9852a)" : "#fff",
+                          color: on ? "#fff" : "#a08050",
+                          boxShadow: on ? "0 2px 8px rgba(200,130,40,0.4)" : "none",
+                        }}>
+                          <div style={{ fontSize: 15 }}>{ic}</div>
+                          <div style={{ fontSize: 7.5, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              {(ui.forgeTab || "enh") === "enh" && (<>
               {/* ⚒️ enhance weapons & gear — moved here from the bag */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#3a7ac0", margin: "2px 0 5px" }}>⚒️ ตีบวกอาวุธ & ชุด</div>
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>⚒️ ของซ้ำ 2 ชิ้น (มีโอกาสพลาด) · 💠 การันตี ใช้ผงเพชร+ผงดาว+แร่ ตามเลเวลตีบวก · ตีได้ถึง +20 (ตามเลเวลตัวละคร)</div>
@@ -51126,6 +51154,8 @@ export default function CherryAdventure() {
                 });
               })()}
               <div style={{ borderTop: "1px dashed #e0d0b0", margin: "8px 0 6px" }} />
+              </>)}
+              {(ui.forgeTab || "enh") === "roll" && (<>
               {/* 🎲 re-roll item quality */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#7a4ad0", margin: "2px 0 5px" }}>🎲 สุ่มค่าไอเทมใหม่</div>
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>
@@ -51163,6 +51193,8 @@ export default function CherryAdventure() {
                 });
               })()}
               <div style={{ borderTop: "1px dashed #e0d0b0", margin: "8px 0 6px" }} />
+              </>)}
+              {(ui.forgeTab || "enh") === "elem" && (<>
               {/* infuse element onto weapon */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a", margin: "2px 0 5px" }}>✨ เสริมธาตุให้อาวุธ</div>
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 6 }}>ใส่ธาตุแล้วอาวุธจะโจมตีตรงจุดอ่อน + ได้เปรียบตามวงล้อธาตุ + ติดสถานะ</div>
@@ -51192,6 +51224,8 @@ export default function CherryAdventure() {
                   </div>
                 );
               })}
+              </>)}
+              {(ui.forgeTab || "enh") === "dragon" && (<>
               {/* dragon scale power */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#c0392b", margin: "8px 0 5px" }}>🐉 หลอมเกล็ดมังกร</div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fbeeee", borderRadius: 9, padding: "6px 8px", border: "1px solid #e8c0c0" }}>
@@ -51250,6 +51284,7 @@ export default function CherryAdventure() {
                   </div>
                 );
               })()}
+              </>)}
             </div>
           )}
 
