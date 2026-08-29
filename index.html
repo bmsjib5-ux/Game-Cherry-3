@@ -4677,7 +4677,24 @@ function CherryAdventure() {
         const trailPositions = new Float32Array(TRAIL_LEN * 2 * 3);
         const trailGeo = new THREE.BufferGeometry();
         trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
-        const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+        // 🔥 แสงดาบไล่สี ขาว → เหลือง → ส้ม ตามหางที่ลากผ่าน (แทนแสงขาวล้วนแบบเดิม)
+        const trailColors = new Float32Array(TRAIL_LEN * 2 * 3);
+        {
+            const HOT = [
+                [1.00, 1.00, 1.00], // หัวเส้น: ขาวจ้า
+                [1.00, 0.86, 0.32], // กลาง: เหลืองทอง
+                [1.00, 0.48, 0.10], // หาง: ส้มไฟ
+            ];
+            for (let i = 0; i < TRAIL_LEN; i++) {
+                const u = i / (TRAIL_LEN - 1) * 2; // 0..2 → ไล่ผ่าน 3 จุดสี
+                const a = HOT[Math.min(1, Math.floor(u))], b = HOT[Math.min(2, Math.floor(u) + 1)], f = u - Math.floor(u);
+                for (let j = 0; j < 2; j++)
+                    for (let ch = 0; ch < 3; ch++)
+                        trailColors[(i * 2 + j) * 3 + ch] = a[ch] + (b[ch] - a[ch]) * f;
+            }
+        }
+        trailGeo.setAttribute("color", new THREE.BufferAttribute(trailColors, 3));
+        const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
         const trailMesh = new THREE.Mesh(trailGeo, trailMat);
         trailMesh.frustumCulled = false;
         trailMesh.visible = false;
@@ -33454,6 +33471,14 @@ function CherryAdventure() {
         shockFx.visible = false;
         shockFx.userData = { t: 99 };
         scene.add(shockFx);
+        // 🔥 วงฟันซ้อนสองชั้น (ส้ม/เหลือง) วิ่งตามหลังวงหลัก — ให้แสงโจมตีอุ่นขึ้น ไม่ขาวโพลน
+        const slashWarm = [0xffb03a, 0xffe36a].map((hex, i) => {
+            const m = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.055 + i * 0.02, 8, 24, Math.PI * 0.95), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+            m.visible = false;
+            m.userData = { t: 99, lag: 0.045 + i * 0.05 };
+            scene.add(m);
+            return m;
+        });
         const fireSlash = (pos, color) => {
             if (G.sfx)
                 G.sfx.slash();
@@ -33463,6 +33488,13 @@ function CherryAdventure() {
             slashFx.scale.setScalar(0.7);
             slashFx.visible = true;
             slashFx.userData.t = 0;
+            slashWarm.forEach((m) => {
+                m.position.copy(slashFx.position);
+                m.rotation.copy(slashFx.rotation);
+                m.scale.setScalar(0.7);
+                m.visible = true;
+                m.userData.t = -m.userData.lag; // ออกช้ากว่าวงหลักนิดหน่อย = เห็นเป็นหางไฟ
+            });
         };
         const fireShock = (pos, color) => {
             shockFx.material.color.setHex(color);
@@ -35247,9 +35279,15 @@ function CherryAdventure() {
                 st.history.unshift({ top: _tipTop.clone(), bot: _tipBot.clone() });
                 if (st.history.length > st.len)
                     st.history.pop();
-                if (st.mat && color != null)
-                    st.mat.color.setHex(color);
-                st.mat.opacity = 0.5;
+                if (st.mat && color != null) {
+                    // สีขาว = ปล่อยให้ไล่สีขาว-เหลือง-ส้มทำงานเต็มที่ · สกิลที่มีสีของตัวเอง = คุมสีนั้นไว้
+                    const whiteish = ((color >> 16) & 255) > 228 && ((color >> 8) & 255) > 228 && (color & 255) > 228;
+                    st.mat.vertexColors = whiteish;
+                    st.mat.needsUpdate = st.mat.vertexColors !== st.mat.userData_vc;
+                    st.mat.userData_vc = st.mat.vertexColors;
+                    st.mat.color.setHex(whiteish ? 0xffffff : color);
+                }
+                st.mat.opacity = 0.62;
                 st.mesh.visible = st.history.length >= 2;
             }
             else {
@@ -40179,6 +40217,15 @@ function CherryAdventure() {
             G.joy = { x: 0, y: 0 };
             G.moveTarget = null;
             G.huntTarget = null; // 🎯 stop chasing once we engage
+            // 🦘💨 ล้างสถานะกระโดด/พุ่งที่ค้างอยู่ — ไม่งั้นเข้าสนามกลางคันแล้วปุ่มพุ่งจะดับถาวร
+            G._jumpT = 0;
+            G._dashT = 0;
+            G._dashCd = 0;
+            char.rotation.x = 0;
+            G._queuedAct = null;
+            G.aimAt && G.aimAt(null);
+            if (G._moveMark)
+                G._moveMark.g.visible = false;
             const sp = SPECIES[wild.userData.spId];
             const lv = wild.userData.lv || 1;
             const boss = !!wild.userData.boss;
@@ -40711,7 +40758,10 @@ function CherryAdventure() {
             }
             if (opts.color != null)
                 burst(m.position, opts.color, 0.5);
-            monGlow(m, 0xffffff, 0.5);
+            // 💥 แฟลชกระแทก 3 ชั้น ขาว-เหลือง-ส้ม (เดิมเป็นแสงขาวล้วน)
+            monGlow(m, 0xfff2d0, 0.55);
+            burst(m.position, 0xffd24a, 0.62);
+            burst(m.position, 0xff8a2a, 0.44);
             // 💢 สะดุ้ง + เด้งถอยตามทิศที่โดนตี (บอส/ตัวใหญ่เด้งน้อยกว่า)
             {
                 const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
@@ -40761,6 +40811,222 @@ function CherryAdventure() {
             }
             return out;
         };
+        // ================= 🖱️ MOUSE MARKERS + เดินไปตี =================
+        // 🗡️ ดาบปักหัวมอนตัวที่เล็งอยู่ — ย้ายตามตัวมอน และหายไปเองเมื่อมอนตาย/หลุดเป้า
+        const ensureAimMark = () => {
+            if (G._aimMark)
+                return G._aimMark;
+            const g = new THREE.Group();
+            const bladeM = new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0.95, depthTest: false });
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.72, 0.03), bladeM);
+            blade.position.y = 0.42;
+            g.add(blade);
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 4), bladeM);
+            tip.position.y = 0.02;
+            tip.rotation.x = Math.PI;
+            g.add(tip);
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.07, 0.07), new THREE.MeshBasicMaterial({ color: 0xffb03a, depthTest: false }));
+            guard.position.y = 0.78;
+            g.add(guard);
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.26, 0.08), new THREE.MeshBasicMaterial({ color: 0xd9364a, depthTest: false }));
+            grip.position.y = 0.94;
+            g.add(grip);
+            const ring = new THREE.Mesh(new THREE.RingGeometry(0.46, 0.62, 24), new THREE.MeshBasicMaterial({ color: 0xff6a5a, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthTest: false }));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.03;
+            g.add(ring);
+            g.renderOrder = 998;
+            g.traverse((o) => { o.renderOrder = 998; });
+            g.visible = false;
+            scene.add(g);
+            G._aimMark = { g, ring };
+            return G._aimMark;
+        };
+        // 🏹 ลูกศรปักจุดที่สั่งเดินไป — หายไปเมื่อเดินถึงแล้ว
+        const ensureMoveMark = () => {
+            if (G._moveMark)
+                return G._moveMark;
+            const g = new THREE.Group();
+            const col = 0x6ad0ff;
+            const head = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.6, 5), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.95, depthTest: false }));
+            head.position.y = 0.42;
+            head.rotation.x = Math.PI;
+            g.add(head);
+            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.7, 6), new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.9, depthTest: false }));
+            shaft.position.y = 1.05;
+            g.add(shaft);
+            const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.46, 26), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthTest: false }));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.04;
+            g.add(ring);
+            g.renderOrder = 997;
+            g.traverse((o) => { o.renderOrder = 997; });
+            g.visible = false;
+            scene.add(g);
+            G._moveMark = { g, ring, head };
+            return G._moveMark;
+        };
+        // 🎯 เล็งมอนตัวนี้ (ปักดาบที่หัว) — null = เลิกเล็ง
+        G.aimAt = (m) => {
+            G.aimTarget = m && wilds.indexOf(m) >= 0 ? m : null;
+            const A = ensureAimMark();
+            A.g.visible = !!G.aimTarget;
+            return G.aimTarget;
+        };
+        // 🚩 ปักหมุดจุดที่จะเดินไป
+        const markY = (x, z) => terrainAt(x, z) - (G._gy || 0); // พื้นถูกยกให้ตัวละครอยู่ระดับ 0 — หมุดต้องหักออกด้วย
+        G.markMoveTo = (x, z) => {
+            const M = ensureMoveMark();
+            M.g.position.set(x, markY(x, z), z);
+            M.g.visible = true;
+            G._moveMarkT = 0;
+        };
+        // 🖱️⚔️ กดโจมตี/สกิลแล้วยังไม่มีมอนในระยะ = เดินเข้าไปหาตัวใกล้สุดแล้วตีให้เอง
+        const AUTO_SEEK_R = 26;
+        G.seekAndAct = (kind, id) => {
+            if (G.mode !== "explore")
+                return false;
+            if (G.inTownZone || G.inHomeZone || G.inRanchZone)
+                return false;
+            const inRange = nearestWild(worldRange());
+            if (inRange) {
+                G.aimAt(inRange);
+                return false;
+            } // มีตัวในระยะแล้ว — ตีได้เลย ไม่ต้องเดิน
+            const far = G.aimTarget && wilds.indexOf(G.aimTarget) >= 0 ? G.aimTarget : nearestWild(AUTO_SEEK_R);
+            if (!far)
+                return false;
+            G.aimAt(far);
+            G.huntTarget = far;
+            G.moveTarget = new THREE.Vector3(far.position.x, 0, far.position.z);
+            G.markMoveTo(far.position.x, far.position.z);
+            G._queuedAct = { kind, id, t: 0 }; // ค้างคำสั่งไว้ ยิงทันทีที่เข้าระยะ
+            return true;
+        };
+        // เดินตามไป แล้วสอยคำสั่งที่ค้างไว้เมื่อเข้าระยะ (เรียกทุกเฟรมจากลูปหลัก)
+        G.tickSeek = (dt) => {
+            // 🗡️ ดาบตามหัวมอน
+            const A = G._aimMark;
+            if (A) {
+                const t = G.aimTarget;
+                const gone = !t || wilds.indexOf(t) < 0 || !t.visible || t.userData.shy > 0;
+                if (gone) {
+                    if (t)
+                        G.aimTarget = null;
+                    A.g.visible = false;
+                }
+                else {
+                    const hy = (t.userData.aimY != null ? t.userData.aimY : 1.5) * (t.scale.y || 1);
+                    A.g.visible = true;
+                    A.g.position.set(t.position.x, t.position.y + hy, t.position.z);
+                    A.g.rotation.y += dt * 2.2;
+                    A.g.position.y += Math.sin((G._aimBob = (G._aimBob || 0) + dt * 4)) * 0.06;
+                    A.ring.material.opacity = 0.5 + Math.sin(G._aimBob * 1.6) * 0.25;
+                }
+            }
+            // 🏹 ลูกศรจุดหมาย
+            const M = G._moveMark;
+            if (M && M.g.visible) {
+                if (!G.moveTarget)
+                    M.g.visible = false;
+                else {
+                    M.g.position.x = G.moveTarget.x;
+                    M.g.position.z = G.moveTarget.z;
+                    M.g.position.y = markY(G.moveTarget.x, G.moveTarget.z);
+                    G._moveMarkT = (G._moveMarkT || 0) + dt;
+                    const bob = Math.abs(Math.sin(G._moveMarkT * 3.4));
+                    M.head.position.y = 0.42 + bob * 0.22;
+                    M.ring.scale.setScalar(1 + bob * 0.16);
+                    M.ring.material.opacity = 0.85 - bob * 0.35;
+                }
+            }
+            // ⚔️ คำสั่งที่ค้างไว้
+            const q = G._queuedAct;
+            if (!q)
+                return;
+            q.t += dt;
+            if (q.t > 6 || G.mode !== "explore") {
+                G._queuedAct = null;
+                return;
+            } // เดินตามนานเกินไปก็เลิก
+            // ✋ เผื่อระยะนิดหน่อย — ยืนพอดีเส้นระยะโจมตีเป๊ะ ๆ จะไม่เข้าเงื่อนไข d² < r² เลยไม่ยอมออกอาวุธ
+            if (!nearestWild(worldRange() + 0.8))
+                return;
+            G._queuedAct = null;
+            G.moveTarget = null;
+            G.huntTarget = null; // ถึงระยะแล้วหยุดเดิน แล้วค่อยออกอาวุธ
+            if (G._moveMark)
+                G._moveMark.g.visible = false;
+            if (q.kind === "skill")
+                G.worldSkill(q.id);
+            else {
+                G._lastSkill = null;
+                G.worldAttack();
+            }
+        };
+        // 🦘 กระโดด — โค้งพาราโบลาสั้น ๆ ลอยพ้นพื้น
+        G.doJump = () => {
+            if (G.mode !== "explore" || G._skCast)
+                return false;
+            if ((G._jumpT || 0) > 0 || (G._dashT || 0) > 0)
+                return false; // ยังลอยอยู่/พุ่งอยู่ = กระโดดซ้อนไม่ได้
+            G._jumpT = 0.0001;
+            G._jumpDur = 0.62;
+            G._jumpH = 1.55;
+            if (G.sfx && G.sfx.button)
+                G.sfx.button();
+            return true;
+        };
+        // 💨 พุ่ง — ถีบตัวไปข้างหน้าตามทิศที่หัน พร้อมเงาตามหลัง
+        G.doDash = () => {
+            if (G.mode !== "explore" || G._skCast)
+                return false;
+            if ((G._dashCd || 0) > 0 || (G._dashT || 0) > 0)
+                return false;
+            const a = char.rotation.y;
+            G._dashT = 0.0001;
+            G._dashDur = 0.30;
+            G._dashCd = 0.85;
+            G._dashVX = Math.sin(a) * 44;
+            G._dashVZ = Math.cos(a) * 44; // ≈ 4.4 ช่อง ต่อการพุ่ง 1 ครั้ง
+            if (G.sfx && G.sfx.button)
+                G.sfx.button();
+            return true;
+        };
+        // เดินจังหวะกระโดด/พุ่งทุกเฟรม — คืนความสูงที่ต้องบวกเพิ่มให้ตัวละคร
+        G.tickHop = (dt) => {
+            if ((G._dashCd || 0) > 0)
+                G._dashCd = Math.max(0, G._dashCd - dt);
+            if ((G._dashT || 0) > 0) {
+                G._dashT += dt;
+                const k = Math.min(1, G._dashT / G._dashDur);
+                const fade = (1 - k) * (1 - k); // ออกตัวแรงแล้วค่อย ๆ เบาลง
+                char.position.x += G._dashVX * fade * dt;
+                char.position.z += G._dashVZ * fade * dt;
+                pushOut(char, 0.45); // 🌳 พุ่งชนต้นไม้/บ้านแล้วไม่ทะลุ
+                {
+                    const rr = Math.hypot(char.position.x, char.position.z), lim = FIELD_R - 0.3;
+                    if (rr > lim) {
+                        char.position.x *= lim / rr;
+                        char.position.z *= lim / rr;
+                    }
+                } // ไม่หลุดขอบแมพ
+                if (G._dashT >= G._dashDur)
+                    G._dashT = 0;
+            }
+            if ((G._jumpT || 0) > 0) {
+                G._jumpT += dt;
+                const k = Math.min(1, G._jumpT / G._jumpDur);
+                if (G._jumpT >= G._jumpDur) {
+                    G._jumpT = 0;
+                    return 0;
+                }
+                return Math.sin(k * Math.PI) * G._jumpH; // โค้งขึ้น-ลงนุ่ม ๆ
+            }
+            return 0;
+        };
+        G.hopAir = () => ((G._jumpT || 0) > 0 ? Math.sin(Math.min(1, G._jumpT / G._jumpDur) * Math.PI) : 0);
+        // ================= 🖱️ END MOUSE MARKERS =================
         const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 9.0 : 3.6;
         // ⚔️ จังหวะสวิงแบบอนิเมะ: นักรบ/ซามูไรได้ท่า 3 จังหวะ (ง้าง→ฟันเร็ว→ค้างโพส) เลยใช้เวลานานขึ้น
         const worldSwing = (isSkill) => {
@@ -44493,7 +44759,7 @@ function CherryAdventure() {
                 return; // ⛔ ระหว่างร่ายสกิลห้ามแทรกท่าตีธรรมดา
             if (G.inTownZone || G.inHomeZone || G.inRanchZone)
                 return; // 🕊️ โซนปลอดภัย: โจมตีไม่ได้เลย
-            const m = nearestWild(worldRange());
+            const m = nearestWild(worldRange() + 0.8); // เผื่อขอบระยะ กันฟันลมตอนยืนพอดีเส้น
             if (!m)
                 return;
             char.rotation.y = Math.atan2(m.position.x - char.position.x, m.position.z - char.position.z);
@@ -48807,6 +49073,10 @@ function CherryAdventure() {
                 if (target) {
                     G.moveTarget = new THREE.Vector3(target.position.x, 0, target.position.z);
                     G.huntTarget = target; // remember we're chasing this one
+                    G.aimAt(target); // 🗡️ ปักดาบที่หัวตัวนี้ ให้รู้ว่ากำลังตีตัวไหน
+                    if (G._moveMark)
+                        G._moveMark.g.visible = false; // เล็งมอนแล้วไม่ต้องมีลูกศรจุดหมาย
+                    G._queuedAct = { kind: "attack", id: null, t: 0 }; // เดินเข้าไปแล้วฟันให้เลย ไม่ต้องกดซ้ำ
                     if (G.sfx && G.sfx.button)
                         G.sfx.button();
                     return;
@@ -48821,6 +49091,10 @@ function CherryAdventure() {
                     hit.z *= (FIELD_R - 0.3) / r;
                 }
                 G.moveTarget = new THREE.Vector3(hit.x, 0, hit.z);
+                G.huntTarget = null;
+                G._queuedAct = null;
+                G.aimAt(null); // คลิกพื้น = เลิกเล็งมอนตัวเดิม
+                G.markMoveTo(hit.x, hit.z); // 🏹 ปักลูกศรตรงจุดที่จะเดินไป
             }
         };
         const onPinchMove = (e) => {
@@ -48874,6 +49148,31 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, homeFurni: (G.home.furni || []).slice() }));
         };
         const onWheel = (e) => { e.preventDefault(); G.zoom(e.deltaY * 0.01); };
+        // 🖱️🔄 คลิกขวาค้างแล้วลาก = หมุนกล้อง (เล่นบนคอม) — ปุ่มกลางก็ได้เหมือนกัน
+        let camDrag = null;
+        const onCamDragStart = (e) => {
+            if (e.button !== 2 && e.button !== 1)
+                return;
+            e.preventDefault();
+            camDrag = { x: e.clientX, y: e.clientY };
+            renderer.domElement.style.cursor = "grabbing";
+        };
+        const onCamDragMove = (e) => {
+            if (!camDrag)
+                return;
+            const dx = e.clientX - camDrag.x, dy = e.clientY - camDrag.y;
+            camDrag.x = e.clientX;
+            camDrag.y = e.clientY;
+            if (G.rotateCam)
+                G.rotateCam(-dx * 0.007, -dy * 0.005);
+        };
+        const onCamDragEnd = () => { if (!camDrag)
+            return; camDrag = null; renderer.domElement.style.cursor = ""; };
+        const onCtxMenu = (e) => { e.preventDefault(); }; // กันเมนูคลิกขวาของเบราว์เซอร์เด้งมาบังจอ
+        renderer.domElement.addEventListener("mousedown", onCamDragStart);
+        window.addEventListener("mousemove", onCamDragMove);
+        window.addEventListener("mouseup", onCamDragEnd);
+        renderer.domElement.addEventListener("contextmenu", onCtxMenu);
         renderer.domElement.addEventListener("mousedown", onTap);
         renderer.domElement.addEventListener("touchstart", onTap, { passive: true });
         renderer.domElement.addEventListener("touchmove", onPinchMove, { passive: true });
@@ -48884,21 +49183,44 @@ function CherryAdventure() {
         renderer.domElement.addEventListener("touchend", onFurniDrop);
         renderer.domElement.addEventListener("touchcancel", onFurniDrop);
         renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
-        const SKILL_KEYS = { a: 0, s: 1, d: 2, f: 3, g: 4 }; // ⌨️ battle skill hotkeys → skill slot index
-        G.SKILL_KEYS = ["A", "S", "D", "F", "G"];
+        // ⌨️ คีย์ลัดสกิลบนคอม: A S D F Q W E R = สกิลที่ 1-8
+        //    (เดินด้วยลูกศร ↑↓←→ หรือคลิกเมาส์บนพื้น — WASD ยกให้เป็นปุ่มสกิลแล้ว)
+        const SKILL_KEYS = { a: 0, s: 1, d: 2, f: 3, q: 4, w: 5, e: 6, r: 7 };
+        G.SKILL_KEYS = ["A", "S", "D", "F", "Q", "W", "E", "R"];
         const onKeyDown = (e) => {
-            G.keys[e.key.toLowerCase()] = true;
-            // ⌨️ A S D F G cast the class skills — ONLY during a battle (so they don't clash with WASD movement while exploring)
             const k = e.key.toLowerCase();
-            if (SKILL_KEYS[k] != null && G.mode === "battle") {
-                const tag = (e.target && e.target.tagName) || "";
-                if (tag === "INPUT" || tag === "TEXTAREA")
-                    return; // don't hijack chat/name fields
-                const sk = (skillsOf(G.cls, G.pathId) || [])[SKILL_KEYS[k]];
-                if (sk && G.act) {
-                    e.preventDefault();
+            G.keys[k] = true;
+            const tag = (e.target && e.target.tagName) || "";
+            if (tag === "INPUT" || tag === "TEXTAREA")
+                return; // ไม่แย่งคีย์ช่องพิมพ์ชื่อ/แชท
+            // ␣ เว้นวรรค = กระโดด · ⇧ Shift = พุ่ง
+            if (k === " " || k === "spacebar") {
+                e.preventDefault();
+                if (G.doJump)
+                    G.doJump();
+                return;
+            }
+            if (k === "shift") {
+                if (G.doDash)
+                    G.doDash();
+                return;
+            }
+            if (SKILL_KEYS[k] == null)
+                return;
+            const sk = (skillsOf(G.cls, G.pathId) || [])[SKILL_KEYS[k]];
+            if (!sk)
+                return;
+            e.preventDefault();
+            if (G.mode === "battle") {
+                if (G.act)
                     G.act("skill", sk.id);
-                }
+                return;
+            }
+            // 🏃⚔️ ตอนสำรวจ: ไม่มีมอนในระยะก็วิ่งเข้าไปหาตัวใกล้สุดแล้วปล่อยสกิลให้เอง
+            if (G.mode === "explore" && G.worldSkill) {
+                if (G.seekAndAct && G.seekAndAct("skill", sk.id))
+                    return;
+                G.worldSkill(sk.id);
             }
         };
         const onKeyUp = (e) => (G.keys[e.key.toLowerCase()] = false);
@@ -55019,13 +55341,14 @@ function CherryAdventure() {
                         G.moveTarget = null;
                     }
                     else {
-                        if (G.keys["arrowup"] || G.keys["w"])
+                        // ⌨️ เดินด้วยลูกศรอย่างเดียว — A S D F Q W E R ยกไปเป็นคีย์สกิลแล้ว
+                        if (G.keys["arrowup"])
                             dz -= 1;
-                        if (G.keys["arrowdown"] || G.keys["s"])
+                        if (G.keys["arrowdown"])
                             dz += 1;
-                        if (G.keys["arrowleft"] || G.keys["a"])
+                        if (G.keys["arrowleft"])
                             dx -= 1;
-                        if (G.keys["arrowright"] || G.keys["d"])
+                        if (G.keys["arrowright"])
                             dx += 1;
                         if (dx || dz) {
                             G.moveTarget = null;
@@ -55049,6 +55372,8 @@ function CherryAdventure() {
                                 G.moveTarget = null;
                                 G.huntTarget = null;
                                 G.path = null;
+                                if (G._moveMark)
+                                    G._moveMark.g.visible = false;
                             }
                             else {
                                 // 🗺️ follow an A* path so mazes (the cave!) get solved properly instead of
@@ -55193,17 +55518,21 @@ function CherryAdventure() {
                     G.walkPhase = (G.walkPhase || 0) + spd * dt * 3.1;
                     const swing = Math.sin(G.walkPhase);
                     const swing2 = Math.sin(G.walkPhase + Math.PI);
-                    legL.rotation.x = swing * 0.8 * moveAmt;
-                    legR.rotation.x = swing2 * 0.8 * moveAmt;
+                    // 🦘 ยิ่งวิ่งเร็ว ยิ่งเปลี่ยนจากก้าวเดินเป็นท่ากระโดดเหาะสลับขา (ขากางกว้าง เข่าพับสูง ตัวลอยเป็นจังหวะ)
+                    const bound = Math.max(0, Math.min(1, (moveAmt - 0.45) / 0.45));
+                    G._boundK = bound;
+                    const strideK = 0.8 + bound * 0.75; // ก้าวยาวขึ้นตอนเหาะ
+                    legL.rotation.x = swing * strideK * moveAmt;
+                    legR.rotation.x = swing2 * strideK * moveAmt;
                     legL.rotation.z += (0 - legL.rotation.z) * Math.min(1, dt * 10); // 🦵 คลายแกนบิดข้างเสมอ (กันขาค้างข้ามโหมดจากท่าเตะ — ขี่สัตว์/ท่าสกิลเขียนทับทีหลังได้ตามปกติ)
                     legR.rotation.z += (0 - legR.rotation.z) * Math.min(1, dt * 10);
                     armR.rotation.x = swing * 0.55 * moveAmt; // 🔮 นักเวทแกว่งแขนตามจังหวะเดิน (ไม่ยกค้าง)
                     armL.rotation.x = swing2 * 0.55 * moveAmt;
                     // 🦵💪 bend knees & elbows through the stride so limbs don't stay stiff
                     if (legL.userData.knee)
-                        legL.userData.knee.rotation.x = Math.max(0, -swing) * 1.1 * moveAmt; // knee flexes as the leg lifts back
+                        legL.userData.knee.rotation.x = Math.max(0, -swing) * (1.1 + bound * 1.15) * moveAmt; // 🦘 เหาะ = เข่าพับเก็บสูงกว่าเดิน
                     if (legR.userData.knee)
-                        legR.userData.knee.rotation.x = Math.max(0, -swing2) * 1.1 * moveAmt;
+                        legR.userData.knee.rotation.x = Math.max(0, -swing2) * (1.1 + bound * 1.15) * moveAmt;
                     if (G.cls !== "archer") {
                         if (armR.userData.elbow)
                             armR.userData.elbow.rotation.x = -(0.25 + Math.max(0, swing) * 0.5) * moveAmt; // slight elbow bend on the arm swing
@@ -55263,7 +55592,46 @@ function CherryAdventure() {
                     }
                     // grounded bounce blends into idle breathing (หอบแรงขึ้นตอนเลือดใกล้หมด)
                     const bK = G._lowK || 0;
-                    char.position.y = Math.abs(swing) * 0.07 * moveAmt + Math.sin(t * (2 + bK * 3.4)) * (0.03 + bK * 0.035) * (1 - moveAmt);
+                    // 🦘 ท่าเหาะ: ตัวลอยพ้นพื้นทุกจังหวะสลับขา (2 ครั้งต่อรอบก้าว) แล้วโน้มตัวไปข้างหน้า
+                    const hop = Math.pow(Math.abs(swing), 0.62);
+                    char.position.y = (0.07 + G._boundK * 0.30) * hop * moveAmt
+                        + Math.sin(t * (2 + bK * 3.4)) * (0.03 + bK * 0.035) * (1 - moveAmt);
+                    if (G._boundK > 0) {
+                        torso.rotation.x = -0.16 * G._boundK - 0.07 * G._boundK * hop; // ลำตัวพุ่งไปหน้าเวลาเหาะ
+                        // แขนสับแรงขึ้นตามจังหวะ — เว้นอาชีพที่มีท่าถืออาวุธเฉพาะตัวไว้ (ไม่งั้นการ์ด/ด้ามหอกหลุด)
+                        if (G.cls !== "lancer" && G.cls !== "boxer" && G.cls !== "samurai" && G.cls !== "archer") {
+                            armR.rotation.x = swing * (0.55 + G._boundK * 0.5) * moveAmt;
+                            armL.rotation.x = swing2 * (0.55 + G._boundK * 0.5) * moveAmt;
+                        }
+                    }
+                    else if (torso.rotation.x) {
+                        torso.rotation.x += (0 - torso.rotation.x) * Math.min(1, dt * 8);
+                    }
+                    // 🦘💨 กระโดด/พุ่ง — ยกตัวลอยและถีบไปข้างหน้า (เดิน/ตีต่อได้ระหว่างลอย)
+                    {
+                        const air = G.tickHop ? G.tickHop(dt) : 0;
+                        if (air > 0) {
+                            char.position.y += air;
+                            const ak = air / (G._jumpH || 1.55);
+                            legL.rotation.x = -0.75 * ak;
+                            legR.rotation.x = -0.25 * ak; // ขาหน้า-หลังแยกกันแบบกระโดด
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 1.15 * ak;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = 0.45 * ak;
+                            armL.rotation.x = -0.8 * ak;
+                            armR.rotation.x = -0.55 * ak;
+                        }
+                        if ((G._dashT || 0) > 0) {
+                            const dk = 1 - Math.min(1, G._dashT / (G._dashDur || 0.26));
+                            char.rotation.x = -0.32 * dk; // ทิ้งตัวไปข้างหน้าตอนพุ่ง
+                            armL.rotation.x = 1.15 * dk;
+                            armR.rotation.x = 1.15 * dk; // แขนสะบัดไปหลัง
+                        }
+                        else if (char.rotation.x) {
+                            char.rotation.x += (0 - char.rotation.x) * Math.min(1, dt * 12);
+                        }
+                    }
                     // 🐎 RIDING — ตัวละครนั่งค่อมบนหลัง สัตว์ขี่เป็นฝ่ายเดิน (ขา/หาง/ปีกขยับแทน)
                     if (G.mountId && G._mountMesh) {
                         const M = G._mountMesh;
@@ -70489,6 +70857,22 @@ function CherryAdventure() {
                     if (st >= 1)
                         slashFx.visible = false;
                 }
+                // 🔥 วงฟันส้ม/เหลืองวิ่งตามหลัง — ทำให้แสงโจมตีเป็นขาว+ส้ม+เหลือง
+                for (let wi = 0; wi < slashWarm.length; wi++) {
+                    const m = slashWarm[wi];
+                    if (!m.visible)
+                        continue;
+                    m.userData.t += dt;
+                    const wt = m.userData.t / 0.4;
+                    if (wt <= 0) {
+                        m.material.opacity = 0;
+                        continue;
+                    }
+                    m.scale.setScalar(0.7 + wt * (1.35 + wi * 0.25));
+                    m.material.opacity = Math.max(0, (0.8 - wi * 0.18) * (1 - wt));
+                    if (wt >= 1)
+                        m.visible = false;
+                }
                 if (shockFx.visible) {
                     shockFx.userData.t += dt;
                     const st = shockFx.userData.t / 0.45;
@@ -70834,6 +71218,12 @@ function CherryAdventure() {
                     }
                     G._heatLast = nowH;
                 }
+                if (dtForce == null && G.tickSeek) {
+                    try {
+                        G.tickSeek(dt);
+                    }
+                    catch (_) { }
+                } // 🗡️🏹 หมุดเป้า/จุดหมาย + คำสั่งที่ค้างไว้
                 if (dtForce == null)
                     renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
                 if (dtForce == null && G._paintMap) {
@@ -73918,30 +74308,60 @@ function CherryAdventure() {
                     } }, "\uD83C\uDF52")),
             G.actionMode && !ui.equipScreen && !ui.inRanchZone && (() => {
                 const list = skillsOf(ui.cls, ui.pathId) || [];
-                const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
-                return (React.createElement("div", { style: { position: "absolute", right: `calc(${HUD_EDGE + HUD_PAD + 12}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
-                    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" } }, skills.map((sk) => {
+                const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 8);
+                // 🎯 ผังปุ่มแบบเกมแอ็กชัน: ปุ่มโจมตีเป็นศูนย์กลาง สกิลเรียงเป็นวงโค้งรอบ ๆ
+                //    กระโดด/พุ่งวางเป็นปุ่มเล็กคู่กันใต้ซ้ายของปุ่มโจมตี
+                const ATK = _shortHud ? 62 : 70; // ขนาดปุ่มโจมตี
+                const SKB = _shortHud ? 40 : 46; // ขนาดปุ่มสกิล
+                const RAD = _shortHud ? 66 : 76; // รัศมีวงโค้ง
+                const PADY = RAD + SKB / 2 + 6; // ที่ว่างเหนือปุ่มโจมตีไว้วางวงโค้ง
+                const HOPB = _shortHud ? 38 : 43; // ขนาดปุ่มกระโดด/พุ่ง
+                const HOPX = ATK / 2 + RAD + SKB / 2 + 12; // วางเลยจุดซ้ายสุดของวงโค้ง ไม่ให้ทับกัน
+                const PADX = HOPX + HOPB * 2 + 6 - ATK;
+                const A0 = 168, A1 = 268; // วงโค้งกวาดจากซ้าย (ทิศ 9 นาฬิกา) ขึ้นไปทางบน
+                const n = skills.length;
+                const skillKey = (i) => (G.SKILL_KEYS && G.SKILL_KEYS[list.indexOf(skills[i])]) || null;
+                const hopBtn = (label, title, fn) => (React.createElement("button", { onClick: fn, title: title, style: {
+                        width: HOPB, height: HOPB, borderRadius: "50%",
+                        border: "2px solid rgba(255,255,255,0.45)", cursor: "pointer", pointerEvents: "auto",
+                        background: "radial-gradient(circle at 35% 30%,#8ce0ff,#2a86d0)",
+                        color: "#fff", fontSize: HOPB * 0.42, fontFamily: font, padding: 0,
+                        boxShadow: "0 3px 9px rgba(0,0,0,0.35)",
+                    } }, label));
+                return (React.createElement("div", { style: { position: "absolute", right: `calc(${HUD_EDGE + HUD_PAD + 12}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 52 : 76, width: ATK + PADX, height: ATK + PADY, zIndex: 23, pointerEvents: "none", fontFamily: font } },
+                    React.createElement("button", { onClick: () => { if (!(G.seekAndAct && G.seekAndAct("attack")))
+                            G.worldAttack(); }, title: "\u0E42\u0E08\u0E21\u0E15\u0E35 (\u0E04\u0E25\u0E34\u0E01\u0E21\u0E2D\u0E19\u0E2B\u0E23\u0E37\u0E2D\u0E01\u0E14\u0E04\u0E49\u0E32\u0E07 \u2014 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E15\u0E31\u0E27\u0E43\u0E19\u0E23\u0E30\u0E22\u0E30\u0E08\u0E30\u0E27\u0E34\u0E48\u0E07\u0E40\u0E02\u0E49\u0E32\u0E44\u0E1B\u0E2B\u0E32\u0E43\u0E2B\u0E49\u0E40\u0E2D\u0E07)", style: {
+                            position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%",
+                            border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer", pointerEvents: "auto", padding: 0,
+                            background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: ATK * 0.44,
+                            boxShadow: "0 5px 16px rgba(217,54,74,0.55)",
+                        } }, "\u2694\uFE0F"),
+                    React.createElement("div", { style: { position: "absolute", right: HOPX, bottom: 0, display: "flex", gap: 6, pointerEvents: "none" } },
+                        hopBtn("💨", "พุ่ง (Shift)", () => G.doDash && G.doDash()),
+                        hopBtn("🦘", "กระโดด (Space)", () => G.doJump && G.doJump())),
+                    skills.map((sk, i) => {
                         const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
                         const afford = (ui.mp || 0) >= cost;
                         const aoe = isAoeSkill(sk);
                         const cdLeft = Math.max(0, (((ui.cdMap || {})[sk.id] || 0) - (ui.cdNow || 0)) / 1000);
                         const ready = afford && cdLeft <= 0;
-                        return (React.createElement("button", { key: sk.id, onClick: () => G.worldSkill(sk.id), title: `${sk.name} · 💧${cost}`, style: {
-                                width: 46, height: 46, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
-                                cursor: ready ? "pointer" : "not-allowed", position: "relative",
+                        const ang = (n === 1 ? (A0 + A1) / 2 : A0 + (A1 - A0) * (i / (n - 1))) * Math.PI / 180;
+                        const cxp = -Math.cos(ang) * RAD, cyp = -Math.sin(ang) * RAD; // เทียบจากจุดกึ่งกลางปุ่มโจมตี
+                        const key = skillKey(i);
+                        return (React.createElement("button", { key: sk.id, onClick: () => { if (!(G.seekAndAct && G.seekAndAct("skill", sk.id)))
+                                G.worldSkill(sk.id); }, title: `${sk.name} · 💧${cost}${key ? " · ปุ่ม " + key : ""}`, style: {
+                                position: "absolute", right: ATK / 2 + cxp - SKB / 2, bottom: ATK / 2 + cyp - SKB / 2,
+                                width: SKB, height: SKB, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
+                                cursor: ready ? "pointer" : "not-allowed", pointerEvents: "auto", padding: 0,
                                 background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: ready ? 1 : 0.45,
-                                boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: 20, color: "#fff", fontFamily: font,
+                                boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: SKB * 0.44, color: "#fff", fontFamily: font,
                             } },
                             sk.emoji || "✨",
-                            cdLeft > 0 && React.createElement("span", { style: { position: "absolute", inset: 0, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,12,20,0.62)", color: "#fff", fontSize: 14, fontWeight: 800 } }, cdLeft.toFixed(1)),
+                            cdLeft > 0 && React.createElement("span", { style: { position: "absolute", inset: 0, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,12,20,0.62)", color: "#fff", fontSize: 13, fontWeight: 800 } }, cdLeft.toFixed(1)),
                             React.createElement("span", { style: { position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" } }, cost),
-                            aoe && React.createElement("span", { style: { position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" } }, "\u0E2B\u0E21\u0E39\u0E48")));
-                    })),
-                    React.createElement("button", { onClick: () => G.worldAttack(), title: "\u0E42\u0E08\u0E21\u0E15\u0E35", style: {
-                            width: 66, height: 66, borderRadius: "50%", border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer",
-                            background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: 30,
-                            boxShadow: "0 5px 16px rgba(217,54,74,0.55)", fontFamily: font, pointerEvents: "auto",
-                        } }, "\u2694\uFE0F")));
+                            aoe && React.createElement("span", { style: { position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" } }, "\u0E2B\u0E21\u0E39\u0E48"),
+                            key && _wideHud && React.createElement("span", { style: { position: "absolute", top: -6, right: -4, background: "rgba(20,20,30,0.9)", color: "#ffe08a", fontSize: 8, fontWeight: 900, borderRadius: 5, padding: "0 3px" } }, key)));
+                    })));
             })(),
             React.createElement("button", { onClick: () => toggleMenu("shopOpen"), style: {
                     position: "absolute", right: 12, bottom: 28,
