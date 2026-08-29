@@ -16900,6 +16900,214 @@ export default function CherryAdventure() {
     G.roadSnap = () => { if (G._roadGrp) G.buildRoad(); };
     // 🧭 ระยะตามทาง (along) และระยะเยื้องข้างทาง (side) เทียบกับทางออกอันหนึ่ง
     G.roadAxis = (e, x, z) => ({ along: x * e.vx + z * e.vz, side: Math.abs(x * -e.vz + z * e.vx) });
+
+    // ================= 🗺️ MINIMAP / แผนที่ย่อ =================
+    // สรุปสภาพแมพรอบตัวหนึ่งเฟรม — ใช้วาดทั้งมินิแมพมุมขวาบนและแผนที่ขยาย
+    G.mapSnap = () => {
+      if (!char) return null;
+      const b = BIOMES[G.curBiome || 0] || BIOMES[0];
+      const indoor = !!(G.inTownZone || G.inHomeZone || G.inRanchZone || G.dungeon);
+      const mobs = [];
+      for (let i = 0; i < wilds.length; i++) {
+        const m = wilds[i];
+        if (!m || !m.visible || !m.parent) continue;
+        const u = m.userData || {};
+        mobs.push({ x: m.position.x, z: m.position.z, sp: u.spId || "mochi", lv: u.lv || 1,
+                    shiny: !!u.shiny, boss: !!(u.boss || u.worldBoss), horde: !!u.horde });
+      }
+      const gates = [];
+      if (!indoor) for (const k of ["town", "home", "ranch"]) {
+        const g = G.GATE_POS[k]; if (g) gates.push({ k, x: g.x, z: g.z });
+      }
+      const spot = indoor ? null : (G.fishSpotOf ? G.fishSpotOf(b.id) : null);
+      const exits = indoor ? [] : (G._roadEnds || []).map((e) => ({
+        dir: e.dir, vx: e.vx, vz: e.vz, id: e.id, name: e.name, emoji: e.emoji, lvMin: e.lvMin, arrow: e.arrow, side: e.side,
+      }));
+      return {
+        r: FIELD_R, indoor,
+        biome: { id: b.id, name: b.name, emoji: b.emoji, ground: b.ground, lvMin: b.lvMin, lvMax: b.lvMax },
+        me: { x: char.position.x, z: char.position.z, ry: char.rotation.y },
+        cam: G._camAng != null ? G._camAng : 0,
+        mobs, gates, exits, camps: (G.camps || []).slice(),
+        spot: spot ? { x: spot.x, z: spot.z, r: spot.r, name: spot.name, lv: spot.lv, kind: spot.kind } : null,
+      };
+    };
+
+    const _hexCss = (n) => "#" + ((n | 0) & 0xffffff).toString(16).padStart(6, "0");
+    // 🎨 วาดแผนที่ลงบนแคนวาส (mini = ย่อมุมขวาบน · big = แผนที่ขยาย)
+    const drawMapOn = (el, S, big) => {
+      const w = el.clientWidth, h = el.clientHeight;
+      if (!w || !h || !S) return;
+      const dpr = Math.min(2, (typeof window !== "undefined" && window.devicePixelRatio) || 1);
+      const W = Math.round(w * dpr), H = Math.round(h * dpr);
+      if (el.width !== W || el.height !== H) { el.width = W; el.height = H; }
+      const c = el.getContext("2d"); if (!c) return;
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.clearRect(0, 0, w, h);
+      const VIEW = S.r * (big ? 1.14 : 1.06);        // รัศมีโลกที่มองเห็นในกรอบ
+      const k = Math.min(w, h) / 2 / VIEW;            // โลก → พิกเซล
+      const cx = w / 2, cy = h / 2;
+      const PX = (x) => cx + x * k, PZ = (z) => cy + z * k;   // เหนืออยู่ด้านบนเสมอ (-Z)
+
+      c.save();
+      c.beginPath();
+      if (big) { const rr = 14; c.moveTo(rr, 0); c.arcTo(w, 0, w, h, rr); c.arcTo(w, h, 0, h, rr); c.arcTo(0, h, 0, 0, rr); c.arcTo(0, 0, w, 0, rr); }
+      else c.arc(cx, cy, Math.min(w, h) / 2, 0, Math.PI * 2);
+      c.closePath(); c.clip();
+
+      // 🟩 พื้นแมพ
+      c.fillStyle = _hexCss(S.biome.ground); c.fillRect(0, 0, w, h);
+      c.fillStyle = "rgba(0,0,0,0.30)"; c.fillRect(0, 0, w, h);   // นอกเขต = มืดกว่า
+      // ⭕ ขอบเขตที่เดินได้ — สว่างกว่าพื้นนอกเขต ให้เห็นขอบแมพชัด
+      c.beginPath(); c.arc(cx, cy, S.r * k, 0, Math.PI * 2);
+      c.fillStyle = "rgba(255,255,255,0.20)"; c.fill();
+
+      // 🛣️ ถนนดินออกไปแต่ละทิศ
+      c.strokeStyle = _hexCss(ROAD_COL.dirt); c.lineWidth = Math.max(2, ROAD_HALF * 2 * k); c.lineCap = "butt";
+      S.exits.forEach((e) => {
+        c.beginPath(); c.moveTo(cx, cy);
+        c.lineTo(PX(e.vx * (S.r + 3)), PZ(e.vz * (S.r + 3))); c.stroke();
+      });
+
+      // 🏕️ แคมป์มอนสเตอร์ (วงจาง ๆ บอกว่าตรงไหนมอนแน่น)
+      c.fillStyle = "rgba(255,90,90,0.13)";
+      S.camps.forEach((p) => { c.beginPath(); c.arc(PX(p.x), PZ(p.z), 3.4 * k, 0, Math.PI * 2); c.fill(); });
+
+      // 🎣 จุดตกปลา
+      if (S.spot) {
+        c.beginPath(); c.arc(PX(S.spot.x), PZ(S.spot.z), Math.max(3, (S.spot.r || 4) * k), 0, Math.PI * 2);
+        c.fillStyle = "rgba(80,170,235,0.75)"; c.fill();
+        c.strokeStyle = "rgba(255,255,255,0.6)"; c.lineWidth = 1; c.stroke();
+      }
+
+      // ⭕ เส้นขอบแมพ
+      c.beginPath(); c.arc(cx, cy, S.r * k, 0, Math.PI * 2);
+      c.strokeStyle = "rgba(255,255,255,0.45)"; c.lineWidth = big ? 2 : 1.5; c.setLineDash(big ? [6, 5] : [4, 4]); c.stroke(); c.setLineDash([]);
+
+      // 🐾 มอนสเตอร์
+      const dotR = big ? 4.2 : 2.6;
+      S.mobs.forEach((m) => {
+        const sp = SPECIES[m.sp] || {};
+        const x = PX(m.x), z = PZ(m.z);
+        const r = m.boss ? dotR * 1.9 : m.shiny ? dotR * 1.4 : dotR;
+        c.beginPath(); c.arc(x, z, r, 0, Math.PI * 2);
+        c.fillStyle = m.shiny ? "#ffd75a" : _hexCss(sp.color != null ? sp.color : 0xdd6666); c.fill();
+        c.lineWidth = 1; c.strokeStyle = m.boss ? "#ff3b3b" : "rgba(0,0,0,0.5)"; c.stroke();
+        if (m.boss) { c.beginPath(); c.arc(x, z, r + 3, 0, Math.PI * 2); c.strokeStyle = "rgba(255,60,60,0.65)"; c.lineWidth = 1.4; c.stroke(); }
+      });
+
+      // 🚪 ประตูโซน
+      const GI = { town: "🏰", home: "🏠", ranch: "🐄" };
+      c.textAlign = "center"; c.textBaseline = "middle";
+      S.gates.forEach((g) => {
+        const x = PX(g.x), z = PZ(g.z);
+        c.beginPath(); c.arc(x, z, big ? 12 : 7.5, 0, Math.PI * 2);   // วงขาวรองหลัง ให้ไอคอนเด่นบนพื้นสีอะไรก็อ่านออก
+        c.fillStyle = "rgba(255,255,255,0.82)"; c.fill();
+        c.font = (big ? 16 : 10) + "px system-ui";
+        c.fillText(GI[g.k] || "🚪", x, z + (big ? 1 : 0.5));
+      });
+
+      // 🪧 ป้ายทางออกไปด่านถัดไป
+      S.exits.forEach((e) => {
+        c.font = (big ? 15 : 10) + "px system-ui"; c.fillStyle = "#ffffff";
+        c.fillText("🪧", PX(e.vx * (S.r - 2.4)), PZ(e.vz * (S.r - 2.4)));
+        if (!big) return;
+        // 🏷️ ป้ายชื่อด่านถัดไป — หนีบให้อยู่ในกรอบเสมอ ไม่โดนขอบตัดคำ
+        c.font = "700 11px system-ui";
+        const t = (e.emoji || "") + " " + (e.name || "");
+        const tw = c.measureText(t).width, bw = tw + 8, bh = 16;
+        const lx = Math.max(bw / 2 + 2, Math.min(w - bw / 2 - 2, PX(e.vx * (S.r + 3.4))));
+        const lz = Math.max(bh / 2 + 2, Math.min(h - bh / 2 - 2, PZ(e.vz * (S.r + 3.4))));
+        c.fillStyle = "rgba(0,0,0,0.62)"; c.fillRect(lx - bw / 2, lz - bh / 2, bw, bh);
+        c.fillStyle = "#ffe9a8"; c.fillText(t, lx, lz);
+      });
+
+      // 🙋 ตัวเรา — สามเหลี่ยมชี้ตามทิศที่หัน
+      {
+        const x = PX(S.me.x), z = PZ(S.me.z), a = -S.me.ry;   // โลก: rotation.y 0 = +Z
+        c.save(); c.translate(x, z); c.rotate(a);
+        const t = big ? 9 : 6;
+        c.beginPath(); c.moveTo(0, t); c.lineTo(-t * 0.72, -t * 0.72); c.lineTo(0, -t * 0.3); c.lineTo(t * 0.72, -t * 0.72); c.closePath();
+        c.fillStyle = "#ffffff"; c.fill(); c.lineWidth = 1.6; c.strokeStyle = "#2a6ad0"; c.stroke();
+        c.restore();
+      }
+
+      // 🧭 ทิศเหนือ
+      c.font = "800 " + (big ? 13 : 9) + "px system-ui"; c.fillStyle = "rgba(255,255,255,0.85)";
+      c.fillText("N", cx, big ? 12 : 8);
+      c.restore();
+    };
+
+    G.regMapCv = (key, el) => {
+      G._mapCv = G._mapCv || {};
+      if (!el) { delete G._mapCv[key]; return; }
+      G._mapCv[key] = el;
+      G._mapPaintT = 0;   // วาดทันทีเฟรมถัดไป
+    };
+    G._paintMap = () => {
+      const cvs = G._mapCv; if (!cvs) return;
+      let live = null;
+      for (const k in cvs) { const el = cvs[k]; if (el && el.isConnected) { live = live || {}; live[k] = el; } else if (el) delete cvs[k]; }
+      if (!live) return;
+      const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+      if (now - (G._mapPaintT || 0) < (live.big ? 70 : 110)) return;
+      G._mapPaintT = now;
+      const S = G.mapSnap(); if (!S) return;
+      for (const k in live) { try { drawMapOn(live[k], S, k === "big"); } catch (_) {} }
+    };
+
+    // 📋 รายละเอียดสำหรับแผนที่ขยาย — รายชื่อมอนสเตอร์ในแมพ + เส้นทางเดิน
+    G.mapDetail = () => {
+      const S = G.mapSnap(); if (!S) return null;
+      const by = {};
+      S.mobs.forEach((m) => {
+        const o = by[m.sp] || (by[m.sp] = { sp: m.sp, n: 0, lo: 1e9, hi: 0, shiny: 0, boss: 0 });
+        o.n++; o.lo = Math.min(o.lo, m.lv); o.hi = Math.max(o.hi, m.lv);
+        if (m.shiny) o.shiny++; if (m.boss) o.boss++;
+      });
+      const list = Object.keys(by).map((k) => {
+        const sp = SPECIES[k] || {}, o = by[k];
+        return { sp: k, n: o.n, lo: o.lo, hi: o.hi, shiny: o.shiny, boss: o.boss,
+                 name: sp.name || k, emoji: sp.emoji || "❓", tier: sp.tier || 1, desc: sp.desc || "",
+                 color: _hexCss(sp.color != null ? sp.color : 0xdd6666) };
+      }).sort((a, b) => (b.boss - a.boss) || (b.tier - a.tier) || (b.n - a.n));
+      const info = G.roadInfo ? G.roadInfo() : null;
+      const myLv = (G.player && G.player.level) || 1;
+      const chain = WORLD_CHAIN.map((id, i) => {
+        const B = biomeById(id) || {};
+        return { id, i, name: B.name || id, emoji: B.emoji || "🗺️", lvMin: B.lvMin || 1, lvMax: B.lvMax || 1,
+                 ground: _hexCss(B.ground != null ? B.ground : 0x888888),
+                 here: id === S.biome.id, ok: myLv >= (B.lvMin || 1),
+                 route: (ROUTE_OF[id] && ROUTE_OF[id].route) ? ROUTE_OF[id].route.name : "" };
+      });
+      return {
+        biome: S.biome, indoor: S.indoor, total: S.mobs.length, list,
+        me: { x: Math.round(S.me.x), z: Math.round(S.me.z) },
+        exits: S.exits, spot: S.spot, chain, myLv,
+        route: info && info.route ? { name: info.route.name, emoji: info.route.emoji, step: info.step, total: info.total } : null,
+      };
+    };
+
+    G.mapRefresh = () => { const d = G.mapDetail(); setUi((u) => ({ ...u, mapInfo: d })); return d; };
+    G.toggleMap = (on) => {
+      const open = on == null ? !G._mapOpen : !!on;
+      G._mapOpen = open;
+      if (G._mapTimer) { clearInterval(G._mapTimer); G._mapTimer = null; }
+      if (open) {
+        const d = G.mapDetail();
+        setUi((u) => ({ ...u, mapOpen: true, mapInfo: d }));
+        G._mapTimer = setInterval(() => {
+          // ปิดเองเมื่อออกจากโหมดสำรวจ (เช่นโดนลากเข้าต่อสู้) — กัน interval ค้างกิน CPU
+          if (!G._mapOpen) { clearInterval(G._mapTimer); G._mapTimer = null; return; }
+          if (G.mode !== "explore") { G.toggleMap(false); return; }
+          G.mapRefresh();
+        }, 1400);
+      } else {
+        setUi((u) => ({ ...u, mapOpen: false }));
+      }
+      return open;
+    };
+    // ================= 🗺️ END MINIMAP =================
     // 🚶 เดินข้ามเขตแดน — เข้าด่านถัดไปจากฝั่งตรงข้าม ทิศเดิม เยื้องข้างเท่าเดิม เดินต่อได้ทันที
     G.travelRoad = (dirKey) => {
       const end = (G._roadEnds || []).find((e) => e.dir === dirKey);
@@ -44708,6 +44916,7 @@ export default function CherryAdventure() {
         G._heatLast = nowH;
       }
       if (dtForce == null) renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
+      if (dtForce == null && G._paintMap) { try { G._paintMap(); } catch (_) {} }   // 🗺️ วาดมินิแมพ/แผนที่ขยาย
       } catch (err) {
         if (!G._loggedErr) { G._loggedErr = true; console.error("animate loop error:", err); }
       }
@@ -44859,6 +45068,12 @@ export default function CherryAdventure() {
     : { bottom: 196, left: "50%", transform: "translateX(-50%)" };
   const PROMPT_W = { maxWidth: 152, textAlign: "center" };   // แคบพอให้ไม่ชนจอยด้านซ้ายกับแถบสกิลด้านขวา
   const _boardOn = !ui.boardHidden && !ui.equipScreen && ui.mode === "explore" && !HUD_HIDE;   // 🏆 แผงอันดับโลกกินมุมซ้ายบน — แบนเนอร์ต้องเลี่ยง
+  // 🗺️ มินิแมพมุมขวาบน — จองที่มุมขวาไว้ก่อน แล้วดันแผงอันดับโลกลงมาอยู่ใต้มัน
+  const MINI_SZ = _shortHud ? 92 : 114;
+  const MINI_ON = ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !ui.mapOpen;
+  const MINI_TOP = HUD_CARD ? 4 : 42;
+  const MINI_H = MINI_SZ + 12;                       // วงกลม + ป้ายชื่อแดนที่ห้อยอยู่ใต้วง
+  const BOARD_TOP = (MINI_ON && HUD_CARD) ? (MINI_TOP + MINI_H + 6) : (HUD_CARD ? 4 : 42);
   // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
   const _bannerSide = !HUD_CARD && _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
   const _bannerDrop = (_boardOn && !_bannerSide && !HUD_CARD) ? 104 : 0;   // แนวนอน: อันดับโลกไปอยู่ขวาแล้ว แบนเนอร์ไม่ต้องหลบลงมา
@@ -46533,6 +46748,138 @@ export default function CherryAdventure() {
         </div>
       )}
 
+      {/* 🗺️ แผนที่ขยาย — คลิกมินิแมพเพื่อเปิด */}
+      {ui.mapOpen && (() => {
+        const MI = ui.mapInfo;
+        const two = _uiWideModal;               // จอกว้าง = แผนที่ซ้าย / รายชื่อมอนขวา
+        const cvSz = two ? "min(46vh, 340px)" : "min(56vw, 300px)";
+        const tierCol = ["#9aa0a8", "#8fc98a", "#6ab0e8", "#c08ae8", "#f0a94a", "#ff6a6a"];
+        return (
+          <div onClick={() => G.toggleMap(false)} style={{
+            position: "absolute", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(14,11,20,0.62)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", fontFamily: font,
+          }}>
+            <div onClick={(e) => e.stopPropagation()} style={{
+              background: "linear-gradient(160deg,#2a2338,#1d1828)", borderRadius: 18, padding: "11px 12px 12px",
+              border: "1px solid rgba(255,255,255,0.16)", boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
+              width: two ? "min(94vw, 760px)" : "min(94vw, 400px)", maxHeight: "92vh", overflowY: "auto", color: "#eae2f5",
+            }}>
+              {/* หัวเรื่อง */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 900, color: "#ffd76a" }}>🗺️ แผนที่ {MI ? MI.biome.emoji + " " + MI.biome.name : ""}</span>
+                {MI && (
+                  <span style={{ fontSize: 10, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.26)", borderRadius: 7, padding: "2px 7px" }}>
+                    Lv.{MI.biome.lvMin}-{MI.biome.lvMax}
+                  </span>
+                )}
+                {MI && MI.route && (
+                  <span style={{ fontSize: 10, fontWeight: 800, color: "#ffcf8a", background: "rgba(200,140,50,0.24)", borderRadius: 7, padding: "2px 7px" }}>
+                    {MI.route.emoji} {MI.route.name} {MI.route.step}/{MI.route.total}
+                  </span>
+                )}
+                <div style={{ flex: 1 }} />
+                <button onClick={() => G.mapRefresh && G.mapRefresh()} title="รีเฟรช" style={{ width: 24, height: 24, borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 12, padding: 0 }}>🔄</button>
+                <button onClick={() => G.toggleMap(false)} title="ปิด" style={{ width: 24, height: 24, borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 13, padding: 0, marginLeft: 3 }}>✕</button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: two ? "row" : "column", gap: 10, alignItems: "flex-start" }}>
+                {/* ── แผนที่ ── */}
+                <div style={{ flexShrink: 0, width: two ? cvSz : "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: cvSz, height: cvSz, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 4px 18px rgba(0,0,0,0.45)", position: "relative" }}>
+                    <canvas ref={(el) => G.regMapCv && G.regMapCv("big", el)} style={{ width: "100%", height: "100%", display: "block" }} />
+                  </div>
+                  {/* คำอธิบายสัญลักษณ์ */}
+                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3px 9px", fontSize: 9.5, color: "#c8bcdd", lineHeight: 1.5 }}>
+                    <span>🔺 ตัวเรา</span><span>🔴 มอนสเตอร์</span><span style={{ color: "#ffd75a" }}>🟡 ตัวหายาก</span>
+                    <span style={{ color: "#ff7a7a" }}>⭕ บอส</span><span>🏰 เมือง</span><span>🏠 บ้าน</span><span>🐄 ฟาร์ม</span><span>🟦 จุดตกปลา</span><span>🪧 ทางออก</span>
+                  </div>
+                  {MI && (
+                    <div style={{ fontSize: 10, color: "#a898c8" }}>
+                      📍 พิกัด X {MI.me.x} · Z {MI.me.z} · 🐾 มอนในแมพ {MI.total} ตัว
+                      {MI.spot ? ` · 🎣 ${MI.spot.name} (Lv.${MI.spot.lv}+)` : ""}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── รายชื่อมอนสเตอร์ + ทางเดิน ── */}
+                <div style={{ flex: 1, minWidth: 0, width: two ? "auto" : "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 11.5, fontWeight: 800, color: "#ffd76a", marginBottom: 4 }}>🐾 มอนสเตอร์ในแดนนี้ {MI ? `(${MI.list.length} ชนิด)` : ""}</div>
+                    <div style={{ maxHeight: two ? "34vh" : 168, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                      {MI && MI.list.length ? MI.list.map((m) => (
+                        <div key={m.sp} style={{
+                          display: "flex", alignItems: "center", gap: 7, padding: "4px 7px", borderRadius: 9,
+                          background: m.boss ? "rgba(255,70,70,0.16)" : "rgba(255,255,255,0.07)",
+                          border: m.boss ? "1px solid rgba(255,90,90,0.45)" : "1px solid rgba(255,255,255,0.08)",
+                        }}>
+                          <span style={{ width: 9, height: 9, borderRadius: "50%", background: m.color, flexShrink: 0, boxShadow: "0 0 5px " + m.color }} />
+                          <span style={{ fontSize: 15, flexShrink: 0 }}>{m.emoji}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 11, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {m.name}
+                              {m.boss ? <span style={{ color: "#ff8a8a" }}> 👑</span> : null}
+                              {m.shiny ? <span style={{ color: "#ffd75a" }}> ✨{m.shiny}</span> : null}
+                            </div>
+                            <div style={{ fontSize: 8.5, color: "#a898c8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.desc}</div>
+                          </div>
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            <div style={{ fontSize: 10, fontWeight: 800, color: "#9ad0ff" }}>Lv.{m.lo}{m.hi > m.lo ? `-${m.hi}` : ""}</div>
+                            <div style={{ fontSize: 8.5, color: tierCol[Math.min(5, m.tier)] }}>★{m.tier} · ×{m.n}</div>
+                          </div>
+                        </div>
+                      )) : (
+                        <div style={{ fontSize: 10, color: "#a898c8", textAlign: "center", padding: "10px 0" }}>
+                          {MI && MI.indoor ? "อยู่ในเขตปลอดภัย — ไม่มีมอนสเตอร์" : "ยังไม่มีมอนสเตอร์ในระยะ"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ทางออกไปด่านข้าง ๆ */}
+                  {MI && MI.exits.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#ffd76a", marginBottom: 4 }}>🪧 เดินต่อจากแดนนี้ได้</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        {MI.exits.map((e) => (
+                          <div key={e.dir} style={{ display: "flex", alignItems: "center", gap: 7, padding: "4px 8px", borderRadius: 9, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                            <span style={{ fontSize: 13, color: "#ffd76a", flexShrink: 0 }}>{e.arrow}</span>
+                            <span style={{ flex: 1, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.emoji} {e.name}</span>
+                            <span style={{ fontSize: 9.5, color: "#a898c8", flexShrink: 0 }}>{e.side}</span>
+                            <span style={{ fontSize: 9.5, fontWeight: 800, color: MI.myLv >= e.lvMin ? "#8fe08a" : "#ff9a6a", flexShrink: 0 }}>Lv.{e.lvMin}+</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 9, color: "#9a8ab8", marginTop: 3 }}>เดินไปสุดถนนตามทิศนั้นแล้วข้ามเขตได้เลย — ไม่ต้องวาร์ป</div>
+                    </div>
+                  )}
+
+                  {/* แผนผังโลกทั้งหมด */}
+                  {MI && (
+                    <div>
+                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#ffd76a", marginBottom: 4 }}>🌍 เส้นทางโลก ({MI.chain.length} แดน)</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                        {MI.chain.map((b) => (
+                          <div key={b.id} title={`${b.name} · Lv.${b.lvMin}-${b.lvMax}${b.route ? " · " + b.route : ""}`} style={{
+                            display: "flex", alignItems: "center", gap: 3, padding: "3px 6px", borderRadius: 8,
+                            border: b.here ? "1.5px solid #ffd76a" : "1px solid rgba(255,255,255,0.12)",
+                            background: b.here ? "rgba(245,200,90,0.22)" : "rgba(255,255,255,0.06)",
+                            opacity: b.ok || b.here ? 1 : 0.5,
+                          }}>
+                            <span style={{ width: 7, height: 7, borderRadius: 2, background: b.ground, flexShrink: 0 }} />
+                            <span style={{ fontSize: 9.5, fontWeight: 700, color: b.here ? "#ffe9a8" : "#d8cfe8" }}>{b.emoji} {b.name}</span>
+                            <span style={{ fontSize: 8, color: b.ok ? "#8fe08a" : "#ff9a6a" }}>{b.here ? "อยู่นี่" : b.ok ? "" : "🔒" + b.lvMin}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 🌀 warp map picker */}
       {ui.warpAsk && ui.mode === "explore" && (
         <div onClick={() => G.closeWarp()} style={{
@@ -47149,10 +47496,32 @@ export default function CherryAdventure() {
       )}
 
       {/* ===== explore HUD ===== */}
+      {/* 🗺️ มินิแมพมุมขวาบน — แตะเพื่อขยายดูรายละเอียดแผนที่ */}
+      {MINI_ON && (
+        <div onClick={() => G.toggleMap && G.toggleMap(true)} title="แตะเพื่อขยายแผนที่" style={{
+          position: "absolute", top: ST(MINI_TOP), right: EDGE_R, zIndex: 27,
+          width: MINI_SZ, cursor: "pointer", pointerEvents: "auto", fontFamily: font,
+        }}>
+          <div style={{
+            width: MINI_SZ, height: MINI_SZ, borderRadius: "50%", overflow: "hidden", position: "relative",
+            border: "2px solid rgba(255,255,255,0.35)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+            background: "rgba(18,14,26,0.55)",
+          }}>
+            <canvas ref={(el) => G.regMapCv && G.regMapCv("mini", el)} style={{ width: "100%", height: "100%", display: "block" }} />
+          </div>
+          {/* 🏷️ ชื่อแดน — วางใต้วงกลม จะได้ไม่โดนขอบวงตัดตัวอักษร */}
+          <div style={{
+            marginTop: -7, marginLeft: "auto", marginRight: "auto", width: "fit-content", maxWidth: "100%",
+            fontSize: 8.5, fontWeight: 800, color: "#ffe9a8", padding: "1px 7px", borderRadius: 999,
+            background: "rgba(18,14,26,0.78)", border: "1px solid rgba(255,255,255,0.18)",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", pointerEvents: "none",
+          }}>{ui.biomeName || "🗺️ แผนที่"}</div>
+        </div>
+      )}
       {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch; hidden during battle so it doesn't clutter combat */}
       {ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && !HUD_HIDE && (
         <button onClick={() => G.toggleBoard && G.toggleBoard()} title="แสดงป้ายอันดับโลก" style={{
-          position: "absolute", top: HUD_CARD ? ST(4) : "calc(env(safe-area-inset-top) + 42px)",
+          position: "absolute", top: ST(BOARD_TOP),
           ...(HUD_CARD ? { right: EDGE_R } : { left: "calc(env(safe-area-inset-left) + 10px)" }), zIndex: 26,
           border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", borderRadius: 999, padding: "4px 10px",
           background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
@@ -47160,7 +47529,7 @@ export default function CherryAdventure() {
         }}>🏆</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && !HUD_HIDE && (
-        <div style={{ position: "absolute", top: HUD_CARD ? ST(4) : "calc(env(safe-area-inset-top) + 42px)",
+        <div style={{ position: "absolute", top: ST(BOARD_TOP),
           ...(HUD_CARD ? { right: EDGE_R } : { left: "calc(env(safe-area-inset-left) + 10px)" }),
           width: HUD_CARD ? (_shortHud ? 168 : 200) : 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
