@@ -49498,6 +49498,7 @@ function CherryAdventure() {
             };
             G.player.maxMp = effMaxMp();
             G.player.mp = G.player.maxMp;
+            G.player.hp = effMaxHp(); // 🩸 ตัวละครใหม่ต้องเริ่มด้วยหลอดเลือดเต็ม (maxHp ในนี้เป็นค่าฐาน ยังไม่คูณ HP_MUL/โบนัสเลเวล)
             // every class skill starts at rank 1
             G.skillRanks = {};
             skillsOf(G.cls, G.pathId).forEach((sk) => { G.skillRanks[sk.id] = 1; });
@@ -52830,12 +52831,11 @@ function CherryAdventure() {
             G.player = { ...d.player };
             G.player.sp = G.player.sp || 0;
             G.player.statPts = G.player.statPts || 0;
-            // ⚖️ สมดุลใหม่ทำให้เพดานเลือด/มานาเปลี่ยน — หนีบค่าที่โหลดมาไม่ให้ล้นเกินสูงสุด
-            try {
-                G.player.hp = Math.max(1, Math.min(G.player.hp || 1, effMaxHp()));
-                G.player.mp = Math.max(0, Math.min(G.player.mp || 0, effMaxMp()));
-            }
-            catch (e) { }
+            // ⚠️ ห้ามหนีบเลือด/มานาตรงนี้! ชุด · เครื่องประดับ · ต้นไม้ทักษะ · หมู่ดาว · มาสเตอรี่ ·
+            //    เซ็ต · สเตตัสที่ปั้ม · สัตว์เลี้ยง ยังไม่ถูกโหลด → effMaxHp() ยังต่ำกว่าความจริงมาก
+            //    ถ้าหนีบตรงนี้ เลือดที่เซฟไว้จะโดนตัดทิ้ง พอโหลดของครบหลอดเลือดเด้งกลับเต็ม
+            //    แต่เลือดปัจจุบันค้างอยู่ต่ำ → "เข้าเกมใหม่แล้วเลือดหาย ไม่เต็มหลอด"
+            //    ย้ายไปทำท้ายฟังก์ชันโหลด (ดู 🩸 ด้านล่าง) ตอนของครบแล้ว
             G.col = d.col || {};
             G.pets = d.pets || {};
             G.inv = (d.inv || []).filter((id) => LOOT.find((x) => x.id === id)); // 🧹 drop stale item ids removed in past updates (they'd crash menus that look them up)
@@ -53095,6 +53095,15 @@ function CherryAdventure() {
                 G.checkAchievements();
             if (G.computeTitle)
                 G.computeTitle();
+            // 🩸 ตั้งเลือด/มานาหลังโหลดของครบทุกอย่างแล้ว (ชุด · เครื่องประดับ · ทักษะ · เซ็ต · สเตตัส · สัตว์เลี้ยง · ฉายา)
+            //    ล็อกอินแล้วเริ่มที่เมืองเชอร์รี่ซึ่งเป็นเขตปลอดภัยอยู่แล้ว จึงเติมเต็มหลอดให้เลย
+            //    (แถมยังซ่อมเซฟเก่าที่เลือดโดนหนีบทิ้งไปจากบั๊กเดิมด้วย)
+            try {
+                const mh = effMaxHp(), mm = effMaxMp();
+                G.player.hp = Number.isFinite(mh) && mh > 0 ? mh : Math.max(1, G.player.hp || 1);
+                G.player.mp = Number.isFinite(mm) && mm > 0 ? mm : Math.max(0, G.player.mp || 0);
+            }
+            catch (e) { }
             toast(`▶ ยินดีต้อนรับกลับ! ${CLASSES[G.cls].emoji} เชอร์รี่สาย${CLASSES[G.cls].name} Lv.${G.player.level} · ${BIOMES[G.curBiome || 0].emoji} ${BIOMES[G.curBiome || 0].name}`);
             setUi((u) => ({
                 ...u, mode: "explore", cls: G.cls,
