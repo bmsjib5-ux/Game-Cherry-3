@@ -1225,6 +1225,35 @@ const SOCKETS_BY_RARITY = { common: 0, rare: 1, epic: 2, secret: 3, dragon: 3, l
 // Each path grants permanent stat multipliers, a passive perk, and unlocks a 6th signature skill.
 // (Distinct from "การตื่นพลัง"/ngPlus, which is the prestige reset.)
 const PATH_LV = 40;
+// ================= 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง =================
+// ขั้นสูง 1 (Lv.40) และขั้นสูง 2 (Lv.80) — ต้องเดินไปคุยกับ "อาจารย์ประจำอาชีพ" รับภารกิจก่อน
+// แล้วล่ามอนสเตอร์ที่กำหนด 5 ชนิด ชนิดละ 10 ตัว (ขั้น 1) / 20 ตัว (ขั้น 2)
+// ทำครบแล้วถึงจะเปลี่ยนสายอาชีพและเริ่มใช้ชุดสกิลของขั้นนั้นได้
+const ADV_STAGES = [
+  { tier: 1, lv: 40, kill: 10, emoji: "🌟", name: "ขั้นสูง 1",
+    intro: "เจ้ามาถึงจุดที่ต้องเลือกทางเดินของตัวเองแล้ว... แต่ข้าจะไม่สอนวิชาให้คนที่ยังพิสูจน์ตัวไม่ได้",
+    task: "จงออกไปล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 10 ตัว แล้วกลับมาหาข้า" },
+  { tier: 2, lv: 80, kill: 20, emoji: "💫", name: "ขั้นสูง 2",
+    intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
+    task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
+];
+// 🐾 มอนสเตอร์ 5 ชนิดที่แต่ละอาชีพต้องล่า
+const ADV_TARGETS = {
+  warrior:  ["khiao", "ngu", "saming", "plerng", "garuda"],
+  archer:   ["paksi", "mekha", "nam", "wayu", "kirara"],
+  mage:     ["mekha", "baibua", "phi", "kirara", "taara"],
+  assassin: ["mochi", "ngu", "khiao", "phi", "saming"],
+  lancer:   ["nam", "ngu", "khiao", "plerng", "garuda"],
+  samurai:  ["khiao", "saming", "plerng", "phi", "garuda"],
+  coder:    ["mekha", "kirara", "paksi", "wayu", "taara"],
+  office:   ["mochi", "baibua", "nam", "mekha", "kirara"],
+  aegis:    ["baibua", "nam", "mekha", "paksi", "taara"],
+  boxer:    ["mochi", "khiao", "plerng", "saming", "garuda"],
+};
+const ADV_TARGETS_DEF = ["mochi", "baibua", "mekha", "plerng", "khiao"];
+const advTargets = (cls) => ADV_TARGETS[cls] || ADV_TARGETS_DEF;
+const ADV_MASTER_POS = { x: 0, z: -13.5 };   // 🧙 อาจารย์ยืนกลางหมู่บ้าน ระหว่างผู้เฒ่ากับช่างตีเหล็ก
+// ================= 🎓 END ภารกิจเปลี่ยนอาชีพขั้นสูง =================
 const CLASS_PATHS = {
   warrior: [
     { id: "w_pal", name: "อัศวินศักดิ์สิทธิ์", emoji: "🛡️✨", tint: 0xf5d24a,
@@ -2455,7 +2484,7 @@ export default function CherryAdventure() {
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
     rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
     guildName: null, guildEmoji: null,
-    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true,
+    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null,
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
   });
@@ -3571,6 +3600,33 @@ export default function CherryAdventure() {
       smith.position.set(8.5, 0, -7); smith.rotation.y = -0.55; scene.add(smith);
       colliders.push({ x: 8.5, z: -7, r: 0.6 });
       G.smith = smith; G.smithPos = { x: 8.5, z: -7 };
+    }
+    // 🧙 CLASS MASTER — อาจารย์ประจำอาชีพ: ให้ภารกิจเปลี่ยนอาชีพขั้นสูง 1 (Lv.40) และ 2 (Lv.80)
+    {
+      const mst = new THREE.Group();
+      const mMat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85 });
+      const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.62, 1.35, 16), mMat(0x4a3a7a)); robe.position.y = 0.68; mst.add(robe);
+      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.06, 8, 20), mMat(0xd8a83a)); sash.position.y = 0.86; sash.rotation.x = Math.PI / 2; mst.add(sash);
+      const chest2 = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 12), mMat(0x5a4a90)); chest2.scale.set(1, 0.8, 0.85); chest2.position.y = 1.28; mst.add(chest2);
+      const head2 = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), mMat(0xf0c088)); head2.position.y = 1.68; mst.add(head2);
+      const beard2 = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.52, 10), mMat(0xe8e8f0)); beard2.position.set(0, 1.42, 0.13); beard2.rotation.x = 0.22; mst.add(beard2);
+      const hat = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.62, 14), mMat(0x3a2a6a)); hat.position.y = 2.05; mst.add(hat);
+      const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 16), mMat(0x3a2a6a)); brim.position.y = 1.82; mst.add(brim);
+      for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.5, 10), mMat(0x5a4a90)); arm.position.set(sx * 0.4, 1.14, 0); arm.rotation.z = sx * 0.28; mst.add(arm); }
+      // 🪄 ไม้เท้าอาจารย์ + ลูกแก้วเรือง
+      const staff = new THREE.Group();
+      staff.add(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.7, 8), mMat(0x6a4a2a)));
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 14), new THREE.MeshStandardMaterial({ color: 0xf5d24a, emissive: 0xf5a623, emissiveIntensity: 0.9, roughness: 0.3 }));
+      orb.position.y = 0.94; staff.add(orb);
+      staff.position.set(0.5, 0.85, 0.1); staff.rotation.z = -0.12; mst.add(staff);
+      mst.userData.orb = orb;
+      const mc = document.createElement("canvas"); mc.width = 64; mc.height = 64;
+      const mctx2 = mc.getContext("2d"); mctx2.font = "44px system-ui"; mctx2.textAlign = "center"; mctx2.textBaseline = "middle"; mctx2.fillText("🎓", 32, 34);
+      const mmark = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(mc), transparent: true, depthTest: false }));
+      mmark.scale.set(0.6, 0.6, 1); mmark.position.y = 2.6; mst.add(mmark); mst.userData.mark = mmark;
+      mst.position.set(ADV_MASTER_POS.x, 0, ADV_MASTER_POS.z); scene.add(mst);
+      colliders.push({ x: ADV_MASTER_POS.x, z: ADV_MASTER_POS.z, r: 0.6 });
+      G.master = mst; G.masterPos = { x: ADV_MASTER_POS.x, z: ADV_MASTER_POS.z };
     }
     addWell(9.5, -9); // stone well in the northeast
     // 🎣 fishing pond (southwest)
@@ -23067,8 +23123,82 @@ export default function CherryAdventure() {
         (G.pathAuraMotes || []).forEach((m) => m.material.color.setHex(p.tint));
       }
     };
+    // ================= 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง — เครื่องยนต์ =================
+    G.adv = G.adv || { tier: 0, taken: {}, kills: {} };
+    G.advTier = () => (G.adv && G.adv.tier) || 0;
+    // ขั้นที่กำลังทำอยู่ (ขั้นแรกที่ยังไม่ผ่าน) — ผ่านครบแล้วคืน null
+    const advStage = () => ADV_STAGES.find((st) => st.tier > G.advTier()) || null;
+    const advKey = (tier, sp) => tier + ":" + sp;
+    const advDone = (st) => !!st && advTargets(G.cls).every((sp) => (G.adv.kills[advKey(st.tier, sp)] || 0) >= st.kill);
+    G.advInfo = () => {
+      const st = advStage();
+      const lv = (G.player && G.player.level) || 1;
+      if (!st) return { tier: G.advTier(), stage: null, allDone: true };
+      const targets = advTargets(G.cls).map((sp) => {
+        const S = SPECIES[sp] || {};
+        return { sp, name: S.name || sp, emoji: S.emoji || "❓", need: st.kill, cur: Math.min(st.kill, G.adv.kills[advKey(st.tier, sp)] || 0) };
+      });
+      return {
+        tier: G.advTier(), allDone: false,
+        stage: { tier: st.tier, lv: st.lv, kill: st.kill, emoji: st.emoji, name: st.name, intro: st.intro, task: st.task },
+        cls: G.cls, className: (CLASSES[G.cls] || {}).name || "", classEmoji: (CLASSES[G.cls] || {}).emoji || "🧙",
+        lvOk: lv >= st.lv, lv, taken: !!G.adv.taken[st.tier], done: advDone(st), targets,
+      };
+    };
+    G.advSync = () => setUi((u) => ({ ...u, adv: G.advInfo() }));
+    // 📜 รับภารกิจจากอาจารย์ (ไม่รับ = ล่ามอนไปก็ไม่นับ)
+    G.advTake = () => {
+      const st = advStage(); if (!st) { toast("🎓 ผ่านภารกิจเปลี่ยนอาชีพครบทุกขั้นแล้ว"); return false; }
+      if (G.adv.taken[st.tier]) { toast("📜 รับภารกิจนี้ไปแล้ว"); return false; }
+      const lv = (G.player && G.player.level) || 1;
+      if (lv < st.lv) { toast(`🔒 ต้องถึงเลเวล ${st.lv} ก่อน (ตอนนี้ Lv.${lv})`); return false; }
+      G.adv.taken[st.tier] = 1;
+      toast(`📜✨ รับภารกิจ "${st.emoji} เปลี่ยนอาชีพ${st.name}" แล้ว! ล่าสัตว์ร้าย 5 ชนิด ชนิดละ ${st.kill} ตัว`);
+      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      G.advSync(); if (G.saveGame) G.saveGame();
+      return true;
+    };
+    // 🐾 นับมอนที่ล่าได้ (เฉพาะขั้นที่รับภารกิจแล้วและยังไม่ผ่าน)
+    G.advKill = (spId) => {
+      if (!spId || !G.adv) return;
+      const st = advStage(); if (!st || !G.adv.taken[st.tier]) return;
+      if (advTargets(G.cls).indexOf(spId) < 0) return;
+      const k = advKey(st.tier, spId);
+      const cur = G.adv.kills[k] || 0;
+      if (cur >= st.kill) return;
+      const wasDone = advDone(st);
+      G.adv.kills[k] = cur + 1;
+      G._advDirty = true;
+      if (!wasDone && advDone(st)) {
+        toast(`🎓✅ ล่าครบแล้ว! กลับไปหาอาจารย์ประจำอาชีพเพื่อเปลี่ยน${st.name}`);
+        if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      }
+    };
+    // 🎓 จบภารกิจ — ปลดล็อกขั้นนั้น
+    G.advFinish = () => {
+      const st = advStage(); if (!st) return false;
+      if (!G.adv.taken[st.tier]) { toast("📜 ต้องรับภารกิจจากอาจารย์ก่อน"); return false; }
+      if (!advDone(st)) { toast("🐾 ยังล่าไม่ครบตามที่อาจารย์สั่ง"); return false; }
+      G.adv.tier = st.tier;
+      G.player.hp = effMaxHp(); G.player.mp = effMaxMp();
+      toast(st.tier === 1
+        ? "🎓🌟 ผ่านบททดสอบขั้นสูง 1! เลือกสายอาชีพขั้นสูงได้แล้ว"
+        : "🎓💫 ผ่านบททดสอบขั้นสูง 2! ใช้ชุดสกิลขั้นสูงของสายได้แล้ว");
+      if (G.sfx) { G.sfx.levelup && G.sfx.levelup(); G.sfx.boom && G.sfx.boom(); }
+      G._camShake = 0.6;
+      for (let k = 0; k < 22; k++) setTimeout(() => burst(char.position, k % 2 ? 0xf5d24a : 0xffffff, 0.6 + Math.random() * 2), k * 28);
+      G.advSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+      // ขั้น 1 ผ่านแล้วเปิดหน้าเลือกสายให้เลย · ขั้น 2 เปิดหน้าสลับชุดสกิล
+      setUi((u) => ({ ...u, masterOpen: false, ...(st.tier === 1 ? { skillPanel: true, pathOpen: true } : {}) }));
+      return true;
+    };
+    G.toggleMaster = () => { const d = G.advInfo(); setUi((u) => ({ ...u, masterOpen: !u.masterOpen, adv: d })); };
+    // ================= 🎓 END =================
+
     G.setSkillMode = (m) => {
       if (m === "adv" && !G.pathId) { toast("🔒 ต้องเลือกสายอาชีพขั้นสูงก่อน จึงใช้ชุดสกิลขั้นสูงได้"); return; }
+      // 🎓 ชุดสกิลขั้นสูงเปิดได้หลังผ่านภารกิจ "เปลี่ยนอาชีพขั้นสูง 2" จากอาจารย์ (Lv.80)
+      if (m === "adv" && G.advTier() < 2) { toast(`🎓 ต้องทำภารกิจขั้นสูง 2 กับอาจารย์ประจำอาชีพให้สำเร็จก่อน (Lv.${ADV_STAGES[1].lv})`); return; }
       G.skillMode = m === "adv" ? "adv" : "basic";
       setSkillModeGlobals(G.skillMode === "adv", G.pathId);
       toast(G.skillMode === "adv" ? "🌟 สลับเป็นชุดสกิลขั้นสูง + ท่าไม้ตายใหม่!" : "⚔️ กลับมาใช้ชุดสกิลพื้นฐาน");
@@ -23080,6 +23210,8 @@ export default function CherryAdventure() {
       if (switching && G.pathId === pathId) { toast("🌟 ใช้สายอาชีพนี้อยู่แล้ว"); return; }
       if (switching && G.player.level < PATH_SWITCH_LV) { toast(`🔒 เปลี่ยนสายอาชีพขั้นสูงได้เมื่อถึง Lv.${PATH_SWITCH_LV} (ตอนนี้ Lv.${G.player.level})`); return; }
       if (G.player.level < PATH_LV) { toast(`🔒 ต้องถึงเลเวล ${PATH_LV} ก่อน (ตอนนี้ Lv.${G.player.level})`); return; }
+      // 🎓 ต้องผ่านภารกิจ "เปลี่ยนอาชีพขั้นสูง 1" จากอาจารย์ประจำอาชีพก่อน
+      if (G.advTier() < 1) { toast("🎓 ต้องคุยกับอาจารย์ประจำอาชีพแล้วทำภารกิจขั้นสูง 1 ให้สำเร็จก่อน"); return; }
       const p = pathOf(G.cls, pathId);
       if (!p) return;
       G.pathId = pathId;
@@ -25482,6 +25614,7 @@ export default function CherryAdventure() {
       if (G.sfx) G.sfx.win && G.sfx.win();
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
       if (G.qingEvent) G.qingEvent("win", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 1
+      if (G.advKill) G.advKill(m.userData.spId);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง
       if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id }); // 📖
       G.combo = (G.combo || 0) + 1;
       const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
@@ -31063,6 +31196,7 @@ export default function CherryAdventure() {
       const em = G.enemy.mesh;
       const sp = SPECIES[G.enemy.spId];
       const wasBoss = G.enemy.boss;
+      if (G.advKill) G.advKill(G.enemy.spId);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง (นับจากสนามต่อสู้ด้วย)
       burst(em.position, 0xf5d05a);
       setMouth("laugh");
       const eLv = G.enemy.lv; // 📸 อ่านเลเวลไว้ก่อน — ข้อความนี้ถูกประกอบทีหลังตอน React เรนเดอร์
@@ -32048,6 +32182,7 @@ export default function CherryAdventure() {
       G.guildId = null; G.guild = null; G.guildRows = [];   // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
       G.warpScrolls = 0;   // 📜 ตัวละครใหม่ยังไม่มีใบวาร์ป
       G.qing = { learned: {}, taken: {}, prog: {} };   // 🍃 ยังไม่ได้ฝึกวิชาตัวเบาสักขั้น
+      G.adv = { tier: 0, taken: {}, kills: {} };        // 🎓 ยังไม่ได้ทำภารกิจเปลี่ยนอาชีพขั้นสูง
       G._qRunX = null; G._qRunZ = null; G._qRunAcc = 0;
       G.mineLv = 1; G.mineExp = 0; G.pickLv = 1; G.mineTotal = 0;   // ⛏️ เริ่มด้วยอีเต้อไม้
       G.cookLv = 1; G.cookExp = 0; G.cookTotal = 0; G.fishBag = { common: 0, rare: 0, epic: 0 }; G.foodBuff = null; G.foodBag = [];   // 🍳 ครัวเปล่า
@@ -32130,7 +32265,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } },
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -34070,6 +34205,12 @@ export default function CherryAdventure() {
       }
       G.petSp = d.petSp || 0;
       G.petSkillLv = d.petSkillLv || {};
+      // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง — กู้ขั้นที่ผ่านแล้ว ภารกิจที่รับไว้ และจำนวนที่ล่าได้
+      G.adv = {
+        tier: (d.adv && d.adv.tier) || 0,
+        taken: (d.adv && d.adv.taken) ? { ...d.adv.taken } : {},
+        kills: (d.adv && d.adv.kills) ? { ...d.adv.kills } : {},
+      };
       // 🍃 วิชาตัวเบา — ฝึกได้จากเควสพิเศษเท่านั้น จึงต้องกู้ทั้งวิชาที่ฝึกแล้ว เควสที่รับไว้ และความคืบหน้า
       G.qing = {
         learned: (d.qing && d.qing.learned) ? { ...d.qing.learned } : {},
@@ -34118,6 +34259,7 @@ export default function CherryAdventure() {
         col: { ...G.col }, pets: { ...G.pets }, msg: "",
       }));
       if (G.qingSync) G.qingSync();   // 🍃 ส่งสถานะวิชาตัวเบาเข้าหน้าจอ
+      if (G.advSync) G.advSync();     // 🎓 ส่งสถานะภารกิจเปลี่ยนอาชีพเข้าหน้าจอ
       syncPlayer();
     };
     // read all 3 save slots → show them on the title screen
@@ -35514,6 +35656,18 @@ export default function CherryAdventure() {
           const snear = sd < 2.1;
           if (snear !== G.smithNear) { G.smithNear = snear; setUi((u) => ({ ...u, smithNear: snear })); }
         }
+        // 🎓 อาจารย์ประจำอาชีพ
+        if (G.masterPos && G.master) {
+          const md = Math.hypot(char.position.x - G.masterPos.x, char.position.z - G.masterPos.z);
+          const mnear = md < 2.3;
+          if (mnear !== G.masterNear) { G.masterNear = mnear; setUi((u) => ({ ...u, masterNear: mnear, adv: G.advInfo ? G.advInfo() : null })); }
+          const orb = G.master.userData.orb;
+          if (orb) { const inf = G.advInfo ? G.advInfo() : null;
+            const hot = !!(inf && inf.stage && inf.lvOk && (!inf.taken || inf.done));   // ✨ มีอะไรให้ทำ = ลูกแก้ววาบ
+            orb.material.emissiveIntensity = hot ? 0.9 + Math.sin(t * 5) * 0.6 : 0.5; }
+          if (G.master.userData.mark) G.master.userData.mark.visible = !!(G.advInfo && (() => { const i2 = G.advInfo(); return i2 && i2.stage && i2.lvOk && (!i2.taken || i2.done); })());
+        }
+        if (G._advDirty) { G._advDirty = false; if (G.advSync) G.advSync(); }
         // 🛣️ เดินสุดปลายถนน = ข้ามไปด่านถัดไปในสายเดียวกัน (มีหน่วงกันเด้งไป-กลับ)
         if (G._roadCool > 0) G._roadCool -= dt;
         if (G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && (G._roadEnds || []).length) {
@@ -45982,7 +46136,7 @@ export default function CherryAdventure() {
     transform: "translateX(-50%)",
   });
   const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-    : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
+    : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
   const isPrompt = (name) => _promptTop === name;
   const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
   const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
@@ -45991,7 +46145,9 @@ export default function CherryAdventure() {
   const SKILL_SHELL = {
     position: "absolute", ...MODAL_POS, zIndex: 58,
     width: "92%", maxWidth: _uiWideModal ? 470 : 400,
-    height: "min(80vh, 580px)", overflowY: "auto",   // 📏 สูงคงที่ทุกแท็บ — สลับแล้วกรอบอยู่นิ่ง ไม่ขยับขึ้นลง
+    // 📏 สูงเท่ากันทุกแท็บ (สลับแล้วกรอบอยู่นิ่ง) และยืดตามความสูงจอ — จอสูงใช้พื้นที่ได้เต็ม จอเตี้ยก็ไม่ล้น
+    //    เว้นขอบบน-ล่างไว้ ~6% ของจอ · เพดาน 900px กันไม่ให้ยาวเกินอ่านสบายบนจอใหญ่มาก
+    height: `min(88vh, ${Math.max(320, Math.min(900, Math.round(_vh * 0.88)))}px)`, overflowY: "auto",
     background: "#fff", borderRadius: 18, padding: 13,
     boxShadow: MODAL_SHADOW, fontFamily: font,
   };
@@ -46146,7 +46302,7 @@ export default function CherryAdventure() {
       <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, pointerEvents: "none", zIndex: 2,
         background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
-      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "skillBoardOpen", "mbookOpen"].some((f) => ui[f]) && (
+      {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "skillBoardOpen", "mbookOpen", "masterOpen"].some((f) => ui[f]) && (
         <div onClick={() => setUi((u) => ({ ...u, ...closeAllMenus() }))} style={{ position: "absolute", inset: 0, zIndex: 49 }} />
       )}
       {/* 🏰 กิลด์ */}
@@ -48254,6 +48410,112 @@ export default function CherryAdventure() {
       )}
 
       {/* 👤 NPC talk button */}
+      {/* 🎓 ปุ่มคุยกับอาจารย์ประจำอาชีพ */}
+      {ui.mode === "explore" && isPrompt("master") && !ui.masterOpen && (
+        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
+          <button onClick={() => G.toggleMaster()} style={{
+            position: "relative", padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
+            background: "linear-gradient(90deg,#7a5cc0,#a86ad0)",
+            boxShadow: "0 5px 16px rgba(120,90,200,0.5)",
+          }}>🎓 คุยกับอาจารย์
+            {ui.adv && ui.adv.stage && ui.adv.lvOk && (!ui.adv.taken || ui.adv.done) &&
+              <span style={{ position: "absolute", top: -5, right: -5, width: 16, height: 16, borderRadius: 999, background: "#ff3b5c", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "16px" }}>!</span>}
+          </button>
+        </div>
+      )}
+
+      {/* 🎓 หน้าอาจารย์ประจำอาชีพ — ภารกิจเปลี่ยนอาชีพขั้นสูง */}
+      {ui.masterOpen && (() => {
+        const A = ui.adv || (G.advInfo ? G.advInfo() : null);
+        if (!A) return null;
+        const st = A.stage;
+        return (
+          <div style={SKILL_SHELL}>
+            {closeBtn("masterOpen")}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 9 }}>
+              <span style={{ fontSize: 24 }}>🎓</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 900, color: "#6a4ab0" }}>อาจารย์ประจำอาชีพ</div>
+                <div style={{ fontSize: 10, color: "#8a7aa0" }}>{A.classEmoji} สาย{A.className} · ผ่านแล้ว {A.tier}/2 ขั้น</div>
+              </div>
+            </div>
+
+            {!st ? (
+              <div style={{ padding: "18px 12px", textAlign: "center", borderRadius: 13, background: "#f5f0ff", border: "1px solid #e0d4f5" }}>
+                <div style={{ fontSize: 30 }}>🏆</div>
+                <div style={{ fontSize: 12.5, fontWeight: 900, color: "#6a4ab0", marginTop: 5 }}>ผ่านบททดสอบครบทุกขั้นแล้ว</div>
+                <div style={{ fontSize: 10.5, color: "#8a7aa0", marginTop: 3 }}>"ไม่มีอะไรจะสอนเจ้าอีกแล้ว จงไปสร้างตำนานของตัวเองเถิด"</div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ borderRadius: 13, padding: "10px 11px", marginBottom: 9,
+                  background: "linear-gradient(160deg,#f7f2ff,#efe8fb)", border: "1px solid #e0d4f5" }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 900, color: "#6a4ab0", marginBottom: 3 }}>{st.emoji} ภารกิจเปลี่ยนอาชีพ{st.name} <span style={{ fontSize: 10, color: "#9a8ab8" }}>(Lv.{st.lv})</span></div>
+                  <div style={{ fontSize: 10.5, color: "#7a6a95", lineHeight: 1.6, fontStyle: "italic" }}>"{A.taken ? st.task : st.intro}"</div>
+                </div>
+
+                {!A.lvOk ? (
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#c07a3a", background: "#fff4e4", borderRadius: 11, padding: "9px 10px", textAlign: "center" }}>
+                    🔒 ต้องถึงเลเวล {st.lv} ก่อน — ตอนนี้ Lv.{A.lv}
+                  </div>
+                ) : !A.taken ? (
+                  <div>
+                    <div style={{ fontSize: 10.5, color: "#7a6a95", marginBottom: 8, lineHeight: 1.55 }}>
+                      🐾 ล่าสัตว์ร้าย 5 ชนิด ชนิดละ <b style={{ color: "#6a4ab0" }}>{st.kill} ตัว</b> — รับภารกิจก่อนถึงจะเริ่มนับ
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5, marginBottom: 9 }}>
+                      {A.targets.map((t) => (
+                        <div key={t.sp} title={t.name} style={{ textAlign: "center", padding: "6px 2px", borderRadius: 10, background: "#f5f0ff", border: "1px solid #e6ddf7" }}>
+                          <div style={{ fontSize: 18 }}>{t.emoji}</div>
+                          <div style={{ fontSize: 7.5, fontWeight: 700, color: "#8a7aa0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => G.advTake()} style={{ width: "100%", padding: "10px 0", borderRadius: 999, border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: 900, fontFamily: font, color: "#fff",
+                      background: "linear-gradient(135deg,#9a6ad0,#6a4ab0)", boxShadow: "0 4px 14px rgba(120,90,200,0.45)" }}>📜 รับภารกิจ</button>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#6a4ab0", marginBottom: 6 }}>🐾 ความคืบหน้าการล่า</div>
+                    {A.targets.map((t) => {
+                      const pct = Math.min(100, Math.round(t.cur / t.need * 100));
+                      const ok = t.cur >= t.need;
+                      return (
+                        <div key={t.sp} style={{ marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: ok ? "#3a9a5a" : "#6a5a85", marginBottom: 2 }}>
+                            <span style={{ fontSize: 15 }}>{t.emoji}</span>
+                            <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ok ? "✅ " : ""}{t.name}</span>
+                            <span style={{ fontWeight: 800 }}>{t.cur}/{t.need}</span>
+                          </div>
+                          <div style={{ height: 6, borderRadius: 999, background: "#ece4f8", overflow: "hidden" }}>
+                            <div style={{ width: pct + "%", height: "100%", borderRadius: 999, transition: "width .3s",
+                              background: ok ? "linear-gradient(90deg,#7cf0b0,#3fbf80)" : "linear-gradient(90deg,#b79bff,#8a6ad0)" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => G.advFinish()} disabled={!A.done} style={{ width: "100%", marginTop: 7, padding: "10px 0", borderRadius: 999, border: "none",
+                      cursor: A.done ? "pointer" : "not-allowed", fontSize: 13, fontWeight: 900, fontFamily: font,
+                      color: A.done ? "#fff" : "#a89ab8",
+                      background: A.done ? "linear-gradient(135deg,#ffd76a,#e0a83a)" : "#efeaf6",
+                      boxShadow: A.done ? "0 4px 14px rgba(224,168,58,0.5)" : "none" }}>
+                      {A.done ? `${st.emoji} เปลี่ยนอาชีพ${st.name}` : "ยังล่าไม่ครบ — ออกไปล่าต่อ"}
+                    </button>
+                  </div>
+                )}
+                <div style={{ fontSize: 9, color: "#9a8ab8", marginTop: 9, lineHeight: 1.55 }}>
+                  {st.tier === 1
+                    ? "🌟 ผ่านขั้นนี้แล้วถึงจะเลือกสายอาชีพขั้นสูงและใช้ท่าประจำสายได้"
+                    : "💫 ผ่านขั้นนี้แล้วถึงจะสลับไปใช้ชุดสกิลขั้นสูงของสายได้"}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {ui.mode === "explore" && isPrompt("npc") && !ui.npcTalk && (
         <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
           <button onClick={() => G.talkNPC()} style={{
