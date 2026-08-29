@@ -24,7 +24,7 @@ const SPAWN_POOL = ["mochi", "mochi", "baibua", "baibua", "mekha", "plerng", "na
 const FLOATY = { mekha: true, phi: true, paksi: true, wayu: true, taara: true }; // species that hover
 // 🗺️ multiple adventure maps (biomes) — warp between them
 const BIOMES = [
-  { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 50, ground: 0xa8c98a, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸" },
+  { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0xa8c98a, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 },   // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
   { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
   { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
   { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
@@ -2411,6 +2411,9 @@ const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
 //      💜 EPIC   = บอส หรือมอนธรรมดาเลเวล 25+ (ยิ่งเลเวลสูงยิ่งมีลุ้น)
 //      มอนเลเวลต่ำ = ได้แค่ของทั่วไปกับของหายาก
 //    (eliteBoss = บอสโลก 👹 หรือเจ้าถิ่นประจำแดน 👑 — สองอย่างนี้คือแหล่งของระดับสูงสุด)
+// ⚖️ ตัวคูณความยากประจำแดน — ด่านฝึกมือกำหนด hpMul/atkMul ไว้ต่ำกว่า 1 (แดนอื่นไม่ระบุ = 1 เท่าเดิม)
+const biomeHpMul = (b) => (b && b.hpMul != null ? b.hpMul : 1);
+const biomeAtkMul = (b) => (b && b.atkMul != null ? b.atkMul : 1);
 const rollRarity = (boss, lv, eliteBoss) => {
   const L = Math.max(1, lv || 1);
   const r = Math.random();
@@ -2452,7 +2455,7 @@ export default function CherryAdventure() {
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
     rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
     guildName: null, guildEmoji: null,
-    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false,
+    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true,
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
   });
@@ -19546,30 +19549,46 @@ export default function CherryAdventure() {
       const boss = c && c.t === "bboss";
       return { gold: (400 + i * 180) * (boss ? 2 : 1), dia: 3 + Math.floor(i / 4) + (boss ? 5 : 0) };
     };
-    // 🧭 แตะป้ายเควส → ตัวละครเดินไปยังจุดหมายของบทนั้นเอง
+    // 🧭 เดินไปยังเป้าหมายของภารกิจ — ใช้ร่วมกันทั้งเนื้อเรื่องและเควสย่อย
+    //    (ถ้าอยู่ในเมือง/บ้าน/ฟาร์ม จะพาเดินออกไปที่ทางออกก่อน)
+    const questWalkTo = (x, z, label) => {
+      if (G.mode !== "explore") { toast("สั่งเดินได้ตอนสำรวจเท่านั้น"); return false; }
+      if (G.inHomeZone || G.inRanchZone) { toast("🚪 ออกจากพื้นที่ส่วนตัวก่อนนะ"); return false; }
+      if (G.inTownZone) {
+        G.moveTarget = new THREE.Vector3(0, 0, 29.8);      // 🏰 ประตูออกเมือง
+        if (G.markMoveTo) G.markMoveTo(0, 29.8);
+        if (G.manualOrder) G.manualOrder(12);
+        toast(`🧭 เดินออกประตูเมืองก่อน แล้วไปต่อที่ ${label}`);
+        return true;
+      }
+      G.moveTarget = new THREE.Vector3(x, 0, z);
+      G.huntTarget = null; G._queuedAct = null;
+      if (G.aimAt) G.aimAt(null);
+      if (G.markMoveTo) G.markMoveTo(x, z);
+      if (G.manualOrder) G.manualOrder(12);
+      toast(`🧭 กำลังเดินไป ${label}`);
+      return true;
+    };
+    // 🎯 ไล่ล่ามอนสเตอร์ตัวใกล้สุด (ใช้กับภารกิจแนวปราบ/จับ/เก็บของดรอป)
+    const questHunt = () => {
+      if (G.inTownZone) return questWalkTo(0, 20, "🌾 ทุ่งกว้างนอกหมู่บ้าน");
+      if (G.mode !== "explore") { toast("สั่งเดินได้ตอนสำรวจเท่านั้น"); return false; }
+      if (G.seekAndAct && G.seekAndAct("attack")) return true;
+      toast("🎯 ไม่เจอมอนสเตอร์ใกล้ ๆ — เดินสำรวจดูก่อน");
+      return false;
+    };
+    // 🧭 เควสย่อย: แตะแล้วเดินไปหาเป้าหมายเอง
+    G.questGoType = (type) => {
+      if (type === "floor") return questWalkTo(-6.6, 7.0, "🗼 หอคอยมิติ");
+      if (type === "boss") { toast("👑 กดปุ่ม ⚔️ ท้าดวลเจ้าถิ่น ที่กลางบนจอ หรือหาบอสในทุ่งก็ได้"); return questHunt(); }
+      return questHunt();   // win · catch · collect
+    };
+    // 🧭 แตะป้ายเควสเนื้อเรื่อง → ตัวละครเดินไปยังจุดหมายของบทนั้นเอง
     G.questGo = () => {
       const c = MSQ[G.storyCh];
       if (!c) { toast("จบเนื้อเรื่องครบทุกบทแล้ว"); return false; }
-      if (G.storyProg >= G.storyTarget(c)) { toast("📖 บทนี้สำเร็จแล้ว — เปิดเมนู 📜 กดรับรางวัลได้เลย"); return false; }
-      if (G.mode !== "explore") { toast("สั่งเดินได้ตอนสำรวจเท่านั้น"); return false; }
-      // เดินไปจุดหนึ่งในทุ่ง (ถ้าอยู่ในเมือง/บ้าน/ฟาร์ม ให้เดินออกไปที่ทางออกก่อน)
-      const walkTo = (x, z, label) => {
-        if (G.inHomeZone || G.inRanchZone) { toast("🚪 ออกจากพื้นที่ส่วนตัวก่อนนะ"); return false; }
-        if (G.inTownZone) {
-          G.moveTarget = new THREE.Vector3(0, 0, 29.8);      // 🏰 ประตูออกเมือง
-          if (G.markMoveTo) G.markMoveTo(0, 29.8);
-          if (G.manualOrder) G.manualOrder(12);
-          toast(`🧭 เดินออกประตูเมืองก่อน แล้วไปต่อที่ ${label}`);
-          return true;
-        }
-        G.moveTarget = new THREE.Vector3(x, 0, z);
-        G.huntTarget = null; G._queuedAct = null;
-        if (G.aimAt) G.aimAt(null);
-        if (G.markMoveTo) G.markMoveTo(x, z);
-        if (G.manualOrder) G.manualOrder(12);
-        toast(`🧭 กำลังเดินไป ${label}`);
-        return true;
-      };
+      if (G.storyProg >= G.storyTarget(c)) { toast("📖 บทนี้สำเร็จแล้ว — แตะป้ายอีกครั้งเพื่อรับรางวัล"); return false; }
+      const walkTo = questWalkTo;
       if (c.t === "talk") {
         const pos = c.who === "smith" ? G.smithPos : G.npcPos;
         if (!pos) { toast("หาตำแหน่งไม่เจอ"); return false; }
@@ -19577,12 +19596,7 @@ export default function CherryAdventure() {
       }
       if (c.t === "gear") { if (G.openEquip) G.openEquip(); toast("🎒 แตะของในกระเป๋าเพื่อสวมใส่ (หรือกด ⚡ ออโต้)"); return true; }
       if (c.t === "leave") return walkTo(0, 20, "🌾 ทุ่งกว้างนอกหมู่บ้าน");
-      if (c.t === "win" || c.t === "winB" || c.t === "catch") {
-        if (G.inTownZone) return walkTo(0, 20, "🌾 ทุ่งกว้างนอกหมู่บ้าน");
-        if (G.seekAndAct && G.seekAndAct(c.t === "catch" ? "attack" : "attack")) return true;
-        toast(c.t === "catch" ? "🎯 ไม่เจอมอนสเตอร์ใกล้ ๆ — เดินสำรวจดูก่อน" : "🎯 ไม่เจอมอนสเตอร์ใกล้ ๆ — เดินสำรวจดูก่อน");
-        return false;
-      }
+      if (c.t === "win" || c.t === "winB" || c.t === "catch") return questHunt();
       if (c.t === "tower") return walkTo(-6.6, 7.0, "🗼 หอคอยมิติ");
       if (c.t === "visit") {
         const e = (G._roadEnds || []).find((x) => x.id === c.biome);
@@ -25082,7 +25096,8 @@ export default function CherryAdventure() {
       const boss = !!wild.userData.boss;
       const worldBoss = !!wild.userData.worldBoss; // 👹 บอสโลกตัวใหญ่มาก — ต้องยืนห่าง & ซูมออก
       if (G.applyEvoParts && !wild.userData._evo && !worldBoss) { wild.userData._evo = true; G.applyEvoParts(wild, wild.userData.spId, lv); } // ✨ มอนเลเวลสูงมีร่างวิวัฒน์ (บอสโลกใหญ่อยู่แล้ว ไม่ต้องเพิ่ม)
-      const scale = (1 + (lv - 1) * MON_HP_LV) * (boss ? 2.0 : 1.4); // ⚖️ เลือดมอนโตตามเลเวล (ลดจาก 0.9 → เลิกเป็นถุงทรายตอนเลเวลสูง)
+      const _B = BIOMES[G.curBiome || 0];
+      const scale = (1 + (lv - 1) * MON_HP_LV) * (boss ? 2.0 : 1.4) * biomeHpMul(_B); // ⚖️ เลือดมอนโตตามเลเวล (ลดจาก 0.9 → เลิกเป็นถุงทรายตอนเลเวลสูง)
       const lvDef = Math.min(0.1, (lv - 1) * 0.004); // 🛡️ ยิ่งเลเวลสูง ยิ่งตั้งรับเก่ง — ลดดาเมจบ่อยขึ้น
       const lvGap = Math.max(0, lv - (G.player ? G.player.level : 1)); // 📈 มอนสเตอร์เหนือกว่ากี่เลเวล
       const gapMul = lvGap >= 2 ? 1 + (lvGap - 1) * 0.07 : 1; // ⚔️ ต่างกัน 2 lv+ → ตีแรงขึ้น (แต่ยังสู้ได้ถ้าพลังโจมตีสูง)
@@ -25095,7 +25110,7 @@ export default function CherryAdventure() {
         spId: wild.userData.spId,
         hp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
         maxHp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
-        atk: Math.round(sp.atk * MON_ATK_K * (1 + (lv - 1) * MON_ATK_LV) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul), // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
+        atk: Math.max(1, Math.round(sp.atk * MON_ATK_K * (1 + (lv - 1) * MON_ATK_LV) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul * biomeAtkMul(_B))), // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
         lv, boss, ghost, golden,
         enraged: false, rageAura: null, shiny,
         name: sp.name, biomeBoss: wild.userData.biomeBoss || null,
@@ -25398,9 +25413,10 @@ export default function CherryAdventure() {
       const lv = m.userData.lv || 1;
       const ng = 1 + (G.ngPlus || 0) * 0.4;
       const scale = (1 + (lv - 1) * 0.9) * 1.4 * (m.userData.shiny ? 1.3 : 1);
-      m.userData.wmaxhp = Math.max(12, Math.round(sp.hp * scale * ng * 0.55)); // 0.55 → snappy open-world fights
+      const _B = BIOMES[G.curBiome || 0];
+      m.userData.wmaxhp = Math.max(8, Math.round(sp.hp * scale * ng * 0.55 * biomeHpMul(_B))); // 0.55 → snappy open-world fights
       m.userData.whp = m.userData.wmaxhp;
-      m.userData.watk = Math.round(sp.atk * (1 + (lv - 1) * 0.13) * ng * (m.userData.shiny ? 1.2 : 1)); // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
+      m.userData.watk = Math.max(1, Math.round(sp.atk * (1 + (lv - 1) * 0.13) * ng * (m.userData.shiny ? 1.2 : 1) * biomeAtkMul(_B))); // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
       m.userData.wcd = 0.5 + Math.random();
     };
     const wildBar = (m) => {
@@ -45912,6 +45928,17 @@ export default function CherryAdventure() {
   const MINI_SZ = _shortHud ? 92 : 114;
   const MINI_ON = ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !ui.mapOpen;
   const MINI_TOP = HUD_CARD ? 4 : 42;
+  // 📜 แถวปุ่ม ⚙️ 👤 📜 ด้านซ้าย + แผงติดตามภารกิจที่ห้อยอยู่ใต้แถวนี้
+  const _sideTop = HUD_CARD ? (HUD_CARD_H + 6) : ((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? 250 : 92);
+  // 📜 พื้นที่ว่างที่แผงติดตามภารกิจใช้ได้ — หยุดก่อนถึงคอลัมน์ปุ่มซ้ายล่าง จะได้ไม่ทับกัน
+  const _colTopL = _vh - (HUD_BASE_L + (_colL.n - 1) * _colL.pitch + HUD_BTN_L);
+  const QT_ROOM = _colTopL - (_sideTop + 40) - 8;
+  // จอเตี้ยแนวนอน คอลัมน์ปุ่มซ้ายกินพื้นที่จนไม่เหลือที่ใต้ปุ่ม ⚙️ →
+  // ย้ายแผงไปวางแนวเดียวกับปุ่ม เยื้องไปทางขวาให้พ้นคอลัมน์ แล้วเหลือแถวเดียว
+  const QT_TIGHT = QT_ROOM < 52;
+  // จอแคบ (แนวตั้ง): แบนเนอร์กลางบนกินแถบ y ด้านบนอยู่ → ดันแผงลงมาให้พ้นก่อน
+  const QT_TOP = QT_TIGHT ? _sideTop : ((typeof window !== "undefined" ? window.innerWidth : 900) < 620 ? Math.max(_sideTop + 40, 152) : _sideTop + 40);
+  const QT_MAX_H = QT_TIGHT ? 30 : (_colTopL - QT_TOP - 8);
   const MINI_H = MINI_SZ + 12;                       // วงกลม + ป้ายชื่อแดนที่ห้อยอยู่ใต้วง
   const BOARD_TOP = (MINI_ON && HUD_CARD) ? (MINI_TOP + MINI_H + 6) : (HUD_CARD ? 4 : 42);
   // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
@@ -47998,31 +48025,24 @@ export default function CherryAdventure() {
         const tgt = G.storyTarget(c);
         const prog = Math.min(tgt, ui.storyProg || 0); const done = prog >= tgt;
         return (
-          <div style={{ position: "absolute", top: ST(104), left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: 4, zIndex: 21, maxWidth: "92%" }}>
-            {/* 🧭 แตะป้าย = ตัวละครเดินไปยังจุดหมายของบทนี้เอง */}
-            <button
-              onClick={() => { if (done) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGo) G.questGo(); }}
-              title={done ? "แตะเพื่อรับรางวัล" : "แตะเพื่อให้ตัวละครเดินไปยังจุดหมาย"}
-              style={{
-                background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.82)", borderRadius: 999,
-                padding: "4px 12px", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
-                border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
-                minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>
-              {done ? "📖" : "🧭"} บท {(ui.storyCh || 0) + 1}: {done ? "สำเร็จ! แตะรับรางวัล ✨" : `${G.storyLabel(c)} (${prog}/${tgt})`}
-            </button>
-            <button onClick={() => setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false }))} title="เปิดเมนูภารกิจ" style={{
-              flexShrink: 0, width: 24, height: 24, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0,
-              background: "rgba(42,34,72,0.82)", color: "#e0d4ff", fontSize: 12, fontFamily: font,
-              boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
-            }}>📜</button>
-          </div>
+          // 🏷️ ป้ายเล็ก — เหลือแค่ไอคอน + เลขคืบหน้า (รายละเอียดไปดูที่แผงติดตามด้านซ้าย)
+          <button
+            onClick={() => { if (done) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGo) G.questGo(); }}
+            title={done ? `บท ${(ui.storyCh || 0) + 1} สำเร็จ — แตะรับรางวัล` : `บท ${(ui.storyCh || 0) + 1}: ${G.storyLabel(c)} — แตะเพื่อเดินไปหาเป้าหมาย`}
+            style={{
+              position: "absolute", top: ST(104), left: "50%", transform: "translateX(-50%)", zIndex: 21,
+              background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.72)", borderRadius: 999,
+              padding: "2px 9px", fontSize: 9, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
+              border: "none", cursor: "pointer", boxShadow: "0 2px 7px rgba(42,34,72,0.3)", whiteSpace: "nowrap",
+            }}>
+            {done ? "📖 ✨" : `🧭 ${prog}/${tgt}`}
+          </button>
         );
       })()}
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && !HUD_HIDE && (
-        <div style={{ position: "absolute", top: HUD_CARD ? ST(HUD_CARD_H + 6) : ((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92)), left: EDGE_L, display: "flex", gap: 6, zIndex: 27 }}>
+        <div style={{ position: "absolute", top: ST(_sideTop), left: EDGE_L, display: "flex", gap: 6, zIndex: 27 }}>
           <button onClick={() => setUi((u) => ({ ...u, settingsOpen: true }))} title="ตั้งค่าเกม" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
             fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
@@ -48033,8 +48053,70 @@ export default function CherryAdventure() {
               fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
             }}>👤</button>
           )}
+          {ui.mode === "explore" && (
+            <button onClick={() => setUi((u) => ({ ...u, qtrack: !u.qtrack }))} title={ui.qtrack ? "ซ่อนรายการภารกิจ" : "แสดงรายการภารกิจ (เปิดค้างไว้ได้)"} style={{
+              width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", position: "relative",
+              fontSize: 15, background: ui.qtrack ? "linear-gradient(135deg,#f2b24d,#e0862f)" : "#fff",
+              boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
+            }}>📜{TODO.quest > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e04a6a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{TODO.quest}</span>}</button>
+          )}
         </div>
       )}
+
+      {/* 📜 แผงติดตามภารกิจ — ติดจอแบบโปร่งใส เปิดค้างไว้ได้ · แตะแถวไหนก็เดินไปหาเป้าหมายนั้น */}
+      {ui.qtrack && ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (() => {
+        const S = G.MSQ || []; const c = S[ui.storyCh || 0];
+        const tgt = c ? G.storyTarget(c) : 1;
+        const prog = Math.min(tgt, ui.storyProg || 0);
+        const mainDone = c && prog >= tgt;
+        const side = (ui.quests || []).filter((q) => !q.claimed).slice(0, 3);
+        const row = (key, icon, label, cur, max, done, onClick, tone) => (
+          <button key={key} onClick={onClick} title={done ? "สำเร็จแล้ว — แตะรับรางวัล" : "แตะเพื่อเดินไปหาเป้าหมาย"} style={{
+            display: "flex", alignItems: "center", gap: 5, width: "100%", textAlign: "left",
+            padding: "3px 5px", borderRadius: 8, cursor: "pointer", fontFamily: font,
+            border: "none", background: done ? "rgba(245,200,74,0.20)" : "rgba(255,255,255,0.06)",
+          }}>
+            <span style={{ fontSize: 11, flexShrink: 0 }}>{done ? "✨" : icon}</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 8.5, fontWeight: 700, lineHeight: 1.3,
+              color: done ? "#ffe9a8" : tone || "#dfe4f0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+            <span style={{ flexShrink: 0, fontSize: 8, fontWeight: 800, color: done ? "#ffd76a" : "#9ab0c8" }}>{done ? "รับ" : `${cur}/${max}`}</span>
+          </button>
+        );
+        return (
+          <div id="qtrack" style={{
+            position: "absolute", zIndex: 26,
+            ...(QT_TIGHT
+              ? { top: ST(_sideTop), left: `calc(${HUD_EDGE + 128}px + env(safe-area-inset-left, 0px))` }
+              : { top: ST(QT_TOP), left: EDGE_L }),
+            // จอแคบ: หนีบความกว้างไม่ให้ล้ำไปทับแบนเนอร์กลางบน (ท้าดวลเจ้าถิ่น/บอสโลก)
+            width: QT_TIGHT ? 172 : Math.min(_shortHud ? 150 : 168, Math.max(112, (typeof window !== "undefined" ? window.innerWidth : 900) * 0.30 - 12)),
+            overflow: "hidden", pointerEvents: "auto", fontFamily: font,
+            background: "rgba(18,16,30,0.34)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)",
+            borderRadius: 11, border: "1px solid rgba(255,255,255,0.10)", padding: "5px 5px 6px",
+            boxShadow: "0 3px 12px rgba(0,0,0,0.22)",
+          }}>
+            <div style={{ display: QT_TIGHT ? "none" : "flex", alignItems: "center", gap: 4, padding: "0 2px 4px" }}>
+              <span style={{ fontSize: 8.5, fontWeight: 800, color: "#ffd76a" }}>📜 ภารกิจ</span>
+              <div style={{ flex: 1 }} />
+              <button onClick={() => setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false }))} title="เปิดเมนูภารกิจเต็ม" style={{
+                width: 15, height: 15, borderRadius: 4, border: "none", cursor: "pointer", padding: 0,
+                background: "rgba(255,255,255,0.14)", color: "#dfe4f0", fontSize: 8.5, lineHeight: "15px",
+              }}>⤢</button>
+              <button onClick={() => setUi((u) => ({ ...u, qtrack: false }))} title="ซ่อนแผงนี้" style={{
+                width: 15, height: 15, borderRadius: 4, border: "none", cursor: "pointer", padding: 0,
+                background: "rgba(255,255,255,0.14)", color: "#dfe4f0", fontSize: 9, lineHeight: "15px",
+              }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, maxHeight: QT_TIGHT ? QT_MAX_H : Math.max(24, QT_MAX_H - 22), overflowY: "auto" }}>
+              {c && row("msq", "📖", `บท ${(ui.storyCh || 0) + 1} · ${G.storyLabel(c)}`, prog, tgt, mainDone,
+                () => { if (mainDone) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGo) G.questGo(); }, "#ffd0a8")}
+              {!QT_TIGHT && side.map((q, i) => row("sq" + i, q.emoji, q.label, q.prog, q.target, q.done,
+                () => { if (q.done) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGoType) G.questGoType(q.type); }))}
+              {!c && (QT_TIGHT || !side.length) && <div style={{ fontSize: 8.5, color: "#9ab0c8", textAlign: "center", padding: "4px 0" }}>ไม่มีภารกิจค้างอยู่</div>}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ⚙️ ตั้งค่าเกม — รวมสวิตช์เสียง/เพลง/เสียงต่อสู้/ประหยัดพลังงาน (จำค่าอัตโนมัติ) */}
       {ui.settingsOpen && (
