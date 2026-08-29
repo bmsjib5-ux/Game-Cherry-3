@@ -48257,21 +48257,12 @@ export default function CherryAdventure() {
             }}>
               {closeBtn("skillPanel")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
-                ⚡ อัพเกรดสกิลอาชีพ
+                💪 ค่าสถานะ · ฉายา · สายอาชีพ
               </div>
               {/* 🔢 combined unspent-points banner — matches the ⚡ button badge (สถานะ + สกิล) */}
               <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8a5ad0", background: "linear-gradient(90deg,#f3ecff,#fdeef6)", border: "1px solid #e0d0f5", borderRadius: 10, padding: "6px 10px", marginBottom: 8 }}>
                 ⚡ แต้มที่ยังไม่ได้ใช้รวม <b style={{ color: "#6a3ac0" }}>{(ui.sp || 0) + (ui.statPts || 0)}</b> <span style={{ color: "#9a8ab0", fontWeight: 700 }}>= 💪 สถานะ {ui.statPts || 0} + ⚡ สกิล {ui.sp || 0}</span>
               </div>
-              {/* 🔀 โหมดสลับชุดสกิล พื้นฐาน/ขั้นสูง */}
-              {ui.pathId ? (
-                <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-                  <button onClick={() => G.setSkillMode("basic")} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: (ui.skillMode || "basic") === "basic" ? "#fff" : "#5a7a4a", background: (ui.skillMode || "basic") === "basic" ? "#7ba05b" : "#eaf5e0" }}>⚔️ สกิลพื้นฐาน</button>
-                  <button onClick={() => G.setSkillMode("adv")} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.skillMode === "adv" ? "#fff" : "#8a5ad0", background: ui.skillMode === "adv" ? "linear-gradient(90deg,#9a6ad0,#d07ae0)" : "#f0e8f8" }}>🌟 สกิลขั้นสูง</button>
-                </div>
-              ) : (
-                <div style={{ fontSize: 9.5, color: "#a89ac0", marginBottom: 6 }}>🔒 เลือกสายอาชีพขั้นสูง แล้วจะสลับใช้ "ชุดสกิลขั้นสูง 4 สกิล + ท่าไม้ตายใหม่" ของสายนั้นได้</div>
-              )}
               {/* 💪 base stats allocation */}
               <div style={{ background: "linear-gradient(135deg,#f0f6ff,#f6f0ff)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #c0d0f0" }}>
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#4a6ac0" }}>💪 ค่าสถานะพื้นฐาน <span style={{ color: "#9a6ad0" }}>· มี {ui.statPts || 0} แต้ม</span></div>
@@ -48446,116 +48437,43 @@ export default function CherryAdventure() {
                   </div>
                 );
               })()}
-              {skillsOf(ui.cls, ui.pathId).map((sk, slot) => {
-                const rank = (ui.skillRanks && ui.skillRanks[sk.id]) || 1;
-                const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId); // 🔒 unlock check
-                const cap = ui.skillCap || 1;
-                const maxed = rank >= 100;
-                const atCap = rank >= cap;
-                // damage estimate at current and next rank
-                const mult = skillMul(sk, rank);
-                const multNext = skillMul(sk, rank + 1);
-                const hits = sk.hits || 1;
-                const dmgNow = Math.round((ui.atk || 8) * mult * hits);
-                const dmgNext = Math.round((ui.atk || 8) * multNext * hits);
-                const pctNow = Math.round(mult * hits * 100);
-                return (
-                  <div key={sk.id} style={{
-                    borderRadius: 12, marginBottom: 8, padding: "9px 11px",
-                    background: gate.open ? "#f7f7f0" : "#ecece4",
-                    border: gate.open ? "none" : "1px dashed #c8c8bc",
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: gate.open ? "#5a5a4a" : "#9a9a8a" }}>
-                      {gate.open ? "" : "🔒 "}{sk.emoji} {sk.name} <span style={{ color: "#e0a020" }}>Lv.{rank}/100</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: "#8a8a7a", margin: "3px 0 4px" }}>{sk.desc}</div>
-                    {/* 🔒 unlock conditions */}
-                    {!gate.open && (
-                      <div style={{ background: "#fff", borderRadius: 8, padding: "5px 7px", marginBottom: 5, border: "1px solid #e0d8c8" }}>
-                        <div style={{ fontSize: 9.5, fontWeight: 800, color: "#c04a4a", marginBottom: 2 }}>🔒 เงื่อนไขปลดล็อก</div>
-                        {gate.reasons.map((r, i2) => (
-                          <div key={i2} style={{ fontSize: 9.5, color: r.ok ? "#5aa06a" : "#c04a4a", fontWeight: 700, lineHeight: 1.5 }}>
-                            {r.ok ? "✓" : "✗"} {r.text}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* 🔢 damage numbers */}
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#d9536b", marginBottom: 4 }}>
-                      💥 พลังโจมตี ~{dmgNow} <span style={{ color: "#8a8a7a", fontWeight: 700 }}>({pctNow}% ATK{hits > 1 ? ` ×${hits}ครั้ง` : ""})</span>
-                      {!maxed && !atCap && <span style={{ color: "#5aa06a" }}> → {dmgNext}</span>}
-                    </div>
-                    {/* single progress bar: fill by rank, faint marker for cap */}
-                    <div style={{ position: "relative", background: "#e5e5da", borderRadius: 99, height: 8, marginBottom: 6, overflow: "hidden" }}>
-                      <div style={{ width: `${(rank / 100) * 100}%`, height: "100%", background: `#${sk.color.toString(16).padStart(6, "0")}`, borderRadius: 99 }}/>
-                      {cap < 100 && <div style={{ position: "absolute", top: 0, left: `${(cap / 100) * 100}%`, width: 2, height: "100%", background: "#c04a4a" }}/>}
-                    </div>
-                    <button onClick={() => gate.open && G.rankSkill(sk.id)} disabled={!gate.open || maxed || atCap || (ui.sp || 0) < (G.skillCost ? G.skillCost(rank) : 1)} style={{
-                      width: "100%", padding: "6px 0", borderRadius: 8, border: "none",
-                      cursor: (maxed || atCap) ? "default" : "pointer",
-                      fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                      background: !gate.open ? "#c8c8bc" : maxed ? "#b0a396" : atCap ? "#d0a0a0" : "linear-gradient(90deg,#9a6ad0,#b07ae0)",
-                    }}>{maxed ? "เต็ม Lv.100 ⭐" : atCap ? `🔒 ต้องเลเวลตัวละครสูงขึ้น` : `อัพเกรด (${G.skillCost ? G.skillCost(rank) : 1} แต้ม)`}</button>
+              {/* 📖 อัพสกิล/ท่าไม้ตาย ย้ายไปที่ "กระดานวิชาสกิล" ที่ปลดเป็นขั้น ๆ แล้ว */}
+              <button onClick={() => { setUi((u) => ({ ...u, skillPanel: false })); G.toggleSkillBoard(); }} style={{
+                width: "100%", padding: "12px 10px", borderRadius: 14, border: "none", cursor: "pointer", fontFamily: font,
+                marginBottom: 10, textAlign: "left", display: "flex", alignItems: "center", gap: 10,
+                background: "linear-gradient(135deg,#1d3a2c,#12261f)", boxShadow: "0 4px 14px rgba(30,80,60,0.35)",
+              }}>
+                <span style={{ fontSize: 26 }}>📖</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 900, color: "#9fe8c0" }}>เปิดกระดานวิชาสกิล</span>
+                  <span style={{ display: "block", fontSize: 9.5, color: "#7fae97", lineHeight: 1.5 }}>
+                    อัพท่าโจมตี · ท่าไม้ตาย · ชุดสกิลขั้นสูง — ปลดล็อกเป็นขั้น 1→2→3
+                  </span>
+                </span>
+                {(ui.sp || 0) > 0 && (
+                  <span style={{ fontSize: 10.5, fontWeight: 900, color: "#0d2018", background: "#ffd76a", borderRadius: 999, padding: "3px 9px", whiteSpace: "nowrap" }}>⚡ {ui.sp}</span>
+                )}
+                <span style={{ fontSize: 18, color: "#7fae97" }}>›</span>
+              </button>
+              {/* 👑 อาชีพที่มีท่าไม้ตายสองแบบ เลือกได้ที่นี่ */}
+              {ui.cls && ULT_ALT[ui.cls] && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#a3907a", marginBottom: 4 }}>👑 เลือกท่าไม้ตาย</div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {[[false, ULTS[ui.cls]], [true, ULT_ALT[ui.cls]]].map(([isAlt, u2]) => {
+                      const on = !!ui.ultAlt === isAlt;
+                      return (
+                        <button key={String(isAlt)} onClick={() => { if (!on) G.toggleUltAlt(); }} style={{
+                          flex: 1, padding: "7px 4px", borderRadius: 9, cursor: on ? "default" : "pointer",
+                          border: on ? "2px solid #e0a020" : "2px solid transparent",
+                          background: on ? "#fff8e4" : "#f3ede4", fontFamily: font,
+                          fontSize: 9.5, fontWeight: 800, color: on ? "#c07a10" : "#a3907a",
+                        }}>{u2.emoji} {u2.name}{on ? " ✓" : ""}</button>
+                      );
+                    })}
                   </div>
-                );
-              })}
-              {/* 🌟 ULTIMATE — ranked here with the 4 skills, gated by conditions */}
-              {(() => {
-                const uc = ui.cls && ULTS[ui.cls] ? ultOf(ui.cls, ui.ultAlt) : null;
-                if (!uc) return null;
-                const ur = ui.ultRank || 1;
-                const ultMax = G.ULT_MAX || 20;
-                const maxed = ur >= ultMax;
-                const req = G.ultReq ? G.ultReq(ur) : { lv: 7 + ur * 7, skillSum: 10 + ur * 9 };
-                const cost = G.ultCost ? G.ultCost(ur) : 3 + ur;
-                const lvOk = (ui.level || 1) >= req.lv;
-                const sumOk = (ui.ultSkillSum || 0) >= req.skillSum;
-                const spOk = (ui.sp || 0) >= cost;
-                const can = !maxed && lvOk && sumOk && spOk;
-                return (
-                  <div style={{ borderRadius: 12, marginTop: 4, padding: "10px 11px", background: "linear-gradient(135deg,#fff4e0,#ffe8f0)", border: "2px solid #f5c542" }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "#c07a10" }}>
-                      🌟 {uc.name} <span style={{ color: "#e0a020" }}>Lv.{ur}/{ultMax}</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: "#8a7a5a", margin: "3px 0 5px" }}>ท่าไม้ตาย · {uc.desc}</div>
-                    {/* 👑 classes with two ultimates can switch between them */}
-                    {ui.cls && ULT_ALT[ui.cls] && (
-                      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-                        {[[false, ULTS[ui.cls]], [true, ULT_ALT[ui.cls]]].map(([isAlt, u2]) => {
-                          const on = !!ui.ultAlt === isAlt;
-                          return (
-                            <button key={String(isAlt)} onClick={() => { if (!on) G.toggleUltAlt(); }} style={{
-                              flex: 1, padding: "6px 4px", borderRadius: 8, cursor: on ? "default" : "pointer",
-                              border: on ? "2px solid #e0a020" : "2px solid transparent",
-                              background: on ? "#fff8e4" : "#f3ede4", fontFamily: font,
-                              fontSize: 9.5, fontWeight: 800, color: on ? "#c07a10" : "#a3907a",
-                            }}>{u2.emoji} {u2.name}{on ? " ✓" : ""}</button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#5aa06a", marginBottom: 5 }}>
-                      💥 พลังท่าไม้ตาย +{Math.round((ur - 1) * 18)}%{!maxed && <span style={{ color: "#8a8a7a" }}> → +{Math.round(ur * 18)}%</span>}
-                    </div>
-                    {!maxed && (
-                      <div style={{ fontSize: 10, marginBottom: 6, lineHeight: 1.6 }}>
-                        <div style={{ color: lvOk ? "#5aa06a" : "#c04a4a", fontWeight: 700 }}>{lvOk ? "✓" : "✗"} เลเวลตัวละคร {ui.level}/{req.lv}</div>
-                        <div style={{ color: sumOk ? "#5aa06a" : "#c04a4a", fontWeight: 700 }}>{sumOk ? "✓" : "✗"} รวม 4 สกิล {ui.ultSkillSum || 0}/{req.skillSum} ระดับ</div>
-                        <div style={{ color: spOk ? "#5aa06a" : "#c04a4a", fontWeight: 700 }}>{spOk ? "✓" : "✗"} ใช้ {cost} แต้มสกิล (มี {ui.sp || 0})</div>
-                      </div>
-                    )}
-                    <div style={{ position: "relative", background: "#e5e5da", borderRadius: 99, height: 8, marginBottom: 6, overflow: "hidden" }}>
-                      <div style={{ width: `${(ur / ultMax) * 100}%`, height: "100%", background: "linear-gradient(90deg,#f5a623,#f5d05a)", borderRadius: 99 }}/>
-                    </div>
-                    <button onClick={() => G.rankUlt()} disabled={!can} style={{
-                      width: "100%", padding: "7px 0", borderRadius: 8, border: "none",
-                      cursor: can ? "pointer" : "default",
-                      fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                      background: maxed ? "#b0a396" : can ? "linear-gradient(90deg,#f5a623,#f5763a)" : "#d0c0a0",
-                    }}>{maxed ? `สุดยอดแล้ว Lv.${ultMax} ⭐` : can ? `ปลุกพลังท่าไม้ตาย (${cost} แต้ม)` : "🔒 ยังไม่ครบเงื่อนไข"}</button>
-                  </div>
-                );
-              })()}
+                </div>
+              )}
               {/* ⚖️ RESPEC — undo stat/skill choices so builds can be experimented with */}
               {(() => {
                 const cost = 200 + (ui.level || 1) * 40;
