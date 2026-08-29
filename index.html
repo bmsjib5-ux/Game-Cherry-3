@@ -1868,26 +1868,37 @@ const fishOdds = (lv, k, spotBonus) => {
 };
 // ---------- 🛣️ เส้นทางเชื่อมด่าน — ด่านในสายเดียวกันต่อกันเป็นทางยาว เดินตามถนนข้ามได้เลย ----------
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
+// links[i] = ทิศที่เดินออกจาก biomes[i] ไป biomes[i+1] — E ตะวันออก · W ตะวันตก · N เหนือ · S ใต้
+// (เส้นทางไม่จำเป็นต้องตรงเสมอ หักเลี้ยวได้)
 const ROUTES = [
-    { id: "r1", name: "เส้นทางต้นทาง", emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
-    { id: "r2", name: "เส้นทางใต้พิภพ", emoji: "🕳️", biomes: ["cave", "volcano", "sky"] },
-    { id: "r3", name: "เส้นทางสวรรค์-นรก", emoji: "🔥", biomes: ["hell", "heaven", "moon"] },
-    { id: "r4", name: "เส้นทางชายทะเล", emoji: "🍬", biomes: ["candy", "beach"] },
-    { id: "r5", name: "เส้นทางไททัน", emoji: "🗿", biomes: ["titan", "amazon"] },
+    { id: "r1", name: "เส้นทางต้นทาง", emoji: "🌸", biomes: ["meadow", "desert", "snow"], links: ["E", "N"] },
+    { id: "r2", name: "เส้นทางใต้พิภพ", emoji: "🕳️", biomes: ["cave", "volcano", "sky"], links: ["E", "N"] },
+    { id: "r3", name: "เส้นทางสวรรค์-นรก", emoji: "🔥", biomes: ["hell", "heaven", "moon"], links: ["N", "E"] },
+    { id: "r4", name: "เส้นทางชายทะเล", emoji: "🍬", biomes: ["candy", "beach"], links: ["S"] },
+    { id: "r5", name: "เส้นทางไททัน", emoji: "🗿", biomes: ["titan", "amazon"], links: ["W"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
-// เพื่อนบ้านซ้าย/ขวาในสายเดียวกัน — คืน id ของด่าน (null = สุดสาย)
-const routeNeighbor = (bid, dir) => {
+const DIR_VEC = { E: [1, 0], W: [-1, 0], N: [0, -1], S: [0, 1] };
+const DIR_OPP = { E: "W", W: "E", N: "S", S: "N" };
+const DIR_TH = { E: "ทางตะวันออก", W: "ทางตะวันตก", N: "ทางเหนือ", S: "ทางใต้" };
+const DIR_ARROW = { E: "▶", W: "◀", N: "▲", S: "▼" };
+// ทางออกทั้งหมดของด่านนี้ → [{ dir: "E", to: "desert" }]
+const routeExits = (bid) => {
     const e = ROUTE_OF[bid];
     if (!e)
-        return null;
-    const j = e.i + (dir > 0 ? 1 : -1);
-    return (j >= 0 && j < e.route.biomes.length) ? e.route.biomes[j] : null;
+        return [];
+    const r = e.route, out = [];
+    if (e.i + 1 < r.biomes.length)
+        out.push({ dir: r.links[e.i], to: r.biomes[e.i + 1] }); // ไปข้างหน้า
+    if (e.i - 1 >= 0)
+        out.push({ dir: DIR_OPP[r.links[e.i - 1]], to: r.biomes[e.i - 1] }); // ย้อนกลับ
+    return out;
 };
 const biomeById = (bid) => BIOMES.find((b) => b.id === bid) || null;
-const ROAD_HALF = 4.2; // ครึ่งความกว้างถนน — เดินออกได้เฉพาะช่วงนี้
-const ROAD_COL = { pave: 0x9a9488, edge: 0x6f6a60, line: 0xe8e2cc };
+const ROAD_HALF = 4.6; // ครึ่งความกว้างทางดิน — เดินออกได้เฉพาะช่วงนี้
+// 🟤 สีทางดิน — ดินอัดแน่น · ร่องล้อ · หญ้าริมทาง · กรวด
+const ROAD_COL = { dirt: 0x9a7a52, rut: 0x7d6140, grass: 0x7d9a58, peb: 0xb0a189 };
 // ---------- 🧱 ขอบแมพ — ป่า / แม่น้ำ / กำแพง / รั้ว / เหว แทนเส้นวงกลมบาง ๆ ----------
 // kind: forest=ป่าทึบ · river=แม่น้ำล้อมเกาะ · wall=กำแพงหิน · fence=รั้ว · cliff=หน้าผา
 const BORDER = {
@@ -28441,26 +28452,27 @@ function CherryAdventure() {
         };
         // มุมที่เว้นไว้ให้ประตูโซนกับแท่นมิติ — แนวกั้นจะไม่ไปบังทางเข้า
         const borderGaps = () => {
-            const gs = [Math.atan2(0, -30), Math.atan2(0, 30)]; // 🌀 แท่นมิติซ้าย/ขวา + 🛣️ ปากทางถนน (ทิศเดียวกัน)
+            const gs = [Math.atan2(0, -30), Math.atan2(0, 30)]; // 🌀 แท่นมิติซ้าย/ขวา
             for (const k of ["town", "home", "ranch"]) {
                 const g = G.GATE_POS[k];
                 gs.push(Math.atan2(g.z, g.x));
             }
+            // 🛣️ เว้นช่องตรงปากทางดินทุกทิศ ไม่ให้ป่า/กำแพงมาปิดทาง
+            const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
+            routeExits(bid).forEach((x) => { const v = DIR_VEC[x.dir]; gs.push(Math.atan2(v[1], v[0])); });
             return gs;
         };
-        // ================= 🛣️ ถนนเชื่อมด่านในสายเดียวกัน =================
+        // ================= 🛣️ ทางดินเชื่อมด่านในสายเดียวกัน (เชื่อมได้ 4 ทิศ) =================
         G.roadInfo = () => {
             const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
             const e = ROUTE_OF[bid];
-            const mk = (dir) => {
-                const nb = routeNeighbor(bid, dir);
-                if (!nb)
-                    return null;
-                const B = biomeById(nb);
-                return { dir, id: nb, name: B ? B.name : nb, emoji: B ? B.emoji : "🗺️", lvMin: B ? B.lvMin : 1, idx: BIOMES.findIndex((x) => x.id === nb) };
-            };
-            return { bid, route: e ? e.route : null, step: e ? e.i + 1 : 1, total: e ? e.route.biomes.length : 1,
-                west: mk(-1), east: mk(1) };
+            const exits = routeExits(bid).map((x) => {
+                const B = biomeById(x.to);
+                return { dir: x.dir, vec: DIR_VEC[x.dir], id: x.to, name: B ? B.name : x.to, emoji: B ? B.emoji : "🗺️",
+                    lvMin: B ? B.lvMin : 1, idx: BIOMES.findIndex((y) => y.id === x.to),
+                    side: DIR_TH[x.dir], arrow: DIR_ARROW[x.dir] };
+            });
+            return { bid, route: e ? e.route : null, step: e ? e.i + 1 : 1, total: e ? e.route.biomes.length : 1, exits };
         };
         const roadClear = () => {
             if (!G._roadGrp)
@@ -28471,101 +28483,108 @@ function CherryAdventure() {
                 G._disposeObj3D(G._roadGrp);
             G._roadGrp = null;
         };
-        // 🏗️ ปูถนนจากกลางแมพออกไปทางเพื่อนบ้านทั้งสองฝั่ง + ปักป้ายบอกทางที่ปลาย
+        // 🏗️ ปูทางดินจากกลางแมพออกไปตามทิศของทางออกแต่ละทาง
         G.buildRoad = () => {
             roadClear();
             const info = G.roadInfo();
             const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
-            if (indoor || (!info.west && !info.east)) {
+            if (indoor || !info.exits.length) {
                 G._roadEnds = [];
                 return;
             }
             const g = new THREE.Group();
-            const paveM = new THREE.MeshLambertMaterial({ color: ROAD_COL.pave });
-            const edgeM = new THREE.MeshLambertMaterial({ color: ROAD_COL.edge, flatShading: true });
-            const lineM = new THREE.MeshLambertMaterial({ color: ROAD_COL.line });
+            const dirtM = new THREE.MeshLambertMaterial({ color: ROAD_COL.dirt, flatShading: true });
+            const rutM = new THREE.MeshLambertMaterial({ color: ROAD_COL.rut, flatShading: true });
+            const grassM = new THREE.MeshLambertMaterial({ color: ROAD_COL.grass, flatShading: true });
+            const pebM = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
             const ends = [];
-            [info.west, info.east].forEach((nb) => {
-                if (!nb)
-                    return;
-                const sgn = nb.dir;
-                // 🧱 ปูแผ่นถนนไล่ตามความสูงพื้น (แบ่งเป็นช่วง ๆ จะได้เกาะเนิน)
-                const SEG = 26, x0 = sgn * 2.5, x1 = sgn * (FIELD_R + 2.2);
+            info.exits.forEach((ex) => {
+                const dx = ex.vec[0], dz = ex.vec[1];
+                const px = -dz, pz = dx; // แกนขวางทาง
+                const at = (t, off) => [dx * t + px * off, dz * t + pz * off];
+                const SEG = 30, t0 = 2.5, t1 = FIELD_R + 2.4;
                 for (let i = 0; i < SEG; i++) {
-                    const xa = x0 + (x1 - x0) * (i / SEG), xb = x0 + (x1 - x0) * ((i + 1) / SEG);
-                    const xm = (xa + xb) / 2, len = Math.abs(xb - xa) + 0.12;
-                    const slab = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, ROAD_HALF * 2), paveM);
-                    slab.position.set(xm, terrainAt(xm, 0) + 0.06, 0);
+                    const ta = t0 + (t1 - t0) * (i / SEG), tb = t0 + (t1 - t0) * ((i + 1) / SEG);
+                    const tm = (ta + tb) / 2, len = (tb - ta) + 0.15;
+                    // 🟤 ทางดินอัดแน่น — ส่ายซ้ายขวานิดหน่อยให้ดูเป็นทางเดินจริง ไม่ใช่เส้นตรงเป๊ะ
+                    const sway = Math.sin(tm * 0.16) * 1.05;
+                    const c = at(tm, sway);
+                    const slab = new THREE.Mesh(new THREE.BoxGeometry(dx ? len : ROAD_HALF * 2, 0.14, dx ? ROAD_HALF * 2 : len), dirtM);
+                    slab.position.set(c[0], terrainAt(c[0], c[1]) + 0.05, c[1]);
+                    slab.rotation.y = Math.sin(tm * 0.16) * 0.06;
                     g.add(slab);
-                    // เส้นกลางถนนขาว ๆ เว้นจังหวะ
-                    if (i % 2 === 0) {
-                        const ln = new THREE.Mesh(new THREE.BoxGeometry(len * 0.55, 0.04, 0.34), lineM);
-                        ln.position.set(xm, terrainAt(xm, 0) + 0.16, 0);
-                        g.add(ln);
-                    }
-                    // ก้อนหินขอบทางสองข้าง
-                    if (i % 3 === 0) {
-                        for (const zz of [-ROAD_HALF - 0.35, ROAD_HALF + 0.35]) {
-                            const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3 + Math.random() * 0.22, 0), edgeM);
-                            rk.position.set(xm, terrainAt(xm, zz) + 0.16, zz);
-                            rk.rotation.y = Math.random() * 3;
-                            g.add(rk);
+                    // 🛞 ร่องล้อเกวียนสองเส้น
+                    if (i % 2 === 0)
+                        for (const o of [-1.35, 1.35]) {
+                            const r = at(tm, sway + o);
+                            const rut = new THREE.Mesh(new THREE.BoxGeometry(dx ? len * 0.9 : 0.5, 0.05, dx ? 0.5 : len * 0.9), rutM);
+                            rut.position.set(r[0], terrainAt(r[0], r[1]) + 0.12, r[1]);
+                            g.add(rut);
                         }
+                    // 🌿 หญ้าริมทาง
+                    if (i % 2 === 1)
+                        for (const o of [-ROAD_HALF - 0.3, ROAD_HALF + 0.3]) {
+                            const q = at(tm, sway + o);
+                            const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.5, 4), grassM);
+                            tuft.position.set(q[0], terrainAt(q[0], q[1]) + 0.22, q[1]);
+                            tuft.rotation.y = Math.random() * 3;
+                            g.add(tuft);
+                        }
+                    // 🪨 กรวดบนทาง
+                    if (i % 4 === 2) {
+                        const q = at(tm, sway + (Math.random() - 0.5) * ROAD_HALF * 1.4);
+                        const pb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16 + Math.random() * 0.12, 0), pebM);
+                        pb.position.set(q[0], terrainAt(q[0], q[1]) + 0.12, q[1]);
+                        g.add(pb);
                     }
                 }
-                // 🪧 ป้ายบอกทางที่ปลายถนน
-                const px = sgn * (FIELD_R - 3.4), py = terrainAt(px, 0);
-                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 2.5, 7), new THREE.MeshLambertMaterial({ color: 0x8a6a44 }));
-                post.position.set(px, py + 1.25, ROAD_HALF + 1.0);
+                // 🪧 ป้ายไม้บอกทางข้างทาง ตรงปลาย
+                const tS = FIELD_R - 3.4, swayS = Math.sin(tS * 0.16) * 1.05;
+                const sp = at(tS, swayS + ROAD_HALF + 1.1);
+                const sy = terrainAt(sp[0], sp[1]);
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 2.3, 6), new THREE.MeshLambertMaterial({ color: 0x7a5a38 }));
+                post.position.set(sp[0], sy + 1.15, sp[1]);
                 g.add(post);
-                const board = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 0.16), new THREE.MeshLambertMaterial({ color: 0xd8b478 }));
-                board.position.set(px, py + 2.35, ROAD_HALF + 1.0);
-                board.rotation.y = sgn > 0 ? -0.35 : 0.35;
+                const board = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 0.14), new THREE.MeshLambertMaterial({ color: 0xc9a56e }));
+                board.position.set(sp[0], sy + 2.15, sp[1]);
+                board.rotation.y = Math.atan2(dx, dz) + Math.PI / 2;
                 g.add(board);
-                const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.8, 4), new THREE.MeshLambertMaterial({ color: 0xf5c542 }));
-                arrow.position.set(px + sgn * 1.5, py + 2.35, ROAD_HALF + 1.0);
-                arrow.rotation.z = sgn > 0 ? -Math.PI / 2 : Math.PI / 2;
+                const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 4), new THREE.MeshLambertMaterial({ color: 0xe8c05a }));
+                arrow.position.set(sp[0] + dx * 1.35, sy + 2.15, sp[1] + dz * 1.35);
+                arrow.rotation.set(dz ? (dz > 0 ? Math.PI / 2 : -Math.PI / 2) : 0, 0, dx ? (dx > 0 ? -Math.PI / 2 : Math.PI / 2) : 0);
                 g.add(arrow);
-                // 🏮 เสาไฟสองข้างปลายทาง ให้เห็นชัดว่าเดินออกได้ตรงนี้
-                for (const zz of [-ROAD_HALF - 0.9, ROAD_HALF + 0.9]) {
-                    const lp = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 2.9, 6), edgeM);
-                    lp.position.set(px, terrainAt(px, zz) + 1.45, zz);
-                    g.add(lp);
-                    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffe9a0, emissive: 0xffd76a, emissiveIntensity: 1.0 }));
-                    bulb.position.set(px, terrainAt(px, zz) + 3.0, zz);
-                    g.add(bulb);
-                }
-                ends.push({ dir: sgn, x: sgn * (FIELD_R - 0.9), idx: nb.idx, id: nb.id, name: nb.name, emoji: nb.emoji, lvMin: nb.lvMin });
+                ends.push({ dir: ex.dir, vx: dx, vz: dz, idx: ex.idx, id: ex.id, name: ex.name, emoji: ex.emoji, lvMin: ex.lvMin, side: ex.side, arrow: ex.arrow });
             });
             (G._worldRoot || scene).add(g);
             G._roadGrp = g;
             G._roadEnds = ends;
         };
         G.roadSnap = () => { if (G._roadGrp)
-            G.buildRoad(); }; // พื้นเปลี่ยนความสูง → ปูใหม่
-        // 🚶 เดินตามถนนข้ามไปด่านถัดไป — โผล่อีกฝั่งของแมพใหม่ เหมือนเดินต่อเนื่อง
-        G.travelRoad = (dir) => {
-            const end = (G._roadEnds || []).find((e) => e.dir === dir);
+            G.buildRoad(); };
+        // 🧭 ระยะตามทาง (along) และระยะเยื้องข้างทาง (side) เทียบกับทางออกอันหนึ่ง
+        G.roadAxis = (e, x, z) => ({ along: x * e.vx + z * e.vz, side: Math.abs(x * -e.vz + z * e.vx) });
+        // 🚶 เดินข้ามเขตแดน — เข้าด่านถัดไปจากฝั่งตรงข้าม ทิศเดิม เยื้องข้างเท่าเดิม เดินต่อได้ทันที
+        G.travelRoad = (dirKey) => {
+            const end = (G._roadEnds || []).find((e) => e.dir === dirKey);
             if (!end)
                 return false;
             if (G.mode !== "explore") {
-                toast("เดินทางได้ตอนสำรวจเท่านั้น");
+                toast("เดินข้ามเขตได้ตอนสำรวจเท่านั้น");
                 return false;
             }
             const lv = (G.player && G.player.level) || 1;
-            if (lv + 30 < end.lvMin) {
+            if (lv + 30 < end.lvMin)
                 toast(`⚠️ ${end.emoji} ${end.name} แนะนำเลเวล ${end.lvMin}+ — ตอนนี้ Lv.${lv} ระวังตัวด้วยนะ`);
-            }
+            // เยื้องข้างทางเดิม — หนีบไว้ในความกว้างทาง กันโผล่นอกทางถ้ากดปุ่มตอนยืนเฉียง ๆ
+            const off = Math.max(-(ROAD_HALF - 0.8), Math.min(ROAD_HALF - 0.8, char.position.x * -end.vz + char.position.z * end.vx));
             switchBiome(end.idx, true);
-            // โผล่ที่ปลายถนนฝั่งตรงข้าม แล้วเดินต่อไปทางเดิม
-            char.position.x = -dir * (FIELD_R - 4.5);
-            char.position.z = 0;
+            const back = FIELD_R - 4.5;
+            char.position.x = -end.vx * back + (-end.vz) * off;
+            char.position.z = -end.vz * back + (end.vx) * off;
             char.position.y = terrainAt(char.position.x, char.position.z);
-            G._roadCool = 1.6; // กันเด้งกลับทันที
-            if (G.sfx && G.sfx.warp)
-                G.sfx.warp();
+            G._roadCool = 1.6;
             const inf = G.roadInfo();
-            toast(`🛣️ เดินตามถนนถึง ${end.emoji} ${end.name} แล้ว! (${inf.route ? inf.route.emoji + " " + inf.route.name + " " + inf.step + "/" + inf.total : ""})`);
+            toast(`🚶 ข้ามเขตเข้าสู่ ${end.emoji} ${end.name}${inf.route ? ` (${inf.route.emoji} ${inf.route.name} ${inf.step}/${inf.total})` : ""}`);
             return true;
         };
         // ================= 🛣️ END ROADS =================
@@ -54261,16 +54280,17 @@ function CherryAdventure() {
                         G._roadCool -= dt;
                     if (G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && (G._roadEnds || []).length) {
                         const px = char.position.x, pz = char.position.z;
-                        const onLane = Math.abs(pz) < ROAD_HALF;
-                        const near = onLane ? (G._roadEnds || []).find((e) => e.dir * px > FIELD_R - 5.2) : null;
-                        const cross = onLane ? (G._roadEnds || []).find((e) => e.dir * px > FIELD_R + 1.2) : null;
+                        const lane = (e) => Math.abs(px * -e.vz + pz * e.vx) < ROAD_HALF; // อยู่ในความกว้างของทางไหม
+                        const along = (e) => px * e.vx + pz * e.vz; // เดินไปตามทางได้ไกลแค่ไหน
+                        const near = (G._roadEnds || []).find((e) => lane(e) && along(e) > FIELD_R - 5.2);
+                        const cross = (G._roadEnds || []).find((e) => lane(e) && along(e) > FIELD_R + 1.2);
                         if (cross && (G._roadCool || 0) <= 0) {
                             G.travelRoad(cross.dir);
                         }
                         const nid = near ? near.id : null;
                         if (nid !== G._roadNearId) {
                             G._roadNearId = nid;
-                            setUi((u) => ({ ...u, roadNear: near ? { dir: near.dir, name: near.name, emoji: near.emoji, lvMin: near.lvMin } : null }));
+                            setUi((u) => ({ ...u, roadNear: near ? { dir: near.dir, name: near.name, emoji: near.emoji, lvMin: near.lvMin, side: near.side, arrow: near.arrow } : null }));
                         }
                     }
                     else if (G._roadNearId) {
@@ -54826,10 +54846,14 @@ function CherryAdventure() {
                         }
                     }
                     else {
-                        // 🛣️ ปากทางถนน = ช่องเดียวที่เดินทะลุขอบแมพออกไปด่านถัดไปได้
-                        const onRoad = Math.abs(char.position.z) < ROAD_HALF - 0.4
-                            && (G._roadEnds || []).some((e) => e.dir * char.position.x > 0);
-                        const rr = Math.hypot(char.position.x, char.position.z);
+                        // 🛣️ ปากทางดิน = ช่องเดียวที่เดินทะลุขอบแมพออกไปด่านถัดไปได้ (เปิดได้ทั้ง 4 ทิศ)
+                        const cx = char.position.x, cz = char.position.z;
+                        const onRoad = (G._roadEnds || []).some((e) => {
+                            const along = cx * e.vx + cz * e.vz;
+                            const side = Math.abs(cx * -e.vz + cz * e.vx);
+                            return along > 0 && side < ROAD_HALF - 0.4;
+                        });
+                        const rr = Math.hypot(cx, cz);
                         const lim = onRoad ? FIELD_R + 1.6 : FIELD_R - 0.3;
                         if (rr > lim) {
                             char.position.x *= lim / rr;
@@ -70620,6 +70644,8 @@ function CherryAdventure() {
     const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen"];
     // 🖥️ คอม (จอกว้าง): เมนูป็อปอัพไปชิดขวาจอ · ตัวละครโชว์อยู่กลางจอ (มือถือ = กลางจอเหมือนเดิม)
     const _uiWideModal = window.innerWidth > 820;
+    // 🖥️📱 จอ "แนวนอน" (คอม · แท็บเล็ตแนวนอน · มือถือแนวนอน) ใช้ผังเดียวกัน — การ์ดสถานะบนซ้าย · อันดับโลกบนขวา
+    const _wideHud = window.innerWidth > window.innerHeight * 1.2;
     const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
     // ---------- 🎛️ ผังปุ่มบนจอ — คิดช่องวางทีเดียวจากขนาดจอจริง ทุกปุ่มอ้างตารางนี้ จะได้ไม่ทับกันและไม่บังตัวละคร ----------
     const _vh = typeof window !== "undefined" ? window.innerHeight : 800;
@@ -70633,14 +70659,14 @@ function CherryAdventure() {
     const HUD_PAD = HUD_CELL * 3 + 6; // ความสูง/กว้างแป้นหมุนกล้อง
     // 📱 แนวนอน: กันขอบซ้าย-ขวาไว้ให้แถบปุ่มโดยเฉพาะ ภาพ 3D จะหยุดก่อนถึงปุ่ม ไม่ล้ำไปบังกัน
     // 📏 ระยะห่างจากขอบจอของแถบปุ่ม — แนวนอนเว้นเยอะกว่า (นิ้วโป้งจับขอบเครื่องอยู่) + เผื่อรอยบาก/มุมโค้ง
-    const HUD_EDGE = _shortHud ? 22 : 12;
+    const HUD_EDGE = _wideHud ? 22 : 12;
     const EDGE_L = `calc(${HUD_EDGE}px + env(safe-area-inset-left, 0px))`;
     const EDGE_R = `calc(${HUD_EDGE}px + env(safe-area-inset-right, 0px))`;
     // 📱 แนวนอน: ภาพ 3D กินเต็มจอ ปุ่มลอยทับอยู่ข้างบน (ไม่หดภาพให้เหลือแถบว่างสองข้างแล้ว)
     // 📱 แนวนอน = ผังแบบเกมมือถือ: การ์ดสถานะมุมบนซ้าย · อันดับโลกมุมบนขวา · กลางล่างโล่งไว้ให้เห็นตัวละคร
-    const HUD_CARD = _shortHud; // ใช้การ์ดสถานะมุมบนซ้ายไหม
+    const HUD_CARD = _wideHud; // ใช้การ์ดสถานะมุมบนซ้ายไหม (จอแนวนอนทั้งคอมและมือถือ)
     const HUD_CARD_H = 92; // ความสูงการ์ด (เอาไว้วางของถัดไปให้ไม่ทับ)
-    const HUD_SCRIM = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0; // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
+    const HUD_SCRIM = _wideHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0; // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
     const HUD_GUTTER = 0; // ไม่กันขอบภาพอีกต่อไป
     // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
     const _fitCol = (want, base, size, reserveTop) => {
@@ -72448,15 +72474,17 @@ function CherryAdventure() {
                     background: "linear-gradient(90deg,#6a7a8a,#98a8b8)", whiteSpace: "nowrap",
                     boxShadow: "0 5px 16px rgba(90,110,130,0.5)",
                 } },
-                "\uD83D\uDEE3\uFE0F \u0E40\u0E14\u0E34\u0E19\u0E15\u0E48\u0E2D\u0E44\u0E1B",
+                ui.roadNear.arrow || "🛣️",
+                " \u0E02\u0E49\u0E32\u0E21\u0E40\u0E02\u0E15\u0E41\u0E14\u0E19",
                 React.createElement("span", { style: { display: "block", fontSize: 11.5 } },
                     ui.roadNear.emoji,
                     " ",
                     ui.roadNear.name),
                 React.createElement("span", { style: { display: "block", fontSize: 9.5, opacity: 0.9 } },
-                    "\u0E41\u0E19\u0E30\u0E19\u0E33 Lv.",
+                    ui.roadNear.side || "",
+                    " \u00B7 \u0E41\u0E19\u0E30\u0E19\u0E33 Lv.",
                     ui.roadNear.lvMin,
-                    "+ \u00B7 \u0E2B\u0E23\u0E37\u0E2D\u0E40\u0E14\u0E34\u0E19\u0E15\u0E23\u0E07\u0E44\u0E1B\u0E40\u0E25\u0E22\u0E01\u0E47\u0E44\u0E14\u0E49")))),
+                    "+ \u00B7 \u0E40\u0E14\u0E34\u0E19\u0E15\u0E23\u0E07\u0E44\u0E1B\u0E01\u0E47\u0E44\u0E14\u0E49")))),
         ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
             React.createElement("button", { onClick: () => G.startMining(), style: {
                     padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
@@ -72637,7 +72665,7 @@ function CherryAdventure() {
             } }, "\uD83C\uDFC6")),
         ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute", top: HUD_CARD ? ST(4) : "calc(env(safe-area-inset-top) + 42px)",
                 ...(HUD_CARD ? { right: EDGE_R } : { left: "calc(env(safe-area-inset-left) + 10px)" }),
-                width: HUD_CARD ? 168 : 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
+                width: HUD_CARD ? (_shortHud ? 168 : 200) : 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, marginBottom: 4 } },
                 React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#ffd76a" } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
                 ui.netEnabled !== false && (React.createElement("span", { title: ui.rtStatus === "SUBSCRIBED" ? "เชื่อมต่อเรียลไทม์แล้ว" : ("เรียลไทม์: " + (ui.rtStatus || "…")), style: { display: "inline-flex", alignItems: "center", gap: 2, fontSize: 9, fontWeight: 800, color: "#cfeaff", background: "rgba(60,120,180,0.28)", borderRadius: 7, padding: "1px 5px", lineHeight: 1.4 } },
@@ -72671,7 +72699,7 @@ function CherryAdventure() {
             React.createElement("button", { onClick: () => G.catchSecret && G.catchSecret(), style: { pointerEvents: "auto", padding: "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(135deg,#ff9ec8,#f5a623)", boxShadow: "0 4px 16px rgba(245,120,80,0.55)", animation: "pulse 0.8s ease-in-out infinite alternate" } }, "\uD83C\uDFA3 \u0E08\u0E31\u0E1A\u0E44\u0E01\u0E48\u0E19\u0E49\u0E2D\u0E22"))),
         (ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute",
                 ...(HUD_CARD
-                    ? { top: ST(4), left: EDGE_L, transform: "none", width: "min(42vw, 250px)",
+                    ? { top: ST(4), left: EDGE_L, transform: "none", width: _shortHud ? "min(42vw, 250px)" : "min(26vw, 320px)",
                         background: "rgba(16,22,18,0.46)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
                         border: "1px solid rgba(255,255,255,0.16)", borderRadius: 13, padding: "6px 8px",
                         boxShadow: "0 4px 16px rgba(0,0,0,0.32)" }
@@ -73425,7 +73453,7 @@ function CherryAdventure() {
             G.actionMode && !ui.equipScreen && !ui.inRanchZone && (() => {
                 const list = skillsOf(ui.cls, ui.pathId) || [];
                 const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
-                return (React.createElement("div", { style: { position: "absolute", right: `calc(${_shortHud ? HUD_EDGE + HUD_PAD + 10 : HUD_BTN_R + HUD_EDGE + 16}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
+                return (React.createElement("div", { style: { position: "absolute", right: `calc(${HUD_EDGE + HUD_PAD + 12}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" } }, skills.map((sk) => {
                         const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
                         const afford = (ui.mp || 0) >= cost;
@@ -75300,7 +75328,7 @@ function CherryAdventure() {
                     !ui.fishing && React.createElement("button", { onClick: () => G.startFishing && G.startFishing(), title: "\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E48\u0E2D", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#5aa0d0,#3a78b0)", color: "#fff", boxShadow: "0 4px 14px rgba(58,120,176,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83C\uDFA3"),
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E01\u0E1B\u0E25\u0E32"))),
-                React.createElement("div", { style: { position: "absolute", right: `calc(${_shortHud ? HUD_EDGE + HUD_PAD + 10 : HUD_BTN_R + HUD_EDGE + 16}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
+                React.createElement("div", { style: { position: "absolute", right: `calc(${HUD_EDGE + HUD_PAD + 12}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
                     React.createElement("button", { onClick: () => G.openRanch && G.openRanch("market"), title: "\u0E15\u0E25\u0E32\u0E14", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83D\uDED2"),
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E25\u0E32\u0E14")),
