@@ -44635,6 +44635,9 @@ export default function CherryAdventure() {
   const EDGE_L = `calc(${HUD_EDGE}px + env(safe-area-inset-left, 0px))`;
   const EDGE_R = `calc(${HUD_EDGE}px + env(safe-area-inset-right, 0px))`;
   // 📱 แนวนอน: ภาพ 3D กินเต็มจอ ปุ่มลอยทับอยู่ข้างบน (ไม่หดภาพให้เหลือแถบว่างสองข้างแล้ว)
+  // 📱 แนวนอน = ผังแบบเกมมือถือ: การ์ดสถานะมุมบนซ้าย · อันดับโลกมุมบนขวา · กลางล่างโล่งไว้ให้เห็นตัวละคร
+  const HUD_CARD = _shortHud;                         // ใช้การ์ดสถานะมุมบนซ้ายไหม
+  const HUD_CARD_H = 92;                              // ความสูงการ์ด (เอาไว้วางของถัดไปให้ไม่ทับ)
   const HUD_SCRIM = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;   // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
   const HUD_GUTTER = 0;                                                        // ไม่กันขอบภาพอีกต่อไป
   // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
@@ -44662,8 +44665,8 @@ export default function CherryAdventure() {
   const PROMPT_W = { maxWidth: 152, textAlign: "center" };   // แคบพอให้ไม่ชนจอยด้านซ้ายกับแถบสกิลด้านขวา
   const _boardOn = !ui.boardHidden && !ui.equipScreen && ui.mode === "explore" && !HUD_HIDE;   // 🏆 แผงอันดับโลกกินมุมซ้ายบน — แบนเนอร์ต้องเลี่ยง
   // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
-  const _bannerSide = _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
-  const _bannerDrop = _boardOn && !_bannerSide ? 104 : 0;
+  const _bannerSide = !HUD_CARD && _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
+  const _bannerDrop = (_boardOn && !_bannerSide && !HUD_CARD) ? 104 : 0;   // แนวนอน: อันดับโลกไปอยู่ขวาแล้ว แบนเนอร์ไม่ต้องหลบลงมา
   const bannerPos = (base) => ({
     top: ST(base + _bannerDrop),
     left: _bannerSide ? "calc(50% + 100px)" : "50%",
@@ -46433,7 +46436,7 @@ export default function CherryAdventure() {
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && !HUD_HIDE && (
-        <div style={{ position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: EDGE_L, display: "flex", gap: 6, zIndex: 27 }}>
+        <div style={{ position: "absolute", top: HUD_CARD ? ST(HUD_CARD_H + 6) : ((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92)), left: EDGE_L, display: "flex", gap: 6, zIndex: 27 }}>
           <button onClick={() => setUi((u) => ({ ...u, settingsOpen: true }))} title="ตั้งค่าเกม" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
             fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
@@ -46939,14 +46942,17 @@ export default function CherryAdventure() {
       {/* 🏆 top-left world leaderboard (top 3) — sits below the announcement + camera notch; hidden during battle so it doesn't clutter combat */}
       {ui.mode === "explore" && !ui.equipScreen && ui.boardHidden && !HUD_HIDE && (
         <button onClick={() => G.toggleBoard && G.toggleBoard()} title="แสดงป้ายอันดับโลก" style={{
-          position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", zIndex: 26,
+          position: "absolute", top: HUD_CARD ? ST(4) : "calc(env(safe-area-inset-top) + 42px)",
+          ...(HUD_CARD ? { right: EDGE_R } : { left: "calc(env(safe-area-inset-left) + 10px)" }), zIndex: 26,
           border: "1px solid rgba(255,255,255,0.18)", cursor: "pointer", borderRadius: 999, padding: "4px 10px",
           background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
           color: "#ffd76a", fontSize: 12, fontWeight: 800, fontFamily: font, boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
         }}>🏆</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.boardHidden && !HUD_HIDE && (
-        <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top) + 42px)", left: "calc(env(safe-area-inset-left) + 10px)", width: 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
+        <div style={{ position: "absolute", top: HUD_CARD ? ST(4) : "calc(env(safe-area-inset-top) + 42px)",
+          ...(HUD_CARD ? { right: EDGE_R } : { left: "calc(env(safe-area-inset-left) + 10px)" }),
+          width: HUD_CARD ? 168 : 178, maxWidth: "52vw", zIndex: 26, background: "rgba(24,18,34,0.56)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 12, padding: "6px 8px 7px", border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", pointerEvents: "auto", fontFamily: font }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 800, color: "#ffd76a" }}>🏆 อันดับโลก</span>
             {ui.netEnabled !== false && (
@@ -46986,9 +46992,18 @@ export default function CherryAdventure() {
       )}
       {/* ⭐ bottom status bar — long, 2 lines (stats / EXP + AUTO) */}
       {(ui.mode === "explore" || ui.mode === "battle") && !ui.equipScreen && !HUD_HIDE && (
-        <div style={{ position: "absolute", bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: _shortHud ? "min(56vw, 470px)" : "min(92vw, 580px)", zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+        <div style={{ position: "absolute",
+          ...(HUD_CARD
+            ? { top: ST(4), left: EDGE_L, transform: "none", width: "min(42vw, 250px)",
+                background: "rgba(16,22,18,0.46)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
+                border: "1px solid rgba(255,255,255,0.16)", borderRadius: 13, padding: "6px 8px",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.32)" }
+            : { bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)" }), zIndex: 25, pointerEvents: "none", fontFamily: font }}>
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "3px 10px", fontSize: 11, fontWeight: 800, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)", pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: HUD_CARD ? 6 : 7, ...(HUD_CARD
+            ? { background: "transparent", borderRadius: 0, padding: 0, fontSize: 10, color: "#eaf4ec", justifyContent: "flex-start", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }
+            : { background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "3px 10px", fontSize: 11, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)" }),
+            fontWeight: 800, pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
             <span>⚔️{ui.atk}</span>
             <span>🛡️{ui.def}</span>
             <span style={{ color: "#c99a2e" }}>💰{(ui.gold || 0) >= 1000000 ? ((ui.gold / 1000000).toFixed(1) + "M") : (ui.gold != null ? ui.gold.toLocaleString() : 0)}</span>
