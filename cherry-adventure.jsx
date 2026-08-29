@@ -44634,7 +44634,9 @@ export default function CherryAdventure() {
   const HUD_EDGE = _shortHud ? 22 : 12;
   const EDGE_L = `calc(${HUD_EDGE}px + env(safe-area-inset-left, 0px))`;
   const EDGE_R = `calc(${HUD_EDGE}px + env(safe-area-inset-right, 0px))`;
-  const HUD_GUTTER = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;
+  // 📱 แนวนอน: ภาพ 3D กินเต็มจอ ปุ่มลอยทับอยู่ข้างบน (ไม่หดภาพให้เหลือแถบว่างสองข้างแล้ว)
+  const HUD_SCRIM = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;   // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
+  const HUD_GUTTER = 0;                                                        // ไม่กันขอบภาพอีกต่อไป
   // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
   const _fitCol = (want, base, size, reserveTop) => {
     const room = _vh - HUD_TOPSAFE - base - reserveTop;
@@ -44754,22 +44756,20 @@ export default function CherryAdventure() {
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} }`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
       <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
-        left: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-left, 0px))` : "calc(-1 * env(safe-area-inset-left, 0px))",
-        right: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-right, 0px))` : "calc(-1 * env(safe-area-inset-right, 0px))" }} />
+        left: "calc(-1 * env(safe-area-inset-left, 0px))",
+        right: "calc(-1 * env(safe-area-inset-right, 0px))" }} />
       {/* 📱 แนวนอน: แถบขอบซ้าย-ขวาที่กันไว้ให้ปุ่ม — ภาพ 3D ไม่ล้ำเข้ามา ปุ่มเลยไม่ทับฉาก */}
-      {HUD_GUTTER > 0 && ["left", "right"].map((side) => (
+      {HUD_SCRIM > 0 && !HUD_HIDE && ["left", "right"].map((side) => (
         <div key={side} style={{
           position: "absolute", top: 0, bottom: 0, [side]: "calc(-1 * env(safe-area-inset-" + side + ", 0px))",
-          width: `calc(${HUD_GUTTER}px + env(safe-area-inset-${side}, 0px))`, zIndex: 0, pointerEvents: "none",
+          width: `calc(${HUD_SCRIM}px + env(safe-area-inset-${side}, 0px))`, zIndex: 2, pointerEvents: "none",
           background: side === "left"
-            ? "linear-gradient(90deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)"
-            : "linear-gradient(270deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)",
+            ? "linear-gradient(90deg,rgba(12,18,12,0.42) 0%,rgba(12,18,12,0.22) 55%,rgba(12,18,12,0) 100%)"
+            : "linear-gradient(270deg,rgba(12,18,12,0.42) 0%,rgba(12,18,12,0.22) 55%,rgba(12,18,12,0) 100%)",
         }} />
       ))}
       {/* 🎞️ ขอบจอมืดจาง ๆ — ดึงสายตาเข้ากลางจอ ภาพดูเป็นเกมจริงจังขึ้น (ไม่กินการแตะ) */}
-      <div style={{ position: "absolute", top: 0, bottom: 0,
-        left: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-left, 0px))` : 0,
-        right: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-right, 0px))` : 0, pointerEvents: "none", zIndex: 2,
+      <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, pointerEvents: "none", zIndex: 2,
         background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
       {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
@@ -47853,7 +47853,7 @@ export default function CherryAdventure() {
             return (
               // anchored to the LEFT of the right-edge utility column (potion/mount/quest/pet) so the
               // skill buttons never sit on top of them while roaming
-              <div style={{ position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", right: `calc(${_shortHud ? HUD_EDGE + HUD_PAD + 10 : HUD_BTN_R + HUD_EDGE + 16}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" }}>
                   {skills.map((sk) => {
                     const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
@@ -49911,7 +49911,7 @@ export default function CherryAdventure() {
                 <span style={{ fontSize: 25 }}>🎣</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ตกปลา</span>
               </button>}
             </div>
-            <div style={{ position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
+            <div style={{ position: "absolute", right: `calc(${_shortHud ? HUD_EDGE + HUD_PAD + 10 : HUD_BTN_R + HUD_EDGE + 16}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
               <button onClick={() => G.openRanch && G.openRanch("market")} title="ตลาด" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🛒</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ตลาด</span>
               </button>

@@ -70455,7 +70455,9 @@ function CherryAdventure() {
     const HUD_EDGE = _shortHud ? 22 : 12;
     const EDGE_L = `calc(${HUD_EDGE}px + env(safe-area-inset-left, 0px))`;
     const EDGE_R = `calc(${HUD_EDGE}px + env(safe-area-inset-right, 0px))`;
-    const HUD_GUTTER = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;
+    // 📱 แนวนอน: ภาพ 3D กินเต็มจอ ปุ่มลอยทับอยู่ข้างบน (ไม่หดภาพให้เหลือแถบว่างสองข้างแล้ว)
+    const HUD_SCRIM = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0; // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
+    const HUD_GUTTER = 0; // ไม่กันขอบภาพอีกต่อไป
     // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
     const _fitCol = (want, base, size, reserveTop) => {
         const room = _vh - HUD_TOPSAFE - base - reserveTop;
@@ -70574,18 +70576,16 @@ function CherryAdventure() {
             paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" } },
         React.createElement("style", null, `@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} }`),
         React.createElement("div", { ref: mountRef, style: { position: "absolute", top: 0, bottom: 0,
-                left: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-left, 0px))` : "calc(-1 * env(safe-area-inset-left, 0px))",
-                right: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-right, 0px))` : "calc(-1 * env(safe-area-inset-right, 0px))" } }),
-        HUD_GUTTER > 0 && ["left", "right"].map((side) => (React.createElement("div", { key: side, style: {
+                left: "calc(-1 * env(safe-area-inset-left, 0px))",
+                right: "calc(-1 * env(safe-area-inset-right, 0px))" } }),
+        HUD_SCRIM > 0 && !HUD_HIDE && ["left", "right"].map((side) => (React.createElement("div", { key: side, style: {
                 position: "absolute", top: 0, bottom: 0, [side]: "calc(-1 * env(safe-area-inset-" + side + ", 0px))",
-                width: `calc(${HUD_GUTTER}px + env(safe-area-inset-${side}, 0px))`, zIndex: 0, pointerEvents: "none",
+                width: `calc(${HUD_SCRIM}px + env(safe-area-inset-${side}, 0px))`, zIndex: 2, pointerEvents: "none",
                 background: side === "left"
-                    ? "linear-gradient(90deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)"
-                    : "linear-gradient(270deg,#20261f 0%,#2a3128 62%,rgba(42,49,40,0.55) 100%)",
+                    ? "linear-gradient(90deg,rgba(12,18,12,0.42) 0%,rgba(12,18,12,0.22) 55%,rgba(12,18,12,0) 100%)"
+                    : "linear-gradient(270deg,rgba(12,18,12,0.42) 0%,rgba(12,18,12,0.22) 55%,rgba(12,18,12,0) 100%)",
             } }))),
-        React.createElement("div", { style: { position: "absolute", top: 0, bottom: 0,
-                left: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-left, 0px))` : 0,
-                right: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-right, 0px))` : 0, pointerEvents: "none", zIndex: 2,
+        React.createElement("div", { style: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0, pointerEvents: "none", zIndex: 2,
                 background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" } }),
         ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus() })), style: { position: "absolute", inset: 0, zIndex: 49 } })),
         ui.guildOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, guildOpen: false })), style: { position: "absolute", inset: 0, background: "rgba(10,14,26,0.58)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 12 } },
@@ -73213,7 +73213,7 @@ function CherryAdventure() {
             G.actionMode && !ui.equipScreen && !ui.inRanchZone && (() => {
                 const list = skillsOf(ui.cls, ui.pathId) || [];
                 const skills = list.filter((sk) => sk.mult && !sk.heal && skillGate(ui.cls, list.indexOf(sk), ui.level, ui.skillRanks, ui.baseStats, ui.pathId).open).slice(0, 6);
-                return (React.createElement("div", { style: { position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
+                return (React.createElement("div", { style: { position: "absolute", right: `calc(${_shortHud ? HUD_EDGE + HUD_PAD + 10 : HUD_BTN_R + HUD_EDGE + 16}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 7, zIndex: 23, pointerEvents: "none" } },
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: 6, maxWidth: 150, pointerEvents: "auto" } }, skills.map((sk) => {
                         const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
                         const afford = (ui.mp || 0) >= cost;
@@ -75088,7 +75088,7 @@ function CherryAdventure() {
                     !ui.fishing && React.createElement("button", { onClick: () => G.startFishing && G.startFishing(), title: "\u0E15\u0E01\u0E1B\u0E25\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E48\u0E2D", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#5aa0d0,#3a78b0)", color: "#fff", boxShadow: "0 4px 14px rgba(58,120,176,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83C\uDFA3"),
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E01\u0E1B\u0E25\u0E32"))),
-                React.createElement("div", { style: { position: "absolute", right: (HUD_GUTTER || HUD_BTN_R + 14) + 12, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
+                React.createElement("div", { style: { position: "absolute", right: `calc(${_shortHud ? HUD_EDGE + HUD_PAD + 10 : HUD_BTN_R + HUD_EDGE + 16}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 58 : 84, display: "flex", flexDirection: "column", gap: 11, zIndex: 34 } },
                     React.createElement("button", { onClick: () => G.openRanch && G.openRanch("market"), title: "\u0E15\u0E25\u0E32\u0E14", style: { width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#f0c060,#d9a020)", color: "#fff", boxShadow: "0 4px 14px rgba(217,160,32,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 } },
                         React.createElement("span", { style: { fontSize: 25 } }, "\uD83D\uDED2"),
                         React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginTop: 2 } }, "\u0E15\u0E25\u0E32\u0E14")),
