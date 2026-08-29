@@ -2537,11 +2537,32 @@ const MOUNTS = [
     { id: "shark", name: "ฉลามบก", emoji: "🦈", spd: 1.8, shape: "fish", color: 0x7ab8e0, scale: 1.7, lift: 0.95, desc: "ความเร็ว +80%" },
 ];
 const WEAPON_TIP = { w1: 0xf28ba8, w2: 0xf5652e, w3: 0x7ad0e8, wS: 0xcfe0ff };
-const rollRarity = (boss) => {
+// 🎲 ระดับของที่ดรอป — ผูกกับ "เลเวลมอน" และ "เป็นบอสไหม"
+//    ของระดับสูงหาไม่ได้จากมอนเลเวลต่ำอีกแล้ว:
+//      🐉 มังกร  = บอสโลก / เจ้าถิ่น / บอสเลเวล 60+ เท่านั้น
+//      🌟 SECRET = บอส หรือมอนธรรมดาเลเวล 120+ (โอกาสน้อยมาก)
+//      💜 EPIC   = บอส หรือมอนธรรมดาเลเวล 25+ (ยิ่งเลเวลสูงยิ่งมีลุ้น)
+//      มอนเลเวลต่ำ = ได้แค่ของทั่วไปกับของหายาก
+//    (eliteBoss = บอสโลก 👹 หรือเจ้าถิ่นประจำแดน 👑 — สองอย่างนี้คือแหล่งของระดับสูงสุด)
+const rollRarity = (boss, lv, eliteBoss) => {
+    const L = Math.max(1, lv || 1);
     const r = Math.random();
-    if (boss)
-        return r < 0.05 ? "dragon" : r < 0.18 ? "secret" : r < 0.65 ? "epic" : "rare"; // boss = big loot
-    return r < 0.003 ? "dragon" : r < 0.013 ? "secret" : r < 0.12 ? "epic" : r < 0.45 ? "rare" : "common";
+    if (boss) {
+        if (eliteBoss || L >= 150)
+            return r < 0.060 ? "dragon" : r < 0.240 ? "secret" : r < 0.70 ? "epic" : "rare";
+        if (L >= 60)
+            return r < 0.015 ? "dragon" : r < 0.120 ? "secret" : r < 0.58 ? "epic" : "rare";
+        if (L >= 25)
+            return r < 0.040 ? "secret" : r < 0.42 ? "epic" : r < 0.85 ? "rare" : "common";
+        return r < 0.10 ? "epic" : r < 0.62 ? "rare" : "common"; // บอส/ตัวหายากเลเวลต้น ๆ ยังไม่ให้ของระดับสูง
+    }
+    if (L >= 120)
+        return r < 0.004 ? "secret" : r < 0.070 ? "epic" : r < 0.34 ? "rare" : "common";
+    if (L >= 60)
+        return r < 0.025 ? "epic" : r < 0.28 ? "rare" : "common";
+    if (L >= 25)
+        return r < 0.008 ? "epic" : r < 0.20 ? "rare" : "common";
+    return r < 0.10 ? "rare" : "common";
 };
 const BOSS_LEVELS_STEP = 5; // bosses at 10, 15, 20, ...
 function CherryAdventure() {
@@ -32356,6 +32377,25 @@ function CherryAdventure() {
             amazon: { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
         };
         const MSQ = [];
+        // ================= 🎓 บทที่ 1-5: สอนเล่นเกม =================
+        // เดินไปคุย NPC ก่อน → ได้ค่าประสบการณ์ + ชุดสวมใส่ → สวมของ → ออกจากเมือง → ตีมอนสเตอร์
+        // แตะป้ายเควสบนจอ ตัวละครจะเดินไปยังจุดหมายให้เอง
+        MSQ.push({ t: "talk", who: "elder", title: "ทักทายผู้เฒ่าประจำหมู่บ้าน", tut: 1,
+            txt: "ผู้เฒ่ายืนรออยู่ใกล้ ๆ จุดเริ่มต้น — เดินไปคุยกับท่านก่อนเพื่อรับอาวุธประจำตัว\n(แตะป้ายเควสบนจอ ตัวละครจะเดินไปเอง)",
+            exp: 0.9, gold: 150, giftWeapon: true, gift: ["o1", "h1"] });
+        MSQ.push({ t: "talk", who: "smith", title: "แวะทักช่างตีเหล็ก", tut: 1,
+            txt: "ช่างตีเหล็กอยู่อีกฝั่งของหมู่บ้าน แกจะให้ชุดฝึกหัดไว้กันตัว — เดินไปคุยกับแกสักหน่อย",
+            exp: 1.0, gold: 200, gift: ["s1", "g1"] });
+        MSQ.push({ t: "gear", n: 3, title: "สวมชุดที่ได้รับ", tut: 1,
+            txt: "เปิดกระเป๋า (ปุ่ม 🎒 หรือกด B) แล้วแตะของเพื่อสวมใส่ให้ครบ 3 ชิ้น — ใส่แล้วพลังจะเพิ่มขึ้นทันที\nกดปุ่ม ⚡ ออโต้ ในกระเป๋าก็สวมของแรงสุดให้เองได้",
+            exp: 1.0, gold: 200 });
+        MSQ.push({ t: "leave", title: "ออกจากหมู่บ้านไปผจญภัย", tut: 1,
+            txt: "เตรียมตัวพร้อมแล้ว! เดินออกจากเขตปลอดภัยของหมู่บ้านไปยังทุ่งกว้าง — มอนสเตอร์รออยู่ข้างนอก",
+            exp: 0.8, gold: 200, pots: 3 });
+        MSQ.push({ t: "win", n: 3, title: "การต่อสู้ครั้งแรก", tut: 1,
+            txt: "เจอมอนสเตอร์แล้วแตะที่ตัวมันได้เลย ตัวละครจะวิ่งเข้าไปฟันให้เอง — หรือกดปุ่ม ⚔️ ก็ได้\nลองปราบให้ได้ 3 ตัว",
+            exp: 1.2, gold: 300 });
+        // ================= 🎓 จบบทสอนเล่น =================
         MSQ.push({ t: "win", n: 5, title: "ก้าวแรกของผู้กล้า", txt: "ผู้เฒ่า: \"ยินดีต้อนรับสู่ทุ่งซากุระ เจ้าหนู! ช่วงนี้มอนสเตอร์คึกคะนองผิดปกติ ช่วยข้าปราบพวกมันสัก 5 ตัวเถิด\"" });
         MSQ.push({ t: "catch", n: 1, title: "เพื่อนร่วมทาง", txt: "ผู้เฒ่า: \"การเดินทางไกลต้องมีเพื่อน ลองใช้ลูกบอลจับมอนสเตอร์มาเป็นเพื่อนสักตัวสิ\"" });
         MSQ.push({ t: "tower", n: 3, title: "บททดสอบหอคอย", txt: "ผู้เฒ่า: \"หอคอยมิติคือบททดสอบของผู้กล้าทุกยุค จงพิชิตให้ถึงชั้น 3 เพื่อพิสูจน์ตัวเจ้า\"" });
@@ -32372,16 +32412,110 @@ function CherryAdventure() {
         G.storyCh = 0;
         G.storyProg = 0;
         const bNameOf = (id) => { const b = BIOMES.find((x) => x.id === id); return b ? `${b.emoji} ${b.name}` : id; };
-        G.storyTarget = (c) => (c && (c.t === "visit" || c.t === "bboss")) ? 1 : (c ? c.n : 1);
+        G.storyTarget = (c) => (c && (c.t === "visit" || c.t === "bboss" || c.t === "talk" || c.t === "leave")) ? 1 : (c ? c.n : 1);
         G.storyLabel = (c) => !c ? "" :
-            c.t === "win" ? `ปราบมอนสเตอร์ ${c.n} ตัว` :
-                c.t === "winB" ? `ปราบมอนสเตอร์ใน${bNameOf(c.biome)} ${c.n} ตัว` :
-                    c.t === "catch" ? `จับมอนสเตอร์เป็นเพื่อน ${c.n} ตัว` :
-                        c.t === "level" ? `เก็บเลเวลให้ถึง ${c.n}` :
-                            c.t === "tower" ? `พิชิตหอคอยมิติถึงชั้น ${c.n}` :
-                                c.t === "visit" ? `วาร์ปไปยัง ${bNameOf(c.biome)}` :
-                                    c.t === "bboss" ? `ท้าดวลเจ้าถิ่น ${(BIOMES.find((x) => x.id === c.biome) || {}).bossName || ""}` : "";
-        G.storyReward = (i) => { const c = MSQ[i]; const boss = c && c.t === "bboss"; return { gold: (400 + i * 180) * (boss ? 2 : 1), dia: 3 + Math.floor(i / 4) + (boss ? 5 : 0) }; };
+            c.t === "talk" ? (c.who === "smith" ? "เดินไปคุยกับช่างตีเหล็ก ⚒️" : "เดินไปคุยกับผู้เฒ่า 🧓") :
+                c.t === "gear" ? `สวมของให้ครบ ${c.n} ชิ้น 🎒` :
+                    c.t === "leave" ? "ออกจากหมู่บ้านไปทุ่งกว้าง 🚪" :
+                        c.t === "win" ? `ปราบมอนสเตอร์ ${c.n} ตัว` :
+                            c.t === "winB" ? `ปราบมอนสเตอร์ใน${bNameOf(c.biome)} ${c.n} ตัว` :
+                                c.t === "catch" ? `จับมอนสเตอร์เป็นเพื่อน ${c.n} ตัว` :
+                                    c.t === "level" ? `เก็บเลเวลให้ถึง ${c.n}` :
+                                        c.t === "tower" ? `พิชิตหอคอยมิติถึงชั้น ${c.n}` :
+                                            c.t === "visit" ? `วาร์ปไปยัง ${bNameOf(c.biome)}` :
+                                                c.t === "bboss" ? `ท้าดวลเจ้าถิ่น ${(BIOMES.find((x) => x.id === c.biome) || {}).bossName || ""}` : "";
+        G.storyReward = (i) => {
+            const c = MSQ[i];
+            if (c && c.tut)
+                return { gold: c.gold || 150, dia: 2 }; // 🎓 บทสอนเล่น — รางวัลพอเหมาะ ไม่เฟ้อ
+            const boss = c && c.t === "bboss";
+            return { gold: (400 + i * 180) * (boss ? 2 : 1), dia: 3 + Math.floor(i / 4) + (boss ? 5 : 0) };
+        };
+        // 🧭 แตะป้ายเควส → ตัวละครเดินไปยังจุดหมายของบทนั้นเอง
+        G.questGo = () => {
+            const c = MSQ[G.storyCh];
+            if (!c) {
+                toast("จบเนื้อเรื่องครบทุกบทแล้ว");
+                return false;
+            }
+            if (G.storyProg >= G.storyTarget(c)) {
+                toast("📖 บทนี้สำเร็จแล้ว — เปิดเมนู 📜 กดรับรางวัลได้เลย");
+                return false;
+            }
+            if (G.mode !== "explore") {
+                toast("สั่งเดินได้ตอนสำรวจเท่านั้น");
+                return false;
+            }
+            // เดินไปจุดหนึ่งในทุ่ง (ถ้าอยู่ในเมือง/บ้าน/ฟาร์ม ให้เดินออกไปที่ทางออกก่อน)
+            const walkTo = (x, z, label) => {
+                if (G.inHomeZone || G.inRanchZone) {
+                    toast("🚪 ออกจากพื้นที่ส่วนตัวก่อนนะ");
+                    return false;
+                }
+                if (G.inTownZone) {
+                    G.moveTarget = new THREE.Vector3(0, 0, 29.8); // 🏰 ประตูออกเมือง
+                    if (G.markMoveTo)
+                        G.markMoveTo(0, 29.8);
+                    if (G.manualOrder)
+                        G.manualOrder(12);
+                    toast(`🧭 เดินออกประตูเมืองก่อน แล้วไปต่อที่ ${label}`);
+                    return true;
+                }
+                G.moveTarget = new THREE.Vector3(x, 0, z);
+                G.huntTarget = null;
+                G._queuedAct = null;
+                if (G.aimAt)
+                    G.aimAt(null);
+                if (G.markMoveTo)
+                    G.markMoveTo(x, z);
+                if (G.manualOrder)
+                    G.manualOrder(12);
+                toast(`🧭 กำลังเดินไป ${label}`);
+                return true;
+            };
+            if (c.t === "talk") {
+                const pos = c.who === "smith" ? G.smithPos : G.npcPos;
+                if (!pos) {
+                    toast("หาตำแหน่งไม่เจอ");
+                    return false;
+                }
+                return walkTo(pos.x, pos.z, c.who === "smith" ? "⚒️ ช่างตีเหล็ก" : "🧓 ผู้เฒ่า");
+            }
+            if (c.t === "gear") {
+                if (G.openEquip)
+                    G.openEquip();
+                toast("🎒 แตะของในกระเป๋าเพื่อสวมใส่ (หรือกด ⚡ ออโต้)");
+                return true;
+            }
+            if (c.t === "leave")
+                return walkTo(0, 20, "🌾 ทุ่งกว้างนอกหมู่บ้าน");
+            if (c.t === "win" || c.t === "winB" || c.t === "catch") {
+                if (G.inTownZone)
+                    return walkTo(0, 20, "🌾 ทุ่งกว้างนอกหมู่บ้าน");
+                if (G.seekAndAct && G.seekAndAct(c.t === "catch" ? "attack" : "attack"))
+                    return true;
+                toast(c.t === "catch" ? "🎯 ไม่เจอมอนสเตอร์ใกล้ ๆ — เดินสำรวจดูก่อน" : "🎯 ไม่เจอมอนสเตอร์ใกล้ ๆ — เดินสำรวจดูก่อน");
+                return false;
+            }
+            if (c.t === "tower")
+                return walkTo(-6.6, 7.0, "🗼 หอคอยมิติ");
+            if (c.t === "visit") {
+                const e = (G._roadEnds || []).find((x) => x.id === c.biome);
+                if (e)
+                    return walkTo(e.vx * (FIELD_R - 2), e.vz * (FIELD_R - 2), `🪧 ทางไป${e.name}`);
+                toast("🗺️ แดนนี้ไม่ได้อยู่ติดกับที่นี่ — เปิดแผนที่ดูเส้นทาง หรือใช้ใบวาร์ป 📜");
+                return false;
+            }
+            if (c.t === "bboss") {
+                toast("👑 กดปุ่ม ⚔️ ท้าดวลเจ้าถิ่น ที่กลางบนจอได้เลย");
+                return false;
+            }
+            if (c.t === "level") {
+                toast(`📈 เก็บเลเวลให้ถึง ${c.n} — ออกไปปราบมอนสเตอร์ต่อได้เลย`);
+                return false;
+            }
+            return false;
+        };
         const storySync = () => setUi((u) => ({ ...u, storyCh: G.storyCh, storyProg: G.storyProg }));
         G.storySync = storySync;
         // ---------- 🏰 กิลด์ — สร้าง/เข้าร่วม · คลัง · บัฟ · บอสรายสัปดาห์ ----------
@@ -32870,6 +33004,12 @@ function CherryAdventure() {
                 G.storyProg = Math.min(tgt, G.storyProg + n);
             else if (c.t === "catch" && type === "catch")
                 G.storyProg = Math.min(tgt, G.storyProg + n);
+            else if (c.t === "talk" && type === "talk" && meta.who === c.who)
+                G.storyProg = tgt;
+            else if (c.t === "gear" && type === "gear")
+                G.storyProg = Math.min(tgt, Math.max(G.storyProg, n));
+            else if (c.t === "leave" && type === "leave")
+                G.storyProg = tgt;
             else if (c.t === "visit" && type === "visit" && meta.biome === c.biome)
                 G.storyProg = tgt;
             else if (c.t === "bboss" && type === "bboss" && meta.biome === c.biome)
@@ -32886,6 +33026,13 @@ function CherryAdventure() {
         // เช็คเงื่อนไขที่อาจสำเร็จอยู่แล้ว (เลเวล/ชั้นหอคอย/ด่านที่ยืนอยู่) ตอนโหลดเซฟหรือขึ้นบทใหม่
         G.storySeed = () => {
             G.storyEvent("seed");
+            {
+                const eq = G.equip || {};
+                const n = Object.keys(eq).filter((k) => eq[k]).length;
+                if (n)
+                    G.storyEvent("gear", n);
+            } // 🎒 นับของที่สวมอยู่แล้ว
+            // 🚪 "ออกจากหมู่บ้าน" นับตอนเดินพ้นเขตหมู่บ้านออกไปในทุ่งจริง ๆ (ดูในลูปเกม) ไม่ใช่แค่ออกจากโซนเมือง
             const b = BIOMES[G.curBiome];
             if (b)
                 G.storyEvent("visit", 1, { biome: b.id });
@@ -32903,8 +33050,36 @@ function CherryAdventure() {
             G.achStats.goldEarned = (G.achStats.goldEarned || 0) + r.gold;
             if (G.gainDiamonds)
                 G.gainDiamonds(r.dia, `เนื้อเรื่องบทที่ ${G.storyCh + 1}`);
-            const xp = Math.round(expForLevel(G.player.level) * 0.35);
-            toast(`📖✨ จบบทที่ ${G.storyCh + 1} "${c.title}"! +${r.gold.toLocaleString()}💰`);
+            // 🎓 บทสอนเล่น: ให้ค่าประสบการณ์ก้อนใหญ่ + ของสวมใส่ ให้ผ่าน 5 เลเวลแรกได้ลื่น ๆ
+            const got = [];
+            if (c.giftWeapon && !(G.equip && G.equip.weapon)) { // 🗡️ อาวุธประจำอาชีพ — ให้เฉพาะตอนที่ยังไม่มีอาวุธ
+                const w = LOOT.find((x) => x.starter && x.slot === "weapon" && x.cls === G.cls);
+                if (w) {
+                    gainItem(w.id);
+                    if (G.equipItem)
+                        G.equipItem(w.id);
+                    got.push(`${w.emoji} ${w.name}`);
+                }
+            }
+            // 👕 ชุดที่ได้จะอยู่ในกระเป๋าเฉย ๆ ไม่สวมให้อัตโนมัติ — บทถัดไปคือสอนเปิดกระเป๋าสวมของเอง
+            (c.gift || []).forEach((id) => {
+                const it = LOOT.find((x) => x.id === id);
+                if (!it)
+                    return;
+                gainItem(id);
+                got.push(`${it.emoji} ${it.name}`);
+            });
+            if (c.pots) {
+                G.hpPots.s = (G.hpPots.s || 0) + c.pots;
+                G.mpPots.s = (G.mpPots.s || 0) + c.pots;
+                if (G.syncPotions)
+                    G.syncPotions();
+                got.push(`🧪 ยา ×${c.pots}`);
+            }
+            const xp = Math.round(expForLevel(G.player.level) * (c.exp || 0.35));
+            toast(`📖✨ จบบทที่ ${G.storyCh + 1} "${c.title}"! +${r.gold.toLocaleString()}💰 +${xp.toLocaleString()} EXP`);
+            if (got.length)
+                toast(`🎁 ได้รับ: ${got.join(" · ")}`);
             gainExp(xp);
             if (G.sfx)
                 G.sfx.levelup();
@@ -36387,6 +36562,16 @@ function CherryAdventure() {
         };
         // equip an item (tap in the bag panel)
         G.equipItem = (id) => {
+            const _r = G._equipItemRaw(id);
+            {
+                const eq = G.equip || {};
+                const n = Object.keys(eq).filter((k) => eq[k]).length;
+                if (G.storyEvent)
+                    G.storyEvent("gear", n);
+            } // 🎓 บทสอนเล่น: นับของที่สวมอยู่
+            return _r;
+        };
+        G._equipItemRaw = (id) => {
             const it = LOOT.find((x) => x.id === id);
             if (!it || !G.inv.includes(id))
                 return;
@@ -36700,7 +36885,7 @@ function CherryAdventure() {
         };
         G.enhanceCap = enhanceCap;
         // loot drop on victory
-        const dropLoot = (boss) => {
+        const dropLoot = (boss, lv, eliteBoss) => {
             // 🦸 boss can drop a temporary hero pass (1 / 2 / 5 days)
             if (boss && Math.random() < 0.32) {
                 const r = Math.random();
@@ -36711,17 +36896,21 @@ function CherryAdventure() {
                 setUi((u) => ({ ...u, heroPasses: { ...G.heroPasses } }));
             }
             // 🧪 potion roll (independent): 25% normal, boss always drops one (small)
-            if (boss || Math.random() < 0.25) {
+            if (boss || Math.random() < 0.14) { // 🧪 เดิม 25% → 14%
                 G.hpPots.s = (G.hpPots.s || 0) + 1;
                 if (G.syncPotions)
                     G.syncPotions();
                 toast("🧪 ดรอปน้ำยาเลือด (เล็ก)!");
             }
-            if (!boss && Math.random() > 0.55) {
-                syncPlayer();
-                return null;
-            } // 55% gear drop (ง่ายขึ้น 20%), boss = always
-            const rar = rollRarity(boss);
+            // 🎁 มอนธรรมดาดรอปของยากขึ้นมาก (เดิม 55% → 24%) · ยิ่งเลเวลสูงยิ่งมีลุ้นขึ้นเล็กน้อย · บอสยังดรอปแน่นอน
+            if (!boss) {
+                const chance = 0.24 + Math.min(0.10, Math.max(0, ((lv || 1) - 20)) * 0.0006);
+                if (Math.random() > chance) {
+                    syncPlayer();
+                    return null;
+                }
+            }
+            const rar = rollRarity(boss, lv, eliteBoss);
             const pool = LOOT.filter((x) => x.rarity === rar && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
             const it = pool[Math.floor(Math.random() * pool.length)];
             gainItem(it.id);
@@ -37859,7 +38048,11 @@ function CherryAdventure() {
         };
         // ⚒️ Blacksmith shop: forge weapons priced by rarity
         G.FORGE_PRICE = { rare: 15000, epic: 28000 };
-        G.openSmith = () => setUi((u) => ({ ...u, smithOpen: true, menuOpen: false }));
+        G.openSmith = () => {
+            if (G.storyEvent)
+                G.storyEvent("talk", 1, { who: "smith" }); // 🎓 บทสอนเล่น: ทักทายช่างตีเหล็ก
+            setUi((u) => ({ ...u, smithOpen: true, menuOpen: false }));
+        };
         G.buyForge = (id) => {
             const it = LOOT.find((x) => x.id === id);
             if (!it)
@@ -40880,7 +41073,7 @@ function CherryAdventure() {
             G.combo = (G.combo || 0) + 1;
             const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
             const ngRew = 1 + (G.ngPlus || 0) * 0.5;
-            let goldGain = Math.round((8 + lv * 2) * comboMult * ngRew * (1 + effLuck() * 0.02));
+            let goldGain = Math.round((4 + lv * 1.05) * comboMult * ngRew * (1 + effLuck() * 0.02)); // 💰 ทองจากมอนธรรมดาลดลง ~47%
             {
                 const P = curPath();
                 if (P && P.goldBonus)
@@ -40899,7 +41092,7 @@ function CherryAdventure() {
             gainExp(Math.min(rawExpW, Math.round(expForLevel(G.player.level) * 0.3))); // 🧢 เพดาน EXP 30% ต่อการฆ่า 1 ครั้ง
             if (G.buddy)
                 petGain(G.buddy, 15);
-            dropLoot(shiny);
+            dropLoot(shiny, lv, false); // ✨ ตัวหายากได้โต๊ะดรอปแบบบอส แต่ยังคุมด้วยเลเวลของมันเอง
             G.mats = G.mats || {};
             G.mats.ironOre = (G.mats.ironOre || 0) + 1 + Math.floor(Math.random() * 2);
             G.stardust = (G.stardust || 0) + 1 + Math.floor(Math.random() * 2);
@@ -48474,7 +48667,7 @@ function CherryAdventure() {
             const ngRew = 1 + (G.ngPlus || 0) * 0.5; // 🔄 NG+ richer rewards
             if (G.combo >= 3)
                 toast(`🔥 คอมโบ ×${G.combo}! โบนัส +${Math.round((comboMult - 1) * 100)}%`);
-            let goldGain = Math.round((8 + G.enemy.lv * 2) * (wasBoss ? 5 : isGhost ? 3 : 1) * comboMult * ngRew * (1 + effLuck() * 0.02)); // 🍀 luck finds more gold
+            let goldGain = Math.round((4 + G.enemy.lv * 1.05) * (wasBoss ? 6 : isGhost ? 3.2 : 1) * comboMult * ngRew * (1 + effLuck() * 0.02)); // 💰 ทองจากมอนธรรมดาลดลง (บอสยังคุ้มค่าเหนื่อย) · 🍀 luck finds more gold
             if (G.enemy.horde)
                 goldGain = Math.round(goldGain * 1.5); // ⚔️ horde bounty
             if (isGolden)
@@ -48512,7 +48705,7 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, combo: G.combo }));
             if (G.buddy)
                 petGain(G.buddy, wasBoss || isGhost ? 40 : 15);
-            dropLoot(wasBoss || isGhost || isGolden); // 🎁 boss/ghost/golden = guaranteed big loot
+            dropLoot(wasBoss || isGhost || isGolden, G.enemy ? G.enemy.lv : 1, !!(G.enemy && (G.enemy.worldBoss || G.enemy.biomeBoss))); // 🎁 บอส/ผี/ทอง = ดรอปแน่นอน · 👹👑 บอสโลก/เจ้าถิ่น = ลุ้นของระดับสูงสุด
             // 🌟 LEGENDARY PET DROP — bosses can grant a legendary/mythic companion
             if (wasBoss && LEGEND_PETS.length && Math.random() < 0.20) {
                 const lp = LEGEND_PETS[Math.floor(Math.random() * LEGEND_PETS.length)];
@@ -49268,6 +49461,8 @@ function CherryAdventure() {
         };
         // ================= 🤝 END REPUTATION =================
         G.talkNPC = () => {
+            if (G.storyEvent)
+                G.storyEvent("talk", 1, { who: "elder" }); // 🎓 บทสอนเล่น: ทักทายผู้เฒ่า
             const ch = G.storyChapter || 0;
             if (ch >= STORY.length) {
                 setUi((u) => ({ ...u, npcTalk: { text: "ขอบใจนะเจ้าหนู เจ้าคือความภูมิใจของหมู่บ้าน! 🌸", done: true, last: true } }));
@@ -55759,6 +55954,15 @@ function CherryAdventure() {
                             }
                             catch (_) { }
                         }
+                    // 🎓🚪 บทสอนเล่น: นับว่า "ออกจากหมู่บ้านไปทุ่งกว้าง" แล้ว เมื่อเดินพ้นเขตหมู่บ้านออกไปจริง ๆ
+                    if (G.storyEvent && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
+                        G._leaveT = (G._leaveT || 0) + dt;
+                        if (G._leaveT > 0.5) {
+                            G._leaveT = 0;
+                            if (Math.hypot(char.position.x, char.position.z) > 14)
+                                G.storyEvent("leave", 1);
+                        }
+                    }
                     // 🍃📜 นับระยะวิ่งสะสมให้เควสพิเศษวิชาตัวเบา (เฉพาะตอนเดินจริงบนพื้น ไม่นับตอนขี่สัตว์)
                     if (G.qingEvent && !G.mountId) {
                         const _px = G._qRunX, _pz = G._qRunZ;
@@ -73753,17 +73957,26 @@ function CherryAdventure() {
             const tgt = G.storyTarget(c);
             const prog = Math.min(tgt, ui.storyProg || 0);
             const done = prog >= tgt;
-            return (React.createElement("button", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })), style: {
-                    position: "absolute", top: ST(104), left: "50%", transform: "translateX(-50%)",
-                    background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.82)", borderRadius: 999,
-                    padding: "4px 12px", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
-                    border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
-                    maxWidth: "86%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", zIndex: 21,
-                } },
-                "\uD83D\uDCD6 \u0E1A\u0E17 ",
-                (ui.storyCh || 0) + 1,
-                ": ",
-                done ? "สำเร็จ! แตะรับรางวัล ✨" : `${G.storyLabel(c)} (${prog}/${tgt})`));
+            return (React.createElement("div", { style: { position: "absolute", top: ST(104), left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: 4, zIndex: 21, maxWidth: "92%" } },
+                React.createElement("button", { onClick: () => { if (done)
+                        setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false }));
+                    else if (G.questGo)
+                        G.questGo(); }, title: done ? "แตะเพื่อรับรางวัล" : "แตะเพื่อให้ตัวละครเดินไปยังจุดหมาย", style: {
+                        background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.82)", borderRadius: 999,
+                        padding: "4px 12px", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
+                        border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
+                        minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                    } },
+                    done ? "📖" : "🧭",
+                    " \u0E1A\u0E17 ",
+                    (ui.storyCh || 0) + 1,
+                    ": ",
+                    done ? "สำเร็จ! แตะรับรางวัล ✨" : `${G.storyLabel(c)} (${prog}/${tgt})`),
+                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })), title: "\u0E40\u0E1B\u0E34\u0E14\u0E40\u0E21\u0E19\u0E39\u0E20\u0E32\u0E23\u0E01\u0E34\u0E08", style: {
+                        flexShrink: 0, width: 24, height: 24, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0,
+                        background: "rgba(42,34,72,0.82)", color: "#e0d4ff", fontSize: 12, fontFamily: font,
+                        boxShadow: "0 3px 10px rgba(42,34,72,0.35)",
+                    } }, "\uD83D\uDCDC")));
         })(),
         ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute", top: HUD_CARD ? ST(HUD_CARD_H + 6) : ((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92)), left: EDGE_L, display: "flex", gap: 6, zIndex: 27 } },
             React.createElement("button", { onClick: () => setUi((u) => ({ ...u, settingsOpen: true })), title: "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E40\u0E01\u0E21", style: {
