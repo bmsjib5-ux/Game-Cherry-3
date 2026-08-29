@@ -2218,7 +2218,7 @@ export default function CherryAdventure() {
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
-    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishBagOpen: false, cookTick: 0,
+    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishBagOpen: false, cookTick: 0, todo: null,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
     repOpen: false, rep: [], repShop: [], repTick: 0,
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
@@ -18572,6 +18572,57 @@ export default function CherryAdventure() {
       syncPlayer();
     };
 
+// ---------- 🔔 ของรอรับ — นับทีเดียวตรงกลาง แล้วเอาไปโชว์เป็นป้ายตัวเลขบนปุ่มเมนู ----------
+    // นับเฉพาะ "ทำเสร็จแล้ว/พร้อมรับ" เท่านั้น จะได้ไม่ขึ้นเลขเตือนมั่วทั้งวัน
+    const _n = (fn) => { try { const v = fn(); return Number.isFinite(v) && v > 0 ? Math.floor(v) : 0; } catch (e) { return 0; } };
+    G.todoCounts = () => {
+      const t = {};
+      // 📜 เควสประจำ — ทำครบแล้วยังไม่กดรับ
+      t.quest = _n(() => (G.quests || []).filter((q) => q.done && !q.claimed).length);
+      // 📖 สมุดภารกิจ + แทร็กรางวัล
+      t.mbook = _n(() => {
+        const Q = G.mbook; if (!Q) return 0;
+        const tier = Math.min(PASS_TIERS, Math.floor((Q.pts || 0) / PASS_STEP));
+        let c = [...(Q.daily || []), ...(Q.weekly || [])].filter((r) => { const M = G.mbMeta(r.id); return M && r.p >= M.n && !r.claimed; }).length;
+        for (let i = 0; i < tier; i++) { if (!Q.claimedF[i]) c++; if (Q.prem && !Q.claimedP[i]) c++; }
+        return c;
+      });
+      // 🗺️ ทีมสำรวจกลับถึงบ้านแล้ว
+      t.exped = _n(() => (G.expedSnap() || []).filter((e) => e && e.ready).length);
+      // 🎡 หมุนกงล้อฟรี + รางวัลเข้าเกมประจำวัน
+      t.wheel = _n(() => (G.wheelFreeLeft ? G.wheelFreeLeft() : 0) + (G.lastDaily !== todayStamp() ? 1 : 0));
+      // 🍳 ทำอาหารเก็บไว้แล้วแต่ยังไม่ได้กิน (ยังไม่มีบัฟติดตัว)
+      t.kitchen = _n(() => (G.foodBuffInfo && G.foodBuffInfo()) ? 0 : (G.foodBag || []).length);
+      // 🤝 ของแลกจากชาวเมืองที่วันนี้ยังไม่ได้แลก และทองพอ
+      t.rep = _n(() => (G.repShopList ? G.repShopList() : []).filter((it) => it.open && !it.bought && (G.gold || 0) >= it.gold).length);
+      // 🌌 หมู่ดาว — ผงดาวพอปลดล็อกดวงต่อไปหรือยัง
+      t.constel = _n(() => {
+        const board = CONSTELLATION[G.cls]; if (!board || !G.player) return 0;
+        const owned = G.constNodes || {};
+        const needLv = (Object.keys(owned).length + 1) * 3;
+        if (G.player.level < needLv) return 0;
+        return board.nodes.filter((nd) => !owned[nd.id] && (!nd.req || owned[nd.req]) && (G.stardust || 0) >= nd.cost).length ? 1 : 0;
+      });
+      // ⚡ แต้มสกิล/สเตตัสที่ยังไม่ได้ลง
+      t.skill = _n(() => (G.player ? (G.player.sp || 0) + (G.player.statPts || 0) : 0));
+      // 🐄 ฟาร์ม — ทองค้าง · ผักโตแล้ว · ของแปรรูปเสร็จ · ไข่ฟักแล้ว · เควสฟาร์มครบ
+      t.ranch = _n(() => {
+        const R = G.ranch; if (!R) return 0;
+        let c = 0;
+        if (Math.floor(R.pending || 0) > 0) c++;
+        c += (R.garden || []).filter((g) => g && (g.readyAt || 0) <= Date.now()).length;
+        c += (R.craft || []).filter((x) => x && (x.readyAt || 0) <= Date.now()).length;
+        if (R.egg && (R.egg.readyAt || 0) <= Date.now()) c++;
+        c += (R.quests || []).filter((q) => q && q.n >= q.need && !q.claimed).length;
+        return c;
+      });
+      // ยอดบนปุ่ม ☰ = เฉพาะที่กดเข้าไปรับได้จากในเมนูจริง ๆ (⚡ แต้มสกิล กับ 🐄 ฟาร์ม มีปุ่มของตัวเองอยู่แล้ว)
+      t.total = t.quest + t.mbook + t.exped + t.wheel + t.kitchen + t.rep + t.constel;
+      return t;
+    };
+    // เก็บผลไว้ให้ JSX อ่าน — คำนวณใหม่ทุกครั้งที่ syncPlayer หรือมีอะไรเปลี่ยน
+    G.syncTodo = () => { const t = G.todoCounts(); setUi((u) => ({ ...u, todo: t })); return t; };
+
     // ---------- 📖 STORY QUESTLINE — ภารกิจเนื้อเรื่องต่อเนื่อง ไล่ตามเลเวลและด่านทั้ง 14 แดน ----------
     // เนื้อเรื่องผู้เฒ่าประจำหมู่บ้านพาไล่ด่าน: เก็บเลเวล → วาร์ปไปด่านใหม่ → กวาดล้างมอน → โค่นเจ้าถิ่น วนไปจนจบตำนาน
     const STORY_NARR = {
@@ -21093,7 +21144,7 @@ export default function CherryAdventure() {
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
       guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null,   // 🏰 โชว์บนป้ายเหนือหัว
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -33824,6 +33875,17 @@ export default function CherryAdventure() {
           if (snear !== G.smithNear) { G.smithNear = snear; setUi((u) => ({ ...u, smithNear: snear })); }
         }
         if (G.mineTick) { try { G.mineTick(dt, t); } catch (e) { G._mineErr = String(e && e.message || e); } }   // ⛏️ สายแร่
+        // 🔔 ของที่ "พร้อม" เองตามเวลา (ทีมสำรวจกลับ · ผักโต · ไข่ฟัก · ทองฟาร์ม) — เช็คทุก 4 วิ
+        if (!G._todoAt || t - G._todoAt > 4) {
+          G._todoAt = t;
+          if (G.todoCounts) {
+            try {
+              const tc = G.todoCounts();
+              const sig = tc.total + "|" + tc.quest + tc.mbook + tc.exped + tc.wheel + tc.kitchen + tc.rep + tc.constel + tc.skill + tc.ranch;
+              if (sig !== G._todoSig) { G._todoSig = sig; setUi((u) => ({ ...u, todo: tc })); }
+            } catch (e) {}
+          }
+        }
         if (G.pondPos) {
           const fd = Math.hypot(char.position.x - G.pondPos.x, char.position.z - G.pondPos.z);
           const near = fd < 3.4;
@@ -44190,6 +44252,18 @@ export default function CherryAdventure() {
   });
   // ✕ close button shown in the corner of every menu panel
   // ✕ close button — pinned to the popup's TOP-RIGHT corner, sticky (never scrolls away), below the front camera
+  // 🔔 ป้ายตัวเลขมุมขวาบนของปุ่ม — โชว์เมื่อมีของรอรับเท่านั้น
+  const TODO = ui.todo || {};
+  const todoDot = (n, col) => (n > 0 ? (
+    <span style={{
+      position: "absolute", top: -5, right: -5, minWidth: 19, height: 19, boxSizing: "border-box",
+      borderRadius: 999, background: col || "#ff3b5c", color: "#fff", fontSize: 11, fontWeight: 900,
+      lineHeight: "17px", padding: "0 5px", border: "1.5px solid rgba(255,255,255,0.9)",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.4)", fontFamily: font, pointerEvents: "none",
+      animation: "todoPop 1.6s ease-in-out infinite",
+    }}>{n > 99 ? "99+" : n}</span>
+  ) : null);
+
   const closeBtn = (name) => (
     <div style={{ position: "sticky", top: "calc(env(safe-area-inset-top) + 6px)", height: 0, zIndex: 12, display: "flex", justifyContent: "flex-end", pointerEvents: "none", order: -1 }}>
       <button onClick={() => setUi((u) => ({ ...u, [name]: false }))} style={{
@@ -44205,7 +44279,7 @@ export default function CherryAdventure() {
     <div style={{ width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box",
       /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
       paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
-      <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
+      <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} }`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
       <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
         left: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-left, 0px))",
@@ -46504,10 +46578,17 @@ export default function CherryAdventure() {
 
       {/* ☰ combined menu */}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title="เมนู" style={{ position: "absolute", ...Lslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰</button>
+        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title={"เมนู" + (TODO.total > 0 ? ` · มี ${TODO.total} อย่างรอรับ` : "")} style={{ position: "absolute", ...Lslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰{todoDot(TODO.total)}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("questOpen")} title="เควส & ภารกิจ" style={{ position: "absolute", ...Rslot(3), display: Rfit(3) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => { const q = ui.quests || []; const active = q.filter((x) => !x.claimed).length; const claim = q.filter((x) => x.done && !x.claimed).length; return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: claim > 0 ? "#f5a623" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null; })()}</button>
+        <button onClick={() => toggleMenu("questOpen")} title={"เควส & ภารกิจ" + (TODO.quest > 0 ? ` · มี ${TODO.quest} อันรอรับรางวัล` : "")} style={{ position: "absolute", ...Rslot(3), display: Rfit(3) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => {
+          // 🔔 ทำครบแล้วรอกดรับ = ป้ายแดงเด้ง · ยังทำไม่ครบ = ป้ายจาง ๆ บอกจำนวนที่ค้าง
+          const q = ui.quests || [];
+          const claim = TODO.quest || 0;
+          if (claim > 0) return todoDot(claim);
+          const active = q.filter((x) => !x.claimed).length;
+          return active > 0 ? <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{active}</span> : null;
+        })()}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
         <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", ...Rslot(2), display: Rfit(2) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
@@ -46606,33 +46687,33 @@ export default function CherryAdventure() {
               ["💍", "เครื่องประดับ", () => G.openAccessories(), "#f5a0d0"],
                           ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
               ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
-              ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d"],
+              ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d", "constel"],
               ["⛏️", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
               ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
               ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
               ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
               ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
               ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
-              ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a"],
+              ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a", "mbook"],
               ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
               ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
-            ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a"],
+            ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a", "kitchen"],
             ["🎣", "กระเป๋าตกปลา", () => G.toggleFishBag(), "#4a90c0"],
-            ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0"],
+            ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0", "exped"],
             ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
-            ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a"],
-            ["🎡", "กงล้อ & ปฏิทิน", () => G.toggleWheel(), "#f07aa0"],
+            ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a", "rep"],
+            ["🎡", "กงล้อ & ปฏิทิน", () => G.toggleWheel(), "#f07aa0", "wheel"],
             ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
             ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#c0392b"],
             ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
-            ["📜", "เควส & ภารกิจ", () => toggleMenu("questOpen"), "#f2b24d"],
+            ["📜", "เควส & ภารกิจ", () => toggleMenu("questOpen"), "#f2b24d", "quest"],
             ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
             ["⚔️", "ประลอง PvP", () => G.togglePvp(), "#d9536b"],
             ["👥", "เพื่อน", () => G.toggleSocial(), "#5fb0f0"],
             ["💬", "แชทโลก", () => { setUi((u) => ({ ...u, menuOpen: false, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, "#5a8ae0"],
             ].map((it) => (
-              <button key={it[1]} title={it[1]} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}</button>
+              <button key={it[1]} title={it[1] + ((it[4] && TODO[it[4]] > 0) ? ` · มี ${TODO[it[4]]} อย่างรอรับ` : "")} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ position: "relative", width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: (it[4] && TODO[it[4]] > 0) ? "0 4px 16px " + it[3] + "aa, 0 0 0 2px rgba(255,59,92,0.45), inset 0 1px 2px rgba(255,255,255,0.4)" : "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}{it[4] ? todoDot(TODO[it[4]]) : null}</button>
             ))}
           </div>
         </div>
@@ -49202,8 +49283,8 @@ export default function CherryAdventure() {
           {/* 🏡 in-zone quick buttons — ซ้าย: ฟาร์ม/เพาะพันธุ์/ปลูกผัก · ขวา: ตลาด/คลัง/ตลาดออนไลน์ (ตรงที่เคยเป็นปุ่มต่อสู้) */}
           {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && !HUD_HIDE && (<React.Fragment>
             <div style={{ position: "absolute", left: "calc(env(safe-area-inset-left) + 12px)", top: "42%", display: "flex", flexDirection: "column", gap: 11, zIndex: 34 }}>
-              <button onClick={() => G.openRanch && G.openRanch("farm")} title="ฟาร์มสัตว์เลี้ยง" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
-                <span style={{ fontSize: 25 }}>🐄</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ฟาร์ม</span>
+              <button onClick={() => G.openRanch && G.openRanch("farm")} title={"ฟาร์มสัตว์เลี้ยง" + (TODO.ranch > 0 ? ` · มี ${TODO.ranch} อย่างรอเก็บ` : "")} style={{ position: "relative", width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#e0a86a,#c9843e)", color: "#fff", boxShadow: "0 4px 14px rgba(201,132,62,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                <span style={{ fontSize: 25 }}>🐄</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>ฟาร์ม</span>{todoDot(TODO.ranch)}
               </button>
               <button onClick={() => G.openRanch && G.openRanch("breed")} title="เพาะพันธุ์" style={{ width: 60, height: 60, borderRadius: 18, border: "none", cursor: "pointer", fontFamily: font, background: "linear-gradient(135deg,#b06ad0,#8a4ac0)", color: "#fff", boxShadow: "0 4px 14px rgba(138,74,192,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 <span style={{ fontSize: 25 }}>🥚</span><span style={{ fontSize: 8.5, fontWeight: 800, marginTop: 2 }}>เพาะพันธุ์</span>
@@ -49855,9 +49936,9 @@ export default function CherryAdventure() {
               </div>
               {/* 🐄 ranch entry */}
               <button onClick={() => G.openRanch && G.openRanch()} style={{
-                flexShrink: 0, width: "100%", padding: "8px 0", marginBottom: 6, borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
+                position: "relative", flexShrink: 0, width: "100%", padding: "8px 0", marginBottom: 6, borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
                 fontSize: 12.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e0a86a,#c9843e)", boxShadow: "0 3px 10px rgba(201,132,62,0.4)",
-              }}>🐄 ฟาร์มสัตว์เลี้ยง — ปล่อยเพ็ตหาทอง/EXP อัตโนมัติ</button>
+              }}>🐄 ฟาร์มสัตว์เลี้ยง — ปล่อยเพ็ตหาทอง/EXP อัตโนมัติ{todoDot(TODO.ranch)}</button>
               {/* 📖 DEX tab: all species, caught or not */}
               {ui.dexTab ? (
                 <div style={{ overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" }}>
