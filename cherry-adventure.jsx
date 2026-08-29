@@ -266,6 +266,12 @@ const QING_BY = {}; QING.forEach((q) => (QING_BY[q.id] = q));
 // ================= 🍃 END วิชาตัวเบา =================
 
 // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
+// ✨ ปลุกพลัง (awaken) — ของที่ตีบวกเต็ม +20 แล้ว เอาของ "ประเภทเดียวกัน" (ช่องสวมใส่เดียวกัน)
+// ที่ตีบวก +20 เหมือนกันมาปลุกพลังต่อได้อีก 5 ขั้น (★1..★5) ขั้นละ +50% ของค่าพื้นฐาน
+const AWK_REQ = 20;   // ต้อง +20 ก่อนถึงปลุกได้ (ทั้งของที่จะปลุก และของที่เอามาเป็นวัตถุดิบ)
+const AWK_MAX = 5;    // ปลุกได้สูงสุด ★5
+const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
+const awkStars = (n) => "★".repeat(Math.max(0, Math.min(AWK_MAX, n || 0)));
 const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen"];
 const ST = (px) => `calc(env(safe-area-inset-top, 0px) + ${px}px)`;
 // 🌊 smoothstep — ไล่ค่าแบบเข้า-ออกนุ่ม (ใช้ลบมุมหักของคีย์เฟรม ให้ท่าลื่นไม่กระตุก)
@@ -2474,7 +2480,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info", warpScrolls: 0,
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
@@ -13859,7 +13865,7 @@ export default function CherryAdventure() {
         if (it.rarity === "dragon") dragonN++;
         const tier = TIER[it.rarity];
         if (tier < 2) return;
-        const plus = (G.plus && G.plus[it.id]) || 0;
+        const plus = ((G.plus && G.plus[it.id]) || 0) + 2 * ((G.awk && G.awk[it.id]) || 0); // ✨ ดาวปลุกพลังทำให้ออร่าฟุ้งขึ้น
         if (!best || tier > best.tier || (tier === best.tier && plus > best.plus)) {
           best = { tier, plus, color: ELEM_GLOW[it.elem] || 0xffe28a };
         }
@@ -21845,6 +21851,7 @@ export default function CherryAdventure() {
     G.accEquip = EMPTY_ACC(); // 💍 worn accessories: slot -> accId
     G.accInv = [];            // 💍 owned accessory ids (unique)
     G.plus = {}; // itemId -> enhancement level (+1..+5)
+    G.awk = {};  // ✨ itemId -> awaken star (0..AWK_MAX) — ปลดล็อกหลังตีบวกเต็ม +20
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
@@ -21911,7 +21918,7 @@ export default function CherryAdventure() {
     const itemStats = (id) => {
       const it = LOOT.find((x) => x.id === id);
       if (!it) return { atk: 0, hp: 0, def: 0, spd: 0, eva: 0, crit: 0 };
-      const m = 1 + 0.2 * (G.plus[id] || 0);          // ⚒️ enhancement
+      const m = 1 + 0.2 * (G.plus[id] || 0) + AWK_STEP * ((G.awk || {})[id] || 0); // ⚒️ ตีบวก + ✨ ปลุกพลัง
       const r = rollOf(id);
       const q = it.starter ? 1 : (r ? r.m : 1);        // 🎲 quality roll (starters are always plain)
       const gb = gemBonus(id);                          // 💎 socketed gems (flat, not scaled)
@@ -21939,6 +21946,7 @@ export default function CherryAdventure() {
         id, name: it.name, emoji: it.emoji, slot: it.slot, slotName: SLOT_NAMES[it.slot] || it.slot, slotIcon: SLOT_ICON[it.slot] || "",
         rarity: it.rarity, rarityName: (RARITY[it.rarity] || {}).name || it.rarity, rarityColor: (RARITY[it.rarity] || {}).color || "#8a9aa8",
         stats: itemStats(id), elem: it.elem || null, req: it.req || 0, cls: it.cls || null, locked, count, equipped, plus, cap,
+        awk: (G.awk || {})[id] || 0, awkMax: AWK_MAX, awkReq: AWK_REQ,
         prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.dustCostNow ? G.dustCostNow() : (G.WB_DUST_COST || 30),
         starter: !!it.starter, salvage: G.salvageYield ? G.salvageYield(id) : 0,   // 💠 แยกชิ้นส่วนได้กี่ผง
       };
@@ -22279,7 +22287,7 @@ export default function CherryAdventure() {
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
       guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null,   // 🏰 โชว์บนป้ายเหนือหัว
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -22400,6 +22408,81 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, gemDust: G.gemDust, stardust: G.stardust, ore: (G.mats && G.mats.ironOre) || 0, mats: { ...G.mats }, plus: { ...G.plus } }));
     };
 
+    // ================= ✨ ปลุกพลังอาวุธ/ชุด (AWAKEN) =================
+    // เงื่อนไข: ของชิ้นที่จะปลุกต้องตีบวกเต็ม +20 ก่อน
+    // วัตถุดิบ: อาวุธ/ชุด "ประเภทเดียวกัน" (ช่องสวมใส่เดียวกัน) ที่ตีบวก +20 เหมือนกัน 1 ชิ้น
+    // ผลลัพธ์: ★1..★5 · ดาวละ +50% ของค่าพื้นฐาน (การันตี ไม่มีพลาด)
+    G.AWK_REQ = AWK_REQ; G.AWK_MAX = AWK_MAX; G.AWK_STEP = AWK_STEP;
+    const awkOf = (id) => ((G.awk || (G.awk = {}))[id] || 0);
+    G.awkOf = awkOf;
+    const invCount = (id) => (G.inv || []).filter((x) => x === id).length;
+    // 🔎 ของที่ใช้เป็นวัตถุดิบปลุกพลังของชิ้น targetId ได้บ้าง
+    G.awkMatsFor = (targetId) => {
+      const t = LOOT.find((x) => x.id === targetId);
+      if (!t) return [];
+      const seen = {};
+      const out = [];
+      (G.inv || []).forEach((mid) => {
+        if (seen[mid]) return; seen[mid] = 1;
+        const it = LOOT.find((x) => x.id === mid);
+        if (!it || it.slot !== t.slot) return;            // ต้องเป็นประเภท (ช่องสวมใส่) เดียวกัน
+        if ((G.plus[mid] || 0) < AWK_REQ) return;         // ต้อง +20 เหมือนกัน
+        const cnt = invCount(mid);
+        if (mid === targetId && cnt < 2) return;          // ชิ้นเดียวกันต้องมีซ้ำถึงจะกินตัวเองได้
+        const eq = G.equip && G.equip[it.slot] === mid;
+        out.push({ id: mid, name: it.name, emoji: it.emoji, rarity: it.rarity, count: cnt, plus: G.plus[mid] || 0, awk: awkOf(mid), equipped: !!eq, blocked: !!eq && cnt <= 1 });
+      });
+      return out.sort((a, b) => (a.blocked - b.blocked) || (TIER[a.rarity] - TIER[b.rarity]) || (a.awk - b.awk));
+    };
+    // 📋 รายการของทั้งหมดในกระเป๋าที่เกี่ยวกับการปลุกพลัง (พร้อมปลุก / ยังไม่ถึง +20)
+    G.awkList = () => {
+      const ready = [], soon = [];
+      const seen = {};
+      (G.inv || []).forEach((id) => {
+        if (seen[id]) return; seen[id] = 1;
+        const it = LOOT.find((x) => x.id === id);
+        if (!it || it.starter) return;
+        const plus = G.plus[id] || 0, aw = awkOf(id);
+        const row = { id, name: it.name, emoji: it.emoji, slot: it.slot, slotName: SLOT_NAMES[it.slot] || it.slot,
+          rarity: it.rarity, plus, awk: aw, count: invCount(id), equipped: !!(G.equip && G.equip[it.slot] === id) };
+        if (plus >= AWK_REQ) { row.mats = G.awkMatsFor(id); ready.push(row); }
+        else if (plus >= AWK_REQ - 6 || aw > 0) soon.push(row);
+      });
+      const bySort = (a, b) => (b.awk - a.awk) || (b.plus - a.plus) || (TIER[b.rarity] - TIER[a.rarity]);
+      return { ready: ready.sort(bySort), soon: soon.sort(bySort).slice(0, 8), req: AWK_REQ, max: AWK_MAX, step: AWK_STEP };
+    };
+    G.awakenItem = (id, matId) => {
+      const it = LOOT.find((x) => x.id === id);
+      const mit = LOOT.find((x) => x.id === matId);
+      if (!it) return;
+      if (!G.inv.includes(id)) { toast("ไม่มีของชิ้นนี้ในกระเป๋า"); return; }
+      if ((G.plus[id] || 0) < AWK_REQ) { toast(`✨ ต้องตีบวกให้ถึง +${AWK_REQ} ก่อนถึงจะปลุกพลังได้`); return; }
+      if (awkOf(id) >= AWK_MAX) { toast(`✨ ปลุกพลังเต็ม ${awkStars(AWK_MAX)} แล้ว!`); return; }
+      if (!mit) { toast("เลือกของที่จะใช้ปลุกพลังก่อนนะ"); return; }
+      if (mit.slot !== it.slot) { toast(`✨ ต้องใช้ของประเภทเดียวกัน (${SLOT_NAMES[it.slot] || it.slot}) เท่านั้น`); return; }
+      const cnt = invCount(matId);
+      if (cnt < 1) { toast("ไม่มีวัตถุดิบชิ้นนี้ในกระเป๋า"); return; }
+      if ((G.plus[matId] || 0) < AWK_REQ) { toast(`✨ วัตถุดิบต้องตีบวก +${AWK_REQ} เหมือนกัน`); return; }
+      if (matId === id && cnt < 2) { toast("ใช้ชิ้นเดียวกันได้ก็ต่อเมื่อมีของซ้ำอีกชิ้น"); return; }
+      if (G.equip && G.equip[mit.slot] === matId && cnt <= 1) { toast("ชิ้นนี้กำลังสวมใส่อยู่ — ถอดออกก่อนถึงจะใช้เป็นวัตถุดิบได้"); return; }
+      // 🔥 กินวัตถุดิบ
+      G.inv.splice(G.inv.indexOf(matId), 1);
+      if (!G.inv.includes(matId)) { delete G.plus[matId]; if (G.awk) delete G.awk[matId]; }
+      G.awk = G.awk || {};
+      G.awk[id] = awkOf(id) + 1;
+      const n = G.awk[id];
+      burst(char.position, 0xf5c542, 2.0);
+      if (G.sfx) G.sfx.levelup && G.sfx.levelup();
+      if (G.mbEvent) G.mbEvent("forge");   // 📖 นับภารกิจ "ตีบวก/หลอมของ"
+      toast(`✨ ปลุกพลังสำเร็จ! ${it.emoji} ${it.name} +${G.plus[id] || 0} ${awkStars(n)} (ใช้ ${mit.emoji} ${mit.name})`);
+      updateAura();
+      G.player.hp = Math.min(G.player.hp, effMaxHp());
+      syncPlayer();
+      setUi((u) => ({ ...u, inv: [...G.inv], plus: { ...G.plus }, awk: { ...G.awk }, equip: { ...G.equip }, awkPick: null }));
+      if (G.saveGame) G.saveGame();
+    };
+    // ================= ✨ END AWAKEN =================
+
     // 🔨 craft the class's dragon-tier weapon from materials
     // 🔨🐉 craft ANY dragon-tier piece, as many times as you like.
     // (It used to be one weapon per class, once ever — the 6 dragon armour pieces existed
@@ -22486,7 +22569,7 @@ export default function CherryAdventure() {
     G.toggleForge = () => {
       const willOpen = !G.forgeOpen;
       G.forgeOpen = willOpen;
-      setUi((u) => ({ ...u, forgeOpen: willOpen, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, gold: G.gold, gemDust: G.gemDust || 0, stardust: G.stardust || 0, rolls: { ...(G.rolls || {}) }, invOpen: false, skillPanel: false, homeOpen: false }));
+      setUi((u) => ({ ...u, forgeOpen: willOpen, awkPick: null, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, awk: { ...(G.awk || {}) }, gold: G.gold, gemDust: G.gemDust || 0, stardust: G.stardust || 0, rolls: { ...(G.rolls || {}) }, invOpen: false, skillPanel: false, homeOpen: false }));
     };
 
     // equip an item (tap in the bag panel)
@@ -23547,7 +23630,7 @@ export default function CherryAdventure() {
     const sellPrice = (id) => {
       const it = LOOT.find((x) => x.id === id);
       if (!it) return 0;
-      return Math.round(SELL_BASE[it.rarity] * (1 + 0.25 * (G.plus[id] || 0)));
+      return Math.round(SELL_BASE[it.rarity] * (1 + 0.25 * (G.plus[id] || 0)) * (1 + 0.6 * ((G.awk || {})[id] || 0)));
     };
     G.sellPrice = sellPrice;
     const rollShopItem = () => {
@@ -23930,7 +24013,7 @@ export default function CherryAdventure() {
         if (it.slot === "weapon") G.setWeaponVisual(null); else G.setOutfitVisual(null);
         G.player.hp = Math.min(G.player.hp, effMaxHp());
       }
-      if (!G.inv.includes(id)) { if (G.plus) delete G.plus[id]; }   // ไม่เหลือชิ้นไหนแล้ว = ล้างระดับตีบวกทิ้ง
+      if (!G.inv.includes(id)) { if (G.plus) delete G.plus[id]; if (G.awk) delete G.awk[id]; }   // ไม่เหลือชิ้นไหนแล้ว = ล้างระดับตีบวก/ดาวปลุกพลังทิ้ง
       if (G.sfx) G.sfx.guard && G.sfx.guard();
       toast(`💠 แยก ${it.emoji} ${it.name} → ผงเพชร +${dust} (มี ${G.gemDust})`);
       setUi((u) => ({ ...u, gemDust: G.gemDust, inv: [...G.inv], plus: { ...G.plus } }));
@@ -32261,7 +32344,7 @@ export default function CherryAdventure() {
       try {
         window.localStorage.setItem(slotKey(), JSON.stringify({
           v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated,
-          col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus,
+          col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, awk: G.awk || {},
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
@@ -34057,6 +34140,7 @@ export default function CherryAdventure() {
       G.accEquip = { ...EMPTY_ACC(), ...(d.accEquip || {}) }; // 💍 worn accessories
       G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
       G.plus = d.plus || {};
+      G.awk = d.awk || {}; // ✨ ดาวปลุกพลัง
       G.mats = d.mats || {};
       G.weaponInfuse = d.weaponInfuse || {};
       G.treeNodes = d.treeNodes || {};
@@ -51086,6 +51170,7 @@ export default function CherryAdventure() {
                 const FT = ui.forgeTab || "enh";
                 const T = [
                   ["enh", "⚒️", "ตีบวก"],
+                  ["awk", "✨", "ปลุกพลัง"],
                   ["roll", "🎲", "สุ่มคุณภาพ"],
                   ["elem", "🔥", "เสริมธาตุ"],
                   ["dragon", "🐉", "คราฟต์มังกร"],
@@ -51134,7 +51219,7 @@ export default function CherryAdventure() {
                     <div key={id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, background: eq ? "#e8f7ec" : "#f2f8fd", borderRadius: 9, padding: "5px 8px", border: "1px solid " + (eq ? "#a8dcb4" : "#cfe4f4") }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 11.5, fontWeight: 700, color: RARITY[it.rarity].color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {it.emoji} {it.name}{plus > 0 && <span style={{ color: "#e0a020" }}> +{plus}</span>} <span style={{ color: "#8a9aa8", fontSize: 10 }}>×{count}</span>
+                          {it.emoji} {it.name}{plus > 0 && <span style={{ color: "#e0a020" }}> +{plus}</span>}{((ui.awk || {})[id] || 0) > 0 && <span style={{ color: "#f5c542" }}> {awkStars((ui.awk || {})[id])}</span>} <span style={{ color: "#8a9aa8", fontSize: 10 }}>×{count}</span>
                         </div>
                         <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>{SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}{eq && <span style={{ marginLeft: 6, color: "#3f9a54", fontWeight: 800, background: "#d6f0dc", borderRadius: 999, padding: "1px 7px" }}>🟢 กำลังใส่</span>}</div>
                       </div>
@@ -51152,6 +51237,92 @@ export default function CherryAdventure() {
                     </div>
                   );
                 });
+              })()}
+              <div style={{ borderTop: "1px dashed #e0d0b0", margin: "8px 0 6px" }} />
+              </>)}
+              {(ui.forgeTab || "enh") === "awk" && (<>
+              {/* ✨ ปลุกพลัง — ต่อยอดจาก +20 ด้วยของประเภทเดียวกันที่ +20 */}
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#c08a20", margin: "2px 0 5px" }}>✨ ปลุกพลังอาวุธ & ชุด</div>
+              <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 7, lineHeight: 1.5 }}>
+                ① ตีบวกของชิ้นที่จะปลุกให้ถึง <b style={{ color: "#e0a020" }}>+{AWK_REQ}</b> ก่อน<br />
+                ② ใช้ <b>อาวุธ/ชุด “ประเภทเดียวกัน” (ช่องสวมใส่เดียวกัน) ที่ +{AWK_REQ}</b> อีก 1 ชิ้นเป็นวัตถุดิบ (วัตถุดิบจะหายไป)<br />
+                ③ ปลุกได้สูงสุด <b style={{ color: "#f5c542" }}>{awkStars(AWK_MAX)}</b> · ดาวละ <b>+{Math.round(AWK_STEP * 100)}%</b> ของค่าพื้นฐาน · การันตี ไม่มีพลาด
+              </div>
+              {(() => {
+                const A = G.awkList ? G.awkList() : { ready: [], soon: [] };
+                const box = (bg, bd) => ({ background: bg, border: "1px solid " + bd, borderRadius: 12, padding: "8px 9px", marginBottom: 8 });
+                return (<>
+                  <div style={box("linear-gradient(135deg,#fffaf0,#fdf2dc)", "#f0d9a8")}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: "#b0801a", marginBottom: 6 }}>🔓 พร้อมปลุกพลัง ({A.ready.length})</div>
+                    {!A.ready.length && <div style={{ fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0" }}>ยังไม่มีของที่ตีบวกถึง +{AWK_REQ} — ไปที่แท็บ ⚒️ ตีบวก ก่อนนะ</div>}
+                    {A.ready.map((r) => {
+                      const open = ui.awkPick === r.id;
+                      const full = r.awk >= AWK_MAX;
+                      const usable = (r.mats || []).filter((m) => !m.blocked);
+                      return (
+                        <div key={r.id} style={{ background: "#fff", borderRadius: 10, padding: "6px 8px", marginBottom: 5, border: "1px solid " + (open ? "#e8b93a" : "#f0e2c8") }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11.5, fontWeight: 800, color: RARITY[r.rarity].color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {r.emoji} {r.name} <span style={{ color: "#e0a020" }}>+{r.plus}</span>{r.awk > 0 && <span style={{ color: "#f5c542" }}> {awkStars(r.awk)}</span>}
+                              </div>
+                              <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>
+                                {SLOT_ICON[r.slot] || ""} {r.slotName}
+                                {r.equipped && <span style={{ marginLeft: 5, color: "#3f9a54", fontWeight: 800, background: "#d6f0dc", borderRadius: 999, padding: "1px 6px" }}>🟢 กำลังใส่</span>}
+                                <span style={{ marginLeft: 5, color: full ? "#c08a20" : (usable.length ? "#5a8a3a" : "#c07a6a") }}>
+                                  {full ? "ปลุกเต็มแล้ว" : `วัตถุดิบพร้อม ${usable.length} แบบ`}
+                                </span>
+                              </div>
+                            </div>
+                            <button disabled={full} onClick={() => setUi((u) => ({ ...u, awkPick: u.awkPick === r.id ? null : r.id }))} style={{
+                              border: "none", borderRadius: 9, padding: "6px 11px", cursor: full ? "default" : "pointer", whiteSpace: "nowrap",
+                              fontSize: 10.5, fontWeight: 900, fontFamily: font, color: full ? "#a89878" : "#4a3a10",
+                              background: full ? "#eee6d6" : "linear-gradient(135deg,#f5c542,#ffd76a)",
+                            }}>{full ? awkStars(AWK_MAX) : (open ? "▲ ปิด" : `✨ ปลุก → ${awkStars(r.awk + 1)}`)}</button>
+                          </div>
+                          {open && !full && (
+                            <div style={{ marginTop: 7, borderTop: "1px dashed #eadcc0", paddingTop: 6 }}>
+                              <div style={{ fontSize: 9.5, fontWeight: 800, color: "#a08050", marginBottom: 5 }}>เลือกวัตถุดิบ — {r.slotName} ที่ +{AWK_REQ} (จะถูกใช้ไป 1 ชิ้น)</div>
+                              {!(r.mats || []).length && <div style={{ fontSize: 10, color: "#c07a6a", padding: "4px 0" }}>ยังไม่มี{r.slotName}ชิ้นอื่นที่ตีบวก +{AWK_REQ} — ตีบวกอีกชิ้นให้เต็มก่อนนะ</div>}
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                                {(r.mats || []).map((m) => (
+                                  <button key={m.id} disabled={m.blocked}
+                                    onClick={() => G.awakenItem && G.awakenItem(r.id, m.id)}
+                                    title={m.blocked ? "กำลังสวมใส่อยู่ (เหลือชิ้นเดียว) — ถอดออกก่อน" : `ใช้ ${m.name} +${m.plus} เป็นวัตถุดิบ`}
+                                    style={{
+                                      display: "flex", alignItems: "center", gap: 4, maxWidth: "100%",
+                                      border: "1px solid " + (m.blocked ? "#e0d8cc" : RARITY[m.rarity].color + "66"),
+                                      borderRadius: 9, padding: "4px 8px", cursor: m.blocked ? "not-allowed" : "pointer",
+                                      fontFamily: font, fontSize: 10, fontWeight: 800,
+                                      color: m.blocked ? "#b8b0a0" : RARITY[m.rarity].color,
+                                      background: m.blocked ? "#f4f1ea" : "#fffdf5", opacity: m.blocked ? 0.65 : 1,
+                                    }}>
+                                    <span>{m.emoji}</span>
+                                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 96 }}>{m.name}</span>
+                                    <span style={{ color: "#e0a020" }}>+{m.plus}</span>
+                                    <span style={{ color: "#8a9aa8" }}>×{m.count}</span>
+                                    {m.blocked && <span style={{ color: "#c07a6a" }}>🔒</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!!(A.soon || []).length && (
+                    <div style={box("linear-gradient(135deg,#f6f8fd,#eef4fb)", "#d4e2f0")}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: "#4a7ab0", marginBottom: 5 }}>⏳ ใกล้ถึง +{AWK_REQ} แล้ว</div>
+                      {(A.soon || []).map((r) => (
+                        <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, padding: "2px 0" }}>
+                          <span style={{ color: RARITY[r.rarity].color, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.emoji} {r.name}</span>
+                          <span style={{ color: "#8a9aa8", whiteSpace: "nowrap", marginLeft: 6 }}>+{r.plus} / +{AWK_REQ}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>);
               })()}
               <div style={{ borderTop: "1px dashed #e0d0b0", margin: "8px 0 6px" }} />
               </>)}
@@ -51606,7 +51777,7 @@ export default function CherryAdventure() {
                   boxShadow: equipped ? `0 0 0 2px ${RARITY[it.rarity].color}44, 0 3px 10px rgba(0,0,0,0.4)` : "0 3px 10px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05)",
                   display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.5 : 1 }}>
                   <span style={{ fontSize: 22 }}>{it.emoji}</span>
-                  {plus > 0 && <span style={{ position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" }}>+{plus}</span>}
+                  {plus > 0 && <span style={{ position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" }}>+{plus}{((ui.awk || {})[id] || 0) > 0 ? "★" + ((ui.awk || {})[id]) : ""}</span>}
                   {count > 1 && <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>×{count}</span>}
                   {equipped && <span style={{ position: "absolute", bottom: 1, left: 3, fontSize: 9 }}>✓</span>}
                   {locked && <span style={{ position: "absolute", top: 1, left: 3, fontSize: 9 }}>🔒</span>}
@@ -52013,7 +52184,7 @@ export default function CherryAdventure() {
                           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 2,
                         }}>
                           <span style={{ fontSize: 22 }}>{it.emoji}</span>
-                          {plus > 0 && <span style={{ position: "absolute", top: 2, right: 3, fontSize: 9, fontWeight: 800, color: "#e0a020" }}>+{plus}</span>}
+                          {plus > 0 && <span style={{ position: "absolute", top: 2, right: 3, fontSize: 9, fontWeight: 800, color: "#e0a020" }}>+{plus}{((ui.awk || {})[id] || 0) > 0 ? "★" + ((ui.awk || {})[id]) : ""}</span>}
                           {it.affix && AFFIXES[it.affix] && <span style={{ position: "absolute", top: 13, right: 2, fontSize: 9 }}>{AFFIXES[it.affix].emoji}</span>}
                           {count > 1 && <span style={{ position: "absolute", bottom: 2, right: 3, fontSize: 9, fontWeight: 800, color: "#5a5a4a" }}>×{count}</span>}
                           {equipped && <span style={{ position: "absolute", bottom: 2, left: 3, fontSize: 9 }}>✓</span>}
@@ -52033,7 +52204,8 @@ export default function CherryAdventure() {
                 const count = ui.inv.filter((x) => x === id).length;
                 const equipped = ui.equip[it.slot] === id;
                 const plus = ui.plus[id] || 0;
-                const m = 1 + 0.2 * plus;
+                const awkN = (ui.awk || {})[id] || 0;
+                const m = 1 + 0.2 * plus + AWK_STEP * awkN;
                 // 🎲 roll + 💎 gems — mirror itemStats() so the panel shows the true numbers
                 const roll = (ui.rolls || {})[id];
                 const q = it.starter ? 1 : (roll ? roll.m : 1);
@@ -52057,7 +52229,7 @@ export default function CherryAdventure() {
                       <span style={{ fontSize: 30 }}>{it.emoji}</span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 14, fontWeight: 800, color: RARITY[it.rarity].color }}>
-                          {it.name}{plus > 0 && <span style={{ color: "#e0a020" }}> +{plus}</span>}
+                          {it.name}{plus > 0 && <span style={{ color: "#e0a020" }}> +{plus}</span>}{awkN > 0 && <span style={{ color: "#f5c542" }}> {awkStars(awkN)}</span>}
                         </div>
                         <div style={{ fontSize: 10.5, color: "#8a8a7a" }}>[{RARITY[it.rarity].name}] {SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}{count > 1 ? ` · มี ${count} ชิ้น` : ""}</div>
                         {/* 🎲 quality prefix */}
@@ -52094,7 +52266,7 @@ export default function CherryAdventure() {
                           <span style={{ color: "#4a7a3a", fontWeight: 800 }}>{val}</span>
                         </div>
                       )) : <div style={{ fontSize: 11, color: "#a3a396" }}>ไม่มีค่าสถานะพิเศษ</div>}
-                      {plus > 0 && <div style={{ fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" }}>⚒️ ตีบวก +{plus} (×{m.toFixed(1)})</div>}
+                      {plus > 0 && <div style={{ fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" }}>⚒️ ตีบวก +{plus}{awkN > 0 && ` · ✨ ปลุกพลัง ${awkStars(awkN)}`} (×{m.toFixed(1)})</div>}
                     </div>
                     {/* 💎 gem sockets */}
                     {nSock > 0 && (
@@ -53613,7 +53785,7 @@ export default function CherryAdventure() {
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 62, height: 62, borderRadius: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38, background: `linear-gradient(135deg, ${info.rarityColor}33, #10160f)`, border: `2px solid ${info.rarityColor}` }}>{info.emoji}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 900, color: info.rarityColor }}>{info.name}{info.plus > 0 && <span style={{ color: "#f5c542" }}> +{info.plus}</span>}</div>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: info.rarityColor }}>{info.name}{info.plus > 0 && <span style={{ color: "#f5c542" }}> +{info.plus}</span>}{(info.awk || 0) > 0 && <span style={{ color: "#ffd76a" }}> {awkStars(info.awk)}</span>}</div>
                   <div style={{ fontSize: 10.5, color: "#b8c0a8", fontWeight: 700 }}>[{info.rarityName}] {info.slotIcon} {info.slotName}{info.count > 1 ? ` · มี ${info.count} ชิ้น` : ""}</div>
                   {info.prefix && <div style={{ fontSize: 10, fontWeight: 800, color: "#e0b060" }}>✨ {info.prefix}</div>}
                   {info.equipped && <div style={{ fontSize: 10, fontWeight: 800, color: "#8ae0a0" }}>✓ กำลังสวมใส่</div>}
@@ -53632,7 +53804,7 @@ export default function CherryAdventure() {
                     <span style={{ color: "#9ae86a", fontWeight: 900 }}>{val}</span>
                   </div>
                 )) : <div style={{ fontSize: 11, color: "#8a9080" }}>ไม่มีค่าสถานะพิเศษ</div>}
-                {info.plus > 0 && <div style={{ fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" }}>⚒️ ตีบวก +{info.plus}</div>}
+                {info.plus > 0 && <div style={{ fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" }}>⚒️ ตีบวก +{info.plus}{(info.awk || 0) > 0 && ` · ✨ ${awkStars(info.awk)}`}</div>}
               </div>
               {info.req > 0 && (
                 <div style={{ fontSize: 10.5, fontWeight: 800, color: info.locked ? "#e08080" : "#8ae0a0", marginTop: 7 }}>
