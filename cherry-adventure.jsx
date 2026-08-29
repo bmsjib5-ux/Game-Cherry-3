@@ -2484,7 +2484,7 @@ export default function CherryAdventure() {
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
     rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
     guildName: null, guildEmoji: null,
-    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null,
+    eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false,
     toast: "", toastAt: 0,
     inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
   });
@@ -48303,8 +48303,66 @@ export default function CherryAdventure() {
               boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
             }}>📜{TODO.quest > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e04a6a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{TODO.quest}</span>}</button>
           )}
+          {/* 🍽️ บัฟอาหาร — ไอคอนต่อจากปุ่มภารกิจ แตะดูรายละเอียดบัฟ */}
+          {(ui.mode === "explore" || ui.mode === "battle") && (ui.foodBuff || (ui.foodBag || []).length > 0) && (
+            <button
+              onClick={() => { if (ui.foodBuff) setUi((u) => ({ ...u, foodInfoOpen: !u.foodInfoOpen })); else G.toggleKitchen(); }}
+              title={ui.foodBuff ? `บัฟอาหาร: ${ui.foodBuff.name} — แตะดูรายละเอียด` : `มีอาหารเก็บไว้ ${(ui.foodBag || []).length} จาน — แตะเปิดครัวไปกิน`}
+              style={{
+                position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
+                padding: 0, fontSize: 15, lineHeight: 1, fontFamily: font,
+                background: ui.foodBuff ? "linear-gradient(135deg,#ffd8a0,#f0a860)" : "#fff",
+                boxShadow: ui.foodBuff ? "0 0 0 2px rgba(240,168,96,0.45), 0 2px 6px rgba(90,60,20,0.3)" : "0 2px 6px rgba(90,120,70,0.25)",
+              }}>
+              {ui.foodBuff ? (ui.foodBuff.emoji || "🍽️") : "🍱"}
+              {ui.foodBuff
+                ? <span style={{ position: "absolute", bottom: -3, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", background: "rgba(60,36,16,0.88)", color: "#ffd8a0", fontSize: 7.5, fontWeight: 800, borderRadius: 999, padding: "0 4px", lineHeight: "12px" }}>{G.foodLeftText ? G.foodLeftText() : ""}</span>
+                : <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e08a3a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{(ui.foodBag || []).length}</span>}
+            </button>
+          )}
         </div>
       )}
+
+      {/* 🍽️ รายละเอียดบัฟอาหาร — เปิดจากไอคอนในแถวปุ่ม */}
+      {ui.foodInfoOpen && ui.foodBuff && (() => {
+        const F = ui.foodBuff;
+        const rows = Object.keys(F.buff || {}).map((k) => ({ k, v: F.buff[k], ex: false }))
+          .concat(Object.keys(F.extra || {}).map((k) => ({ k, v: F.extra[k], ex: true })));
+        return (
+          <div style={{
+            position: "absolute", top: ST(_sideTop + 40), left: EDGE_L, zIndex: 47,
+            width: 208, maxHeight: "58vh", overflowY: "auto", pointerEvents: "auto", fontFamily: font,
+            background: "linear-gradient(165deg,#3a2a18,#241a10)", borderRadius: 14, padding: "10px 11px 11px",
+            border: "1px solid rgba(240,190,120,0.34)", boxShadow: "0 10px 28px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 20 }}>{F.emoji || "🍽️"}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 900, color: "#ffe0b0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{F.name}</div>
+                <div style={{ fontSize: 8.5, fontWeight: 800, color: F.qCol || "#e0b070" }}>{F.qEmoji} {F.qName}</div>
+              </div>
+              <button onClick={() => setUi((u) => ({ ...u, foodInfoOpen: false }))} title="ปิด" style={{ width: 18, height: 18, borderRadius: 5, border: "none", cursor: "pointer", padding: 0, background: "rgba(255,255,255,0.14)", color: "#ffe0b0", fontSize: 10, lineHeight: "18px" }}>✕</button>
+            </div>
+            <div style={{ fontSize: 9.5, fontWeight: 800, color: "#ffd8a0", background: "rgba(0,0,0,0.28)", borderRadius: 8, padding: "3px 7px", marginBottom: 7, textAlign: "center" }}>
+              ⏳ เหลืออีก {G.foodLeftText ? G.foodLeftText() : "-"}
+            </div>
+            {rows.length ? rows.map((r) => {
+              const L = BUFF_LABEL[r.k] || [r.k, ""];
+              return (
+                <div key={(r.ex ? "x" : "b") + r.k} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 700, padding: "3px 5px", borderRadius: 7, marginBottom: 3, background: r.ex ? "rgba(160,120,255,0.16)" : "rgba(255,255,255,0.06)", color: r.ex ? "#dcc8ff" : "#f0dcc0" }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>{r.ex ? "✨ " : ""}{L[0]}</span>
+                  <span style={{ fontWeight: 900, color: r.ex ? "#c8a8ff" : "#8fe0a0" }}>+{r.v}{L[1]}</span>
+                </div>
+              );
+            }) : <div style={{ fontSize: 9.5, color: "#c0a888", textAlign: "center", padding: "4px 0" }}>ไม่มีค่าบัฟ</div>}
+            <button onClick={() => { setUi((u) => ({ ...u, foodInfoOpen: false })); G.toggleKitchen(); }} style={{
+              width: "100%", marginTop: 5, padding: "6px 0", borderRadius: 999, border: "none", cursor: "pointer",
+              fontSize: 10, fontWeight: 800, fontFamily: font, color: "#3a2a10",
+              background: "linear-gradient(135deg,#ffd8a0,#f0a860)",
+            }}>🍳 เปิดครัว</button>
+          </div>
+        );
+      })()}
 
       {/* 📜 แผงติดตามภารกิจ — ติดจอแบบโปร่งใส เปิดค้างไว้ได้ · แตะแถวไหนก็เดินไปหาเป้าหมายนั้น */}
       {ui.qtrack && ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (() => {
@@ -48778,21 +48836,6 @@ export default function CherryAdventure() {
 
       {/* 🎣 fishing UI */}
       {/* 🍽️ ป้ายบัฟอาหารที่กินอยู่ */}
-      {(ui.mode === "explore" || ui.mode === "battle") && ui.foodBuff && !ui.equipScreen && !HUD_HIDE && (
-        <div style={{
-          position: "absolute", top: 96, right: 10, zIndex: 20, pointerEvents: "none",
-          background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
-          fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
-        }}>{ui.foodBuff.emoji || "🍽️"}{ui.foodBuff.qEmoji || ""} {G.foodLeftText ? G.foodLeftText() : ""}</div>
-      )}
-      {/* 🍱 มีอาหารเก็บไว้แต่ยังไม่ได้กิน — แตะเพื่อเปิดครัวไปกิน */}
-      {ui.mode === "explore" && !ui.foodBuff && (ui.foodBag || []).length > 0 && !ui.equipScreen && !HUD_HIDE && (
-        <button onClick={() => G.toggleKitchen()} style={{
-          position: "absolute", top: 96, right: 10, zIndex: 20, border: "none", cursor: "pointer",
-          background: "rgba(60,36,16,0.78)", borderRadius: 999, padding: "3px 10px",
-          fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#ffd8a0",
-        }}>🍱 มีอาหาร {(ui.foodBag || []).length} จาน</button>
-      )}
       {/* 👹 แถบบอสรัช — โชว์ตนที่เท่าไหร่ + เวลาที่ใช้ */}
       {ui.rushOn && !ui.equipScreen && (
         <div style={{
