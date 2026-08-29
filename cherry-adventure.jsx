@@ -251,6 +251,20 @@ const CRIT_DMG_BASE = 100;    // คริพื้นฐาน = ×2
 const CRIT_DMG_CAP = 320;     // ดาเมจคริรวมสูงสุด ×4.2
 const FOOD_CAP = { atkPct: 60, defPct: 60, hpPct: 60, crit: 25, luck: 30, expPct: 120, goldPct: 120, dropPct: 60 };
 const ATK_PER_LV = 2.5;
+// ⚔️ เพดานดาเมจสกิล — เดิม mult × (1 + (Lv−1)×perLv) ทะลุ 6,900% ตอนอัพเต็ม Lv.100
+// ตอนนี้ตันที่ 300% ของพลังโจมตี · ท่าไม้ตายได้เพดานสูงกว่านิดหน่อยเพราะใช้เกจ
+const SKILL_DMG_CAP = 3.0;      // ⚔️ ท่าปกติ ตันที่ 300% ของพลังโจมตี
+const ULT_DMG_CAP = 4.5;        // 🌟 ท่าไม้ตาย ตันที่ 450%
+const SKILL_RANK_MAX = 100;     // เลเวลวิชาสูงสุด
+const ULT_RANK_MAX = 20;
+// ไต่จากค่าเริ่มต้นของท่า → เพดาน โดยไปถึงเพดานพอดีตอนอัพเต็ม (โค้งหน้าหนัก ช่วงแรกขึ้นไว)
+const _mulCurve = (base, cap, rank, maxR) => {
+  const b = Math.min(cap, base);
+  const t = Math.pow((Math.max(1, Math.min(maxR, rank || 1)) - 1) / (maxR - 1), 0.7);
+  return b + (cap - b) * t;
+};
+const skillMul = (sk, rank) => _mulCurve(sk.mult || 1, SKILL_DMG_CAP, rank, SKILL_RANK_MAX);
+const ultMulOf = (rank, advMul) => _mulCurve(advMul || 1, ULT_DMG_CAP, rank, ULT_RANK_MAX);
 // 🛡️ ป้องกัน — เดิม "ลบตรง ๆ" ทำให้พอ DEF โตแซง ATK มอน ผู้เล่นกลายเป็นอมตะ (โดน 1 หน่วยต่อครั้ง)
 // เปลี่ยนเป็นลดดาเมจเป็น % แบบผลตอบแทนลดหลั่น — อัพต่อยังคุ้ม แต่ไม่มีวันภูมิคุ้มกัน 100%
 const DEF_K = 5.5;            // ยิ่งมอนเลเวลสูง ยิ่งต้องใช้ DEF มากขึ้นเพื่อลดได้เท่าเดิม
@@ -1351,6 +1365,72 @@ const skillGate = (cls, slot, level, ranks, stats, pathId) => {
   return { open: reasons.every((r) => r.ok), reasons };
 };
 // which element each skill counts as (for weakness advantage). null = neutral
+// ---------- 📖 วิชาสกิล — กระดานปลดล็อกเป็นขั้น ๆ (ขั้น 1 พื้นฐาน → ขั้น 2 สายอาชีพ → ขั้น 3 ขั้นสูง) ----------
+const SKILL_TIERS = [
+  { n: 1, name: "วิชาพื้นฐาน",  emoji: "📗", lv: 1,  desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
+  { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
+  { n: 3, name: "วิชาขั้นสูง",  emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+];
+const SKILL_TIER_BY = {}; SKILL_TIERS.forEach((t) => (SKILL_TIER_BY[t.n] = t));
+// เลเวลที่ต้องมีของแต่ละท่าในขั้นนั้น (ไล่จากซ้ายไปขวา) — ขั้น 1 ใช้ SKILL_GATE เดิม
+const TIER2_LV = [40, 45];
+const TIER3_LV = [60, 66, 72, 80, 90];
+
+// 📋 ประกอบกระดานวิชาทั้งหมดของอาชีพนี้ — คืนเป็นแถวละขั้น พร้อมสถานะล็อก/ปลดของทุกใบ
+const skillBoard = (cls, pathId, level, ranks, stats, skillMode, ultRank) => {
+  ranks = ranks || {}; stats = stats || {}; level = level || 1;
+  const rows = [];
+  const P = pathOf(cls, pathId);
+  const adv = PATH_ADV[pathId] || null;
+
+  // ── ขั้น 1: ท่าพื้นฐานประจำอาชีพ ──
+  const base = CLASS_SKILLS[cls] || [];
+  rows.push({
+    tier: 1, open: true, note: null,
+    cards: base.map((sk, i) => {
+      const g = SKILL_GATE[i];
+      const gate = skillGate(cls, i, level, ranks, stats, pathId);
+      return { kind: "skill", id: sk.id, sk, tier: 1, needLv: g ? g.lv : 1,
+        open: gate.open, reasons: gate.reasons, rank: ranks[sk.id] || 1 };
+    }),
+  });
+
+  // ── ขั้น 2: ท่าประจำสาย + ท่าไม้ตาย ──
+  const t2 = [];
+  if (P && P.skill) {
+    t2.push({ kind: "skill", id: P.skill.id, sk: P.skill, tier: 2, needLv: TIER2_LV[0],
+      open: !!pathId && level >= TIER2_LV[0], reasons: [{ ok: !!pathId, text: "เลือกสายอาชีพก่อน" }, { ok: level >= TIER2_LV[0], text: `เลเวล ${level}/${TIER2_LV[0]}` }],
+      rank: ranks[P.skill.id] || 1 });
+  }
+  const ultSk = ultOf(cls, false);
+  if (ultSk) {
+    t2.push({ kind: "ult", id: "ult_" + cls, sk: { ...ultSk, id: "ult_" + cls, cost: 0, name: "🌟 " + ultSk.name }, tier: 2, needLv: TIER2_LV[1],
+      open: level >= 7, reasons: [{ ok: level >= 7, text: `เลเวล ${level}/7` }], rank: ultRank || 1 });
+  }
+  rows.push({ tier: 2, open: !!pathId, note: pathId ? null : "🔒 ถึง Lv.40 แล้วเลือกสายอาชีพเพื่อปลดขั้นนี้", cards: t2 });
+
+  // ── ขั้น 3: ชุดสกิลขั้นสูงของสาย ──
+  const t3 = [];
+  if (adv) {
+    (adv.skills || []).forEach((sk, i) => {
+      const need = TIER3_LV[i] || TIER3_LV[TIER3_LV.length - 1];
+      t3.push({ kind: "adv", id: sk.id, sk, tier: 3, needLv: need,
+        open: skillMode === "adv" && level >= need,
+        reasons: [{ ok: skillMode === "adv", text: "สลับไปชุดสกิลขั้นสูงก่อน" }, { ok: level >= need, text: `เลเวล ${level}/${need}` }],
+        rank: ranks[sk.id] || 1 });
+    });
+    if (adv.ult) t3.push({ kind: "advult", id: "advult_" + pathId, sk: { ...adv.ult, id: "advult_" + pathId, emoji: adv.ult.emoji, cost: 0, name: "🌟 " + adv.ult.name }, tier: 3,
+      needLv: TIER3_LV[4], open: skillMode === "adv" && level >= TIER3_LV[4],
+      reasons: [{ ok: skillMode === "adv", text: "สลับไปชุดสกิลขั้นสูงก่อน" }, { ok: level >= TIER3_LV[4], text: `เลเวล ${level}/${TIER3_LV[4]}` }],
+      rank: ultRank || 1 });
+  }
+  rows.push({ tier: 3, open: !!adv && skillMode === "adv",
+    note: !adv ? "🔒 ต้องเลือกสายอาชีพที่มีชุดสกิลขั้นสูงก่อน" : (skillMode !== "adv" ? "🔒 กดสลับเป็น “ชุดสกิลขั้นสูง” เพื่อใช้ขั้นนี้" : null),
+    cards: t3 });
+
+  return rows;
+};
+// which element each skill counts as (for weakness advantage). null = neutral
 const SKILL_ELEM = {
   w_cleave: null, w_bash: null, w_rage: "fire", w_quake: "earth",
   a_power: null, a_multi: "wind", a_poison: "earth", a_snipe: null,
@@ -2264,7 +2344,7 @@ export default function CherryAdventure() {
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
-    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null,
+    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null, skillBoardOpen: false, boardPick: null, boardTick: 0,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
     repOpen: false, rep: [], repShop: [], repTick: 0,
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
@@ -22449,6 +22529,68 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, constNodes: { ...G.constNodes }, stardust: G.stardust || 0 }));
       syncPlayer(); // re-sync boosted stats
     };
+// ================= 📖 วิชาสกิล — กระดานปลดล็อกเป็นขั้น =================
+    G.skillBoard = () => skillBoard(G.cls, G.pathId, (G.player && G.player.level) || 1, G.skillRanks || {}, G.baseStats || {}, G.skillMode || "basic", G.ultRank || 1);
+    // 📄 รายละเอียดของท่าที่เลือก — ค่าปัจจุบัน → ค่าถัดไป (ให้เห็นว่าอัพแล้วได้อะไรเพิ่ม)
+    G.skillDetail = (id) => {
+      const rows = G.skillBoard();
+      let card = null;
+      rows.forEach((r) => r.cards.forEach((c) => { if (c.id === id) card = c; }));
+      if (!card) return null;
+      const sk = card.sk;
+      const isUlt = card.kind === "ult" || card.kind === "advult";
+      const rank = card.rank || 1;
+      const maxR = isUlt ? (G.ULT_MAX || 20) : SKILL_MAX;
+      const cap = isUlt ? maxR : (G.skillCap ? G.skillCap() : 1);
+      const dmgAt = (r) => isUlt
+        ? Math.round(ultMulOf(r, sk.mul || 1) * 100)
+        : Math.round(skillMul(sk, r) * 100);
+      const mpAt = (r) => (isUlt ? 0 : (G.mpCostOf ? Math.round((sk.cost || 8) * Math.min(3, 1 + (r - 1) * 0.06)) : (sk.cost || 8)));
+      const cost = isUlt ? (G.ultCost ? G.ultCost(rank) : rank + 3) : (G.skillCost ? G.skillCost(rank) : 1);
+      const T = SKILL_TIER_BY[card.tier] || SKILL_TIERS[0];
+      const tags = [];
+      if (sk.hits) tags.push(`🔁 ตี ${sk.hits} ครั้ง`);
+      if (sk.pierce) tags.push("🗡️ เจาะการ์ด");
+      if (sk.stun) tags.push("💫 มีโอกาสมึน");
+      if (sk.burn) tags.push("🔥 ติดไฟ");
+      if (sk.poison) tags.push("☠️ พิษ");
+      if (sk.bleed) tags.push("🩸 เลือดไหล");
+      if (sk.freeze) tags.push("❄️ แช่แข็ง");
+      if (sk.slow) tags.push("🐌 ชะลอ");
+      if (sk.heal) tags.push(`💚 ฟื้นเลือด ${Math.round(sk.heal * 100)}%`);
+      if (sk.defDown) tags.push(`🛡️ ลดเกราะ ${sk.defDown}`);
+      if (sk.buffCrit) tags.push(`🎯 คริ +${sk.buffCrit}%`);
+      if (sk.buffDef) tags.push(`🛡️ ป้องกัน +${sk.buffDef}`);
+      if (sk.critBonus) tags.push(`💥 โอกาสคริ +${Math.round(sk.critBonus * 100)}%`);
+      if (sk.guaranteedCrit) tags.push("💥 คริการันตี");
+      if (sk.buffTeam) tags.push("🤝 บัฟทั้งทีม");
+      return {
+        id: card.id, kind: card.kind, tier: card.tier, tierName: T.name, tierEmoji: T.emoji,
+        name: sk.name, emoji: sk.emoji, desc: sk.desc || "",
+        rank, maxR, cap, needLv: card.needLv, open: card.open, reasons: card.reasons || [],
+        maxed: rank >= maxR, atCap: rank >= cap,
+        dmg: dmgAt(rank), dmgNext: rank < maxR ? dmgAt(rank + 1) : null,
+        mp: mpAt(rank), mpNext: rank < maxR ? mpAt(rank + 1) : null,
+        cost, sp: G.player ? (G.player.sp || 0) : 0, canPay: (G.player ? (G.player.sp || 0) : 0) >= cost,
+        tags, elem: SKILL_ELEM[sk.id] || null,
+      };
+    };
+    // ⬆️ อัปเกรดท่าที่เลือก — ส่งต่อไปยังระบบเดิม (ท่าปกติ / ท่าไม้ตาย)
+    G.boardUpgrade = (id) => {
+      const d = G.skillDetail(id);
+      if (!d) return;
+      if (!d.open) { toast(`🔒 ยังปลดไม่ได้ — ${d.reasons.filter((r) => !r.ok).map((r) => r.text).join(" · ")}`); return; }
+      if (d.kind === "ult" || d.kind === "advult") G.rankUlt();
+      else G.rankSkill(id);
+      setUi((u) => ({ ...u, skillRanks: { ...(G.skillRanks || {}) }, ultRank: G.ultRank || 1, sp: G.player.sp || 0, boardTick: (u.boardTick || 0) + 1 }));
+    };
+    G.toggleSkillBoard = () => setUi((u) => (u.skillBoardOpen
+      ? { ...u, skillBoardOpen: false }
+      : { ...u, skillBoardOpen: true, menuOpen: false, skillPanel: false, kitchenOpen: false, fishBagOpen: false, equipScreen: false,
+          boardPick: u.boardPick || null, skillRanks: { ...(G.skillRanks || {}) }, ultRank: G.ultRank || 1, sp: G.player.sp || 0,
+          skillMode: G.skillMode || "basic", pathId: G.pathId || null, boardTick: (u.boardTick || 0) + 1 }));
+    // ================= 📖 END SKILL BOARD =================
+
     G.rankSkill = (skillId) => {
       // 🔒 can't rank a skill that isn't unlocked yet
       const slot = skillsOf(G.cls, G.pathId).findIndex((s) => s.id === skillId);
@@ -27337,7 +27479,7 @@ export default function CherryAdventure() {
       G.startCd(sk); // ⏳ begin cooldown
       char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
       yaw = char.rotation.y; // 🧭 ล็อกทิศเดินตามไปด้วย ไม่งั้นท่าเดินจะค่อย ๆ หมุนตัวกลับทิศเก่าระหว่างร่าย
-      const base = (effAtk() + Math.random() * 4) * (sk.mult || 1) * (1 + ((rank - 1) * (sk.perLv || 0)));
+      const base = (effAtk() + Math.random() * 4) * skillMul(sk, rank);   // ⚖️ ตันที่ 300%
       const col = sk.color || 0xffd24a;
       const applyDmg = (m, scale) => {
         const crit = !!sk.guaranteedCrit || Math.random() < (0.08 + effCrit() / 100 + (sk.critBonus || 0));
@@ -30517,7 +30659,7 @@ export default function CherryAdventure() {
           const weak = WEAK[e.spId]; // enemy elemental weakness
           const scored = affordable.map((sk) => {
             const r = G.skillRanks[sk.id] || 1;
-            let w = (sk.mult + sk.perLv * (r - 1)) * (sk.hits || 1) + r * 0.25;
+            let w = skillMul(sk, r) * (sk.hits || 1) + r * 0.25;
             // situational bonuses
             if (SKILL_ELEM[sk.id] && SKILL_ELEM[sk.id] === weak) w *= 2.0; // hits weakness
             if ((sk.freeze || sk.stun) && !e.frozen && e.hp / e.maxHp > 0.5) w *= 1.6; // lock down healthy foes
@@ -30558,7 +30700,7 @@ export default function CherryAdventure() {
         const many = wildsInRadius(char.position.x, char.position.z, worldRange() + 1).length >= 2;
         const scored = affordable.map((sk) => {
           const r = G.skillRanks[sk.id] || 1;
-          let w = (sk.mult + sk.perLv * (r - 1)) * (sk.hits || 1) + r * 0.25;
+          let w = skillMul(sk, r) * (sk.hits || 1) + r * 0.25;
           if (many && isAoeSkill(sk)) w *= 2.4;       // gang of foes → favour AoE
           if (!many && isAoeSkill(sk)) w *= 0.7;      // lone foe → prefer single-target
           if (G._lastSkill === sk.id) w *= 0.4;       // avoid spamming one skill
@@ -40899,7 +41041,7 @@ export default function CherryAdventure() {
               let critBonus = 0;
               if (sk) {
                 // 🎯 class skill: damage scales with its rank
-                const mult = sk.mult + sk.perLv * (rank - 1);
+                const mult = skillMul(sk, rank);
                 const hitCount = sk.hits || 1;
                 for (let h = 0; h < hitCount; h++) dmg += roll() * mult;
                 fxMsg = ` ${sk.emoji} ${sk.name} Lv.${rank}`;
@@ -41388,7 +41530,7 @@ export default function CherryAdventure() {
           } else if (A.type === "ult") {
             const cls = G.cls || "warrior";   // 🤖 ทุกอาชีพมีท่าไม้ตายเป็นของตัวเอง (aegis ไม่ยืมของ coder แล้ว)
             if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
-            const ultMul = (1 + ((G.ultRank || 1) - 1) * 0.18) * ((A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติขั้นสูงแรงกว่า
+            const ultMul = ultMulOf(G.ultRank || 1, (A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติ · ⚖️ ตันที่ 450%ขั้นสูงแรงกว่า
             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
@@ -45261,6 +45403,151 @@ export default function CherryAdventure() {
               })()}
             </div>
           )}
+          {/* 📖 วิชาสกิล — ปลดล็อกเป็นขั้น ๆ พร้อมแผงรายละเอียดของแต่ละท่า */}
+          {ui.skillBoardOpen && (() => {
+            const rows = G.skillBoard ? G.skillBoard() : [];
+            const pickId = ui.boardPick || (() => { for (const r of rows) for (const c of r.cards) if (c.open) return c.id; return (rows[0] && rows[0].cards[0] && rows[0].cards[0].id) || null; })();
+            const D = pickId && G.skillDetail ? G.skillDetail(pickId) : null;
+            const wide = window.innerWidth >= 720;
+            return (
+            <div style={{
+              position: "absolute", ...MODAL_POS, zIndex: 58, width: wide ? "94%" : "94%", maxWidth: wide ? 720 : 430,
+              maxHeight: "88vh", overflowY: "auto",
+              background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e",
+              borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, fontFamily: font,
+            }}>
+              {closeBtn("skillBoardOpen")}
+              <div style={{ fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 }}>📖 วิชาสกิล</div>
+              <div style={{ fontSize: 10, color: "#7fae97", marginBottom: 9 }}>
+                ปลดล็อกไล่เป็นขั้น — ขั้นสูงขึ้นต้องเลเวลสูงขึ้น · แตะการ์ดเพื่อดูรายละเอียด · ⚡ แต้มสกิล {ui.sp || 0}
+              </div>
+
+              <div style={{ display: wide ? "flex" : "block", gap: 12, alignItems: "flex-start" }}>
+                {/* ── ตารางขั้น ── */}
+                <div style={{ flex: wide ? 1.25 : "none", minWidth: 0 }}>
+                  {rows.map((row) => {
+                    const T = SKILL_TIER_BY[row.tier] || SKILL_TIERS[0];
+                    return (
+                      <div key={row.tier} style={{ marginBottom: 10 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 5 }}>
+                          <span style={{ fontSize: 11.5, fontWeight: 900, color: row.open ? "#f5d24a" : "#6a8a7a" }}>
+                            {T.emoji} ขั้น {row.tier} · {T.name}
+                          </span>
+                          <span style={{ fontSize: 9, color: "#6a8a7a" }}>{T.desc}</span>
+                        </div>
+                        {row.note && (
+                          <div style={{ fontSize: 9.5, fontWeight: 800, color: "#e0a05a", background: "rgba(224,160,90,0.10)", border: "1px solid rgba(224,160,90,0.28)", borderRadius: 8, padding: "5px 8px", marginBottom: 5 }}>{row.note}</div>
+                        )}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                          {row.cards.length === 0 && (
+                            <div style={{ gridColumn: "1 / -1", fontSize: 9.5, color: "#5f7f6f", textAlign: "center", padding: "10px 0" }}>— ยังไม่มีท่าในขั้นนี้ —</div>
+                          )}
+                          {row.cards.map((c) => {
+                            const on = c.id === pickId;
+                            return (
+                              <button key={c.id} onClick={() => setUi((u) => ({ ...u, boardPick: c.id }))} style={{
+                                position: "relative", padding: "8px 3px 6px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "center",
+                                border: on ? "2px solid #ffd76a" : c.open ? "1.5px solid #4f9a76" : "1.5px dashed #35594a",
+                                background: c.open ? (on ? "linear-gradient(180deg,#2c4a38,#1c3227)" : "rgba(79,154,118,0.14)") : "rgba(255,255,255,0.03)",
+                                opacity: c.open ? 1 : 0.62,
+                              }}>
+                                {/* 🏷️ ป้ายขั้นมุมซ้ายบน */}
+                                <span style={{ position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#0d2018", background: "#f5d24a", borderRadius: 5, padding: "0 4px" }}>ขั้น {c.tier}</span>
+                                <div style={{ fontSize: 25, marginTop: 7, filter: c.open ? "none" : "grayscale(1)" }}>{c.open ? c.sk.emoji : "🔒"}</div>
+                                <div style={{ fontSize: 9.5, fontWeight: 800, color: c.open ? "#d8f0e2" : "#7f9d8e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>{c.sk.name}</div>
+                                {/* 🔢 ปลดแล้วโชว์เลเวลท่า · ยังไม่ปลดโชว์เลเวลที่ต้องมี */}
+                                <div style={{ fontSize: 9, fontWeight: 900, color: c.open ? "#9fe8c0" : "#e0a05a" }}>
+                                  {c.open ? `Lv.${c.rank}`
+                                    : ((ui.level || 1) >= c.needLv ? "🔗 ยังไม่ครบเงื่อนไข" : `Lv.${c.needLv}`)}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* 🔀 สลับชุดสกิลพื้นฐาน / ขั้นสูง */}
+                  {G.setSkillMode && (
+                    <div style={{ display: "flex", gap: 6, marginTop: 4, marginBottom: wide ? 0 : 10 }}>
+                      {[["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].map(([k, lbl]) => {
+                        const on = (ui.skillMode || "basic") === k;
+                        return <button key={k} onClick={() => { G.setSkillMode(k); setUi((u) => ({ ...u, boardTick: (u.boardTick || 0) + 1, boardPick: null })); }} style={{
+                          flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
+                          fontSize: 11, fontWeight: 800, color: on ? "#0d2018" : "#8fbfa6",
+                          background: on ? "linear-gradient(90deg,#7fd0a0,#4f9a76)" : "rgba(255,255,255,0.06)",
+                        }}>{lbl}</button>;
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── แผงรายละเอียดของท่าที่เลือก ── */}
+                <div style={{ flex: wide ? 1 : "none", minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid #35594a", borderRadius: 13, padding: "10px 11px" }}>
+                  {!D ? (
+                    <div style={{ fontSize: 11, color: "#7fae97", textAlign: "center", padding: "18px 0" }}>แตะการ์ดท่าทางซ้ายเพื่อดูรายละเอียด</div>
+                  ) : (
+                    <>
+                      <div style={{ textAlign: "center", marginBottom: 7 }}>
+                        <div style={{ fontSize: 30 }}>{D.open ? D.emoji : "🔒"}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 900, color: "#ffe9a0" }}>{D.name}</div>
+                        <div style={{ fontSize: 9.5, fontWeight: 800, color: "#7fae97" }}>{D.tierEmoji} ขั้น {D.tier} · {D.tierName}</div>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10.5, marginBottom: 8 }}>
+                        {[["เลเวลวิชา", D.open ? `Lv.${D.rank} / ${D.maxR}` : `ต้องเลเวลตัวละคร ${D.needLv}`],
+                          ["ค่ามานา", D.kind === "ult" || D.kind === "advult" ? "ใช้เกจท่าไม้ตาย" : `${D.mp}`],
+                          ["ธาตุ", D.elem && ELEM_META[D.elem] ? `${ELEM_META[D.elem].emoji} ${ELEM_META[D.elem].name}` : "ไร้ธาตุ"]].map(([k, v]) => (
+                          <div key={k} style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span style={{ color: "#7fae97" }}>{k}</span><span style={{ fontWeight: 800, color: "#d8f0e2" }}>{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {D.desc && (
+                        <div style={{ fontSize: 10, color: "#c8e4d6", lineHeight: 1.6, background: "rgba(0,0,0,0.22)", borderRadius: 9, padding: "7px 9px", marginBottom: 8 }}>{D.desc}</div>
+                      )}
+                      {D.tags.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+                          {D.tags.map((t, i) => (
+                            <span key={i} style={{ fontSize: 9, fontWeight: 800, color: "#9fe8c0", background: "rgba(79,154,118,0.2)", border: "1px solid #3f7a5e", borderRadius: 999, padding: "2px 7px" }}>{t}</span>
+                          ))}
+                        </div>
+                      )}
+                      {/* 📈 ค่าปัจจุบัน → ค่าหลังอัพ */}
+                      <div style={{ background: "rgba(0,0,0,0.24)", borderRadius: 9, padding: "7px 9px", marginBottom: 8 }}>
+                        {[["ดาเมจ", D.dmg + "%", D.dmgNext != null ? D.dmgNext + "%" : null],
+                          ["ค่ามานา", D.kind === "ult" || D.kind === "advult" ? null : D.mp, D.mpNext]].filter((r) => r[1] != null).map(([k, a, bnext]) => (
+                          <div key={k} style={{ display: "flex", alignItems: "center", fontSize: 10.5, marginBottom: 2 }}>
+                            <span style={{ flex: 1, color: "#7fae97" }}>{k}</span>
+                            <span style={{ fontWeight: 800, color: "#d8f0e2" }}>{a}</span>
+                            {bnext != null && !D.maxed && <><span style={{ margin: "0 6px", color: "#f5d24a" }}>»</span><span style={{ fontWeight: 900, color: "#7fe8a0" }}>{bnext}</span></>}
+                          </div>
+                        ))}
+                      </div>
+                      {/* 🔒 เหตุผลที่ยังปลดไม่ได้ */}
+                      {!D.open && (
+                        <div style={{ fontSize: 9.5, marginBottom: 8 }}>
+                          {D.reasons.map((r, i) => (
+                            <div key={i} style={{ color: r.ok ? "#7fe8a0" : "#f09a6a", fontWeight: 800 }}>{r.ok ? "✓" : "✕"} {r.text}</div>
+                          ))}
+                        </div>
+                      )}
+                      <button onClick={() => G.boardUpgrade(D.id)} disabled={!D.open || D.maxed || D.atCap || !D.canPay} style={{
+                        width: "100%", padding: "10px 0", borderRadius: 11, border: "none", fontFamily: font,
+                        cursor: (D.open && !D.maxed && !D.atCap && D.canPay) ? "pointer" : "not-allowed",
+                        fontSize: 12.5, fontWeight: 900,
+                        color: (D.open && !D.maxed && !D.atCap && D.canPay) ? "#0d2018" : "#6f8f7f",
+                        background: (D.open && !D.maxed && !D.atCap && D.canPay) ? "linear-gradient(90deg,#ffd76a,#f0a83a)" : "rgba(255,255,255,0.06)",
+                      }}>
+                        {!D.open ? `🔒 ต้องเลเวล ${D.needLv}` : D.maxed ? `⭐ เต็ม Lv.${D.maxR}` : D.atCap ? "🔒 อัพเลเวลตัวละครก่อน"
+                          : !D.canPay ? `⚡ แต้มสกิลไม่พอ (ต้อง ${D.cost})` : `⬆️ อัปเกรดเป็น Lv.${D.rank + 1} (⚡ ${D.cost})`}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            );
+          })()}
           {/* 🎣 กระเป๋าตกปลา — ปลาที่จับได้ · สมุดปลา · เลเวลตกปลา */}
           {ui.fishBagOpen && (() => {
             const FI = ui.fishInfo || (G.fishInfo ? G.fishInfo() : null);
@@ -47109,6 +47396,7 @@ export default function CherryAdventure() {
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a", "kitchen"],
             ["🎣", "กระเป๋าตกปลา", () => G.toggleFishBag(), "#4a90c0"],
+            ["📖", "วิชาสกิล (ปลดเป็นขั้น)", () => G.toggleSkillBoard(), "#7fd0f5"],
             ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0", "exped"],
             ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
             ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a", "rep"],
@@ -48165,8 +48453,8 @@ export default function CherryAdventure() {
                 const maxed = rank >= 100;
                 const atCap = rank >= cap;
                 // damage estimate at current and next rank
-                const mult = sk.mult + sk.perLv * (rank - 1);
-                const multNext = sk.mult + sk.perLv * rank;
+                const mult = skillMul(sk, rank);
+                const multNext = skillMul(sk, rank + 1);
                 const hits = sk.hits || 1;
                 const dmgNow = Math.round((ui.atk || 8) * mult * hits);
                 const dmgNext = Math.round((ui.atk || 8) * multNext * hits);
@@ -50664,7 +50952,7 @@ export default function CherryAdventure() {
                     const cdLeft = Math.max(0, (((ui.cdMap || {})[sk.id] || 0) - (ui.cdNow || 0)) / 1000); // ⏳
                     const gate = skillGate(ui.cls, slot, ui.level, ui.skillRanks, ui.baseStats, ui.pathId); // 🔒 unlock check
                     const afford = (ui.mp || 0) >= cost && gate.open && cdLeft <= 0;
-                    const mult = sk.mult + sk.perLv * (rank - 1);
+                    const mult = skillMul(sk, rank);
                     const hits = sk.hits || 1;
                     const dmg = Math.round((ui.atk || 8) * mult * hits);
                     const skEl = SKILL_ELEM[sk.id];
