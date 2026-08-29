@@ -48703,7 +48703,9 @@ export default function CherryAdventure() {
                 background: "rgba(16,22,18,0.46)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
                 border: "1px solid rgba(255,255,255,0.16)", borderRadius: 13, padding: "6px 8px",
                 boxShadow: "0 4px 16px rgba(0,0,0,0.32)" }
-            : { bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)" }), zIndex: 25, pointerEvents: "none", fontFamily: font }}>
+            : { bottom: "calc(env(safe-area-inset-bottom, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)" }),
+          zIndex: ui.autoCfgOpen ? 46 : 25,   // ⚙️ เปิดตั้งค่าออโต้ = ยกการ์ดขึ้นเหนือมินิแมพ/แผงภารกิจ ไม่งั้นหน้าต่างโดนบัง
+          pointerEvents: "none", fontFamily: font }}>
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: HUD_CARD ? 6 : 7, ...(HUD_CARD
             ? { background: "transparent", borderRadius: 0, padding: 0, fontSize: 10, color: "#eaf4ec", justifyContent: "flex-start", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }
@@ -48733,12 +48735,26 @@ export default function CherryAdventure() {
               <div style={{ width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" }}/>
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
             </div>
-            <button onClick={() => G.toggleAuto()} style={{ padding: "6px 13px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: ui.auto ? "#fff" : "#59a0e8", background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff", boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>🤖 {ui.auto ? "ON" : "OFF"}</button>
-            <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen }))} title="ตั้งค่าออโต้" style={{ position: "relative", width: 34, height: 30, borderRadius: 999, border: "none", cursor: "pointer", fontSize: 15, fontFamily: font, color: "#59a0e8", background: ui.autoCfgOpen ? "#e8f1ff" : "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.24)" }}>⚙️</button>
+            <button onClick={() => G.toggleAuto()} title={ui.auto ? "ต่อสู้อัตโนมัติ: เปิดอยู่ (แตะเพื่อปิด)" : "ต่อสู้อัตโนมัติ: ปิดอยู่ (แตะเพื่อเปิด)"} style={{
+              width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
+              fontSize: 13, lineHeight: 1, fontFamily: font,
+              filter: ui.auto ? "none" : "grayscale(0.85)", opacity: ui.auto ? 1 : 0.8,
+              background: ui.auto ? "linear-gradient(135deg,#59a0e8,#9a6ad0)" : "#fff",
+              boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45), 0 2px 8px rgba(89,160,232,0.5)" : "0 2px 6px rgba(0,0,0,0.24)",
+            }}>🤖</button>
+            <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen }))} title="ตั้งค่าออโต้" style={{
+              width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
+              fontSize: 12, lineHeight: 1, fontFamily: font, color: "#59a0e8",
+              background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 2px 6px rgba(0,0,0,0.24)",
+            }}>⚙️</button>
           </div>
           {/* ⚙️ auto-battle settings popup */}
           {ui.autoCfgOpen && (
-            <div style={{ position: "absolute", bottom: 62, right: 0, width: "min(88vw, 300px)", background: "rgba(255,255,255,0.97)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 14, padding: "10px 12px", boxShadow: "0 8px 24px rgba(60,80,120,0.35)", pointerEvents: "auto", fontFamily: font }}>
+            <div style={{ position: "absolute",
+              // 🖥️ การ์ดสถานะอยู่มุมบนซ้าย → กางลงล่าง · 📱 การ์ดอยู่ล่างจอ → กางขึ้นบนเหมือนเดิม
+              ...(HUD_CARD ? { top: "calc(100% + 8px)", left: 0 } : { bottom: 62, right: 0 }),
+              width: "min(88vw, 300px)", maxHeight: "72vh", overflowY: "auto", zIndex: 40,
+              background: "rgba(255,255,255,0.97)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 14, padding: "10px 12px", boxShadow: "0 8px 24px rgba(60,80,120,0.35)", pointerEvents: "auto", fontFamily: font }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
                 <span style={{ fontSize: 13, fontWeight: 800, color: "#4a6a9a" }}>⚙️ ตั้งค่าต่อสู้ออโต้</span>
                 <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: false }))} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 15, color: "#9aa" }}>✕</button>
