@@ -19849,6 +19849,16 @@ export default function CherryAdventure() {
       G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
     };
     G.toggleMbook = () => { G.mbRefresh(); setUi((u) => ({ ...u, mbookOpen: !u.mbookOpen })); };
+    // 🧩 กลุ่มเมนู "ภารกิจ" — เควส · ความสำเร็จ · ภารกิจรายวัน/รายสัปดาห์ รวมเป็นหน้าเดียวสลับแท็บได้
+    G.QUEST_TABS = [
+      { k: "quest", ic: "📜", name: "เควส" },
+      { k: "mbook", ic: "🗓️", name: "รายวัน/สัปดาห์" },
+      { k: "ach",   ic: "🏅", name: "ความสำเร็จ" },
+    ];
+    G.questTab = (key) => {
+      if (key === "mbook") { try { G.mbRefresh(); } catch (e) {} setUi((u) => { const c = {}; MENU_FLAGS.forEach((f) => (c[f] = false)); return { ...u, ...c, menuOpen: false, mbookOpen: true }; }); return; }
+      setUi((u) => { const c = {}; MENU_FLAGS.forEach((f) => (c[f] = false)); return { ...u, ...c, menuOpen: false, mbookOpen: false, questOpen: true, achTab: key === "ach", ...(key === "ach" ? { achUnlocked: { ...G.achUnlocked } } : {}) }; });
+    };
     try { G.mbRefresh(); } catch (e) {}   // 📖 มีสมุดภารกิจพร้อมนับตั้งแต่วินาทีแรก (เซฟที่โหลดทีหลังจะเขียนทับแล้วรีเฟรชอีกรอบ)
 
     G.storyEvent = (type, n = 1, meta = {}) => {
@@ -23263,6 +23273,28 @@ export default function CherryAdventure() {
       if (d.kind === "ult" || d.kind === "advult") G.rankUlt();
       else G.rankSkill(id);
       setUi((u) => ({ ...u, skillRanks: { ...(G.skillRanks || {}) }, ultRank: G.ultRank || 1, sp: G.player.sp || 0, boardTick: (u.boardTick || 0) + 1 }));
+    };
+    // 🧩 กลุ่มเมนู "สกิล" — สถานะ · วิชาสกิล · ต้นไม้ทักษะ · หมู่ดาว · มาสเตอรี่อาวุธ · วิชาตัวเบา
+    //    รวมเป็นหน้าเดียวที่สลับแท็บกันได้ ไม่ต้องกลับไปเปิดจากเมนู ☰ ทีละอัน
+    G.SKILL_TABS = [
+      { k: "skillPanel",     ic: "💪", name: "สถานะ" },
+      { k: "skillBoardOpen", ic: "📖", name: "วิชาสกิล" },
+      { k: "treeOpen",       ic: "🌳", name: "ต้นไม้ทักษะ" },
+      { k: "constOpen",      ic: "🌌", name: "หมู่ดาว" },
+      { k: "masteryOpen",    ic: "🗡️", name: "มาสเตอรี่" },
+      { k: "qingOpen",       ic: "🍃", name: "วิชาตัวเบา" },
+    ];
+    G.skillTab = (key) => {
+      // ปิดทุกแท็บในกลุ่มก่อน แล้วเปิดอันที่เลือกด้วยฟังก์ชันเดิมของมันเอง
+      // (แต่ละอันเตรียมข้อมูลของตัวเองไว้ เช่น ต้นไม้ทักษะ/หมู่ดาว/มาสเตอรี่ — เรียกตรงจะได้ข้อมูลครบ)
+      G.treeOpen = false; G.constOpen = false; G.masteryOpen = false;
+      setUi((u) => { const c = {}; MENU_FLAGS.forEach((f) => (c[f] = false)); return { ...u, ...c, menuOpen: false, skillBoardOpen: false, qingOpen: false }; });
+      if (key === "skillPanel") setUi((u) => ({ ...u, skillPanel: true }));
+      else if (key === "skillBoardOpen") G.toggleSkillBoard();
+      else if (key === "treeOpen") G.toggleTree();
+      else if (key === "constOpen") G.toggleConst();
+      else if (key === "masteryOpen") G.toggleMastery();
+      else if (key === "qingOpen") G.toggleQing();
     };
     G.toggleSkillBoard = () => setUi((u) => (u.skillBoardOpen
       ? { ...u, skillBoardOpen: false }
@@ -45954,6 +45986,55 @@ export default function CherryAdventure() {
   const isPrompt = (name) => _promptTop === name;
   const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
   const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
+  // 🧩 แถบแท็บกลุ่มเมนูสกิล — ใส่ไว้หัวทุกหน้าในกลุ่ม สลับไปมาได้เลยไม่ต้องกลับเมนู ☰
+  //    dark = ธีมเข้ม (หน้าวิชาตัวเบา) · ปกติ = ธีมการ์ดขาว
+  const skillTabs = (active, dark) => (
+    <div style={{
+      display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
+      background: dark ? "rgba(0,0,0,0.24)" : "#f1eef8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #e2dcf0",
+    }}>
+      {(G.SKILL_TABS || []).map((t) => {
+        const on = t.k === active;
+        return (
+          <button key={t.k} onClick={() => { if (!on && G.skillTab) G.skillTab(t.k); }} title={t.name} style={{
+            flex: "1 1 auto", minWidth: 0, padding: "5px 3px", borderRadius: 9, cursor: on ? "default" : "pointer",
+            border: "none", fontFamily: font, lineHeight: 1.15,
+            background: on ? "linear-gradient(135deg,#8a6ad0,#6a4ab0)" : (dark ? "rgba(255,255,255,0.07)" : "#fff"),
+            color: on ? "#fff" : (dark ? "#cfe0d6" : "#7a6a9a"),
+            boxShadow: on ? "0 2px 8px rgba(120,90,200,0.42)" : "none",
+          }}>
+            <div style={{ fontSize: 15 }}>{t.ic}</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+  // 🧩 แถบแท็บกลุ่มเมนูภารกิจ — เควส · รายวัน/สัปดาห์ · ความสำเร็จ
+  const questTabs = (active, dark) => (
+    <div style={{
+      display: "flex", gap: 4, marginBottom: 9, padding: 3, borderRadius: 11,
+      background: dark ? "rgba(0,0,0,0.24)" : "#fdf0d8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #f0e0c0",
+    }}>
+      {(G.QUEST_TABS || []).map((t) => {
+        const on = t.k === active;
+        const badge = t.k === "mbook" ? (TODO.mbook || 0) : t.k === "quest" ? (TODO.quest || 0) : 0;
+        return (
+          <button key={t.k} onClick={() => { if (!on && G.questTab) G.questTab(t.k); }} title={t.name} style={{
+            position: "relative", flex: 1, minWidth: 0, padding: "5px 3px", borderRadius: 9, cursor: on ? "default" : "pointer",
+            border: "none", fontFamily: font, lineHeight: 1.15,
+            background: on ? "linear-gradient(135deg,#f5b93a,#e0862f)" : (dark ? "rgba(255,255,255,0.07)" : "#fff"),
+            color: on ? "#fff" : (dark ? "#e0d0ff" : "#8a7a5a"),
+            boxShadow: on ? "0 2px 8px rgba(224,134,47,0.42)" : "none",
+          }}>
+            <div style={{ fontSize: 14 }}>{t.ic}</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</div>
+            {badge > 0 && !on && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#ff3b5c", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{badge}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
   const closeAllMenus = (extra = {}) => {
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
@@ -46178,6 +46259,7 @@ export default function CherryAdventure() {
               <div style={{ marginLeft: "auto", fontSize: 11.5, color: "#c9b8ff" }}>แต้มแทร็ก {ui.mbook.pts} · ขั้น {ui.mbook.tier}/{PASS_TIERS}</div>
               <button onClick={() => setUi((u) => ({ ...u, mbookOpen: false }))} style={{ border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 15 }}>✕</button>
             </div>
+            {questTabs("mbook", true)}
             <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
               {[["daily", "🗓️ รายวัน"], ["weekly", "📅 รายสัปดาห์"], ["pass", "🎫 แทร็กรางวัล"]].map(([k, lb]) => (
                 <button key={k} onClick={() => setUi((u) => ({ ...u, mbTab: k }))} style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.mbTab === k ? "#2a2416" : "#d8cff0", background: ui.mbTab === k ? "linear-gradient(90deg,#f5d24a,#e0a83a)" : "rgba(255,255,255,0.08)" }}>{lb}</button>
@@ -46697,6 +46779,7 @@ export default function CherryAdventure() {
               borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, fontFamily: font,
             }}>
               {closeBtn("skillBoardOpen")}
+              {skillTabs("skillBoardOpen", true)}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 }}>📖 วิชาสกิล</div>
               <div style={{ fontSize: 10, color: "#7fae97", marginBottom: 9 }}>
                 ปลดล็อกไล่เป็นขั้น — ขั้นสูงขึ้นต้องเลเวลสูงขึ้น · แตะการ์ดเพื่อดูรายละเอียด · ⚡ แต้มสกิล {ui.sp || 0}
@@ -47826,6 +47909,7 @@ export default function CherryAdventure() {
                 <span style={{ fontSize: 10.5, fontWeight: 800, color: "#f5d24a" }}>ขั้น {QI.step}/3</span>
                 <button onClick={() => G.toggleQing()} title="ปิด" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.34)", color: "#e6f0e2", fontSize: 14, cursor: "pointer", padding: 0 }}>✕</button>
               </div>
+              {skillTabs("qingOpen", true)}
 
               {/* ตำรา → ขั้นวิชา */}
               <div style={{ display: "flex", alignItems: "center", gap: wide ? 12 : 7, padding: "11px 10px", borderRadius: 16, marginBottom: 10,
@@ -48069,7 +48153,14 @@ export default function CherryAdventure() {
         const tgt = c ? G.storyTarget(c) : 1;
         const prog = Math.min(tgt, ui.storyProg || 0);
         const mainDone = c && prog >= tgt;
-        const side = (ui.quests || []).filter((q) => !q.claimed).slice(0, 3);
+        const side = (ui.quests || []).filter((q) => !q.claimed).slice(0, 2);
+        // 🗓️ ภารกิจรายวัน/รายสัปดาห์ — เอามาโชว์ในแผงเดียวกัน (ที่ทำสำเร็จรอรับรางวัลมาก่อน)
+        const MB = ui.mbook || {};
+        const mbRows = [...(MB.daily || []).map((r) => ({ ...r, kind: "d" })), ...(MB.weekly || []).map((r) => ({ ...r, kind: "w" }))]
+          .map((r) => { const M = G.mbMeta ? G.mbMeta(r.id) : null; return M ? { ...r, M, done: r.p >= M.n } : null; })
+          .filter((r) => r && !r.claimed)
+          .sort((a, b) => (b.done ? 1 : 0) - (a.done ? 1 : 0))
+          .slice(0, 3);
         const row = (key, icon, label, cur, max, done, onClick, tone) => (
           <button key={key} onClick={onClick} title={done ? "สำเร็จแล้ว — แตะรับรางวัล" : "แตะเพื่อเดินไปหาเป้าหมาย"} style={{
             display: "flex", alignItems: "center", gap: 5, width: "100%", textAlign: "left",
@@ -48112,6 +48203,8 @@ export default function CherryAdventure() {
                 () => { if (mainDone) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGo) G.questGo(); }, "#ffd0a8")}
               {!QT_TIGHT && side.map((q, i) => row("sq" + i, q.emoji, q.label, q.prog, q.target, q.done,
                 () => { if (q.done) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGoType) G.questGoType(q.type); }))}
+              {!QT_TIGHT && mbRows.map((r, i) => row("mb" + i, r.kind === "d" ? "🗓️" : "📅", r.M.name, Math.min(r.M.n, r.p), r.M.n, r.done,
+                () => { if (r.done) { if (G.questTab) G.questTab("mbook"); } else if (G.questGoType) G.questGoType(r.M.t || "win"); }, "#bfe0ff"))}
               {!c && (QT_TIGHT || !side.length) && <div style={{ fontSize: 8.5, color: "#9ab0c8", textAlign: "center", padding: "4px 0" }}>ไม่มีภารกิจค้างอยู่</div>}
             </div>
           </div>
@@ -49110,48 +49203,100 @@ export default function CherryAdventure() {
           {ui.mountId && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 10, fontWeight: 800, lineHeight: "18px", padding: "0 3px" }}>✓</span>}
         </button>
       )}
-      {ui.menuOpen && (
-        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", zIndex: 66 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ margin: "70px 12px 0 0", padding: 13, borderRadius: 26, background: "rgba(26,20,38,0.30)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", boxShadow: "0 12px 34px rgba(0,0,0,0.38), inset 0 1px 3px rgba(255,255,255,0.22)", display: "grid", gridTemplateColumns: "repeat(3, 54px)", gap: 12 }}>
-            {[
-              ["💾", "ช่องเซฟทั้งหมด", () => { if (G.saveGame) G.saveGame(); if (G._cloudPush) G._cloudPush(true); setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots, confirmDelete: null })); }, "#8fd0ff"],
-              ["🏛️", "ตลาดทองคำ", () => G.openGoldMarket(), "#f5c542"],
-              ["💍", "เครื่องประดับ", () => G.openAccessories(), "#f5a0d0"],
-                          ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
-              ["🌳", "ต้นไม้ทักษะ", () => G.toggleTree(), "#f2b24d"],
-              ["🌌", "หมู่ดาว", () => G.toggleConst(), "#f2b24d", "constel"],
-              ["⛏️", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
-              ["🗡️", "มาสเตอรี่อาวุธ", () => G.toggleMastery(), "#f2b24d"],
-              ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
-              ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
-              ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
-              ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
-              ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a", "mbook"],
-              ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
-              ["🍃", "วิชาตัวเบา", () => G.toggleQing(), "#6fd0a0", "qing"],
-              ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
+      {ui.menuOpen && (() => {
+        // 📚 เมนูรวม — จัดเป็นหมวดหมู่ ปุ่มเป็นไอคอนล้วน (ชื่อดูจาก tooltip) จะได้กินพื้นที่น้อยลง
+        // 🧩 ต้นไม้ทักษะ · หมู่ดาว · มาสเตอรี่อาวุธ · วิชาตัวเบา · วิชาสกิล ย้ายไปรวมอยู่ในเมนู ⚡ สกิลแล้ว
+        const CATS = [
+          ["⚔️", "ต่อสู้ & ท้าทาย", [
+            ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss && G.challengeBiomeBoss(); }, "#e0605a"],
+            ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), menuOpen: false, wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#e0605a"],
+            ["🔥", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
+            ["⚔️", "ประลอง PvP", () => G.togglePvp(), "#d9536b"],
+          ]],
+          ["🧍", "ตัวละคร", [
+            ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
+            ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
+            ["💍", "เครื่องประดับ", () => G.openAccessories(), "#f5a0d0"],
+            ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
+            ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
+          ]],
+          ["🛠️", "ผลิต & อาชีพ", [
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a", "kitchen"],
             ["🎣", "กระเป๋าตกปลา", () => G.toggleFishBag(), "#4a90c0"],
-            ["📖", "วิชาสกิล (ปลดเป็นขั้น)", () => G.toggleSkillBoard(), "#7fd0f5"],
+            ["🔨", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
             ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0", "exped"],
-            ["👹", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
-            ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a", "rep"],
+          ]],
+          ["🏪", "ร้านค้า & สุ่ม", [
+            ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
+            ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
+            ["🏛️", "ตลาดทองคำ", () => G.openGoldMarket(), "#f5c542"],
+            ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
             ["🎡", "กงล้อ & ปฏิทิน", () => G.toggleWheel(), "#f07aa0", "wheel"],
-            ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss(); }, "#e0708a"],
-            ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#c0392b"],
-            ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
+          ]],
+          ["📜", "ภารกิจ & สังคม", [
             ["📜", "เควส & ภารกิจ", () => toggleMenu("questOpen"), "#f2b24d", "quest"],
-            ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
-            ["⚔️", "ประลอง PvP", () => G.togglePvp(), "#d9536b"],
+            ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
             ["👥", "เพื่อน", () => G.toggleSocial(), "#5fb0f0"],
-            ["💬", "แชทโลก", () => { setUi((u) => ({ ...u, menuOpen: false, chatOpen: true })); G.chatStart && G.chatStart(); G.pollFriendsOnline && G.pollFriendsOnline(); }, "#5a8ae0"],
-            ].map((it) => (
-              <button key={it[1]} title={it[1] + ((it[4] && TODO[it[4]] > 0) ? ` · มี ${TODO[it[4]]} อย่างรอรับ` : "")} onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{ position: "relative", width: 54, height: 54, borderRadius: "50%", cursor: "pointer", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font, color: "#fff", background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.24), rgba(255,255,255,0.08))", border: "2px solid " + it[3], boxShadow: (it[4] && TODO[it[4]] > 0) ? "0 4px 16px " + it[3] + "aa, 0 0 0 2px rgba(255,59,92,0.45), inset 0 1px 2px rgba(255,255,255,0.4)" : "0 4px 12px " + it[3] + "66, inset 0 1px 2px rgba(255,255,255,0.4)", transition: "transform 0.1s" }}>{it[0]}{it[4] ? todoDot(TODO[it[4]]) : null}</button>
+            ["💬", "แชทโลก", () => { setUi((u) => ({ ...u, menuOpen: false, chatOpen: true })); G.chatStart && G.chatStart(); }, "#8fd0ff"],
+            ["🤝", "ชื่อเสียงกับชาวเมือง", () => G.toggleRep(), "#c08a4a", "rep"],
+          ]],
+          ["⚙️", "อื่น ๆ", [
+            ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
+            ["💾", "ช่องเซฟทั้งหมด", () => { if (G.saveGame) G.saveGame(); if (G._cloudPush) G._cloudPush(true); setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots, menuOpen: false })); }, "#a0a8c0"],
+          ]],
+        ];
+        const BSZ = _shortHud ? 40 : 46;
+        return (
+        <div onClick={() => setUi((u) => ({ ...u, menuOpen: false }))} style={{ position: "absolute", inset: 0, background: "transparent", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", zIndex: 66 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            margin: "56px 12px 0 0", padding: "11px 12px 12px", borderRadius: 20,
+            width: "min(92vw, 330px)", maxHeight: "82vh", overflowY: "auto",
+            background: "rgba(26,20,38,0.42)", backdropFilter: "blur(11px)", WebkitBackdropFilter: "blur(11px)",
+            border: "1px solid rgba(255,255,255,0.24)", boxShadow: "0 12px 34px rgba(0,0,0,0.42), inset 0 1px 3px rgba(255,255,255,0.14)",
+            fontFamily: font,
+          }}>
+            {/* ⚡ กลุ่มสกิลรวมอยู่ปุ่มเดียว — กดแล้วเข้าไปสลับแท็บข้างในได้ */}
+            <button onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); G.skillTab && G.skillTab("skillPanel"); }} style={{
+              display: "flex", alignItems: "center", gap: 9, width: "100%", marginBottom: 10, padding: "9px 11px",
+              borderRadius: 14, border: "1px solid rgba(160,130,240,0.45)", cursor: "pointer", fontFamily: font, textAlign: "left",
+              background: "linear-gradient(135deg,rgba(138,106,208,0.42),rgba(106,74,176,0.30))",
+              boxShadow: "0 3px 12px rgba(110,80,190,0.35)",
+            }}>
+              <span style={{ fontSize: 23 }}>⚡</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: "#fff" }}>สกิล & พลัง</span>
+                <span style={{ display: "block", fontSize: 8.5, color: "#d8cbf5" }}>สถานะ · วิชาสกิล · ต้นไม้ทักษะ · หมู่ดาว · มาสเตอรี่ · วิชาตัวเบา</span>
+              </span>
+              {((ui.sp || 0) + (ui.statPts || 0)) > 0 && (
+                <span style={{ flexShrink: 0, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", padding: "0 5px", textAlign: "center" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>
+              )}
+            </button>
+            {CATS.map((cat) => (
+              <div key={cat[1]} style={{ marginBottom: 9 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: "#cbbde8", letterSpacing: 0.3, padding: "0 2px 5px" }}>{cat[0]} {cat[1]}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {cat[2].map((it) => (
+                    <button key={cat[1] + it[1]} title={it[1] + ((it[4] && TODO[it[4]] > 0) ? ` · มี ${TODO[it[4]]} อย่างรอรับ` : "")}
+                      onClick={() => { setUi((u) => ({ ...u, menuOpen: false })); it[2](); }} style={{
+                        position: "relative", width: BSZ, height: BSZ, borderRadius: 14, cursor: "pointer",
+                        fontSize: BSZ * 0.48, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                        fontFamily: font, color: "#fff", padding: 0,
+                        background: "radial-gradient(circle at 50% 32%, rgba(255,255,255,0.22), rgba(255,255,255,0.06))",
+                        border: "1.5px solid " + it[3],
+                        boxShadow: (it[4] && TODO[it[4]] > 0) ? "0 3px 12px " + it[3] + "aa, 0 0 0 2px rgba(255,59,92,0.45)" : "0 2px 8px rgba(0,0,0,0.28)",
+                      }}>
+                      {it[0]}
+                      {it[4] && TODO[it[4]] > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 999, background: "#ff3b5c", color: "#fff", fontSize: 9.5, fontWeight: 800, lineHeight: "16px", padding: "0 4px" }}>{TODO[it[4]]}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* 🏛️ Gold Market — currency exchange + rotating premium gold shop */}
       {ui.goldMarketOpen && (
@@ -50025,6 +50170,7 @@ export default function CherryAdventure() {
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("skillPanel")}
+              {skillTabs("skillPanel")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
                 💪 ค่าสถานะ · ฉายา · สายอาชีพ
               </div>
@@ -50318,18 +50464,7 @@ export default function CherryAdventure() {
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("questOpen")}
-              <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-                <button onClick={() => setUi((u) => ({ ...u, achTab: false }))} style={{
-                  flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
-                  fontSize: 12, fontWeight: 800, color: !ui.achTab ? "#fff" : "#5a7a4a",
-                  background: !ui.achTab ? "#f5a623" : "#fdf0d8",
-                }}>📜 ภารกิจ</button>
-                <button onClick={() => setUi((u) => ({ ...u, achTab: true, achUnlocked: { ...G.achUnlocked } }))} style={{
-                  flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
-                  fontSize: 12, fontWeight: 800, color: ui.achTab ? "#fff" : "#5a7a4a",
-                  background: ui.achTab ? "#f5a623" : "#fdf0d8",
-                }}>🏅 ความสำเร็จ</button>
-              </div>
+              {questTabs(ui.achTab ? "ach" : "quest")}
               {ui.achTab ? (
                 <div>
                   {(() => {
@@ -50827,6 +50962,7 @@ export default function CherryAdventure() {
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("treeOpen")}
+              {skillTabs("treeOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#4a9a5a", marginBottom: 2 }}>🌳 สกิลต้นไม้ (พาสซีฟ)</div>
               <div style={{ fontSize: 11, color: "#7a8a6a", marginBottom: 8 }}>มีแต้มสกิล ⚡ <b style={{ color: "#4a9a5a" }}>{ui.sp || 0}</b> · ปลดล็อกโหนดเพื่อเพิ่มค่าถาวร</div>
               {(() => {
@@ -50885,6 +51021,7 @@ export default function CherryAdventure() {
               background: "#fbf9ff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("constOpen")}
+              {skillTabs("constOpen")}
               {(() => {
                 const cls = (G && G.cls) || ui.cls;
                 const board = CONSTELLATION[cls];
@@ -50937,6 +51074,7 @@ export default function CherryAdventure() {
               background: "#fdfaf3", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("masteryOpen")}
+              {skillTabs("masteryOpen")}
               {(() => {
                 const mi = WP_MASTERY[(G && G.cls) || ui.cls];
                 if (!mi) return <div style={{ fontSize: 12, color: "#8a7a5a" }}>เลือกอาชีพก่อนจึงจะมีอาวุธประจำตัว</div>;
