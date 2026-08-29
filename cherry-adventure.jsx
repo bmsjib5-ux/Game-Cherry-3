@@ -16963,6 +16963,7 @@ export default function CherryAdventure() {
       const k = Math.min(w, h) / 2 / VIEW;            // โลก → พิกเซล
       const cx = w / 2, cy = h / 2;
       const PX = (x) => cx + x * k, PZ = (z) => cy + z * k;   // เหนืออยู่ด้านบนเสมอ (-Z)
+      el.__mapT = { cx, cy, k, r: S.r };                      // 🗺️👆 เก็บไว้แปลงกลับตอนคลิกบนแผนที่
 
       c.save();
       c.beginPath();
@@ -17090,7 +17091,8 @@ export default function CherryAdventure() {
       const myLv = (G.player && G.player.level) || 1;
       const chain = WORLD_CHAIN.map((id, i) => {
         const B = biomeById(id) || {};
-        return { id, i, name: B.name || id, emoji: B.emoji || "🗺️", lvMin: B.lvMin || 1, lvMax: B.lvMax || 1,
+        return { id, i, idx: BIOMES.findIndex((b) => b.id === id), name: B.name || id, emoji: B.emoji || "🗺️",
+                 lvMin: B.lvMin || 1, lvMax: B.lvMax || 1,
                  ground: _hexCss(B.ground != null ? B.ground : 0x888888),
                  here: id === S.biome.id, ok: myLv >= (B.lvMin || 1),
                  route: (ROUTE_OF[id] && ROUTE_OF[id].route) ? ROUTE_OF[id].route.name : "" };
@@ -17098,12 +17100,57 @@ export default function CherryAdventure() {
       return {
         biome: S.biome, indoor: S.indoor, total: S.mobs.length, list,
         me: { x: Math.round(S.me.x), z: Math.round(S.me.z) },
-        exits: S.exits, spot: S.spot, chain, myLv,
+        exits: S.exits, spot: S.spot, chain, myLv, scrolls: G.warpScrolls || 0,
         route: info && info.route ? { name: info.route.name, emoji: info.route.emoji, step: info.step, total: info.total } : null,
       };
     };
 
     G.mapRefresh = () => { const d = G.mapDetail(); setUi((u) => ({ ...u, mapInfo: d })); return d; };
+    // 📜🗺️ แตะเมืองบนแผนที่แล้ววาร์ปไป — ต้องมีใบวาร์ปอย่างน้อย 1 ใบ
+    //    ขั้นแรกแค่ถามยืนยัน (ใบวาร์ปเป็นของใช้แล้วหมด กันกดพลาดเสียฟรี)
+    G.mapWarpAsk = (idx) => {
+      const B = BIOMES[idx];
+      if (!B) return false;
+      if (idx === (G.curBiome || 0)) { toast(`${B.emoji} อยู่ที่${B.name}อยู่แล้ว`); return false; }
+      if (G.mode !== "explore") { toast("📜 ใช้ใบวาร์ปได้เฉพาะตอนเดินสำรวจ"); return false; }
+      if (G.inHomeZone || G.inRanchZone) { toast("📜 ออกจากพื้นที่ส่วนตัวก่อนนะ"); return false; }
+      if ((G.warpScrolls || 0) <= 0) { toast("📜 ไม่มีใบวาร์ป — ซื้อได้ที่ร้านค้า 🏪 หรือเดินไปตามถนนก็ได้"); return false; }
+      setUi((u) => ({ ...u, mapWarp: { idx, id: B.id, name: B.name, emoji: B.emoji, lvMin: B.lvMin, lvMax: B.lvMax,
+                                       left: G.warpScrolls || 0, low: ((G.player && G.player.level) || 1) < B.lvMin } }));
+      return true;
+    };
+    G.mapWarpGo = (idx) => {
+      const B = BIOMES[idx];
+      setUi((u) => ({ ...u, mapWarp: null }));
+      if (!B) return false;
+      if ((G.warpScrolls || 0) <= 0) { toast("📜 ไม่มีใบวาร์ปแล้ว"); return false; }
+      const lv = (G.player && G.player.level) || 1;
+      G._warpByScroll = true;        // ให้ doWarp หักใบวาร์ปให้ 1 ใบ
+      G.toggleMap(false);            // ปิดแผนที่ก่อน จะได้เห็นตอนวาร์ปถึง
+      G.doWarp(idx);
+      if (lv < B.lvMin) toast(`⚠️ ${B.emoji} ${B.name} แนะนำเลเวล ${B.lvMin}+ — ตอนนี้ Lv.${lv} ระวังตัวด้วยนะ`);
+      return true;
+    };
+    G.mapWarpCancel = () => setUi((u) => ({ ...u, mapWarp: null }));
+    // 🗺️👆 คลิกจุดบนแผนที่ขยาย = ปักหมุดแล้วเดินไปที่นั่น (แปลงพิกัดจอ → พิกัดโลก)
+    G.mapClickTo = (px, py) => {
+      const el = G._mapCv && G._mapCv.big;
+      const T = el && el.__mapT;
+      if (!T) return false;
+      if (G.mode !== "explore") { toast("สั่งเดินได้ตอนสำรวจเท่านั้น"); return false; }
+      if (G.inTownZone || G.inHomeZone || G.inRanchZone) { toast("อยู่ในเขตปลอดภัย — ออกไปข้างนอกก่อนนะ"); return false; }
+      let wx = (px - T.cx) / T.k, wz = (py - T.cy) / T.k;
+      const rr = Math.hypot(wx, wz), lim = T.r - 0.8;
+      if (rr > lim) { wx *= lim / rr; wz *= lim / rr; }        // คลิกนอกเขต = หนีบเข้ามาที่ขอบแมพ
+      G.moveTarget = new THREE.Vector3(wx, 0, wz);
+      G.huntTarget = null; G._queuedAct = null;
+      G.aimAt(null);
+      G.markMoveTo(wx, wz);
+      G.manualOrder(9);                                        // 🤖 คำสั่งมือมาก่อน — auto รอจนเดินถึง
+      G.toggleMap(false);                                      // ปิดแผนที่ให้เห็นตัวละครเดิน
+      toast(`🚩 เดินไปจุดที่ปักไว้ (${Math.round(wx)}, ${Math.round(wz)})`);
+      return true;
+    };
     G.toggleMap = (on) => {
       const open = on == null ? !G._mapOpen : !!on;
       G._mapOpen = open;
@@ -25359,6 +25406,8 @@ export default function CherryAdventure() {
         }
       }
       // ⚔️ คำสั่งที่ค้างไว้
+      G.tickOrder(dt);
+      if (G.tickDust) G.tickDust(dt);
       const q = G._queuedAct;
       if (!q) return;
       q.t += dt;
@@ -25376,6 +25425,8 @@ export default function CherryAdventure() {
       if (G.mode !== "explore" || G._skCast) return false;
       if ((G._jumpT || 0) > 0 || (G._dashT || 0) > 0) return false;   // ยังลอยอยู่/พุ่งอยู่ = กระโดดซ้อนไม่ได้
       G._jumpT = 0.0001; G._jumpDur = 0.62; G._jumpH = 1.55;
+      if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.5);   // 💨 ฝุ่นตอนถีบพื้นขึ้น
+      G._jumpLanded = false;
       if (G.sfx && G.sfx.button) G.sfx.button();
       return true;
     };
@@ -25406,12 +25457,91 @@ export default function CherryAdventure() {
       if ((G._jumpT || 0) > 0) {
         G._jumpT += dt;
         const k = Math.min(1, G._jumpT / G._jumpDur);
-        if (G._jumpT >= G._jumpDur) { G._jumpT = 0; return 0; }
+        if (G._jumpT >= G._jumpDur) {
+          G._jumpT = 0;
+          if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.7);   // 💨 ฝุ่นตอนลงพื้น
+          return 0;
+        }
         return Math.sin(k * Math.PI) * G._jumpH;        // โค้งขึ้น-ลงนุ่ม ๆ
       }
       return 0;
     };
     G.hopAir = () => ((G._jumpT || 0) > 0 ? Math.sin(Math.min(1, G._jumpT / G._jumpDur) * Math.PI) : 0);
+    // 💨 ฝุ่นฟุ้งใต้เท้าตอนถีบพื้น — แผ่นกลมแบน ๆ บานออกแล้วจางหาย (ใช้พูลซ้ำ ไม่สร้างใหม่ทุกก้าว)
+    const DUST_N = 10;
+    const dustPool = [];
+    const ensureDust = () => {
+      if (dustPool.length) return;
+      for (let i = 0; i < DUST_N; i++) {
+        const m = new THREE.Mesh(
+          new THREE.CircleGeometry(0.3, 12),
+          new THREE.MeshBasicMaterial({ color: 0xd8cbb0, transparent: true, opacity: 0, depthWrite: false })
+        );
+        m.rotation.x = -Math.PI / 2;
+        m.visible = false;
+        m.userData = { t: 99, dur: 0.5 };
+        scene.add(m);
+        dustPool.push(m);
+      }
+    };
+    G.puffDust = (x, y, z, scale) => {
+      ensureDust();
+      const m = dustPool.find((d) => !d.visible) || dustPool[0];
+      m.position.set(x + (Math.random() - 0.5) * 0.18, y + 0.04, z + (Math.random() - 0.5) * 0.18);
+      m.userData.t = 0;
+      m.userData.dur = 0.42 + Math.random() * 0.16;
+      m.userData.s0 = 0.32 * (scale || 1);
+      m.userData.s1 = m.userData.s0 * 2.8;
+      m.scale.setScalar(m.userData.s0);
+      m.material.opacity = 0.5;
+      // ฝุ่นสีตามพื้นของแดนนั้น จะได้กลืนกับภูมิประเทศ
+      const B = BIOMES[G.curBiome || 0];
+      if (B) m.material.color.setHex(B.ground).lerp(new THREE.Color(0xffffff), 0.35);
+      m.visible = true;
+    };
+    G.tickDust = (dt) => {
+      for (let i = 0; i < dustPool.length; i++) {
+        const m = dustPool[i];
+        if (!m.visible) continue;
+        m.userData.t += dt;
+        const k = m.userData.t / m.userData.dur;
+        if (k >= 1) { m.visible = false; continue; }
+        m.scale.setScalar(m.userData.s0 + (m.userData.s1 - m.userData.s0) * k);
+        m.material.opacity = 0.5 * (1 - k) * (1 - k);
+        m.position.y += dt * 0.35;
+      }
+    };
+    // 🤖✋ สั่งเอง = auto หยุดรอจนทำคำสั่งนั้นเสร็จก่อน แล้วค่อยกลับไปเล่นเองต่อ
+    G.manualOrder = (sec) => { G._manualT = Math.max(G._manualT || 0, sec == null ? 3.5 : sec); };
+    G.manualHold = () => (G._manualT || 0) > 0;
+    // 🎯 จองท่าถัดไป — กดตอนกำลังออกท่าอยู่ ท่าที่กดจะไม่หาย แต่ต่อคิวยิงทันทีที่ท่าปัจจุบันจบ
+    const actBusy = () => !!(G.banim || G._skCast || (G._worldSwingT || 0) > 0.02);
+    const syncBuf = () => setUi((u) => ({ ...u, bufAct: G._bufAct ? (G._bufAct.kind === "skill" ? G._bufAct.id : "__atk") : null }));
+    G.orderAct = (kind, id) => {
+      if (G.mode !== "explore") return "off";
+      G.manualOrder();                                  // สั่งเอง → auto รอก่อน
+      if (actBusy()) { G._bufAct = { kind, id, t: 0 }; syncBuf(); return "buffered"; }   // 🎯 จองไว้
+      if (G.seekAndAct && G.seekAndAct(kind, id)) return "walking";                       // ไกลไป → เดินเข้าไปก่อน
+      if (kind === "skill") G.worldSkill(id); else { G._lastSkill = null; G.worldAttack(); }
+      return "acted";
+    };
+    // เดินคิวท่าที่จองไว้ + นับถอยหลังช่วงที่ auto ต้องรอ (เรียกทุกเฟรมจาก tickSeek)
+    G.tickOrder = (dt) => {
+      if ((G._manualT || 0) > 0) {
+        G._manualT -= dt;
+        // ทำคำสั่งเสร็จก่อนเวลา (ถึงจุดหมาย/ยิงท่าที่ค้างไปแล้ว) ก็ปล่อยให้ auto ทำงานต่อได้เลย
+        if (!G.moveTarget && !G._queuedAct && !G._bufAct && !actBusy()) G._manualT = 0;
+      }
+      const bf = G._bufAct;
+      if (!bf) return;
+      bf.t += dt;
+      if (bf.t > 2.5 || G.mode !== "explore") { G._bufAct = null; syncBuf(); return; }   // จองค้างนานเกินไปก็ทิ้ง
+      if (actBusy()) return;
+      G._bufAct = null; syncBuf();
+      G.manualOrder();
+      if (G.seekAndAct && G.seekAndAct(bf.kind, bf.id)) return;
+      if (bf.kind === "skill") G.worldSkill(bf.id); else { G._lastSkill = null; G.worldAttack(); }
+    };
     // ================= 🖱️ END MOUSE MARKERS =================
     const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 9.0 : 3.6;
     // ⚔️ จังหวะสวิงแบบอนิเมะ: นักรบ/ซามูไรได้ท่า 3 จังหวะ (ง้าง→ฟันเร็ว→ค้างโพส) เลยใช้เวลานานขึ้น
@@ -31351,6 +31481,7 @@ export default function CherryAdventure() {
           G.aimAt(target);                              // 🗡️ ปักดาบที่หัวตัวนี้ ให้รู้ว่ากำลังตีตัวไหน
           if (G._moveMark) G._moveMark.g.visible = false;   // เล็งมอนแล้วไม่ต้องมีลูกศรจุดหมาย
           G._queuedAct = { kind: "attack", id: null, t: 0 };  // เดินเข้าไปแล้วฟันให้เลย ไม่ต้องกดซ้ำ
+          G.manualOrder(7);                                  // 🤖 auto รอจนตีตัวที่เราเลือกก่อน
           if (G.sfx && G.sfx.button) G.sfx.button();
           return;
         }
@@ -31367,6 +31498,7 @@ export default function CherryAdventure() {
         G.huntTarget = null; G._queuedAct = null;
         G.aimAt(null);                       // คลิกพื้น = เลิกเล็งมอนตัวเดิม
         G.markMoveTo(hit.x, hit.z);          // 🏹 ปักลูกศรตรงจุดที่จะเดินไป
+        G.manualOrder(9);                    // 🤖 auto รอจนเดินถึงจุดที่สั่งก่อน
       }
     };
     const onPinchMove = (e) => {
@@ -31458,10 +31590,8 @@ export default function CherryAdventure() {
       e.preventDefault();
       if (G.mode === "battle") { if (G.act) G.act("skill", sk.id); return; }
       // 🏃⚔️ ตอนสำรวจ: ไม่มีมอนในระยะก็วิ่งเข้าไปหาตัวใกล้สุดแล้วปล่อยสกิลให้เอง
-      if (G.mode === "explore" && G.worldSkill) {
-        if (G.seekAndAct && G.seekAndAct("skill", sk.id)) return;
-        G.worldSkill(sk.id);
-      }
+      //    กดตอนกำลังออกท่าอยู่ = จองคิวไว้ยิงต่อทันทีที่ท่าปัจจุบันจบ
+      if (G.mode === "explore" && G.orderAct) G.orderAct("skill", sk.id);
     };
     const onKeyUp = (e) => (G.keys[e.key.toLowerCase()] = false);
     window.addEventListener("keydown", onKeyDown);
@@ -35141,10 +35271,12 @@ export default function CherryAdventure() {
         }
 
         // 🤖 auto-hunt: walk to targets on her own (events first, then monsters)
+        // ✋ นับเฉพาะปุ่มที่ "เดิน" จริง ๆ — W A S D ยกไปเป็นคีย์สกิลแล้ว ไม่ใช่ปุ่มเดิน
+        // 🤖 และถ้าเพิ่งสั่งเอง (คลิกเดิน/คลิกตี/กดสกิล) ให้ auto รอจนคำสั่งนั้นเสร็จก่อน
         const manualInput =
           Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12 ||
-          G.keys["arrowup"] || G.keys["w"] || G.keys["arrowdown"] || G.keys["s"] ||
-          G.keys["arrowleft"] || G.keys["a"] || G.keys["arrowright"] || G.keys["d"];
+          G.keys["arrowup"] || G.keys["arrowdown"] || G.keys["arrowleft"] || G.keys["arrowright"] ||
+          (G._manualT || 0) > 0;
         if (G.auto && !manualInput && !G.inRanchZone && !G.inTownZone && !G.inHomeZone) { // 🏰🏠 ในเมือง/ในบ้าน = ห้ามออกล่ามอนสเตอร์
           // top up HP/MP before charging in (⚙️ togglable in auto settings)
           if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion(G.hpPotUse);
@@ -35346,23 +35478,45 @@ export default function CherryAdventure() {
         char.rotation.y += turn;
         char.rotation.z += (-turn * 2.4 * moveAmt - char.rotation.z) * Math.min(1, dt * 7);
 
-        // stride synced to actual ground speed → feet never slide
-        G.walkPhase = (G.walkPhase || 0) + spd * dt * 3.1;
-        const swing = Math.sin(G.walkPhase);
-        const swing2 = Math.sin(G.walkPhase + Math.PI);
-        // 🦘 ยิ่งวิ่งเร็ว ยิ่งเปลี่ยนจากก้าวเดินเป็นท่ากระโดดเหาะสลับขา (ขากางกว้าง เข่าพับสูง ตัวลอยเป็นจังหวะ)
+        // 🦘 ยิ่งวิ่งเร็ว ยิ่งเปลี่ยนจากก้าวเดินเป็น "ท่าก้าวกระโดด" — จังหวะช้าลง ก้าวยาวขึ้น
         const bound = Math.max(0, Math.min(1, (moveAmt - 0.45) / 0.45));
         G._boundK = bound;
-        const strideK = 0.8 + bound * 0.75;                       // ก้าวยาวขึ้นตอนเหาะ
-        legL.rotation.x = swing * strideK * moveAmt;
-        legR.rotation.x = swing2 * strideK * moveAmt;
+        // stride synced to actual ground speed → feet never slide
+        // ตอนก้าวกระโดดลดความถี่ลงเกือบครึ่ง — ไม่สับขาถี่ ๆ แต่เป็นก้าวยาว ๆ ทีละก้าว
+        G.walkPhase = (G.walkPhase || 0) + spd * dt * (3.1 - bound * 1.5);
+        const swing = Math.sin(G.walkPhase);
+        const swing2 = Math.sin(G.walkPhase + Math.PI);
+        // 🦵 ท่าก้าวกระโดด: ข้างที่ยกขึ้นหน้า = งอเข่าเก็บสูง · อีกข้าง = เหยียดตรงไปข้างหลัง
+        const legPose = (sw, leg) => {
+          const lift = Math.max(0, sw);          // ยกขึ้นมาข้างหน้า
+          const ext = Math.max(0, -sw);          // เหยียดไปข้างหลัง
+          const walkX = sw * 0.8 * moveAmt;                              // ท่าเดินปกติ
+          const boundX = (lift * 1.05 - ext * 0.95) * moveAmt;           // ท่าก้าวกระโดด
+          leg.rotation.x = walkX * (1 - bound) + boundX * bound;
+          if (leg.userData.knee) {
+            const walkK = Math.max(0, -sw) * 1.1 * moveAmt;              // เดิน: เข่างอตอนขาไปหลัง
+            const boundK = (1.75 * lift + 0.06 * ext) * moveAmt;         // กระโดด: งอเฉพาะข้างที่ยก อีกข้างเหยียดตรง
+            leg.userData.knee.rotation.x = walkK * (1 - bound) + boundK * bound;
+          }
+        };
+        legPose(swing, legL);
+        legPose(swing2, legR);
+        // 💨 ฝุ่นฟุ้งตอนถีบพื้นออกตัวแต่ละก้าว (เฉพาะตอนก้าวกระโดด และต้องอยู่ติดพื้น)
+        if (bound > 0.25 && G.puffDust) {
+          const half = Math.floor(G.walkPhase / Math.PI);
+          if (half !== G._lastStepHalf) {
+            G._lastStepHalf = half;
+            if ((G._jumpT || 0) <= 0 && !G.mountId) {
+              const back = 0.34;
+              G.puffDust(char.position.x - Math.sin(char.rotation.y) * back, 0, char.position.z - Math.cos(char.rotation.y) * back, 0.85 + bound * 0.5);
+            }
+          }
+        }
         legL.rotation.z += (0 - legL.rotation.z) * Math.min(1, dt * 10);   // 🦵 คลายแกนบิดข้างเสมอ (กันขาค้างข้ามโหมดจากท่าเตะ — ขี่สัตว์/ท่าสกิลเขียนทับทีหลังได้ตามปกติ)
         legR.rotation.z += (0 - legR.rotation.z) * Math.min(1, dt * 10);
         armR.rotation.x = swing * 0.55 * moveAmt;  // 🔮 นักเวทแกว่งแขนตามจังหวะเดิน (ไม่ยกค้าง)
         armL.rotation.x = swing2 * 0.55 * moveAmt;
         // 🦵💪 bend knees & elbows through the stride so limbs don't stay stiff
-        if (legL.userData.knee) legL.userData.knee.rotation.x = Math.max(0, -swing) * (1.1 + bound * 1.15) * moveAmt;   // 🦘 เหาะ = เข่าพับเก็บสูงกว่าเดิน
-        if (legR.userData.knee) legR.userData.knee.rotation.x = Math.max(0, -swing2) * (1.1 + bound * 1.15) * moveAmt;
         if (G.cls !== "archer") {
           if (armR.userData.elbow) armR.userData.elbow.rotation.x = -(0.25 + Math.max(0, swing) * 0.5) * moveAmt;   // slight elbow bend on the arm swing
           if (armL.userData.elbow) armL.userData.elbow.rotation.x = -(0.25 + Math.max(0, swing2) * 0.5) * moveAmt;
@@ -47075,8 +47229,17 @@ export default function CherryAdventure() {
                 {/* ── แผนที่ ── */}
                 <div style={{ flexShrink: 0, width: two ? cvSz : "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                   <div style={{ width: cvSz, height: cvSz, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 4px 18px rgba(0,0,0,0.45)", position: "relative" }}>
-                    <canvas ref={(el) => G.regMapCv && G.regMapCv("big", el)} style={{ width: "100%", height: "100%", display: "block" }} />
+                    <canvas
+                      ref={(el) => G.regMapCv && G.regMapCv("big", el)}
+                      title="คลิกจุดบนแผนที่เพื่อสั่งเดินไปที่นั่น"
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        if (G.mapClickTo) G.mapClickTo(e.clientX - r.left, e.clientY - r.top);
+                      }}
+                      style={{ width: "100%", height: "100%", display: "block", cursor: (MI && !MI.indoor) ? "crosshair" : "default" }}
+                    />
                   </div>
+                  <div style={{ fontSize: 9.5, color: "#9a8ab8", textAlign: "center" }}>👆 คลิกจุดบนแผนที่ = ปักหมุดแล้วเดินไปที่นั่น</div>
                   {/* คำอธิบายสัญลักษณ์ */}
                   <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3px 9px", fontSize: 9.5, color: "#c8bcdd", lineHeight: 1.5 }}>
                     <span>🔺 ตัวเรา</span><span>🔴 มอนสเตอร์</span><span style={{ color: "#ffd75a" }}>🟡 ตัวหายาก</span>
@@ -47145,20 +47308,34 @@ export default function CherryAdventure() {
                   {/* แผนผังโลกทั้งหมด */}
                   {MI && (
                     <div>
-                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#ffd76a", marginBottom: 4 }}>🌍 เส้นทางโลก ({MI.chain.length} แดน)</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 800, color: "#ffd76a" }}>🌍 เส้นทางโลก ({MI.chain.length} แดน)</span>
+                        <span style={{ fontSize: 9.5, fontWeight: 800, borderRadius: 7, padding: "1px 6px",
+                          color: MI.scrolls > 0 ? "#9ad0ff" : "#e08a8a",
+                          background: MI.scrolls > 0 ? "rgba(60,120,180,0.26)" : "rgba(180,70,70,0.22)" }}>📜 ใบวาร์ป {MI.scrolls}</span>
+                      </div>
+                      <div style={{ fontSize: 9, color: "#9a8ab8", marginBottom: 4 }}>
+                        {MI.scrolls > 0 ? "แตะชื่อแดนเพื่อวาร์ปไปเลย — ใช้ใบวาร์ป 1 ใบต่อครั้ง" : "ไม่มีใบวาร์ป — ซื้อที่ร้านค้า 🏪 หรือเดินไปตามถนนก็ถึงเหมือนกัน"}
+                      </div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                        {MI.chain.map((b) => (
-                          <div key={b.id} title={`${b.name} · Lv.${b.lvMin}-${b.lvMax}${b.route ? " · " + b.route : ""}`} style={{
-                            display: "flex", alignItems: "center", gap: 3, padding: "3px 6px", borderRadius: 8,
-                            border: b.here ? "1.5px solid #ffd76a" : "1px solid rgba(255,255,255,0.12)",
-                            background: b.here ? "rgba(245,200,90,0.22)" : "rgba(255,255,255,0.06)",
-                            opacity: b.ok || b.here ? 1 : 0.5,
-                          }}>
-                            <span style={{ width: 7, height: 7, borderRadius: 2, background: b.ground, flexShrink: 0 }} />
-                            <span style={{ fontSize: 9.5, fontWeight: 700, color: b.here ? "#ffe9a8" : "#d8cfe8" }}>{b.emoji} {b.name}</span>
-                            <span style={{ fontSize: 8, color: b.ok ? "#8fe08a" : "#ff9a6a" }}>{b.here ? "อยู่นี่" : b.ok ? "" : "🔒" + b.lvMin}</span>
-                          </div>
-                        ))}
+                        {MI.chain.map((b) => {
+                          const can = !b.here && MI.scrolls > 0;
+                          return (
+                            <button key={b.id} onClick={() => can && G.mapWarpAsk && G.mapWarpAsk(b.idx)} disabled={!can}
+                              title={b.here ? `${b.name} — อยู่แดนนี้อยู่แล้ว` : MI.scrolls > 0 ? `📜 วาร์ปไป ${b.name} · Lv.${b.lvMin}-${b.lvMax}${b.route ? " · " + b.route : ""}` : `${b.name} · Lv.${b.lvMin}-${b.lvMax} — ต้องมีใบวาร์ปก่อน`}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 3, padding: "3px 6px", borderRadius: 8, fontFamily: font,
+                                border: b.here ? "1.5px solid #ffd76a" : "1px solid rgba(255,255,255,0.12)",
+                                background: b.here ? "rgba(245,200,90,0.22)" : "rgba(255,255,255,0.06)",
+                                opacity: b.here ? 1 : can ? (b.ok ? 1 : 0.72) : 0.42,
+                                cursor: can ? "pointer" : "default",
+                              }}>
+                              <span style={{ width: 7, height: 7, borderRadius: 2, background: b.ground, flexShrink: 0 }} />
+                              <span style={{ fontSize: 9.5, fontWeight: 700, color: b.here ? "#ffe9a8" : "#d8cfe8" }}>{b.emoji} {b.name}</span>
+                              <span style={{ fontSize: 8, color: b.ok ? "#8fe08a" : "#ff9a6a" }}>{b.here ? "อยู่นี่" : b.ok ? (can ? "📜" : "") : "⚠️" + b.lvMin}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -47168,6 +47345,45 @@ export default function CherryAdventure() {
           </div>
         );
       })()}
+
+      {/* 📜 ยืนยันวาร์ปจากแผนที่ — ใบวาร์ปใช้แล้วหมด เลยถามก่อนหักจริง */}
+      {ui.mapWarp && (
+        <div onClick={() => G.mapWarpCancel && G.mapWarpCancel()} style={{
+          position: "absolute", inset: 0, zIndex: 76, display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(12,9,18,0.68)", fontFamily: font,
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: "linear-gradient(160deg,#2f2740,#1f1a2c)", borderRadius: 16, padding: "14px 16px 13px", textAlign: "center",
+            border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 12px 36px rgba(0,0,0,0.55)",
+            width: "min(90vw, 320px)", color: "#eae2f5",
+          }}>
+            <div style={{ fontSize: 30, lineHeight: 1.1 }}>{ui.mapWarp.emoji}</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: "#ffd76a", marginTop: 2 }}>วาร์ปไป {ui.mapWarp.name}?</div>
+            <div style={{ fontSize: 10.5, color: "#a898c8", marginTop: 3 }}>
+              แดนเลเวล {ui.mapWarp.lvMin}-{ui.mapWarp.lvMax}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.24)", borderRadius: 9, padding: "5px 8px", margin: "8px 0 4px" }}>
+              📜 ใช้ใบวาร์ป 1 ใบ · เหลืออยู่ {ui.mapWarp.left} ใบ → {Math.max(0, ui.mapWarp.left - 1)} ใบ
+            </div>
+            {ui.mapWarp.low && (
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#ff9a6a", background: "rgba(180,80,50,0.2)", borderRadius: 9, padding: "5px 8px", marginBottom: 4 }}>
+                ⚠️ เลเวลยังไม่ถึง {ui.mapWarp.lvMin} — มอนที่นั่นแรงมาก ไปได้แต่ระวังตัวด้วยนะ
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button onClick={() => G.mapWarpCancel && G.mapWarpCancel()} style={{
+                flex: 1, padding: "9px 0", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#d8cfe8", background: "rgba(255,255,255,0.12)",
+              }}>ยกเลิก</button>
+              <button onClick={() => G.mapWarpGo && G.mapWarpGo(ui.mapWarp.idx)} style={{
+                flex: 1.3, padding: "9px 0", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
+                background: "linear-gradient(135deg,#7a5cff,#2a86d0)", boxShadow: "0 4px 14px rgba(90,80,220,0.5)",
+              }}>📜 วาร์ปเลย</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🌀 warp map picker */}
       {ui.warpAsk && ui.mode === "explore" && (
@@ -48758,12 +48974,12 @@ export default function CherryAdventure() {
               // ยึดตำแหน่งไว้ทางซ้ายของคอลัมน์ปุ่มขอบขวา (ยาน้ำ/สัตว์ขี่/เควส/สัตว์เลี้ยง) ปุ่มจะได้ไม่ทับกัน
               <div style={{ position: "absolute", right: `calc(${HUD_EDGE + HUD_PAD + 12}px + env(safe-area-inset-right, 0px))`, bottom: _shortHud ? 52 : 76, width: ATK + PADX, height: ATK + PADY, zIndex: 23, pointerEvents: "none", fontFamily: font }}>
                 {/* ⚔️ ปุ่มโจมตี — ศูนย์กลางวง อยู่มุมขวาล่างของกรอบ */}
-                <button onClick={() => { if (!(G.seekAndAct && G.seekAndAct("attack"))) G.worldAttack(); }} title="โจมตี (คลิกมอนหรือกดค้าง — ไม่มีตัวในระยะจะวิ่งเข้าไปหาให้เอง)" style={{
-                  position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%",
+                <button onClick={() => G.orderAct && G.orderAct("attack")} title="โจมตี — ไม่มีตัวในระยะจะวิ่งเข้าไปหาให้เอง · กดตอนกำลังออกท่าอยู่ = จองคิวท่าถัดไป" style={{
+                  position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%", overflow: "visible",
                   border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer", pointerEvents: "auto", padding: 0,
                   background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: ATK * 0.44,
                   boxShadow: "0 5px 16px rgba(217,54,74,0.55)",
-                }}>⚔️</button>
+                }}>⚔️{ui.bufAct === "__atk" && <span style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" }} />}</button>
                 {/* 🦘💨 กระโดด + พุ่ง — คู่เล็กใต้ซ้ายของปุ่มโจมตี */}
                 <div style={{ position: "absolute", right: HOPX, bottom: 0, display: "flex", gap: 6, pointerEvents: "none" }}>
                   {hopBtn("💨", "พุ่ง (Shift)", () => G.doDash && G.doDash())}
@@ -48780,7 +48996,7 @@ export default function CherryAdventure() {
                   const cxp = -Math.cos(ang) * RAD, cyp = -Math.sin(ang) * RAD;   // เทียบจากจุดกึ่งกลางปุ่มโจมตี
                   const key = skillKey(i);
                   return (
-                    <button key={sk.id} onClick={() => { if (!(G.seekAndAct && G.seekAndAct("skill", sk.id))) G.worldSkill(sk.id); }} title={`${sk.name} · 💧${cost}${key ? " · ปุ่ม " + key : ""}`} style={{
+                    <button key={sk.id} onClick={() => G.orderAct && G.orderAct("skill", sk.id)} title={`${sk.name} · 💧${cost}${key ? " · ปุ่ม " + key : ""}`} style={{
                       position: "absolute", right: ATK / 2 + cxp - SKB / 2, bottom: ATK / 2 + cyp - SKB / 2,
                       width: SKB, height: SKB, borderRadius: "50%", border: aoe ? "2px solid #f5a623" : "2px solid rgba(255,255,255,0.4)",
                       cursor: ready ? "pointer" : "not-allowed", pointerEvents: "auto", padding: 0,
@@ -48792,6 +49008,7 @@ export default function CherryAdventure() {
                       <span style={{ position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>{cost}</span>
                       {aoe && <span style={{ position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>หมู่</span>}
                       {key && _wideHud && <span style={{ position: "absolute", top: -6, right: -4, background: "rgba(20,20,30,0.9)", color: "#ffe08a", fontSize: 8, fontWeight: 900, borderRadius: 5, padding: "0 3px" }}>{key}</span>}
+                      {ui.bufAct === sk.id && <span style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" }} />}
                     </button>
                   );
                 })}
