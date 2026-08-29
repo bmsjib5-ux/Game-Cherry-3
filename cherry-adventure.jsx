@@ -1730,6 +1730,27 @@ const fishOdds = (lv, k, spotBonus) => {
   return out;
 };
 
+// ---------- 🛣️ เส้นทางเชื่อมด่าน — ด่านในสายเดียวกันต่อกันเป็นทางยาว เดินตามถนนข้ามได้เลย ----------
+// (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
+const ROUTES = [
+  { id: "r1", name: "เส้นทางต้นทาง",   emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
+  { id: "r2", name: "เส้นทางใต้พิภพ",  emoji: "🕳️", biomes: ["cave", "volcano", "sky"] },
+  { id: "r3", name: "เส้นทางสวรรค์-นรก", emoji: "🔥", biomes: ["hell", "heaven", "moon"] },
+  { id: "r4", name: "เส้นทางชายทะเล",  emoji: "🍬", biomes: ["candy", "beach"] },
+  { id: "r5", name: "เส้นทางไททัน",    emoji: "🗿", biomes: ["titan", "amazon"] },
+];
+const ROUTE_OF = {};
+ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
+// เพื่อนบ้านซ้าย/ขวาในสายเดียวกัน — คืน id ของด่าน (null = สุดสาย)
+const routeNeighbor = (bid, dir) => {
+  const e = ROUTE_OF[bid]; if (!e) return null;
+  const j = e.i + (dir > 0 ? 1 : -1);
+  return (j >= 0 && j < e.route.biomes.length) ? e.route.biomes[j] : null;
+};
+const biomeById = (bid) => BIOMES.find((b) => b.id === bid) || null;
+const ROAD_HALF = 4.2;      // ครึ่งความกว้างถนน — เดินออกได้เฉพาะช่วงนี้
+const ROAD_COL = { pave: 0x9a9488, edge: 0x6f6a60, line: 0xe8e2cc };
+
 // ---------- 🧱 ขอบแมพ — ป่า / แม่น้ำ / กำแพง / รั้ว / เหว แทนเส้นวงกลมบาง ๆ ----------
 // kind: forest=ป่าทึบ · river=แม่น้ำล้อมเกาะ · wall=กำแพงหิน · fence=รั้ว · cliff=หน้าผา
 const BORDER = {
@@ -2344,7 +2365,7 @@ export default function CherryAdventure() {
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
-    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null, skillBoardOpen: false, boardPick: null, boardTick: 0,
+    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null, skillBoardOpen: false, boardPick: null, boardTick: 0, roadNear: null,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
     repOpen: false, rep: [], repShop: [], repTick: 0,
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
@@ -16754,10 +16775,113 @@ export default function CherryAdventure() {
     };
     // มุมที่เว้นไว้ให้ประตูโซนกับแท่นมิติ — แนวกั้นจะไม่ไปบังทางเข้า
     const borderGaps = () => {
-      const gs = [Math.atan2(0, -30), Math.atan2(0, 30)];   // 🌀 แท่นมิติซ้าย/ขวา
+      const gs = [Math.atan2(0, -30), Math.atan2(0, 30)];   // 🌀 แท่นมิติซ้าย/ขวา + 🛣️ ปากทางถนน (ทิศเดียวกัน)
       for (const k of ["town", "home", "ranch"]) { const g = G.GATE_POS[k]; gs.push(Math.atan2(g.z, g.x)); }
       return gs;
     };
+// ================= 🛣️ ถนนเชื่อมด่านในสายเดียวกัน =================
+    G.roadInfo = () => {
+      const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
+      const e = ROUTE_OF[bid];
+      const mk = (dir) => {
+        const nb = routeNeighbor(bid, dir);
+        if (!nb) return null;
+        const B = biomeById(nb);
+        return { dir, id: nb, name: B ? B.name : nb, emoji: B ? B.emoji : "🗺️", lvMin: B ? B.lvMin : 1, idx: BIOMES.findIndex((x) => x.id === nb) };
+      };
+      return { bid, route: e ? e.route : null, step: e ? e.i + 1 : 1, total: e ? e.route.biomes.length : 1,
+               west: mk(-1), east: mk(1) };
+    };
+    const roadClear = () => {
+      if (!G._roadGrp) return;
+      if (G._roadGrp.parent) G._roadGrp.parent.remove(G._roadGrp);
+      if (G._disposeObj3D) G._disposeObj3D(G._roadGrp);
+      G._roadGrp = null;
+    };
+    // 🏗️ ปูถนนจากกลางแมพออกไปทางเพื่อนบ้านทั้งสองฝั่ง + ปักป้ายบอกทางที่ปลาย
+    G.buildRoad = () => {
+      roadClear();
+      const info = G.roadInfo();
+      const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
+      if (indoor || (!info.west && !info.east)) { G._roadEnds = []; return; }
+      const g = new THREE.Group();
+      const paveM = new THREE.MeshLambertMaterial({ color: ROAD_COL.pave });
+      const edgeM = new THREE.MeshLambertMaterial({ color: ROAD_COL.edge, flatShading: true });
+      const lineM = new THREE.MeshLambertMaterial({ color: ROAD_COL.line });
+      const ends = [];
+      [info.west, info.east].forEach((nb) => {
+        if (!nb) return;
+        const sgn = nb.dir;
+        // 🧱 ปูแผ่นถนนไล่ตามความสูงพื้น (แบ่งเป็นช่วง ๆ จะได้เกาะเนิน)
+        const SEG = 26, x0 = sgn * 2.5, x1 = sgn * (FIELD_R + 2.2);
+        for (let i = 0; i < SEG; i++) {
+          const xa = x0 + (x1 - x0) * (i / SEG), xb = x0 + (x1 - x0) * ((i + 1) / SEG);
+          const xm = (xa + xb) / 2, len = Math.abs(xb - xa) + 0.12;
+          const slab = new THREE.Mesh(new THREE.BoxGeometry(len, 0.16, ROAD_HALF * 2), paveM);
+          slab.position.set(xm, terrainAt(xm, 0) + 0.06, 0);
+          g.add(slab);
+          // เส้นกลางถนนขาว ๆ เว้นจังหวะ
+          if (i % 2 === 0) {
+            const ln = new THREE.Mesh(new THREE.BoxGeometry(len * 0.55, 0.04, 0.34), lineM);
+            ln.position.set(xm, terrainAt(xm, 0) + 0.16, 0);
+            g.add(ln);
+          }
+          // ก้อนหินขอบทางสองข้าง
+          if (i % 3 === 0) {
+            for (const zz of [-ROAD_HALF - 0.35, ROAD_HALF + 0.35]) {
+              const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3 + Math.random() * 0.22, 0), edgeM);
+              rk.position.set(xm, terrainAt(xm, zz) + 0.16, zz);
+              rk.rotation.y = Math.random() * 3;
+              g.add(rk);
+            }
+          }
+        }
+        // 🪧 ป้ายบอกทางที่ปลายถนน
+        const px = sgn * (FIELD_R - 3.4), py = terrainAt(px, 0);
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 2.5, 7), new THREE.MeshLambertMaterial({ color: 0x8a6a44 }));
+        post.position.set(px, py + 1.25, ROAD_HALF + 1.0); g.add(post);
+        const board = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 0.16), new THREE.MeshLambertMaterial({ color: 0xd8b478 }));
+        board.position.set(px, py + 2.35, ROAD_HALF + 1.0);
+        board.rotation.y = sgn > 0 ? -0.35 : 0.35;
+        g.add(board);
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.8, 4), new THREE.MeshLambertMaterial({ color: 0xf5c542 }));
+        arrow.position.set(px + sgn * 1.5, py + 2.35, ROAD_HALF + 1.0);
+        arrow.rotation.z = sgn > 0 ? -Math.PI / 2 : Math.PI / 2;
+        g.add(arrow);
+        // 🏮 เสาไฟสองข้างปลายทาง ให้เห็นชัดว่าเดินออกได้ตรงนี้
+        for (const zz of [-ROAD_HALF - 0.9, ROAD_HALF + 0.9]) {
+          const lp = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 2.9, 6), edgeM);
+          lp.position.set(px, terrainAt(px, zz) + 1.45, zz); g.add(lp);
+          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffe9a0, emissive: 0xffd76a, emissiveIntensity: 1.0 }));
+          bulb.position.set(px, terrainAt(px, zz) + 3.0, zz); g.add(bulb);
+        }
+        ends.push({ dir: sgn, x: sgn * (FIELD_R - 0.9), idx: nb.idx, id: nb.id, name: nb.name, emoji: nb.emoji, lvMin: nb.lvMin });
+      });
+      (G._worldRoot || scene).add(g);
+      G._roadGrp = g;
+      G._roadEnds = ends;
+    };
+    G.roadSnap = () => { if (G._roadGrp) G.buildRoad(); };   // พื้นเปลี่ยนความสูง → ปูใหม่
+    // 🚶 เดินตามถนนข้ามไปด่านถัดไป — โผล่อีกฝั่งของแมพใหม่ เหมือนเดินต่อเนื่อง
+    G.travelRoad = (dir) => {
+      const end = (G._roadEnds || []).find((e) => e.dir === dir);
+      if (!end) return false;
+      if (G.mode !== "explore") { toast("เดินทางได้ตอนสำรวจเท่านั้น"); return false; }
+      const lv = (G.player && G.player.level) || 1;
+      if (lv + 30 < end.lvMin) { toast(`⚠️ ${end.emoji} ${end.name} แนะนำเลเวล ${end.lvMin}+ — ตอนนี้ Lv.${lv} ระวังตัวด้วยนะ`); }
+      switchBiome(end.idx, true);
+      // โผล่ที่ปลายถนนฝั่งตรงข้าม แล้วเดินต่อไปทางเดิม
+      char.position.x = -dir * (FIELD_R - 4.5);
+      char.position.z = 0;
+      char.position.y = terrainAt(char.position.x, char.position.z);
+      G._roadCool = 1.6;   // กันเด้งกลับทันที
+      if (G.sfx && G.sfx.warp) G.sfx.warp();
+      const inf = G.roadInfo();
+      toast(`🛣️ เดินตามถนนถึง ${end.emoji} ${end.name} แล้ว! (${inf.route ? inf.route.emoji + " " + inf.route.name + " " + inf.step + "/" + inf.total : ""})`);
+      return true;
+    };
+    // ================= 🛣️ END ROADS =================
+
     G.buildBorder = (bid) => {
       borderClear();
       const B = BORDER[bid] || BORDER.meadow;
@@ -16879,6 +17003,7 @@ export default function CherryAdventure() {
       G.curBiome = BIOMES.indexOf(b);
       G.rebuildTerrain(b);   // 🏔️ ปั้นภูเขา/ที่ราบสูง/หน้าผาประจำแมพนี้
       if (G.buildBorder) G.buildBorder(b.id);   // 🧱 แนวกั้นขอบแมพประจำแมพนี้ (ป่า/แม่น้ำ/กำแพง/รั้ว/เหว)
+      if (G.buildRoad) { try { G.buildRoad(); } catch (e) {} }   // 🛣️ ถนนเชื่อมด่านในสายเดียวกัน
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
@@ -18407,7 +18532,7 @@ export default function CherryAdventure() {
     };
 
     const mineNodeSnap = (n) => { if (n && n.mesh) n.mesh.position.set(n.x, terrainAt(n.x, n.z), n.z); };
-    G.mineSnapAll = () => { (G.mineNodes || []).forEach(mineNodeSnap); if (G.fishSpotSnap) G.fishSpotSnap(); };
+    G.mineSnapAll = () => { (G.mineNodes || []).forEach(mineNodeSnap); if (G.fishSpotSnap) G.fishSpotSnap(); if (G.roadSnap) G.roadSnap(); };
 
     // 🗺️ วางสายแร่ชุดใหม่เมื่อเปลี่ยนแมพ
     G.mineRespawnAll = (bid) => {
@@ -18545,7 +18670,7 @@ export default function CherryAdventure() {
       const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
       const zoneNow = !!(G.inTownZone || G.inHomeZone || G.inRanchZone);
       const key = bid + "|" + (zoneNow ? "in" : "out");
-      if (G._mineBiome !== key) { G._mineBiome = key; G.mineRespawnAll(bid); if (G.fishRespawn) { try { G.fishRespawn(bid); } catch (e) {} } return; }   // 🎣 จุดตกปลาเปลี่ยนตามด่านด้วย
+      if (G._mineBiome !== key) { G._mineBiome = key; G.mineRespawnAll(bid); if (G.fishRespawn) { try { G.fishRespawn(bid); } catch (e) {} } if (G.buildRoad) { try { G.buildRoad(); } catch (e) {} } return; }   // 🎣 จุดตกปลา · 🛣️ ถนน เปลี่ยนตามด่านด้วย
       let near = null, nd = 2.7;
       for (let i = 0; i < G.mineNodes.length; i++) {
         const n = G.mineNodes[i];
@@ -34341,6 +34466,20 @@ export default function CherryAdventure() {
           const snear = sd < 2.1;
           if (snear !== G.smithNear) { G.smithNear = snear; setUi((u) => ({ ...u, smithNear: snear })); }
         }
+        // 🛣️ เดินสุดปลายถนน = ข้ามไปด่านถัดไปในสายเดียวกัน (มีหน่วงกันเด้งไป-กลับ)
+        if (G._roadCool > 0) G._roadCool -= dt;
+        if (G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && (G._roadEnds || []).length) {
+          const px = char.position.x, pz = char.position.z;
+          const onLane = Math.abs(pz) < ROAD_HALF;
+          const near = onLane ? (G._roadEnds || []).find((e) => e.dir * px > FIELD_R - 5.2) : null;
+          const cross = onLane ? (G._roadEnds || []).find((e) => e.dir * px > FIELD_R + 1.2) : null;
+          if (cross && (G._roadCool || 0) <= 0) { G.travelRoad(cross.dir); }
+          const nid = near ? near.id : null;
+          if (nid !== G._roadNearId) {
+            G._roadNearId = nid;
+            setUi((u) => ({ ...u, roadNear: near ? { dir: near.dir, name: near.name, emoji: near.emoji, lvMin: near.lvMin } : null }));
+          }
+        } else if (G._roadNearId) { G._roadNearId = null; setUi((u) => ({ ...u, roadNear: null })); }
         if (G.mineTick) { try { G.mineTick(dt, t); } catch (e) { G._mineErr = String(e && e.message || e); } }   // ⛏️ สายแร่
         // 🔔 ของที่ "พร้อม" เองตามเวลา (ทีมสำรวจกลับ · ผักโต · ไข่ฟัก · ทองฟาร์ม) — เช็คทุก 4 วิ
         if (!G._todoAt || t - G._todoAt > 4) {
@@ -34691,8 +34830,12 @@ export default function CherryAdventure() {
           if (rr > 31) { char.position.x *= 31 / rr; char.position.z *= 31 / rr; }
           else if (rr < 5.4 && rr > 0.001) { char.position.x *= 5.4 / rr; char.position.z *= 5.4 / rr; }
         } else {
+          // 🛣️ ปากทางถนน = ช่องเดียวที่เดินทะลุขอบแมพออกไปด่านถัดไปได้
+          const onRoad = Math.abs(char.position.z) < ROAD_HALF - 0.4
+            && (G._roadEnds || []).some((e) => e.dir * char.position.x > 0);
           const rr = Math.hypot(char.position.x, char.position.z);
-          if (rr > FIELD_R - 0.3) { char.position.x *= (FIELD_R - 0.3) / rr; char.position.z *= (FIELD_R - 0.3) / rr; }
+          const lim = onRoad ? FIELD_R + 1.6 : FIELD_R - 0.3;
+          if (rr > lim) { char.position.x *= lim / rr; char.position.z *= lim / rr; }
         }
         pushOut(char, 0.45); // can't walk through trees/buildings
 
@@ -44673,7 +44816,7 @@ export default function CherryAdventure() {
     transform: "translateX(-50%)",
   });
   const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-    : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : null;
+    : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
   const isPrompt = (name) => _promptTop === name;
   const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
   const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
@@ -46775,6 +46918,21 @@ export default function CherryAdventure() {
           padding: "4px 14px", fontSize: 11.5, fontWeight: 900, fontFamily: font, color: "#fff", whiteSpace: "nowrap",
           boxShadow: "0 3px 12px rgba(180,40,50,0.5)",
         }}>👹 บอสรัช {ui.rushKills}/{ui.rushTotal} · ⏱️ {rushTimeText(ui.rushMs)}</div>
+      )}
+      {/* 🛣️ ยืนที่ปากทางถนน = เดินต่อไปด่านถัดไปในสายเดียวกัน */}
+      {ui.mode === "explore" && isPrompt("road") && ui.roadNear && !ui.equipScreen && (
+        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
+          <button onClick={() => G.travelRoad(ui.roadNear.dir)} style={{
+            padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.3,
+            background: "linear-gradient(90deg,#6a7a8a,#98a8b8)", whiteSpace: "nowrap",
+            boxShadow: "0 5px 16px rgba(90,110,130,0.5)",
+          }}>
+            🛣️ เดินต่อไป
+            <span style={{ display: "block", fontSize: 11.5 }}>{ui.roadNear.emoji} {ui.roadNear.name}</span>
+            <span style={{ display: "block", fontSize: 9.5, opacity: 0.9 }}>แนะนำ Lv.{ui.roadNear.lvMin}+ · หรือเดินตรงไปเลยก็ได้</span>
+          </button>
+        </div>
       )}
       {/* ⛏️ ยืนใกล้สายแร่ = กดขุดได้ */}
       {ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (
