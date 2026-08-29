@@ -239,6 +239,29 @@ const ELEM_GLOW = {
 // ⚔️🛡️💨 ARCHETYPES — at every tier each armour slot comes in three flavours that spend the
 // SAME stat budget differently, so gearing up becomes a choice instead of an auto-equip.
 const STAT_COST = { atk: 2.2, hp: 0.45, def: 2.0, spd: 0.8, eva: 1.4, crit: 1.1 }; // budget cost per +1
+
+// ---------- ⚖️ สมดุลพลัง — กันไม่ให้ตัวคูณจากหลายระบบทบกันจนพลังบานปลาย ----------
+// โบนัส % รวมกันจากทุกระบบ พอเกินเพดานแล้วผลจะลดลงเรื่อย ๆ (ยังคุ้มที่จะอัพ แต่ไม่ทวีคูณ)
+const BAL_SOFT_AT = 120;      // เริ่มลดผลเมื่อรวมเกิน 120%
+const BAL_SOFT_K = 0.40;      // ส่วนที่เกินได้ผลแค่ 40%
+const softPct = (p) => (p <= BAL_SOFT_AT ? p : BAL_SOFT_AT + (p - BAL_SOFT_AT) * BAL_SOFT_K);
+const CRIT_CAP = 75;          // 🎯 โอกาสคริสูงสุด — ส่วนที่เกินแปลงเป็นดาเมจคริแทน
+const CRIT_OVER_TO_DMG = 0.5; // คริเกินเพดาน 1% → ดาเมจคริ +0.5%
+const CRIT_DMG_BASE = 100;    // คริพื้นฐาน = ×2
+const CRIT_DMG_CAP = 320;     // ดาเมจคริรวมสูงสุด ×4.2
+const FOOD_CAP = { atkPct: 60, defPct: 60, hpPct: 60, crit: 25, luck: 30, expPct: 120, goldPct: 120, dropPct: 60 };
+const ATK_PER_LV = 2.5;
+// 🛡️ ป้องกัน — เดิม "ลบตรง ๆ" ทำให้พอ DEF โตแซง ATK มอน ผู้เล่นกลายเป็นอมตะ (โดน 1 หน่วยต่อครั้ง)
+// เปลี่ยนเป็นลดดาเมจเป็น % แบบผลตอบแทนลดหลั่น — อัพต่อยังคุ้ม แต่ไม่มีวันภูมิคุ้มกัน 100%
+const DEF_K = 5.5;            // ยิ่งมอนเลเวลสูง ยิ่งต้องใช้ DEF มากขึ้นเพื่อลดได้เท่าเดิม
+const DEF_BASE = 45;
+const DEF_MAX_CUT = 0.70;     // ลดดาเมจได้สูงสุด 70%
+const defCut = (def, foeLv) => Math.min(DEF_MAX_CUT, Math.max(0, def) / (Math.max(0, def) + DEF_K * Math.max(1, foeLv) + DEF_BASE));
+const HP_MUL = 1.5;
+const HP_PER_LV = 18;   // ❤️ เลือดฐานต่อเลเวล           // ❤️ ตัวคูณเลือดรวม (เดิม 3 — เลือดบวมจนมอนตีไม่ระคายเลย)
+const MON_ATK_K = 2.2;        // 🐲 ตัวคูณพลังโจมตีมอนโดยรวม       // ⚔️ พลังโจมตีติดตัวต่อเลเวล — ให้เลเวลมีความหมาย ไม่ใช่ได้จากของอย่างเดียว
+const MON_HP_LV = 0.55;       // 🐲 เลือดมอนต่อเลเวล (เดิม 0.9 — บวมจนกลายเป็นถุงทราย)
+const MON_ATK_LV = 0.28;     // 🐲 พลังโจมตีมอนต่อเลเวล (เดิม 0.13)
 const TIER_BUDGET = { rare: 26, epic: 50, secret: 82 };
 const ARCHETYPES = [
   { k: "atk", name: "จู่โจม", emoji: "⚔️", w: { atk: 5, crit: 3, hp: 1, def: 1, spd: 0, eva: 0 } },
@@ -21314,15 +21337,26 @@ export default function CherryAdventure() {
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-    const effAtk = () => Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * (1 + tB("atk") / 100) * xMul("atk") * (1 + (constBonus().atkPct + masteryBonus().atkPct + sB("atkPct")) / 100) * (1 - (G.wbAtkDebuff || 0)) * (1 + (G.foodB ? G.foodB("atkPct") : 0) / 100)) + (G.guild ? G.guildBuff().atk : 0); // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
-    const effDef = () => Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * (1 + tB("def") / 100) * xMul("def") * (1 + (constBonus().defPct + sB("defPct")) / 100) * (1 + (G.foodB ? G.foodB("defPct") : 0) / 100)); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
-    const effMaxHp = () => Math.round(3 * (G.player.maxHp + ((G.player.level || 1) - 1) * 3 + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + (treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct")) / 100) * awakenMul() * pMul("hp") * (1 + tB("hp") / 100) * (1 + (G.foodB ? G.foodB("hpPct") : 0) / 100)) + (G.guild ? G.guildBuff().hp : 0); // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+    const effAtk = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
+    const effDef = () => num(Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * xMul("def") * (1 + softPct(tB("def") + constBonus().defPct + sB("defPct") + (G.foodB ? G.foodB("defPct") : 0)) / 100))); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
+    const effMaxHp = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
-    const effCrit = () => (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0) + (G.foodB ? G.foodB("crit") : 0); // 🎯 crit · 🍳 บัฟอาหาร · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
+    const effCrit = () => Math.min(CRIT_CAP, critRaw());   // 🎯 เกิน 75% แล้วไปเพิ่มดาเมจคริแทน (ไม่ทิ้งเปล่า) // 🎯 crit · 🍳 บัฟอาหาร · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
+    // 🎯 คริดิบ (ก่อนตัดเพดาน) — เอาไว้คำนวณส่วนเกินที่แปลงเป็นดาเมจคริ
+    // 🛟 กันค่าเพี้ยน (เซฟเก่า/ของที่ข้อมูลไม่ครบ) ไม่ให้ NaN ลามไปทั้งสูตร แล้วสถานะกลายเป็นว่าง
+    const num = (v) => (Number.isFinite(v) ? v : 0);
+    const critRaw = () => num( (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0) + (G.foodB ? G.foodB("crit") : 0));
+    // 💥 ดาเมจคริรวม (%) — พื้นฐาน 100 (=×2) + ของที่เพิ่มดาเมจคริ + คริส่วนที่เกินเพดาน
+    const effCritDmg = () => Math.min(CRIT_DMG_CAP, CRIT_DMG_BASE
+      + num(accBonus().critDmg) + num(constBonus().critDmg) + num(masteryBonus().critDmg) + num(tB("critDmg")) + num(sB("critDmg"))
+      + num(curPath() && curPath().critDmg)
+      + Math.max(0, critRaw() - CRIT_CAP) * CRIT_OVER_TO_DMG);
+    G.effCritDmg = effCritDmg;
+    G.critMul = () => 1 + effCritDmg() / 100;
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck") + (G.foodB ? G.foodB("luck") : 0); // 🍀 luck · 🍳 บัฟอาหาร: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     // 🐤✨ SECRET RARE PET — a shy chick that hides in the world; can't be attacked, walk up & catch only
     G.secretPet = null; G.secretTimer = 0;
@@ -23357,7 +23391,9 @@ export default function CherryAdventure() {
       const f = G.foodBuff;
       if (!f || !f.id || f.until <= Date.now()) return 0;
       const b = foodBuffOf(f);
-      return (b && b[k]) || 0;
+      const v = (b && b[k]) || 0;
+      const cap = FOOD_CAP[k];   // ⚖️ จานคุณภาพสูงยังดีกว่าเสมอ แต่ไม่ให้บัฟอาหารกลายเป็นพลังหลัก
+      return cap != null ? Math.min(cap, v) : v;
     };
     G.foodB = foodB;
     G.foodBuffInfo = () => {
@@ -24231,7 +24267,7 @@ export default function CherryAdventure() {
       const boss = !!wild.userData.boss;
       const worldBoss = !!wild.userData.worldBoss; // 👹 บอสโลกตัวใหญ่มาก — ต้องยืนห่าง & ซูมออก
       if (G.applyEvoParts && !wild.userData._evo && !worldBoss) { wild.userData._evo = true; G.applyEvoParts(wild, wild.userData.spId, lv); } // ✨ มอนเลเวลสูงมีร่างวิวัฒน์ (บอสโลกใหญ่อยู่แล้ว ไม่ต้องเพิ่ม)
-      const scale = (1 + (lv - 1) * 0.9) * (boss ? 2.0 : 1.4); // ⚖️ เลือดมอนโตตามเลเวลชันขึ้น → ~3 เท่าเมื่อเลเวลสูง
+      const scale = (1 + (lv - 1) * MON_HP_LV) * (boss ? 2.0 : 1.4); // ⚖️ เลือดมอนโตตามเลเวล (ลดจาก 0.9 → เลิกเป็นถุงทรายตอนเลเวลสูง)
       const lvDef = Math.min(0.1, (lv - 1) * 0.004); // 🛡️ ยิ่งเลเวลสูง ยิ่งตั้งรับเก่ง — ลดดาเมจบ่อยขึ้น
       const lvGap = Math.max(0, lv - (G.player ? G.player.level : 1)); // 📈 มอนสเตอร์เหนือกว่ากี่เลเวล
       const gapMul = lvGap >= 2 ? 1 + (lvGap - 1) * 0.07 : 1; // ⚔️ ต่างกัน 2 lv+ → ตีแรงขึ้น (แต่ยังสู้ได้ถ้าพลังโจมตีสูง)
@@ -24244,7 +24280,7 @@ export default function CherryAdventure() {
         spId: wild.userData.spId,
         hp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
         maxHp: Math.round(sp.hp * scale * (ghost ? 1.8 : 1) * ngMul),
-        atk: Math.round(sp.atk * (1 + (lv - 1) * 0.13) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul), // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
+        atk: Math.round(sp.atk * MON_ATK_K * (1 + (lv - 1) * MON_ATK_LV) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul), // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
         lv, boss, ghost, golden,
         enraged: false, rageAura: null, shiny,
         name: sp.name, biomeBoss: wild.userData.biomeBoss || null,
@@ -24508,7 +24544,7 @@ export default function CherryAdventure() {
       if (r < evaChance + blockChance + guardChance) {
         // 🪨 guard — reduces ~40%, มีโอกาสสวนกลับ
         if (Math.random() < (e.boss ? 0.4 : 0.25)) {
-          const cd = Math.max(1, Math.round(e.atk * 0.5 - effDef() * 0.4));
+          const cd = Math.max(1, Math.round(e.atk * 0.5 * (1 - defCut(effDef(), e.lv || 1) * 0.8)));
           G.player.hp = Math.max(1, G.player.hp - cd);
           burst(char.position, 0xff5a5a, 0.9);
           syncPlayer();
@@ -27204,7 +27240,7 @@ export default function CherryAdventure() {
       }
       worldSwing();
       const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
-      const dmg = (effAtk() + Math.random() * 4) * (crit ? 2 : 1);
+      const dmg = (effAtk() + Math.random() * 4) * (crit ? G.critMul() : 1);
       // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
       if (worldRange() > 4) {
         spawnSkillFx(G.cls === "archer" ? "arrowpierce" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
@@ -27307,7 +27343,7 @@ export default function CherryAdventure() {
         const crit = !!sk.guaranteedCrit || Math.random() < (0.08 + effCrit() / 100 + (sk.critBonus || 0));
         let d = base;
         if (sk.hits && sk.hits > 1 && !aoe) d = base * sk.hits; // multi-hit lands on the one target
-        d *= (crit ? 2 : 1) * (scale || 1);
+        d *= (crit ? G.critMul() : 1) * (scale || 1);
         hurtWild(m, d, { crit, color: col });
       };
       const fk = fk0, arch = arch0;
@@ -32583,6 +32619,9 @@ export default function CherryAdventure() {
       G.heroPick = (savedPick && G.heroUnlocked && G.heroUnlocked(savedPick)) ? savedPick : null;
       if (G.setHero) G.setHero(G.heroHide ? null : G.heroPick);
       G.player = { ...d.player };
+      G.player.sp = G.player.sp || 0; G.player.statPts = G.player.statPts || 0;
+      // ⚖️ สมดุลใหม่ทำให้เพดานเลือด/มานาเปลี่ยน — หนีบค่าที่โหลดมาไม่ให้ล้นเกินสูงสุด
+      try { G.player.hp = Math.max(1, Math.min(G.player.hp || 1, effMaxHp())); G.player.mp = Math.max(0, Math.min(G.player.mp || 0, effMaxMp())); } catch (e) {}
       G.col = d.col || {};
       G.pets = d.pets || {};
       G.inv = (d.inv || []).filter((id) => LOOT.find((x) => x.id === id)); // 🧹 drop stale item ids removed in past updates (they'd crash menus that look them up)
@@ -33764,7 +33803,7 @@ export default function CherryAdventure() {
                   m.userData.wcd = 0.9;
                 } else {
                 const wk = m.userData.weakT > 0 ? 1 - (m.userData.weak || 0) : 1;   // 🛡️ ศัตรูที่โดนลดพลังโจมตี
-                let raw = Math.max(1, Math.round((m.userData.watk || 8) * wk - effDef() * 0.4));
+                let raw = Math.max(1, Math.round((m.userData.watk || 8) * wk * (1 - defCut(effDef(), m.userData.lv || 1) * 0.8)));
                 let ab = 0;                                                         // แต้มที่เกราะกินไว้ (ใช้คิดแรงสะท้อนด้วย)
                 if (G.wShield > 0) {                                                // 🛡️✨ เกราะเทวฑูตกันไว้ก่อน แล้วค่อยเข้าเลือด
                   ab = Math.min(G.wShield, raw);
@@ -43821,7 +43860,8 @@ export default function CherryAdventure() {
                 setUi((u) => ({ ...u, msg: "💨 หลบได้อย่างว่องไว!" }));
               } else {
                 const dmgFloor = Math.max(1, Math.round(G.enemy.lv * 0.4)); // ⚖️ enemies always chip a bit
-                let dmg = Math.max(dmgFloor, Math.round(G.enemy.atk + Math.random() * 3 - effDef() - (G.battleDef || 0) - (G.cls === "warrior" ? 2 : 0))); // 🛡️ def + earth wall + warrior grit
+                // 🛡️ ป้องกันลดดาเมจเป็น % (ไม่ลบตรง ๆ) — กำแพงดิน/สัญชาตญาณนักรบยังลบเพิ่มได้อีกนิด
+                let dmg = Math.max(dmgFloor, Math.round((G.enemy.atk + Math.random() * 3) * (1 - defCut(effDef(), G.enemy.lv)) - (G.battleDef || 0) - (G.cls === "warrior" ? 2 : 0)));
                 // 🛡️ SHIELD BLOCK — warriors with the phoenix shield can block, halving the hit
                 let blocked = false;
                 if (G.cls === "warrior" && G.warriorShield && Math.random() < 0.35) {
@@ -43883,7 +43923,7 @@ export default function CherryAdventure() {
                 }
                 // 🐲 enraged boss extra strike
                 if (G.enemy.enraged && G.player.hp > 0 && Math.random() < 0.4) {
-                  const dmg2 = Math.max(1, Math.round(G.enemy.atk * 0.7 + Math.random() * 2 - effDef() - (G.battleDef || 0)));
+                  const dmg2 = Math.max(1, Math.round((G.enemy.atk * 0.7 + Math.random() * 2) * (1 - defCut(effDef(), G.enemy.lv)) - (G.battleDef || 0)));
                   G.player.hp = Math.max(0, G.player.hp - dmg2);
                   burst(char.position, 0xff2a2a, 1.2);
                   setUi((u) => ({ ...u, msg: `🐲 โจมตีรัวเฟส 2! -${dmg} -${dmg2} HP` }));
