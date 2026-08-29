@@ -1564,6 +1564,26 @@ const FISH_TYPES = [
   { id: "king",    name: "ราชาปลามังกร",      emoji: "👑", rarity: "epic",   gold: 800, exp: 380, w: 1,  lv: 20 },
 ];
 const FISH_BY = {}; FISH_TYPES.forEach((f) => (FISH_BY[f.id] = f));
+// ---------- 🎣 จุดตกปลาประจำแต่ละด่าน — ตำแหน่ง · รูปทรงน้ำ · เลเวลที่ต้องมี · โบนัสปลาหายาก ----------
+// kind: pond=บ่อกลม · river=แม่น้ำไหลยาว · oasis=โอเอซิส · hole=รูน้ำแข็ง · under=ธารใต้ถ้ำ ·
+//       lava=บ่อน้ำพุร้อนข้างลาวา · cloud=สระเมฆลอย · styx=แม่น้ำวิญญาณ · sacred=สระศักดิ์สิทธิ์ ·
+//       crater=หลุมอุกกาบาต · syrup=สระน้ำเชื่อม · shore=ชายทะเล · basin=อ่างหินยักษ์ · fall=น้ำตกกลางป่า
+const FISH_SPOT = {
+  meadow:  { kind: "pond",   x: -10,   z: -10.5, r: 2.4, lv: 1,  bonus: 0,    name: "บ่อน้ำใสท้ายทุ่ง",     water: 0x4a90c0, rim: 0x9a9a92, deco: 0x5a8a45 },
+  desert:  { kind: "oasis",  x: 13.5,  z: -6.0,  r: 2.6, lv: 2,  bonus: 0.15, name: "โอเอซิสกลางทราย",     water: 0x2fb0b8, rim: 0xd8bc82, deco: 0x6a9a4a },
+  snow:    { kind: "hole",   x: -8.0,  z: 12.5,  r: 2.2, lv: 4,  bonus: 0.3,  name: "รูตกปลาน้ำแข็ง",       water: 0x7fc8e8, rim: 0xe8f2fa, deco: 0xbcd8ea },
+  cave:    { kind: "under",  x: 11.0,  z: 9.5,   r: 2.5, lv: 6,  bonus: 0.45, name: "ธารน้ำเรืองแสงใต้ถ้ำ", water: 0x2ad0c0, rim: 0x4a4e58, deco: 0x6ae8d8 },
+  volcano: { kind: "lava",   x: -13.0, z: 5.5,   r: 2.3, lv: 8,  bonus: 0.6,  name: "บ่อน้ำพุร้อนขอบลาวา",  water: 0xff8a3a, rim: 0x4a2418, deco: 0xff5a2a },
+  sky:     { kind: "cloud",  x: 6.5,   z: -13.5, r: 2.7, lv: 10, bonus: 0.75, name: "สระเมฆลอยฟ้า",         water: 0x9fe0ff, rim: 0xffffff, deco: 0xd0f0ff },
+  hell:    { kind: "styx",   x: -12.0, z: -9.0,  r: 2.4, lv: 11, bonus: 0.9,  name: "แม่น้ำวิญญาณเลือด",    water: 0xc02030, rim: 0x2a0a0c, deco: 0xff4a5a },
+  heaven:  { kind: "sacred", x: 12.5,  z: 8.0,   r: 2.8, lv: 12, bonus: 1.05, name: "สระศักดิ์สิทธิ์",       water: 0xfff0a0, rim: 0xf5e2b0, deco: 0xffffff },
+  moon:    { kind: "crater", x: -6.5,  z: -13.0, r: 2.6, lv: 14, bonus: 1.2,  name: "หลุมอุกกาบาตน้ำเงิน",  water: 0x7a6ae0, rim: 0x6a6e7a, deco: 0xc0a8ff },
+  candy:   { kind: "syrup",  x: 10.5,  z: -11.0, r: 2.5, lv: 15, bonus: 1.35, name: "สระน้ำเชื่อมสตรอว์เบอร์รี", water: 0xff8ac0, rim: 0xffd0e8, deco: 0xfff0f8 },
+  beach:   { kind: "shore",  x: -14.0, z: 2.0,   r: 3.0, lv: 16, bonus: 1.5,  name: "ชายทะเลคราม",          water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
+  titan:   { kind: "basin",  x: 8.0,   z: 13.0,  r: 2.6, lv: 18, bonus: 1.7,  name: "อ่างหินไททัน",          water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
+  amazon:  { kind: "fall",   x: -11.5, z: -12.0, r: 2.8, lv: 20, bonus: 2.0,  name: "แอ่งน้ำตกอเมซอน",      water: 0x2aa87a, rim: 0x4a5a38, deco: 0x8ae86a },
+};
+const FISH_SPOT_DEF = FISH_SPOT.meadow;
 const FISH_RAR = {
   junk:   { name: "ขยะ",           emoji: "🗑️", col: "#9a9188" },
   common: { name: "ปลาธรรมดา",     emoji: "🐟", col: "#4a90c0" },
@@ -1582,11 +1602,14 @@ const FISH_RAR_CURVE = (t, kk) => ({
   rare:   FISH_RAR_BASE.rare   * (1 + 2.7 * t) * (1 + kk * 0.24),
   epic:   FISH_RAR_BASE.epic   * (1 + 6.5 * t) * (1 + kk * 0.5),
 });
-const fishWeight = (f, lv, k) => {
+const fishWeight = (f, lv, k, spotBonus) => {
   const L = Math.max(1, Math.min(FISH_LV_MAX, lv | 0 || 1));
   if (L < (f.lv || 1)) return 0;                       // 🔒 ยังไม่ถึงเลเวลที่ปลาตัวนี้จะติดเบ็ด
   const t = (L - 1) / (FISH_LV_MAX - 1);               // 0 → 1
   const RW = FISH_RAR_CURVE(t, k || 0);
+  // 🗺️ ด่านยิ่งสูง น้ำยิ่งลึกลับ ปลาหายาก/ตำนานยิ่งชุก (ขยะน้อยลง)
+  const sb = spotBonus || 0;
+  if (sb > 0) { RW.junk *= 1 / (1 + sb * 0.9); RW.common *= 1 / (1 + sb * 0.45); RW.rare *= (1 + sb * 0.55); RW.epic *= (1 + sb * 1.15); }
   let sum = 0;
   for (let i = 0; i < FISH_TYPES.length; i++) {
     const x = FISH_TYPES[i];
@@ -1596,9 +1619,9 @@ const fishWeight = (f, lv, k) => {
   return Math.max(0, RW[f.rarity]) * (f.w / sum);      // แบ่งสัดส่วนของระดับนั้นตามน้ำหนักปลาแต่ละตัว
 };
 // 📊 โอกาสได้แต่ละระดับที่เลเวลนี้ (รวมเป็น 100)
-const fishOdds = (lv, k) => {
+const fishOdds = (lv, k, spotBonus) => {
   const w = {}; let tot = 0;
-  FISH_TYPES.forEach((f) => { const v = fishWeight(f, lv, k); w[f.rarity] = (w[f.rarity] || 0) + v; tot += v; });
+  FISH_TYPES.forEach((f) => { const v = fishWeight(f, lv, k, spotBonus); w[f.rarity] = (w[f.rarity] || 0) + v; tot += v; });
   const out = {};
   FISH_RAR_ORDER.forEach((r) => (out[r] = tot > 0 ? (w[r] || 0) / tot * 100 : 0));
   return out;
@@ -2218,7 +2241,7 @@ export default function CherryAdventure() {
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
-    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishBagOpen: false, cookTick: 0, todo: null,
+    kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
     repOpen: false, rep: [], repShop: [], repTick: 0,
     wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
@@ -3372,11 +3395,10 @@ export default function CherryAdventure() {
         top.position.set(Math.cos(a) * 2.1, 0.85, Math.sin(a) * 2.1);
         pondG.add(top);
       }
-      pondG.position.set(-10, 0, -10.5);
-      scene.add(pondG);
-      colliders.push({ x: -10, z: -10.5, r: 2.5 });
-      G.pondPos = { x: -10, z: -10.5 };
-      G.pondWater = water;
+      // 🎣 บ่อชุดตั้งต้นนี้ไม่ใช้แล้ว — G.fishRespawn() จะปั้นจุดตกปลาตามด่านให้เอง
+      // (เก็บโค้ดปั้นไว้เฉย ๆ ไม่ได้ add เข้าฉาก จะได้ไม่มีบ่อลอยค้างที่ (-10,-10.5) ทุกแมพ)
+      if (G._disposeObj3D) G._disposeObj3D(pondG);
+      if (G._waterSurf) G._waterSurf = G._waterSurf.filter((w) => w.m !== water);
     }
     addRuin(-9.5, 9.5); // ancient ruins in the southwest
     addSign(1.4, -2.6);
@@ -17896,8 +17918,9 @@ export default function CherryAdventure() {
       // 🤝 ยิ่งสนิทกับลุงชาวประมง + เลเวลตกปลายิ่งสูง ปลาดี ๆ ยิ่งออกบ่อย · ขยะยิ่งออกน้อย
       const k = G.repFishLuck ? G.repFishLuck() : 0;
       const lv = G.fishLv || 1;
+      const sb = (G.fishSpotOf ? G.fishSpotOf() : FISH_SPOT_DEF).bonus || 0;   // 🗺️ ด่านยิ่งสูง ปลาหายากยิ่งชุก
       let total = 0;
-      const w = FISH_TYPES.map((f) => { const v = fishWeight(f, lv, k); total += v; return v; });
+      const w = FISH_TYPES.map((f) => { const v = fishWeight(f, lv, k, sb); total += v; return v; });
       if (total <= 0) return FISH_TYPES[3];
       let r = Math.random() * total;
       for (let i = 0; i < FISH_TYPES.length; i++) { r -= w[i]; if (r <= 0) return FISH_TYPES[i]; }
@@ -17908,17 +17931,22 @@ export default function CherryAdventure() {
       const lv = G.fishLv || 1, max = lv >= FISH_LV_MAX;
       const need = FISH_LV_EXP(lv), exp = G.fishExp || 0;
       const k = G.repFishLuck ? G.repFishLuck() : 0;
-      const odds = fishOdds(lv, k);
+      const S = G.fishSpotOf ? G.fishSpotOf() : FISH_SPOT_DEF;
+      const odds = fishOdds(lv, k, S.bonus || 0);
       const caught = G.fishCaught || {};
       return {
         lv, exp, need, max, lvMax: FISH_LV_MAX, pct: max ? 100 : Math.min(100, Math.round(exp / need * 100)),
-        total: G.fishTotal || 0, luck: k, odds,
+        total: G.fishTotal || 0, luck: k, odds, spot: (G.fishSpotInfo ? G.fishSpotInfo() : null),
+        spots: BIOMES.map((B) => { const sp = FISH_SPOT[B.id]; if (!sp) return null;
+          return { biome: B.id, biomeName: B.name, biomeEmoji: B.emoji, name: sp.name, kind: sp.kind, need: sp.lv, ok: lv >= sp.lv,
+                   bonus: sp.bonus, epic: fishOdds(lv, k, sp.bonus).epic, here: B.id === ((BIOMES[G.curBiome || 0] || BIOMES[0]).id) };
+        }).filter(Boolean),
         bag: ["common", "rare", "epic"].map((r) => ({ id: r, emoji: FISH_TIER[r].emoji, name: FISH_TIER[r].name, n: (G.fishBag && G.fishBag[r]) || 0 })),
         kinds: FISH_TYPES.map((f) => ({
           id: f.id, name: f.name, emoji: f.emoji, rarity: f.rarity, gold: f.gold, lv: f.lv,
           rarName: FISH_RAR[f.rarity].name, rarCol: FISH_RAR[f.rarity].col,
           n: caught[f.id] || 0, locked: lv < (f.lv || 1),
-          chance: (() => { let tot = 0; FISH_TYPES.forEach((x) => (tot += fishWeight(x, lv, k))); const v = fishWeight(f, lv, k); return tot > 0 ? v / tot * 100 : 0; })(),
+          chance: (() => { let tot = 0; FISH_TYPES.forEach((x) => (tot += fishWeight(x, lv, k, S.bonus || 0))); const v = fishWeight(f, lv, k, S.bonus || 0); return tot > 0 ? v / tot * 100 : 0; })(),
         })),
         seen: FISH_TYPES.filter((f) => (caught[f.id] || 0) > 0).length,
         kindsTotal: FISH_TYPES.length,
@@ -17927,7 +17955,223 @@ export default function CherryAdventure() {
     G.toggleFishBag = () => setUi((u) => (u.fishBagOpen
       ? { ...u, fishBagOpen: false }
       : { ...u, fishBagOpen: true, menuOpen: false, kitchenOpen: false, shopOpen: false, panelOpen: false, equipScreen: false, fishInfo: G.fishInfo() }));
-    G.syncFishUi = () => setUi((u) => ({ ...u, fishInfo: G.fishInfo(), fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1 }));
+    G.syncFishUi = () => setUi((u) => ({ ...u, fishInfo: G.fishInfo(), fishSpot: G.fishSpotInfo(), fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1 }));
+// ================= 🎣 จุดตกปลาประจำด่าน — รูปทรงน้ำไม่ซ้ำกันสักด่าน =================
+    G.fishSpotOf = (bid) => FISH_SPOT[bid || (BIOMES[G.curBiome || 0] || BIOMES[0]).id] || FISH_SPOT_DEF;
+    const _fsMat = (c, o) => new THREE.MeshStandardMaterial({ color: c, transparent: o < 1, opacity: o, roughness: 0.2, metalness: 0.3 });
+
+    // 💧 ผิวน้ำหนึ่งผืน — ลงทะเบียนให้คลื่นไหวด้วย
+    const fsWater = (grp, geo, color, opacity, amp) => {
+      const m = new THREE.Mesh(geo, _fsMat(color, opacity));
+      m.rotation.x = -Math.PI / 2; m.position.y = 0.05;
+      G._waterSurf = G._waterSurf || [];
+      G._waterSurf.push({ m, base: m.geometry.attributes.position.array.slice(), amp: amp || 0.045, hz: 1.9, k: 2.6 });
+      grp.add(m);
+      return m;
+    };
+    const fsRocks = (grp, n, rad, color, sz) => {
+      const g = new THREE.SphereGeometry(sz || 0.28, 8, 8), mt = new THREE.MeshStandardMaterial({ color, roughness: 0.9 });
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2, rk = new THREE.Mesh(g, mt);
+        rk.scale.set(1, 0.6, 1);
+        rk.position.set(Math.cos(a) * rad, 0.1, Math.sin(a) * rad);
+        rk.rotation.y = Math.random() * 3;
+        grp.add(rk);
+      }
+    };
+
+    // 🏗️ ปั้นจุดตกปลาตามชนิดของด่าน
+    const buildFishSpot = (S) => {
+      const g = new THREE.Group();
+      let water = null;
+      const K = S.kind;
+      if (K === "river" || K === "styx" || K === "under" || K === "fall") {
+        // 🌊 น้ำไหลเป็นแถบยาว — วางเฉียง ๆ ให้ดูเป็นสายน้ำ
+        water = fsWater(g, new THREE.PlaneGeometry(S.r * 4.6, S.r * 1.5, 26, 8), S.water, 0.86, 0.055);
+        water.rotation.z = K === "styx" ? 0.5 : K === "fall" ? -0.35 : 0.22;
+        const bankMat = new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.95 });
+        for (const sgn of [-1, 1]) {
+          const bank = new THREE.Mesh(new THREE.BoxGeometry(S.r * 4.6, 0.34, 0.5), bankMat);
+          bank.position.set(-Math.sin(water.rotation.z) * sgn * S.r * 0.85, 0.14, Math.cos(water.rotation.z) * sgn * S.r * 0.85);
+          bank.rotation.y = -water.rotation.z;
+          g.add(bank);
+        }
+        if (K === "fall") {   // 💦 ม่านน้ำตกไหลลงมาที่ปลายแอ่ง
+          const fallM = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.6), _fsMat(S.deco, 0.6));
+          fallM.position.set(S.r * 1.9, 1.3, -S.r * 0.5);
+          g.add(fallM);
+          const mist = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), _fsMat(0xffffff, 0.22));
+          mist.position.set(S.r * 1.8, 0.35, -S.r * 0.5); mist.scale.set(1, 0.5, 1); g.add(mist);
+        }
+        if (K === "under") {  // ✨ ผลึกเรืองแสงริมธาร
+          for (let i = 0; i < 7; i++) {
+            const c = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.5, 5), new THREE.MeshStandardMaterial({ color: S.deco, emissive: S.deco, emissiveIntensity: 0.8, roughness: 0.3 }));
+            const a = Math.random() * Math.PI * 2, rr = S.r * (1.0 + Math.random() * 0.9);
+            c.position.set(Math.cos(a) * rr, 0.25, Math.sin(a) * rr); g.add(c);
+          }
+        }
+        if (K === "styx") {   // 👻 เปลวไฟวิญญาณลอยเหนือน้ำ
+          for (let i = 0; i < 6; i++) {
+            const f = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshStandardMaterial({ color: S.deco, emissive: S.deco, emissiveIntensity: 1.1 }));
+            f.position.set((Math.random() - 0.5) * S.r * 3.6, 0.5 + Math.random() * 0.7, (Math.random() - 0.5) * S.r * 1.2);
+            g.add(f);
+          }
+        }
+      } else if (K === "hole") {
+        // 🧊 แผ่นน้ำแข็งเจาะรูตรงกลาง
+        const ice = new THREE.Mesh(new THREE.CircleGeometry(S.r * 1.9, 26), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.35, metalness: 0.1 }));
+        ice.rotation.x = -Math.PI / 2; ice.position.y = 0.08; g.add(ice);
+        water = fsWater(g, new THREE.CircleGeometry(S.r * 0.7, 20), S.water, 0.92, 0.03);
+        water.position.y = 0.1;
+        for (let i = 0; i < 9; i++) {   // 🧊 ก้อนน้ำแข็งที่เจาะออกมากองไว้
+          const b = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.24, 0.3), new THREE.MeshStandardMaterial({ color: S.deco, roughness: 0.4 }));
+          const a = Math.random() * Math.PI * 2, rr = S.r * (0.95 + Math.random() * 0.7);
+          b.position.set(Math.cos(a) * rr, 0.18, Math.sin(a) * rr); b.rotation.y = Math.random() * 3; g.add(b);
+        }
+      } else if (K === "cloud") {
+        // ☁️ สระบนก้อนเมฆ
+        water = fsWater(g, new THREE.CircleGeometry(S.r, 26), S.water, 0.8, 0.05);
+        for (let i = 0; i < 12; i++) {
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.55 + Math.random() * 0.35, 9, 7), _fsMat(S.rim, 0.9));
+          const a = (i / 12) * Math.PI * 2;
+          puff.position.set(Math.cos(a) * (S.r + 0.25), -0.05, Math.sin(a) * (S.r + 0.25));
+          puff.scale.y = 0.62; g.add(puff);
+        }
+      } else if (K === "lava") {
+        // 🌋 บ่อร้อนขอบหินภูเขาไฟ + ไอน้ำ
+        water = fsWater(g, new THREE.CircleGeometry(S.r, 24), S.water, 0.92, 0.06);
+        water.material.emissive = new THREE.Color(S.deco); water.material.emissiveIntensity = 0.55;
+        fsRocks(g, 14, S.r + 0.35, S.rim, 0.3);
+        for (let i = 0; i < 5; i++) {
+          const st = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), _fsMat(0xffffff, 0.16));
+          st.position.set((Math.random() - 0.5) * S.r * 1.5, 0.7 + Math.random() * 0.8, (Math.random() - 0.5) * S.r * 1.5);
+          g.add(st);
+        }
+      } else if (K === "sacred") {
+        // ☀️ สระศักดิ์สิทธิ์ + เสาหินล้อม
+        water = fsWater(g, new THREE.CircleGeometry(S.r, 28), S.water, 0.85, 0.035);
+        water.material.emissive = new THREE.Color(S.water); water.material.emissiveIntensity = 0.35;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.5, 8), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.7 }));
+          pil.position.set(Math.cos(a) * (S.r + 0.6), 0.75, Math.sin(a) * (S.r + 0.6)); g.add(pil);
+          const orb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshStandardMaterial({ color: S.deco, emissive: S.deco, emissiveIntensity: 0.9 }));
+          orb.position.set(Math.cos(a) * (S.r + 0.6), 1.62, Math.sin(a) * (S.r + 0.6)); g.add(orb);
+        }
+      } else if (K === "crater") {
+        // 🌑 หลุมอุกกาบาต ขอบหินคม
+        water = fsWater(g, new THREE.CircleGeometry(S.r * 0.85, 22), S.water, 0.9, 0.03);
+        water.material.emissive = new THREE.Color(S.deco); water.material.emissiveIntensity = 0.4;
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          const sh = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 5), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 1, flatShading: true }));
+          sh.position.set(Math.cos(a) * (S.r + 0.15), 0.28, Math.sin(a) * (S.r + 0.15));
+          sh.rotation.z = (Math.random() - 0.5) * 0.5; g.add(sh);
+        }
+      } else if (K === "syrup") {
+        // 🍬 สระน้ำเชื่อม ขอบวิปครีม + ลูกอมลอย
+        water = fsWater(g, new THREE.CircleGeometry(S.r, 26), S.water, 0.95, 0.04);
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * Math.PI * 2;
+          const cr = new THREE.Mesh(new THREE.SphereGeometry(0.3, 9, 7), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.85 }));
+          cr.position.set(Math.cos(a) * (S.r + 0.22), 0.14, Math.sin(a) * (S.r + 0.22)); cr.scale.y = 0.75; g.add(cr);
+        }
+        for (let i = 0; i < 5; i++) {
+          const cd = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.07, 6, 12), new THREE.MeshStandardMaterial({ color: S.deco, roughness: 0.4 }));
+          cd.rotation.x = -Math.PI / 2;
+          cd.position.set((Math.random() - 0.5) * S.r * 1.3, 0.12, (Math.random() - 0.5) * S.r * 1.3); g.add(cd);
+        }
+      } else if (K === "shore") {
+        // 🏖️ ชายทะเล — น้ำเป็นแถบกว้างด้านหนึ่ง + คลื่นขาว
+        water = fsWater(g, new THREE.PlaneGeometry(S.r * 5.5, S.r * 2.4, 28, 10), S.water, 0.85, 0.07);
+        water.position.z = -S.r * 0.6;
+        const foam = new THREE.Mesh(new THREE.PlaneGeometry(S.r * 5.5, 0.5), _fsMat(0xffffff, 0.45));
+        foam.rotation.x = -Math.PI / 2; foam.position.set(0, 0.07, S.r * 0.55); g.add(foam);
+        for (let i = 0; i < 6; i++) {   // 🐚 เปลือกหอย/หินริมหาด
+          const sh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.9 }));
+          sh.position.set((Math.random() - 0.5) * S.r * 4, 0.08, S.r * (0.8 + Math.random() * 0.5)); sh.scale.y = 0.5; g.add(sh);
+        }
+      } else if (K === "oasis") {
+        // 🏜️ โอเอซิส — น้ำใสกลางทราย + ต้นปาล์ม
+        water = fsWater(g, new THREE.CircleGeometry(S.r, 24), S.water, 0.88, 0.04);
+        fsRocks(g, 10, S.r + 0.3, S.rim, 0.22);
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2 + 0.6;
+          const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 2.2, 6), new THREE.MeshStandardMaterial({ color: 0x8a6a3a }));
+          tr.position.set(Math.cos(a) * (S.r + 0.9), 1.1, Math.sin(a) * (S.r + 0.9));
+          tr.rotation.z = (Math.random() - 0.5) * 0.25; g.add(tr);
+          for (let k = 0; k < 5; k++) {
+            const lf = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.0, 4), new THREE.MeshStandardMaterial({ color: S.deco }));
+            const la = (k / 5) * Math.PI * 2;
+            lf.position.set(Math.cos(a) * (S.r + 0.9) + Math.cos(la) * 0.42, 2.2, Math.sin(a) * (S.r + 0.9) + Math.sin(la) * 0.42);
+            lf.rotation.set(Math.cos(la) * 1.15, 0, -Math.sin(la) * 1.15); g.add(lf);
+          }
+        }
+      } else if (K === "basin") {
+        // 🗿 อ่างหินยักษ์ ขอบหินเรียงเป็นกำแพงเตี้ย
+        water = fsWater(g, new THREE.CircleGeometry(S.r * 0.9, 24), S.water, 0.9, 0.04);
+        for (let i = 0; i < 18; i++) {
+          const a = (i / 18) * Math.PI * 2;
+          const bk = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.42), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 1, flatShading: true }));
+          bk.position.set(Math.cos(a) * (S.r + 0.1), 0.27, Math.sin(a) * (S.r + 0.1));
+          bk.rotation.y = -a; g.add(bk);
+        }
+        for (let i = 0; i < 4; i++) {
+          const mo = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 6), new THREE.MeshStandardMaterial({ color: S.deco, roughness: 1 }));
+          const a = Math.random() * Math.PI * 2;
+          mo.position.set(Math.cos(a) * (S.r + 0.1), 0.56, Math.sin(a) * (S.r + 0.1)); mo.scale.y = 0.4; g.add(mo);
+        }
+      } else {
+        // 🌸 บ่อกลมมาตรฐาน (ทุ่งซากุระ) — หินล้อม + ต้นกก
+        water = fsWater(g, new THREE.RingGeometry(0.02, S.r, 30, 6), S.water, 0.85, 0.045);
+        fsRocks(g, 16, S.r + 0.1, S.rim, 0.28);
+        for (let i = 0; i < 5; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 5), new THREE.MeshStandardMaterial({ color: S.deco }));
+          st.position.set(Math.cos(a) * (S.r - 0.1), 0.4, Math.sin(a) * (S.r - 0.1)); g.add(st);
+          const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.22, 6), new THREE.MeshStandardMaterial({ color: 0x8a5a2a }));
+          tp.position.set(Math.cos(a) * (S.r - 0.1), 0.85, Math.sin(a) * (S.r - 0.1)); g.add(tp);
+        }
+      }
+      return { grp: g, water };
+    };
+
+    // 🗺️ เปลี่ยนด่าน = รื้อจุดเก่า ปั้นจุดใหม่ตามด่านนั้น
+    G.fishRespawn = (bid) => {
+      if (G.fishing) G.stopFishing();
+      if (G._fishGrp) {
+        // 🧹 เอาผิวน้ำเก่าออกจากรายการคลื่น ไม่งั้นจะไล่อัปเดต mesh ที่ถูกทิ้งแล้ว
+        if (G._waterSurf) G._waterSurf = G._waterSurf.filter((w) => w.m !== G.pondWater);
+        if (G._fishGrp.parent) G._fishGrp.parent.remove(G._fishGrp);
+        if (G._disposeObj3D) G._disposeObj3D(G._fishGrp);
+        G._fishGrp = null; G.pondWater = null;
+      }
+      const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
+      if (indoor) { G.pondPos = null; G.pondNear = false; setUi((u) => ({ ...u, pondNear: false, fishSpot: null })); return; }
+      const S = G.fishSpotOf(bid);
+      const built = buildFishSpot(S);
+      built.grp.position.set(S.x, terrainAt(S.x, S.z), S.z);
+      (G._worldRoot || scene).add(built.grp);
+      G._fishGrp = built.grp; G.pondWater = built.water;
+      G.pondPos = { x: S.x, z: S.z };
+      G.pondNear = false;
+      // 🚧 ตัวกันชนกับตัวละคร — ใช้ก้อนเดิม เลื่อนตำแหน่งแทนการเพิ่มใหม่ทุกครั้ง
+      if (!G._pondCol) { G._pondCol = { x: S.x, z: S.z, r: S.r + 0.1 }; colliders.push(G._pondCol); }
+      else { G._pondCol.x = S.x; G._pondCol.z = S.z; G._pondCol.r = S.r + 0.1; }
+      setUi((u) => ({ ...u, pondNear: false, fishSpot: G.fishSpotInfo() }));
+    };
+    G.fishSpotSnap = () => { if (G._fishGrp && G.pondPos) G._fishGrp.position.y = terrainAt(G.pondPos.x, G.pondPos.z); };
+    // 📋 ข้อมูลจุดตกปลาปัจจุบัน — ให้ JSX อ่าน
+    G.fishSpotInfo = () => {
+      const B = BIOMES[G.curBiome || 0] || BIOMES[0];
+      const S = G.fishSpotOf(B.id);
+      const lv = G.fishLv || 1;
+      return { biome: B.id, biomeName: B.name, biomeEmoji: B.emoji, name: S.name, kind: S.kind,
+               need: S.lv, ok: lv >= S.lv, bonus: S.bonus,
+               odds: fishOdds(lv, G.repFishLuck ? G.repFishLuck() : 0, S.bonus) };
+    };
+    // ================= 🎣 END FISH SPOTS =================
+
     // ================= ⛏️ MINING — สายแร่โผล่ตามภูมิประเทศ ขุดเอาวัตถุดิบ =================
     G.mineLv = 1; G.mineExp = 0; G.pickLv = 1; G.mineTotal = 0;
     G.mineNodes = [];
@@ -18060,7 +18304,7 @@ export default function CherryAdventure() {
     };
 
     const mineNodeSnap = (n) => { if (n && n.mesh) n.mesh.position.set(n.x, terrainAt(n.x, n.z), n.z); };
-    G.mineSnapAll = () => (G.mineNodes || []).forEach(mineNodeSnap);
+    G.mineSnapAll = () => { (G.mineNodes || []).forEach(mineNodeSnap); if (G.fishSpotSnap) G.fishSpotSnap(); };
 
     // 🗺️ วางสายแร่ชุดใหม่เมื่อเปลี่ยนแมพ
     G.mineRespawnAll = (bid) => {
@@ -18198,7 +18442,7 @@ export default function CherryAdventure() {
       const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
       const zoneNow = !!(G.inTownZone || G.inHomeZone || G.inRanchZone);
       const key = bid + "|" + (zoneNow ? "in" : "out");
-      if (G._mineBiome !== key) { G._mineBiome = key; G.mineRespawnAll(bid); return; }
+      if (G._mineBiome !== key) { G._mineBiome = key; G.mineRespawnAll(bid); if (G.fishRespawn) { try { G.fishRespawn(bid); } catch (e) {} } return; }   // 🎣 จุดตกปลาเปลี่ยนตามด่านด้วย
       let near = null, nd = 2.7;
       for (let i = 0; i < G.mineNodes.length; i++) {
         const n = G.mineNodes[i];
@@ -18242,6 +18486,12 @@ export default function CherryAdventure() {
 
     G.startFishing = () => {
       if (G.fishing) return;
+      // 🔒 ด่านยาก ๆ น้ำลึกและเชี่ยว ต้องเลเวลตกปลาถึงก่อน
+      const SP = G.fishSpotOf ? G.fishSpotOf() : null;
+      if (SP && (G.fishLv || 1) < SP.lv) {
+        toast(`🔒 ${SP.name} — ต้องเลเวลตกปลา ${SP.lv} ก่อน (ตอนนี้ Lv.${G.fishLv || 1}) · ไปฝึกที่ด่านง่ายกว่านี้ก่อนนะ`);
+        return;
+      }
       if (G.sfx) G.sfx.splash();
       // cast → wait random → bite window
       G.fishing = { phase: "waiting", t: 0, bite: 1.2 + Math.random() * 2.5 };
@@ -18280,7 +18530,7 @@ export default function CherryAdventure() {
           G.fishBag = G.fishBag || { common: 0, rare: 0, epic: 0 };
           G.fishBag[fish.rarity] = (G.fishBag[fish.rarity] || 0) + 1;
         }
-        setUi((u) => ({ ...u, fishing: null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: G.fishInfo() }));
+        setUi((u) => ({ ...u, fishing: null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: G.fishInfo(), fishSpot: G.fishSpotInfo() }));
         if (G.mbEvent) G.mbEvent("fish");   // 📖 นับภารกิจ "ตกปลา"
         const R = FISH_RAR[fish.rarity] || FISH_RAR.common;
         toast(`${fish.emoji} จับ${fish.name}ได้! (${R.name}) +${fish.gold}💰 +${fish.exp}EXP${firstTime ? " · ✨ ชนิดใหม่!" : ""}`);
@@ -18859,6 +19109,42 @@ export default function CherryAdventure() {
       toast(`🎁 รับรางวัลแทร็กขั้น ${tier + 1} — ${R.label}`);
       if (G.sfx && G.sfx.coin) G.sfx.coin();
       G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // 🎁 กดรับรางวัลแทร็กที่ค้างอยู่ทั้งหมดรวดเดียว (ฟรี + พรีเมียมถ้าปลดแล้ว)
+    G.mbPassClaimAll = () => {
+      const Q = G.mbook; if (!Q) return { n: 0 };
+      Q.claimedF = Q.claimedF || {}; Q.claimedP = Q.claimedP || {};
+      const cur = Math.min(PASS_TIERS, Math.floor((Q.pts || 0) / PASS_STEP));
+      let n = 0, gold = 0, dia = 0, exp = 0;
+      for (let i = 0; i < cur; i++) {
+        for (const prem of [false, true]) {
+          if (prem && !Q.prem) continue;
+          const book = prem ? Q.claimedP : Q.claimedF;
+          if (book[i]) continue;
+          book[i] = 1;
+          const R = passReward(i, prem);
+          gold += R.gold || 0; dia += R.dia || 0; exp += R.exp || 0; n++;
+        }
+      }
+      if (!n) { toast(cur > 0 ? "รับรางวัลแทร็กที่ปลดแล้วครบหมดแล้ว 🎫" : `ยังไม่ถึงขั้นแรก — สะสมให้ครบ ${PASS_STEP} แต้มก่อนนะ`); return { n: 0 }; }
+      G.gold = (G.gold || 0) + gold;
+      G.diamonds = (G.diamonds || 0) + dia;
+      if (exp && typeof gainExp === "function") gainExp(exp);
+      toast(`🎁 รับรางวัลรวดเดียว ${n} ช่อง — 💰${gold.toLocaleString()} · 💎${dia} · ⭐${exp.toLocaleString()} EXP`);
+      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+      return { n, gold, dia, exp };
+    };
+    // 📊 สรุปว่ามีของค้างกี่ช่อง รวมเป็นเท่าไร (ให้ปุ่มโชว์ตัวเลข)
+    G.mbPassPending = () => {
+      const Q = G.mbook; if (!Q) return { n: 0, gold: 0, dia: 0 };
+      const cur = Math.min(PASS_TIERS, Math.floor((Q.pts || 0) / PASS_STEP));
+      let n = 0, gold = 0, dia = 0;
+      for (let i = 0; i < cur; i++) {
+        if (!(Q.claimedF || {})[i]) { const R = passReward(i, false); n++; gold += R.gold || 0; dia += R.dia || 0; }
+        if (Q.prem && !(Q.claimedP || {})[i]) { const R = passReward(i, true); n++; gold += R.gold || 0; dia += R.dia || 0; }
+      }
+      return { n, gold, dia, tier: cur };
     };
     G.mbPassBuy = () => {
       const Q = G.mbook; if (!Q) return;
@@ -21144,7 +21430,7 @@ export default function CherryAdventure() {
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
       guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null,   // 🏰 โชว์บนป้ายเหนือหัว
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -44162,7 +44448,11 @@ export default function CherryAdventure() {
   const HUD_CELL = _shortHud ? 28 : 34;               // ขนาดปุ่มในแป้นหมุนกล้อง
   const HUD_PAD = HUD_CELL * 3 + 6;                  // ความสูง/กว้างแป้นหมุนกล้อง
   // 📱 แนวนอน: กันขอบซ้าย-ขวาไว้ให้แถบปุ่มโดยเฉพาะ ภาพ 3D จะหยุดก่อนถึงปุ่ม ไม่ล้ำไปบังกัน
-  const HUD_GUTTER = _shortHud ? Math.max(HUD_PAD + 16, 100) : 0;
+  // 📏 ระยะห่างจากขอบจอของแถบปุ่ม — แนวนอนเว้นเยอะกว่า (นิ้วโป้งจับขอบเครื่องอยู่) + เผื่อรอยบาก/มุมโค้ง
+  const HUD_EDGE = _shortHud ? 22 : 12;
+  const EDGE_L = `calc(${HUD_EDGE}px + env(safe-area-inset-left, 0px))`;
+  const EDGE_R = `calc(${HUD_EDGE}px + env(safe-area-inset-right, 0px))`;
+  const HUD_GUTTER = _shortHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;
   // จำนวนช่องที่จอนี้รับไหว + ระยะห่าง (จอเตี้ยจะตัดช่องท้าย ๆ ทิ้ง — ของที่ตัดยังเข้าถึงได้จากเมนู ☰)
   const _fitCol = (want, base, size, reserveTop) => {
     const room = _vh - HUD_TOPSAFE - base - reserveTop;
@@ -44174,8 +44464,8 @@ export default function CherryAdventure() {
   const _colL = _fitCol(6, HUD_BASE_L, HUD_BTN_L, 0);
   const _colR = _fitCol(5, HUD_BASE_R, HUD_BTN_R, HUD_PAD + 14);
   // ช่องที่ i นับจากล่างขึ้นบน (i = 0 คือช่องล่างสุด นิ้วถึงง่ายสุด)
-  const Lslot = (i) => ({ left: 12, bottom: HUD_BASE_L + i * _colL.pitch, width: HUD_BTN_L, height: HUD_BTN_L });
-  const Rslot = (i) => ({ right: 12, bottom: HUD_BASE_R + i * _colR.pitch, width: HUD_BTN_R, height: HUD_BTN_R });
+  const Lslot = (i) => ({ left: EDGE_L, bottom: HUD_BASE_L + i * _colL.pitch, width: HUD_BTN_L, height: HUD_BTN_L });
+  const Rslot = (i) => ({ right: EDGE_R, bottom: HUD_BASE_R + i * _colR.pitch, width: HUD_BTN_R, height: HUD_BTN_R });
   const Lfit = (i) => !HUD_HIDE && i < _colL.n;        // ช่องนี้มีที่พอไหม
   const Rfit = (i) => !HUD_HIDE && i < _colR.n;
   // 🎮 แป้นหมุนกล้อง วางเหนือคอลัมน์ขวาเสมอ
@@ -44282,8 +44572,8 @@ export default function CherryAdventure() {
       <style>{`@keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} }`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
       <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
-        left: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-left, 0px))",
-        right: HUD_GUTTER ? HUD_GUTTER : "calc(-1 * env(safe-area-inset-right, 0px))" }} />
+        left: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-left, 0px))` : "calc(-1 * env(safe-area-inset-left, 0px))",
+        right: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-right, 0px))` : "calc(-1 * env(safe-area-inset-right, 0px))" }} />
       {/* 📱 แนวนอน: แถบขอบซ้าย-ขวาที่กันไว้ให้ปุ่ม — ภาพ 3D ไม่ล้ำเข้ามา ปุ่มเลยไม่ทับฉาก */}
       {HUD_GUTTER > 0 && ["left", "right"].map((side) => (
         <div key={side} style={{
@@ -44295,7 +44585,9 @@ export default function CherryAdventure() {
         }} />
       ))}
       {/* 🎞️ ขอบจอมืดจาง ๆ — ดึงสายตาเข้ากลางจอ ภาพดูเป็นเกมจริงจังขึ้น (ไม่กินการแตะ) */}
-      <div style={{ position: "absolute", top: 0, bottom: 0, left: HUD_GUTTER, right: HUD_GUTTER, pointerEvents: "none", zIndex: 0,
+      <div style={{ position: "absolute", top: 0, bottom: 0,
+        left: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-left, 0px))` : 0,
+        right: HUD_GUTTER ? `calc(${HUD_GUTTER}px + env(safe-area-inset-right, 0px))` : 0, pointerEvents: "none", zIndex: 2,
         background: "radial-gradient(ellipse 76% 70% at 50% 47%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.09) 74%, rgba(0,0,0,0.30) 100%)" }} />
       {/* 🖱️ แตะพื้นหลัง (พื้นที่จางนอกกล่อง) เพื่อปิดเมนูที่เปิดอยู่ — สำหรับเมนูกล่องกลางจอ */}
       {["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "socialOpen", "pvpOpen", "heroGalleryOpen", "goldMarketOpen", "accOpen", "ranchOpen"].some((f) => ui[f]) && (
@@ -44452,6 +44744,31 @@ export default function CherryAdventure() {
             )}
             {ui.mbTab === "pass" && (
               <div>
+                {/* ❓ วิธีได้รางวัล — อ่านรอบเดียวเข้าใจว่าต้องทำอะไร */}
+                <div style={{ background: "rgba(245,210,74,0.10)", border: "1px solid #6a5a2a", borderRadius: 12, padding: "9px 11px", marginBottom: 9 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 900, color: "#f5d24a", marginBottom: 4 }}>❓ ได้รางวัลแทร็กยังไง?</div>
+                  <div style={{ fontSize: 10, color: "#d8ccec", lineHeight: 1.75 }}>
+                    <b style={{ color: "#fff" }}>1.</b> ทำภารกิจในแท็บ <b style={{ color: "#f5d24a" }}>📅 รายวัน / รายสัปดาห์</b> ให้ครบ แล้วกด "รับรางวัล"<br />
+                    <b style={{ color: "#fff" }}>2.</b> ทุกครั้งที่รับ จะได้ <b style={{ color: "#8fd0ff" }}>แต้มแทร็ก</b> สะสม (ภารกิจรายวัน 8–12 แต้ม · รายสัปดาห์ 28–40 แต้ม)<br />
+                    <b style={{ color: "#fff" }}>3.</b> ครบ <b style={{ color: "#8fd0ff" }}>{PASS_STEP} แต้ม = ปลด 1 ขั้น</b> (มีทั้งหมด {PASS_TIERS} ขั้น) แล้วกดรับรางวัลของขั้นนั้นได้เลย<br />
+                    <b style={{ color: "#fff" }}>4.</b> แต้มที่สะสม <b style={{ color: "#9ac86a" }}>ไม่รีเซ็ต</b> เมื่อขึ้นวัน/สัปดาห์ใหม่ — ภารกิจเปลี่ยนชุด แต่แต้มสะสมต่อ<br />
+                    <b style={{ color: "#fff" }}>5.</b> แถวสีเขียว = <b style={{ color: "#9ac86a" }}>ฟรีทุกคน</b> · แถวสีทอง = <b style={{ color: "#f5d24a" }}>พรีเมียม</b> (ปลดครั้งเดียวด้วย 💎{PASS_PREMIUM_COST} แล้วย้อนรับขั้นเก่าได้หมด)
+                  </div>
+                </div>
+                {/* 🎁 รับที่ค้างทั้งหมดรวดเดียว — ไม่ต้องไล่กดทีละขั้น */}
+                {(() => {
+                  const P = G.mbPassPending ? G.mbPassPending() : { n: 0 };
+                  return (
+                    <button onClick={() => G.mbPassClaimAll()} disabled={!P.n} style={{
+                      width: "100%", marginBottom: 9, padding: "10px 0", borderRadius: 11, border: "none",
+                      cursor: P.n ? "pointer" : "not-allowed", fontFamily: font, fontSize: 12.5, fontWeight: 900,
+                      color: P.n ? "#2a2416" : "#7a6f92",
+                      background: P.n ? "linear-gradient(90deg,#f5d24a,#e0883a)" : "rgba(255,255,255,0.05)",
+                    }}>
+                      {P.n ? `🎁 รับรางวัลที่ค้างทั้งหมด (${P.n} ช่อง) — 💰${P.gold.toLocaleString()}${P.dia ? ` · 💎${P.dia}` : ""}` : "🎁 ไม่มีรางวัลค้างให้รับ"}
+                    </button>
+                  );
+                })()}
                 <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid #3a2f52", borderRadius: 12, padding: "9px 11px", marginBottom: 9, display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 800 }}>{ui.mbook.prem ? "🎫 แทร็กพรีเมียม — ปลดแล้ว" : "🔒 แทร็กพรีเมียม — ยังไม่ปลด"}</div>
@@ -44941,6 +45258,24 @@ export default function CherryAdventure() {
                 </div>
               </div>
 
+              {/* 📍 จุดตกปลาของด่านที่ยืนอยู่ */}
+              {FI.spot && (
+                <div style={{
+                  background: FI.spot.ok ? "linear-gradient(135deg,#e6f4fd,#d8ecfb)" : "#f2f4f6",
+                  border: `1px solid ${FI.spot.ok ? "#b8dcf2" : "#dde2e6"}`, borderRadius: 12, padding: "8px 10px", marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 900, color: FI.spot.ok ? "#2a6a9a" : "#8a949c" }}>
+                    📍 {FI.spot.biomeEmoji} {FI.spot.name}
+                    {!FI.spot.ok && <span style={{ color: "#c07a5a" }}> · 🔒 ต้องเลเวล {FI.spot.need}</span>}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#7a94a8", marginTop: 2 }}>
+                    {FI.spot.ok
+                      ? <>ตกได้แล้ว · โบนัสปลาหายากของด่านนี้ {FI.spot.bonus > 0 ? `+${Math.round(FI.spot.bonus * 100)}%` : "ไม่มี (ด่านเริ่มต้น)"} · 🐉 ตำนาน {FI.odds.epic.toFixed(FI.odds.epic < 10 ? 1 : 0)}%</>
+                      : <>ยังตกที่นี่ไม่ได้ — ไปฝึกที่ด่านง่ายกว่าให้เลเวลตกปลาถึง {FI.spot.need} ก่อน</>}
+                  </div>
+                </div>
+              )}
+
               {/* 🪣 ปลาในถัง (เอาไปทำอาหาร) */}
               <div style={{ background: "#eef6fc", borderRadius: 12, padding: "8px 10px", marginBottom: 10 }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: "#5a86a4", marginBottom: 5 }}>🪣 ปลาในถัง — ใช้ทำอาหารที่ครัว</div>
@@ -44957,6 +45292,28 @@ export default function CherryAdventure() {
                   width: "100%", marginTop: 7, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
                   fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e08a3a,#f5b45a)",
                 }}>🍳 ไปครัว ทำอาหารจากปลา</button>
+              </div>
+
+              {/* 🗺️ จุดตกปลาทุกด่าน */}
+              <div style={{ fontSize: 11.5, fontWeight: 900, color: "#2a6a9a", marginBottom: 5 }}>🗺️ จุดตกปลาแต่ละด่าน <span style={{ fontSize: 9.5, fontWeight: 800, color: "#7a94a8" }}>· ด่านยิ่งลึก ปลาตำนานยิ่งชุก</span></div>
+              <div style={{ marginBottom: 10 }}>
+                {(FI.spots || []).map((sp) => (
+                  <div key={sp.biome} style={{
+                    display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", marginBottom: 4, borderRadius: 9,
+                    background: sp.here ? "#e2f2ff" : sp.ok ? "#fbfdff" : "#f5f6f7",
+                    border: `1px solid ${sp.here ? "#8ec8f0" : sp.ok ? "#e6eef4" : "#e8eaec"}`,
+                    opacity: sp.ok ? 1 : 0.8,
+                  }}>
+                    <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{sp.ok ? sp.biomeEmoji : "🔒"}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, color: sp.ok ? "#3a6a88" : "#98a2aa", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {sp.name}{sp.here && <span style={{ color: "#2a6a9a" }}> · อยู่ที่นี่</span>}
+                      </div>
+                      <div style={{ fontSize: 9, color: "#93a8b8" }}>{sp.biomeName} · {sp.ok ? `🐉 ตำนาน ${sp.epic.toFixed(sp.epic < 10 ? 1 : 0)}%` : `ต้องเลเวลตกปลา ${sp.need}`}</div>
+                    </div>
+                    {sp.bonus > 0 && <span style={{ fontSize: 9.5, fontWeight: 900, color: sp.ok ? "#d98a20" : "#b8c2ca", whiteSpace: "nowrap" }}>+{Math.round(sp.bonus * 100)}%</span>}
+                  </div>
+                ))}
               </div>
 
               {/* 📖 สมุดปลา */}
@@ -45749,7 +46106,7 @@ export default function CherryAdventure() {
 
       {/* 🎵 sound/music toggles — sit below the world leaderboard so they never overlap */}
       {ui.mode !== "create" && ui.mode !== "title" && !ui.equipScreen && !HUD_HIDE && (
-        <div style={{ position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: 12, display: "flex", gap: 6, zIndex: 27 }}>
+        <div style={{ position: "absolute", top: (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? ST(250) : ST(92), left: EDGE_L, display: "flex", gap: 6, zIndex: 27 }}>
           <button onClick={() => setUi((u) => ({ ...u, settingsOpen: true }))} title="ตั้งค่าเกม" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
             fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
@@ -46181,12 +46538,24 @@ export default function CherryAdventure() {
         <div style={{
           position: "absolute", ...PROMPT_POS, ...PROMPT_W,
         }}>
-          <button onClick={() => G.startFishing()} style={{
-            padding: "11px 18px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontSize: 15, fontWeight: 800, fontFamily: font, color: "#fff",
-            background: "linear-gradient(90deg,#4a90c0,#6ac0e0)",
-            boxShadow: "0 5px 16px rgba(74,144,192,0.5)",
-          }}>🎣 ตกปลา<span style={{ display: "block", fontSize: 9.5, opacity: 0.88 }}>เลเวลตกปลา {ui.fishLv || 1}/{FISH_LV_MAX}</span></button>
+          {(() => {
+            const SP = ui.fishSpot || (G.fishSpotInfo ? G.fishSpotInfo() : null);
+            const lock = SP && !SP.ok;
+            return (
+              <button onClick={() => G.startFishing()} style={{
+                padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.3,
+                background: lock ? "linear-gradient(90deg,#7a8894,#5a6874)" : "linear-gradient(90deg,#4a90c0,#6ac0e0)",
+                boxShadow: lock ? "0 5px 16px rgba(90,104,116,0.5)" : "0 5px 16px rgba(74,144,192,0.5)",
+              }}>
+                {lock ? "🔒 ตกปลาไม่ได้" : "🎣 ตกปลา"}
+                {SP && <span style={{ display: "block", fontSize: 10, opacity: 0.95 }}>{SP.name}</span>}
+                <span style={{ display: "block", fontSize: 9.5, opacity: 0.88 }}>
+                  {lock ? `ต้องเลเวลตกปลา ${SP.need} (มี ${ui.fishLv || 1})` : `เลเวลตกปลา ${ui.fishLv || 1}/${FISH_LV_MAX}${SP && SP.bonus > 0 ? ` · 🐉 +${Math.round(SP.bonus * 100)}%` : ""}`}
+                </span>
+              </button>
+            );
+          })()}
         </div>
       )}
       {ui.mode === "explore" && ui.fishing && (
@@ -47095,7 +47464,7 @@ export default function CherryAdventure() {
       )}
 
       {ui.mode === "explore" && !ui.equipScreen && (
-        <div style={{ position: "absolute", right: 14, bottom: HUD_PAD_BOTTOM, display: HUD_HIDE ? "none" : "grid", gridTemplateColumns: `repeat(3, ${HUD_CELL}px)`, gridTemplateRows: `repeat(3, ${HUD_CELL}px)`, gap: 3, zIndex: 24 }}>
+        <div style={{ position: "absolute", right: EDGE_R, bottom: HUD_PAD_BOTTOM, display: HUD_HIDE ? "none" : "grid", gridTemplateColumns: `repeat(3, ${HUD_CELL}px)`, gridTemplateRows: `repeat(3, ${HUD_CELL}px)`, gap: 3, zIndex: 24 }}>
           {[
             ["＋", () => G.zoom(-1.6)],
             ["▲", () => G.rotateCam(0, 0.12)],
@@ -47135,7 +47504,7 @@ export default function CherryAdventure() {
             onPointerUp={joyEnd}
             onPointerCancel={joyEnd}
             style={{
-              position: "absolute", left: 18, ...(_shortHud ? { bottom: 6, width: 70, height: 70 } : { bottom: 82, width: 112, height: 112 }), borderRadius: "50%",
+              position: "absolute", left: EDGE_L, ...(_shortHud ? { bottom: 6, width: 70, height: 70 } : { bottom: 82, width: 112, height: 112 }), borderRadius: "50%",
               background: "rgba(255,255,255,0.45)", border: "3px solid rgba(122,160,91,0.5)",
               touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 14px rgba(90,120,70,0.2)",
@@ -50111,7 +50480,7 @@ export default function CherryAdventure() {
       {ui.mode === "battle" && ui.enemy && (
         <>
           {/* 🔍 ปุ่มซูมตอนสู้ — วางเป็นแถวนอนใต้เขตหวงห้ามด้านบน ไม่ทับปุ่มคำสั่งข้างจอ */}
-          <div style={{ position: "absolute", left: 12, top: ST(HUD_TOPSAFE), display: "flex", flexDirection: "row", gap: 8, zIndex: 26 }}>
+          <div style={{ position: "absolute", left: EDGE_L, top: ST(HUD_TOPSAFE), display: "flex", flexDirection: "row", gap: 8, zIndex: 26 }}>
             {[["＋", -1.6], ["－", 1.6]].map(([sym, d]) => (
               <button key={sym} onClick={() => G.zoom(d)} style={{
                 width: 40, height: 40, borderRadius: "50%", border: "none", cursor: "pointer",
