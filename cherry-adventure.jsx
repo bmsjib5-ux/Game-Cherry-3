@@ -217,8 +217,56 @@ const terrainAt = (x, z) => {
 };
 
 // 📱 กันรอยบาก/กล้องหน้า (Dynamic Island): เลื่อน UI ขอบบนลงตาม safe-area ของเครื่อง
+// ================= 🍃 วิชาตัวเบา (ฝึกได้จากเควสพิเศษเท่านั้น) =================
+// สายวิชาเคลื่อนไหว 3 ขั้น ต่อยอดกันเป็นทอด ๆ — ซื้อด้วยทอง/เพชร/แต้มสกิลไม่ได้เลย
+// ต้องรับ "เควสพิเศษ" ของขั้นนั้นแล้วทำให้สำเร็จเท่านั้นถึงจะเรียนได้
+const QING_MAX_STEP = 3;
+const QING = [
+  {
+    id: "q1", step: 1, emoji: "👣", name: "ทะลวงป่าเร็ว", lv: 10,
+    lore: "ย่างเท้าเบาดั่งใบไม้ร่วง วิ่งฝ่าพงไพรได้โดยไม่สะดุดกิ่งไม้",
+    perk: "🏃 เดินเร็วขึ้น 15% · 💨 พุ่งไกลขึ้น 30% · คูลดาวน์พุ่งสั้นลง 25%",
+    quest: {
+      name: "รอยเท้าบนใบไม้",
+      giver: "ผู้เฒ่า: \"วิชาตัวเบาเริ่มที่ขา ไม่ใช่ที่ลม เจ้าจงวิ่งให้ครบระยะ แล้วปราบสิ่งที่ขวางทางเสีย\"",
+      goals: [
+        { k: "run", n: 600, label: "วิ่งสะสมให้ครบ" , unit: "ช่อง" },
+        { k: "win", n: 30, label: "ปราบมอนสเตอร์", unit: "ตัว" },
+      ],
+    },
+  },
+  {
+    id: "q2", step: 2, emoji: "🦵", name: "แอบขึ้นถนนชิงลม", lv: 30,
+    lore: "ถีบลมเป็นบันได ก้าวที่สองลอยขึ้นได้โดยไม่ต้องแตะพื้น",
+    perk: "🦘 กระโดดได้สองชั้น · กระโดดสูงขึ้น 20%",
+    quest: {
+      name: "ก้าวที่สองบนสายลม",
+      giver: "ผู้เฒ่า: \"ขาเบาแล้วยังไม่พอ ต้องรู้จักยืมแรงลม ฝึกกระโดดและถีบตัวให้ชินเสียก่อน\"",
+      goals: [
+        { k: "jump", n: 120, label: "กระโดด", unit: "ครั้ง" },
+        { k: "dash", n: 60, label: "พุ่งตัว", unit: "ครั้ง" },
+      ],
+    },
+  },
+  {
+    id: "q3", step: 3, emoji: "🐉", name: "มังกรเหินเมฆ", lv: 60,
+    lore: "ร่างเบาจนลมพยุงไว้ได้ ลอยข้ามหุบเขาดั่งมังกรเลื้อยบนเมฆ",
+    perk: "☁️ ค้างกลางอากาศได้ (ร่อนลงช้า) · 💨 พุ่งกลางอากาศได้อีก 1 ครั้ง",
+    quest: {
+      name: "ข้ามหุบด้วยลมใต้ปีก",
+      giver: "ผู้เฒ่า: \"ขั้นสุดท้ายไม่ได้วัดที่ขา แต่วัดที่ใจกล้า จงข้ามเขตแดนด้วยเท้าตัวเอง และโค่นเจ้าถิ่นให้ยอมรับเจ้า\"",
+      goals: [
+        { k: "cross", n: 5, label: "เดินข้ามเขตแดน", unit: "ครั้ง" },
+        { k: "bboss", n: 3, label: "โค่นบอสเจ้าถิ่น", unit: "ตัว" },
+      ],
+    },
+  },
+];
+const QING_BY = {}; QING.forEach((q) => (QING_BY[q.id] = q));
+// ================= 🍃 END วิชาตัวเบา =================
+
 // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen"];
+const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen"];
 const ST = (px) => `calc(env(safe-area-inset-top, 0px) + ${px}px)`;
 // 🌊 smoothstep — ไล่ค่าแบบเข้า-ออกนุ่ม (ใช้ลบมุมหักของคีย์เฟรม ให้ท่าลื่นไม่กระตุก)
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
@@ -17187,6 +17235,7 @@ export default function CherryAdventure() {
       char.position.z = -end.vz * back + (end.vx) * off;
       char.position.y = terrainAt(char.position.x, char.position.z);
       G._roadCool = 1.6;
+      if (G.qingEvent) G.qingEvent("cross", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 3
       const inf = G.roadInfo();
       toast(`🚶 ข้ามเขตเข้าสู่ ${end.emoji} ${end.name}${inf.route ? ` (${inf.route.emoji} ${inf.route.name} ${inf.step}/${inf.total})` : ""}`);
       return true;
@@ -21917,7 +21966,7 @@ export default function CherryAdventure() {
     const effMaxHp = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
-    const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
+    const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1) * (G.qingSpd ? G.qingSpd() : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => Math.min(CRIT_CAP, critRaw());   // 🎯 เกิน 75% แล้วไปเพิ่มดาเมจคริแทน (ไม่ทิ้งเปล่า) // 🎯 crit · 🍳 บัฟอาหาร · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
@@ -25261,6 +25310,7 @@ export default function CherryAdventure() {
       burst(m.position, 0xf5d05a, 1.0);
       if (G.sfx) G.sfx.win && G.sfx.win();
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
+      if (G.qingEvent) G.qingEvent("win", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 1
       if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id }); // 📖
       G.combo = (G.combo || 0) + 1;
       const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
@@ -25460,23 +25510,141 @@ export default function CherryAdventure() {
       if (q.kind === "skill") G.worldSkill(q.id);
       else { G._lastSkill = null; G.worldAttack(); }
     };
+    // ================= 🍃 วิชาตัวเบา — เครื่องยนต์ =================
+    // state: G.qing = { learned:{id:1}, taken:{id:1}, prog:{key:n} }
+    //   taken = รับเควสพิเศษของขั้นนั้นแล้ว · learned = ฝึกสำเร็จแล้ว
+    //   ความคืบหน้าจะเดินเฉพาะขั้นที่ "รับเควสแล้วและยังไม่สำเร็จ" เท่านั้น
+    G.qing = G.qing || { learned: {}, taken: {}, prog: {} };
+    const qingHas = (id) => !!(G.qing && G.qing.learned && G.qing.learned[id]);
+    G.qingHas = qingHas;
+    G.qingStep = () => { let n = 0; for (const q of QING) if (qingHas(q.id)) n = q.step; return n; };   // ขั้นสูงสุดที่ฝึกสำเร็จ (ต่อยอดเป็นทอด)
+    // ขั้นนี้เปิดให้รับเควสได้หรือยัง — ต้องผ่านขั้นก่อนหน้า + ถึงเลเวลที่กำหนด
+    G.qingReady = (q) => {
+      const prev = QING.find((x) => x.step === q.step - 1);
+      const lv = (G.player && G.player.level) || 1;
+      return (!prev || qingHas(prev.id)) && lv >= q.lv;
+    };
+    const qingGoalDone = (q) => q.quest.goals.every((g) => (G.qing.prog[q.id + ":" + g.k] || 0) >= g.n);
+    // ▶️ รับเควสพิเศษ (ไม่รับ = ความคืบหน้าไม่เดิน — บังคับให้ต้องมารับก่อนจริง ๆ)
+    G.qingTake = (id) => {
+      const q = QING_BY[id]; if (!q) return false;
+      if (qingHas(id)) { toast(`🍃 ฝึก${q.name}สำเร็จไปแล้ว`); return false; }
+      if (G.qing.taken[id]) { toast(`📜 รับเควส "${q.quest.name}" ไปแล้ว`); return false; }
+      if (!G.qingReady(q)) {
+        const prev = QING.find((x) => x.step === q.step - 1);
+        if (prev && !qingHas(prev.id)) toast(`🔒 ต้องฝึก${prev.name}ให้สำเร็จก่อน`);
+        else toast(`🔒 ต้องถึงเลเวล ${q.lv} ก่อนถึงจะรับเควสนี้ได้`);
+        return false;
+      }
+      G.qing.taken[id] = 1;
+      toast(`📜✨ รับเควสพิเศษ "${q.quest.name}" แล้ว!`);
+      if (G.sfx && G.sfx.button) G.sfx.button();
+      G.qingSync(); if (G.saveGame) G.saveGame();
+      return true;
+    };
+    // 📈 นับความคืบหน้า — เดินเฉพาะเควสที่รับแล้วและยังไม่สำเร็จ
+    G.qingEvent = (kind, n = 1) => {
+      if (!G.qing || !n) return;
+      let changed = false;
+      for (const q of QING) {
+        if (qingHas(q.id) || !G.qing.taken[q.id]) continue;
+        const g = q.quest.goals.find((x) => x.k === kind);
+        if (!g) continue;
+        const key = q.id + ":" + kind;
+        const cur = G.qing.prog[key] || 0;
+        if (cur >= g.n) continue;
+        const wasDone = qingGoalDone(q);
+        G.qing.prog[key] = Math.min(g.n, cur + n);
+        changed = true;
+        if (!wasDone && qingGoalDone(q)) {
+          toast(`📜✅ เควสพิเศษ "${q.quest.name}" สำเร็จ! เปิดเมนู 🍃 วิชาตัวเบา เพื่อฝึก`);
+          if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+        }
+      }
+      if (changed) { G._qingDirty = true; }
+    };
+    // 🎓 ฝึกวิชา (เรียนได้ก็ต่อเมื่อเควสพิเศษของขั้นนั้นสำเร็จแล้วเท่านั้น)
+    G.qingLearn = (id) => {
+      const q = QING_BY[id]; if (!q) return false;
+      if (qingHas(id)) return false;
+      if (!G.qing.taken[id]) { toast(`📜 ต้องรับเควสพิเศษ "${q.quest.name}" ก่อน`); return false; }
+      if (!qingGoalDone(q)) { toast(`📜 ยังทำเควส "${q.quest.name}" ไม่สำเร็จ`); return false; }
+      G.qing.learned[id] = 1;
+      toast(`🍃✨ ฝึก "${q.emoji} ${q.name}" สำเร็จ! ${q.perk}`);
+      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      G.qingSync(); syncPlayer(); if (G.saveGame) G.saveGame();
+      return true;
+    };
+    G.qingInfo = () => ({
+      step: G.qingStep(),
+      list: QING.map((q) => {
+        const goals = q.quest.goals.map((g) => ({ ...g, cur: Math.min(g.n, G.qing.prog[q.id + ":" + g.k] || 0) }));
+        const prev = QING.find((x) => x.step === q.step - 1);
+        return {
+          id: q.id, step: q.step, emoji: q.emoji, name: q.name, lv: q.lv, lore: q.lore, perk: q.perk,
+          quest: { name: q.quest.name, giver: q.quest.giver },
+          goals,
+          learned: qingHas(q.id),
+          taken: !!G.qing.taken[q.id],
+          ready: G.qingReady(q),
+          done: goals.every((g) => g.cur >= g.n),
+          needPrev: prev && !qingHas(prev.id) ? prev.name : null,
+        };
+      }),
+    });
+    G.qingSync = () => { G._qingDirty = false; setUi((u) => ({ ...u, qing: G.qingInfo() })); };
+    G.toggleQing = () => setUi((u) => {
+      const willOpen = !u.qingOpen;
+      const c = {}; MENU_FLAGS.forEach((f) => (c[f] = false));
+      return { ...u, ...c, menuOpen: false, qingOpen: willOpen, qing: G.qingInfo() };
+    });
+    // 🎁 อานิสงส์จากวิชาที่ฝึกได้
+    G.qingSpd = () => (qingHas("q1") ? 1.15 : 1);                       // 🏃 เดินเร็วขึ้น
+    G.qingDashMul = () => (qingHas("q1") ? 1.30 : 1);                   // 💨 พุ่งไกลขึ้น
+    G.qingDashCd = () => (qingHas("q1") ? 0.75 : 1);                    // ⏳ คูลดาวน์พุ่งสั้นลง
+    G.qingJumpMax = () => (qingHas("q2") ? 2 : 1);                      // 🦘 กระโดดสองชั้น
+    G.qingJumpH = () => (qingHas("q2") ? 1.20 : 1);                     // ⬆️ กระโดดสูงขึ้น
+    G.qingGlide = () => qingHas("q3");                                  // ☁️ ร่อนกลางอากาศ
+    // ================= 🍃 END วิชาตัวเบา =================
+
     // 🦘 กระโดด — โค้งพาราโบลาสั้น ๆ ลอยพ้นพื้น
     G.doJump = () => {
       if (G.mode !== "explore" || G._skCast) return false;
-      if ((G._jumpT || 0) > 0 || (G._dashT || 0) > 0) return false;   // ยังลอยอยู่/พุ่งอยู่ = กระโดดซ้อนไม่ได้
-      G._jumpT = 0.0001; G._jumpDur = 0.62; G._jumpH = 1.55;
-      if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.5);   // 💨 ฝุ่นตอนถีบพื้นขึ้น
-      G._jumpLanded = false;
+      if ((G._dashT || 0) > 0) return false;                          // กำลังพุ่งอยู่ = กระโดดซ้อนไม่ได้
+      const maxJ = G.qingJumpMax ? G.qingJumpMax() : 1;               // 🍃 แอบขึ้นถนนชิงลม = กระโดดได้สองชั้น
+      const air = (G._jumpT || 0) > 0;
+      if (air) {
+        if ((G._jumpN || 1) >= maxJ) return false;                    // ใช้ครบจำนวนชั้นแล้ว ต้องแตะพื้นก่อน
+        G._jumpN = (G._jumpN || 1) + 1;
+        if (G.puffDust) G.puffDust(char.position.x, char.position.y, char.position.z, 1.1);   // 💨 ถีบลมกลางอากาศ
+      } else {
+        G._jumpN = 1;
+        if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.5);                 // 💨 ฝุ่นตอนถีบพื้นขึ้น
+      }
+      const hMul = G.qingJumpH ? G.qingJumpH() : 1;
+      G._jumpT = 0.0001; G._jumpDur = 0.62; G._jumpH = 1.55 * hMul * (air ? 0.86 : 1);        // ชั้นสองเบากว่านิดหน่อย
+      G._jumpBase = air ? (G._jumpAirY || 0) : 0;                                             // ชั้นสองต่อยอดจากความสูงที่ค้างอยู่
+      G._glideT = 0;
+      if (G.qingEvent) G.qingEvent("jump", 1);                        // 📜 นับเควสพิเศษขั้น 2
       if (G.sfx && G.sfx.button) G.sfx.button();
       return true;
     };
     // 💨 พุ่ง — ถีบตัวไปข้างหน้าตามทิศที่หัน พร้อมเงาตามหลัง
     G.doDash = () => {
       if (G.mode !== "explore" || G._skCast) return false;
-      if ((G._dashCd || 0) > 0 || (G._dashT || 0) > 0) return false;
+      if ((G._dashT || 0) > 0) return false;
+      const air = (G._jumpT || 0) > 0;
+      // ☁️ มังกรเหินเมฆ = พุ่งกลางอากาศได้อีก 1 ครั้ง (ไม่มีวิชานี้ ลอยอยู่ก็พุ่งไม่ได้)
+      if (air) {
+        if (!(G.qingGlide && G.qingGlide()) || G._airDashUsed) return false;
+        G._airDashUsed = true;
+      } else if ((G._dashCd || 0) > 0) return false;
       const a = char.rotation.y;
-      G._dashT = 0.0001; G._dashDur = 0.30; G._dashCd = 0.85;
-      G._dashVX = Math.sin(a) * 44; G._dashVZ = Math.cos(a) * 44;   // ≈ 4.4 ช่อง ต่อการพุ่ง 1 ครั้ง
+      const mul = G.qingDashMul ? G.qingDashMul() : 1;
+      G._dashT = 0.0001; G._dashDur = 0.30;
+      if (!air) G._dashCd = 0.85 * (G.qingDashCd ? G.qingDashCd() : 1);
+      G._dashVX = Math.sin(a) * 44 * mul; G._dashVZ = Math.cos(a) * 44 * mul;   // ≈ 4.4 ช่อง (มีวิชา = 5.7 ช่อง)
+      if (G.qingEvent) G.qingEvent("dash", 1);                                  // 📜 นับเควสพิเศษขั้น 2
       if (G.sfx && G.sfx.button) G.sfx.button();
       return true;
     };
@@ -25497,13 +25665,26 @@ export default function CherryAdventure() {
       if ((G._jumpT || 0) > 0) {
         G._jumpT += dt;
         const k = Math.min(1, G._jumpT / G._jumpDur);
+        // ☁️ มังกรเหินเมฆ — ค้างกดกระโดด/พุ่งขาลงแล้วร่อนลงช้า ๆ แทนที่จะตกทันที
+        const canGlide = !!(G.qingGlide && G.qingGlide());
+        const falling = k > 0.5;
+        if (canGlide && falling && (G.keys[" "] || G.keys["shift"] || G._glideHold)) {
+          G._glideT = (G._glideT || 0) + dt;
+          if (G._glideT < 1.6) {                         // ร่อนค้างได้สูงสุด 1.6 วิ
+            G._jumpT -= dt * 0.72;                       // หน่วงเวลาตกลง = ลอยค้าง
+            G._jumpAirY = (G._jumpBase || 0) + Math.sin(Math.min(1, G._jumpT / G._jumpDur) * Math.PI) * G._jumpH;
+            return G._jumpAirY;
+          }
+        }
         if (G._jumpT >= G._jumpDur) {
-          G._jumpT = 0;
+          G._jumpT = 0; G._jumpN = 0; G._airDashUsed = false; G._glideT = 0; G._jumpAirY = 0; G._jumpBase = 0;
           if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.7);   // 💨 ฝุ่นตอนลงพื้น
           return 0;
         }
-        return Math.sin(k * Math.PI) * G._jumpH;        // โค้งขึ้น-ลงนุ่ม ๆ
+        G._jumpAirY = (G._jumpBase || 0) + Math.sin(k * Math.PI) * G._jumpH;
+        return G._jumpAirY;                              // โค้งขึ้น-ลงนุ่ม ๆ
       }
+      G._jumpN = 0; G._airDashUsed = false;
       return 0;
     };
     G.hopAir = () => ((G._jumpT || 0) > 0 ? Math.sin(Math.min(1, G._jumpT / G._jumpDur) * Math.PI) : 0);
@@ -30743,6 +30924,7 @@ export default function CherryAdventure() {
       if (G.enemy.biomeBoss) {
         const bid = G.enemy.biomeBoss;
         if (G.storyEvent) G.storyEvent("bboss", 1, { biome: bid }); // 📖
+        if (G.qingEvent) G.qingEvent("bboss", 1);                   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 3
         if (!G.biomeBossDefeated[bid]) {
           G.biomeBossDefeated[bid] = true;
           G.gold += 500;
@@ -31624,6 +31806,7 @@ export default function CherryAdventure() {
       // ␣ เว้นวรรค = กระโดด · ⇧ Shift = พุ่ง
       if (k === " " || k === "spacebar") { e.preventDefault(); if (G.doJump) G.doJump(); return; }
       if (k === "shift") { if (G.doDash) G.doDash(); return; }
+      if (k === " " || k === "spacebar") { G._glideHold = 1; }   // ☁️ ค้างเว้นวรรค = ร่อน (ถ้าฝึกมังกรเหินเมฆแล้ว)
       // ⌨️ คีย์ลัดเมนู: K สกิล · B กระเป๋า · P พีวีพี · G เพื่อน · C เควส · Z สัตว์เลี้ยง · X ขี่สัตว์ · O เมนูรวม · 1 ยาเลือด · 2 ยามานา
       if (G.hotMenu && G.hotMenu(k)) { e.preventDefault(); return; }
       // Esc / กด B ซ้ำ = ปิดหน้ากระเป๋า
@@ -31637,7 +31820,11 @@ export default function CherryAdventure() {
       //    กดตอนกำลังออกท่าอยู่ = จองคิวไว้ยิงต่อทันทีที่ท่าปัจจุบันจบ
       if (G.mode === "explore" && G.orderAct) G.orderAct("skill", sk.id);
     };
-    const onKeyUp = (e) => (G.keys[e.key.toLowerCase()] = false);
+    const onKeyUp = (e) => {
+      const k = e.key.toLowerCase();
+      G.keys[k] = false;
+      if (k === " " || k === "spacebar" || k === "shift") G._glideHold = 0;   // ☁️ ปล่อยปุ่ม = เลิกร่อน
+    };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
 
@@ -31688,6 +31875,8 @@ export default function CherryAdventure() {
       G.mbook = null; if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // 📖 ตัวละครใหม่ = สมุดภารกิจชุดใหม่
       G.guildId = null; G.guild = null; G.guildRows = [];   // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
       G.warpScrolls = 0;   // 📜 ตัวละครใหม่ยังไม่มีใบวาร์ป
+      G.qing = { learned: {}, taken: {}, prog: {} };   // 🍃 ยังไม่ได้ฝึกวิชาตัวเบาสักขั้น
+      G._qRunX = null; G._qRunZ = null; G._qRunAcc = 0;
       G.mineLv = 1; G.mineExp = 0; G.pickLv = 1; G.mineTotal = 0;   // ⛏️ เริ่มด้วยอีเต้อไม้
       G.cookLv = 1; G.cookExp = 0; G.cookTotal = 0; G.fishBag = { common: 0, rare: 0, epic: 0 }; G.foodBuff = null; G.foodBag = [];   // 🍳 ครัวเปล่า
       G.fishLv = 1; G.fishExp = 0; G.fishTotal = 0; G.fishCaught = {};   // 🎣 เริ่มตกปลาใหม่
@@ -31769,7 +31958,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0,
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } },
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -33709,6 +33898,13 @@ export default function CherryAdventure() {
       }
       G.petSp = d.petSp || 0;
       G.petSkillLv = d.petSkillLv || {};
+      // 🍃 วิชาตัวเบา — ฝึกได้จากเควสพิเศษเท่านั้น จึงต้องกู้ทั้งวิชาที่ฝึกแล้ว เควสที่รับไว้ และความคืบหน้า
+      G.qing = {
+        learned: (d.qing && d.qing.learned) ? { ...d.qing.learned } : {},
+        taken: (d.qing && d.qing.taken) ? { ...d.qing.taken } : {},
+        prog: (d.qing && d.qing.prog) ? { ...d.qing.prog } : {},
+      };
+      G._qRunX = null; G._qRunZ = null; G._qRunAcc = 0;
       G.ngPlus = d.ngPlus || 0;
       G.storyChapter = d.storyChapter || 0;
       G.pvpRank = d.pvpRank || 1000;
@@ -33749,6 +33945,7 @@ export default function CherryAdventure() {
         ...u, mode: "explore", cls: G.cls,
         col: { ...G.col }, pets: { ...G.pets }, msg: "",
       }));
+      if (G.qingSync) G.qingSync();   // 🍃 ส่งสถานะวิชาตัวเบาเข้าหน้าจอ
       syncPlayer();
     };
     // read all 3 save slots → show them on the title screen
@@ -35314,6 +35511,19 @@ export default function CherryAdventure() {
           }
         } catch (err) { try { console.warn("ranch zone frame error", err); } catch (_) {} }
 
+        // 🍃📜 นับระยะวิ่งสะสมให้เควสพิเศษวิชาตัวเบา (เฉพาะตอนเดินจริงบนพื้น ไม่นับตอนขี่สัตว์)
+        if (G.qingEvent && !G.mountId) {
+          const _px = G._qRunX, _pz = G._qRunZ;
+          if (_px != null) {
+            const d = Math.hypot(char.position.x - _px, char.position.z - _pz);
+            if (d > 0.02 && d < 3) {                       // กันค่ากระโดดตอนวาร์ป/สลับแมพ
+              G._qRunAcc = (G._qRunAcc || 0) + d;
+              if (G._qRunAcc >= 5) { const w = Math.floor(G._qRunAcc); G._qRunAcc -= w; G.qingEvent("run", w); }
+            }
+          }
+          G._qRunX = char.position.x; G._qRunZ = char.position.z;
+        }
+        if (G._qingDirty) { G._qingDirty = false; if (G.qingSync) G.qingSync(); }   // อัปเดตหน้าจอเมื่อความคืบหน้าขยับ
         // 💾 autosave every few seconds
         G.saveT = (G.saveT || 0) + dt;
         if (G.achStats) G.achStats.playSec = (G.achStats.playSec || 0) + dt; // ⏱️ playtime
@@ -47401,6 +47611,138 @@ export default function CherryAdventure() {
         );
       })()}
 
+      {/* 🍃 วิชาตัวเบา — สายวิชาเคลื่อนไหว 3 ขั้น ฝึกได้จากเควสพิเศษเท่านั้น */}
+      {ui.qingOpen && (() => {
+        const QI = ui.qing || { step: 0, list: [] };
+        const wide = window.innerWidth > 660;
+        const tile = (q) => {
+          const st = q.learned ? "learned" : q.done && q.taken ? "ready" : q.taken ? "doing" : q.ready ? "open" : "locked";
+          const col = { learned: "#f5d24a", ready: "#7cf0b0", doing: "#8fd0ff", open: "#c8d0c0", locked: "#5a6a58" }[st];
+          const sel = ui.qingSel === q.id;
+          return (
+            <button key={q.id} onClick={() => setUi((u) => ({ ...u, qingSel: u.qingSel === q.id ? null : q.id }))} style={{
+              position: "relative", width: wide ? 88 : 74, flexShrink: 0, padding: 0, cursor: "pointer", fontFamily: font,
+              background: "transparent", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+            }}>
+              <div style={{
+                width: wide ? 82 : 68, height: wide ? 82 : 68, borderRadius: 13, position: "relative",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: wide ? 36 : 30,
+                background: q.learned
+                  ? "linear-gradient(155deg,#3f6a52,#1e3a2c)"
+                  : "linear-gradient(155deg,rgba(255,255,255,0.06),rgba(14,22,18,0.9))",
+                border: `2px solid ${sel ? "#fff" : col}`,
+                boxShadow: q.learned
+                  ? "0 0 14px rgba(245,210,74,0.55), inset 0 1px 0 rgba(255,255,255,0.12)"
+                  : sel ? "0 0 0 2px rgba(255,255,255,0.28)" : "0 3px 12px rgba(0,0,0,0.42)",
+                filter: st === "locked" ? "grayscale(0.75)" : "none", opacity: st === "locked" ? 0.55 : 1,
+              }}>
+                {q.emoji}
+                {st === "locked" && <span style={{ position: "absolute", right: 3, bottom: 2, fontSize: 13 }}>🔒</span>}
+                {st === "learned" && <span style={{ position: "absolute", right: 2, top: 1, fontSize: 12 }}>✓</span>}
+                {st === "ready" && <span style={{ position: "absolute", inset: -4, borderRadius: 16, border: "2px dashed #7cf0b0", animation: "pulse 0.8s ease-in-out infinite alternate", pointerEvents: "none" }} />}
+              </div>
+              <span style={{ fontSize: 9.5, fontWeight: 800, color: q.learned ? "#ffe9a8" : col, maxWidth: "100%", textAlign: "center", lineHeight: 1.25 }}>{q.name}</span>
+            </button>
+          );
+        };
+        const sel = QI.list.find((x) => x.id === ui.qingSel) || QI.list.find((x) => !x.learned) || QI.list[QI.list.length - 1];
+        return (
+          <div onClick={() => G.toggleQing()} style={{
+            position: "absolute", inset: 0, zIndex: 52, display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 8, fontFamily: font,
+            background: "radial-gradient(125% 95% at 50% 22%, rgba(46,86,66,0.42), rgba(7,12,10,0.88))",
+            backdropFilter: "blur(9px)", WebkitBackdropFilter: "blur(9px)",
+          }}>
+            <div onClick={(e) => e.stopPropagation()} style={{
+              width: wide ? "min(96vw, 660px)" : "min(96vw, 420px)", maxHeight: "94vh", overflowY: "auto",
+              borderRadius: 22, color: "#e6f0e2", padding: "12px 14px 14px",
+              background: "linear-gradient(168deg,#2f4a3c 0%,#1c2e26 46%,#141f1a 100%)",
+              border: "1px solid rgba(160,220,180,0.28)",
+              boxShadow: "0 28px 70px rgba(0,0,0,0.65), 0 2px 0 rgba(255,255,255,0.05) inset",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 900, color: "#bff0cf" }}>🍃 วิชาตัวเบา</span>
+                <span style={{ fontSize: 9.5, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.24)", borderRadius: 7, padding: "2px 7px" }}>ฝึกได้จากเควสพิเศษเท่านั้น</span>
+                <div style={{ flex: 1 }} />
+                <span style={{ fontSize: 10.5, fontWeight: 800, color: "#f5d24a" }}>ขั้น {QI.step}/3</span>
+                <button onClick={() => G.toggleQing()} title="ปิด" style={{ width: 28, height: 28, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.34)", color: "#e6f0e2", fontSize: 14, cursor: "pointer", padding: 0 }}>✕</button>
+              </div>
+
+              {/* ตำรา → ขั้นวิชา */}
+              <div style={{ display: "flex", alignItems: "center", gap: wide ? 12 : 7, padding: "11px 10px", borderRadius: 16, marginBottom: 10,
+                background: "linear-gradient(170deg, rgba(255,255,255,0.05), rgba(0,0,0,0.22))", border: "1px solid rgba(255,255,255,0.09)" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <div style={{ fontSize: wide ? 40 : 32, filter: QI.step > 0 ? "drop-shadow(0 0 9px rgba(245,210,74,0.6))" : "grayscale(0.6)" }}>📙</div>
+                  <span style={{ fontSize: 10.5, fontWeight: 900, color: "#e8dcc0" }}>วิชาตัวเบา</span>
+                </div>
+                <span style={{ fontSize: wide ? 24 : 18, color: "#f5d24a", flexShrink: 0, opacity: 0.85 }}>》</span>
+                <div style={{ display: "flex", gap: wide ? 10 : 5, flex: 1, justifyContent: "space-around", minWidth: 0 }}>
+                  {QI.list.map(tile)}
+                </div>
+              </div>
+
+              {/* รายละเอียดขั้นที่เลือก */}
+              {sel && (
+                <div style={{ borderRadius: 16, padding: "11px 12px",
+                  background: "linear-gradient(170deg, rgba(0,0,0,0.26), rgba(0,0,0,0.10))", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+                    <span style={{ fontSize: 20 }}>{sel.emoji}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 900, color: sel.learned ? "#ffe9a8" : "#dff0e4" }}>ขั้น {sel.step} · {sel.name}</span>
+                    {sel.learned && <span style={{ fontSize: 9.5, fontWeight: 800, color: "#2a3a20", background: "#f5d24a", borderRadius: 7, padding: "1px 7px" }}>ฝึกแล้ว</span>}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#a8c0b0", lineHeight: 1.55, marginBottom: 6 }}>{sel.lore}</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8fe0b0", background: "rgba(60,160,110,0.16)", borderRadius: 10, padding: "6px 9px", marginBottom: 8 }}>{sel.perk}</div>
+
+                  {sel.learned ? (
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#f5d24a", textAlign: "center", padding: "6px 0" }}>🍃 ฝึกสำเร็จแล้ว — อานิสงส์ติดตัวตลอด</div>
+                  ) : sel.needPrev ? (
+                    <div style={{ fontSize: 10.5, color: "#ff9a6a", textAlign: "center", padding: "7px 0" }}>🔒 ต้องฝึก{sel.needPrev}ให้สำเร็จก่อน</div>
+                  ) : !sel.ready ? (
+                    <div style={{ fontSize: 10.5, color: "#ff9a6a", textAlign: "center", padding: "7px 0" }}>🔒 ต้องถึงเลเวล {sel.lv} ก่อนถึงจะรับเควสพิเศษนี้ได้</div>
+                  ) : !sel.taken ? (
+                    <div>
+                      <div style={{ fontSize: 10.5, color: "#cfe0c8", lineHeight: 1.6, fontStyle: "italic", marginBottom: 7 }}>📜 เควสพิเศษ "{sel.quest.name}"<br />{sel.quest.giver}</div>
+                      <button onClick={() => { G.qingTake(sel.id); }} style={{ width: "100%", padding: "9px 0", borderRadius: 999, border: "none", cursor: "pointer",
+                        fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#12241a",
+                        background: "linear-gradient(135deg,#8fe0b0,#4aa87a)", boxShadow: "0 4px 14px rgba(70,180,130,0.45)" }}>📜 รับเควสพิเศษ</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: 10.5, fontWeight: 800, color: "#bff0cf", marginBottom: 5 }}>📜 เควสพิเศษ "{sel.quest.name}"</div>
+                      {sel.goals.map((g) => {
+                        const pct = Math.min(100, Math.round(g.cur / g.n * 100));
+                        return (
+                          <div key={g.k} style={{ marginBottom: 6 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, fontWeight: 700, color: g.cur >= g.n ? "#8fe0b0" : "#cfe0c8", marginBottom: 2 }}>
+                              <span>{g.cur >= g.n ? "✅" : "▫️"} {g.label}</span>
+                              <span>{g.cur.toLocaleString()} / {g.n.toLocaleString()} {g.unit}</span>
+                            </div>
+                            <div style={{ height: 6, borderRadius: 999, background: "rgba(0,0,0,0.35)", overflow: "hidden" }}>
+                              <div style={{ width: pct + "%", height: "100%", borderRadius: 999, background: g.cur >= g.n ? "linear-gradient(90deg,#7cf0b0,#3fbf80)" : "linear-gradient(90deg,#8fd0ff,#4a86d0)", transition: "width .3s" }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <button onClick={() => { G.qingLearn(sel.id); }} disabled={!sel.done} style={{ width: "100%", marginTop: 4, padding: "9px 0", borderRadius: 999, border: "none",
+                        cursor: sel.done ? "pointer" : "not-allowed", fontSize: 12.5, fontWeight: 900, fontFamily: font,
+                        color: sel.done ? "#2a2416" : "#7d8a7b",
+                        background: sel.done ? "linear-gradient(135deg,#ffe08a,#e0a83a)" : "rgba(255,255,255,0.07)",
+                        boxShadow: sel.done ? "0 4px 14px rgba(224,168,58,0.45)" : "none" }}>
+                        {sel.done ? "🎓 ฝึกวิชานี้" : "ทำเควสให้สำเร็จก่อนถึงจะฝึกได้"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div style={{ fontSize: 9, color: "#8aa898", marginTop: 8, lineHeight: 1.5 }}>
+                🍃 วิชาตัวเบาซื้อด้วยทอง เพชร หรือแต้มสกิลไม่ได้ — ต้องรับเควสพิเศษของแต่ละขั้นแล้วทำให้สำเร็จเท่านั้น
+                {QI.step >= 3 ? " · ☁️ กดค้างเว้นวรรค/Shift ตอนขาลง = ร่อนกลางอากาศ" : ""}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 📜 ยืนยันวาร์ปจากแผนที่ — ใบวาร์ปใช้แล้วหมด เลยถามก่อนหักจริง */}
       {ui.mapWarp && (
         <div onClick={() => G.mapWarpCancel && G.mapWarpCancel()} style={{
@@ -48546,6 +48888,7 @@ export default function CherryAdventure() {
               ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
               ["📖", "สมุดภารกิจ", () => G.toggleMbook(), "#f5d24a", "mbook"],
               ["🏰", "กิลด์", () => G.toggleGuild(), "#8fd0ff"],
+              ["🍃", "วิชาตัวเบา", () => G.toggleQing(), "#6fd0a0", "qing"],
               ["📜", "ใบวาร์ปข้ามแดน", () => G.useWarpScroll(), "#7ab0e8"],
             ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a", "kitchen"],
