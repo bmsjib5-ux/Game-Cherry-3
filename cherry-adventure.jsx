@@ -266,8 +266,8 @@ const QING_BY = {}; QING.forEach((q) => (QING_BY[q.id] = q));
 // ================= 🍃 END วิชาตัวเบา =================
 
 // 🪟 all bottom-menu panels — opening one closes the others (no overlap)
-// ✨ ปลุกพลัง (awaken) — ของที่ตีบวกเต็ม +20 แล้ว เอาของ "ประเภทเดียวกัน" (ช่องสวมใส่เดียวกัน)
-// ที่ตีบวก +20 เหมือนกันมาปลุกพลังต่อได้อีก 5 ขั้น (★1..★5) ขั้นละ +50% ของค่าพื้นฐาน
+// ✨ ปลุกพลัง (awaken) — ของที่ตีบวกเต็ม +20 แล้ว เอา "ของชนิดเดียวกัน ระดับเดียวกัน" (ไอเทมชิ้นเดิมเป๊ะ ๆ
+// และตีบวกเท่ากัน) อีก 1 ชิ้นมาปลุกพลังต่อได้อีก 5 ขั้น (★1..★5) ขั้นละ +50% ของค่าพื้นฐาน
 const AWK_REQ = 20;   // ต้อง +20 ก่อนถึงปลุกได้ (ทั้งของที่จะปลุก และของที่เอามาเป็นวัตถุดิบ)
 const AWK_MAX = 5;    // ปลุกได้สูงสุด ★5
 const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
@@ -22416,23 +22416,15 @@ export default function CherryAdventure() {
     const awkOf = (id) => ((G.awk || (G.awk = {}))[id] || 0);
     G.awkOf = awkOf;
     const invCount = (id) => (G.inv || []).filter((x) => x === id).length;
-    // 🔎 ของที่ใช้เป็นวัตถุดิบปลุกพลังของชิ้น targetId ได้บ้าง
+    // 🔎 วัตถุดิบปลุกพลัง — ต้องเป็น "ของชนิดเดียวกัน ระดับเดียวกัน" เท่านั้น
+    //    = ไอเทมชิ้นเดิมเป๊ะ ๆ (id เดียวกัน) ที่ตีบวกเท่ากัน จึงต้องมีของซ้ำอย่างน้อย 2 ชิ้น
     G.awkMatsFor = (targetId) => {
       const t = LOOT.find((x) => x.id === targetId);
       if (!t) return [];
-      const seen = {};
-      const out = [];
-      (G.inv || []).forEach((mid) => {
-        if (seen[mid]) return; seen[mid] = 1;
-        const it = LOOT.find((x) => x.id === mid);
-        if (!it || it.slot !== t.slot) return;            // ต้องเป็นประเภท (ช่องสวมใส่) เดียวกัน
-        if ((G.plus[mid] || 0) < AWK_REQ) return;         // ต้อง +20 เหมือนกัน
-        const cnt = invCount(mid);
-        if (mid === targetId && cnt < 2) return;          // ชิ้นเดียวกันต้องมีซ้ำถึงจะกินตัวเองได้
-        const eq = G.equip && G.equip[it.slot] === mid;
-        out.push({ id: mid, name: it.name, emoji: it.emoji, rarity: it.rarity, count: cnt, plus: G.plus[mid] || 0, awk: awkOf(mid), equipped: !!eq, blocked: !!eq && cnt <= 1 });
-      });
-      return out.sort((a, b) => (a.blocked - b.blocked) || (TIER[a.rarity] - TIER[b.rarity]) || (a.awk - b.awk));
+      const cnt = invCount(targetId);
+      const plus = G.plus[targetId] || 0;
+      if (cnt < 2 || plus < AWK_REQ) return [];
+      return [{ id: targetId, name: t.name, emoji: t.emoji, rarity: t.rarity, count: cnt, plus, awk: awkOf(targetId), equipped: !!(G.equip && G.equip[t.slot] === targetId), blocked: false }];
     };
     // 📋 รายการของทั้งหมดในกระเป๋าที่เกี่ยวกับการปลุกพลัง (พร้อมปลุก / ยังไม่ถึง +20)
     G.awkList = () => {
@@ -22459,12 +22451,11 @@ export default function CherryAdventure() {
       if ((G.plus[id] || 0) < AWK_REQ) { toast(`✨ ต้องตีบวกให้ถึง +${AWK_REQ} ก่อนถึงจะปลุกพลังได้`); return; }
       if (awkOf(id) >= AWK_MAX) { toast(`✨ ปลุกพลังเต็ม ${awkStars(AWK_MAX)} แล้ว!`); return; }
       if (!mit) { toast("เลือกของที่จะใช้ปลุกพลังก่อนนะ"); return; }
-      if (mit.slot !== it.slot) { toast(`✨ ต้องใช้ของประเภทเดียวกัน (${SLOT_NAMES[it.slot] || it.slot}) เท่านั้น`); return; }
+      // 🔒 ต้องเป็นของชนิดเดียวกัน (ไอเทมชิ้นเดิม) และระดับตีบวกเท่ากันเท่านั้น
+      if (matId !== id) { toast(`✨ ต้องใช้ ${it.emoji} ${it.name} ชนิดเดียวกัน ระดับเดียวกัน (+${AWK_REQ}) เท่านั้น`); return; }
       const cnt = invCount(matId);
-      if (cnt < 1) { toast("ไม่มีวัตถุดิบชิ้นนี้ในกระเป๋า"); return; }
-      if ((G.plus[matId] || 0) < AWK_REQ) { toast(`✨ วัตถุดิบต้องตีบวก +${AWK_REQ} เหมือนกัน`); return; }
-      if (matId === id && cnt < 2) { toast("ใช้ชิ้นเดียวกันได้ก็ต่อเมื่อมีของซ้ำอีกชิ้น"); return; }
-      if (G.equip && G.equip[mit.slot] === matId && cnt <= 1) { toast("ชิ้นนี้กำลังสวมใส่อยู่ — ถอดออกก่อนถึงจะใช้เป็นวัตถุดิบได้"); return; }
+      if (cnt < 2) { toast(`✨ ต้องมี ${it.emoji} ${it.name} +${G.plus[id] || 0} ซ้ำอีก 1 ชิ้นมาเป็นวัตถุดิบ`); return; }
+      if ((G.plus[matId] || 0) !== (G.plus[id] || 0)) { toast(`✨ ระดับตีบวกต้องเท่ากัน (+${G.plus[id] || 0})`); return; }
       // 🔥 กินวัตถุดิบ
       G.inv.splice(G.inv.indexOf(matId), 1);
       if (!G.inv.includes(matId)) { delete G.plus[matId]; if (G.awk) delete G.awk[matId]; }
@@ -51245,7 +51236,7 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 12, fontWeight: 800, color: "#c08a20", margin: "2px 0 5px" }}>✨ ปลุกพลังอาวุธ & ชุด</div>
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 7, lineHeight: 1.5 }}>
                 ① ตีบวกของชิ้นที่จะปลุกให้ถึง <b style={{ color: "#e0a020" }}>+{AWK_REQ}</b> ก่อน<br />
-                ② ใช้ <b>อาวุธ/ชุด “ประเภทเดียวกัน” (ช่องสวมใส่เดียวกัน) ที่ +{AWK_REQ}</b> อีก 1 ชิ้นเป็นวัตถุดิบ (วัตถุดิบจะหายไป)<br />
+                ② ใช้ <b>ของชนิดเดียวกัน ระดับเดียวกัน</b> (ไอเทมชิ้นเดิมเป๊ะ ๆ ที่ +{AWK_REQ} เท่ากัน) ซ้ำอีก <b>1 ชิ้น</b> เป็นวัตถุดิบ — วัตถุดิบจะหายไป<br />
                 ③ ปลุกได้สูงสุด <b style={{ color: "#f5c542" }}>{awkStars(AWK_MAX)}</b> · ดาวละ <b>+{Math.round(AWK_STEP * 100)}%</b> ของค่าพื้นฐาน · การันตี ไม่มีพลาด
               </div>
               {(() => {
@@ -51256,57 +51247,34 @@ export default function CherryAdventure() {
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#b0801a", marginBottom: 6 }}>🔓 พร้อมปลุกพลัง ({A.ready.length})</div>
                     {!A.ready.length && <div style={{ fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0" }}>ยังไม่มีของที่ตีบวกถึง +{AWK_REQ} — ไปที่แท็บ ⚒️ ตีบวก ก่อนนะ</div>}
                     {A.ready.map((r) => {
-                      const open = ui.awkPick === r.id;
                       const full = r.awk >= AWK_MAX;
-                      const usable = (r.mats || []).filter((m) => !m.blocked);
+                      const mat = (r.mats || [])[0];      // 🔒 วัตถุดิบมีได้แบบเดียว = ของซ้ำชนิด/ระดับเดียวกัน
+                      const can = !full && !!mat;
                       return (
-                        <div key={r.id} style={{ background: "#fff", borderRadius: 10, padding: "6px 8px", marginBottom: 5, border: "1px solid " + (open ? "#e8b93a" : "#f0e2c8") }}>
+                        <div key={r.id} style={{ background: "#fff", borderRadius: 10, padding: "6px 8px", marginBottom: 5, border: "1px solid " + (can ? "#e8b93a" : "#f0e2c8") }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 11.5, fontWeight: 800, color: RARITY[r.rarity].color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {r.emoji} {r.name} <span style={{ color: "#e0a020" }}>+{r.plus}</span>{r.awk > 0 && <span style={{ color: "#f5c542" }}> {awkStars(r.awk)}</span>}
+                                {r.emoji} {r.name} <span style={{ color: "#e0a020" }}>+{r.plus}</span>{r.awk > 0 && <span style={{ color: "#f5c542" }}> {awkStars(r.awk)}</span>} <span style={{ color: "#8a9aa8", fontSize: 10 }}>×{r.count}</span>
                               </div>
                               <div style={{ fontSize: 9.5, color: "#8a9aa8" }}>
                                 {SLOT_ICON[r.slot] || ""} {r.slotName}
                                 {r.equipped && <span style={{ marginLeft: 5, color: "#3f9a54", fontWeight: 800, background: "#d6f0dc", borderRadius: 999, padding: "1px 6px" }}>🟢 กำลังใส่</span>}
-                                <span style={{ marginLeft: 5, color: full ? "#c08a20" : (usable.length ? "#5a8a3a" : "#c07a6a") }}>
-                                  {full ? "ปลุกเต็มแล้ว" : `วัตถุดิบพร้อม ${usable.length} แบบ`}
-                                </span>
+                              </div>
+                              <div style={{ fontSize: 9.5, fontWeight: 800, marginTop: 2, color: full ? "#c08a20" : (can ? "#5a8a3a" : "#c07a6a") }}>
+                                {full ? `ปลุกเต็ม ${awkStars(AWK_MAX)} แล้ว`
+                                      : can ? `✅ วัตถุดิบพร้อม — ใช้ ${r.emoji} ${r.name} +${r.plus} ซ้ำ 1 ชิ้น (เหลือ ${r.count - 1})`
+                                            : `❌ ต้องมี ${r.emoji} ${r.name} +${r.plus} ซ้ำอีก 1 ชิ้น (มี ${r.count})`}
                               </div>
                             </div>
-                            <button disabled={full} onClick={() => setUi((u) => ({ ...u, awkPick: u.awkPick === r.id ? null : r.id }))} style={{
-                              border: "none", borderRadius: 9, padding: "6px 11px", cursor: full ? "default" : "pointer", whiteSpace: "nowrap",
-                              fontSize: 10.5, fontWeight: 900, fontFamily: font, color: full ? "#a89878" : "#4a3a10",
-                              background: full ? "#eee6d6" : "linear-gradient(135deg,#f5c542,#ffd76a)",
-                            }}>{full ? awkStars(AWK_MAX) : (open ? "▲ ปิด" : `✨ ปลุก → ${awkStars(r.awk + 1)}`)}</button>
+                            <button disabled={!can} onClick={() => can && G.awakenItem && G.awakenItem(r.id, mat.id)}
+                              title={can ? `ปลุกพลัง → ${awkStars(r.awk + 1)} · ใช้ ${r.name} +${r.plus} ซ้ำ 1 ชิ้น` : (full ? "ปลุกเต็มแล้ว" : "ต้องมีของชนิดเดียวกัน ระดับเดียวกัน ซ้ำอีก 1 ชิ้น")}
+                              style={{
+                                border: "none", borderRadius: 9, padding: "7px 11px", cursor: can ? "pointer" : "default", whiteSpace: "nowrap",
+                                fontSize: 10.5, fontWeight: 900, fontFamily: font, color: can ? "#4a3a10" : "#a89878",
+                                background: can ? "linear-gradient(135deg,#f5c542,#ffd76a)" : "#eee6d6",
+                              }}>{full ? awkStars(AWK_MAX) : `✨ ปลุก → ${awkStars(r.awk + 1)}`}</button>
                           </div>
-                          {open && !full && (
-                            <div style={{ marginTop: 7, borderTop: "1px dashed #eadcc0", paddingTop: 6 }}>
-                              <div style={{ fontSize: 9.5, fontWeight: 800, color: "#a08050", marginBottom: 5 }}>เลือกวัตถุดิบ — {r.slotName} ที่ +{AWK_REQ} (จะถูกใช้ไป 1 ชิ้น)</div>
-                              {!(r.mats || []).length && <div style={{ fontSize: 10, color: "#c07a6a", padding: "4px 0" }}>ยังไม่มี{r.slotName}ชิ้นอื่นที่ตีบวก +{AWK_REQ} — ตีบวกอีกชิ้นให้เต็มก่อนนะ</div>}
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                                {(r.mats || []).map((m) => (
-                                  <button key={m.id} disabled={m.blocked}
-                                    onClick={() => G.awakenItem && G.awakenItem(r.id, m.id)}
-                                    title={m.blocked ? "กำลังสวมใส่อยู่ (เหลือชิ้นเดียว) — ถอดออกก่อน" : `ใช้ ${m.name} +${m.plus} เป็นวัตถุดิบ`}
-                                    style={{
-                                      display: "flex", alignItems: "center", gap: 4, maxWidth: "100%",
-                                      border: "1px solid " + (m.blocked ? "#e0d8cc" : RARITY[m.rarity].color + "66"),
-                                      borderRadius: 9, padding: "4px 8px", cursor: m.blocked ? "not-allowed" : "pointer",
-                                      fontFamily: font, fontSize: 10, fontWeight: 800,
-                                      color: m.blocked ? "#b8b0a0" : RARITY[m.rarity].color,
-                                      background: m.blocked ? "#f4f1ea" : "#fffdf5", opacity: m.blocked ? 0.65 : 1,
-                                    }}>
-                                    <span>{m.emoji}</span>
-                                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 96 }}>{m.name}</span>
-                                    <span style={{ color: "#e0a020" }}>+{m.plus}</span>
-                                    <span style={{ color: "#8a9aa8" }}>×{m.count}</span>
-                                    {m.blocked && <span style={{ color: "#c07a6a" }}>🔒</span>}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       );
                     })}
