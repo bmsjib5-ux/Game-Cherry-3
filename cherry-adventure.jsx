@@ -326,6 +326,8 @@ const CRIT_DMG_BASE = 100;    // คริพื้นฐาน = ×2
 const CRIT_DMG_CAP = 320;     // ดาเมจคริรวมสูงสุด ×4.2
 const FOOD_CAP = { atkPct: 60, defPct: 60, hpPct: 60, crit: 25, luck: 30, expPct: 120, goldPct: 120, dropPct: 60 };
 const ATK_PER_LV = 2.5;
+const FBOSS_RESPAWN_MS = 10 * 60 * 1000;   // 👑 บอสประจำถิ่นเกิดใหม่ทุก 10 นาทีหลังถูกโค่น
+const FBOSS_GUARDS = 5;                    // 👥 ลูกน้องที่เดินวนรอบบอสประจำถิ่น
 // ⚔️ น้ำหนักพลังโจมตีจากอาวุธ/ชุดที่สวมใส่ — คูณเฉพาะส่วนที่ได้จากไอเทม (รวมตีบวก/ปลุกพลัง/อัญมณี/โบนัสเซ็ต)
 // ตั้งไว้ 2.5 เพื่อให้ "หาของดี ตีบวก ปลุกพลัง" คุ้มกว่าเดิมมาก แทนที่จะโตตามเลเวลอย่างเดียว
 const GEAR_ATK_W = 2.5;
@@ -15850,10 +15852,102 @@ export default function CherryAdventure() {
       scene.add(m);
       wilds.push(m);
     };
+    // ================= 👑 บอสประจำถิ่น — จุดเกิดประจำในโลกกว้าง =================
+    // ยืนนิ่งอยู่มุมลับตาของแดน ไม่ไล่ ไม่ตีก่อน · มีลูกน้องเดินวนรอบ ๆ · ตายแล้วเกิดใหม่ใน 10 นาที
+    G.fieldBossDead = {};   // biomeId -> เวลาที่ถูกโค่น (ms)
+    G.fieldBoss = null;     // mesh ของบอสประจำถิ่นในแดนปัจจุบัน
+    // 📍 จุดเกิดคงที่ต่อแดน — สุ่มจากชื่อแดน (แดนเดิมได้จุดเดิมเสมอ) แล้วหลบเขตปลอดภัย/สิ่งกีดขวาง
+    const fieldBossSpot = (bid) => {
+      let hsh = 0; for (let i = 0; i < String(bid).length; i++) hsh = (hsh * 31 + String(bid).charCodeAt(i)) >>> 0;
+      const a0 = (hsh % 360) * Math.PI / 180;
+      const r = FIELD_R * 0.82;                       // 🙈 ไกลจากกลางแมพ = ลับตา ไม่เจอโดยบังเอิญ
+      for (let g = 0; g < 36; g++) {
+        const a = a0 + g * 0.35;
+        const x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (G.inSafeZone && G.inSafeZone(x, z)) continue;
+        if (inKeepOut(x, z)) continue;
+        return { x, z };
+      }
+      return { x: Math.cos(a0) * r, z: Math.sin(a0) * r };
+    };
+    G.fieldBossSpot = fieldBossSpot;
+    const spawnFieldBoss = () => {
+      const b = BIOMES[G.curBiome || 0];   // ตอนเริ่มเกม G.curBiome ยังไม่ถูกตั้ง
+      if (!b || !b.boss) return;
+      if (G.fieldBoss && G.fieldBoss.parent && wilds.indexOf(G.fieldBoss) >= 0) return;   // มีอยู่แล้ว
+      const dead = G.fieldBossDead[b.id] || 0;
+      if (dead && Date.now() - dead < FBOSS_RESPAWN_MS) return;                            // ⏳ ยังไม่ถึงเวลาเกิดใหม่
+      const sp = fieldBossSpot(b.id);
+      // 🧹 เก็บลูกน้องชุดเก่าที่ยังเหลือค้างอยู่ก่อน จะได้ไม่สะสมทับกันทุกรอบเกิดใหม่
+      for (let i = wilds.length - 1; i >= 0; i--) {
+        if (wilds[i].userData.fbGuard === b.id) {
+          const gm = wilds[i];
+          if (gm.userData.lbl) gm.userData.lbl.sprite.visible = false;
+          scene.remove(gm); (G._disposeObj3D && G._disposeObj3D(gm));
+          wilds.splice(i, 1);
+        }
+      }
+      const m = buildMonster(b.boss, 3);
+      m.scale.multiplyScalar(1.7);
+      m.userData.lv = b.lvMax != null ? b.lvMax : ((G.player ? G.player.level : 1) + 4);
+      m.userData.boss = true;
+      m.userData.biomeBoss = b.id;
+      m.userData.fieldBoss = b.id;
+      m.userData.stay = true;                      // 🧍 ยืนนิ่งกับที่ ไม่ขยับไปไหน
+      m.userData.wander = { cx: sp.x, cz: sp.z, ph: 0, r: 0, sp: 0 };
+      m.position.set(sp.x, 0, sp.z);
+      m.rotation.y = Math.atan2(-sp.x, -sp.z);     // หันหน้าเข้ากลางแมพ
+      applyMenace(m); vivify(m);
+      scene.add(m); wilds.push(m);
+      G.fieldBoss = m;
+      // 👥 ลูกน้องเดินวนรอบบอส
+      const pool = b.pool || G.biomePool || SPAWN_POOL;
+      for (let k = 0; k < FBOSS_GUARDS; k++) {
+        const a = (k / FBOSS_GUARDS) * Math.PI * 2 + Math.random() * 0.3;
+        const rr = 2.6 + Math.random() * 1.6;
+        const g = buildMonster(pool[Math.floor(Math.random() * pool.length)]);
+        g.userData.lv = Math.max(1, (m.userData.lv || 5) - 2 - Math.floor(Math.random() * 4));
+        g.position.set(sp.x + Math.cos(a) * rr, 0, sp.z + Math.sin(a) * rr);
+        g.userData.wander = { cx: sp.x, cz: sp.z, ph: a, r: rr, sp: 0.35 + Math.random() * 0.25 };  // 🔄 เดินวนรอบบอส
+        g.userData.fbGuard = b.id;
+        pushOut(g, 0.6);
+        applyMenace(g); vivify(g);
+        scene.add(g); wilds.push(g);
+      }
+      return m;
+    };
+    G.spawnFieldBoss = spawnFieldBoss;
+    // ⏳ เวลาที่เหลือก่อนบอสประจำถิ่นเกิดใหม่ (วินาที · 0 = พร้อมแล้ว/อยู่ในแมพ)
+    G.fieldBossInfo = () => {
+      const b = BIOMES[G.curBiome || 0];
+      if (!b || !b.boss) return null;
+      const alive = !!(G.fieldBoss && G.fieldBoss.parent && wilds.indexOf(G.fieldBoss) >= 0);
+      const dead = G.fieldBossDead[b.id] || 0;
+      const left = alive ? 0 : Math.max(0, Math.ceil((FBOSS_RESPAWN_MS - (Date.now() - dead)) / 1000));
+      const sp = fieldBossSpot(b.id);
+      return { biome: b.id, name: b.bossName || "เจ้าถิ่น", emoji: (SPECIES[b.boss] || {}).emoji || "👑",
+               lv: b.lvMax != null ? b.lvMax : 1, alive, left, x: Math.round(sp.x), z: Math.round(sp.z),
+               cleared: !!(G.biomeBossDefeated || {})[b.id] };
+    };
+    // 🚶 เดินไปหาบอสประจำถิ่น
+    G.goFieldBoss = () => {
+      const b = BIOMES[G.curBiome || 0];
+      if (!b || !b.boss) { toast("แดนนี้ไม่มีบอสประจำถิ่น"); return; }
+      if (G.mode !== "explore") { toast("ออกจากการต่อสู้ก่อนนะ"); return; }
+      if (G.inTownZone && G.exitTownZone) G.exitTownZone();
+      const sp = fieldBossSpot(b.id);
+      if (G.markMoveTo) G.markMoveTo(sp.x, sp.z);
+      else { G.moveTarget = new THREE.Vector3(sp.x, 0, sp.z); }
+      const inf = G.fieldBossInfo();
+      toast(inf && inf.alive ? `👑 มุ่งหน้าไปหา ${b.bossName || "เจ้าถิ่น"} แห่ง${b.name}!`
+                             : `⏳ ${b.bossName || "เจ้าถิ่น"} ยังไม่ฟื้น — อีก ${Math.ceil((inf ? inf.left : 0) / 60)} นาที`);
+    };
+    // ================= 👑 END FIELD BOSS =================
     G.biomeLvMin = BIOMES[0].lvMin; G.biomeLvMax = BIOMES[0].lvMax; // 🌸 start map: Lv 1-50
     // 🏕️ populate the map by camp: several groups, each clustered by level at its own spot
     makeCamps();
     for (const c of G.camps) { const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnWild(c); }
+    spawnFieldBoss();   // 👑 บอสประจำถิ่นประจำแดนแรก
     G.respawnT = 0;
 
     // 🏜️ DESERT DECOR — cacti, sand dunes/mountains, and a blowing sandstorm (hidden unless in desert)
@@ -17579,6 +17673,7 @@ export default function CherryAdventure() {
       // 🏕️ rebuild camps for this map's level range and spawn each group
       makeCamps();
       for (const c of G.camps) { const n = 3 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnWild(c); }
+      G.fieldBoss = null; spawnFieldBoss();   // 👑 บอสประจำถิ่นของแดนใหม่
       if (!quiet) { // 🔇 loading a save shouldn't sound like a fresh warp
         if (G.sfx) G.sfx.warp();
         toast(`${b.emoji} วาร์ปสู่ ${b.name}! มอนสเตอร์ประจำถิ่นปรากฏตัว`);
@@ -19653,13 +19748,13 @@ export default function CherryAdventure() {
     MSQ.push({ t: "win", n: 5, title: "ก้าวแรกของผู้กล้า", txt: "ผู้เฒ่า: \"ยินดีต้อนรับสู่ทุ่งซากุระ เจ้าหนู! ช่วงนี้มอนสเตอร์คึกคะนองผิดปกติ ช่วยข้าปราบพวกมันสัก 5 ตัวเถิด\"" });
     MSQ.push({ t:"catch", n: 1, title: "เพื่อนร่วมทาง", txt: "ผู้เฒ่า: \"การเดินทางไกลต้องมีเพื่อน ลองใช้ลูกบอลจับมอนสเตอร์มาเป็นเพื่อนสักตัวสิ\"" });
     MSQ.push({ t:"tower", n: 3, title: "บททดสอบหอคอย", txt: "ผู้เฒ่า: \"หอคอยมิติคือบททดสอบของผู้กล้าทุกยุค จงพิชิตให้ถึงชั้น 3 เพื่อพิสูจน์ตัวเจ้า\"" });
-    MSQ.push({ t:"bboss", biome: "meadow", title: "ราชินีบุปผาคลั่ง", txt: "ผู้เฒ่า: \"ราชินีบุปผาผู้เคยปกปักษ์ทุ่งนี้ถูกพลังมืดครอบงำ กดปุ่มท้าดวลเจ้าถิ่นแล้วปลดปล่อยนางด้วยเถิด!\"" });
+    MSQ.push({ t:"bboss", biome: "meadow", title: "ราชินีบุปผาคลั่ง", txt: "ผู้เฒ่า: \"ราชินีบุปผาผู้เคยปกปักษ์ทุ่งนี้ถูกพลังมืดครอบงำ นางยืนนิ่งอยู่มุมลับตาของทุ่ง — เปิดแผนที่ 🗺️ แล้วตามไปปลดปล่อยนางด้วยเถิด!\"" });
     BIOMES.slice(1).forEach((b, k) => {
       const NR = STORY_NARR[b.id] || {};
       MSQ.push({ t:"level", n: b.lvMin, title: `เตรียมพร้อมสู่${b.name}`, txt: `ผู้เฒ่า: "ศัตรูเบื้องหน้าแข็งแกร่งขึ้นทุกก้าว ฝึกฝนให้ถึงเลเวล ${b.lvMin} ก่อนออกเดินทางสู่${b.name}"` });
       MSQ.push({ t:"visit", biome: b.id, title: `เดินทางสู่${b.name}`, txt: NR.a || `เดินทางผ่านประตูวาร์ปไปยัง ${b.emoji} ${b.name}` });
       MSQ.push({ t:"winB", biome: b.id, n: 10 + k * 2, title: `กวาดล้าง${b.name}`, txt: NR.h || `ปราบมอนสเตอร์ประจำถิ่นใน${b.name}` });
-      MSQ.push({ t:"bboss", biome: b.id, title: `โค่น${b.bossName}`, txt: NR.b || `ท้าดวลเจ้าถิ่นแห่ง${b.name}` });
+      MSQ.push({ t:"bboss", biome: b.id, title: `โค่น${b.bossName}`, txt: NR.b || `บอสประจำถิ่นแห่ง${b.name}ยืนรออยู่มุมลับตา — เปิดแผนที่ 🗺️ แล้วตามไปโค่นให้ได้` });
     });
     MSQ.push({ t:"tower", n: 100, title: "สุดยอดตำนานเชอร์รี่", txt: "ผู้เฒ่า: \"บทสุดท้ายแล้ว ผู้กล้า... พิชิตหอคอยมิติให้ครบ 100 ชั้น แล้วชื่อของเจ้าจะถูกจารึกในตำนานตลอดกาล\"" });
     G.MSQ = MSQ;
@@ -19676,7 +19771,7 @@ export default function CherryAdventure() {
       c.t === "level" ? `เก็บเลเวลให้ถึง ${c.n}` :
       c.t === "tower" ? `พิชิตหอคอยมิติถึงชั้น ${c.n}` :
       c.t === "visit" ? `วาร์ปไปยัง ${bNameOf(c.biome)}` :
-      c.t === "bboss" ? `ท้าดวลเจ้าถิ่น ${(BIOMES.find((x) => x.id === c.biome) || {}).bossName || ""}` : "";
+      c.t === "bboss" ? `โค่นบอสประจำถิ่น ${(BIOMES.find((x) => x.id === c.biome) || {}).bossName || ""}` : "";
     G.storyReward = (i) => {
       const c = MSQ[i];
       if (c && c.tut) return { gold: c.gold || 150, dia: 2 };   // 🎓 บทสอนเล่น — รางวัลพอเหมาะ ไม่เฟ้อ
@@ -19714,7 +19809,7 @@ export default function CherryAdventure() {
     // 🧭 เควสย่อย: แตะแล้วเดินไปหาเป้าหมายเอง
     G.questGoType = (type) => {
       if (type === "floor") return questWalkTo(-6.6, 7.0, "🗼 หอคอยมิติ");
-      if (type === "boss") { toast("👑 กดปุ่ม ⚔️ ท้าดวลเจ้าถิ่น ที่กลางบนจอ หรือหาบอสในทุ่งก็ได้"); return questHunt(); }
+      if (type === "boss") { if (G.goFieldBoss) { G.goFieldBoss(); return true; } return questHunt(); }
       return questHunt();   // win · catch · collect
     };
     // 🧭 แตะป้ายเควสเนื้อเรื่อง → ตัวละครเดินไปยังจุดหมายของบทนั้นเอง
@@ -19738,7 +19833,7 @@ export default function CherryAdventure() {
         toast("🗺️ แดนนี้ไม่ได้อยู่ติดกับที่นี่ — เปิดแผนที่ดูเส้นทาง หรือใช้ใบวาร์ป 📜");
         return false;
       }
-      if (c.t === "bboss") { toast("👑 กดปุ่ม ⚔️ ท้าดวลเจ้าถิ่น ที่กลางบนจอได้เลย"); return false; }
+      if (c.t === "bboss") { if (G.goFieldBoss) { G.goFieldBoss(); return true; } return false; }
       if (c.t === "level") { toast(`📈 เก็บเลเวลให้ถึง ${c.n} — ออกไปปราบมอนสเตอร์ต่อได้เลย`); return false; }
       return false;
     };
@@ -25466,7 +25561,7 @@ export default function CherryAdventure() {
         atk: Math.max(1, Math.round(sp.atk * MON_ATK_K * (1 + (lv - 1) * MON_ATK_LV) * (boss ? 1.6 : ghost ? 1.4 : 1) * ngMul * gapMul * biomeAtkMul(_B))), // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
         lv, boss, ghost, golden,
         enraged: false, rageAura: null, shiny,
-        name: sp.name, biomeBoss: wild.userData.biomeBoss || null,
+        name: sp.name, biomeBoss: wild.userData.biomeBoss || null, fieldBoss: wild.userData.fieldBoss || null,
         horde: !!wild.userData.horde,
         dungeon: !!wild.userData.dungeon,
         // 🎲 defensive-skill chances (bosses & ghosts are craftier; scales up with level)
@@ -31417,6 +31512,12 @@ export default function CherryAdventure() {
       // 🏰 biome boss extra reward (first time)
       if (G.enemy.biomeBoss) {
         const bid = G.enemy.biomeBoss;
+        if (G.enemy.fieldBoss) {                       // 👑 บอสประจำถิ่นถูกโค่น — จับเวลาเกิดใหม่ 10 นาที
+          G.fieldBossDead = G.fieldBossDead || {};
+          G.fieldBossDead[bid] = Date.now();
+          G.fieldBoss = null;
+          toast(`👑 โค่น${(BIOMES.find((x) => x.id === bid) || {}).bossName || "เจ้าถิ่น"}แล้ว! จะฟื้นคืนอีกครั้งใน 10 นาที`);
+        }
         if (G.storyEvent) G.storyEvent("bboss", 1, { biome: bid }); // 📖
         if (G.qingEvent) G.qingEvent("bboss", 1);                   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 3
         if (!G.biomeBossDefeated[bid]) {
@@ -31874,7 +31975,7 @@ export default function CherryAdventure() {
       { emoji: "⚔️", title: "ต่อสู้", text: "แตะ ⚔️ โจมตี · ⚡ ปล่อยสกิลอาชีพ (ใช้มานา 💧) · 💗 จับมอนสเตอร์ตอนเลือดน้อย" },
       { emoji: "⚡", title: "สกิล & เลเวล", text: "เลเวลอัพได้แต้มสกิล → กด ⚡ อัพสกิลอาชีพให้แรงถึง Lv.100 (ยิ่งเลเวลตัวละครสูง ยิ่งอัพสกิลได้สูง)" },
       { emoji: "🐾", title: "สัตว์เลี้ยง", text: "จับมอนสเตอร์มาเป็นทีม 3 ตัว (ปุ่ม 🐾) ช่วยบัฟ+ร่วมรบ · ผสมพันธุ์ได้ตัวหายาก" },
-      { emoji: "🌀", title: "แผนที่ & หอคอย", text: "แท่นวาร์ป 🌀 ไปแดนอื่น · ประตูมิติ 🗼 เข้าหอคอย 100 ชั้น · ⚔️ ท้าดวลเจ้าถิ่นแต่ละแดน" },
+      { emoji: "🌀", title: "แผนที่ & หอคอย", text: "แท่นวาร์ป 🌀 ไปแดนอื่น · ประตูมิติ 🗼 เข้าหอคอย 100 ชั้น · 👑 บอสประจำถิ่นยืนรออยู่มุมลับตาของแต่ละแดน (ดูในแผนที่ 🗺️)" },
       { emoji: "📜", title: "ภารกิจ & ร้านค้า", text: "ทำภารกิจ 📜 รับ EXP+ทองก้อนโต · ซื้อของ/น้ำยาที่ร้าน 🏪 · ดูความสำเร็จ 🏅 และบ้านถ้วยรางวัล 🏠" },
     ];
     G.TUTORIAL = TUTORIAL;
@@ -31890,7 +31991,7 @@ export default function CherryAdventure() {
       { text: "โอ้ เจ้าหนูเชอร์รี่! ข้าคือผู้เฒ่าประจำหมู่บ้าน หมู่บ้านเรากำลังเดือดร้อน เหล่าปีศาจอาละวาด... เจ้าช่วยปราบมอนสเตอร์ 3 ตัวก่อนได้ไหม?", goal: (st) => st.wins >= 3, reward: 100, hint: "ปราบมอนสเตอร์ 3 ตัว" },
       { text: "เก่งมาก! พลังของเจ้าไม่ธรรมดา... ข้าเห็นแววจอมยุทธ์ ลองไปจับมอนสเตอร์มาเป็นเพื่อนคู่ใจสัก 1 ตัวสิ มันจะช่วยเจ้าได้มาก", goal: (st) => st.species >= 1, reward: 150, hint: "จับมอนสเตอร์ 1 ตัว" },
       { text: "ดีแล้ว! ทีนี้ข้าจะบอกความลับ... มีหอคอยมิติปริศนาปรากฏขึ้น (ประตู 🗼) ว่ากันว่าผู้พิชิตจะได้พลังมหาศาล ลองไต่ให้ถึงชั้น 5 ดู", goal: (st) => st.floor >= 5, reward: 250, hint: "พิชิตหอคอยชั้น 5" },
-      { text: "น่าทึ่งจริงๆ! เจ้าแข็งแกร่งขึ้นมาก... ตอนนี้แต่ละแดนมีเจ้าถิ่นคอยระราน (ปุ่ม ⚔️ ท้าดวลเจ้าถิ่น) ลองปราบสัก 1 ตนเพื่อปลดปล่อยดินแดน", goal: (st) => st.biomeBoss >= 1, reward: 400, hint: "ปราบเจ้าถิ่น 1 แดน" },
+      { text: "น่าทึ่งจริงๆ! เจ้าแข็งแกร่งขึ้นมาก... ตอนนี้แต่ละแดนมีเจ้าถิ่นยืนเฝ้าอยู่มุมลับตา (เปิดแผนที่ 🗺️ แล้วแตะ 👑 บอสประจำถิ่น) ลองปราบสัก 1 ตนเพื่อปลดปล่อยดินแดน", goal: (st) => st.biomeBoss >= 1, reward: 400, hint: "ปราบเจ้าถิ่น 1 แดน" },
       { text: "เจ้าคือฮีโร่ที่หมู่บ้านรอคอย! เหล่าปีศาจเริ่มหวาดกลัวเจ้าแล้ว จงเดินหน้าเป็นตำนานต่อไป... ขอให้เส้นทางของเจ้าเต็มไปด้วยชัยชนะ 🌸", goal: () => true, reward: 500, hint: "จบบท — ขอบคุณที่เล่น!" },
     ];
     G.STORY = STORY;
@@ -32449,7 +32550,7 @@ export default function CherryAdventure() {
       if (G.mode !== "explore" && G.mode !== "battle") return;
       try {
         window.localStorage.setItem(slotKey(), JSON.stringify({
-          v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated,
+          v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated, fieldBossDead: G.fieldBossDead || {},
           col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, awk: G.awk || {}, itemLock: G.itemLock || {},
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
@@ -34357,6 +34458,7 @@ export default function CherryAdventure() {
       G.achStats = d.achStats || { wins: 0, bosses: 0, floor: 0, dragon: 0 };
       G.achUnlocked = d.achUnlocked || {};
       G.biomeBossDefeated = d.biomeBossDefeated || {};
+      G.fieldBossDead = d.fieldBossDead || {};   // 👑 เวลาที่บอสประจำถิ่นถูกโค่น
       skillsOf(G.cls, G.pathId).forEach((sk) => { if (!G.skillRanks[sk.id]) G.skillRanks[sk.id] = 1; });
       G.bossSpawned = {};
       G.mode = "explore";
@@ -35476,7 +35578,8 @@ export default function CherryAdventure() {
           }
         }
         let dx, dz;
-        if (aggroHandled) { dx = 0; dz = 0; }
+        if (m.userData.stay) { dx = 0; dz = 0; }   // 👑 บอสประจำถิ่น — ยืนนิ่งกับที่ ไม่เดินไปไหน
+        else if (aggroHandled) { dx = 0; dz = 0; }
         else if (m.userData.golden && G.mode === "explore") {
           // 🌟 golden monster runs away from Cherry!
           const fx2 = m.position.x - char.position.x, fz2 = m.position.z - char.position.z;
@@ -35536,6 +35639,8 @@ export default function CherryAdventure() {
       if (wilds.length < TARGET_WILDS) {
         G.respawnT += dt;
         if (G.respawnT > 3) { G.respawnT = 0; spawnWild(); }
+        G._fbT = (G._fbT || 0) + dt;
+        if (G._fbT > 10) { G._fbT = 0; spawnFieldBoss(); }   // 👑 เช็คว่าถึงเวลาบอสประจำถิ่นฟื้นหรือยัง
       }  // 🔚 จบบล็อกเกิดมอนสเตอร์ — เอฟเฟกต์บรรยากาศของแต่ละด่านต้องทำงานทุกเฟรม ไม่ใช่เฉพาะตอนมอนสเตอร์ไม่เต็ม
 
       // ☁️ sky islands: drifting clouds + rising star motes (sky biome only)
@@ -48109,7 +48214,7 @@ export default function CherryAdventure() {
                   {/* คำอธิบายสัญลักษณ์ */}
                   <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3px 9px", fontSize: 9.5, color: "#c8bcdd", lineHeight: 1.5 }}>
                     <span>🔺 ตัวเรา</span><span>🔴 มอนสเตอร์</span><span style={{ color: "#ffd75a" }}>🟡 ตัวหายาก</span>
-                    <span style={{ color: "#ff7a7a" }}>⭕ บอส</span><span>🏰 เมือง</span><span>🏠 บ้าน</span><span>🐄 ฟาร์ม</span><span>🟦 จุดตกปลา</span><span>🪧 ทางออก</span>
+                    <span style={{ color: "#ff7a7a" }}>⭕ บอส/เจ้าถิ่น</span><span>🏰 เมือง</span><span>🏠 บ้าน</span><span>🐄 ฟาร์ม</span><span>🟦 จุดตกปลา</span><span>🪧 ทางออก</span>
                   </div>
                   {MI && (
                     <div style={{ fontSize: 10, color: "#a898c8" }}>
@@ -48117,6 +48222,42 @@ export default function CherryAdventure() {
                       {MI.spot ? ` · 🎣 ${MI.spot.name} (Lv.${MI.spot.lv}+)` : ""}
                     </div>
                   )}
+                  {/* 👑 บอสประจำถิ่น + 👹 บอสโลก */}
+                  {(() => {
+                    const FB = G.fieldBossInfo ? G.fieldBossInfo() : null;
+                    return (
+                      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6, marginTop: 2 }}>
+                        {FB && (
+                          <button onClick={() => { G.toggleMap(false); G.goFieldBoss && G.goFieldBoss(); }}
+                            title={FB.alive ? `เดินไปหา ${FB.name} ที่พิกัด X ${FB.x} · Z ${FB.z}` : "ยังไม่ฟื้น — รอเวลาเกิดใหม่"}
+                            style={{
+                              width: "100%", padding: "7px 10px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "left",
+                              border: FB.alive ? "1px solid rgba(255,120,120,0.55)" : "1px solid rgba(255,255,255,0.14)",
+                              background: FB.alive ? "linear-gradient(90deg,rgba(150,40,60,0.55),rgba(90,30,50,0.4))" : "rgba(255,255,255,0.07)",
+                              color: "#f5e2ea",
+                            }}>
+                            <div style={{ fontSize: 11.5, fontWeight: 900 }}>
+                              👑 บอสประจำถิ่น · {FB.emoji} {FB.name} <span style={{ color: "#ffb0b0" }}>Lv.{FB.lv}</span>
+                              {FB.cleared && <span style={{ marginLeft: 5, fontSize: 9, color: "#9ae86a" }}>✅ เคยโค่นแล้ว</span>}
+                            </div>
+                            <div style={{ fontSize: 9.5, color: FB.alive ? "#ffd0d0" : "#a898c8", marginTop: 1 }}>
+                              {FB.alive
+                                ? `🙈 ยืนนิ่งอยู่มุมลับตา X ${FB.x} · Z ${FB.z} — มีลูกน้องเดินวนรอบ · แตะเพื่อเดินไปหา`
+                                : `⏳ ถูกโค่นแล้ว — ฟื้นอีกครั้งใน ${Math.floor(FB.left / 60)}:${String(FB.left % 60).padStart(2, "0")} นาที`}
+                            </div>
+                          </button>
+                        )}
+                        <button onClick={() => { G.toggleMap(false); const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }}
+                          style={{
+                            width: "100%", padding: "7px 10px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "left",
+                            border: "1px solid #f5a623", background: "linear-gradient(90deg,#5a1a2a,#c0392b)", color: "#fff",
+                          }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 900 }}>👹 บอสโลก (ปาร์ตี้)</div>
+                          <div style={{ fontSize: 9.5, color: "#ffd0b0", marginTop: 1 }}>บอสประจำชั่วโมง ตีร่วมกับเพื่อน — แตะเพื่อเปิดแผงบอสโลก</div>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* ── รายชื่อมอนสเตอร์ + ทางเดิน ── */}
@@ -48425,34 +48566,7 @@ export default function CherryAdventure() {
           {ui.biomeName}{ui.weather ? ` · ${ui.weather}` : ""}
         </div>
       )}
-      {/* 🏰 biome boss challenge button */}
-      {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !_shortHud && (
-        <button
-          onClick={() => G.challengeBiomeBoss()}
-          style={{
-            position: "absolute", ...bannerPos(40), whiteSpace: "nowrap",
-            background: "linear-gradient(90deg,#b03060,#e0708a)", borderRadius: 999,
-            padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-            border: "none", cursor: "pointer", boxShadow: "0 3px 10px rgba(176,48,96,0.4)",
-          }}
-        >
-          ⚔️ ท้าดวลเจ้าถิ่น
-        </button>
-      )}
-      {/* 👹 World Boss entry */}
-      {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !_shortHud && (
-        <button
-          onClick={() => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }}
-          style={{
-            position: "absolute", ...bannerPos(72), whiteSpace: "nowrap",
-            background: "linear-gradient(90deg,#5a1a2a,#c0392b)", borderRadius: 999,
-            padding: "5px 16px", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-            border: "1px solid #f5a623", cursor: "pointer", boxShadow: "0 3px 10px rgba(192,57,43,0.5)",
-          }}
-        >
-          👹 บอสโลก (ปาร์ตี้)
-        </button>
-      )}
+      {/* 👑 บอสประจำถิ่นเดินไปหาเองในโลกกว้าง · 👹 บอสโลกย้ายไปอยู่ในแผนที่ 🗺️ แล้ว */}
       {/* 📖 story tracker chip — เกาะติดบทเนื้อเรื่องปัจจุบัน กดเพื่อเปิดเมนูภารกิจ */}
       {ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (() => {
         const S = G.MSQ || []; const c = S[ui.storyCh || 0];
@@ -49708,7 +49822,7 @@ export default function CherryAdventure() {
         // 🧩 ต้นไม้ทักษะ · หมู่ดาว · มาสเตอรี่อาวุธ · วิชาตัวเบา · วิชาสกิล ย้ายไปรวมอยู่ในเมนู ⚡ สกิลแล้ว
         const CATS = [
           ["⚔️", "ต่อสู้ & ท้าทาย", [
-            ["🐉", "ท้าดวลเจ้าถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.challengeBiomeBoss && G.challengeBiomeBoss(); }, "#e0605a"],
+            ["🐉", "บอสประจำถิ่น", () => { setUi((u) => ({ ...u, menuOpen: false })); G.goFieldBoss && G.goFieldBoss(); }, "#e0605a"],
             ["👹", "บอสโลก (ปาร์ตี้)", () => { const st = G.wbStatus(); setUi((u) => ({ ...u, ...closeAllMenus(), menuOpen: false, wbPanel: true, wbStat: st, gemDust: G.gemDust || 0, friends: G.readFriends ? G.readFriends() : [], netEnabled: G.net ? G.net.enabled() : false, wbRaid: G.wbRaid || null, wbParty: (G.wbRaidRow && G.wbRaidRow.members) || [], wbOpenRaids: [] })); if (G.wbRefreshParty) G.wbRefreshParty(); }, "#e0605a"],
             ["🔥", "บอสรัช 13 แดน", () => G.toggleRush(), "#e0605a"],
             ["⚔️", "ประลอง PvP", () => G.togglePvp(), "#d9536b"],
