@@ -22061,6 +22061,52 @@ export default function CherryAdventure() {
     G.enemy = null; // {spId, hp, maxHp, atk, lv, boss, mesh}
     let battleCenter = new THREE.Vector3();
     const _plateV = new THREE.Vector3(); // 🏷️ scratch for projecting the enemy nameplate to screen
+    // ================= 🎞️ POSE POLISH — ทำท่าให้ลื่นไหลเป็นธรรมชาติ ไม่แข็งเหมือนหุ่นยนต์ =================
+    // โค้ดท่าทั้งเกมเขียนค่ามุมข้อต่อ "ตรง ๆ" ทุกเฟรม พอเปลี่ยนท่าจึงกระตุกเป็นขั้น ๆ
+    // ชั้นนี้ทำงานท้ายเฟรม: หน่วงทุกข้อต่อด้วยสปริง (มี follow-through นิดหน่อย) แล้วเติมลมหายใจ/โยกตัวเบา ๆ
+    const _springs = [];
+    let _springsRigged = false;
+    const _regSpring = (o, ax, st, dp) => { if (o && o.rotation) _springs.push({ o, ax, s: st, d: dp, v: 0, x: o.rotation[ax] }); };
+    const rigPoseSprings = () => {
+      if (_springsRigged) return;
+      _springsRigged = true;
+      const S = 900, D = 42;          // ζ ≈ 0.7 → เข้าที่ใน ~80 มิลลิวินาที และเลยนิดหน่อยเป็น follow-through
+      ["x", "y", "z"].forEach((ax) => {
+        _regSpring(armL, ax, S, D); _regSpring(armR, ax, S, D);
+        _regSpring(torso, ax, S * 0.8, D);
+        _regSpring(headG, ax, S * 0.65, D * 0.9);   // 🙂 หัวตามช้ากว่าตัวเล็กน้อย = overlap
+      });
+      ["x", "z"].forEach((ax) => { _regSpring(legL, ax, S, D); _regSpring(legR, ax, S, D); });
+      [armL && armL.userData.elbow, armR && armR.userData.elbow,
+       legL && legL.userData.knee, legR && legR.userData.knee].forEach((j) => _regSpring(j, "x", S * 1.05, D));
+    };
+    const polishPose = (dtRaw, tt) => {
+      rigPoseSprings();
+      // เฟรมกระตุกแรง (สลับหน้าจอ/โหลด) → ตัดการหน่วงทิ้ง ไม่ให้ท่าไหลผิด
+      if (!(dtRaw > 0) || dtRaw > 0.12) { for (const sp of _springs) { sp.x = sp.o.rotation[sp.ax]; sp.v = 0; } }
+      else {
+        const dtc = Math.min(0.034, dtRaw);
+        for (const sp of _springs) {
+          const tg = sp.o.rotation[sp.ax];
+          if (!Number.isFinite(tg)) { sp.x = 0; sp.v = 0; continue; }
+          // ท่าที่เปลี่ยนแรง ๆ (จังหวะปะทะ) ให้สปริงตามไวขึ้น — หมัดยังหนัก แต่ช่วงเปลี่ยนท่าเล็ก ๆ ยังนุ่ม
+          const err = tg - sp.x;
+          const big = Math.min(1, Math.abs(err) / 0.5);
+          sp.v += err * sp.s * (1 + big * 2.2) * dtc;
+          sp.v *= Math.exp(-sp.d * (1 + big * 0.6) * dtc);
+          sp.x += sp.v * dtc;
+          if (!Number.isFinite(sp.x) || Math.abs(sp.x - tg) > 1.7) { sp.x = tg; sp.v = 0; }   // กันสปริงหลุด/ท่าค้างผิด
+          sp.o.rotation[sp.ax] = sp.x;
+        }
+      }
+      // 🫁 ลมหายใจ + ถ่ายน้ำหนัก — ค่าน้อยมาก แค่ทำให้ "ไม่นิ่งสนิทเหมือนหุ่น"
+      const b1 = Math.sin(tt * 2.15), b2 = Math.sin(tt * 1.63), b3 = Math.sin(tt * 0.87);
+      if (headG) { headG.rotation.x += b1 * 0.016; headG.rotation.z += b2 * 0.013; headG.rotation.y += b3 * 0.020; }
+      if (torso) { torso.rotation.z += b1 * 0.011; torso.rotation.x += b1 * 0.008; }
+      if (armL) armL.rotation.z += b2 * 0.022;
+      if (armR) armR.rotation.z -= b2 * 0.022;
+    };
+    // ================= 🎞️ END POSE POLISH =================
     G.restoreScenery = () => { if (G._hiddenScenery) { G._hiddenScenery.forEach((o) => (o.visible = true)); G._hiddenScenery = []; } if (torso) torso.rotation.y = 0; /* undo archer aim twist */ };
 
     // item stats scale +20% per enhancement level
@@ -35603,6 +35649,7 @@ export default function CherryAdventure() {
         }
         // hop
         m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4 + i)) * 0.08;
+        m.userData.body.rotation.z = Math.sin(t * 1.5 + i * 0.7) * 0.05;   // 🫁 โยกตัวตามจังหวะเดิน ไม่ให้ดูแข็ง
         if (m.userData.star) m.userData.star.rotation.y = t * 3;
         // 🐙 octopus tentacles undulate · 🦈 shark tail swishes
         if (m.userData.tentacles) m.userData.tentacles.forEach((tn, k) => { tn.rotation.y = Math.sin(t * 2 + k * 0.8) * 0.12; tn.position.y = Math.sin(t * 2.6 + k) * 0.03; });
@@ -38399,7 +38446,13 @@ export default function CherryAdventure() {
 
         const em = G.enemy.mesh;
         // idle bounce for both
-        em.userData.body.position.y = (FLOATY[em.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4)) * 0.06;
+        if (!G.banim || G.banim.type !== "enemyAttack") {
+          em.userData.body.position.y = (FLOATY[em.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 4)) * 0.06;
+          // 🫁 ยืนรอแบบมีชีวิต — โยกตัวเบา ๆ คนละจังหวะกับการเด้ง ไม่ใช่ขยับขึ้นลงอย่างเดียว
+          em.userData.body.rotation.z = Math.sin(t * 1.45) * 0.035 + Math.sin(t * 0.63) * 0.02;
+          if (em.userData._baseRy == null) em.userData._baseRy = em.rotation.y;   // จำทิศที่หันเข้าหาเราไว้ก่อน
+          em.rotation.y += (em.userData._baseRy + Math.sin(t * 0.7) * 0.05 - em.rotation.y) * Math.min(1, dt * 3);
+        }
         if (em.userData.star) em.userData.star.rotation.y = t * 3;
         // 🐲 pulsing rage aura in phase 2
         if (G.enemy.rageAura) {
@@ -45719,8 +45772,18 @@ export default function CherryAdventure() {
             }
           } else if (A.type === "enemyAttack") {
             const ex = G.enemyX || 1.3;
-            const lunge = Math.sin(p * Math.PI) * (ex - 0.2);
+            // 🎞️ จังหวะธรรมชาติ: ถอยเก็บแรง (anticipation) → พุ่งเข้าเร็ว → ถอยกลับช้า ๆ (follow-through)
+            const antic  = p < 0.30 ? -Math.sin((p / 0.30) * Math.PI) * 0.20 : 0;
+            const strike = p < 0.30 ? 0
+                         : p < 0.50 ? Math.pow((p - 0.30) / 0.20, 0.55)
+                         : 1 - Math.pow((p - 0.50) / 0.50, 1.7);
+            const lunge = (strike + antic) * (ex - 0.2);
             em.position.x = battleCenter.x + ex - lunge;
+            const bd0 = em.userData.body;
+            if (bd0) {   // 🫨 ทิ้งน้ำหนักไปข้างหน้าตอนฟาด แล้วเด้งกลับ
+              bd0.rotation.z = -strike * 0.30 - antic * 0.5;
+              bd0.position.y = (FLOATY[em.userData.spId] ? 0.95 : 0.5) + strike * 0.10 - Math.max(0, -antic) * 0.06;
+            }
             if (p >= 0.5 && !A.hitDone && G.enemy) { // 🛡️ guard: enemy may have vanished (DoT/skill kill or battle end) mid-swing → skip the hit, don't read G.enemy.lv on null
               A.hitDone = true;
               // 💨 evasion check first!
@@ -46256,6 +46319,8 @@ export default function CherryAdventure() {
       }
       if (!G.equipScreen && char && !char.visible) char.visible = true;   // 🛟 ปิดกระเป๋าแล้วตัวละครต้องกลับมาเสมอ
       if (dtForce == null && G.tickSeek) { try { G.tickSeek(dt); } catch (_) {} }   // 🗡️🏹 หมุดเป้า/จุดหมาย + คำสั่งที่ค้างไว้
+      // 🎞️ ขัดเกลาท่าทาง — ทำหลังโค้ดท่าทั้งหมดเขียนค่าเสร็จ แล้วค่อยหน่วง/เติมลมหายใจก่อนวาด
+      if (dtForce == null && G.mode !== "create" && !G.equipScreen) { try { polishPose(dt, t); } catch (_) {} }
       if (dtForce == null) renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
       if (dtForce == null && G._paintMap) { try { G._paintMap(); } catch (_) {} }   // 🗺️ วาดมินิแมพ/แผนที่ขยาย
       } catch (err) {
