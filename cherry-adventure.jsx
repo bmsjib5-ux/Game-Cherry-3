@@ -2276,6 +2276,56 @@ const findSet = (id) => OUTFIT_SETS.find((x) => x.id === id) || SEASONAL_SETS.fi
 // ---------- 🐉⭐ GEAR SET BONUSES (ใส่อุปกรณ์ครบเซ็ตมังกร/ตำนาน) — counts EQUIPPED pieces sharing a `set` tag ----------
 // Cumulative tiers: every reached threshold adds its bonus. 7 slots max (weapon+outfit+hat+mask+gloves+pants+shoes).
 const GEAR_SET_SLOTS = ["weapon", "outfit", "hat", "mask", "gloves", "pants", "shoes"];
+// ---------- 🧩 GEAR SET BONUS — ใส่ของ "ระดับเดียวกัน" ครบ 3 / 5 / 7 ชิ้น ได้โบนัสเป็นขั้น ----------
+// โบนัสไม่สะสมทบกัน — ได้ของ "ขั้นสูงสุดที่ถึง" ขั้นเดียว (อ่านง่ายกว่าและโชว์ในกระเป๋าได้ตรง ๆ)
+const SET_STEPS = [3, 5, 7];
+const GEAR_SET_BONUS = {
+  legend: { emoji: "⭐", name: "เซ็ตตำนาน", tiers: [
+    { n: 3, b: { atk: 10, hp: 36, def: 7, crit: 6 } },
+    { n: 5, b: { atk: 20, hp: 72, def: 14, crit: 12, spd: 6 } },
+    { n: 7, b: { atk: 40, hp: 140, def: 28, crit: 22, spd: 14, eva: 10 } },
+  ] },
+  dragon: { emoji: "🐉", name: "เซ็ตจอมมังกร", tiers: [
+    { n: 3, b: { atk: 8 } },
+    { n: 5, b: { atk: 8, hp: 30, def: 6 } },
+    { n: 7, b: { atk: 20, hp: 70, def: 12, spd: 10, crit: 10, eva: 5 } },
+  ] },
+  secret: { emoji: "🔱", name: "เซ็ตลับ SECRET", tiers: [
+    { n: 3, b: { atk: 6, hp: 24, def: 5, crit: 6 } },
+    { n: 5, b: { atk: 12, hp: 48, def: 10, crit: 12, spd: 4 } },
+    { n: 7, b: { atk: 24, hp: 96, def: 20, crit: 20, spd: 10, eva: 6 } },
+  ] },
+  epic: { emoji: "🟣", name: "เซ็ตมหากาพย์", tiers: [
+    { n: 3, b: { atk: 4, hp: 16, def: 4, crit: 4 } },
+    { n: 5, b: { atk: 8, hp: 32, def: 8, crit: 8, spd: 4 } },
+    { n: 7, b: { atk: 16, hp: 64, def: 16, crit: 14, spd: 8, eva: 5 } },
+  ] },
+  rare: { emoji: "🔵", name: "เซ็ตหายาก", tiers: [
+    { n: 3, b: { atk: 2, hp: 10, def: 2, crit: 2 } },
+    { n: 5, b: { atk: 4, hp: 20, def: 4, crit: 4, spd: 4 } },
+    { n: 7, b: { atk: 8, hp: 40, def: 8, crit: 8, spd: 6, eva: 3 } },
+  ] },
+  common: { emoji: "⚪", name: "เซ็ตทั่วไป", tiers: [
+    { n: 3, b: { atk: 1, hp: 6, def: 1 } },
+    { n: 5, b: { atk: 2, hp: 12, def: 2, spd: 4 } },
+    { n: 7, b: { atk: 4, hp: 24, def: 4, spd: 6, crit: 2 } },
+  ] },
+};
+const SET_STAT_LABEL = { atk: "⚔️ ATK", hp: "❤️ HP", def: "🛡️ DEF", spd: "👟 SPD", eva: "💨 EVA", crit: "🎯 คริ" };
+const SET_STAT_UNIT = { atk: "", hp: "", def: "", spd: "%", eva: "%", crit: "%" };
+const setBonusTxt = (b) => Object.keys(b).map((k) => `${SET_STAT_LABEL[k] || k} +${b[k]}${SET_STAT_UNIT[k] || ""}`).join(" · ");
+// โบนัสรวมของทุกเซ็ตจากจำนวนชิ้นที่ใส่อยู่ (counts = { rarity: n })
+const setBonusOf = (counts) => {
+  const b = { atk: 0, hp: 0, def: 0, spd: 0, eva: 0, crit: 0 };
+  Object.keys(GEAR_SET_BONUS).forEach((rar) => {
+    const n = (counts || {})[rar] || 0;
+    let hit = null;
+    GEAR_SET_BONUS[rar].tiers.forEach((t) => { if (n >= t.n) hit = t; });
+    if (hit) Object.keys(hit.b).forEach((k) => (b[k] += hit.b[k]));
+  });
+  return b;
+};
+
 const GEAR_SETS = {
   dragon: { name: "จอมมังกร", emoji: "🐉", tiers: [
     { n: 3, b: { atkPct: 5, hpPct: 5 },                 desc: "3 ชิ้น: ATK +5% · HP +5%" },
@@ -2499,7 +2549,7 @@ export default function CherryAdventure() {
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info", warpScrolls: 0,
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
-    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
+    inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, itemLock: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
@@ -21871,6 +21921,7 @@ export default function CherryAdventure() {
     G.accInv = [];            // 💍 owned accessory ids (unique)
     G.plus = {}; // itemId -> enhancement level (+1..+5)
     G.awk = {};  // ✨ itemId -> awaken star (0..AWK_MAX) — ปลดล็อกหลังตีบวกเต็ม +20
+    G.itemLock = {}; // 🔐 itemId -> 1 = ล็อกไว้ ห้ามขาย/ห้ามแยกชิ้นส่วน
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
@@ -21933,6 +21984,21 @@ export default function CherryAdventure() {
       return a;
     };
     G.equipAffixes = equipAffixes;
+    // 🧩 สรุปเซ็ตที่ใส่อยู่ + ขั้นถัดไป สำหรับโชว์ในกระเป๋า
+    G.setInfo = () => {
+      const counts = {};
+      SLOTS.forEach((sl) => { const it = LOOT.find((x) => x.id === G.equip[sl]); if (it) counts[it.rarity] = (counts[it.rarity] || 0) + 1; });
+      const rows = Object.keys(GEAR_SET_BONUS).map((rar) => {
+        const n = counts[rar] || 0;
+        const S = GEAR_SET_BONUS[rar];
+        const tiers = S.tiers.map((t) => ({ n: t.n, on: n >= t.n, txt: setBonusTxt(t.b) }));
+        const next = S.tiers.find((t) => n < t.n) || null;
+        return { rar, name: S.name, emoji: S.emoji, color: (RARITY[rar] || {}).color || "#8a9aa8", rarityName: (RARITY[rar] || {}).name || rar,
+          worn: n, tiers, need: next ? next.n - n : 0, nextN: next ? next.n : 0 };
+      }).filter((r) => r.worn > 0).sort((a, b) => b.worn - a.worn || (TIER[b.rar] - TIER[a.rar]));
+      const tot = setBonusOf(counts);
+      return { rows, total: tot, totalTxt: setBonusTxt(Object.keys(tot).reduce((o, k) => (tot[k] ? ((o[k] = tot[k]), o) : o), {})), slots: SLOTS.length };
+    };
     // 🎲 the quality roll for an item (rolled on first pickup; re-rollable at the forge)
     const rollOf = (id) => (G.rolls && G.rolls[id]) || null;
     const itemStats = (id) => {
@@ -21968,6 +22034,19 @@ export default function CherryAdventure() {
         rarity: it.rarity, rarityName: (RARITY[it.rarity] || {}).name || it.rarity, rarityColor: (RARITY[it.rarity] || {}).color || "#8a9aa8",
         stats: itemStats(id), elem: it.elem || null, req: it.req || 0, cls: it.cls || null, locked, count, equipped, plus, cap,
         awk: (G.awk || {})[id] || 0, awkMax: AWK_MAX, awkReq: AWK_REQ,
+        locked2: !!(G.itemLock && G.itemLock[id]),        // 🔐 ล็อกกันขาย/แยกไว้ไหม
+        sell: G.sellPrice ? G.sellPrice(id) : 0,          // 💰 ขายได้เท่าไร
+        cmp: (() => {                                     // ⚖️ เทียบกับของที่ใส่อยู่ในช่องเดียวกัน
+          const curId = G.equip && G.equip[it.slot];
+          if (!curId || curId === id) return null;
+          const cur = LOOT.find((x) => x.id === curId);
+          if (!cur) return null;
+          const a = itemStats(id), c = itemStats(curId);
+          const diff = {}; ["atk", "hp", "def", "spd", "eva", "crit"].forEach((k) => (diff[k] = (a[k] || 0) - (c[k] || 0)));
+          return { id: curId, name: cur.name, emoji: cur.emoji, rarity: cur.rarity,
+            rarityColor: (RARITY[cur.rarity] || {}).color || "#8a9aa8",
+            plus: (G.plus || {})[curId] || 0, awk: (G.awk || {})[curId] || 0, stats: c, diff };
+        })(),
         prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.dustCostNow ? G.dustCostNow() : (G.WB_DUST_COST || 30),
         starter: !!it.starter, salvage: G.salvageYield ? G.salvageYield(id) : 0,   // 💠 แยกชิ้นส่วนได้กี่ผง
       };
@@ -21992,19 +22071,9 @@ export default function CherryAdventure() {
         const it = LOOT.find((x) => x.id === G.equip[s]);
         if (it) rarityCount[it.rarity] = (rarityCount[it.rarity] || 0) + 1;
       });
-      const dragonN = rarityCount.dragon || 0;
-      // 🐉 dragon set bonus: 3 / 5 / full 7 pieces
-      if (dragonN >= 3) b.atk += 8;
-      if (dragonN >= 5) { b.def += 6; b.hp += 30; }
-      if (dragonN >= 7) { b.atk += 12; b.hp += 40; b.def += 6; b.spd += 10; b.crit += 10; b.eva += 5; }
-      // 🎁 rarity set bonuses — reward wearing matching-rarity gear (3+ / 5+ pieces)
-      const setTiers = { secret: { atk: 6, hp: 24, def: 5, crit: 6 }, epic: { atk: 4, hp: 16, def: 4, crit: 4 }, rare: { atk: 2, hp: 10, def: 2, crit: 2 }, common: { atk: 1, hp: 6, def: 1, crit: 0 } };
-      Object.keys(setTiers).forEach((rar) => {
-        const n = rarityCount[rar] || 0;
-        const t = setTiers[rar];
-        if (n >= 3) { b.atk += t.atk; b.hp += t.hp; b.def += t.def; b.crit += t.crit; }        // 3-piece
-        if (n >= 5) { b.atk += t.atk; b.hp += t.hp; b.def += t.def; b.crit += t.crit; b.spd += 4; } // 5-piece doubles + speed
-      });
+      // 🧩 โบนัสเซ็ต 3/5/7 ชิ้น จากตาราง GEAR_SET_BONUS (แหล่งข้อมูลเดียวกับที่โชว์ในกระเป๋า)
+      const sb = setBonusOf(rarityCount);
+      b.atk += sb.atk; b.hp += sb.hp; b.def += sb.def; b.spd += sb.spd; b.eva += sb.eva; b.crit += sb.crit;
       G._rarityCount = rarityCount; // expose for the UI
       return b;
     };
@@ -22308,7 +22377,7 @@ export default function CherryAdventure() {
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
       guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null,   // 🏰 โชว์บนป้ายเหนือหัว
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, itemLock: { ...(G.itemLock || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
       costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -22773,7 +22842,7 @@ export default function CherryAdventure() {
         // unique item ids owned in this slot, sorted STRONGEST first
         const owned = [...new Set(G.inv)].filter((id) => {
           const it = LOOT.find((x) => x.id === id);
-          return it && it.slot === slot && !it.starter;
+          return it && it.slot === slot && !it.starter && !(G.itemLock && G.itemLock[id]);   // 🔐 ไม่แตะของที่ล็อกไว้
         }).sort((a, b) => itemPower(b) - itemPower(a));
         // keep #1 (the best); for the rest, keep 1 duplicate for enhancing, sell surplus
         owned.forEach((id, rank) => {
@@ -24021,13 +24090,15 @@ export default function CherryAdventure() {
       const it = LOOT.find((x) => x.id === id);
       if (!it) return;
       if (it.starter) { toast("อาวุธฝึกหัดแยกชิ้นส่วนไม่ได้นะ!"); return; }
-      if (it.slot !== "weapon" && it.slot !== "outfit") { toast("แยกชิ้นส่วนได้เฉพาะ 🗡️ อาวุธ กับ 👗 ชุดเท่านั้น"); return; }
+      if (G.itemLock && G.itemLock[id]) { toast(`🔐 ${it.emoji} ${it.name} ถูกล็อกไว้ — ปลดล็อกก่อนถึงจะแยกชิ้นส่วนได้`); return; }
       const dust = G.salvageYield(id);
       G.inv.splice(idx, 1);
       G.gemDust = (G.gemDust || 0) + dust;
       if (G.equip[it.slot] === id && !G.inv.includes(id)) {   // ถอดออกถ้าแยกชิ้นสุดท้ายที่ใส่อยู่
         G.equip[it.slot] = null;
-        if (it.slot === "weapon") G.setWeaponVisual(null); else G.setOutfitVisual(null);
+        if (it.slot === "weapon") G.setWeaponVisual(null);
+        else if (it.slot === "outfit") G.setOutfitVisual(null);
+        else applyGear();
         G.player.hp = Math.min(G.player.hp, effMaxHp());
       }
       if (!G.inv.includes(id)) { if (G.plus) delete G.plus[id]; if (G.awk) delete G.awk[id]; }   // ไม่เหลือชิ้นไหนแล้ว = ล้างระดับตีบวก/ดาวปลุกพลังทิ้ง
@@ -24041,7 +24112,8 @@ export default function CherryAdventure() {
       const seen = {}, kill = [];
       G.inv.forEach((id) => {
         const it = LOOT.find((x) => x.id === id);
-        if (!it || it.starter || (it.slot !== "weapon" && it.slot !== "outfit")) return;
+        if (!it || it.starter) return;
+        if (G.itemLock && G.itemLock[id]) return;   // 🔐 ข้ามของที่ล็อกไว้
         if (seen[id]) kill.push(id); else seen[id] = 1;
       });
       if (!kill.length) { toast("💠 ไม่มีของซ้ำให้แยก"); return; }
@@ -24059,11 +24131,24 @@ export default function CherryAdventure() {
       syncPlayer(); if (G.saveGame) G.saveGame();
     };
 
+    // 🔐 ล็อก/ปลดล็อกไอเทม — กันเผลอขายหรือแยกชิ้นส่วน
+    G.toggleLock = (id) => {
+      const it = LOOT.find((x) => x.id === id);
+      if (!it) return;
+      G.itemLock = G.itemLock || {};
+      if (G.itemLock[id]) { delete G.itemLock[id]; toast(`🔓 ปลดล็อก ${it.emoji} ${it.name}`); }
+      else { G.itemLock[id] = 1; toast(`🔐 ล็อก ${it.emoji} ${it.name} — ขาย/แยกชิ้นส่วนไม่ได้แล้ว`); }
+      setUi((u) => ({ ...u, itemLock: { ...G.itemLock } }));
+      if (G.saveGame) G.saveGame();
+    };
+    G.isLocked = (id) => !!(G.itemLock && G.itemLock[id]);
+
     G.sellItem = (id) => {
       const idx = G.inv.indexOf(id);
       if (idx < 0) return;
       const it = LOOT.find((x) => x.id === id);
       if (it.starter) { toast("อาวุธฝึกหัดขายไม่ได้นะ!"); return; }
+      if (G.itemLock && G.itemLock[id]) { toast(`🔐 ${it.emoji} ${it.name} ถูกล็อกไว้ — ปลดล็อกก่อนถึงจะขายได้`); return; }
       const price = sellPrice(id);
       G.inv.splice(idx, 1);
       G.gold += price;
@@ -24076,7 +24161,8 @@ export default function CherryAdventure() {
         G.player.hp = Math.min(G.player.hp, effMaxHp());
       }
       toast(`💰 ขาย ${it.emoji} ${it.name} ได้ ${price} ทอง`);
-      syncPlayer();
+      setUi((u) => ({ ...u, inv: [...G.inv], equip: { ...G.equip }, gold: G.gold, invSel: G.inv.includes(id) ? u.invSel : null }));
+      syncPlayer(); if (G.saveGame) G.saveGame();
     };
 
     // pet EXP / level — every level buffs Cherry, evolves every 3 levels!
@@ -32361,7 +32447,7 @@ export default function CherryAdventure() {
       try {
         window.localStorage.setItem(slotKey(), JSON.stringify({
           v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated,
-          col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, awk: G.awk || {},
+          col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, awk: G.awk || {}, itemLock: G.itemLock || {},
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
@@ -34158,6 +34244,7 @@ export default function CherryAdventure() {
       G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
       G.plus = d.plus || {};
       G.awk = d.awk || {}; // ✨ ดาวปลุกพลัง
+      G.itemLock = d.itemLock || {}; // 🔐 ไอเทมที่ล็อกไว้
       G.equipSort = d.equipSort || "none"; // 🔀 การเรียงของในกระเป๋าที่จำไว้
       G.mats = d.mats || {};
       G.weaponInfuse = d.weaponInfuse || {};
@@ -51785,8 +51872,9 @@ export default function CherryAdventure() {
                   {aw > 0 && <span style={{ position: "absolute", top: -3, left: 3, fontSize: 9 }}>✨</span>}
                   <span style={{ fontSize: 22 }}>{it.emoji}</span>
                   {plus > 0 && <span style={{ position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" }}>+{plus}{((ui.awk || {})[id] || 0) > 0 ? "★" + ((ui.awk || {})[id]) : ""}</span>}
-                  {count > 1 && <span style={{ position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>×{count}</span>}
-                  {equipped && <span style={{ position: "absolute", bottom: 1, left: 3, fontSize: 9 }}>✓</span>}
+                  {count > 1 && <span style={{ position: "absolute", top: 15, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>×{count}</span>}
+                  {equipped && <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, fontSize: 8.5, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: "0 0 11px 11px", letterSpacing: 0.3, padding: "1px 0" }}>✓ สวมใส่</span>}
+                  {(ui.itemLock || {})[id] && <span style={{ position: "absolute", bottom: 12, left: 3, fontSize: 9 }} title="ล็อกไว้ — ขาย/แยกชิ้นส่วนไม่ได้">🔐</span>}
                   {locked && <span style={{ position: "absolute", top: 1, left: 3, fontSize: 9 }}>🔒</span>}
                 </button>
               );
@@ -51865,6 +51953,37 @@ export default function CherryAdventure() {
                             background: "rgba(0,0,0,0.26)", borderRadius: 12, padding: "5px 4px", border: "1px solid rgba(255,255,255,0.08)" }}>{ic} {v}</span>
                         ))}
                       </div>
+                      {/* 🧩 คุณสมบัติเซ็ต — ใส่ของระดับเดียวกันครบ 3 / 5 / 7 ชิ้น */}
+                      {(() => {
+                        const SI = G.setInfo ? G.setInfo() : null;
+                        if (!SI) return null;
+                        return (
+                          <div style={{ borderRadius: 16, padding: "9px 10px 10px", maxHeight: 250, overflowY: "auto",
+                            background: "linear-gradient(170deg, rgba(255,255,255,0.06), rgba(0,0,0,0.22))",
+                            border: "1px solid rgba(255,255,255,0.09)" }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c9b98a", marginBottom: 2 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></div>
+                            <div style={{ fontSize: 8.5, color: "#8a9a88", marginBottom: 6 }}>ใส่ของ “ระดับเดียวกัน” ให้ครบตามจำนวน · ได้โบนัสขั้นสูงสุดที่ถึง</div>
+                            {!SI.rows.length && <div style={{ fontSize: 10, color: "#8a9080", textAlign: "center", padding: "6px 0" }}>ยังไม่ได้ใส่ของ — สวมของระดับเดียวกัน 3 ชิ้นขึ้นไปเพื่อรับโบนัสเซ็ต</div>}
+                            {SI.rows.map((r) => (
+                              <div key={r.rar} style={{ marginBottom: 7, background: "rgba(0,0,0,0.24)", borderRadius: 10, padding: "6px 8px", border: `1px solid ${r.color}44` }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                                  <span style={{ fontSize: 10.5, fontWeight: 900, color: r.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.emoji} {r.name}</span>
+                                  <span style={{ fontSize: 10, fontWeight: 900, color: "#d8e0c8", whiteSpace: "nowrap" }}>{r.worn}/{SI.slots}</span>
+                                </div>
+                                {r.tiers.map((t) => (
+                                  <div key={t.n} style={{ display: "flex", gap: 5, alignItems: "flex-start", fontSize: 9, lineHeight: 1.45, marginTop: 3,
+                                    color: t.on ? "#a8e88a" : "#7e8878", opacity: t.on ? 1 : 0.72 }}>
+                                    <span style={{ flexShrink: 0, fontWeight: 900 }}>{t.on ? "✅" : "🔒"} {t.n} ชิ้น</span>
+                                    <span style={{ minWidth: 0 }}>{t.txt}</span>
+                                  </div>
+                                ))}
+                                {r.need > 0 && <div style={{ fontSize: 8.5, color: "#c9b98a", marginTop: 3 }}>อีก {r.need} ชิ้นถึงขั้น {r.nextN} ชิ้น</div>}
+                              </div>
+                            ))}
+                            {SI.totalTxt && <div style={{ fontSize: 9.5, fontWeight: 800, color: "#9ae86a", borderTop: "1px dashed rgba(255,255,255,0.12)", paddingTop: 5 }}>รวมโบนัสเซ็ต: {SI.totalTxt}</div>}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* กระเป๋า */}
@@ -51880,8 +51999,8 @@ export default function CherryAdventure() {
                     )}
                       </div>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
-                    <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
-                    <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }} title="ทุบอาวุธ/ชุดที่ซ้ำกันทั้งหมดเป็นผงเพชร (เก็บไว้แบบละ 1 ชิ้น)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" }}>💠 แยกของซ้ำ {ui.gemDust || 0}</button>
+                    <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก · ข้ามของที่ล็อก 🔐)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
+                    <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }} title="ทุบของซ้ำทุกชนิดเป็นผงเพชร (เก็บไว้แบบละ 1 ชิ้น · ข้ามของที่ล็อก 🔐)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" }}>💠 แยกของซ้ำ {ui.gemDust || 0}</button>
                     <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(255,255,255,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
                     <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(255,255,255,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
                       </div>
@@ -52175,7 +52294,26 @@ export default function CherryAdventure() {
                   return tb - ta || (ui.plus[b] || 0) - (ui.plus[a] || 0) || SLOTS.indexOf(ia.slot) - SLOTS.indexOf(ib.slot);
                 });
                 if (!ids.length) return <div style={{ fontSize: 12, color: "#a3a396", textAlign: "center", padding: "16px 0" }}>ยังไม่มีของในหมวดนี้</div>;
-                return (
+                return (<>
+                  {/* 🧩 คุณสมบัติเซ็ต 3/5/7 ชิ้น */}
+                  {(() => {
+                    const SI = G.setInfo ? G.setInfo() : null;
+                    if (!SI || !SI.rows.length) return null;
+                    return (
+                      <div style={{ background: "linear-gradient(135deg,#fffdf4,#f6f2e6)", border: "1px solid #e6dcc4", borderRadius: 11, padding: "7px 9px", marginBottom: 8 }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 900, color: "#a08040", marginBottom: 4 }}>🧩 คุณสมบัติเซ็ต · ครบ 3 / 5 / 7 ชิ้น</div>
+                        {SI.rows.map((r) => (
+                          <div key={r.rar} style={{ marginBottom: 5 }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 900, color: r.color }}>{r.emoji} {r.name} <span style={{ color: "#8a8a7a" }}>{r.worn}/{SI.slots} ชิ้น</span></div>
+                            {r.tiers.map((t) => (
+                              <div key={t.n} style={{ fontSize: 9, lineHeight: 1.45, color: t.on ? "#3f9a54" : "#a8a498" }}>{t.on ? "✅" : "🔒"} {t.n} ชิ้น — {t.txt}</div>
+                            ))}
+                          </div>
+                        ))}
+                        {SI.totalTxt && <div style={{ fontSize: 9.5, fontWeight: 800, color: "#3f7a4a", borderTop: "1px dashed #e0d8c0", paddingTop: 4 }}>รวมโบนัสเซ็ต: {SI.totalTxt}</div>}
+                      </div>
+                    );
+                  })()}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                     {ids.map((id) => {
                       const it = LOOT.find((x) => x.id === id);
@@ -52196,15 +52334,16 @@ export default function CherryAdventure() {
                           <span style={{ fontSize: 22 }}>{it.emoji}</span>
                           {plus > 0 && <span style={{ position: "absolute", top: 2, right: 3, fontSize: 9, fontWeight: 800, color: "#e0a020" }}>+{plus}{((ui.awk || {})[id] || 0) > 0 ? "★" + ((ui.awk || {})[id]) : ""}</span>}
                           {it.affix && AFFIXES[it.affix] && <span style={{ position: "absolute", top: 13, right: 2, fontSize: 9 }}>{AFFIXES[it.affix].emoji}</span>}
-                          {count > 1 && <span style={{ position: "absolute", bottom: 2, right: 3, fontSize: 9, fontWeight: 800, color: "#5a5a4a" }}>×{count}</span>}
-                          {equipped && <span style={{ position: "absolute", bottom: 2, left: 3, fontSize: 9 }}>✓</span>}
+                          {count > 1 && <span style={{ position: "absolute", top: 15, right: 3, fontSize: 9, fontWeight: 800, color: "#5a5a4a" }}>×{count}</span>}
+                          {equipped && <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, fontSize: 8.5, fontWeight: 900, color: "#123018", background: "linear-gradient(90deg,#9ae8a8,#6ac47c)", borderRadius: "0 0 8px 8px", padding: "1px 0" }}>✓ สวมใส่</span>}
+                          {(ui.itemLock || {})[id] && <span style={{ position: "absolute", bottom: 12, left: 3, fontSize: 9 }}>🔐</span>}
                           {locked && <span style={{ position: "absolute", top: 2, left: 3, fontSize: 9 }}>🔒</span>}
                           <span style={{ position: "absolute", top: -1, left: 0, right: 0, height: 3, borderRadius: "10px 10px 0 0", background: RARITY[it.rarity].color }} />
                         </button>
                       );
                     })}
                   </div>
-                );
+                </>);
               })()}
               {/* 🔍 item detail panel — click a grid cell to see stats + actions */}
               {ui.invSel && (() => {
@@ -52215,6 +52354,7 @@ export default function CherryAdventure() {
                 const equipped = ui.equip[it.slot] === id;
                 const plus = ui.plus[id] || 0;
                 const awkN = (ui.awk || {})[id] || 0;
+                const itLocked = !!(ui.itemLock || {})[id];
                 const m = 1 + 0.2 * plus + AWK_STEP * awkN;
                 // 🎲 roll + 💎 gems — mirror itemStats() so the panel shows the true numbers
                 const roll = (ui.rolls || {})[id];
@@ -52292,6 +52432,37 @@ export default function CherryAdventure() {
                         {awkN < AWK_MAX && <div style={{ fontSize: 9.5, color: "#b0a088", marginTop: 3 }}>★{awkN + 1} ถัดไป → {awkPerkTxt(awkN)}</div>}
                       </div>
                     )}
+                    {/* ⚖️ เทียบกับของที่ใส่อยู่ในช่องเดียวกัน */}
+                    {!equipped && (() => {
+                      const info2 = G.itemInfo ? G.itemInfo(id) : null;
+                      const c = info2 && info2.cmp;
+                      if (!c) return <div style={{ fontSize: 10, color: "#a3a396", marginBottom: 8 }}>⚖️ ช่อง{SLOT_NAMES[it.slot]}ยังว่าง — ใส่ได้เลย ไม่มีของให้เทียบ</div>;
+                      const mine = info2.stats || {};
+                      const keys = ["atk", "hp", "def", "spd", "eva", "crit"].filter((k) => (mine[k] || 0) || (c.stats[k] || 0));
+                      const up = keys.filter((k) => c.diff[k] > 0).length, dn = keys.filter((k) => c.diff[k] < 0).length;
+                      const vd = up > dn ? { t: "⬆️ ดีกว่าของที่ใส่อยู่", c: "#3f9a54" } : up < dn ? { t: "⬇️ แย่กว่าของที่ใส่อยู่", c: "#c05a5a" } : { t: "➖ พอ ๆ กัน", c: "#8a8a7a" };
+                      return (
+                        <div style={{ background: "#f4f7fb", border: "1px solid #d8e2ee", borderRadius: 10, padding: "7px 9px", marginBottom: 8 }}>
+                          <div style={{ fontSize: 10.5, fontWeight: 900, color: "#4a6a8a", marginBottom: 4 }}>
+                            ⚖️ เทียบกับที่ใส่อยู่ · <span style={{ color: c.rarityColor }}>{c.emoji} {c.name}</span>
+                            {c.plus > 0 && <span style={{ color: "#e0a020" }}> +{c.plus}</span>}{c.awk > 0 && <span style={{ color: "#f5c542" }}> {awkStars(c.awk)}</span>}
+                          </div>
+                          {keys.map((k) => {
+                            const d = c.diff[k], u = SET_STAT_UNIT[k] || "";
+                            return (
+                              <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "1px 0" }}>
+                                <span style={{ color: "#7a7a6a", fontWeight: 700 }}>{SET_STAT_LABEL[k]}</span>
+                                <span style={{ color: "#8a8a7a", fontWeight: 700 }}>
+                                  {c.stats[k] || 0}{u} → <b style={{ color: "#3a3a2a" }}>{mine[k] || 0}{u}</b>
+                                  <span style={{ marginLeft: 6, fontWeight: 900, color: d > 0 ? "#3f9a54" : d < 0 ? "#c05a5a" : "#a3a396" }}>{d > 0 ? `▲+${d}` : d < 0 ? `▼${d}` : "－"}{d ? u : ""}</span>
+                                </span>
+                              </div>
+                            );
+                          })}
+                          <div style={{ fontSize: 10.5, fontWeight: 900, color: vd.c, marginTop: 4, textAlign: "right" }}>{vd.t}</div>
+                        </div>
+                      );
+                    })()}
                     {/* 💎 gem sockets */}
                     {nSock > 0 && (
                       <div style={{ background: "#f4f0fa", borderRadius: 10, padding: "7px 9px", marginBottom: 8, border: "1px solid #ddd0ee" }}>
@@ -52339,18 +52510,24 @@ export default function CherryAdventure() {
                         color: "#fff", background: equipped ? "#a8b89a" : (it.req && ui.level < it.req) ? "#d8d8ce" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
                       }}>{equipped ? "สวมอยู่ ✓" : "🎽 สวมใส่"}</button>
                       {!it.starter && (
-                        <button onClick={() => { G.sellItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} style={{
-                          padding: "8px 12px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
-                          color: "#fff", background: "#c09020",
+                        <button onClick={() => { G.sellItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} disabled={itLocked} title={itLocked ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะขายได้" : ""} style={{
+                          padding: "8px 12px", borderRadius: 9, border: "none", cursor: itLocked ? "not-allowed" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
+                          color: "#fff", background: itLocked ? "#c8c8bc" : "#c09020",
                         }}>💰 ขาย {G.sellPrice ? G.sellPrice(id) : 0}</button>
                       )}
                     </div>
-                    {/* 💠 แยกชิ้นส่วน — เฉพาะอาวุธกับชุด ได้ผงเพชรไว้ตีบวกการันตี */}
-                    {!it.starter && (it.slot === "weapon" || it.slot === "outfit") && (
-                      <button onClick={() => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} style={{
-                        width: "100%", marginTop: 5, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
-                        color: "#fff", background: "linear-gradient(90deg,#7a6ad0,#4a86e0)",
-                      }}>💠 แยกชิ้นส่วน → ผงเพชร +{G.salvageYield ? G.salvageYield(id) : 0}</button>
+                    {/* 💠 แยกชิ้นส่วน — ทำได้ทุกช่อง ได้ผงเพชรไว้ตีบวกการันตี · 🔐 ล็อกกันเผลอ */}
+                    {!it.starter && (
+                      <div style={{ display: "flex", gap: 5, marginTop: 5 }}>
+                        <button onClick={() => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} disabled={itLocked} title={itLocked ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะย่อยได้" : "ย่อยเป็นผงเพชร"} style={{
+                          flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: itLocked ? "not-allowed" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
+                          color: "#fff", background: itLocked ? "#c8c8bc" : "linear-gradient(90deg,#7a6ad0,#4a86e0)",
+                        }}>💠 ย่อย +{G.salvageYield ? G.salvageYield(id) : 0}</button>
+                        <button onClick={() => { G.toggleLock(id); }} title="ล็อกกันเผลอขาย/ย่อย (รวมขายออโต้และแยกของซ้ำ)" style={{
+                          padding: "8px 12px", borderRadius: 9, border: itLocked ? "1px solid #d9a020" : "1px solid #ddd8cc", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
+                          color: itLocked ? "#5a4410" : "#8a8a7a", background: itLocked ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "#f2f2ea",
+                        }}>{itLocked ? "🔐 ล็อกอยู่" : "🔓 ล็อก"}</button>
+                      </div>
                     )}
                     {count >= 2 && plus < 5 && (
                       <div style={{ fontSize: 9.5, color: "#7a9ac0", marginTop: 6, textAlign: "center", background: "#f2f8fd", borderRadius: 8, padding: "4px 6px" }}>
@@ -53812,7 +53989,10 @@ export default function CherryAdventure() {
                   <div style={{ fontSize: 15, fontWeight: 900, color: info.rarityColor }}>{info.name}{info.plus > 0 && <span style={{ color: "#f5c542" }}> +{info.plus}</span>}{(info.awk || 0) > 0 && <span style={{ color: "#ffd76a" }}> {awkStars(info.awk)}</span>}</div>
                   <div style={{ fontSize: 10.5, color: "#b8c0a8", fontWeight: 700 }}>[{info.rarityName}] {info.slotIcon} {info.slotName}{info.count > 1 ? ` · มี ${info.count} ชิ้น` : ""}</div>
                   {info.prefix && <div style={{ fontSize: 10, fontWeight: 800, color: "#e0b060" }}>✨ {info.prefix}</div>}
-                  {info.equipped && <div style={{ fontSize: 10, fontWeight: 800, color: "#8ae0a0" }}>✓ กำลังสวมใส่</div>}
+                  {info.equipped
+                    ? <div style={{ display: "inline-block", fontSize: 10, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: 999, padding: "1px 9px", marginTop: 2 }}>✓ สวมใส่อยู่</div>
+                    : <div style={{ display: "inline-block", fontSize: 10, fontWeight: 800, color: "#c8d0b8", background: "rgba(255,255,255,0.10)", borderRadius: 999, padding: "1px 9px", marginTop: 2 }}>ยังไม่ได้สวมใส่</div>}
+                  {info.locked2 && <div style={{ display: "inline-block", fontSize: 10, fontWeight: 900, color: "#ffd76a", background: "rgba(245,197,66,0.16)", borderRadius: 999, padding: "1px 9px", marginTop: 2, marginLeft: 4 }}>🔐 ล็อกไว้</div>}
                 </div>
               </div>
               {info.elem && ELEM_META[info.elem] && (
@@ -53841,6 +54021,35 @@ export default function CherryAdventure() {
                   {info.locked ? `🔒 ต้องถึงเลเวล ${info.req} จึงจะสวมได้` : `✅ ใช้ได้ (Lv.${info.req})`}
                 </div>
               )}
+              {/* ⚖️ เทียบกับของที่ใส่อยู่ในช่องเดียวกัน */}
+              {info.cmp && (() => {
+                const c = info.cmp;
+                const keys = ["atk", "hp", "def", "spd", "eva", "crit"].filter((k) => (s[k] || 0) || (c.stats[k] || 0));
+                const up = keys.filter((k) => c.diff[k] > 0).length, dn = keys.filter((k) => c.diff[k] < 0).length;
+                const verdict = up > dn ? { t: "⬆️ ดีกว่าของที่ใส่อยู่", c: "#9ae86a" } : up < dn ? { t: "⬇️ แย่กว่าของที่ใส่อยู่", c: "#e88a8a" } : { t: "➖ พอ ๆ กัน", c: "#d8d0a8" };
+                return (
+                  <div style={{ background: "rgba(0,0,0,0.30)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 10, padding: "9px 11px", marginTop: 9 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 900, color: "#c9d8b8", marginBottom: 5 }}>
+                      ⚖️ เทียบกับที่ใส่อยู่ · <span style={{ color: c.rarityColor }}>{c.emoji} {c.name}</span>
+                      {c.plus > 0 && <span style={{ color: "#f5c542" }}> +{c.plus}</span>}{c.awk > 0 && <span style={{ color: "#ffd76a" }}> {awkStars(c.awk)}</span>}
+                    </div>
+                    {keys.map((k) => {
+                      const d = c.diff[k], u = SET_STAT_UNIT[k] || "";
+                      return (
+                        <div key={k} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11.5, padding: "1px 0" }}>
+                          <span style={{ color: "#b8c0a8", fontWeight: 700 }}>{SET_STAT_LABEL[k]}</span>
+                          <span style={{ color: "#9aa89a", fontWeight: 700 }}>
+                            {c.stats[k] || 0}{u} <span style={{ color: "#6f7a6a" }}>→</span> <span style={{ color: "#e6f0d8", fontWeight: 900 }}>{s[k] || 0}{u}</span>
+                            <span style={{ marginLeft: 6, fontWeight: 900, color: d > 0 ? "#9ae86a" : d < 0 ? "#e88a8a" : "#8a9080" }}>{d > 0 ? `▲+${d}` : d < 0 ? `▼${d}` : "－"}{d ? u : ""}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div style={{ fontSize: 11, fontWeight: 900, color: verdict.c, marginTop: 5, textAlign: "right" }}>{verdict.t}</div>
+                  </div>
+                );
+              })()}
+              {!info.cmp && !info.equipped && <div style={{ fontSize: 10, color: "#8a9080", marginTop: 8 }}>⚖️ ช่อง{info.slotName}ยังว่างอยู่ — ใส่ได้เลย ไม่มีของให้เทียบ</div>}
               {/* actions: equip / unequip / enhance */}
               <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
                 <button onClick={() => { G.equipItem(id); }} disabled={info.equipped || info.locked} style={{
@@ -53866,12 +54075,28 @@ export default function CherryAdventure() {
                   background: (info.plus >= 5 || info.plus >= info.cap) ? "#5a6450" : "linear-gradient(90deg,#c0392b,#f5a623)",
                 }}>💠 การันตี ({info.dustCost})</button>
               </div>
-              {/* 💠 แยกชิ้นส่วน — เฉพาะอาวุธกับชุด ทุบเป็นผงเพชรไว้ตีบวกการันตี */}
-              {!info.starter && (info.slot === "weapon" || info.slot === "outfit") && (
-                <button onClick={() => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} title="ทุบของชิ้นนี้เป็นผงเพชร (ถ้าเป็นชิ้นสุดท้ายที่ใส่อยู่จะถอดออกให้)" style={{
-                  width: "100%", marginTop: 6, padding: "9px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-                  fontSize: 11.5, fontWeight: 900, color: "#fff", background: "linear-gradient(90deg,#7a6ad0,#4a86e0)",
-                }}>💠 แยกชิ้นส่วน → ผงเพชร +{info.salvage}</button>
+              {/* 💰 ขาย · 💠 แยกชิ้นส่วน (ทำได้ทุกช่อง) · 🔐 ล็อก */}
+              {!info.starter && (
+                <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                  <button onClick={() => { G.sellItem(id); }} disabled={info.locked2} title={info.locked2 ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะขายได้" : "ขายชิ้นนี้ 1 ชิ้น"} style={{
+                    flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                    cursor: info.locked2 ? "not-allowed" : "pointer", color: "#fff",
+                    background: info.locked2 ? "#5a6450" : "linear-gradient(90deg,#c0902a,#e0b850)",
+                  }}>💰 ขาย +{(info.sell || 0).toLocaleString()}</button>
+                  <button onClick={() => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }} disabled={info.locked2} title={info.locked2 ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะแยกได้" : "ทุบของชิ้นนี้เป็นผงเพชร (ถ้าเป็นชิ้นสุดท้ายที่ใส่อยู่จะถอดออกให้)"} style={{
+                    flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                    cursor: info.locked2 ? "not-allowed" : "pointer", color: "#fff",
+                    background: info.locked2 ? "#5a6450" : "linear-gradient(90deg,#7a6ad0,#4a86e0)",
+                  }}>💠 ย่อย +{info.salvage}</button>
+                </div>
+              )}
+              {!info.starter && (
+                <button onClick={() => { G.toggleLock(id); }} title="ล็อกไว้กันเผลอขาย/ย่อย (รวมถึงขายออโต้และแยกของซ้ำ)" style={{
+                  width: "100%", marginTop: 6, padding: "9px 0", borderRadius: 10, border: info.locked2 ? "1px solid #f5c542" : "1px solid rgba(255,255,255,0.16)",
+                  cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                  color: info.locked2 ? "#2a2410" : "#d8e0c8",
+                  background: info.locked2 ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "rgba(255,255,255,0.10)",
+                }}>{info.locked2 ? "🔐 ล็อกอยู่ — แตะเพื่อปลดล็อก" : "🔓 ล็อกไอเทมนี้ (กันขาย/ย่อย)"}</button>
               )}
               <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
             </div>
