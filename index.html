@@ -355,6 +355,7 @@ QING.forEach((q) => (QING_BY[q.id] = q));
 const AWK_REQ = 20; // ต้อง +20 ก่อนถึงปลุกได้ (ทั้งของที่จะปลุก และของที่เอามาเป็นวัตถุดิบ)
 const AWK_MAX = 5; // ปลุกได้สูงสุด ★5
 const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
+const AWK_GOLD = 100000; // 💰 ค่าปลุกพลังต่อครั้ง
 const awkStars = (n) => "★".repeat(Math.max(0, Math.min(AWK_MAX, n || 0)));
 // ✨ ปลุกพลังแต่ละดาว = ได้ "สถานะพิเศษ" ติดของชิ้นนั้นเพิ่มอีกอย่าง (สะสมทบกันไปเรื่อย ๆ)
 const AWK_PERK = [
@@ -36604,6 +36605,7 @@ function CherryAdventure() {
         G.AWK_REQ = AWK_REQ;
         G.AWK_MAX = AWK_MAX;
         G.AWK_STEP = AWK_STEP;
+        G.AWK_GOLD = AWK_GOLD;
         G.awkPerkTxt = awkPerkTxt;
         G.awkBonus = awkBonus;
         const awkOf = (id) => ((G.awk || (G.awk = {}))[id] || 0);
@@ -36643,7 +36645,7 @@ function CherryAdventure() {
                     soon.push(row);
             });
             const bySort = (a, b) => (b.awk - a.awk) || (b.plus - a.plus) || (TIER[b.rarity] - TIER[a.rarity]);
-            return { ready: ready.sort(bySort), soon: soon.sort(bySort).slice(0, 8), req: AWK_REQ, max: AWK_MAX, step: AWK_STEP };
+            return { ready: ready.sort(bySort), soon: soon.sort(bySort).slice(0, 8), req: AWK_REQ, max: AWK_MAX, step: AWK_STEP, cost: AWK_GOLD, gold: Math.floor(G.gold || 0), rich: (G.gold || 0) >= AWK_GOLD };
         };
         G.awakenItem = (id, matId) => {
             const it = LOOT.find((x) => x.id === id);
@@ -36680,7 +36682,12 @@ function CherryAdventure() {
                 toast(`✨ ระดับตีบวกต้องเท่ากัน (+${G.plus[id] || 0})`);
                 return;
             }
-            // 🔥 กินวัตถุดิบ
+            if ((G.gold || 0) < AWK_GOLD) {
+                toast(`💰 ทองไม่พอ — ปลุกพลังครั้งละ ${AWK_GOLD.toLocaleString()} ทอง (มี ${Math.floor(G.gold || 0).toLocaleString()})`);
+                return;
+            }
+            // 💰 หักค่าปลุกพลัง แล้วค่อยกินวัตถุดิบ
+            G.gold -= AWK_GOLD;
             G.inv.splice(G.inv.indexOf(matId), 1);
             if (!G.inv.includes(matId)) {
                 delete G.plus[matId];
@@ -36695,11 +36702,11 @@ function CherryAdventure() {
                 G.sfx.levelup && G.sfx.levelup();
             if (G.mbEvent)
                 G.mbEvent("forge"); // 📖 นับภารกิจ "ตีบวก/หลอมของ"
-            toast(`✨ ปลุกพลังสำเร็จ! ${it.emoji} ${it.name} +${G.plus[id] || 0} ${awkStars(n)} · ได้สถานะพิเศษ ${awkPerkTxt(n - 1)}`);
+            toast(`✨ ปลุกพลังสำเร็จ! ${it.emoji} ${it.name} +${G.plus[id] || 0} ${awkStars(n)} · ได้สถานะพิเศษ ${awkPerkTxt(n - 1)} (−💰${AWK_GOLD.toLocaleString()})`);
             updateAura();
             G.player.hp = Math.min(G.player.hp, effMaxHp());
             syncPlayer();
-            setUi((u) => ({ ...u, inv: [...G.inv], plus: { ...G.plus }, awk: { ...G.awk }, equip: { ...G.equip }, awkPick: null }));
+            setUi((u) => ({ ...u, inv: [...G.inv], plus: { ...G.plus }, awk: { ...G.awk }, equip: { ...G.equip }, gold: G.gold, awkPick: null }));
             if (G.saveGame)
                 G.saveGame();
         };
@@ -77039,7 +77046,16 @@ function CherryAdventure() {
                         React.createElement("b", null, "1 \u0E0A\u0E34\u0E49\u0E19"),
                         " \u0E40\u0E1B\u0E47\u0E19\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A \u2014 \u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E08\u0E30\u0E2B\u0E32\u0E22\u0E44\u0E1B",
                         React.createElement("br", null),
-                        "\u2462 \u0E1B\u0E25\u0E38\u0E01\u0E44\u0E14\u0E49\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 ",
+                        "\u2462 \u0E40\u0E2A\u0E35\u0E22\u0E04\u0E48\u0E32\u0E1B\u0E25\u0E38\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E25\u0E30 ",
+                        React.createElement("b", { style: { color: "#c08a20" } },
+                            "\uD83D\uDCB0 ",
+                            AWK_GOLD.toLocaleString(),
+                            " \u0E17\u0E2D\u0E07"),
+                        " (\u0E21\u0E35 ",
+                        (ui.gold || 0).toLocaleString(),
+                        ")",
+                        React.createElement("br", null),
+                        "\u2463 \u0E1B\u0E25\u0E38\u0E01\u0E44\u0E14\u0E49\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 ",
                         React.createElement("b", { style: { color: "#f5c542" } }, awkStars(AWK_MAX)),
                         " \u00B7 \u0E14\u0E32\u0E27\u0E25\u0E30 ",
                         React.createElement("b", null,
@@ -77048,7 +77064,7 @@ function CherryAdventure() {
                             "%"),
                         " \u0E02\u0E2D\u0E07\u0E04\u0E48\u0E32\u0E1E\u0E37\u0E49\u0E19\u0E10\u0E32\u0E19 \u00B7 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E1E\u0E25\u0E32\u0E14",
                         React.createElement("br", null),
-                        "\u2463 ",
+                        "\u2464 ",
                         React.createElement("b", { style: { color: "#c08a20" } }, "\u0E17\u0E38\u0E01\u0E14\u0E32\u0E27\u0E44\u0E14\u0E49\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 1 \u0E2D\u0E22\u0E48\u0E32\u0E07"),
                         " (\u0E2A\u0E30\u0E2A\u0E21\u0E17\u0E1A\u0E01\u0E31\u0E19): ",
                         AWK_PERK.map((k, i) => `★${i + 1} ${k.emoji}+${k.val}${k.unit}`).join(" · ")),
@@ -77068,7 +77084,8 @@ function CherryAdventure() {
                                 A.ready.map((r) => {
                                     const full = r.awk >= AWK_MAX;
                                     const mat = (r.mats || [])[0]; // 🔒 วัตถุดิบมีได้แบบเดียว = ของซ้ำชนิด/ระดับเดียวกัน
-                                    const can = !full && !!mat;
+                                    const rich = (ui.gold || 0) >= AWK_GOLD; // 💰 ทองพอไหม
+                                    const can = !full && !!mat && rich;
                                     return (React.createElement("div", { key: r.id, style: { background: "#fff", borderRadius: 10, padding: "6px 8px", marginBottom: 5, border: "1px solid " + (can ? "#e8b93a" : "#f0e2c8") } },
                                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } },
                                             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
@@ -77101,13 +77118,20 @@ function CherryAdventure() {
                                                     " \u0E08\u0E30\u0E44\u0E14\u0E49 ",
                                                     React.createElement("b", null, awkPerkTxt(r.awk))),
                                                 React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, marginTop: 2, color: full ? "#c08a20" : (can ? "#5a8a3a" : "#c07a6a") } }, full ? `ปลุกเต็ม ${awkStars(AWK_MAX)} แล้ว`
-                                                    : can ? `✅ วัตถุดิบพร้อม — ใช้ ${r.emoji} ${r.name} +${r.plus} ซ้ำ 1 ชิ้น (เหลือ ${r.count - 1})`
-                                                        : `❌ ต้องมี ${r.emoji} ${r.name} +${r.plus} ซ้ำอีก 1 ชิ้น (มี ${r.count})`)),
-                                            React.createElement("button", { disabled: !can, onClick: () => can && G.awakenItem && G.awakenItem(r.id, mat.id), title: can ? `ปลุกพลัง → ${awkStars(r.awk + 1)} · ใช้ ${r.name} +${r.plus} ซ้ำ 1 ชิ้น` : (full ? "ปลุกเต็มแล้ว" : "ต้องมีของชนิดเดียวกัน ระดับเดียวกัน ซ้ำอีก 1 ชิ้น"), style: {
+                                                    : !mat ? `❌ ต้องมี ${r.emoji} ${r.name} +${r.plus} ซ้ำอีก 1 ชิ้น (มี ${r.count})`
+                                                        : !rich ? `❌ ทองไม่พอ — ต้องมี 💰 ${AWK_GOLD.toLocaleString()} (มี ${(ui.gold || 0).toLocaleString()})`
+                                                            : `✅ พร้อมปลุก — ใช้ ${r.emoji} ${r.name} +${r.plus} ซ้ำ 1 ชิ้น (เหลือ ${r.count - 1}) + 💰 ${AWK_GOLD.toLocaleString()}`)),
+                                            React.createElement("button", { disabled: !can, onClick: () => can && G.awakenItem && G.awakenItem(r.id, mat.id), title: can ? `ปลุกพลัง → ${awkStars(r.awk + 1)} · ใช้ ${r.name} +${r.plus} ซ้ำ 1 ชิ้น + 💰 ${AWK_GOLD.toLocaleString()}` : (full ? "ปลุกเต็มแล้ว" : !mat ? "ต้องมีของชนิดเดียวกัน ระดับเดียวกัน ซ้ำอีก 1 ชิ้น" : `ทองไม่พอ — ต้องมี ${AWK_GOLD.toLocaleString()} ทอง`), style: {
                                                     border: "none", borderRadius: 9, padding: "7px 11px", cursor: can ? "pointer" : "default", whiteSpace: "nowrap",
                                                     fontSize: 10.5, fontWeight: 900, fontFamily: font, color: can ? "#4a3a10" : "#a89878",
                                                     background: can ? "linear-gradient(135deg,#f5c542,#ffd76a)" : "#eee6d6",
-                                                } }, full ? awkStars(AWK_MAX) : `✨ ปลุก → ${awkStars(r.awk + 1)}`))));
+                                                } }, full ? awkStars(AWK_MAX) : React.createElement(React.Fragment, null,
+                                                "\u2728 \u0E1B\u0E25\u0E38\u0E01 \u2192 ",
+                                                awkStars(r.awk + 1),
+                                                React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, opacity: 0.9 } },
+                                                    "\uD83D\uDCB0 ",
+                                                    (AWK_GOLD / 1000),
+                                                    "k"))))));
                                 })),
                             !!(A.soon || []).length && (React.createElement("div", { style: box("linear-gradient(135deg,#f6f8fd,#eef4fb)", "#d4e2f0") },
                                 React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#4a7ab0", marginBottom: 5 } },

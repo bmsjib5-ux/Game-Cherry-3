@@ -271,6 +271,7 @@ const QING_BY = {}; QING.forEach((q) => (QING_BY[q.id] = q));
 const AWK_REQ = 20;   // ต้อง +20 ก่อนถึงปลุกได้ (ทั้งของที่จะปลุก และของที่เอามาเป็นวัตถุดิบ)
 const AWK_MAX = 5;    // ปลุกได้สูงสุด ★5
 const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
+const AWK_GOLD = 100000; // 💰 ค่าปลุกพลังต่อครั้ง
 const awkStars = (n) => "★".repeat(Math.max(0, Math.min(AWK_MAX, n || 0)));
 // ✨ ปลุกพลังแต่ละดาว = ได้ "สถานะพิเศษ" ติดของชิ้นนั้นเพิ่มอีกอย่าง (สะสมทบกันไปเรื่อย ๆ)
 const AWK_PERK = [
@@ -22428,7 +22429,7 @@ export default function CherryAdventure() {
     // เงื่อนไข: ของชิ้นที่จะปลุกต้องตีบวกเต็ม +20 ก่อน
     // วัตถุดิบ: อาวุธ/ชุด "ประเภทเดียวกัน" (ช่องสวมใส่เดียวกัน) ที่ตีบวก +20 เหมือนกัน 1 ชิ้น
     // ผลลัพธ์: ★1..★5 · ดาวละ +50% ของค่าพื้นฐาน (การันตี ไม่มีพลาด)
-    G.AWK_REQ = AWK_REQ; G.AWK_MAX = AWK_MAX; G.AWK_STEP = AWK_STEP;
+    G.AWK_REQ = AWK_REQ; G.AWK_MAX = AWK_MAX; G.AWK_STEP = AWK_STEP; G.AWK_GOLD = AWK_GOLD;
     G.awkPerkTxt = awkPerkTxt; G.awkBonus = awkBonus;
     const awkOf = (id) => ((G.awk || (G.awk = {}))[id] || 0);
     G.awkOf = awkOf;
@@ -22458,7 +22459,7 @@ export default function CherryAdventure() {
         else if (plus >= AWK_REQ - 6 || aw > 0) soon.push(row);
       });
       const bySort = (a, b) => (b.awk - a.awk) || (b.plus - a.plus) || (TIER[b.rarity] - TIER[a.rarity]);
-      return { ready: ready.sort(bySort), soon: soon.sort(bySort).slice(0, 8), req: AWK_REQ, max: AWK_MAX, step: AWK_STEP };
+      return { ready: ready.sort(bySort), soon: soon.sort(bySort).slice(0, 8), req: AWK_REQ, max: AWK_MAX, step: AWK_STEP, cost: AWK_GOLD, gold: Math.floor(G.gold || 0), rich: (G.gold || 0) >= AWK_GOLD };
     };
     G.awakenItem = (id, matId) => {
       const it = LOOT.find((x) => x.id === id);
@@ -22473,7 +22474,9 @@ export default function CherryAdventure() {
       const cnt = invCount(matId);
       if (cnt < 2) { toast(`✨ ต้องมี ${it.emoji} ${it.name} +${G.plus[id] || 0} ซ้ำอีก 1 ชิ้นมาเป็นวัตถุดิบ`); return; }
       if ((G.plus[matId] || 0) !== (G.plus[id] || 0)) { toast(`✨ ระดับตีบวกต้องเท่ากัน (+${G.plus[id] || 0})`); return; }
-      // 🔥 กินวัตถุดิบ
+      if ((G.gold || 0) < AWK_GOLD) { toast(`💰 ทองไม่พอ — ปลุกพลังครั้งละ ${AWK_GOLD.toLocaleString()} ทอง (มี ${Math.floor(G.gold || 0).toLocaleString()})`); return; }
+      // 💰 หักค่าปลุกพลัง แล้วค่อยกินวัตถุดิบ
+      G.gold -= AWK_GOLD;
       G.inv.splice(G.inv.indexOf(matId), 1);
       if (!G.inv.includes(matId)) { delete G.plus[matId]; if (G.awk) delete G.awk[matId]; }
       G.awk = G.awk || {};
@@ -22482,11 +22485,11 @@ export default function CherryAdventure() {
       burst(char.position, 0xf5c542, 2.0);
       if (G.sfx) G.sfx.levelup && G.sfx.levelup();
       if (G.mbEvent) G.mbEvent("forge");   // 📖 นับภารกิจ "ตีบวก/หลอมของ"
-      toast(`✨ ปลุกพลังสำเร็จ! ${it.emoji} ${it.name} +${G.plus[id] || 0} ${awkStars(n)} · ได้สถานะพิเศษ ${awkPerkTxt(n - 1)}`);
+      toast(`✨ ปลุกพลังสำเร็จ! ${it.emoji} ${it.name} +${G.plus[id] || 0} ${awkStars(n)} · ได้สถานะพิเศษ ${awkPerkTxt(n - 1)} (−💰${AWK_GOLD.toLocaleString()})`);
       updateAura();
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       syncPlayer();
-      setUi((u) => ({ ...u, inv: [...G.inv], plus: { ...G.plus }, awk: { ...G.awk }, equip: { ...G.equip }, awkPick: null }));
+      setUi((u) => ({ ...u, inv: [...G.inv], plus: { ...G.plus }, awk: { ...G.awk }, equip: { ...G.equip }, gold: G.gold, awkPick: null }));
       if (G.saveGame) G.saveGame();
     };
     // ================= ✨ END AWAKEN =================
@@ -51255,8 +51258,9 @@ export default function CherryAdventure() {
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 7, lineHeight: 1.5 }}>
                 ① ตีบวกของชิ้นที่จะปลุกให้ถึง <b style={{ color: "#e0a020" }}>+{AWK_REQ}</b> ก่อน<br />
                 ② ใช้ <b>ของชนิดเดียวกัน ระดับเดียวกัน</b> (ไอเทมชิ้นเดิมเป๊ะ ๆ ที่ +{AWK_REQ} เท่ากัน) ซ้ำอีก <b>1 ชิ้น</b> เป็นวัตถุดิบ — วัตถุดิบจะหายไป<br />
-                ③ ปลุกได้สูงสุด <b style={{ color: "#f5c542" }}>{awkStars(AWK_MAX)}</b> · ดาวละ <b>+{Math.round(AWK_STEP * 100)}%</b> ของค่าพื้นฐาน · การันตี ไม่มีพลาด<br />
-                ④ <b style={{ color: "#c08a20" }}>ทุกดาวได้สถานะพิเศษเพิ่มอีก 1 อย่าง</b> (สะสมทบกัน): {AWK_PERK.map((k, i) => `★${i + 1} ${k.emoji}+${k.val}${k.unit}`).join(" · ")}
+                ③ เสียค่าปลุกครั้งละ <b style={{ color: "#c08a20" }}>💰 {AWK_GOLD.toLocaleString()} ทอง</b> (มี {(ui.gold || 0).toLocaleString()})<br />
+                ④ ปลุกได้สูงสุด <b style={{ color: "#f5c542" }}>{awkStars(AWK_MAX)}</b> · ดาวละ <b>+{Math.round(AWK_STEP * 100)}%</b> ของค่าพื้นฐาน · การันตี ไม่มีพลาด<br />
+                ⑤ <b style={{ color: "#c08a20" }}>ทุกดาวได้สถานะพิเศษเพิ่มอีก 1 อย่าง</b> (สะสมทบกัน): {AWK_PERK.map((k, i) => `★${i + 1} ${k.emoji}+${k.val}${k.unit}`).join(" · ")}
               </div>
               {(() => {
                 const A = G.awkList ? G.awkList() : { ready: [], soon: [] };
@@ -51268,7 +51272,8 @@ export default function CherryAdventure() {
                     {A.ready.map((r) => {
                       const full = r.awk >= AWK_MAX;
                       const mat = (r.mats || [])[0];      // 🔒 วัตถุดิบมีได้แบบเดียว = ของซ้ำชนิด/ระดับเดียวกัน
-                      const can = !full && !!mat;
+                      const rich = (ui.gold || 0) >= AWK_GOLD;   // 💰 ทองพอไหม
+                      const can = !full && !!mat && rich;
                       return (
                         <div key={r.id} style={{ background: "#fff", borderRadius: 10, padding: "6px 8px", marginBottom: 5, border: "1px solid " + (can ? "#e8b93a" : "#f0e2c8") }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -51284,17 +51289,18 @@ export default function CherryAdventure() {
                               {!full && <div style={{ fontSize: 9, color: "#7a9a4a", marginTop: 1 }}>➕ ★{r.awk + 1} จะได้ <b>{awkPerkTxt(r.awk)}</b></div>}
                               <div style={{ fontSize: 9.5, fontWeight: 800, marginTop: 2, color: full ? "#c08a20" : (can ? "#5a8a3a" : "#c07a6a") }}>
                                 {full ? `ปลุกเต็ม ${awkStars(AWK_MAX)} แล้ว`
-                                      : can ? `✅ วัตถุดิบพร้อม — ใช้ ${r.emoji} ${r.name} +${r.plus} ซ้ำ 1 ชิ้น (เหลือ ${r.count - 1})`
-                                            : `❌ ต้องมี ${r.emoji} ${r.name} +${r.plus} ซ้ำอีก 1 ชิ้น (มี ${r.count})`}
+                                      : !mat ? `❌ ต้องมี ${r.emoji} ${r.name} +${r.plus} ซ้ำอีก 1 ชิ้น (มี ${r.count})`
+                                      : !rich ? `❌ ทองไม่พอ — ต้องมี 💰 ${AWK_GOLD.toLocaleString()} (มี ${(ui.gold || 0).toLocaleString()})`
+                                      : `✅ พร้อมปลุก — ใช้ ${r.emoji} ${r.name} +${r.plus} ซ้ำ 1 ชิ้น (เหลือ ${r.count - 1}) + 💰 ${AWK_GOLD.toLocaleString()}`}
                               </div>
                             </div>
                             <button disabled={!can} onClick={() => can && G.awakenItem && G.awakenItem(r.id, mat.id)}
-                              title={can ? `ปลุกพลัง → ${awkStars(r.awk + 1)} · ใช้ ${r.name} +${r.plus} ซ้ำ 1 ชิ้น` : (full ? "ปลุกเต็มแล้ว" : "ต้องมีของชนิดเดียวกัน ระดับเดียวกัน ซ้ำอีก 1 ชิ้น")}
+                              title={can ? `ปลุกพลัง → ${awkStars(r.awk + 1)} · ใช้ ${r.name} +${r.plus} ซ้ำ 1 ชิ้น + 💰 ${AWK_GOLD.toLocaleString()}` : (full ? "ปลุกเต็มแล้ว" : !mat ? "ต้องมีของชนิดเดียวกัน ระดับเดียวกัน ซ้ำอีก 1 ชิ้น" : `ทองไม่พอ — ต้องมี ${AWK_GOLD.toLocaleString()} ทอง`)}
                               style={{
                                 border: "none", borderRadius: 9, padding: "7px 11px", cursor: can ? "pointer" : "default", whiteSpace: "nowrap",
                                 fontSize: 10.5, fontWeight: 900, fontFamily: font, color: can ? "#4a3a10" : "#a89878",
                                 background: can ? "linear-gradient(135deg,#f5c542,#ffd76a)" : "#eee6d6",
-                              }}>{full ? awkStars(AWK_MAX) : `✨ ปลุก → ${awkStars(r.awk + 1)}`}</button>
+                              }}>{full ? awkStars(AWK_MAX) : <>✨ ปลุก → {awkStars(r.awk + 1)}<div style={{ fontSize: 8.5, fontWeight: 800, opacity: 0.9 }}>💰 {(AWK_GOLD / 1000)}k</div></>}</button>
                           </div>
                         </div>
                       );
