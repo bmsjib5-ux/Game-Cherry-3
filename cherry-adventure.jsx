@@ -272,6 +272,10 @@ const AWK_REQ = 20;   // ต้อง +20 ก่อนถึงปลุกไ�
 const AWK_MAX = 5;    // ปลุกได้สูงสุด ★5
 const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
 const AWK_GOLD = 100000; // 💰 ค่าปลุกพลังต่อครั้ง
+const AWK_MIN_TIER = 3;  // 🔒 ปลุกพลังได้เฉพาะ "ของขั้นสูง" = มหากาพย์ (epic) ขึ้นไปเท่านั้น
+const awkTierKeys = () => Object.keys(TIER).filter((k) => TIER[k] >= AWK_MIN_TIER);          // ⚠️ ต้องเป็นฟังก์ชัน — TIER/RARITY ประกาศทีหลังบล็อกนี้
+const awkTierNames = () => awkTierKeys().map((k) => (RARITY[k] || {}).name || k).join(" / ");
+const awkEligible = (it) => !!it && !it.starter && (TIER[it.rarity] || 1) >= AWK_MIN_TIER;
 const awkStars = (n) => "★".repeat(Math.max(0, Math.min(AWK_MAX, n || 0)));
 // ✨ ปลุกพลังแต่ละดาว = ได้ "สถานะพิเศษ" ติดของชิ้นนั้นเพิ่มอีกอย่าง (สะสมทบกันไปเรื่อย ๆ)
 const AWK_PERK = [
@@ -22429,7 +22433,7 @@ export default function CherryAdventure() {
     // เงื่อนไข: ของชิ้นที่จะปลุกต้องตีบวกเต็ม +20 ก่อน
     // วัตถุดิบ: อาวุธ/ชุด "ประเภทเดียวกัน" (ช่องสวมใส่เดียวกัน) ที่ตีบวก +20 เหมือนกัน 1 ชิ้น
     // ผลลัพธ์: ★1..★5 · ดาวละ +50% ของค่าพื้นฐาน (การันตี ไม่มีพลาด)
-    G.AWK_REQ = AWK_REQ; G.AWK_MAX = AWK_MAX; G.AWK_STEP = AWK_STEP; G.AWK_GOLD = AWK_GOLD;
+    G.AWK_REQ = AWK_REQ; G.AWK_MAX = AWK_MAX; G.AWK_STEP = AWK_STEP; G.AWK_GOLD = AWK_GOLD; G.AWK_MIN_TIER = AWK_MIN_TIER;
     G.awkPerkTxt = awkPerkTxt; G.awkBonus = awkBonus;
     const awkOf = (id) => ((G.awk || (G.awk = {}))[id] || 0);
     G.awkOf = awkOf;
@@ -22439,6 +22443,7 @@ export default function CherryAdventure() {
     G.awkMatsFor = (targetId) => {
       const t = LOOT.find((x) => x.id === targetId);
       if (!t) return [];
+      if (!awkEligible(t)) return [];                   // 🔒 ของทั่วไป/หายาก ปลุกไม่ได้
       const cnt = invCount(targetId);
       const plus = G.plus[targetId] || 0;
       if (cnt < 2 || plus < AWK_REQ) return [];
@@ -22451,7 +22456,7 @@ export default function CherryAdventure() {
       (G.inv || []).forEach((id) => {
         if (seen[id]) return; seen[id] = 1;
         const it = LOOT.find((x) => x.id === id);
-        if (!it || it.starter) return;
+        if (!awkEligible(it)) return;                    // 🔒 เฉพาะของขั้นสูงเท่านั้น
         const plus = G.plus[id] || 0, aw = awkOf(id);
         const row = { id, name: it.name, emoji: it.emoji, slot: it.slot, slotName: SLOT_NAMES[it.slot] || it.slot,
           rarity: it.rarity, plus, awk: aw, count: invCount(id), equipped: !!(G.equip && G.equip[it.slot] === id) };
@@ -22466,6 +22471,7 @@ export default function CherryAdventure() {
       const mit = LOOT.find((x) => x.id === matId);
       if (!it) return;
       if (!G.inv.includes(id)) { toast("ไม่มีของชิ้นนี้ในกระเป๋า"); return; }
+      if (!awkEligible(it)) { toast(`✨ ปลุกพลังได้เฉพาะของขั้นสูงเท่านั้น (${awkTierNames()}) — ${it.emoji} ${it.name} เป็นระดับ${(RARITY[it.rarity] || {}).name || it.rarity}`); return; }
       if ((G.plus[id] || 0) < AWK_REQ) { toast(`✨ ต้องตีบวกให้ถึง +${AWK_REQ} ก่อนถึงจะปลุกพลังได้`); return; }
       if (awkOf(id) >= AWK_MAX) { toast(`✨ ปลุกพลังเต็ม ${awkStars(AWK_MAX)} แล้ว!`); return; }
       if (!mit) { toast("เลือกของที่จะใช้ปลุกพลังก่อนนะ"); return; }
@@ -51256,11 +51262,12 @@ export default function CherryAdventure() {
               {/* ✨ ปลุกพลัง — ต่อยอดจาก +20 ด้วยของประเภทเดียวกันที่ +20 */}
               <div style={{ fontSize: 12, fontWeight: 800, color: "#c08a20", margin: "2px 0 5px" }}>✨ ปลุกพลังอาวุธ & ชุด</div>
               <div style={{ fontSize: 9.5, color: "#9a8a7a", marginBottom: 7, lineHeight: 1.5 }}>
-                ① ตีบวกของชิ้นที่จะปลุกให้ถึง <b style={{ color: "#e0a020" }}>+{AWK_REQ}</b> ก่อน<br />
-                ② ใช้ <b>ของชนิดเดียวกัน ระดับเดียวกัน</b> (ไอเทมชิ้นเดิมเป๊ะ ๆ ที่ +{AWK_REQ} เท่ากัน) ซ้ำอีก <b>1 ชิ้น</b> เป็นวัตถุดิบ — วัตถุดิบจะหายไป<br />
-                ③ เสียค่าปลุกครั้งละ <b style={{ color: "#c08a20" }}>💰 {AWK_GOLD.toLocaleString()} ทอง</b> (มี {(ui.gold || 0).toLocaleString()})<br />
-                ④ ปลุกได้สูงสุด <b style={{ color: "#f5c542" }}>{awkStars(AWK_MAX)}</b> · ดาวละ <b>+{Math.round(AWK_STEP * 100)}%</b> ของค่าพื้นฐาน · การันตี ไม่มีพลาด<br />
-                ⑤ <b style={{ color: "#c08a20" }}>ทุกดาวได้สถานะพิเศษเพิ่มอีก 1 อย่าง</b> (สะสมทบกัน): {AWK_PERK.map((k, i) => `★${i + 1} ${k.emoji}+${k.val}${k.unit}`).join(" · ")}
+                ① ปลุกได้เฉพาะ <b style={{ color: "#b07ae0" }}>ของขั้นสูง</b> เท่านั้น — {awkTierKeys().map((k) => <span key={k} style={{ color: (RARITY[k] || {}).color, fontWeight: 900 }}>{(RARITY[k] || {}).name} </span>)}(ทั่วไป/หายาก ปลุกไม่ได้)<br />
+                ② ตีบวกของชิ้นที่จะปลุกให้ถึง <b style={{ color: "#e0a020" }}>+{AWK_REQ}</b> ก่อน<br />
+                ③ ใช้ <b>ของชนิดเดียวกัน ระดับเดียวกัน</b> (ไอเทมชิ้นเดิมเป๊ะ ๆ ที่ +{AWK_REQ} เท่ากัน) ซ้ำอีก <b>1 ชิ้น</b> เป็นวัตถุดิบ — วัตถุดิบจะหายไป<br />
+                ④ เสียค่าปลุกครั้งละ <b style={{ color: "#c08a20" }}>💰 {AWK_GOLD.toLocaleString()} ทอง</b> (มี {(ui.gold || 0).toLocaleString()})<br />
+                ⑤ ปลุกได้สูงสุด <b style={{ color: "#f5c542" }}>{awkStars(AWK_MAX)}</b> · ดาวละ <b>+{Math.round(AWK_STEP * 100)}%</b> ของค่าพื้นฐาน · การันตี ไม่มีพลาด<br />
+                ⑥ <b style={{ color: "#c08a20" }}>ทุกดาวได้สถานะพิเศษเพิ่มอีก 1 อย่าง</b> (สะสมทบกัน): {AWK_PERK.map((k, i) => `★${i + 1} ${k.emoji}+${k.val}${k.unit}`).join(" · ")}
               </div>
               {(() => {
                 const A = G.awkList ? G.awkList() : { ready: [], soon: [] };
@@ -51268,7 +51275,7 @@ export default function CherryAdventure() {
                 return (<>
                   <div style={box("linear-gradient(135deg,#fffaf0,#fdf2dc)", "#f0d9a8")}>
                     <div style={{ fontSize: 11, fontWeight: 900, color: "#b0801a", marginBottom: 6 }}>🔓 พร้อมปลุกพลัง ({A.ready.length})</div>
-                    {!A.ready.length && <div style={{ fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0" }}>ยังไม่มีของที่ตีบวกถึง +{AWK_REQ} — ไปที่แท็บ ⚒️ ตีบวก ก่อนนะ</div>}
+                    {!A.ready.length && <div style={{ fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0" }}>ยังไม่มีของขั้นสูง ({awkTierNames()}) ที่ตีบวกถึง +{AWK_REQ} — ไปที่แท็บ ⚒️ ตีบวก ก่อนนะ</div>}
                     {A.ready.map((r) => {
                       const full = r.awk >= AWK_MAX;
                       const mat = (r.mats || [])[0];      // 🔒 วัตถุดิบมีได้แบบเดียว = ของซ้ำชนิด/ระดับเดียวกัน
@@ -51308,7 +51315,7 @@ export default function CherryAdventure() {
                   </div>
                   {!!(A.soon || []).length && (
                     <div style={box("linear-gradient(135deg,#f6f8fd,#eef4fb)", "#d4e2f0")}>
-                      <div style={{ fontSize: 11, fontWeight: 900, color: "#4a7ab0", marginBottom: 5 }}>⏳ ใกล้ถึง +{AWK_REQ} แล้ว</div>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: "#4a7ab0", marginBottom: 5 }}>⏳ ของขั้นสูงที่ใกล้ถึง +{AWK_REQ} แล้ว</div>
                       {(A.soon || []).map((r) => (
                         <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, padding: "2px 0" }}>
                           <span style={{ color: RARITY[r.rarity].color, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.emoji} {r.name}</span>

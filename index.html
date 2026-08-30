@@ -356,6 +356,10 @@ const AWK_REQ = 20; // ต้อง +20 ก่อนถึงปลุกได�
 const AWK_MAX = 5; // ปลุกได้สูงสุด ★5
 const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
 const AWK_GOLD = 100000; // 💰 ค่าปลุกพลังต่อครั้ง
+const AWK_MIN_TIER = 3; // 🔒 ปลุกพลังได้เฉพาะ "ของขั้นสูง" = มหากาพย์ (epic) ขึ้นไปเท่านั้น
+const awkTierKeys = () => Object.keys(TIER).filter((k) => TIER[k] >= AWK_MIN_TIER); // ⚠️ ต้องเป็นฟังก์ชัน — TIER/RARITY ประกาศทีหลังบล็อกนี้
+const awkTierNames = () => awkTierKeys().map((k) => (RARITY[k] || {}).name || k).join(" / ");
+const awkEligible = (it) => !!it && !it.starter && (TIER[it.rarity] || 1) >= AWK_MIN_TIER;
 const awkStars = (n) => "★".repeat(Math.max(0, Math.min(AWK_MAX, n || 0)));
 // ✨ ปลุกพลังแต่ละดาว = ได้ "สถานะพิเศษ" ติดของชิ้นนั้นเพิ่มอีกอย่าง (สะสมทบกันไปเรื่อย ๆ)
 const AWK_PERK = [
@@ -36606,6 +36610,7 @@ function CherryAdventure() {
         G.AWK_MAX = AWK_MAX;
         G.AWK_STEP = AWK_STEP;
         G.AWK_GOLD = AWK_GOLD;
+        G.AWK_MIN_TIER = AWK_MIN_TIER;
         G.awkPerkTxt = awkPerkTxt;
         G.awkBonus = awkBonus;
         const awkOf = (id) => ((G.awk || (G.awk = {}))[id] || 0);
@@ -36617,6 +36622,8 @@ function CherryAdventure() {
             const t = LOOT.find((x) => x.id === targetId);
             if (!t)
                 return [];
+            if (!awkEligible(t))
+                return []; // 🔒 ของทั่วไป/หายาก ปลุกไม่ได้
             const cnt = invCount(targetId);
             const plus = G.plus[targetId] || 0;
             if (cnt < 2 || plus < AWK_REQ)
@@ -36632,8 +36639,8 @@ function CherryAdventure() {
                     return;
                 seen[id] = 1;
                 const it = LOOT.find((x) => x.id === id);
-                if (!it || it.starter)
-                    return;
+                if (!awkEligible(it))
+                    return; // 🔒 เฉพาะของขั้นสูงเท่านั้น
                 const plus = G.plus[id] || 0, aw = awkOf(id);
                 const row = { id, name: it.name, emoji: it.emoji, slot: it.slot, slotName: SLOT_NAMES[it.slot] || it.slot,
                     rarity: it.rarity, plus, awk: aw, count: invCount(id), equipped: !!(G.equip && G.equip[it.slot] === id) };
@@ -36654,6 +36661,10 @@ function CherryAdventure() {
                 return;
             if (!G.inv.includes(id)) {
                 toast("ไม่มีของชิ้นนี้ในกระเป๋า");
+                return;
+            }
+            if (!awkEligible(it)) {
+                toast(`✨ ปลุกพลังได้เฉพาะของขั้นสูงเท่านั้น (${awkTierNames()}) — ${it.emoji} ${it.name} เป็นระดับ${(RARITY[it.rarity] || {}).name || it.rarity}`);
                 return;
             }
             if ((G.plus[id] || 0) < AWK_REQ) {
@@ -77032,13 +77043,21 @@ function CherryAdventure() {
                 (ui.forgeTab || "enh") === "awk" && (React.createElement(React.Fragment, null,
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#c08a20", margin: "2px 0 5px" } }, "\u2728 \u0E1B\u0E25\u0E38\u0E01\u0E1E\u0E25\u0E31\u0E07\u0E2D\u0E32\u0E27\u0E38\u0E18 & \u0E0A\u0E38\u0E14"),
                     React.createElement("div", { style: { fontSize: 9.5, color: "#9a8a7a", marginBottom: 7, lineHeight: 1.5 } },
-                        "\u2460 \u0E15\u0E35\u0E1A\u0E27\u0E01\u0E02\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19\u0E17\u0E35\u0E48\u0E08\u0E30\u0E1B\u0E25\u0E38\u0E01\u0E43\u0E2B\u0E49\u0E16\u0E36\u0E07 ",
+                        "\u2460 \u0E1B\u0E25\u0E38\u0E01\u0E44\u0E14\u0E49\u0E40\u0E09\u0E1E\u0E32\u0E30 ",
+                        React.createElement("b", { style: { color: "#b07ae0" } }, "\u0E02\u0E2D\u0E07\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07"),
+                        " \u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19 \u2014 ",
+                        awkTierKeys().map((k) => React.createElement("span", { key: k, style: { color: (RARITY[k] || {}).color, fontWeight: 900 } },
+                            (RARITY[k] || {}).name,
+                            " ")),
+                        "(\u0E17\u0E31\u0E48\u0E27\u0E44\u0E1B/\u0E2B\u0E32\u0E22\u0E32\u0E01 \u0E1B\u0E25\u0E38\u0E01\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49)",
+                        React.createElement("br", null),
+                        "\u2461 \u0E15\u0E35\u0E1A\u0E27\u0E01\u0E02\u0E2D\u0E07\u0E0A\u0E34\u0E49\u0E19\u0E17\u0E35\u0E48\u0E08\u0E30\u0E1B\u0E25\u0E38\u0E01\u0E43\u0E2B\u0E49\u0E16\u0E36\u0E07 ",
                         React.createElement("b", { style: { color: "#e0a020" } },
                             "+",
                             AWK_REQ),
                         " \u0E01\u0E48\u0E2D\u0E19",
                         React.createElement("br", null),
-                        "\u2461 \u0E43\u0E0A\u0E49 ",
+                        "\u2462 \u0E43\u0E0A\u0E49 ",
                         React.createElement("b", null, "\u0E02\u0E2D\u0E07\u0E0A\u0E19\u0E34\u0E14\u0E40\u0E14\u0E35\u0E22\u0E27\u0E01\u0E31\u0E19 \u0E23\u0E30\u0E14\u0E31\u0E1A\u0E40\u0E14\u0E35\u0E22\u0E27\u0E01\u0E31\u0E19"),
                         " (\u0E44\u0E2D\u0E40\u0E17\u0E21\u0E0A\u0E34\u0E49\u0E19\u0E40\u0E14\u0E34\u0E21\u0E40\u0E1B\u0E4A\u0E30 \u0E46 \u0E17\u0E35\u0E48 +",
                         AWK_REQ,
@@ -77046,7 +77065,7 @@ function CherryAdventure() {
                         React.createElement("b", null, "1 \u0E0A\u0E34\u0E49\u0E19"),
                         " \u0E40\u0E1B\u0E47\u0E19\u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A \u2014 \u0E27\u0E31\u0E15\u0E16\u0E38\u0E14\u0E34\u0E1A\u0E08\u0E30\u0E2B\u0E32\u0E22\u0E44\u0E1B",
                         React.createElement("br", null),
-                        "\u2462 \u0E40\u0E2A\u0E35\u0E22\u0E04\u0E48\u0E32\u0E1B\u0E25\u0E38\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E25\u0E30 ",
+                        "\u2463 \u0E40\u0E2A\u0E35\u0E22\u0E04\u0E48\u0E32\u0E1B\u0E25\u0E38\u0E01\u0E04\u0E23\u0E31\u0E49\u0E07\u0E25\u0E30 ",
                         React.createElement("b", { style: { color: "#c08a20" } },
                             "\uD83D\uDCB0 ",
                             AWK_GOLD.toLocaleString(),
@@ -77055,7 +77074,7 @@ function CherryAdventure() {
                         (ui.gold || 0).toLocaleString(),
                         ")",
                         React.createElement("br", null),
-                        "\u2463 \u0E1B\u0E25\u0E38\u0E01\u0E44\u0E14\u0E49\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 ",
+                        "\u2464 \u0E1B\u0E25\u0E38\u0E01\u0E44\u0E14\u0E49\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 ",
                         React.createElement("b", { style: { color: "#f5c542" } }, awkStars(AWK_MAX)),
                         " \u00B7 \u0E14\u0E32\u0E27\u0E25\u0E30 ",
                         React.createElement("b", null,
@@ -77064,7 +77083,7 @@ function CherryAdventure() {
                             "%"),
                         " \u0E02\u0E2D\u0E07\u0E04\u0E48\u0E32\u0E1E\u0E37\u0E49\u0E19\u0E10\u0E32\u0E19 \u00B7 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E1E\u0E25\u0E32\u0E14",
                         React.createElement("br", null),
-                        "\u2464 ",
+                        "\u2465 ",
                         React.createElement("b", { style: { color: "#c08a20" } }, "\u0E17\u0E38\u0E01\u0E14\u0E32\u0E27\u0E44\u0E14\u0E49\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 1 \u0E2D\u0E22\u0E48\u0E32\u0E07"),
                         " (\u0E2A\u0E30\u0E2A\u0E21\u0E17\u0E1A\u0E01\u0E31\u0E19): ",
                         AWK_PERK.map((k, i) => `★${i + 1} ${k.emoji}+${k.val}${k.unit}`).join(" · ")),
@@ -77078,7 +77097,9 @@ function CherryAdventure() {
                                     A.ready.length,
                                     ")"),
                                 !A.ready.length && React.createElement("div", { style: { fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0" } },
-                                    "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E15\u0E35\u0E1A\u0E27\u0E01\u0E16\u0E36\u0E07 +",
+                                    "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07 (",
+                                    awkTierNames(),
+                                    ") \u0E17\u0E35\u0E48\u0E15\u0E35\u0E1A\u0E27\u0E01\u0E16\u0E36\u0E07 +",
                                     AWK_REQ,
                                     " \u2014 \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E41\u0E17\u0E47\u0E1A \u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 \u0E01\u0E48\u0E2D\u0E19\u0E19\u0E30"),
                                 A.ready.map((r) => {
@@ -77135,7 +77156,7 @@ function CherryAdventure() {
                                 })),
                             !!(A.soon || []).length && (React.createElement("div", { style: box("linear-gradient(135deg,#f6f8fd,#eef4fb)", "#d4e2f0") },
                                 React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#4a7ab0", marginBottom: 5 } },
-                                    "\u23F3 \u0E43\u0E01\u0E25\u0E49\u0E16\u0E36\u0E07 +",
+                                    "\u23F3 \u0E02\u0E2D\u0E07\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E17\u0E35\u0E48\u0E43\u0E01\u0E25\u0E49\u0E16\u0E36\u0E07 +",
                                     AWK_REQ,
                                     " \u0E41\u0E25\u0E49\u0E27"),
                                 (A.soon || []).map((r) => (React.createElement("div", { key: r.id, style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10.5, padding: "2px 0" } },
