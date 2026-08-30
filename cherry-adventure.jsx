@@ -326,10 +326,13 @@ const CRIT_DMG_BASE = 100;    // คริพื้นฐาน = ×2
 const CRIT_DMG_CAP = 320;     // ดาเมจคริรวมสูงสุด ×4.2
 const FOOD_CAP = { atkPct: 60, defPct: 60, hpPct: 60, crit: 25, luck: 30, expPct: 120, goldPct: 120, dropPct: 60 };
 const ATK_PER_LV = 2.5;
+// ⚔️ น้ำหนักพลังโจมตีจากอาวุธ/ชุดที่สวมใส่ — คูณเฉพาะส่วนที่ได้จากไอเทม (รวมตีบวก/ปลุกพลัง/อัญมณี/โบนัสเซ็ต)
+// ตั้งไว้ 2.5 เพื่อให้ "หาของดี ตีบวก ปลุกพลัง" คุ้มกว่าเดิมมาก แทนที่จะโตตามเลเวลอย่างเดียว
+const GEAR_ATK_W = 2.5;
 // ⚔️ เพดานดาเมจสกิล — เดิม mult × (1 + (Lv−1)×perLv) ทะลุ 6,900% ตอนอัพเต็ม Lv.100
-// ตอนนี้ตันที่ 300% ของพลังโจมตี · ท่าไม้ตายได้เพดานสูงกว่านิดหน่อยเพราะใช้เกจ
-const SKILL_DMG_CAP = 3.0;      // ⚔️ ท่าปกติ ตันที่ 300% ของพลังโจมตี
-const ULT_DMG_CAP = 4.5;        // 🌟 ท่าไม้ตาย ตันที่ 450%
+// ตอนนี้ตันที่ 200% ของพลังโจมตี · ท่าไม้ตายได้เพดานสูงกว่านิดหน่อยเพราะใช้เกจ
+const SKILL_DMG_CAP = 2.0;      // ⚔️ ท่าปกติ ตันที่ 200% ของพลังโจมตี
+const ULT_DMG_CAP = 3.0;        // 🌟 ท่าไม้ตาย ตันที่ 300% (ลดตามสัดส่วนเดิม 1.5 เท่าของท่าปกติ)
 const SKILL_RANK_MAX = 100;     // เลเวลวิชาสูงสุด
 const ULT_RANK_MAX = 20;
 // ไต่จากค่าเริ่มต้นของท่า → เพดาน โดยไปถึงเพดานพอดีตอนอัพเต็ม (โค้งหน้าหนัก ช่วงแรกขึ้นไว)
@@ -22250,7 +22253,7 @@ export default function CherryAdventure() {
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-    const effAtk = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
+    const effAtk = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk * GEAR_ATK_W + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
     const effDef = () => num(Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * xMul("def") * (1 + softPct(tB("def") + constBonus().defPct + sB("defPct") + (G.foodB ? G.foodB("defPct") : 0)) / 100))); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
     const effMaxHp = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
@@ -28896,7 +28899,7 @@ export default function CherryAdventure() {
       G.startCd(sk); // ⏳ begin cooldown
       char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
       yaw = char.rotation.y; // 🧭 ล็อกทิศเดินตามไปด้วย ไม่งั้นท่าเดินจะค่อย ๆ หมุนตัวกลับทิศเก่าระหว่างร่าย
-      const base = (effAtk() + Math.random() * 4) * skillMul(sk, rank);   // ⚖️ ตันที่ 300%
+      const base = (effAtk() + Math.random() * 4) * skillMul(sk, rank);   // ⚖️ ตันที่ 200%
       const col = sk.color || 0xffd24a;
       const applyDmg = (m, scale) => {
         const crit = !!sk.guaranteedCrit || Math.random() < (0.08 + effCrit() / 100 + (sk.critBonus || 0));
@@ -43151,7 +43154,7 @@ export default function CherryAdventure() {
           } else if (A.type === "ult") {
             const cls = G.cls || "warrior";   // 🤖 ทุกอาชีพมีท่าไม้ตายเป็นของตัวเอง (aegis ไม่ยืมของ coder แล้ว)
             if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
-            const ultMul = ultMulOf(G.ultRank || 1, (A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติ · ⚖️ ตันที่ 450%ขั้นสูงแรงกว่า
+            const ultMul = ultMulOf(G.ultRank || 1, (A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติ · ⚖️ ตันที่ 300% ขั้นสูงแรงกว่า
             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
