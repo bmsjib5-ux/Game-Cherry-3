@@ -293,6 +293,41 @@ const awkBonus = (n) => {
 const awkPerkTxt = (i) => { const k = AWK_PERK[i]; return k ? `${k.emoji} ${k.name} +${k.val}${k.unit}` : ""; };
 const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
 const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
+// 🦸 ท่าฟาดของ "ชุดฮีโร่" ในโลกกว้าง — แต่ละชุดมีท่าประจำตัว + เอฟเฟคประจำตัว
+//    style: claw ตะปบไขว้ · smash ทุบสองมือ · cast ผลักฝ่ามือ · breath พ่นลมหายใจ · dance ร่ายรำ · throw ขว้าง
+const HERO_SWING = {
+  fenrir:   { style: "claw",   fx: "crossslash",   col: 0x9ad0ff },
+  neko:     { style: "claw",   fx: "crossslash",   col: 0xffb0d0 },
+  garuda:   { style: "claw",   fx: "crescent",     col: 0xd8e8ff },
+  captain:  { style: "throw",  fx: "crescent",     col: 0x6ab0f0 },
+  usagi:    { style: "smash",  fx: "quake",        col: 0xffd76a },
+  yaksa:    { style: "smash",  fx: "quake",        col: 0xc0703a },
+  hanuman:  { style: "smash",  fx: "quake",        col: 0xffe08a },
+  thunder:  { style: "smash",  fx: "thunderstorm", col: 0x9ad8ff },
+  ignis:    { style: "cast",   fx: "bolt",         col: 0x6ae0ff },
+  apsara:   { style: "cast",   fx: "healbless",    col: 0xfff0b0 },
+  luminia:  { style: "cast",   fx: "multi",        col: 0x9ae86a },
+  lich:     { style: "cast",   fx: "shadow",       col: 0x9a6ad0 },
+  naki:     { style: "cast",   fx: "poison",       col: 0x4ad0a0 },
+  mermaid:  { style: "cast",   fx: "ice",          col: 0x6ac0f0 },
+  ryujin:   { style: "breath", fx: "hellfire",     col: 0xff6a2a },
+  kitsune:  { style: "breath", fx: "hellfire",     col: 0xff9a3a },
+  phoenix:  { style: "breath", fx: "hellfire",     col: 0xff4a2a },
+  asura:    { style: "breath", fx: "shadow",       col: 0xff3a5a },
+  kinnaree: { style: "dance",  fx: "spearsweep",   col: 0xffc0e0 },
+  // 🗡️ ชุดสายถืออาวุธ — คงท่าฟันตามอาชีพไว้ (style: null) แต่เพิ่มเอฟเฟคประจำชุดตอนปะทะ
+  rose:     { style: null,     fx: "swordbeam",    col: 0xff8ab0 },
+  kentaro:  { style: null,     fx: "crescent",     col: 0xc0e8ff },
+  kotaro:   { style: null,     fx: "shadowdance",  col: 0x8a6ad0 },
+  kairi:    { style: null,     fx: "crossslash",   col: 0x6ac0ff },
+  celestia: { style: null,     fx: "healbless",    col: 0xfff0c0 },
+  luna:     { style: null,     fx: "multi",        col: 0xb08aff },
+  yuki:     { style: null,     fx: "arrowmulti",   col: 0xa0e0ff },
+  haru:     { style: null,     fx: "orb",          col: 0x9ae86a },
+  aurelius: { style: null,     fx: "swordbeam",    col: 0xffd76a },
+  ragnar:   { style: null,     fx: "earthsplit",   col: 0xff7a3a },
+  khaosai:  { style: null,     fx: "punchwave",    col: 0xff5a4a },
+};
 // 🌊 smoothstep — ไล่ค่าแบบเข้า-ออกนุ่ม (ใช้ลบมุมหักของคีย์เฟรม ให้ท่าลื่นไม่กระตุก)
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "พายุเทพเจ้า", taara: "จักรวาลเทพ" };
@@ -26498,7 +26533,7 @@ export default function CherryAdventure() {
       if (G._combo3 === 1) dur *= 0.9;   // ไม้ 2 ฟันย้อนกลับเร็วกว่า
       if (G._combo3 === 2) dur *= 1.2;   // ไม้ 3 ท่าจบ หนักกว่านิดเดียว
       G._worldSwingDur = dur;
-      G._worldSwingT = dur; G._swPrevS = 0; G._swYawApplied = 0;
+      G._worldSwingT = dur; G._swPrevS = 0; G._swYawApplied = 0; G._heroFxDone = 0;
       G._clothBurst = G._combo3 === 2 ? 0.85 : 0.5;
       if (G._combo3 === 2) { G._camPunch = 1; G._camShake = Math.max(G._camShake || 0, 0.28); } // 🎥 กล้องกระชากเข้าตอนท่าจบ
     };
@@ -36932,7 +36967,66 @@ export default function CherryAdventure() {
           // 💥 เฟรมกระแทก — ยืดอาวุธสั้น ๆ ตอนถึงจุดปะทะ (stretch แบบอนิเมะ)
           const impK = melee && s > 0.42 && s < 0.56 ? 1 : 0;
           wand.scale.set(1 - impK * 0.12, 1 + impK * 0.22, 1 - impK * 0.12);
-          if (G.cls === "archer") {
+          const HS = (!G.heroHide && G.heroId) ? HERO_SWING[G.heroId] : null;   // 🦸 ใส่ชุดฮีโร่อยู่ = ใช้ท่า/เอฟเฟคประจำชุด
+          // 💥 เอฟเฟคประจำชุด — ปล่อยครั้งเดียวตอนถึงจังหวะปะทะ ตรงหน้าตัวละคร (มีทุกชุด แม้ชุดที่ยังใช้ท่าอาชีพเดิม)
+          if (HS && HS.fx && !G._heroFxDone && s > 0.45 && activeFx.length < 8) {   // 🛡️ กันเอฟเฟคซ้อนกันเกินตอนรัวคอมโบ
+            G._heroFxDone = 1;
+            const hfx = Math.sin(char.rotation.y), hfz = Math.cos(char.rotation.y);
+            const reach = HS.style === "breath" ? 2.2 : HS.style === "cast" ? 1.9 : 1.4;
+            try { spawnSkillFx(HS.fx, new THREE.Vector3(char.position.x + hfx * reach, 0, char.position.z + hfz * reach), HS.col); } catch (_) {}
+            if (G.sfx) G.sfx.slash && G.sfx.slash();
+          }
+          if (HS && HS.style) {
+            // 🦸✨ ท่าฟาดประจำชุดฮีโร่ — เก็บแรง → ออกท่า → คืนท่า (คีย์เฟรม 3 จังหวะ ไม่ให้แขนเหวี่ยงเลยหลัง)
+            //    K(rest, wound, strike) : พัก → ง้าง(0.40) → ปะทะ(0.62) → คืนสู่ท่าพัก
+            const K = (a0, a1, a2) =>
+              s < 0.4 ? a0 + (a1 - a0) * smK(s / 0.4)
+              : s < 0.62 ? a1 + (a2 - a1) * smK((s - 0.4) / 0.22)
+              : a2 + (a0 - a2) * smK((s - 0.62) / 0.38);
+            const wind = s < 0.4 ? smK(s / 0.4) : smK(Math.max(0, 1 - (s - 0.4) / 0.18));   // เก็บแรง (ใช้กับท่าร่ายรำ)
+            const st = HS.style;
+            if (st === "claw") {                       // 🐺🐱 ตะปบไขว้สองมือ
+              armR.rotation.x = K(-0.5, -1.6, -0.15); armR.rotation.z = K(0.5, 1.05, -0.5); armR.rotation.y = K(0, -0.5, 0.55);
+              armL.rotation.x = K(-0.5, -1.35, -0.2); armL.rotation.z = K(-0.5, -1.0, 0.55); armL.rotation.y = K(0, 0.5, -0.55);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = K(-1.0, -1.25, -0.3);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = K(-1.0, -1.25, -0.3);
+              torso.rotation.y = K(0, 0.34, -0.4); char.rotation.z = K(0, -0.08, 0.1);
+            } else if (st === "smash") {               // 🔨 ยกสองมือขึ้นเหนือหัวแล้วทุบลง
+              armR.rotation.x = K(-0.4, -2.75, 0.3); armR.rotation.z = K(0.24, 0.3, 0.1);
+              armL.rotation.x = K(-0.4, -2.75, 0.3); armL.rotation.z = K(-0.24, -0.3, -0.1);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = K(-0.5, -1.05, -0.1);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = K(-0.5, -1.05, -0.1);
+              torso.rotation.x = K(0, -0.2, 0.36); char.position.y -= K(0, 0, 0.1);
+              if (legL.userData.knee) legL.userData.knee.rotation.x = K(0.1, 0.1, 0.65);
+              if (legR.userData.knee) legR.userData.knee.rotation.x = K(0.1, 0.1, 0.65);
+            } else if (st === "cast") {                // ✨ ดึงมือเก็บพลังแล้วผลักฝ่ามือออกไปข้างหน้า
+              armR.rotation.x = K(-0.6, -0.45, -1.62); armR.rotation.z = K(0.3, 0.42, 0.12); armR.rotation.y = K(0, 0.25, -0.1);
+              armL.rotation.x = K(-1.15, -1.05, -1.3); armL.rotation.z = K(0.42, 0.5, 0.3);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = K(-1.15, -1.35, -0.12);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = K(-0.95, -1.0, -0.75);
+              torso.rotation.y = K(0, 0.2, -0.28); char.rotation.z = K(0, 0, 0.06);
+            } else if (st === "breath") {              // 🔥 เอนหลังเก็บลมแล้วพ่นออกไปข้างหน้า
+              armR.rotation.x = K(-0.35, -0.85, -0.55); armR.rotation.z = K(0.55, 0.9, 0.35);
+              armL.rotation.x = K(-0.35, -0.85, -0.55); armL.rotation.z = K(-0.55, -0.9, -0.35);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.45;
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.45;
+              torso.rotation.x = K(0, 0.3, -0.42);
+              headG.rotation.x = K(0, 0.34, -0.46);            // เงยเก็บลม แล้วก้มพ่นออก
+              char.rotation.z = 0; char.position.y += K(0, 0.06, 0);
+            } else if (st === "dance") {               // 🕊️ กางแขนร่ายรำเป็นวง
+              const sw2 = Math.sin(s * Math.PI * 2);
+              armR.rotation.x = -1.25 + sw2 * 0.3; armR.rotation.z = 0.95 + wind * 0.3; armR.rotation.y = sw2 * 0.4;
+              armL.rotation.x = -1.25 - sw2 * 0.3; armL.rotation.z = -0.95 - wind * 0.3; armL.rotation.y = -sw2 * 0.4;
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.28;
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.28;
+              torso.rotation.y = sw2 * 0.22; char.rotation.z = sw2 * 0.1;
+            } else {                                   // 🛡️ ขว้าง — ง้างข้ามลำตัวแล้วเหวี่ยงออก
+              armR.rotation.x = K(-0.7, -1.55, -1.35); armR.rotation.z = K(-0.5, -1.05, 0.85); armR.rotation.y = K(0, 0.7, -0.85);
+              armL.rotation.x = K(-0.55, -0.7, -0.3); armL.rotation.z = -0.3;
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = K(-1.2, -1.5, -0.15);
+              torso.rotation.y = K(0, 0.45, -0.55); char.rotation.z = K(0, -0.1, 0.12);
+            }
+          } else if (G.cls === "archer") {
             // 🏹 ค้างคันธนูเล็งไว้นิ่ง ๆ — ขยับแค่มือน้าวสายแล้วปล่อย (ไม่ยกแขนขึ้น-ลงทุกนัด)
             const draw = s < 0.42 ? smK(s / 0.42) : smK(1 - (s - 0.42) / 0.58);
             armR.rotation.x = -1.38; armR.rotation.z = 0; // คงมุมแขนเดิม → คันธนูยังตั้งฉากกับพื้น
