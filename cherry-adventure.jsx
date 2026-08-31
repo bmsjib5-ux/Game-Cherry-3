@@ -50408,7 +50408,7 @@ export default function CherryAdventure() {
             onPointerUp={joyEnd}
             onPointerCancel={joyEnd}
             style={{
-              position: "absolute", ...(_shortHud ? { left: EDGE_L, bottom: 6, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 258, width: 112, height: 112 }), borderRadius: "50%",
+              position: "absolute", ...(_shortHud ? { left: EDGE_L, bottom: 6, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 158, width: 112, height: 112 }), borderRadius: "50%",
               background: "rgba(255,255,255,0.45)", border: "3px solid rgba(122,160,91,0.5)",
               touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 14px rgba(90,120,70,0.2)",
