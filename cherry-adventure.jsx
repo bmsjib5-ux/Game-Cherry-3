@@ -22061,6 +22061,7 @@ export default function CherryAdventure() {
     G.enemy = null; // {spId, hp, maxHp, atk, lv, boss, mesh}
     let battleCenter = new THREE.Vector3();
     const _plateV = new THREE.Vector3(); // 🏷️ scratch for projecting the enemy nameplate to screen
+    const _promptV = new THREE.Vector3(); // 💬 scratch สำหรับฉายป้ายคุย NPC ขึ้นเหนือหัว
     // ================= 🎞️ POSE POLISH — ทำท่าให้ลื่นไหลเป็นธรรมชาติ ไม่แข็งเหมือนหุ่นยนต์ =================
     // โค้ดท่าทั้งเกมเขียนค่ามุมข้อต่อ "ตรง ๆ" ทุกเฟรม พอเปลี่ยนท่าจึงกระตุกเป็นขั้น ๆ
     // ชั้นนี้ทำงานท้ายเฟรม: หน่วงทุกข้อต่อด้วยสปริง (มี follow-through นิดหน่อย) แล้วเติมลมหายใจ/โยกตัวเบา ๆ
@@ -36011,6 +36012,22 @@ export default function CherryAdventure() {
             orb.material.emissiveIntensity = hot ? 0.9 + Math.sin(t * 5) * 0.6 : 0.5; }
           if (G.master.userData.mark) G.master.userData.mark.visible = !!(G.advInfo && (() => { const i2 = G.advInfo(); return i2 && i2.stage && i2.lvOk && (!i2.taken || i2.done); })());
         }
+        // 💬 ป้ายคุย NPC — เกาะอยู่เหนือหัวตัวที่ยืนใกล้ ฉายพิกัดโลก → พิกัดจอทุกเฟรม
+        if (G._npcPrompt && G._npcPrompt.el) {
+          const PR = G._npcPrompt;
+          const src = PR.who === "npc" ? G.npc : PR.who === "smith" ? G.smith : PR.who === "master" ? G.master : null;
+          if (src) {
+            src.getWorldPosition(_promptV);
+            _promptV.y += 2.62;                       // เหนือหัวขึ้นไปนิดหนึ่ง
+            _promptV.project(camera);
+            const cw = renderer.domElement.clientWidth, ch = renderer.domElement.clientHeight;
+            const behind = _promptV.z > 1;            // อยู่หลังกล้อง = ซ่อนไว้
+            PR.el.style.opacity = behind ? "0" : "1";
+            PR.el.style.pointerEvents = behind ? "none" : "auto";
+            PR.el.style.left = Math.max(70, Math.min(cw - 70, (_promptV.x * 0.5 + 0.5) * cw)) + "px";
+            PR.el.style.top = Math.max(56, Math.min(ch - 60, (-_promptV.y * 0.5 + 0.5) * ch)) + "px";
+          }
+        }
         if (G._advDirty) { G._advDirty = false; if (G.advSync) G.advSync(); }
         // 🛣️ เดินสุดปลายถนน = ข้ามไปด่านถัดไปในสายเดียวกัน (มีหน่วงกันเด้งไป-กลับ)
         if (G._roadCool > 0) G._roadCool -= dt;
@@ -46471,6 +46488,14 @@ export default function CherryAdventure() {
     ? { top: ST(36), left: "50%", transform: "translateX(-50%)" }
     : { bottom: 196, left: "50%", transform: "translateX(-50%)" };
   const PROMPT_W = { maxWidth: 152, textAlign: "center" };   // แคบพอให้ไม่ชนจอยด้านซ้ายกับแถบสกิลด้านขวา
+  // 💬 ป้ายคุย NPC — ลอยอยู่เหนือหัวตัว NPC จริง ๆ (ฉายพิกัดโลกลงจอทุกเฟรมในลูปเกม)
+  //    เริ่มไว้นอกจอกันกระพริบมุมซ้ายบนตอนเฟรมแรกก่อนคำนวณตำแหน่ง
+  const HEAD_PROMPT = { position: "absolute", left: -9999, top: -9999, transform: "translate(-50%,-100%)",
+                        zIndex: 26, pointerEvents: "auto", textAlign: "center", whiteSpace: "nowrap", transition: "opacity 0.15s" };
+  const headPromptRef = (who) => (el) => {
+    if (el) G._npcPrompt = { el, who };
+    else if (G._npcPrompt && G._npcPrompt.who === who) G._npcPrompt = null;
+  };
   const _boardOn = !ui.boardHidden && !ui.equipScreen && ui.mode === "explore" && !HUD_HIDE;   // 🏆 แผงอันดับโลกกินมุมซ้ายบน — แบนเนอร์ต้องเลี่ยง
   // 🗺️ มินิแมพมุมขวาบน — จองที่มุมขวาไว้ก่อน แล้วดันแผงอันดับโลกลงมาอยู่ใต้มัน
   const MINI_SZ = _shortHud ? 92 : 114;
@@ -48856,16 +48881,17 @@ export default function CherryAdventure() {
       {/* 👤 NPC talk button */}
       {/* 🎓 ปุ่มคุยกับอาจารย์ประจำอาชีพ */}
       {ui.mode === "explore" && isPrompt("master") && !ui.masterOpen && (
-        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
+        <div ref={headPromptRef("master")} style={HEAD_PROMPT}>
           <button onClick={() => G.toggleMaster()} style={{
-            position: "relative", padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
+            position: "relative", padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer",
+            fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
             background: "linear-gradient(90deg,#7a5cc0,#a86ad0)",
-            boxShadow: "0 5px 16px rgba(120,90,200,0.5)",
+            boxShadow: "0 5px 16px rgba(120,90,200,0.55)",
           }}>🎓 คุยกับอาจารย์
             {ui.adv && ui.adv.stage && ui.adv.lvOk && (!ui.adv.taken || ui.adv.done) &&
               <span style={{ position: "absolute", top: -5, right: -5, width: 16, height: 16, borderRadius: 999, background: "#ff3b5c", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "16px" }}>!</span>}
           </button>
+          <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #9060c8" }} />
         </div>
       )}
 
@@ -48961,13 +48987,14 @@ export default function CherryAdventure() {
       })()}
 
       {ui.mode === "explore" && isPrompt("npc") && !ui.npcTalk && (
-        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
+        <div ref={headPromptRef("npc")} style={HEAD_PROMPT}>
           <button onClick={() => G.talkNPC()} style={{
-            padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
+            padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer",
+            fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
             background: "linear-gradient(90deg,#6a8ac0,#8aacd0)",
-            boxShadow: "0 5px 16px rgba(106,138,192,0.5)",
+            boxShadow: "0 5px 16px rgba(106,138,192,0.55)",
           }}>💬 คุยกับผู้เฒ่า</button>
+          <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #7a9ac8" }} />
         </div>
       )}
       {/* 👤 NPC dialogue */}
@@ -50153,8 +50180,9 @@ export default function CherryAdventure() {
       )}
 
       {ui.mode === "explore" && isPrompt("smith") && !ui.smithOpen && (
-        <div style={{ position: "absolute", ...PROMPT_POS, ...PROMPT_W }}>
-          <button onClick={() => G.openSmith()} style={{ padding: "10px 16px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.5)" }}>⚒️ ตีอาวุธกับช่างตีเหล็ก</button>
+        <div ref={headPromptRef("smith")} style={HEAD_PROMPT}>
+          <button onClick={() => G.openSmith()} style={{ padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.55)" }}>⚒️ ตีอาวุธ</button>
+          <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #a87840" }} />
         </div>
       )}
       {ui.smithOpen && (
