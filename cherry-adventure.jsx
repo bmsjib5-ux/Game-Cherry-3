@@ -48236,15 +48236,25 @@ export default function CherryAdventure() {
         return (
           <div onClick={() => G.toggleMap(false)} style={{
             position: "absolute", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center",
+            // 📱 เว้นขอบปลอดภัยของมือถือ (รอยบาก/แถบสถานะบน · แถบเลื่อนล่าง) ปุ่ม ✕ จะได้ไม่ไปซ่อนใต้แถบสถานะ
+            padding: "calc(env(safe-area-inset-top, 0px) + 10px) calc(env(safe-area-inset-right, 0px) + 8px) calc(env(safe-area-inset-bottom, 0px) + 10px) calc(env(safe-area-inset-left, 0px) + 8px)",
+            boxSizing: "border-box",
             background: "rgba(14,11,20,0.62)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", fontFamily: font,
           }}>
             <div onClick={(e) => e.stopPropagation()} style={{
               background: "linear-gradient(160deg,#2a2338,#1d1828)", borderRadius: 18, padding: "11px 12px 12px",
               border: "1px solid rgba(255,255,255,0.16)", boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
-              width: two ? "min(94vw, 760px)" : "min(94vw, 400px)", maxHeight: "92vh", overflowY: "auto", color: "#eae2f5",
+              width: two ? "min(94vw, 760px)" : "min(94vw, 400px)", maxHeight: "100%", boxSizing: "border-box",
+              overflowY: "auto", WebkitOverflowScrolling: "touch", color: "#eae2f5",
             }}>
-              {/* หัวเรื่อง */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              {/* หัวเรื่อง — ติดหนึบไว้ด้านบน เลื่อนอ่านไปไหนก็ยังกดปิดได้ตลอด */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                position: "sticky", top: -11, zIndex: 6,
+                margin: "-11px -12px 8px", padding: "11px 12px 8px",
+                background: "linear-gradient(160deg,#2a2338,#251e33)",
+                borderBottom: "1px solid rgba(255,255,255,0.10)",
+              }}>
                 <span style={{ fontSize: 15, fontWeight: 900, color: "#ffd76a" }}>🗺️ แผนที่ {MI ? MI.biome.emoji + " " + MI.biome.name : ""}</span>
                 {MI && (
                   <span style={{ fontSize: 10, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.26)", borderRadius: 7, padding: "2px 7px" }}>
@@ -48257,8 +48267,8 @@ export default function CherryAdventure() {
                   </span>
                 )}
                 <div style={{ flex: 1 }} />
-                <button onClick={() => G.mapRefresh && G.mapRefresh()} title="รีเฟรช" style={{ width: 24, height: 24, borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 12, padding: 0 }}>🔄</button>
-                <button onClick={() => G.toggleMap(false)} title="ปิด" style={{ width: 24, height: 24, borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 13, padding: 0, marginLeft: 3 }}>✕</button>
+                <button onClick={() => G.mapRefresh && G.mapRefresh()} title="รีเฟรช" style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 15, padding: 0 }}>🔄</button>
+                <button onClick={() => G.toggleMap(false)} title="ปิดแผนที่" style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 10, border: "1px solid rgba(255,255,255,0.22)", cursor: "pointer", background: "rgba(220,90,110,0.85)", color: "#fff", fontSize: 17, fontWeight: 900, padding: 0, marginLeft: 4 }}>✕</button>
               </div>
 
               <div style={{ display: "flex", flexDirection: two ? "row" : "column", gap: 10, alignItems: "flex-start" }}>
@@ -48413,6 +48423,11 @@ export default function CherryAdventure() {
                   )}
                 </div>
               </div>
+              <button onClick={() => G.toggleMap(false)} style={{
+                width: "100%", marginTop: 10, padding: "11px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                fontFamily: font, fontSize: 13, fontWeight: 900, color: "#fff",
+                background: "linear-gradient(90deg,#7a4a6a,#a85a72)",
+              }}>✕ ปิดแผนที่</button>
             </div>
           </div>
         );

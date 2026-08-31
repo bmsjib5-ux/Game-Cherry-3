@@ -74473,14 +74473,24 @@ function CherryAdventure() {
             const tierCol = ["#9aa0a8", "#8fc98a", "#6ab0e8", "#c08ae8", "#f0a94a", "#ff6a6a"];
             return (React.createElement("div", { onClick: () => G.toggleMap(false), style: {
                     position: "absolute", inset: 0, zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center",
+                    // 📱 เว้นขอบปลอดภัยของมือถือ (รอยบาก/แถบสถานะบน · แถบเลื่อนล่าง) ปุ่ม ✕ จะได้ไม่ไปซ่อนใต้แถบสถานะ
+                    padding: "calc(env(safe-area-inset-top, 0px) + 10px) calc(env(safe-area-inset-right, 0px) + 8px) calc(env(safe-area-inset-bottom, 0px) + 10px) calc(env(safe-area-inset-left, 0px) + 8px)",
+                    boxSizing: "border-box",
                     background: "rgba(14,11,20,0.62)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", fontFamily: font,
                 } },
                 React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
                         background: "linear-gradient(160deg,#2a2338,#1d1828)", borderRadius: 18, padding: "11px 12px 12px",
                         border: "1px solid rgba(255,255,255,0.16)", boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
-                        width: two ? "min(94vw, 760px)" : "min(94vw, 400px)", maxHeight: "92vh", overflowY: "auto", color: "#eae2f5",
+                        width: two ? "min(94vw, 760px)" : "min(94vw, 400px)", maxHeight: "100%", boxSizing: "border-box",
+                        overflowY: "auto", WebkitOverflowScrolling: "touch", color: "#eae2f5",
                     } },
-                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
+                    React.createElement("div", { style: {
+                            display: "flex", alignItems: "center", gap: 8,
+                            position: "sticky", top: -11, zIndex: 6,
+                            margin: "-11px -12px 8px", padding: "11px 12px 8px",
+                            background: "linear-gradient(160deg,#2a2338,#251e33)",
+                            borderBottom: "1px solid rgba(255,255,255,0.10)",
+                        } },
                         React.createElement("span", { style: { fontSize: 15, fontWeight: 900, color: "#ffd76a" } },
                             "\uD83D\uDDFA\uFE0F \u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48 ",
                             MI ? MI.biome.emoji + " " + MI.biome.name : ""),
@@ -74498,8 +74508,8 @@ function CherryAdventure() {
                             "/",
                             MI.route.total)),
                         React.createElement("div", { style: { flex: 1 } }),
-                        React.createElement("button", { onClick: () => G.mapRefresh && G.mapRefresh(), title: "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A", style: { width: 24, height: 24, borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 12, padding: 0 } }, "\uD83D\uDD04"),
-                        React.createElement("button", { onClick: () => G.toggleMap(false), title: "\u0E1B\u0E34\u0E14", style: { width: 24, height: 24, borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 13, padding: 0, marginLeft: 3 } }, "\u2715")),
+                        React.createElement("button", { onClick: () => G.mapRefresh && G.mapRefresh(), title: "\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A", style: { width: 34, height: 34, flexShrink: 0, borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.16)", color: "#fff", fontSize: 15, padding: 0 } }, "\uD83D\uDD04"),
+                        React.createElement("button", { onClick: () => G.toggleMap(false), title: "\u0E1B\u0E34\u0E14\u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48", style: { width: 34, height: 34, flexShrink: 0, borderRadius: 10, border: "1px solid rgba(255,255,255,0.22)", cursor: "pointer", background: "rgba(220,90,110,0.85)", color: "#fff", fontSize: 17, fontWeight: 900, padding: 0, marginLeft: 4 } }, "\u2715")),
                     React.createElement("div", { style: { display: "flex", flexDirection: two ? "row" : "column", gap: 10, alignItems: "flex-start" } },
                         React.createElement("div", { style: { flexShrink: 0, width: two ? cvSz : "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 } },
                             React.createElement("div", { style: { width: cvSz, height: cvSz, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.2)", boxShadow: "0 4px 18px rgba(0,0,0,0.45)", position: "relative" } },
@@ -74629,7 +74639,12 @@ function CherryAdventure() {
                                             " ",
                                             b.name),
                                         React.createElement("span", { style: { fontSize: 8, color: b.ok ? "#8fe08a" : "#ff9a6a" } }, b.here ? "อยู่นี่" : b.ok ? (can ? "📜" : "") : "⚠️" + b.lvMin)));
-                                })))))))));
+                                })))))),
+                    React.createElement("button", { onClick: () => G.toggleMap(false), style: {
+                            width: "100%", marginTop: 10, padding: "11px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                            fontFamily: font, fontSize: 13, fontWeight: 900, color: "#fff",
+                            background: "linear-gradient(90deg,#7a4a6a,#a85a72)",
+                        } }, "\u2715 \u0E1B\u0E34\u0E14\u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48"))));
         })(),
         ui.qingOpen && (() => {
             const QI = ui.qing || { step: 0, list: [] };
