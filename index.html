@@ -57671,16 +57671,30 @@ function CherryAdventure() {
                                 armL.userData.elbow.rotation.x = -0.5 - 0.35 * draw;
                         }
                         else if (G.cls === "lancer") {
-                            // 🔱 แทงพุ่ง thrust → recoil: พุ่งเร็วช่วงแรกแล้วดึงกลับ + โน้มตัว/ขยับตัวไปหน้าเล็กน้อย
-                            const th = s < 0.35 ? smK(s / 0.35) : smK(1 - (s - 0.35) / 0.65);
-                            armR.rotation.x = -0.32 - 1.0 * th; // ยืดแขนแทงระดับอก
-                            armR.rotation.z = -0.1;
-                            armL.rotation.x = -0.5 - 0.45 * th; // มือซ้ายประคองด้าม
-                            armL.rotation.z = 0.4;
+                            // 🔱✨ จ้วงหอกสามจังหวะ — ① ม้วนตัวเก็บแรง ② จ้วงเต็มเหยียดแบบท่าลันจ์ ③ สะบัดหอกเก็บท่า
+                            const th = s < 0.22 ? 0 : s < 0.52 ? smK((s - 0.22) / 0.3) : smK(1 - (s - 0.52) / 0.48);
+                            const back = s < 0.22 ? smK(s / 0.22) : smK(Math.max(0, 1 - (s - 0.22) / 0.22)); // แรงถอยตอนเก็บ
+                            const flick = s > 0.62 ? smK((s - 0.62) / 0.38) : 0; // 🌀 สะบัดหอกกลับ
+                            armR.rotation.x = -0.32 + back * 0.3 - 1.0 * th; // ลากกลับก่อน แล้วยืดแขนแทงระดับอก
+                            armR.rotation.z = -0.1 + back * 0.1;
+                            armR.rotation.y = -back * 0.18 + th * 0.18;
+                            armL.rotation.x = -0.5 + back * 0.18 - 0.45 * th; // มือซ้ายประคองด้าม
+                            armL.rotation.z = 0.4 - th * 0.08;
                             if (armR.userData.elbow)
-                                armR.userData.elbow.rotation.x = -0.2 * (1 - th);
+                                armR.userData.elbow.rotation.x = -0.2 - back * 0.45 + th * 0.3;
+                            if (armL.userData.elbow)
+                                armL.userData.elbow.rotation.x = -0.5 - back * 0.25 + th * 0.35;
+                            torso.rotation.y = back * 0.3 - th * 0.26; // บิดลำตัวส่งแรงไปกับหอก
+                            // 🦵 ท่าลันจ์: ขาหน้างอรับน้ำหนัก ขาหลังเหยียดตรงสวย ๆ
+                            legL.rotation.x = -0.1 - th * 0.42;
+                            legR.rotation.x = 0.08 + th * 0.36;
+                            if (legL.userData.knee)
+                                legL.userData.knee.rotation.x = 0.1 + back * 0.3 + th * 0.3;
+                            if (legR.userData.knee)
+                                legR.userData.knee.rotation.x = 0.1 + back * 0.26 - th * 0.06;
+                            char.rotation.z = -back * 0.07 + th * 0.09;
                             wand.position.set(0.02, -0.56, 0.12 + th * 0.3); // ดันหอกไปหน้าตอนแทง
-                            wand.rotation.set(2.12 + 0.95 * th, 0, 0); // ชดเชยแขนที่ยกขึ้น ให้ปลายหอกพุ่งขนานพื้น
+                            wand.rotation.set(2.12 + 0.95 * th, 0, flick * Math.PI * 2); // ปลายพุ่งขนานพื้น + สะบัดหมุนกลับหนึ่งรอบ
                             if (char.rotation.order !== "YXZ")
                                 char.rotation.order = "YXZ"; // ให้ก้มตัวตามทิศที่หันจริง
                             char.rotation.x = 0.12 * th; // โน้มตัวไปหน้าตอนแทง
@@ -57705,6 +57719,9 @@ function CherryAdventure() {
                             tr.rotation.y = char.rotation.y;
                             if (G._worldSwingT === 0) {
                                 char.rotation.x = 0;
+                                char.rotation.z = 0;
+                                torso.rotation.y = 0;
+                                wand.rotation.z = 0;
                                 G._lungeAmt = 0;
                                 tr.visible = false;
                             }
@@ -64831,44 +64848,66 @@ function CherryAdventure() {
                                     }
                                 }
                                 else {
-                                    // 🔱💨 PIERCING THRUST — crouch, gather blue wind at the tip, dash STRAIGHT THROUGH
+                                    // 🔱✨ จ้วงหอกทะลวง — ท่าสง่างามสามจังหวะ: ตั้งท่า → จ้วงเต็มเหยียด → เก็บท่าพร้อมสะบัดหอก
                                     const windBlue = 0x4a90c0, bright = 0xbfe4ff;
                                     const ex = battleCenter.x + (G.enemyX || 1.3);
-                                    // ─── stance: lower into a thrust posture, wind gathers on the spear tip ───
-                                    if (p < 0.3) {
-                                        const cp = p / 0.3;
-                                        char.position.set(battleCenter.x - 1.3 - cp * 0.18, -cp * 0.12, battleCenter.z);
+                                    const spBase = battleCenter.x - 1.3;
+                                    // ─── ① ตั้งท่า: ย่อลงบนขาหลัง ลำตัวเฉียง หอกลากกลับแนบสีข้าง + หมุนด้ามหนึ่งรอบช้า ๆ ───
+                                    if (p < 0.32) {
+                                        const cp = smK(p / 0.32);
+                                        const twirl = smK(Math.min(1, p / 0.2));
+                                        char.position.set(spBase - cp * 0.16, -cp * 0.1, battleCenter.z);
+                                        torso.rotation.y = 0.42 + cp * 0.34;
+                                        char.rotation.z = -cp * 0.09;
+                                        legL.rotation.x = -0.24 - cp * 0.22;
+                                        legR.rotation.x = 0.16 + cp * 0.2;
                                         if (legL.userData.knee)
-                                            legL.userData.knee.rotation.x = 0.22 + cp * 0.4;
+                                            legL.userData.knee.rotation.x = 0.22 + cp * 0.46;
                                         if (legR.userData.knee)
-                                            legR.userData.knee.rotation.x = 0.3 + cp * 0.4;
-                                        armR.rotation.x = -0.45 - cp * 0.5; // coil the spear back
-                                        armR.rotation.z = 0.16;
-                                        armL.rotation.x = -1.15;
-                                        armL.rotation.z = 0.32; // front hand stays on the shaft
-                                        char.rotation.z = -cp * 0.1;
-                                        // 💨 blue wind spiralling into the spear tip + piercing glow
+                                            legR.userData.knee.rotation.x = 0.3 + cp * 0.38;
+                                        armR.rotation.x = -0.45 - cp * 0.62;
+                                        armR.rotation.z = 0.16 + cp * 0.1;
+                                        armR.rotation.y = -cp * 0.16;
+                                        armL.rotation.x = -1.15 - cp * 0.18;
+                                        armL.rotation.z = 0.32 - cp * 0.06;
+                                        if (armR.userData.elbow)
+                                            armR.userData.elbow.rotation.x = -0.35 - cp * 0.5;
+                                        if (armL.userData.elbow)
+                                            armL.userData.elbow.rotation.x = -0.5 - cp * 0.25;
+                                        wand.rotation.set(1.75 - cp * 0.16, 0, 0.05 + twirl * Math.PI * 2);
+                                        headG.rotation.y = cp * 0.12;
                                         const tipX = char.position.x + 1.5, tipY = 1.55;
                                         if (Math.random() < 0.9) {
-                                            const a = t * 7 + Math.random() * 6.28, r = 0.55 * (1 - cp) + 0.08;
-                                            burst(new THREE.Vector3(tipX + Math.cos(a) * r * 0.6, tipY + Math.sin(a) * r, battleCenter.z + Math.sin(a) * r), Math.random() < 0.5 ? windBlue : bright, 0.26);
+                                            const a2 = t * 7 + Math.random() * 6.28, r = 0.55 * (1 - cp) + 0.08;
+                                            burst(new THREE.Vector3(tipX + Math.cos(a2) * r * 0.6, tipY + Math.sin(a2) * r, battleCenter.z + Math.sin(a2) * r), Math.random() < 0.5 ? windBlue : bright, 0.26);
                                         }
                                         if (cp > 0.6 && Math.random() < 0.4)
-                                            burst(new THREE.Vector3(tipX, tipY, battleCenter.z), bright, 0.2); // sharp piercing glow
+                                            burst(new THREE.Vector3(tipX, tipY, battleCenter.z), bright, 0.2);
                                     }
-                                    // ─── dash: blink forward, spear leading, straight through the enemy ───
+                                    // ─── ② จ้วง: ทิ้งน้ำหนักลงขาหน้าแบบท่าลันจ์ ขาหลังเหยียดตรง หอกพุ่งเต็มเหยียด ───
                                     else if (p < 0.62) {
-                                        const dp = (p - 0.3) / 0.32;
-                                        const e = 1 - Math.pow(1 - dp, 4); // extremely fast dash
-                                        char.position.set(battleCenter.x - 1.48 + e * (ex + 1.1 - (battleCenter.x - 1.48)), 0, battleCenter.z);
+                                        const dp = (p - 0.32) / 0.3;
+                                        const e = 1 - Math.pow(1 - dp, 4);
+                                        char.position.set(spBase - 0.16 + e * (ex + 1.05 - (spBase - 0.16)), -0.06 * (1 - e) - 0.05 * Math.sin(e * Math.PI), battleCenter.z);
+                                        torso.rotation.y = 0.76 - e * 0.62;
+                                        char.rotation.z = -0.09 + e * 0.17;
+                                        legL.rotation.x = -0.46 - e * 0.34;
+                                        legR.rotation.x = 0.36 + e * 0.3;
                                         if (legL.userData.knee)
-                                            legL.userData.knee.rotation.x = 0.1;
+                                            legL.userData.knee.rotation.x = 0.68 - e * 0.1;
                                         if (legR.userData.knee)
-                                            legR.userData.knee.rotation.x = 0.1;
-                                        armR.rotation.x = -0.95 + e * 1.5; // spear drives forward
-                                        armL.rotation.x = -1.15 + e * 0.5;
-                                        char.rotation.z = -0.1 + e * 0.16;
-                                        // 🔵 long blue energy line left along the dash path + motion blur
+                                            legR.userData.knee.rotation.x = 0.68 - e * 0.62;
+                                        armR.rotation.x = -1.07 + e * 1.72;
+                                        armR.rotation.z = 0.26 - e * 0.14;
+                                        armR.rotation.y = -0.16 + e * 0.16;
+                                        armL.rotation.x = -1.33 + e * 0.74;
+                                        armL.rotation.z = 0.26 - e * 0.1;
+                                        if (armR.userData.elbow)
+                                            armR.userData.elbow.rotation.x = -0.85 + e * 0.8;
+                                        if (armL.userData.elbow)
+                                            armL.userData.elbow.rotation.x = -0.75 + e * 0.62;
+                                        wand.rotation.set(1.59 + e * 0.16, 0, 0.05);
+                                        headG.rotation.y = 0.12 - e * 0.12;
                                         for (let k = 0; k < 3; k++) {
                                             const tx = char.position.x - 0.3 - k * 0.4;
                                             burst(new THREE.Vector3(tx, 1.4 + (Math.random() - 0.5) * 0.2, battleCenter.z), k ? windBlue : bright, 0.3);
@@ -64880,20 +64919,35 @@ function CherryAdventure() {
                                                 G.sfx.slash && G.sfx.slash();
                                         }
                                     }
-                                    // ─── follow-through: stand past the enemy, wind pressure trails behind ───
+                                    // ─── ③ เก็บท่า: สะบัดหอกหมุนกลับหนึ่งรอบ แล้วยืดตัวกลับสู่ท่าตั้งการ์ดอย่างนิ่มนวล ───
                                     else {
                                         const rp = (p - 0.62) / 0.38;
-                                        char.position.set(ex + 1.1 - rp * (ex + 1.1 - (battleCenter.x - 1.3)) * rp, 0, battleCenter.z);
-                                        char.rotation.z = 0.06 * (1 - rp);
-                                        armR.rotation.x = 0.55 - rp * 1.0;
-                                        armR.rotation.z = 0.16;
-                                        armL.rotation.x = -0.65 - rp * 0.5;
-                                        armL.rotation.z = 0.32;
+                                        const sm = smK(rp);
+                                        const flick = smK(Math.min(1, rp / 0.55));
+                                        char.position.set((ex + 1.05) + sm * (spBase - (ex + 1.05)), 0, battleCenter.z);
+                                        torso.rotation.y = 0.14 + sm * 0.28;
+                                        char.rotation.z = 0.08 * (1 - sm);
+                                        legL.rotation.x = -0.8 + sm * 0.56;
+                                        legR.rotation.x = 0.66 - sm * 0.5;
                                         if (legL.userData.knee)
-                                            legL.userData.knee.rotation.x = 0.22;
+                                            legL.userData.knee.rotation.x = 0.58 - sm * 0.36;
                                         if (legR.userData.knee)
-                                            legR.userData.knee.rotation.x = 0.3;
-                                        // 💨 wind pressure keeps blasting out behind the enemy
+                                            legR.userData.knee.rotation.x = 0.06 + sm * 0.24;
+                                        armR.rotation.x = 0.65 - sm * 1.1;
+                                        armR.rotation.z = 0.12 + sm * 0.04;
+                                        armR.rotation.y = 0;
+                                        armL.rotation.x = -0.59 - sm * 0.56;
+                                        armL.rotation.z = 0.16 + sm * 0.16;
+                                        if (armR.userData.elbow)
+                                            armR.userData.elbow.rotation.x = -0.05 - sm * 0.3;
+                                        if (armL.userData.elbow)
+                                            armL.userData.elbow.rotation.x = -0.13 - sm * 0.37;
+                                        wand.rotation.set(1.75, 0, 0.05 - flick * Math.PI * 2);
+                                        headG.rotation.y = 0;
+                                        if (flick < 1 && Math.random() < 0.7) {
+                                            const aa = flick * Math.PI * 2;
+                                            burst(new THREE.Vector3(char.position.x + Math.cos(aa) * 0.95, 1.35 + Math.sin(aa) * 0.75, battleCenter.z), Math.random() < 0.5 ? bright : windBlue, 0.24);
+                                        }
                                         if (rp < 0.6 && Math.random() < 0.6)
                                             burst(new THREE.Vector3(em.position.x + 0.8 + Math.random() * 1.6, 0.6 + Math.random() * 1.4, em.position.z + (Math.random() - 0.5) * 1.2), windBlue, 0.35);
                                     }
