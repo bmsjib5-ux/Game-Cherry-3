@@ -378,7 +378,7 @@ const awkBonus = (n) => {
     return b;
 };
 const awkPerkTxt = (i) => { const k = AWK_PERK[i]; return k ? `${k.emoji} ${k.name} +${k.val}${k.unit}` : ""; };
-const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen"];
+const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
 const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
 // 🌊 smoothstep — ไล่ค่าแบบเข้า-ออกนุ่ม (ใช้ลบมุมหักของคีย์เฟรม ให้ท่าลื่นไม่กระตุก)
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
@@ -2706,7 +2706,7 @@ function CherryAdventure() {
         wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
         rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
         guildName: null, guildEmoji: null,
-        eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false, forgeTab: "enh",
+        eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false, awakenOpen: false, forgeTab: "enh",
         toast: "", toastAt: 0,
         inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
     });
@@ -38400,6 +38400,7 @@ function CherryAdventure() {
             { k: "constOpen", ic: "🌌", name: "หมู่ดาว" },
             { k: "masteryOpen", ic: "🗡️", name: "มาสเตอรี่" },
             { k: "qingOpen", ic: "🍃", name: "วิชาตัวเบา" },
+            { k: "awakenOpen", ic: "⚡", name: "ตื่นพลัง" },
         ];
         G.skillTab = (key) => {
             // ปิดทุกแท็บในกลุ่มก่อน แล้วเปิดอันที่เลือกด้วยฟังก์ชันเดิมของมันเอง
@@ -38420,7 +38421,14 @@ function CherryAdventure() {
                 G.toggleMastery();
             else if (key === "qingOpen")
                 G.toggleQing();
+            else if (key === "awakenOpen")
+                G.toggleAwaken();
         };
+        // ⚡ การตื่นพลัง — ย้ายมาอยู่ในกลุ่มเมนูสกิลแล้ว
+        G.toggleAwaken = () => setUi((u) => (u.awakenOpen
+            ? { ...u, awakenOpen: false }
+            : { ...u, awakenOpen: true, menuOpen: false, homeOpen: false, skillPanel: false, skillBoardOpen: false,
+                ngPlus: G.ngPlus || 0, level: G.player ? G.player.level : 1 }));
         G.toggleSkillBoard = () => setUi((u) => (u.skillBoardOpen
             ? { ...u, skillBoardOpen: false }
             : { ...u, skillBoardOpen: true, menuOpen: false, skillPanel: false, kitchenOpen: false, fishBagOpen: false, equipScreen: false,
@@ -50248,7 +50256,7 @@ function CherryAdventure() {
             G.player.mp = G.player.maxMp;
             G.combo = 0;
             toast(`⚡✨ ตื่นพลังครั้งที่ ${G.ngPlus}! รีเซ็ตกลับ Lv.${m.to} · +5% ทุกสเตตัสถาวร (รวม +${G.ngPlus * 5}%) · เก็บของ/สกิล/สัตว์เลี้ยงไว้ครบ`);
-            setUi((u) => ({ ...u, ngPlus: G.ngPlus, level: G.player.level, mode: "explore", homeOpen: false }));
+            setUi((u) => ({ ...u, ngPlus: G.ngPlus, level: G.player.level, mode: "explore", homeOpen: false, awakenOpen: false }));
             G.spawnAtVillage(); // 🏡 เกิดใหม่ที่หน้าบ้านในเขตปลอดภัย
             G.mode = "explore"; // ให้ saveGame ผ่านการ์ดโหมดแน่นอน
             syncPlayer();
@@ -74673,6 +74681,60 @@ function CherryAdventure() {
                             background: "linear-gradient(90deg,#7a4a6a,#a85a72)",
                         } }, "\u2715 \u0E1B\u0E34\u0E14\u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48"))));
         })(),
+        ui.awakenOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, awakenOpen: false })), style: { position: "absolute", inset: 0, zIndex: 57 } },
+            React.createElement("div", { onClick: (e) => e.stopPropagation(), style: SKILL_SHELL },
+                skillTabs("awakenOpen"),
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
+                    React.createElement("span", { style: { fontSize: 15, fontWeight: 900, color: "#7a3ad0" } }, "\u26A1 \u0E01\u0E32\u0E23\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07"),
+                    ui.ngPlus > 0 && React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "#7a3ad0", background: "#efe2ff", borderRadius: 7, padding: "2px 8px" } },
+                        "\u0E02\u0E31\u0E49\u0E19 ",
+                        ui.ngPlus,
+                        " \u00B7 +",
+                        (ui.ngPlus || 0) * 5,
+                        "% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A"),
+                    React.createElement("div", { style: { flex: 1 } }),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, awakenOpen: false })), title: "\u0E1B\u0E34\u0E14", style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#efe6f8", color: "#7a5aa0", fontSize: 15, fontWeight: 900, padding: 0 } }, "\u2715")),
+                React.createElement("div", { style: { background: "#f3e8ff", borderRadius: 12, padding: 12, marginTop: 12 } },
+                    React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#7a3ad0", marginBottom: 4 } },
+                        "\u26A1 \u0E01\u0E32\u0E23\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07 ",
+                        ui.ngPlus > 0 ? `(ขั้น ${ui.ngPlus})` : ""),
+                    (() => {
+                        const tiers = AWAKEN_TIERS;
+                        const cur = ui.ngPlus || 0;
+                        const maxed = cur >= tiers.length;
+                        const m = maxed ? null : tiers[cur];
+                        const need = m ? m.at : null;
+                        const ready = !maxed && (ui.level || 0) >= need;
+                        return (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { fontSize: 10.5, color: "#8a6ac0", marginBottom: 6, lineHeight: 1.6 } },
+                                "\u0E1B\u0E25\u0E38\u0E01\u0E1E\u0E25\u0E31\u0E07\u0E43\u0E19\u0E15\u0E31\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E02\u0E47\u0E07\u0E41\u0E01\u0E23\u0E48\u0E07\u0E02\u0E36\u0E49\u0E19 \u2014 ",
+                                React.createElement("b", null, "\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07/\u0E2A\u0E01\u0E34\u0E25/\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07/\u0E17\u0E2D\u0E07\u0E44\u0E27\u0E49\u0E04\u0E23\u0E1A"),
+                                " \u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E40\u0E25\u0E40\u0E27\u0E25\u0E01\u0E25\u0E31\u0E1A\u0E15\u0E32\u0E21\u0E02\u0E31\u0E49\u0E19 \u00B7 ",
+                                React.createElement("b", { style: { color: "#7a3ad0" } }, "\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19 +5% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A (+2% \u0E04\u0E23\u0E34) \u0E16\u0E32\u0E27\u0E23!"),
+                                cur > 0 ? ` ตอนนี้ +${cur * 5}%` : "",
+                                m ? React.createElement(React.Fragment, null,
+                                    React.createElement("br", null),
+                                    "\u0E04\u0E23\u0E31\u0E49\u0E07\u0E19\u0E35\u0E49: \u0E16\u0E36\u0E07 ",
+                                    React.createElement("b", null,
+                                        "Lv.",
+                                        m.at),
+                                    " \u2192 \u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E01\u0E25\u0E31\u0E1A ",
+                                    React.createElement("b", null,
+                                        "Lv.",
+                                        m.to)) : null),
+                            React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" } }, tiers.map((tr, i) => (React.createElement("div", { key: i, style: { minWidth: 40, textAlign: "center", fontSize: 9, fontWeight: 800, borderRadius: 8, padding: "4px 4px",
+                                    background: i < cur ? "#7a3ad0" : (i === cur && ready) ? "#c0a0f0" : "#eae0f5",
+                                    color: i < cur ? "#fff" : "#7a5aa0", border: i === cur ? "1.5px solid #9a5ad0" : "none" } }, i < cur ? "✓" : `${tr.at}→${tr.to}`)))),
+                            maxed ? (React.createElement("div", { style: { textAlign: "center", fontSize: 12, fontWeight: 800, color: "#7a3ad0", padding: "8px 0" } }, "\u2B50 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E1A\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19\u0E41\u0E25\u0E49\u0E27!")) : (React.createElement(React.Fragment, null,
+                                React.createElement("div", { style: { fontSize: 10.5, color: ready ? "#4a9a5a" : "#c06a4a", fontWeight: 700, marginBottom: 6, textAlign: "center" } }, ready ? `✅ พร้อมตื่นพลังครั้งที่ ${cur + 1}!` : `🔒 ครั้งที่ ${cur + 1} ต้องถึง Lv.${need} (ตอนนี้ Lv.${ui.level || 1})`),
+                                React.createElement("button", { onClick: () => G.startNGPlus(), disabled: !ready, style: {
+                                        width: "100%", padding: "9px 0", borderRadius: 10, border: "none", cursor: ready ? "pointer" : "not-allowed",
+                                        fontSize: 13, fontWeight: 800, fontFamily: font, color: ready ? "#fff" : "#a89ab8",
+                                        background: ready ? "linear-gradient(90deg,#7a3ad0,#c04ad0)" : "#e0d8ec",
+                                    } },
+                                    "\u26A1 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E31\u0E49\u0E07\u0E17\u0E35\u0E48 ",
+                                    cur + 1)))));
+                    })())))),
         ui.qingOpen && (() => {
             const QI = ui.qing || { step: 0, list: [] };
             const wide = _uiWideModal; // อิงความกว้างของกรอบมาตรฐาน ไม่ใช่ความกว้างจอ
@@ -75272,43 +75334,17 @@ function CherryAdventure() {
                     React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#7a3ad0", marginBottom: 4 } },
                         "\u26A1 \u0E01\u0E32\u0E23\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07 ",
                         ui.ngPlus > 0 ? `(ขั้น ${ui.ngPlus})` : ""),
-                    (() => {
-                        const tiers = AWAKEN_TIERS;
-                        const cur = ui.ngPlus || 0;
-                        const maxed = cur >= tiers.length;
-                        const m = maxed ? null : tiers[cur];
-                        const need = m ? m.at : null;
-                        const ready = !maxed && (ui.level || 0) >= need;
-                        return (React.createElement(React.Fragment, null,
-                            React.createElement("div", { style: { fontSize: 10.5, color: "#8a6ac0", marginBottom: 6, lineHeight: 1.6 } },
-                                "\u0E1B\u0E25\u0E38\u0E01\u0E1E\u0E25\u0E31\u0E07\u0E43\u0E19\u0E15\u0E31\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E02\u0E47\u0E07\u0E41\u0E01\u0E23\u0E48\u0E07\u0E02\u0E36\u0E49\u0E19 \u2014 ",
-                                React.createElement("b", null, "\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07/\u0E2A\u0E01\u0E34\u0E25/\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07/\u0E17\u0E2D\u0E07\u0E44\u0E27\u0E49\u0E04\u0E23\u0E1A"),
-                                " \u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E40\u0E25\u0E40\u0E27\u0E25\u0E01\u0E25\u0E31\u0E1A\u0E15\u0E32\u0E21\u0E02\u0E31\u0E49\u0E19 \u00B7 ",
-                                React.createElement("b", { style: { color: "#7a3ad0" } }, "\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19 +5% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A (+2% \u0E04\u0E23\u0E34) \u0E16\u0E32\u0E27\u0E23!"),
-                                cur > 0 ? ` ตอนนี้ +${cur * 5}%` : "",
-                                m ? React.createElement(React.Fragment, null,
-                                    React.createElement("br", null),
-                                    "\u0E04\u0E23\u0E31\u0E49\u0E07\u0E19\u0E35\u0E49: \u0E16\u0E36\u0E07 ",
-                                    React.createElement("b", null,
-                                        "Lv.",
-                                        m.at),
-                                    " \u2192 \u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E01\u0E25\u0E31\u0E1A ",
-                                    React.createElement("b", null,
-                                        "Lv.",
-                                        m.to)) : null),
-                            React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" } }, tiers.map((tr, i) => (React.createElement("div", { key: i, style: { minWidth: 40, textAlign: "center", fontSize: 9, fontWeight: 800, borderRadius: 8, padding: "4px 4px",
-                                    background: i < cur ? "#7a3ad0" : (i === cur && ready) ? "#c0a0f0" : "#eae0f5",
-                                    color: i < cur ? "#fff" : "#7a5aa0", border: i === cur ? "1.5px solid #9a5ad0" : "none" } }, i < cur ? "✓" : `${tr.at}→${tr.to}`)))),
-                            maxed ? (React.createElement("div", { style: { textAlign: "center", fontSize: 12, fontWeight: 800, color: "#7a3ad0", padding: "8px 0" } }, "\u2B50 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E1A\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19\u0E41\u0E25\u0E49\u0E27!")) : (React.createElement(React.Fragment, null,
-                                React.createElement("div", { style: { fontSize: 10.5, color: ready ? "#4a9a5a" : "#c06a4a", fontWeight: 700, marginBottom: 6, textAlign: "center" } }, ready ? `✅ พร้อมตื่นพลังครั้งที่ ${cur + 1}!` : `🔒 ครั้งที่ ${cur + 1} ต้องถึง Lv.${need} (ตอนนี้ Lv.${ui.level || 1})`),
-                                React.createElement("button", { onClick: () => G.startNGPlus(), disabled: !ready, style: {
-                                        width: "100%", padding: "9px 0", borderRadius: 10, border: "none", cursor: ready ? "pointer" : "not-allowed",
-                                        fontSize: 13, fontWeight: 800, fontFamily: font, color: ready ? "#fff" : "#a89ab8",
-                                        background: ready ? "linear-gradient(90deg,#7a3ad0,#c04ad0)" : "#e0d8ec",
-                                    } },
-                                    "\u26A1 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E31\u0E49\u0E07\u0E17\u0E35\u0E48 ",
-                                    cur + 1)))));
-                    })()),
+                    React.createElement("div", { style: { fontSize: 10.5, color: "#8a6ac0", marginBottom: 8, lineHeight: 1.6 } },
+                        "\u0E22\u0E49\u0E32\u0E22\u0E44\u0E1B\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E40\u0E21\u0E19\u0E39 ",
+                        React.createElement("b", null, "\u2728 \u0E2A\u0E01\u0E34\u0E25 \u2192 \u0E41\u0E17\u0E47\u0E1A \u26A1 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07"),
+                        " \u0E41\u0E25\u0E49\u0E27",
+                        ui.ngPlus > 0 ? ` · ตอนนี้ +${(ui.ngPlus || 0) * 5}% ทุกสเตตัส` : ""),
+                    React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, homeOpen: false })); if (G.skillTab)
+                            G.skillTab("awakenOpen"); }, style: {
+                            width: "100%", padding: "9px 0", borderRadius: 10, border: "none", cursor: "pointer",
+                            fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff",
+                            background: "linear-gradient(90deg,#7a3ad0,#c04ad0)",
+                        } }, "\u26A1 \u0E40\u0E1B\u0E34\u0E14\u0E2B\u0E19\u0E49\u0E32\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07")),
                 React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 14 } },
                     React.createElement("button", { onClick: () => {
                             G.saveGame && G.saveGame();
@@ -76407,7 +76443,7 @@ function CherryAdventure() {
                     fontSize: 11.5, fontWeight: 700, color: "#59a0e8", whiteSpace: "nowrap",
                 } }, "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E2D\u0E01\u0E25\u0E48\u0E32\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C... \uD83C\uDFC3\u200D\u2640\uFE0F\uD83D\uDCA8")),
             React.createElement("div", { ref: joyRef, onPointerDown: joyStart, onPointerMove: joyMove, onPointerUp: joyEnd, onPointerCancel: joyEnd, style: {
-                    position: "absolute", ...(_shortHud ? { left: EDGE_L, bottom: 6, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 158, width: 112, height: 112 }), borderRadius: "50%",
+                    position: "absolute", ...(_shortHud ? { left: `calc(${HUD_EDGE + HUD_BTN_L + 40}px + var(--sa-l, 0px))`, bottom: 50, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 158, width: 112, height: 112 }), borderRadius: "50%",
                     background: "rgba(255,255,255,0.45)", border: "3px solid rgba(122,160,91,0.5)",
                     touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center",
                     boxShadow: "0 4px 14px rgba(90,120,70,0.2)",
