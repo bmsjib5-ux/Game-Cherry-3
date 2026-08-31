@@ -46629,6 +46629,8 @@ export default function CherryAdventure() {
   // 📱 แนวนอน: ภาพ 3D กินเต็มจอ ปุ่มลอยทับอยู่ข้างบน (ไม่หดภาพให้เหลือแถบว่างสองข้างแล้ว)
   // 📱 แนวนอน = ผังแบบเกมมือถือ: การ์ดสถานะมุมบนซ้าย · อันดับโลกมุมบนขวา · กลางล่างโล่งไว้ให้เห็นตัวละคร
   const HUD_CARD = _wideHud;                          // ใช้การ์ดสถานะมุมบนซ้ายไหม (จอแนวนอนทั้งคอมและมือถือ)
+  // 📱 แนวตั้ง: ย้ายแถบสถานะ (พลัง/ทอง/เลือด/มานา/เลเวล) ขึ้นไปไว้บนสุด — ของอื่นบนจอต้องเลื่อนลงมาให้พ้น
+  const TOPBAR_H = HUD_CARD ? 0 : 92;
   const HUD_CARD_H = 92;                              // ความสูงการ์ด (เอาไว้วางของถัดไปให้ไม่ทับ)
   const HUD_SCRIM = _wideHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;   // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
   const HUD_GUTTER = 0;                                                        // ไม่กันขอบภาพอีกต่อไป
@@ -46667,9 +46669,9 @@ export default function CherryAdventure() {
   // 🗺️ มินิแมพมุมขวาบน — จองที่มุมขวาไว้ก่อน แล้วดันแผงอันดับโลกลงมาอยู่ใต้มัน
   const MINI_SZ = _shortHud ? 92 : 114;
   const MINI_ON = ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !ui.mapOpen;
-  const MINI_TOP = HUD_CARD ? 4 : 42;
+  const MINI_TOP = HUD_CARD ? 4 : 42 + TOPBAR_H;
   // 📜 แถวปุ่ม ⚙️ 👤 📜 ด้านซ้าย + แผงติดตามภารกิจที่ห้อยอยู่ใต้แถวนี้
-  const _sideTop = HUD_CARD ? (HUD_CARD_H + 6) : ((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? 250 : 92);
+  const _sideTop = HUD_CARD ? (HUD_CARD_H + 6) : (((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? 250 : 92) + TOPBAR_H);
   // 📜 พื้นที่ว่างที่แผงติดตามภารกิจใช้ได้ — หยุดก่อนถึงคอลัมน์ปุ่มซ้ายล่าง จะได้ไม่ทับกัน
   const _colTopL = _vh - (HUD_BASE_L + (_colL.n - 1) * _colL.pitch + HUD_BTN_L);
   const QT_ROOM = _colTopL - (_sideTop + 40) - 8;
@@ -46680,12 +46682,12 @@ export default function CherryAdventure() {
   const QT_TOP = QT_TIGHT ? _sideTop : ((typeof window !== "undefined" ? window.innerWidth : 900) < 620 ? Math.max(_sideTop + 40, 152) : _sideTop + 40);
   const QT_MAX_H = QT_TIGHT ? 30 : (_colTopL - QT_TOP - 8);
   const MINI_H = MINI_SZ + 12;                       // วงกลม + ป้ายชื่อแดนที่ห้อยอยู่ใต้วง
-  const BOARD_TOP = (MINI_ON && HUD_CARD) ? (MINI_TOP + MINI_H + 6) : (HUD_CARD ? 4 : 42);
+  const BOARD_TOP = (MINI_ON && HUD_CARD) ? (MINI_TOP + MINI_H + 6) : (HUD_CARD ? 4 : 42 + TOPBAR_H);
   // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
   const _bannerSide = !HUD_CARD && _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
   const _bannerDrop = (_boardOn && !_bannerSide && !HUD_CARD) ? 104 : 0;   // แนวนอน: อันดับโลกไปอยู่ขวาแล้ว แบนเนอร์ไม่ต้องหลบลงมา
   const bannerPos = (base) => ({
-    top: ST(base + _bannerDrop),
+    top: ST(base + _bannerDrop + TOPBAR_H),
     left: _bannerSide ? "calc(50% + 100px)" : "50%",
     transform: "translateX(-50%)",
   });
@@ -48422,7 +48424,7 @@ export default function CherryAdventure() {
       {/* 📅 daily login reward */}
       {ui.dailyReady && ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (
         <div style={{
-          position: "absolute", top: ST(70), left: "50%", transform: "translateX(-50%)",
+          position: "absolute", top: ST(70 + TOPBAR_H), left: "50%", transform: "translateX(-50%)",
           background: "linear-gradient(135deg,#fff2c8,#ffe0a0)", borderRadius: 16, padding: "12px 16px",
           boxShadow: "0 6px 20px rgba(200,150,40,0.4)", border: "2px solid #f5c542",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 6, zIndex: 50, maxWidth: 280,
@@ -48930,7 +48932,7 @@ export default function CherryAdventure() {
             onClick={() => { if (done) setUi((u) => ({ ...u, ...closeAllMenus(), questOpen: true, achTab: false })); else if (G.questGo) G.questGo(); }}
             title={done ? `บท ${(ui.storyCh || 0) + 1} สำเร็จ — แตะรับรางวัล` : `บท ${(ui.storyCh || 0) + 1}: ${G.storyLabel(c)} — แตะเพื่อเดินไปหาเป้าหมาย`}
             style={{
-              position: "absolute", top: ST(104), left: "50%", transform: "translateX(-50%)", zIndex: 21,
+              position: "absolute", top: ST(104 + TOPBAR_H), left: "50%", transform: "translateX(-50%)", zIndex: 21,
               background: done ? "linear-gradient(90deg,#ffd84a,#ffb020)" : "rgba(42,34,72,0.72)", borderRadius: 999,
               padding: "2px 9px", fontSize: 9, fontWeight: 800, fontFamily: font, color: done ? "#3a2a10" : "#e0d4ff",
               border: "none", cursor: "pointer", boxShadow: "0 2px 7px rgba(42,34,72,0.3)", whiteSpace: "nowrap",
@@ -49731,13 +49733,20 @@ export default function CherryAdventure() {
                 background: "rgba(16,22,18,0.46)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
                 border: "1px solid rgba(255,255,255,0.16)", borderRadius: 13, padding: "6px 8px",
                 boxShadow: "0 4px 16px rgba(0,0,0,0.32)" }
-            : { bottom: "calc(var(--sa-b, 0px) * 0.5)", left: "50%", transform: "translateX(-50%)", width: "min(92vw, 580px)" }),
+            : { // 📱 แนวตั้ง: แถบสถานะอยู่บนสุด ในกรอบลายผ้าทอขอบทอง
+                top: ST(5), left: "50%", transform: "translateX(-50%)", width: "min(96vw, 580px)",
+                borderRadius: 16, padding: "5px 8px 6px",
+                // 🎀 ลวดลายกรอบ: เส้นทแยงทอ + แสงนวลมุมบน + พื้นไม้เข้ม
+                background: "repeating-linear-gradient(135deg, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 5px, rgba(255,255,255,0.02) 5px, rgba(255,255,255,0.02) 11px), radial-gradient(120% 90% at 50% -20%, rgba(255,236,180,0.36), rgba(255,236,180,0) 62%), linear-gradient(180deg, #4a3a26 0%, #33281c 55%, #241c14 100%)",
+                border: "2px solid #d9b45a",
+                boxShadow: "inset 0 0 0 1px rgba(255,232,170,0.42), inset 0 2px 10px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.45)",
+              }),
           zIndex: ui.autoCfgOpen ? 46 : 25,   // ⚙️ เปิดตั้งค่าออโต้ = ยกการ์ดขึ้นเหนือมินิแมพ/แผงภารกิจ ไม่งั้นหน้าต่างโดนบัง
           pointerEvents: "none", fontFamily: font }}>
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: HUD_CARD ? 6 : 7, ...(HUD_CARD
             ? { background: "transparent", borderRadius: 0, padding: 0, fontSize: 10, color: "#eaf4ec", justifyContent: "flex-start", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }
-            : { background: "rgba(255,255,255,0.6)", backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)", borderRadius: 12, padding: "3px 10px", fontSize: 11, color: "#6a4a3a", boxShadow: "0 3px 10px rgba(90,120,70,0.22)" }),
+            : { background: "linear-gradient(180deg, rgba(255,250,238,0.95), rgba(246,236,214,0.92))", borderRadius: 10, padding: "3px 10px", fontSize: 11, color: "#5a4230", border: "1px solid rgba(217,180,90,0.75)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.28)" }),
             fontWeight: 800, pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
             <span>⚔️{ui.atk}</span>
             <span>🛡️{ui.def}</span>
@@ -49779,8 +49788,8 @@ export default function CherryAdventure() {
           {/* ⚙️ auto-battle settings popup */}
           {ui.autoCfgOpen && (
             <div style={{ position: "absolute",
-              // 🖥️ การ์ดสถานะอยู่มุมบนซ้าย → กางลงล่าง · 📱 การ์ดอยู่ล่างจอ → กางขึ้นบนเหมือนเดิม
-              ...(HUD_CARD ? { top: "calc(100% + 8px)", left: 0 } : { bottom: 62, right: 0 }),
+              // 🖥️📱 แถบสถานะอยู่ด้านบนทั้งสองผังแล้ว → กางลงล่างเสมอ
+              ...(HUD_CARD ? { top: "calc(100% + 8px)", left: 0 } : { top: "calc(100% + 8px)", right: 0 }),
               width: "min(88vw, 300px)", maxHeight: "calc(72vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", zIndex: 40,
               background: "rgba(255,255,255,0.97)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 14, padding: "10px 12px", boxShadow: "0 8px 24px rgba(60,80,120,0.35)", pointerEvents: "auto", fontFamily: font }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
