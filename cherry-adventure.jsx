@@ -46611,6 +46611,11 @@ export default function CherryAdventure() {
   // 🖥️📱 จอ "แนวนอน" (คอม · แท็บเล็ตแนวนอน · มือถือแนวนอน) ใช้ผังเดียวกัน — การ์ดสถานะบนซ้าย · อันดับโลกบนขวา
   const _wideHud = window.innerWidth > window.innerHeight * 1.2;
   const _shortHud = window.innerHeight < 500; // 📱 แนวนอน/จอเตี้ย → HUD แบบกระชับ (คอลัมน์ชิดขอบ ไม่ทับกัน)
+  // 📱 มือถือแนวนอน (จอเตี้ยมาก) — ย่อ "หน้าเมนู" ทั้งหมดลง แล้วขยายกล่องในผังให้ใหญ่ขึ้นชดเชย
+  //    ผลคือเนื้อหาเห็นได้มากขึ้นในจอเตี้ย ตัวหนังสือเล็กลงแต่ผังไม่เพี้ยน
+  const UI_S = window.innerHeight < 380 ? 0.72 : window.innerHeight < 440 ? 0.78 : _shortHud ? 0.85 : 1;
+  const _uiInv = 1 / UI_S;                                     // ตัวหารสำหรับขยายกล่องในผังชดเชยการย่อ
+  const uiScale = (base, origin) => (UI_S === 1 ? {} : { transform: `${base ? base + " " : ""}scale(${UI_S})`, transformOrigin: origin || "50% 50%" });
   // ---------- 🎛️ ผังปุ่มบนจอ — คิดช่องวางทีเดียวจากขนาดจอจริง ทุกปุ่มอ้างตารางนี้ จะได้ไม่ทับกันและไม่บังตัวละคร ----------
   const _vh = typeof window !== "undefined" ? window.innerHeight : 800;
   const HUD_HIDE = !!ui.mining;                       // ⛏️ กำลังขุดแร่ = ซ่อนปุ่มบนจอทั้งหมด เหลือแต่แผงขุด
@@ -46703,10 +46708,11 @@ export default function CherryAdventure() {
   //     สลับแท็บแล้วกรอบจะอยู่นิ่ง ไม่เด้งไปมาหรือเปลี่ยนขนาดกะทันหัน
   const SKILL_SHELL = {
     position: "absolute", ...MODAL_POS, zIndex: 58,
-    width: "92%", maxWidth: _uiWideModal ? 470 : 400,
+    ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"),   // 📱 จอเตี้ย: ย่อทั้งกรอบลง
+    width: `${Math.round(92 * _uiInv)}%`, maxWidth: Math.round((_uiWideModal ? 470 : 400) * _uiInv),
     // 📏 สูงเท่ากันทุกแท็บ (สลับแล้วกรอบอยู่นิ่ง) และยืดตามความสูงจอ — จอสูงใช้พื้นที่ได้เต็ม จอเตี้ยก็ไม่ล้น
     //    เว้นขอบบน-ล่างไว้ ~6% ของจอ · เพดาน 900px กันไม่ให้ยาวเกินอ่านสบายบนจอใหญ่มาก
-    height: `min(calc(88vh - var(--sa-t, 0px) - var(--sa-b, 0px)), ${Math.max(320, Math.min(900, Math.round(_vh * 0.88)))}px)`, overflowY: "auto",
+    height: `min(calc((88vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)}), ${Math.round(Math.max(320, Math.min(900, Math.round(_vh * 0.88))) * _uiInv)}px)`, overflowY: "auto",
     background: "#fff", borderRadius: 18, padding: 13,
     boxShadow: MODAL_SHADOW, fontFamily: font,
   };
@@ -46738,6 +46744,7 @@ export default function CherryAdventure() {
   const skillTabs = (active, dark) => (
     <div style={{
       display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
+      paddingRight: 38,                      // ⛔ เว้นที่ให้ปุ่ม ✕ ที่ลอยอยู่มุมขวาบน แท็บสุดท้ายจะได้ไม่โดนทับ
       position: "sticky", top: 0, zIndex: 11,
       background: dark ? "rgba(0,0,0,0.24)" : "#f1eef8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #e2dcf0",
     }}>
@@ -46761,7 +46768,7 @@ export default function CherryAdventure() {
   // 🧩 แถบแท็บกลุ่มเมนูภารกิจ — เควส · รายวัน/สัปดาห์ · ความสำเร็จ
   const questTabs = (active, dark) => (
     <div style={{
-      display: "flex", gap: 4, marginBottom: 9, padding: 3, borderRadius: 11,
+      display: "flex", gap: 4, marginBottom: 9, padding: 3, paddingRight: 38, borderRadius: 11,
       background: dark ? "rgba(0,0,0,0.24)" : "#fdf0d8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #f0e0c0",
     }}>
       {(G.QUEST_TABS || []).map((t) => {
@@ -53058,12 +53065,13 @@ export default function CherryAdventure() {
           {/* 🐄 pet ranch (idle farm) */}
           {ui.ranchOpen && ui.ranch && (
             <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "96%", maxWidth: 460,
-              maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", display: "flex", flexDirection: "column",
+              position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 50,
+              width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(460 * _uiInv),
+              maxHeight: `calc((84vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column",
               background: "#fff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("ranchOpen")}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
+              <div style={{ paddingRight: 36, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
                 <div style={{ fontSize: 17, fontWeight: 900, color: "#b0702a" }}>🐄 ฟาร์มสัตว์เลี้ยง</div>
                 <div style={{ flex: 1 }} />
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
@@ -53498,9 +53506,9 @@ export default function CherryAdventure() {
 
           {/* 🌐 online player market — buy/sell farm produce & pets */}
           {ui.mktOpen && (
-            <div style={{ position: "absolute", ...MODAL_POS, zIndex: 52, width: "96%", maxWidth: 470, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", display: "flex", flexDirection: "column", background: "#fff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
+            <div style={{ position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 52, width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(470 * _uiInv), maxHeight: `calc((86vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", background: "#fff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
               {closeBtn("mktOpen")}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0, paddingRight: 36 }}>
                 <div style={{ fontSize: 16.5, fontWeight: 900, color: "#2f8f9a" }}>🌐 ตลาดออนไลน์</div>
                 <div style={{ flex: 1 }} />
                 <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
