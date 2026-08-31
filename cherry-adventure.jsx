@@ -46616,8 +46616,9 @@ export default function CherryAdventure() {
   const HUD_HIDE = !!ui.mining;                       // ⛏️ กำลังขุดแร่ = ซ่อนปุ่มบนจอทั้งหมด เหลือแต่แผงขุด
   const HUD_BTN_L = _shortHud ? 42 : 48;              // ขนาดปุ่มคอลัมน์ซ้าย
   const HUD_BTN_R = _shortHud ? 42 : 52;              // ขนาดปุ่มคอลัมน์ขวา
-  const HUD_BASE_L = _shortHud ? 78 : 150;            // ช่องล่างสุดคอลัมน์ซ้าย (พ้นมินิแมพ)
-  const HUD_BASE_R = _shortHud ? 70 : 84;             // ช่องล่างสุดคอลัมน์ขวา
+  // 📱 แนวตั้ง: แถบสถานะย้ายขึ้นบนแล้ว ด้านล่างจึงว่าง — ลดระยะเผื่อลง ดันแถบปุ่มไปชิดขอบล่าง
+  const HUD_BASE_L = _shortHud ? 78 : 88;             // ช่องล่างสุดคอลัมน์ซ้าย
+  const HUD_BASE_R = _shortHud ? 70 : 46;             // ช่องล่างสุดคอลัมน์ขวา
   const HUD_TOPSAFE = _shortHud ? 140 : 132;          // เขตหวงห้ามด้านบน — ป้ายชื่อแมพ/ปุ่มบอส/อันดับโลก/ปุ่มตั้งค่า
   const HUD_CELL = _shortHud ? 28 : 34;               // ขนาดปุ่มในแป้นหมุนกล้อง
   const HUD_PAD = HUD_CELL * 3 + 6;                  // ความสูง/กว้างแป้นหมุนกล้อง
@@ -46630,7 +46631,7 @@ export default function CherryAdventure() {
   // 📱 แนวนอน = ผังแบบเกมมือถือ: การ์ดสถานะมุมบนซ้าย · อันดับโลกมุมบนขวา · กลางล่างโล่งไว้ให้เห็นตัวละคร
   const HUD_CARD = _wideHud;                          // ใช้การ์ดสถานะมุมบนซ้ายไหม (จอแนวนอนทั้งคอมและมือถือ)
   // 📱 แนวตั้ง: ย้ายแถบสถานะ (พลัง/ทอง/เลือด/มานา/เลเวล) ขึ้นไปไว้บนสุด — ของอื่นบนจอต้องเลื่อนลงมาให้พ้น
-  const TOPBAR_H = HUD_CARD ? 0 : 92;
+  const TOPBAR_H = HUD_CARD ? 0 : 48;
   const HUD_CARD_H = 92;                              // ความสูงการ์ด (เอาไว้วางของถัดไปให้ไม่ทับ)
   const HUD_SCRIM = _wideHud ? Math.max(HUD_PAD + HUD_EDGE + 10, 104) : 0;   // ความกว้างเงาจาง ๆ ใต้แถบปุ่ม — ให้ปุ่มอ่านออกบนฉากสว่าง
   const HUD_GUTTER = 0;                                                        // ไม่กันขอบภาพอีกต่อไป
@@ -46669,9 +46670,11 @@ export default function CherryAdventure() {
   // 🗺️ มินิแมพมุมขวาบน — จองที่มุมขวาไว้ก่อน แล้วดันแผงอันดับโลกลงมาอยู่ใต้มัน
   const MINI_SZ = _shortHud ? 92 : 114;
   const MINI_ON = ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && !ui.mapOpen;
-  const MINI_TOP = HUD_CARD ? 4 : 42 + TOPBAR_H;
+  const MINI_TOP = HUD_CARD ? 4 : 8 + TOPBAR_H;
   // 📜 แถวปุ่ม ⚙️ 👤 📜 ด้านซ้าย + แผงติดตามภารกิจที่ห้อยอยู่ใต้แถวนี้
-  const _sideTop = HUD_CARD ? (HUD_CARD_H + 6) : (((!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? 250 : 92) + TOPBAR_H);
+  // 📱 แนวตั้ง: แถวปุ่ม ⚙️👤📜 ต้องอยู่ใต้แผงอันดับโลกเสมอ (แผงย่อ ≈ 68px · แผงมีรายชื่อ ≈ 156px)
+  const _boardH = (!ui.boardHidden && ui.globalBoard && ui.globalBoard.length) ? 156 : 68;
+  const _sideTop = HUD_CARD ? (HUD_CARD_H + 6) : (8 + TOPBAR_H + _boardH + 8);
   // 📜 พื้นที่ว่างที่แผงติดตามภารกิจใช้ได้ — หยุดก่อนถึงคอลัมน์ปุ่มซ้ายล่าง จะได้ไม่ทับกัน
   const _colTopL = _vh - (HUD_BASE_L + (_colL.n - 1) * _colL.pitch + HUD_BTN_L);
   const QT_ROOM = _colTopL - (_sideTop + 40) - 8;
@@ -46682,7 +46685,7 @@ export default function CherryAdventure() {
   const QT_TOP = QT_TIGHT ? _sideTop : ((typeof window !== "undefined" ? window.innerWidth : 900) < 620 ? Math.max(_sideTop + 40, 152) : _sideTop + 40);
   const QT_MAX_H = QT_TIGHT ? 30 : (_colTopL - QT_TOP - 8);
   const MINI_H = MINI_SZ + 12;                       // วงกลม + ป้ายชื่อแดนที่ห้อยอยู่ใต้วง
-  const BOARD_TOP = (MINI_ON && HUD_CARD) ? (MINI_TOP + MINI_H + 6) : (HUD_CARD ? 4 : 42 + TOPBAR_H);
+  const BOARD_TOP = (MINI_ON && HUD_CARD) ? (MINI_TOP + MINI_H + 6) : (HUD_CARD ? 4 : 8 + TOPBAR_H);
   // 🏷️ แบนเนอร์กลางบน — จอกว้างเลี่ยงไปทางขวา จอแคบเลื่อนลงมาใต้แผงอันดับแทน (ข้อความจะได้ไม่ตกบรรทัด)
   const _bannerSide = !HUD_CARD && _boardOn && (typeof window !== "undefined" ? window.innerWidth : 900) >= 620;
   const _bannerDrop = (_boardOn && !_bannerSide && !HUD_CARD) ? 104 : 0;   // แนวนอน: อันดับโลกไปอยู่ขวาแล้ว แบนเนอร์ไม่ต้องหลบลงมา
@@ -49735,7 +49738,7 @@ export default function CherryAdventure() {
                 boxShadow: "0 4px 16px rgba(0,0,0,0.32)" }
             : { // 📱 แนวตั้ง: แถบสถานะอยู่บนสุด ในกรอบลายผ้าทอขอบทอง
                 top: ST(5), left: "50%", transform: "translateX(-50%)", width: "min(96vw, 580px)",
-                borderRadius: 16, padding: "5px 8px 6px",
+                borderRadius: 13, padding: "3px 6px 4px",
                 // 🎀 ลวดลายกรอบ: เส้นทแยงทอ + แสงนวลมุมบน + พื้นไม้เข้ม
                 background: "repeating-linear-gradient(135deg, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 5px, rgba(255,255,255,0.02) 5px, rgba(255,255,255,0.02) 11px), radial-gradient(120% 90% at 50% -20%, rgba(255,236,180,0.36), rgba(255,236,180,0) 62%), linear-gradient(180deg, #4a3a26 0%, #33281c 55%, #241c14 100%)",
                 border: "2px solid #d9b45a",
@@ -49746,7 +49749,7 @@ export default function CherryAdventure() {
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: HUD_CARD ? 6 : 7, ...(HUD_CARD
             ? { background: "transparent", borderRadius: 0, padding: 0, fontSize: 10, color: "#eaf4ec", justifyContent: "flex-start", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }
-            : { background: "linear-gradient(180deg, rgba(255,250,238,0.95), rgba(246,236,214,0.92))", borderRadius: 10, padding: "3px 10px", fontSize: 11, color: "#5a4230", border: "1px solid rgba(217,180,90,0.75)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.28)" }),
+            : { background: "linear-gradient(180deg, rgba(255,250,238,0.95), rgba(246,236,214,0.92))", borderRadius: 8, padding: "1px 9px", fontSize: 9.5, color: "#5a4230", border: "1px solid rgba(217,180,90,0.75)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.28)" }),
             fontWeight: 800, pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
             <span>⚔️{ui.atk}</span>
             <span>🛡️{ui.def}</span>
@@ -49754,7 +49757,32 @@ export default function CherryAdventure() {
             <span style={{ color: "#3a86c0" }}>💎{(ui.diamonds || 0) >= 1000000 ? (((ui.diamonds || 0) / 1000000).toFixed(1) + "M") : ((ui.diamonds || 0).toLocaleString())}</span>
             <span>🐾×{totalCaught}</span>
           </div>
-          {/* ❤️💧 หลอดเลือด + มานา — ย้ายลงมาจากเหนือหัวตัวละคร ทำให้เล็กลง */}
+          {/* 📱 แนวตั้ง: ยุบเลือด/มานา/เลเวล/EXP ให้เหลือแถวเดียว — กรอบเตี้ยลงครึ่งหนึ่ง */}
+          {!HUD_CARD && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3, pointerEvents: "auto" }}>
+              <div style={{ fontSize: 9.5, fontWeight: 900, color: "#4a3410", background: "linear-gradient(135deg,#ffd76a,#f5a623)", borderRadius: 999, padding: "1px 7px", whiteSpace: "nowrap", flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>Lv.{ui.level}</div>
+              {[["hp", "❤️", ui.hp, ui.maxHp, (ui.maxHp && ui.hp / ui.maxHp > 0.35) ? "linear-gradient(90deg,#4aa86a,#7fd08a)" : "linear-gradient(90deg,#c03a3a,#e05555)", 1.35],
+                ["mp", "💧", ui.mp, ui.maxMp, "linear-gradient(90deg,#3a80d0,#6ac0f0)", 1],
+                ["xp", "⭐", ui.exp, ui.expNext, "linear-gradient(90deg,#f5c542,#f5a623)", 1.35]].map(([k, em, cur, max, col, fl]) => (
+                <div key={k} style={{ flex: fl, minWidth: 0, position: "relative", height: 11, background: "rgba(0,0,0,0.42)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,232,170,0.4)" }}>
+                  <div style={{ width: `${max ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0}%`, height: "100%", background: col, transition: "width 0.25s" }} />
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.7)", whiteSpace: "nowrap" }}>
+                    {em}{Math.max(0, Math.round(cur || 0)).toLocaleString()}/{Math.round(max || 0).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+              <button onClick={() => G.toggleAuto()} title={ui.auto ? "ต่อสู้อัตโนมัติ: เปิดอยู่ (แตะเพื่อปิด)" : "ต่อสู้อัตโนมัติ: ปิดอยู่ (แตะเพื่อเปิด)"} style={{
+                width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 11, lineHeight: 1, fontFamily: font,
+                filter: ui.auto ? "none" : "grayscale(0.85)", opacity: ui.auto ? 1 : 0.85,
+                background: ui.auto ? "linear-gradient(135deg,#59a0e8,#9a6ad0)" : "#fff",
+                boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45)" : "0 1px 4px rgba(0,0,0,0.3)" }}>🤖</button>
+              <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen }))} title="ตั้งค่าออโต้" style={{
+                width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 10.5, lineHeight: 1, fontFamily: font, color: "#59a0e8",
+                background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>⚙️</button>
+            </div>
+          )}
+          {/* ❤️💧 หลอดเลือด + มานา (จอแนวนอน) */}
+          {HUD_CARD && (<>
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 4 }}>
             {[["hp", "❤️", ui.hp, ui.maxHp, (ui.maxHp && ui.hp / ui.maxHp > 0.35) ? "linear-gradient(90deg,#4aa86a,#7fd08a)" : "linear-gradient(90deg,#c03a3a,#e05555)", 1.5],
               ["mp", "💧", ui.mp, ui.maxMp, "linear-gradient(90deg,#3a80d0,#6ac0f0)", 1]].map(([k, em, cur, max, col, fl]) => (
@@ -49785,6 +49813,7 @@ export default function CherryAdventure() {
               background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 2px 6px rgba(0,0,0,0.24)",
             }}>⚙️</button>
           </div>
+          </>)}
           {/* ⚙️ auto-battle settings popup */}
           {ui.autoCfgOpen && (
             <div style={{ position: "absolute",
@@ -50659,7 +50688,7 @@ export default function CherryAdventure() {
             onPointerUp={joyEnd}
             onPointerCancel={joyEnd}
             style={{
-              position: "absolute", ...(_shortHud ? { left: `calc(${HUD_EDGE + HUD_BTN_L + 40}px + var(--sa-l, 0px))`, bottom: 50, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 158, width: 112, height: 112 }), borderRadius: "50%",
+              position: "absolute", ...(_shortHud ? { left: `calc(${HUD_EDGE + HUD_BTN_L + 40}px + var(--sa-l, 0px))`, bottom: 50, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 96, width: 112, height: 112 }), borderRadius: "50%",
               background: "rgba(255,255,255,0.45)", border: "3px solid rgba(122,160,91,0.5)",
               touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 14px rgba(90,120,70,0.2)",
@@ -50709,7 +50738,7 @@ export default function CherryAdventure() {
             );
             return (
               // ยึดตำแหน่งไว้ทางซ้ายของคอลัมน์ปุ่มขอบขวา (ยาน้ำ/สัตว์ขี่/เควส/สัตว์เลี้ยง) ปุ่มจะได้ไม่ทับกัน
-              <div style={{ position: "absolute", right: `calc(${HUD_EDGE + HUD_BTN_R + 8}px + var(--sa-r, 0px))`, bottom: _shortHud ? 52 : 76, width: ATK + PADX, height: ATK + PADY, zIndex: 23, pointerEvents: "none", fontFamily: font }}>
+              <div style={{ position: "absolute", right: `calc(${HUD_EDGE + HUD_BTN_R + 8}px + var(--sa-r, 0px))`, bottom: _shortHud ? 52 : 38, width: ATK + PADX, height: ATK + PADY, zIndex: 23, pointerEvents: "none", fontFamily: font }}>
                 {/* ⚔️ ปุ่มโจมตี — ศูนย์กลางวง อยู่มุมขวาล่างของกรอบ */}
                 <button onClick={() => G.orderAct && G.orderAct("attack")} title="โจมตี — ไม่มีตัวในระยะจะวิ่งเข้าไปหาให้เอง · กดตอนกำลังออกท่าอยู่ = จองคิวท่าถัดไป" style={{
                   position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%", overflow: "visible",
