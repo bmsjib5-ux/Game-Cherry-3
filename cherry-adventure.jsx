@@ -1749,6 +1749,9 @@ const BUFF_LABEL = {
   goldPct: ["💰 ทองที่ได้", "%"], dropPct: ["🎁 โอกาสดรอป", "%"],
 };
 // 🐟 ปลาที่ตกได้เก็บเข้าถัง แยกตามระดับ
+// 🌐 ราคาฐานของของที่เอาไปลงตลาดออนไลน์ได้ (ใช้คิดราคาแนะนำ + เพดานราคา)
+const MKT_FISH_BASE = { common: 18, rare: 70, epic: 260 };
+const MKT_MAT_BASE = { ironOre: 14, crystal: 70, fireEss: 95, iceEss: 95, windEss: 95, earthEss: 95, dragonScale: 950 };
 const FISH_TIER = { common: { name: "ปลาธรรมดา", emoji: "🐟" }, rare: { name: "ปลาหายาก", emoji: "🐠" }, epic: { name: "ปลาในตำนาน", emoji: "🐉" } };
 // ---------- 🎣 ตกปลา — ชนิดปลา · เลเวลตกปลา · โอกาสได้ปลาหายากตามเลเวล ----------
 const FISH_LV_MAX = 20;
@@ -33941,11 +33944,49 @@ export default function CherryAdventure() {
     // sellable-item snapshots for the sell tab
     const MKT_PRODUCE_MAXMUL = 10, MKT_PET_MAXMUL = 20; // 🔒 เพดานราคาขาย = มูลค่าฐาน × ตัวคูณ (กันตั้งราคาเว่อร์)
     const mktProduceOpts = () => CROPS.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji, n: (G.ranch && G.ranch.produce && G.ranch.produce[c.id]) || 0, base: c.sell, max: (c.sell || 10) * MKT_PRODUCE_MAXMUL })).filter((p) => p.n > 0);
+    // 🗡️ อาวุธ/ชุดที่ดรอปมา — ขายได้ทีละชิ้น พร้อมค่าตีบวก/ดาวปลุกพลัง/คุณภาพ/อัญมณีติดไปด้วย
+    const MKT_GEAR_MAXMUL = 12, MKT_FISH_MAXMUL = 10, MKT_FOOD_MAXMUL = 10, MKT_MAT_MAXMUL = 10;
+    const mktGearOpts = () => {
+      const seen = {}, out = [];
+      (G.inv || []).forEach((id) => {
+        if (seen[id]) return; seen[id] = 1;
+        const it = LOOT.find((x) => x.id === id);
+        if (!it || it.starter) return;
+        if (G.itemLock && G.itemLock[id]) return;              // 🔐 ของที่ล็อกไว้ไม่เอาไปขาย
+        const cnt = (G.inv || []).filter((x) => x === id).length;
+        const equipped = !!(G.equip && G.equip[it.slot] === id);
+        if (equipped && cnt <= 1) return;                       // ชิ้นสุดท้ายที่ใส่อยู่ ห้ามขาย
+        const base = Math.max(10, G.sellPrice ? G.sellPrice(id) : 10);
+        out.push({ id, name: it.name, emoji: it.emoji, rarity: it.rarity, slot: it.slot,
+          slotName: SLOT_NAMES[it.slot] || it.slot, count: cnt, equipped,
+          plus: (G.plus || {})[id] || 0, awk: (G.awk || {})[id] || 0,
+          base, suggest: base * 2, max: base * MKT_GEAR_MAXMUL });
+      });
+      return out.sort((a, b) => (TIER[b.rarity] - TIER[a.rarity]) || (b.base - a.base));
+    };
+    // 🎣 ปลาที่ตกได้ (เก็บเป็นระดับ ธรรมดา/หายาก/ตำนาน)
+    const mktFishOpts = () => ["common", "rare", "epic"].map((r) => {
+      const n = (G.fishBag && G.fishBag[r]) || 0;
+      const base = MKT_FISH_BASE[r] || 20;
+      return { id: r, name: (FISH_TIER[r] || {}).name || r, emoji: (FISH_TIER[r] || {}).emoji || "🐟", n, base, suggest: base * 2, max: base * MKT_FISH_MAXMUL };
+    }).filter((f) => f.n > 0);
+    // 🍳 อาหารที่ทำไว้ — ขายทีละจาน (บัฟติดไปกับจานนั้น)
+    const mktFoodOpts = () => (G.foodBagList ? G.foodBagList() : []).map((f) => {
+      const base = Math.max(20, Math.round(40 + (f.qi || 0) * 55 + (f.mins || 0) * 1.2));
+      return { uid: f.uid, rid: f.rid, name: f.name, emoji: f.emoji, q: f.q, qName: f.qName, qEmoji: f.qEmoji,
+        mins: f.mins || 0, lv: f.lv || 1, base, suggest: base * 2, max: base * MKT_FOOD_MAXMUL };
+    });
+    // ⛏️ แร่ที่ขุดได้
+    const mktMatOpts = () => Object.keys(MATERIALS).map((k) => {
+      const n = (G.mats && G.mats[k]) || 0;
+      const base = MKT_MAT_BASE[k] || 20;
+      return { id: k, name: MATERIALS[k].name, emoji: MATERIALS[k].emoji, n, base, suggest: base * 2, max: base * MKT_MAT_MAXMUL };
+    }).filter((m) => m.n > 0);
     const mktPetOpts = () => (G.petBox || []).filter((p) => !G.petInUse(p.i) && !((G.ranch && G.ranch.slots) || []).includes(p.i)).map((p) => { const sp = SPECIES[p.sp] || {}; const base = G.petSellPrice(p); return { i: p.i, sp: p.sp, name: sp.name, emoji: sp.emoji, tier: sp.tier || 1, lv: p.lv, plus: p.plus || 0, stage: p.stage || 1, iv: p.iv || { a: 0, h: 0, d: 0 }, suggest: base * 2, max: base * MKT_PET_MAXMUL }; });
     G.openMarket = (tab) => {
       if (G.ensurePid) G.ensurePid();
       setUi((u) => ({ ...u, panelOpen: false, ranchOpen: false, mktOpen: true, mktTab: (["sell", "mine", "contest", "board"].indexOf(tab) >= 0 ? tab : "buy"), gold: G.gold, pid: G.pid || null,
-        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktListings: null, mktMine: null, mktBusy: false, mktPrices: {}, mktErr: CN.enabled() ? null : "offline",
+        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktGear: mktGearOpts(), mktFish: mktFishOpts(), mktFood: mktFoodOpts(), mktMats: mktMatOpts(), mktSellCat: "gear", mktListings: null, mktMine: null, mktBusy: false, mktPrices: {}, mktErr: CN.enabled() ? null : "offline",
         contestPets: G.contestPetOpts ? G.contestPetOpts() : [], contestUsed: contestUsedToday(), contestMax: CONTEST_MAX, contestBest: (G.ranch && G.ranch.contestBest) || 0, contestTop: null, contestErr: CN.enabled() ? null : "offline" }));
       G.marketRefresh("buy");
       if (G.contestBoard) G.contestBoard();
@@ -33973,6 +34014,98 @@ export default function CherryAdventure() {
       toast(`🏷️ ลงขาย ${c.emoji} ${c.name} ×${qty} ราคา ${price}💰`);
       if (G.saveGame) G.saveGame();
       setUi((u) => ({ ...u, ranch: ranchUiSnap(), mktProduce: mktProduceOpts() }));
+      G.marketRefresh("mine");
+    };
+    // 🗡️ ลงขายอาวุธ/ชุดที่ดรอปมา — หิ้วค่าตีบวก/ดาว/คุณภาพ/อัญมณี/ธาตุ ไปให้ผู้ซื้อครบ
+    G.marketSellGear = async (id, price) => {
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      const it = LOOT.find((x) => x.id === id); if (!it) return;
+      if (it.starter) { toast("อาวุธฝึกหัดขายไม่ได้นะ!"); return; }
+      if (G.itemLock && G.itemLock[id]) { toast(`🔐 ${it.emoji} ${it.name} ถูกล็อกไว้ — ปลดล็อกก่อน`); return; }
+      const idx = (G.inv || []).indexOf(id);
+      if (idx < 0) { toast("ไม่มีของชิ้นนี้ในกระเป๋า"); return; }
+      const cnt = G.inv.filter((x) => x === id).length;
+      if (G.equip && G.equip[it.slot] === id && cnt <= 1) { toast("ชิ้นนี้กำลังสวมใส่อยู่ — ถอดออกก่อน"); return; }
+      const base = Math.max(10, G.sellPrice ? G.sellPrice(id) : 10);
+      price = Math.max(1, Math.min(base * MKT_GEAR_MAXMUL, price | 0));
+      if (G.ensurePid) G.ensurePid();
+      const snap = { id, name: it.name, emoji: it.emoji, rarity: it.rarity, slot: it.slot,
+        plus: (G.plus || {})[id] || 0, awk: (G.awk || {})[id] || 0,
+        roll: (G.rolls || {})[id] || null, sockets: ((G.sockets || {})[id] || []).slice(),
+        elem: (G.weaponInfuse || {})[id] || null };
+      G.inv.splice(idx, 1);                                     // 🔒 escrow
+      if (!G.inv.includes(id)) { if (G.plus) delete G.plus[id]; if (G.awk) delete G.awk[id]; }
+      const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "gear", item: snap, price, status: "open", collected: false, ts: Date.now() };
+      const created = await CN.marketPost(row);
+      if (!created) { G.gainItem(id); if (snap.plus) G.plus[id] = snap.plus; if (snap.awk) { G.awk = G.awk || {}; G.awk[id] = snap.awk; }
+        toast("🌐 ลงขายไม่สำเร็จ (ตรวจสอบตาราง market)"); setUi((u) => ({ ...u, inv: [...G.inv], mktGear: mktGearOpts() })); return; }
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏷️ ลงขาย ${it.emoji} ${it.name}${snap.plus ? ` +${snap.plus}` : ""} ราคา ${price.toLocaleString()}💰`);
+      if (G.saveGame) G.saveGame();
+      syncPlayer();
+      setUi((u) => ({ ...u, inv: [...G.inv], plus: { ...G.plus }, awk: { ...(G.awk || {}) }, mktGear: mktGearOpts() }));
+      G.marketRefresh("mine");
+    };
+    // 🎣 ลงขายปลา
+    G.marketSellFish = async (tier, qty, price) => {
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      const have = (G.fishBag && G.fishBag[tier]) || 0;
+      if (have <= 0) { toast("🎣 ไม่มีปลาระดับนี้ในถัง"); return; }
+      qty = Math.max(1, Math.min(have, qty | 0));
+      const base = MKT_FISH_BASE[tier] || 20;
+      price = Math.max(1, Math.min(qty * base * MKT_FISH_MAXMUL, price | 0));
+      if (G.ensurePid) G.ensurePid();
+      G.fishBag[tier] = have - qty;
+      const T = FISH_TIER[tier] || {};
+      const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "fish", item: { tier, name: T.name || tier, emoji: T.emoji || "🐟", qty }, price, status: "open", collected: false, ts: Date.now() };
+      const created = await CN.marketPost(row);
+      if (!created) { G.fishBag[tier] = (G.fishBag[tier] || 0) + qty; toast("🌐 ลงขายไม่สำเร็จ"); setUi((u) => ({ ...u, mktFish: mktFishOpts() })); return; }
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏷️ ลงขาย ${T.emoji} ${T.name} ×${qty} ราคา ${price.toLocaleString()}💰`);
+      if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, mktFish: mktFishOpts(), fishInfo: G.fishInfo ? G.fishInfo() : null }));
+      G.marketRefresh("mine");
+    };
+    // 🍳 ลงขายอาหาร (ทีละจาน — บัฟติดไปกับจานนั้น)
+    G.marketSellFood = async (uid, price) => {
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      const i = (G.foodBag || []).findIndex((f) => f.uid === uid);
+      if (i < 0) { toast("🍽️ ไม่มีจานนี้ในกระเป๋าอาหาร"); return; }
+      const dish = G.foodBag[i];
+      const view = (mktFoodOpts() || []).find((f) => f.uid === uid) || { base: 40, max: 400, name: dish.rid, emoji: "🍽️" };
+      price = Math.max(1, Math.min(view.max, price | 0));
+      if (G.ensurePid) G.ensurePid();
+      const snap = { dish: { ...dish, buff: { ...(dish.buff || {}) }, extra: { ...(dish.extra || {}) } },
+        name: view.name, emoji: view.emoji, q: view.q, qName: view.qName, mins: view.mins };
+      G.foodBag.splice(i, 1);                                   // 🔒 escrow
+      const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "food", item: snap, price, status: "open", collected: false, ts: Date.now() };
+      const created = await CN.marketPost(row);
+      if (!created) { G.foodBag.splice(i, 0, dish); toast("🌐 ลงขายไม่สำเร็จ"); setUi((u) => ({ ...u, mktFood: mktFoodOpts() })); return; }
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏷️ ลงขาย ${view.emoji} ${view.name} ราคา ${price.toLocaleString()}💰`);
+      if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, mktFood: mktFoodOpts(), foodBag: G.foodBagList ? G.foodBagList() : [] }));
+      G.marketRefresh("mine");
+    };
+    // ⛏️ ลงขายแร่ที่ขุดได้
+    G.marketSellMat = async (matId, qty, price) => {
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      const M = MATERIALS[matId]; if (!M) return;
+      G.mats = G.mats || {};
+      const have = G.mats[matId] || 0;
+      if (have <= 0) { toast("⛏️ ไม่มีแร่ชนิดนี้"); return; }
+      qty = Math.max(1, Math.min(have, qty | 0));
+      const base = MKT_MAT_BASE[matId] || 20;
+      price = Math.max(1, Math.min(qty * base * MKT_MAT_MAXMUL, price | 0));
+      if (G.ensurePid) G.ensurePid();
+      G.mats[matId] = have - qty;
+      const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "mat", item: { mat: matId, name: M.name, emoji: M.emoji, qty }, price, status: "open", collected: false, ts: Date.now() };
+      const created = await CN.marketPost(row);
+      if (!created) { G.mats[matId] = (G.mats[matId] || 0) + qty; toast("🌐 ลงขายไม่สำเร็จ"); setUi((u) => ({ ...u, mktMats: mktMatOpts() })); return; }
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏷️ ลงขาย ${M.emoji} ${M.name} ×${qty} ราคา ${price.toLocaleString()}💰`);
+      if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, mktMats: mktMatOpts(), mats: { ...G.mats } }));
       G.marketRefresh("mine");
     };
     G.marketSellPet = async (iid, price) => {
@@ -34007,12 +34140,37 @@ export default function CherryAdventure() {
       if (!bought) { toast("😢 ช้าไปนิด — มีคนซื้อไปก่อนแล้ว"); setUi((u) => ({ ...u, mktBusy: false })); G.marketRefresh("buy"); return; }
       G.gold = (G.gold || 0) - listing.price;
       const it = listing.item || {};
-      if (listing.kind === "produce") { G.ranch.produce = G.ranch.produce || {}; G.ranch.produce[it.crop] = (G.ranch.produce[it.crop] || 0) + (it.qty || 1); toast(`✅ ซื้อ ${it.emoji} ${it.name} ×${it.qty} เข้าคลังแล้ว!`); }
-      else { G.addPetInstance(it.sp, { lv: it.lv, exp: it.exp, stage: it.stage, plus: it.plus, iv: it.iv }); toast(`✅ ซื้อ ${it.emoji} ${it.name} Lv.${it.lv} เข้ากล่องแล้ว!`); }
+      if (!G.mktDeliver(listing.kind, it)) { G.gold += listing.price; toast("😢 รับของไม่ได้ — คืนทองให้แล้ว"); setUi((u) => ({ ...u, gold: G.gold, mktBusy: false })); return; }
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       syncPlayer(); if (G.saveGame) G.saveGame();
-      setUi((u) => ({ ...u, gold: G.gold, mktBusy: false, ranch: ranchUiSnap(), petBox: (G.petBox || []).map((x) => ({ ...x })) }));
+      setUi((u) => ({ ...u, gold: G.gold, mktBusy: false, ranch: ranchUiSnap(), petBox: (G.petBox || []).map((x) => ({ ...x })),
+        inv: [...(G.inv || [])], plus: { ...G.plus }, awk: { ...(G.awk || {}) }, mats: { ...G.mats },
+        mktGear: mktGearOpts(), mktFish: mktFishOpts(), mktFood: mktFoodOpts(), mktMats: mktMatOpts() }));
       G.marketRefresh("buy");
+    };
+    // 📦 ส่งของเข้ากระเป๋าตามหมวด — ใช้ทั้งตอนซื้อสำเร็จและตอนยกเลิกประกาศ
+    G.mktDeliver = (kind, it, quiet) => {
+      it = it || {};
+      try {
+        if (kind === "produce") { G.ranch.produce = G.ranch.produce || {}; G.ranch.produce[it.crop] = (G.ranch.produce[it.crop] || 0) + (it.qty || 1); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} ×${it.qty} เข้าคลังแล้ว!`); return true; }
+        if (kind === "gear") {
+          if (!LOOT.find((x) => x.id === it.id)) return false;
+          G.gainItem(it.id);
+          if (it.plus) G.plus[it.id] = Math.max((G.plus || {})[it.id] || 0, it.plus);
+          if (it.awk) { G.awk = G.awk || {}; G.awk[it.id] = Math.max(G.awk[it.id] || 0, it.awk); }
+          if (it.roll) { G.rolls = G.rolls || {}; G.rolls[it.id] = it.roll; }
+          if (it.sockets && it.sockets.length) { G.sockets = G.sockets || {}; G.sockets[it.id] = it.sockets.slice(); }
+          if (it.elem) { G.weaponInfuse = G.weaponInfuse || {}; G.weaponInfuse[it.id] = it.elem; }
+          if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name}${it.plus ? ` +${it.plus}` : ""} เข้ากระเป๋าแล้ว!`);
+          return true;
+        }
+        if (kind === "fish") { G.fishBag = G.fishBag || {}; G.fishBag[it.tier] = (G.fishBag[it.tier] || 0) + (it.qty || 1); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} ×${it.qty} เข้าถังแล้ว!`); return true; }
+        if (kind === "food") { G.foodBag = Array.isArray(G.foodBag) ? G.foodBag : []; const d = it.dish; if (!d) return false;
+          G.foodBag.push({ ...d, uid: "m" + Date.now() + Math.floor(Math.random() * 1000) }); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} เข้ากระเป๋าอาหารแล้ว!`); return true; }
+        if (kind === "mat") { G.mats = G.mats || {}; G.mats[it.mat] = (G.mats[it.mat] || 0) + (it.qty || 1); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} ×${it.qty} แล้ว!`); return true; }
+        if (kind === "pet") { G.addPetInstance(it.sp, { lv: it.lv, exp: it.exp, stage: it.stage, plus: it.plus, iv: it.iv }); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} Lv.${it.lv} เข้ากล่องแล้ว!`); return true; }
+      } catch (e) { return false; }
+      return false;
     };
     G.marketCollect = async (listing) => {
       if (!listing || listing.status !== "sold" || listing.collected) return;
@@ -34033,11 +34191,13 @@ export default function CherryAdventure() {
       if (!rows) { toast("🌐 ยกเลิกไม่สำเร็จ ลองใหม่"); return; }
       if (!rows.length) { toast("ยกเลิกไม่ได้ — อาจถูกซื้อไปแล้ว"); G.marketRefresh("mine"); return; }
       const it = listing.item || {};
-      if (listing.kind === "produce") { G.ranch.produce = G.ranch.produce || {}; G.ranch.produce[it.crop] = (G.ranch.produce[it.crop] || 0) + (it.qty || 1); }
-      else { G.addPetInstance(it.sp, { lv: it.lv, exp: it.exp, stage: it.stage, plus: it.plus, iv: it.iv }); }
-      toast("↩️ ยกเลิกประกาศ — คืนของเข้าคลัง/กล่องแล้ว");
+      G.mktDeliver(listing.kind, it, true);
+      toast("↩️ ยกเลิกประกาศ — คืนของเข้ากระเป๋าแล้ว");
       if (G.saveGame) G.saveGame();
-      setUi((u) => ({ ...u, ranch: ranchUiSnap(), petBox: (G.petBox || []).map((x) => ({ ...x })), mktProduce: mktProduceOpts(), mktPets: mktPetOpts() }));
+      syncPlayer();
+      setUi((u) => ({ ...u, ranch: ranchUiSnap(), petBox: (G.petBox || []).map((x) => ({ ...x })),
+        inv: [...(G.inv || [])], plus: { ...G.plus }, awk: { ...(G.awk || {}) }, mats: { ...G.mats },
+        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktGear: mktGearOpts(), mktFish: mktFishOpts(), mktFood: mktFoodOpts(), mktMats: mktMatOpts() }));
       G.marketRefresh("mine");
     };
     // ---------- 🏆 PET CONTEST + FARM LEADERBOARD ----------
@@ -46550,6 +46710,26 @@ export default function CherryAdventure() {
   const SKILL_DARK = { borderRadius: 13, padding: "11px 12px 12px", color: "#e6f0e2" };
   // 🧩 แถบแท็บกลุ่มเมนูสกิล — ใส่ไว้หัวทุกหน้าในกลุ่ม สลับไปมาได้เลยไม่ต้องกลับเมนู ☰
   //    dark = ธีมเข้ม (หน้าวิชาตัวเบา) · ปกติ = ธีมการ์ดขาว
+  // 🌐 ชื่อ/คำอธิบายของรายการในตลาด — รองรับทุกหมวด (ของดรอป · แร่ · ปลา · อาหาร · พืชผล · สัตว์เลี้ยง)
+  const MKT_KIND = { gear: { ic: "🗡️", nm: "อาวุธ/ชุด" }, mat: { ic: "⛏️", nm: "แร่" }, fish: { ic: "🎣", nm: "ปลา" },
+                     food: { ic: "🍳", nm: "อาหาร" }, produce: { ic: "🥕", nm: "พืชผล" }, pet: { ic: "🐾", nm: "สัตว์เลี้ยง" } };
+  const mktTitle = (L) => {
+    const it = (L && L.item) || {}, k = L && L.kind;
+    if (k === "pet") return `${it.name} Lv.${it.lv}${it.plus ? ` +${it.plus}` : ""}`;
+    if (k === "gear") return `${it.name}${it.plus ? ` +${it.plus}` : ""}${it.awk ? ` ${awkStars(it.awk)}` : ""}`;
+    if (k === "food") return `${it.name}`;
+    return `${it.name} ×${it.qty || 1}`;
+  };
+  const mktSub = (L) => {
+    const it = (L && L.item) || {}, k = L && L.kind;
+    if (k === "pet") return `พรสวรรค์ ${(it.iv ? it.iv.a + it.iv.h + it.iv.d : 0)} · ร่าง ${it.stage || 1}`;
+    if (k === "gear") { const R = RARITY[it.rarity] || {}; return `${R.name || it.rarity || ""} · ${SLOT_NAMES[it.slot] || ""}${it.sockets && it.sockets.filter(Boolean).length ? ` · 💎${it.sockets.filter(Boolean).length}` : ""}`; }
+    if (k === "food") return `${it.qName || ""} · บัฟ ${it.mins || 0} นาที`;
+    if (k === "fish") return "ปลาที่ตกได้";
+    if (k === "mat") return "แร่ที่ขุดได้";
+    return "พืชผลฟาร์ม";
+  };
+  const mktIcon = (L) => ((L && L.item && L.item.emoji) || (MKT_KIND[L && L.kind] || {}).ic || "📦");
   const skillTabs = (active, dark) => (
     <div style={{
       display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
@@ -50500,10 +50680,19 @@ export default function CherryAdventure() {
             const A0 = 168, A1 = 268;                        // วงโค้งกวาดจากซ้าย (ทิศ 9 นาฬิกา) ขึ้นไปทางบน
             const n = skills.length;
             const skillKey = (i) => (G.SKILL_KEYS && G.SKILL_KEYS[list.indexOf(skills[i])]) || null;
-            const hopBtn = (label, title, fn) => (
-              <button onClick={fn} title={title} style={{
+            // 🦘💨 กระโดด/พุ่ง — ตอบสนองตั้งแต่ "แตะลง" ไม่ใช่ตอนปล่อย
+            //    นิ้วหนึ่งค้างจอยเดินอยู่ อีกนิ้วแตะปุ่มนี้ได้ทันที (เดินไป-กระโดด/พุ่งไปพร้อมกัน)
+            const hopBtn = (label, title, fn, hold) => (
+              <button title={title}
+                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); if (hold) G._glideHold = true; fn(); }}
+                onPointerUp={(e) => { e.stopPropagation(); if (hold) G._glideHold = false; }}
+                onPointerCancel={() => { if (hold) G._glideHold = false; }}
+                onPointerLeave={() => { if (hold) G._glideHold = false; }}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{
                 width: HOPB, height: HOPB, borderRadius: "50%",
                 border: "2px solid rgba(255,255,255,0.45)", cursor: "pointer", pointerEvents: "auto",
+                touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTapHighlightColor: "transparent",
                 background: "radial-gradient(circle at 35% 30%,#8ce0ff,#2a86d0)",
                 color: "#fff", fontSize: HOPB * 0.42, fontFamily: font, padding: 0,
                 boxShadow: "0 3px 9px rgba(0,0,0,0.35)",
@@ -50521,8 +50710,8 @@ export default function CherryAdventure() {
                 }}>⚔️{ui.bufAct === "__atk" && <span style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" }} />}</button>
                 {/* 🦘💨 กระโดด + พุ่ง — คู่เล็กใต้ซ้ายของปุ่มโจมตี */}
                 <div style={{ position: "absolute", right: HOPX, bottom: 0, display: "flex", gap: 6, pointerEvents: "none" }}>
-                  {hopBtn("💨", "พุ่ง (Shift)", () => G.doDash && G.doDash())}
-                  {hopBtn("🦘", "กระโดด (Space)", () => G.doJump && G.doJump())}
+                  {hopBtn("💨", "พุ่ง (Shift) — กดพร้อมเดินได้", () => G.doDash && G.doDash())}
+                  {hopBtn("🦘", "กระโดด (Space) — กดพร้อมเดินได้ · กดค้างตอนตกเพื่อร่อน", () => G.doJump && G.doJump(), true)}
                 </div>
                 {/* ✨ สกิลเรียงเป็นวงโค้งรอบปุ่มโจมตี */}
                 {skills.map((sk, i) => {
@@ -53296,10 +53485,12 @@ export default function CherryAdventure() {
                 ) : ui.mktListings.length ? (
                   ui.mktListings.map((L) => { const it = L.item || {}; const mine = L.seller === ui.pid; const poor = (ui.gold || 0) < L.price; return (
                     <div key={L.id} style={{ display: "flex", alignItems: "center", gap: 9, background: "#f6faf9", border: "1px solid #d8ebe7", borderRadius: 12, padding: "8px 10px", marginBottom: 7 }}>
-                      <div style={{ fontSize: 26, flexShrink: 0 }}>{it.emoji || (L.kind === "pet" ? "🐾" : "🌾")}</div>
+                      <div style={{ fontSize: 26, flexShrink: 0 }}>{mktIcon(L)}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 800, color: "#2f7a80" }}>{L.kind === "pet" ? `${it.name} Lv.${it.lv}${it.plus ? ` +${it.plus}` : ""}` : `${it.name} ×${it.qty}`}</div>
-                        <div style={{ fontSize: 9.5, color: "#8aa8a4", fontWeight: 600 }}>{L.kind === "pet" ? `พรสวรรค์ ${(it.iv ? it.iv.a + it.iv.h + it.iv.d : 0)} · ร่าง ${it.stage || 1}` : "พืชผลฟาร์ม"} · ผู้ขาย {L.seller_name || "?"}</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: "#2f7a80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <span style={{ fontSize: 9.5, color: "#8aa8a4", marginRight: 4 }}>{(MKT_KIND[L.kind] || {}).nm || ""}</span>{mktTitle(L)}
+                        </div>
+                        <div style={{ fontSize: 9.5, color: "#8aa8a4", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{mktSub(L)} · ผู้ขาย {L.seller_name || "?"}</div>
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 900, color: "#c9843e", flexShrink: 0 }}>💰{(L.price || 0).toLocaleString()}</div>
                       <button onClick={() => !mine && G.marketBuyListing(L)} disabled={mine || poor || ui.mktBusy} style={{ flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(90deg,#5ab0a0,#2f8f9a)" }}>{mine ? "ของคุณ" : "ซื้อ"}</button>
@@ -53311,6 +53502,118 @@ export default function CherryAdventure() {
               </React.Fragment>)}
 
               {ui.mktTab === "sell" && (<React.Fragment>
+                {(() => {
+                  const CAT = ui.mktSellCat || "gear";
+                  const cats = [
+                    ["gear", "🗡️", "อาวุธ/ชุด", (ui.mktGear || []).length],
+                    ["mat", "⛏️", "แร่", (ui.mktMats || []).length],
+                    ["fish", "🎣", "ปลา", (ui.mktFish || []).length],
+                    ["food", "🍳", "อาหาร", (ui.mktFood || []).length],
+                    ["produce", "🥕", "พืชผล", (ui.mktProduce || []).length],
+                    ["pet", "🐾", "สัตว์เลี้ยง", (ui.mktPets || []).length],
+                  ];
+                  return (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8, padding: 3, borderRadius: 11, background: "#eef5f3", border: "1px solid #d8e8e4" }}>
+                      {cats.map(([k, ic, nm, n]) => {
+                        const on = CAT === k;
+                        return (
+                          <button key={k} onClick={() => setUi((u) => ({ ...u, mktSellCat: k }))} title={nm} style={{
+                            flex: "1 1 auto", minWidth: 0, position: "relative", padding: "5px 3px", borderRadius: 9, border: "none",
+                            cursor: on ? "default" : "pointer", fontFamily: font, lineHeight: 1.15,
+                            background: on ? "linear-gradient(135deg,#5ab0a0,#2f8f9a)" : "#fff", color: on ? "#fff" : "#5a8088",
+                            boxShadow: on ? "0 2px 8px rgba(47,143,154,0.35)" : "none",
+                          }}>
+                            <div style={{ fontSize: 15 }}>{ic}</div>
+                            <div style={{ fontSize: 7.5, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm}</div>
+                            {n > 0 && <span style={{ position: "absolute", top: 1, right: 2, minWidth: 13, height: 13, borderRadius: 999, background: on ? "#fff" : "#2f8f9a", color: on ? "#2f8f9a" : "#fff", fontSize: 8, fontWeight: 900, lineHeight: "13px", padding: "0 3px" }}>{n}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+                {/* ⛏️🎣 ของเป็นกอง — เลือกจำนวน + ราคา */}
+                {["mat", "fish"].indexOf(ui.mktSellCat || "gear") >= 0 && (() => {
+                  const isMat = (ui.mktSellCat || "gear") === "mat";
+                  const rows = isMat ? (ui.mktMats || []) : (ui.mktFish || []);
+                  const col = isMat ? { t: "#7a6a4a", s: "#a89878", bg: "#faf6ee", bd: "#e8dcc4" } : { t: "#2f7a9a", s: "#7aa8c0", bg: "#eef7fb", bd: "#cfe4f0" };
+                  const head = isMat ? "⛏️ ลงขายแร่ที่ขุดได้" : "🎣 ลงขายปลาที่ตกได้";
+                  return (<>
+                    <div style={{ fontSize: 11.5, fontWeight: 900, color: col.t, marginBottom: 6 }}>{head} (เลือกจำนวน + ราคา)</div>
+                    {rows.length ? rows.map((m) => {
+                      const qkey = "sq:" + m.id, pkey = "sp:" + m.id;
+                      const qty = Math.max(1, Math.min(m.n, (ui.mktQty && ui.mktQty[qkey] != null) ? ui.mktQty[qkey] : m.n));
+                      const maxPrice = qty * m.max;
+                      const def = Math.min(maxPrice, Math.max(1, Math.round(qty * m.base * 1.3)));
+                      const price = Math.min(maxPrice, Math.max(1, (ui.mktPrices && ui.mktPrices[pkey] != null) ? ui.mktPrices[pkey] : def));
+                      return (
+                        <div key={m.id} style={{ background: col.bg, border: "1px solid " + col.bd, borderRadius: 11, padding: "8px 9px", marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                            <div style={{ fontSize: 22, flexShrink: 0 }}>{m.emoji}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11.5, fontWeight: 800, color: col.t }}>{m.name} <span style={{ color: col.s }}>(มี {m.n})</span></div>
+                              <div style={{ fontSize: 8.5, color: col.s }}>ราคาสูงสุด {maxPrice.toLocaleString()}💰 · แนะนำ ~{def.toLocaleString()}💰</div>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 9.5, fontWeight: 800, color: col.t }}>จำนวน</span>
+                            <input type="number" value={qty} min={1} max={m.n} onChange={(e) => setUi((u) => ({ ...u, mktQty: { ...(u.mktQty || {}), [qkey]: Math.max(1, Math.min(m.n, e.target.value | 0)) } }))} style={{ width: 50, padding: "6px 5px", borderRadius: 8, border: "1px solid " + col.bd, fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: col.t }} />
+                            <span style={{ fontSize: 9.5, fontWeight: 800, color: col.t }}>ราคา</span>
+                            <input type="number" value={price} min={1} max={maxPrice} onChange={(e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [pkey]: Math.max(1, Math.min(maxPrice, e.target.value | 0)) } }))} style={{ flex: 1, minWidth: 0, padding: "6px 6px", borderRadius: 8, border: "1px solid " + col.bd, fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: col.t }} />
+                            <button onClick={() => (isMat ? G.marketSellMat(m.id, qty, price) : G.marketSellFish(m.id, qty, price))} style={{ flexShrink: 0, padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#5ab0a0,#2f8f9a)" }}>ลงขาย</button>
+                          </div>
+                        </div>
+                      );
+                    }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "10px 0", background: "#f6f8f2", borderRadius: 10 }}>{isMat ? "ยังไม่มีแร่ — ไปขุดที่สายแร่ในแมพก่อนนะ" : "ยังไม่มีปลาในถัง — ไปตกปลาที่บ่อก่อนนะ"}</div>)}
+                  </>);
+                })()}
+                {/* 🗡️ อาวุธ/ชุดที่ดรอปมา — ขายทีละชิ้น */}
+                {(ui.mktSellCat || "gear") === "gear" && (<>
+                  <div style={{ fontSize: 11.5, fontWeight: 900, color: "#3a6a9a", marginBottom: 6 }}>🗡️ ลงขายอาวุธ/ชุดที่ดรอปมา</div>
+                  <div style={{ fontSize: 9, color: "#a99", marginBottom: 6 }}>ค่าตีบวก · ดาวปลุกพลัง · คุณภาพ · อัญมณี · ธาตุ ติดไปกับของด้วย · 🔐 ของที่ล็อกไว้จะไม่ขึ้นในรายการ</div>
+                  {(ui.mktGear || []).length ? (ui.mktGear || []).map((g) => {
+                    const key = "gear:" + g.id;
+                    const def = Math.min(g.max, Math.max(1, g.suggest));
+                    const val = Math.min(g.max, Math.max(1, (ui.mktPrices && ui.mktPrices[key] != null) ? ui.mktPrices[key] : def));
+                    const rc = (RARITY[g.rarity] || {}).color || "#8a9aa8";
+                    return (
+                      <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 8, background: "#f4f7fb", border: "1px solid " + rc + "44", borderRadius: 11, padding: "7px 9px", marginBottom: 6 }}>
+                        <div style={{ fontSize: 22, flexShrink: 0 }}>{g.emoji}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 800, color: rc, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {g.name}{g.plus > 0 && <span style={{ color: "#e0a020" }}> +{g.plus}</span>}{g.awk > 0 && <span style={{ color: "#f5c542" }}> {awkStars(g.awk)}</span>}
+                          </div>
+                          <div style={{ fontSize: 8.5, color: "#8a9aa8" }}>
+                            {SLOT_ICON[g.slot] || ""} {g.slotName} · มี {g.count} ชิ้น{g.equipped ? " · 🟢 ใส่อยู่ 1" : ""} · สูงสุด {g.max.toLocaleString()}💰
+                          </div>
+                        </div>
+                        <input type="number" value={val} min={1} max={g.max} onChange={(e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [key]: Math.max(1, Math.min(g.max, e.target.value | 0)) } }))} style={{ width: 76, padding: "6px 6px", borderRadius: 8, border: "1px solid #cfd8e4", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#3a6a9a" }} />
+                        <button onClick={() => G.marketSellGear(g.id, val)} style={{ flexShrink: 0, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#5a90d0,#3a6ab0)" }}>ลงขาย</button>
+                      </div>
+                    );
+                  }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "10px 0", background: "#f6f8fb", borderRadius: 10 }}>ยังไม่มีของให้ขาย — ล่ามอนสเตอร์เก็บของก่อนนะ (ของที่ล็อก 🔐 และชิ้นสุดท้ายที่ใส่อยู่ ขายไม่ได้)</div>)}
+                </>)}
+                {/* 🍳 อาหารที่ทำไว้ — ขายทีละจาน */}
+                {(ui.mktSellCat || "gear") === "food" && (<>
+                  <div style={{ fontSize: 11.5, fontWeight: 900, color: "#b06a2a", marginBottom: 6 }}>🍳 ลงขายอาหารที่ทำไว้</div>
+                  {(ui.mktFood || []).length ? (ui.mktFood || []).map((f) => {
+                    const key = "food:" + f.uid;
+                    const def = Math.min(f.max, Math.max(1, f.suggest));
+                    const val = Math.min(f.max, Math.max(1, (ui.mktPrices && ui.mktPrices[key] != null) ? ui.mktPrices[key] : def));
+                    return (
+                      <div key={f.uid} style={{ display: "flex", alignItems: "center", gap: 8, background: "#fdf6ec", border: "1px solid #f0dcc0", borderRadius: 11, padding: "7px 9px", marginBottom: 6 }}>
+                        <div style={{ fontSize: 22, flexShrink: 0 }}>{f.emoji}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 800, color: "#a05a20", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.qEmoji} {f.name}</div>
+                          <div style={{ fontSize: 8.5, color: "#b09070" }}>{f.qName} · บัฟ {f.mins} นาที · สูงสุด {f.max.toLocaleString()}💰</div>
+                        </div>
+                        <input type="number" value={val} min={1} max={f.max} onChange={(e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [key]: Math.max(1, Math.min(f.max, e.target.value | 0)) } }))} style={{ width: 76, padding: "6px 6px", borderRadius: 8, border: "1px solid #ecd8bc", fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: "#a05a20" }} />
+                        <button onClick={() => G.marketSellFood(f.uid, val)} style={{ flexShrink: 0, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e0a050,#c07820)" }}>ลงขาย</button>
+                      </div>
+                    );
+                  }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "10px 0", background: "#fdf8f0", borderRadius: 10 }}>ยังไม่มีอาหารในกระเป๋า — ไปทำอาหารที่ครัวก่อนนะ</div>)}
+                </>)}
+                {(ui.mktSellCat || "gear") === "produce" && (<>
                 <div style={{ fontSize: 11.5, fontWeight: 900, color: "#5a9a4a", marginBottom: 6 }}>🥕 ลงขายพืชผล (เลือกจำนวน + ราคา)</div>
                 {(ui.mktProduce || []).length ? (ui.mktProduce || []).map((p) => {
                   const qkey = "q:" + p.id, pkey = "p:" + p.id;
@@ -53337,6 +53640,8 @@ export default function CherryAdventure() {
                   </div>
                 ); }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "8px 0", background: "#f6f8f2", borderRadius: 10, marginBottom: 8 }}>ยังไม่มีพืชผลในคลัง</div>)}
 
+                </>)}
+                {(ui.mktSellCat || "gear") === "pet" && (<>
                 <div style={{ fontSize: 11.5, fontWeight: 900, color: "#8a6a9a", margin: "10px 0 6px" }}>🐾 ลงขายสัตว์เลี้ยง</div>
                 {(ui.mktPets || []).length ? (ui.mktPets || []).map((p) => { const key = "pet:" + p.i; const def = Math.min(p.max, Math.max(1, p.suggest)); const val = Math.min(p.max, Math.max(1, (ui.mktPrices && ui.mktPrices[key] != null) ? ui.mktPrices[key] : def)); return (
                   <div key={p.i} style={{ display: "flex", alignItems: "center", gap: 8, background: "#f7f2fb", border: "1px solid #e3d0f2", borderRadius: 11, padding: "7px 9px", marginBottom: 6 }}>
@@ -53349,6 +53654,7 @@ export default function CherryAdventure() {
                     <button onClick={() => G.marketSellPet(p.i, val)} style={{ flexShrink: 0, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#b06ad0,#8a4ac0)" }}>ลงขาย</button>
                   </div>
                 ); }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "8px 0", background: "#f8f4fb", borderRadius: 10 }}>ไม่มีสัตว์เลี้ยงว่างให้ขาย (ตัวในทีม/บัดดี้/คอกฟาร์ม ขายไม่ได้)</div>)}
+                </>)}
                 <div style={{ fontSize: 9.5, color: "#a99", marginTop: 8, lineHeight: 1.5, background: "#f4f8f7", borderRadius: 10, padding: "8px 10px" }}>💡 เมื่อลงขาย ของจะถูกยกออกจากคลัง/กล่องทันที · เมื่อมีคนซื้อ ไปกด "เก็บทอง" ที่แท็บ 📋 ของฉัน · ยังไม่ขายก็กดยกเลิกเพื่อเอาของคืนได้</div>
               </React.Fragment>)}
 
@@ -53363,9 +53669,9 @@ export default function CherryAdventure() {
                 ) : ui.mktMine.length ? (
                   ui.mktMine.map((L) => { const it = L.item || {}; const sold = L.status === "sold"; const canCollect = sold && !L.collected; return (
                     <div key={L.id} style={{ display: "flex", alignItems: "center", gap: 9, background: sold ? "#eef7ee" : "#f6faf9", border: "1px solid " + (sold ? "#c4e6c0" : "#d8ebe7"), borderRadius: 12, padding: "8px 10px", marginBottom: 7, opacity: (sold && L.collected) ? 0.6 : 1 }}>
-                      <div style={{ fontSize: 24, flexShrink: 0 }}>{it.emoji || (L.kind === "pet" ? "🐾" : "🌾")}</div>
+                      <div style={{ fontSize: 24, flexShrink: 0 }}>{mktIcon(L)}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: "#2f7a80" }}>{L.kind === "pet" ? `${it.name} Lv.${it.lv}` : `${it.name} ×${it.qty}`}</div>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: "#2f7a80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{mktTitle(L)}</div>
                         <div style={{ fontSize: 9.5, color: "#8aa8a4", fontWeight: 600 }}>💰{(L.price || 0).toLocaleString()} · {sold ? (L.collected ? "ขายแล้ว ✓ เก็บเงินแล้ว" : `ขายได้!${L.buyer_name ? " ผู้ซื้อ " + L.buyer_name : ""}`) : "กำลังลงขาย"}</div>
                       </div>
                       {canCollect ? (
