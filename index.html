@@ -34351,15 +34351,123 @@ function CherryAdventure() {
                 update = (pr) => rocks.forEach((m) => { m.userData.vy -= 0.15; m.position.y = Math.max(0, m.position.y + m.userData.vy * 0.03); m.rotation.x += 0.2; m.rotation.y += 0.15; });
             }
             else if (fxType === "pierce") {
-                // 🎯 horizontal shockwave streak (armor-piercing)
-                const streak = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 0.08), new THREE.MeshBasicMaterial({ color: 0x59a0e8, transparent: true, opacity: 0.9 }));
-                streak.position.set(-0.6, 1.4, 0);
-                g.add(streak);
-                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 8, 20), new THREE.MeshStandardMaterial({ color: 0x59a0e8, emissive: 0x2a70c0, emissiveIntensity: 1 }));
-                ring.position.y = 1.4;
-                g.add(ring);
-                dur = 0.4;
-                update = (pr) => { streak.material.opacity = 0.9 * (1 - pr); streak.scale.x = 1 + pr; ring.scale.setScalar(1 + pr * 2.5); ring.material.opacity = 1 - pr; };
+                // 🔱 ทะลวงเกราะ — ลำแสงหอกเรียวสามมิติ + ริบบิ้นลมหมุนรอบลำ + วงกระแทกตั้งฉาก + สะเก็ดพุ่งกระจาย
+                const pCol = col === 0xffffff ? 0x59a0e8 : col, pBright = 0xd8f0ff;
+                const addM = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                // 🗡️ ลำแสงเรียวปลายแหลม วางตามแนวแทง (ทรงกรวยกลวง ไม่ใช่แผ่นสี่เหลี่ยม)
+                const lance = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.3, 3.2, 18, 1, true), addM(pCol, 0.5));
+                lance.rotation.z = Math.PI / 2;
+                lance.position.set(-0.55, 1.4, 0);
+                g.add(lance);
+                const lcore = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.12, 3.2, 14, 1, true), addM(pBright, 0.95));
+                lcore.rotation.z = Math.PI / 2;
+                lcore.position.set(-0.55, 1.4, 0);
+                g.add(lcore);
+                // 🌀 ริบบิ้นลมหมุนรอบลำแสง — วงแหวนเรียงไล่ไปตามแนว หมุนคนละจังหวะ
+                const ribs = [];
+                for (let i = 0; i < 5; i++) {
+                    const rb = new THREE.Mesh(new THREE.TorusGeometry(0.15 + i * 0.05, 0.022, 8, 22), addM(i % 2 ? pBright : pCol, 0.8));
+                    rb.rotation.y = Math.PI / 2;
+                    rb.position.set(-1.7 + i * 0.55, 1.4, 0);
+                    g.add(rb);
+                    ribs.push(rb);
+                }
+                // 💥 วงกระแทกตั้งฉากกับแนวแทง + ลูกแสงแฟลชตรงจุดปะทะ
+                const pr1 = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.07, 10, 28), addM(pCol));
+                pr1.rotation.y = Math.PI / 2;
+                pr1.position.set(0.15, 1.4, 0);
+                g.add(pr1);
+                const pr2 = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.035, 8, 22), addM(pBright));
+                pr2.rotation.y = Math.PI / 2;
+                pr2.position.set(0.15, 1.4, 0);
+                g.add(pr2);
+                const pflash = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 14), addM(pBright, 0.95));
+                pflash.position.set(0.15, 1.4, 0);
+                g.add(pflash);
+                // ✨ สะเก็ดพลังเป็นกรวยเล็ก ๆ พุ่งกระจายรอบจุดปะทะ
+                const shards = [];
+                for (let i = 0; i < 10; i++) {
+                    const aa = (i / 10) * Math.PI * 2, tl = 0.16 + Math.random() * 0.16;
+                    const sh = new THREE.Mesh(new THREE.ConeGeometry(0.045, tl, 5), addM(i % 2 ? pBright : pCol, 0.9));
+                    sh.position.set(0.15, 1.4, 0);
+                    sh.rotation.z = -aa;
+                    sh.userData = { a: aa, sp: 1.5 + Math.random() * 1.5, ty: (Math.random() - 0.5) * 1.1 };
+                    g.add(sh);
+                    shards.push(sh);
+                }
+                // 🌊 ระลอกแผ่บนพื้น
+                const pshock = new THREE.Mesh(new THREE.RingGeometry(0.22, 0.36, 40), addM(pCol, 0.65));
+                pshock.rotation.x = -Math.PI / 2;
+                pshock.position.set(0.15, 0.05, 0);
+                g.add(pshock);
+                dur = 0.55;
+                update = (pr) => {
+                    const q = 1 - pr;
+                    lance.scale.set(1, 1 + pr * 0.9, 1);
+                    lance.material.opacity = 0.5 * q;
+                    lcore.scale.set(1, 1 + pr * 0.9, 1);
+                    lcore.material.opacity = 0.95 * q * q;
+                    ribs.forEach((rb, i) => { rb.position.x = -1.7 + i * 0.55 + pr * 2.3; rb.rotation.x = pr * 9 + i; rb.scale.setScalar(1 + pr * 0.8); rb.material.opacity = 0.8 * q; });
+                    pr1.scale.setScalar(1 + pr * 3.2);
+                    pr1.material.opacity = q;
+                    pr2.scale.setScalar(1 + pr * 4.6);
+                    pr2.material.opacity = q * 0.9;
+                    pflash.scale.setScalar(1 + pr * 1.6);
+                    pflash.material.opacity = 0.95 * Math.max(0, 1 - pr * 2.2);
+                    shards.forEach((sh) => { const d = pr * sh.userData.sp; sh.position.set(0.15 + Math.cos(sh.userData.a) * d * 0.45, 1.4 + Math.sin(sh.userData.a) * d + sh.userData.ty * pr, Math.sin(sh.userData.a) * d); sh.material.opacity = 0.9 * q; });
+                    pshock.scale.setScalar(1 + pr * 5);
+                    pshock.material.opacity = 0.65 * q;
+                };
+            }
+            else if (fxType === "spearsweep") {
+                // 🌪️ กวาดหอกพายุ — ใบมีดลมโค้งสามมิติกวาดเป็นวง + เสาลมหมุนซ้อนชั้น + สะเก็ดปลิว
+                const wCol = col === 0xffffff ? 0x6ab0d0 : col, wBright = 0xd8f4ff;
+                const addW = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o == null ? 1 : o, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                // 🌙 ใบมีดลมโค้ง — ท่อนโค้ง (torus บางส่วน) หนาจริง มีมิติ ไม่ใช่แผ่นแบน
+                const blades = [];
+                for (let i = 0; i < 3; i++) {
+                    const bl = new THREE.Mesh(new THREE.TorusGeometry(0.85 + i * 0.3, 0.07 - i * 0.014, 10, 34, Math.PI * 1.05), addW(i ? wCol : wBright, 0.9));
+                    bl.rotation.x = -Math.PI / 2 + (i - 1) * 0.22;
+                    bl.position.y = 1.05 + i * 0.32;
+                    bl.userData = { sp: 7 + i * 2.2, ph: i * 1.1 };
+                    g.add(bl);
+                    blades.push(bl);
+                }
+                // 🌀 เสาลมหมุน — วงแหวนซ้อนไล่ขึ้นไป
+                const rings = [];
+                for (let i = 0; i < 5; i++) {
+                    const rg = new THREE.Mesh(new THREE.TorusGeometry(0.5 + i * 0.12, 0.028, 8, 26), addW(i % 2 ? wBright : wCol, 0.6));
+                    rg.rotation.x = -Math.PI / 2;
+                    rg.position.y = 0.25 + i * 0.42;
+                    g.add(rg);
+                    rings.push(rg);
+                }
+                // ✨ สะเก็ด/ใบไม้ปลิวเป็นเกลียวขึ้น
+                const bits = [];
+                for (let i = 0; i < 14; i++) {
+                    const bt = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 4), addW(i % 3 ? wCol : wBright, 0.85));
+                    bt.userData = { a: Math.random() * Math.PI * 2, r: 0.5 + Math.random() * 0.9, y0: Math.random() * 0.6, sp: 4 + Math.random() * 5 };
+                    g.add(bt);
+                    bits.push(bt);
+                }
+                const wshock = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.6, 44), addW(wCol, 0.6));
+                wshock.rotation.x = -Math.PI / 2;
+                wshock.position.y = 0.05;
+                g.add(wshock);
+                dur = 0.7;
+                update = (pr) => {
+                    const q = 1 - pr;
+                    blades.forEach((bl, i) => { bl.rotation.z = pr * bl.userData.sp + bl.userData.ph; bl.scale.setScalar(1 + pr * 1.2); bl.material.opacity = 0.9 * q; });
+                    rings.forEach((rg, i) => { rg.rotation.z = pr * (5 + i); rg.scale.setScalar(1 + pr * 1.9); rg.position.y = 0.25 + i * 0.42 + pr * 0.7; rg.material.opacity = 0.6 * q; });
+                    bits.forEach((bt) => {
+                        const u = bt.userData, ang = u.a + pr * u.sp, rr = u.r * (1 + pr * 1.5);
+                        bt.position.set(Math.cos(ang) * rr, u.y0 + pr * 2.0, Math.sin(ang) * rr);
+                        bt.rotation.set(pr * 6, ang, pr * 5);
+                        bt.material.opacity = 0.85 * q;
+                    });
+                    wshock.scale.setScalar(1 + pr * 4.2);
+                    wshock.material.opacity = 0.6 * q;
+                };
             }
             else if (fxType === "plasmadash") {
                 // 🤖⚡ AAA Plasma Dash — supersonic dash streak → afterimages → circular plasma explosion + lightning arcs + hex shards
@@ -46109,7 +46217,7 @@ function CherryAdventure() {
                 m_ice: "icespear", m_bolt: "thunderstorm", m_heal: "healbless",
                 a_power: "arrowpierce", a_snipe: "arrowsnipe", a_multi: "arrowmulti", a_poison: "arrowpoison", a_weak: "arrowsnipe",
                 s_double: "bleedstab", s_poison: "poisonknives", s_shadow: "shadow", s_evade: "shadowdance",
-                l_thrust: "pierce", l_sweep: "multi", l_quake: "earthsplit",
+                l_thrust: "pierce", l_sweep: "spearsweep", l_quake: "earthsplit",
                 // 🥊 นักมวย — หมัดใช้คลื่นหมัด · เข่า/ศอก/อัปเปอร์ใช้ลำพลังพุ่งขึ้น
                 b_jab: "punchwave", b_kick: "punchwave", b_knee: "kneeburst", b_combo: "punchwave", b_iron: "punchwave",
                 x_box_1: "punchwave", x_box_2: "punchwave", x_box_3: "kneeburst", x_box_4: "punchwave", p_koblow: "punchwave",
