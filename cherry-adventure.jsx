@@ -295,6 +295,8 @@ const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel
 const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
 // 🦸 ท่าฟาดของ "ชุดฮีโร่" ในโลกกว้าง — แต่ละชุดมีท่าประจำตัว + เอฟเฟคประจำตัว
 //    style: claw ตะปบไขว้ · smash ทุบสองมือ · cast ผลักฝ่ามือ · breath พ่นลมหายใจ · dance ร่ายรำ · throw ขว้าง
+// 🐒 ตรีเพชรหนุมานตอนใช้สกิล — ขยายใหญ่กี่เท่า
+const HAN_BIG = 3.4;
 const HERO_SWING = {
   fenrir:   { style: "claw",   fx: "crossslash",   col: 0x9ad0ff },
   neko:     { style: "claw",   fx: "crossslash",   col: 0xffb0d0 },
@@ -3282,8 +3284,11 @@ export default function CherryAdventure() {
     const KEEP_OUT = [
       { x: -24, z: 0, r: 3.0 },      // 🌀 LEFT dimension rift (far west edge) — keep clear
       { x: 24, z: 0, r: 3.0 },       // 🌀 RIGHT dimension rift (far east edge) — keep clear
-      { x: -10, z: -10.5, r: 3.4 },  // 🎣 pond
       { x: -6.6, z: 7.0, r: 1.6 },   // 🚪 house portal
+      // 🎣 จุดตกปลา "ทุกด่าน" — ฉากประจำด่านสร้างครั้งเดียวตอนเปิดเกม แต่บ่อย้ายที่ตามด่าน
+      //    ถ้ากันไว้แค่บ่อทุ่งหญ้า บ่อด่านอื่น (ที่ยังล็อกอยู่) จะโดนของประดับทับ แล้วเดินไปติดค้างตรงนั้น
+      //    เผื่อรัศมีของตัวของประดับเองด้วย (inKeepOut วัดแค่จุดศูนย์กลาง) — ของใหญ่สุดที่สุ่มวางมีรัศมี ~1.3
+      ...Object.keys(FISH_SPOT).map((k) => ({ x: FISH_SPOT[k].x, z: FISH_SPOT[k].z, r: FISH_SPOT[k].r + 1.6 })),
     ];
     const inKeepOut = (x, z) => KEEP_OUT.some((k) => Math.hypot(x - k.x, z - k.z) < k.r);
     const nearWarpG = (x, z) => inKeepOut(x, z);
@@ -3292,9 +3297,9 @@ export default function CherryAdventure() {
         const dx = obj.position.x - c.x, dz = obj.position.z - c.z;
         const d = Math.hypot(dx, dz);
         const min = c.r + extra;
-        if (d < min && d > 0.0001) {
-          obj.position.x = c.x + (dx / d) * min;
-          obj.position.z = c.z + (dz / d) * min;
+        if (d < min) {
+          if (d > 0.0001) { obj.position.x = c.x + (dx / d) * min; obj.position.z = c.z + (dz / d) * min; }
+          else { obj.position.x = c.x + min; obj.position.z = c.z; }   // 🆘 ยืนตรงใจกลางพอดี — ดันออกด้านใดด้านหนึ่งเสมอ ไม่งั้นติดค้างถาวร
         }
       }
     };
@@ -3402,6 +3407,7 @@ export default function CherryAdventure() {
     };
 
     const addTree = (x, z, pink = false) => {
+      if (inKeepOut(x, z)) return;   // 🎣🌀 ห้ามงอกทับบ่อตกปลา/แท่นวาร์ป (ของพวกนี้อยู่ทุกด่าน แต่บ่อย้ายที่ตามด่าน)
       const g = new THREE.Group();
       const trunk = new THREE.Mesh(
         new THREE.CylinderGeometry(0.16, 0.24, rnd(1.1, 1.6), 8),
@@ -3426,6 +3432,7 @@ export default function CherryAdventure() {
       colliders.push({ x, z, r: 0.45 });
     };
     const addDeadTree = (x, z) => {
+      if (inKeepOut(x, z)) return;   // 🎣🌀 ห้ามงอกทับบ่อตกปลา/แท่นวาร์ป (ของพวกนี้อยู่ทุกด่าน แต่บ่อย้ายที่ตามด่าน)
       const g = new THREE.Group();
       const mat = new THREE.MeshStandardMaterial({ color: 0x6a5240, roughness: 0.95 });
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, rnd(1.7, 2.3), 7), mat);
@@ -3446,6 +3453,7 @@ export default function CherryAdventure() {
       colliders.push({ x, z, r: 0.35 });
     };
     const addBush = (x, z, berry = false) => {
+      if (inKeepOut(x, z)) return;   // 🎣🌀 ห้ามงอกทับบ่อตกปลา/แท่นวาร์ป (ของพวกนี้อยู่ทุกด่าน แต่บ่อย้ายที่ตามด่าน)
       const g = new THREE.Group();
       const col = [0x5f9a50, 0x6fae5f][Math.floor(Math.random() * 2)];
       for (let i = 0; i < 4; i++) {
@@ -19021,7 +19029,10 @@ export default function CherryAdventure() {
         G._fishGrp = null; G.pondWater = null;
       }
       const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
-      if (indoor) { G.pondPos = null; G.pondNear = false; setUi((u) => ({ ...u, pondNear: false, fishSpot: null })); return; }
+      if (indoor) {
+        if (G._pondCol) { const pi = colliders.indexOf(G._pondCol); if (pi >= 0) colliders.splice(pi, 1); G._pondCol = null; } // 🏡 ไม่งั้นเหลือกำแพงล่องหนตรงบ่อของด่านล่าสุด
+        G.pondPos = null; G.pondNear = false; setUi((u) => ({ ...u, pondNear: false, fishSpot: null })); return;
+      }
       const S = G.fishSpotOf(bid);
       const built = buildFishSpot(S);
       built.grp.position.set(S.x, terrainAt(S.x, S.z), S.z);
@@ -26692,6 +26703,70 @@ export default function CherryAdventure() {
         }
       }
     };
+    // ================= 🐒🔱 หนุมาน — ตรีเพชรลอยหมุนใส่มอนสเตอร์ =================
+    // ขว้างตรีเพชรออกไปหมุนตีลังกาใส่เป้า แล้วลอยวนกลับเข้ามือเอง (ระหว่างนั้นซ่อนอันที่ถืออยู่)
+    const hanFly = [];
+    const spawnHanTri = (target, col, onHit) => {
+      try {
+        const src = G._hanTri; if (!src) return;
+        const aim = new THREE.Group();                    // ชั้นนอก = ทิศบิน
+        const spin = src.clone(true);                     // ชั้นใน = หมุนตีลังกา (ใช้ material/geometry ร่วม ไม่ต้อง dispose)
+        spin.visible = true;
+        spin.traverse((o) => { o.visible = true; o.raycast = () => {}; });
+        spin.position.set(0, 0, 0); spin.rotation.set(0, 0, 0);
+        spin.scale.setScalar(1.5);                        // ✋ ปาออกไปแล้วเห็นชัดขึ้น
+        aim.add(spin);
+        const sx = char.position.x + Math.sin(char.rotation.y) * 0.4;
+        const sz = char.position.z + Math.cos(char.rotation.y) * 0.4;
+        aim.position.set(sx, 1.35, sz);
+        // ✨ ประกายทองพันรอบตัวตรีเพชรระหว่างลอย
+        const glowMat = new THREE.MeshBasicMaterial({ color: col || 0xffe08a, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+        const halo = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.045, 8, 26), glowMat);
+        halo.rotation.x = Math.PI / 2; halo.raycast = () => {};
+        aim.add(halo);
+        aim.userData = { t: 0, out: 0.30, back: 0.26, hit: false, sx, sz, target, onHit, glowMat, halo, spin };
+        (G._worldRoot || scene).add(aim); hanFly.push(aim);
+        if (G._hanTri) G._hanTri.visible = false;         // 🖐️ มือว่างระหว่างอาวุธลอยอยู่
+      } catch (e) {}
+    };
+    G._animHanTri = (d) => {
+      for (let i = hanFly.length - 1; i >= 0; i--) {
+        const o = hanFly[i], u = o.userData;
+        u.t += d;
+        const tp = (u.target && wilds.indexOf(u.target) >= 0) ? u.target.position : null;
+        const tx = tp ? tp.x : u.sx + Math.sin(char.rotation.y) * 4;
+        const tz = tp ? tp.z : u.sz + Math.cos(char.rotation.y) * 4;
+        u.spin.rotation.x += d * 24;                      // 🌀 ตีลังกาไปตลอดทาง
+        u.halo.rotation.z += d * 6;
+        if (u.t <= u.out) {                               // ① พุ่งออกไปหาเป้า
+          const p = u.t / u.out, e = p * p * (3 - 2 * p);
+          o.position.set(u.sx + (tx - u.sx) * e, 1.35 + Math.sin(e * Math.PI) * 0.55, u.sz + (tz - u.sz) * e);
+          o.rotation.y = Math.atan2(tx - u.sx, tz - u.sz);
+          u.glowMat.opacity = 0.3 + 0.4 * Math.sin(e * Math.PI);
+        } else if (!u.hit) {                              // ② ถึงตัวเป้า = ลงดาเมจ
+          u.hit = true;
+          if (u.onHit) { try { u.onHit(tx, tz); } catch (e) {} }
+          G._camShake = Math.max(G._camShake || 0, 0.2);
+        } else {                                          // ③ ลอยวนกลับเข้ามือ
+          const p = Math.min(1, (u.t - u.out) / u.back), e = p * p * (3 - 2 * p);
+          const hx = char.position.x + Math.sin(char.rotation.y) * 0.4;
+          const hz = char.position.z + Math.cos(char.rotation.y) * 0.4;
+          const arc = Math.sin(e * Math.PI);
+          const side = Math.atan2(hx - tx, hz - tz) + Math.PI / 2;
+          o.position.set(tx + (hx - tx) * e + Math.sin(side) * arc * 1.1, 1.35 + arc * 0.7, tz + (hz - tz) * e + Math.cos(side) * arc * 1.1);
+          o.rotation.y = Math.atan2(hx - tx, hz - tz);
+          u.glowMat.opacity = 0.55 * (1 - e);
+          if (p >= 1) {
+            (G._worldRoot || scene).remove(o);
+            u.glowMat.dispose(); u.halo.geometry.dispose();
+            hanFly.splice(i, 1);
+            if (G._hanTri && G.heroId === "hanuman" && !G.heroHide) G._hanTri.visible = true;   // 🔱 คืนเข้ามือ
+          }
+        }
+      }
+    };
+    G._hanThrow = spawnHanTri;
+    // ================= 🐒 END หนุมาน =================
     // 🔥❄️ เอฟเฟกต์เวทหมู่ — ดวงไฟลอยขึ้นแล้วพุ่งใส่ · เสาไฟผุดจากพื้น · แท่งน้ำแข็งผุดขึ้นแช่แข็งแล้วแตก
     const magicFx = [];
     const spawnFirePillar = (x, z, col) => {
@@ -36651,7 +36726,8 @@ export default function CherryAdventure() {
         let inLen = Math.hypot(dx, dz);
         // 🌳 auto-steer: if an obstacle is ahead, curve the walk direction to slide around it
         if (inLen > 0.01) {
-          let ndx = dx / inLen, ndz = dz / inLen;
+          const rdx = dx / inLen, rdz = dz / inLen;   // 🧭 ทิศที่สั่งเดินจริง ๆ เก็บไว้เป็นตัวสำรอง
+          let ndx = rdx, ndz = rdz;
           for (const c of activeColliders()) {
             const cvx = c.x - char.position.x, cvz = c.z - char.position.z;
             const cd = Math.hypot(cvx, cvz);
@@ -36671,8 +36747,12 @@ export default function CherryAdventure() {
             // also push slightly outward so we don't scrape the edge
             ndx -= cnx * w * 0.3; ndz -= cnz * w * 0.3;
           }
-          const nl = Math.hypot(ndx, ndz) || 1;
-          dx = ndx / nl; dz = ndz / nl;
+          const nl = Math.hypot(ndx, ndz);
+          // 🆘 ยืนระหว่างของสองชิ้น (เช่น บ่อน้ำกับก้อนหิน) แรงหลบจะหักล้างกันจนเหลือศูนย์
+          //    หรือหลบจนทิศสวนทางกับที่สั่ง → ตัวละครหยุดนิ่งทั้งที่กดเดินค้างไว้
+          //    กรณีนี้ใช้ทิศที่สั่งไปตรง ๆ แล้วปล่อยให้ pushOut ไถลไปตามขอบแทน
+          if (nl < 0.35 || (ndx * rdx + ndz * rdz) <= 0) { dx = rdx; dz = rdz; }
+          else { dx = ndx / nl; dz = ndz / nl; }
           inLen = 1; // keep full speed while steering
         }
         const wantX = inLen > 0 ? (dx / Math.max(inLen, 1)) * Math.min(1, inLen) * speed : 0;
@@ -36915,6 +36995,7 @@ export default function CherryAdventure() {
         if (G._animWpnGhosts) G._animWpnGhosts(dt);           // 👻 เฟดเงาอาวุธ
         if (G._animShadowBolts) G._animShadowBolts(dt);       // 💀 กะโหลกเงาลอย → พุ่งเข้าใส่เป้า
         if (G._animPoisonFx) G._animPoisonFx(dt);             // 🔪🟣 มีดพิษที่ขว้าง + ควันม่วงลอยขึ้น
+        if (G._animHanTri) G._animHanTri(dt);                 // 🐒🔱 ตรีเพชรหนุมานที่ปาออกไป
         if (G._animMagicFx) G._animMagicFx(dt);               // 🔥❄️ ดวงไฟ/เสาไฟ + แท่งน้ำแข็งแช่แข็ง
         if (G._animArcherFx) G._animArcherFx(dt);             // 🎯🦅⚡💥 ลำแสงเจาะ · เหยี่ยว · สายฟ้าลูกโซ่ · ฝนลูกธนู
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
@@ -38764,10 +38845,74 @@ export default function CherryAdventure() {
             }
             try { S.fire(); } catch (e) {}
           }
+          // ================= 🐒🔱 ท่าประจำตัวหนุมาน (โลกกว้าง) =================
+          // ใส่ชุดหนุมานแล้วร่ายสกิล จะสลับ 3 ท่าประจำตัว: ขยายตรีเพชร → หมุนบนหัว → ปาออกไปหมุนใส่มอนสเตอร์
+          if (G.heroId === "hanuman" && !G.heroHide && G._hanTri) {
+            if (S.hanM === undefined) S.hanM = (G._hanMoveN = ((G._hanMoveN || 0) + 1) % 3);
+            const hp = Math.min(1, S.t / S.dur);
+            const hCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg)));            // 0→1 ช่วงเก็บพลัง
+            const hRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel)));  // 0→1 ช่วงปล่อยท่า
+            const hEnd = smK(Math.max(0, (S.t - (S.dur - (S.rec || 0.06))) / (S.rec || 0.06))); // 0→1 คืนท่า
+            const hb = (cur, tgt) => cur + (tgt - cur) * cbw;   // 🌊 ผสมทับท่าเดิมด้วยน้ำหนักเดียวกับท่าสกิล
+            if (S.hanM === 0) {
+              // ① 🔱 ขยายตรีเพชรให้ใหญ่ยักษ์ แล้วฟาดลง
+              G._hanTri.scale.setScalar(1 + (HAN_BIG - 1) * hCh * (1 - hEnd) * cbw);
+              armR.rotation.x = hb(armR.rotation.x, -0.5 - 2.1 * hCh + 3.0 * hRel * (1 - hEnd));
+              armR.rotation.z = hb(armR.rotation.z, 0.2);
+              armL.rotation.x = hb(armL.rotation.x, -0.4 - 1.5 * hCh + 1.9 * hRel * (1 - hEnd));
+              armL.rotation.z = hb(armL.rotation.z, -0.3);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = hb(armR.userData.elbow.rotation.x, -0.35 - 0.7 * hCh + 0.9 * hRel);
+              torso.rotation.x = hb(torso.rotation.x, -0.2 * hCh + 0.36 * hRel * (1 - hEnd));
+              if (!S.hanFx && hRel > 0.5) {                                        // 💥 ลงน้ำหนักครั้งเดียวตอนฟาดถึงพื้น
+                S.hanFx = 1;
+                const fx = char.position.x + Math.sin(char.rotation.y) * 1.7, fz = char.position.z + Math.cos(char.rotation.y) * 1.7;
+                try { spawnSkillFx("earthsplit", new THREE.Vector3(fx, 0, fz), S.col || 0xffe08a); } catch (_) {}
+                G._camShake = Math.max(G._camShake || 0, 0.42);
+                G._hitStop = Math.max(G._hitStop || 0, 0.05);
+              }
+            } else if (S.hanM === 1) {
+              // ② 🌀 ชูตรีเพชรหมุนคว้างเหนือหัว
+              const up = hCh * (1 - hEnd);
+              G._hanTri.scale.setScalar(1 + 0.85 * hCh * (1 - hEnd) * cbw);
+              armR.rotation.x = hb(armR.rotation.x, -0.5 - 2.35 * up); armR.rotation.z = hb(armR.rotation.z, 0.16 * up);
+              armL.rotation.x = hb(armL.rotation.x, -0.5 - 2.05 * up); armL.rotation.z = hb(armL.rotation.z, -0.42 - 0.2 * up);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = hb(armR.userData.elbow.rotation.x, -0.3 - 0.5 * up);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = hb(armL.userData.elbow.rotation.x, -0.5 - 0.5 * up);
+              G._hanSpin = (G._hanSpin || 0) + dt * 17 * up;                        // 🌀 หมุนคว้าง
+              wand.rotation.z = (Math.PI / 2) * up * cbw;                           // พลิกด้ามให้ขนานพื้น
+              wand.rotation.y = G._hanSpin * cbw;                                   // คลายกลับเองตอนจบท่า
+              torso.rotation.y = hb(torso.rotation.y, Math.sin(S.t * 11) * 0.12 * up);
+              char.rotation.z = hb(char.rotation.z, Math.sin(S.t * 11) * 0.05 * up);
+              if (!S.hanFx && hRel > 0.35) {                                         // 🌪️ ลมหมุนรอบตัวตอนหมุนเต็มที่
+                S.hanFx = 1;
+                try { spawnSkillFx("spearsweep", new THREE.Vector3(char.position.x, 0, char.position.z), S.col || 0xffe08a); } catch (_) {}
+                G._camShake = Math.max(G._camShake || 0, 0.26);
+              }
+            } else {
+              // ③ 🎯 ง้างแล้วปาตรีเพชรออกไปหมุนใส่มอนสเตอร์
+              G._hanTri.scale.setScalar(1 + 0.5 * hCh * (1 - hEnd) * cbw);
+              armR.rotation.x = hb(armR.rotation.x, -0.6 - 1.5 * hCh + 2.1 * hRel);
+              armR.rotation.z = hb(armR.rotation.z, -0.4 - 0.7 * hCh + 1.3 * hRel);
+              armR.rotation.y = hb(armR.rotation.y, 0.6 * hCh - 0.8 * hRel);
+              armL.rotation.x = hb(armL.rotation.x, -1.1 + 0.5 * hRel); armL.rotation.z = hb(armL.rotation.z, 0.3);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = hb(armR.userData.elbow.rotation.x, -1.1 - 0.3 * hCh + 1.2 * hRel);
+              torso.rotation.y = hb(torso.rotation.y, 0.42 * hCh - 0.55 * hRel);
+              if (!S.hanFx && hRel > 0.3) {                                          // 🔱 ปล่อยออกจากมือ
+                S.hanFx = 1;
+                const tgt = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus : nearestWild(worldRange() + 6);
+                if (G._hanThrow) G._hanThrow(tgt, S.col || 0xffe08a, (hx, hz) => {
+                  try { spawnSkillFx("crossslash", new THREE.Vector3(hx, 0.9, hz), S.col || 0xffe08a); } catch (_) {}
+                });
+                if (G.sfx && G.sfx.slash) G.sfx.slash();
+              }
+            }
+            if (hp >= 1) { G._hanTri.scale.setScalar(1); wand.rotation.z = 0; wand.rotation.y = 0; }  // 🔚 คืนขนาด/มุมด้ามเสมอ
+          }
           if (S.t >= S.dur || G.mode !== "explore") {
             if (!S.fired) { S.fired = true; try { S.fire(); } catch (e) {} }     // 🛟 โหมดเปลี่ยนกลางคัน — อย่าให้มานาที่จ่ายไปสูญเปล่า
             hideCastFx();
             torso.rotation.y = 0; headG.rotation.y = 0; headG.rotation.x = 0; char.rotation.x = 0; wand.scale.set(1, 1, 1);
+            if (G._hanTri) { G._hanTri.scale.setScalar(1); wand.rotation.z = 0; wand.rotation.y = 0; G._hanSpin = 0; }   // 🐒 คืนตรีเพชรกลับขนาดปกติ
             if (G._camLock) G._camLock.off = true;   // 🎥 คลายล็อกกล้อง แล้วค่อย ๆ กลับมาเกาะตัวละคร
             G._skCast = null;
           }
