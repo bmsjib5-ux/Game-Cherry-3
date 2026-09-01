@@ -299,6 +299,8 @@ const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
 const HAN_BIG = 3.4;
 // 🐉 ริวจินทะยานขึ้นสูงกี่หน่วยก่อนดิ่งลง
 const RYU_FLY = 2.6;
+// 🦅 ครุฑโฉบขึ้นสูงกี่หน่วยก่อนพุ่งเข้าใส่
+const GAR_FLY = 1.5;
 const HERO_SWING = {
   fenrir:   { style: "claw",   fx: "crossslash",   col: 0x9ad0ff },
   neko:     { style: "claw",   fx: "crossslash",   col: 0xffb0d0 },
@@ -10918,6 +10920,7 @@ export default function CherryAdventure() {
       garParts.forEach(q => q.visible = false);
       G._garParts = garParts;
       G._garShoeMat = gGoldD; // 🦶 ตีนครุฑทองเข้ม
+      G._garWings = garWings;   // 🪽 ปีกคู่ใหญ่ — ท่าประจำตัวเขียนทับมุมกระพือได้
       G._garFur = { tail: garLow, wings: garWings.concat(garTail), wingAmp: 0.19, ph: 13 };
     }
 
@@ -26826,6 +26829,55 @@ export default function CherryAdventure() {
     };
     G._dragonBreath = spawnDragonBreath;
     // ================= 🐉 END ริวจิน =================
+    // ================= 🦅 ครุฑ — ขนเพชรพุ่งเป็นพัด =================
+    // ยิงขนทองแบนเป็นแผ่น กระจายออกเป็นพัดไปข้างหน้า หมุนคว้างระหว่างพุ่ง
+    const garudaFx = [];
+    const spawnGarudaFeathers = (col, n) => {
+      try {
+        const g = new THREE.Group();
+        const yaw = char.rotation.y;
+        g.position.set(char.position.x, 1.35, char.position.z);
+        g.rotation.y = yaw;                                   // แกน +Z ของกลุ่ม = ทิศที่ตัวละครหันหน้า
+        const mats = [], blades = [];
+        const N = n || 9;
+        for (let k = 0; k < N; k++) {
+          const m = new THREE.MeshBasicMaterial({ color: k % 2 ? 0xfff2c0 : (col || 0xffcf60),
+            transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+          const f = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.85, 5), m);
+          f.scale.z = 0.22;                                   // 🪶 แบนเป็นแผ่นขน ไม่ใช่หนามแหลม
+          f.rotation.x = Math.PI / 2;                         // ปลายขนชี้ไปข้างหน้า
+          f.raycast = () => {};
+          const spread = N > 1 ? (k - (N - 1) / 2) / ((N - 1) / 2) : 0;   // -1..1 กระจายเป็นพัด
+          f.userData = { d0: Math.abs(spread) * 0.18, ax: spread * 0.55,
+                         ay: (Math.random() - 0.5) * 0.5, sp: 8.5 + Math.random() * 3, rot: 12 + Math.random() * 8 };
+          g.add(f); mats.push(m); blades.push(f);
+        }
+        g.userData = { t: 0, dur: 0.5, mats, blades };
+        (G._worldRoot || scene).add(g); garudaFx.push(g);
+      } catch (e) {}
+    };
+    G._animGarudaFx = (d) => {
+      for (let i = garudaFx.length - 1; i >= 0; i--) {
+        const g = garudaFx[i], u = g.userData;
+        u.t += d;
+        const p = Math.min(1, u.t / u.dur);
+        for (const f of u.blades) {
+          const q = Math.max(0, Math.min(1, (p - f.userData.d0) / (1 - f.userData.d0)));
+          const dist = q * f.userData.sp * 0.5;
+          f.position.set(f.userData.ax * dist * 0.34, f.userData.ay * dist * 0.16, dist);
+          f.rotation.z += f.userData.rot * d;                 // ขนหมุนคว้างระหว่างพุ่ง
+          f.material.opacity = 0.9 * Math.sin(Math.min(1, q * 1.15) * Math.PI);
+        }
+        if (p >= 1) {
+          (G._worldRoot || scene).remove(g);
+          u.mats.forEach((m) => m.dispose());
+          u.blades.forEach((f) => f.geometry.dispose());
+          garudaFx.splice(i, 1);
+        }
+      }
+    };
+    G._garudaFeathers = spawnGarudaFeathers;
+    // ================= 🦅 END ครุฑ =================
     // 🔥❄️ เอฟเฟกต์เวทหมู่ — ดวงไฟลอยขึ้นแล้วพุ่งใส่ · เสาไฟผุดจากพื้น · แท่งน้ำแข็งผุดขึ้นแช่แข็งแล้วแตก
     const magicFx = [];
     const spawnFirePillar = (x, z, col) => {
@@ -37056,6 +37108,7 @@ export default function CherryAdventure() {
         if (G._animPoisonFx) G._animPoisonFx(dt);             // 🔪🟣 มีดพิษที่ขว้าง + ควันม่วงลอยขึ้น
         if (G._animHanTri) G._animHanTri(dt);                 // 🐒🔱 ตรีเพชรหนุมานที่ปาออกไป
         if (G._animDragonFx) G._animDragonFx(dt);             // 🐉 ลมหายใจมังกรริวจิน
+        if (G._animGarudaFx) G._animGarudaFx(dt);             // 🦅 ขนเพชรครุฑที่ยิงออกไป
         if (G._animMagicFx) G._animMagicFx(dt);               // 🔥❄️ ดวงไฟ/เสาไฟ + แท่งน้ำแข็งแช่แข็ง
         if (G._animArcherFx) G._animArcherFx(dt);             // 🎯🦅⚡💥 ลำแสงเจาะ · เหยี่ยว · สายฟ้าลูกโซ่ · ฝนลูกธนู
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
@@ -38904,6 +38957,83 @@ export default function CherryAdventure() {
               burst(new THREE.Vector3(char.position.x, 0.18, char.position.z), 0xdccfae, 0.85); // 🌫️ ฝุ่นตอนเบรก
             }
             try { S.fire(); } catch (e) {}
+          }
+          // ================= 🦅 ท่าประจำตัวครุฑ (โลกกว้าง) =================
+          // ใส่ชุดครุฑแล้วร่ายสกิล สลับ 3 ท่า: กระพือปีกพายุ → โฉบกรงเล็บ → ขนเพชรพุ่ง
+          if (G.heroId === "garuda" && !G.heroHide) {
+            if (S.garM === undefined) S.garM = (G._garMoveN = ((G._garMoveN || 0) + 1) % 3);
+            const gCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg)));                       // 0→1 เก็บพลัง
+            const gRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel)));     // 0→1 ปล่อยท่า
+            const gb = (cur, tgt) => cur + (tgt - cur) * cbw;   // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+            const wings = G._garWings || [];
+            // 🪽 มุมกางปีกของแต่ละท่า — เขียนทับจังหวะกระพือปกติระหว่างร่าย
+            let wOpen = 0, wSweep = 0;
+            if (S.garM === 0) {
+              // ① 🪽 กางปีกสุดแล้วฟาดลง ส่งลมพายุออกไปข้างหน้า
+              wOpen = 1.15 * gCh - 1.5 * gRel;                 // กางกว้าง → ฟาดปิดเข้าหาลำตัว
+              wSweep = -0.5 * gCh + 0.9 * gRel;
+              armR.rotation.x = gb(armR.rotation.x, -0.5 - 0.9 * gCh + 1.1 * gRel);
+              armR.rotation.z = gb(armR.rotation.z, 0.7 + 0.7 * gCh - 0.9 * gRel);
+              armL.rotation.x = gb(armL.rotation.x, -0.5 - 0.9 * gCh + 1.1 * gRel);
+              armL.rotation.z = gb(armL.rotation.z, -0.7 - 0.7 * gCh + 0.9 * gRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = gb(armR.userData.elbow.rotation.x, -0.35);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = gb(armL.userData.elbow.rotation.x, -0.35);
+              torso.rotation.x = gb(torso.rotation.x, -0.22 * gCh + 0.3 * gRel);
+              char.position.y += 0.55 * gCh * (1 - gRel) * cbw;              // ลอยขึ้นตอนกางปีก
+              if (!S.garFx && gRel > 0.3) {                                   // 🌪️ ลมพายุออกตอนฟาดปีกลง
+                S.garFx = 1;
+                const wx = char.position.x + Math.sin(char.rotation.y) * 1.9, wz = char.position.z + Math.cos(char.rotation.y) * 1.9;
+                try { spawnSkillFx("spearsweep", new THREE.Vector3(wx, 0, wz), S.col || 0xd8e8ff); } catch (_) {}
+                if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.4);
+                G._camShake = Math.max(G._camShake || 0, 0.38);
+              }
+            } else if (S.garM === 1) {
+              // ② 🦅 โฉบขึ้นแล้วพุ่งลงตะปบด้วยกรงเล็บ
+              wOpen = 0.85 * gCh - 1.1 * gRel;
+              wSweep = 0.6 * gCh - 0.3 * gRel;                                // ปีกลู่ไปหลังตอนพุ่ง
+              char.position.y += GAR_FLY * gCh * (1 - gRel) * cbw;
+              armR.rotation.x = gb(armR.rotation.x, -0.6 - 1.1 * gCh + 2.0 * gRel);
+              armR.rotation.z = gb(armR.rotation.z, 0.5 + 0.4 * gCh - 1.0 * gRel);
+              armL.rotation.x = gb(armL.rotation.x, -0.6 - 1.1 * gCh + 2.0 * gRel);
+              armL.rotation.z = gb(armL.rotation.z, -0.5 - 0.4 * gCh + 1.0 * gRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = gb(armR.userData.elbow.rotation.x, -1.0 + 0.6 * gRel);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = gb(armL.userData.elbow.rotation.x, -1.0 + 0.6 * gRel);
+              legL.rotation.x = gb(legL.rotation.x, -0.45 * gCh + 0.6 * gRel); // 🦶 ยื่นกรงเล็บออกตอนโฉบถึง
+              legR.rotation.x = gb(legR.rotation.x, -0.3 * gCh + 0.5 * gRel);
+              torso.rotation.x = gb(torso.rotation.x, -0.2 * gCh + 0.42 * gRel);
+              headG.rotation.x = gb(headG.rotation.x, -0.15 * gCh + 0.3 * gRel);
+              if (!S.garFx && gRel > 0.6) {
+                S.garFx = 1;
+                const cx2 = char.position.x + Math.sin(char.rotation.y) * 1.5, cz2 = char.position.z + Math.cos(char.rotation.y) * 1.5;
+                try { spawnSkillFx("crossslash", new THREE.Vector3(cx2, 0.9, cz2), S.col || 0xd8e8ff); } catch (_) {}
+                G._camShake = Math.max(G._camShake || 0, 0.42);
+                G._hitStop = Math.max(G._hitStop || 0, 0.05);
+              }
+            } else {
+              // ③ ✨ กางปีกเต็มแล้วสะบัดขนเพชรเป็นพัดใส่ศัตรู
+              wOpen = 1.35 * gCh - 0.5 * gRel;
+              wSweep = -0.35 * gCh + 0.75 * gRel;
+              armR.rotation.x = gb(armR.rotation.x, -0.35 - 0.55 * gCh + 0.35 * gRel);
+              armR.rotation.z = gb(armR.rotation.z, 0.95 + 0.55 * gCh - 0.35 * gRel);
+              armL.rotation.x = gb(armL.rotation.x, -0.35 - 0.55 * gCh + 0.35 * gRel);
+              armL.rotation.z = gb(armL.rotation.z, -0.95 - 0.55 * gCh + 0.35 * gRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = gb(armR.userData.elbow.rotation.x, -0.25);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = gb(armL.userData.elbow.rotation.x, -0.25);
+              torso.rotation.x = gb(torso.rotation.x, -0.16 * gCh + 0.2 * gRel);
+              char.position.y += 0.4 * gCh * (1 - gRel * 0.5) * cbw;
+              if (!S.garFx && gRel > 0.25) {
+                S.garFx = 1;
+                if (G._garudaFeathers) G._garudaFeathers(S.col || 0xffcf60, 9);
+                G._camShake = Math.max(G._camShake || 0, 0.24);
+                if (G.sfx && G.sfx.slash) G.sfx.slash();
+              }
+            }
+            // 🪽 ปีกซ้าย-ขวาสลับทิศกัน (ตัวโมเดลกลับด้านอยู่แล้ว) ให้กางออกสมมาตร
+            for (let wi = 0; wi < wings.length; wi++) {
+              const w = wings[wi], sgn = wi ? -1 : 1;
+              w.rotation.y = w.userData.by + (wOpen * sgn) * cbw;
+              w.rotation.z = (wSweep * sgn) * cbw;
+            }
           }
           // ================= 🐉 ท่าประจำตัวริวจิน (โลกกว้าง) =================
           // ใส่ชุดริวจินแล้วร่ายสกิล สลับ 3 ท่าประจำตัว: มังกรพ่นไฟ → มังกรพ่นลม → ทะยานขึ้นแล้วดิ่งลง
