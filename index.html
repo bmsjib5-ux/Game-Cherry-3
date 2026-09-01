@@ -394,6 +394,10 @@ const KIT_SIGIL = 3.2;
 const PHX_FLY = 2.0;
 // 👹 วงเวทย์นรกแอสซูร่าขยายกี่เท่าตอนใช้ท่า
 const ASU_SIGIL = 3.6;
+// 💀 วงเวทย์ลิชขยายกี่เท่าตอนดูดวิญญาณ
+const LIC_SIGIL = 4.0;
+// 🔱 ไตรศูลบาดาลขยายกี่เท่าตอนใช้ท่า
+const MER_TRI = 2.6;
 const HERO_SWING = {
     fenrir: { style: "claw", fx: "crossslash", col: 0x9ad0ff },
     neko: { style: "claw", fx: "crossslash", col: 0xffb0d0 },
@@ -17861,6 +17865,9 @@ function CherryAdventure() {
                 hd3.rotation.z = -a * 0.85;
                 hd3.rotation.x = -0.32;
                 hd3.scale.setScalar(sc3);
+                hd3.userData.ba = a;
+                hd3.userData.bz = -a * 0.85;
+                hd3.userData.bx = -0.32; // 🐍 มุมฐานเจ็ดเศียร
                 nakHood.add(hd3);
             }
             headG.add(nakHood);
@@ -18148,6 +18155,8 @@ function CherryAdventure() {
             nakParts.forEach(q => q.visible = false);
             G._nakParts = nakParts;
             G._nakShoeMat = nScaleD;
+            G._nakHeads = nakHood.children;
+            G._nakTail = nakTail; // 🐍 ท่าประจำตัวคุมเจ็ดเศียร/หางนาค
             G._nakFur = { tail: nakAura, tailTube: { m: nakTube, rings: 27, per: 9 }, tailTip: nakFin, tailTipB: nakFinB, tailRoot: nakTail, riders: nakRid, wings: nakStrands.concat(nakPanels), cloth: nakCloth, puffs: nakMotes, wagHz: 1.9, wagAmp: 0.12, wingAmp: 0.1, ph: 15 };
         }
         // ---------- 🕊️ KINNAREE signature look (กินรีครึ่งหงส์ป่าหิมพานต์) ----------
@@ -18792,7 +18801,8 @@ function CherryAdventure() {
                 g8.position.y = 0.18;
                 if (G._regHeroWeapon)
                     G._regHeroWeapon("merTriW", g8);
-            }
+                G._merTri = g8;
+            } // 🔱 ท่าประจำตัวคุมไตรศูล
             const merParts = [merCrown, merHair, merTop, merLow, merTail, merAura, ...merArmParts, ...merLegParts];
             merParts.forEach(q => q.visible = false);
             G._merParts = merParts;
@@ -19090,11 +19100,14 @@ function CherryAdventure() {
                 g9.position.y = 0.1;
                 if (G._regHeroWeapon)
                     G._regHeroWeapon("licStaffW", g9);
-            }
+                G._licStaff = g9;
+            } // 💀 ท่าประจำตัวคุมคทา
             const licParts = [licHead, licCape, licTop, licLow, licAura, licSigil, ...licArmParts, ...licLegParts];
             licParts.forEach(q => q.visible = false);
             G._licParts = licParts;
             G._licShoeMat = lRobeD;
+            G._licSigil = licSigil;
+            G._licMotes = licMotes; // 💀 ท่าประจำตัวคุมวงเวทย์/ดวงวิญญาณ
             G._licFur = { tail: licAura, wings: licStrands, cloth: licCloth, puffs: licMotes, spin: [licSigil], wingAmp: 0.09, ph: 21 };
         }
         // ---------- 🦊 KITSUNE signature look (จิ้งจอกเก้าหางจอมมายา) ----------
@@ -43245,6 +43258,317 @@ function CherryAdventure() {
         };
         G._hellSpikes = spawnHellSpikes;
         // ================= 👹 END แอสซูร่า =================
+        // ================= 💀 ลิช — ลำแสงวิญญาณ + ดูดวิญญาณจากพื้น =================
+        const licFx = [];
+        // 🟢 ลำแสงวิญญาณ — ลำแสงพุ่งจากปลายคทาไปข้างหน้า ยืดออกแล้วจางหาย
+        const spawnSoulBeam = (col) => {
+            try {
+                const g = new THREE.Group();
+                const yaw = char.rotation.y;
+                g.position.set(char.position.x + Math.sin(yaw) * 0.5, 1.45, char.position.z + Math.cos(yaw) * 0.5);
+                g.rotation.y = yaw;
+                const mats = [], parts = [];
+                for (let k = 0; k < 3; k++) { // แกนสว่าง + ปลอกรอบนอกซ้อนกัน
+                    const m = new THREE.MeshBasicMaterial({ color: k === 0 ? 0xd8ffe8 : (col || 0x7affa8),
+                        transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.07 + k * 0.11, 0.05 + k * 0.08, 1, 12, 1, true), m);
+                    cyl.rotation.x = Math.PI / 2; // แกนลำแสงชี้ไปข้างหน้า
+                    cyl.raycast = () => { };
+                    g.add(cyl);
+                    mats.push(m);
+                    parts.push(cyl);
+                }
+                for (let k = 0; k < 5; k++) { // 💀 วงวิญญาณวิ่งไปตามลำแสง
+                    const m = new THREE.MeshBasicMaterial({ color: col || 0x7affa8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                    const rg = new THREE.Mesh(new THREE.TorusGeometry(0.24 + k * 0.03, 0.026, 6, 20), m);
+                    rg.raycast = () => { };
+                    rg.userData.d0 = k / 5;
+                    g.add(rg);
+                    mats.push(m);
+                    parts.push(rg);
+                }
+                g.userData = { kind: "beam", t: 0, dur: 0.45, mats, parts, len: 7 };
+                (G._worldRoot || scene).add(g);
+                licFx.push(g);
+            }
+            catch (e) { }
+        };
+        // ⚰️ ดวงวิญญาณผุดจากพื้นรอบ ๆ แล้วไหลเข้าหาตัวลิช
+        const spawnSoulDrain = (col, n, rad) => {
+            try {
+                const N = n || 10, R = rad == null ? 2.6 : rad;
+                for (let k = 0; k < N; k++) {
+                    const a = Math.random() * Math.PI * 2, rr = R * (0.45 + Math.random() * 0.55);
+                    const m = new THREE.MeshBasicMaterial({ color: col || 0x7affa8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                    const w = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.42, 6), m);
+                    w.raycast = () => { };
+                    const sx = char.position.x + Math.cos(a) * rr, sz = char.position.z + Math.sin(a) * rr;
+                    w.position.set(sx, 0.05, sz);
+                    w.userData = { kind: "soul", t: 0, d0: k * 0.03, dur: 0.55, sx, sz, mat: m, spin: (Math.random() - 0.5) * 5 };
+                    (G._worldRoot || scene).add(w);
+                    licFx.push(w);
+                }
+            }
+            catch (e) { }
+        };
+        G._animLicFx = (d) => {
+            for (let i = licFx.length - 1; i >= 0; i--) {
+                const o = licFx[i], u = o.userData;
+                u.t += d;
+                if (u.kind === "beam") {
+                    const p = Math.min(1, u.t / u.dur);
+                    const grow = Math.min(1, p / 0.22); // ยืดออกเร็ว ๆ ตอนต้น
+                    const fade = p < 0.22 ? 1 : 1 - (p - 0.22) / 0.78;
+                    for (let q = 0; q < 3; q++) {
+                        const c = u.parts[q];
+                        c.scale.set(1, u.len * grow, 1);
+                        c.position.z = (u.len * grow) / 2;
+                        u.mats[q].opacity = (q === 0 ? 0.95 : 0.5 - q * 0.12) * fade;
+                    }
+                    for (let q = 3; q < u.parts.length; q++) { // วงวิญญาณวิ่งไล่ไปตามลำ
+                        const rg = u.parts[q];
+                        const tt = (p * 1.7 + rg.userData.d0) % 1;
+                        rg.position.z = tt * u.len * grow;
+                        rg.scale.setScalar(1 + tt * 0.7);
+                        u.mats[q].opacity = 0.75 * fade * Math.sin(tt * Math.PI);
+                    }
+                    if (p >= 1) {
+                        (G._worldRoot || scene).remove(o);
+                        u.mats.forEach((m) => m.dispose());
+                        u.parts.forEach((c) => c.geometry.dispose());
+                        licFx.splice(i, 1);
+                    }
+                }
+                else { // ⚰️ วิญญาณลอยขึ้นแล้วไหลเข้าหาตัว
+                    if (u.t < u.d0)
+                        continue;
+                    const p = Math.min(1, (u.t - u.d0) / u.dur);
+                    const e = p * p * (3 - 2 * p);
+                    o.position.set(u.sx + (char.position.x - u.sx) * e, 0.05 + Math.sin(p * Math.PI) * 0.55 + e * 0.9, u.sz + (char.position.z - u.sz) * e);
+                    o.rotation.y += u.spin * d;
+                    o.scale.setScalar(1 - e * 0.55);
+                    u.mat.opacity = 0.9 * Math.sin(Math.min(1, p * 1.1) * Math.PI);
+                    if (p >= 1) {
+                        (G._worldRoot || scene).remove(o);
+                        u.mat.dispose();
+                        o.geometry.dispose();
+                        licFx.splice(i, 1);
+                    }
+                }
+            }
+        };
+        G._soulBeam = spawnSoulBeam;
+        G._soulDrain = spawnSoulDrain;
+        // ================= 💀 END ลิช =================
+        // ================= 🐍 นากิ — พิษเจ็ดเศียร + วังวนวารี =================
+        const nakFx = [];
+        // 🟢 พ่นพิษเป็นสายจากเจ็ดเศียร กระจายเป็นพัดไปข้างหน้า
+        const spawnVenomSpray = (col, n) => {
+            try {
+                const N = n || 7;
+                const g = new THREE.Group();
+                const yaw = char.rotation.y;
+                g.position.set(char.position.x, 1.75, char.position.z);
+                g.rotation.y = yaw; // แกน +Z = ทิศที่หันหน้า
+                const mats = [], drops = [];
+                for (let k = 0; k < N; k++) {
+                    const spread = N > 1 ? (k - (N - 1) / 2) / ((N - 1) / 2) : 0; // -1..1 ตามหัวแต่ละเศียร
+                    for (let q = 0; q < 3; q++) { // สายละ 3 หยด ทยอยพ่น
+                        const m = new THREE.MeshBasicMaterial({ color: q === 0 ? 0xd8ffe8 : (col || 0x4ad0a0),
+                            transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                        const dp = new THREE.Mesh(new THREE.SphereGeometry(0.15 - q * 0.02, 8, 6), m);
+                        dp.scale.z = 1.9; // ยืดตามทิศพุ่ง เป็นหยดพิษ
+                        dp.raycast = () => { };
+                        dp.userData = { d0: q * 0.09 + Math.abs(spread) * 0.06, ax: spread * 0.62,
+                            ay: -0.12 + (Math.random() - 0.5) * 0.3, sp: 7.5 + Math.random() * 2.2 };
+                        g.add(dp);
+                        mats.push(m);
+                        drops.push(dp);
+                    }
+                }
+                g.userData = { kind: "venom", t: 0, dur: 0.5, mats, drops };
+                (G._worldRoot || scene).add(g);
+                nakFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🌊 วังวนวารี — วงน้ำผุดซ้อนขึ้นแล้วบานออก พร้อมละอองน้ำวนรอบ
+        const spawnWaterVortex = (x, z, col) => {
+            try {
+                const g = new THREE.Group();
+                g.position.set(x, 0, z);
+                const mats = [], rings = [], bits = [];
+                for (let k = 0; k < 5; k++) {
+                    const m = new THREE.MeshBasicMaterial({ color: k % 2 ? 0xd8f8ff : (col || 0x4ad0a0),
+                        transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                    const rg = new THREE.Mesh(new THREE.TorusGeometry(0.55 + k * 0.12, 0.075 - k * 0.008, 8, 30), m);
+                    rg.rotation.x = Math.PI / 2;
+                    rg.raycast = () => { };
+                    rg.userData.d0 = k * 0.09;
+                    g.add(rg);
+                    mats.push(m);
+                    rings.push(rg);
+                }
+                for (let k = 0; k < 10; k++) { // 💧 ละอองน้ำวนขึ้นเป็นเกลียว
+                    const m = new THREE.MeshBasicMaterial({ color: col || 0x4ad0a0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                    const bt = new THREE.Mesh(new THREE.SphereGeometry(0.1, 7, 5), m);
+                    bt.raycast = () => { };
+                    bt.userData = { a0: (k / 10) * Math.PI * 2, rad: 0.5 + (k % 3) * 0.28, hi: 1.5 + Math.random() * 1.3, d0: k * 0.03 };
+                    g.add(bt);
+                    mats.push(m);
+                    bits.push(bt);
+                }
+                g.userData = { kind: "vortex", t: 0, dur: 0.72, mats, rings, bits };
+                (G._worldRoot || scene).add(g);
+                nakFx.push(g);
+            }
+            catch (e) { }
+        };
+        G._animNakFx = (d) => {
+            for (let i = nakFx.length - 1; i >= 0; i--) {
+                const g = nakFx[i], u = g.userData;
+                u.t += d;
+                const p = Math.min(1, u.t / u.dur);
+                if (u.kind === "venom") {
+                    for (let q = 0; q < u.drops.length; q++) {
+                        const dp = u.drops[q], ud = dp.userData;
+                        const t2 = Math.max(0, Math.min(1, (p - ud.d0) / (1 - ud.d0)));
+                        const dist = t2 * ud.sp * 0.5;
+                        dp.position.set(ud.ax * dist * 0.4, ud.ay * dist * 0.5 - dist * dist * 0.045, dist); // ตกโค้งลงตามแรงโน้มถ่วง
+                        dp.scale.setScalar(0.8 + t2 * 0.9);
+                        dp.scale.z = (0.8 + t2 * 0.9) * 1.9;
+                        u.mats[q].opacity = 0.9 * Math.sin(Math.min(1, t2 * 1.15) * Math.PI);
+                    }
+                }
+                else {
+                    for (let q = 0; q < u.rings.length; q++) {
+                        const rg = u.rings[q];
+                        const t2 = Math.max(0, Math.min(1, (p - rg.userData.d0) / (1 - rg.userData.d0)));
+                        rg.position.y = t2 * 2.1;
+                        rg.scale.setScalar(0.5 + t2 * 1.5); // ผุดขึ้นแล้วบานออก
+                        rg.material.opacity = 0.8 * Math.sin(t2 * Math.PI);
+                    }
+                    for (const bt of u.bits) {
+                        const ud = bt.userData;
+                        const t2 = Math.max(0, Math.min(1, (p - ud.d0) / (1 - ud.d0)));
+                        const aa = ud.a0 + t2 * 7; // วนเป็นเกลียวขึ้น
+                        bt.position.set(Math.cos(aa) * ud.rad * (1 + t2 * 0.7), t2 * ud.hi, Math.sin(aa) * ud.rad * (1 + t2 * 0.7));
+                        bt.material.opacity = 0.85 * Math.sin(t2 * Math.PI);
+                    }
+                }
+                if (p >= 1) {
+                    (G._worldRoot || scene).remove(g);
+                    u.mats.forEach((m) => m.dispose());
+                    (u.drops || []).concat(u.rings || [], u.bits || []).forEach((o) => o.geometry.dispose());
+                    nakFx.splice(i, 1);
+                }
+            }
+        };
+        G._venomSpray = spawnVenomSpray;
+        G._waterVortex = spawnWaterVortex;
+        // ================= 🐍 END นากิ =================
+        // ================= 🧜‍♀️ เมอร์เมด — คลื่นยักษ์ + เสียงเพรียก =================
+        const merFx = [];
+        // 🌊 กำแพงคลื่นซัดไปข้างหน้า — ผนังน้ำโค้งสูงขึ้นแล้วม้วนตัวไปข้างหน้า
+        const spawnTidalWave = (col) => {
+            try {
+                const g = new THREE.Group();
+                const yaw = char.rotation.y;
+                g.position.set(char.position.x + Math.sin(yaw) * 0.9, 0, char.position.z + Math.cos(yaw) * 0.9);
+                g.rotation.y = yaw;
+                const mats = [], slabs = [];
+                for (let k = 0; k < 7; k++) { // แผ่นน้ำเรียงเป็นแนวขวาง สูงต่างกันเป็นคลื่น
+                    const m = new THREE.MeshBasicMaterial({ color: k % 2 ? 0xd8f4ff : (col || 0x6ac0f0),
+                        transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                    const off = (k - 3) / 3; // -1..1 ตำแหน่งขวาง
+                    const h = 2.3 - Math.abs(off) * 0.85; // กลางคลื่นสูงสุด
+                    const sl = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.62, h, 8, 1, true), m);
+                    sl.raycast = () => { };
+                    sl.userData = { off, h, d0: Math.abs(off) * 0.07 };
+                    g.add(sl);
+                    mats.push(m);
+                    slabs.push(sl);
+                }
+                for (let k = 0; k < 9; k++) { // 💧 ละอองน้ำกระเซ็นเหนือยอดคลื่น
+                    const m = new THREE.MeshBasicMaterial({ color: 0xeafaff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                    const sp = new THREE.Mesh(new THREE.SphereGeometry(0.11, 7, 5), m);
+                    sp.raycast = () => { };
+                    sp.userData = { ax: (Math.random() - 0.5) * 2.6, ay: 1.7 + Math.random() * 1.1, d0: Math.random() * 0.2 };
+                    g.add(sp);
+                    mats.push(m);
+                    slabs.push(sp);
+                }
+                g.userData = { kind: "wave", t: 0, dur: 0.62, mats, slabs, reach: 6.5 };
+                (G._worldRoot || scene).add(g);
+                merFx.push(g);
+            }
+            catch (e) { }
+        };
+        // 🎵 เสียงเพรียกนางเงือก — วงเสียงแผ่ออกรอบตัวเป็นชั้น ๆ
+        const spawnSirenSong = (col, n) => {
+            try {
+                const g = new THREE.Group();
+                g.position.set(char.position.x, 0.9, char.position.z);
+                const mats = [], rings = [];
+                const N = n || 5;
+                for (let k = 0; k < N; k++) {
+                    const m = new THREE.MeshBasicMaterial({ color: k % 2 ? 0xffd8f0 : (col || 0x6ac0f0),
+                        transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                    const rg = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.05, 8, 34), m);
+                    rg.rotation.x = Math.PI / 2;
+                    rg.raycast = () => { };
+                    rg.userData.d0 = k * 0.11;
+                    g.add(rg);
+                    mats.push(m);
+                    rings.push(rg);
+                }
+                g.userData = { kind: "song", t: 0, dur: 0.75, mats, rings };
+                (G._worldRoot || scene).add(g);
+                merFx.push(g);
+            }
+            catch (e) { }
+        };
+        G._animMerFx = (d) => {
+            for (let i = merFx.length - 1; i >= 0; i--) {
+                const g = merFx[i], u = g.userData;
+                u.t += d;
+                const p = Math.min(1, u.t / u.dur);
+                if (u.kind === "wave") {
+                    for (const o of u.slabs) {
+                        const ud = o.userData;
+                        const t2 = Math.max(0, Math.min(1, (p - ud.d0) / (1 - ud.d0)));
+                        if (ud.h != null) { // แผ่นน้ำ — ยกสูงขึ้นแล้วซัดไปหน้า
+                            const rise = Math.min(1, t2 / 0.3);
+                            o.position.set(ud.off * 1.5, (ud.h * rise) / 2, t2 * u.reach);
+                            o.scale.set(1, rise, 1);
+                            o.rotation.x = -t2 * 0.55; // ยอดคลื่นม้วนไปข้างหน้า
+                            o.material.opacity = 0.72 * Math.sin(Math.min(1, t2 * 1.12) * Math.PI);
+                        }
+                        else { // ละอองน้ำ
+                            o.position.set(ud.ax, ud.ay * Math.sin(t2 * Math.PI) + 0.6, t2 * u.reach * 0.92);
+                            o.material.opacity = 0.85 * Math.sin(t2 * Math.PI);
+                        }
+                    }
+                }
+                else { // 🎵 วงเสียงแผ่ออก
+                    for (const rg of u.rings) {
+                        const t2 = Math.max(0, Math.min(1, (p - rg.userData.d0) / (1 - rg.userData.d0)));
+                        rg.scale.setScalar(0.35 + t2 * 4.2);
+                        rg.position.y = t2 * 0.5;
+                        rg.material.opacity = 0.7 * Math.sin(t2 * Math.PI);
+                    }
+                }
+                if (p >= 1) {
+                    (G._worldRoot || scene).remove(g);
+                    u.mats.forEach((m) => m.dispose());
+                    (u.slabs || u.rings).forEach((o) => o.geometry.dispose());
+                    merFx.splice(i, 1);
+                }
+            }
+        };
+        G._tidalWave = spawnTidalWave;
+        G._sirenSong = spawnSirenSong;
+        // ================= 🧜‍♀️ END เมอร์เมด =================
         // 🔥❄️ เอฟเฟกต์เวทหมู่ — ดวงไฟลอยขึ้นแล้วพุ่งใส่ · เสาไฟผุดจากพื้น · แท่งน้ำแข็งผุดขึ้นแช่แข็งแล้วแตก
         const magicFx = [];
         const spawnFirePillar = (x, z, col) => {
@@ -58178,6 +58502,12 @@ function CherryAdventure() {
                         G._animPhxFx(dt); // 🔥 อุกกาบาตเพลิงฟีนิกซ์
                     if (G._animAsuFx)
                         G._animAsuFx(dt); // 👹 หนามนรกแอสซูร่า
+                    if (G._animLicFx)
+                        G._animLicFx(dt); // 💀 ลำแสง/วิญญาณของลิช
+                    if (G._animNakFx)
+                        G._animNakFx(dt); // 🐍 พิษ/วังวนของนากิ
+                    if (G._animMerFx)
+                        G._animMerFx(dt); // 🧜‍♀️ คลื่น/เสียงเพรียกของเมอร์เมด
                     if (G._animMagicFx)
                         G._animMagicFx(dt); // 🔥❄️ ดวงไฟ/เสาไฟ + แท่งน้ำแข็งแช่แข็ง
                     if (G._animArcherFx)
@@ -60899,6 +61229,291 @@ function CherryAdventure() {
                             }
                             catch (e) { }
                         }
+                        // ================= 🧜‍♀️ ท่าประจำตัวเมอร์เมด (โลกกว้าง) =================
+                        // ใส่ชุดเมอร์เมดแล้วร่ายสกิล สลับ 3 ท่า: คลื่นยักษ์ซัด → เสียงเพรียกนางเงือก → ไตรศูลบาดาลพุ่ง
+                        if (G.heroId === "mermaid" && !G.heroHide) {
+                            if (S.merM === undefined)
+                                S.merM = (G._merMoveN = ((G._merMoveN || 0) + 1) % 3);
+                            const mCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg))); // 0→1 เก็บพลัง
+                            const mRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel))); // 0→1 ปล่อยท่า
+                            const mb = (cur, tgt) => cur + (tgt - cur) * cbw; // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+                            const mtri = G._merTri;
+                            let triK = 0;
+                            if (S.merM === 0) {
+                                // ① 🌊 ชูไตรศูลเรียกน้ำ แล้วฟาดลงส่งกำแพงคลื่นซัดไปข้างหน้า
+                                triK = 0.6 * mCh;
+                                armR.rotation.x = mb(armR.rotation.x, -0.5 - 2.0 * mCh + 2.4 * mRel);
+                                armR.rotation.z = mb(armR.rotation.z, 0.22);
+                                armL.rotation.x = mb(armL.rotation.x, -0.5 - 1.3 * mCh + 1.5 * mRel);
+                                armL.rotation.z = mb(armL.rotation.z, -0.4);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = mb(armR.userData.elbow.rotation.x, -0.3 - 0.5 * mCh + 0.7 * mRel);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = mb(armL.userData.elbow.rotation.x, -0.6);
+                                torso.rotation.x = mb(torso.rotation.x, -0.26 * mCh + 0.36 * mRel);
+                                headG.rotation.x = mb(headG.rotation.x, -0.2 * mCh + 0.24 * mRel);
+                                char.position.y += 0.5 * mCh * (1 - mRel * 0.6) * cbw;
+                                if (!S.merFx && mRel > 0.35) {
+                                    S.merFx = 1;
+                                    if (G._tidalWave)
+                                        G._tidalWave(S.col || 0x6ac0f0);
+                                    if (G.puffDust)
+                                        G.puffDust(char.position.x, 0, char.position.z, 1.3);
+                                    G._camShake = Math.max(G._camShake || 0, 0.42);
+                                    G._hitStop = Math.max(G._hitStop || 0, 0.05);
+                                }
+                            }
+                            else if (S.merM === 1) {
+                                // ② 🎵 กางแขนแอ่นตัวเปล่งเสียงเพรียก วงเสียงแผ่ออกรอบตัว
+                                triK = 0.25 * mCh;
+                                armR.rotation.x = mb(armR.rotation.x, -0.5 - 1.15 * mCh + 0.5 * mRel);
+                                armR.rotation.z = mb(armR.rotation.z, 0.9 + 0.55 * mCh - 0.25 * mRel); // กางแขนผายออก
+                                armL.rotation.x = mb(armL.rotation.x, -0.5 - 1.15 * mCh + 0.5 * mRel);
+                                armL.rotation.z = mb(armL.rotation.z, -0.9 - 0.55 * mCh + 0.25 * mRel);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = mb(armR.userData.elbow.rotation.x, -0.22);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = mb(armL.userData.elbow.rotation.x, -0.22);
+                                torso.rotation.x = mb(torso.rotation.x, 0.3 * mCh - 0.34 * mRel); // แอ่นอกเปล่งเสียง
+                                headG.rotation.x = mb(headG.rotation.x, 0.4 * mCh - 0.42 * mRel); // เงยหน้าร้อง
+                                char.position.y += 0.7 * mCh * (1 - mRel * 0.4) * cbw;
+                                if (!S.merFx && mCh > 0.6) {
+                                    S.merFx = 1;
+                                    if (G._sirenSong)
+                                        G._sirenSong(S.col || 0x6ac0f0, 5);
+                                    G._camShake = Math.max(G._camShake || 0, 0.2);
+                                    if (G.sfx && G.sfx.slash)
+                                        G.sfx.slash();
+                                }
+                            }
+                            else {
+                                // ③ 🔱 ไตรศูลบาดาลใหญ่ขึ้น ง้างแล้วพุ่งแทงไปข้างหน้า
+                                triK = (MER_TRI - 1) * mCh * (1 - mRel * 0.25);
+                                armR.rotation.x = mb(armR.rotation.x, -0.55 - 0.95 * mCh - 0.7 * mRel); // ง้างหลัง → ดันแทงไปหน้า
+                                armR.rotation.z = mb(armR.rotation.z, 0.3 - 0.15 * mRel);
+                                armR.rotation.y = mb(armR.rotation.y, 0.35 * mCh - 0.5 * mRel);
+                                armL.rotation.x = mb(armL.rotation.x, -1.1 - 0.3 * mCh - 0.35 * mRel); // มือซ้ายประคองด้าม
+                                armL.rotation.z = mb(armL.rotation.z, 0.4);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = mb(armR.userData.elbow.rotation.x, -1.25 + 1.15 * mRel);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = mb(armL.userData.elbow.rotation.x, -0.95);
+                                torso.rotation.y = mb(torso.rotation.y, 0.34 * mCh - 0.5 * mRel);
+                                torso.rotation.x = mb(torso.rotation.x, -0.14 * mCh + 0.2 * mRel);
+                                char.position.y += 0.3 * mCh * (1 - mRel) * cbw;
+                                if (!S.merFx && mRel > 0.45) {
+                                    S.merFx = 1;
+                                    const px2 = char.position.x + Math.sin(char.rotation.y) * 2.0, pz2 = char.position.z + Math.cos(char.rotation.y) * 2.0;
+                                    try {
+                                        spawnSkillFx("pierce", new THREE.Vector3(px2, 0.9, pz2), S.col || 0x6ac0f0);
+                                    }
+                                    catch (_) { }
+                                    G._camShake = Math.max(G._camShake || 0, 0.4);
+                                    G._hitStop = Math.max(G._hitStop || 0, 0.05);
+                                }
+                            }
+                            if (mtri)
+                                mtri.scale.setScalar(1 + triK * cbw); // 🔱 ไตรศูลเรืองใหญ่ขึ้นระหว่างร่าย
+                        }
+                        // ================= 🐍 ท่าประจำตัวนากิ (โลกกว้าง) =================
+                        // ใส่ชุดนากิแล้วร่ายสกิล สลับ 3 ท่า: เจ็ดเศียรพ่นพิษ → วังวนวารี → หางนาคฟาด
+                        if (G.heroId === "naki" && !G.heroHide) {
+                            if (S.nakM === undefined)
+                                S.nakM = (G._nakMoveN = ((G._nakMoveN || 0) + 1) % 3);
+                            const nCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg))); // 0→1 เก็บพลัง
+                            const nRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel))); // 0→1 ปล่อยท่า
+                            const nb = (cur, tgt) => cur + (tgt - cur) * cbw; // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+                            const heads = G._nakHeads || [], ntail = G._nakTail;
+                            let hFan = 0, hRear = 0, tailY = 0;
+                            if (S.nakM === 0) {
+                                // ① 🐍 เจ็ดเศียรผายพังพานกว้าง เงยขึ้น แล้วพุ่งหน้าพ่นพิษพร้อมกัน
+                                hFan = 0.85 * nCh - 0.35 * nRel; // ผายพังพานกว้างขึ้น
+                                hRear = -0.75 * nCh + 1.15 * nRel; // เงยขึ้นเก็บ → ทิ่มหน้าพ่นพิษ
+                                armR.rotation.x = nb(armR.rotation.x, -0.4 - 0.8 * nCh + 0.9 * nRel);
+                                armR.rotation.z = nb(armR.rotation.z, 0.75 + 0.45 * nCh - 0.5 * nRel);
+                                armL.rotation.x = nb(armL.rotation.x, -0.4 - 0.8 * nCh + 0.9 * nRel);
+                                armL.rotation.z = nb(armL.rotation.z, -0.75 - 0.45 * nCh + 0.5 * nRel);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = nb(armR.userData.elbow.rotation.x, -0.4);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = nb(armL.userData.elbow.rotation.x, -0.4);
+                                torso.rotation.x = nb(torso.rotation.x, -0.24 * nCh + 0.32 * nRel);
+                                char.position.y += 0.45 * nCh * (1 - nRel * 0.5) * cbw;
+                                if (!S.nakFx && nRel > 0.35) {
+                                    S.nakFx = 1;
+                                    if (G._venomSpray)
+                                        G._venomSpray(S.col || 0x4ad0a0, 7);
+                                    G._camShake = Math.max(G._camShake || 0, 0.3);
+                                    if (G.sfx && G.sfx.slash)
+                                        G.sfx.slash();
+                                }
+                            }
+                            else if (S.nakM === 1) {
+                                // ② 🌊 ยกมือเรียกวังวนวารีผุดขึ้นกลืนเป้า
+                                hFan = 0.4 * nCh;
+                                hRear = -0.4 * nCh + 0.25 * nRel;
+                                armR.rotation.x = nb(armR.rotation.x, -0.6 - 1.9 * nCh + 1.4 * nRel); // ชูขึ้นเรียกน้ำ → กดลง
+                                armR.rotation.z = nb(armR.rotation.z, 0.28);
+                                armL.rotation.x = nb(armL.rotation.x, -0.6 - 1.9 * nCh + 1.4 * nRel);
+                                armL.rotation.z = nb(armL.rotation.z, -0.28);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = nb(armR.userData.elbow.rotation.x, -0.4 - 0.4 * nCh + 0.5 * nRel);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = nb(armL.userData.elbow.rotation.x, -0.4 - 0.4 * nCh + 0.5 * nRel);
+                                torso.rotation.x = nb(torso.rotation.x, -0.28 * nCh + 0.3 * nRel);
+                                headG.rotation.x = nb(headG.rotation.x, -0.3 * nCh + 0.26 * nRel);
+                                char.position.y += 0.55 * nCh * (1 - nRel * 0.6) * cbw;
+                                if (!S.nakFx && nRel > 0.25) {
+                                    S.nakFx = 1;
+                                    const tgt = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus : nearestWild(worldRange() + 6);
+                                    const vx = tgt ? tgt.position.x : char.position.x + Math.sin(char.rotation.y) * 2.6;
+                                    const vz = tgt ? tgt.position.z : char.position.z + Math.cos(char.rotation.y) * 2.6;
+                                    if (G._waterVortex)
+                                        G._waterVortex(vx, vz, S.col || 0x4ad0a0);
+                                    G._camShake = Math.max(G._camShake || 0, 0.34);
+                                    G._hitStop = Math.max(G._hitStop || 0, 0.045);
+                                }
+                            }
+                            else {
+                                // ③ 🐍 ง้างหางนาคไปข้างหลัง แล้วฟาดกวาดขวางลำตัว
+                                hFan = 0.3 * nCh;
+                                hRear = -0.2 * nCh;
+                                tailY = -1.15 * nCh + 2.5 * nRel; // ง้างข้างหนึ่ง → กวาดข้ามไปอีกข้าง
+                                armR.rotation.x = nb(armR.rotation.x, -0.45 - 0.5 * nCh + 0.6 * nRel);
+                                armR.rotation.z = nb(armR.rotation.z, 0.5 + 0.5 * nCh - 0.8 * nRel);
+                                armL.rotation.x = nb(armL.rotation.x, -0.45 - 0.5 * nCh + 0.6 * nRel);
+                                armL.rotation.z = nb(armL.rotation.z, -0.5 - 0.5 * nCh + 0.8 * nRel);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = nb(armR.userData.elbow.rotation.x, -0.5);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = nb(armL.userData.elbow.rotation.x, -0.5);
+                                torso.rotation.y = nb(torso.rotation.y, 0.4 * nCh - 0.7 * nRel); // บิดลำตัวตามหางที่กวาด
+                                char.rotation.z = nb(char.rotation.z, -0.1 * nCh + 0.16 * nRel);
+                                char.position.y += 0.2 * nCh * (1 - nRel) * cbw;
+                                if (!S.nakFx && nRel > 0.45) {
+                                    S.nakFx = 1;
+                                    const sx3 = char.position.x + Math.sin(char.rotation.y) * 1.7, sz3 = char.position.z + Math.cos(char.rotation.y) * 1.7;
+                                    try {
+                                        spawnSkillFx("spearsweep", new THREE.Vector3(sx3, 0, sz3), S.col || 0x4ad0a0);
+                                    }
+                                    catch (_) { }
+                                    G._camShake = Math.max(G._camShake || 0, 0.42);
+                                    G._hitStop = Math.max(G._hitStop || 0, 0.05);
+                                }
+                            }
+                            // 🐍 เจ็ดเศียร — ผายพังพานออกจากแกนกลาง (คูณมุมฐานของหัวเส้นนั้น) แล้วเงย/ทิ่มพร้อมกัน
+                            for (let hi = 0; hi < heads.length; hi++) {
+                                const H = heads[hi], u = H.userData;
+                                if (u.ba == null)
+                                    continue;
+                                H.rotation.z = (u.bz || 0) * (1 + hFan * cbw);
+                                H.rotation.x = (u.bx || 0) + hRear * cbw;
+                            }
+                            if (ntail && tailY)
+                                ntail.rotation.y = tailY * cbw; // 🐍 หางนาคกวาดขวาง
+                        }
+                        // ================= 💀 ท่าประจำตัวลิช (โลกกว้าง) =================
+                        // ใส่ชุดลิชแล้วร่ายสกิล สลับ 3 ท่า: เรียกกองทัพกะโหลก → ลำแสงวิญญาณ → วงสุสานดูดวิญญาณ
+                        if (G.heroId === "lich" && !G.heroHide) {
+                            if (S.licM === undefined)
+                                S.licM = (G._licMoveN = ((G._licMoveN || 0) + 1) % 3);
+                            const lCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg))); // 0→1 เก็บพลัง
+                            const lRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel))); // 0→1 ปล่อยท่า
+                            const lb = (cur, tgt) => cur + (tgt - cur) * cbw; // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+                            const lstaff = G._licStaff, lsig = G._licSigil, lmotes = G._licMotes || [];
+                            let sigK = 0, staffK = 0, moteK = 1;
+                            if (S.licM === 0) {
+                                // ① 💀 ชูคทาขึ้นเรียกกะโหลกวิญญาณ แล้วชี้สั่งให้พุ่งเข้าใส่
+                                staffK = 0.5 * lCh;
+                                armR.rotation.x = lb(armR.rotation.x, -0.6 - 2.0 * lCh + 1.6 * lRel); // ชูคทาสูง → ชี้ไปข้างหน้า
+                                armR.rotation.z = lb(armR.rotation.z, 0.2 - 0.1 * lRel);
+                                armL.rotation.x = lb(armL.rotation.x, -0.5 - 0.9 * lCh + 0.5 * lRel);
+                                armL.rotation.z = lb(armL.rotation.z, -0.55 - 0.25 * lCh);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = lb(armR.userData.elbow.rotation.x, -0.3 - 0.5 * lCh + 0.7 * lRel);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = lb(armL.userData.elbow.rotation.x, -0.8);
+                                torso.rotation.x = lb(torso.rotation.x, -0.22 * lCh + 0.26 * lRel);
+                                headG.rotation.x = lb(headG.rotation.x, -0.26 * lCh + 0.3 * lRel);
+                                char.position.y += 0.35 * lCh * (1 - lRel * 0.5) * cbw;
+                                if (!S.licFx && lRel > 0.3) {
+                                    S.licFx = 1;
+                                    const tgt = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus : nearestWild(worldRange() + 7);
+                                    if (tgt)
+                                        for (let q = 0; q < 5; q++) {
+                                            try {
+                                                spawnShadowBolt(q, tgt, S.col || 0x9a6ad0, (hx, hz) => {
+                                                    try {
+                                                        spawnSkillFx("shadow", new THREE.Vector3(hx, 0.9, hz), S.col || 0x9a6ad0);
+                                                    }
+                                                    catch (_) { }
+                                                });
+                                            }
+                                            catch (_) { }
+                                        }
+                                    G._camShake = Math.max(G._camShake || 0, 0.28);
+                                    if (G.sfx && G.sfx.slash)
+                                        G.sfx.slash();
+                                }
+                            }
+                            else if (S.licM === 1) {
+                                // ② 🟢 จ่อคทาไปข้างหน้า ยิงลำแสงวิญญาณทะลุออกไป
+                                staffK = 0.85 * lCh * (1 - lRel * 0.3);
+                                armR.rotation.x = lb(armR.rotation.x, -0.7 - 0.5 * lCh - 0.5 * lRel); // ยกจ่อระดับอก แล้วดันไปหน้า
+                                armR.rotation.z = lb(armR.rotation.z, 0.3 - 0.2 * lRel);
+                                armR.rotation.y = lb(armR.rotation.y, -0.15 * lCh + 0.25 * lRel);
+                                armL.rotation.x = lb(armL.rotation.x, -1.15 - 0.2 * lCh - 0.3 * lRel); // มือซ้ายประคองใต้คทา
+                                armL.rotation.z = lb(armL.rotation.z, 0.42);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = lb(armR.userData.elbow.rotation.x, -1.0 + 0.85 * lRel);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = lb(armL.userData.elbow.rotation.x, -0.9);
+                                torso.rotation.y = lb(torso.rotation.y, 0.18 * lCh - 0.28 * lRel);
+                                torso.rotation.x = lb(torso.rotation.x, -0.1 * lCh + 0.16 * lRel);
+                                char.position.y += 0.2 * lCh * (1 - lRel) * cbw;
+                                if (!S.licFx && lRel > 0.3) {
+                                    S.licFx = 1;
+                                    if (G._soulBeam)
+                                        G._soulBeam(S.col || 0x7affa8);
+                                    G._camShake = Math.max(G._camShake || 0, 0.34);
+                                    G._hitStop = Math.max(G._hitStop || 0, 0.045);
+                                }
+                            }
+                            else {
+                                // ③ ⚰️ วงสุสานเรืองใต้เท้า ดูดดวงวิญญาณจากพื้นรอบตัวเข้าหาคทา
+                                sigK = lCh * (1 - lRel * 0.25);
+                                staffK = 0.6 * lCh;
+                                moteK = 1 + 1.1 * lRel; // ดวงไฟรอบตัวโตขึ้นตอนกลืนวิญญาณ
+                                armR.rotation.x = lb(armR.rotation.x, -0.5 - 1.7 * lCh + 0.5 * lRel);
+                                armR.rotation.z = lb(armR.rotation.z, 0.35 + 0.3 * lCh);
+                                armL.rotation.x = lb(armL.rotation.x, -0.5 - 1.7 * lCh + 0.5 * lRel);
+                                armL.rotation.z = lb(armL.rotation.z, -0.35 - 0.3 * lCh);
+                                if (armR.userData.elbow)
+                                    armR.userData.elbow.rotation.x = lb(armR.userData.elbow.rotation.x, -0.35);
+                                if (armL.userData.elbow)
+                                    armL.userData.elbow.rotation.x = lb(armL.userData.elbow.rotation.x, -0.35);
+                                torso.rotation.x = lb(torso.rotation.x, -0.3 * lCh + 0.2 * lRel);
+                                headG.rotation.x = lb(headG.rotation.x, -0.34 * lCh + 0.24 * lRel); // เงยหน้ากลืนวิญญาณ
+                                char.position.y += 0.65 * lCh * (1 - lRel * 0.4) * cbw; // ลอยขึ้นเหนือวงสุสาน
+                                if (!S.licFx && lCh > 0.6) {
+                                    S.licFx = 1;
+                                    if (G._soulDrain)
+                                        G._soulDrain(S.col || 0x7affa8, 10, 2.6);
+                                    G._camShake = Math.max(G._camShake || 0, 0.3);
+                                }
+                            }
+                            if (lstaff)
+                                lstaff.scale.setScalar(1 + staffK * cbw); // 🪄 คทาเรืองใหญ่ขึ้นระหว่างร่าย
+                            if (lsig) { // ⭕ วงสุสานใต้เท้า
+                                lsig.scale.setScalar(1 + (LIC_SIGIL - 1) * sigK * cbw);
+                                lsig.rotation.y += dt * (0.42 + 5 * sigK) * cbw;
+                            }
+                            if (moteK !== 1)
+                                for (const m of lmotes) {
+                                    const bs = m.userData.bs ? m.userData.bs.x : 1;
+                                    m.scale.setScalar(bs * (1 + (moteK - 1) * cbw));
+                                }
+                        }
                         // ================= 👹 ท่าประจำตัวแอสซูร่า (โลกกว้าง) =================
                         // ใส่ชุดแอสซูร่าแล้วร่ายสกิล สลับ 3 ท่า: ปีกนรกโอบระเบิด → หางนรกแทง → วงเวทย์หนามนรก
                         if (G.heroId === "asura" && !G.heroHide) {
@@ -61476,6 +62091,22 @@ function CherryAdventure() {
                                 wand.rotation.y = 0;
                                 G._hanSpin = 0;
                             } // 🐒 คืนตรีเพชรกลับขนาดปกติ
+                            if (G._licStaff)
+                                G._licStaff.scale.setScalar(1); // 💀 คืนขนาดคทาลิช
+                            if (G._licSigil)
+                                G._licSigil.scale.setScalar(1); // 💀 คืนวงสุสาน
+                            if (G._asuSigil)
+                                G._asuSigil.scale.setScalar(1); // 👹 คืนวงเวทย์นรก
+                            if (G._asuTail)
+                                G._asuTail.rotation.x = 0; // 👹 คืนหางปีศาจ
+                            if (G._nakTail)
+                                G._nakTail.rotation.y = 0; // 🐍 คืนหางนาค
+                            if (G._merTri)
+                                G._merTri.scale.setScalar(1); // 🔱 คืนขนาดไตรศูล
+                            if (G._kitSigil) {
+                                G._kitSigil.scale.setScalar(1);
+                                G._kitSigil.position.y = 0.05;
+                            } // 🦊 คืนยันต์จิ้งจอก
                             if (G._camLock)
                                 G._camLock.off = true; // 🎥 คลายล็อกกล้อง แล้วค่อย ๆ กลับมาเกาะตัวละคร
                             G._skCast = null;
