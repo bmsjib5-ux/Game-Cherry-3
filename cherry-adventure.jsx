@@ -18256,6 +18256,7 @@ export default function CherryAdventure() {
       if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 ซ่อนแนวกั้นขอบแมพ
       if (G._homePad) G._homePad.visible = false;
       if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน
+      if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }   // 🎣 รื้อบ่อ+ตัวกันชนบ่อ ไม่งั้นเหลือกำแพงล่องหนกลางฟาร์ม
       if (G._ranchPad) G._ranchPad.visible = false;
       G._ranchZone.visible = true;
       if (G.buildRanchPens) G.buildRanchPens((G.ranch && G.ranch.pens) || 2);   // 🐄 คอกตามจำนวนที่ซื้อ
@@ -18277,6 +18278,7 @@ export default function CherryAdventure() {
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
       if (G._restoreBiomeDecor) G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
+      if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }   // 🎣 ปั้นบ่อของด่านที่ยืนอยู่กลับคืน
       const r = G._ranchReturn || { x: -6, z: -1 };
       char.position.set(r.x, char.position.y, r.z);
       G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
@@ -18434,6 +18436,7 @@ export default function CherryAdventure() {
       if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false)); // 🌳 ซ่อนต้นไม้/หิน/ของประดับโลก — พื้นบ้านเรียบโล่ง
       if (G._hideBiomeDecor) G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน (เข้าบ้านได้จากทุกด่าน)
+      if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }   // 🎣 รื้อบ่อ+ตัวกันชนบ่อตอนเข้าบ้าน
       homeZone.visible = true;
       if (G.applyHomeStyles) G.applyHomeStyles(); // 🎨 พื้น/ผนังตามสไตล์ที่เลือกไว้
       G.buildHomeFurni(G._homeVisit ? G._homeVisit.furni : null);
@@ -18452,6 +18455,7 @@ export default function CherryAdventure() {
       if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true)); // 🌳 คืนฉากทุ่งซากุระ
       if (G._restoreBiomeDecor) G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
+      if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }   // 🎣 ปั้นบ่อกลับคืนตอนออกจากบ้าน
       const r = G._homeReturn || { x: -13, z: -3 };
       char.position.set(r.x, char.position.y, r.z);
       G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;
@@ -18720,6 +18724,7 @@ export default function CherryAdventure() {
       if (G._borderGrp) G._borderGrp.visible = false;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = false));
       if (G._hideBiomeDecor) G._hideBiomeDecor();
+      if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }   // 🎣 รื้อบ่อ+ตัวกันชนบ่อตอนเข้าเมือง
       townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
       if (scene.fog) { G._townFogPrev = { near: scene.fog.near, far: scene.fog.far }; scene.fog.near = 78; scene.fog.far = 210; } // 🌫️ เมืองกว้าง — ดันหมอกออกไป ให้เห็นทั่วทั้งเมือง
       townZone.visible = true;
@@ -18741,6 +18746,7 @@ export default function CherryAdventure() {
       if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true));
       if (G._restoreBiomeDecor) G._restoreBiomeDecor();
+      if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }   // 🎣 ปั้นบ่อกลับคืนตอนออกจากเมือง
       const r = G._townReturn || { x: -9.5, z: -5.5 };
       char.position.set(r.x, char.position.y, r.z);
       G.vel.x = 0; G.vel.z = 0; G.moveTarget = null; G.huntTarget = null; G.path = null;

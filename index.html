@@ -30375,6 +30375,12 @@ function CherryAdventure() {
                 G._homePad.visible = false;
             if (G._hideBiomeDecor)
                 G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน
+            if (G.fishRespawn) {
+                try {
+                    G.fishRespawn();
+                }
+                catch (e) { }
+            } // 🎣 รื้อบ่อ+ตัวกันชนบ่อ ไม่งั้นเหลือกำแพงล่องหนกลางฟาร์ม
             if (G._ranchPad)
                 G._ranchPad.visible = false;
             G._ranchZone.visible = true;
@@ -30408,6 +30414,12 @@ function CherryAdventure() {
                 G.warpGate.visible = true;
             if (G._restoreBiomeDecor)
                 G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
+            if (G.fishRespawn) {
+                try {
+                    G.fishRespawn();
+                }
+                catch (e) { }
+            } // 🎣 ปั้นบ่อของด่านที่ยืนอยู่กลับคืน
             const r = G._ranchReturn || { x: -6, z: -1 };
             char.position.set(r.x, char.position.y, r.z);
             G.vel.x = 0;
@@ -30778,6 +30790,12 @@ function CherryAdventure() {
                 G.sceneryObjects.forEach((o) => (o.visible = false)); // 🌳 ซ่อนต้นไม้/หิน/ของประดับโลก — พื้นบ้านเรียบโล่ง
             if (G._hideBiomeDecor)
                 G._hideBiomeDecor(); // 🌵 ซ่อนฉากประจำด่าน (เข้าบ้านได้จากทุกด่าน)
+            if (G.fishRespawn) {
+                try {
+                    G.fishRespawn();
+                }
+                catch (e) { }
+            } // 🎣 รื้อบ่อ+ตัวกันชนบ่อตอนเข้าบ้าน
             homeZone.visible = true;
             if (G.applyHomeStyles)
                 G.applyHomeStyles(); // 🎨 พื้น/ผนังตามสไตล์ที่เลือกไว้
@@ -30805,6 +30823,12 @@ function CherryAdventure() {
                 G.sceneryObjects.forEach((o) => (o.visible = true)); // 🌳 คืนฉากทุ่งซากุระ
             if (G._restoreBiomeDecor)
                 G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
+            if (G.fishRespawn) {
+                try {
+                    G.fishRespawn();
+                }
+                catch (e) { }
+            } // 🎣 ปั้นบ่อกลับคืนตอนออกจากบ้าน
             const r = G._homeReturn || { x: -13, z: -3 };
             char.position.set(r.x, char.position.y, r.z);
             G.vel.x = 0;
@@ -31343,6 +31367,12 @@ function CherryAdventure() {
                 G.sceneryObjects.forEach((o) => (o.visible = false));
             if (G._hideBiomeDecor)
                 G._hideBiomeDecor();
+            if (G.fishRespawn) {
+                try {
+                    G.fishRespawn();
+                }
+                catch (e) { }
+            } // 🎣 รื้อบ่อ+ตัวกันชนบ่อตอนเข้าเมือง
             townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
             if (scene.fog) {
                 G._townFogPrev = { near: scene.fog.near, far: scene.fog.far };
@@ -31380,6 +31410,12 @@ function CherryAdventure() {
                 G.sceneryObjects.forEach((o) => (o.visible = true));
             if (G._restoreBiomeDecor)
                 G._restoreBiomeDecor();
+            if (G.fishRespawn) {
+                try {
+                    G.fishRespawn();
+                }
+                catch (e) { }
+            } // 🎣 ปั้นบ่อกลับคืนตอนออกจากเมือง
             const r = G._townReturn || { x: -9.5, z: -5.5 };
             char.position.set(r.x, char.position.y, r.z);
             G.vel.x = 0;
