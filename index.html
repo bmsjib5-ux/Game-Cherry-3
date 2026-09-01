@@ -1921,6 +1921,88 @@ const foodRoll = (R, lv) => {
     const mins = Math.max(1, Math.min(300, Math.round(R.mins * (1 + (L - 1) * 0.045) * (0.86 + qi * 0.08)))); // ⏳ ยาวสุด 5 ชม.
     return { rid: R.id, q: Q.id, qi, buff, base, extra, mins, lv: L };
 };
+// ================= 🌿 อาชีพยาสมุนไพร — เก็บสมุนไพร → ปรุงยา =================
+// สมุนไพรเก็บได้จากกอที่ขึ้นตามแดน · เอามาปรุงเป็นยาฟื้นเลือด/มานา และยาบำรุง (บัฟตามเวลาจริง)
+const HERBS = [
+    { id: "leaf", name: "ใบเขียวป่า", emoji: "🌿", tier: 1, sell: 14, desc: "ใบไม้สามัญ ขึ้นได้ทุกที่" },
+    { id: "root", name: "รากขมดิน", emoji: "🫚", tier: 1, sell: 22, desc: "รากรสขม ช่วยฟื้นกำลัง" },
+    { id: "flower", name: "ดอกจันทร์ฉาย", emoji: "🌸", tier: 2, sell: 52, desc: "บานเฉพาะกลางคืน กลิ่นหอมเย็น" },
+    { id: "mush", name: "เห็ดเรืองแสง", emoji: "🍄", tier: 2, sell: 70, desc: "เรืองแสงในที่มืด เต็มไปด้วยมานา" },
+    { id: "lotus", name: "บัวพันปี", emoji: "🪷", tier: 3, sell: 165, desc: "หายากมาก แก่นยาชั้นเลิศ" },
+];
+const HERB_BY = {};
+HERBS.forEach((h) => (HERB_BY[h.id] = h));
+// 🗺️ สมุนไพรที่ออกในแต่ละแดน (น้ำหนักสุ่ม) — แดนสูงมีของหายากมากขึ้น
+const HERB_W = {
+    meadow: { leaf: 100, root: 62, flower: 20, mush: 6 },
+    desert: { leaf: 70, root: 88, flower: 22, mush: 8 },
+    snow: { leaf: 62, root: 70, flower: 44, mush: 14 },
+    cave: { leaf: 46, root: 62, flower: 28, mush: 76, lotus: 3 },
+    volcano: { leaf: 44, root: 74, flower: 30, mush: 26, lotus: 4 },
+    sky: { leaf: 54, root: 40, flower: 84, mush: 22, lotus: 8 },
+    hell: { leaf: 34, root: 66, flower: 26, mush: 62, lotus: 9 },
+    heaven: { leaf: 46, root: 34, flower: 96, mush: 24, lotus: 16 },
+    moon: { leaf: 40, root: 44, flower: 70, mush: 48, lotus: 14 },
+    candy: { leaf: 58, root: 40, flower: 78, mush: 30, lotus: 12 },
+    beach: { leaf: 72, root: 50, flower: 46, mush: 20, lotus: 12 },
+    titan: { leaf: 44, root: 72, flower: 38, mush: 44, lotus: 18 },
+    amazon: { leaf: 88, root: 60, flower: 58, mush: 62, lotus: 24 },
+};
+const HERB_W_DEF = HERB_W.meadow;
+// 🚫 กดค้าง/กดย้ำบนจอ ต้องไม่คลุมข้อความ ไม่เด้งเมนูก็อปปี้ ไม่ซูม
+//    ต้องอยู่ระดับโมดูล ไม่ใช่ใน init ของเกม 3D — ไม่งั้นหน้าล็อกอิน/สร้างตัวละครจะยังคลุมได้อยู่
+(function lockSelection() {
+    if (typeof document === "undefined" || document.getElementById("cherry-noselect"))
+        return;
+    const css = document.createElement("style");
+    css.id = "cherry-noselect";
+    css.textContent =
+        "*{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;" +
+            "-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}" +
+            /* ✍️ ช่องพิมพ์ต้องเลือก/แก้/วางข้อความได้ตามปกติ */
+            "input,textarea,select,[contenteditable=\"true\"]{-webkit-user-select:text;-moz-user-select:text;" +
+            "-ms-user-select:text;user-select:text;-webkit-touch-callout:default;}" +
+            "html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-behavior:none;}" +
+            "img{-webkit-user-drag:none;}";
+    (document.head || document.documentElement).appendChild(css);
+    const typable = (el) => !!(el && el.closest && el.closest('input,textarea,select,[contenteditable="true"]'));
+    document.addEventListener("contextmenu", (e) => { if (!typable(e.target))
+        e.preventDefault(); }); // กดค้าง = ไม่เด้งเมนูก็อปปี้
+    document.addEventListener("selectstart", (e) => { if (!typable(e.target))
+        e.preventDefault(); }); // กดย้ำ = ไม่คลุมข้อความ
+})();
+const HERB_LV_EXP = (lv) => Math.round(36 + lv * 42 + Math.pow(Math.max(0, lv - 5), 2) * 6); // 🌿 EXP ขึ้นเลเวลปรุงยา
+const HERB_LV_MAX = 20;
+const HERB_NODES = 5; // 🌿 กอสมุนไพรที่ขึ้นพร้อมกันในแมพ
+const HERB_RESPAWN = 26; // ⏳ เก็บแล้วกี่วินาทีถึงขึ้นใหม่ที่อื่น
+const POT_BAG_MAX = 40; // 🎒 ยาที่เก็บได้พร้อมกัน
+// 🧪 ตำรายา — kind: hp/mp = ฟื้นทันที (% ของค่าสูงสุด) · bhp/bmp = บัฟค่าสูงสุดตามเวลาจริง
+const BREWS = [
+    { id: "hp1", kind: "hp", name: "ยาฟื้นเลือดอ่อน", emoji: "🧪", lv: 1, exp: 9, need: { leaf: 3 }, pct: 25 },
+    { id: "mp1", kind: "mp", name: "ยาฟื้นมานาอ่อน", emoji: "💧", lv: 1, exp: 9, need: { root: 3 }, pct: 25 },
+    { id: "hp2", kind: "hp", name: "ยาฟื้นเลือดกลาง", emoji: "🧪", lv: 4, exp: 20, need: { leaf: 5, root: 2 }, pct: 45 },
+    { id: "mp2", kind: "mp", name: "ยาฟื้นมานากลาง", emoji: "💧", lv: 4, exp: 20, need: { root: 5, mush: 1 }, pct: 45 },
+    { id: "bhp1", kind: "bhp", name: "ยาบำรุงเลือด", emoji: "❤️", lv: 6, exp: 30, need: { leaf: 6, flower: 2 }, pct: 10, mins: 30 },
+    { id: "bmp1", kind: "bmp", name: "ยาบำรุงมานา", emoji: "🔮", lv: 6, exp: 30, need: { root: 6, mush: 2 }, pct: 10, mins: 30 },
+    { id: "hp3", kind: "hp", name: "ยาฟื้นเลือดเข้ม", emoji: "🧪", lv: 9, exp: 44, need: { leaf: 8, flower: 3 }, pct: 70 },
+    { id: "mp3", kind: "mp", name: "ยาฟื้นมานาเข้ม", emoji: "💧", lv: 9, exp: 44, need: { root: 8, mush: 3 }, pct: 70 },
+    { id: "bhp2", kind: "bhp", name: "ยาบำรุงเลือดเข้ม", emoji: "❤️", lv: 12, exp: 62, need: { flower: 5, mush: 3, lotus: 1 }, pct: 18, mins: 45 },
+    { id: "bmp2", kind: "bmp", name: "ยาบำรุงมานาเข้ม", emoji: "🔮", lv: 12, exp: 62, need: { mush: 5, flower: 3, lotus: 1 }, pct: 18, mins: 45 },
+    { id: "hp4", kind: "hp", name: "ยาฟื้นเลือดสมบูรณ์", emoji: "🧪", lv: 15, exp: 86, need: { flower: 6, lotus: 2 }, pct: 100 },
+    { id: "mp4", kind: "mp", name: "ยาฟื้นมานาสมบูรณ์", emoji: "💧", lv: 15, exp: 86, need: { mush: 6, lotus: 2 }, pct: 100 },
+    { id: "bhp3", kind: "bhp", name: "ยาอมฤตเลือด", emoji: "❤️", lv: 18, exp: 120, need: { lotus: 4, flower: 6, mush: 4 }, pct: 28, mins: 60 },
+    { id: "bmp3", kind: "bmp", name: "ยาอมฤตมานา", emoji: "🔮", lv: 18, exp: 120, need: { lotus: 4, mush: 6, flower: 4 }, pct: 28, mins: 60 },
+];
+const BREW_BY = {};
+BREWS.forEach((b) => (BREW_BY[b.id] = b));
+const BREW_KIND = {
+    hp: { label: "ฟื้นเลือด", emoji: "🧪", col: "#ff6a7a" },
+    mp: { label: "ฟื้นมานา", emoji: "💧", col: "#6ab0f0" },
+    bhp: { label: "บัฟเลือดสูงสุด", emoji: "❤️", col: "#ff8a5a" },
+    bmp: { label: "บัฟมานาสูงสุด", emoji: "🔮", col: "#a08aff" },
+};
+// ⚗️ ยิ่งเลเวลปรุงยาสูง ยิ่งได้ผลแรงขึ้น (สูงสุด +40% ที่ Lv.20)
+const BREW_POW = (lv) => 1 + Math.min(20, Math.max(1, lv || 1) - 1) * 0.021;
 const COOK_LV_EXP = (lv) => Math.round(40 + lv * 46 + Math.pow(Math.max(0, lv - 5), 2) * 7); // 🍳 EXP ขึ้นเลเวลทำอาหาร (ชันขึ้นหลัง Lv.5)
 const COOK_LV_MAX = 20;
 // 🏷️ ชื่อบัฟที่โชว์บนจอ
@@ -30413,6 +30495,12 @@ function CherryAdventure() {
                     G.fishRespawn();
                 }
                 catch (e) { }
+            }
+            if (G.herbRespawnAll) {
+                try {
+                    G.herbRespawnAll();
+                }
+                catch (e) { }
             } // 🎣 รื้อบ่อ+ตัวกันชนบ่อ ไม่งั้นเหลือกำแพงล่องหนกลางฟาร์ม
             if (G._ranchPad)
                 G._ranchPad.visible = false;
@@ -30450,6 +30538,12 @@ function CherryAdventure() {
             if (G.fishRespawn) {
                 try {
                     G.fishRespawn();
+                }
+                catch (e) { }
+            }
+            if (G.herbRespawnAll) {
+                try {
+                    G.herbRespawnAll();
                 }
                 catch (e) { }
             } // 🎣 ปั้นบ่อของด่านที่ยืนอยู่กลับคืน
@@ -30828,6 +30922,12 @@ function CherryAdventure() {
                     G.fishRespawn();
                 }
                 catch (e) { }
+            }
+            if (G.herbRespawnAll) {
+                try {
+                    G.herbRespawnAll();
+                }
+                catch (e) { }
             } // 🎣 รื้อบ่อ+ตัวกันชนบ่อตอนเข้าบ้าน
             homeZone.visible = true;
             if (G.applyHomeStyles)
@@ -30859,6 +30959,12 @@ function CherryAdventure() {
             if (G.fishRespawn) {
                 try {
                     G.fishRespawn();
+                }
+                catch (e) { }
+            }
+            if (G.herbRespawnAll) {
+                try {
+                    G.herbRespawnAll();
                 }
                 catch (e) { }
             } // 🎣 ปั้นบ่อกลับคืนตอนออกจากบ้าน
@@ -31405,6 +31511,12 @@ function CherryAdventure() {
                     G.fishRespawn();
                 }
                 catch (e) { }
+            }
+            if (G.herbRespawnAll) {
+                try {
+                    G.herbRespawnAll();
+                }
+                catch (e) { }
             } // 🎣 รื้อบ่อ+ตัวกันชนบ่อตอนเข้าเมือง
             townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
             if (scene.fog) {
@@ -31446,6 +31558,12 @@ function CherryAdventure() {
             if (G.fishRespawn) {
                 try {
                     G.fishRespawn();
+                }
+                catch (e) { }
+            }
+            if (G.herbRespawnAll) {
+                try {
+                    G.herbRespawnAll();
                 }
                 catch (e) { }
             } // 🎣 ปั้นบ่อกลับคืนตอนออกจากเมือง
@@ -32005,7 +32123,8 @@ function CherryAdventure() {
             n.mesh.position.set(n.x, terrainAt(n.x, n.z), n.z); };
         G.mineSnapAll = () => { (G.mineNodes || []).forEach(mineNodeSnap); if (G.fishSpotSnap)
             G.fishSpotSnap(); if (G.roadSnap)
-            G.roadSnap(); };
+            G.roadSnap(); if (G.herbSnapAll)
+            G.herbSnapAll(); };
         // 🗺️ วางสายแร่ชุดใหม่เมื่อเปลี่ยนแมพ
         G.mineRespawnAll = (bid) => {
             for (const n of G.mineNodes) {
@@ -32209,6 +32328,12 @@ function CherryAdventure() {
                     }
                     catch (e) { }
                 }
+                if (G.herbRespawnAll) {
+                    try {
+                        G.herbRespawnAll(bid);
+                    }
+                    catch (e) { }
+                }
                 if (G.buildRoad) {
                     try {
                         G.buildRoad();
@@ -32278,6 +32403,349 @@ function CherryAdventure() {
             }
         };
         // ================= ⛏️ END MINING =================
+        // ================= 🌿 อาชีพยาสมุนไพร — เก็บสมุนไพร → ปรุงยา =================
+        // 🛟 บล็อกนี้อยู่เหนือบรรทัดที่ประกาศ const toast — เรียกตรง ๆ แล้วมีโอกาสชน TDZ
+        //    ห่อไว้ให้ข้อความเตือนหายไปเฉย ๆ แทนที่จะทำให้ทั้งฟังก์ชันพัง
+        const hToast = (m) => { try {
+            toast(m);
+        }
+        catch (_) { } };
+        G.herbLv = 1;
+        G.herbExp = 0;
+        G.herbTotal = 0;
+        G.herbBag = G.herbBag || {}; // 🌿 สมุนไพรที่เก็บได้
+        G.potBag = Array.isArray(G.potBag) ? G.potBag : []; // 🧪 ยาที่ปรุงไว้ ยังไม่ได้ใช้
+        G.brewBuff = G.brewBuff || { hp: null, mp: null }; // ❤️🔮 บัฟค่าสูงสุดตามเวลาจริง (แยกเลือด/มานา)
+        G.herbNodes = [];
+        G._herbNear = null;
+        G._herbBiome = null;
+        G.herbExpNeed = () => HERB_LV_EXP(G.herbLv || 1);
+        // 🎲 สุ่มชนิดสมุนไพรตามแดน
+        const herbRoll = (bid) => {
+            const W = HERB_W[bid || (BIOMES[G.curBiome || 0] || BIOMES[0]).id] || HERB_W_DEF;
+            let tot = 0;
+            for (const k in W)
+                tot += W[k];
+            let r = Math.random() * tot;
+            for (const k in W) {
+                r -= W[k];
+                if (r <= 0)
+                    return k;
+            }
+            return "leaf";
+        };
+        // 🌿 กอสมุนไพร — ใบพุ่ม + ดอกเรืองแสงบอกตำแหน่ง
+        const buildHerbNode = (hid) => {
+            const H = HERB_BY[hid] || HERB_BY.leaf;
+            const g = new THREE.Group();
+            const tone = H.id === "lotus" ? 0xff9ad0 : H.id === "mush" ? 0x7ae8c0 : H.id === "flower" ? 0xffd0e8 : H.id === "root" ? 0xc09a5a : 0x6ac04a;
+            const leafM = new THREE.MeshStandardMaterial({ color: 0x3a8a3a, roughness: 0.85, flatShading: true });
+            const budM = new THREE.MeshStandardMaterial({ color: tone, emissive: tone, emissiveIntensity: 0.6, roughness: 0.5 });
+            const buds = [];
+            for (let i = 0; i < 7; i++) { // 🍃 ใบแผ่เป็นกอ
+                const a = (i / 7) * Math.PI * 2;
+                const h = 0.42 + Math.random() * 0.3;
+                const lf = new THREE.Mesh(new THREE.ConeGeometry(0.1, h, 5), leafM);
+                lf.position.set(Math.cos(a) * 0.16, h / 2, Math.sin(a) * 0.16);
+                lf.rotation.z = -Math.cos(a) * 0.5;
+                lf.rotation.x = Math.sin(a) * 0.5;
+                lf.castShadow = true;
+                g.add(lf);
+            }
+            for (let i = 0; i < 3; i++) { // 🌸 ดอก/ตุ่มเรืองแสง
+                const a = (i / 3) * Math.PI * 2 + 0.4;
+                const bd = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), budM);
+                bd.position.set(Math.cos(a) * 0.2, 0.52 + (i % 2) * 0.12, Math.sin(a) * 0.2);
+                g.add(bd);
+                buds.push(bd);
+            }
+            const ringM = new THREE.MeshBasicMaterial({ color: tone, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(new THREE.RingGeometry(0.44, 0.6, 22), ringM);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.03;
+            ring.raycast = () => { };
+            g.add(ring);
+            g.traverse((o) => { o.raycast = () => { }; });
+            g.userData = { buds, ring, ringM };
+            return g;
+        };
+        const herbPlace = () => {
+            for (let tries = 0; tries < 30; tries++) {
+                const a = Math.random() * Math.PI * 2;
+                const r = 9 + Math.random() * 20;
+                const x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (inKeepOut(x, z))
+                    continue; // 🎣🌀 ไม่ขึ้นทับบ่อ/แท่นวาร์ป
+                let clash = false;
+                for (const n of G.herbNodes) {
+                    if (n && Math.hypot(n.x - x, n.z - z) < 4.5) {
+                        clash = true;
+                        break;
+                    }
+                }
+                for (const n of (G.mineNodes || [])) {
+                    if (n && Math.hypot(n.x - x, n.z - z) < 3) {
+                        clash = true;
+                        break;
+                    }
+                }
+                if (!clash)
+                    return { x, z };
+            }
+            const a = Math.random() * Math.PI * 2;
+            return { x: Math.cos(a) * 16, z: Math.sin(a) * 16 };
+        };
+        const herbNodeSnap = (n) => { if (n && n.mesh)
+            n.mesh.position.set(n.x, terrainAt(n.x, n.z), n.z); };
+        G.herbSnapAll = () => (G.herbNodes || []).forEach(herbNodeSnap);
+        // 🗺️ วางกอสมุนไพรชุดใหม่เมื่อเปลี่ยนแมพ
+        G.herbRespawnAll = (bid) => {
+            for (const n of G.herbNodes) {
+                if (n && n.mesh) {
+                    if (n.mesh.parent)
+                        n.mesh.parent.remove(n.mesh);
+                    if (G._disposeObj3D)
+                        G._disposeObj3D(n.mesh);
+                }
+            }
+            G.herbNodes = [];
+            G._herbNear = null;
+            const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
+            if (indoor) {
+                setUi((u) => ({ ...u, herbNear: false, herbKind: null }));
+                return;
+            }
+            const root = G._worldRoot || scene;
+            for (let i = 0; i < HERB_NODES; i++) {
+                const pos = herbPlace();
+                const hid = herbRoll(bid);
+                const mesh = buildHerbNode(hid);
+                const n = { x: pos.x, z: pos.z, mesh, herb: hid, dead: false, respawn: 0, bob: Math.random() * 6 };
+                herbNodeSnap(n);
+                root.add(mesh);
+                G.herbNodes.push(n);
+            }
+            setUi((u) => ({ ...u, herbNear: false, herbKind: null }));
+        };
+        // ✋ เก็บสมุนไพรกอที่ยืนอยู่ใกล้ — เก็บทีเดียวจบ ไม่ต้องเล่นมินิเกม
+        G.gatherHerb = () => {
+            if (G.mode !== "explore") {
+                hToast("เก็บสมุนไพรได้เฉพาะตอนเดินสำรวจ");
+                return;
+            }
+            const i = G._herbNear;
+            const n = i != null ? G.herbNodes[i] : null;
+            if (!n || n.dead) {
+                hToast("🌿 ไม่มีกอสมุนไพรอยู่ใกล้ ๆ");
+                return;
+            }
+            const H = HERB_BY[n.herb] || HERB_BY.leaf;
+            const L = G.herbLv || 1;
+            // 🌿 ยิ่งเลเวลสูง ยิ่งเก็บได้ทีละมาก (1-2 ต้น + โบนัสตามเลเวล)
+            let qty = 1 + (Math.random() < 0.35 ? 1 : 0) + Math.floor(L / 7);
+            if (Math.random() < 0.08 + L * 0.004)
+                qty += 1; // 🍀 เก็บได้พิเศษ
+            G.herbBag = G.herbBag || {};
+            G.herbBag[H.id] = (G.herbBag[H.id] || 0) + qty;
+            G.herbTotal = (G.herbTotal || 0) + qty;
+            const gx = (2 + H.tier * 3) * qty; // ⭐ EXP ตามระดับสมุนไพร
+            let lvUp = 0;
+            G.herbExp = (G.herbExp || 0) + gx;
+            while ((G.herbLv || 1) < HERB_LV_MAX && G.herbExp >= HERB_LV_EXP(G.herbLv || 1)) {
+                G.herbExp -= HERB_LV_EXP(G.herbLv || 1);
+                G.herbLv = (G.herbLv || 1) + 1;
+                lvUp++;
+            }
+            if ((G.herbLv || 1) >= HERB_LV_MAX)
+                G.herbExp = Math.min(G.herbExp, HERB_LV_EXP(HERB_LV_MAX));
+            n.dead = true;
+            n.respawn = HERB_RESPAWN;
+            if (n.mesh) {
+                try {
+                    burst(n.mesh.position, 0x8ae06a, 0.8);
+                }
+                catch (_) { }
+                n.mesh.visible = false;
+            }
+            G._herbNear = null;
+            if (G.sfx && G.sfx.pick)
+                G.sfx.pick();
+            else if (G.sfx && G.sfx.hit)
+                G.sfx.hit();
+            hToast(`${H.emoji} เก็บ${H.name} ×${qty}  (+${gx} EXP)`);
+            if (lvUp)
+                hToast(`🌿 ปรุงยาเลเวล ${G.herbLv} แล้ว!`);
+            G.syncHerbUi();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 📋 ข้อมูลสำหรับ JSX
+        G.herbBagList = () => HERBS.map((h) => ({ ...h, n: (G.herbBag || {})[h.id] || 0 })).filter((h) => h.n > 0);
+        G.herbHave = (id) => (G.herbBag || {})[id] || 0;
+        G.brewList = () => BREWS.map((B) => {
+            const lack = [];
+            for (const k in B.need) {
+                const have = G.herbHave(k);
+                if (have < B.need[k])
+                    lack.push(`${(HERB_BY[k] || {}).emoji || ""}${B.need[k] - have}`);
+            }
+            return { ...B, ok: (G.herbLv || 1) >= B.lv && lack.length === 0, lvOk: (G.herbLv || 1) >= B.lv, lack,
+                power: G.brewPower(B) };
+        });
+        // ⚗️ ผลจริงหลังคูณโบนัสเลเวล
+        G.brewPower = (B) => {
+            const p = Math.round(B.pct * BREW_POW(G.herbLv || 1));
+            return (B.kind === "bhp" || B.kind === "bmp") ? { pct: p, mins: B.mins } : { pct: p };
+        };
+        G.potBagList = () => (G.potBag || []).map((p, i) => ({ ...p, i, def: BREW_BY[p.id] || null }));
+        // ⚗️ ปรุงยา 1 ขวด
+        G.brewPotion = (id) => {
+            const B = BREW_BY[id];
+            if (!B)
+                return;
+            if ((G.herbLv || 1) < B.lv) {
+                hToast(`🌿 ต้องปรุงยาเลเวล ${B.lv} ก่อน`);
+                return;
+            }
+            if ((G.potBag || []).length >= POT_BAG_MAX) {
+                hToast(`🎒 ถุงยาเต็มแล้ว (${POT_BAG_MAX} ขวด) — ใช้หรือขายบางขวดก่อนนะ`);
+                return;
+            }
+            for (const k in B.need) {
+                if (G.herbHave(k) < B.need[k]) {
+                    hToast(`${(HERB_BY[k] || {}).emoji || "🌿"} ${(HERB_BY[k] || {}).name || k} ไม่พอ`);
+                    return;
+                }
+            }
+            for (const k in B.need)
+                G.herbBag[k] -= B.need[k];
+            const pw = G.brewPower(B);
+            G.potBag = G.potBag || [];
+            G.potBag.push({ id: B.id, kind: B.kind, pct: pw.pct, mins: pw.mins || 0, lv: G.herbLv || 1 });
+            let lvUp = 0;
+            G.herbExp = (G.herbExp || 0) + B.exp;
+            while ((G.herbLv || 1) < HERB_LV_MAX && G.herbExp >= HERB_LV_EXP(G.herbLv || 1)) {
+                G.herbExp -= HERB_LV_EXP(G.herbLv || 1);
+                G.herbLv = (G.herbLv || 1) + 1;
+                lvUp++;
+            }
+            if ((G.herbLv || 1) >= HERB_LV_MAX)
+                G.herbExp = Math.min(G.herbExp, HERB_LV_EXP(HERB_LV_MAX));
+            if (G.sfx && G.sfx.buy)
+                G.sfx.buy();
+            hToast(`${B.emoji} ปรุง${B.name}สำเร็จ! (+${B.exp} EXP)`);
+            if (lvUp)
+                hToast(`🌿 ปรุงยาเลเวล ${G.herbLv} แล้ว!`);
+            G.syncHerbUi();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 🥤 ใช้ยา 1 ขวด
+        G.useBrew = (idx) => {
+            const bag = G.potBag || [];
+            const p = bag[idx];
+            if (!p)
+                return;
+            const B = BREW_BY[p.id] || {};
+            if (p.kind === "hp") {
+                const mx = effMaxHp();
+                const before = G.player.hp;
+                if (before >= mx) {
+                    hToast("❤️ เลือดเต็มอยู่แล้ว");
+                    return;
+                }
+                G.player.hp = Math.min(mx, before + Math.round(mx * p.pct / 100));
+                hToast(`🧪 ฟื้นเลือด +${Math.round(G.player.hp - before)}`);
+            }
+            else if (p.kind === "mp") {
+                const mx = effMaxMp();
+                const before = G.player.mp;
+                if (before >= mx) {
+                    hToast("💧 มานาเต็มอยู่แล้ว");
+                    return;
+                }
+                G.player.mp = Math.min(mx, before + Math.round(mx * p.pct / 100));
+                hToast(`💧 ฟื้นมานา +${Math.round(G.player.mp - before)}`);
+            }
+            else {
+                const slot = p.kind === "bhp" ? "hp" : "mp";
+                G.brewBuff = G.brewBuff || { hp: null, mp: null };
+                const cur = G.brewBuff[slot];
+                if (cur && cur.until > Date.now() && cur.pct > p.pct) {
+                    hToast("✨ บัฟที่ใช้อยู่แรงกว่า — เก็บขวดนี้ไว้ก่อนนะ");
+                    return;
+                }
+                G.brewBuff[slot] = { pct: p.pct, mins: p.mins, until: Date.now() + p.mins * 60000 };
+                const rat = G.player.hp / Math.max(1, effMaxHp()); // 🩸 รักษาสัดส่วนเลือดไว้ ไม่ให้บัฟแล้วเลือดพร่องทันที
+                if (slot === "hp")
+                    G.player.hp = Math.round(effMaxHp() * rat);
+                G.player.maxMp = effMaxMp();
+                hToast(`${B.emoji || "✨"} ${slot === "hp" ? "❤️ เลือดสูงสุด" : "🔮 มานาสูงสุด"} +${p.pct}% นาน ${p.mins} นาที`);
+            }
+            bag.splice(idx, 1);
+            if (G.sfx && G.sfx.heal)
+                G.sfx.heal();
+            else if (G.sfx && G.sfx.buy)
+                G.sfx.buy();
+            G.syncHerbUi();
+            if (G.syncPlayerUi)
+                G.syncPlayerUi();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 💰 ขายยาที่ไม่ใช้
+        G.sellBrew = (idx) => {
+            const bag = G.potBag || [];
+            const p = bag[idx];
+            if (!p)
+                return;
+            const B = BREW_BY[p.id] || {};
+            let worth = 0;
+            for (const k in (B.need || {}))
+                worth += ((HERB_BY[k] || {}).sell || 10) * B.need[k];
+            const gold = Math.max(10, Math.round(worth * 1.15));
+            G.gold += gold;
+            bag.splice(idx, 1);
+            hToast(`💰 ขาย${B.name || "ยา"} ได้ ${gold} ทอง`);
+            G.syncHerbUi();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // ✨ ค่าบัฟที่ใช้อยู่ (ให้สูตรพลังเรียก)
+        const brewB = (key) => {
+            const bb = G.brewBuff;
+            if (!bb)
+                return 0;
+            const slot = key === "hpPct" ? "hp" : key === "mpPct" ? "mp" : null;
+            if (!slot)
+                return 0;
+            const b = bb[slot];
+            return (b && b.until > Date.now()) ? (b.pct || 0) : 0;
+        };
+        G.brewB = brewB;
+        G.brewBuffInfo = () => {
+            const bb = G.brewBuff || {};
+            const now = Date.now();
+            const one = (slot, emoji, label) => {
+                const b = bb[slot];
+                if (!b || b.until <= now)
+                    return null;
+                return { slot, emoji, label, pct: b.pct, left: Math.max(0, Math.round((b.until - now) / 1000)) };
+            };
+            return [one("hp", "❤️", "เลือดสูงสุด"), one("mp", "🔮", "มานาสูงสุด")].filter(Boolean);
+        };
+        G.herbInfo = () => ({
+            lv: G.herbLv || 1, exp: G.herbExp || 0, need: HERB_LV_EXP(G.herbLv || 1), max: HERB_LV_MAX,
+            total: G.herbTotal || 0, power: Math.round((BREW_POW(G.herbLv || 1) - 1) * 100),
+        });
+        G.syncHerbUi = () => setUi((u) => ({ ...u,
+            herbInfo: G.herbInfo(), herbBag: { ...(G.herbBag || {}) }, potBag: G.potBagList(),
+            brewBuff: G.brewBuffInfo(), gold: G.gold }));
+        G.toggleHerb = () => setUi((u) => (u.herbOpen
+            ? { ...u, herbOpen: false }
+            : { ...u, herbOpen: true, menuOpen: false, kitchenOpen: false, fishBagOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false,
+                herbInfo: G.herbInfo(), herbBag: { ...(G.herbBag || {}) }, potBag: G.potBagList(), brewBuff: G.brewBuffInfo(), herbTab: u.herbTab || "brew" }));
+        // ================= 🌿 END HERBALISM =================
         G.startFishing = () => {
             if (G.fishing)
                 return;
@@ -36769,9 +37237,10 @@ function CherryAdventure() {
         const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
         const effAtk = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk * GEAR_ATK_W + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
         const effDef = () => num(Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * xMul("def") * (1 + softPct(tB("def") + constBonus().defPct + sB("defPct") + (G.foodB ? G.foodB("defPct") : 0)) / 100))); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
-        const effMaxHp = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+        const effMaxHp = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0) + (G.brewB ? G.brewB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
         G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
-        const effMaxMp = () => 30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp"); // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
+        const effMaxMp = () => Math.round((30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp")) * (1 + (G.brewB ? G.brewB("mpPct") : 0) / 100)); // 🌿 ยาบำรุงมานาคูณเป็น % ท้ายสุด // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
+        G.effMaxMp = effMaxMp; // 🔮 คู่กับ effMaxHp — ให้ส่วนอื่นอ่านมานาสูงสุดที่รวมบัฟแล้วได้
         const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1) * (G.qingSpd ? G.qingSpd() : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
         const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
         const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
@@ -36929,7 +37398,8 @@ function CherryAdventure() {
             team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
             playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
             guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null, // 🏰 โชว์บนป้ายเหนือหัว
-            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, itemLock: { ...(G.itemLock || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []),
+            inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, itemLock: { ...(G.itemLock || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []),
+            herbInfo: (G.herbInfo ? G.herbInfo() : null), potBag: (G.potBagList ? G.potBagList() : []), brewBuff: (G.brewBuffInfo ? G.brewBuffInfo() : []),
             titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
             rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
             costume: { ...(G.costume || {}) }, dye: { ...(G.dye || {}) }, dyePalette: [...(G.dyePalette || [])], weaponSkin: G.weaponSkin || "none", weaponEnchant: G.weaponEnchant || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, heroPick: G.heroPick || null, hideHero: !!G.heroHide, activeAura: G.activeAura || "none", potions: G.potions, mpPotions: G.mpPotions || 0, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, stardust: G.stardust || 0, diamonds: G.diamonds || 0, diaSkins: { ...(G.diaSkins || {}) }, heroesOwned: { ...(G.heroesOwned || {}) }, heroPasses: { ...(G.heroPasses || {}) }, heroTemp: { ...(G.heroTemp || {}) }, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0,
@@ -51633,6 +52103,12 @@ function CherryAdventure() {
             G.fishBag = { common: 0, rare: 0, epic: 0 };
             G.foodBuff = null;
             G.foodBag = []; // 🍳 ครัวเปล่า
+            G.herbLv = 1;
+            G.herbExp = 0;
+            G.herbTotal = 0;
+            G.herbBag = {};
+            G.potBag = [];
+            G.brewBuff = { hp: null, mp: null }; // 🌿 ยาสมุนไพรเริ่มต้น
             G.fishLv = 1;
             G.fishExp = 0;
             G.fishTotal = 0;
@@ -51754,7 +52230,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -55274,6 +55750,18 @@ function CherryAdventure() {
             G.fishExp = d.fishExp || 0;
             G.fishTotal = d.fishTotal || 0; // 🎣 เลเวลตกปลา
             G.fishCaught = (d.fishCaught && typeof d.fishCaught === "object") ? { ...d.fishCaught } : {};
+            G.herbLv = d.herbLv || 1;
+            G.herbExp = d.herbExp || 0;
+            G.herbTotal = d.herbTotal || 0;
+            G.herbBag = d.herbBag || {};
+            G.potBag = Array.isArray(d.potBag) ? d.potBag.map((q) => ({ ...q })) : [];
+            G.brewBuff = { hp: null, mp: null };
+            if (d.brewBuff)
+                for (const sl of ["hp", "mp"]) { // 🌿 บัฟที่หมดอายุระหว่างปิดเกมถือว่าหมดไปแล้ว
+                    const b = d.brewBuff[sl];
+                    if (b && b.until > Date.now())
+                        G.brewBuff[sl] = { pct: b.pct || 0, mins: b.mins || 0, until: b.until };
+                }
             G.foodBuff = (d.foodBuff && d.foodBuff.until > Date.now())
                 ? { id: d.foodBuff.id, q: d.foodBuff.q || "normal", buff: d.foodBuff.buff || null, extra: d.foodBuff.extra || {}, mins: d.foodBuff.mins || 0, until: d.foodBuff.until }
                 : null;
@@ -75277,7 +75765,8 @@ function CherryAdventure() {
         transform: "translateX(-50%)",
     });
     const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-        : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
+        : ui.herbNear ? "herb"
+            : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
     const isPrompt = (name) => _promptTop === name;
     const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
     const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
@@ -77702,6 +78191,157 @@ function CherryAdventure() {
                     MINE_LV_MAX,
                     " \u00B7 ",
                     (G.pickOf ? G.pickOf().name : ""))))),
+        ui.herbOpen && (() => {
+            const HI = ui.herbInfo || (G.herbInfo ? G.herbInfo() : { lv: 1, exp: 0, need: 1, max: HERB_LV_MAX, total: 0, power: 0 });
+            const bag = HERBS.map((h) => ({ ...h, n: (ui.herbBag || {})[h.id] || 0 }));
+            const pots = ui.potBag || [];
+            const buffs = ui.brewBuff || [];
+            const tab = ui.herbTab || "brew";
+            const tabBtn = (id, label) => (React.createElement("button", { key: id, onClick: () => setUi((u) => ({ ...u, herbTab: id })), style: {
+                    flex: 1, padding: "7px 4px", borderRadius: 10, border: "none", cursor: "pointer",
+                    fontSize: 12.5, fontWeight: 800, fontFamily: font,
+                    background: tab === id ? "linear-gradient(90deg,#3a8a4a,#7ac05a)" : "#eef2ea",
+                    color: tab === id ? "#fff" : "#5a6a55",
+                } }, label));
+            return (React.createElement("div", { style: { ...SKILL_SHELL } },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
+                    React.createElement("div", { style: { fontSize: 17, fontWeight: 900, color: "#2f5a34", fontFamily: font } }, "\uD83C\uDF3F \u0E22\u0E32\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23"),
+                    React.createElement("div", { style: { marginLeft: "auto", fontSize: 11.5, color: "#6a7a62", fontFamily: font } },
+                        "Lv.",
+                        HI.lv,
+                        "/",
+                        HI.max,
+                        " \u00B7 \u0E24\u0E17\u0E18\u0E34\u0E4C\u0E22\u0E32 +",
+                        HI.power,
+                        "%"),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, herbOpen: false })), style: {
+                            width: 30, height: 30, borderRadius: 999, border: "none", cursor: "pointer",
+                            background: "#eef2ea", color: "#5a6a55", fontSize: 16, fontWeight: 900, lineHeight: 1,
+                        } }, "\u00D7")),
+                React.createElement("div", { style: { height: 9, borderRadius: 999, background: "#e6ece2", overflow: "hidden", marginBottom: 4 } },
+                    React.createElement("div", { style: { width: `${Math.min(100, Math.round((HI.exp / Math.max(1, HI.need)) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#5aa84a,#9ad86a)" } })),
+                React.createElement("div", { style: { fontSize: 10.5, color: "#7a8a72", fontFamily: font, marginBottom: 8 } },
+                    "EXP ",
+                    HI.exp,
+                    "/",
+                    HI.need,
+                    " \u00B7 \u0E40\u0E01\u0E47\u0E1A\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23\u0E21\u0E32\u0E41\u0E25\u0E49\u0E27 ",
+                    HI.total,
+                    " \u0E15\u0E49\u0E19"),
+                buffs.length > 0 && (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" } }, buffs.map((b) => (React.createElement("div", { key: b.slot, style: {
+                        flex: "1 1 46%", padding: "6px 9px", borderRadius: 10, fontFamily: font,
+                        background: "linear-gradient(90deg,#fff4e2,#ffe9d0)", border: "1.5px solid #f0c88a",
+                    } },
+                    React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#8a5a20" } },
+                        b.emoji,
+                        " ",
+                        b.label,
+                        " +",
+                        b.pct,
+                        "%"),
+                    React.createElement("div", { style: { fontSize: 10, color: "#a07a48" } },
+                        "\u0E40\u0E2B\u0E25\u0E37\u0E2D ",
+                        Math.floor(b.left / 60),
+                        ":",
+                        String(b.left % 60).padStart(2, "0"),
+                        " \u0E19\u0E32\u0E17\u0E35")))))),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 9 } },
+                    tabBtn("brew", "⚗️ ปรุงยา"),
+                    tabBtn("bag", `🎒 ถุงยา (${pots.length})`),
+                    tabBtn("herb", "🌿 สมุนไพร")),
+                tab === "brew" && (React.createElement("div", { style: { display: "grid", gap: 7 } }, BREWS.map((B) => {
+                    const K = BREW_KIND[B.kind];
+                    const lvOk = HI.lv >= B.lv;
+                    let matOk = true;
+                    for (const k in B.need)
+                        if (((ui.herbBag || {})[k] || 0) < B.need[k])
+                            matOk = false;
+                    const ok = lvOk && matOk;
+                    const pw = Math.round(B.pct * BREW_POW(HI.lv));
+                    return (React.createElement("div", { key: B.id, style: {
+                            display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 12,
+                            background: ok ? "#f4faf2" : "#f2f2f0", border: `1.5px solid ${ok ? "#bfe0b0" : "#dcdcd8"}`, opacity: lvOk ? 1 : 0.55,
+                        } },
+                        React.createElement("div", { style: { fontSize: 22 } }, B.emoji),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0, fontFamily: font } },
+                            React.createElement("div", { style: { fontSize: 12.8, fontWeight: 900, color: "#2f4a33" } }, B.name),
+                            React.createElement("div", { style: { fontSize: 10.5, color: K.col, fontWeight: 800 } },
+                                K.emoji,
+                                " ",
+                                K.label,
+                                " ",
+                                pw,
+                                "%",
+                                B.mins ? ` · ${B.mins} นาที` : ""),
+                            React.createElement("div", { style: { fontSize: 10, color: "#7a8a72" } },
+                                Object.keys(B.need).map((k) => `${(HERB_BY[k] || {}).emoji || ""}${B.need[k]}`).join(" "),
+                                !lvOk ? ` · ต้อง Lv.${B.lv}` : "")),
+                        React.createElement("button", { disabled: !ok, onClick: () => G.brewPotion(B.id), style: {
+                                padding: "7px 12px", borderRadius: 999, border: "none", cursor: ok ? "pointer" : "default",
+                                fontSize: 12, fontWeight: 900, fontFamily: font, color: ok ? "#fff" : "#a0a098",
+                                background: ok ? "linear-gradient(90deg,#3a8a4a,#7ac05a)" : "#e4e4e0",
+                            } }, "\u0E1B\u0E23\u0E38\u0E07")));
+                }))),
+                tab === "bag" && (pots.length === 0
+                    ? React.createElement("div", { style: { padding: 22, textAlign: "center", color: "#8a9a82", fontSize: 12.5, fontFamily: font } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E22\u0E32\u0E43\u0E19\u0E16\u0E38\u0E07 \u2014 \u0E44\u0E1B\u0E17\u0E35\u0E48\u0E41\u0E17\u0E47\u0E1A \u2697\uFE0F \u0E1B\u0E23\u0E38\u0E07\u0E22\u0E32 \u0E44\u0E14\u0E49\u0E40\u0E25\u0E22")
+                    : React.createElement("div", { style: { display: "grid", gap: 7 } }, pots.map((p) => {
+                        const K = BREW_KIND[p.kind] || {};
+                        const D = p.def || {};
+                        return (React.createElement("div", { key: p.i, style: {
+                                display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 12,
+                                background: "#f7f9f6", border: "1.5px solid #d8e4d0",
+                            } },
+                            React.createElement("div", { style: { fontSize: 22 } }, D.emoji || K.emoji),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0, fontFamily: font } },
+                                React.createElement("div", { style: { fontSize: 12.8, fontWeight: 900, color: "#2f4a33" } }, D.name || "ยา"),
+                                React.createElement("div", { style: { fontSize: 10.5, color: K.col, fontWeight: 800 } },
+                                    K.emoji,
+                                    " ",
+                                    K.label,
+                                    " ",
+                                    p.pct,
+                                    "%",
+                                    p.mins ? ` · ${p.mins} นาที` : "")),
+                            React.createElement("button", { onClick: () => G.useBrew(p.i), style: {
+                                    padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                                    fontSize: 12, fontWeight: 900, fontFamily: font, color: "#fff",
+                                    background: "linear-gradient(90deg,#3a8a4a,#7ac05a)",
+                                } }, "\u0E43\u0E0A\u0E49"),
+                            React.createElement("button", { onClick: () => G.sellBrew(p.i), style: {
+                                    padding: "7px 10px", borderRadius: 999, border: "none", cursor: "pointer",
+                                    fontSize: 11.5, fontWeight: 900, fontFamily: font, color: "#8a6a20", background: "#f6e8c8",
+                                } }, "\u0E02\u0E32\u0E22")));
+                    }))),
+                tab === "herb" && (React.createElement("div", { style: { display: "grid", gap: 7 } },
+                    bag.map((h) => (React.createElement("div", { key: h.id, style: {
+                            display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 12,
+                            background: h.n > 0 ? "#f4faf2" : "#f2f2f0", border: `1.5px solid ${h.n > 0 ? "#bfe0b0" : "#dcdcd8"}`, opacity: h.n > 0 ? 1 : 0.6,
+                        } },
+                        React.createElement("div", { style: { fontSize: 22 } }, h.emoji),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0, fontFamily: font } },
+                            React.createElement("div", { style: { fontSize: 12.8, fontWeight: 900, color: "#2f4a33" } }, h.name),
+                            React.createElement("div", { style: { fontSize: 10.2, color: "#7a8a72" } }, h.desc)),
+                        React.createElement("div", { style: { fontSize: 14, fontWeight: 900, color: h.n > 0 ? "#3a8a4a" : "#a0a098", fontFamily: font } },
+                            "\u00D7",
+                            h.n)))),
+                    React.createElement("div", { style: { fontSize: 10.5, color: "#8a9a82", fontFamily: font, textAlign: "center", marginTop: 3 } }, "\uD83C\uDF3F \u0E40\u0E14\u0E34\u0E19\u0E2B\u0E32\u0E01\u0E2D\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23\u0E43\u0E19\u0E42\u0E25\u0E01\u0E01\u0E27\u0E49\u0E32\u0E07 \u0E41\u0E25\u0E49\u0E27\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21 \u201C\u0E40\u0E01\u0E47\u0E1A\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23\u201D")))));
+        })(),
+        ui.mode === "explore" && isPrompt("herb") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
+            React.createElement("button", { onClick: () => G.gatherHerb(), style: {
+                    padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+                    fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.25,
+                    background: "linear-gradient(90deg,#3a8a4a,#7ac05a)",
+                    boxShadow: "0 5px 16px rgba(58,138,74,0.5)", whiteSpace: "nowrap",
+                } },
+                "\uD83C\uDF3F \u0E40\u0E01\u0E47\u0E1A\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23",
+                ui.herbKind && HERB_BY[ui.herbKind] ? React.createElement("span", { style: { display: "block", fontSize: 10.5, opacity: 0.92 } },
+                    HERB_BY[ui.herbKind].emoji,
+                    HERB_BY[ui.herbKind].name) : null,
+                React.createElement("span", { style: { display: "block", fontSize: 9.5, opacity: 0.85 } },
+                    "\uD83C\uDF3F \u0E40\u0E25\u0E40\u0E27\u0E25\u0E1B\u0E23\u0E38\u0E07\u0E22\u0E32 ",
+                    (ui.herbInfo || {}).lv || 1,
+                    "/",
+                    HERB_LV_MAX)))),
         ui.mode === "explore" && ui.mining && (() => {
             const m = ui.mining;
             const zL = Math.max(0, (m.zc - m.zone / 2) * 100), zW = m.zone * 100;
@@ -78317,6 +78957,7 @@ function CherryAdventure() {
                         ["⛏️", "ขุดสายแร่", () => { setUi((u) => ({ ...u, menuOpen: false })); G.startMining(); }, "#c09a4a"],
                         ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a", "kitchen"],
                         ["🎣", "กระเป๋าตกปลา", () => G.toggleFishBag(), "#4a90c0"],
+                        ["🌿", "ยาสมุนไพร", () => G.toggleHerb(), "#5aa84a"],
                         ["🔨", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
                         ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0", "exped"],
                     ]],
