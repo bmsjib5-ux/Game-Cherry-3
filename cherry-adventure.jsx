@@ -303,6 +303,10 @@ const RYU_FLY = 2.6;
 const GAR_FLY = 1.5;
 // 🦊 ยันต์คิทสึเนะขยายใหญ่กี่เท่าตอนใช้ท่า
 const KIT_SIGIL = 3.2;
+// 🔥 ฟีนิกซ์ทะยานขึ้นกี่หน่วยตอนเรียกฝนเพลิง
+const PHX_FLY = 2.0;
+// 👹 วงเวทย์นรกแอสซูร่าขยายกี่เท่าตอนใช้ท่า
+const ASU_SIGIL = 3.6;
 const HERO_SWING = {
   fenrir:   { style: "claw",   fx: "crossslash",   col: 0x9ad0ff },
   neko:     { style: "claw",   fx: "crossslash",   col: 0xffb0d0 },
@@ -10733,6 +10737,7 @@ export default function CherryAdventure() {
       asuParts.forEach(q => q.visible = false);
       G._asuParts = asuParts;
       G._asuShoeMat = dPlateD; // 🥾 บู๊ตเกราะดำ
+      G._asuWings = asuWings; G._asuSigil = asuSigil; G._asuTail = asuTail;   // 👹 ท่าประจำตัวคุมปีก/วงเวทย์/หาง
       G._asuFur = { tail: asuAura, tailTube: { m: asuTube, rings: 25, per: 9 }, tailTip: asuBarb, tailTipB: asuBarbB, tailRoot: asuTail, wings: asuStrands.concat(asuWings), cloth: asuCloth, puffs: asuMotes, spin: [asuSigil], wagHz: 2.2, wagAmp: 0.1, wingAmp: 0.2, ph: 9 };
     }
 
@@ -11722,6 +11727,7 @@ export default function CherryAdventure() {
       G._phxParts = phxParts;
       G._phxShoeMat = pCrimD;
       G._phxWings = phxWingG;
+      G._phxWings = pWings;   // 🪽 ปีกเพลิงคู่ — ท่าประจำตัวคุมมุมกาง
       G._phxFur = { tail: phxAura, tailTube: { m: phxTube, rings: 27, per: 9 }, tailTip: phxTip, tailTipB: phxTipB, riders: phxRid, wings: pWings.concat(pStrands), cloth: pCloth, puffs: pMotes, wagHz: 1.5, wagAmp: 0.17, wingAmp: 0.16, ph: 25 };
     }
 
@@ -26931,6 +26937,93 @@ export default function CherryAdventure() {
     };
     G._foxFire = spawnFoxFire;
     // ================= 🦊 END คิทสึเนะ =================
+    // ================= 🔥 ฟีนิกซ์ — ฝนอุกกาบาตเพลิง =================
+    // ลูกไฟตกลงมาจากฟ้ารอบ ๆ เป้า ทยอยตกทีละลูก ถึงพื้นแล้วแตกกระจาย
+    const phxFx = [];
+    const spawnPhoenixMeteor = (tx, tz, col, delay, spread) => {
+      try {
+        const sp = spread == null ? 1.6 : spread;
+        const a = Math.random() * Math.PI * 2, rr = Math.random() * sp;
+        const gx = tx + Math.cos(a) * rr, gz = tz + Math.sin(a) * rr;
+        const g = new THREE.Group();
+        const outer = new THREE.MeshBasicMaterial({ color: col || 0xff4a2a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const core = new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), outer);
+        const hot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), core);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.2, 1.15, 8, 1, true), outer);
+        tail.position.y = 0.62;                              // หางไฟลากขึ้นด้านบน (ทิศที่ตกลงมา)
+        head.raycast = () => {}; hot.raycast = () => {}; tail.raycast = () => {};
+        g.add(head, hot, tail);
+        g.position.set(gx + 0.9, 7.4, gz + 0.9);
+        g.userData = { t: 0, d0: delay || 0, dur: 0.42, gx, gz, sx: gx + 0.9, sz: gz + 0.9,
+                       mats: [outer, core], meshes: [head, hot, tail], col: col || 0xff4a2a, hit: false };
+        (G._worldRoot || scene).add(g); phxFx.push(g);
+      } catch (e) {}
+    };
+    G._animPhxFx = (d) => {
+      for (let i = phxFx.length - 1; i >= 0; i--) {
+        const g = phxFx[i], u = g.userData;
+        u.t += d;
+        if (u.t < u.d0) { u.mats[0].opacity = 0; u.mats[1].opacity = 0; continue; }
+        const p = Math.min(1, (u.t - u.d0) / u.dur);
+        const e = p * p;                                     // ตกเร็วขึ้นเรื่อย ๆ
+        g.position.set(u.sx + (u.gx - u.sx) * e, 7.4 + (0.25 - 7.4) * e, u.sz + (u.gz - u.sz) * e);
+        u.mats[0].opacity = 0.9; u.mats[1].opacity = 1;
+        if (p >= 1 && !u.hit) {
+          u.hit = true;
+          try { burst(new THREE.Vector3(u.gx, 0.3, u.gz), u.col, 0.85); } catch (_) {}
+          G._camShake = Math.max(G._camShake || 0, 0.2);
+          (G._worldRoot || scene).remove(g);
+          u.mats.forEach((m) => m.dispose());
+          u.meshes.forEach((m) => m.geometry.dispose());
+          phxFx.splice(i, 1);
+        }
+      }
+    };
+    G._phxMeteor = spawnPhoenixMeteor;
+    // ================= 🔥 END ฟีนิกซ์ =================
+    // ================= 👹 แอสซูร่า — หนามนรกผุดจากพื้น =================
+    // หนามแหลมทะลุขึ้นมาจากใต้ดินเป็นวง ทยอยผุดทีละต้น พุ่งเลยแล้วยุบจมหายไป
+    const asuFx = [];
+    const spawnHellSpikes = (x, z, col, n, rad) => {
+      try {
+        const N = n || 8, R = rad == null ? 1.7 : rad;
+        for (let k = 0; k < N; k++) {
+          const a = (k / N) * Math.PI * 2 + Math.random() * 0.3;
+          const sx = x + Math.cos(a) * R * (0.55 + Math.random() * 0.6);
+          const sz = z + Math.sin(a) * R * (0.55 + Math.random() * 0.6);
+          const m = new THREE.MeshBasicMaterial({ color: col || 0xff3a5a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+          const h = 1.05 + Math.random() * 0.75;
+          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.17, h, 5), m);
+          spike.raycast = () => {};
+          spike.rotation.z = (Math.random() - 0.5) * 0.4;      // เอียงคนละองศา ไม่เป็นระเบียบเกินไป
+          spike.rotation.x = (Math.random() - 0.5) * 0.3;
+          spike.position.set(sx, -h, sz);
+          spike.userData = { t: 0, d0: k * 0.035, dur: 0.5, h, mat: m };
+          (G._worldRoot || scene).add(spike); asuFx.push(spike);
+        }
+      } catch (e) {}
+    };
+    G._animAsuFx = (d) => {
+      for (let i = asuFx.length - 1; i >= 0; i--) {
+        const s2 = asuFx[i], u = s2.userData;
+        u.t += d;
+        if (u.t < u.d0) continue;
+        const p = Math.min(1, (u.t - u.d0) / u.dur);
+        // พุ่งขึ้นเร็วแล้วเด้งเลยนิดหนึ่ง ก่อนยุบจมลง
+        const up = p < 0.35 ? (p / 0.35) : 1 - (p - 0.35) / 0.65;
+        const over = p < 0.35 ? Math.sin((p / 0.35) * Math.PI) * 0.14 : 0;
+        s2.position.y = -u.h + (u.h * 0.92 + over) * (p < 0.35 ? (p / 0.35) : 1) - (p < 0.35 ? 0 : (u.h * 0.92) * ((p - 0.35) / 0.65));
+        u.mat.opacity = 0.9 * Math.min(1, up * 1.6);
+        if (p >= 1) {
+          (G._worldRoot || scene).remove(s2);
+          u.mat.dispose(); s2.geometry.dispose();
+          asuFx.splice(i, 1);
+        }
+      }
+    };
+    G._hellSpikes = spawnHellSpikes;
+    // ================= 👹 END แอสซูร่า =================
     // 🔥❄️ เอฟเฟกต์เวทหมู่ — ดวงไฟลอยขึ้นแล้วพุ่งใส่ · เสาไฟผุดจากพื้น · แท่งน้ำแข็งผุดขึ้นแช่แข็งแล้วแตก
     const magicFx = [];
     const spawnFirePillar = (x, z, col) => {
@@ -37163,6 +37256,8 @@ export default function CherryAdventure() {
         if (G._animDragonFx) G._animDragonFx(dt);             // 🐉 ลมหายใจมังกรริวจิน
         if (G._animGarudaFx) G._animGarudaFx(dt);             // 🦅 ขนเพชรครุฑที่ยิงออกไป
         if (G._animFoxFx) G._animFoxFx(dt);                   // 🦊 ไฟจิ้งจอกคิทสึเนะ
+        if (G._animPhxFx) G._animPhxFx(dt);                   // 🔥 อุกกาบาตเพลิงฟีนิกซ์
+        if (G._animAsuFx) G._animAsuFx(dt);                   // 👹 หนามนรกแอสซูร่า
         if (G._animMagicFx) G._animMagicFx(dt);               // 🔥❄️ ดวงไฟ/เสาไฟ + แท่งน้ำแข็งแช่แข็ง
         if (G._animArcherFx) G._animArcherFx(dt);             // 🎯🦅⚡💥 ลำแสงเจาะ · เหยี่ยว · สายฟ้าลูกโซ่ · ฝนลูกธนู
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
@@ -39011,6 +39106,176 @@ export default function CherryAdventure() {
               burst(new THREE.Vector3(char.position.x, 0.18, char.position.z), 0xdccfae, 0.85); // 🌫️ ฝุ่นตอนเบรก
             }
             try { S.fire(); } catch (e) {}
+          }
+          // ================= 👹 ท่าประจำตัวแอสซูร่า (โลกกว้าง) =================
+          // ใส่ชุดแอสซูร่าแล้วร่ายสกิล สลับ 3 ท่า: ปีกนรกโอบระเบิด → หางนรกแทง → วงเวทย์หนามนรก
+          if (G.heroId === "asura" && !G.heroHide) {
+            if (S.asuM === undefined) S.asuM = (G._asuMoveN = ((G._asuMoveN || 0) + 1) % 3);
+            const aCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg)));                        // 0→1 เก็บพลัง
+            const aRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel)));      // 0→1 ปล่อยท่า
+            const ab = (cur, tgt) => cur + (tgt - cur) * cbw;   // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+            const aw = G._asuWings || [], asig = G._asuSigil, atail = G._asuTail;
+            let wFold = 0, sigK = 0, tailX = 0;
+            if (S.asuM === 0) {
+              // ① 🌑 โอบปีกคลุมตัวเก็บพลัง แล้วสะบัดกางออกพร้อมคลื่นมืด
+              wFold = -1.15 * aCh + 1.9 * aRel;                 // หุบเข้าคลุมตัว → กางผางออก
+              armR.rotation.x = ab(armR.rotation.x, -0.5 - 1.5 * aCh + 1.8 * aRel);
+              armR.rotation.z = ab(armR.rotation.z, 0.25 + 0.9 * aCh - 1.2 * aRel);   // กอดอกตอนเก็บพลัง
+              armL.rotation.x = ab(armL.rotation.x, -0.5 - 1.5 * aCh + 1.8 * aRel);
+              armL.rotation.z = ab(armL.rotation.z, -0.25 - 0.9 * aCh + 1.2 * aRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = ab(armR.userData.elbow.rotation.x, -1.4 + 1.1 * aRel);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = ab(armL.userData.elbow.rotation.x, -1.4 + 1.1 * aRel);
+              torso.rotation.x = ab(torso.rotation.x, 0.3 * aCh - 0.45 * aRel);       // ก้มเก็บ → แอ่นอกผาง
+              headG.rotation.x = ab(headG.rotation.x, 0.28 * aCh - 0.4 * aRel);
+              char.position.y += (-0.18 * aCh + 0.8 * aRel * (1 - aRel)) * cbw;       // ย่อลง → กระโดดผางตอนกาง
+              if (!S.asuFx && aRel > 0.4) {
+                S.asuFx = 1;
+                try { spawnSkillFx("shadow", new THREE.Vector3(char.position.x, 0.6, char.position.z), S.col || 0xff3a5a); } catch (_) {}
+                if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.7);
+                G._camShake = Math.max(G._camShake || 0, 0.5);
+                G._hitStop = Math.max(G._hitStop || 0, 0.055);
+              }
+            } else if (S.asuM === 1) {
+              // ② 🔻 ยกหางปลายลูกศรข้ามไหล่ แล้วสับแทงไปข้างหน้า
+              wFold = 0.5 * aCh - 0.2 * aRel;
+              tailX = -1.5 * aCh + 2.6 * aRel;                  // ง้างขึ้นเหนือหัว → สับลงมาข้างหน้า
+              armR.rotation.x = ab(armR.rotation.x, -0.35 - 0.5 * aCh + 0.3 * aRel);
+              armR.rotation.z = ab(armR.rotation.z, 0.75 + 0.35 * aCh);
+              armL.rotation.x = ab(armL.rotation.x, -0.35 - 0.5 * aCh + 0.3 * aRel);
+              armL.rotation.z = ab(armL.rotation.z, -0.75 - 0.35 * aCh);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = ab(armR.userData.elbow.rotation.x, -0.55);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = ab(armL.userData.elbow.rotation.x, -0.55);
+              torso.rotation.x = ab(torso.rotation.x, -0.26 * aCh + 0.4 * aRel);
+              headG.rotation.x = ab(headG.rotation.x, -0.18 * aCh + 0.26 * aRel);
+              char.position.y += 0.3 * aCh * (1 - aRel) * cbw;
+              if (!S.asuFx && aRel > 0.5) {                     // 🔻 ปลายหางปักถึงเป้า
+                S.asuFx = 1;
+                const tx3 = char.position.x + Math.sin(char.rotation.y) * 2.0, tz3 = char.position.z + Math.cos(char.rotation.y) * 2.0;
+                try { spawnSkillFx("pierce", new THREE.Vector3(tx3, 0.8, tz3), S.col || 0xff3a5a); } catch (_) {}
+                G._camShake = Math.max(G._camShake || 0, 0.4);
+                G._hitStop = Math.max(G._hitStop || 0, 0.05);
+              }
+            } else {
+              // ③ ⭕ วงเวทย์นรกใต้เท้าขยาย แล้วหนามนรกทะลุพื้นขึ้นล้อมเป้า
+              wFold = 0.85 * aCh - 0.25 * aRel;
+              sigK = aCh * (1 - aRel * 0.3);
+              armR.rotation.x = ab(armR.rotation.x, -0.6 - 1.0 * aCh + 1.9 * aRel);   // กดฝ่ามือลงพื้น
+              armR.rotation.z = ab(armR.rotation.z, 0.3);
+              armL.rotation.x = ab(armL.rotation.x, -0.6 - 1.0 * aCh + 1.9 * aRel);
+              armL.rotation.z = ab(armL.rotation.z, -0.3);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = ab(armR.userData.elbow.rotation.x, -1.1 + 0.9 * aRel);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = ab(armL.userData.elbow.rotation.x, -1.1 + 0.9 * aRel);
+              legL.rotation.x = ab(legL.rotation.x, 0.2 * aRel);
+              torso.rotation.x = ab(torso.rotation.x, -0.2 * aCh + 0.5 * aRel);
+              headG.rotation.x = ab(headG.rotation.x, -0.15 * aCh + 0.35 * aRel);
+              char.position.y += (0.35 * aCh - 0.45 * aRel) * cbw;                    // ลอยขึ้น → ทิ้งตัวลงกดพื้น
+              if (!S.asuFx && aRel > 0.45) {
+                S.asuFx = 1;
+                const tgt = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus : nearestWild(worldRange() + 6);
+                const hx2 = tgt ? tgt.position.x : char.position.x + Math.sin(char.rotation.y) * 2.4;
+                const hz2 = tgt ? tgt.position.z : char.position.z + Math.cos(char.rotation.y) * 2.4;
+                if (G._hellSpikes) G._hellSpikes(hx2, hz2, S.col || 0xff3a5a, 8, 1.7);
+                G._camShake = Math.max(G._camShake || 0, 0.46);
+                G._hitStop = Math.max(G._hitStop || 0, 0.05);
+              }
+            }
+            // 🪽 ปีกปีศาจซ้าย-ขวาต้องเซ็นตรงข้ามกัน (โมเดลมิเรอร์ด้วยสเกลลบ) ถึงจะโอบ/กางสมมาตร
+            for (let wi = 0; wi < aw.length; wi++) {
+              const w = aw[wi], sgn = wi ? -1 : 1;
+              w.rotation.y = (w.userData.by || 0) + (wFold * sgn) * cbw;
+            }
+            if (asig) {                                          // ⭕ วงเวทย์นรกใต้เท้า
+              asig.scale.setScalar(1 + (ASU_SIGIL - 1) * sigK * cbw);
+              asig.rotation.y -= dt * (0.5 + 6 * sigK) * cbw;     // หมุนสวนเข็มตามของเดิม
+            }
+            if (atail && tailX) atail.rotation.x = tailX * cbw;   // 🔻 หางสับแทง
+          }
+          // ================= 🔥 ท่าประจำตัวฟีนิกซ์ (โลกกว้าง) =================
+          // ใส่ชุดฟีนิกซ์แล้วร่ายสกิล สลับ 3 ท่า: เพลิงนิรันดร์ → ดาวตกเพลิง → ฝนเพลิงจากฟ้า
+          if (G.heroId === "phoenix" && !G.heroHide) {
+            if (S.phxM === undefined) S.phxM = (G._phxMoveN = ((G._phxMoveN || 0) + 1) % 3);
+            const pCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg)));                        // 0→1 เก็บพลัง
+            const pRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel)));      // 0→1 ปล่อยท่า
+            const pb = (cur, tgt) => cur + (tgt - cur) * cbw;   // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+            const pw = G._phxWings || [];
+            let wRaise = 0, wBack = 0;
+            if (S.phxM === 0) {
+              // ① 🔥 เพลิงนิรันดร์ — เสาไฟผุดรอบตัว กางปีกชูขึ้น ลอยขึ้นกลางเปลวไฟ
+              wRaise = 1.25 * pCh * (1 - pRel * 0.4);          // ชูปีกขึ้นสูง
+              wBack = -0.3 * pCh;
+              armR.rotation.x = pb(armR.rotation.x, -0.4 - 1.9 * pCh + 0.8 * pRel);
+              armR.rotation.z = pb(armR.rotation.z, 0.7 + 0.6 * pCh - 0.3 * pRel);
+              armL.rotation.x = pb(armL.rotation.x, -0.4 - 1.9 * pCh + 0.8 * pRel);
+              armL.rotation.z = pb(armL.rotation.z, -0.7 - 0.6 * pCh + 0.3 * pRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = pb(armR.userData.elbow.rotation.x, -0.28);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = pb(armL.userData.elbow.rotation.x, -0.28);
+              torso.rotation.x = pb(torso.rotation.x, -0.3 * pCh + 0.2 * pRel);
+              headG.rotation.x = pb(headG.rotation.x, -0.34 * pCh + 0.22 * pRel);   // เงยหน้ารับไฟ
+              char.position.y += 0.9 * pCh * (1 - pRel * 0.6) * cbw;
+              if (!S.phxFx && pCh > 0.55) {                     // 🔥 เสาไฟผุดรอบตัวตอนสะสมเต็ม
+                S.phxFx = 1;
+                for (let q = 0; q < 5; q++) {
+                  const aa = (q / 5) * Math.PI * 2;
+                  try { spawnFirePillar(char.position.x + Math.cos(aa) * 1.15, char.position.z + Math.sin(aa) * 1.15, S.col || 0xff4a2a); } catch (_) {}
+                }
+                G._camShake = Math.max(G._camShake || 0, 0.4);
+              }
+            } else if (S.phxM === 1) {
+              // ② ☄️ ดาวตกเพลิง — หุบปีกลู่หลังสุด โน้มตัวพุ่งไปข้างหน้าเป็นลูกไฟ
+              wRaise = -0.55 * pCh;                             // หุบปีกแนบตัว
+              wBack = 1.35 * pCh - 0.35 * pRel;                 // ลู่ไปหลังสุด
+              armR.rotation.x = pb(armR.rotation.x, -0.9 - 1.2 * pCh + 0.4 * pRel);
+              armR.rotation.z = pb(armR.rotation.z, 0.18);
+              armL.rotation.x = pb(armL.rotation.x, -0.9 - 1.2 * pCh + 0.4 * pRel);
+              armL.rotation.z = pb(armL.rotation.z, -0.18);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = pb(armR.userData.elbow.rotation.x, -0.2);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = pb(armL.userData.elbow.rotation.x, -0.2);
+              legL.rotation.x = pb(legL.rotation.x, -0.4 * pCh);
+              legR.rotation.x = pb(legR.rotation.x, -0.28 * pCh);
+              torso.rotation.x = pb(torso.rotation.x, 0.42 * pCh - 0.1 * pRel);     // โน้มตัวไปหน้าแบบพุ่ง
+              char.position.y += 0.6 * pCh * (1 - pRel) * cbw;
+              S.phxGh = (S.phxGh || 0) - dt;
+              if (S.phxGh <= 0 && pCh > 0.5 && pRel < 0.9) {                        // 🔥 ทิ้งเงาไฟไว้เป็นทาง
+                S.phxGh = 0.045;
+                try { spawnBodyGhost(0.3, S.col || 0xff4a2a); } catch (_) {}
+              }
+              if (!S.phxFx && pRel > 0.35) {
+                S.phxFx = 1;
+                const bx2 = char.position.x + Math.sin(char.rotation.y) * 1.6, bz2 = char.position.z + Math.cos(char.rotation.y) * 1.6;
+                try { spawnSkillFx("hellfire", new THREE.Vector3(bx2, 0.5, bz2), S.col || 0xff4a2a); } catch (_) {}
+                G._camShake = Math.max(G._camShake || 0, 0.45);
+                G._hitStop = Math.max(G._hitStop || 0, 0.05);
+              }
+            } else {
+              // ③ 🌋 ฝนเพลิงจากฟ้า — ทะยานขึ้น กระพือปีกกว้าง เรียกอุกกาบาตลงใส่เป้า
+              wRaise = 0.5 + Math.sin(S.t * 15) * 0.55 * pCh;   // กระพือถี่ ๆ ตอนลอยค้าง
+              wBack = -0.2 * pCh;
+              char.position.y += PHX_FLY * pCh * (1 - pRel * 0.5) * cbw;
+              armR.rotation.x = pb(armR.rotation.x, -0.5 - 2.2 * pCh + 1.0 * pRel);
+              armR.rotation.z = pb(armR.rotation.z, 0.3 + 0.2 * pCh);
+              armL.rotation.x = pb(armL.rotation.x, -0.5 - 2.2 * pCh + 1.0 * pRel);
+              armL.rotation.z = pb(armL.rotation.z, -0.3 - 0.2 * pCh);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = pb(armR.userData.elbow.rotation.x, -0.35);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = pb(armL.userData.elbow.rotation.x, -0.35);
+              legL.rotation.x = pb(legL.rotation.x, -0.35 * pCh);
+              legR.rotation.x = pb(legR.rotation.x, -0.22 * pCh);
+              torso.rotation.x = pb(torso.rotation.x, -0.22 * pCh + 0.16 * pRel);
+              if (!S.phxFx && pRel > 0.2) {
+                S.phxFx = 1;
+                const tgt = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus : nearestWild(worldRange() + 6);
+                const mx = tgt ? tgt.position.x : char.position.x + Math.sin(char.rotation.y) * 3;
+                const mz = tgt ? tgt.position.z : char.position.z + Math.cos(char.rotation.y) * 3;
+                if (G._phxMeteor) for (let q = 0; q < 7; q++) G._phxMeteor(mx, mz, S.col || 0xff4a2a, q * 0.08, 1.9);
+                G._camShake = Math.max(G._camShake || 0, 0.3);
+                if (G.sfx && G.sfx.slash) G.sfx.slash();
+              }
+            }
+            // 🪽 ปีกเพลิงซ้าย-ขวาต้องกางสมมาตร → มุมเซ็นตรงข้ามกัน (ตรงกับจังหวะกระพือเดิม)
+            for (let wi = 0; wi < pw.length; wi++) {
+              const w = pw[wi], sgn = wi ? -1 : 1;
+              w.rotation.z = (wRaise * sgn) * cbw;
+              w.rotation.y = (w.userData.by || 0) + (wBack * sgn) * cbw;
+            }
           }
           // ================= 🦊 ท่าประจำตัวคิทสึเนะ (โลกกว้าง) =================
           // ใส่ชุดคิทสึเนะแล้วร่ายสกิล สลับ 3 ท่า: เก้าหางกวาด → ไฟจิ้งจอก → ยันต์เก้าหาง
