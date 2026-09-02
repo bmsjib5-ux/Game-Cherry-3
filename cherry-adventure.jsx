@@ -2756,7 +2756,8 @@ export default function CherryAdventure() {
     const rect = el.getBoundingClientRect();
     const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
     let dx = cx0 - cx, dy = cy0 - cy;
-    const max = rect.width / 2 - 22;
+    const kw = (knobRef.current && knobRef.current.offsetWidth) || 52;
+    const max = Math.max(12, rect.width / 2 - kw / 2 - 5);   // 🕹️ อิงขนาดจริงทั้งวงและลูกบิด ปรับขนาดแล้วไม่ล้นขอบ
     const len = Math.hypot(dx, dy);
     if (len > max) { dx = (dx / len) * max; dy = (dy / len) * max; }
     if (knobRef.current) knobRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -53252,14 +53253,14 @@ export default function CherryAdventure() {
             onPointerUp={joyEnd}
             onPointerCancel={joyEnd}
             style={{
-              position: "absolute", ...(_shortHud ? { left: `calc(${HUD_EDGE + HUD_BTN_L + 40}px + var(--sa-l, 0px))`, bottom: 50, width: 70, height: 70 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 18}px + var(--sa-l, 0px))`, bottom: 96, width: 112, height: 112 }), borderRadius: "50%",
+              position: "absolute", ...(_shortHud ? { left: `calc(${HUD_EDGE + HUD_BTN_L + 34}px + var(--sa-l, 0px))`, bottom: 46, width: 92, height: 92 } : { left: `calc(${HUD_EDGE + HUD_BTN_L + 12}px + var(--sa-l, 0px))`, bottom: 92, width: 136, height: 136 }), borderRadius: "50%",
               background: "rgba(255,255,255,0.45)", border: "3px solid rgba(122,160,91,0.5)",
               touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 14px rgba(90,120,70,0.2)",
             }}
           >
             <div ref={knobRef} style={{
-              width: 52, height: 52, borderRadius: "50%", background: "#7ba05b",
+              width: _shortHud ? 46 : 58, height: _shortHud ? 46 : 58, borderRadius: "50%", background: "#7ba05b",
               boxShadow: "0 3px 10px rgba(122,160,91,0.5)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 20, pointerEvents: "none",
