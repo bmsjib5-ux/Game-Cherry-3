@@ -17384,8 +17384,13 @@ export default function CherryAdventure() {
       const exits = indoor ? [] : (G._roadEnds || []).map((e) => ({
         dir: e.dir, vx: e.vx, vz: e.vz, id: e.id, name: e.name, emoji: e.emoji, lvMin: e.lvMin, arrow: e.arrow, side: e.side,
       }));
+      // ⛏️🌿 จุดเก็บของในแมพ — เอาเฉพาะที่ยังไม่ถูกเก็บ (dead = รอเกิดใหม่ ไม่ต้องโชว์)
+      const ores = indoor ? [] : (G.mineNodes || []).filter((n) => n && !n.dead)
+        .map((n) => ({ x: n.x, z: n.z, ore: n.ore || "ironOre" }));
+      const herbs = indoor ? [] : (G.herbNodes || []).filter((n) => n && !n.dead)
+        .map((n) => ({ x: n.x, z: n.z, herb: n.herb || "leaf", uses: n.uses == null ? HERB_USES : n.uses }));
       return {
-        r: FIELD_R, indoor,
+        r: FIELD_R, indoor, ores, herbs,
         biome: { id: b.id, name: b.name, emoji: b.emoji, ground: b.ground, lvMin: b.lvMin, lvMax: b.lvMax },
         me: { x: char.position.x, z: char.position.z, ry: char.rotation.y },
         cam: G._camAng != null ? G._camAng : 0,
@@ -17441,6 +17446,34 @@ export default function CherryAdventure() {
         c.fillStyle = "rgba(80,170,235,0.75)"; c.fill();
         c.strokeStyle = "rgba(255,255,255,0.6)"; c.lineWidth = 1; c.stroke();
       }
+
+      // ⛏️ สายแร่ — สี่เหลี่ยมข้าวหลามตัดสีตามชนิดแร่
+      const nodeR = big ? 4.6 : 2.9;
+      (S.ores || []).forEach((o) => {
+        const x = PX(o.x), z = PZ(o.z);
+        const M = MATERIALS[o.ore] || {};
+        c.save(); c.translate(x, z); c.rotate(Math.PI / 4);
+        c.fillStyle = _hexCss(M.color != null ? M.color : 0x9aa0a8);
+        c.fillRect(-nodeR, -nodeR, nodeR * 2, nodeR * 2);
+        c.lineWidth = 1.2; c.strokeStyle = "rgba(255,255,255,0.85)";
+        c.strokeRect(-nodeR, -nodeR, nodeR * 2, nodeR * 2);
+        c.restore();
+      });
+
+      // 🌿 กอสมุนไพร — สามเหลี่ยมเขียว จางลงตามจำนวนครั้งที่เหลือ
+      (S.herbs || []).forEach((o) => {
+        const x = PX(o.x), z = PZ(o.z);
+        const H = HERB_BY[o.herb] || {};
+        const tone = H.id === "lotus" ? "#ff9ad0" : H.id === "mush" ? "#7ae8c0" : H.id === "flower" ? "#ffb8dc" : H.id === "root" ? "#c09a5a" : "#6ac04a";
+        const left = Math.max(1, o.uses || 1), full = HERB_USES || 3;
+        c.globalAlpha = 0.45 + 0.55 * (left / full);
+        c.beginPath();
+        c.moveTo(x, z - nodeR * 1.2); c.lineTo(x + nodeR, z + nodeR * 0.85); c.lineTo(x - nodeR, z + nodeR * 0.85);
+        c.closePath();
+        c.fillStyle = tone; c.fill();
+        c.lineWidth = 1.2; c.strokeStyle = "rgba(255,255,255,0.85)"; c.stroke();
+        c.globalAlpha = 1;
+      });
 
       // ⭕ เส้นขอบแมพ
       c.beginPath(); c.arc(cx, cy, S.r * k, 0, Math.PI * 2);
@@ -17547,6 +17580,9 @@ export default function CherryAdventure() {
         biome: S.biome, indoor: S.indoor, total: S.mobs.length, list,
         me: { x: Math.round(S.me.x), z: Math.round(S.me.z) },
         exits: S.exits, spot: S.spot, chain, myLv, scrolls: G.warpScrolls || 0,
+        // ⛏️🌿 สรุปจุดเก็บของที่ยังเก็บได้ในแมพนี้
+        ores: (S.ores || []).map((o) => ({ ...o, name: (MATERIALS[o.ore] || {}).name || o.ore, emoji: (MATERIALS[o.ore] || {}).emoji || "⛏️" })),
+        herbs: (S.herbs || []).map((o) => ({ ...o, name: (HERB_BY[o.herb] || {}).name || o.herb, emoji: (HERB_BY[o.herb] || {}).emoji || "🌿" })),
         route: info && info.route ? { name: info.route.name, emoji: info.route.emoji, step: info.step, total: info.total } : null,
       };
     };
@@ -50527,14 +50563,35 @@ export default function CherryAdventure() {
                   {/* คำอธิบายสัญลักษณ์ */}
                   <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3px 9px", fontSize: 9.5, color: "#c8bcdd", lineHeight: 1.5 }}>
                     <span>🔺 ตัวเรา</span><span>🔴 มอนสเตอร์</span><span style={{ color: "#ffd75a" }}>🟡 ตัวหายาก</span>
-                    <span style={{ color: "#ff7a7a" }}>⭕ บอส/เจ้าถิ่น</span><span>🏰 เมือง</span><span>🏠 บ้าน</span><span>🐄 ฟาร์ม</span><span>🟦 จุดตกปลา</span><span>🪧 ทางออก</span>
+                    <span style={{ color: "#ff7a7a" }}>⭕ บอส/เจ้าถิ่น</span><span>🏰 เมือง</span><span>🏠 บ้าน</span><span>🐄 ฟาร์ม</span><span>🟦 จุดตกปลา</span><span style={{ color: "#b8a888" }}>◆ สายแร่</span><span style={{ color: "#6ac04a" }}>▲ สมุนไพร</span><span>🪧 ทางออก</span>
                   </div>
                   {MI && (
                     <div style={{ fontSize: 10, color: "#a898c8" }}>
                       📍 พิกัด X {MI.me.x} · Z {MI.me.z} · 🐾 มอนในแมพ {MI.total} ตัว
                       {MI.spot ? ` · 🎣 ${MI.spot.name} (Lv.${MI.spot.lv}+)` : ""}
+                      {(MI.ores || []).length ? ` · ⛏️ สายแร่ ${MI.ores.length} จุด` : ""}
+                      {(MI.herbs || []).length ? ` · 🌿 สมุนไพร ${MI.herbs.length} กอ` : ""}
                     </div>
                   )}
+                  {/* ⛏️🌿 ชนิดของที่เก็บได้ในแมพนี้ตอนนี้ */}
+                  {MI && ((MI.ores || []).length > 0 || (MI.herbs || []).length > 0) && (() => {
+                    const tally = (arr, key) => {
+                      const by = {};
+                      arr.forEach((o) => { const k = o[key]; (by[k] = by[k] || { emoji: o.emoji, name: o.name, n: 0 }).n++; });
+                      return Object.keys(by).map((k) => by[k]).sort((a, b) => b.n - a.n);
+                    };
+                    const os = tally(MI.ores || [], "ore"), hs = tally(MI.herbs || [], "herb");
+                    return (
+                      <div style={{ width: "100%", display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
+                        {os.concat(hs).map((o, i) => (
+                          <span key={i} style={{
+                            fontSize: 10, fontWeight: 800, fontFamily: font, padding: "2px 7px", borderRadius: 999,
+                            background: "rgba(255,255,255,0.12)", color: "#e8dcff", border: "1px solid rgba(255,255,255,0.18)",
+                          }}>{o.emoji} {o.name} ×{o.n}</span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   {/* 👑 บอสประจำถิ่น + 👹 บอสโลก */}
                   {(() => {
                     const FB = G.fieldBossInfo ? G.fieldBossInfo() : null;
