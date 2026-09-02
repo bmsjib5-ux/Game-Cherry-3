@@ -311,6 +311,10 @@ const ASU_SIGIL = 3.6;
 const LIC_SIGIL = 4.0;
 // 🔱 ไตรศูลบาดาลขยายกี่เท่าตอนใช้ท่า
 const MER_TRI = 2.6;
+// 🕊️ กินรีลอยขึ้นกี่หน่วยตอนร่ายระบำ
+const KIN_FLY = 1.15;
+// 🪷 บัวสวรรค์บานกว้างกี่เท่าตอนผุดใต้เป้า
+const KIN_LOTUS = 3.4;
 const HERO_SWING = {
   fenrir:   { style: "claw",   fx: "crossslash",   col: 0x9ad0ff },
   neko:     { style: "claw",   fx: "crossslash",   col: 0xffb0d0 },
@@ -11294,11 +11298,13 @@ export default function CherryAdventure() {
         pnl.userData.base = pnl.geometry.attributes.position.array.slice();
         pnl.userData.cTop = 0; pnl.userData.cLen = 0.98; pnl.userData.cAmp = 1.2;
         kinLow.add(pnl); kinPanels.push(pnl); kinCloth.push(pnl); }
+      const kinTailF = [];
       for (let i = 0; i < 7; i++) { const a = -0.72 + i * 0.24; const len6 = 1.5 - Math.abs(i - 3) * 0.16;   // 🪶 หางขนหงส์ยาวแผ่เป็นพัด
         const pf3 = new THREE.Mesh(new THREE.ConeGeometry(0.1, len6, 6), i % 2 ? kPlume2D : kPlume2); pf3.scale.z = 0.2;
         pf3.position.set(Math.sin(a) * 0.28, 1.16 - len6 * 0.42, -0.44 - Math.cos(a) * 0.06);
         pf3.rotation.x = Math.PI - 0.34; pf3.rotation.z = Math.sin(a) * 0.55; pf3.userData.by = 0;
-        kinLow.add(pf3); kinStrands.push(pf3); }
+        pf3.userData.bx = pf3.rotation.x; pf3.userData.bz = pf3.rotation.z;   // 🪶 มุมฐาน — ท่าประจำตัวผายหางเป็นพัดจากมุมของขนเส้นนั้นเอง
+        kinLow.add(pf3); kinStrands.push(pf3); kinTailF.push(pf3); }
       char.add(kinLow);
       // ===== ✨ ละอองดอกไม้ป่าหิมพานต์ =====
       const kinAura = new THREE.Group(); const kinMotes = [];
@@ -11319,6 +11325,7 @@ export default function CherryAdventure() {
       G._kinParts = kinParts;
       G._kinShoeMat = kGold2;
       G._kinFur = { tail: kinAura, wings: kinStrands.concat(kinPanels, kinWings), cloth: kinCloth, puffs: kinMotes, wingAmp: 0.13, ph: 17 };
+      G._kinWings = kinWings; G._kinTailF = kinTailF; G._kinAura = kinAura; G._kinMotes = kinMotes;   // 🕊️ ท่าประจำตัวคุมปีกหงส์/หางขน/ละอองดอกไม้
     }
 
     // ---------- 🧜‍♀️ MERMAID signature look (เจ้าหญิงเงือกวังบาดาล) ----------
@@ -27979,6 +27986,143 @@ export default function CherryAdventure() {
     };
     G._tidalWave = spawnTidalWave; G._sirenSong = spawnSirenSong;
     // ================= 🧜‍♀️ END เมอร์เมด =================
+    // ================= 🕊️ กินรี — ระบำบุปผา · สไบพลิ้ว · บัวสวรรค์ =================
+    // ① กลีบดอกไม้ป่าหิมพานต์หมุนเป็นเกลียวขึ้นรอบตัว ② สไบไหมกวาดโค้งเป็นเสี้ยววงกลมข้างหน้า ③ ดอกบัวสวรรค์ผุดใต้เป้า บานแล้วหุบงับ
+    const kinFx = [];
+    // 🌸 กลีบดอกทรงหยดโค้ง — โคนกลีบอยู่ที่จุดกำเนิด ปลายกลีบชี้ +Y (บานโดยหมุนรอบโคน)
+    const mkKinPetal = (len, w) => {
+      const sh = new THREE.Shape();
+      sh.moveTo(0, 0);
+      sh.bezierCurveTo(-w, len * 0.3, -w * 0.7, len * 0.84, 0, len);
+      sh.bezierCurveTo(w * 0.7, len * 0.84, w, len * 0.3, 0, 0);
+      return new THREE.ShapeGeometry(sh, 12);
+    };
+    // ① 🌸 ระบำบุปผาสวรรค์ — กลีบดอกวนเป็นเกลียวออกจากตัวแล้วลอยสูงขึ้น
+    const spawnPetalDance = (col, n) => {
+      try {
+        const g = new THREE.Group();
+        g.position.set(char.position.x, 0, char.position.z);
+        const mats = [], bits = [];
+        const N = n || 16;
+        for (let k = 0; k < N; k++) {
+          const m = new THREE.MeshBasicMaterial({ color: k % 3 === 0 ? 0xfff2fa : (k % 3 === 1 ? 0xff8ec4 : (col || 0xff5a9a)),
+            transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+          const pt = new THREE.Mesh(mkKinPetal(0.44, 0.19), m);   // 🌸 กลีบดอกจริง — ไม่ใช้ additive จะได้เห็นเป็นสีชมพู ไม่ฟอกเป็นขาว
+          pt.raycast = () => {};
+          pt.userData = { a0: (k / N) * Math.PI * 2, d0: (k % 4) * 0.09,
+                          turn: 2.1 + (k % 3) * 0.5, rad: 2.2 + (k % 5) * 0.28,
+                          up: 1.9 + (k % 4) * 0.4, spin: 5 + Math.random() * 5 };
+          g.add(pt); mats.push(m); bits.push(pt);
+        }
+        g.userData = { kind: "petal", t: 0, dur: 0.9, mats, bits };
+        (G._worldRoot || scene).add(g); kinFx.push(g);
+      } catch (e) {}
+    };
+    // ② 🎀 สไบพลิ้วฟาด — ริบบิ้นไหมกวาดเป็นเสี้ยวโค้งจากซ้ายไปขวาหน้าตัวละคร
+    const spawnSilkArc = (col, n) => {
+      try {
+        const g = new THREE.Group();
+        const yaw = char.rotation.y;
+        g.position.set(char.position.x, 0, char.position.z);
+        g.rotation.y = yaw;                                     // แกน +Z ของกลุ่ม = ทิศที่ตัวละครหันหน้า
+        const mats = [], bits = [];
+        const N = n || 13;
+        for (let k = 0; k < N; k++) {
+          const m = new THREE.MeshBasicMaterial({ color: k % 2 ? 0xfff2fa : (col || 0xff9ac8),
+            transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+          const ka = N > 1 ? k / (N - 1) : 0.5;                 // 0 = ต้นสไบ (ซ้าย) → 1 = ปลายสไบ (ขวา)
+          const sg = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 1.75 - Math.abs(ka - 0.5) * 0.7), m);   // 🎀 ริ้วผ้ากว้างพอให้ซ้อนต่อกันเป็นผืนสไบโค้ง
+          sg.raycast = () => {};
+          sg.userData = { ka, ang: (-1 + 2 * ka) * 1.18, d0: ka * 0.42 };   // ทยอยสะบัดไล่จากต้นไปปลาย
+          g.add(sg); mats.push(m); bits.push(sg);
+        }
+        g.userData = { kind: "silk", t: 0, dur: 0.66, mats, bits };
+        (G._worldRoot || scene).add(g); kinFx.push(g);
+      } catch (e) {}
+    };
+    // ③ 🪷 บัวสวรรค์บาน — ดอกบัวผุดใต้เป้า กลีบคลี่บานออกแล้วหุบงับเข้าหากัน
+    const spawnLotusBloom = (x, z, col) => {
+      try {
+        const g = new THREE.Group();
+        g.position.set(x, 0.05, z);
+        const mats = [], bits = [];
+        for (let ring = 0; ring < 2; ring++) {                  // กลีบสองชั้น — ชั้นนอกใหญ่ ชั้นในเล็กเยื้องมุม
+          const N = ring ? 6 : 8, len = ring ? 0.38 : 0.52, rad = ring ? 0.1 : 0.17;
+          for (let k = 0; k < N; k++) {
+            const m = new THREE.MeshBasicMaterial({ color: ring ? 0xfff2fa : (col || 0xff5a9a),
+              transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+            const a = (k / N) * Math.PI * 2 + (ring ? Math.PI / N : 0);
+            const pt = new THREE.Mesh(mkKinPetal(len, 0.19 - ring * 0.04), m);   // 🪷 กลีบบัวโค้ง โคนกลีบอยู่ที่วงแหวน
+            pt.rotation.order = "YXZ";                          // เอียงกลีบรอบแกน X ก่อน แล้วค่อยหมุนไปมุมของกลีบนั้น — ทุกกลีบจึงคลี่ออกด้านนอกจริง
+            pt.raycast = () => {};
+            pt.position.set(Math.sin(a) * rad, 0.02, Math.cos(a) * rad);
+            pt.userData = { a, rad, len, tilt: ring ? 1.0 : 1.35 };   // กลีบชั้นในคลี่น้อยกว่า
+            g.add(pt); mats.push(m); bits.push(pt);
+          }
+        }
+        {                                                       // ✨ เกสรกลางดอกเรืองแสง
+          const m = new THREE.MeshBasicMaterial({ color: 0xfff6c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+          const core = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), m);
+          core.raycast = () => {}; core.position.y = 0.16; core.userData = { core: 1 };
+          g.add(core); mats.push(m); bits.push(core);
+        }
+        g.userData = { kind: "lotus", t: 0, dur: 0.85, mats, bits };
+        (G._worldRoot || scene).add(g); kinFx.push(g);
+      } catch (e) {}
+    };
+    G._animKinFx = (d) => {
+      for (let i = kinFx.length - 1; i >= 0; i--) {
+        const g = kinFx[i], u = g.userData;
+        u.t += d;
+        const p = Math.min(1, u.t / u.dur);
+        if (u.kind === "petal") {
+          for (const b of u.bits) {
+            const ud = b.userData;
+            const q = Math.max(0, Math.min(1, (p - ud.d0) / Math.max(0.05, 1 - ud.d0)));
+            const a = ud.a0 + q * ud.turn * Math.PI;             // 🌀 วนเป็นเกลียวออก
+            const r = 0.35 + q * ud.rad;
+            b.position.set(Math.sin(a) * r, 0.25 + q * ud.up, Math.cos(a) * r);
+            b.rotation.y = a; b.rotation.z += ud.spin * d;
+            b.scale.setScalar(0.6 + q * 0.9);
+            b.material.opacity = 0.95 * Math.sin(Math.min(1, q * 1.08) * Math.PI);
+          }
+        } else if (u.kind === "silk") {
+          for (const b of u.bits) {
+            const ud = b.userData;
+            const q = Math.max(0, Math.min(1, (p - ud.d0) / Math.max(0.05, 1 - ud.d0)));
+            const r = 1.0 + q * 1.75;                            // สไบสะบัดยืดออกไกลขึ้น
+            b.position.set(Math.sin(ud.ang) * r, 0.75 + Math.sin(ud.ka * Math.PI) * 0.45, Math.cos(ud.ang) * r);
+            b.rotation.y = ud.ang; b.rotation.z = ud.ang * 0.6 + q * 0.5;
+            b.scale.set(1 + q * 0.5, 1 + q * 0.3, 1);
+            b.material.opacity = 0.88 * Math.sin(Math.min(1, q * 1.15) * Math.PI);
+          }
+        } else {                                                 // 🪷 บัวสวรรค์ — คลี่บาน → หุบงับ
+          const rise = Math.min(1, p / 0.22);
+          const op = p < 0.55 ? Math.sin((p / 0.55) * Math.PI * 0.5) : Math.max(0, 1 - Math.pow((p - 0.55) / 0.45, 2.4));
+          g.scale.setScalar(rise * KIN_LOTUS);
+          g.rotation.y = p * 1.1;
+          for (const b of u.bits) {
+            const ud = b.userData;
+            if (ud.core) {
+              b.scale.setScalar(0.7 + op * 0.9);
+              b.material.opacity = 0.95 * rise * (0.35 + 0.65 * (1 - op));   // เกสรวาบตอนกลีบหุบงับ
+              continue;
+            }
+            b.rotation.y = ud.a;
+            b.rotation.x = op * ud.tilt;                         // คลี่กลีบออกด้านนอกโดยหมุนรอบโคนกลีบ (ลำดับ YXZ — เอียงตามแนวรัศมีของกลีบเอง)
+            b.material.opacity = 0.92 * rise * Math.min(1, (1 - p) * 3.4);
+          }
+        }
+        if (p >= 1) {
+          (G._worldRoot || scene).remove(g);
+          u.mats.forEach((m) => m.dispose());
+          u.bits.forEach((b) => b.geometry.dispose());
+          kinFx.splice(i, 1);
+        }
+      }
+    };
+    G._petalDance = spawnPetalDance; G._silkArc = spawnSilkArc; G._lotusBloom = spawnLotusBloom;
+    // ================= 🕊️ END กินรี =================
     // 🔥❄️ เอฟเฟกต์เวทหมู่ — ดวงไฟลอยขึ้นแล้วพุ่งใส่ · เสาไฟผุดจากพื้น · แท่งน้ำแข็งผุดขึ้นแช่แข็งแล้วแตก
     const magicFx = [];
     const spawnFirePillar = (x, z, col) => {
@@ -38300,6 +38444,7 @@ export default function CherryAdventure() {
         if (G._animLicFx) G._animLicFx(dt);                   // 💀 ลำแสง/วิญญาณของลิช
         if (G._animNakFx) G._animNakFx(dt);                   // 🐍 พิษ/วังวนของนากิ
         if (G._animMerFx) G._animMerFx(dt);                   // 🧜‍♀️ คลื่น/เสียงเพรียกของเมอร์เมด
+        if (G._animKinFx) G._animKinFx(dt);                   // 🕊️ กลีบบุปผา/สไบ/บัวสวรรค์ของกินรี
         if (G._animMagicFx) G._animMagicFx(dt);               // 🔥❄️ ดวงไฟ/เสาไฟ + แท่งน้ำแข็งแช่แข็ง
         if (G._animArcherFx) G._animArcherFx(dt);             // 🎯🦅⚡💥 ลำแสงเจาะ · เหยี่ยว · สายฟ้าลูกโซ่ · ฝนลูกธนู
         if (G._clothBurst > 0) G._clothBurst = Math.max(0, G._clothBurst - dt); // 🌬️ แรงปลิวผ้าตอนโจมตี
@@ -40711,6 +40856,104 @@ export default function CherryAdventure() {
               w.rotation.z = (wSweep * sgn) * cbw;
             }
           }
+          // ================= 🕊️ ท่าประจำตัวกินรี (โลกกว้าง) =================
+          // ใส่ชุดกินรีแล้วร่ายสกิล สลับ 3 ท่า: ระบำบุปผาสวรรค์ → สไบพลิ้วฟาด → บัวสวรรค์บานงับ
+          if (G.heroId === "kinnaree" && !G.heroHide) {
+            if (S.kinM === undefined) S.kinM = (G._kinMoveN = ((G._kinMoveN || 0) + 1) % 3);
+            const kCh = smK(Math.min(1, S.t / Math.max(0.05, S.chg)));                        // 0→1 เก็บพลัง
+            const kRel = smK(Math.max(0, (S.t - S.chg - S.dsh) / Math.max(0.05, S.rel)));      // 0→1 ปล่อยท่า
+            const kb = (cur, tgt) => cur + (tgt - cur) * cbw;   // 🌊 ผสมด้วยน้ำหนักเดียวกับท่าสกิล
+            const kwings = G._kinWings || [], ktail = G._kinTailF || [], kmotes = G._kinMotes || [];
+            let wOpen = 0, wSweep = 0, tFan = 0, tLift = 0, moteK = 1, auraSpin = 0;
+            if (S.kinM === 0) {
+              // ① 🌸 ระบำบุปผาสวรรค์ — ลอยตัวชูแขนอ่อนช้อยหมุนรำ กลีบดอกวนเป็นเกลียวรอบตัว
+              wOpen = 0.55 * kCh + 0.35 * kRel;                 // ปีกค่อย ๆ ผายกว้างตามจังหวะรำ
+              wSweep = -0.3 * kCh + 0.15 * kRel;
+              tFan = 0.9 * kCh + 0.5 * kRel;                    // หางขนหงส์แผ่เป็นพัด
+              tLift = -0.18 * kCh;
+              auraSpin = 3.2; moteK = 1 + 0.85 * kCh;
+              armR.rotation.x = kb(armR.rotation.x, -0.5 - 1.9 * kCh + 0.6 * kRel);   // ชูแขนขึ้นเหนือศีรษะแบบนาฏศิลป์
+              armR.rotation.z = kb(armR.rotation.z, 0.55 + 0.6 * kCh - 0.2 * kRel);
+              armL.rotation.x = kb(armL.rotation.x, -0.5 - 1.55 * kCh + 0.45 * kRel);
+              armL.rotation.z = kb(armL.rotation.z, -0.55 - 0.75 * kCh + 0.25 * kRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = kb(armR.userData.elbow.rotation.x, -0.55 - 0.45 * kCh);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = kb(armL.userData.elbow.rotation.x, -0.75 - 0.3 * kCh);
+              torso.rotation.y = kb(torso.rotation.y, 0.5 * kCh - 1.0 * kRel);          // บิดลำตัวหมุนตามจังหวะระบำ
+              headG.rotation.y = kb(headG.rotation.y, 0.3 * kCh - 0.5 * kRel);
+              headG.rotation.x = kb(headG.rotation.x, -0.18 * kCh + 0.1 * kRel);
+              char.rotation.z = kb(char.rotation.z, 0.1 * kCh - 0.14 * kRel);           // เอียงตัวอ่อนช้อย
+              char.position.y += KIN_FLY * kCh * (1 - kRel * 0.35) * cbw;
+              if (!S.kinFx && kCh > 0.55) {
+                S.kinFx = 1;
+                if (G._petalDance) G._petalDance(S.col || 0xffc0e0, 16);
+                G._camShake = Math.max(G._camShake || 0, 0.2);
+                if (G.sfx && G.sfx.slash) G.sfx.slash();
+              }
+            } else if (S.kinM === 1) {
+              // ② 🎀 สไบพลิ้วฟาด — ง้างสไบไขว้ลำตัว แล้วสะบัดกวาดเป็นเสี้ยวโค้งไปข้างหน้า
+              wOpen = 0.7 * kCh - 0.35 * kRel;
+              wSweep = 0.45 * kCh - 0.7 * kRel;                 // ปีกลู่ตามแรงสะบัด
+              tFan = 0.35 * kCh + 0.4 * kRel;
+              armR.rotation.x = kb(armR.rotation.x, -0.5 - 1.15 * kCh + 1.25 * kRel);
+              armR.rotation.z = kb(armR.rotation.z, -0.55 - 0.8 * kCh + 2.0 * kRel);   // ไขว้เข้าใน → ผายกวาดออกกว้าง
+              armR.rotation.y = kb(armR.rotation.y, 0.45 * kCh - 0.7 * kRel);
+              armL.rotation.x = kb(armL.rotation.x, -0.4 - 0.5 * kCh + 0.4 * kRel);
+              armL.rotation.z = kb(armL.rotation.z, -0.45 - 0.35 * kCh + 0.6 * kRel);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = kb(armR.userData.elbow.rotation.x, -1.2 + 1.0 * kRel);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = kb(armL.userData.elbow.rotation.x, -0.7);
+              torso.rotation.y = kb(torso.rotation.y, 0.55 * kCh - 0.95 * kRel);
+              char.rotation.z = kb(char.rotation.z, 0.08 * kCh - 0.1 * kRel);
+              char.position.y += 0.35 * kCh * (1 - kRel) * cbw;
+              if (!S.kinFx && kRel > 0.35) {
+                S.kinFx = 1;
+                if (G._silkArc) G._silkArc(S.col || 0xffc0e0, 13);
+                if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.1);
+                if (G.sfx && G.sfx.slash) G.sfx.slash();
+                G._camShake = Math.max(G._camShake || 0, 0.36);
+                G._hitStop = Math.max(G._hitStop || 0, 0.045);
+              }
+            } else {
+              // ③ 🪷 บัวสวรรค์บานงับ — ลอยตัวพนมมือขึ้นฟ้า แล้วกดฝ่ามือลง เรียกดอกบัวผุดใต้เป้า
+              wOpen = 1.2 * kCh - 0.45 * kRel;                  // กางปีกเต็มลอยตัว
+              wSweep = -0.5 * kCh + 0.25 * kRel;
+              tFan = 1.1 * kCh - 0.3 * kRel;
+              tLift = -0.25 * kCh + 0.12 * kRel;
+              moteK = 1 + 1.3 * kRel;                           // ละอองดอกไม้โตขึ้นตอนบัวบาน
+              armR.rotation.x = kb(armR.rotation.x, -0.6 - 1.75 * kCh + 1.5 * kRel);   // พนมชูขึ้นฟ้า → กดฝ่ามือลงพื้น
+              armR.rotation.z = kb(armR.rotation.z, 0.24);
+              armL.rotation.x = kb(armL.rotation.x, -0.6 - 1.75 * kCh + 1.5 * kRel);
+              armL.rotation.z = kb(armL.rotation.z, -0.24);
+              if (armR.userData.elbow) armR.userData.elbow.rotation.x = kb(armR.userData.elbow.rotation.x, -0.5 - 0.5 * kCh + 0.75 * kRel);
+              if (armL.userData.elbow) armL.userData.elbow.rotation.x = kb(armL.userData.elbow.rotation.x, -0.5 - 0.5 * kCh + 0.75 * kRel);
+              torso.rotation.x = kb(torso.rotation.x, -0.3 * kCh + 0.34 * kRel);
+              headG.rotation.x = kb(headG.rotation.x, -0.34 * kCh + 0.36 * kRel);
+              char.position.y += (KIN_FLY + 0.5) * kCh * (1 - kRel * 0.7) * cbw;
+              if (!S.kinFx && kRel > 0.3) {
+                S.kinFx = 1;
+                const tgt = (S.focus && wilds.indexOf(S.focus) >= 0) ? S.focus : nearestWild(worldRange() + 6);
+                const lx = tgt ? tgt.position.x : char.position.x + Math.sin(char.rotation.y) * 2.6;
+                const lz = tgt ? tgt.position.z : char.position.z + Math.cos(char.rotation.y) * 2.6;
+                if (G._lotusBloom) G._lotusBloom(lx, lz, S.col || 0xffc0e0);
+                G._camShake = Math.max(G._camShake || 0, 0.42);
+                G._hitStop = Math.max(G._hitStop || 0, 0.05);
+              }
+            }
+            // 🪽 ปีกหงส์ซ้าย-ขวาสลับทิศกัน (ตัวโมเดลกลับด้านอยู่แล้ว) ให้ผายออกสมมาตร
+            for (let wi = 0; wi < kwings.length; wi++) {
+              const w = kwings[wi], sgn = wi ? -1 : 1;
+              w.rotation.y = w.userData.by + (wOpen * sgn) * cbw;
+              w.rotation.z = (wSweep * sgn) * cbw;
+            }
+            // 🪶 หางขนหงส์ — ผายเป็นพัดโดยคูณมุมฐานของขนเส้นนั้นเอง (ไม่ใช่บวกค่าเดียวกันทุกเส้น)
+            for (let ti = 0; ti < ktail.length; ti++) {
+              const f = ktail[ti], u = f.userData;
+              if (u.bx == null) continue;
+              f.rotation.z = u.bz * (1 + tFan * cbw);
+              f.rotation.x = u.bx + tLift * cbw;
+            }
+            if (moteK !== 1) for (const mo of kmotes) { if (mo.userData.bs) mo.scale.copy(mo.userData.bs).multiplyScalar(1 + (moteK - 1) * cbw); }
+            if (auraSpin && G._kinAura) G._kinAura.rotation.y += auraSpin * dt * cbw;   // ✨ ละอองดอกไม้วนรอบตัวตอนระบำ
+          }
           // ================= 🐉 ท่าประจำตัวริวจิน (โลกกว้าง) =================
           // ใส่ชุดริวจินแล้วร่ายสกิล สลับ 3 ท่าประจำตัว: มังกรพ่นไฟ → มังกรพ่นลม → ทะยานขึ้นแล้วดิ่งลง
           if (G.heroId === "ryujin" && !G.heroHide) {
@@ -40834,6 +41077,9 @@ export default function CherryAdventure() {
             if (G._nakTail) G._nakTail.rotation.y = 0;                             // 🐍 คืนหางนาค
             if (G._merTri) G._merTri.scale.setScalar(1);                          // 🔱 คืนขนาดไตรศูล
             if (G._kitSigil) { G._kitSigil.scale.setScalar(1); G._kitSigil.position.y = 0.05; }   // 🦊 คืนยันต์จิ้งจอก
+            if (G._kinWings) G._kinWings.forEach((w) => { w.rotation.z = 0; });     // 🕊️ คืนมุมปีกหงส์ (จังหวะกระพือปกติคุมเฉพาะ rotation.y)
+            if (G._kinTailF) G._kinTailF.forEach((f) => { if (f.userData.bx != null) { f.rotation.x = f.userData.bx; f.rotation.z = f.userData.bz; } });   // 🪶 คืนหางขนหงส์
+            if (G._kinAura) G._kinAura.rotation.y = 0;                              // ✨ คืนวงละอองดอกไม้
             if (G._camLock) G._camLock.off = true;   // 🎥 คลายล็อกกล้อง แล้วค่อย ๆ กลับมาเกาะตัวละคร
             G._skCast = null;
           }
