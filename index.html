@@ -2380,6 +2380,42 @@ const CRAFT_RECIPES = {
 // (แชร์ข้ามเครื่อง, อัปเดตอัตโนมัติ) ให้สร้างโปรเจกต์ Supabase ฟรีแล้ววาง url + anon key ที่นี่
 // วิธีตั้งค่าแบบละเอียด (พร้อม SQL) อยู่ในไฟล์ ONLINE_SETUP.md
 // ปล่อยว่างไว้ = เกมใช้ระบบเพื่อนแบบออฟไลน์ (รหัสก็อป-วาง) เหมือนเดิม
+// ================= 🤖 ผู้เล่นบอท — 5 ตัวละครที่เล่นเกมเองเสมือนคนจริง =================
+// เริ่มที่เลเวล 1 เหมือนผู้เล่นใหม่ · เดินสำรวจ ล่ามอน เก็บของ ขึ้นเลเวลเอง
+// ปรากฏในโลกเหมือนผู้เล่นออนไลน์คนอื่น (ผ่านช่องทางอวตารเดียวกัน) คุย/ชวนปาร์ตี้/ชวนเข้ากิลด์ได้
+const BOT_CHARS = [
+    { pid: "bot_mali", n: "มะลิ", c: "mage", dy: 0xc86ad8, style: { hunt: 0.35, gather: 0.45, roam: 0.20 },
+        bio: "สายเวทที่ชอบเก็บสมุนไพรมากกว่าตีมอน",
+        hi: ["สวัสดีค่า~ เก็บสมุนไพรอยู่พอดีเลย", "หวัดดีค่ะ! เจอบัวพันปีแถวนี้ไหมคะ", "ว่าไงคะ กำลังหาของปรุงยาอยู่"],
+        chat: ["เก็บใบเขียวป่าได้อีกกองแล้ว 🌿", "ใครมียาฟื้นมานาเหลือบ้างคะ", "แถวถ้ำมีเห็ดเรืองแสงเยอะเลย", "ปรุงยาขึ้นเลเวลแล้ว ดีใจจัง"],
+        party: "ไปด้วยกันค่ะ! เดี๋ยวช่วยฟื้นเลือดให้", guild: "ขอบคุณค่ะ ยินดีเข้ากิลด์เลย!" },
+    { pid: "bot_kong", n: "ก้องภพ", c: "warrior", dy: 0xd9536b, style: { hunt: 0.70, gather: 0.10, roam: 0.20 },
+        bio: "สายบู๊ ตรงไปตรงมา เจอมอนเป็นไม่ปล่อย",
+        hi: ["โย่! มาล่ามอนด้วยกันไหม", "หวัดดี ตรงนี้มอนเยอะดี", "เฮ้ย เจอกันพอดี กำลังจะไปตีบอส"],
+        chat: ["ล่าไปอีก 10 ตัวแล้ว 💪", "ใครไปบอสประจำถิ่นบ้าง", "ดาบเล่มนี้ตีบวกคุ้มมาก", "เลเวลขึ้นอีกแล้วโว้ย!"],
+        party: "เอาเลย! ข้าเปิดทางให้", guild: "ได้เลย! กิลด์นี้ต้องแกร่งแน่" },
+    { pid: "bot_rin", n: "ริน", c: "archer", dy: 0x9ad0ff, style: { hunt: 0.45, gather: 0.20, roam: 0.35 },
+        bio: "นักธนูสายสำรวจ ชอบเดินดูแมพใหม่",
+        hi: ["หวัดดี~ เพิ่งวาร์ปมาจากแดนหิมะ", "สวัสดี กำลังสำรวจแมพนี้อยู่", "โอ๊ะ เจอคนด้วย ดีจัง"],
+        chat: ["แดนนี้วิวสวยกว่าที่คิดนะ", "เจอสายแร่คริสตัลตรงขอบแมพ", "ใครรู้ทางไปหอคอยบ้าง", "เดินครบทุกแดนแล้ววันนี้"],
+        party: "ไปด้วย! เดี๋ยวยิงคุ้มกันให้", guild: "ขอบคุณนะ เข้าเลย!" },
+    { pid: "bot_took", n: "ตุ๊กตา", c: "assassin", dy: 0xb79bff, style: { hunt: 0.60, gather: 0.15, roam: 0.25 },
+        bio: "สายลอบเร็ว เก็บมอนไวไม่รอใคร",
+        hi: ["หวัดดี เร็วหน่อยนะ เดี๋ยวมอนหนี", "ว่าไง~ ตามมาสิ", "เจอกันพอดี กำลังไล่เก็บอยู่"],
+        chat: ["เก็บครบคอมโบ 3 ไม้แล้ว", "มอนแดนนี้ตายไวมาก", "ใครแข่งล่ามอนไหม", "คริแตกรัวเลย 🎯"],
+        party: "ตามมา! อย่าช้าล่ะ", guild: "โอเค เข้ากิลด์ก็ได้~" },
+    { pid: "bot_meephi", n: "พี่หมี", c: "aegis", dy: 0x6ab0a0, style: { hunt: 0.40, gather: 0.30, roam: 0.30 },
+        bio: "สายแทงค์ใจดี ชอบชวนคนใหม่เล่นด้วยกัน",
+        hi: ["สวัสดีน้อง~ เล่นถึงไหนแล้ว", "หวัดดีครับ ต้องการให้ช่วยอะไรไหม", "มาด้วยกันไหม พี่ทางกันให้"],
+        chat: ["ใครเลเวลน้อยมาปาร์ตี้กับพี่ได้นะ", "พี่รับดาเมจแทนได้ ไม่ต้องกลัว", "วันนี้ช่วยน้องล่าบอสไป 3 ตัว", "กิลด์เรารับสมาชิกใหม่อยู่นะ"],
+        party: "ยินดีเลยน้อง! พี่ดูแลให้", guild: "ขอบคุณนะ! พี่เข้าเต็มใจ" },
+];
+const BOT_BY = {};
+BOT_CHARS.forEach((b) => (BOT_BY[b.pid] = b));
+const BOT_TALK_R = 3.2; // 💬 ระยะที่คุยกับบอทได้
+const BOT_EXP_LV = (lv) => Math.round(28 + lv * 26 + Math.pow(Math.max(0, lv - 8), 2) * 4); // 🤖 EXP ต่อเลเวลของบอท
+const BOT_LV_MAX = 200;
+const BOT_SAVE_KEY = "cherry-bots-v1";
 const ONLINE_CONFIG = {
     url: "https://xaifhvlvfdvpieeutmys.supabase.co",
     anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaWZodmx2ZmR2cGllZXV0bXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTcyMzEsImV4cCI6MjEwMDI5MzIzMX0.OdLp0--DlPrStyeJ9pZn33h6EigN5uqUby-yq8jAGH4", // anon public key (ปลอดภัยที่จะฝังใน client — RLS เป็นตัวกันข้อมูล)
@@ -32379,6 +32415,12 @@ function CherryAdventure() {
                     }
                     catch (e) { }
                 }
+                if (G.botInit) {
+                    try {
+                        G.botInit();
+                    }
+                    catch (e) { }
+                }
                 if (G.buildRoad) {
                     try {
                         G.buildRoad();
@@ -32868,6 +32910,261 @@ function CherryAdventure() {
             : { ...u, herbOpen: true, menuOpen: false, kitchenOpen: false, fishBagOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false,
                 herbInfo: G.herbInfo(), herbBag: { ...(G.herbBag || {}) }, potBag: G.potBagList(), brewBuff: G.brewBuffInfo(), herbTab: u.herbTab || "brew" }));
         // ================= 🌿 END HERBALISM =================
+        // ================= 🤖 ผู้เล่นบอท — สมองที่เล่นเกมเอง =================
+        // บอทเล่นเอง: เดินสำรวจ → เจอมอนก็สู้ → เก็บของ → ขึ้นเลเวล → พักฟื้น วนไป
+        // ⚠️ การต่อสู้ของบอทจำลองภายในตัวเอง ไม่แตะมอนสเตอร์จริงในโลก — ผู้เล่นจะได้ไม่โดนแย่งมอน/แย่งดรอป
+        G.bots = [];
+        G._botTick = 0;
+        const botToast = (m) => { try {
+            toast(m);
+        }
+        catch (_) { } };
+        // 💾 บอทจำความคืบหน้าไว้ข้ามรอบเล่น — กลับมาอีกทีเลเวลขึ้นแล้วเหมือนคนเล่นจริง
+        const botLoad = () => {
+            try {
+                return JSON.parse(localStorage.getItem(BOT_SAVE_KEY) || "{}") || {};
+            }
+            catch (_) {
+                return {};
+            }
+        };
+        const botSave = () => {
+            try {
+                const o = {};
+                G.bots.forEach((b) => (o[b.pid] = { lv: b.lv, exp: b.exp, kills: b.kills, gathers: b.gathers, mins: Math.round(b.mins || 0) }));
+                localStorage.setItem(BOT_SAVE_KEY, JSON.stringify(o));
+            }
+            catch (_) { }
+        };
+        G.botSave = botSave;
+        const botMaxHp = (b) => 40 + (b.lv - 1) * 9;
+        const botPower = (b) => 8 + (b.lv - 1) * 2.4;
+        // 🎯 เลือกเป้าหมายถัดไปตามนิสัยของบอทแต่ละตัว
+        const botPickGoal = (b) => {
+            const S = b.def.style, r = Math.random();
+            let kind = r < S.hunt ? "hunt" : r < S.hunt + S.gather ? "gather" : "roam";
+            if (b.hp < botMaxHp(b) * 0.3)
+                kind = "rest"; // เลือดน้อยต้องพักก่อน
+            const a = Math.random() * Math.PI * 2, rad = 6 + Math.random() * (FIELD_R - 9);
+            b.goal = { kind, x: Math.cos(a) * rad, z: Math.sin(a) * rad, t: 0,
+                dur: kind === "rest" ? 6 + Math.random() * 4 : 9 + Math.random() * 12 };
+            // 🌿⛏️ ถ้าจะเก็บของ เดินไปหาจุดเก็บจริงในแมพ ไม่ใช่เดินมั่ว
+            if (kind === "gather") {
+                const pool = ((G.herbNodes || []).filter((n) => n && !n.dead)).concat((G.mineNodes || []).filter((n) => n && !n.dead));
+                if (pool.length) {
+                    const n = pool[(Math.random() * pool.length) | 0];
+                    b.goal.x = n.x;
+                    b.goal.z = n.z;
+                }
+            }
+        };
+        const botLevelUp = (b, gained) => {
+            b.exp += gained;
+            let up = 0;
+            while (b.lv < BOT_LV_MAX && b.exp >= BOT_EXP_LV(b.lv)) {
+                b.exp -= BOT_EXP_LV(b.lv);
+                b.lv++;
+                up++;
+            }
+            if (up) {
+                b.hp = botMaxHp(b);
+                b.say = { txt: `เลเวล ${b.lv} แล้ว!`, t: 3 };
+            }
+            return up;
+        };
+        // 🤖 หนึ่งจังหวะคิดของบอท (เรียกทุก ~0.25 วิ ไม่ใช่ทุกเฟรม)
+        const botStep = (b, dt) => {
+            b.mins = (b.mins || 0) + dt / 60;
+            if (b.say) {
+                b.say.t -= dt;
+                if (b.say.t <= 0)
+                    b.say = null;
+            }
+            if (!b.goal || (b.goal.t += dt) > b.goal.dur)
+                botPickGoal(b);
+            const g = b.goal;
+            if (g.kind === "rest") { // 💤 นั่งพักฟื้นเลือด
+                b.moving = false;
+                b.hp = Math.min(botMaxHp(b), b.hp + botMaxHp(b) * 0.28 * dt);
+                return;
+            }
+            // 🚶 เดินเข้าหาเป้าหมาย
+            const dx = g.x - b.x, dz = g.z - b.z, d = Math.hypot(dx, dz);
+            const spd = 3.0 + b.lv * 0.004;
+            if (d > 0.6) {
+                b.x += (dx / d) * spd * dt;
+                b.z += (dz / d) * spd * dt;
+                b.yaw = Math.atan2(dx, dz);
+                b.moving = true;
+                const rr = Math.hypot(b.x, b.z);
+                if (rr > FIELD_R - 1) {
+                    b.x *= (FIELD_R - 1) / rr;
+                    b.z *= (FIELD_R - 1) / rr;
+                } // ไม่ให้หลุดขอบแมพ
+            }
+            else {
+                b.moving = false;
+                if (g.kind === "hunt") {
+                    // ⚔️ จำลองการต่อสู้ — ยิ่งเลเวลสูงยิ่งเก็บไว แต่มีโอกาสเจ็บตัว
+                    b.fight = (b.fight || 0) + dt;
+                    if (b.fight > 1.1) {
+                        b.fight = 0;
+                        const win = Math.random() < 0.82;
+                        if (win) {
+                            b.kills++;
+                            const up = botLevelUp(b, Math.round(9 + b.lv * 2.2 + Math.random() * 6));
+                            if (!up && Math.random() < 0.22)
+                                b.say = { txt: "เก็บอีกตัว!", t: 2.2 };
+                        }
+                        else {
+                            b.hp = Math.max(1, b.hp - botMaxHp(b) * (0.12 + Math.random() * 0.16));
+                            if (Math.random() < 0.3)
+                                b.say = { txt: "โอ๊ย เจ็บ!", t: 2 };
+                        }
+                        g.t = g.dur; // สู้จบยกแล้วไปหาเป้าใหม่
+                    }
+                }
+                else if (g.kind === "gather") {
+                    b.gathers++;
+                    botLevelUp(b, Math.round(4 + b.lv * 0.8));
+                    if (Math.random() < 0.3)
+                        b.say = { txt: "เก็บได้แล้ว 🌿", t: 2.2 };
+                    g.t = g.dur;
+                }
+                else {
+                    g.t = g.dur;
+                }
+            }
+        };
+        // 🌍 ส่งบอทเข้าโลกผ่านช่องทางเดียวกับผู้เล่นออนไลน์คนอื่น — เห็นเป็นอวตารมีป้ายชื่อเหมือนกัน
+        const botBroadcast = (b) => {
+            if (!G._rtOnPos)
+                return;
+            const B = BIOMES[G.curBiome || 0] || BIOMES[0];
+            try {
+                G._rtOnPos({ pid: b.pid, n: b.def.n, c: b.def.c, lv: b.lv, dy: b.def.dy,
+                    x: b.x, z: b.z, yaw: b.yaw, biome: B.id, moving: b.moving, bot: 1 });
+            }
+            catch (_) { }
+        };
+        G.botInit = () => {
+            if (G.bots.length)
+                return G.bots;
+            const saved = botLoad();
+            G.bots = BOT_CHARS.map((def, i) => {
+                const sv = saved[def.pid] || {};
+                const a = (i / BOT_CHARS.length) * Math.PI * 2;
+                const b = { pid: def.pid, def, lv: Math.max(1, sv.lv || 1), exp: sv.exp || 0,
+                    kills: sv.kills || 0, gathers: sv.gathers || 0, mins: sv.mins || 0,
+                    x: Math.cos(a) * 12, z: Math.sin(a) * 12, yaw: 0, moving: false,
+                    hp: 0, goal: null, fight: 0, say: null, party: false, guild: false };
+                b.hp = botMaxHp(b);
+                return b;
+            });
+            return G.bots;
+        };
+        // ⏱️ เรียกจากลูปหลัก — คิดเป็นจังหวะ ไม่ใช่ทุกเฟรม (บอท 5 ตัวไม่ควรกินเฟรมเรต)
+        G.botUpdate = (dt) => {
+            if (!G.bots.length)
+                return;
+            if (G.mode !== "explore" || G.inTownZone || G.inHomeZone || G.inRanchZone)
+                return; // โผล่เฉพาะโลกกว้าง
+            G._botTick += dt;
+            if (G._botTick < 0.25)
+                return;
+            const step = G._botTick;
+            G._botTick = 0;
+            for (const b of G.bots) {
+                botStep(b, step);
+                botBroadcast(b);
+            }
+            G._botSaveT = (G._botSaveT || 0) + step;
+            if (G._botSaveT > 20) {
+                G._botSaveT = 0;
+                botSave();
+            } // เซฟความคืบหน้าเป็นระยะ
+            // 💬 หาบอทที่ยืนใกล้พอจะคุยด้วย
+            let near = null, nd = BOT_TALK_R;
+            for (const b of G.bots) {
+                const d = Math.hypot(char.position.x - b.x, char.position.z - b.z);
+                if (d < nd) {
+                    nd = d;
+                    near = b;
+                }
+            }
+            const pid = near ? near.pid : null;
+            if (pid !== G._botNear) {
+                G._botNear = pid;
+                setUi((u) => ({ ...u, botNear: pid, botNearName: near ? near.def.n : null, botNearLv: near ? near.lv : 0 }));
+            }
+        };
+        // 📋 ข้อมูลบอทให้ JSX อ่าน
+        G.botList = () => G.bots.map((b) => ({
+            pid: b.pid, n: b.def.n, c: b.def.c, lv: b.lv, bio: b.def.bio,
+            exp: b.exp, need: BOT_EXP_LV(b.lv), kills: b.kills, gathers: b.gathers,
+            mins: Math.round(b.mins || 0), hp: Math.round(b.hp), maxHp: botMaxHp(b),
+            party: !!b.party, guild: !!b.guild,
+            goal: b.goal ? b.goal.kind : "idle",
+            dist: Math.round(Math.hypot(char.position.x - b.x, char.position.z - b.z)),
+        }));
+        G.botInfo = (pid) => (G.botList().find((b) => b.pid === pid) || null);
+        // 💬 คุยกับบอท
+        G.botTalk = (pid) => {
+            const b = G.bots.find((x) => x.pid === pid);
+            if (!b)
+                return;
+            const lines = b.def.hi;
+            const txt = lines[(Math.random() * lines.length) | 0];
+            b.say = { txt, t: 4 };
+            botToast(`💬 ${b.def.n}: ${txt}`);
+        };
+        // 🎉 ชวนเข้าปาร์ตี้ — บอทตอบรับถ้าปาร์ตี้ยังไม่เต็ม
+        G.botInviteParty = (pid) => {
+            const b = G.bots.find((x) => x.pid === pid);
+            if (!b)
+                return;
+            if (b.party) {
+                botToast(`${b.def.n} อยู่ในปาร์ตี้ของคุณอยู่แล้ว`);
+                return;
+            }
+            const inParty = G.bots.filter((x) => x.party).length;
+            if (inParty >= 3) {
+                botToast("🎉 ปาร์ตี้เต็มแล้ว (สูงสุด 4 คนรวมตัวคุณ)");
+                return;
+            }
+            b.party = true;
+            b.say = { txt: b.def.party, t: 4 };
+            botToast(`🎉 ${b.def.n} เข้าปาร์ตี้แล้ว! — ${b.def.party}`);
+            G.syncBotUi();
+        };
+        G.botLeaveParty = (pid) => {
+            const b = G.bots.find((x) => x.pid === pid);
+            if (!b)
+                return;
+            b.party = false;
+            botToast(`👋 ${b.def.n} ออกจากปาร์ตี้แล้ว`);
+            G.syncBotUi();
+        };
+        // 🏰 ชวนเข้ากิลด์ — ต้องมีกิลด์ก่อน
+        G.botInviteGuild = (pid) => {
+            const b = G.bots.find((x) => x.pid === pid);
+            if (!b)
+                return;
+            if (!G.guild || !G.guildId) {
+                botToast("🏰 ต้องมีกิลด์ก่อน ถึงจะชวนคนเข้าได้");
+                return;
+            }
+            if (b.guild) {
+                botToast(`${b.def.n} อยู่ในกิลด์ของคุณอยู่แล้ว`);
+                return;
+            }
+            b.guild = true;
+            b.say = { txt: b.def.guild, t: 4 };
+            botToast(`🏰 ${b.def.n} เข้ากิลด์แล้ว! — ${b.def.guild}`);
+            G.syncBotUi();
+        };
+        G.syncBotUi = () => setUi((u) => ({ ...u, bots: G.botList() }));
+        // ================= 🤖 END BOTS =================
         G.startFishing = () => {
             if (G.fishing)
                 return;
@@ -59275,6 +59572,12 @@ function CherryAdventure() {
                         G._animGarudaFx(dt); // 🦅 ขนเพชรครุฑที่ยิงออกไป
                     if (G._animFoxFx)
                         G._animFoxFx(dt); // 🦊 ไฟจิ้งจอกคิทสึเนะ
+                    if (G.botUpdate) {
+                        try {
+                            G.botUpdate(dt);
+                        }
+                        catch (_) { }
+                    } // 🤖 ผู้เล่นบอทเล่นเกมของตัวเอง
                     if (G._animPhxFx)
                         G._animPhxFx(dt); // 🔥 อุกกาบาตเพลิงฟีนิกซ์
                     if (G._animAsuFx)
@@ -76064,7 +76367,7 @@ function CherryAdventure() {
     const _hpCount = _hpBrew ? (_hpBrew.n || 1) : (ui.potions || 0);
     const _mpCount = _mpBrew ? (_mpBrew.n || 1) : (ui.mpPotions || 0);
     const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-        : ui.herbNear ? "herb"
+        : ui.herbNear ? "herb" : ui.botNear ? "bot"
             : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
     const isPrompt = (name) => _promptTop === name;
     const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
@@ -78516,6 +78819,72 @@ function CherryAdventure() {
                     MINE_LV_MAX,
                     " \u00B7 ",
                     (G.pickOf ? G.pickOf().name : ""))))),
+        ui.mode === "explore" && isPrompt("bot") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
+            React.createElement("button", { onClick: () => { G.syncBotUi(); setUi((u) => ({ ...u, botPick: u.botNear })); }, style: {
+                    padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+                    fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.25,
+                    background: "linear-gradient(90deg,#6a5ac0,#9a8ae0)",
+                    boxShadow: "0 5px 16px rgba(106,90,192,0.5)", whiteSpace: "nowrap",
+                } },
+                "\uD83D\uDCAC \u0E17\u0E31\u0E01\u0E17\u0E32\u0E22 ",
+                ui.botNearName || "ผู้เล่น",
+                React.createElement("span", { style: { display: "block", fontSize: 9.5, opacity: 0.85 } },
+                    "Lv.",
+                    ui.botNearLv || 1,
+                    " \u00B7 \u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C")))),
+        ui.botPick && (() => {
+            const b = (ui.bots || []).find((x) => x.pid === ui.botPick);
+            if (!b)
+                return null;
+            const CL = CLASSES[b.c] || {};
+            const goalTxt = { hunt: "⚔️ กำลังล่ามอน", gather: "🌿 กำลังเก็บของ", roam: "🚶 กำลังสำรวจ", rest: "💤 กำลังพัก", idle: "…" }[b.goal] || "…";
+            const act = (label, bg, fn) => (React.createElement("button", { onClick: fn, style: {
+                    flex: 1, padding: "9px 0", borderRadius: 12, border: "none", cursor: "pointer",
+                    fontFamily: font, fontSize: 12.5, fontWeight: 900, color: "#fff", background: bg,
+                } }, label));
+            return (React.createElement("div", { style: { ...SKILL_SHELL } },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 9, marginBottom: 9 } },
+                    React.createElement("div", { style: { fontSize: 30 } }, CL.emoji || "🧑"),
+                    React.createElement("div", { style: { flex: 1, minWidth: 0, fontFamily: font } },
+                        React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#3a2f5a" } },
+                            b.n,
+                            " ",
+                            React.createElement("span", { style: { fontSize: 11.5, color: "#8a7ab0" } },
+                                "Lv.",
+                                b.lv)),
+                        React.createElement("div", { style: { fontSize: 10.5, color: "#8a7ab0" } },
+                            CL.name || b.c,
+                            " \u00B7 ",
+                            goalTxt,
+                            " \u00B7 \u0E2B\u0E48\u0E32\u0E07 ",
+                            b.dist,
+                            " \u0E2B\u0E19\u0E48\u0E27\u0E22")),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, botPick: null })), style: {
+                            width: 30, height: 30, borderRadius: 999, border: "none", cursor: "pointer",
+                            background: "#eee8f6", color: "#6a5a8a", fontSize: 16, fontWeight: 900, lineHeight: 1,
+                        } }, "\u00D7")),
+                React.createElement("div", { style: { fontSize: 11.5, color: "#7a6a9a", fontFamily: font, marginBottom: 9, lineHeight: 1.6 } }, b.bio),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 9 } }, [["⚔️ ล่าไปแล้ว", b.kills + " ตัว"], ["🌿 เก็บของ", b.gathers + " ครั้ง"], ["⏱️ เล่นมา", b.mins + " นาที"]].map(([k, v]) => (React.createElement("div", { key: k, style: { flex: 1, textAlign: "center", background: "#f4f0fb", borderRadius: 10, padding: "6px 3px" } },
+                    React.createElement("div", { style: { fontSize: 9.5, color: "#8a7ab0", fontFamily: font } }, k),
+                    React.createElement("div", { style: { fontSize: 12.5, fontWeight: 900, color: "#5a4a8a", fontFamily: font } }, v))))),
+                React.createElement("div", { style: { height: 8, borderRadius: 999, background: "#eee8f6", overflow: "hidden", marginBottom: 3 } },
+                    React.createElement("div", { style: { width: `${Math.min(100, Math.round((b.exp / Math.max(1, b.need)) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#8a6ad0,#b89aff)" } })),
+                React.createElement("div", { style: { fontSize: 10, color: "#9a8ab8", fontFamily: font, marginBottom: 10 } },
+                    "EXP ",
+                    b.exp,
+                    "/",
+                    b.need,
+                    " \u00B7 \u2764\uFE0F ",
+                    b.hp,
+                    "/",
+                    b.maxHp),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 6 } },
+                    act("💬 ทักทาย", "linear-gradient(90deg,#6a5ac0,#9a8ae0)", () => { G.botTalk(b.pid); G.syncBotUi(); }),
+                    b.party
+                        ? act("👋 ออกจากปาร์ตี้", "linear-gradient(90deg,#c08a5a,#e0aa7a)", () => G.botLeaveParty(b.pid))
+                        : act("🎉 ชวนเข้าปาร์ตี้", "linear-gradient(90deg,#3a8a4a,#7ac05a)", () => G.botInviteParty(b.pid))),
+                React.createElement("div", { style: { display: "flex", gap: 6 } }, act(b.guild ? "🏰 อยู่ในกิลด์แล้ว" : "🏰 ชวนเข้ากิลด์", b.guild ? "#b8aacc" : "linear-gradient(90deg,#c08a3a,#e0b45a)", () => G.botInviteGuild(b.pid)))));
+        })(),
         ui.herbOpen && (() => {
             const HI = ui.herbInfo || (G.herbInfo ? G.herbInfo() : { lv: 1, exp: 0, need: 1, max: HERB_LV_MAX, total: 0, power: 0 });
             const bag = HERBS.map((h) => ({ ...h, n: (ui.herbBag || {})[h.id] || 0 }));
