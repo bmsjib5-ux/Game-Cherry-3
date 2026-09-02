@@ -1840,6 +1840,7 @@ const HERB_W_DEF = HERB_W.meadow;
 const HERB_LV_EXP = (lv) => Math.round(36 + lv * 42 + Math.pow(Math.max(0, lv - 5), 2) * 6);   // 🌿 EXP ขึ้นเลเวลปรุงยา
 const HERB_LV_MAX = 20;
 const HERB_NODES = 5;            // 🌿 กอสมุนไพรที่ขึ้นพร้อมกันในแมพ
+const HERB_USES = 3;             // 🌿 หนึ่งกอเก็บได้กี่ครั้งก่อนหมด
 const HERB_RESPAWN = 26;         // ⏳ เก็บแล้วกี่วินาทีถึงขึ้นใหม่ที่อื่น
 const POT_BAG_MAX = 40;          // 🎒 ยาที่เก็บได้พร้อมกัน
 // 🧪 ตำรายา — kind: hp/mp = ฟื้นทันที (% ของค่าสูงสุด) · bhp/bmp = บัฟค่าสูงสุดตามเวลาจริง
@@ -19480,7 +19481,7 @@ export default function CherryAdventure() {
             n.respawn -= dt;
             if (n.respawn <= 0) {
               const pos = herbPlace();
-              n.x = pos.x; n.z = pos.z; n.herb = herbRoll(bid); n.dead = false;
+              n.x = pos.x; n.z = pos.z; n.herb = herbRoll(bid); n.dead = false; n.uses = HERB_USES;
               if (n.mesh) { if (n.mesh.parent) n.mesh.parent.remove(n.mesh); if (G._disposeObj3D) G._disposeObj3D(n.mesh); }
               n.mesh = buildHerbNode(n.herb);              // 🌸 ขึ้นใหม่เป็นสมุนไพรคนละชนิดได้
               (G._worldRoot || scene).add(n.mesh);
@@ -19499,7 +19500,7 @@ export default function CherryAdventure() {
         if (hNear !== G._herbNear) {
           G._herbNear = hNear;
           const hn = hNear != null ? G.herbNodes[hNear] : null;
-          setUi((u) => ({ ...u, herbNear: hNear != null, herbKind: hn ? hn.herb : null }));
+          setUi((u) => ({ ...u, herbNear: hNear != null, herbKind: hn ? hn.herb : null, herbUses: hn ? (hn.uses == null ? HERB_USES : hn.uses) : 0 }));
         }
       }
       const m = G.mining;
@@ -19595,7 +19596,7 @@ export default function CherryAdventure() {
         const pos = herbPlace();
         const hid = herbRoll(bid);
         const mesh = buildHerbNode(hid);
-        const n = { x: pos.x, z: pos.z, mesh, herb: hid, dead: false, respawn: 0, bob: Math.random() * 6 };
+        const n = { x: pos.x, z: pos.z, mesh, herb: hid, dead: false, respawn: 0, bob: Math.random() * 6, uses: HERB_USES };
         herbNodeSnap(n);
         root.add(mesh);
         G.herbNodes.push(n);
@@ -19622,9 +19623,20 @@ export default function CherryAdventure() {
       G.herbExp = (G.herbExp || 0) + gx;
       while ((G.herbLv || 1) < HERB_LV_MAX && G.herbExp >= HERB_LV_EXP(G.herbLv || 1)) { G.herbExp -= HERB_LV_EXP(G.herbLv || 1); G.herbLv = (G.herbLv || 1) + 1; lvUp++; }
       if ((G.herbLv || 1) >= HERB_LV_MAX) G.herbExp = Math.min(G.herbExp, HERB_LV_EXP(HERB_LV_MAX));
-      n.dead = true; n.respawn = HERB_RESPAWN;
-      if (n.mesh) { try { burst(n.mesh.position, 0x8ae06a, 0.8); } catch (_) {} n.mesh.visible = false; }
-      G._herbNear = null;
+      n.uses = (n.uses == null ? HERB_USES : n.uses) - 1;
+      if (n.mesh) { try { burst(n.mesh.position, 0x8ae06a, 0.8); } catch (_) {} }
+      if (n.uses > 0) {
+        // 🌿 กอยังเหลือให้เก็บอีก — ย่อลงตามที่เหลือ ให้เห็นว่าร่อยหรอลง
+        if (n.mesh) n.mesh.scale.setScalar(0.58 + 0.42 * (n.uses / HERB_USES));
+        setUi((u) => ({ ...u, herbUses: n.uses }));
+      } else {
+        n.dead = true; n.respawn = HERB_RESPAWN;
+        if (n.mesh) n.mesh.visible = false;
+        G._herbNear = null;
+        // 🛟 ต้องสั่งซ่อนปุ่มเอง — ลูปต่อเฟรมเทียบ hNear กับ G._herbNear ที่เป็น null ทั้งคู่
+        //    แล้วถือว่าไม่มีอะไรเปลี่ยน ปุ่มจึงค้างอยู่ตลอด
+        setUi((u) => ({ ...u, herbNear: false, herbKind: null, herbUses: 0 }));
+      }
       if (G.sfx && G.sfx.pick) G.sfx.pick(); else if (G.sfx && G.sfx.hit) G.sfx.hit();
       hToast(`${H.emoji} เก็บ${H.name} ×${qty}  (+${gx} EXP)`);
       if (lvUp) hToast(`🌿 ปรุงยาเลเวล ${G.herbLv} แล้ว!`);
@@ -51540,7 +51552,9 @@ export default function CherryAdventure() {
           }}>
             🌿 เก็บสมุนไพร
             {ui.herbKind && HERB_BY[ui.herbKind] ? <span style={{ display: "block", fontSize: 10.5, opacity: 0.92 }}>{HERB_BY[ui.herbKind].emoji}{HERB_BY[ui.herbKind].name}</span> : null}
-            <span style={{ display: "block", fontSize: 9.5, opacity: 0.85 }}>🌿 เลเวลปรุงยา {(ui.herbInfo || {}).lv || 1}/{HERB_LV_MAX}</span>
+            <span style={{ display: "block", fontSize: 9.5, opacity: 0.85 }}>
+              เหลือเก็บได้ {ui.herbUses != null ? ui.herbUses : HERB_USES}/{HERB_USES} ครั้ง · 🌿 Lv.{(ui.herbInfo || {}).lv || 1}
+            </span>
           </button>
         </div>
       )}
