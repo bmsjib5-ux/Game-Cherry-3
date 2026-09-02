@@ -19658,18 +19658,28 @@ export default function CherryAdventure() {
       const p = Math.round(B.pct * BREW_POW(G.herbLv || 1));
       return (B.kind === "bhp" || B.kind === "bmp") ? { pct: p, mins: B.mins } : { pct: p };
     };
-    G.potBagList = () => (G.potBag || []).map((p, i) => ({ ...p, i, def: BREW_BY[p.id] || null }));
+    G.potBagList = () => (G.potBag || []).map((p, i) => ({ ...p, n: p.n || 1, i, def: BREW_BY[p.id] || null }));
+    G.potBottles = () => (G.potBag || []).reduce((a, q) => a + (q.n || 1), 0);   // 🧮 จำนวนขวดรวมทุกกอง
 
     // ⚗️ ปรุงยา 1 ขวด
     G.brewPotion = (id) => {
       const B = BREW_BY[id]; if (!B) return;
       if ((G.herbLv || 1) < B.lv) { hToast(`🌿 ต้องปรุงยาเลเวล ${B.lv} ก่อน`); return; }
-      if ((G.potBag || []).length >= POT_BAG_MAX) { hToast(`🎒 ถุงยาเต็มแล้ว (${POT_BAG_MAX} ขวด) — ใช้หรือขายบางขวดก่อนนะ`); return; }
+      // 🎒 ถุงยานับเป็น "ชนิด" — ยาชนิดเดียวกันกองรวมกันอยู่ช่องเดียว จะเต็มก็ต่อเมื่อชนิดครบ
+      {
+        const B0 = BREW_BY[id], pw0 = B0 ? G.brewPower(B0) : null;
+        const stack0 = pw0 && (G.potBag || []).find((q) => q.id === id && q.pct === pw0.pct && (q.mins || 0) === (pw0.mins || 0));
+        if (!stack0 && (G.potBag || []).length >= POT_BAG_MAX) { hToast(`🎒 ถุงยาเต็มแล้ว (${POT_BAG_MAX} ชนิด) — ใช้หรือขายบางชนิดก่อนนะ`); return; }
+      }
       for (const k in B.need) { if (G.herbHave(k) < B.need[k]) { hToast(`${(HERB_BY[k] || {}).emoji || "🌿"} ${(HERB_BY[k] || {}).name || k} ไม่พอ`); return; } }
       for (const k in B.need) G.herbBag[k] -= B.need[k];
       const pw = G.brewPower(B);
       G.potBag = G.potBag || [];
-      G.potBag.push({ id: B.id, kind: B.kind, pct: pw.pct, mins: pw.mins || 0, lv: G.herbLv || 1 });
+      // 🧪 กองรวมเฉพาะยาที่ "ฤทธิ์เท่ากันจริง" — สูตรเดียวกันแต่ปรุงคนละเลเวลฤทธิ์ต่างกัน
+      //    ถ้ารวมมั่วยาแรงจะถูกกลืนเป็นยาอ่อนโดยผู้เล่นไม่รู้ตัว
+      const stack = G.potBag.find((q) => q.id === B.id && q.pct === pw.pct && (q.mins || 0) === (pw.mins || 0));
+      if (stack) stack.n = (stack.n || 1) + 1;
+      else G.potBag.push({ id: B.id, kind: B.kind, pct: pw.pct, mins: pw.mins || 0, lv: G.herbLv || 1, n: 1 });
       let lvUp = 0;
       G.herbExp = (G.herbExp || 0) + B.exp;
       while ((G.herbLv || 1) < HERB_LV_MAX && G.herbExp >= HERB_LV_EXP(G.herbLv || 1)) { G.herbExp -= HERB_LV_EXP(G.herbLv || 1); G.herbLv = (G.herbLv || 1) + 1; lvUp++; }
@@ -19709,7 +19719,8 @@ export default function CherryAdventure() {
         G.player.maxMp = effMaxMp();
         hToast(`${B.emoji || "✨"} ${slot === "hp" ? "❤️ เลือดสูงสุด" : "🔮 มานาสูงสุด"} +${p.pct}% นาน ${p.mins} นาที`);
       }
-      bag.splice(idx, 1);
+      p.n = (p.n || 1) - 1;
+      if (p.n <= 0) bag.splice(idx, 1);
       if (G.sfx && G.sfx.heal) G.sfx.heal(); else if (G.sfx && G.sfx.buy) G.sfx.buy();
       G.syncHerbUi();
       if (G.syncPlayerUi) G.syncPlayerUi();
@@ -19724,7 +19735,8 @@ export default function CherryAdventure() {
       let worth = 0; for (const k in (B.need || {})) worth += ((HERB_BY[k] || {}).sell || 10) * B.need[k];
       const gold = Math.max(10, Math.round(worth * 1.15));
       G.gold += gold;
-      bag.splice(idx, 1);
+      p.n = (p.n || 1) - 1;
+      if (p.n <= 0) bag.splice(idx, 1);
       hToast(`💰 ขาย${B.name || "ยา"} ได้ ${gold} ทอง`);
       G.syncHerbUi();
       if (G.saveGame) G.saveGame();
@@ -35710,7 +35722,7 @@ export default function CherryAdventure() {
       G.fishCaught = (d.fishCaught && typeof d.fishCaught === "object") ? { ...d.fishCaught } : {};
       G.herbLv = d.herbLv || 1; G.herbExp = d.herbExp || 0; G.herbTotal = d.herbTotal || 0;
       G.herbBag = d.herbBag || {};
-      G.potBag = Array.isArray(d.potBag) ? d.potBag.map((q) => ({ ...q })) : [];
+      G.potBag = Array.isArray(d.potBag) ? d.potBag.map((q) => ({ ...q, n: q.n || 1 })) : [];   // 🧪 เซฟเก่าไม่มีจำนวน ถือว่ากองละ 1 ขวด
       G.brewBuff = { hp: null, mp: null };
       if (d.brewBuff) for (const sl of ["hp", "mp"]) {          // 🌿 บัฟที่หมดอายุระหว่างปิดเกมถือว่าหมดไปแล้ว
         const b = d.brewBuff[sl];
@@ -51444,7 +51456,7 @@ export default function CherryAdventure() {
             )}
             <div style={{ display: "flex", gap: 6, marginBottom: 9 }}>
               {tabBtn("brew", "⚗️ ปรุงยา")}
-              {tabBtn("bag", `🎒 ถุงยา (${pots.length})`)}
+              {tabBtn("bag", `🎒 ถุงยา (${pots.length}/${POT_BAG_MAX} ชนิด · ${pots.reduce((a, q) => a + (q.n || 1), 0)} ขวด)`)}
               {tabBtn("herb", "🌿 สมุนไพร")}
             </div>
 
@@ -51496,9 +51508,21 @@ export default function CherryAdventure() {
                           display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 12,
                           background: "#f7f9f6", border: "1.5px solid #d8e4d0",
                         }}>
-                          <div style={{ fontSize: 22 }}>{D.emoji || K.emoji}</div>
+                          <div style={{ position: "relative", fontSize: 22 }}>
+                            {D.emoji || K.emoji}
+                            {(p.n || 1) > 1 && (
+                              <span style={{
+                                position: "absolute", right: -7, bottom: -4, minWidth: 17, padding: "0 4px",
+                                borderRadius: 999, background: "#3a8a4a", color: "#fff",
+                                fontSize: 10.5, fontWeight: 900, lineHeight: "17px", textAlign: "center",
+                                fontFamily: font, boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                              }}>{p.n}</span>
+                            )}
+                          </div>
                           <div style={{ flex: 1, minWidth: 0, fontFamily: font }}>
-                            <div style={{ fontSize: 12.8, fontWeight: 900, color: "#2f4a33" }}>{D.name || "ยา"}</div>
+                            <div style={{ fontSize: 12.8, fontWeight: 900, color: "#2f4a33" }}>
+                              {D.name || "ยา"}{(p.n || 1) > 1 ? <span style={{ color: "#3a8a4a" }}> ×{p.n}</span> : null}
+                            </div>
                             <div style={{ fontSize: 10.5, color: K.col, fontWeight: 800 }}>
                               {K.emoji} {K.label} {p.pct}%{p.mins ? ` · ${p.mins} นาที` : ""}
                             </div>
