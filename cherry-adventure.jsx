@@ -1882,6 +1882,8 @@ const BUFF_LABEL = {
 // 🌐 ราคาฐานของของที่เอาไปลงตลาดออนไลน์ได้ (ใช้คิดราคาแนะนำ + เพดานราคา)
 const MKT_FISH_BASE = { common: 18, rare: 70, epic: 260 };
 const MKT_MAT_BASE = { ironOre: 14, crystal: 70, fireEss: 95, iceEss: 95, windEss: 95, earthEss: 95, dragonScale: 950 };
+// 🌿🧪 สมุนไพร/ยาที่ปรุงเอง — ราคาฐานคิดจากค่าขายสมุนไพร (ยา = ค่าวัตถุดิบ x1.15 เท่าเดิมกับขายในแผง)
+const MKT_HERB_MAXMUL = 6, MKT_POT_MAXMUL = 6;
 const FISH_TIER = { common: { name: "ปลาธรรมดา", emoji: "🐟" }, rare: { name: "ปลาหายาก", emoji: "🐠" }, epic: { name: "ปลาในตำนาน", emoji: "🐉" } };
 // ---------- 🎣 ตกปลา — ชนิดปลา · เลเวลตกปลา · โอกาสได้ปลาหายากตามเลเวล ----------
 const FISH_LV_MAX = 20;
@@ -19764,7 +19766,7 @@ export default function CherryAdventure() {
       lv: G.herbLv || 1, exp: G.herbExp || 0, need: HERB_LV_EXP(G.herbLv || 1), max: HERB_LV_MAX,
       total: G.herbTotal || 0, power: Math.round((BREW_POW(G.herbLv || 1) - 1) * 100),
     });
-    G.syncHerbUi = () => setUi((u) => ({ ...u,
+    G.syncHerbUi = () => setUi((u) => ({ ...u, hpPotUse: G.hpPotUse, mpPotUse: G.mpPotUse,
       herbInfo: G.herbInfo(), herbBag: { ...(G.herbBag || {}) }, potBag: G.potBagList(),
       brewBuff: G.brewBuffInfo(), gold: G.gold }));
     G.toggleHerb = () => setUi((u) => (u.herbOpen
@@ -23073,12 +23075,34 @@ export default function CherryAdventure() {
     // 🧪 pick the chosen size when available; otherwise fall back to the LARGEST one you own
     // (so choosing "ใหญ่" never silently drinks a small one while bigger potions exist)
     const pickSize = (o, want) => (want && o[want] > 0) ? want : (o.l > 0 ? "l" : o.m > 0 ? "m" : o.s > 0 ? "s" : null);
+    // 🌿 ปุ่มลัดเลือกใช้ "ยาที่ปรุงเอง" ได้ — เก็บเป็นคีย์ brew:<สูตร>|<ฤทธิ์>|<นาที>
+    const brewKey = (q) => `brew:${q.id}|${q.pct}|${q.mins || 0}`;
+    G.brewKey = brewKey;
+    const findBrew = (want, kind) => {
+      if (!want || String(want).slice(0, 5) !== "brew:") return -1;
+      const bag = G.potBag || [];
+      return bag.findIndex((q) => q.kind === kind && brewKey(q) === want);
+    };
+    // คืน true ถ้าใช้ยาที่ปรุงเองไปแล้ว (ปุ่มลัดไม่ต้องไปยุ่งกับน้ำยาปกติต่อ)
+    G.hasBrewPick = (kind) => findBrew(kind === "hp" ? G.hpPotUse : G.mpPotUse, kind) >= 0;
+    const useBrewQuick = (want, kind) => {
+      const i = findBrew(want, kind);
+      if (i < 0) return false;
+      if (G.mode === "battle" && (G.banim || !G.enemy)) return true;   // กันกดตอนแอนิเมชันกำลังเล่น
+      const full = kind === "hp" ? G.player.hp >= effMaxHp() : G.player.mp >= effMaxMp();
+      if (full) { toast(kind === "hp" ? "เลือดเต็มอยู่แล้ว!" : "มานาเต็มอยู่แล้ว!"); return true; }
+      if (G.useBrew) G.useBrew(i);
+      if (G.mode === "battle") enemyTurn();                            // กินยาในสนามรบเสียตาเหมือนน้ำยาปกติ
+      return true;
+    };
     const syncPotions = () => { // keep the legacy totals in sync so HUD badges + auto checks keep working
       G.potions = G.hpPotTotal(); G.mpPotions = G.mpPotTotal();
       setUi((u) => ({ ...u, potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots } }));
     };
     G.syncPotions = syncPotions;
     G.usePotion = (size) => {
+      if (useBrewQuick(size, "hp")) return;                            // 🌿 เลือกยาที่ปรุงเองไว้
+      if (String(size).slice(0, 5) === "brew:") size = null;           // 🛟 กองหมดแล้ว — ถือว่าไม่ได้เลือกขนาดไว้ ไม่งั้น HP_POT[size] เป็น undefined
       const use = pickSize(G.hpPots, size);
       if (!use) { toast("น้ำยาเลือดหมด! ซื้อที่ร้านค้า 🧪 (100/500/1000💰)"); return; }
       if (G.player.hp >= effMaxHp()) { toast("เลือดเต็มอยู่แล้ว!"); return; }
@@ -23102,6 +23126,8 @@ export default function CherryAdventure() {
       }
     };
     G.useManaPotion = (size) => {
+      if (useBrewQuick(size, "mp")) return;                            // 🌿 เลือกยาที่ปรุงเองไว้
+      if (String(size).slice(0, 5) === "brew:") size = null;           // 🛟 กองหมดแล้ว — ถือว่าไม่ได้เลือกขนาดไว้
       const use = pickSize(G.mpPots, size);
       if (!use) { toast("น้ำยามานาหมด! ซื้อที่ร้านค้า 💧 (100/500/1000💰)"); return; }
       if (G.player.mp >= effMaxMp()) { toast("มานาเต็มอยู่แล้ว!"); return; }
@@ -24488,6 +24514,14 @@ export default function CherryAdventure() {
     // ⚙️ pick which potion size the on-screen quick-use buttons (and auto-drink) consume
     G.setPotUse = (type, size) => {
       if (type === "hp") G.hpPotUse = size; else G.mpPotUse = size;
+      if (String(size).slice(0, 5) === "brew:") {                      // 🌿 ยาที่ปรุงเอง
+        const q = (G.potBag || []).find((x) => G.brewKey(x) === size);
+        const D = q && BREW_BY[q.id];
+        toast(`⚙️ ปุ่ม${type === "hp" ? "🧪เลือด" : "💧มานา"} ใช้${D ? D.name : "ยาที่ปรุงเอง"}`);
+        setUi((u) => ({ ...u, hpPotUse: G.hpPotUse, mpPotUse: G.mpPotUse }));
+        if (G.saveGame) G.saveGame();
+        return;
+      }
       const P = (type === "hp" ? HP_POT : MP_POT)[size];
       if (P) toast(`⚙️ ปุ่ม${type === "hp" ? "🧪เลือด" : "💧มานา"} ใช้ขนาด${P.name}`);
       setUi((u) => ({ ...u, hpPotUse: G.hpPotUse, mpPotUse: G.mpPotUse }));
@@ -33316,8 +33350,8 @@ export default function CherryAdventure() {
       const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
       const hpPct = G.player.hp / effMaxHp();
       // 1) very low HP → drink a potion (⚙️ togglable)
-      if (G.autoHpPot && hpPct < 0.3 && G.potions > 0) { G.usePotion(G.hpPotUse); return; }
-      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(G.mpPotUse); return; }
+      if (G.autoHpPot && hpPct < 0.3 && (G.potions > 0 || G.hasBrewPick("hp"))) { G.usePotion(G.hpPotUse); return; }
+      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && ((G.mpPotions || 0) > 0 || G.hasBrewPick("mp"))) { G.useManaPotion(G.mpPotUse); return; }
       // 2) mage with a heal skill and hurt → heal
       if (hpPct < 0.55) {
         const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
@@ -33367,8 +33401,8 @@ export default function CherryAdventure() {
       if (G.mode !== "explore" || G.banim) return;
       const unlocked = (sk) => skillGate(G.cls, skillsOf(G.cls, G.pathId).indexOf(sk), G.player.level, G.skillRanks, G.baseStats, G.pathId).open;
       // top up HP/MP with a potion when low (⚙️ togglable)
-      if (G.autoHpPot && G.player.hp < effMaxHp() * 0.35 && G.potions > 0) { G.usePotion(G.hpPotUse); return; }
-      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && (G.mpPotions || 0) > 0) { G.useManaPotion(G.mpPotUse); return; }
+      if (G.autoHpPot && G.player.hp < effMaxHp() * 0.35 && (G.potions > 0 || G.hasBrewPick("hp"))) { G.usePotion(G.hpPotUse); return; }
+      if (G.autoMpPot && G.player.mp < effMaxMp() * 0.25 && ((G.mpPotions || 0) > 0 || G.hasBrewPick("mp"))) { G.useManaPotion(G.mpPotUse); return; }
       // a mage/priest with a heal skill & hurt → heal (cast targets self-safely via the arena FX path)
       if (G.player.hp < effMaxHp() * 0.5) {
         const healSk = skillsOf(G.cls, G.pathId).find((sk) => sk.heal && G.mpCostOf(sk) <= G.player.mp && !G.cdLeft(sk) && unlocked(sk));
@@ -35081,11 +35115,25 @@ export default function CherryAdventure() {
       const base = MKT_MAT_BASE[k] || 20;
       return { id: k, name: MATERIALS[k].name, emoji: MATERIALS[k].emoji, n, base, suggest: base * 2, max: base * MKT_MAT_MAXMUL };
     }).filter((m) => m.n > 0);
+    // 🌿 สมุนไพรที่เก็บได้
+    const mktHerbOpts = () => HERBS.map((h) => {
+      const n = (G.herbBag || {})[h.id] || 0;
+      const base = h.sell || 20;
+      return { id: h.id, name: h.name, emoji: h.emoji, n, base, suggest: base * 2, max: base * MKT_HERB_MAXMUL };
+    }).filter((h) => h.n > 0);
+    // 🧪 ยาที่ปรุงเอง — ขายทีละขวดจากกอง (ฤทธิ์ติดไปกับขวดนั้น)
+    const mktPotOpts = () => (G.potBag || []).map((q, i) => {
+      const D = BREW_BY[q.id] || {};
+      let worth = 0; for (const k in (D.need || {})) worth += ((HERB_BY[k] || {}).sell || 10) * D.need[k];
+      const base = Math.max(20, Math.round(worth * 1.15));
+      return { i, id: q.id, kind: q.kind, name: D.name || "ยา", emoji: D.emoji || "🧪", pct: q.pct, mins: q.mins || 0,
+               n: q.n || 1, base, suggest: base * 2, max: base * MKT_POT_MAXMUL };
+    }).filter((q) => q.n > 0);
     const mktPetOpts = () => (G.petBox || []).filter((p) => !G.petInUse(p.i) && !((G.ranch && G.ranch.slots) || []).includes(p.i)).map((p) => { const sp = SPECIES[p.sp] || {}; const base = G.petSellPrice(p); return { i: p.i, sp: p.sp, name: sp.name, emoji: sp.emoji, tier: sp.tier || 1, lv: p.lv, plus: p.plus || 0, stage: p.stage || 1, iv: p.iv || { a: 0, h: 0, d: 0 }, suggest: base * 2, max: base * MKT_PET_MAXMUL }; });
     G.openMarket = (tab) => {
       if (G.ensurePid) G.ensurePid();
       setUi((u) => ({ ...u, panelOpen: false, ranchOpen: false, mktOpen: true, mktTab: (["sell", "mine", "contest", "board"].indexOf(tab) >= 0 ? tab : "buy"), gold: G.gold, pid: G.pid || null,
-        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktGear: mktGearOpts(), mktFish: mktFishOpts(), mktFood: mktFoodOpts(), mktMats: mktMatOpts(), mktSellCat: "gear", mktListings: null, mktMine: null, mktBusy: false, mktPrices: {}, mktErr: CN.enabled() ? null : "offline",
+        mktProduce: mktProduceOpts(), mktPets: mktPetOpts(), mktGear: mktGearOpts(), mktFish: mktFishOpts(), mktFood: mktFoodOpts(), mktMats: mktMatOpts(), mktHerbs: mktHerbOpts(), mktPots: mktPotOpts(), mktSellCat: "gear", mktListings: null, mktMine: null, mktBusy: false, mktPrices: {}, mktErr: CN.enabled() ? null : "offline",
         contestPets: G.contestPetOpts ? G.contestPetOpts() : [], contestUsed: contestUsedToday(), contestMax: CONTEST_MAX, contestBest: (G.ranch && G.ranch.contestBest) || 0, contestTop: null, contestErr: CN.enabled() ? null : "offline" }));
       G.marketRefresh("buy");
       if (G.contestBoard) G.contestBoard();
@@ -35207,6 +35255,57 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, mktMats: mktMatOpts(), mats: { ...G.mats } }));
       G.marketRefresh("mine");
     };
+    // 🌿 ลงขายสมุนไพร
+    G.marketSellHerb = async (herbId, qty, price) => {
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      const H = HERB_BY[herbId]; if (!H) return;
+      G.herbBag = G.herbBag || {};
+      const have = G.herbBag[herbId] || 0;
+      if (have <= 0) { toast("🌿 ไม่มีสมุนไพรชนิดนี้"); return; }
+      qty = Math.max(1, Math.min(have, qty | 0));
+      const base = H.sell || 20;
+      price = Math.max(1, Math.min(qty * base * MKT_HERB_MAXMUL, price | 0));
+      if (G.ensurePid) G.ensurePid();
+      G.herbBag[herbId] = have - qty;                                   // 🔒 ยกออกก่อนลงขาย กันขายซ้ำ
+      const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "herb", item: { herb: herbId, name: H.name, emoji: H.emoji, qty }, price, status: "open", collected: false, ts: Date.now() };
+      const created = await CN.marketPost(row);
+      if (!created) { G.herbBag[herbId] = (G.herbBag[herbId] || 0) + qty; toast("🌐 ลงขายไม่สำเร็จ"); setUi((u) => ({ ...u, mktHerbs: mktHerbOpts() })); return; }
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏷️ ลงขาย ${H.emoji} ${H.name} ×${qty} ราคา ${price.toLocaleString()}💰`);
+      if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, mktHerbs: mktHerbOpts(), herbBag: { ...(G.herbBag || {}) } }));
+      G.marketRefresh("mine");
+    };
+    // 🧪 ลงขายยาที่ปรุงเอง (ทีละขวดจากกอง — ฤทธิ์ติดไปกับขวด)
+    G.marketSellPot = async (idx, qty, price) => {
+      if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
+      const bag = G.potBag || [];
+      const q = bag[idx]; if (!q) { toast("🧪 ไม่มียาขวดนี้แล้ว"); return; }
+      const D = BREW_BY[q.id] || {};
+      const have = q.n || 1;
+      qty = Math.max(1, Math.min(have, qty | 0));
+      let worth = 0; for (const k in (D.need || {})) worth += ((HERB_BY[k] || {}).sell || 10) * D.need[k];
+      const base = Math.max(20, Math.round(worth * 1.15));
+      price = Math.max(1, Math.min(qty * base * MKT_POT_MAXMUL, price | 0));
+      if (G.ensurePid) G.ensurePid();
+      const snap = { id: q.id, kind: q.kind, pct: q.pct, mins: q.mins || 0, lv: q.lv || 1, qty,
+                     name: D.name || "ยา", emoji: D.emoji || "🧪" };
+      q.n = have - qty;                                                  // 🔒 ยกออกก่อนลงขาย
+      if (q.n <= 0) bag.splice(idx, 1);
+      const row = { seller: G.pid, seller_name: (G.playerName || "เชอร์รี่").slice(0, 14), kind: "pot", item: snap, price, status: "open", collected: false, ts: Date.now() };
+      const created = await CN.marketPost(row);
+      if (!created) {                                                    // คืนของถ้าลงขายไม่สำเร็จ
+        const back = (G.potBag || []).find((x) => x.id === snap.id && x.pct === snap.pct && (x.mins || 0) === snap.mins);
+        if (back) back.n = (back.n || 1) + qty;
+        else G.potBag.push({ id: snap.id, kind: snap.kind, pct: snap.pct, mins: snap.mins, lv: snap.lv, n: qty });
+        toast("🌐 ลงขายไม่สำเร็จ"); setUi((u) => ({ ...u, mktPots: mktPotOpts() })); return;
+      }
+      if (G.sfx) G.sfx.coin && G.sfx.coin();
+      toast(`🏷️ ลงขาย ${snap.emoji} ${snap.name} ×${qty} ราคา ${price.toLocaleString()}💰`);
+      if (G.saveGame) G.saveGame();
+      setUi((u) => ({ ...u, mktPots: mktPotOpts(), potBag: G.potBagList() }));
+      G.marketRefresh("mine");
+    };
     G.marketSellPet = async (iid, price) => {
       if (!CN.enabled()) { toast("🌐 ต้องตั้งค่าออนไลน์ (ONLINE_SETUP.md)"); return; }
       const p = G.petAt(iid); if (!p) return;
@@ -35267,6 +35366,15 @@ export default function CherryAdventure() {
         if (kind === "food") { G.foodBag = Array.isArray(G.foodBag) ? G.foodBag : []; const d = it.dish; if (!d) return false;
           G.foodBag.push({ ...d, uid: "m" + Date.now() + Math.floor(Math.random() * 1000) }); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} เข้ากระเป๋าอาหารแล้ว!`); return true; }
         if (kind === "mat") { G.mats = G.mats || {}; G.mats[it.mat] = (G.mats[it.mat] || 0) + (it.qty || 1); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} ×${it.qty} แล้ว!`); return true; }
+        if (kind === "herb") { G.herbBag = G.herbBag || {}; G.herbBag[it.herb] = (G.herbBag[it.herb] || 0) + (it.qty || 1); if (G.syncHerbUi) G.syncHerbUi(); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} ×${it.qty} แล้ว!`); return true; }
+        if (kind === "pot") {                                            // 🧪 ยาที่ซื้อมา กองรวมกับยาฤทธิ์เดียวกันที่มีอยู่
+          G.potBag = G.potBag || [];
+          const same = G.potBag.find((x) => x.id === it.id && x.pct === it.pct && (x.mins || 0) === (it.mins || 0));
+          if (same) same.n = (same.n || 1) + (it.qty || 1);
+          else G.potBag.push({ id: it.id, kind: it.kind, pct: it.pct, mins: it.mins || 0, lv: it.lv || 1, n: it.qty || 1 });
+          if (G.syncHerbUi) G.syncHerbUi();
+          if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} ×${it.qty || 1} แล้ว!`); return true;
+        }
         if (kind === "pet") { G.addPetInstance(it.sp, { lv: it.lv, exp: it.exp, stage: it.stage, plus: it.plus, iv: it.iv }); if (!quiet) toast(`✅ ได้ ${it.emoji} ${it.name} Lv.${it.lv} เข้ากล่องแล้ว!`); return true; }
       } catch (e) { return false; }
       return false;
@@ -37514,8 +37622,8 @@ export default function CherryAdventure() {
           (G._manualT || 0) > 0;
         if (G.auto && !manualInput && !G.inRanchZone && !G.inTownZone && !G.inHomeZone) { // 🏰🏠 ในเมือง/ในบ้าน = ห้ามออกล่ามอนสเตอร์
           // top up HP/MP before charging in (⚙️ togglable in auto settings)
-          if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && G.potions > 0) G.usePotion(G.hpPotUse);
-          if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && (G.mpPotions || 0) > 0) G.useManaPotion(G.mpPotUse);
+          if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && (G.potions > 0 || G.hasBrewPick("hp"))) G.usePotion(G.hpPotUse);
+          if (G.autoMpPot && G.player.mp < effMaxMp() * 0.3 && ((G.mpPotions || 0) > 0 || G.hasBrewPick("mp"))) G.useManaPotion(G.mpPotUse);
           G.huntT = (G.huntT || 0) + dt;
           if (G.huntT > 0.35) { // re-aim often since things move & wander
             G.huntT = 0;
@@ -48592,6 +48700,15 @@ export default function CherryAdventure() {
     left: _bannerSide ? "calc(50% + 100px)" : "50%",
     transform: "translateX(-50%)",
   });
+  // 🌿 ปุ่มลัดยา: ถ้าเลือกยาที่ปรุงเองไว้ ให้ป้ายนับจำนวนขวดของกองนั้นแทนน้ำยาที่ซื้อ
+  const _brewPick = (key, kind) => {
+    const want = ui[key] || "s";
+    if (String(want).slice(0, 5) !== "brew:") return null;
+    return (ui.potBag || []).find((q) => q.kind === kind && `brew:${q.id}|${q.pct}|${q.mins || 0}` === want) || null;
+  };
+  const _hpBrew = _brewPick("hpPotUse", "hp"), _mpBrew = _brewPick("mpPotUse", "mp");
+  const _hpCount = _hpBrew ? (_hpBrew.n || 1) : (ui.potions || 0);
+  const _mpCount = _mpBrew ? (_mpBrew.n || 1) : (ui.mpPotions || 0);
   const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
     : ui.herbNear ? "herb"
     : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
@@ -48617,7 +48734,8 @@ export default function CherryAdventure() {
   //    dark = ธีมเข้ม (หน้าวิชาตัวเบา) · ปกติ = ธีมการ์ดขาว
   // 🌐 ชื่อ/คำอธิบายของรายการในตลาด — รองรับทุกหมวด (ของดรอป · แร่ · ปลา · อาหาร · พืชผล · สัตว์เลี้ยง)
   const MKT_KIND = { gear: { ic: "🗡️", nm: "อาวุธ/ชุด" }, mat: { ic: "⛏️", nm: "แร่" }, fish: { ic: "🎣", nm: "ปลา" },
-                     food: { ic: "🍳", nm: "อาหาร" }, produce: { ic: "🥕", nm: "พืชผล" }, pet: { ic: "🐾", nm: "สัตว์เลี้ยง" } };
+                     food: { ic: "🍳", nm: "อาหาร" }, produce: { ic: "🥕", nm: "พืชผล" }, pet: { ic: "🐾", nm: "สัตว์เลี้ยง" },
+                     herb: { ic: "🌿", nm: "สมุนไพร" }, pot: { ic: "🧪", nm: "ยาปรุงเอง" } };
   const mktTitle = (L) => {
     const it = (L && L.item) || {}, k = L && L.kind;
     if (k === "pet") return `${it.name} Lv.${it.lv}${it.plus ? ` +${it.plus}` : ""}`;
@@ -48632,6 +48750,8 @@ export default function CherryAdventure() {
     if (k === "food") return `${it.qName || ""} · บัฟ ${it.mins || 0} นาที`;
     if (k === "fish") return "ปลาที่ตกได้";
     if (k === "mat") return "แร่ที่ขุดได้";
+    if (k === "herb") return "สมุนไพรที่เก็บได้";
+    if (k === "pot") return `${BREW_KIND[it.kind] ? BREW_KIND[it.kind].label : "ยา"} ${it.pct || 0}%${it.mins ? ` · ${it.mins} นาที` : ""}`;
     return "พืชผลฟาร์ม";
   };
   const mktIcon = (L) => ((L && L.item && L.item.emoji) || (MKT_KIND[L && L.kind] || {}).ic || "📦");
@@ -51936,6 +52056,21 @@ export default function CherryAdventure() {
                   {["s", "m", "l"].map((sz) => { const on = (ui[key] || "s") === sz; const p = (META || {})[sz] || {}; return (
                     <button key={sz} onClick={() => G.setPotUse(type, sz)} title={`${p.name} (+${type === "hp" ? p.heal : p.rest})`} style={{ width: 34, height: 28, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: on ? "#fff" : "#7a8a7a", background: on ? (type === "hp" ? "linear-gradient(90deg,#5aa06a,#7ac088)" : "linear-gradient(90deg,#4a90c0,#6ab8e0)") : "#fff", boxShadow: on ? "0 2px 6px rgba(90,140,90,0.35)" : "inset 0 0 0 1px #d8d8cc" }}>{({ s: "S", m: "M", l: "L" })[sz]}</button>
                   ); })}
+                  {/* 🌿 ยาที่ปรุงเอง — เลือกให้ปุ่มลัดใช้แทนน้ำยาที่ซื้อได้ */}
+                  {(ui.potBag || []).filter((q) => q.kind === type).map((q) => {
+                    const k = `brew:${q.id}|${q.pct}|${q.mins || 0}`;
+                    const on = (ui[key] || "s") === k;
+                    const D = q.def || {};
+                    return (
+                      <button key={k} onClick={() => G.setPotUse(type, k)} title={`${D.name || "ยาที่ปรุงเอง"} ฟื้น ${q.pct}%`} style={{
+                        height: 28, padding: "0 8px", borderRadius: 8, border: "none", cursor: "pointer",
+                        fontFamily: font, fontSize: 11, fontWeight: 800,
+                        color: on ? "#fff" : "#5a7a5a",
+                        background: on ? "linear-gradient(90deg,#3a8a4a,#7ac05a)" : "#fff",
+                        boxShadow: on ? "0 2px 6px rgba(58,138,74,0.35)" : "inset 0 0 0 1px #cfe0c8",
+                      }}>{D.emoji || "🌿"}{q.pct}%<span style={{ opacity: 0.85 }}>×{q.n || 1}</span></button>
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -52177,7 +52312,7 @@ export default function CherryAdventure() {
         <button onClick={() => G.toggleSocial()} title="เพื่อน" style={{ position: "absolute", ...Lslot(4), display: Lfit(4) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
       </>)}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>🧪<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.potions || 0}</span></button>
+        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>{_hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : "🧪"}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _hpBrew ? "#3a8a4a" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_hpCount}</span></button>
       )}
       {/* 🏠 ปุ่มในบ้าน: แต่งบ้าน + นอนพัก (โหมดเยี่ยมบ้านเพื่อน = ดูอย่างเดียว) */}
       {ui.mode === "explore" && !ui.equipScreen && ui.inHomeZone && !ui.homeVisitOwner && (
@@ -52242,7 +52377,7 @@ export default function CherryAdventure() {
       )}
       {/* 💧 mana potion — ใต้ปุ่มเลือด */}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>💧<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{ui.mpPotions || 0}</span></button>
+        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>{_mpBrew ? ((_mpBrew.def || {}).emoji || "🌿") : "💧"}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _mpBrew ? "#3a8a4a" : "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_mpCount}</span></button>
       )}
       {/* 🐎 ride / dismount — one tap */}
       {ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (
@@ -52280,6 +52415,7 @@ export default function CherryAdventure() {
             ["🏪", "ร้านค้า", () => toggleMenu("shopOpen"), "#6fce97"],
             ["💎", "ร้านเพชร", () => G.openDiamondShop(), "#7fd0f5"],
             ["🏛️", "ตลาดทองคำ", () => G.openGoldMarket(), "#f5c542"],
+            ["🌐", "ตลาดออนไลน์", () => G.openMarket && G.openMarket("buy"), "#2f8f9a"],
             ["🎰", "กาชาอัญเชิญ", () => G.openGacha(), "#f5a0e0"],
             ["🎡", "กงล้อ & ปฏิทิน", () => G.toggleWheel(), "#f07aa0", "wheel"],
           ]],
@@ -55626,6 +55762,8 @@ export default function CherryAdventure() {
                     ["food", "🍳", "อาหาร", (ui.mktFood || []).length],
                     ["produce", "🥕", "พืชผล", (ui.mktProduce || []).length],
                     ["pet", "🐾", "สัตว์เลี้ยง", (ui.mktPets || []).length],
+                    ["herb", "🌿", "สมุนไพร", (ui.mktHerbs || []).length],
+                    ["pot", "🧪", "ยาปรุงเอง", (ui.mktPots || []).length],
                   ];
                   return (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8, padding: 3, borderRadius: 11, background: "#eef5f3", border: "1px solid #d8e8e4" }}>
@@ -55648,25 +55786,29 @@ export default function CherryAdventure() {
                   );
                 })()}
                 {/* ⛏️🎣 ของเป็นกอง — เลือกจำนวน + ราคา */}
-                {["mat", "fish"].indexOf(ui.mktSellCat || "gear") >= 0 && (() => {
-                  const isMat = (ui.mktSellCat || "gear") === "mat";
-                  const rows = isMat ? (ui.mktMats || []) : (ui.mktFish || []);
-                  const col = isMat ? { t: "#7a6a4a", s: "#a89878", bg: "#faf6ee", bd: "#e8dcc4" } : { t: "#2f7a9a", s: "#7aa8c0", bg: "#eef7fb", bd: "#cfe4f0" };
-                  const head = isMat ? "⛏️ ลงขายแร่ที่ขุดได้" : "🎣 ลงขายปลาที่ตกได้";
+                {["mat", "fish", "herb", "pot"].indexOf(ui.mktSellCat || "gear") >= 0 && (() => {
+                  const CATN = ui.mktSellCat || "gear";
+                  const isMat = CATN === "mat", isHerb = CATN === "herb", isPot = CATN === "pot";
+                  const rows = isMat ? (ui.mktMats || []) : isHerb ? (ui.mktHerbs || []) : isPot ? (ui.mktPots || []) : (ui.mktFish || []);
+                  const col = isMat ? { t: "#7a6a4a", s: "#a89878", bg: "#faf6ee", bd: "#e8dcc4" }
+                    : (isHerb || isPot) ? { t: "#3a7a4a", s: "#7aa888", bg: "#f2faf2", bd: "#cfe4d0" }
+                    : { t: "#2f7a9a", s: "#7aa8c0", bg: "#eef7fb", bd: "#cfe4f0" };
+                  const head = isMat ? "⛏️ ลงขายแร่ที่ขุดได้" : isHerb ? "🌿 ลงขายสมุนไพรที่เก็บได้" : isPot ? "🧪 ลงขายยาที่ปรุงเอง" : "🎣 ลงขายปลาที่ตกได้";
                   return (<>
                     <div style={{ fontSize: 11.5, fontWeight: 900, color: col.t, marginBottom: 6 }}>{head} (เลือกจำนวน + ราคา)</div>
                     {rows.length ? rows.map((m) => {
-                      const qkey = "sq:" + m.id, pkey = "sp:" + m.id;
+                      const rk = isPot ? `${m.id}|${m.pct}|${m.mins}` : m.id;       // 🧪 ยาแยกแถวตามฤทธิ์
+                      const qkey = "sq:" + rk, pkey = "sp:" + rk;
                       const qty = Math.max(1, Math.min(m.n, (ui.mktQty && ui.mktQty[qkey] != null) ? ui.mktQty[qkey] : m.n));
                       const maxPrice = qty * m.max;
                       const def = Math.min(maxPrice, Math.max(1, Math.round(qty * m.base * 1.3)));
                       const price = Math.min(maxPrice, Math.max(1, (ui.mktPrices && ui.mktPrices[pkey] != null) ? ui.mktPrices[pkey] : def));
                       return (
-                        <div key={m.id} style={{ background: col.bg, border: "1px solid " + col.bd, borderRadius: 11, padding: "8px 9px", marginBottom: 6 }}>
+                        <div key={rk} style={{ background: col.bg, border: "1px solid " + col.bd, borderRadius: 11, padding: "8px 9px", marginBottom: 6 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                             <div style={{ fontSize: 22, flexShrink: 0 }}>{m.emoji}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 11.5, fontWeight: 800, color: col.t }}>{m.name} <span style={{ color: col.s }}>(มี {m.n})</span></div>
+                              <div style={{ fontSize: 11.5, fontWeight: 800, color: col.t }}>{m.name}{isPot ? <span style={{ color: col.s }}> {m.pct}%{m.mins ? ` · ${m.mins} นาที` : ""}</span> : null} <span style={{ color: col.s }}>(มี {m.n})</span></div>
                               <div style={{ fontSize: 8.5, color: col.s }}>ราคาสูงสุด {maxPrice.toLocaleString()}💰 · แนะนำ ~{def.toLocaleString()}💰</div>
                             </div>
                           </div>
@@ -55675,11 +55817,11 @@ export default function CherryAdventure() {
                             <input type="number" value={qty} min={1} max={m.n} onChange={(e) => setUi((u) => ({ ...u, mktQty: { ...(u.mktQty || {}), [qkey]: Math.max(1, Math.min(m.n, e.target.value | 0)) } }))} style={{ width: 50, padding: "6px 5px", borderRadius: 8, border: "1px solid " + col.bd, fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: col.t }} />
                             <span style={{ fontSize: 9.5, fontWeight: 800, color: col.t }}>ราคา</span>
                             <input type="number" value={price} min={1} max={maxPrice} onChange={(e) => setUi((u) => ({ ...u, mktPrices: { ...(u.mktPrices || {}), [pkey]: Math.max(1, Math.min(maxPrice, e.target.value | 0)) } }))} style={{ flex: 1, minWidth: 0, padding: "6px 6px", borderRadius: 8, border: "1px solid " + col.bd, fontFamily: font, fontSize: 11, fontWeight: 800, textAlign: "right", color: col.t }} />
-                            <button onClick={() => (isMat ? G.marketSellMat(m.id, qty, price) : G.marketSellFish(m.id, qty, price))} style={{ flexShrink: 0, padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#5ab0a0,#2f8f9a)" }}>ลงขาย</button>
+                            <button onClick={() => (isMat ? G.marketSellMat(m.id, qty, price) : isHerb ? G.marketSellHerb(m.id, qty, price) : isPot ? G.marketSellPot(m.i, qty, price) : G.marketSellFish(m.id, qty, price))} style={{ flexShrink: 0, padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#5ab0a0,#2f8f9a)" }}>ลงขาย</button>
                           </div>
                         </div>
                       );
-                    }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "10px 0", background: "#f6f8f2", borderRadius: 10 }}>{isMat ? "ยังไม่มีแร่ — ไปขุดที่สายแร่ในแมพก่อนนะ" : "ยังไม่มีปลาในถัง — ไปตกปลาที่บ่อก่อนนะ"}</div>)}
+                    }) : (<div style={{ fontSize: 10.5, color: "#a99", textAlign: "center", padding: "10px 0", background: "#f6f8f2", borderRadius: 10 }}>{isMat ? "ยังไม่มีแร่ — ไปขุดที่สายแร่ในแมพก่อนนะ" : isHerb ? "ยังไม่มีสมุนไพร — ไปเก็บที่กอสมุนไพรในแมพก่อนนะ" : isPot ? "ยังไม่มียาที่ปรุงเอง — ไปปรุงที่แผง 🌿 ยาสมุนไพร ก่อนนะ" : "ยังไม่มีปลาในถัง — ไปตกปลาที่บ่อก่อนนะ"}</div>)}
                   </>);
                 })()}
                 {/* 🗡️ อาวุธ/ชุดที่ดรอปมา — ขายทีละชิ้น */}
