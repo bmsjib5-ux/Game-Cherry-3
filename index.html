@@ -2055,19 +2055,19 @@ FISH_TYPES.forEach((f) => (FISH_BY[f.id] = f));
 //       lava=บ่อน้ำพุร้อนข้างลาวา · cloud=สระเมฆลอย · styx=แม่น้ำวิญญาณ · sacred=สระศักดิ์สิทธิ์ ·
 //       crater=หลุมอุกกาบาต · syrup=สระน้ำเชื่อม · shore=ชายทะเล · basin=อ่างหินยักษ์ · fall=น้ำตกกลางป่า
 const FISH_SPOT = {
-    meadow: { kind: "pond", x: -10, z: -10.5, r: 2.4, lv: 1, bonus: 0, name: "บ่อน้ำใสท้ายทุ่ง", water: 0x4a90c0, rim: 0x9a9a92, deco: 0x5a8a45 },
-    desert: { kind: "oasis", x: 13.5, z: -6.0, r: 2.6, lv: 2, bonus: 0.15, name: "โอเอซิสกลางทราย", water: 0x2fb0b8, rim: 0xd8bc82, deco: 0x6a9a4a },
-    snow: { kind: "hole", x: -8.0, z: 12.5, r: 2.2, lv: 4, bonus: 0.3, name: "รูตกปลาน้ำแข็ง", water: 0x7fc8e8, rim: 0xe8f2fa, deco: 0xbcd8ea },
-    cave: { kind: "under", x: 11.0, z: 9.5, r: 2.5, lv: 6, bonus: 0.45, name: "ธารน้ำเรืองแสงใต้ถ้ำ", water: 0x2ad0c0, rim: 0x4a4e58, deco: 0x6ae8d8 },
-    volcano: { kind: "lava", x: -13.0, z: 5.5, r: 2.3, lv: 8, bonus: 0.6, name: "บ่อน้ำพุร้อนขอบลาวา", water: 0xff8a3a, rim: 0x4a2418, deco: 0xff5a2a },
-    sky: { kind: "cloud", x: 6.5, z: -13.5, r: 2.7, lv: 10, bonus: 0.75, name: "สระเมฆลอยฟ้า", water: 0x9fe0ff, rim: 0xffffff, deco: 0xd0f0ff },
-    hell: { kind: "styx", x: -12.0, z: -9.0, r: 2.4, lv: 11, bonus: 0.9, name: "แม่น้ำวิญญาณเลือด", water: 0xc02030, rim: 0x2a0a0c, deco: 0xff4a5a },
-    heaven: { kind: "sacred", x: 12.5, z: 8.0, r: 2.8, lv: 12, bonus: 1.05, name: "สระศักดิ์สิทธิ์", water: 0xfff0a0, rim: 0xf5e2b0, deco: 0xffffff },
-    moon: { kind: "crater", x: -6.5, z: -13.0, r: 2.6, lv: 14, bonus: 1.2, name: "หลุมอุกกาบาตน้ำเงิน", water: 0x7a6ae0, rim: 0x6a6e7a, deco: 0xc0a8ff },
-    candy: { kind: "syrup", x: 10.5, z: -11.0, r: 2.5, lv: 15, bonus: 1.35, name: "สระน้ำเชื่อมสตรอว์เบอร์รี", water: 0xff8ac0, rim: 0xffd0e8, deco: 0xfff0f8 },
-    beach: { kind: "shore", x: -14.0, z: 2.0, r: 3.0, lv: 16, bonus: 1.5, name: "ชายทะเลคราม", water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
-    titan: { kind: "basin", x: 8.0, z: 13.0, r: 2.6, lv: 18, bonus: 1.7, name: "อ่างหินไททัน", water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
-    amazon: { kind: "fall", x: -11.5, z: -12.0, r: 2.8, lv: 20, bonus: 2.0, name: "แอ่งน้ำตกอเมซอน", water: 0x2aa87a, rim: 0x4a5a38, deco: 0x8ae86a },
+    meadow: { kind: "pond", x: -12.0, z: -13.5, r: 3.1, lv: 1, bonus: 0, name: "บ่อน้ำใสท้ายทุ่ง", water: 0x4a90c0, rim: 0x9a9a92, deco: 0x5a8a45 },
+    desert: { kind: "oasis", x: 13.5, z: -6.0, r: 3.4, lv: 2, bonus: 0.15, name: "โอเอซิสกลางทราย", water: 0x2fb0b8, rim: 0xd8bc82, deco: 0x6a9a4a },
+    snow: { kind: "hole", x: -8.0, z: 12.5, r: 2.9, lv: 4, bonus: 0.3, name: "รูตกปลาน้ำแข็ง", water: 0x7fc8e8, rim: 0xe8f2fa, deco: 0xbcd8ea },
+    cave: { kind: "under", x: 9.5, z: 8.0, r: 3.2, lv: 6, bonus: 0.45, name: "ธารน้ำเรืองแสงใต้ถ้ำ", water: 0x2ad0c0, rim: 0x4a4e58, deco: 0x6ae8d8 },
+    volcano: { kind: "lava", x: -13.0, z: 5.5, r: 3.0, lv: 8, bonus: 0.6, name: "บ่อน้ำพุร้อนขอบลาวา", water: 0xff8a3a, rim: 0x4a2418, deco: 0xff5a2a },
+    sky: { kind: "cloud", x: 6.5, z: -13.5, r: 3.5, lv: 10, bonus: 0.75, name: "สระเมฆลอยฟ้า", water: 0x9fe0ff, rim: 0xffffff, deco: 0xd0f0ff },
+    hell: { kind: "styx", x: -14.5, z: -13.0, r: 3.1, lv: 11, bonus: 0.9, name: "แม่น้ำวิญญาณเลือด", water: 0xc02030, rim: 0x2a0a0c, deco: 0xff4a5a },
+    heaven: { kind: "sacred", x: 12.5, z: 8.0, r: 3.6, lv: 12, bonus: 1.05, name: "สระศักดิ์สิทธิ์", water: 0xfff0a0, rim: 0xf5e2b0, deco: 0xffffff },
+    moon: { kind: "crater", x: -6.5, z: -13.0, r: 3.4, lv: 14, bonus: 1.2, name: "หลุมอุกกาบาตน้ำเงิน", water: 0x7a6ae0, rim: 0x6a6e7a, deco: 0xc0a8ff },
+    candy: { kind: "syrup", x: 12.5, z: -13.5, r: 3.2, lv: 15, bonus: 1.35, name: "สระน้ำเชื่อมสตรอว์เบอร์รี", water: 0xff8ac0, rim: 0xffd0e8, deco: 0xfff0f8 },
+    beach: { kind: "shore", x: -14.0, z: 2.0, r: 3.9, lv: 16, bonus: 1.5, name: "ชายทะเลคราม", water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
+    titan: { kind: "basin", x: 8.0, z: 13.0, r: 3.4, lv: 18, bonus: 1.7, name: "อ่างหินไททัน", water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
+    amazon: { kind: "fall", x: -11.5, z: -12.0, r: 3.6, lv: 20, bonus: 2.0, name: "แอ่งน้ำตกอเมซอน", water: 0x2aa87a, rim: 0x4a5a38, deco: 0x8ae86a },
 };
 const FISH_SPOT_DEF = FISH_SPOT.meadow;
 const FISH_RAR = {
@@ -31801,6 +31801,37 @@ function CherryAdventure() {
             grp.add(m);
             return m;
         };
+        // 🕳️ แอ่งบ่อ — พื้นเกมเป็นผิวเรียบ เจาะพื้นจริงไม่ได้ จึงสร้างความลึกด้วย
+        //    ① ก้นบ่อสีเข้มสองชั้นใต้ผิวน้ำ (กลางบ่อเข้มกว่าขอบ = ดูลึก)
+        //    ② ผนังลาดเข้าในรอบปากบ่อ ③ ขอบหินยกขึ้นรอบวง
+        const fsBasin = (grp, r, S, opt) => {
+            const o = opt || {};
+            const rimCol = o.rim != null ? o.rim : (S.rim || 0x8a8a82);
+            const lipH = o.lipH != null ? o.lipH : 0.3; // ความสูงขอบบ่อ
+            const wallW = o.wallW != null ? o.wallW : 0.5; // ความหนาผนังลาด
+            const deepCol = new THREE.Color(o.deep != null ? o.deep : (S.water || 0x2a5a80)).multiplyScalar(0.34);
+            const mk = (rad, y, col, seg) => {
+                const d = new THREE.Mesh(new THREE.CircleGeometry(rad, seg || 28), new THREE.MeshStandardMaterial({ color: col, roughness: 1 }));
+                d.rotation.x = -Math.PI / 2;
+                d.position.y = y;
+                grp.add(d);
+                return d;
+            };
+            mk(r * 0.94, 0.014, deepCol.clone().multiplyScalar(1.5).getHex()); // ไล่เฉดขอบบ่อ
+            mk(r * 0.66, 0.022, deepCol.clone().multiplyScalar(1.1).getHex(), 24);
+            mk(r * 0.34, 0.03, deepCol.getHex(), 20); // จุดที่ลึกสุด
+            // ผนังลาดเข้าใน — กรวยกลวง กว้างด้านบน แคบลงที่ปากน้ำ
+            const inner = new THREE.Mesh(new THREE.CylinderGeometry(r + wallW, r * 1.005, lipH + 0.12, 36, 1, true), new THREE.MeshStandardMaterial({ color: rimCol, roughness: 0.96, side: THREE.DoubleSide }));
+            inner.position.y = (lipH + 0.12) / 2 - 0.07;
+            grp.add(inner);
+            // ขอบหินยกขึ้นรอบปากบ่อ
+            const lip = new THREE.Mesh(new THREE.TorusGeometry(r + wallW, wallW * 0.46, 8, 44), new THREE.MeshStandardMaterial({ color: rimCol, roughness: 0.9 }));
+            lip.rotation.x = Math.PI / 2;
+            lip.position.y = lipH * 0.9;
+            lip.scale.y = 0.7;
+            grp.add(lip);
+            return { inner, lip };
+        };
         const fsRocks = (grp, n, rad, color, sz) => {
             const g = new THREE.SphereGeometry(sz || 0.28, 8, 8), mt = new THREE.MeshStandardMaterial({ color, roughness: 0.9 });
             for (let i = 0; i < n; i++) {
@@ -31822,8 +31853,8 @@ function CherryAdventure() {
                 water.rotation.z = K === "styx" ? 0.5 : K === "fall" ? -0.35 : 0.22;
                 const bankMat = new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.95 });
                 for (const sgn of [-1, 1]) {
-                    const bank = new THREE.Mesh(new THREE.BoxGeometry(S.r * 4.6, 0.34, 0.5), bankMat);
-                    bank.position.set(-Math.sin(water.rotation.z) * sgn * S.r * 0.85, 0.14, Math.cos(water.rotation.z) * sgn * S.r * 0.85);
+                    const bank = new THREE.Mesh(new THREE.BoxGeometry(S.r * 4.6, 0.52, 0.72), bankMat); // 🧱 ตลิ่งหนา-สูงขึ้น ให้เห็นเป็นร่องน้ำลึก
+                    bank.position.set(-Math.sin(water.rotation.z) * sgn * S.r * 0.92, 0.2, Math.cos(water.rotation.z) * sgn * S.r * 0.92);
                     bank.rotation.y = -water.rotation.z;
                     g.add(bank);
                 }
@@ -31881,10 +31912,11 @@ function CherryAdventure() {
             }
             else if (K === "lava") {
                 // 🌋 บ่อร้อนขอบหินภูเขาไฟ + ไอน้ำ
+                fsBasin(g, S.r, S, { lipH: 0.34, wallW: 0.54, deep: 0x3a1208 });
                 water = fsWater(g, new THREE.CircleGeometry(S.r, 24), S.water, 0.92, 0.06);
                 water.material.emissive = new THREE.Color(S.deco);
                 water.material.emissiveIntensity = 0.55;
-                fsRocks(g, 14, S.r + 0.35, S.rim, 0.3);
+                fsRocks(g, 14, S.r + 0.86, S.rim, 0.3);
                 for (let i = 0; i < 5; i++) {
                     const st = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), _fsMat(0xffffff, 0.16));
                     st.position.set((Math.random() - 0.5) * S.r * 1.5, 0.7 + Math.random() * 0.8, (Math.random() - 0.5) * S.r * 1.5);
@@ -31893,6 +31925,7 @@ function CherryAdventure() {
             }
             else if (K === "sacred") {
                 // ☀️ สระศักดิ์สิทธิ์ + เสาหินล้อม
+                fsBasin(g, S.r, S, { lipH: 0.28, wallW: 0.5 });
                 water = fsWater(g, new THREE.CircleGeometry(S.r, 28), S.water, 0.85, 0.035);
                 water.material.emissive = new THREE.Color(S.water);
                 water.material.emissiveIntensity = 0.35;
@@ -31908,6 +31941,7 @@ function CherryAdventure() {
             }
             else if (K === "crater") {
                 // 🌑 หลุมอุกกาบาต ขอบหินคม
+                fsBasin(g, S.r * 0.85, S, { lipH: 0.4, wallW: 0.6 });
                 water = fsWater(g, new THREE.CircleGeometry(S.r * 0.85, 22), S.water, 0.9, 0.03);
                 water.material.emissive = new THREE.Color(S.deco);
                 water.material.emissiveIntensity = 0.4;
@@ -31921,6 +31955,7 @@ function CherryAdventure() {
             }
             else if (K === "syrup") {
                 // 🍬 สระน้ำเชื่อม ขอบวิปครีม + ลูกอมลอย
+                fsBasin(g, S.r, S, { lipH: 0.26, wallW: 0.48, deep: 0xc04a86 });
                 water = fsWater(g, new THREE.CircleGeometry(S.r, 26), S.water, 0.95, 0.04);
                 for (let i = 0; i < 14; i++) {
                     const a = (i / 14) * Math.PI * 2;
@@ -31953,8 +31988,9 @@ function CherryAdventure() {
             }
             else if (K === "oasis") {
                 // 🏜️ โอเอซิส — น้ำใสกลางทราย + ต้นปาล์ม
+                fsBasin(g, S.r, S, { lipH: 0.24, wallW: 0.46 });
                 water = fsWater(g, new THREE.CircleGeometry(S.r, 24), S.water, 0.88, 0.04);
-                fsRocks(g, 10, S.r + 0.3, S.rim, 0.22);
+                fsRocks(g, 10, S.r + 0.78, S.rim, 0.22);
                 for (let i = 0; i < 3; i++) {
                     const a = (i / 3) * Math.PI * 2 + 0.6;
                     const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 2.2, 6), new THREE.MeshStandardMaterial({ color: 0x8a6a3a }));
@@ -31972,6 +32008,7 @@ function CherryAdventure() {
             }
             else if (K === "basin") {
                 // 🗿 อ่างหินยักษ์ ขอบหินเรียงเป็นกำแพงเตี้ย
+                fsBasin(g, S.r * 0.9, S, { lipH: 0.42, wallW: 0.58 });
                 water = fsWater(g, new THREE.CircleGeometry(S.r * 0.9, 24), S.water, 0.9, 0.04);
                 for (let i = 0; i < 18; i++) {
                     const a = (i / 18) * Math.PI * 2;
@@ -31990,8 +32027,9 @@ function CherryAdventure() {
             }
             else {
                 // 🌸 บ่อกลมมาตรฐาน (ทุ่งซากุระ) — หินล้อม + ต้นกก
+                fsBasin(g, S.r, S, { lipH: 0.28, wallW: 0.5 });
                 water = fsWater(g, new THREE.RingGeometry(0.02, S.r, 30, 6), S.water, 0.85, 0.045);
-                fsRocks(g, 16, S.r + 0.1, S.rim, 0.28);
+                fsRocks(g, 16, S.r + 0.86, S.rim, 0.28);
                 for (let i = 0; i < 5; i++) {
                     const a = Math.random() * Math.PI * 2;
                     const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 5), new THREE.MeshStandardMaterial({ color: S.deco }));
@@ -32038,17 +32076,16 @@ function CherryAdventure() {
             (G._worldRoot || scene).add(built.grp);
             G._fishGrp = built.grp;
             G.pondWater = built.water;
-            G.pondPos = { x: S.x, z: S.z };
+            G.pondPos = { x: S.x, z: S.z, r: S.r }; // 📏 จำรัศมีไว้ให้ระยะตรวจ "ยืนใกล้บ่อ" ขยายตามขนาดบ่อ
             G.pondNear = false;
-            // 🚧 ตัวกันชนกับตัวละคร — ใช้ก้อนเดิม เลื่อนตำแหน่งแทนการเพิ่มใหม่ทุกครั้ง
-            if (!G._pondCol) {
-                G._pondCol = { x: S.x, z: S.z, r: S.r + 0.1 };
-                colliders.push(G._pondCol);
-            }
-            else {
-                G._pondCol.x = S.x;
-                G._pondCol.z = S.z;
-                G._pondCol.r = S.r + 0.1;
+            // 🚶 บ่อน้ำไม่กันการเดินอีกแล้ว — ลุยลงบ่อได้ทุกบ่อ
+            //    บ่อที่เลเวลตกปลายังไม่ถึงจะถูกล็อกไว้ที่ "ปุ่มตกปลา" เท่านั้น ไม่ใช่กำแพงมองไม่เห็นรอบบ่อ
+            //    (เดิมมีตัวกันชนรัศมี r+0.1 วางทับบ่อ ทำให้เดินชนขอบบ่อที่ล็อกไว้แล้วไปต่อไม่ได้)
+            if (G._pondCol) {
+                const _pi = colliders.indexOf(G._pondCol);
+                if (_pi >= 0)
+                    colliders.splice(_pi, 1);
+                G._pondCol = null;
             }
             setUi((u) => ({ ...u, pondNear: false, fishSpot: G.fishSpotInfo() }));
         };
@@ -59009,7 +59046,7 @@ function CherryAdventure() {
                     }
                     if (G.pondPos) {
                         const fd = Math.hypot(char.position.x - G.pondPos.x, char.position.z - G.pondPos.z);
-                        const near = fd < 3.4;
+                        const near = fd < (G.pondPos.r || 2.4) + 1.5; // ⚠️ ต้องอิงรัศมีบ่อ ไม่ใช่ค่าคงที่ ไม่งั้นบ่อใหญ่จะยืนขอบแล้วตกไม่ได้
                         if (near !== G.pondNear) {
                             G.pondNear = near;
                             setUi((u) => ({ ...u, pondNear: near }));
@@ -76778,6 +76815,11 @@ function CherryAdventure() {
         : ui.herbNear ? "herb" : ui.botNear ? "bot"
             : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
     const isPrompt = (name) => _promptTop === name;
+    // 🎯 เดินเข้าใกล้ สายแร่/บ่อน้ำ/กอสมุนไพร → ปุ่มโจมตีกลางจอสลับเป็น ขุด/ตกปลา/เก็บ
+    //    (ป้ายกลางหน้าจอของเรื่องนั้นจะถูกซ่อน ไม่ให้มีปุ่มซ้ำสองที่)
+    const _actBtnOn = !!G.actionMode && !ui.equipScreen && !ui.inRanchZone && ui.mode === "explore";
+    const _nearAct = (!_actBtnOn || ui.mining || ui.fishing) ? null
+        : ui.mineNear ? "mine" : ui.pondNear ? "fish" : ui.herbNear ? "herb" : null;
     const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
     const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
     // 🖼️ กรอบมาตรฐานของกลุ่มเมนูสกิล — ทุกแท็บใช้ตำแหน่ง/ขนาด/พื้นหลังชุดเดียวกัน
@@ -79208,7 +79250,7 @@ function CherryAdventure() {
                     " \u00B7 \u0E41\u0E19\u0E30\u0E19\u0E33 Lv.",
                     ui.roadNear.lvMin,
                     "+ \u00B7 \u0E40\u0E14\u0E34\u0E19\u0E15\u0E23\u0E07\u0E44\u0E1B\u0E01\u0E47\u0E44\u0E14\u0E49")))),
-        ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
+        ui.mode === "explore" && isPrompt("mine") && !ui.equipScreen && _nearAct !== "mine" && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
             React.createElement("button", { onClick: () => G.startMining(), style: {
                     padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
                     fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.25,
@@ -79439,7 +79481,7 @@ function CherryAdventure() {
                             h.n)))),
                     React.createElement("div", { style: { fontSize: 10.5, color: "#8a9a82", fontFamily: font, textAlign: "center", marginTop: 3 } }, "\uD83C\uDF3F \u0E40\u0E14\u0E34\u0E19\u0E2B\u0E32\u0E01\u0E2D\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23\u0E43\u0E19\u0E42\u0E25\u0E01\u0E01\u0E27\u0E49\u0E32\u0E07 \u0E41\u0E25\u0E49\u0E27\u0E01\u0E14\u0E1B\u0E38\u0E48\u0E21 \u201C\u0E40\u0E01\u0E47\u0E1A\u0E2A\u0E21\u0E38\u0E19\u0E44\u0E1E\u0E23\u201D")))));
         })(),
-        ui.mode === "explore" && isPrompt("herb") && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
+        ui.mode === "explore" && isPrompt("herb") && !ui.equipScreen && _nearAct !== "herb" && (React.createElement("div", { style: { position: "absolute", ...PROMPT_POS, ...PROMPT_W } },
             React.createElement("button", { onClick: () => G.gatherHerb(), style: {
                     padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
                     fontSize: 14.5, fontWeight: 800, fontFamily: font, color: "#fff", lineHeight: 1.25,
@@ -79555,7 +79597,7 @@ function CherryAdventure() {
                             fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#d8ccb0", background: "rgba(255,255,255,0.12)",
                         } }, "\u0E40\u0E25\u0E34\u0E01\u0E02\u0E38\u0E14"))));
         })(),
-        ui.mode === "explore" && isPrompt("fish") && !ui.fishing && (React.createElement("div", { style: {
+        ui.mode === "explore" && isPrompt("fish") && !ui.fishing && _nearAct !== "fish" && (React.createElement("div", { style: {
                 position: "absolute", ...PROMPT_POS, ...PROMPT_W,
             } }, (() => {
             const SP = ui.fishSpot || (G.fishSpotInfo ? G.fishSpotInfo() : null);
@@ -80558,14 +80600,52 @@ function CherryAdventure() {
                         boxShadow: "0 3px 9px rgba(0,0,0,0.35)",
                     } }, label));
                 return (React.createElement("div", { style: { position: "absolute", right: `calc(${HUD_EDGE + HUD_BTN_R + 8}px + var(--sa-r, 0px))`, bottom: _shortHud ? 52 : 38, width: ATK + PADX, height: ATK + PADY, zIndex: 23, pointerEvents: "none", fontFamily: font } },
-                    React.createElement("button", { onClick: () => G.orderAct && G.orderAct("attack"), title: "\u0E42\u0E08\u0E21\u0E15\u0E35 \u2014 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E15\u0E31\u0E27\u0E43\u0E19\u0E23\u0E30\u0E22\u0E30\u0E08\u0E30\u0E27\u0E34\u0E48\u0E07\u0E40\u0E02\u0E49\u0E32\u0E44\u0E1B\u0E2B\u0E32\u0E43\u0E2B\u0E49\u0E40\u0E2D\u0E07 \u00B7 \u0E01\u0E14\u0E15\u0E2D\u0E19\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E2D\u0E01\u0E17\u0E48\u0E32\u0E2D\u0E22\u0E39\u0E48 = \u0E08\u0E2D\u0E07\u0E04\u0E34\u0E27\u0E17\u0E48\u0E32\u0E16\u0E31\u0E14\u0E44\u0E1B", style: {
-                            position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%", overflow: "visible",
-                            border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer", pointerEvents: "auto", padding: 0,
-                            background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: ATK * 0.44,
-                            boxShadow: "0 5px 16px rgba(217,54,74,0.55)",
-                        } },
-                        "\u2694\uFE0F",
-                        ui.bufAct === "__atk" && React.createElement("span", { style: { position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" } })),
+                    (() => {
+                        const NA = _nearAct;
+                        let D = null;
+                        if (NA === "mine") {
+                            const ore = ui.mineOre && MATERIALS[ui.mineOre];
+                            D = { emoji: (G.pickOf ? G.pickOf().emoji : "⛏️"), label: "ขุด", sub: ore ? ore.emoji : null,
+                                bg: "radial-gradient(circle at 35% 30%, #f0cf8a, #8a6a3a)", sh: "rgba(138,106,58,0.6)",
+                                fn: () => G.startMining && G.startMining(),
+                                title: `ขุดสายแร่${ore ? " — " + ore.name : ""} · ⛏️ เลเวลขุด ${ui.mineLv || 1}` };
+                        }
+                        else if (NA === "herb") {
+                            const hb = ui.herbKind && HERB_BY[ui.herbKind];
+                            D = { emoji: "🌿", label: "เก็บ", sub: hb ? hb.emoji : null,
+                                bg: "radial-gradient(circle at 35% 30%, #b0f08a, #3a8a4a)", sh: "rgba(58,138,74,0.6)",
+                                fn: () => G.gatherHerb && G.gatherHerb(),
+                                title: `เก็บสมุนไพร${hb ? " — " + hb.name : ""} · เหลือ ${ui.herbUses != null ? ui.herbUses : HERB_USES}/${HERB_USES} ครั้ง` };
+                        }
+                        else if (NA === "fish") {
+                            const SP = ui.fishSpot || (G.fishSpotInfo ? G.fishSpotInfo() : null);
+                            const lk = !!(SP && !SP.ok); // 🔒 บ่อที่เลเวลยังไม่ถึง — ล็อกไว้ที่ปุ่มนี้เท่านั้น เดินลงบ่อได้ตามปกติ
+                            D = { emoji: lk ? "🔒" : "🎣", label: lk ? `Lv.${(SP || {}).need || "?"}` : "ตกปลา", sub: null, lock: lk,
+                                bg: lk ? "radial-gradient(circle at 35% 30%, #b0bcc8, #5a6874)" : "radial-gradient(circle at 35% 30%, #9ce8ff, #2a86d0)",
+                                sh: lk ? "rgba(90,104,116,0.55)" : "rgba(42,134,208,0.6)",
+                                fn: () => G.startFishing && G.startFishing(),
+                                title: lk ? `🔒 ${(SP || {}).name || "บ่อนี้"} — ต้องเลเวลตกปลา ${(SP || {}).need} (มี ${ui.fishLv || 1})` : `🎣 ${(SP || {}).name || "ตกปลา"} · เลเวลตกปลา ${ui.fishLv || 1}` };
+                        }
+                        if (!D)
+                            return (React.createElement("button", { onClick: () => G.orderAct && G.orderAct("attack"), title: "\u0E42\u0E08\u0E21\u0E15\u0E35 \u2014 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E15\u0E31\u0E27\u0E43\u0E19\u0E23\u0E30\u0E22\u0E30\u0E08\u0E30\u0E27\u0E34\u0E48\u0E07\u0E40\u0E02\u0E49\u0E32\u0E44\u0E1B\u0E2B\u0E32\u0E43\u0E2B\u0E49\u0E40\u0E2D\u0E07 \u00B7 \u0E01\u0E14\u0E15\u0E2D\u0E19\u0E01\u0E33\u0E25\u0E31\u0E07\u0E2D\u0E2D\u0E01\u0E17\u0E48\u0E32\u0E2D\u0E22\u0E39\u0E48 = \u0E08\u0E2D\u0E07\u0E04\u0E34\u0E27\u0E17\u0E48\u0E32\u0E16\u0E31\u0E14\u0E44\u0E1B", style: {
+                                    position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%", overflow: "visible",
+                                    border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer", pointerEvents: "auto", padding: 0,
+                                    background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: ATK * 0.44,
+                                    boxShadow: "0 5px 16px rgba(217,54,74,0.55)",
+                                } },
+                                "\u2694\uFE0F",
+                                ui.bufAct === "__atk" && React.createElement("span", { style: { position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" } })));
+                        return (React.createElement("button", { onClick: D.fn, title: D.title, style: {
+                                position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%", overflow: "visible",
+                                border: "3px solid rgba(255,255,255,0.75)", cursor: "pointer", pointerEvents: "auto", padding: 0,
+                                background: D.bg, color: "#fff", boxShadow: `0 5px 16px ${D.sh}`,
+                                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1,
+                            } },
+                            React.createElement("span", { style: { fontSize: ATK * 0.36 } }, D.emoji),
+                            React.createElement("span", { style: { fontSize: ATK * 0.17, fontWeight: 900, fontFamily: font, marginTop: 1, textShadow: "0 1px 3px rgba(0,0,0,0.5)" } }, D.label),
+                            D.sub && React.createElement("span", { style: { position: "absolute", top: -3, left: -3, fontSize: ATK * 0.24, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" } }, D.sub),
+                            !D.lock && React.createElement("span", { style: { position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed rgba(255,255,255,0.75)", animation: "pulse 0.9s ease-in-out infinite alternate", pointerEvents: "none" } })));
+                    })(),
                     React.createElement("div", { style: { position: "absolute", right: HOPX, bottom: 0, display: "flex", gap: 6, pointerEvents: "none" } },
                         hopBtn("💨", "พุ่ง (Shift) — กดพร้อมเดินได้", () => G.doDash && G.doDash()),
                         hopBtn("🦘", "กระโดด (Space) — กดพร้อมเดินได้ · กดค้างตอนตกเพื่อร่อน", () => G.doJump && G.doJump(), true)),
