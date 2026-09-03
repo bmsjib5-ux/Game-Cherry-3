@@ -2241,27 +2241,27 @@ const CRAFT_RECIPES = {
 // เริ่มที่เลเวล 1 เหมือนผู้เล่นใหม่ · เดินสำรวจ ล่ามอน เก็บของ ขึ้นเลเวลเอง
 // ปรากฏในโลกเหมือนผู้เล่นออนไลน์คนอื่น (ผ่านช่องทางอวตารเดียวกัน) คุย/ชวนปาร์ตี้/ชวนเข้ากิลด์ได้
 const BOT_CHARS = [
-  { pid: "bot_mali",   hair: 6, hc: 3, sk: 0, n: "มะลิ",     c: "mage",      dy: 0xc86ad8, style: { hunt: 0.35, gather: 0.45, roam: 0.20 },
+  { pid: "bot_mali",   hero: "kinnaree", hair: 6, hc: 3, sk: 0, n: "มะลิ",     c: "mage",      dy: 0xc86ad8, style: { hunt: 0.35, gather: 0.45, roam: 0.20 },
     bio: "สายเวทที่ชอบเก็บสมุนไพรมากกว่าตีมอน",
     hi:   ["สวัสดีค่า~ เก็บสมุนไพรอยู่พอดีเลย", "หวัดดีค่ะ! เจอบัวพันปีแถวนี้ไหมคะ", "ว่าไงคะ กำลังหาของปรุงยาอยู่"],
     chat: ["เก็บใบเขียวป่าได้อีกกองแล้ว 🌿", "ใครมียาฟื้นมานาเหลือบ้างคะ", "แถวถ้ำมีเห็ดเรืองแสงเยอะเลย", "ปรุงยาขึ้นเลเวลแล้ว ดีใจจัง"],
     party: "ไปด้วยกันค่ะ! เดี๋ยวช่วยฟื้นเลือดให้", guild: "ขอบคุณค่ะ ยินดีเข้ากิลด์เลย!" },
-  { pid: "bot_kong",   hair: 1, hc: 1, sk: 2, n: "ก้องภพ",   c: "warrior",   dy: 0xd9536b, style: { hunt: 0.70, gather: 0.10, roam: 0.20 },
+  { pid: "bot_kong",   hero: "hanuman", hair: 1, hc: 1, sk: 2, n: "ก้องภพ",   c: "warrior",   dy: 0xd9536b, style: { hunt: 0.70, gather: 0.10, roam: 0.20 },
     bio: "สายบู๊ ตรงไปตรงมา เจอมอนเป็นไม่ปล่อย",
     hi:   ["โย่! มาล่ามอนด้วยกันไหม", "หวัดดี ตรงนี้มอนเยอะดี", "เฮ้ย เจอกันพอดี กำลังจะไปตีบอส"],
     chat: ["ล่าไปอีก 10 ตัวแล้ว 💪", "ใครไปบอสประจำถิ่นบ้าง", "ดาบเล่มนี้ตีบวกคุ้มมาก", "เลเวลขึ้นอีกแล้วโว้ย!"],
     party: "เอาเลย! ข้าเปิดทางให้", guild: "ได้เลย! กิลด์นี้ต้องแกร่งแน่" },
-  { pid: "bot_rin",    hair: 3, hc: 4, sk: 3, n: "ริน",      c: "archer",    dy: 0x9ad0ff, style: { hunt: 0.45, gather: 0.20, roam: 0.35 },
+  { pid: "bot_rin",    hero: "garuda", hair: 3, hc: 4, sk: 3, n: "ริน",      c: "archer",    dy: 0x9ad0ff, style: { hunt: 0.45, gather: 0.20, roam: 0.35 },
     bio: "นักธนูสายสำรวจ ชอบเดินดูแมพใหม่",
     hi:   ["หวัดดี~ เพิ่งวาร์ปมาจากแดนหิมะ", "สวัสดี กำลังสำรวจแมพนี้อยู่", "โอ๊ะ เจอคนด้วย ดีจัง"],
     chat: ["แดนนี้วิวสวยกว่าที่คิดนะ", "เจอสายแร่คริสตัลตรงขอบแมพ", "ใครรู้ทางไปหอคอยบ้าง", "เดินครบทุกแดนแล้ววันนี้"],
     party: "ไปด้วย! เดี๋ยวยิงคุ้มกันให้", guild: "ขอบคุณนะ เข้าเลย!" },
-  { pid: "bot_took",   hair: 2, hc: 5, sk: 0, n: "ตุ๊กตา",   c: "assassin",  dy: 0xb79bff, style: { hunt: 0.60, gather: 0.15, roam: 0.25 },
+  { pid: "bot_took",   hero: "kitsune", hair: 2, hc: 5, sk: 0, n: "ตุ๊กตา",   c: "assassin",  dy: 0xb79bff, style: { hunt: 0.60, gather: 0.15, roam: 0.25 },
     bio: "สายลอบเร็ว เก็บมอนไวไม่รอใคร",
     hi:   ["หวัดดี เร็วหน่อยนะ เดี๋ยวมอนหนี", "ว่าไง~ ตามมาสิ", "เจอกันพอดี กำลังไล่เก็บอยู่"],
     chat: ["เก็บครบคอมโบ 3 ไม้แล้ว", "มอนแดนนี้ตายไวมาก", "ใครแข่งล่ามอนไหม", "คริแตกรัวเลย 🎯"],
     party: "ตามมา! อย่าช้าล่ะ", guild: "โอเค เข้ากิลด์ก็ได้~" },
-  { pid: "bot_meephi", hair: 8, hc: 0, sk: 1, n: "พี่หมี",   c: "aegis",     dy: 0x6ab0a0, style: { hunt: 0.40, gather: 0.30, roam: 0.30 },
+  { pid: "bot_meephi", hero: "ryujin", hair: 8, hc: 0, sk: 1, n: "พี่หมี",   c: "aegis",     dy: 0x6ab0a0, style: { hunt: 0.40, gather: 0.30, roam: 0.30 },
     bio: "สายแทงค์ใจดี ชอบชวนคนใหม่เล่นด้วยกัน",
     hi:   ["สวัสดีน้อง~ เล่นถึงไหนแล้ว", "หวัดดีครับ ต้องการให้ช่วยอะไรไหม", "มาด้วยกันไหม พี่ทางกันให้"],
     chat: ["ใครเลเวลน้อยมาปาร์ตี้กับพี่ได้นะ", "พี่รับดาเมจแทนได้ ไม่ต้องกลัว", "วันนี้ช่วยน้องล่าบอสไป 3 ตัว", "กิลด์เรารับสมาชิกใหม่อยู่นะ"],
@@ -19902,9 +19902,17 @@ export default function CherryAdventure() {
     };
 
     // 🤖 หนึ่งจังหวะคิดของบอท (เรียกทุก ~0.25 วิ ไม่ใช่ทุกเฟรม)
+    // 🦸 บอทออกท่าประจำชุดฮีโร่ — ตั้งท่าค้างไว้ให้อวตารเล่น แล้วปล่อยเอฟเฟกต์ที่ตัวบอทเอง
+    const botCast = (b) => {
+      const H = b.def.hero ? HERO_SWING[b.def.hero] : null;
+      b.cast = { t: 0, dur: 1.0, style: (H && H.style) || "cast" };
+      if (H && G._skillFxAt) G._skillFxAt(H.fx, b.x, b.z, H.col);
+      if (Math.random() < 0.28) b.say = { txt: "รับท่านี้ไป!", t: 1.8 };
+    };
     const botStep = (b, dt) => {
       b.mins = (b.mins || 0) + dt / 60;
       if (b.say) { b.say.t -= dt; if (b.say.t <= 0) b.say = null; }
+      if (b.cast) { b.cast.t += dt; if (b.cast.t >= b.cast.dur) b.cast = null; }   // 🦸 ท่าหมดเวลาแล้วคืนท่ายืน
       if (!b.goal || (b.goal.t += dt) > b.goal.dur) botPickGoal(b);
       const g = b.goal;
 
@@ -19928,6 +19936,7 @@ export default function CherryAdventure() {
         if (g.kind === "hunt") {
           // ⚔️ จำลองการต่อสู้ — ยิ่งเลเวลสูงยิ่งเก็บไว แต่มีโอกาสเจ็บตัว
           b.fight = (b.fight || 0) + dt;
+          if (!b.cast && b.fight > 0.3) botCast(b);                  // 🦸 ออกท่าประจำชุดก่อน แล้วค่อยตัดสินแพ้ชนะ
           if (b.fight > 1.1) {
             b.fight = 0;
             const win = Math.random() < 0.82;
@@ -19958,6 +19967,8 @@ export default function CherryAdventure() {
       try {
         const d = b.def;
         G._rtOnPos({ pid: b.pid, n: d.n, c: d.c, lv: b.lv, dy: d.dy,
+                     hero: d.hero || null,                                             // 🦸 ชุดฮีโร่ประจำตัวบอท
+                     act: b.cast ? (b.cast.style || "cast") : null,                     // 🦸 ท่าที่กำลังออกอยู่
                      hair: d.hair, hc: d.hc, sk: d.sk, w: CLASS_WEAPON[d.c] || null,   // 🎨 ให้บอทแต่ละตัวหน้าตา/ทรงผม/อาวุธไม่ซ้ำกัน
                      x: b.x, z: b.z, yaw: b.yaw,
                      biome: G.curBiome || 0,   // ⚠️ ต้องเป็น "เลขลำดับไบโอม" ให้ตรงกับที่ผู้เล่นจริงส่ง — ถ้าส่งเป็นชื่อ (b.id) ตัวกรองจะซ่อนอวตารทิ้งทุกเฟรม
@@ -21456,6 +21467,8 @@ export default function CherryAdventure() {
 
     // ✨ per-skill impact effects — each skill type looks different
     const activeFx = []; // {group, t, dur, update}
+    // 🦸 ปล่อยเอฟเฟกต์สกิลที่พิกัดใดก็ได้ — ใช้กับอวตารบอท/ผู้เล่นอื่นที่ไม่ได้อยู่ตรงตัวเรา
+    G._skillFxAt = (fxType, x, z, color) => { try { spawnSkillFx(fxType, { x, z }, color); } catch (_) {} };
     const spawnSkillFx = (fxType, pos, color) => {
       const g = new THREE.Group();
       g.position.set(pos.x, 0, pos.z);
@@ -35001,7 +35014,12 @@ export default function CherryAdventure() {
         const cloneCosmetic = (model) => {
           if (!model) return null;
           const c = model.clone(true); c.visible = true;
-          c.traverse((o) => { if (o.isMesh && o.material) o.material = Array.isArray(o.material) ? o.material.map((mm) => mm.clone()) : o.material.clone(); });
+          if (c.isLight) return null;
+          // 💡 อาวุธ/หมวก/ชุดเรืองแสงหลายชิ้นมีไฟจริงฝังอยู่ข้างใน — clone(true) ลากติดมาด้วย
+          //    ถ้าไม่ตัดทิ้ง ผู้เล่นอื่น/บอททุกคนที่ถือของเรืองแสงจะเพิ่มไฟเข้าฉาก ฉากสว่างผิดและเฟรมตกตามจำนวนคน
+          const lights = [];
+          c.traverse((o) => { if (o.isLight) { lights.push(o); return; } if (o.isMesh && o.material) o.material = Array.isArray(o.material) ? o.material.map((mm) => mm.clone()) : o.material.clone(); });
+          lights.forEach((lt) => { if (lt.parent) lt.parent.remove(lt); });
           return c;
         };
         // ---- 👗 outfit (body-origin coords) — tinted like setOutfitVisual (reset to base, lerp 0.55 toward dye) ----
@@ -35111,7 +35129,11 @@ export default function CherryAdventure() {
                 let anchor = null; for (let p2 = part.parent; p2; p2 = p2.parent) { if (charToRemote.has(p2)) { anchor = p2; break; } }
                 if (!anchor) return;
                 const clone = part.clone(true);
-                clone.traverse((o) => { o.visible = true; if (o.isMesh && o.material) o.material = Array.isArray(o.material) ? o.material.map((mm) => mm.clone()) : o.material.clone(); });
+                // 💡 ไฟที่ซ่อนอยู่ในกลุ่มย่อยของชิ้นส่วนก็ถูก clone(true) ลากมาด้วย — ด่านบนกรองได้แค่ชิ้นบนสุด
+                //    ถ้าไม่ตัดทิ้ง ผู้เล่นอื่น/บอทที่ใส่ชุดเรืองแสงทุกคนจะเพิ่มไฟจริงเข้าฉาก ทำให้ฉากสว่างผิดและเฟรมตก
+                const strayLights = [];
+                clone.traverse((o) => { if (o.isLight) { strayLights.push(o); return; } o.visible = true; if (o.isMesh && o.material) o.material = Array.isArray(o.material) ? o.material.map((mm) => mm.clone()) : o.material.clone(); });
+                strayLights.forEach((lt) => { if (lt.parent) lt.parent.remove(lt); });
                 inv.copy(anchor.matrixWorld).invert(); tmp.copy(inv).multiply(part.matrixWorld);
                 tmp.decompose(clone.position, clone.quaternion, clone.scale);
                 charToRemote.get(anchor).add(clone);
@@ -35198,6 +35220,9 @@ export default function CherryAdventure() {
       let a = remoteAvatars.get(m.pid);
       if (!a) { const grp = buildFullAvatar(m); grp.position.set(m.x || 0, 0, m.z || 0); scene.add(grp); a = { grp, walk: 0 }; remoteAvatars.set(m.pid, a); } // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
       a.tx = m.x || 0; a.tz = m.z || 0; a.tyaw = m.yaw || 0; a.biome = m.biome; a.moving = !!m.moving; a.last = Date.now();
+      // 🦸 เริ่มท่าใหม่ = นับเวลาท่าใหม่ · ตอน "จบท่า" ห้ามล้างตัวนับตรงนี้
+      //    ไม่งั้นโค้ดคืนมุมแขนต่อเฟรม (ที่เช็ก castT) จะไม่ทำงาน แขนค้างกางอยู่อย่างนั้น
+      if (a.act !== (m.act || null)) { a.act = m.act || null; if (a.act) a.castT = 0; }
       G._rtSyncPet(a, m); // 🐾 keep the buddy pet in sync
     };
     G._rtRemove = (pid) => { const a = remoteAvatars.get(pid); if (a) { G._rtDropPet(a); scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); } };
@@ -35226,6 +35251,38 @@ export default function CherryAdventure() {
         if (a.grp.userData.legL) { a.grp.userData.legL.rotation.x = sw; a.grp.userData.legR.rotation.x = -sw; a.grp.userData.armL.rotation.x = -sw * 0.7; a.grp.userData.armR.rotation.x = sw * 0.7; }
         const _b0 = (a.grp.userData.bodyBaseY != null ? a.grp.userData.bodyBaseY : 0.9); // 🧍‍♂️ full avatars sit at ground (0); simple avatars keep 0.9
         a.grp.userData.body.position.y = _b0 + (moving ? Math.abs(Math.sin(a.walk)) * 0.05 : 0) + Math.sin(t * 2 + a.walk * 0) * 0.02;
+        // 🦸 ท่าออกสกิลประจำชุดฮีโร่ — เขียนทับจังหวะเดินตลอดช่วงออกท่า แล้วคืนแขนกลับเอง
+        {
+          const U = a.grp.userData, aL = U.armL, aR = U.armR;
+          if (aL && aR) {
+            if (a.act) {
+              a.castT = (a.castT || 0) + dt;
+              // ยกแขนขึ้นเร็ว ๆ แล้ว "ค้างไว้" จนกว่าท่าจะจบ — ไม่ผูกกับความยาวท่า เพราะท่าแต่ละชุดยาวไม่เท่ากัน
+              // (ถ้าใช้ sin เต็มคาบ พอท่ายาวเกินคาบ แขนจะตกกลับทั้งที่ยังออกท่าอยู่)
+              const rise = Math.sin(Math.min(1, a.castT / 0.35) * Math.PI * 0.5);
+              if (a.act === "smash") {            // 🐒 ยกอาวุธเหนือหัวแล้วฟาดลง
+                aR.rotation.x = -2.5 * rise; aL.rotation.x = -2.1 * rise;
+                aR.rotation.z = 0.18; aL.rotation.z = -0.18;
+              } else if (a.act === "claw") {      // 🦅 ผายแขนตะปบออกสองข้าง
+                aR.rotation.x = -1.15 * rise; aL.rotation.x = -1.15 * rise;
+                aR.rotation.z = 1.15 * rise; aL.rotation.z = -1.15 * rise;
+              } else if (a.act === "breath") {    // 🐉 ก้มตัวพ่นไปข้างหน้า
+                aR.rotation.x = -0.55 * rise; aL.rotation.x = -0.55 * rise;
+                aR.rotation.z = 0.95 * rise; aL.rotation.z = -0.95 * rise;
+              } else if (a.act === "dance") {     // 🕊️ ชูแขนอ่อนช้อยแบบนาฏศิลป์
+                aR.rotation.x = -2.7 * rise; aL.rotation.x = -2.2 * rise;
+                aR.rotation.z = 0.75 * rise; aL.rotation.z = -0.75 * rise;
+              } else {                            // ✨ ท่าร่ายเวทพื้นฐาน
+                aR.rotation.x = -1.95 * rise; aL.rotation.x = -1.95 * rise;
+                aR.rotation.z = 0.22; aL.rotation.z = -0.22;
+              }
+              a.grp.userData.body.position.y = _b0 + rise * 0.22;                     // ลอยตัวขึ้นตอนออกท่า
+              if (U.legL) { U.legL.rotation.x = -0.18 * rise; U.legR.rotation.x = 0.18 * rise; }
+            } else if (a.castT) {                                                     // 🔚 ท่าจบแล้ว — คืนมุมแขนที่จังหวะเดินไม่ได้คุม
+              a.castT = 0; aR.rotation.z = 0; aL.rotation.z = 0;
+            }
+          }
+        }
         // 🐾 buddy pet trails behind the avatar (same follow feel as the local buddy)
         if (a.petMesh) {
           const fd = a.petMesh.userData.followDist || 1.8;
