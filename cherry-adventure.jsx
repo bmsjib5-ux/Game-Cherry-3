@@ -4401,6 +4401,8 @@ export default function CherryAdventure() {
     const wand = new THREE.Group();
     wand.position.set(0.02, -0.59, 0.12); // sits in the palm (relative to the elbow joint)
     wand.rotation.x = -0.5;
+    wand.userData.homePos = wand.position.clone();   // 🤚 ตำแหน่งในฝ่ามือมาตรฐาน — ใช้คืนค่าทุกเฟรม กันอาวุธค้างหลุดมือ
+    wand.userData.homeRot = wand.rotation.clone();
     (armR.userData.elbow || armR).add(wand); // 💪 follows the forearm/hand when the elbow bends
     // 🥊 ช่องมือซ้าย — อาวุธส่วนใหญ่ถือมือเดียว แต่ "นวมมวย" ต้องสวมทั้งสองข้าง
     const wandL = new THREE.Group();
@@ -6826,6 +6828,7 @@ export default function CherryAdventure() {
       // 🤚 orient the weapon naturally in the hand
       const grip = gripFor(curWeapon);
       wand.rotation.set(grip.x, grip.y, grip.z);
+      if (wand.userData.homeRot) wand.userData.homeRot.set(grip.x, grip.y, grip.z);   // 🤚 จำมุมจับของอาวุธชิ้นนี้ไว้เป็นค่ากลับ
       // 🤚 shift the model so the HANDLE sits in the palm (not the blade)
       const model = weaponModels[curWeapon];
       if (model) {
@@ -38379,6 +38382,14 @@ export default function CherryAdventure() {
           if (armR.userData.elbow) armR.userData.elbow.rotation.x = -(0.25 + Math.max(0, swing) * 0.5) * moveAmt;   // slight elbow bend on the arm swing
           if (armL.userData.elbow) armL.userData.elbow.rotation.x = -(0.25 + Math.max(0, swing2) * 0.5) * moveAmt;
         }
+        // 🤚 คืนอาวุธกลับเข้าฝ่ามือทุกเฟรมก่อน แล้วค่อยให้ท่าประจำอาชีพ/ท่าฟันเขียนทับ
+        //    (ท่าต่อสู้ในสนาม · หน้าแต่งตัว · ท่าแทงหอก ต่างก็ย้ายตำแหน่งอาวุธ แต่ไม่มีใครย้ายกลับ
+        //     อาชีพที่ไม่ได้ตั้งตำแหน่งเองทุกเฟรม เช่นนักรบ จึงถือดาบหลุดจากมือค้างไว้)
+        if (!G._swActive) {
+          if (wand.userData.homePos) wand.position.copy(wand.userData.homePos);
+          if (wand.userData.homeRot) wand.rotation.copy(wand.userData.homeRot);
+          wand.scale.set(1, 1, 1);
+        }
         if (G.cls === "archer") {
           // 🏹 sling the bow across the back while roaming (diagonal, behind the torso)
           wand.position.set(-0.15, -0.4, -0.5);      // move up & behind the shoulder
@@ -38555,6 +38566,23 @@ export default function CherryAdventure() {
           const swDur = G._worldSwingDur || 0.28;
           const s = Math.min(1, 1 - G._worldSwingT / swDur); // 0→1 across the swing
           const sw = Math.sin(s * Math.PI);                  // ease up then back down
+          // ⚔️ เส้นจังหวะฟัน/แทง — เดิมทุกช่วงใช้ smoothstep ซึ่ง "ผ่อนความเร็วตอนปะทะ"
+          //    แล้วยัง "ค้างท่านิ่ง" ยาวถึง 40% ของท่า ทำให้รู้สึกหน่วงและไม่เหมือนฟันจริง
+          //    ของใหม่: ① ง้างเร็วแล้วนิ่งเสี้ยววิ ② ฟาดสั้น-เร่งขึ้นเรื่อย ๆ (เร็วสุดตอนปะทะ)
+          //             ③ ตามแรงเลยจุดปะทะเล็กน้อย ④ คืนท่าการ์ดนุ่ม ๆ — ไม่มีช่วงค้างนิ่ง
+          const segK = (a, b) => s <= a ? 0 : s >= b ? 1 : (s - a) / (b - a);
+          const eOut2 = (x) => 1 - (1 - x) * (1 - x);
+          const eAcc2 = (x) => x * x;
+          // ⚠️ ทุกช่วงต้อง "คาบเกี่ยวกัน" — ถ้าเว้นช่องว่าง ช่วงก่อนจะชะลอจนนิ่งสนิท
+          //    ส่วนช่วงถัดไปก็เริ่มจากศูนย์ กลายเป็นจุดตายกลางท่า (เคยวัดได้ 0.14-0.28 และ 0.44-0.55)
+          const swPh = (off) => {
+            const w = eOut2(segK(0.00 + off, 0.24 + off));
+            const c = eAcc2(segK(0.17 + off, 0.40 + off));   // เริ่มเร่งตั้งแต่แขนยังง้างไม่สุด = ไม่มีจุดนิ่งบนยอดง้าง
+            const f = eOut2(segK(0.40 + off, 0.52 + off));   // ตามแรงสั้นลง ความเร็วหลังปะทะจึงยังสูง
+            const r = eOut2(segK(0.50 + off, 1.00 + off));   // คืนท่าเริ่มทันทีที่ตามแรงใกล้สุด — ต่อเนื่องไม่สะดุด
+            return (rest, wind, hit, over) => rest + w * (wind - rest) + c * (hit - wind) + f * (over - hit) + r * (rest - over);
+          };
+          const SW = swPh(0), SWlag = swPh(0.13);   // SWlag = มืออีกข้างตามหลังครึ่งจังหวะ
           const cb = G._combo3 || 0;                         // 🥊 ไม้ที่ 1/2/3 ของคอมโบ
           G._swActive = 1;                                   // 🏳️ กำลังอยู่ในท่าฟัน — ใช้เคลียร์ค่าครั้งเดียวตอนจบ
           // 🌊 เก็บท่าเดิน ณ เฟรมนี้ไว้ก่อน แล้วค่อยผสมเข้า/ออกกับท่าฟัน — ไม่ให้แขนขากระตุกตอนเริ่มและตอนจบท่า
@@ -38565,7 +38593,7 @@ export default function CherryAdventure() {
           // 👻 วางเงาอาวุธช่วงหวด (เฉพาะสายประชิด · ท่าจบวาง 3 จังหวะ)
           if (melee) {
             const pv = G._swPrevS || 0;
-            const pts = cb === 2 ? [0.3, 0.42, 0.54] : (G.cls === "warrior" || G.cls === "samurai") ? [0.38, 0.48] : [0.3, 0.55];
+            const pts = cb === 2 ? [0.27, 0.36, 0.45] : (G.cls === "warrior" || G.cls === "samurai") ? [0.29, 0.38] : [0.27, 0.44];   // ⚔️ วางเงาระหว่างช่วงฟาดจริง
             pts.forEach((pp, pi) => { if (pv < pp && s >= pp) spawnWpnGhost(0.15 + pi * 0.03); });
             G._swPrevS = s;
           }
@@ -38665,13 +38693,14 @@ export default function CherryAdventure() {
             if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.5 - 0.35 * draw;
           } else if (G.cls === "lancer") {
             // 🔱✨ จ้วงหอกสามจังหวะ — ① ม้วนตัวเก็บแรง ② จ้วงเต็มเหยียดแบบท่าลันจ์ ③ สะบัดหอกเก็บท่า
-            const th = s < 0.22 ? 0 : s < 0.52 ? smK((s - 0.22) / 0.3) : smK(1 - (s - 0.52) / 0.48);
-            const back = s < 0.22 ? smK(s / 0.22) : smK(Math.max(0, 1 - (s - 0.22) / 0.22));  // แรงถอยตอนเก็บ
-            const flick = s > 0.62 ? smK((s - 0.62) / 0.38) : 0;                              // 🌀 สะบัดหอกกลับ
-            armR.rotation.x = -0.32 + back * 0.3 - 1.0 * th;   // ลากกลับก่อน แล้วยืดแขนแทงระดับอก
+            // ⏱️ ใช้จังหวะเดียวกับท่าฟันของอาชีพอื่น — เร่งความเร็วสูงสุดตอน "ปะทะ" (s≈0.40) ไม่ใช่ตอนเงื้อ
+            const th = SW(0, -0.3, 1, 1.06);                  // ติดลบ = ดึงหอกกลับเก็บแรง · 1 = จ้วงสุดพอดีจังหวะโดน
+            const back = Math.max(0, -th / 0.3);              // แรงถอยตอนเก็บ (บวกเฉพาะช่วงเงื้อ)
+            const flick = s > 0.60 ? smK((s - 0.60) / 0.40) : 0;                              // 🌀 สะบัดหอกกลับ
+            armR.rotation.x = -0.32 - 1.0 * th;                // ลากกลับก่อน แล้วยืดแขนแทงระดับอก
             armR.rotation.z = -0.1 + back * 0.1;
-            armR.rotation.y = -back * 0.18 + th * 0.18;
-            armL.rotation.x = -0.5 + back * 0.18 - 0.45 * th;  // มือซ้ายประคองด้าม
+            armR.rotation.y = th * 0.18;
+            armL.rotation.x = -0.5 - 0.45 * SWlag(0, -0.3, 1, 1.06);  // มือซ้ายประคองด้าม (ตามหลังนิดเดียว)
             armL.rotation.z = 0.4 - th * 0.08;
             if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.2 - back * 0.45 + th * 0.3;
             if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.5 - back * 0.25 + th * 0.35;
@@ -38712,35 +38741,38 @@ export default function CherryAdventure() {
           } else if (G.cls === "samurai") {
             // 🗡️ คอมโบ 3 ไม้: ① ยกเหนือหัวฟันลง ② ฟันย้อนเฉียงขึ้น ③ อิไอ ฟันขวางแล้วค้างโพส
             if (cb === 1) {
-              armR.rotation.z = -0.25 + 0.7 * smK((s - 0.2) / 0.18);
-              armR.rotation.x = s < 0.2 ? -1.8 * smK(s / 0.2) : s < 0.38 ? -1.8 + 2.5 * smK((s - 0.2) / 0.18) : s < 0.85 ? 0.7 : 0.7 * smK(1 - (s - 0.85) / 0.15);
+              armR.rotation.z = SW(-0.25, -0.25, 0.45, 0.53);
+              armR.rotation.x = SW(0, -1.8, 0.7, 0.92);
             } else if (cb === 2) {
-              armR.rotation.z = 0.1 + 0.9 * smK((s - 0.28) / 0.16);
-              armR.rotation.x = s < 0.28 ? -2.4 * smK(s / 0.28) : s < 0.44 ? -2.4 + 3.9 * smK((s - 0.28) / 0.16) : s < 0.88 ? 1.5 : 1.5 * smK(1 - (s - 0.88) / 0.12);
+              armR.rotation.z = SW(0.1, 0.1, 1.0, 1.1);
+              armR.rotation.x = SW(0, -2.4, 1.5, 1.78);
             } else {
               armR.rotation.z = 0.1;
-              armR.rotation.x = s < 0.35 ? -2.1 * smK(s / 0.35) : s < 0.5 ? -2.1 + 3.3 * smK((s - 0.35) / 0.15) : s < 0.85 ? 1.2 : 1.2 * smK(1 - (s - 0.85) / 0.15);
+              armR.rotation.x = SW(0, -2.1, 1.2, 1.45);
             }
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = SW(-0.1, -0.55, 0.35, 0.42);   // ข้อศอกสะบัดตามปลายดาบ
           } else if (G.cls === "assassin") {
             // 🗡️🗡️ รัวมีดคู่ — สลับมือนำตามไม้คอมโบ · ไม้ 3 แทงพร้อมกันสองมือ
-            if (cb === 2) { armR.rotation.x = -2.05 * sw; armL.rotation.x = -2.05 * sw; }
-            else if (cb === 1) { armL.rotation.x = -1.7 * sw; armR.rotation.x = -1.7 * Math.sin(Math.min(1, s + 0.28) * Math.PI); }
-            else { armR.rotation.x = -1.7 * sw; armL.rotation.x = -1.7 * Math.sin(Math.min(1, s + 0.28) * Math.PI); }
+            // 🗡️ แทง = ดึงมีดกลับสั้น ๆ แล้วพุ่งออกเร็ว ค้างปลายมีดเสี้ยววิ แล้วชักกลับ
+            //    (เดิมใช้คลื่นไซน์ ออก-เข้าเร็วเท่ากัน เลยดูเป็นการ "โบก" ไม่ใช่ "แทง")
+            if (cb === 2) { armR.rotation.x = SW(0, 0.4, -2.05, -2.2); armL.rotation.x = SW(0, 0.4, -2.05, -2.2); }
+            else if (cb === 1) { armL.rotation.x = SW(0, 0.35, -1.7, -1.85); armR.rotation.x = SWlag(0, 0.3, -1.7, -1.82); }
+            else { armR.rotation.x = SW(0, 0.35, -1.7, -1.85); armL.rotation.x = SWlag(0, 0.3, -1.7, -1.82); }
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = SW(-0.15, -0.7, 0.15, 0.2);
+            if (armL.userData.elbow) armL.userData.elbow.rotation.x = SWlag(-0.15, -0.7, 0.15, 0.2);
           } else {
             // ⚔️ คอมโบ 3 ไม้: ① ผ่าลงหน้า ② ฟันย้อนกลับขึ้น ③ เงื้อสุดแล้วทุบลง (ท่าจบ)
             let ax, az;
             if (cb === 1) {
-              ax = s < 0.22 ? -1.9 * smK(s / 0.22) : s < 0.42 ? -1.9 + 2.6 * smK((s - 0.22) / 0.2) : s < 0.8 ? 0.7 : 0.7 * smK(1 - (s - 0.8) / 0.2);
-              az = -0.3 + 0.8 * smK((s - 0.22) / 0.2);
+              ax = SW(0, -1.9, 0.7, 0.94); az = SW(-0.3, -0.3, 0.5, 0.58);
             } else if (cb === 2) {
-              ax = s < 0.3 ? 0.95 * smK(s / 0.3) : s < 0.46 ? 0.95 - 3.4 * smK((s - 0.3) / 0.16) : s < 0.85 ? -2.45 : -2.45 * smK(1 - (s - 0.85) / 0.15);
-              az = 0.12 - 0.34 * smK((s - 0.3) / 0.16);
+              ax = SW(0, 0.95, -2.45, -2.72); az = SW(0.12, 0.12, -0.22, -0.28);
             } else {
-              ax = s < 0.22 ? 0.55 * smK(s / 0.22) : s < 0.4 ? 0.55 - 2.5 * smK((s - 0.22) / 0.18) : s < 0.8 ? -1.95 : -1.95 * smK(1 - (s - 0.8) / 0.2);
-              az = 0.12 - 0.5 * smK((s - 0.22) / 0.18);
+              ax = SW(0, 0.55, -1.95, -2.2); az = SW(0.12, 0.12, -0.38, -0.46);
             }
             armR.rotation.x = ax; armR.rotation.z = az;
-            armL.rotation.x = -0.25 - 0.5 * sw; armL.rotation.z = -0.18 - 0.25 * sw; // แขนซ้ายเหวี่ยงถ่วงน้ำหนัก
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = SW(-0.1, -0.5, 0.3, 0.36);   // ศอกสะบัดตามคมดาบ ให้แรงส่งต่อเนื่อง
+            armL.rotation.x = SWlag(-0.25, -0.6, -0.15, -0.1); armL.rotation.z = SWlag(-0.18, -0.4, -0.05, 0); // แขนซ้ายเหวี่ยงถ่วงน้ำหนักตามหลัง
           }
           // 🌊 ผสมท่าฟันกับท่าเดินตามน้ำหนัก bw → เข้าท่านุ่ม ออกท่านุ่ม ไม่มีการดีดกลับ
           armR.rotation.x = P0[0] + (armR.rotation.x - P0[0]) * bw;
