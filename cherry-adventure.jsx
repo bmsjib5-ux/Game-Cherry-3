@@ -2565,14 +2565,22 @@ const CUSTOM = {
     { n: "น้ำตาล", c: 0x3f2517 }, { n: "ดำขลับ", c: 0x2a2226 }, { n: "บลอนด์", c: 0xd9b56a },
     { n: "ชมพูซากุระ", c: 0xf2a0b4 }, { n: "ฟ้าพาสเทล", c: 0x6a9ad0 }, { n: "เงินจันทรา", c: 0xdfe3ec },
   ],
-  hairStyles: ["ยาวประบ่า", "บ๊อบสั้น", "หางม้าคู่", "หางม้าสูง", "บ๊อบติดเขาดำ 🖤", "บ๊อบตรง", "ยาวตรงหน้าม้า", "เปียโบว์กระต่าย 🎀", "มวยผมหน้าม้า"],
-  eyes: ["กลมใส", "โตประกาย", "ยิ้มหวาน", "ประกายดาวเขียว ✨"],
+  // 💇 g = ทรงนี้เหมาะกับเพศไหน (0 หญิง · 1 ชาย · 2 ได้ทั้งคู่)
+  hairStyles: [
+    { n: "ยาวประบ่า", g: 0 }, { n: "บ๊อบสั้น", g: 2 }, { n: "หางม้าคู่", g: 0 }, { n: "หางม้าสูง", g: 2 },
+    { n: "บ๊อบติดเขาดำ 🖤", g: 0 }, { n: "บ๊อบตรง", g: 0 }, { n: "ยาวตรงหน้าม้า", g: 0 },
+    { n: "เปียโบว์กระต่าย 🎀", g: 0 }, { n: "มวยผมหน้าม้า", g: 0 },
+    { n: "สั้นเกรียน ✂️", g: 1 }, { n: "สั้นตั้งชี้ ⚡", g: 1 }, { n: "รองทรงเสย 🕴️", g: 1 },
+  ],
+  eyes: [{ n: "กลมใส", g: 2 }, { n: "โตประกาย", g: 0 }, { n: "ยิ้มหวาน", g: 2 }, { n: "ประกายดาวเขียว ✨", g: 0 }, { n: "คมเข้ม 🔥", g: 1 }],
   outfits: [
-    { n: "ลายทางกรม", base: "#33415e", stripe: "#dfe6f2", pants: 0xf7f5f0 },
-    { n: "ชมพูหวาน", base: "#e8879e", stripe: "#ffe3ec", pants: 0xfff5f8 },
-    { n: "มิ้นต์สดชื่น", base: "#4f9a7d", stripe: "#dff5ea", pants: 0xf2efe6 },
-    { n: "ดำสุดเท่", base: "#3a3a44", stripe: "#8a8a98", pants: 0x52525c },
-    { n: "เดรสดำขลิบทอง", base: "#2b2724", stripe: "#c9a24a", pants: 0xf5f2ec, collar: true },
+    { n: "ลายทางกรม", base: "#33415e", stripe: "#dfe6f2", pants: 0xf7f5f0, g: 2 },
+    { n: "ชมพูหวาน", base: "#e8879e", stripe: "#ffe3ec", pants: 0xfff5f8, g: 0 },
+    { n: "มิ้นต์สดชื่น", base: "#4f9a7d", stripe: "#dff5ea", pants: 0xf2efe6, g: 2 },
+    { n: "ดำสุดเท่", base: "#3a3a44", stripe: "#8a8a98", pants: 0x52525c, g: 2 },
+    { n: "เดรสดำขลิบทอง", base: "#2b2724", stripe: "#c9a24a", pants: 0xf5f2ec, collar: true, g: 0 },
+    { n: "เชิ้ตน้ำเงินเข้ม", base: "#26456e", stripe: "#4d7bb5", pants: 0x39404d, g: 1 },
+    { n: "สนามซ้อมเทาเข้ม", base: "#4a4f57", stripe: "#767d88", pants: 0x2f3339, g: 1 },
   ],
   // 🎨 shared palette for individually recolouring the top / pants / shoes
   clothColors: [
@@ -3968,18 +3976,35 @@ export default function CherryAdventure() {
     }
 
     // ---------- Materials ----------
-    // 🎌 3-step toon gradient → anime cel-shading
-    const toneData = new Uint8Array([110, 110, 110, 255, 165, 165, 165, 255, 215, 215, 215, 255, 255, 255, 255, 255]);
-    const toonGrad = new THREE.DataTexture(toneData, 4, 1, THREE.RGBAFormat);
-    toonGrad.minFilter = THREE.NearestFilter;
-    toonGrad.magFilter = THREE.NearestFilter;
-    toonGrad.needsUpdate = true;
-    // 🎨 skin-only gradient: เงาลึกขึ้นเล็กน้อย + ไฮไลต์ไม่ถึงขาวสุด (ลดความโปร่งแสง)
-    const skinToneData = new Uint8Array([95, 95, 95, 255, 150, 150, 150, 255, 205, 205, 205, 255, 242, 242, 242, 255]);
-    const skinGrad = new THREE.DataTexture(skinToneData, 4, 1, THREE.RGBAFormat);
-    skinGrad.minFilter = THREE.NearestFilter;
-    skinGrad.magFilter = THREE.NearestFilter;
-    skinGrad.needsUpdate = true;
+    // 🎨 แถบไล่แสงแบบการ์ตูน 3D — เดิมเป็น 4 ขั้นตัดขอบแข็ง (NearestFilter) เงาจึงหักเป็นปื้น
+    //    ทำให้ตัวละครดู "เหลี่ยมแข็ง" ทั้งที่โมเดลกลม · ของใหม่ยังคงโทนเดิมแต่ไล่เฉดนุ่มต่อเนื่อง
+    //    pts = [ตำแหน่งแสง 0-1, ความสว่าง 0-1] ต่อกันด้วย smoothstep → ไม่มีขอบเงาแข็ง
+    const rampTex = (pts) => {
+      const N = 64, d = new Uint8Array(N * 4);
+      for (let i = 0; i < N; i++) {
+        const x = i / (N - 1);
+        let v = pts[0][1];
+        for (let k = 1; k < pts.length; k++) {
+          const [x0, v0] = pts[k - 1], [x1, v1] = pts[k];
+          if (x >= x1) { v = v1; continue; }
+          if (x <= x0) break;
+          const u = (x - x0) / (x1 - x0);
+          v = v0 + (v1 - v0) * u * u * (3 - 2 * u);
+          break;
+        }
+        const c = Math.max(0, Math.min(255, Math.round(v * 255)));
+        d[i * 4] = c; d[i * 4 + 1] = c; d[i * 4 + 2] = c; d[i * 4 + 3] = 255;
+      }
+      const tx = new THREE.DataTexture(d, N, 1, THREE.RGBAFormat);
+      tx.minFilter = THREE.LinearFilter;
+      tx.magFilter = THREE.LinearFilter;
+      tx.needsUpdate = true;
+      return tx;
+    };
+    // ช่วงความสว่างเท่าเดิม (0.43 → 1.00) แต่เปลี่ยนรอยต่อ 3 จุดให้เป็นการไล่เฉด
+    const toonGrad = rampTex([[0, 0.43], [0.26, 0.47], [0.44, 0.65], [0.62, 0.81], [0.80, 0.92], [1, 1]]);
+    // 🎨 ผิว: เงาลึกขึ้นเล็กน้อย + ไฮไลต์ไม่ถึงขาวสุด (ลดความโปร่งแสง) — ช่วง 0.37 → 0.95 เท่าเดิม
+    const skinGrad = rampTex([[0, 0.37], [0.28, 0.42], [0.46, 0.59], [0.64, 0.76], [0.82, 0.88], [1, 0.95]]);
     const skinMat = new THREE.MeshToonMaterial({ color: 0xffe0c8, gradientMap: skinGrad });
     G._skinBase = 0xffe0c8; // 🤖 remember base skin tone (aegis recolors it metallic, restores on class change)
     const hairMat = new THREE.MeshToonMaterial({ color: 0x3f2517, gradientMap: toonGrad, emissive: 0x120a05, emissiveIntensity: 0.1 }); // 🎨 cel-shaded hair — ให้แสงตัดเป็นขั้นแบบอนิเมะเหมือนผิว/เสื้อ
@@ -4026,6 +4051,19 @@ export default function CherryAdventure() {
     G.spawnAtVillage(); // ⭐ ตำแหน่งเริ่มต้นทุกครั้งที่เข้าเกม
     const shoeMeshes = [];
     const legSkinMeshes = []; // 🦵 ขาเปลี่ยนเป็นสีผิวได้ (ฮารุ)
+    // 🌊 ดัดเส้นขอบของแขน/ขา/ลำตัวให้เป็นเส้นโค้งจริง
+    //    LatheGeometry ลากเส้น "ตรง" ระหว่างจุดควบคุม — โปรไฟล์แขน/ขามีแค่ 4 จุด
+    //    เงาจึงหักเป็นปล้องและเห็นเหลี่ยมตามยาว แม้จะแบ่งรอบวงละเอียดแค่ไหนก็ตาม
+    const smoothProfile = (pts, mult) => {
+      const cur = new THREE.CatmullRomCurve3(pts.map((v) => new THREE.Vector3(v.x, v.y, 0)));
+      const n = Math.max(2, (pts.length - 1) * (mult || 4));
+      const out = [];
+      for (let i = 0; i <= n; i++) {
+        const q = cur.getPoint(i / n);
+        out.push(new THREE.Vector2(Math.max(0.002, q.x), q.y));   // กันรัศมีติดลบตอนเส้นโค้งเลยจุด
+      }
+      return out;
+    };
     const makeLeg = (side) => {
       const hip = new THREE.Group();
       hip.position.set(0.165 * side, 1.393, 0); // ขาชิดแบบสรีระจริง (ยกสะโพกขึ้นให้ขายาว)
@@ -4037,7 +4075,7 @@ export default function CherryAdventure() {
         [0.157, 0.42],
         [0.165, 0.56], // โคนขากว้างสุดชนสะโพก แล้วไล่ระดับแคบลงถึงข้อเท้า
       ].map(([r, y]) => new THREE.Vector2(r, y));
-      const thigh = new THREE.Mesh(new THREE.LatheGeometry(thighProfile, 30), pantsMat);
+      const thigh = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile(thighProfile), 30), pantsMat);
       thigh.position.y = -0.56; thigh.scale.set(1, 1, 0.9); thigh.castShadow = true;
       const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.165, 20, 20), pantsMat);
       hipBall.position.y = -0.06; hipBall.scale.set(1, 0.9, 0.85);
@@ -4052,7 +4090,7 @@ export default function CherryAdventure() {
         [0.123, 0.30],
         [0.1348, 0.42], // หัวเข่า — รัศมีเท่าปลายต้นขา (0.135) → ขาไล่เรียวเป็นท่อนเดียว ไม่เห็นรอยต่อ
       ].map(([r, y]) => new THREE.Vector2(r, y));
-      const calf = new THREE.Mesh(new THREE.LatheGeometry(calfProfile, 30), pantsMat);
+      const calf = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile(calfProfile), 30), pantsMat);
       calf.position.y = -0.42; calf.scale.set(1, 1, 0.9); calf.castShadow = true;
       const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.1352, 18, 16), pantsMat);
       kneeCap.scale.set(1, 0.98, 0.9); // ✏️ รัศมีเท่าท่อขาพอดี — มองไม่เห็นตอนยืดตรง แค่อุดรอยต่อตอนงอเข่า
@@ -4074,8 +4112,8 @@ export default function CherryAdventure() {
     const torsoProfileM = [[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.40], [0.37, 0.61], [0.405, 0.75], [0.415, 0.87], [0.40, 0.99], [0.35, 1.10], [0.24, 1.21], [0.12, 1.29]].map(([r, y]) => new THREE.Vector2(r, y));
     // ♀ hourglass profile — hip flare → pinched waist → soft bust swell (ส่วนโค้งเว้า)
     const torsoProfileF = [[0.315, 0.00], [0.33, 0.08], [0.302, 0.20], [0.29, 0.38], [0.312, 0.59], [0.38, 0.73], [0.415, 0.85], [0.402, 0.97], [0.35, 1.10], [0.24, 1.21], [0.12, 1.29]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
-    const torsoGeoM = new THREE.LatheGeometry(torsoProfileM, 44);
-    const torsoGeoF = new THREE.LatheGeometry(torsoProfileF, 44);
+    const torsoGeoM = new THREE.LatheGeometry(smoothProfile(torsoProfileM, 3), 44);
+    const torsoGeoF = new THREE.LatheGeometry(smoothProfile(torsoProfileF, 3), 44);
     // 📐 side-view shaping (หน้านูน หลังตรง): flatten the back to a near-straight wall, puff the chest slightly
     {
       const pos = torsoGeoF.attributes.position;
@@ -4351,7 +4389,7 @@ export default function CherryAdventure() {
         [0.078, 0.36],
         [0.076, 0.5],  // elbow
       ].map(([r, y]) => new THREE.Vector2(r, y));
-      const upperArm = new THREE.Mesh(new THREE.LatheGeometry(upperProfile, 20), skinMat);
+      const upperArm = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile(upperProfile), 24), skinMat);
       upperArm.position.y = -0.53; upperArm.scale.y = 1.06; // 💪 ท่อนบนยาวขึ้น
       p.add(sleeve, upperArm);
       // 💪 ELBOW JOINT — pivot at the elbow; the forearm + hand bend from here
@@ -4363,7 +4401,7 @@ export default function CherryAdventure() {
         [0.073, 0.30],
         [0.0757, 0.42], // ข้อศอก — รัศมีเท่าปลายท่อนบน (0.076) → แขนไล่เรียวเป็นท่อนเดียว ไม่เห็นรอยต่อ
       ].map(([r, y]) => new THREE.Vector2(r, y));
-      const forearm = new THREE.Mesh(new THREE.LatheGeometry(foreProfile, 20), skinMat);
+      const forearm = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile(foreProfile), 24), skinMat);
       forearm.position.y = -0.445; forearm.scale.y = 1.06; // ท่อนล่างยาวขึ้น
       const hand = new THREE.Mesh(new THREE.SphereGeometry(0.115, 22, 22), skinMat);
       hand.scale.set(0.86, 1.05, 0.52); // ✋ ฝ่ามือแบน (ไม่เป็นลูกบอล)
@@ -7510,6 +7548,100 @@ export default function CherryAdventure() {
     }
     hairStyles.push(hairBun);
 
+    // ---------- 👦 ทรงผมผู้ชาย — ทุกทรงเป็นหมวกผมเต็มหัวในตัว (index >= 5 จึงซ่อนผมฐานอัตโนมัติ) ----------
+    // 🌊 ปอยผมสั้นทรงกรวยปลายเรียว — ใช้เส้นโค้งจริงเพื่อไม่ให้เป็นแท่งเหลี่ยม
+    const mkTuft = (len, thick, lean, twist) => {
+      const pts = [];
+      for (let i = 0; i <= 8; i++) {
+        const u = i / 8;
+        pts.push(new THREE.Vector3(Math.sin(u * Math.PI * 0.5) * lean, u * len, Math.sin(u * Math.PI * 0.45) * twist));
+      }
+      const curve = new THREE.CatmullRomCurve3(pts);
+      const geo = new THREE.TubeGeometry(curve, 12, thick, 10, false);
+      const pos = geo.attributes.position, rings = 13, rv = 11;
+      for (let r = 0; r < rings; r++) {                       // เรียวจากโคนไปปลาย
+        const u = r / (rings - 1), sc = (1 - u * u * 0.92) + 0.05, c = curve.getPoint(u);
+        for (let v = 0; v <= 10; v++) {
+          const idx = r * rv + v; if (idx >= pos.count) continue;
+          pos.setX(idx, c.x + (pos.getX(idx) - c.x) * sc);
+          pos.setY(idx, c.y + (pos.getY(idx) - c.y) * sc);
+          pos.setZ(idx, c.z + (pos.getZ(idx) - c.z) * sc);
+        }
+      }
+      pos.needsUpdate = true; geo.computeVertexNormals(); bakeHairGrad(geo);
+      return new THREE.Mesh(geo, hairMatV);
+    };
+    // หมวกผมแนบกะโหลก ใช้ร่วมกันทุกทรงผู้ชาย
+    const mkCropCap = (r, sy, yy) => {
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 26, 20), hairMat);
+      cap.scale.set(1.04, sy, 1.03); cap.position.set(0, yy, -0.04);
+      return cap;
+    };
+
+    // style 9: ✂️ สั้นเกรียน — แนบหัว หน้าผากเปิด ดูสะอาด
+    const hairCrop = new THREE.Group();
+    {
+      hairCrop.add(mkCropCap(0.6, 0.86, 0.2));
+      // จอนสั้นข้างหู
+      for (const sx of [-1, 1]) {
+        const sb = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 14), hairMat);
+        sb.scale.set(0.5, 0.9, 0.75); sb.position.set(0.52 * sx, -0.02, 0.02);
+        hairCrop.add(sb);
+      }
+      // หน้าม้าสั้นเฉียง ไม่ปิดคิ้ว — โคนฝังในหมวกผม
+      for (let k = 0; k < 5; k++) {
+        const t = mkTuft(0.24, 0.07, 0.05, 0.01);
+        t.position.set(-0.3 + k * 0.15, 0.4, 0.3);
+        t.rotation.set(2.35, 0, -0.26 + k * 0.13);
+        hairCrop.add(t);
+      }
+    }
+    hairStyles.push(hairCrop);
+
+    // style 10: ⚡ สั้นตั้งชี้ — ปอยผมชี้ขึ้นรอบกระหม่อม
+    const hairSpike = new THREE.Group();
+    {
+      hairSpike.add(mkCropCap(0.61, 0.9, 0.18));
+      const spikes = [[0, 0.6, 0.06, 0.46, -0.18], [-0.26, 0.54, 0.1, 0.42, -0.34], [0.26, 0.54, 0.08, 0.42, 0.34],
+                      [-0.14, 0.48, 0.34, 0.38, -0.55], [0.16, 0.48, 0.34, 0.38, 0.55],
+                      [-0.42, 0.32, -0.1, 0.34, -0.9], [0.42, 0.32, -0.08, 0.34, 0.9],
+                      [-0.12, 0.5, -0.32, 0.36, -0.15], [0.14, 0.5, -0.32, 0.36, 0.15]];
+      for (const [x, y, z, len, tilt] of spikes) {
+        const t = mkTuft(len, 0.062, 0.05, 0.02);
+        t.position.set(x, y, z);
+        t.rotation.set(-z * 0.9, 0, tilt);                    // ปอยหน้าเอนไปหน้า ปอยหลังเอนไปหลัง
+        hairSpike.add(t);
+      }
+      // หน้าม้าแหลม — โคนฝังในหมวกผม ปลายทิ้งลงมาแนบหน้าผาก
+      for (let k = 0; k < 5; k++) {
+        const t = mkTuft(0.3, 0.075, 0.05, 0);
+        t.position.set(-0.3 + k * 0.15, 0.38, 0.32);
+        t.rotation.set(2.25, 0, -0.32 + k * 0.16);
+        hairSpike.add(t);
+      }
+    }
+    hairStyles.push(hairSpike);
+
+    // style 11: 🕴️ รองทรงเสย — ข้างสั้น ด้านบนเสยไปหลัง
+    const hairSwept = new THREE.Group();
+    {
+      hairSwept.add(mkCropCap(0.6, 0.88, 0.19));
+      // ข้างตัดสั้นแนบ
+      for (const sx of [-1, 1]) {
+        const sb = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 14), hairMat);
+        sb.scale.set(0.42, 0.95, 0.8); sb.position.set(0.53 * sx, -0.03, 0.0);
+        hairSwept.add(sb);
+      }
+      // ผมด้านบนเสยจากหน้าผากไปท้ายทอย
+      for (let k = 0; k < 6; k++) {
+        const t = mkTuft(0.5, 0.07, -0.06, 0);
+        t.position.set(-0.3 + k * 0.12, 0.42, 0.3);
+        t.rotation.set(1.9, 0, -0.16 + k * 0.064);            // เอนไปด้านหลังเกือบขนานหัว
+        hairSwept.add(t);
+      }
+    }
+    hairStyles.push(hairSwept);
+
     hairStyles.forEach((h, i) => { h.visible = i === 0; headG.add(h); });
 
     // ---------- 👀 Eye styles — big anime eyes ----------
@@ -7529,7 +7661,7 @@ export default function CherryAdventure() {
       pupil.scale.set(0.85, 1.25, 0.3);
       pupil.position.set(0, -0.015, 0.045);
       // upper eyelid line: bold dark arc over the eye (เส้นเปลือกตาแบบลายเส้น)
-      const lid = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.02, 8, 18, Math.PI * 0.95), darkMat);
+      const lid = new THREE.Mesh(new THREE.TorusGeometry(0.088, 0.02, 14, 22, Math.PI * 0.95), darkMat);
       lid.position.set(0, 0.015, 0.05);
       lid.rotation.z = Math.PI * 0.025 * side;
       lid.scale.set(1.05, 1.15, 0.6);
@@ -7548,6 +7680,8 @@ export default function CherryAdventure() {
       lash2.position.set(0.052 * side, 0.135, 0.028);
       lash2.rotation.z = -0.55 * side;
       e.add(sclera, iris, pupil, lid, hi1, hi2, lash, lash2);
+      lash.name = "lash"; lash2.name = "lash";
+      e.userData.lashes = [lash, lash2];     // 👦 ใบหน้าผู้ชายซ่อนขนตางอน
       e.position.set(0.2 * side, -0.03, 0.52);
       return e;
     };
@@ -7590,20 +7724,23 @@ export default function CherryAdventure() {
       bigSpark.visible = i === 1;
       starSparks.visible = i === 3;
       // 💚 star style = big green eyes, others = warm brown
-      irisMat.color.setHex(i === 3 ? 0x54b845 : 0x8a5638);
-      irisMat.emissive.setHex(i === 3 ? 0x1a5a14 : 0x2a1408);
+      irisMat.color.setHex(i === 3 ? 0x54b845 : i === 4 ? 0x5a4030 : 0x8a5638);
+      irisMat.emissive.setHex(i === 3 ? 0x1a5a14 : i === 4 ? 0x1a0e06 : 0x2a1408);
       const s3 = i === 1 ? 1.22 : i === 3 ? 1.3 : 1;
-      eyeL.scale.setScalar(s3);
-      eyeR.scale.setScalar(s3);
+      // 🔥 "คมเข้ม" = ตาเรียวแคบแนวตั้ง ดูคมขึ้น (สไตล์ผู้ชาย)
+      const sy = i === 4 ? 0.7 : 1;
+      eyeL.scale.set(s3, s3 * sy, s3);
+      eyeR.scale.set(s3, s3 * sy, s3);
     };
     // 🖌️ eyebrows (มีคิ้ว = หน้ามีชีวิต) — thin arcs, slightly uneven like hand-drawn
     const browMat = new THREE.MeshBasicMaterial({ color: 0x6a4530 });
-    const browL = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 14, Math.PI * 0.7), browMat);
+    const browL = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 12, 18, Math.PI * 0.7), browMat);
     browL.position.set(-0.2, 0.17, 0.55);
     browL.rotation.z = Math.PI * 0.16;
-    const browR = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 14, Math.PI * 0.7), browMat);
+    const browR = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 12, 18, Math.PI * 0.7), browMat);
     browR.position.set(0.2, 0.175, 0.55);
     browR.rotation.z = Math.PI * 0.12; // ← คิ้วสองข้างเอียงไม่เท่ากันนิดๆ
+    browL.name = "brow"; browR.name = "brow";
     headG.add(browL, browR);
     // tiny nose dot
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), new THREE.MeshBasicMaterial({ color: 0xe8a988 }));
@@ -7618,6 +7755,7 @@ export default function CherryAdventure() {
     const cheekR = cheekL.clone();
     cheekR.position.x = 0.33;
     cheekR.rotation.z = -0.12;
+    cheekL.name = "blush"; cheekR.name = "blush";
     headG.add(cheekL, cheekR);
     const mouths = {};
     const mSmile = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.018, 10, 20, Math.PI), darkMat);
@@ -13446,7 +13584,22 @@ export default function CherryAdventure() {
       if (G.officeGlasses) G.officeGlasses.visible = o.acc === "tie"; // 👓 glasses for the office worker
       if (G.coderGlasses) G.coderGlasses.visible = o.acc === "hoodie"; // 👓 glasses for the coder
       G._classAcc = o.acc;
+      wand.visible = true;      // 🗡️ คืนอาวุธเข้ามือ (หน้าออกแบบตัวละครซ่อนไว้)
       G.reconcileClassPieces(); // 🚫 keep equipped gear from overlapping the class look (also refreshes the aegis head)
+    };
+    // 🧍 หน้า "ออกแบบตัวละคร" ต้องเห็นตัวจริงที่กำลังแต่ง
+    //    ⚠️ เดิมกดช่องเซฟว่างแล้วสวมชุดเกราะนักรบ + หมวก + โล่ + ดาบทันที
+    //       ทรงผม/ใบหน้า/ชุด ที่เลือกอยู่จึงถูกบังจนมองไม่เห็นเลย (ชุดอาชีพย้ายไปโชว์ตอนเลือกอาชีพแทน)
+    G.showPlainLook = () => {
+      Object.values(classAccessories).forEach((g) => { if (g) g.visible = false; });
+      if (G.warriorHelm) G.warriorHelm.visible = false;
+      if (G.warriorShield) G.warriorShield.visible = false;
+      if (G.elvenCirclet) G.elvenCirclet.visible = false;
+      if (G.officeGlasses) G.officeGlasses.visible = false;
+      if (G.coderGlasses) G.coderGlasses.visible = false;
+      G._classAcc = null;
+      wand.visible = false;                                   // 🚫 ไม่ต้องถืออาวุธตอนออกแบบหน้าตา
+      if (G.setCustom) G.setCustom("outfit", G.custom ? (G.custom.outfit || 0) : 0);  // คืนสีเสื้อ/กางเกงตามชุดที่เลือก
     };
     // 👀 preview a class during selection: outfit + weapon in hand
     G.previewClass = (cls) => {
@@ -14016,6 +14169,15 @@ export default function CherryAdventure() {
       armR.position.x = 0.46 * (male ? 1.18 : 0.92);
       // 👗 feminine curve — hips only show for the female form
       if (G.hips) G.hips.visible = !male;
+      // 👦👧 ใบหน้าต้องต่างกันด้วย ไม่ใช่แค่รูปร่าง — เดิมชาย/หญิงหน้าเหมือนกันทุกอย่าง
+      [eyeL, eyeR].forEach((ey) => (ey.userData.lashes || []).forEach((l) => (l.visible = !male)));  // ขนตางอน = เฉพาะหญิง
+      cheekL.visible = !male; cheekR.visible = !male;                                                // แก้มแดง = เฉพาะหญิง
+      browL.scale.set(male ? 1.18 : 1, male ? 1.55 : 1, 1);                                          // คิ้วชายหนาและตรงกว่า
+      browR.scale.set(male ? 1.18 : 1, male ? 1.55 : 1, 1);
+      browL.rotation.z = Math.PI * (male ? 0.05 : 0.16);
+      browR.rotation.z = Math.PI * (male ? 0.03 : 0.12);
+      browL.position.y = male ? 0.142 : 0.17;
+      browR.position.y = male ? 0.147 : 0.175;
       // 🛡️ knight emblem tint: ♂ crimson lion / ♀ royal blue eagle (like the reference art)
       const capeAcc = G.classAccessories && G.classAccessories.cape;
       if (capeAcc && capeAcc.userData.emblemMat) {
@@ -14027,6 +14189,11 @@ export default function CherryAdventure() {
       G.custom[cat] = i;
       if (cat === "gender") {
         applyGender(i);
+        // 👦👧 ตัวเลือกที่ค้างอยู่แล้วไม่เข้ากับเพศที่เพิ่งเลือก → สลับไปตัวเริ่มต้นของเพศนั้นทันที
+        const fits = (list, cur) => { const it = list[cur]; return !!it && (it.g === 2 || it.g === i); };
+        if (!fits(CUSTOM.hairStyles, G.custom.hairStyle)) G.setCustom("hairStyle", i === 1 ? 11 : 0);
+        if (!fits(CUSTOM.eyes, G.custom.eyes)) G.setCustom("eyes", i === 1 ? 4 : 0);
+        if (!fits(CUSTOM.outfits, G.custom.outfit)) G.setCustom("outfit", i === 1 ? 5 : 0);
       } else if (cat === "skin") {
         skinMat.color.setHex(CUSTOM.skins[i].c);
         G._skinBase = CUSTOM.skins[i].c; // 💜 จำโทนผิวที่เลือก — ใช้คืนค่าหลังร่างฮีโร่ที่ย้อมผิว (aegis/ragnar)
@@ -14034,6 +14201,11 @@ export default function CherryAdventure() {
         setHairColorHex(CUSTOM.hairColors[i].c);
       } else if (cat === "hairStyle") {
         hairStyles.forEach((h, k) => (h.visible = k === i));
+        // ✂️ ทรงตัดสั้นของผู้ชาย: ผมหลังแนบขึ้นเล็กน้อยให้ท้ายทอยไม่พองเป็นทรงบ๊อบ
+        //    (ยังต้องคลุมกะโหลกให้มิด — เคยลองย่อจนหนังหัวโผล่มาแล้ว)
+        const crop = i >= 9;
+        hairBack.scale.set(1.02, crop ? 1.0 : 1.05, crop ? 0.95 : 0.98);
+        hairBack.position.set(0, crop ? 0.08 : 0.06, -0.1);
         // styles 5-8 are self-contained (full cap + own bangs) → hide the shared base hair
         const selfContained = i >= 5;
         if (baseHair) baseHair.visible = !selfContained;
@@ -14078,11 +14250,17 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, custom: { ...G.custom } }));
     };
     G.randomCustom = () => {
+      const g = G.custom.gender || 0;
+      // 🎲 สุ่มเฉพาะตัวเลือกที่เข้ากับเพศที่เลือกไว้ (ไม่สุ่มข้ามเพศ)
+      const pick = (list) => {
+        const ok = list.map((it, k) => (it.g === 2 || it.g === g ? k : -1)).filter((k) => k >= 0);
+        return ok.length ? ok[Math.floor(Math.random() * ok.length)] : 0;
+      };
       G.setCustom("skin", Math.floor(Math.random() * CUSTOM.skins.length));
       G.setCustom("hairColor", Math.floor(Math.random() * CUSTOM.hairColors.length));
-      G.setCustom("hairStyle", Math.floor(Math.random() * CUSTOM.hairStyles.length));
-      G.setCustom("eyes", Math.floor(Math.random() * CUSTOM.eyes.length));
-      G.setCustom("outfit", Math.floor(Math.random() * CUSTOM.outfits.length));
+      G.setCustom("hairStyle", pick(CUSTOM.hairStyles));
+      G.setCustom("eyes", pick(CUSTOM.eyes));
+      G.setCustom("outfit", pick(CUSTOM.outfits));
     };
     // 🦸 apply a preset character (name + full look) from the roster
     G.applyCharPreset = (idx) => {
@@ -34729,6 +34907,7 @@ export default function CherryAdventure() {
       if (taken) { setUi((u) => ({ ...u, customTab: "char", nameChecking: false, nameErr: "❌ ชื่อ \"" + nm + "\" มีคนใช้แล้ว ลองตั้งชื่ออื่นนะ" })); return; }
       G.pendingName = nm;
       G.mode = "class";
+      if (G.previewClass) G.previewClass("warrior");   // 👗 ชุดอาชีพมาโชว์ตอนนี้ (กดอาชีพอื่นจะเรียกซ้ำเอง)
       setUi((u) => ({ ...u, nameChecking: false, nameErr: "", pendingName: nm, mode: "class" }));
     };
     G.addFriendOnline = async (pid) => {
@@ -36239,7 +36418,7 @@ export default function CherryAdventure() {
       G.saveSlot = i;
       const sv = loadSave(i);
       if (sv && sv.player) { G.continueGame(); }
-      else { setUi((u) => ({ ...u, mode: "create", saveSlot: i, chosenClass: "warrior" })); G.previewClass && G.previewClass("warrior"); }
+      else { setUi((u) => ({ ...u, mode: "create", saveSlot: i, chosenClass: "warrior" })); G.showPlainLook && G.showPlainLook(); }
     };
     G.clearSave = (i) => {
       const target = i == null ? G.saveSlot : i;
@@ -49137,16 +49316,20 @@ export default function CherryAdventure() {
         // 🧍 equip screen pulls the camera back so the whole body is visible
         // 🖥️ คอม (จอกว้าง): ถอยกล้องออกอีก + ยกตัวละครขึ้นให้พอดีช่องว่างระหว่างหัวเรื่องกับกระเป๋าด้านล่าง
         const wideEquip = G.equipOpen && window.innerWidth > 620;
-        const cd = G.equipOpen ? (wideEquip ? 16.5 : 9.4) : G._editLook ? Math.max(6.5, Math.min(11, camDist * 0.62)) : Math.max(2.6, Math.min(11, camDist * 0.5));
-        const camY = G.equipOpen ? (wideEquip ? 2.05 : 1.62) : G._editLook ? 2.5 : 1.55 + cd * 0.14;
-        const lookY = G.equipOpen ? (wideEquip ? 0.30 : 1.02) : G._editLook ? 1.9 : 1.35;
+        // 🧍 ระยะ/ความสูงกล้องชุดเดียวกันทั้ง "สร้างตัวละครใหม่" และ "แก้รูปลักษณ์"
+        //    ⚠️ เดิมตอนสร้างใหม่ใช้ค่าคนละชุด (ใกล้กว่า ก้มกว่า) → หัวตัวละครโดนตัดออกนอกจอ
+        const cd = G.equipOpen ? (wideEquip ? 16.5 : 9.4) : Math.max(6.5, Math.min(11, camDist * 0.62));
+        const camY = G.equipOpen ? (wideEquip ? 2.05 : 1.62) : 2.5;
+        const lookY = G.equipOpen ? (wideEquip ? 0.30 : 1.02) : 1.9;
         // 🖥️ หน้าแต่งตัว: คอม = แผงครึ่งจอฝั่งซ้าย → เลื่อนตัวละครไปอยู่กึ่งกลางแผงซ้าย · มือถือ = กลางจอ
         const panX = !G.equipOpen && window.innerWidth < 640 ? -cd * 0.11 : 0;
         const camX = wideEquip ? cd * 0.03 : panX;
         const lookX = wideEquip ? cd * 0.25 : panX;
-        // 💇 โหมดแก้รูปลักษณ์: ตัวละครยืนที่เดิมในโลก — เลื่อนแท่นกล้องทั้งชุดไปหาตัวละคร
-        const ex = (G._editLook && char) ? char.position.x : 0;
-        const ez = (G._editLook && char) ? char.position.z : 0;
+        // 💇 หน้าออกแบบตัวละคร: เล็งกล้องไปที่ "ตัวละครจริง" เสมอ
+        //    ⚠️ เดิมเล็งไปที่จุดกำเนิดโลก (0,0) ยกเว้นโหมดแก้รูปลักษณ์ แต่ตัวละครใหม่เกิดหน้าบ้าน (-9.5,-5.5)
+        //       ทำให้ "ตอนสร้างตัวละครใหม่ มองไม่เห็นตัวเองเลย" — เลือกผม/หน้า/ชุดโดยไม่เห็นของจริง
+        const ex = char ? char.position.x : 0;
+        const ez = char ? char.position.z : 0;
         camera.position.x += (ex + camX - camera.position.x) * 0.08;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (ez + cd - camera.position.z) * 0.08;
@@ -50967,8 +51150,27 @@ export default function CherryAdventure() {
       <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px", display: "flex", flexDirection: "column", gap: 12 }}>
         {ui.customTab === "char" && (
           <>
+            {/* 👦👧 ขั้นแรกสุด: เลือกเพศให้ชัดเจน — เดิมซ่อนอยู่ในแท็บ "รูปร่าง" จนหาไม่เจอ */}
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>✏️ ตั้งชื่อตัวละคร</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 6 }}>① เลือกเพศตัวละคร</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {CUSTOM.genders.map((o, i) => (
+                  <button key={i} onClick={() => G.setCustom("gender", i)} style={{
+                    flex: 1, padding: "12px 0 9px", borderRadius: 14, cursor: "pointer", fontFamily: font,
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                    border: ui.custom.gender === i ? "2px solid #d9536b" : "2px solid #ece2d8",
+                    background: ui.custom.gender === i ? "#ffe1ea" : "#fbf7f2",
+                    boxShadow: ui.custom.gender === i ? "0 3px 10px rgba(217,83,107,0.25)" : "none",
+                  }}>
+                    <span style={{ fontSize: 26, lineHeight: 1 }}>{o.emoji}</span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: ui.custom.gender === i ? "#d9536b" : "#8a5a4a" }}>{o.n}</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{ marginTop: 5, fontSize: 9.5, color: "#a58a7a" }}>ทรงผม ใบหน้า และชุด จะเปลี่ยนตามเพศที่เลือก</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>② ตั้งชื่อตัวละคร</div>
               <input
                 key={"nm-" + (ui.pendingName || "")}
                 type="text" maxLength={12} defaultValue={ui.pendingName || ""} placeholder="ตั้งชื่อของคุณ..."
@@ -50988,7 +51190,7 @@ export default function CherryAdventure() {
         {ui.customTab === "body" && (
           <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🧍 เพศ</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🧍 รูปร่าง</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {CUSTOM.genders.map((o, i) => (
                   <button key={i} onClick={() => G.setCustom("gender", i)} style={{
@@ -51017,15 +51219,25 @@ export default function CherryAdventure() {
         {ui.customTab === "hair" && (
           <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>💇 ทรงผม</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a" }}>
+                  💇 ทรงผม{ui.showAllLooks ? "" : ` (${CUSTOM.genders[ui.custom.gender || 0].n})`}
+                </div>
+                <button onClick={() => setUi((u) => ({ ...u, showAllLooks: !u.showAllLooks }))} style={{
+                  padding: "3px 7px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font,
+                  fontSize: 9, fontWeight: 800, background: ui.showAllLooks ? "#d9536b" : "#f3ede4",
+                  color: ui.showAllLooks ? "#fff" : "#9a7a6a",
+                }}>{ui.showAllLooks ? "เฉพาะเพศนี้" : "ดูทั้งหมด"}</button>
+              </div>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                {CUSTOM.hairStyles.map((n, i) => (
+                {CUSTOM.hairStyles.map((o, i) => (
+                  (ui.showAllLooks || o.g === 2 || o.g === (ui.custom.gender || 0) || ui.custom.hairStyle === i) && (
                   <button key={i} onClick={() => G.setCustom("hairStyle", i)} style={{
                     padding: "6px 9px", borderRadius: 999, border: "none", cursor: "pointer",
                     fontSize: 11, fontWeight: 700, fontFamily: font,
                     background: ui.custom.hairStyle === i ? "#d9536b" : "#f3ede4",
                     color: ui.custom.hairStyle === i ? "#fff" : "#8a5a4a",
-                  }}>{n}</button>
+                  }}>{o.n}</button>)
                 ))}
               </div>
             </div>
@@ -51045,15 +51257,18 @@ export default function CherryAdventure() {
         )}
         {ui.customTab === "face" && (
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👀 ดวงตา</div>
+            <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>
+              👀 ดวงตา{ui.showAllLooks ? "" : ` (${CUSTOM.genders[ui.custom.gender || 0].n})`}
+            </div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {CUSTOM.eyes.map((n, i) => (
+              {CUSTOM.eyes.map((o, i) => (
+                (ui.showAllLooks || o.g === 2 || o.g === (ui.custom.gender || 0) || ui.custom.eyes === i) && (
                 <button key={i} onClick={() => G.setCustom("eyes", i)} style={{
                   padding: "6px 9px", borderRadius: 999, border: "none", cursor: "pointer",
                   fontSize: 11, fontWeight: 700, fontFamily: font,
                   background: ui.custom.eyes === i ? "#d9536b" : "#f3ede4",
                   color: ui.custom.eyes === i ? "#fff" : "#8a5a4a",
-                }}>{n}</button>
+                }}>{o.n}</button>)
               ))}
             </div>
           </div>
@@ -51061,16 +51276,19 @@ export default function CherryAdventure() {
         {ui.customTab === "top" && (
           <>
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>👗 ชุดสำเร็จรูป</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>
+                👗 ชุดสำเร็จรูป{ui.showAllLooks ? "" : ` (${CUSTOM.genders[ui.custom.gender || 0].n})`}
+              </div>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                 {CUSTOM.outfits.map((o, i) => (
+                  (ui.showAllLooks || o.g === 2 || o.g === (ui.custom.gender || 0) || ui.custom.outfit === i) && (
                   <button key={i} onClick={() => G.setCustom("outfit", i)} style={{
                     padding: "6px 9px", borderRadius: 999, cursor: "pointer",
                     fontSize: 11, fontWeight: 700, fontFamily: font,
                     background: ui.custom.outfit === i && ui.custom.top == null ? o.base : "#f3ede4",
                     color: ui.custom.outfit === i && ui.custom.top == null ? "#fff" : "#8a5a4a",
                     border: `2px solid ${o.base}`,
-                  }}>{o.n}</button>
+                  }}>{o.n}</button>)
                 ))}
               </div>
             </div>
