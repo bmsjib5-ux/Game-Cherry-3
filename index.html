@@ -4582,15 +4582,16 @@ function CherryAdventure() {
             // ✨ thigh (upper leg) — from hip down to the knee
             const thighProfile = [
                 [0.1352, 0.00], // 🦵 หัวเข่า (ปลายล่าง) — รัศมีเท่าหัวน่อง → ต่อเนื่องไม่เห็นรอย
-                [0.145, 0.20],
-                [0.157, 0.42],
-                [0.165, 0.56], // โคนขากว้างสุดชนสะโพก แล้วไล่ระดับแคบลงถึงข้อเท้า
+                [0.142, 0.20],
+                [0.148, 0.42],
+                [0.148, 0.56], // ⚠️ โคนขาต้องแคบพอที่จะอยู่ในเสื้อ — เดิม 0.165 กว้างกว่าเอวเสื้อ
+                [0.118, 0.64], //    จึงโผล่ทะลุออกมาเป็นแถบขาวคาดเอว
             ].map(([r, y]) => new THREE.Vector2(r, y));
             const thigh = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile(thighProfile), 30), pantsMat);
             thigh.position.y = -0.56;
             thigh.scale.set(1, 1, 0.9);
             thigh.castShadow = true;
-            const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.165, 20, 20), pantsMat);
+            const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.148, 22, 20), pantsMat);
             hipBall.position.y = -0.06;
             hipBall.scale.set(1, 0.9, 0.85);
             legSkinMeshes.push(thigh, hipBall);
@@ -4626,9 +4627,9 @@ function CherryAdventure() {
         const legR = makeLeg(1);
         // ✨ human-proportioned torso: broad chest → narrow waist → hips, with sloped shoulders
         // ♂ straight athletic profile
-        const torsoProfileM = [[0.30, 0.00], [0.315, 0.10], [0.30, 0.22], [0.32, 0.40], [0.37, 0.61], [0.405, 0.75], [0.415, 0.87], [0.40, 0.99], [0.35, 1.10], [0.24, 1.21], [0.12, 1.29]].map(([r, y]) => new THREE.Vector2(r, y));
+        const torsoProfileM = [[0.325, 0.00], [0.335, 0.10], [0.322, 0.22], [0.335, 0.40], [0.375, 0.61], [0.405, 0.75], [0.415, 0.87], [0.40, 0.99], [0.35, 1.10], [0.24, 1.21], [0.12, 1.29]].map(([r, y]) => new THREE.Vector2(r, y));
         // ♀ hourglass profile — hip flare → pinched waist → soft bust swell (ส่วนโค้งเว้า)
-        const torsoProfileF = [[0.315, 0.00], [0.33, 0.08], [0.302, 0.20], [0.29, 0.38], [0.312, 0.59], [0.38, 0.73], [0.415, 0.85], [0.402, 0.97], [0.35, 1.10], [0.24, 1.21], [0.12, 1.29]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
+        const torsoProfileF = [[0.335, 0.00], [0.348, 0.08], [0.322, 0.20], [0.313, 0.38], [0.325, 0.59], [0.38, 0.73], [0.415, 0.85], [0.402, 0.97], [0.35, 1.10], [0.24, 1.21], [0.12, 1.29]].map(([r, y]) => new THREE.Vector2(r, y)); // โค้งพองาม ไม่เว้าลึก
         const torsoGeoM = new THREE.LatheGeometry(smoothProfile(torsoProfileM, 3), 44);
         const torsoGeoF = new THREE.LatheGeometry(smoothProfile(torsoProfileF, 3), 44);
         // 📐 side-view shaping (หน้านูน หลังตรง): flatten the back to a near-straight wall, puff the chest slightly
@@ -4677,16 +4678,19 @@ function CherryAdventure() {
         //       ทั้งยังแคบกว่าที่ควร — เปลี่ยนเป็นวงกลึงเส้นโค้งเดียวจึงได้ส่วนเว้าโค้งเต็มวง
         const hips = new THREE.Group();
         {
+            // ⚠️ ส่วนบนต้องแคบกว่าผิวเสื้อเสมอ ไม่งั้นก้อนสะโพกสีกางเกงจะทะลุเสื้อออกมาที่เอว
+            //    จุดกว้างสุดจึงต้องอยู่ "ใต้ชายเสื้อ" ไม่ใช่กลางลำตัว
             const hipProfile = [
-                [0.222, 0.00], // โคนขา — สอบเข้า
-                [0.310, 0.09],
-                [0.372, 0.20], // จุดกว้างสุดของสะโพก (แคบลงจากเดิม ~18% ไม่ให้ผายออกข้างมากเกิน)
-                [0.383, 0.30],
-                [0.360, 0.40],
-                [0.300, 0.49], // เอวคอด (ซ่อนอยู่ใต้ชายเสื้อ)
+                [0.215, 0.00], // โคนขา — สอบเข้า
+                [0.288, 0.10],
+                [0.322, 0.19], // กว้างสุด — อยู่ต่ำกว่าชายเสื้อ จึงเป็นส่วนที่มองเห็นจริง
+                [0.280, 0.27], // ไล่แคบลงแบบนุ่ม ๆ (ถ้าหักคมเกิน เส้นโค้งจะเลยจุดจนป่องออก)
+                [0.232, 0.35],
+                [0.202, 0.43],
+                [0.190, 0.49], // ยอดสะโพก — ซ่อนอยู่ในเสื้อสนิท (ส่วนนี้ไม่ต้องกว้าง เพราะมองไม่เห็น)
             ].map(([r, y]) => new THREE.Vector2(r, y));
             const h = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile(hipProfile, 4), 40), pantsMat);
-            h.position.set(0, 0.90, -0.02); // ยกสะโพกขึ้นเล็กน้อยให้ชนเอวพอดี ไม่ตกลงไปคลุมโคนขา
+            h.position.set(0, 0.72, -0.02); // จุดกว้างสุดอยู่ระดับ 0.91 = ต่ำกว่าชายเสื้อ (1.03) ชัดเจน
             h.scale.set(1, 1, 0.62); // กว้างกว่าลึก — เป็นส่วนเว้าด้านข้าง ไม่พองออกด้านหน้า
             hips.add(h);
         }
@@ -4694,14 +4698,14 @@ function CherryAdventure() {
         G.hips = hips;
         // ---------- 👕👖 ชิ้นส่วนแบบเสื้อ/แบบกางเกงที่เลือกได้ (ปกติซ่อน เปิดตามแบบที่เลือก) ----------
         // 👕 ชายเสื้อ — คลุมรอยต่อเอวระหว่างเสื้อกับสะโพก (จุดที่เดิมดูขาดเป็นรอย)
-        const shirtHem = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile([[0.30, 0], [0.335, 0.12], [0.365, 0.26]].map(([r, y]) => new THREE.Vector2(r, y)), 4), 40), shirtMat);
-        shirtHem.position.y = 1.30;
+        const shirtHem = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile([[0.31, 0], [0.375, 0.12], [0.425, 0.26]].map(([r, y]) => new THREE.Vector2(r, y)), 4), 40), shirtMat);
+        shirtHem.position.y = 1.40;
         shirtHem.scale.set(1, -1, 1);
         shirtHem.visible = false;
         char.add(shirtHem);
         // 🧥 ชายเสื้อคลุมยาว — ยาวคลุมสะโพกทั้งหมด
-        const shirtLong = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile([[0.30, 0], [0.35, 0.2], [0.40, 0.44], [0.42, 0.6]].map(([r, y]) => new THREE.Vector2(r, y)), 4), 40), shirtMat);
-        shirtLong.position.y = 1.34;
+        const shirtLong = new THREE.Mesh(new THREE.LatheGeometry(smoothProfile([[0.31, 0], [0.40, 0.2], [0.455, 0.44], [0.47, 0.6]].map(([r, y]) => new THREE.Vector2(r, y)), 4), 40), shirtMat);
+        shirtLong.position.y = 1.46;
         shirtLong.scale.set(1, -1, 1);
         shirtLong.visible = false;
         char.add(shirtLong);
@@ -4730,11 +4734,11 @@ function CherryAdventure() {
         hoodSet.visible = false;
         char.add(hoodSet);
         // 👗 กระโปรง 2 แบบ — บาน / จีบ
-        const skirtFlare = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.62, 0.5, 40, 1, true), pantsMat);
+        const skirtFlare = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.62, 0.5, 40, 10, true), pantsMat);
         skirtFlare.position.y = 1.06;
         skirtFlare.visible = false;
         char.add(skirtFlare);
-        const skirtPleat = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.58, 0.46, 44, 1, true), pantsMat);
+        const skirtPleat = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.58, 0.46, 44, 10, true), pantsMat);
         {
             const pos = skirtPleat.geometry.attributes.position; // จีบ: ย่นรัศมีเป็นคลื่นรอบวง
             for (let i = 0; i < pos.count; i++) {
@@ -24110,8 +24114,8 @@ function CherryAdventure() {
             // สะโพกต้องยกชดเชย "ความยาวขาที่เพิ่ม" พอดี ไม่งั้นตัวสูงจะจมพื้น ตัวเตี้ยจะลอย
             // (วัดจริงแล้วเท้าเลื่อน 0.797 หน่วยโลกต่อ hK 1 หน่วย → ในพิกัดตัวละครคือ 1.332)
             const hipY = 1.393 + 1.332 * (hK - 1);
-            legL.position.set(-0.165 * bK, hipY, 0);
-            legR.position.set(0.165 * bK, hipY, 0);
+            legL.position.set(-0.138 * bK, hipY, 0);
+            legR.position.set(0.138 * bK, hipY, 0); // ขาชิดเข้าอีกนิด ให้โคนขาอยู่ในแนวเสื้อ
             // male: broader shoulders, straighter/boxier torso; female: hourglass curves (โค้งเว้า)
             torso.geometry = male ? torsoGeoM : torsoGeoF;
             const tW = (male ? 1.12 : 0.912) * bK, tD = (male ? 0.784 : 0.706) * bK;
@@ -24130,7 +24134,9 @@ function CherryAdventure() {
             hips.scale.set(hipW, 1 + (hK - 1) * 0.5, hipW);
             hips.visible = true;
             neck.position.y = 2.02 + (hipY - 1.393) + 0.85 * 1.29 * 0.28 * (hK - 1);
-            pelvis.scale.set((male ? 0.98 : 1.02) * bK, 0.6, (male ? 0.72 : 0.66) * bK); // ก้นเชิงกราน — ความโค้งด้านข้างย้ายไปอยู่ที่ชิ้นสะโพกแล้ว
+            // ก้นเชิงกราน — ต้องแคบกว่าผิวเสื้อ ไม่งั้นส่วนบนของมันจะโผล่ทะลุเสื้อออกมาเป็นแถบขาว
+            // ความกว้างที่ตาเห็นมาจากชิ้นสะโพก (hips) แทน
+            pelvis.scale.set((male ? 0.82 : 0.84) * bK, 0.6, (male ? 0.66 : 0.62) * bK);
             headG.position.y = 2.748 + (hipY - 1.393) + 0.85 * 1.29 * 0.28 * (hK - 1); // หัวขยับตามไหล่ ไม่ลอยหลุดคอ
             armL.position.x = -0.46 * (male ? 1.18 : 0.92) * bK; // shoulders wider apart for male
             armR.position.x = 0.46 * (male ? 1.18 : 0.92) * bK;
