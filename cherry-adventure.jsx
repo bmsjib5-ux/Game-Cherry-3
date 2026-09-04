@@ -14193,6 +14193,23 @@ export default function CherryAdventure() {
     const mkLimbPair = (dict, id, anchors, buildFn) => {
       dict[id] = anchors.map((a) => { const grp = new THREE.Group(); buildFn(grp); grp.visible = false; a.add(grp); return grp; });
     };
+    const _hipEls = [legL, legR];
+    // 👖 กางเกงกินพื้นที่ทั้งต้นขาและหน้าแข้ง — ถ้าผูกไว้กับ "ข้อเข่า" ทั้งชิ้น
+    //    พองอเข่าเดิน ท่อนที่คลุมต้นขาจะหมุนตามหน้าแข้งจนหลุดออกจากต้นขา
+    //    จึงต้องย้ายชิ้นที่อยู่เหนือเข่าไปผูกกับ "ข้อสะโพก" (ตำแหน่งตอนยืนตรงเท่าเดิมทุกประการ)
+    const mkPantsPair = (dict, id, buildFn) => {
+      dict[id] = _kneeEls.map((kneeEl, i) => {
+        const grp = new THREE.Group();
+        buildFn(grp);
+        const up = new THREE.Group();
+        up.position.copy(kneeEl.position);
+        grp.children.filter((c) => c.position.y > 0).slice().forEach((c) => up.add(c));
+        up.visible = false; _hipEls[i].add(up);
+        grp.visible = false; kneeEl.add(grp);
+        grp.userData.thighPart = up;   // เปิด/ปิดพร้อมกันกับท่อนล่าง
+        return grp;
+      });
+    };
     // 🐉 gD — dragon claw gauntlet (dark-green scaled forearm + gold claws + green knuckle glow)
     mkLimbPair(glovesModels, "gD", _armEls, (grp) => {
       const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.6, roughness: 0.34, emissive: 0x0a2416, emissiveIntensity: 0.5 });
@@ -14220,7 +14237,7 @@ export default function CherryAdventure() {
       for (const kx of [-1, 0, 1]) { const claw = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.11, 5), lightMat); claw.position.set(kx * 0.06, -0.63, 0.12); claw.rotation.x = 2.4; grp.add(claw); }
     });
     // 🐉 pD — dragon-scale greaves (dark-green scaled leg + gold knee guard + green knee gem)
-    mkLimbPair(pantsModels, "pD", _kneeEls, (grp) => {
+    mkPantsPair(pantsModels, "pD", (grp) => {
       const scaleMat = new THREE.MeshStandardMaterial({ color: 0x1e3a24, metalness: 0.55, roughness: 0.32, emissive: 0x0a2416, emissiveIntensity: 0.5 });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xd9a24a, metalness: 0.85, roughness: 0.28, emissive: 0x5a3808, emissiveIntensity: 0.4 });
       const glowMat = new THREE.MeshStandardMaterial({ color: 0x3ad06a, emissive: 0x1a9a44, emissiveIntensity: 1.1 });
@@ -14232,7 +14249,7 @@ export default function CherryAdventure() {
       const vein = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 16), goldMat); vein.position.y = -0.06; vein.rotation.x = Math.PI / 2; grp.add(vein);
     });
     // ⭐ lg_pnt — divine greaves (pearl+gold plate, red knee gem, gold trim)
-    mkLimbPair(pantsModels, "lg_pnt", _kneeEls, (grp) => {
+    mkPantsPair(pantsModels, "lg_pnt", (grp) => {
       const plateMat = new THREE.MeshStandardMaterial({ color: 0xfaf1de, metalness: 0.5, roughness: 0.3, emissive: 0x6a5824, emissiveIntensity: 0.3 });
       const goldMat = new THREE.MeshStandardMaterial({ color: 0xf0cf6a, metalness: 0.85, roughness: 0.24, emissive: 0x7a5810, emissiveIntensity: 0.4 });
       const lightMat = new THREE.MeshStandardMaterial({ color: 0xfff6d0, emissive: 0xffe08a, emissiveIntensity: 1.4, roughness: 0.16 });
@@ -14247,7 +14264,7 @@ export default function CherryAdventure() {
     });
     // 👖 กางเกงตามชื่อ + ระดับคุณภาพ — ทุกชิ้นมีทรง 3D จริง ไม่ใช่แค่เปลี่ยนสีขา
     // p1 กางเกงยีนส์ฟ้า (common) — ยีนส์เดนิม เย็บตะเข็บ กระเป๋าหลัง ปลายขาพับ
-    mkLimbPair(pantsModels, "p1", _kneeEls, (grp) => {
+    mkPantsPair(pantsModels, "p1", (grp) => {
       const denim = new THREE.MeshStandardMaterial({ color: 0x4a72b0, roughness: 0.95, metalness: 0.0 });
       const denimD = new THREE.MeshStandardMaterial({ color: 0x3a5d94, roughness: 0.95, metalness: 0.0 });
       const stitch = new THREE.MeshStandardMaterial({ color: 0xe8c98a, roughness: 0.85 });
@@ -14262,7 +14279,7 @@ export default function CherryAdventure() {
       const knee = new THREE.Mesh(new THREE.TorusGeometry(0.152, 0.014, 6, 18), denimD); knee.position.y = -0.01; knee.rotation.x = Math.PI / 2; grp.add(knee);
     });
     // p2 กางเกงเกราะนิล (epic) — แผ่นเกราะสีนิล + สนับเข่า + พลอยนิลน้ำเงินเข้ม
-    mkLimbPair(pantsModels, "p2", _kneeEls, (grp) => {
+    mkPantsPair(pantsModels, "p2", (grp) => {
       const nil = new THREE.MeshStandardMaterial({ color: 0x2a3a6e, metalness: 0.55, roughness: 0.36, emissive: 0x101a3a, emissiveIntensity: 0.4 });
       const nilD = new THREE.MeshStandardMaterial({ color: 0x1c2850, metalness: 0.6, roughness: 0.34 });
       const silver = new THREE.MeshStandardMaterial({ color: 0xc4ccd8, metalness: 0.85, roughness: 0.26 });
@@ -14278,7 +14295,7 @@ export default function CherryAdventure() {
     });
     // 🦵 กางเกงทั่วไปตามระดับคุณภาพ (ใช้กับกางเกงที่ไม่มีทรงเฉพาะ) — ยิ่งสูงยิ่งมีเกราะ/ขลิบ/พลอย
     for (let t = 0; t < 3; t++) {
-      mkLimbPair(pantsModels, `pnt_${t}`, _kneeEls, (grp) => {
+      mkPantsPair(pantsModels, `pnt_${t}`, (grp) => {
         const cloth = new THREE.MeshStandardMaterial({ color: [0x5a6070, 0x46506e, 0x3c4668][t], roughness: [0.95, 0.8, 0.66][t], metalness: [0.0, 0.25, 0.45][t] });
         const trimM = new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0cf6a : 0xc4ccd8, metalness: 0.85, roughness: t === 2 ? 0.24 : 0.3, emissive: t === 2 ? 0x6a4a08 : 0x000000, emissiveIntensity: t === 2 ? 0.45 : 0 });
         const gemM = new THREE.MeshStandardMaterial({ color: 0x8fd0f5, emissive: 0x2a6a9a, emissiveIntensity: 1.0 + t * 0.3, roughness: 0.18, metalness: 0.3 });
@@ -14449,7 +14466,10 @@ export default function CherryAdventure() {
       Object.entries(glovesModels).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === gl)));
       let paKey = pa;
       if (pa && !pantsModels[pa]) { const pit = LOOT.find((x) => x.id === pa); if (pit) paKey = `pnt_${wpnTierOf(pit.rarity)}`; } // 👖 ไม่มีทรงเฉพาะ → ใช้ทรงตามระดับคุณภาพ
-      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === paKey)));
+      Object.entries(pantsModels).forEach(([k, pr]) => pr.forEach((m) => {
+        setVisFrozen(m, k === paKey);
+        if (m.userData.thighPart) setVisFrozen(m.userData.thighPart, k === paKey);   // ท่อนต้นขาอยู่คนละข้อต่อ ต้องสั่งแยก
+      }));
       Object.entries(shoeModels3D).forEach(([k, pr]) => pr.forEach((m) => setVisFrozen(m, k === sh)));
       if (G.applyWear) G.applyWear();   // 👕👖 แบบเสื้อ/กางเกงที่เลือก ต้องทับหลัง applyGear เพราะ applyGear เพิ่งตั้งวัสดุขาใหม่
       if (G.reconcileClassPieces) G.reconcileClassPieces(); // 🚫 hat/mask hide the class head/face piece
