@@ -13913,6 +13913,7 @@ export default function CherryAdventure() {
     };
     // 👀 preview a class during selection: outfit + weapon in hand
     G.previewClass = (cls) => {
+      G._previewCls = cls;                    // 🗡️ หน้าเลือกอาชีพก็ต้องถือดาบให้ถูกท่าเหมือนกัน
       G.applyClassOutfit(cls);
       const wep = CLASS_WEAPON[cls];
       if (wep && G.setWeaponVisual) G.setWeaponVisual(wep);
@@ -14578,6 +14579,33 @@ export default function CherryAdventure() {
       [legL, legR].forEach((lg) => {
         if (lg.userData.knee) lg.userData.knee.scale.set(legW, 1, legW);
       });
+    };
+    // 🗡️ ดาบคาตานะเป็นอาวุธ "จับสองมือ" — มือซ้ายต้องกำด้ามใต้มือขวาเสมอ
+    //    เดิมซามูไรฟันด้วยมือขวาข้างเดียว แขนซ้ายห้อยเฉย ๆ ดูไม่เหมือนการใช้ดาบจริง
+    //    วิธี: เล็งแขนซ้ายไปที่ "ปลายด้าม" แล้วงอศอกตามระยะที่เหลือ (IK สองท่อนอย่างง่าย)
+    const _thV = new THREE.Vector3(), _thQ = new THREE.Vector3(), _thN = new THREE.Vector3();
+    const _thDown = new THREE.Vector3(0, -1, 0), _thXax = new THREE.Vector3(1, 0, 0), _thQx = new THREE.Quaternion();
+    G._twoHandGrip = (gripY) => {
+      wand.updateWorldMatrix(true, false);
+      _thV.set(0, gripY == null ? -0.24 : gripY, 0).applyMatrix4(wand.matrixWorld);
+      const sh = armL.parent || char;
+      sh.updateWorldMatrix(true, false);
+      _thQ.copy(_thV); sh.worldToLocal(_thQ); _thQ.sub(armL.position);
+      // IK สองท่อนจริง — งอศอกอย่างเดียวไม่พอ เพราะการงอศอกจะเหวี่ยงมือออกนอกแนวเล็ง
+      // ต้องหมุนไหล่ชดเชยตามกฎโคไซน์ด้วย มือถึงจะไปหยุดตรงด้ามดาบพอดี
+      const sc = armL.scale.y || 1;
+      const A1 = 0.53 * sc, A2 = 0.47 * sc;               // ต้นแขน / ท่อนล่าง (วัดจากรุ่นจริง)
+      const dRaw = _thQ.length();
+      const d = Math.max(Math.abs(A1 - A2) + 0.02, Math.min(A1 + A2 - 0.02, dRaw));
+      const cl = (v) => Math.max(-1, Math.min(1, v));
+      const elb = Math.PI - Math.acos(cl((A1 * A1 + A2 * A2 - d * d) / (2 * A1 * A2)));
+      const shd = Math.acos(cl((A1 * A1 + d * d - A2 * A2) / (2 * A1 * d)));
+      // ใช้ควอเทอร์เนียนหมุนแกน -Y ของแขนไปทับทิศเป้าโดยตรง (ไม่ต้องพึ่งลำดับมุมออยเลอร์)
+      // แล้วหมุนชดเชยรอบแกน X ของแขนเอง เพื่อให้ปลายมือกลับมาอยู่บนแนวเล็งหลังงอศอก
+      _thN.copy(_thQ).normalize();
+      armL.quaternion.setFromUnitVectors(_thDown, _thN);
+      armL.quaternion.multiply(_thQx.setFromAxisAngle(_thXax, shd));
+      if (armL.userData.elbow) armL.userData.elbow.rotation.set(-elb, 0, 0);
     };
     G._applyBody = () => applyGender(G.custom.gender || 0);   // 🦸 ให้โค้ดอื่น (เช่นสลับชุดฮีโร่) สั่งคำนวณหุ่นใหม่ได้
     G.setCustom = (cat, i) => {
@@ -39017,11 +39045,15 @@ export default function CherryAdventure() {
           G._boxWeave = wv;                                           // ส่งจังหวะโยกให้ท่าสกิลใช้ต่อ
         }
         if (G.cls === "samurai") {
-          // ⚔️ carry the katana low & forward, tip angled toward the ground (relaxed ready stance)
-          armR.rotation.x = 0.35 + swing * 0.08 * moveAmt; // arm hangs slightly forward
-          armR.rotation.z = 0.18;
-          wand.position.set(0.06, -0.5, 0.16);             // out in front of the hip
-          wand.rotation.set(-0.75, 0.15, -0.1);            // blade sweeps down & forward
+          // ⚔️ ท่าจูดัน (ท่าคุมกลาง) — ดาบอยู่กลางลำตัว จับสองมือ ปลายดาบเฉียงขึ้นหน้า
+          //    ⚠️ ท่าเดิมกางแขนขวาออกข้าง (z +0.18) ด้ามดาบอยู่ห่างไหล่ซ้าย 1.36
+          //       เกินระยะที่แขนเอื้อมถึง (1.22) มือซ้ายจึงจับด้ามไม่ได้เลย
+          armR.rotation.x = 0.82 + swing * 0.06 * moveAmt;
+          armR.rotation.z = -0.62;                         // ดึงแขนขวาเข้ากลางลำตัว
+          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -1.62;
+          wand.position.set(0.02, -0.5, 0.08);
+          wand.rotation.set(-1.15, 0.1, -0.05);            // ปลายดาบเฉียงขึ้นไปข้างหน้า
+          if (G._twoHandGrip) G._twoHandGrip(0);           // 🤝 มือซ้ายมาประกบมือขวาที่ด้าม
         }
         // grounded bounce blends into idle breathing (หอบแรงขึ้นตอนเลือดใกล้หมด)
         const bK = G._lowK || 0;
@@ -39328,18 +39360,26 @@ export default function CherryAdventure() {
             armR.rotation.x = -0.9 - 1.05 * sw; armR.rotation.z = 0.12 + 0.22 * sw; // raise the staff to cast
             armL.rotation.x = -1.35 - 0.35 * sw;
           } else if (G.cls === "samurai") {
-            // 🗡️ คอมโบ 3 ไม้: ① ยกเหนือหัวฟันลง ② ฟันย้อนเฉียงขึ้น ③ อิไอ ฟันขวางแล้วค้างโพส
+            // 🗡️ เพลงดาบสามจังหวะ ทุกจังหวะจับสองมือกลางลำตัว (เคนโด้)
+            //    ① เงื้อเหนือหัวแล้วผ่าลงกลาง (โชเมง) ② ฟันเฉียงขึ้นย้อน (คิริอาเกะ) ③ ฟันเฉียงลง (เคซะงิริ)
+            //    ⚠️ แขนต้องอยู่ "ในแนวกลางตัว" ตลอด ไม่งั้นมือซ้ายเอื้อมไม่ถึงด้าม
+            // ⚠️ ท่าเริ่มต้นของซามูไรคือท่าคุมกลาง (0.82) ไม่ใช่แขนห้อย (0)
+            //    ถ้าเงื้อไปไกลเท่าเดิม ระยะ "ตอนเงื้อ" จะยาวกว่า "ตอนฟัน"
+            //    ความเร็วสูงสุดจะไปตกตอนเงื้อแทนตอนปะทะ (วัดได้ s=0.11) ดูเป็นการเหวี่ยงมั่ว
+            //    จึงต้องเงื้อสั้นลง ให้ระยะฟันยาวกว่าระยะเงื้อเสมอ
             if (cb === 1) {
-              armR.rotation.z = SW(-0.25, -0.25, 0.45, 0.53);
-              armR.rotation.x = SW(0, -1.8, 0.7, 0.92);
+              armR.rotation.z = SW(-0.5, -0.42, -0.3, -0.28);
+              armR.rotation.x = SW(0.82, -0.7, 1.35, 1.5);
             } else if (cb === 2) {
-              armR.rotation.z = SW(0.1, 0.1, 1.0, 1.1);
-              armR.rotation.x = SW(0, -2.4, 1.5, 1.78);
+              armR.rotation.z = SW(-0.5, -0.3, -0.62, -0.66);
+              armR.rotation.x = SW(0.82, 1.15, -1.55, -1.78);
             } else {
-              armR.rotation.z = 0.1;
-              armR.rotation.x = SW(0, -2.1, 1.2, 1.45);
+              armR.rotation.z = SW(-0.5, -0.55, -0.2, -0.16);
+              armR.rotation.x = SW(0.82, -0.9, 1.5, 1.7);
             }
-            if (armR.userData.elbow) armR.userData.elbow.rotation.x = SW(-0.1, -0.55, 0.35, 0.42);   // ข้อศอกสะบัดตามปลายดาบ
+            // ศอกงอตลอดท่า — ดาบสองมือไม่เหยียดแขนสุด และคลายออกตอนฟันผ่าน
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = SW(-1.5, -1.75, -0.5, -0.42);
+            if (G._twoHandGrip) G._twoHandGrip(0);         // 🤝 มือซ้ายตามด้ามดาบทุกเฟรม
           } else if (G.cls === "assassin") {
             // 🗡️🗡️ รัวมีดคู่ — สลับมือนำตามไม้คอมโบ · ไม้ 3 แทงพร้อมกันสองมือ
             // 🗡️ แทง = ดึงมีดกลับสั้น ๆ แล้วพุ่งออกเร็ว ค้างปลายมีดเสี้ยววิ แล้วชักกลับ
@@ -41972,18 +42012,17 @@ export default function CherryAdventure() {
           const sway = Math.sin(t * 1.3) * 0.02; // the katana sways naturally
           // 🗡️ blade points diagonally DOWN ~30° toward the enemy.
           // wand rotation stacks on armR's, so the X angles add: 0.35 + 1.74 = 2.09 rad = 30° below horizontal
-          wand.position.set(0.05, -0.52, 0.14);
+          wand.position.set(0.02, -0.5, 0.08);
           wand.rotation.set(1.74 + sway, 0.12, -0.08);
-          // 🤚 RIGHT hand — grips just under the tsuba, slightly forward
-          armR.rotation.x = 0.35 + breathe;
-          armR.rotation.z = 0.3;
+          // 🤚 มือขวากำใต้ที่กั้นดาบ — ต้องอยู่ "กลางลำตัว" ไม่กางออกข้าง
+          //    ⚠️ ท่าเดิมกาง z = +0.3 ทำให้ด้ามดาบห่างไหล่ซ้าย 1.78 เกินระยะเอื้อม (1.22)
+          //       มือซ้ายจึงลอยอยู่ข้างตัว ไม่ได้จับดาบจริงแม้โค้ดจะตั้งใจให้จับสองมือ
+          armR.rotation.x = 0.82 + breathe;
+          armR.rotation.z = -0.62;
           armR.rotation.y = 0;
-          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.4;
-          // 🤚 LEFT hand — takes the end of the handle, drawn in near the body
-          armL.rotation.x = 0.05 + breathe;
-          armL.rotation.z = -0.55;
-          armL.rotation.y = 0.2;
-          if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.75;
+          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -1.62;
+          // 🤚 มือซ้ายกำปลายด้าม — คำนวณให้ไปหยุดที่ด้ามดาบจริง (ดู _twoHandGrip)
+          if (G._twoHandGrip) G._twoHandGrip(0);
           // 🧍 body bladed ~45°, shoulders relaxed, eyes on the enemy
           torso.rotation.y = 0.45;
           char.position.y = Math.sin(t * 2.5) * 0.015; // breathing
@@ -49827,6 +49866,23 @@ export default function CherryAdventure() {
       if (dtForce == null && G.tickSeek) { try { G.tickSeek(dt); } catch (_) {} }   // 🗡️🏹 หมุดเป้า/จุดหมาย + คำสั่งที่ค้างไว้
       // 🎞️ ขัดเกลาท่าทาง — ทำหลังโค้ดท่าทั้งหมดเขียนค่าเสร็จ แล้วค่อยหน่วง/เติมลมหายใจก่อนวาด
       if (dtForce == null && G.mode !== "create" && !G.equipScreen) { try { polishPose(dt, t); } catch (_) {} }
+      // 🗡️ ซามูไรจับคาตานะสองมือ — ทำท้ายสุดหลังทุกท่าจัดแขนขวาเสร็จแล้ว
+      //    ครอบคลุม ยืนเฉย/เดิน/ยืนการ์ด/โจมตีปกติ ทั้งโลกกว้างและในสนามรบ
+      //    ⚠️ เว้นท่าสกิล/ท่าไม้ตายไว้ เพราะบางท่าตั้งใจให้มือซ้ายไปจับฝักดาบ (ท่าชักดาบอิไอ)
+      const _samuNow = G.cls === "samurai" || ((G.mode === "class" || G.mode === "create") && G._previewCls === "samurai");
+      if (dtForce == null && _samuNow && !G.heroId && !G.equipScreen
+          && G._twoHandGrip && wand.visible && (!G.banim || G.banim.basic)) {
+        try {
+          if (G.banim && G.banim.basic) armR.rotation.z = Math.min(armR.rotation.z, -0.14); // ดึงดาบเข้ากลางตัวให้มือซ้ายเอื้อมถึง
+          if (G.cls !== "samurai") {                 // 👀 หน้าพรีวิวอาชีพ — จัดท่าถือดาบให้เหมือนตอนเล่นจริง
+            armR.rotation.x = 0.82; armR.rotation.z = -0.62; armR.rotation.y = 0;
+            if (armR.userData.elbow) armR.userData.elbow.rotation.x = -1.62;
+            wand.position.set(0.02, -0.5, 0.08);
+            wand.rotation.set(-1.15, 0.1, -0.05);
+          }
+          G._twoHandGrip(0);
+        } catch (_) {}
+      }
       if (dtForce == null) renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
       if (dtForce == null && G._paintMap) { try { G._paintMap(); } catch (_) {} }   // 🗺️ วาดมินิแมพ/แผนที่ขยาย
       } catch (err) {
