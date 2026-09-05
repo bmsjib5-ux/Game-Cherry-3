@@ -22633,19 +22633,21 @@ function CherryAdventure() {
             const gold = new THREE.MeshStandardMaterial({ color: 0xbfa055, metalness: 0.4, roughness: 0.5, emissive: 0x3a3010, emissiveIntensity: 0.2 }); // aged gold patterns
             const collarMat = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.7, side: THREE.DoubleSide });
             // 🥋 inner kimono body wrap (indigo, wraps torso down past the waist)
-            const kimono = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.9, 18, 1, true), indigo);
+            const kimono = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.5, 0.9, 18, 1, true), indigo);
             kimono.position.set(0, 1.25, 0);
             // hakama skirt (wide pleated lower garment)
             const hakama = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.66, 0.85, 18, 1, true), hakamaGray);
             hakama.position.set(0, 0.55, 0);
             g.add(kimono, hakama);
             // 🧥 long HAORI coat over the shoulders (open front, hangs to the knees)
-            const haori = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.66, 1.5, 20, 1, true, Math.PI * 0.18, Math.PI * 1.64), indigoDark);
+            // ⚠️ เดิมรัศมีบน 0.52 กว้างกว่าตำแหน่งหัวไหล่ (0.42–0.46) → ต้นแขนทั้งสองข้าง "จม" อยู่ในท่อเสื้อคลุม
+            //    เห็นแต่ท่อนแขนล่างโผล่จากช่องหน้าเสื้อ ดูเหมือนแขนหายเข้าไปในตัว → ลดให้แนบลำตัว แล้วทำแขนเสื้อติดกับแขนแทน
+            const haori = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.62, 1.5, 20, 1, true, Math.PI * 0.18, Math.PI * 1.64), indigoDark);
             haori.position.set(0, 1.1, 0);
             haori.userData.rest = Float32Array.from(haori.geometry.attributes.position.array);
             g.userData.haori = haori; // 🧥 sways like flowing cloth
             // gold wave/floral hem accents on the haori
-            const haoriHem = new THREE.Mesh(new THREE.TorusGeometry(0.63, 0.02, 6, 26, Math.PI * 1.64), gold);
+            const haoriHem = new THREE.Mesh(new THREE.TorusGeometry(0.595, 0.02, 6, 26, Math.PI * 1.64), gold);
             haoriHem.position.set(0, 0.36, 0);
             haoriHem.rotation.set(Math.PI / 2, 0, Math.PI * 0.18);
             g.add(haori, haoriHem);
@@ -22692,6 +22694,30 @@ function CherryAdventure() {
                 sayaWrap.rotateX(Math.PI / 2);
                 g.add(saya, sayaWrap);
             }
+            // 👘 แขนเสื้อกิโมโนกว้าง — ติดกับกลุ่มแขน (หมุนตามไหล่/ศอก) ไม่ใช่ท่อนิ่งบนลำตัว
+            //    ท่อนบน: กระบอกบานออกถึงข้อศอก ขลิบทองที่ชาย · ท่อนล่าง: ปลอกแขนชั้นในถึงกลางแขน ปล่อยข้อมือ/มือโล่งไว้จับดาบ
+            const kimonoExtras = [];
+            for (const arm of [armL, armR]) {
+                const up = new THREE.Group();
+                const upProfile = [[0.125, -0.02], [0.135, -0.16], [0.15, -0.34], [0.165, -0.50]].map(([r, y]) => new THREE.Vector2(r, y));
+                const upMesh = new THREE.Mesh(new THREE.LatheGeometry(upProfile, 20), indigoDark);
+                upMesh.userData._wear = 1;
+                const upTrim = new THREE.Mesh(new THREE.TorusGeometry(0.165, 0.012, 6, 20), gold);
+                upTrim.rotation.x = Math.PI / 2;
+                upTrim.position.y = -0.50;
+                upTrim.userData._wear = 1;
+                up.add(upMesh, upTrim);
+                up.visible = false;
+                arm.add(up);
+                const el = arm.userData.elbow || arm;
+                const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.092, 0.1, 0.3, 14, 1, true), indigo);
+                cuff.position.y = -0.15;
+                cuff.userData._wear = 1;
+                cuff.visible = false;
+                el.add(cuff);
+                kimonoExtras.push(up, cuff);
+            }
+            g.userData.extras = kimonoExtras; // 👁️ เปิด/ปิดพร้อมชุด (ไม่ได้อยู่ใต้กลุ่ม g)
             classAccessories.kimono = g;
         }
         { // 🤖 AI Mecha Guardian — pearl-white/black mechanical armor, plasma core, LED visor, energy halo, 2 orbiting drones
@@ -22830,6 +22856,9 @@ function CherryAdventure() {
         }
         Object.values(classAccessories).forEach((g) => { g.visible = false; char.add(g); });
         G.classAccessories = classAccessories;
+        // 👘 ชิ้นส่วนชุดอาชีพที่ติดกับแขน/ขา (ไม่ได้อยู่ใต้กลุ่มหลัก) ต้องเปิด/ปิดตามกลุ่มหลักทุกครั้ง
+        const syncAccExtras = () => Object.values(classAccessories).forEach((g) => { if (g && g.userData.extras)
+            g.userData.extras.forEach((m) => { m.visible = g.visible; }); });
         // 🛡️ AEGIS-X round tech shield — held on the left arm (concentric silver rings + glowing plasma core)
         {
             const sh = new THREE.Group();
@@ -23187,6 +23216,7 @@ function CherryAdventure() {
             const maskOn = !hidden && !!(cos.mask || eq.mask);
             Object.entries(classAccessories).forEach(([k, g]) => { if (g)
                 g.visible = k === acc && !outfitOn; });
+            syncAccExtras();
             if (G.warriorShield)
                 G.warriorShield.visible = acc === "cape" && !outfitOn;
             if (G.warriorHelm)
@@ -23216,6 +23246,7 @@ function CherryAdventure() {
             pantsMat.color = new THREE.Color(o.pants);
             // show only this class's accessory
             Object.entries(classAccessories).forEach(([k, g]) => (g.visible = k === o.acc));
+            syncAccExtras();
             if (G.warriorHelm)
                 G.warriorHelm.visible = o.acc === "cape"; // ⛑️ knight helmet for the warrior
             if (G.warriorShield)
@@ -23236,6 +23267,7 @@ function CherryAdventure() {
         G.showPlainLook = () => {
             Object.values(classAccessories).forEach((g) => { if (g)
                 g.visible = false; });
+            syncAccExtras();
             if (G.warriorHelm)
                 G.warriorHelm.visible = false;
             if (G.warriorShield)
@@ -60467,12 +60499,14 @@ function CherryAdventure() {
                         // ⚔️ ท่าจูดัน (ท่าคุมกลาง) — ดาบอยู่กลางลำตัว จับสองมือ ปลายดาบเฉียงขึ้นหน้า
                         //    ⚠️ ท่าเดิมกางแขนขวาออกข้าง (z +0.18) ด้ามดาบอยู่ห่างไหล่ซ้าย 1.36
                         //       เกินระยะที่แขนเอื้อมถึง (1.22) มือซ้ายจึงจับด้ามไม่ได้เลย
-                        armR.rotation.x = 0.82 + swing * 0.06 * moveAmt;
-                        armR.rotation.z = -0.62; // ดึงแขนขวาเข้ากลางลำตัว
+                        // ⚠️ แกน x ของแขน: ค่าลบ = ยื่นไปข้างหน้า · ค่าบวก = ไปข้างหลัง (เคยสลับแล้วมือจมเข้าตัว)
+                        //    ค่าชุดนี้หาด้วยการค้นเชิงตัวเลข: มืออยู่หน้าอก 0.69 (ผิวอกอยู่ 0.32) และมือซ้ายเอื้อมถึง
+                        armR.rotation.x = -0.6 - swing * 0.05 * moveAmt;
+                        armR.rotation.z = -0.6; // ดึงแขนขวาเข้ากลางลำตัว
                         if (armR.userData.elbow)
-                            armR.userData.elbow.rotation.x = -1.62;
+                            armR.userData.elbow.rotation.x = -0.9;
                         wand.position.set(0.02, -0.5, 0.08);
-                        wand.rotation.set(-1.15, 0.1, -0.05); // ปลายดาบเฉียงขึ้นไปข้างหน้า
+                        wand.rotation.set(2.7, 0, -0.05); // ค่าจากการค้นเชิงตัวเลข: ปลายดาบชี้ไปหน้า-เชิดขึ้น ~22° (ท่าจูดัน)             // ปลายดาบเฉียงขึ้นไปข้างหน้า (ท่าจูดัน)
                         if (G._twoHandGrip)
                             G._twoHandGrip(0); // 🤝 มือซ้ายมาประกบมือขวาที่ด้าม
                     }
@@ -60915,21 +60949,25 @@ function CherryAdventure() {
                             //    ถ้าเงื้อไปไกลเท่าเดิม ระยะ "ตอนเงื้อ" จะยาวกว่า "ตอนฟัน"
                             //    ความเร็วสูงสุดจะไปตกตอนเงื้อแทนตอนปะทะ (วัดได้ s=0.11) ดูเป็นการเหวี่ยงมั่ว
                             //    จึงต้องเงื้อสั้นลง ให้ระยะฟันยาวกว่าระยะเงื้อเสมอ
-                            if (cb === 1) {
-                                armR.rotation.z = SW(-0.5, -0.42, -0.3, -0.28);
-                                armR.rotation.x = SW(0.82, -0.7, 1.35, 1.5);
+                            // แกน x: ลบ = แขนยกไปข้างหน้า/เหนือหัว · บวก = เหวี่ยงผ่านลงไปข้างหลัง (ท่าเริ่ม = จูดัน -0.6)
+                            // ⚠️ ท่าฟันของเคนโด้ "หยุดหน้าตัว" (แขนยังยื่นไปหน้า ค่าลบ) ไม่เหวี่ยงเลยไปข้างหลัง
+                            //    ถ้าปล่อยให้ x เป็นบวกตอนปะทะ มือจะทะลุกลับเข้าไปในลำตัว/แขนเสื้อ
+                            //    ส่วนการ "ยกดาบสูง" ตอนเงื้อใช้ข้อศอกช่วยพับ จะได้ไม่ต้องเหวี่ยงไหล่ไกลจนความเร็วไปตกตอนเงื้อ
+                            if (cb === 1) { // คิริอาเกะ — ลดดาบต่ำหน้าตัว แล้วเชือดเฉียงขึ้น
+                                armR.rotation.z = SW(-0.6, -0.45, -0.3, -0.28);
+                                armR.rotation.x = SW(-0.6, -0.15, -2.0, -2.2);
                             }
-                            else if (cb === 2) {
-                                armR.rotation.z = SW(-0.5, -0.3, -0.62, -0.66);
-                                armR.rotation.x = SW(0.82, 1.15, -1.55, -1.78);
+                            else if (cb === 2) { // เคซะงิริ — เงื้อสูงข้างศีรษะ ฟันเฉียงลงจากไหล่ถึงสะโพก
+                                armR.rotation.z = SW(-0.6, -0.25, -0.62, -0.66);
+                                armR.rotation.x = SW(-0.6, -2.0, -0.55, -0.45);
                             }
-                            else {
-                                armR.rotation.z = SW(-0.5, -0.55, -0.2, -0.16);
-                                armR.rotation.x = SW(0.82, -0.9, 1.5, 1.7);
+                            else { // โชเมง — เงื้อเหนือหัวตรง แล้วผ่าลงกลาง
+                                armR.rotation.z = SW(-0.6, -0.55, -0.4, -0.38);
+                                armR.rotation.x = SW(-0.6, -1.9, -0.35, -0.2);
                             }
-                            // ศอกงอตลอดท่า — ดาบสองมือไม่เหยียดแขนสุด และคลายออกตอนฟันผ่าน
+                            // ศอกพับตอนเงื้อ (ดาบชูสูง) แล้วคลายออกตอนฟันผ่าน — ดาบสองมือไม่เหยียดแขนสุด
                             if (armR.userData.elbow)
-                                armR.userData.elbow.rotation.x = SW(-1.5, -1.75, -0.5, -0.42);
+                                armR.userData.elbow.rotation.x = cb === 1 ? SW(-0.9, -1.2, -0.4, -0.35) : SW(-0.9, -1.9, -0.35, -0.3);
                             if (G._twoHandGrip)
                                 G._twoHandGrip(0); // 🤝 มือซ้ายตามด้ามดาบทุกเฟรม
                         }
@@ -64622,15 +64660,15 @@ function CherryAdventure() {
                         // 🗡️ blade points diagonally DOWN ~30° toward the enemy.
                         // wand rotation stacks on armR's, so the X angles add: 0.35 + 1.74 = 2.09 rad = 30° below horizontal
                         wand.position.set(0.02, -0.5, 0.08);
-                        wand.rotation.set(1.74 + sway, 0.12, -0.08);
+                        wand.rotation.set(2.7 + sway, 0, -0.05); // ปลายดาบชี้ไปหน้า-เชิดขึ้น (ท่าจูดัน)
                         // 🤚 มือขวากำใต้ที่กั้นดาบ — ต้องอยู่ "กลางลำตัว" ไม่กางออกข้าง
                         //    ⚠️ ท่าเดิมกาง z = +0.3 ทำให้ด้ามดาบห่างไหล่ซ้าย 1.78 เกินระยะเอื้อม (1.22)
                         //       มือซ้ายจึงลอยอยู่ข้างตัว ไม่ได้จับดาบจริงแม้โค้ดจะตั้งใจให้จับสองมือ
-                        armR.rotation.x = 0.82 + breathe;
-                        armR.rotation.z = -0.62;
+                        armR.rotation.x = -0.6 - breathe; // ⚠️ ค่าลบ = แขนยื่นไปข้างหน้า
+                        armR.rotation.z = -0.6;
                         armR.rotation.y = 0;
                         if (armR.userData.elbow)
-                            armR.userData.elbow.rotation.x = -1.62;
+                            armR.userData.elbow.rotation.x = -0.9;
                         // 🤚 มือซ้ายกำปลายด้าม — คำนวณให้ไปหยุดที่ด้ามดาบจริง (ดู _twoHandGrip)
                         if (G._twoHandGrip)
                             G._twoHandGrip(0);
@@ -77466,15 +77504,15 @@ function CherryAdventure() {
                     && G._twoHandGrip && wand.visible && (!G.banim || G.banim.basic)) {
                     try {
                         if (G.banim && G.banim.basic)
-                            armR.rotation.z = Math.min(armR.rotation.z, -0.14); // ดึงดาบเข้ากลางตัวให้มือซ้ายเอื้อมถึง
+                            armR.rotation.z = Math.min(armR.rotation.z, -0.5); // ดึงดาบเข้ากลางตัวให้มือซ้ายเอื้อมถึง (-0.14 ยังห่าง 1.4 เกินระยะ)
                         if (G.cls !== "samurai") { // 👀 หน้าพรีวิวอาชีพ — จัดท่าถือดาบให้เหมือนตอนเล่นจริง
-                            armR.rotation.x = 0.82;
-                            armR.rotation.z = -0.62;
+                            armR.rotation.x = -0.6;
+                            armR.rotation.z = -0.6;
                             armR.rotation.y = 0;
                             if (armR.userData.elbow)
-                                armR.userData.elbow.rotation.x = -1.62;
+                                armR.userData.elbow.rotation.x = -0.9;
                             wand.position.set(0.02, -0.5, 0.08);
-                            wand.rotation.set(-1.15, 0.1, -0.05);
+                            wand.rotation.set(2.7, 0, -0.05); // ค่าจากการค้นเชิงตัวเลข: ปลายดาบชี้ไปหน้า-เชิดขึ้น ~22° (ท่าจูดัน)
                         }
                         G._twoHandGrip(0);
                     }
