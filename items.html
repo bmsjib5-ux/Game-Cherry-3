@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>คลังไอเทม — Cherry Adventure</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#fbf3ef; --bg2:#f4e7e0; --card:#ffffff; --card2:#fdf6f2;
+    --ink:#2a1a24; --ink-soft:#7a5a68; --muted:#a98d99;
+    --accent:#d9536b; --accent-deep:#a83552;
+    --line:rgba(42,26,36,.10); --ring:rgba(217,83,107,.35);
+    --shadow:0 8px 26px rgba(140,60,80,.13);
+    /* rarity — semantic, tuned per theme */
+    --r-common:#8a94a2; --r-rare:#3f8fd0; --r-epic:#9a6ad0;
+    --r-secret:#e0a022; --r-dragon:#e0533b; --r-legend:#e8912a;
+    --font:"Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme:dark;
+      --bg:#16121a; --bg2:#1d1622; --card:#211a28; --card2:#261d2e;
+      --ink:#f6ecf0; --ink-soft:#c3a9b6; --muted:#8f7684;
+      --accent:#ff6f8a; --accent-deep:#ff96a9;
+      --line:rgba(255,255,255,.10); --ring:rgba(255,111,138,.4);
+      --shadow:0 10px 30px rgba(0,0,0,.45);
+      --r-common:#9aa6b4; --r-rare:#5aa8e8; --r-epic:#c095ec;
+      --r-secret:#f0b429; --r-dragon:#ff6a4d; --r-legend:#ffc247;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#16121a; --bg2:#1d1622; --card:#211a28; --card2:#261d2e;
+    --ink:#f6ecf0; --ink-soft:#c3a9b6; --muted:#8f7684;
+    --accent:#ff6f8a; --accent-deep:#ff96a9;
+    --line:rgba(255,255,255,.10); --ring:rgba(255,111,138,.4);
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+    --r-common:#9aa6b4; --r-rare:#5aa8e8; --r-epic:#c095ec;
+    --r-secret:#f0b429; --r-dragon:#ff6a4d; --r-legend:#ffc247;
+  }
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#fbf3ef; --bg2:#f4e7e0; --card:#ffffff; --card2:#fdf6f2;
+    --ink:#2a1a24; --ink-soft:#7a5a68; --muted:#a98d99;
+    --accent:#d9536b; --accent-deep:#a83552;
+    --line:rgba(42,26,36,.10); --ring:rgba(217,83,107,.35);
+    --shadow:0 8px 26px rgba(140,60,80,.13);
+    --r-common:#8a94a2; --r-rare:#3f8fd0; --r-epic:#9a6ad0;
+    --r-secret:#e0a022; --r-dragon:#e0533b; --r-legend:#e8912a;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.55;
+    background-image:
+      radial-gradient(1100px 500px at 88% -8%, color-mix(in srgb,var(--accent) 15%, transparent), transparent 60%),
+      radial-gradient(900px 460px at -6% 4%, color-mix(in srgb,var(--r-epic) 12%, transparent), transparent 60%);
+    background-attachment:fixed;}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 72px}
+
+  /* ---- header ---- */
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .brand{display:flex;flex-direction:column;gap:4px}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+  h1{margin:0;font-size:clamp(30px,6vw,50px);font-weight:900;letter-spacing:-.5px;line-height:1.02;text-wrap:balance}
+  h1 .cherry{filter:drop-shadow(0 3px 6px rgba(160,40,70,.3))}
+  .sub{color:var(--ink-soft);font-size:14.5px;max-width:52ch}
+  .theme{border:1px solid var(--line);background:var(--card);color:var(--ink);font-family:var(--font);
+    font-weight:800;font-size:12.5px;padding:9px 14px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow);white-space:nowrap}
+  .theme:hover{border-color:var(--ring)}
+
+  /* ---- stat tiles ---- */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 8px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow)}
+  .tile b{display:block;font-size:26px;font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.1}
+  .tile span{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+  @media(max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---- rarity legend ---- */
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 6px}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;
+    padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card)}
+  .dot{width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 18%,transparent)}
+
+  /* ---- section ---- */
+  section{margin-top:38px}
+  .shead{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding-bottom:9px;border-bottom:2px solid var(--line)}
+  .shead h2{margin:0;font-size:21px;font-weight:900;letter-spacing:-.3px}
+  .shead .cnt{font-size:12px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+  .note{font-size:12.5px;color:var(--ink-soft);margin:-6px 0 12px}
+
+  /* ---- class filter ---- */
+  .filters{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+  .fbtn{font-family:var(--font);font-weight:800;font-size:12.5px;padding:7px 13px;border-radius:999px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;transition:.15s}
+  .fbtn:hover{border-color:var(--ring)}
+  .fbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px var(--ring)}
+
+  /* ---- cards grid ---- */
+  .grid{display:grid;gap:12px}
+  .grid.cls{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .grid.slot{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px 16px 16px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);opacity:.85}
+  .card.d::before{background:var(--r-dragon)} .card.l::before{background:var(--r-legend)}
+  .chead{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .chead .ic{font-size:24px;line-height:1}
+  .chead .nm{font-size:16px;font-weight:900}
+  .chead .tag{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .row{margin-bottom:9px}
+  .row:last-child{margin-bottom:0}
+  .rlabel{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+  .items{display:flex;flex-wrap:wrap;gap:6px}
+  .it{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;
+    padding:5px 10px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--ink)}
+  .it .b{width:7px;height:7px;border-radius:50%;flex:none}
+  .it .em{font-size:15px;line-height:1;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.14))}
+  .it[data-r]{border-left-width:3px;border-left-color:currentColor}
+  .it.big{font-size:13px;font-weight:800;padding:7px 12px}
+  .it.big .em{font-size:17px}
+  /* rarity color mapping via data attr */
+  [data-r="common"]{color:var(--r-common)} [data-r="rare"]{color:var(--r-rare)}
+  [data-r="epic"]{color:var(--r-epic)} [data-r="secret"]{color:var(--r-secret)}
+  [data-r="dragon"]{color:var(--r-dragon)} [data-r="legend"]{color:var(--r-legend)}
+  .it .b[data-r]{background:currentColor}
+  .it .nmx{color:var(--ink)}
+
+  /* ---- archetype table ---- */
+  .arch{width:100%;border-collapse:collapse;font-size:13px}
+  .arch th,.arch td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .arch th{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .arch td.base{font-weight:800}
+  .tierdot{display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
+  .tierdot .b{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .tierdot .em{font-size:14px;line-height:1}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow)}
+
+  /* ---- set bonus ---- */
+  .bonus{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .bcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px 16px;box-shadow:var(--shadow)}
+  .bcard h3{margin:0 0 4px;font-size:16px;font-weight:900}
+  .bcard .tier{display:flex;gap:9px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+  .bcard .tier:first-of-type{border-top:0}
+  .bcard .n{font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums;min-width:56px}
+
+  footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion:no-preference){.card,.fbtn{transition:transform .15s ease, border-color .15s ease}.card:hover{transform:translateY(-2px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="margin-bottom:6px"><a href="./dashboard.html" style="font-size:12px;font-weight:800;color:var(--accent);text-decoration:none">← แดชบอร์ด</a> · <a href="./index.html" style="font-size:12px;font-weight:800;color:var(--accent);text-decoration:none">▶ เข้าเล่นเกม</a></div>
+  <header>
+    <div class="brand">
+      <div class="eyebrow">Item Compendium</div>
+      <h1><span class="cherry">🍒</span> คลังไอเทมสวมใส่</h1>
+      <div class="sub">รวมอาวุธ ชุดเกราะ เครื่องประดับ และเซ็ตทั้งหมดของ <b>Cherry Adventure</b> — เลือกดูตามอาชีพและระดับความหายากได้</div>
+    </div>
+    <button class="theme" id="themeBtn" type="button">🌙 สลับธีม</button>
+  </header>
+
+  <div class="tiles">
+    <div class="tile"><b>7</b><span>ช่องสวมหลัก</span></div>
+    <div class="tile"><b>4</b><span>ช่องเครื่องประดับ</span></div>
+    <div class="tile"><b>6</b><span>ระดับความหายาก</span></div>
+    <div class="tile"><b id="tot">—</b><span>ไอเทมทั้งหมด</span></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <!-- WEAPONS -->
+  <section>
+    <div class="shead"><h2>⚔️ อาวุธ</h2><span class="cnt" id="wcnt"></span></div>
+    <div class="note">แต่ละอาชีพมีสายธาตุ (หายาก → ลับ) และอาวุธระดับ 🐉 มังกร / ⭐ ตำนาน · เริ่มต้นด้วยอาวุธฝึกหัดของอาชีพนั้น</div>
+    <div class="filters" id="filters"></div>
+    <div class="grid cls" id="weapons"></div>
+  </section>
+
+  <!-- FORGE -->
+  <section>
+    <div class="shead"><h2>⚒️ อาวุธตีเหล็ก</h2><span class="cnt">โรงตีเหล็ก</span></div>
+    <div class="card"><div class="items" id="forge"></div></div>
+  </section>
+
+  <!-- ARMOR fixed -->
+  <section>
+    <div class="shead"><h2>👕 ชุดเกราะ</h2><span class="cnt">6 ช่อง</span></div>
+    <div class="grid slot" id="armor"></div>
+  </section>
+
+  <!-- ARMOR archetypes -->
+  <section>
+    <div class="shead"><h2>🛡️ ชุดสายอาชีพ</h2><span class="cnt">3 สไตล์ × 3 ระดับ ต่อช่อง</span></div>
+    <div class="note">แต่ละชื่อมี 3 ระดับ: <b>ชั้นดี</b> (หายาก) · <b>ชั้นเลิศ</b> (มหากาพย์) · <b>ระดับตำนาน</b> (ลับ)</div>
+    <div class="scroll"><table class="arch" id="archTable"></table></div>
+  </section>
+
+  <!-- SETS: dragon / legend gear -->
+  <section>
+    <div class="shead"><h2>✦ เซ็ตอุปกรณ์ระดับสูง</h2><span class="cnt">มังกร · ตำนาน</span></div>
+    <div class="grid slot" id="sets"></div>
+  </section>
+
+  <!-- ACCESSORIES -->
+  <section>
+    <div class="shead"><h2>💍 เครื่องประดับ</h2><span class="cnt">4 ช่อง</span></div>
+    <div class="grid slot" id="acc"></div>
+  </section>
+
+  <!-- COSTUME SETS -->
+  <section>
+    <div class="shead"><h2>👘 เซ็ตคอสตูม</h2><span class="cnt">แต่งชุด + โบนัส</span></div>
+    <div class="card"><div class="items" id="costumes"></div></div>
+  </section>
+
+  <!-- SET BONUS -->
+  <section>
+    <div class="shead"><h2>✨ โบนัสใส่ครบเซ็ต</h2><span class="cnt">นับชิ้นที่สวม</span></div>
+    <div class="bonus" id="bonus"></div>
+  </section>
+
+  <footer>🍒 Cherry Adventure · คลังไอเทมอัปเดตตามเวอร์ชันล่าสุด — ระดับความหายาก: ธรรมดา → หายาก → มหากาพย์ → ลับ → มังกร → ตำนาน</footer>
+</div>
+
+<script>
+(function(){
+  const RAR = {
+    common:{n:"ธรรมดา"}, rare:{n:"หายาก"}, epic:{n:"มหากาพย์"},
+    secret:{n:"ลับ"}, dragon:{n:"มังกร"}, legend:{n:"ตำนาน"}
+  };
+  let count = 0;
+  const $ = s => document.querySelector(s);
+  // 🎯 in-game item icons (emoji) — kept in sync with cherry-adventure.jsx LOOT / genArmour / ACCESSORIES
+  const EMO = {
+    // ⚔️ elemental weapons
+    "ดาบเพลิงอัคคี":"🔥","ดาบน้ำแข็งพันปี":"❄️","ดาบปฐพีศิลา":"🌍","ดาบเทพวายุ":"🌪️","ดาบเทพจันทรา":"🌙",
+    "ธนูเพลิง":"🔥","ธนูน้ำแข็ง":"❄️","ธนูพสุธา":"🌍","ธนูพายุวายุ":"🌪️","ธนูแสงดารา":"🌟",
+    "คทาเพลิงนรก":"🔥","คทาน้ำแข็งนิรันดร์":"❄️","คทาวารีชล":"💧","คทาจันทราวายุ":"🌪️","คทาสุริยเทพ":"🌟",
+    "มีดคู่เพลิงพิษ":"🔥","มีดคู่เกล็ดน้ำแข็ง":"❄️","มีดคู่พสุธา":"🌍","มีดคู่วายุเงา":"🌪️","มีดคู่จันทราลับ":"🌙",
+    "หอกเพลิงพิฆาต":"🔥","หอกน้ำแข็งนิรันดร์":"❄️","หอกพสุธาศิลา":"🌍","หอกวายุทะลวง":"🌪️","หอกเทพจันทรา":"🌙",
+    "คาตานะเพลิง":"🔥","คาตานะเยือกเย็น":"❄️","คาตานะวายุ":"🍃","คาตานะฟ้าสวรรค์":"🌟","ดาบซากุระราตรี":"🌸",
+    "ปากกาไฟลนก้น":"🔥","ปากกาแอร์ออฟฟิศ":"❄️","ปากกาตรายางศิลา":"🌍","ปากกาเดดไลน์":"🌪️","ปากกาทองผู้บริหาร":"🌟",
+    "คีย์บอร์ดโอเวอร์คล็อก":"🔥","คีย์บอร์ดลิควิดคูล":"❄️","คีย์บอร์ดเมนบอร์ด":"🌍","คีย์บอร์ดควอนตัม":"🌪️","คีย์บอร์ดนิวรัล":"🌟",
+    "ปืนเลเซอร์ฝึก":"🔫",
+    // 🐉 dragon weapons
+    "ดาบเขี้ยวมังกร":"🗡️","ธนูอสูรมังกร":"🏹","คทาราชันมังกร":"🪄","มีดคู่เขี้ยวมังกร":"🔪","หอกเขี้ยวมังกร":"🔱","คาตานะมังกร":"⚔️","ปากกามังกร CEO":"🖊️","คีย์บอร์ดมังกรดิจิทัล":"⌨️","แคนนอนเขี้ยวมังกร":"🔫",
+    // ⭐ legend weapons
+    "ดาบเทพโลกันตร์":"🗡️","ธนูสุริยเทพ":"🏹","คทาจักรวาลาไลย":"🪄","มีดคู่ราตรีนิรันดร์":"🔪","หอกจ้าวสวรรค์":"🔱","ดาบเทพอสนีบาต":"⚔️","ปากกาจักรพรรดิ":"🖊️","คีย์บอร์ดซิงกูลาริตี้":"⌨️","ปืนใหญ่สุริยเทพ":"🔫",
+    // 🔨 forge weapons
+    "ดาบเหล็กกล้า":"🗡️","ดาบใหญ่ทำลายล้าง":"⚔️","โล่เหล็กหนา":"🛡️","ธนูล่าสัตว์":"🏹","มีดสั้นคู่":"🔪","หอกเหล็กกล้า":"🔱","กระบองยาวสังหาร":"🔨","กระบี่พริ้วลม":"🤺","ดาบคาตานะเหล็กกล้า":"⚔️","คทาเวทมนตร์":"🪄","หนังสือเวทโบราณ":"📖","ลูกแก้ววิเศษ":"🔮",
+    // 👕 fixed armor
+    "ผ้าพันคอนุ่มฟู":"🧣","ชุดใบไม้พราย":"🍀","เกราะเมฆานิล":"🌩️","อาภรณ์ดวงดาว":"✨","หมวกฟางชาวสวน":"👒","หมวกแม่มดราตรี":"🎩","มงกุฎแสงดารา":"👑","แว่นหัวใจ":"🕶️","หน้ากากจิ้งจอก":"🦊","ถุงมือขนนุ่ม":"🧤","ถุงมือนักสู้":"🥊","กำปั้นเทพวายุ":"🌪️","กางเกงยีนส์ฟ้า":"👖","กางเกงเกราะนิล":"🩹","ผ้าใบชมพูหวาน":"👟","บูทสายฟ้า":"⚡",
+    // 🥋 archetype pieces (atk/def/agi × 6 slots)
+    "เสื้อคลุมนักรบ":"🥋","เกราะปราการ":"🛡️","ชุดพรายลม":"🎐","หมวกนักล่า":"🪖","หมวกเหล็กกล้า":"⛑️","หมวกขนนก":"🪶","หน้ากากอสูร":"👹","หน้ากากศิลา":"🗿","หน้ากากสายลม":"🌬️","ถุงมือทมิฬ":"✊","ถุงมือเหล็ก":"🧱","ถุงมือไหมพราย":"🕸️","กางเกงนักรบ":"🩳","สนับเกราะหนา":"🦿","กางเกงว่องไว":"🩱","บูทบุกตะลุย":"🥾","บูทเหล็กหนัก":"🦶","รองเท้าพราย":"🩰",
+    // 🐲 dragon armor set
+    "เกราะเกล็ดมังกร":"🐲","หมวกเขามังกร":"👹","หน้ากากอสุรมังกร":"😈","กรงเล็บมังกร":"🐾","สนับเกล็ดมังกร":"🦿","รองเท้ามังกรเหิน":"👢",
+    // 👼 legend armor set
+    "อาภรณ์เทพโลกันตร์":"👼","มงกุฎเทพโลกันตร์":"👑","หน้ากากสุริยเทพ":"🌞","ถุงมือจ้าวพิภพ":"🧤","เกราะขาเทพโลกันตร์":"🦵","รองเท้าเหินสวรรค์":"🪽",
+    // 💍 accessories
+    "แหวนหินไฟ":"💍","แหวนราชันเพลิง":"💍","แหวนมังกรนิรันดร์":"💍","กำไลศิลา":"📿","กำไลพิทักษ์":"📿","กำไลปราการเทพ":"📿","สร้อยคริสตัล":"🔱","สร้อยจันทรา":"🔱","สร้อยเทพสวรรค์":"🔱","ต่างหูขนนก":"🌟","ต่างหูสายลม":"🌟","ต่างหูเทพสายฟ้า":"🌟",
+  };
+  const it = (name, r, big) => {
+    const e = EMO[name] || "";
+    return `<span class="it${big?' big':''}" data-r="${r}">${e?`<span class="em">${e}</span>`:`<span class="b" data-r="${r}"></span>`}<span class="nmx">${name}</span></span>`;
+  };
+
+  // ----- rarity legend -----
+  $("#legend").innerHTML = Object.entries(RAR).map(([k,v]) =>
+    `<span class="chip" data-r="${k}"><span class="dot" style="background:currentColor"></span><span style="color:var(--ink)">${v.n}</span></span>`
+  ).join("");
+
+  // ----- WEAPONS -----
+  const R5 = ["rare","epic","epic","secret","secret"];
+  const CLASSES = [
+    {k:"warrior",  name:"นักรบ",       ic:"⚔️", el:["ดาบเพลิงอัคคี","ดาบน้ำแข็งพันปี","ดาบปฐพีศิลา","ดาบเทพวายุ","ดาบเทพจันทรา"], dr:"ดาบเขี้ยวมังกร", lg:"ดาบเทพโลกันตร์"},
+    {k:"archer",   name:"นักธนู",      ic:"🏹", el:["ธนูเพลิง","ธนูน้ำแข็ง","ธนูพสุธา","ธนูพายุวายุ","ธนูแสงดารา"], dr:"ธนูอสูรมังกร", lg:"ธนูสุริยเทพ"},
+    {k:"mage",     name:"นักเวท",      ic:"🔮", el:["คทาเพลิงนรก","คทาน้ำแข็งนิรันดร์","คทาวารีชล","คทาจันทราวายุ","คทาสุริยเทพ"], dr:"คทาราชันมังกร", lg:"คทาจักรวาลาไลย"},
+    {k:"assassin", name:"นักฆ่า",      ic:"🗡️", el:["มีดคู่เพลิงพิษ","มีดคู่เกล็ดน้ำแข็ง","มีดคู่พสุธา","มีดคู่วายุเงา","มีดคู่จันทราลับ"], dr:"มีดคู่เขี้ยวมังกร", lg:"มีดคู่ราตรีนิรันดร์"},
+    {k:"lancer",   name:"นักหอก",      ic:"🔱", el:["หอกเพลิงพิฆาต","หอกน้ำแข็งนิรันดร์","หอกพสุธาศิลา","หอกวายุทะลวง","หอกเทพจันทรา"], dr:"หอกเขี้ยวมังกร", lg:"หอกจ้าวสวรรค์"},
+    {k:"samurai",  name:"ซามูไร",      ic:"🌸", el:["คาตานะเพลิง","คาตานะเยือกเย็น","คาตานะวายุ","คาตานะฟ้าสวรรค์","ดาบซากุระราตรี"], dr:"คาตานะมังกร", lg:"ดาบเทพอสนีบาต"},
+    {k:"office",   name:"ออฟฟิศ",      ic:"💼", el:["ปากกาไฟลนก้น","ปากกาแอร์ออฟฟิศ","ปากกาตรายางศิลา","ปากกาเดดไลน์","ปากกาทองผู้บริหาร"], dr:"ปากกามังกร CEO", lg:"ปากกาจักรพรรดิ"},
+    {k:"coder",    name:"จอมเวทโค้ด",  ic:"💻", el:["คีย์บอร์ดโอเวอร์คล็อก","คีย์บอร์ดลิควิดคูล","คีย์บอร์ดเมนบอร์ด","คีย์บอร์ดควอนตัม","คีย์บอร์ดนิวรัล"], dr:"คีย์บอร์ดมังกรดิจิทัล", lg:"คีย์บอร์ดซิงกูลาริตี้"},
+    {k:"aegis",    name:"หุ่นยนต์",    ic:"🤖", el:null, starter:"ปืนเลเซอร์ฝึก", dr:"แคนนอนเขี้ยวมังกร", lg:"ปืนใหญ่สุริยเทพ"},
+  ];
+  $("#weapons").innerHTML = CLASSES.map(c=>{
+    let rows = "";
+    if(c.el){ rows += `<div class="row"><div class="rlabel">สายธาตุ · หายาก → ลับ</div><div class="items">${c.el.map((n,i)=>it(n,R5[i])).join("")}</div></div>`; count += c.el.length; }
+    if(c.starter){ rows += `<div class="row"><div class="rlabel">เริ่มต้น</div><div class="items">${it(c.starter,"common")}</div></div>`; count++; }
+    rows += `<div class="row"><div class="rlabel">🐉 มังกร · ⭐ ตำนาน</div><div class="items">${it(c.dr,"dragon",1)}${it(c.lg,"legend",1)}</div></div>`;
+    count += 2;
+    return `<div class="card wcard" data-cls="${c.k}"><div class="chead"><span class="ic">${c.ic}</span><span class="nm">${c.name}</span></div>${rows}</div>`;
+  }).join("");
+  // starter (common) weapons count for the other 8 classes too
+  count += 8;
+  $("#wcnt").textContent = "9 อาชีพ";
+
+  // filters
+  const fdata = [{k:"all",name:"ทั้งหมด"}].concat(CLASSES.map(c=>({k:c.k,name:c.ic+" "+c.name})));
+  $("#filters").innerHTML = fdata.map((f,i)=>`<button class="fbtn" type="button" data-f="${f.k}" aria-pressed="${i===0}">${f.name}</button>`).join("");
+  $("#filters").addEventListener("click",e=>{
+    const b = e.target.closest(".fbtn"); if(!b) return;
+    const f = b.dataset.f;
+    document.querySelectorAll("#filters .fbtn").forEach(x=>x.setAttribute("aria-pressed", x.dataset.f===f));
+    document.querySelectorAll(".wcard").forEach(c=>c.classList.toggle("hidden", f!=="all" && c.dataset.cls!==f));
+  });
+
+  // ----- FORGE -----
+  const FORGE = [["ดาบเหล็กกล้า","rare"],["ดาบใหญ่ทำลายล้าง","epic"],["โล่เหล็กหนา","rare"],["ธนูล่าสัตว์","rare"],["มีดสั้นคู่","rare"],["หอกเหล็กกล้า","rare"],["กระบองยาวสังหาร","epic"],["กระบี่พริ้วลม","rare"],["ดาบคาตานะเหล็กกล้า","rare"],["คทาเวทมนตร์","rare"],["หนังสือเวทโบราณ","epic"],["ลูกแก้ววิเศษ","epic"]];
+  $("#forge").innerHTML = FORGE.map(([n,r])=>it(n,r)).join(""); count += FORGE.length;
+
+  // ----- ARMOR fixed -----
+  const ARMOR = [
+    {ic:"👕",nm:"ชุด",   items:[["ผ้าพันคอนุ่มฟู","common"],["ชุดใบไม้พราย","rare"],["เกราะเมฆานิล","epic"],["อาภรณ์ดวงดาว","secret"]]},
+    {ic:"🎩",nm:"หมวก",  items:[["หมวกฟางชาวสวน","common"],["หมวกแม่มดราตรี","epic"],["มงกุฎแสงดารา","secret"]]},
+    {ic:"😷",nm:"หน้ากาก",items:[["แว่นหัวใจ","common"],["หน้ากากจิ้งจอก","rare"]]},
+    {ic:"🧤",nm:"ถุงมือ", items:[["ถุงมือขนนุ่ม","common"],["ถุงมือนักสู้","epic"],["กำปั้นเทพวายุ","secret"]]},
+    {ic:"👖",nm:"กางเกง", items:[["กางเกงยีนส์ฟ้า","common"],["กางเกงเกราะนิล","epic"]]},
+    {ic:"👟",nm:"รองเท้า",items:[["ผ้าใบชมพูหวาน","common"],["บูทสายฟ้า","epic"]]},
+  ];
+  $("#armor").innerHTML = ARMOR.map(s=>{
+    count += s.items.length;
+    return `<div class="card"><div class="chead"><span class="ic">${s.ic}</span><span class="nm">${s.nm}</span><span class="tag">${s.items.length} ชิ้น</span></div><div class="items">${s.items.map(([n,r])=>it(n,r)).join("")}</div></div>`;
+  }).join("");
+
+  // ----- ARCHETYPE table -----
+  const ARCH = [
+    ["👕 ชุด","เสื้อคลุมนักรบ","เกราะปราการ","ชุดพรายลม"],
+    ["🎩 หมวก","หมวกนักล่า","หมวกเหล็กกล้า","หมวกขนนก"],
+    ["😷 หน้ากาก","หน้ากากอสูร","หน้ากากศิลา","หน้ากากสายลม"],
+    ["🧤 ถุงมือ","ถุงมือทมิฬ","ถุงมือเหล็ก","ถุงมือไหมพราย"],
+    ["👖 กางเกง","กางเกงนักรบ","สนับเกราะหนา","กางเกงว่องไว"],
+    ["👟 รองเท้า","บูทบุกตะลุย","บูทเหล็กหนัก","รองเท้าพราย"],
+  ];
+  const base=(n)=>`<span class="tierdot" data-r="secret">${EMO[n]?`<span class="em">${EMO[n]}</span>`:`<span class="b"></span>`}${n}</span>`;
+  $("#archTable").innerHTML =
+    `<thead><tr><th>ช่อง</th><th>⚔️ จู่โจม</th><th>🛡️ ปราการ</th><th>💨 ว่องไว</th></tr></thead><tbody>` +
+    ARCH.map(r=>{ count += 9; return `<tr><td class="base">${r[0]}</td><td>${base(r[1])}</td><td>${base(r[2])}</td><td>${base(r[3])}</td></tr>`; }).join("") +
+    `</tbody>`;
+
+  // ----- gear SETS (dragon / legend armor) -----
+  const SETS = [
+    {ic:"🐉",nm:"เซ็ตมังกร", cls:"d", r:"dragon", items:["เกราะเกล็ดมังกร","หมวกเขามังกร","หน้ากากอสุรมังกร","กรงเล็บมังกร","สนับเกล็ดมังกร","รองเท้ามังกรเหิน"]},
+    {ic:"⭐",nm:"เซ็ตตำนาน", cls:"l", r:"legend", items:["อาภรณ์เทพโลกันตร์","มงกุฎเทพโลกันตร์","หน้ากากสุริยเทพ","ถุงมือจ้าวพิภพ","เกราะขาเทพโลกันตร์","รองเท้าเหินสวรรค์"]},
+  ];
+  $("#sets").innerHTML = SETS.map(s=>{
+    count += s.items.length;
+    return `<div class="card ${s.cls}"><div class="chead"><span class="ic">${s.ic}</span><span class="nm">${s.nm}</span><span class="tag">6 ชิ้น + อาวุธ</span></div><div class="items">${s.items.map(n=>it(n,s.r)).join("")}</div></div>`;
+  }).join("");
+
+  // ----- ACCESSORIES -----
+  const ACC = [
+    {ic:"💍",nm:"แหวน",   items:[["แหวนหินไฟ","rare"],["แหวนราชันเพลิง","epic"],["แหวนมังกรนิรันดร์","legend"]]},
+    {ic:"📿",nm:"กำไล",   items:[["กำไลศิลา","rare"],["กำไลพิทักษ์","epic"],["กำไลปราการเทพ","legend"]]},
+    {ic:"🔱",nm:"สร้อยคอ", items:[["สร้อยคริสตัล","rare"],["สร้อยจันทรา","epic"],["สร้อยเทพสวรรค์","legend"]]},
+    {ic:"🌟",nm:"ต่างหู",  items:[["ต่างหูขนนก","rare"],["ต่างหูสายลม","epic"],["ต่างหูเทพสายฟ้า","legend"]]},
+  ];
+  $("#acc").innerHTML = ACC.map(s=>{
+    count += s.items.length;
+    return `<div class="card"><div class="chead"><span class="ic">${s.ic}</span><span class="nm">${s.nm}</span></div><div class="items">${s.items.map(([n,r])=>it(n,r)).join("")}</div></div>`;
+  }).join("");
+
+  // ----- COSTUME sets -----
+  const COST = ["🐉 ชุดจอมมังกร","👑 ราชินีน้ำแข็ง","🌑 นักฆ่าเงา","💰 เศรษฐีทองคำ","🌿 พิทักษ์พงไพร","💦 ชุดสงกรานต์","🎄 ชุดคริสต์มาส","🎃 ชุดฮาโลวีน","🎆 ชุดปีใหม่"];
+  $("#costumes").innerHTML = COST.map(n=>`<span class="it big">${n}</span>`).join("");
+
+  // ----- SET BONUS -----
+  const BONUS = [
+    {ic:"🐉",nm:"จอมมังกร",tiers:[["3 ชิ้น","ATK +5% · HP +5%"],["5 ชิ้น","DEF +6% · คริ +4%"],["7 ชิ้น","ATK +10% · HP +10% · ดาเมจคริ +15%"]]},
+    {ic:"⭐",nm:"เทพโลกันตร์ (ตำนาน)",tiers:[["3 ชิ้น","ATK +8% · HP +8%"],["5 ชิ้น","DEF +10% · คริ +6%"],["7 ชิ้น","ATK +16% · HP +16% · ดาเมจคริ +25% · โชค +10"]]},
+  ];
+  $("#bonus").innerHTML = BONUS.map(b=>
+    `<div class="bcard"><h3>${b.ic} ${b.nm}</h3>${b.tiers.map(t=>`<div class="tier"><span class="n">${t[0]}</span><span>${t[1]}</span></div>`).join("")}</div>`
+  ).join("");
+
+  // total
+  $("#tot").textContent = count + "+";
+
+  // ----- theme toggle -----
+  const btn = $("#themeBtn");
+  const sync = ()=>{ const dark = (document.documentElement.getAttribute("data-theme")||
+      (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"))==="dark";
+    btn.textContent = dark ? "☀️ โหมดสว่าง" : "🌙 โหมดมืด"; };
+  btn.addEventListener("click",()=>{
+    const cur = document.documentElement.getAttribute("data-theme")
+      || (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+    document.documentElement.setAttribute("data-theme", cur==="dark"?"light":"dark"); sync();
+  });
+  sync();
+})();
+</script>
+</body>
+</html>
