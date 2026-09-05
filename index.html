@@ -5314,42 +5314,33 @@ function CherryAdventure() {
         wand.add(tipMarker);
         G.tipMarker = tipMarker;
         // sword trail ribbon — a fading strip that follows the blade tip while swinging
-        const TRAIL_LEN = 9;
-        const trailPositions = new Float32Array(TRAIL_LEN * 2 * 3);
+        // ✨ เส้นแสงดาบ (v447) — เดิมเก็บปลายดาบ 9 จุดแล้วโยงตรง ๆ ผสมสีปกติ ทึบ 0.62 → เห็นเป็นแถบส้มเหลี่ยม ๆ
+        //    ใหม่: เก็บ 12 จุด แล้วลากเส้นโค้ง Catmull-Rom แบ่งละเอียด 4 เท่า · ผสมสีแบบบวก (Additive)
+        //    ค่อย ๆ มืดลงตามหาง = จางลงตามหางจริง ๆ · หางแคบลง · หัวเส้นสว่างวาบตอนปะทะ
+        const TRAIL_LEN = 12, TRAIL_SUB = (G.powerSave ? 2 : 4), TRAIL_SEG = (TRAIL_LEN - 1) * TRAIL_SUB + 1;
+        const trailPositions = new Float32Array(TRAIL_SEG * 2 * 3);
+        const trailColors = new Float32Array(TRAIL_SEG * 2 * 3);
         const trailGeo = new THREE.BufferGeometry();
         trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
-        // 🔥 แสงดาบไล่สี ขาว → เหลือง → ส้ม ตามหางที่ลากผ่าน (แทนแสงขาวล้วนแบบเดิม)
-        const trailColors = new Float32Array(TRAIL_LEN * 2 * 3);
-        {
-            const HOT = [
-                [1.00, 1.00, 1.00], // หัวเส้น: ขาวจ้า
-                [1.00, 0.86, 0.32], // กลาง: เหลืองทอง
-                [1.00, 0.48, 0.10], // หาง: ส้มไฟ
-            ];
-            for (let i = 0; i < TRAIL_LEN; i++) {
-                const u = i / (TRAIL_LEN - 1) * 2; // 0..2 → ไล่ผ่าน 3 จุดสี
-                const a = HOT[Math.min(1, Math.floor(u))], b = HOT[Math.min(2, Math.floor(u) + 1)], f = u - Math.floor(u);
-                for (let j = 0; j < 2; j++)
-                    for (let ch = 0; ch < 3; ch++)
-                        trailColors[(i * 2 + j) * 3 + ch] = a[ch] + (b[ch] - a[ch]) * f;
-            }
-        }
         trailGeo.setAttribute("color", new THREE.BufferAttribute(trailColors, 3));
-        const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+        const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
         const trailMesh = new THREE.Mesh(trailGeo, trailMat);
         trailMesh.frustumCulled = false;
         trailMesh.visible = false;
+        trailMesh.renderOrder = 5;
         scene.add(trailMesh);
         // build triangle indices for the ribbon
         {
             const idx = [];
-            for (let i = 0; i < TRAIL_LEN - 1; i++) {
+            for (let i = 0; i < TRAIL_SEG - 1; i++) {
                 const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
                 idx.push(a, b, c, b, d, c);
             }
             trailGeo.setIndex(idx);
         }
-        G.swordTrail = { mesh: trailMesh, geo: trailGeo, mat: trailMat, pos: trailPositions, len: TRAIL_LEN, history: [], active: false };
+        G.swordTrail = { mesh: trailMesh, geo: trailGeo, mat: trailMat, pos: trailPositions, col: trailColors, len: TRAIL_LEN, seg: TRAIL_SEG, sub: TRAIL_SUB, history: [], active: false, flash: 0 };
+        // 🎨 สีเส้นแสงตอนตีธรรมดาต่ออาชีพ (สกิลใช้สีของสกิลเอง) — ขาว = ไล่ ขาว→เหลือง→ส้ม
+        G.TRAIL_COL = { warrior: 0xffffff, samurai: 0xdff4ff, assassin: 0xc79cff, aegis: 0x7ad8ff, lancer: 0xbfe8ff, boxer: 0xffd9a0 };
         // 🛡️ shield on the left arm (warrior only)
         const shield = new THREE.Group();
         {
@@ -37910,55 +37901,174 @@ function CherryAdventure() {
         let dtGlobal = 0.016;
         const _tipTop = new THREE.Vector3();
         const _tipBot = new THREE.Vector3();
+        const _trHOT = [[1.00, 1.00, 1.00], [1.00, 0.86, 0.32], [1.00, 0.48, 0.10]]; // ขาวจ้า → เหลืองทอง → ส้มไฟ
+        const _trC = new THREE.Color();
+        // Catmull-Rom หนึ่งแกน — โค้งผ่านจุดตัวอย่างทุกจุด ไม่มีมุมหัก
+        const _cr1 = (p0, p1, p2, p3, t) => 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
         const updateSwordTrail = (active, color) => {
             const st = G.swordTrail;
             if (!st)
                 return;
+            const frozen = (G._hitStop || 0) > 0; // ⏸️ ระหว่าง hit-stop เส้นแสง "ค้าง" ไว้ ไม่เก็บจุดซ้ำจนเส้นหด
             if (active) {
-                // tip (top) and a point lower on the blade (bottom) → gives the ribbon width
-                G.tipMarker.getWorldPosition(_tipTop);
-                // a point 0.5 below the tip along the blade
-                _tipBot.set(0, 0.78, 0);
-                wand.localToWorld(_tipBot); // narrower ribbon (was 0.5 → 0.78)
-                st.history.unshift({ top: _tipTop.clone(), bot: _tipBot.clone() });
-                if (st.history.length > st.len)
-                    st.history.pop();
-                if (st.mat && color != null) {
-                    // สีขาว = ปล่อยให้ไล่สีขาว-เหลือง-ส้มทำงานเต็มที่ · สกิลที่มีสีของตัวเอง = คุมสีนั้นไว้
-                    const whiteish = ((color >> 16) & 255) > 228 && ((color >> 8) & 255) > 228 && (color & 255) > 228;
-                    st.mat.vertexColors = whiteish;
-                    st.mat.needsUpdate = st.mat.vertexColors !== st.mat.userData_vc;
-                    st.mat.userData_vc = st.mat.vertexColors;
-                    st.mat.color.setHex(whiteish ? 0xffffff : color);
+                if (!frozen) {
+                    // tip (top) and a point lower on the blade (bottom) → gives the ribbon width
+                    G.tipMarker.getWorldPosition(_tipTop);
+                    _tipBot.set(0, 0.78, 0);
+                    wand.localToWorld(_tipBot);
+                    const h0 = st.history[0];
+                    if (!h0 || h0.top.distanceToSquared(_tipTop) > 0.0004) { // ปลายดาบแทบไม่ขยับ = ไม่เก็บซ้ำ (เส้นไม่กองเป็นก้อน)
+                        st.history.unshift({ top: _tipTop.clone(), bot: _tipBot.clone() });
+                        if (st.history.length > st.len)
+                            st.history.pop();
+                    }
                 }
-                st.mat.opacity = 0.62;
+                st.color = color == null ? 0xffffff : color;
+                st.mat.opacity = 0.95;
                 st.mesh.visible = st.history.length >= 2;
             }
             else {
                 // fade out and clear when not swinging
                 if (st.mesh.visible) {
-                    st.mat.opacity -= dtGlobal * 4;
+                    st.mat.opacity -= dtGlobal * 5;
                     if (st.mat.opacity <= 0) {
                         st.mesh.visible = false;
                         st.history.length = 0;
                     }
                 }
-                if (st.history.length)
+                if (st.history.length && !frozen)
                     st.history.pop();
             }
-            // write the ribbon vertices from history
+            if (st.flash > 0)
+                st.flash = Math.max(0, st.flash - dtGlobal * 7);
+            // write the ribbon vertices from history — เส้นโค้งผ่านจุดตัวอย่าง + หางเรียว + สีจางตามหาง
             if (st.mesh.visible && st.history.length >= 2) {
-                for (let i = 0; i < st.len; i++) {
-                    const h = st.history[Math.min(i, st.history.length - 1)];
-                    st.pos[i * 6 + 0] = h.top.x;
-                    st.pos[i * 6 + 1] = h.top.y;
-                    st.pos[i * 6 + 2] = h.top.z;
-                    st.pos[i * 6 + 3] = h.bot.x;
-                    st.pos[i * 6 + 4] = h.bot.y;
-                    st.pos[i * 6 + 5] = h.bot.z;
+                const H = st.history, n = H.length, SUB = st.sub, SEG = st.seg;
+                const rows = (n - 1) * SUB + 1;
+                const c = st.color, whiteish = ((c >> 16) & 255) > 228 && ((c >> 8) & 255) > 228 && (c & 255) > 228;
+                _trC.setHex(c);
+                const bright = 1 + st.flash * 0.9;
+                for (let r = 0; r < SEG; r++) {
+                    const rr = Math.min(r, rows - 1);
+                    const i = Math.min(n - 2, Math.floor(rr / SUB)), t = rr - i * SUB === 0 ? 0 : (rr - i * SUB) / SUB;
+                    const a = H[Math.max(0, i - 1)], b = H[i], cc = H[Math.min(n - 1, i + 1)], d = H[Math.min(n - 1, i + 2)];
+                    const tx = _cr1(a.top.x, b.top.x, cc.top.x, d.top.x, t), ty = _cr1(a.top.y, b.top.y, cc.top.y, d.top.y, t), tz = _cr1(a.top.z, b.top.z, cc.top.z, d.top.z, t);
+                    const bx = _cr1(a.bot.x, b.bot.x, cc.bot.x, d.bot.x, t), by = _cr1(a.bot.y, b.bot.y, cc.bot.y, d.bot.y, t), bz = _cr1(a.bot.z, b.bot.z, cc.bot.z, d.bot.z, t);
+                    const u = rows > 1 ? rr / (rows - 1) : 0; // 0 หัวเส้น → 1 ปลายหาง
+                    const wk = 1 - u * 0.55; // หางแคบลง
+                    st.pos[r * 6 + 0] = tx;
+                    st.pos[r * 6 + 1] = ty;
+                    st.pos[r * 6 + 2] = tz;
+                    st.pos[r * 6 + 3] = tx + (bx - tx) * wk;
+                    st.pos[r * 6 + 4] = ty + (by - ty) * wk;
+                    st.pos[r * 6 + 5] = tz + (bz - tz) * wk;
+                    // สี: ผสมแบบบวก → ยิ่งมืดยิ่งโปร่ง · จางแบบโค้ง (1-u)^1.6 · หัวเส้นอมขาวเสมอ
+                    const fade = Math.pow(1 - u, 1.6) * bright;
+                    let cr, cg, cb;
+                    if (whiteish) {
+                        const uu = u * 2, k0 = Math.min(1, Math.floor(uu)), k1 = Math.min(2, k0 + 1), f = uu - Math.floor(uu);
+                        cr = _trHOT[k0][0] + (_trHOT[k1][0] - _trHOT[k0][0]) * f;
+                        cg = _trHOT[k0][1] + (_trHOT[k1][1] - _trHOT[k0][1]) * f;
+                        cb = _trHOT[k0][2] + (_trHOT[k1][2] - _trHOT[k0][2]) * f;
+                    }
+                    else {
+                        const w = 0.6 * (1 - u); // หัวเส้นขาววาบ แล้วไล่เป็นสีของสกิล/อาชีพที่หาง
+                        cr = _trC.r + (1 - _trC.r) * w;
+                        cg = _trC.g + (1 - _trC.g) * w;
+                        cb = _trC.b + (1 - _trC.b) * w;
+                    }
+                    const inner = 0.72; // ขอบล่างของแถบมืดกว่าหัวนิดหน่อย = ขอบนุ่ม
+                    st.col[r * 6 + 0] = cr * fade;
+                    st.col[r * 6 + 1] = cg * fade;
+                    st.col[r * 6 + 2] = cb * fade;
+                    st.col[r * 6 + 3] = cr * fade * inner;
+                    st.col[r * 6 + 4] = cg * fade * inner;
+                    st.col[r * 6 + 5] = cb * fade * inner;
                 }
                 st.geo.attributes.position.needsUpdate = true;
-                st.geo.computeVertexNormals();
+                st.geo.attributes.color.needsUpdate = true;
+            }
+        };
+        // 💥 IMPACT (v447) — เฟรมปะทะแบบอนิเมะ: เส้นแสงวาบ + รอยฟันขีดตามทิศดาบบนจอ + กล้องกระเด็นตามทิศตี
+        //    รอยฟันเป็น Sprite หมุนในระนาบจอ (คำนวณมุมจากทิศปลายดาบที่โปรเจ็กต์ลงจอ) จึงตรงกับแนวฟันจริงทุกมุมกล้อง
+        const streakTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = 256;
+            cv.height = 32;
+            const cx = cv.getContext("2d");
+            const g = cx.createLinearGradient(0, 0, 256, 0);
+            g.addColorStop(0, "rgba(255,255,255,0)");
+            g.addColorStop(0.5, "rgba(255,255,255,1)");
+            g.addColorStop(1, "rgba(255,255,255,0)");
+            cx.fillStyle = g;
+            cx.fillRect(0, 0, 256, 32);
+            const v = cx.createLinearGradient(0, 0, 0, 32);
+            v.addColorStop(0, "rgba(0,0,0,1)");
+            v.addColorStop(0.5, "rgba(0,0,0,0)");
+            v.addColorStop(1, "rgba(0,0,0,1)");
+            cx.globalCompositeOperation = "destination-out";
+            cx.fillStyle = v;
+            cx.fillRect(0, 0, 256, 32);
+            const tex = new THREE.CanvasTexture(cv);
+            tex.minFilter = THREE.LinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            return tex;
+        })();
+        const streakPool = [];
+        for (let i = 0; i < 4; i++) {
+            const mk = (op) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: streakTex, transparent: true, opacity: op, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending })); sp.renderOrder = 900; sp.visible = false; scene.add(sp); return sp; };
+            streakPool.push({ core: mk(1), glow: mk(0.7), t: 99, dur: 0.16, len: 1.4 });
+        }
+        let streakIdx = 0;
+        const _imA = new THREE.Vector3(), _imB = new THREE.Vector3();
+        G._impact = (pos, dir, opts) => {
+            opts = opts || {};
+            const st = G.swordTrail;
+            if (st)
+                st.flash = 1;
+            // ทิศรอยฟันบนจอ: จากจุดตัวอย่างปลายดาบ 2 จุดล่าสุด (ถ้ามี) ไม่งั้นเฉียงตามที่ส่งมา/สุ่ม
+            let ang = opts.angle != null ? opts.angle : (Math.random() * 0.8 - 0.4) - Math.PI * 0.3;
+            if (st && st.history.length >= 3) {
+                _imA.copy(st.history[0].top).project(camera);
+                _imB.copy(st.history[2].top).project(camera);
+                const dx = (_imA.x - _imB.x) * (camera.aspect || 1), dy = _imA.y - _imB.y;
+                if (dx * dx + dy * dy > 1e-6)
+                    ang = Math.atan2(dy, dx);
+            }
+            const S = streakPool[streakIdx = (streakIdx + 1) % streakPool.length];
+            const col = opts.color != null ? opts.color : 0xfff1c0;
+            const len = (opts.crit ? 2.1 : 1.5) * (opts.scale || 1);
+            S.t = 0;
+            S.dur = opts.crit ? 0.2 : 0.15;
+            S.len = len;
+            S.core.position.set(pos.x, opts.y != null ? opts.y : 1.05, pos.z);
+            S.glow.position.copy(S.core.position);
+            S.core.material.rotation = ang;
+            S.glow.material.rotation = ang;
+            S.core.material.color.setHex(0xffffff);
+            S.glow.material.color.setHex(col);
+            S.core.visible = S.glow.visible = true;
+            // 🎥 กล้องกระเด็นตามทิศตี (สปริงคืนตัว) — แทนการสั่นสุ่มอย่างเดียว
+            if (dir && G.mode !== "create") {
+                const kl = Math.hypot(dir.x, dir.z) || 1, amt = opts.crit ? 0.34 : 0.2;
+                G._camKick = { x: (dir.x / kl) * amt, z: (dir.z / kl) * amt };
+                G._camShake = Math.max(G._camShake || 0, opts.crit ? 0.22 : 0.1);
+            }
+        };
+        const updateStreaks = (dt) => {
+            for (const S of streakPool) {
+                if (!S.core.visible)
+                    continue;
+                S.t += dt;
+                const pr = Math.min(1, S.t / S.dur);
+                const grow = 0.5 + Math.pow(pr, 0.35) * 0.5; // พุ่งยาวเร็วช่วงแรก
+                const th = (1 - pr) * 0.22 + 0.02; // แล้วบางลงจนหาย
+                S.core.scale.set(S.len * grow, th, 1);
+                S.glow.scale.set(S.len * grow * 1.15, th * 2.6, 1);
+                S.core.material.opacity = 1 - pr * pr;
+                S.glow.material.opacity = 0.7 * (1 - pr);
+                if (pr >= 1)
+                    S.core.visible = S.glow.visible = false;
             }
         };
         // ---------- Player / battle state ----------
@@ -43855,7 +43965,7 @@ function CherryAdventure() {
             popDamage(m.position, dmg, opts.crit ? "crit" : "hit");
             // ⏸️ hit-stop แบบอนิเมะ — โลกกว้างหน่วงให้ตรงจังหวะอาวุธลง · คริใหญ่มีแฟลชขาว
             {
-                const hs = opts.crit ? 0.09 : 0.04;
+                const hs = (opts.crit ? 0.13 : 0.07) + (G._combo3 === 2 ? 0.03 : 0); // v447: 0.04/0.09 เดิมสั้นแค่ 2–3 เฟรม แทบไม่รู้สึก
                 if (G.mode === "battle")
                     G._hitStop = Math.max(G._hitStop || 0, hs);
                 else {
@@ -49011,6 +49121,11 @@ function CherryAdventure() {
             }
             if (crit)
                 G._camShake = Math.max(G._camShake || 0, 0.18);
+            // 💥 เฟรมปะทะ (รอยฟัน + เส้นแสงวาบ + กล้องกระเด็น) — ต้องออกตอนดาบถึงตัวจริง (0.13 วิ หลังเริ่มท่า) ไม่ใช่ตอนกดปุ่ม
+            if (worldRange() <= 4 && G.cls !== "boxer") {
+                const hy = 0.6 + Math.min(1.6, (m.scale ? m.scale.y : 1) * 0.55);
+                G._impactQ = { pos: { x: m.position.x, z: m.position.z }, dir: { x: m.position.x - char.position.x, z: m.position.z - char.position.z }, crit, y: hy, color: crit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xfff1c0) };
+            }
             hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a });
             if (G.sfx)
                 G.sfx.hit && G.sfx.hit();
@@ -57684,6 +57799,14 @@ function CherryAdventure() {
                         if (G._hitStopFlash)
                             G._camShake = Math.max(G._camShake || 0, 0.22);
                         G._hitStopFlash = 0;
+                        if (G._impactQ && G._impact) {
+                            const q = G._impactQ;
+                            G._impactQ = null;
+                            try {
+                                G._impact(q.pos, q.dir, q);
+                            }
+                            catch (_) { }
+                        }
                     }
                 } // 🚫 ไม่มีแฟลชเต็มจอตอนตี (จอกระพริบ) — คงไว้แค่กล้องสั่น
                 if (G._hitStop > 0 && dtForce == null) {
@@ -72583,6 +72706,11 @@ function CherryAdventure() {
                                 }
                                 // class impact FX
                                 const fxColor = sk ? sk.color : CLASSES[cls].color;
+                                // 💥 ตีธรรมดาสายประชิด: เฟรมปะทะ + hit-stop (เดิมสนามรบมีเฉพาะสกิล ตีธรรมดาไม่หยุดภาพเลย)
+                                if (!sk && (cls === "warrior" || cls === "samurai" || cls === "assassin" || cls === "lancer" || cls === "aegis") && G._impact) {
+                                    G._impact({ x: em.position.x, z: em.position.z }, { x: em.position.x - char.position.x, z: em.position.z - char.position.z }, { crit: didCrit, y: em.position.y + 0.9, color: didCrit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[cls]) || 0xfff1c0) });
+                                    G._hitStop = Math.max(G._hitStop || 0, didCrit ? 0.12 : 0.07);
+                                }
                                 if (cls === "warrior")
                                     fireSlash(em.position, fxColor);
                                 else if (cls === "mage")
@@ -77100,13 +77228,22 @@ function CherryAdventure() {
                 });
                 // class FX lifetimes
                 updateSkillFx(dt, t); // ✨ per-skill impact effects (pass the clock so FX update()s can use time)
-                // ✨ sword trail — active during a melee player attack/ult swing
+                // ✨ sword trail — active during a melee player attack/ult swing (สนามรบ) และช่วงฟาดจริงของท่าตีในโลกกว้าง
                 {
                     const A = G.banim;
                     const meleeClasses = ["warrior", "samurai", "lancer", "assassin", "aegis"];
-                    const swinging = A && (A.type === "playerAttack" || A.type === "ult") && meleeClasses.includes(G.cls) && G.mode === "battle";
-                    const trailColor = A && A.skill ? A.skill.color : (G.cls && CLASSES[G.cls] ? CLASSES[G.cls].color : 0xffffff);
+                    const battleSwing = A && (A.type === "playerAttack" || A.type === "ult") && meleeClasses.includes(G.cls) && G.mode === "battle";
+                    // 🌍 โลกกว้าง: เดิมไม่มีเส้นแสงเลย — เปิดช่วง s 0.12–0.62 ของท่า (ง้าง→ปะทะ→ตามแรง) เฉพาะสายดาบ/มีด และต้องเห็นอาวุธอยู่
+                    let worldSwing = false;
+                    if (G.mode === "explore" && (G._worldSwingT || 0) > 0 && wand.visible && (G.cls === "warrior" || G.cls === "samurai" || G.cls === "assassin" || G.cls === "aegis")) {
+                        const sN = 1 - G._worldSwingT / (G._worldSwingDur || 0.28);
+                        worldSwing = sN > 0.12 && sN < 0.62;
+                    }
+                    const swinging = battleSwing || worldSwing;
+                    const basicCol = (G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xffffff;
+                    const trailColor = battleSwing && A && A.skill ? A.skill.color : basicCol;
                     updateSwordTrail(swinging, trailColor);
+                    updateStreaks(dt);
                 }
                 if (slashFx.visible) {
                     slashFx.userData.t += dt;
@@ -77427,6 +77564,14 @@ function CherryAdventure() {
                         camera.position.y += (Math.random() - 0.5) * G._camShake;
                         G._camShake *= 0.88; // decay
                     }
+                    if (G._camKick) {
+                        camera.position.x += G._camKick.x;
+                        camera.position.z += G._camKick.z;
+                        G._camKick.x *= 0.72;
+                        G._camKick.z *= 0.72;
+                        if (Math.abs(G._camKick.x) + Math.abs(G._camKick.z) < 0.002)
+                            G._camKick = null;
+                    }
                 }
                 else {
                     // 🎥 follow the character + orbit (yaw left/right, pitch up/down)
@@ -77445,6 +77590,23 @@ function CherryAdventure() {
                     camera.position.z += (camZ - camera.position.z) * 0.1;
                     // 🎯 มองจุดเหนือหัวตัวละคร (สเกลตามซูม) → ตัวละครยืนค่อนลงล่างจอ เห็นฉากด้านหน้ามากขึ้น
                     camera.lookAt(fx, 0.8 + camDistE * 0.15, fz);
+                    // 📷 v447: โลกกว้างเดิมตั้งค่า _camShake ตอนคริแต่ไม่เคยถูกนำไปใช้ (ใช้แค่ในสนามรบ) → สั่นเบา ๆ + กระเด็นตามทิศตี
+                    if (G.mode === "explore" && dtForce == null) {
+                        if (G._camShake && G._camShake > 0.001) {
+                            const sh = Math.min(0.35, G._camShake);
+                            camera.position.x += (Math.random() - 0.5) * sh;
+                            camera.position.y += (Math.random() - 0.5) * sh;
+                            G._camShake *= 0.85;
+                        }
+                        if (G._camKick) {
+                            camera.position.x += G._camKick.x;
+                            camera.position.z += G._camKick.z;
+                            G._camKick.x *= 0.72;
+                            G._camKick.z *= 0.72;
+                            if (Math.abs(G._camKick.x) + Math.abs(G._camKick.z) < 0.002)
+                                G._camKick = null;
+                        }
+                    }
                 }
                 // 🏔️ ยกพื้นทั้งผืนให้จุดที่ตัวละครยืนอยู่ตรงระดับ 0 พอดี — เดินขึ้นเขา/ลงหุบได้จริง
                 if (G._worldRoot) {
