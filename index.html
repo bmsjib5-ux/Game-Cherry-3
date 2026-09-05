@@ -4758,6 +4758,8 @@ function CherryAdventure() {
         skirtPleat.position.y = 1.08;
         skirtPleat.visible = false;
         char.add(skirtPleat);
+        skirtFlare.userData.baseY = skirtFlare.position.y;
+        skirtPleat.userData.baseY = skirtPleat.position.y;
         G._wearParts = { shirtHem, shirtLong, strapSet, hoodSet, skirtFlare, skirtPleat };
         // 🏷️ ทำเครื่องหมายว่าชิ้นพวกนี้ "เปิด/ปิดตามแบบที่เลือก" — ห้ามโดนกวาดไปบังคับโชว์รวมกับลำตัวพื้นฐาน
         Object.values(G._wearParts).forEach((g) => g.traverse((m) => (m.userData._wear = 1)));
@@ -11083,6 +11085,8 @@ function CherryAdventure() {
                 });
                 if (G.refreshAegisHead)
                     G.refreshAegisHead(); // 🤖 re-apply the aegis mech head after a hero swap
+                if (G._applyBody)
+                    G._applyBody(); // 🦸 หุ่นต้องปรับให้พอดีชุดฮีโร่ (ดู applyGender)
             };
         }
         // ---------- 🌙 LUNA signature look (moonlight maiden) ----------
@@ -24134,6 +24138,11 @@ function CherryAdventure() {
         //    ⚠️ ต้องรวมในฟังก์ชันเดียว ไม่งั้นเปลี่ยนเพศทีไรค่าความสูง/ความอ้วนจะถูกเขียนทับหายทุกครั้ง
         const applyGender = (g) => {
             const male = g === 1;
+            // 🦸 ชุดฮีโร่ทุกชุดปั้นมาบนหุ่นมาตรฐาน — หุ่นผู้ชายที่อกกว้างกว่าจะดันจนตัวโผล่พ้นชุด
+            //    ตอนสวมชุดฮีโร่จึงหุบลำตัว/ไหล่ลงให้พอดีชุด (ส่วนสูง ความท้วม และใบหน้า ยังเป็นชายเหมือนเดิม)
+            const heroFit = male && !!G.heroId;
+            const mTorsoW = heroFit ? 0.95 : 1.12, mTorsoD = heroFit ? 0.72 : 0.784;
+            const mShoulder = heroFit ? 1.0 : 1.18;
             const hK = 0.86 + (G.custom.height != null ? G.custom.height : 0.5) * 0.34; // เตี้ยสุด 0.86 → สูงสุด 1.20
             const bK = 0.88 + (G.custom.build != null ? G.custom.build : 0.5) * 0.34; // ผอมสุด 0.88 → ท้วมสุด 1.22
             // ตัวสูงขึ้น = ขายาวขึ้นเป็นหลัก (ไม่ใช่ยืดทั้งตัวจนหัวโย่ง) · เท้ายังแตะพื้นเพราะจุดหมุนอยู่ที่สะโพก
@@ -24146,7 +24155,7 @@ function CherryAdventure() {
             legR.position.set(0.138 * bK, hipY, 0); // ขาชิดเข้าอีกนิด ให้โคนขาอยู่ในแนวเสื้อ
             // male: broader shoulders, straighter/boxier torso; female: hourglass curves (โค้งเว้า)
             torso.geometry = male ? torsoGeoM : torsoGeoF;
-            const tW = (male ? 1.12 : 0.912) * bK, tD = (male ? 0.784 : 0.706) * bK;
+            const tW = (male ? mTorsoW : 0.912) * bK, tD = (male ? mTorsoD : 0.706) * bK;
             torso.scale.set(tW, 0.85 * (0.72 + 0.28 * hK), tD);
             torso.position.y = 1.030 + (hipY - 1.393);
             const shY = 1.85 + (hipY - 1.393) + 0.85 * 1.29 * 0.28 * (hK - 1); // ไหล่ตามลำตัวที่ยืด
@@ -24166,8 +24175,8 @@ function CherryAdventure() {
             // ความกว้างที่ตาเห็นมาจากชิ้นสะโพก (hips) แทน
             pelvis.scale.set((male ? 0.82 : 0.84) * bK, 0.6, (male ? 0.66 : 0.62) * bK);
             headG.position.y = 2.748 + (hipY - 1.393) + 0.85 * 1.29 * 0.28 * (hK - 1); // หัวขยับตามไหล่ ไม่ลอยหลุดคอ
-            armL.position.x = -0.46 * (male ? 1.18 : 0.92) * bK; // shoulders wider apart for male
-            armR.position.x = 0.46 * (male ? 1.18 : 0.92) * bK;
+            armL.position.x = -0.46 * (male ? mShoulder : 0.92) * bK; // shoulders wider apart for male
+            armR.position.x = 0.46 * (male ? mShoulder : 0.92) * bK;
             // 👦👧 ใบหน้าต้องต่างกันด้วย ไม่ใช่แค่รูปร่าง — เดิมชาย/หญิงหน้าเหมือนกันทุกอย่าง
             [eyeL, eyeR].forEach((ey) => (ey.userData.lashes || []).forEach((l) => (l.visible = !male))); // ขนตางอน = เฉพาะหญิง
             cheekL.visible = !male;
@@ -24184,6 +24193,23 @@ function CherryAdventure() {
                 capeAcc.userData.emblemMat.color.setHex(male ? 0xb01a2a : 0x2a5ac0);
                 capeAcc.userData.emblemMat.emissive.setHex(male ? 0x5a0a10 : 0x0a2060);
             }
+        };
+        // 👗 กระโปรงต้องแกว่งตามขา — ผ้าแข็งทื่อจะโดนต้นขาทะลุออกมาตอนก้าวยาว/วิ่ง
+        //    ยืดผ้าตามแนวหน้า-หลัง (ทิศที่ขาแกว่ง) ตามมุมขาที่กางที่สุด ณ ขณะนั้น
+        G._skirtFollow = () => {
+            const W = G._wearParts;
+            if (!W)
+                return;
+            const sw = Math.max(Math.abs(legL.rotation.x), Math.abs(legR.rotation.x));
+            // โค้งกำลังสอง: เดินปกติผ้าแทบไม่เปลี่ยนรูป จะยืดชัดก็ต่อเมื่อก้าวกว้าง/วิ่งจริง ๆ
+            const k = 1 + Math.min(0.78, sw * sw * 0.9);
+            const drop = Math.min(0.05, sw * sw * 0.06); // ผ้าถูกดันจนยกลอยขึ้นเล็กน้อยตอนก้าวกว้าง
+            [W.skirtFlare, W.skirtPleat].forEach((m) => {
+                if (!m || !m.visible)
+                    return;
+                m.scale.set(1, 1, k);
+                m.position.y = m.userData.baseY != null ? m.userData.baseY + drop : m.position.y;
+            });
         };
         // 👕👖 เปิด/ปิดชิ้นส่วนตามแบบเสื้อและแบบกางเกงที่เลือก
         G.applyWear = () => {
@@ -24207,6 +24233,7 @@ function CherryAdventure() {
                     lg.userData.knee.scale.set(legW, 1, legW);
             });
         };
+        G._applyBody = () => applyGender(G.custom.gender || 0); // 🦸 ให้โค้ดอื่น (เช่นสลับชุดฮีโร่) สั่งคำนวณหุ่นใหม่ได้
         G.setCustom = (cat, i) => {
             G.custom[cat] = i;
             if (cat === "height" || cat === "build") {
@@ -60327,6 +60354,8 @@ function CherryAdventure() {
                     };
                     legPose(swing, legL);
                     legPose(swing2, legR);
+                    if (G._skirtFollow)
+                        G._skirtFollow(); // 👗 ผ้ากระโปรงขยับตามขาที่เพิ่งจัดท่า
                     // 💨 ฝุ่นฟุ้งตอนถีบพื้นออกตัวแต่ละก้าว (เฉพาะตอนก้าวกระโดด และต้องอยู่ติดพื้น)
                     if (bound > 0.25 && G.puffDust) {
                         const half = Math.floor(G.walkPhase / Math.PI);
