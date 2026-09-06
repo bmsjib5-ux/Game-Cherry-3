@@ -570,6 +570,7 @@ const LOOT = [
     { id: "st_c", slot: "weapon", name: "คีย์บอร์ดฝึกหัด", emoji: "⌨️", rarity: "common", atk: 3, cls: "coder", starter: true },
     { id: "st_x", slot: "weapon", name: "ปืนเลเซอร์ฝึก", emoji: "🔫", rarity: "common", atk: 3, cls: "aegis", starter: true },
     { id: "st_b", slot: "weapon", name: "นวมซ้อมมือ", emoji: "🥊", rarity: "common", atk: 3, cls: "boxer", starter: true },
+    { id: "st_t", slot: "weapon", name: "แส้หนังฝึกสัตว์", emoji: "🐾", rarity: "common", atk: 3, cls: "tamer", starter: true },
     // ⚔️ samurai katanas — multiple tiers, each with a distinct look
     { id: "kf", slot: "weapon", name: "คาตานะเพลิง", emoji: "🔥", rarity: "rare", atk: 7, elem: "fire", cls: "samurai", req: 5 },
     { id: "ki", slot: "weapon", name: "คาตานะเยือกเย็น", emoji: "❄️", rarity: "epic", atk: 11, def: 2, elem: "ice", cls: "samurai", req: 10 },
@@ -583,6 +584,9 @@ const LOOT = [
     { id: "bxw", slot: "weapon", name: "นวมวายุ", emoji: "💨", rarity: "epic", atk: 13, crit: 8, elem: "wind", cls: "boxer", req: 15 },
     { id: "bxs", slot: "weapon", name: "นวมแสงสวรรค์", emoji: "🌟", rarity: "secret", atk: 16, def: 3, elem: "light", cls: "boxer", req: 22 },
     { id: "bxs2", slot: "weapon", name: "นวมเงามัจจุราช", emoji: "🌑", rarity: "secret", atk: 17, crit: 14, spd: 6, elem: "arcane", cls: "boxer", req: 25, affix: "double" },
+    { id: "tmr", slot: "weapon", name: "แส้พรานป่า", emoji: "🐾", rarity: "rare", atk: 7, def: 2, cls: "tamer", req: 5 },
+    { id: "tme", slot: "weapon", name: "แส้เขี้ยวสมิง", emoji: "🐯", rarity: "epic", atk: 12, crit: 6, elem: "earth", cls: "tamer", req: 12 },
+    { id: "tms", slot: "weapon", name: "แส้วิญญาณป่า", emoji: "🌿", rarity: "secret", atk: 16, hp: 12, elem: "wind", cls: "tamer", req: 22, affix: "double" },
     // ⚔️ warrior elemental swords
     // ⚔️ WARRIOR swords — unlock every 5 levels (req)
     { id: "wfw", slot: "weapon", name: "ดาบเพลิงอัคคี", emoji: "🔥", rarity: "rare", atk: 6, elem: "fire", cls: "warrior", req: 5 },
@@ -652,6 +656,7 @@ const LOOT = [
     { id: "wDc", slot: "weapon", name: "คีย์บอร์ดมังกรดิจิทัล", emoji: "⌨️", rarity: "dragon", atk: 105, mp: 56, crit: 22, elem: "dragon", cls: "coder", req: 100, set: "dragon" },
     { id: "wDx", slot: "weapon", name: "แคนนอนเขี้ยวมังกร", emoji: "🔫", rarity: "dragon", atk: 105, crit: 20, def: 20, elem: "dragon", cls: "aegis", req: 100, set: "dragon" },
     { id: "wDb", slot: "weapon", name: "นวมเกล็ดมังกรเพลิง", emoji: "🥊", rarity: "dragon", atk: 105, crit: 24, def: 16, elem: "dragon", cls: "boxer", req: 100, set: "dragon" },
+    { id: "wDt", slot: "weapon", name: "แส้เกล็ดมังกรป่า", emoji: "🐾", rarity: "dragon", atk: 105, crit: 20, def: 20, elem: "dragon", cls: "tamer", req: 100, set: "dragon" },
     { id: "oD", slot: "outfit", name: "เกราะเกล็ดมังกร", emoji: "🐲", rarity: "dragon", hp: 70, def: 12, atk: 6, elem: "dragon", set: "dragon" },
     { id: "hD", slot: "hat", name: "หมวกเขามังกร", emoji: "👹", rarity: "dragon", atk: 8, hp: 30, def: 6, elem: "dragon", set: "dragon" },
     { id: "mD", slot: "mask", name: "หน้ากากอสุรมังกร", emoji: "😈", rarity: "dragon", atk: 10, def: 4, crit: 10, eva: 4, elem: "dragon", set: "dragon" },
@@ -668,6 +673,7 @@ const LOOT = [
     { id: "fg_saber", slot: "weapon", name: "กระบี่พริ้วลม", emoji: "🤺", rarity: "rare", atk: 17, spd: 8, cls: "assassin", forge: true },
     { id: "fg_katana", slot: "weapon", name: "ดาบคาตานะเหล็กกล้า", emoji: "⚔️", rarity: "rare", atk: 20, crit: 5, cls: "samurai", forge: true },
     { id: "fg_glove", slot: "weapon", name: "นวมเหล็กกล้า", emoji: "🥊", rarity: "rare", atk: 20, crit: 6, cls: "boxer", forge: true },
+    { id: "fg_whip", slot: "weapon", name: "แส้หนังเสริมเหล็ก", emoji: "🐾", rarity: "rare", atk: 20, def: 4, cls: "tamer", forge: true },
     { id: "fg_staff", slot: "weapon", name: "คทาเวทมนตร์", emoji: "🪄", rarity: "rare", atk: 17, cls: "mage", forge: true },
     { id: "fg_book", slot: "weapon", name: "หนังสือเวทโบราณ", emoji: "📖", rarity: "epic", atk: 24, cls: "mage", forge: true },
     { id: "fg_orb", slot: "weapon", name: "ลูกแก้ววิเศษ", emoji: "🔮", rarity: "epic", atk: 25, cls: "mage", forge: true },
@@ -682,6 +688,7 @@ const LOOT = [
     { id: "lg_oc", slot: "weapon", name: "คีย์บอร์ดซิงกูลาริตี้", emoji: "⌨️", rarity: "legend", atk: 200, mp: 104, crit: 28, elem: "light", cls: "coder", req: 200, set: "legend" },
     { id: "lg_ox", slot: "weapon", name: "ปืนใหญ่สุริยเทพ", emoji: "🔫", rarity: "legend", atk: 200, crit: 26, def: 40, mp: 60, elem: "light", cls: "aegis", req: 200, set: "legend" },
     { id: "lg_ob", slot: "weapon", name: "นวมมงคลเทพอสูร", emoji: "🥊", rarity: "legend", atk: 200, crit: 32, def: 34, mp: 60, elem: "light", cls: "boxer", req: 200, set: "legend" },
+    { id: "lg_ot", slot: "weapon", name: "แส้ราชาแห่งสรรพสัตว์", emoji: "🐾", rarity: "legend", atk: 200, crit: 28, def: 40, mp: 60, elem: "earth", cls: "tamer", req: 200, set: "legend" },
     { id: "lg_out", slot: "outfit", name: "อาภรณ์เทพโลกันตร์", emoji: "👼", rarity: "legend", hp: 120, def: 22, atk: 12, elem: "light", set: "legend" },
     { id: "lg_hat", slot: "hat", name: "มงกุฎเทพโลกันตร์", emoji: "👑", rarity: "legend", atk: 14, hp: 50, def: 10, crit: 6, elem: "light", set: "legend" },
     { id: "lg_msk", slot: "mask", name: "หน้ากากสุริยเทพ", emoji: "🌞", rarity: "legend", atk: 16, crit: 14, eva: 6, def: 6, elem: "light", set: "legend" },
@@ -1060,6 +1067,12 @@ const CLASSES = {
         desc: "นักสู้มือเปล่า หมัด เท้า เข่า ศอก — เข้าประชิดแล้วรัวคอมโบไม่ให้ตั้งตัว",
         perk: "ต่อคอมโบสะสมพลัง — โจมตีติดกันแรงขึ้นเรื่อยๆ · หลบหลีก +8%",
     },
+    tamer: {
+        name: "ผู้ฝึกสัตว์", emoji: "🐾", color: 0x5a9a3a,
+        hp: 48, atk: 8, def: 2,
+        desc: "จับมอนสเตอร์มาเป็นเพื่อนแล้วสั่งสู้แทน — เพื่อนซี้พุ่งโจมตีตามคำสั่ง ส่วนผู้ฝึกคุมเกมด้วยแส้",
+        perk: "สัตว์เลี้ยงคู่ใจโจมตีแทนทุกตา (แรงตามพลังโจมตีของคุณ) · บัฟจากสัตว์เลี้ยง ×1.5 · จับมอนสเตอร์ง่ายขึ้น +15%",
+    },
 };
 // 📊 role ratings (0–5) shown as a stat graph on the class picker
 const RATING_CATS = [["single", "โจมตีเดี่ยว"], ["control", "ควบคุม"], ["aoe", "โจมตีกลุ่ม"], ["def", "ป้องกัน"], ["heal", "ฟื้นฟู"]];
@@ -1074,6 +1087,7 @@ const CLASS_RATINGS = {
     office: { single: 3, control: 3, aoe: 2, def: 3, heal: 5 },
     aegis: { single: 4, control: 5, aoe: 4, def: 3, heal: 1 },
     boxer: { single: 5, control: 4, aoe: 2, def: 3, heal: 2 },
+    tamer: { single: 4, control: 3, aoe: 3, def: 2, heal: 3 },
 };
 // 💡 quick playstyle guidance per class
 const CLASS_TIP = {
@@ -1087,8 +1101,9 @@ const CLASS_TIP = {
     office: "อึดยาว ยิ่งเลือดน้อยยิ่งแรง — สายอดทนสู้ยืดเยื้อ",
     aegis: "หุ่นรบไซไฟ คุมพื้นที่+เบิร์สต์ ผสมโดรน/พลาสมา/แรงโน้มถ่วง รอบด้าน",
     boxer: "สายประชิดคอมโบ ยิ่งต่อยติดกันยิ่งแรง เข้าใกล้แล้วรัวยาวไม่ให้หยุด",
+    tamer: "สายเพื่อนซี้ — เลือกสัตว์เลี้ยงคู่ใจแล้วสั่งสู้แทน ยิ่งเลี้ยงเก่งยิ่งแรง จับมอนง่าย",
 };
-const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" };
+const CLASS_WEAPON = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb", tamer: "ct" };
 // 👗 per-class outfit look: shirt/pants/trim colors + which accessory to show
 const CLASS_OUTFIT = {
     warrior: { shirt: 0x5a4a4a, pants: 0x4a4038, trim: 0xe8c848, acc: "cape", accColor: 0xc41a2a }, // 🛡️ steel plate armor + red cape
@@ -1101,6 +1116,7 @@ const CLASS_OUTFIT = {
     coder: { shirt: 0x14161c, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "hoodie", accColor: 0x2ad0e8 }, // 💻 black hoodie + neon circuits
     aegis: { shirt: 0xe8ecf2, pants: 0x1a1d24, trim: 0x2ad0e8, acc: "mecha", accColor: 0x2ad0e8 },
     boxer: { shirt: 0xc4302a, pants: 0x14141a, trim: 0xf5c542, acc: "mongkol", accColor: 0xf5c542 }, // 🥊 เสื้อกล้ามแดง กางเกงมวยดำขลิบทอง + มงคลสวมหัว // 🤖 pearl-white + black mechanical armor, electric-blue energy lines
+    tamer: { shirt: 0x6a8a4a, pants: 0x5a3a2a, trim: 0xf5c542, acc: "tamer", accColor: 0x8a5a2a }, // 🐾 เสื้อพรานเขียว + ย่ามหนัง + ผ้าพันคอ
 };
 const ULTS = {
     warrior: { name: "คำพิพากษาศักดิ์สิทธิ์", emoji: "⚔️✨", desc: "พาลาดินอัญเชิญผู้พิทักษ์ ฟาดดาบศักดิ์สิทธิ์ ×4 + สตัน + ทำลายเกราะ + ฟื้น HP" },
@@ -1112,6 +1128,7 @@ const ULTS = {
     office: { name: "โอทีล้นทะลัก", emoji: "💻⚡", desc: "เอกสารถล่มฟ้า โน้ตบุ๊กยักษ์ทุบ ระเบิดดิจิทัล ×3.5 + สตัน + ทำลายเกราะ" },
     samurai: { name: "ฟันฟ้าแยก", emoji: "⚔️🌸", desc: "เวลาหยุด ชักดาบเสี้ยววินาที ฟันฟ้าแยก ×3.6 · เจาะเกราะ + เลือดไหล + หวาดกลัว" },
     boxer: { name: "มหาหัตถ์อสูรทลายฟ้า", emoji: "🥊💥", desc: "รวมลมปราณทั้งร่างลงหมัดเดียว — พุ่งรัวหมัด/ศอก/เข่า ×3.6 ปิดท้ายด้วยหมัดทลายฟ้าที่สะเทือนทั้งสังเวียน · ทะลุเกราะ + สตัน + เลือดไหล" },
+    tamer: { name: "ฝูงสรรพสัตว์ทะยานฟ้า", emoji: "🐾🌪️", desc: "เป่านกหวีดเรียกฝูง — สัตว์ป่าทั้งผองพุ่งเหยียบเป้าหมาย ×3.4 + สตัน + ลดป้องกัน" },
     aegis: { name: "โอเมกาจัดจ์เมนต์ โปรโตคอล", emoji: "🤖⚡", desc: "AI เปิดโปรโตคอลสูงสุด ลอยขึ้นฟ้า ดาวเทียมล็อกเป้า ยิงลำแสงอวกาศ + ดาบพลาสมายักษ์ฟันพื้น ระเบิด EMP ×3.6 · เจาะเกราะ + สตัน" },
 };
 // 👑 alternate ultimates — unlocked classes can switch between two ults (toggled in the skill panel)
@@ -1345,6 +1362,13 @@ const CLASS_SKILLS = {
         { id: "b_combo", cost: 11, name: "คอมโบสายฟ้า", emoji: "💨", color: 0xf5d24a, mult: 0.8, perLv: 0.18, hits: 5, buffSpd: true, buffCrit: 12, fx: "multi", desc: "รัวหมัด-ศอก-เข่าติดกัน 5 ครั้ง · เร่งความเร็ว + คริเพิ่ม ⚡" },
         { id: "b_iron", cost: 12, name: "หมัดเหล็กเดือด", emoji: "🔥", color: 0xff5a1a, mult: 2.2, perLv: 0.48, rage: true, burn: 3, buffCrit: 15, fx: "rage", desc: "อัดลมปราณลงนวมจนแดงฉาน ยิ่งเลือดน้อยยิ่งแรง + เผาไหม้ 🔥" },
     ],
+    tamer: [
+        { id: "t_bite", cost: 6, name: "สั่งกัด!", emoji: "🐾", color: 0x5a9a3a, mult: 1.6, perLv: 0.34, bleed: 3, fx: "stab", desc: "ชี้เป้าให้เพื่อนซี้พุ่งกัด เลือดไหล 3 เทิร์น 🩸" },
+        { id: "t_roar", cost: 8, name: "คำรามข่มขวัญ", emoji: "🦁", color: 0xd08a3a, mult: 1.2, perLv: 0.26, defDown: 6, slow: true, fx: "quake", desc: "สัตว์คู่ใจคำรามสะเทือน ลดป้องกัน + ทำให้ช้า 🌍" },
+        { id: "t_bond", cost: 9, name: "สายใยผูกพัน", emoji: "💞", color: 0xf5a6c8, mult: 0.9, perLv: 0.2, heal: 0.25, buffDef: 4, buffCrit: 8, fx: "heal", desc: "ประสานใจกับเพื่อนซี้ ฟื้น HP 25% ป้องกัน+4 คริ+8% ✨" },
+        { id: "t_stampede", cost: 11, name: "ฝูงสัตว์ทะยาน", emoji: "🐗", color: 0x8a6a3a, mult: 0.7, perLv: 0.18, hits: 4, stun: true, fx: "multi", desc: "เรียกฝูงพุ่งเหยียบ 4 ระลอก มีโอกาสสตัน 💫" },
+        { id: "t_wild", cost: 12, name: "สัญชาตญาณป่า", emoji: "🌿", color: 0x3ad06a, mult: 2.1, perLv: 0.46, critBonus: 0.3, rage: true, fx: "rage", desc: "ปลุกสัญชาตญาณดิบ โจมตีหนัก คริสูง + เข้าโหมดคลั่ง 🔥" },
+    ],
 };
 // 🏅 TITLES — earned by playing, each grants a real bonus and you pick which one to wear.
 // (The old system auto-picked a cosmetic string; there was nothing to chase.)
@@ -1450,6 +1474,7 @@ const ADV_TARGETS = {
     office: ["mochi", "baibua", "nam", "mekha", "kirara"],
     aegis: ["baibua", "nam", "mekha", "paksi", "taara"],
     boxer: ["mochi", "khiao", "plerng", "saming", "garuda"],
+    tamer: ["mochi", "baibua", "nam", "khiao", "paksi"],
 };
 const ADV_TARGETS_DEF = ["mochi", "baibua", "mekha", "plerng", "khiao"];
 const advTargets = (cls) => ADV_TARGETS[cls] || ADV_TARGETS_DEF;
@@ -1559,6 +1584,16 @@ const CLASS_PATHS = {
             desc: "สายไม้มวยไทย — ศอก เข่า เตะเหล็กไหล ดูดพลังคู่ต่อสู้", perk: "ดูดเลือด 18% ของดาเมจ",
             mul: { atk: 1.24, def: 1.12, hp: 1.14, crit: 8 }, lifesteal: 0.18,
             skill: { id: "p_tiger", cost: 13, name: "เสือลากหาง", emoji: "🐯🔥", color: 0xd93a2a, mult: 1.2, perLv: 0.28, hits: 3, burn: 3, defDown: 6, fx: "slash", desc: "ไม้มวยไทยเสือลากหาง เหวี่ยงส้นเท้าเพลิง ×3 · เผาไหม้ + ลดเกราะ 🐯" } },
+    ],
+    tamer: [
+        { id: "t_beast", name: "จอมพลสัตว์ป่า", emoji: "🐺👑", tint: 0x8a6a3a,
+            desc: "สายบุก — สัตว์คู่ใจดุดัน โจมตีแรง คริสูง", perk: "ดาเมจคริ +25% · โจมตี +25%",
+            mul: { atk: 1.25, def: 0.95, hp: 1.05, crit: 12 }, critDmg: 25,
+            skill: { id: "p_alpha", cost: 13, name: "จ่าฝูงพิฆาต", emoji: "🐺👑", color: 0x8a6a3a, mult: 2.6, perLv: 0.55, critBonus: 0.4, bleed: 4, stun: true, fx: "slash", desc: "จ่าฝูงพุ่งขย้ำ ×2.6 คริสูง เลือดไหล + สตัน 🐺" } },
+        { id: "t_druid", name: "ผู้พิทักษ์พงไพร", emoji: "🌿🛡️", tint: 0x4a9a4a,
+            desc: "สายค้ำจุน — ทนทาน ฟื้นตัว ดูแลเพื่อนซี้", perk: "ฟื้น HP 4% ทุกเทิร์น · หลบ +8%",
+            mul: { atk: 1.05, def: 1.3, hp: 1.25, crit: 2 }, regen: true, eva: 8,
+            skill: { id: "p_grove", cost: 12, name: "พรแห่งพงไพร", emoji: "🌿🛡️", color: 0x4a9a4a, mult: 1.3, perLv: 0.28, heal: 0.4, buffDef: 6, regen: 3, fx: "heal", desc: "ป่าอวยพร ฟื้น HP 40% ป้องกัน+6 ฟื้นต่อเนื่อง 🌿" } },
     ],
 };
 // resolve the player's chosen path object (null until they pick one)
@@ -1719,6 +1754,7 @@ const SKILL_ELEM = {
     c_inject: "arcane", c_wall: null, c_drone: "light", c_crash: "ice", c_matrix: "arcane",
     m_fire: "fire", m_ice: "ice", m_bolt: "wind", m_heal: "light",
     s_double: null, s_poison: "earth", s_shadow: null, s_evade: "wind",
+    t_bite: null, t_roar: "earth", t_bond: "light", t_stampede: "wind", t_wild: "fire",
     l_thrust: null, l_sweep: "wind", l_quake: "earth", l_charge: null,
     k_slash: null, k_double: null, k_iai: "wind", k_moon: null,
     p_frostpierce: "ice", x_frz_1: "ice", x_frz_2: "ice", x_frz_3: "ice", x_frz_4: "ice", // 🧊 อัศวินน้ำแข็งดำ
@@ -1763,7 +1799,7 @@ const REACT = {
 // 🌟 ธาตุประจำท่าไม้ตายของแต่ละอาชีพ
 const ULT_ELEM = {
     warrior: "fire", archer: "wind", mage: "arcane", assassin: "arcane", lancer: "dragon",
-    samurai: "ice", coder: "light", office: "earth", aegis: "light", boxer: "earth",
+    samurai: "ice", coder: "light", office: "earth", aegis: "light", boxer: "earth", tamer: "earth",
 };
 // ---------- ⛏️ Crafting materials (drop from monsters, used at the forge) ----------
 const MATERIALS = {
@@ -2403,6 +2439,7 @@ const CRAFT_RECIPES = {
     coder: { itemId: "wDc", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
     aegis: { itemId: "wDx", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
     boxer: { itemId: "wDb", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
+    tamer: { itemId: "wDt", mats: { dragonScale: 3, crystal: 5, ironOre: 10 } },
 };
 // 🌳 Skill tree: each node can be leveled up (rank 1..max). Bonuses are PER RANK.
 // Conditions: reqLv = min player level, req = prerequisite node id (must have ≥1 rank).
@@ -2519,6 +2556,11 @@ const TALENTS = {
         mkBranch("aegis", 2, "เกราะอีจิส", "🛡️", "#5a7ad0", [["แผ่นเกราะ", "🛡️", { def: 6 }], ["สนามพลัง", "🧱", { dmgCut: 10 }], ["สะท้อนพลังงาน", "🌵", { thorns: 25 }], ["โปรโตคอลกู้ชีพ", "💾", { secondWind: 1 }], ["ตอบโต้อัตโนมัติ", "⚡", { counter: 30 }]]),
         mkBranch("aegis", 3, "ระบบสนับสนุน", "🔋", "#4ad0a0", [["เก็บเกี่ยวพลังงาน", "🔋", { mpOnHit: 4 }], ["ประหยัดพลังงาน", "💧", { skillCost: 12 }], ["นาโนซ่อมแซม", "🔧", { regen: 4 }], ["ขยายแกน", "❤️", { hpPct: 18 }], ["คริซ่อมแซม", "💚", { critHeal: 5 }]]),
     ],
+    tamer: [
+        mkBranch("tamer", 1, "จ่าฝูง", "🐺", "#8a6a3a", [["เขี้ยวคม", "🐾", { atkPct: 7 }], ["ขย้ำจุดตาย", "🎯", { crit: 8 }], ["ล่าเหยื่อบาดเจ็บ", "🩸", { execute: 35 }], ["ตะครุบเปิดศึก", "⚡", { firstStrike: 70 }], ["ล่าอสูรยักษ์", "👹", { bossDmg: 30 }]]),
+        mkBranch("tamer", 2, "พงไพรคุ้มครอง", "🌿", "#4a9a4a", [["เปลือกไม้", "🛡️", { def: 5 }], ["ฟื้นฟูพงไพร", "🌿", { regen: 4 }], ["หนามป่า", "🌵", { thorns: 22 }], ["ผิวหนังหนา", "🪨", { dmgCut: 10 }], ["ปาฏิหาริย์ป่า", "💚", { secondWind: 1 }]]),
+        mkBranch("tamer", 3, "สายใยเพื่อนซี้", "💞", "#d06a8a", [["ใจเดียวกัน", "❤️", { hpPct: 12 }], ["แบ่งปันเลือด", "🩸", { lifesteal: 7 }], ["สวนกัด", "🐾", { counter: 30 }], ["เรียกฝูงต่อเนื่อง", "🔗", { comboAmp: 6 }], ["จนตรอกฝูงคลั่ง", "🔥", { lowHpAtk: 35 }]]),
+    ],
 };
 const SKILL_TREE = {
     common: [
@@ -2537,6 +2579,7 @@ const SKILL_TREE = {
     office: { id: "t_office", name: "มือโปรออฟฟิศ", emoji: "💼", cost: 4, max: 3, reqLv: 8, req: "t_atk1", atk: 4, mp: 3, crit: 5, desc: "โจมตี+4 มานา+3 คริ+5% /ระดับ" },
     samurai: { id: "t_samurai", name: "วิถีซามูไร", emoji: "⚔️", cost: 4, max: 3, reqLv: 8, req: "t_atk1", atk: 5, hp: 8, crit: 6, desc: "โจมตี+5 คริ+6% HP+8% /ระดับ" },
     aegis: { id: "t_aegis", name: "แกนพลังงาน", emoji: "🤖", cost: 4, max: 3, reqLv: 8, req: "t_def1", atk: 4, def: 4, hp: 8, crit: 5, desc: "โจมตี+4 ป้องกัน+4 HP+8% คริ+5% /ระดับ" },
+    tamer: { id: "t_tamer", name: "สายใยพงไพร", emoji: "🐾", cost: 4, max: 3, reqLv: 8, req: "t_hp1", atk: 4, hp: 10, def: 3, desc: "โจมตี+4 HP+10% ป้องกัน+3 /ระดับ" },
 };
 // 🌳 เพดานปมพรสวรรค์ทุกปม → Lv.20 (อัพได้ตามเลเวลตัวละคร ผ่าน treeCap)
 [...SKILL_TREE.common, ...Object.keys(SKILL_TREE).filter((k) => k !== "common").map((k) => SKILL_TREE[k])].forEach((n) => { if (n && n.max)
@@ -2611,6 +2654,14 @@ const CONSTELLATION = (() => {
                 { n: "ทำโอที", e: "💼", d: "ATK +8% · มานา +6", atkPct: 8, mp: 6 },
                 { n: "ประกันกลุ่ม", e: "🛡️", d: "HP +8% · DEF +6", hpPct: 8, def: 6 },
                 { n: "ซีอีโอจักรวาล", e: "🌌", d: "ATK +8% · โชค +10 · ร่างพลังนาน +1 เทิร์น", atkPct: 8, luck: 10, tfTurns: 1 },
+            ] },
+        tamer: { name: "ดาวจ่าฝูง", star: 0x9ad06a, emoji: "🐾", nodes: [
+                { n: "สัญชาตญาณป่า", e: "🐾", d: "ATK +8", atk: 8 },
+                { n: "เกราะขน", e: "🛡️", d: "HP สูงสุด +8%", hpPct: 8 },
+                { n: "ใจเชื่อมใจ", e: "💞", d: "เริ่มศึกด้วยเกจพลัง +20%", tfStart: 20 },
+                { n: "เขี้ยวคมกริบ", e: "🎯", d: "คริ +5% · ดาเมจคริ +10%", crit: 5, critDmg: 10 },
+                { n: "จ่าฝูงแกร่ง", e: "🐺", d: "ATK +10% · DEF +6", atkPct: 10, def: 6 },
+                { n: "ราชาสรรพสัตว์", e: "👑", d: "HP +10% · โชค +8 · ร่างพลังนาน +1 เทิร์น", hpPct: 10, luck: 8, tfTurns: 1 },
             ] },
     };
     const out = {};
@@ -8858,7 +8909,7 @@ function CherryAdventure() {
         // ---------- ⚔️ TIERED LOOT WEAPONS — ตระกูลอาวุธตามอาชีพ × ระดับคุณภาพ (ยิ่งสูงยิ่งใหญ่/วิจิตร) ----------
         // อาวุธ loot ทุกชิ้นเคยใช้โมเดลประจำอาชีพร่วมกัน ต่างแค่สี — ตอนนี้แยกรูปทรงจริงตามคุณภาพ
         // และมีเครื่องประดับตามธาตุในชื่อไอเทม (เพลิง/น้ำแข็ง/พสุธา/วายุ/จันทรา/มังกร)
-        const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster", boxer: "glove" };
+        const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster", boxer: "glove", tamer: "whip" };
         const wpnTierOf = (r) => (r === "legend" || r === "dragon") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
         {
             const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
@@ -9152,6 +9203,51 @@ function CherryAdventure() {
                     }
                     g.userData.gripY = 0.05;
                 }
+                else if (fam === "whip") {
+                    // 🐾 แส้ฝึกสัตว์ — ด้ามหนังพัน + สายแส้โค้งเป็นปล้อง ปลายห้อยพู่/กระดิ่ง (ระดับสูงมีอัญมณี+ปลอกทอง)
+                    const HL = 0.34 + t * 0.04;
+                    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.036, HL, 10), wrap);
+                    handle.position.y = HL / 2 - 0.2;
+                    g.add(handle);
+                    const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.042, 10, 8), t >= 1 ? gold : steel);
+                    pommel.position.y = -0.2;
+                    g.add(pommel);
+                    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.034, 0.05, 10), t >= 1 ? gold : steel);
+                    cap.position.y = HL - 0.2;
+                    g.add(cap);
+                    const lashMat = new THREE.MeshStandardMaterial({ color: t === 2 ? 0x6a3a1a : 0x4a3020, roughness: 0.85 });
+                    const segs = 9 + t * 2;
+                    let px = 0, py = HL - 0.2, pz = 0, ang = 0.25;
+                    for (let k = 0; k < segs; k++) {
+                        const len = 0.085, r = 0.017 - k * 0.0009;
+                        const seg = new THREE.Mesh(new THREE.CylinderGeometry(Math.max(0.005, r - 0.002), r, len, 6), lashMat);
+                        ang += 0.16 + k * 0.012; // โค้งงอลงเรื่อย ๆ เหมือนสายแส้ที่ห้อยตัว
+                        const dx = Math.sin(ang) * len, dy = Math.cos(ang) * len;
+                        seg.position.set(px + dx / 2, py + dy / 2, pz);
+                        seg.rotation.z = -ang;
+                        g.add(seg);
+                        px += dx;
+                        py += dy;
+                        if (k === segs - 1) {
+                            const tip = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.08, 6), t >= 1 ? gold : steel);
+                            tip.position.set(px, py, pz);
+                            tip.rotation.z = -ang - Math.PI;
+                            g.add(tip);
+                            tintParts.push(tip);
+                        }
+                    }
+                    for (let k = 0; k < 2 + t; k++) {
+                        const bnd = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.006, 5, 12), gold);
+                        bnd.position.y = -0.12 + k * 0.1;
+                        bnd.rotation.x = Math.PI / 2;
+                        g.add(bnd);
+                    }
+                    if (t >= 1)
+                        gem(0.03, 0, HL - 0.2 + 0.04, 0);
+                    if (t >= 2)
+                        shards(5, 0.1, 0.08);
+                    g.userData.gripY = 0.08;
+                }
                 else { // blaster
                     const L = [0.44, 0.56, 0.72][t];
                     const body = new THREE.Mesh(new THREE.BoxGeometry(0.13 + t * 0.03, 0.16, 0.3 + t * 0.06), t >= 1 ? gold : steel);
@@ -9198,7 +9294,7 @@ function CherryAdventure() {
                 return g;
             };
             // 🔥❄️🌍🌪️🌙 เครื่องประดับตามธาตุในชื่ออาวุธ — ติดที่คมอาวุธตอนสวม (เพลิง/น้ำแข็ง/พสุธา/วายุ/แสง/มังกร)
-            const FX_ANCHOR = { sword: [0.55, 0.11], katana: [0.55, 0.11], spear: [1.0, 0.12], bow: [0.0, 0.34], staff: [0.78, 0.14], dagger: [0.2, 0.09], pen: [0.34, 0.09], keyboard: [0.12, 0.24], blaster: [0.4, 0.11] };
+            const FX_ANCHOR = { sword: [0.55, 0.11], katana: [0.55, 0.11], spear: [1.0, 0.12], bow: [0.0, 0.34], staff: [0.78, 0.14], dagger: [0.2, 0.09], pen: [0.34, 0.09], keyboard: [0.12, 0.24], blaster: [0.4, 0.11], whip: [0.16, 0.1] };
             G.applyWpnElem = (model, fam, tier, elem) => {
                 if (!model)
                     return;
@@ -9274,7 +9370,7 @@ function CherryAdventure() {
             // 🚀 PERF: อาวุธ 27 แบบสร้างเมื่อถูกถือครั้งแรก (lazy) — ไม่แบกติดตัวตั้งแต่เข้าเกม
             G._tierWpnKeys = [];
             G._wpnFactories = {};
-            ["sword", "bow", "staff", "dagger", "spear", "katana", "pen", "keyboard", "blaster"].forEach((fam) => {
+            ["sword", "bow", "staff", "dagger", "spear", "katana", "pen", "keyboard", "blaster", "whip"].forEach((fam) => {
                 for (let t = 0; t < 3; t++) {
                     const k = `w_${fam}_${t}`;
                     G._wpnFactories[k] = () => buildTierWeapon(fam, t);
@@ -22278,6 +22374,61 @@ function CherryAdventure() {
             g.traverse((o) => { o.raycast = () => { }; });
             classAccessories.mongkol = g;
         }
+        { // 🐾 tamer — ชุดพรานฝึกสัตว์: ผ้าพันคอเขียว + ย่ามหนังสะพาย + เข็มกลัดรอยเท้า + ขนนกที่ผม
+            const g = new THREE.Group();
+            const leather = new THREE.MeshStandardMaterial({ color: 0x7a4a2a, roughness: 0.8 });
+            const scarf = new THREE.MeshStandardMaterial({ color: 0x3a8a4a, roughness: 0.7, side: THREE.DoubleSide });
+            const brass = new THREE.MeshStandardMaterial({ color: 0xd8b04a, metalness: 0.6, roughness: 0.35, emissive: 0x4a3810, emissiveIntensity: 0.25 });
+            const feather = new THREE.MeshStandardMaterial({ color: 0xf0e0a0, roughness: 0.6, side: THREE.DoubleSide });
+            // 🧣 ผ้าพันคอ + ชายห้อยด้านหลัง
+            const neck = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 8, 24), scarf);
+            neck.rotation.x = Math.PI / 2;
+            neck.position.set(0, 1.86, 0);
+            g.add(neck);
+            const tail = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.42), scarf);
+            tail.position.set(0.12, 1.62, -0.34);
+            tail.rotation.set(0.18, 0, 0.22);
+            g.add(tail);
+            // 👜 สายสะพายเฉียง + ย่ามหนังที่สะโพก
+            const strap = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.028, 6, 30, Math.PI * 1.25), leather);
+            strap.rotation.set(Math.PI / 2, 0.9, 0.5);
+            strap.position.set(0, 1.45, 0);
+            g.add(strap);
+            const bag = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.2, 0.12), leather);
+            bag.position.set(0.38, 1.05, 0.08);
+            bag.rotation.y = 0.3;
+            g.add(bag);
+            const flap = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.13), new THREE.MeshStandardMaterial({ color: 0x5a3420, roughness: 0.8 }));
+            flap.position.set(0.38, 1.13, 0.085);
+            flap.rotation.y = 0.3;
+            g.add(flap);
+            const buckle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 12), brass);
+            buckle.position.set(0.4, 1.09, 0.16);
+            buckle.rotation.y = 0.3;
+            g.add(buckle);
+            // 🐾 เข็มกลัดรอยเท้าที่อก
+            const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.012, 16), brass);
+            badge.rotation.x = Math.PI / 2;
+            badge.position.set(-0.16, 1.62, 0.31);
+            g.add(badge);
+            for (const [px, py, r] of [[0, 0.018, 0.016], [-0.02, -0.006, 0.01], [0.02, -0.006, 0.01], [-0.008, -0.026, 0.009], [0.008, -0.026, 0.009]]) {
+                const pad = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.7 }));
+                pad.scale.z = 0.4;
+                pad.position.set(-0.16 + px, 1.62 + py, 0.318);
+                g.add(pad);
+            }
+            // 🪶 ขนนกเสียบผมด้านข้าง
+            const quill = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.3), feather);
+            quill.position.set(0.3, 2.28, -0.05);
+            quill.rotation.set(0, 0.5, -0.5);
+            g.add(quill);
+            const quillTip = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.12), new THREE.MeshStandardMaterial({ color: 0xd06a3a, roughness: 0.6, side: THREE.DoubleSide }));
+            quillTip.position.set(0.39, 2.4, -0.05);
+            quillTip.rotation.set(0, 0.5, -0.5);
+            g.add(quillTip);
+            g.traverse((o) => { o.raycast = () => { }; });
+            classAccessories.tamer = g;
+        }
         { // 💻 arcane coder — black hoodie, glasses, circuit tattoos
             const g = new THREE.Group();
             const hoodMat = new THREE.MeshStandardMaterial({ color: 0x14161c, roughness: 0.85 });
@@ -32449,7 +32600,7 @@ function CherryAdventure() {
         const townFolkG = new THREE.Group();
         townZone.add(townFolkG);
         G._townFolk = [];
-        const TCLS_COLOR = { warrior: 0xd9536b, archer: 0x5a9a4e, mage: 0x6a7ae0, assassin: 0x5a5a6a, lancer: 0x3a8ad0, samurai: 0xb04a3a, office: 0x8a6ad0, coder: 0x3aa89a, aegis: 0xd0a83a, boxer: 0xe8622a };
+        const TCLS_COLOR = { warrior: 0xd9536b, archer: 0x5a9a4e, mage: 0x6a7ae0, assassin: 0x5a5a6a, lancer: 0x3a8ad0, samurai: 0xb04a3a, office: 0x8a6ad0, coder: 0x3aa89a, aegis: 0xd0a83a, boxer: 0xe8622a, tamer: 0x5a9a3a };
         const tSkinM = new THREE.MeshStandardMaterial({ color: 0xffe2cc, roughness: 0.65 });
         const buildTownFolk = (label, clsId, px, pz, isPlayer, wanderR) => {
             const g = new THREE.Group();
@@ -38598,10 +38749,26 @@ function CherryAdventure() {
         };
         const petBuff = () => {
             const team = (G.team && G.team.length) ? G.team : (G.buddy ? [G.buddy] : []);
-            return team.reduce((acc, id) => {
+            const r = team.reduce((acc, id) => {
                 const b = petBuffOne(id);
                 return { atk: acc.atk + b.atk, hp: acc.hp + b.hp, def: acc.def + b.def };
             }, { atk: 0, hp: 0, def: 0 });
+            if (G.cls === "tamer") {
+                r.atk = Math.round(r.atk * 1.5);
+                r.hp = Math.round(r.hp * 1.5);
+                r.def = Math.round(r.def * 1.5);
+            } // 🐾 ผู้ฝึกสัตว์: บัฟจากสัตว์เลี้ยง ×1.5
+            return r;
+        };
+        // 🐾 พลังกัดของเพื่อนซี้ (ใช้คำนวณตีธรรมดาของผู้ฝึกสัตว์ในโลกกว้าง) — สูตรเดียวกับสัตว์เลี้ยงร่วมโจมตีในสนามรบ
+        G.tamerPetDmg = () => {
+            const pet = (G.petAt && G.buddy) ? G.petAt(G.buddy) : null;
+            if (!pet)
+                return 0;
+            let d = 3 + ((SPECIES[pet.sp] || {}).tier || 1) * 2 * (pet.stage || 1) + (pet.lv || 1) + (pet.plus || 0) * 3 + ((pet.iv || {}).a || 0);
+            if (G.mutMul && (pet.mut || 0))
+                d *= G.mutMul(pet.mut);
+            return d;
         };
         // 💪 base-stat allocation: each rank adds a flat bonus
         const bs = () => G.baseStats || { atk: 0, hp: 0, def: 0, crit: 0, luck: 0, mp: 0 };
@@ -44849,7 +45016,7 @@ function CherryAdventure() {
             }
         };
         // ================= 🖱️ END MOUSE MARKERS =================
-        const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 9.0 : 3.6;
+        const worldRange = () => (G.cls === "archer" || G.cls === "mage" || G.cls === "coder") ? 9.0 : G.cls === "tamer" ? 5.2 : 3.6; // 🐾 ผู้ฝึกสัตว์: เพื่อนซี้พุ่งไปกัดให้
         // ⚔️ จังหวะสวิงแบบอนิเมะ: นักรบ/ซามูไรได้ท่า 3 จังหวะ (ง้าง→ฟันเร็ว→ค้างโพส) เลยใช้เวลานานขึ้น
         const worldSwing = (isSkill) => {
             const slow = G.cls === "warrior" || G.cls === "samurai";
@@ -49388,6 +49555,13 @@ function CherryAdventure() {
                 spawnSkillFx("pierce", pos, col);
             else if (G.cls === "mage" || G.cls === "coder" || G.cls === "office")
                 fireShock(pos, col);
+            else if (G.cls === "tamer") { // 🐾 สั่งเพื่อนซี้พุ่งตะครุบ — ถ้าไม่มีสัตว์เลี้ยงคู่ใจ ผู้ฝึกฟาดแส้เอง
+                spawnSkillFx("punchwave", pos, col);
+                if (buddyMesh)
+                    buddyMesh.userData.lunge = { t: 0, sx: buddyMesh.position.x, sz: buddyMesh.position.z, tx: pos.x, tz: pos.z, dur: 0.42 };
+                else
+                    fireSlash(pos, col);
+            }
             else
                 fireSlash(pos, col);
         };
@@ -49420,10 +49594,12 @@ function CherryAdventure() {
             worldSwing();
             const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
             let dmg = (effAtk() + Math.random() * 4) * (crit ? G.critMul() : 1);
+            if (G.cls === "tamer")
+                dmg = dmg * 0.8 + (G.tamerPetDmg ? G.tamerPetDmg() : 0) * (crit ? G.critMul() : 1); // 🐾 เพื่อนซี้กัดแทน: พลังผู้ฝึก 80% + พลังสัตว์เลี้ยง
             if (m.userData.boss && talB("bossDmg"))
                 dmg *= 1 + talB("bossDmg") / 100; // 📜 ล่าบอส (โลกกว้าง)
             // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
-            if (worldRange() > 4) {
+            if (worldRange() > 4 && G.cls !== "tamer") { // 🐾 ผู้ฝึกสัตว์ระยะ 5.2 แต่ใช้ท่าประชิด (เพื่อนซี้พุ่งไปกัด)
                 spawnSkillFx(G.cls === "archer" ? "arrowpierce" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
             }
             else {
@@ -53069,6 +53245,13 @@ function CherryAdventure() {
                     enemyTurn(); }, 750);
                 return;
             }
+            if (kind === "attack" && G.cls === "tamer" && !G.heroId && buddyMesh && G.buddy) {
+                // 🐾 ผู้ฝึกสัตว์: ตีธรรมดา = สั่งเพื่อนซี้พุ่งโจมตี (แรงตามพลังโจมตีของผู้ฝึก + พลังสัตว์เลี้ยง)
+                G.banim = { type: "petAttack", t: 0, dur: 0.75, tamer: true };
+                const petI = G.petAt ? G.petAt(G.buddy) : null;
+                setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: `🐾 สั่ง${petI && SPECIES[petI.sp] ? SPECIES[petI.sp].name : "เพื่อนซี้"}โจมตี!` }));
+                return;
+            }
             if (kind === "attack") {
                 G.banim = { type: "playerAttack", t: 0, dur: G.heroId === "fenrir" ? 1.3 : G.heroId === "neko" ? 1.25 : G.heroId === "usagi" ? 1.35 : G.heroId === "ryujin" ? 1.4 : G.heroId === "ignis" ? 1.35 : G.heroId === "captain" ? 1.35 : G.heroId === "thunder" ? 1.4 : G.heroId === "yaksa" ? 1.4 : G.heroId === "luminia" ? 1.45 : G.heroId === "apsara" ? 1.5 : G.heroId === "asura" ? 1.45 : G.heroId === "hanuman" ? 1.6 : G.heroId === "garuda" ? 1.5 : G.heroId === "naki" ? 1.5 : G.heroId === "kinnaree" ? 1.45 : G.heroId === "mermaid" ? 1.5 : G.heroId === "lich" ? 1.55 : G.heroId === "kitsune" ? 1.5 : G.heroId === "phoenix" ? 1.65 : G.cls === "warrior" ? 0.85 : 0.65, mult: 1, basic: true };
                 const atkMsg = G.heroId === "fenrir" ? "เชอร์รี่พุ่งตะครุบ! กรงเล็บหมาป่าฟาดไขว้ 🐺" : G.heroId === "neko" ? "เชอร์รี่ตบแมวรัวสามจังหวะ! 🐱🐾" : G.heroId === "usagi" ? "เชอร์รี่เผ่นฟ้า! ค้อนแครอทถล่มลงมา 🐰🥕" : G.heroId === "ryujin" ? "เชอร์รี่พ่นลมหายใจมังกรเพลิง! 🐉🔥" : G.heroId === "ignis" ? "เชอร์รี่ลอยตัวระดมยิงลำแสงฝ่ามือ! 🤖✨" : G.heroId === "captain" ? "เชอร์รี่ขว้างโล่เพชรสะท้อนสองเด้ง! 🛡️" : G.heroId === "thunder" ? "เชอร์รี่เรียกสายฟ้าฟาด ปิดท้ายขว้างค้อนพายุ! ⚡🔨" : G.heroId === "yaksa" ? "เชอร์รี่กระทืบสะเทือนดิน! กระบองยักษ์ถล่มปฐพีสองจังหวะ 👹" : G.heroId === "luminia" ? "เชอร์รี่ร่ายระบำเถาวัลย์ต้องมนตร์! 🧝‍♀️🌸" : G.heroId === "apsara" ? "เชอร์รี่เรียกลำแสงสวรรค์ปลิดบาป! 👼✨" : G.heroId === "asura" ? "เชอร์รี่ปลดผนึกอสูร! ขวากนรกทลายวิญญาณ 😈🔥" : G.heroId === "hanuman" ? "เชอร์รี่หาวเป็นดาวเป็นเดือน! ร่างใหญ่ฟาดตรีเพชร 🐒⭐" : G.heroId === "garuda" ? "เชอร์รี่โฉบพญาครุฑ! กรงเล็บฉีกลมพายุ 🦅💨" : G.heroId === "naki" ? "เชอร์รี่พ่นพิษนาคี! เจ็ดเศียรผุดจากบาดาล 🐍💧" : G.heroId === "kinnaree" ? "เชอร์รี่ร่ายระบำกินรี! ขนหงส์คมปลิวเป็นวง 🕊️🌸" : G.heroId === "mermaid" ? "เชอร์รี่เรียกวังวนบาดาล! ไตรศูลซัดคลื่นยักษ์ 🧜‍♀️🌊" : G.heroId === "lich" ? "เชอร์รี่เรียกกองทัพกระดูก! วิญญาณผุดจากปฐพี 💀👻" : G.heroId === "kitsune" ? "เชอร์รี่สะบัดเก้าหาง! ไฟจิ้งจอกเก้าดวงพุ่งพร้อมกัน 🦊🔥" : G.heroId === "phoenix" ? "เชอร์รี่เผาตัวเองแล้วเกิดใหม่! ระเบิดเพลิงกลางสนาม 🔥🐦‍🔥" : G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
@@ -54095,7 +54278,7 @@ function CherryAdventure() {
             G.petSkillLv = {};
             G.ngPlus = 0;
             G.storyChapter = 0;
-            const starter = { warrior: "st_w", archer: "st_a", mage: "st_m", assassin: "st_s", lancer: "st_l", samurai: "st_k", office: "st_o", coder: "st_c", aegis: "st_x", boxer: "st_b" }[G.cls];
+            const starter = { warrior: "st_w", archer: "st_a", mage: "st_m", assassin: "st_s", lancer: "st_l", samurai: "st_k", office: "st_o", coder: "st_c", aegis: "st_x", boxer: "st_b", tamer: "st_t" }[G.cls];
             G.inv = [starter];
             G.equip.weapon = starter; // 🗡️ starting weapon of your class
             G.setWeaponVisual(starter);
@@ -55337,7 +55520,7 @@ function CherryAdventure() {
             try {
                 let wm = info.w && weaponModels[info.w];
                 if (!wm) {
-                    const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c];
+                    const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb", tamer: "ct" }[info.c];
                     wm = (dflt && weaponModels[dflt]) || weaponModels.default;
                 }
                 if (wm) {
@@ -55919,7 +56102,7 @@ function CherryAdventure() {
                     const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW" }; // ⚔️ ฮีโร่ที่มีอาวุธประจำตัวถืออาวุธนั้น · ที่เหลือถืออาวุธตามอาชีพ/ของที่สวมจริง
                     let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : (info.w && weaponModels[info.w] ? info.w : null); // 🦸 signature weapon overrides the equipped one, exactly like setWeaponVisual
                     if (!wid) {
-                        const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb" }[info.c];
+                        const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb", tamer: "ct" }[info.c];
                         wid = (dflt && weaponModels[dflt]) ? dflt : "default";
                     }
                     const wm = weaponModels[wid] || weaponModels.default;
@@ -65028,8 +65211,19 @@ function CherryAdventure() {
                     if (buddyMesh) {
                         const fd = buddyMesh.userData.followDist || 2.1; // 🐾 ระยะยืนห่าง (ตัวใหญ่ยิ่งห่าง)
                         const behind = new THREE.Vector3(char.position.x - Math.sin(char.rotation.y) * fd, 0, char.position.z - Math.cos(char.rotation.y) * fd);
-                        buddyMesh.position.x += (behind.x - buddyMesh.position.x) * Math.min(1, dt * 4);
-                        buddyMesh.position.z += (behind.z - buddyMesh.position.z) * Math.min(1, dt * 4);
+                        const LG = buddyMesh.userData.lunge; // 🐾 ผู้ฝึกสัตว์สั่งโจมตี: พุ่งไปหาเป้าแล้วเด้งกลับ (ไม่เดินตามระหว่างนี้)
+                        if (LG) {
+                            LG.t += dt;
+                            const k = Math.sin(Math.min(1, LG.t / LG.dur) * Math.PI);
+                            buddyMesh.position.x = LG.sx + (LG.tx - LG.sx) * k * 0.85;
+                            buddyMesh.position.z = LG.sz + (LG.tz - LG.sz) * k * 0.85;
+                            if (LG.t >= LG.dur)
+                                buddyMesh.userData.lunge = null;
+                        }
+                        else {
+                            buddyMesh.position.x += (behind.x - buddyMesh.position.x) * Math.min(1, dt * 4);
+                            buddyMesh.position.z += (behind.z - buddyMesh.position.z) * Math.min(1, dt * 4);
+                        }
                         buddyMesh.position.y = terrainAt(buddyMesh.position.x, buddyMesh.position.z) - (G._gy || 0); // 🐾 เกาะพื้นตามภูมิประเทศ
                         const bd = Math.atan2(char.position.x - buddyMesh.position.x, char.position.z - buddyMesh.position.z);
                         let bdd = bd - buddyMesh.rotation.y;
@@ -77387,15 +77581,49 @@ function CherryAdventure() {
                                     dmg *= G.mutMul(pet.mut); // 🧬 กลายพันธุ์เพิ่มดาเมจ
                                 if (weak)
                                     dmg *= 1.5;
+                                let tCrit = false;
+                                if (A.tamer) {
+                                    // 🐾 ผู้ฝึกสัตว์: เพื่อนซี้ตีแทน — บวกพลังโจมตีของผู้ฝึก 90% · คริตามค่าคริ · ตำราวิชาตีแรก/ประหาร/ล่าบอสใช้ได้
+                                    dmg += effAtk() * 0.9;
+                                    if (G.talents) {
+                                        const fs = talB("firstStrike");
+                                        if (fs && G.enemy.hp >= G.enemy.maxHp)
+                                            dmg *= 1 + fs / 100;
+                                        const ex = talB("execute");
+                                        if (ex && G.enemy.hp < G.enemy.maxHp * 0.3)
+                                            dmg *= 1 + ex / 100;
+                                        const bd = talB("bossDmg");
+                                        if (bd && G.enemy.boss)
+                                            dmg *= 1 + bd / 100;
+                                    }
+                                    if (Math.random() < 0.05 + effCrit() / 100) {
+                                        tCrit = true;
+                                        dmg *= G.critMul();
+                                        G.achStats.crits = (G.achStats.crits || 0) + 1;
+                                    }
+                                }
                                 dmg = Math.round(dmg);
                                 let petNote = weak ? " โดนจุดอ่อน!! 💢" : "";
+                                if (tCrit)
+                                    petNote += " 🎯 คริติคอล!!";
                                 {
                                     const d2 = enemyDefend(dmg);
                                     dmg = d2.dmg;
                                     petNote += d2.note;
                                 }
                                 G.enemy.hp = Math.max(0, G.enemy.hp - dmg);
-                                popDamage(em.position, dmg, weak ? "weak" : "hit"); // 💢 pet damage number
+                                if (A.tamer && dmg > 0) {
+                                    const ls = talB("lifesteal");
+                                    if (ls)
+                                        G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.max(1, Math.round(dmg * ls / 100)));
+                                    if (G._impact)
+                                        G._impact({ x: em.position.x, z: em.position.z }, { x: em.position.x - char.position.x, z: em.position.z - char.position.z }, { crit: tCrit, y: em.position.y + 0.9, color: tCrit ? 0xffd24a : 0xa8e07a });
+                                    G._hitStop = Math.max(G._hitStop || 0, tCrit ? 0.12 : 0.07);
+                                    spawnSkillFx("punchwave", em.position, 0x8ad06a);
+                                    if (G.chargeTf)
+                                        G.chargeTf(6);
+                                }
+                                popDamage(em.position, dmg, tCrit ? "crit" : weak ? "weak" : "hit"); // 💢 pet damage number
                                 burst(em.position, (ELEMENTS[elem] || { color: 0xc0a0f5 }).color, 0.6);
                                 setUi((u) => ({
                                     ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp },
@@ -77654,7 +77882,7 @@ function CherryAdventure() {
                                 ball.visible = false;
                                 const sp = SPECIES[G.enemy.spId];
                                 const baseCatch = G.enemy.golden ? 0.6 : G.enemy.boss ? 0.05 : G.enemy.ghost ? 0.1 : sp.catch; // 🌟 golden = easy, 👻/👑 = hard
-                                const chance = Math.min(0.95, baseCatch + (1 - G.enemy.hp / G.enemy.maxHp) * (G.enemy.boss ? 0.15 : 0.55) + effLuck() * 0.01); // 🍀 luck helps
+                                const chance = Math.min(0.95, baseCatch + (1 - G.enemy.hp / G.enemy.maxHp) * (G.enemy.boss ? 0.15 : 0.55) + effLuck() * 0.01 + (G.cls === "tamer" ? 0.15 : 0)); // 🍀 luck helps · 🐾 ผู้ฝึกสัตว์จับง่ายขึ้น
                                 if (Math.random() < chance) {
                                     // caught!
                                     burst(em.position, 0xf06a8a);
