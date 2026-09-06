@@ -2,7 +2,7 @@
 -- วิธีใช้: Supabase Dashboard → SQL Editor → New query → วางทั้งไฟล์ → Run
 -- รันซ้ำได้ปลอดภัย: ตาราง = create if not exists · นโยบาย = drop แล้วสร้างใหม่
 -- ครอบคลุม: players · saves · messages · friends · duels · boss_raids ·
---            market · contest · party_member · homes · guilds · guild_members
+--            market · contest · party_member · homes · guilds · guild_members · boss_rush · tower_rush
 
 -- เซฟเต็ม (ผูกกับบัญชีผู้ใช้ Auth)
 create table if not exists public.saves (
@@ -372,3 +372,22 @@ create policy "rush insert" on public.boss_rush for insert with check (true);
 drop policy if exists "rush update" on public.boss_rush;
 create policy "rush update" on public.boss_rush for update using (true) with check (true);
 create index if not exists boss_rush_week_ms on public.boss_rush (week, ms);
+
+-- 🎲 tower_rush : กระดานอันดับหอคอยท้าทายรายสัปดาห์ (ชั้นมากสุดชนะ · เวลาน้อยสุดเป็นตัวตัดสิน)
+create table if not exists public.tower_rush (
+  pid  text not null,          -- ID ผู้เล่น
+  week text not null,          -- สัปดาห์ (YYYY-Wnn)
+  n    text,                   -- ชื่อผู้เล่น
+  fl   int  not null,          -- จำนวนชั้นที่ผ่าน
+  ms   bigint not null,        -- เวลาที่ใช้ (มิลลิวินาที)
+  ts   bigint,
+  primary key (pid, week)
+);
+alter table public.tower_rush enable row level security;
+drop policy if exists "tower read" on public.tower_rush;
+create policy "tower read"   on public.tower_rush for select using (true);
+drop policy if exists "tower insert" on public.tower_rush;
+create policy "tower insert" on public.tower_rush for insert with check (true);
+drop policy if exists "tower update" on public.tower_rush;
+create policy "tower update" on public.tower_rush for update using (true) with check (true);
+create index if not exists tower_rush_week_fl on public.tower_rush (week, fl desc, ms);

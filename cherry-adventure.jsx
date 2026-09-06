@@ -2143,6 +2143,30 @@ const rushWeek = () => {
   const wk = Math.ceil(((t - y0) / 86400000 + 1) / 7);
   return `${t.getUTCFullYear()}-W${String(wk).padStart(2, "0")}`;
 };
+// 🎲 หอคอยท้าทายรายสัปดาห์ (roguelike) — สุ่มแบบมี seed: ทุกคนเจอชั้นเดียวกันทั้งสัปดาห์ → อันดับเทียบกันได้จริง
+const seedRng = (str) => {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  let a = (h >>> 0) || 1;
+  return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+};
+// 🎁 พรประจำรอบ — เลือก 1 จาก 3 ทุก 3 ชั้น · ซ้อนได้ · หายเมื่อจบรอบ (ไม่ใช่แค่ +% ทั่วไป: มีเงื่อนไข/การแลกเปลี่ยน)
+const ROGUE_BUFFS = [
+  { id: "atk",    emoji: "💪", name: "พละกำลัง",      desc: "พลังโจมตี +18%",                                   b: { atkPct: 18 } },
+  { id: "leech",  emoji: "🩸", name: "ดาบดูดเลือด",   desc: "ฟื้น HP 10% ของดาเมจที่ทำได้ ทุกครั้งที่ตี",         b: { leech: 10 } },
+  { id: "stone",  emoji: "🪨", name: "ผิวหิน",        desc: "รับดาเมจลดลง 12% และป้องกัน +6",                    b: { dmgCut: 12, def: 6 } },
+  { id: "eye",    emoji: "🎯", name: "ตาเหยี่ยว",     desc: "โอกาสคริติคอล +15%",                               b: { crit: 15 } },
+  { id: "brutal", emoji: "💥", name: "คริโหด",        desc: "ดาเมจคริติคอล +45%",                              b: { critDmg: 45 } },
+  { id: "vital",  emoji: "❤️", name: "เลือดหนา",      desc: "HP สูงสุด +25% และฟื้น HP 30% ทันที",                b: { hpPct: 25 }, heal: 0.3 },
+  { id: "open",   emoji: "⚡", name: "เปิดฉากสายฟ้า", desc: "การตีครั้งแรกของทุกชั้น แรง ×2 (ซ้อน +50%)",         b: { open: 1 } },
+  { id: "regen",  emoji: "🌿", name: "ลมหายใจป่า",    desc: "ผ่านชั้นแล้วฟื้น HP 20% ทุกชั้น",                    b: { regen: 20 } },
+  { id: "eva",    emoji: "💨", name: "เท้าเบา",       desc: "โอกาสหลบ +12%",                                    b: { eva: 12 } },
+  { id: "fire",   emoji: "🔥", name: "คมดาบลุกไฟ",    desc: "ทุกการตีจุดไฟเผาศัตรู 4 เทิร์น",                     b: { burn: 4 } },
+  { id: "gold",   emoji: "💰", name: "โชคลาภ",        desc: "ทองจากทุกชั้น ×2",                                 b: { gold: 100 } },
+  { id: "glass",  emoji: "🪞", name: "ดาบแก้ว",       desc: "พลังโจมตี +40% แต่ HP สูงสุด −20% (กล้าได้กล้าเสีย)", b: { atkPct: 40, hpPct: -20 } },
+  { id: "potion", emoji: "🧪", name: "ยาวิเศษ",       desc: "ฟื้น HP เต็มทันที (ครั้งเดียว ไม่ซ้อน)",                b: {}, heal: 1 },
+  { id: "thorn",  emoji: "🌵", name: "เกราะหนาม",     desc: "โดนตีแล้วสะท้อนกลับ 35% ของดาเมจที่รับ",             b: { thorn: 35 } },
+];
 const rushTimeText = (ms) => {
   if (ms == null) return "-";
   const s2 = Math.floor(ms / 1000), m = Math.floor(s2 / 60);
@@ -2789,7 +2813,7 @@ export default function CherryAdventure() {
     custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, itemLock: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
-    eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, quests: [], questOpen: false,
+    eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
     mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
     kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null, skillBoardOpen: false, boardPick: null, boardTick: 0, roadNear: null,
     expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
@@ -18702,17 +18726,31 @@ export default function CherryAdventure() {
     const dungeonSpawn = (floor) => {
       const bossFloor = floor % 10 === 0; // 👑 boss every 10 floors
       const midBoss = floor % 5 === 0 && !bossFloor;
-      // deeper floors pull from tougher species
-      const easyPool = ["mochi", "baibua", "mekha", "plerng", "nam"];
-      const midPool = ["khiao", "ngu", "paksi", "plerng", "kirara"];
-      const hardPool = ["saming", "paksi", "phi", "garuda", "kirara"];
-      const pool = floor >= 60 ? hardPool : floor >= 25 ? midPool : easyPool;
-      const bossPool = floor >= 50 ? ["garuda", "saming"] : ["saming", "phi", "kirara"];
-      const spId = (bossFloor ? bossPool : pool)[Math.floor(Math.random() * (bossFloor ? bossPool : pool).length)];
+      const rogue = !!(G.dungeon && G.dungeon.rogue);
+      let spId;
+      if (rogue) {
+        // 🎲 โหมดท้าทาย: สุ่มจากมอนสเตอร์ "ทุกสายพันธุ์" ตามระดับความลึก ด้วย seed ประจำสัปดาห์ (ทุกคนเจอลำดับเดียวกัน)
+        const rng = seedRng(`${G.dungeon.seed}:${floor}`);
+        const all = Object.keys(SPECIES).filter((k) => SPECIES[k] && SPECIES[k].tier && k !== "chickpet" && !SPECIES[k].secret);
+        const maxTier = floor >= 70 ? 5 : floor >= 45 ? 4 : floor >= 20 ? 3 : floor >= 8 ? 2 : 1;
+        const minTier = floor >= 60 ? 3 : floor >= 30 ? 2 : 1;
+        let pool = all.filter((k) => SPECIES[k].tier >= (bossFloor ? Math.max(3, minTier) : minTier) && SPECIES[k].tier <= (bossFloor ? 5 : maxTier));
+        if (!pool.length) pool = all;
+        spId = pool[Math.floor(rng() * pool.length)];
+        G.dungeon.openUsed = false;   // ⚡ พร "เปิดฉาก" ใช้ได้ใหม่ทุกชั้น
+      } else {
+        // deeper floors pull from tougher species
+        const easyPool = ["mochi", "baibua", "mekha", "plerng", "nam"];
+        const midPool = ["khiao", "ngu", "paksi", "plerng", "kirara"];
+        const hardPool = ["saming", "paksi", "phi", "garuda", "kirara"];
+        const pool = floor >= 60 ? hardPool : floor >= 25 ? midPool : easyPool;
+        const bossPool = floor >= 50 ? ["garuda", "saming"] : ["saming", "phi", "kirara"];
+        spId = (bossFloor ? bossPool : pool)[Math.floor(Math.random() * (bossFloor ? bossPool : pool).length)];
+      }
       const stage = bossFloor ? 3 : midBoss ? 2 : 1;
       const m = buildMonster(spId, stage);
       if (bossFloor) m.scale.multiplyScalar(1.5);
-      m.userData.lv = G.player.level + floor;
+      m.userData.lv = G.player.level + (rogue ? Math.round(floor * 1.3) : floor);   // 🎲 โหมดท้าทายโหดกว่า 30% (มีพรช่วย)
       m.userData.boss = bossFloor;
       m.userData.dungeon = true;
       applyMenace(m);
@@ -18736,6 +18774,82 @@ export default function CherryAdventure() {
     G.declineDungeon = () => {
       G.portalShy = true;
       setUi((u) => ({ ...u, dungeonAsk: false }));
+    };
+    // ===== 🎲 หอคอยท้าทายรายสัปดาห์ (roguelike) =====
+    //   · ชั้นสุ่มด้วย seed ประจำสัปดาห์ · ทุก 3 ชั้นเลือกพร 1 จาก 3 · ตาย/ออก = จบรอบ ไม่มีเล่นต่อ
+    //   · ส่งจำนวนชั้น + เวลา ขึ้นตาราง tower_rush (ชั้นมากสุดชนะ เวลาเป็นตัวตัดสิน)
+    G.rogueBest = G.rogueBest || {};
+    try { const v = window.localStorage.getItem("cherry-rogue-best"); if (v) G.rogueBest = JSON.parse(v) || {}; } catch (_) {}
+    G.rgB = (k) => (G.dungeon && G.dungeon.rogue && G.dungeon.rb && G.dungeon.rb[k]) || 0;
+    G.syncRogueUi = () => setUi((u) => ({ ...u, rogueOn: !!(G.dungeon && G.dungeon.rogue), rogueBuffs: G.dungeon && G.dungeon.rogue ? G.dungeon.picks.slice() : [] }));
+    G.enterRogue = () => {
+      if (G.dungeon || G.mode !== "explore") return;
+      const week = rushWeek();
+      G.dungeon = { floor: 1, rogue: true, seed: week, week, rb: {}, picks: [], start: Date.now(), cleared: 0, gold: 0 };
+      G.player.hp = G.effMaxHp ? G.effMaxHp() : G.player.hp;   // เริ่มรอบด้วยเลือดเต็ม
+      dungeonCenter.set(char.position.x, 0, char.position.z);
+      setUi((u) => ({ ...u, dungeonAsk: false, rogueChoice: null, rogueResult: null }));
+      G.syncRogueUi();
+      toast(`🎲 หอคอยท้าทายสัปดาห์ ${week} เริ่ม! ทุก 3 ชั้นได้เลือกพร · แพ้คือจบรอบ`);
+      dungeonSpawn(1);
+    };
+    // 🎁 เสนอพร 3 อย่าง (สุ่มด้วย seed ประจำสัปดาห์+ชั้น → ทุกคนได้ตัวเลือกชุดเดียวกัน แต่เลือกต่างกันได้)
+    G.rogueOffer = () => {
+      if (!G.dungeon || !G.dungeon.rogue) return;
+      const rng = seedRng(`${G.dungeon.seed}:offer:${G.dungeon.floor}`);
+      const pool = ROGUE_BUFFS.filter((b) => !(b.id === "potion" && G.dungeon.picks.includes("potion")));
+      const offer = [];
+      while (offer.length < 3 && pool.length) { const i = Math.floor(rng() * pool.length); offer.push(pool.splice(i, 1)[0]); }
+      G._rogueOffer = offer;
+      setUi((u) => ({ ...u, rogueChoice: offer.map((b) => ({ id: b.id, emoji: b.emoji, name: b.name, desc: b.desc })) }));
+    };
+    G.roguePick = (i) => {
+      const b = G._rogueOffer && G._rogueOffer[i];
+      if (!b || !G.dungeon || !G.dungeon.rogue) return;
+      G._rogueOffer = null;
+      G.dungeon.picks.push(b.id);
+      Object.entries(b.b || {}).forEach(([k, v]) => { G.dungeon.rb[k] = (G.dungeon.rb[k] || 0) + v; });
+      const mx = G.effMaxHp ? G.effMaxHp() : G.player.maxHp;
+      if (b.heal) G.player.hp = Math.min(mx, G.player.hp + Math.round(mx * b.heal));
+      G.player.hp = Math.min(G.player.hp, mx);   // 🪞 ดาบแก้วลด HP สูงสุด → ตัดให้ไม่เกิน
+      toast(`${b.emoji} รับพร "${b.name}"!`);
+      setUi((u) => ({ ...u, rogueChoice: null }));
+      G.syncRogueUi();
+      G.dungeon.floor++;
+      dungeonSpawn(G.dungeon.floor);
+    };
+    // 🏁 จบรอบ (ตาย/ออกเอง/พิชิตครบ) — บันทึกสถิติ + ส่งขึ้นกระดาน + โชว์ผล
+    G.rogueEnd = (reason) => {
+      const D = G.dungeon;
+      if (!D || !D.rogue || D.ended) return;
+      D.ended = true;
+      const fl = D.cleared || 0, ms = Date.now() - D.start;
+      const prev = G.rogueBest[D.week];
+      const better = !prev || fl > prev.fl || (fl === prev.fl && ms < prev.ms);
+      if (better && fl > 0) { G.rogueBest[D.week] = { fl, ms }; try { window.localStorage.setItem("cherry-rogue-best", JSON.stringify(G.rogueBest)); } catch (_) {} }
+      if (fl > 0) { G.achStats.rogueFl = Math.max(G.achStats.rogueFl || 0, fl); }
+      const gold = D.gold || 0;
+      toast(reason === "clear" ? `🏆🎲 พิชิตหอคอยท้าทายครบ ${fl} ชั้น!! ⏱️ ${rushTimeText(ms)}` : `🎲 รอบนี้ไปได้ ${fl} ชั้น ⏱️ ${rushTimeText(ms)} · ทอง +${gold.toLocaleString()}`);
+      setUi((u) => ({ ...u, rogueChoice: null, rogueOn: false, rogueBuffs: [], rogueResult: { fl, ms, reason, picks: D.picks.slice(), record: better && fl > 0, week: D.week, gold } }));
+      (async () => {
+        try { if (G.net && G.net.enabled() && G.pid && fl > 0 && better) await G.net.towerSubmit(G.pid, G.playerName || "ผู้เล่น", fl, ms, D.week); } catch (_) {}
+        G.rogueBoardLoad();
+      })();
+      setTimeout(() => { try { if (G.effMaxHp) G.player.hp = Math.min(G.player.hp, G.effMaxHp()); } catch (_) {} }, 0);   // 🩸 พรหมดแล้ว HP ต้องไม่ค้างเกินเพดาน
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.rogueBoardLoad = async () => {
+      setUi((u) => ({ ...u, rogueBoard: null, rogueBoardErr: null }));
+      try {
+        if (!G.net || !G.net.enabled()) { setUi((u) => ({ ...u, rogueBoard: [], rogueBoardErr: "offline" })); return; }
+        const rows = await G.net.towerBoard(rushWeek());
+        setUi((u) => ({ ...u, rogueBoard: rows || [], rogueBoardErr: rows ? null : "nocol" }));
+      } catch (e) { setUi((u) => ({ ...u, rogueBoard: [], rogueBoardErr: "nocol" })); }
+    };
+    G.rogueBoardOpen = () => {
+      const w = rushWeek(), best = G.rogueBest[w];
+      setUi((u) => ({ ...u, dungeonAsk: false, rogueResult: { boardOnly: true, week: w, fl: best ? best.fl : 0, ms: best ? best.ms : 0, picks: [] } }));
+      G.rogueBoardLoad();
     };
     G.closeWarp = () => {
       G._warpByScroll = false;   // 📜 ปิดหน้าต่างเฉย ๆ ไม่เสียใบวาร์ป
@@ -20801,12 +20915,14 @@ export default function CherryAdventure() {
       if (G.enemy && G.enemy.mesh) { scene.remove(G.enemy.mesh); (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh)); }
       G.enemy = null;
       G.banim = null;
+      const wasRogue = !!(G.dungeon && G.dungeon.rogue);
+      if (wasRogue) G.rogueEnd("quit");
       G.dungeon = null;
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
       char.position.set(-5, 0, 6.5); // near the portal
-      toast(`🚪 ออกจากหอคอย · บันทึกความคืบหน้าถึงชั้น ${G.dungeonProgress || 1} แล้ว`);
-      setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, enemy: null, msg: "" }));
+      if (!wasRogue) toast(`🚪 ออกจากหอคอย · บันทึกความคืบหน้าถึงชั้น ${G.dungeonProgress || 1} แล้ว`);
+      setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, enemy: null, msg: "", rogueChoice: null }));
       saveGame && saveGame();
     };
 
@@ -23974,25 +24090,32 @@ export default function CherryAdventure() {
     const xMul = (k) => G.tfActive ? (({ atk: 1.6, def: 1.4 })[k] || 1) : 1;
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
-    const effAtk = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk * GEAR_ATK_W + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
-    const effDef = () => num(Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * xMul("def") * (1 + softPct(tB("def") + constBonus().defPct + sB("defPct") + (G.foodB ? G.foodB("defPct") : 0)) / 100))); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
-    const effMaxHp = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0) + (G.brewB ? G.brewB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+    const rgB = (k) => (G.rgB ? G.rgB(k) : 0);   // 🎲 พรประจำรอบหอคอยท้าทาย (0 นอกโหมด)
+    const effAtk0 = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk * GEAR_ATK_W + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
+    const effDef0 = () => num(Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * xMul("def") * (1 + softPct(tB("def") + constBonus().defPct + sB("defPct") + (G.foodB ? G.foodB("defPct") : 0)) / 100))); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
+    const effMaxHp0 = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0) + (G.brewB ? G.brewB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
+    const effAtk = () => Math.round(effAtk0() * (1 + rgB("atkPct") / 100));
+    const effDef = () => effDef0() + rgB("def");
+    const effMaxHp = () => Math.max(1, Math.round(effMaxHp0() * (1 + Math.max(-60, rgB("hpPct")) / 100)));
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => Math.round((30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp")) * (1 + (G.brewB ? G.brewB("mpPct") : 0) / 100));   // 🌿 ยาบำรุงมานาคูณเป็น % ท้ายสุด // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     G.effMaxMp = effMaxMp; // 🔮 คู่กับ effMaxHp — ให้ส่วนอื่นอ่านมานาสูงสุดที่รวมบัฟแล้วได้
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1) * (G.qingSpd ? G.qingSpd() : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
-    const effEva = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
+    const effEva0 = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
+    const effEva = () => effEva0() + rgB("eva");
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => Math.min(CRIT_CAP, critRaw());   // 🎯 เกิน 75% แล้วไปเพิ่มดาเมจคริแทน (ไม่ทิ้งเปล่า) // 🎯 crit · 🍳 บัฟอาหาร · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
     // 🎯 คริดิบ (ก่อนตัดเพดาน) — เอาไว้คำนวณส่วนเกินที่แปลงเป็นดาเมจคริ
     // 🛟 กันค่าเพี้ยน (เซฟเก่า/ของที่ข้อมูลไม่ครบ) ไม่ให้ NaN ลามไปทั้งสูตร แล้วสถานะกลายเป็นว่าง
     const num = (v) => (Number.isFinite(v) ? v : 0);
-    const critRaw = () => num( (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0) + (G.foodB ? G.foodB("crit") : 0));
+    const critRaw0 = () => num( (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0) + (G.foodB ? G.foodB("crit") : 0));
+    const critRaw = () => critRaw0() + rgB("crit");
     // 💥 ดาเมจคริรวม (%) — พื้นฐาน 100 (=×2) + ของที่เพิ่มดาเมจคริ + คริส่วนที่เกินเพดาน
-    const effCritDmg = () => Math.min(CRIT_DMG_CAP, CRIT_DMG_BASE
+    const effCritDmg0 = () => Math.min(CRIT_DMG_CAP, CRIT_DMG_BASE
       + num(accBonus().critDmg) + num(constBonus().critDmg) + num(masteryBonus().critDmg) + num(tB("critDmg")) + num(sB("critDmg"))
       + num(curPath() && curPath().critDmg)
       + Math.max(0, critRaw() - CRIT_CAP) * CRIT_OVER_TO_DMG);
+    const effCritDmg = () => Math.min(CRIT_DMG_CAP, effCritDmg0() + rgB("critDmg"));
     G.effCritDmg = effCritDmg;
     G.critMul = () => 1 + effCritDmg() / 100;
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck") + (G.foodB ? G.foodB("luck") : 0); // 🍀 luck · 🍳 บัฟอาหาร: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
@@ -27345,6 +27468,7 @@ export default function CherryAdventure() {
           if (mm2.userData.golden) toast("💨 มอนสเตอร์ทองฉวยโอกาสหนีไป!");
           if (mm2.userData.ghost) ghostMesh = null;
           if (G.dungeon) {
+            if (G.dungeon.rogue) G.rogueEnd("flee");
             G.dungeon = null;
             setUi((u) => ({ ...u, dungeonFloor: 0 }));
             toast("🗼 ออกจากหอคอยมิติแล้ว");
@@ -33983,10 +34107,15 @@ export default function CherryAdventure() {
       // 🗼 dungeon: chain to the next floor instead of leaving battle
       if (G.dungeon) {
         const fl = G.dungeon.floor;
-        const dGold = 15 * fl;
+        const rogue = !!G.dungeon.rogue;
+        const dGold = Math.round(15 * fl * (rogue ? 1.5 : 1) * (1 + (G.rgB ? G.rgB("gold") : 0) / 100));
         G.gold += dGold;
-        // 💾 remember the deepest floor we've cleared → resume at next
-        G.dungeonProgress = Math.max(G.dungeonProgress || 1, fl + 1);
+        if (rogue) {
+          G.dungeon.cleared = fl; G.dungeon.gold = (G.dungeon.gold || 0) + dGold;
+          const rg = G.rgB("regen"); if (rg) { const mx = effMaxHp(); G.player.hp = Math.min(mx, G.player.hp + Math.round(mx * rg / 100)); }   // 🌿 ฟื้นหลังผ่านชั้น
+        }
+        // 💾 remember the deepest floor we've cleared → resume at next (โหมดท้าทายไม่จำด่าน — ตายคือเริ่มใหม่)
+        if (!rogue) G.dungeonProgress = Math.max(G.dungeonProgress || 1, fl + 1);
         questProgress("floor", 1); // 📜
         if (G.storyEvent) G.storyEvent("tower"); // 📖
         G.achStats.floor = Math.max(G.achStats.floor || 0, fl);
@@ -34005,6 +34134,16 @@ export default function CherryAdventure() {
         syncPlayer();
         setTimeout(() => {
           if (!G.dungeon || G.mode !== "battle") return;
+          if (G.dungeon.rogue && fl >= DUNGEON_MAX) {
+            G.gold += 5000; toast("🏆🎲 พิชิตหอคอยท้าทายครบ 100 ชั้น!! +5000💰");
+            G.rogueEnd("clear");
+            G.dungeon = null;
+            setUi((u) => ({ ...u, dungeonFloor: 0 }));
+            endBattle(false);
+            syncPlayer();
+            return;
+          }
+          if (G.dungeon.rogue && fl % 3 === 0) { G.rogueOffer(); return; }   // 🎁 ทุก 3 ชั้น: เลือกพรก่อนไปชั้นถัดไป
           if (fl >= DUNGEON_MAX) {
             // 🏆 conquered all 100 floors!
             G.gold += 3000;
@@ -35086,6 +35225,26 @@ export default function CherryAdventure() {
         if (!this.enabled() || !week) return null;
         try {
           const res = await fetch(this._url(`boss_rush?week=eq.${encodeURIComponent(week)}&select=pid,n,ms&order=ms.asc&limit=20`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      // 🎲 กระดานหอคอยท้าทายรายสัปดาห์ — ตาราง tower_rush (ชั้นมากสุดชนะ · เวลาเป็นตัวตัดสิน)
+      async towerSubmit(pid, name, fl, ms, week) {
+        if (!this.enabled() || !pid || !fl || !week) return false;
+        try {
+          const res = await fetch(this._url("tower_rush?on_conflict=pid,week"), {
+            method: "POST",
+            headers: this._headers({ Prefer: "resolution=merge-duplicates,return=minimal" }),
+            body: JSON.stringify({ pid, n: name || "ผู้เล่น", fl: Math.round(fl), ms: Math.round(ms || 0), week, ts: Date.now() }),
+          });
+          return res.ok;
+        } catch (e) { return false; }
+      },
+      async towerBoard(week) {
+        if (!this.enabled() || !week) return null;
+        try {
+          const res = await fetch(this._url(`tower_rush?week=eq.${encodeURIComponent(week)}&select=pid,n,fl,ms&order=fl.desc,ms.asc&limit=20`), { headers: this._headers() });
           if (!res.ok) return null;
           return await res.json();
         } catch (e) { return null; }
@@ -46755,6 +46914,15 @@ export default function CherryAdventure() {
               // 🎲 enemy may dodge/block/guard — pierce skills bypass block/guard
               if (A.pierce) { fxMsg += " เจาะทะลุ! 🎯"; }
               else { const d2 = enemyDefend(dmg); dmg = d2.dmg; fxMsg += d2.note; }
+              // 🎲 พรหอคอยท้าทาย: เปิดฉาก / ดูดเลือด / ไฟลุก
+              if (G.dungeon && G.dungeon.rogue) {
+                const op = rgB("open");
+                if (op && !G.dungeon.openUsed) { G.dungeon.openUsed = true; dmg = Math.round(dmg * (1.5 + op * 0.5)); fxMsg += " ⚡ เปิดฉาก!"; }
+                const lc = rgB("leech");
+                if (lc) { const hl = Math.round(dmg * lc / 100); if (hl > 0) { G.player.hp = Math.min(effMaxHp(), G.player.hp + hl); popDamage(char.position, hl, "heal"); } }
+                const bn = rgB("burn");
+                if (bn) { G.est.burn = Math.max(G.est.burn || 0, bn); fxMsg += " 🔥"; }
+              }
               G.enemy.hp = Math.max(0, G.enemy.hp - dmg);
               // 💢 floating number over the monster's head
               popDamage(em.position, dmg, didCrit ? "crit" : weakHit ? "weak" : "hit");
@@ -49465,6 +49633,11 @@ export default function CherryAdventure() {
                   blocked = true;
                   dmg = Math.max(1, Math.round(dmg * 0.35)); // block soaks 65% of the blow
                 }
+                // 🎲 พรหอคอยท้าทาย: ผิวหิน (ลดดาเมจ) / เกราะหนาม (สะท้อน)
+                if (G.dungeon && G.dungeon.rogue) {
+                  const cut = rgB("dmgCut"); if (cut) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(60, cut) / 100)));
+                  const th = rgB("thorn"); if (th && G.enemy) { const back = Math.round(dmg * th / 100); if (back > 0) { G.enemy.hp = Math.max(0, G.enemy.hp - back); popDamage(em.position, back, "hit"); } }
+                }
                 G.player.hp = Math.max(0, G.player.hp - dmg);
                 G.chargeTf(9); // ⚡ taking a hit builds the power gauge (fighting spirit)
                 popDamage(char.position, dmg, "hit"); // 💢 damage taken pops on the player too
@@ -49568,9 +49741,11 @@ export default function CherryAdventure() {
                   G.enemy = null;
                 }
                 if (G.dungeon) {
+                  const wasRogue = !!G.dungeon.rogue;
+                  if (wasRogue) G.rogueEnd("dead");
                   G.dungeon = null;
                   setUi((u) => ({ ...u, dungeonFloor: 0 }));
-                  toast("🗼 ถูกดีดออกจากหอคอยมิติ... ไว้มาแก้มือใหม่!");
+                  if (!wasRogue) toast("🗼 ถูกดีดออกจากหอคอยมิติ... ไว้มาแก้มือใหม่!");
                 }
                 setTimeout(() => {
                   G.player.hp = effMaxHp();
@@ -53850,7 +54025,7 @@ export default function CherryAdventure() {
             boxShadow: "0 4px 12px rgba(74,26,138,0.5)", pointerEvents: "auto",
             display: "flex", alignItems: "center", gap: 10,
           }}>
-            🗼 หอคอยมิติ — ชั้น {ui.dungeonFloor}/100
+            {ui.rogueOn ? <>🎲 หอคอยท้าทาย — ชั้น {ui.dungeonFloor} {ui.rogueBuffs.length > 0 && <span style={{ fontSize: 11, opacity: 0.9 }}>· {ui.rogueBuffs.map((id) => (ROGUE_BUFFS.find((x) => x.id === id) || {}).emoji || "").join("")}</span>}</> : <>🗼 หอคอยมิติ — ชั้น {ui.dungeonFloor}/100</>}
             <span onClick={() => G.exitDungeon()} style={{
               cursor: "pointer", background: "rgba(255,255,255,0.2)", borderRadius: 999,
               padding: "2px 10px", fontSize: 11.5,
@@ -53890,6 +54065,98 @@ export default function CherryAdventure() {
                 fontSize: 14, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
               }}>ไว้ก่อน</button>
             </div>
+            {/* 🎲 หอคอยท้าทายรายสัปดาห์ (roguelike) */}
+            <div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px dashed #e0d0f0" }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: "#b0402a" }}>🎲 หอคอยท้าทาย · สัปดาห์นี้</div>
+              <div style={{ fontSize: 11, color: "#9a7a8a", margin: "4px 0 7px", lineHeight: 1.6 }}>
+                ชั้นสุ่มเหมือนกันทุกคนทั้งสัปดาห์ · ทุก 3 ชั้นเลือกพร 1 จาก 3<br/>แพ้ = จบรอบ (ไม่จำด่าน) · ไปได้ลึกสุดติดกระดานโลก
+              </div>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+                <button onClick={() => G.enterRogue()} style={{
+                  padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff",
+                  background: "linear-gradient(90deg,#d0482a,#f08a3a)",
+                }}>🎲 ลุยรอบใหม่</button>
+                <button onClick={() => G.rogueBoardOpen()} style={{
+                  padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#b0402a", background: "#fdeee6",
+                }}>🏆 อันดับ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🎁 เลือกพร 1 จาก 3 (หอคอยท้าทาย) */}
+      {ui.rogueChoice && ui.mode === "battle" && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 60, background: "rgba(20,8,30,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+          <div style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: 900, color: "#ffe6c0", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>🎁 ผ่านชั้น {ui.dungeonFloor} — เลือกพร 1 อย่าง</div>
+            <div style={{ fontSize: 11, color: "#e8c8d8", marginBottom: 10 }}>พรซ้อนกันได้ · อยู่จนจบรอบ</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {ui.rogueChoice.map((b, i) => (
+                <button key={b.id + i} onClick={() => G.roguePick(i)} style={{
+                  flex: 1, background: "linear-gradient(180deg,#fff8f0,#ffe8d8)", border: "2px solid #f0b080", borderRadius: 14, padding: "12px 6px",
+                  cursor: "pointer", fontFamily: font, boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
+                }}>
+                  <div style={{ fontSize: 30 }}>{b.emoji}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 900, color: "#b0402a", marginTop: 4 }}>{b.name}</div>
+                  <div style={{ fontSize: 10.5, color: "#7a5a4a", marginTop: 4, lineHeight: 1.45 }}>{b.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🏁 ผลรอบ + กระดานอันดับ หอคอยท้าทาย */}
+      {ui.rogueResult && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 61, background: "rgba(20,8,30,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+          <div style={{ width: "100%", maxWidth: 380, maxHeight: "84vh", overflowY: "auto", background: "linear-gradient(180deg,#fff6ee,#fff)", borderRadius: 16, padding: 14, boxShadow: "0 12px 36px rgba(0,0,0,0.45)" }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: "#b0402a" }}>🎲 หอคอยท้าทาย · สัปดาห์ {ui.rogueResult.week}</div>
+            {!ui.rogueResult.boardOnly ? (
+              <div style={{ background: "#fdeee6", borderRadius: 12, padding: "9px 10px", margin: "8px 0" }}>
+                <div style={{ fontSize: 13.5, fontWeight: 900, color: "#8a3a20" }}>
+                  {ui.rogueResult.reason === "clear" ? "🏆 พิชิตครบ!" : ui.rogueResult.reason === "dead" ? "💀 พ่ายแพ้" : "🚪 ออกจากรอบ"} — ไปได้ <b>{ui.rogueResult.fl}</b> ชั้น · ⏱️ {rushTimeText(ui.rogueResult.ms)}
+                  {ui.rogueResult.record && <span style={{ marginLeft: 6, fontSize: 10.5, background: "#ffd24a", color: "#6a4a00", borderRadius: 999, padding: "1px 7px" }}>สถิติใหม่</span>}
+                </div>
+                <div style={{ fontSize: 11, color: "#9a6a5a", marginTop: 3 }}>💰 ทองที่เก็บได้ +{(ui.rogueResult.gold || 0).toLocaleString()}</div>
+                {ui.rogueResult.picks.length > 0 && (
+                  <div style={{ fontSize: 11, color: "#7a5a4a", marginTop: 4 }}>
+                    พรที่เลือก: {ui.rogueResult.picks.map((id) => { const b = ROGUE_BUFFS.find((x) => x.id === id); return b ? `${b.emoji}${b.name}` : id; }).join(" · ")}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ fontSize: 11.5, color: "#9a6a5a", margin: "6px 0 8px" }}>
+                สถิติของคุณสัปดาห์นี้: {ui.rogueResult.fl > 0 ? <b>{ui.rogueResult.fl} ชั้น · ⏱️ {rushTimeText(ui.rogueResult.ms)}</b> : "ยังไม่เคยลง"}
+              </div>
+            )}
+            <div style={{ fontSize: 11, fontWeight: 900, color: "#b0402a", marginBottom: 4 }}>🏆 กระดานอันดับสัปดาห์นี้ (ชั้นมากสุด · เวลาน้อยสุด)</div>
+            {ui.rogueBoard == null ? (
+              <div style={{ fontSize: 11, color: "#b09a8a" }}>กำลังโหลด...</div>
+            ) : ui.rogueBoardErr === "offline" ? (
+              <div style={{ fontSize: 11, color: "#b09a8a" }}>ออฟไลน์ — เชื่อมต่อออนไลน์เพื่อดูอันดับ</div>
+            ) : ui.rogueBoardErr === "nocol" ? (
+              <div style={{ fontSize: 11, color: "#b09a8a" }}>ยังไม่มีตาราง <b>tower_rush</b> ในฐานข้อมูล — ดู SQL ที่ไฟล์ supabase-setup.sql</div>
+            ) : ui.rogueBoard.length === 0 ? (
+              <div style={{ fontSize: 11, color: "#b09a8a" }}>ยังไม่มีใครลงสัปดาห์นี้ — เป็นคนแรกสิ!</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {ui.rogueBoard.slice(0, 10).map((r, i) => (
+                  <div key={r.pid || i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, background: r.pid === G.pid ? "#ffe8c8" : "#fff", border: "1px solid #f0dcd0", borderRadius: 9, padding: "4px 8px" }}>
+                    <span style={{ width: 22, fontWeight: 900, color: i < 3 ? "#d0482a" : "#a08a80" }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</span>
+                    <span style={{ flex: 1, fontWeight: 800, color: "#5a3a30", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.n || "ผู้เล่น"}</span>
+                    <span style={{ fontWeight: 900, color: "#b0402a" }}>{r.fl} ชั้น</span>
+                    <span style={{ color: "#a08a80", fontSize: 10.5 }}>{rushTimeText(r.ms || 0)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={() => setUi((u) => ({ ...u, rogueResult: null }))} style={{
+              width: "100%", marginTop: 10, padding: "9px 0", borderRadius: 11, border: "none", cursor: "pointer",
+              fontFamily: font, fontSize: 12.5, fontWeight: 900, color: "#fff", background: "linear-gradient(90deg,#d0482a,#f08a3a)",
+            }}>ปิด</button>
           </div>
         </div>
       )}
