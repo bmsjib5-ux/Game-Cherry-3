@@ -2302,6 +2302,76 @@ const ONLINE_CONFIG = {
   anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaWZodmx2ZmR2cGllZXV0bXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTcyMzEsImV4cCI6MjEwMDI5MzIzMX0.OdLp0--DlPrStyeJ9pZn33h6EigN5uqUby-yq8jAGH4",  // anon public key (ปลอดภัยที่จะฝังใน client — RLS เป็นตัวกันข้อมูล)
 };
 
+
+// 📜 ตำราวิชาประจำอาชีพ (TALENTS) — 3 สาย × 5 วิชา ต่ออาชีพ · ปลดด้วยแต้มสกิล ⚡ · แต่ละวิชาต้องปลดวิชาก่อนหน้าในสายเดียวกัน
+//    ต่างจากสกิลต้นไม้ (สเตตัสล้วน): วิชาส่วนใหญ่ "เปลี่ยนวิธีเล่น" มีเงื่อนไข เช่น ตีแรก/ประหารเลือดต่ำ/สวนกลับ/รอดตาย/ดูดเลือด
+const TAL_DESC = {
+  atkPct: (v) => `โจมตี +${v}%`, hpPct: (v) => `HP สูงสุด +${v}%`, def: (v) => `ป้องกัน +${v}`, crit: (v) => `คริติคอล +${v}%`, critDmg: (v) => `ดาเมจคริ +${v}%`, eva: (v) => `หลบหลีก +${v}%`,
+  lifesteal: (v) => `ดูดเลือด ${v}% ของดาเมจที่ทำ`, execute: (v) => `ศัตรูเลือดต่ำกว่า 30% รับดาเมจเพิ่ม ${v}%`, firstStrike: (v) => `ตีแรกใส่ศัตรูเลือดเต็ม แรงขึ้น ${v}%`,
+  burnOnHit: (v) => `ทุกการตีจุดไฟเผา ${v} เทิร์น`, poisonOnHit: (v) => `ทุกการตีอาบพิษ ${v} เทิร์น`, thorns: (v) => `สะท้อนดาเมจที่รับ ${v}%`, dmgCut: (v) => `รับดาเมจลดลง ${v}%`,
+  regen: (v) => `ฟื้น HP ${v}% ทุกเทิร์น`, counter: (v) => `โดนตีมีโอกาส ${v}% สวนกลับ (60% ของโจมตี)`, secondWind: () => `รอดตายครั้งแรกของศึกด้วย HP 1`,
+  pierceChance: (v) => `โอกาส ${v}% เจาะการ์ด/บล็อก`, bossDmg: (v) => `ดาเมจใส่บอส +${v}%`, goldPct: (v) => `ทอง +${v}%`, expPct: (v) => `EXP +${v}%`,
+  mpOnHit: (v) => `ตีแล้วฟื้นมานา +${v}`, skillCost: (v) => `สกิลใช้มานาลดลง ${v}%`, comboAmp: (v) => `คอมโบสกิลต่อเนื่อง แรงขึ้นอีก ${v}%/ชั้น`,
+  critHeal: (v) => `คริแล้วฟื้น HP ${v}%`, lowHpAtk: (v) => `HP ต่ำกว่า 40% โจมตี +${v}%`,
+};
+const talDesc = (fx) => Object.entries(fx).map(([k, v]) => (TAL_DESC[k] ? TAL_DESC[k](v) : `${k} ${v}`)).join(" · ");
+const TAL_COST = [2, 3, 3, 4, 5], TAL_LV = [5, 12, 20, 30, 40];
+const mkBranch = (cls, bi, name, emoji, col, nodes) => ({
+  id: `${cls}_b${bi}`, name, emoji, col,
+  nodes: nodes.map(([n, e, fx], i) => ({ id: `tal_${cls}_${bi}_${i + 1}`, name: n, emoji: e, fx, cost: TAL_COST[i], reqLv: TAL_LV[i], desc: talDesc(fx) })),
+});
+const TALENTS = {
+  warrior: [
+    mkBranch("warrior", 1, "ปราการเหล็ก", "🛡️", "#5a7ad0", [["ผิวเหล็ก", "🛡️", { def: 5 }], ["กำแพงเนื้อ", "🧱", { dmgCut: 8 }], ["หนามเกราะ", "🌵", { thorns: 20 }], ["ยืนหยัด", "🏰", { hpPct: 15, dmgCut: 6 }], ["ไม่ยอมล้ม", "💪", { secondWind: 1 }]]),
+    mkBranch("warrior", 2, "ดาบพิฆาต", "⚔️", "#d0483a", [["ลับคม", "⚔️", { atkPct: 6 }], ["จ้องจุดตาย", "🎯", { crit: 8 }], ["ตัดหัวสั่งลา", "🩸", { execute: 30 }], ["คมแค้น", "💥", { critDmg: 30 }], ["ฟันเปิดศึก", "⚡", { firstStrike: 60 }]]),
+    mkBranch("warrior", 3, "โลหิตนักรบ", "🔥", "#c0392b", [["กระหายเลือด", "🩸", { lifesteal: 6 }], ["เลือดนักสู้", "❤️", { regen: 3 }], ["หัวใจสิงห์", "🦁", { hpPct: 20 }], ["สวนหมัด", "👊", { counter: 25 }], ["จนตรอกยิ่งดุ", "🔥", { lowHpAtk: 35 }]]),
+  ],
+  archer: [
+    mkBranch("archer", 1, "สายตาเหยี่ยว", "🎯", "#d0a030", [["เล็งนิ่ง", "🎯", { crit: 8 }], ["ศรทะลุ", "🏹", { pierceChance: 25 }], ["ยิงจุดตาย", "💥", { critDmg: 30 }], ["ปิดบัญชี", "🩸", { execute: 35 }], ["ศรเปิดศึก", "⚡", { firstStrike: 70 }]]),
+    mkBranch("archer", 2, "พรานพงไพร", "🌿", "#4a9a4a", [["เท้าเบา", "💨", { eva: 6 }], ["นักล่าทอง", "💰", { goldPct: 20 }], ["ผู้ช่ำชอง", "📚", { expPct: 15 }], ["ยิงสวน", "🏹", { counter: 30 }], ["สมาธิป่า", "🌿", { regen: 4, eva: 6 }]]),
+    mkBranch("archer", 3, "ศรอาบพิษ", "☠️", "#7a4ad0", [["ปลายศรพิษ", "☠️", { poisonOnHit: 2 }], ["แรงดึง", "💪", { atkPct: 8 }], ["ศรเพลิง", "🔥", { burnOnHit: 3 }], ["นักล่าบอส", "👹", { bossDmg: 25 }], ["พิษซึมลึก", "🟣", { poisonOnHit: 3, lifesteal: 6 }]]),
+  ],
+  mage: [
+    mkBranch("mage", 1, "เวทย์ทำลาย", "🔥", "#d0483a", [["โฟกัสมานา", "🔮", { atkPct: 7 }], ["เปลวเวท", "🔥", { burnOnHit: 3 }], ["ระเบิดคริ", "💥", { critDmg: 30 }], ["เวทประหาร", "☄️", { execute: 35 }], ["ผู้ล่าอสูร", "👹", { bossDmg: 30 }]]),
+    mkBranch("mage", 2, "สายธารมานา", "💧", "#3a8ad0", [["ประหยัดมานา", "💧", { skillCost: 10 }], ["ดูดซับมานา", "✨", { mpOnHit: 4 }], ["ร่ายต่อเนื่อง", "🔗", { comboAmp: 6 }], ["บำบัดตน", "🌿", { regen: 4 }], ["จอมเวทเต็มร่าง", "🌌", { skillCost: 15, hpPct: 15 }]]),
+    mkBranch("mage", 3, "อาถรรพ์ปกป้อง", "✨", "#9a6ad0", [["ลางสังหรณ์", "👁️", { crit: 6 }], ["เวทเยียวยา", "💚", { critHeal: 4 }], ["ม่านลวงตา", "💨", { eva: 8 }], ["เกราะเวท", "🛡️", { dmgCut: 10 }], ["ฟีนิกซ์", "🐦‍🔥", { secondWind: 1 }]]),
+  ],
+  assassin: [
+    mkBranch("assassin", 1, "เงามัจจุราช", "🌑", "#4a2a8a", [["ตาเงา", "👁️", { crit: 10 }], ["แทงจุดตาย", "💥", { critDmg: 35 }], ["ประหาร", "🩸", { execute: 40 }], ["ทะลุการ์ด", "🗡️", { pierceChance: 30 }], ["ลอบสังหาร", "⚡", { firstStrike: 90 }]]),
+    mkBranch("assassin", 2, "ราชาพิษ", "☠️", "#4ad04a", [["มีดอาบพิษ", "☠️", { poisonOnHit: 2 }], ["ดูดพิษ", "🩸", { lifesteal: 6 }], ["คมมีด", "🔪", { atkPct: 8 }], ["บ้าเลือด", "🔥", { lowHpAtk: 30 }], ["พิษล้มยักษ์", "👹", { bossDmg: 25, poisonOnHit: 2 }]]),
+    mkBranch("assassin", 3, "สายลม", "💨", "#3aa0a0", [["ก้าวลม", "💨", { eva: 8 }], ["สวนมีด", "🗡️", { counter: 30 }], ["มือไว", "💰", { goldPct: 20 }], ["นักเรียนรู้", "📚", { expPct: 15 }], ["เงาหลอก", "👤", { secondWind: 1, eva: 6 }]]),
+  ],
+  lancer: [
+    mkBranch("lancer", 1, "ทวนมังกร", "🐉", "#3a7ad0", [["ปลายทวนคม", "🔱", { atkPct: 7 }], ["เจาะเกล็ด", "🎯", { pierceChance: 30 }], ["ล่ามังกร", "🐉", { bossDmg: 30 }], ["พุ่งเปิดศึก", "⚡", { firstStrike: 70 }], ["แทงปิดบัญชี", "🩸", { execute: 35 }]]),
+    mkBranch("lancer", 2, "ผู้พิทักษ์ปฐพี", "🛡️", "#8a6a3a", [["โล่ดิน", "🛡️", { def: 6 }], ["หนามหิน", "🌵", { thorns: 25 }], ["ผืนดินมั่นคง", "🪨", { dmgCut: 10 }], ["แทงสวน", "🔱", { counter: 30 }], ["ปฐพีไม่ล้ม", "🏔️", { secondWind: 1 }]]),
+    mkBranch("lancer", 3, "น้ำแข็งดำ", "🧊", "#66ccff", [["เย็นยะเยือก", "🧊", { crit: 6 }], ["เลือดน้ำแข็ง", "💙", { critHeal: 4 }], ["ฟื้นเย็น", "❄️", { regen: 3 }], ["คมน้ำแข็ง", "💎", { critDmg: 30 }], ["จอมโวยด์", "🌑", { lifesteal: 8, hpPct: 12 }]]),
+  ],
+  samurai: [
+    mkBranch("samurai", 1, "วิถีเคนโด้", "⚔️", "#3a6ad0", [["จิตนิ่ง", "🎯", { crit: 8 }], ["คมเดียวขาด", "💥", { critDmg: 30 }], ["ฟันเปิดศึก", "⚡", { firstStrike: 80 }], ["เคซะงิริ", "🩸", { execute: 35 }], ["ดาบไร้เงา", "🗡️", { pierceChance: 30 }]]),
+    mkBranch("samurai", 2, "บูชิโด", "🌸", "#d06a8a", [["ใจแกร่ง", "🛡️", { dmgCut: 8 }], ["ฟันสวน", "⚔️", { counter: 30 }], ["ลมหายใจเซน", "🌿", { regen: 3 }], ["ไม่ยอมแพ้", "🌸", { secondWind: 1 }], ["ร่างเหล็ก", "💪", { hpPct: 18, dmgCut: 6 }]]),
+    mkBranch("samurai", 3, "ไอไอโด", "⚡", "#e0a030", [["ชักไว", "⚡", { atkPct: 7 }], ["จนมุมยิ่งคม", "🔥", { lowHpAtk: 30 }], ["ต่อเพลงดาบ", "🔗", { comboAmp: 6 }], ["ดาบดูดวิญญาณ", "🩸", { lifesteal: 8 }], ["สังหารอสูร", "👹", { bossDmg: 30 }]]),
+  ],
+  boxer: [
+    mkBranch("boxer", 1, "หมัดหนัก", "👊", "#d0483a", [["กำหมัดแน่น", "👊", { atkPct: 7 }], ["ต่อยจุดตาย", "🎯", { crit: 8 }], ["น็อกเอาต์", "🩸", { execute: 35 }], ["หมัดแรก", "⚡", { firstStrike: 70 }], ["ล้มยักษ์", "👹", { bossDmg: 30 }]]),
+    mkBranch("boxer", 2, "ร่างทนทาน", "🥊", "#3a8a5a", [["กล้ามหนา", "❤️", { hpPct: 12 }], ["รับหมัดได้", "🛡️", { dmgCut: 10 }], ["ลมหายใจนักชก", "🌿", { regen: 3 }], ["ลุกยกสิบ", "💪", { secondWind: 1 }], ["สวนหมัดชุด", "🥊", { counter: 35 }]]),
+    mkBranch("boxer", 3, "ฟุตเวิร์ก", "💨", "#3aa0d0", [["ก้าวไว", "💨", { eva: 7 }], ["หมัดคม", "💥", { critDmg: 30 }], ["ต่อยชุด", "🔗", { comboAmp: 6 }], ["ดูดพลัง", "🩸", { lifesteal: 7 }], ["ฮึดสู้", "🔥", { lowHpAtk: 35 }]]),
+  ],
+  coder: [
+    mkBranch("coder", 1, "เอ็กซ์พลอยต์", "💻", "#2ae84a", [["สแกนช่องโหว่", "🔍", { crit: 8 }], ["ข้ามการ์ด", "🕶️", { pierceChance: 30 }], ["บั๊กร้ายแรง", "💥", { critDmg: 30 }], ["ลบทิ้ง", "🗑️", { execute: 35 }], ["โค่นเซิร์ฟเวอร์", "👹", { bossDmg: 30 }]]),
+    mkBranch("coder", 2, "ออโตเมชัน", "🤖", "#3a8ad0", [["แคชมานา", "💧", { mpOnHit: 4 }], ["บีบอัดโค้ด", "📦", { skillCost: 12 }], ["ไปป์ไลน์", "🔗", { comboAmp: 7 }], ["ซ่อมตัวเอง", "🔧", { regen: 4 }], ["สคริปต์ฟาร์ม", "📚", { expPct: 15, goldPct: 15 }]]),
+    mkBranch("coder", 3, "ไฟร์วอลล์", "🛡️", "#5a7ad0", [["แพตช์เกราะ", "🛡️", { def: 5 }], ["กรองแพ็กเก็ต", "🧱", { dmgCut: 10 }], ["ตอบโต้อัตโนมัติ", "⚡", { counter: 30 }], ["สำรองข้อมูล", "💾", { secondWind: 1 }], ["ขยายหน่วยความจำ", "❤️", { hpPct: 18 }]]),
+  ],
+  office: [
+    mkBranch("office", 1, "ผู้บริหาร", "💼", "#d8a840", [["โบนัส", "💰", { goldPct: 20 }], ["อบรมพนักงาน", "📚", { expPct: 15 }], ["เดดไลน์", "⚔️", { atkPct: 8 }], ["ปิดดีลใหญ่", "👹", { bossDmg: 25 }], ["เปิดประชุม", "⚡", { firstStrike: 70 }]]),
+    mkBranch("office", 2, "โอทีทรหด", "☕", "#8a5a3a", [["กาแฟเช้า", "❤️", { hpPct: 12 }], ["พักกลางวัน", "🌿", { regen: 3 }], ["ไฟลนก้น", "🔥", { lowHpAtk: 35 }], ["ไม่ลาป่วย", "💪", { secondWind: 1 }], ["ดูดพลังทีม", "🩸", { lifesteal: 7 }]]),
+    mkBranch("office", 3, "ประสานงาน", "📎", "#5a8ad0", [["สายตาคม", "🎯", { crit: 8 }], ["งานต่อเนื่อง", "🔗", { comboAmp: 6 }], ["ลดต้นทุน", "💧", { skillCost: 12 }], ["ผลงานเด่น", "💚", { critHeal: 4 }], ["สรุปงาน", "🩸", { execute: 35 }]]),
+  ],
+  aegis: [
+    mkBranch("aegis", 1, "แกนพลาสมา", "⚙️", "#3ad0ff", [["โอเวอร์คล็อก", "⚙️", { atkPct: 7 }], ["ลำแสงเผา", "🔥", { burnOnHit: 3 }], ["คริพลาสมา", "💥", { critDmg: 30 }], ["ลบเป้าหมาย", "🎯", { execute: 35 }], ["โหมดทำลายล้าง", "👹", { bossDmg: 30 }]]),
+    mkBranch("aegis", 2, "เกราะอีจิส", "🛡️", "#5a7ad0", [["แผ่นเกราะ", "🛡️", { def: 6 }], ["สนามพลัง", "🧱", { dmgCut: 10 }], ["สะท้อนพลังงาน", "🌵", { thorns: 25 }], ["โปรโตคอลกู้ชีพ", "💾", { secondWind: 1 }], ["ตอบโต้อัตโนมัติ", "⚡", { counter: 30 }]]),
+    mkBranch("aegis", 3, "ระบบสนับสนุน", "🔋", "#4ad0a0", [["เก็บเกี่ยวพลังงาน", "🔋", { mpOnHit: 4 }], ["ประหยัดพลังงาน", "💧", { skillCost: 12 }], ["นาโนซ่อมแซม", "🔧", { regen: 4 }], ["ขยายแกน", "❤️", { hpPct: 18 }], ["คริซ่อมแซม", "💚", { critHeal: 5 }]]),
+  ],
+};
 const SKILL_TREE = {
   common: [
     { id: "t_hp1",   name: "พลังชีวิต",   emoji: "❤️", cost: 2, max: 5, reqLv: 1,  hp: 8,  desc: "HP สูงสุด +8%/ระดับ" },
@@ -23716,6 +23786,7 @@ export default function CherryAdventure() {
     G.awk = {};  // ✨ itemId -> awaken star (0..AWK_MAX) — ปลดล็อกหลังตีบวกเต็ม +20
     G.itemLock = {}; // 🔐 itemId -> 1 = ล็อกไว้ ห้ามขาย/ห้ามแยกชิ้นส่วน
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
+    G.talents = {};   // 📜 ตำราวิชา: talentId -> 1
     G.constNodes = {}; // ✨ constellation board: nodeId -> 1 (unlocked)
     G.stardust = 0; // ✨ ผงดาว — currency for the constellation board
     G.diamonds = 0; // 💎 เพชร — premium currency (separate from star dust)
@@ -24091,31 +24162,35 @@ export default function CherryAdventure() {
     const xCrit = () => G.tfActive ? 20 : 0; // ⚡ transformed = +20% crit
     const sB = (k) => (G.setBonus ? G.setBonus()[k] || 0 : 0); // 👘 outfit-set bonus (defined later; guarded)
     const rgB = (k) => (G.rgB ? G.rgB(k) : 0);   // 🎲 พรประจำรอบหอคอยท้าทาย (0 นอกโหมด)
+    // 📜 ตำราวิชา: รวมค่า fx จากวิชาที่ปลดแล้วของอาชีพปัจจุบัน
+    const talB = (k) => { const T = G.talents, br = TALENTS[G.cls]; if (!T || !br) return 0; let v = 0; for (const b of br) for (const n of b.nodes) if (T[n.id] && n.fx[k]) v += n.fx[k]; return v; };
+    G.talB = talB;
+    const xB = (k) => rgB(k) + talB(k);            // พรชั่วคราว + วิชาถาวร
     const effAtk0 = () => num(Math.round((1 + (G.wAtkT > 0 ? (G.wAtk || 0) : 0)) * (G.player.atk + ((G.player.level || 1) - 1) * ATK_PER_LV + equipBonus().atk * GEAR_ATK_W + accBonus().atk + petBuff().atk + bs().atk + treeBonus().atk + constBonus().atk) * awakenMul() * pMul("atk") * xMul("atk") * (1 + softPct(tB("atk") + constBonus().atkPct + masteryBonus().atkPct + sB("atkPct") + (G.foodB ? G.foodB("atkPct") : 0)) / 100) * (1 - (G.wbAtkDebuff || 0))) + (G.guild ? G.guildBuff().atk : 0)) || 1; // 👹 world-boss aura reduces ATK · ⏰ บัฟพลังโจมตีชั่วคราว · 🏰 บัฟกิลด์ · 🍳 บัฟอาหาร
     const effDef0 = () => num(Math.round((G.player.def + (G.wDefT > 0 ? (G.wDef || 0) : 0) + ((G.player.level || 1) - 1) * 1 + equipBonus().def + accBonus().def + petBuff().def + bs().def + treeBonus().def + constBonus().def + masteryBonus().def + sB("def")) * awakenMul() * pMul("def") * xMul("def") * (1 + softPct(tB("def") + constBonus().defPct + sB("defPct") + (G.foodB ? G.foodB("defPct") : 0)) / 100))); // ⚖️ +1 DEF ติดตัวต่อเลเวล · 🍳 บัฟอาหาร
     const effMaxHp0 = () => num(Math.round(HP_MUL * (G.player.maxHp + ((G.player.level || 1) - 1) * HP_PER_LV + equipBonus().hp + accBonus().hp + petBuff().hp + bs().hp * 6) * (1 + softPct(treeBonus().hpPct + constBonus().hpPct + masteryBonus().hpPct + sB("hpPct") + tB("hp") + (G.foodB ? G.foodB("hpPct") : 0) + (G.brewB ? G.brewB("hpPct") : 0)) / 100) * awakenMul() * pMul("hp")) + (G.guild ? G.guildBuff().hp : 0)) || 1; // ⚖️ +3 HP ฐานต่อเลเวล · 🍳 บัฟอาหาร · 🏰 บัฟกิลด์ (×3 = +9 HP จริง/เลเวล) — เลือดโตตามเลเวล
-    const effAtk = () => Math.round(effAtk0() * (1 + rgB("atkPct") / 100));
-    const effDef = () => effDef0() + rgB("def");
-    const effMaxHp = () => Math.max(1, Math.round(effMaxHp0() * (1 + Math.max(-60, rgB("hpPct")) / 100)));
+    const effMaxHp = () => Math.max(1, Math.round(effMaxHp0() * (1 + Math.max(-60, xB("hpPct")) / 100)));
+    const effAtk = () => Math.round(effAtk0() * (1 + xB("atkPct") / 100) * (1 + (talB("lowHpAtk") && G.player.hp < effMaxHp() * 0.4 ? talB("lowHpAtk") : 0) / 100));   // 🔥 จนตรอกยิ่งดุ
+    const effDef = () => effDef0() + xB("def");
     G.effMaxHp = effMaxHp; // 🩸 ให้ลูปเรนเดอร์ใช้คำนวณสัดส่วนเลือด (เตือนเลือดใกล้หมด)
     const effMaxMp = () => Math.round((30 + (G.player.level - 1) * 6 + (G.cls === "mage" ? 20 : 0) + bs().mp * 5 + constBonus().mp + accBonus().mp + masteryBonus().mp + sB("mp")) * (1 + (G.brewB ? G.brewB("mpPct") : 0) / 100));   // 🌿 ยาบำรุงมานาคูณเป็น % ท้ายสุด // 🔮 mage has more mana + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
     G.effMaxMp = effMaxMp; // 🔮 คู่กับ effMaxHp — ให้ส่วนอื่นอ่านมานาสูงสุดที่รวมบัฟแล้วได้
     const effSpd = () => { const mt = G.mountId ? MOUNTS.find((m) => m.id === G.mountId) : null; return 3.4 * (1 + (equipBonus().spd + accBonus().spd) / 100) * (mt ? mt.spd : 1) * (G.qingSpd ? G.qingSpd() : 1); }; // ⚡ รองเท้า + 💍 ต่างหู + 🐎 สัตว์ขี่เร่งความเร็ว
     const effEva0 = () => equipBonus().eva + accBonus().eva + ((curPath() && curPath().eva) || 0) + constBonus().eva + masteryBonus().eva + sB("eva"); // 💨 % chance to dodge + 💍 accessory + 🌟 path + ✨ constellation + ⚔️ mastery + 👘 set
-    const effEva = () => effEva0() + rgB("eva");
+    const effEva = () => effEva0() + xB("eva");
     const expForLevel = (lv) => Math.round(50 * lv * (1 + lv * 0.05)); // ⚖️ steeper EXP curve — leveling is meant to take work
     const effCrit = () => Math.min(CRIT_CAP, critRaw());   // 🎯 เกิน 75% แล้วไปเพิ่มดาเมจคริแทน (ไม่ทิ้งเปล่า) // 🎯 crit · 🍳 บัฟอาหาร · 👼 พรครูเสดสวรรค์ + 💍 accessory + tree + awakening + 🌟 path + 🏅 title + ⚡ transform + ✨ constellation + ⚔️ mastery + 👘 set + 🤖 aegis perk · 👹 −world-boss aura
     // 🎯 คริดิบ (ก่อนตัดเพดาน) — เอาไว้คำนวณส่วนเกินที่แปลงเป็นดาเมจคริ
     // 🛟 กันค่าเพี้ยน (เซฟเก่า/ของที่ข้อมูลไม่ครบ) ไม่ให้ NaN ลามไปทั้งสูตร แล้วสถานะกลายเป็นว่าง
     const num = (v) => (Number.isFinite(v) ? v : 0);
     const critRaw0 = () => num( (equipBonus().crit + accBonus().crit + bs().crit * 0.5 + treeBonus().crit) + (G.ngPlus || 0) * 2 + ((curPath() && curPath().mul && curPath().mul.crit) || 0) + tB("crit") + xCrit() + constBonus().crit + masteryBonus().crit + sB("crit") + (G.cls === "aegis" ? 10 : 0) + (G.wCritT > 0 ? (G.wCrit || 0) : 0) - (G.wbCritDebuff || 0) + (G.foodB ? G.foodB("crit") : 0));
-    const critRaw = () => critRaw0() + rgB("crit");
+    const critRaw = () => critRaw0() + xB("crit");
     // 💥 ดาเมจคริรวม (%) — พื้นฐาน 100 (=×2) + ของที่เพิ่มดาเมจคริ + คริส่วนที่เกินเพดาน
     const effCritDmg0 = () => Math.min(CRIT_DMG_CAP, CRIT_DMG_BASE
       + num(accBonus().critDmg) + num(constBonus().critDmg) + num(masteryBonus().critDmg) + num(tB("critDmg")) + num(sB("critDmg"))
       + num(curPath() && curPath().critDmg)
       + Math.max(0, critRaw() - CRIT_CAP) * CRIT_OVER_TO_DMG);
-    const effCritDmg = () => Math.min(CRIT_DMG_CAP, effCritDmg0() + rgB("critDmg"));
+    const effCritDmg = () => Math.min(CRIT_DMG_CAP, effCritDmg0() + xB("critDmg"));
     G.effCritDmg = effCritDmg;
     G.critMul = () => 1 + effCritDmg() / 100;
     const effLuck = () => bs().luck + tB("luck") + constBonus().luck + accBonus().luck + masteryBonus().luck + sB("luck") + (G.foodB ? G.foodB("luck") : 0); // 🍀 luck · 🍳 บัฟอาหาร: catch % + gold % + 🏅 title + ✨ constellation + 💍 accessory + ⚔️ mastery + 👘 set
@@ -24225,7 +24300,7 @@ export default function CherryAdventure() {
       team: [...(G.team || [])], petSp: G.petSp || 0, petSkillLv: { ...(G.petSkillLv || {}) },
       playerName: G.playerName, playerTitle: G.playerTitle, playerTitleId: (curTitle() || {}).id || "t_none",
       guildName: (G.guild && G.guild.name) || null, guildEmoji: (G.guild && G.guild.emoji) || null,   // 🏰 โชว์บนป้ายเหนือหัว
-      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, itemLock: { ...(G.itemLock || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
+      inv: [...G.inv], equip: { ...G.equip }, plus: { ...G.plus }, awk: { ...(G.awk || {}) }, itemLock: { ...(G.itemLock || {}) }, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, treeNodes: { ...G.treeNodes }, talents: { ...(G.talents || {}) }, ultAlt: !!G.ultAlt, pathId: G.pathId || null, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishInfo: (G.fishInfo ? G.fishInfo() : null), fishSpot: (G.fishSpotInfo ? G.fishSpotInfo() : null), todo: (G.todoCounts ? G.todoCounts() : null), foodBuff: (G.foodBuffInfo ? G.foodBuffInfo() : null), foodBag: (G.foodBagList ? G.foodBagList() : []), 
       herbInfo: (G.herbInfo ? G.herbInfo() : null), potBag: (G.potBagList ? G.potBagList() : []), brewBuff: (G.brewBuffInfo ? G.brewBuffInfo() : []),
       titleId: G.titleId || "t_none", titleId: G.titleId || "t_none", achStats: { ...(G.achStats || {}) },
       rolls: { ...(G.rolls || {}) }, sockets: { ...(G.sockets || {}) }, gems: { ...(G.gems || {}) },
@@ -24846,6 +24921,7 @@ export default function CherryAdventure() {
       if (G.foodB && G.foodB("expPct")) amt = Math.round(amt * (1 + G.foodB("expPct") / 100));   // 🍳 บัฟอาหาร EXP
       if (G.repExpBonus && G.repExpBonus()) amt = Math.round(amt * (1 + G.repExpBonus()));   // 🤝 ผู้เฒ่าผู้วิเศษสอนพิเศษ
       if (G.expBoostUntil && Date.now() < G.expBoostUntil) amt *= 2; // 📜 ใบประสบการณ์ x2
+      if (talB("expPct")) amt = Math.round(amt * (1 + talB("expPct") / 100));   // 📜 ตำราวิชา EXP
       if (G.restBuffUntil && Date.now() < G.restBuffUntil) amt = Math.round(amt * 1.15); // 😴 บัฟนอนพักจากบ้าน +15% XP
       // 🤝 ปาร์ตี้เก็บเลเวล: มีเพื่อนออนไลน์ในปาร์ตี้ → โบนัส XP +15%/คน (สูงสุด +45%) และสะสม 10% แบ่งให้เพื่อน
       if (!G._partyShareGrant && G.partyCode && G.partyActiveOthers) {
@@ -24899,7 +24975,7 @@ export default function CherryAdventure() {
     G.treeCap = treeCap;
     G.skillCost = skillCost;
     // 💧 MP cost scales with the skill's upgrade rank (higher rank → stronger → costs more, capped ×3)
-    G.mpCostOf = (sk) => { if (!sk) return 0; const r = (G.skillRanks && G.skillRanks[sk.id]) || 1; return Math.round((sk.cost || 8) * Math.min(3, 1 + (r - 1) * 0.05)); };
+    G.mpCostOf = (sk) => { if (!sk) return 0; const r = (G.skillRanks && G.skillRanks[sk.id]) || 1; return Math.max(1, Math.round((sk.cost || 8) * Math.min(3, 1 + (r - 1) * 0.05) * (1 - Math.min(50, talB("skillCost")) / 100))); };   // 📜 วิชาลดค่ามานา
     // ⏳ per-skill cooldown (1–3s, heavier skills longer) — after casting, that skill is locked briefly
     G.skillCd = {};
     G.cdOf = (sk) => { if (!sk) return 1; return Math.round(Math.min(3, Math.max(1, (sk.mult || 1) * 1.1 + ((sk.hits && sk.hits > 1) ? 0.4 : 0) + (sk.heal ? 0.5 : 0))) * 10) / 10; };
@@ -24936,6 +25012,8 @@ export default function CherryAdventure() {
           refundSp += r * n.cost;
           if (G.treeNodes) G.treeNodes[n.id] = 0;
         });
+        // 📜 ตำราวิชา: คืนแต้มทุกวิชาที่ปลดไว้
+        (TALENTS[G.cls] || []).forEach((b) => b.nodes.forEach((n) => { if (G.talents && G.talents[n.id]) { refundSp += n.cost; delete G.talents[n.id]; } }));
         G.player.sp = (G.player.sp || 0) + refundSp;
       }
       G.gold -= cost;
@@ -24946,7 +25024,7 @@ export default function CherryAdventure() {
       burst(char.position, 0x9a4ad0, 2);
       toast(`⚖️ รีเซ็ตแล้ว! คืน ${refundStat ? refundStat + " แต้มสถานะ " : ""}${refundSp ? refundSp + " แต้มสกิล" : ""} (−${cost}💰)`);
       syncPlayer();
-      setUi((u) => ({ ...u, baseStats: { ...G.baseStats }, statPts: G.player.statPts, sp: G.player.sp, skillRanks: { ...G.skillRanks }, treeNodes: { ...G.treeNodes }, gold: G.gold }));
+      setUi((u) => ({ ...u, baseStats: { ...G.baseStats }, statPts: G.player.statPts, sp: G.player.sp, skillRanks: { ...G.skillRanks }, treeNodes: { ...G.treeNodes }, talents: { ...(G.talents || {}) }, gold: G.gold }));
     };
     // 🎲 re-roll an item's quality — the endgame chase for a 👑 สมบูรณ์แบบ
     G.REROLL_COST = { crystal: 2, ironOre: 5 };
@@ -25290,6 +25368,29 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, ultAlt: G.ultAlt }));
     };
     // 🌳 level up a skill-tree passive node (with conditions: level req + prerequisite)
+    // 📜 ปลดวิชาในตำรา — ต้องถึงเลเวล + ปลดวิชาก่อนหน้าในสายเดียวกัน + มีแต้มพอ
+    G.unlockTalent = (tid) => {
+      try {
+        if (!G.talents) G.talents = {};
+        const br = TALENTS[G.cls]; if (!br || !G.player) return;
+        let node = null, prev = null, branch = null;
+        br.forEach((b) => b.nodes.forEach((n, i) => { if (n.id === tid) { node = n; prev = i > 0 ? b.nodes[i - 1] : null; branch = b; } }));
+        if (!node) return;
+        if (G.talents[tid]) { toast(`${node.emoji} ${node.name} ปลดแล้ว ✓`); return; }
+        if (G.player.level < node.reqLv) { toast(`🔒 ต้องเลเวล ${node.reqLv} ขึ้นไป (ตอนนี้ Lv.${G.player.level})`); return; }
+        if (prev && !G.talents[prev.id]) { toast(`🔒 ต้องปลด "${prev.name}" ในสาย${branch.name}ก่อน`); return; }
+        if ((G.player.sp || 0) < node.cost) { toast(`📜 ต้องใช้ ${node.cost} แต้มสกิล (มี ${G.player.sp || 0})`); return; }
+        const oldMax = effMaxHp();
+        G.player.sp -= node.cost;
+        G.talents[tid] = 1;
+        const diff = effMaxHp() - oldMax; if (diff > 0) G.player.hp += diff;
+        if (G.sfx) G.sfx.levelup();
+        if (char) burst(char.position, 0xffd27a, 1.4);
+        toast(`📜✨ เรียนวิชา "${node.emoji} ${node.name}" สำเร็จ! (−${node.cost}⚡)`);
+        setUi((u) => ({ ...u, talents: { ...G.talents }, sp: G.player.sp, level: G.player.level }));
+        syncPlayer(); if (G.saveGame) G.saveGame();
+      } catch (err) { console.error("unlockTalent error:", err); toast("⚠️ เกิดข้อผิดพลาด: " + err.message); }
+    };
     G.unlockNode = (nodeId) => {
      try {
       if (!G.treeNodes) G.treeNodes = {}; // 🛟 self-heal for old saves that predate the skill tree
@@ -25320,7 +25421,7 @@ export default function CherryAdventure() {
       if (G.sfx) G.sfx.levelup();
       if (char) burst(char.position, 0x7ad0e8, 1.4);
       toast(`🌳✨ ${node.emoji} ${node.name} → Lv.${cur + 1}/${max}! (−${node.cost}⚡)`);
-      setUi((u) => ({ ...u, treeNodes: { ...G.treeNodes }, sp: G.player.sp, level: G.player.level, treeCap: treeCap() }));
+      setUi((u) => ({ ...u, treeNodes: { ...G.treeNodes }, talents: { ...(G.talents || {}) }, sp: G.player.sp, level: G.player.level, treeCap: treeCap() }));
       syncPlayer();
      } catch (err) { console.error("unlockNode error:", err); toast("⚠️ เกิดข้อผิดพลาด: " + err.message); }
     };
@@ -25346,7 +25447,8 @@ export default function CherryAdventure() {
       const willOpen = !G.treeOpen;
       G.treeOpen = willOpen;
       if (!G.treeNodes) G.treeNodes = {}; // 🛟 self-heal for old saves
-      setUi((u) => ({ ...u, treeOpen: willOpen, treeNodes: { ...G.treeNodes }, sp: (G.player && G.player.sp) || 0, level: (G.player && G.player.level) || 1, treeCap: G.treeCap ? G.treeCap() : 1, invOpen: false, skillPanel: false, forgeOpen: false, homeOpen: false }));
+      if (!G.talents) G.talents = {};
+      setUi((u) => ({ ...u, treeOpen: willOpen, treeNodes: { ...G.treeNodes }, talents: { ...G.talents }, sp: (G.player && G.player.sp) || 0, level: (G.player && G.player.level) || 1, treeCap: G.treeCap ? G.treeCap() : 1, invOpen: false, skillPanel: false, forgeOpen: false, homeOpen: false }));
     };
     // ✨ CONSTELLATION BOARD (กระดานพรสวรรค์)
     G.toggleConst = () => {
@@ -27372,7 +27474,7 @@ export default function CherryAdventure() {
       if (idx >= 0) wilds.splice(idx, 1);
       if (wild.userData.lbl) wild.userData.lbl.sprite.visible = false; // hide floating tag in battle
       // status effects & battle buffs
-      G.est = { burn: 0, frozen: false, poison: 0, bleed: 0, confused: 0, aura: null, defBreak: 0 };
+      G.est = { burn: 0, frozen: false, poison: 0, bleed: 0, confused: 0, aura: null, defBreak: 0 }; G._swUsed = 0;
       if (G.auraRingHide) G.auraRingHide();
       {   // 🌦️ อากาศทาธาตุให้ศัตรูตั้งแต่เริ่มสู้ — ฝนตกอยู่ = ศัตรูติดธาตุน้ำ ยิงไฟใส่ทันทีได้ปฏิกิริยาเลย
         const wEl = (G.weather && G.weather.boost) || null;
@@ -27695,7 +27797,7 @@ export default function CherryAdventure() {
       const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
       const ngRew = 1 + (G.ngPlus || 0) * 0.5;
       let goldGain = Math.round((4 + lv * 1.05) * comboMult * ngRew * (1 + effLuck() * 0.02));   // 💰 ทองจากมอนธรรมดาลดลง ~47%
-      { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); }
+      { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); if (talB("goldPct")) goldGain = Math.round(goldGain * (1 + talB("goldPct") / 100)); }
       if (tB("gold")) goldGain = Math.round(goldGain * (1 + tB("gold") / 100));
       if (G.foodB && G.foodB("goldPct")) goldGain = Math.round(goldGain * (1 + G.foodB("goldPct") / 100));   // 🍳 บัฟอาหาร ทอง
       if (shiny) goldGain += 100;
@@ -31397,7 +31499,8 @@ export default function CherryAdventure() {
       }
       worldSwing();
       const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
-      const dmg = (effAtk() + Math.random() * 4) * (crit ? G.critMul() : 1);
+      let dmg = (effAtk() + Math.random() * 4) * (crit ? G.critMul() : 1);
+      if (m.userData.boss && talB("bossDmg")) dmg *= 1 + talB("bossDmg") / 100;   // 📜 ล่าบอส (โลกกว้าง)
       // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
       if (worldRange() > 4) {
         spawnSkillFx(G.cls === "archer" ? "arrowpierce" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
@@ -31412,6 +31515,7 @@ export default function CherryAdventure() {
         G._impactQ = { pos: { x: m.position.x, z: m.position.z }, dir: { x: m.position.x - char.position.x, z: m.position.z - char.position.z }, crit, y: hy, color: crit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xfff1c0) };
       }
       hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a });
+      { const ls = talB("lifesteal"); if (ls) { const hl = Math.round(dmg * ls / 100); if (hl > 0) G.player.hp = Math.min(effMaxHp(), G.player.hp + hl); } }   // 📜 ดูดเลือด (โลกกว้าง)
       if (G.sfx) G.sfx.hit && G.sfx.hit();
     };
     // ✨ วงเวทย์ใต้เท้า + ประกายพลังที่หดเข้าหาตัว — ใช้ตอน "สะสมพลัง" ก่อนปล่อยสกิล
@@ -34041,7 +34145,7 @@ export default function CherryAdventure() {
       let goldGain = Math.round((4 + G.enemy.lv * 1.05) * (wasBoss ? 6 : isGhost ? 3.2 : 1) * comboMult * ngRew * (1 + effLuck() * 0.02)); // 💰 ทองจากมอนธรรมดาลดลง (บอสยังคุ้มค่าเหนื่อย) · 🍀 luck finds more gold
       if (G.enemy.horde) goldGain = Math.round(goldGain * 1.5); // ⚔️ horde bounty
       if (isGolden) goldGain += 100; // 🌟 golden jackpot
-      { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); } // 👑 CEO path earns more
+      { const P = curPath(); if (P && P.goldBonus) goldGain = Math.round(goldGain * (1 + P.goldBonus)); if (talB("goldPct")) goldGain = Math.round(goldGain * (1 + talB("goldPct") / 100)); } // 👑 CEO path earns more
       { const AF = G.equipAffixes ? G.equipAffixes() : {}; if (AF.gold) goldGain = Math.round(goldGain * (1 + 0.25 * AF.gold)); } // 💰 ล่าสมบัติ affix
       if (tB("gold")) goldGain = Math.round(goldGain * (1 + tB("gold") / 100)); // 🏅 title gold bonus
       if (G.foodB && G.foodB("goldPct")) goldGain = Math.round(goldGain * (1 + G.foodB("goldPct") / 100));   // 🍳 บัฟอาหาร ทอง
@@ -34239,6 +34343,8 @@ export default function CherryAdventure() {
           burst(char.position, 0x6ad06a, 0.5);
           syncPlayer();
         } }
+      // 📜 ตำราวิชา: ฟื้น HP ทุกเทิร์น
+      { const tr = talB("regen"); if (tr && G.player.hp < effMaxHp()) { G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.round(effMaxHp() * tr / 100)); burst(char.position, 0x8ad08a, 0.4); syncPlayer(); } }
       // ✨ Holy Healing regeneration — heals the mage a little each turn
       if (G.regen > 0) {
         G.regen--;
@@ -34366,7 +34472,7 @@ export default function CherryAdventure() {
           G.comboSeq.push(sk.id);
           if (G.comboSeq.length > 4) G.comboSeq.shift();
         }
-        G.chainMult = 1 + Math.max(0, G.comboSeq.length - 1) * 0.12; // +12% per distinct chained skill (max ~+48%)
+        G.chainMult = 1 + Math.max(0, G.comboSeq.length - 1) * (0.12 + talB("comboAmp") / 100);   // 📜 วิชาต่อคอมโบ // +12% per distinct chained skill (max ~+48%)
         setUi((u) => ({ ...u, chainLen: G.comboSeq.length }));
         if (sk.id && sk.id.indexOf("x_") === 0) { // 🌟 สกิลขั้นสูง — ซีนีมาติกระดับ SSS
           spawnAdvCast(sk.color || 0xb07ae0, char.position, false);
@@ -34972,6 +35078,7 @@ export default function CherryAdventure() {
       G.accEquip = EMPTY_ACC(); G.accInv = []; // 💍 fresh accessories
       G.plus = {};
       G.treeNodes = {}; // 🌳 fresh passive skill tree
+      G.talents = {};   // 📜 fresh talents
       G.constNodes = {}; // ✨ fresh constellation board
       G.stardust = 0; // ✨ fresh star dust
       G.diamonds = 1000; G.starterGems = 1; // 💎 fresh diamonds — แจกเพชรเริ่มต้น 1000
@@ -35079,7 +35186,7 @@ export default function CherryAdventure() {
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
+          mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, talents: G.talents || {}, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
           curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
           pathId: G.pathId || null, // 🌟 chosen class path
           titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -37173,6 +37280,7 @@ export default function CherryAdventure() {
       G.mats = d.mats || {};
       G.weaponInfuse = d.weaponInfuse || {};
       G.treeNodes = d.treeNodes || {};
+      G.talents = d.talents || {};
       G.constNodes = d.constNodes || {};
       G.stardust = d.stardust || 0;
       G.diamonds = d.diamonds || 0;
@@ -46912,7 +47020,16 @@ export default function CherryAdventure() {
               dmg *= clsAmp;
               dmg = Math.round(dmg);
               // 🎲 enemy may dodge/block/guard — pierce skills bypass block/guard
-              if (A.pierce) { fxMsg += " เจาะทะลุ! 🎯"; }
+              // 📜 ตำราวิชา (ก่อนศัตรูป้องกัน): ตีแรกเลือดเต็ม / ประหารเลือดต่ำ / ล่าบอส / เจาะการ์ด
+              let talPierce = false;
+              if (G.talents && G.enemy) {
+                const fs = talB("firstStrike"); if (fs && G.enemy.hp >= G.enemy.maxHp) { dmg *= 1 + fs / 100; fxMsg += " ⚡ ตีแรก!"; }
+                const ex = talB("execute"); if (ex && G.enemy.hp < G.enemy.maxHp * 0.3) { dmg *= 1 + ex / 100; fxMsg += " 🩸 ประหาร!"; }
+                const bd = talB("bossDmg"); if (bd && G.enemy.boss) dmg *= 1 + bd / 100;
+                const pc = talB("pierceChance"); if (pc && !A.pierce && Math.random() * 100 < pc) { talPierce = true; }
+                dmg = Math.round(dmg);
+              }
+              if (A.pierce || talPierce) { fxMsg += " เจาะทะลุ! 🎯"; }
               else { const d2 = enemyDefend(dmg); dmg = d2.dmg; fxMsg += d2.note; }
               // 🎲 พรหอคอยท้าทาย: เปิดฉาก / ดูดเลือด / ไฟลุก
               if (G.dungeon && G.dungeon.rogue) {
@@ -46924,6 +47041,14 @@ export default function CherryAdventure() {
                 if (bn) { G.est.burn = Math.max(G.est.burn || 0, bn); fxMsg += " 🔥"; }
               }
               G.enemy.hp = Math.max(0, G.enemy.hp - dmg);
+              // 📜 ตำราวิชา (หลังโดน): ดูดเลือด / เผา / พิษ / ฟื้นมานา / คริฟื้น HP
+              if (G.talents && dmg > 0) {
+                const ls = talB("lifesteal"); if (ls) { const hl = Math.max(1, Math.round(dmg * ls / 100)); G.player.hp = Math.min(effMaxHp(), G.player.hp + hl); }
+                const bo = talB("burnOnHit"); if (bo) { G.est.burn = Math.max(G.est.burn || 0, bo); }
+                const po = talB("poisonOnHit"); if (po) { G.est.poison = Math.max(G.est.poison || 0, po); }
+                const mh = talB("mpOnHit"); if (mh) { G.player.mp = Math.min(effMaxMp(), (G.player.mp || 0) + mh); }
+                const ch = talB("critHeal"); if (ch && didCrit) { G.player.hp = Math.min(effMaxHp(), G.player.hp + Math.round(effMaxHp() * ch / 100)); }
+              }
               // 💢 floating number over the monster's head
               popDamage(em.position, dmg, didCrit ? "crit" : weakHit ? "weak" : "hit");
               // ⚡ affix: ตีสองครั้ง — roll an immediate bonus strike
@@ -49633,11 +49758,11 @@ export default function CherryAdventure() {
                   blocked = true;
                   dmg = Math.max(1, Math.round(dmg * 0.35)); // block soaks 65% of the blow
                 }
-                // 🎲 พรหอคอยท้าทาย: ผิวหิน (ลดดาเมจ) / เกราะหนาม (สะท้อน)
-                if (G.dungeon && G.dungeon.rogue) {
-                  const cut = rgB("dmgCut"); if (cut) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(60, cut) / 100)));
-                  const th = rgB("thorn"); if (th && G.enemy) { const back = Math.round(dmg * th / 100); if (back > 0) { G.enemy.hp = Math.max(0, G.enemy.hp - back); popDamage(em.position, back, "hit"); } }
-                }
+                // 🎲 พรหอคอยท้าทาย + 📜 ตำราวิชา: ลดดาเมจ / สะท้อน / รอดตาย / สวนกลับ
+                { const cut = rgB("dmgCut") + talB("dmgCut"); if (cut) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(60, cut) / 100)));
+                  const th = rgB("thorn") + talB("thorns"); if (th && G.enemy) { const back = Math.round(dmg * th / 100); if (back > 0) { G.enemy.hp = Math.max(0, G.enemy.hp - back); popDamage(em.position, back, "hit"); } }
+                  if (talB("secondWind") && !G._swUsed && dmg >= G.player.hp) { G._swUsed = 1; dmg = Math.max(0, G.player.hp - 1); toast("💪 ไม่ยอมล้ม! รอดด้วย HP 1"); burst(char.position, 0xffd24a, 1.2); }
+                  const ct = talB("counter"); if (ct && G.enemy && Math.random() * 100 < ct) { const back = Math.max(1, Math.round(effAtk() * 0.6)); G.enemy.hp = Math.max(0, G.enemy.hp - back); popDamage(em.position, back, "crit"); toast(`⚔️ สวนกลับ ${back}!`); } }
                 G.player.hp = Math.max(0, G.player.hp - dmg);
                 G.chargeTf(9); // ⚡ taking a hit builds the power gauge (fighting spirit)
                 popDamage(char.position, dmg, "hit"); // 💢 damage taken pops on the player too
@@ -56311,6 +56436,50 @@ export default function CherryAdventure() {
                     </div>
                   );
                 });
+              })()}
+              {/* 📜 ตำราวิชาประจำอาชีพ — 3 สาย × 5 วิชา */}
+              {(() => {
+                const cls = (G && G.cls) || ui.cls;
+                const br = TALENTS[cls];
+                if (!br) return null;
+                const T = ui.talents || {};
+                const lv = ui.level != null ? ui.level : (G && G.player ? G.player.level : 1);
+                const total = br.reduce((a, b) => a + b.nodes.length, 0), have = br.reduce((a, b) => a + b.nodes.filter((n) => T[n.id]).length, 0);
+                return (
+                  <div style={{ marginTop: 12, paddingTop: 10, borderTop: "2px dashed #e0dcd0" }}>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: "#b07a20" }}>📜 ตำราวิชา{(CLASSES[cls] || {}).name ? ` ${(CLASSES[cls] || {}).name}` : ""} <span style={{ fontSize: 10.5, color: "#a09070" }}>{have}/{total}</span></div>
+                    <div style={{ fontSize: 10.5, color: "#8a8a6a", marginBottom: 8 }}>3 สาย × 5 วิชา · ปลดตามลำดับในสาย · วิชาเปลี่ยนวิธีเล่น ไม่ใช่แค่ +% · ใช้แต้มสกิล ⚡ เดียวกัน</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 }}>
+                      {br.map((b) => (
+                        <div key={b.id} style={{ background: "#fbf9f2", border: `1px solid ${b.col}44`, borderRadius: 12, padding: 6 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 900, color: b.col, textAlign: "center", marginBottom: 5 }}>{b.emoji} {b.name}</div>
+                          {b.nodes.map((n, i) => {
+                            const got = !!T[n.id];
+                            const prevOk = i === 0 || !!T[b.nodes[i - 1].id];
+                            const lvOk = lv >= n.reqLv;
+                            const can = !got && prevOk && lvOk && (ui.sp || 0) >= n.cost;
+                            const dim = !got && !prevOk;
+                            return (
+                              <div key={n.id} style={{ position: "relative", marginBottom: 5 }}>
+                                {i > 0 && <div style={{ position: "absolute", left: "50%", top: -5, width: 2, height: 5, background: got ? b.col : "#ddd8cc" }} />}
+                                <button onClick={() => G.unlockTalent(n.id)} disabled={!can && !got} title={n.desc} style={{
+                                  width: "100%", textAlign: "left", border: got ? `2px solid ${b.col}` : `1px solid ${can ? b.col : "#e2ddd0"}`, borderRadius: 9, padding: "5px 6px",
+                                  background: got ? `${b.col}22` : can ? "#fff" : "#f4f2ea", cursor: can ? "pointer" : "default", fontFamily: font, opacity: dim ? 0.6 : 1,
+                                }}>
+                                  <div style={{ fontSize: 11, fontWeight: 900, color: got ? b.col : "#5a5a4a", display: "flex", justifyContent: "space-between", gap: 4 }}>
+                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.emoji} {n.name}</span>
+                                    <span style={{ flexShrink: 0, fontSize: 10, color: got ? b.col : !lvOk ? "#d06a4a" : "#8a8a6a" }}>{got ? "✓" : !lvOk ? `Lv.${n.reqLv}` : `⚡${n.cost}`}</span>
+                                  </div>
+                                  <div style={{ fontSize: 9.5, color: "#7a7a62", lineHeight: 1.35, marginTop: 2 }}>{n.desc}</div>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
               })()}
               <div style={{ fontSize: 10, color: "#a3a396", marginTop: 6, textAlign: "center" }}>อัพซ้ำได้จนเต็ม · โหนด ⭐ ประจำอาชีพ · บางโหนดต้องปลดโหนดก่อนหน้า</div>
             </div>
