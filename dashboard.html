@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>🍒 Cherry Adventure — Insight Dashboard</title>
+<meta name="description" content="สถิติผู้เล่นเกม Cherry Adventure แบบเรียลไทม์" />
+<link rel="icon" href="./icon-192.png" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#eef2df" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Cherry" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
+<style>
+  /* ---------- theme tokens (light + dark, per the data-viz palette) ---------- */
+  :root {
+    color-scheme: light;
+    --plane: #f4eef7;
+    --surface-1: #ffffff;
+    --surface-2: #faf6fd;
+    --text-primary: #241b2e;
+    --text-secondary: #5c5168;
+    --muted: #8a7f96;
+    --grid: #ece4f2;
+    --baseline: #d9cee2;
+    --border: rgba(36,27,46,0.10);
+    --accent: #a24bd0;
+    --accent-soft: #f0e2f8;
+    --seq-1: #256abf;  --seq-2: #2a78d6;  --seq-3: #3987e5;  --seq-4: #5598e7;  --seq-5: #86b6ef;
+    --gold: #f5c542; --silver: #c8ccd4; --bronze: #d08a4a;
+    --good: #0ca30c;
+    --shadow: 0 6px 22px rgba(80,40,110,0.10);
+    --shadow-lg: 0 12px 40px rgba(80,40,110,0.16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --plane: #14101a;
+      --surface-1: #201828;
+      --surface-2: #1a1422;
+      --text-primary: #f6f0fb;
+      --text-secondary: #c7bcd2;
+      --muted: #9a8ea8;
+      --grid: #2e2438;
+      --baseline: #3a2e46;
+      --border: rgba(255,255,255,0.10);
+      --accent: #c07be8;
+      --accent-soft: #35264a;
+      --seq-1: #86b6ef; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #2a78d6; --seq-5: #1c5cab;
+      --shadow: 0 6px 22px rgba(0,0,0,0.4);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane: #14101a; --surface-1: #201828; --surface-2: #1a1422;
+    --text-primary: #f6f0fb; --text-secondary: #c7bcd2; --muted: #9a8ea8;
+    --grid: #2e2438; --baseline: #3a2e46; --border: rgba(255,255,255,0.10);
+    --accent: #c07be8; --accent-soft: #35264a;
+    --seq-1: #86b6ef; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #2a78d6; --seq-5: #1c5cab;
+    --shadow: 0 6px 22px rgba(0,0,0,0.4); --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", "Sarabun", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    line-height: 1.4;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 20px 16px 56px; }
+
+  /* ---------- header ---------- */
+  header.top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .logo { font-size: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+  .titles h1 { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -0.01em; }
+  .titles p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-secondary); }
+  .top .spacer { flex: 1; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; box-shadow: var(--shadow); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); }
+  .dot.off { background: var(--muted); box-shadow: none; }
+  button.act { cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, #c07be8, #f0a0c8); border: none; border-radius: 999px; padding: 8px 15px; box-shadow: var(--shadow); }
+  button.ghost { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 800; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; width: 36px; height: 36px; box-shadow: var(--shadow); }
+  button.act:active, button.ghost:active { transform: translateY(1px); }
+  a.linkbtn { cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 800; color: #fff; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #e0708a, #d9536b);
+    border: none; border-radius: 999px; padding: 8px 15px; box-shadow: var(--shadow); }
+  a.linkbtn:active { transform: translateY(1px); }
+  a.playbtn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 900; color: #fff; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #5bbf7a, #3a9a5a);
+    border: none; border-radius: 999px; padding: 9px 18px; box-shadow: 0 5px 16px rgba(58,154,90,.4); }
+  a.playbtn:active { transform: translateY(1px); }
+  button.installbtn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 900; color: #fff;
+    display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #5a8ad0, #3a6ab0);
+    border: none; border-radius: 999px; padding: 9px 16px; box-shadow: 0 5px 16px rgba(58,106,176,.4); }
+  button.installbtn:active { transform: translateY(1px); }
+  #lgInstall { width: 100%; margin-top: 8px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 900; color: #fff;
+    background: linear-gradient(135deg, #5a8ad0, #3a6ab0); border: none; border-radius: 12px; padding: 12px; }
+
+  /* ---------- KPI tiles ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .kpi { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 14px 14px 13px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden; }
+  .kpi .k-ico { font-size: 17px; }
+  .kpi .k-val { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; margin-top: 3px; line-height: 1.05; }
+  .kpi .k-lab { font-size: 11px; color: var(--text-secondary); font-weight: 700; margin-top: 3px; }
+  .kpi .k-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .kpi-live { border-color: rgba(12,163,12,0.4); background: linear-gradient(180deg, rgba(12,163,12,0.09), var(--surface-1)); }
+  .kpi-live .k-val { color: var(--good); }
+  .livedot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 rgba(12,163,12,0.6); animation: pulse 1.6s infinite; vertical-align: middle; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(12,163,12,0.55); } 70% { box-shadow: 0 0 0 9px rgba(12,163,12,0); } 100% { box-shadow: 0 0 0 0 rgba(12,163,12,0); } }
+  select.iv { cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 7px 10px; box-shadow: var(--shadow); -webkit-appearance: none; appearance: none; }
+
+  /* ---------- cards / charts ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 16px 18px 18px; box-shadow: var(--shadow); }
+  .card h2 { margin: 0 0 2px; font-size: 14.5px; font-weight: 900; }
+  .card .csub { margin: 0 0 14px; font-size: 11.5px; color: var(--text-secondary); }
+
+  /* horizontal class bars */
+  .hbar-row { display: grid; grid-template-columns: 128px 1fr 66px; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .hbar-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hbar-track { height: 16px; background: var(--surface-2); border-radius: 8px; overflow: hidden; position: relative; }
+  .hbar-fill { height: 100%; border-radius: 8px; min-width: 3px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .hbar-val { font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* vertical histogram */
+  .histo { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; align-items: end; gap: 12px; height: 172px;
+    border-bottom: 1.5px solid var(--baseline); padding-top: 6px; }
+  .hcol { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+  .hcol .bar { width: 74%; max-width: 52px; border-radius: 6px 6px 2px 2px; min-height: 3px; transition: height .5s cubic-bezier(.2,.8,.2,1); }
+  .hcol .bval { font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .hlabels { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 12px; margin-top: 7px; }
+  .hlabels div { text-align: center; font-size: 10.5px; color: var(--muted); font-weight: 700; }
+
+  /* table */
+  .lb { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .lb th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+    font-weight: 800; padding: 0 10px 9px; border-bottom: 1px solid var(--grid); }
+  .lb td { padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  .lb tr:last-child td { border-bottom: none; }
+  .lb .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+  .rankbadge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 8px;
+    font-size: 11px; font-weight: 900; color: #3a2a10; background: var(--surface-2); }
+  .rankbadge.g1 { background: linear-gradient(135deg,#ffe07a,#f5c542); }
+  .rankbadge.g2 { background: linear-gradient(135deg,#eef1f6,#c8ccd4); }
+  .rankbadge.g3 { background: linear-gradient(135deg,#f0c99a,#d08a4a); color:#fff; }
+  .cchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
+  .cdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .pcell { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+  .pname { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .ngtag { font-size: 10.5px; font-weight: 800; color: #e0862f; }
+  .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .sdot.on { background: var(--good); box-shadow: 0 0 0 0 rgba(12,163,12,0.55); animation: pulse 1.8s infinite; }
+  .sdot.off { background: var(--baseline); }
+
+  .statmini { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .statmini .sm { background: var(--surface-2); border-radius: 13px; padding: 12px 10px; text-align: center; }
+  .statmini .sm .v { font-size: 20px; font-weight: 900; letter-spacing: -0.01em; }
+  .statmini .sm .l { font-size: 10.5px; color: var(--text-secondary); font-weight: 700; margin-top: 2px; }
+
+  footer { margin-top: 22px; text-align: center; font-size: 11px; color: var(--muted); line-height: 1.7; }
+  footer a { color: var(--accent); text-decoration: none; font-weight: 700; }
+
+  .full { grid-column: 1 / -1; }
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 26px 0; }
+  .skel { background: linear-gradient(90deg, var(--surface-2) 25%, var(--grid) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%; animation: sh 1.2s infinite; border-radius: 8px; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* floating tooltip */
+  #tip { position: fixed; pointer-events: none; z-index: 50; background: var(--text-primary); color: var(--surface-1);
+    font-size: 11.5px; font-weight: 700; padding: 6px 9px; border-radius: 8px; box-shadow: var(--shadow-lg); opacity: 0;
+    transition: opacity .12s; transform: translate(-50%, -130%); white-space: nowrap; }
+
+  /* ---------- auth ---------- */
+  .authbtn { cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, #5aa0f0, #6ad0c0); border: none; border-radius: 999px; padding: 8px 14px; box-shadow: var(--shadow); }
+  .authbtn:active { transform: translateY(1px); }
+  .authinfo { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 6px 6px 6px 12px; box-shadow: var(--shadow); }
+  .authinfo b { color: var(--text-primary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .authinfo button { cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 800; color: var(--text-secondary);
+    background: var(--surface-2); border: none; border-radius: 999px; padding: 5px 10px; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(20,12,26,0.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    z-index: 60; display: none; align-items: center; justify-content: center; padding: 18px; }
+  .modal-bg.open { display: flex; }
+  .modal { width: 100%; max-width: 360px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 20px;
+    padding: 22px 22px 20px; box-shadow: var(--shadow-lg); }
+  .modal h3 { margin: 0 0 4px; font-size: 17px; font-weight: 900; }
+  .modal p.sub { margin: 0 0 16px; font-size: 12px; color: var(--text-secondary); }
+  .modal label { display: block; font-size: 11.5px; font-weight: 800; color: var(--text-secondary); margin: 12px 0 5px; }
+  .inp { width: 100%; font-family: inherit; font-size: 14px; color: var(--text-primary); background: var(--surface-2);
+    border: 1.5px solid var(--border); border-radius: 12px; padding: 11px 13px; outline: none; }
+  .inp:focus { border-color: var(--accent); }
+  .modal .go { width: 100%; margin-top: 18px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 900; color: #fff;
+    background: linear-gradient(135deg, #5aa0f0, #6ad0c0); border: none; border-radius: 12px; padding: 13px; box-shadow: var(--shadow); }
+  .modal .go:disabled, .modal .go2:disabled { opacity: .6; cursor: default; }
+  .modal .go2 { width: 100%; margin-top: 9px; cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 800; color: var(--accent);
+    background: var(--accent-soft); border: none; border-radius: 12px; padding: 12px; }
+  .modal .orline { display: flex; align-items: center; gap: 10px; margin: 15px 0 12px; color: var(--muted); font-size: 11px; font-weight: 700; }
+  .modal .orline::before, .modal .orline::after { content: ""; flex: 1; height: 1px; background: var(--grid); }
+  .modal .google { width: 100%; cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 800; color: var(--text-primary);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .modal .cancel { width: 100%; margin-top: 10px; cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 800;
+    color: var(--text-secondary); background: transparent; border: none; padding: 9px; }
+  .modal .err { margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--critical, #d03b3b); text-align: center; min-height: 16px; }
+  .modal .note { margin-top: 12px; font-size: 10.5px; color: var(--muted); line-height: 1.5; text-align: center; }
+
+  /* ---------- my characters ---------- */
+  #mine { margin-bottom: 18px; }
+  .slotgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 4px; }
+  .slotcard { background: var(--surface-2); border: 1px solid var(--border); border-radius: 15px; padding: 13px 14px; position: relative; }
+  .slotcard .sc-top { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+  .slotcard .sc-av { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: #fff; }
+  .slotcard .sc-name { font-size: 14px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slotcard .sc-cls { font-size: 11px; color: var(--text-secondary); font-weight: 700; }
+  .slotcard .sc-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; }
+  .slotcard .sc-row { display: flex; align-items: baseline; justify-content: space-between; font-size: 12px; }
+  .slotcard .sc-row .l { color: var(--text-secondary); font-weight: 700; }
+  .slotcard .sc-row .v { font-weight: 900; font-variant-numeric: tabular-nums; }
+  .slotcard .sc-slot { position: absolute; top: 11px; right: 12px; font-size: 9.5px; font-weight: 800; color: var(--muted); background: var(--surface-1); border-radius: 6px; padding: 2px 6px; }
+  .slotcard .sc-rank { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; color: #b8860b; background: rgba(245,197,66,0.16); border-radius: 999px; padding: 3px 8px; margin-top: 10px; }
+  .herotag { font-size: 10px; font-weight: 800; color: #fff; background: linear-gradient(135deg,#c07be8,#f0a0c8); border-radius: 999px; padding: 2px 7px; }
+  .slotcard { cursor: pointer; transition: transform .1s, box-shadow .15s; }
+  .slotcard:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+
+  /* ---------- character detail modal ---------- */
+  .modal.detail { max-width: 440px; max-height: 90vh; overflow-y: auto; padding: 20px 20px 16px; }
+  .dt-x { position: sticky; top: -2px; float: right; margin: -6px -4px 0 0; cursor: pointer; border: none; background: var(--surface-2);
+    color: var(--text-secondary); width: 30px; height: 30px; border-radius: 50%; font-size: 16px; font-weight: 800; }
+  .dt-head { text-align: center; margin-bottom: 12px; }
+  .dt-title { font-size: 17px; font-weight: 900; }
+  .dt-sub { font-size: 12.5px; color: var(--text-secondary); font-weight: 800; margin-top: 2px; }
+  .dt-exp { font-size: 10.5px; color: var(--muted); margin-top: 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  .dt-expbar { height: 9px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-top: 3px; }
+  .dt-expfill { height: 100%; background: linear-gradient(90deg,#6da7ec,#256abf); border-radius: 6px; }
+  .dt-sec { background: var(--surface-2); border-radius: 14px; padding: 11px 14px; margin-top: 12px; }
+  .dt-sec h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 900; }
+  .dt-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; border-top: 1px solid var(--grid); }
+  .dt-row:first-of-type { border-top: none; }
+  .dt-row .l { color: var(--text-secondary); font-weight: 700; display: flex; gap: 8px; align-items: center; }
+  .dt-row .v { font-weight: 900; font-variant-numeric: tabular-nums; }
+  .dt-cur { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .dt-cur .c { background: var(--surface-2); border-radius: 12px; padding: 11px 13px; display: flex; align-items: center; gap: 9px; font-weight: 900; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  .dt-cur .c .ic { font-size: 16px; }
+  .dt-code { display: flex; align-items: center; gap: 8px; }
+  .dt-code code { font-family: ui-monospace, monospace; font-size: 11px; background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+  .dt-code button { cursor: pointer; border: none; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 11px; border-radius: 8px; padding: 5px 9px; font-family: inherit; }
+
+  @media (max-width: 860px) {
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .hbar-row { grid-template-columns: 104px 1fr 52px; }
+    .lb .hide-s { display: none; }
+    .titles h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="logo">🍒</span>
+    <div class="titles">
+      <h1>Cherry Adventure — Insight Dashboard</h1>
+      <p>สถิติผู้เล่นออนไลน์ · เลือกช่วงเวลารีเฟรชอัตโนมัติได้เอง</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="chip" id="statusChip"><span class="dot off" id="statusDot"></span><span id="statusTxt">กำลังโหลด…</span></span>
+    <select class="iv" id="intervalSel" title="ตั้งเวลารีเฟรชอัตโนมัติ">
+      <option value="0">⏱️ รีเฟรช: ปิด</option>
+      <option value="10000">⏱️ ทุก 10 วิ</option>
+      <option value="30000">⏱️ ทุก 30 วิ</option>
+      <option value="60000">⏱️ ทุก 1 นาที</option>
+      <option value="300000">⏱️ ทุก 5 นาที</option>
+    </select>
+    <span id="authArea"></span>
+    <button class="installbtn" id="installBtn" title="ติดตั้งเป็นแอปบนหน้าจอโฮม" style="display:none">📲 ติดตั้งแอป</button>
+    <a class="playbtn" href="./index.html" title="เข้าเล่นเกม">▶ เข้าเล่นเกม</a>
+    <a class="linkbtn" href="./items.html" title="เปิดคลังไอเทมทั้งหมด">🍒 คลังไอเทม</a>
+    <a class="linkbtn" href="./classes.html" title="คู่มืออาชีพตัวละคร">⚔️ อาชีพ</a>
+    <a class="linkbtn" href="./heroes.html" title="แกลเลอรีฮีโร่">🦸 ฮีโร่</a>
+    <button class="ghost" id="themeBtn" title="สลับธีมสว่าง/มืด">🌗</button>
+    <button class="act" id="refreshBtn">🔄 รีเฟรช</button>
+  </header>
+
+  <section id="mine"></section>
+
+  <div id="dash">
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>การใช้งานรายวัน (7 วันล่าสุด)</h2>
+      <p class="csub">จำนวนผู้เล่นแยกตามวันที่ใช้งานล่าสุด 📈</p>
+      <div id="dailyChart"></div>
+    </div>
+    <div class="card">
+      <h2>👑 แชมป์แต่ละอาชีพ</h2>
+      <p class="csub">ผู้เล่นพลังสูงสุดของแต่ละอาชีพ</p>
+      <div id="championChart"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>การกระจายตามอาชีพ</h2>
+      <p class="csub">จำนวนผู้เล่นในแต่ละอาชีพ</p>
+      <div id="classChart"></div>
+    </div>
+    <div class="card">
+      <h2>การกระจายตามเลเวล</h2>
+      <p class="csub">จำนวนผู้เล่นในแต่ละช่วงเลเวล</p>
+      <div id="levelChart"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>ระดับการตื่นพลัง (New Game+)</h2>
+      <p class="csub">จำนวนผู้เล่นในแต่ละระดับการตื่นพลัง ⚡</p>
+      <div id="ngChart"></div>
+    </div>
+    <div class="card">
+      <h2>ค่าพลังเฉลี่ยของผู้เล่น</h2>
+      <p class="csub">ค่าเฉลี่ยของสถานะการต่อสู้ทั้งหมด</p>
+      <div id="avgStats" class="statmini"></div>
+    </div>
+  </div>
+
+  <div class="card full">
+    <h2>🏆 ตารางอันดับผู้เล่น</h2>
+    <p class="csub">25 อันดับแรก จัดเรียงตามค่าพลังรวม (ATK×4 + DEF×3 + HP×0.05 + CRIT×8) · 🟢 = ออนไลน์ตอนนี้</p>
+    <div id="leaderboard"></div>
+  </div>
+  </div>
+
+  <footer>
+    ข้อมูลจากเซิร์ฟเวอร์ออนไลน์ Cherry Adventure (Supabase) · แสดงเฉพาะโปรไฟล์สาธารณะบนกระดานอันดับ<br/>
+    <a href="./index.html">← กลับไปเล่นเกม</a> · <a href="./items.html">🍒 คลังไอเทม</a> · <a href="./classes.html">⚔️ อาชีพ</a> · <a href="./heroes.html">🦸 ฮีโร่</a>
+  </footer>
+</div>
+
+<div class="modal-bg" id="loginModal">
+  <div class="modal">
+    <h3>🔑 เข้าสู่ระบบ</h3>
+    <p class="sub">ใช้อีเมล + รหัสผ่านเดียวกับในเกม เพื่อดูข้อมูลตัวละครของคุณ</p>
+    <label for="lgEmail">อีเมล</label>
+    <input class="inp" id="lgEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+    <label for="lgPass">รหัสผ่าน</label>
+    <input class="inp" id="lgPass" type="password" autocomplete="current-password" placeholder="••••••••" />
+    <button class="go" id="lgGo">เข้าสู่ระบบ</button>
+    <button class="go2" id="lgSignup">สมัครสมาชิกใหม่</button>
+    <div class="orline">หรือ</div>
+    <button class="google" id="lgGoogle">🇬 เข้าสู่ระบบด้วย Google</button>
+    <button id="lgInstall" style="display:none">📲 ติดตั้งเป็นแอป (PWA)</button>
+    <button class="cancel" id="lgCancel">ยกเลิก</button>
+    <div class="err" id="lgErr"></div>
+    <div class="note">ใช้อีเมล/รหัสผ่านหรือ Google เดียวกับตอนเข้าเกม · ระบบอ่านข้อมูลเซฟของคุณอย่างเดียว (read-only)</div>
+  </div>
+</div>
+<div class="modal-bg" id="detailModal">
+  <div class="modal detail" id="detailBox"></div>
+</div>
+<div id="tip"></div>
+
+<script>
+(function () {
+  "use strict";
+  var CFG = {
+    url: "https://xaifhvlvfdvpieeutmys.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhaWZodmx2ZmR2cGllZXV0bXlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTcyMzEsImV4cCI6MjEwMDI5MzIzMX0.OdLp0--DlPrStyeJ9pZn33h6EigN5uqUby-yq8jAGH4"
+  };
+
+  var CLASSES = {
+    warrior:  { name: "นักรบ",          emoji: "🛡️", color: "#d9536b" },
+    archer:   { name: "นักธนู",         emoji: "🏹", color: "#7ba05b" },
+    mage:     { name: "นักเวท",         emoji: "🔮", color: "#9a6ad0" },
+    assassin: { name: "นักฆ่า",         emoji: "🗡️", color: "#5a5a70" },
+    lancer:   { name: "นักหอก",         emoji: "🔱", color: "#4a90c0" },
+    samurai:  { name: "ซามูไร",         emoji: "⚔️", color: "#c0392b" },
+    coder:    { name: "จอมเวทโค้ด",     emoji: "💻", color: "#2ac0d8" },
+    office:   { name: "พนักงานออฟฟิศ",  emoji: "💼", color: "#2a7ad0" },
+    aegis:    { name: "จักรกลพิทักษ์",  emoji: "🤖", color: "#2ab0f5" }
+  };
+  var CLASS_ORDER = ["warrior","archer","mage","assassin","lancer","samurai","coder","office","aegis"];
+  var SEQ = ["var(--seq-1)","var(--seq-2)","var(--seq-3)","var(--seq-4)","var(--seq-5)"];
+  var lastRows = []; // latest fetched leaderboard rows (for the my-characters rank lookup)
+
+  function powerOf(r) { return Math.round((r.atk||0)*4 + (r.def||0)*3 + (r.hp||0)*0.05 + (r.crit||0)*8); }
+  function fmt(n) { return (n||0).toLocaleString("en-US"); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+  function agoTxt(ms) { var m = Math.floor(ms/60000); if (m < 1) return "ไม่กี่วินาทีที่แล้ว"; if (m < 60) return m + " นาทีที่แล้ว"; var h = Math.floor(m/60); if (h < 24) return h + " ชม.ที่แล้ว"; return Math.floor(h/24) + " วันที่แล้ว"; }
+
+  // ---- floating tooltip ----
+  var tip = document.getElementById("tip");
+  function showTip(e, html) { tip.innerHTML = html; tip.style.opacity = "1"; moveTip(e); }
+  function moveTip(e) { var x = e.touches ? e.touches[0].clientX : e.clientX; var y = e.touches ? e.touches[0].clientY : e.clientY; tip.style.left = x + "px"; tip.style.top = y + "px"; }
+  function hideTip() { tip.style.opacity = "0"; }
+  function bindTip(el, html) {
+    el.addEventListener("mousemove", function(e){ showTip(e, html); });
+    el.addEventListener("mouseleave", hideTip);
+    el.addEventListener("touchstart", function(e){ showTip(e, html); }, { passive: true });
+    el.addEventListener("touchend", hideTip);
+  }
+
+  // ---- theme toggle ----
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var dark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  function setStatus(ok, txt) {
+    document.getElementById("statusDot").className = "dot" + (ok ? "" : " off");
+    document.getElementById("statusTxt").textContent = txt;
+  }
+
+  function kpi(ico, val, lab, sub) {
+    return '<div class="kpi"><div class="k-ico">' + ico + '</div><div class="k-val">' + val +
+      '</div><div class="k-lab">' + lab + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function renderKPIs(rows) {
+    var now = Date.now();
+    var total = rows.length;
+    var online = rows.filter(function(r){ return r.ts && (now - r.ts) < 180000; }).length;   // 🟢 active in last 3 min = online now
+    var active = rows.filter(function(r){ return r.ts && (now - r.ts) < 86400000; }).length;
+    var maxLv = rows.reduce(function(m,r){ return Math.max(m, r.lv||0); }, 0);
+    var avgLv = total ? Math.round(rows.reduce(function(s,r){ return s + (r.lv||0); }, 0) / total) : 0;
+    var prestige = rows.reduce(function(s,r){ return s + (r.ng||0); }, 0);
+    var avgPow = total ? Math.round(rows.reduce(function(s,r){ return s + powerOf(r); }, 0) / total) : 0;
+    var liveTile = '<div class="kpi kpi-live"><div class="k-ico"><span class="livedot"></span></div><div class="k-val">' + fmt(online) +
+      '</div><div class="k-lab">ออนไลน์ตอนนี้</div><div class="k-sub">ใช้งานใน 3 นาที</div></div>';
+    document.getElementById("kpis").innerHTML =
+      liveTile +
+      kpi("👥", fmt(total), "ผู้เล่นทั้งหมด") +
+      kpi("🕑", fmt(active), "ใช้งานใน 24 ชม.") +
+      kpi("🏆", fmt(maxLv), "เลเวลสูงสุด") +
+      kpi("📊", fmt(avgLv), "เลเวลเฉลี่ย") +
+      kpi("⚡", fmt(prestige), "ตื่นพลังรวม", "New Game+ สะสม") +
+      kpi("⚔️", fmt(avgPow), "พลังเฉลี่ย");
+  }
+
+  function renderClassChart(rows) {
+    var counts = {}; CLASS_ORDER.forEach(function(c){ counts[c] = 0; });
+    rows.forEach(function(r){ if (counts[r.c] != null) counts[r.c]++; else counts[r.c] = (counts[r.c]||0)+1; });
+    var arr = CLASS_ORDER.map(function(c){ return { c: c, n: counts[c] || 0 }; }).sort(function(a,b){ return b.n - a.n; });
+    var max = Math.max(1, arr[0].n);
+    var total = rows.length || 1;
+    var el = document.getElementById("classChart");
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูลผู้เล่น</div>'; return; }
+    el.innerHTML = arr.map(function(x){
+      var meta = CLASSES[x.c] || { name: x.c, emoji: "❓", color: "#888" };
+      var pct = Math.round(x.n / total * 100);
+      return '<div class="hbar-row">' +
+        '<div class="hbar-name">' + meta.emoji + ' ' + esc(meta.name) + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" data-w="' + (x.n / max * 100) + '" style="width:0;background:' + meta.color + '"></div></div>' +
+        '<div class="hbar-val">' + fmt(x.n) + ' · ' + pct + '%</div></div>';
+    }).join("");
+    // animate + tooltip
+    [].forEach.call(el.querySelectorAll(".hbar-fill"), function(f, i){
+      setTimeout(function(){ f.style.width = f.getAttribute("data-w") + "%"; }, 30);
+      var x = arr[i], meta = CLASSES[x.c] || {};
+      bindTip(f.parentNode, (meta.emoji||"") + " " + esc((meta.name)||x.c) + "<br>" + fmt(x.n) + " คน (" + Math.round(x.n/total*100) + "%)");
+    });
+  }
+
+  function bucketChart(elId, buckets) {
+    var max = Math.max(1, buckets.reduce(function(m,b){ return Math.max(m, b.n); }, 0));
+    var el = document.getElementById(elId);
+    var bars = '<div class="histo">' + buckets.map(function(b, i){
+      var h = Math.round(b.n / max * 100);
+      return '<div class="hcol" data-i="' + i + '"><div class="bval">' + fmt(b.n) + '</div>' +
+        '<div class="bar" data-h="' + h + '" style="height:0;background:' + SEQ[i % SEQ.length] + '"></div></div>';
+    }).join("") + '</div>';
+    var labels = '<div class="hlabels">' + buckets.map(function(b){ return '<div>' + esc(b.label) + '</div>'; }).join("") + '</div>';
+    el.innerHTML = bars + labels;
+    [].forEach.call(el.querySelectorAll(".hcol"), function(col, i){
+      var bar = col.querySelector(".bar");
+      setTimeout(function(){ bar.style.height = bar.getAttribute("data-h") + "%"; }, 30);
+      bindTip(col, esc(buckets[i].label) + "<br>" + fmt(buckets[i].n) + " คน");
+    });
+  }
+
+  function renderLevelChart(rows) {
+    var defs = [
+      { label: "1–49", lo: 1, hi: 49 }, { label: "50–99", lo: 50, hi: 99 },
+      { label: "100–199", lo: 100, hi: 199 }, { label: "200–499", lo: 200, hi: 499 },
+      { label: "500+", lo: 500, hi: Infinity }
+    ];
+    var buckets = defs.map(function(d){ return { label: d.label, n: rows.filter(function(r){ var l = r.lv||1; return l >= d.lo && l <= d.hi; }).length }; });
+    bucketChart("levelChart", buckets);
+  }
+
+  function renderNgChart(rows) {
+    var buckets = [
+      { label: "ยังไม่ตื่น", n: rows.filter(function(r){ return (r.ng||0) === 0; }).length },
+      { label: "⚡ 1", n: rows.filter(function(r){ return (r.ng||0) === 1; }).length },
+      { label: "⚡ 2", n: rows.filter(function(r){ return (r.ng||0) === 2; }).length },
+      { label: "⚡ 3+", n: rows.filter(function(r){ return (r.ng||0) >= 3; }).length }
+    ];
+    bucketChart("ngChart", buckets);
+  }
+
+  function renderAvgStats(rows) {
+    var el = document.getElementById("avgStats");
+    if (!rows.length) { el.innerHTML = '<div class="empty full">ยังไม่มีข้อมูล</div>'; return; }
+    var n = rows.length;
+    var avg = function(k){ return Math.round(rows.reduce(function(s,r){ return s + (r[k]||0); }, 0) / n); };
+    var items = [ ["⚔️","ATK","atk"], ["🛡️","DEF","def"], ["❤️","HP","hp"], ["🎯","CRIT","crit"] ];
+    el.innerHTML = items.map(function(it){
+      var v = avg(it[2]); if (it[2] === "crit") v = v + "%";
+      return '<div class="sm"><div class="v">' + (typeof v === "number" ? fmt(v) : v) + '</div><div class="l">' + it[0] + ' ' + it[1] + '</div></div>';
+    }).join("");
+  }
+
+  function renderLeaderboard(rows) {
+    var el = document.getElementById("leaderboard");
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีผู้เล่นบนกระดานอันดับ — เล่นเกมและเปิดออนไลน์เพื่อขึ้นอันดับ!</div>'; return; }
+    var now = Date.now();
+    var top = rows.slice().map(function(r){ return { r: r, p: powerOf(r) }; }).sort(function(a,b){ return b.p - a.p; }).slice(0, 25);
+    var body = top.map(function(x, i){
+      var r = x.r, meta = CLASSES[r.c] || { name: r.c || "?", emoji: "❓", color: "#888" };
+      var rk = i + 1, badge = rk <= 3 ? " g" + rk : "";
+      var on = r.ts && (now - r.ts) < 180000; // 🟢 online = active in last 3 min
+      var seen = r.ts ? ("เห็นล่าสุด " + agoTxt(now - r.ts)) : "ไม่ทราบสถานะ";
+      return '<tr>' +
+        '<td><span class="rankbadge' + badge + '">' + rk + '</span></td>' +
+        '<td><span class="pcell"><span class="sdot ' + (on ? "on" : "off") + '" title="' + (on ? "ออนไลน์" : esc(seen)) + '"></span>' +
+          '<span class="pname">' + esc(r.n || "ผู้เล่น") + '</span>' + ((r.ng||0) > 0 ? '<span class="ngtag">⚡' + r.ng + '</span>' : '') + '</span></td>' +
+        '<td class="hide-s"><span class="cchip"><span class="cdot" style="background:' + meta.color + '"></span>' + meta.emoji + ' ' + esc(meta.name) + '</span></td>' +
+        '<td class="num">' + fmt(r.lv || 1) + '</td>' +
+        '<td class="num" style="color:var(--accent)">' + fmt(x.p) + '</td>' +
+        '</tr>';
+    }).join("");
+    el.innerHTML = '<div style="overflow-x:auto"><table class="lb"><thead><tr>' +
+      '<th style="width:44px">#</th><th>ผู้เล่น</th><th class="hide-s">อาชีพ</th>' +
+      '<th class="num" style="width:70px">เลเวล</th><th class="num" style="width:90px">พลังรวม</th>' +
+      '</tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+
+  function renderDaily(rows) {
+    var el = document.getElementById("dailyChart");
+    var days = 7, now = new Date();
+    var buckets = [];
+    for (var i = days - 1; i >= 0; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      buckets.push({ start: d.getTime(), end: d.getTime() + 86400000, label: (d.getMonth() + 1) + "/" + d.getDate(), n: 0 });
+    }
+    rows.forEach(function(r){ if (!r.ts) return; for (var j = 0; j < buckets.length; j++) { if (r.ts >= buckets[j].start && r.ts < buckets[j].end) { buckets[j].n++; break; } } });
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+    var W = Math.max(240, el.clientWidth || 320), H = 190;
+    var padL = 8, padR = 10, padT = 16, padB = 24;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxN = Math.max(1, buckets.reduce(function(m,b){ return Math.max(m, b.n); }, 0));
+    var peak = buckets.reduce(function(m,b){ return b.n > m ? b.n : m; }, 0);
+    var xs = function(i){ return padL + (days === 1 ? plotW / 2 : plotW * i / (days - 1)); };
+    var ys = function(n){ return padT + plotH * (1 - n / maxN); };
+    var pts = buckets.map(function(b, i){ return [xs(i), ys(b.n)]; });
+    var line = pts.map(function(p, i){ return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+    var area = line + " L" + pts[pts.length-1][0].toFixed(1) + " " + (padT+plotH) + " L" + pts[0][0].toFixed(1) + " " + (padT+plotH) + " Z";
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" style="display:block;overflow:visible">';
+    svg += '<defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--seq-3)" stop-opacity="0.32"/><stop offset="1" stop-color="var(--seq-3)" stop-opacity="0"/></linearGradient></defs>';
+    svg += '<line x1="' + padL + '" y1="' + (padT+plotH) + '" x2="' + (W-padR) + '" y2="' + (padT+plotH) + '" stroke="var(--baseline)" stroke-width="1.5"/>';
+    svg += '<path d="' + area + '" fill="url(#dg)"/>';
+    svg += '<path d="' + line + '" fill="none" stroke="var(--seq-3)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    buckets.forEach(function(b, i){
+      var cx = pts[i][0], cy = pts[i][1];
+      if (b.n === peak && peak > 0) svg += '<text x="' + cx + '" y="' + (cy - 9) + '" text-anchor="middle" font-size="11" font-weight="800" fill="var(--text-primary)">' + b.n + '</text>';
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="var(--surface-1)" stroke="var(--seq-3)" stroke-width="2.5"/>';
+      svg += '<circle class="hit" data-i="' + i + '" cx="' + cx + '" cy="' + cy + '" r="16" fill="transparent"/>';
+      svg += '<text x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--muted)">' + esc(b.label) + '</text>';
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+    [].forEach.call(el.querySelectorAll(".hit"), function(h){
+      var b = buckets[+h.getAttribute("data-i")];
+      bindTip(h, esc(b.label) + "<br>" + fmt(b.n) + " คน");
+    });
+  }
+
+  function renderChampions(rows) {
+    var el = document.getElementById("championChart");
+    if (!rows.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+    var best = {};
+    rows.forEach(function(r){ var p = powerOf(r); if (!best[r.c] || p > best[r.c].p) best[r.c] = { r: r, p: p }; });
+    var arr = CLASS_ORDER.filter(function(c){ return best[c]; }).map(function(c){ return { c: c, r: best[c].r, p: best[c].p }; }).sort(function(a,b){ return b.p - a.p; });
+    if (!arr.length) { el.innerHTML = '<div class="empty">ยังไม่มีข้อมูล</div>'; return; }
+    var max = Math.max(1, arr[0].p);
+    el.innerHTML = arr.map(function(x){
+      var meta = CLASSES[x.c] || { name: x.c, emoji: "❓", color: "#888" };
+      var champ = esc((x.r.n || "ผู้เล่น")) + " · Lv." + fmt(x.r.lv || 1);
+      return '<div class="hbar-row" title="">' +
+        '<div class="hbar-name">' + meta.emoji + ' ' + champ + '</div>' +
+        '<div class="hbar-track"><div class="hbar-fill" data-w="' + (x.p / max * 100) + '" style="width:0;background:' + meta.color + '"></div></div>' +
+        '<div class="hbar-val">' + fmt(x.p) + '</div></div>';
+    }).join("");
+    [].forEach.call(el.querySelectorAll(".hbar-fill"), function(f, i){
+      setTimeout(function(){ f.style.width = f.getAttribute("data-w") + "%"; }, 30);
+      var x = arr[i], meta = CLASSES[x.c] || {};
+      bindTip(f.parentNode, (meta.emoji||"") + " " + esc((meta.name)||x.c) + "<br>" + esc(x.r.n || "ผู้เล่น") + " · Lv." + fmt(x.r.lv||1) + "<br>⚔️ พลัง " + fmt(x.p));
+    });
+  }
+
+  function renderAll(rows) {
+    renderKPIs(rows); renderDaily(rows); renderChampions(rows);
+    renderClassChart(rows); renderLevelChart(rows);
+    renderNgChart(rows); renderAvgStats(rows); renderLeaderboard(rows);
+  }
+
+  function skeletons() {
+    document.getElementById("kpis").innerHTML = Array(6).fill('<div class="kpi"><div class="skel" style="height:56px"></div></div>').join("");
+    ["dailyChart","championChart","classChart","levelChart","ngChart","leaderboard"].forEach(function(id){ document.getElementById(id).innerHTML = '<div class="skel" style="height:150px"></div>'; });
+    document.getElementById("avgStats").innerHTML = '<div class="skel full" style="height:80px"></div>';
+  }
+
+  var loading = false;
+  function load() {
+    if (loading) return; loading = true;
+    setStatus(false, "กำลังโหลด…");
+    var url = CFG.url + "/rest/v1/players?select=pid,n,c,lv,atk,def,hp,crit,ng,rank,t,ts&limit=2000";
+    fetch(url, { headers: { apikey: CFG.anonKey, Authorization: "Bearer " + CFG.anonKey } })
+      .then(function(res){ if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+      .then(function(rows){
+        rows = Array.isArray(rows) ? rows : [];
+        lastRows = rows;
+        renderAll(rows);
+        if (session) renderMine(); // refresh my-character rank/online with the new data
+        var t = new Date();
+        setStatus(true, "อัปเดต " + t.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }));
+        loading = false;
+      })
+      .catch(function(err){
+        setStatus(false, "โหลดข้อมูลไม่ได้");
+        document.getElementById("kpis").innerHTML = '<div class="empty full" style="grid-column:1/-1">⚠️ เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ — ' + esc(err.message) + '<br>ตรวจสอบว่าเปิด RLS ให้อ่านตาราง players ได้ (ดู ONLINE_SETUP.md)</div>';
+        loading = false;
+      });
+  }
+
+  // ---- user-settable auto-refresh ----
+  var timer = null;
+  function armTimer(ms) { if (timer) { clearInterval(timer); timer = null; } if (ms > 0) timer = setInterval(load, ms); }
+  var sel = document.getElementById("intervalSel");
+  var saved = null; try { saved = window.localStorage.getItem("dash_interval"); } catch (e) {}
+  sel.value = (saved != null && [ "0","10000","30000","60000","300000" ].indexOf(saved) >= 0) ? saved : "60000";
+  sel.addEventListener("change", function () {
+    try { window.localStorage.setItem("dash_interval", sel.value); } catch (e) {}
+    armTimer(parseInt(sel.value, 10) || 0);
+  });
+
+  // ---- 🔑 auth + my characters ----
+  var SKEY = "dash_session";
+  var session = null, mineSlots = null;
+  try { var rawS = window.localStorage.getItem(SKEY); if (rawS) session = JSON.parse(rawS); } catch (e) {}
+  function saveSession() { try { session ? window.localStorage.setItem(SKEY, JSON.stringify(session)) : window.localStorage.removeItem(SKEY); } catch (e) {} }
+
+  function renderAuth() {
+    var el = document.getElementById("authArea");
+    if (session && session.email) {
+      el.innerHTML = '<span class="authinfo">👤 <b>' + esc(session.email) + '</b><button id="logoutBtn">ออกจากระบบ</button></span>';
+      document.getElementById("logoutBtn").addEventListener("click", logout);
+    } else {
+      el.innerHTML = '<button class="authbtn" id="loginBtn">🔑 เข้าสู่ระบบ</button>';
+      document.getElementById("loginBtn").addEventListener("click", openModal);
+    }
+    // 🔒 logged in → show only the player's own character data; hide the aggregate dashboard + its feed controls
+    var on = !!(session && session.email);
+    var dash = document.getElementById("dash"); if (dash) dash.style.display = on ? "none" : "";
+    var chip = document.getElementById("statusChip"); if (chip) chip.style.display = on ? "none" : "";
+    var iv = document.getElementById("intervalSel"); if (iv) iv.style.display = on ? "none" : "";
+    var sub = document.querySelector(".titles p");
+    if (sub) sub.textContent = on ? "ข้อมูลตัวละครของคุณ" : "สถิติผู้เล่นออนไลน์ · เลือกช่วงเวลารีเฟรชอัตโนมัติได้เอง";
+  }
+  function openModal() { document.getElementById("lgErr").textContent = ""; document.getElementById("loginModal").classList.add("open"); setTimeout(function(){ document.getElementById("lgEmail").focus(); }, 50); }
+  function closeModal() { document.getElementById("loginModal").classList.remove("open"); }
+
+  async function getToken() {
+    if (!session) return null;
+    if (session.exp && Date.now() < session.exp) return session.access_token;
+    try {
+      var res = await fetch(CFG.url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: CFG.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
+      if (!res.ok) throw 0;
+      var j = await res.json();
+      session.access_token = j.access_token; session.refresh_token = j.refresh_token || session.refresh_token;
+      session.exp = Date.now() + (j.expires_in ? j.expires_in * 1000 : 3600000) - 60000; saveSession();
+      return session.access_token;
+    } catch (e) { logout(); return null; }
+  }
+
+  function applyAuth(j, emailFallback) {
+    session = { access_token: j.access_token, refresh_token: j.refresh_token, uid: (j.user && j.user.id) || j.uid, email: (j.user && j.user.email) || emailFallback, exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 3600000) - 60000 };
+    saveSession(); closeModal(); document.getElementById("lgPass").value = "";
+    renderAuth(); loadMine();
+  }
+  async function doLogin() {
+    var email = document.getElementById("lgEmail").value.trim(), pass = document.getElementById("lgPass").value;
+    var err = document.getElementById("lgErr"), go = document.getElementById("lgGo");
+    err.style.color = "";
+    if (!email || !pass) { err.textContent = "กรอกอีเมลและรหัสผ่าน"; return; }
+    go.disabled = true; go.textContent = "กำลังเข้าสู่ระบบ…"; err.textContent = "";
+    try {
+      var res = await fetch(CFG.url + "/auth/v1/token?grant_type=password", { method: "POST", headers: { apikey: CFG.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email: email, password: pass }) });
+      var j = await res.json();
+      if (!res.ok || !j.access_token) throw new Error(j.error_description || j.msg || j.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      applyAuth(j, email);
+    } catch (e) { err.textContent = "❌ " + (e.message || "เข้าสู่ระบบไม่สำเร็จ"); }
+    finally { go.disabled = false; go.textContent = "เข้าสู่ระบบ"; }
+  }
+  async function doSignup() {
+    var email = document.getElementById("lgEmail").value.trim(), pass = document.getElementById("lgPass").value;
+    var err = document.getElementById("lgErr"), go2 = document.getElementById("lgSignup");
+    err.style.color = "";
+    if (!email || !pass) { err.textContent = "กรอกอีเมลและรหัสผ่าน"; return; }
+    if (pass.length < 6) { err.textContent = "รหัสผ่านอย่างน้อย 6 ตัวอักษร"; return; }
+    go2.disabled = true; go2.textContent = "กำลังสมัคร…"; err.textContent = "";
+    try {
+      var res = await fetch(CFG.url + "/auth/v1/signup", { method: "POST", headers: { apikey: CFG.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ email: email, password: pass }) });
+      var j = await res.json();
+      if (!res.ok) throw new Error(j.msg || j.error_description || j.message || j.error || "สมัครไม่สำเร็จ");
+      if (j.access_token) { applyAuth(j, email); } // auto-confirmed → logged in
+      else { err.style.color = "var(--good)"; err.textContent = "📧 สมัครแล้ว — ตรวจอีเมลเพื่อยืนยัน แล้วเข้าสู่ระบบ"; }
+    } catch (e) { err.textContent = "❌ " + (e.message || "สมัครไม่สำเร็จ"); }
+    finally { go2.disabled = false; go2.textContent = "สมัครสมาชิกใหม่"; }
+  }
+  function googleLogin() {
+    // prompt=select_account → บังคับหน้าเลือกบัญชี Google ทุกครั้ง (หลัง logout เลือกเมลใหม่ได้)
+    location.href = CFG.url + "/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=" + encodeURIComponent(location.href.split("#")[0]);
+  }
+  async function handleOAuthReturn() {
+    if (!(location.hash && location.hash.indexOf("access_token=") >= 0)) return false;
+    var h = new URLSearchParams(location.hash.slice(1));
+    var at = h.get("access_token"), rt = h.get("refresh_token"), ei = parseInt(h.get("expires_in") || "3600", 10);
+    if (!at) return false;
+    var uid = null, email = null;
+    try { var ur = await fetch(CFG.url + "/auth/v1/user", { headers: { apikey: CFG.anonKey, Authorization: "Bearer " + at } }); if (ur.ok) { var u = await ur.json(); uid = u.id; email = u.email; } } catch (e) {}
+    applyAuth({ access_token: at, refresh_token: rt, expires_in: ei, user: { id: uid, email: email } }, email);
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    return true;
+  }
+  function logout() { session = null; mineSlots = null; saveSession(); renderAuth(); document.getElementById("mine").innerHTML = ""; }
+
+  async function loadMine() {
+    if (!session) { document.getElementById("mine").innerHTML = ""; return; }
+    var token = await getToken(); if (!token) return;
+    try {
+      var res = await fetch(CFG.url + "/rest/v1/saves?uid=eq." + encodeURIComponent(session.uid) + "&select=data,ts", { headers: { apikey: CFG.anonKey, Authorization: "Bearer " + token } });
+      var arr = await res.json();
+      var data = arr && arr[0] && arr[0].data;
+      mineSlots = (data && data.slots) || null;
+    } catch (e) { mineSlots = null; }
+    renderMine();
+  }
+  function scRow(l, v) { return '<div class="sc-row"><span class="l">' + l + '</span><span class="v">' + v + '</span></div>'; }
+  function renderMine() {
+    var el = document.getElementById("mine");
+    if (!session) { el.innerHTML = ""; return; }
+    if (!mineSlots) { el.innerHTML = '<div class="card"><h2>👤 ตัวละครของฉัน</h2><p class="csub">ยังไม่พบเซฟบนคลาวด์ของบัญชีนี้ — เข้าเกมแล้วบันทึกขึ้นคลาวด์ก่อน</p></div>'; return; }
+    var now = Date.now();
+    var byPid = {}; lastRows.forEach(function(r){ if (r.pid) byPid[r.pid] = r; });
+    var sorted = lastRows.slice().sort(function(a, b){ return powerOf(b) - powerOf(a); });
+    var cards = Object.keys(mineSlots).sort().map(function(k){
+      var s = mineSlots[k]; if (!s || !s.player) return "";
+      var meta = CLASSES[s.cls] || { name: s.cls || "?", emoji: "❓", color: "#888" };
+      var lv = (s.player && s.player.level) || 1, name = s.name || "เชอร์รี่";
+      var row = s.pid && byPid[s.pid] ? byPid[s.pid] : null, rankHtml = "";
+      if (row) {
+        var rk = sorted.findIndex(function(r){ return r.pid === row.pid; }) + 1;
+        var on = row.ts && (now - row.ts) < 180000;
+        rankHtml = '<div class="sc-rank">🏆 อันดับโลก #' + rk + ' · ⚔️ ' + fmt(powerOf(row)) + (on ? ' · 🟢 ออนไลน์' : '') + '</div>';
+      }
+      return '<div class="slotcard" data-k="' + k + '"><span class="sc-slot">ช่อง ' + (parseInt(k, 10) + 1) + '</span>' +
+        '<div class="sc-top"><div class="sc-av" style="background:' + meta.color + '">' + meta.emoji + '</div>' +
+        '<div style="min-width:0"><div class="sc-name">' + esc(name) + (s.heroId ? ' <span class="herotag">ฮีโร่</span>' : '') + '</div>' +
+        '<div class="sc-cls">' + esc(meta.name) + ' · Lv.' + fmt(lv) + '</div></div></div>' +
+        '<div class="sc-rows">' +
+          scRow("💰 ทอง", fmt(s.gold || 0)) + scRow("💎 เพชร", fmt(s.diamonds || 0)) +
+          scRow("⚡ ตื่นพลัง", (s.ngPlus || 0)) + scRow("🐾 สัตว์เลี้ยง", fmt((s.petBox && s.petBox.length) || 0)) +
+        '</div>' + rankHtml + '</div>';
+    }).join("");
+    el.innerHTML = '<div class="card"><h2>👤 ตัวละครของฉัน</h2><p class="csub">ข้อมูลเซฟจากบัญชี ' + esc(session.email) + ' · แตะการ์ดเพื่อดูรายละเอียดเต็ม</p><div class="slotgrid">' + (cards || '<div class="empty">ยังไม่มีตัวละครในเซฟ</div>') + '</div></div>';
+    Array.prototype.forEach.call(el.querySelectorAll(".slotcard"), function(card){ card.addEventListener("click", function(){ openDetail(card.getAttribute("data-k")); }); });
+  }
+
+  // ---- 📊 character detail (mirrors the in-game profile popup) ----
+  function effProfile(s) {
+    if (s.profile) return s.profile; // 📊 game-stored snapshot (full, exact)
+    var meta = CLASSES[s.cls] || {}; var byPid = {}; lastRows.forEach(function(r){ if (r.pid) byPid[r.pid] = r; });
+    var row = s.pid && byPid[s.pid] ? byPid[s.pid] : null, a = s.achStats || {};
+    return { name: s.name || "เชอร์รี่", className: meta.name || s.cls, classEmoji: meta.emoji || "",
+      title: null, titleEmoji: null, level: (s.player && s.player.level) || 1, exp: Math.round((s.player && s.player.exp) || 0), expNeed: null,
+      hp: Math.round((s.player && s.player.hp) || 0), maxHp: row ? row.hp : null, mp: Math.round((s.player && s.player.mp) || 0), maxMp: null,
+      atk: row ? row.atk : null, def: row ? row.def : null, crit: row ? row.crit : null, eva: null, luck: null, spd: null, power: row ? powerOf(row) : null,
+      gold: s.gold || 0, diamonds: s.diamonds || 0, gemDust: s.gemDust || 0, stardust: s.stardust || 0,
+      pid: s.pid || null, code: null, pvpRank: s.pvpRank || 1000, pvpTier: null, endlessBest: s.endlessBest || 0, ngPlus: s.ngPlus || 0,
+      wins: a.wins || 0, bosses: a.bosses || 0, catches: a.catches || 0, crits: a.crits || 0, wbKills: a.wbKills || 0,
+      pets: (s.petBox && s.petBox.length) || 0, species: Object.keys(s.dexSeen || {}).length, items: (s.inv && s.inv.length) || 0 };
+  }
+  function nv(v, suffix) { return (v == null || v === "") ? "—" : (fmt(v) + (suffix || "")); }
+  function dRow(icon, label, valHtml) { return '<div class="dt-row"><span class="l">' + icon + ' ' + label + '</span><span class="v">' + valHtml + '</span></div>'; }
+  function openDetail(k) {
+    if (!mineSlots || !mineSlots[k]) return;
+    var s = mineSlots[k], p = effProfile(s);
+    var meta = CLASSES[s.cls] || { emoji: "❓", color: "#888", name: s.cls };
+    var headEmoji = p.titleEmoji || p.classEmoji || meta.emoji;
+    var headName = p.title || p.className || meta.name;
+    var expPct = (p.expNeed && p.exp != null) ? Math.max(0, Math.min(100, p.exp / p.expNeed * 100)) : 0;
+    var col = { orange: "#eb6834", green: "#1baf7a", blue: "#3987e5", teal: "#1baf7a", purple: "#9a6ad0", gold: "#e0a020" };
+    var hp = nv(p.hp) + (p.maxHp != null ? " / " + fmt(p.maxHp) : "");
+    var mp = nv(p.mp) + (p.maxMp != null ? " / " + fmt(p.maxMp) : "");
+    var html = '<button class="dt-x" id="dtX">✕</button>' +
+      '<div class="dt-head"><div class="dt-title">' + headEmoji + ' ' + esc(headName) + '</div>' +
+        '<div class="dt-sub">' + esc(p.className || meta.name) + ' · เลเวล ' + fmt(p.level) + (p.ngPlus ? ' · NG+' + p.ngPlus : '') + '</div>' +
+        (p.expNeed ? '<div class="dt-exp">EXP ' + fmt(p.exp) + ' / ' + fmt(p.expNeed) + '</div><div class="dt-expbar"><div class="dt-expfill" style="width:' + expPct + '%"></div></div>' : '') +
+      '</div>' +
+      '<div class="dt-sec"><h4>⚔️ ค่าพลังตัวละคร</h4>' +
+        dRow("💪", "พลังการต่อสู้รวม", '<span style="color:' + col.gold + '">' + nv(p.power) + '</span>') +
+        dRow("⚡", "ขั้นการตื่น", '<span style="color:' + col.orange + '">ตื่น ' + (p.ngPlus || 0) + '</span>') +
+        dRow("❤️", "พลังชีวิต (HP)", '<span style="color:' + col.green + '">' + hp + '</span>') +
+        dRow("💧", "มานา (MP)", '<span style="color:' + col.blue + '">' + mp + '</span>') +
+        dRow("🗡️", "พลังโจมตี", '<span style="color:' + col.orange + '">' + nv(p.atk) + '</span>') +
+        dRow("🛡️", "ป้องกัน", nv(p.def)) +
+        dRow("🎯", "คริติคอล", '<span style="color:' + col.orange + '">' + nv(p.crit, "%") + '</span>') +
+        dRow("💨", "หลบหลีก", '<span style="color:' + col.teal + '">' + nv(p.eva, "%") + '</span>') +
+        dRow("🍀", "โชค", '<span style="color:' + col.green + '">' + nv(p.luck, "%") + '</span>') +
+        dRow("👟", "ความเร็ว", '<span style="color:' + col.purple + '">' + (p.spd == null ? "—" : p.spd) + '</span>') +
+      '</div>' +
+      '<div class="dt-cur">' +
+        '<div class="c"><span class="ic">💰</span>' + fmt(p.gold) + '</div>' +
+        '<div class="c"><span class="ic">💎</span>' + fmt(p.diamonds) + '</div>' +
+        '<div class="c"><span class="ic">🔷</span>' + fmt(p.gemDust) + '</div>' +
+        '<div class="c"><span class="ic">✨</span>' + fmt(p.stardust) + '</div>' +
+      '</div>' +
+      '<div class="dt-sec"><h4>📊 สถิติ & ออนไลน์</h4>' +
+        (p.code || p.pid ? '<div class="dt-row"><span class="l">🆔 รหัสเพื่อน</span><span class="dt-code"><code id="dtCode">' + esc(p.code || p.pid) + '</code><button id="dtCopy">คัดลอก</button></span></div>' : '') +
+        dRow("🥇", "อันดับ PvP", nv(p.pvpRank) + (p.pvpTier ? ' <span style="color:var(--muted);font-weight:700">(' + esc(p.pvpTier) + ')</span>' : '')) +
+        dRow("♾️", "เอาชีวิตรอด (เวฟดีสุด)", nv(p.endlessBest)) +
+        dRow("🏆", "ชนะศึก", nv(p.wins)) +
+        dRow("👑", "ปราบบอส", nv(p.bosses)) +
+        dRow("👹", "ปราบบอสโลก", nv(p.wbKills)) +
+        dRow("💗", "จับมอนสเตอร์", nv(p.catches)) +
+        dRow("🎯", "ออกคริรวม", nv(p.crits)) +
+        dRow("🐾", "สัตว์เลี้ยง / สายพันธุ์", nv(p.pets) + " / " + nv(p.species)) +
+        dRow("🎒", "ไอเทมในกระเป๋า", nv(p.items)) +
+      '</div>';
+    document.getElementById("detailBox").innerHTML = html;
+    document.getElementById("detailModal").classList.add("open");
+    document.getElementById("dtX").addEventListener("click", closeDetail);
+    var cp = document.getElementById("dtCopy");
+    if (cp) cp.addEventListener("click", function(){ try { navigator.clipboard.writeText(p.code || p.pid); cp.textContent = "คัดลอกแล้ว!"; setTimeout(function(){ cp.textContent = "คัดลอก"; }, 1500); } catch (e) {} });
+  }
+  function closeDetail() { document.getElementById("detailModal").classList.remove("open"); }
+
+  document.getElementById("lgGo").addEventListener("click", doLogin);
+  document.getElementById("lgSignup").addEventListener("click", doSignup);
+  document.getElementById("lgGoogle").addEventListener("click", googleLogin);
+  document.getElementById("lgCancel").addEventListener("click", closeModal);
+  document.getElementById("lgPass").addEventListener("keydown", function(e){ if (e.key === "Enter") doLogin(); });
+  document.getElementById("loginModal").addEventListener("click", function(e){ if (e.target.id === "loginModal") closeModal(); });
+  document.getElementById("detailModal").addEventListener("click", function(e){ if (e.target.id === "detailModal") closeDetail(); });
+  renderAuth();
+  handleOAuthReturn().then(function(handled){ if (!handled && session) loadMine(); }); // 🇬 finish a Google redirect, else resume saved session
+
+  document.getElementById("refreshBtn").addEventListener("click", load);
+
+  // register service worker so the dashboard is installable as a PWA
+  if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("./sw.js").catch(function () {}); } catch (e) {} }
+
+  // ---------- 📲 PWA install ----------
+  (function () {
+    var deferred = null;
+    var hdr = document.getElementById("installBtn");
+    var modalBtn = document.getElementById("lgInstall");
+    var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    function showBtns(on) { var d = on ? "" : "none"; if (hdr) hdr.style.display = d; if (modalBtn) modalBtn.style.display = d; }
+    function doInstall() {
+      if (deferred) {
+        deferred.prompt();
+        deferred.userChoice.then(function (c) { if (c && c.outcome === "accepted") showBtns(false); deferred = null; });
+      } else if (isIOS) {
+        alert("ติดตั้งบน iPhone/iPad:\nแตะปุ่ม แชร์ ⬆️ ด้านล่าง แล้วเลือก \"เพิ่มไปยังหน้าจอโฮม\" (Add to Home Screen)");
+      } else {
+        alert("ถ้ายังไม่เห็นตัวเลือกติดตั้ง ลองเปิดเมนูเบราว์เซอร์ แล้วเลือก \"ติดตั้งแอป\" / \"เพิ่มไปยังหน้าจอโฮม\"");
+      }
+    }
+    window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; if (!standalone) showBtns(true); });
+    window.addEventListener("appinstalled", function () { showBtns(false); deferred = null; });
+    if (hdr) hdr.addEventListener("click", doInstall);
+    if (modalBtn) modalBtn.addEventListener("click", doInstall);
+    // iOS ไม่มี beforeinstallprompt → โชว์ปุ่มพร้อมคำแนะนำเลย (ถ้ายังไม่ได้ติดตั้ง)
+    if (isIOS && !standalone) showBtns(true);
+  })();
+
+  skeletons();
+  load();
+  armTimer(parseInt(sel.value, 10) || 0);
+})();
+</script>
+</body>
+</html>

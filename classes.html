@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>อาชีพตัวละคร · Cherry Adventure</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg1:#fbeee6; --bg2:#f6e0d2; --card:#fffdfb; --card2:#fdf3ef; --ink:#5a3b32; --muted:#a9887c;
+    --line:#f0dccf; --accent:#d9536b; --shadow:0 8px 24px rgba(180,110,90,.14);
+    --bar:#f0dccf; --barfill:#e0708a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg1:#241a1e; --bg2:#1a1215; --card:#2c2126; --card2:#332830; --ink:#f4e6de; --muted:#b79a8f;
+      --line:#3d2e34; --accent:#f0869c; --shadow:0 8px 24px rgba(0,0,0,.35); --bar:#3d2e34; --barfill:#f0869c; }
+  }
+  :root[data-theme="dark"]{ --bg1:#241a1e; --bg2:#1a1215; --card:#2c2126; --card2:#332830; --ink:#f4e6de; --muted:#b79a8f;
+    --line:#3d2e34; --accent:#f0869c; --shadow:0 8px 24px rgba(0,0,0,.35); --bar:#3d2e34; --barfill:#f0869c; }
+  :root[data-theme="light"]{ --bg1:#fbeee6; --bg2:#f6e0d2; --card:#fffdfb; --card2:#fdf3ef; --ink:#5a3b32; --muted:#a9887c;
+    --line:#f0dccf; --accent:#d9536b; --shadow:0 8px 24px rgba(180,110,90,.14); --bar:#f0dccf; --barfill:#e0708a; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh}
+  .wrap{max-width:1100px;margin:0 auto;padding:26px 18px 60px}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+  h1{font-size:34px;margin:2px 0 4px;display:flex;align-items:center;gap:10px}
+  .lead{color:var(--muted);font-size:14px;font-weight:600;max-width:640px;line-height:1.5}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}
+  .tbtn{font-family:inherit;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;
+    background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 14px;box-shadow:var(--shadow)}
+  .tbtn[aria-pressed="true"]{background:linear-gradient(135deg,#e0708a,#d9536b);color:#fff;border-color:transparent}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-top:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 16px 15px;box-shadow:var(--shadow);
+    border-top:4px solid var(--c,#d9536b);position:relative;overflow:hidden}
+  .chead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .ico{width:52px;height:52px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:28px;flex:none;
+    background:color-mix(in srgb,var(--c) 18%,var(--card2));border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+  .cname{font-size:19px;font-weight:900;line-height:1.1}
+  .crole{font-size:11.5px;font-weight:800;color:var(--c);margin-top:2px}
+  .desc{font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.5;margin:2px 0 12px}
+  .stats{display:flex;gap:8px;margin-bottom:11px}
+  .stat{flex:1;background:var(--card2);border-radius:11px;padding:8px 4px;text-align:center}
+  .stat .k{font-size:10px;font-weight:800;color:var(--muted)}
+  .stat .v{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+  .rate{margin-bottom:11px}
+  .rrow{display:grid;grid-template-columns:70px 1fr 22px;align-items:center;gap:8px;margin:5px 0}
+  .rrow .rk{font-size:11px;font-weight:700;color:var(--muted)}
+  .track{display:block;height:8px;border-radius:999px;background:var(--bar);overflow:hidden}
+  .fill{display:block;height:100%;min-width:6px;border-radius:999px;background:var(--c,#e0708a)}
+  .rrow .rv{font-size:11px;font-weight:800;text-align:right;color:var(--ink)}
+  .perk,.tip{font-size:12px;font-weight:700;line-height:1.5;border-radius:11px;padding:9px 11px;margin-top:8px}
+  .perk{background:color-mix(in srgb,var(--c) 12%,var(--card2));border:1px solid color-mix(in srgb,var(--c) 22%,transparent)}
+  .perk b,.tip b{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--c);margin-bottom:3px}
+  .tip{background:var(--card2)}
+  .tip b{color:var(--muted)}
+  footer{margin-top:34px;text-align:center;color:var(--muted);font-size:11.5px;line-height:1.7;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="margin-bottom:6px"><a href="./dashboard.html" style="font-size:12px;font-weight:800;color:var(--accent);text-decoration:none">← แดชบอร์ด</a> · <a href="./index.html" style="font-size:12px;font-weight:800;color:var(--accent);text-decoration:none">▶ เข้าเล่นเกม</a></div>
+  <div class="eyebrow">Class Codex</div>
+  <h1>⚔️ อาชีพตัวละคร</h1>
+  <p class="lead">9 อาชีพให้เลือกเล่น — ค่าพลังเริ่มต้น สไตล์การเล่น ความสามารถพิเศษ และเรตติ้งตามบทบาท (โจมตีเดี่ยว/ควบคุม/โจมตีกลุ่ม/ป้องกัน/ฟื้นฟู)</p>
+  <div class="toolbar" id="filters"></div>
+  <div class="grid" id="classes"></div>
+  <footer>🍒 Cherry Adventure · ข้อมูลอาชีพอัปเดตตามเวอร์ชันล่าสุด</footer>
+</div>
+
+<script>
+(function(){
+  const CATS = [["single","โจมตีเดี่ยว"],["control","ควบคุม"],["aoe","โจมตีกลุ่ม"],["def","ป้องกัน"],["heal","ฟื้นฟู"]];
+  const C = [
+    {k:"warrior", n:"นักรบ", e:"🛡️", col:"#d9536b", hp:55, atk:9, def:3, desc:"เลือดหนา ป้องกันสูง ฟันดาบระยะประชิด", perk:"รับดาเมจลดลง -2 เพิ่มเติม", tip:"แท็งก์แนวหน้า อึดทน บุกรับได้ครบ — เหมาะกับมือใหม่", r:{single:3,control:2,aoe:2,def:5,heal:3}},
+    {k:"archer", n:"นักธนู", e:"🏹", col:"#7ba05b", hp:42, atk:10, def:1, desc:"ยิงธนูจากระยะไกล แม่นยำสูง", perk:"โอกาสคริติคอล 25% แรง ×2 🎯", tip:"ดาเมจเดี่ยวจากระยะไกล คริแรง แต่ตัวบางต้องรักษาระยะ", r:{single:5,control:2,aoe:3,def:1,heal:2}},
+    {k:"mage", n:"นักเวท", e:"🔮", col:"#9a6ad0", hp:36, atk:8, def:0, desc:"ร่ายเวทลูกแก้วอาคม พลังทำลายสูง", perk:"สกิลแรง ×1.15 · พลังสกิลเริ่ม +2", tip:"กวาดมอนเป็นกลุ่มด้วยเวท เก็บระยะแล้วปล่อยของหนัก", r:{single:4,control:3,aoe:5,def:1,heal:2}},
+    {k:"assassin", n:"นักฆ่า", e:"🗡️", col:"#7a6a8a", hp:40, atk:8, def:1, desc:"มีดสั้นคู่ จู่โจมสองมือรวดเร็ว", perk:"โจมตี 2 ครั้ง · คริ 30% · หลบ +12%", tip:"เบิร์สต์เดี่ยวไว หลบเก่ง เล่นจังหวะเข้า-ออก", r:{single:5,control:3,aoe:2,def:2,heal:1}},
+    {k:"lancer", n:"นักหอก", e:"🔱", col:"#4a90c0", hp:50, atk:9, def:2, desc:"หอกยาวจ้วงระยะกลาง เจาะเกราะทะลุ", perk:"โจมตีทะลุการ์ด/บล็อก · เจาะเกราะ -2 DEF ศัตรู", tip:"เจาะเกราะ/ทะลุบล็อก คุมศัตรูจากระยะกลาง", r:{single:4,control:4,aoe:2,def:3,heal:2}},
+    {k:"samurai", n:"ซามูไร", e:"⚔️", col:"#c0392b", hp:46, atk:11, def:1, desc:"ดาบคาตานะเร็วดุ ฟันติดต่อกันคมกริบ", perk:"คริ 22% · โจมตีปกติมีโอกาสฟัน 2 ครั้ง", tip:"ฟันรัวคริสูง สายบุกดุดันจบไว", r:{single:5,control:2,aoe:3,def:2,heal:1}},
+    {k:"coder", n:"จอมเวทโค้ด", e:"💻", col:"#2ab0c8", hp:44, atk:10, def:2, desc:"โปรแกรมเมอร์เวทมนตร์ ใช้โค้ด AI และเวทดิจิทัล", perk:"AI ช่วยคำนวณ — คริ +8% · มานาฟื้นเร็ว", tip:"สายไฮบริดรอบด้าน คริ + มานาฟื้นไว", r:{single:4,control:4,aoe:3,def:2,heal:4}},
+    {k:"office", n:"พนักงานออฟฟิศ", e:"💼", col:"#2a7ad0", hp:46, atk:9, def:2, desc:"นักรบโต๊ะทำงาน ใช้เวทเทคโนโลยี กาแฟ และเอกสาร", perk:"กาแฟฟื้นมานาทุกเทิร์น · ยิ่งเลือดน้อยยิ่ง OT แรง", tip:"อึดยาว ยิ่งเลือดน้อยยิ่งแรง — สายอดทนสู้ยืดเยื้อ", r:{single:3,control:3,aoe:2,def:3,heal:5}},
+    {k:"aegis", n:"จักรกลพิทักษ์", e:"🤖", col:"#2ab0f5", hp:48, atk:10, def:3, desc:"หุ่นยนต์ AI พลังพลาสมา+นาโนเทค อาวุธแปลงร่างและโดรนอัตโนมัติ", perk:"เทคโนโลยีแม่นยำ — คริ +10% · เจาะเกราะศัตรู -1 DEF", tip:"หุ่นรบไซไฟ คุมพื้นที่+เบิร์สต์ ผสมโดรน/พลาสมา/แรงโน้มถ่วง", r:{single:4,control:5,aoe:4,def:3,heal:1}},
+  ];
+  const card = c => {
+    const rows = CATS.map(([k,n])=>`<div class="rrow"><span class="rk">${n}</span><span class="track"><span class="fill" style="width:${c.r[k]/5*100}%"></span></span><span class="rv">${c.r[k]}</span></div>`).join("");
+    return `<div class="card" data-k="${c.k}" style="--c:${c.col}">
+      <div class="chead"><div class="ico">${c.e}</div><div><div class="cname">${c.n}</div><div class="crole">${c.tip.split(" ")[0]} · ${c.n}</div></div></div>
+      <div class="desc">${c.desc}</div>
+      <div class="stats">
+        <div class="stat"><div class="k">❤️ HP</div><div class="v">${c.hp}</div></div>
+        <div class="stat"><div class="k">⚔️ ATK</div><div class="v">${c.atk}</div></div>
+        <div class="stat"><div class="k">🛡️ DEF</div><div class="v">${c.def}</div></div>
+      </div>
+      <div class="rate">${rows}</div>
+      <div class="perk"><b>⭐ ความสามารถพิเศษ</b>${c.perk}</div>
+      <div class="tip"><b>💡 สไตล์การเล่น</b>${c.tip}</div>
+    </div>`;
+  };
+  document.getElementById("classes").innerHTML = C.map(card).join("");
+  const fdata = [{k:"all",n:"ทั้งหมด"}].concat(C.map(c=>({k:c.k,n:c.e+" "+c.n})));
+  const fb = document.getElementById("filters");
+  fb.innerHTML = fdata.map((f,i)=>`<button class="tbtn" data-f="${f.k}" aria-pressed="${i===0}">${f.n}</button>`).join("");
+  fb.addEventListener("click",e=>{ const b=e.target.closest(".tbtn"); if(!b)return; const f=b.dataset.f;
+    fb.querySelectorAll(".tbtn").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===f));
+    document.querySelectorAll("#classes .card").forEach(c=>c.style.display=(f==="all"||c.dataset.k===f)?"":"none"); });
+})();
+</script>
+</body>
+</html>
