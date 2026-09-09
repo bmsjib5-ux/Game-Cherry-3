@@ -1,3 +1,9 @@
 # Phaser ที่ดาวน์โหลดมาแคชไว้สำหรับ build — สคริปต์ดึงใหม่เองถ้าไม่มี
-# ตัว Phaser ฝังอยู่ใน maple/standalone.html แล้ว ไม่ต้องคอมมิตซ้ำ
-maple/vendor/
+# ตัว Phaser ฝังอยู่ใน maple/standalone.html และ desktop-pet/pet.html แล้ว
+.cache/
+node_modules/
+desktop-pet/dist/
+
+# สร้างอัตโนมัติจาก desktop-pet/build-pet.mjs (npm start / npm run dist สร้างให้เอง)
+desktop-pet/pet.html
+desktop-pet/assets/

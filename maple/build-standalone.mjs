@@ -15,20 +15,15 @@
 //   node maple/build-standalone.mjs
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PHASER_VERSION, getPhaser, bundleFiles, kb } from '../tools/bundle.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
+const PHASER_CACHE = resolve(ROOT, '.cache', `phaser-${PHASER_VERSION}.min.js`);
 
-const PHASER_VERSION = '3.80.1';
-const PHASER_URL = `https://cdn.jsdelivr.net/npm/phaser@${PHASER_VERSION}/dist/phaser.min.js`;
-const PHASER_LOCAL = resolve(HERE, 'vendor', `phaser-${PHASER_VERSION}.min.js`);
-
-// เรียงตามลำดับ dependency — โมดูลที่ถูก import ต้องมาก่อนผู้ใช้งานเสมอ
-// maps.js มีโค้ดระดับบนสุดที่สร้าง MAPS จาก BIOMES จึงต้องอยู่หลัง gamedata.js
-// main.js สร้าง Phaser.Game ทันทีที่รัน จึงต้องอยู่ท้ายสุด
 const ORDER = [
   'shared/gamedata.js',
   'maple/src/color.js',
@@ -50,60 +45,11 @@ const ORDER = [
   'maple/src/main.js',
 ];
 
-async function getPhaser() {
-  try {
-    await stat(PHASER_LOCAL);
-    return readFile(PHASER_LOCAL, 'utf8');
-  } catch {
-    process.stdout.write(`ดาวน์โหลด Phaser ${PHASER_VERSION} ...`);
-    const res = await fetch(PHASER_URL);
-    if (!res.ok) throw new Error(`โหลด Phaser ไม่สำเร็จ: HTTP ${res.status}`);
-    const js = await res.text();
-    await mkdir(dirname(PHASER_LOCAL), { recursive: true });
-    await writeFile(PHASER_LOCAL, js);
-    console.log(` เก็บไว้ที่ ${PHASER_LOCAL.replace(ROOT + '/', '')}`);
-    return js;
-  }
-}
-
-// ตัด import (รองรับแบบหลายบรรทัด) และคำนำหน้า export ออก
-// เมื่อทุกโมดูลอยู่ในสโคปเดียวกัน ชื่อที่ import กันก็มองเห็นกันอยู่แล้ว
-function stripModuleSyntax(src) {
-  return src
-    .replace(/^import\s+[\s\S]*?from\s+['"][^'"]*['"];?[ \t]*$/gm, '')
-    .replace(/^export\s+(?=(?:const|let|var|function|class|async)\b)/gm, '');
-}
-
-// กันพลาด: ถ้ามีชื่อ top-level ซ้ำกันข้ามไฟล์ การรวมสโคปเดียวจะพังตอนรัน
-function assertNoDuplicateNames(chunks) {
-  const seen = new Map();
-  const dupes = [];
-  for (const { file, code } of chunks) {
-    const re = /^(?:const|let|var|function|class|async function)\s+([A-Za-z_$][\w$]*)/gm;
-    let m;
-    while ((m = re.exec(code))) {
-      const name = m[1];
-      if (seen.has(name)) dupes.push(`${name} (${seen.get(name)} + ${file})`);
-      else seen.set(name, file);
-    }
-  }
-  if (dupes.length) {
-    throw new Error(`ชื่อ top-level ซ้ำกัน จะรวมเป็นไฟล์เดียวไม่ได้:\n  ${dupes.join('\n  ')}`);
-  }
-  return seen.size;
-}
-
-const [phaser, ...sources] = await Promise.all([
-  getPhaser(),
-  ...ORDER.map((rel) => readFile(resolve(ROOT, rel), 'utf8')),
+const [phaser, bundle] = await Promise.all([
+  getPhaser(PHASER_CACHE),
+  bundleFiles(ROOT, ORDER),
 ]);
-
-const chunks = ORDER.map((file, i) => ({ file, code: stripModuleSyntax(sources[i]) }));
-const names = assertNoDuplicateNames(chunks);
-
-const gameJs = chunks
-  .map(({ file, code }) => `\n// ${'═'.repeat(70)}\n// ${file}\n// ${'═'.repeat(70)}\n${code.trim()}\n`)
-  .join('\n');
+const gameJs = bundle.code;
 
 const html = `<!DOCTYPE html>
 <html lang="th">
@@ -183,8 +129,7 @@ ${gameJs}
 const out = resolve(HERE, 'standalone.html');
 await writeFile(out, html);
 
-const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
 console.log(`สร้าง ${out.replace(ROOT + '/', '')} แล้ว`);
 console.log(`  Phaser ${PHASER_VERSION}   ${kb(phaser.length)}`);
-console.log(`  โค้ดเกม ${ORDER.length} โมดูล  ${kb(gameJs.length)}  (${names} ชื่อ top-level ไม่ซ้ำกัน)`);
+console.log(`  โค้ดเกม ${ORDER.length} โมดูล  ${kb(gameJs.length)}  (${bundle.names} ชื่อ top-level ไม่ซ้ำกัน)`);
 console.log(`  รวมทั้งไฟล์        ${kb(html.length)}`);

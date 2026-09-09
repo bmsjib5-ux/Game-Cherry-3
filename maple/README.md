@@ -68,7 +68,7 @@ maple/
   index.html              เวอร์ชันพัฒนา — โหลด Phaser จาก CDN + แสดงข้อผิดพลาดบนจอ
   standalone.html         เวอร์ชันไฟล์เดียว (สร้างอัตโนมัติ ห้ามแก้มือ)
   build-standalone.mjs    สคริปต์รวมไฟล์ — ตัด import/export แล้วต่อกันในสโคปเดียว
-  vendor/                 Phaser ที่ดาวน์โหลดมาเก็บไว้สำหรับ build
+  ../.cache/              Phaser ที่ดาวน์โหลดมาแคชไว้ (ใช้ร่วมกับ desktop-pet)
   src/main.js             ตั้งค่า Phaser และลงทะเบียนฉาก
   src/maps.js             โครงแมพ: foothold / เชือก / พอร์ทัล / จุดสปอว์น
   src/rng.js              สุ่มแบบมี seed (แมพ procedural ต้องออกมาเหมือนเดิมทุกครั้ง)

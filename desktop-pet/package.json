@@ -1,0 +1,35 @@
+{
+  "name": "cherry-desktop-pet",
+  "version": "1.0.0",
+  "description": "น้องเชอร์รี่เดินเล่นอยู่บนหน้าจอเดสก์ท็อป (desktop pet)",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "build": "node build-pet.mjs",
+    "start": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.cherry.desktoppet",
+    "productName": "Cherry Pet",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "pet.html", "assets/**"],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Cherry Pet"
+    },
+    "portable": { "artifactName": "CherryPet-portable-${version}.exe" }
+  }
+}
