@@ -50587,7 +50587,7 @@ export default function CherryAdventure() {
   }, []);
 
   const G = gameRef.current;
-  const font = "'Mitr', 'Segoe UI', system-ui, sans-serif";   // 🎀 v451 ฟอนต์ไทยโค้งมน (Google Fonts, OFL) — โหลดไม่ได้ก็ตกไปใช้ฟอนต์ระบบ
+  const font = "'Sarabun', 'Segoe UI', system-ui, sans-serif";   // 📖 v458 ฟอนต์ไทยมีหัว อ่านชัดในตัวเล็ก (Google Fonts, OFL) — เดิม Mitr ตัวติดกันอ่านยาก · โหลดไม่ได้ก็ตกไปใช้ฟอนต์ระบบ
   const card = {
     background: "#fffaf4", border: "3px solid #f2b6c9", borderRadius: 20, padding: "12px 22px", textAlign: "center",
     boxShadow: "0 6px 18px rgba(120,60,90,0.18), inset 0 0 0 2px #fff",

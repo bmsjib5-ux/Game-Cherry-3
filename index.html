@@ -14,17 +14,17 @@
 <meta name="apple-mobile-web-app-title" content="Cherry Adventure" />
 <link rel="apple-touch-icon" href="./icon-180.png" />
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
-<!-- 🎀 ฟอนต์ไทยโค้งมน Mitr (Google Fonts, OFL) — โหลดไม่ได้ (ออฟไลน์) ก็ตกไปใช้ฟอนต์ระบบ -->
+<!-- 🎀 ฟอนต์ไทยมีหัว Sarabun (Google Fonts, OFL) — โหลดไม่ได้ (ออฟไลน์) ก็ตกไปใช้ฟอนต์ระบบ -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #eef2df; }
   #root { width: 100%; height: 100%; }
   #loading {
     position: fixed; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 12px;
-    font-family: 'Mitr', system-ui, sans-serif; color: #5a7a4a; background: #eef2df; z-index: 99;
+    font-family: 'Sarabun', system-ui, sans-serif; color: #5a7a4a; background: #eef2df; z-index: 99;
   }
   .spin { font-size: 46px; animation: bounce 0.8s infinite alternate ease-in-out; }
   @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-14px); } }
@@ -78575,7 +78575,7 @@ function CherryAdventure() {
         };
     }, []);
     const G = gameRef.current;
-    const font = "'Mitr', 'Segoe UI', system-ui, sans-serif"; // 🎀 v451 ฟอนต์ไทยโค้งมน (Google Fonts, OFL) — โหลดไม่ได้ก็ตกไปใช้ฟอนต์ระบบ
+    const font = "'Sarabun', 'Segoe UI', system-ui, sans-serif"; // 📖 v458 ฟอนต์ไทยมีหัว อ่านชัดในตัวเล็ก (Google Fonts, OFL) — เดิม Mitr ตัวติดกันอ่านยาก · โหลดไม่ได้ก็ตกไปใช้ฟอนต์ระบบ
     const card = {
         background: "#fffaf4", border: "3px solid #f2b6c9", borderRadius: 20, padding: "12px 22px", textAlign: "center",
         boxShadow: "0 6px 18px rgba(120,60,90,0.18), inset 0 0 0 2px #fff",
