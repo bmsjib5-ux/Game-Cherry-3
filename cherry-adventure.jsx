@@ -54088,23 +54088,23 @@ export default function CherryAdventure() {
         <div style={{ position: "absolute",
           ...(HUD_CARD
             ? { top: ST(4), left: EDGE_L, transform: "none", width: _shortHud ? "min(42vw, 250px)" : "min(26vw, 320px)",
-                background: "rgba(16,22,18,0.46)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
-                border: "1px solid rgba(255,255,255,0.16)", borderRadius: 13, padding: "6px 8px",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.32)" }
+                background: "rgba(255,250,244,0.9)", backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
+                border: "2px solid #f2b6c9", borderRadius: 16, padding: "6px 8px",
+                boxShadow: "0 6px 18px rgba(120,60,90,0.22), inset 0 0 0 1px #fff" }
             : { // 📱 แนวตั้ง: แถบสถานะอยู่บนสุด ในกรอบลายผ้าทอขอบทอง
                 top: ST(5), left: "50%", transform: "translateX(-50%)", width: "min(96vw, 580px)",
                 borderRadius: 13, padding: "3px 6px 4px",
                 // 🎀 ลวดลายกรอบ: เส้นทแยงทอ + แสงนวลมุมบน + พื้นไม้เข้ม
-                background: "repeating-linear-gradient(135deg, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 5px, rgba(255,255,255,0.02) 5px, rgba(255,255,255,0.02) 11px), radial-gradient(120% 90% at 50% -20%, rgba(255,236,180,0.36), rgba(255,236,180,0) 62%), linear-gradient(180deg, #4a3a26 0%, #33281c 55%, #241c14 100%)",
-                border: "2px solid #d9b45a",
-                boxShadow: "inset 0 0 0 1px rgba(255,232,170,0.42), inset 0 2px 10px rgba(0,0,0,0.4), 0 6px 20px rgba(0,0,0,0.45)",
+                background: "repeating-linear-gradient(135deg, rgba(242,182,201,0.22) 0px, rgba(242,182,201,0.22) 5px, rgba(255,255,255,0) 5px, rgba(255,255,255,0) 11px), linear-gradient(180deg, #fffaf4 0%, #fff0f5 100%)",
+                border: "2px solid #f2b6c9",
+                boxShadow: "inset 0 0 0 1px #fff, 0 6px 20px rgba(120,60,90,0.25)",
               }),
           zIndex: ui.autoCfgOpen ? 46 : 25,   // ⚙️ เปิดตั้งค่าออโต้ = ยกการ์ดขึ้นเหนือมินิแมพ/แผงภารกิจ ไม่งั้นหน้าต่างโดนบัง
           pointerEvents: "none", fontFamily: font }}>
           {/* 🔒 บรรทัดเดียวเสมอ (ตัวเลขใหญ่ย่อเป็น M) — กันแถบสูงขึ้นไปทับจอยสติ๊ก/ปุ่มโจมตี */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: HUD_CARD ? 6 : 7, ...(HUD_CARD
-            ? { background: "transparent", borderRadius: 0, padding: 0, fontSize: 10, color: "#eaf4ec", justifyContent: "flex-start", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }
-            : { background: "linear-gradient(180deg, rgba(255,250,238,0.95), rgba(246,236,214,0.92))", borderRadius: 8, padding: "1px 9px", fontSize: 9.5, color: "#5a4230", border: "1px solid rgba(217,180,90,0.75)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.28)" }),
+            ? { background: "transparent", borderRadius: 0, padding: 0, fontSize: 10, color: "#5a3a5a", justifyContent: "flex-start", textShadow: "0 1px 0 #fff" }
+            : { background: "linear-gradient(180deg, rgba(255,250,238,0.95), rgba(246,236,214,0.92))", borderRadius: 8, padding: "1px 9px", fontSize: 9.5, color: "#5a4230", border: "1px solid rgba(242,182,201,0.9)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.85), 0 2px 6px rgba(0,0,0,0.28)" }),
             fontWeight: 800, pointerEvents: "auto", flexWrap: "nowrap", whiteSpace: "nowrap", overflow: "hidden" }}>
             <span>⚔️{ui.atk}</span>
             <span>🛡️{ui.def}</span>
@@ -54119,7 +54119,7 @@ export default function CherryAdventure() {
               {[["hp", "❤️", ui.hp, ui.maxHp, (ui.maxHp && ui.hp / ui.maxHp > 0.35) ? "linear-gradient(90deg,#4aa86a,#7fd08a)" : "linear-gradient(90deg,#c03a3a,#e05555)", 1.35],
                 ["mp", "💧", ui.mp, ui.maxMp, "linear-gradient(90deg,#3a80d0,#6ac0f0)", 1],
                 ["xp", "⭐", ui.exp, ui.expNext, "linear-gradient(90deg,#f5c542,#f5a623)", 1.35]].map(([k, em, cur, max, col, fl]) => (
-                <div key={k} style={{ flex: fl, minWidth: 0, position: "relative", height: 11, background: "rgba(0,0,0,0.42)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,232,170,0.4)" }}>
+                <div key={k} style={{ flex: fl, minWidth: 0, position: "relative", height: 11, background: "rgba(120,60,90,0.16)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(242,182,201,0.90,0.4)" }}>
                   <div style={{ width: `${max ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0}%`, height: "100%", background: col, transition: "width 0.25s" }} />
                   <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.7)", whiteSpace: "nowrap" }}>
                     {em}{Math.max(0, Math.round(cur || 0)).toLocaleString()}/{Math.round(max || 0).toLocaleString()}
@@ -54141,7 +54141,7 @@ export default function CherryAdventure() {
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 4 }}>
             {[["hp", "❤️", ui.hp, ui.maxHp, (ui.maxHp && ui.hp / ui.maxHp > 0.35) ? "linear-gradient(90deg,#4aa86a,#7fd08a)" : "linear-gradient(90deg,#c03a3a,#e05555)", 1.5],
               ["mp", "💧", ui.mp, ui.maxMp, "linear-gradient(90deg,#3a80d0,#6ac0f0)", 1]].map(([k, em, cur, max, col, fl]) => (
-              <div key={k} style={{ flex: fl, position: "relative", height: 12, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
+              <div key={k} style={{ flex: fl, position: "relative", height: 12, background: "rgba(120,60,90,0.16)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(242,182,201,0.9)" }}>
                 <div style={{ width: `${max ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0}%`, height: "100%", background: col, transition: "width 0.25s" }} />
                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)", whiteSpace: "nowrap" }}>
                   {em} {Math.max(0, Math.round(cur || 0)).toLocaleString()}/{Math.round(max || 0).toLocaleString()}
@@ -54151,7 +54151,7 @@ export default function CherryAdventure() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 4, pointerEvents: "auto" }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg,#f5c542,#f5a623)", borderRadius: 999, padding: "2px 9px", boxShadow: "0 2px 6px rgba(0,0,0,0.28)", whiteSpace: "nowrap" }}>Lv.{ui.level}</div>
-            <div style={{ flex: 1, position: "relative", height: 12, background: "rgba(0,0,0,0.34)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(255,255,255,0.35)" }}>
+            <div style={{ flex: 1, position: "relative", height: 12, background: "rgba(120,60,90,0.16)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(242,182,201,0.9)" }}>
               <div style={{ width: `${ui.expNext ? Math.min(100, (ui.exp / ui.expNext) * 100) : 0}%`, height: "100%", background: "linear-gradient(90deg,#f5c542,#f5a623)", transition: "width 0.3s" }}/>
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>⭐ {ui.exp}/{ui.expNext}</div>
             </div>
@@ -54538,10 +54538,10 @@ export default function CherryAdventure() {
 
       {/* ☰ combined menu */}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title={"เมนู" + (TODO.total > 0 ? ` · มี ${TODO.total} อย่างรอรับ` : "")} style={{ position: "absolute", ...Lslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰{todoDot(TODO.total)}</button>
+        <button onClick={() => setUi((u) => ({ ...u, menuOpen: true }))} title={"เมนู" + (TODO.total > 0 ? ` · มี ${TODO.total} อย่างรอรับ` : "")} style={{ position: "absolute", ...Lslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: "50%", border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 24, background: "linear-gradient(135deg,#7b6ad0,#5a8ae0)", color: "#fff", boxShadow: "0 4px 14px rgba(90,90,150,0.45)", zIndex: 27 }}>☰{todoDot(TODO.total)}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("questOpen")} title={"เควส & ภารกิจ" + (TODO.quest > 0 ? ` · มี ${TODO.quest} อันรอรับรางวัล` : "")} style={{ position: "absolute", ...Rslot(3), display: Rfit(3) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => {
+        <button onClick={() => toggleMenu("questOpen")} title={"เควส & ภารกิจ" + (TODO.quest > 0 ? ` · มี ${TODO.quest} อันรอรับรางวัล` : "")} style={{ position: "absolute", ...Rslot(3), display: Rfit(3) ? "block" : "none", borderRadius: 16, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#f2b24d,#e0862f)", color: "#fff", boxShadow: "0 4px 14px rgba(200,140,60,0.45)", zIndex: 24 }}>📜{(() => {
           // 🔔 ทำครบแล้วรอกดรับ = ป้ายแดงเด้ง · ยังทำไม่ครบ = ป้ายจาง ๆ บอกจำนวนที่ค้าง
           const q = ui.quests || [];
           const claim = TODO.quest || 0;
@@ -54551,25 +54551,25 @@ export default function CherryAdventure() {
         })()}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", ...Rslot(2), display: Rfit(2) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
+        <button onClick={() => toggleMenu("panelOpen")} title="สัตว์เลี้ยง" style={{ position: "absolute", ...Rslot(2), display: Rfit(2) ? "block" : "none", borderRadius: 16, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#5fc98a,#3fa86a)", color: "#fff", boxShadow: "0 4px 14px rgba(70,170,110,0.45)", zIndex: 24 }}>🐾{(ui.petBox || []).length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: (ui.petBox || []).some((x) => x.fresh) ? "#ff4a8a" : "#2f9a5a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.petBox || []).length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", ...Lslot(1), display: Lfit(1) ? "block" : "none", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
+        <button onClick={() => G.openEquip()} title="กระเป๋า & แต่งตัว" style={{ position: "absolute", ...Lslot(1), display: Lfit(1) ? "block" : "none", borderRadius: "50%", border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 23, background: "rgba(255,250,244,0.92)", color: "#5a3a5a", boxShadow: "0 4px 12px rgba(120,60,90,0.22)", zIndex: 24 }}>🎒{ui.inv && ui.inv.length > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#8a6ad0", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.inv.length}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (
-        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", ...Lslot(2), display: Lfit(2) ? "block" : "none", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 23, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "#fff", boxShadow: "0 3px 10px rgba(0,0,0,0.2)", zIndex: 24 }}>⚡{((ui.sp || 0) + (ui.statPts || 0)) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>}</button>
+        <button onClick={() => toggleMenu("skillPanel")} title="สกิล & สเตตัส" style={{ position: "absolute", ...Lslot(2), display: Lfit(2) ? "block" : "none", borderRadius: "50%", border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 23, background: "rgba(255,250,244,0.92)", color: "#5a3a5a", boxShadow: "0 4px 12px rgba(120,60,90,0.22)", zIndex: 24 }}>⚡{((ui.sp || 0) + (ui.statPts || 0)) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#e0708a", color: "#fff", fontSize: 10.5, fontWeight: 800, lineHeight: "18px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{(ui.sp || 0) + (ui.statPts || 0)}</span>}</button>
       )}
       {ui.mode === "explore" && !ui.equipScreen && !ui.inRanchZone && (<>
-        <button onClick={() => G.togglePvp()} title="ประลอง PvP" style={{ position: "absolute", ...Lslot(3), display: Lfit(3) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 22, background: "linear-gradient(135deg,#d9536b,#b04ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(176,74,208,0.42)", zIndex: 24 }}>⚔️</button>
-        <button onClick={() => G.toggleSocial()} title="เพื่อน" style={{ position: "absolute", ...Lslot(4), display: Lfit(4) ? "block" : "none", borderRadius: 15, border: "none", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
+        <button onClick={() => G.togglePvp()} title="ประลอง PvP" style={{ position: "absolute", ...Lslot(3), display: Lfit(3) ? "block" : "none", borderRadius: 15, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 22, background: "linear-gradient(135deg,#d9536b,#b04ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(176,74,208,0.42)", zIndex: 24 }}>⚔️</button>
+        <button onClick={() => G.toggleSocial()} title="เพื่อน" style={{ position: "absolute", ...Lslot(4), display: Lfit(4) ? "block" : "none", borderRadius: 15, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}>👥{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
       </>)}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 }}>{_hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : "🧪"}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _hpBrew ? "#3a8a4a" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_hpCount}</span></button>
+        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 24, background: "#fffaf4", boxShadow: "0 4px 12px rgba(120,60,90,0.22)", zIndex: 24 }}>{_hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : "🧪"}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _hpBrew ? "#3a8a4a" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_hpCount}</span></button>
       )}
       {/* 🏠 ปุ่มในบ้าน: แต่งบ้าน + นอนพัก (โหมดเยี่ยมบ้านเพื่อน = ดูอย่างเดียว) */}
       {ui.mode === "explore" && !ui.equipScreen && ui.inHomeZone && !ui.homeVisitOwner && (
         <>
-          <button onClick={() => G.homeToggleDecor()} style={{ position: "absolute", right: 12, top: 112, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#e8a05a,#d0763a)", color: "#fff", boxShadow: "0 4px 14px rgba(200,130,70,0.45)", zIndex: 26 }}>🛋️</button>
+          <button onClick={() => G.homeToggleDecor()} style={{ position: "absolute", right: 12, top: 112, width: 52, height: 52, borderRadius: 16, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#e8a05a,#d0763a)", color: "#fff", boxShadow: "0 4px 14px rgba(200,130,70,0.45)", zIndex: 26 }}>🛋️</button>
           <button onClick={() => G.homeRest()} style={{ position: "absolute", right: 12, top: 170, width: 52, height: 52, borderRadius: 16, border: "none", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#8a7ae0,#6a5ac0)", color: "#fff", boxShadow: "0 4px 14px rgba(110,95,200,0.45)", zIndex: 26 }}>😴</button>
         </>
       )}
@@ -56856,18 +56856,18 @@ export default function CherryAdventure() {
             const slotCell = (slot) => {
               const id = ui.equip && ui.equip[slot];
               const it = id ? LOOT.find((x) => x.id === id) : null;
-              const col = it ? RARITY[it.rarity].color : "#5a6a58";
+              const col = it ? RARITY[it.rarity].color : "#b09aa8";
               const on = (ui.invCat || "all") === slot;
               return (
                 <div key={slot} title={SLOT_NAMES[slot]} onClick={() => setUi((u) => ({ ...u, invCat: on ? "all" : slot, invSel: null, equipPage: 0 }))}
                   style={{ position: "relative", aspectRatio: "1", borderRadius: 14, cursor: "pointer",
-                    background: it ? `linear-gradient(150deg, ${col}3a, rgba(28,35,29,0.9))` : "linear-gradient(150deg, rgba(255,255,255,0.05), rgba(22,27,23,0.9))",
-                    border: `1.5px solid ${on ? "#f0cf7a" : it ? col + "aa" : "rgba(255,255,255,0.10)"}`,
+                    background: it ? `linear-gradient(150deg, ${col}3a, rgba(255,255,255,0.92))` : "linear-gradient(150deg, rgba(232,128,158,0.12), rgba(255,250,244,0.92))",
+                    border: `1.5px solid ${on ? "#f0cf7a" : it ? col + "aa" : "rgba(232,128,158,0.35)"}`,
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.28), 0 4px 12px rgba(0,0,0,0.42)" : "0 3px 10px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.06)",
+                    boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.28), 0 4px 12px rgba(120,60,90,0.18)" : "0 3px 10px rgba(120,60,90,0.16), inset 0 1px 0 rgba(232,128,158,0.2)",
                     transition: "border-color .15s, box-shadow .15s" }}>
                   <span style={{ fontSize: it ? 25 : 20, opacity: it ? 1 : 0.32, lineHeight: 1 }}>{it ? it.emoji : SLOT_ICON[slot]}</span>
-                  <span style={{ marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : "#7d8a7b", opacity: it ? 0.95 : 0.75, letterSpacing: 0.2 }}>{SLOT_NAMES[slot]}</span>
+                  <span style={{ marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : "#a08a98", opacity: it ? 0.95 : 0.75, letterSpacing: 0.2 }}>{SLOT_NAMES[slot]}</span>
                   {it && <button title={`ถอด${SLOT_NAMES[slot]}`} onClick={(e) => { e.stopPropagation(); G.unequipSlot(slot); }} style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", border: "none", background: "linear-gradient(135deg,#d05050,#9a2c2c)", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "17px", boxShadow: "0 2px 6px rgba(0,0,0,0.45)" }}>✕</button>}
                 </div>
               );
@@ -56897,10 +56897,10 @@ export default function CherryAdventure() {
               const locked = it.req && ui.level < it.req;
               return (
                 <button key={id} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
-                  border: aw > 0 ? "1.5px solid #ffd76a" : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : "1.5px solid rgba(255,255,255,0.09)",
-                  background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `linear-gradient(150deg, ${RARITY[it.rarity].color}30, rgba(26,32,27,0.92))`,
-                  boxShadow: aw > 0 ? `0 0 0 2px #f5c54255, 0 0 ${6 + aw * 3}px #ffd76a${aw >= 3 ? "aa" : "77"}, 0 3px 10px rgba(0,0,0,0.42)`
-                            : equipped ? `0 0 0 2px ${RARITY[it.rarity].color}44, 0 3px 10px rgba(0,0,0,0.4)` : "0 3px 10px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05)",
+                  border: aw > 0 ? "1.5px solid #ffd76a" : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : "1.5px solid rgba(232,128,158,0.3)",
+                  background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `linear-gradient(150deg, ${RARITY[it.rarity].color}30, rgba(255,255,255,0.92))`,
+                  boxShadow: aw > 0 ? `0 0 0 2px #f5c54255, 0 0 ${6 + aw * 3}px #ffd76a${aw >= 3 ? "aa" : "77"}, 0 3px 10px rgba(120,60,90,0.18)`
+                            : equipped ? `0 0 0 2px ${RARITY[it.rarity].color}44, 0 3px 10px rgba(120,60,90,0.16)` : "0 3px 10px rgba(120,60,90,0.14), inset 0 1px 0 rgba(232,128,158,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.5 : 1 }}>
                   {aw > 0 && <span style={{ position: "absolute", inset: 2, borderRadius: 10, border: "1px solid #ffe9a866", pointerEvents: "none" }} />}
                   {aw > 0 && <span style={{ position: "absolute", top: -3, left: 3, fontSize: 9 }}>✨</span>}
@@ -56921,9 +56921,9 @@ export default function CherryAdventure() {
               const tint = pot === "hp" ? "#3a2a2a55" : "#2a3340aa";
               return (
                 <button key={`pot:${pot}:${sz}`} onClick={() => setUi((u) => ({ ...u, invSel: `pot:${pot}:${sz}` }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
-                  border: sel ? "1.5px solid #9ccc7b" : "1.5px solid rgba(255,255,255,0.09)",
-                  background: `linear-gradient(150deg,${tint},rgba(26,32,27,0.92))`,
-                  boxShadow: sel ? "0 0 0 2px rgba(156,204,123,0.32), 0 3px 10px rgba(0,0,0,0.4)" : "0 3px 10px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05)",
+                  border: sel ? "1.5px solid #9ccc7b" : "1.5px solid rgba(232,128,158,0.3)",
+                  background: `linear-gradient(150deg,${tint},rgba(255,255,255,0.92))`,
+                  boxShadow: sel ? "0 0 0 2px rgba(156,204,123,0.32), 0 3px 10px rgba(120,60,90,0.16)" : "0 3px 10px rgba(120,60,90,0.14), inset 0 1px 0 rgba(232,128,158,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center", opacity: n > 0 ? 1 : 0.45 }}>
                   <span style={{ fontSize: 20 }}>{emoji}</span>
                   <span style={{ position: "absolute", top: 1, left: 3, fontSize: 8.5, fontWeight: 900, color: pot === "hp" ? "#f0a0a0" : "#8ecbff" }}>{SZ_LABEL[sz]}</span>
@@ -56933,12 +56933,12 @@ export default function CherryAdventure() {
             };
             const catChip = (ck, label) => (
               <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 }))} style={{ padding: "4px 10px", borderRadius: 999, cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font,
-                border: (ui.invCat || "all") === ck ? "1px solid #f0cf7a" : "1px solid rgba(255,255,255,0.10)",
+                border: (ui.invCat || "all") === ck ? "1px solid #f0cf7a" : "1px solid rgba(232,128,158,0.35)",
                 background: (ui.invCat || "all") === ck ? "linear-gradient(135deg,#e0bb62,#b78d38)" : "rgba(255,255,255,0.06)",
                 color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0",
                 boxShadow: (ui.invCat || "all") === ck ? "0 2px 8px rgba(201,162,74,0.35)" : "none" }}>{label}</button>
             );
-            const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 13, border: "1.5px dashed rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.015)" }} />;
+            const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 13, border: "1.5px dashed rgba(232,128,158,0.07)", background: "rgba(232,128,158,0.015)" }} />;
             const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
               <div key="eqscr" onClick={() => G.closeEquip()} style={{
@@ -56949,21 +56949,21 @@ export default function CherryAdventure() {
               }}>
                 <div onClick={(e) => e.stopPropagation()} style={{
                   width: two ? "min(96vw, 700px)" : "min(96vw, 430px)", maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px))",
-                  display: "flex", flexDirection: "column", borderRadius: 22, overflow: "hidden", color: "#e8dcc0",
-                  background: "linear-gradient(168deg,#39443a 0%,#232b24 42%,#171d18 100%)",
-                  border: "1px solid rgba(201,162,74,0.32)",
-                  boxShadow: "0 28px 70px rgba(0,0,0,0.65), 0 2px 0 rgba(255,255,255,0.05) inset",
+                  display: "flex", flexDirection: "column", borderRadius: 22, overflow: "hidden", color: "#5a3a5a",
+                  background: "linear-gradient(168deg,#fff4f8 0%,#fffaf4 45%,#fff0f5 100%)",
+                  border: "3px solid #f2b6c9",
+                  boxShadow: "0 24px 60px rgba(120,60,90,0.35), inset 0 0 0 2px #fff",
                 }}>
                   {/* ── หัวป๊อปอัป ── */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
                     padding: "11px 13px", paddingTop: "max(11px, calc(env(safe-area-inset-top) * 0.5 + 11px))",
-                    background: "linear-gradient(180deg, rgba(201,162,74,0.18), rgba(201,162,74,0.02))",
-                    borderBottom: "1px solid rgba(201,162,74,0.20)" }}>
-                    <span style={{ fontSize: 14.5, fontWeight: 900, color: "#f2e0b4", letterSpacing: 0.2 }}>🎒 กระเป๋า &amp; ชุดสวมใส่</span>
+                    background: "linear-gradient(180deg, rgba(232,128,158,0.18), rgba(232,128,158,0.02))",
+                    borderBottom: "1px solid rgba(232,128,158,0.20)" }}>
+                    <span style={{ fontSize: 14.5, fontWeight: 900, color: "#c0446a", letterSpacing: 0.2 }}>🎒 กระเป๋า &amp; ชุดสวมใส่</span>
                     <div style={{ flex: 1 }} />
-                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#f5d24a", background: "rgba(0,0,0,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(245,210,74,0.24)" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
-                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7fd0f5", background: "rgba(0,0,0,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(127,208,245,0.24)" }}>💎 {(ui.diamonds || 0).toLocaleString()}</span>
-                    <button title="ปิด" onClick={() => G.closeEquip()} style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(0,0,0,0.34)", color: "#e8dcc0", fontSize: 15, cursor: "pointer", padding: 0, flexShrink: 0 }}>✕</button>
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#f5d24a", background: "rgba(120,60,90,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(245,210,74,0.24)" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7fd0f5", background: "rgba(120,60,90,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(127,208,245,0.24)" }}>💎 {(ui.diamonds || 0).toLocaleString()}</span>
+                    <button title="ปิด" onClick={() => G.closeEquip()} style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(232,128,158,0.14)", background: "rgba(120,60,90,0.34)", color: "#5a3a5a", fontSize: 15, cursor: "pointer", padding: 0, flexShrink: 0 }}>✕</button>
                   </div>
 
                   {/* ── เนื้อหา ── */}
@@ -56973,9 +56973,9 @@ export default function CherryAdventure() {
                     {/* ชุดที่สวมอยู่ */}
                     <div style={{ flexShrink: 0, width: two ? 216 : "auto", display: "flex", flexDirection: "column", gap: 8 }}>
                       <div style={{ borderRadius: 16, padding: "9px 10px 10px",
-                        background: "linear-gradient(170deg, rgba(255,255,255,0.06), rgba(0,0,0,0.20))",
-                        border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 4px 16px rgba(0,0,0,0.30) inset" }}>
-                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c9b98a", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#8a9a88", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>
+                        background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.20))",
+                        border: "1px solid rgba(232,128,158,0.09)", boxShadow: "0 4px 16px rgba(120,60,90,0.30) inset" }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#8a9a88", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>
                         <div style={{ display: "grid", gridTemplateColumns: two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: 7 }}>
                           {GEAR.map(slotCell)}
                         </div>
@@ -56984,7 +56984,7 @@ export default function CherryAdventure() {
                         {[["⚔️", ui.atk || 0, "#ffb98a"], ["🛡️", ui.def || 0, "#9ad0ff"], ["❤️", ui.maxHp || 0, "#ff9aa8"]].map(([ic, v, c]) => (
                           <span key={ic} style={{ textAlign: "center", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                             fontSize: 11.5, fontWeight: 900, color: c,
-                            background: "rgba(0,0,0,0.26)", borderRadius: 12, padding: "5px 4px", border: "1px solid rgba(255,255,255,0.08)" }}>{ic} {v}</span>
+                            background: "rgba(120,60,90,0.26)", borderRadius: 12, padding: "5px 4px", border: "1px solid rgba(232,128,158,0.08)" }}>{ic} {v}</span>
                         ))}
                       </div>
                       {/* 🧩 คุณสมบัติเซ็ต — ใส่ของระดับเดียวกันครบ 3 / 5 / 7 ชิ้น */}
@@ -56993,13 +56993,13 @@ export default function CherryAdventure() {
                         if (!SI) return null;
                         return (
                           <div style={{ borderRadius: 16, padding: "9px 10px 10px", maxHeight: 250, overflowY: "auto",
-                            background: "linear-gradient(170deg, rgba(255,255,255,0.06), rgba(0,0,0,0.22))",
-                            border: "1px solid rgba(255,255,255,0.09)" }}>
-                            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#c9b98a", marginBottom: 2 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></div>
+                            background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.22))",
+                            border: "1px solid rgba(232,128,158,0.09)" }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 2 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></div>
                             <div style={{ fontSize: 8.5, color: "#8a9a88", marginBottom: 6 }}>ใส่ของ “ระดับเดียวกัน” ให้ครบตามจำนวน · ได้โบนัสขั้นสูงสุดที่ถึง</div>
                             {!SI.rows.length && <div style={{ fontSize: 10, color: "#8a9080", textAlign: "center", padding: "6px 0" }}>ยังไม่ได้ใส่ของ — สวมของระดับเดียวกัน 3 ชิ้นขึ้นไปเพื่อรับโบนัสเซ็ต</div>}
                             {SI.rows.map((r) => (
-                              <div key={r.rar} style={{ marginBottom: 7, background: "rgba(0,0,0,0.24)", borderRadius: 10, padding: "6px 8px", border: `1px solid ${r.color}44` }}>
+                              <div key={r.rar} style={{ marginBottom: 7, background: "rgba(120,60,90,0.24)", borderRadius: 10, padding: "6px 8px", border: `1px solid ${r.color}44` }}>
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                                   <span style={{ fontSize: 10.5, fontWeight: 900, color: r.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.emoji} {r.name}</span>
                                   <span style={{ fontSize: 10, fontWeight: 900, color: "#d8e0c8", whiteSpace: "nowrap" }}>{r.worn}/{SI.slots}</span>
@@ -57011,10 +57011,10 @@ export default function CherryAdventure() {
                                     <span style={{ minWidth: 0 }}>{t.txt}</span>
                                   </div>
                                 ))}
-                                {r.need > 0 && <div style={{ fontSize: 8.5, color: "#c9b98a", marginTop: 3 }}>อีก {r.need} ชิ้นถึงขั้น {r.nextN} ชิ้น</div>}
+                                {r.need > 0 && <div style={{ fontSize: 8.5, color: "#9a7a8a", marginTop: 3 }}>อีก {r.need} ชิ้นถึงขั้น {r.nextN} ชิ้น</div>}
                               </div>
                             ))}
-                            {SI.totalTxt && <div style={{ fontSize: 9.5, fontWeight: 800, color: "#9ae86a", borderTop: "1px dashed rgba(255,255,255,0.12)", paddingTop: 5 }}>รวมโบนัสเซ็ต: {SI.totalTxt}</div>}
+                            {SI.totalTxt && <div style={{ fontSize: 9.5, fontWeight: 800, color: "#9ae86a", borderTop: "1px dashed rgba(232,128,158,0.12)", paddingTop: 5 }}>รวมโบนัสเซ็ต: {SI.totalTxt}</div>}
                           </div>
                         );
                       })()}
@@ -57025,35 +57025,35 @@ export default function CherryAdventure() {
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="⚡ สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡</button>
-                    <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>
+                    <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>
                     <button key="eqlook" onClick={() => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }} title="แก้หน้า ทรงผม สีผม สีผิว ของตัวละครเดิม — ไม่กระทบเลเวล/ไอเทม" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" }}>💇 รูปลักษณ์</button>
-                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(255,255,255,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
+                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
                     {(ui.heroPick || ui.heroId) && (
-                      <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(255,255,255,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
+                      <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
                     )}
                       </div>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
                     <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก · ข้ามของที่ล็อก 🔐)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
                     <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }} title="ทุบของซ้ำทุกชนิดเป็นผงเพชร (เก็บไว้แบบละ 1 ชิ้น · ข้ามของที่ล็อก 🔐)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" }}>💠 แยกของซ้ำ {ui.gemDust || 0}</button>
-                    <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(255,255,255,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
-                    <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(255,255,255,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
+                    <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(232,128,158,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
+                    <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
                       </div>
                   {ui.sellSetup && (
                     <div style={{ background: "rgba(20,26,20,0.6)", borderRadius: 10, padding: "8px 10px", marginBottom: 7, border: "1px solid #c9a24a33" }}>
                       <div style={{ fontSize: 10, color: "#b8c0a8", marginBottom: 6, lineHeight: 1.5 }}>⚙️ ลำดับการขาย (บนก่อน) — ระบบเก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก แล้วขายที่เหลือ</div>
                       {(ui.sellPriority || SLOTS).map((slot, i) => (
-                        <div key={slot} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 6px", background: "rgba(255,255,255,0.05)", borderRadius: 8, marginBottom: 4 }}>
+                        <div key={slot} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 6px", background: "rgba(232,128,158,0.05)", borderRadius: 8, marginBottom: 4 }}>
                           <span style={{ fontSize: 11, fontWeight: 800, color: "#d0b060", width: 16 }}>{i + 1}.</span>
                           <span style={{ flex: 1, fontSize: 11.5, fontWeight: 700, color: "#d8dcc8" }}>{SLOT_NAMES[slot]}</span>
-                          <button onClick={() => G.moveSellPriority(slot, -1)} disabled={i === 0} style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === 0 ? "default" : "pointer", fontSize: 12, background: i === 0 ? "rgba(255,255,255,0.05)" : "rgba(201,162,74,0.3)", color: "#e8dcc0", fontWeight: 800 }}>▲</button>
-                          <button onClick={() => G.moveSellPriority(slot, 1)} disabled={i === (ui.sellPriority || SLOTS).length - 1} style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === (ui.sellPriority || SLOTS).length - 1 ? "default" : "pointer", fontSize: 12, background: i === (ui.sellPriority || SLOTS).length - 1 ? "rgba(255,255,255,0.05)" : "rgba(201,162,74,0.3)", color: "#e8dcc0", fontWeight: 800 }}>▼</button>
+                          <button onClick={() => G.moveSellPriority(slot, -1)} disabled={i === 0} style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === 0 ? "default" : "pointer", fontSize: 12, background: i === 0 ? "rgba(232,128,158,0.05)" : "rgba(232,128,158,0.3)", color: "#5a3a5a", fontWeight: 800 }}>▲</button>
+                          <button onClick={() => G.moveSellPriority(slot, 1)} disabled={i === (ui.sellPriority || SLOTS).length - 1} style={{ width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === (ui.sellPriority || SLOTS).length - 1 ? "default" : "pointer", fontSize: 12, background: i === (ui.sellPriority || SLOTS).length - 1 ? "rgba(232,128,158,0.05)" : "rgba(232,128,158,0.3)", color: "#5a3a5a", fontWeight: 800 }}>▼</button>
                         </div>
                       ))}
                     </div>
                   )}
                       <div style={{ borderRadius: 16, padding: 9,
-                        background: "linear-gradient(170deg, rgba(0,0,0,0.26), rgba(0,0,0,0.10))",
-                        border: "1px solid rgba(255,255,255,0.07)" }}>
+                        background: "linear-gradient(170deg, rgba(120,60,90,0.26), rgba(120,60,90,0.10))",
+                        border: "1px solid rgba(232,128,158,0.07)" }}>
                         <div style={{ display: "grid", gridTemplateColumns: `repeat(${two ? 6 : 6}, 1fr)`, gap: 6 }}>
                           {pageCells.map(renderCell)}
                         </div>
@@ -57061,9 +57061,9 @@ export default function CherryAdventure() {
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                     {totalPages > 1 ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(255,255,255,0.04)" : "rgba(201,162,74,0.28)", color: "#e8dcc0", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font }}>‹</button>
+                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#5a3a5a", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font }}>‹</button>
                         <span style={{ fontSize: 11.5, fontWeight: 800, color: "#d8c898", minWidth: 34, textAlign: "center" }}>{`${page + 1}/${totalPages}`}</span>
-                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.min(totalPages - 1, page + 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page >= totalPages - 1 ? "default" : "pointer", background: page >= totalPages - 1 ? "rgba(255,255,255,0.04)" : "rgba(201,162,74,0.28)", color: "#e8dcc0", fontSize: 15, fontWeight: 800, opacity: page >= totalPages - 1 ? 0.4 : 1, fontFamily: font }}>›</button>
+                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.min(totalPages - 1, page + 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page >= totalPages - 1 ? "default" : "pointer", background: page >= totalPages - 1 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#5a3a5a", fontSize: 15, fontWeight: 800, opacity: page >= totalPages - 1 ? 0.4 : 1, fontFamily: font }}>›</button>
                       </div>
                     ) : <span />}
                         <span style={{ fontSize: 10.5, color: "#9aa896" }}>ของในกระเป๋า {(ui.inv || []).length} ชิ้น</span>
@@ -57255,7 +57255,7 @@ export default function CherryAdventure() {
                             <button key={i} onClick={() => G.setDye(slot, hex)} style={{
                               width: 26, height: 26, borderRadius: "50%", cursor: "pointer",
                               border: on ? "3px solid #d06ab0" : "2px solid #fff",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.18)", fontFamily: font, fontSize: 10, fontWeight: 800,
+                              boxShadow: "0 1px 4px rgba(120,60,90,0.18)", fontFamily: font, fontSize: 10, fontWeight: 800,
                               background: hex == null ? "#fff" : `#${hex.toString(16).padStart(6, "0")}`,
                               color: "#a04a80", padding: 0,
                             }}>{hex == null ? "✕" : ""}</button>
@@ -57267,7 +57267,7 @@ export default function CherryAdventure() {
                         <input type="color" title="เลือกสีอิสระ (RGB)" value={ui.dye && ui.dye[slot] != null ? `#${ui.dye[slot].toString(16).padStart(6, "0")}` : "#ffffff"} onChange={(e) => G.setDye(slot, e.target.value)} style={{ width: 30, height: 26, border: "none", borderRadius: 6, cursor: "pointer", padding: 0, background: "none" }} />
                         <button onClick={() => { const curC = ui.dye && ui.dye[slot]; if (curC != null) G.savePaletteColor(curC); else G.toast("เลือกสีก่อน (แตะวงกลมสี หรือใช้ตัวเลือกสี RGB)"); }} title="บันทึกสีนี้ลงพาเลต" style={{ border: "none", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: "#fff", background: "#b07ae0" }}>💾</button>
                         {(ui.dyePalette || []).map((hx, pi) => (
-                          <button key={"p" + pi} onClick={() => G.setDye(slot, hx)} style={{ width: 24, height: 24, borderRadius: "50%", cursor: "pointer", border: "2px solid #fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", background: `#${hx.toString(16).padStart(6, "0")}`, padding: 0 }} />
+                          <button key={"p" + pi} onClick={() => G.setDye(slot, hx)} style={{ width: 24, height: 24, borderRadius: "50%", cursor: "pointer", border: "2px solid #fff", boxShadow: "0 1px 3px rgba(120,60,90,0.2)", background: `#${hx.toString(16).padStart(6, "0")}`, padding: 0 }} />
                         ))}
                       </div>
                     </div>
@@ -57280,7 +57280,7 @@ export default function CherryAdventure() {
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                           {(ui.dyePalette || []).map((hx, pi) => (
                             <div key={"dp" + pi} style={{ position: "relative", width: 24, height: 24 }}>
-                              <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", background: `#${hx.toString(16).padStart(6, "0")}` }} />
+                              <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #fff", boxShadow: "0 1px 3px rgba(120,60,90,0.2)", background: `#${hx.toString(16).padStart(6, "0")}` }} />
                               <button onClick={() => G.delPaletteColor(pi)} style={{ position: "absolute", top: -6, right: -6, width: 15, height: 15, borderRadius: "50%", border: "none", background: "#c05a8a", color: "#fff", fontSize: 8, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "13px" }}>✕</button>
                             </div>
                           ))}
@@ -57991,7 +57991,7 @@ export default function CherryAdventure() {
             const busy = notInPen.map((p) => ({ p, why: G.petBusyWhy && G.petBusyWhy(p.i) })).filter((x) => x.why).sort((a, b) => byRare(a.p, b.p));
             return (
               <div onClick={() => setUi((u) => ({ ...u, ranchPick: null }))} style={{ position: "absolute", inset: 0, zIndex: 70, background: "rgba(40,28,18,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 14 }}>
-                <div onClick={(e) => e.stopPropagation()} style={{ width: "94%", maxWidth: 430, maxHeight: "calc(82vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "#fff", borderRadius: 16, padding: 13, boxShadow: "0 14px 44px rgba(0,0,0,0.32)", display: "flex", flexDirection: "column" }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ width: "94%", maxWidth: 430, maxHeight: "calc(82vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "#fff", borderRadius: 16, padding: 13, boxShadow: "0 14px 44px rgba(120,60,90,0.32)", display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
                     <div style={{ fontSize: 14, fontWeight: 900, color: "#7a5a3a" }}>🐾 เลือกเพ็ตลงคอก · ช่อง {ui.ranchPick + 1}</div>
                     <div style={{ flex: 1 }} />
@@ -58651,8 +58651,8 @@ export default function CherryAdventure() {
             display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
           }}>
             <div style={{
-              background: "#fff", borderRadius: 12, padding: "6px 16px",
-              fontSize: 13, fontWeight: 700, color: "#5a5a4a", minHeight: 18,
+              background: "#fffaf4", border: "2px solid #f2b6c9", borderRadius: 14, padding: "5px 16px",
+              fontSize: 13, fontWeight: 700, color: "#5a3a5a", minHeight: 18,
               boxShadow: "0 3px 10px rgba(90,120,70,0.2)", textAlign: "center", maxWidth: 380,
             }}>
               {ui.auto && <span style={{ color: "#59a0e8" }}>🤖 </span>}{ui.msg}
@@ -58729,9 +58729,9 @@ export default function CherryAdventure() {
               const canAct = ui.bstate === "choose";
               const iconBtn = (icon, bg, onClick, badge, opts = {}) => (
                 <button key={opts.key} onClick={onClick} title={opts.title || ""} style={{
-                  position: "relative", width: 52, height: 52, borderRadius: "50%", border: opts.border || "none",
+                  position: "relative", width: 52, height: 52, borderRadius: "50%", border: opts.border || "2.5px solid rgba(255,255,255,0.88)",
                   cursor: "pointer", fontSize: 24, background: bg,
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.18)", fontFamily: font,
+                  boxShadow: "0 5px 12px rgba(120,60,90,0.24)", fontFamily: font,
                   opacity: opts.opacity != null ? opts.opacity : 1,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
@@ -58824,10 +58824,10 @@ export default function CherryAdventure() {
             <button
               onClick={() => G.toggleAuto()}
               style={{
-                padding: "6px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+                padding: "6px 18px", borderRadius: 999, border: "2px solid #f2b6c9", cursor: "pointer",
                 fontSize: 12.5, fontWeight: 800, fontFamily: font,
                 color: ui.auto ? "#fff" : "#59a0e8",
-                background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fff",
+                background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fffaf4",
                 boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(90,120,70,0.2)",
               }}
             >
@@ -58838,10 +58838,10 @@ export default function CherryAdventure() {
             <button
               onClick={() => G.cycleSpeed()}
               style={{
-                marginLeft: 8, padding: "6px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                marginLeft: 8, padding: "6px 16px", borderRadius: 999, border: "2px solid #f2b6c9", cursor: "pointer",
                 fontSize: 12.5, fontWeight: 800, fontFamily: font,
                 color: (ui.battleSpeed || 1) > 1 ? "#fff" : "#e0894a",
-                background: (ui.battleSpeed || 1) > 1 ? "linear-gradient(90deg,#f5a623,#e0894a)" : "#fff",
+                background: (ui.battleSpeed || 1) > 1 ? "linear-gradient(90deg,#f5a623,#e0894a)" : "#fffaf4",
                 boxShadow: (ui.battleSpeed || 1) > 1 ? "0 3px 12px rgba(224,137,74,0.5)" : "0 2px 8px rgba(90,120,70,0.2)",
               }}
             >
