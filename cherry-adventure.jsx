@@ -19009,7 +19009,7 @@ export default function CherryAdventure() {
       const fl = D.cleared || 0, ms = Date.now() - D.start;
       const prev = G.rogueBest[D.week];
       const better = !prev || fl > prev.fl || (fl === prev.fl && ms < prev.ms);
-      if (better && fl > 0) { G.rogueBest[D.week] = { fl, ms }; try { window.localStorage.setItem("cherry-rogue-best", JSON.stringify(G.rogueBest)); } catch (_) {} }
+      if (better && fl > 0) { G.rogueBest[D.week] = { fl, ms }; try { window.localStorage.setItem("cherry-rogue-best", JSON.stringify(G.rogueBest)); } catch (_) {} if (G.juice) G.juice("rare"); }
       if (fl > 0) { G.achStats.rogueFl = Math.max(G.achStats.rogueFl || 0, fl); }
       const gold = D.gold || 0;
       toast(reason === "clear" ? `🏆🎲 พิชิตหอคอยท้าทายครบ ${fl} ชั้น!! ⏱️ ${rushTimeText(ms)}` : `🎲 รอบนี้ไปได้ ${fl} ชั้น ⏱️ ${rushTimeText(ms)} · ทอง +${gold.toLocaleString()}`);
@@ -21277,6 +21277,7 @@ export default function CherryAdventure() {
       G.dailyStreak = (G.dailyStreak || 0) + 1;
       if (G.gainDiamonds) G.gainDiamonds(day === 6 ? 8 : 3, "ล็อกอินประจำวัน");
       if (G.sfx) G.sfx.levelup();
+      if (G.juice) G.juice("reward");
       toast(`📅✨ รางวัลล็อกอินวันที่ ${day + 1}! ได้ ${r.label} (ต่อเนื่อง ${G.dailyStreak} วัน)`);
       setUi((u) => ({ ...u, dailyReady: false, dailyStreak: G.dailyStreak, gold: G.gold }));
       if (G._wheelOpen && G.syncWheelUi) G.syncWheelUi();   // 📅 ปฏิทินขยับตามทันที
@@ -21320,6 +21321,7 @@ export default function CherryAdventure() {
           G.gold += a.reward;
           changed = true;
           toast(`🏅 ปลดล็อกความสำเร็จ! ${a.emoji} ${a.name} +${a.reward}💰`);
+          if (G.juice) G.juice("reward");
           if (G.sfx) G.sfx.levelup();
         }
       });
@@ -21857,7 +21859,7 @@ export default function CherryAdventure() {
       if (c.pots) { G.hpPots.s = (G.hpPots.s || 0) + c.pots; G.mpPots.s = (G.mpPots.s || 0) + c.pots; if (G.syncPotions) G.syncPotions(); got.push(`🧪 ยา ×${c.pots}`); }
       const xp = Math.round(expForLevel(G.player.level) * (c.exp || 0.35));
       toast(`📖✨ จบบทที่ ${G.storyCh + 1} "${c.title}"! +${r.gold.toLocaleString()}💰 +${xp.toLocaleString()} EXP`);
-      if (got.length) toast(`🎁 ได้รับ: ${got.join(" · ")}`);
+      if (got.length) { toast(`🎁 ได้รับ: ${got.join(" · ")}`); if (G.juice) G.juice("reward"); }
       gainExp(xp);
       if (G.sfx) G.sfx.levelup();
       G.storyCh++; G.storyProg = 0;
@@ -24409,6 +24411,24 @@ export default function CherryAdventure() {
     }
 
     const toast = (msg) => setUi((u) => ({ ...u, toast: msg, toastAt: Date.now() }));
+    // 🎉 JUICE (v455) — คอนเฟตตีตอนเลเวลอัพ/ของหายาก/จับสัตว์/รับรางวัล (canvas-confetti, MIT, โหลดจาก CDN — ไม่มีก็ข้าม ไม่พัง)
+    //    ปิดอัตโนมัติในโหมดประหยัดพลังงานและเมื่อผู้ใช้ตั้ง "ลดการเคลื่อนไหว" ในระบบ
+    G.juice = (kind) => {
+      try {
+        const cf = window.confetti; if (!cf || G.powerSave) return;
+        const base = { zIndex: 9999, disableForReducedMotion: true };
+        if (kind === "level") {
+          cf({ ...base, particleCount: 120, spread: 80, startVelocity: 45, origin: { x: 0.5, y: 0.6 }, colors: ["#f7c6d6", "#e8809e", "#ffe9a8", "#bfe8c8", "#cfe6ff"] });
+          setTimeout(() => { cf({ ...base, particleCount: 50, angle: 60, spread: 55, origin: { x: 0, y: 0.7 } }); cf({ ...base, particleCount: 50, angle: 120, spread: 55, origin: { x: 1, y: 0.7 } }); }, 250);
+        } else if (kind === "rare") {
+          cf({ ...base, particleCount: 90, spread: 100, startVelocity: 35, scalar: 1.2, shapes: ["star", "circle"], colors: ["#ffd24a", "#ffe9a8", "#ffffff", "#f5a623"], origin: { x: 0.5, y: 0.55 } });
+        } else if (kind === "catch") {
+          cf({ ...base, particleCount: 70, spread: 70, startVelocity: 32, colors: ["#f7c6d6", "#e8809e", "#ffffff", "#ffb6c1"], origin: { x: 0.5, y: 0.6 } });
+        } else {
+          cf({ ...base, particleCount: 60, spread: 70, startVelocity: 30, colors: ["#ffe9a8", "#f5c542", "#ffffff", "#f7c6d6"], origin: { x: 0.5, y: 0.5 } });
+        }
+      } catch (_) {}
+    };
     G.toast = toast; // 📣 the JSX below lives OUTSIDE this effect's closure — it must call G.toast(...)
     const syncPlayer = () => setUi((u) => ({
       ...u, hp: Math.ceil(G.player.hp), maxHp: effMaxHp(), level: G.player.level,
@@ -24994,7 +25014,7 @@ export default function CherryAdventure() {
       if (rar === "dragon") { toast(`🐉🔥 DRAGON DROP!!! ${it.name} 🔥🐉`); G.achStats.dragon = (G.achStats.dragon || 0) + 1; }
       if (G.checkAchievements) G.checkAchievements();
       else if (rar === "secret") toast(`🌟 SECRET DROP!! ${it.emoji} ${it.name} 🌟`);
-      else toast(`🎁 ดรอป ${it.emoji} ${it.name} (${RARITY[rar].name})`);
+      else { toast(`🎁 ดรอป ${it.emoji} ${it.name} (${RARITY[rar].name})`); if (G.juice && (TIER[rar] || 1) >= 3) G.juice("rare"); }
       syncPlayer();
       return it;
     };
@@ -25075,6 +25095,8 @@ export default function CherryAdventure() {
       }
       if (leveled) {
         toast(`🎉 เลเวลอัพ! Lv.${G.player.level} — ได้แต้มสกิล เลือกอัพเกรดเลย!`);
+        if (G.juice) G.juice("level");
+        setUi((u) => ({ ...u, levelUpAt: Date.now(), levelUpLv: G.player.level }));   // 🎉 แบนเนอร์ LEVEL UP
         if (G.sfx) G.sfx.levelup();
         checkBoss();
         if (G.storyEvent) G.storyEvent("level"); // 📖
@@ -50097,6 +50119,7 @@ export default function CherryAdventure() {
                   msg: petInst ? `🎊 จับ${sp.name} Lv.${petInst.lv} ได้! พรสวรรค์ ${petInst.iv.a + petInst.iv.h + petInst.iv.d} ✨` : `🎊 จับ${sp.name}ได้ แต่กล่องเต็ม (${G.petCap()}) — บันทึกในสมุดภาพ`,
                 }));
                 gainExp(30 + sp.tier * 10 + G.enemy.lv * 3);
+                if (G.juice) G.juice("catch");
                 scene.remove(em);
                 (G._disposeObj3D && G._disposeObj3D(em));
                 G.enemy.dead = true;                                   // 🎯 จับสำเร็จ = ตัวในโลกหายไปแล้วเช่นกัน
@@ -50885,7 +50908,7 @@ export default function CherryAdventure() {
     <div style={{ width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box",
       /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
       paddingLeft: "var(--sa-l, 0px)", paddingRight: "var(--sa-r, 0px)" }}>
-      <style>{`:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} button:not([disabled]):active{filter:brightness(.95);}`}</style>
+      <style>{`:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}}`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
       <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
         left: "calc(-1 * var(--sa-l, 0px))",
@@ -52552,6 +52575,7 @@ export default function CherryAdventure() {
           background: "linear-gradient(135deg,#fff2c8,#ffe0a0)", borderRadius: 16, padding: "12px 16px",
           boxShadow: "0 6px 20px rgba(200,150,40,0.4)", border: "2px solid #f5c542",
           display: "flex", flexDirection: "column", alignItems: "center", gap: 6, zIndex: 50, maxWidth: 280,
+          animation: "bounceInX 0.6s cubic-bezier(0.2,0.9,0.3,1.2)",
         }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "#a5721a" }}>📅 รางวัลล็อกอินประจำวัน!</div>
           <div style={{ fontSize: 11, color: "#b5852a", textAlign: "center" }}>
@@ -52560,7 +52584,7 @@ export default function CherryAdventure() {
           <button onClick={() => G.claimDaily()} style={{
             padding: "8px 20px", borderRadius: 10, border: "none", cursor: "pointer",
             fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff",
-            background: "linear-gradient(90deg,#f5a623,#f5c542)", boxShadow: "0 3px 8px rgba(200,150,40,0.4)", ...KBTN("btnYellow"), color: "#5a3a10", textShadow: "0 1px 0 rgba(255,255,255,0.5)",
+            background: "linear-gradient(90deg,#f5a623,#f5c542)", boxShadow: "0 3px 8px rgba(200,150,40,0.4)", ...KBTN("btnYellow"), color: "#5a3a10", textShadow: "0 1px 0 rgba(255,255,255,0.5)", animation: "heartBeat 1.8s ease-in-out infinite",
           }}>🎁 รับรางวัล</button>
         </div>
       )}
@@ -54465,6 +54489,15 @@ export default function CherryAdventure() {
         </div>
       )}
 
+      {/* 🎉 LEVEL UP banner */}
+      {ui.levelUpAt && Date.now() - ui.levelUpAt < 2400 && (
+        <div key={ui.levelUpAt} style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 62 }}>
+          <div style={{ animation: "lvlPop 2.4s ease-out forwards", textAlign: "center", fontFamily: font }}>
+            <div style={{ fontSize: 36, fontWeight: 700, color: "#fff", letterSpacing: 1, textShadow: "0 3px 0 #e8809e, 0 6px 18px rgba(232,128,158,0.55)" }}>LEVEL UP!</div>
+            <div style={{ marginTop: 2, display: "inline-block", padding: "4px 18px", borderRadius: 999, background: "linear-gradient(90deg,#ffd24a,#f5a623)", color: "#5a3a10", fontSize: 16, fontWeight: 700, boxShadow: "0 4px 12px rgba(200,150,40,0.4)" }}>Lv.{ui.levelUpLv}</div>
+          </div>
+        </div>
+      )}
       {/* toast */}
       {ui.toast && Date.now() - ui.toastAt < 1700 && (
         <div key={ui.toastAt} style={{
