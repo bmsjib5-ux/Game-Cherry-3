@@ -50548,10 +50548,10 @@ export default function CherryAdventure() {
   }, []);
 
   const G = gameRef.current;
-  const font = "'Segoe UI', system-ui, sans-serif";
+  const font = "'Mitr', 'Segoe UI', system-ui, sans-serif";   // 🎀 v451 ฟอนต์ไทยโค้งมน (Google Fonts, OFL) — โหลดไม่ได้ก็ตกไปใช้ฟอนต์ระบบ
   const card = {
-    background: "#fff", borderRadius: 18, padding: "14px 24px", textAlign: "center",
-    boxShadow: "0 4px 14px rgba(90,120,70,0.25)",
+    background: "#fffaf4", border: "3px solid #f2b6c9", borderRadius: 20, padding: "12px 22px", textAlign: "center",
+    boxShadow: "0 6px 18px rgba(120,60,90,0.18), inset 0 0 0 2px #fff",
   };
   const bigBtn = {
     padding: "13px 40px", borderRadius: 999, border: "none", cursor: "pointer",
@@ -50687,6 +50687,12 @@ export default function CherryAdventure() {
     : ui.mineNear ? "mine" : ui.pondNear ? "fish" : ui.herbNear ? "herb" : null;
   const MODAL_POS = _uiWideModal ? { left: "auto", right: "1.6vw", top: "50%", transform: "translateY(-50%)" } : { left: "50%", top: "50%", transform: "translate(-50%,-50%)" };
   const MODAL_SHADOW = _uiWideModal ? "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" : "0 0 0 100vmax rgba(40,30,40,0.55), 0 10px 30px rgba(0,0,0,0.35)";
+  // 🎀 ธีมชิบิน่ารัก (v451) — โทเค็นสี/รัศมี/เงาชุดเดียว + กรอบ nine-slice วาดเองเป็น SVG (ไม่พึ่งไฟล์ภายนอก ไม่มีปัญหาลิขสิทธิ์)
+  //    ครีมนวล ขอบชมพูพาสเทล เส้นไฮไลต์ขาวด้านใน · ทุกหน้าต่างเด้งเข้าเบา ๆ (cpop)
+  const UI = { pink: "#f7c6d6", rose: "#e8809e", plum: "#6a4a7a", cream: "#fffaf4", text: "#4a3a4a", muted: "#9a8a9a", r: { s: 10, m: 16, l: 22 }, sh: { s: "0 2px 8px rgba(120,60,90,0.14)", m: "0 10px 30px rgba(120,60,90,0.22)" } };
+  const UI_POP = "cpop 0.22s cubic-bezier(0.2,0.9,0.3,1.15)";
+  const CHIBI_SVG = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect x="4" y="4" width="88" height="88" rx="30" fill="#fffaf4" stroke="#f2b6c9" stroke-width="5"/><rect x="12" y="12" width="72" height="72" rx="23" fill="none" stroke="#ffffff" stroke-opacity="0.95" stroke-width="2.5"/></svg>');
+  const CHIBI_FRAME = { borderStyle: "solid", borderWidth: 12, borderColor: "transparent", borderImage: `url("${CHIBI_SVG}") 32 fill / 12px / 0 stretch`, background: "transparent", borderRadius: 14, animation: UI_POP };
   // 🖼️ กรอบมาตรฐานของกลุ่มเมนูสกิล — ทุกแท็บใช้ตำแหน่ง/ขนาด/พื้นหลังชุดเดียวกัน
   //     สลับแท็บแล้วกรอบจะอยู่นิ่ง ไม่เด้งไปมาหรือเปลี่ยนขนาดกะทันหัน
   const SKILL_SHELL = {
@@ -50696,8 +50702,7 @@ export default function CherryAdventure() {
     // 📏 สูงเท่ากันทุกแท็บ (สลับแล้วกรอบอยู่นิ่ง) และยืดตามความสูงจอ — จอสูงใช้พื้นที่ได้เต็ม จอเตี้ยก็ไม่ล้น
     //    เว้นขอบบน-ล่างไว้ ~6% ของจอ · เพดาน 900px กันไม่ให้ยาวเกินอ่านสบายบนจอใหญ่มาก
     height: `min(calc((88vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)}), ${Math.round(Math.max(320, Math.min(900, Math.round(_vh * 0.88))) * _uiInv)}px)`, overflowY: "auto",
-    background: "#fff", borderRadius: 18, padding: 13,
-    boxShadow: MODAL_SHADOW, fontFamily: font,
+    padding: 10, boxShadow: MODAL_SHADOW, fontFamily: font, ...CHIBI_FRAME,
   };
   // 🌑 กล่องเนื้อหาธีมเข้ม — ใช้กับแท็บที่ออกแบบมาบนพื้นเข้ม (วิชาสกิล · วิชาตัวเบา)
   //     ห่อไว้ข้างในกรอบขาวเดียวกัน ตัวหนังสือเลยยังอ่านออกเหมือนเดิม
@@ -50732,7 +50737,7 @@ export default function CherryAdventure() {
       display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
       paddingRight: 38,                      // ⛔ เว้นที่ให้ปุ่ม ✕ ที่ลอยอยู่มุมขวาบน แท็บสุดท้ายจะได้ไม่โดนทับ
       position: "sticky", top: 0, zIndex: 11,
-      background: dark ? "rgba(0,0,0,0.24)" : "#f1eef8", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #e2dcf0",
+      background: dark ? "rgba(0,0,0,0.24)" : "#fff1f5", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #f6cfdc",
     }}>
       {(G.SKILL_TABS || []).map((t) => {
         const on = t.k === active;
@@ -50740,9 +50745,9 @@ export default function CherryAdventure() {
           <button key={t.k} onClick={() => { if (!on && G.skillTab) G.skillTab(t.k); }} title={t.name} style={{
             flex: "1 1 auto", minWidth: 0, padding: "5px 3px", borderRadius: 9, cursor: on ? "default" : "pointer",
             border: "none", fontFamily: font, lineHeight: 1.15,
-            background: on ? "linear-gradient(135deg,#8a6ad0,#6a4ab0)" : (dark ? "rgba(255,255,255,0.07)" : "#fff"),
-            color: on ? "#fff" : (dark ? "#cfe0d6" : "#7a6a9a"),
-            boxShadow: on ? "0 2px 8px rgba(120,90,200,0.42)" : "none",
+            background: on ? "linear-gradient(135deg,#f08aa8,#e0608a)" : (dark ? "rgba(255,255,255,0.07)" : "#fff"),
+            color: on ? "#fff" : (dark ? "#cfe0d6" : "#9a6a8a"),
+            boxShadow: on ? "0 3px 10px rgba(224,96,138,0.4)" : "none",
           }}>
             <div style={{ fontSize: 15 }}>{t.ic}</div>
             <div style={{ fontSize: 7.5, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</div>
@@ -50843,10 +50848,10 @@ export default function CherryAdventure() {
   const closeBtn = (name) => (
     <div style={{ position: "sticky", top: "calc(env(safe-area-inset-top) + 6px)", height: 0, zIndex: 12, display: "flex", justifyContent: "flex-end", pointerEvents: "none", order: -1 }}>
       <button onClick={() => setUi((u) => ({ ...u, [name]: false }))} style={{
-        marginRight: -2, width: 34, height: 34, borderRadius: 9,
-        border: "none", cursor: "pointer", fontSize: 16, fontWeight: 800, lineHeight: "30px",
-        color: "#a06a6a", background: "#f3ede4", padding: 0, fontFamily: font,
-        boxShadow: "0 2px 6px rgba(0,0,0,0.22)", pointerEvents: "auto", flexShrink: 0,
+        marginRight: -2, width: 34, height: 34, borderRadius: 999,
+        border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 15, fontWeight: 800, lineHeight: "28px",
+        color: "#d0608a", background: "#fff3f7", padding: 0, fontFamily: font,
+        boxShadow: "0 2px 8px rgba(120,60,90,0.18)", pointerEvents: "auto", flexShrink: 0,
       }}>✕</button>
     </div>
   );
@@ -50855,7 +50860,7 @@ export default function CherryAdventure() {
     <div style={{ width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box",
       /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
       paddingLeft: "var(--sa-l, 0px)", paddingRight: "var(--sa-r, 0px)" }}>
-      <style>{`:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} }`}</style>
+      <style>{`:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} button:not([disabled]):active{filter:brightness(.95);}`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
       <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
         left: "calc(-1 * var(--sa-l, 0px))",
@@ -51085,7 +51090,7 @@ export default function CherryAdventure() {
           {ui.wheelOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "linear-gradient(180deg,#fff4f8,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              background: "linear-gradient(180deg,#fff4f8,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP,
             }}>
               {closeBtn("wheelOpen")}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#c0407a", marginBottom: 8 }}>🎡 กงล้อเสี่ยงโชค</div>
@@ -51195,7 +51200,7 @@ export default function CherryAdventure() {
           {ui.repOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 410, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "linear-gradient(180deg,#fdf8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              background: "linear-gradient(180deg,#fdf8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP,
             }}>
               {closeBtn("repOpen")}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#a06a2a", marginBottom: 3 }}>🤝 ชื่อเสียงกับชาวเมือง</div>
@@ -51281,7 +51286,7 @@ export default function CherryAdventure() {
           {ui.rushOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "linear-gradient(180deg,#fff2f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              background: "linear-gradient(180deg,#fff2f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP,
             }}>
               {closeBtn("rushOpen")}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#c0392b", marginBottom: 3 }}>👹 บอสรัช 13 แดน</div>
@@ -51372,7 +51377,7 @@ export default function CherryAdventure() {
           {ui.expedOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 410, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "linear-gradient(180deg,#f2fbf7,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              background: "linear-gradient(180deg,#f2fbf7,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP,
             }}>
               {closeBtn("expedOpen")}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#2a8a72", marginBottom: 3 }}>🗺️ ส่งทีมสัตว์เลี้ยงออกสำรวจ</div>
@@ -51657,7 +51662,7 @@ export default function CherryAdventure() {
             return (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "linear-gradient(180deg,#f2f8fd,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              background: "linear-gradient(180deg,#f2f8fd,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP,
             }}>
               {closeBtn("fishBagOpen")}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#2a6a9a", marginBottom: 3 }}>🎣 กระเป๋าตกปลา</div>
@@ -51789,7 +51794,7 @@ export default function CherryAdventure() {
           {ui.kitchenOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 56, width: "92%", maxWidth: 400, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "linear-gradient(180deg,#fff8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              background: "linear-gradient(180deg,#fff8f0,#fff)", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP,
             }}>
               {closeBtn("kitchenOpen")}
               <div style={{ fontSize: 15, fontWeight: 900, color: "#c06a2a", marginBottom: 3 }}>🍳 ครัวเชอร์รี่</div>
@@ -51985,7 +51990,7 @@ export default function CherryAdventure() {
       {/* ===== 💾 title / save-slot selection ===== */}
       {ui.mode === "login" && (
         <div style={{ position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font }}>
-          <div style={{ width: "100%", maxWidth: 360, background: "#fff", borderRadius: 24, padding: "26px 22px", boxShadow: "0 14px 44px rgba(150,90,120,0.28)", textAlign: "center" }}>
+          <div style={{ width: "100%", maxWidth: 360, background: "#fffaf4", border: "4px solid #f2b6c9", borderRadius: 28, padding: "24px 20px", boxShadow: "0 14px 44px rgba(150,90,120,0.28), inset 0 0 0 3px #fff", textAlign: "center", animation: UI_POP }}>
             <div style={{ fontSize: 42 }}>🍒</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#c0446a", marginBottom: 2 }}>Cherry Adventure</div>
             <div style={{ fontSize: 11.5, color: "#a07a8a", marginBottom: 18, lineHeight: 1.5 }}>เข้าสู่ระบบเพื่อเซฟข้ามเครื่อง<br />(หรือเล่นแบบไม่ล็อกอินก็ได้)</div>
@@ -54314,8 +54319,8 @@ export default function CherryAdventure() {
           display: "flex", justifyContent: "center",
         }}>
           <div style={{
-            background: "#fff", borderRadius: 18, padding: "16px 22px", textAlign: "center",
-            boxShadow: "0 8px 24px rgba(74,26,138,0.4)", maxWidth: 300,
+            padding: "12px 16px", textAlign: "center",
+            boxShadow: "0 8px 24px rgba(74,26,138,0.4)", maxWidth: 320, ...CHIBI_FRAME,
           }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: "#4a1a8a" }}>🗼 ประตูมิติสั่นสะเทือน...</div>
             <div style={{ fontSize: 12.5, color: "#8a7a9a", margin: "8px 0", lineHeight: 1.7 }}>
@@ -54441,9 +54446,9 @@ export default function CherryAdventure() {
           display: "flex", justifyContent: "center", pointerEvents: "none",
         }}>
           <div style={{
-            background: "#fff", borderRadius: 999, padding: "7px 20px",
-            fontSize: 15, fontWeight: 800, color: "#5a7a4a",
-            boxShadow: "0 5px 14px rgba(90,120,70,0.3)",
+            background: "#fff8fb", border: "2px solid #f2b6c9", borderRadius: 999, padding: "7px 20px",
+            fontSize: 15, fontWeight: 700, color: "#7a4a6a",
+            boxShadow: "0 6px 16px rgba(120,60,90,0.22)",
             animation: "toastUp 1.7s ease forwards",
           }}>
             {ui.toast}
@@ -54732,7 +54737,7 @@ export default function CherryAdventure() {
 
       {/* 🏛️ Gold Market — currency exchange + rotating premium gold shop */}
       {ui.goldMarketOpen && (
-        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#2a2416,#20190e)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, border: "1.5px solid #f5c542" }}>
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#2a2416,#20190e)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, animation: UI_POP, border: "1.5px solid #f5c542" }}>
           {closeBtn("goldMarketOpen")}
           <div style={{ fontSize: 16, fontWeight: 900, color: "#f5d76a" }}>🏛️ ตลาดทองคำ</div>
           <div style={{ display: "flex", gap: 9, fontSize: 11, fontWeight: 800, margin: "5px 0 9px", color: "#e8d9a8", flexWrap: "wrap" }}>
@@ -54790,7 +54795,7 @@ export default function CherryAdventure() {
         const statLine = (st) => Object.keys(st).map((k) => `${STAT_L[k] || k} +${st[k]}${["crit", "critDmg", "eva", "luck"].includes(k) ? "%" : ""}`).join(" · ");
         const groups = ui.accInfo || [];
         return (
-          <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#2a1a2a,#1c1220)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, border: "1.5px solid #f5a0d0" }}>
+          <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 384, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#2a1a2a,#1c1220)", borderRadius: 20, padding: 15, boxShadow: MODAL_SHADOW, animation: UI_POP, border: "1.5px solid #f5a0d0" }}>
             {closeBtn("accOpen")}
             <div style={{ fontSize: 16, fontWeight: 900, color: "#f5b0d8" }}>💍 เครื่องประดับ</div>
             <div style={{ fontSize: 10.5, color: "#d8b0c8", margin: "3px 0 8px" }}>สวมใส่แหวน · กำไล · สร้อยคอ · ต่างหู เพื่อเพิ่มสเตตัสพิเศษ</div>
@@ -54834,7 +54839,7 @@ export default function CherryAdventure() {
       })()}
 
       {ui.heroGalleryOpen && (
-        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 392, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #4a3a6a" }}>
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 392, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#20142e,#161022)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, animation: UI_POP, border: "1px solid #4a3a6a" }}>
           {closeBtn("heroGalleryOpen")}
           <div style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
             <div style={{ fontSize: 17, fontWeight: 800, color: "#e6c6ff" }}>🦸 ฮีโร่ในตำนาน</div>
@@ -55007,7 +55012,7 @@ export default function CherryAdventure() {
       })()}
 
       {ui.gachaOpen && (
-        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 60, width: "90%", maxWidth: 392, maxHeight: "calc(88vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#241033,#150a22)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, border: "1px solid #5a3a7a" }}>
+        <div style={{ position: "absolute", ...MODAL_POS, zIndex: 60, width: "90%", maxWidth: 392, maxHeight: "calc(88vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "linear-gradient(180deg,#241033,#150a22)", borderRadius: 20, padding: 16, boxShadow: MODAL_SHADOW, animation: UI_POP, border: "1px solid #5a3a7a" }}>
           {closeBtn("gachaOpen")}
           <div style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#ffd6f5" }}>🎰 อัญเชิญในตำนาน</div>
@@ -55300,7 +55305,7 @@ export default function CherryAdventure() {
           {ui.shopOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
+              ...CHIBI_FRAME, borderRadius: 16, padding: 12,
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("shopOpen")}
@@ -56036,7 +56041,7 @@ export default function CherryAdventure() {
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50,
               width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "#fff", borderRadius: 20, padding: 16,
+              ...CHIBI_FRAME, borderRadius: 20, padding: 16,
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("pvpOpen")}
@@ -56081,7 +56086,7 @@ export default function CherryAdventure() {
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50,
               width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "#fff", borderRadius: 20, padding: 16,
+              ...CHIBI_FRAME, borderRadius: 20, padding: 16,
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("socialOpen")}
@@ -56738,7 +56743,7 @@ export default function CherryAdventure() {
 
           {/* ✨ collection panel: weapon skins + outfit sets */}
           {ui.collectionOpen && (
-            <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
+            <div style={{ position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP }}>
               {closeBtn("collectionOpen")}
               <div style={{ fontSize: 14, fontWeight: 800, color: "#b0407a", marginBottom: 2 }}>✨ คอลเลกชัน</div>
               <div style={{ fontSize: 10.5, color: "#a3789a", marginBottom: 8 }}>สะสมสกินอาวุธ & ชุดเซ็ต — ปลดล็อกด้วยความสำเร็จ</div>
@@ -57073,7 +57078,7 @@ export default function CherryAdventure() {
           {ui.invOpen && (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              background: "#fff", borderRadius: 16, padding: 12,
+              ...CHIBI_FRAME, borderRadius: 16, padding: 12,
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("invOpen")}
@@ -57604,7 +57609,7 @@ export default function CherryAdventure() {
               position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 50,
               width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(460 * _uiInv),
               maxHeight: `calc((84vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column",
-              background: "#fff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              ...CHIBI_FRAME, borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("ranchOpen")}
               <div style={{ paddingRight: 36, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
@@ -58042,7 +58047,7 @@ export default function CherryAdventure() {
 
           {/* 🌐 online player market — buy/sell farm produce & pets */}
           {ui.mktOpen && (
-            <div style={{ position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 52, width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(470 * _uiInv), maxHeight: `calc((86vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", background: "#fff", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
+            <div style={{ position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 52, width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(470 * _uiInv), maxHeight: `calc((86vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", ...CHIBI_FRAME, borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
               {closeBtn("mktOpen")}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0, paddingRight: 36 }}>
                 <div style={{ fontSize: 16.5, fontWeight: 900, color: "#2f8f9a" }}>🌐 ตลาดออนไลน์</div>
@@ -58331,7 +58336,7 @@ export default function CherryAdventure() {
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50, width: "96%", maxWidth: 460,
               maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", display: "flex", flexDirection: "column",
-              background: "#fff", borderRadius: 16, padding: 12,
+              ...CHIBI_FRAME, borderRadius: 16, padding: 12,
               boxShadow: MODAL_SHADOW,
             }}>
               {closeBtn("panelOpen")}
