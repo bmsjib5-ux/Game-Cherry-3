@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v458";
+const CACHE = "cherry-adventure-v459";
 const SHELL = [
   "./",
   "./index.html",
@@ -15,8 +15,25 @@ const SHELL = [
   "https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js",
   "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
   "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+  "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js",
   "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js",
+  "./assets/kaykit/sword_1handed.gltf",
+  "./assets/kaykit/sword_1handed.bin",
+  "./assets/kaykit/sword_2handed.gltf",
+  "./assets/kaykit/sword_2handed.bin",
+  "./assets/kaykit/dagger.gltf",
+  "./assets/kaykit/dagger.bin",
+  "./assets/kaykit/staff.gltf",
+  "./assets/kaykit/staff.bin",
+  "./assets/kaykit/bow_withString.gltf",
+  "./assets/kaykit/bow_withString.bin",
+  "./assets/kaykit/shield_round.gltf",
+  "./assets/kaykit/shield_round.bin",
+  "./assets/kaykit/knight_texture.png",
+  "./assets/kaykit/rogue_texture.png",
+  "./assets/kaykit/mage_texture.png",
+  "./assets/kaykit/ranger_texture.png",
 ];
 
 self.addEventListener("install", (e) => {
