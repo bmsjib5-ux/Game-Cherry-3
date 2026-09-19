@@ -4792,9 +4792,16 @@ export default function CherryAdventure() {
       elbow.add(forearm, hand, elbowBall, fingers, foreSleeve);
       p.add(elbow);
       p.userData.elbow = elbow; // 💪 expose the joint for bending
-      char.add(p);
+      armMirror.add(p);
       return p;
     };
+    // 🫱 กระจกแขน — โค้ดท่าทางทั้งเกมเขียนบนสมมติฐานว่า armR อยู่ฝั่ง +x
+    //    แต่ตัวละครหันหน้าเข้ากล้อง (+z) → ฝั่ง +x คือ "มือซ้าย" ของตัวละคร
+    //    อาวุธหลักจึงไปอยู่มือซ้ายมาตลอด แก้ด้วยการครอบแขนทั้งคู่ด้วยกลุ่มที่กลับแกน x
+    //    → armR ย้ายไปขวาจริง · การหมุนรอบ z กลับด้านให้เอง ท่าทางทุกท่าเหมือนเดิม แค่สลับข้าง
+    const armMirror = new THREE.Group();
+    armMirror.scale.x = -1;
+    char.add(armMirror);
     const armL = makeArm(-1);
     const armR = makeArm(1);
     armL.rotation.z = -0.12;
