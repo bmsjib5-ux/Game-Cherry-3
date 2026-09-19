@@ -5587,6 +5587,8 @@ function CherryAdventure() {
         G.shield = shield;
         // 🤚 realistic grip: each weapon type is held at a natural angle
         const gripFor = (id) => {
+            if (id && id.indexOf("kkh_") === 0)
+                return { x: 0.9, y: 0, z: 0.3 }; // 🦸🪓 อาวุธหนักรุ่น KayKit — พาดเฉียงข้างลำตัว หัวอาวุธชี้ออกนอก
             const it = LOOT.find((x) => x.id === id);
             const cls = G.cls;
             if (id === "haruStaff" || id === "lunaStaff" || id === "celStaff")
@@ -9525,6 +9527,10 @@ function CherryAdventure() {
             halberd: { url: "assets/kaykit/weapons/halberd.gltf", s: 0.8, gripY: 0.1, gripZ: 0 },
             fistA: { url: "assets/kaykit/weapons/fistweapon_A.gltf", s: 1.3, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] },
             fistB: { url: "assets/kaykit/weapons/fistweapon_B.gltf", s: 1.15, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] },
+            // 🦸 อาวุธประจำตัวฮีโร่ — ขวานอสูร · ค้อนพายุ · กระบองยักษ์
+            axeHero: { url: "assets/kaykit/weapons/axe_B.gltf", s: 0.95, gripY: 0.12, gripZ: 0.15 },
+            hammerHero: { url: "assets/kaykit/weapons/hammer_A.gltf", s: 0.82, gripY: 0.14, gripZ: 0.15 },
+            maceHero: { url: "assets/kaykit/weapons/hammer_B.gltf", s: 0.95, gripY: 0.12, gripZ: 0.15 },
             // ✏️🪢 KayKit RPG Tools Bits (CC0) — ปากกาของสายออฟฟิศ · เชือกของสายเลี้ยงสัตว์
             pencilA: { url: "assets/kaykit/tools/pencil_A_long.gltf", s: 1.5, gripY: 0.1, gripZ: 0 },
             pencilB: { url: "assets/kaykit/tools/pencil_B_long.gltf", s: 1.5, gripY: 0.1, gripZ: 0 },
@@ -9614,6 +9620,45 @@ function CherryAdventure() {
             if (!fam)
                 return null;
             return G.kkKey(fam, wit ? wpnTierOf(wit.rarity) : 0);
+        };
+        // 🦸 อาวุธประจำตัวฮีโร่ที่หาโมเดล KayKit มาแทนของที่ปั้นเองได้ตรง ๆ — ย้อมสีให้ตรงธีมฮีโร่เดิม
+        const KK_HERO = {
+            ragAxe: { p: "axeHero", tint: 0xc4506e }, // 🪓 ขวานอสูรของรักนาร์ — เหล็กแดงอมม่วง
+            thdHammerW: { p: "hammerHero", tint: 0xb9a6ff }, // 🔨 ค้อนพายุของอัสนี — เหล็กม่วงสายฟ้า
+            yakClubW: { p: "maceHero", tint: 0x5fe39a }, // 🏏 กระบองยักษ์ของยักษา — เขียวหยกหนามแหลม
+        };
+        G.kkHeroKey = (id) => {
+            const H = KK_HERO[id];
+            if (!H || !G.kkOn)
+                return null;
+            if (!kkLib[H.p]) {
+                G.kkEnsure(H.p);
+                return null;
+            } // ⏳ ยังไม่มีไฟล์ — สั่งโหลดแล้วใช้ของเดิมไปก่อน
+            const k = "kkh_" + id;
+            if (!weaponModels[k]) {
+                const m = kkWrap(H.p);
+                if (!m)
+                    return null;
+                m.traverse((ob) => {
+                    if (!ob.isMesh || !ob.material)
+                        return;
+                    ob.material = ob.material.clone();
+                    ob.material.color = new THREE.Color(H.tint);
+                    if (ob.material.emissive) {
+                        ob.material.emissive = new THREE.Color(H.tint);
+                        ob.material.emissiveIntensity = 0.18;
+                    } // ✨ กันอาวุธดำทึบตอนอยู่ในเงา
+                });
+                m.visible = false;
+                wand.add(m);
+                if (G.freezeStatic) {
+                    G.freezeStatic(m, 0);
+                    m.userData._frzM = 1;
+                }
+                weaponModels[k] = m;
+            }
+            return k;
         };
         const kkFiles = {}; // ชื่อชิ้น → Promise (โหลดชิ้นละครั้งเดียว)
         G.kkEnsure = (name) => {
@@ -10065,7 +10110,7 @@ function CherryAdventure() {
             if (G.setWeaponVisual)
                 G.setWeaponVisual(G.equip ? G.equip.weapon : null);
             if (G.toast)
-                G.toast(G.kkOn ? "🗡️🌳💀 เปิดโมเดล 3D KayKit (อาวุธ + ต้นไม้ + อันเดด)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
+                G.toast(G.kkOn ? "🗡️🌳💀 เปิดโมเดล 3D KayKit (อาวุธ + หมวก/ผม + ต้นไม้ + อันเดด + ห้องดันเจี้ยน)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
         };
         if (kkOn)
             setTimeout(() => { try {
@@ -10074,6 +10119,8 @@ function CherryAdventure() {
             }
             catch (e) { } }, 1500); // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
         // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
+        // 🦸 ฮีโร่ที่มีอาวุธประจำตัว — ใช้ทั้งตัวเราเองและผู้เล่นออนไลน์คนอื่น
+        const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW" };
         G._regHeroWeapon = (key, mesh) => { if (!key || !mesh || weaponModels[key])
             return; mesh.visible = false; wand.add(mesh); weaponModels[key] = mesh; };
         Object.values(gloveLModels).forEach((m) => { m.visible = false; wandL.add(m); }); // 🥊 นวมข้างซ้ายอยู่คนละช่องมือ
@@ -10122,6 +10169,13 @@ function CherryAdventure() {
                 id = "merTriW"; // 🧜‍♀️ ไตรศูลบาดาล
             else if (G.heroId === "lich" && weaponModels.licStaffW)
                 id = "licStaffW"; // 💀 คทาวิญญาณ
+            // 🦸 อาวุธประจำตัวฮีโร่ต้องมาก่อนโมเดลตระกูลอาวุธตามอาชีพเสมอ (ไม่งั้นโดน KayKit ของอาชีพทับ)
+            const sigHero = !!(G.heroId && HERO_WEAPON[G.heroId] === id);
+            {
+                const kh = G.kkHeroKey && G.kkHeroKey(id);
+                if (kh)
+                    id = kh;
+            } // 🪓⚡👹 สามชิ้นนี้มีรุ่น KayKit ของจริง
             // 🐉😈🦅🐍🕊️👼🧝🦸 ฮีโร่ที่ไม่มีอาวุธประจำตัว — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง
             // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
             // 🗡️ เดิมคิดโมเดลตระกูลเฉพาะไอเทมที่ "ไม่มีโมเดลเฉพาะตัว" ระดับตำนาน/มังกรจึงไม่เคยใช้โมเดล KayKit เลย
@@ -10139,7 +10193,7 @@ function CherryAdventure() {
                 G.ensureWeaponModel(famKey); // 🚀 สร้างโมเดลตระกูลอาวุธเมื่อใช้จริง
             // 🗡️ KayKit: อาวุธตระกูล (ดาบ/มีด/ไม้เท้า/ธนู) และอาวุธเริ่มต้นของอาชีพ → โมเดล glTF ถ้าโหลดแล้วและเปิดใช้
             let kkKey = null;
-            if (G.kkKey) {
+            if (G.kkKey && !sigHero) {
                 const fam2 = famKey ? famKey.split("_")[1] : (WPN_FAMILY[G.cls] || null);
                 const t2 = famKey ? +famKey.split("_")[2] : 0;
                 kkKey = fam2 ? G.kkKey(fam2, t2) : null;
@@ -57084,9 +57138,9 @@ function CherryAdventure() {
                 }
                 // ---- ⚔️ weapon: clone the real model, mount in the right hand exactly like setWeaponVisual + wand ----
                 try {
-                    const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW" }; // ⚔️ ฮีโร่ที่มีอาวุธประจำตัวถืออาวุธนั้น · ที่เหลือถืออาวุธตามอาชีพ/ของที่สวมจริง
                     const kkw2 = G.kkResolve && G.kkResolve(info.w, info.c); // 🗡️ ใช้โมเดล KayKit เหมือนตัวเราเอง
-                    let wid = (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : ((kkw2 && weaponModels[kkw2]) ? kkw2 : (info.w && weaponModels[info.w] ? info.w : null)); // 🦸 อาวุธประจำฮีโร่มาก่อน
+                    const kkh2 = (info.hero && HERO_WEAPON[info.hero] && G.kkHeroKey) ? G.kkHeroKey(HERO_WEAPON[info.hero]) : null; // 🦸 อาวุธประจำตัวรุ่น KayKit
+                    let wid = (kkh2 && weaponModels[kkh2]) ? kkh2 : (info.hero && HERO_WEAPON[info.hero] && weaponModels[HERO_WEAPON[info.hero]]) ? HERO_WEAPON[info.hero] : ((kkw2 && weaponModels[kkw2]) ? kkw2 : (info.w && weaponModels[info.w] ? info.w : null)); // 🦸 อาวุธประจำฮีโร่มาก่อน
                     if (!wid) {
                         const dflt = { warrior: "cw", archer: "ca", mage: "cm", assassin: "cs", lancer: "cl", samurai: "ck", office: "co", coder: "cc", aegis: "cx", boxer: "cb", tamer: "ct" }[info.c];
                         wid = (dflt && weaponModels[dflt]) ? dflt : "default";
@@ -81845,7 +81899,7 @@ function CherryAdventure() {
                     { k: "battleSfxOn", on: ui.battleSfxOn !== false, emoji: "⚔️", label: "เสียงต่อสู้", sub: "เสียงฟัน กระแทก คริ ระเบิด", act: () => G.toggleBattleSfx() },
                     { k: "powerSave", on: !!ui.powerSave, emoji: "🔋", label: "ประหยัดพลังงาน", sub: "ลดความคมชัด/เงา ยืดแบต", act: () => G.togglePowerSave() },
                     { k: "shake", on: (ui.shakeLv != null ? ui.shakeLv : 1) > 0, emoji: "📷", label: `การสั่นหน้าจอ: ${["ปิด", "เบา", "เต็ม"][ui.shakeLv != null ? ui.shakeLv : 1]}`, sub: "ความแรงที่กล้องสั่นตอนโจมตี/ท่าไม้ตาย — แตะเพื่อสลับ ปิด → เบา → เต็ม", act: () => G.cycleShake() },
-                    { k: "kaykit", on: ui.kaykit != null ? !!ui.kaykit : G.kkOn !== false, emoji: "🗡️", label: "โมเดล 3D KayKit", sub: "อาวุธ · ต้นไม้/พุ่มไม้ · มอนสเตอร์อันเดดมีอนิเมชัน — จากชุด KayKit (CC0)", act: () => { if (G.toggleKayKit)
+                    { k: "kaykit", on: ui.kaykit != null ? !!ui.kaykit : G.kkOn !== false, emoji: "🗡️", label: "โมเดล 3D KayKit", sub: "อาวุธ (รวมอาวุธประจำตัวฮีโร่) · หมวก/ผม · ต้นไม้ · อันเดดมีอนิเมชัน · ห้องดันเจี้ยน — จากชุด KayKit (CC0)", act: () => { if (G.toggleKayKit)
                             G.toggleKayKit(); setUi((u) => ({ ...u, kaykit: G.kkOn })); } },
                 ].map((row) => (React.createElement("button", { key: row.k, onClick: row.act, style: {
                         width: "100%", display: "flex", alignItems: "center", gap: 10, marginBottom: 8, padding: "10px 12px",
