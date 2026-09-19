@@ -13457,14 +13457,22 @@ export default function CherryAdventure() {
       G._outfitCloth.push({ grp: g, m: suit, base: Float32Array.from(suit.geometry.attributes.position.array), top: 2.05, h: 0.83, amp: 0.012 });
       const fz = (R, x) => Math.sqrt(Math.max(0.001, R * R - (x / 1.06) * (x / 1.06))) * 0.84; // ระยะผิวเสื้อด้านหน้า
       const zc = fz(0.385, 0);
-      // 🌊 ชายเสื้อบานพริ้วรอบสะโพก (robe ใช้กระโปรงยาวของตัวเองแทน)
+      // 👕 ชายเสื้อสั้น จบที่เอว — "ชุด" คือเสื้อท่อนบนล้วน ไม่มีกระโปรงติดมาด้วย
+      //    ท่อนล่างเป็นของกางเกง/กระโปรงที่เลือกเอง + ช่องกางเกงที่สวม จะได้แยกส่วนกันจริง ๆ
+      {
+        const HH = 0.18, HY = 1.23;                       // สูง 0.18 · ขอบล่างอยู่ที่ 1.14 = แนวเอว ไม่ลงไปคลุมสะโพก/ต้นขา
+        const hem = new THREE.Mesh(new THREE.CylinderGeometry(0.372, 0.425, HH, 40, 3, true), baseMat);
+        hem.position.y = HY; hem.scale.set(1.03, 1, 0.86); clothFolds(hem, 0.006); g.add(hem);
+        G._outfitCloth.push({ grp: g, m: hem, base: Float32Array.from(hem.geometry.attributes.position.array), top: HH / 2, h: HH, amp: 0.014 });
+        const ht = new THREE.Mesh(new THREE.TorusGeometry(0.425, 0.013, 6, 34), trimMat); ht.position.y = HY - HH / 2; ht.rotation.x = Math.PI / 2; ht.scale.set(1.03, 0.86, 1); g.add(ht);
+      }
+      // 👗 ชายกระโปรงของชุด — เป็น "ส่วนกระโปรง" แยกต่างหาก เปิด/ปิดได้ ไม่ติดมากับเสื้อ
       if (B !== "robe") {
-        // 👗 ชายเสื้อยาวขึ้นตามระดับ: ชั้นดี = สั้นแค่สะโพก · ชั้นเลิศ = คลุมต้นขา · ตำนาน = ยาวถึงเข่า
         const HL = [[0.4, 0.46, 0.24, 1.16], [0.39, 0.5, 0.46, 1.05], [0.38, 0.55, 0.68, 0.94]][tier];
-        const hem = new THREE.Mesh(new THREE.CylinderGeometry(HL[0], HL[1], HL[2], 40, 5, true), baseMat);
-        hem.position.y = HL[3]; hem.scale.set(1.03, 1, 0.85); clothFolds(hem, 0.012); g.add(hem);
-        G._outfitCloth.push({ grp: g, m: hem, base: Float32Array.from(hem.geometry.attributes.position.array), top: HL[2] / 2, h: HL[2], amp: 0.045 + tier * 0.015 });
-        const ht = new THREE.Mesh(new THREE.TorusGeometry(HL[1], 0.012, 6, 34), trimMat); ht.position.y = HL[3] - HL[2] / 2; ht.rotation.x = Math.PI / 2; ht.scale.set(1.03, 0.85, 1); g.add(ht);
+        const skirt = new THREE.Mesh(new THREE.CylinderGeometry(HL[0], HL[1], HL[2], 40, 5, true), baseMat);
+        skirt.position.y = HL[3]; skirt.scale.set(1.03, 1, 0.85); clothFolds(skirt, 0.012); g.add(skirt);
+        G._outfitCloth.push({ grp: g, m: skirt, base: Float32Array.from(skirt.geometry.attributes.position.array), top: HL[2] / 2, h: HL[2], amp: 0.045 + tier * 0.015 });
+        const st = new THREE.Mesh(new THREE.TorusGeometry(HL[1], 0.012, 6, 34), trimMat); st.position.y = HL[3] - HL[2] / 2; st.rotation.x = Math.PI / 2; st.scale.set(1.03, 0.85, 1); g.add(st);
       }
       if (tier >= 1) { // 🎀 ชั้นเลิศขึ้นไป — ชายผ้าหางยาวด้านหลัง + ไหล่ซ้อนสองชั้น
         for (const sx of [-1, 1]) {
@@ -13485,7 +13493,7 @@ export default function CherryAdventure() {
         for (let k = 0; k < 2; k++) { const wb = new THREE.Mesh(new THREE.TorusGeometry(0.355 - k * 0.006, 0.016, 6, 26), accMat); wb.position.y = 1.3 - k * 0.07; wb.rotation.x = Math.PI / 2; wb.scale.set(1.06, 0.86, 1); g.add(wb); }
       }
       if (B === "robe") {
-        const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.72, 0.78, 30, 6, true), baseMat);
+        const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.72, 0.78, 30, 6, true), baseMat);   // 👗 กระโปรงคลุมของนักเวท — ส่วนกระโปรง เปิด/ปิดแยกได้
         skirt.position.y = 0.97; clothFolds(skirt, 0.012); g.add(skirt);
         G._outfitCloth.push({ grp: g, m: skirt, base: Float32Array.from(skirt.geometry.attributes.position.array), top: 0.39, h: 0.78, amp: 0.05 });
         const collar = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.032, 8, 26), trimMat); collar.position.y = 2.05; collar.rotation.x = Math.PI / 2; collar.scale.set(1.06, 0.84, 1); g.add(collar);
@@ -13610,6 +13618,47 @@ export default function CherryAdventure() {
     // matching tier and RE-TINT it per archetype — every outfit you equip still looks different.
     const OUTFIT_FALLBACK = { rare: "o2", epic: "o3", secret: "oS", dragon: "oD", legend: "lg_out", common: "o1" };
     const ARCH_TINT = { atk: 0xd9536b, def: 0x3a7ac0, agi: 0x4aa06a };
+    // 👕👗🧣 แยก "ชุด" ออกเป็น 3 ส่วน: เสื้อท่อนบน · ชายกระโปรง/แผงเอว · ผ้าคลุมหลัง
+    //    ติดป้ายอัตโนมัติจากตำแหน่งของแต่ละชิ้นในตัวโมเดล จึงครอบคลุมชุดทุกแบบโดยไม่ต้องไล่แก้ทีละชุด
+    const OUTFIT_WAIST_Y = 1.2;                 // แนวเอวของตัวละคร — ต่ำกว่านี้นับเป็นท่อนล่าง
+    const tagOutfitParts = (root) => {
+      if (!root || root.userData._parted) return;
+      root.userData._parted = 1;
+      const inv = new THREE.Matrix4(), mtx = new THREE.Matrix4(), bb = new THREE.Box3(), sz = new THREE.Vector3(), ct = new THREE.Vector3();
+      root.updateWorldMatrix(true, true);
+      inv.copy(root.matrixWorld).invert();
+      root.traverse((o) => {
+        if (!o.isMesh || !o.geometry) return;
+        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+        mtx.multiplyMatrices(inv, o.matrixWorld);                       // พิกัดเทียบกับตัวละคร ไม่ใช่พิกัดโลก
+        bb.copy(o.geometry.boundingBox).applyMatrix4(mtx);
+        bb.getSize(sz); bb.getCenter(ct);
+        if (ct.z < -0.16 && sz.y > 0.34 && sz.x > 0.12) o.userData._part = "cape";        // 🧣 ผืนใหญ่อยู่หลังลำตัว
+        else if (ct.y < OUTFIT_WAIST_Y) o.userData._part = "lower";                        // 👗 ชายกระโปรง/แผงเอว/สายห้อย
+        else o.userData._part = "top";                                                     // 👕 เสื้อท่อนบน
+      });
+    };
+    G.fitSkirt = false;   // 👗 ปิดไว้ตั้งแต่แรก — ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง จะได้ไม่ซ้อนกันสองชั้น
+    G.fitCape = true;     // 🧣 ผ้าคลุมหลังเปิดไว้ แต่ปิดแยกได้
+    try { const v = window.localStorage.getItem("cherry-fitparts"); if (v) { const o = JSON.parse(v); G.fitSkirt = !!o.s; G.fitCape = o.c !== false; } } catch (e) {}
+    G.applyOutfitParts = () => {
+      Object.values(outfitModels).forEach((m) => {
+        tagOutfitParts(m);
+        m.traverse((o) => {
+          const pt = o.userData && o.userData._part;
+          if (pt === "lower") o.visible = !!G.fitSkirt;
+          else if (pt === "cape") o.visible = !!G.fitCape;
+        });
+      });
+    };
+    G.setFitPart = (k, on) => {
+      if (k === "skirt") G.fitSkirt = !!on; else G.fitCape = !!on;
+      try { window.localStorage.setItem("cherry-fitparts", JSON.stringify({ s: !!G.fitSkirt, c: !!G.fitCape })); } catch (e) {}
+      G.applyOutfitParts();
+      if (G.toast) G.toast(k === "skirt"
+        ? (G.fitSkirt ? "👗 ใส่ชายกระโปรงของชุดด้วย" : "👕 ชุดเหลือแค่เสื้อ — ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง")
+        : (G.fitCape ? "🧣 ใส่ผ้าคลุมหลังของชุด" : "🧣 ถอดผ้าคลุมหลังออกจากชุด"));
+    };
     G.setOutfitVisual = (id) => {
       // 🦸 ลุคฮีโร่ประจำตัวแทนที่ชุดสวมทั้งชิ้น (กันเสื้อเกราะ/ผ้าพันคอโผล่ทับผิว) · 🙈 hide-gear hides the worn outfit; 👗 else a costume outfit overrides the look
       if (G.heroId || G._gearHidden) id = null;
@@ -13637,6 +13686,7 @@ export default function CherryAdventure() {
           if (tint != null) o.material.color.lerp(new THREE.Color(tint), 0.55);
         });
       }
+      if (G.applyOutfitParts) G.applyOutfitParts();   // 👕👗🧣 เปิด/ปิดชายกระโปรง + ผ้าคลุมตามที่ตั้งไว้
       // 🚫 no overlap: reconcile which class pieces stay hidden behind equipped gear
       if (G.reconcileClassPieces) G.reconcileClassPieces();
       updateAura();
@@ -25510,7 +25560,7 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, equipSort: G.equipSort || "none", hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
+      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, equipSort: G.equipSort || "none", hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, fitSkirt: !!G.fitSkirt, fitCape: G.fitCape !== false, heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
       syncPlayer();
     };
     G.closeEquip = () => {
@@ -57900,6 +57950,9 @@ export default function CherryAdventure() {
                     <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>
                     <button key="eqlook" onClick={() => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }} title="แก้หน้า ทรงผม สีผม สีผิว ของตัวละครเดิม — ไม่กระทบเลเวล/ไอเทม" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" }}>💇 รูปลักษณ์</button>
                     <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
+                    {/* 👗🧣 ชุด = เสื้อ + ชายกระโปรง + ผ้าคลุม — แยกเปิดปิดได้ทีละส่วน */}
+                    <button key="eqskirt" onClick={() => { const nv = !ui.fitSkirt; G.setFitPart("skirt", nv); setUi((u) => ({ ...u, fitSkirt: nv })); }} title="ชายกระโปรงที่ติดมากับชุด — ปิดไว้จะเหลือแค่เสื้อ ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.fitSkirt ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitSkirt ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.fitSkirt ? "#ffdff0" : "#c8d0c0" }}>{ui.fitSkirt ? "👗 ชายกระโปรง ✓" : "👗 ชายกระโปรง"}</button>
+                    <button key="eqcape" onClick={() => { const nv = !ui.fitCape; G.setFitPart("cape", nv); setUi((u) => ({ ...u, fitCape: nv })); }} title="ผ้าคลุมหลังที่ติดมากับชุด — ปิด/เปิดแยกจากเสื้อได้" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.fitCape ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitCape ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.fitCape ? "#e0ecff" : "#c8d0c0" }}>{ui.fitCape ? "🧣 ผ้าคลุม ✓" : "🧣 ผ้าคลุม"}</button>
                     {(ui.heroPick || ui.heroId) && (
                       <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
                     )}
