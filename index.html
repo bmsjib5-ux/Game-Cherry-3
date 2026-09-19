@@ -3782,6 +3782,30 @@ function CherryAdventure() {
             G._fpsInterval = ps ? (1000 / 30) : (1000 / 60); // ⏱️ ประหยัด 30fps · ปกติ 60fps (จอ 90/120Hz ไม่ต้องวาดทิ้ง = ลดความร้อน)
         };
         G.applyQuality = applyQuality;
+        // 📷 ระดับการสั่นจอ — 0 ปิด · 1 เบา (ค่าเริ่มต้น) · 2 เต็มเหมือนเดิม
+        //    เดิมสั่นแรงตายตัว บางท่าถึง 1.5 หน่วย เล่นนาน ๆ แล้วเวียนหัว
+        const SHAKE_MUL = [0, 0.45, 1];
+        const SHAKE_NAME = ["ปิด", "เบา", "เต็ม"];
+        let shakeLv = 1;
+        try {
+            const v = window.localStorage.getItem("cherry-shake");
+            if (v != null)
+                shakeLv = Math.max(0, Math.min(2, +v || 0));
+        }
+        catch (e) { }
+        G.shakeLv = shakeLv;
+        G.shakeMul = () => SHAKE_MUL[G.shakeLv != null ? G.shakeLv : 1];
+        G.cycleShake = () => {
+            G.shakeLv = ((G.shakeLv != null ? G.shakeLv : 1) + 1) % 3;
+            try {
+                window.localStorage.setItem("cherry-shake", String(G.shakeLv));
+            }
+            catch (e) { }
+            G._camShake = 0;
+            if (G.toast)
+                G.toast(`📷 การสั่นหน้าจอ: ${SHAKE_NAME[G.shakeLv]}`);
+            setUi((u) => ({ ...u, shakeLv: G.shakeLv }));
+        };
         G.togglePowerSave = () => {
             G.powerSave = !G.powerSave;
             try {
@@ -3794,7 +3818,7 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, powerSave: G.powerSave }));
         };
         applyQuality(); // ใช้การตั้งค่าที่บันทึกไว้ (และลดค่าเริ่มต้นที่เปลืองเกิน)
-        setUi((u) => ({ ...u, powerSave: G.powerSave })); // 🔋 sync ปุ่มให้ตรงกับค่าที่บันทึก
+        setUi((u) => ({ ...u, powerSave: G.powerSave, shakeLv: G.shakeLv })); // 🔋📷 sync ปุ่มให้ตรงกับค่าที่บันทึก
         // 🔋 ถ้าอุปกรณ์แบตต่ำ (<20%) และยังไม่เคยตั้งค่า → แนะนำเปิดอัตโนมัติ (best-effort)
         try {
             if (navigator.getBattery && window.localStorage.getItem("cherry-powersave") == null) {
@@ -78831,6 +78855,17 @@ function CherryAdventure() {
                 // 🌑 เงาสัมผัสใต้เท้า — วางบนผิวพื้นตามความสูงจริง (กลุ่มโลกถูกยกลง จึงต้องบวกความสูงพื้นกลับเข้าไป)
                 blobShadow.position.set(char.position.x, terrainAt(char.position.x, char.position.z) + 0.03, char.position.z);
                 // camera
+                // 📷 ค่าสั่นเฟรมก่อนต้องถอนออกก่อน — ไม่งั้นมันค้างอยู่ในตำแหน่งกล้องแล้วถูกดึงกลับแค่ 6%/เฟรม
+                //    กลายเป็นกล้องเดินสุ่มออกนอกกรอบและสั่นค้างยาวกว่าที่ตั้งใจหลายเท่า
+                {
+                    const SO = G._shakeOff;
+                    if (SO && (SO.x || SO.y)) {
+                        camera.position.x -= SO.x;
+                        camera.position.y -= SO.y;
+                        SO.x = 0;
+                        SO.y = 0;
+                    }
+                }
                 if (G.mode === "create" || G.mode === "class") {
                     // centered turntable, zoomable with pinch/wheel/buttons (camDist)
                     // 🧍 equip screen pulls the camera back so the whole body is visible
@@ -78889,9 +78924,14 @@ function CherryAdventure() {
                     camera.lookAt(cx, lookY, cz);
                     // 📷 camera shake (driven by ult impacts)
                     if (G._camShake && G._camShake > 0.001) {
-                        camera.position.x += (Math.random() - 0.5) * G._camShake;
-                        camera.position.y += (Math.random() - 0.5) * G._camShake;
-                        G._camShake *= 0.88; // decay
+                        // 📷 เพดาน 0.7 กันท่าที่ตั้งไว้แรงถึง 1.5 แล้วคูณด้วยระดับที่ผู้เล่นเลือก
+                        const sh = Math.min(0.7, G._camShake) * (G.shakeMul ? G.shakeMul() : 1);
+                        const SO = G._shakeOff || (G._shakeOff = { x: 0, y: 0 });
+                        SO.x = (Math.random() - 0.5) * sh;
+                        SO.y = (Math.random() - 0.5) * sh;
+                        camera.position.x += SO.x;
+                        camera.position.y += SO.y;
+                        G._camShake *= 0.86; // decay (เร็วขึ้นเล็กน้อย — หยุดสั่นไวขึ้น)
                     }
                     if (G._camKick) {
                         camera.position.x += G._camKick.x;
@@ -78922,9 +78962,12 @@ function CherryAdventure() {
                     // 📷 v447: โลกกว้างเดิมตั้งค่า _camShake ตอนคริแต่ไม่เคยถูกนำไปใช้ (ใช้แค่ในสนามรบ) → สั่นเบา ๆ + กระเด็นตามทิศตี
                     if (G.mode === "explore" && dtForce == null) {
                         if (G._camShake && G._camShake > 0.001) {
-                            const sh = Math.min(0.35, G._camShake);
-                            camera.position.x += (Math.random() - 0.5) * sh;
-                            camera.position.y += (Math.random() - 0.5) * sh;
+                            const sh = Math.min(0.35, G._camShake) * (G.shakeMul ? G.shakeMul() : 1);
+                            const SO = G._shakeOff || (G._shakeOff = { x: 0, y: 0 });
+                            SO.x = (Math.random() - 0.5) * sh;
+                            SO.y = (Math.random() - 0.5) * sh;
+                            camera.position.x += SO.x;
+                            camera.position.y += SO.y;
                             G._camShake *= 0.85;
                         }
                         if (G._camKick) {
@@ -81445,6 +81488,7 @@ function CherryAdventure() {
                     { k: "musicOn", on: ui.musicOn, emoji: "🎵", label: "เพลงประกอบ", sub: "เพลงสำรวจ + เพลงต่อสู้", act: () => G.toggleMusic() },
                     { k: "battleSfxOn", on: ui.battleSfxOn !== false, emoji: "⚔️", label: "เสียงต่อสู้", sub: "เสียงฟัน กระแทก คริ ระเบิด", act: () => G.toggleBattleSfx() },
                     { k: "powerSave", on: !!ui.powerSave, emoji: "🔋", label: "ประหยัดพลังงาน", sub: "ลดความคมชัด/เงา ยืดแบต", act: () => G.togglePowerSave() },
+                    { k: "shake", on: (ui.shakeLv != null ? ui.shakeLv : 1) > 0, emoji: "📷", label: `การสั่นหน้าจอ: ${["ปิด", "เบา", "เต็ม"][ui.shakeLv != null ? ui.shakeLv : 1]}`, sub: "ความแรงที่กล้องสั่นตอนโจมตี/ท่าไม้ตาย — แตะเพื่อสลับ ปิด → เบา → เต็ม", act: () => G.cycleShake() },
                     { k: "kaykit", on: ui.kaykit != null ? !!ui.kaykit : G.kkOn !== false, emoji: "🗡️", label: "โมเดล 3D KayKit", sub: "อาวุธ · ต้นไม้/พุ่มไม้ · มอนสเตอร์อันเดดมีอนิเมชัน — จากชุด KayKit (CC0)", act: () => { if (G.toggleKayKit)
                             G.toggleKayKit(); setUi((u) => ({ ...u, kaykit: G.kkOn })); } },
                 ].map((row) => (React.createElement("button", { key: row.k, onClick: row.act, style: {
@@ -82455,15 +82499,17 @@ function CherryAdventure() {
                         padding: "2px 10px", fontSize: 11.5,
                     } }, "\uD83D\uDEAA \u0E2D\u0E2D\u0E01")))),
         ui.dungeonAsk && ui.mode === "explore" && (React.createElement("div", { style: {
-                position: "absolute", top: "32%", left: 0, right: 0,
-                display: "flex", justifyContent: "center",
+                position: "absolute", inset: 0, pointerEvents: "none",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: `calc(8px + var(--sa-t, 0px)) 10px calc(8px + var(--sa-b, 0px))`,
             } },
             React.createElement("div", { style: {
-                    padding: "12px 16px", textAlign: "center",
-                    boxShadow: "0 8px 24px rgba(74,26,138,0.4)", maxWidth: 320, ...CHIBI_FRAME,
+                    padding: _shortHud ? "9px 14px" : "12px 16px", textAlign: "center", pointerEvents: "auto",
+                    boxShadow: "0 8px 24px rgba(74,26,138,0.4)", maxWidth: 320,
+                    maxHeight: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", ...CHIBI_FRAME,
                 } },
-                React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#4a1a8a" } }, "\uD83D\uDDFC \u0E1B\u0E23\u0E30\u0E15\u0E39\u0E21\u0E34\u0E15\u0E34\u0E2A\u0E31\u0E48\u0E19\u0E2A\u0E30\u0E40\u0E17\u0E37\u0E2D\u0E19..."),
-                React.createElement("div", { style: { fontSize: 12.5, color: "#8a7a9a", margin: "8px 0", lineHeight: 1.7 } },
+                React.createElement("div", { style: { fontSize: _shortHud ? 15 : 17, fontWeight: 800, color: "#4a1a8a" } }, "\uD83D\uDDFC \u0E1B\u0E23\u0E30\u0E15\u0E39\u0E21\u0E34\u0E15\u0E34\u0E2A\u0E31\u0E48\u0E19\u0E2A\u0E30\u0E40\u0E17\u0E37\u0E2D\u0E19..."),
+                React.createElement("div", { style: { fontSize: _shortHud ? 11.5 : 12.5, color: "#8a7a9a", margin: _shortHud ? "5px 0" : "8px 0", lineHeight: _shortHud ? 1.45 : 1.7 } },
                     "\u0E2B\u0E2D\u0E04\u0E2D\u0E22 100 \u0E0A\u0E31\u0E49\u0E19 \u0E22\u0E34\u0E48\u0E07\u0E25\u0E36\u0E01\u0E22\u0E34\u0E48\u0E07\u0E42\u0E2B\u0E14",
                     React.createElement("br", null),
                     "\uD83D\uDC51 \u0E1A\u0E2D\u0E2A\u0E17\u0E38\u0E01 10 \u0E0A\u0E31\u0E49\u0E19 \u00B7 \u0E02\u0E2D\u0E07\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25\u0E17\u0E27\u0E35\u0E04\u0E39\u0E13",
@@ -82476,33 +82522,33 @@ function CherryAdventure() {
                         React.createElement("b", { style: { color: "#6a2ad0" } },
                             "\u25B6 \u0E40\u0E25\u0E48\u0E19\u0E15\u0E48\u0E2D\u0E08\u0E32\u0E01\u0E0A\u0E31\u0E49\u0E19 ",
                             ui.dungeonProgress)))),
-                React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "center" } },
+                React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" } },
                     React.createElement("button", { onClick: () => G.enterDungeon(), style: {
-                            padding: "10px 22px", borderRadius: 999, border: "none", cursor: "pointer",
-                            fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
+                            padding: _shortHud ? "7px 18px" : "10px 22px", borderRadius: 999, border: "none", cursor: "pointer",
+                            fontSize: _shortHud ? 13 : 14, fontWeight: 800, fontFamily: font, color: "#fff",
                             background: "linear-gradient(90deg,#6a2ad0,#9a6ad0)", ...KBTN("btnPurple"),
                         } },
                         "\u2694\uFE0F ",
                         ui.dungeonProgress > 1 ? `ลุยต่อชั้น ${ui.dungeonProgress}` : "เข้าเลย!"),
                     React.createElement("button", { onClick: () => G.declineDungeon(), style: {
-                            padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
-                            fontSize: 14, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
+                            padding: _shortHud ? "7px 15px" : "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+                            fontSize: _shortHud ? 13 : 14, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
                         } }, "\u0E44\u0E27\u0E49\u0E01\u0E48\u0E2D\u0E19")),
-                React.createElement("div", { style: { marginTop: 10, paddingTop: 9, borderTop: "1px dashed #e0d0f0" } },
-                    React.createElement("div", { style: { fontSize: 13, fontWeight: 900, color: "#b0402a" } }, "\uD83C\uDFB2 \u0E2B\u0E2D\u0E04\u0E2D\u0E22\u0E17\u0E49\u0E32\u0E17\u0E32\u0E22 \u00B7 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C\u0E19\u0E35\u0E49"),
-                    React.createElement("div", { style: { fontSize: 11, color: "#9a7a8a", margin: "4px 0 7px", lineHeight: 1.6 } },
+                React.createElement("div", { style: { marginTop: _shortHud ? 7 : 10, paddingTop: _shortHud ? 6 : 9, borderTop: "1px dashed #e0d0f0" } },
+                    React.createElement("div", { style: { fontSize: _shortHud ? 12 : 13, fontWeight: 900, color: "#b0402a" } }, "\uD83C\uDFB2 \u0E2B\u0E2D\u0E04\u0E2D\u0E22\u0E17\u0E49\u0E32\u0E17\u0E32\u0E22 \u00B7 \u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C\u0E19\u0E35\u0E49"),
+                    React.createElement("div", { style: { fontSize: _shortHud ? 10.5 : 11, color: "#9a7a8a", margin: _shortHud ? "3px 0 5px" : "4px 0 7px", lineHeight: _shortHud ? 1.4 : 1.6 } },
                         "\u0E0A\u0E31\u0E49\u0E19\u0E2A\u0E38\u0E48\u0E21\u0E40\u0E2B\u0E21\u0E37\u0E2D\u0E19\u0E01\u0E31\u0E19\u0E17\u0E38\u0E01\u0E04\u0E19\u0E17\u0E31\u0E49\u0E07\u0E2A\u0E31\u0E1B\u0E14\u0E32\u0E2B\u0E4C \u00B7 \u0E17\u0E38\u0E01 3 \u0E0A\u0E31\u0E49\u0E19\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1E\u0E23 1 \u0E08\u0E32\u0E01 3",
                         React.createElement("br", null),
                         "\u0E41\u0E1E\u0E49 = \u0E08\u0E1A\u0E23\u0E2D\u0E1A (\u0E44\u0E21\u0E48\u0E08\u0E33\u0E14\u0E48\u0E32\u0E19) \u00B7 \u0E44\u0E1B\u0E44\u0E14\u0E49\u0E25\u0E36\u0E01\u0E2A\u0E38\u0E14\u0E15\u0E34\u0E14\u0E01\u0E23\u0E30\u0E14\u0E32\u0E19\u0E42\u0E25\u0E01"),
-                    React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center" } },
+                    React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" } },
                         React.createElement("button", { onClick: () => G.enterRogue(), style: {
-                                padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-                                fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff",
+                                padding: _shortHud ? "6px 14px" : "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                                fontSize: _shortHud ? 11.5 : 12.5, fontWeight: 800, fontFamily: font, color: "#fff",
                                 background: "linear-gradient(90deg,#d0482a,#f08a3a)", ...KBTN("btnPink"),
                             } }, "\uD83C\uDFB2 \u0E25\u0E38\u0E22\u0E23\u0E2D\u0E1A\u0E43\u0E2B\u0E21\u0E48"),
                         React.createElement("button", { onClick: () => G.rogueBoardOpen(), style: {
-                                padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
-                                fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#b0402a", background: "#fdeee6",
+                                padding: _shortHud ? "6px 11px" : "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                                fontSize: _shortHud ? 11.5 : 12.5, fontWeight: 800, fontFamily: font, color: "#b0402a", background: "#fdeee6",
                             } }, "\uD83C\uDFC6 \u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A")))))),
         ui.rogueChoice && ui.mode === "battle" && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 60, background: "rgba(20,8,30,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 } },
             React.createElement("div", { style: { width: "100%", maxWidth: 420, textAlign: "center" } },

@@ -3449,6 +3449,21 @@ export default function CherryAdventure() {
       G._fpsInterval = ps ? (1000 / 30) : (1000 / 60); // ⏱️ ประหยัด 30fps · ปกติ 60fps (จอ 90/120Hz ไม่ต้องวาดทิ้ง = ลดความร้อน)
     };
     G.applyQuality = applyQuality;
+    // 📷 ระดับการสั่นจอ — 0 ปิด · 1 เบา (ค่าเริ่มต้น) · 2 เต็มเหมือนเดิม
+    //    เดิมสั่นแรงตายตัว บางท่าถึง 1.5 หน่วย เล่นนาน ๆ แล้วเวียนหัว
+    const SHAKE_MUL = [0, 0.45, 1];
+    const SHAKE_NAME = ["ปิด", "เบา", "เต็ม"];
+    let shakeLv = 1;
+    try { const v = window.localStorage.getItem("cherry-shake"); if (v != null) shakeLv = Math.max(0, Math.min(2, +v || 0)); } catch (e) {}
+    G.shakeLv = shakeLv;
+    G.shakeMul = () => SHAKE_MUL[G.shakeLv != null ? G.shakeLv : 1];
+    G.cycleShake = () => {
+      G.shakeLv = ((G.shakeLv != null ? G.shakeLv : 1) + 1) % 3;
+      try { window.localStorage.setItem("cherry-shake", String(G.shakeLv)); } catch (e) {}
+      G._camShake = 0;
+      if (G.toast) G.toast(`📷 การสั่นหน้าจอ: ${SHAKE_NAME[G.shakeLv]}`);
+      setUi((u) => ({ ...u, shakeLv: G.shakeLv }));
+    };
     G.togglePowerSave = () => {
       G.powerSave = !G.powerSave;
       try { window.localStorage.setItem("cherry-powersave", G.powerSave ? "1" : "0"); } catch (e) {}
@@ -3457,7 +3472,7 @@ export default function CherryAdventure() {
       setUi((u) => ({ ...u, powerSave: G.powerSave }));
     };
     applyQuality(); // ใช้การตั้งค่าที่บันทึกไว้ (และลดค่าเริ่มต้นที่เปลืองเกิน)
-    setUi((u) => ({ ...u, powerSave: G.powerSave })); // 🔋 sync ปุ่มให้ตรงกับค่าที่บันทึก
+    setUi((u) => ({ ...u, powerSave: G.powerSave, shakeLv: G.shakeLv })); // 🔋📷 sync ปุ่มให้ตรงกับค่าที่บันทึก
     // 🔋 ถ้าอุปกรณ์แบตต่ำ (<20%) และยังไม่เคยตั้งค่า → แนะนำเปิดอัตโนมัติ (best-effort)
     try {
       if (navigator.getBattery && window.localStorage.getItem("cherry-powersave") == null) {
@@ -50732,6 +50747,12 @@ export default function CherryAdventure() {
       blobShadow.position.set(char.position.x, terrainAt(char.position.x, char.position.z) + 0.03, char.position.z);
 
       // camera
+      // 📷 ค่าสั่นเฟรมก่อนต้องถอนออกก่อน — ไม่งั้นมันค้างอยู่ในตำแหน่งกล้องแล้วถูกดึงกลับแค่ 6%/เฟรม
+      //    กลายเป็นกล้องเดินสุ่มออกนอกกรอบและสั่นค้างยาวกว่าที่ตั้งใจหลายเท่า
+      {
+        const SO = G._shakeOff;
+        if (SO && (SO.x || SO.y)) { camera.position.x -= SO.x; camera.position.y -= SO.y; SO.x = 0; SO.y = 0; }
+      }
       if (G.mode === "create" || G.mode === "class") {
         // centered turntable, zoomable with pinch/wheel/buttons (camDist)
         // 🧍 equip screen pulls the camera back so the whole body is visible
@@ -50786,9 +50807,12 @@ export default function CherryAdventure() {
         camera.lookAt(cx, lookY, cz);
         // 📷 camera shake (driven by ult impacts)
         if (G._camShake && G._camShake > 0.001) {
-          camera.position.x += (Math.random() - 0.5) * G._camShake;
-          camera.position.y += (Math.random() - 0.5) * G._camShake;
-          G._camShake *= 0.88; // decay
+          // 📷 เพดาน 0.7 กันท่าที่ตั้งไว้แรงถึง 1.5 แล้วคูณด้วยระดับที่ผู้เล่นเลือก
+          const sh = Math.min(0.7, G._camShake) * (G.shakeMul ? G.shakeMul() : 1);
+          const SO = G._shakeOff || (G._shakeOff = { x: 0, y: 0 });
+          SO.x = (Math.random() - 0.5) * sh; SO.y = (Math.random() - 0.5) * sh;
+          camera.position.x += SO.x; camera.position.y += SO.y;
+          G._camShake *= 0.86; // decay (เร็วขึ้นเล็กน้อย — หยุดสั่นไวขึ้น)
         }
         if (G._camKick) { camera.position.x += G._camKick.x; camera.position.z += G._camKick.z; G._camKick.x *= 0.72; G._camKick.z *= 0.72; if (Math.abs(G._camKick.x) + Math.abs(G._camKick.z) < 0.002) G._camKick = null; }
       } else {
@@ -50811,9 +50835,10 @@ export default function CherryAdventure() {
         // 📷 v447: โลกกว้างเดิมตั้งค่า _camShake ตอนคริแต่ไม่เคยถูกนำไปใช้ (ใช้แค่ในสนามรบ) → สั่นเบา ๆ + กระเด็นตามทิศตี
         if (G.mode === "explore" && dtForce == null) {
           if (G._camShake && G._camShake > 0.001) {
-            const sh = Math.min(0.35, G._camShake);
-            camera.position.x += (Math.random() - 0.5) * sh;
-            camera.position.y += (Math.random() - 0.5) * sh;
+            const sh = Math.min(0.35, G._camShake) * (G.shakeMul ? G.shakeMul() : 1);
+            const SO = G._shakeOff || (G._shakeOff = { x: 0, y: 0 });
+            SO.x = (Math.random() - 0.5) * sh; SO.y = (Math.random() - 0.5) * sh;
+            camera.position.x += SO.x; camera.position.y += SO.y;
             G._camShake *= 0.85;
           }
           if (G._camKick) { camera.position.x += G._camKick.x; camera.position.z += G._camKick.z; G._camKick.x *= 0.72; G._camKick.z *= 0.72; if (Math.abs(G._camKick.x) + Math.abs(G._camKick.z) < 0.002) G._camKick = null; }
@@ -53625,6 +53650,7 @@ export default function CherryAdventure() {
               { k: "musicOn", on: ui.musicOn, emoji: "🎵", label: "เพลงประกอบ", sub: "เพลงสำรวจ + เพลงต่อสู้", act: () => G.toggleMusic() },
               { k: "battleSfxOn", on: ui.battleSfxOn !== false, emoji: "⚔️", label: "เสียงต่อสู้", sub: "เสียงฟัน กระแทก คริ ระเบิด", act: () => G.toggleBattleSfx() },
               { k: "powerSave", on: !!ui.powerSave, emoji: "🔋", label: "ประหยัดพลังงาน", sub: "ลดความคมชัด/เงา ยืดแบต", act: () => G.togglePowerSave() },
+              { k: "shake", on: (ui.shakeLv != null ? ui.shakeLv : 1) > 0, emoji: "📷", label: `การสั่นหน้าจอ: ${["ปิด", "เบา", "เต็ม"][ui.shakeLv != null ? ui.shakeLv : 1]}`, sub: "ความแรงที่กล้องสั่นตอนโจมตี/ท่าไม้ตาย — แตะเพื่อสลับ ปิด → เบา → เต็ม", act: () => G.cycleShake() },
               { k: "kaykit", on: ui.kaykit != null ? !!ui.kaykit : G.kkOn !== false, emoji: "🗡️", label: "โมเดล 3D KayKit", sub: "อาวุธ · ต้นไม้/พุ่มไม้ · มอนสเตอร์อันเดดมีอนิเมชัน — จากชุด KayKit (CC0)", act: () => { if (G.toggleKayKit) G.toggleKayKit(); setUi((u) => ({ ...u, kaykit: G.kkOn })); } },
             ].map((row) => (
               <button key={row.k} onClick={row.act} style={{
@@ -54725,16 +54751,20 @@ export default function CherryAdventure() {
 
       {/* 🗼 dungeon entrance prompt */}
       {ui.dungeonAsk && ui.mode === "explore" && (
+        // 📱 เดิมตรึงไว้ 32% จากขอบบนแล้วปล่อยยาวลงไป — จอแนวนอนเตี้ยจึงล้นจนปุ่มล่างหลุดจอ
+        //    เปลี่ยนเป็นจัดกลางจอ จำกัดความสูง และเลื่อนดูได้ถ้าเนื้อหายาวเกิน
         <div style={{
-          position: "absolute", top: "32%", left: 0, right: 0,
-          display: "flex", justifyContent: "center",
+          position: "absolute", inset: 0, pointerEvents: "none",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: `calc(8px + var(--sa-t, 0px)) 10px calc(8px + var(--sa-b, 0px))`,
         }}>
           <div style={{
-            padding: "12px 16px", textAlign: "center",
-            boxShadow: "0 8px 24px rgba(74,26,138,0.4)", maxWidth: 320, ...CHIBI_FRAME,
+            padding: _shortHud ? "9px 14px" : "12px 16px", textAlign: "center", pointerEvents: "auto",
+            boxShadow: "0 8px 24px rgba(74,26,138,0.4)", maxWidth: 320,
+            maxHeight: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch", ...CHIBI_FRAME,
           }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: "#4a1a8a" }}>🗼 ประตูมิติสั่นสะเทือน...</div>
-            <div style={{ fontSize: 12.5, color: "#8a7a9a", margin: "8px 0", lineHeight: 1.7 }}>
+            <div style={{ fontSize: _shortHud ? 15 : 17, fontWeight: 800, color: "#4a1a8a" }}>🗼 ประตูมิติสั่นสะเทือน...</div>
+            <div style={{ fontSize: _shortHud ? 11.5 : 12.5, color: "#8a7a9a", margin: _shortHud ? "5px 0" : "8px 0", lineHeight: _shortHud ? 1.45 : 1.7 }}>
               หอคอย 100 ชั้น ยิ่งลึกยิ่งโหด<br/>
               👑 บอสทุก 10 ชั้น · ของรางวัลทวีคูณ<br/>
               พิชิตครบ 100 ชั้น รับ +3000💰 + มังกร 🐉<br/>
@@ -54743,32 +54773,32 @@ export default function CherryAdventure() {
                 <><br/><b style={{ color: "#6a2ad0" }}>▶ เล่นต่อจากชั้น {ui.dungeonProgress}</b></>
               )}
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
               <button onClick={() => G.enterDungeon()} style={{
-                padding: "10px 22px", borderRadius: 999, border: "none", cursor: "pointer",
-                fontSize: 14, fontWeight: 800, fontFamily: font, color: "#fff",
+                padding: _shortHud ? "7px 18px" : "10px 22px", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: _shortHud ? 13 : 14, fontWeight: 800, fontFamily: font, color: "#fff",
                 background: "linear-gradient(90deg,#6a2ad0,#9a6ad0)", ...KBTN("btnPurple"),
               }}>⚔️ {ui.dungeonProgress > 1 ? `ลุยต่อชั้น ${ui.dungeonProgress}` : "เข้าเลย!"}</button>
               <button onClick={() => G.declineDungeon()} style={{
-                padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
-                fontSize: 14, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
+                padding: _shortHud ? "7px 15px" : "10px 18px", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: _shortHud ? 13 : 14, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
               }}>ไว้ก่อน</button>
             </div>
             {/* 🎲 หอคอยท้าทายรายสัปดาห์ (roguelike) */}
-            <div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px dashed #e0d0f0" }}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: "#b0402a" }}>🎲 หอคอยท้าทาย · สัปดาห์นี้</div>
-              <div style={{ fontSize: 11, color: "#9a7a8a", margin: "4px 0 7px", lineHeight: 1.6 }}>
+            <div style={{ marginTop: _shortHud ? 7 : 10, paddingTop: _shortHud ? 6 : 9, borderTop: "1px dashed #e0d0f0" }}>
+              <div style={{ fontSize: _shortHud ? 12 : 13, fontWeight: 900, color: "#b0402a" }}>🎲 หอคอยท้าทาย · สัปดาห์นี้</div>
+              <div style={{ fontSize: _shortHud ? 10.5 : 11, color: "#9a7a8a", margin: _shortHud ? "3px 0 5px" : "4px 0 7px", lineHeight: _shortHud ? 1.4 : 1.6 }}>
                 ชั้นสุ่มเหมือนกันทุกคนทั้งสัปดาห์ · ทุก 3 ชั้นเลือกพร 1 จาก 3<br/>แพ้ = จบรอบ (ไม่จำด่าน) · ไปได้ลึกสุดติดกระดานโลก
               </div>
-              <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
                 <button onClick={() => G.enterRogue()} style={{
-                  padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-                  fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff",
+                  padding: _shortHud ? "6px 14px" : "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: _shortHud ? 11.5 : 12.5, fontWeight: 800, fontFamily: font, color: "#fff",
                   background: "linear-gradient(90deg,#d0482a,#f08a3a)", ...KBTN("btnPink"),
                 }}>🎲 ลุยรอบใหม่</button>
                 <button onClick={() => G.rogueBoardOpen()} style={{
-                  padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
-                  fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#b0402a", background: "#fdeee6",
+                  padding: _shortHud ? "6px 11px" : "8px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                  fontSize: _shortHud ? 11.5 : 12.5, fontWeight: 800, fontFamily: font, color: "#b0402a", background: "#fdeee6",
                 }}>🏆 อันดับ</button>
               </div>
             </div>
