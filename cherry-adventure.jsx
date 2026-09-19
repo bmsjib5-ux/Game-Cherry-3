@@ -25657,14 +25657,16 @@ export default function CherryAdventure() {
     G.openEquip = () => {
       if (G.mode !== "explore") { toast("เปิดหน้าแต่งตัวได้จากโลกกว้าง"); return; }
       G._equipPrevPos = char ? { x: char.position.x, z: char.position.z } : null;
-      // 🙈 หน้ากระเป๋าเป็นป๊อปอัปแล้ว ไม่ต้องโชว์ตัวละครกลางจอ — ซ่อนตัวไว้ ปล่อยให้ฉากหลังเบลอ ๆ อยู่ข้างหลัง
-      if (char) { char.position.set(0, 0, 0); char.rotation.y = Math.PI; char.visible = false; }
+      // 🧍 จอแนวนอนกว้าง = ผังแบบเกม MMO โชว์ตัวละครยืนกลางจอระหว่างแผงซ้าย-ขวา
+      //    จอแคบยังเป็นป๊อปอัปเต็มจอเหมือนเดิม จึงซ่อนตัวละครไว้
+      G._eqWide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
+      if (char) { char.position.set(0, 0, 0); char.rotation.y = G._eqWide ? (G.dressRotY != null ? G.dressRotY : 0) : Math.PI; char.visible = !!G._eqWide; }
       G.mode = "create"; // หยุดโลกไว้ (ไม่โดนมอนตีระหว่างเปิดกระเป๋า) — React creator UI ยังซ่อนอยู่ เพราะมันเช็ค ui.mode
       G.equipOpen = true;
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, equipSort: G.equipSort || "none", hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, fitSkirt: !!G.fitSkirt, capeMode: G.capeMode || "fit", heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
+      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, eqTab: "bag", equipSort: G.equipSort || "none", hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, fitSkirt: !!G.fitSkirt, capeMode: G.capeMode || "fit", heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
       syncPlayer();
     };
     G.closeEquip = () => {
@@ -57890,6 +57892,18 @@ export default function CherryAdventure() {
           {ui.equipScreen && (() => {
             const GEAR = ["weapon", "hat", "mask", "outfit", "gloves", "pants", "shoes"];
             const two = window.innerWidth > 660;                 // จอกว้าง = ชุดซ้าย / กระเป๋าขวา
+            // 🖥️ จอแนวนอนกว้างพอ → ผังแบบเกม MMO: แท็บซ้าย · ช่องอุปกรณ์ · ตัวละครโชว์ตรงกลาง · แผงขวา
+            const wide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
+            const eqTab = ui.eqTab || "bag";
+            const railBtn = (k, ic, label) => (
+              <button key={k} onClick={() => setUi((u) => ({ ...u, eqTab: k }))} style={{
+                display: "flex", alignItems: "center", gap: 7, width: "100%", padding: "9px 10px", marginBottom: 6,
+                borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 900, textAlign: "left",
+                border: eqTab === k ? "1px solid #f0cf7a" : "1px solid rgba(232,128,158,0.22)",
+                background: eqTab === k ? "linear-gradient(135deg,rgba(224,187,98,0.92),rgba(183,141,56,0.92))" : "rgba(26,34,28,0.62)",
+                color: eqTab === k ? "#2a2416" : "#c8d0c0",
+              }}><span style={{ fontSize: 15 }}>{ic}</span>{label}</button>
+            );
             const slotCell = (slot) => {
               const id = ui.equip && ui.equip[slot];
               const it = id ? LOOT.find((x) => x.id === id) : null;
@@ -57981,21 +57995,23 @@ export default function CherryAdventure() {
               <div key="eqscr" onClick={() => G.closeEquip()} style={{
                 position: "absolute", inset: 0, zIndex: 45, display: "flex", alignItems: "center", justifyContent: "center",
                 padding: "8px", fontFamily: font, pointerEvents: "auto",
-                background: "radial-gradient(125% 95% at 50% 20%, rgba(96,82,56,0.40), rgba(8,10,9,0.88))",
-                backdropFilter: "blur(9px)", WebkitBackdropFilter: "blur(9px)",
+                background: wide ? "radial-gradient(120% 95% at 50% 25%, rgba(30,44,36,0.26), rgba(8,10,9,0.62))" : "radial-gradient(125% 95% at 50% 20%, rgba(96,82,56,0.40), rgba(8,10,9,0.88))",
+                backdropFilter: wide ? "none" : "blur(9px)", WebkitBackdropFilter: wide ? "none" : "blur(9px)",
               }}>
                 <div onClick={(e) => e.stopPropagation()} style={{
-                  width: two ? "min(96vw, 700px)" : "min(96vw, 430px)", maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px))",
-                  display: "flex", flexDirection: "column", borderRadius: 22, overflow: "hidden", color: "#5a3a5a",
-                  background: "linear-gradient(168deg,#fff4f8 0%,#fffaf4 45%,#fff0f5 100%)",
-                  border: "3px solid #f2b6c9",
-                  boxShadow: "0 24px 60px rgba(120,60,90,0.35), inset 0 0 0 2px #fff",
+                  width: wide ? "min(99vw, 1240px)" : two ? "min(96vw, 700px)" : "min(96vw, 430px)", height: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px))" : undefined, maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px))",
+                  display: "flex", flexDirection: "column", borderRadius: 22, overflow: wide ? "visible" : "hidden", color: "#5a3a5a",
+                  background: wide ? "none" : "linear-gradient(168deg,#fff4f8 0%,#fffaf4 45%,#fff0f5 100%)",
+                  border: wide ? "none" : "3px solid #f2b6c9",
+                  boxShadow: wide ? "none" : "0 24px 60px rgba(120,60,90,0.35), inset 0 0 0 2px #fff",
                 }}>
                   {/* ── หัวป๊อปอัป ── */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
                     padding: "11px 13px", paddingTop: "max(11px, calc(env(safe-area-inset-top) * 0.5 + 11px))",
-                    background: "linear-gradient(180deg, rgba(232,128,158,0.18), rgba(232,128,158,0.02))",
-                    borderBottom: "1px solid rgba(232,128,158,0.20)" }}>
+                    background: wide ? "linear-gradient(180deg, rgba(20,28,22,0.86), rgba(20,28,22,0.62))" : "linear-gradient(180deg, rgba(232,128,158,0.18), rgba(232,128,158,0.02))",
+                    borderRadius: wide ? 16 : 0, border: wide ? "1px solid rgba(232,128,158,0.22)" : "none",
+                    marginBottom: wide ? 10 : 0,
+                    borderBottom: wide ? "1px solid rgba(232,128,158,0.22)" : "1px solid rgba(232,128,158,0.20)" }}>
                     <span style={{ fontSize: 14.5, fontWeight: 900, color: "#c0446a", letterSpacing: 0.2 }}>🎒 กระเป๋า &amp; ชุดสวมใส่</span>
                     <div style={{ flex: 1 }} />
                     <span style={{ fontSize: 11.5, fontWeight: 800, color: "#f5d24a", background: "rgba(120,60,90,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(245,210,74,0.24)" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
@@ -58004,16 +58020,27 @@ export default function CherryAdventure() {
                   </div>
 
                   {/* ── เนื้อหา ── */}
-                  <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "12px 13px 13px",
-                    display: "flex", gap: 12, flexDirection: two ? "row" : "column", alignItems: "stretch" }}>
+                  <div style={{ flex: 1, minHeight: 0, overflowY: wide ? "visible" : "auto", padding: wide ? 0 : "12px 13px 13px",
+                    display: "flex", gap: wide ? 10 : 12, flexDirection: two ? "row" : "column", alignItems: "stretch" }}>
+
+                    {/* 🗂️ แถบแท็บซ้าย (เฉพาะจอกว้าง) */}
+                    {wide && (
+                      <div style={{ flexShrink: 0, width: 132, alignSelf: "flex-start",
+                        background: "linear-gradient(170deg, rgba(20,28,22,0.80), rgba(14,20,16,0.72))",
+                        border: "1px solid rgba(232,128,158,0.18)", borderRadius: 16, padding: 8 }}>
+                        {railBtn("char", "👤", "ตัวละคร")}
+                        {railBtn("bag", "🎒", "กระเป๋า")}
+                      </div>
+                    )}
 
                     {/* ชุดที่สวมอยู่ */}
-                    <div style={{ flexShrink: 0, width: two ? 216 : "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ flexShrink: 0, width: wide ? 196 : two ? 216 : "auto", alignSelf: wide ? "flex-start" : "stretch", maxHeight: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 84px)" : undefined, overflowY: wide ? "auto" : undefined, display: "flex", flexDirection: "column", gap: 8,
+                      ...(wide ? { background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "9px 9px 10px" } : {}) }}>
                       <div style={{ borderRadius: 16, padding: "9px 10px 10px",
                         background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.20))",
                         border: "1px solid rgba(232,128,158,0.09)", boxShadow: "0 4px 16px rgba(120,60,90,0.30) inset" }}>
                         <div style={{ fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#8a9a88", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>
-                        <div style={{ display: "grid", gridTemplateColumns: two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: 7 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: wide ? "repeat(2, 1fr)" : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: 7 }}>
                           {GEAR.map(slotCell)}
                         </div>
                       </div>
@@ -58095,8 +58122,68 @@ export default function CherryAdventure() {
                       })()}
                     </div>
 
+                    {/* 🧍 ช่องว่างตรงกลาง — เว้นให้เห็นตัวละคร 3D ที่ยืนอยู่หลังแผง */}
+                    {wide && <div style={{ flex: 1, minWidth: 40, pointerEvents: "none" }} />}
+
+                    {/* 👤 แผงสถานะตัวละคร (แท็บ "ตัวละคร") */}
+                    {wide && eqTab === "char" && (() => {
+                      const P = G.profileInfo ? G.profileInfo() : null;
+                      if (!P) return null;
+                      const bar = (label, v, mx, c1, c2) => (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <span style={{ width: 52, fontSize: 10.5, fontWeight: 800, color: "#c8d0c0", flexShrink: 0 }}>{label}</span>
+                          <span style={{ flex: 1, height: 14, borderRadius: 999, background: "rgba(0,0,0,0.38)", position: "relative", overflow: "hidden" }}>
+                            <span style={{ position: "absolute", inset: 0, width: `${Math.max(0, Math.min(100, (v / Math.max(1, mx)) * 100))}%`, background: `linear-gradient(90deg,${c1},${c2})` }} />
+                            <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, fontWeight: 900, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>{Math.round(v)}/{Math.round(mx)}</span>
+                          </span>
+                        </div>
+                      );
+                      const head = (txt) => (
+                        <div style={{ margin: "10px 0 6px", textAlign: "center", fontSize: 11, fontWeight: 900, color: "#f0cf7a",
+                          background: "linear-gradient(90deg,rgba(240,207,122,0),rgba(240,207,122,0.18),rgba(240,207,122,0))", padding: "3px 0", borderRadius: 8 }}>{txt}</div>
+                      );
+                      const row = (a1, v1, a2, v2) => (
+                        <div key={a1} style={{ display: "flex", fontSize: 11, marginBottom: 5 }}>
+                          <span style={{ flex: 1, color: "#c8d0c0" }}>{a1}</span><span style={{ fontWeight: 900, color: "#9ee08a", marginRight: 14 }}>{v1}</span>
+                          <span style={{ flex: 1, color: "#c8d0c0" }}>{a2}</span><span style={{ fontWeight: 900, color: "#9ee08a" }}>{v2}</span>
+                        </div>
+                      );
+                      return (
+                        <div style={{ flexShrink: 0, width: 342, maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 84px)", overflowY: "auto",
+                          background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))",
+                          border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 12px 12px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
+                            <span style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, background: "linear-gradient(135deg,#e0bb62,#8a6a28)" }}>{P.classEmoji || "🍒"}</span>
+                            <span style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{ display: "block", fontSize: 13.5, fontWeight: 900, color: "#ffe9b0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{P.name}</span>
+                              <span style={{ display: "block", fontSize: 10, color: "#b0bca8" }}>{P.classEmoji} {P.className}{P.path ? ` · ${P.pathEmoji} ${P.path}` : ""} · Lv.{P.level}</span>
+                            </span>
+                            <span style={{ fontSize: 10.5, fontWeight: 900, color: "#f0cf7a", background: "rgba(0,0,0,0.3)", borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>⚡ {P.power}</span>
+                          </div>
+                          {bar("EXP", P.exp, P.expNeed, "#7fd36a", "#4fa83a")}
+                          {bar("HP", P.hp, P.maxHp, "#ff6a6a", "#c02a2a")}
+                          {bar("MP", P.mp, P.maxMp, "#6aa8ff", "#2a5ac0")}
+                          {head(`สเตตัส Lv.${P.level}`)}
+                          {row("⚔️ พลังโจมตี", P.atk, "🛡️ ป้องกัน", P.def)}
+                          {row("❤️ พลังชีวิต", P.maxHp, "🔮 มานา", P.maxMp)}
+                          {head("สเตตัสขั้นสูง")}
+                          {row("🎯 คริติคอล", P.crit + "%", "💨 หลบหลีก", P.eva + "%")}
+                          {row("🍀 โชค", P.luck + "%", "👟 ความเร็ว", P.spd)}
+                          {head("สะสม")}
+                          {row("🏆 ชนะ", P.wins, "👑 บอส", P.bosses)}
+                          {row("💗 จับได้", P.catches, "📖 สายพันธุ์", P.species)}
+                          {row("🐾 สัตว์เลี้ยง", P.pets, "🎒 ไอเทม", P.items)}
+                          <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+                            <button onClick={() => G.spinChar(-0.5)} style={{ flex: 1, border: "1px solid rgba(232,128,158,0.3)", borderRadius: 10, padding: "8px 0", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#ffe9b0", background: "rgba(232,128,158,0.12)" }}>↩︎ หมุนซ้าย</button>
+                            <button onClick={() => G.spinChar(0.5)} style={{ flex: 1, border: "1px solid rgba(232,128,158,0.3)", borderRadius: 10, padding: "8px 0", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#ffe9b0", background: "rgba(232,128,158,0.12)" }}>↪︎ หมุนขวา</button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* กระเป๋า */}
-                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>
+                    <div style={{ flex: wide ? "0 0 342px" : 1, minWidth: 0, display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
+                      ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 84px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="⚡ สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡</button>
