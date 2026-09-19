@@ -28402,6 +28402,15 @@ export default function CherryAdventure() {
     };
 
     const endBattle = (keepEnemyMesh) => {
+      // 🗼 จบศึกทั้งที่ยังอยู่ในหอคอย = ออกจากหอคอย (ทางเดียวที่ไปต่อได้คือ dungeonSpawn ชั้นถัดไป ซึ่งไม่ผ่านตรงนี้)
+      //    ⚠️ เดิมเช็กไว้เฉพาะสาขา keepEnemyMesh — พอจบด้วยทางอื่น (เช่นจับมอนติด) G.dungeon ค้าง
+      //       กลายเป็นเดินอยู่ในห้องหอคอย ชั้นไม่ขยับ แล้วยังไปชนมอนสเตอร์ข้างนอกเข้าสู้ได้อีก
+      if (G.dungeon) {
+        if (G.dungeon.rogue && G.rogueEnd) G.rogueEnd("flee");
+        G.dungeon = null;
+        setUi((u) => ({ ...u, dungeonFloor: 0 }));
+        toast("🗼 ออกจากหอคอยมิติแล้ว");
+      }
       if (!keepEnemyMesh && G.enemy) { scene.remove(G.enemy.mesh); (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh)); }
       else if (G.enemy) {
         const mm2 = G.enemy.mesh;
@@ -35429,6 +35438,7 @@ export default function CherryAdventure() {
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, advUltUsed: true, msg: `👑 ${AU.emoji} ${AU.name}!!` }));
       } else if (kind === "catch") {
         if (G.enemy && G.enemy.worldBoss) { toast("👹 จับบอสโลกไม่ได้!"); return; } // world boss cannot be captured
+        if (G.dungeon) { toast("🗼 ในหอคอยจับมอนสเตอร์ไม่ได้ — ต้องปราบให้ชนะถึงจะขึ้นชั้นต่อไป"); return; }   // 🐛 จับในหอคอยทำให้ศึกจบแบบไม่ผ่านชั้น แล้วค้างอยู่ในห้องหอคอย
         if (G.player.balls <= 0) { toast("ลูกบอลหมด! ซื้อเพิ่มที่ร้านค้า 🏪 (1000💰/ลูก)"); return; }
         G.player.balls--;
         G.banim = { type: "throwBall", t: 0, dur: 1.9 };
@@ -35681,7 +35691,7 @@ export default function CherryAdventure() {
         if (healSk && Math.random() < 0.8) { G.act("skill", healSk.id); return; }
       }
       // 3) weak wild we don't own yet → try to catch
-      if (!e.boss && !G.pets[e.spId] && G.player.balls > 0 && e.hp / e.maxHp < 0.3) { G.act("catch"); return; }
+      if (!G.dungeon && !e.boss && !G.pets[e.spId] && G.player.balls > 0 && e.hp / e.maxHp < 0.3) { G.act("catch"); return; }   // 🗼 ในหอคอยจับไม่ได้
       // 4) open strong fights with the ultimate — ใช้ท่าไม้ตายให้ตรงโหมดสกิลที่เลือก (ขั้นสูง/พื้นฐาน)
       if (e.boss || e.maxHp > effMaxHp()) {
         if (G.skillMode === "adv" && G.pathId && advUltOf(G.pathId)) { // 👑 โหมดขั้นสูง → ใช้ท่าไม้ตายขั้นสูง
@@ -43206,7 +43216,7 @@ export default function CherryAdventure() {
         }
 
         // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
-        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) // 🛡️🌀🏠🏰 no encounters in a warp safe zone, the ranch, the home, or the town
+        if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone && !G.inTownZone && !G.dungeon) // 🛡️🌀🏠🏰🗼 no encounters in a warp safe zone, the ranch, the home, the town — or while the tower run is live
         for (const m of wilds) {
           if (m.userData.shy > 0) continue;
           if (G.auto && G.autoNoBoss && m.userData.boss) continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
@@ -59632,7 +59642,7 @@ export default function CherryAdventure() {
                 <>
                   {/* มุมล่างซ้าย: จับ / เลือด / มานา / หนี */}
                   <div style={cornerStyle("left")}>
-                    {!(ui.enemy && ui.enemy.worldBoss) && iconBtn(catchBallIcon, "#f5f0e8", () => G.act("catch"), ui.balls, { title: "จับ (ลูกบอล)", badgeBg: "#c05878" })}
+                    {!(ui.enemy && ui.enemy.worldBoss) && !ui.dungeonFloor && iconBtn(catchBallIcon, "#f5f0e8", () => G.act("catch"), ui.balls, { title: "จับ (ลูกบอล)", badgeBg: "#c05878" })}   {/* 🗼 ในหอคอยจับไม่ได้ — ซ่อนปุ่มไปเลย */}
                     {iconBtn(<span style={{ position: "relative", display: "inline-block" }}>{_hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : <Ico n="hp" size={27} color="#e04a6a" />}<span style={{ position: "absolute", bottom: -9, left: -13, fontSize: 9, fontWeight: 900, color: "#fff", background: _hpBrew ? "#3a8a4a" : "#3a8050", borderRadius: 5, padding: "0 3px" }}>{_hpBrew ? "🌿" : ({ s: "S", m: "M", l: "L" })[ui.hpPotUse || "s"]}</span></span>, _hpBrew ? "#3a8a4a" : "#5aa06a", () => G.usePotion(G.hpPotUse), _hpCount, { title: _hpBrew ? `${((_hpBrew.def || {}).name) || "ยาที่ปรุงเอง"} (ฟื้น ${_hpBrew.pct}%)` : `น้ำยาเพิ่มเลือด (ขนาด ${(G.HP_POT && G.HP_POT[ui.hpPotUse] || {}).name || ""})`, badgeBg: "#3a8050" })}
                     {iconBtn(<span style={{ position: "relative", display: "inline-block" }}>{_mpBrew ? ((_mpBrew.def || {}).emoji || "🌿") : <Ico n="mp" size={27} color="#3a80d0" />}<span style={{ position: "absolute", bottom: -9, left: -13, fontSize: 9, fontWeight: 900, color: "#fff", background: _mpBrew ? "#3a8a4a" : "#3a70a0", borderRadius: 5, padding: "0 3px" }}>{_mpBrew ? "🌿" : ({ s: "S", m: "M", l: "L" })[ui.mpPotUse || "s"]}</span></span>, _mpBrew ? "#3a8a4a" : "#4a90c0", () => G.useManaPotion(G.mpPotUse), _mpCount, { title: _mpBrew ? `${((_mpBrew.def || {}).name) || "ยาที่ปรุงเอง"} (ฟื้น ${_mpBrew.pct}%)` : `น้ำยาเพิ่มมานา (ขนาด ${(G.MP_POT && G.MP_POT[ui.mpPotUse] || {}).name || ""})`, badgeBg: "#3a70a0" })}
                     {iconBtn(<Ico n="run" size={27} color="#fff" />, "#8a9aa8", () => G.act("run"), null, { title: "หนี" })}

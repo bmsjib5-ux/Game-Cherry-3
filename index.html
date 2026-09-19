@@ -45130,6 +45130,16 @@ function CherryAdventure() {
             syncPlayer();
         };
         const endBattle = (keepEnemyMesh) => {
+            // 🗼 จบศึกทั้งที่ยังอยู่ในหอคอย = ออกจากหอคอย (ทางเดียวที่ไปต่อได้คือ dungeonSpawn ชั้นถัดไป ซึ่งไม่ผ่านตรงนี้)
+            //    ⚠️ เดิมเช็กไว้เฉพาะสาขา keepEnemyMesh — พอจบด้วยทางอื่น (เช่นจับมอนติด) G.dungeon ค้าง
+            //       กลายเป็นเดินอยู่ในห้องหอคอย ชั้นไม่ขยับ แล้วยังไปชนมอนสเตอร์ข้างนอกเข้าสู้ได้อีก
+            if (G.dungeon) {
+                if (G.dungeon.rogue && G.rogueEnd)
+                    G.rogueEnd("flee");
+                G.dungeon = null;
+                setUi((u) => ({ ...u, dungeonFloor: 0 }));
+                toast("🗼 ออกจากหอคอยมิติแล้ว");
+            }
             if (!keepEnemyMesh && G.enemy) {
                 scene.remove(G.enemy.mesh);
                 (G._disposeObj3D && G._disposeObj3D(G.enemy.mesh));
@@ -54488,6 +54498,10 @@ function CherryAdventure() {
                     toast("👹 จับบอสโลกไม่ได้!");
                     return;
                 } // world boss cannot be captured
+                if (G.dungeon) {
+                    toast("🗼 ในหอคอยจับมอนสเตอร์ไม่ได้ — ต้องปราบให้ชนะถึงจะขึ้นชั้นต่อไป");
+                    return;
+                } // 🐛 จับในหอคอยทำให้ศึกจบแบบไม่ผ่านชั้น แล้วค้างอยู่ในห้องหอคอย
                 if (G.player.balls <= 0) {
                     toast("ลูกบอลหมด! ซื้อเพิ่มที่ร้านค้า 🏪 (1000💰/ลูก)");
                     return;
@@ -54853,10 +54867,10 @@ function CherryAdventure() {
                 }
             }
             // 3) weak wild we don't own yet → try to catch
-            if (!e.boss && !G.pets[e.spId] && G.player.balls > 0 && e.hp / e.maxHp < 0.3) {
+            if (!G.dungeon && !e.boss && !G.pets[e.spId] && G.player.balls > 0 && e.hp / e.maxHp < 0.3) {
                 G.act("catch");
                 return;
-            }
+            } // 🗼 ในหอคอยจับไม่ได้
             // 4) open strong fights with the ultimate — ใช้ท่าไม้ตายให้ตรงโหมดสกิลที่เลือก (ขั้นสูง/พื้นฐาน)
             if (e.boss || e.maxHp > effMaxHp()) {
                 if (G.skillMode === "adv" && G.pathId && advUltOf(G.pathId)) { // 👑 โหมดขั้นสูง → ใช้ท่าไม้ตายขั้นสูง
@@ -66350,7 +66364,7 @@ function CherryAdventure() {
                             G._animPetFx(buddyMesh, t); // ✨ spin the chick's stars + magic circle
                     }
                     // encounter check — bosses/special still enter the 1v1 arena; normal monsters are fought in the open world
-                    if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) // 🛡️🌀🏠🏰 no encounters in a warp safe zone, the ranch, the home, or the town
+                    if (!inSafeZone(char.position.x, char.position.z) && !G.inRanchZone && !G.inHomeZone && !G.inTownZone && !G.dungeon) // 🛡️🌀🏠🏰🗼 no encounters in a warp safe zone, the ranch, the home, the town — or while the tower run is live
                         for (const m of wilds) {
                             if (m.userData.shy > 0)
                                 continue;
@@ -87299,7 +87313,8 @@ function CherryAdventure() {
                     });
                     return (React.createElement(React.Fragment, null,
                         React.createElement("div", { style: cornerStyle("left") },
-                            !(ui.enemy && ui.enemy.worldBoss) && iconBtn(catchBallIcon, "#f5f0e8", () => G.act("catch"), ui.balls, { title: "จับ (ลูกบอล)", badgeBg: "#c05878" }),
+                            !(ui.enemy && ui.enemy.worldBoss) && !ui.dungeonFloor && iconBtn(catchBallIcon, "#f5f0e8", () => G.act("catch"), ui.balls, { title: "จับ (ลูกบอล)", badgeBg: "#c05878" }),
+                            "   ",
                             iconBtn(React.createElement("span", { style: { position: "relative", display: "inline-block" } },
                                 _hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : React.createElement(Ico, { n: "hp", size: 27, color: "#e04a6a" }),
                                 React.createElement("span", { style: { position: "absolute", bottom: -9, left: -13, fontSize: 9, fontWeight: 900, color: "#fff", background: _hpBrew ? "#3a8a4a" : "#3a8050", borderRadius: 5, padding: "0 3px" } }, _hpBrew ? "🌿" : ({ s: "S", m: "M", l: "L" })[ui.hpPotUse || "s"])), _hpBrew ? "#3a8a4a" : "#5aa06a", () => G.usePotion(G.hpPotUse), _hpCount, { title: _hpBrew ? `${((_hpBrew.def || {}).name) || "ยาที่ปรุงเอง"} (ฟื้น ${_hpBrew.pct}%)` : `น้ำยาเพิ่มเลือด (ขนาด ${(G.HP_POT && G.HP_POT[ui.hpPotUse] || {}).name || ""})`, badgeBg: "#3a8050" }),
