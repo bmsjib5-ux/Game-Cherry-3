@@ -24446,13 +24446,16 @@ function CherryAdventure() {
         //    w = ความกว้างเป้าหมายในเกม (คำนวณสเกลจากกรอบโมเดลจริง) · y = ระดับที่วางบนหัว
         const KK_HAT = {
             // 📏 หัวชิบิกว้างราว 1.48 ยอดหัวอยู่ที่ y = 1.0 (พิกัดของกลุ่มหัว) หมวกจึงต้องกว้างกว่านั้นถึงจะครอบได้
-            // ตัวเลขปรับจากการวัดจริง: หัว+ผมกว้าง 1.57 · ยอดหัวอยู่ y 0.96 · คิ้ว/ตาอยู่ y 0.48-0.63
-            helmKnight: { url: "assets/kaykit/hats/helm_knight.gltf", w: 1.5, y: -0.08 },
-            helmHorned: { url: "assets/kaykit/hats/helm_horned.gltf", w: 1.62, y: -0.18 },
-            hatMage: { url: "assets/kaykit/hats/hat_mage.gltf", w: 1.78, y: 0.3 },
-            hatWitch: { url: "assets/kaykit/hats/hat_witch.gltf", w: 1.78, y: 0.3 },
-            hoodRogue: { url: "assets/kaykit/hats/hood_rogue.gltf", w: 1.62, y: -0.16 },
-            hatBarb: { url: "assets/kaykit/hats/hat_barbarian.gltf", w: 1.6, y: 0.14 },
+            // 📏 วัดจริงในเกม: หัว+ผม กว้าง 1.50 · สูง -0.85 ถึง 1.00 · แกน z -0.77 ถึง 0.62
+            //    หมวกของ KayKit ปั้นมาสำหรับหัวทรงลูกบาศก์ซึ่ง "สูงพอ ๆ กับกว้าง" ถ้าย่อเท่ากันทุกแกน
+            //    จะได้หมวกแคบกว่าหัวแต่โด่งสูงกว่าหัวครึ่งหัว → ต้องคุมความกว้างกับความสูงแยกกัน
+            //    w = ความกว้าง/ลึกเป้าหมาย · h = ความสูงเป้าหมาย · y = ระดับขอบล่าง · z = เลื่อนหน้า-หลัง
+            helmKnight: { url: "assets/kaykit/hats/helm_knight.gltf", w: 1.62, h: 1.30, y: -0.15, z: -0.05 },
+            helmHorned: { url: "assets/kaykit/hats/helm_horned.gltf", w: 1.72, h: 1.18, y: -0.10, z: -0.05 },
+            hatMage: { url: "assets/kaykit/hats/hat_mage.gltf", w: 1.95, h: 1.15, y: 0.55, z: -0.04 },
+            hatWitch: { url: "assets/kaykit/hats/hat_witch.gltf", w: 1.95, h: 1.05, y: 0.55, z: -0.04 },
+            hoodRogue: { url: "assets/kaykit/hats/hood_rogue.gltf", w: 1.62, h: 1.35, y: -0.25, z: -0.05 },
+            hatBarb: { url: "assets/kaykit/hats/hat_barbarian.gltf", w: 1.70, h: 0.95, y: 0.45, z: -0.04 },
         };
         const KK_HAT_CLS = { warrior: "helmKnight", lancer: "helmKnight", aegis: "helmKnight", samurai: "helmHorned",
             mage: "hatMage", assassin: "hoodRogue", archer: "hoodRogue", boxer: "hatBarb", tamer: "hatBarb" };
@@ -24497,9 +24500,11 @@ function CherryAdventure() {
                 const m = kkHatLib[name].clone();
                 const b = new THREE.Box3().setFromObject(m), sz = new THREE.Vector3();
                 b.getSize(sz);
-                const sc = P.w / Math.max(0.01, Math.max(sz.x, sz.z)); // ย่อจากความกว้างจริง ไม่ใช่เดาค่า
-                m.scale.setScalar(sc);
-                m.position.y = P.y - b.min.y * sc; // ฐานหมวกแตะระดับที่ตั้งไว้
+                const sxz = P.w / Math.max(0.01, Math.max(sz.x, sz.z)); // กว้าง/ลึก คุมให้ครอบหัวพอดี
+                const sy = P.h / Math.max(0.01, sz.y); // สูง คุมแยก ไม่ให้โด่งพ้นหัว
+                m.scale.set(sxz, sy, sxz);
+                m.position.y = P.y - b.min.y * sy; // ฐานหมวกแตะระดับที่ตั้งไว้
+                m.position.z = (P.z || 0) - ((b.min.z + b.max.z) / 2) * sxz; // จัดกึ่งกลางหน้า-หลังตามหัว
                 g.add(m);
                 g.visible = false;
                 headG.add(g);
