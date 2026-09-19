@@ -54700,12 +54700,17 @@ export default function CherryAdventure() {
       {/* 🗼 dungeon floor pill */}
       {ui.mode === "battle" && ui.dungeonFloor > 0 && (
         <div style={{
-          position: "absolute", top: ST(160), left: 0, right: 0,
-          display: "flex", justifyContent: "center", pointerEvents: "none",
+          // 📱 จอแนวนอน/เตี้ย: ป้ายนี้เคยตรึงไว้ 160px จากขอบบน ซึ่งตกกลางจอพอดี → บังตัวละคร
+          //    ย้ายไปเกาะมุมล่างซ้าย (ใต้แถบปุ่มมุม) ส่วนจอสูงยังอยู่ด้านบนเหมือนเดิม
+          position: "absolute",
+          ...(_shortHud
+            ? { bottom: `calc(6px + var(--sa-b, 0px))`, left: EDGE_L, right: "auto", justifyContent: "flex-start", zIndex: 7 }
+            : { top: ST(160), left: 0, right: 0, justifyContent: "center" }),
+          display: "flex", pointerEvents: "none",
         }}>
           <div style={{
-            background: "#4a1a8a", borderRadius: 999, padding: "5px 16px",
-            fontSize: 13, fontWeight: 800, color: "#e8d8ff",
+            background: "#4a1a8a", borderRadius: 999, padding: _shortHud ? "3px 11px" : "5px 16px",
+            fontSize: _shortHud ? 11 : 13, fontWeight: 800, color: "#e8d8ff",
             boxShadow: "0 4px 12px rgba(74,26,138,0.5)", pointerEvents: "auto",
             display: "flex", alignItems: "center", gap: 10,
           }}>
@@ -59060,15 +59065,18 @@ export default function CherryAdventure() {
           )}
 
           {/* message + actions */}
+          {/* 📱 จอแนวนอน/เตี้ย: เดิมกองนี้ลอยสูงจากขอบล่าง 74px + เรียงลงล่างทีละบรรทัด
+              รวมแล้วกินกลางจอจนบังตัวละคร → ชิดขอบล่าง ลดระยะห่าง และย่อขนาดลง */}
           <div style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
-            padding: "8px 12px 74px",
-            background: "linear-gradient(transparent, rgba(238,242,223,0.9) 55%)",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+            padding: _shortHud ? `6px 12px calc(8px + var(--sa-b, 0px))` : "8px 12px 74px",
+            background: _shortHud ? "linear-gradient(transparent, rgba(238,242,223,0.72) 70%)" : "linear-gradient(transparent, rgba(238,242,223,0.9) 55%)",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: _shortHud ? 5 : 8,
           }}>
             <div style={{
-              background: "#fffaf4", border: "2px solid #f2b6c9", borderRadius: 14, padding: "5px 16px",
-              fontSize: 13, fontWeight: 700, color: "#5a3a5a", minHeight: 18,
+              background: "#fffaf4", border: "2px solid #f2b6c9", borderRadius: 14,
+              padding: _shortHud ? "3px 13px" : "5px 16px",
+              fontSize: _shortHud ? 12 : 13, fontWeight: 700, color: "#5a3a5a", minHeight: 18,
               boxShadow: "0 3px 10px rgba(90,120,70,0.2)", textAlign: "center", maxWidth: 380,
             }}>
               {ui.auto && <span style={{ color: "#59a0e8" }}>🤖 </span>}{ui.msg}
@@ -59236,12 +59244,14 @@ export default function CherryAdventure() {
                 </>
               );
             })()}
+            {/* AUTO + ⏩ อยู่แถวเดียวกัน — เดิมกองเรียงเป็นคอลัมน์ marginLeft จึงไม่มีผล ปุ่มเลยกินความสูงเพิ่มอีกบรรทัด */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
             {/* AUTO toggle — usable anytime, even mid-animation */}
             <button
               onClick={() => G.toggleAuto()}
               style={{
-                padding: "6px 18px", borderRadius: 999, border: "2px solid #f2b6c9", cursor: "pointer",
-                fontSize: 12.5, fontWeight: 800, fontFamily: font,
+                padding: _shortHud ? "4px 14px" : "6px 18px", borderRadius: 999, border: "2px solid #f2b6c9", cursor: "pointer",
+                fontSize: _shortHud ? 11.5 : 12.5, fontWeight: 800, fontFamily: font,
                 color: ui.auto ? "#fff" : "#59a0e8",
                 background: ui.auto ? "linear-gradient(90deg,#59a0e8,#9a6ad0)" : "#fffaf4",
                 boxShadow: ui.auto ? "0 3px 12px rgba(89,160,232,0.5)" : "0 2px 8px rgba(90,120,70,0.2)",
@@ -59254,8 +59264,8 @@ export default function CherryAdventure() {
             <button
               onClick={() => G.cycleSpeed()}
               style={{
-                marginLeft: 8, padding: "6px 16px", borderRadius: 999, border: "2px solid #f2b6c9", cursor: "pointer",
-                fontSize: 12.5, fontWeight: 800, fontFamily: font,
+                padding: _shortHud ? "4px 13px" : "6px 16px", borderRadius: 999, border: "2px solid #f2b6c9", cursor: "pointer",
+                fontSize: _shortHud ? 11.5 : 12.5, fontWeight: 800, fontFamily: font,
                 color: (ui.battleSpeed || 1) > 1 ? "#fff" : "#e0894a",
                 background: (ui.battleSpeed || 1) > 1 ? "linear-gradient(90deg,#f5a623,#e0894a)" : "#fffaf4",
                 boxShadow: (ui.battleSpeed || 1) > 1 ? "0 3px 12px rgba(224,137,74,0.5)" : "0 2px 8px rgba(90,120,70,0.2)",
@@ -59264,6 +59274,7 @@ export default function CherryAdventure() {
               ⏩ ×{ui.battleSpeed || 1}
             </button>
             )}
+            </div>
           </div>
         </>
       )}
