@@ -2885,6 +2885,28 @@ const HERO_GALLERY = [
   { id: "kitsune",  name: "ทามะโมะ", emoji: "🦊", title: "จิ้งจอกเก้าหางจอมมายา", c1: "#ffd6a0", c2: "#c4302a", price: 300 },
   { id: "phoenix",  name: "เพลิงฟ้า", emoji: "🔥", title: "วิหคเพลิงคืนชีพ",   c1: "#ffd76a", c2: "#c42a10", price: 300 },
 ];
+// ⚔️ ชื่ออาวุธประจำตัวของฮีโร่ที่มีโมเดลเฉพาะ — ฮีโร่พวกนี้จะถืออาวุธนี้แทนของที่สวม (สถิติยังคิดจากของที่สวมจริง)
+const HERO_WPN_INFO = {
+  haru:     { emoji: "🌸", name: "คทาซากุระ" },
+  luna:     { emoji: "🌙", name: "คทาจันทราเสี้ยว" },
+  celestia: { emoji: "👸", name: "คทาเทพีสวรรค์" },
+  yuki:     { emoji: "❄️", name: "ธนูปีกน้ำแข็ง" },
+  rose:     { emoji: "🌹", name: "ดาบเจ้าหญิงกุหลาบ" },
+  kentaro:  { emoji: "⚔️", name: "คาตานะคู่" },
+  kotaro:   { emoji: "🦂", name: "มีดแมงป่อง" },
+  kairi:    { emoji: "⚡", name: "ดาบสายฟ้า" },
+  aurelius: { emoji: "⚜️", name: "ดาบใหญ่ศักดิ์สิทธิ์" },
+  ragnar:   { emoji: "🪓", name: "ขวานอสูร" },
+  khaosai:  { emoji: "🥊", name: "นวมมวยไทย" },
+  fenrir:   { emoji: "🐺", name: "กรงเล็บหมาป่า" },
+  neko:     { emoji: "🐱", name: "อุ้งมือแมว" },
+  usagi:    { emoji: "🥕", name: "ค้อนแครอท" },
+  hanuman:  { emoji: "🔱", name: "ตรีเพชร" },
+  yaksa:    { emoji: "🏏", name: "กระบองยักษ์" },
+  thunder:  { emoji: "🔨", name: "ค้อนพายุ" },
+  mermaid:  { emoji: "🔱", name: "ไตรศูลบาดาล" },
+  lich:     { emoji: "💀", name: "คทาวิญญาณ" },
+};
 // 💎 ราคาเพชรชุดฮีโร่ — แหล่งข้อมูลเดียว ทั้งการ์ดในร้านและตอนหักเพชรจริงอ่านจากตารางนี้
 const HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200, naki: 2200, kinnaree: 2200, mermaid: 2400, lich: 2400, kitsune: 2500, phoenix: 2500 };
 HERO_GALLERY.forEach((h) => { h.price = HERO_PRICE[h.id] || h.price || 1000; });
@@ -57775,6 +57797,44 @@ export default function CherryAdventure() {
                           {GEAR.map(slotCell)}
                         </div>
                       </div>
+                      {/* ⚔️ อาวุธที่ถืออยู่ตอนนี้ — ของที่สวมจริง หรืออาวุธประจำตัวฮีโร่ที่โชว์ทับ (แตะ = กรองเฉพาะอาวุธ + เปิดรายละเอียด) */}
+                      {(() => {
+                        const wid = (ui.equip || {}).weapon;
+                        const wit = wid ? LOOT.find((x) => x.id === wid) : null;
+                        const hw = G.heroId ? HERO_WPN_INFO[G.heroId] : null;
+                        const hero = hw ? HERO_GALLERY.find((h) => h.id === G.heroId) : null;
+                        const plus = (ui.plus || {})[wid] || 0;
+                        const col = hw ? (hero ? hero.c2 : "#7a4ad0") : wit ? RARITY[wit.rarity].color : "#9a8a92";   // c2 = โทนเข้มของฮีโร่ อ่านออกบนการ์ดสีอ่อน
+                        const chip = hw && hero ? `linear-gradient(135deg, ${hero.c1}, ${hero.c2})` : wit ? RARITY[wit.rarity].color : "rgba(255,255,255,0.14)";
+                        const sub = hw
+                          ? `🦸 อาวุธประจำตัว${hero ? hero.name : "ฮีโร่"} · พลังยังคิดจาก ${wit ? wit.emoji + " " + wit.name : "ไม่มีอาวุธสวม"}`
+                          : wit
+                            ? `[${RARITY[wit.rarity].name}]${wit.atk ? ` · ⚔️ +${wit.atk}` : ""}${plus > 0 ? ` · ตีบวก +${plus}` : ""} — แตะดูรายละเอียด`
+                            : "แตะเพื่อเลือกอาวุธจากกระเป๋า";
+                        return (
+                          <button onClick={() => setUi((u) => ({ ...u, invCat: "weapon", invSel: wit ? wid : null, equipPage: 0 }))} style={{
+                            display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left",
+                            padding: "7px 9px", borderRadius: 14, cursor: "pointer", fontFamily: font,
+                            border: `1px solid ${hw ? "rgba(255,255,255,0.30)" : "rgba(232,128,158,0.18)"}`,
+                            background: "linear-gradient(170deg, rgba(232,128,158,0.10), rgba(120,60,90,0.24))",
+                            boxShadow: "0 4px 16px rgba(120,60,90,0.26) inset",
+                          }}>
+                            <span style={{
+                              width: 36, height: 36, borderRadius: 11, flexShrink: 0, background: chip,
+                              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                              boxShadow: "inset 0 -2px 6px rgba(0,0,0,0.20)",
+                            }}>{hw ? hw.emoji : wit ? wit.emoji : "▫️"}</span>
+                            <span style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: col, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {hw ? hw.name : wit ? wit.name : "ยังไม่ได้สวมอาวุธ"}
+                                {!hw && plus > 0 && <span style={{ color: "#f5d24a" }}> +{plus}</span>}
+                              </span>
+                              <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "#9a7a8a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</span>
+                            </span>
+                            <span style={{ fontSize: 16, fontWeight: 900, color: col, flexShrink: 0 }}>›</span>
+                          </button>
+                        );
+                      })()}
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
                         {[["⚔️", ui.atk || 0, "#ffb98a"], ["🛡️", ui.def || 0, "#9ad0ff"], ["❤️", ui.maxHp || 0, "#ff9aa8"]].map(([ic, v, c]) => (
                           <span key={ic} style={{ textAlign: "center", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
