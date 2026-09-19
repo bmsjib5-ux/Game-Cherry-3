@@ -6995,6 +6995,10 @@ export default function CherryAdventure() {
     // อาวุธ loot ทุกชิ้นเคยใช้โมเดลประจำอาชีพร่วมกัน ต่างแค่สี — ตอนนี้แยกรูปทรงจริงตามคุณภาพ
     // และมีเครื่องประดับตามธาตุในชื่อไอเทม (เพลิง/น้ำแข็ง/พสุธา/วายุ/จันทรา/มังกร)
     const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster", boxer: "glove", tamer: "whip" };
+    // 🗡️ ดาบ/คาตานะใหญ่ขึ้นเท่าตัว — ครอบคลุมทั้งดาบตามระดับ (w_/kk_) และดาบประจำอาชีพ/ไอเทมเฉพาะ
+    const BLADE_KEYS = { cw: 1, wDw: 1, wS: 1, lg_ow: 1, ck: 1, wDk: 1, lg_ok: 1 };
+    const BLADE_HILT = 0.42;   // ระยะจากจุดหมุนโมเดลถึงปลายด้ามล่าง (ใช้ชดเชยตอนขยาย ให้มือยังอยู่ที่ด้าม)
+    const BLADE_BIG = (k) => (typeof k === "string" && (BLADE_KEYS[k] || /^(w|kk)_(sword|katana)_/.test(k)) ? 2 : 1);
     const wpnTierOf = (r) => (r === "legend" || r === "dragon") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
     {
       const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
@@ -7671,8 +7675,12 @@ export default function CherryAdventure() {
       const model = weaponModels[curWeapon];
       if (model) {
         const gy = model.userData.gripY != null ? model.userData.gripY : 0.28;
-        model.position.y = gy; // raise weapon so grip point is at the hand
-        model.position.z = model.userData.gripZ != null ? model.userData.gripZ : 0; // push away from the body if set
+        // 🗡️ ดาบ/คาตานะใหญ่ขึ้นเท่าตัว (ทั้งโมเดล KayKit และโมเดลที่ปั้นเอง)
+        //    ขยายทั้งชิ้นแล้วเลื่อนด้ามลงตามสัดส่วน มือจึงยังกำอยู่ที่ด้ามเดิม ไม่ใช่กลางใบดาบ
+        const big = BLADE_BIG(curWeapon);
+        model.scale.setScalar(big);
+        model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
+        model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
       }
       if (famKey && G.applyWpnElem) { // 🔥 ติดเครื่องประดับธาตุตามชื่ออาวุธ
         const wit2 = LOOT.find((x) => x.id === id);
