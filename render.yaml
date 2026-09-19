@@ -1,0 +1,20 @@
+# Render Blueprint — static site สำหรับเกม "น้องเชอร์รี่ผจญภัยแดนมอนสเตอร์"
+# วิธีใช้: ไปที่ Render dashboard > New > Blueprint แล้วเชื่อม repo นี้
+# Render จะอ่านไฟล์นี้และสร้าง static site ให้อัตโนมัติ
+services:
+  - type: web
+    name: game-cherry-3
+    runtime: static
+    # ไม่มีขั้นตอน build เพราะเกมเป็น HTML ที่ precompiled แล้ว
+    buildCommand: ""
+    # เสิร์ฟไฟล์จาก root ของ repo (index.html อยู่ที่นี่)
+    staticPublishPath: .
+    # ทุก path ให้ตกลงมาที่ index.html (รองรับการรีเฟรช/ลิงก์ตรง)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate

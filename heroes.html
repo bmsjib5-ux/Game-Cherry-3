@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ฮีโร่ในตำนาน · Cherry Adventure</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg1:#fbeee6; --bg2:#f6e0d2; --card:#fffdfb; --card2:#fdf3ef; --ink:#5a3b32; --muted:#a9887c;
+    --line:#f0dccf; --accent:#d9536b; --shadow:0 8px 24px rgba(180,110,90,.14);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg1:#241a1e; --bg2:#1a1215; --card:#2c2126; --card2:#332830; --ink:#f4e6de; --muted:#b79a8f;
+      --line:#3d2e34; --accent:#f0869c; --shadow:0 8px 24px rgba(0,0,0,.35); }
+  }
+  :root[data-theme="dark"]{ --bg1:#241a1e; --bg2:#1a1215; --card:#2c2126; --card2:#332830; --ink:#f4e6de; --muted:#b79a8f;
+    --line:#3d2e34; --accent:#f0869c; --shadow:0 8px 24px rgba(0,0,0,.35); }
+  :root[data-theme="light"]{ --bg1:#fbeee6; --bg2:#f6e0d2; --card:#fffdfb; --card2:#fdf3ef; --ink:#5a3b32; --muted:#a9887c;
+    --line:#f0dccf; --accent:#d9536b; --shadow:0 8px 24px rgba(180,110,90,.14); }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 18px 60px}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+  h1{font-size:34px;margin:2px 0 4px;display:flex;align-items:center;gap:10px}
+  .lead{color:var(--muted);font-size:14px;font-weight:600;max-width:640px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:15px;margin-top:20px}
+  .hero{border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);background:var(--card)}
+  .banner{position:relative;height:120px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg,var(--c1),var(--c2))}
+  .banner .em{font-size:56px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+  .banner .price{position:absolute;top:10px;right:10px;font-size:12px;font-weight:900;color:#fff;
+    background:rgba(0,0,0,.28);border-radius:999px;padding:4px 10px;display:flex;align-items:center;gap:4px}
+  .body{padding:13px 14px 15px}
+  .hname{font-size:19px;font-weight:900}
+  .htitle{font-size:12.5px;font-weight:700;color:var(--accent);margin-top:2px}
+  .htag{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px}
+  .note{margin-top:18px;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--card2);
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;line-height:1.6}
+  footer{margin-top:30px;text-align:center;color:var(--muted);font-size:11.5px;line-height:1.7;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="margin-bottom:6px"><a href="./dashboard.html" style="font-size:12px;font-weight:800;color:var(--accent);text-decoration:none">← แดชบอร์ด</a> · <a href="./index.html" style="font-size:12px;font-weight:800;color:var(--accent);text-decoration:none">▶ เข้าเล่นเกม</a></div>
+  <div class="eyebrow">Hero Gallery</div>
+  <h1>🦸 ฮีโร่ในตำนาน</h1>
+  <p class="lead">รวมฮีโร่สุดพิเศษของ Cherry Adventure — แต่ละตัวมีทรงผม/ชุด/อาวุธเอกลักษณ์และท่าไม้ตายเฉพาะตัว ปลดล็อกได้ด้วยเพชร 💎</p>
+  <div class="grid" id="heroes"></div>
+  <div class="note">💎 ราคาเป็นจำนวนเพชรสำหรับปลดล็อกฮีโร่ในร้านค้า · ฮีโร่ที่ปลดล็อกแล้วสวมใส่ทรงผม ชุด และอาวุธประจำตัวโดยอัตโนมัติ</div>
+  <footer>🍒 Cherry Adventure · แกลเลอรีฮีโร่อัปเดตตามเวอร์ชันล่าสุด</footer>
+</div>
+
+<script>
+(function(){
+  const H = [
+    {n:"ออเรลิอุส", e:"⚜️", t:"ครูเสดแห่งสวรรค์", c1:"#ffe9a0", c2:"#c8961e", p:300, tag:"🛡️ อัศวินศักดิ์สิทธิ์ สายบุกรับ+ฟื้นฟู"},
+    {n:"รักนาร์", e:"🪓", t:"นักรบโทสะปีศาจ", c1:"#e05a4a", c2:"#7a1410", p:300, tag:"😈 เบอร์เซิร์ก ยิ่งเดือดยิ่งแรง"},
+    {n:"ไครี", e:"⚡", t:"เทพเจ้าสายฟ้า", c1:"#8fd0ff", c2:"#3a6ae0", p:260, tag:"⚡ ดาบสายฟ้า เบิร์สต์ความเร็วสูง"},
+    {n:"โคทาโร่", e:"🦂", t:"นักลอบสังหารทะเลทราย", c1:"#e0c088", c2:"#9a7c4c", p:220, tag:"🗡️ มีดคู่เงา ลอบฆ่าไว"},
+    {n:"เคนทาโร่", e:"🗡️", t:"ซามูไรดาบคู่", c1:"#f0907a", c2:"#c0402e", p:200, tag:"⚔️ คาตานะคู่ ฟันรัวคมกริบ"},
+    {n:"เซเลสเทีย", e:"👸", t:"เทพีสวรรค์", c1:"#9ab0f0", c2:"#4a6ad0", p:180, tag:"🔮 เวทสวรรค์ กวาดกลุ่ม+ฟื้นฟู"},
+    {n:"โรส", e:"👑", t:"อัศวินแสงกุหลาบ", c1:"#f7d488", c2:"#e0a038", p:160, tag:"☀️ ดาบแสง สายบุกสง่างาม"},
+    {n:"ลูน่า", e:"🌙", t:"เจ้าหญิงจันทรา", c1:"#b0b8f0", c2:"#6a7ae0", p:120, tag:"🌙 คทาจันทรา เวทควบคุม"},
+    {n:"ยูกิ", e:"❄️", t:"นักธนูน้ำแข็ง", c1:"#a8e0ff", c2:"#4a9ad0", p:120, tag:"🏹 ธนูน้ำแข็ง แช่แข็งศัตรู"},
+    {n:"ฮารุ", e:"🌸", t:"จอมเวทซากุระ", c1:"#f2a8d0", c2:"#c05a9a", p:80, tag:"🌸 เวทซากุระ เริ่มต้นคุ้มค่า"},
+  ];
+  document.getElementById("heroes").innerHTML = H.map(h=>`
+    <div class="hero">
+      <div class="banner" style="--c1:${h.c1};--c2:${h.c2}">
+        <span class="em">${h.e}</span>
+        <span class="price">💎 ${h.p}</span>
+      </div>
+      <div class="body">
+        <div class="hname">${h.n}</div>
+        <div class="htitle">${h.t}</div>
+        <div class="htag">${h.tag}</div>
+      </div>
+    </div>`).join("");
+})();
+</script>
+</body>
+</html>
