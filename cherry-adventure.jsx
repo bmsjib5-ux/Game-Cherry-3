@@ -362,6 +362,18 @@ const RARITY = {
   legend: { name: "ตำนาน ⭐", color: "#f5a623" },
 };
 const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5, legend: 6 };
+// ⚒️✨ ขั้นแสงตีบวก — +5 ขาว · +10 เขียว · +15 ม่วง · +20 ทอง (ออร่าบนอาวุธ + กรอบในกระเป๋า)
+const PLUS_TIERS = [
+  { min: 5,  name: "ขาว",   color: 0xffffff, css: "#f2f6ff", a: 0.40, s: 0.95, li: 0.0 },
+  { min: 10, name: "เขียว", color: 0x5ce87a, css: "#5ce87a", a: 0.56, s: 1.16, li: 0.45 },
+  { min: 15, name: "ม่วง",  color: 0xb06aff, css: "#b06aff", a: 0.70, s: 1.36, li: 0.75 },
+  { min: 20, name: "ทอง",   color: 0xffd24a, css: "#ffd24a", a: 0.88, s: 1.62, li: 1.15 },
+];
+const plusTier = (n) => { let t = null; for (let i = 0; i < PLUS_TIERS.length; i++) if ((n || 0) >= PLUS_TIERS[i].min) t = PLUS_TIERS[i]; return t; };
+// ⚒️ โอกาสตีบวกสำเร็จ — +1..+3 การันตี จากนั้นยิ่งสูงยิ่งยาก (ไปจน +20 เหลือ 11%)
+const ENH_RATE = (cur) => (cur < 3 ? 1 : Math.max(0.05, 0.75 - (cur - 3) * 0.04));
+// 💢 พลาดสะสม — ทุกครั้งที่พลาด เก็บครึ่งหนึ่งของโอกาสฐานไปบวกครั้งต่อไป จนกว่าจะสำเร็จ
+const ENH_PITY_STEP = (cur) => ENH_RATE(cur) * 0.5;
 const ELEM_GLOW = {
   fire: 0xf5652e, ice: 0x9adcf5, wind: 0xb8e8c0, water: 0x59a0e8,
   earth: 0xc09a5a, light: 0xffe28a, arcane: 0xb07ae0, dragon: 0xff4a2a,
@@ -4846,6 +4858,42 @@ export default function CherryAdventure() {
     wand.add(wpGlow);
     G.wpGlow = wpGlow;
     G.wpGlowSprites = wpGlowSprites;
+    // ⚒️✨ ออร่าตีบวก — อาวุธที่ตีบวกสูงจะเรืองแสงตามขั้น (+5 ขาว · +10 เขียว · +15 ม่วง · +20 ทอง)
+    //    แยกจาก wpGlow ที่เป็นของสกินอาวุธ — ใส่พร้อมกันได้
+    const enhGlow = new THREE.Group();
+    const enhGlowSprites = [];
+    for (let i = 0; i < 5; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: wpGlowTex, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+      sp.scale.setScalar(0.5);
+      sp.position.y = 0.02 + i * 0.3;
+      enhGlow.add(sp);
+      enhGlowSprites.push(sp);
+    }
+    enhGlow.visible = false;
+    wand.add(enhGlow);
+    // 💡 แสงจริงที่อาวุธ — สาดลงพื้น/ตัวละครตามสีขั้น (เฉพาะ +10 ขึ้นไป · โหมดประหยัดแบตปิด)
+    const enhLight = new THREE.PointLight(0xffffff, 0, 2.5, 2);
+    enhLight.position.y = 0.5;
+    enhLight.visible = false;
+    wand.add(enhLight);
+    G.enhGlow = enhGlow;
+    G.enhGlowSprites = enhGlowSprites;
+    G.enhLight = enhLight;
+    // อ่านขั้นจากอาวุธที่สวมอยู่ → ตั้งสี/ความแรงของออร่า
+    G.applyEnhGlow = () => {
+      const wid = G.equip && G.equip.weapon;
+      const n = (wid && G.plus && G.plus[wid]) || 0;
+      const T = plusTier(n);
+      G._enhTier = T;
+      enhGlow.visible = !!T;
+      enhLight.visible = !!(T && T.li > 0 && !G.powerSave);
+      if (T) {
+        enhGlowSprites.forEach((sp) => { sp.material.color.setHex(T.color); sp.scale.setScalar(0.4 * T.s); });
+        enhLight.color.setHex(T.color);
+      } else {
+        enhLight.intensity = 0;
+      }
+    };
     // 🌟✨ COSMETIC AURA — floating ambient particles rising around the character (color set per aura)
     const auraFx = new THREE.Group();
     const auraFxParts = [];
@@ -15769,6 +15817,7 @@ export default function CherryAdventure() {
         glowRing2.material.color.setHex(g2.color);
       }
       // orbiting particles: epic+ · more particles the higher the + level
+      if (G.applyEnhGlow) G.applyEnhGlow();   // ⚒️✨ ออร่าตีบวกของอาวุธที่ถืออยู่
       const dots = g2.tier >= 3 ? Math.min(14, 3 + g2.plus * 2 + (g2.tier - 3) * 3) : 0;
       auraDots.forEach((d, i) => {
         d.visible = i < dots;
@@ -24796,6 +24845,7 @@ export default function CherryAdventure() {
     G.accEquip = EMPTY_ACC(); // 💍 worn accessories: slot -> accId
     G.accInv = [];            // 💍 owned accessory ids (unique)
     G.plus = {}; // itemId -> enhancement level (+1..+5)
+    G.enhPity = {}; // 💢 itemId -> { lv, b } โบนัสโอกาสสะสมจากตีบวกพลาด (รีเซ็ตเมื่อสำเร็จ/ขึ้นขั้น)
     G.awk = {};  // ✨ itemId -> awaken star (0..AWK_MAX) — ปลดล็อกหลังตีบวกเต็ม +20
     G.itemLock = {}; // 🔐 itemId -> 1 = ล็อกไว้ ห้ามขาย/ห้ามแยกชิ้นส่วน
     G.treeNodes = {}; // 🌳 passive skill tree: nodeId -> rank
@@ -25437,7 +25487,11 @@ export default function CherryAdventure() {
     };
 
     // ⚒️ enhance: consume 1 duplicate copy as material → +1 (up to +5)
-    // +1..+3 always succeed · +4 = 70% · +5 = 50% (fail = material lost, level kept)
+    // +1..+3 การันตี · จากนั้นโอกาสลดขั้นละ 4% (+4 = 75% → +20 = 11%)
+    // พลาด = เสียวัตถุดิบ ระดับเดิมคงไว้ แต่เก็บครึ่งหนึ่งของโอกาสฐานสะสมไปครั้งต่อไป
+    // 💢 โบนัสสะสมจากตีบวกพลาด — ผูกกับขั้นที่กำลังตี ถ้าขั้นเปลี่ยน โบนัสรีเซ็ต
+    G.enhPityOf = (id, lv) => { const p = G.enhPity && G.enhPity[id]; return (p && p.lv === lv) ? (p.b || 0) : 0; };
+    G.enhRateNow = (id) => { const cur = (G.plus && G.plus[id]) || 0; return Math.min(1, ENH_RATE(cur) + G.enhPityOf(id, cur)); };
     G.enhance = (id) => {
       const it = LOOT.find((x) => x.id === id);
       if (!it) return;
@@ -25448,14 +25502,20 @@ export default function CherryAdventure() {
       if (cur >= cap) { toast(`⚒️ เพดานตีบวกตอนนี้คือ +${cap} — อัพเลเวลตัวละครเพื่อปลดล็อกต่อ!`); return; }
       if (copies < 2) { toast("ต้องมีไอเทมชิ้นเดียวกันซ้ำอีก 1 ชิ้นเป็นวัตถุดิบ (หรือใช้ 💠 การันตี ด้วยผงเพชร+ผงดาว+แร่)"); return; }
       G.inv.splice(G.inv.indexOf(id), 1); // consume material
-      const rate = cur < 3 ? 1 : cur === 3 ? 0.7 : 0.5;
+      const base = ENH_RATE(cur);
+      const pity = G.enhPityOf(id, cur);
+      const rate = Math.min(1, base + pity);
       if (Math.random() < rate) {
         G.plus[id] = cur + 1;
-        burst(char.position, 0x7ad0e8, 1.5);
-        toast(`⚒️ ตีบวกสำเร็จ! ${it.emoji} ${it.name} +${cur + 1} ✨`);
+        if (G.enhPity) delete G.enhPity[id];   // 💢 สำเร็จแล้ว ล้างโบนัสสะสม
+        const T = plusTier(cur + 1);
+        burst(char.position, T ? T.color : 0x7ad0e8, T ? 1.5 + T.s * 0.6 : 1.5);
+        toast(`⚒️ ตีบวกสำเร็จ! ${it.emoji} ${it.name} +${cur + 1} ✨${(T && cur + 1 === T.min) ? ` — ออร่าสี${T.name}!` : ""}`);
         updateAura(); // glow grows with every +
       } else {
-        toast(`💥 ตีบวกล้มเหลว... วัตถุดิบสลาย (ยังคง +${cur})`);
+        const nb = Math.min(1 - base, pity + ENH_PITY_STEP(cur));
+        G.enhPity[id] = { lv: cur, b: nb };
+        toast(`💥 ตีบวกล้มเหลว... วัตถุดิบสลาย (ยังคง +${cur}) · สะสมโอกาสครั้งหน้า ${Math.round(Math.min(1, base + nb) * 100)}% 💢`);
       }
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       syncPlayer();
@@ -25814,9 +25874,10 @@ export default function CherryAdventure() {
           const cur = G.plus[id] || 0;
           G.inv.splice(G.inv.indexOf(id), 1); // consume a duplicate
           copies--;
-          const rate = cur < 3 ? 1 : cur === 3 ? 0.7 : 0.5;
-          if (Math.random() < rate) { G.plus[id] = cur + 1; ups++; }
-          else fails++;
+          const base = ENH_RATE(cur);
+          const rate = Math.min(1, base + G.enhPityOf(id, cur));
+          if (Math.random() < rate) { G.plus[id] = cur + 1; ups++; if (G.enhPity) delete G.enhPity[id]; }
+          else { G.enhPity[id] = { lv: cur, b: Math.min(1 - base, G.enhPityOf(id, cur) + ENH_PITY_STEP(cur)) }; fails++; }
         }
       });
       updateAura();
@@ -36183,6 +36244,7 @@ export default function CherryAdventure() {
       G.equip = EMPTY_EQUIP();
       G.accEquip = EMPTY_ACC(); G.accInv = []; // 💍 fresh accessories
       G.plus = {};
+      G.enhPity = {};
       G.treeNodes = {}; // 🌳 fresh passive skill tree
       G.talents = {};   // 📜 fresh talents
       G.constNodes = {}; // ✨ fresh constellation board
@@ -36288,7 +36350,7 @@ export default function CherryAdventure() {
       try {
         window.localStorage.setItem(slotKey(), JSON.stringify({
           v: 1, ts: Date.now(), cls: G.cls, name: G.playerName, custom: G.custom, player: G.player, dungeonProgress: G.dungeonProgress || 1, skillRanks: G.skillRanks, ultRank: G.ultRank || 1, sellPriority: G.sellPriority, sellMaxRarity: G.sellMaxRarity, baseStats: G.baseStats, lastDaily: G.lastDaily, dailyStreak: G.dailyStreak, achStats: G.achStats, achUnlocked: G.achUnlocked, biomeBossDefeated: G.biomeBossDefeated, fieldBossDead: G.fieldBossDead || {},
-          col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, awk: G.awk || {}, itemLock: G.itemLock || {},
+          col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, enhPity: G.enhPity || {}, awk: G.awk || {}, itemLock: G.itemLock || {},
           potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
           team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
           petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
@@ -38382,6 +38444,7 @@ export default function CherryAdventure() {
       G.accEquip = { ...EMPTY_ACC(), ...(d.accEquip || {}) }; // 💍 worn accessories
       G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
       G.plus = d.plus || {};
+      G.enhPity = d.enhPity || {};   // 💢 โบนัสสะสมจากตีบวกพลาด
       G.awk = d.awk || {}; // ✨ ดาวปลุกพลัง
       G.itemLock = d.itemLock || {}; // 🔐 ไอเทมที่ล็อกไว้
       G.equipSort = d.equipSort || "none"; // 🔀 การเรียงของในกระเป๋าที่จำไว้
@@ -39071,6 +39134,12 @@ export default function CherryAdventure() {
         auraMotes.forEach((m) => { const a = m.userData.ph + t * 1.6; m.position.set(Math.cos(a) * 0.6, 0.12 + Math.abs(Math.sin(a * 2 + t * 3)) * 0.5, Math.sin(a) * 0.6); m.material.opacity = pulse; });
       }
       // 🗡️✨ weapon-skin glow — pulse the blade halos (rainbow cycles hue)
+      if (enhGlow.visible && G._enhTier) {   // ⚒️✨ ออร่าตีบวก — เต้นหายใจช้า ๆ ตามขั้น
+        const ET = G._enhTier;
+        const pu = 0.72 + Math.sin(t * 3.2) * 0.28;
+        for (let i = 0; i < enhGlowSprites.length; i++) enhGlowSprites[i].material.opacity = Math.max(0, (ET.a - i * 0.07) * pu);
+        if (enhLight.visible) enhLight.intensity = ET.li * pu;
+      }
       if (wpGlow.visible) {
         const gp = 0.45 + Math.abs(Math.sin(t * 4)) * 0.55;
         if (G._wpGlowColor === "rainbow") { const rc = new THREE.Color().setHSL((t * 0.3) % 1, 0.9, 0.6); wpGlowSprites.forEach((sp) => sp.material.color.copy(rc)); }
@@ -57420,7 +57489,7 @@ export default function CherryAdventure() {
                   const it = LOOT.find((x) => x.id === id);
                   const count = ui.inv.filter((x) => x === id).length;
                   const plus = ui.plus[id] || 0;
-                  const rate = plus < 3 ? 100 : plus === 3 ? 70 : 50;
+                  const rate = Math.round((G.enhRateNow ? G.enhRateNow(id) : 1) * 100); // ⚒️ รวมโบนัสสะสมจากครั้งที่พลาดแล้ว
                   const eq = !!(ui.equip && ui.equip[it.slot] === id); // 🟢 ชิ้นนี้กำลังสวมใส่อยู่หรือไม่
                   return (
                     <div key={id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5, background: eq ? "#e8f7ec" : "#f2f8fd", borderRadius: 9, padding: "5px 8px", border: "1px solid " + (eq ? "#a8dcb4" : "#cfe4f4") }}>
@@ -58025,12 +58094,14 @@ export default function CherryAdventure() {
               const equipped = ui.equip && ui.equip[it.slot] === id;
               const plus = (ui.plus || {})[id] || 0;
               const aw = (ui.awk || {})[id] || 0;   // ✨ ปลุกพลังแล้ว = กรอบทองพิเศษ
+              const PT = plusTier(plus);            // ⚒️✨ ขั้นออร่าตีบวก — ขาว/เขียว/ม่วง/ทอง
               const locked = it.req && ui.level < it.req;
               return (
                 <button key={id} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
-                  border: aw > 0 ? "1.5px solid #ffd76a" : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : "1.5px solid rgba(232,128,158,0.3)",
+                  border: aw > 0 ? "1.5px solid #ffd76a" : PT ? `1.5px solid ${PT.css}` : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : "1.5px solid rgba(232,128,158,0.3)",
                   background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `linear-gradient(150deg, ${RARITY[it.rarity].color}30, rgba(255,255,255,0.92))`,
                   boxShadow: aw > 0 ? `0 0 0 2px #f5c54255, 0 0 ${6 + aw * 3}px #ffd76a${aw >= 3 ? "aa" : "77"}, 0 3px 10px rgba(120,60,90,0.18)`
+                            : PT ? `0 0 0 2px ${PT.css}55, 0 0 ${7 + (plus - PT.min) * 0.6 + PT.s * 6}px ${PT.css}99, 0 3px 10px rgba(120,60,90,0.18)`
                             : equipped ? `0 0 0 2px ${RARITY[it.rarity].color}44, 0 3px 10px rgba(120,60,90,0.16)` : "0 3px 10px rgba(120,60,90,0.14), inset 0 1px 0 rgba(232,128,158,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.5 : 1 }}>
                   {aw > 0 && <span style={{ position: "absolute", inset: 2, borderRadius: 10, border: "1px solid #ffe9a866", pointerEvents: "none" }} />}
@@ -58672,7 +58743,7 @@ export default function CherryAdventure() {
                   it.luck && ["🍀 โชค", `+${sv(it.luck)}%`], it.mp && ["🔮 มานา", `+${sv(it.mp)}`],
                 ].filter(Boolean);
                 const canPlus = count >= 2 && plus < 5;
-                const rate = plus < 3 ? 100 : plus === 3 ? 70 : 50;
+                const rate = Math.round((G.enhRateNow ? G.enhRateNow(id) : 1) * 100); // ⚒️ รวมโบนัสสะสมจากครั้งที่พลาดแล้ว
                 return (
                   <div style={{ marginTop: 8, background: "#fff", borderRadius: 14, padding: 12, border: `2px solid ${RARITY[it.rarity].color}`, boxShadow: "0 3px 12px rgba(90,120,70,0.2)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -60401,7 +60472,7 @@ export default function CherryAdventure() {
         if (!info) return null;
         const id = info.id;
         const s = info.stats || {};
-        const rate = info.plus < 3 ? 100 : info.plus === 3 ? 70 : 50;
+        const rate = Math.round((G.enhRateNow ? G.enhRateNow(id) : 1) * 100); // ⚒️ รวมโบนัสสะสม
         const rows = [
           s.atk && ["⚔️ พลังโจมตี", `+${s.atk}`], s.hp && ["❤️ พลังชีวิต", `+${s.hp}`],
           s.def && ["🛡️ ป้องกัน", `+${s.def}`], s.spd && ["👟 ความเร็ว", `+${s.spd}%`],
