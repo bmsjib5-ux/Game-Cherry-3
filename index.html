@@ -5607,6 +5607,15 @@ function CherryAdventure() {
             armL.add(shield);
         }
         G.shield = shield;
+        // 🗡️🔱🪓 ท่าสะพายอาวุธไว้ข้างหลังตอนเดิน/วิ่ง — สายดาบ/คาตานะ/หอก/ขวานเท่านั้น
+        //    (ธนูมีท่าสะพายของตัวเองอยู่แล้ว · สายหมัด/ปืน/ไม้เท้าไม่ต้องสะพาย)
+        const BACK_CARRY = {
+            warrior: { p: [-0.15, -0.40, -0.50], r: [0.30, -Math.PI / 2, 0.79] }, // ดาบพาดเฉียงหลัง ปลายชี้ขึ้นเหนือไหล่ซ้าย
+            samurai: { p: [-0.15, -0.40, -0.50], r: [0.28, -Math.PI / 2, 0.72] }, // คาตานะพาดเฉียงเช่นกัน แต่ชันน้อยกว่านิดเดียว
+            lancer: { p: [-0.14, -0.38, -0.52], r: [0.32, -Math.PI / 2, 0.58] }, // หอกยาว วางเฉียงราบกว่าไม่ให้ปลายทิ่มพื้น
+        };
+        const ARM_OUT = 0.16; // 💪 กางแขนออกจากลำตัวเล็กน้อยตอนถืออาวุธ — ไม่ให้แขนแนบติดตัวเป็นท่อนไม้
+        G.wpnReady = (sec) => { G._wpnReadyT = Math.max(G._wpnReadyT || 0, sec == null ? 2.5 : sec); }; // ⚔️ ชักอาวุธออกมาถือข้างหน้า
         // 🤚 realistic grip: each weapon type is held at a natural angle
         const gripFor = (id) => {
             if (id && id.indexOf("kkh_") === 0)
@@ -46348,6 +46357,8 @@ function CherryAdventure() {
             if (G._combo3 === 2)
                 dur *= 1.2; // ไม้ 3 ท่าจบ หนักกว่านิดเดียว
             G._worldSwingDur = dur;
+            if (G.wpnReady)
+                G.wpnReady(2.6); // ⚔️ เริ่มสู้แล้ว — ชักอาวุธมาถือข้างหน้า แล้วค่อยสะพายกลับเมื่อเลิกสู้
             G._worldSwingT = dur;
             G._swPrevS = 0;
             G._swYawApplied = 0;
@@ -62462,6 +62473,8 @@ function CherryAdventure() {
                     legR.rotation.z += (0 - legR.rotation.z) * Math.min(1, dt * 10);
                     armR.rotation.x = swing * 0.55 * moveAmt; // 🔮 นักเวทแกว่งแขนตามจังหวะเดิน (ไม่ยกค้าง)
                     armL.rotation.x = swing2 * 0.55 * moveAmt;
+                    armR.rotation.z = ARM_OUT;
+                    armL.rotation.z = -ARM_OUT; // 💪 กางแขนออกเล็กน้อย ไม่ให้แนบติดลำตัว
                     // 🦵💪 bend knees & elbows through the stride so limbs don't stay stiff
                     if (G.cls !== "archer") {
                         if (armR.userData.elbow)
@@ -62495,7 +62508,7 @@ function CherryAdventure() {
                         if (armL.userData.elbow)
                             armL.userData.elbow.rotation.x = -0.5;
                         wand.position.set(0.02, -0.56, 0.12); // ถือในมือระดับเอว
-                        wand.rotation.set(2.12, 0, 0); // ปลายชี้ไปหน้า เอียงลงนิดหน่อย
+                        wand.rotation.set(1.45, 0, 0); // 🔱 ปลายหอกเฉียงขึ้นหน้า 45° (รวมกับ armR.x = -0.3)
                     }
                     if (G.cls === "boxer") {
                         // 🥊 ท่ามวย — นักมวยไม่ปล่อยมือห้อยข้างตัว ต้องยกการ์ดชิดคางตลอดเวลา
@@ -62534,9 +62547,47 @@ function CherryAdventure() {
                         if (armR.userData.elbow)
                             armR.userData.elbow.rotation.x = -0.9;
                         wand.position.set(0.02, -0.5, 0.08);
-                        wand.rotation.set(2.7, 0, -0.05); // ค่าจากการค้นเชิงตัวเลข: ปลายดาบชี้ไปหน้า-เชิดขึ้น ~22° (ท่าจูดัน)             // ปลายดาบเฉียงขึ้นไปข้างหน้า (ท่าจูดัน)
+                        wand.rotation.set(1.75, 0, -0.05); // ⚔️ ปลายดาบเฉียงขึ้นหน้า 45° (มุมรวมกับ armR.x = -0.6 ได้ 1.15)
                         if (G._twoHandGrip)
                             G._twoHandGrip(0); // 🤝 มือซ้ายมาประกบมือขวาที่ด้าม
+                    }
+                    // 🗡️🔱🪓 เดิน/วิ่งเฉย ๆ = สะพายอาวุธไว้ข้างหลัง · เริ่มสู้เมื่อไหร่ค่อยชักมาถือข้างหน้า
+                    //    ผสมเข้า-ออกนุ่ม ๆ ด้วย G._wpnDrawK (1 = ถือข้างหน้าเต็มที่ · 0 = สะพายหลังเต็มที่)
+                    if (BACK_CARRY[G.cls] && !G._swActive && !G._skCast) {
+                        G._wpnReadyT = Math.max(0, (G._wpnReadyT || 0) - dt);
+                        const want = (G._wpnReadyT > 0 || !!G.huntTarget) ? 1 : 0;
+                        const k = G._wpnDrawK = (G._wpnDrawK || 0) + (want - (G._wpnDrawK || 0)) * Math.min(1, dt * 7);
+                        const inv = 1 - k;
+                        if (G.cls === "warrior" && k > 0.002) {
+                            // ⚔️ ชักดาบออกมาแล้ว — ถือข้างหน้าเฉียงขึ้น 45° (มุมรวม armR.x + wand.x ≈ 1.15)
+                            armR.rotation.x = -0.55 - swing * 0.05 * moveAmt;
+                            armR.rotation.z = ARM_OUT + 0.08;
+                            if (armR.userData.elbow)
+                                armR.userData.elbow.rotation.x = -0.45;
+                            wand.position.set(0.04, -0.52, 0.12);
+                            wand.rotation.set(1.70, 0, -0.05);
+                        }
+                        if (inv > 0.002) {
+                            const B = BACK_CARRY[G.cls];
+                            wand.position.x += (B.p[0] - wand.position.x) * inv;
+                            wand.position.y += (B.p[1] - wand.position.y) * inv;
+                            wand.position.z += (B.p[2] - wand.position.z) * inv;
+                            wand.rotation.x += (B.r[0] - wand.rotation.x) * inv;
+                            wand.rotation.y += (B.r[1] - wand.rotation.y) * inv;
+                            wand.rotation.z += (B.r[2] - wand.rotation.z) * inv;
+                            // 🚶 สะพายหลังแล้วแขนแกว่งตามจังหวะเดินปกติ ไม่ต้องจับด้ามสองมือ
+                            const wR = swing * 0.55 * moveAmt, wL = swing2 * 0.55 * moveAmt;
+                            armR.rotation.x += (wR - armR.rotation.x) * inv;
+                            armR.rotation.z += (ARM_OUT - armR.rotation.z) * inv;
+                            armL.rotation.x += (wL - armL.rotation.x) * inv;
+                            armL.rotation.z += (-ARM_OUT - armL.rotation.z) * inv;
+                            if (armR.userData.elbow)
+                                armR.userData.elbow.rotation.x += (-(0.25 + Math.max(0, swing) * 0.5) * moveAmt - armR.userData.elbow.rotation.x) * inv;
+                            if (armL.userData.elbow)
+                                armL.userData.elbow.rotation.x += (-(0.25 + Math.max(0, swing2) * 0.5) * moveAmt - armL.userData.elbow.rotation.x) * inv;
+                            if (G.cls === "lancer" || G.cls === "samurai")
+                                torso.rotation.y += (0 - torso.rotation.y) * inv;
+                        }
                     }
                     // grounded bounce blends into idle breathing (หอบแรงขึ้นตอนเลือดใกล้หมด)
                     const bK = G._lowK || 0;
@@ -66633,6 +66684,8 @@ function CherryAdventure() {
                             armL.userData.elbow.rotation.x = -0.15;
                         if (armR.userData.elbow)
                             armR.userData.elbow.rotation.x = -0.15;
+                        armR.rotation.z = ARM_OUT;
+                        armL.rotation.z = -ARM_OUT; // 💪 กางแขนออกเล็กน้อยตอนยืนถืออาวุธ
                         const rlx = Math.min(1, dt * 10); // 🦵 คลายขากลับตรงเสมอ — ท่าเตะ/เข่าเคยทิ้งขาค้างไว้เพราะไม่มีใครเขียนแกนนี้ตอนยืนรอ
                         legL.rotation.x += (0 - legL.rotation.x) * rlx;
                         legR.rotation.x += (0 - legR.rotation.x) * rlx;
@@ -66674,7 +66727,7 @@ function CherryAdventure() {
                         // spear held across the body, tip angled slightly up toward the enemy.
                         // wand rotation stacks on top of armR's, so the two X angles add up.
                         wand.position.set(0.04, -0.54, 0.16);
-                        wand.rotation.set(1.75, 0, 0.05);
+                        wand.rotation.set(1.60, 0, 0.05); // 🔱 ปลายหอกเฉียงขึ้นหน้า 45° (รวมกับ armR.x = -0.45)
                         // 🤚 BACK hand (right) — grips the rear of the shaft, tucked near the hip
                         armR.rotation.x = -0.45 + Math.sin(t * 2) * 0.02; // gentle breathing
                         armR.rotation.z = 0.16;
@@ -66698,6 +66751,28 @@ function CherryAdventure() {
                         if (legR.userData.knee)
                             legR.userData.knee.rotation.x = 0.3;
                     }
+                    // ⚔️ นักรบ (ดาบ/ขวาน) — ท่ายืนรอ: ชูอาวุธมาข้างหน้าเฉียงขึ้น 45° แขนกางออกเล็กน้อย
+                    if (G.cls === "warrior" && !G.banim) {
+                        const breathe = Math.sin(t * 2) * 0.025;
+                        wand.position.set(0.04, -0.52, 0.12);
+                        wand.rotation.set(1.70 + Math.sin(t * 1.3) * 0.02, 0, -0.05);
+                        armR.rotation.x = -0.55 - breathe;
+                        armR.rotation.z = ARM_OUT + 0.08;
+                        armR.rotation.y = 0;
+                        if (armR.userData.elbow)
+                            armR.userData.elbow.rotation.x = -0.45;
+                        armL.rotation.x = 0.1 + breathe;
+                        armL.rotation.z = -ARM_OUT - 0.06;
+                        if (armL.userData.elbow)
+                            armL.userData.elbow.rotation.x = -0.3;
+                        torso.rotation.y = 0.2;
+                        legL.rotation.x = -0.18;
+                        legR.rotation.x = 0.12;
+                        if (legL.userData.knee)
+                            legL.userData.knee.rotation.x = 0.2;
+                        if (legR.userData.knee)
+                            legR.userData.knee.rotation.x = 0.24;
+                    }
                     // ⚔️ samurai battle-ready: professional TWO-HANDED kenjutsu stance
                     if (G.cls === "samurai" && !G.banim) {
                         const breathe = Math.sin(t * 2) * 0.025;
@@ -66705,7 +66780,7 @@ function CherryAdventure() {
                         // 🗡️ blade points diagonally DOWN ~30° toward the enemy.
                         // wand rotation stacks on armR's, so the X angles add: 0.35 + 1.74 = 2.09 rad = 30° below horizontal
                         wand.position.set(0.02, -0.5, 0.08);
-                        wand.rotation.set(2.7 + sway, 0, -0.05); // ปลายดาบชี้ไปหน้า-เชิดขึ้น (ท่าจูดัน)
+                        wand.rotation.set(1.75 + sway, 0, -0.05); // ⚔️ ปลายดาบเฉียงขึ้นหน้า 45°
                         // 🤚 มือขวากำใต้ที่กั้นดาบ — ต้องอยู่ "กลางลำตัว" ไม่กางออกข้าง
                         //    ⚠️ ท่าเดิมกาง z = +0.3 ทำให้ด้ามดาบห่างไหล่ซ้าย 1.78 เกินระยะเอื้อม (1.22)
                         //       มือซ้ายจึงลอยอยู่ข้างตัว ไม่ได้จับดาบจริงแม้โค้ดจะตั้งใจให้จับสองมือ
