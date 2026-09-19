@@ -7580,7 +7580,7 @@ export default function CherryAdventure() {
       if (G.kkForestReady) G.kkForestApply(G.kkOn);
       G.kkSkelShow(G.kkOn);
       if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null);
-      if (G.toast) G.toast(G.kkOn ? "🗡️🌳💀 เปิดโมเดล 3D KayKit (อาวุธ + หมวก/ผม + ต้นไม้ + อันเดด + ห้องดันเจี้ยน)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
+      if (G.toast) G.toast(G.kkOn ? "🗡️🌳💀 เปิดโมเดล 3D KayKit (อาวุธ + หมวก/ผม + ผ้าคลุม/หน้ากาก + ต้นไม้ + อันเดด + ห้องดันเจี้ยน)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
     };
     if (kkOn) setTimeout(() => { try { G.kkLoad(); G.kkForestLoad(); } catch (e) {} }, 1500); // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
     // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
@@ -13638,26 +13638,85 @@ export default function CherryAdventure() {
         else o.userData._part = "top";                                                     // 👕 เสื้อท่อนบน
       });
     };
+    // 🧣 ผ้าคลุม KayKit (CC0) — ผืนเดียวย้อมสีตามอาชีพ + ผ้าคลุมไหล่อีกทรง
+    const KK_CAPE = {
+      cape:   { url: "assets/kaykit/cape/cape.gltf",   w: 1.02, h: 1.26, top: 1.96, z: -0.36, tint: true },
+      mantle: { url: "assets/kaykit/cape/mantle.gltf", w: 1.34, h: 0.62, top: 2.06, z: -0.06 },
+    };
+    const KK_CAPE_COL = { warrior: 0xc4303a, lancer: 0x3a6ac0, aegis: 0x2aa0c8, samurai: 0x9a1a2a, mage: 0xb84a9a,
+      archer: 0x3a8a4a, assassin: 0x2a6a4a, boxer: 0xe07020, tamer: 0x8a5a3a, coder: 0x7a4ad0, office: 0x2a3a6a };
+    const kkCapeLib = {}, kkCapeFiles = {}, kkCapeMesh = {};
+    G.kkCapeEnsure = (name) => {
+      const P = KK_CAPE[name];
+      if (!P || !THREE.GLTFLoader || kkCapeFiles[name]) return kkCapeFiles[name] || null;
+      const L = new THREE.GLTFLoader();
+      kkCapeFiles[name] = new Promise((res) => {
+        L.load(P.url, (gl) => {
+          gl.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); o.material.side = THREE.DoubleSide; if (o.material.map) o.material.map.anisotropy = 4; } });
+          kkCapeLib[name] = gl.scene;
+          if (G.applyOutfitParts) G.applyOutfitParts();   // 🔁 โหลดเสร็จแล้วสวมให้ทันที
+          res(true);
+        }, undefined, () => res(false));
+      });
+      return kkCapeFiles[name];
+    };
+    const kkCapeGet = (name) => {
+      if (!kkCapeLib[name]) { G.kkCapeEnsure(name); return null; }
+      if (!kkCapeMesh[name]) {
+        const P = KK_CAPE[name], g = new THREE.Group(), m = kkCapeLib[name].clone();
+        const b = new THREE.Box3().setFromObject(m), sz = new THREE.Vector3(); b.getSize(sz);
+        const sxz = P.w / Math.max(0.01, sz.x), sy = P.h / Math.max(0.01, sz.y);
+        m.scale.set(sxz, sy, sxz);
+        m.position.y = P.top - b.max.y * sy;                               // ขอบบนแนบไหล่
+        m.position.z = P.z - ((b.min.z + b.max.z) / 2) * sxz;              // ดันไปหลังลำตัว
+        m.position.x = -((b.min.x + b.max.x) / 2) * sxz;
+        g.add(m); g.visible = false; char.add(g);
+        kkCapeMesh[name] = g;
+      }
+      return kkCapeMesh[name];
+    };
+    // ปิด → ตามชุด → ผ้าคลุม KayKit → ผ้าคลุมไหล่ KayKit
+    const CAPE_MODES = ["off", "fit", "kk", "kk2"];
+    const CAPE_LABEL = { off: "🧣 ไม่ใส่ผ้าคลุม", fit: "🧣 ผ้าคลุมตามชุด", kk: "🧣 ผ้าคลุม KayKit", kk2: "🧣 ผ้าคลุมไหล่ KayKit" };
+    G.capeMode = "fit";
+    G.cycleCape = () => {
+      G.capeMode = CAPE_MODES[(CAPE_MODES.indexOf(G.capeMode) + 1) % CAPE_MODES.length];
+      try { window.localStorage.setItem("cherry-fitparts", JSON.stringify({ s: !!G.fitSkirt, cm: G.capeMode })); } catch (e) {}
+      if (G.applyOutfitParts) G.applyOutfitParts();
+      if (G.toast) G.toast(CAPE_LABEL[G.capeMode]);
+      return G.capeMode;
+    };
+    G.capeLabel = () => CAPE_LABEL[G.capeMode] || CAPE_LABEL.fit;
     G.fitSkirt = false;   // 👗 ปิดไว้ตั้งแต่แรก — ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง จะได้ไม่ซ้อนกันสองชั้น
-    G.fitCape = true;     // 🧣 ผ้าคลุมหลังเปิดไว้ แต่ปิดแยกได้
-    try { const v = window.localStorage.getItem("cherry-fitparts"); if (v) { const o = JSON.parse(v); G.fitSkirt = !!o.s; G.fitCape = o.c !== false; } } catch (e) {}
+    try { const v = window.localStorage.getItem("cherry-fitparts"); if (v) { const o = JSON.parse(v); G.fitSkirt = !!o.s; if (o.cm && CAPE_MODES.indexOf(o.cm) >= 0) G.capeMode = o.cm; else if (o.c === false) G.capeMode = "off"; } } catch (e) {}
     G.applyOutfitParts = () => {
+      const mode = G.capeMode || "fit";
+      const kkName = !G.kkOn ? null : mode === "kk" ? "cape" : mode === "kk2" ? "mantle" : null;
       Object.values(outfitModels).forEach((m) => {
         tagOutfitParts(m);
         m.traverse((o) => {
           const pt = o.userData && o.userData._part;
           if (pt === "lower") o.visible = !!G.fitSkirt;
-          else if (pt === "cape") o.visible = !!G.fitCape;
+          else if (pt === "cape") o.visible = mode === "fit";     // ผ้าคลุมที่ติดมากับชุด
         });
       });
+      Object.keys(KK_CAPE).forEach((n) => { const g = kkCapeMesh[n]; if (g) g.visible = false; });
+      if (kkName) {
+        const g = kkCapeGet(kkName);
+        if (g) {
+          g.visible = !G._gearHidden && !G.heroId;                 // 🦸 ใส่ลุคฮีโร่/ซ่อนชุดอยู่ = ไม่ใส่ทับ
+          if (KK_CAPE[kkName].tint) {
+            const hex = (G.dye && G.dye.outfit) || KK_CAPE_COL[G.cls] || 0xc4303a;
+            g.traverse((o) => { if (o.isMesh && o.material && o.material.color) o.material.color.setHex(hex); });
+          }
+        }
+      }
     };
     G.setFitPart = (k, on) => {
-      if (k === "skirt") G.fitSkirt = !!on; else G.fitCape = !!on;
-      try { window.localStorage.setItem("cherry-fitparts", JSON.stringify({ s: !!G.fitSkirt, c: !!G.fitCape })); } catch (e) {}
+      G.fitSkirt = !!on;
+      try { window.localStorage.setItem("cherry-fitparts", JSON.stringify({ s: !!G.fitSkirt, cm: G.capeMode })); } catch (e) {}
       G.applyOutfitParts();
-      if (G.toast) G.toast(k === "skirt"
-        ? (G.fitSkirt ? "👗 ใส่ชายกระโปรงของชุดด้วย" : "👕 ชุดเหลือแค่เสื้อ — ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง")
-        : (G.fitCape ? "🧣 ใส่ผ้าคลุมหลังของชุด" : "🧣 ถอดผ้าคลุมหลังออกจากชุด"));
+      if (G.toast) G.toast(G.fitSkirt ? "👗 ใส่ชายกระโปรงของชุดด้วย" : "👕 ชุดเหลือแค่เสื้อ — ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง");
     };
     G.setOutfitVisual = (id) => {
       // 🦸 ลุคฮีโร่ประจำตัวแทนที่ชุดสวมทั้งชิ้น (กันเสื้อเกราะ/ผ้าพันคอโผล่ทับผิว) · 🙈 hide-gear hides the worn outfit; 👗 else a costume outfit overrides the look
@@ -14943,6 +15002,41 @@ export default function CherryAdventure() {
       }
       return k;
     };
+    // 🎭 หน้ากาก KayKit (CC0) — หน้ากากตระกูล (mratk/meagi/…) เดิมไม่มีโมเดล สวมแล้วหน้าโล่ง
+    const KK_MASK = { maskRogue: { url: "assets/kaykit/hats/mask_rogue.gltf", w: 0.86, h: 0.29, y: -0.56, z: 0.31 } };
+    const kkMaskLib = {}, kkMaskFiles = {};
+    G.kkMaskEnsure = (name) => {
+      const P = KK_MASK[name];
+      if (!P || !THREE.GLTFLoader || kkMaskFiles[name]) return kkMaskFiles[name] || null;
+      const L = new THREE.GLTFLoader();
+      kkMaskFiles[name] = new Promise((res) => {
+        L.load(P.url, (gl) => {
+          gl.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; if (o.material && o.material.map) o.material.map.anisotropy = 4; } });
+          kkMaskLib[name] = gl.scene;
+          if (G.applyGear) G.applyGear();
+          res(true);
+        }, undefined, () => res(false));
+      });
+      return kkMaskFiles[name];
+    };
+    G.kkMaskKey = (id) => {
+      if (!G.kkOn || !id) return null;
+      if (!/^m[res](atk|def|agi)$/.test(id)) return null;        // เฉพาะหน้ากากตระกูลที่ไม่มีทรงเฉพาะ
+      const name = "maskRogue";
+      if (!kkMaskLib[name]) { G.kkMaskEnsure(name); return null; }
+      const k = "kkmask_" + name;
+      if (!maskModels[k]) {
+        const P = KK_MASK[name], g = new THREE.Group(), m = kkMaskLib[name].clone();
+        const b = new THREE.Box3().setFromObject(m), sz = new THREE.Vector3(); b.getSize(sz);
+        const sxz = P.w / Math.max(0.01, sz.x), sy = P.h / Math.max(0.01, sz.y);
+        m.scale.set(sxz, sy, sxz);
+        m.position.set(-((b.min.x + b.max.x) / 2) * sxz, P.y - ((b.min.y + b.max.y) / 2) * sy, P.z - ((b.min.z + b.max.z) / 2) * sxz);
+        g.add(m); g.visible = false; headG.add(g);
+        maskModels[k] = g;
+      }
+      return k;
+    };
+    G.resolveMaskKey = (id) => (G.kkMaskKey ? G.kkMaskKey(id) : null) || id;
     G.resolveHatKey = (id, cls) => {
       const kk = G.kkHatKey ? G.kkHatKey(id, cls) : null;       // 🎩 โมเดล KayKit มาก่อนถ้ามี
       if (kk) return kk;
@@ -15302,7 +15396,8 @@ export default function CherryAdventure() {
       const look = (s) => (G._gearHidden && s !== "weapon") ? null : (cos[s] || eq[s]); // 🙈 hidden = base body; 👗 else transmog overrides the LOOK, stats stay from eq
       const hatKey = G.resolveHatKey ? G.resolveHatKey(look("hat"), G.cls) : look("hat"); // 🎩 archetype hats → class look
       Object.entries(hatModels).forEach(([k, m]) => (G._setVisFrozen ? G._setVisFrozen(m, k === hatKey) : (m.visible = k === hatKey)));
-      Object.entries(maskModels).forEach(([k, m]) => (G._setVisFrozen ? G._setVisFrozen(m, k === look("mask")) : (m.visible = k === look("mask"))));
+      const maskKey = G.resolveMaskKey ? G.resolveMaskKey(look("mask")) : look("mask");   // 🎭 โมเดล KayKit มาก่อนถ้ามี
+      Object.entries(maskModels).forEach(([k, m]) => (G._setVisFrozen ? G._setVisFrozen(m, k === maskKey) : (m.visible = k === maskKey)));
       const gl = look("gloves");
       handMeshes.forEach((h) => {
         let gmat, sc;
@@ -25560,7 +25655,7 @@ export default function CherryAdventure() {
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
       G.moveTarget = null;
       G.equipScreen = true;
-      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, equipSort: G.equipSort || "none", hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, fitSkirt: !!G.fitSkirt, fitCape: G.fitCape !== false, heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
+      setUi((u) => ({ ...u, gemDust: G.gemDust || 0, warpScrolls: G.warpScrolls || 0, equipScreen: true, shopOpen: false, invOpen: false, panelOpen: false, questOpen: false, skillPanel: false, homeOpen: false, forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, socialOpen: false, invCat: "all", invSel: null, equipPage: 0, equipSort: G.equipSort || "none", hideGear: !!G.dressHideGear, hideHero: !!G.heroHide, fitSkirt: !!G.fitSkirt, capeMode: G.capeMode || "fit", heroPick: G.heroPick || G.heroId || null, gold: G.gold }));
       syncPlayer();
     };
     G.closeEquip = () => {
@@ -54084,7 +54179,7 @@ export default function CherryAdventure() {
               { k: "battleSfxOn", on: ui.battleSfxOn !== false, emoji: "⚔️", label: "เสียงต่อสู้", sub: "เสียงฟัน กระแทก คริ ระเบิด", act: () => G.toggleBattleSfx() },
               { k: "powerSave", on: !!ui.powerSave, emoji: "🔋", label: "ประหยัดพลังงาน", sub: "ลดความคมชัด/เงา ยืดแบต", act: () => G.togglePowerSave() },
               { k: "shake", on: (ui.shakeLv != null ? ui.shakeLv : 1) > 0, emoji: "📷", label: `การสั่นหน้าจอ: ${["ปิด", "เบา", "เต็ม"][ui.shakeLv != null ? ui.shakeLv : 1]}`, sub: "ความแรงที่กล้องสั่นตอนโจมตี/ท่าไม้ตาย — แตะเพื่อสลับ ปิด → เบา → เต็ม", act: () => G.cycleShake() },
-              { k: "kaykit", on: ui.kaykit != null ? !!ui.kaykit : G.kkOn !== false, emoji: "🗡️", label: "โมเดล 3D KayKit", sub: "อาวุธ (รวมอาวุธประจำตัวฮีโร่) · หมวก/ผม · ต้นไม้ · อันเดดมีอนิเมชัน · ห้องดันเจี้ยน — จากชุด KayKit (CC0)", act: () => { if (G.toggleKayKit) G.toggleKayKit(); setUi((u) => ({ ...u, kaykit: G.kkOn })); } },
+              { k: "kaykit", on: ui.kaykit != null ? !!ui.kaykit : G.kkOn !== false, emoji: "🗡️", label: "โมเดล 3D KayKit", sub: "อาวุธ (รวมของฮีโร่) · หมวก/ผม · ผ้าคลุม/หน้ากาก · ต้นไม้ · อันเดดมีอนิเมชัน · ห้องดันเจี้ยน — จากชุด KayKit (CC0)", act: () => { if (G.toggleKayKit) G.toggleKayKit(); setUi((u) => ({ ...u, kaykit: G.kkOn })); } },
             ].map((row) => (
               <button key={row.k} onClick={row.act} style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10, marginBottom: 8, padding: "10px 12px",
@@ -57952,7 +58047,7 @@ export default function CherryAdventure() {
                     <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
                     {/* 👗🧣 ชุด = เสื้อ + ชายกระโปรง + ผ้าคลุม — แยกเปิดปิดได้ทีละส่วน */}
                     <button key="eqskirt" onClick={() => { const nv = !ui.fitSkirt; G.setFitPart("skirt", nv); setUi((u) => ({ ...u, fitSkirt: nv })); }} title="ชายกระโปรงที่ติดมากับชุด — ปิดไว้จะเหลือแค่เสื้อ ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.fitSkirt ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitSkirt ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.fitSkirt ? "#ffdff0" : "#c8d0c0" }}>{ui.fitSkirt ? "👗 ชายกระโปรง ✓" : "👗 ชายกระโปรง"}</button>
-                    <button key="eqcape" onClick={() => { const nv = !ui.fitCape; G.setFitPart("cape", nv); setUi((u) => ({ ...u, fitCape: nv })); }} title="ผ้าคลุมหลังที่ติดมากับชุด — ปิด/เปิดแยกจากเสื้อได้" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.fitCape ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitCape ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.fitCape ? "#e0ecff" : "#c8d0c0" }}>{ui.fitCape ? "🧣 ผ้าคลุม ✓" : "🧣 ผ้าคลุม"}</button>
+                    <button key="eqcape" onClick={() => setUi((u) => ({ ...u, capeMode: G.cycleCape() }))} title="ผ้าคลุมหลัง — แตะวนเลือก: ไม่ใส่ · ตามชุด · ผ้าคลุม KayKit · ผ้าคลุมไหล่ KayKit" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.capeMode !== "off" ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.capeMode !== "off" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.capeMode !== "off" ? "#e0ecff" : "#c8d0c0" }}>{ui.capeMode === "off" ? "🧣 ผ้าคลุม" : ui.capeMode === "kk" ? "🧣 KayKit ✓" : ui.capeMode === "kk2" ? "🧣 คลุมไหล่ ✓" : "🧣 ตามชุด ✓"}</button>
                     {(ui.heroPick || ui.heroId) && (
                       <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
                     )}
