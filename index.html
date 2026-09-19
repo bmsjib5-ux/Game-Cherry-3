@@ -1295,6 +1295,18 @@ const PATH_ADV = {
             { id: "x_nov_3", cost: 13, name: "หลุมดำจิ๋ว", emoji: "🌌", color: 0x8a5ad0, mult: 1.6, perLv: 0.34, stun: true, slow: true, defDown: 8, fx: "quake", desc: "โยนแกนหลุมดำ ดูดศัตรูเข้าศูนย์กลางแล้วระเบิด ช้าลง + ลดเกราะ" },
             { id: "x_nov_4", cost: 16, name: "ลำแสงดาวเทียม", emoji: "🛰️", color: 0xeaf6ff, mult: 3.0, perLv: 0.62, pierce: true, defDown: 12, burn: 4, fx: "quake", desc: "ล็อกเป้าจากวงโคจร ลำแสงดาวเทียมกวาดลงมา AoE ทำลายเกราะ + เผาไหม้" }
         ] },
+    t_beast: { ult: { name: "ราชันพงไพรเรียกฝูงอสูร", emoji: "🐺👑", mul: 1.72, stun: true, bleed: 5, defDown: 14, buffTeam: true, desc: "เป่านกหวีดจ่าฝูง — หมาป่า เสือ หมี และสรรพสัตว์ทั้งพงไพรพุ่งเข้าขย้ำพร้อมกัน ปิดท้ายจ่าฝูงกระโจนฉีกเกราะ เลือดไหล + สตัน + Alpha Howl (คริ/ความเร็ว/หลบให้ทีม)" }, skills: [
+            { id: "x_bst_1", cost: 7, name: "เขี้ยวจ่าฝูง", emoji: "🐺", color: 0x8a6a3a, mult: 0.8, perLv: 0.18, hits: 4, bleed: 3, critBonus: 0.25, fx: "multi", desc: "สั่งฝูงหมาป่าตะครุบสลับ ×4 · เลือดไหล + คริสูง" },
+            { id: "x_bst_2", cost: 10, name: "คำรามราชสีห์", emoji: "🦁", color: 0xd08a3a, mult: 1.75, perLv: 0.36, defDown: 12, slow: true, stun: true, buffCrit: 10, fx: "quake", desc: "ราชสีห์คำรามสะเทือนทั้งวง AoE · ทำลายเกราะ + ช้าลง + ข่มขวัญจนสตัน" },
+            { id: "x_bst_3", cost: 13, name: "กรงเล็บมัจจุราช", emoji: "🐯", color: 0xe8622a, mult: 2.4, perLv: 0.5, critBonus: 0.4, bleed: 5, defDown: 8, fx: "slash", desc: "เสือคู่ใจตะปบกรงเล็บฉีกอก · คริสูง + เลือดไหลหนัก" },
+            { id: "x_bst_4", cost: 16, name: "ขย้ำสังหารจ่าฝูง", emoji: "🐾", color: 0xffd9a0, mult: 3.1, perLv: 0.64, guaranteedCrit: true, stun: true, bleed: 4, defDown: 10, fx: "bolt", desc: "จ่าฝูงกระโจนขย้ำลำคอ คริการันตี · สตัน + เลือดไหล + ทำลายเกราะ" }
+        ] },
+    t_druid: { ult: { name: "พงไพรนิรันดร์ตื่นจากภวังค์", emoji: "🌿🛡️", mul: 1.62, defDown: 12, slow: true, stun: true, heal: 0.35, regen: 5, buffDef: 20, cleanse: true, buffTeam: true, desc: "สวดมนต์ปลุกพงไพรนิรันดร์ — รากยักษ์ทะลุขึ้นรัดศัตรูไว้กับที่ ดอกไม้แห่งชีวิตบานสะพรั่งทั้งสนาม ตรึง + ทำลายเกราะ ฟื้น HP ล้างสถานะ + เกราะพงไพรให้ทั้งทีม" }, skills: [
+            { id: "x_grv_1", cost: 7, name: "เถาวัลย์พันธนาการ", emoji: "🌿", color: 0x4a9a4a, mult: 1.7, perLv: 0.36, slow: true, defDown: 8, stun: true, fx: "stab", desc: "เถาวัลย์ผุดขึ้นรัดขาศัตรู · ช้าลง + ลดเกราะ + โอกาสตรึง" },
+            { id: "x_grv_2", cost: 10, name: "พรพงไพรคุ้มภัย", emoji: "🛡️", color: 0x7ada6a, mult: 1.0, perLv: 0.22, heal: 0.35, buffDef: 18, regen: 4, cleanse: true, fx: "healbless", desc: "พงไพรอวยพร ฟื้น HP 35% เกราะ +18 · ล้างสถานะ + ฟื้นต่อเนื่อง" },
+            { id: "x_grv_3", cost: 13, name: "ธรณีพิโรธพงไพร", emoji: "🌳", color: 0x3a8a3a, mult: 1.5, perLv: 0.32, stun: true, slow: true, defDown: 10, regen: 3, fx: "quake", desc: "พื้นป่าพิโรธ รากไม้ทะลุขึ้นทั่วสนาม AoE · สตัน + ช้าลง + ลดเกราะ" },
+            { id: "x_grv_4", cost: 16, name: "คำสาปรากปฐพี", emoji: "🌱", color: 0x2ad06a, mult: 2.5, perLv: 0.52, stun: true, defDown: 12, heal: 0.2, regen: 4, bleed: 3, fx: "earthsplit", desc: "รากคำสาประทุขึ้นทั้งผืน ดูดพลังชีวิตคืนให้เจ้าของ · สตัน + ทำลายเกราะ" }
+        ] },
 };
 let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสลับสกิลพื้นฐาน/ขั้นสูง (singleton ต่อหน้าเกม)
 const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
@@ -1323,7 +1335,9 @@ const ADV_SIG = {
     o_ceo: { c: 0xf5c542, c2: 0xffffff, aura: "ring", fx: ["dronebarrage", "omega", "shieldbash"] }, // 👑🌐 เทคโอเวอร์จักรวาล
     o_work: { c: 0xff9a4a, c2: 0xffd9a0, aura: "pillar", fx: ["multi", "fire", "healbless"] }, // 🌅💻 คืนนี้ไม่กลับบ้าน
     g_titan: { c: 0x8ab0ff, c2: 0xe0f0ff, aura: "spikes", fx: ["shieldbash", "quake", "earthsplit"] }, // 🦾⚙️ ไททันโปรโตคอล
-    g_nova: { c: 0x3ad0ff, c2: 0xffffff, aura: "orbs", fx: ["snipe", "dronebarrage", "plasmadash"] }, // 🛰️🔫 ออร์บิทัลจัดจ์เมนต์
+    g_nova: { c: 0x3ad0ff, c2: 0xffffff, aura: "orbs", fx: ["snipe", "dronebarrage", "plasmadash"] },
+    t_beast: { c: 0xd08a3a, c2: 0xfff0c0, aura: "spikes", fx: ["warfrenzy", "quake", "crossslash"] }, // 🐺👑 ราชันพงไพร
+    t_druid: { c: 0x4a9a4a, c2: 0xd8f0a0, aura: "ring", fx: ["healbless", "poison", "earthsplit"] }, // 🌿🛡️ พงไพรนิรันดร์   // 🛰️🔫 ออร์บิทัลจัดจ์เมนต์
 };
 // 🎯 4 signature skills per class — level up gives skill points to rank them up (max Lv.100, gated by character level)
 // dmg = base attack × (mult + perLv×(rank-1)); each skill costs "cost" mana 💧
@@ -1640,7 +1654,7 @@ const skillsOf = (cls, pathId) => {
 // Ground-slam (quake) and poison-cloud (poison) effects blanket an area; a few signature
 // wide swings are AoE too. Everything else (incl. multi-hit combos) focuses one target.
 const AOE_FX = { quake: 1, poison: 1 };
-const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1, x_shp_4: 1, x_rng_2: 1, x_rng_4: 1, x_pal_3: 1, x_ttn_3: 1, x_nov_2: 1, x_elm_1: 1, x_elm_2: 1, x_elm_3: 1, x_pri_1: 1, x_pri_4: 1, o_paper: 1, o_ceo: 1, x_ceo_1: 1, x_ceo_2: 1, c_crash: 1, c_drone: 1, x_hck_2: 1, x_hck_3: 1, x_hck_4: 1, x_ai_1: 1, x_ai_3: 1, x_ai_4: 1, x_vnm_1: 1, x_vnm_2: 1, x_vnm_4: 1, x_frz_2: 1, x_frz_4: 1, x_ken_2: 1, x_ken_3: 1, x_iai_3: 1, x_iai_4: 1, x_wrk_2: 1, x_wrk_3: 1, x_wrk_4: 1, b_kick: 1, x_box_3: 1, x_mua_3: 1, x_mua_4: 1, p_tiger: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
+const AOE_SKILL_IDS = { w_cleave: 1, l_sweep: 1, m_bolt: 1, s_evade: 1, m_fire: 1, m_ice: 1, x_shp_4: 1, x_rng_2: 1, x_rng_4: 1, x_pal_3: 1, x_ttn_3: 1, x_nov_2: 1, x_elm_1: 1, x_elm_2: 1, x_elm_3: 1, x_pri_1: 1, x_pri_4: 1, o_paper: 1, o_ceo: 1, x_ceo_1: 1, x_ceo_2: 1, c_crash: 1, c_drone: 1, x_hck_2: 1, x_hck_3: 1, x_hck_4: 1, x_ai_1: 1, x_ai_3: 1, x_ai_4: 1, x_vnm_1: 1, x_vnm_2: 1, x_vnm_4: 1, x_frz_2: 1, x_frz_4: 1, x_ken_2: 1, x_ken_3: 1, x_iai_3: 1, x_iai_4: 1, x_wrk_2: 1, x_wrk_3: 1, x_wrk_4: 1, b_kick: 1, x_box_3: 1, x_mua_3: 1, x_mua_4: 1, p_tiger: 1, x_grv_4: 1 }; // 🌟 ระบำเงา · 🔥❄️ เพลิงนรก/หอกน้ำแข็ง = โจมตีหมู่
 const isAoeSkill = (sk) => !!(sk && (sk.aoe || AOE_FX[sk.fx] || AOE_SKILL_IDS[sk.id]));
 // 🎭 ท่าร่ายประจำสกิล — แมปทีละสกิลให้ท่าตรงกับชื่อ/ความหมายของมันจริง ๆ
 // (สกิลที่ไม่อยู่ในตารางจะถูกเดาให้จากอาชีพ + ชนิดเอฟเฟกต์)
@@ -1676,6 +1690,8 @@ const SK_ARCH = {
     c_inject: "codeinject", c_wall: "firewall", c_drone: "aidrone", c_crash: "systemcrash", c_matrix: "matrixrain", // 💻 โปรแกรมเมอร์      // 💻 โปรแกรมเมอร์
     g_dash: "dash", g_drone: "summon", g_grav: "beam", g_over: "buff", // 🤖 จักรกลพิทักษ์
     x_ttn_1: "rocketfist", x_ttn_2: "energyshield", x_ttn_3: "shouldercannon", x_ttn_4: "titanstomp", // 🦾⚙️ ไททันเหล็กกล้า
+    x_bst_1: "wolfcall", x_bst_2: "summon", x_bst_3: "cobraclaw", x_bst_4: "meteordive", // 🐺👑 จอมพลสัตว์ป่า
+    x_grv_1: "vine", x_grv_2: "blessing", x_grv_3: "naturecata", x_grv_4: "rootcurse", // 🌿🛡️ ผู้พิทักษ์พงไพร
     x_nov_1: "railgun", x_nov_2: "dronelock", x_nov_3: "blackhole", x_nov_4: "satellite", // 🛰️🔫 โนวาสไตรก์                            // 🤖 AI Mecha
 };
 // สายที่ "พุ่งเข้าหาเป้า" ก่อนออกท่า (ที่เหลือร่ายอยู่กับที่)
