@@ -28989,14 +28989,28 @@ export default function CherryAdventure() {
     };
     G.hopAir = () => ((G._jumpT || 0) > 0 ? Math.sin(Math.min(1, G._jumpT / G._jumpDur) * Math.PI) : 0);
     // 💨 ฝุ่นฟุ้งใต้เท้าตอนถีบพื้น — แผ่นกลมแบน ๆ บานออกแล้วจางหาย (ใช้พูลซ้ำ ไม่สร้างใหม่ทุกก้าว)
-    const DUST_N = 10;
+    const DUST_N = 12;
     const dustPool = [];
+    let dustTex = null;
+    // 🌫️ ปุยฝุ่นขอบฟุ้ง — วงกลมขอบคมดูเหมือนสติกเกอร์แปะพื้น ไม่เหมือนฝุ่น
+    const makeDustTex = () => {
+      const cv = document.createElement("canvas"); cv.width = cv.height = 64;
+      const cx = cv.getContext("2d");
+      const g = cx.createRadialGradient(32, 32, 1, 32, 32, 31);
+      g.addColorStop(0, "rgba(255,255,255,1)");
+      g.addColorStop(0.42, "rgba(255,255,255,0.8)");
+      g.addColorStop(0.72, "rgba(255,255,255,0.32)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      cx.fillStyle = g; cx.fillRect(0, 0, 64, 64);
+      const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
+    };
     const ensureDust = () => {
       if (dustPool.length) return;
+      if (!dustTex) dustTex = makeDustTex();
       for (let i = 0; i < DUST_N; i++) {
         const m = new THREE.Mesh(
           new THREE.CircleGeometry(0.3, 12),
-          new THREE.MeshBasicMaterial({ color: 0xd8cbb0, transparent: true, opacity: 0, depthWrite: false })
+          new THREE.MeshBasicMaterial({ map: dustTex, color: 0xd8cbb0, transparent: true, opacity: 0, depthWrite: false })
         );
         m.rotation.x = -Math.PI / 2;
         m.visible = false;
@@ -29011,13 +29025,18 @@ export default function CherryAdventure() {
       m.position.set(x + (Math.random() - 0.5) * 0.18, y + 0.04, z + (Math.random() - 0.5) * 0.18);
       m.userData.t = 0;
       m.userData.dur = 0.42 + Math.random() * 0.16;
-      m.userData.s0 = 0.32 * (scale || 1);
-      m.userData.s1 = m.userData.s0 * 2.8;
+      m.userData.s0 = 0.85 * (scale || 1);          // เดิม 0.32 — เล็กจนแทบมองไม่เห็นว่ามีฝุ่น
+      m.userData.s1 = m.userData.s0 * 2.3;
       m.scale.setScalar(m.userData.s0);
-      m.material.opacity = 0.5;
-      // ฝุ่นสีตามพื้นของแดนนั้น จะได้กลืนกับภูมิประเทศ
+      m.material.opacity = 0.82;
+      // ฝุ่นอิงสีพื้นของแดนนั้น แต่ต้องต่างจากพื้นพอให้เห็น — พื้นสว่างใช้ฝุ่นโทนดินเข้มกว่า · พื้นมืดใช้โทนทรายสว่างกว่า
       const B = BIOMES[G.curBiome || 0];
-      if (B) m.material.color.setHex(B.ground).lerp(new THREE.Color(0xffffff), 0.35);
+      if (B) {
+        const gc = new THREE.Color(B.ground);
+        const lum = 0.3 * gc.r + 0.59 * gc.g + 0.11 * gc.b;
+        m.material.color.copy(gc).lerp(new THREE.Color(lum > 0.52 ? 0x8a7350 : 0xe8d7ae), 0.72);
+      }
+      m.rotation.set(-Math.PI / 2 + (Math.random() - 0.5) * 0.55, 0, Math.random() * Math.PI);   // เอียงสุ่ม ไม่ให้เป็นแผ่นแบนแปะพื้นเหมือนเงา
       m.visible = true;
     };
     G.tickDust = (dt) => {
@@ -29028,8 +29047,8 @@ export default function CherryAdventure() {
         const k = m.userData.t / m.userData.dur;
         if (k >= 1) { m.visible = false; continue; }
         m.scale.setScalar(m.userData.s0 + (m.userData.s1 - m.userData.s0) * k);
-        m.material.opacity = 0.5 * (1 - k) * (1 - k);
-        m.position.y += dt * 0.35;
+        m.material.opacity = 0.82 * (1 - k) * (1 - k);
+        m.position.y += dt * 0.95;                                    // ลอยขึ้นให้เห็นว่าเป็นฝุ่นฟุ้ง ไม่ใช่วงแปะพื้น
       }
     };
     // 🤖✋ สั่งเอง = auto หยุดรอจนทำคำสั่งนั้นเสร็จก่อน แล้วค่อยกลับไปเล่นเองต่อ
@@ -40194,14 +40213,16 @@ export default function CherryAdventure() {
         legPose(swing, legL);
         legPose(swing2, legR);
         if (G._skirtFollow) G._skirtFollow();   // 👗 ผ้ากระโปรงขยับตามขาที่เพิ่งจัดท่า
-        // 💨 ฝุ่นฟุ้งตอนถีบพื้นออกตัวแต่ละก้าว (เฉพาะตอนก้าวกระโดด และต้องอยู่ติดพื้น)
-        if (bound > 0.25 && G.puffDust) {
+        // 💨 ฝุ่นฟุ้งใต้เท้าทุกก้าวที่วิ่ง — เริ่มฟุ้งนิดเดียวตั้งแต่ออกวิ่ง แล้วค่อยฟุ้งเต็มที่ตอนก้าวกระโดดเต็มฝีเท้า
+        //    (เดิมฟุ้งเฉพาะตอนก้าวกระโดด วิ่งธรรมดาจึงไม่มีฝุ่นเลย) · ต้องอยู่ติดพื้นและไม่ได้ขี่สัตว์
+        if (moveAmt > 0.3 && G.puffDust) {
           const half = Math.floor(G.walkPhase / Math.PI);
           if (half !== G._lastStepHalf) {
             G._lastStepHalf = half;
             if ((G._jumpT || 0) <= 0 && !G.mountId) {
-              const back = 0.34;
-              G.puffDust(char.position.x - Math.sin(char.rotation.y) * back, 0, char.position.z - Math.cos(char.rotation.y) * back, 0.85 + bound * 0.5);
+              const sn = Math.sin(char.rotation.y), cs = Math.cos(char.rotation.y);
+              const back = 0.34, side = (half & 1) ? 0.15 : -0.15;      // สลับซ้าย-ขวาตามเท้าที่ถีบพื้น
+              G.puffDust(char.position.x - sn * back + cs * side, 0, char.position.z - cs * back - sn * side, 0.5 + moveAmt * 0.55 + bound * 0.6);
             }
           }
         }
