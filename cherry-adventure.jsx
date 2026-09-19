@@ -24,7 +24,7 @@ const SPAWN_POOL = ["mochi", "mochi", "baibua", "baibua", "mekha", "plerng", "na
 const FLOATY = { mekha: true, phi: true, paksi: true, wayu: true, taara: true }; // species that hover
 // 🗺️ multiple adventure maps (biomes) — warp between them
 const BIOMES = [
-  { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0xa8c98a, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 },   // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
+  { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0x55a038, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 },   // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
   { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
   { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
   { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
@@ -74,7 +74,7 @@ const terrFeat = (f, x, z) => {
 };
 const TERRAIN = {
   // 🌸 ทุ่งซากุระ — เนินหญ้าลูกคลื่นนุ่ม ภูเขาเขียวล้อมไกล ๆ
-  meadow:  { lo: 0x76a054, hi: 0xd8ea9e, rock: 0x93a077, hN: 7, rockK: 0.26, f: [
+  meadow:  { lo: 0x357a24, hi: 0x7cc14e, rock: 0x5f8a52, hN: 7, rockK: 0.16, f: [
     { t: "wave", fx: 0.075, fz: 0.062, h: 0.95, p: 0.6, q: 1.3 },
     { t: "hill", x: -25, z: -15, r: 15, h: 6.5 },
     { t: "hill", x: 23, z: 19, r: 13, h: 5.2 },
