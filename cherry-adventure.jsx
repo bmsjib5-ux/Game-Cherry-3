@@ -19668,6 +19668,13 @@ export default function CherryAdventure() {
     const dungeonCenter = new THREE.Vector3();
     const DUNGEON_MAX = 100;
     const dungeonSpawn = (floor) => {
+      // 💀 เก็บกวาดมอนของชั้นก่อนที่ค้างในฉาก — กันศพซ้อนทับกันเต็มห้องหอคอย
+      for (let i = scene.children.length - 1; i >= 0; i--) {
+        const o = scene.children[i];
+        if (o && o.userData && o.userData.dungeon) { scene.remove(o); (G._disposeObj3D && G._disposeObj3D(o)); }
+      }
+      for (let i = wilds.length - 1; i >= 0; i--) { const w = wilds[i]; if (w && w.userData && w.userData.dungeon) wilds.splice(i, 1); }
+
       const bossFloor = floor % 10 === 0; // 👑 boss every 10 floors
       const midBoss = floor % 5 === 0 && !bossFloor;
       const rogue = !!(G.dungeon && G.dungeon.rogue);
@@ -43567,6 +43574,13 @@ export default function CherryAdventure() {
           if (G._animPetFx) G._animPetFx(buddyMesh, t); // ✨ spin the chick's stars + magic circle
         }
 
+        // 💀 กันศึกค้าง: ศัตรูเลือดหมดแล้วแต่ไม่มีใครปิดศึก (เช่น ตายด้วยหนามสะท้อน/สวนกลับระหว่างตาศัตรู)
+        //    มอนจะยืนค้างกลางจอที่ HP 0 สู้ต่อไม่จบ — ในหอคอยยิ่งเห็นชัดเพราะชั้นไม่ขยับ
+        if (G.mode === "battle" && G.enemy && !G.enemy.dead && !G.enemy.worldBoss && G.enemy.hp <= 0 && !G.banim) {
+          G._deadStuck = (G._deadStuck || 0) + dt;
+          if (G._deadStuck > 0.4) { G._deadStuck = 0; winBattle(); }
+        } else if (G._deadStuck) G._deadStuck = 0;
+
         // battle animations
         if (G.banim) {
           const A = G.banim;
@@ -51046,6 +51060,8 @@ export default function CherryAdventure() {
                   syncPlayer();
                   setUi((u) => ({ ...u, mode: "explore" }));
                 }, 2000);
+              } else if (G.enemy && !G.enemy.dead && G.enemy.hp <= 0) {
+                winBattle();   // 🩸 ศัตรูตายคาตาตัวเอง (หนามสะท้อน/สวนกลับ) — ปิดศึกทันที ไม่งั้นมอนค้างจอที่ HP 0
               } else {
                 setMouth("smile");
                 // 💧 regenerate mana each round
