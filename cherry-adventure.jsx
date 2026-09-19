@@ -28954,9 +28954,15 @@ export default function CherryAdventure() {
       m.userData.whp -= dmg;
       popDamage(m.position, dmg, opts.crit ? "crit" : "hit");
       // ⏸️ hit-stop แบบอนิเมะ — โลกกว้างหน่วงให้ตรงจังหวะอาวุธลง · คริใหญ่มีแฟลชขาว
-      { const hs = (opts.crit ? 0.13 : 0.07) + (G._combo3 === 2 ? 0.03 : 0);   // v447: 0.04/0.09 เดิมสั้นแค่ 2–3 เฟรม แทบไม่รู้สึก
+      { const hs = (opts.crit ? 0.085 : 0.05) + (G._combo3 === 2 ? 0.02 : 0);   // v487: สั้นลง — ท่าฟันไม่ค้างกลางคัน
         if (G.mode === "battle") G._hitStop = Math.max(G._hitStop || 0, hs);
-        else { G._hitStopIn = G._hitStopIn > 0 ? G._hitStopIn : 0.13; G._hitStopAmt = Math.max(G._hitStopAmt || 0, hs); if (opts.crit) G._hitStopFlash = 1; } }
+        else {
+          // ⏱️ จังหวะปะทะผูกกับความยาวของท่าฟันจริง (เดิมตายตัวที่ 0.13 วิ — สายไวดาบฟันจบไปก่อนแล้ว)
+          const impT = Math.max(0.045, (G._worldSwingDur || 0.2) * 0.46);
+          G._hitStopIn = G._hitStopIn > 0 ? G._hitStopIn : impT;
+          G._hitStopAmt = Math.max(G._hitStopAmt || 0, hs);
+          if (opts.crit) G._hitStopFlash = 1;
+        } }
       if (opts.color != null) burst(m.position, opts.color, 0.5);
       // 💥 แฟลชกระแทก 3 ชั้น ขาว-เหลือง-ส้ม (เดิมเป็นแสงขาวล้วน)
       monGlow(m, 0xfff2d0, 0.55);
@@ -29404,7 +29410,7 @@ export default function CherryAdventure() {
       G._comboRe = isSkill ? 0 : 1.2;
       if (G.cls === "archer") G._bowReady = 2.2; // 🏹 เข้าโหมดจ่อธนู — ยกคันธนูค้างไว้จนพ้นการต่อสู้
       let dur = isSkill ? (G.cls === "archer" ? 0.13 : slow ? 0.30 : 0.19)
-                        : (G.cls === "archer" ? 0.115 : slow ? 0.245 : 0.155); // ⚡ ตีธรรมดาไวขึ้น ~18% · ร่ายสกิลใช้จังหวะเดิม · นักธนูยิงรัวเร็วสุด
+                        : (G.cls === "archer" ? 0.10 : slow ? 0.205 : 0.132); // ⚡ ตีธรรมดาไวขึ้น ~18% · ร่ายสกิลใช้จังหวะเดิม · นักธนูยิงรัวเร็วสุด
       // ⚠️ ทุกบรรทัดที่แตะ dur ต้องอยู่ "ใต้" บรรทัดประกาศเท่านั้น — เดิมบรรทัดเร่งความเร็วอยู่เหนือ
       //    ทำให้พอมีบัฟเร่งความเร็วติดตัว การตี/ร่ายสกิลในโลกกว้างพังทั้งหมดทุกอาชีพ
       if (G.wHasteT > 0) dur *= 0.7; // 👼 พรครูเสดสวรรค์ — ฟันไวขึ้น 30%
@@ -35610,7 +35616,7 @@ export default function CherryAdventure() {
         return;
       }
       if (kind === "attack") {
-        G.banim = { type: "playerAttack", t: 0, dur: G.heroId === "fenrir" ? 1.3 : G.heroId === "neko" ? 1.25 : G.heroId === "usagi" ? 1.35 : G.heroId === "ryujin" ? 1.4 : G.heroId === "ignis" ? 1.35 : G.heroId === "captain" ? 1.35 : G.heroId === "thunder" ? 1.4 : G.heroId === "yaksa" ? 1.4 : G.heroId === "luminia" ? 1.45 : G.heroId === "apsara" ? 1.5 : G.heroId === "asura" ? 1.45 : G.heroId === "hanuman" ? 1.6 : G.heroId === "garuda" ? 1.5 : G.heroId === "naki" ? 1.5 : G.heroId === "kinnaree" ? 1.45 : G.heroId === "mermaid" ? 1.5 : G.heroId === "lich" ? 1.55 : G.heroId === "kitsune" ? 1.5 : G.heroId === "phoenix" ? 1.65 : G.cls === "warrior" ? 0.62 : 0.48, mult: 1, basic: true };   // ⚡ ตีธรรมดาไวขึ้น ~27% (สกิล/อัลติ/ท่าประจำฮีโร่คงความเร็วเดิม)
+        G.banim = { type: "playerAttack", t: 0, dur: G.heroId === "fenrir" ? 1.3 : G.heroId === "neko" ? 1.25 : G.heroId === "usagi" ? 1.35 : G.heroId === "ryujin" ? 1.4 : G.heroId === "ignis" ? 1.35 : G.heroId === "captain" ? 1.35 : G.heroId === "thunder" ? 1.4 : G.heroId === "yaksa" ? 1.4 : G.heroId === "luminia" ? 1.45 : G.heroId === "apsara" ? 1.5 : G.heroId === "asura" ? 1.45 : G.heroId === "hanuman" ? 1.6 : G.heroId === "garuda" ? 1.5 : G.heroId === "naki" ? 1.5 : G.heroId === "kinnaree" ? 1.45 : G.heroId === "mermaid" ? 1.5 : G.heroId === "lich" ? 1.55 : G.heroId === "kitsune" ? 1.5 : G.heroId === "phoenix" ? 1.65 : G.cls === "warrior" ? 0.50 : 0.40, mult: 1, basic: true };   // ⚡ ตีธรรมดาไวขึ้น ~27% (สกิล/อัลติ/ท่าประจำฮีโร่คงความเร็วเดิม)
         const atkMsg = G.heroId === "fenrir" ? "เชอร์รี่พุ่งตะครุบ! กรงเล็บหมาป่าฟาดไขว้ 🐺" : G.heroId === "neko" ? "เชอร์รี่ตบแมวรัวสามจังหวะ! 🐱🐾" : G.heroId === "usagi" ? "เชอร์รี่เผ่นฟ้า! ค้อนแครอทถล่มลงมา 🐰🥕" : G.heroId === "ryujin" ? "เชอร์รี่พ่นลมหายใจมังกรเพลิง! 🐉🔥" : G.heroId === "ignis" ? "เชอร์รี่ลอยตัวระดมยิงลำแสงฝ่ามือ! 🤖✨" : G.heroId === "captain" ? "เชอร์รี่ขว้างโล่เพชรสะท้อนสองเด้ง! 🛡️" : G.heroId === "thunder" ? "เชอร์รี่เรียกสายฟ้าฟาด ปิดท้ายขว้างค้อนพายุ! ⚡🔨" : G.heroId === "yaksa" ? "เชอร์รี่กระทืบสะเทือนดิน! กระบองยักษ์ถล่มปฐพีสองจังหวะ 👹" : G.heroId === "luminia" ? "เชอร์รี่ร่ายระบำเถาวัลย์ต้องมนตร์! 🧝‍♀️🌸" : G.heroId === "apsara" ? "เชอร์รี่เรียกลำแสงสวรรค์ปลิดบาป! 👼✨" : G.heroId === "asura" ? "เชอร์รี่ปลดผนึกอสูร! ขวากนรกทลายวิญญาณ 😈🔥" : G.heroId === "hanuman" ? "เชอร์รี่หาวเป็นดาวเป็นเดือน! ร่างใหญ่ฟาดตรีเพชร 🐒⭐" : G.heroId === "garuda" ? "เชอร์รี่โฉบพญาครุฑ! กรงเล็บฉีกลมพายุ 🦅💨" : G.heroId === "naki" ? "เชอร์รี่พ่นพิษนาคี! เจ็ดเศียรผุดจากบาดาล 🐍💧" : G.heroId === "kinnaree" ? "เชอร์รี่ร่ายระบำกินรี! ขนหงส์คมปลิวเป็นวง 🕊️🌸" : G.heroId === "mermaid" ? "เชอร์รี่เรียกวังวนบาดาล! ไตรศูลซัดคลื่นยักษ์ 🧜‍♀️🌊" : G.heroId === "lich" ? "เชอร์รี่เรียกกองทัพกระดูก! วิญญาณผุดจากปฐพี 💀👻" : G.heroId === "kitsune" ? "เชอร์รี่สะบัดเก้าหาง! ไฟจิ้งจอกเก้าดวงพุ่งพร้อมกัน 🦊🔥" : G.heroId === "phoenix" ? "เชอร์รี่เผาตัวเองแล้วเกิดใหม่! ระเบิดเพลิงกลางสนาม 🔥🐦‍🔥" : G.cls === "archer" ? "เชอร์รี่ง้างธนูยิง! 🏹" : G.cls === "mage" ? "เชอร์รี่ร่ายลูกแก้วอาคม! 🔮" : G.cls === "assassin" ? "เชอร์รี่พุ่งแทงมีดคู่! 🗡️" : G.cls === "lancer" ? "เชอร์รี่จ้วงหอกทะลวง! 🔱" : G.cls === "coder" ? "เชอร์รี่รันโค้ดโจมตี! ⌨️" : G.cls === "office" ? "เชอร์รี่ฟาดโน้ตบุ๊ก! 💻" : G.cls === "samurai" ? "เชอร์รี่ชักดาบฟันเร็ว! ⚔️" : "เชอร์รี่ฟันดาบเต็มแรง! ⚔️";
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: atkMsg }));
       } else if (kind === "skill") {
@@ -38700,11 +38706,13 @@ export default function CherryAdventure() {
         G._lastFrameT = nowF;
       }
       try {
-      const dtReal = Math.min(clock.getDelta(), 0.05);
+      // ⏱️ เพดาน dt — เดิม 0.05 (20fps) ทำให้เครื่องที่เฟรมตกต่ำกว่านั้น "อนิเมชันช้าลงตามเฟรม"
+      //    ท่าฟันที่ตั้งไว้ 0.2 วิ กลายเป็นยืดหลายเท่า — ขยับเพดานขึ้นให้ช้าน้อยลง
+      const dtReal = Math.min(clock.getDelta(), 0.075);
       let dt = dtForce != null ? dtForce : dtReal; // 🤖💤 forced dt while background-farming
       // ⏸️ HIT-STOP สไตล์อนิเมะ — แช่ภาพเสี้ยววินาทีตอนอาวุธกินเนื้อ (นับเวลาจริง ไม่ทำงานตอนซิมพื้นหลัง)
       if (G._hitStopIn > 0 && dtForce == null) { G._hitStopIn -= dtReal; if (G._hitStopIn <= 0) { G._hitStop = Math.max(G._hitStop || 0, G._hitStopAmt || 0); G._hitStopAmt = 0; if (G._hitStopFlash) G._camShake = Math.max(G._camShake || 0, 0.22); G._hitStopFlash = 0; if (G._impactQ && G._impact) { const q = G._impactQ; G._impactQ = null; try { G._impact(q.pos, q.dir, q); } catch (_) {} } } } // 🚫 ไม่มีแฟลชเต็มจอตอนตี (จอกระพริบ) — คงไว้แค่กล้องสั่น
-      if (G._hitStop > 0 && dtForce == null) { G._hitStop -= dtReal; dt *= 0.06; }
+      if (G._hitStop > 0 && dtForce == null) { G._hitStop -= dtReal; dt *= 0.2; }   // ⏸️ v487: จาก 0.06 (แช่แข็งเกือบสนิท) → 0.2 หน่วงแต่ยังเห็นการเคลื่อนไหว — ท่าฟันจึงไม่สะดุดกลางท่า
       dtGlobal = dt;
       if (G.kkSkelTick) G.kkSkelTick(dt);   // 💀 ไล่เฟรมอนิเมชันโครงกระดูก
       if (G.kkDunTick) G.kkDunTick();       // 🏰 ห้องดันเจี้ยนขึ้น/รื้อตามสถานะหอคอย
@@ -40796,10 +40804,10 @@ export default function CherryAdventure() {
           // ⚠️ ทุกช่วงต้อง "คาบเกี่ยวกัน" — ถ้าเว้นช่องว่าง ช่วงก่อนจะชะลอจนนิ่งสนิท
           //    ส่วนช่วงถัดไปก็เริ่มจากศูนย์ กลายเป็นจุดตายกลางท่า (เคยวัดได้ 0.14-0.28 และ 0.44-0.55)
           const swPh = (off) => {
-            const w = eOut2(segK(0.00 + off, 0.24 + off));
-            const c = eAcc2(segK(0.17 + off, 0.40 + off));   // เริ่มเร่งตั้งแต่แขนยังง้างไม่สุด = ไม่มีจุดนิ่งบนยอดง้าง
-            const f = eOut2(segK(0.40 + off, 0.52 + off));   // ตามแรงสั้นลง ความเร็วหลังปะทะจึงยังสูง
-            const r = eOut2(segK(0.50 + off, 1.00 + off));   // คืนท่าเริ่มทันทีที่ตามแรงใกล้สุด — ต่อเนื่องไม่สะดุด
+            const w = eOut2(segK(0.00 + off, 0.20 + off));
+            const c = eAcc2(segK(0.13 + off, 0.34 + off));   // หวดสั้นลงและมาเร็วขึ้น — ใบมีดกวาดผ่านจอเร็วขึ้นชัดเจน
+            const f = eOut2(segK(0.34 + off, 0.45 + off));   // ตามแรงสั้น ความเร็วหลังปะทะยังสูง
+            const r = eOut2(segK(0.43 + off, 1.00 + off));   // คืนท่าเริ่มเร็วขึ้น — หางท่าสั้นลง ไม่ค้างเก้ก
             return (rest, wind, hit, over) => rest + w * (wind - rest) + c * (hit - wind) + f * (over - hit) + r * (rest - over);
           };
           const SW = swPh(0), SWlag = swPh(0.13);   // SWlag = มืออีกข้างตามหลังครึ่งจังหวะ
@@ -40813,7 +40821,7 @@ export default function CherryAdventure() {
           // 👻 วางเงาอาวุธช่วงหวด (เฉพาะสายประชิด · ท่าจบวาง 3 จังหวะ)
           if (melee) {
             const pv = G._swPrevS || 0;
-            const pts = cb === 2 ? [0.27, 0.36, 0.45] : (G.cls === "warrior" || G.cls === "samurai") ? [0.29, 0.38] : [0.27, 0.44];   // ⚔️ วางเงาระหว่างช่วงฟาดจริง
+            const pts = cb === 2 ? [0.20, 0.28, 0.36] : (G.cls === "warrior" || G.cls === "samurai") ? [0.22, 0.31] : [0.20, 0.34];   // ⚔️ วางเงาระหว่างช่วงฟาดจริง
             pts.forEach((pp, pi) => { if (pv < pp && s >= pp) spawnWpnGhost(0.15 + pi * 0.03); });
             G._swPrevS = s;
           }
@@ -40843,7 +40851,7 @@ export default function CherryAdventure() {
             char.position.y -= 0.06 * stepK;                        // ย่อตัวลงตอนลงน้ำหนัก
           }
           // 💥 เฟรมกระแทก — ยืดอาวุธสั้น ๆ ตอนถึงจุดปะทะ (stretch แบบอนิเมะ)
-          const impK = melee && s > 0.42 && s < 0.56 ? 1 : 0;
+          const impK = melee && s > 0.32 && s < 0.46 ? 1 : 0;
           wand.scale.set(1 - impK * 0.12, 1 + impK * 0.22, 1 - impK * 0.12);
           let HS = (!G.heroHide && G.heroId) ? HERO_SWING[G.heroId] : null;   // 🦸 ใส่ชุดฮีโร่อยู่ = ใช้ท่า/เอฟเฟคประจำชุด
           // 🗡️🔱 ชุดฮีโร่ที่ "ไม่มีอาวุธประจำตัว" มือยังถือดาบ/คาตานะ/มีด/หอกของอาชีพอยู่
@@ -51253,7 +51261,7 @@ export default function CherryAdventure() {
         let worldSwing = false;
         if (G.mode === "explore" && (G._worldSwingT || 0) > 0 && wand.visible && (G.cls === "warrior" || G.cls === "samurai" || G.cls === "assassin" || G.cls === "aegis")) {
           const sN = 1 - G._worldSwingT / (G._worldSwingDur || 0.28);
-          worldSwing = sN > 0.12 && sN < 0.62;
+          worldSwing = sN > 0.08 && sN < 0.52;
         }
         const swinging = battleSwing || worldSwing;
         const basicCol = (G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xffffff;
