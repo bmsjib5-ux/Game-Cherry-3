@@ -23467,6 +23467,7 @@ export default function CherryAdventure() {
       };
     })();
     const FIRE_HOT = new THREE.Color(0xfff2c0), FIRE_MID = new THREE.Color(0xff8a20), FIRE_LOW = new THREE.Color(0x8e1a06);
+    const ICE_LIT = new THREE.Color(0xf2fcff), ICE_MID = new THREE.Color(0x9fdcf8), ICE_DEEP = new THREE.Color(0x2f7fb8);   // ❄️ ไล่สีน้ำแข็ง: ขอบสว่าง → ฟ้า → แกนน้ำเงินลึก
     const spawnSkillFx = (fxType, pos, color) => {
       const g = new THREE.Group();
       g.position.set(pos.x, 0, pos.z);
@@ -23580,16 +23581,55 @@ export default function CherryAdventure() {
         dur = 0.5;
         update = (pr) => { line.material.opacity = 1 - pr; flash.material.opacity = 0.8 * (1 - pr); flash.scale.setScalar(1 + pr * 2); };
       } else if (fxType === "ice") {
-        // ❄️ ice shards stab upward
-        const shards = [];
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2;
-          const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 5), new THREE.MeshStandardMaterial({ color: 0xaef0ff, emissive: 0x4aa0e0, emissiveIntensity: 0.8, transparent: true, opacity: 0.9 }));
-          m.position.set(Math.cos(a) * 0.4, 0, Math.sin(a) * 0.4);
-          m.userData.a = a; g.add(m); shards.push(m);
+        // ❄️ น้ำแข็งแทงขึ้น — แท่งเหลี่ยมมุมโปร่งแสง + ประกายวาบ + ไอเย็นจมลงต่ำ
+        const FTc = fireTex();
+        const iceM2 = new THREE.MeshStandardMaterial({ color: 0xdff4ff, transparent: true, opacity: 0,
+          roughness: 0.06, metalness: 0.02, emissive: 0x2f7fb8, emissiveIntensity: 0.5, flatShading: true, side: THREE.DoubleSide });
+        const shards2 = [];
+        for (let i = 0; i < 7; i++) {
+          const a = (i / 7) * Math.PI * 2 + Math.random() * 0.4;
+          const tall = 0.45 + Math.random() * 0.45;
+          const m = new THREE.Mesh(new THREE.ConeGeometry(0.1 + Math.random() * 0.05, tall, 5), iceM2);
+          m.position.set(Math.cos(a) * (0.3 + Math.random() * 0.22), 0, Math.sin(a) * (0.3 + Math.random() * 0.22));
+          m.rotation.set(Math.sin(a) * 0.3, Math.random() * 3, -Math.cos(a) * 0.3);
+          m.scale.set(1, 1, 0.72 + Math.random() * 0.3);
+          m.userData = { tall, d: (i / 7) * 0.25 };
+          g.add(m); shards2.push(m);
         }
-        dur = 0.8;
-        update = (pr) => shards.forEach((m) => { m.position.y = pr < 0.5 ? pr * 1.4 : 0.7; m.material.opacity = 0.9 * (1 - Math.max(0, (pr - 0.5) * 2)); });
+        const glints2 = [], mist2 = [];
+        for (let i = 0; i < 7; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTc, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2, rr = Math.random() * 0.5;
+          sp.position.set(Math.cos(aa) * rr, 0.25 + Math.random() * 0.7, Math.sin(aa) * rr);
+          sp.userData = { ph: Math.random() * 6.3, sp2: 7 + Math.random() * 8, s: 0.1 + Math.random() * 0.1 };
+          g.add(sp); glints2.push(sp);
+        }
+        for (let i = 0; i < 8; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTc, color: 0xe6f8ff, transparent: true, opacity: 0, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { a: aa, r0: 0.2 + Math.random() * 0.3, spd: 0.7 + Math.random() * 0.7, y0: 0.4 + Math.random() * 0.6, s0: 0.4 + Math.random() * 0.45 };
+          g.add(sp); mist2.push(sp);
+        }
+        dur = 0.9;
+        update = (pr) => {
+          iceM2.opacity = pr < 0.55 ? Math.min(0.66, pr * 3.2) : Math.max(0, 0.66 * (1 - (pr - 0.55) / 0.45));
+          iceM2.emissiveIntensity = 0.4 + Math.abs(Math.sin(pr * 11)) * 0.35;
+          shards2.forEach((m) => {
+            const lp = Math.max(0, Math.min(1, (pr - m.userData.d) / 0.25));
+            m.position.y = -m.userData.tall * 0.5 + lp * (m.userData.tall * 0.85);
+          });
+          glints2.forEach((sp) => {
+            const tw = Math.max(0, Math.sin(pr * dur * sp.userData.sp2 + sp.userData.ph));
+            const ss = sp.userData.s * (0.4 + tw * 0.9); sp.scale.set(ss, ss, 1);
+            sp.material.opacity = tw * tw * 0.85 * (1 - pr * 0.6);
+          });
+          mist2.forEach((sp) => {
+            const ud = sp.userData, rr = ud.r0 + pr * ud.spd * 1.3;
+            sp.position.set(Math.cos(ud.a) * rr, ud.y0 * (1 - pr * 0.7) + 0.08, Math.sin(ud.a) * rr);
+            const ss = ud.s0 * (0.5 + pr * 1.4); sp.scale.set(ss, ss * 0.8, 1);
+            sp.material.opacity = Math.sin(pr * Math.PI) * 0.3;
+          });
+        };
       } else if (fxType === "poison") {
         // ☠️ bubbling poison cloud
         const bubbles = [];
@@ -24090,50 +24130,96 @@ export default function CherryAdventure() {
           scorch.material.opacity = Math.min(0.55, pr * 1.6) * (pr > 0.8 ? (1 - pr) / 0.2 : 1);
         };
       } else if (fxType === "icespear") {
-        // ❄️ หอกน้ำแข็ง — big jagged ice spears erupt from the ground, then shatter
+        // ❄️ หอกน้ำแข็ง — แท่งคริสตัลเหลี่ยมมุมผุดขึ้นจากพื้น แล้วแตกกระจาย
+        //    น้ำแข็งจริงโปร่งแสง มีหน้าตัด มีประกายวาบ และมีไอเย็นจมลงต่ำ — ไม่ใช่กรวยผิวเนียน
+        const FTi = fireTex();
+        const iceM = new THREE.MeshStandardMaterial({ color: 0xdff4ff, transparent: true, opacity: 0,
+          roughness: 0.06, metalness: 0.02, emissive: 0x2f7fb8, emissiveIntensity: 0.45, flatShading: true, side: THREE.DoubleSide });
+        const litM = new THREE.MeshBasicMaterial({ color: 0xeafaff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
         const spears = [];
-        for (let i = 0; i < 10; i++) {
-          const a = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
-          const r = 0.1 + Math.random() * 0.6;
-          const tall = 1.0 + Math.random() * 0.7;
+        for (let i = 0; i < 9; i++) {
+          const a = (i / 9) * Math.PI * 2 + Math.random() * 0.35;
+          const r = 0.12 + Math.random() * 0.62;
+          const tall = 0.95 + Math.random() * 0.75;
           const grp = new THREE.Group();
-          const m = new THREE.Mesh(new THREE.ConeGeometry(0.18, tall, 5),
-            new THREE.MeshStandardMaterial({ color: 0xdaf7ff, emissive: 0x5ab0f0, emissiveIntensity: 1.0, transparent: true, opacity: 0.94, metalness: 0.4, roughness: 0.08 }));
-          m.position.y = tall / 2;
-          // small ice crystal offshoots for a jagged look
-          const chip = new THREE.Mesh(new THREE.ConeGeometry(0.08, tall * 0.4, 4), m.material);
-          chip.position.set(0.1, tall * 0.35, 0); chip.rotation.z = -0.6;
-          grp.add(m, chip);
+          const main = new THREE.Mesh(new THREE.ConeGeometry(0.17, tall, 5), iceM);
+          main.position.y = tall / 2; main.scale.set(1, 1, 0.7 + Math.random() * 0.35); main.rotation.y = Math.random() * Math.PI;
+          grp.add(main);
+          for (let j = 0; j < 2; j++) {                          // หน่อแตกข้างแท่ง
+            const hh = tall * (0.26 + Math.random() * 0.24);
+            const off = new THREE.Mesh(new THREE.ConeGeometry(0.075 * (0.8 + Math.random() * 0.6), hh, 4), iceM);
+            const aa = Math.random() * Math.PI * 2;
+            off.position.set(Math.cos(aa) * 0.11, tall * (0.25 + Math.random() * 0.4), Math.sin(aa) * 0.11);
+            off.rotation.set(Math.sin(aa) * 0.75, 0, -Math.cos(aa) * 0.75);
+            grp.add(off);
+          }
+          const core = new THREE.Mesh(new THREE.ConeGeometry(0.075, tall * 0.8, 4), litM);
+          core.position.y = tall * 0.42; grp.add(core);
           grp.position.set(Math.cos(a) * r, -tall, Math.sin(a) * r);
-          grp.rotation.z = (Math.random() - 0.5) * 0.3;
-          grp.userData = { delay: (i / 10) * 0.4, tall };
+          grp.rotation.z = (Math.random() - 0.5) * 0.32;
+          grp.userData = { delay: (i / 9) * 0.34, tall };
           g.add(grp); spears.push(grp);
         }
-        // shatter shards
-        const shards = [];
-        for (let i = 0; i < 20; i++) {
-          const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), new THREE.MeshStandardMaterial({ color: 0xbef2ff, emissive: 0x5ab0f0, emissiveIntensity: 0.9, transparent: true, metalness: 0.3, roughness: 0.1 }));
-          m.position.set(0, 1.0, 0); m.visible = false;
-          m.userData = { vx: (Math.random() - 0.5) * 4, vy: 1.5 + Math.random() * 2.5, vz: (Math.random() - 0.5) * 4 };
+        const shards = [];                                       // 💥 เศษน้ำแข็งตอนแตก
+        for (let i = 0; i < 18; i++) {
+          const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.075 + Math.random() * 0.07, 0), iceM);
+          m.position.set(0, 0.9, 0); m.visible = false;
+          m.userData = { vx: (Math.random() - 0.5) * 4.2, vy: 1.4 + Math.random() * 2.4, vz: (Math.random() - 0.5) * 4.2,
+            rx: (Math.random() - 0.5) * 9, rz: (Math.random() - 0.5) * 9 };
           g.add(m); shards.push(m);
         }
-        // frost mist ring + cold light
-        const mist = new THREE.Mesh(new THREE.RingGeometry(0.3, 1.1, 24), new THREE.MeshBasicMaterial({ color: 0xaef0ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
-        mist.rotation.x = -Math.PI / 2; mist.position.y = 0.02; g.add(mist);
-        const iceLight = new THREE.PointLight(0x6ac0f0, 1.6, 5); iceLight.position.y = 1; /* iceLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
-        dur = 1.2;
+        const glints = [];                                       // ✨ ประกายวาบบนผิว
+        for (let i = 0; i < 10; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTi, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2, rr = Math.random() * 0.75;
+          sp.position.set(Math.cos(aa) * rr, 0.3 + Math.random() * 1.2, Math.sin(aa) * rr);
+          sp.userData = { ph: Math.random() * 6.3, sp2: 6 + Math.random() * 7, s: 0.13 + Math.random() * 0.13 };
+          g.add(sp); glints.push(sp);
+        }
+        const mist = [];                                         // 🌫️ ไอเย็นแผ่ต่ำ ๆ แล้วจมลง
+        for (let i = 0; i < 12; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTi, color: 0xe6f8ff, transparent: true, opacity: 0, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { a: aa, r0: 0.25 + Math.random() * 0.4, spd: 0.8 + Math.random(), y0: 0.5 + Math.random() * 0.8, off: Math.random() * 0.4, s0: 0.55 + Math.random() * 0.55 };
+          g.add(sp); mist.push(sp);
+        }
+        const frost = new THREE.Mesh(new THREE.RingGeometry(0.28, 1.25, 22),
+          new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+        frost.rotation.x = -Math.PI / 2; frost.position.y = 0.02; g.add(frost);
+        dur = 1.25;
         update = (pr) => {
+          const brk = pr > 0.6;
+          iceM.opacity = brk ? Math.max(0, 0.62 * (1 - (pr - 0.6) / 0.4)) : Math.min(0.62, pr * 4);
+          litM.opacity = (brk ? Math.max(0, 0.3 * (1 - (pr - 0.6) / 0.4)) : 0.22 + Math.abs(Math.sin(pr * 14)) * 0.14);
+          iceM.emissiveIntensity = 0.35 + Math.abs(Math.sin(pr * 9)) * 0.35;
           spears.forEach((grp) => {
-            const lp = Math.max(0, Math.min(1, (pr - grp.userData.delay) / 0.3));
-            if (pr < 0.62) { grp.position.y = -grp.userData.tall + lp * grp.userData.tall; grp.children.forEach((c) => (c.material.opacity = 0.94)); }
-            else { grp.children.forEach((c) => (c.material.opacity = Math.max(0, 0.94 - (pr - 0.62) * 5))); }
+            const lp = Math.max(0, Math.min(1, (pr - grp.userData.delay) / 0.26));
+            if (!brk) grp.position.y = -grp.userData.tall + lp * grp.userData.tall;
+            else grp.position.y += 0.004;
           });
-          if (pr >= 0.58) {
-            const sp = (pr - 0.58) / 0.42;
-            shards.forEach((m) => { m.visible = true; m.position.x += m.userData.vx * 0.03; m.position.y = 1.0 + m.userData.vy * sp - sp * sp * 3.5; m.position.z += m.userData.vz * 0.03; m.rotation.x += 0.4; m.rotation.y += 0.3; m.material.opacity = 1 - sp; });
+          if (brk) {
+            const sp2 = (pr - 0.6) / 0.4;
+            shards.forEach((m) => {
+              m.visible = true;
+              m.position.set(m.userData.vx * sp2, 0.9 + m.userData.vy * sp2 - 4.2 * sp2 * sp2, m.userData.vz * sp2);
+              m.rotation.x += m.userData.rx * 0.02; m.rotation.z += m.userData.rz * 0.02;
+            });
           }
-          mist.material.opacity = 0.5 * (1 - pr); mist.scale.setScalar(1 + pr * 0.6);
-          iceLight.intensity = 1.6 * Math.sin(pr * Math.PI);
+          glints.forEach((sp) => {
+            const tw = Math.max(0, Math.sin(pr * dur * sp.userData.sp2 + sp.userData.ph));
+            const ss = sp.userData.s * (0.4 + tw * 0.9); sp.scale.set(ss, ss, 1);
+            sp.material.opacity = tw * tw * 0.9 * (brk ? Math.max(0, 1 - (pr - 0.6) / 0.3) : 1);
+          });
+          mist.forEach((sp) => {
+            const ud = sp.userData;
+            const k = Math.max(0, Math.min(1, (pr - ud.off) / Math.max(0.15, 1 - ud.off)));
+            const rr = ud.r0 + k * ud.spd * 1.6;
+            sp.position.set(Math.cos(ud.a) * rr, ud.y0 * (1 - k * 0.7) + 0.1, Math.sin(ud.a) * rr);
+            const ss = ud.s0 * (0.5 + k * 1.45); sp.scale.set(ss, ss * 0.8, 1);
+            sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * 0.3;
+          });
+          frost.material.opacity = Math.min(0.42, pr * 2.4) * (pr > 0.72 ? Math.max(0, 1 - (pr - 0.72) / 0.28) : 1);
+          frost.scale.setScalar(1 + pr * 0.35);
         };
       } else if (fxType === "thunderstorm") {
         // ⚡ สายฟ้าฟาด — a dark cloud gathers overhead, then rains down bolts
@@ -30510,20 +30596,63 @@ export default function CherryAdventure() {
     };
     const spawnIceSpike = (target, col, onShatter) => {
       try {
-        const ice = new THREE.MeshStandardMaterial({ color: col || 0x9fe4ff, transparent: true, opacity: 0.75, roughness: 0.08, metalness: 0.15, emissive: 0x2a6a9a, emissiveIntensity: 0.6 });
-        const g = new THREE.Group();
+        const FT = fireTex();
+        // ❄️ น้ำแข็งจริงไม่ใช่กรวยผิวเนียน — เป็นแท่งเหลี่ยมมุมโปร่งแสง มีหน่อแตกแขนง มีไอน้ำแข็งเกาะรอบ ๆ
+        const ice = new THREE.MeshStandardMaterial({ color: col || 0xdff4ff, transparent: true, opacity: 0.58,
+          roughness: 0.06, metalness: 0.02, emissive: 0x2f7fb8, emissiveIntensity: 0.4, flatShading: true, side: THREE.DoubleSide });
+        const lit = new THREE.MeshBasicMaterial({ color: 0xeafaff, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false });
+        const g = new THREE.Group(); const mats = [ice, lit]; const bits = [];
+        const shard = (h, r, seg) => new THREE.Mesh(new THREE.ConeGeometry(r, h, seg || 5), ice);
         for (let k = 0; k < 5; k++) {
-          const a = (k / 5) * Math.PI * 2;
-          const h = k === 0 ? 2.4 : 1.1 + (k % 3) * 0.35;
-          const sp = new THREE.Mesh(new THREE.ConeGeometry(k === 0 ? 0.44 : 0.22, h, 6), ice);
-          sp.position.set(k === 0 ? 0 : Math.cos(a) * 0.6, h / 2, k === 0 ? 0 : Math.sin(a) * 0.6);
-          if (k) { sp.rotation.z = -Math.cos(a) * 0.28; sp.rotation.x = Math.sin(a) * 0.28; }
-          sp.raycast = () => {};
-          g.add(sp);
+          const a = (k / 5) * Math.PI * 2 + Math.random() * 0.5;
+          const h = k === 0 ? 2.5 : 1.0 + Math.random() * 0.9;
+          const cl = new THREE.Group();
+          const main = shard(h, k === 0 ? 0.42 : 0.2, k === 0 ? 6 : 5);
+          main.position.y = h / 2; main.scale.set(1, 1, 0.72 + Math.random() * 0.3);   // บี้บให้เหลี่ยมไม่กลม
+          main.rotation.y = Math.random() * Math.PI;
+          cl.add(main);
+          const nOff = k === 0 ? 3 : 1;
+          for (let j = 0; j < nOff; j++) {                                     // หน่อแตกข้างแท่งหลัก
+            const hh = h * (0.28 + Math.random() * 0.26);
+            const off = shard(hh, (k === 0 ? 0.18 : 0.1) * (0.8 + Math.random() * 0.5), 4);
+            const aa = Math.random() * Math.PI * 2;
+            off.position.set(Math.cos(aa) * (k === 0 ? 0.3 : 0.14), h * (0.22 + Math.random() * 0.4), Math.sin(aa) * (k === 0 ? 0.3 : 0.14));
+            off.rotation.set(Math.sin(aa) * 0.7, 0, -Math.cos(aa) * 0.7);
+            cl.add(off);
+          }
+          const core = new THREE.Mesh(new THREE.ConeGeometry((k === 0 ? 0.2 : 0.09), h * 0.8, 4), lit);
+          core.position.y = h * 0.42; cl.add(core);                            // ✨ แกนเรืองข้างใน
+          cl.position.set(k === 0 ? 0 : Math.cos(a) * (0.55 + Math.random() * 0.25), 0, k === 0 ? 0 : Math.sin(a) * (0.55 + Math.random() * 0.25));
+          if (k) { cl.rotation.z = -Math.cos(a) * 0.3; cl.rotation.x = Math.sin(a) * 0.3; }
+          cl.traverse((o2) => { o2.raycast = () => {}; });
+          g.add(cl);
+        }
+        // ❄️ วงน้ำค้างบนพื้น + ไอเย็นลอยต่ำ ๆ + ประกายวาบ
+        const frost = new THREE.Mesh(new THREE.RingGeometry(0.45, 1.5, 22),
+          new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+        frost.rotation.x = -Math.PI / 2; frost.position.y = 0.02; frost.raycast = () => {};
+        g.add(frost); mats.push(frost.material);
+        const mist = [];
+        for (let i = 0; i < 12; i++) {
+          const mm = new THREE.SpriteMaterial({ map: FT, color: 0xe6f8ff, transparent: true, opacity: 0, depthWrite: false });
+          const sp = new THREE.Sprite(mm); sp.raycast = () => {};
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { a: aa, r0: 0.3 + Math.random() * 0.5, spd: 0.7 + Math.random() * 0.9,
+            y0: 0.5 + Math.random() * 0.9, off: Math.random() * 0.5, s0: 0.6 + Math.random() * 0.6 };
+          g.add(sp); mats.push(mm); mist.push(sp);
+        }
+        const glints = [];
+        for (let i = 0; i < 9; i++) {
+          const mm = new THREE.SpriteMaterial({ map: FT, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+          const sp = new THREE.Sprite(mm); sp.raycast = () => {};
+          const aa = Math.random() * Math.PI * 2, rr = Math.random() * 0.7;
+          sp.position.set(Math.cos(aa) * rr, 0.35 + Math.random() * 1.7, Math.sin(aa) * rr);
+          sp.userData = { ph: Math.random() * 6.3, sp2: 5 + Math.random() * 6, s: 0.14 + Math.random() * 0.14 };
+          g.add(sp); mats.push(mm); glints.push(sp);
         }
         const tp = target ? target.position : char.position;
         g.position.set(tp.x, 0, tp.z); g.scale.set(1, 0.02, 1);
-        g.userData = { kind: "spike", t: 0, up: 0.16, hold: 1.0, out: 0.3, target, onShatter, col, mats: [ice], done: false };
+        g.userData = { kind: "spike", t: 0, up: 0.18, hold: 1.0, out: 0.34, target, onShatter, col, mats, mist, glints, ice, lit, done: false };
         scene.add(g); magicFx.push(g);
       } catch (e) {}
     };
@@ -30571,21 +30700,44 @@ export default function CherryAdventure() {
             sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (ud.inner ? 0.5 : 0.32) * out2;
           }
           if (p >= 1) kill();
-        } else {                                                // 🧊 แท่งน้ำแข็ง: ผุดขึ้น → ค้างแช่แข็ง → แตก
+        } else {                                                // 🧊 แท่งน้ำแข็ง: ผุดขึ้น → ค้างแช่แข็ง → แตกละเอียด
+          const tot = u.up + u.hold + u.out;
+          const brk = u.t >= u.up + u.hold;
+          const pOut = brk ? Math.min(1, (u.t - u.up - u.hold) / u.out) : 0;
           if (u.t < u.up) {
             const h = u.t / u.up;
             o.scale.set(1, 0.02 + h * 1.08, 1);
-          } else if (u.t < u.up + u.hold) {
+            u.ice.opacity = 0.58 * h;
+          } else if (!brk) {
             o.scale.set(1, 1.0 + Math.sin(u.t * 9) * 0.02, 1);
-            u.mats[0].emissiveIntensity = 0.5 + Math.abs(Math.sin(u.t * 5)) * 0.5;
+            u.ice.emissiveIntensity = 0.35 + Math.abs(Math.sin(u.t * 4)) * 0.35;
+            u.lit.opacity = 0.24 + Math.abs(Math.sin(u.t * 3.4)) * 0.18;
             if (u.target && wilds.indexOf(u.target) >= 0) u.target.userData.frzT = Math.max(u.target.userData.frzT || 0, 0.2); // ❄️ ตรึงไว้ตลอดที่น้ำแข็งยังอยู่
           } else {
             if (!u.done) { u.done = true; if (u.onShatter) { try { u.onShatter(o.position.x, o.position.z); } catch (e2) {} } }
-            const p = Math.min(1, (u.t - u.up - u.hold) / u.out);
-            o.scale.set(1 + p * 0.5, 1 - p * 0.7, 1 + p * 0.5);
-            u.mats[0].opacity = 0.75 * (1 - p);
-            if (p >= 1) kill();
+            o.scale.set(1 + pOut * 0.45, 1 - pOut * 0.72, 1 + pOut * 0.45);
+            u.ice.opacity = 0.58 * (1 - pOut);
+            u.lit.opacity = 0.3 * (1 - pOut);
           }
+          // ❄️ ไอเย็นแผ่ออกและจมลงต่ำ (อากาศเย็นไหลลง ต่างจากควันไฟที่ลอยขึ้น)
+          const pAll = Math.min(1, u.t / tot);
+          for (let mi = 0; mi < u.mist.length; mi++) {
+            const sp = u.mist[mi], ud = sp.userData;
+            const k = Math.max(0, Math.min(1, (pAll - ud.off) / Math.max(0.15, 1 - ud.off)));
+            const rr = ud.r0 + k * ud.spd * 1.7;
+            sp.position.set(Math.cos(ud.a) * rr, ud.y0 * (1 - k * 0.72) + 0.1, Math.sin(ud.a) * rr);
+            const ss = ud.s0 * (0.5 + k * 1.5); sp.scale.set(ss, ss * 0.8, 1);
+            sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * 0.3;
+          }
+          for (let gi = 0; gi < u.glints.length; gi++) {        // ✨ ประกายวาบบนผิวน้ำแข็ง
+            const sp = u.glints[gi], ud = sp.userData;
+            const tw = Math.max(0, Math.sin(u.t * ud.sp2 + ud.ph));
+            const ss = ud.s * (0.4 + tw * 0.9); sp.scale.set(ss, ss, 1);
+            sp.material.opacity = tw * tw * 0.9 * (1 - pOut);
+          }
+          const fr = u.mats[2];                                  // วงน้ำค้างบนพื้น
+          fr.opacity = Math.min(0.45, pAll * 2.2) * (1 - pOut * 0.9);
+          if (pOut >= 1) kill();
         }
       }
     };
