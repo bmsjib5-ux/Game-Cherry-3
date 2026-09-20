@@ -37960,6 +37960,7 @@ function CherryAdventure() {
                         cx2.fill();
                     }
                     tx = new THREE.CanvasTexture(cv);
+                    tx.userData = tx.userData || {}; // ⚠️ three r128 ยังไม่มี Texture.userData — ไม่ตั้งเองจะโยน error แล้วคืน null ทุกครั้ง
                     tx.userData._shared = true; // ใช้ซ้ำทุกเอฟเฟคต์ — อย่าให้ตัวเก็บกวาดเอฟเฟคต์ไป dispose
                 }
                 catch (_) {
@@ -38155,17 +38156,17 @@ function CherryAdventure() {
                             _oc.copy(tint).lerp(FIRE_HOT, Math.max(0, 0.55 - k));
                         }
                         sp.material.color.copy(_oc);
-                        sp.material.opacity = Math.sin(k * Math.PI) * (u2.core ? 0.55 : 0.34);
+                        sp.material.opacity = Math.sin(k * Math.PI) * (u2.core ? 1.0 : 0.66);
                     }
                     for (let i = 0; i < sparks.length; i++) {
                         const sp = sparks[i], u2 = sp.userData;
                         sp.position.set(u2.vx * pr, 0.7 + u2.vy * pr * (1 - pr * 0.5), u2.vz * pr);
                         const ss = u2.s * (1 - pr * 0.4);
                         sp.scale.set(ss, ss, 1);
-                        sp.material.opacity = Math.sin(pr * Math.PI) * 0.8;
+                        sp.material.opacity = Math.sin(pr * Math.PI) * 1.0;
                     }
                     const fk2 = Math.max(0, 1 - pr / 0.35);
-                    flash.material.opacity = fk2 * 0.6;
+                    flash.material.opacity = fk2 * 0.95;
                     flash.scale.setScalar(0.7 + (1 - fk2) * 1.6);
                 };
             }
@@ -39174,7 +39175,7 @@ function CherryAdventure() {
                         if (!u2.inner && k > 0.6)
                             _fc.multiplyScalar(1 - (k - 0.6) * 0.5);
                         sp.material.color.copy(_fc);
-                        sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (u2.inner ? 0.5 : 0.32) * out;
+                        sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (u2.inner ? 0.95 : 0.62) * out;
                     }
                     for (let i = 0; i < embers.length; i++) {
                         const sp = embers[i], u2 = sp.userData;
@@ -39188,7 +39189,7 @@ function CherryAdventure() {
                         sp.position.set(u2.x + u2.vx * k + Math.sin(tt * 6 + u2.sway) * 0.1, 0.18 + u2.vy * k * (1 - k * 0.25), u2.z + u2.vz * k);
                         const es = u2.s * (1 - k * 0.5);
                         sp.scale.set(es, es, 1);
-                        sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * 0.7 * out;
+                        sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * 1.0 * out;
                     }
                     for (let i = 0; i < smoke.length; i++) {
                         const sp = smoke[i], u2 = sp.userData;
@@ -39202,12 +39203,12 @@ function CherryAdventure() {
                         sp.position.set(u2.x + Math.sin(tt * 2.2 + u2.sway) * 0.3 * k, 0.6 + u2.vy * lt, u2.z + Math.cos(tt * 1.9 + u2.sway) * 0.3 * k);
                         const ss = u2.s0 * (0.5 + k * 1.7);
                         sp.scale.set(ss, ss, 1);
-                        sp.material.opacity = Math.sin(k * Math.PI) * 0.42;
+                        sp.material.opacity = Math.sin(k * Math.PI) * 0.6;
                     }
                     const flick = 0.78 + Math.sin(tt * 21) * 0.12 + Math.sin(tt * 37) * 0.08;
-                    base.material.opacity = 0.42 * out * flick;
+                    base.material.opacity = 0.8 * out * flick;
                     base.scale.set(2.3 * (0.9 + flick * 0.15), 0.9 * (0.85 + flick * 0.2), 1);
-                    hot.material.opacity = 0.26 * out * flick;
+                    hot.material.opacity = 0.4 * out * flick;
                     hot.scale.setScalar(1 + pr * 0.3);
                     scorch.material.opacity = Math.min(0.55, pr * 1.6) * (pr > 0.8 ? (1 - pr) / 0.2 : 1);
                 };
@@ -46614,6 +46615,8 @@ function CherryAdventure() {
         //   · โลกกว้าง — วิ่งไล่กัดมอนสเตอร์รอบตัวเจ้าของเอง ไม่มีเป้าก็วิ่งตามเป็นวง
         //   · สนามต่อสู้ — เข้าแถวข้างเชอร์รี่ แล้วรุมกัดศัตรูให้ทุกเทิร์นก่อนถึงตาของมัน
         const summons = [];
+        // 🐾 ตำแหน่งยืนของฝูงในสนามต่อสู้ (ระยะจากจุดกลางเวที) — กระจายฝั่งเชอร์รี่ เลี่ยงจุดยืนของเพื่อนซี้ (-2.8, +1.1)
+        const SUMMON_SLOT = [[-2.7, -1.6], [-3.6, 0.3], [-2.9, 2.2], [-4.3, 1.7], [-4.4, -0.7]];
         const clearSummons = (quiet) => {
             for (const s of summons) {
                 if (!s.m)
@@ -46655,6 +46658,64 @@ function CherryAdventure() {
                 out.push({ sp: pool[Math.floor(Math.random() * pool.length)], stage: 1, lv: 1, mut: 0 });
             return out;
         };
+        // 🐾 ป้ายบอกว่าเป็นสัตว์ของเรา — วงแหวนเขียวใต้เท้า + รอยเท้าลอยเหนือหัว
+        //    (พอเรียกมาตัวเท่ามอนสเตอร์ปกติ ต้องแยกออกจากมอนป่าให้ออกทันที)
+        const allyPawTex = (() => {
+            let tx = null;
+            return () => {
+                if (tx)
+                    return tx;
+                const cv = document.createElement("canvas");
+                cv.width = cv.height = 128;
+                const cx2 = cv.getContext("2d");
+                // เหรียญเขียวขอบขาว — อ่านออกทันทีว่าเป็นฝ่ายเรา ไม่ขึ้นกับว่าอิโมจิ 🐾 บนเครื่องเครื่องนั้นจะออกสีอะไร
+                cx2.beginPath();
+                cx2.arc(64, 64, 46, 0, Math.PI * 2);
+                cx2.fillStyle = "rgba(24,70,16,0.55)";
+                cx2.fill();
+                cx2.beginPath();
+                cx2.arc(64, 64, 41, 0, Math.PI * 2);
+                const gd2 = cx2.createLinearGradient(0, 22, 0, 106);
+                gd2.addColorStop(0, "#9df06a");
+                gd2.addColorStop(1, "#3fae2a");
+                cx2.fillStyle = gd2;
+                cx2.fill();
+                cx2.lineWidth = 6;
+                cx2.strokeStyle = "rgba(255,255,255,0.95)";
+                cx2.stroke();
+                cx2.font = "52px system-ui";
+                cx2.textAlign = "center";
+                cx2.textBaseline = "middle";
+                cx2.fillText("🐾", 64, 70);
+                tx = new THREE.CanvasTexture(cv);
+                tx.userData = tx.userData || {}; // ⚠️ three r128 ยังไม่มี Texture.userData มาให้
+                tx.userData._shared = true; // ♻️ ใช้ร่วมทุกตัว — ห้าม dispose ตอนเก็บฝูง
+                return tx;
+            };
+        })();
+        const markAlly = (m) => {
+            let top = 1.6, rad = 0.7;
+            try {
+                const b = new THREE.Box3().setFromObject(m);
+                if (isFinite(b.max.y))
+                    top = b.max.y;
+                if (isFinite(b.max.x))
+                    rad = Math.max(0.5, ((b.max.x - b.min.x) + (b.max.z - b.min.z)) * 0.25 + 0.2); // รัศมีจากค่าเฉลี่ยกว้าง×ลึก — ตัวยาวอย่างหมาป่าจะได้วงที่พอดี ไม่กว้างเกิน
+            }
+            catch (eMk) { }
+            const ring = new THREE.Mesh(new THREE.RingGeometry(rad, rad + 0.17, 32), new THREE.MeshBasicMaterial({ color: 0x4ee62a, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false }));
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.05;
+            m.add(ring);
+            const paw = new THREE.Sprite(new THREE.SpriteMaterial({ map: allyPawTex(), transparent: true, depthTest: false, fog: false }));
+            paw.scale.set(0.78, 0.78, 1);
+            paw.position.y = top + 0.55;
+            m.add(paw);
+            m.userData.allyRing = ring;
+            m.userData.allyMark = paw;
+            m.userData.allyTop = top;
+            return rad;
+        };
         G.summonPack = (n, dur) => {
             n = Math.max(1, Math.min(5, n || 3));
             dur = dur || 60;
@@ -46674,13 +46735,14 @@ function CherryAdventure() {
                 }
                 if (!m)
                     return;
-                m.scale.multiplyScalar(0.52); // 🐾 เล็กกว่าเพื่อนซี้ — ออกมาพร้อมกันหลายตัวแล้วไม่บังจอ
                 vivify(m);
+                const rad = markAlly(m); // 🐾 ตัวเท่ามอนสเตอร์ปกติ — ติดป้ายฝูงของเราไว้แทนการย่อขนาด
                 const ang = (i / picks.length) * Math.PI * 2 + Math.random() * 0.6;
-                m.position.set(char.position.x + Math.sin(ang) * 1.9, 0, char.position.z + Math.cos(ang) * 1.9);
+                const sr = 2.6 + rad;
+                m.position.set(char.position.x + Math.sin(ang) * sr, 0, char.position.z + Math.cos(ang) * sr);
                 m.userData.summon = true;
                 scene.add(m);
-                summons.push({ m, cd: 0.35 + i * 0.22, reT: 0, tgt: null, lunge: null });
+                summons.push({ m, rad, cd: 0.35 + i * 0.22, reT: 0, tgt: null, lunge: null });
                 try {
                     spawnSkillFx("summonpop", m.position, 0x9ae06a);
                     burst(m.position, 0x9ae06a, 0.7);
@@ -46761,7 +46823,8 @@ function CherryAdventure() {
                         s.lunge = null;
                 }
                 else if (battle) { // 🥊 ในสนาม: เข้าแถวเฉียงข้างเชอร์รี่ รอจังหวะรุมกัด
-                    const gx = battleCenter.x - 2.0 - i * 0.55, gz = battleCenter.z + 1.2 + i * 0.75;
+                    const SL = SUMMON_SLOT[i % SUMMON_SLOT.length];
+                    const gx = battleCenter.x + SL[0], gz = battleCenter.z + SL[1];
                     m.position.x += (gx - m.position.x) * Math.min(1, dt * 5);
                     m.position.z += (gz - m.position.z) * Math.min(1, dt * 5);
                 }
@@ -46788,7 +46851,7 @@ function CherryAdventure() {
                     if (tg && wilds.indexOf(tg) >= 0) {
                         const dx = tg.position.x - m.position.x, dz = tg.position.z - m.position.z;
                         const d = Math.hypot(dx, dz) || 1;
-                        const stand = 1.0 + (tg.scale ? tg.scale.x : 1) * 0.45;
+                        const stand = 0.85 + (s.rad || 0.7) + (tg.scale ? tg.scale.x : 1) * 0.45; // 🐾 ตัวใหญ่ขึ้น ก็ต้องยืนห่างขึ้น ไม่งั้นตัวทะลุกัน
                         gx = tg.position.x - (dx / d) * stand;
                         gz = tg.position.z - (dz / d) * stand;
                         spd = 7.4;
@@ -46801,8 +46864,9 @@ function CherryAdventure() {
                     }
                     else { // 🐕 ไม่มีเป้า = วิ่งวนตามหลังเจ้าของ
                         const ang = (i / summons.length) * Math.PI * 2 + t * 0.5;
-                        gx = char.position.x - Math.sin(char.rotation.y) * 2.1 + Math.cos(ang) * 1.15;
-                        gz = char.position.z - Math.cos(char.rotation.y) * 2.1 + Math.sin(ang) * 1.15;
+                        const fr = 1.8 + (s.rad || 0.7);
+                        gx = char.position.x - Math.sin(char.rotation.y) * 3.4 + Math.cos(ang) * fr;
+                        gz = char.position.z - Math.cos(char.rotation.y) * 3.4 + Math.sin(ang) * fr;
                     }
                     const mx = gx - m.position.x, mz = gz - m.position.z, md = Math.hypot(mx, mz);
                     if (md > 0.07) {
@@ -46828,6 +46892,14 @@ function CherryAdventure() {
                 }
                 if (m.userData.body)
                     m.userData.body.position.y = (FLOATY[m.userData.spId] ? 0.95 : 0.5) + Math.abs(Math.sin(t * 7 + i * 1.3)) * 0.09;
+                // 🐾 ป้ายฝูงของเรา — วงเต้นเบา ๆ และรอยเท้าลอยขึ้นลง
+                if (m.userData.allyRing) {
+                    const ar = m.userData.allyRing;
+                    ar.scale.setScalar(1 + Math.sin(t * 3 + i * 1.7) * 0.06);
+                    ar.material.opacity = 0.72 + Math.sin(t * 3 + i * 1.7) * 0.16;
+                }
+                if (m.userData.allyMark)
+                    m.userData.allyMark.position.y = (m.userData.allyTop || 1.6) + 0.5 + Math.sin(t * 2.4 + i * 1.1) * 0.09;
                 if (G._animPetFx)
                     G._animPetFx(m, t); // ✨ หมุนดาว/วงเวทประจำตัวสัตว์
             }
@@ -48606,7 +48678,7 @@ function CherryAdventure() {
                             sp.position.set(ud.x + ud.vx * k + Math.sin(u.t * 6 + ud.sway) * 0.1, 0.2 + ud.vy * k * (1 - k * 0.25), ud.z + ud.vz * k);
                             const es = ud.s * (1 - k * 0.45);
                             sp.scale.set(es, es, 1);
-                            sp.material.opacity = Math.sin(k * Math.PI) * 0.75 * out2;
+                            sp.material.opacity = Math.sin(k * Math.PI) * 1.0 * out2;
                             continue;
                         }
                         const k = (u.t * 1.45 + ud.off) % 1; // ลิ้นไฟไหลขึ้นเรื่อย ๆ คนละจังหวะ
@@ -48619,7 +48691,7 @@ function CherryAdventure() {
                         if (!ud.inner && k > 0.6)
                             fc.multiplyScalar(1 - (k - 0.6) * 0.5);
                         sp.material.color.copy(fc);
-                        sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (ud.inner ? 0.5 : 0.32) * out2;
+                        sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (ud.inner ? 0.95 : 0.62) * out2;
                     }
                     if (p >= 1)
                         kill();
