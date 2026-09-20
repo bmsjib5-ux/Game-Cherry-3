@@ -9718,7 +9718,7 @@ function CherryAdventure() {
             sword_2handed: { url: "assets/kaykit/sword_2handed.gltf", s: 0.75, gripY: 0.12, gripZ: 0 },
             dagger: { url: "assets/kaykit/dagger.gltf", s: 0.75, gripY: 0.1, gripZ: 0 },
             staff: { url: "assets/kaykit/staff.gltf", s: 1.25, gripY: 0.65, gripZ: 0 },
-            bow: { url: "assets/kaykit/bow_withString.gltf", s: 0.95, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] },
+            bow: { url: "assets/kaykit/bow_withString.gltf", s: 0.72, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] }, // 🏹 ย่อลงให้ได้สัดส่วนกับตัวละคร ปลายคันไม่ทิ่มพื้น
             shield: { url: "assets/kaykit/shield_round.gltf", s: 0.8, gripY: 0.12, gripZ: 0.04, rot: [0, -Math.PI / 2, 0] },
             // ⚔️ KayKit Fantasy Weapons Bits (CC0)
             swordWood: { url: "assets/kaykit/weapons/sword_A.gltf", s: 0.88, gripY: 0.1, gripZ: 0 },
@@ -9728,7 +9728,7 @@ function CherryAdventure() {
             daggerB: { url: "assets/kaykit/weapons/dagger_B.gltf", s: 0.7, gripY: 0.1, gripZ: 0 },
             staffWood: { url: "assets/kaykit/weapons/staff_A.gltf", s: 1.15, gripY: 0.3, gripZ: 0 },
             staffGem: { url: "assets/kaykit/weapons/staff_B.gltf", s: 1.1, gripY: 0.35, gripZ: 0 },
-            bowA: { url: "assets/kaykit/weapons/bow_A_withString.gltf", s: 0.9, gripY: 0, gripZ: 0, rot: [0, Math.PI / 2, Math.PI / 2] },
+            bowA: { url: "assets/kaykit/weapons/bow_A_withString.gltf", s: 0.68, gripY: 0, gripZ: 0, rot: [0, Math.PI / 2, Math.PI / 2] },
             bowB: { url: "assets/kaykit/weapons/bow_B_withString.gltf", s: 0.9, gripY: 0, gripZ: 0, rot: [0, Math.PI / 2, Math.PI / 2] },
             spear: { url: "assets/kaykit/weapons/spear_A.gltf", s: 0.72, gripY: 0, gripZ: 0 },
             halberd: { url: "assets/kaykit/weapons/halberd.gltf", s: 0.8, gripY: 0.1, gripZ: 0 },
@@ -47905,6 +47905,7 @@ function CherryAdventure() {
                 fl.position.z = -0.32;
                 g.add(st, hd, fl);
                 g.traverse((o) => { o.raycast = () => { }; });
+                g.scale.setScalar(1.3); // 🏹 ใหญ่ขึ้นนิด มองเห็นชัดตอนพุ่งข้ามจอ
                 g.position.copy(from);
                 g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), to.clone().sub(from).normalize());
                 g.visible = !delay;
@@ -49761,7 +49762,32 @@ function CherryAdventure() {
                     kill();
                     continue;
                 }
-                if (u.kind === "beam") { // 🎯 ลำแสงยืดออกวาบเดียวแล้วจาง
+                if (u.kind === "arrow") { // 🏹 ลูกธนูพุ่งจากคันธนูไปหาเป้า
+                    // ⚠️ เดิม spawnArrow สร้าลูกธนูขึ้นมาจริง แต่ไม่มีโค้ดขยับเลย — ลูกธนูจึงค้างนิ่งที่ปลายคันธนู และ onHit ไม่เคยทำงาน
+                    if (u.t < u.delay) {
+                        o.visible = false;
+                    }
+                    else {
+                        o.visible = true;
+                        const pa = Math.min(1, (u.t - u.delay) / u.dur);
+                        const ax = u.from.x + (u.to.x - u.from.x) * pa;
+                        const az = u.from.z + (u.to.z - u.from.z) * pa;
+                        const ay = u.from.y + (u.to.y - u.from.y) * pa + Math.sin(pa * Math.PI) * 0.2; // วิถีโค้งเล็กน้อย
+                        o.position.set(ax, ay, az);
+                        if (pa < 0.98)
+                            o.lookAt(u.to.x, u.to.y - 0.05, u.to.z); // หัวลูกธนูชี้ไปทางที่บิน
+                        if (pa >= 1) {
+                            if (u.onHit) {
+                                try {
+                                    u.onHit(u.to.x, u.to.z);
+                                }
+                                catch (eAr) { }
+                            }
+                            kill();
+                        }
+                    }
+                }
+                else if (u.kind === "beam") { // 🎯 ลำแสงยืดออกวาบเดียวแล้วจาง
                     const pb = Math.min(1, u.t / u.dur);
                     o.scale.set(1 + pb * 0.6, 1 + pb * 0.6, pb < 0.13 ? pb / 0.13 : 1);
                     u.mats.forEach((m, k) => (m.opacity = (0.95 - k * 0.22) * (1 - Math.pow(pb, 1.7))));
@@ -51164,7 +51190,24 @@ function CherryAdventure() {
                 dmg *= 1 + talB("bossDmg") / 100; // 📜 ล่าบอส (โลกกว้าง)
             // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
             if (worldRange() > 4 && G.cls !== "tamer") { // 🐾 ผู้ฝึกสัตว์ระยะ 5.2 แต่ใช้ท่าประชิด (เพื่อนซี้พุ่งไปกัด)
-                spawnSkillFx(G.cls === "archer" ? "arrowpierce" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
+                if (G.cls === "archer") {
+                    // 🏹 ยิงธรรมดา — เห็นลูกธนูพุ่งจากคันธนูไปถึงตัวมอน แล้วค่อยแตกตอนปัก
+                    const acol = crit ? 0xffd24a : 0xf5d24a;
+                    const ahy = 0.85 + (m.scale ? m.scale.y : 1) * 0.3;
+                    const adist = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
+                    const adur = Math.max(0.16, Math.min(0.34, adist / 26)); // ยิ่งไกลยิ่งใช้เวลาบินนาน — เห็นลูกธนูชัดทุกระยะ
+                    try {
+                        spawnArrow(bowMuzzle(), new THREE.Vector3(m.position.x, ahy, m.position.z), acol, adur, () => {
+                            spawnSkillFx("arrowpierce", m.position, acol);
+                            burst(m.position, acol, 0.7);
+                        });
+                    }
+                    catch (_) {
+                        spawnSkillFx("arrowpierce", m.position, acol);
+                    }
+                }
+                else
+                    spawnSkillFx("orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
             }
             else {
                 worldGestureFx(m.position, crit ? 0xffd24a : 0xffe08a);
@@ -51318,6 +51361,17 @@ function CherryAdventure() {
                 hurtWild(m, d, { crit, color: col });
             };
             const fk = fk0, arch = arch0;
+            // 🏹 สกิลนักธนู: ยิงลูกธนูให้เห็นจริงทุกท่า (เว้นท่าที่ยิงจากฟ้า/ขึ้นจากพื้นอยู่แล้ว)
+            if (G.cls === "archer" && focus && arch !== "arrowrain" && arch !== "vine" && arch !== "rootcurse") {
+                try {
+                    const nAr = Math.max(1, Math.min(5, sk.hits || 1));
+                    const ahy2 = 0.85 + (focus.scale ? focus.scale.y : 1) * 0.3;
+                    for (let ka = 0; ka < nAr; ka++) {
+                        spawnArrow(bowMuzzle(), new THREE.Vector3(focus.position.x + (Math.random() - 0.5) * 0.35, ahy2 + (Math.random() - 0.5) * 0.3, focus.position.z + (Math.random() - 0.5) * 0.35), col, Math.max(0.16, Math.min(0.34, Math.hypot(focus.position.x - char.position.x, focus.position.z - char.position.z) / 26)) + Math.random() * 0.03, null, ka * 0.06);
+                    }
+                }
+                catch (_) { }
+            }
             // 🥷 ส่งเงาออกไปทีละร่าง — ดาเมจรวมเท่าเดิม หารเป็น 3 ครั้ง
             const shadowFire = arch !== "shadow3" ? null : (idx) => {
                 const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 8);
@@ -62751,9 +62805,15 @@ function CherryAdventure() {
                         wand.scale.set(1, 1, 1);
                     }
                     if (G.cls === "archer") {
-                        // 🏹 sling the bow across the back while roaming (diagonal, behind the torso)
-                        wand.position.set(-0.15, -0.4, -0.5); // move up & behind the shoulder
-                        wand.rotation.set(0.3, -Math.PI / 2, Math.PI / 4); // diagonal like a slung bow
+                        // 🏹 เดิน/วิ่ง = ถือคันธนูไว้ในมือข้างลำตัว เอียงไปข้างหลังเล็กน้อย
+                        //    ⚠️ ของเดิม "สะพายหลัง" โดยเลื่อนออกหลังข้อศอก 0.5 — แต่นั่นเป็นพิกัดของ "แขน"
+                        //       พอแขนแกว่งตอนเดิน คันธนูจึงลอยห่างออกจากมือ/ตัว ไม่ติดหลังจริง
+                        const elx0 = armR.userData.elbow ? armR.userData.elbow.rotation.x : 0;
+                        armR.rotation.z = ARM_OUT; // กางแขนออกนิดหน่อย คันธนูจะได้ไม่เสียดขา
+                        if (armR.userData.elbow)
+                            armR.userData.elbow.rotation.x = elx0 * 0.5 - 0.12;
+                        wand.position.set(0.03, -0.50, 0.04); // อยู่ในฝ่ามือเหมือนอาวุธชิ้นอื่น
+                        wand.rotation.set(-(armR.rotation.x + (armR.userData.elbow ? armR.userData.elbow.rotation.x : 0)) - 1.18, -Math.PI / 2, 0); // เอียง ~54° ปลายล่างไม่ทิ่มพื้น
                     }
                     if (G.cls === "lancer") {
                         // 🔱 ถือหอกสองมือระดับเอว — ปลายสามแฉกชี้ไปทิศที่ตัวละครหัน ขนานพื้นเอียงลงเล็กน้อย
