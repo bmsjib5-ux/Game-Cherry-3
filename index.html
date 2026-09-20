@@ -1337,7 +1337,7 @@ const PATH_ADV = {
         ] },
     t_beast: { ult: { name: "ราชันพงไพรเรียกฝูงอสูร", emoji: "🐺👑", mul: 1.72, stun: true, bleed: 5, defDown: 14, buffTeam: true, desc: "เป่านกหวีดจ่าฝูง — หมาป่า เสือ หมี และสรรพสัตว์ทั้งพงไพรพุ่งเข้าขย้ำพร้อมกัน ปิดท้ายจ่าฝูงกระโจนฉีกเกราะ เลือดไหล + สตัน + Alpha Howl (คริ/ความเร็ว/หลบให้ทีม)" }, skills: [
             { id: "x_bst_1", cost: 7, name: "เขี้ยวจ่าฝูง", emoji: "🐺", color: 0x8a6a3a, mult: 0.8, perLv: 0.18, hits: 4, bleed: 3, critBonus: 0.25, fx: "multi", desc: "สั่งฝูงหมาป่าตะครุบสลับ ×4 · เลือดไหล + คริสูง" },
-            { id: "x_bst_2", cost: 10, name: "คำรามราชสีห์", emoji: "🦁", color: 0xd08a3a, mult: 1.75, perLv: 0.36, defDown: 12, slow: true, stun: true, buffCrit: 10, fx: "quake", desc: "ราชสีห์คำรามสะเทือนทั้งวง AoE · ทำลายเกราะ + ช้าลง + ข่มขวัญจนสตัน" },
+            { id: "x_bst_2", cost: 10, name: "คำรามราชสีห์", emoji: "🦁", color: 0xd08a3a, mult: 1.75, perLv: 0.36, defDown: 12, slow: true, stun: true, buffCrit: 10, summon: 4, summonDur: 75, fx: "quake", desc: "ราชสีห์คำรามสะเทือนทั้งวง AoE · ทำลายเกราะ + ช้าลง + ข่มขวัญจนสตัน + เรียกสัตว์ 4 ตัวมาช่วยรบ 75 วิ 🐾" },
             { id: "x_bst_3", cost: 13, name: "กรงเล็บมัจจุราช", emoji: "🐯", color: 0xe8622a, mult: 2.4, perLv: 0.5, critBonus: 0.4, bleed: 5, defDown: 8, fx: "slash", desc: "เสือคู่ใจตะปบกรงเล็บฉีกอก · คริสูง + เลือดไหลหนัก" },
             { id: "x_bst_4", cost: 16, name: "ขย้ำสังหารจ่าฝูง", emoji: "🐾", color: 0xffd9a0, mult: 3.1, perLv: 0.64, guaranteedCrit: true, stun: true, bleed: 4, defDown: 10, fx: "bolt", desc: "จ่าฝูงกระโจนขย้ำลำคอ คริการันตี · สตัน + เลือดไหล + ทำลายเกราะ" }
         ] },
@@ -1450,7 +1450,7 @@ const CLASS_SKILLS = {
         { id: "t_bite", cost: 6, name: "สั่งกัด!", emoji: "🐾", color: 0x5a9a3a, mult: 1.6, perLv: 0.34, bleed: 3, fx: "stab", desc: "ชี้เป้าให้เพื่อนซี้พุ่งกัด เลือดไหล 3 เทิร์น 🩸" },
         { id: "t_roar", cost: 8, name: "คำรามข่มขวัญ", emoji: "🦁", color: 0xd08a3a, mult: 1.2, perLv: 0.26, defDown: 6, slow: true, fx: "quake", desc: "สัตว์คู่ใจคำรามสะเทือน ลดป้องกัน + ทำให้ช้า 🌍" },
         { id: "t_bond", cost: 9, name: "สายใยผูกพัน", emoji: "💞", color: 0xf5a6c8, mult: 0.9, perLv: 0.2, heal: 0.25, buffDef: 4, buffCrit: 8, fx: "heal", desc: "ประสานใจกับเพื่อนซี้ ฟื้น HP 25% ป้องกัน+4 คริ+8% ✨" },
-        { id: "t_stampede", cost: 11, name: "ฝูงสัตว์ทะยาน", emoji: "🐗", color: 0x8a6a3a, mult: 0.7, perLv: 0.18, hits: 4, stun: true, summon: 3, summonDur: 60, cd: 45, fx: "multi", desc: "เรียกฝูงพุ่งเหยียบ 4 ระลอก แล้วสัตว์ 3 ตัวอยู่ช่วยรบต่ออีก 60 วิ 🐾" },
+        { id: "t_stampede", cost: 11, name: "ฝูงสัตว์ทะยาน", emoji: "🐗", color: 0x8a6a3a, mult: 0.7, perLv: 0.18, hits: 4, stun: true, summon: 3, summonDur: 60, fx: "multi", desc: "เรียกฝูงพุ่งเหยียบ 4 ระลอก แล้วสัตว์ 3 ตัวอยู่ช่วยรบต่ออีก 60 วิ 🐾" },
         { id: "t_wild", cost: 12, name: "สัญชาตญาณป่า", emoji: "🌿", color: 0x3ad06a, mult: 2.1, perLv: 0.46, critBonus: 0.3, rage: true, fx: "rage", desc: "ปลุกสัญชาตญาณดิบ โจมตีหนัก คริสูง + เข้าโหมดคลั่ง 🔥" },
     ],
 };
@@ -46615,6 +46615,7 @@ function CherryAdventure() {
         //   · โลกกว้าง — วิ่งไล่กัดมอนสเตอร์รอบตัวเจ้าของเอง ไม่มีเป้าก็วิ่งตามเป็นวง
         //   · สนามต่อสู้ — เข้าแถวข้างเชอร์รี่ แล้วรุมกัดศัตรูให้ทุกเทิร์นก่อนถึงตาของมัน
         const summons = [];
+        const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
         // 🐾 ตำแหน่งยืนของฝูงในสนามต่อสู้ (ระยะจากจุดกลางเวที) — กระจายฝั่งเชอร์รี่ เลี่ยงจุดยืนของเพื่อนซี้ (-2.8, +1.1)
         const SUMMON_SLOT = [[-2.7, -1.6], [-3.6, 0.3], [-2.9, 2.2], [-4.3, 1.7], [-4.4, -0.7]];
         const clearSummons = (quiet) => {
@@ -46631,12 +46632,23 @@ function CherryAdventure() {
                 if (G._disposeObj3D)
                     G._disposeObj3D(s.m);
             }
+            const had = summons.length;
             summons.length = 0;
             G.summonT = 0;
             G._summonSec = 0;
+            // ⏳ ฝูงกลับป่าแล้วพัก 10 วิค่อยเรียกใหม่ — คุมของ ยูนิตฝูง ไม่ไปถ่วงคูลดาวน์ท่าตีของสกิล
+            if (had)
+                G._summonLock = nowMs() + 10000;
             setUi((u) => (u.summonLeft ? { ...u, summonLeft: 0 } : u));
         };
         G.clearSummons = clearSummons;
+        // 🐾 เรียกฝูงใหม่ได้หรือยัง — 0 = ยัง, ตัวเลข = วินาทีที่ต้องรอ
+        G.summonWait = () => {
+            if (summons.length)
+                return Math.max(1, Math.ceil(G.summonT || 0));
+            const left = ((G._summonLock || 0) - nowMs()) / 1000;
+            return left > 0 ? Math.ceil(left) : 0;
+        };
         // 🐾 เลือกตัวที่จะเรียก: สัตว์เลี้ยงของตัวเองมาก่อน (ทีมสู้ → เพื่อนซี้ → ตัวเลเวลสูงสุดในกล่อง)
         //    ถ้ายังไม่มีสัตว์เลี้ยงเลย ก็ยืมสายพันธุ์ประจำแมพที่ยืนอยู่มาแทน จะได้ใช้สกิลได้ตั้งแต่ตัวเปล่า
         const summonPicks = (n) => {
@@ -46719,7 +46731,13 @@ function CherryAdventure() {
         G.summonPack = (n, dur) => {
             n = Math.max(1, Math.min(5, n || 3));
             dur = dur || 60;
-            clearSummons(true); // 🔁 เรียกซ้ำ = ฝูงเดิมกลับป่าแล้วเริ่มจับเวลาใหม่ (ไม่สะสมทับกันจนจอแน่น)
+            // ⏳ มีฝูงได้ครั้งละชุด — กดสกิลซ้ำระหว่างนั้นก็ตีได้ตามปกติ แต่ฝูงไม่รีเซ็ต
+            if (summons.length)
+                return 0;
+            if ((G._summonLock || 0) > nowMs()) {
+                toast(`🐾 ฝูงสัตว์กำลังพัก อีก ${G.summonWait()} วิค่อยเรียกใหม่ได้`);
+                return 0;
+            }
             const picks = summonPicks(n);
             picks.forEach((p, i) => {
                 let m = null;
@@ -52344,6 +52362,10 @@ function CherryAdventure() {
             if (!focus) {
                 if (!sk.summon)
                     return;
+                if (G.summonWait() > 0) {
+                    toast(`🐾 ${summons.length ? "ฝูงสัตว์อยู่ครบแล้ว" : "ฝูงสัตว์กำลังพัก"} (อีก ${G.summonWait()} วิ)`);
+                    return;
+                } // ไม่มีเป้าให้ตี และเรียกฝูงไม่ได้ — อย่าตัดมานาทิ้ง
                 // 🐾 สกิลเรียกฝูงสัตว์ — ไม่มีมอนสเตอร์ใกล้ ๆ ก็ร่ายได้ (เรียกฝูงมาเดินนำก่อนแล้วค่อยออกไปหาเรื่อง)
                 G.player.mp -= cost;
                 G.startCd(sk);
