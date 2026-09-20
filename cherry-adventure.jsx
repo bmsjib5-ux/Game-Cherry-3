@@ -374,6 +374,9 @@ const plusTier = (n) => { let t = null; for (let i = 0; i < PLUS_TIERS.length; i
 const ENH_RATE = (cur) => (cur < 3 ? 1 : Math.max(0.05, 0.75 - (cur - 3) * 0.04));
 // 💢 พลาดสะสม — ทุกครั้งที่พลาด เก็บครึ่งหนึ่งของโอกาสฐานไปบวกครั้งต่อไป จนกว่าจะสำเร็จ
 const ENH_PITY_STEP = (cur) => ENH_RATE(cur) * 0.5;
+// 🔮 สีวงเวทใต้เท้าตอนร่าย — ไฟแดง · น้ำแข็งฟ้า · สายฟ้าเหลือง
+const CAST_RING_COL = { m_fire: 0xff2a10, m_ice: 0x2f9dff, m_bolt: 0xffd21a,
+  x_elm_1: 0xff2a10, x_elm_2: 0x2f9dff, x_elm_3: 0xffd21a, x_frz_1: 0x2f9dff, x_frz_2: 0x2f9dff };
 const ELEM_GLOW = {
   fire: 0xf5652e, ice: 0x9adcf5, wind: 0xb8e8c0, water: 0x59a0e8,
   earth: 0xc09a5a, light: 0xffe28a, arcane: 0xb07ae0, dragon: 0xff4a2a,
@@ -24326,7 +24329,7 @@ export default function CherryAdventure() {
         const bolts = [];
         for (let b = 0; b < 4; b++) {
           const bl = makeBolt(g, col === 0xffffff ? 0xbfe4ff : col, 8, 2, 0.035);
-          bolts.push({ bl, fireAt: 0.26 + b * 0.15, ox: (Math.random() - 0.5) * 1.2, oz: (Math.random() - 0.5) * 1.0, last: -1 });
+          bolts.push({ bl, fireAt: 0.14 + b * 0.2, ox: (Math.random() - 0.5) * 1.2, oz: (Math.random() - 0.5) * 1.0, last: -1 });
         }
         // 💥 จุดฟ้าผ่าลงพื้น + วงคลื่นกระแทก + สะเก็ดไฟฟ้า
         const hit = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTb, color: 0xeaf6ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -24343,7 +24346,7 @@ export default function CherryAdventure() {
           g.add(sp); sparks.push(sp);
         }
         let lastStrike = -1;
-        dur = 1.25;
+        dur = 1.75;
         update = (pr) => {
           const cl = Math.min(1, pr * 3.2) * (1 - Math.max(0, (pr - 0.85) * 6));
           let flash = 0;
@@ -33205,6 +33208,21 @@ export default function CherryAdventure() {
         new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
       );
       ring.rotation.x = -Math.PI / 2; ring.visible = false; ring.raycast = () => {}; scene.add(ring); G._castRing = ring;
+      // 🔮 วงในหมุนสวนทาง + ขีดอักขระเวทรอบวง — ทำให้ดูเป็น "วงเวท" ไม่ใช่วงแหวนเฉย ๆ
+      const ring2 = new THREE.Mesh(
+        new THREE.RingGeometry(0.3, 0.52, 3, 1),
+        new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
+      );
+      ring2.rotation.x = -Math.PI / 2; ring2.visible = false; ring2.raycast = () => {}; scene.add(ring2); G._castRing2 = ring2;
+      const runes = [];
+      for (let i = 0; i < 8; i++) {
+        const rn = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.3),
+          new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        rn.rotation.x = -Math.PI / 2; rn.visible = false; rn.raycast = () => {};
+        rn.userData = { a: (i / 8) * Math.PI * 2 };
+        scene.add(rn); runes.push(rn);
+      }
+      G._castRunes = runes;
       const orbs = [];
       for (let i = 0; i < 8; i++) {
         const o = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -33232,6 +33250,8 @@ export default function CherryAdventure() {
     };
     const hideCastFx = () => {
       if (G._castRing) G._castRing.visible = false;
+      if (G._castRing2) G._castRing2.visible = false;
+      if (G._castRunes) G._castRunes.forEach((r) => (r.visible = false));
       if (G._castOrbs) G._castOrbs.forEach((o) => (o.visible = false));
       if (G._dashLine) G._dashLine.visible = false;
       if (G._starLines) G._starLines.forEach((l) => (l.visible = false));
@@ -33250,7 +33270,7 @@ export default function CherryAdventure() {
     // 🎬 เริ่มคิวท่าสกิล: ② สะสมพลัง+ย่อเก็บแรง → ① พุ่งเข้าหาเป้า → ปล่อย → ④ ค้างท่าจบ → คืนท่า
     const startSkillCast = (arch, col, focus, fire, beats) => {
       // ⏱️ จังหวะเฉพาะท่า (สัดส่วนเดิม แต่กระชับลงทั้งชุด): สายเวท/เล็งสะสมนานกว่าเพื่อน · อิไอนิ่งแล้วฟันแวบเดียว
-      const CHG = { swordspin: 0.26, swordbash: 0.20, swordrage: 0.24, swordquake: 0.28, cast: 0.24, beam: 0.26, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.28, icefreeze: 0.28, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26, skyleap: 0.20, dragonbreath: 0.26, shadowspears: 0.20, meteordive: 0.28, stonepillar: 0.22, mountainarmor: 0.28, quakespear: 0.24, golemjudge: 0.30, rocketfist: 0.18, energyshield: 0.26, shouldercannon: 0.22, titanstomp: 0.26, railgun: 0.34, dronelock: 0.22, blackhole: 0.28, satellite: 0.36, meteorcall: 0.34, frostrain: 0.24, thunderjudge: 0.30, naturecata: 0.30, lightjudge: 0.28, blessing: 0.30, bindchain: 0.26, holytide: 0.28, coffee: 0.24, papertornado: 0.26, laptopsmash: 0.22, overtime: 0.26, ceoorder: 0.30, signorder: 0.26, boardmeeting: 0.22, pinkslip: 0.26, corptitan: 0.30, codeinject: 0.18, firewall: 0.26, aidrone: 0.22, systemcrash: 0.28, matrixrain: 0.26, darkscript: 0.24, ddos: 0.22, ransomware: 0.28, zeroday: 0.32, assaultdrone: 0.22, nanoarmor: 0.26, orbitallaser: 0.34, deathcalc: 0.30, shadowcut: 0.16, tripleshade: 0.22, reaperhand: 0.28, eclipse: 0.30, venomneedle: 0.18, venomfog: 0.26, cobraclaw: 0.20, venomflask: 0.28, frozenpierce: 0.20, frostspiral: 0.22, voidfrostdragon: 0.28, frozenabyss: 0.32, formless: 0.16, twinmoon: 0.22, bladestorm: 0.24, kenseikill: 0.34, iaifirst: 0.22, twinbolt: 0.20, godblade: 0.30, finalbolt: 0.34, coffeedash: 0.20, filedrop: 0.26, deadline: 0.30, overtimehell: 0.28, jabcross: 0.14, roundkick: 0.20, flyknee: 0.22, comborush: 0.16, ironfist: 0.26, lightjab: 0.12, wallhook: 0.20, staruppercut: 0.24, koblow: 0.34, ironshin: 0.20, fireelbow: 0.18, tigertail: 0.22, hanumanknee: 0.28 };
+      const CHG = { swordspin: 0.26, swordbash: 0.20, swordrage: 0.24, swordquake: 0.28, cast: 0.24, beam: 0.4, buff: 0.20, summon: 0.22, snipe: 0.20, smash: 0.20, shot: 0.11, volley: 0.13, throw: 0.16, iai: 0.24, backstab: 0.17, star: 0.18, shadow3: 0.22, knives: 0.16, firestorm: 0.42, icefreeze: 0.42, pierce: 0.30, hawk: 0.24, kneel: 0.34, arrowrain: 0.32, vine: 0.26, poisonvolley: 0.20, wolfcall: 0.30, rootcurse: 0.32, crusade: 0.18, shieldangel: 0.22, judgement: 0.30, holyarmy: 0.26, axecombo: 0.18, bloodrage: 0.22, groundsplit: 0.24, axestorm: 0.26, spearpierce: 0.16, spearstorm: 0.20, earthspear: 0.24, dragoncharge: 0.24, frostlance: 0.26, skyleap: 0.20, dragonbreath: 0.26, shadowspears: 0.20, meteordive: 0.28, stonepillar: 0.22, mountainarmor: 0.28, quakespear: 0.24, golemjudge: 0.30, rocketfist: 0.18, energyshield: 0.26, shouldercannon: 0.22, titanstomp: 0.26, railgun: 0.34, dronelock: 0.22, blackhole: 0.28, satellite: 0.36, meteorcall: 0.34, frostrain: 0.24, thunderjudge: 0.30, naturecata: 0.30, lightjudge: 0.28, blessing: 0.30, bindchain: 0.26, holytide: 0.28, coffee: 0.24, papertornado: 0.26, laptopsmash: 0.22, overtime: 0.26, ceoorder: 0.30, signorder: 0.26, boardmeeting: 0.22, pinkslip: 0.26, corptitan: 0.30, codeinject: 0.18, firewall: 0.26, aidrone: 0.22, systemcrash: 0.28, matrixrain: 0.26, darkscript: 0.24, ddos: 0.22, ransomware: 0.28, zeroday: 0.32, assaultdrone: 0.22, nanoarmor: 0.26, orbitallaser: 0.34, deathcalc: 0.30, shadowcut: 0.16, tripleshade: 0.22, reaperhand: 0.28, eclipse: 0.30, venomneedle: 0.18, venomfog: 0.26, cobraclaw: 0.20, venomflask: 0.28, frozenpierce: 0.20, frostspiral: 0.22, voidfrostdragon: 0.28, frozenabyss: 0.32, formless: 0.16, twinmoon: 0.22, bladestorm: 0.24, kenseikill: 0.34, iaifirst: 0.22, twinbolt: 0.20, godblade: 0.30, finalbolt: 0.34, coffeedash: 0.20, filedrop: 0.26, deadline: 0.30, overtimehell: 0.28, jabcross: 0.14, roundkick: 0.20, flyknee: 0.22, comborush: 0.16, ironfist: 0.26, lightjab: 0.12, wallhook: 0.20, staruppercut: 0.24, koblow: 0.34, ironshin: 0.20, fireelbow: 0.18, tigertail: 0.22, hanumanknee: 0.28 };
       const REL = { swordspin: 0.28, swordbash: 0.30, swordrage: 0.44, swordquake: 0.18, smash: 0.11, stab: 0.22, shot: 0.11, volley: 0.19, snipe: 0.12, iai: 0.09, twin: 0.14, spin: 0.21, backstab: 0.17, star: 0.14, shadow3: 0.46, knives: 0.34, firestorm: 0.22, icefreeze: 0.18, pierce: 0.20, hawk: 0.40, kneel: 0.26, arrowrain: 0.50, vine: 0.24, poisonvolley: 0.46, wolfcall: 0.50, rootcurse: 0.30, crusade: 0.42, shieldangel: 0.14, judgement: 0.62, holyarmy: 0.50, axecombo: 0.48, bloodrage: 0.30, groundsplit: 0.52, axestorm: 0.70, spearpierce: 0.18, spearstorm: 0.36, earthspear: 0.22, dragoncharge: 0.20, frostlance: 0.24, skyleap: 0.20, dragonbreath: 0.30, shadowspears: 0.46, meteordive: 0.24, stonepillar: 0.22, mountainarmor: 0.26, quakespear: 0.40, golemjudge: 0.55, rocketfist: 0.42, energyshield: 0.24, shouldercannon: 0.52, titanstomp: 0.24, railgun: 0.18, dronelock: 0.50, blackhole: 0.30, satellite: 0.42, meteorcall: 0.30, frostrain: 0.46, thunderjudge: 0.55, naturecata: 0.52, lightjudge: 0.44, blessing: 0.26, bindchain: 0.28, holytide: 0.48, coffee: 0.30, papertornado: 0.46, laptopsmash: 0.16, overtime: 0.28, ceoorder: 0.46, signorder: 0.28, boardmeeting: 0.46, pinkslip: 0.24, corptitan: 0.46, codeinject: 0.30, firewall: 0.24, aidrone: 0.48, systemcrash: 0.28, matrixrain: 0.50, darkscript: 0.28, ddos: 0.50, ransomware: 0.30, zeroday: 0.26, assaultdrone: 0.48, nanoarmor: 0.24, orbitallaser: 0.42, deathcalc: 0.40, shadowcut: 0.44, tripleshade: 0.42, reaperhand: 0.30, eclipse: 0.50, venomneedle: 0.40, venomfog: 0.28, cobraclaw: 0.32, venomflask: 0.30, frozenpierce: 0.22, frostspiral: 0.46, voidfrostdragon: 0.26, frozenabyss: 0.55, formless: 0.46, twinmoon: 0.42, bladestorm: 0.46, kenseikill: 0.14, iaifirst: 0.10, twinbolt: 0.44, godblade: 0.24, finalbolt: 0.40, coffeedash: 0.16, filedrop: 0.48, deadline: 0.34, overtimehell: 0.46, jabcross: 0.24, roundkick: 0.30, flyknee: 0.20, comborush: 0.46, ironfist: 0.22, lightjab: 0.48, wallhook: 0.26, staruppercut: 0.22, koblow: 0.12, ironshin: 0.24, fireelbow: 0.42, tigertail: 0.46, hanumanknee: 0.30 };
       const chg = CHG[arch] != null ? CHG[arch] : 0.15;
       const rel = REL[arch] != null ? REL[arch] : 0.16;
@@ -35591,6 +35611,26 @@ export default function CherryAdventure() {
         G._camShake = Math.max(G._camShake || 0, 0.5);
         toast(`${sk.emoji || "🌳"} ${sk.name} — รากไม้ตรึง ${group.length} ตัว · เกราะแตก + พิษ!`);
       };
+      G._castRingCol = (CAST_RING_COL[sk.id] != null) ? CAST_RING_COL[sk.id] : null;   // 🔮 สีวงเวทใต้เท้าตอนร่าย
+      // ⚡ สายฟ้าฟาดซ้ำใส่เป้าหลายระลอกราว 1.3 วิ — ดาเมจแบ่งลงทีละระลอก มอนจึงไม่ดับทันทีตั้งแต่ระลอกแรก
+      const boltStormFire = (fk !== "thunderstorm" || !focus) ? null : () => {
+        const N = 4;
+        for (let bi = 0; bi < N; bi++) {
+          setTimeout(() => {
+            let bp = null;
+            try {                                                // ดาเมจก่อน — ถ้าเอฟเฟกต์พัง ระลอกนั้นก็ต้องยังเข้าอยู่ดี
+              if (G.mode !== "explore") return;
+              const tg2 = (wilds.indexOf(focus) >= 0) ? focus : nearestWild(worldRange() + 3);
+              if (!tg2) return;
+              bp = tg2.position;
+              const list = aoe ? wildsInRadius(bp.x, bp.z, 3.2) : [tg2];
+              (list.length ? list : [tg2]).forEach((m2) => applyDmg(m2, 1 / N));
+              G._camShake = Math.max(G._camShake || 0, bi === N - 1 ? 0.45 : 0.22);
+            } catch (_) {}
+            try { if (bp && bi > 0) spawnSkillFx("bolt", bp, col); } catch (_) {}   // ระลอกแรกใช้ฟ้าของเอฟเฟกต์พายุ
+          }, 120 + bi * 440);   // ⚡ ฟาดซ้ำ 4 ระลอก กินเวลารวม ~1.5 วิก่อนมอนจะดับ
+        }
+      };
       if (arch === "hawk") spawnHawk(focus, col, 0.95);
       if (arch === "shieldangel") spawnHolyShield(0xffe9a0, 0.62);       // 🛡️ โล่แสงขึ้นมาบังตั้งแต่ตอนชาร์จ            // 🦅 ปล่อยเหยี่ยวออกไปวนตั้งแต่เริ่มร่าย
       // 🎬 ปล่อยพลังจริงตอนจบช่วงสะสม — ท่าร่ายมาก่อน ดาเมจตามหลัง (anticipation → release)
@@ -35635,6 +35675,8 @@ export default function CherryAdventure() {
           if (pierceFire) pierceFire();                                  // 🎯 ดาเมจลงทั้งแนวที่ลำแสงผ่าน
         } else if (arch === "kneel") {
           if (boltFire) boltFire();                                      // ⚡ ดาเมจลงตอนสายฟ้ากระโดดถึงแต่ละตัว
+        } else if (boltStormFire) {
+          boltStormFire();                                               // ⚡ ฟ้าผ่าซ้ำ 4 ระลอก ดาเมจลงทีละระลอก
         } else if (arch === "arrowrain") {
           if (rainFire) rainFire();                                      // 💥 ดาเมจลงตอนลูกธนูแต่ละดอกปัก
         } else if (arch === "frozenpierce") {
@@ -35750,7 +35792,7 @@ export default function CherryAdventure() {
                    || arch === "twinbolt" || arch === "filedrop" || arch === "overtimehell"
                    || arch === "comborush" || arch === "lightjab" || arch === "fireelbow" || arch === "tigertail") {
           /* 🦅🍃🐺✝️🌟👼🪓🩸💢🌪️ ดาเมจลงทีละชุดตามจังหวะของท่า — ตรงนี้แค่เล่นเอฟเฟกต์นำ */
-        } else if (tgt) {
+        } else if (tgt && !boltStormFire) {
           if (aoe) {
             const targets = wildsInRadius(at.x, at.z, 3.4);
             (targets.length ? targets : [tgt]).forEach(applyDmg);
@@ -41713,13 +41755,39 @@ export default function CherryAdventure() {
           // ✨ วงเวทย์ + ประกายพลังหดเข้าหาตัว (เฉพาะช่วงสะสม)
           if (G._castRing) {
             const rg = G._castRing;
+            const rc = G._castRingCol != null ? G._castRingCol : S.col;   // 🔮 ไฟ=แดง · น้ำแข็ง=ฟ้า · สายฟ้า=เหลือง
             rg.visible = charging;
             if (charging) {
-              rg.material.color.setHex(S.col);
+              rg.material.color.setHex(rc);
               rg.position.set(char.position.x, 0.06, char.position.z);
               rg.rotation.z += dt * 2.6;
-              rg.scale.setScalar(1.7 - 0.75 * cp);
-              rg.material.opacity = 0.7 * Math.sin(cp * Math.PI * 0.85);
+              rg.scale.setScalar(1.95 - 0.7 * cp);
+              rg.material.opacity = 0.92 * Math.sin(Math.min(1, cp * 1.25) * Math.PI * 0.9);
+            }
+            if (G._castRing2) {
+              const r2 = G._castRing2;
+              r2.visible = charging;
+              if (charging) {
+                r2.material.color.setHex(rc);
+                r2.position.set(char.position.x, 0.065, char.position.z);
+                r2.rotation.z -= dt * 3.4;                                  // หมุนสวนทางกับวงนอก
+                r2.scale.setScalar((1.95 - 0.7 * cp) * 1.55);
+                r2.material.opacity = 0.7 * Math.sin(Math.min(1, cp * 1.25) * Math.PI * 0.9);
+              }
+            }
+            if (G._castRunes) {
+              const rr = (1.95 - 0.7 * cp) * 0.98;
+              for (let ri = 0; ri < G._castRunes.length; ri++) {
+                const rn = G._castRunes[ri];
+                rn.visible = charging;
+                if (!charging) continue;
+                const aa = rn.userData.a + t * 1.4;
+                rn.material.color.setHex(rc);
+                rn.position.set(char.position.x + Math.cos(aa) * rr, 0.07, char.position.z + Math.sin(aa) * rr);
+                rn.rotation.z = -aa;
+                rn.scale.setScalar(0.8 + Math.abs(Math.sin(t * 6 + ri)) * 0.5);
+                rn.material.opacity = 0.9 * Math.sin(Math.min(1, cp * 1.3) * Math.PI * 0.9);
+              }
             }
           }
           if (G._castOrbs) G._castOrbs.forEach((o, i) => {
