@@ -23462,12 +23462,70 @@ export default function CherryAdventure() {
             cx2.beginPath(); cx2.arc(64 + Math.cos(a2) * r2, 64 + Math.sin(a2) * r2, 8 + Math.random() * 14, 0, Math.PI * 2); cx2.fill();
           }
           tx = new THREE.CanvasTexture(cv);
+          tx.userData._shared = true;   // ใช้ซ้ำทุกเอฟเฟคต์ — อย่าให้ตัวเก็บกวาดเอฟเฟคต์ไป dispose
         } catch (_) { tx = null; }
         return tx;
       };
     })();
     const FIRE_HOT = new THREE.Color(0xfff2c0), FIRE_MID = new THREE.Color(0xff8a20), FIRE_LOW = new THREE.Color(0x8e1a06);
     const ICE_LIT = new THREE.Color(0xf2fcff), ICE_MID = new THREE.Color(0x9fdcf8), ICE_DEEP = new THREE.Color(0x2f7fb8);   // ❄️ ไล่สีน้ำแข็ง: ขอบสว่าง → ฟ้า → แกนน้ำเงินลึก
+    // ⚡ สายฟ้า — เส้น Line ใน WebGL หนาได้แค่ 1px จึงดูเป็นเส้นผมบาง ๆ
+    //    ทำเป็น "ท่อนทรงกระบอกบาง ๆ ต่อกันเป็นเส้นหักศอก" ซ้อนสองชั้น (แกนขาว + ออร่าสี) พร้อมแขนงแยก
+    const BOLT_GEO = new THREE.CylinderGeometry(1, 1, 1, 5, 1, true);
+    BOLT_GEO.userData._shared = true;   // ท่อนสายฟ้าใช้จีโอเมทรีเดียวกันทั้งหมด
+    const _bA = new THREE.Vector3(), _bB = new THREE.Vector3(), _bM = new THREE.Vector3(), _bD = new THREE.Vector3();
+    const BOLT_UP = new THREE.Vector3(0, 1, 0);
+    const makeBolt = (parent, col, nSeg, nFork, rad) => {
+      const core = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      const glow = new THREE.MeshBasicMaterial({ color: col || 0xfff06a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      const pool = [];
+      const total = nSeg + nFork * 3;
+      for (let i = 0; i < total; i++) {
+        const c = new THREE.Mesh(BOLT_GEO, core), gl = new THREE.Mesh(BOLT_GEO, glow);
+        c.raycast = () => {}; gl.raycast = () => {};
+        c.visible = false; gl.visible = false;
+        parent.add(gl); parent.add(c);
+        pool.push({ c, gl });
+      }
+      const put = (k, ax, ay, az, bx, by, bz, r) => {
+        if (k >= pool.length) return;
+        const it = pool[k];
+        _bA.set(ax, ay, az); _bB.set(bx, by, bz);
+        _bM.copy(_bA).add(_bB).multiplyScalar(0.5);
+        _bD.copy(_bB).sub(_bA);
+        const len = _bD.length() || 0.001;
+        _bD.divideScalar(len);
+        it.c.position.copy(_bM); it.gl.position.copy(_bM);
+        it.c.quaternion.setFromUnitVectors(BOLT_UP, _bD); it.gl.quaternion.copy(it.c.quaternion);
+        it.c.scale.set(r, len, r); it.gl.scale.set(r * 3.6, len, r * 3.6);
+        it.c.visible = true; it.gl.visible = true;
+      };
+      // สุ่มรูปสายฟ้าใหม่ทุกครั้งที่วาบ — ฟ้าผ่าสองครั้งไม่เหมือนกัน
+      const shape = (x0, y0, z0, x1, y1, z1, spread) => {
+        for (let i = 0; i < pool.length; i++) { pool[i].c.visible = false; pool[i].gl.visible = false; }
+        const px = [], py = [], pz = [];
+        for (let i = 0; i <= nSeg; i++) {
+          const t = i / nSeg, edge = Math.sin(t * Math.PI);     // กลางเส้นหักมาก ปลายทั้งสองตรงเข้าหาเป้า
+          px.push(x0 + (x1 - x0) * t + (Math.random() - 0.5) * spread * edge);
+          py.push(y0 + (y1 - y0) * t + (Math.random() - 0.5) * spread * 0.35 * edge);
+          pz.push(z0 + (z1 - z0) * t + (Math.random() - 0.5) * spread * edge);
+        }
+        let k = 0;
+        for (let i = 0; i < nSeg; i++) put(k++, px[i], py[i], pz[i], px[i + 1], py[i + 1], pz[i + 1], rad);
+        for (let f = 0; f < nFork; f++) {                        // แขนงแยกออกจากข้อกลาง
+          const i0 = 1 + Math.floor(Math.random() * (nSeg - 2));
+          let fx = px[i0], fy = py[i0], fz = pz[i0];
+          const dx = (Math.random() - 0.5) * spread * 2.2, dz = (Math.random() - 0.5) * spread * 2.2;
+          for (let j = 0; j < 3; j++) {
+            const nx = fx + dx * (0.5 + Math.random() * 0.6), ny = fy - (0.25 + Math.random() * 0.4) * Math.abs(y1 - y0) / nSeg * 2, nz = fz + dz * (0.5 + Math.random() * 0.6);
+            put(k++, fx, fy, fz, nx, ny, nz, rad * 0.55);
+            fx = nx; fy = ny; fz = nz;
+          }
+        }
+      };
+      const setOpacity = (o) => { core.opacity = o; glow.opacity = o * 0.42; };
+      return { core, glow, mats: [core, glow], shape, setOpacity, pool };
+    };
     const spawnSkillFx = (fxType, pos, color) => {
       const g = new THREE.Group();
       g.position.set(pos.x, 0, pos.z);
@@ -23570,16 +23628,47 @@ export default function CherryAdventure() {
           flash.scale.setScalar(0.7 + (1 - fk2) * 1.6);
         };
       } else if (fxType === "bolt") {
-        // ⚡ lightning strike from above (zigzag)
-        const pts = [];
-        for (let i = 0; i <= 8; i++) pts.push(new THREE.Vector3((Math.random() - 0.5) * 0.5, 4 - i * 0.5, (Math.random() - 0.5) * 0.5));
-        const geo = new THREE.BufferGeometry().setFromPoints(pts);
-        const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xfff460, transparent: true, linewidth: 3 }));
-        g.add(line);
-        const flash = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), new THREE.MeshBasicMaterial({ color: 0xfff460, transparent: true, opacity: 0.8 }));
-        flash.position.y = 1.0; g.add(flash);
-        dur = 0.5;
-        update = (pr) => { line.material.opacity = 1 - pr; flash.material.opacity = 0.8 * (1 - pr); flash.scale.setScalar(1 + pr * 2); };
+        // ⚡ ฟ้าผ่าลงมาตรง ๆ — สายหนามีแขนงแยก กะพริบ 3 จังหวะ รูปไม่ซ้ำกันสักจังหวะ
+        const FTb2 = fireTex();
+        const bl = makeBolt(g, col === 0xffffff ? 0xfff06a : col, 9, 3, 0.05);
+        const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTb2, color: 0xfffbe0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+        flash.position.y = 0.6; g.add(flash);
+        const ring2 = new THREE.Mesh(new THREE.RingGeometry(0.18, 0.5, 22),
+          new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        ring2.rotation.x = -Math.PI / 2; ring2.position.y = 0.03; g.add(ring2);
+        const sp2 = [];
+        for (let i = 0; i < 12; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTb2, color: 0xfff6c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { vx: Math.cos(aa) * (1.4 + Math.random() * 2.2), vz: Math.sin(aa) * (1.4 + Math.random() * 2.2), vy: 1.7 + Math.random() * 2.2, s: 0.08 + Math.random() * 0.08 };
+          g.add(sp); sp2.push(sp);
+        }
+        let lastStep = -1;
+        dur = 0.6;
+        update = (pr) => {
+          const on = pr < 0.42;
+          if (on) {
+            const step = Math.floor(pr / 0.07);
+            if (step !== lastStep) { lastStep = step; bl.shape((Math.random() - 0.5) * 0.5, 4.2, (Math.random() - 0.5) * 0.5, 0, 0.1, 0, 0.55); }
+            const f = 1 - (pr / 0.42) * 0.5;
+            bl.setOpacity(f * (step % 2 ? 0.7 : 1));             // กะพริบหนัก-เบาสลับกัน
+          } else {
+            bl.setOpacity(Math.max(0, bl.core.opacity - 0.2));
+            if (bl.core.opacity <= 0.001) for (let k2 = 0; k2 < bl.pool.length; k2++) { bl.pool[k2].c.visible = false; bl.pool[k2].gl.visible = false; }
+          }
+          const fl = Math.max(0, 1 - pr / 0.3);
+          flash.material.opacity = fl * 0.45;
+          flash.scale.setScalar(0.6 + (1 - fl) * 1.3);
+          ring2.material.opacity = Math.max(0, 1 - pr / 0.5) * 0.5;
+          ring2.scale.setScalar(1 + pr * 3.2);
+          for (let i = 0; i < sp2.length; i++) {
+            const sp = sp2[i], ud = sp.userData;
+            const k = Math.min(1, pr / 0.5);
+            sp.position.set(ud.vx * k * 0.55, 0.1 + ud.vy * k * 0.45 - 1.7 * k * k, ud.vz * k * 0.55);
+            const ss = ud.s * (1 - k * 0.4); sp.scale.set(ss, ss, 1);
+            sp.material.opacity = Math.max(0, 1 - k) * 0.7;
+          }
+        };
       } else if (fxType === "ice") {
         // ❄️ น้ำแข็งแทงขึ้น — แท่งเหลี่ยมมุมโปร่งแสง + ประกายวาบ + ไอเย็นจมลงต่ำ
         const FTc = fireTex();
@@ -24222,34 +24311,75 @@ export default function CherryAdventure() {
           frost.scale.setScalar(1 + pr * 0.35);
         };
       } else if (fxType === "thunderstorm") {
-        // ⚡ สายฟ้าฟาด — a dark cloud gathers overhead, then rains down bolts
+        // ⚡ สายฟ้าฟาด — เมฆดำก่อตัวเหนือหัว แล้วฟาดลงมาเป็นชุด ๆ กะพริบไม่เท่ากัน
+        const FTb = fireTex();
         const cloud = new THREE.Group();
-        for (let i = 0; i < 6; i++) {
-          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.3 + Math.random() * 0.2, 10, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 1, transparent: true, opacity: 0.9 }));
-          puff.position.set((Math.random() - 0.5) * 1.4, 3.2 + Math.random() * 0.2, (Math.random() - 0.5) * 0.8);
-          puff.scale.y = 0.7; cloud.add(puff);
+        const puffs = [];
+        for (let i = 0; i < 9; i++) {
+          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.34 + Math.random() * 0.26, 9, 8),
+            new THREE.MeshStandardMaterial({ color: 0x23242e, roughness: 1, transparent: true, opacity: 0, emissive: 0x3a3ac0, emissiveIntensity: 0 }));
+          puff.position.set((Math.random() - 0.5) * 1.9, 3.15 + Math.random() * 0.3, (Math.random() - 0.5) * 1.1);
+          puff.scale.set(1, 0.6, 0.85); puff.raycast = () => {};
+          cloud.add(puff); puffs.push(puff);
         }
         g.add(cloud);
-        const boltLight = new THREE.PointLight(0xf5e042, 0, 5); boltLight.position.y = 2; /* boltLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
-        // several zigzag bolts fire in sequence
         const bolts = [];
         for (let b = 0; b < 4; b++) {
-          const pts = [];
-          const ox = (Math.random() - 0.5) * 0.8;
-          for (let i = 0; i <= 7; i++) pts.push(new THREE.Vector3(ox + (Math.random() - 0.5) * 0.4, 3 - i * 0.42, (Math.random() - 0.5) * 0.4));
-          const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xfff460, transparent: true, opacity: 0 }));
-          g.add(line); bolts.push({ line, fireAt: 0.3 + b * 0.16 });
+          const bl = makeBolt(g, col === 0xffffff ? 0xbfe4ff : col, 8, 2, 0.035);
+          bolts.push({ bl, fireAt: 0.26 + b * 0.15, ox: (Math.random() - 0.5) * 1.2, oz: (Math.random() - 0.5) * 1.0, last: -1 });
         }
-        dur = 1.2;
+        // 💥 จุดฟ้าผ่าลงพื้น + วงคลื่นกระแทก + สะเก็ดไฟฟ้า
+        const hit = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTb, color: 0xeaf6ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+        hit.position.y = 0.35; g.add(hit);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.62, 24),
+          new THREE.MeshBasicMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03; g.add(ring);
+        const sparks = [];
+        for (let i = 0; i < 14; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FTb, color: 0xfff6c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { vx: Math.cos(aa) * (1.6 + Math.random() * 2.4), vz: Math.sin(aa) * (1.6 + Math.random() * 2.4),
+            vy: 1.8 + Math.random() * 2.4, s: 0.08 + Math.random() * 0.08, t0: 0 };
+          g.add(sp); sparks.push(sp);
+        }
+        let lastStrike = -1;
+        dur = 1.25;
         update = (pr) => {
-          cloud.children.forEach((p, i) => { p.position.x += Math.sin(pr * 6 + i) * 0.004; p.material.opacity = 0.9 * Math.min(1, pr * 3) * (1 - Math.max(0, (pr - 0.85) * 6)); });
-          let anyFlash = false;
-          bolts.forEach((b) => {
+          const cl = Math.min(1, pr * 3.2) * (1 - Math.max(0, (pr - 0.85) * 6));
+          let flash = 0;
+          for (let i = 0; i < bolts.length; i++) {
+            const b = bolts[i];
             const local = pr - b.fireAt;
-            if (local > 0 && local < 0.12) { b.line.material.opacity = 1; anyFlash = true; }
-            else b.line.material.opacity = Math.max(0, b.line.material.opacity - 0.15);
-          });
-          boltLight.intensity = anyFlash ? 3 : boltLight.intensity * 0.7;
+            if (local > 0 && local < 0.13) {
+              const step = Math.floor(local / 0.033);            // สุ่มรูปใหม่ทุกจังหวะกะพริบ = ไม่นิ่งค้าง
+              if (step !== b.last) { b.last = step; b.bl.shape(b.ox, 3.2, b.oz, 0, 0.1, 0, 0.42); }
+              const f = 1 - (local / 0.13) * 0.55;
+              b.bl.setOpacity(f);
+              flash = Math.max(flash, f);
+              if (local > 0.02 && lastStrike < i) { lastStrike = i; for (let k2 = 0; k2 < sparks.length; k2++) sparks[k2].userData.t0 = pr; }
+            } else {
+              b.bl.core.opacity = Math.max(0, b.bl.core.opacity - 0.22);
+              b.bl.glow.opacity = Math.max(0, b.bl.glow.opacity - 0.1);
+              if (b.bl.core.opacity <= 0.001) for (let k2 = 0; k2 < b.bl.pool.length; k2++) { b.bl.pool[k2].c.visible = false; b.bl.pool[k2].gl.visible = false; }
+            }
+          }
+          for (let i = 0; i < puffs.length; i++) {
+            const p2 = puffs[i];
+            p2.position.x += Math.sin(pr * 6 + i) * 0.004;
+            p2.material.opacity = 0.92 * cl;
+            p2.material.emissiveIntensity = flash * 1.5;         // ☁️ ท้องเมฆสว่างขึ้นตอนฟ้าแลบ
+          }
+          hit.material.opacity = flash * 0.42;
+          hit.scale.setScalar(0.55 + flash * 0.95);
+          ring.material.opacity = flash * 0.5;
+          ring.scale.setScalar(1 + (1 - flash) * 1.6);
+          for (let i = 0; i < sparks.length; i++) {
+            const sp = sparks[i], ud = sp.userData;
+            const k = ud.t0 > 0 ? Math.min(1, (pr - ud.t0) / 0.35) : 1;
+            sp.position.set(ud.vx * k * 0.5, 0.1 + ud.vy * k * 0.4 - 1.6 * k * k, ud.vz * k * 0.5);
+            const ss = ud.s * (1 - k * 0.4); sp.scale.set(ss, ss, 1);
+            sp.material.opacity = ud.t0 > 0 ? Math.max(0, 1 - k) * 0.7 : 0;
+          }
         };
       } else if (fxType === "healbless") {
         // ✨ แสงเยียวยา — sparkles swirl up around the CASTER + a soft holy glow
@@ -24944,7 +25074,7 @@ export default function CherryAdventure() {
       grp.traverse((o) => {
         if (o.geometry && o.geometry.dispose && !(o.userData && o.userData._outlShell) && !(o.geometry.userData && o.geometry.userData._shared)) o.geometry.dispose(); // 🖤 เปลือกเส้นขอบยืม geometry ของชิ้นจริง — เจ้าของเป็นคน dispose อยู่แล้ว
         const m = o.material;
-        if (m) (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm) { if (mm.userData && mm.userData._shared) return; if (mm.map && mm.map.dispose) mm.map.dispose(); if (mm.dispose) mm.dispose(); } });
+        if (m) (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm) { if (mm.userData && mm.userData._shared) return; if (mm.map && mm.map.dispose && !(mm.map.userData && mm.map.userData._shared)) mm.map.dispose(); if (mm.dispose) mm.dispose(); } });
       });
     };
     G._disposeObj3D = disposeObj3D;
