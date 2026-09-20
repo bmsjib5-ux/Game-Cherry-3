@@ -49449,7 +49449,7 @@ function CherryAdventure() {
         // 📄 ทอร์นาโดกระดาษ — กรวยลมสีขาวพร้อมแผ่นกระดาษปลิวหมุนวน ดูดศัตรูเข้ากลาง
         const spawnPaperTornado = (x, z, col, dur, r) => {
             try {
-                const wm = new THREE.MeshBasicMaterial({ color: col || 0xe8eef6, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const wm = new THREE.MeshBasicMaterial({ color: col || 0xd8e2ee, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }); // 🌬️ เลิก additive — กรวยลมเคยสว่างจนบังมอน
                 const pm = new THREE.MeshStandardMaterial({ color: 0xfbfbfd, roughness: 0.85, side: THREE.DoubleSide, transparent: true, opacity: 0 });
                 const g = new THREE.Group();
                 for (let k = 0; k < 3; k++) {
@@ -49478,8 +49478,8 @@ function CherryAdventure() {
         // 💻 โน้ตบุ๊ก — เครื่องเปิดฝากางลอยขึ้นเหนือหัว แล้วฟาดลงใส่เป้าจนจอแตก
         const spawnLaptopSmash = (target, col, onHit) => {
             try {
-                const bodyM = new THREE.MeshStandardMaterial({ color: 0x3a3f4a, roughness: 0.35, metalness: 0.6 });
-                const scrM = new THREE.MeshBasicMaterial({ color: col || 0x2a7ad0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const bodyM = new THREE.MeshStandardMaterial({ color: 0x3a3f4a, roughness: 0.35, metalness: 0.6, transparent: true, opacity: 0.5, depthWrite: false }); // 💻 โปร่งขึ้น — ตอนหล่นทับจะไม่บังมอนทั้งตัว
+                const scrM = new THREE.MeshBasicMaterial({ color: col || 0x2a7ad0, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide });
                 const g = new THREE.Group();
                 const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.62), bodyM);
                 const lid = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.58, 0.05), bodyM);
@@ -51128,8 +51128,8 @@ function CherryAdventure() {
                     const gr2 = Math.min(1, u.t / 0.14);
                     o.scale.set(1 + Math.sin(ppr * Math.PI) * 0.2, gr2, 1 + Math.sin(ppr * Math.PI) * 0.2);
                     const f5 = Math.sin(Math.min(1, ppr * 1.05) * Math.PI);
-                    u.mats[0].opacity = 0.4 * f5;
-                    u.mats[1].opacity = 0.95 * f5;
+                    u.mats[0].opacity = 0.15 * f5;
+                    u.mats[1].opacity = 0.6 * f5; // 📄 โปร่งขึ้นมาก มองทะลุเห็นศัตรูข้างในได้
                     u.sheets.forEach((sh) => {
                         sh.a += d * sh.sp * 2.2;
                         sh.y += d * 2.0;
