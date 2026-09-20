@@ -23442,6 +23442,31 @@ export default function CherryAdventure() {
     const activeFx = []; // {group, t, dur, update}
     // 🦸 ปล่อยเอฟเฟกต์สกิลที่พิกัดใดก็ได้ — ใช้กับอวตารบอท/ผู้เล่นอื่นที่ไม่ได้อยู่ตรงตัวเรา
     G._skillFxAt = (fxType, x, z, color) => { try { spawnSkillFx(fxType, { x, z }, color); } catch (_) {} };
+    // 🔥 พื้นผิวเปลวไฟ — จุดนุ่ม ขอบขาดไม่เรียบ ใช้ซ้ำทุกสไปรท์ไฟ (สร้างครั้งเดียว)
+    const fireTex = (() => {
+      let tx = null;
+      return () => {
+        if (tx) return tx;
+        try {
+          const cv = document.createElement("canvas"); cv.width = cv.height = 128;
+          const cx2 = cv.getContext("2d");
+          const gd = cx2.createRadialGradient(64, 64, 0, 64, 64, 64);
+          gd.addColorStop(0, "rgba(255,255,255,1)");
+          gd.addColorStop(0.24, "rgba(255,255,255,0.86)");
+          gd.addColorStop(0.55, "rgba(255,255,255,0.34)");
+          gd.addColorStop(1, "rgba(255,255,255,0)");
+          cx2.fillStyle = gd; cx2.fillRect(0, 0, 128, 128);
+          cx2.globalCompositeOperation = "destination-out";   // แหว้งขอบให้ดูเป็นลิ้นไฟ ไม่ใช่วงกลมเกลี้ยง
+          for (let i = 0; i < 14; i++) {
+            const a2 = Math.random() * Math.PI * 2, r2 = 40 + Math.random() * 28;
+            cx2.beginPath(); cx2.arc(64 + Math.cos(a2) * r2, 64 + Math.sin(a2) * r2, 8 + Math.random() * 14, 0, Math.PI * 2); cx2.fill();
+          }
+          tx = new THREE.CanvasTexture(cv);
+        } catch (_) { tx = null; }
+        return tx;
+      };
+    })();
+    const FIRE_HOT = new THREE.Color(0xfff2c0), FIRE_MID = new THREE.Color(0xff8a20), FIRE_LOW = new THREE.Color(0x8e1a06);
     const spawnSkillFx = (fxType, pos, color) => {
       const g = new THREE.Group();
       g.position.set(pos.x, 0, pos.z);
@@ -23494,19 +23519,55 @@ export default function CherryAdventure() {
           bits.forEach((b2, k) => { b2.o.position.set(Math.cos(b2.a) * (0.5 + pr * 1.1), 0.3 + pr * (1.7 + (k % 3) * 0.5), Math.sin(b2.a) * (0.5 + pr * 1.1)); b2.o.rotation.y = pr * 6; });
         };
       } else if (fxType === "fire" || fxType === "orb") {
-        // 🔥 rising fireballs + embers
-        const balls = [];
-        for (let i = 0; i < 7; i++) {
-          const m = new THREE.Mesh(
-            new THREE.SphereGeometry(0.12 + Math.random() * 0.12, 8, 8),
-            new THREE.MeshStandardMaterial({ color: 0xff6a2a, emissive: 0xff3a10, emissiveIntensity: 1.3, transparent: true })
-          );
-          m.position.set((Math.random() - 0.5) * 0.7, 0.6 + Math.random() * 0.4, (Math.random() - 0.5) * 0.7);
-          m.userData.vy = 1.5 + Math.random() * 1.5;
-          g.add(m); balls.push(m);
+        // 🔥 ลูกไฟแตกแล้วพวยขึ้น — สไปรท์ additive ซ้อนกัน ไม่ใช่ลูกกลมทึบ ๆ
+        const FT2 = fireTex();
+        const isFire = fxType === "fire";
+        const tint = new THREE.Color(isFire ? 0xff7a1a : col);
+        const puffs = [];
+        for (let i = 0; i < 16; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FT2, color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2, rr = Math.random() * 0.42;
+          sp.userData = { x: Math.cos(aa) * rr, z: Math.sin(aa) * rr, delay: Math.random() * 0.2,
+            vy: 1.2 + Math.random() * 1.5, s0: 0.34 + Math.random() * 0.42,
+            sway: Math.random() * 7, spin: (Math.random() - 0.5) * 2.4, core: i < 6 };
+          g.add(sp); puffs.push(sp);
         }
-        dur = 0.7;
-        update = (pr) => balls.forEach((m) => { m.position.y += m.userData.vy * 0.03; m.material.opacity = 1 - pr; m.scale.setScalar(1 + pr); });
+        const sparks = [];
+        for (let i = 0; i < 10; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: FT2, color: isFire ? 0xffcf6a : col, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { vx: Math.cos(aa) * (1.1 + Math.random() * 1.4), vz: Math.sin(aa) * (1.1 + Math.random() * 1.4),
+            vy: 1.6 + Math.random() * 1.8, s: 0.09 + Math.random() * 0.09 };
+          g.add(sp); sparks.push(sp);
+        }
+        const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: FT2, color: isFire ? 0xfff0c0 : col, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+        flash.position.y = 0.95; g.add(flash);
+        const _oc = new THREE.Color();
+        dur = 0.85;
+        update = (pr) => {
+          for (let i = 0; i < puffs.length; i++) {
+            const sp = puffs[i], u2 = sp.userData;
+            const k = Math.max(0, Math.min(1, (pr - u2.delay) / (1 - u2.delay)));
+            sp.position.set(u2.x + Math.sin(pr * 9 + u2.sway) * 0.12 * k, 0.6 + u2.vy * k * (1 - k * 0.2), u2.z + Math.cos(pr * 8 + u2.sway) * 0.1 * k);
+            sp.material.rotation = u2.spin * k;
+            const sc = u2.s0 * (0.6 + k * 1.5);
+            sp.scale.set(sc, sc * (1.2 - k * 0.15), 1);
+            if (isFire) { _oc.copy(u2.core ? FIRE_HOT : FIRE_MID).lerp(u2.core ? FIRE_MID : FIRE_LOW, Math.min(1, k * 1.25)); }
+            else { _oc.copy(tint).lerp(FIRE_HOT, Math.max(0, 0.55 - k)); }
+            sp.material.color.copy(_oc);
+            sp.material.opacity = Math.sin(k * Math.PI) * (u2.core ? 0.55 : 0.34);
+          }
+          for (let i = 0; i < sparks.length; i++) {
+            const sp = sparks[i], u2 = sp.userData;
+            sp.position.set(u2.vx * pr, 0.7 + u2.vy * pr * (1 - pr * 0.5), u2.vz * pr);
+            const ss = u2.s * (1 - pr * 0.4);
+            sp.scale.set(ss, ss, 1);
+            sp.material.opacity = Math.sin(pr * Math.PI) * 0.8;
+          }
+          const fk2 = Math.max(0, 1 - pr / 0.35);
+          flash.material.opacity = fk2 * 0.6;
+          flash.scale.setScalar(0.7 + (1 - fk2) * 1.6);
+        };
       } else if (fxType === "bolt") {
         // ⚡ lightning strike from above (zigzag)
         const pts = [];
@@ -23931,44 +23992,102 @@ export default function CherryAdventure() {
         dur = 0.5;
         update = (pr) => pops.forEach((m) => { m.scale.setScalar(1 + pr * 1.5); m.material.opacity = 1 - pr; });
       } else if (fxType === "hellfire") {
-        // 🔥 เพลิงนรก — a massive fire pillar erupts from the ground, engulfing the target
-        const flames = [];
+        // 🔥 เพลิงนรก — เสาเพลิงพวยพุ่งจากพื้น
+        //    ไฟจริงไม่มีผิวแข็ง: ใช้สไปรท์หันเข้ากล้องซ้อนกันแบบ additive
+        //    แกนในขาว-เหลือง → รอบนอกส้ม-แดง → ดับเป็นควัน พร้อมสะเก็ดไฟลอยขึ้น
+        const FT = fireTex();
+        const mkFire = (hex, op, add) => new THREE.Sprite(new THREE.SpriteMaterial({
+          map: FT, color: hex, transparent: true, opacity: op, depthWrite: false,
+          blending: add === false ? THREE.NormalBlending : THREE.AdditiveBlending }));
+        const licks = [];
         for (let i = 0; i < 26; i++) {
-          const w = 0.14 + Math.random() * 0.24;
-          const tall = 0.6 + Math.random() * 0.9;
-          const hot = Math.random();
-          const m = new THREE.Mesh(new THREE.ConeGeometry(w, tall, 6),
-            new THREE.MeshStandardMaterial({ color: hot < 0.3 ? 0xffe86a : hot < 0.7 ? 0xff7a1a : 0xd82a10, emissive: hot < 0.3 ? 0xffcc40 : 0xff4a10, emissiveIntensity: 1.6, transparent: true }));
-          const r = Math.random() * 0.85;
-          const a = Math.random() * Math.PI * 2;
-          m.position.set(Math.cos(a) * r, -0.4, Math.sin(a) * r);
-          m.userData = { delay: Math.random() * 0.35, peak: 1.0 + Math.random() * 1.4, sway: Math.random() * 6, tall };
-          g.add(m); flames.push(m);
+          const inner = i < 9;                                   // แกนกลางร้อนสุด สว่างสุด
+          const sp = mkFire(0xffffff, 0);
+          const rr = (inner ? 0.3 : 0.92) * Math.sqrt(Math.random());
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { x: Math.cos(aa) * rr, z: Math.sin(aa) * rr,
+            delay: Math.random() * 0.3, life: 0.42 + Math.random() * 0.38,
+            rise: (inner ? 2.4 : 1.6) + Math.random() * 1.2,
+            s0: (inner ? 0.52 : 0.9) + Math.random() * 0.45,
+            sway: Math.random() * 7, spin: (Math.random() - 0.5) * 2.2, inner };
+          sp.visible = false; g.add(sp); licks.push(sp);
         }
-        // dark smoke puffs rising above
-        const smoke = [];
-        for (let i = 0; i < 8; i++) {
-          const m = new THREE.Mesh(new THREE.SphereGeometry(0.2 + Math.random() * 0.2, 8, 8), new THREE.MeshStandardMaterial({ color: 0x2a2018, roughness: 1, transparent: true, opacity: 0 }));
-          m.position.set((Math.random() - 0.5) * 1.2, 1.5, (Math.random() - 0.5) * 1.2);
-          m.userData = { vy: 0.8 + Math.random() * 0.8 };
-          g.add(m); smoke.push(m);
+        const embers = [];                                        // ✨ สะเก็ดไฟลอยขึ้นแล้วดับ
+        for (let i = 0; i < 18; i++) {
+          const sp = mkFire(0xffc24a, 0);
+          const aa = Math.random() * Math.PI * 2, rr = Math.random() * 0.8;
+          sp.userData = { x: Math.cos(aa) * rr, z: Math.sin(aa) * rr, delay: Math.random() * 0.6,
+            life: 0.5 + Math.random() * 0.5, vy: 1.7 + Math.random() * 1.9,
+            vx: (Math.random() - 0.5) * 0.8, vz: (Math.random() - 0.5) * 0.8,
+            s: 0.1 + Math.random() * 0.1, sway: Math.random() * 7 };
+          sp.visible = false; g.add(sp); embers.push(sp);
         }
-        // big scorch ring + strong light
-        const scorch = new THREE.Mesh(new THREE.RingGeometry(0.4, 1.25, 28), new THREE.MeshBasicMaterial({ color: 0xff4a1a, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
+        const smoke = [];                                         // 💨 ควันดำลอยขึ้นช่วงท้าย
+        for (let i = 0; i < 10; i++) {
+          const sp = mkFire(0x2a211c, 0, false);
+          const aa = Math.random() * Math.PI * 2, rr = Math.random() * 0.7;
+          sp.userData = { x: Math.cos(aa) * rr, z: Math.sin(aa) * rr, delay: 0.3 + Math.random() * 0.45,
+            vy: 0.9 + Math.random() * 0.8, s0: 0.7 + Math.random() * 0.6, sway: Math.random() * 7 };
+          sp.visible = false; g.add(sp); smoke.push(sp);
+        }
+        // 🔥 กองไฟที่โคน + รอยไหม้บนพื้น
+        const base = mkFire(0xff7a1a, 0); base.scale.set(2.3, 0.9, 1); base.position.y = 0.16; g.add(base);
+        const scorch = new THREE.Mesh(new THREE.RingGeometry(0.28, 1.35, 30),
+          new THREE.MeshBasicMaterial({ color: 0x3a1408, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
         scorch.rotation.x = -Math.PI / 2; scorch.position.y = 0.02; g.add(scorch);
-        const fireLight = new THREE.PointLight(0xff5a1a, 3, 6); fireLight.position.y = 1.2; /* fireLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
-        dur = 1.3;
+        const hot = new THREE.Mesh(new THREE.CircleGeometry(0.95, 26),
+          new THREE.MeshBasicMaterial({ color: 0xff5a14, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+        hot.rotation.x = -Math.PI / 2; hot.position.y = 0.03; g.add(hot);
+        const _fc = new THREE.Color();
+        dur = 1.5;
         update = (pr) => {
-          flames.forEach((m) => {
-            const lp = Math.max(0, Math.min(1, (pr - m.userData.delay) / (1 - m.userData.delay)));
-            m.position.y = -0.4 + Math.sin(lp * Math.PI) * m.userData.peak;
-            m.rotation.z = Math.sin(pr * 12 + m.userData.sway) * 0.25;
-            m.scale.set(1 + Math.sin(pr * 9 + m.userData.sway) * 0.15, 0.6 + Math.sin(lp * Math.PI) * 1.6, 1);
-            m.material.opacity = Math.sin(lp * Math.PI);
-          });
-          smoke.forEach((m) => { m.position.y += m.userData.vy * 0.03; m.material.opacity = (pr > 0.4 ? (pr - 0.4) / 0.6 : 0) * 0.5 * (1 - pr); m.scale.setScalar(1 + pr * 1.5); });
-          scorch.material.opacity = 0.75 * (1 - pr); scorch.scale.setScalar(1 + pr * 0.5);
-          fireLight.intensity = 3 * Math.sin(pr * Math.PI);
+          const tt = pr * dur;
+          const out = pr > 0.68 ? Math.max(0, 1 - (pr - 0.68) / 0.32) : 1;   // ไฟค่อย ๆ มอดช่วงท้าย
+          const rise = Math.min(1, pr / 0.18);                                // พุ่งขึ้นเร็วตอนแรก
+          for (let i = 0; i < licks.length; i++) {
+            const sp = licks[i], u2 = sp.userData;
+            const lt = tt - u2.delay;
+            if (lt < 0) { sp.visible = false; continue; }
+            const k = (lt % u2.life) / u2.life;                               // อายุของลิ้นไฟแต่ละรอบ
+            sp.visible = true;
+            const wob = Math.sin(tt * 8.5 + u2.sway) * 0.12 * (0.25 + k);
+            sp.position.set(u2.x * (1 - k * 0.5) + wob, 0.1 + k * u2.rise * rise, u2.z * (1 - k * 0.5) + wob * 0.6);
+            sp.material.rotation = u2.spin * k;
+            const sc = u2.s0 * (0.5 + k * 1.0) * (1 - k * 0.32) * (0.8 + rise * 0.2);
+            sp.scale.set(sc * (1 - k * 0.28), sc * (1.35 - k * 0.2), 1);      // สูงกว่ากว้าง = ลิ้นไฟ
+            _fc.copy(u2.inner ? FIRE_HOT : FIRE_MID).lerp(u2.inner ? FIRE_MID : FIRE_LOW, Math.min(1, u2.inner ? k * 1.3 : k * 1.15));
+            if (!u2.inner && k > 0.6) _fc.multiplyScalar(1 - (k - 0.6) * 0.5);
+            sp.material.color.copy(_fc);
+            sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (u2.inner ? 0.5 : 0.32) * out;
+          }
+          for (let i = 0; i < embers.length; i++) {
+            const sp = embers[i], u2 = sp.userData;
+            const lt = tt - u2.delay;
+            if (lt < 0) { sp.visible = false; continue; }
+            const k = (lt % u2.life) / u2.life;
+            sp.visible = true;
+            sp.position.set(u2.x + u2.vx * k + Math.sin(tt * 6 + u2.sway) * 0.1, 0.18 + u2.vy * k * (1 - k * 0.25), u2.z + u2.vz * k);
+            const es = u2.s * (1 - k * 0.5);
+            sp.scale.set(es, es, 1);
+            sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * 0.7 * out;
+          }
+          for (let i = 0; i < smoke.length; i++) {
+            const sp = smoke[i], u2 = sp.userData;
+            const lt = tt - u2.delay;
+            if (lt < 0) { sp.visible = false; continue; }
+            sp.visible = true;
+            const k = Math.min(1, lt / 1.0);
+            sp.position.set(u2.x + Math.sin(tt * 2.2 + u2.sway) * 0.3 * k, 0.6 + u2.vy * lt, u2.z + Math.cos(tt * 1.9 + u2.sway) * 0.3 * k);
+            const ss = u2.s0 * (0.5 + k * 1.7);
+            sp.scale.set(ss, ss, 1);
+            sp.material.opacity = Math.sin(k * Math.PI) * 0.42;
+          }
+          const flick = 0.78 + Math.sin(tt * 21) * 0.12 + Math.sin(tt * 37) * 0.08;
+          base.material.opacity = 0.42 * out * flick;
+          base.scale.set(2.3 * (0.9 + flick * 0.15), 0.9 * (0.85 + flick * 0.2), 1);
+          hot.material.opacity = 0.26 * out * flick;
+          hot.scale.setScalar(1 + pr * 0.3);
+          scorch.material.opacity = Math.min(0.55, pr * 1.6) * (pr > 0.8 ? (1 - pr) / 0.2 : 1);
         };
       } else if (fxType === "icespear") {
         // ❄️ หอกน้ำแข็ง — big jagged ice spears erupt from the ground, then shatter
@@ -30351,16 +30470,25 @@ export default function CherryAdventure() {
     const magicFx = [];
     const spawnFirePillar = (x, z, col) => {
       try {
-        const g = new THREE.Group(); const mats = [];
-        for (let k = 0; k < 3; k++) {
-          const mm = new THREE.MeshBasicMaterial({ color: k === 0 ? 0xfff2c0 : (col || 0xff7a2a), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-          const h = 2.7 - k * 0.55;
-          const cone = new THREE.Mesh(new THREE.ConeGeometry(0.28 + k * 0.16, h, 10, 1, true), mm);
-          cone.position.y = h / 2; cone.raycast = () => {};
-          g.add(cone); mats.push(mm);
+        const FT = fireTex(); const g = new THREE.Group(); const mats = []; const bits = [];
+        const mk = (hex) => { const mm = new THREE.SpriteMaterial({ map: FT, color: hex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }); mats.push(mm); const sp = new THREE.Sprite(mm); sp.raycast = () => {}; g.add(sp); bits.push(sp); return sp; };
+        for (let i = 0; i < 24; i++) {                          // 🔥 ลิ้นเปลวพวยขึ้นเป็นเสา
+          const inner = i < 9;
+          const sp = mk(0xffffff);
+          const rr = (inner ? 0.24 : 0.66) * Math.sqrt(Math.random()), aa = Math.random() * Math.PI * 2;
+          sp.userData = { x: Math.cos(aa) * rr, z: Math.sin(aa) * rr, off: Math.random(),
+            rise: (inner ? 2.7 : 2.0) + Math.random() * 1.1, s0: (inner ? 0.5 : 0.84) + Math.random() * 0.4,
+            sway: Math.random() * 7, spin: (Math.random() - 0.5) * 2, inner };
         }
-        g.position.set(x, 0, z); g.scale.set(1, 0.05, 1);
-        g.userData = { kind: "pillar", t: 0, dur: 0.65, mats };
+        for (let i = 0; i < 10; i++) {                          // ✨ สะเก็ดไฟกระเด็นออก
+          const sp = mk(0xffc24a);
+          const aa = Math.random() * Math.PI * 2;
+          sp.userData = { ember: 1, x: Math.cos(aa) * Math.random() * 0.5, z: Math.sin(aa) * Math.random() * 0.5,
+            off: Math.random() * 0.4, vy: 2.5 + Math.random() * 2.2, vx: (Math.random() - 0.5) * 1.2,
+            vz: (Math.random() - 0.5) * 1.2, s: 0.1 + Math.random() * 0.1, sway: Math.random() * 7 };
+        }
+        g.position.set(x, 0, z);
+        g.userData = { kind: "pillar", t: 0, dur: 0.9, mats, bits, fc: new THREE.Color() };
         scene.add(g); magicFx.push(g);
       } catch (e) {}
     };
@@ -30418,11 +30546,30 @@ export default function CherryAdventure() {
             o.scale.setScalar(1.1 + p * 0.3);
             if (p >= 1) { if (u.onHit) { try { u.onHit(tx, tz); } catch (e2) {} } kill(); }
           }
-        } else if (u.kind === "pillar") {                       // 🔥 เสาไฟพุ่งขึ้นจากพื้น
+        } else if (u.kind === "pillar") {                       // 🔥 เสาเพลิง — ลิ้นไฟซ้อนกันพวยขึ้น ไม่ใช่กรวยผิวเรียบ
           const p = Math.min(1, u.t / u.dur);
-          o.scale.set(1 + p * 0.25, p < 0.22 ? 0.05 + (p / 0.22) * 1.15 : 1.2 - (p - 0.22) * 0.25, 1 + p * 0.25);
-          o.rotation.y += d * 3.2;
-          u.mats.forEach((m, k) => (m.opacity = (0.9 - k * 0.15) * Math.sin(Math.min(1, p * 1.1) * Math.PI)));
+          const up = Math.min(1, p / 0.16), out2 = p > 0.62 ? Math.max(0, 1 - (p - 0.62) / 0.38) : 1;
+          const fc = u.fc;
+          for (let bi = 0; bi < u.bits.length; bi++) {
+            const sp = u.bits[bi], ud = sp.userData;
+            if (ud.ember) {
+              const k = Math.max(0, Math.min(1, (p - ud.off) / (1 - ud.off)));
+              sp.position.set(ud.x + ud.vx * k + Math.sin(u.t * 6 + ud.sway) * 0.1, 0.2 + ud.vy * k * (1 - k * 0.25), ud.z + ud.vz * k);
+              const es = ud.s * (1 - k * 0.45); sp.scale.set(es, es, 1);
+              sp.material.opacity = Math.sin(k * Math.PI) * 0.75 * out2;
+              continue;
+            }
+            const k = (u.t * 1.45 + ud.off) % 1;                // ลิ้นไฟไหลขึ้นเรื่อย ๆ คนละจังหวะ
+            const wob = Math.sin(u.t * 8.5 + ud.sway) * 0.14 * (0.25 + k);
+            sp.position.set(ud.x * (1 - k * 0.55) + wob, 0.1 + k * ud.rise * up, ud.z * (1 - k * 0.55) + wob * 0.6);
+            sp.material.rotation = ud.spin * k;
+            const sc = ud.s0 * (0.5 + k * 1.05) * (1 - k * 0.3) * (0.75 + up * 0.25);
+            sp.scale.set(sc * (1 - k * 0.26), sc * (1.4 - k * 0.22), 1);
+            fc.copy(ud.inner ? FIRE_HOT : FIRE_MID).lerp(ud.inner ? FIRE_MID : FIRE_LOW, Math.min(1, ud.inner ? k * 1.3 : k * 1.15));
+            if (!ud.inner && k > 0.6) fc.multiplyScalar(1 - (k - 0.6) * 0.5);
+            sp.material.color.copy(fc);
+            sp.material.opacity = Math.sin(Math.min(1, k) * Math.PI) * (ud.inner ? 0.5 : 0.32) * out2;
+          }
           if (p >= 1) kill();
         } else {                                                // 🧊 แท่งน้ำแข็ง: ผุดขึ้น → ค้างแช่แข็ง → แตก
           if (u.t < u.up) {
