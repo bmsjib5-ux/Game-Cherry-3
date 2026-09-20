@@ -5911,6 +5911,48 @@ function CherryAdventure() {
             orbG.userData = { orb, core, ring, light: glowLight };
             G.mageOrb = orbG;
         }
+        // 💻 นักเวทโค้ด — แท่นคีย์บอร์ดโน้ตบุ๊คลอยอยู่ตรงหน้า ไม่ได้ถือด้วยมือ
+        {
+            const deck = new THREE.Group();
+            deck.position.set(0, 1.2, 0.52);
+            deck.rotation.x = -0.3; // เอียงแป้นเข้าหาตัวเหมือนโน้ตบุ๊คที่เปิดกาง
+            // 🖥️ ฝาจอโฮลโกรแกรมที่กางขึ้นจากขอบหลังแป้น
+            const scrMat = new THREE.MeshBasicMaterial({ color: 0x2ad0e8, transparent: true, opacity: 0.3, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+            const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.38), scrMat);
+            scr.position.set(0, 0.2, -0.13);
+            scr.rotation.x = 0.26;
+            scr.raycast = () => { };
+            deck.add(scr);
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x1a1d24, metalness: 0.6, roughness: 0.35, emissive: 0x1aa0c8, emissiveIntensity: 0.5 });
+            const frm = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.42, 0.012), frameMat);
+            frm.position.copy(scr.position);
+            frm.position.z -= 0.012;
+            frm.rotation.x = scr.rotation.x;
+            frm.raycast = () => { };
+            deck.add(frm);
+            // ✨ บรรทัดโค้ดไหลบนจอ
+            const rows = [];
+            for (let i = 0; i < 7; i++) {
+                const w = 0.12 + Math.random() * 0.34;
+                const ln = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.022), new THREE.MeshBasicMaterial({ color: 0x8affc0, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false }));
+                ln.position.set(-0.22 + w / 2, 0, 0.004);
+                ln.raycast = () => { };
+                ln.userData = { y0: 0.16 - i * 0.045, sp: 0.35 + Math.random() * 0.5 };
+                scr.add(ln);
+                rows.push(ln);
+            }
+            // 🌈 ไฟ RGB ขอบแท่น
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.012, 6, 28), new THREE.MeshBasicMaterial({ color: 0x2ad0e8, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+            rim.rotation.x = Math.PI / 2;
+            rim.scale.set(1.12, 1, 0.52);
+            rim.position.y = -0.035;
+            rim.raycast = () => { };
+            deck.add(rim);
+            deck.visible = false;
+            deck.userData = { scr: scrMat, rows, rim, frame: frameMat };
+            char.add(deck);
+            G._coderDeck = deck;
+        }
         // 🏹 archer's quiver of arrows — slung diagonally across the back
         {
             const quiver = new THREE.Group();
@@ -10406,7 +10448,8 @@ function CherryAdventure() {
             if (G.kkKey && !sigHero) {
                 const fam2 = famKey ? famKey.split("_")[1] : (WPN_FAMILY[G.cls] || null);
                 const t2 = famKey ? +famKey.split("_")[2] : 0;
-                kkKey = fam2 ? G.kkKey(fam2, t2) : null;
+                // 💻 นักเวทโค้ดใช้คีย์บอร์ด RGB ของเกมเอง (มีไฟใต้แป้น + คิวบ AI) — ไม่สลับเป็นโมเดล KayKit
+                kkKey = (fam2 && fam2 !== "keyboard") ? G.kkKey(fam2, t2) : null;
                 if (kkKey)
                     famKey = kkKey;
             }
@@ -10494,6 +10537,31 @@ function CherryAdventure() {
                         b.material.emissive.setHex(it2 && it2.elem ? hex2 : 0x2a3038);
                         b.material.emissiveIntensity = it2 && it2.elem ? 0.3 + (TIER[it2.rarity] || 1) * 0.15 : 0.3;
                     });
+                }
+            }
+            // 💻 นักเวทโค้ด: ย้ายคีย์บอร์ดไปลอยบนแท่นตรงหน้า แทนการถือด้วยมือ
+            if (G._coderDeck) {
+                const deck = G._coderDeck;
+                const floatKb = G.cls === "coder" && !G.heroId;
+                deck.visible = floatKb && !!model;
+                if (model) {
+                    if (floatKb) {
+                        if (model.parent !== deck)
+                            deck.add(model);
+                        model.position.set(0, 0, 0);
+                        model.rotation.set(0, 0, 0);
+                        model.scale.setScalar(1.25);
+                    }
+                    else if (model.parent === deck) {
+                        wand.add(model); // คืนกลับมือเมื่อเปลี่ยนอาชีพ/ใส่ชุดฮีโร่
+                        model.scale.setScalar(1);
+                    }
+                }
+                // โมเดลของอาชีพอื่นที่เคยหลุดค้างอยู่ในแท่น ต้องเอาออกด้วย
+                for (let ci = deck.children.length - 1; ci >= 0; ci--) {
+                    const ch2 = deck.children[ci];
+                    if (ch2 !== model && ch2.userData && ch2.userData.keys)
+                        wand.add(ch2);
                 }
             }
             // 🔮 mage: hide the hand weapon, show the floating orb tinted by element
@@ -38095,6 +38163,66 @@ function CherryAdventure() {
                     flash.scale.setScalar(0.7 + (1 - fk2) * 1.6);
                 };
             }
+            else if (fxType === "pixel") {
+                // 🟩 พิกเซลแตก — คิวบเรืองแสงกระจายออก ขยับทีละช่องแบบเกม 8-bit ไม่ลื่นไหล
+                //    เคล็ดลับ: ปัดตำแหน่งเข้าตาราง (quantise) ทุกเฟรม → มองเห็นเป็นพิกเซลจริง
+                const PAL = [0x2ae84a, 0x2ad0e8, 0xff3ab0, 0xfff24a, 0xffffff, 0x9a5aff];
+                const STEP = 0.11;
+                const qz = (v) => Math.round(v / STEP) * STEP;
+                const px = [];
+                for (let i = 0; i < 30; i++) {
+                    const sz = 0.075 + Math.floor(Math.random() * 3) * 0.045;
+                    const cm = new THREE.MeshBasicMaterial({ color: PAL[Math.floor(Math.random() * PAL.length)], transparent: true, opacity: 1 });
+                    const m = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), cm);
+                    const aa = Math.random() * Math.PI * 2, rr = 0.6 + Math.random() * 2.4;
+                    m.userData = { vx: Math.cos(aa) * rr, vz: Math.sin(aa) * rr, vy: 1.1 + Math.random() * 2.6,
+                        d: Math.random() * 0.22, sz, spin: Math.floor(Math.random() * 4) };
+                    m.raycast = () => { };
+                    g.add(m);
+                    px.push(m);
+                }
+                // ■ ก้อนพิกเซลกลางที่แตกออกจากจุดปะทะ
+                const coreP = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 }));
+                coreP.position.y = 0.95;
+                coreP.raycast = () => { };
+                g.add(coreP);
+                // ▓ แถบกลิตช์แนวนอนวาบขึ้นสลับสี
+                const bars = [];
+                for (let i = 0; i < 4; i++) {
+                    const bm = new THREE.MeshBasicMaterial({ color: PAL[i % PAL.length], transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+                    const b = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.1), bm);
+                    b.position.set(0, 0.5 + i * 0.32, 0);
+                    b.raycast = () => { };
+                    b.userData = { y: 0.5 + i * 0.32, ph: Math.random() * 6.3 };
+                    g.add(b);
+                    bars.push(b);
+                }
+                dur = 0.75;
+                update = (pr) => {
+                    for (let i = 0; i < px.length; i++) {
+                        const m = px[i], u2 = m.userData;
+                        const k = Math.max(0, Math.min(1, (pr - u2.d) / (1 - u2.d)));
+                        m.position.set(qz(u2.vx * k), qz(0.85 + u2.vy * k - 2.4 * k * k), qz(u2.vz * k));
+                        m.rotation.set(Math.floor(k * 4 + u2.spin) * (Math.PI / 2), Math.floor(k * 3) * (Math.PI / 2), 0); // หมุนทีละ 90° แบบดอต
+                        const st = Math.max(0.25, 1 - Math.floor(k * 4) * 0.25); // ย่อเป็นขั้น ๆ
+                        m.scale.setScalar(st);
+                        m.material.opacity = k < 0.9 ? 1 : (1 - k) * 10;
+                        m.visible = k > 0;
+                    }
+                    const cp = Math.min(1, pr / 0.3);
+                    coreP.scale.setScalar(Math.max(0.05, (1 - cp) * 1.6 + 0.2));
+                    coreP.rotation.set(Math.floor(pr * 8) * (Math.PI / 2), Math.floor(pr * 6) * (Math.PI / 2), 0);
+                    coreP.material.opacity = 1 - cp;
+                    for (let i = 0; i < bars.length; i++) {
+                        const b = bars[i];
+                        const on = ((Math.floor(pr * 14) + i) % 3) === 0; // กระพริบเป็นจังหวะแบบจอเสีย
+                        b.material.opacity = on ? 0.75 * (1 - pr) : 0;
+                        b.position.x = qz(Math.sin(pr * 20 + b.userData.ph) * 0.4);
+                        b.position.y = b.userData.y + qz(Math.sin(pr * 9 + i) * 0.2);
+                        b.scale.x = 0.5 + ((Math.floor(pr * 11) + i) % 4) * 0.35;
+                    }
+                };
+            }
             else if (fxType === "bolt") {
                 // ⚡ ฟ้าผ่าลงมาตรง ๆ — สายหนามีแขนงแยก กะพริบ 3 จังหวะ รูปไม่ซ้ำกันสักจังหวะ
                 const FTb2 = fireTex();
@@ -51727,7 +51855,7 @@ function CherryAdventure() {
                     }
                 }
                 else
-                    spawnSkillFx("orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);
+                    spawnSkillFx(G.cls === "coder" ? "pixel" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a); // 💻 นักเวทโค้ดตีเป็นพิกเซลแตก
             }
             else {
                 worldGestureFx(m.position, crit ? 0xffd24a : 0xffe08a);
@@ -63393,6 +63521,18 @@ function CherryAdventure() {
                             armR.userData.elbow.rotation.x = elx0 * 0.5 - 0.12;
                         wand.position.set(0.03, -0.50, 0.04); // อยู่ในฝ่ามือเหมือนอาวุธชิ้นอื่น
                         wand.rotation.set(-(armR.rotation.x + (armR.userData.elbow ? armR.userData.elbow.rotation.x : 0)) - 1.18, -Math.PI / 2, 0); // เอียง ~54° ปลายล่างไม่ทิ่มพื้น
+                    }
+                    if (G.cls === "coder") {
+                        // 💻 ยกสองมือขึ้นพิมบนคีย์บอร์ดที่ลอยอยู่ตรงหน้า — นิ้วขยับสลับกันเป็นจังหวะ
+                        const ty1 = Math.sin(t * 9), ty2 = Math.sin(t * 9 + 1.7);
+                        armR.rotation.x = -1.0 + ty1 * 0.055 + swing * 0.03 * moveAmt;
+                        armR.rotation.z = 0.3;
+                        armL.rotation.x = -1.0 + ty2 * 0.055 + swing2 * 0.03 * moveAmt;
+                        armL.rotation.z = -0.3;
+                        if (armR.userData.elbow)
+                            armR.userData.elbow.rotation.x = -0.74 - ty1 * 0.04;
+                        if (armL.userData.elbow)
+                            armL.userData.elbow.rotation.x = -0.74 - ty2 * 0.04;
                     }
                     if (G.cls === "lancer") {
                         // 🔱 ถือหอกสองมือระดับเอว — ปลายสามแฉกชี้ไปทิศที่ตัวละครหัน ขนานพื้นเอียงลงเล็กน้อย
@@ -80452,15 +80592,49 @@ function CherryAdventure() {
                 }
                 // 💻🔮 arcane coder: RGB keyboard wave, AI cube, code motes, orbiting holo laptop
                 if (G.cls === "coder") {
-                    const kb = weaponModels && weaponModels.cc;
+                    // 💻 แท่นคีย์บอร์ดลอยหน้าอก — ลอยขึ้นลงเบา ๆ ส่ายซ้ายขวาเล็กน้อย ขอบเรือง RGB วนสี
+                    const deck = G._coderDeck;
+                    if (deck && deck.visible) {
+                        deck.position.set(0, 1.2 + Math.sin(t * 2.1) * 0.025, 0.52);
+                        deck.rotation.set(-0.3 + Math.sin(t * 1.6) * 0.022, Math.sin(t * 0.9) * 0.07, 0);
+                        const du = deck.userData;
+                        if (du.rim) {
+                            du.rim.material.color.setHSL((t * 0.17) % 1, 0.9, 0.58);
+                            du.rim.material.opacity = 0.6 + Math.abs(Math.sin(t * 3.4)) * 0.3;
+                        }
+                        if (du.scr)
+                            du.scr.opacity = 0.22 + Math.abs(Math.sin(t * 2.4)) * 0.13;
+                        if (du.frame)
+                            du.frame.emissiveIntensity = 0.32 + Math.abs(Math.sin(t * 3)) * 0.38;
+                        if (du.rows)
+                            for (let ri = 0; ri < du.rows.length; ri++) {
+                                const ln = du.rows[ri];
+                                let y = ln.userData.y0 - ((t * ln.userData.sp) % 0.38);
+                                if (y < -0.17)
+                                    y += 0.38; // บรรทัดโค้ดไหลวนขึ้นบนจอ
+                                ln.position.y = y;
+                                ln.material.opacity = 0.45 + Math.sin(t * 6 + ri) * 0.28;
+                            }
+                    }
+                    const kb = (deck && deck.children.find((c2) => c2.userData && c2.userData.keys)) || (weaponModels && weaponModels.cc);
                     if (kb && kb.visible) {
                         // 🌈 RGB wave rolls across the keycaps
-                        if (kb.userData.keys)
+                        if (kb.userData.keys) {
+                            // 🌈 คลื่นสี RGB ไหลผ่านแป้นจริง — แยกวัสดุต่อปุ่มครั้งแรกที่ใช้ (เดิมทุกปุ่มใช้วัสดุเดียวกัน เลยไม่เคยเปลี่ยนสีได้)
+                            if (!kb.userData._rgbKeys) {
+                                kb.userData.keys.forEach((k2) => { k2.material = k2.material.clone(); });
+                                kb.userData._rgbKeys = 1;
+                            }
                             kb.userData.keys.forEach((k2) => {
-                                const h = ((t * 0.6 + k2.userData.phase * 0.06) % 1);
-                                k2.material = k2.material.clone ? k2.material : k2.material;
+                                const h = ((t * 0.22 + k2.userData.phase * 0.075) % 1);
+                                k2.material.color.setHSL(h, 0.9, 0.55);
+                                if (k2.material.emissive) {
+                                    k2.material.emissive.setHSL(h, 0.95, 0.32);
+                                    k2.material.emissiveIntensity = 1.0;
+                                }
                                 k2.position.y = 0.026 + Math.max(0, Math.sin(t * 8 - k2.userData.phase)) * 0.006; // keys press
                             });
+                        }
                         if (kb.userData.rgb)
                             kb.userData.rgb.material.emissiveIntensity = 1.1 + Math.sin(t * 3) * 0.5;
                         if (kb.userData.cube) {
