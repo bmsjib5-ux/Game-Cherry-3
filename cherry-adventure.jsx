@@ -8795,7 +8795,9 @@ export default function CherryAdventure() {
     hairStyles.forEach((h, i) => { h.visible = i === 0; headG.add(h); });
     // 💇 ทรงผม KayKit — จองช่องไว้ตามลำดับใน CUSTOM.hairStyles แล้วค่อยโหลดไฟล์ตอนถูกเลือกครั้งแรก
     //    วัสดุของเส้นผมถูกแทนด้วย hairMat ของเกม สีผมจึงเปลี่ยนตามจานสีเดิมได้ทันที
-    const KK_HAIR = { hair_mage: { w: 1.58, y: -0.50 }, hair_rogue: { w: 1.56, y: -0.38 } };
+    // 💇 ทรงผม KayKit — w = ความกว้างเป้า · h = เพดานความสูง · y = ขอบล่างของผมเทียบกึ่งกลางหัว
+//    หัวสูง 1.36 (y -0.71..0.65) — ถ้าย่อด้วยความกว้างอย่างเดียว ทรงมวยผมที่สูงจะยืดเป็นหอคอยเหนือหัว
+const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.56, h: 1.48, y: -0.56 } };
     const kkHairSlot = {}, kkHairFiles = {};
     CUSTOM.hairStyles.forEach((st, i) => {
       if (!st.kk) return;
@@ -8817,7 +8819,7 @@ export default function CherryAdventure() {
             if (nm !== "Red") o.material = hairMat;      // 🎨 เส้นผมใช้วัสดุผมของเกม (ย้อมสีได้) · โบว์/ที่มัดคงสีเดิม
           });
           const b = new THREE.Box3().setFromObject(m), sz = new THREE.Vector3(); b.getSize(sz);
-          const sc = P.w / Math.max(0.01, Math.max(sz.x, sz.z));
+          const sc = Math.min(P.w / Math.max(0.01, Math.max(sz.x, sz.z)), (P.h || 99) / Math.max(0.01, sz.y));   // คุมทั้งกว้างและสูง ไม่ให้ผมท่วมหัว
           m.scale.setScalar(sc);
           m.position.y = P.y - b.min.y * sc;
           slot.add(m);
