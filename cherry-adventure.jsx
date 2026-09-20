@@ -32863,18 +32863,6 @@ export default function CherryAdventure() {
         hurtWild(m, d, { crit, color: col });
       };
       const fk = fk0, arch = arch0;
-      // 🏹 สกิลนักธนู: ยิงลูกธนูให้เห็นจริงทุกท่า (เว้นท่าที่ยิงจากฟ้า/ขึ้นจากพื้นอยู่แล้ว)
-      if (G.cls === "archer" && focus && arch !== "arrowrain" && arch !== "vine" && arch !== "rootcurse") {
-        try {
-          const nAr = Math.max(1, Math.min(5, sk.hits || 1));
-          const ahy2 = 0.85 + (focus.scale ? focus.scale.y : 1) * 0.3;
-          for (let ka = 0; ka < nAr; ka++) {
-            spawnArrow(bowMuzzle(),
-              new THREE.Vector3(focus.position.x + (Math.random() - 0.5) * 0.35, ahy2 + (Math.random() - 0.5) * 0.3, focus.position.z + (Math.random() - 0.5) * 0.35),
-              col, Math.max(0.16, Math.min(0.34, Math.hypot(focus.position.x - char.position.x, focus.position.z - char.position.z) / 26)) + Math.random() * 0.03, null, ka * 0.06);
-          }
-        } catch (_) {}
-      }
       // 🥷 ส่งเงาออกไปทีละร่าง — ดาเมจรวมเท่าเดิม หารเป็น 3 ครั้ง
       const shadowFire = arch !== "shadow3" ? null : (idx) => {
         const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 8);
@@ -35182,8 +35170,29 @@ export default function CherryAdventure() {
         const tgt = alive ? focus : nearestWild(worldRange() + (aoe ? 3 : 2)); // 🎯 เป้าอาจตาย/หนีระหว่างร่าย
         const at = tgt ? tgt.position : focus.position;
         const selfFx = fk === "healbless" || fk === "warfrenzy" || fk === "overclock";
-        worldGestureFx(at, col);
-        spawnSkillFx(fk, selfFx ? char.position : at, col);
+        // 🏹 นักธนู: ปล่อยลูกธนูออกไปก่อน — เอฟเฟคต์ประจำสกิลค่อยแตกตอนลูกธนูปักเป้า
+        //    (ท่าบำรุงตัวเอง/ยิงจากฟ้า/ขึ้นจากพื้น ใช้จังหวะเดิม)
+        let arrowLead = false;
+        if (G.cls === "archer" && tgt && !selfFx && arch !== "arrowrain" && arch !== "vine" && arch !== "rootcurse") {
+          try {
+            const nAr = Math.max(1, Math.min(5, sk.hits || 1));
+            const ahy2 = 0.85 + (tgt.scale ? tgt.scale.y : 1) * 0.3;
+            const adur2 = Math.max(0.16, Math.min(0.34, Math.hypot(at.x - char.position.x, at.z - char.position.z) / 26));
+            const ax0 = at.x, az0 = at.z;
+            for (let ka = 0; ka < nAr; ka++) {
+              spawnArrow(bowMuzzle(),
+                new THREE.Vector3(ax0 + (Math.random() - 0.5) * 0.35, ahy2 + (Math.random() - 0.5) * 0.3, az0 + (Math.random() - 0.5) * 0.35),
+                col, adur2 + Math.random() * 0.03,
+                ka === 0 ? (hx, hz) => { const hp = new THREE.Vector3(hx, 0.5, hz); worldGestureFx(hp, col); spawnSkillFx(fk, hp, col); } : null,
+                ka * 0.06);
+            }
+            arrowLead = true;
+          } catch (_) {}
+        }
+        if (!arrowLead) {
+          worldGestureFx(at, col);
+          spawnSkillFx(fk, selfFx ? char.position : at, col);
+        }
         G._camShake = Math.max(G._camShake || 0, aoe ? 0.35 : 0.22);
         if (arch === "star") {
           toast(`${sk.emoji || "✨"} ${sk.name} — ฟันหมู่รูปดาว 5 แฉก!`); // ดาเมจลงไปแล้วทีละแฉกระหว่างวิ่ง
