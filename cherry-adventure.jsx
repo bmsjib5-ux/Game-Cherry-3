@@ -588,17 +588,25 @@ const LOOT = [
   { id: "gD", slot: "gloves", name: "กรงเล็บมังกร", emoji: "🐾", rarity: "dragon", atk: 14, def: 3, elem: "dragon", set: "dragon" },
   { id: "pD", slot: "pants", name: "สนับเกล็ดมังกร", emoji: "🦿", rarity: "dragon", hp: 40, def: 8, elem: "dragon", set: "dragon" },
   { id: "sD", slot: "shoes", name: "รองเท้ามังกรเหิน", emoji: "👢", rarity: "dragon", def: 5, spd: 20, eva: 6, crit: 5, elem: "dragon", set: "dragon" },
-  // 🛡️ OFF-HAND — โล่/ของมือรอง (ใช้ได้ทุกอาชีพที่ถืออาวุธมือเดียว)
-{ id: "oh1", slot: "offhand", name: "โล่ไม้ฝึกหัด", emoji: "🛡️", rarity: "common", def: 4, hp: 8 },
-{ id: "oh2", slot: "offhand", name: "โล่เหล็กกลม", emoji: "🛡️", rarity: "rare", def: 9, hp: 18 },
-{ id: "oh3", slot: "offhand", name: "ตะเกียงนำทาง", emoji: "🏮", rarity: "rare", def: 5, mp: 14, spd: 4 },
-{ id: "oh4", slot: "offhand", name: "โล่หอคอยเหล็กกล้า", emoji: "🔰", rarity: "epic", def: 16, hp: 34 },
-{ id: "oh5", slot: "offhand", name: "ตำราเวทโบราณ", emoji: "📕", rarity: "epic", def: 6, mp: 28, atk: 6 },
-{ id: "oh6", slot: "offhand", name: "ลูกแก้ววิญญาณ", emoji: "🔮", rarity: "legend", def: 10, mp: 34, crit: 8, atk: 8 },
-{ id: "oh7", slot: "offhand", name: "โล่ราชันเพลิง", emoji: "🛡️", rarity: "legend", def: 24, hp: 55, atk: 6, elem: "fire" },
-{ id: "ohD", slot: "offhand", name: "โล่เกล็ดมังกร", emoji: "🐲", rarity: "dragon", def: 34, hp: 80, atk: 10, elem: "dragon", req: 100 },
+  // 🛡️ OFF-HAND — ของมือซ้าย มีเฉพาะ 3 อาชีพ และใช้ข้ามอาชีพไม่ได้
+  //    นักรบ 🛡️ โล่ · นักฆ่า 🗡️ มีดสั้น · นักเวท 📖 สมุด/ลูกแก้ว
+{ id: "oh1", slot: "offhand", cls: "warrior",  name: "โล่ไม้ฝึกหัด",      emoji: "🛡️", rarity: "common", def: 4,  hp: 8 },
+{ id: "oh2", slot: "offhand", cls: "warrior",  name: "โล่เหล็กกลม",       emoji: "🛡️", rarity: "rare",   def: 9,  hp: 18 },
+{ id: "oh4", slot: "offhand", cls: "warrior",  name: "โล่หอคอยเหล็กกล้า", emoji: "🔰", rarity: "epic",   def: 16, hp: 34 },
+{ id: "oh7", slot: "offhand", cls: "warrior",  name: "โล่ราชันเพลิง",      emoji: "🛡️", rarity: "legend", def: 24, hp: 55, atk: 6, elem: "fire" },
+{ id: "ohD", slot: "offhand", cls: "warrior",  name: "โล่เกล็ดมังกร",      emoji: "🐲", rarity: "dragon", def: 34, hp: 80, atk: 10, elem: "dragon", req: 100 },
+{ id: "ohA1", slot: "offhand", cls: "assassin", name: "มีดสั้นฝึกหัด",     emoji: "🔪", rarity: "common", atk: 4,  crit: 3 },
+{ id: "ohA2", slot: "offhand", cls: "assassin", name: "กริชเงาคู่",          emoji: "🔪", rarity: "rare",   atk: 8,  crit: 6,  spd: 4 },
+{ id: "ohA3", slot: "offhand", cls: "assassin", name: "มีดพิษราตรี",        emoji: "🗡️", rarity: "epic",   atk: 14, crit: 10, spd: 6, elem: "wind" },
+{ id: "ohA4", slot: "offhand", cls: "assassin", name: "เขี้ยวมัจจุราช",     emoji: "🗡️", rarity: "legend", atk: 22, crit: 16, spd: 10, eva: 4 },
+{ id: "ohAD", slot: "offhand", cls: "assassin", name: "เขี้ยวมังกรคู่",     emoji: "🐉", rarity: "dragon", atk: 32, crit: 20, spd: 12, elem: "dragon", req: 100 },
+{ id: "ohM1", slot: "offhand", cls: "mage",    name: "สมุดคาถาฝึกหัด",      emoji: "📘", rarity: "common", def: 2,  mp: 10 },
+{ id: "oh3", slot: "offhand", cls: "mage",     name: "ตะเกียงนำทาง",        emoji: "🏮", rarity: "rare",   def: 5,  mp: 14, spd: 4 },
+{ id: "oh5", slot: "offhand", cls: "mage",     name: "ตำราเวทโบราณ",        emoji: "📕", rarity: "epic",   def: 6,  mp: 28, atk: 6,  elem: "arcane" },
+{ id: "oh6", slot: "offhand", cls: "mage",     name: "ลูกแก้ววิญญาณ",        emoji: "🔮", rarity: "legend", def: 10, mp: 34, crit: 8, atk: 8, elem: "arcane" },
+{ id: "ohMD", slot: "offhand", cls: "mage",    name: "ลูกแก้วขวัญมังกร",  emoji: "🔮", rarity: "dragon", def: 14, mp: 48, atk: 16, crit: 10, elem: "dragon", req: 100 },
 { id: "fg_sword", slot: "weapon", name: "ดาบเหล็กกล้า", emoji: "🗡️", rarity: "rare", atk: 18, cls: "warrior", forge: true },
-{ id: "fg_great", slot: "weapon", name: "ดาบใหญ่ทำลายล้าง", emoji: "⚔️", rarity: "epic", atk: 28, cls: "warrior", forge: true },
+{ id: "fg_great", slot: "weapon", name: "ดาบใหญ่ทำลายล้าง", emoji: "⚔️", rarity: "epic", atk: 28, cls: "warrior", forge: true, twoH: true },   // 🤲 ดาบใหญ่ = สองมือ ถือโล่ไม่ได้
 { id: "fg_shield", slot: "weapon", name: "โล่เหล็กหนา", emoji: "🛡️", rarity: "rare", atk: 8, def: 16, cls: "warrior", forge: true },
 { id: "fg_bow", slot: "weapon", name: "ธนูล่าสัตว์", emoji: "🏹", rarity: "rare", atk: 18, cls: "archer", forge: true },
 { id: "fg_dagger", slot: "weapon", name: "มีดสั้นคู่", emoji: "🔪", rarity: "rare", atk: 16, crit: 6, cls: "assassin", forge: true },
@@ -654,8 +662,10 @@ const SLOT_GI = { weapon: "sword", offhand: "shield", outfit: "shirt", hat: "hat
 const SLOTS = Object.keys(SLOT_NAMES);
 const EMPTY_EQUIP = () => ({ weapon: null, offhand: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null });
 // 🤲 อาวุธสองมือ — ธนู/คทา/หอก/คาตานะ/คีย์บอร์ด ต้องจับสองมือ จึงใส่ของมือรองไม่ได้
-const TWOH_CLS = { archer: 1, mage: 1, lancer: 1, samurai: 1, coder: 1 };
-const twoHandedWpn = (id, cls) => { const it = id ? LOOT.find((x) => x.id === id) : null; return !!TWOH_CLS[(it && it.cls) || cls]; };
+// 🛡️🗡️📖 อาชีพที่มีช่องมือรอง — นักรบถือโล่ · นักฆ่าถือมีดสั้น · นักเวทถือสมุด/ลูกแก้ว (ทั้งหมดอยู่มือซ้าย)
+const OFFHAND_CLS = { warrior: "🛡️ โล่", assassin: "🗡️ มีดสั้น", mage: "📖 สมุด/ลูกแก้ว" };
+const TWOH_CLS = { archer: 1, lancer: 1, samurai: 1, coder: 1 };   // 🧙 นักเวทถือคทามือเดียว — อีกมือประคองสมุด/ลูกแก้ว
+const twoHandedWpn = (id, cls) => { const it = id ? LOOT.find((x) => x.id === id) : null; if (it && it.twoH != null) return !!it.twoH; return !!TWOH_CLS[(it && it.cls) || cls]; };
 
 // ---------- 💍 ACCESSORIES — ring / bracelet / necklace / earring (special stats, own separate slots) ----------
 const ACC_SLOT_NAMES = { ring: "แหวน", bracelet: "กำไล", necklace: "สร้อยคอ", earring: "ต่างหู" };
@@ -4880,6 +4890,46 @@ export default function CherryAdventure() {
     G.enhGlowSprites = enhGlowSprites;
     G.enhLight = enhLight;
     // อ่านขั้นจากอาวุธที่สวมอยู่ → ตั้งสี/ความแรงของออร่า
+    // 🛡️🗡️📖 ของมือรองที่สวมอยู่ → เปลี่ยนรูปลักษณ์ของมือซ้ายประจำอาชีพ (สีตามระดับ/ธาตุ · ใหญ่ขึ้นตามระดับ)
+    G.applyOffhandLook = () => {
+      const oid = G.equip && G.equip.offhand;
+      const it = oid ? LOOT.find((x) => x.id === oid) : null;
+      const sh = G.warriorShield, dg = G.offDagger, orb = G.mageOrb;
+      if (!it) {   // ไม่ได้สวมของมือรอง → คืนขนาด/สีพื้นฐาน (สีธาตุจากอาวุธยังทำงานตามเดิม)
+        if (sh) { sh.scale.setScalar(0.95);
+          if (sh.userData.faceMat) { sh.userData.faceMat.color.setHex(0x2a4a7a); sh.userData.faceMat.emissive.setHex(0x0a1830); sh.userData.faceMat.emissiveIntensity = 0.25; }
+          if (sh.userData.runeMat) { sh.userData.runeMat.color.setHex(0x5ac8f5); sh.userData.runeMat.emissive.setHex(0x2a9ae0); sh.userData.runeMat.emissiveIntensity = 1.3; } }
+        if (dg) dg.scale.setScalar(1);
+        if (orb) orb.scale.setScalar(1);
+        return;
+      }
+      const tier = TIER[it.rarity] || 1;
+      const rc = new THREE.Color((RARITY[it.rarity] || {}).color || "#cccccc");
+      const hex = it.elem ? (ELEM_GLOW[it.elem] || rc.getHex()) : rc.getHex();
+      if (sh && G.cls === "warrior") {
+        sh.scale.setScalar(0.95 * (1 + tier * 0.035));
+        const fm = sh.userData.faceMat, rm = sh.userData.runeMat;
+        if (fm) { fm.color.copy(rc); fm.emissive.copy(rc).multiplyScalar(0.35); fm.emissiveIntensity = 0.25 + tier * 0.12; }
+        if (rm) { rm.color.setHex(hex); rm.emissive.setHex(hex); rm.emissiveIntensity = 1.3 + tier * 0.25; }
+      }
+      if (dg && G.cls === "assassin") {
+        dg.scale.setScalar(1 + tier * 0.05);
+        const b = dg.userData.tintBlade;
+        if (b) { b.material.color.setHex(hex); b.material.emissive.setHex(hex); b.material.emissiveIntensity = 0.3 + tier * 0.15; }
+      }
+      if (orb && G.cls === "mage" && orb.userData && orb.userData.orb) {
+        orb.scale.setScalar(1 + tier * 0.04);
+        const ud = orb.userData;
+        ud.orb.material.color.setHex(hex); ud.orb.material.emissive.setHex(hex);
+        ud.ring.material.color.setHex(hex); ud.ring.material.emissive.setHex(hex);
+        if (ud.light) { ud.light.color.setHex(hex); ud.light.intensity = 1.2 + tier * 0.25; }
+        const bk = G.mageBook;
+        if (bk && bk.userData && bk.userData.gem) {
+          bk.userData.gem.material.color.setHex(hex); bk.userData.gem.material.emissive.setHex(hex);
+          if (bk.userData.runeMat) { bk.userData.runeMat.color.setHex(hex); bk.userData.runeMat.emissive.setHex(hex); }
+        }
+      }
+    };
     G.applyEnhGlow = () => {
       const wid = G.equip && G.equip.weapon;
       const n = (wid && G.plus && G.plus[wid]) || 0;
@@ -4962,6 +5012,7 @@ export default function CherryAdventure() {
       shield.scale.setScalar(0.95);
       shield.visible = false;
       shield.userData.runes = shieldRunes;
+      shield.userData.faceMat = faceMat; shield.userData.runeMat = runeMat;   // 🛡️ ไว้เปลี่ยนสีตามโล่มือรองที่สวม
       (armL.userData.elbow || armL).add(shield); // 💪 rides on the left forearm
       G.warriorShield = shield;
     // 💻 office worker's battle laptop — carried OPEN in the LEFT hand, shown only for the office class
@@ -15818,6 +15869,7 @@ export default function CherryAdventure() {
       }
       // orbiting particles: epic+ · more particles the higher the + level
       if (G.applyEnhGlow) G.applyEnhGlow();   // ⚒️✨ ออร่าตีบวกของอาวุธที่ถืออยู่
+      if (G.applyOffhandLook) G.applyOffhandLook();   // 🛡️ รูปลักษณ์ของมือรองที่มือซ้าย
       const dots = g2.tier >= 3 ? Math.min(14, 3 + g2.plus * 2 + (g2.tier - 3) * 3) : 0;
       auraDots.forEach((d, i) => {
         d.visible = i < dots;
@@ -25718,6 +25770,17 @@ export default function CherryAdventure() {
       if (it.req && G.player.level < it.req) {
         toast(`🔒 ต้องถึงเลเวล ${it.req} จึงจะสวม ${it.emoji} ${it.name} ได้`);
         return;
+      }
+      // 🛡️ ช่องมือรองมีเฉพาะนักรบ/นักฆ่า/นักเวท · แต่ละอาชีพใช้ของของตัวเองเท่านั้น
+      if (it.slot === "offhand") {
+        if (!OFFHAND_CLS[G.cls]) {
+          toast("🤲 อาชีพนี้ไม่มีช่องมือรอง — มีเฉพาะ นักรบ 🛡️ · นักฆ่า 🗡️ · นักเวท 📖");
+          return;
+        }
+        if (it.cls && it.cls !== G.cls) {
+          toast(`🔒 ${it.emoji} ${it.name} เป็นของมือรองของ ${(CLASSES[it.cls] && CLASSES[it.cls].name) || it.cls} — อาชีพอื่นใช้ไม่ได้`);
+          return;
+        }
       }
       // 🤲 อาวุธสองมือกับของมือรองใส่พร้อมกันไม่ได้
       if (it.slot === "offhand" && twoHandedWpn(G.equip.weapon, G.cls)) {
@@ -38451,6 +38514,11 @@ export default function CherryAdventure() {
       G.accInv = Array.isArray(d.accInv) ? d.accInv.slice() : [];
       G.plus = d.plus || {};
       G.enhPity = d.enhPity || {};   // 💢 โบนัสสะสมจากตีบวกพลาด
+      // 🛡️ เซฟเก่าอาจใส่ของมือรองที่ตอนนี้อาชีพใช้ไม่ได้แล้ว — ถอดออกให้เงียบ ๆ (ของยังอยู่ในกระเป๋า)
+      if (G.equip && G.equip.offhand) {
+        const _oh = LOOT.find((x) => x.id === G.equip.offhand);
+        if (!OFFHAND_CLS[G.cls] || (_oh && _oh.cls && _oh.cls !== G.cls)) G.equip.offhand = null;
+      }
       G.awk = d.awk || {}; // ✨ ดาวปลุกพลัง
       G.itemLock = d.itemLock || {}; // 🔐 ไอเทมที่ล็อกไว้
       G.equipSort = d.equipSort || "none"; // 🔀 การเรียงของในกระเป๋าที่จำไว้
@@ -39129,9 +39197,9 @@ export default function CherryAdventure() {
         }
       }
       // 🛡️ shield shows for warriors once a class is chosen
-      if (shield) shield.visible = (G.cls === "warrior" || !!(G.equip && G.equip.offhand)) && G.mode !== "create" && !G.heroId && !G._kkShieldOn;   // 🛡️ ใส่ของมือรอง → มีโล่ทุกอาชีพ // 🦸 ลุคฮีโร่แทนที่ของประจำอาชีพมือรองทุกตัว (เดิมยกเว้นแค่ฮารุ ทำให้โล่นักรบโผล่ทับโล่เพชรกัปตัน)
+      if (shield) shield.visible = G.cls === "warrior" && (G.mode !== "create" || G.equipOpen) && !G.heroId && !G._kkShieldOn;   // 🧍 หน้าแต่งตัวก็โชว์ของมือรองด้วย   // 🛡️ ใส่ของมือรอง → มีโล่ทุกอาชีพ // 🦸 ลุคฮีโร่แทนที่ของประจำอาชีพมือรองทุกตัว (เดิมยกเว้นแค่ฮารุ ทำให้โล่นักรบโผล่ทับโล่เพชรกัปตัน)
       // 🗡️ off-hand dagger shows for assassins
-      if (offDagger) offDagger.visible = G.cls === "assassin" && G.mode !== "create" && G.heroId !== "haru";
+      if (offDagger) offDagger.visible = G.cls === "assassin" && (G.mode !== "create" || G.equipOpen) && G.heroId !== "haru";
       // 🏷️ 3D name sprite replaced by the richer HTML nameplate (ชื่อ + เลือด + มานา) — keep hidden
       if (nameSprite) nameSprite.visible = false;
       // 🌟 class-evolution aura — spin the rings + orbit the motes + gentle pulse
@@ -58041,7 +58109,8 @@ export default function CherryAdventure() {
 
           {/* 🧍 paper-doll character equipment + inventory screen */}
           {ui.equipScreen && (() => {
-            const GEAR = ["weapon", "offhand", "hat", "mask", "outfit", "gloves", "pants", "shoes"]; // 🛡️ มือรองอยู่คู่กับอาวุธ
+            const hasOff = !!OFFHAND_CLS[ui.cls || G.cls];   // 🛡️ ช่องมือรองมีเฉพาะนักรบ/นักฆ่า/นักเวท
+            const GEAR = hasOff ? ["weapon", "offhand", "hat", "mask", "outfit", "gloves", "pants", "shoes"] : ["weapon", "hat", "mask", "outfit", "gloves", "pants", "shoes"];
             const two = window.innerWidth > 660;                 // จอกว้าง = ชุดซ้าย / กระเป๋าขวา
             // 🖥️ จอแนวนอนกว้างพอ → ผังแบบเกม MMO: แท็บซ้าย · ช่องอุปกรณ์ · ตัวละครโชว์ตรงกลาง · แผงขวา
             const wide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
@@ -58074,7 +58143,7 @@ export default function CherryAdventure() {
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                     boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.28), 0 4px 12px rgba(120,60,90,0.18)" : "0 3px 10px rgba(120,60,90,0.16), inset 0 1px 0 rgba(232,128,158,0.2)",
                     transition: "border-color .15s, box-shadow .15s" }}>
-                  <span style={{ fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 }}>{it ? it.emoji : twoLock ? "🤲" : <Ico n={SLOT_GI[slot]} size={22} color="#b09aa8" />}</span>
+                  <span style={{ fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 }}>{it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : <Ico n={SLOT_GI[slot]} size={22} color="#b09aa8" />}</span>
                   <span style={{ marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : twoLock ? "#c09a5a" : "#a08a98", opacity: it ? 0.95 : 0.75, letterSpacing: 0.2 }}>{twoLock ? "สองมือ" : SLOT_NAMES[slot]}</span>
                   {it && <button title={`ถอด${SLOT_NAMES[slot]}`} onClick={(e) => { e.stopPropagation(); G.unequipSlot(slot); }} style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", border: "none", background: "linear-gradient(135deg,#d05050,#9a2c2c)", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "17px", boxShadow: "0 2px 6px rgba(0,0,0,0.45)" }}>✕</button>}
                 </div>
@@ -58364,7 +58433,7 @@ export default function CherryAdventure() {
                     <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
                       ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
                       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
-                    {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
+                    {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="⚡ สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡</button>
                     <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>
                     <button key="eqlook" onClick={() => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }} title="แก้หน้า ทรงผม สีผม สีผิว ของตัวละครเดิม — ไม่กระทบเลเวล/ไอเทม" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" }}>💇 รูปลักษณ์</button>
