@@ -5236,7 +5236,8 @@ export default function CherryAdventure() {
     // 💻 นักเวทโค้ด — แท่นคีย์บอร์ดโน้ตบุ๊คลอยอยู่ตรงหน้า ไม่ได้ถือด้วยมือ
     {
       const deck = new THREE.Group();
-      deck.position.set(0, 1.2, 0.52);
+      deck.position.set(0, 1.3, 1.0);   // 💻 ลอยห่างออกมาข้างหน้า ไม่แนบติดตัวละคร
+      deck.scale.setScalar(2);          // ใหญ่ขึ้นเท่าตัวทั้งแท่น (จอ กรอบ ขอบไฟ และคีย์บอร์ดที่วางอยู่)
       deck.rotation.x = -0.3;                       // เอียงแป้นเข้าหาตัวเหมือนโน้ตบุ๊คที่เปิดกาง
       // 🖥️ ฝาจอโฮลโกรแกรมที่กางขึ้นจากขอบหลังแป้น
       const scrMat = new THREE.MeshBasicMaterial({ color: 0x2ad0e8, transparent: true, opacity: 0.3, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -41287,12 +41288,12 @@ export default function CherryAdventure() {
         if (G.cls === "coder") {
           // 💻 ยกสองมือขึ้นพิมบนคีย์บอร์ดที่ลอยอยู่ตรงหน้า — นิ้วขยับสลับกันเป็นจังหวะ
           const ty1 = Math.sin(t * 9), ty2 = Math.sin(t * 9 + 1.7);
-          armR.rotation.x = -1.0 + ty1 * 0.055 + swing * 0.03 * moveAmt;
+          armR.rotation.x = -1.18 + ty1 * 0.055 + swing * 0.03 * moveAmt;
           armR.rotation.z = 0.3;
-          armL.rotation.x = -1.0 + ty2 * 0.055 + swing2 * 0.03 * moveAmt;
+          armL.rotation.x = -1.18 + ty2 * 0.055 + swing2 * 0.03 * moveAmt;
           armL.rotation.z = -0.3;
-          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.74 - ty1 * 0.04;
-          if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.74 - ty2 * 0.04;
+          if (armR.userData.elbow) armR.userData.elbow.rotation.x = -0.42 - ty1 * 0.04;   // แท่นลอยไกลขึ้น แขนจึงเหยียดออกมากขึ้น
+          if (armL.userData.elbow) armL.userData.elbow.rotation.x = -0.42 - ty2 * 0.04;
         }
         if (G.cls === "lancer") {
           // 🔱 ถือหอกสองมือระดับเอว — ปลายสามแฉกชี้ไปทิศที่ตัวละครหัน ขนานพื้นเอียงลงเล็กน้อย
@@ -52108,7 +52109,7 @@ export default function CherryAdventure() {
         // 💻 แท่นคีย์บอร์ดลอยหน้าอก — ลอยขึ้นลงเบา ๆ ส่ายซ้ายขวาเล็กน้อย ขอบเรือง RGB วนสี
         const deck = G._coderDeck;
         if (deck && deck.visible) {
-          deck.position.set(0, 1.2 + Math.sin(t * 2.1) * 0.025, 0.52);
+          deck.position.set(0, 1.3 + Math.sin(t * 2.1) * 0.04, 1.0 + Math.sin(t * 1.3) * 0.03);
           deck.rotation.set(-0.3 + Math.sin(t * 1.6) * 0.022, Math.sin(t * 0.9) * 0.07, 0);
           const du = deck.userData;
           if (du.rim) { du.rim.material.color.setHSL((t * 0.17) % 1, 0.9, 0.58); du.rim.material.opacity = 0.6 + Math.abs(Math.sin(t * 3.4)) * 0.3; }
