@@ -5241,13 +5241,18 @@ export default function CherryAdventure() {
       deck.rotation.x = -0.3;                       // เอียงแป้นเข้าหาตัวเหมือนโน้ตบุ๊คที่เปิดกาง
       // 🖥️ ฝาจอโฮลโกรแกรมที่กางขึ้นจากขอบหลังแป้น
       const scrMat = new THREE.MeshBasicMaterial({ color: 0x2ad0e8, transparent: true, opacity: 0.3, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
-      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.38), scrMat);
-      scr.position.set(0, 0.2, -0.13); scr.rotation.x = 0.26; scr.raycast = () => {};
-      deck.add(scr);
+      // 🖥️ ฝาจอบานพับที่ "ขอบไกล" กางขึ้นเอนออกจากตัว — ด้านหน้าจอหันกลับมาทางตัวละคร (เหมือนโน้ตบุ๊คจริง)
+      const lid = new THREE.Group();
+      lid.position.set(0, 0.015, 0.13);      // บานพับอยู่ขอบไกล (ด้านตรงข้ามกับตัวละคร)
+      lid.rotation.x = 0.26;                 // กางขึ้นแล้วเอนออกจากตัวเล็กน้อย
+      deck.add(lid);
       const frameMat = new THREE.MeshStandardMaterial({ color: 0x1a1d24, metalness: 0.6, roughness: 0.35, emissive: 0x1aa0c8, emissiveIntensity: 0.5 });
       const frm = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.42, 0.012), frameMat);
-      frm.position.copy(scr.position); frm.position.z -= 0.012; frm.rotation.x = scr.rotation.x; frm.raycast = () => {};
-      deck.add(frm);
+      frm.position.set(0, 0.21, 0.012); frm.raycast = () => {};   // หลังจออยู่ด้านไกลกว่า
+      lid.add(frm);
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.38), scrMat);
+      scr.position.set(0, 0.21, 0.002); scr.rotation.y = Math.PI; scr.raycast = () => {};   // พลิกด้านหน้าจอกลับมาหาตัวละคร ตัวหนังสือจึงไม่กลับด้าน
+      lid.add(scr);
       // ✨ บรรทัดโค้ดไหลบนจอ
       const rows = [];
       for (let i = 0; i < 7; i++) {
