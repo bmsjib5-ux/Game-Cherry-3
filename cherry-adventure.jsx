@@ -3886,6 +3886,53 @@ export default function CherryAdventure() {
       sceneryObjects.push(g);
       colliders.push({ x, z, r: 0.45 });
     };
+    // 🌸 ต้นซากุระใหญ่กลางทุ่ง — ลำต้นหนา รากโคน กิ่งแยก พุ่มชมพู 10 ก้อน + พรมกลีบบนพื้น (canvas) + กลีบร่วงรอบต้น (Points ชุดของตัวเอง)
+    //    อยู่ใน sceneryObjects จึงโผล่เฉพาะทุ่งซากุระ และหายตอนสู้/ในเมืองเหมือนต้นอื่น · ไม่ติดป้าย KayKit ให้สลับทับ
+    const addSakuraTree = (x, z) => {
+      const g = new THREE.Group();
+      const bark = new THREE.MeshStandardMaterial({ color: 0x5e3d2a, roughness: 0.95 });
+      const up = new THREE.Vector3(0, 1, 0);
+      const tilt = (m, dir) => { m.quaternion.setFromUnitVectors(up, new THREE.Vector3(dir[0], dir[1], dir[2]).normalize()); };
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.74, 3.8, 10), bark); trunk.position.y = 1.9; trunk.castShadow = true; g.add(trunk);
+      for (let i = 0; i < 5; i++) {   // รากโคนต้น
+        const a = (i / 5) * Math.PI * 2 + 0.3, r = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 1.2, 6), bark);
+        r.position.set(Math.cos(a) * 0.75, 0.32, Math.sin(a) * 0.75); tilt(r, [Math.cos(a) * 0.9, 1, Math.sin(a) * 0.9]); g.add(r);
+      }
+      [[0.35, 3.5, 0.2, [0.9, 1, 0.5]], [-0.4, 3.7, -0.1, [-1, 1, -0.3]], [0.1, 3.9, -0.45, [0.2, 1, -1]], [-0.15, 3.3, 0.45, [-0.4, 1, 1]], [0, 4.2, 0, [0.1, 1, 0.1]]].forEach(([bx, by, bz, d]) => {
+        const br = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 2.4, 7), bark); br.position.set(bx + d[0] * 0.7, by + 0.9, bz + d[2] * 0.7); tilt(br, d); br.castShadow = true; g.add(br);
+      });
+      const pinks = [0xf07aa8, 0xe8669a, 0xf8a0c0, 0xd8568a];   // ชมพูสด (ค่าถูกยกสว่างตอนวาด จึงตั้งเข้มไว้)
+      [[0, 5.7, 0, 2.4], [2.0, 5.0, 0.6, 1.8], [-2.0, 5.1, -0.4, 1.8], [0.5, 4.9, -2.0, 1.7], [-0.4, 5.0, 2.0, 1.7], [1.3, 6.5, 1.2, 1.5], [-1.4, 6.6, -1.0, 1.5], [0.2, 7.2, 0.2, 1.35], [2.6, 4.2, -1.3, 1.25], [-2.7, 4.3, 1.2, 1.25]].forEach(([px, py, pz, r], i) => {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 12), new THREE.MeshStandardMaterial({ color: pinks[i % 4], roughness: 0.9 }));
+        m.position.set(px, py, pz); m.castShadow = true; g.add(m);
+      });
+      // 🌸 พรมกลีบร่วงบนพื้น — วาดกลีบ 460 ใบลง canvas แผ่นเดียว หนาแน่นใกล้โคน จางออกที่ขอบ
+      const cv = document.createElement("canvas"); cv.width = cv.height = 256;
+      const c2 = cv.getContext("2d"), pcol = ["#f7b3cc", "#f9c6d8", "#f29bbd", "#ffd9e6"];
+      for (let i = 0; i < 460; i++) {
+        const a = Math.random() * Math.PI * 2, rr = Math.pow(Math.random(), 0.7) * 122;
+        c2.fillStyle = pcol[i % 4]; c2.save(); c2.translate(128 + Math.cos(a) * rr, 128 + Math.sin(a) * rr); c2.rotate(Math.random() * Math.PI); c2.scale(1, 0.6);
+        c2.beginPath(); c2.arc(0, 0, 3 + Math.random() * 2.4, 0, Math.PI * 2); c2.fill(); c2.restore();
+      }
+      const ctex = new THREE.CanvasTexture(cv); ctex.encoding = THREE.sRGBEncoding;
+      const carpet = new THREE.Mesh(new THREE.CircleGeometry(6.4, 40), new THREE.MeshStandardMaterial({ map: ctex, transparent: true, depthWrite: false, roughness: 1 }));
+      carpet.rotation.x = -Math.PI / 2; carpet.position.y = 0.035; carpet.renderOrder = 1; carpet.receiveShadow = true; g.add(carpet);
+      // 🌸 กลีบร่วงจากพุ่ม — 140 จุด วนใหม่ที่ยอดเมื่อถึงพื้น (ขยับใน tick หลัก)
+      const NP = 140, pa = new Float32Array(NP * 3), ca = new Float32Array(NP * 3), tmp = new THREE.Color();
+      for (let i = 0; i < NP; i++) {
+        const a = Math.random() * Math.PI * 2, rr = 0.6 + Math.random() * 3.6;
+        pa[i * 3] = Math.cos(a) * rr; pa[i * 3 + 1] = Math.random() * 7.2; pa[i * 3 + 2] = Math.sin(a) * rr;
+        tmp.setHex([0xffc2dc, 0xffe0ec, 0xf9a8c8, 0xfff0f6][i % 4]); const k = 0.85 + Math.random() * 0.2;
+        ca[i * 3] = tmp.r * k; ca[i * 3 + 1] = tmp.g * k; ca[i * 3 + 2] = tmp.b * k;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pa, 3)); geo.setAttribute("color", new THREE.Float32BufferAttribute(ca, 3));
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: ambTex("petal"), size: 0.52, sizeAttenuation: true, vertexColors: true, transparent: true, depthWrite: false, opacity: 0.95 }));
+      pts.frustumCulled = false; pts.renderOrder = 3; g.add(pts);
+      g.position.set(x, 0, z);
+      scene.add(g); sceneryObjects.push(g); colliders.push({ x, z, r: 1.0 });
+      G._sakura = { g, pts, n: NP, eqHid: false };
+    };
     const addDeadTree = (x, z) => {
       if (inKeepOut(x, z)) return;   // 🎣🌀 ห้ามงอกทับบ่อตกปลา/แท่นวาร์ป (ของพวกนี้อยู่ทุกด่าน แต่บ่อย้ายที่ตามด่าน)
       const g = new THREE.Group();
@@ -4287,6 +4334,8 @@ export default function CherryAdventure() {
       f.position.set(Math.cos(a) * r, 0.09, Math.sin(a) * r);
       scene.add(f);
     }
+
+    addSakuraTree(0, 0);   // 🌸 ต้นซากุระใหญ่กลางแผนที่ (ด่าน 1)
 
     // ---------- Materials ----------
     // 🎨 แถบไล่แสงแบบการ์ตูน 3D — เดิมเป็น 4 ขั้นตัดขอบแข็ง (NearestFilter) เงาจึงหักเป็นปื้น
@@ -40272,6 +40321,23 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
       }
 
+      // 🌸 กลีบร่วงรอบต้นซากุระใหญ่ — ขยับเฉพาะตอนต้นมองเห็น · หน้าแต่งตัว (ตัวละครยืนที่ 0,0) ซ่อนต้นชั่วคราว
+      if (G._sakura) {
+        const S = G._sakura;
+        if (G.mode === "create" && S.g.visible) { S.g.visible = false; S.eqHid = true; }
+        else if (G.mode !== "create" && S.eqHid) { S.eqHid = false; S.g.visible = (G.curBiome || 0) === 0 && !G.inTownZone && !G.inHomeZone && !G.inRanchZone; }
+        if (S.g.visible) {
+          const pa = S.pts.geometry.attributes.position.array;
+          for (let i = 0; i < S.n; i++) {
+            const k = i * 3;
+            pa[k + 1] -= (0.5 + (i % 5) * 0.07) * dt;
+            pa[k] += Math.sin(t * 0.8 + i * 0.9) * 0.55 * dt;
+            pa[k + 2] += Math.cos(t * 0.6 + i * 1.7) * 0.4 * dt;
+            if (pa[k + 1] < 0.05) { const a = Math.random() * Math.PI * 2, rr = 0.6 + Math.random() * 3.6; pa[k] = Math.cos(a) * rr; pa[k + 2] = Math.sin(a) * rr; pa[k + 1] = 4.3 + Math.random() * 3; }
+          }
+          S.pts.geometry.attributes.position.needsUpdate = true;
+        }
+      }
       // ---------- ✨ ละอองบรรยากาศ: ร่วง/ลอยขึ้น + แกว่งตามลม + วนกลับเมื่อหลุดกรอบรอบตัวผู้เล่น ----------
       if (G._ambCfg && G._ambSys && G._ambSys.visible && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
         const A = G._ambCfg, sys = G._ambSys, pa = sys.geometry.attributes.position.array;
