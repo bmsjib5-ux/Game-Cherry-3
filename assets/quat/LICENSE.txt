@@ -29,3 +29,7 @@ Crab.glb      — "Crab low poly animated 3d model" by methodical pixel, CC0
 Crocodile.glb — "Crocodile" by br-n518, CC0 (diffuse texture only, downscaled to 512)
                 https://opengameart.org/content/crocodile-0
 Exported from .blend to .glb with Blender 4.2 (bpy) glTF exporter; each action as one animation.
+Duckling.glb  — "Rigged Duckling" by weirdybeardyman, CC0 (Peck / Waddle)
+                https://opengameart.org/content/rigged-duckling
+Turtle.glb    — "Turtle" by Heathal, CC0 (Walking-loop; texture downscaled to 512)
+                https://opengameart.org/content/turtle-0
