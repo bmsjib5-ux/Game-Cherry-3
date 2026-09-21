@@ -37,3 +37,16 @@ Elephant.glb  — "low poly elephant model" by syncopika, CC0 (Idle / Angry / Si
                 https://opengameart.org/content/low-poly-elephant-model
 Duck.glb      — "Rigged Duck" by weirdybeardyman, CC0 (Peck / Waddle)
                 https://opengameart.org/content/rigged-duck
+
+--- assets/quat/hero/ — ตัวละครโมเดล 3D (ทดลอง) — Quaternius, CC0 1.0 ---
+Female_Base.glb / Male_Base.glb — "Universal Base Characters" (Standard/free: Superhero proportions only)
+  https://quaternius.com/packs/universalbasecharacters.html
+Female_Ranger.glb / Male_Peasant.glb — "Modular Character Outfits - Fantasy" (Standard/free: Ranger + Peasant)
+  https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+Hair_Long.glb — hairstyle from Universal Base Characters (rigged to head bone)
+Anims.glb — "Universal Animation Library" (Standard/free), trimmed to 12 clips:
+  Idle_Loop, Walk_Loop, Jog_Fwd_Loop, Sprint_Loop, Sword_Attack, Punch_Cross, Spell_Simple_Shoot,
+  Hit_Chest, Death01, Jump_Loop, Roll, Sitting_Idle_Loop
+  https://quaternius.com/packs/universalanimationlibrary.html
+All repacked .gltf/.glb -> .glb with three.js GLTFExporter; textures downscaled to 256px; two texture
+filenames in the free base pack (T_Eye_Normal_png.png, T_Hair_1_Normal_png.png) were fixed to the real files.

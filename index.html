@@ -3044,8 +3044,19 @@ const CREATE_TABS = [
     { k: "shoes", n: "รองเท้า", e: "👟" }, { k: "acc", n: "ประดับ", e: "💎" },
 ];
 // 🦸 preset characters — pick a ready-made hero instead of always starting as Cherry.
+// 🧍 ตัวละครโมเดล 3D (ทดลอง) — ประกอบจาก Quaternius Universal Base Characters + Modular Outfits + Universal Animation Library (CC0)
+//    files = ชิ้นที่โหลด (ทุกชิ้นใช้ rig 65 ข้อชุดเดียวกัน เล่นท่าเดียวกันพร้อมกันได้) · h = ความสูงในหน่วยตัวละคร (เท้าแตะ y=0)
+//    atk = ท่าโจมตีตามอาชีพ · แยกจากตัวหลักที่ปั้นจากโค้ดโดยสิ้นเชิง: เลือกแล้วร่างปั้นเองถูกซ่อน โมเดลโผล่แทน
+const HERO_MODELS = {
+    ranger: { name: "เรนเจอร์", emoji: "🏹", gender: 0, files: ["Female_Base", "Female_Ranger", "Hair_Long"], h: 3.9, desc: "นักธนูป่าใส่ฮู้ดเขียว" },
+    peasant: { name: "ชาวบ้าน", emoji: "🌾", gender: 1, files: ["Male_Base", "Male_Peasant"], h: 4.0, desc: "หนุ่มชาวบ้านเสื้อผ้าเรียบ" },
+};
+const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack", assassin: "Sword_Attack",
+    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", archer: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot" }; // ที่เหลือ = Punch_Cross
 const CHAR_PRESETS = [
     { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
+    { name: "เรนเจอร์", emoji: "🏹", gender: 0, skin: 0, hairColor: 5, hairStyle: 0, eyes: 0, outfit: 2, model: "ranger" }, // 🧍 โมเดล 3D ทดลอง
+    { name: "ชาวบ้าน", emoji: "🌾", gender: 1, skin: 2, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 5, model: "peasant" },
     { name: "ฮารุ", emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
     { name: "ออเรลิอุส", emoji: "⚜️", gender: 1, skin: 1, hairColor: 3, hairStyle: 1, eyes: 0, outfit: 0, hero: "aurelius" },
     { name: "รักนาร์", emoji: "🪓", gender: 1, skin: 2, hairColor: 1, hairStyle: 2, eyes: 2, outfit: 1, hero: "ragnar" },
@@ -3202,7 +3213,7 @@ function CherryAdventure() {
         enemy: null, // {id,name,emoji,hp,maxHp,lv}
         bstate: "choose", // choose | busy
         msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info", warpScrolls: 0,
-        custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
+        custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, model: null, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
         inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, itemLock: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
         gold: 80, shop: [], shopOpen: false,
         eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
@@ -12837,6 +12848,179 @@ function CherryAdventure() {
             G.heroId = G.heroId || null;
             // 🦸 toggle a hero's signature look + magic eye colour (haru = pink-violet, luna = violet-blue)
             const HERO_EYES = { haru: [0xc86ad8, 0x9a3ad0], luna: [0x8a8ae8, 0x5a6ad0], celestia: [0x6a8ae8, 0x2a4ad0], yuki: [0x9ad0ff, 0x4a8ae0], rose: [0xf2c66a, 0xb8821a], kentaro: [0xd0402e, 0x7a1408], kotaro: [0xe0402e, 0xc0180a], kairi: [0x50a8ff, 0x2a6ae0], aurelius: [0xf2c02a, 0xa87808], ragnar: [0xf06a9a, 0xc0245a], khaosai: [0xc87828, 0x7a4808], fenrir: [0xf07818, 0xa83008], neko: [0x5ae082, 0x1a8a40], usagi: [0xf05a6a, 0xb01828], ryujin: [0xffb020, 0xb05808], ignis: [0x6ad8ff, 0x2a6ae0], captain: [0x7ab0e8, 0x2a5ac0], thunder: [0xb0e0ff, 0x4a8ae0], yaksa: [0xffe08a, 0xc08010], luminia: [0xd8a0f0, 0x8a3ac0], apsara: [0xfff0b0, 0xd0a020], asura: [0xff3a5a, 0xa00820], hanuman: [0xff6a2a, 0xb03808], garuda: [0xffd24a, 0xc07808], naki: [0x4ae8c0, 0x0a9a8a], kinnaree: [0xffb0d0, 0xc04a80], mermaid: [0x6ae0ff, 0x1070c0], lich: [0x7affa8, 0x18a050], kitsune: [0xffc24a, 0xc06808], phoenix: [0xff8a2a, 0xc02808] }; // ⚜️ ตาทอง · 💗 ตาชมพูหัวใจ · 🥊 ตาอำพันนักสู้ · 🐺 ตาอำพันเลือดดุดัน · 🐱 ตามรกตแมว · 🐰 ตาทับทิมกระต่าย · 🐉 ตาทองมังกร · 🦸 ทีมผู้พิทักษ์ตาฟ้า · 👹 ตาทองยักษ์ถลึง
+            // ===== 🧍 ตัวละครโมเดล 3D (ทดลอง) =====
+            //  โหลด glb ทีละชิ้น (ตัวฐาน + ชุด + ผม + คลังท่า) แล้วแขวนใต้ char · ซ่อนร่างปั้นเองทั้งหมดยกเว้นป้าย (Sprite)
+            //  ทุกชิ้นมีโครงกระดูกของตัวเอง → ใช้ mixer คนละตัวแต่สั่งท่าเดียวกันพร้อมกัน (ตรวจแล้วแทร็กท่าจับกระดูกได้ครบ 195/195)
+            const HERO_BASE = "assets/quat/hero/";
+            const heroFiles = {};
+            const heroLoad = (name) => heroFiles[name] || (heroFiles[name] = new Promise((res) => {
+                if (!THREE.GLTFLoader)
+                    return res(null);
+                new THREE.GLTFLoader().load(HERO_BASE + name + ".glb", (gl) => res(gl), undefined, () => res(null));
+            }));
+            const heroPlay = (name, once) => {
+                const H = G._heroModel;
+                if (!H)
+                    return;
+                const list = H.acts[name];
+                if (!list || H.cur === name)
+                    return;
+                const prev = H.cur ? H.acts[H.cur] : null;
+                list.forEach((a, i) => {
+                    a.reset();
+                    a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+                    a.clampWhenFinished = !!once;
+                    a.fadeIn(0.14).play();
+                    if (prev && prev[i] && prev[i] !== a)
+                        prev[i].fadeOut(0.14);
+                });
+                H.cur = name;
+            };
+            G.heroModelSet = (id) => {
+                const M = id && HERO_MODELS[id];
+                if (G._heroModel) {
+                    char.remove(G._heroModel.g);
+                    G._heroModel = null;
+                }
+                if (G._heroHidden) {
+                    G._heroHidden.forEach((o) => (o.visible = true));
+                    G._heroHidden = null;
+                }
+                char.children.forEach((o) => { if (o.isSprite && o.userData._heroY0 != null) {
+                    o.position.y = o.userData._heroY0;
+                    delete o.userData._heroY0;
+                } });
+                G.heroModelId = M ? id : null;
+                if (!M)
+                    return;
+                const token = (G._heroTok = (G._heroTok || 0) + 1);
+                Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims")])).then((arr) => {
+                    if (token !== G._heroTok || G.heroModelId !== id)
+                        return; // เปลี่ยนใจระหว่างโหลด
+                    const anims = arr.pop();
+                    const srcs = arr.filter(Boolean);
+                    if (!anims || !srcs.length || !THREE.SkeletonUtils) {
+                        G.heroModelId = null;
+                        if (G.toast)
+                            G.toast("โหลดโมเดลตัวละครไม่สำเร็จ");
+                        return;
+                    }
+                    const g = new THREE.Group();
+                    g.name = "heroModel";
+                    const parts = srcs.map((gl) => THREE.SkeletonUtils.clone(gl.scene));
+                    const b = new THREE.Box3();
+                    parts.forEach((pt) => { pt.updateMatrixWorld(true); b.expandByObject(pt); });
+                    const k = M.h / Math.max(0.01, b.max.y - b.min.y);
+                    parts.forEach((pt) => {
+                        pt.scale.setScalar(k);
+                        pt.position.y = -b.min.y * k;
+                        g.add(pt);
+                        pt.traverse((o) => {
+                            if (o.isMesh) {
+                                o.castShadow = true;
+                                o.frustumCulled = false;
+                                const ms = Array.isArray(o.material) ? o.material : [o.material];
+                                ms.forEach((m) => { if (m && m.metalness > 0.2)
+                                    m.metalness = 0.2; });
+                            }
+                        });
+                    });
+                    const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
+                    const acts = {};
+                    anims.animations.forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
+                    let neck = null, neckPlane = null;
+                    if (M.files.length > 1 && /_Base$/.test(M.files[0])) {
+                        neck = parts[0].getObjectByName("neck_01");
+                        if (neck) {
+                            neckPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                            renderer.localClippingEnabled = true;
+                            parts[0].traverse((o) => { if (o.isMesh) {
+                                const ms = Array.isArray(o.material) ? o.material : [o.material];
+                                ms.forEach((m) => { if (m) {
+                                    m.clippingPlanes = [neckPlane];
+                                    m.clipShadows = true;
+                                } });
+                            } });
+                        }
+                    }
+                    char.add(g);
+                    const hidden = [];
+                    char.children.forEach((o) => {
+                        if (o === g)
+                            return;
+                        if (o.isSprite) {
+                            if (o.userData._heroY0 == null)
+                                o.userData._heroY0 = o.position.y;
+                            o.position.y = M.h + 0.45;
+                            return;
+                        } // ป้ายลอยเหนือหัวโมเดล
+                        if (o.visible) {
+                            o.visible = false;
+                            hidden.push(o);
+                        }
+                    });
+                    G._heroHidden = hidden;
+                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3() };
+                    heroPlay("Idle_Loop");
+                });
+            };
+            // 🎬 เลือกท่าจากสถานะจริงของผู้เล่นทุกเฟรม — ตาย > ขี่สัตว์ > พุ่ง > กระโดด > โจมตี/ร่าย > โดนตี > วิ่ง/เดิน > ยืน
+            G.heroModelTick = (dt) => {
+                const H = G._heroModel;
+                if (!H)
+                    return;
+                for (const o of char.children)
+                    if (o !== H.g && !o.isSprite && o.visible) {
+                        o.visible = false;
+                        G._heroHidden.push(o);
+                    } // ของที่เพิ่งถูกเปิดทีหลัง (เปลี่ยนชุด/ผ้าคลุม) ก็ซ่อน
+                const P = G.player;
+                if (P) {
+                    if (P.hp < H.lastHp - 0.5)
+                        H.hurtT = 0.45;
+                    H.lastHp = P.hp;
+                }
+                H.hurtT = Math.max(0, H.hurtT - dt);
+                const sw = G._worldSwingT || 0, bat = !!G.banim;
+                const atkEdge = (sw > 0.02 && H.swPrev <= 0.02) || (bat && !H.batPrev);
+                H.swPrev = sw;
+                H.batPrev = bat;
+                const sp = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
+                let want = "Idle_Loop", once = false;
+                if (G.mode === "fainted" || (P && P.hp <= 0)) {
+                    want = "Death01";
+                    once = true;
+                }
+                else if (G.mountId)
+                    want = "Sitting_Idle_Loop";
+                else if ((G._dashT || 0) > 0)
+                    want = "Roll";
+                else if ((G._jumpT || 0) > 0)
+                    want = "Jump_Loop";
+                else if (sw > 0.02 || bat || G._skCast) {
+                    want = G._skCast ? "Spell_Simple_Shoot" : (HERO_ATK[G.cls] || "Punch_Cross");
+                    once = true;
+                    if (atkEdge)
+                        H.cur = null;
+                }
+                else if (H.hurtT > 0) {
+                    want = "Hit_Chest";
+                    once = true;
+                }
+                else if (sp > 5.5)
+                    want = "Sprint_Loop";
+                else if (sp > 2.6)
+                    want = "Jog_Fwd_Loop";
+                else if (sp > 0.25)
+                    want = "Walk_Loop";
+                heroPlay(want, once);
+                H.mixers.forEach((m) => m.update(dt));
+                if (H.neck && H.neckPlane) { // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
+                    H.neck.getWorldPosition(H.tmpV);
+                    H.tmpV.y -= 0.06 * H.k;
+                    H.neckPlane.setFromNormalAndCoplanarPoint(H.neckPlane.normal.set(0, 1, 0), H.tmpV);
+                }
+            };
             G.setHero = id => {
                 G.heroId = id || null;
                 if (id)
@@ -26389,7 +26573,7 @@ function CherryAdventure() {
         G.applyGear = applyGear;
         // ---------- 🎀 apply character customization ----------
         let curBasePants = basePantsColor; // eslint-disable-line
-        G.custom = { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} };
+        G.custom = { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, model: null, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} };
         // 👦👧 apply body shape for the chosen gender
         // 📏 ความสูง/ความอ้วน 0..1 (0.5 = มาตรฐาน) — เก็บแยกจากเพศ แล้วคำนวณรวมกันครั้งเดียวใน applyGender
         //    ⚠️ ต้องรวมในฟังก์ชันเดียว ไม่งั้นเปลี่ยนเพศทีไรค่าความสูง/ความอ้วนจะถูกเขียนทับหายทุกครั้ง
@@ -26523,7 +26707,11 @@ function CherryAdventure() {
         G._applyBody = () => applyGender(G.custom.gender || 0); // 🦸 ให้โค้ดอื่น (เช่นสลับชุดฮีโร่) สั่งคำนวณหุ่นใหม่ได้
         G.setCustom = (cat, i) => {
             G.custom[cat] = i;
-            if (CUSTOM.faceSliders.some((f) => f.k === cat)) { // 🧑‍🎨 แถบเลื่อนโครงหน้า
+            if (cat === "model") { // 🧍 ตัวละครโมเดล 3D (ทดลอง)
+                if (G.heroModelSet)
+                    G.heroModelSet(i || null);
+            }
+            else if (CUSTOM.faceSliders.some((f) => f.k === cat)) { // 🧑‍🎨 แถบเลื่อนโครงหน้า
                 if (G.applyFaceShape)
                     G.applyFaceShape();
             }
@@ -26674,6 +26862,7 @@ function CherryAdventure() {
             G.setCustom("hairStyle", p.hairStyle);
             G.setCustom("eyes", p.eyes);
             G.setCustom("outfit", p.outfit);
+            G.setCustom("model", p.model || null); // 🧍 ตัวละครโมเดล 3D (ทดลอง) — null = ร่างปั้นเองตามปกติ
             if (G.setHero)
                 G.setHero(p.hero || null); // 🌸 signature look for special heroes (Haru)
             G.pendingName = p.name;
@@ -82032,6 +82221,12 @@ function CherryAdventure() {
                     }
                     catch (_) { }
                 }
+                if (G.heroModelTick) {
+                    try {
+                        G.heroModelTick(dt);
+                    }
+                    catch (_) { }
+                } // 🧍 ตัวละครโมเดล 3D (ทดลอง)
                 // 🗡️ ซามูไรจับคาตานะสองมือ — ทำท้ายสุดหลังทุกท่าจัดแขนขวาเสร็จแล้ว
                 //    ครอบคลุม ยืนเฉย/เดิน/ยืนการ์ด/โจมตีปกติ ทั้งโลกกว้างและในสนามรบ
                 //    ⚠️ เว้นท่าสกิล/ท่าไม้ตายไว้ เพราะบางท่าตั้งใจให้มือซ้ายไปจับฝักดาบ (ท่าชักดาบอิไอ)
@@ -83684,6 +83879,19 @@ function CherryAdventure() {
                                 React.createElement("span", { style: { fontSize: 12, fontWeight: 800, color: ui.custom.gender === i ? "#d9536b" : "#8a5a4a" } }, o.n))))),
                             React.createElement("div", { style: { marginTop: 5, fontSize: 9.5, color: "#a58a7a" } }, "\u0E17\u0E23\u0E07\u0E1C\u0E21 \u0E43\u0E1A\u0E2B\u0E19\u0E49\u0E32 \u0E41\u0E25\u0E30\u0E0A\u0E38\u0E14 \u0E08\u0E30\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E15\u0E32\u0E21\u0E40\u0E1E\u0E28\u0E17\u0E35\u0E48\u0E40\u0E25\u0E37\u0E2D\u0E01")),
                         React.createElement("div", null,
+                            React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } },
+                                "\uD83E\uDDCD \u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E42\u0E21\u0E40\u0E14\u0E25 3D ",
+                                React.createElement("span", { style: { fontSize: 9.5, color: "#c09020" } }, "\u0E17\u0E14\u0E25\u0E2D\u0E07")),
+                            React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, [["", "🎨", "ร่างปั้นเอง (ปรับแต่งได้)"]].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (React.createElement("button", { key: k || "none", onClick: () => G.setCustom("model", k || null), style: {
+                                    flex: 1, minWidth: 96, padding: "8px 6px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+                                    fontSize: 11.5, fontWeight: 800, border: (ui.custom.model || "") === k ? "2px solid #d9536b" : "2px solid #ece2d8",
+                                    background: (ui.custom.model || "") === k ? "#ffe1ea" : "#fbf7f2", color: (ui.custom.model || "") === k ? "#d9536b" : "#8a5a4a",
+                                } },
+                                e,
+                                " ",
+                                n)))),
+                            React.createElement("div", { style: { marginTop: 5, fontSize: 9.5, color: "#a58a7a" } }, "\u0E42\u0E21\u0E40\u0E14\u0E25\u0E08\u0E32\u0E01 Quaternius (CC0) \u2014 \u0E42\u0E2B\u0E25\u0E14\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13 5-7 MB \u00B7 \u0E15\u0E31\u0E27\u0E42\u0E21\u0E40\u0E14\u0E25\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E23\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E1B\u0E23\u0E31\u0E1A\u0E2B\u0E19\u0E49\u0E32/\u0E1C\u0E21/\u0E0A\u0E38\u0E14 \u0E41\u0E25\u0E30\u0E44\u0E21\u0E48\u0E42\u0E0A\u0E27\u0E4C\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E43\u0E19\u0E21\u0E37\u0E2D")),
+                        React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\u2461 \u0E15\u0E31\u0E49\u0E07\u0E0A\u0E37\u0E48\u0E2D\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23"),
                             React.createElement("input", { key: "nm-" + (ui.pendingName || ""), type: "text", maxLength: 12, defaultValue: ui.pendingName || "", placeholder: "\u0E15\u0E31\u0E49\u0E07\u0E0A\u0E37\u0E48\u0E2D\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13...", onChange: (e) => { G.pendingName = e.target.value; if (ui.nameErr)
                                     setUi((u) => ({ ...u, nameErr: "" })); }, style: {
@@ -83694,6 +83902,10 @@ function CherryAdventure() {
                             ui.nameErr
                                 ? React.createElement("div", { style: { marginTop: 5, fontSize: 10.5, fontWeight: 800, color: "#d9536b" } }, ui.nameErr)
                                 : React.createElement("div", { style: { marginTop: 5, fontSize: 10, color: "#a58a7a" } }, "\u0E0A\u0E37\u0E48\u0E2D\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E0B\u0E49\u0E33\u0E01\u0E31\u0E1A\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E04\u0E19\u0E2D\u0E37\u0E48\u0E19 \uD83C\uDF10")))),
+                    ui.custom.model && ui.customTab !== "char" && (React.createElement("div", { style: { padding: "7px 10px", borderRadius: 10, background: "#fff6d8", border: "1px solid #f0d890", fontSize: 10.5, fontWeight: 700, color: "#8a6a20", marginBottom: 6 } },
+                        "\uD83E\uDDCD \u0E01\u0E33\u0E25\u0E31\u0E07\u0E43\u0E0A\u0E49\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E42\u0E21\u0E40\u0E14\u0E25 3D (",
+                        (HERO_MODELS[ui.custom.model] || {}).name,
+                        ") \u2014 \u0E01\u0E32\u0E23\u0E1B\u0E23\u0E31\u0E1A\u0E43\u0E19\u0E41\u0E17\u0E47\u0E1A\u0E19\u0E35\u0E49\u0E08\u0E30\u0E21\u0E35\u0E1C\u0E25\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E25\u0E31\u0E1A\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B \"\u0E23\u0E48\u0E32\u0E07\u0E1B\u0E31\u0E49\u0E19\u0E40\u0E2D\u0E07\"")),
                     ui.customTab === "body" && (React.createElement(React.Fragment, null,
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\uD83E\uDDCD \u0E23\u0E39\u0E1B\u0E23\u0E48\u0E32\u0E07"),
