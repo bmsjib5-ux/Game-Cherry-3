@@ -3052,9 +3052,15 @@ const HERO_MODELS = {
     peasant: { name: "ชาวบ้าน", emoji: "🌾", gender: 1, files: ["Male_Base", "Male_Peasant"], h: 4.0, desc: "หนุ่มชาวบ้านเสื้อผ้าเรียบ" },
 };
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
-const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.055, pz: 0 }; // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
-const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack", assassin: "Sword_Attack",
-    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", archer: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot" }; // ที่เหลือ = Punch_Cross
+const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.1, pz: 0 }; // py 0.1 = กำปั้นอยู่ระหว่างลูกทุยกับโกร่งดาบพอดี (ต่ำกว่านี้มือไปกำใบดาบ)   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
+// 🎭 ท่าตามอาชีพ — คลังท่ามี ดาบ / ร่ายเวท / เล็งยิง / หมัด · อาชีพไหนไม่อยู่ในตารางใช้ค่าตั้งต้น
+const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack",
+    assassin: "Punch_Jab", boxer: "Punch_Cross",
+    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot",
+    archer: "Pistol_Shoot" }; // ที่เหลือ = Punch_Cross
+const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
+    mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
+    archer: "Pistol_Idle_Loop" }; // ที่เหลือ = Idle_Loop
 const CHAR_PRESETS = [
     { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
     { name: "เรนเจอร์", emoji: "🏹", gender: 0, skin: 0, hairColor: 5, hairStyle: 0, eyes: 0, outfit: 2, model: "ranger" }, // 🧍 โมเดล 3D ทดลอง
@@ -12942,6 +12948,22 @@ function CherryAdventure() {
                             }
                         });
                     });
+                    // 💡 เก็บวัสดุไว้ปรับความสว่างรายเฟรม — กลางคืนแสงฉากมืดลงมาก โมเดล PBR จะดำจนแทบมองไม่เห็นตัว
+                    //    ใช้ emissiveMap = แผนที่สีเดิม แล้วเร่ง emissive ตามความมืด ตัวจึงสว่างด้วย "สีของตัวเอง" ไม่ใช่ฟุ้งขาว
+                    const mats = [];
+                    parts.forEach((pt) => pt.traverse((o) => {
+                        if (!o.isMesh)
+                            return;
+                        (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
+                            if (!m || mats.indexOf(m) >= 0)
+                                return;
+                            if (m.map && !m.emissiveMap) {
+                                m.emissiveMap = m.map;
+                                m.needsUpdate = true;
+                            }
+                            mats.push(m);
+                        });
+                    }));
                     const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
                     const acts = {};
                     anims.animations.forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
@@ -12992,7 +13014,7 @@ function CherryAdventure() {
                         }
                     });
                     G._heroHidden = hidden;
-                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand };
+                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, mats, lit: -1 };
                     heroPlay("Idle_Loop");
                 });
             };
@@ -13018,7 +13040,8 @@ function CherryAdventure() {
                 H.swPrev = sw;
                 H.batPrev = bat;
                 const sp = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
-                let want = "Idle_Loop", once = false;
+                const has = (n, f) => (n && H.acts[n] ? n : f); // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
+                let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false;
                 if (G.mode === "fainted" || (P && P.hp <= 0)) {
                     want = "Death01";
                     once = true;
@@ -13030,7 +13053,7 @@ function CherryAdventure() {
                 else if ((G._jumpT || 0) > 0)
                     want = "Jump_Loop";
                 else if (sw > 0.02 || bat || G._skCast) {
-                    want = G._skCast ? "Spell_Simple_Shoot" : (HERO_ATK[G.cls] || "Punch_Cross");
+                    want = has(G._skCast ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross");
                     once = true;
                     if (atkEdge)
                         H.cur = null;
@@ -13047,6 +13070,14 @@ function CherryAdventure() {
                     want = "Walk_Loop";
                 heroPlay(want, once);
                 H.mixers.forEach((m) => m.update(dt));
+                { // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
+                    const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
+                    const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
+                    if (Math.abs(lit - H.lit) > 0.015) {
+                        H.lit = lit;
+                        H.mats.forEach((m) => { m.emissive.setScalar(lit); m.emissiveIntensity = 1; });
+                    }
+                }
                 if (H.grip) { // 🗡️ โค้ดร่างปั้นเองรีเซ็ตตำแหน่งอาวุธทุกเฟรม (ไปที่ข้อศอก) — ดึงกลับมากลางฝ่ามือ
                     wand.position.set(0, 0, 0);
                     wand.scale.set(1, 1, 1);
