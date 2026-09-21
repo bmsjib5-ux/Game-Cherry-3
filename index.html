@@ -10400,9 +10400,9 @@ function CherryAdventure() {
             egghog: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.5, mul: 0xc09060 },
             ngueak: { f: "Big_Fish", c: "big", by: "h", size: 2.2 },
             plerng: { f: "Fox", c: "ani", by: "h", size: 1.3 },
-            thewada: { f: "Flying_Ghost", c: "fly", size: 2.4, y: 0.9, flat: 0xf0e2b0, halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } }, // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
-            kinnara: { f: "Flying_Hywirl", c: "fly", size: 2.6, y: 0.7, flat: 0xe08ab0, halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } }, // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
-            phothisat: { f: "Big_Tribal", c: "big", by: "h", size: 3.0, flat: 0xd8961a, gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } }, // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
+            thewada: { f: "Flying_Ghost", c: "fly", size: 2.4, y: 0.9, hue: [42, 0, 5.0, 0.94, 0, 0.16], halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } }, // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
+            kinnara: { f: "Flying_Hywirl", c: "fly", size: 2.6, y: 0.7, hue: [332, 0.45, 2.4, 0.8, 0, 0.6], halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } }, // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
+            phothisat: { f: "Big_Tribal", c: "big", by: "h", size: 3.0, hue: [44, 0.85, 1.7, 0.62, 1], gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } }, // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
             pooyak: { f: "Crab", size: 2.6, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle" }, // 🦀 ปูยักษ์ทราย — OpenGameArt (methodical pixel, CC0) มีแค่ idle/walk
             crocodile: { f: "Crocodile", size: 3.8, idle: "idle-loop", walk: "walk-loop", run: "walk-loop", atk: "attack", hit: "idle-loop", die: "death" }, // 🐊 จระเข้ยักษ์ — OpenGameArt (CC0)
             eggduck: { f: "Duckling", size: 1.4, by: "h", lift: 0.8, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck" }, // 🐤 ลูกเป็ดน้อย — OpenGameArt (weirdybeardyman, CC0) ท่าจิก/เดิน
@@ -10431,7 +10431,7 @@ function CherryAdventure() {
         G._qtMix = []; // ตัวที่มีอนิเมชันวิ่งอยู่
         G.qtHas = (spId) => !!QT_MON[spId];
         // 🎨 ย้อมสีด้วยการเลื่อน hue บนสำเนา atlas — ส่วนที่มีสี (เสื้อ/ผิว) เปลี่ยนเป็นสีเป้าหมาย ส่วนขาว/ดำ (ตา ปาก) คงเดิม
-        //    hue = [องศาสีเป้าหมาย, ความอิ่มต่ำสุด, ตัวคูณความสว่าง, เพดานความสว่าง, ย้อมเทากลางด้วย?] · แคชต่อ (ไฟล์, ค่า) เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์
+        //    hue = [องศาสีเป้าหมาย, ความอิ่มต่ำสุด, ตัวคูณความสว่าง, เพดานความสว่าง, ย้อมเทากลางด้วย?, ความอิ่มสูงสุด] · แคชต่อ (ไฟล์, ค่า) เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์
         const qtHueCache = {};
         // 🦚 พัดขนนกยูงเจ็ดสี วาดครั้งเดียว — 11 ก้านกางจากจุดล่างกลาง ปลายก้านมี "ตา" น้ำเงิน-เขียว-ทอง
         let peacockTex = null;
@@ -10499,7 +10499,7 @@ function CherryAdventure() {
                 const sat = mx === mn ? 0 : (mx - mn) / (l0 > 0.5 ? 2 - mx - mn : mx + mn);
                 if (l0 < 0.06 || l0 > 0.96 || (sat < 0.18 && !(H[4] && l0 > 0.22 && l0 < 0.8)))
                     continue; // ขาว/ดำ/เทา (ตา ฟัน ขอบ) → ไม่แตะ · H[4]=1 ยอมย้อมเทากลางด้วย (โมเดลที่หนาม/ตาใช้สีเดียวกันจะโดนทั้งคู่)
-                const sN = Math.max(sat, smin), l = Math.min(H[3] == null ? 0.97 : H[3], l0 * lm), q = l < 0.5 ? l * (1 + sN) : l + sN - l * sN, pp = 2 * l - q;
+                const sN = Math.min(H[5] == null ? 1 : H[5], Math.max(sat, smin)), l = Math.min(H[3] == null ? 0.97 : H[3], l0 * lm), q = l < 0.5 ? l * (1 + sN) : l + sN - l * sN, pp = 2 * l - q;
                 a[i] = Math.round(h2r(pp, q, th + 1 / 3) * 255);
                 a[i + 1] = Math.round(h2r(pp, q, th) * 255);
                 a[i + 2] = Math.round(h2r(pp, q, th - 1 / 3) * 255);
