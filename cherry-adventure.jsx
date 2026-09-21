@@ -2888,6 +2888,8 @@ const HERO_MODELS = {
   ranger:  { name: "เรนเจอร์",  emoji: "🏹", gender: 0, files: ["Female_Base", "Female_Ranger", "Hair_Long"], h: 3.9, desc: "นักธนูป่าใส่ฮู้ดเขียว" },
   peasant: { name: "ชาวบ้าน",   emoji: "🌾", gender: 1, files: ["Male_Base", "Male_Peasant"],               h: 4.0, desc: "หนุ่มชาวบ้านเสื้อผ้าเรียบ" },
 };
+// 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
+const HERO_GRIP = { s: 0.55, rx: -0.2, ry: 0, rz: 0 };
 const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack", assassin: "Sword_Attack",
                    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", archer: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot" };   // ที่เหลือ = Punch_Cross
 const CHAR_PRESETS = [
@@ -9775,7 +9777,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       };
       G.heroModelSet = (id) => {
         const M = id && HERO_MODELS[id];
-        if (G._heroModel) { char.remove(G._heroModel.g); G._heroModel = null; }
+        if (G._heroModel) {
+          const H0 = G._heroModel;
+          if (H0.gripHome && H0.grip) {                       // 🗡️ คืนอาวุธกลับข้อศอกของร่างปั้นเอง
+            H0.gripHome.parent.add(wand);
+            wand.position.copy(H0.gripHome.pos); wand.rotation.copy(H0.gripHome.rot); wand.scale.copy(H0.gripHome.scl);
+            if (H0.grip.parent) H0.grip.parent.remove(H0.grip);
+          }
+          char.remove(H0.g); G._heroModel = null;
+        }
         if (G._heroHidden) { G._heroHidden.forEach((o) => (o.visible = true)); G._heroHidden = null; }
         char.children.forEach((o) => { if (o.isSprite && o.userData._heroY0 != null) { o.position.y = o.userData._heroY0; delete o.userData._heroY0; } });
         G.heroModelId = M ? id : null;
@@ -9807,6 +9817,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               parts[0].traverse((o) => { if (o.isMesh) { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach((m) => { if (m) { m.clippingPlanes = [neckPlane]; m.clipShadows = true; } }); } });
             }
           }
+          // 🗡️ ย้ายกลุ่มอาวุธ (wand) ไปเกาะกระดูก hand_r ของโมเดล — ใช้โมเดลอาวุธชุดเดิมทั้งหมด ไม่ต้องทำใหม่
+          //    ร่างปั้นเองถูกซ่อน (visible=false) ซึ่งลูกก็โดนซ่อนตาม อาวุธจึงต้องย้ายออกมาจริง ๆ ไม่ใช่แค่ยืมตำแหน่ง
+          //    กระดูกมือมี world scale = char × k จึงต้องหารกลับด้วย gripScale ไม่งั้นดาบใหญ่เท่าตัวละคร
+          let grip = null, gripHome = null;
+          const hand = parts[0].getObjectByName("hand_r");
+          if (hand) {
+            gripHome = { parent: wand.parent, pos: wand.position.clone(), rot: wand.rotation.clone(), scl: wand.scale.clone() };
+            grip = new THREE.Group(); grip.name = "heroGrip";
+            grip.scale.setScalar(HERO_GRIP.s / k);
+            grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+            hand.add(grip); grip.add(wand);
+          }
           char.add(g);
           const hidden = [];
           char.children.forEach((o) => {
@@ -9815,7 +9837,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             if (o.visible) { o.visible = false; hidden.push(o); }
           });
           G._heroHidden = hidden;
-          G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3() };
+          G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand };
           heroPlay("Idle_Loop");
         });
       };
@@ -9842,6 +9864,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if (sp > 0.25) want = "Walk_Loop";
         heroPlay(want, once);
         H.mixers.forEach((m) => m.update(dt));
+        if (H.grip) {                                      // 🗡️ โค้ดร่างปั้นเองรีเซ็ตตำแหน่งอาวุธทุกเฟรม (ไปที่ข้อศอก) — ดึงกลับมากลางฝ่ามือ
+          wand.position.set(0, 0, 0);
+          wand.scale.set(1, 1, 1);
+          H.grip.scale.setScalar(HERO_GRIP.s / H.k);
+          H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+        }
         if (H.neck && H.neckPlane) {                       // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
           H.neck.getWorldPosition(H.tmpV); H.tmpV.y -= 0.06 * H.k;
           H.neckPlane.setFromNormalAndCoplanarPoint(H.neckPlane.normal.set(0, 1, 0), H.tmpV);
