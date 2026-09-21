@@ -2,10 +2,10 @@ Quaternius low-poly animated models (CC0 1.0 Universal / public domain)
 https://quaternius.com  ·  https://quaternius.itch.io
 
 Packs used:
-  LowPoly Animated Monsters   -> Dragon
+  LowPoly Animated Monsters   -> Dragon, Slime
   LowPoly Animated Easy Enemies -> Snake, Snake_angry
   LowPoly Animated Fish       -> Fish1, Fish3, Shark
-  Animated LowPoly Dinosaurs  -> Parasaurolophus
+  Animated LowPoly Dinosaurs  -> Parasaurolophus, Velociraptor
   LowPoly Animated Animals    -> Horse
 
 Converted from the packs' .fbx to .glb with three.js FBXLoader + GLTFExporter.
