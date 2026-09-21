@@ -2889,7 +2889,7 @@ const HERO_MODELS = {
   peasant: { name: "ชาวบ้าน",   emoji: "🌾", gender: 1, files: ["Male_Base", "Male_Peasant"],               h: 4.0, desc: "หนุ่มชาวบ้านเสื้อผ้าเรียบ" },
 };
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
-const HERO_GRIP = { s: 0.55, rx: -0.2, ry: 0, rz: 0 };
+const HERO_GRIP = { s: 0.55, rx: -0.2, ry: 0, rz: 0, px: 0, py: 0.035, pz: 0 };   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
 const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack", assassin: "Sword_Attack",
                    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", archer: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot" };   // ที่เหลือ = Punch_Cross
 const CHAR_PRESETS = [
@@ -3273,13 +3273,17 @@ export default function CherryAdventure() {
       const z = JSON.parse(window.localStorage.getItem("cherry-zoom") || "null");
       if (z) { camDist = z.camDist || camDist; bZoom = z.bZoom || bZoom; }
     } catch (e) {}
+    // 📷 ระยะกล้องใกล้สุดตอนสำรวจ — โมเดล 3D ต้องถอยไกลกว่า เพราะทรงสูงชะลูดกว่าตัวชิบิ
+    //    (วัดจริง: ซูมสุดแบบเดิมแล้วหัวโมเดลโดนขอบบนจอตัด ส่วนตัวชิบิยังเห็นครบ)
+    const camMin = () => (G.heroModelId ? 9.5 : 6);
+    G.camMin = camMin;
     G.zoom = (d) => {
       if (G.mode === "battle" || G.mode === "fainted") {
         bZoom = Math.min(1.8, Math.max(0.6, bZoom + d * 0.09));
       } else if (G.mode === "create" || G.mode === "class") {
         camDist = Math.min(24, Math.max(5.2, camDist + d)); // ซูมหน้าแต่งตัว (ซูมออกได้ไกลขึ้น)
       } else {
-        camDist = Math.min(G.inTownZone ? 52 : G.inHomeZone ? 36 : 24, Math.max(6, camDist + d)); // 🏠 ในบ้านซูมออกไกลขึ้น · 🏰 ในเมืองใหญ่ซูมออกได้ไกลสุด
+        camDist = Math.min(G.inTownZone ? 52 : G.inHomeZone ? 36 : 24, Math.max(camMin(), camDist + d)); // 🏠 ในบ้านซูมออกไกลขึ้น · 🏰 ในเมืองใหญ่ซูมออกได้ไกลสุด
       }
       saveZoom(); // 🔍 remember zoom level
     };
@@ -3292,7 +3296,7 @@ export default function CherryAdventure() {
     };
     G.resetCam = () => {
       G.camYaw = 0; G.camPitch = 0.77;
-      camDist = 8; bZoom = 1;      // 🔍 คืนระยะซูมตั้งต้นด้วย ไม่งั้นกดรีเซ็ตแล้วยังค้างซูมสุดอยู่
+      camDist = Math.max(camMin(), 8); bZoom = 1;      // 🔍 คืนระยะซูมตั้งต้นด้วย ไม่งั้นกดรีเซ็ตแล้วยังค้างซูมสุดอยู่
       saveZoom();
       if (G.toast) G.toast("🎥 รีเซ็ตมุมกล้องแล้ว");
     };
@@ -9789,6 +9793,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G._heroHidden) { G._heroHidden.forEach((o) => (o.visible = true)); G._heroHidden = null; }
         char.children.forEach((o) => { if (o.isSprite && o.userData._heroY0 != null) { o.position.y = o.userData._heroY0; delete o.userData._heroY0; } });
         G.heroModelId = M ? id : null;
+        if (G.zoom) G.zoom(0);        // 📷 ดันระยะกล้องให้เข้าช่วงใหม่ทันที (ขั้นต่ำของโมเดลไกลกว่าตัวชิบิ)
         if (!M) return;
         const token = (G._heroTok = (G._heroTok || 0) + 1);
         Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims")])).then((arr) => {
@@ -9827,6 +9832,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             grip = new THREE.Group(); grip.name = "heroGrip";
             grip.scale.setScalar(HERO_GRIP.s / k);
             grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+            grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
             hand.add(grip); grip.add(wand);
           }
           char.add(g);
@@ -9869,6 +9875,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           wand.scale.set(1, 1, 1);
           H.grip.scale.setScalar(HERO_GRIP.s / H.k);
           H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+          H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
         }
         if (H.neck && H.neckPlane) {                       // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
           H.neck.getWorldPosition(H.tmpV); H.tmpV.y -= 0.06 * H.k;
