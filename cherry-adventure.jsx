@@ -7599,7 +7599,7 @@ export default function CherryAdventure() {
     // 💀 KayKit Skeletons (CC0 — Kay Lousberg) — มอนสเตอร์อันเดดใช้โมเดลมีโครงกระดูกจริง + อนิเมชัน
     //    ยืน · เดิน · วิ่งไล่ · สะดุ้งตอนโดนตี · เงื้อตี · ล้มตาย  (คลิปดึงมาจากชุด Rig_Medium ของ KayKit)
     //    ⏳ โหลดตอนเจอมอนพวกนี้ครั้งแรกเท่านั้น (ราว 1.2MB) — คนที่ยังไม่ถึงด่านนรกไม่ต้องโหลด
-    const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue" };
+    const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage" };   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
     const KK_SKEL_H = 1.5;            // ความสูงในเกม (ตัวละครผู้เล่นสูงราว 2)
     const KK_ONCE = ["Hit_A", "Death_A", "Throw"];
     const kkSkelLib = {};
