@@ -2113,7 +2113,8 @@ const routeExits = (bid) => {
   return out;
 };
 const biomeById = (bid) => BIOMES.find((b) => b.id === bid) || null;
-const ROAD_HALF = 4.6;      // ครึ่งความกว้างทางดิน — เดินออกได้เฉพาะช่วงนี้
+const ROAD_HALF = 4.6;      // ครึ่งความกว้างช่องเดินออกจากแมพ (กติกา) — คงเดิมไว้ ไม่งั้นเดินออกยาก
+const ROAD_VIS = ROAD_HALF / 3;   // 🛣️ ครึ่งความกว้าง "ที่มองเห็น" ของทางดิน = 1/3 ของช่องเดิน (ทางแคบลง ทุ่งโล่งขึ้น)
 // 🟤 สีทางดิน — ดินอัดแน่น · ร่องล้อ · หญ้าริมทาง · กรวด
 const ROAD_COL = { dirt: 0x9a7a52, rut: 0x7d6140, grass: 0x7d9a58, peb: 0xb0a189 };
 
@@ -3901,11 +3902,21 @@ export default function CherryAdventure() {
       [[0.35, 3.5, 0.2, [0.9, 1, 0.5]], [-0.4, 3.7, -0.1, [-1, 1, -0.3]], [0.1, 3.9, -0.45, [0.2, 1, -1]], [-0.15, 3.3, 0.45, [-0.4, 1, 1]], [0, 4.2, 0, [0.1, 1, 0.1]]].forEach(([bx, by, bz, d]) => {
         const br = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 2.4, 7), bark); br.position.set(bx + d[0] * 0.7, by + 0.9, bz + d[2] * 0.7); tilt(br, d); br.castShadow = true; g.add(br);
       });
+      const blooms = [];
       const pinks = [0xf07aa8, 0xe8669a, 0xf8a0c0, 0xd8568a];   // ชมพูสด (ค่าถูกยกสว่างตอนวาด จึงตั้งเข้มไว้)
       [[0, 5.7, 0, 2.4], [2.0, 5.0, 0.6, 1.8], [-2.0, 5.1, -0.4, 1.8], [0.5, 4.9, -2.0, 1.7], [-0.4, 5.0, 2.0, 1.7], [1.3, 6.5, 1.2, 1.5], [-1.4, 6.6, -1.0, 1.5], [0.2, 7.2, 0.2, 1.35], [2.6, 4.2, -1.3, 1.25], [-2.7, 4.3, 1.2, 1.25]].forEach(([px, py, pz, r], i) => {
         const m = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 12), new THREE.MeshStandardMaterial({ color: pinks[i % 4], roughness: 0.9 }));
-        m.position.set(px, py, pz); m.castShadow = true; g.add(m);
+        m.position.set(px, py, pz); m.castShadow = true; g.add(m); blooms.push(m);
       });
+      // 🌙 ดวงเรืองแสงชมพูกลางพุ่ม — โผล่เฉพาะกลางคืน (ทึบ 0 ตอนกลางวัน)
+      const gcv = document.createElement("canvas"); gcv.width = gcv.height = 128;
+      const g2 = gcv.getContext("2d"), rg2 = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
+      rg2.addColorStop(0, "rgba(255,214,236,0.95)"); rg2.addColorStop(0.28, "rgba(255,170,212,0.5)");
+      rg2.addColorStop(0.62, "rgba(255,140,196,0.16)"); rg2.addColorStop(1, "rgba(255,130,190,0)");
+      g2.fillStyle = rg2; g2.fillRect(0, 0, 128, 128);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gcv), transparent: true,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: 0 }));
+      glow.scale.set(13, 11, 1); glow.position.set(0, 5.7, 0); glow.renderOrder = 2; glow.visible = false; g.add(glow);
       // 🌸 พรมกลีบร่วงบนพื้น — วาดกลีบ 460 ใบลง canvas แผ่นเดียว หนาแน่นใกล้โคน จางออกที่ขอบ
       const cv = document.createElement("canvas"); cv.width = cv.height = 256;
       const c2 = cv.getContext("2d"), pcol = ["#f7b3cc", "#f9c6d8", "#f29bbd", "#ffd9e6"];
@@ -3931,7 +3942,7 @@ export default function CherryAdventure() {
       pts.frustumCulled = false; pts.renderOrder = 3; g.add(pts);
       g.position.set(x, 0, z);
       scene.add(g); sceneryObjects.push(g); colliders.push({ x, z, r: 1.0 });
-      G._sakura = { g, pts, n: NP, eqHid: false };
+      G._sakura = { g, pts, n: NP, eqHid: false, blooms, glow, carpet, na: -1 };
     };
     const addDeadTree = (x, z) => {
       if (inKeepOut(x, z)) return;   // 🎣🌀 ห้ามงอกทับบ่อตกปลา/แท่นวาร์ป (ของพวกนี้อยู่ทุกด่าน แต่บ่อย้ายที่ตามด่าน)
@@ -19530,21 +19541,21 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const ta = t0 + (t1 - t0) * (i / SEG), tb = t0 + (t1 - t0) * ((i + 1) / SEG);
           const tm = (ta + tb) / 2, len = (tb - ta) + 0.15;
           // 🟤 ทางดินอัดแน่น — ส่ายซ้ายขวานิดหน่อยให้ดูเป็นทางเดินจริง ไม่ใช่เส้นตรงเป๊ะ
-          const sway = Math.sin(tm * 0.16) * 1.05;
+          const sway = Math.sin(tm * 0.16) * 0.35;
           const c = at(tm, sway);
-          const slab = new THREE.Mesh(new THREE.BoxGeometry(dx ? len : ROAD_HALF * 2, 0.14, dx ? ROAD_HALF * 2 : len), dirtM);
+          const slab = new THREE.Mesh(new THREE.BoxGeometry(dx ? len : ROAD_VIS * 2, 0.14, dx ? ROAD_VIS * 2 : len), dirtM);
           slab.position.set(c[0], terrainAt(c[0], c[1]) + 0.05, c[1]);
           slab.rotation.y = Math.sin(tm * 0.16) * 0.06;
           g.add(slab);
           // 🛞 ร่องล้อเกวียนสองเส้น
-          if (i % 2 === 0) for (const o of [-1.35, 1.35]) {
+          if (i % 2 === 0) for (const o of [-0.45, 0.45]) {
             const r = at(tm, sway + o);
-            const rut = new THREE.Mesh(new THREE.BoxGeometry(dx ? len * 0.9 : 0.5, 0.05, dx ? 0.5 : len * 0.9), rutM);
+            const rut = new THREE.Mesh(new THREE.BoxGeometry(dx ? len * 0.9 : 0.34, 0.05, dx ? 0.34 : len * 0.9), rutM);
             rut.position.set(r[0], terrainAt(r[0], r[1]) + 0.12, r[1]);
             g.add(rut);
           }
           // 🌿 หญ้าริมทาง
-          if (i % 2 === 1) for (const o of [-ROAD_HALF - 0.3, ROAD_HALF + 0.3]) {
+          if (i % 2 === 1) for (const o of [-ROAD_VIS - 0.3, ROAD_VIS + 0.3]) {
             const q = at(tm, sway + o);
             const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.5, 4), grassM);
             tuft.position.set(q[0], terrainAt(q[0], q[1]) + 0.22, q[1]);
@@ -19553,15 +19564,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           }
           // 🪨 กรวดบนทาง
           if (i % 4 === 2) {
-            const q = at(tm, sway + (Math.random() - 0.5) * ROAD_HALF * 1.4);
+            const q = at(tm, sway + (Math.random() - 0.5) * ROAD_VIS * 1.4);
             const pb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16 + Math.random() * 0.12, 0), pebM);
             pb.position.set(q[0], terrainAt(q[0], q[1]) + 0.12, q[1]);
             g.add(pb);
           }
         }
         // 🪧 ป้ายไม้บอกทางข้างทาง ตรงปลาย
-        const tS = FIELD_R - 3.4, swayS = Math.sin(tS * 0.16) * 1.05;
-        const sp = at(tS, swayS + ROAD_HALF + 1.1);
+        const tS = FIELD_R - 3.4, swayS = Math.sin(tS * 0.16) * 0.35;
+        const sp = at(tS, swayS + ROAD_VIS + 1.1);
         const sy = terrainAt(sp[0], sp[1]);
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 2.3, 6), new THREE.MeshLambertMaterial({ color: 0x7a5a38 }));
         post.position.set(sp[0], sy + 1.15, sp[1]); g.add(post);
@@ -19660,7 +19671,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       c.fillStyle = "rgba(255,255,255,0.20)"; c.fill();
 
       // 🛣️ ถนนดินออกไปแต่ละทิศ
-      c.strokeStyle = _hexCss(ROAD_COL.dirt); c.lineWidth = Math.max(2, ROAD_HALF * 2 * k); c.lineCap = "butt";
+      c.strokeStyle = _hexCss(ROAD_COL.dirt); c.lineWidth = Math.max(2, ROAD_VIS * 2 * k); c.lineCap = "butt";
       S.exits.forEach((e) => {
         c.beginPath(); c.moveTo(cx, cy);
         c.lineTo(PX(e.vx * (S.r + 3)), PZ(e.vz * (S.r + 3))); c.stroke();
@@ -40327,6 +40338,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G.mode === "create" && S.g.visible) { S.g.visible = false; S.eqHid = true; }
         else if (G.mode !== "create" && S.eqHid) { S.eqHid = false; S.g.visible = (G.curBiome || 0) === 0 && !G.inTownZone && !G.inHomeZone && !G.inRanchZone; }
         if (S.g.visible) {
+          // 🌙 กลางคืนติดไฟชมพูอ่อน ๆ — ไล่ตามแสงวัน (0.55 เริ่มติด, มืดสนิท = เต็มดวง)
+          const na = Math.max(0, Math.min(1, (0.55 - (G.dayPhaseAmt != null ? G.dayPhaseAmt : 1)) / 0.5));
+          if (Math.abs(na - S.na) > 0.02) {
+            S.na = na;
+            for (const m of S.blooms) { m.material.emissive.setHex(0x7a2c4c); m.material.emissiveIntensity = 0.85 * na; }
+            S.carpet.material.emissive.setHex(0x6a2440); S.carpet.material.emissiveIntensity = 0.5 * na;
+            S.glow.material.opacity = 0.5 * na; S.glow.visible = na > 0.02;
+            S.pts.material.opacity = 0.95;
+          }
+          if (S.glow.visible) S.glow.material.opacity = 0.5 * na * (0.86 + Math.sin(t * 1.1) * 0.14);   // ✨ หายใจช้า ๆ
           const pa = S.pts.geometry.attributes.position.array;
           for (let i = 0; i < S.n; i++) {
             const k = i * 3;
