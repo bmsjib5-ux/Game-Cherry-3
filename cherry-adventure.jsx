@@ -7775,7 +7775,7 @@ export default function CherryAdventure() {
       chalam:     { f: "Shark",           size: 2.6, y: 0.85, idle: "Swim", walk: "Swim", run: "Swim" },
       eggdino:    { f: "Parasaurolophus", size: 2.5, lift: 0.62, idle: "Parasaurolophus_Idle", walk: "Parasaurolophus_Walk", run: "Parasaurolophus_Run", atk: "Parasaurolophus_Attack", die: "Parasaurolophus_Death" },
       eggunicorn: { f: "Horse",           size: 2.0,          idle: "Idle", walk: "Walk", run: "Run", die: "Death",
-                    tint: { "Material.003": 0xf6f2ff, "Material.006": 0xf0b8e6 },                      // 🦄 ขนขาว แผงคอ/กีบชมพู
+                    tint: { "Material.003": 0xf07ab8, "Material.006": 0xc23f8a },                      // 🦄 ขนขาว แผงคอ/กีบชมพู
                     horn: { bone: "Head", base: [0, 668, 405], tip: [0, 765, 522], r: 13 } },          // เขาทองบนหน้าผาก (หน่วยโมเดล)
       eggdrake:   { f: "Dragon",          size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                     tint: { Main: 0xd99a2a, Wings: 0xb87f1c, Belly: 0xfff0c0, Claws: 0x4a3210 } },     // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
