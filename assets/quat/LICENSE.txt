@@ -35,3 +35,5 @@ Turtle.glb    — "Turtle" by Heathal, CC0 (Walking-loop; texture downscaled to 
                 https://opengameart.org/content/turtle-0
 Elephant.glb  — "low poly elephant model" by syncopika, CC0 (Idle / Angry / Sitting kept, half keyframe rate)
                 https://opengameart.org/content/low-poly-elephant-model
+Duck.glb      — "Rigged Duck" by weirdybeardyman, CC0 (Peck / Waddle)
+                https://opengameart.org/content/rigged-duck
