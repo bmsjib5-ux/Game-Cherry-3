@@ -840,14 +840,14 @@ const PET_SKILL = { mochi: "ลมกระต่ายหมุน", baibua: "�
 Object.assign(SPECIES, {
   pikul:    { name: "สไลม์พิกุล",  emoji: "🌼", color: 0xf5d878, hp: 44,  atk: 7,  catch: 0.42, tier: 2, desc: "สไลม์สีทองกลิ่นดอกพิกุลหอมหวาน", weak: "fire" },
   hima:     { name: "กระต่ายหิมะ",  emoji: "🐇", color: 0xd8ecff, hp: 58,  atk: 10, catch: 0.26, tier: 3, desc: "กระต่ายหิมะแห่งขุนเขา", weak: "fire" },
-  ngueak:   { name: "เงือกวารี",    emoji: "🐠", color: 0x4ad0c0, hp: 62,  atk: 11, catch: 0.24, tier: 3, desc: "เงือกน้อยแห่งวังบาดาล", animal: "fish", weak: "wind" },
+  ngueak:   { name: "มนุษย์ปลาวารี", emoji: "🐟", color: 0x4ad0c0, hp: 62,  atk: 11, catch: 0.24, tier: 3, desc: "มนุษย์ปลาแห่งวังบาดาล ครีบคม", animal: "fish", weak: "wind" },
   mangkorn: { name: "มังกรเยาว์",   emoji: "🐲", color: 0xe0503a, hp: 88,  atk: 15, catch: 0.16, tier: 4, desc: "มังกรน้อยพ่นเปลวเพลิง", animal: "snake", weak: "ice" },
   hanuman:  { name: "หนุมานเผือก",  emoji: "🐵", color: 0xf0f0e0, hp: 150, atk: 22, catch: 0.05, tier: 5, desc: "วานรเทพกายสิทธิ์ อมตะ", animal: "beast", weak: "arcane" },
   suphan:   { name: "สุพรรณหงส์",   emoji: "🦢", color: 0xf5d24a, hp: 165, atk: 24, catch: 0.05, tier: 5, desc: "หงส์ทองแห่งสรวงสวรรค์", animal: "bird", weak: "earth" },
   nakprok:  { name: "นาคามรกต",   emoji: "🐍", color: 0x2ad08a, hp: 210, atk: 28, catch: 0.03, tier: 6, desc: "พญานาคาเกล็ดมรกต เทพเจ้าแห่งวารี", animal: "snake", weak: "arcane" },
   erawan:   { name: "ช้างเอราวัณ",  emoji: "🐘", color: 0xe8e0ff, hp: 240, atk: 30, catch: 0.02, tier: 6, desc: "ช้างสามเศียรพาหนะเทพ สูงสุดแห่งตำนาน", animal: "beast", weak: "light" },
 });
-Object.assign(EVOLVED, { pikul: "สไลม์ราชินีพิกุล", hima: "กระต่ายเทพหิมะ", ngueak: "เงือกราชานาคี", mangkorn: "มังกรอัคคีราช", hanuman: "หนุมานชาญสมร", suphan: "สุพรรณหงส์ทิพย์", nakprok: "อนันตนาคราชมรกต", erawan: "เอราวัณเทวราช" });
+Object.assign(EVOLVED, { pikul: "สไลม์ราชินีพิกุล", hima: "กระต่ายเทพหิมะ", ngueak: "ราชามนุษย์ปลา", mangkorn: "มังกรอัคคีราช", hanuman: "หนุมานชาญสมร", suphan: "สุพรรณหงส์ทิพย์", nakprok: "อนันตนาคราชมรกต", erawan: "เอราวัณเทวราช" });
 Object.assign(WEAK, { pikul: "fire", hima: "fire", ngueak: "wind", mangkorn: "ice", hanuman: "arcane", suphan: "earth", nakprok: "arcane", erawan: "light" });
 Object.assign(PET_ELEM, { pikul: "wind", hima: "ice", ngueak: "water", mangkorn: "fire", hanuman: "wind", suphan: "light", nakprok: "water", erawan: "arcane" });
 Object.assign(PET_SKILL, { pikul: "ละอองพิกุลทอง", hima: "พายุเกล็ดหิมะ", ngueak: "วังวนวารี", mangkorn: "ลมหายใจมังกร", hanuman: "หาวเป็นดาวเป็นเดือน", suphan: "ปีกทองสุพรรณ", nakprok: "คลื่นนาคามรกต", erawan: "ตรีเนตรเอราวัณ" });
@@ -923,7 +923,7 @@ Object.assign(SPECIES, {
   eggpeacock: { name: "นกยูงทิพย์",     emoji: "🦚", color: 0x35c0b0, hp: 175, atk: 23, catch: 0, tier: 5, desc: "นกยูงเทพหางเจ็ดสี ฟักได้จากไข่เท่านั้น", eggOnly: 1, weak: "earth" },
   eggunicorn: { name: "ยูนิคอร์นจิ๋ว",  emoji: "🦄", color: 0xf0c0e8, hp: 120, atk: 18, catch: 0, tier: 4, desc: "ม้าเขาเดียวศักดิ์สิทธิ์ตัวจิ๋ว", eggOnly: 1, weak: "light" },
   eggdino:    { name: "ไดโนน้อย",      emoji: "🦕", color: 0x7ec86a, hp: 110, atk: 17, catch: 0, tier: 4, desc: "ไดโนเสาร์คอยาวยุคดึกดำบรรพ์ตัวน้อย", eggOnly: 1, weak: "ice" },
-  eggowl:     { name: "นกฮูกเวท",      emoji: "🦉", color: 0xb99a6a, hp: 78,  atk: 13, catch: 0, tier: 3, desc: "นกฮูกนักเวท ตาโตเปล่งประกายเวทมนตร์", eggOnly: 1, weak: "wind" },
+  eggowl:     { name: "นกกลมเวท",      emoji: "🐦", color: 0x4a7ad8, hp: 78,  atk: 13, catch: 0, tier: 3, desc: "นกกลมตัวป้อม ปากใหญ่ ร่ายเวทลมได้", eggOnly: 1, weak: "wind" },
   egggecko:   { name: "แร็พเตอร์แก้ว", emoji: "🦖", color: 0x6fd08a, hp: 72,  atk: 12, catch: 0, tier: 3, desc: "ไดโนน้อยเกล็ดผลึกใสวิ่งไวปานลม", eggOnly: 1, weak: "fire" },
   eggturtle:  { name: "เต่ามงคล",      emoji: "🐢", color: 0x6abf6a, hp: 60,  atk: 9,  catch: 0, tier: 2, desc: "เต่าน้อยกระดองมงคล นำโชคลาภ", eggOnly: 1, weak: "wind" },
   egghog:     { name: "เม่นจิ๋ว",       emoji: "🦔", color: 0xc09a70, hp: 52,  atk: 8,  catch: 0, tier: 2, desc: "เม่นตัวจิ๋วขนแหลม ขี้อายน่ารัก", eggOnly: 1, weak: "fire" },
@@ -941,7 +941,7 @@ Object.assign(MON_SHAPE_EXTRA, {
 });
 // 🥚🐾 รูปร่างเฉพาะตัวของสัตว์เลี้ยงจากไข่ — เดิมไม่ได้แม็ปไว้เลย ทุกตัวจึงออกมาเป็นก้อนสไลม์เหมือนกันหมด
 Object.assign(MON_SHAPE_EXTRA, { eggdrake: "drake", eggpeacock: "peacock", eggunicorn: "unicorn", eggdino: "dino", eggowl: "owl", egggecko: "gecko", eggturtle: "turtle", egghog: "hedgehog", eggchick: "chicklet", eggduck: "duck" });
-Object.assign(PET_SKILL, { eggdrake: "ลมหายใจมังกร", eggpeacock: "พัดหางเจ็ดสี", eggunicorn: "แสงเขาศักดิ์สิทธิ์", eggdino: "กระทืบปฐพี", eggowl: "คลื่นปัญญา", egggecko: "กรงเล็บสายฟ้า", eggturtle: "โล่กระดองมงคล", egghog: "ขนแหลมพุ่ง", eggchick: "จิกน้อย", eggduck: "ปีกกระพือ" });
+Object.assign(PET_SKILL, { eggdrake: "ลมหายใจมังกร", eggpeacock: "พัดหางเจ็ดสี", eggunicorn: "แสงเขาศักดิ์สิทธิ์", eggdino: "กระทืบปฐพี", eggowl: "คลื่นเสียงนกกลม", egggecko: "กรงเล็บสายฟ้า", eggturtle: "โล่กระดองมงคล", egghog: "ขนแหลมพุ่ง", eggchick: "จิกน้อย", eggduck: "ปีกกระพือ" });
 // 🗺️ seed the new wild monsters into biomes
 (BIOMES.find((b) => b.id === "meadow")  || {}).pool && BIOMES.find((b) => b.id === "meadow").pool.push("pikul");
 (BIOMES.find((b) => b.id === "desert")  || {}).pool && BIOMES.find((b) => b.id === "desert").pool.push("mangkorn");
