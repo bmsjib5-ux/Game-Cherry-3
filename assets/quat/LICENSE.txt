@@ -33,3 +33,5 @@ Duckling.glb  — "Rigged Duckling" by weirdybeardyman, CC0 (Peck / Waddle)
                 https://opengameart.org/content/rigged-duckling
 Turtle.glb    — "Turtle" by Heathal, CC0 (Walking-loop; texture downscaled to 512)
                 https://opengameart.org/content/turtle-0
+Elephant.glb  — "low poly elephant model" by syncopika, CC0 (Idle / Angry / Sitting kept, half keyframe rate)
+                https://opengameart.org/content/low-poly-elephant-model

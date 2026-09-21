@@ -7820,6 +7820,8 @@ export default function CherryAdventure() {
       crocodile:  { f: "Crocodile", size: 3.8, idle: "idle-loop", walk: "walk-loop", run: "walk-loop", atk: "attack", hit: "idle-loop", die: "death" },   // 🐊 จระเข้ยักษ์ — OpenGameArt (CC0)
       eggduck:    { f: "Duckling",  size: 1.4, by: "h", lift: 0.8, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck" },   // 🐤 ลูกเป็ดน้อย — OpenGameArt (weirdybeardyman, CC0) ท่าจิก/เดิน
       eggturtle:  { f: "Turtle",    size: 2.0, idle: "", walk: "Walking-loop", run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop" },   // 🐢 เต่ามงคล — OpenGameArt (Heathal, CC0) มีแค่ท่าเดิน
+      erawan:     { f: "Elephant",  by: "h", size: 2.6, idle: "Idle", walk: "Idle", run: "Idle", atk: "Angry", hit: "Idle", die: "Sitting", tint: { "Material.001": 0xc8c0e4 }, horn: { bone: "Bone003", base: [0, 6.05, 2.1], tip: [0, 7.25, 2.1], r: 0.42 } },   // 🐘 ช้างเอราวัณ — OpenGameArt (syncopika, CC0) ไม่มีท่าเดิน · ตัวขาวอมม่วง
+      eggpeacock: { f: "Big_Birb",  c: "big", by: "h", size: 1.9, hue: [168, 0.75, 1.05], fan: { bone: "Hips", at: [0, 0.85, -0.5], w: 3.6, h: 2.3, tilt: -0.3 } },   // 🦚 นกยูงทิพย์ — นกใหญ่ย้อมมรกต + หางพัดเจ็ดสีเกาะสะโพก
       kirara:     { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.6, hue: [46, 0.9, 1.5, 0.64], gloss: [0.3, 0.38, 0x1a1000], evo: { size: 2.4, halo: { bone: "Head3", at: [0, 4.6, 0], r: 1.1, tube: 0.1, tilt: 0.3 } } },   // ⭐ คิราระ — บอลหนามย้อมทอง (ขั้น 2 โนวา ใหญ่ขึ้น + รัศมี)
       eggdrake:   { f: "Dragon",          size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                     tint: { Main: 0x9a5a08, Wings: 0x6e3e05, Belly: 0xd6a63e, Claws: 0x261806 } },     // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
@@ -7839,6 +7841,31 @@ export default function CherryAdventure() {
     // 🎨 ย้อมสีด้วยการเลื่อน hue บนสำเนา atlas — ส่วนที่มีสี (เสื้อ/ผิว) เปลี่ยนเป็นสีเป้าหมาย ส่วนขาว/ดำ (ตา ปาก) คงเดิม
     //    hue = [องศาสีเป้าหมาย, ความอิ่มต่ำสุด, ตัวคูณความสว่าง, เพดานความสว่าง, ย้อมเทากลางด้วย?] · แคชต่อ (ไฟล์, ค่า) เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์
     const qtHueCache = {};
+    // 🦚 พัดขนนกยูงเจ็ดสี วาดครั้งเดียว — 11 ก้านกางจากจุดล่างกลาง ปลายก้านมี "ตา" น้ำเงิน-เขียว-ทอง
+    let peacockTex = null;
+    G.peacockFanTex = () => {
+      if (peacockTex) return peacockTex;
+      const W = 512, H = 328, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      const cx = cv.getContext("2d"), px = W / 2, py = H - 6, R = H - 14;
+      const cols = ["#e8323c", "#ff7a1a", "#ffd21e", "#3ecf3a", "#19b8c8", "#2f6df5", "#8a3fe0", "#2f6df5", "#19b8c8", "#3ecf3a", "#ffd21e"];
+      const n = cols.length, a0 = -Math.PI * 0.47, a1 = Math.PI * 0.47, step = (a1 - a0) / n;
+      cx.translate(px, py);
+      for (let i = 0; i < n; i++) {
+        const am = a0 + step * (i + 0.5), aw = step * 0.5, r = R * (0.86 + 0.14 * Math.sin((i / (n - 1)) * Math.PI));
+        cx.beginPath(); cx.moveTo(0, 0);
+        cx.arc(0, 0, r, -Math.PI / 2 + am - aw, -Math.PI / 2 + am + aw); cx.closePath();
+        cx.fillStyle = cols[i]; cx.fill();
+        cx.strokeStyle = "rgba(20,40,30,0.55)"; cx.lineWidth = 3; cx.stroke();
+        const ex = Math.sin(am) * r * 0.78, ey = -Math.cos(am) * r * 0.78, er = Math.min(20, r * step * 0.42);
+        cx.beginPath(); cx.ellipse(ex, ey, er, er * 1.3, am, 0, Math.PI * 2); cx.fillStyle = "#123f8a"; cx.fill();
+        cx.beginPath(); cx.ellipse(ex, ey, er * 0.62, er * 0.85, am, 0, Math.PI * 2); cx.fillStyle = "#19a88c"; cx.fill();
+        cx.beginPath(); cx.ellipse(ex, ey, er * 0.28, er * 0.4, am, 0, Math.PI * 2); cx.fillStyle = "#ffd94a"; cx.fill();
+      }
+      cx.beginPath(); cx.arc(0, 0, 26, 0, Math.PI * 2); cx.fillStyle = "#1e6b5a"; cx.fill();
+      peacockTex = new THREE.CanvasTexture(cv); peacockTex.encoding = THREE.sRGBEncoding; peacockTex.anisotropy = 4;
+      peacockTex.userData = peacockTex.userData || {}; peacockTex.userData._shared = true;
+      return peacockTex;
+    };
     const qtHueMap = (map, key, H) => {
       if (!map || !map.image || !map.image.width) return map;
       const ck = key + "|" + H.join(",");
@@ -7947,6 +7974,24 @@ export default function CherryAdventure() {
           horn.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
           horn.castShadow = true;
           bone.add(horn);
+        }
+      }
+      // 🦚 หางพัดนกยูง — ระนาบวาดขนเจ็ดสีเกาะกระดูก (จุดหมุนอยู่ปลายล่างกลาง) ระนาบตั้งในแกน X-Y ของโมเดล เอียงหลังตาม tilt
+      if (P.fan) {
+        const bone = node.getObjectByName(P.fan.bone);
+        if (bone) {
+          node.updateMatrixWorld(true);
+          const toB = (a) => bone.worldToLocal(node.localToWorld(new THREE.Vector3(a[0], a[1], a[2])));
+          const a = P.fan.at, t = P.fan.tilt || 0, c0 = toB(a);
+          const ex = toB([a[0] + 1, a[1], a[2]]).sub(c0), ey = toB([a[0], a[1] + Math.cos(t), a[2] + Math.sin(t)]).sub(c0);
+          const k = ex.length() || 1; ex.normalize(); ey.normalize();
+          const ez = new THREE.Vector3().crossVectors(ex, ey).normalize(); ey.crossVectors(ez, ex).normalize();
+          const geo = new THREE.PlaneGeometry(P.fan.w * k, P.fan.h * k); geo.translate(0, P.fan.h * k * 0.5, 0);
+          const fan = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: G.peacockFanTex(), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.7, metalness: 0, emissive: 0x143028 }));
+          fan.position.copy(c0);
+          fan.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(ex, ey, ez));
+          fan.castShadow = true;
+          bone.add(fan);
         }
       }
       // 😇 รัศมีลอยเหนือหัว — วงแหวนทองเกาะกระดูกหัวเหมือนเขา (พิกัดโมเดล) ปรับสเกลจากระยะ 1 หน่วยโมเดลในเฟรมกระดูก
