@@ -23368,21 +23368,21 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ⌨️ คีย์ลัดเปิด/ปิดเมนู (เล่นบนคอม) — กดซ้ำที่เดิม = ปิด
     const MENU_HOTKEY = {
       k: { flag: "skillPanel", name: "สกิล & สเตตัส" },
-      c: { flag: "questOpen", name: "เควส & ภารกิจ" },
+      q: { flag: "questOpen", name: "เควส & ภารกิจ" },   // ย้ายจาก C → Q (Quest) เพราะ C ยกให้รีเซ็ตกล้อง
       z: { flag: "panelOpen", name: "สัตว์เลี้ยง" },
       p: { fn: () => G.togglePvp && G.togglePvp(), name: "สนามประลอง PVP" },
       g: { fn: () => G.toggleSocial && G.toggleSocial(), name: "เพื่อน" },
       b: { fn: () => (G.equipScreen ? G.closeEquip() : G.openEquip()), name: "กระเป๋า & ชุด" },
       o: { menu: true, name: "เมนูรวม" },
       x: { fn: () => G.toggleMount && G.toggleMount(), name: "ขี่/ลงสัตว์ขี่", anyMode: true },
-      v: { fn: () => G.resetCam && G.resetCam(), name: "รีเซ็ตมุมกล้อง", anyMode: true },
+      c: { fn: () => G.resetCam && G.resetCam(), name: "รีเซ็ตมุมกล้อง", anyMode: true },   // C = Camera
       h: { fn: () => G.usePotion && G.usePotion(G.hpPotUse || "s"), name: "ดื่มยาเลือด", anyMode: true },
       m: { fn: () => G.useManaPotion && G.useManaPotion(G.mpPotUse || "s"), name: "ดื่มยามานา", anyMode: true },
     };
     G.MENU_HOTKEY_HELP = [
-      ["K", "สกิล"], ["B", "กระเป๋า"], ["P", "PVP"], ["G", "เพื่อน"], ["C", "เควส"],
+      ["K", "สกิล"], ["B", "กระเป๋า"], ["P", "PVP"], ["G", "เพื่อน"], ["Q", "เควส"],
       ["Z", "สัตว์เลี้ยง"], ["X", "ขี่สัตว์"], ["O", "เมนูรวม"], ["H", "ยาเลือด"], ["M", "ยามานา"],
-      ["1-8", "สกิลช่อง 1-8"], ["W A S D", "เดิน"], ["V", "รีเซ็ตมุมกล้อง"],
+      ["1-8", "สกิลช่อง 1-8"], ["W A S D", "เดิน"], ["C", "รีเซ็ตมุมกล้อง"],
     ];
     G.hotMenu = (key) => {
       const h = MENU_HOTKEY[key];
@@ -57810,7 +57810,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             ["▲", () => G.rotateCam(0, 0.12), "กล้องสูงขึ้น"],
             ["－", () => G.zoom(1.6), "ซูมออก"],
             ["◀", () => G.rotateCam(0.22, 0), "หมุนกล้องซ้าย"],
-            ["🎥", () => G.resetCam(), "รีเซ็ตมุมกล้อง + ซูม  [⌨️ V]"],   // 🎥 ไม่ใช้ 🔄 แล้ว — ซ้ำกับปุ่มรีเฟรชกระดานอันดับที่ลอยอยู่ข้าง ๆ
+            ["🎥", () => G.resetCam(), "รีเซ็ตมุมกล้อง + ซูม  [⌨️ C]"],   // 🎥 ไม่ใช้ 🔄 แล้ว — ซ้ำกับปุ่มรีเฟรชกระดานอันดับที่ลอยอยู่ข้าง ๆ
             ["▶", () => G.rotateCam(-0.22, 0), "หมุนกล้องขวา"],
             ["", null],
             ["▼", () => G.rotateCam(0, -0.12), "กล้องต่ำลง"],
