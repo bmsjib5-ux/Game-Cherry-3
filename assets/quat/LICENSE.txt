@@ -10,3 +10,14 @@ Packs used:
 
 Converted from the packs' .fbx to .glb with three.js FBXLoader + GLTFExporter.
 Unused animation clips and all .scale tracks were stripped to cut file size.
+
+Ultimate Monsters (50 models) — Quaternius, CC0, via the public Google Drive
+folder linked from https://www.patreon.com/posts/ultimate-50-73633148
+  -> Big_Bunny, Big_Birb, Big_Alien, Big_Orc_Skull, Big_Yeti, Big_Orc, Big_Monkroose,
+     Big_MushroomKing, Big_Fish, Blob_Cat, Blob_Chicken, Blob_Birb, Blob_Alien,
+     Blob_PinkBlob, Blob_GreenBlob, Blob_Mushnub, Blob_GreenSpikyBlob,
+     Flying_Squidle, Flying_Glub   (shared Atlas_Monsters.png embedded per file)
+Ultimate Animated Animals (12 models) — Quaternius, CC0, via the public Google Drive
+folder linked from https://www.patreon.com/posts/ultimate-animals-53427821
+  -> Wolf, Fox
+Repacked .gltf -> .glb with three.js GLTFExporter; unused clips and .scale tracks stripped.

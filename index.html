@@ -10374,12 +10374,45 @@ function CherryAdventure() {
                 tint: { DarkGreen: 0x0a3a20, LightGreen: 0x1a7a45, Yellow: 0xe0a000 } }, // 🐍 นาคามรกต — งูยักษ์เขียวมรกต
             egggecko: { f: "Velociraptor", size: 2.1, lift: 0.6, idle: "Velociraptor_Idle", walk: "Velociraptor_Walk", run: "Velociraptor_Run", atk: "Velociraptor_Attack", die: "Velociraptor_Death",
                 tint: { Brown: 0x0da342, LightBrown: 0x54e38f, Black: 0x081410 } }, // 🦖 แร็พเตอร์แก้ว — เขียวแก้ว
-            khiao: { f: "Pug", size: 1.9, idle: "Idle", walk: "Jump", run: "Jump", atk: "Jump",
-                tint: { Beige: 0x5c6068, Brown: 0x14161c } }, // 🐺 เขี้ยวป่า — ปั๊กย้อมเทาหมาป่า (ไฟล์มีแค่ Idle/Jump เลยใช้ท่ากระโดดแทนวิ่ง/ตี ชั่วคราวจนกว่าจะมี Wolf)
+            // ===== Ultimate Monsters (50) + Ultimate Animals (12) — ชุด Patreon ของ Quaternius (CC0) =====
+            //   c = ชุดชื่อคลิปตามกลุ่ม (QT_CLIPS) · by:"h" = ตั้งขนาดจากความสูง (กลุ่ม Big กางแขนท่ายืน กว้างเกินจริง) · mul = ย้อมทับ texture ทั้งตัว
+            mochi: { f: "Big_Bunny", c: "big", by: "h", size: 1.6 },
+            hima: { f: "Big_Bunny", c: "big", by: "h", size: 1.6, mul: 0xcfe6ff },
+            saming: { f: "Blob_Cat", c: "blob", by: "h", size: 1.7 },
+            eggchick: { f: "Blob_Chicken", c: "blob", by: "h", size: 1.4, mul: 0xffd860 },
+            chickpet: { f: "Blob_Chicken", c: "blob", by: "h", size: 1.5 },
+            paksi: { f: "Big_Birb", c: "big", by: "h", size: 1.9, y: 0.5 },
+            eggowl: { f: "Blob_Birb", c: "blob", by: "h", size: 1.5 },
+            alien: { f: "Big_Alien", c: "big", by: "h", size: 2.3 },
+            ufoboss: { f: "Blob_Alien", c: "blob", by: "h", size: 2.4, y: 0.4, mul: 0xb080ff },
+            gummy: { f: "Blob_PinkBlob", c: "blob", by: "h", size: 1.6 },
+            cyclops: { f: "Big_Orc_Skull", c: "big", by: "h", size: 2.7 },
+            stonetitan: { f: "Big_Yeti", c: "big", by: "h", size: 2.7, mul: 0x9a9aa0 },
+            titanlord: { f: "Big_Orc", c: "big", by: "h", size: 3.1, mul: 0x7a7a80 },
+            hanuman: { f: "Big_Monkroose", c: "big", by: "h", size: 2.3, mul: 0xf0f0f0 },
+            amzmonkey: { f: "Big_Monkroose", c: "big", by: "h", size: 2.0 },
+            kraken: { f: "Flying_Squidle", c: "fly", size: 3.0, y: 0.6, mul: 0xa070c0 },
+            khiao: { f: "Wolf", c: "ani", by: "h", size: 1.3 },
+            baibua: { f: "Blob_GreenBlob", c: "blob", by: "h", size: 1.5 },
+            mekha: { f: "Flying_Glub", c: "fly", size: 2.0, y: 0.9, mul: 0xf4f8ff },
+            cupcake: { f: "Blob_Mushnub", c: "blob", by: "h", size: 1.8, mul: 0xffb0d0 },
+            candyking: { f: "Big_MushroomKing", c: "big", by: "h", size: 3.0, mul: 0xffa0e0 },
+            egghog: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.5, mul: 0xc09060 },
+            ngueak: { f: "Big_Fish", c: "big", by: "h", size: 2.2 },
+            plerng: { f: "Fox", c: "ani", by: "h", size: 1.3 },
             eggdrake: { f: "Dragon", size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                 tint: { Main: 0x9a5a08, Wings: 0x6e3e05, Belly: 0xd6a63e, Claws: 0x261806 } }, // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
         };
-        const qtLib = {}; // ชื่อไฟล์ → { obj, clips, max, y0 }
+        const QT_CLIPS = {
+            big: { idle: "Idle", walk: "Walk", run: "Run", atk: "Punch", hit: "HitReact", die: "Death" },
+            blob: { idle: "Idle", walk: "Walk", run: "Walk", atk: "Bite_Front", hit: "HitRecieve", die: "Death" },
+            fly: { idle: "Flying_Idle", walk: "Fast_Flying", run: "Fast_Flying", atk: "Headbutt", hit: "HitReact", die: "Death" },
+            ani: { idle: "Idle", walk: "Walk", run: "Gallop", atk: "Attack", hit: "Idle_HitReact1", die: "Death" },
+        };
+        Object.keys(QT_MON).forEach((k) => { const P = QT_MON[k]; if (P.c && QT_CLIPS[P.c])
+            Object.keys(QT_CLIPS[P.c]).forEach((q) => { if (P[q] == null)
+                P[q] = QT_CLIPS[P.c][q]; }); });
+        const qtLib = {}; // ชื่อไฟล์ → { obj, clips, max, y0, h }
         const qtFiles = {}; // ชื่อไฟล์ → Promise (โหลดครั้งเดียว)
         G._qtMons = []; // มอนทุกตัวที่สลับเป็นโมเดล Quaternius ได้
         G._qtMix = []; // ตัวที่มีอนิเมชันวิ่งอยู่
@@ -10400,9 +10433,21 @@ function CherryAdventure() {
                         kkShare(o.geometry);
                         if (o.material) {
                             kkShare(o.material);
-                            if (o.material.map)
-                                o.material.map.anisotropy = 4;
-                        } // ♻️ ทั้งฝูงใช้ร่วมกัน — ห้ามโดน dispose
+                            const mp = o.material.map;
+                            if (mp) {
+                                const im = mp.image, tiny = im && im.width && im.width <= 64;
+                                // 🎨 Ultimate Monsters ใช้ atlas จานสี 32×32 — ถ้าปล่อย mipmap/anisotropy สีจะเลอะข้ามช่องจนออกน้ำตาลขุ่น → สุ่มแบบ nearest
+                                if (tiny) {
+                                    mp.magFilter = THREE.NearestFilter;
+                                    mp.minFilter = THREE.NearestFilter;
+                                    mp.generateMipmaps = false;
+                                    mp.anisotropy = 1;
+                                    mp.needsUpdate = true;
+                                }
+                                else
+                                    mp.anisotropy = 4;
+                            }
+                        }
                     });
                     kkMergeSkinned(gl.scene);
                     gl.scene.traverse((o) => {
@@ -10416,7 +10461,7 @@ function CherryAdventure() {
                         }
                     });
                     const b = new THREE.Box3().setFromObject(gl.scene);
-                    qtLib[P.f] = { obj: gl.scene, clips: gl.animations || [], y0: b.min.y,
+                    qtLib[P.f] = { obj: gl.scene, clips: gl.animations || [], y0: b.min.y, h: Math.max(0.01, b.max.y - b.min.y),
                         max: Math.max(0.01, Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z)) };
                     // สลับทุกตัวที่รอไฟล์นี้อยู่ — เทียบด้วยชื่อไฟล์ ไม่ใช่สายพันธุ์ (Dragon.glb ใช้ร่วมกัน 2 สายพันธุ์
                     //  ตัวที่เกิดระหว่างโหลดจะได้ promise เดิมคืนไปเฉย ๆ ถ้าเทียบสายพันธุ์จะค้างเป็นตัวปั้นเอง)
@@ -10442,12 +10487,12 @@ function CherryAdventure() {
                 return true;
             }
             const node = THREE.SkeletonUtils.clone(src.obj); // ต้องใช้ SkeletonUtils — clone ปกติจะแชร์กระดูกกันทั้งฝูง
-            const sc = (P.size || 1.7) / src.max;
+            const sc = (P.size || 1.7) / (P.by === "h" ? src.h : src.max);
             node.scale.setScalar(sc);
             node.position.y = (P.y || 0) - src.y0 * sc; // ฝ่าเท้าแตะพื้น (ปลา/มังกรบวกความสูงลอย)
             // 🎨 สีเฉพาะสายพันธุ์ — ทำบนสำเนาวัสดุของตัวนั้น เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์ (Dragon = มังกรเยาว์ + มังกรไข่ทอง)
             //    tint = แทนสีตามชื่อวัสดุ · lift < 1 = ยกสีที่คล้ำให้สว่างขึ้น (สำเนาไม่ติดป้าย _shared จะได้ถูกเก็บไปพร้อมตัว)
-            if (P.lift || P.tint)
+            if (P.lift || P.tint || P.mul)
                 node.traverse((o) => {
                     if (!o.isMesh || !o.material)
                         return;
@@ -10457,6 +10502,8 @@ function CherryAdventure() {
                         c.userData = {};
                         if (P.tint && P.tint[m.name] != null)
                             c.color.setHex(P.tint[m.name]);
+                        else if (P.mul != null)
+                            c.color.setHex(P.mul); // มี texture → สีนี้คูณทับทั้งตัว
                         else if (P.lift)
                             c.color.setRGB(Math.pow(c.color.r, P.lift), Math.pow(c.color.g, P.lift), Math.pow(c.color.b, P.lift));
                         return c;
