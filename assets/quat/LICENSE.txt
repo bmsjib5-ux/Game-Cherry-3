@@ -16,7 +16,8 @@ folder linked from https://www.patreon.com/posts/ultimate-50-73633148
   -> Big_Bunny, Big_Birb, Big_Alien, Big_Orc_Skull, Big_Yeti, Big_Orc, Big_Monkroose,
      Big_MushroomKing, Big_Fish, Blob_Cat, Blob_Chicken, Blob_Birb, Blob_Alien,
      Blob_PinkBlob, Blob_GreenBlob, Blob_Mushnub, Blob_GreenSpikyBlob,
-     Flying_Squidle, Flying_Glub   (shared Atlas_Monsters.png embedded per file)
+     Flying_Squidle, Flying_Glub, Flying_Ghost, Flying_Hywirl, Flying_Pigeon
+     (shared Atlas_Monsters.png embedded per file)
 Ultimate Animated Animals (12 models) — Quaternius, CC0, via the public Google Drive
 folder linked from https://www.patreon.com/posts/ultimate-animals-53427821
   -> Wolf, Fox
