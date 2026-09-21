@@ -2889,7 +2889,7 @@ const HERO_MODELS = {
   peasant: { name: "ชาวบ้าน",   emoji: "🌾", gender: 1, files: ["Male_Base", "Male_Peasant"],               h: 4.0, desc: "หนุ่มชาวบ้านเสื้อผ้าเรียบ" },
 };
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
-const HERO_GRIP = { s: 0.55, rx: -0.2, ry: 0, rz: 0, px: 0, py: 0.035, pz: 0 };   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
+const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.055, pz: 0 };   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
 const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack", assassin: "Sword_Attack",
                    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", archer: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot" };   // ที่เหลือ = Punch_Cross
 const CHAR_PRESETS = [
