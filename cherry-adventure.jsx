@@ -3266,7 +3266,12 @@ export default function CherryAdventure() {
       G.camYaw = (G.camYaw || 0) + (dyaw || 0);
       G.camPitch = Math.max(0.42, Math.min(1.35, (G.camPitch != null ? G.camPitch : 0.77) + (dpitch || 0)));
     };
-    G.resetCam = () => { G.camYaw = 0; G.camPitch = 0.77; };
+    G.resetCam = () => {
+      G.camYaw = 0; G.camPitch = 0.77;
+      camDist = 8; bZoom = 1;      // 🔍 คืนระยะซูมตั้งต้นด้วย ไม่งั้นกดรีเซ็ตแล้วยังค้างซูมสุดอยู่
+      saveZoom();
+      if (G.toast) G.toast("🎥 รีเซ็ตมุมกล้องแล้ว");
+    };
     camera.position.set(0, 8.5, 11);
     camera.lookAt(0, 0.8, 0);
 
@@ -23370,13 +23375,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       b: { fn: () => (G.equipScreen ? G.closeEquip() : G.openEquip()), name: "กระเป๋า & ชุด" },
       o: { menu: true, name: "เมนูรวม" },
       x: { fn: () => G.toggleMount && G.toggleMount(), name: "ขี่/ลงสัตว์ขี่", anyMode: true },
+      v: { fn: () => G.resetCam && G.resetCam(), name: "รีเซ็ตมุมกล้อง", anyMode: true },
       h: { fn: () => G.usePotion && G.usePotion(G.hpPotUse || "s"), name: "ดื่มยาเลือด", anyMode: true },
       m: { fn: () => G.useManaPotion && G.useManaPotion(G.mpPotUse || "s"), name: "ดื่มยามานา", anyMode: true },
     };
     G.MENU_HOTKEY_HELP = [
       ["K", "สกิล"], ["B", "กระเป๋า"], ["P", "PVP"], ["G", "เพื่อน"], ["C", "เควส"],
       ["Z", "สัตว์เลี้ยง"], ["X", "ขี่สัตว์"], ["O", "เมนูรวม"], ["H", "ยาเลือด"], ["M", "ยามานา"],
-      ["1-8", "สกิลช่อง 1-8"], ["W A S D", "เดิน"],
+      ["1-8", "สกิลช่อง 1-8"], ["W A S D", "เดิน"], ["V", "รีเซ็ตมุมกล้อง"],
     ];
     G.hotMenu = (key) => {
       const h = MENU_HOTKEY[key];
@@ -57800,17 +57806,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       {ui.mode === "explore" && !ui.equipScreen && (
         <div style={{ position: "absolute", right: EDGE_R, bottom: HUD_PAD_BOTTOM, display: HUD_HIDE ? "none" : "grid", gridTemplateColumns: `repeat(3, ${HUD_CELL}px)`, gridTemplateRows: `repeat(3, ${HUD_CELL}px)`, gap: 3, zIndex: 24 }}>
           {[
-            ["＋", () => G.zoom(-1.6)],
-            ["▲", () => G.rotateCam(0, 0.12)],
-            ["－", () => G.zoom(1.6)],
-            ["◀", () => G.rotateCam(0.22, 0)],
-            ["🔄", () => G.resetCam()],
-            ["▶", () => G.rotateCam(-0.22, 0)],
+            ["＋", () => G.zoom(-1.6), "ซูมเข้า"],
+            ["▲", () => G.rotateCam(0, 0.12), "กล้องสูงขึ้น"],
+            ["－", () => G.zoom(1.6), "ซูมออก"],
+            ["◀", () => G.rotateCam(0.22, 0), "หมุนกล้องซ้าย"],
+            ["🎥", () => G.resetCam(), "รีเซ็ตมุมกล้อง + ซูม  [⌨️ V]"],   // 🎥 ไม่ใช้ 🔄 แล้ว — ซ้ำกับปุ่มรีเฟรชกระดานอันดับที่ลอยอยู่ข้าง ๆ
+            ["▶", () => G.rotateCam(-0.22, 0), "หมุนกล้องขวา"],
             ["", null],
-            ["▼", () => G.rotateCam(0, -0.12)],
+            ["▼", () => G.rotateCam(0, -0.12), "กล้องต่ำลง"],
             ["", null],
           ].map((c, i) => c[1] ? (
-            <button key={i} onClick={c[1]} style={{ width: HUD_CELL, height: HUD_CELL, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🔄" ? HUD_CELL * 0.42 : HUD_CELL * 0.45, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font }}>{c[0]}</button>
+            <button key={i} onClick={c[1]} title={c[2]} aria-label={c[2]} style={{ width: HUD_CELL, height: HUD_CELL, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: c[0] === "🎥" ? HUD_CELL * 0.42 : HUD_CELL * 0.45, fontWeight: 800, color: "#5a7a4a", background: "rgba(255,255,255,0.82)", boxShadow: "0 2px 7px rgba(90,120,70,0.28)", fontFamily: font }}>{c[0]}</button>
           ) : (
             <span key={i} />
           ))}
