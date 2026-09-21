@@ -7814,7 +7814,7 @@ export default function CherryAdventure() {
       ngueak:     { f: "Big_Fish",            c: "big",  by: "h", size: 2.2 },
       plerng:     { f: "Fox",                 c: "ani",  by: "h", size: 1.3 },
       thewada:    { f: "Flying_Ghost",        c: "fly",           size: 2.4, y: 0.9, flat: 0xf0e2b0, halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } },   // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
-      kinnara:    { f: "Flying_Hywirl",       c: "fly",           size: 2.6, y: 0.7, flat: 0xe08ab0 },   // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
+      kinnara:    { f: "Flying_Hywirl",       c: "fly",           size: 2.6, y: 0.7, flat: 0xe08ab0, halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } },   // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
       eggdrake:   { f: "Dragon",          size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                     tint: { Main: 0x9a5a08, Wings: 0x6e3e05, Belly: 0xd6a63e, Claws: 0x261806 } },     // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
     };
