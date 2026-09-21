@@ -2855,6 +2855,17 @@ const CUSTOM = {
     { n: "ฟ้า", c: 0x5a8fd0 }, { n: "ม่วง", c: 0x8a6ad0 }, { n: "ทอง", c: 0xd9a92a },
     { n: "น้ำตาล", c: 0x8a5a3a }, { n: "เทา", c: 0x8a8a92 }, { n: "ส้ม", c: 0xe08020 },
   ],
+  // 🧑‍🎨 แถบเลื่อนโครงหน้า — ทุกค่า 0..1 · 0.5 = โครงหน้าตั้งต้นเดิมเป๊ะ (ของเก่าที่เซฟไว้ไม่มีคีย์พวกนี้ จึงอ่านเป็น 0.5 เองอัตโนมัติ)
+  faceSliders: [
+    { k: "faceW",    n: "ความกว้างใบหน้า", e: "↔️", lo: "หน้าแคบ",  hi: "หน้ากว้าง" },
+    { k: "faceJaw",  n: "ทรงกราม",        e: "🔲", lo: "เรียวแหลม", hi: "เหลี่ยมกว้าง" },
+    { k: "faceChin", n: "ความยาวคาง",     e: "🔻", lo: "คางสั้น",   hi: "คางยาว" },
+    { k: "eyeSize",  n: "ขนาดดวงตา",      e: "👁️", lo: "ตาเล็ก",    hi: "ตาโต" },
+    { k: "eyeGap",   n: "ระยะห่างดวงตา",  e: "↔️", lo: "ตาชิด",     hi: "ตาห่าง" },
+    { k: "eyeY",     n: "ระดับดวงตา",     e: "↕️", lo: "ตาต่ำ",     hi: "ตาสูง" },
+    { k: "noseSize", n: "ขนาดจมูก",       e: "👃", lo: "จมูกเล็ก",  hi: "จมูกโด่ง" },
+    { k: "headSize", n: "ขนาดหัว",        e: "🧠", lo: "หัวเล็ก",   hi: "หัวโต" },
+  ],
   // 💎 toggleable cosmetic accessories worn on the head
   accessories: [
     { k: "glasses", n: "แว่นตา", e: "👓" },
@@ -3024,7 +3035,7 @@ export default function CherryAdventure() {
     enemy: null, // {id,name,emoji,hp,maxHp,lv}
     bstate: "choose", // choose | busy
     msg: "", col: {}, pets: {}, buddy: null, panelOpen: false, skillMenu: false, auto: false, ultUsed: false, dayPhase: "", weather: "", mbookOpen: false, mbook: null, mbookReady: 0, mbTab: "daily", guildOpen: false, guild: null, guildRows: [], guildFound: [], guildTab: "info", warpScrolls: 0,
-    custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
+    custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
     inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, itemLock: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
     gold: 80, shop: [], shopOpen: false,
     eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
@@ -8386,21 +8397,26 @@ export default function CherryAdventure() {
     head.scale.set(1, 1.02, 0.95);
     head.castShadow = true;
     // 💠 หน้าวีเชฟ — เรียวเฉพาะกราม→คาง (ใต้โหนกแก้มลงไป) โหนกแก้ม/ตา/ปาก คงเดิม
-    {
-      const p = head.geometry.attributes.position;
+    //    เก็บ "ทรงกลมดิบ" ไว้ก่อนดัด เพราะแถบเลื่อนกราม/คางต้องปั้นใหม่จากศูนย์ทุกครั้ง
+    //    (ถ้าดัดทับของเดิมซ้ำ ๆ หน้าจะเรียวสะสมจนแหลมเป็นกรวย)
+    const headBasePos = new Float32Array(head.geometry.attributes.position.array);
+    const faceVal = (k) => { const v = G.custom && G.custom[k]; return v == null ? 0.5 : v; };
+    const shapeHeadMesh = () => {
+      const jaw = 0.66 - faceVal("faceJaw") * 0.44;    // 0.66 เรียวแหลม → 0.22 เหลี่ยมกว้าง (0.5 = 0.44 ของเดิม)
+      const chin = faceVal("faceChin") * 0.10;         // 0 → 0.10 (0.5 = 0.05 ของเดิม)
+      const p = head.geometry.attributes.position, b = headBasePos;
       const yTop = -0.10, span = 0.62 + yTop; // เริ่มเรียวใต้แก้ม ไล่ถึงปลายคาง
       for (let i = 0; i < p.count; i++) {
-        const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-        if (y >= yTop) continue;
+        const x = b[i * 3], y = b[i * 3 + 1], z = b[i * 3 + 2];
+        if (y >= yTop) { p.setXYZ(i, x, y, z); continue; }
         const t = Math.min(1, (yTop - y) / span);
-        const k = Math.pow(t, 1.45);              // ค่อย ๆ สอบเข้า ไม่หักมุม
-        p.setX(i, x * (1 - 0.44 * k));            // กรามแคบลง (เรียวขึ้นอีก)
-        p.setZ(i, z * (1 - 0.22 * k));            // ด้านลึกสอบตาม
-        p.setY(i, y - 0.05 * Math.pow(t, 2.4));   // ปลายคางแหลมยื่นลง
+        const k = Math.pow(t, 1.45);                   // ค่อย ๆ สอบเข้า ไม่หักมุม
+        p.setXYZ(i, x * (1 - jaw * k), y - chin * Math.pow(t, 2.4), z * (1 - 0.22 * k));
       }
       p.needsUpdate = true;
       head.geometry.computeVertexNormals();
-    }
+    };
+    shapeHeadMesh();
     headG.add(head);
     // ⛑️ silver open-face knight helmet (shows the face) — only visible for the warrior class
     {
@@ -9317,7 +9333,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       starSparks.visible = st.spark === 3;
       if (st.iris != null) irisMat.color.setHex(st.iris);
       if (st.em != null) irisMat.emissive.setHex(st.em);
-      const s3 = st.sc || 1, sy = st.sy != null ? st.sy : 1;   // sy < 1 = ตาเรียวคมขึ้น
+      const s3 = (st.sc || 1) * (0.82 + faceVal("eyeSize") * 0.36), sy = st.sy != null ? st.sy : 1;   // sy < 1 = ตาเรียวคมขึ้น · คูณขนาดจากแถบเลื่อน
       eyeL.scale.set(s3, s3 * sy, s3);
       eyeR.scale.set(s3, s3 * sy, s3);
     };
@@ -9346,6 +9362,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     cheekR.rotation.z = -0.12;
     cheekL.name = "blush"; cheekR.name = "blush";
     headG.add(cheekL, cheekR);
+    // 🧑‍🎨 ปั้นโครงหน้าตามแถบเลื่อน — ทุกชิ้นบนหน้าขยับตามความกว้างหน้าไปด้วย
+    //    ไม่งั้นหน้ากว้างขึ้นแล้วตา/แก้มยังกองอยู่กลางหน้าเหมือนเดิม
+    const applyFaceShape = () => {
+      shapeHeadMesh();
+      // ความกว้างหน้า = ยืดทั้ง "กลุ่มหัว" ตามแกน X ไม่ใช่ยืดแค่ก้อนหัว
+      //    ไม่งั้นหน้ากว้างจะโผล่ทะลุหมวกนักรบกับทรงผม (ของพวกนั้นอยู่ในกลุ่มเดียวกัน แต่ไม่ได้ถูกยืดตาม)
+      const w = 0.88 + faceVal("faceW") * 0.24;                 // 0.88..1.12 · ค่ากลาง 0.5 = 1.00 เท่าหน้าเดิมเป๊ะ
+      const hs = 0.97 * (0.9 + faceVal("headSize") * 0.2);
+      headG.scale.set(hs * w, hs, hs);
+      head.scale.set(1, 1.02, 0.95);
+      const gap = 0.82 + faceVal("eyeGap") * 0.36;              // ตาห่าง (สัมพัทธ์ในหัว — ความกว้างหน้าคูณให้แล้วที่กลุ่มหัว)
+      const ey = (faceVal("eyeY") - 0.5) * 0.085;
+      eyes.position.y = ey;
+      eyeL.position.x = -0.2 * gap; eyeR.position.x = 0.2 * gap;
+      bigSpark.scale.x = gap; smileEyes.scale.x = gap; starSparks.scale.x = gap;
+      browL.position.x = -0.2 * gap; browR.position.x = 0.2 * gap;
+      browL.position.y = 0.17 + ey; browR.position.y = 0.175 + ey;
+      const nk = 0.55 + faceVal("noseSize") * 0.9;              // 0.55..1.45 · ค่ากลาง 0.5 = 1.00 เท่าจมูกเดิม
+      nose.scale.set(nk, 0.7 * nk, 0.5 * nk);
+      if (applyEyeStyle) applyEyeStyle(G.custom ? (G.custom.eyes || 0) : 0);
+    };
+    G.applyFaceShape = applyFaceShape;
     const mouths = {};
     // 👄 ทรงปากตอนปกติเลือกได้ — เก็บทุกทรงไว้ในกลุ่มเดียว แล้วโชว์ทีละทรง
     //    อารมณ์อื่น (หัวเราะ/เศร้า/เจ็บ) ยังใช้ก้อนเดิม ไม่กระทบกัน
@@ -16063,7 +16101,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     // ---------- 🎀 apply character customization ----------
     let curBasePants = basePantsColor; // eslint-disable-line
-    G.custom = { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} };
+    G.custom = { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} };
     // 👦👧 apply body shape for the chosen gender
     // 📏 ความสูง/ความอ้วน 0..1 (0.5 = มาตรฐาน) — เก็บแยกจากเพศ แล้วคำนวณรวมกันครั้งเดียวใน applyGender
     //    ⚠️ ต้องรวมในฟังก์ชันเดียว ไม่งั้นเปลี่ยนเพศทีไรค่าความสูง/ความอ้วนจะถูกเขียนทับหายทุกครั้ง
@@ -16185,7 +16223,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G._applyBody = () => applyGender(G.custom.gender || 0);   // 🦸 ให้โค้ดอื่น (เช่นสลับชุดฮีโร่) สั่งคำนวณหุ่นใหม่ได้
     G.setCustom = (cat, i) => {
       G.custom[cat] = i;
-      if (cat === "height" || cat === "build") {
+      if (CUSTOM.faceSliders.some((f) => f.k === cat)) {   // 🧑‍🎨 แถบเลื่อนโครงหน้า
+        if (G.applyFaceShape) G.applyFaceShape();
+      } else if (cat === "height" || cat === "build") {
         applyGender(G.custom.gender || 0);   // 📏 คำนวณรูปร่างใหม่ทั้งชุด (เพศ + สูง + อ้วน พร้อมกัน)
       } else if (cat === "gender") {
         applyGender(i);
@@ -54994,6 +55034,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         )}
         {ui.customTab === "face" && (
           <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a" }}>🧑‍🎨 โครงหน้า</div>
+              <button onClick={() => CUSTOM.faceSliders.forEach((f) => G.setCustom(f.k, 0.5))} style={{
+                padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a", background: "#f3ede4",
+              }}>↺ คืนค่าเริ่มต้น</button>
+            </div>
+            {CUSTOM.faceSliders.map((f) => {
+              const v = ui.custom[f.k] != null ? ui.custom[f.k] : 0.5;
+              return (
+                <div key={f.k} style={{ marginBottom: 9 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "#8a5a4a", marginBottom: 3 }}>
+                    {f.e} {f.n} <span style={{ color: "#c09020" }}>{Math.round(v * 100)}%</span>
+                  </div>
+                  <input type="range" min="0" max="1" step="0.02" value={v}
+                    onChange={(e) => G.setCustom(f.k, +e.target.value)}
+                    style={{ width: "100%", accentColor: "#d9536b" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "#a58a7a" }}><span>{f.lo}</span><span>{f.hi}</span></div>
+                </div>
+              );
+            })}
+            <div style={{ height: 6 }} />
             <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>
               👀 ดวงตา{ui.showAllLooks ? "" : ` (${CUSTOM.genders[ui.custom.gender || 0].n})`}
             </div>
