@@ -10361,7 +10361,11 @@ function CherryAdventure() {
             piranha: { f: "Fish3", size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },
             chalam: { f: "Shark", size: 2.6, y: 0.85, idle: "Swim", walk: "Swim", run: "Swim" },
             eggdino: { f: "Parasaurolophus", size: 2.5, lift: 0.62, idle: "Parasaurolophus_Idle", walk: "Parasaurolophus_Walk", run: "Parasaurolophus_Run", atk: "Parasaurolophus_Attack", die: "Parasaurolophus_Death" },
-            eggunicorn: { f: "Horse", size: 2.0, idle: "Idle", walk: "Walk", run: "Run", die: "Death" },
+            eggunicorn: { f: "Horse", size: 2.0, idle: "Idle", walk: "Walk", run: "Run", die: "Death",
+                tint: { "Material.003": 0xf6f2ff, "Material.006": 0xf0b8e6 }, // 🦄 ขนขาว แผงคอ/กีบชมพู
+                horn: { bone: "Head", base: [0, 668, 405], tip: [0, 765, 522], r: 13 } }, // เขาทองบนหน้าผาก (หน่วยโมเดล)
+            eggdrake: { f: "Dragon", size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
+                tint: { Main: 0xd99a2a, Wings: 0xb87f1c, Belly: 0xfff0c0, Claws: 0x4a3210 } }, // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
         };
         const qtLib = {}; // ชื่อไฟล์ → { obj, clips, max, y0 }
         const qtFiles = {}; // ชื่อไฟล์ → Promise (โหลดครั้งเดียว)
@@ -10385,14 +10389,8 @@ function CherryAdventure() {
                         if (o.material) {
                             kkShare(o.material);
                             if (o.material.map)
-                                o.material.map.anisotropy = 4; // ♻️ ทั้งฝูงใช้ร่วมกัน — ห้ามโดน dispose
-                            // 🎨 สีต้นฉบับบางตัวคล้ำมาก (มังกร/ไดโน) ยกให้สว่างขึ้นให้เข้ากับโทนสดใสของเกม (lift < 1 = สว่างขึ้น)
-                            if (P.lift && o.material.color && !o.material.userData._qtLift) {
-                                o.material.userData._qtLift = 1;
-                                const c = o.material.color;
-                                c.setRGB(Math.pow(c.r, P.lift), Math.pow(c.g, P.lift), Math.pow(c.b, P.lift));
-                            }
-                        }
+                                o.material.map.anisotropy = 4;
+                        } // ♻️ ทั้งฝูงใช้ร่วมกัน — ห้ามโดน dispose
                     });
                     kkMergeSkinned(gl.scene);
                     gl.scene.traverse((o) => {
@@ -10408,8 +10406,10 @@ function CherryAdventure() {
                     const b = new THREE.Box3().setFromObject(gl.scene);
                     qtLib[P.f] = { obj: gl.scene, clips: gl.animations || [], y0: b.min.y,
                         max: Math.max(0.01, Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z)) };
-                    (G._qtMons || []).forEach((g) => { if (g && g.parent && g.userData.spId === spId)
-                        G.qtSwap(g); }); // สลับตัวที่รออยู่
+                    // สลับทุกตัวที่รอไฟล์นี้อยู่ — เทียบด้วยชื่อไฟล์ ไม่ใช่สายพันธุ์ (Dragon.glb ใช้ร่วมกัน 2 สายพันธุ์
+                    //  ตัวที่เกิดระหว่างโหลดจะได้ promise เดิมคืนไปเฉย ๆ ถ้าเทียบสายพันธุ์จะค้างเป็นตัวปั้นเอง)
+                    (G._qtMons || []).forEach((g) => { const Q = g && g.parent && QT_MON[g.userData.spId]; if (Q && Q.f === P.f)
+                        G.qtSwap(g); });
                     res(true);
                 }, undefined, () => res(false));
             });
@@ -10433,8 +10433,42 @@ function CherryAdventure() {
             const sc = (P.size || 1.7) / src.max;
             node.scale.setScalar(sc);
             node.position.y = (P.y || 0) - src.y0 * sc; // ฝ่าเท้าแตะพื้น (ปลา/มังกรบวกความสูงลอย)
+            // 🎨 สีเฉพาะสายพันธุ์ — ทำบนสำเนาวัสดุของตัวนั้น เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์ (Dragon = มังกรเยาว์ + มังกรไข่ทอง)
+            //    tint = แทนสีตามชื่อวัสดุ · lift < 1 = ยกสีที่คล้ำให้สว่างขึ้น (สำเนาไม่ติดป้าย _shared จะได้ถูกเก็บไปพร้อมตัว)
+            if (P.lift || P.tint)
+                node.traverse((o) => {
+                    if (!o.isMesh || !o.material)
+                        return;
+                    const arr = Array.isArray(o.material) ? o.material : [o.material];
+                    const fresh = arr.map((m) => {
+                        const c = m.clone();
+                        c.userData = {};
+                        if (P.tint && P.tint[m.name] != null)
+                            c.color.setHex(P.tint[m.name]);
+                        else if (P.lift)
+                            c.color.setRGB(Math.pow(c.color.r, P.lift), Math.pow(c.color.g, P.lift), Math.pow(c.color.b, P.lift));
+                        return c;
+                    });
+                    o.material = Array.isArray(o.material) ? fresh : fresh[0];
+                });
             g.add(node);
             g.userData.qtNode = node;
+            // 🦄 เขาเกาะกระดูกหัว — ตำแหน่งตั้งเป็นพิกัดโมเดลในท่ายืน แปลงเข้าเฟรมของกระดูก จะได้ส่ายตามหัวตอนขยับ
+            if (P.horn) {
+                const bone = node.getObjectByName(P.horn.bone);
+                if (bone) {
+                    node.updateMatrixWorld(true);
+                    const toB = (a) => bone.worldToLocal(node.localToWorld(new THREE.Vector3(a[0], a[1], a[2])));
+                    const b0 = toB(P.horn.base), b1 = toB(P.horn.tip), dir = b1.clone().sub(b0), len = dir.length();
+                    // หน่วยของกระดูกไม่เท่าหน่วยโมเดล (armature ของ FBX มี scale ฝังมา) — รัศมีเขาต้องคูณสัดส่วนเดียวกับความยาว ไม่งั้นได้จานยักษ์แทนเขา
+                    const mlen = Math.hypot(P.horn.tip[0] - P.horn.base[0], P.horn.tip[1] - P.horn.base[1], P.horn.tip[2] - P.horn.base[2]) || 1;
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry((P.horn.r || 12) * (len / mlen), len, 10), new THREE.MeshStandardMaterial({ color: 0xffd24a, emissive: 0x5a3a00, roughness: 0.45, metalness: 0.15 }));
+                    horn.position.copy(b0).addScaledVector(dir, 0.5);
+                    horn.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+                    horn.castShadow = true;
+                    bone.add(horn);
+                }
+            }
             if (body)
                 body.visible = false; // ซ่อนตัวที่ปั้นเอง (เส้นขอบ/หน้า/ตัวอยู่ในนี้ทั้งก้อน)
             if (G.unfreezeStatic)
