@@ -7819,8 +7819,12 @@ export default function CherryAdventure() {
       pooyak:     { f: "Crab",      size: 2.6, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle" },   // 🦀 ปูยักษ์ทราย — OpenGameArt (methodical pixel, CC0) มีแค่ idle/walk
       crocodile:  { f: "Crocodile", size: 3.8, idle: "idle-loop", walk: "walk-loop", run: "walk-loop", atk: "attack", hit: "idle-loop", die: "death" },   // 🐊 จระเข้ยักษ์ — OpenGameArt (CC0)
       eggduck:    { f: "Duckling",  size: 1.4, by: "h", lift: 0.8, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck" },   // 🐤 ลูกเป็ดน้อย — OpenGameArt (weirdybeardyman, CC0) ท่าจิก/เดิน
-      eggturtle:  { f: "Turtle",    size: 2.0, idle: "", walk: "Walking-loop", run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop" },   // 🐢 เต่ามงคล — OpenGameArt (Heathal, CC0) มีแค่ท่าเดิน
-      erawan:     { f: "Elephant",  by: "h", size: 2.6, idle: "Idle", walk: "Idle", run: "Idle", atk: "Angry", hit: "Idle", die: "Sitting", tint: { "Material.001": 0xc8c0e4 }, horn: { bone: "Bone003", base: [0, 6.05, 2.1], tip: [0, 7.25, 2.1], r: 0.42 } },   // 🐘 ช้างเอราวัณ — OpenGameArt (syncopika, CC0) ไม่มีท่าเดิน · ตัวขาวอมม่วง
+      eggturtle:  { f: "Turtle",    size: 2.0, idle: "GenIdle", walk: "Walking-loop",
+                    gen: { GenIdle: { period: 2.6, tracks: [["Bone016", "x", 0.07, 0], ["Bone017", "x", 0.06, 0.6], ["Bone018", "x", 0.05, 1.2], ["Bone", "py", 0.015, 0], ["Bone006", "z", 0.1, 0.9]] } }, run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop" },   // 🐢 เต่ามงคล — OpenGameArt (Heathal, CC0) มีแค่ท่าเดิน
+      erawan:     { f: "Elephant",  by: "h", size: 2.6, idle: "Idle", walk: "GenWalk", run: "GenWalk", atk: "Angry", hit: "Idle", die: "Sitting",
+                    gen: { GenWalk: { period: 1.1, tracks: [["UpperLegFrontL", "x", 0.55, 0], ["UpperLegBackL001", "x", 0.55, 0], ["UpperLegFrontL001", "x", 0.55, Math.PI], ["UpperLegBackL", "x", 0.55, Math.PI],
+                      ["LowerLegFrontL", "x", 0.3, 1.6], ["LowerLegBackL001", "x", 0.3, 1.6], ["LowerLegFrontL001", "x", 0.3, 1.6 + Math.PI], ["LowerLegBackL", "x", 0.3, 1.6 + Math.PI],
+                      ["Bone003", "x", 0.05, 0.8], ["Bone012", "x", 0.14, 2.2], ["Bone013", "x", 0.12, 2.9], ["Tail", "x", 0.2, 0.4], ["Bone", "py", 0.08, 0.3]] } }, tint: { "Material.001": 0xc8c0e4 }, horn: { bone: "Bone003", base: [0, 6.05, 2.1], tip: [0, 7.25, 2.1], r: 0.42 } },   // 🐘 ช้างเอราวัณ — OpenGameArt (syncopika, CC0) ไม่มีท่าเดิน · ตัวขาวอมม่วง
       eggpeacock: { f: "Big_Birb",  c: "big", by: "h", size: 1.9, hue: [168, 0.75, 1.05], fan: { bone: "Hips", at: [0, 0.85, -0.5], w: 3.6, h: 2.3, tilt: -0.3 } },   // 🦚 นกยูงทิพย์ — นกใหญ่ย้อมมรกต + หางพัดเจ็ดสีเกาะสะโพก
       taara:      { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.7, y: 0.5, hue: [268, 0.55, 1.45, 0.82], gloss: [0.2, 0.45, 0x1a1030], halo: { bone: "Head", at: [0, 2.1, 0], r: 2.5, tube: 0.13, tilt: 1.1 }, evo: { size: 2.5, y: 0.7 } },   // 💫 ธาราทิพย์ — ดาวหนามย้อมม่วง + วงแหวนเอียงรอบตัว
       garuda:     { f: "Big_Birb",  c: "big", by: "h", size: 2.1, hue: [28, 0.85, 1.05, 0.7], horn: { bone: "Head", base: [0, 3.25, 0.1], tip: [0, 4.2, 0.1], r: 0.32 } },   // 🦁 ครุฑอสูร — นกใหญ่มีแขนขา ย้อมส้มทอง + ชฎา
@@ -7923,7 +7927,26 @@ export default function CherryAdventure() {
             if (o.geometry.boundingSphere && !o.geometry.userData._kkInflated) { o.geometry.boundingSphere.radius *= 2.2; o.geometry.userData._kkInflated = 1; }
           });
           const b = new THREE.Box3().setFromObject(gl.scene);
-          qtLib[P.f] = { obj: gl.scene, clips: gl.animations || [], y0: b.min.y, h: Math.max(0.01, b.max.y - b.min.y),
+          // 🦶 ท่าที่ไฟล์ไม่มี (เดิน/ยืน) สร้างเองจาก sine บนกระดูก: gen: { ชื่อท่า: { period, tracks: [[กระดูก, แกน x|y|z|py, แอมพลิจูด(เรเดียน/หน่วย), เฟส], ...] } }
+          //    หมุนซ้อนบนท่าพัก (q = q0 · rot) — ทุกสายพันธุ์ที่ใช้ไฟล์เดียวกันได้ท่าเดียวกัน
+          const genClips = [];
+          if (P.gen) Object.keys(P.gen).forEach((name) => {
+            const D = P.gen[name], per = D.period || 1, NS = 24, times = [];
+            for (let i = 0; i <= NS; i++) times.push(per * i / NS);
+            const tracks = [];
+            D.tracks.forEach(([bn, axis, amp, ph]) => {
+              const bone = gl.scene.getObjectByName(bn); if (!bone) return;
+              if (axis === "py") {
+                const v = []; for (let i = 0; i <= NS; i++) { const t = times[i]; v.push(bone.position.x, bone.position.y + amp * Math.sin(2 * Math.PI * t / per + (ph || 0)), bone.position.z); }
+                tracks.push(new THREE.VectorKeyframeTrack(bone.name + ".position", times, v)); return;
+              }
+              const ax = new THREE.Vector3(axis === "x" ? 1 : 0, axis === "y" ? 1 : 0, axis === "z" ? 1 : 0), q0 = bone.quaternion.clone(), v = [], q = new THREE.Quaternion();
+              for (let i = 0; i <= NS; i++) { const t = times[i]; q.setFromAxisAngle(ax, amp * Math.sin(2 * Math.PI * t / per + (ph || 0))).premultiply(q0); v.push(q.x, q.y, q.z, q.w); }
+              tracks.push(new THREE.QuaternionKeyframeTrack(bone.name + ".quaternion", times, v));
+            });
+            if (tracks.length) genClips.push(new THREE.AnimationClip(name, per, tracks));
+          });
+          qtLib[P.f] = { obj: gl.scene, clips: (gl.animations || []).concat(genClips), y0: b.min.y, h: Math.max(0.01, b.max.y - b.min.y),
             max: Math.max(0.01, Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z)) };
           // สลับทุกตัวที่รอไฟล์นี้อยู่ — เทียบด้วยชื่อไฟล์ ไม่ใช่สายพันธุ์ (Dragon.glb ใช้ร่วมกัน 2 สายพันธุ์
           //  ตัวที่เกิดระหว่างโหลดจะได้ promise เดิมคืนไปเฉย ๆ ถ้าเทียบสายพันธุ์จะค้างเป็นตัวปั้นเอง)
@@ -8072,7 +8095,7 @@ export default function CherryAdventure() {
             to.fadeIn(0.18).play();
             if (from && from !== to) from.fadeOut(0.18);
             e.cur = want;
-          }
+          } else if (from) { from.fadeOut(0.18); e.cur = want; }   // ท่าที่ต้องการไม่มี → กลับท่าพัก ไม่ค้างท่าเก่า (เช่น เดินอยู่กับที่)
         }
         e.mixer.update(step);
       }
