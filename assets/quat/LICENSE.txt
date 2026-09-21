@@ -6,7 +6,7 @@ Packs used:
   LowPoly Animated Easy Enemies -> Snake, Snake_angry
   LowPoly Animated Fish       -> Fish1, Fish3, Shark
   Animated LowPoly Dinosaurs  -> Parasaurolophus, Velociraptor
-  LowPoly Animated Animals    -> Horse
+  LowPoly Animated Animals    -> Horse, Pug
 
 Converted from the packs' .fbx to .glb with three.js FBXLoader + GLTFExporter.
 Unused animation clips and all .scale tracks were stripped to cut file size.
