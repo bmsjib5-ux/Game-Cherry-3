@@ -7760,14 +7760,147 @@ export default function CherryAdventure() {
         e.mixer.update(step);
       }
     };
+
+    // ================= 🐾 Quaternius (CC0) — โมเดลสัตว์จริงแทนมอนที่ปั้นด้วยโค้ด =================
+    // ต่างจากโครงกระดูก KayKit ตรงที่แต่ละตัวพกอนิเมชันมาในไฟล์ของตัวเอง (คนละรีก คนละชื่อคลิป)
+    // จึงต้องแมปชื่อท่าทีละสายพันธุ์ · ⏳ โหลดทีละไฟล์ตอนเจอสายพันธุ์นั้นครั้งแรกเท่านั้น
+    //    size = ด้านที่ยาวที่สุดของตัวในหน่วยเกม (ตัวละครผู้เล่นสูงราว 2) · y = ลอยเหนือพื้น (ปลา/มังกร)
+    const QT_BASE = "assets/quat/";
+    const QT_MON = {
+      ngu:        { f: "Snake",           size: 1.7,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
+      anaconda:   { f: "Snake_angry",     size: 2.6,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
+      mangkorn:   { f: "Dragon",          size: 2.4, y: 0.55, lift: 0.55, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death" },
+      nam:        { f: "Fish1",           size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },
+      piranha:    { f: "Fish3",           size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },
+      chalam:     { f: "Shark",           size: 2.6, y: 0.85, idle: "Swim", walk: "Swim", run: "Swim" },
+      eggdino:    { f: "Parasaurolophus", size: 2.5, lift: 0.62, idle: "Parasaurolophus_Idle", walk: "Parasaurolophus_Walk", run: "Parasaurolophus_Run", atk: "Parasaurolophus_Attack", die: "Parasaurolophus_Death" },
+      eggunicorn: { f: "Horse",           size: 2.0,          idle: "Idle", walk: "Walk", run: "Run", die: "Death" },
+    };
+    const qtLib = {};                 // ชื่อไฟล์ → { obj, clips, max, y0 }
+    const qtFiles = {};               // ชื่อไฟล์ → Promise (โหลดครั้งเดียว)
+    G._qtMons = [];                   // มอนทุกตัวที่สลับเป็นโมเดล Quaternius ได้
+    G._qtMix = [];                    // ตัวที่มีอนิเมชันวิ่งอยู่
+    G.qtHas = (spId) => !!QT_MON[spId];
+    G.qtLoad = (spId) => {
+      const P = QT_MON[spId];
+      if (!P || !THREE.GLTFLoader || !THREE.SkeletonUtils) return null;
+      if (qtFiles[P.f]) return qtFiles[P.f];
+      const L = new THREE.GLTFLoader();
+      qtFiles[P.f] = new Promise((res) => {
+        L.load(QT_BASE + P.f + ".glb", (gl) => {
+          gl.scene.traverse((o) => {
+            if (!o.isMesh) return;
+            o.castShadow = true;
+            kkShare(o.geometry);
+            if (o.material) {
+              kkShare(o.material); if (o.material.map) o.material.map.anisotropy = 4;   // ♻️ ทั้งฝูงใช้ร่วมกัน — ห้ามโดน dispose
+              // 🎨 สีต้นฉบับบางตัวคล้ำมาก (มังกร/ไดโน) ยกให้สว่างขึ้นให้เข้ากับโทนสดใสของเกม (lift < 1 = สว่างขึ้น)
+              if (P.lift && o.material.color && !o.material.userData._qtLift) {
+                o.material.userData._qtLift = 1;
+                const c = o.material.color; c.setRGB(Math.pow(c.r, P.lift), Math.pow(c.g, P.lift), Math.pow(c.b, P.lift));
+              }
+            }
+          });
+          kkMergeSkinned(gl.scene);
+          gl.scene.traverse((o) => {                          // 🔭 ขยายกรอบตัดสายตา เผื่อตอนกางปีก/ล้ม
+            if (!o.isMesh || !o.geometry) return;
+            if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+            if (o.geometry.boundingSphere && !o.geometry.userData._kkInflated) { o.geometry.boundingSphere.radius *= 2.2; o.geometry.userData._kkInflated = 1; }
+          });
+          const b = new THREE.Box3().setFromObject(gl.scene);
+          qtLib[P.f] = { obj: gl.scene, clips: gl.animations || [], y0: b.min.y,
+            max: Math.max(0.01, Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z)) };
+          (G._qtMons || []).forEach((g) => { if (g && g.parent && g.userData.spId === spId) G.qtSwap(g); });  // สลับตัวที่รออยู่
+          res(true);
+        }, undefined, () => res(false));
+      });
+      return qtFiles[P.f];
+    };
+    G.qtSwap = (g) => {
+      if (!g || !g.userData || !G.kkOn) return false;
+      const P = QT_MON[g.userData.spId];
+      const src = P && qtLib[P.f];
+      if (!src) return false;
+      const body = g.userData.body;
+      if (g.userData.qtNode) { g.userData.qtNode.visible = true; if (body) body.visible = false; return true; }
+      const node = THREE.SkeletonUtils.clone(src.obj);   // ต้องใช้ SkeletonUtils — clone ปกติจะแชร์กระดูกกันทั้งฝูง
+      const sc = (P.size || 1.7) / src.max;
+      node.scale.setScalar(sc);
+      node.position.y = (P.y || 0) - src.y0 * sc;        // ฝ่าเท้าแตะพื้น (ปลา/มังกรบวกความสูงลอย)
+      g.add(node);
+      g.userData.qtNode = node;
+      if (body) body.visible = false;                    // ซ่อนตัวที่ปั้นเอง (เส้นขอบ/หน้า/ตัวอยู่ในนี้ทั้งก้อน)
+      if (G.unfreezeStatic) G.unfreezeStatic(g);
+      g.userData._frzW = 1;                              // 🧊 กันตัวตรึงเมทริกซ์มาแช่กระดูกจนขยับไม่ได้
+      const mixer = new THREE.AnimationMixer(node);
+      const acts = {};
+      src.clips.forEach((c) => { acts[c.name] = mixer.clipAction(c); });
+      if (acts[P.idle]) { acts[P.idle].time = Math.random() * 2; acts[P.idle].play(); }   // เหลื่อมจังหวะกันทั้งฝูง
+      G._qtMix.push({ g, mixer, acts, P, cur: P.idle, px: g.position.x, pz: g.position.z });
+      return true;
+    };
+    G.qtShow = (on) => {
+      let n = 0;
+      G._qtMons = (G._qtMons || []).filter((g) => g && g.parent);
+      G._qtMons.forEach((g) => {
+        if (on) { if (G.qtSwap(g)) n++; else G.qtLoad(g.userData.spId); }
+        else { if (g.userData.qtNode) g.userData.qtNode.visible = false; if (g.userData.body) g.userData.body.visible = true; n++; }
+      });
+      return n;
+    };
+    G.qtRegister = (g) => {                              // เรียกจาก buildMonster ทุกครั้งที่ปั้นสายพันธุ์ที่มีโมเดล
+      (G._qtMons = G._qtMons || []).push(g);
+      if (!G.kkOn) return;
+      if (!G.qtSwap(g)) G.qtLoad(g.userData.spId);
+    };
+    // 🎬 เลือกท่าตามสถานการณ์จริงของมอนแต่ละตัว แล้วไล่เฟรมให้ mixer (ท่าไหนไม่มีก็ข้ามไปใช้ท่าถัดไป)
+    G.qtTick = (dt) => {
+      const L = G._qtMix; if (!L || !L.length) return;
+      for (let i = L.length - 1; i >= 0; i--) {
+        const e = L[i];
+        if (!e.g.parent) { L.splice(i, 1); continue; }
+        const u = e.g.userData, node = u.qtNode;
+        if (!e.g.visible || !node || !node.visible) { e.px = e.g.position.x; e.pz = e.g.position.z; continue; }
+        const ddx = e.g.position.x - camera.position.x, ddz = e.g.position.z - camera.position.z;
+        const d2 = ddx * ddx + ddz * ddz;
+        e.acc = (e.acc || 0) + dt;
+        e.k = (e.k || 0) + 1;
+        const every = d2 > 900 ? 8 : d2 > 196 ? 3 : 1;   // ไกลแล้วคิดท่าถี่น้อยลง (เหมือนฝั่งโครงกระดูก)
+        if (every > 1 && e.k % every) continue;
+        const step = e.acc; e.acc = 0;
+        const sp = Math.hypot(e.g.position.x - e.px, e.g.position.z - e.pz) / Math.max(step, 0.0001);
+        e.px = e.g.position.x; e.pz = e.g.position.z;
+        const P = e.P;
+        let want = P.idle;
+        if (u.whp != null && u.whp <= 0 && P.die) want = P.die;
+        else if (u.kkAtk > 0 && P.atk) { u.kkAtk -= step; want = P.atk; }
+        else if (u.flinch > 0.25 && P.hit) want = P.hit;
+        else if (sp > 1.4 && P.run) want = P.run;
+        else if (sp > 0.22 && P.walk) want = P.walk;
+        if (want !== e.cur) {
+          const from = e.acts[e.cur], to = e.acts[want];
+          if (to) {
+            to.reset();
+            if (want === P.die || want === P.atk || want === P.hit) { to.setLoop(THREE.LoopOnce, 1); to.clampWhenFinished = true; }
+            else { to.setLoop(THREE.LoopRepeat, Infinity); to.clampWhenFinished = false; }
+            to.fadeIn(0.18).play();
+            if (from && from !== to) from.fadeOut(0.18);
+            e.cur = want;
+          }
+        }
+        e.mixer.update(step);
+      }
+    };
+
     G.toggleKayKit = () => {
       G.kkOn = !G.kkOn;
       try { window.localStorage.setItem("cherry-kaykit", G.kkOn ? "1" : "0"); } catch (e) {}
       if (G.kkOn) { G.kkLoad(); G.kkForestLoad(); if ((G._kkMons || []).length) G.kkSkelLoad(); }
       if (G.kkForestReady) G.kkForestApply(G.kkOn);
       G.kkSkelShow(G.kkOn);
+      G.qtShow(G.kkOn);   // 🐾 มอนสัตว์ Quaternius สลับตามสวิตช์เดียวกัน
       if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null);
-      if (G.toast) G.toast(G.kkOn ? "🗡️🌳💀 เปิดโมเดล 3D KayKit (อาวุธ + หมวก/ผม + ผ้าคลุม/หน้ากาก + ต้นไม้ + อันเดด + ห้องดันเจี้ยน)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
+      if (G.toast) G.toast(G.kkOn ? "🗡️🌳🐾 เปิดโมเดล 3D (อาวุธ + หมวก/ผม + ผ้าคลุม + ต้นไม้ + อันเดด + ห้องดันเจี้ยน + มอนสัตว์)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
     };
     if (kkOn) setTimeout(() => { try { G.kkLoad(); G.kkForestLoad(); } catch (e) {} }, 1500); // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
     // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
@@ -17694,6 +17827,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       // 💀 มอนอันเดด (วิญญาณ/ปีศาจ/ยมทูต) — สลับเป็นโมเดลโครงกระดูกมีอนิเมชันถ้าโหลดแล้ว
       if (G.kkSkelHas && G.kkSkelHas(spId) && G.kkSkelRegister) G.kkSkelRegister(g);
+      if (G.qtHas && G.qtHas(spId) && G.qtRegister) G.qtRegister(g);   // 🐾 มอนที่มีโมเดล Quaternius
       return g;
     };
 
@@ -39690,6 +39824,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G._hitStop > 0 && dtForce == null) { G._hitStop -= dtReal; dt *= 0.2; }   // ⏸️ v487: จาก 0.06 (แช่แข็งเกือบสนิท) → 0.2 หน่วงแต่ยังเห็นการเคลื่อนไหว — ท่าฟันจึงไม่สะดุดกลางท่า
       dtGlobal = dt;
       if (G.kkSkelTick) G.kkSkelTick(dt);   // 💀 ไล่เฟรมอนิเมชันโครงกระดูก
+      if (G.qtTick) G.qtTick(dt);           // 🐾 ไล่เฟรมมอนโมเดล Quaternius
       if (G.kkDunTick) G.kkDunTick();       // 🏰 ห้องดันเจี้ยนขึ้น/รื้อตามสถานะหอคอย
       const t = clock.getElapsedTime();
       // 🍽️ นับถอยหลังบัฟอาหาร — เดินนาฬิกาบนจอ และล้างป้ายเองเมื่อหมดอายุ
