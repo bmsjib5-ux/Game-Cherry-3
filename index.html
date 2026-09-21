@@ -4078,7 +4078,7 @@ function CherryAdventure() {
         };
         // 🚪 ประตูโซนกระจายคนละมุมของแมพ (หันหน้าเข้ากลางแมพ) — ไม่กระจุกอยู่กลางแมพแล้ว
         const GATE_POS = {
-            town: { x: 0, z: -27.5, ry: 0 }, // 🏰 ทิศเหนือ
+            town: { x: 19.5, z: -19.5, ry: -Math.PI * 0.25 }, // 🏰 ตะวันออกเฉียงเหนือ — ถนนวิ่งตามแกน N/S/E/W เท่านั้น ประตูจึงอยู่แนวทแยงไม่ทับถนน (เดิมอยู่เหนือพอดี ทับถนนทิศเหนือในถ้ำ/นรก/ขนมหวาน/ไททัน)
             home: { x: -19.5, z: 19.5, ry: -Math.PI * 0.75 }, // 🏠 ตะวันตกเฉียงใต้
             ranch: { x: 19.5, z: 19.5, ry: Math.PI * 0.75 }, // 🐄 ตะวันออกเฉียงใต้
         };
@@ -37796,12 +37796,13 @@ function CherryAdventure() {
             b: { fn: () => (G.equipScreen ? G.closeEquip() : G.openEquip()), name: "กระเป๋า & ชุด" },
             o: { menu: true, name: "เมนูรวม" },
             x: { fn: () => G.toggleMount && G.toggleMount(), name: "ขี่/ลงสัตว์ขี่", anyMode: true },
-            "1": { fn: () => G.usePotion && G.usePotion(G.hpPotUse || "s"), name: "ดื่มยาเลือด", anyMode: true },
-            "2": { fn: () => G.useManaPotion && G.useManaPotion(G.mpPotUse || "s"), name: "ดื่มยามานา", anyMode: true },
+            h: { fn: () => G.usePotion && G.usePotion(G.hpPotUse || "s"), name: "ดื่มยาเลือด", anyMode: true },
+            m: { fn: () => G.useManaPotion && G.useManaPotion(G.mpPotUse || "s"), name: "ดื่มยามานา", anyMode: true },
         };
         G.MENU_HOTKEY_HELP = [
             ["K", "สกิล"], ["B", "กระเป๋า"], ["P", "PVP"], ["G", "เพื่อน"], ["C", "เควส"],
-            ["Z", "สัตว์เลี้ยง"], ["X", "ขี่สัตว์"], ["O", "เมนูรวม"], ["1", "ยาเลือด"], ["2", "ยามานา"],
+            ["Z", "สัตว์เลี้ยง"], ["X", "ขี่สัตว์"], ["O", "เมนูรวม"], ["H", "ยาเลือด"], ["M", "ยามานา"],
+            ["1-8", "สกิลช่อง 1-8"], ["W A S D", "เดิน"],
         ];
         G.hotMenu = (key) => {
             const h = MENU_HOTKEY[key];
@@ -56764,7 +56765,7 @@ function CherryAdventure() {
         };
         // 📖 tutorial steps for new players
         const TUTORIAL = [
-            { emoji: "🕹️", title: "เดินสำรวจ", text: "ใช้จอยสติ๊กมุมซ้ายล่าง (หรือปุ่มลูกศร) เดินหามอนสเตอร์ เข้าใกล้เพื่อเริ่มต่อสู้" },
+            { emoji: "🕹️", title: "เดินสำรวจ", text: "ใช้จอยสติ๊กมุมซ้ายล่าง · บนคอมกด W A S D (หรือลูกศร) เดิน · คลิกซ้ายบนพื้นเพื่อสั่งเดินไปจุดนั้น · คลิกขวาค้างแล้วลาก = หมุนกล้อง" },
             { emoji: "⚔️", title: "ต่อสู้", text: "แตะ ⚔️ โจมตี · ⚡ ปล่อยสกิลอาชีพ (ใช้มานา 💧) · 💗 จับมอนสเตอร์ตอนเลือดน้อย" },
             { emoji: "⚡", title: "สกิล & เลเวล", text: "เลเวลอัพได้แต้มสกิล → กด ⚡ อัพสกิลอาชีพให้แรงถึง Lv.100 (ยิ่งเลเวลตัวละครสูง ยิ่งอัพสกิลได้สูง)" },
             { emoji: "🐾", title: "สัตว์เลี้ยง", text: "จับมอนสเตอร์มาเป็นทีม 3 ตัว (ปุ่ม 🐾) ช่วยบัฟ+ร่วมรบ · ผสมพันธุ์ได้ตัวหายาก" },
@@ -57186,6 +57187,8 @@ function CherryAdventure() {
                 pinchDist = touchDist(e);
                 return;
             }
+            if (e.button != null && e.button !== 0)
+                return; // 🖱️ ปุ่มขวา/กลาง = หมุนกล้องอย่างเดียว ไม่ปักจุดเดิน
             if (G.mode !== "explore")
                 return;
             const cx = e.touches ? e.touches[0].clientX : e.clientX;
@@ -57369,16 +57372,18 @@ function CherryAdventure() {
         renderer.domElement.addEventListener("touchend", onFurniDrop);
         renderer.domElement.addEventListener("touchcancel", onFurniDrop);
         renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
-        // ⌨️ คีย์ลัดสกิลบนคอม: A S D F Q W E R = สกิลที่ 1-8
-        //    (เดินด้วยลูกศร ↑↓←→ หรือคลิกเมาส์บนพื้น — WASD ยกให้เป็นปุ่มสกิลแล้ว)
-        const SKILL_KEYS = { a: 0, s: 1, d: 2, f: 3, q: 4, w: 5, e: 6, r: 7 };
-        G.SKILL_KEYS = ["A", "S", "D", "F", "Q", "W", "E", "R"];
+        // ⌨️ คีย์ลัดสกิลบนคอม: เลข 1-8 = สกิลช่องที่ 1-8 (ตรงตัว ไม่ต้องจำ)
+        //    W A S D ยกกลับไปเป็นปุ่มเดิน · ยาเลือด/ยามานาย้ายไปปุ่ม H / M
+        const SKILL_KEYS = { "1": 0, "2": 1, "3": 2, "4": 3, "5": 4, "6": 5, "7": 6, "8": 7 };
+        G.SKILL_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8"];
         const onKeyDown = (e) => {
             const k = e.key.toLowerCase();
-            G.keys[k] = true;
             const tag = (e.target && e.target.tagName) || "";
-            if (tag === "INPUT" || tag === "TEXTAREA")
-                return; // ไม่แย่งคีย์ช่องพิมพ์ชื่อ/แชท
+            if (tag === "INPUT" || tag === "TEXTAREA") {
+                G.keys[k] = false;
+                return;
+            } // ไม่แย่งคีย์ช่องพิมพ์ชื่อ/แชท (พิมพ์ w-a-s-d แล้วต้องไม่ออกเดิน)
+            G.keys[k] = true;
             // ␣ เว้นวรรค = กระโดด · ⇧ Shift = พุ่ง
             if (k === " " || k === "spacebar") {
                 e.preventDefault();
@@ -64188,10 +64193,11 @@ function CherryAdventure() {
                         }
                     }
                     // 🤖 auto-hunt: walk to targets on her own (events first, then monsters)
-                    // ✋ นับเฉพาะปุ่มที่ "เดิน" จริง ๆ — W A S D ยกไปเป็นคีย์สกิลแล้ว ไม่ใช่ปุ่มเดิน
+                    // ✋ นับเฉพาะปุ่มที่ "เดิน" จริง ๆ (W A S D + ลูกศร)
                     // 🤖 และถ้าเพิ่งสั่งเอง (คลิกเดิน/คลิกตี/กดสกิล) ให้ auto รอจนคำสั่งนั้นเสร็จก่อน
                     const manualInput = Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12 ||
                         G.keys["arrowup"] || G.keys["arrowdown"] || G.keys["arrowleft"] || G.keys["arrowright"] ||
+                        G.keys["w"] || G.keys["a"] || G.keys["s"] || G.keys["d"] ||
                         (G._manualT || 0) > 0;
                     if (G.auto && !manualInput && !G.inRanchZone && !G.inTownZone && !G.inHomeZone) { // 🏰🏠 ในเมือง/ในบ้าน = ห้ามออกล่ามอนสเตอร์
                         // top up HP/MP before charging in (⚙️ togglable in auto settings)
@@ -64278,15 +64284,35 @@ function CherryAdventure() {
                         G.moveTarget = null;
                     }
                     else {
-                        // ⌨️ เดินด้วยลูกศรอย่างเดียว — A S D F Q W E R ยกไปเป็นคีย์สกิลแล้ว
-                        if (G.keys["arrowup"])
-                            dz -= 1;
-                        if (G.keys["arrowdown"])
-                            dz += 1;
-                        if (G.keys["arrowleft"])
-                            dx -= 1;
-                        if (G.keys["arrowright"])
-                            dx += 1;
+                        // ⌨️ เดินด้วย W A S D หรือลูกศร — อิง "มุมกล้อง" ไม่ใช่ทิศโลก
+                        //    w = หน้า (ออกห่างกล้อง) · s = ถอย · a = ซ้ายของจอ · d = ขวาของจอ
+                        //    หมุนกล้องแล้วทิศเดินหมุนตาม เหมือนเกม 3D ทั่วไป (มุมกล้องตั้งต้น = ทิศเดิมเป๊ะ)
+                        const _yaw = G.camYaw || 0;
+                        const _fx = -Math.sin(_yaw), _fz = -Math.cos(_yaw); // ทิศ "หน้า"
+                        const _rx = -_fz, _rz = _fx; // ทิศ "ขวา"
+                        if (G.keys["w"] || G.keys["arrowup"]) {
+                            dx += _fx;
+                            dz += _fz;
+                        }
+                        if (G.keys["s"] || G.keys["arrowdown"]) {
+                            dx -= _fx;
+                            dz -= _fz;
+                        }
+                        if (G.keys["a"] || G.keys["arrowleft"]) {
+                            dx -= _rx;
+                            dz -= _rz;
+                        }
+                        if (G.keys["d"] || G.keys["arrowright"]) {
+                            dx += _rx;
+                            dz += _rz;
+                        }
+                        {
+                            const _l = Math.hypot(dx, dz);
+                            if (_l > 1) {
+                                dx /= _l;
+                                dz /= _l;
+                            }
+                        } // เดินทแยงไม่เร็วกว่าเดินตรง
                         if (dx || dz) {
                             G.moveTarget = null;
                             G.huntTarget = null;
@@ -89807,7 +89833,7 @@ function CherryAdventure() {
                                     rank),
                                 slot < 5 && React.createElement("span", { style: { marginLeft: 5, fontSize: 9, fontWeight: 900, color: "#fff", background: "#5a6a8a", borderRadius: 5, padding: "1px 5px" } },
                                     "\u2328\uFE0F",
-                                    (G.SKILL_KEYS || ["A", "S", "D", "F", "G"])[slot])),
+                                    (G.SKILL_KEYS || ["1", "2", "3", "4", "5", "6", "7", "8"])[slot])),
                             React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#d9536b" } },
                                 "\uD83D\uDCA5 ~",
                                 advantage ? Math.round(dmg * 1.5) : dmg,
@@ -89899,7 +89925,7 @@ function CherryAdventure() {
                                     G.act("skill", sk.id);
                                 }, gate.open ? cost : null, {
                                     key: sk.id,
-                                    title: gate.open ? `[⌨️ ${(G.SKILL_KEYS || ["A", "S", "D", "F", "G"])[slot] || "-"}] ${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา · ⏳${G.cdOf ? G.cdOf(sk) : 1} วิ)` : `🔒 ${sk.name}`,
+                                    title: gate.open ? `[⌨️ ${(G.SKILL_KEYS || ["1", "2", "3", "4", "5", "6", "7", "8"])[slot] || "-"}] ${sk.emoji} ${sk.name} — ${sk.desc} (💧${cost} มานา · ⏳${G.cdOf ? G.cdOf(sk) : 1} วิ)` : `🔒 ${sk.name}`,
                                     badgeBg: afford ? "#3a70c0" : "#c05a5a",
                                     opacity: gate.open ? (afford ? 1 : 0.5) : 0.55,
                                     border: advantage ? "2px solid #f5a623" : "none",
