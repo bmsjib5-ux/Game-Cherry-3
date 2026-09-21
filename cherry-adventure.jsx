@@ -7816,6 +7816,7 @@ export default function CherryAdventure() {
       thewada:    { f: "Flying_Ghost",        c: "fly",           size: 2.4, y: 0.9, flat: 0xf0e2b0, halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } },   // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
       kinnara:    { f: "Flying_Hywirl",       c: "fly",           size: 2.6, y: 0.7, flat: 0xe08ab0, halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } },   // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
       phothisat:  { f: "Big_Tribal",          c: "big", by: "h", size: 3.0, flat: 0xd8961a, gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } },   // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
+      kirara:     { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.6, hue: [46, 0.9, 1.5, 0.64], gloss: [0.3, 0.38, 0x1a1000], evo: { size: 2.4, halo: { bone: "Head3", at: [0, 4.6, 0], r: 1.1, tube: 0.1, tilt: 0.3 } } },   // ⭐ คิราระ — บอลหนามย้อมทอง (ขั้น 2 โนวา ใหญ่ขึ้น + รัศมี)
       eggdrake:   { f: "Dragon",          size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                     tint: { Main: 0x9a5a08, Wings: 0x6e3e05, Belly: 0xd6a63e, Claws: 0x261806 } },     // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
     };
@@ -7831,8 +7832,36 @@ export default function CherryAdventure() {
     G._qtMons = [];                   // มอนทุกตัวที่สลับเป็นโมเดล Quaternius ได้
     G._qtMix = [];                    // ตัวที่มีอนิเมชันวิ่งอยู่
     G.qtHas = (spId) => !!QT_MON[spId];
-    G.qtLoad = (spId) => {
-      const P = QT_MON[spId];
+    // 🎨 ย้อมสีด้วยการเลื่อน hue บนสำเนา atlas — ส่วนที่มีสี (เสื้อ/ผิว) เปลี่ยนเป็นสีเป้าหมาย ส่วนขาว/ดำ (ตา ปาก) คงเดิม
+    //    hue = [องศาสีเป้าหมาย, ความอิ่มต่ำสุด, ตัวคูณความสว่าง, เพดานความสว่าง, ย้อมเทากลางด้วย?] · แคชต่อ (ไฟล์, ค่า) เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์
+    const qtHueCache = {};
+    const qtHueMap = (map, key, H) => {
+      if (!map || !map.image || !map.image.width) return map;
+      const ck = key + "|" + H.join(",");
+      if (qtHueCache[ck]) return qtHueCache[ck];
+      const im = map.image, cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height;
+      const cx = cv.getContext("2d"); cx.drawImage(im, 0, 0);
+      const d = cx.getImageData(0, 0, cv.width, cv.height), a = d.data, th = ((H[0] % 360) + 360) % 360 / 360, smin = H[1] == null ? 0.7 : H[1], lm = H[2] == null ? 1 : H[2];
+      const h2r = (p, q, t) => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+      for (let i = 0; i < a.length; i += 4) {
+        const r = a[i] / 255, g = a[i + 1] / 255, b = a[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l0 = (mx + mn) / 2;
+        const sat = mx === mn ? 0 : (mx - mn) / (l0 > 0.5 ? 2 - mx - mn : mx + mn);
+        if (l0 < 0.06 || l0 > 0.96 || (sat < 0.18 && !(H[4] && l0 > 0.22 && l0 < 0.8))) continue;   // ขาว/ดำ/เทา (ตา ฟัน ขอบ) → ไม่แตะ · H[4]=1 ยอมย้อมเทากลางด้วย (โมเดลที่หนาม/ตาใช้สีเดียวกันจะโดนทั้งคู่)
+        const sN = Math.max(sat, smin), l = Math.min(H[3] == null ? 0.97 : H[3], l0 * lm), q = l < 0.5 ? l * (1 + sN) : l + sN - l * sN, pp = 2 * l - q;
+        a[i] = Math.round(h2r(pp, q, th + 1 / 3) * 255); a[i + 1] = Math.round(h2r(pp, q, th) * 255); a[i + 2] = Math.round(h2r(pp, q, th - 1 / 3) * 255);
+      }
+      cx.putImageData(d, 0, 0);
+      const t = new THREE.CanvasTexture(cv);
+      t.flipY = map.flipY; t.encoding = map.encoding; t.wrapS = map.wrapS; t.wrapT = map.wrapT;
+      t.magFilter = map.magFilter; t.minFilter = map.minFilter; t.generateMipmaps = map.generateMipmaps; t.anisotropy = map.anisotropy;
+      t.userData = t.userData || {}; t.userData._shared = true; t.needsUpdate = true;
+      return (qtHueCache[ck] = t);
+    };
+    // 🧬 ตัววิวัฒน์ (stage ≥ 2) ใช้ไฟล์/ค่าจาก evo ทับของขั้นแรก — ให้บอสวิวัฒน์ได้โมเดลคนละตัวกับลูกน้อง
+    const qtP = (spId, stage) => { const P = QT_MON[spId]; return P && P.evo && (stage || 1) >= 2 ? Object.assign({}, P, P.evo) : P; };
+    G.qtP = qtP;
+    G.qtLoad = (spId, stage) => {
+      const P = qtP(spId, stage);
       if (!P || !THREE.GLTFLoader || !THREE.SkeletonUtils) return null;
       if (qtFiles[P.f]) return qtFiles[P.f];
       const L = new THREE.GLTFLoader();
@@ -7864,7 +7893,7 @@ export default function CherryAdventure() {
             max: Math.max(0.01, Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z)) };
           // สลับทุกตัวที่รอไฟล์นี้อยู่ — เทียบด้วยชื่อไฟล์ ไม่ใช่สายพันธุ์ (Dragon.glb ใช้ร่วมกัน 2 สายพันธุ์
           //  ตัวที่เกิดระหว่างโหลดจะได้ promise เดิมคืนไปเฉย ๆ ถ้าเทียบสายพันธุ์จะค้างเป็นตัวปั้นเอง)
-          (G._qtMons || []).forEach((g) => { const Q = g && g.parent && QT_MON[g.userData.spId]; if (Q && Q.f === P.f) G.qtSwap(g); });
+          (G._qtMons || []).forEach((g) => { const Q = g && g.parent && qtP(g.userData.spId, g.userData.stage); if (Q && Q.f === P.f) G.qtSwap(g); });
           res(true);
         }, undefined, () => res(false));
       });
@@ -7872,7 +7901,7 @@ export default function CherryAdventure() {
     };
     G.qtSwap = (g) => {
       if (!g || !g.userData || !G.kkOn) return false;
-      const P = QT_MON[g.userData.spId];
+      const P = qtP(g.userData.spId, g.userData.stage);
       const src = P && qtLib[P.f];
       if (!src) return false;
       const body = g.userData.body;
@@ -7883,12 +7912,13 @@ export default function CherryAdventure() {
       node.position.y = (P.y || 0) - src.y0 * sc;        // ฝ่าเท้าแตะพื้น (ปลา/มังกรบวกความสูงลอย)
       // 🎨 สีเฉพาะสายพันธุ์ — ทำบนสำเนาวัสดุของตัวนั้น เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์ (Dragon = มังกรเยาว์ + มังกรไข่ทอง)
       //    tint = แทนสีตามชื่อวัสดุ · lift < 1 = ยกสีที่คล้ำให้สว่างขึ้น (สำเนาไม่ติดป้าย _shared จะได้ถูกเก็บไปพร้อมตัว)
-      if (P.lift || P.tint || P.mul || P.flat != null) node.traverse((o) => {
+      if (P.lift || P.tint || P.mul || P.flat != null || P.hue) node.traverse((o) => {
         if (!o.isMesh || !o.material) return;
         const arr = Array.isArray(o.material) ? o.material : [o.material];
         const fresh = arr.map((m) => {
           const c = m.clone(); c.userData = {};
           if (P.tint && P.tint[m.name] != null) c.color.setHex(P.tint[m.name]);
+          else if (P.hue) { c.map = qtHueMap(c.map, P.f, P.hue); if (P.gloss) { c.metalness = P.gloss[0]; c.roughness = P.gloss[1]; c.emissive.setHex(P.gloss[2] || 0); } }
           else if (P.flat != null) { c.map = null; c.color.setHex(P.flat); if (P.gloss) { c.metalness = P.gloss[0]; c.roughness = P.gloss[1]; c.emissive.setHex(P.gloss[2] || 0); } }   // ทิ้ง texture ทั้งตัว ใช้สีเดียว (โมเดลสีเข้มที่ต้องทำให้ขาว — mul ทำได้แค่มืดลง)
           else if (P.mul != null) c.color.setHex(P.mul);                 // มี texture → สีนี้คูณทับทั้งตัว
           else if (P.lift) c.color.setRGB(Math.pow(c.color.r, P.lift), Math.pow(c.color.g, P.lift), Math.pow(c.color.b, P.lift));
@@ -7947,7 +7977,7 @@ export default function CherryAdventure() {
       let n = 0;
       G._qtMons = (G._qtMons || []).filter((g) => g && g.parent);
       G._qtMons.forEach((g) => {
-        if (on) { if (G.qtSwap(g)) n++; else G.qtLoad(g.userData.spId); }
+        if (on) { if (G.qtSwap(g)) n++; else G.qtLoad(g.userData.spId, g.userData.stage); }
         else { if (g.userData.qtNode) g.userData.qtNode.visible = false; if (g.userData.body) g.userData.body.visible = true; n++; }
       });
       return n;
@@ -7955,7 +7985,7 @@ export default function CherryAdventure() {
     G.qtRegister = (g) => {                              // เรียกจาก buildMonster ทุกครั้งที่ปั้นสายพันธุ์ที่มีโมเดล
       (G._qtMons = G._qtMons || []).push(g);
       if (!G.kkOn) return;
-      if (!G.qtSwap(g)) G.qtLoad(g.userData.spId);
+      if (!G.qtSwap(g)) G.qtLoad(g.userData.spId, g.userData.stage);
     };
     // 🎬 เลือกท่าตามสถานการณ์จริงของมอนแต่ละตัว แล้วไล่เฟรมให้ mixer (ท่าไหนไม่มีก็ข้ามไปใช้ท่าถัดไป)
     G.qtTick = (dt) => {
@@ -17886,6 +17916,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       g.userData.body = body;
       g.userData.spId = spId;
+      g.userData.stage = stage;
       // 🏷️ floating level label (color set later in updateMonsterLabel)
       const lblCanvas = document.createElement("canvas");
       lblCanvas.width = 128; lblCanvas.height = 64;
