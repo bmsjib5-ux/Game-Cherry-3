@@ -7815,6 +7815,7 @@ export default function CherryAdventure() {
       plerng:     { f: "Fox",                 c: "ani",  by: "h", size: 1.3 },
       thewada:    { f: "Flying_Ghost",        c: "fly",           size: 2.4, y: 0.9, flat: 0xf0e2b0, halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } },   // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
       kinnara:    { f: "Flying_Hywirl",       c: "fly",           size: 2.6, y: 0.7, flat: 0xe08ab0, halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } },   // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
+      phothisat:  { f: "Big_Tribal",          c: "big", by: "h", size: 3.0, flat: 0xd8961a, gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } },   // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
       eggdrake:   { f: "Dragon",          size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                     tint: { Main: 0x9a5a08, Wings: 0x6e3e05, Belly: 0xd6a63e, Claws: 0x261806 } },     // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
     };
@@ -7888,7 +7889,7 @@ export default function CherryAdventure() {
         const fresh = arr.map((m) => {
           const c = m.clone(); c.userData = {};
           if (P.tint && P.tint[m.name] != null) c.color.setHex(P.tint[m.name]);
-          else if (P.flat != null) { c.map = null; c.color.setHex(P.flat); }   // ทิ้ง texture ทั้งตัว ใช้สีเดียว (โมเดลสีเข้มที่ต้องทำให้ขาว — mul ทำได้แค่มืดลง)
+          else if (P.flat != null) { c.map = null; c.color.setHex(P.flat); if (P.gloss) { c.metalness = P.gloss[0]; c.roughness = P.gloss[1]; c.emissive.setHex(P.gloss[2] || 0); } }   // ทิ้ง texture ทั้งตัว ใช้สีเดียว (โมเดลสีเข้มที่ต้องทำให้ขาว — mul ทำได้แค่มืดลง)
           else if (P.mul != null) c.color.setHex(P.mul);                 // มี texture → สีนี้คูณทับทั้งตัว
           else if (P.lift) c.color.setRGB(Math.pow(c.color.r, P.lift), Math.pow(c.color.g, P.lift), Math.pow(c.color.b, P.lift));
           return c;
