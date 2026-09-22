@@ -22688,13 +22688,24 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       };
       return [one("hp", "❤️", "เลือดสูงสุด"), one("mp", "🔮", "มานาสูงสุด")].filter(Boolean);
     };
+    // ⏳ เวลาที่เหลือของบัฟยา — สั้นๆ พอใส่ใต้ไอคอน HUD
+    G.brewLeftText = (left) => {
+      const sec = Math.max(0, Math.round(left || 0));
+      if (sec >= 3600) return `${Math.floor(sec / 3600)} ชม`;
+      if (sec >= 60) return `${Math.floor(sec / 60)} นาที`;
+      return `${sec} วิ`;
+    };
     G.herbInfo = () => ({
       lv: G.herbLv || 1, exp: G.herbExp || 0, need: HERB_LV_EXP(G.herbLv || 1), max: HERB_LV_MAX,
       total: G.herbTotal || 0, power: Math.round((BREW_POW(G.herbLv || 1) - 1) * 100),
     });
-    G.syncHerbUi = () => setUi((u) => ({ ...u, hpPotUse: G.hpPotUse, mpPotUse: G.mpPotUse,
-      herbInfo: G.herbInfo(), herbBag: { ...(G.herbBag || {}) }, potBag: G.potBagList(),
-      brewBuff: G.brewBuffInfo(), gold: G.gold }));
+    G.syncHerbUi = () => {
+      const _bi = G.brewBuffInfo();
+      G._brewSig = _bi.map((b) => b.slot + ":" + b.pct).join(",");   // จำไว้ให้ตรงกับจอ นาฬิกาในลูปจะได้ล้างป้ายถูกจังหวะ
+      setUi((u) => ({ ...u, hpPotUse: G.hpPotUse, mpPotUse: G.mpPotUse,
+        herbInfo: G.herbInfo(), herbBag: { ...(G.herbBag || {}) }, potBag: G.potBagList(),
+        brewBuff: _bi, gold: G.gold }));
+    };
     G.toggleHerb = () => setUi((u) => (u.herbOpen
       ? { ...u, herbOpen: false }
       : { ...u, herbOpen: true, menuOpen: false, kitchenOpen: false, fishBagOpen: false, shopOpen: false, invOpen: false, panelOpen: false, forgeOpen: false, equipScreen: false,
@@ -40704,6 +40715,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const on = !!(G.foodBuff && G.foodBuff.until > Date.now());
           if (on !== !!G._foodOn) { G._foodOn = on; if (!on) G.foodBuff = null; setUi((u) => ({ ...u, foodBuff: G.foodBuffInfo ? G.foodBuffInfo() : null })); }
           else if (on) setUi((u) => ({ ...u, foodBuff: G.foodBuffInfo ? G.foodBuffInfo() : null }));
+          // 🌿 นับถอยหลังบัฟยาสมุนไพร (เลือด/มานา) — อัพก็ต่อเมื่อยังมีบัฟ และล้างป้ายเมื่อหมดอายุ
+          const _bb = G.brewBuffInfo ? G.brewBuffInfo() : [];
+          const _bsig = _bb.map((b) => b.slot + ":" + b.pct).join(",");
+          if (_bb.length > 0 || _bsig !== G._brewSig) { G._brewSig = _bsig; setUi((u) => ({ ...u, brewBuff: _bb })); }
           // 🗺️ นับถอยหลังทีมสำรวจ + เด้งเตือนตอนทีมกลับถึงบ้าน
           if (G.exped && G.exped.length) {
             const rdy = G.exped.map((e) => !!(e && Date.now() >= e.endAt)).join(",");
@@ -56463,6 +56478,25 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 : <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e08a3a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{(ui.foodBag || []).length}</span>}
             </button>
           )}
+          {/* 🌿 บัฟยาสมุนไพร — เลือด/มานาสูงสุดที่เพิ่มอยู่ แตะเปิดหน้าต้มยา */}
+          {(ui.mode === "explore" || ui.mode === "battle") && (ui.brewBuff || []).map((b) => {
+            const hp = b.slot === "hp";
+            return (
+              <button key={b.slot}
+                onClick={() => { if (G.toggleHerb) G.toggleHerb(); }}
+                title={`บัฟ${b.label} +${b.pct}% — เหลืออีก ${G.brewLeftText ? G.brewLeftText(b.left) : b.left + " วิ"} (แตะเปิดหน้าต้มยาสมุนไพร)`}
+                style={{
+                  position: "relative", width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
+                  padding: 0, fontSize: 15, lineHeight: 1, fontFamily: font,
+                  background: hp ? "linear-gradient(135deg,#ffc0c8,#e0566e)" : "linear-gradient(135deg,#c0d8ff,#5a7ae0)",
+                  boxShadow: hp ? "0 0 0 2px rgba(224,86,110,0.45), 0 2px 6px rgba(90,20,40,0.3)" : "0 0 0 2px rgba(90,122,224,0.45), 0 2px 6px rgba(20,40,90,0.3)",
+                }}>
+                {b.emoji}
+                <span style={{ position: "absolute", top: -4, right: -5, whiteSpace: "nowrap", background: hp ? "#c0304c" : "#3a54b8", color: "#fff", fontSize: 8, fontWeight: 900, borderRadius: 999, padding: "0 3px", lineHeight: "13px" }}>+{b.pct}%</span>
+                <span style={{ position: "absolute", bottom: -3, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", background: hp ? "rgba(70,16,26,0.88)" : "rgba(16,26,70,0.88)", color: hp ? "#ffd0d8" : "#d0dcff", fontSize: 7.5, fontWeight: 800, borderRadius: 999, padding: "0 4px", lineHeight: "12px" }}>{G.brewLeftText ? G.brewLeftText(b.left) : b.left + " วิ"}</span>
+              </button>
+            );
+          })}
           {/* 🐾 ฝูงสัตว์ที่เรียกมา — นับถอยหลังเวลาที่ฝูงยังอยู่ช่วยรบ */}
           {(ui.mode === "explore" || ui.mode === "battle") && (ui.summonLeft || 0) > 0 && (
             <div
