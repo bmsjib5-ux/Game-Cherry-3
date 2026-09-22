@@ -2915,6 +2915,18 @@ const HERO_ATK_TIME = { hold: 0.4, spd: 2.4, from: 0.18 };
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Pistol_Idle_Loop" };                             // ที่เหลือ = Idle_Loop
+// 🎲 คลังชื่อสุ่มตอนสร้างตัวละคร — ชื่อเล่นไทยสั้น ๆ + ท้ายเสริมบางครั้ง (ยาวไม่เกิน 12 ตัวอักษรตามช่องกรอก)
+const RAND_NAME_A = ["มะลิ", "ปันปัน", "น้ำหวาน", "ข้าวปั้น", "ไข่มุก", "ต้นกล้า", "ฟ้าใส", "ขนมปัง", "โมจิ", "ลูกหมี", "ดาวเหนือ", "น้องเป้", "บัวลอย", "ทับทิม", "มินนี่", "แตงโม", "ก้านกล้วย", "ปีโป้", "สายรุ้ง", "ชาเย็น", "โกโก้", "กะทิ", "ข้าวหอม", "แพนเค้ก", "พริกขี้หนู", "ลูกชิ้น", "แสงดาว", "ใบเฟิร์น", "องุ่น", "น้ำผึ้ง", "หมีพูห์", "เจ้าเหมียว", "เพชร", "ตะวัน", "จันทร์เจ้า", "ลมหนาว", "สายฟ้า", "เพลิง", "อินทรี", "มังกรน้อย", "หมาป่า", "เสือดาว", "นักล่า", "ราชสีห์", "เงา", "พายุ", "ธนูทอง", "ดาบคม", "โล่เหล็ก", "ภูผา"];
+const RAND_NAME_B = ["", "", "", "จัง", "คุง", "น้อย", "จ๋า", "ซัง", "ตัวจริง", "ผู้กล้า", "นักสู้", "ฟีเวอร์"];
+const randHeroName = () => {
+  for (let k = 0; k < 20; k++) {
+    const a = RAND_NAME_A[Math.floor(Math.random() * RAND_NAME_A.length)];
+    const b = RAND_NAME_B[Math.floor(Math.random() * RAND_NAME_B.length)];
+    const nm = b ? a + b : a;
+    if (nm.length <= 12) return nm;
+  }
+  return "เชอร์รี่";
+};
 const CHAR_PRESETS = [
   { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
   { name: "นักธนูป่า", emoji: "🏹", gender: 0, skin: 0, hairColor: 5, hairStyle: 0, eyes: 0, outfit: 2, model: "archer" },   // 🧍 โมเดล 3D
@@ -38959,6 +38971,32 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G._lastPub = now;
       CN.publish(G.cloudProfile()).then((ok) => { if (ok) setUi((u) => ({ ...u, netStatus: "ok" })); });
     };
+    // 🦸 หน้าสร้างตัวละครใหม่: เลือก "ตัวละครต้นแบบ" = โมเดล 3D ของอาชีพนั้น (ตัวละครรองขึ้นเป็นตัวหลัก) ไม่มีแต่งตัว
+    G.pickTemplate = (cls) => {
+      if (!HERO_MODELS[cls]) return;
+      if (G.setHero) G.setHero(null);
+      G.setCustom("model", cls);                                   // 🧍 โมเดลตามอาชีพ (ซ่อนร่างปั้นเอง)
+      if (G.previewClass) G.previewClass(cls);                     // 🗡️ อาวุธประจำอาชีพมาอยู่ในมือโมเดล
+      setUi((u) => ({ ...u, chosenClass: cls, custom: { ...G.custom } }));
+    };
+    G.randomName = () => {
+      G.pendingName = randHeroName();
+      setUi((u) => ({ ...u, pendingName: G.pendingName, nameErr: "" }));
+    };
+    G.startFromTemplate = async (cls) => {
+      const nm = (G.pendingName || "").trim();
+      if (!nm) { setUi((u) => ({ ...u, nameErr: "⚠️ กรุณาตั้งชื่อตัวละครก่อน" })); return; }
+      if (!HERO_MODELS[cls]) return;
+      if (G.ensurePid) G.ensurePid();
+      setUi((u) => ({ ...u, nameErr: "", nameChecking: true }));
+      let taken = false;
+      try { if (CN.enabled()) taken = await CN.nameTaken(nm, G.pid); } catch (e) { taken = false; }
+      if (taken) { setUi((u) => ({ ...u, nameChecking: false, nameErr: "❌ ชื่อ \"" + nm + "\" มีคนใช้แล้ว ลองสุ่มหรือตั้งชื่ออื่นนะ" })); return; }
+      G.pendingName = nm;
+      if (G.custom.model !== cls) G.setCustom("model", cls);
+      setUi((u) => ({ ...u, nameChecking: false, nameErr: "", pendingName: nm }));
+      G.startGame(cls);
+    };
     // ➜ leave the character-creator for the class picker — but first require a non-empty, non-duplicate name
     G.proceedToClass = async () => {
       const nm = (G.pendingName || "").trim();
@@ -40483,7 +40521,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.saveSlot = i;
       const sv = loadSave(i);
       if (sv && sv.player) { G.continueGame(); }
-      else { setUi((u) => ({ ...u, mode: "create", saveSlot: i, chosenClass: "warrior" })); G.showPlainLook && G.showPlainLook(); }
+      else {
+        G.showPlainLook && G.showPlainLook();
+        if (char) char.rotation.y = 0;                             // 🧍 หันหน้าเข้ากล้อง (+z) ให้เห็นหน้าตัวละครต้นแบบ
+        G.pendingName = randHeroName();                            // 🎲 ตั้งชื่อสุ่มให้ก่อน แก้เองหรือกดสุ่มใหม่ได้
+        setUi((u) => ({ ...u, mode: "create", saveSlot: i, chosenClass: "warrior", editLook: false, nameErr: "", pendingName: G.pendingName }));
+        if (G.pickTemplate) G.pickTemplate("warrior");
+      }
     };
     G.clearSave = (i) => {
       const target = i == null ? G.saveSlot : i;
@@ -53752,9 +53796,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         //    ⚠️ เดิมตอนสร้างใหม่ใช้ค่าคนละชุด (ใกล้กว่า ก้มกว่า) → หัวตัวละครโดนตัดออกนอกจอ
         // 🖼️ ผังใหม่ (v484): มี "กรอบโชว์ตัวละคร" อยู่กลางระหว่างแผง → ดึงกล้องเข้า + เล็งให้ตรงกรอบ
         const bagFrame = !!(G.equipScreen && G._eqWide && G._eqCamFrac != null);
-        const cd = G.equipOpen ? (bagFrame ? 13.5 : wideEquip ? 16.5 : 9.4) : Math.max(6.5, Math.min(11, camDist * 0.62));
-        const camY = G.equipOpen ? (bagFrame ? 1.98 : wideEquip ? 2.05 : 1.62) : 2.5;
-        const lookY = G.equipOpen ? (bagFrame ? 1.02 : wideEquip ? 0.30 : 1.02) : 1.9;
+        const tallM = !!G.heroModelId;                        // 🧍 โมเดล 3D สูงกว่าชิบิ → ถอยกล้อง/ยกจุดมอง ไม่งั้นหัวโดนตัด
+        const tallK = tallM ? (window.innerWidth < window.innerHeight ? 1.45 : 1.0) : 1;   // 📱 จอตั้ง: มุมมองแนวนอนแคบ ต้องถอยอีกถึงจะเห็นหัวจรดเท้า
+        const cd = G.equipOpen ? (bagFrame ? 13.5 : wideEquip ? 16.5 : 9.4) : Math.max((tallM ? 10.5 : 6.5) * tallK, Math.min((tallM ? 16 : 11) * tallK, camDist * (tallM ? tallK : 0.62)));
+        const camY = G.equipOpen ? (bagFrame ? 1.98 : wideEquip ? 2.05 : 1.62) : (tallM ? 3.1 : 2.5);
+        const lookY = G.equipOpen ? (bagFrame ? 1.02 : wideEquip ? 0.30 : 1.02) : (tallM ? 2.35 : 1.9);
         // 🖥️ หน้าแต่งตัว: คอม = แผงครึ่งจอฝั่งซ้าย → เลื่อนตัวละครไปอยู่กึ่งกลางแผงซ้าย · มือถือ = กลางจอ
         const panX = !G.equipOpen && window.innerWidth < 640 ? -cd * 0.11 : 0;
         let camX = wideEquip ? cd * 0.03 : panX;
@@ -55603,7 +55649,115 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         </>
       )}
 
-      {ui.mode === "create" && (
+      {/* ===== 🦸 สร้างตัวละครใหม่ — เลือกตัวละครต้นแบบ (โมเดล 3D ตามอาชีพ) + ตั้งชื่อ/สุ่มชื่อ · ไม่มีแต่งตัว ===== */}
+      {ui.mode === "create" && !ui.editLook && (() => {
+        const cls = ui.chosenClass && HERO_MODELS[ui.chosenClass] ? ui.chosenClass : "warrior";
+        const C = CLASSES[cls], M = HERO_MODELS[cls];
+        const hex = `#${C.color.toString(16).padStart(6, "0")}`;
+        const wide = window.innerWidth >= 640;
+        const short = window.innerHeight < 520;
+        return (
+          <>
+            <div style={{ position: "absolute", top: ST(12), left: wide ? 240 : 12, right: wide ? 100 : 100, textAlign: "center", pointerEvents: "none" }}>
+              <div style={{ fontSize: short ? 15 : 18, fontWeight: 800, color: "#8a5a4a" }}>🦸 เลือกตัวละครต้นแบบ</div>
+              <div style={{ fontSize: 10.5, color: "#a3796a", marginTop: 2 }}>แตะการ์ดด้านล่างเพื่อดูตัวละครและอาชีพ · ลาก/บีบเพื่อหมุน–ซูม</div>
+            </div>
+            <div style={{ position: "absolute", top: ST(10), right: 12 }}>
+              <button onClick={() => setUi((u) => ({ ...u, mode: "title", slots: G.readSlots ? G.readSlots() : u.slots }))} style={{
+                padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer",
+                fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
+                background: "#fff", boxShadow: "0 3px 10px rgba(90,120,70,0.25)",
+              }}>← ช่องเซฟ</button>
+            </div>
+            {/* ℹ️ การ์ดข้อมูลอาชีพที่เลือก — ซ้ายบน ไม่บังโมเดลกลางจอ · จอเตี้ยเลื่อนอ่านได้ */}
+            <div style={{
+              position: "absolute", top: ST(short ? 40 : 52), left: 12, width: wide ? 214 : "min(214px, 46vw)",
+              maxHeight: `calc(100vh - var(--sa-t, 0px) - var(--sa-b, 0px) - ${short ? 176 : 200}px)`, overflowY: "auto",
+              background: "rgba(255,255,255,0.94)", borderRadius: 14, padding: "9px 12px", boxSizing: "border-box",
+              boxShadow: "0 4px 14px rgba(90,120,70,0.25)", fontFamily: font,
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.18em", color: "#b0a080" }}>ตัวละครต้นแบบ · อาชีพ</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: hex }}>{M.emoji} {C.name}</div>
+              <div style={{ fontSize: 10.5, color: "#7a6a5a", margin: "2px 0" }}>{M.desc} — {C.desc}</div>
+              <div style={{ fontSize: 10.5, color: "#c09020", fontWeight: 700 }}>💫 {C.perk}</div>
+              <div style={{ fontSize: 10, color: "#6a8a5a", fontWeight: 700, marginTop: 2 }}>❤️{C.hp} ⚔️{C.atk} 🛡️{C.def} · 🌟 {ULTS[cls].name}</div>
+              {CLASS_TIP[cls] && !short && (
+                <div style={{ fontSize: 10, color: "#5a7a4a", fontWeight: 700, marginTop: 5, background: "rgba(120,160,100,0.12)", borderRadius: 8, padding: "4px 9px", lineHeight: 1.4 }}>💡 {CLASS_TIP[cls]}</div>
+              )}
+              {CLASS_RATINGS[cls] && (
+                <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+                  {RATING_CATS.map((pair) => {
+                    const v = CLASS_RATINGS[cls][pair[0]] || 0;
+                    return (
+                      <div key={pair[0]} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 9.5, color: "#7a6a5a", width: 52, textAlign: "right", flex: "none", fontWeight: 700 }}>{pair[1]}</span>
+                        <div style={{ flex: 1, height: 7, borderRadius: 4, background: "rgba(0,0,0,0.09)", overflow: "hidden" }}>
+                          <div style={{ width: `${v / 5 * 100}%`, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${hex}, ${hex}bb)` }} />
+                        </div>
+                        <span style={{ fontSize: 9, color: "#a09080", width: 20, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{v}/5</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            {/* 🃏 การ์ดตัวละครต้นแบบ 11 ตัว — แถบเลื่อนแนวนอนด้านล่าง */}
+            <div style={{
+              position: "absolute", left: 0, right: 0, bottom: short ? 62 : 70,
+              display: "flex", gap: 8, overflowX: "auto", padding: "6px 12px 6px", WebkitOverflowScrolling: "touch",
+            }}>
+              {Object.keys(HERO_MODELS).map((id) => {
+                const CC = CLASSES[id], MM = HERO_MODELS[id]; if (!CC) return null;
+                const on = cls === id;
+                const hx = `#${CC.color.toString(16).padStart(6, "0")}`;
+                return (
+                  <button key={id} onClick={() => G.pickTemplate(id)} style={{
+                    flex: "0 0 auto", width: short ? 78 : 88, padding: short ? "5px 4px" : "7px 5px", borderRadius: 14, cursor: "pointer",
+                    background: on ? hx : "#fff", fontFamily: font, textAlign: "center",
+                    border: on ? "3px solid #fff" : "3px solid transparent",
+                    boxShadow: on ? `0 5px 16px ${hx}99` : `0 3px 10px ${hx}44`,
+                    transform: on ? "translateY(-4px)" : "none", transition: "all 0.15s",
+                  }}>
+                    <div style={{ fontSize: short ? 20 : 24 }}>{MM.emoji}</div>
+                    <div style={{ fontSize: short ? 11 : 12, fontWeight: 800, color: on ? "#fff" : hx, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{CC.name}</div>
+                  </button>
+                );
+              })}
+            </div>
+            {/* 🪪 ชื่อ + สุ่มชื่อ + เริ่มผจญภัย — แถวเดียวด้านล่างสุด */}
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: short ? 10 : 16, display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "0 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 1 300px", minWidth: 0 }}>
+                <input
+                  key={"tn-" + (ui.pendingName || "")}
+                  type="text" maxLength={12} defaultValue={ui.pendingName || ""} placeholder="ตั้งชื่อตัวละคร..."
+                  onChange={(e) => { G.pendingName = e.target.value; if (ui.nameErr) setUi((u) => ({ ...u, nameErr: "" })); }}
+                  style={{
+                    flex: 1, minWidth: 0, boxSizing: "border-box", padding: "9px 10px", borderRadius: 999,
+                    border: ui.nameErr ? "2px solid #e0788a" : "2px solid #e5d5cc", fontSize: 13, fontFamily: font, color: "#5a5a4a",
+                    outline: "none", background: "#fff", textAlign: "center",
+                  }}
+                />
+                <button onClick={() => G.randomName()} title="สุ่มชื่อ" style={{
+                  width: 38, height: 38, borderRadius: "50%", border: "none", cursor: "pointer", flex: "none",
+                  fontSize: 17, fontFamily: font, color: "#8a5a4a", background: "#fff", boxShadow: "0 3px 10px rgba(90,120,70,0.25)",
+                }}>🎲</button>
+              </div>
+              <button onClick={() => G.startFromTemplate(cls)} disabled={ui.nameChecking} style={{
+                padding: short ? "9px 18px" : "11px 26px", borderRadius: 999, border: "none", cursor: "pointer", flex: "none",
+                fontSize: short ? 13 : 14.5, fontWeight: 800, fontFamily: font, color: "#fff", whiteSpace: "nowrap",
+                background: "linear-gradient(90deg,#f5a623,#f5c542)", boxShadow: "0 5px 16px rgba(245,166,35,0.5)", opacity: ui.nameChecking ? 0.6 : 1,
+              }}>{ui.nameChecking ? "⏳ ตรวจชื่อ..." : "🌸 เริ่มผจญภัย!"}</button>
+            </div>
+            {ui.nameErr && (
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: short ? 52 : 60, textAlign: "center", pointerEvents: "none" }}>
+                <span style={{ display: "inline-block", background: "#fff", borderRadius: 999, padding: "4px 12px", fontSize: 11, fontWeight: 800, color: "#d9536b", boxShadow: "0 3px 10px rgba(90,120,70,0.25)" }}>{ui.nameErr}</span>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
+      {ui.mode === "create" && ui.editLook && (
   <>
     <div style={{ position: "absolute", top: ST(14), left: 202, right: 12, textAlign: "center", pointerEvents: "none" }}>
       <div style={{ fontSize: 18, fontWeight: 800, color: "#8a5a4a" }}>🎀 ออกแบบตัวละคร</div>
@@ -55980,7 +56134,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
       {/* creator zoom buttons */}
       {ui.mode === "create" && (
-        <div style={{ position: "absolute", right: 12, bottom: 138, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ position: "absolute", right: 12, bottom: ui.editLook ? 138 : 160, display: "flex", flexDirection: "column", gap: 8 }}>
           {[["＋", -1.2], ["－", 1.2]].map(([sym, d]) => (
             <button key={sym} onClick={() => G.zoom(d)} style={{
               width: 42, height: 42, borderRadius: "50%", border: "none", cursor: "pointer",
@@ -57494,7 +57648,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* ===== title / class selection ===== */}
-      {ui.mode === "create" && (
+      {ui.mode === "create" && ui.editLook && (
         <div style={{
           position: "absolute", left: 0, right: 0, bottom: 0,
           padding: "10px 0 16px", pointerEvents: "none",
