@@ -32113,50 +32113,127 @@ function CherryAdventure() {
             }
         };
         G.eventT = 20; // first event comes fairly soon
-        // ---------- 🗼 Dungeon gate — rectangular tower doorway ----------
+        // ---------- 🗼 ประตูหอคอย — ซากหอคอยหินเก่าพังทลาย มีช่องประตูให้วาปเข้า ----------
+        //   วางให้ "ช่องประตู" อยู่ที่ portal.position เป๊ะ ๆ (โค้ดอื่นวัดระยะจากจุดนี้)
+        //   ตัวหอคอยจึงถอยไปข้างหลังประตูในแกน local +Z เพื่อไม่ให้ขวางทางเดินที่วิ่งเข้ามาจากด้านหน้า
         const portal = new THREE.Group();
         const gateStone = new THREE.MeshStandardMaterial({ color: 0x3a2a5a, roughness: 0.85, metalness: 0.1 });
+        const stoneA = new THREE.MeshStandardMaterial({ color: 0x4a3a66, roughness: 0.92, metalness: 0.05 });
+        const stoneB = new THREE.MeshStandardMaterial({ color: 0x33264f, roughness: 0.95, metalness: 0.05 });
+        const stoneC = new THREE.MeshStandardMaterial({ color: 0x281d40, roughness: 0.97, metalness: 0.04 });
+        const mossMat = new THREE.MeshStandardMaterial({ color: 0x1c3320, roughness: 1, metalness: 0 });
         const gateTrim = new THREE.MeshStandardMaterial({ color: 0x9a6ad0, emissive: 0x6a2ad0, emissiveIntensity: 0.95, roughness: 0.4, metalness: 0.3 });
-        const DW = 1.7, DH = 2.6, TH = 0.28; // 🚪 door width / height / frame thickness (rectangular)
-        // 🧱 two side pillars + top lintel = the rectangular stone frame
+        const DW = 1.7, DH = 2.6, TH = 0.28; // 🚪 ขนาดช่องประตู (กว้าง/สูง/ความหนากรอบ)
+        const TWR_R = 1.95, TWR_BACK = 1.95; // 🗼 รัศมีหอคอย · ระยะที่ศูนย์กลางหอถอยหลังจากประตู (เท่ากันเพื่อให้ประตูอยู่ขอบหน้าพอดี)
+        // 🎲 สุ่มแบบมี seed คงที่ — เปิดเกมกี่รอบซากหอคอยก็หน้าตาเดิม
+        let _twSeed = 20260922;
+        const twRnd = () => ((_twSeed = (_twSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+        const stoneOf = (i) => (i % 3 === 0 ? stoneA : i % 3 === 1 ? stoneB : stoneC);
+        // 🧱 กำแพงวงกลมที่แตกหักไม่เท่ากัน — เว้นช่วงหน้าไว้ทำประตู
+        const WALL_N = 16;
+        for (let i = 0; i < WALL_N; i++) {
+            const a = (i / WALL_N) * Math.PI * 2 - Math.PI / 2; // -90° = ด้านหน้า (local -Z)
+            const front = Math.abs(((a + Math.PI / 2 + Math.PI) % (Math.PI * 2)) - Math.PI) < 0.72; // ระยะเชิงมุมจากกลางประตู
+            if (front)
+                continue; // เว้นช่องประตู
+            const back = Math.sin(a) > 0.2; // ด้านหลังยังสูงอยู่ ด้านข้างพังเตี้ยลง
+            const h = (back ? 6.2 : 3.2) + twRnd() * (back ? 3.4 : 2.2);
+            const w = (Math.PI * 2 * TWR_R) / WALL_N * 1.06;
+            const blk = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.46), stoneOf(i));
+            blk.position.set(Math.cos(a) * TWR_R, h / 2, TWR_BACK + Math.sin(a) * TWR_R);
+            blk.rotation.y = -a + Math.PI / 2;
+            blk.rotation.z = (twRnd() - 0.5) * 0.045; // เอียงนิด ๆ ให้ดูทรุด
+            blk.castShadow = true;
+            portal.add(blk);
+            // 🪨 ก้อนหินที่หลุดร่วงค้างอยู่บนยอดกำแพงท่อนนั้น
+            if (twRnd() < 0.45) {
+                const cap = new THREE.Mesh(new THREE.BoxGeometry(w * (0.4 + twRnd() * 0.4), 0.26, 0.42), stoneOf(i + 1));
+                cap.position.set(blk.position.x + (twRnd() - 0.5) * 0.3, h + 0.13, blk.position.z + (twRnd() - 0.5) * 0.3);
+                cap.rotation.y = twRnd() * 3;
+                portal.add(cap);
+            }
+            // 🌿 มอสเกาะโคนกำแพง
+            if (twRnd() < 0.5) {
+                const mo = new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.13, 0.52), mossMat);
+                mo.position.set(blk.position.x * 1.02, 0.1 + twRnd() * 0.2, TWR_BACK + (blk.position.z - TWR_BACK) * 1.02);
+                mo.rotation.y = blk.rotation.y;
+                portal.add(mo);
+            }
+        }
+        // 🕳️ แกนในของหอ — ทรงกระบอกมืด กันมองทะลุไปเห็นฉากหลังผ่านช่องกำแพงที่พัง
+        const twCore = new THREE.Mesh(new THREE.CylinderGeometry(TWR_R - 0.26, TWR_R - 0.18, 5.0, 18, 1, true), new THREE.MeshStandardMaterial({ color: 0x140e22, roughness: 1, metalness: 0, side: THREE.BackSide }));
+        twCore.position.set(0, 2.5, TWR_BACK);
+        portal.add(twCore);
+        // 🪟 ช่องหน้าต่างแคบ ๆ สองช่องบนกำแพงด้านหลัง
+        for (const [wa, wy] of [[0.9, 4.6], [2.3, 6.1], [1.7, 3.1]]) {
+            const win = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.78, 0.2), new THREE.MeshStandardMaterial({ color: 0x0e0a18, roughness: 1 }));
+            win.position.set(Math.cos(wa) * (TWR_R + 0.12), wy, TWR_BACK + Math.sin(wa) * (TWR_R + 0.12));
+            win.rotation.y = -wa + Math.PI / 2;
+            portal.add(win);
+        }
+        // 🚪 กรอบประตูหิน — เสาสองข้าง + คานบน + ใบเสมาที่แหว่งไปหนึ่งอัน
         for (const sx of [-1, 1]) {
-            const pil = new THREE.Mesh(new THREE.BoxGeometry(TH, DH, TH), gateStone);
+            const pil = new THREE.Mesh(new THREE.BoxGeometry(TH, DH, TH * 1.7), gateStone);
             pil.position.set(sx * (DW / 2), DH / 2, 0);
             pil.castShadow = true;
             portal.add(pil);
         }
-        const lintel = new THREE.Mesh(new THREE.BoxGeometry(DW + TH, TH, TH), gateStone);
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(DW + TH, TH, TH * 1.7), gateStone);
         lintel.position.set(0, DH, 0);
         lintel.castShadow = true;
         portal.add(lintel);
-        // 🏰 crenellations on top so it reads as a tower gate
         for (let k = -1; k <= 1; k++) {
-            const cren = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, TH), gateStone);
+            if (k === 1)
+                continue; // 🧱 อันขวาหักหายไป ให้ดูเก่าพัง
+            const cren = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, TH * 1.6), gateStone);
             cren.position.set(k * 0.62, DH + 0.3, 0);
             portal.add(cren);
         }
-        // ✨ glowing rectangular trim just inside the frame
+        const crenBroke = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, TH * 1.6), gateStone);
+        crenBroke.position.set(0.62, DH + 0.22, 0);
+        crenBroke.rotation.z = 0.12;
+        portal.add(crenBroke);
+        // ✨ ขอบเรืองแสงด้านในกรอบประตู
         const trimTop = new THREE.Mesh(new THREE.BoxGeometry(DW - TH, 0.07, 0.07), gateTrim);
-        trimTop.position.set(0, DH - TH / 2, TH / 2 + 0.01);
+        trimTop.position.set(0, DH - TH / 2, -TH * 0.85 - 0.01);
         portal.add(trimTop);
         const pRing = trimTop; // 🔖 kept for reference compatibility
         for (const sx of [-1, 1]) {
             const tv = new THREE.Mesh(new THREE.BoxGeometry(0.07, DH - TH, 0.07), gateTrim);
-            tv.position.set(sx * (DW / 2 - TH / 2), (DH - TH) / 2, TH / 2 + 0.01);
+            tv.position.set(sx * (DW / 2 - TH / 2), (DH - TH) / 2, -TH * 0.85 - 0.01);
             portal.add(tv);
         }
-        // 🟪 rectangular energy fill (the portal surface)
+        // 🟪 ผิวพอร์ทัลในช่องประตู
         const pDisc = new THREE.Mesh(new THREE.PlaneGeometry(DW - TH, DH - TH), new THREE.MeshBasicMaterial({ color: 0x4a1a8a, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
-        pDisc.position.set(0, (DH - TH) / 2 + TH / 2, 0.015);
+        pDisc.position.set(0, (DH - TH) / 2 + TH / 2, -0.015);
         portal.add(pDisc);
-        // 🔮 inner rectangular glow (pulses)
         const pSwirl = new THREE.Mesh(new THREE.PlaneGeometry(DW - TH - 0.34, DH - TH - 0.44), new THREE.MeshBasicMaterial({ color: 0xc9a8f0, transparent: true, opacity: 0.5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-        pSwirl.position.set(0, (DH - TH) / 2 + TH / 2, 0.03);
+        pSwirl.position.set(0, (DH - TH) / 2 + TH / 2, -0.03);
         portal.add(pSwirl);
+        // 🧱 ซากผนังเหนือประตู — เดิมผนังด้านหน้าต่อขึ้นไปจนสุด ตอนนี้เหลือแค่ตอ
+        for (const [ox, oh, ow] of [[-0.72, 1.5, 0.52], [-0.18, 0.78, 0.46], [0.42, 1.12, 0.5]]) {
+            const ab = new THREE.Mesh(new THREE.BoxGeometry(ow, oh, 0.44), stoneOf(Math.round(ox * 10) + 8));
+            ab.position.set(ox, DH + 0.45 + oh / 2, 0.06);
+            ab.rotation.z = (twRnd() - 0.5) * 0.07;
+            ab.castShadow = true;
+            portal.add(ab);
+        }
+        // 🪨 เศษหินกองอยู่รอบโคนหอ
+        for (let i = 0; i < 11; i++) {
+            const a = twRnd() * Math.PI * 2, rr = TWR_R + 0.35 + twRnd() * 1.5;
+            const sz = 0.18 + twRnd() * 0.34;
+            const rock = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * (0.5 + twRnd() * 0.5), sz * (0.7 + twRnd() * 0.6)), stoneOf(i));
+            rock.position.set(Math.cos(a) * rr, sz * 0.3, TWR_BACK + Math.sin(a) * rr);
+            rock.rotation.set(twRnd() * 0.5, twRnd() * 3, twRnd() * 0.4);
+            rock.castShadow = true;
+            portal.add(rock);
+        }
         portal.position.set(-6.6, 0, 7.0);
         portal.rotation.y = 0.8;
         scene.add(portal);
-        colliders.push({ x: -6.6, z: 7.0, r: 0.4 });
+        // 🚧 ตัวหอคอยกันเดินทะลุ — วางที่ศูนย์กลางหอ (ถอยหลังจากประตูไปตามแกน local +Z)
+        //    รัศมีเล็กกว่าตัวหอเล็กน้อย เพื่อให้ยังเดินเข้าไปแตะช่องประตูได้
+        colliders.push({ x: -6.6 + Math.sin(0.8) * TWR_BACK, z: 7.0 + Math.cos(0.8) * TWR_BACK, r: TWR_R - 0.45 });
         // ---------- 🌀 Dimension rifts: LEFT = back a stage · RIGHT = forward a stage ----------
         G.curBiome = 0;
         G.biomeLvMin = BIOMES[0].lvMin;
