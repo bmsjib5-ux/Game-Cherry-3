@@ -5712,6 +5712,31 @@ export default function CherryAdventure() {
     weaponModels.wew = mkElemSword({ shape: "stone", blade: 0x9a7a4a, glow: 0x4a3a1a, glowI: 0.3, guard: 0x6a5030, handle: 0x4a3320, metal: 0.2, rough: 0.9 }); // 🌍 ดาบปฐพีศิลา
     weaponModels.www = mkElemSword({ shape: "wind", blade: 0xd8ffe0, glow: 0x6ac080, glowI: 0.9, edge: 0x8affa0, guard: 0x3a6a40, handle: 0x2a4a30 }); // 🌪️ ดาบเทพวายุ
     weaponModels.wlw = mkElemSword({ shape: "holy", blade: 0xfff6dc, glow: 0xf5d05a, glowI: 1.1, edge: 0xffe680, guard: 0xd9b45a, guardGlow: 0x5a4210, handle: 0xb0904a }); // 🌙 ดาบเทพจันทรา
+    // ⚔️ ดาบตรงแบบเรียบ — ใช้กับดาบที่ไม่มีธาตุ (ฝึกหัด / เหล็กกล้า / ดาบใหญ่) · o.w/o.L = กว้าง/ยาวใบ · o.great = สองมือ
+    const mkPlainSword = (o) => {
+      const g = new THREE.Group();
+      const handle = mkStick(o.handle || 0x5a3b26, o.great ? 0.4 : 0.28); handle.position.y = o.great ? -0.28 : -0.22; g.add(handle);
+      const gold = new THREE.MeshStandardMaterial({ color: o.guard || 0x8a8e98, metalness: o.gMetal != null ? o.gMetal : 0.7, roughness: 0.35, emissive: o.guardGlow || 0x000000, emissiveIntensity: o.guardGlow ? 0.6 : 0 });
+      const guard = new THREE.Mesh(new THREE.BoxGeometry(o.gw || 0.22, 0.05, 0.07), gold); guard.position.y = -0.05; g.add(guard);
+      if (o.great) for (const sx of [-1, 1]) { const prong = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.16, 4), gold); prong.position.set(sx * (o.gw / 2 + 0.03), -0.02, 0); prong.rotation.z = sx * -1.2; g.add(prong); }
+      const steel = new THREE.MeshStandardMaterial({ color: o.blade, metalness: o.metal != null ? o.metal : 0.8, roughness: o.rough != null ? o.rough : 0.28, emissive: o.glow || 0x000000, emissiveIntensity: o.glowI != null ? o.glowI : 0 });
+      const W = o.w || 0.09, L = o.L || 0.8;
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(W, L, o.t || 0.026), steel); blade.position.y = -0.03 + L / 2; g.add(blade);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(W * 0.72, 0.16, 4), steel); tip.position.y = -0.03 + L + 0.07; tip.rotation.y = Math.PI / 4; tip.scale.set(1, 1, 0.35); g.add(tip);
+      if (o.fuller) { const f = new THREE.Mesh(new THREE.BoxGeometry(W * 0.28, L * 0.8, (o.t || 0.026) + 0.006), new THREE.MeshStandardMaterial({ color: o.fuller, metalness: 0.5, roughness: 0.4 })); f.position.y = -0.03 + L / 2; g.add(f); }
+      if (o.gem) { const gm = new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), new THREE.MeshStandardMaterial({ color: o.gem, emissive: o.gem, emissiveIntensity: 0.9, roughness: 0.2 })); gm.scale.set(0.85, 1.3, 0.55); gm.position.set(0, -0.05, 0.045); g.add(gm); g.userData.flame = gm; }
+      const pommel = new THREE.Mesh(new THREE.SphereGeometry(o.great ? 0.05 : 0.04, 10, 8), gold); pommel.position.y = o.great ? -0.5 : -0.38; g.add(pommel);
+      if (o.rivets) for (let k = 0; k < 3; k++) { const rv = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), gold); rv.position.set(0, 0.12 + k * 0.2, (o.t || 0.026) / 2 + 0.006); g.add(rv); }
+      g.userData.gripY = 0.42;
+      return g;
+    };
+    // 🪵 st_w ดาบฝึกหัด — ดาบไม้ทั้งเล่ม ด้ามหนังเก่า ไม่มีประกาย
+    weaponModels.st_w = mkPlainSword({ blade: 0xb08a5a, guard: 0x7a5a3a, gMetal: 0.05, handle: 0x5a3b26, metal: 0.05, rough: 0.9, w: 0.085, L: 0.7, t: 0.03 });
+    // ⚒️ fg_sword ดาบเหล็กกล้า — เหล็กขัดเงา ร่องเลือดเข้ม หมุดสามเม็ด การ์ดเหล็กเรียบ
+    weaponModels.fg_sword = mkPlainSword({ blade: 0xc8ccd4, guard: 0x5a5e68, handle: 0x2a2a34, w: 0.095, L: 0.86, fuller: 0x7a7e88, rivets: true });
+    // ⚔️ fg_great ดาบใหญ่ทำลายล้าง — ใบกว้างยาวเหล็กดำ การ์ดกว้างมีเขี้ยว อัญมณีแดงเรือง
+    weaponModels.fg_great = mkPlainSword({ great: true, blade: 0x6a6e78, guard: 0x3a3a44, guardGlow: 0x3a0a0a, handle: 0x1a1a22, w: 0.16, L: 1.12, t: 0.036, gw: 0.36, fuller: 0x2a2a30, gem: 0xe83a3a });
+    ["st_w", "fg_sword", "wfw", "wiw", "wew", "www", "wlw"].forEach((k) => { if (weaponModels[k]) weaponModels[k].userData.bladeScale = 1.25; });   // 📏 ยาวเท่าดาบ KayKit ในมือ
     { // ca นักธนู: ornate elven bow — dark wood limbs, gold filigree tips with green leaves, teal gem
       const g = new THREE.Group();
       const darkWood = new THREE.MeshStandardMaterial({ color: 0x1e1712, roughness: 0.42, metalness: 0.25, emissive: 0x0e0805, emissiveIntensity: 0.18 }); // ebony wood body
@@ -6265,23 +6290,40 @@ export default function CherryAdventure() {
       const tsuba = new THREE.Mesh(opts.roundGuard ? new THREE.TorusGeometry(0.075, 0.03, 8, 18) : new THREE.CylinderGeometry(0.095, 0.095, 0.025, opts.guardSides || 12), new THREE.MeshStandardMaterial({ color: opts.guard || 0x1a1a1a, metalness: 0.7, roughness: 0.3, emissive: opts.guardGlow || 0x000000, emissiveIntensity: opts.guardGlow ? 0.5 : 0 }));
       tsuba.position.y = 0.12; if (opts.roundGuard) tsuba.rotation.x = Math.PI / 2;
       // blade
-      const bladeMat = new THREE.MeshStandardMaterial({ color: opts.blade || 0xe8ecf0, metalness: 0.9, roughness: 0.12, emissive: opts.glow || 0x3a4048, emissiveIntensity: opts.glowI != null ? opts.glowI : 0.35 });
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.9, 0.013), bladeMat);
+      const bladeMat = new THREE.MeshStandardMaterial({ color: opts.blade || 0xe8ecf0, metalness: opts.metal != null ? opts.metal : 0.9, roughness: opts.rough != null ? opts.rough : 0.12, emissive: opts.glow || 0x3a4048, emissiveIntensity: opts.glowI != null ? opts.glowI : 0.35 });
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(opts.bladeW || 0.06, 0.9, opts.bladeT || 0.02), bladeMat);
       blade.position.y = 0.59; blade.rotation.z = opts.curve != null ? opts.curve : 0.1;
       const tipk = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.14, 4), bladeMat);
       tipk.position.set(0.05, 1.04, 0); tipk.scale.set(1, 1, 0.3); tipk.rotation.z = -0.2;
       // glowing hamon edge line
-      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.9, 0.016), new THREE.MeshStandardMaterial({ color: opts.edge || 0xffffff, emissive: opts.edge || 0xffffff, emissiveIntensity: 1.2, transparent: true, opacity: 0.9 }));
-      edge.position.set(-0.02, 0.59, 0); edge.rotation.z = opts.curve != null ? opts.curve : 0.1;
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.9, 0.016), new THREE.MeshStandardMaterial({ color: opts.edge || 0xffffff, emissive: opts.edge || 0xffffff, emissiveIntensity: opts.edgeI != null ? opts.edgeI : 1.2, transparent: true, opacity: 0.9 }));
+      edge.position.set(-((opts.bladeW || 0.06) / 2) + 0.004, 0.59, 0); edge.rotation.z = opts.curve != null ? opts.curve : 0.1;
       g.add(handle, tsuba, blade, tipk, edge);
       g.userData.flame = opts.animGlow ? edge : null;
-      g.userData.gripY = 0.15;
+      g.userData.gripY = 0.3;                                   // กำกลางด้าม (เดิม 0.15 กำชิดทสึบะ)
+      g.userData.bladeScale = opts.bladeScale != null ? opts.bladeScale : 1.25;
       return g;
     };
     weaponModels.kf = mkKatana({ blade: 0xffd0a0, glow: 0xff5a1a, glowI: 0.7, edge: 0xff7a2a, guard: 0x5a2a10, wrap: 0xc0392b, animGlow: true }); // 🔥 fire
     weaponModels.ki = mkKatana({ blade: 0xd0f0ff, glow: 0x4aa0e0, glowI: 0.7, edge: 0xaef0ff, guard: 0x2a5a7a, wrap: 0x4a90c0, roundGuard: true }); // ❄️ ice
     weaponModels.kw = mkKatana({ blade: 0xd8ffe0, glow: 0x4ac06a, glowI: 0.6, edge: 0x8affa0, guard: 0x2a5a30, wrap: 0x5aa06a, curve: 0.16 }); // 🍃 wind (more curved)
     weaponModels.kl = mkKatana({ blade: 0xfff8e0, glow: 0xf5d05a, glowI: 0.9, edge: 0xffe680, guard: 0xd9b45a, guardGlow: 0x5a4210, wrap: 0xf0e0a0, roundGuard: true, animGlow: true }); // 🌟 light
+    // 🪵 st_k ดาบไม้ซ้อม — โบกเก้นไม้ทั้งเล่ม ไม่มีคมเรือง ทสึบะไม้กลม เชือกพันด้ามสีเข้ม
+    weaponModels.st_k = mkKatana({ blade: 0xb08a5a, glow: 0x000000, glowI: 0, edge: 0x8a6a40, edgeI: 0.05, metal: 0.05, rough: 0.9, bladeW: 0.07, bladeT: 0.028, guard: 0x7a5a36, wrap: 0x3a2a1a, handle: 0x8a6a44, roundGuard: true, curve: 0.08 });
+    // ⚒️ fg_katana ดาบคาตานะเหล็กกล้า — เหล็กขัดเงาเรียบ ๆ คมขาวสว่าง ทสึบะเหลี่ยมดำ พันด้ามน้ำเงินกรมท่า
+    weaponModels.fg_katana = mkKatana({ blade: 0xd8dce4, glow: 0x2a3038, glowI: 0.25, edge: 0xffffff, edgeI: 0.9, guard: 0x2a2a34, wrap: 0x2a3a6a, handle: 0x1a1a24, guardSides: 8, bladeW: 0.062 });
+    { // 🌸 kl2 ดาบซากุระราตรี — ใบดาบดำอมม่วง คมเรืองชมพู ทสึบะกลมชมพู กลีบซากุระโปรยรอบคม
+      const g = mkKatana({ blade: 0x2a1a3a, glow: 0xff7ab0, glowI: 0.75, edge: 0xffb0d0, guard: 0xd05a8a, guardGlow: 0x5a1a3a, wrap: 0x3a1a2a, handle: 0x1a0a14, roundGuard: true, curve: 0.14, animGlow: true });
+      const petalMat = new THREE.MeshStandardMaterial({ color: 0xffb8d4, emissive: 0xff6aa0, emissiveIntensity: 0.9, roughness: 0.5, side: THREE.DoubleSide });
+      for (let k = 0; k < 6; k++) {
+        const pet = new THREE.Mesh(new THREE.CircleGeometry(0.03, 5), petalMat);
+        const a = k * 1.05;
+        pet.position.set(Math.cos(a) * 0.09 + 0.02, 0.28 + k * 0.14, Math.sin(a) * 0.05);
+        pet.rotation.set(0.6 + k * 0.4, a, 0.3 * k);
+        g.add(pet);
+      }
+      weaponModels.kl2 = g;
+    }
     { // kd 🐉 คาตานะมังกร — bespoke dragon katana: dark curved blade, red flame edge, round gold dragon tsuba, red-wrapped handle
       const g = new THREE.Group();
       const steelMat = new THREE.MeshStandardMaterial({ color: 0x22242c, metalness: 0.9, roughness: 0.16, emissive: 0x0c0d12, emissiveIntensity: 0.2 }); // dark steel blade
@@ -7303,9 +7345,12 @@ export default function CherryAdventure() {
     // และมีเครื่องประดับตามธาตุในชื่อไอเทม (เพลิง/น้ำแข็ง/พสุธา/วายุ/จันทรา/มังกร)
     const WPN_FAMILY = { warrior: "sword", archer: "bow", mage: "staff", assassin: "dagger", lancer: "spear", samurai: "katana", office: "pen", coder: "keyboard", aegis: "blaster", boxer: "glove", tamer: "whip" };
     // 🗡️ ดาบ/คาตานะใหญ่ขึ้นเท่าตัว — ครอบคลุมทั้งดาบตามระดับ (w_/kk_) และดาบประจำอาชีพ/ไอเทมเฉพาะ
-    const BLADE_KEYS = { cw: 1, wDw: 1, wS: 1, lg_ow: 1, ck: 1, wDk: 1, lg_ok: 1 };
+    const BLADE_KEYS = { cw: 1, wDw: 1, wS: 1, lg_ow: 1, ck: 1, wDk: 1, lg_ok: 1,
+      st_w: 1, fg_sword: 1, fg_great: 1, wfw: 1, wiw: 1, wew: 1, www: 1, wlw: 1,          // ⚔️ ดาบนักรบทุกใบ
+      st_k: 1, fg_katana: 1, kf: 1, ki: 1, kw: 1, kl: 1, kl2: 1, kd: 1 };                  // 🗡️ คาตานะซามูไรทุกใบ
     const BLADE_HILT = 0.42;   // ระยะจากจุดหมุนโมเดลถึงปลายด้ามล่าง (ใช้ชดเชยตอนขยาย ให้มือยังอยู่ที่ด้าม)
-    const BLADE_BIG = (k) => (typeof k === "string" && (BLADE_KEYS[k] || /^(w|kk)_(sword|katana)_/.test(k)) ? 2 : 1);
+    // 📏 bladeScale ต่อโมเดล: ดาบ/คาตานะที่ปั้นเองสั้นกว่าโมเดล KayKit ราว 20-25% (วัดจริง 1.25-1.35 vs 1.6-1.7) → ขยายเพิ่มให้ยาวเท่ากันในมือ
+    const BLADE_BIG = (k) => { const m = typeof k === "string" ? weaponModels[k] : null; const bs = m && m.userData && m.userData.bladeScale ? m.userData.bladeScale : 1; return (typeof k === "string" && (BLADE_KEYS[k] || /^(w|kk)_(sword|katana)_/.test(k)) ? 2 : 1) * bs; };
     const wpnTierOf = (r) => (r === "legend" || r === "dragon") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
     {
       const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
@@ -8291,8 +8336,10 @@ export default function CherryAdventure() {
       }
       if (famKey && !famHasOwn && G.ensureWeaponModel) G.ensureWeaponModel(famKey); // 🚀 สร้างโมเดลตระกูลอาวุธเมื่อใช้จริง
       // 🗡️ KayKit: อาวุธตระกูล (ดาบ/มีด/ไม้เท้า/ธนู) และอาวุธเริ่มต้นของอาชีพ → โมเดล glTF ถ้าโหลดแล้วและเปิดใช้
+      // 🗡️ อาวุธที่มีโมเดลปั้นเฉพาะตัว (ดาบ/คาตานะทุกใบ) ใช้โมเดลของตัวเอง — เดิม KayKit ทับหมดจนดาบทุกใบในระดับเดียวกันหน้าตาเหมือนกัน
+      const ownModel = !!(id && weaponModels[id]);
       let kkKey = null;
-      if (G.kkKey && !sigHero) {
+      if (G.kkKey && !sigHero && !ownModel) {
         const fam2 = famKey ? famKey.split("_")[1] : (WPN_FAMILY[G.cls] || null);
         const t2 = famKey ? +famKey.split("_")[2] : 0;
         // 💻 นักเวทโค้ดใช้คีย์บอร์ด RGB ของเกมเอง (มีไฟใต้แป้น + คิวบ AI) — ไม่สลับเป็นโมเดล KayKit
@@ -8333,7 +8380,7 @@ export default function CherryAdventure() {
         model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
         model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
       }
-      if (famKey && G.applyWpnElem) { // 🔥 ติดเครื่องประดับธาตุตามชื่ออาวุธ
+      if (famKey && !ownModel && G.applyWpnElem) { // 🔥 ติดเครื่องประดับธาตุตามชื่ออาวุธ (โมเดลเฉพาะตัวปั้นธาตุมาในตัวแล้ว)
         const wit2 = LOOT.find((x) => x.id === id);
         const parts = famKey.split("_");
         G.applyWpnElem(model, parts[1], +parts[2], (wit2 && wit2.elem) || null);
@@ -59474,7 +59521,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           {ui.skillPanel && (() => {
             // 💪 หน้าสถานะ (ปรับใหม่): การ์ดสรุปค่าพลังจริงตัวใหญ่ → แต้มรอใช้ + ปุ่มไปกระดานสกิล → อัพค่าสถานะแบบกริด → หัวข้อย่อยพับได้ทีละอัน
             const P = G.profileInfo ? G.profileInfo() : {};
-            const wideS = window.innerWidth >= 700;
+            const wideS = false;   // 📏 กรอบกว้างเท่าหน้าเมนูอื่น (คอลัมน์เดียว) — ผู้เล่นขอให้เท่ากัน ไม่ขยาย
             const sec = ui.statSec || (ui.pathOpen && !ui.pathId ? "path" : null);
             const tog = (k) => setUi((u) => ({ ...u, statSec: (u.statSec || (u.pathOpen && !u.pathId ? "path" : null)) === k ? "none" : k, pathOpen: false }));
             const C = CLASSES[ui.cls] || {};
@@ -59505,7 +59552,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               </button>
             );
             return (
-            <div style={{ ...SKILL_SHELL, maxWidth: wideS ? Math.round(720 * _uiInv) : SKILL_SHELL.maxWidth }}>
+            <div style={SKILL_SHELL}>
               {closeBtn("skillPanel")}
               {skillTabs("skillPanel")}
               {/* 🪪 การ์ดสรุปตัวละคร + ค่าพลังจริง */}
@@ -59563,25 +59610,26 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     fontSize: 10.5, fontWeight: 800, color: "#fff", background: (ui.statPts || 0) > 0 ? "linear-gradient(90deg,#5aa06a,#7ac08a)" : "#c8ccd4",
                   }}>🎯 อัพอัตโนมัติ</button>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: wideS ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: 6 }}>
-                  {Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
-                    const rank = (ui.baseStats || {})[k] || 0;
-                    const c2 = 1 + Math.floor(rank / 10);
-                    const can = (ui.statPts || 0) >= c2;
-                    return (
-                      <div key={k} style={{ background: "#fff", borderRadius: 11, padding: "7px 5px 6px", textAlign: "center", border: "1px solid #dfe6f5" }}>
-                        <div style={{ fontSize: 18, lineHeight: 1 }}>{inf.emoji}</div>
-                        <div style={{ fontSize: 11, fontWeight: 900, color: "#4a5a7a", marginTop: 2 }}>{inf.name} <span style={{ color: "#9aa4b8" }}>Lv.{rank}</span></div>
-                        <div style={{ fontSize: 8.5, color: "#9aa0b0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{inf.per}</div>
-                        <button onClick={() => G.allocStat(k)} disabled={!can} style={{
-                          width: "100%", marginTop: 5, height: 28, borderRadius: 8, border: "none", cursor: can ? "pointer" : "default",
-                          fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
-                          background: can ? "linear-gradient(90deg,#59a0e8,#7ac0f0)" : "#d0d5dd",
-                        }}>＋{c2 > 1 ? ` (${c2})` : ""}</button>
+                {/* 💪 แยกเป็นบรรทัดละค่า (ตามที่ผู้เล่นขอ) — ไอคอน · ชื่อ+เลเวล · ผลต่อแต้ม · ปุ่ม ＋ ขวาสุด */}
+                {Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
+                  const rank = (ui.baseStats || {})[k] || 0;
+                  const c2 = 1 + Math.floor(rank / 10);
+                  const can = (ui.statPts || 0) >= c2;
+                  return (
+                    <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", borderRadius: 10, padding: "5px 8px 5px 9px", marginBottom: 4, border: "1px solid #dfe6f5" }}>
+                      <span style={{ fontSize: 17, width: 22, textAlign: "center", lineHeight: 1 }}>{inf.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 900, color: "#4a5a7a" }}>{inf.name} <span style={{ color: "#9aa4b8" }}>Lv.{rank}</span></div>
+                        <div style={{ fontSize: 9, color: "#9aa0b0" }}>{inf.per}</div>
                       </div>
-                    );
-                  })}
-                </div>
+                      <button onClick={() => G.allocStat(k)} disabled={!can} style={{
+                        width: 58, height: 30, borderRadius: 8, border: "none", cursor: can ? "pointer" : "default", flex: "none",
+                        fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
+                        background: can ? "linear-gradient(90deg,#59a0e8,#7ac0f0)" : "#d0d5dd",
+                      }}>＋{c2 > 1 ? ` (${c2})` : ""}</button>
+                    </div>
+                  );
+                })}
                 <div style={{ fontSize: 9, color: "#8a94a8", marginTop: 5 }}>ได้ 3 แต้ม/เลเวล · ทุก 10 ระดับของค่านั้นใช้แต้มเพิ่ม 1 (เลขในวงเล็บ)</div>
               </div>
               {/* 📂 หัวข้อย่อยพับได้ — ฉายา · สายอาชีพขั้นสูง · ท่าไม้ตาย · รีเซ็ตแต้ม */}
