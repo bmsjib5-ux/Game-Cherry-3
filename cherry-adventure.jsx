@@ -2884,9 +2884,21 @@ const CREATE_TABS = [
 // 🧍 ตัวละครโมเดล 3D (ทดลอง) — ประกอบจาก Quaternius Universal Base Characters + Modular Outfits + Universal Animation Library (CC0)
 //    files = ชิ้นที่โหลด (ทุกชิ้นใช้ rig 65 ข้อชุดเดียวกัน เล่นท่าเดียวกันพร้อมกันได้) · h = ความสูงในหน่วยตัวละคร (เท้าแตะ y=0)
 //    atk = ท่าโจมตีตามอาชีพ · แยกจากตัวหลักที่ปั้นจากโค้ดโดยสิ้นเชิง: เลือกแล้วร่างปั้นเองถูกซ่อน โมเดลโผล่แทน
+// 🧍 ตัวละครโมเดล 3D ครบทุกสายอาชีพ — ชุดฟรีมี 2 แบบ (Ranger/Peasant) × 2 เพศ + ผม 6 ทรง
+//    จึงแยกหน้าตาแต่ละอาชีพด้วย เพศ + ชุด + ทรงผม + สีย้อมชุด (hue หมุนสีบน texture ของชุดเท่านั้น ไม่แตะผิว/ผม)
+//    hue = [องศาสี, ความอิ่มตัวต่ำสุด, ตัวคูณความสว่าง, เพดานสว่าง?, ย้อมเทากลาง?, ความอิ่มตัวสูงสุด?] — ชุดเดียวกับที่ใช้ย้อมมอนสเตอร์
 const HERO_MODELS = {
-  ranger:  { name: "เรนเจอร์",  emoji: "🏹", gender: 0, files: ["Female_Base", "Female_Ranger", "Hair_Long"], h: 3.9, desc: "นักธนูป่าใส่ฮู้ดเขียว" },
-  peasant: { name: "ชาวบ้าน",   emoji: "🌾", gender: 1, files: ["Male_Base", "Male_Peasant"],               h: 4.0, desc: "หนุ่มชาวบ้านเสื้อผ้าเรียบ" },
+  warrior:  { name: "นักรบ",        emoji: "⚔️", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_Buzzed"],           h: 4.0, hue: [215, 0.30, 1.02], desc: "นักรบเกราะหนังเหล็ก" },
+  aegis:    { name: "องครักษ์",     emoji: "🛡️", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_SimpleParted"],     h: 4.05, hue: [45, 0.60, 1.06], desc: "องครักษ์ชุดทอง" },
+  lancer:   { name: "ทหารหอก",      emoji: "🔱", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_Buzzed"],           h: 4.05, hue: [352, 0.50, 0.98], desc: "ทหารหอกชุดแดงเลือดหมู" },
+  samurai:  { name: "ซามูไร",       emoji: "🗡️", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_Buns"],            h: 3.95, hue: [358, 0.60, 1.00], desc: "ซามูไรมวยผมชุดแดง" },
+  assassin: { name: "นักฆ่าเงา",    emoji: "🥷", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_SimpleParted"],     h: 3.9, hue: [225, 0, 0.5, 0.97, 1, 0.2], desc: "นักฆ่าชุดดำล้วน" },
+  boxer:    { name: "นักมวย",       emoji: "🥊", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"],          h: 3.95, hue: [24, 0.78, 1.06], desc: "นักมวยเสื้อกล้ามส้ม" },
+  office:   { name: "พนักงานออฟฟิศ", emoji: "💼", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_SimpleParted"],   h: 3.95, hue: [222, 0.52, 0.96], desc: "พนักงานเชิ้ตกรมท่า" },
+  archer:   { name: "นักธนู",       emoji: "🏹", gender: 0, files: ["Female_Base", "Female_Ranger", "Hair_Long"],         h: 3.9, desc: "นักธนูป่าใส่ฮู้ดเขียว" },
+  mage:     { name: "นักเวท",       emoji: "🔮", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_Buns"],        h: 3.85, hue: [280, 0.52, 1.02], desc: "นักเวทชุดม่วงมวยผม" },
+  coder:    { name: "โปรแกรมเมอร์", emoji: "💻", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_SimpleParted"], h: 3.85, hue: [186, 0.55, 1.02], desc: "โปรแกรมเมอร์ชุดฟ้าน้ำทะเล" },
+  tamer:    { name: "นักฝึกสัตว์",  emoji: "🐾", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_Long"],        h: 3.9, hue: [36, 0.50, 1.02], desc: "นักฝึกสัตว์ชุดน้ำตาลทอง" },
 };
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
 const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.1, pz: 0 };   // py 0.1 = กำปั้นอยู่ระหว่างลูกทุยกับโกร่งดาบพอดี (ต่ำกว่านี้มือไปกำใบดาบ)   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
@@ -2904,8 +2916,8 @@ const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword
                     archer: "Pistol_Idle_Loop" };                             // ที่เหลือ = Idle_Loop
 const CHAR_PRESETS = [
   { name: "เชอร์รี่", emoji: "🍒", gender: 0, skin: 0, hairColor: 3, hairStyle: 7, eyes: 3, outfit: 1 },
-  { name: "เรนเจอร์", emoji: "🏹", gender: 0, skin: 0, hairColor: 5, hairStyle: 0, eyes: 0, outfit: 2, model: "ranger" },   // 🧍 โมเดล 3D ทดลอง
-  { name: "ชาวบ้าน",  emoji: "🌾", gender: 1, skin: 2, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 5, model: "peasant" },
+  { name: "นักธนูป่า", emoji: "🏹", gender: 0, skin: 0, hairColor: 5, hairStyle: 0, eyes: 0, outfit: 2, model: "archer" },   // 🧍 โมเดล 3D
+  { name: "นักรบเหล็ก", emoji: "⚔️", gender: 1, skin: 2, hairColor: 0, hairStyle: 1, eyes: 0, outfit: 5, model: "warrior" },
   { name: "ฮารุ",    emoji: "🌸", gender: 0, skin: 3, hairColor: 0, hairStyle: 0, eyes: 1, outfit: 2, hero: "haru" },
   { name: "ออเรลิอุส", emoji: "⚜️", gender: 1, skin: 1, hairColor: 3, hairStyle: 1, eyes: 0, outfit: 0, hero: "aurelius" },
   { name: "รักนาร์", emoji: "🪓", gender: 1, skin: 2, hairColor: 1, hairStyle: 2, eyes: 2, outfit: 1, hero: "ragnar" },
@@ -7998,6 +8010,7 @@ export default function CherryAdventure() {
       t.userData = t.userData || {}; t.userData._shared = true; t.needsUpdate = true;
       return (qtHueCache[ck] = t);
     };
+    G.qtHueMap = qtHueMap;            // 🎨 ใช้ซ้ำกับชุดของตัวละครโมเดล 3D (ย้อมสีชุดโดยรักษาแสงเงา/ลายผ้าเดิม)
     // 🧬 ตัววิวัฒน์ (stage ≥ 2) ใช้ไฟล์/ค่าจาก evo ทับของขั้นแรก — ให้บอสวิวัฒน์ได้โมเดลคนละตัวกับลูกน้อง
     const qtP = (spId, stage) => { const P = QT_MON[spId]; return P && P.evo && (stage || 1) >= 2 ? Object.assign({}, P, P.evo) : P; };
     G.qtP = qtP;
@@ -9825,14 +9838,23 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           });
           // 💡 เก็บวัสดุไว้ปรับความสว่างรายเฟรม — กลางคืนแสงฉากมืดลงมาก โมเดล PBR จะดำจนแทบมองไม่เห็นตัว
           //    ใช้ emissiveMap = แผนที่สีเดิม แล้วเร่ง emissive ตามความมืด ตัวจึงสว่างด้วย "สีของตัวเอง" ไม่ใช่ฟุ้งขาว
-          const mats = [];
-          parts.forEach((pt) => pt.traverse((o) => {
+          //    โคลนวัสดุต่อร่าง — SkeletonUtils.clone ใช้วัสดุร่วมกับไฟล์ที่แคชไว้ ถ้าย้อมทับตรง ๆ สีจะติดค้างข้ามตัวละคร
+          const mats = [], seen = new Map();
+          parts.forEach((pt, pi) => pt.traverse((o) => {
             if (!o.isMesh) return;
-            (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
-              if (!m || mats.indexOf(m) >= 0) return;
-              if (m.map && !m.emissiveMap) { m.emissiveMap = m.map; m.needsUpdate = true; }
-              mats.push(m);
+            const arr = Array.isArray(o.material) ? o.material : [o.material];
+            const fresh = arr.map((m) => {
+              if (!m) return m;
+              let c = seen.get(m);
+              if (!c) {
+                c = m.clone();
+                if (c.map && !c.emissiveMap) c.emissiveMap = c.map;
+                if (M.hue && pi === 1 && c.map && G.qtHueMap) c.map = G.qtHueMap(c.map, M.files[1] + ":" + (c.name || "m"), M.hue);   // 🎨 ย้อมเฉพาะชิ้นเสื้อผ้า (parts[1]) ผิว/ผมคงเดิม
+                c.needsUpdate = true; seen.set(m, c); mats.push(c);
+              }
+              return c;
             });
+            o.material = Array.isArray(o.material) ? fresh : fresh[0];
           }));
           const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
           const acts = {};
@@ -37370,7 +37392,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // 📖 tutorial steps for new players
     const TUTORIAL = [
-      { emoji: "🕹️", title: "เดินสำรวจ", text: "ใช้จอยสติ๊กมุมซ้ายล่าง · บนคอมกด W A S D (หรือลูกศร) เดิน · คลิกซ้ายบนพื้นเพื่อสั่งเดินไปจุดนั้น · คลิกขวาค้างแล้วลาก = หมุนกล้อง" },
+      { emoji: "🕹️", title: "เดินสำรวจ", text: "ใช้จอยสติ๊กมุมซ้ายล่างเดิน · ลากนิ้วบนจอ = หมุนมุมมอง · หนีบสองนิ้ว = ซูม · บนคอมกด W A S D เดิน คลิกซ้ายบนพื้นสั่งเดิน คลิกขวาลากหมุนกล้อง" },
       { emoji: "⚔️", title: "ต่อสู้", text: "แตะ ⚔️ โจมตี · ⚡ ปล่อยสกิลอาชีพ (ใช้มานา 💧) · 💗 จับมอนสเตอร์ตอนเลือดน้อย" },
       { emoji: "⚡", title: "สกิล & เลเวล", text: "เลเวลอัพได้แต้มสกิล → กด ⚡ อัพสกิลอาชีพให้แรงถึง Lv.100 (ยิ่งเลเวลตัวละครสูง ยิ่งอัพสกิลได้สูง)" },
       { emoji: "🐾", title: "สัตว์เลี้ยง", text: "จับมอนสเตอร์มาเป็นทีม 3 ตัว (ปุ่ม 🐾) ช่วยบัฟ+ร่วมรบ · ผสมพันธุ์ได้ตัวหายาก" },
@@ -37646,8 +37668,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
     );
+    let touchCam = null;
     const onTap = (e) => {
-      if (e.touches && e.touches.length === 2) { pinchDist = touchDist(e); return; }
+      if (e.touches && e.touches.length === 2) { pinchDist = touchDist(e); touchCam = null; return; }
+      if (e.touches && e.touches.length === 1) touchCam = { x: e.touches[0].clientX, y: e.touches[0].clientY };   // 📱 จุดเริ่มลากหมุนกล้อง
       if (e.button != null && e.button !== 0) return;   // 🖱️ ปุ่มขวา/กลาง = หมุนกล้องอย่างเดียว ไม่ปักจุดเดิน
       if (G.mode !== "explore") return;
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
@@ -37704,6 +37728,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           return;
         }
       }
+      // 📱 นิ้วแตะพื้น = ไม่ปักจุดเดินแล้ว — ลากนิ้วเพื่อหมุนมุมมองแทน (เดินด้วยจอยสติ๊ก)
+      //    เมาส์คลิกซ้ายบนคอมยังสั่งเดินได้เหมือนเดิม
+      if (e.touches) return;
       const hit = new THREE.Vector3();
       raycaster.ray.intersectPlane(floorPlane, hit);
       if (hit) {
@@ -37724,9 +37751,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const d = touchDist(e);
         G.zoom((pinchDist - d) * 0.02);
         pinchDist = d;
+        touchCam = null;
+        return;
       }
+      // 📱🔄 ลากนิ้วเดียวบนจอ = หมุนมุมมอง (แทนการแตะปักจุดเดินแบบเดิม)
+      if (!touchCam || !e.touches || e.touches.length !== 1 || G._dragFurni) return;
+      const t = e.touches[0], dx = t.clientX - touchCam.x, dy = t.clientY - touchCam.y;
+      touchCam.x = t.clientX; touchCam.y = t.clientY;
+      if (G.rotateCam) G.rotateCam(-dx * 0.008, -dy * 0.006);
     };
-    const onPinchEnd = () => (pinchDist = 0);
+    const onPinchEnd = () => { pinchDist = 0; touchCam = null; };
     // 🛋️🖐️ ลากเฟอร์นิเจอร์ตามนิ้ว/เมาส์ บนระนาบพื้นบ้าน แล้วบันทึกตำแหน่งตอนปล่อย
     const onFurniDrag = (e) => {
       if (!G._dragFurni) return;
@@ -37784,6 +37818,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     renderer.domElement.addEventListener("touchstart", onTap, { passive: true });
     renderer.domElement.addEventListener("touchmove", onPinchMove, { passive: true });
     renderer.domElement.addEventListener("touchend", onPinchEnd);
+    renderer.domElement.addEventListener("touchcancel", onPinchEnd);
     renderer.domElement.addEventListener("mousemove", onFurniDrag);
     renderer.domElement.addEventListener("touchmove", onFurniDrag, { passive: true });
     window.addEventListener("mouseup", onFurniDrop);
@@ -55105,16 +55140,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             </div>
             <div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🧍 ตัวละครโมเดล 3D <span style={{ fontSize: 9.5, color: "#c09020" }}>ทดลอง</span></div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {[["", "🎨", "ร่างปั้นเอง (ปรับแต่งได้)"]].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (
+              {/* 12 ตัวเลือก (ร่างปั้นเอง + 11 อาชีพ) — ใช้กริดยืดหยุ่น จอแคบได้ 2 คอลัมน์ จอกว้างได้ 3-4 ไม่ยาวเป็นพรืด */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(74px, 1fr))", gap: 5 }}>
+                {[["", "🎨", "ร่างปั้นเอง"]].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (
                   <button key={k || "none"} onClick={() => G.setCustom("model", k || null)} style={{
-                    flex: 1, minWidth: 96, padding: "8px 6px", borderRadius: 12, cursor: "pointer", fontFamily: font,
-                    fontSize: 11.5, fontWeight: 800, border: (ui.custom.model || "") === k ? "2px solid #d9536b" : "2px solid #ece2d8",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+                    padding: "6px 3px", borderRadius: 11, cursor: "pointer", fontFamily: font, lineHeight: 1.15,
+                    fontSize: 10, fontWeight: 800, border: (ui.custom.model || "") === k ? "2px solid #d9536b" : "2px solid #ece2d8",
                     background: (ui.custom.model || "") === k ? "#ffe1ea" : "#fbf7f2", color: (ui.custom.model || "") === k ? "#d9536b" : "#8a5a4a",
-                  }}>{e} {n}</button>
+                  }}><span style={{ fontSize: 17 }}>{e}</span>{n}</button>
                 ))}
               </div>
-              <div style={{ marginTop: 5, fontSize: 9.5, color: "#a58a7a" }}>โมเดลจาก Quaternius (CC0) — โหลดครั้งแรกประมาณ 5-7 MB · ตัวโมเดลยังไม่รับการปรับหน้า/ผม/ชุด และไม่โชว์อาวุธในมือ</div>
+              <div style={{ marginTop: 5, fontSize: 9.5, color: "#a58a7a" }}>โมเดลจาก Quaternius (CC0) — โหลดครั้งแรกประมาณ 6-8 MB · หน้าตา/ผม/ชุด ถูกกำหนดตามอาชีพแล้ว (แถบปรับแต่งด้านล่างจะมีผลเมื่อสลับกลับไป "ร่างปั้นเอง")</div>
             </div>
             <div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>② ตั้งชื่อตัวละคร</div>

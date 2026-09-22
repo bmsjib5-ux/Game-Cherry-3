@@ -41,9 +41,11 @@ Duck.glb      — "Rigged Duck" by weirdybeardyman, CC0 (Peck / Waddle)
 --- assets/quat/hero/ — ตัวละครโมเดล 3D (ทดลอง) — Quaternius, CC0 1.0 ---
 Female_Base.glb / Male_Base.glb — "Universal Base Characters" (Standard/free: Superhero proportions only)
   https://quaternius.com/packs/universalbasecharacters.html
-Female_Ranger.glb / Male_Peasant.glb — "Modular Character Outfits - Fantasy" (Standard/free: Ranger + Peasant)
+Female_Ranger.glb / Male_Ranger.glb / Female_Peasant.glb / Male_Peasant.glb
+  — "Modular Character Outfits - Fantasy" (Standard/free: Ranger + Peasant, both genders)
   https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
-Hair_Long.glb — hairstyle from Universal Base Characters (rigged to head bone)
+Hair_Long.glb / Hair_Buns.glb / Hair_SimpleParted.glb / Hair_Buzzed.glb / Hair_BuzzedFemale.glb / Hair_Beard.glb
+  — hairstyles from Universal Base Characters (rigged to the head bone of the same 65-joint rig)
 Anims.glb — "Universal Animation Library" (Standard/free), trimmed to 17 clips:
   Idle_Loop, Walk_Loop, Jog_Fwd_Loop, Sprint_Loop, Hit_Chest, Death01, Jump_Loop, Roll, Sitting_Idle_Loop,
   Sword_Idle, Sword_Attack, Spell_Simple_Idle_Loop, Spell_Simple_Shoot, Pistol_Idle_Loop, Pistol_Shoot,
