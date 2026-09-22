@@ -3240,7 +3240,7 @@ function CherryAdventure() {
         custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, model: null, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
         inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, itemLock: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
         gold: 80, shop: [], shopOpen: false,
-        eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
+        eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, twr: null, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
         mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
         kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null, skillBoardOpen: false, boardPick: null, boardTick: 0, roadNear: null,
         expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
@@ -33476,58 +33476,252 @@ function CherryAdventure() {
         G.dungeon = null;
         const dungeonCenter = new THREE.Vector3();
         const DUNGEON_MAX = 100;
-        const dungeonSpawn = (floor) => {
-            // 💀 เก็บกวาดมอนของชั้นก่อนที่ค้างในฉาก — กันศพซ้อนทับกันเต็มห้องหอคอย
-            for (let i = scene.children.length - 1; i >= 0; i--) {
-                const o = scene.children[i];
-                if (o && o.userData && o.userData.dungeon) {
-                    scene.remove(o);
-                    (G._disposeObj3D && G._disposeObj3D(o));
-                }
-            }
+        // ================= 🗼 หอคอยมิติ — ต่อสู้แบบโลกกว้าง =================
+        //   เดิมหนึ่งชั้น = มอนหนึ่งตัวในอารีน่าผลัดตา · ตอนนี้ชั้นหนึ่งคือสนามเปิด
+        //   ที่สุ่มมอนหลายตัวออกมาพร้อมกัน ต้องเคลียร์ให้หมดภายในเวลาที่จับไว้
+        //   ทุก 10 ชั้นมีบอสใหญ่ · แต่ละชั้นมีธาตุประจำชั้น + เงื่อนไขสัตว์เลี้ยงที่ช่วยให้ตีง่ายขึ้น
+        const TWR_ELEM_CYCLE = ["fire", "ice", "wind", "water", "earth"];
+        const TWR_SEC = (fl) => (fl % 10 === 0 ? 180 : fl % 5 === 0 ? 130 : 105); // ⏱️ เวลาต่อชั้น
+        const TWR_COUNT = (fl) => (fl % 10 === 0 ? 3 + Math.min(3, Math.floor(fl / 12)) // 👑 บอสใหญ่ + ลูกสมุนอย่างน้อย 2 ตัว
+            : Math.min(8, 2 + Math.floor(fl / 7) + (fl % 5 === 0 ? 1 : 0)));
+        //  หมุนธาตุแบบเลื่อนทุก 5 ชั้น — ชั้นติดกัน 5 ชั้นได้ครบ 5 ธาตุ และชั้นบอส (10/20/30/40/50) ก็ไม่ซ้ำกันเลย
+        const twrElemOf = (fl) => TWR_ELEM_CYCLE[(fl + Math.floor((fl - 1) / 5)) % TWR_ELEM_CYCLE.length];
+        // 🗡️ ธาตุที่ผู้เล่นตีออก — ธาตุที่หลอมใส่อาวุธมาก่อน ถ้าไม่มีก็ใช้ธาตุของอาวุธที่ใส่อยู่
+        const twrPlayerElem = () => {
+            if (G.weaponInfuse && ELEM_META[G.weaponInfuse])
+                return G.weaponInfuse;
+            const it = LOOT.find((x) => x.id === (G.equip && G.equip.weapon));
+            return (it && it.elem) || null;
+        };
+        // 🐾 เงื่อนไขชั้น — พาสัตว์เลี้ยงธาตุที่ "ข่ม" ธาตุประจำชั้นมาด้วย จะตีแรงขึ้น
+        const twrCondOf = (fl) => {
+            const el = twrElemOf(fl);
+            const want = Object.keys(ELEM_BEATS).find((k) => (ELEM_BEATS[k] || []).includes(el)) || "water";
+            return { elem: want, mul: 1.35 };
+        };
+        const twrBuddySp = () => { const b = G.buddy; return b ? (b.sp || b.spId || b) : null; };
+        G.twrCondOk = () => {
+            const D = G.dungeon;
+            if (!D || !D.cond)
+                return false;
+            const b = twrBuddySp();
+            return !!(b && PET_ELEM[b] === D.cond.elem);
+        };
+        // 💥 ตัวคูณดาเมจในหอคอย — ธาตุหักล้าง × โบนัสเงื่อนไขสัตว์เลี้ยง
+        G.twrDmgMul = (m) => {
+            const D = G.dungeon;
+            if (!D || !m || !m.userData || !m.userData.twr)
+                return 1;
+            let mul = elemAdv(twrPlayerElem(), m.userData.elem);
+            if (G.twrCondOk())
+                mul *= D.cond.mul;
+            return mul;
+        };
+        const twrSyncUi = () => {
+            const D = G.dungeon;
+            setUi((u) => ({ ...u, dungeonFloor: D ? D.floor : 0, twr: D ? {
+                    floor: D.floor, max: DUNGEON_MAX, rogue: !!D.rogue, alive: D.alive || 0, total: D.total || 0,
+                    sec: Math.max(0, Math.ceil(D.tLeft || 0)), secMax: D.sec || 1, boss: D.floor % 10 === 0,
+                    elem: D.elem, cond: D.cond, condOk: G.twrCondOk(), myElem: twrPlayerElem(),
+                } : null }));
+        };
+        G.twrSyncUi = twrSyncUi;
+        // 🧹 เก็บมอนของชั้นก่อนออกจากฉากให้หมด — กันศพค้างทับกันตอนขึ้นชั้นใหม่
+        const twrClearMobs = () => {
             for (let i = wilds.length - 1; i >= 0; i--) {
                 const w = wilds[i];
-                if (w && w.userData && w.userData.dungeon)
-                    wilds.splice(i, 1);
+                if (!w || !w.userData || !w.userData.twr)
+                    continue;
+                if (w.userData.lbl && w.userData.lbl.sprite)
+                    w.userData.lbl.sprite.visible = false;
+                if (w.parent)
+                    w.parent.remove(w);
+                if (G._disposeObj3D)
+                    G._disposeObj3D(w);
+                wilds.splice(i, 1);
+                if (G.huntTarget === w)
+                    G.huntTarget = null;
             }
-            const bossFloor = floor % 10 === 0; // 👑 boss every 10 floors
+        };
+        const dungeonSpawn = (floor) => {
+            twrClearMobs();
+            const D = G.dungeon;
+            if (!D)
+                return;
+            const bossFloor = floor % 10 === 0;
             const midBoss = floor % 5 === 0 && !bossFloor;
-            const rogue = !!(G.dungeon && G.dungeon.rogue);
-            let spId;
+            const rogue = !!D.rogue;
+            const el = twrElemOf(floor);
+            D.floor = floor;
+            D.elem = el;
+            D.cond = twrCondOf(floor);
+            D.sec = TWR_SEC(floor);
+            D.tLeft = D.sec;
+            D._lastSec = -1;
+            D.pending = 0;
+            // 🎲 คัดสายพันธุ์ของชั้นนี้ — โหมดท้าทายใช้ seed ประจำสัปดาห์ (ทุกคนเจอชุดเดียวกัน)
+            const rng = rogue ? seedRng(`${D.seed}:${floor}`) : Math.random;
+            let pool, bossPool;
             if (rogue) {
-                // 🎲 โหมดท้าทาย: สุ่มจากมอนสเตอร์ "ทุกสายพันธุ์" ตามระดับความลึก ด้วย seed ประจำสัปดาห์ (ทุกคนเจอลำดับเดียวกัน)
-                const rng = seedRng(`${G.dungeon.seed}:${floor}`);
                 const all = Object.keys(SPECIES).filter((k) => SPECIES[k] && SPECIES[k].tier && k !== "chickpet" && !SPECIES[k].secret);
                 const maxTier = floor >= 70 ? 5 : floor >= 45 ? 4 : floor >= 20 ? 3 : floor >= 8 ? 2 : 1;
                 const minTier = floor >= 60 ? 3 : floor >= 30 ? 2 : 1;
-                let pool = all.filter((k) => SPECIES[k].tier >= (bossFloor ? Math.max(3, minTier) : minTier) && SPECIES[k].tier <= (bossFloor ? 5 : maxTier));
+                pool = all.filter((k) => SPECIES[k].tier >= minTier && SPECIES[k].tier <= maxTier);
                 if (!pool.length)
                     pool = all;
-                spId = pool[Math.floor(rng() * pool.length)];
-                G.dungeon.openUsed = false; // ⚡ พร "เปิดฉาก" ใช้ได้ใหม่ทุกชั้น
+                bossPool = all.filter((k) => SPECIES[k].tier >= 4);
+                if (!bossPool.length)
+                    bossPool = pool;
+                D.openUsed = false; // ⚡ พร "เปิดฉาก" ใช้ได้ใหม่ทุกชั้น
             }
             else {
-                // deeper floors pull from tougher species
                 const easyPool = ["mochi", "baibua", "mekha", "plerng", "nam"];
                 const midPool = ["khiao", "ngu", "paksi", "plerng", "kirara"];
                 const hardPool = ["saming", "paksi", "phi", "garuda", "kirara"];
-                const pool = floor >= 60 ? hardPool : floor >= 25 ? midPool : easyPool;
-                const bossPool = floor >= 50 ? ["garuda", "saming"] : ["saming", "phi", "kirara"];
-                spId = (bossFloor ? bossPool : pool)[Math.floor(Math.random() * (bossFloor ? bossPool : pool).length)];
+                pool = floor >= 60 ? hardPool : floor >= 25 ? midPool : easyPool;
+                bossPool = floor >= 50 ? ["garuda", "saming"] : ["saming", "phi", "kirara"];
             }
-            const stage = bossFloor ? 3 : midBoss ? 2 : 1;
-            const m = buildMonster(spId, stage);
-            if (bossFloor)
-                m.scale.multiplyScalar(1.5);
-            m.userData.lv = G.player.level + (rogue ? Math.round(floor * 1.3) : floor); // 🎲 โหมดท้าทายโหดกว่า 30% (มีพรช่วย)
-            m.userData.boss = bossFloor;
-            m.userData.dungeon = true;
-            applyMenace(m);
-            vivify(m);
-            scene.add(m);
-            char.position.copy(dungeonCenter); // keep the arena centered
-            startBattle(m);
-            setUi((u) => ({ ...u, dungeonFloor: floor }));
+            const n = TWR_COUNT(floor);
+            for (let i = 0; i < n; i++) {
+                const isBoss = bossFloor && i === 0;
+                const src = isBoss ? bossPool : pool;
+                const spId = src[Math.floor(rng() * src.length)] || "mochi";
+                const m = buildMonster(spId, isBoss ? 3 : midBoss ? 2 : 1);
+                if (isBoss)
+                    m.scale.multiplyScalar(1.7);
+                // 📍 วางเป็นวงรอบกลางห้อง เว้นระยะให้ผู้เล่นตั้งตัวได้ก่อน
+                const a = (i / n) * Math.PI * 2 + rng() * 0.6;
+                const rr = isBoss ? 5.5 : 4.6 + rng() * 2.4; // อยู่ในห้องหอคอย ไม่ทะลุกำแพง
+                m.position.set(dungeonCenter.x + Math.cos(a) * rr, 0, dungeonCenter.z + Math.sin(a) * rr);
+                m.rotation.y = a + Math.PI;
+                m.userData.lv = G.player.level + Math.round(floor * (rogue ? 1.3 : 1.05)) + (isBoss ? 6 : 0);
+                m.userData.twr = true; // 🗼 ธงของมอนหอคอย (ไม่ใช้ dungeon เพื่อให้สู้แบบโลกกว้างได้)
+                m.userData.twrBoss = isBoss;
+                m.userData.elem = el; // 🎴 ธาตุประจำชั้น — ใช้คิดการหักล้างธาตุ
+                // 🚶 ข้อมูลเดินวน — ลูปภาพอ่านค่านี้ทุกเฟรม ถ้าไม่ใส่จะพังทั้งลูป
+                m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * Math.PI * 2,
+                    r: isBoss ? 0.6 : 1.1 + Math.random() * 1.2, sp: 0.28 + Math.random() * 0.3 };
+                applyMenace(m);
+                vivify(m);
+                initWildHp(m);
+                // ⚔️ ยิ่งชั้นลึกยิ่งอึดและตีแรง · บอสหนากว่ามาก
+                const hpMul = (isBoss ? 4 : midBoss ? 1.7 : 1) * (1 + floor * 0.03) * (rogue ? 1.3 : 1);
+                m.userData.wmaxhp = Math.max(10, Math.round(m.userData.wmaxhp * hpMul));
+                m.userData.whp = m.userData.wmaxhp;
+                m.userData.watk = Math.max(1, Math.round(m.userData.watk * (1 + floor * 0.015) * (isBoss ? 1.5 : 1)));
+                (G._worldRoot || scene).add(m);
+                wilds.push(m);
+            }
+            D.alive = n;
+            D.total = n;
+            char.position.copy(dungeonCenter);
+            const EM = ELEM_META[el] || { emoji: "", name: el };
+            const CM = ELEM_META[D.cond.elem] || { emoji: "", name: D.cond.elem };
+            toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${EM.emoji} ธาตุ${EM.name} · ${n} ตัว · ${TWR_SEC(floor)} วิ`);
+            toast(`🐾 เงื่อนไขชั้นนี้: พาสัตว์เลี้ยงธาตุ${CM.name} ${CM.emoji} มาด้วย ดาเมจ +35%`);
+            twrSyncUi();
+        };
+        // 🏆 เคลียร์ชั้นสำเร็จ — แจกรางวัลแล้วไปชั้นถัดไป
+        const twrNext = () => {
+            const D = G.dungeon;
+            if (!D)
+                return;
+            const fl = D.floor, bossFloor = fl % 10 === 0;
+            const bonus = Math.round((40 + fl * 12) * (bossFloor ? 4 : 1) * (1 + (G.ngPlus || 0) * 0.5));
+            G.gold += bonus;
+            G.stardust = (G.stardust || 0) + (bossFloor ? 8 : 2);
+            const left = Math.max(0, Math.ceil(D.tLeft || 0));
+            toast(`✅ ผ่านชั้น ${fl}! +${bonus}💰 (เหลือเวลา ${left} วิ)`);
+            if (!D.rogue && fl + 1 > (G.dungeonProgress || 1))
+                G.dungeonProgress = Math.min(DUNGEON_MAX, fl + 1);
+            if (D.rogue) {
+                D.cleared = fl;
+                D.gold = (D.gold || 0) + bonus;
+            }
+            if (fl >= DUNGEON_MAX) {
+                toast("🏆 พิชิตหอคอยครบ 100 ชั้นแล้ว!");
+                if (D.rogue)
+                    G.rogueEnd("clear");
+                else
+                    G.dungeonProgress = DUNGEON_MAX;
+                G.twrLeave(true);
+                return;
+            }
+            // 🎁 โหมดท้าทาย: ทุก 3 ชั้นเลือกพร 1 จาก 3 ก่อนไปต่อ
+            if (D.rogue && fl % 3 === 0 && G.rogueOffer) {
+                D.waitPick = true;
+                G.rogueOffer();
+                return;
+            }
+            dungeonSpawn(fl + 1);
+            if (G.saveGame)
+                G.saveGame();
+        };
+        G.twrNext = twrNext;
+        // ⏱️ นับเวลา + เช็กเคลียร์ชั้น — เรียกทุกเฟรมตอนอยู่ในหอคอย
+        G.twrTick = (dt) => {
+            const D = G.dungeon;
+            if (!D || G.mode !== "explore")
+                return;
+            if (D.waitPick)
+                return; // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
+            if (G.player && G.player.hp <= 0)
+                return; // ตายแล้ว ปล่อยให้ระบบตายจัดการ
+            if (D.pending > 0) {
+                D.pending -= dt;
+                if (D.pending <= 0)
+                    twrNext();
+                return;
+            }
+            D.tLeft -= dt;
+            if (D.tLeft <= 0) {
+                D.tLeft = 0;
+                G.twrFail("⏱️ หมดเวลา");
+                return;
+            }
+            const sec = Math.ceil(D.tLeft);
+            if (sec !== D._lastSec) {
+                D._lastSec = sec;
+                if (sec === 30 || sec === 10)
+                    toast(`⏱️ เหลือ ${sec} วินาที!`);
+                twrSyncUi();
+            }
+        };
+        // ☠️ มอนหอคอยตายหนึ่งตัว — นับถอยหลังจำนวนที่เหลือ
+        G.twrKill = (m) => {
+            const D = G.dungeon;
+            if (!D || !m.userData.twr)
+                return;
+            D.alive = Math.max(0, (D.alive || 1) - 1);
+            if (D.alive <= 0)
+                D.pending = 1.1; // หน่วงนิดให้เห็นจังหวะเคลียร์ก่อนขึ้นชั้นใหม่
+            twrSyncUi();
+        };
+        // 💀 ล้มเหลว (หมดเวลา/ตาย) — ดีดออกจากหอคอย แต่ยังจำชั้นที่ทำได้
+        G.twrFail = (why) => {
+            const D = G.dungeon;
+            if (!D)
+                return;
+            toast(`${why} — ดีดออกจากหอคอย (จำความคืบหน้าถึงชั้น ${G.dungeonProgress || 1} ไว้แล้ว)`);
+            if (D.rogue && G.rogueEnd)
+                G.rogueEnd("fail");
+            G.twrLeave(!!D.rogue);
+        };
+        // 🚪 ออกจากหอคอย — เก็บกวาดมอนแล้ววาร์ปกลับหน้าประตู
+        G.twrLeave = (quiet) => {
+            twrClearMobs();
+            G.dungeon = null;
+            if (G.restoreScenery)
+                G.restoreScenery();
+            G.mode = "explore";
+            char.position.set(-5, 0, 6.5);
+            G.moveTarget = null;
+            G.portalShy = true;
+            if (!quiet)
+                toast(`🚪 ออกจากหอคอย · ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`);
+            setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, twr: null, dungeonAsk: false }));
+            if (G.saveGame)
+                G.saveGame();
         };
         G.enterDungeon = () => {
             // resume from the deepest unbeaten floor, or start at 1
@@ -33537,7 +33731,7 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, dungeonAsk: false }));
             toast(startFloor > 1
                 ? `🗼 กลับเข้าหอคอย เริ่มต่อชั้น ${startFloor}/100!`
-                : "🗼 เข้าสู่หอคอยมิติ 100 ชั้น! บอสทุก 10 ชั้น — แพ้คือดีดออก (จำด่านให้)");
+                : "🗼 เข้าสู่หอคอยมิติ 100 ชั้น! เคลียร์มอนให้หมดทันเวลา — บอสใหญ่ทุก 10 ชั้น");
             dungeonSpawn(startFloor);
         };
         G.declineDungeon = () => {
@@ -33596,8 +33790,8 @@ function CherryAdventure() {
             toast(`${b.emoji} รับพร "${b.name}"!`);
             setUi((u) => ({ ...u, rogueChoice: null }));
             G.syncRogueUi();
-            G.dungeon.floor++;
-            dungeonSpawn(G.dungeon.floor);
+            G.dungeon.waitPick = false; // ⏱️ หยุดนับเวลาไว้ตอนเลือกพร — เลือกเสร็จค่อยเดินต่อ
+            dungeonSpawn(G.dungeon.floor + 1);
         };
         // 🏁 จบรอบ (ตาย/ออกเอง/พิชิตครบ) — บันทึกสถิติ + ส่งขึ้นกระดาน + โชว์ผล
         G.rogueEnd = (reason) => {
@@ -36982,14 +37176,14 @@ function CherryAdventure() {
             const wasRogue = !!(G.dungeon && G.dungeon.rogue);
             if (wasRogue)
                 G.rogueEnd("quit");
-            G.dungeon = null;
-            if (G.restoreScenery)
-                G.restoreScenery();
-            G.mode = "explore";
-            char.position.set(-5, 0, 6.5); // near the portal
-            if (!wasRogue)
-                toast(`🚪 ออกจากหอคอย · บันทึกความคืบหน้าถึงชั้น ${G.dungeonProgress || 1} แล้ว`);
-            setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, enemy: null, msg: "", rogueChoice: null }));
+            if (G.twrLeave)
+                G.twrLeave(wasRogue); // 🧹 เก็บมอนของชั้นออกให้หมดก่อนกลับหน้าประตู
+            else {
+                G.dungeon = null;
+                G.mode = "explore";
+                char.position.set(-5, 0, 6.5);
+            }
+            setUi((u) => ({ ...u, enemy: null, msg: "", rogueChoice: null }));
             saveGame && saveGame();
         };
         // ---------- 📜 Quest system (bigger exp/gold than plain fighting) ----------
@@ -47545,13 +47739,18 @@ function CherryAdventure() {
                 G.gainMastery(Math.round(6 + lv * 2));
             checkAchievements();
             setUi((u) => ({ ...u, combo: G.combo, gold: G.gold, stardust: G.stardust }));
+            if (m.userData.twr && G.twrKill)
+                G.twrKill(m); // 🗼 หอคอย — นับจำนวนที่เหลือของชั้นนี้
             if (m.userData.lbl)
                 m.userData.lbl.sprite.visible = false;
             if (m.userData.hpbar) {
                 m.remove(m.userData.hpbar);
                 m.userData.hpbar = null;
             }
-            scene.remove(m);
+            if (m.parent)
+                m.parent.remove(m);
+            else
+                scene.remove(m);
             const idx = wilds.indexOf(m);
             if (idx >= 0)
                 wilds.splice(idx, 1);
@@ -47565,6 +47764,9 @@ function CherryAdventure() {
             // ⚖️ level-gap penalty — hitting monsters far above your level deals less (mirrors the EXP relMul)
             const lvGap = Math.max(0, (m.userData.lv || 1) - (G.player ? G.player.level : 1));
             dmg = dmg * Math.max(0.4, 1 - lvGap * 0.03);
+            // 🗼 ในหอคอย: ธาตุประจำชั้นหักล้างกับธาตุอาวุธ + โบนัสถ้าพาสัตว์เลี้ยงตามเงื่อนไขมา
+            if (m.userData.twr && G.twrDmgMul)
+                dmg = dmg * G.twrDmgMul(m);
             if (m.userData.vulnT > 0)
                 dmg = dmg * (1 + (m.userData.vuln || 0)); // 🌳🌟 เกราะแตก — รับดาเมจเพิ่มตลอดที่ยังติดคำสาป
             dmg = Math.max(1, Math.round(dmg));
@@ -56445,6 +56647,15 @@ function CherryAdventure() {
             if (G.sfx)
                 G.sfx.lose && G.sfx.lose();
             G.combo = 0;
+            // 🗼 ล้มกลางหอคอย = จบรอบนี้ — เก็บมอนของชั้นออกก่อน ไม่งั้นค้างอยู่กลางทุ่งตอนฟื้น
+            if (G.dungeon) {
+                const wasRogue = !!G.dungeon.rogue;
+                if (wasRogue && G.rogueEnd)
+                    G.rogueEnd("fail");
+                if (G.twrLeave)
+                    G.twrLeave(true);
+                toast(`💀 ล้มในหอคอย — ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`);
+            }
             wilds.forEach((w) => { w.userData.aggro = false; });
             if (G.clearSummons)
                 G.clearSummons(); // 🐾 เจ้าของล้ม — ฝูงแตกหนีกลับเข้าป่า
@@ -63802,7 +64013,7 @@ function CherryAdventure() {
                         scene.children.forEach((o) => {
                             if (!o.userData || o.userData.spId == null || !o.userData.wander || inW.has(o))
                                 return;
-                            if (o.userData.worldBoss || o.userData.golden || o.userData.ghost || o.userData.horde || o.userData.dungeon || o.userData.secret)
+                            if (o.userData.worldBoss || o.userData.golden || o.userData.ghost || o.userData.horde || o.userData.dungeon || o.userData.twr || o.userData.secret)
                                 return;
                             if (G.enemy && G.enemy.mesh === o)
                                 return;
@@ -64348,6 +64559,14 @@ function CherryAdventure() {
                             G._mineErr = String(e && e.message || e);
                         }
                     } // ⛏️ สายแร่
+                    if (G.dungeon && G.twrTick) {
+                        try {
+                            G.twrTick(dt);
+                        }
+                        catch (e) {
+                            G._twrErr = String(e && e.message || e);
+                        }
+                    } // 🗼 นับเวลา/เคลียร์ชั้นหอคอย
                     // 🔔 ของที่ "พร้อม" เองตามเวลา (ทีมสำรวจกลับ · ผักโต · ไข่ฟัก · ทองฟาร์ม) — เช็คทุก 4 วิ
                     if (!G._todoAt || t - G._todoAt > 4) {
                         G._todoAt = t;
@@ -64394,7 +64613,7 @@ function CherryAdventure() {
                     // ---------- 🌿🎣⛏️ เก็บของอัตโนมัติ ----------
                     //   เปิด/ปิดแยกกันได้จาก "ตั้งค่าออโต้" · ทำงานเฉพาะตอนเดินสำรวจนอกเมือง/บ้าน/ฟาร์ม
                     //   จับการบังคับเองทุกช่องทาง (จอยสติ๊ก/WASD/ลูกศร) แล้วหยุดทันที เพื่อไม่แย่งคุมตัวละคร
-                    if ((G.autoHerb || G.autoFish || G.autoMine) && G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
+                    if ((G.autoHerb || G.autoFish || G.autoMine) && G.mode === "explore" && !G.dungeon && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) { // 🗼 อยู่ในหอคอยไม่ต้องเดินไปเก็บของ
                         const agManual = Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12 ||
                             G.keys["w"] || G.keys["a"] || G.keys["s"] || G.keys["d"] ||
                             G.keys["arrowup"] || G.keys["arrowdown"] || G.keys["arrowleft"] || G.keys["arrowright"];
@@ -86080,6 +86299,57 @@ function CherryAdventure() {
                 " \u23F1\uFE0F",
                 ui.eventLeft,
                 "s"))),
+        ui.twr && ui.mode === "explore" && (() => {
+            const T = ui.twr;
+            const EM = ELEM_META[T.elem] || { emoji: "", name: T.elem || "" };
+            const CM = ELEM_META[(T.cond || {}).elem] || { emoji: "", name: "" };
+            const MY = T.myElem ? (ELEM_META[T.myElem] || { emoji: "", name: T.myElem }) : null;
+            const adv = T.myElem ? elemAdv(T.myElem, T.elem) : 1;
+            const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
+            const low = T.sec <= 15;
+            return (React.createElement("div", { style: { position: "absolute", top: ST(_shortHud ? 96 : 128), left: "50%", transform: "translateX(-50%)",
+                    width: "min(94vw, 340px)", zIndex: 30, pointerEvents: "none", fontFamily: font } },
+                React.createElement("div", { style: { background: "rgba(40,16,72,0.92)", border: "1px solid #7a4ad0", borderRadius: 13,
+                        padding: "6px 10px 7px", boxShadow: "0 6px 20px rgba(40,10,70,0.5)", pointerEvents: "auto" } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7 } },
+                        React.createElement("span", { style: { fontSize: 12.5, fontWeight: 900, color: "#ffe6c0" } },
+                            T.rogue ? "🎲" : "🗼",
+                            " \u0E0A\u0E31\u0E49\u0E19 ",
+                            T.floor,
+                            T.rogue ? "" : "/" + T.max,
+                            T.boss ? " 👑" : ""),
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#d8c4ff" } },
+                            EM.emoji,
+                            " \u0E18\u0E32\u0E15\u0E38",
+                            EM.name),
+                        React.createElement("span", { style: { flex: 1 } }),
+                        React.createElement("span", { style: { fontSize: 11.5, fontWeight: 900, color: low ? "#ff9a9a" : "#cfe8ff" } },
+                            "\u23F1\uFE0F ",
+                            T.sec,
+                            " \u0E27\u0E34"),
+                        React.createElement("span", { onClick: () => G.exitDungeon(), style: { cursor: "pointer", background: "rgba(255,255,255,0.18)",
+                                borderRadius: 999, padding: "1px 8px", fontSize: 10.5, color: "#f0e6ff" } }, "\uD83D\uDEAA \u0E2D\u0E2D\u0E01")),
+                    React.createElement("div", { style: { height: 5, borderRadius: 999, background: "rgba(0,0,0,0.38)", overflow: "hidden", margin: "4px 0 3px" } },
+                        React.createElement("div", { style: { width: (pct * 100).toFixed(1) + "%", height: "100%", transition: "width 0.25s",
+                                background: low ? "linear-gradient(90deg,#e0503a,#ff8a6a)" : "linear-gradient(90deg,#7a4ad0,#c9a8f0)" } })),
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 9.5, lineHeight: 1.45 } },
+                        React.createElement("span", { style: { fontWeight: 800, color: "#ffd9a0" } },
+                            "\u0E40\u0E2B\u0E25\u0E37\u0E2D ",
+                            T.alive,
+                            "/",
+                            T.total,
+                            " \u0E15\u0E31\u0E27"),
+                        MY && (React.createElement("span", { style: { color: adv > 1 ? "#8ef0a8" : adv < 1 ? "#ffa8a8" : "#c8bce0" } },
+                            "\u00B7 \u0E2D\u0E32\u0E27\u0E38\u0E18 ",
+                            MY.emoji,
+                            MY.name,
+                            " ",
+                            adv > 1 ? "ได้เปรียบ 🔺+30%" : adv < 1 ? "เสียเปรียบ 🔻-25%" : "เสมอ")),
+                        !MY && React.createElement("span", { style: { color: "#a89ac0" } }, "\u00B7 \u0E2D\u0E32\u0E27\u0E38\u0E18\u0E44\u0E21\u0E48\u0E21\u0E35\u0E18\u0E32\u0E15\u0E38 (\u0E2B\u0E25\u0E2D\u0E21\u0E18\u0E32\u0E15\u0E38\u0E17\u0E35\u0E48\u0E42\u0E23\u0E07\u0E15\u0E35\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E0A\u0E48\u0E27\u0E22\u0E44\u0E14\u0E49)")),
+                    React.createElement("div", { style: { marginTop: 3, fontSize: 9.5, fontWeight: 700, lineHeight: 1.45,
+                            color: T.condOk ? "#8ef0a8" : "#e0c88a" } }, T.condOk ? `✅ พาสัตว์เลี้ยงธาตุ${CM.name} ${CM.emoji} มาแล้ว — ดาเมจ +35%`
+                        : `🐾 เงื่อนไขชั้นนี้: พาสัตว์เลี้ยงธาตุ${CM.name} ${CM.emoji} มาด้วย จะตีแรงขึ้น 35%`))));
+        })(),
         ui.mode === "battle" && ui.dungeonFloor > 0 && (React.createElement("div", { style: {
                 // 📱 จอแนวนอน/เตี้ย: ป้ายนี้เคยตรึงไว้ 160px จากขอบบน ซึ่งตกกลางจอพอดี → บังตัวละคร
                 //    ย้ายไปเกาะมุมล่างซ้าย (ใต้แถบปุ่มมุม) ส่วนจอสูงยังอยู่ด้านบนเหมือนเดิม
