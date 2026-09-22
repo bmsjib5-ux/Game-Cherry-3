@@ -20575,6 +20575,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     //   เดิมหนึ่งชั้น = มอนหนึ่งตัวในอารีน่าผลัดตา · ตอนนี้ชั้นหนึ่งคือสนามเปิด
     //   ที่สุ่มมอนหลายตัวออกมาพร้อมกัน ต้องเคลียร์ให้หมดภายในเวลาที่จับไว้
     //   ทุก 10 ชั้นมีบอสใหญ่ · แต่ละชั้นมีธาตุประจำชั้น + เงื่อนไขสัตว์เลี้ยงที่ช่วยให้ตีง่ายขึ้น
+    const TWR_ROOM_R = 13.5;   // 🧱 รัศมีที่เดินได้ในห้องหอคอย (ห้องกว้าง ±16 เว้นขอบไว้ไม่ให้มุดกำแพง)
     const TWR_ELEM_CYCLE = ["fire", "ice", "wind", "water", "earth"];
     const TWR_SEC = (fl) => (fl % 10 === 0 ? 180 : fl % 5 === 0 ? 130 : 105);        // ⏱️ เวลาต่อชั้น
     const TWR_COUNT = (fl) => (fl % 10 === 0 ? 3 + Math.min(3, Math.floor(fl / 12))   // 👑 บอสใหญ่ + ลูกสมุนอย่างน้อย 2 ตัว
@@ -20682,7 +20683,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         m.userData.wmaxhp = Math.max(10, Math.round(m.userData.wmaxhp * hpMul));
         m.userData.whp = m.userData.wmaxhp;
         m.userData.watk = Math.max(1, Math.round(m.userData.watk * (1 + floor * 0.015) * (isBoss ? 1.5 : 1)));
-        (G._worldRoot || scene).add(m);
+        scene.add(m);        // ⚠️ ห้ามใส่ใน _worldRoot — ตอนห้องหอคอยขึ้นมันถูกซ่อนทั้งก้อน มอนจะหายหมด
         wilds.push(m);
       }
       D.alive = n; D.total = n;
@@ -20724,6 +20725,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (D.pending > 0) { D.pending -= dt; if (D.pending <= 0) twrNext(); return; }
       D.tLeft -= dt;
       if (D.tLeft <= 0) { D.tLeft = 0; G.twrFail("⏱️ หมดเวลา"); return; }
+      // 🧱 ล็อกไม่ให้เดินหลุดออกนอกห้อง — เดิมเดินทะลุกำแพงออกไปโลกกว้างได้เลย
+      { const ox = char.position.x - dungeonCenter.x, oz = char.position.z - dungeonCenter.z;
+        const od = Math.hypot(ox, oz);
+        if (od > TWR_ROOM_R) {
+          char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
+          char.position.z = dungeonCenter.z + (oz / od) * TWR_ROOM_R;
+          G.moveTarget = null;
+          if (!D._wallT || D._wallT <= 0) { D._wallT = 2.5; toast("🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้"); }
+        }
+        if (D._wallT > 0) D._wallT -= dt; }
       const sec = Math.ceil(D.tLeft);
       if (sec !== D._lastSec) {
         D._lastSec = sec;
@@ -20762,7 +20773,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const startFloor = (G.dungeonProgress && G.dungeonProgress > 1) ? G.dungeonProgress : 1;
       G.dungeon = { floor: startFloor };
       dungeonCenter.set(char.position.x, 0, char.position.z);
-      setUi((u) => ({ ...u, dungeonAsk: false }));
+      G._botNear = null; G._npcNear = null;
+      setUi((u) => ({ ...u, dungeonAsk: false, botNear: null, botNearName: null, botNearLv: 0, npcNear: false, npcTalk: null }));
       toast(startFloor > 1
         ? `🗼 กลับเข้าหอคอย เริ่มต่อชั้น ${startFloor}/100!`
         : "🗼 เข้าสู่หอคอยมิติ 100 ชั้น! เคลียร์มอนให้หมดทันเวลา — บอสใหญ่ทุก 10 ชั้น");
@@ -22779,7 +22791,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ⏱️ เรียกจากลูปหลัก — คิดเป็นจังหวะ ไม่ใช่ทุกเฟรม (บอท 5 ตัวไม่ควรกินเฟรมเรต)
     G.botUpdate = (dt) => {
       if (!G.bots.length) return;
-      if (G.mode !== "explore" || G.inTownZone || G.inHomeZone || G.inRanchZone) return;   // โผล่เฉพาะโลกกว้าง
+      if (G.mode !== "explore" || G.dungeon || G.inTownZone || G.inHomeZone || G.inRanchZone) return;   // โผล่เฉพาะโลกกว้าง (ในหอคอยไม่มี)
       G._botTick += dt;
       if (G._botTick < 0.25) return;
       const step = G._botTick; G._botTick = 0;
@@ -22999,7 +23011,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       (G.sceneryObjects || []).forEach(hide);      // ของที่สร้างทีหลัง ไม่ได้อยู่ในกลุ่มรวม
       if (G._hideBiomeDecor) G._hideBiomeDecor();
       hide(portal); hide(G.warpGate); hide(G._safeMarks); hide(G._borderGrp); hide(G._homePad); hide(G._ranchPad);
-      wilds.forEach(hide);          // 🐾 มอนสเตอร์ในโลกกว้างไม่ควรโผล่ในห้องดันเจี้ยน (และช่วยลดภาระวาดด้วย)
+      wilds.forEach((w) => { if (!(w.userData && w.userData.twr)) hide(w); });   // 🐾 ซ่อนมอนโลกกว้าง แต่ไม่ซ่อนมอนของชั้นหอคอย
       return true;
     };
     G.kkDunClear = () => {
@@ -39317,7 +39329,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       let vis = 0;
       remoteAvatars.forEach((a, pid) => {
         if (a.last && now - a.last > 6000) { G._rtDropPet(a); scene.remove(a.grp); (G._disposeObj3D && G._disposeObj3D(a.grp)); remoteAvatars.delete(pid); return; }
-        const show = a.biome === G.curBiome && G.mode === "explore";
+        const show = a.biome === G.curBiome && G.mode === "explore" && !G.dungeon;   // 🗼 ในหอคอยไม่เห็นผู้เล่นคนอื่น
         a.grp.visible = show; if (a.petMesh) a.petMesh.visible = show;
         if (!show) return;
         vis++;
@@ -42121,12 +42133,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         {
           const pd = Math.hypot(char.position.x - portal.position.x, char.position.z - portal.position.z);
-          if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) {
+          if (pd < 1.6 && !G.dungeon && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) {
             G.dungeonAskShown = true;
             setUi((u) => ({ ...u, dungeonAsk: true, dungeonProgress: G.dungeonProgress || 1 }));
           }
-          if (pd > 2.8) { G.portalShy = false; G.dungeonAskShown = false; if (G.uiDungeonAsk) { setUi((u) => ({ ...u, dungeonAsk: false })); G.uiDungeonAsk = false; } }
-          else if (pd < 1.6) G.uiDungeonAsk = true;
+          if (pd > 2.8 || G.dungeon) { G.portalShy = false; G.dungeonAskShown = false; if (G.uiDungeonAsk) { setUi((u) => ({ ...u, dungeonAsk: false })); G.uiDungeonAsk = false; } }
+          else if (pd < 1.6) G.uiDungeonAsk = true;   // 🗼 อยู่ในหอคอยแล้วไม่ต้องถามซ้ำ (กลางห้องอยู่ติดประตูพอดี)
         }
 
         // ---------- 🏡 MY RANCH: pad visibility + enter/exit + in-zone life ----------
