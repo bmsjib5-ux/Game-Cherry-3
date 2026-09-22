@@ -4264,7 +4264,7 @@ export default function CherryAdventure() {
       npc.userData.mark = mark;
       npc.position.set(-8.5, 0, -7);
       scene.add(npc);
-      colliders.push({ x: -8.5, z: -7, r: 0.5 });
+      colliders.push({ x: -8.5, z: -7, r: 0.85 });
       G.npc = npc;
       G.npcPos = { x: -8.5, z: -7 };
     }
@@ -4282,20 +4282,20 @@ export default function CherryAdventure() {
       const hammer = new THREE.Group();
       hammer.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.55, 8), smMat(0x6a4a2a)));
       const hhead = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.14), new THREE.MeshStandardMaterial({ color: 0x4a4a55, metalness: 0.7, roughness: 0.4 })); hhead.position.y = 0.3; hammer.add(hhead);
-      hammer.position.set(0.62, 1.15, 0.16); hammer.rotation.z = -0.7; smith.add(hammer);
+      hammer.position.set(0.62, 1.15, 0.16); hammer.rotation.z = -0.7; hammer.userData.npcHold = true; smith.add(hammer);
       const anvil = new THREE.Group();
       const anMat = new THREE.MeshStandardMaterial({ color: 0x3a3a44, metalness: 0.6, roughness: 0.5 });
       const anTop = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.18, 0.34), anMat); anTop.position.y = 0.62; anvil.add(anTop);
       const anHorn = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.34, 8), anMat); anHorn.position.set(-0.46, 0.62, 0); anHorn.rotation.z = Math.PI / 2; anvil.add(anHorn);
       const anBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.55, 10), smMat(0x2a2a33)); anBase.position.y = 0.28; anvil.add(anBase);
-      anvil.position.set(0.9, 0, 0.35); smith.add(anvil);
+      anvil.position.set(1.75, 0, 0.62); anvil.scale.setScalar(2.0); anvil.userData.npcKeep = true; smith.add(anvil);   // 🔨 ทั่งขยายตามช่างร่างโมเดล
       smith.add(apron, belt, chest, head, beard, band);
       const smc = document.createElement("canvas"); smc.width = 64; smc.height = 64;
       const sctx = smc.getContext("2d"); sctx.font = "44px system-ui"; sctx.textAlign = "center"; sctx.textBaseline = "middle"; sctx.fillText("⚒️", 32, 34);
       const smark = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(smc), transparent: true, depthTest: false }));
       smark.scale.set(0.55, 0.55, 1); smark.position.y = 2.15; smith.add(smark); smith.userData.mark = smark;
       smith.position.set(8.5, 0, -7); smith.rotation.y = -0.55; scene.add(smith);
-      colliders.push({ x: 8.5, z: -7, r: 0.6 });
+      colliders.push({ x: 8.5, z: -7, r: 0.95 });
       G.smith = smith; G.smithPos = { x: 8.5, z: -7 };
     }
     // 🧙 CLASS MASTER — อาจารย์ประจำอาชีพ: ให้ภารกิจเปลี่ยนอาชีพขั้นสูง 1 (Lv.40) และ 2 (Lv.80)
@@ -4315,14 +4315,14 @@ export default function CherryAdventure() {
       staff.add(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.7, 8), mMat(0x6a4a2a)));
       const orb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 14), new THREE.MeshStandardMaterial({ color: 0xf5d24a, emissive: 0xf5a623, emissiveIntensity: 0.9, roughness: 0.3 }));
       orb.position.y = 0.94; staff.add(orb);
-      staff.position.set(0.5, 0.85, 0.1); staff.rotation.z = -0.12; mst.add(staff);
+      staff.position.set(0.5, 0.85, 0.1); staff.rotation.z = -0.12; staff.userData.npcHold = true; mst.add(staff);
       mst.userData.orb = orb;
       const mc = document.createElement("canvas"); mc.width = 64; mc.height = 64;
       const mctx2 = mc.getContext("2d"); mctx2.font = "44px system-ui"; mctx2.textAlign = "center"; mctx2.textBaseline = "middle"; mctx2.fillText("🎓", 32, 34);
       const mmark = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(mc), transparent: true, depthTest: false }));
       mmark.scale.set(0.6, 0.6, 1); mmark.position.y = 2.6; mst.add(mmark); mst.userData.mark = mmark;
       mst.position.set(ADV_MASTER_POS.x, 0, ADV_MASTER_POS.z); scene.add(mst);
-      colliders.push({ x: ADV_MASTER_POS.x, z: ADV_MASTER_POS.z, r: 0.6 });
+      colliders.push({ x: ADV_MASTER_POS.x, z: ADV_MASTER_POS.z, r: 0.9 });
       G.master = mst; G.masterPos = { x: ADV_MASTER_POS.x, z: ADV_MASTER_POS.z };
     }
     addWell(9.5, -9); // stone well in the northeast
@@ -9792,6 +9792,95 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!THREE.GLTFLoader) return res(null);
         new THREE.GLTFLoader().load(HERO_BASE + name + ".glb", (gl) => res(gl), undefined, () => res(null));
       }));
+      // ===== 🧑‍🌾 NPC ในหมู่บ้านใช้โมเดลชุดเดียวกับตัวละครรอง =====
+      //  ร่างปั้นเองของ NPC ถูกซ่อน เหลือไว้แค่ป้ายลอย (Sprite) กับของประกอบฉากที่ติดธง npcKeep
+      //  ของถือ (ค้อน/ไม้เท้า) ย้ายไปเกาะกระดูก hand_r เหมือนอาวุธของผู้เล่น
+      const NPC_MODELS = {
+        elder:  { files: ["Male_Base", "Male_Peasant", "Hair_Beard"],  h: 4.2,  hue: [215, 0.50, 0.95, 0.97, 1], hairC: 0xf0f0f0, idle: "Spell_Simple_Idle_Loop", off: 0 },   // เสื้อชาวนาสีอ่อน ต้องเปิดย้อมเทา (H[4]) ถึงจะติดสีน้ำเงินแบบเสื้อคลุมเดิม
+        smith:  { files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"], h: 4.5,  hue: [20, 0.62, 1.02],  hairC: 0x3a2a1a, idle: "Idle_Loop",               off: 0.8, hold: { s: 1.7, rx: -0.6, py: 0.1 } },
+        master: { files: ["Male_Base", "Male_Ranger", "Hair_Beard"],   h: 4.35, hue: [276, 0.50, 0.90], hairC: 0xf0f0f4, idle: "Idle_Loop", off: 1.6, hold: { s: 2.1, rx: Math.PI - 0.1, py: 0.1 } },   // ไม้เท้าหันลูกแก้วขึ้นฟ้า ปลายจรดพื้น
+      };
+      const npcModels = []; G._npcRigs = npcModels;
+      const npcModelSet = (grp, key) => {
+        const M = grp && NPC_MODELS[key]; if (!M) return;
+        Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims")])).then((arr) => {
+          const anims = arr.pop(), srcs = arr.filter(Boolean);
+          if (!anims || !srcs.length || !THREE.SkeletonUtils) return;     // โหลดไม่ได้ก็คงร่างปั้นเองไว้เหมือนเดิม
+          const g = new THREE.Group(); g.name = "npcModel";
+          const parts = srcs.map((gl) => THREE.SkeletonUtils.clone(gl.scene));
+          const bx = new THREE.Box3(); parts.forEach((pt) => { pt.updateMatrixWorld(true); bx.expandByObject(pt); });
+          const k = M.h / Math.max(0.01, bx.max.y - bx.min.y);
+          const mats = [], seen = new Map();
+          parts.forEach((pt, pi) => {
+            pt.scale.setScalar(k); pt.position.y = -bx.min.y * k; g.add(pt);
+            pt.traverse((oo) => {
+              if (!oo.isMesh) return;
+              oo.castShadow = true; oo.frustumCulled = false;
+              const ms = Array.isArray(oo.material) ? oo.material : [oo.material];
+              const fresh = ms.map((m) => {
+                if (!m) return m;
+                let c = seen.get(m);
+                if (!c) {
+                  c = m.clone();
+                  if (c.metalness > 0.2) c.metalness = 0.2;
+                  if (c.map && !c.emissiveMap) c.emissiveMap = c.map;   // 💡 กลางคืนเร่ง emissive ด้วยสีของตัวเอง
+                  if (pi === 1 && M.hue && c.map && G.qtHueMap) c.map = G.qtHueMap(c.map, "npc:" + key + ":" + M.files[1] + ":" + (c.name || "m"), M.hue);
+                  if (pi === 2 && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
+                  c.needsUpdate = true; seen.set(m, c); mats.push(c);
+                }
+                return c;
+              });
+              oo.material = Array.isArray(oo.material) ? fresh : fresh[0];
+            });
+          });
+          const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
+          const clip = anims.animations.find((c) => c.name === M.idle) || anims.animations.find((c) => c.name === "Idle_Loop");
+          if (clip) mixers.forEach((mx) => { mx.clipAction(clip).play(); mx.setTime(M.off || 0); });   // เหลื่อมจังหวะทีละตัว จะได้ไม่ขยับพร้อมกันเป๊ะ
+          let neck = null, neckPlane = null;
+          if (/_Base$/.test(M.files[0]) && parts.length > 1) {     // ✂️ ตัดตัวฐานที่คอ กันเนื้อตัวโผล่พ้นชุด
+            neck = parts[0].getObjectByName("neck_01");
+            if (neck) {
+              neckPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+              renderer.localClippingEnabled = true;
+              parts[0].traverse((oo) => { if (oo.isMesh) { const ms = Array.isArray(oo.material) ? oo.material : [oo.material]; ms.forEach((m) => { if (m) { m.clippingPlanes = [neckPlane]; m.clipShadows = true; } }); } });
+            }
+          }
+          const hold = [];
+          grp.children.slice().forEach((oo) => {
+            if (oo === g) return;
+            if (oo.isSprite) { oo.userData.baseY = M.h + 0.55; oo.position.y = oo.userData.baseY; oo.scale.multiplyScalar(1.45); return; }
+            if (oo.userData && oo.userData.npcHold) { hold.push(oo); return; }
+            if (oo.userData && oo.userData.npcKeep) return;
+            oo.visible = false;
+          });
+          grp.add(g);
+          const hand = parts[0].getObjectByName("hand_r");
+          if (hand && hold.length) {
+            const HG = M.hold || { s: 1.7, rx: -0.5, py: 0.1 };
+            const grip = new THREE.Group(); grip.name = "npcGrip";
+            grip.scale.setScalar(HG.s / k);                       // กระดูกมือถูกขยายมาแล้ว ต้องหารกลับก่อน ของถือจึงจะได้ขนาดจริง
+            grip.rotation.set(HG.rx || 0, HG.ry || 0, HG.rz || 0);
+            grip.position.set(HG.px || 0, HG.py || 0, HG.pz || 0);
+            hand.add(grip);
+            hold.forEach((oo) => { oo.position.set(0, 0, 0); oo.rotation.set(0, 0, 0); grip.add(oo); });
+          }
+          grp.userData.headY = M.h + 0.9;                          // 💬 ป้ายบทสนทนาลอยเหนือหัวโมเดลใหม่
+          npcModels.push({ key, grp, mixers, mats, lit: -1, neck, neckPlane, k, tmpV: new THREE.Vector3(), clips: anims.animations });
+        });
+      };
+      // ⏱️ ไล่เฟรมท่ายืนของ NPC + เร่งความสว่างตอนกลางคืนเหมือนโมเดลผู้เล่น
+      G.npcModelTick = (dt) => {
+        if (!npcModels.length) return;
+        const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
+        const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
+        for (const N of npcModels) {
+          if (N.grp && !N.grp.visible) continue;
+          N.mixers.forEach((m) => m.update(dt));
+          if (Math.abs(lit - N.lit) > 0.015) { N.lit = lit; N.mats.forEach((m) => { m.emissive.copy(m.color).multiplyScalar(lit); m.emissiveIntensity = 1; }); }
+          if (N.neck && N.neckPlane) { N.neck.getWorldPosition(N.tmpV); N.tmpV.y -= 0.06 * N.k; N.neckPlane.setFromNormalAndCoplanarPoint(N.neckPlane.normal.set(0, 1, 0), N.tmpV); }
+        }
+      };
+      npcModelSet(G.npc, "elder"); npcModelSet(G.smith, "smith"); npcModelSet(G.master, "master");
       const heroPlay = (name, once, opt) => {
         const H = G._heroModel; if (!H) return;
         const list = H.acts[name]; if (!list || H.cur === name) return;
@@ -21261,6 +21350,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       wilds.forEach((m) => (m.visible = true));   // 🐾 คืนมอนสเตอร์ป่า
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
+      if (G.npc) G.npc.visible = true;                 // 🧙 ผู้เฒ่าถูกซ่อนตอนหน้าสร้างตัว ถ้าเริ่มเกมในโซนจะไม่มีใครคืนให้ — คืนที่นี่
       if (G._restoreBiomeDecor) G._restoreBiomeDecor(); // 🌵 คืนฉากประจำด่าน
       if (G.fishRespawn) { try { G.fishRespawn(); } catch (e) {} }
       if (G.herbRespawnAll) { try { G.herbRespawnAll(); } catch (e) {} }   // 🎣 ปั้นบ่อของด่านที่ยืนอยู่กลับคืน
@@ -21437,6 +21527,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       wilds.forEach((m) => (m.visible = true));
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
+      if (G.npc) G.npc.visible = true;                 // 🧙 ผู้เฒ่าถูกซ่อนตอนหน้าสร้างตัว ถ้าเริ่มเกมในโซนจะไม่มีใครคืนให้ — คืนที่นี่
       if (G._safeMarks) G._safeMarks.visible = true;
       if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true)); // 🌳 คืนฉากทุ่งซากุระ
@@ -21730,6 +21821,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       wilds.forEach((m) => (m.visible = true));
       if (portal) portal.visible = true;
       if (G.warpGate) G.warpGate.visible = true;
+      if (G.npc) G.npc.visible = true;                 // 🧙 ผู้เฒ่าถูกซ่อนตอนหน้าสร้างตัว ถ้าเริ่มเกมในโซนจะไม่มีใครคืนให้ — คืนที่นี่
       if (G._safeMarks) G._safeMarks.visible = true;
       if (G._borderGrp) G._borderGrp.visible = true;   // 🧱 แนวกั้นขอบแมพ
       if (G.sceneryObjects && G.curBiome === 0) G.sceneryObjects.forEach((o) => (o.visible = true));
@@ -40819,7 +40911,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🎬 clean backdrop on the character screens (class picker / dress-up): hide trees, monsters, decor
       {
         const preview = G.mode === "class" || G.mode === "create";
-        if (preview !== G._prevPreview && (G.inTownZone || G.inHomeZone || G.inRanchZone)) G._prevPreview = preview; // 🏰🏠🏡 อยู่ในโซนพิเศษ — โซนคุมการมองเห็นเอง ห้ามคืนต้นไม้/มอนสเตอร์ทับ
+        if (preview !== G._prevPreview && (G.inTownZone || G.inHomeZone || G.inRanchZone)) { G._prevPreview = preview; if (G.npc && !preview) G.npc.visible = true; } // 🏰🏠🏡 อยู่ในโซนพิเศษ — โซนคุมการมองเห็นเอง ห้ามคืนต้นไม้/มอนสเตอร์ทับ
         else if (preview !== G._prevPreview) {
           G._prevPreview = preview;
           const b = BIOMES[G.curBiome || 0] || BIOMES[0];
@@ -42098,22 +42190,22 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         // 👤 NPC: bob the marker + proximity
         if (G.npc) {
-          if (G.npc.userData.mark) { G.npc.userData.mark.position.y = 2.1 + Math.sin(t * 3) * 0.12; }
+          if (G.npc.userData.mark) { const _mk = G.npc.userData.mark; _mk.position.y = (_mk.userData.baseY || 2.1) + Math.sin(t * 3) * 0.12; }
           const nd = Math.hypot(char.position.x - G.npcPos.x, char.position.z - G.npcPos.z);
-          const near = nd < 1.9;
+          const near = nd < 2.6;
           if (near !== G.npcNear) { G.npcNear = near; setUi((u) => ({ ...u, npcNear: near })); }
         }
         // ⚒️ Blacksmith: bob the marker + proximity
         if (G.smith) {
-          if (G.smith.userData.mark) { G.smith.userData.mark.position.y = 2.1 + Math.sin(t * 3 + 1) * 0.12; }
+          if (G.smith.userData.mark) { const _sk = G.smith.userData.mark; _sk.position.y = (_sk.userData.baseY || 2.1) + Math.sin(t * 3 + 1) * 0.12; }
           const sd = Math.hypot(char.position.x - G.smithPos.x, char.position.z - G.smithPos.z);
-          const snear = sd < 2.1;
+          const snear = sd < 2.8;
           if (snear !== G.smithNear) { G.smithNear = snear; setUi((u) => ({ ...u, smithNear: snear })); }
         }
         // 🎓 อาจารย์ประจำอาชีพ
         if (G.masterPos && G.master) {
           const md = Math.hypot(char.position.x - G.masterPos.x, char.position.z - G.masterPos.z);
-          const mnear = md < 2.3;
+          const mnear = md < 3.0;
           if (mnear !== G.masterNear) { G.masterNear = mnear; setUi((u) => ({ ...u, masterNear: mnear, adv: G.advInfo ? G.advInfo() : null })); }
           const orb = G.master.userData.orb;
           if (orb) { const inf = G.advInfo ? G.advInfo() : null;
@@ -42127,7 +42219,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const src = PR.who === "npc" ? G.npc : PR.who === "smith" ? G.smith : PR.who === "master" ? G.master : null;
           if (src) {
             src.getWorldPosition(_promptV);
-            _promptV.y += 2.62;                       // เหนือหัวขึ้นไปนิดหนึ่ง
+            _promptV.y += (src.userData.headY || 2.62);   // เหนือหัวขึ้นไปนิดหนึ่ง (โมเดลตัวสูงกว่าร่างเก่า)
             _promptV.project(camera);
             const cw = renderer.domElement.clientWidth, ch = renderer.domElement.clientHeight;
             const behind = _promptV.z > 1;            // อยู่หลังกล้อง = ซ่อนไว้
@@ -53782,6 +53874,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🎞️ ขัดเกลาท่าทาง — ทำหลังโค้ดท่าทั้งหมดเขียนค่าเสร็จ แล้วค่อยหน่วง/เติมลมหายใจก่อนวาด
       if (dtForce == null && G.mode !== "create" && !G.equipScreen) { try { polishPose(dt, t); } catch (_) {} }
       if (G.heroModelTick) { try { G.heroModelTick(dt); } catch (_) {} }   // 🧍 ตัวละครโมเดล 3D (ทดลอง)
+      if (G.npcModelTick) { try { G.npcModelTick(dt); } catch (_) {} }        // 🧑‍🌾 NPC หมู่บ้านขยับท่ายืน
       // 🗡️ ซามูไรจับคาตานะสองมือ — ทำท้ายสุดหลังทุกท่าจัดแขนขวาเสร็จแล้ว
       //    ครอบคลุม ยืนเฉย/เดิน/ยืนการ์ด/โจมตีปกติ ทั้งโลกกว้างและในสนามรบ
       //    ⚠️ เว้นท่าสกิล/ท่าไม้ตายไว้ เพราะบางท่าตั้งใจให้มือซ้ายไปจับฝักดาบ (ท่าชักดาบอิไอ)
