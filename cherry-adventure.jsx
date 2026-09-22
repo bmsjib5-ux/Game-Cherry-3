@@ -22244,6 +22244,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.startMining = () => {
       if (G.mining) return;
       if (G.mode !== "explore") { toast("ขุดได้เฉพาะตอนเดินสำรวจ"); return; }
+      if (G.dungeon) { toast("🗼 ในหอคอยขุดแร่ไม่ได้ — เคลียร์ชั้นให้ผ่านก่อน"); return; }
       const i = G._mineNear;
       const n = i != null ? G.mineNodes[i] : null;
       if (!n || n.dead) { toast("⛏️ ไม่มีสายแร่อยู่ใกล้ ๆ"); return; }
@@ -22353,6 +22354,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     // ⏱️ เรียกจากลูปภาพทุกเฟรม — เด้งผลึก · นับเวลาเกิดใหม่ · เช็กระยะ · เดินตัววิ่งมินิเกม
     G.mineTick = (dt, t) => {
+      // 🗼 ในหอคอย: สายแร่/กอสมุนไพรของโลกกว้างแค่ถูกซ่อน ต้องตัดการตรวจระยะด้วย ไม่งั้นปุ่มเก็บของยังโผล่
+      if (G.dungeon) {
+        if (G.mining) G.stopMining();
+        if (G._mineNear != null || G._herbNear != null) {
+          G._mineNear = null; G._herbNear = null;
+          setUi((u) => ({ ...u, mineNear: false, mineOre: null, herbNear: false, herbKind: null, herbUses: 0 }));
+        }
+        return;
+      }
       const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id;
       const zoneNow = !!(G.inTownZone || G.inHomeZone || G.inRanchZone);
       const key = bid + "|" + (zoneNow ? "in" : "out");
@@ -22523,6 +22533,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ✋ เก็บสมุนไพรกอที่ยืนอยู่ใกล้ — เก็บทีเดียวจบ ไม่ต้องเล่นมินิเกม
     G.gatherHerb = () => {
       if (G.mode !== "explore") { hToast("เก็บสมุนไพรได้เฉพาะตอนเดินสำรวจ"); return; }
+      if (G.dungeon) { hToast("🗼 ในหอคอยเก็บสมุนไพรไม่ได้ — เคลียร์ชั้นให้ผ่านก่อน"); return; }
       const i = G._herbNear;
       const n = i != null ? G.herbNodes[i] : null;
       if (!n || n.dead) { hToast("🌿 ไม่มีกอสมุนไพรอยู่ใกล้ ๆ"); return; }
@@ -22898,6 +22909,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     G.startFishing = () => {
       if (G.fishing) return;
+      if (G.dungeon) { toast("🗼 ในหอคอยตกปลาไม่ได้ — เคลียร์ชั้นให้ผ่านก่อน"); return; }
       // 🔒 ด่านยาก ๆ น้ำลึกและเชี่ยว ต้องเลเวลตกปลาถึงก่อน
       const SP = G.fishSpotOf ? G.fishSpotOf() : null;
       if (SP && (G.fishLv || 1) < SP.lv) {
@@ -30443,6 +30455,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       let best = null, bd = range * range;
       for (const m of wilds) {
         if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+        if (G.dungeon && !m.userData.twr) continue;   // 🗼 ในหอคอยตีได้เฉพาะมอนของหอคอย
         const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
         const d2 = dx * dx + dz * dz;
         if (d2 < bd) { bd = d2; best = m; }
@@ -41538,6 +41551,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
       // wild monster idle/wander (both modes; battle enemy excluded since removed from wilds)
       if (!G.inRanchZone) wilds.forEach((m, i) => { // 🏡 หยุดมอนสเตอร์ป่าทั้งหมดตอนอยู่ในฟาร์ม (ไม่ไล่/ไม่ตี/ไม่วาดป้าย)
+        if (G.dungeon && !m.userData.twr) return;   // 🗼 ในหอคอย มอนโลกกว้างแค่ถูกซ่อน ต้องหยุด AI ด้วย ไม่งั้นยังเดินไล่ตีอยู่
         const w = m.userData.wander;
         if (m.userData.shy > 0) m.userData.shy -= dt;
         // 💢 อาการสะดุ้ง: เด้งถอย + ย่อตัวหดแล้วเด้งกลับ + เงยหน้าหงายเล็กน้อย
@@ -42092,11 +42106,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G.pondPos) {
           const fd = Math.hypot(char.position.x - G.pondPos.x, char.position.z - G.pondPos.z);
           const near = fd < (G.pondPos.r || 2.4) + 1.5;   // ⚠️ ต้องอิงรัศมีบ่อ ไม่ใช่ค่าคงที่ ไม่งั้นบ่อใหญ่จะยืนขอบแล้วตกไม่ได้
-          if (near !== G.pondNear) {
-            G.pondNear = near;
-            setUi((u) => ({ ...u, pondNear: near }));
+          const near2 = near && !G.dungeon;              // 🗼 ในหอคอยบ่อถูกซ่อน ปุ่มตกปลาต้องไม่โผล่
+          if (near2 !== G.pondNear) {
+            G.pondNear = near2;
+            setUi((u) => ({ ...u, pondNear: near2 }));
           }
-          if (!near && G.fishing) G.stopFishing();
+          if (!near2 && G.fishing) G.stopFishing();
         }
         if (G.fishing) {
           const f = G.fishing;
