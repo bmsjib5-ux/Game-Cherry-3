@@ -3055,7 +3055,10 @@ const HERO_MODELS = {
     warrior: { name: "นักรบ", emoji: "⚔️", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_Buzzed"], h: 4.0, hue: [215, 0.30, 1.02], hairC: 0x4a3222, desc: "นักรบเกราะหนังเหล็ก" },
     aegis: { name: "องครักษ์", emoji: "🛡️", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_SimpleParted"], h: 4.05, hue: [45, 0.60, 1.06], hairC: 0x5a4028, desc: "องครักษ์ชุดทอง" },
     lancer: { name: "ทหารหอก", emoji: "🔱", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_Buzzed"], h: 4.05, hue: [352, 0.50, 0.98], hairC: 0x2e2620, desc: "ทหารหอกชุดแดงเลือดหมู" },
-    samurai: { name: "ซามูไร", emoji: "🗡️", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_Buns"], h: 3.95, hue: [358, 0.60, 1.00], hairC: 0x2a2830, desc: "ซามูไรมวยผมชุดแดง" },
+    samurai: { name: "ซามูไร", emoji: "🗡️", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"], h: 3.95, hue: [358, 0.60, 1.00], hairC: 0x2a2830, desc: "ซามูไรมัดจุกหางม้าชุดแดง",
+        // 🎀 ผมสั้นเป็นฐาน + จุกมัดรวบหางม้าเดียวปั้นเพิ่มบนกระดูกหัว (คลังผมฟรีไม่มีทรงนี้) — พิกัดหน่วยตัวละคร: +y ขึ้น, -z หลัง, วัดจากกระดูกหัว
+        //    วัดจากจุดยอดที่สกินแล้ว: ยอดหัวอยู่ +0.42 เหนือกระดูกหัว · ท้ายทอย z≈-0.07 · หัวกว้าง ±0.17
+        topknot: { knot: [0, 0.45, -0.07, 0.085], tie: [0, 0.4, -0.11, 0.045, 0.06], tail: [[0, 0.47, -0.1], [0, 0.55, -0.22], [0, 0.44, -0.34], [0, 0.22, -0.41], [0, -0.04, -0.36]], tailR: 0.05, tieC: 0xd0303a } },
     assassin: { name: "นักฆ่าเงา", emoji: "🥷", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_SimpleParted"], h: 3.9, hue: [225, 0, 0.5, 0.97, 1, 0.2], hairC: 0x26262c, desc: "นักฆ่าชุดดำล้วน" },
     boxer: { name: "นักมวย", emoji: "🥊", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"], h: 3.95, hue: [24, 0.78, 1.06], hairC: 0x4a3020, desc: "นักมวยเสื้อกล้ามส้ม" },
     office: { name: "พนักงานออฟฟิศ", emoji: "💼", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_SimpleParted"], h: 3.95, hue: [222, 0.52, 0.96], hairC: 0x2c2c34, desc: "พนักงานเชิ้ตกรมท่า" },
@@ -3561,6 +3564,11 @@ function CherryAdventure() {
         //    (วัดจริง: ซูมสุดแบบเดิมแล้วหัวโมเดลโดนขอบบนจอตัด ส่วนตัวชิบิยังเห็นครบ)
         const camMin = () => (G.heroModelId ? 9.5 : 6);
         G.camMin = camMin;
+        // 📷 เริ่มเกมใหม่ด้วยโมเดล 3D: ถอยกล้องให้เห็นทั้งตัวก่อน — ค่าเดิม (8) คือระยะของตัวชิบิ โมเดลสูงกว่าเกือบเท่า หลังตัวเต็มจอ
+        G.camFit = () => { if (G.heroModelId && camDist < 13.5) {
+            camDist = 13.5;
+            saveZoom();
+        } };
         G.zoom = (d) => {
             if (G.mode === "battle" || G.mode === "fainted") {
                 bZoom = Math.min(1.8, Math.max(0.6, bZoom + d * 0.09));
@@ -13062,6 +13070,20 @@ function CherryAdventure() {
                 });
                 H.cur = name;
             };
+            // 🎀 ให้จุก/หางม้าตามกระดูกหัว: ตำแหน่ง = จุดกระดูกหัวในพิกัด g · หมุน = หัวหมุนไปจากท่าอ้างอิงเท่าไหร่ (ในพิกัด g)
+            const heroTopknotTick = (H) => {
+                const K = H && H.tk;
+                if (!K)
+                    return;
+                K.head.getWorldPosition(H.tmpV);
+                H.g.worldToLocal(H.tmpV);
+                K.grp.position.copy(H.tmpV);
+                H.g.getWorldQuaternion(K.qg).invert();
+                K.head.getWorldQuaternion(K.qh).premultiply(K.qg);
+                if (!K.q0)
+                    K.q0 = K.qh.clone().invert();
+                K.grp.quaternion.copy(K.qh).multiply(K.q0);
+            };
             G.heroModelSet = (id) => {
                 const M = id && HERO_MODELS[id];
                 if (G._heroModel) {
@@ -13186,6 +13208,39 @@ function CherryAdventure() {
                         hand.add(grip);
                         grip.add(wand);
                     }
+                    // 🎀 ผมปั้นเพิ่ม (จุก/หางม้า) — วางใน g (หน่วยตัวละคร: +y ขึ้น, -z หลัง) แล้วให้ตามกระดูก Head ทุกเฟรมใน heroModelTick
+                    //    ⚠️ ไม่เกาะกระดูกตรง ๆ เพราะกระดูกหัวมีสเกล/แกนเอียง ทำให้ทรงเบี้ยวและพิกัดเดาไม่ออก
+                    let tkRig = null;
+                    const headB = M.topknot && parts[0].getObjectByName("Head");
+                    if (headB) {
+                        const tk = new THREE.Group();
+                        tk.name = "heroTopknot";
+                        const TK = M.topknot;
+                        const hm = new THREE.MeshStandardMaterial({ color: new THREE.Color(M.hairC || 0x2a2830).convertSRGBToLinear(), roughness: 0.72 });
+                        const tm = new THREE.MeshStandardMaterial({ color: new THREE.Color(TK.tieC || 0xc02030).convertSRGBToLinear(), roughness: 0.6 });
+                        mats.push(hm, tm);
+                        const knot = new THREE.Mesh(new THREE.SphereGeometry(TK.knot[3], 14, 12), hm);
+                        knot.position.set(TK.knot[0], TK.knot[1], TK.knot[2]);
+                        knot.scale.set(1, 0.85, 1.1);
+                        tk.add(knot);
+                        const tie = new THREE.Mesh(new THREE.CylinderGeometry(TK.tie[3], TK.tie[3], TK.tie[4], 12), tm);
+                        tie.position.set(TK.tie[0], TK.tie[1], TK.tie[2]);
+                        tie.rotation.x = 0.55;
+                        tk.add(tie);
+                        const curve = new THREE.CatmullRomCurve3(TK.tail.map((q) => new THREE.Vector3(q[0], q[1], q[2])));
+                        const tail = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, TK.tailR, 8, false), hm);
+                        tk.add(tail);
+                        const tipP = TK.tail[TK.tail.length - 1];
+                        const tip = new THREE.Mesh(new THREE.SphereGeometry(TK.tailR * 0.95, 10, 8), hm);
+                        tip.position.set(tipP[0], tipP[1], tipP[2]);
+                        tk.add(tip);
+                        tk.traverse((o) => { if (o.isMesh) {
+                            o.castShadow = true;
+                            o.frustumCulled = false;
+                        } });
+                        g.add(tk);
+                        tkRig = { grp: tk, head: headB, q0: null, qg: new THREE.Quaternion(), qh: new THREE.Quaternion() };
+                    }
                     char.add(g);
                     const hidden = [];
                     char.children.forEach((o) => {
@@ -13203,7 +13258,11 @@ function CherryAdventure() {
                         }
                     });
                     G._heroHidden = hidden;
-                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, mats, lit: -1 };
+                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, mats, lit: -1, tk: tkRig };
+                    if (tkRig) {
+                        g.updateMatrixWorld(true);
+                        heroTopknotTick(G._heroModel);
+                    } // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
                     heroPlay("Idle_Loop");
                 });
             };
@@ -13264,6 +13323,10 @@ function CherryAdventure() {
                     want = "Walk_Loop";
                 heroPlay(want, once, atk ? { spd: HERO_ATK_TIME.spd, from: HERO_ATK_TIME.from } : null);
                 H.mixers.forEach((m) => m.update(dt));
+                if (H.tk) {
+                    H.g.updateMatrixWorld(true);
+                    heroTopknotTick(H);
+                }
                 { // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
                     const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
                     const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
@@ -58476,6 +58539,8 @@ function CherryAdventure() {
             G.playerName = (G.pendingName && G.pendingName.trim()) || "เชอร์รี่";
             const C = CLASSES[G.cls];
             G.mode = "explore";
+            if (G.camFit)
+                G.camFit();
             G.player = {
                 level: 1, exp: 0,
                 maxHp: C.hp, hp: C.hp, atk: C.atk, def: C.def,
