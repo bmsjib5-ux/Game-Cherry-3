@@ -2895,6 +2895,10 @@ const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sw
                    assassin: "Punch_Jab", boxer: "Punch_Cross",
                    mage: "Spell_Simple_Shoot", coder: "Spell_Simple_Shoot", office: "Spell_Simple_Shoot", tamer: "Spell_Simple_Shoot",
                    archer: "Pistol_Shoot" };                                  // ที่เหลือ = Punch_Cross
+// ⚔️ ท่าโจมตีในโลกกว้างกินเวลาแค่ 0.10-0.30 วิ แต่คลิปท่าฟันยาว 0.5-1.5 วิ
+//    ถ้าปล่อยตามจังหวะเกม ท่าจะถูกตัดตั้งแต่ช่วงเงื้อ (วัดได้ 13% ของคลิป) ผู้เล่นไม่เห็นการฟันเลย
+//    จึง (1) ค้างท่าไว้อย่างน้อย hold วินาที (2) เร่งความเร็วคลิป (3) เริ่มที่ from ข้ามช่วงเงื้อช้า ๆ
+const HERO_ATK_TIME = { hold: 0.4, spd: 2.4, from: 0.18 };
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Pistol_Idle_Loop" };                             // ที่เหลือ = Idle_Loop
@@ -9774,14 +9778,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!THREE.GLTFLoader) return res(null);
         new THREE.GLTFLoader().load(HERO_BASE + name + ".glb", (gl) => res(gl), undefined, () => res(null));
       }));
-      const heroPlay = (name, once) => {
+      const heroPlay = (name, once, opt) => {
         const H = G._heroModel; if (!H) return;
         const list = H.acts[name]; if (!list || H.cur === name) return;
         const prev = H.cur ? H.acts[H.cur] : null;
+        const spd = (opt && opt.spd) || 1, from = (opt && opt.from) || 0;
         list.forEach((a, i) => {
           a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity); a.clampWhenFinished = !!once;
-          a.fadeIn(0.14).play();
-          if (prev && prev[i] && prev[i] !== a) prev[i].fadeOut(0.14);
+          a.timeScale = spd;
+          if (from > 0) a.time = a.getClip().duration * from;      // ข้ามช่วงเงื้อ เริ่มที่จังหวะเหวี่ยงจริง
+          a.fadeIn(0.1).play();
+          if (prev && prev[i] && prev[i] !== a) prev[i].fadeOut(0.1);
         });
         H.cur = name;
       };
@@ -9874,19 +9881,22 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const sw = G._worldSwingT || 0, bat = !!G.banim;
         const atkEdge = (sw > 0.02 && H.swPrev <= 0.02) || (bat && !H.batPrev);
         H.swPrev = sw; H.batPrev = bat;
+        // ⚔️ ค้างท่าฟันไว้ให้ดูออก ถึงแม้จังหวะตีของเกมจะจบไปแล้ว (ตีรัวก็เริ่มท่าใหม่ทุกครั้ง)
+        H.atkT = Math.max(0, (H.atkT || 0) - dt);
+        if (atkEdge) { H.atkT = Math.max(G._worldSwingDur || 0.2, HERO_ATK_TIME.hold); H.cur = null; }
         const sp = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
         const has = (n, f) => (n && H.acts[n] ? n : f);                      // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
-        let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false;
+        let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false;
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
         else if (G.mountId) want = "Sitting_Idle_Loop";
         else if ((G._dashT || 0) > 0) want = "Roll";
         else if ((G._jumpT || 0) > 0) want = "Jump_Loop";
-        else if (sw > 0.02 || bat || G._skCast) { want = has(G._skCast ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross"); once = true; if (atkEdge) H.cur = null; }
+        else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(G._skCast ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross"); once = true; atk = true; }
         else if (H.hurtT > 0) { want = "Hit_Chest"; once = true; }
         else if (sp > 5.5) want = "Sprint_Loop";
         else if (sp > 2.6) want = "Jog_Fwd_Loop";
         else if (sp > 0.25) want = "Walk_Loop";
-        heroPlay(want, once);
+        heroPlay(want, once, atk ? { spd: HERO_ATK_TIME.spd, from: HERO_ATK_TIME.from } : null);
         H.mixers.forEach((m) => m.update(dt));
         {                                                  // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
           const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
