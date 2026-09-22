@@ -42356,7 +42356,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // ---------- smooth physics-based locomotion ----------
         let dx = 0, dz = 0;
         if (Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12) {
-          dx = G.joy.x; dz = G.joy.y;
+          // 🕹️ จอยสติ๊กอิง "มุมกล้อง" เหมือน WASD — หมุนจอไปทางไหน ดันจอยขึ้นก็เดินไปทางนั้น
+          //    (เดิมใช้ทิศโลกตรง ๆ พอหมุนกล้องแล้วดันขึ้นตัวละครเดินคนละทางกับที่เห็นบนจอ)
+          //    มุมกล้อง 0 ให้ผลเท่าเดิมเป๊ะ จึงไม่กระทบการเล่นแบบไม่หมุนกล้อง
+          { const _jw = G.camYaw || 0;
+            const _jfx = -Math.sin(_jw), _jfz = -Math.cos(_jw);   // ทิศ "หน้าจอ"
+            const _jrx = -_jfz, _jrz = _jfx;                      // ทิศ "ขวาจอ"
+            dx = _jrx * G.joy.x + _jfx * -G.joy.y;
+            dz = _jrz * G.joy.x + _jfz * -G.joy.y; }
           G.moveTarget = null;
         } else {
           // ⌨️ เดินด้วย W A S D หรือลูกศร — อิง "มุมกล้อง" ไม่ใช่ทิศโลก
