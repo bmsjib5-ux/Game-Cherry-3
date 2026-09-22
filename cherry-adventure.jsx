@@ -60300,11 +60300,24 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             // 🖥️ จอแนวนอนกว้างพอ → ผังแบบเกม MMO: แท็บซ้าย · ช่องอุปกรณ์ · ตัวละครโชว์ตรงกลาง · แผงขวา
             const wide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
             const eqTab = ui.eqTab || "bag";
+            // 📱 แนวนอนมือถือ: กว้างพอจะเข้าผัง MMO แต่เตี้ยและแคบกว่าคอมมาก
+            //    ถ้าใช้ความกว้างคอลัมน์ชุดคอม กระเป๋าจะถูกดันจนล้นออกนอกจอ
+            const _vw = window.innerWidth, _vh = window.innerHeight;
+            const tight = wide && (_vh < 560 || _vw < 1060);
+            const railW = tight ? 92 : 132;      // แถบแท็บซ้าย
+            const gearW = tight ? 148 : 196;     // ช่องชุดที่สวมอยู่
+            const dollW = tight ? 176 : 290;     // ตัวละครตรงกลาง
             // 🖥️ คอม: ตารางของยืดให้เต็มความสูงจอ (เดิมล็อก 24 ช่อง/หน้า เหลือพื้นที่ว่างครึ่งจอ)
-            const bagCols = wide ? 8 : 6;
-            const bagW = wide ? Math.round(Math.max(342, Math.min(780, Math.min(window.innerWidth * 0.99, 1240) - 132 - 196 - 290 - 34))) : 0;
-            const bagCell = wide ? Math.max(40, (bagW - 24 - (bagCols - 1) * 6) / bagCols) : 0;
-            const bagRows = wide ? Math.max(4, Math.min(16, Math.floor((Math.max(200, window.innerHeight * 0.94 - 106 - 152) + 6) / (bagCell + 6)))) : 4;
+            // 🐛 เดิมมีพื้นขั้นต่ำ 342px ทำให้จอแนวนอนมือถือ (เหลือที่จริงแค่ ~260) ถูกดันจนคอลัมน์ขวาหลุดออกนอกจอ
+            //    คิดจากที่เหลือจริง แล้วลดจำนวนคอลัมน์แทน ถ้าที่ไม่พอ
+            //    หักตามกล่องที่วาดจริง: แถบแท็บ = railW+18 · ช่องชุด = gearW+20 · ตัวละคร = dollW
+            //    บวกช่องไฟ 3 ช่อง (30) และขอบซ้าย-ขวาของแผง (32)
+            const bagW = wide ? Math.round(Math.max(150, Math.min(780,
+              Math.min(_vw, 1240) - 32 - (railW + 18) - (gearW + 20) - dollW - 30))) : 0;
+            const _minCell = tight ? 36 : 44;
+            const bagCols = wide ? Math.max(3, Math.min(8, Math.floor((bagW - 24 + 6) / (_minCell + 6)))) : 6;
+            const bagCell = wide ? Math.max(_minCell, (bagW - 24 - (bagCols - 1) * 6) / bagCols) : 0;
+            const bagRows = wide ? Math.max(3, Math.min(16, Math.floor((Math.max(160, _vh * 0.94 - 106 - (tight ? 68 : 152)) + 6) / (bagCell + 6)))) : 4;
             const railBtn = (k, ic, label) => (
               <button key={k} onClick={() => setUi((u) => ({ ...u, eqTab: k }))} style={{
                 display: "flex", alignItems: "center", gap: 7, width: "100%", padding: "9px 10px", marginBottom: 6,
@@ -60439,7 +60452,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
                     {/* 🗂️ แถบแท็บซ้าย (เฉพาะจอกว้าง) */}
                     {wide && (
-                      <div style={{ flexShrink: 0, width: 132, alignSelf: "flex-start",
+                      <div style={{ flexShrink: 0, width: railW, alignSelf: "flex-start",
                         background: "linear-gradient(170deg, rgba(20,28,22,0.80), rgba(14,20,16,0.72))",
                         border: "1px solid rgba(232,128,158,0.18)", borderRadius: 16, padding: 8 }}>
                         {railBtn("char", "👤", "ตัวละคร")}
@@ -60448,13 +60461,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     )}
 
                     {/* ชุดที่สวมอยู่ */}
-                    <div style={{ flexShrink: 0, width: wide ? 196 : two ? 216 : "auto", alignSelf: wide ? "flex-start" : "stretch", maxHeight: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)" : undefined, overflowY: wide ? "auto" : undefined, display: "flex", flexDirection: "column", gap: 8,
+                    <div style={{ flexShrink: 0, width: wide ? gearW : two ? 216 : "auto", alignSelf: wide ? "flex-start" : "stretch", maxHeight: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)" : undefined, overflowY: wide ? "auto" : undefined, display: "flex", flexDirection: "column", gap: 8,
                       ...(wide ? { background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "9px 9px 10px" } : {}) }}>
                       <div style={{ borderRadius: 16, padding: "9px 10px 10px",
                         background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.20))",
                         border: "1px solid rgba(232,128,158,0.09)", boxShadow: "0 4px 16px rgba(120,60,90,0.30) inset" }}>
                         <div style={{ fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#8a9a88", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>
-                        <div style={{ display: "grid", gridTemplateColumns: wide ? "repeat(2, 1fr)" : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: 7 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: tight ? 5 : 7 }}>
                           {GEAR.map(slotCell)}
                         </div>
                       </div>
@@ -60539,7 +60552,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     {/* 🧍 เวทีโชว์ตัวละครตรงกลาง — กรอบขาวโปร่ง มองทะลุไปเห็นตัวละคร 3D ที่ยืนอยู่ข้างหลัง */}
                     {wide && (
                       <div ref={(el) => { if (el) { const r = el.getBoundingClientRect(); const f = (r.left + r.width / 2) / Math.max(1, window.innerWidth) - 0.5; if (Math.abs(f - (G._eqCamFrac || 0)) > 0.002) { G._eqCamFrac = f; G._eqCamSnap = 1; } } }}
-                        style={{ flex: 1, minWidth: 250, alignSelf: "stretch", boxSizing: "border-box",
+                        style={{ flex: 1, minWidth: dollW, alignSelf: "stretch", boxSizing: "border-box",
                         maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)",
                         borderRadius: 18, border: "2px solid rgba(255,255,255,0.86)",
                         background: "linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.03))",
@@ -60615,9 +60628,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     })()}
 
                     {/* กระเป๋า */}
-                    <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
+                    <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box", display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
                       ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
-                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+                      <div style={{ display: "flex", flexWrap: tight ? "nowrap" : "wrap", alignItems: "center", gap: 4, overflowX: tight ? "auto" : "visible", paddingBottom: tight ? 2 : 0, minHeight: tight ? 30 : undefined }}>
                     {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
                     <button key="eqauto" onClick={() => G.autoEquip()} title="⚡ สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡</button>
                     <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>

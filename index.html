@@ -88833,11 +88833,23 @@ function CherryAdventure() {
                 // 🖥️ จอแนวนอนกว้างพอ → ผังแบบเกม MMO: แท็บซ้าย · ช่องอุปกรณ์ · ตัวละครโชว์ตรงกลาง · แผงขวา
                 const wide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
                 const eqTab = ui.eqTab || "bag";
+                // 📱 แนวนอนมือถือ: กว้างพอจะเข้าผัง MMO แต่เตี้ยและแคบกว่าคอมมาก
+                //    ถ้าใช้ความกว้างคอลัมน์ชุดคอม กระเป๋าจะถูกดันจนล้นออกนอกจอ
+                const _vw = window.innerWidth, _vh = window.innerHeight;
+                const tight = wide && (_vh < 560 || _vw < 1060);
+                const railW = tight ? 92 : 132; // แถบแท็บซ้าย
+                const gearW = tight ? 148 : 196; // ช่องชุดที่สวมอยู่
+                const dollW = tight ? 176 : 290; // ตัวละครตรงกลาง
                 // 🖥️ คอม: ตารางของยืดให้เต็มความสูงจอ (เดิมล็อก 24 ช่อง/หน้า เหลือพื้นที่ว่างครึ่งจอ)
-                const bagCols = wide ? 8 : 6;
-                const bagW = wide ? Math.round(Math.max(342, Math.min(780, Math.min(window.innerWidth * 0.99, 1240) - 132 - 196 - 290 - 34))) : 0;
-                const bagCell = wide ? Math.max(40, (bagW - 24 - (bagCols - 1) * 6) / bagCols) : 0;
-                const bagRows = wide ? Math.max(4, Math.min(16, Math.floor((Math.max(200, window.innerHeight * 0.94 - 106 - 152) + 6) / (bagCell + 6)))) : 4;
+                // 🐛 เดิมมีพื้นขั้นต่ำ 342px ทำให้จอแนวนอนมือถือ (เหลือที่จริงแค่ ~260) ถูกดันจนคอลัมน์ขวาหลุดออกนอกจอ
+                //    คิดจากที่เหลือจริง แล้วลดจำนวนคอลัมน์แทน ถ้าที่ไม่พอ
+                //    หักตามกล่องที่วาดจริง: แถบแท็บ = railW+18 · ช่องชุด = gearW+20 · ตัวละคร = dollW
+                //    บวกช่องไฟ 3 ช่อง (30) และขอบซ้าย-ขวาของแผง (32)
+                const bagW = wide ? Math.round(Math.max(150, Math.min(780, Math.min(_vw, 1240) - 32 - (railW + 18) - (gearW + 20) - dollW - 30))) : 0;
+                const _minCell = tight ? 36 : 44;
+                const bagCols = wide ? Math.max(3, Math.min(8, Math.floor((bagW - 24 + 6) / (_minCell + 6)))) : 6;
+                const bagCell = wide ? Math.max(_minCell, (bagW - 24 - (bagCols - 1) * 6) / bagCols) : 0;
+                const bagRows = wide ? Math.max(3, Math.min(16, Math.floor((Math.max(160, _vh * 0.94 - 106 - (tight ? 68 : 152)) + 6) / (bagCell + 6)))) : 4;
                 const railBtn = (k, ic, label) => (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, eqTab: k })), style: {
                         display: "flex", alignItems: "center", gap: 7, width: "100%", padding: "9px 10px", marginBottom: 6,
                         borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 900, textAlign: "left",
@@ -88962,12 +88974,12 @@ function CherryAdventure() {
                             React.createElement("button", { title: "\u0E1B\u0E34\u0E14", onClick: () => G.closeEquip(), style: { width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(232,128,158,0.14)", background: "rgba(120,60,90,0.34)", color: "#5a3a5a", fontSize: 15, cursor: "pointer", padding: 0, flexShrink: 0 } }, "\u2715")),
                         React.createElement("div", { style: { flex: 1, minHeight: 0, overflowY: wide ? "visible" : "auto", padding: wide ? 0 : "12px 13px 13px",
                                 display: "flex", gap: wide ? 10 : 12, flexDirection: two ? "row" : "column", alignItems: "stretch" } },
-                            wide && (React.createElement("div", { style: { flexShrink: 0, width: 132, alignSelf: "flex-start",
+                            wide && (React.createElement("div", { style: { flexShrink: 0, width: railW, alignSelf: "flex-start",
                                     background: "linear-gradient(170deg, rgba(20,28,22,0.80), rgba(14,20,16,0.72))",
                                     border: "1px solid rgba(232,128,158,0.18)", borderRadius: 16, padding: 8 } },
                                 railBtn("char", "👤", "ตัวละคร"),
                                 railBtn("bag", "🎒", "กระเป๋า"))),
-                            React.createElement("div", { style: { flexShrink: 0, width: wide ? 196 : two ? 216 : "auto", alignSelf: wide ? "flex-start" : "stretch", maxHeight: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)" : undefined, overflowY: wide ? "auto" : undefined, display: "flex", flexDirection: "column", gap: 8,
+                            React.createElement("div", { style: { flexShrink: 0, width: wide ? gearW : two ? 216 : "auto", alignSelf: wide ? "flex-start" : "stretch", maxHeight: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)" : undefined, overflowY: wide ? "auto" : undefined, display: "flex", flexDirection: "column", gap: 8,
                                     ...(wide ? { background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "9px 9px 10px" } : {}) } },
                                 React.createElement("div", { style: { borderRadius: 16, padding: "9px 10px 10px",
                                         background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.20))",
@@ -88975,7 +88987,7 @@ function CherryAdventure() {
                                     React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 7 } },
                                         "\uD83E\uDDE5 \u0E0A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E2D\u0E22\u0E39\u0E48 ",
                                         React.createElement("span", { style: { color: "#8a9a88", fontWeight: 700 } }, "\u00B7 \u0E41\u0E15\u0E30\u0E0A\u0E48\u0E2D\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E01\u0E23\u0E2D\u0E07")),
-                                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: wide ? "repeat(2, 1fr)" : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: 7 } }, GEAR.map(slotCell))),
+                                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: tight ? 5 : 7 } }, GEAR.map(slotCell))),
                                 (() => {
                                     const wid = (ui.equip || {}).weapon;
                                     const wit = wid ? LOOT.find((x) => x.id === wid) : null;
@@ -89063,7 +89075,7 @@ function CherryAdventure() {
                                         G._eqCamFrac = f;
                                         G._eqCamSnap = 1;
                                     }
-                                } }, style: { flex: 1, minWidth: 250, alignSelf: "stretch", boxSizing: "border-box",
+                                } }, style: { flex: 1, minWidth: dollW, alignSelf: "stretch", boxSizing: "border-box",
                                     maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)",
                                     borderRadius: 18, border: "2px solid rgba(255,255,255,0.86)",
                                     background: "linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.03))",
@@ -89130,9 +89142,9 @@ function CherryAdventure() {
                                         React.createElement("button", { onClick: () => G.spinChar(-0.5), style: { flex: 1, border: "1px solid rgba(232,128,158,0.3)", borderRadius: 10, padding: "8px 0", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#ffe9b0", background: "rgba(232,128,158,0.12)" } }, "\u21A9\uFE0E \u0E2B\u0E21\u0E38\u0E19\u0E0B\u0E49\u0E32\u0E22"),
                                         React.createElement("button", { onClick: () => G.spinChar(0.5), style: { flex: 1, border: "1px solid rgba(232,128,158,0.3)", borderRadius: 10, padding: "8px 0", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 800, color: "#ffe9b0", background: "rgba(232,128,158,0.12)" } }, "\u21AA\uFE0E \u0E2B\u0E21\u0E38\u0E19\u0E02\u0E27\u0E32"))));
                             })(),
-                            React.createElement("div", { style: { flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
+                            React.createElement("div", { style: { flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box", display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
                                     ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) } },
-                                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 } },
+                                React.createElement("div", { style: { display: "flex", flexWrap: tight ? "nowrap" : "wrap", alignItems: "center", gap: 4, overflowX: tight ? "auto" : "visible", paddingBottom: tight ? 2 : 0, minHeight: tight ? 30 : undefined } },
                                     [["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1])),
                                     React.createElement("button", { key: "eqauto", onClick: () => G.autoEquip(), title: "\u26A1 \u0E2A\u0E27\u0E21\u0E02\u0E2D\u0E07\u0E41\u0E23\u0E07\u0E2A\u0E38\u0E14\u0E43\u0E2B\u0E49\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34", style: { marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" } }, "\u26A1"),
                                     React.createElement("button", { key: "eqsort", onClick: () => { G.equipSort = nextSort; if (G.saveGame)
