@@ -2918,7 +2918,7 @@ const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sw
 const HERO_ATK_TIME = { hold: 0.4, spd: 2.4, from: 0.18 };
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
-                    archer: "Pistol_Idle_Loop" };                             // ที่เหลือ = Idle_Loop
+                    archer: "Idle_Loop" };                                    // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
 // 🎲 คลังชื่อสุ่มตอนสร้างตัวละคร — ชื่อเล่นไทยสั้น ๆ + ท้ายเสริมบางครั้ง (ยาวไม่เกิน 12 ตัวอักษรตามช่องกรอก)
 const RAND_NAME_A = ["มะลิ", "ปันปัน", "น้ำหวาน", "ข้าวปั้น", "ไข่มุก", "ต้นกล้า", "ฟ้าใส", "ขนมปัง", "โมจิ", "ลูกหมี", "ดาวเหนือ", "น้องเป้", "บัวลอย", "ทับทิม", "มินนี่", "แตงโม", "ก้านกล้วย", "ปีโป้", "สายรุ้ง", "ชาเย็น", "โกโก้", "กะทิ", "ข้าวหอม", "แพนเค้ก", "พริกขี้หนู", "ลูกชิ้น", "แสงดาว", "ใบเฟิร์น", "องุ่น", "น้ำผึ้ง", "หมีพูห์", "เจ้าเหมียว", "เพชร", "ตะวัน", "จันทร์เจ้า", "ลมหนาว", "สายฟ้า", "เพลิง", "อินทรี", "มังกรน้อย", "หมาป่า", "เสือดาว", "นักล่า", "ราชสีห์", "เงา", "พายุ", "ธนูทอง", "ดาบคม", "โล่เหล็ก", "ภูผา"];
 const RAND_NAME_B = ["", "", "", "จัง", "คุง", "น้อย", "จ๋า", "ซัง", "ตัวจริง", "ผู้กล้า", "นักสู้", "ฟีเวอร์"];
@@ -5271,6 +5271,8 @@ export default function CherryAdventure() {
     const ARM_OUT = 0.16;   // 💪 กางแขนออกจากลำตัวเล็กน้อยตอนถืออาวุธ — ไม่ให้แขนแนบติดตัวเป็นท่อนไม้
     G.wpnReady = (sec) => { G._wpnReadyT = Math.max(G._wpnReadyT || 0, sec == null ? 2.5 : sec); };   // ⚔️ ชักอาวุธออกมาถือข้างหน้า
     // 🤚 realistic grip: each weapon type is held at a natural angle
+    // 🏹 ธนูบนโมเดล 3D: ถือตั้งขึ้นข้างตัว คันโค้งหันไปหน้า — ค้นหาเชิงตัวเลขบนกระดูกมือ (ชิบิยังถือแนวนอนเหมือนเดิม)
+    const BOW_GRIP_MODEL = { x: -2.09, y: -1.83, z: 1.05 };   // วัดกับท่า Idle_Loop: แกนคัน ↑ 1.00 · คันโค้งหันหน้า 0.99
     const gripFor = (id) => {
       if (id && id.indexOf("kkh_") === 0) return { x: 0.9, y: 0, z: 0.3 };   // 🦸🪓 อาวุธหนักรุ่น KayKit — พาดเฉียงข้างลำตัว หัวอาวุธชี้ออกนอก
       const it = LOOT.find((x) => x.id === id);
@@ -5292,13 +5294,13 @@ export default function CherryAdventure() {
       if (id === "usaCarrot") return { x: -0.35, y: 0, z: 0.15 }; // 🐰🥕 ค้อนแครอทพาดไหล่เฉียงหน้า
       if (id === "cx" || id === "wDx" || id === "lg_ox") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
-      if (cls === "archer" || id === "ca" || id === "wDa" || id === "lg_oa") return { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal
+      if (cls === "archer" || id === "ca" || id === "wDa" || id === "lg_oa") return G.heroModelId ? { ...BOW_GRIP_MODEL } : { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal (โมเดล 3D ตั้งขึ้น)
       if (cls === "mage" || id === "cm" || id === "wDm" || id === "lg_om") return { x: -0.15, y: 0, z: 0 };
       if (id === "cw" || id === "wDw" || id === "wS" || id === "lg_ow" || cls === "warrior") return { x: 1.55, y: 0, z: 0 }; // blade points backward
       if (cls === "assassin" || id === "cs" || id === "wDs" || id === "lg_os") return { x: 1.4, y: 0, z: 0 }; // daggers point backward
       if (typeof id === "string" && id.startsWith("kki_")) {   // ✨ KayKit ต่อไอเทม — จับตามตระกูลที่บันทึกไว้บนโมเดล
         const kf = weaponModels[id] && weaponModels[id].userData.kkFam;
-        if (kf === "bow") return { x: -0.15, y: 0, z: Math.PI / 2 };
+        if (kf === "bow") return G.heroModelId ? { ...BOW_GRIP_MODEL } : { x: -0.15, y: 0, z: Math.PI / 2 };
         if (kf === "staff") return G.heroModelId ? { x: 1.45, y: 0, z: 0 } : { x: -0.15, y: 0, z: 0 };            // 🧍 บนโมเดล 3D กระดูกมือเอียงคนละแบบ — ต้องหมุนให้หัวคทาชี้ขึ้น
         if (kf === "spear") return G.heroModelId ? { x: 1.45, y: 0, z: 0 } : { x: (Math.PI / 2) + 0.15, y: 0, z: 0 };
         if (kf === "dagger") return { x: 1.4, y: 0, z: 0 };
@@ -5306,7 +5308,7 @@ export default function CherryAdventure() {
       }
       if (typeof id === "string" && (id.startsWith("w_") || id.startsWith("kk_"))) { // ⚔️ โมเดลอาวุธตามระดับ / 🗡️ KayKit — จับตามชนิดอาวุธ
         id = id.replace(/^kk_/, "w_");
-        if (id.startsWith("w_bow")) return { x: -0.15, y: 0, z: Math.PI / 2 };
+        if (id.startsWith("w_bow")) return G.heroModelId ? { ...BOW_GRIP_MODEL } : { x: -0.15, y: 0, z: Math.PI / 2 };
         if (id.startsWith("w_staff")) return { x: -0.15, y: 0, z: 0 };
         if (id.startsWith("w_spear")) return { x: (Math.PI / 2) + 0.15, y: 0, z: 0 };
         if (id.startsWith("w_keyboard")) return { x: -1.35, y: 0, z: 0 };
@@ -8575,7 +8577,7 @@ export default function CherryAdventure() {
         const gy = model.userData.gripY != null ? model.userData.gripY : 0.28;
         // 🗡️ ดาบ/คาตานะใหญ่ขึ้นเท่าตัว (ทั้งโมเดล KayKit และโมเดลที่ปั้นเอง)
         //    ขยายทั้งชิ้นแล้วเลื่อนด้ามลงตามสัดส่วน มือจึงยังกำอยู่ที่ด้ามเดิม ไม่ใช่กลางใบดาบ
-        const big = BLADE_BIG(curWeapon);
+        const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : 1);   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
         model.scale.setScalar(big);
         model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
         model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
@@ -43127,7 +43129,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (wand.userData.homeRot) wand.rotation.copy(wand.userData.homeRot);
           wand.scale.set(1, 1, 1);
         }
-        if (G.cls === "archer") {
+        if (G.cls === "archer" && !G.heroModelId) {   // 🧍 โมเดล 3D ใช้มุมจับจาก gripFor (ธนูตั้งข้างตัว) ไม่ใช้ท่าแขนชิบิ
           // 🏹 เดิน/วิ่ง = ถือคันธนูไว้ในมือข้างลำตัว เอียงไปข้างหลังเล็กน้อย
           //    ⚠️ ของเดิม "สะพายหลัง" โดยเลื่อนออกหลังข้อศอก 0.5 — แต่นั่นเป็นพิกัดของ "แขน"
           //       พอแขนแกว่งตอนเดิน คันธนูจึงลอยห่างออกจากมือ/ตัว ไม่ติดหลังจริง
@@ -46172,7 +46174,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           torso.rotation.y += (0 - torso.rotation.y) * rlx;       // ลำตัวที่โยกค้างจากฟุตเวิร์กก็คลายกลับ
         }
         // 🏹 archer battle-ready stance while waiting: hold the bow at a diagonal
-        if (G.cls === "archer" && !G.banim) {
+        if (G.cls === "archer" && !G.banim && !G.heroModelId) {   // 🧍 โมเดล 3D: คงมุมจับธนูตั้งข้างตัว
           // 🏹 READY stance — bow lowered toward the ground, angled ~40° across the body
           const brk = Math.sin(t * 2) * 0.02; // gentle breathing
           // bow held down-forward, tilted 40° (≈0.7 rad) from vertical
