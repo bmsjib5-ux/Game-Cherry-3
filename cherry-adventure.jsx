@@ -1214,6 +1214,7 @@ const PATH_ADV = {
     { id: "x_grv_1", cost: 7,  name: "เถาวัลย์พันธนาการ", emoji: "🌿", color: 0x4a9a4a, mult: 1.7, perLv: 0.36, slow: true, defDown: 8,  stun: true,  fx: "stab",     desc: "เถาวัลย์ผุดขึ้นรัดขาศัตรู · ช้าลง + ลดเกราะ + โอกาสตรึง" },
     { id: "x_grv_2", cost: 10, name: "พรพงไพรคุ้มภัย",   emoji: "🛡️", color: 0x7ada6a, mult: 1.0, perLv: 0.22, heal: 0.35, buffDef: 18, regen: 4, cleanse: true, fx: "healbless", desc: "พงไพรอวยพร ฟื้น HP 35% เกราะ +18 · ล้างสถานะ + ฟื้นต่อเนื่อง" },
     { id: "x_grv_3", cost: 13, name: "ธรณีพิโรธพงไพร",  emoji: "🌳", color: 0x3a8a3a, mult: 1.5, perLv: 0.32, stun: true, slow: true, defDown: 10, regen: 3, fx: "quake",  desc: "พื้นป่าพิโรธ รากไม้ทะลุขึ้นทั่วสนาม AoE · สตัน + ช้าลง + ลดเกราะ" },
+    { id: "x_grv_5", cost: 14, name: "เรียกขานพงไพร",   emoji: "🐾🌿", color: 0x5ad06a, mult: 1.15, perLv: 0.22, buffDef: 8, summon: 5, summonDur: 90, fx: "summon", desc: "เป่าเขาสัตว์เรียกเพื่อนซี้ในทีมออกมาสู้เคียงข้าง 5 ตัว นาน 90 วิ · สัตว์ที่เรียกจะรับดาเมจแทนเจ้าของ 🐾" },
     { id: "x_grv_4", cost: 16, name: "คำสาปรากปฐพี",    emoji: "🌱", color: 0x2ad06a, mult: 2.5, perLv: 0.52, stun: true, defDown: 12, heal: 0.2, regen: 4, bleed: 3, fx: "earthsplit", desc: "รากคำสาประทุขึ้นทั้งผืน ดูดพลังชีวิตคืนให้เจ้าของ · สตัน + ทำลายเกราะ" } ] },
 };
 let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสลับสกิลพื้นฐาน/ขั้นสูง (singleton ต่อหน้าเกม)
@@ -1595,7 +1596,7 @@ const SK_ARCH = {
   g_dash: "dash", g_drone: "summon", g_grav: "beam", g_over: "buff",                             // 🤖 จักรกลพิทักษ์
   x_ttn_1: "rocketfist", x_ttn_2: "energyshield", x_ttn_3: "shouldercannon", x_ttn_4: "titanstomp", // 🦾⚙️ ไททันเหล็กกล้า
   x_bst_1: "wolfcall", x_bst_2: "summon", x_bst_3: "cobraclaw", x_bst_4: "meteordive",             // 🐺👑 จอมพลสัตว์ป่า
-  x_grv_1: "vine", x_grv_2: "blessing", x_grv_3: "naturecata", x_grv_4: "rootcurse",               // 🌿🛡️ ผู้พิทักษ์พงไพร
+  x_grv_1: "vine", x_grv_2: "blessing", x_grv_3: "naturecata", x_grv_4: "rootcurse", x_grv_5: "summon",   // 🌿🛡️ ผู้พิทักษ์พงไพร
   x_nov_1: "railgun", x_nov_2: "dronelock", x_nov_3: "blackhole", x_nov_4: "satellite",             // 🛰️🔫 โนวาสไตรก์                            // 🤖 AI Mecha
 };
 // สายที่ "พุ่งเข้าหาเป้า" ก่อนออกท่า (ที่เหลือร่ายอยู่กับที่)
@@ -24038,7 +24039,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G.team.splice(i, 1);
         toast(`ถอด ${SPECIES[p.sp].name} ออกจากทีม`);
       } else {
-        if (G.team.length >= 3) { toast("ทีมเต็มแล้ว (3 ตัว)! ถอดตัวอื่นก่อน"); return; }
+        const tmax = G.teamMax ? G.teamMax() : 3;
+        if (G.team.length >= tmax) { toast(`ทีมเต็มแล้ว (${tmax} ตัว)! ถอดตัวอื่นก่อน`); return; }
         G.team.push(iid);
         toast(`➕ ${SPECIES[p.sp].name} เข้าทีม!`);
       }
@@ -26505,6 +26507,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // active buddy buffs the character — grows every pet level, jumps at evolution
     // 🐾 pet team (up to 3) — all members contribute buffs; slot 0 walks with you
+    // 🐾 นักฝึกสัตว์จัดทีมสัตว์ได้ 5 ตัว อาชีพอื่น 3 ตัว
+    G.teamMax = () => ((G.cls || "") === "tamer" ? 5 : 3);
     G.team = [];
     G.petBox = []; G._petSeq = 1; G.ranch = G.ranch || { slots: [], happy: {}, last: Date.now(), pending: 0 };
     const petBuffOne = (iid) => {
@@ -30578,8 +30582,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const sr = 2.6 + rad;
         m.position.set(char.position.x + Math.sin(ang) * sr, 0, char.position.z + Math.cos(ang) * sr);
         m.userData.summon = true;
+        // 🩸 สัตว์ที่เรียกมีเลือดของตัวเอง รับดาเมจแทนเจ้าของได้และตายได้
+        //    อิงเลเวลสัตว์ + ระดับสายพันธุ์ + เลือดสูงสุดของเจ้าของ (สายเลี้ยงสัตว์เลยอึดขึ้นตามตัวเอง)
+        const _sp = SPECIES[p.sp] || { tier: 1 };
+        const _mx = Math.max(30, Math.round((40 + (p.lv || 1) * 10 + (_sp.tier || 1) * 26) * (1 + (effMaxHp() / 900))));
+        m.userData.wmaxhp = _mx; m.userData.whp = _mx;
         scene.add(m);
-        summons.push({ m, rad, cd: 0.35 + i * 0.22, reT: 0, tgt: null, lunge: null });
+        wildBar(m); updateWildBar(m);
+        summons.push({ m, rad, cd: 0.35 + i * 0.22, reT: 0, tgt: null, lunge: null, hp: _mx, maxHp: _mx, name: (_sp.name || "เพื่อนซี้") });
         try { spawnSkillFx("summonpop", m.position, 0x9ae06a); burst(m.position, 0x9ae06a, 0.7); } catch (e2) {}
       });
       G.summonT = summons.length ? dur : 0;
@@ -30587,6 +30597,36 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       setUi((u) => ({ ...u, summonLeft: Math.ceil(G.summonT) }));
       if (summons.length) toast(`🐾 เรียกฝูงสัตว์ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!`);
       return summons.length;
+    };
+    // 🛡️🐾 สัตว์ที่เรียกออกมา "รับหน้า" แทนเจ้าของ — มอนสเตอร์ตัวไหนมีสัตว์อยู่ใกล้จะเข้าใส่สัตว์ก่อน
+    const SUMMON_TAUNT_R = 8;
+    G.summonTarget = (mon) => {
+      if (!summons.length || !mon) return null;
+      let best = null, bd = SUMMON_TAUNT_R * SUMMON_TAUNT_R;
+      for (const s of summons) {
+        if (!s.m || s.hp <= 0) continue;
+        const dx = s.m.position.x - mon.position.x, dz = s.m.position.z - mon.position.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 < bd) { bd = d2; best = s; }
+      }
+      return best;
+    };
+    // 💔 สัตว์ที่เรียกโดนตี — เลือดหมดแล้วกลับเข้าป่า (ตัวอื่นยังสู้ต่อ)
+    G.summonHurt = (s, dmg) => {
+      if (!s || !s.m || s.hp <= 0) return;
+      dmg = Math.max(1, Math.round(dmg));
+      s.hp = Math.max(0, s.hp - dmg);
+      s.m.userData.whp = s.hp;
+      try { popDamage(s.m.position, dmg, "hit"); burst(s.m.position, 0xff8a6a, 0.45); updateWildBar(s.m); } catch (e) {}
+      if (s.hp > 0) return;
+      // ☠️ ล้ม — เอาออกจากฝูง
+      try { burst(s.m.position, 0x9ae06a, 1.0); } catch (e) {}
+      scene.remove(s.m);
+      if (G._disposeObj3D) G._disposeObj3D(s.m);
+      const i = summons.indexOf(s); if (i >= 0) summons.splice(i, 1);
+      toast(`💔 ${s.name} ล้มลงแล้ว — เหลือเพื่อนซี้ ${summons.length} ตัว`);
+      if (!summons.length) { G.summonT = 0; G._summonSec = 0; G._summonLock = nowMs() + 10000; setUi((u) => ({ ...u, summonLeft: 0 })); }
+      else setUi((u) => ({ ...u, summonLeft: Math.ceil(G.summonT || 0) }));
     };
     // 🐾 ฝูงรุมกัดศัตรูในสนามต่อสู้ — เรียกทุกเทิร์นก่อนถึงตาศัตรู ตราบที่เวลายังเหลือ
     G.summonAssist = () => {
@@ -40544,9 +40584,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           for (let k = 0; k < nInst && G.petBox.length < 30; k++) G.petBox.push({ i: G._petSeq++, sp: spId, lv: base.lv || 1, exp: 0, stage: base.stage || 1, plus: 0, iv: { a: Math.floor(Math.random() * 6), h: Math.floor(Math.random() * 9), d: Math.floor(Math.random() * 4) } });
         });
         const bySp = (spId) => { const fi = G.petBox.find((x) => x.sp === spId && !(G.team || []).some((t) => t === x.i)); return fi ? fi.i : null; };
-        G.team = (d.team || []).map(bySp).filter((x) => x != null).slice(0, 3);
+        G.team = (d.team || []).map(bySp).filter((x) => x != null).slice(0, G.teamMax ? G.teamMax() : 3);
       } else {
-        G.team = (G.team || []).filter((iid) => G.petBox.some((x) => x.i === iid)).slice(0, 3);
+        G.team = (G.team || []).filter((iid) => G.petBox.some((x) => x.i === iid)).slice(0, G.teamMax ? G.teamMax() : 3);
       }
       G.petSp = d.petSp || 0;
       G.petSkillLv = d.petSkillLv || {};
@@ -41612,7 +41652,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         let aggroHandled = false;
         if (G.actionMode && G.mode === "explore" && !isArenaFoe(m) && !m.userData.golden) {
           initWildHp(m);
-          const pdx = char.position.x - m.position.x, pdz = char.position.z - m.position.z;
+          // 🐾 สัตว์ที่เรียกออกมา "รับหน้า" แทนเจ้าของ — มอนตัวไหนมีเพื่อนซี้อยู่ใกล้จะเข้าใส่ตัวนั้นก่อน
+          const guard = G.summonTarget ? G.summonTarget(m) : null;
+          const tgtP = guard ? guard.m.position : char.position;
+          const pdx = tgtP.x - m.position.x, pdz = tgtP.z - m.position.z;
           const pdist = Math.hypot(pdx, pdz) || 0.001;
           const playerSafe = G.inHomeZone || G.inRanchZone || G.inTownZone || inSafeZone(char.position.x, char.position.z); // 🛡️ ในบ้าน/ฟาร์ม/เมือง/เขตปลอดภัย = มอนสเตอร์แตะไม่ได้
           if (playerSafe) {
@@ -41646,15 +41689,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 const wk = m.userData.weakT > 0 ? 1 - (m.userData.weak || 0) : 1;   // 🛡️ ศัตรูที่โดนลดพลังโจมตี
                 let raw = Math.max(1, Math.round((m.userData.watk || 8) * wk * (1 - defCut(effDef(), m.userData.lv || 1) * 0.8)));
                 let ab = 0;                                                         // แต้มที่เกราะกินไว้ (ใช้คิดแรงสะท้อนด้วย)
-                if (G.wShield > 0) {                                                // 🛡️✨ เกราะเทวฑูตกันไว้ก่อน แล้วค่อยเข้าเลือด
+                if (G.wShield > 0 && !guard) {                                                // 🛡️✨ เกราะเทวฑูตกันไว้ก่อน แล้วค่อยเข้าเลือด
                   ab = Math.min(G.wShield, raw);
                   G.wShield -= ab; raw -= ab;
                   if (ab > 0) { burst(char.position, 0xffe9a0, 0.6); popDamage(char.position, ab, "weak"); }
                 }
                 if (raw > 0) {
-                  G.player.hp = Math.max(0, G.player.hp - raw);
-                  popDamage(char.position, raw, "hit"); burst(char.position, 0xff5a5a, 0.5);
-                  if (G.sfx) G.sfx.hit && G.sfx.hit();
+                  if (guard && guard.hp > 0) {
+                    G.summonHurt(guard, raw);                 // 🐾 เพื่อนซี้กินดาเมจแทน เจ้าของไม่เจ็บ
+                    if (G.sfx) G.sfx.hit && G.sfx.hit();
+                  } else {
+                    G.player.hp = Math.max(0, G.player.hp - raw);
+                    popDamage(char.position, raw, "hit"); burst(char.position, 0xff5a5a, 0.5);
+                    if (G.sfx) G.sfx.hit && G.sfx.hit();
+                  }
                 }
                 if (G.wThornsT > 0 && G.wThorns > 0) {                              // ⛰️ เกราะภูผาสะท้อนแรงกลับใส่ผู้ตี
                   hurtWild(m, Math.max(1, Math.round((raw + ab) * G.wThorns)), { color: 0xc09a5a });
