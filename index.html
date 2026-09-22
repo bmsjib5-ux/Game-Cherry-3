@@ -3240,7 +3240,7 @@ function CherryAdventure() {
         custom: { gender: 0, skin: 0, hairColor: 0, hairStyle: 0, eyes: 0, mouth: 0, height: 0.5, build: 0.5, faceW: 0.5, faceJaw: 0.5, faceChin: 0.5, eyeSize: 0.5, eyeGap: 0.5, eyeY: 0.5, noseSize: 0.5, headSize: 0.5, model: null, topStyle: 0, bottomStyle: 0, outfit: 0, top: null, pants: null, shoes: null, acc: {} }, customTab: "char",
         inv: [], equip: { weapon: null, outfit: null, hat: null, mask: null, gloves: null, pants: null, shoes: null }, invOpen: false, invCat: "all", invSel: null, ultAlt: false, pathId: null, pathOpen: false, pathConfirm: null, titleId: "t_none", titleOpen: false, titleTick: 0, achStats: {}, rolls: {}, sockets: {}, gems: {}, costume: {}, dye: {}, fashionOpen: false, gemPick: null, plus: {}, awk: {}, awkPick: null, itemLock: {}, mats: {}, weaponInfuse: {}, treeNodes: {}, constNodes: {}, stardust: 0, diamonds: 0, diaSkins: {}, diamondShopOpen: false, wpMastery: {}, weaponSkin: "none", activeSet: null, activeAura: "none", weaponEnchant: "none", dyePalette: [], forgeOpen: false, treeOpen: false, constOpen: false, masteryOpen: false, collectionOpen: false, equipScreen: false, comboSeq: [], potions: 1, mpPotions: 1, hpPots: { s: 1, m: 0, l: 0 }, mpPots: { s: 1, m: 0, l: 0 }, hpPotUse: "s", mpPotUse: "s", shopQty: 1, potSellQty: 1, mp: 50, maxMp: 50, sortMode: "rarity", hasSave: null,
         gold: 80, shop: [], shopOpen: false,
-        eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, twr: null, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
+        eventMsg: "", eventLeft: 0, dungeonAsk: false, dungeonFloor: 0, dungeonProgress: 1, twr: null, twrLoad: null, rogueOn: false, rogueBuffs: [], rogueChoice: null, rogueResult: null, rogueBoard: null, rogueBoardErr: null, quests: [], questOpen: false,
         mining: null, mineNear: false, mineOre: null, mineLv: 1, mineExp: 0, mineTotal: 0, pickLv: 1, mineLast: null, mineTick: 0,
         kitchenOpen: false, cookLv: 1, cookExp: 0, cookTotal: 0, foodBuff: null, foodBag: [], cookTab: "bag", fishBag: { common: 0, rare: 0, epic: 0 }, fishLv: 1, fishInfo: null, fishSpot: null, fishBagOpen: false, cookTick: 0, todo: null, skillBoardOpen: false, boardPick: null, boardTick: 0, roadNear: null,
         expedOpen: false, exped: [null, null], expedPick: [], expedDest: null, expedTick: 0,
@@ -33480,6 +33480,7 @@ function CherryAdventure() {
         //   เดิมหนึ่งชั้น = มอนหนึ่งตัวในอารีน่าผลัดตา · ตอนนี้ชั้นหนึ่งคือสนามเปิด
         //   ที่สุ่มมอนหลายตัวออกมาพร้อมกัน ต้องเคลียร์ให้หมดภายในเวลาที่จับไว้
         //   ทุก 10 ชั้นมีบอสใหญ่ · แต่ละชั้นมีธาตุประจำชั้น + เงื่อนไขสัตว์เลี้ยงที่ช่วยให้ตีง่ายขึ้น
+        const TWR_LOAD_MAX = 8; // ⏳ รอฉากหอคอยนานสุดกี่วินาที เกินนี้เข้าไปเลย
         const TWR_ROOM_R = 13.5; // 🧱 รัศมีที่เดินได้ในห้องหอคอย (ห้องกว้าง ±16 เว้นขอบไว้ไม่ให้มุดกำแพง)
         const TWR_ELEM_CYCLE = ["fire", "ice", "wind", "water", "earth"];
         const TWR_SEC = (fl) => Math.round((fl % 10 === 0 ? 150 : fl % 5 === 0 ? 100 : 80) + TWR_COUNT(fl) * 18); // ⏱️ เวลาต่อชั้น = ฐาน + 18 วิต่อมอนหนึ่งตัว
@@ -33655,6 +33656,49 @@ function CherryAdventure() {
             const D = G.dungeon;
             if (!D || G.mode !== "explore")
                 return;
+            // 🚪 กำลังรอฉากหอคอยขึ้น — นับถอยหลังแล้วค่อยเริ่มชั้นจริง
+            if (D.loading) {
+                D.loadT = (D.loadT || 0) + dt;
+                const roomUp = G.kkDunHas ? G.kkDunHas() : true;
+                const ready = roomUp || !G.kkOn || D.loadT >= TWR_LOAD_MAX; // โหลดนานเกินกำหนด = เข้าไปเลย ไม่ปล่อยให้ค้าง
+                const left = Math.max(0, Math.ceil(TWR_LOAD_MAX - D.loadT));
+                if (left !== D._loadSec) {
+                    D._loadSec = left;
+                    setUi((u) => ({ ...u, twrLoad: { sec: left, floor: D.floor, max: DUNGEON_MAX } }));
+                }
+                if (ready) {
+                    D.loading = false;
+                    setUi((u) => ({ ...u, twrLoad: null }));
+                    toast(D.floor > 1 ? `🗼 กลับเข้าหอคอย เริ่มต่อชั้น ${D.floor}/${DUNGEON_MAX}!`
+                        : "🗼 เข้าสู่หอคอยมิติ 100 ชั้น! เคลียร์มอนให้หมดทันเวลา — บอสใหญ่ทุก 10 ชั้น");
+                    dungeonSpawn(D.floor);
+                }
+                return;
+            }
+            // 👁️ ในหอคอยโชว์เฉพาะมอนของหอคอย — ตัวที่เกิดจากโลกกว้างซ่อนทั้งตัว ป้ายชื่อ และหลอดเลือด
+            //    (ตอนสร้างห้องซ่อนให้ครั้งเดียว แต่มอนที่เกิดทีหลังยังโผล่ได้ จึงต้องกวาดทุกเฟรม)
+            {
+                const hid = (D.hid = D.hid || []);
+                for (let i = 0; i < wilds.length; i++) {
+                    const w = wilds[i];
+                    if (!w || (w.userData && w.userData.twr))
+                        continue;
+                    if (w.visible) {
+                        w.visible = false;
+                        hid.push(w);
+                    }
+                    const lb = w.userData && w.userData.lbl && w.userData.lbl.sprite;
+                    if (lb && lb.visible) {
+                        lb.visible = false;
+                        hid.push(lb);
+                    }
+                    const hb = w.userData && w.userData.hpbar;
+                    if (hb && hb.visible) {
+                        hb.visible = false;
+                        hid.push(hb);
+                    }
+                }
+            }
             if (D.waitPick)
                 return; // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
             if (G.player && G.player.hp <= 0)
@@ -33726,6 +33770,12 @@ function CherryAdventure() {
         };
         // 🚪 ออกจากหอคอย — เก็บกวาดมอนแล้ววาร์ปกลับหน้าประตู
         G.twrLeave = (quiet) => {
+            const D0 = G.dungeon;
+            if (D0 && D0.hid) {
+                D0.hid.forEach((o) => { if (o)
+                    o.visible = true; });
+                D0.hid = null;
+            } // 👁️ คืนมอนโลกกว้างที่ซ่อนไว้
             twrClearMobs();
             G.dungeon = null;
             if (G.restoreScenery)
@@ -33736,22 +33786,29 @@ function CherryAdventure() {
             G.portalShy = true;
             if (!quiet)
                 toast(`🚪 ออกจากหอคอย · ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`);
-            setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, twr: null, dungeonAsk: false }));
+            setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, twr: null, twrLoad: null, dungeonAsk: false }));
             if (G.saveGame)
                 G.saveGame();
         };
         G.enterDungeon = () => {
             // resume from the deepest unbeaten floor, or start at 1
             const startFloor = (G.dungeonProgress && G.dungeonProgress > 1) ? G.dungeonProgress : 1;
-            G.dungeon = { floor: startFloor };
+            // 🚪 ห้องหอคอยโหลดไม่ทันในเฟรมเดียว — เข้าสถานะ "กำลังเข้าฉาก" ไว้ก่อน
+            //    แล้วค่อยปั้นมอน/เริ่มจับเวลาตอนห้องขึ้นจริง จะได้ไม่เห็นโลกเดิมค้างอยู่
+            G.dungeon = { floor: startFloor, loading: true, loadT: 0 };
             dungeonCenter.set(char.position.x, 0, char.position.z);
             G._botNear = null;
             G._npcNear = null;
-            setUi((u) => ({ ...u, dungeonAsk: false, botNear: null, botNearName: null, botNearLv: 0, npcNear: false, npcTalk: null }));
-            toast(startFloor > 1
-                ? `🗼 กลับเข้าหอคอย เริ่มต่อชั้น ${startFloor}/100!`
-                : "🗼 เข้าสู่หอคอยมิติ 100 ชั้น! เคลียร์มอนให้หมดทันเวลา — บอสใหญ่ทุก 10 ชั้น");
-            dungeonSpawn(startFloor);
+            G.moveTarget = null;
+            G.joy = { x: 0, y: 0 };
+            if (G.kkOn && G.kkDunLoad && !G.kkDunReady) {
+                try {
+                    G.kkDunLoad();
+                }
+                catch (_) { }
+            } // เริ่มโหลดทันที ไม่ต้องรอเฟรมถัดไป
+            setUi((u) => ({ ...u, dungeonAsk: false, botNear: null, botNearName: null, botNearLv: 0, npcNear: false, npcTalk: null,
+                twrLoad: { sec: TWR_LOAD_MAX, floor: startFloor, max: DUNGEON_MAX } }));
         };
         G.declineDungeon = () => {
             G.portalShy = true;
@@ -37174,6 +37231,7 @@ function CherryAdventure() {
             return true;
         };
         // เรียกทุกเฟรม — เข้าหอคอยเมื่อไหร่ห้องขึ้นเอง ออกทางไหนก็รื้อเอง (แพ้ ดีดออก หรือกดออก)
+        G.kkDunHas = () => !!kkDunGroup; // 🏰 ห้องหอคอยสร้างเสร็จแล้วหรือยัง
         G.kkDunTick = () => {
             const want = !!(G.dungeon && G.kkOn);
             if (want && !kkDunGroup) {
@@ -83262,7 +83320,7 @@ function CherryAdventure() {
     return (React.createElement("div", { style: { width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box",
             /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
             paddingLeft: "var(--sa-l, 0px)", paddingRight: "var(--sa-r, 0px)" } },
-        React.createElement("style", null, `:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}}`),
+        React.createElement("style", null, `:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} @keyframes cvSpin{to{transform:rotate(360deg);}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}}`),
         React.createElement("div", { ref: mountRef, style: { position: "absolute", top: 0, bottom: 0,
                 left: "calc(-1 * var(--sa-l, 0px))",
                 right: "calc(-1 * var(--sa-r, 0px))" } }),
@@ -86324,6 +86382,23 @@ function CherryAdventure() {
                 " \u23F1\uFE0F",
                 ui.eventLeft,
                 "s"))),
+        ui.twrLoad && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 60, pointerEvents: "auto", fontFamily: font,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12,
+                background: "radial-gradient(circle at 50% 45%, #3c1470, #0d0618)" } },
+            React.createElement("div", { style: { fontSize: 40, lineHeight: 1, filter: "drop-shadow(0 4px 14px rgba(201,168,240,0.7))" } }, "\uD83D\uDDFC"),
+            React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#f0e6ff", letterSpacing: 0.5 } }, "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E02\u0E49\u0E32\u0E2B\u0E2D\u0E04\u0E2D\u0E22\u0E21\u0E34\u0E15\u0E34\u2026"),
+            React.createElement("div", { style: { fontSize: 11.5, fontWeight: 700, color: "#c9a8f0" } },
+                "\u0E0A\u0E31\u0E49\u0E19 ",
+                ui.twrLoad.floor,
+                "/",
+                ui.twrLoad.max || 100,
+                " \u00B7 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E09\u0E32\u0E01"),
+            React.createElement("div", { style: { position: "relative", width: 84, height: 84, display: "flex", alignItems: "center", justifyContent: "center" } },
+                React.createElement("div", { style: { position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid rgba(201,168,240,0.25)" } }),
+                React.createElement("div", { style: { position: "absolute", inset: 0, borderRadius: "50%",
+                        border: "3px solid transparent", borderTopColor: "#c9a8f0", animation: "cvSpin 0.9s linear infinite" } }),
+                React.createElement("span", { style: { fontSize: 30, fontWeight: 900, color: "#ffe6c0" } }, ui.twrLoad.sec)),
+            React.createElement("div", { style: { fontSize: 10, color: "#a891c8", maxWidth: 260, textAlign: "center", lineHeight: 1.5 } }, "\u0E42\u0E2B\u0E25\u0E14\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01\u0E08\u0E30\u0E19\u0E32\u0E19\u0E2B\u0E19\u0E48\u0E2D\u0E22 \u0E04\u0E23\u0E31\u0E49\u0E07\u0E15\u0E48\u0E2D\u0E44\u0E1B\u0E40\u0E02\u0E49\u0E32\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35"))),
         ui.twr && ui.mode === "explore" && (() => {
             const T = ui.twr;
             const EM = ELEM_META[T.elem] || { emoji: "", name: T.elem || "" };
