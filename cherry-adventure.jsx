@@ -20583,26 +20583,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     //  หมุนธาตุแบบเลื่อนทุก 5 ชั้น — ชั้นติดกัน 5 ชั้นได้ครบ 5 ธาตุ และชั้นบอส (10/20/30/40/50) ก็ไม่ซ้ำกันเลย
     const twrElemOf = (fl) => TWR_ELEM_CYCLE[(fl + Math.floor((fl - 1) / 5)) % TWR_ELEM_CYCLE.length];
     // 🗡️ ธาตุที่ผู้เล่นตีออก — ธาตุที่หลอมใส่อาวุธมาก่อน ถ้าไม่มีก็ใช้ธาตุของอาวุธที่ใส่อยู่
-    const twrPlayerElem = () => {
-      if (G.weaponInfuse && ELEM_META[G.weaponInfuse]) return G.weaponInfuse;
-      const it = LOOT.find((x) => x.id === (G.equip && G.equip.weapon));
-      return (it && it.elem) || null;
-    };
     // 🎯 เงื่อนไขผ่านชั้น — หมุน 3 แบบ: ตามจำนวน · ตามเวลา · ตามชนิด
     //    ชั้นบอสใช้แบบ "ชนิด" เสมอ (ล้มบอสตัวนั้นให้ได้)
     const TWR_OBJ = { count: "จำนวน", time: "เวลา", kind: "ชนิด" };
     const twrObjKind = (fl) => (fl % 10 === 0 ? "kind" : fl % 3 === 2 ? "time" : fl % 3 === 0 ? "kind" : "count");
-    // 💥 ตัวคูณดาเมจในหอคอย — เหลือแค่การหักล้างธาตุ
-    G.twrDmgMul = (m) => {
-      const D = G.dungeon; if (!D || !m || !m.userData || !m.userData.twr) return 1;
-      return Math.max(0.85, elemAdv(twrPlayerElem(), m.userData.elem));   // เสียเปรียบธาตุหักแค่ 15% ไม่ถึงกับตีไม่ออก
-    };
     const twrSyncUi = () => {
       const D = G.dungeon;
       setUi((u) => ({ ...u, dungeonFloor: D ? D.floor : 0, twr: D ? {
         floor: D.floor, max: DUNGEON_MAX, rogue: !!D.rogue, alive: D.alive || 0, total: D.total || 0,
         sec: Math.max(0, Math.ceil(D.tLeft || 0)), secMax: D.sec || 1, boss: D.floor % 10 === 0,
-        elem: D.elem, obj: D.obj ? { ...D.obj } : null, myElem: twrPlayerElem(),
+        elem: D.elem, obj: D.obj ? { ...D.obj } : null,
       } : null }));
     };
     G.twrSyncUi = twrSyncUi;
@@ -30377,8 +30367,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // ⚖️ level-gap penalty — hitting monsters far above your level deals less (mirrors the EXP relMul)
       const lvGap = Math.max(0, (m.userData.lv || 1) - (G.player ? G.player.level : 1));
       dmg = dmg * Math.max(0.4, 1 - lvGap * 0.03);
-      // 🗼 ในหอคอย: ธาตุประจำชั้นหักล้างกับธาตุอาวุธ + โบนัสถ้าพาสัตว์เลี้ยงตามเงื่อนไขมา
-      if (m.userData.twr && G.twrDmgMul) dmg = dmg * G.twrDmgMul(m);
       if (m.userData.vulnT > 0) dmg = dmg * (1 + (m.userData.vuln || 0)); // 🌳🌟 เกราะแตก — รับดาเมจเพิ่มตลอดที่ยังติดคำสาป
       dmg = Math.max(1, Math.round(dmg));
       m.userData.whp -= dmg;
@@ -57622,8 +57610,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       {ui.twr && ui.mode === "explore" && (() => {
         const T = ui.twr;
         const EM = ELEM_META[T.elem] || { emoji: "", name: T.elem || "" };
-        const MY = T.myElem ? (ELEM_META[T.myElem] || { emoji: "", name: T.myElem }) : null;
-        const adv = T.myElem ? elemAdv(T.myElem, T.elem) : 1;
         const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
         const low = T.sec <= 15;
         return (
@@ -57648,12 +57634,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 9.5, lineHeight: 1.45 }}>
                 <span style={{ fontWeight: 800, color: "#ffd9a0" }}>เหลือ {T.alive}/{T.total} ตัว</span>
-                {MY && (
-                  <span style={{ color: adv > 1 ? "#8ef0a8" : adv < 1 ? "#ffa8a8" : "#c8bce0" }}>
-                    · อาวุธ {MY.emoji}{MY.name} {adv > 1 ? "ได้เปรียบ 🔺+30%" : adv < 1 ? "เสียเปรียบ 🔻-25%" : "เสมอ"}
-                  </span>
-                )}
-                {!MY && <span style={{ color: "#a89ac0" }}>· อาวุธไม่มีธาตุ (หลอมธาตุที่โรงตีเหล็กช่วยได้)</span>}
               </div>
               {/* 🎯 เงื่อนไขผ่านชั้น — ตามจำนวน / ตามเวลา / ตามชนิด */}
               {T.obj && (() => {
