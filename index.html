@@ -3068,7 +3068,8 @@ const HERO_MODELS = {
     tamer: { name: "นักฝึกสัตว์", emoji: "🐾", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_Long"], h: 3.9, hue: [36, 0.50, 1.02], hairC: 0xb08a4a, desc: "นักฝึกสัตว์ชุดน้ำตาลทอง" },
 };
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
-const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.1, pz: 0 }; // py 0.1 = กำปั้นอยู่ระหว่างลูกทุยกับโกร่งดาบพอดี (ต่ำกว่านี้มือไปกำใบดาบ)   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
+const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.1, pz: 0 };
+const HERO_GRIP_L = { rx: -0.6, ry: -Math.PI, rz: -2.36, px: 0, py: 0.1, pz: 0 }; // 🛡️ ท่าจับมือซ้าย (โล่/นวมซ้าย) บนกระดูก hand_l — ค้นหาเชิงตัวเลขให้หน้าโล่หันออกซ้าย-หน้า ขอบบนชี้ขึ้น   // py 0.1 = กำปั้นอยู่ระหว่างลูกทุยกับโกร่งดาบพอดี (ต่ำกว่านี้มือไปกำใบดาบ)   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
 // 🎭 ท่าตามอาชีพ — คลังท่ามี ดาบ / ร่ายเวท / เล็งยิง / หมัด · อาชีพไหนไม่อยู่ในตารางใช้ค่าตั้งต้น
 const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sword_Attack", aegis: "Sword_Attack",
     assassin: "Punch_Jab", boxer: "Punch_Cross",
@@ -10230,6 +10231,100 @@ function CherryAdventure() {
             if (t >= 5)
                 g.userData.bladeScale = t >= 6 ? 1.15 : 1.1;
         };
+        // 🛡️✨ โล่มือซ้ายของนักรบ: KayKit shield_round เป็นต้นแบบ แล้ววาดต่างกันตามขั้น/ธาตุ/ชื่อของ "ดาบที่ถือ"
+        //    หลัง kkWrap โล่หันหน้าไปทาง -x · หน้าโล่อยู่ในระนาบ y–z ศูนย์กลาง (y 0.12, z 0.04) รัศมี ~0.35 (วัดจากโมเดลจริง)
+        const kkiShieldDecorate = (g, it) => {
+            const t = TIER[it.rarity] || 1, col = (it.elem && ELEM_GLOW[it.elem]) || (t >= 6 ? 0xffe08a : t >= 4 ? 0xf5c542 : 0xbfe0ff);
+            const nm = it.name || "";
+            const CY = 0.12, CZ = 0.04, R = 0.35, FX = -0.16; // ศูนย์กลางหน้าโล่ / รัศมี / ระนาบหน้าโล่ (x)
+            const gold = new THREE.MeshStandardMaterial({ color: t >= 6 ? 0xffd870 : t >= 5 ? 0x3a2a2a : 0xd9b45a, metalness: 0.8, roughness: 0.3, emissive: t >= 6 ? 0x7a5a10 : 0x000000, emissiveIntensity: 0.6 });
+            const em = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.0 + t * 0.25, roughness: 0.3, metalness: 0.2, transparent: true, opacity: 0.9 });
+            const gemMat = (c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.9 + t * 0.15, roughness: 0.15, metalness: 0.3 });
+            const ring = (r, tube, mat, dx) => { const m = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 8, 32), mat); m.position.set(FX + (dx || 0), CY, CZ); m.rotation.y = Math.PI / 2; g.add(m); return m; };
+            const onFace = (obj, a, r, dx) => { obj.position.set(FX + (dx || 0), CY + Math.sin(a) * r, CZ + Math.cos(a) * r); g.add(obj); return obj; };
+            if (t <= 1 || /ไม้|ฝึก/.test(nm)) {
+                g.traverse((o) => { if (o.isMesh) {
+                    o.material = o.material.clone();
+                    o.material.color.setHex(0xc9a070);
+                    o.material.roughness = 0.9;
+                    o.material.metalness = 0;
+                } });
+            }
+            if (t <= 1)
+                return;
+            // 💎 หายาก: ขอบเรืองสีธาตุ + อัญมณีกลางโล่
+            ring(R + 0.02, 0.014 + t * 0.002, em);
+            const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.045 + t * 0.006, 0), gemMat(col));
+            core.scale.set(0.6, 1, 1);
+            core.position.set(FX - 0.02, CY, CZ);
+            g.add(core);
+            g.userData.flame = core;
+            if (/เหล็กกล้า/.test(nm)) {
+                for (let k = 0; k < 8; k++) {
+                    const rv = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 5), gold);
+                    onFace(rv, (k / 8) * Math.PI * 2, R - 0.05);
+                }
+            }
+            if (t >= 3) { // 💜 มหากาพย์: หมุดโลหะ 6 เม็ด + อัญมณีเล็ก 4 ทิศ
+                for (let k = 0; k < 6; k++) {
+                    const st = new THREE.Mesh(new THREE.SphereGeometry(0.022, 7, 6), gold);
+                    onFace(st, (k / 6) * Math.PI * 2 + 0.5, R - 0.07);
+                }
+                for (let k = 0; k < 4; k++) {
+                    const gm = new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), gemMat(col));
+                    gm.scale.set(0.6, 1.2, 0.8);
+                    onFace(gm, (k / 4) * Math.PI * 2, R * 0.55, -0.01);
+                }
+            }
+            if (t >= 4) { // 🌟 SECRET: รัศมีวงนอก + รูนเรือง 5 จุด + เกล็ดพลังลอยหน้าโล่
+                ring(R + 0.11, 0.012, em, 0.02);
+                for (let k = 0; k < 5; k++) {
+                    const rn = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.055, 0.03), em);
+                    onFace(rn, (k / 5) * Math.PI * 2 + 0.3, R * 0.78, -0.005);
+                    rn.rotation.x = (k / 5) * Math.PI * 2 + 0.3;
+                }
+                for (let k = 0; k < 4 + (t - 4) * 2; k++) {
+                    const sh = new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), em);
+                    onFace(sh, (k / (4 + (t - 4) * 2)) * Math.PI * 2, R + 0.06 + (k % 2) * 0.06, -0.06 - (k % 3) * 0.03);
+                }
+            }
+            if (t === 5) { // 🐉 มังกร: หนามดำแดงรอบขอบ 10 ซี่ ชี้ออก + ตามังกรแดงกลางโล่
+                const fang = new THREE.MeshStandardMaterial({ color: 0x2a1418, metalness: 0.5, roughness: 0.5, emissive: 0x7a1010, emissiveIntensity: 0.5 });
+                for (let k = 0; k < 10; k++) {
+                    const a = (k / 10) * Math.PI * 2;
+                    const f = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 4), fang);
+                    onFace(f, a, R + 0.05, 0.02);
+                    f.rotation.x = -a;
+                }
+                core.material = gemMat(0xff2a2a);
+            }
+            if (t >= 6) { // ⭐ ตำนาน: รัศมีทองคู่ + ปีกทองบน–ล่าง + ขอบทอง
+                ring(R + 0.2, 0.01, em, 0.04);
+                ring(R + 0.05, 0.02, gold, 0.03);
+                for (const sy of [1, -1]) {
+                    const w = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.3, 4), gold);
+                    w.scale.set(0.3, 1, 1);
+                    onFace(w, sy > 0 ? Math.PI / 2 : -Math.PI / 2, R + 0.12, 0.02);
+                    w.rotation.x = sy > 0 ? 0 : Math.PI;
+                }
+            }
+            if (/จันทรา/.test(nm)) {
+                const moon = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.022, 8, 20, Math.PI * 1.25), gemMat(0xfff0b0));
+                moon.position.set(FX - 0.02, CY, CZ);
+                moon.rotation.set(0.5, Math.PI / 2, 0);
+                g.add(moon);
+            }
+            if (/สุริย|ฟ้าสวรรค์|อสนีบาต|โลกันตร์/.test(nm)) {
+                for (let k = 0; k < 10; k++) {
+                    const a = (k / 10) * Math.PI * 2;
+                    const ry = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.17, 4), gemMat(0xfff0b0));
+                    onFace(ry, a, R + 0.14, 0.03);
+                    ry.rotation.x = -a;
+                }
+            }
+            if (t >= 5)
+                g.scale.multiplyScalar(t >= 6 ? 1.12 : 1.08);
+        };
         G.kkItem = (id, it) => {
             if (!G.kkOn || !it)
                 return null;
@@ -10254,14 +10349,16 @@ function CherryAdventure() {
                     m.userData._frzM = 1;
                 }
                 weaponModels[k] = m;
-                if (fam === "sword" && (TIER[it.rarity] || 1) <= 4) {
+                if (fam === "sword") {
                     const sh = kkWrap("shield");
                     if (sh) {
+                        kkiShieldDecorate(sh, it);
+                        sh.scale.multiplyScalar(1.8);
                         sh.visible = false;
                         wandL.add(sh);
                         gloveLModels[k] = sh;
                     }
-                } // 🛡️ ดาบมือเดียว → โล่มือซ้าย (สองมือไม่ถือโล่)
+                } // 🛡️ นักรบถือโล่คู่ดาบทุกขั้น — โล่ตกแต่งตามขั้น/ธาตุของดาบ · ขยาย 1.8 ให้สมดุลกับดาบที่ขยาย 2 เท่า
             }
             return k;
         };
@@ -13360,6 +13457,14 @@ function CherryAdventure() {
                         if (H0.grip.parent)
                             H0.grip.parent.remove(H0.grip);
                     }
+                    if (H0.gripHomeL && H0.gripL) { // 🛡️ คืนโล่/นวมมือซ้ายเช่นกัน
+                        H0.gripHomeL.parent.add(wandL);
+                        wandL.position.copy(H0.gripHomeL.pos);
+                        wandL.rotation.copy(H0.gripHomeL.rot);
+                        wandL.scale.copy(H0.gripHomeL.scl);
+                        if (H0.gripL.parent)
+                            H0.gripL.parent.remove(H0.gripL);
+                    }
                     char.remove(H0.g);
                     G._heroModel = null;
                 }
@@ -13472,6 +13577,18 @@ function CherryAdventure() {
                         hand.add(grip);
                         grip.add(wand);
                     }
+                    let gripL = null, gripHomeL = null;
+                    const handL = parts[0].getObjectByName("hand_l");
+                    if (handL && typeof wandL !== "undefined" && wandL) { // 🛡️ มือซ้าย: โล่ KayKit / นวมซ้าย — เดิมโมเดล 3D ซ่อนร่างปั้นเองทั้งตัว ของมือซ้ายเลยหายไปด้วย
+                        gripHomeL = { parent: wandL.parent, pos: wandL.position.clone(), rot: wandL.rotation.clone(), scl: wandL.scale.clone() };
+                        gripL = new THREE.Group();
+                        gripL.name = "heroGripL";
+                        gripL.scale.setScalar(HERO_GRIP.s / k);
+                        gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz);
+                        gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
+                        handL.add(gripL);
+                        gripL.add(wandL);
+                    }
                     // 🎀 ผมปั้นเพิ่ม (จุก/หางม้า) — วางใน g (หน่วยตัวละคร: +y ขึ้น, -z หลัง) แล้วให้ตามกระดูก Head ทุกเฟรมใน heroModelTick
                     //    ⚠️ ไม่เกาะกระดูกตรง ๆ เพราะกระดูกหัวมีสเกล/แกนเอียง ทำให้ทรงเบี้ยวและพิกัดเดาไม่ออก
                     let tkRig = null;
@@ -13522,7 +13639,7 @@ function CherryAdventure() {
                         }
                     });
                     G._heroHidden = hidden;
-                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, mats, lit: -1, tk: tkRig };
+                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, gripL, gripHomeL, mats, lit: -1, tk: tkRig };
                     if (tkRig) {
                         g.updateMatrixWorld(true);
                         heroTopknotTick(G._heroModel);
@@ -13605,6 +13722,13 @@ function CherryAdventure() {
                     H.grip.scale.setScalar(HERO_GRIP.s / H.k);
                     H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
                     H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
+                }
+                if (H.gripL) { // 🛡️ มือซ้ายก็ถูกรีเซ็ตทุกเฟรมเหมือนกัน
+                    wandL.position.set(0, 0, 0);
+                    wandL.scale.set(1, 1, 1);
+                    H.gripL.scale.setScalar(HERO_GRIP.s / H.k);
+                    H.gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz);
+                    H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
                 }
                 if (H.neck && H.neckPlane) { // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
                     H.neck.getWorldPosition(H.tmpV);
