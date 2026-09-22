@@ -54213,7 +54213,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 📏 สูงเท่ากันทุกแท็บ (สลับแล้วกรอบอยู่นิ่ง) และยืดตามความสูงจอ — จอสูงใช้พื้นที่ได้เต็ม จอเตี้ยก็ไม่ล้น
     //    เว้นขอบบน-ล่างไว้ ~6% ของจอ · เพดาน 900px กันไม่ให้ยาวเกินอ่านสบายบนจอใหญ่มาก
     height: `min(calc((88vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)}), ${Math.round(Math.max(320, Math.min(900, Math.round(_vh * 0.88))) * _uiInv)}px)`, overflowY: "auto",
-    padding: 10, boxShadow: MODAL_SHADOW, fontFamily: font, ...CHIBI_FRAME,
+    padding: 10, boxSizing: "border-box", boxShadow: MODAL_SHADOW, fontFamily: font, ...CHIBI_FRAME,   // border-box: กว้าง 92% + padding ไม่ล้นขอบจอแคบ
   };
   // 🌑 กล่องเนื้อหาธีมเข้ม — ใช้กับแท็บที่ออกแบบมาบนพื้นเข้ม (วิชาสกิล · วิชาตัวเบา)
   //     ห่อไว้ข้างในกรอบขาวเดียวกัน ตัวหนังสือเลยยังอ่านออกเหมือนเดิม
@@ -54245,8 +54245,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
   const mktIcon = (L) => ((L && L.item && L.item.emoji) || (MKT_KIND[L && L.kind] || {}).ic || "📦");
   const skillTabs = (active, dark) => (
     <div style={{
-      display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap",
-      paddingRight: 38,                      // ⛔ เว้นที่ให้ปุ่ม ✕ ที่ลอยอยู่มุมขวาบน แท็บสุดท้ายจะได้ไม่โดนทับ
+      display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap", boxSizing: "border-box",
+      paddingRight: 38,                      // ⛔ เว้นที่ให้ปุ่ม ✕ ที่ลอยอยู่มุมขวาบน แท็บสุดท้ายจะได้ไม่โดน (border-box ไม่งั้นแถบล้นขวา 5px)ทับ
       position: "sticky", top: 0, zIndex: 11,
       background: dark ? "rgba(0,0,0,0.24)" : "#fff1f5", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #f6cfdc",
     }}>
@@ -59471,71 +59471,128 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           </button>
 
           {/* ⚡ skill upgrade panel */}
-          {ui.skillPanel && (
-            <div style={SKILL_SHELL}>
+          {ui.skillPanel && (() => {
+            // 💪 หน้าสถานะ (ปรับใหม่): การ์ดสรุปค่าพลังจริงตัวใหญ่ → แต้มรอใช้ + ปุ่มไปกระดานสกิล → อัพค่าสถานะแบบกริด → หัวข้อย่อยพับได้ทีละอัน
+            const P = G.profileInfo ? G.profileInfo() : {};
+            const wideS = window.innerWidth >= 700;
+            const sec = ui.statSec || (ui.pathOpen && !ui.pathId ? "path" : null);
+            const tog = (k) => setUi((u) => ({ ...u, statSec: (u.statSec || (u.pathOpen && !u.pathId ? "path" : null)) === k ? "none" : k, pathOpen: false }));
+            const C = CLASSES[ui.cls] || {};
+            const hex = C.color != null ? `#${C.color.toString(16).padStart(6, "0")}` : "#8a5a4a";
+            const chosen = ui.cls ? pathOf(ui.cls, ui.pathId) : null;
+            const canPick = (ui.level || 1) >= PATH_LV;
+            const isOpen = (t) => (G.titleUnlocked ? G.titleUnlocked(t) : false);
+            const nUnlocked = TITLES.filter(isOpen).length;
+            const eq = TITLES.find((t) => t.id === ui.titleId && t.id !== "t_none");
+            const cost = 200 + (ui.level || 1) * 40;
+            const afford = (ui.gold || 0) >= cost;
+            const critDmg = G.effCritDmg ? Math.round(G.effCritDmg()) : null;
+            const STATS = [
+              ["⚔️", "โจมตี", P.atk], ["🛡️", "ป้องกัน", P.def], ["❤️", "เลือด", `${P.hp}/${P.maxHp}`], ["💧", "มานา", `${P.mp}/${P.maxMp}`],
+              ["🎯", "คริ", `${P.crit}%`], ["💥", "ดาเมจคริ", critDmg != null ? `${critDmg}%` : "-"], ["🍀", "โชค", P.luck], ["💨", "หลบ", `${P.eva}%`], ["⚡", "ความเร็ว", P.spd],
+            ];
+            const secHead = (k, icon, label, value, col, bg) => (
+              <button onClick={() => tog(k)} style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 11px", borderRadius: 12, cursor: "pointer",
+                border: sec === k ? `2px solid ${col}` : "1.5px solid #ece4da", background: sec === k ? "#fff" : bg, fontFamily: font, textAlign: "left",
+              }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: col }}>{label}</span>
+                  <span style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#8a8070", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</span>
+                </span>
+                <span style={{ fontSize: 11, color: col, fontWeight: 900 }}>{sec === k ? "▲" : "▼"}</span>
+              </button>
+            );
+            return (
+            <div style={{ ...SKILL_SHELL, maxWidth: wideS ? Math.round(720 * _uiInv) : SKILL_SHELL.maxWidth }}>
               {closeBtn("skillPanel")}
               {skillTabs("skillPanel")}
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a", marginBottom: 4 }}>
-                💪 ค่าสถานะ · ฉายา · สายอาชีพ
-              </div>
-              {/* 🔢 combined unspent-points banner — matches the ⚡ button badge (สถานะ + สกิล) */}
-              <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8a5ad0", background: "linear-gradient(90deg,#f3ecff,#fdeef6)", border: "1px solid #e0d0f5", borderRadius: 10, padding: "6px 10px", marginBottom: 8 }}>
-                ⚡ แต้มที่ยังไม่ได้ใช้รวม <b style={{ color: "#6a3ac0" }}>{(ui.sp || 0) + (ui.statPts || 0)}</b> <span style={{ color: "#9a8ab0", fontWeight: 700 }}>= 💪 สถานะ {ui.statPts || 0} + ⚡ สกิล {ui.sp || 0}</span>
-              </div>
-              {/* 💪 base stats allocation */}
-              <div style={{ background: "linear-gradient(135deg,#f0f6ff,#f6f0ff)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #c0d0f0" }}>
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: "#4a6ac0" }}>💪 ค่าสถานะพื้นฐาน <span style={{ color: "#9a6ad0" }}>· มี {ui.statPts || 0} แต้ม</span></div>
-                <div style={{ fontSize: 9.5, color: "#7a8aa8", margin: "2px 0 6px" }}>ได้ 3 แต้ม/เลเวล · ยิ่งอัพสูงยิ่งใช้แต้มเพิ่ม (ทุก 10 ระดับ +1 แต้ม)</div>
-                {Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
-                  const rank = (ui.baseStats || {})[k] || 0;
-                  const cost = 1 + Math.floor(rank / 10);
-                  const can = (ui.statPts || 0) >= cost; // 💪 อัพได้เรื่อยๆ จนกว่าแต้มจะหมด (ไม่มีเพดาน)
-                  return (
-                    <div key={k} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                      <span style={{ fontSize: 12, width: 18 }}>{inf.emoji}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "#5a5a6a" }}>{inf.name} <span style={{ color: "#9aa" }}>Lv.{rank}</span></div>
-                        <div style={{ fontSize: 8.5, color: "#9aa0b0" }}>{inf.per}</div>
-                      </div>
-                      <button onClick={() => G.allocStat(k)} disabled={!can} style={{
-                        width: 44, height: 26, borderRadius: 8, border: "none", cursor: can ? "pointer" : "default",
-                        fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff",
-                        background: can ? "linear-gradient(90deg,#59a0e8,#7ac0f0)" : "#d0d5dd",
-                      }}>+{cost > 1 ? ` (${cost})` : "1"}</button>
+              {/* 🪪 การ์ดสรุปตัวละคร + ค่าพลังจริง */}
+              <div style={{ borderRadius: 14, padding: "10px 12px", marginBottom: 8, background: `linear-gradient(135deg, ${hex}22, #fff6fa)`, border: `1.5px solid ${hex}55` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, boxShadow: `0 3px 10px ${hex}44`, flex: "none" }}>{P.classEmoji || "🧍"}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: "#5a4a3a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{P.name} <span style={{ color: hex }}>Lv.{P.level}</span></div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8a7a6a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {P.className}{P.path ? ` · ${P.pathEmoji} ${P.path}` : ""}{P.title ? ` · 🏅 ${P.title}` : ""}
                     </div>
-                  );
-                })}
-                <button onClick={() => G.autoAllocStats()} style={{
-                  width: "100%", marginTop: 5, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer",
-                  fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff",
-                  background: "linear-gradient(90deg,#5aa06a,#7ac08a)",
-                }}>🎯 อัพตามแนะนำอาชีพ{ui.cls && G.STAT_RECO && G.STAT_RECO[ui.cls] ? ` — ${G.STAT_RECO[ui.cls].desc}` : ""}</button>
+                  </div>
+                  <div style={{ textAlign: "center", background: "#fff", borderRadius: 12, padding: "5px 10px", flex: "none", boxShadow: "0 2px 8px rgba(90,70,50,0.12)" }}>
+                    <div style={{ fontSize: 8.5, fontWeight: 800, color: "#b09a80", letterSpacing: "0.1em" }}>พลังรบ</div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: "#d0703a" }}>💪 {P.power != null ? P.power.toLocaleString() : "-"}</div>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: wideS ? "repeat(9, 1fr)" : "repeat(3, 1fr)", gap: 5, marginTop: 9 }}>
+                  {STATS.map(([ic, nm, v]) => (
+                    <div key={nm} style={{ background: "rgba(255,255,255,0.85)", borderRadius: 10, padding: "6px 4px", textAlign: "center" }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: "#9a8a7a", whiteSpace: "nowrap" }}>{ic} {nm}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 900, color: "#4a4a3a", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: "#9a6ad0", fontWeight: 800, marginBottom: 2 }}>
-                มีแต้มสกิล: {ui.sp || 0} (ได้ 3 แต้ม/เลเวล)
+              {/* ⚡ แต้มรอใช้ + ทางไปกระดานสกิล */}
+              <div style={{ display: "grid", gridTemplateColumns: wideS ? "1fr 1fr" : "1fr", gap: 8, marginBottom: 8 }}>
+                <div style={{ borderRadius: 12, padding: "8px 11px", background: "linear-gradient(90deg,#f3ecff,#fdeef6)", border: "1px solid #e0d0f5", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 20 }}>⚡</span>
+                  <span style={{ flex: 1 }}>
+                    <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: "#9a8ab0" }}>แต้มที่ยังไม่ได้ใช้</span>
+                    <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: "#6a3ac0" }}>💪 สถานะ {ui.statPts || 0} · 📖 สกิล {ui.sp || 0}</span>
+                  </span>
+                </div>
+                <button onClick={() => { setUi((u) => ({ ...u, skillPanel: false })); G.toggleSkillBoard(); }} style={{
+                  padding: "8px 11px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: font, textAlign: "left",
+                  display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#1d3a2c,#12261f)", boxShadow: "0 4px 12px rgba(30,80,60,0.3)",
+                }}>
+                  <span style={{ fontSize: 20 }}>📖</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: "#9fe8c0" }}>อัพสกิล / ท่าไม้ตาย</span>
+                    <span style={{ display: "block", fontSize: 9.5, color: "#7fae97" }}>เปิดกระดานวิชาสกิล · เพดาน Lv.{ui.skillCap || 1}</span>
+                  </span>
+                  {(ui.sp || 0) > 0 && <span style={{ fontSize: 10.5, fontWeight: 900, color: "#0d2018", background: "#ffd76a", borderRadius: 999, padding: "3px 8px" }}>⚡ {ui.sp}</span>}
+                  <span style={{ fontSize: 18, color: "#7fae97" }}>›</span>
+                </button>
               </div>
-              <div style={{ fontSize: 10, color: "#c04a4a", fontWeight: 700, marginBottom: 8 }}>
-                🔒 เพดานสกิลตอนนี้: Lv.{ui.skillCap || 1}/100 · เลเวลตัวละครสูงขึ้น = อัพสกิลได้สูงขึ้น
-              </div>
-              {/* 🏅 TITLES — earned by playing; equip one for its bonus */}
-              {(() => {
-                // unlock state is computed live from stats — no separate save flag to drift
-                const isOpen = (t) => (G.titleUnlocked ? G.titleUnlocked(t) : false);
-                const nUnlocked = TITLES.filter(isOpen).length;
-                const eq = TITLES.find((t) => t.id === ui.titleId && t.id !== "t_none");
-                return (
-                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "10px 11px", background: "linear-gradient(135deg,#fff4e6,#f4f0ff)", border: "2px solid #e0b060" }}>
-                    <button onClick={() => setUi((u) => ({ ...u, titleOpen: !u.titleOpen }))} style={{
-                      width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer",
-                      fontFamily: font, textAlign: "left",
-                    }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "#b07a10" }}>
-                        🏅 ฉายา {eq ? `— ${eq.emoji} ${eq.name}` : "(ยังไม่ได้สวม)"} <span style={{ color: "#c0a070", fontSize: 10 }}>{nUnlocked}/{TITLES.length} {ui.titleOpen ? "▲" : "▼"}</span>
+              {/* 💪 อัพค่าสถานะ — กริดปุ่มใหญ่ */}
+              <div style={{ borderRadius: 12, padding: "9px 10px", marginBottom: 8, background: "linear-gradient(135deg,#f0f6ff,#f6f0ff)", border: "1.5px solid #c0d0f0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div style={{ flex: 1, fontSize: 12.5, fontWeight: 900, color: "#4a6ac0" }}>💪 อัพค่าสถานะ <span style={{ color: (ui.statPts || 0) > 0 ? "#d04a8a" : "#9a6ad0" }}>· มี {ui.statPts || 0} แต้ม</span></div>
+                  <button onClick={() => G.autoAllocStats()} disabled={(ui.statPts || 0) <= 0} title={ui.cls && G.STAT_RECO && G.STAT_RECO[ui.cls] ? G.STAT_RECO[ui.cls].desc : ""} style={{
+                    padding: "5px 10px", borderRadius: 999, border: "none", cursor: (ui.statPts || 0) > 0 ? "pointer" : "default", fontFamily: font,
+                    fontSize: 10.5, fontWeight: 800, color: "#fff", background: (ui.statPts || 0) > 0 ? "linear-gradient(90deg,#5aa06a,#7ac08a)" : "#c8ccd4",
+                  }}>🎯 อัพอัตโนมัติ</button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: wideS ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: 6 }}>
+                  {Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
+                    const rank = (ui.baseStats || {})[k] || 0;
+                    const c2 = 1 + Math.floor(rank / 10);
+                    const can = (ui.statPts || 0) >= c2;
+                    return (
+                      <div key={k} style={{ background: "#fff", borderRadius: 11, padding: "7px 5px 6px", textAlign: "center", border: "1px solid #dfe6f5" }}>
+                        <div style={{ fontSize: 18, lineHeight: 1 }}>{inf.emoji}</div>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: "#4a5a7a", marginTop: 2 }}>{inf.name} <span style={{ color: "#9aa4b8" }}>Lv.{rank}</span></div>
+                        <div style={{ fontSize: 8.5, color: "#9aa0b0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{inf.per}</div>
+                        <button onClick={() => G.allocStat(k)} disabled={!can} style={{
+                          width: "100%", marginTop: 5, height: 28, borderRadius: 8, border: "none", cursor: can ? "pointer" : "default",
+                          fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
+                          background: can ? "linear-gradient(90deg,#59a0e8,#7ac0f0)" : "#d0d5dd",
+                        }}>＋{c2 > 1 ? ` (${c2})` : ""}</button>
                       </div>
-                      {eq && <div style={{ fontSize: 10, color: "#5a7a4a", fontWeight: 700 }}>✨ {titleBonusText(eq)}</div>}
-                    </button>
-                    {ui.titleOpen && (
-                      <div style={{ marginTop: 7 }}>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 9, color: "#8a94a8", marginTop: 5 }}>ได้ 3 แต้ม/เลเวล · ทุก 10 ระดับของค่านั้นใช้แต้มเพิ่ม 1 (เลขในวงเล็บ)</div>
+              </div>
+              {/* 📂 หัวข้อย่อยพับได้ — ฉายา · สายอาชีพขั้นสูง · ท่าไม้ตาย · รีเซ็ตแต้ม */}
+              <div style={{ display: "grid", gridTemplateColumns: wideS ? "1fr 1fr" : "1fr", gap: 6 }}>
+                {secHead("title", "🏅", "ฉายา", eq ? `${eq.emoji} ${eq.name} · ${titleBonusText(eq)}` : `ยังไม่ได้สวม · ปลดแล้ว ${nUnlocked}/${TITLES.length}`, "#b07a10", "#fff8ea")}
+                {ui.cls && CLASS_PATHS[ui.cls] && secHead("path", "🌟", "สายอาชีพขั้นสูง", chosen ? `${chosen.emoji} ${chosen.name} · ${chosen.perk}` : (canPick ? "เลือกได้แล้ว! แตะเพื่อเลือกสาย" : `ปลดที่ Lv.${PATH_LV} (ตอนนี้ Lv.${ui.level || 1})`), "#a06a10", chosen ? "#fff6e0" : "#f6f3ec")}
+                {ui.cls && ULT_ALT[ui.cls] && secHead("ult", "👑", "ท่าไม้ตาย", `${(ui.ultAlt ? ULT_ALT[ui.cls] : ULTS[ui.cls]).emoji} ${(ui.ultAlt ? ULT_ALT[ui.cls] : ULTS[ui.cls]).name}`, "#c07a10", "#fff8e4")}
+                {secHead("respec", "⚖️", "รีเซ็ตแต้ม", `คืนแต้มลองบิลด์ใหม่ · 💰${cost}`, "#7a4ad0", "#f2f0fa")}
+              </div>
+              {sec === "title" && (
+                <div style={{ marginTop: 7, borderRadius: 12, padding: "9px 10px", background: "linear-gradient(135deg,#fff4e6,#f4f0ff)", border: "2px solid #e0b060" }}>
                         <button onClick={() => G.setTitle("t_none")} style={{
                           width: "100%", padding: "5px 0", borderRadius: 8, cursor: "pointer", marginBottom: 5,
                           border: (ui.titleId || "t_none") === "t_none" ? "2px solid #e0a020" : "2px solid transparent",
@@ -59560,24 +59617,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                             </button>
                           );
                         })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-              {/* 🌟 CLASS PATH (สายอาชีพขั้นสูง) — unlocks at Lv.40, permanent choice */}
-              {ui.cls && CLASS_PATHS[ui.cls] && (() => {
-                const chosen = pathOf(ui.cls, ui.pathId);
-                const canPick = (ui.level || 1) >= PATH_LV;
-                return (
-                  <div style={{
-                    borderRadius: 12, marginBottom: 10, padding: "10px 11px",
-                    background: chosen ? "linear-gradient(135deg,#fff6e0,#fdf0f6)" : "#f4f2ea",
-                    border: chosen ? "2px solid #e0a020" : "1px dashed #c8c0b0",
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "#a06a10", marginBottom: 4 }}>
-                      🌟 สายอาชีพขั้นสูง {chosen ? `— ${chosen.emoji} ${chosen.name}` : `(Lv.${PATH_LV})`}
-                    </div>
+                </div>
+              )}
+              {sec === "path" && ui.cls && CLASS_PATHS[ui.cls] && (
+                <div style={{ marginTop: 7, borderRadius: 12, padding: "9px 10px", background: chosen ? "linear-gradient(135deg,#fff6e0,#fdf0f6)" : "#f4f2ea", border: chosen ? "2px solid #e0a020" : "1px dashed #c8c0b0" }}>
                     {chosen ? (
                       <>
                         <div style={{ fontSize: 10.5, color: "#8a7a5a", marginBottom: 5 }}>{chosen.desc}</div>
@@ -59653,72 +59696,44 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         </div>
                       );
                     })()}
-                  </div>
-                );
-              })()}
-              {/* 📖 อัพสกิล/ท่าไม้ตาย ย้ายไปที่ "กระดานวิชาสกิล" ที่ปลดเป็นขั้น ๆ แล้ว */}
-              <button onClick={() => { setUi((u) => ({ ...u, skillPanel: false })); G.toggleSkillBoard(); }} style={{
-                width: "100%", padding: "12px 10px", borderRadius: 14, border: "none", cursor: "pointer", fontFamily: font,
-                marginBottom: 10, textAlign: "left", display: "flex", alignItems: "center", gap: 10,
-                background: "linear-gradient(135deg,#1d3a2c,#12261f)", boxShadow: "0 4px 14px rgba(30,80,60,0.35)",
-              }}>
-                <span style={{ fontSize: 26 }}>📖</span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "block", fontSize: 13, fontWeight: 900, color: "#9fe8c0" }}>เปิดกระดานวิชาสกิล</span>
-                  <span style={{ display: "block", fontSize: 9.5, color: "#7fae97", lineHeight: 1.5 }}>
-                    อัพท่าโจมตี · ท่าไม้ตาย · ชุดสกิลขั้นสูง — ปลดล็อกเป็นขั้น 1→2→3
-                  </span>
-                </span>
-                {(ui.sp || 0) > 0 && (
-                  <span style={{ fontSize: 10.5, fontWeight: 900, color: "#0d2018", background: "#ffd76a", borderRadius: 999, padding: "3px 9px", whiteSpace: "nowrap" }}>⚡ {ui.sp}</span>
-                )}
-                <span style={{ fontSize: 18, color: "#7fae97" }}>›</span>
-              </button>
-              {/* 👑 อาชีพที่มีท่าไม้ตายสองแบบ เลือกได้ที่นี่ */}
-              {ui.cls && ULT_ALT[ui.cls] && (
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#a3907a", marginBottom: 4 }}>👑 เลือกท่าไม้ตาย</div>
-                  <div style={{ display: "flex", gap: 4 }}>
+                </div>
+              )}
+              {sec === "ult" && ui.cls && ULT_ALT[ui.cls] && (
+                <div style={{ marginTop: 7, borderRadius: 12, padding: "9px 10px", background: "#fff8e4", border: "2px solid #e0a020" }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#a3907a", marginBottom: 5 }}>👑 เลือกท่าไม้ตายที่จะใช้</div>
+                  <div style={{ display: "flex", gap: 5 }}>
                     {[[false, ULTS[ui.cls]], [true, ULT_ALT[ui.cls]]].map(([isAlt, u2]) => {
                       const on = !!ui.ultAlt === isAlt;
                       return (
                         <button key={String(isAlt)} onClick={() => { if (!on) G.toggleUltAlt(); }} style={{
-                          flex: 1, padding: "7px 4px", borderRadius: 9, cursor: on ? "default" : "pointer",
+                          flex: 1, padding: "9px 4px", borderRadius: 10, cursor: on ? "default" : "pointer",
                           border: on ? "2px solid #e0a020" : "2px solid transparent",
-                          background: on ? "#fff8e4" : "#f3ede4", fontFamily: font,
-                          fontSize: 9.5, fontWeight: 800, color: on ? "#c07a10" : "#a3907a",
+                          background: on ? "#fff" : "#f3ede4", fontFamily: font,
+                          fontSize: 11, fontWeight: 800, color: on ? "#c07a10" : "#a3907a",
                         }}>{u2.emoji} {u2.name}{on ? " ✓" : ""}</button>
                       );
                     })}
                   </div>
                 </div>
               )}
-              {/* ⚖️ RESPEC — undo stat/skill choices so builds can be experimented with */}
-              {(() => {
-                const cost = 200 + (ui.level || 1) * 40;
-                const afford = (ui.gold || 0) >= cost;
-                return (
-                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "9px 11px", background: "#f2f0fa", border: "1px solid #d8d0ee" }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a4ad0", marginBottom: 2 }}>⚖️ รีเซ็ตแต้ม (Respec)</div>
-                    <div style={{ fontSize: 9.5, color: "#9a8ab0", marginBottom: 6 }}>
-                      คืนแต้มทั้งหมดเพื่อลองบิลด์ใหม่ · ค่าใช้จ่าย 💰{cost} (มี {ui.gold || 0})
-                    </div>
-                    <div style={{ display: "flex", gap: 5 }}>
-                      {[["stats", "💪 สถานะ"], ["skills", "🌳 สกิล+ต้นไม้"], ["all", "♻️ ทั้งหมด"]].map(([k, label]) => (
-                        <button key={k} onClick={() => G.respec(k)} disabled={!afford} style={{
-                          flex: 1, padding: "7px 0", borderRadius: 8, border: "none",
-                          cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 10.5, fontWeight: 800,
-                          color: afford ? "#fff" : "#a89ab0",
-                          background: afford ? "linear-gradient(90deg,#9a4ad0,#b07ae0)" : "#e0dce8",
-                        }}>{label}</button>
-                      ))}
-                    </div>
+              {sec === "respec" && (
+                <div style={{ marginTop: 7, borderRadius: 12, padding: "9px 10px", background: "#f2f0fa", border: "2px solid #c8b8ea" }}>
+                  <div style={{ fontSize: 10, color: "#9a8ab0", marginBottom: 6 }}>คืนแต้มทั้งหมดเพื่อลองบิลด์ใหม่ · ค่าใช้จ่าย 💰{cost} (มี {ui.gold || 0}){afford ? "" : " — ทองไม่พอ"}</div>
+                  <div style={{ display: "flex", gap: 5 }}>
+                    {[["stats", "💪 สถานะ"], ["skills", "🌳 สกิล+ต้นไม้"], ["all", "♻️ ทั้งหมด"]].map(([k, label]) => (
+                      <button key={k} onClick={() => G.respec(k)} disabled={!afford} style={{
+                        flex: 1, padding: "8px 0", borderRadius: 9, border: "none",
+                        cursor: afford ? "pointer" : "not-allowed", fontFamily: font, fontSize: 11, fontWeight: 800,
+                        color: afford ? "#fff" : "#a89ab0",
+                        background: afford ? "linear-gradient(90deg,#9a4ad0,#b07ae0)" : "#e0dce8",
+                      }}>{label}</button>
+                    ))}
                   </div>
-                );
-              })()}
+                </div>
+              )}
             </div>
-          )}
-
+            );
+          })()}
           {/* 📜 quest button */}
           <button
             onClick={() => toggleMenu("questOpen")}
