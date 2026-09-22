@@ -3248,7 +3248,7 @@ function CherryAdventure() {
         wheelOpen: false, wheelAngle: 0, wheelBusy: false, wheelResult: null, wheelFree: 1, wheelCost: 30, wheelPity: 0, wheelTotal: 0, cal: [],
         rushOpen: false, rushOn: false, rushIdx: 0, rushKills: 0, rushTotal: 13, rushMs: 0, rushBest: null, rushAllTime: null, rushClears: 0, rushBoard: null, rushBoardErr: null,
         guildName: null, guildEmoji: null,
-        eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false, awakenOpen: false, forgeTab: "enh",
+        eAura: null, eDefBreak: 0, warpAsk: false, biomeName: "🌸 ทุ่งซากุระ", biomeIdx: 0, soundOn: true, musicOn: true, fishing: null, pondNear: false, skillPanel: false, sp: 0, skillRanks: {}, skillCap: 1, treeCap: 1, ultRank: 1, ultSkillSum: 0, sellPriority: SLOTS.slice(), sellSetup: false, sellMaxRarity: "rare", statPts: 0, baseStats: {}, battleSpeed: 1, dexTab: false, achTab: false, achUnlocked: {}, combo: 0, homeOpen: false, loggedOut: false, team: [], petSp: 0, petSkillLv: {}, fuseA: null, fuseB: null, tutStep: null, ngPlus: 0, npcNear: false, npcTalk: null, smithNear: false, smithOpen: false, hideGear: false, storyChapter: 0, dailyReady: false, dailyStreak: 0, pvpRank: 1000, socialOpen: false, endlessWave: 0, endlessBest: 0, timeOfDay: 0, autoNoBoss: false, autoNoEvent: false, autoHpPot: true, autoMpPot: false, autoHerb: false, autoFish: false, autoMine: false, autoCfgOpen: false, qtrack: true, masterNear: false, masterOpen: false, adv: null, foodInfoOpen: false, awakenOpen: false, forgeTab: "enh",
         toast: "", toastAt: 0,
         inRanchZone: false, // 🏡 พื้นที่ของฉัน — never persisted, always starts false
     });
@@ -42148,7 +42148,7 @@ function CherryAdventure() {
         const syncPlayer = () => setUi((u) => ({
             ...u, hp: Math.ceil(G.player.hp), maxHp: effMaxHp(), level: G.player.level,
             exp: G.player.exp, expNext: expForLevel(G.player.level), balls: G.player.balls, specials: G.player.specials,
-            battleSpeed: G.battleSpeed || 1, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot,
+            battleSpeed: G.battleSpeed || 1, autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, autoHerb: !!G.autoHerb, autoFish: !!G.autoFish, autoMine: !!G.autoMine,
             mp: Math.ceil(G.player.mp), maxMp: effMaxMp(),
             atk: effAtk(), def: effDef(), skillPts: G.player.skillPts,
             sp: G.player.sp || 0, skillRanks: { ...G.skillRanks }, skillCap: G.skillCap ? G.skillCap() : 1, treeCap: G.treeCap ? G.treeCap() : 1,
@@ -57079,6 +57079,12 @@ function CherryAdventure() {
         G.autoNoEvent = false; // ⚙️ auto setting: skip events (meteor crystals + golden monster)
         G.autoHpPot = true; // ⚙️ auto setting: drink a blood potion when HP is low
         G.autoMpPot = false; // ⚙️ auto setting: drink a mana potion when MP is low
+        // 🌿🎣⛏️ เก็บของอัตโนมัติ — แยกสวิตช์ละอย่าง เปิดพร้อมกันได้
+        //    เปิดออโต้ต่อสู้ไว้ด้วย → AI ล่ามอนคุมการเดิน ตรงนี้เก็บเฉพาะของที่เดินผ่านใกล้ ๆ
+        //    ไม่ได้เปิดออโต้ต่อสู้ → ตรงนี้จะเดินไปหาจุดเก็บของที่ใกล้ที่สุดเอง
+        G.autoHerb = false; // ⚙️ เก็บสมุนไพรอัตโนมัติ
+        G.autoFish = false; // ⚙️ ตกปลาอัตโนมัติ
+        G.autoMine = false; // ⚙️ ขุดแร่อัตโนมัติ
         G.toggleAuto = () => {
             G.auto = !G.auto;
             setUi((u) => ({ ...u, auto: G.auto }));
@@ -57089,6 +57095,9 @@ function CherryAdventure() {
             autoNoEvent: (v) => v ? "🚫✨ ออโต้จะไม่เก็บ event" : "✨ ออโต้จะเก็บ event",
             autoHpPot: (v) => v ? "🧪 ออโต้จะเติมเลือดเอง" : "🚫🧪 ออโต้จะไม่เติมเลือด",
             autoMpPot: (v) => v ? "💧 ออโต้จะเติมมานาเอง" : "🚫💧 ออโต้จะไม่เติมมานา",
+            autoHerb: (v) => v ? "🌿 เก็บสมุนไพรอัตโนมัติ" : "🚫🌿 หยุดเก็บสมุนไพรอัตโนมัติ",
+            autoFish: (v) => v ? "🎣 ตกปลาอัตโนมัติ" : "🚫🎣 หยุดตกปลาอัตโนมัติ",
+            autoMine: (v) => v ? "⛏️ ขุดแร่อัตโนมัติ" : "🚫⛏️ หยุดขุดแร่อัตโนมัติ",
         };
         G.setAutoCfg = (key, val) => {
             G[key] = !!val;
@@ -58022,7 +58031,7 @@ function CherryAdventure() {
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
                     petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
-                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, talents: G.talents || {}, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
+                    mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, talents: G.talents || {}, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, autoHerb: !!G.autoHerb, autoFish: !!G.autoFish, autoMine: !!G.autoMine, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
                     titleId: G.titleId || "t_none", // 🏅 equipped title
@@ -61759,6 +61768,9 @@ function CherryAdventure() {
             G._gearHidden = G.dressHideGear; // 🙈 apply saved hide-gear on load (before visuals render)
             G.autoNoBoss = !!d.autoNoBoss;
             G.autoNoEvent = !!d.autoNoEvent; // ⚙️ auto-battle preferences
+            G.autoHerb = !!d.autoHerb;
+            G.autoFish = !!d.autoFish;
+            G.autoMine = !!d.autoMine; // 🌿🎣⛏️ สวิตช์เก็บของอัตโนมัติ
             G.autoHpPot = d.autoHpPot !== false;
             G.autoMpPot = !!d.autoMpPot; // ⚙️ auto potion prefs (HP defaults on)
             G.battleSpeed = Math.min(3, Math.max(1, d.battleSpeed || 1)); // ⏩ saved battle speed
@@ -64276,6 +64288,95 @@ function CherryAdventure() {
                             toast("🐟 ปลาหลุด! ช้าไปนิด");
                         }
                     }
+                    // ---------- 🌿🎣⛏️ เก็บของอัตโนมัติ ----------
+                    //   เปิด/ปิดแยกกันได้จาก "ตั้งค่าออโต้" · ทำงานเฉพาะตอนเดินสำรวจนอกเมือง/บ้าน/ฟาร์ม
+                    //   จับการบังคับเองทุกช่องทาง (จอยสติ๊ก/WASD/ลูกศร) แล้วหยุดทันที เพื่อไม่แย่งคุมตัวละคร
+                    if ((G.autoHerb || G.autoFish || G.autoMine) && G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone) {
+                        const agManual = Math.abs(G.joy.x) > 0.12 || Math.abs(G.joy.y) > 0.12 ||
+                            G.keys["w"] || G.keys["a"] || G.keys["s"] || G.keys["d"] ||
+                            G.keys["arrowup"] || G.keys["arrowdown"] || G.keys["arrowleft"] || G.keys["arrowright"];
+                        G._agGap = Math.max(0, (G._agGap || 0) - dt);
+                        if (!agManual) {
+                            if (G.mining) {
+                                // ⛏️ มินิเกมขุด — ตีเองตอนตัววิ่งอยู่กลางช่องเป้า
+                                //    เงื่อนไขที่สองกันเฟรมตก: ถ้าอยู่ในเป้าแต่กำลังวิ่งพ้นกลางเป้าไปแล้ว ให้รีบตีทันที จะได้ไม่พลาดทั้งช่อง
+                                if (G.autoMine) {
+                                    const mm = G.mining, agHalf = mm.zone / 2, agOff = mm.pos - mm.zc, agD = Math.abs(agOff);
+                                    const agAway = agOff * mm.dir > 0;
+                                    const agCross = G._agPrev != null && G._agPrev * agOff < 0; // เฟรมนี้วิ่งข้ามกลางเป้าพอดี — จังหวะดีที่สุดเท่าที่เฟรมจะให้ได้ (สำคัญตอนเครื่องเฟรมตก)
+                                    G._agPrev = agOff;
+                                    G._agTap = Math.max(0, (G._agTap || 0) - dt);
+                                    if (G._agTap <= 0 && (agD <= agHalf * MINE_CORE * 0.75 || agCross || (agD <= agHalf * 0.92 && agAway))) {
+                                        G._agTap = 0.1;
+                                        G._agPrev = null;
+                                        G.mineTap();
+                                    }
+                                }
+                                else {
+                                    G._agPrev = null;
+                                    G.stopMining();
+                                } // ปิดสวิตช์กลางคัน → ปล่อยมือ ไม่ค้างมินิเกมไว้
+                            }
+                            else if (G.fishing) {
+                                if (G.autoFish) {
+                                    if (G.fishing.phase === "bite")
+                                        G.reelFishing();
+                                }
+                                else
+                                    G.stopFishing();
+                            }
+                            else if (G._agGap <= 0) {
+                                // 🌿 กอสมุนไพรก่อน (แตะครั้งเดียวจบ) → ⛏️ สายแร่ → 🎣 บ่อ
+                                if (G.autoHerb && G._herbNear != null) {
+                                    G._agGap = 0.45;
+                                    G.gatherHerb();
+                                }
+                                else if (G.autoMine && G._mineNear != null) {
+                                    G._agGap = 0.45;
+                                    G._agPrev = null;
+                                    G.startMining();
+                                }
+                                else if (G.autoFish && G.pondNear) {
+                                    const agSP = G.fishSpotOf ? G.fishSpotOf() : null;
+                                    // 🔒 เลเวลตกปลาไม่ถึงบ่อของด่านนี้ — เงียบไว้ 6 วิ ไม่งั้นข้อความเตือนจะขึ้นรัว
+                                    if (agSP && (G.fishLv || 1) < agSP.lv)
+                                        G._agGap = 6;
+                                    else {
+                                        G._agGap = 0.6;
+                                        G.startFishing();
+                                    }
+                                }
+                                else if (!G.auto) {
+                                    // 🚶 ไม่ได้เปิดออโต้ต่อสู้ → เดินไปหาจุดเก็บของที่ใกล้ที่สุดเอง
+                                    //    (ถ้าเปิดออโต้ต่อสู้ไว้ ปล่อยให้ AI ล่ามอนคุมการเดิน ไม่งั้นสองระบบจะแย่งกันสั่ง)
+                                    G._agWalk = Math.max(0, (G._agWalk || 0) - dt);
+                                    if (G._agWalk <= 0) {
+                                        G._agWalk = 0.5;
+                                        let agX = 0, agZ = 0, agD2 = Infinity;
+                                        const agPick = (x, z) => { const d = Math.hypot(char.position.x - x, char.position.z - z); if (d < agD2 && d < FIELD_R) {
+                                            agD2 = d;
+                                            agX = x;
+                                            agZ = z;
+                                        } };
+                                        if (G.autoHerb)
+                                            (G.herbNodes || []).forEach((n) => { if (n && !n.dead)
+                                                agPick(n.x, n.z); });
+                                        if (G.autoMine)
+                                            (G.mineNodes || []).forEach((n) => { if (n && !n.dead)
+                                                agPick(n.x, n.z); });
+                                        if (G.autoFish && G.pondPos) {
+                                            // 🎣 เล็งไปที่ "ขอบบ่อ" ฝั่งที่ยืนอยู่ ไม่ใช่กลางบ่อ จะได้ไม่เดินลงน้ำ
+                                            const agVx = char.position.x - G.pondPos.x, agVz = char.position.z - G.pondPos.z;
+                                            const agL = Math.hypot(agVx, agVz) || 1, agR = (G.pondPos.r || 2.4) + 1.0;
+                                            agPick(G.pondPos.x + (agVx / agL) * agR, G.pondPos.z + (agVz / agL) * agR);
+                                        }
+                                        if (agD2 < Infinity && agD2 > 1.2)
+                                            G.moveTarget = new THREE.Vector3(agX, 0, agZ);
+                                    }
+                                }
+                            }
+                        }
+                    }
                     {
                         const pd = Math.hypot(char.position.x - portal.position.x, char.position.z - portal.position.z);
                         if (pd < 1.6 && !G.portalShy && !G.dungeonAskShown && !G.inRanchZone && !G.inHomeZone && !G.inTownZone) {
@@ -64577,7 +64678,9 @@ function CherryAdventure() {
                         G.keys["arrowup"] || G.keys["arrowdown"] || G.keys["arrowleft"] || G.keys["arrowright"] ||
                         G.keys["w"] || G.keys["a"] || G.keys["s"] || G.keys["d"] ||
                         (G._manualT || 0) > 0;
-                    if (G.auto && !manualInput && !G.inRanchZone && !G.inTownZone && !G.inHomeZone) { // 🏰🏠 ในเมือง/ในบ้าน = ห้ามออกล่ามอนสเตอร์
+                    // 🌿🎣⛏️ กำลังขุด/ตกปลาด้วยออโต้เก็บของอยู่ → พัก AI ล่ามอนไว้ก่อน ไม่งั้นมันจะสั่งเดินจนหลุดระยะแล้วมินิเกมถูกยกเลิก
+                    const agBusy = (G.mining && G.autoMine) || (G.fishing && G.autoFish);
+                    if (G.auto && !manualInput && !agBusy && !G.inRanchZone && !G.inTownZone && !G.inHomeZone) { // 🏰🏠 ในเมือง/ในบ้าน = ห้ามออกล่ามอนสเตอร์
                         // top up HP/MP before charging in (⚙️ togglable in auto settings)
                         if (G.autoHpPot && G.player.hp < effMaxHp() * 0.4 && (G.potions > 0 || G.hasBrewPick("hp")))
                             G.usePotion(G.hpPotUse);
@@ -85754,7 +85857,7 @@ function CherryAdventure() {
                     width: "min(88vw, 300px)", maxHeight: "calc(72vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", zIndex: 40,
                     background: "rgba(255,255,255,0.97)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", borderRadius: 14, padding: "10px 12px", boxShadow: "0 8px 24px rgba(60,80,120,0.35)", pointerEvents: "auto", fontFamily: font } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 } },
-                    React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: "#4a6a9a" } }, "\u2699\uFE0F \u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E15\u0E48\u0E2D\u0E2A\u0E39\u0E49\u0E2D\u0E2D\u0E42\u0E15\u0E49"),
+                    React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: "#4a6a9a" } }, "\u2699\uFE0F \u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E2D\u0E2D\u0E42\u0E15\u0E49"),
                     React.createElement("button", { onClick: () => setUi((u) => ({ ...u, autoCfgOpen: false })), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: 15, color: "#9aa" } }, "\u2715")),
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", marginBottom: 6, borderRadius: 10, background: "#fff4e8" } },
                     React.createElement("span", { style: { fontSize: 12, fontWeight: 800, color: "#c07a2a", flex: 1 } }, "\u23E9 \u0E04\u0E27\u0E32\u0E21\u0E40\u0E23\u0E47\u0E27\u0E15\u0E48\u0E2D\u0E2A\u0E39\u0E49"),
@@ -85769,7 +85872,16 @@ function CherryAdventure() {
                     { key: "autoNoEvent", label: "🚫✨ ไม่เก็บ event", desc: "ไม่ไล่มอนทอง/ไม่เก็บคริสตัลดาวตก" },
                     { key: "autoHpPot", label: "🧪 เติมเลือดออโต้", desc: "ดื่มน้ำยาเลือดเมื่อเลือดต่ำ" },
                     { key: "autoMpPot", label: "💧 เติมมานาออโต้", desc: "ดื่มน้ำยามานาเมื่อมานาต่ำ" },
+                    { sep: "🌿 เก็บของอัตโนมัติ" },
+                    { key: "autoHerb", label: "🌿 เก็บสมุนไพรออโต้", desc: "เดินไปเก็บกอที่ใกล้ที่สุดเอง (ถ้าเปิดออโต้ต่อสู้ไว้ จะเก็บเฉพาะกอที่เดินผ่าน)" },
+                    { key: "autoFish", label: "🎣 ตกปลาออโต้", desc: "เดินไปขอบบ่อ เหวี่ยงเบ็ดเอง และดึงทันทีที่ปลากิน" },
+                    { key: "autoMine", label: "⛏️ ขุดแร่ออโต้", desc: "เดินไปหาสายแร่ เริ่มขุดเอง และตีให้เข้ากลางเป้าทุกครั้ง" },
                 ].map((o) => {
+                    if (o.sep)
+                        return (React.createElement("div", { key: o.sep, style: { display: "flex", alignItems: "center", gap: 7, margin: "9px 2px 5px" } },
+                            React.createElement("span", { style: { fontSize: 10.5, fontWeight: 800, color: "#6a9a5a", whiteSpace: "nowrap" } }, o.sep),
+                            React.createElement("span", { style: { flex: 1, height: 1, background: "#e2ece0" } }),
+                            React.createElement("span", { style: { fontSize: 8.5, color: "#a8b8a0", whiteSpace: "nowrap" } }, "\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E15\u0E2D\u0E19\u0E40\u0E14\u0E34\u0E19\u0E2A\u0E33\u0E23\u0E27\u0E08\u0E19\u0E2D\u0E01\u0E40\u0E21\u0E37\u0E2D\u0E07")));
                     const on = !!ui[o.key];
                     return (React.createElement("button", { key: o.key, onClick: () => G.setAutoCfg(o.key, !on), style: { width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "7px 9px", marginBottom: 5, borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, textAlign: "left", background: on ? "#e6f2ff" : "#f4f4ef" } },
                         React.createElement("span", { style: { width: 40, height: 22, borderRadius: 999, background: on ? "#59a0e8" : "#cfcfc6", position: "relative", flexShrink: 0, transition: "background 0.15s" } },
