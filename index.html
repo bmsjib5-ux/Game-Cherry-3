@@ -33482,7 +33482,7 @@ function CherryAdventure() {
         //   ทุก 10 ชั้นมีบอสใหญ่ · แต่ละชั้นมีธาตุประจำชั้น + เงื่อนไขสัตว์เลี้ยงที่ช่วยให้ตีง่ายขึ้น
         const TWR_ROOM_R = 13.5; // 🧱 รัศมีที่เดินได้ในห้องหอคอย (ห้องกว้าง ±16 เว้นขอบไว้ไม่ให้มุดกำแพง)
         const TWR_ELEM_CYCLE = ["fire", "ice", "wind", "water", "earth"];
-        const TWR_SEC = (fl) => (fl % 10 === 0 ? 180 : fl % 5 === 0 ? 130 : 105); // ⏱️ เวลาต่อชั้น
+        const TWR_SEC = (fl) => Math.round((fl % 10 === 0 ? 150 : fl % 5 === 0 ? 100 : 80) + TWR_COUNT(fl) * 18); // ⏱️ เวลาต่อชั้น = ฐาน + 18 วิต่อมอนหนึ่งตัว
         const TWR_COUNT = (fl) => (fl % 10 === 0 ? 3 + Math.min(3, Math.floor(fl / 12)) // 👑 บอสใหญ่ + ลูกสมุนอย่างน้อย 2 ตัว
             : Math.min(8, 2 + Math.floor(fl / 7) + (fl % 5 === 0 ? 1 : 0)));
         //  หมุนธาตุแบบเลื่อนทุก 5 ชั้น — ชั้นติดกัน 5 ชั้นได้ครบ 5 ธาตุ และชั้นบอส (10/20/30/40/50) ก็ไม่ซ้ำกันเลย
@@ -33494,36 +33494,23 @@ function CherryAdventure() {
             const it = LOOT.find((x) => x.id === (G.equip && G.equip.weapon));
             return (it && it.elem) || null;
         };
-        // 🐾 เงื่อนไขชั้น — พาสัตว์เลี้ยงธาตุที่ "ข่ม" ธาตุประจำชั้นมาด้วย จะตีแรงขึ้น
-        const twrCondOf = (fl) => {
-            const el = twrElemOf(fl);
-            const want = Object.keys(ELEM_BEATS).find((k) => (ELEM_BEATS[k] || []).includes(el)) || "water";
-            return { elem: want, mul: 1.35 };
-        };
-        const twrBuddySp = () => { const b = G.buddy; return b ? (b.sp || b.spId || b) : null; };
-        G.twrCondOk = () => {
-            const D = G.dungeon;
-            if (!D || !D.cond)
-                return false;
-            const b = twrBuddySp();
-            return !!(b && PET_ELEM[b] === D.cond.elem);
-        };
-        // 💥 ตัวคูณดาเมจในหอคอย — ธาตุหักล้าง × โบนัสเงื่อนไขสัตว์เลี้ยง
+        // 🎯 เงื่อนไขผ่านชั้น — หมุน 3 แบบ: ตามจำนวน · ตามเวลา · ตามชนิด
+        //    ชั้นบอสใช้แบบ "ชนิด" เสมอ (ล้มบอสตัวนั้นให้ได้)
+        const TWR_OBJ = { count: "จำนวน", time: "เวลา", kind: "ชนิด" };
+        const twrObjKind = (fl) => (fl % 10 === 0 ? "kind" : fl % 3 === 2 ? "time" : fl % 3 === 0 ? "kind" : "count");
+        // 💥 ตัวคูณดาเมจในหอคอย — เหลือแค่การหักล้างธาตุ
         G.twrDmgMul = (m) => {
             const D = G.dungeon;
             if (!D || !m || !m.userData || !m.userData.twr)
                 return 1;
-            let mul = elemAdv(twrPlayerElem(), m.userData.elem);
-            if (G.twrCondOk())
-                mul *= D.cond.mul;
-            return mul;
+            return Math.max(0.85, elemAdv(twrPlayerElem(), m.userData.elem)); // เสียเปรียบธาตุหักแค่ 15% ไม่ถึงกับตีไม่ออก
         };
         const twrSyncUi = () => {
             const D = G.dungeon;
             setUi((u) => ({ ...u, dungeonFloor: D ? D.floor : 0, twr: D ? {
                     floor: D.floor, max: DUNGEON_MAX, rogue: !!D.rogue, alive: D.alive || 0, total: D.total || 0,
                     sec: Math.max(0, Math.ceil(D.tLeft || 0)), secMax: D.sec || 1, boss: D.floor % 10 === 0,
-                    elem: D.elem, cond: D.cond, condOk: G.twrCondOk(), myElem: twrPlayerElem(),
+                    elem: D.elem, obj: D.obj ? { ...D.obj } : null, myElem: twrPlayerElem(),
                 } : null }));
         };
         G.twrSyncUi = twrSyncUi;
@@ -33553,10 +33540,10 @@ function CherryAdventure() {
             const midBoss = floor % 5 === 0 && !bossFloor;
             const rogue = !!D.rogue;
             const el = twrElemOf(floor);
+            const objKind = twrObjKind(floor);
             D.floor = floor;
             D.elem = el;
-            D.cond = twrCondOf(floor);
-            D.sec = TWR_SEC(floor);
+            D.sec = Math.round(TWR_SEC(floor) * (objKind === "time" ? 0.7 : 1)); // ⏱️ ชั้น "ตามเวลา" บีบเวลาให้แน่นขึ้น
             D.tLeft = D.sec;
             D._lastSec = -1;
             D.pending = 0;
@@ -33583,10 +33570,20 @@ function CherryAdventure() {
                 bossPool = floor >= 50 ? ["garuda", "saming"] : ["saming", "phi", "kirara"];
             }
             const n = TWR_COUNT(floor);
+            // 🎯 ชั้น "ตามชนิด" — เลือกสายพันธุ์เป้าหมายไว้ก่อน แล้วการันตีว่าจะเกิดครบตามจำนวนที่ขอ
+            const objSp = objKind === "kind"
+                ? (bossFloor ? (bossPool[Math.floor(rng() * bossPool.length)] || "saming") : (pool[Math.floor(rng() * pool.length)] || "mochi"))
+                : null;
+            const objNeed = objKind === "kind" ? (bossFloor ? 1 : Math.max(2, Math.min(n, 2 + Math.floor(floor / 15)))) : n;
+            let objMade = 0;
             for (let i = 0; i < n; i++) {
                 const isBoss = bossFloor && i === 0;
                 const src = isBoss ? bossPool : pool;
-                const spId = src[Math.floor(rng() * src.length)] || "mochi";
+                // การันตีสายพันธุ์เป้าหมายให้ครบก่อน ที่เหลือค่อยสุ่มอิสระ
+                const forceObj = objSp && !isBoss && objMade < objNeed - (bossFloor ? 1 : 0) && (n - i) <= (objNeed - objMade);
+                const spId = (isBoss && objSp) ? objSp : forceObj ? objSp : (src[Math.floor(rng() * src.length)] || "mochi");
+                if (objSp && spId === objSp)
+                    objMade++;
                 const m = buildMonster(spId, isBoss ? 3 : midBoss ? 2 : 1);
                 if (isBoss)
                     m.scale.multiplyScalar(1.7);
@@ -33595,7 +33592,10 @@ function CherryAdventure() {
                 const rr = isBoss ? 5.5 : 4.6 + rng() * 2.4; // อยู่ในห้องหอคอย ไม่ทะลุกำแพง
                 m.position.set(dungeonCenter.x + Math.cos(a) * rr, 0, dungeonCenter.z + Math.sin(a) * rr);
                 m.rotation.y = a + Math.PI;
-                m.userData.lv = G.player.level + Math.round(floor * (rogue ? 1.3 : 1.05)) + (isBoss ? 6 : 0);
+                // ⚖️ จำกัดช่องว่างเลเวลไม่ให้เกิน +12 (บอส +16) — เกินกว่านี้ระบบจะหักดาเมจจนตันที่ 40% แล้วตียังไงก็ไม่ทันเวลา
+                //    ความยากไปอยู่ที่เลือด/จำนวนตัว/เวลาแทน
+                const lvGapCap = rogue ? 16 : 12;
+                m.userData.lv = G.player.level + Math.min(lvGapCap, Math.round(floor * (rogue ? 0.5 : 0.4))) + (isBoss ? 4 : 0);
                 m.userData.twr = true; // 🗼 ธงของมอนหอคอย (ไม่ใช้ dungeon เพื่อให้สู้แบบโลกกว้างได้)
                 m.userData.twrBoss = isBoss;
                 m.userData.elem = el; // 🎴 ธาตุประจำชั้น — ใช้คิดการหักล้างธาตุ
@@ -33615,11 +33615,15 @@ function CherryAdventure() {
             }
             D.alive = n;
             D.total = n;
+            const spName = objSp ? `${(SPECIES[objSp] || {}).emoji || ""}${(SPECIES[objSp] || {}).name || objSp}` : "";
+            D.obj = { kind: objKind, need: objKind === "kind" ? Math.min(objNeed, objMade || objNeed) : n,
+                done: 0, sp: objSp, spName };
             char.position.copy(dungeonCenter);
             const EM = ELEM_META[el] || { emoji: "", name: el };
-            const CM = ELEM_META[D.cond.elem] || { emoji: "", name: D.cond.elem };
-            toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${EM.emoji} ธาตุ${EM.name} · ${n} ตัว · ${TWR_SEC(floor)} วิ`);
-            toast(`🐾 เงื่อนไขชั้นนี้: พาสัตว์เลี้ยงธาตุ${CM.name} ${CM.emoji} มาด้วย ดาเมจ +35%`);
+            toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${EM.emoji} ธาตุ${EM.name} · ${n} ตัว · ${D.sec} วิ`);
+            toast(objKind === "kind" ? `🎯 เงื่อนไขชั้นนี้ (ตามชนิด): กำจัด ${spName} ให้ครบ ${D.obj.need} ตัว`
+                : objKind === "time" ? `⏱️ เงื่อนไขชั้นนี้ (ตามเวลา): เคลียร์ ${n} ตัวให้ทันใน ${D.sec} วินาที`
+                    : `🎯 เงื่อนไขชั้นนี้ (ตามจำนวน): กำจัดมอนให้ครบ ${n} ตัว`);
             twrSyncUi();
         };
         // 🏆 เคลียร์ชั้นสำเร็จ — แจกรางวัลแล้วไปชั้นถัดไป
@@ -33710,8 +33714,17 @@ function CherryAdventure() {
             if (!D || !m.userData.twr)
                 return;
             D.alive = Math.max(0, (D.alive || 1) - 1);
-            if (D.alive <= 0)
-                D.pending = 1.1; // หน่วงนิดให้เห็นจังหวะเคลียร์ก่อนขึ้นชั้นใหม่
+            const O = D.obj;
+            if (O) {
+                // 🎯 ชั้น "ตามชนิด" นับเฉพาะสายพันธุ์เป้าหมาย · แบบอื่นนับทุกตัว
+                if (!O.sp || m.userData.spId === O.sp)
+                    O.done++;
+                if (O.done >= O.need)
+                    D.pending = 1.1; // หน่วงนิดให้เห็นจังหวะเคลียร์ก่อนขึ้นชั้นใหม่
+            }
+            // 🛟 กันค้าง: ถ้ามอนหมดห้องแล้วแต่เงื่อนไขยังไม่ครบ (ไม่ควรเกิด เพราะการันตีสายพันธุ์เป้าหมายไว้) ก็ให้ผ่านไป
+            if (D.alive <= 0 && !D.pending)
+                D.pending = 1.1;
             twrSyncUi();
         };
         // 💀 ล้มเหลว (หมดเวลา/ตาย) — ดีดออกจากหอคอย แต่ยังจำชั้นที่ทำได้
@@ -86322,7 +86335,6 @@ function CherryAdventure() {
         ui.twr && ui.mode === "explore" && (() => {
             const T = ui.twr;
             const EM = ELEM_META[T.elem] || { emoji: "", name: T.elem || "" };
-            const CM = ELEM_META[(T.cond || {}).elem] || { emoji: "", name: "" };
             const MY = T.myElem ? (ELEM_META[T.myElem] || { emoji: "", name: T.myElem }) : null;
             const adv = T.myElem ? elemAdv(T.myElem, T.elem) : 1;
             const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
@@ -86366,9 +86378,20 @@ function CherryAdventure() {
                             " ",
                             adv > 1 ? "ได้เปรียบ 🔺+30%" : adv < 1 ? "เสียเปรียบ 🔻-25%" : "เสมอ")),
                         !MY && React.createElement("span", { style: { color: "#a89ac0" } }, "\u00B7 \u0E2D\u0E32\u0E27\u0E38\u0E18\u0E44\u0E21\u0E48\u0E21\u0E35\u0E18\u0E32\u0E15\u0E38 (\u0E2B\u0E25\u0E2D\u0E21\u0E18\u0E32\u0E15\u0E38\u0E17\u0E35\u0E48\u0E42\u0E23\u0E07\u0E15\u0E35\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E0A\u0E48\u0E27\u0E22\u0E44\u0E14\u0E49)")),
-                    React.createElement("div", { style: { marginTop: 3, fontSize: 9.5, fontWeight: 700, lineHeight: 1.45,
-                            color: T.condOk ? "#8ef0a8" : "#e0c88a" } }, T.condOk ? `✅ พาสัตว์เลี้ยงธาตุ${CM.name} ${CM.emoji} มาแล้ว — ดาเมจ +35%`
-                        : `🐾 เงื่อนไขชั้นนี้: พาสัตว์เลี้ยงธาตุ${CM.name} ${CM.emoji} มาด้วย จะตีแรงขึ้น 35%`))));
+                    T.obj && (() => {
+                        const O = T.obj, ok = O.done >= O.need;
+                        const pc2 = Math.max(0, Math.min(1, O.done / Math.max(1, O.need)));
+                        const lb = O.kind === "kind" ? `🎯 ตามชนิด — กำจัด ${O.spName} ${O.done}/${O.need} ตัว`
+                            : O.kind === "time" ? `⏱️ ตามเวลา — เคลียร์ ${O.done}/${O.need} ตัวให้ทันเวลา`
+                                : `🎯 ตามจำนวน — กำจัดมอน ${O.done}/${O.need} ตัว`;
+                        return (React.createElement("div", { style: { marginTop: 3 } },
+                            React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, lineHeight: 1.4, color: ok ? "#8ef0a8" : "#ffe0a8" } },
+                                ok ? "✅ " : "",
+                                lb),
+                            React.createElement("div", { style: { height: 4, borderRadius: 999, background: "rgba(0,0,0,0.38)", overflow: "hidden", marginTop: 2 } },
+                                React.createElement("div", { style: { width: (pc2 * 100).toFixed(1) + "%", height: "100%", transition: "width 0.2s",
+                                        background: ok ? "#5ec97a" : "linear-gradient(90deg,#e0a03a,#ffd76a)" } }))));
+                    })())));
         })(),
         ui.mode === "battle" && ui.dungeonFloor > 0 && (React.createElement("div", { style: {
                 // 📱 จอแนวนอน/เตี้ย: ป้ายนี้เคยตรึงไว้ 160px จากขอบบน ซึ่งตกกลางจอพอดี → บังตัวละคร
