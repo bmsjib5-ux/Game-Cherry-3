@@ -33498,7 +33498,7 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, dungeonFloor: D ? D.floor : 0, twr: D ? {
                     floor: D.floor, max: DUNGEON_MAX, rogue: !!D.rogue, alive: D.alive || 0, total: D.total || 0,
                     sec: Math.max(0, Math.ceil(D.tLeft || 0)), secMax: D.sec || 1, boss: D.floor % 10 === 0,
-                    elem: D.elem, obj: D.obj ? { ...D.obj } : null,
+                    obj: D.obj ? { ...D.obj } : null,
                 } : null }));
         };
         G.twrSyncUi = twrSyncUi;
@@ -33607,8 +33607,7 @@ function CherryAdventure() {
             D.obj = { kind: objKind, need: objKind === "kind" ? Math.min(objNeed, objMade || objNeed) : n,
                 done: 0, sp: objSp, spName };
             char.position.copy(dungeonCenter);
-            const EM = ELEM_META[el] || { emoji: "", name: el };
-            toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${EM.emoji} ธาตุ${EM.name} · ${n} ตัว · ${D.sec} วิ`);
+            toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${n} ตัว · ${D.sec} วิ`);
             toast(objKind === "kind" ? `🎯 เงื่อนไขชั้นนี้ (ตามชนิด): กำจัด ${spName} ให้ครบ ${D.obj.need} ตัว`
                 : objKind === "time" ? `⏱️ เงื่อนไขชั้นนี้ (ตามเวลา): เคลียร์ ${n} ตัวให้ทันใน ${D.sec} วินาที`
                     : `🎯 เงื่อนไขชั้นนี้ (ตามจำนวน): กำจัดมอนให้ครบ ${n} ตัว`);
@@ -86401,7 +86400,6 @@ function CherryAdventure() {
             React.createElement("div", { style: { fontSize: 10, color: "#a891c8", maxWidth: 260, textAlign: "center", lineHeight: 1.5 } }, "\u0E42\u0E2B\u0E25\u0E14\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01\u0E08\u0E30\u0E19\u0E32\u0E19\u0E2B\u0E19\u0E48\u0E2D\u0E22 \u0E04\u0E23\u0E31\u0E49\u0E07\u0E15\u0E48\u0E2D\u0E44\u0E1B\u0E40\u0E02\u0E49\u0E32\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35"))),
         ui.twr && ui.mode === "explore" && (() => {
             const T = ui.twr;
-            const EM = ELEM_META[T.elem] || { emoji: "", name: T.elem || "" };
             const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
             const low = T.sec <= 15;
             return (React.createElement("div", { style: { position: "absolute", top: ST(_shortHud ? 96 : 128), left: "50%", transform: "translateX(-50%)",
@@ -86415,10 +86413,6 @@ function CherryAdventure() {
                             T.floor,
                             T.rogue ? "" : "/" + T.max,
                             T.boss ? " 👑" : ""),
-                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#d8c4ff" } },
-                            EM.emoji,
-                            " \u0E18\u0E32\u0E15\u0E38",
-                            EM.name),
                         React.createElement("span", { style: { flex: 1 } }),
                         React.createElement("span", { style: { fontSize: 11.5, fontWeight: 900, color: low ? "#ff9a9a" : "#cfe8ff" } },
                             "\u23F1\uFE0F ",

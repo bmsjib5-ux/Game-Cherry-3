@@ -20593,7 +20593,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       setUi((u) => ({ ...u, dungeonFloor: D ? D.floor : 0, twr: D ? {
         floor: D.floor, max: DUNGEON_MAX, rogue: !!D.rogue, alive: D.alive || 0, total: D.total || 0,
         sec: Math.max(0, Math.ceil(D.tLeft || 0)), secMax: D.sec || 1, boss: D.floor % 10 === 0,
-        elem: D.elem, obj: D.obj ? { ...D.obj } : null,
+        obj: D.obj ? { ...D.obj } : null,
       } : null }));
     };
     G.twrSyncUi = twrSyncUi;
@@ -20686,8 +20686,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       D.obj = { kind: objKind, need: objKind === "kind" ? Math.min(objNeed, objMade || objNeed) : n,
                 done: 0, sp: objSp, spName };
       char.position.copy(dungeonCenter);
-      const EM = ELEM_META[el] || { emoji: "", name: el };
-      toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${EM.emoji} ธาตุ${EM.name} · ${n} ตัว · ${D.sec} วิ`);
+      toast(`🗼 ชั้น ${floor}${bossFloor ? " 👑 บอสใหญ่!" : ""} — ${n} ตัว · ${D.sec} วิ`);
       toast(objKind === "kind" ? `🎯 เงื่อนไขชั้นนี้ (ตามชนิด): กำจัด ${spName} ให้ครบ ${D.obj.need} ตัว`
           : objKind === "time" ? `⏱️ เงื่อนไขชั้นนี้ (ตามเวลา): เคลียร์ ${n} ตัวให้ทันใน ${D.sec} วินาที`
           : `🎯 เงื่อนไขชั้นนี้ (ตามจำนวน): กำจัดมอนให้ครบ ${n} ตัว`);
@@ -57671,7 +57670,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       {/* 🗼 แผงสถานะชั้นหอคอย (โหมดสำรวจ) — ชั้น · เวลา · ธาตุประจำชั้น · เงื่อนไขสัตว์เลี้ยง · มอนที่เหลือ */}
       {ui.twr && ui.mode === "explore" && (() => {
         const T = ui.twr;
-        const EM = ELEM_META[T.elem] || { emoji: "", name: T.elem || "" };
         const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
         const low = T.sec <= 15;
         return (
@@ -57683,7 +57681,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 <span style={{ fontSize: 12.5, fontWeight: 900, color: "#ffe6c0" }}>
                   {T.rogue ? "🎲" : "🗼"} ชั้น {T.floor}{T.rogue ? "" : "/" + T.max}{T.boss ? " 👑" : ""}
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#d8c4ff" }}>{EM.emoji} ธาตุ{EM.name}</span>
                 <span style={{ flex: 1 }} />
                 <span style={{ fontSize: 11.5, fontWeight: 900, color: low ? "#ff9a9a" : "#cfe8ff" }}>⏱️ {T.sec} วิ</span>
                 <span onClick={() => G.exitDungeon()} style={{ cursor: "pointer", background: "rgba(255,255,255,0.18)",
