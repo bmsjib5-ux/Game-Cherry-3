@@ -10421,6 +10421,66 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!K.q0) K.q0 = K.qh.clone().invert();
         K.grp.quaternion.copy(K.qh).multiply(K.q0);
       };
+      // 🏹 ท่ายิงธนูบนโมเดล 3D (ทับหลังคลิป Pistol_Shoot ทุกเฟรม)
+      //    ① ธนูตั้งตรง คันโค้งหันไปข้างหน้า — ตั้งทิศของธนูในพิกัดโลกตรง ๆ (มุมมือในคลิปแกว่งทุกเฟรม ใช้มุมคงที่ไม่ได้)
+      //    ② แขนซ้ายง้างสาย: IK สองท่อน (ต้นแขน/แขนท่อนล่าง) ดึงมือซ้ายไปที่ข้างแก้ม ศอกกางออกด้านนอก
+      //    ③ ลูกธนูพาดคัน จากมือซ้ายทะลุคันไปข้างหน้า
+      const _bq = { qc: new THREE.Quaternion(), qp: new THREE.Quaternion(), qb: new THREE.Quaternion(), m: new THREE.Matrix4(), q: new THREE.Quaternion(),
+        S: new THREE.Vector3(), E: new THREE.Vector3(), W: new THREE.Vector3(), T: new THREE.Vector3(), d1: new THREE.Vector3(), d2: new THREE.Vector3(), pole: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3() };
+      const _ikRot = (bone, from, to) => {   // หมุนกระดูก (ในพิกัดโลก) ให้ทิศ from ไปเป็นทิศ to
+        _bq.q.setFromUnitVectors(from.clone().normalize(), to.clone().normalize());
+        bone.getWorldQuaternion(_bq.qb); bone.parent.getWorldQuaternion(_bq.qp).invert();
+        bone.quaternion.copy(_bq.qp.multiply(_bq.q.multiply(_bq.qb)));
+        bone.updateMatrixWorld(true);
+      };
+      const heroBowDraw = (H) => {
+        const bow = wand.children.find((x) => x.visible && x.userData && x.userData.kkFam === "bow") || wand.children.find((x) => x.visible && x.userData && x.userData.kk && /^bow/.test(x.userData.kk));
+        char.updateMatrixWorld(true);
+        char.getWorldQuaternion(_bq.qc);
+        const up = new THREE.Vector3(0, 1, 0).applyQuaternion(_bq.qc), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(_bq.qc), left = new THREE.Vector3(1, 0, 0).applyQuaternion(_bq.qc);
+        // ②  IK แขนซ้าย: เป้า = ข้างแก้ม (ยอดไหล่ขวาของตัวคือมือขวาถือธนู → สายดึงกลับมาทางหน้า)
+        const b0 = H.parts[0], ua = b0.getObjectByName("upperarm_l"), la = b0.getObjectByName("lowerarm_l"), hn = b0.getObjectByName("hand_l"), hr = b0.getObjectByName("hand_r"), hd = b0.getObjectByName("Head");
+        if (ua && la && hn && hr && hd) {
+          ua.getWorldPosition(_bq.S); la.getWorldPosition(_bq.E); hn.getWorldPosition(_bq.W);
+          hd.getWorldPosition(_bq.T);
+          const sc = char.scale.x * H.k;
+          _bq.T.addScaledVector(up, -0.08 * sc).addScaledVector(fwd, 0.14 * sc).addScaledVector(left, -0.1 * sc);   // แก้มขวา-หน้าเล็กน้อย
+          const L1 = _bq.S.distanceTo(_bq.E), L2 = _bq.E.distanceTo(_bq.W);
+          const toT = _bq.T.clone().sub(_bq.S); let D = Math.min(toT.length(), (L1 + L2) * 0.999); D = Math.max(D, Math.abs(L1 - L2) + 1e-3);
+          const dir = toT.normalize();
+          const cosA = (L1 * L1 + D * D - L2 * L2) / (2 * L1 * D), A = Math.acos(Math.max(-1, Math.min(1, cosA)));
+          _bq.pole.copy(left).multiplyScalar(0.8).addScaledVector(up, 0.25);   // ศอกกางออกซ้าย ยกขึ้นนิด (ท่าง้างสาย)
+          const pn = _bq.pole.clone().sub(dir.clone().multiplyScalar(_bq.pole.dot(dir))).normalize();
+          const Enew = _bq.S.clone().addScaledVector(dir, Math.cos(A) * L1).addScaledVector(pn, Math.sin(A) * L1);
+          _ikRot(ua, _bq.E.clone().sub(_bq.S), Enew.clone().sub(_bq.S));
+          la.getWorldPosition(_bq.E); hn.getWorldPosition(_bq.W);
+          _ikRot(la, _bq.W.clone().sub(_bq.E), _bq.T.clone().sub(_bq.E));
+          hn.getWorldPosition(_bq.W);
+        }
+        if (!bow) return;
+        // ①  ธนู: แกน y ของคัน = ขึ้น · แกน −x (ด้านโค้ง) = ไปข้างหน้า
+        const X = fwd.clone().multiplyScalar(-1), Y = up.clone(), Z = new THREE.Vector3().crossVectors(X, Y);
+        _bq.m.makeBasis(X, Y, Z); const qWant = new THREE.Quaternion().setFromRotationMatrix(_bq.m);
+        wand.parent.getWorldQuaternion(_bq.qp).invert();
+        const qBowLocal = bow.quaternion.clone();
+        wand.quaternion.copy(_bq.qp).multiply(qWant).multiply(qBowLocal.invert());
+        wand.updateMatrixWorld(true);
+        // ③  ลูกธนู: จากมือซ้าย (สาย) พุ่งผ่านมือขวา (คัน) ไปข้างหน้า
+        if (!H.bowArrow) {
+          const ar = new THREE.Group();
+          const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1, 6), new THREE.MeshStandardMaterial({ color: 0x8a6a40, roughness: 0.8 }));
+          shaft.position.y = 0.5; ar.add(shaft);
+          const tip = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 6), new THREE.MeshStandardMaterial({ color: 0xd0d6e0, metalness: 0.7, roughness: 0.3 })); tip.position.y = 1.03; ar.add(tip);
+          for (let k = 0; k < 3; k++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.12, 0.05), new THREE.MeshStandardMaterial({ color: 0xe8e0d0, side: THREE.DoubleSide })); f.position.y = 0.08; f.rotation.y = (k / 3) * Math.PI * 2; f.position.x = Math.sin(f.rotation.y) * 0.02; f.position.z = Math.cos(f.rotation.y) * 0.02; ar.add(f); }
+          ar.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } });
+          scene.add(ar); H.bowArrow = ar;
+        }
+        const ar = H.bowArrow; ar.visible = true;
+        hr.getWorldPosition(_bq.a);
+        const start = _bq.W.clone(), dirA = fwd.clone(), len = Math.max(0.6, _bq.a.clone().sub(start).dot(fwd) + 0.5 * char.scale.x * H.k * 0.25);
+        ar.position.copy(start); ar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirA); ar.scale.set(1, len, 1);
+        ar.children.forEach((o) => { if (o.geometry && o.geometry.type === "ConeGeometry") o.scale.set(1, 1 / len, 1); });
+      };
       G.heroModelSet = (id) => {
         const M0 = id && HERO_MODELS[id];
         const OI = M0 && G.heroOutfitInfo ? G.heroOutfitInfo() : null;   // 👕 ชุดไอเทมที่สวมอยู่
@@ -10447,6 +10507,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             wandL.position.copy(H0.gripHomeL.pos); wandL.rotation.copy(H0.gripHomeL.rot); wandL.scale.copy(H0.gripHomeL.scl);
             if (H0.gripL.parent) H0.gripL.parent.remove(H0.gripL);
           }
+          if (H0.bowArrow) { scene.remove(H0.bowArrow); H0.bowArrow = null; }
           char.remove(H0.g); G._heroModel = null;
         }
         if (G._heroHidden) { G._heroHidden.forEach((o) => (o.visible = true)); G._heroHidden = null; }
@@ -10586,11 +10647,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if (G.mountId) want = "Sitting_Idle_Loop";
         else if ((G._dashT || 0) > 0) want = "Roll";
         else if ((G._jumpT || 0) > 0) want = "Jump_Loop";
-        else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(G._skCast ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross"); once = true; atk = true; }
+        else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross"); once = true; atk = true; }   // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
         else if (H.hurtT > 0) { want = "Hit_Chest"; once = true; }
         else if (sp > 5.5) want = "Sprint_Loop";
         else if (sp > 2.6) want = "Jog_Fwd_Loop";
         else if (sp > 0.25) want = "Walk_Loop";
+        if (atk && G.cls === "archer") { want = has("Pistol_Idle_Loop", want); once = false; atk = false; }   // 🏹 ค้างท่าเล็งสองมือตลอดช่วงยิง (คลิปยิงจบใน 0.2 วิแล้วลดแขนลง เหลือแค่ยกมือแว้บเดียว)
         heroPlay(want, once, atk ? { spd: HERO_ATK_TIME.spd, from: HERO_ATK_TIME.from } : null);
         H.mixers.forEach((m) => m.update(dt));
         if (H.tk || H.deco) { H.g.updateMatrixWorld(true); if (H.tk) heroTopknotTick(H); if (H.deco) H.deco.forEach((K) => heroBoneFollow(H, K)); }
@@ -10612,6 +10674,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           H.gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz);
           H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
         }
+        if (G.cls === "archer" && H.cur === "Pistol_Idle_Loop") heroBowDraw(H); else if (H.bowArrow) H.bowArrow.visible = false;
         if (H.neck && H.neckPlane) {                       // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
           H.neck.getWorldPosition(H.tmpV); H.tmpV.y -= 0.06 * H.k;
           H.neckPlane.setFromNormalAndCoplanarPoint(H.neckPlane.normal.set(0, 1, 0), H.tmpV);
@@ -21427,7 +21490,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (hb && hb.visible) { hb.visible = false; hid.push(hb); }
         }
       }
-      if (D.waitPick) return;                                  // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
+      if (D.waitPick) {                                        // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
+        if (!G._rogueOffer && G.rogueOffer) G.rogueOffer();    // 🛟 กันค้าง: ถ้าไม่มีตัวเลือกค้างอยู่ (โหลดเซฟ/หน้าต่างหาย) ให้เสนอพรใหม่
+        return;
+      }
       if (G.player && G.player.hp <= 0) return;                // ตายแล้ว ปล่อยให้ระบบตายจัดการ
       if (D.pending > 0) { D.pending -= dt; if (D.pending <= 0) twrNext(); return; }
       D.tLeft -= dt;
@@ -21451,7 +21517,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // ☠️ มอนหอคอยตายหนึ่งตัว — นับถอยหลังจำนวนที่เหลือ
     G.twrKill = (m) => {
-      const D = G.dungeon; if (!D || !m.userData.twr) return;
+      const D = G.dungeon; if (!D || !m.userData.twr || m.userData._twrDead) return;
+      m.userData._twrDead = true;                              // 🛡️ นับตัวละครั้งเดียว — เดิมตัวเดียวถูกนับซ้ำได้ (ขึ้น 3/2)
       D.alive = Math.max(0, (D.alive || 1) - 1);
       const O = D.obj;
       if (O) {
@@ -58593,7 +58660,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* 🗼 แผงสถานะชั้นหอคอย (โหมดสำรวจ) — ชั้น · เวลา · ธาตุประจำชั้น · เงื่อนไขสัตว์เลี้ยง · มอนที่เหลือ */}
-      {ui.twr && ui.mode === "explore" && (() => {
+      {ui.twr && ui.mode === "explore" && !ui.rogueChoice && (() => {
         const T = ui.twr;
         const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
         const low = T.sec <= 15;
@@ -58724,8 +58791,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* 🎁 เลือกพร 1 จาก 3 (หอคอยท้าทาย) */}
-      {ui.rogueChoice && ui.mode === "battle" && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 60, background: "rgba(20,8,30,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+      {ui.rogueChoice && (ui.mode === "battle" || ui.mode === "explore") && (   /* 🎁 หอคอยสู้แบบโลกกว้างแล้ว (explore) — เดิมโชว์เฉพาะ battle หน้าเลือกพรเลยไม่ขึ้น ชั้น 3 ค้างรอเลือกตลอด */
+        <div style={{ position: "absolute", inset: 0, zIndex: 95, background: "rgba(20,8,30,0.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
           <div style={{ width: "100%", maxWidth: 420, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: 900, color: "#ffe6c0", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>🎁 ผ่านชั้น {ui.dungeonFloor} — เลือกพร 1 อย่าง</div>
             <div style={{ fontSize: 11, color: "#e8c8d8", marginBottom: 10 }}>พรซ้อนกันได้ · อยู่จนจบรอบ</div>
