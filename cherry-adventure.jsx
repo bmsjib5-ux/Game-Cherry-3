@@ -5275,7 +5275,7 @@ export default function CherryAdventure() {
     G.wpnReady = (sec) => { G._wpnReadyT = Math.max(G._wpnReadyT || 0, sec == null ? 2.5 : sec); };   // ⚔️ ชักอาวุธออกมาถือข้างหน้า
     // 🤚 realistic grip: each weapon type is held at a natural angle
     // 🏹 ธนูบนโมเดล 3D: ถือตั้งขึ้นข้างตัว คันโค้งหันไปหน้า — ค้นหาเชิงตัวเลขบนกระดูกมือ (ชิบิยังถือแนวนอนเหมือนเดิม)
-    const BOW_GRIP_MODEL = { x: -2.09, y: -1.83, z: 1.05 };   // วัดกับท่า Idle_Loop: แกนคัน ↑ 1.00 · คันโค้งหันหน้า 0.99
+    const BOW_GRIP_MODEL = { x: -2.09, y: 1.31, z: -1.05 };   // วัดกับท่า Idle_Loop: แกนคัน ↑ 1.00 · ท้องคัน (+x ของโมเดล) หันหน้า 0.99 → สายอยู่ฝั่งตัว
     const gripFor = (id) => {
       if (id && id.indexOf("kkh_") === 0) return { x: 0.9, y: 0, z: 0.3 };   // 🦸🪓 อาวุธหนักรุ่น KayKit — พาดเฉียงข้างลำตัว หัวอาวุธชี้ออกนอก
       const it = LOOT.find((x) => x.id === id);
@@ -10458,8 +10458,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           hn.getWorldPosition(_bq.W);
         }
         if (!bow) return;
-        // ①  ธนู: แกน y ของคัน = ขึ้น · แกน −x (ด้านโค้ง) = ไปข้างหน้า
-        const X = fwd.clone().multiplyScalar(-1), Y = up.clone(), Z = new THREE.Vector3().crossVectors(X, Y);
+        // ①  ธนู: แกน y ของคัน = ขึ้น · แกน +x (ท้องคันที่นูน) = ไปข้างหน้า → สาย (ฝั่ง −x ที่โยงปลายคัน) หันเข้าตัวผู้ยิง
+        const X = fwd.clone(), Y = up.clone(), Z = new THREE.Vector3().crossVectors(X, Y);
         _bq.m.makeBasis(X, Y, Z); const qWant = new THREE.Quaternion().setFromRotationMatrix(_bq.m);
         wand.parent.getWorldQuaternion(_bq.qp).invert();
         const qBowLocal = bow.quaternion.clone();
