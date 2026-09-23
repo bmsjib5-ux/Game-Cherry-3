@@ -3566,10 +3566,13 @@ function CherryAdventure() {
         const camMin = () => (G.heroModelId ? 9.5 : 6);
         G.camMin = camMin;
         // 📷 เริ่มเกมใหม่ด้วยโมเดล 3D: ถอยกล้องให้เห็นทั้งตัวก่อน — ค่าเดิม (8) คือระยะของตัวชิบิ โมเดลสูงกว่าเกือบเท่า หลังตัวเต็มจอ
-        G.camFit = () => { if (G.heroModelId && camDist < 13.5) {
-            camDist = 13.5;
+        // 📷 ระยะกล้องเริ่มต้นของโมเดล 3D: 10.5 → ตัวละครสูงราวครึ่งจอ (เดิม 13.5 ตัวเล็กราว 1 ใน 4 ของจอ ของประดับชิ้นเล็กมองไม่เห็น)
+        //    ใช้ตอนเริ่มเกมใหม่และตอนเข้าร่างโมเดล — ซูมเองหลังจากนั้นได้ตามปกติ (ใกล้สุด camMin 9.5 ยังเห็นหัวครบ)
+        const HERO_CAM_DEFAULT = 10.5;
+        G.camFit = () => { if (G.heroModelId) {
+            camDist = window.innerWidth < window.innerHeight ? 14 : HERO_CAM_DEFAULT;
             saveZoom();
-        } };
+        } }; // 📱 จอตั้งแคบ → ถอยอีกหน่อย ไม่งั้นตัวละครบังปุ่มสองข้าง
         G.zoom = (d) => {
             if (G.mode === "battle" || G.mode === "fainted") {
                 bZoom = Math.min(1.8, Math.max(0.6, bZoom + d * 0.09));
@@ -14283,7 +14286,10 @@ function CherryAdventure() {
                     o.position.y = o.userData._heroY0;
                     delete o.userData._heroY0;
                 } });
+                const _wasModel = !!G.heroModelId;
                 G.heroModelId = M ? id : null;
+                if (M && !_wasModel && G.camFit && G.mode !== "create" && G.mode !== "class")
+                    G.camFit(); // 📷 เพิ่งเข้าร่างโมเดล → ระยะกล้องเริ่มต้น
                 if (G.setWeaponVisual && G.cls === "mage")
                     G.setWeaponVisual(G.equip ? G.equip.weapon : null); // 🔮 นักเวท: ชิบิถือลูกแก้ว · โมเดล 3D ถือคทา — สลับร่างต้องคิดใหม่
                 if (G.zoom)
