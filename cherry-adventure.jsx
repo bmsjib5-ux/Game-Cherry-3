@@ -42269,7 +42269,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🏷️ float the player's nameplate (ชื่อ + เลือด + มานา) above Cherry's head (explore + battle)
       if (G.playerPlateEl) {
         if ((G.mode === "explore" || G.mode === "battle") && char) {
-          _plateV.set(char.position.x, char.position.y + 3.4, char.position.z);
+          // 🧍 โมเดล 3D สูงกว่าชิบิ — ยึดยอดหัวจริงจากกระดูกหัว (ไม่งั้นป้ายชื่อ/ฉายาไปลอยกลางอก)
+          const HM = G._heroModel, hb = HM && (HM.headBone || (HM.headBone = HM.parts[0].getObjectByName("Head")));
+          if (hb) { hb.getWorldPosition(_plateV); _plateV.x = char.position.x; _plateV.z = char.position.z; _plateV.y += 0.75 * (char.scale.y || 1); }
+          else _plateV.set(char.position.x, char.position.y + 3.4, char.position.z);
           _plateV.project(camera);
           const cw = renderer.domElement.clientWidth || W;
           const ch = renderer.domElement.clientHeight || H;
