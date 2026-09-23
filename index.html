@@ -51777,6 +51777,16 @@ function CherryAdventure() {
         G._worldFxCount = () => archerFx.length + magicFx.length + poisonFx.length + shadowBolts.length + wpnGhosts.length;
         const bowMuzzle = () => {
             const s = Math.sin(char.rotation.y), c = Math.cos(char.rotation.y);
+            // 🧍 โมเดล 3D สูงกว่าชิบิ — ความสูงคงที่ 1.45 อยู่แค่ระดับขา ลูกธนูเลยพุ่งออกจากขา → ใช้ตำแหน่งมือถือคันธนูจริง ดันไปหน้าอีกนิดให้พ้นคัน
+            //    ยึด "ตำแหน่งคันในท่าเล็ง" (วัดจากท่าจริง: มือถือคันอยู่ต่ำกว่ากระดูกหัว ~0.26×สเกล · หน้า +0.8 · ขวา −0.41 หน่วยโมเดล)
+            //    ไม่ใช้ตำแหน่งมือ ณ เฟรมนั้น — นัดแรกยิงก่อนแขนยกขึ้นเล็งเสร็จ มือยังอยู่ระดับเอว
+            const H = G._heroModel, hd = H && (H.headB || (H.headB = H.parts[0].getObjectByName("Head")));
+            if (hd) {
+                const v = hd.getWorldPosition(new THREE.Vector3());
+                const S = char.scale.x || 1;
+                const fwd = 1.0 * S, side = -0.4 * S; // มือเล็ง z≈0.8 + เลยคันไปอีกนิด
+                return new THREE.Vector3(char.position.x + s * fwd + c * side, v.y - 0.56 * S, char.position.z + c * fwd - s * side);
+            }
             return new THREE.Vector3(char.position.x + s * 0.5 + c * 0.24, 1.45, char.position.z + c * 0.5 - s * 0.24);
         };
         // 🎯 ลำแสงเจาะเกราะ — ลำแสงทองพุ่งออกจากคันธนูเป็นแนวตรง ทะลุทุกตัวที่ขวางอยู่
