@@ -53,3 +53,10 @@ Anims.glb — "Universal Animation Library" (Standard/free), trimmed to 17 clips
   https://quaternius.com/packs/universalanimationlibrary.html
 All repacked .gltf/.glb -> .glb with three.js GLTFExporter; textures downscaled to 256px; two texture
 filenames in the free base pack (T_Eye_Normal_png.png, T_Hair_1_Normal_png.png) were fixed to the real files.
+
+Universal Animation Library 2 [Standard] + Universal Animation Library [Standard] — Quaternius, CC0
+https://quaternius.itch.io/universal-animation-library-2
+  -> hero/Anims2.glb: Sword_Regular_A/B/C, Sword_Heavy_Combo, Sword_Dash, Shield_OneShot,
+     Shield_Dash, Idle_Shield_Loop, Melee_Hook, NinjaJump_Idle_Loop, OverhandThrow, Consume,
+     Yes (UAL2) + Jump_Start, Hit_Head (UAL1). Meshes removed, scale tracks dropped,
+     keyframes thinned (linear tolerance 0.0015).

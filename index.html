@@ -3079,6 +3079,19 @@ const HERO_ATK = { warrior: "Sword_Attack", samurai: "Sword_Attack", lancer: "Sw
 //    ถ้าปล่อยตามจังหวะเกม ท่าจะถูกตัดตั้งแต่ช่วงเงื้อ (วัดได้ 13% ของคลิป) ผู้เล่นไม่เห็นการฟันเลย
 //    จึง (1) ค้างท่าไว้อย่างน้อย hold วินาที (2) เร่งความเร็วคลิป (3) เริ่มที่ from ข้ามช่วงเงื้อช้า ๆ
 const HERO_ATK_TIME = { hold: 0.4, spd: 2.4, from: 0.18 };
+// 🎬 คลังท่าเสริม UAL2 (Quaternius · CC0) — ฟัน 3 จังหวะ / แทงพุ่ง / หมัดฮุก / โล่กระแทก ไล่ตามคอมโบ 3 ไม้ของเกม
+const HERO_COMBO = { warrior: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"], samurai: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"],
+    aegis: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"], lancer: ["Sword_Dash", "Sword_Regular_B", "Sword_Dash"],
+    assassin: ["Sword_Regular_A", "Sword_Regular_B", "Melee_Hook"], boxer: ["Punch_Jab", "Punch_Cross", "Melee_Hook"],
+    office: ["Spell_Simple_Shoot", "Spell_Simple_Shoot", "OverhandThrow"] };
+const HERO_SKILL = { warrior: "Sword_Heavy_Combo", samurai: "Sword_Heavy_Combo", aegis: "Shield_Dash", lancer: "Sword_Dash", assassin: "Sword_Dash",
+    boxer: "Melee_Hook", office: "OverhandThrow" }; // ที่เหลือ = ร่ายเวท (นักธนู = เล็งยิง)
+// from = ข้ามช่วงเงื้อ (สัดส่วนคลิป) · spd = ความเร็วคลิป — วัดจากแผ่นเฟรมทีละคลิป ให้ท่าฟันจริงตกช่วงที่เกมคิดดาเมจ
+const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B: { from: 0.08, spd: 1.3 }, Sword_Regular_C: { from: 0.05, spd: 2.2 },
+    Sword_Dash: { from: 0.06, spd: 2.0 }, Sword_Heavy_Combo: { from: 0, spd: 2.8 }, Shield_Dash: { from: 0.05, spd: 1.5 },
+    Shield_OneShot: { from: 0.05, spd: 1.4 }, Melee_Hook: { from: 0.08, spd: 1.2 }, OverhandThrow: { from: 0.2, spd: 1.8 },
+    Punch_Jab: HERO_ATK_TIME, Punch_Cross: HERO_ATK_TIME, Sword_Attack: HERO_ATK_TIME, Spell_Simple_Shoot: HERO_ATK_TIME, Pistol_Shoot: HERO_ATK_TIME,
+    Jump_Start: { from: 0.12, spd: 1.7 }, Hit_Head: { from: 0, spd: 1.1 } };
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
     archer: "Idle_Loop" }; // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
@@ -10699,6 +10712,7 @@ function CherryAdventure() {
                 if (fam === "sword") {
                     const sh = kkWrap("shield");
                     if (sh) {
+                        sh.userData.isShield = true;
                         kkiShieldDecorate(sh, it);
                         sh.scale.multiplyScalar(1.8);
                         sh.visible = false;
@@ -14387,9 +14401,10 @@ function CherryAdventure() {
                 if (!M)
                     return;
                 const token = (G._heroTok = (G._heroTok || 0) + 1);
-                Promise.all(M.files.map(heroLoad).concat([hatKK || Promise.resolve(null), heroLoad("Anims")])).then((arr) => {
+                Promise.all(M.files.map(heroLoad).concat([hatKK || Promise.resolve(null), heroLoad("Anims"), heroLoad("Anims2")])).then((arr) => {
                     if (token !== G._heroTok || G.heroModelId !== id)
                         return; // เปลี่ยนใจระหว่างโหลด
+                    const anims2 = arr.pop(); // 🎬 คลังท่าเสริม (UAL2 ฟันคอมโบ/แทงพุ่ง/โล่/หมัดฮุก + UAL1 กระโดด) — โหลดไม่ขึ้นก็ใช้คลังเดิมต่อได้
                     arr.splice(arr.length - 2, 1); // ตัดผลโหลดหมวกออก (ใช้จาก G.kkHatLib)
                     const anims = arr.pop();
                     const srcs = arr.filter(Boolean);
@@ -14452,7 +14467,7 @@ function CherryAdventure() {
                     }));
                     const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
                     const acts = {};
-                    anims.animations.forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
+                    anims.animations.concat(anims2 ? anims2.animations : []).forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
                     let neck = null, neckPlane = null;
                     if (M.files.length > 1 && /_Base$/.test(M.files[0])) {
                         neck = parts[0].getObjectByName("neck_01");
@@ -14563,6 +14578,20 @@ function CherryAdventure() {
                 });
             };
             // 🎬 เลือกท่าจากสถานะจริงของผู้เล่นทุกเฟรม — ตาย > ขี่สัตว์ > พุ่ง > กระโดด > โจมตี/ร่าย > โดนตี > วิ่ง/เดิน > ยืน
+            G.heroEmote = (n, t) => { const H = G._heroModel; if (H && H.acts[n]) {
+                H.emote = { n, t: t || 1.2 };
+                if (H.cur === n)
+                    H.cur = null;
+            } };
+            // 🛡️ ถือโล่ KayKit อยู่ในมือซ้ายไหม (นักรบสายดาบ) — ใช้ท่ายืนตั้งโล่/ยกโล่รับแทนท่าสะดุ้ง
+            const heroHasShield = () => {
+                if (typeof wandL === "undefined" || !wandL || !wandL.visible)
+                    return false;
+                for (const c of wandL.children)
+                    if (c.visible && c.userData.isShield)
+                        return true;
+                return false;
+            };
             G.heroModelTick = (dt) => {
                 const H = G._heroModel;
                 if (!H)
@@ -14574,8 +14603,12 @@ function CherryAdventure() {
                     } // ของที่เพิ่งถูกเปิดทีหลัง (เปลี่ยนชุด/ผ้าคลุม) ก็ซ่อน
                 const P = G.player;
                 if (P) {
-                    if (P.hp < H.lastHp - 0.5)
+                    if (P.hp < H.lastHp - 0.5) {
                         H.hurtT = 0.45;
+                        H.hurtN = (H.hurtN || 0) + 1;
+                        if (H.cur === "Hit_Chest" || H.cur === "Hit_Head" || H.cur === "Shield_OneShot")
+                            H.cur = null;
+                    }
                     H.lastHp = P.hp;
                 }
                 H.hurtT = Math.max(0, H.hurtT - dt);
@@ -14585,13 +14618,24 @@ function CherryAdventure() {
                 H.batPrev = bat;
                 // ⚔️ ค้างท่าฟันไว้ให้ดูออก ถึงแม้จังหวะตีของเกมจะจบไปแล้ว (ตีรัวก็เริ่มท่าใหม่ทุกครั้ง)
                 H.atkT = Math.max(0, (H.atkT || 0) - dt);
-                if (atkEdge) {
-                    H.atkT = Math.max(G._worldSwingDur || 0.2, HERO_ATK_TIME.hold);
+                const skEdge = !!G._skCast && !H.skPrev;
+                H.skPrev = !!G._skCast;
+                if (atkEdge || skEdge) { // 🎬 เลือกท่าตอนเริ่มตี: สกิล → ท่าหนักประจำอาชีพ · ตีปกติ → ไล่ท่าตามจังหวะคอมโบ 3 ไม้
+                    const cmb = HERO_COMBO[G.cls];
+                    const nm = G._skCast ? HERO_SKILL[G.cls] || (G.cls === "archer" ? HERO_ATK.archer : "Spell_Simple_Shoot")
+                        : cmb ? cmb[(G._combo3 || 0) % cmb.length] : HERO_ATK[G.cls];
+                    H.atkClip = nm && H.acts[nm] ? nm : null;
+                    const T = H.atkClip && HERO_CLIP_T[H.atkClip], a0 = H.atkClip && H.acts[H.atkClip][0];
+                    const len = T && a0 ? a0.getClip().duration * (1 - T.from) / T.spd : 0; // ค้างท่าให้เล่นจบจังหวะฟันจริง (ไม่ใช่แค่ 0.4 วิ)
+                    H.atkT = Math.max(G._worldSwingDur || 0.2, HERO_ATK_TIME.hold, Math.min(G._skCast ? 1.3 : 0.95, len * 0.9));
                     H.cur = null;
                 }
                 const sp = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
                 const has = (n, f) => (n && H.acts[n] ? n : f); // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
-                let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false;
+                const shield = heroHasShield();
+                let want = has(shield ? "Idle_Shield_Loop" : HERO_IDLE[G.cls], has(HERO_IDLE[G.cls], "Idle_Loop")), once = false, atk = false, opt = null;
+                if (H.emote && (H.emote.t -= dt) <= 0)
+                    H.emote = null;
                 if (G.mode === "fainted" || (P && P.hp <= 0)) {
                     want = "Death01";
                     once = true;
@@ -14600,29 +14644,47 @@ function CherryAdventure() {
                     want = "Sitting_Idle_Loop";
                 else if ((G._dashT || 0) > 0)
                     want = "Roll";
-                else if ((G._jumpT || 0) > 0)
-                    want = "Jump_Loop";
+                else if ((G._jumpT || 0) > 0) { // 🦘 ชั้นแรก = ย่อถีบตัวขึ้น · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
+                    if ((G._jumpN || 1) >= 2 && H.acts.NinjaJump_Idle_Loop)
+                        want = "NinjaJump_Idle_Loop";
+                    else if (H.acts.Jump_Start) {
+                        want = "Jump_Start";
+                        once = true;
+                        opt = HERO_CLIP_T.Jump_Start;
+                    }
+                    else
+                        want = "Jump_Loop";
+                }
                 else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) {
-                    want = has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross");
+                    want = has(H.atkClip, has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross"));
                     once = true;
                     atk = true;
+                    opt = HERO_CLIP_T[want] || HERO_ATK_TIME;
                 } // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
-                else if (H.hurtT > 0) {
-                    want = "Hit_Chest";
+                else if (H.hurtT > 0) { // 💥 ถือโล่ = ยกโล่รับ · ไม่มีโล่ = สะดุ้งสลับอก/หัว
+                    want = shield ? has("Shield_OneShot", "Hit_Chest") : (H.hurtN & 1 ? has("Hit_Head", "Hit_Chest") : "Hit_Chest");
                     once = true;
+                    opt = HERO_CLIP_T[want] || null;
                 }
+                else if (H.emote && sp <= 0.25) {
+                    want = has(H.emote.n, want);
+                    once = true;
+                } // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
                 else if (sp > 5.5)
                     want = "Sprint_Loop";
                 else if (sp > 2.6)
                     want = "Jog_Fwd_Loop";
                 else if (sp > 0.25)
                     want = "Walk_Loop";
+                if (sp > 0.25 && H.emote)
+                    H.emote = null;
                 if (atk && G.cls === "archer") {
                     want = has("Pistol_Idle_Loop", want);
                     once = false;
                     atk = false;
+                    opt = null;
                 } // 🏹 ค้างท่าเล็งสองมือตลอดช่วงยิง (คลิปยิงจบใน 0.2 วิแล้วลดแขนลง เหลือแค่ยกมือแว้บเดียว)
-                heroPlay(want, once, atk ? { spd: HERO_ATK_TIME.spd, from: HERO_ATK_TIME.from } : null);
+                heroPlay(want, once, opt);
                 H.mixers.forEach((m) => m.update(dt));
                 if (H.tk || H.deco) {
                     H.g.updateMatrixWorld(true);
@@ -44181,6 +44243,8 @@ function CherryAdventure() {
             }
             else {
                 toast(`🧪 ฟื้นฟู +${got} HP!${note}`);
+                if (G.heroEmote)
+                    G.heroEmote("Consume", 1.1);
                 setTimeout(() => setMouth("smile"), 800);
             }
         };
@@ -44216,6 +44280,8 @@ function CherryAdventure() {
             }
             else {
                 toast(`💧 ฟื้นมานา +${got}!${note}`);
+                if (G.heroEmote)
+                    G.heroEmote("Consume", 1.1);
             }
         };
         // ⚒️ enhance: consume 1 duplicate copy as material → +1 (up to +5)
@@ -45038,6 +45104,8 @@ function CherryAdventure() {
                 toast(`🎉 เลเวลอัพ! Lv.${G.player.level} — ได้แต้มสกิล เลือกอัพเกรดเลย!`);
                 if (G.juice)
                     G.juice("level");
+                if (G.heroEmote)
+                    G.heroEmote("Yes", 1.6); // 🙆 โมเดล 3D พยักหน้าดีใจตอนเลเวลอัพ
                 setUi((u) => ({ ...u, levelUpAt: Date.now(), levelUpLv: G.player.level })); // 🎉 แบนเนอร์ LEVEL UP
                 if (G.sfx)
                     G.sfx.levelup();
@@ -47667,6 +47735,8 @@ function CherryAdventure() {
             if (G.sfx && G.sfx.coin)
                 G.sfx.coin();
             const bt = Object.keys(dish.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.buff[k]}${L[1]}`; }).join(" · ");
+            if (G.heroEmote)
+                G.heroEmote("Consume", 1.1);
             toast(`${R.emoji} กิน${R.name} (${Q.emoji}${Q.name}) — ${bt} นาน ${dish.mins} นาที${prev ? " · แทนที่บัฟเดิม" : ""}`);
             G.syncCookUi();
             syncPlayer();
