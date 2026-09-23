@@ -10162,6 +10162,95 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         });
         H.cur = name;
       };
+      // 👕 ชุดไอเทมบนโมเดล 3D — ① แบบชุด (cut: Peasant ผ้า/เสื้อคลุม · Ranger เกราะหนัง+ฮู้ด) ② ย้อมสีตามไอเทม (hue แบบเดียวกับที่แยกอาชีพ)
+      //    ③ ของประดับเกาะกระดูกตามขั้น (heroOutfitDeco) · ไม่ระบุ cut = ใช้ชุดประจำอาชีพเดิม
+      const HERO_OUTFIT = {
+        o1:     { scarf: 1 },                                        // 🧣 ผ้าพันคอนุ่มฟู — ชุดเดิม + ผ้าพันคอ
+        o2:     { cut: "Peasant", hue: [112, 0.45, 0.95, 0.97, 1, 0.55], leaf: 1 },   // H[4]=1 ย้อมเสื้อตัวในสีเบจด้วย ไม่งั้นเปลี่ยนแค่แขน  // 🍀 ชุดใบไม้พราย — ผ้าเขียวใบไม้
+        o3:     { cut: "Ranger",  hue: [212, 0.60, 0.92] },           // 🌩️ เกราะเมฆานิล — น้ำเงินพายุ
+        oS:     { cut: "Peasant", hue: [262, 0.45, 0.82, 0.97, 1, 0.6], star: 1 },  // ✨ อาภรณ์ดวงดาว — ม่วงราตรี + ประกายดาว
+        oD:     { cut: "Ranger",  hue: [356, 0.72, 0.72] },           // 🐲 เกราะเกล็ดมังกร — แดงเลือดนก
+        lg_out: { cut: "Peasant", hue: [45, 0.2, 1.22, 0.97, 1, 0.35], star: 1 },   // 👼 อาภรณ์เทพโลกันตร์ — ขาวทอง
+      };
+      const HERO_OUTFIT_ARCH = {                                      // ชุดสุ่ม 3 สาย × 3 ขั้น (oratk / oedef / osagi …)
+        atk: { cut: "Ranger",  hue: [352, 0.62, 0.9] },   // ⚔️ จู่โจม — แดง
+        def: { cut: "Ranger",  hue: [214, 0.28, 0.95] },  // 🛡️ ปราการ — เทาเหล็กอมฟ้า
+        agi: { cut: "Peasant", hue: [150, 0.42, 0.98, 0.97, 1, 0.5] },   // 💨 ว่องไว — เขียวลม
+      };
+      G.heroOutfitInfo = () => {
+        let id = G.equip ? G.equip.outfit : null;
+        if (G.heroId || G._gearHidden) id = null; else if (G.costume && G.costume.outfit) id = G.costume.outfit;
+        const it = id ? LOOT.find((x) => x.id === id) : null;
+        if (!it) return null;
+        let O = HERO_OUTFIT[id];
+        if (!O) { const m = /^o[res](atk|def|agi)$/.exec(id); O = m ? HERO_OUTFIT_ARCH[m[1]] : {}; }
+        const t = TIER[it.rarity] || 1;
+        const col = (it.elem && ELEM_GLOW[it.elem]) || (t >= 6 ? 0xffe08a : t >= 4 ? 0xf5c542 : t >= 3 ? 0xb07ae0 : 0xd9536b);
+        let hue = O.hue || null;
+        const dy = G.dye && G.dye.outfit;
+        if (dy != null) { const hsl = {}; new THREE.Color(dy).getHSL(hsl); hue = [hsl.h * 360, Math.max(0.3, hsl.s), 0.6 + hsl.l * 0.8]; }   // 🎨 ย้อมเองชนะเสมอ
+        return { id, it, t, col, cut: O.cut || null, hue, scarf: !!O.scarf, leaf: !!O.leaf, star: !!O.star,
+          sig: [id, O.cut || "", hue ? hue.join(",") : "", dy == null ? "" : dy].join("|") };
+      };
+      // 🦴 ให้กลุ่มของประดับตามกระดูก: ตำแหน่ง = กระดูกในพิกัด g · หมุนเท่าที่กระดูกหมุนไปจากท่าตอนโหลด
+      const heroBoneFollow = (H, K) => {
+        K.head.getWorldPosition(H.tmpV); H.g.worldToLocal(H.tmpV); K.grp.position.copy(H.tmpV);
+        H.g.getWorldQuaternion(K.qg).invert(); K.head.getWorldQuaternion(K.qh).premultiply(K.qg);
+        if (!K.q0) K.q0 = K.qh.clone().invert();
+        K.grp.quaternion.copy(K.qh).multiply(K.q0);
+      };
+      // ✨ ของประดับตามขั้น — พิกัดวัดจากท่าผูก (T-pose) ของโมเดลจริง: หน้า = +z · อกหน้า z≈+0.29 · หลัง z≈−0.27 · ไหล่ = กระดูก upperarm
+      //    ทั่วไป: ผ้าพันคอ(ถ้าเป็นชุดผ้าพันคอ) · หายาก: เข็มกลัดอัญมณีธาตุที่อก · มหากาพย์: +เกราะไหล่คู่ขอบเรือง
+      //    SECRET: +เข็มขัดรูนเรืองรอบเอว+เกล็ดพลังลอยข้างไหล่ · มังกร: +หนามไหล่+หนามแนวสันหลัง · ตำนาน: +ปีกทอง+วงรัศมีหลัง
+      const heroOutfitDeco = (OI, parts, g) => {
+        const rigs = [];
+        if (!OI) return rigs;
+        const bone = (n) => parts[0].getObjectByName(n);
+        const t = OI.t, col = OI.col;
+        const metal = new THREE.MeshStandardMaterial({ color: t >= 6 ? 0xf0d27a : t >= 5 ? 0x2a1c20 : t >= 4 ? 0xd9b45a : 0x9aa4b4, metalness: 0.75, roughness: 0.32, emissive: t >= 6 ? 0x6a4a10 : 0x000000, emissiveIntensity: 0.5 });
+        const em = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.0 + t * 0.2, roughness: 0.3, transparent: true, opacity: 0.9 });
+        const gemM = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.1 + t * 0.15, roughness: 0.15, metalness: 0.3 });
+        const fang = new THREE.MeshStandardMaterial({ color: 0x2a1418, metalness: 0.5, roughness: 0.5, emissive: 0x7a1010, emissiveIntensity: 0.5 });
+        const rig = (bn) => { const b = bone(bn); if (!b) return null; const grp = new THREE.Group(); grp.name = "heroDeco_" + bn; g.add(grp); rigs.push({ grp, head: b, q0: null, qg: new THREE.Quaternion(), qh: new THREE.Quaternion() }); return grp; };
+        const add = (grp, mesh, x, y, z) => { mesh.position.set(x, y, z); mesh.castShadow = true; mesh.frustumCulled = false; grp.add(mesh); return mesh; };
+        const chest = rig("spine_03"), waist = rig("spine_01"), neck = rig("neck_01");
+        // 🧣 ผ้าพันคอ
+        if (OI.scarf && neck) {
+          const cloth = new THREE.MeshStandardMaterial({ color: new THREE.Color(0xd9536b).convertSRGBToLinear(), roughness: 0.85 });
+          const ring = add(neck, new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.07, 10, 22), cloth), 0, -0.06, 0.08); ring.rotation.x = Math.PI / 2 - 0.3; ring.scale.set(1.1, 1.05, 1);
+          for (const [dx, dz, rz, L] of [[0.1, 0.3, 0.1, 0.28], [0.17, 0.27, 0.3, 0.22]]) { const tail = add(neck, new THREE.Mesh(new THREE.BoxGeometry(0.085, L, 0.035), cloth), dx, -0.1 - L / 2, dz); tail.rotation.z = rz; tail.rotation.x = -0.15; }
+        }
+        // 💎 หายากขึ้นไป: เข็มกลัดอัญมณีธาตุที่อกซ้าย
+        if (t >= 2 && chest) {
+          const rim = add(chest, new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.016, 8, 18), metal), 0.12, 0.16, 0.3);
+          const gm = add(chest, new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), gemM), 0.12, 0.16, 0.31); gm.scale.set(0.9, 1.25, 0.6);
+          rim.rotation.set(0, 0, 0);
+        }
+        // 🛡️ มหากาพย์ขึ้นไป: เกราะไหล่คู่ + ขอบเรือง
+        if (t >= 3) for (const side of ["l", "r"]) {
+          const sh = rig("upperarm_" + side); if (!sh) continue;
+          const sx = side === "l" ? 1 : -1;
+          const pad = add(sh, new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), metal), sx * 0.06, 0.07, 0.12);
+          pad.scale.set(1.25, 0.55, 1.15);   // ทรงรีแบนทั้งลูก (ครึ่งทรงกลมมองจากด้านในจะโปร่ง)
+          const trim = add(sh, new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.013, 6, 24), em), sx * 0.06, 0.06, 0.12); trim.rotation.x = Math.PI / 2; trim.scale.set(1.28, 1.18, 1);
+          if (t === 5) for (let k = 0; k < 3; k++) { const sp = add(sh, new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.18, 5), fang), sx * (-0.08 + k * 0.1), 0.2, 0.1 - k * 0.04); sp.rotation.z = -sx * 0.35; }   // 🐉 หนามไหล่
+          if (OI.leaf) for (let k = 0; k < 3; k++) { const lf = add(sh, new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 4), new THREE.MeshStandardMaterial({ color: 0x4aa04a, roughness: 0.7 })), sx * (0.12 + k * 0.03), 0.1, 0.1 - k * 0.1); lf.scale.set(1, 1, 0.3); lf.rotation.z = -sx * (1.2 + k * 0.2); }
+          if (OI.star || t >= 4) for (let k = 0; k < 2 + (t >= 6 ? 2 : 0); k++) { const st = add(sh, new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), em), sx * (0.15 + k * 0.06), 0.3 + (k % 2) * 0.12, 0.05 - k * 0.05); st.scale.set(0.7, 1.3, 0.7); }   // ✨ ประกายดาว/เกล็ดพลังลอย
+        }
+        // 🔮 SECRET ขึ้นไป: เข็มขัดรูนเรืองรอบเอว
+        if (t >= 4 && waist) {
+          const belt = add(waist, new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.03, 8, 32), metal), 0, 0, 0.02); belt.rotation.x = Math.PI / 2; belt.scale.set(1, 0.82, 1);   // 📏 เอวจริง x ±0.37 · z −0.27..0.29
+          for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; const rn = add(waist, new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.07, 0.02), em), Math.sin(a) * 0.38, 0, 0.02 + Math.cos(a) * 0.315); rn.rotation.y = a; }
+        }
+        // 🐉 มังกร: หนามแนวสันหลัง
+        if (t === 5 && chest) for (let k = 0; k < 4; k++) { const sp = add(chest, new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.22 - k * 0.03, 5), fang), 0, 0.2 - k * 0.2, -0.3); sp.rotation.x = -1.1; }
+        // 👼 ตำนาน: ปีกทองคู่ + วงรัศมีกลางหลัง
+        if (t >= 6 && chest) {
+          for (const sx of [1, -1]) for (let k = 0; k < 3; k++) { const f = add(chest, new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.6 - k * 0.12, 4), metal), sx * (0.22 + k * 0.1), 0.25 - k * 0.12, -0.36 - k * 0.03); f.scale.set(1, 1, 0.25); f.rotation.z = sx * -(0.9 + k * 0.3); f.rotation.y = sx * 0.3; }
+          const halo = add(chest, new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.02, 8, 36), em), 0, 0.35, -0.45);
+        }
+        return rigs;
+      };
       // 🎀 ให้จุก/หางม้าตามกระดูกหัว: ตำแหน่ง = จุดกระดูกหัวในพิกัด g · หมุน = หัวหมุนไปจากท่าอ้างอิงเท่าไหร่ (ในพิกัด g)
       const heroTopknotTick = (H) => {
         const K = H && H.tk; if (!K) return;
@@ -10171,7 +10260,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         K.grp.quaternion.copy(K.qh).multiply(K.q0);
       };
       G.heroModelSet = (id) => {
-        const M = id && HERO_MODELS[id];
+        const M0 = id && HERO_MODELS[id];
+        const OI = M0 && G.heroOutfitInfo ? G.heroOutfitInfo() : null;   // 👕 ชุดไอเทมที่สวมอยู่
+        G._heroOutfitSig = OI ? OI.sig : "";
+        let M = M0;
+        if (M0 && OI && (OI.cut || OI.hue)) {
+          M = Object.assign({}, M0);
+          if (OI.cut) M.files = [M0.files[0], (/^Female/.test(M0.files[0]) ? "Female_" : "Male_") + OI.cut].concat(M0.files.slice(2));
+          if (OI.hue) M.hue = OI.hue;
+          if (OI.cut === "Ranger") M.topknot = null;   // 🧥 ชุดเรนเจอร์มีฮู้ดคลุมหัว — เก็บจุกไว้ในฮู้ด
+        }
         if (G._heroModel) {
           const H0 = G._heroModel;
           if (H0.gripHome && H0.grip) {                       // 🗡️ คืนอาวุธกลับข้อศอกของร่างปั้นเอง
@@ -10295,7 +10393,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           });
           G._heroHidden = hidden;
           G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, gripL, gripHomeL, mats, lit: -1, tk: tkRig };
-          if (tkRig) { g.updateMatrixWorld(true); heroTopknotTick(G._heroModel); }   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
+          if (tkRig) { g.updateMatrixWorld(true); heroTopknotTick(G._heroModel); }
+          { const deco = heroOutfitDeco(OI, parts, g); if (deco.length) { G._heroModel.deco = deco; g.updateMatrixWorld(true); deco.forEach((K) => heroBoneFollow(G._heroModel, K)); } }   // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
           heroPlay("Idle_Loop");
         });
       };
@@ -10326,7 +10425,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if (sp > 0.25) want = "Walk_Loop";
         heroPlay(want, once, atk ? { spd: HERO_ATK_TIME.spd, from: HERO_ATK_TIME.from } : null);
         H.mixers.forEach((m) => m.update(dt));
-        if (H.tk) { H.g.updateMatrixWorld(true); heroTopknotTick(H); }
+        if (H.tk || H.deco) { H.g.updateMatrixWorld(true); if (H.tk) heroTopknotTick(H); if (H.deco) H.deco.forEach((K) => heroBoneFollow(H, K)); }
         {                                                  // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
           const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
           const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
@@ -15015,6 +15114,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         });
       }
       if (G.applyOutfitParts) G.applyOutfitParts();   // 👕👗🧣 เปิด/ปิดชายกระโปรง + ผ้าคลุมตามที่ตั้งไว้
+      if (G.heroModelId && G.heroOutfitInfo && G.heroModelSet) {   // 🧍👕 โมเดล 3D: ชุดเปลี่ยน → ประกอบโมเดลใหม่ด้วยแบบ/สี/ของประดับของชุดนั้น
+        const OI2 = G.heroOutfitInfo(), sig2 = OI2 ? OI2.sig : "";
+        if (sig2 !== (G._heroOutfitSig || "")) G.heroModelSet(G.heroModelId);
+      }
       // 🚫 no overlap: reconcile which class pieces stay hidden behind equipped gear
       if (G.reconcileClassPieces) G.reconcileClassPieces();
       updateAura();
