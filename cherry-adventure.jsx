@@ -10642,7 +10642,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         });
       };
       // 🎬 เลือกท่าจากสถานะจริงของผู้เล่นทุกเฟรม — ตาย > ขี่สัตว์ > พุ่ง > กระโดด > โจมตี/ร่าย > โดนตี > วิ่ง/เดิน > ยืน
-      G.heroEmote = (n, t) => { const H = G._heroModel; if (H && H.acts[n]) { H.emote = { n, t: t || 1.2 }; if (H.cur === n) H.cur = null; } };
+      G.heroEmote = (n, t) => { const H = G._heroModel; if (n === "Consume" && heroHasShield()) return;   // 🛡️ ท่าดื่มใช้มือซ้าย — มือซ้ายถือโล่อยู่จะกลายเป็นยกโล่ขึ้นปาก
+        if (H && H.acts[n]) { H.emote = { n, t: t || 1.2 }; if (H.cur === n) H.cur = null; } };
       // 🛡️ ถือโล่ KayKit อยู่ในมือซ้ายไหม (นักรบสายดาบ) — ใช้ท่ายืนตั้งโล่/ยกโล่รับแทนท่าสะดุ้ง
       const heroHasShield = () => { if (typeof wandL === "undefined" || !wandL || !wandL.visible) return false;
         for (const c of wandL.children) if (c.visible && c.userData.isShield) return true; return false; };
@@ -10673,7 +10674,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (H.atkT > 0 && sp > 0.25 && !G._skCast && sw <= 0.02 && H.atkAge >= HERO_ATK_TIME.hold) H.atkT = 0;
         const has = (n, f) => (n && H.acts[n] ? n : f);                      // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
         const shield = heroHasShield();
-        let want = has(shield ? "Idle_Shield_Loop" : HERO_IDLE[G.cls], has(HERO_IDLE[G.cls], "Idle_Loop")), once = false, atk = false, opt = null;
+        let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false, opt = null;
         if (H.emote && (H.emote.t -= dt) <= 0) H.emote = null;
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
         else if (G.mountId) want = "Sitting_Idle_Loop";
