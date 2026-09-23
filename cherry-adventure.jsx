@@ -2928,7 +2928,7 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Sword_Dash: { from: 0.06, spd: 2.0 }, Sword_Heavy_Combo: { from: 0, spd: 2.8 }, Shield_Dash: { from: 0.05, spd: 1.5 },
                       Shield_OneShot: { from: 0.05, spd: 1.4 }, Melee_Hook: { from: 0.08, spd: 1.2 }, OverhandThrow: { from: 0.2, spd: 1.8 },
                       Punch_Jab: HERO_ATK_TIME, Punch_Cross: HERO_ATK_TIME, Sword_Attack: HERO_ATK_TIME, Spell_Simple_Shoot: HERO_ATK_TIME, Pistol_Shoot: HERO_ATK_TIME,
-                      Jump_Start: { from: 0.12, spd: 1.7 }, Hit_Head: { from: 0, spd: 1.1 } };
+                      Hit_Head: { from: 0, spd: 1.1 } };
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Idle_Loop" };                                    // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
@@ -10657,6 +10657,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         H.swPrev = sw; H.batPrev = bat;
         // ⚔️ ค้างท่าฟันไว้ให้ดูออก ถึงแม้จังหวะตีของเกมจะจบไปแล้ว (ตีรัวก็เริ่มท่าใหม่ทุกครั้ง)
         H.atkT = Math.max(0, (H.atkT || 0) - dt);
+        const sp = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
         const skEdge = !!G._skCast && !H.skPrev; H.skPrev = !!G._skCast;
         if (atkEdge || skEdge) {                          // 🎬 เลือกท่าตอนเริ่มตี: สกิล → ท่าหนักประจำอาชีพ · ตีปกติ → ไล่ท่าตามจังหวะคอมโบ 3 ไม้
           const cmb = HERO_COMBO[G.cls];
@@ -10665,9 +10666,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           H.atkClip = nm && H.acts[nm] ? nm : null;
           const T = H.atkClip && HERO_CLIP_T[H.atkClip], a0 = H.atkClip && H.acts[H.atkClip][0];
           const len = T && a0 ? a0.getClip().duration * (1 - T.from) / T.spd : 0;   // ค้างท่าให้เล่นจบจังหวะฟันจริง (ไม่ใช่แค่ 0.4 วิ)
-          H.atkT = Math.max(G._worldSwingDur || 0.2, HERO_ATK_TIME.hold, Math.min(G._skCast ? 1.3 : 0.95, len * 0.9)); H.cur = null;
+          H.atkT = Math.max(G._worldSwingDur || 0.2, HERO_ATK_TIME.hold, Math.min(G._skCast ? 1.3 : 0.95, len * 0.9)); H.cur = null; H.atkAge = 0;
         }
-        const sp = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
+        H.atkAge = (H.atkAge || 0) + dt;
+        // 🏃 กำลังเดิน/วิ่ง → ค้างท่าฟันแค่เท่าเดิม (0.4 วิ) แล้วกลับเข้าท่าเดิน/วิ่งทันที ไม่ไถลตัวไปในท่าฟัน
+        if (H.atkT > 0 && sp > 0.25 && !G._skCast && sw <= 0.02 && H.atkAge >= HERO_ATK_TIME.hold) H.atkT = 0;
         const has = (n, f) => (n && H.acts[n] ? n : f);                      // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
         const shield = heroHasShield();
         let want = has(shield ? "Idle_Shield_Loop" : HERO_IDLE[G.cls], has(HERO_IDLE[G.cls], "Idle_Loop")), once = false, atk = false, opt = null;
@@ -10675,11 +10678,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
         else if (G.mountId) want = "Sitting_Idle_Loop";
         else if ((G._dashT || 0) > 0) want = "Roll";
-        else if ((G._jumpT || 0) > 0) {                   // 🦘 ชั้นแรก = ย่อถีบตัวขึ้น · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
-          if ((G._jumpN || 1) >= 2 && H.acts.NinjaJump_Idle_Loop) want = "NinjaJump_Idle_Loop";
-          else if (H.acts.Jump_Start) { want = "Jump_Start"; once = true; opt = HERO_CLIP_T.Jump_Start; }
-          else want = "Jump_Loop";
-        }
+        else if ((G._jumpT || 0) > 0) want = (G._jumpN || 1) >= 2 && H.acts.NinjaJump_Idle_Loop ? "NinjaJump_Idle_Loop" : "Jump_Loop";   // 🦘 ชั้นแรก = ท่ากระโดดเดิม · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
         else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(H.atkClip, has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross")); once = true; atk = true; opt = HERO_CLIP_T[want] || HERO_ATK_TIME; }   // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
         else if (H.hurtT > 0) {                           // 💥 ถือโล่ = ยกโล่รับ · ไม่มีโล่ = สะดุ้งสลับอก/หัว
           want = shield ? has("Shield_OneShot", "Hit_Chest") : (H.hurtN & 1 ? has("Hit_Head", "Hit_Chest") : "Hit_Chest"); once = true; opt = HERO_CLIP_T[want] || null;
