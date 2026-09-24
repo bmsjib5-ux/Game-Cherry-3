@@ -10140,6 +10140,60 @@ function CherryAdventure() {
             spear: { fam: "spear", headY: 0.85, top: 1.5, bot: -0.7, hW: 0.1 }, halberd: { fam: "spear", headY: 0.35, top: 1.45, bot: -0.7, hW: 0.63 },
         };
         // 🏹🪄🔪🔱 ตกแต่งอาวุธตระกูลอื่นตามขั้น/ธาตุ/ชื่อ (ชุดเดียวกับดาบ แต่ยึดตามรูปทรงของแต่ละตระกูล)
+        let _spearGlowTex = null;
+        const spearGlowTex = () => {
+            if (_spearGlowTex)
+                return _spearGlowTex;
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 64;
+            const x = cv.getContext("2d");
+            const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gr.addColorStop(0, "rgba(255,255,255,1)");
+            gr.addColorStop(0.25, "rgba(255,255,255,0.75)");
+            gr.addColorStop(0.6, "rgba(255,255,255,0.18)");
+            gr.addColorStop(1, "rgba(255,255,255,0)");
+            x.fillStyle = gr;
+            x.fillRect(0, 0, 64, 64);
+            return (_spearGlowTex = new THREE.CanvasTexture(cv));
+        };
+        // ✨ แสงที่ปลายหอก — แกนขาวสว่าง + รัศมีเรืองแสง (sprite บวกแสง) กะพริบเบา ๆ ให้เห็นปลายหอกชัดแม้หอกเรียวบาง
+        //    หาปลายจากจุดสูงสุดของทุก mesh ในพิกัดของโมเดล (ก่อนขยาย) จึงใช้ได้ทั้งหอก KayKit และหอกที่ปั้นเอง · ติดครั้งเดียวต่อโมเดล
+        const spearTipGlow = (model, it) => {
+            if (!model || model.userData.spearHalo)
+                return;
+            const t = TIER[(it && it.rarity) || "common"] || 1, col = (it && it.elem && ELEM_GLOW[it.elem]) || (t >= 6 ? 0xffe08a : t >= 4 ? 0xf5c542 : 0xcfeaff);
+            model.updateMatrixWorld(true);
+            const inv = new THREE.Matrix4().copy(model.matrixWorld).invert(), v = new THREE.Vector3();
+            let top = -1e9;
+            model.traverse((o) => {
+                if (!o.isMesh || o.isSprite || !o.geometry)
+                    return;
+                const g = o.geometry;
+                if (!g.boundingBox)
+                    g.computeBoundingBox();
+                const b = g.boundingBox;
+                for (let k = 0; k < 8; k++) {
+                    v.set(k & 1 ? b.max.x : b.min.x, k & 2 ? b.max.y : b.min.y, k & 4 ? b.max.z : b.min.z).applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+                    if (v.y > top)
+                        top = v.y;
+                }
+            });
+            if (top < -1e8)
+                return;
+            const tipY = top - 0.04;
+            const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            core.scale.set(0.8, 1.6, 0.8);
+            core.position.set(0, tipY, 0);
+            model.add(core);
+            const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: spearGlowTex(), color: col, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.95 }));
+            const hs = 0.55 + t * 0.05;
+            halo.scale.set(hs, hs, 1);
+            halo.position.set(0, tipY, 0);
+            halo.renderOrder = 5;
+            halo.onBeforeRender = () => { const k = hs * (1 + 0.14 * Math.sin(performance.now() * 0.005)); halo.scale.set(k, k, 1); };
+            model.add(halo);
+            model.userData.spearHalo = halo;
+        };
         const kkiDecorateFam = (g, it, name) => {
             const A = KKI_ANCHOR[name];
             if (!A)
@@ -11887,7 +11941,10 @@ function CherryAdventure() {
                 const gy = model.userData.gripY != null ? model.userData.gripY : 0.28;
                 // 🗡️ ดาบ/คาตานะใหญ่ขึ้นเท่าตัว (ทั้งโมเดล KayKit และโมเดลที่ปั้นเอง)
                 //    ขยายทั้งชิ้นแล้วเลื่อนด้ามลงตามสัดส่วน มือจึงยังกำอยู่ที่ด้ามเดิม ไม่ใช่กลางใบดาบ
-                const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : 1); // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
+                const witS = LOOT.find((x) => x.id === id), isSpear = model.userData.kkFam === "spear" || !!(witS && WPN_FAMILY[witS.cls] === "spear");
+                if (isSpear)
+                    spearTipGlow(model, witS); // ✨ หอกทุกด้ามมีแสงที่ปลาย
+                const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : 1); // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
                 model.scale.setScalar(big);
                 model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
                 model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
@@ -14394,8 +14451,8 @@ function CherryAdventure() {
                 G.heroModelId = M ? id : null;
                 if (M && !_wasModel && G.camFit && G.mode !== "create" && G.mode !== "class")
                     G.camFit(); // 📷 เพิ่งเข้าร่างโมเดล → ระยะกล้องเริ่มต้น
-                if (G.setWeaponVisual && G.cls === "mage")
-                    G.setWeaponVisual(G.equip ? G.equip.weapon : null); // 🔮 นักเวท: ชิบิถือลูกแก้ว · โมเดล 3D ถือคทา — สลับร่างต้องคิดใหม่
+                if (G.setWeaponVisual && (G.cls === "mage" || G.cls === "lancer"))
+                    G.setWeaponVisual(G.equip ? G.equip.weapon : null); // 🔱 นักหอก: หอกบนโมเดล 3D ขยายต่างจากชิบิ   // 🔮 นักเวท: ชิบิถือลูกแก้ว · โมเดล 3D ถือคทา — สลับร่างต้องคิดใหม่
                 if (G.zoom)
                     G.zoom(0); // 📷 ดันระยะกล้องให้เข้าช่วงใหม่ทันที (ขั้นต่ำของโมเดลไกลกว่าตัวชิบิ)
                 if (!M)
