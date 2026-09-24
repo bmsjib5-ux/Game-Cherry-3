@@ -10183,6 +10183,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       };
       // ⏱️ ไล่เฟรมท่ายืนของ NPC + เร่งความสว่างตอนกลางคืนเหมือนโมเดลผู้เล่น
       G.npcModelTick = (dt) => {
+        {   // 📜 ป้ายเควสไล่เฟรมลอยเหนือหัว NPC ที่บทเนื้อเรื่องปัจจุบันให้ "ไปคุย" (Kalponic Quest) — หายเมื่อคุยแล้ว
+          const c = G.MSQ && G.MSQ[G.storyCh]; const who = c && c.t === "talk" && (G.storyProg || 0) < 1 ? c.who : null;
+          const tgt = who === "elder" ? G.npc : who === "smith" ? G.smith : who === "master" ? G.master : null;
+          if (tgt && G.kFlip && !G._qMark) { try { const F = G.kFlip("quest", 2.6); F.sp.renderOrder = 3; scene.add(F.sp); G._qMark = F; } catch (_) { G._qMark = { sp: null }; } }
+          const Q = G._qMark;
+          if (Q && Q.sp) { const on = !!(tgt && tgt.visible && G.mode === "explore"); Q.sp.visible = on;
+            if (on) { Q.sp.position.set(tgt.position.x, tgt.position.y + (tgt.userData.headY || 4.6) + 0.55 + Math.sin(performance.now() * 0.003) * 0.12, tgt.position.z); Q.set((performance.now() * 0.0007) % 1); } }
+        }
         if (!npcModels.length) return;
         const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
         const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
@@ -10713,6 +10721,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(H.atkClip, has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross")); once = true; atk = true; opt = HERO_CLIP_T[want] || HERO_ATK_TIME; }   // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
         else if (H.hurtT > 0) {                           // 💥 ถือโล่ = ยกโล่รับ · ไม่มีโล่ = สะดุ้งสลับอก/หัว
           want = shield ? has("Shield_OneShot", "Hit_Chest") : (H.hurtN & 1 ? has("Hit_Head", "Hit_Chest") : "Hit_Chest"); once = true; opt = HERO_CLIP_T[want] || null;
+          if (shield && H.shieldFxN !== H.hurtN) { H.shieldFxN = H.hurtN; if (G._skillFxAt) G._skillFxAt("shieldaura", char.position.x, char.position.z, 0xffffff); }   // 🛡️ ออร่าโล่วาบทุกครั้งที่ยกโล่รับ
         }
         else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = true; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
         else if (sp > 5.5) want = "Sprint_Loop";
@@ -23952,7 +23961,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.quests.forEach((q) => {
         if (q.type === type && !q.done) {
           q.prog = Math.min(q.target, q.prog + n);
-          if (q.prog >= q.target) { q.done = true; any = true; toast(`📜 ภารกิจสำเร็จ! ${q.emoji} ${q.label} — กดรับรางวัล`); }
+          if (q.prog >= q.target) { q.done = true; any = true; toast(`📜 ภารกิจสำเร็จ! ${q.emoji} ${q.label} — กดรับรางวัล`); if (G.questFx) G.questFx(); }
         }
       });
       setUi((u) => ({ ...u, quests: G.quests.map((q) => ({ ...q })) }));
@@ -24524,7 +24533,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       let hit = false;
       const bump = (row) => { const M = mbMeta(row.id); if (!M || M.t !== type || row.p >= M.n) return;
         row.p = Math.min(M.n, row.p + n); hit = true;
-        if (row.p >= M.n) { toast(`📖 ภารกิจสำเร็จ! ${M.emoji} ${M.name} — เปิดสมุดภารกิจกดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); } };
+        if (row.p >= M.n) { toast(`📖 ภารกิจสำเร็จ! ${M.emoji} ${M.name} — เปิดสมุดภารกิจกดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); if (G.questFx) G.questFx(); } };
       (Q.daily || []).forEach(bump); (Q.weekly || []).forEach(bump);
       if (hit) G.mbSync();
     };
@@ -24636,7 +24645,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       else if (c.t === "visit" && type === "visit" && meta.biome === c.biome) G.storyProg = tgt;
       else if (c.t === "bboss" && type === "bboss" && meta.biome === c.biome) G.storyProg = tgt;
       if (G.storyProg !== before) {
-        if (G.storyProg >= tgt) { toast(`📖 เนื้อเรื่องบทที่ ${G.storyCh + 1} "${c.title}" สำเร็จ! เปิดเมนูภารกิจ 📜 กดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); }
+        if (G.storyProg >= tgt) { toast(`📖 เนื้อเรื่องบทที่ ${G.storyCh + 1} "${c.title}" สำเร็จ! เปิดเมนูภารกิจ 📜 กดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); if (G.questFx) G.questFx(); }
         storySync();
       }
     };
@@ -25273,6 +25282,25 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     const kfxSpawn = (x, z, dur, build) => { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const update = build(g); activeFx.push({ group: g, t: 0, dur, update }); return g; };
     const kEase = (pr, a, b) => Math.max(0, Math.min(1, (pr - a) / (b - a)));
+    // 🎬 Kalponic Free Stylized Sprite VFX (CC BY 4.0) — เฟรมไล่ภาพจริง (16 เฟรม) รวมเป็น sprite sheet ตาราง 128px
+    //    ต่างจาก Kenney ที่เป็นภาพนิ่ง: ใช้กับของที่ "เล่นเป็นชุด" — รอยฟันดาบ / ประกายฮีล / โล่รับ / ป้ายเควส
+    const KALP_BASE = "assets/kalponic/";
+    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4] };   // [เฟรม, คอลัมน์, แถว]
+    const kalpPend = {};                          // สำเนา texture ที่ทำไว้ก่อนรูปมาถึง (r128 ไม่มี Texture.userData) — เติมรูปให้ทีหลัง
+    const kalpTex = (() => { const c = {}; return (n) => { if (c[n]) return c[n]; kalpPend[n] = [];
+      const t = new THREE.TextureLoader().load(KALP_BASE + n + ".png", () => { (kalpPend[n] || []).forEach((x) => { x.image = t.image; x.needsUpdate = true; }); kalpPend[n] = null; });
+      t.encoding = THREE.sRGBEncoding; return (c[n] = t); }; })();
+    const kFlip = (name, size, o) => {              // คืน {sp, set(pr)} · set(0..1) = เลือกเฟรมตามสัดส่วนเวลา
+      const [n, cols, rows] = KALP[name], base = kalpTex(name), t = base.clone(); t.needsUpdate = true;
+      const pd = kalpPend[name]; if (pd) pd.push(t);
+      t.repeat.set(1 / cols, 1 / rows); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, color: o && o.color != null ? o.color : 0xffffff, transparent: true, opacity: 1, blending: o && o.add ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: false, rotation: (o && o.rot) || 0 }));
+      sp.scale.set(size, size, 1);
+      const set = (pr) => { const i = Math.min(n - 1, Math.floor((((pr % 1) + 1) % 1) * n)); t.offset.set((i % cols) / cols, 1 - (Math.floor(i / cols) + 1) / rows); };
+      set(0); return { sp, set, n };
+    };
+    G.kFlip = kFlip;
+    setTimeout(() => { try { Object.keys(KALP).forEach(kalpTex); } catch (_) {} }, 2500);
     setTimeout(() => { try { ["circle_02", "circle_03", "dirt_02", "fire_01", "flame_03", "light_02", "magic_01", "magic_02", "scorch_01", "scorch_02", "slash_01", "slash_03", "smoke_05", "spark_01", "spark_05", "star_01", "star_06", "star_08", "star_09", "twirl_02"].forEach(kfxTex); } catch (_) {} }, 2500);   // โหลดล่วงหน้าหลังฉากขึ้น — สไปรท์ที่รูปยังไม่มาจะเป็นสี่เหลี่ยมดำ
     // 💥 จุดปะทะ — ดาววาบขาว + วงแหวนแผ่ + ประกายกระจาย + เศษดาว 5 ดวงกระเด็น (ซ้อนบน burst เดิม)
     const kImpact = (x, y, z, color, size) => {
@@ -25293,14 +25321,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // ✂️ รอยฟันเสี้ยว — ภาพ slash ของ Kenney หมุนสุ่มในระนาบจอ วาบแล้วยืดออก + ดาวแวบที่กลางรอย
     const kSlash = (x, y, z, color) => {
-      kfxSpawn(x, z, 0.32, (g) => {
-        const rot = Math.random() * Math.PI * 2;
-        const sl = kSprite(Math.random() < 0.5 ? "slash_01" : "slash_03", 0xffffff, 1.7, { rot }); sl.position.y = y; g.add(sl);
-        const gl = kSprite(Math.random() < 0.5 ? "slash_01" : "slash_03", color, 1.9, { rot }); gl.position.y = y; g.add(gl);
+      kfxSpawn(x, z, 0.38, (g) => {                // 🎬 รอยฟันไล่เฟรม Kalponic (16 เฟรม) หมุนสุ่ม ± กลับด้าน + ดาวแวบกลางรอย
+        const F = kFlip("slash", 4.4, { add: true, rot: (Math.random() - 0.5) * 1.2 + (Math.random() < 0.5 ? 0 : Math.PI) }); F.sp.position.y = y; g.add(F.sp);
         const st = kSprite("star_09", 0xffffff, 0.9); st.position.y = y; g.add(st);
         return (pr) => {
-          const o = 1 - kEase(pr, 0.15, 1); sl.material.opacity = o; gl.material.opacity = o * 0.9;
-          const k = 1.7 + pr * 1.0; sl.scale.setScalar(k); gl.scale.setScalar(k * 1.15);
+          F.set(pr); F.sp.material.opacity = 1 - kEase(pr, 0.75, 1);
           st.material.opacity = 1 - kEase(pr, 0, 0.4); st.scale.setScalar(0.9 + pr * 0.8);
         };
       });
@@ -25393,7 +25418,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return { core, glow, mats: [core, glow], shape, setOpacity, pool };
     };
     // 🎇 ประเภทที่ใช้ภาพ Kenney แทนของเดิมทั้งหมด (ค่า = ระยะเวลา) — ของเดิมกับภาพซ้อนกันจนรก
-    const KFX_ONLY = { fire: 0.8, bolt: 0.6, quake: 0.75, shadow: 0.7, healbless: 1.1, punchwave: 0.55, pierce: 0.55, ice: 0.7 };
+    const KFX_ONLY = { fire: 0.8, bolt: 0.6, quake: 0.75, shadow: 0.7, healbless: 1.1, punchwave: 0.55, pierce: 0.55, ice: 0.7, healpop: 1.0, shieldaura: 0.6, questdone: 1.4 };
     const spawnSkillFx = (fxType, pos, color) => {
       const kType = fxType, kOnly = KFX_ONLY[fxType] != null;
       if (kOnly) fxType = "__kfx__";                   // ไม่เข้าสาขาของเดิม (สาขา default ท้ายสุดสร้างแค่วงแหวน → ตัดทิ้งด้านล่าง)
@@ -27050,6 +27075,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const mc = add(kDecal("magic_01", 0x9affb0, 2.6)); const lt = add(kSprite("light_02", 0xd0ffd8, 1.4)); lt.position.y = 0.4;
           const hs = []; for (let k = 0; k < 12; k++) { const b = add(kSprite("star_01", k % 2 ? 0xfff0b0 : 0x8affa0, 0.28)); b.userData = { a: (k / 12) * Math.PI * 2, rise: 1.5 + Math.random() * 1.2 }; hs.push(b); }
           kx.push((pr) => { for (const b of hs) { const u = b.userData, rr = 0.55 * (1 - pr * 0.4); b.position.set(Math.cos(u.a + pr * 4) * rr, pr * u.rise, Math.sin(u.a + pr * 4) * rr); b.material.opacity = 1 - kEase(pr, 0.5, 1); } mc.rotation.z = pr * 2.5; mc.material.opacity = Math.sin(pr * Math.PI) * 0.95; mc.scale.setScalar(0.8 + pr * 0.3); lt.position.y = 0.4 + pr * 1.8; lt.material.opacity = Math.sin(pr * Math.PI) * 0.8; lt.scale.setScalar(1.4 + pr * 0.6); });
+        } else if (fxType === "healpop") {          // 💚 ดื่มยา/กินอาหาร — ประกายเขียวเหลืองลอยขึ้นรอบตัว (Kalponic Heal)
+          const F = kFlip("heal", 4.4, { add: true }); F.sp.position.y = 1.3; add(F.sp);
+          kx.push((pr) => { F.set(pr); F.sp.position.y = 1.3 + pr * 0.5; F.sp.material.opacity = 1 - kEase(pr, 0.8, 1); });
+        } else if (fxType === "shieldaura") {       // 🛡️ ยกโล่รับ — ออร่าโล่ฟ้าวาบหน้าตัว (Kalponic Shield Aura)
+          const F = kFlip("shield", 4.6, { add: true }); F.sp.position.y = 1.2; add(F.sp);
+          const rg = add(kSprite("circle_02", 0x9fd8ff, 0.8)); rg.position.y = 1.2;
+          kx.push((pr) => { F.set(pr); F.sp.material.opacity = 1 - kEase(pr, 0.7, 1); rg.scale.setScalar(0.8 + pr * 2.2); rg.material.opacity = (1 - pr) * 0.7; });
+        } else if (fxType === "questdone") {        // 📜✅ ภารกิจสำเร็จ — ตราเช็คทองลอยเหนือหัว (Kalponic Quest Complete)
+          const F = kFlip("questdone", 3.4); F.sp.position.y = 2.9; add(F.sp);
+          const st = add(kSprite("star_09", 0xffe090, 1.6)); st.position.y = 2.9;
+          kx.push((pr) => { F.set(pr); F.sp.position.y = 2.9 + pr * 0.6; F.sp.material.opacity = 1 - kEase(pr, 0.8, 1); st.material.opacity = 1 - kEase(pr, 0, 0.5); st.scale.setScalar(1.6 + pr * 1.6); st.material.rotation = pr * 1.5; });
         } else if (fxType === "punchwave") {
           const rg = add(kSprite("circle_03", col, 0.6)); rg.position.y = 1.0; const st = add(kSprite("star_09", 0xffffff, 1.3)); st.position.y = 1.0;
           const spr = add(kSprite("spark_01", col, 1.0, { rot: Math.random() * 6 })); spr.position.y = 1.0; const sb = bits(8, "star_01", col, 1.0, 1.6, 2.4);
@@ -27077,6 +27113,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       });
     };
     G._disposeObj3D = disposeObj3D;
+    G.healFx = () => { try { spawnSkillFx("healpop", char.position, 0xffffff); } catch (_) {} };        // 💚 เรียกตอนดื่มยา/กินอาหาร
+    G.questFx = () => { try { spawnSkillFx("questdone", char.position, 0xffffff); } catch (_) {} };    // ✅ เรียกตอนภารกิจ/บทเนื้อเรื่องสำเร็จ
     const updateSkillFx = (dt, tNow) => {
       for (let i = activeFx.length - 1; i >= 0; i--) {
         const f = activeFx[i];
@@ -27817,6 +27855,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const full = kind === "hp" ? G.player.hp >= effMaxHp() : G.player.mp >= effMaxMp();
       if (full) { toast(kind === "hp" ? "เลือดเต็มอยู่แล้ว!" : "มานาเต็มอยู่แล้ว!"); return true; }
       if (G.useBrew) G.useBrew(i);
+      if (G.healFx) G.healFx();
       if (G.mode === "battle") enemyTurn();                            // กินยาในสนามรบเสียตาเหมือนน้ำยาปกติ
       return true;
     };
@@ -27846,7 +27885,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         setUi((u) => ({ ...u, msg: `🧪 ฟื้นฟู +${got} HP!${note}` }));
         enemyTurn(); // healing uses your turn
       } else {
-        toast(`🧪 ฟื้นฟู +${got} HP!${note}`); if (G.heroEmote) G.heroEmote("Consume", 1.1);
+        toast(`🧪 ฟื้นฟู +${got} HP!${note}`); if (G.heroEmote) G.heroEmote("Consume", 1.1); if (G.healFx) G.healFx();
         setTimeout(() => setMouth("smile"), 800);
       }
     };
@@ -27870,7 +27909,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         setUi((u) => ({ ...u, msg: `💧 ฟื้นมานา +${got}!${note}` }));
         enemyTurn(); // uses your turn
       } else {
-        toast(`💧 ฟื้นมานา +${got}!${note}`); if (G.heroEmote) G.heroEmote("Consume", 1.1);
+        toast(`💧 ฟื้นมานา +${got}!${note}`); if (G.heroEmote) G.heroEmote("Consume", 1.1); if (G.healFx) G.healFx();
       }
     };
 
@@ -29796,7 +29835,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (q.gem) G.diamonds = (G.diamonds || 0) + q.gem;
       G.farmXp(q.xp);
       if (G.sfx) G.sfx.coin && G.sfx.coin();
-      toast(`✅ ภารกิจสำเร็จ! +${q.gold.toLocaleString()}💰${q.gem ? ` +${q.gem}💎` : ""} · +${q.xp} XP ฟาร์ม`);
+      toast(`✅ ภารกิจสำเร็จ! +${q.gold.toLocaleString()}💰${q.gem ? ` +${q.gem}💎` : ""} · +${q.xp} XP ฟาร์ม`); if (G.questFx) G.questFx();
       syncPlayer(); if (G.saveGame) G.saveGame();
       setUi((u) => ({ ...u, gold: G.gold, diamonds: G.diamonds, ranch: ranchUiSnap() }));
     };
@@ -30189,7 +30228,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.foodBuff = { id: dish.rid, q: dish.q, buff: { ...dish.buff }, extra: { ...(dish.extra || {}) }, mins: dish.mins, until: Date.now() + dish.mins * 60000 };
       if (G.sfx && G.sfx.coin) G.sfx.coin();
       const bt = Object.keys(dish.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.buff[k]}${L[1]}`; }).join(" · ");
-      if (G.heroEmote) G.heroEmote("Consume", 1.1);
+      if (G.heroEmote) G.heroEmote("Consume", 1.1); if (G.healFx) G.healFx();
       toast(`${R.emoji} กิน${R.name} (${Q.emoji}${Q.name}) — ${bt} นาน ${dish.mins} นาที${prev ? " · แทนที่บัฟเดิม" : ""}`);
       G.syncCookUi(); syncPlayer(); if (G.saveGame) G.saveGame();
       return true;
@@ -38829,7 +38868,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.gainDiamonds) G.gainDiamonds(5, "เควสเนื้อเรื่อง");
       G.storyChapter = ch + 1;
       if (G.sfx) G.sfx.levelup();
-      toast(`📖 บทที่ ${ch + 1} สำเร็จ! +${chapter.reward}💰`);
+      toast(`📖 บทที่ ${ch + 1} สำเร็จ! +${chapter.reward}💰`); if (G.questFx) G.questFx();
       if (G.npc) G.npc.userData.mark.visible = G.storyChapter < STORY.length;
       setUi((u) => ({ ...u, npcTalk: null, storyChapter: G.storyChapter }));
       syncPlayer();
