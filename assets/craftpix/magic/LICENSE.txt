@@ -1,0 +1,8 @@
+Free Water and Fire Magic Sprite Vector Pack — CraftPix.net
+https://craftpix.net/freebies/free-water-and-fire-magic-sprite-vector-pack/
+License: CraftPix File License (https://craftpix.net/file-licenses/) — royalty-free use in personal and
+commercial projects; attribution not required. The raw asset files must not be redistributed as assets.
+
+Sheets (8 frames each, 4 columns x 2 rows, left-to-right, top-to-bottom; art faces LEFT = forward):
+  firearrow.png  300x160/frame · fireball.png 200x200 · firespell.png 320x180
+  waterarrow.png 240x180/frame · waterball.png 200x200 · waterspell.png 320x180

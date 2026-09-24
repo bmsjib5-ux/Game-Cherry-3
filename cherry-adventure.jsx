@@ -25370,21 +25370,50 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🎬 Kalponic Free Stylized Sprite VFX (CC BY 4.0) — เฟรมไล่ภาพจริง (16 เฟรม) รวมเป็น sprite sheet ตาราง 128px
     //    ต่างจาก Kenney ที่เป็นภาพนิ่ง: ใช้กับของที่ "เล่นเป็นชุด" — รอยฟันดาบ / ประกายฮีล / โล่รับ / ป้ายเควส
     const KALP_BASE = "assets/kalponic/";
-    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2], fireflies: [16, 4, 4], butterfly: [16, 4, 4], leaves: [15, 4, 4] };   // [เฟรม, คอลัมน์, แถว]
+    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2], fireflies: [16, 4, 4], butterfly: [16, 4, 4], leaves: [15, 4, 4],
+      // 🔮 CraftPix "Free Water and Fire Magic" (royalty-free) — กระสุนเวทไล่เฟรม 8 เฟรม · ภาพหันหน้าไปทางซ้าย = ทิศพุ่ง · [เฟรม, คอลัมน์, แถว, ไฟล์, อัตราส่วนกว้าง/สูง]
+      firearrow: [8, 4, 2, "assets/craftpix/magic/firearrow.png", 300 / 160], fireball: [8, 4, 2, "assets/craftpix/magic/fireball.png", 1], firespell: [8, 4, 2, "assets/craftpix/magic/firespell.png", 320 / 180],
+      waterarrow: [8, 4, 2, "assets/craftpix/magic/waterarrow.png", 240 / 180], waterball: [8, 4, 2, "assets/craftpix/magic/waterball.png", 1], waterspell: [8, 4, 2, "assets/craftpix/magic/waterspell.png", 320 / 180] };   // [เฟรม, คอลัมน์, แถว]
     const kalpPend = {};                          // สำเนา texture ที่ทำไว้ก่อนรูปมาถึง (r128 ไม่มี Texture.userData) — เติมรูปให้ทีหลัง
     const kalpTex = (() => { const c = {}; return (n) => { if (c[n]) return c[n]; kalpPend[n] = [];
-      const t = new THREE.TextureLoader().load(KALP_BASE + n + ".png", () => { (kalpPend[n] || []).forEach((x) => { x.image = t.image; x.needsUpdate = true; }); kalpPend[n] = null; });
+      const t = new THREE.TextureLoader().load((KALP[n] && KALP[n][3]) || (KALP_BASE + n + ".png"), () => { (kalpPend[n] || []).forEach((x) => { x.image = t.image; x.needsUpdate = true; }); kalpPend[n] = null; });
       t.encoding = THREE.sRGBEncoding; return (c[n] = t); }; })();
     const kFlip = (name, size, o) => {              // คืน {sp, set(pr)} · set(0..1) = เลือกเฟรมตามสัดส่วนเวลา
       const [n, cols, rows] = KALP[name], base = kalpTex(name), t = base.clone(); t.needsUpdate = true;
       const pd = kalpPend[name]; if (pd) pd.push(t);
       t.repeat.set(1 / cols, 1 / rows); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, color: o && o.color != null ? o.color : 0xffffff, transparent: true, opacity: 1, blending: o && o.add ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: false, rotation: (o && o.rot) || 0 }));
-      sp.scale.set(size, size, 1);
+      sp.scale.set(size, (o && o.h) || size, 1);   // o.h = สูงต่างจากกว้าง (กระสุนเวทภาพแนวนอน)
       const set = (pr) => { const i = Math.min(n - 1, Math.floor((((pr % 1) + 1) % 1) * n)); t.offset.set((i % cols) / cols, 1 - (Math.floor(i / cols) + 1) / rows); };
       set(0); return { sp, set, n };
     };
     G.kFlip = kFlip;
+    // 🔮 กระสุนเวทไล่เฟรม — พุ่งจากมือผู้ร่ายไปหาเป้า โค้งขึ้นเล็กน้อย หมุนภาพให้หัวชี้ตามทิศบนจอ (ภาพต้นฉบับหันซ้าย)
+    const _msA = new THREE.Vector3(), _msB = new THREE.Vector3();
+    const spawnMagicShot = (from, tgt, kind, tint, dur, onHit) => {
+      const K = KALP[kind]; if (!K) { if (onHit) onHit(tgt.x != null ? tgt.x : tgt.position.x, tgt.z != null ? tgt.z : tgt.position.z); return; }
+      const asp = K[4] || 1, size = 1.5;
+      const F = kFlip(kind, size, { color: tint == null ? 0xffffff : tint, h: size / asp }); F.sp.renderOrder = 6; F.sp.frustumCulled = false;
+      const g = new THREE.Group(); g.add(F.sp); scene.add(g);
+      const p0 = from.clone(), tp = () => (tgt.isObject3D ? new THREE.Vector3(tgt.position.x, 0.6 + (tgt.scale ? tgt.scale.y : 1) * 0.45, tgt.position.z) : tgt.clone());
+      let done = false, last = p0.clone();
+      activeFx.push({ group: g, t: 0, dur: dur || 0.35, update: (pr) => {
+        const to = tp(); const e = pr < 0.5 ? 2 * pr * pr : 1 - Math.pow(-2 * pr + 2, 2) / 2;
+        const pos = p0.clone().lerp(to, e); pos.y += Math.sin(pr * Math.PI) * 0.6;
+        g.position.copy(pos); F.set((pr * 2.2) % 1);
+        const dir = pos.clone().sub(last); if (dir.lengthSq() > 1e-6) { _msA.copy(pos).project(camera); _msB.copy(pos).add(dir.normalize().multiplyScalar(0.5)).project(camera);
+          const asp2 = (renderer.domElement.clientWidth || 1) / (renderer.domElement.clientHeight || 1);
+          F.sp.material.rotation = Math.atan2(_msB.y - _msA.y, (_msB.x - _msA.x) * asp2) + Math.PI; }
+        last.copy(pos);
+        F.sp.material.opacity = 1 - kEase(pr, 0.92, 1);
+        if (pr >= 1 && !done) { done = true; if (onHit) { try { onHit(to.x, to.z); } catch (_) {} } }
+      } });
+    };
+    G.spawnMagicShot = spawnMagicShot;
+    // เลือกชุดภาพตามธาตุ: ไฟ/มังกร/แสง → ไฟ · น้ำแข็ง/น้ำ/ลม/ดิน/อาร์เคน → น้ำ (ย้อมสีสกิลได้)
+    const magicKindOf = (elem, big) => { const fire = elem === "fire" || elem === "dragon" || elem === "light"; return fire ? (big ? "firespell" : "fireball") : (big ? "waterspell" : "waterball"); };
+    const castOrigin = () => { const H = G._heroModel; if (H && H.hand) { const v = H.hand.getWorldPosition(new THREE.Vector3()); v.y += 0.1; return v; }
+      return new THREE.Vector3(char.position.x + Math.sin(char.rotation.y) * 0.5, 1.6, char.position.z + Math.cos(char.rotation.y) * 0.5); };
     // 🔥💨 กองไฟ / คบเพลิง / ควัน ในหมู่บ้าน (Kalponic Bonfire · Torch · Smoke) — เฟรมไล่วนต่อเนื่อง สร้างครั้งเดียวตอนเรียก tick ครั้งแรก
     //    ไม่ใช้ PointLight (บังคับคอมไพล์เชดเดอร์ใหม่ กระตุกบนมือถือ) → ใช้แผ่นแสงส้มบนพื้นกะพริบแทน
     const vfx = [];                                    // {F, spd, ph, kind, y0, sp}
@@ -33234,10 +33263,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const inner = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), core);
         outer.raycast = () => {}; inner.raycast = () => {};
         g.add(outer, inner);
+        if (G.kFlip && KALP.fireball) { try { const F = G.kFlip("fireball", 1.0, { color: 0xffffff }); F.sp.renderOrder = 6; F.sp.onBeforeRender = () => F.set((performance.now() * 0.0025 + idx * 0.3) % 1); g.add(F.sp); outer.visible = false; inner.scale.setScalar(0.5); F.sp.material.opacity = 0; mm.userData = mm.userData || {}; g.userData._flip = F; } catch (_) {} }   // 🔥 ลูกไฟ CraftPix แทนทรงกลม
         const a = idx * 1.9 + 0.4;
         const sx = char.position.x + Math.cos(a) * 1.25, sz = char.position.z + Math.sin(a) * 1.25;
         g.position.set(sx, 0.5, sz);
-        g.userData = { kind: "orb", t: 0, rise: 0.3 + idx * 0.05, fly: 0.26, sx, sz, target, onHit, col, mats: [mm, core] };
+        g.userData = { kind: "orb", t: 0, rise: 0.3 + idx * 0.05, fly: 0.26, sx, sz, target, onHit, col, mats: g.userData && g.userData._flip ? [mm, core, g.userData._flip.sp.material] : [mm, core] };
         scene.add(g); magicFx.push(g);
       } catch (e) {}
     };
@@ -35706,7 +35736,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           try { spawnArrow(bowMuzzle(), new THREE.Vector3(m.position.x, ahy, m.position.z), acol, adur, () => {
             spawnSkillFx("arrowpierce", m.position, acol); burst(m.position, acol, 0.7);
           }); } catch (_) { spawnSkillFx("arrowpierce", m.position, acol); }
-        } else spawnSkillFx(G.cls === "coder" ? "pixel" : "orb", m.position, G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a);   // 💻 นักเวทโค้ดตีเป็นพิกเซลแตก
+        } else if (G.cls === "mage" || G.cls === "coder" || G.cls === "office") {   // 🔮 สายเวท: กระสุนเวทพุ่งจากมือไปโดนตัว แล้วค่อยแตก (CraftPix)
+          const we = weaponElem(), mcol = G.cls === "mage" ? 0x8a5cff : G.cls === "coder" ? 0x2ad0e8 : 0xf5d24a;
+          const kind = we === "fire" || we === "dragon" || we === "light" ? "firespell" : we ? "waterspell" : (G.cls === "mage" ? "waterspell" : G.cls === "coder" ? "waterspell" : "firespell");
+          const tint = (we === "fire" || we === "dragon" || we === "light" || G.cls === "office") ? 0xffffff : (G.cls === "coder" ? 0x9af0ff : (we === "ice" || we === "water") ? 0xffffff : 0xc8a0ff);
+          const fxN = G.cls === "coder" ? "pixel" : "orb", fxC = crit ? 0xffd24a : mcol;
+          try { spawnMagicShot(castOrigin(), m, kind, tint, 0.3, (hx, hz) => spawnSkillFx(fxN, { x: hx, z: hz }, fxC)); } catch (_) { spawnSkillFx(fxN, m.position, fxC); }
+        } else spawnSkillFx("orb", m.position, 0xf5d24a);
       } else {
         worldGestureFx(m.position, crit ? 0xffd24a : 0xffe08a);
         if (G.cls === "lancer") { burst(m.position, 0xbfe8ff, 0.9); monGlow(m, 0x9fd8ff, 0.8); } // 🔱 แสงกระแทกปลายหอก
@@ -38188,6 +38224,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 ka === 0 ? (hx, hz) => { const hp = new THREE.Vector3(hx, 0.5, hz); worldGestureFx(hp, col); spawnSkillFx(fk, hp, col); } : null,
                 ka * 0.06);
             }
+            arrowLead = true;
+          } catch (_) {}
+        }
+        if (!arrowLead && arch === "cast" && tgt && !selfFx && (G.cls === "mage" || G.cls === "coder" || G.cls === "office")) {   // 🔮 สายเวท: กระสุนเวทใหญ่พุ่งไปก่อน เอฟเฟกต์สกิลแตกตอนโดน
+          try {
+            const we = weaponElem(); const hot = fk === "fire" || fk === "hellfire" || !!sk.burn || we === "fire" || we === "dragon" || we === "light";
+            const cold = fk === "ice" || !!sk.freeze || we === "ice" || we === "water";
+            const kind = hot ? "firespell" : "waterspell", tint = hot || cold ? 0xffffff : col;
+            spawnMagicShot(castOrigin(), tgt, kind, tint, 0.34, (hx, hz) => { const hp = new THREE.Vector3(hx, 0.5, hz); worldGestureFx(hp, col); spawnSkillFx(fk, hp, col); });
             arrowLead = true;
           } catch (_) {}
         }
