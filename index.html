@@ -40680,8 +40680,9 @@ function CherryAdventure() {
         const burst = (pos, color, y = 0.8) => {
             try {
                 kImpact(pos.x, y, pos.z, color, 1);
+                return;
             }
-            catch (_) { } // 🎇 ชั้นภาพ Kenney ซ้อนบนประกายเดิม
+            catch (_) { } // 🎇 จุดปะทะแบบภาพวาด Kenney — ประกายลูกกลมชุดเดิมใช้เฉพาะตอนภาพพัง
             sparks.forEach((s, i) => {
                 s.visible = true;
                 s.material.color.setHex(color);
@@ -40918,8 +40919,9 @@ function CherryAdventure() {
                 G.sfx.slash();
             try {
                 kSlash(pos.x, 1.0, pos.z, color);
+                return;
             }
-            catch (_) { } // 🎇 รอยฟันภาพวาด Kenney ซ้อนบนวงเสี้ยวเดิม
+            catch (_) { } // 🎇 รอยฟันภาพวาด Kenney — วงเสี้ยวปั้นเองใช้เฉพาะตอนภาพพัง
             slashFx.material.color.setHex(color);
             slashFx.position.set(pos.x, 1.0, pos.z + 0.2);
             slashFx.rotation.set(0, 0, Math.random() * Math.PI);
@@ -41146,7 +41148,12 @@ function CherryAdventure() {
             const setOpacity = (o) => { core.opacity = o; glow.opacity = o * 0.42; };
             return { core, glow, mats: [core, glow], shape, setOpacity, pool };
         };
+        // 🎇 ประเภทที่ใช้ภาพ Kenney แทนของเดิมทั้งหมด (ค่า = ระยะเวลา) — ของเดิมกับภาพซ้อนกันจนรก
+        const KFX_ONLY = { fire: 0.8, bolt: 0.6, quake: 0.75, shadow: 0.7, healbless: 1.1, punchwave: 0.55, pierce: 0.55, ice: 0.7 };
         const spawnSkillFx = (fxType, pos, color) => {
+            const kType = fxType, kOnly = KFX_ONLY[fxType] != null;
+            if (kOnly)
+                fxType = "__kfx__"; // ไม่เข้าสาขาของเดิม (สาขา default ท้ายสุดสร้างแค่วงแหวน → ตัดทิ้งด้านล่าง)
             const g = new THREE.Group();
             g.position.set(pos.x, 0, pos.z);
             scene.add(g);
@@ -43366,14 +43373,38 @@ function CherryAdventure() {
             try {
                 const kx = []; // {fn(pr)}
                 const add = (o) => { g.add(o); return o; };
-                if (fxType === "fire" || fxType === "hellfire") {
+                if (kOnly) {
+                    while (g.children.length)
+                        g.remove(g.children[0]);
+                    update = null;
+                    dur = KFX_ONLY[kType];
+                    fxType = kType;
+                }
+                const bits = (n, name, c, y, up, sp) => {
+                    const arr = [];
+                    for (let k = 0; k < n; k++) {
+                        const b = add(kSprite(name, k % 2 ? 0xffffff : c, 0.3));
+                        const a = Math.random() * Math.PI * 2, vr = (sp || 1.4) * (0.6 + Math.random() * 0.8);
+                        b.userData = { vx: Math.cos(a) * vr, vz: Math.sin(a) * vr, vy: up * (0.7 + Math.random() * 0.8) };
+                        b.position.y = y;
+                        arr.push(b);
+                    }
+                    return (pr, T) => { for (const b of arr) {
+                        const u = b.userData, t = pr * T;
+                        b.position.set(u.vx * t, y + u.vy * t - 5 * t * t, u.vz * t);
+                        b.material.opacity = 1 - pr;
+                    } };
+                };
+                if (fxType === "fire") {
                     const fc = fxType === "fire" ? 0xff7a1a : col;
                     const sc = add(kDecal("scorch_02", 0xff8a30, 2.6));
                     sc.rotation.z = Math.random() * Math.PI;
                     const fl = [0, 1, 2].map((k) => { const f = add(kSprite("flame_03", k ? fc : 0xffd080, 1.1 + k * 0.25, { rot: (Math.random() - 0.5) * 0.6 })); f.position.set((Math.random() - 0.5) * 0.5, 0.5, (Math.random() - 0.5) * 0.5); f.userData = { d: k * 0.12 }; return f; });
                     const bl = add(kSprite("fire_01", 0xffb060, 1.6));
                     bl.position.y = 0.9;
+                    const sb = bits(8, "star_01", 0xffb060, 0.8, 3.2, 1.6);
                     kx.push((pr) => {
+                        sb(pr, dur);
                         sc.material.opacity = (1 - kEase(pr, 0.3, 1)) * 0.85;
                         sc.scale.setScalar(0.8 + pr * 0.5);
                         fl.forEach((f) => { const u = kEase(pr, f.userData.d, 1); f.position.y = 0.5 + u * 2.2; f.material.opacity = Math.sin(u * Math.PI) * 0.95; f.scale.set(f.scale.x, (1.1 + u * 1.2), 1); });
@@ -43381,13 +43412,15 @@ function CherryAdventure() {
                         bl.scale.setScalar(1.6 + pr * 2.2);
                     });
                 }
-                else if (fxType === "bolt" || fxType === "thunderstorm") {
+                else if (fxType === "bolt") {
                     const bt = add(kSprite("spark_05", 0xfff6a0, 1.3, { h: 5.0 }));
                     bt.position.y = 2.4;
                     const gl = add(kDecal("light_02", 0xfff0a0, 2.4));
                     const st = add(kSprite("star_06", 0xffffff, 1.6));
                     st.position.y = 0.6;
+                    const sb = bits(10, "star_01", 0xfff6a0, 0.3, 3.0, 2.2);
                     kx.push((pr) => {
+                        sb(pr, dur);
                         const on = pr < 0.42;
                         bt.material.opacity = on ? (Math.floor(pr / 0.07) % 2 ? 0.55 : 1) : Math.max(0, 1 - kEase(pr, 0.42, 0.6));
                         bt.material.rotation = on ? (Math.floor(pr / 0.07) % 2 ? 0.08 : -0.08) : 0;
@@ -43397,13 +43430,17 @@ function CherryAdventure() {
                         st.scale.setScalar(1.6 + pr * 2);
                     });
                 }
-                else if (fxType === "quake" || fxType === "earthsplit") {
+                else if (fxType === "quake") {
                     const cr = add(kDecal("scorch_01", 0xffc890, 3.2));
                     cr.rotation.z = Math.random() * Math.PI;
                     const sm = [0, 1, 2].map((k) => { const m = add(kSprite("smoke_05", 0x9a8a72, 1.2, { normal: true, rot: Math.random() * Math.PI * 2 })); const a = (k / 3) * Math.PI * 2; m.position.set(Math.cos(a) * 0.4, 0.3, Math.sin(a) * 0.4); m.userData = { a }; return m; });
                     const dr = add(kSprite("dirt_02", 0xa88a5a, 1.6, { normal: true }));
                     dr.position.y = 0.5;
+                    const dr2 = add(kSprite("dirt_02", 0x8a6a3a, 1.1, { normal: true, rot: 1.3 }));
+                    dr2.position.set(0.5, 0.3, -0.3);
                     kx.push((pr) => {
+                        dr2.position.y = 0.3 + pr * 2.2;
+                        dr2.material.opacity = (1 - kEase(pr, 0.2, 0.9)) * 0.9;
                         cr.material.opacity = (1 - kEase(pr, 0.4, 1)) * 0.95;
                         cr.scale.setScalar(0.7 + kEase(pr, 0, 0.3) * 0.5);
                         sm.forEach((m) => { const a = m.userData.a; m.position.set(Math.cos(a) * (0.4 + pr * 1.3), 0.3 + pr * 1.0, Math.sin(a) * (0.4 + pr * 1.3)); m.scale.setScalar(1.2 + pr * 1.6); m.material.opacity = (1 - pr) * 0.75; });
@@ -43422,27 +43459,48 @@ function CherryAdventure() {
                     const mc = add(kDecal("magic_01", 0x9affb0, 2.6));
                     const lt = add(kSprite("light_02", 0xd0ffd8, 1.4));
                     lt.position.y = 0.4;
-                    kx.push((pr) => { mc.rotation.z = pr * 2.5; mc.material.opacity = Math.sin(pr * Math.PI) * 0.95; mc.scale.setScalar(0.8 + pr * 0.3); lt.position.y = 0.4 + pr * 1.8; lt.material.opacity = Math.sin(pr * Math.PI) * 0.8; lt.scale.setScalar(1.4 + pr * 0.6); });
+                    const hs = [];
+                    for (let k = 0; k < 12; k++) {
+                        const b = add(kSprite("star_01", k % 2 ? 0xfff0b0 : 0x8affa0, 0.28));
+                        b.userData = { a: (k / 12) * Math.PI * 2, rise: 1.5 + Math.random() * 1.2 };
+                        hs.push(b);
+                    }
+                    kx.push((pr) => { for (const b of hs) {
+                        const u = b.userData, rr = 0.55 * (1 - pr * 0.4);
+                        b.position.set(Math.cos(u.a + pr * 4) * rr, pr * u.rise, Math.sin(u.a + pr * 4) * rr);
+                        b.material.opacity = 1 - kEase(pr, 0.5, 1);
+                    } mc.rotation.z = pr * 2.5; mc.material.opacity = Math.sin(pr * Math.PI) * 0.95; mc.scale.setScalar(0.8 + pr * 0.3); lt.position.y = 0.4 + pr * 1.8; lt.material.opacity = Math.sin(pr * Math.PI) * 0.8; lt.scale.setScalar(1.4 + pr * 0.6); });
                 }
-                else if (fxType === "punchwave" || fxType === "kneeburst") {
+                else if (fxType === "punchwave") {
                     const rg = add(kSprite("circle_03", col, 0.6));
                     rg.position.y = 1.0;
                     const st = add(kSprite("star_09", 0xffffff, 1.3));
                     st.position.y = 1.0;
-                    kx.push((pr) => { rg.scale.setScalar(0.6 + pr * 3.0); rg.material.opacity = (1 - pr) * 0.9; st.material.opacity = 1 - kEase(pr, 0, 0.45); st.scale.setScalar(1.3 + pr * 1.4); st.material.rotation = pr * 2; });
+                    const spr = add(kSprite("spark_01", col, 1.0, { rot: Math.random() * 6 }));
+                    spr.position.y = 1.0;
+                    const sb = bits(8, "star_01", col, 1.0, 1.6, 2.4);
+                    kx.push((pr) => { sb(pr, dur); spr.material.opacity = (1 - kEase(pr, 0, 0.7)) * 0.95; spr.scale.setScalar(1.0 + pr * 1.4); rg.scale.setScalar(0.6 + pr * 3.0); rg.material.opacity = (1 - pr) * 0.9; st.material.opacity = 1 - kEase(pr, 0, 0.45); st.scale.setScalar(1.3 + pr * 1.4); st.material.rotation = pr * 2; });
                 }
-                else if (fxType === "pierce" || fxType === "arrowpierce" || fxType === "arrowsnipe") {
-                    const rg = add(kSprite("circle_02", col === 0xffffff ? 0x8ac0ff : col, 0.5));
+                else if (fxType === "pierce") {
+                    const pc = col === 0xffffff ? 0x8ac0ff : col;
+                    const rg = add(kSprite("circle_02", pc, 0.5));
                     rg.position.set(0.15, 1.4, 0);
                     const st = add(kSprite("star_08", 0xffffff, 1.2));
                     st.position.set(0.15, 1.4, 0);
-                    kx.push((pr) => { rg.scale.setScalar(0.5 + pr * 2.2); rg.material.opacity = (1 - pr) * 0.9; st.material.opacity = 1 - kEase(pr, 0, 0.4); st.scale.setScalar(1.2 + pr * 1.0); });
+                    const rg2 = add(kSprite("circle_03", pc, 0.3));
+                    rg2.position.set(0.15, 1.4, 0);
+                    const spr = add(kSprite("spark_01", pc, 0.9, { rot: Math.random() * 6 }));
+                    spr.position.set(0.15, 1.4, 0);
+                    kx.push((pr) => { rg2.scale.setScalar(0.3 + kEase(pr, 0.15, 1) * 2.0); rg2.material.opacity = (1 - kEase(pr, 0.15, 1)) * 0.8; spr.material.opacity = (1 - kEase(pr, 0, 0.6)) * 0.9; spr.scale.setScalar(0.9 + pr * 1.2); rg.scale.setScalar(0.5 + pr * 2.2); rg.material.opacity = (1 - pr) * 0.9; st.material.opacity = 1 - kEase(pr, 0, 0.4); st.scale.setScalar(1.2 + pr * 1.0); });
                 }
                 else if (fxType === "ice") {
                     const st = add(kSprite("star_08", 0xe8f8ff, 1.5));
                     st.position.y = 1.2;
                     const gl = add(kDecal("light_02", 0x9fe4ff, 2.2));
-                    kx.push((pr) => { st.material.opacity = 1 - kEase(pr, 0, 0.5); st.scale.setScalar(1.5 + pr * 1.2); gl.material.opacity = (1 - pr) * 0.8; gl.scale.setScalar(0.7 + pr * 1.0); });
+                    const rg = add(kSprite("circle_02", 0x9fe4ff, 0.5));
+                    rg.position.y = 1.2;
+                    const sb = bits(8, "star_01", 0x9fe4ff, 1.0, 2.4, 1.6);
+                    kx.push((pr) => { sb(pr, dur); rg.scale.setScalar(0.5 + pr * 2.4); rg.material.opacity = (1 - pr) * 0.85; st.material.opacity = 1 - kEase(pr, 0, 0.5); st.scale.setScalar(1.5 + pr * 1.2); gl.material.opacity = (1 - pr) * 0.8; gl.scale.setScalar(0.7 + pr * 1.0); });
                 }
                 if (kx.length) {
                     const u0 = update;
@@ -43451,7 +43509,11 @@ function CherryAdventure() {
                         f(pr); };
                 }
             }
-            catch (_) { }
+            catch (_) {
+                if (kOnly && !g.children.length) {
+                    fxType = kType;
+                }
+            }
             activeFx.push({ group: g, t: 0, dur, update });
         };
         // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
