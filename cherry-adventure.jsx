@@ -28222,8 +28222,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       toast("🐉⚔️ หลอมเกล็ดมังกร! พลังโจมตีถาวร +2");
       syncPlayer();
     };
-    G.toggleForge = () => {
+    G.toggleForge = (opts) => {
       const willOpen = !G.forgeOpen;
+      if (willOpen && !(opts && opts.fromSmith) && !G.smithNear && !G.smithOpenNow) {   // ⚒️ ย้ายเมนูตีบวก/หลอมไปอยู่ที่ช่างตีเหล็ก — ต้องเดินไปหาช่างในหมู่บ้าน
+        toast("⚒️ ตีบวก / หลอม / อัพเกรดอาวุธ ทำได้ที่ช่างตีเหล็กในหมู่บ้าน (ทางทิศตะวันออกเฉียงเหนือ)"); return;
+      }
       G.forgeOpen = willOpen;
       setUi((u) => ({ ...u, forgeOpen: willOpen, awkPick: null, mats: { ...G.mats }, weaponInfuse: { ...G.weaponInfuse }, inv: [...G.inv], plus: { ...G.plus }, awk: { ...(G.awk || {}) }, gold: G.gold, gemDust: G.gemDust || 0, stardust: G.stardust || 0, rolls: { ...(G.rolls || {}) }, invOpen: false, skillPanel: false, homeOpen: false }));
     };
@@ -29464,7 +29467,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.FORGE_PRICE = { rare: 15000, epic: 28000 };
     G.openSmith = () => {
       if (G.storyEvent) G.storyEvent("talk", 1, { who: "smith" });   // 🎓 บทสอนเล่น: ทักทายช่างตีเหล็ก
-      setUi((u) => ({ ...u, smithOpen: true, menuOpen: false }));
+      setUi((u) => ({ ...u, smithOpen: true, menuOpen: false, gemDust: G.gemDust || 0, stardust: G.stardust || 0, mats: { ...(G.mats || {}) }, gold: G.gold }));
     };
     G.buyForge = (id) => {
       const it = LOOT.find((x) => x.id === id);
@@ -59411,7 +59414,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             ["🍳", "ครัว (ทำอาหาร)", () => G.toggleKitchen(), "#e08a5a", "kitchen"],
             ["🎣", "กระเป๋าตกปลา", () => G.toggleFishBag(), "#4a90c0"],
             ["🌿", "ยาสมุนไพร", () => G.toggleHerb(), "#5aa84a"],
-            ["🔨", "หลอม & ตีบวก", () => G.toggleForge(), "#f2b24d"],
             ["🗺️", "ส่งสัตว์เลี้ยงสำรวจ", () => G.toggleExped(), "#6ab0a0", "exped"],
           ]],
           ["🏪", "ร้านค้า & สุ่ม", [
@@ -59648,7 +59650,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
       {ui.mode === "explore" && isPrompt("smith") && !ui.smithOpen && (
         <div ref={headPromptRef("smith")} style={HEAD_PROMPT}>
-          <button onClick={() => G.openSmith()} style={{ padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.55)" }}>⚒️ ตีอาวุธ</button>
+          <button onClick={() => G.openSmith()} style={{ padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.55)" }}>⚒️ ช่างตีเหล็ก</button>
           <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #a87840" }} />
         </div>
       )}
@@ -59661,6 +59663,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               <div style={{ fontSize: 13, fontWeight: 800, color: "#c09020", marginRight: 10 }}>{ui.gold || 0} 💰</div>
               <button onClick={() => setUi((u) => ({ ...u, smithOpen: false }))} style={{ width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#efe2d2", fontWeight: 800 }}>✕</button>
             </div>
+            <button onClick={() => { setUi((u) => ({ ...u, smithOpen: false })); G.toggleForge({ fromSmith: true }); }} style={{ width: "100%", padding: "12px 0", marginBottom: 10, borderRadius: 14, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0902a,#e0b850)", boxShadow: "0 4px 14px rgba(190,140,40,0.4)" }}>
+              🔨 ตีบวก · หลอม · อัพเกรดอาวุธ
+              <div style={{ fontSize: 10.5, fontWeight: 700, opacity: 0.9, marginTop: 2 }}>💠 ผงเพชร {ui.gemDust || 0} · 🌟 ผงดาว {ui.stardust || 0} · ⛏️ แร่ {(ui.mats || {}).ironOre || 0}</div>
+            </button>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#7a4a24", marginBottom: 4 }}>🛒 ซื้ออาวุธตีเหล็ก</div>
             <div style={{ fontSize: 11.5, color: "#a08464", marginBottom: 11 }}>เลือกอาวุธที่จะให้ข้าตีให้ เจ้าหนู! ทุกชิ้นตีจากเหล็กกล้าชั้นดี</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
               {LOOT.filter((x) => x.forge).map((it) => {
@@ -61002,7 +61009,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           {ui.forgeOpen && (
             <div style={SKILL_SHELL}>
               {closeBtn("forgeOpen")}
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 }}>⛏️ โรงตีเหล็ก (คราฟต์)</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 }}>⚒️ ช่างตีเหล็ก — ตีบวก · หลอม · อัพเกรด</div>
               {/* 💠🌟⛏️ enhancement resources on hand */}
               <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
                 {[["💠", "ผงเพชร", ui.gemDust || 0, "#7fd0f5"], ["🌟", "ผงดาว", ui.stardust || 0, "#f5c542"], ["⛏️", "แร่", (ui.mats || {}).ironOre || 0, "#a0a8b0"], ["💰", "ทอง", ui.gold || 0, "#e0a84a"]].map(([em, nm, val, col]) => (
@@ -62056,7 +62063,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
                   fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
                   background: "linear-gradient(90deg,#c0902a,#e0b850)",
-                }}>⛏️ ไปโรงตีเหล็ก</button>
+                }}>{ui.smithNear ? "⚒️ ตีบวกกับช่าง" : "⚒️ ไปหาช่างตีเหล็ก"}</button>
               </div>
               {/* 💠 แยกของซ้ำทั้งหมดทีเดียว */}
               <div style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}>
@@ -62110,7 +62117,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 </div>
               )}
               <div style={{ fontSize: 10, color: "#a3a396", marginBottom: 6, textAlign: "center" }}>
-                🎽 ใส่ของแรงสุดทุกช่อง · ⚒️ ตีบวกได้ที่โรงตีเหล็ก ⛏️
+                🎽 ใส่ของแรงสุดทุกช่อง · ⚒️ ตีบวกได้ที่ช่างตีเหล็กในหมู่บ้าน ⛏️
               </div>
               <div style={{ fontSize: 11, color: "#a3a396", marginBottom: 6, lineHeight: 1.6 }}>
                 สวมอยู่: {SLOTS.map((s) => {
@@ -62501,7 +62508,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     )}
                     {count >= 2 && plus < 5 && (
                       <div style={{ fontSize: 9.5, color: "#7a9ac0", marginTop: 6, textAlign: "center", background: "#f2f8fd", borderRadius: 8, padding: "4px 6px" }}>
-                        ⚒️ ตีบวกได้ที่ <b>โรงตีเหล็ก</b> (มีของซ้ำ ×{count})
+                        ⚒️ ตีบวกได้ที่ <b>ช่างตีเหล็ก</b> ในหมู่บ้าน (มีของซ้ำ ×{count})
                       </div>
                     )}
                   </div>
