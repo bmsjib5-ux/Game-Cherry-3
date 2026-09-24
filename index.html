@@ -11915,8 +11915,14 @@ function CherryAdventure() {
             }
             if (kkKey)
                 famKey = kkKey;
+            G._gloveOn = false; // 🥊 ตั้งใหม่ด้านล่างเมื่อรู้ว่า curWeapon เป็นนวม (ท่าจับบนโมเดล 3D ต่างจากดาบ)
             curWeapon = kkKey ? kkKey : id && weaponModels[id] ? id : (famKey && !famHasOwn && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
             Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
+            {
+                const wm = weaponModels[curWeapon];
+                G._curWeaponKey = curWeapon;
+                G._gloveOn = !!(GLOVE_SPEC[curWeapon] || curWeapon === "fenClaw" || curWeapon === "nekoPaw" || (wm && wm.userData && wm.userData.kkFam === "glove") || /^kk_glove/.test(curWeapon) || (/^kki_/.test(curWeapon) && WPN_FAMILY[G.cls] === "glove"));
+            }
             // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา · 🐺🐱 เผ่าสัตว์สวมกรงเล็บ/อุ้งมือข้างซ้ายเป็นส่วนของชุดเสมอ
             const lKey = G.heroId === "fenrir" ? "fenClaw" : G.heroId === "neko" ? "nekoPaw" : curWeapon;
             Object.entries(gloveLModels).forEach(([k, m]) => setVisFrozen(m, k === lKey));
@@ -14660,7 +14666,7 @@ function CherryAdventure() {
                         }
                     });
                     G._heroHidden = hidden;
-                    G._heroModel = { g, parts, mixers, acts, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, gripL, gripHomeL, mats, lit: -1, tk: tkRig };
+                    G._heroModel = { g, parts, mixers, acts, glove: null, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, gripL, gripHomeL, mats, lit: -1, tk: tkRig };
                     if (tkRig) {
                         g.updateMatrixWorld(true);
                         heroTopknotTick(G._heroModel);
@@ -14678,6 +14684,32 @@ function CherryAdventure() {
                 });
             };
             // 🎬 เลือกท่าจากสถานะจริงของผู้เล่นทุกเฟรม — ตาย > ขี่สัตว์ > พุ่ง > กระโดด > โจมตี/ร่าย > โดนตี > วิ่ง/เดิน > ยืน
+            // 🥊 ท่าสวมนวมบนโมเดล 3D — คำนวณจากกระดูกนิ้วจริงของแต่ละมือ (ไม่ใช้ค่าจับดาบ/โล่)
+            //    แกน -Y ของนวม (กำปั้น) ชี้ตามนิ้ว · แกน X ชี้จากนิ้วชี้ไปนิ้วก้อย (นิ้วโป้งของนวมอยู่ -X ข้างขวา / +X ข้างซ้าย) · จุดกำเนิดที่ข้อนิ้ว
+            //    ขนาด: ความยาวนวม (คัฟถึงปลายกำปั้น ≈0.56 หน่วยนวม) = 2.4 เท่าของความยาวมือ → นวมใหญ่คลุมมือทั้งหมด
+            const heroGloveFit = (root, k) => {
+                const out = {};
+                for (const side of ["r", "l"]) {
+                    const B = (n) => root.getObjectByName(n + "_" + side);
+                    const hand = B("hand"), tip = B("middle_04_leaf") || B("middle_03"), i1 = B("index_01"), p1 = B("pinky_01");
+                    if (!hand || !tip || !i1 || !p1)
+                        continue;
+                    const W = (b) => b.getWorldPosition(new THREE.Vector3());
+                    const inv = new THREE.Matrix4().copy(hand.matrixWorld).invert();
+                    const L = (b) => W(b).applyMatrix4(inv);
+                    const ltip = L(tip), li1 = L(i1), lp1 = L(p1);
+                    const f = ltip.clone().normalize(); // ทิศนิ้ว = ข้อมือ → ปลายนิ้วกลาง (ข้อกระดูกนิ้วของริกนี้วางไม่เรียงตามนิ้ว ใช้ไม่ได้)
+                    const lm1 = ltip.clone().multiplyScalar(0.3); // จุดกำเนิดนวม ≈ 30% ของทางข้อมือ→ปลายนิ้ว (คัฟคลุมข้อมือ กำปั้นคลุมนิ้วทั้งหมด)
+                    let xg = (side === "r" ? lp1.clone().sub(li1) : li1.clone().sub(lp1));
+                    xg.sub(f.clone().multiplyScalar(xg.dot(f))).normalize();
+                    const yg = f.clone().negate(), zg = new THREE.Vector3().crossVectors(xg, yg).normalize();
+                    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xg, yg, zg));
+                    const handLen = W(tip).distanceTo(W(hand)), ws = hand.getWorldScale(new THREE.Vector3()).x || 1;
+                    const sWorld = (handLen * 2.4) / 0.56, sLocal = sWorld / ws; // นวมยาว 2.4 เท่าของมือ — ใหญ่เห็นชัดแบบนวมมวย
+                    out[side] = { q, p: lm1, s: sLocal };
+                }
+                return out;
+            };
             G.heroEmote = (n, t) => {
                 const H = G._heroModel;
                 if (n === "Consume" && heroHasShield())
@@ -14804,19 +14836,43 @@ function CherryAdventure() {
                         H.mats.forEach((m) => { m.emissive.copy(m.color).multiplyScalar(lit); m.emissiveIntensity = 1; });
                     } // คูณสีวัสดุด้วย ไม่งั้นชิ้นที่ย้อมสีเข้ม (เช่นผม) จะถูกแสงขาวจาก emissiveMap กลบจนออกเทา
                 }
+                if (G._gloveOn && !H.glove) {
+                    H.g.updateMatrixWorld(true);
+                    try {
+                        H.glove = heroGloveFit(H.parts[0], H.k);
+                    }
+                    catch (_) {
+                        H.glove = {};
+                    }
+                } // คำนวณครั้งแรกจากกระดูกที่อัปเดตจริงแล้ว
+                const gv = G._gloveOn && H.glove; // 🥊 นวม: ท่าสวมจากกระดูกนิ้ว (ไม่ใช่ท่าจับดาบ/โล่)
                 if (H.grip) { // 🗡️ โค้ดร่างปั้นเองรีเซ็ตตำแหน่งอาวุธทุกเฟรม (ไปที่ข้อศอก) — ดึงกลับมากลางฝ่ามือ
                     wand.position.set(0, 0, 0);
                     wand.scale.set(1, 1, 1);
-                    H.grip.scale.setScalar(HERO_GRIP.s / H.k);
-                    H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
-                    H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
+                    if (gv && gv.r) {
+                        H.grip.scale.setScalar(gv.r.s);
+                        H.grip.quaternion.copy(gv.r.q);
+                        H.grip.position.copy(gv.r.p);
+                    }
+                    else {
+                        H.grip.scale.setScalar(HERO_GRIP.s / H.k);
+                        H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+                        H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
+                    }
                 }
                 if (H.gripL) { // 🛡️ มือซ้ายก็ถูกรีเซ็ตทุกเฟรมเหมือนกัน
                     wandL.position.set(0, 0, 0);
                     wandL.scale.set(1, 1, 1);
-                    H.gripL.scale.setScalar(HERO_GRIP.s / H.k);
-                    H.gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz);
-                    H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
+                    if (gv && gv.l) {
+                        H.gripL.scale.setScalar(gv.l.s);
+                        H.gripL.quaternion.copy(gv.l.q);
+                        H.gripL.position.copy(gv.l.p);
+                    }
+                    else {
+                        H.gripL.scale.setScalar(HERO_GRIP.s / H.k);
+                        H.gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz);
+                        H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
+                    }
                 }
                 if (G.cls === "archer" && H.cur === "Pistol_Idle_Loop")
                     heroBowDraw(H);
