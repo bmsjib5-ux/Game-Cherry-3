@@ -12,3 +12,6 @@ Used sets (frames packed into 128px grid sprite sheets, left-to-right, top-to-bo
   bonfire.png   <- "Bonfire"         16 frames, 4x4
   torch.png     <- "Torch"           16 frames, 4x4
   smoke.png     <- "Smoke"            8 frames, 4x2
+  fireflies.png <- "FireFlies"       16 frames, 4x4
+  butterfly.png <- "Butterfly"       16 frames, 4x4
+  leaves.png    <- "Leaves Falling"  15 frames, 4x4

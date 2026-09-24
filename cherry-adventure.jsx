@@ -25286,7 +25286,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🎬 Kalponic Free Stylized Sprite VFX (CC BY 4.0) — เฟรมไล่ภาพจริง (16 เฟรม) รวมเป็น sprite sheet ตาราง 128px
     //    ต่างจาก Kenney ที่เป็นภาพนิ่ง: ใช้กับของที่ "เล่นเป็นชุด" — รอยฟันดาบ / ประกายฮีล / โล่รับ / ป้ายเควส
     const KALP_BASE = "assets/kalponic/";
-    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2] };   // [เฟรม, คอลัมน์, แถว]
+    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2], fireflies: [16, 4, 4], butterfly: [16, 4, 4], leaves: [15, 4, 4] };   // [เฟรม, คอลัมน์, แถว]
     const kalpPend = {};                          // สำเนา texture ที่ทำไว้ก่อนรูปมาถึง (r128 ไม่มี Texture.userData) — เติมรูปให้ทีหลัง
     const kalpTex = (() => { const c = {}; return (n) => { if (c[n]) return c[n]; kalpPend[n] = [];
       const t = new THREE.TextureLoader().load(KALP_BASE + n + ".png", () => { (kalpPend[n] || []).forEach((x) => { x.image = t.image; x.needsUpdate = true; }); kalpPend[n] = null; });
@@ -25337,6 +25337,48 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       townZone.updateMatrixWorld(true);
       (G._townChims || []).forEach((ch, i) => { if (i % 2) return; const w = ch.getWorldPosition(new THREE.Vector3()); vAdd("smoke", 4.6, w.x, w.y + 2.6, w.z, 0.28 + (i % 3) * 0.05, vfxTown, "smoke", { color: 0xd8d5d0 }); });   // ครึ่งหนึ่งของบ้านมีควัน
       for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + Math.PI / 6; const x = Math.cos(a) * 6.2, z = Math.sin(a) * 6.2; vPost(x, z, 2.8, vfxTown); vAdd("torch", 2.5, x, 3.6, z, 1.05, vfxTown, "fire"); }   // คบเพลิงรอบลานกลางเมือง
+    };
+    // 🌿 บรรยากาศโลกกว้าง (Kalponic FireFlies · Butterfly · Leaves Falling) — ภาพแต่ละเฟรมเป็น "ฝูง" (ผีเสื้อหลายสิบตัว / ใบไม้หลายสิบใบ / จุดหิ่งห้อยทั่วผืน)
+    //    ไล่เฟรมแล้วฝูงจะค่อย ๆ แผ่ออก → วางเป็นฝูงใหญ่ไม่กี่จุดรอบตัวผู้เล่น ไม่ใช่ตัวเดียวโดด ๆ
+    //    🪲 หิ่งห้อย = กลางคืนด่านที่มีหญ้า/ป่า · 🦋 ผีเสื้อ = กลางวันด่านทุ่ง/ป่า · 🍂 ใบไม้ร่วง = ด่านที่มีต้นไม้ (ทุ่งซากุระ/อเมซอน)
+    //    ฝูงไหนหลุดรัศมี AMB_R จากผู้เล่น จะย้ายไปโผล่ฝั่งตรงข้ามเงียบ ๆ (เดินไปไหนก็ยังมีรอบตัว)
+    const AMB_R = 13;   // กล้องเห็นรอบตัวแค่ราว ๆ 12-14 หน่วย — กว้างกว่านี้สไปรท์ส่วนใหญ่จะอยู่นอกจอ
+    const AMB_BIOME = { meadow: { ff: 1, bf: 1, lf: 1 }, amazon: { ff: 1, bf: 1, lf: 1 }, candy: { bf: 1 }, heaven: { bf: 1 }, beach: { bf: 0.5 }, snow: {}, cave: { ff: 0.6 }, sky: { bf: 0.7 } };
+    let ambFx = null;
+    const ambSpot = (o) => { const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (AMB_R - 3); o.x = char.position.x + Math.cos(a) * r; o.z = char.position.z + Math.sin(a) * r; };
+    const ambInit = () => {
+      ambFx = { g: new THREE.Group(), ff: [], bf: [], lf: [] }; ambFx.g.name = "ambientFx"; scene.add(ambFx.g);
+      const mk = (arr, name, n, size, add, mkU) => { for (let i = 0; i < n; i++) { const F = kFlip(name, size * (0.85 + Math.random() * 0.4), { add }); F.sp.renderOrder = 4; F.sp.frustumCulled = false; ambFx.g.add(F.sp); const o = { F, u: mkU(i) }; ambSpot(o); arr.push(o); } };
+      mk(ambFx.ff, "fireflies", 6, 12, true, () => ({ y: 1.6, ph: Math.random() * 9, spd: 0.22 + Math.random() * 0.1, drift: 0.1 + Math.random() * 0.15 }));
+      mk(ambFx.bf, "butterfly", 5, 7.5, false, () => ({ y: 1.4, ph: Math.random() * 9, spd: 0.16 + Math.random() * 0.06, vx: (Math.random() - 0.5) * 0.8, vz: (Math.random() - 0.5) * 0.8, turnT: 0 }));
+      mk(ambFx.lf, "leaves", 5, 8.5, false, () => ({ top: 6.5 + Math.random() * 2, drop: 5.5, ph: Math.random() * 9, spd: 0.13 + Math.random() * 0.05, sway: 0.5 + Math.random() * 0.5 }));
+    };
+    const ambWrap = (o) => {                           // หลุดรัศมี → โผล่ฝั่งตรงข้าม
+      const dx = o.x - char.position.x, dz = o.z - char.position.z;
+      if (Math.hypot(dx, dz) > AMB_R) { const a = Math.atan2(dz, dx) + Math.PI + (Math.random() - 0.5) * 0.8, r = AMB_R * (0.6 + Math.random() * 0.35); o.x = char.position.x + Math.cos(a) * r; o.z = char.position.z + Math.sin(a) * r; }
+    };
+    G.ambientFxTick = (dt, t) => {
+      if (!ambFx) { try { ambInit(); } catch (_) { ambFx = { g: new THREE.Group(), ff: [], bf: [], lf: [] }; } }
+      const b = BIOMES[G.curBiome] || BIOMES[0], cfg = AMB_BIOME[b.id] || {};
+      const on = G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.dungeon;
+      ambFx.g.visible = on; if (!on) return;
+      const day = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1, night = Math.max(0, Math.min(1, (0.55 - day) / 0.4));
+      const ffA = (cfg.ff || 0) * night, bfA = (cfg.bf || 0) * Math.max(0, Math.min(1, (day - 0.35) / 0.35)), lfA = cfg.lf || 0;
+      const gy = (x, z) => (typeof terrainAt === "function" ? terrainAt(x, z) : 0);
+      for (const o of ambFx.ff) { const u = o.u, sp = o.F.sp; if (ffA <= 0.01) { sp.visible = false; continue; } sp.visible = true;
+        o.x += Math.cos(t * 0.3 + u.ph) * u.drift * dt; o.z += Math.sin(t * 0.25 + u.ph * 1.3) * u.drift * dt; ambWrap(o);
+        sp.position.set(o.x, gy(o.x, o.z) + u.y, o.z); o.F.set(t * u.spd + u.ph); sp.material.opacity = ffA * (0.8 + 0.2 * Math.sin(t * 1.7 + u.ph * 4)); }
+      for (const o of ambFx.bf) { const u = o.u, sp = o.F.sp; if (bfA <= 0.01) { sp.visible = false; continue; } sp.visible = true;
+        u.turnT -= dt; if (u.turnT <= 0) { u.turnT = 2 + Math.random() * 3; const a = Math.random() * Math.PI * 2, v = 0.3 + Math.random() * 0.6; u.vx = Math.cos(a) * v; u.vz = Math.sin(a) * v; }
+        o.x += u.vx * dt; o.z += u.vz * dt; ambWrap(o);
+        const cyc = (t * u.spd + u.ph) % 1;
+        sp.position.set(o.x, gy(o.x, o.z) + u.y + cyc * 1.2, o.z); o.F.set(cyc); sp.material.opacity = bfA * Math.min(1, (1 - cyc) * 4); }   // ฝูงลอยขึ้นตามเฟรมที่แผ่ออก แล้วจางตอนวนรอบใหม่
+      const lfCol = b.id === "meadow" ? 0xffb8d0 : 0xffffff;   // 🌸 ทุ่งซากุระ = ย้อมใบไม้เป็นกลีบชมพู (ใบเขียวบนหญ้าเขียวมองไม่ออก)
+      for (const o of ambFx.lf) { const u = o.u, sp = o.F.sp; if (lfA <= 0.01) { sp.visible = false; continue; } sp.visible = true; if (sp.material.color.getHex() !== lfCol) sp.material.color.setHex(lfCol);
+        const cyc = (t * u.spd + u.ph) % 1;
+        if (cyc < u.last) ambSpot(o); u.last = cyc;   // ครบรอบ = ย้ายฝูงไปจุดใหม่
+        o.x += Math.sin(t * 0.8 + u.ph) * u.sway * dt; ambWrap(o);
+        sp.position.set(o.x, gy(o.x, o.z) + u.top - cyc * u.drop, o.z); o.F.set(cyc); sp.material.rotation = Math.sin(t * 0.9 + u.ph) * 0.25; sp.material.opacity = lfA * Math.min(1, (1 - cyc) * 3); }   // ใบไม้แผ่ออกพร้อมร่วงลง จางก่อนถึงพื้น
     };
     G.villageFxTick = (t) => {
       if (!vfxHub) { try { villageFxInit(); } catch (_) { vfxHub = new THREE.Group(); } }
@@ -54843,6 +54885,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.heroModelTick) { try { G.heroModelTick(dt); } catch (_) {} }   // 🧍 ตัวละครโมเดล 3D (ทดลอง)
       if (G.npcModelTick) { try { G.npcModelTick(dt); } catch (_) {} }        // 🧑‍🌾 NPC หมู่บ้านขยับท่ายืน
       if (G.villageFxTick && G.mode !== "battle") { try { G.villageFxTick(t); } catch (_) {} }   // 🔥💨 กองไฟ/คบเพลิง/ควันหมู่บ้าน
+      if (G.ambientFxTick && dtForce == null) { try { G.ambientFxTick(dt, t); } catch (_) {} }   // 🪲🦋🍂 หิ่งห้อย/ผีเสื้อ/ใบไม้ร่วง
       // 🗡️ ซามูไรจับคาตานะสองมือ — ทำท้ายสุดหลังทุกท่าจัดแขนขวาเสร็จแล้ว
       //    ครอบคลุม ยืนเฉย/เดิน/ยืนการ์ด/โจมตีปกติ ทั้งโลกกว้างและในสนามรบ
       //    ⚠️ เว้นท่าสกิล/ท่าไม้ตายไว้ เพราะบางท่าตั้งใจให้มือซ้ายไปจับฝักดาบ (ท่าชักดาบอิไอ)
