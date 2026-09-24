@@ -10739,7 +10739,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (shield && H.shieldFxN !== H.hurtN) { H.shieldFxN = H.hurtN; if (G._skillFxAt) G._skillFxAt("shieldaura", char.position.x, char.position.z, 0xffffff); }   // 🛡️ ออร่าโล่วาบทุกครั้งที่ยกโล่รับ
         }
         else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = true; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
-        else if (sp > 5.5) want = "Sprint_Loop";
+        else if (sp > 3.9) want = "Sprint_Loop";   // 🏃 วิ่ง (กดซ้ำ/คลิกซ้ำ) = 4.4 → ท่าวิ่งเต็มฝีเท้า
         else if (sp > 2.6) want = "Jog_Fwd_Loop";
         else if (sp > 0.25) want = "Walk_Loop";
         if (sp > 0.25 && H.emote) H.emote = null;
@@ -20363,14 +20363,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         toast("☄️ ฝนดาวตก!! เก็บคริสตัลที่ร่วงลงมาให้ทัน 60 วิ!");
         setUi((u) => ({ ...u, eventMsg: "☄️ ฝนดาวตก — เก็บคริสตัลรับของแรร์!", eventLeft: 60 }));
       } else if (type === "horde") {
+        // ⚔️ ฝูงบุกต้องเกิด "นอกจุดปลอดภัย" (หมู่บ้าน/วาร์ป/บ้าน/หอคอย) — ในนั้นมอนสเตอร์ตีไม่ได้ อีเวนต์จะเสียเปล่า
+        //    ยืนอยู่ในเมือง/บ้าน/ฟาร์ม = ข้ามอีเวนต์นี้ไปเลย · ยืนในโซนปลอดภัยของทุ่ง = ขยับจุดเกิดออกไปจนพ้นเขต (ไกลสุด 16 หน่วย)
+        if (G.inTownZone || G.inHomeZone || G.inRanchZone) { G.eventT = 20 + Math.random() * 15; return; }
+        const hordeSpot = (i) => {
+          const a0 = Math.random() * Math.PI * 2;
+          for (let r = 4; r <= 16; r += 1.5) for (let k = 0; k < 8; k++) {
+            const a = a0 + (k / 8) * Math.PI * 2 + i * 0.4;
+            const x = char.position.x + Math.cos(a) * r, z = char.position.z + Math.sin(a) * r;
+            if (Math.hypot(x, z) > FIELD_R - 1) continue;
+            if (!inSafeZone(x, z) && !(G._safePts || []).some((q) => Math.hypot(x - q.x, z - q.z) < q.r + 1.5)) return { x, z };   // เผื่อระยะ 1.5 กันเดินไถลกลับเข้าเขต
+          }
+          return null;
+        };
+        if (!hordeSpot(0)) { G.eventT = 20 + Math.random() * 15; return; }   // รอบตัวเป็นเขตปลอดภัยทั้งหมด (ไม่น่าเกิด) → เลื่อนไปก่อน
         G.event = { type, t: 0, dur: 90 };
         for (let i = 0; i < 5; i++) {
           spawnWild();
           const m = wilds[wilds.length - 1];
           m.userData.horde = true;
           m.userData.lv = (m.userData.lv || 1) + 2;
-          const a = Math.random() * Math.PI * 2;
-          m.position.set(char.position.x + Math.cos(a) * 4, 0, char.position.z + Math.sin(a) * 4);
+          const sp = hordeSpot(i) || { x: char.position.x + 6, z: char.position.z };
+          m.position.set(sp.x, 0, sp.z);
           m.userData.wander.cx = m.position.x;
           m.userData.wander.cz = m.position.z;
         }
@@ -39218,8 +39232,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           hit.x *= (FIELD_R - 0.3) / r;
           hit.z *= (FIELD_R - 0.3) / r;
         }
-        G.moveTarget = new THREE.Vector3(hit.x, 0, hit.z);
+        G.moveTarget = new THREE.Vector3(hit.x, 0, hit.z); G._tapTarget = G.moveTarget;
         G.huntTarget = null; G._queuedAct = null;
+        { // 🚶🏃 คลิกครั้งเดียว = เดินไป · คลิกซ้ำที่เดิมภายใน 0.4 วิ = วิ่งไป
+          const now = performance.now(), lt = G._tapRun;
+          G.runMode = !!(lt && now - lt.t < 400 && Math.hypot(lt.x - cx, lt.y - cy) < 48);
+          G._tapRun = { t: now, x: cx, y: cy };
+        }
         G.aimAt(null);                       // คลิกพื้น = เลิกเล็งมอนตัวเดิม
         G.markMoveTo(hit.x, hit.z);          // 🏹 ปักลูกศรตรงจุดที่จะเดินไป
         G.manualOrder(9);                    // 🤖 auto รอจนเดินถึงจุดที่สั่งก่อน
@@ -39307,12 +39326,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ⌨️ คีย์ลัดสกิลบนคอม: เลข 1-8 = สกิลช่องที่ 1-8 (ตรงตัว ไม่ต้องจำ)
     //    W A S D ยกกลับไปเป็นปุ่มเดิน · ยาเลือด/ยามานาย้ายไปปุ่ม H / M
     const SKILL_KEYS = { "1": 0, "2": 1, "3": 2, "4": 3, "5": 4, "6": 5, "7": 6, "8": 7 };
+    const MOVE_KEYS = { w: 1, a: 1, s: 1, d: 1, arrowup: 1, arrowdown: 1, arrowleft: 1, arrowright: 1 };
     G.SKILL_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8"];
     const onKeyDown = (e) => {
       const k = e.key.toLowerCase();
       const tag = (e.target && e.target.tagName) || "";
       if (tag === "INPUT" || tag === "TEXTAREA") { G.keys[k] = false; return; }   // ไม่แย่งคีย์ช่องพิมพ์ชื่อ/แชท (พิมพ์ w-a-s-d แล้วต้องไม่ออกเดิน)
       G.keys[k] = true;
+      // 🚶🏃 W A S D / ลูกศร: กดครั้งเดียว = เดิน · กดซ้ำเร็ว ๆ (ภายใน 0.35 วิ) = วิ่ง — วิ่งค้างจนปล่อยปุ่มเดินทุกปุ่ม
+      if (MOVE_KEYS[k] && !e.repeat) {
+        const now = performance.now();
+        if (G._kTapKey === k && now - (G._kTapAt || 0) < 350) G.runMode = true;
+        G._kTapKey = k; G._kTapAt = now;
+      }
       // ␣ เว้นวรรค = กระโดด · ⇧ Shift = พุ่ง
       if (k === " " || k === "spacebar") { e.preventDefault(); if (G.doJump) G.doJump(); return; }
       if (k === "shift") { if (G.doDash) G.doDash(); return; }
@@ -39333,6 +39359,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const onKeyUp = (e) => {
       const k = e.key.toLowerCase();
       G.keys[k] = false;
+      if (MOVE_KEYS[k] && !Object.keys(MOVE_KEYS).some((m) => G.keys[m])) G.runMode = false;   // ปล่อยปุ่มเดินหมด → กลับเป็นเดิน
       if (k === " " || k === "spacebar" || k === "shift") G._glideHold = 0;   // ☁️ ปล่อยปุ่ม = เลิกร่อน
     };
     window.addEventListener("keydown", onKeyDown);
@@ -43670,7 +43697,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const tx = G.moveTarget.x - char.position.x;
             const tz = G.moveTarget.z - char.position.z;
             const dist = Math.hypot(tx, tz);
-            if (dist < 0.12) { G.moveTarget = null; G.huntTarget = null; G.path = null; if (G._moveMark) G._moveMark.g.visible = false; }
+            if (dist < 0.12) { G.moveTarget = null; G.huntTarget = null; G.path = null; G.runMode = false; if (G._moveMark) G._moveMark.g.visible = false; }
             else {
               // 🗺️ follow an A* path so mazes (the cave!) get solved properly instead of
               // wedging into a corner. Recompute only when the goal moves or the path runs out.
@@ -43694,7 +43721,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             }
           }
         }
-        const speed = effSpd(); // base 3.4, boosted by shoes ⚡
+        // 🚶🏃 เดิน = 0.62 เท่า · วิ่ง = 1.3 เท่า (ท่าโมเดล: เดิน ≤2.6 · วิ่ง >3.9) · การเดินที่ระบบสั่งเอง (ออโต้ล่า/ออโต้อาชีพ/ตามมอน) ใช้ความเร็วเดิม 1.0
+        const manualMove = (!G.moveTarget && !!(dx || dz)) || (!!G.moveTarget && G.moveTarget === G._tapTarget);   // ปุ่ม/จอย หรือจุดที่ผู้เล่นคลิกเอง
+        const joyLen = Math.hypot(G.joy.x, G.joy.y);
+        const runNow = G.runMode || (joyLen > 0.12 && joyLen > 0.78);   // 🕹️ จอย: ดันสุด = วิ่ง · ดันเบา = เดิน
+        const speed = effSpd() * (manualMove ? (runNow ? 1.3 : 0.62) : 1); // base 3.4, boosted by shoes ⚡
         // 🩹 STUCK DETECTION: if we're trying to move but barely progressing, nudge sideways to break free
         {
           const px = char.position.x, pz = char.position.z;
@@ -43764,7 +43795,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         char.position.x += G.vel.x * dt;
         char.position.z += G.vel.z * dt;
         const spd = Math.hypot(G.vel.x, G.vel.z);
-        const moveAmt = Math.min(1, spd / 3.4); // 0..1 blend between idle & full stride
+        const moveAmt = Math.min(1, spd / 3.4); // 0..1 blend between idle & full stride (เดิน ≈0.6 = ก้าวสั้น · วิ่ง = ก้าวเต็ม+กระโดด)
         if (spd > 0.25) yaw = Math.atan2(G.vel.x, G.vel.z);
 
         if (G.inHomeZone) { // 🏠 เดินได้เฉพาะในห้อง (กำแพง 3 ด้าน + หน้าเปิดถึงเสื่อทางออก)
