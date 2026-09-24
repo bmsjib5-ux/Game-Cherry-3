@@ -36800,6 +36800,7 @@ function CherryAdventure() {
                 const chim = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.6, 0.7), tStoneD);
                 chim.position.set(w * 0.28, h + 1.6, -d * 0.2);
                 g.add(chim);
+                (G._townChims = G._townChims || []).push(chim); // 💨 ควันปล่องไฟ (villageFxTick)
                 g.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(g);
@@ -41004,7 +41005,7 @@ function CherryAdventure() {
         // 🎬 Kalponic Free Stylized Sprite VFX (CC BY 4.0) — เฟรมไล่ภาพจริง (16 เฟรม) รวมเป็น sprite sheet ตาราง 128px
         //    ต่างจาก Kenney ที่เป็นภาพนิ่ง: ใช้กับของที่ "เล่นเป็นชุด" — รอยฟันดาบ / ประกายฮีล / โล่รับ / ป้ายเควส
         const KALP_BASE = "assets/kalponic/";
-        const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4] }; // [เฟรม, คอลัมน์, แถว]
+        const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2] }; // [เฟรม, คอลัมน์, แถว]
         const kalpPend = {}; // สำเนา texture ที่ทำไว้ก่อนรูปมาถึง (r128 ไม่มี Texture.userData) — เติมรูปให้ทีหลัง
         const kalpTex = (() => {
             const c = {};
@@ -41032,6 +41033,130 @@ function CherryAdventure() {
             return { sp, set, n };
         };
         G.kFlip = kFlip;
+        // 🔥💨 กองไฟ / คบเพลิง / ควัน ในหมู่บ้าน (Kalponic Bonfire · Torch · Smoke) — เฟรมไล่วนต่อเนื่อง สร้างครั้งเดียวตอนเรียก tick ครั้งแรก
+        //    ไม่ใช้ PointLight (บังคับคอมไพล์เชดเดอร์ใหม่ กระตุกบนมือถือ) → ใช้แผ่นแสงส้มบนพื้นกะพริบแทน
+        const vfx = []; // {F, spd, ph, kind, y0, sp}
+        const vAdd = (name, size, x, y, z, spd, parent, kind, o) => { const F = kFlip(name, size, o || { add: kind !== "smoke" }); F.sp.position.set(x, y, z); F.sp.renderOrder = 4; (parent || scene).add(F.sp); vfx.push({ F, spd, ph: Math.random(), kind, y0: y, size }); return F; };
+        const vPost = (x, z, h, parent) => {
+            const g = new THREE.Group();
+            const wm = new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.85 }), im = new THREE.MeshStandardMaterial({ color: 0x3a3a40, metalness: 0.6, roughness: 0.5 });
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, h, 8), wm);
+            pole.position.y = h / 2;
+            g.add(pole);
+            const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.12, 0.28, 8, 1, true), im);
+            cup.position.y = h + 0.1;
+            g.add(cup);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 14), im);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = h + 0.22;
+            g.add(ring);
+            g.position.set(x, 0, z);
+            (parent || scene).add(g);
+            return g;
+        };
+        let vfxHub = null, vfxTown = null;
+        const villageFxInit = () => {
+            vfxHub = new THREE.Group();
+            vfxHub.name = "villageFx";
+            scene.add(vfxHub);
+            // 🔥 กองไฟกลางหมู่บ้าน — วงหิน + ฟืน + เปลวไฟ + ควัน + แสงบนพื้น
+            const cx = -3.6, cz = -10.4;
+            const stone = new THREE.MeshStandardMaterial({ color: 0x8a847a, roughness: 0.95 }), log = new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.9 }), ember = new THREE.MeshStandardMaterial({ color: 0x2a1408, emissive: 0xff5a10, emissiveIntensity: 1.2 });
+            for (let k = 0; k < 9; k++) {
+                const a = (k / 9) * Math.PI * 2;
+                const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.26 + (k % 3) * 0.05, 0), stone);
+                st.position.set(cx + Math.cos(a) * 1.05, 0.16, cz + Math.sin(a) * 1.05);
+                st.rotation.set(k, k * 0.7, 0);
+                st.scale.y = 0.7;
+                vfxHub.add(st);
+            }
+            for (let k = 0; k < 4; k++) {
+                const a = k * 0.8 + 0.3;
+                const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.3, 7), log);
+                lg.position.set(cx, 0.16 + (k % 2) * 0.12, cz);
+                lg.rotation.set(Math.PI / 2 * 0.85, 0, a);
+                vfxHub.add(lg);
+            }
+            const emb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), ember);
+            emb.position.set(cx, 0.12, cz);
+            emb.scale.y = 0.35;
+            vfxHub.add(emb);
+            const glow = kDecal("light_02", 0xff8a30, 5.2, 0.06);
+            glow.position.x = cx;
+            glow.position.z = cz;
+            vfxHub.add(glow);
+            vfx.push({ glow, kind: "glow" });
+            vAdd("bonfire", 5.6, cx, 1.9, cz, 1.0, vfxHub, "fire");
+            vAdd("smoke", 5.0, cx, 4.4, cz, 0.35, vfxHub, "smoke", { color: 0xbfbcb8 });
+            if (typeof colliders !== "undefined")
+                colliders.push({ x: cx, z: cz, r: 1.25 });
+            // 🕯️ คบเพลิง — คู่หน้าโรงตีเหล็ก + คู่หน้ากระท่อมผู้เฒ่า + คู่ข้างอาจารย์
+            const torches = [[6.2, -4.6], [10.8, -4.6], [-8.2, -4.9], [-12.6, -6.2], [-2.6, -14.2], [2.6, -14.2]];
+            torches.forEach(([x, z]) => { vPost(x, z, 2.6, vfxHub); vAdd("torch", 2.5, x, 3.4, z, 1.1, vfxHub, "fire"); const gl = kDecal("light_02", 0xffa040, 2.6, 0.05); gl.position.x = x; gl.position.z = z; vfxHub.add(gl); vfx.push({ glow: gl, kind: "glow", dim: 0.55 }); });
+            // 💨 ควันปล่องกระท่อม (บ้านหมุน 0.5 · ปล่องอยู่ที่ (0.8,2.4,-0.4)) + ควันเตาเผาโรงตีเหล็ก
+            {
+                const th = 0.5, lx = 0.8, lz = -0.4;
+                const wx = -10.5 + (lx * Math.cos(th) + lz * Math.sin(th)), wz = -8 + (-lx * Math.sin(th) + lz * Math.cos(th));
+                vAdd("smoke", 4.0, wx, 4.4, wz, 0.3, vfxHub, "smoke", { color: 0xd0cdc8 });
+            }
+            vAdd("smoke", 3.6, 10.3, 3.6, -6.3, 0.42, vfxHub, "smoke", { color: 0x9a9690 });
+        };
+        const townFxInit = () => {
+            vfxTown = new THREE.Group();
+            vfxTown.name = "townFx";
+            townZone.add(vfxTown);
+            townZone.updateMatrixWorld(true);
+            (G._townChims || []).forEach((ch, i) => { if (i % 2)
+                return; const w = ch.getWorldPosition(new THREE.Vector3()); vAdd("smoke", 4.6, w.x, w.y + 2.6, w.z, 0.28 + (i % 3) * 0.05, vfxTown, "smoke", { color: 0xd8d5d0 }); }); // ครึ่งหนึ่งของบ้านมีควัน
+            for (let k = 0; k < 6; k++) {
+                const a = (k / 6) * Math.PI * 2 + Math.PI / 6;
+                const x = Math.cos(a) * 6.2, z = Math.sin(a) * 6.2;
+                vPost(x, z, 2.8, vfxTown);
+                vAdd("torch", 2.5, x, 3.6, z, 1.05, vfxTown, "fire");
+            } // คบเพลิงรอบลานกลางเมือง
+        };
+        G.villageFxTick = (t) => {
+            if (!vfxHub) {
+                try {
+                    villageFxInit();
+                }
+                catch (_) {
+                    vfxHub = new THREE.Group();
+                }
+            }
+            if (!vfxTown && townZone.visible && G._townChims) {
+                try {
+                    townFxInit();
+                }
+                catch (_) {
+                    vfxTown = new THREE.Group();
+                }
+            }
+            vfxHub.visible = !!(G.smith && G.smith.visible && !townZone.visible && (G.curBiome || 0) === 0);
+            const anyOn = vfxHub.visible || townZone.visible;
+            if (!anyOn)
+                return;
+            const night = G.dayPhaseAmt != null ? Math.max(0, Math.min(1, (0.62 - G.dayPhaseAmt) / 0.55)) : 0;
+            for (const v of vfx) {
+                if (v.kind === "glow") {
+                    v.glow.material.opacity = (0.25 + night * 0.55) * (v.dim || 1) * (0.85 + 0.15 * Math.sin(t * 9 + (v.dim || 0) * 7));
+                    continue;
+                }
+                if (!v.F.sp.parent || (v.F.sp.parent !== vfxHub && !townZone.visible) || (v.F.sp.parent === vfxHub && !vfxHub.visible))
+                    continue;
+                v.F.set(t * v.spd + v.ph);
+                if (v.kind === "fire") {
+                    const k = 1 + 0.06 * Math.sin(t * 11 + v.ph * 9);
+                    v.F.sp.scale.set(v.size * k, v.size * (1 + 0.1 * Math.sin(t * 7 + v.ph * 5)), 1);
+                    v.F.sp.material.opacity = 0.85 + night * 0.15;
+                }
+                else {
+                    v.F.sp.position.x += 0;
+                    v.F.sp.material.rotation = Math.sin(t * 0.6 + v.ph * 6) * 0.08;
+                    v.F.sp.material.opacity = 0.8 - night * 0.25;
+                } // 💨 ควันเอนไปมาเบา ๆ · กลางคืนจางลง
+            }
+        };
         setTimeout(() => { try {
             Object.keys(KALP).forEach(kalpTex);
         }
@@ -85100,6 +85225,12 @@ function CherryAdventure() {
                     }
                     catch (_) { }
                 } // 🧑‍🌾 NPC หมู่บ้านขยับท่ายืน
+                if (G.villageFxTick && G.mode !== "battle") {
+                    try {
+                        G.villageFxTick(t);
+                    }
+                    catch (_) { }
+                } // 🔥💨 กองไฟ/คบเพลิง/ควันหมู่บ้าน
                 // 🗡️ ซามูไรจับคาตานะสองมือ — ทำท้ายสุดหลังทุกท่าจัดแขนขวาเสร็จแล้ว
                 //    ครอบคลุม ยืนเฉย/เดิน/ยืนการ์ด/โจมตีปกติ ทั้งโลกกว้างและในสนามรบ
                 //    ⚠️ เว้นท่าสกิล/ท่าไม้ตายไว้ เพราะบางท่าตั้งใจให้มือซ้ายไปจับฝักดาบ (ท่าชักดาบอิไอ)

@@ -9,3 +9,6 @@ Used sets (frames packed into 128px grid sprite sheets, left-to-right, top-to-bo
   shield.png    <- "Shield Aura"      7 frames, 4x2
   quest.png     <- "Quest"           16 frames, 4x4
   questdone.png <- "Quest Complete"  16 frames, 4x4
+  bonfire.png   <- "Bonfire"         16 frames, 4x4
+  torch.png     <- "Torch"           16 frames, 4x4
+  smoke.png     <- "Smoke"            8 frames, 4x2
