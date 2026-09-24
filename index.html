@@ -40678,6 +40678,10 @@ function CherryAdventure() {
             sparks.push(s);
         }
         const burst = (pos, color, y = 0.8) => {
+            try {
+                kImpact(pos.x, y, pos.z, color, 1);
+            }
+            catch (_) { } // 🎇 ชั้นภาพ Kenney ซ้อนบนประกายเดิม
             sparks.forEach((s, i) => {
                 s.visible = true;
                 s.material.color.setHex(color);
@@ -40912,6 +40916,10 @@ function CherryAdventure() {
         const fireSlash = (pos, color) => {
             if (G.sfx)
                 G.sfx.slash();
+            try {
+                kSlash(pos.x, 1.0, pos.z, color);
+            }
+            catch (_) { } // 🎇 รอยฟันภาพวาด Kenney ซ้อนบนวงเสี้ยวเดิม
             slashFx.material.color.setHex(color);
             slashFx.position.set(pos.x, 1.0, pos.z + 0.2);
             slashFx.rotation.set(0, 0, Math.random() * Math.PI);
@@ -40935,6 +40943,96 @@ function CherryAdventure() {
         };
         // ✨ per-skill impact effects — each skill type looks different
         const activeFx = []; // {group, t, dur, update}
+        // 🎇 Kenney Particle Pack (CC0) — ภาพเอฟเฟกต์วาดมือ 512px (ประกาย/วงแหวน/รอยฟัน/เปลวไฟ/ควัน/รอยไหม้/วงเวท)
+        //    ใช้เป็นสไปรท์บวกแสงซ้อน "บน" เอฟเฟกต์เดิม ไม่ได้แทนที่ — ของเดิมยังทำงานเหมือนเดิมถ้ารูปโหลดไม่ขึ้น
+        const KFX_BASE = "assets/kenney/fx/";
+        const kfxTex = (() => { const c = {}; return (n) => { if (c[n])
+            return c[n]; const t = new THREE.TextureLoader().load(KFX_BASE + n + ".png"); t.encoding = THREE.sRGBEncoding; t.minFilter = THREE.LinearMipmapLinearFilter; return (c[n] = t); }; })();
+        const kSprite = (name, color, size, o) => {
+            const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: kfxTex(name), color: color == null ? 0xffffff : color, transparent: true, opacity: o && o.op != null ? o.op : 1,
+                blending: o && o.normal ? THREE.NormalBlending : THREE.AdditiveBlending, depthWrite: false, rotation: (o && o.rot) || 0 }));
+            sp.scale.set(size, (o && o.h) || size, 1);
+            return sp;
+        };
+        const kDecal = (name, color, size, y) => {
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: kfxTex(name), color: color == null ? 0xffffff : color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+            m.rotation.x = -Math.PI / 2;
+            m.position.y = y == null ? 0.05 : y;
+            m.renderOrder = 2;
+            return m;
+        };
+        const kfxSpawn = (x, z, dur, build) => { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const update = build(g); activeFx.push({ group: g, t: 0, dur, update }); return g; };
+        const kEase = (pr, a, b) => Math.max(0, Math.min(1, (pr - a) / (b - a)));
+        setTimeout(() => { try {
+            ["circle_02", "circle_03", "dirt_02", "fire_01", "flame_03", "light_02", "magic_01", "magic_02", "scorch_01", "scorch_02", "slash_01", "slash_03", "smoke_05", "spark_01", "spark_05", "star_01", "star_06", "star_08", "star_09", "twirl_02"].forEach(kfxTex);
+        }
+        catch (_) { } }, 2500); // โหลดล่วงหน้าหลังฉากขึ้น — สไปรท์ที่รูปยังไม่มาจะเป็นสี่เหลี่ยมดำ
+        // 💥 จุดปะทะ — ดาววาบขาว + วงแหวนแผ่ + ประกายกระจาย + เศษดาว 5 ดวงกระเด็น (ซ้อนบน burst เดิม)
+        const kImpact = (x, y, z, color, size) => {
+            const S = size || 1;
+            kfxSpawn(x, z, 0.42, (g) => {
+                const flash = kSprite("star_06", 0xffffff, 1.2 * S);
+                flash.position.y = y;
+                g.add(flash);
+                const ring = kSprite("circle_03", color, 0.5 * S);
+                ring.position.y = y;
+                g.add(ring);
+                const spr = kSprite("spark_01", color, 1.0 * S, { rot: Math.random() * Math.PI * 2 });
+                spr.position.y = y;
+                g.add(spr);
+                const bits = [];
+                for (let k = 0; k < 5; k++) {
+                    const b = kSprite("star_01", k % 2 ? 0xffffff : color, 0.32 * S);
+                    const a = Math.random() * Math.PI * 2, vr = 1.4 + Math.random() * 1.6;
+                    b.userData = { vx: Math.cos(a) * vr, vz: Math.sin(a) * vr, vy: 1.5 + Math.random() * 2 };
+                    b.position.y = y;
+                    g.add(b);
+                    bits.push(b);
+                }
+                return (pr) => {
+                    const f = 1 - kEase(pr, 0, 0.55);
+                    flash.material.opacity = f;
+                    flash.scale.setScalar((1.2 + (1 - f) * 1.3) * S);
+                    flash.material.rotation = pr * 1.2;
+                    const r = kEase(pr, 0.05, 0.8);
+                    ring.material.opacity = (1 - r) * 0.9;
+                    ring.scale.setScalar((0.5 + r * 2.4) * S);
+                    const q = kEase(pr, 0, 0.7);
+                    spr.material.opacity = (1 - q) * 0.95;
+                    spr.scale.setScalar((1.0 + q * 1.1) * S);
+                    for (const b of bits) {
+                        const u = b.userData, t = pr * 0.42;
+                        b.position.set(u.vx * t, y + u.vy * t - 6 * t * t, u.vz * t);
+                        b.material.opacity = 1 - pr;
+                    }
+                };
+            });
+        };
+        // ✂️ รอยฟันเสี้ยว — ภาพ slash ของ Kenney หมุนสุ่มในระนาบจอ วาบแล้วยืดออก + ดาวแวบที่กลางรอย
+        const kSlash = (x, y, z, color) => {
+            kfxSpawn(x, z, 0.32, (g) => {
+                const rot = Math.random() * Math.PI * 2;
+                const sl = kSprite(Math.random() < 0.5 ? "slash_01" : "slash_03", 0xffffff, 1.7, { rot });
+                sl.position.y = y;
+                g.add(sl);
+                const gl = kSprite(Math.random() < 0.5 ? "slash_01" : "slash_03", color, 1.9, { rot });
+                gl.position.y = y;
+                g.add(gl);
+                const st = kSprite("star_09", 0xffffff, 0.9);
+                st.position.y = y;
+                g.add(st);
+                return (pr) => {
+                    const o = 1 - kEase(pr, 0.15, 1);
+                    sl.material.opacity = o;
+                    gl.material.opacity = o * 0.9;
+                    const k = 1.7 + pr * 1.0;
+                    sl.scale.setScalar(k);
+                    gl.scale.setScalar(k * 1.15);
+                    st.material.opacity = 1 - kEase(pr, 0, 0.4);
+                    st.scale.setScalar(0.9 + pr * 0.8);
+                };
+            });
+        };
         // 🦸 ปล่อยเอฟเฟกต์สกิลที่พิกัดใดก็ได้ — ใช้กับอวตารบอท/ผู้เล่นอื่นที่ไม่ได้อยู่ตรงตัวเรา
         G._skillFxAt = (fxType, x, z, color) => { try {
             spawnSkillFx(fxType, { x, z }, color);
@@ -43264,6 +43362,96 @@ function CherryAdventure() {
                 dur = 0.5;
                 update = (pr) => { ring.scale.setScalar(1 + pr * 2); ring.material.opacity = 1 - pr; };
             }
+            // 🎇 ชั้นภาพ Kenney ตามประเภทสกิล — ซ้อนบนของเดิม ใช้เวลาเท่ากับ dur ของเอฟเฟกต์นั้น
+            try {
+                const kx = []; // {fn(pr)}
+                const add = (o) => { g.add(o); return o; };
+                if (fxType === "fire" || fxType === "hellfire") {
+                    const fc = fxType === "fire" ? 0xff7a1a : col;
+                    const sc = add(kDecal("scorch_02", 0xff8a30, 2.6));
+                    sc.rotation.z = Math.random() * Math.PI;
+                    const fl = [0, 1, 2].map((k) => { const f = add(kSprite("flame_03", k ? fc : 0xffd080, 1.1 + k * 0.25, { rot: (Math.random() - 0.5) * 0.6 })); f.position.set((Math.random() - 0.5) * 0.5, 0.5, (Math.random() - 0.5) * 0.5); f.userData = { d: k * 0.12 }; return f; });
+                    const bl = add(kSprite("fire_01", 0xffb060, 1.6));
+                    bl.position.y = 0.9;
+                    kx.push((pr) => {
+                        sc.material.opacity = (1 - kEase(pr, 0.3, 1)) * 0.85;
+                        sc.scale.setScalar(0.8 + pr * 0.5);
+                        fl.forEach((f) => { const u = kEase(pr, f.userData.d, 1); f.position.y = 0.5 + u * 2.2; f.material.opacity = Math.sin(u * Math.PI) * 0.95; f.scale.set(f.scale.x, (1.1 + u * 1.2), 1); });
+                        bl.material.opacity = 1 - kEase(pr, 0, 0.35);
+                        bl.scale.setScalar(1.6 + pr * 2.2);
+                    });
+                }
+                else if (fxType === "bolt" || fxType === "thunderstorm") {
+                    const bt = add(kSprite("spark_05", 0xfff6a0, 1.3, { h: 5.0 }));
+                    bt.position.y = 2.4;
+                    const gl = add(kDecal("light_02", 0xfff0a0, 2.4));
+                    const st = add(kSprite("star_06", 0xffffff, 1.6));
+                    st.position.y = 0.6;
+                    kx.push((pr) => {
+                        const on = pr < 0.42;
+                        bt.material.opacity = on ? (Math.floor(pr / 0.07) % 2 ? 0.55 : 1) : Math.max(0, 1 - kEase(pr, 0.42, 0.6));
+                        bt.material.rotation = on ? (Math.floor(pr / 0.07) % 2 ? 0.08 : -0.08) : 0;
+                        gl.material.opacity = (1 - kEase(pr, 0.1, 0.8)) * 0.9;
+                        gl.scale.setScalar(0.6 + pr * 1.6);
+                        st.material.opacity = 1 - kEase(pr, 0, 0.3);
+                        st.scale.setScalar(1.6 + pr * 2);
+                    });
+                }
+                else if (fxType === "quake" || fxType === "earthsplit") {
+                    const cr = add(kDecal("scorch_01", 0xffc890, 3.2));
+                    cr.rotation.z = Math.random() * Math.PI;
+                    const sm = [0, 1, 2].map((k) => { const m = add(kSprite("smoke_05", 0x9a8a72, 1.2, { normal: true, rot: Math.random() * Math.PI * 2 })); const a = (k / 3) * Math.PI * 2; m.position.set(Math.cos(a) * 0.4, 0.3, Math.sin(a) * 0.4); m.userData = { a }; return m; });
+                    const dr = add(kSprite("dirt_02", 0xa88a5a, 1.6, { normal: true }));
+                    dr.position.y = 0.5;
+                    kx.push((pr) => {
+                        cr.material.opacity = (1 - kEase(pr, 0.4, 1)) * 0.95;
+                        cr.scale.setScalar(0.7 + kEase(pr, 0, 0.3) * 0.5);
+                        sm.forEach((m) => { const a = m.userData.a; m.position.set(Math.cos(a) * (0.4 + pr * 1.3), 0.3 + pr * 1.0, Math.sin(a) * (0.4 + pr * 1.3)); m.scale.setScalar(1.2 + pr * 1.6); m.material.opacity = (1 - pr) * 0.75; });
+                        dr.position.y = 0.5 + pr * 1.6;
+                        dr.scale.setScalar(1.6 + pr * 0.8);
+                        dr.material.opacity = (1 - kEase(pr, 0.3, 1)) * 0.9;
+                    });
+                }
+                else if (fxType === "shadow") {
+                    const tw = add(kSprite("twirl_02", 0x9a5af0, 1.6));
+                    tw.position.y = 0.8;
+                    const mc = add(kDecal("magic_02", 0x8a4ae0, 2.2));
+                    kx.push((pr) => { tw.material.rotation = pr * 9; tw.scale.setScalar(1.6 + pr * 1.2); tw.material.opacity = 1 - pr; mc.rotation.z = -pr * 3; mc.material.opacity = (1 - pr) * 0.9; });
+                }
+                else if (fxType === "healbless") {
+                    const mc = add(kDecal("magic_01", 0x9affb0, 2.6));
+                    const lt = add(kSprite("light_02", 0xd0ffd8, 1.4));
+                    lt.position.y = 0.4;
+                    kx.push((pr) => { mc.rotation.z = pr * 2.5; mc.material.opacity = Math.sin(pr * Math.PI) * 0.95; mc.scale.setScalar(0.8 + pr * 0.3); lt.position.y = 0.4 + pr * 1.8; lt.material.opacity = Math.sin(pr * Math.PI) * 0.8; lt.scale.setScalar(1.4 + pr * 0.6); });
+                }
+                else if (fxType === "punchwave" || fxType === "kneeburst") {
+                    const rg = add(kSprite("circle_03", col, 0.6));
+                    rg.position.y = 1.0;
+                    const st = add(kSprite("star_09", 0xffffff, 1.3));
+                    st.position.y = 1.0;
+                    kx.push((pr) => { rg.scale.setScalar(0.6 + pr * 3.0); rg.material.opacity = (1 - pr) * 0.9; st.material.opacity = 1 - kEase(pr, 0, 0.45); st.scale.setScalar(1.3 + pr * 1.4); st.material.rotation = pr * 2; });
+                }
+                else if (fxType === "pierce" || fxType === "arrowpierce" || fxType === "arrowsnipe") {
+                    const rg = add(kSprite("circle_02", col === 0xffffff ? 0x8ac0ff : col, 0.5));
+                    rg.position.set(0.15, 1.4, 0);
+                    const st = add(kSprite("star_08", 0xffffff, 1.2));
+                    st.position.set(0.15, 1.4, 0);
+                    kx.push((pr) => { rg.scale.setScalar(0.5 + pr * 2.2); rg.material.opacity = (1 - pr) * 0.9; st.material.opacity = 1 - kEase(pr, 0, 0.4); st.scale.setScalar(1.2 + pr * 1.0); });
+                }
+                else if (fxType === "ice") {
+                    const st = add(kSprite("star_08", 0xe8f8ff, 1.5));
+                    st.position.y = 1.2;
+                    const gl = add(kDecal("light_02", 0x9fe4ff, 2.2));
+                    kx.push((pr) => { st.material.opacity = 1 - kEase(pr, 0, 0.5); st.scale.setScalar(1.5 + pr * 1.2); gl.material.opacity = (1 - pr) * 0.8; gl.scale.setScalar(0.7 + pr * 1.0); });
+                }
+                if (kx.length) {
+                    const u0 = update;
+                    update = (pr, tn) => { if (u0)
+                        u0(pr, tn); for (const f of kx)
+                        f(pr); };
+                }
+            }
+            catch (_) { }
             activeFx.push({ group: g, t: 0, dur, update });
         };
         // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
