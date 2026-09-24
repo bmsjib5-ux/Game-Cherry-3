@@ -60,6 +60,10 @@ const SPECIES = {
     ngu: { name: "นาคาน้อย", emoji: "🐍", color: 0x6ab04a, hp: 60, atk: 11, catch: 0.24, tier: 2, desc: "งูพิษเลื้อยเงียบ", animal: "snake", weak: "earth" },
     paksi: { name: "เวหาปักษี", emoji: "🦅", color: 0xc98a4a, hp: 65, atk: 12, catch: 0.2, tier: 3, desc: "อินทรีจอมโฉบ", animal: "bird", weak: "ice" },
     saming: { name: "เสือสมิง", emoji: "🐯", color: 0xe0a040, hp: 80, atk: 14, catch: 0.14, tier: 3, desc: "เสือปีศาจ ราชาแห่งไพร", animal: "tiger", weak: "water" },
+    // 🗡️ มอนสเตอร์ภาพวาด 2D สี่ทิศ (CraftPix Top-Down Boss) — ยืนเป็นแผ่นหันเข้ากล้อง เลือกภาพหน้า/หลัง/ซ้าย/ขวาตามทิศที่เดินเทียบกับกล้อง
+    goblin2d: { name: "ก็อบลินยักษ์", emoji: "👺", color: 0x6ab04a, hp: 95, atk: 16, catch: 0.12, tier: 3, desc: "ก็อบลินหงอนแดงกวัดแกว่งลูกตุ้มหนาม", sprite2d: "goblin" },
+    caveman2d: { name: "หัวหน้ามนุษย์ถ้ำ", emoji: "🪨", color: 0xd8a040, hp: 110, atk: 18, catch: 0.1, tier: 4, desc: "มนุษย์ถ้ำหนังเสือถือกระบองหิน", sprite2d: "caveman" },
+    viking2d: { name: "จ้าวไวกิ้ง", emoji: "🪓", color: 0xb0603a, hp: 120, atk: 20, catch: 0.08, tier: 4, desc: "ผู้นำไวกิ้งหมวกเขาเหวี่ยงขวานศึก", sprite2d: "viking" },
     garuda: { name: "ครุฑอสูร", emoji: "🦁", color: 0xd07a2a, hp: 100, atk: 17, catch: 0.1, tier: 4, desc: "อสูรกายพญาครุฑ", animal: "beast", weak: "light" },
     // ☁️ sky-realm monsters (map 6: floating islands)
     wayu: { name: "สไลม์วายุ", emoji: "🌪️", color: 0xa0e0f0, hp: 90, atk: 16, catch: 0.14, tier: 4, desc: "สไลม์สายลมลอยเหนือเวหา", animal: "bird", weak: "earth" },
@@ -69,10 +73,10 @@ const SPAWN_POOL = ["mochi", "mochi", "baibua", "baibua", "mekha", "plerng", "na
 const FLOATY = { mekha: true, phi: true, paksi: true, wayu: true, taara: true }; // species that hover
 // 🗺️ multiple adventure maps (biomes) — warp between them
 const BIOMES = [
-    { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0x55a038, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 }, // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
-    { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
-    { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
-    { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
+    { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0x55a038, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam", "goblin2d"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 }, // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
+    { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming", "caveman2d"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
+    { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara", "viking2d"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
+    { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda", "viking2d"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
     { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 250, lvMax: 350, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
     { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
     // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 450-550 · โทนดำแดงมืด กลางคืนตลอด
@@ -86,9 +90,9 @@ const BIOMES = [
     // 🏖️ ด่านหาดทะเลทราย — Lv 850-950 · หาดทราย + ทะเลคราม
     { id: "beach", name: "หาดทะเลทราย", emoji: "🏖️", lvMin: 850, lvMax: 950, ground: 0xf3e0a8, sky: 0x4aa8ee, fog: 0x9fd4f5, pool: ["pooyak", "chalam"], tree: "none", boss: "kraken", bossName: "คราเคนเจ้าสมุทร 🐙", bright: true },
     // 🗿 ด่านไททัน — Lv 950-1000 · ยักษ์ไททันบรรพกาล โทนหินมืดกลางคืน
-    { id: "titan", name: "ลานประลองไททัน", emoji: "🗿", lvMin: 950, lvMax: 1000, ground: 0x46592c, sky: 0x8a8c78, fog: 0x9a9c86, pool: ["stonetitan", "cyclops"], tree: "none", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️" },
+    { id: "titan", name: "ลานประลองไททัน", emoji: "🗿", lvMin: 950, lvMax: 1000, ground: 0x46592c, sky: 0x8a8c78, fog: 0x9a9c86, pool: ["stonetitan", "cyclops", "caveman2d"], tree: "none", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️" },
     // 🌴 ด่านป่าอเมซอน — Lv 1000-1100 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
-    { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 1000, lvMax: 1100, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
+    { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 1000, lvMax: 1100, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda", "goblin2d"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -28934,6 +28938,80 @@ function CherryAdventure() {
             if (g.userData.magicCircle)
                 g.userData.magicCircle.rotation.y = -t * 0.5;
         };
+        // 🗡️ มอนสเตอร์ 2D สี่ทิศ — sheet 10 คอลัมน์ × 11 แถว (ลำดับแถวตาม SPR2D_ROWS) ภาพครอปแล้วสัดส่วน กว้าง/สูง = SPR2D[key].asp
+        const SPR2D = { goblin: { asp: 177 / 150 }, caveman: { asp: 180 / 150 }, viking: { asp: 177 / 150 } };
+        const SPR2D_ROWS = { walkF: [0, 10], walkL: [1, 10], walkR: [2, 10], walkB: [3, 10], idle: [4, 8], atkF: [5, 10], atkL: [6, 10], atkR: [7, 10], atkB: [8, 10], hurt: [9, 10], die: [10, 10] };
+        const spr2dTex = {}, spr2dPend = {}, spr2dList = [];
+        const spr2dAttach = (g, key) => {
+            if (!spr2dTex[key]) {
+                spr2dPend[key] = [];
+                spr2dTex[key] = new THREE.TextureLoader().load("assets/craftpix/boss/" + key + ".png", (t) => { (spr2dPend[key] || []).forEach((x) => { x.image = t.image; x.needsUpdate = true; }); spr2dPend[key] = null; });
+                spr2dTex[key].encoding = THREE.sRGBEncoding;
+            }
+            const t = spr2dTex[key].clone();
+            t.needsUpdate = true;
+            if (spr2dPend[key])
+                spr2dPend[key].push(t);
+            t.repeat.set(1 / 10, 1 / 11);
+            const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, alphaTest: 0.08, depthWrite: true }));
+            const H = 2.3;
+            sp.scale.set(H * SPR2D[key].asp, H, 1);
+            sp.position.y = H * 0.42;
+            sp.userData._spr2d = true;
+            g.add(sp);
+            if (g.userData.body)
+                g.userData.body.visible = false;
+            const S = { g, sp, t, key, anim: "idle", f: 0, px: g.position.x, pz: g.position.z };
+            g.userData.spr2d = S;
+            spr2dList.push(S);
+            const setFrame = (row, i) => { t.offset.set((i % 10) / 10, 1 - (row + 1) / 11); };
+            S.setFrame = setFrame;
+            setFrame(4, 0);
+        };
+        // 🎬 ทุกเฟรม: ทิศ (เทียบกล้อง) + สถานะ → แถว/เฟรม
+        G.spr2dTick = (dt) => {
+            if (!spr2dList.length)
+                return;
+            const cdx = camera.position.x, cdz = camera.position.z;
+            for (let i = spr2dList.length - 1; i >= 0; i--) {
+                const S = spr2dList[i], g = S.g, u = g.userData;
+                if (!g.parent) {
+                    spr2dList.splice(i, 1);
+                    continue;
+                }
+                if (!g.visible)
+                    continue;
+                const mdx = g.position.x - S.px, mdz = g.position.z - S.pz;
+                S.px = g.position.x;
+                S.pz = g.position.z;
+                const spd = Math.hypot(mdx, mdz) / Math.max(dt, 1e-4);
+                // ทิศที่หันอยู่ในโลก (rotation.y ของกลุ่ม) → เทียบกับทิศมองของกล้อง
+                const fx = Math.sin(g.rotation.y), fz = Math.cos(g.rotation.y);
+                let vx = g.position.x - cdx, vz = g.position.z - cdz;
+                const vl = Math.hypot(vx, vz) || 1;
+                vx /= vl;
+                vz /= vl; // ทิศกล้อง → มอน
+                const fwd = fx * vx + fz * vz, side = fx * vz - fz * vx; // fwd>0 = หันหนีกล้อง (เห็นหลัง)
+                const dir = Math.abs(fwd) >= Math.abs(side) ? (fwd > 0 ? "B" : "F") : (side > 0 ? "L" : "R");
+                let anim = "idle";
+                if (u.whp != null && u.whp <= 0)
+                    anim = "die";
+                else if (u.kkAtk > 0)
+                    anim = "atk" + dir;
+                else if ((u.flinch || 0) > 0.25)
+                    anim = "hurt";
+                else if (spd > 0.2)
+                    anim = "walk" + dir;
+                if (anim !== S.anim) {
+                    S.anim = anim;
+                    S.f = 0;
+                }
+                const R = SPR2D_ROWS[anim] || SPR2D_ROWS.idle, fps = anim === "idle" ? 8 : anim.startsWith("walk") ? 12 : 16;
+                S.f += dt * fps;
+                const fi = anim === "die" ? Math.min(R[1] - 1, Math.floor(S.f)) : Math.floor(S.f) % R[1];
+                S.setFrame(R[0], fi);
+            }
+        };
         const buildMonster = (spId, stage = 1) => {
             const sp = SPECIES[spId];
             const g = new THREE.Group();
@@ -32230,6 +32308,12 @@ function CherryAdventure() {
                 G.kkSkelRegister(g);
             if (G.qtHas && G.qtHas(spId) && G.qtRegister)
                 G.qtRegister(g); // 🐾 มอนที่มีโมเดล Quaternius
+            if (sp && sp.sprite2d && SPR2D[sp.sprite2d]) {
+                try {
+                    spr2dAttach(g, sp.sprite2d);
+                }
+                catch (_) { }
+            } // 🗡️ มอน 2D สี่ทิศ
             return g;
         };
         // draw/refresh a monster's level tag (red if higher than player)
@@ -65469,6 +65553,8 @@ function CherryAdventure() {
                     G.kkSkelTick(dt); // 💀 ไล่เฟรมอนิเมชันโครงกระดูก
                 if (G.qtTick)
                     G.qtTick(dt); // 🐾 ไล่เฟรมมอนโมเดล Quaternius
+                if (G.spr2dTick)
+                    G.spr2dTick(dt); // 🗡️ ไล่เฟรมมอน 2D สี่ทิศ
                 if (G.kkDunTick)
                     G.kkDunTick(); // 🏰 ห้องดันเจี้ยนขึ้น/รื้อตามสถานะหอคอย
                 const t = clock.getElapsedTime();
