@@ -454,8 +454,9 @@ const RARITY = {
     secret: { name: "SECRET", color: "#f5c542" },
     dragon: { name: "มังกร 🐉", color: "#e8552e" },
     legend: { name: "ตำนาน ⭐", color: "#f5a623" },
+    god: { name: "เทวศาสตรา 🌌", color: "#ff4de0" }, // 👑 ขั้นสูงสุด — ดรอปจากบอสบุกแมพเท่านั้น (1%)
 };
-const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5, legend: 6 };
+const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5, legend: 6, god: 7 };
 // ⚒️✨ ขั้นแสงตีบวก — +5 ขาว · +10 เขียว · +15 ม่วง · +20 ทอง (ออร่าบนอาวุธ + กรอบในกระเป๋า)
 const PLUS_TIERS = [
     { min: 5, name: "ขาว", color: 0xffffff, css: "#f2f6ff", a: 0.40, s: 0.95, li: 0.0 },
@@ -718,6 +719,8 @@ const LOOT = [
     { id: "sw_gloves", slot: "gloves", name: "ถุงมือหนังเย็บมือ", emoji: "🧤", rarity: "rare", atk: 3, def: 2, sew: true },
     { id: "sw_pants", slot: "pants", name: "กางเกงลินินเย็นสบาย", emoji: "👖", rarity: "rare", hp: 14, spd: 4, sew: true },
     { id: "sw_boots", slot: "shoes", name: "บูทหนังนุ่มเย็บมือ", emoji: "👢", rarity: "epic", def: 4, spd: 10, eva: 4, sew: true },
+    // 👑 เทวศาสตราปฐมกาล — อาวุธขั้น "เทวศาสตรา" ชิ้นเดียวในเกม ทุกอาชีพใช้ได้ ดรอปจากบอสบุกแมพ 1% เท่านั้น (ไม่ดรอป/ไม่สุ่ม/ไม่ขายที่อื่น)
+    { id: "god_wpn", slot: "weapon", name: "เทวศาสตราปฐมกาล", emoji: "🌌", rarity: "god", atk: 99999, def: 99999, crit: 99999, elem: "light", mapBoss: true },
     { id: "fg_mace", slot: "weapon", name: "กระบองยาวสังหาร", emoji: "🔨", rarity: "epic", atk: 27, cls: "lancer", forge: true },
     { id: "fg_saber", slot: "weapon", name: "กระบี่พริ้วลม", emoji: "🤺", rarity: "rare", atk: 17, spd: 8, cls: "assassin", forge: true },
     { id: "fg_katana", slot: "weapon", name: "ดาบคาตานะเหล็กกล้า", emoji: "⚔️", rarity: "rare", atk: 20, crit: 5, cls: "samurai", forge: true },
@@ -1537,7 +1540,7 @@ const GEMS = {
     g_spd: { name: "โทแพซความเร็ว", emoji: "🔶", color: "#d88a20", stat: "spd", val: 6 },
     g_eva: { name: "โอปอลหลบหลีก", emoji: "🟣", color: "#9a4ad0", stat: "eva", val: 4 },
 };
-const SOCKETS_BY_RARITY = { common: 0, rare: 1, epic: 2, secret: 3, dragon: 3, legend: 4 };
+const SOCKETS_BY_RARITY = { common: 0, rare: 1, epic: 2, secret: 3, dragon: 3, legend: 4, god: 5 };
 // 🌟 CLASS PATHS (สายอาชีพขั้นสูง) — at Lv.40 every class splits into two specialisations.
 // Each path grants permanent stat multipliers, a passive perk, and unlocks a 6th signature skill.
 // (Distinct from "การตื่นพลัง"/ngPlus, which is the prestige reset.)
@@ -9545,7 +9548,7 @@ function CherryAdventure() {
         const BLADE_HILT = 0.42; // ระยะจากจุดหมุนโมเดลถึงปลายด้ามล่าง (ใช้ชดเชยตอนขยาย ให้มือยังอยู่ที่ด้าม)
         // 📏 bladeScale ต่อโมเดล: ดาบ/คาตานะที่ปั้นเองสั้นกว่าโมเดล KayKit ราว 20-25% (วัดจริง 1.25-1.35 vs 1.6-1.7) → ขยายเพิ่มให้ยาวเท่ากันในมือ
         const BLADE_BIG = (k) => { const m = typeof k === "string" ? weaponModels[k] : null; const bs = m && m.userData && m.userData.bladeScale ? m.userData.bladeScale : 1; return (typeof k === "string" && (BLADE_KEYS[k] || /^(w|kk)_(sword|katana)_/.test(k) || (/^kki_/.test(k) && m && (m.userData.kkFam === "sword" || m.userData.kkFam === "katana"))) ? 2 : 1) * bs; };
-        const wpnTierOf = (r) => (r === "legend" || r === "dragon") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
+        const wpnTierOf = (r) => (r === "legend" || r === "dragon" || r === "god") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
         {
             const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
             const goldOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf5cf6a : 0xd8ab4e, metalness: 0.9, roughness: 0.24, emissive: t === 2 ? 0x6a4a08 : 0x3a2a06, emissiveIntensity: t === 2 ? 0.5 : 0.25 });
@@ -46954,7 +46957,7 @@ function CherryAdventure() {
             syncPlayer();
         };
         // ---------- 🏪 Shop: buy & sell with gold ----------
-        const SELL_BASE = { common: 15, rare: 40, epic: 100, secret: 300, dragon: 800, legend: 2500 };
+        const SELL_BASE = { common: 15, rare: 40, epic: 100, secret: 300, dragon: 800, legend: 2500, god: 999999 };
         const sellPrice = (id) => {
             const it = LOOT.find((x) => x.id === id);
             if (!it)
@@ -47597,7 +47600,7 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, warpAsk: true, menuOpen: false }));
         };
         // ---------- 💠 แยกชิ้นส่วนอาวุธ/ชุด — ทุบเป็นผงเพชรไว้ตีบวกการันตี ----------
-        const SALVAGE_DUST = { common: 1, rare: 3, epic: 8, secret: 20, dragon: 45, legend: 90 };
+        const SALVAGE_DUST = { common: 1, rare: 3, epic: 8, secret: 20, dragon: 45, legend: 90, god: 999 };
         G.salvageYield = (id) => {
             const it = LOOT.find((x) => x.id === id);
             if (!it || it.starter)
@@ -50221,6 +50224,11 @@ function CherryAdventure() {
         G._updateWildBar = updateWildBar;
         G._wilds = wilds; // 🔧 debug/test hook: read-only reference to the live wild list
         const killWild = (m) => {
+            if (m.userData.mapBoss) {
+                if (G.mbKilled)
+                    G.mbKilled(false);
+                return;
+            } // 👑 บอสบุกแมพ — จบแบบของตัวเอง
             const sp = SPECIES[m.userData.spId] || { tier: 1, name: "มอนสเตอร์" };
             const lv = m.userData.lv || 1;
             const shiny = m.userData.shiny;
@@ -63374,6 +63382,20 @@ function CherryAdventure() {
                     return null;
                 }
             },
+            async bossFindDay(day) {
+                if (!this.enabled())
+                    return null;
+                try {
+                    const res = await fetch(this._url("boss_raids?day=eq." + encodeURIComponent(day) + "&select=*&order=id.asc&limit=1"), { headers: this._headers() });
+                    if (!res.ok)
+                        return null;
+                    const rows = await res.json();
+                    return (rows && rows[0]) || null;
+                }
+                catch (e) {
+                    return null;
+                }
+            },
             async bossJoin(id, member) { return await this._rpc("boss_join", { p_id: id, p_member: member }); }, // atomic append to members[]
             async bossReady(id, pid) { return await this._rpc("boss_ready", { p_id: id, p_pid: pid }); }, // mark a member ready → row
             async bossHit(id, dmg, winner) { return await this._rpc("boss_hit", { p_id: id, p_dmg: dmg, p_winner: winner || null }); }, // atomic decrement + score → { hp, state, winner, scores }
@@ -64229,6 +64251,225 @@ function CherryAdventure() {
         };
         G.wbLeaveParty = () => { G.wbRaid = null; G.wbRaidRow = null; setUi((u) => ({ ...u, wbRaid: null, wbParty: [], wbRaidHp: null })); };
         // flush accumulated local damage to the shared cloud pool, reconcile HP (called from the battle loop)
+        // ================= 👑 บอสบุกแมพ — เกิดกลางแมพโลกกว้าง ทุก 30 นาที (นาที :00 และ :30) อยู่ 5 นาที =================
+        //  · ตีแบบเรียลไทม์ในโลกกว้าง (ไม่ดึงเข้าสนามผลัดกันตี) ผู้เล่นออนไลน์ทุกคนตีตัวเดียวกัน — เลือดร่วมผ่านตาราง boss_raids (แถว day = "mb<รอบ>")
+        //  · ปราบได้ → ทุกคนที่ตีได้ทอง+เพชร และมีโอกาส 1% ได้ "เทวศาสตราปฐมกาล" (atk/def/crit 99999) · หมดเวลา → บอสหนี ได้ทองปลอบใจตามดาเมจ
+        const MB = { period: 1800000, dur: 300, hp: 3000000, drop: 0.01, lv: 999 };
+        const mbStamp = () => Math.floor(Date.now() / MB.period);
+        const mbActive = () => (Date.now() % MB.period) < MB.dur * 1000;
+        const mbLeft = () => Math.max(0, Math.ceil((MB.dur * 1000 - (Date.now() % MB.period)) / 1000));
+        const mbBossOf = (st) => WB_POOL[_wbHash(st, 11) % WB_POOL.length];
+        const mbSpot = () => {
+            for (let r = 0; r <= 14; r += 2)
+                for (let k = 0; k < 8; k++) {
+                    const a = (k / 8) * Math.PI * 2;
+                    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+                    if (!inSafeZone(x, z) && !(G._safePts || []).some((q) => Math.hypot(x - q.x, z - q.z) < q.r + 2.5))
+                        return { x, z };
+                }
+            return { x: 0, z: 0 };
+        };
+        const mbRemove = () => { const S = G.mapBoss; if (!S || !S.m)
+            return; const m = S.m; if (m.parent)
+            m.parent.remove(m); const i = wilds.indexOf(m); if (i >= 0)
+            wilds.splice(i, 1); if (G.huntTarget === m)
+            G.huntTarget = null; (G._disposeObj3D && G._disposeObj3D(m)); S.m = null; };
+        const mbUi = (S) => setUi((u) => ({ ...u, mb: S ? { name: S.name, emoji: S.emoji, hp: Math.max(0, Math.round(S.hp)), maxHp: MB.hp, left: mbLeft(), dealt: Math.round(S.dealt) } : null }));
+        G.mbSpawn = () => {
+            const st = mbStamp(), b = mbBossOf(st), sp = mbSpot();
+            const m = buildMonster(b.spId);
+            m.userData.lv = MB.lv;
+            m.userData.mapBoss = true;
+            m.userData.stay = true;
+            m.userData.shy = 0;
+            m.userData.wmaxhp = MB.hp;
+            m.userData.whp = MB.hp;
+            m.userData.wander = { cx: sp.x, cz: sp.z, ph: 0, r: 0, sp: 0 };
+            m.position.set(sp.x, 0, sp.z);
+            m.scale.multiplyScalar(3.2);
+            scene.add(m);
+            wilds.push(m);
+            if (typeof wildBar === "function") {
+                wildBar(m);
+                updateWildBar(m);
+            }
+            G.mapBoss = { m, stamp: st, name: b.name, emoji: b.emoji, hp: MB.hp, prev: MB.hp, dealt: 0, acc: 0, syncT: 0, row: null, done: false, uiT: 0 };
+            const msg = `👑 ${b.emoji} ${b.name} บุกกลางแมพ! ร่วมกันปราบใน 5 นาที — โอกาส 1% ได้ 🌌 เทวศาสตราปฐมกาล`;
+            toast(msg);
+            if (G.showAnnounce)
+                G.showAnnounce(msg);
+            if (G.sfx && G.sfx.levelup)
+                G.sfx.levelup();
+            if (G.markMoveTo)
+                try {
+                    G.markMoveTo(sp.x, sp.z);
+                }
+                catch (_) { }
+            mbUi(G.mapBoss);
+            G.mbCloudJoin(st);
+        };
+        G.mbCloudJoin = async (st) => {
+            if (!CN.enabled())
+                return;
+            const S = G.mapBoss;
+            if (!S || S.stamp !== st)
+                return;
+            try {
+                const day = "mb" + st;
+                let row = await CN.bossFindDay(day);
+                if (!row)
+                    row = await CN.bossCreate({ host: G.ensurePid ? G.ensurePid() : (G.pid || "?"), day, members: [G.wbMember()], hp: MB.hp, maxhp: MB.hp, lv: MB.lv, state: "open", ts: Date.now() });
+                else {
+                    const j = await CN.bossJoin(row.id, G.wbMember());
+                    if (j)
+                        row = Array.isArray(j) ? j[0] || row : j;
+                }
+                if (!row || !G.mapBoss || G.mapBoss.stamp !== st)
+                    return;
+                G.mapBoss.row = row;
+                if (row.state === "cleared" || row.hp <= 0) {
+                    G.mbKilled(true);
+                    return;
+                }
+                if (row.hp < G.mapBoss.hp) {
+                    G.mapBoss.hp = row.hp;
+                    G.mapBoss.prev = row.hp;
+                    if (G.mapBoss.m) {
+                        G.mapBoss.m.userData.whp = row.hp;
+                        updateWildBar(G.mapBoss.m);
+                    }
+                }
+            }
+            catch (_) { }
+        };
+        G.mbFlush = async () => {
+            const S = G.mapBoss;
+            if (!S || !S.row || S.syncing || !CN.enabled())
+                return;
+            const dmg = Math.round(S.acc || 0);
+            if (dmg <= 0)
+                return;
+            S.syncing = true;
+            S.acc = 0;
+            try {
+                const res = await CN.bossHit(S.row.id, dmg, G.pid);
+                const row = Array.isArray(res) ? res[0] : res;
+                if (row && row.hp != null && G.mapBoss === S && !S.done) {
+                    const shared = Math.max(0, row.hp);
+                    if (shared < S.hp) {
+                        S.hp = shared;
+                        S.prev = shared;
+                        if (S.m) {
+                            S.m.userData.whp = shared;
+                            updateWildBar(S.m);
+                        }
+                    }
+                    if (row.state === "cleared" || shared <= 0)
+                        G.mbKilled(false);
+                }
+            }
+            catch (_) { }
+            S.syncing = false;
+        };
+        G.mbKilled = (late) => {
+            const S = G.mapBoss;
+            if (!S || S.done)
+                return;
+            S.done = true;
+            if (S.m)
+                burst(S.m.position, 0xffd24a, 1.6);
+            mbRemove();
+            G.mbDoneStamp = S.stamp;
+            if (late && S.dealt <= 0) {
+                toast(`👑 ${S.name} ถูกผู้เล่นคนอื่นปราบไปแล้ว — รอรอบหน้าอีก 30 นาที`);
+            }
+            else {
+                const gold = 50000 + Math.min(150000, Math.round(S.dealt / 20)), dia = 30;
+                G.gold += gold;
+                if (G.gainDiamonds)
+                    G.gainDiamonds(dia, "บอสบุกแมพ");
+                else
+                    G.diamonds = (G.diamonds || 0) + dia;
+                let msg = `👑 ปราบ ${S.emoji} ${S.name} สำเร็จ! +${gold.toLocaleString()}💰 +${dia}💎`;
+                if (Math.random() < MB.drop) {
+                    gainItem("god_wpn");
+                    msg += " · 🌌✨ ได้ เทวศาสตราปฐมกาล!!";
+                    if (G.juice)
+                        G.juice("level");
+                    if (G.showAnnounce)
+                        G.showAnnounce(`🌌✨ ${G.playerName || "ผู้กล้า"} ได้รับ เทวศาสตราปฐมกาล จากบอสบุกแมพ!!`);
+                }
+                else
+                    msg += " · ครั้งนี้ยังไม่ได้ 🌌 (โอกาส 1%)";
+                toast(msg);
+                if (G.sfx && G.sfx.levelup)
+                    G.sfx.levelup();
+                questProgress("win", 1);
+                if (G.storyEvent)
+                    G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id });
+                syncPlayer();
+                if (G.saveGame)
+                    G.saveGame();
+            }
+            G.mapBoss = null;
+            mbUi(null);
+        };
+        const mbExpire = () => {
+            const S = G.mapBoss;
+            if (!S)
+                return;
+            mbRemove();
+            G.mbDoneStamp = S.stamp;
+            if (S.dealt > 0) {
+                const gold = Math.min(100000, Math.round(S.dealt / 40));
+                G.gold += gold;
+                toast(`💨 ${S.name} หนีไปแล้ว — ทองปลอบใจ +${gold.toLocaleString()}💰 (ดาเมจ ${Math.round(S.dealt).toLocaleString()})`);
+                syncPlayer();
+            }
+            else
+                toast(`💨 ${S.name} หนีไปแล้ว — รอบหน้าอีก 30 นาที`);
+            G.mapBoss = null;
+            mbUi(null);
+        };
+        G.mbTick = (dt) => {
+            const S = G.mapBoss, st = mbStamp();
+            const canHere = G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.dungeon && G.player;
+            if (!S) {
+                if (canHere && mbActive() && G.mbDoneStamp !== st)
+                    G.mbSpawn();
+                return;
+            }
+            if (!mbActive() || S.stamp !== st) {
+                mbExpire();
+                return;
+            }
+            if (S.m && !wilds.includes(S.m)) {
+                S.m = null;
+                G.mapBoss = null;
+                return;
+            } // แมพเปลี่ยน (ล้างมอน) → เกิดใหม่ในแมพนี้ถ้ายังอยู่ในเวลา
+            if (S.m) {
+                const cur = S.m.userData.whp;
+                if (cur < S.prev) {
+                    const d = S.prev - cur;
+                    S.dealt += d;
+                    S.acc += d;
+                    S.hp = cur;
+                }
+                S.prev = cur;
+                S.m.position.set(S.m.userData.wander.cx, 0, S.m.userData.wander.cz);
+            }
+            S.syncT += dt;
+            if (S.syncT >= 1.5) {
+                S.syncT = 0;
+                G.mbFlush();
+            }
+            S.uiT += dt;
+            if (S.uiT >= 1) {
+                S.uiT = 0;
+                mbUi(S);
+            }
+        };
         G._wbFlushDamage = async () => {
             if (G._wbSyncing || !G.wbRaid || !CN.enabled())
                 return;
@@ -72277,6 +72518,8 @@ function CherryAdventure() {
                             if (G.auto && G.autoNoBoss && m.userData.boss)
                                 continue; // 🚫👹 auto set to skip bosses — don't get dragged into the arena
                             const dd = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
+                            if (m.userData.mapBoss)
+                                continue; // 👑 บอสบุกแมพตีในโลกกว้างเท่านั้น
                             if (dd < 0.95 && (!G.actionMode || isArenaFoe(m))) {
                                 startBattle(m);
                                 break;
@@ -85536,6 +85779,12 @@ function CherryAdventure() {
                     }
                     catch (_) { }
                 } // 🪲🦋🍂 หิ่งห้อย/ผีเสื้อ/ใบไม้ร่วง
+                if (G.mbTick && dtForce == null) {
+                    try {
+                        G.mbTick(dt);
+                    }
+                    catch (_) { }
+                } // 👑 บอสบุกแมพ
                 // 🗡️ ซามูไรจับคาตานะสองมือ — ทำท้ายสุดหลังทุกท่าจัดแขนขวาเสร็จแล้ว
                 //    ครอบคลุม ยืนเฉย/เดิน/ยืนการ์ด/โจมตีปกติ ทั้งโลกกว้างและในสนามรบ
                 //    ⚠️ เว้นท่าสกิล/ท่าไม้ตายไว้ เพราะบางท่าตั้งใจให้มือซ้ายไปจับฝักดาบ (ท่าชักดาบอิไอ)
@@ -89151,6 +89400,27 @@ function CherryAdventure() {
                 React.createElement("span", { style: { color: "#ffd0a0" } },
                     "Lv.",
                     ui.level)))),
+        ui.mb && ui.mode === "explore" && !ui.equipScreen && (React.createElement("div", { style: { position: "absolute", top: ui.eventMsg ? 118 : 84, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none" } },
+            React.createElement("div", { style: { background: "linear-gradient(90deg,#3a1a4a,#7a2a6a)", border: "2px solid #ff8ae8", borderRadius: 14, padding: "5px 14px", minWidth: 250, maxWidth: "76%", color: "#fff", fontSize: 12, fontWeight: 800, textAlign: "center", boxShadow: "0 4px 16px rgba(120,30,120,0.5)" } },
+                React.createElement("div", null,
+                    "\uD83D\uDC51 ",
+                    ui.mb.emoji,
+                    " ",
+                    ui.mb.name,
+                    " \u0E1A\u0E38\u0E01\u0E01\u0E25\u0E32\u0E07\u0E41\u0E21\u0E1E! \u23F1\uFE0F",
+                    Math.floor(ui.mb.left / 60),
+                    ":",
+                    String(ui.mb.left % 60).padStart(2, "0")),
+                React.createElement("div", { style: { height: 7, background: "rgba(0,0,0,0.4)", borderRadius: 999, overflow: "hidden", margin: "4px 0 2px" } },
+                    React.createElement("div", { style: { width: `${Math.max(0, Math.min(100, (ui.mb.hp / ui.mb.maxHp) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#ff4a6a,#ffb04a)", transition: "width 0.4s" } })),
+                React.createElement("div", { style: { fontSize: 10, opacity: 0.9 } },
+                    "HP ",
+                    ui.mb.hp.toLocaleString(),
+                    " / ",
+                    ui.mb.maxHp.toLocaleString(),
+                    " \u00B7 \u0E14\u0E32\u0E40\u0E21\u0E08\u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19 ",
+                    ui.mb.dealt.toLocaleString(),
+                    " \u00B7 \u0E14\u0E23\u0E2D\u0E1B \uD83C\uDF0C 1%")))),
         ui.eventMsg && (ui.mode === "explore" || ui.mode === "battle") && (React.createElement("div", { style: {
                 position: "absolute", top: ui.mode === "battle" ? 128 : 84, left: 0, right: 0,
                 display: "flex", justifyContent: "center", pointerEvents: "none",
