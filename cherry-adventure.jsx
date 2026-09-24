@@ -10726,8 +10726,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           H.atkT = Math.max(G._worldSwingDur || 0.2, HERO_ATK_TIME.hold, Math.min(G._skCast ? 1.3 : 0.95, len * 0.9)); H.cur = null; H.atkAge = 0;
         }
         H.atkAge = (H.atkAge || 0) + dt;
-        // 🏃 กำลังเดิน/วิ่ง → ค้างท่าฟันแค่เท่าเดิม (0.4 วิ) แล้วกลับเข้าท่าเดิน/วิ่งทันที ไม่ไถลตัวไปในท่าฟัน
-        if (H.atkT > 0 && sp > 0.25 && !G._skCast && sw <= 0.02 && H.atkAge >= HERO_ATK_TIME.hold) H.atkT = 0;
         const has = (n, f) => (n && H.acts[n] ? n : f);                      // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
         const shield = heroHasShield();
         let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false, opt = null;
@@ -43852,6 +43850,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._lastPos = { x: px, z: pz };
         }
         // desired velocity
+        // ⚔️🧍 ยืนโจมตี — ระหว่างท่าตี/ร่ายสกิล (โมเดล 3D: จนท่าจบ · ชิบิ: ช่วงสวิง) ไม่ขยับตัว ปุ่มที่กดค้าง/จุดที่คลิกยังจำไว้ พอท่าจบเดิน-วิ่งต่อเอง
+        if (G.mode === "explore" && ((G._worldSwingT || 0) > 0 || G._skCast || (G._heroModel && (G._heroModel.atkT || 0) > 0))) { dx = 0; dz = 0; }
         let inLen = Math.hypot(dx, dz);
         // 🌳 auto-steer: if an obstacle is ahead, curve the walk direction to slide around it
         if (inLen > 0.01) {
