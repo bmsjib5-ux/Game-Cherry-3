@@ -291,7 +291,7 @@ const awkBonus = (n) => {
   return b;
 };
 const awkPerkTxt = (i) => { const k = AWK_PERK[i]; return k ? `${k.emoji} ${k.name} +${k.val}${k.unit}` : ""; };
-const MENU_FLAGS = ["shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
+const MENU_FLAGS = ["tailorOpen", "minerOpen", "shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
 const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
 // 🦸 ท่าฟาดของ "ชุดฮีโร่" ในโลกกว้าง — แต่ละชุดมีท่าประจำตัว + เอฟเฟคประจำตัว
 //    style: claw ตะปบไขว้ · smash ทุบสองมือ · cast ผลักฝ่ามือ · breath พ่นลมหายใจ · dance ร่ายรำ · throw ขว้าง
@@ -614,6 +614,13 @@ const LOOT = [
 { id: "fg_bow", slot: "weapon", name: "ธนูล่าสัตว์", emoji: "🏹", rarity: "rare", atk: 18, cls: "archer", forge: true },
 { id: "fg_dagger", slot: "weapon", name: "มีดสั้นคู่", emoji: "🔪", rarity: "rare", atk: 16, crit: 6, cls: "assassin", forge: true },
 { id: "fg_spear", slot: "weapon", name: "หอกเหล็กกล้า", emoji: "🔱", rarity: "rare", atk: 19, cls: "lancer", forge: true },
+// 🧵 ชุดจากช่างตัดเย็บในเมือง (sew: true) — ซื้อด้วยทอง ไม่หลุดจากมอนสเตอร์/กาชา
+{ id: "sw_cloak",  slot: "outfit", name: "เสื้อคลุมผ้าทอมือ",   emoji: "🧥", rarity: "rare", hp: 24, def: 3, sew: true },
+{ id: "sw_gown",   slot: "outfit", name: "ชุดไหมพราวราตรี",     emoji: "👘", rarity: "epic", hp: 36, def: 5, eva: 3, sew: true },
+{ id: "sw_beret",  slot: "hat",    name: "หมวกเบเร่ต์ผ้าวูล",   emoji: "🎩", rarity: "rare", def: 3, crit: 3, sew: true },
+{ id: "sw_gloves", slot: "gloves", name: "ถุงมือหนังเย็บมือ",   emoji: "🧤", rarity: "rare", atk: 3, def: 2, sew: true },
+{ id: "sw_pants",  slot: "pants",  name: "กางเกงลินินเย็นสบาย", emoji: "👖", rarity: "rare", hp: 14, spd: 4, sew: true },
+{ id: "sw_boots",  slot: "shoes",  name: "บูทหนังนุ่มเย็บมือ",  emoji: "👢", rarity: "epic", def: 4, spd: 10, eva: 4, sew: true },
 { id: "fg_mace", slot: "weapon", name: "กระบองยาวสังหาร", emoji: "🔨", rarity: "epic", atk: 27, cls: "lancer", forge: true },
 { id: "fg_saber", slot: "weapon", name: "กระบี่พริ้วลม", emoji: "🤺", rarity: "rare", atk: 17, spd: 8, cls: "assassin", forge: true },
 { id: "fg_katana", slot: "weapon", name: "ดาบคาตานะเหล็กกล้า", emoji: "⚔️", rarity: "rare", atk: 20, crit: 5, cls: "samurai", forge: true },
@@ -10111,7 +10118,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const NPC_MODELS = {
         elder:  { files: ["Male_Base", "Male_Peasant", "Hair_Beard"],  h: 4.2,  hue: [215, 0.50, 0.95, 0.97, 1], hairC: 0xf0f0f0, idle: "Spell_Simple_Idle_Loop", off: 0 },   // เสื้อชาวนาสีอ่อน ต้องเปิดย้อมเทา (H[4]) ถึงจะติดสีน้ำเงินแบบเสื้อคลุมเดิม
         smith:  { files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"], h: 4.5,  hue: [20, 0.62, 1.02],  hairC: 0x3a2a1a, idle: "Idle_Loop",               off: 0.8, hold: { s: 1.7, rx: -0.6, py: 0.1 } },
-        master: { files: ["Male_Base", "Male_Ranger", "Hair_Beard"],   h: 4.35, hue: [276, 0.50, 0.90], hairC: 0xf0f0f4, idle: "Idle_Loop", off: 1.6, hold: { s: 2.1, rx: Math.PI - 0.1, py: 0.1 } },   // ไม้เท้าหันลูกแก้วขึ้นฟ้า ปลายจรดพื้น
+        master: { files: ["Male_Base", "Male_Ranger", "Hair_Beard"],   h: 4.35, hue: [276, 0.50, 0.90], hairC: 0xf0f0f4, idle: "Idle_Loop", off: 1.6, hold: { s: 2.1, rx: Math.PI - 0.1, py: 0.1 } },
+        // 🏘️ NPC อาชีพรองประจำเมือง — พ่อครัว · หมอยา · นักตกปลา · นักขุดแร่ · ช่างตัดเย็บ
+        chef:      { files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"],          h: 4.3, hue: [40, 0.10, 1.18, 0.97, 1, 0.25], hairC: 0x2a1a10, idle: "Idle_Loop", off: 0, hold: { s: 1.5, rx: -0.6, py: 0.1 } },
+        herbalist: { files: ["Female_Base", "Female_Peasant", "Hair_Buns"],        h: 4.1, hue: [125, 0.45, 0.95, 0.97, 1, 0.5], hairC: 0x5a3a2a, idle: "Spell_Simple_Idle_Loop", off: 0 },
+        fisher:    { files: ["Male_Base", "Male_Peasant", "Hair_SimpleParted"],    h: 4.3, hue: [205, 0.55, 0.95, 0.97, 1, 0.5], hairC: 0x3a2a1a, idle: "Idle_Loop", off: 0, hold: { s: 1.8, rx: -0.6, py: 0.1 } },
+        miner:     { files: ["Male_Base", "Male_Ranger", "Hair_Beard"],            h: 4.4, hue: [28, 0.50, 0.85], hairC: 0x4a3020, idle: "Idle_Loop", off: 0, hold: { s: 1.6, rx: -0.6, py: 0.1 } },
+        tailor:    { files: ["Female_Base", "Female_Peasant", "Hair_Long"],        h: 4.1, hue: [330, 0.45, 1.0, 0.97, 1, 0.5], hairC: 0x7a3a5a, idle: "Idle_Loop", off: 0, hold: { s: 1.3, rx: -0.6, py: 0.1 } },   // ไม้เท้าหันลูกแก้วขึ้นฟ้า ปลายจรดพื้น
       };
       const npcModels = []; G._npcRigs = npcModels;
       const npcModelSet = (grp, key) => {
@@ -10202,6 +10215,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
       };
       npcModelSet(G.npc, "elder"); npcModelSet(G.smith, "smith"); npcModelSet(G.master, "master");
+      G.npcModelSet = npcModelSet;
+      (G.townNpcs || []).forEach((N) => npcModelSet(N.grp, N.key));   // 🏘️ NPC อาชีพรองในเมือง (สร้างไว้ก่อนหน้าแล้ว)
       const heroPlay = (name, once, opt) => {
         const H = G._heroModel; if (!H) return;
         const list = H.acts[name]; if (!list || H.cur === name) return;
@@ -22451,6 +22466,34 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const panel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.7, 0.16), tWood); panel.position.y = 2.4; bb.add(panel);
       const bLab = ranchLabel(5.0, 1.4); bLab.draw("🏰 เมืองเชอร์รี่ · เขตปลอดภัย 100%", "#fff4e0"); bLab.sprite.position.set(0, 4.2, 0); bb.add(bLab.sprite);
       bb.position.set(7.6, 0, 16); bb.rotation.y = Math.PI + 0.5; townZone.add(bb);
+      // 🏘️ NPC อาชีพรองประจำเมือง — ยืนรอบลานที่รัศมี 12 (เว้นทางประตูทิศใต้) · ร่างปั้นเองถูกแทนด้วยโมเดล 3D (npcModelSet) เหลือป้ายชื่อ + ของถือ
+      const TOWN_NPCS = [
+        { key: "chef",      a: 0.30, name: "พ่อครัวอิ่ม",    emoji: "🍳", label: "🍳 พ่อครัว",     col: "#e08a5a", body: 0xf4f0e8, prop: "ladle" },
+        { key: "tailor",    a: 1.05, name: "ช่างเย็บมะลิ",   emoji: "🧵", label: "🧵 ช่างตัดเย็บ", col: "#d878b0", body: 0xf0b8d8, prop: "needle" },
+        { key: "fisher",    a: 2.20, name: "ลุงเบ็ดทอง",     emoji: "🎣", label: "🎣 นักตกปลา",    col: "#4a90c0", body: 0x8ab8e0, prop: "rod" },
+        { key: "miner",     a: 3.30, name: "ลุงขุดเพชร",     emoji: "⛏️", label: "⛏️ นักขุดแร่",   col: "#b0842a", body: 0xb08a5a, prop: "pick" },
+        { key: "herbalist", a: 4.45, name: "หมอยาใบเตย",     emoji: "🌿", label: "🌿 หมอยา",       col: "#5aa84a", body: 0xa8d890, prop: "bottle" },
+      ];
+      G.townNpcs = TOWN_NPCS.map((T) => {
+        const grp = new THREE.Group(); grp.name = "townNpc_" + T.key;
+        const bm = new THREE.MeshStandardMaterial({ color: T.body, roughness: 0.85 });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.5, 1.3, 14), bm); body.position.y = 0.65; grp.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 12), new THREE.MeshStandardMaterial({ color: 0xf0c088, roughness: 0.85 })); head.position.y = 1.62; grp.add(head);
+        const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a2a, roughness: 0.8 }), steel = new THREE.MeshStandardMaterial({ color: 0xb8bec8, metalness: 0.8, roughness: 0.3 });
+        const prop = new THREE.Group();
+        if (T.prop === "ladle") { prop.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.9, 8), steel)); const cup = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), steel); cup.position.y = 0.5; cup.rotation.x = Math.PI; prop.add(cup); }
+        else if (T.prop === "needle") { const sc = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6), steel); prop.add(sc); const sc2 = sc.clone(); sc2.rotation.z = 0.35; prop.add(sc2); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 12), new THREE.MeshStandardMaterial({ color: 0xd8a83a, metalness: 0.7, roughness: 0.4 })); ring.position.y = -0.4; prop.add(ring); }
+        else if (T.prop === "rod") { prop.add(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.035, 1.9, 8), wood)); const reel = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), steel); reel.rotation.x = Math.PI / 2; reel.position.set(0.06, -0.5, 0); prop.add(reel); }
+        else if (T.prop === "pick") { prop.add(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.4, 8), wood)); const hd = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.1), steel); hd.position.y = 0.66; prop.add(hd); }
+        else if (T.prop === "bottle") { const bt = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.3, 10), new THREE.MeshStandardMaterial({ color: 0x8ad878, transparent: true, opacity: 0.85, roughness: 0.2 })); prop.add(bt); const nk = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x6a4a2a })); nk.position.y = 0.2; prop.add(nk); }
+        prop.position.set(0.5, 0.95, 0.1); prop.rotation.z = -0.4; prop.userData.npcHold = true; grp.add(prop);
+        const lab = ranchLabel(3.8, 1.05); lab.draw(`${T.emoji} ${T.name}`, "#fff8ee"); lab.sprite.position.set(0, 2.5, 0); grp.add(lab.sprite);
+        const x = Math.cos(T.a) * 12, z = Math.sin(T.a) * 12;
+        grp.position.set(x, 0, z); grp.rotation.y = Math.atan2(-x, -z);   // หันหน้าเข้าลานกลางเมือง
+        townZone.add(grp);
+        return { key: T.key, grp, x, z, name: T.name, emoji: T.emoji, label: T.label, col: T.col };
+      });
+      if (G.npcModelSet) G.townNpcs.forEach((N) => G.npcModelSet(N.grp, N.key));
       const warm = new THREE.PointLight(0xfff0d0, 0.5, 95); warm.position.set(0, 14, 0); townZone.add(warm);
       for (const [lx, lz] of [[-20, -20], [20, -20], [-20, 20], [20, 20]]) { const l2 = new THREE.PointLight(0xffeccc, 0.28, 46); l2.position.set(lx, 7, lz); townZone.add(l2); } // 💡 ไฟมุมเมือง ให้สว่างทั่วลานใหญ่
     }
@@ -28510,7 +28553,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       const rar = rollRarity(boss, lv, eliteBoss);
       const pool = LOOT.filter((x) =>
-        x.rarity === rar && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls)
+        x.rarity === rar && !x.starter && !x.forge && !x.sew && (x.slot !== "weapon" || !x.cls || x.cls === G.cls)
       );
       const it = pool[Math.floor(Math.random() * pool.length)];
       gainItem(it.id);
@@ -29355,7 +29398,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const r = Math.random();
       const rar = r < 0.05 ? "secret" : r < 0.3 ? "epic" : r < 0.65 ? "rare" : "common";
       const pool = LOOT.filter((x) =>
-        x.rarity === rar && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls)
+        x.rarity === rar && !x.starter && !x.forge && !x.sew && (x.slot !== "weapon" || !x.cls || x.cls === G.cls)
       );
       return pool[Math.floor(Math.random() * pool.length)].id;
     };
@@ -29468,6 +29511,26 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.openSmith = () => {
       if (G.storyEvent) G.storyEvent("talk", 1, { who: "smith" });   // 🎓 บทสอนเล่น: ทักทายช่างตีเหล็ก
       setUi((u) => ({ ...u, smithOpen: true, menuOpen: false, gemDust: G.gemDust || 0, stardust: G.stardust || 0, mats: { ...(G.mats || {}) }, gold: G.gold }));
+    };
+    // 🏘️ NPC อาชีพรองในเมือง — กดป้ายเหนือหัวแล้วเปิดเมนูของอาชีพนั้น
+    G.openTownNpc = () => {
+      const k = G.townNpcNear; if (!k) return;
+      if (G.storyEvent) G.storyEvent("talk", 1, { who: k });
+      if (k === "chef") G.toggleKitchen();
+      else if (k === "herbalist") G.toggleHerb();
+      else if (k === "fisher") G.toggleFishBag();
+      else if (k === "miner") setUi((u) => ({ ...u, ...closeAllMenus(), minerOpen: true, pickLv: G.pickLv || 1, mats: { ...(G.mats || {}) }, gold: G.gold }));
+      else if (k === "tailor") setUi((u) => ({ ...u, ...closeAllMenus(), tailorOpen: true, gold: G.gold, inv: [...G.inv] }));
+    };
+    G.SEW_PRICE = { rare: 9000, epic: 18000 };
+    G.buyTailor = (id) => {
+      const it = LOOT.find((x) => x.id === id && x.sew); if (!it) return;
+      const price = G.SEW_PRICE[it.rarity] || 9000;
+      if (G.gold < price) { toast(`ทองไม่พอ! ต้องมี ${price.toLocaleString()}💰`); return; }
+      G.gold -= price; gainItem(id);
+      if (G.sfx) G.sfx.coin();
+      toast(`🧵 ตัดเย็บ ${it.emoji} ${it.name} เสร็จแล้ว!`);
+      setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] })); syncPlayer();
     };
     G.buyForge = (id) => {
       const it = LOOT.find((x) => x.id === id);
@@ -31009,10 +31072,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.gold += out.gold;
       if (G.gainDiamonds) G.gainDiamonds(out.diamonds, "บอสโลก"); else G.diamonds = (G.diamonds || 0) + out.diamonds;
       G.gemDust = (G.gemDust || 0) + out.gemDust;
-      const hiPool = LOOT.filter((x) => (x.rarity === "epic" || x.rarity === "dragon") && !x.forge);
+      const hiPool = LOOT.filter((x) => (x.rarity === "epic" || x.rarity === "dragon") && !x.forge && !x.sew);
       const hiN = 3 + Math.floor(Math.random() * 3); // 3–5 high-tier pieces
       for (let i = 0; i < hiN && hiPool.length; i++) { const it = hiPool[Math.floor(Math.random() * hiPool.length)]; gainItem(it.id); out.items.push(it.id); }
-      const midPool = LOOT.filter((x) => x.rarity === "rare" && !x.forge); // a couple of mid-tier pieces
+      const midPool = LOOT.filter((x) => x.rarity === "rare" && !x.forge && !x.sew); // a couple of mid-tier pieces
       for (let i = 0; i < 2 && midPool.length; i++) { const it = midPool[Math.floor(Math.random() * midPool.length)]; gainItem(it.id); out.items.push(it.id); }
       if (getLegendary) { // ⭐ legendary weapon/outfit — the one random winner of the 20% roll
         const lgPool = LOOT.filter((x) => x.rarity === "legend" && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
@@ -38305,7 +38368,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!G.biomeBossDefeated[bid]) {
           G.biomeBossDefeated[bid] = true;
           G.gold += 500;
-          const dPool = LOOT.filter((x) => (x.rarity === "epic" || x.rarity === "dragon") && !x.forge);
+          const dPool = LOOT.filter((x) => (x.rarity === "epic" || x.rarity === "dragon") && !x.forge && !x.sew);
           if (dPool.length) { const dIt = dPool[Math.floor(Math.random() * dPool.length)]; gainItem(dIt.id); toast(`🏰 พิชิตเจ้าถิ่น! +500💰 + ${dIt.name}!`); }
         } else { G.gold += 200; toast("🏰 ปราบเจ้าถิ่นซ้ำ +200💰"); }
       }
@@ -43132,7 +43195,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             if (dd2 < 0.85) {
               const r3 = Math.random();
               const rar3 = r3 < 0.03 ? "secret" : r3 < 0.25 ? "epic" : r3 < 0.6 ? "rare" : "common";
-              const pool3 = LOOT.filter((x) => x.rarity === rar3 && !x.starter && !x.forge && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+              const pool3 = LOOT.filter((x) => x.rarity === rar3 && !x.starter && !x.forge && !x.sew && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
               const it3 = pool3[Math.floor(Math.random() * pool3.length)];
               gainItem(it3.id);
               G.gold += 10;
@@ -43212,6 +43275,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const snear = sd < 2.8;
           if (snear !== G.smithNear) { G.smithNear = snear; setUi((u) => ({ ...u, smithNear: snear })); }
         }
+        { // 🏘️ NPC อาชีพรองในเมือง — ใกล้คนไหนสุด (ภายใน 2.8) ก็ขึ้นป้ายคนนั้น
+          let tk = null;
+          if (G.inTownZone && G.townNpcs) { let bd = 2.8; for (const N of G.townNpcs) { const d = Math.hypot(char.position.x - N.x, char.position.z - N.z); if (d < bd) { bd = d; tk = N.key; } } }
+          if (tk !== (G.townNpcNear || null)) { G.townNpcNear = tk; setUi((u) => ({ ...u, townNpcNear: tk })); }
+        }
         // 🎓 อาจารย์ประจำอาชีพ
         if (G.masterPos && G.master) {
           const md = Math.hypot(char.position.x - G.masterPos.x, char.position.z - G.masterPos.z);
@@ -43226,7 +43294,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // 💬 ป้ายคุย NPC — เกาะอยู่เหนือหัวตัวที่ยืนใกล้ ฉายพิกัดโลก → พิกัดจอทุกเฟรม
         if (G._npcPrompt && G._npcPrompt.el) {
           const PR = G._npcPrompt;
-          const src = PR.who === "npc" ? G.npc : PR.who === "smith" ? G.smith : PR.who === "master" ? G.master : null;
+          const src = PR.who === "npc" ? G.npc : PR.who === "smith" ? G.smith : PR.who === "master" ? G.master
+            : PR.who === "townNpc" ? (((G.townNpcs || []).find((N) => N.key === G.townNpcNear) || {}).grp || null) : null;
           if (src) {
             src.getWorldPosition(_promptV);
             _promptV.y += (src.userData.headY || 2.62);   // เหนือหัวขึ้นไปนิดหนึ่ง (โมเดลตัวสูงกว่าร่างเก่า)
@@ -55110,7 +55179,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
   const _hpCount = _hpBrew ? (_hpBrew.n || 1) : (ui.potions || 0);
   const _mpCount = _mpBrew ? (_mpBrew.n || 1) : (ui.mpPotions || 0);
   const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-    : ui.herbNear ? "herb" : ui.botNear ? "bot"
+    : ui.herbNear ? "herb" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot"   // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
     : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
   const isPrompt = (name) => _promptTop === name;
   // 🎯 เดินเข้าใกล้ สายแร่/บ่อน้ำ/กอสมุนไพร → ปุ่มโจมตีกลางจอสลับเป็น ขุด/ตกปลา/เก็บ
@@ -59648,6 +59717,88 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         </div>
       )}
 
+      {ui.mode === "explore" && isPrompt("townNpc") && !ui.tailorOpen && !ui.minerOpen && !ui.kitchenOpen && !ui.herbOpen && !ui.fishBagOpen && (() => {
+        const N = (G.townNpcs || []).find((x) => x.key === ui.townNpcNear); if (!N) return null;
+        return (
+          <div ref={headPromptRef("townNpc")} style={HEAD_PROMPT}>
+            <button onClick={() => G.openTownNpc()} style={{ padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: `linear-gradient(90deg,${N.col},${N.col}cc)`, boxShadow: "0 5px 16px rgba(60,40,40,0.45)" }}>{N.label}</button>
+            <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: `7px solid ${N.col}` }} />
+          </div>
+        );
+      })()}
+      {ui.tailorOpen && (
+        <div onClick={() => setUi((u) => ({ ...u, tailorOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,14,10,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 470, maxHeight: "84%", overflowY: "auto", background: "#fdf4f8", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#8a3a6a" }}>🧵 ช่างตัดเย็บมะลิ</div>
+              <div style={{ flex: 1 }} />
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#c09020", marginRight: 10 }}>{(ui.gold || 0).toLocaleString()} 💰</div>
+              <button onClick={() => setUi((u) => ({ ...u, tailorOpen: false }))} style={{ width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f2dde8", fontWeight: 800 }}>✕</button>
+            </div>
+            <div style={{ fontSize: 11.5, color: "#a07090", marginBottom: 11 }}>เย็บมือทุกชิ้น ใส่แล้วสวมบนตัวละคร 3D ได้เลยจ้ะ · ของที่มีแล้วจะขึ้น ✓</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
+              {LOOT.filter((x) => x.sew).map((it) => {
+                const price = (G.SEW_PRICE && G.SEW_PRICE[it.rarity]) || 9000;
+                const afford = (ui.gold || 0) >= price, owned = (ui.inv || []).includes(it.id);
+                const rc = it.rarity === "epic" ? "#a24ad0" : "#3a7ad0";
+                const SL = { outfit: "เสื้อ", hat: "หมวก", gloves: "ถุงมือ", pants: "กางเกง", shoes: "รองเท้า" };
+                const stats = [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : "", it.eva ? "🌀" + it.eva : ""].filter(Boolean).join("  ");
+                return (
+                  <div key={it.id} style={{ border: "1px solid #eed8e4", borderRadius: 14, padding: "10px 11px", background: "#fff", display: "flex", flexDirection: "column", gap: 5 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <span style={{ fontSize: 24 }}>{it.emoji}</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 800, color: "#4a3a4a", lineHeight: 1.15 }}>{it.name}{owned ? " ✓" : ""}</span>
+                    </div>
+                    <div style={{ fontSize: 10.5, fontWeight: 800, color: rc }}>{it.rarity === "epic" ? "★ Epic" : "◆ Rare"} · {SL[it.slot] || it.slot}</div>
+                    <div style={{ fontSize: 11, color: "#6a5a6a" }}>{stats}</div>
+                    <button onClick={() => G.buyTailor(it.id)} disabled={!afford} style={{ marginTop: 2, padding: "7px 0", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontSize: 12, fontWeight: 800, fontFamily: font, color: afford ? "#fff" : "#a09090", background: afford ? "linear-gradient(90deg,#d878b0,#b85a98)" : "#eee" }}>{price.toLocaleString()} 💰</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+      {ui.minerOpen && (() => {
+        const cur = PICKS[Math.min(PICKS.length, Math.max(1, ui.pickLv || 1)) - 1];
+        const nx = PICKS[Math.min(PICKS.length - 1, ui.pickLv || 1)];
+        const top = !nx || nx.lv <= (ui.pickLv || 1);
+        const afford = (ui.gold || 0) >= (nx ? nx.cost : 0);
+        const mats = ui.mats || {};
+        return (
+          <div onClick={() => setUi((u) => ({ ...u, minerOpen: false }))} style={{ position: "absolute", inset: 0, background: "rgba(20,14,10,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 470, maxHeight: "84%", overflowY: "auto", background: "#fbf6ef", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#7a5a24" }}>⛏️ ลุงขุดเพชร นักขุดแร่</div>
+                <div style={{ flex: 1 }} />
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#c09020", marginRight: 10 }}>{(ui.gold || 0).toLocaleString()} 💰</div>
+                <button onClick={() => setUi((u) => ({ ...u, minerOpen: false }))} style={{ width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#efe2d2", fontWeight: 800 }}>✕</button>
+              </div>
+              <div style={{ fontSize: 11.5, color: "#a08464", marginBottom: 11 }}>สายแร่อยู่ในทุ่งกว้าง เดินไปหาแล้วขุดเอา — ลุงดูแลอีเต้อให้ และรับดูแร่ที่เจ้ามี</div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#8a5a20", marginBottom: 4 }}>⛏️ อีเต้อขุดแร่ (ตอนนี้ {cur.emoji} {cur.name} · แร่ ×{cur.yield})</div>
+              <button onClick={() => G.buyPick()} disabled={top || !afford} style={{ width: "100%", marginBottom: 12, padding: "9px 10px", borderRadius: 12, border: "none", cursor: (top || !afford) ? "not-allowed" : "pointer", fontFamily: font, background: top ? "#eee" : afford ? "#fff" : "#eee", opacity: (top || !afford) ? 0.62 : 1, display: "flex", alignItems: "center", gap: 8, textAlign: "left", boxShadow: "0 2px 8px rgba(120,80,40,0.12)" }}>
+                <span style={{ fontSize: 22 }}>{top ? cur.emoji : nx.emoji}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 12.5, fontWeight: 800, color: "#8a5a20" }}>{top ? "ขั้นสูงสุดแล้ว" : `อัปเกรดเป็น${nx.name}`}</span>
+                  <span style={{ display: "block", fontSize: 10, color: "#a08a6a" }}>{top ? cur.desc : nx.desc}</span>
+                </span>
+                {!top && <span style={{ fontSize: 12, fontWeight: 800, color: "#c09020", whiteSpace: "nowrap" }}>{nx.cost.toLocaleString()}💰</span>}
+              </button>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#8a5a20", marginBottom: 6 }}>💎 แร่ที่มีในกระเป๋า</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6 }}>
+                {Object.entries(MATERIALS).map(([k, M]) => (
+                  <div key={k} title={M.desc} style={{ background: "#fff", borderRadius: 10, padding: "6px 4px", textAlign: "center", border: "1px solid #ece0d0" }}>
+                    <div style={{ fontSize: 18 }}>{M.emoji}</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: "#8a7a60" }}>{M.name}</div>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: "#5a4a30" }}>{(mats[k] || 0).toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => { setUi((u) => ({ ...u, minerOpen: false })); if (G.setAutoCfg) G.setAutoCfg("autoMine", !G.autoMine); }} style={{ width: "100%", marginTop: 12, padding: "9px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#b0842a,#d8a84a)" }}>{G.autoMine ? "🚫⛏️ หยุดขุดแร่อัตโนมัติ" : "⛏️ เปิดขุดแร่อัตโนมัติ (ออกจากเมืองแล้วเริ่มเอง)"}</button>
+            </div>
+          </div>
+        );
+      })()}
       {ui.mode === "explore" && isPrompt("smith") && !ui.smithOpen && (
         <div ref={headPromptRef("smith")} style={HEAD_PROMPT}>
           <button onClick={() => G.openSmith()} style={{ padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#8a6a4a,#c08040)", boxShadow: "0 5px 16px rgba(120,80,40,0.55)" }}>⚒️ ช่างตีเหล็ก</button>
