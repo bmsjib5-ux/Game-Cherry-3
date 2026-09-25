@@ -2943,7 +2943,9 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Shield_OneShot: { from: 0.05, spd: 1.4 }, Melee_Hook: { from: 0.08, spd: 1.2 }, OverhandThrow: { from: 0.2, spd: 1.8 },
                       Punch_Jab: HERO_ATK_TIME, Punch_Cross: HERO_ATK_TIME, Sword_Attack: HERO_ATK_TIME, Spell_Simple_Shoot: HERO_ATK_TIME, Pistol_Shoot: HERO_ATK_TIME,
                       Hit_Head: { from: 0, spd: 1.1 },
-                      Hit_Knockback: { from: 0, spd: 1.15 }, Idle_Shield_Break: { from: 0, spd: 0.9 }, LayToIdle: { from: 0, spd: 1.25 } };   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
+                      Hit_Knockback: { from: 0, spd: 1.15 }, Idle_Shield_Break: { from: 0, spd: 0.9 }, LayToIdle: { from: 0, spd: 1.25 },
+                      Sword_Block: { from: 0.06, spd: 1.8 }, Sword_Regular_A_Rec: { from: 0, spd: 2.2 }, Sword_Regular_B_Rec: { from: 0, spd: 2.2 }, Melee_Hook_Rec: { from: 0, spd: 2.2 },   // 🗡️ ยกดาบรับ · เก็บดาบ/หมัดหลังฟันจบ
+                      Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 } };   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Idle_Loop" };                                    // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
@@ -10759,6 +10761,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         H.atkAge = (H.atkAge || 0) + dt;
         const has = (n, f) => (n && H.acts[n] ? n : f);                      // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
         const shield = heroHasShield();
+        if (H.wasAtk && H.recClip && !(sw > 0.02 || bat || G._skCast || H.atkT > 0))   // 🗡️ เพิ่งฟันจบเฟรมนี้ — ตั้งเวลาท่าเก็บดาบก่อนเลือกท่า (กันท่ายืนแวบ 1 เฟรม)
+          H.recT = H.acts[H.recClip][0].getClip().duration / ((HERO_CLIP_T[H.recClip] || {}).spd || 1);
+        if (sp > 0.25) H.recT = 0;
         let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false, opt = null;
         if (H.emote && (H.emote.t -= dt) <= 0) H.emote = null;
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
@@ -10766,19 +10771,24 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if ((G._getUpT || 0) > 0 && H.acts.LayToIdle) { want = "LayToIdle"; once = true; opt = HERO_CLIP_T.LayToIdle; }   // 🛌 ฟื้นแล้วค่อย ๆ ลุกจากพื้น
         else if ((G._pKdT || 0) > 0 && G.mode === "explore" && H.acts.Hit_Knockback) { want = "Hit_Knockback"; once = true; opt = HERO_CLIP_T.Hit_Knockback; }   // 💥 โดนบอสสตัน/โดนหนักมาก — ล้มหงายหลัง (แล้วต่อด้วยท่าลุก)
         else if (G.mode === "explore" && G.wst && G.wst.stunT > 0 && H.acts.Idle_Shield_Break) { want = "Idle_Shield_Break"; once = true; opt = HERO_CLIP_T.Idle_Shield_Break; }   // 💫 ติดสตัน — ยืนเซหมดแรง
-        else if ((G._dashT || 0) > 0) want = "Roll";
+        else if ((G._dashT || 0) > 0) { if (G._dashSlide && H.acts.Slide_Start) { want = "Slide_Start"; once = true; opt = HERO_CLIP_T.Slide_Start; } else want = "Roll"; }
+        else if ((G._slideExitT || 0) > 0 && H.acts.Slide_Exit) { want = "Slide_Exit"; once = true; opt = HERO_CLIP_T.Slide_Exit; }   // 🛷 ลุกจากสไลด์
         else if ((G._jumpT || 0) > 0) want = (G._jumpN || 1) >= 2 && H.acts.NinjaJump_Idle_Loop ? "NinjaJump_Idle_Loop" : "Jump_Loop";   // 🦘 ชั้นแรก = ท่ากระโดดเดิม · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
         else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(H.atkClip, has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross")); once = true; atk = true; opt = HERO_CLIP_T[want] || HERO_ATK_TIME; }   // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
-        else if (H.hurtT > 0) {                           // 💥 ถือโล่ = ยกโล่รับ · ไม่มีโล่ = สะดุ้งสลับอก/หัว
-          want = shield ? has("Shield_OneShot", "Hit_Chest") : (H.hurtN & 1 ? has("Hit_Head", "Hit_Chest") : "Hit_Chest"); once = true; opt = HERO_CLIP_T[want] || null;
+        else if (H.hurtT > 0) {                           // 💥 ถือโล่ = ยกโล่รับ · ถือดาบยืนนิ่ง = ยกดาบรับสลับสะดุ้ง · มือเปล่า = สะดุ้งสลับอก/หัว
+          const swordBlock = !shield && HERO_IDLE[G.cls] === "Sword_Idle" && sp <= 0.25 && !(H.hurtN & 1) && H.acts.Sword_Block;
+          want = shield ? has("Shield_OneShot", "Hit_Chest") : swordBlock ? "Sword_Block" : (H.hurtN & 1 ? has("Hit_Head", "Hit_Chest") : "Hit_Chest"); once = true; opt = HERO_CLIP_T[want] || null;
           if (shield && H.shieldFxN !== H.hurtN) { H.shieldFxN = H.hurtN; if (G._skillFxAt) G._skillFxAt("shieldaura", char.position.x, char.position.z, 0xffffff); }   // 🛡️ ออร่าโล่วาบทุกครั้งที่ยกโล่รับ
         }
+        else if (H.recT > 0 && sp <= 0.25 && H.acts[H.recClip]) { want = H.recClip; once = true; opt = HERO_CLIP_T[H.recClip]; }   // 🗡️ ฟันจบแล้วเก็บดาบ/ตั้งการ์ดก่อนกลับท่ายืน (เดินแล้วยกเลิก)
         else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = true; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
         else if (sp > 3.9) want = "Sprint_Loop";   // 🏃 วิ่ง (กดซ้ำ/คลิกซ้ำ) = 4.4 → ท่าวิ่งเต็มฝีเท้า
         else if (sp > 2.6) want = "Jog_Fwd_Loop";
         else if (sp > 0.25) want = "Walk_Loop";
         if (sp > 0.25 && H.emote) H.emote = null;
         if (atk && G.cls === "archer") { want = has("Pistol_Idle_Loop", want); once = false; atk = false; opt = null; }   // 🏹 ค้างท่าเล็งสองมือตลอดช่วงยิง (คลิปยิงจบใน 0.2 วิแล้วลดแขนลง เหลือแค่ยกมือแว้บเดียว)
+        if (atk) { H.recClip = H.acts[want + "_Rec"] ? want + "_Rec" : null; H.recT = 0; }   // จำไว้ว่าเพิ่งฟันท่าไหน
+        H.wasAtk = atk; if (H.recT > 0) H.recT = Math.max(0, H.recT - dt);
         heroPlay(want, once, opt);
         H.mixers.forEach((m) => m.update(dt));
         if (H.tk || H.deco) { H.g.updateMatrixWorld(true); if (H.tk) heroTopknotTick(H); if (H.deco) H.deco.forEach((K) => heroBoneFollow(H, K)); }
@@ -25723,7 +25733,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🎬 Kalponic Free Stylized Sprite VFX (CC BY 4.0) — เฟรมไล่ภาพจริง (16 เฟรม) รวมเป็น sprite sheet ตาราง 128px
     //    ต่างจาก Kenney ที่เป็นภาพนิ่ง: ใช้กับของที่ "เล่นเป็นชุด" — รอยฟันดาบ / ประกายฮีล / โล่รับ / ป้ายเควส
     const KALP_BASE = "assets/kalponic/";
-    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2], fireflies: [16, 4, 4], butterfly: [16, 4, 4], leaves: [15, 4, 4],
+    const KALP = { slash: [16, 4, 4], heal: [16, 4, 4], shield: [7, 4, 2], quest: [16, 4, 4], questdone: [16, 4, 4], bonfire: [16, 4, 4], torch: [16, 4, 4], smoke: [8, 4, 2], fireflies: [16, 4, 4],
       // 🔮 CraftPix "Free Water and Fire Magic" (royalty-free) — กระสุนเวทไล่เฟรม 8 เฟรม · ภาพหันหน้าไปทางซ้าย = ทิศพุ่ง · [เฟรม, คอลัมน์, แถว, ไฟล์, อัตราส่วนกว้าง/สูง]
       firearrow: [8, 4, 2, "assets/craftpix/magic/firearrow.png", 300 / 160], fireball: [8, 4, 2, "assets/craftpix/magic/fireball.png", 1], firespell: [8, 4, 2, "assets/craftpix/magic/firespell.png", 320 / 180],
       waterarrow: [8, 4, 2, "assets/craftpix/magic/waterarrow.png", 240 / 180], waterball: [8, 4, 2, "assets/craftpix/magic/waterball.png", 1], waterspell: [8, 4, 2, "assets/craftpix/magic/waterspell.png", 320 / 180] };   // [เฟรม, คอลัมน์, แถว]
@@ -25806,45 +25816,32 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // 🌿 บรรยากาศโลกกว้าง (Kalponic FireFlies · Butterfly · Leaves Falling) — ภาพแต่ละเฟรมเป็น "ฝูง" (ผีเสื้อหลายสิบตัว / ใบไม้หลายสิบใบ / จุดหิ่งห้อยทั่วผืน)
     //    ไล่เฟรมแล้วฝูงจะค่อย ๆ แผ่ออก → วางเป็นฝูงใหญ่ไม่กี่จุดรอบตัวผู้เล่น ไม่ใช่ตัวเดียวโดด ๆ
-    //    🪲 หิ่งห้อย = กลางคืนด่านที่มีหญ้า/ป่า · 🦋 ผีเสื้อ = กลางวันด่านทุ่ง/ป่า · 🍂 ใบไม้ร่วง = ด่านที่มีต้นไม้ (ทุ่งซากุระ/อเมซอน)
+    //    🪲 หิ่งห้อย = กลางคืนด่านที่มีหญ้า/ป่า/ถ้ำ (ผีเสื้อ/ใบไม้ร่วงเอาออกแล้วตามที่ผู้เล่นขอ)
     //    ฝูงไหนหลุดรัศมี AMB_R จากผู้เล่น จะย้ายไปโผล่ฝั่งตรงข้ามเงียบ ๆ (เดินไปไหนก็ยังมีรอบตัว)
     const AMB_R = 13;   // กล้องเห็นรอบตัวแค่ราว ๆ 12-14 หน่วย — กว้างกว่านี้สไปรท์ส่วนใหญ่จะอยู่นอกจอ
-    const AMB_BIOME = { meadow: { ff: 1, bf: 1, lf: 1 }, amazon: { ff: 1, bf: 1, lf: 1 }, candy: { bf: 1 }, heaven: { bf: 1 }, beach: { bf: 0.5 }, snow: {}, cave: { ff: 0.6 }, sky: { bf: 0.7 } };
+    const AMB_BIOME = { meadow: { ff: 1 }, amazon: { ff: 1 }, cave: { ff: 0.6 } };   // 🦋🍂 เอาผีเสื้อ/ใบไม้ร่วงออกแล้ว (ผู้เล่นขอ) — เหลือหิ่งห้อยกลางคืน
     let ambFx = null;
     const ambSpot = (o) => { const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (AMB_R - 3); o.x = char.position.x + Math.cos(a) * r; o.z = char.position.z + Math.sin(a) * r; };
     const ambInit = () => {
-      ambFx = { g: new THREE.Group(), ff: [], bf: [], lf: [] }; ambFx.g.name = "ambientFx"; scene.add(ambFx.g);
+      ambFx = { g: new THREE.Group(), ff: [] }; ambFx.g.name = "ambientFx"; scene.add(ambFx.g);
       const mk = (arr, name, n, size, add, mkU) => { for (let i = 0; i < n; i++) { const F = kFlip(name, size * (0.85 + Math.random() * 0.4), { add }); F.sp.renderOrder = 4; F.sp.frustumCulled = false; ambFx.g.add(F.sp); const o = { F, u: mkU(i) }; ambSpot(o); arr.push(o); } };
       mk(ambFx.ff, "fireflies", 6, 12, true, () => ({ y: 1.6, ph: Math.random() * 9, spd: 0.22 + Math.random() * 0.1, drift: 0.1 + Math.random() * 0.15 }));
-      mk(ambFx.bf, "butterfly", 5, 7.5, false, () => ({ y: 1.4, ph: Math.random() * 9, spd: 0.16 + Math.random() * 0.06, vx: (Math.random() - 0.5) * 0.8, vz: (Math.random() - 0.5) * 0.8, turnT: 0 }));
-      mk(ambFx.lf, "leaves", 5, 8.5, false, () => ({ top: 6.5 + Math.random() * 2, drop: 5.5, ph: Math.random() * 9, spd: 0.13 + Math.random() * 0.05, sway: 0.5 + Math.random() * 0.5 }));
     };
     const ambWrap = (o) => {                           // หลุดรัศมี → โผล่ฝั่งตรงข้าม
       const dx = o.x - char.position.x, dz = o.z - char.position.z;
       if (Math.hypot(dx, dz) > AMB_R) { const a = Math.atan2(dz, dx) + Math.PI + (Math.random() - 0.5) * 0.8, r = AMB_R * (0.6 + Math.random() * 0.35); o.x = char.position.x + Math.cos(a) * r; o.z = char.position.z + Math.sin(a) * r; }
     };
     G.ambientFxTick = (dt, t) => {
-      if (!ambFx) { try { ambInit(); } catch (_) { ambFx = { g: new THREE.Group(), ff: [], bf: [], lf: [] }; } }
+      if (!ambFx) { try { ambInit(); } catch (_) { ambFx = { g: new THREE.Group(), ff: [] }; } }
       const b = BIOMES[G.curBiome] || BIOMES[0], cfg = AMB_BIOME[b.id] || {};
       const on = G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.dungeon;
       ambFx.g.visible = on; if (!on) return;
       const day = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1, night = Math.max(0, Math.min(1, (0.55 - day) / 0.4));
-      const ffA = (cfg.ff || 0) * night, bfA = (cfg.bf || 0) * Math.max(0, Math.min(1, (day - 0.35) / 0.35)), lfA = cfg.lf || 0;
+      const ffA = (cfg.ff || 0) * night;
       const gy = (x, z) => (typeof terrainAt === "function" ? terrainAt(x, z) : 0);
       for (const o of ambFx.ff) { const u = o.u, sp = o.F.sp; if (ffA <= 0.01) { sp.visible = false; continue; } sp.visible = true;
         o.x += Math.cos(t * 0.3 + u.ph) * u.drift * dt; o.z += Math.sin(t * 0.25 + u.ph * 1.3) * u.drift * dt; ambWrap(o);
         sp.position.set(o.x, gy(o.x, o.z) + u.y, o.z); o.F.set(t * u.spd + u.ph); sp.material.opacity = ffA * (0.8 + 0.2 * Math.sin(t * 1.7 + u.ph * 4)); }
-      for (const o of ambFx.bf) { const u = o.u, sp = o.F.sp; if (bfA <= 0.01) { sp.visible = false; continue; } sp.visible = true;
-        u.turnT -= dt; if (u.turnT <= 0) { u.turnT = 2 + Math.random() * 3; const a = Math.random() * Math.PI * 2, v = 0.3 + Math.random() * 0.6; u.vx = Math.cos(a) * v; u.vz = Math.sin(a) * v; }
-        o.x += u.vx * dt; o.z += u.vz * dt; ambWrap(o);
-        const cyc = (t * u.spd + u.ph) % 1;
-        sp.position.set(o.x, gy(o.x, o.z) + u.y + cyc * 1.2, o.z); o.F.set(cyc); sp.material.opacity = bfA * Math.min(1, (1 - cyc) * 4); }   // ฝูงลอยขึ้นตามเฟรมที่แผ่ออก แล้วจางตอนวนรอบใหม่
-      const lfCol = b.id === "meadow" ? 0xffb8d0 : 0xffffff;   // 🌸 ทุ่งซากุระ = ย้อมใบไม้เป็นกลีบชมพู (ใบเขียวบนหญ้าเขียวมองไม่ออก)
-      for (const o of ambFx.lf) { const u = o.u, sp = o.F.sp; if (lfA <= 0.01) { sp.visible = false; continue; } sp.visible = true; if (sp.material.color.getHex() !== lfCol) sp.material.color.setHex(lfCol);
-        const cyc = (t * u.spd + u.ph) % 1;
-        if (cyc < u.last) ambSpot(o); u.last = cyc;   // ครบรอบ = ย้ายฝูงไปจุดใหม่
-        o.x += Math.sin(t * 0.8 + u.ph) * u.sway * dt; ambWrap(o);
-        sp.position.set(o.x, gy(o.x, o.z) + u.top - cyc * u.drop, o.z); o.F.set(cyc); sp.material.rotation = Math.sin(t * 0.9 + u.ph) * 0.25; sp.material.opacity = lfA * Math.min(1, (1 - cyc) * 3); }   // ใบไม้แผ่ออกพร้อมร่วงลง จางก่อนถึงพื้น
     };
     G.villageFxTick = (t) => {
       if (!vfxHub) { try { villageFxInit(); } catch (_) { vfxHub = new THREE.Group(); } }
@@ -32140,6 +32137,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       if (G._kdImm > 0) G._kdImm = Math.max(0, G._kdImm - dt);
       if (G._getUpT > 0) G._getUpT = Math.max(0, G._getUpT - dt);
+      if (G._slideExitT > 0) G._slideExitT = Math.max(0, G._slideExitT - dt);
       const W = G.wst;
       if (W) {
         if (W.stunT > 0) W.stunT = Math.max(0, W.stunT - dt);
@@ -32714,9 +32712,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       } else if ((G._dashCd || 0) > 0) return false;
       const a = char.rotation.y;
       const mul = G.qingDashMul ? G.qingDashMul() : 1;
-      G._dashT = 0.0001; G._dashDur = 0.30;
+      const spNow = G.vel ? Math.hypot(G.vel.x || 0, G.vel.z || 0) : 0;
+      G._dashSlide = !air && spNow > 3.9;                                       // 🛷 กำลังวิ่งเต็มฝีเท้า → สไลด์ไถพื้น (เดิน/ยืน = ม้วนตัวแบบเดิม)
+      G._dashT = 0.0001; G._dashDur = G._dashSlide ? 0.42 : 0.30;
       if (!air) G._dashCd = 0.85 * (G.qingDashCd ? G.qingDashCd() : 1);
-      G._dashVX = Math.sin(a) * 44 * mul; G._dashVZ = Math.cos(a) * 44 * mul;   // ≈ 4.4 ช่อง (มีวิชา = 5.7 ช่อง)
+      const dv = 44 * mul * 0.30 / G._dashDur;                                  // ระยะพุ่งเท่าเดิม — สไลด์นานกว่าแต่ความเร็วต้นต่ำกว่า
+      G._dashVX = Math.sin(a) * dv; G._dashVZ = Math.cos(a) * dv;   // ≈ 4.4 ช่อง (มีวิชา = 5.7 ช่อง)
       if (G.qingEvent) G.qingEvent("dash", 1);                                  // 📜 นับเควสพิเศษขั้น 2
       if (G.sfx && G.sfx.button) G.sfx.button();
       return true;
@@ -32733,7 +32734,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         pushOut(char, 0.45);                                   // 🌳 พุ่งชนต้นไม้/บ้านแล้วไม่ทะลุ
         { const rr = Math.hypot(char.position.x, char.position.z), lim = FIELD_R - 0.3;
           if (rr > lim) { char.position.x *= lim / rr; char.position.z *= lim / rr; } }   // ไม่หลุดขอบแมพ
-        if (G._dashT >= G._dashDur) G._dashT = 0;
+        if (G._dashSlide && Math.random() < dt * 22) dustPuff(char.position.x, char.position.z, 0.5);   // 🛷 ฝุ่นฟุ้งตามรอยสไลด์
+        if (G._dashT >= G._dashDur) { G._dashT = 0; if (G._dashSlide) G._slideExitT = 0.25; G._dashSlide = false; }
       }
       if ((G._jumpT || 0) > 0) {
         G._jumpT += dt;
