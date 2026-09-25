@@ -31963,7 +31963,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (m.userData.lbl) m.userData.lbl.sprite.visible = false;
       if (m.userData.hpbar) { m.remove(m.userData.hpbar); m.userData.hpbar = null; }
       stFxDrop(m.userData);
+      popPoseEnd(m);
       if (m.parent && m.visible) {   // 💀💨 ตีปลิว — ร่างกระเด็นหมุนออกไปทางที่โดนตี แล้วค่อยสลายเป็นฝุ่น
+        m.children.forEach((c) => { if (isGroundKid(c)) c.visible = false; });   // 🔴 ตายแล้ว — วงบนพื้นหายไป ไม่ปลิวตามร่าง
         const big = m.userData.boss || m.userData.caveBoss;
         const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z, dl = Math.hypot(dx, dz) || 1, v = big ? 2.2 : 6.5;
         deathFly.push({ m, vx: (dx / dl) * v, vz: (dz / dl) * v, vy: big ? 3 : 7, y0: m.position.y, t: 0, s0: m.scale.x, spin: (Math.random() < 0.5 ? -1 : 1) * (big ? 3 : 11) });
@@ -32079,6 +32081,22 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       kImpact(m.position.x, 0.8, m.position.z, 0xffe9a0, 0.8);
     };
     G.launchMon = launchMon;
+    // 🤸 ท่าตีลังกา — หมุนเฉพาะ "ตัว" รอบจุดกลางลำตัว · วงบนพื้น (วงแดง/วงประกาย/วงทอง/เงา) ค้างอยู่ที่พื้นตลอดไม่พลิกตาม
+    const _popQ = new THREE.Quaternion(), _popAx = new THREE.Vector3(1, 0, 0), _popP = new THREE.Vector3();
+    const isGroundKid = (c) => c.isMesh && c.geometry && /Ring|Torus|Circle|Plane/.test(c.geometry.type) && c.position.y < 0.16 && Math.abs(Math.abs(c.rotation.x) - Math.PI / 2) < 0.02;
+    const popPose = (m, ang, lift) => {
+      const U = m.userData;
+      if (!U._popKids) U._popKids = m.children.map((c) => ({ c, p: c.position.clone(), q: c.quaternion.clone(), g: isGroundKid(c), keep: c.isSprite || c === U.hpbar }));
+      const sy = m.scale.y || 1, piv = 0.5;
+      _popQ.setFromAxisAngle(_popAx, ang);
+      for (const k of U._popKids) {
+        if (k.keep) continue;
+        if (k.g) { k.c.position.set(k.p.x, k.p.y - lift / sy, k.p.z); continue; }   // 🔴 ค้างที่พื้น
+        _popP.set(k.p.x, k.p.y - piv, k.p.z).applyQuaternion(_popQ); k.c.position.set(_popP.x, _popP.y + piv, _popP.z);
+        k.c.quaternion.copy(_popQ).multiply(k.q);
+      }
+    };
+    const popPoseEnd = (m) => { const U = m.userData; if (!U._popKids) return; for (const k of U._popKids) { k.c.position.copy(k.p); k.c.quaternion.copy(k.q); } U._popKids = null; };
     // 🎯 ผลติดสถานะตอนเราตีโดน — สกิลสตันมีโอกาสสตัน (ไม่ติดก็มึน) · สกิลพิษ = ติดพิษ · สกิลหนัก = ทุบลอย
     const statusOnHit = (m, sk, crit, heavy) => {
       const U = m && m.userData; if (!U || U.whp <= 0 || U.mapBoss) return;
@@ -43500,10 +43518,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const U = m.userData;
           U.popT = Math.max(0, U.popT - dt);
           const pq = Math.max(0, Math.min(1, 1 - U.popT / (U.popD || 1)));
-          m.position.y += Math.sin(pq * Math.PI) * (U.popH || 1.6);                       // 🏔️ ลอยจากระดับพื้นจริง (เดิมอิง y=0)
-          if (U.popSpin) m.rotation.x = pq * Math.PI * 2 * U.popSpin;                      // 🤸 ตีลังกากลางอากาศ
+          const lift = Math.sin(pq * Math.PI) * (U.popH || 1.6);
+          m.position.y += lift;                                                           // 🏔️ ลอยจากระดับพื้นจริง (เดิมอิง y=0)
+          popPose(m, U.popSpin ? pq * Math.PI * 2 * U.popSpin : 0, lift);                  // 🤸 ตีลังกากลางอากาศ — วงแดงค้างที่พื้น
           if (U.popT <= 0) {
-            m.rotation.x = 0;
+            popPoseEnd(m);
             if (U.popLand) { U.popLand = 0; dustRing(m.position.x, m.position.z, Math.min(1.6, 0.8 + (U.popH || 1) * 0.3));   // 💥 ร่วงกระแทกพื้น — ฝุ่นวง + มึน
               G._camShake = Math.max(G._camShake || 0, 0.12); if (!(U.stunT > 0)) U.dazeT = Math.max(U.dazeT || 0, 1.5); }
           }
