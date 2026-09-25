@@ -31962,7 +31962,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (m.userData.twr && G.twrKill) G.twrKill(m);   // 🗼 หอคอย — นับจำนวนที่เหลือของชั้นนี้
       if (m.userData.lbl) m.userData.lbl.sprite.visible = false;
       if (m.userData.hpbar) { m.remove(m.userData.hpbar); m.userData.hpbar = null; }
-      if (m.parent) m.parent.remove(m); else scene.remove(m);
+      stFxDrop(m.userData);
+      if (m.parent && m.visible) {   // 💀💨 ตีปลิว — ร่างกระเด็นหมุนออกไปทางที่โดนตี แล้วค่อยสลายเป็นฝุ่น
+        const big = m.userData.boss || m.userData.caveBoss;
+        const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z, dl = Math.hypot(dx, dz) || 1, v = big ? 2.2 : 6.5;
+        deathFly.push({ m, vx: (dx / dl) * v, vz: (dz / dl) * v, vy: big ? 3 : 7, y0: m.position.y, t: 0, s0: m.scale.x, spin: (Math.random() < 0.5 ? -1 : 1) * (big ? 3 : 11) });
+      } else if (m.parent) m.parent.remove(m); else scene.remove(m);
       const idx = wilds.indexOf(m); if (idx >= 0) wilds.splice(idx, 1);
       if (G.huntTarget === m) G.huntTarget = null;
       syncPlayer();
@@ -31998,7 +32003,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const dl = Math.hypot(dx, dz) || 1;
         const kb = (opts.crit ? 0.9 : 0.5) * (m.userData.boss ? 0.3 : 1) / Math.max(1, m.scale.x || 1);
         m.userData.kbx = (dx / dl) * kb; m.userData.kbz = (dz / dl) * kb;
-        m.userData.flinch = 1; }
+        m.userData.flinch = 1; m.userData._kbDone = false; }
+      if (!opts.basic && !opts.noStop && G._stSk && performance.now() < G._stSk.until) statusOnHit(m, G._stSk.sk, opts.crit, G._stSk.heavy);
       m.userData.aggro = true;
       wildBar(m); updateWildBar(m);
       if (m.userData.whp <= 0) killWild(m);
@@ -32010,6 +32016,134 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const d = m.userData.dot;
       const stack = d && d.kind === kind ? d.dmg + dmg * 0.5 : dmg;      // ☠️ พิษสะสม — ต่อยอดจากกองเดิม
       m.userData.dot = { kind, dmg: Math.max(1, Math.round(stack)), t: Math.max(d ? d.t : 0, dur), iv: 0.5, next: 0.5, col: col || 0x7ad04a };
+    };
+    // 💫😵☠️ สถานะผิดปกติ (โลกกว้าง/ดันเจี้ยน) — ไอคอนลอยเหนือหัวทั้งตัวเราและมอนสเตอร์
+    //    สตัน = ดาว 3 ดวงวนรอบหัว · มึนงง = วงก้นหอยหมุน · ติดพิษ = หัวกะโหลกเขียว + ฟองพิษลอยขึ้น
+    const stTex = (() => {
+      const mk = (draw) => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d"); x.translate(32, 32); draw(x); return new THREE.CanvasTexture(c); };
+      return {
+        star: mk((x) => { x.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 11 : 27, a = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); } x.closePath();
+          x.lineJoin = "round"; x.lineWidth = 5; x.strokeStyle = "#7a4a00"; x.stroke(); x.fillStyle = "#ffe14a"; x.fill(); x.fillStyle = "#fffbd8"; x.beginPath(); x.arc(-5, -7, 5, 0, 7); x.fill(); }),
+        swirl: mk((x) => { const path = () => { x.beginPath(); for (let k = 0; k <= 60; k++) { const a = k * 0.21, r = 2 + k * 0.45; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); } };
+          x.lineCap = "round"; path(); x.lineWidth = 9; x.strokeStyle = "#2a0f4a"; x.stroke(); path(); x.lineWidth = 5; x.strokeStyle = "#c89aff"; x.stroke(); }),
+        skull: mk((x) => { x.fillStyle = "#1c4a14"; x.beginPath(); x.arc(0, 0, 29, 0, 7); x.fill(); x.fillStyle = "#6ad04a"; x.beginPath(); x.arc(0, 0, 25, 0, 7); x.fill();
+          x.fillStyle = "#f4ffe8"; x.beginPath(); x.arc(0, -4, 14, 0, 7); x.fill(); x.fillRect(-8, 6, 16, 10);
+          x.fillStyle = "#1c4a14"; x.beginPath(); x.arc(-5.5, -4, 4.2, 0, 7); x.arc(5.5, -4, 4.2, 0, 7); x.fill(); x.fillRect(-1.5, 2, 3, 4); x.fillRect(-5, 12, 2, 4); x.fillRect(-1, 12, 2, 4); x.fillRect(3, 12, 2, 4); }),
+        bubble: mk((x) => { x.fillStyle = "rgba(122,224,74,0.85)"; x.beginPath(); x.arc(0, 0, 24, 0, 7); x.fill(); x.strokeStyle = "#2a6a1a"; x.lineWidth = 4; x.stroke(); x.fillStyle = "rgba(255,255,255,0.85)"; x.beginPath(); x.arc(-8, -8, 6, 0, 7); x.fill(); }),
+      };
+    })();
+    const stFxReg = new Set();                   // ตัวที่มีกลุ่มไอคอนอยู่ (ไว้เก็บกวาดเมื่อหายไปจากฉาก)
+    const stFxMake = () => {
+      const g = new THREE.Group(); g.renderOrder = 998;
+      const mk = (tex, s) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false })); sp.scale.set(s, s, 1); sp.renderOrder = 998; g.add(sp); return sp; };
+      const F = { g, stars: [0, 1, 2].map(() => mk(stTex.star, 0.3)), swirl: mk(stTex.swirl, 0.56), skull: mk(stTex.skull, 0.42), bubs: [0, 1, 2].map(() => mk(stTex.bubble, 0.14)) };
+      scene.add(g); return F;
+    };
+    const stFxDrop = (U) => { const F = U && U._stFx; if (!F) return; scene.remove(F.g); F.g.children.forEach((s) => s.material.dispose()); U._stFx = null; stFxReg.delete(U); };
+    const stFxSet = (U, x, y, z, st, t, sc) => {
+      let F = U._stFx;
+      if (!(st.stun || st.daze || st.poison)) { if (F) stFxDrop(U); return; }
+      if (!F) { F = U._stFx = stFxMake(); stFxReg.add(U); }
+      U._stSeen = true;
+      F.g.visible = true; F.g.position.set(x, y, z); F.g.scale.setScalar(sc || 1);
+      F.stars.forEach((s, i) => { s.visible = !!st.stun; if (!st.stun) return; const a = t * 5 + i * 2.094; s.position.set(Math.cos(a) * 0.4, Math.sin(a * 2) * 0.05, Math.sin(a) * 0.4); s.material.rotation = t * 4 + i; });
+      F.swirl.visible = !!st.daze;
+      if (st.daze) { F.swirl.material.rotation = -t * 7; F.swirl.position.set(0, st.stun ? 0.36 : 0.08, 0); const s = 0.5 + Math.sin(t * 5) * 0.06; F.swirl.scale.set(s, s, 1); }
+      const px = st.stun || st.daze ? 0.46 : 0;
+      F.skull.visible = !!st.poison; if (st.poison) F.skull.position.set(px, 0.14 + Math.sin(t * 3) * 0.05, 0);
+      F.bubs.forEach((b, i) => { b.visible = !!st.poison; if (!st.poison) return; const ph = (t * 0.9 + i / 3) % 1; b.position.set(px + Math.sin(i * 2.1 + t * 2) * 0.17, -0.25 + ph * 0.75, Math.cos(i * 1.7) * 0.08); b.material.opacity = Math.sin(ph * Math.PI); const s = 0.08 + ph * 0.1; b.scale.set(s, s, 1); });
+    };
+    // 🌪️💨 ฝุ่นฟุ้งจากพื้น (ตอนตกกระแทก / ถูกกระเด็นไถไปกับพื้น)
+    const dustPuff = (x, z, size, col) => {
+      const S = size || 1;
+      kfxSpawn(x, z, 0.5, (g) => {
+        const sm = kSprite("smoke_05", col == null ? 0xcbb89a : col, 0.7 * S, { normal: true, op: 0.75, rot: Math.random() * 6 }); sm.position.y = 0.25; g.add(sm);
+        return (pr) => { sm.material.opacity = 0.75 * (1 - pr); sm.scale.setScalar((0.7 + pr * 1.1) * S); sm.position.y = 0.25 + pr * 0.4; };
+      });
+    };
+    const dustRing = (x, z, size) => {
+      const S = size || 1;
+      kfxSpawn(x, z, 0.45, (g) => {
+        const ring = kDecal("circle_03", 0xe8d8b0, 1, 0.06); g.add(ring);
+        const cr = kDecal("dirt_02", 0x8a6a4a, 1.4 * S, 0.05); g.add(cr);
+        return (pr) => { const r = kEase(pr, 0, 0.8); ring.material.opacity = (1 - r) * 0.9; ring.scale.setScalar((0.6 + r * 2.6) * S); cr.material.opacity = 0.8 * (1 - pr); };
+      });
+      for (let k = 0; k < 4; k++) { const a = k * 1.571 + Math.random(); dustPuff(x + Math.cos(a) * 0.6 * S, z + Math.sin(a) * 0.6 * S, 0.8 * S); }
+    };
+    // 🚀 ทุบลอย — ส่งมอนขึ้นฟ้า หมุนตีลังกา แล้วร่วงลงกระแทกพื้น (ฝุ่นวง + มึนตอนลงพื้น)
+    const launchMon = (m, h, spin) => {
+      const U = m && m.userData; if (!U || U.mapBoss) return;
+      const big = U.boss || U.caveBoss;
+      const H = (h || 1.6) * (big ? 0.35 : 1), D = 0.55 + H * 0.22;
+      U.popH = H; U.popD = D; U.popT = D; U.popSpin = spin === false ? 0 : (Math.random() < 0.5 ? -1 : 1); U.popLand = 1;
+      kImpact(m.position.x, 0.8, m.position.z, 0xffe9a0, 0.8);
+    };
+    G.launchMon = launchMon;
+    // 🎯 ผลติดสถานะตอนเราตีโดน — สกิลสตันมีโอกาสสตัน (ไม่ติดก็มึน) · สกิลพิษ = ติดพิษ · สกิลหนัก = ทุบลอย
+    const statusOnHit = (m, sk, crit, heavy) => {
+      const U = m && m.userData; if (!U || U.whp <= 0 || U.mapBoss) return;
+      const big = U.boss || U.caveBoss;
+      if (sk && sk.stun) {
+        if (!(U.stunImm > 0) && Math.random() < (big ? 0.25 : 0.6)) { U.stunT = big ? 0.8 : 1.8; U.stunImm = U.stunT + 1.5; }
+        else if (!(U.stunT > 0)) U.dazeT = Math.max(U.dazeT || 0, 2.5);
+        if (!big && !(U.popT > 0) && (heavy || crit)) launchMon(m, crit ? 2.0 : 1.5);
+      } else if (sk && heavy && !big && !(U.popT > 0) && crit) launchMon(m, 1.4);
+      if (sk && sk.poison && !(U.dot && U.dot.kind === "poison")) applyDot(m, "poison", Math.max(1, Math.round(effAtk() * 0.04 * sk.poison)), 5, 0x7ad04a);
+      if (!sk && crit && !big && Math.random() < 0.15) U.dazeT = Math.max(U.dazeT || 0, 2);   // 🗡️ คริจากการตีธรรมดา — มีโอกาสตีจนมึน
+    };
+    G.statusOnHit = statusOnHit;
+    // 👾➡️🧍 มอนบางเผ่าทำให้เราติดสถานะ: งู/ใบบัว/ก็อบลิน/ยมทูต = พิษ · มนุษย์ถ้ำ/ไวกิ้ง/ไททัน/เสือ/ครุฑ/มังกร/บอส = สตัน · เมฆ/สไลม์ลม/ผี/นก/ดาว = มึน
+    const WST_POISON = { ngu: 1, baibua: 1, goblin2d: 1, yommathut: 1 };
+    const WST_STUN = { caveman2d: 1, viking2d: 1, stonetitan: 1, saming: 1, garuda: 1, mangkorn: 1 };
+    const WST_DAZE = { mekha: 1, wayu: 1, phi: 1, paksi: 1, taara: 1, kirara: 1 };
+    const wstInflict = (m, raw) => {
+      const W = G.wst || (G.wst = {}), U = m.userData, sp = U.spId, big = U.boss || U.caveBoss || U.mapBoss, r = Math.random();
+      if ((WST_STUN[sp] || big) && r < (big ? 0.22 : 0.15)) { if (!(W.stunImm > 0) && !(W.stunT > 0)) { W.stunT = big ? 1.3 : 1.0; W.stunImm = W.stunT + 3; } }
+      else if (WST_DAZE[sp] && r < 0.2) W.dazeT = Math.max(W.dazeT || 0, 2.5);
+      else if (WST_POISON[sp] && r < 0.25) { W.psnT = 5; W.psnDmg = Math.max(1, Math.round(raw * 0.18)); W.psnNext = Math.min(W.psnNext || 0.6, 0.6); }
+    };
+    G.wstClear = () => { G.wst = {}; };
+    const deathFly = [];                         // 💀💨 มอนที่ตายแล้วถูกกระเด็นปลิวออกไป (ตัวจริงหลุดจาก wilds แล้ว เหลือแค่ภาพ)
+    const _stV = new THREE.Vector3();
+    const stFxTick = (dt, t) => {
+      // 🧍 สถานะบนตัวเรา
+      const W = G.wst;
+      if (W) {
+        if (W.stunT > 0) W.stunT = Math.max(0, W.stunT - dt);
+        if (W.stunImm > 0) W.stunImm = Math.max(0, W.stunImm - dt);
+        if (W.dazeT > 0) W.dazeT = Math.max(0, W.dazeT - dt);
+        if (W.psnT > 0) {
+          W.psnT -= dt; W.psnNext -= dt;
+          if (W.psnNext <= 0 && G.mode === "explore") {
+            W.psnNext = 0.6;
+            if (G.player.hp > 1) { const d = Math.min(W.psnDmg || 1, G.player.hp - 1); G.player.hp -= d; popDamage(char.position, d, "hit"); syncPlayer(); }   // ☠️ พิษไม่ฆ่า — ค้างไว้ที่ 1 HP
+          }
+        }
+      }
+      const pst = G.mode === "explore" && W ? { stun: W.stunT > 0, daze: W.dazeT > 0, poison: W.psnT > 0 } : {};
+      const PU = char.userData;
+      stFxSet(PU, char.position.x, char.position.y + (PU.headY || 2.62) + 0.62, char.position.z, pst, t, 1.15);
+      // 👾 สถานะบนมอนสเตอร์
+      for (const m of wilds) {
+        const U = m.userData;
+        if (!U._stFx && !(U.stunT > 0) && !(U.dazeT > 0) && !U.dot) continue;
+        if (!m.visible || !m.parent || (G.dungeon ? !U.twr : U.twr)) { if (U._stFx) stFxDrop(U); continue; }
+        let hy;
+        if (U.lbl && U.lbl.sprite) { U.lbl.sprite.getWorldPosition(_stV); hy = _stV.y + 0.62; } else hy = m.position.y + 1.8 * (m.scale.y || 1);
+        stFxSet(U, m.position.x, hy, m.position.z, { stun: U.stunT > 0, daze: U.dazeT > 0, poison: !!(U.dot && (U.dot.kind === "poison" || U.dot.kind === "corrode")) }, t, U.boss ? 1.7 : 1.3);
+      }
+      stFxReg.forEach((U) => { if (U === PU) return; if (!U._stSeen) stFxDrop(U); U._stSeen = false; });
+      if (PU._stFx) PU._stSeen = false;
+      // 💀💨 ร่างที่ถูกตีปลิว
+      for (let i = deathFly.length - 1; i >= 0; i--) {
+        const D = deathFly[i], m = D.m; D.t += dt;
+        m.position.x += D.vx * dt; m.position.z += D.vz * dt; D.vy -= 20 * dt; m.position.y = Math.max(D.y0, m.position.y + D.vy * dt);
+        m.rotation.x += D.spin * dt; m.rotation.z += D.spin * 0.35 * dt;
+        if (D.t > 0.5) m.scale.setScalar(D.s0 * Math.max(0.05, 1 - (D.t - 0.5) / 0.35));
+        if (D.t > 0.1 && !D.trail) { D.trail = 0.07; }
+        if (D.trail != null) { D.trail -= dt; if (D.trail <= 0) { D.trail = 0.07; dustPuff(m.position.x, m.position.z, 0.5, 0xffffff); } }
+        if (D.t >= 0.85) { burst(m.position, 0xf5d05a, 0.9); dustPuff(m.position.x, m.position.z, 1.1); if (m.parent) m.parent.remove(m); deathFly.splice(i, 1); }
+      }
     };
     const nearestWild = (range) => {
       let best = null, bd = range * range;
@@ -36056,6 +36190,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     G.worldAttack = () => {
       if (G.mode !== "explore" || G.banim || G._skCast) return; // ⛔ ระหว่างร่ายสกิลห้ามแทรกท่าตีธรรมดา
+      if (G.wst && G.wst.stunT > 0) return;   // 💫 ถูกสตัน — ตีไม่ได้
       if (G.inTownZone || G.inHomeZone || G.inRanchZone) return; // 🕊️ โซนปลอดภัย: โจมตีไม่ได้เลย
       const m = nearestWild(worldRange() + 0.8);   // เผื่อขอบระยะ กันฟันลมตอนยืนพอดีเส้น
       if (!m) return;
@@ -36105,7 +36240,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const hy = 0.6 + Math.min(1.6, (m.scale ? m.scale.y : 1) * 0.55);
         G._impactQ = { pos: { x: m.position.x, z: m.position.z }, dir: { x: m.position.x - char.position.x, z: m.position.z - char.position.z }, crit, y: hy, color: crit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xfff1c0) };
       }
-      hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a });
+      hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a, basic: true });
+      statusOnHit(m, null, crit);   // 😵 คริมีโอกาสทำให้มึน
       { const ls = talB("lifesteal"); if (ls) { const hl = Math.round(dmg * ls / 100); if (hl > 0) G.player.hp = Math.min(effMaxHp(), G.player.hp + hl); } }   // 📜 ดูดเลือด (โลกกว้าง)
       if (G.sfx) G.sfx.hit && G.sfx.hit();
     };
@@ -36195,6 +36331,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.worldSkill = (id) => {
       if (G.mode !== "explore" || G.banim) return;
       if (G._skCast) return; // ⛔ กำลังร่ายอยู่ — ห้ามร่ายซ้อน
+      if (G.wst && G.wst.stunT > 0) return;   // 💫 ถูกสตัน — ร่ายไม่ได้
       const list = skillsOf(G.cls, G.pathId) || [];
       const sk = list.find((s) => s.id === id); if (!sk) return;
       const rank = (G.skillRanks && G.skillRanks[id]) || 1;
@@ -36220,6 +36357,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       G.player.mp -= cost;
       G.startCd(sk); // ⏳ begin cooldown
+      // 💫☠️🚀 ทุกดาเมจที่เกิดจากสกิลนี้ (ช่วงท่า ~2.5 วิ) ติดสถานะตามสกิล — สตัน/มึน/พิษ/ทุบลอย
+      G._stSk = { sk, until: performance.now() + 2500, heavy: fk0 === "quake" || fk0 === "bash" || (sk.mult || 0) >= 2.3 };
       char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
       yaw = char.rotation.y; // 🧭 ล็อกทิศเดินตามไปด้วย ไม่งั้นท่าเดินจะค่อย ๆ หมุนตัวกลับทิศเก่าระหว่างร่าย
       const base = (effAtk() + Math.random() * 4) * skillMul(sk, rank);   // ⚖️ ตันที่ 200%
@@ -38736,6 +38875,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // player fell in the open world
     G.worldFaint = () => {
       if (G.sfx) G.sfx.lose && G.sfx.lose();
+      G.wst = {};   // 💫 ล้มแล้วล้างสถานะผิดปกติทั้งหมด
       G.combo = 0;
       // 🗼 ล้มกลางหอคอย = จบรอบนี้ — เก็บมอนของชั้นออกก่อน ไม่งั้นค้างอยู่กลางทุ่งตอนฟื้น
       if (G.dungeon) { const wasRogue = !!G.dungeon.rogue, wasCave = !!G.dungeon.cave; G._lastCave = G.dungeon.cave; if (wasRogue && G.rogueEnd) G.rogueEnd("fail"); if (G.twrLeave) G.twrLeave(true); toast(wasCave ? `💀 ล้มใน${(CAVE_DEF[G._lastCave] || CAVE_DEF.goblin).name} — กลับมาลองใหม่ได้เสมอ` : `💀 ล้มในหอคอย — ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`); }
@@ -43317,6 +43457,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (p >= 1) { blinkTimer = 0; nextBlink = 1.5 + Math.random() * 3; eyes.scale.y = 1; }
       }
 
+      stFxTick(dt, t);   // 💫😵☠️ ไอคอนสถานะเหนือหัว + พิษบนตัวเรา + ร่างที่ถูกตีปลิว
       // wild monster idle/wander (both modes; battle enemy excluded since removed from wilds)
       if (!G.inRanchZone) wilds.forEach((m, i) => { // 🏡 หยุดมอนสเตอร์ป่าทั้งหมดตอนอยู่ในฟาร์ม (ไม่ไล่/ไม่ตี/ไม่วาดป้าย)
         if (G.dungeon && !m.userData.twr) return;   // 🗼 ในหอคอย มอนโลกกว้างแค่ถูกซ่อน ต้องหยุด AI ด้วย ไม่งั้นยังเดินไล่ตีอยู่
@@ -43328,6 +43469,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const fk = m.userData.flinch;
           m.position.x += (m.userData.kbx || 0) * dt * 6 * fk;
           m.position.z += (m.userData.kbz || 0) * dt * 6 * fk;
+          { const U = m.userData, kbm = Math.hypot(U.kbx || 0, U.kbz || 0);   // 💨 ถูกกระเด็นแรง — ไถไปกับพื้นทิ้งฝุ่น + ตัวที่โดนหนักมากเด้งลอยตีลังกา
+            if (!U._kbDone) { U._kbDone = true; if (kbm > 1.9 && !U.boss && !U.caveBoss && !(U.popT > 0)) launchMon(m, 0.9, false); }
+            if (kbm > 1.1 && fk > 0.25) { U._kbPuff = (U._kbPuff || 0) - dt; if (U._kbPuff <= 0) { U._kbPuff = 0.07; dustPuff(m.position.x, m.position.z, 0.45 + kbm * 0.12); } } }
           clampOutOfSafe(m); pushOut(m, 0.6);
           const bd = m.userData.body;
           if (bd) {
@@ -43349,11 +43493,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (m.userData.atkSlowT > 0) m.userData.atkSlowT = Math.max(0, m.userData.atkSlowT - dt); // 🌍 โดนแผ่นดินไหวจนเงื้อช้าลง
         if (m.userData.blindT > 0) m.userData.blindT = Math.max(0, m.userData.blindT - dt);        // ☀️ ตาพร่าจนเล็งไม่ถูก
         if (m.userData.fearT > 0) m.userData.fearT = Math.max(0, m.userData.fearT - dt);           // 😱 ขวัญเสียจนไม่กล้าสู้
+        if (m.userData.stunT > 0) m.userData.stunT = Math.max(0, m.userData.stunT - dt);        // 💫 สตัน
+        if (m.userData.stunImm > 0) m.userData.stunImm = Math.max(0, m.userData.stunImm - dt);  // กันสตันติดกันยาว
+        if (m.userData.dazeT > 0) m.userData.dazeT = Math.max(0, m.userData.dazeT - dt);        // 😵 มึนงง
         if (m.userData.popT > 0) {                                                        // 🐉 ถูกทุ่มลอยขึ้นกลางอากาศ
-          m.userData.popT = Math.max(0, m.userData.popT - dt);
-          const pq = 1 - m.userData.popT / (m.userData.popD || 1);
-          m.position.y = Math.sin(Math.max(0, Math.min(1, pq)) * Math.PI) * (m.userData.popH || 1.6);
-          if (m.userData.popT <= 0) m.position.y = 0;
+          const U = m.userData;
+          U.popT = Math.max(0, U.popT - dt);
+          const pq = Math.max(0, Math.min(1, 1 - U.popT / (U.popD || 1)));
+          m.position.y += Math.sin(pq * Math.PI) * (U.popH || 1.6);                       // 🏔️ ลอยจากระดับพื้นจริง (เดิมอิง y=0)
+          if (U.popSpin) m.rotation.x = pq * Math.PI * 2 * U.popSpin;                      // 🤸 ตีลังกากลางอากาศ
+          if (U.popT <= 0) {
+            m.rotation.x = 0;
+            if (U.popLand) { U.popLand = 0; dustRing(m.position.x, m.position.z, Math.min(1.6, 0.8 + (U.popH || 1) * 0.3));   // 💥 ร่วงกระแทกพื้น — ฝุ่นวง + มึน
+              G._camShake = Math.max(G._camShake || 0, 0.12); if (!(U.stunT > 0)) U.dazeT = Math.max(U.dazeT || 0, 1.5); }
+          }
         }
         if (m.userData.dot) {
           const D = m.userData.dot;
@@ -43374,6 +43527,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (m.userData.frzT > 0) {
           m.userData.frzT = Math.max(0, m.userData.frzT - dt);
           m.userData.wcd = Math.max(m.userData.wcd || 0, 0.4); // กันไม่ให้ตีทันทีที่หลุดน้ำแข็ง
+          return;
+        }
+        // 💫 สตัน — ยืนโงนเงนอยู่กับที่ ไม่เดิน ไม่ตี จนกว่าดาวจะหายไป
+        if (m.userData.stunT > 0) {
+          m.userData.wcd = Math.max(m.userData.wcd || 0, 0.4);
+          m.rotation.y += Math.sin(t * 9 + i) * 0.03;
           return;
         }
         // ⚔️ open-world action: normal monsters aggro → chase → hit the player
@@ -43399,9 +43558,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
             aggroHandled = true;
             if (pdist > WILD_MELEE) {
-              const sl = m.userData.slowT > 0 ? 1 - (m.userData.slow || 0) : 1;   // 🧊 ติดความเย็น → ไล่ช้าลง
-              m.position.x += (pdx / pdist) * 1.9 * sl * dt;
-              m.position.z += (pdz / pdist) * 1.9 * sl * dt;
+              const sl = (m.userData.slowT > 0 ? 1 - (m.userData.slow || 0) : 1) * (m.userData.dazeT > 0 ? 0.55 : 1);   // 🧊 ติดความเย็น → ไล่ช้าลง · 😵 มึน → เดินเซ
+              let cdx = pdx / pdist, cdz = pdz / pdist;
+              if (m.userData.dazeT > 0) { const wa = Math.sin(t * 3.3 + i * 1.7) * 1.3, ca = Math.cos(wa), sa = Math.sin(wa); const nx = cdx * ca - cdz * sa; cdz = cdx * sa + cdz * ca; cdx = nx; }
+              m.position.x += cdx * 1.9 * sl * dt;
+              m.position.z += cdz * 1.9 * sl * dt;
               clampOutOfSafe(m); // 🛡️ never chase into the safe bubble
               pushOut(m, 0.6);
               m.rotation.y = Math.atan2(pdx, pdz);
@@ -43410,7 +43571,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               m.userData.wcd = (m.userData.wcd || 0) - dt;
               if (m.userData.wcd <= 0) {
                 m.userData.wcd = 1.3 * (m.userData.atkSlowT > 0 ? 1 + (m.userData.atkSlow || 0) : 1); m.userData.kkAtk = 0.6; // 💀 เงื้อท่าตี ·  🌍 เงื้อนานขึ้น = ตีถี่น้อยลง
-                if (m.userData.blindT > 0 && Math.random() < (m.userData.blind || 0)) {   // 👁️‍🗨️ ตาพร่า — เหวี่ยงพลาดไปเลย
+                if ((m.userData.blindT > 0 && Math.random() < (m.userData.blind || 0)) || (m.userData.dazeT > 0 && Math.random() < 0.5)) {   // 👁️‍🗨️ ตาพร่า / 😵 มึน — เหวี่ยงพลาดไปเลย
                   popDamage(char.position, 0, "weak"); burst(m.position, 0xffe9a0, 0.4);
                   m.userData.wcd = 0.9;
                 } else {
@@ -43429,6 +43590,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   } else {
                     G.player.hp = Math.max(0, G.player.hp - raw);
                     popDamage(char.position, raw, "hit"); burst(char.position, 0xff5a5a, 0.5);
+                    wstInflict(m, raw);   // 💫😵☠️ บางเผ่าตีแล้วติดสถานะ
                     if (G.sfx) G.sfx.hit && G.sfx.hit();
                   }
                 }
@@ -44244,6 +44406,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             }
           }
         }
+        // 💫😵 สถานะบนตัวเรา — สตัน = ขยับไม่ได้ · มึน = เดินเซไปมาและช้าลง
+        if (G.wst && G.wst.stunT > 0 && G.mode === "explore") { dx = 0; dz = 0; G._lastPos = null; }
+        else if (G.wst && G.wst.dazeT > 0 && (dx || dz)) { const wa = Math.sin(t * 2.7) * 0.8 + Math.sin(t * 6.1) * 0.3, ca = Math.cos(wa), sa = Math.sin(wa); const nx = dx * ca - dz * sa; dz = (dx * sa + dz * ca) * 0.75; dx = nx * 0.75; }
         // 🚶🏃 เดิน = 0.62 เท่า · วิ่ง = 1.3 เท่า (ท่าโมเดล: เดิน ≤2.6 · วิ่ง >3.9) · การเดินที่ระบบสั่งเอง (ออโต้ล่า/ออโต้อาชีพ/ตามมอน) ใช้ความเร็วเดิม 1.0
         const manualMove = (!G.moveTarget && !!(dx || dz)) || (!!G.moveTarget && G.moveTarget === G._tapTarget);   // ปุ่ม/จอย หรือจุดที่ผู้เล่นคลิกเอง
         const joyLen = Math.hypot(G.joy.x, G.joy.y);
