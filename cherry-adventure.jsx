@@ -43875,7 +43875,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // ---------- ⏰ random event scheduler ----------
         if (!G.event) {
           G.eventT -= dt;
-          if (G.eventT <= 0 && !G.inRanchZone) { // 🏡 ไม่สุ่มอีเวนต์ตอนอยู่ในฟาร์ม (แต่ยังคง if/else invariant ไว้)
+          if (G.eventT <= 0 && !G.inRanchZone && !G.dungeon) {   // 🗼 อยู่ในหอคอย/ดันเจี้ยน = ไม่สุ่มอีเวนต์โลกกว้างใหม่ // 🏡 ไม่สุ่มอีเวนต์ตอนอยู่ในฟาร์ม (แต่ยังคง if/else invariant ไว้)
             G.eventT = 45 + Math.random() * 30; // next one later
             const roll2 = Math.random();
             startEvent(roll2 < 0.34 ? "meteor" : roll2 < 0.67 ? "horde" : "golden");
@@ -59754,7 +59754,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* ⏰ event banner */}
-      {ui.mb && ui.mode === "explore" && !ui.equipScreen && (
+      {ui.mb && ui.mode === "explore" && !ui.equipScreen && !ui.twr && !ui.twrLoad && (   // 🗼 ในหอคอย/ดันเจี้ยนไม่โชว์ป้ายอีเวนต์โลกกว้าง
         <div style={{ position: "absolute", top: ui.eventMsg ? 118 : 84, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
           <div style={{ background: "linear-gradient(90deg,#3a1a4a,#7a2a6a)", border: "2px solid #ff8ae8", borderRadius: 14, padding: "5px 14px", minWidth: 250, maxWidth: "76%", color: "#fff", fontSize: 12, fontWeight: 800, textAlign: "center", boxShadow: "0 4px 16px rgba(120,30,120,0.5)" }}>
             <div>👑 {ui.mb.emoji} {ui.mb.name} บุกกลางแมพ! ⏱️{Math.floor(ui.mb.left / 60)}:{String(ui.mb.left % 60).padStart(2, "0")}</div>
@@ -59765,7 +59765,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           </div>
         </div>
       )}
-      {ui.eventMsg && (ui.mode === "explore" || ui.mode === "battle") && (
+      {ui.eventMsg && (ui.mode === "explore" || ui.mode === "battle") && !ui.twr && !ui.twrLoad && (   // 🗼 ฝูงมอนบุก/อุกกาบาต/มอนทอง เป็นของโลกกว้าง — ซ่อนตอนอยู่ในดันเจี้ยน
         <div style={{
           position: "absolute", top: ui.mode === "battle" ? 128 : 84, left: 0, right: 0,
           display: "flex", justifyContent: "center", pointerEvents: "none",
