@@ -22830,7 +22830,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const deco = () => {
         if (cg.userData.deco || !G.kkCaveReady) return;
         cg.userData.deco = true;
-        const add = (k, x, z, ry, sc, y) => { const L = G._kkCaveLib && G._kkCaveLib[k]; if (!L) return; const o = L.clone(true); o.scale.setScalar(sc); o.position.set(x, (y || 0) - (G._kkCaveY[k].min * sc), z); o.rotation.y = ry || 0; if (k === "arch") { const dr = o.getObjectByName("wall_doorway_door"); if (dr) dr.visible = false; } cg.add(o); };   // ปากทางเปิดประตูทิ้งไว้
+        const add = (k, x, z, ry, sc, y) => { const L = G._kkCaveLib && G._kkCaveLib[k]; if (!L) return; const o = L.clone(true); o.scale.setScalar(sc); o.position.set(x, (y || 0) - (G._kkCaveY[k].min * sc), z); o.rotation.y = ry || 0; if (k === "arch") { const dr = o.getObjectByName("wall_doorway_door"); if (dr) dr.visible = false; }
+          if (C.theme === "ruins" && G.ruinSandMat) o.traverse((mm) => { if (mm.isMesh && mm.material) mm.material = Array.isArray(mm.material) ? mm.material.map(G.ruinSandMat) : G.ruinSandMat(mm.material); });   // 🏜️ ซุ้มวิหารโทนหินทรายเหมือนในห้อง
+          cg.add(o); };   // ปากทางเปิดประตูทิ้งไว้
         add("arch", 0, -1.9, 0, 1.25);
         if (C.theme === "ruins") {
           add("rPillar", -3.8, -1.9, 0, 1.0); add("rCol", 3.8, -1.6, 0.6, 1.6); add("rubble", 5.2, -2.2, -0.3, 0.45); add("rubbleH", -5.6, -1.2, 0.2, 0.45);
@@ -24228,6 +24230,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       } else c.color.setHex(0xe8cfa0);
       c.needsUpdate = true; return c;
     };
+    G.ruinSandMat = (m) => tintCache[m.uuid] || (tintCache[m.uuid] = ruinSandMat(m));
     const caveBuild = () => {
       if (kkDunGroup || !G.kkCaveReady) return false;
       const cx = dungeonCenter.x, cz = dungeonCenter.z, baseY = char.position.y;
