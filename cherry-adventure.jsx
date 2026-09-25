@@ -31889,6 +31889,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
     };
     G.clampOutOfSafe = clampOutOfSafe;
+    // 🗼⛏️ ขอบเขตเป้าหมาย: อยู่ในหอคอย/ดันเจี้ยน = ตีได้เฉพาะมอนของห้องนั้น (twr) · อยู่นอก = ห้ามแตะมอนของหอคอย/ดันเจี้ยน
+    const offScope = (m) => (G.dungeon ? !m.userData.twr : !!m.userData.twr);
+    G.offScope = offScope;
     const isArenaFoe = (m) => !!(m.userData.boss || m.userData.biomeBoss || m.userData.dungeon || m.userData.golden || m.userData.ghost || m.userData.horde);
     const initWildHp = (m) => {
       if (m.userData.whp != null) return;
@@ -32011,7 +32014,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const nearestWild = (range) => {
       let best = null, bd = range * range;
       for (const m of wilds) {
-        if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+        if (m.userData.shy > 0 || isArenaFoe(m) || offScope(m)) continue;
         if (G.dungeon && !m.userData.twr) continue;   // 🗼 ในหอคอยตีได้เฉพาะมอนของหอคอย
         const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
         const d2 = dx * dx + dz * dz;
@@ -32021,7 +32024,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     const wildsInRadius = (cx, cz, radius) => {
       const out = [];
-      for (const m of wilds) { if (m.userData.shy > 0 || isArenaFoe(m)) continue; const dx = m.position.x - cx, dz = m.position.z - cz; if (dx * dx + dz * dz < radius * radius) out.push(m); }
+      for (const m of wilds) { if (m.userData.shy > 0 || isArenaFoe(m) || offScope(m)) continue; const dx = m.position.x - cx, dz = m.position.z - cz; if (dx * dx + dz * dz < radius * radius) out.push(m); }
       return out;
     };
 
@@ -36295,7 +36298,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         spawnPierceBeam(dy, LEN, col);
         const line = [];
         for (const m of wilds) {
-          if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+          if (m.userData.shy > 0 || isArenaFoe(m) || offScope(m)) continue;
           const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
           const along = dx * fx3 + dz * fz3;                        // ระยะไปตามแนวยิง
           if (along < 0 || along > LEN) continue;
@@ -36328,7 +36331,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         while (chain.length < 4) {                                 // 🔗 กระโดดหาตัวที่ใกล้ที่สุดที่ยังไม่โดน
           let best = null, bd = 36;
           for (const m of wilds) {
-            if (m.userData.shy > 0 || isArenaFoe(m) || chain.indexOf(m) >= 0) continue;
+            if (m.userData.shy > 0 || isArenaFoe(m) || offScope(m) || chain.indexOf(m) >= 0) continue;
             const dx = m.position.x - cur.position.x, dz = m.position.z - cur.position.z;
             const d2 = dx * dx + dz * dz;
             if (d2 < bd) { bd = d2; best = m; }
@@ -36367,7 +36370,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const lineTargets = (dirY, len, wide) => {
         const fxl = Math.sin(dirY), fzl = Math.cos(dirY), out = [];
         for (const m of wilds) {
-          if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+          if (m.userData.shy > 0 || isArenaFoe(m) || offScope(m)) continue;
           const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
           const along = dx * fxl + dz * fzl;
           if (along < -1.2 || along > len) continue;
@@ -37685,7 +37688,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const fxw = Math.sin(dy6), fzw = Math.cos(dy6);
         const hit = [];
         for (const m of wilds) {                                                    // 🌊 กวาดเป็นครึ่งวงหน้าตัว
-          if (m.userData.shy > 0 || isArenaFoe(m)) continue;
+          if (m.userData.shy > 0 || isArenaFoe(m) || offScope(m)) continue;
           const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
           const dl = Math.hypot(dx, dz);
           if (dl > 5.2) continue;
@@ -39626,7 +39629,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🎯 first, check if the player tapped directly on a wild monster — if so, walk over to fight it
       const wildMeshes = [];
       if (!G.inTownZone && !G.inHomeZone && !G.inRanchZone) // 🕊️ ในโซนปลอดภัย แตะโดนมอนสเตอร์ที่ซ่อนอยู่ไม่ได้
-      for (const w of wilds) { if (w.userData.shy > 0) continue; w.traverse((o) => { if (o.isMesh) { o.userData._wildRoot = w; wildMeshes.push(o); } }); }
+      for (const w of wilds) { if (w.userData.shy > 0 || offScope(w)) continue; w.traverse((o) => { if (o.isMesh) { o.userData._wildRoot = w; wildMeshes.push(o); } }); }
       const wildHits = raycaster.intersectObjects(wildMeshes, false);
       if (wildHits.length) {
         let root = wildHits[0].object;
@@ -44134,7 +44137,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const avoidBoss = G.autoNoBoss || G.player.hp < effMaxHp() * 0.6; // ⚙️ setting or too risky when hurt
             let target = null;
 
-            if (!G.autoNoEvent) { // ⚙️ setting: skip events entirely
+            if (!G.autoNoEvent && !G.dungeon) { // ⚙️ setting: skip events entirely · 🗼 ในหอคอย/ดันเจี้ยนไม่ไล่อีเวนต์ข้างนอก
               // 1) ☄️ grab landed meteor crystals nearby (free loot!)
               let mBest = null, mbd = Infinity;
               meteors.forEach((mt) => {
@@ -44154,8 +44157,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             if (!target) {
               let best = null, bestD = Infinity;
               wilds.forEach((m) => {
-                if (m.userData.shy > 0) return;
-                if (avoidBoss && m.userData.boss) return; // 🚫👹 skip bosses (setting or too risky while hurt)
+                if (m.userData.shy > 0 || offScope(m)) return;   // 🗼 ในหอคอย/ดันเจี้ยนล่าเฉพาะมอนของห้อง
+                if (avoidBoss && m.userData.boss && !G.dungeon) return; // 🚫👹 skip bosses (setting or too risky while hurt)
                 if (G.autoNoEvent && m.userData.golden) return; // 🚫✨ skip event golden monster
                 const d = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
                 if (d < bestD) { bestD = d; best = m; }
