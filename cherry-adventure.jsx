@@ -21630,6 +21630,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         pool12: ["viking2d", "viking2d", "paksi", "mekha"], pool: ["viking2d", "viking2d", "kirara", "nam", "paksi"], boss: "viking2d", minion: "viking2d",
         bossName: "🪓 จ้าวไวกิ้งผู้ไม่หลับใหล", foe: "วิญญาณนักรบไวกิ้ง", theme: "tomb", reward: 3, gateCol: 0x8ac8ff, labelCol: "#dff0ff",
         wall: "ผนังสุสานกั้นอยู่", kick: "วิญญาณไวกิ้งผลักออกจากสุสาน!" },
+      caveman: { name: "วิหารร้างมนุษย์ถ้ำ", emoji: "🗿", bossEmoji: "🪨", biome: "desert", pos: { x: -23, z: -23 }, req: 40, lvMin: 50, lvMax: 110,
+        pool12: ["caveman2d", "caveman2d", "plerng", "ngu"], pool: ["caveman2d", "caveman2d", "khiao", "saming", "ngu"], boss: "caveman2d", minion: "caveman2d",
+        bossName: "🪨 หัวหน้าเผ่ามนุษย์ถ้ำ", foe: "นักรบเผ่ามนุษย์ถ้ำ", theme: "ruins", reward: 2, gateCol: 0xffc070, labelCol: "#fff0d0",
+        wall: "ซากกำแพงวิหารกั้นอยู่", kick: "เผ่ามนุษย์ถ้ำไล่ออกจากวิหาร!" },
     };
     G.CAVE_DEF = CAVE_DEF;
     const caveCfg = () => CAVE_DEF[(G.dungeon && G.dungeon.cave) || "goblin"] || CAVE_DEF.goblin;
@@ -22828,7 +22832,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         cg.userData.deco = true;
         const add = (k, x, z, ry, sc, y) => { const L = G._kkCaveLib && G._kkCaveLib[k]; if (!L) return; const o = L.clone(true); o.scale.setScalar(sc); o.position.set(x, (y || 0) - (G._kkCaveY[k].min * sc), z); o.rotation.y = ry || 0; if (k === "arch") { const dr = o.getObjectByName("wall_doorway_door"); if (dr) dr.visible = false; } cg.add(o); };   // ปากทางเปิดประตูทิ้งไว้
         add("arch", 0, -1.9, 0, 1.25);
-        if (C.theme === "tomb") {
+        if (C.theme === "ruins") {
+          add("rPillar", -3.8, -1.9, 0, 1.0); add("rCol", 3.8, -1.6, 0.6, 1.6); add("rubble", 5.2, -2.2, -0.3, 0.45); add("rubbleH", -5.6, -1.2, 0.2, 0.45);
+          add("torch", -2.4, 0.4, 0, 1.4); add("torch", 2.4, 0.4, 0, 1.4); add("candles", -1.4, 0.8, 0, 1.3); add("swords", 1.9, 1.4, -0.4, 0.9);
+        } else if (C.theme === "tomb") {
           add("tPillar", -3.6, -1.9, 0, 1.2); add("tPillar", 3.6, -1.9, 0, 1.2); add("coffin", -3.4, 0.9, 0.4, 1.1); add("coffin", 3.4, 0.9, -0.4, 1.1);
           add("candles", -2.2, 0.6, 0, 1.4); add("candles", 2.2, 0.6, 0, 1.4); add("shieldG", 0, -1.45, 0, 1.0, 5.0); add("torch", -2.4, 0.2, 0, 1.3); add("torch", 2.4, 0.2, 0, 1.3);
         } else {
@@ -24084,7 +24091,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // ⚰️ ชุดสุสานไวกิ้ง — พื้นหินแผ่นใหญ่/ตะแกรง กำแพงเสา/ลูกกรง เสาสลัก เทียน โลงศพ(หีบใหญ่) โล่ดาบ ธงน้ำเงิน-ขาว
       tFloor: "floor_tile_large", tGrate: "floor_tile_big_grate", tWall: "wall_pillar", tWallG: "wall_gated", tPillar: "pillar_decorated",
       candles: "candle_triple", candle: "candle_lit", tBanner: "banner_triple_blue", tBanner2: "banner_shield_white", shield: "sword_shield", shieldG: "sword_shield_gold",
-      coffin: "trunk_large_A", rail: "barrier_column" };
+      coffin: "trunk_large_A", rail: "barrier_column",
+      // 🗿 ชุดวิหารร้าง — พื้นหินแตก เสาใหญ่/เสาหัก กำแพงครึ่งซีก รั้วหินพัง (ย้อมสีทรายทั้งห้อง)
+      rPillar: "pillar", rCol: "column", rWallH: "wall_half", rRail: "barrier_half", rFloor: "floor_tile_large_rocks" };
     const kkCaveLib = {}, kkCaveY = {};
     let kkCaveLoading = null;
     G.kkCaveLoad = () => {
@@ -24194,6 +24203,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // ⛏️ ห้องถ้ำโจรก็อบลิน — ห้องเดียวกว้าง ±16 เหมือนหอคอย แต่ใช้ชุดถ้ำ + กับดักหนาม (โคลนแยก ไม่รวม instanced เพราะต้องขยับหนาม)
     const CAVE_S = 1.33;   // กำแพง/พื้นต้นฉบับกว้าง 4 → 5.3 หน่วย · กำแพงสูง 4 → 5.3 (พ้นหัวตัวละคร)
+    const tintCache = {};
     const caveBuild = () => {
       if (kkDunGroup || !G.kkCaveReady) return false;
       const cx = dungeonCenter.x, cz = dungeonCenter.z, baseY = char.position.y;
@@ -24205,11 +24215,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const holder = new THREE.Object3D(); holder.position.set(cx + x, yy, cz + z); holder.rotation.set(0, ry || 0, 0); holder.scale.setScalar(sc); holder.updateMatrixWorld(true);
         src.traverse((m) => { if (!m.isMesh) return; _m.multiplyMatrices(holder.matrixWorld, m.matrixWorld);
           const key = m.geometry.uuid + "|" + m.material.uuid; let e = inst.get(key);
-          if (!e) { e = { geo: m.geometry, mat: m.material, list: [], cast: m.castShadow }; inst.set(key, e); } e.list.push(_m.clone()); });
+          if (!e) { let mat = m.material; if (tint) { mat = tintCache[m.material.uuid] || (tintCache[m.material.uuid] = (() => { const c = m.material.clone(); c.color.multiply(new THREE.Color(tint)); return c; })()); }
+            e = { geo: m.geometry, mat, list: [], cast: m.castShadow }; inst.set(key, e); } e.list.push(_m.clone()); });
       };
+      const tint = (CAVE_DEF[G.dungeon.cave] || {}).theme === "ruins" ? 0xf2d49a : null;   // 🏜️ ย้อมสีทรายทั้งห้อง
       const T = 4 * CAVE_S, H = KK_DUN_H;
       const rng = seedRng((G.dungeon.cave || "cave") + ":" + (G.dungeon.floor || 1));
-      if ((CAVE_DEF[G.dungeon.cave] || {}).theme === "tomb") {
+      if ((CAVE_DEF[G.dungeon.cave] || {}).theme === "ruins") {
+        // 🗿 วิหารร้าง: ลานหินแตกกลางทะเลทราย · กำแพงครึ่งซีก/พังสลับช่องโหว่ · เสาใหญ่เรียงเป็นวง (บางต้นหักเหลือตอ) · ซากหินกอง · แท่นบูชากลางหลัง
+        for (let ix = -3; ix <= 2; ix++) for (let iz = -3; iz <= 2; iz++) put(rng() < 0.4 ? "rFloor" : rng() < 0.5 ? "floorR" : "tFloor", (ix + 0.5) * T, (iz + 0.5) * T, Math.floor(rng() * 4) * Math.PI / 2, { top: 1, y: 0.02 });
+        for (let i = -2.5; i <= 2.5; i += 1) {
+          const w = () => { const r = rng(); return r < 0.4 ? "rWallH" : r < 0.75 ? "wallB" : "wall"; };
+          put(w(), i * T, -H, 0); put(i === 0.5 ? "arch" : w(), i * T, H, Math.PI); put(w(), -H, i * T, Math.PI / 2); put(w(), H, i * T, -Math.PI / 2);
+        }
+        for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + Math.PI / 8, x = Math.cos(a) * 10.6, z = Math.sin(a) * 10.6;
+          if (rng() < 0.35) put("rCol", x, z, rng() * 3, { s: 1.4 }); else put("rPillar", x, z, 0, { s: 0.85 }); }
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) put("rubble", sx * (H - 2), sz * (H - 2), rng() * 3, { s: 0.55 });
+        put("rubbleH", -6, -12.6, 0, { s: 0.5 }); put("rubbleH", 7.5, 12.4, Math.PI, { s: 0.45 });
+        put("rRail", -T * 0.8, -H + 2.6, 0); put("rRail", T * 0.8, -H + 2.6, 0); put("tPillar", 0, -H + 1.4, 0, { s: 0.8 });
+        put("candles", -1.6, -H + 2.6, 0); put("candles", 1.6, -H + 2.6, 0); put("coins", 0, -H + 3.0, 0, { s: 0.7 });
+        for (const tx of [-T * 1.5, T * 1.5]) { put("torch", tx, -H + 1.6, 0, { s: 1.4 }); put("torch", -tx, H - 1.6, 0, { s: 1.4 }); }
+        [["barrel", -12.6, 6.2], ["crates", 12.4, -7.4], ["table", 12.6, 6.8], ["swords", -12, -7.8]].forEach(([k, x, z]) => put(k, x, z, rng() * 3));
+      } else if ((CAVE_DEF[G.dungeon.cave] || {}).theme === "tomb") {
         // ⚰️ สุสานไวกิ้ง: พื้นหิน (ตะแกรงแซม) · กำแพงเสาสลับลูกกรง · เสาสลักมุมห้อง · โลงเรียงสองข้าง · เทียน · โล่ดาบติดผนัง · ธงน้ำเงิน
         for (let ix = -3; ix <= 2; ix++) for (let iz = -3; iz <= 2; iz++) put(rng() < 0.18 ? "tGrate" : "tFloor", (ix + 0.5) * T, (iz + 0.5) * T, 0, { top: 1, y: 0.02 });
         for (let i = -2.5; i <= 2.5; i += 1) {
