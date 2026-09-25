@@ -3828,7 +3828,7 @@ export default function CherryAdventure() {
     const rnd = (a, b) => a + Math.random() * (b - a);
     // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
     G.biomeColliders = [];
-    const activeColliders = () => (G.inHomeZone || G.inTownZone) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
+    const activeColliders = () => (G.inHomeZone || G.inTownZone || (G.dungeon && G.dungeon.cave)) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
     G.activeColliders = activeColliders;
     // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
     // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -20655,6 +20655,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       { x: -9.5, z: -8, r: 5.5 },  // 🏡 จุดบ้าน + NPC เฒ่าผู้วิเศษ + บ่อน้ำ
       { x: 8.5, z: -7, r: 3.4 },   // ⚒️ จุดช่างตีเหล็ก
       { x: -6.6, z: 7.0, r: 3.6 }, // 🗼 จุดวาร์ปหอคอยมิติ
+      { x: -23, z: -23, r: 3.4 }, // ⛏️ ปากถ้ำโจรก็อบลิน
       { x: GATE_POS.town.x,  z: GATE_POS.town.z,  r: 3.6 },  // 🏰 ประตูเมือง
       { x: GATE_POS.home.x,  z: GATE_POS.home.z,  r: 3.6 },  // 🏠 ประตูบ้าน
       { x: GATE_POS.ranch.x, z: GATE_POS.ranch.z, r: 3.6 },  // 🐄 ประตูฟาร์ม
@@ -21514,7 +21515,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const twrSyncUi = () => {
       const D = G.dungeon;
       setUi((u) => ({ ...u, dungeonFloor: D ? D.floor : 0, twr: D ? {
-        floor: D.floor, max: DUNGEON_MAX, rogue: !!D.rogue, alive: D.alive || 0, total: D.total || 0,
+        floor: D.floor, max: D.cave ? CAVE_ROOMS : DUNGEON_MAX, rogue: !!D.rogue, cave: !!D.cave, alive: D.alive || 0, total: D.total || 0,
         sec: Math.max(0, Math.ceil(D.tLeft || 0)), secMax: D.sec || 1, boss: D.floor % 10 === 0,
         obj: D.obj ? { ...D.obj } : null,
       } : null }));
@@ -21615,9 +21616,83 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           : `🎯 เงื่อนไขชั้นนี้ (ตามจำนวน): กำจัดมอนให้ครบ ${n} ตัว`);
       twrSyncUi();
     };
+    // ================= ⛏️ ถ้ำโจรก็อบลิน — ดันเจี้ยน 5 ห้อง (ใช้ระบบห้อง/เวลา/นับตัวของหอคอย) =================
+    //   ห้อง 1-4: ลูกสมุนโจรก็อบลิน + สัตว์ถ้ำ (ห้อง 2+ มีกับดักหนาม) · ห้อง 5: 👺 หัวหน้าโจรก็อบลินยักษ์ + ลูกสมุน
+    //   ผ่านครบ → หีบสมบัติทองคำ (ครั้งแรกของวันได้โบนัสเพชร) · ตาย/หมดเวลา = ดีดออกหน้าถ้ำ เริ่มใหม่ห้อง 1
+    const CAVE_ROOMS = 5;
+    const CAVE_POS = { x: -23, z: -23 };   // ⛏️ ปากถ้ำ — มุมตะวันตกเฉียงเหนือของทุ่งซากุระ
+    G.CAVE_POS = CAVE_POS;
+    const caveSpawn = (floor) => {
+      twrClearMobs();
+      const D = G.dungeon; if (!D) return;
+      const boss = floor === CAVE_ROOMS;
+      D.floor = floor; D.elem = null;
+      D.sec = boss ? 200 : 110 + floor * 10; D.tLeft = D.sec; D._lastSec = -1; D.pending = 0;
+      const pool = floor <= 2 ? ["goblin2d", "goblin2d", "mochi", "plerng"] : ["goblin2d", "goblin2d", "khiao", "ngu", "plerng"];
+      const n = boss ? 4 : 3 + floor;
+      const baseLv = Math.max(10, Math.min(G.player.level + 2, 45));
+      for (let i = 0; i < n; i++) {
+        const isBoss = boss && i === 0;
+        const spId = isBoss ? "goblin2d" : pool[Math.floor(Math.random() * pool.length)];
+        const m = buildMonster(spId, isBoss ? 3 : 1);
+        if (isBoss) m.scale.multiplyScalar(1.9); else if (spId === "goblin2d") m.scale.multiplyScalar(0.72);   // ลูกสมุนตัวเล็กกว่า
+        const a = (i / n) * Math.PI * 2 + Math.random() * 0.6, rr = isBoss ? 6 : 5 + Math.random() * 3;
+        m.position.set(dungeonCenter.x + Math.cos(a) * rr, 0, dungeonCenter.z + Math.sin(a) * rr);
+        m.rotation.y = a + Math.PI;
+        m.userData.lv = baseLv + floor * 2 + (isBoss ? 6 : 0);
+        m.userData.twr = true; m.userData.twrBoss = isBoss; m.userData.caveBoss = isBoss;
+        m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * Math.PI * 2, r: isBoss ? 0.6 : 1.2 + Math.random(), sp: 0.3 + Math.random() * 0.3 };
+        applyMenace(m); vivify(m); initWildHp(m);
+        const hpMul = (isBoss ? 9 : 1.2) * (1 + floor * 0.12);
+        m.userData.wmaxhp = Math.max(10, Math.round(m.userData.wmaxhp * hpMul)); m.userData.whp = m.userData.wmaxhp;
+        m.userData.watk = Math.max(1, Math.round(m.userData.watk * (1 + floor * 0.08) * (isBoss ? 1.6 : 1)));
+        scene.add(m); wilds.push(m);
+      }
+      D.alive = n; D.total = n;
+      D.obj = boss ? { kind: "kind", need: 1, done: 0, sp: "goblin2d", spName: "👺 หัวหน้าโจรก็อบลิน", bossOnly: true } : { kind: "count", need: n, done: 0, sp: null, spName: "" };
+      char.position.copy(dungeonCenter); char.position.z += 9;
+      G._spkTold = false;
+      if (G.kkDunClear) G.kkDunClear();   // สร้างห้องใหม่ทุกห้อง (ผังพื้น/กำแพง/หนามเปลี่ยนตามห้อง)
+      toast(boss ? `👺 ห้อง ${floor}/${CAVE_ROOMS} — หัวหน้าโจรก็อบลินยักษ์ปรากฏตัว! ล้มมันให้ได้ใน ${D.sec} วิ`
+                 : `⛏️ ห้อง ${floor}/${CAVE_ROOMS} — โจรก็อบลิน ${n} ตัว · ${D.sec} วิ${floor >= 2 ? " · ระวังกับดักหนาม 🪤" : ""}`);
+      twrSyncUi();
+    };
+    const caveNext = () => {
+      const D = G.dungeon; if (!D) return;
+      const fl = D.floor;
+      const g = Math.round(300 + fl * 220);
+      G.gold += g; G.stardust = (G.stardust || 0) + 3;
+      if (fl < CAVE_ROOMS) { toast(`✅ เคลียร์ห้อง ${fl}! +${g}💰 — เดินลึกเข้าไปอีก…`); caveSpawn(fl + 1); return; }
+      // 🏆 ผ่านถ้ำ — หีบสมบัติ
+      const today = new Date().toDateString(), first = G.caveDay !== today;
+      G.caveDay = today; G.caveClears = (G.caveClears || 0) + 1;
+      const gold = 5000 + G.player.level * 120, dia = first ? 40 : 8;
+      G.gold += gold; if (G.gainDiamonds) G.gainDiamonds(dia, "ถ้ำโจรก็อบลิน"); else G.diamonds = (G.diamonds || 0) + dia;
+      G.gemDust = (G.gemDust || 0) + (first ? 10 : 3); G.stardust = (G.stardust || 0) + 20;
+      const lv = G.player.level + 8;
+      try { dropLoot(true, lv, true); dropLoot(true, lv, false); } catch (_) {}
+      toast(`🏆 พิชิตถ้ำโจรก็อบลิน! 💰 หีบสมบัติ +${gold.toLocaleString()}💰 +${dia}💎 +${first ? 10 : 3}💠 +20🌟${first ? " (โบนัสครั้งแรกของวัน!)" : ""}`);
+      if (G.showAnnounce) G.showAnnounce(`🏆 ${G.playerName || "ผู้กล้า"} พิชิตถ้ำโจรก็อบลินแล้ว!`);
+      if (G.questFx) G.questFx(); if (G.juice) G.juice("reward"); if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      questProgress("boss", 1);
+      G.twrLeave(true);
+      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    G.enterGoblinCave = () => {
+      if (G.dungeon || G.mode !== "explore") return;
+      if ((G.player.level || 1) < 5) { toast("⛏️ ถ้ำโจรก็อบลินอันตรายเกินไป — ต้องเลเวล 5 ขึ้นไป"); G.caveShy = true; return; }
+      G.dungeon = { floor: 1, cave: "goblin", loading: true, loadT: 0 };
+      dungeonCenter.set(0, 0, 0);   // ห้องถ้ำวางกลางลานเรียบของแมพ (ฉากโลกถูกซ่อน · ชนสิ่งกีดขวางโลกกว้างปิดไว้ระหว่างอยู่ในถ้ำ)
+      char.position.set(dungeonCenter.x, 0, dungeonCenter.z + 9);
+      G.player.hp = G.effMaxHp ? G.effMaxHp() : G.player.hp;
+      G._botNear = null; G._npcNear = null; G.moveTarget = null; G.joy = { x: 0, y: 0 };
+      if (G.kkOn && G.kkCaveLoad && !G.kkCaveReady) { try { G.kkCaveLoad(); } catch (_) {} }
+      setUi((u) => ({ ...u, dungeonAsk: false, twrLoad: { sec: TWR_LOAD_MAX, floor: 1, max: CAVE_ROOMS, cave: true } }));
+    };
     // 🏆 เคลียร์ชั้นสำเร็จ — แจกรางวัลแล้วไปชั้นถัดไป
     const twrNext = () => {
       const D = G.dungeon; if (!D) return;
+      if (D.cave) { caveNext(); return; }
       const fl = D.floor, bossFloor = fl % 10 === 0;
       const bonus = Math.round((40 + fl * 12) * (bossFloor ? 4 : 1) * (1 + (G.ngPlus || 0) * 0.5));
       G.gold += bonus;
@@ -21647,7 +21722,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const roomUp = G.kkDunHas ? G.kkDunHas() : true;
         const ready = roomUp || !G.kkOn || D.loadT >= TWR_LOAD_MAX;   // โหลดนานเกินกำหนด = เข้าไปเลย ไม่ปล่อยให้ค้าง
         const left = Math.max(0, Math.ceil(TWR_LOAD_MAX - D.loadT));
-        if (left !== D._loadSec) { D._loadSec = left; setUi((u) => ({ ...u, twrLoad: { sec: left, floor: D.floor, max: DUNGEON_MAX } })); }
+        if (left !== D._loadSec) { D._loadSec = left; setUi((u) => ({ ...u, twrLoad: { sec: left, floor: D.floor, max: D.cave ? CAVE_ROOMS : DUNGEON_MAX, cave: !!D.cave } })); }
+        if (ready && D.cave) {
+          D.loading = false; setUi((u) => ({ ...u, twrLoad: null }));
+          toast("⛏️ เข้าสู่ถ้ำโจรก็อบลิน! เคลียร์ 5 ห้องแล้วล้มหัวหน้าโจรให้ได้");
+          caveSpawn(1); return;
+        }
         if (ready) {
           D.loading = false;
           setUi((u) => ({ ...u, twrLoad: null }));
@@ -21686,9 +21766,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
           char.position.z = dungeonCenter.z + (oz / od) * TWR_ROOM_R;
           G.moveTarget = null;
-          if (!D._wallT || D._wallT <= 0) { D._wallT = 2.5; toast("🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้"); }
+          if (!D._wallT || D._wallT <= 0) { D._wallT = 2.5; toast(D.cave ? "🪨 ผนังถ้ำกั้นอยู่ — เคลียร์ห้องนี้ก่อนถึงจะเดินลึกเข้าไปได้" : "🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้"); }
         }
         if (D._wallT > 0) D._wallT -= dt; }
+      if (D.cave && G.caveSpikeTick) G.caveSpikeTick(dt, (D._spT = (D._spT || 0) + dt));   // 🪤
       const sec = Math.ceil(D.tLeft);
       if (sec !== D._lastSec) {
         D._lastSec = sec;
@@ -21704,7 +21785,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const O = D.obj;
       if (O) {
         // 🎯 ชั้น "ตามชนิด" นับเฉพาะสายพันธุ์เป้าหมาย · แบบอื่นนับทุกตัว
-        if (!O.sp || m.userData.spId === O.sp) O.done++;
+        if (O.bossOnly ? m.userData.caveBoss : (!O.sp || m.userData.spId === O.sp)) O.done++;
         if (O.done >= O.need) D.pending = 1.1;                 // หน่วงนิดให้เห็นจังหวะเคลียร์ก่อนขึ้นชั้นใหม่
       }
       // 🛟 กันค้าง: ถ้ามอนหมดห้องแล้วแต่เงื่อนไขยังไม่ครบ (ไม่ควรเกิด เพราะการันตีสายพันธุ์เป้าหมายไว้) ก็ให้ผ่านไป
@@ -21714,7 +21795,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 💀 ล้มเหลว (หมดเวลา/ตาย) — ดีดออกจากหอคอย แต่ยังจำชั้นที่ทำได้
     G.twrFail = (why) => {
       const D = G.dungeon; if (!D) return;
-      toast(`${why} — ดีดออกจากหอคอย (จำความคืบหน้าถึงชั้น ${G.dungeonProgress || 1} ไว้แล้ว)`);
+      toast(D.cave ? `${why} — ถูกโจรก็อบลินไล่ออกจากถ้ำ! ลองใหม่ได้เลย` : `${why} — ดีดออกจากหอคอย (จำความคืบหน้าถึงชั้น ${G.dungeonProgress || 1} ไว้แล้ว)`);
       if (D.rogue && G.rogueEnd) G.rogueEnd("fail");
       G.twrLeave(!!D.rogue);
     };
@@ -21723,12 +21804,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const D0 = G.dungeon;
       if (D0 && D0.hid) { D0.hid.forEach((o) => { if (o) o.visible = true; }); D0.hid = null; }   // 👁️ คืนมอนโลกกว้างที่ซ่อนไว้
       twrClearMobs();
+      const wasCave = !!(D0 && D0.cave);
       G.dungeon = null;
       if (G.restoreScenery) G.restoreScenery();
       G.mode = "explore";
-      char.position.set(-5, 0, 6.5);
+      if (wasCave) { char.position.set(CAVE_POS.x + 3.2, 0, CAVE_POS.z + 3.2); G.caveShy = true; }   // ⛏️ ออกมายืนหน้าปากถ้ำ
+      else char.position.set(-5, 0, 6.5);
       G.moveTarget = null; G.portalShy = true;
-      if (!quiet) toast(`🚪 ออกจากหอคอย · ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`);
+      if (!quiet) toast(wasCave ? "🚪 ออกจากถ้ำโจรก็อบลิน" : `🚪 ออกจากหอคอย · ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`);
       setUi((u) => ({ ...u, mode: "explore", dungeonFloor: 0, twr: null, twrLoad: null, dungeonAsk: false }));
       if (G.saveGame) G.saveGame();
     };
@@ -22709,6 +22792,27 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     townPad.rotation.y = GATE_POS.town.ry;
     scene.add(townPad);
     G._townPad = townPad; G._townPadRing = tpRing;
+    // ⛏️ ปากถ้ำโจรก็อบลิน (เฉพาะทุ่งซากุระ) — ซุ้มหินร้าว + ซากหิน + คบเพลิง + ธงโจร · ยืนในวง 2 วิ = เข้าดันเจี้ยน
+    {
+      const CP = G.CAVE_POS || { x: -23, z: -23 };
+      const cg = new THREE.Group(); cg.position.set(CP.x, 0, CP.z); cg.rotation.y = Math.atan2(-CP.x, -CP.z);   // หันปากถ้ำเข้ากลางแมพ
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.09, 8, 40), new THREE.MeshBasicMaterial({ color: 0x9ae06a, transparent: true, opacity: 0.85 }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06; cg.add(ring);
+      const dark = new THREE.Mesh(new THREE.CircleGeometry(1.6, 32), new THREE.MeshBasicMaterial({ color: 0x1a1410, transparent: true, opacity: 0.55 }));
+      dark.rotation.x = -Math.PI / 2; dark.position.y = 0.04; cg.add(dark);
+      const lab = ranchLabel(5.2, 1.3); lab.draw("⛏️ ถ้ำโจรก็อบลิน · Lv.5+", "#e8ffd0"); lab.sprite.position.set(0, 6.4, -1.2); cg.add(lab.sprite);
+      scene.add(cg); G._caveGate = cg; G._caveGateRing = ring;
+      const deco = () => {
+        if (cg.userData.deco || !G.kkCaveReady) return;
+        cg.userData.deco = true;
+        const add = (k, x, z, ry, sc, y) => { const L = G._kkCaveLib && G._kkCaveLib[k]; if (!L) return; const o = L.clone(true); o.scale.setScalar(sc); o.position.set(x, (y || 0) - (G._kkCaveY[k].min * sc), z); o.rotation.y = ry || 0; if (k === "arch") { const dr = o.getObjectByName("wall_doorway_door"); if (dr) dr.visible = false; } cg.add(o); };   // ปากถ้ำเปิดประตูทิ้งไว้
+        add("arch", 0, -1.9, 0, 1.25); add("rubble", -4.6, -1.6, 0.15, 0.6); add("rubble", 4.6, -1.6, -0.15, 0.6);
+        add("torch", -2.3, 0.4, 0, 1.3); add("torch", 2.3, 0.4, 0, 1.3); add("coins", 3.1, -0.4, 0.3, 0.6);
+        add("barrel", -3.4, 0.9, 0.5, 0.8); add("crates", 3.5, 0.8, -0.4, 0.8); add("swords", -1.9, 1.7, 0.4, 0.9);
+      };
+      G._caveGateDeco = deco;
+      setTimeout(() => { try { if (G.kkCaveLoad) G.kkCaveLoad().then(deco); } catch (_) {} }, 3500);
+    }
     // ================= 🎬 ANIME FX LAYERS — แฟลชกระแทก + ป้ายชื่อสกิล + เส้นสปีด =================
     {
       const fl = document.createElement("div");
@@ -23945,6 +24049,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const KK_DUN = { floor: "tileBrickB_large", wall: "wallSingle", pillar: "pillar", torch: "torchWall",
       barrel: "barrel", crate: "crate", pot: "potA", chest: "chest_common", shelf: "bookcaseFilled", banner: "banner" };
     const kkDunLib = {}, kkDunY = {};
+    // ⛏️ ถ้ำโจรก็อบลิน — ชิ้นส่วน KayKit Dungeon Remastered (CC0) ชุดถ้ำ: พื้นดิน กำแพงร้าว ซากหิน คบเพลิง กับดักหนาม
+    const KK_CAVE = { floor: "floor_dirt_large", floorR: "floor_dirt_large_rocky", wall: "wall_cracked", wallB: "wall_broken", arch: "wall_doorway",
+      rubble: "rubble_large", rubbleH: "rubble_half", barrel: "barrel_large", crates: "crates_stacked", boxes: "box_stacked", torch: "torch_lit", torchW: "torch_mounted",
+      keg: "keg", table: "table_medium_broken", swords: "sword_shield_broken", coins: "coin_stack_large", banner: "banner_patternA_green", trunk: "trunk_medium_A",
+      chest: "chest_gold", spikes: "floor_tile_big_spikes" };
+    const kkCaveLib = {}, kkCaveY = {};
+    let kkCaveLoading = null;
+    G.kkCaveLoad = () => {
+      if (kkCaveLoading || !THREE.GLTFLoader) return kkCaveLoading;
+      const L = new THREE.GLTFLoader();
+      kkCaveLoading = Promise.all(Object.keys(KK_CAVE).map((k) => new Promise((res) => {
+        L.load("assets/kaykit/cave/" + KK_CAVE[k] + ".glb", (gl) => {
+          const bg = k === "floor" || k === "floorR" || k === "wall" || k === "wallB";
+          gl.scene.traverse((o) => { if (o.isMesh) { o.castShadow = !bg; o.receiveShadow = true; } });
+          gl.scene.updateMatrixWorld(true);
+          const b = new THREE.Box3().setFromObject(gl.scene);
+          kkCaveLib[k] = gl.scene; kkCaveY[k] = { min: b.min.y, max: b.max.y }; G._kkCaveLib = kkCaveLib; G._kkCaveY = kkCaveY;
+          res(true);
+        }, undefined, () => res(false));
+      }))).then((ok) => { G.kkCaveReady = ok.some(Boolean); return G.kkCaveReady; });
+      return kkCaveLoading;
+    };
     let kkDunLoading = null, kkDunGroup = null, kkDunHidden = null;
     const KK_DUN_S = 1.6;          // ย่อ/ขยายให้กำแพงสูงพ้นหัวตัวละคร (กำแพงต้นฉบับสูง 3.2 ตัวละครสูงราว 3.8)
     const KK_DUN_H = 16;           // ครึ่งความกว้างห้อง
@@ -23965,6 +24091,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return kkDunLoading;
     };
     G.kkDunBuild = () => {
+      if (G.dungeon && G.dungeon.cave) return caveBuild();
       if (kkDunGroup || !G.kkDunReady) return false;
       const cx = dungeonCenter.x, cz = dungeonCenter.z, baseY = char.position.y;
       const root = new THREE.Group();
@@ -24034,8 +24161,76 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       wilds.forEach((w) => { if (!(w.userData && w.userData.twr)) hide(w); });   // 🐾 ซ่อนมอนโลกกว้าง แต่ไม่ซ่อนมอนของชั้นหอคอย
       return true;
     };
+    // ⛏️ ห้องถ้ำโจรก็อบลิน — ห้องเดียวกว้าง ±16 เหมือนหอคอย แต่ใช้ชุดถ้ำ + กับดักหนาม (โคลนแยก ไม่รวม instanced เพราะต้องขยับหนาม)
+    const CAVE_S = 1.33;   // กำแพง/พื้นต้นฉบับกว้าง 4 → 5.3 หน่วย · กำแพงสูง 4 → 5.3 (พ้นหัวตัวละคร)
+    const caveBuild = () => {
+      if (kkDunGroup || !G.kkCaveReady) return false;
+      const cx = dungeonCenter.x, cz = dungeonCenter.z, baseY = char.position.y;
+      const root = new THREE.Group(); const inst = new Map(); const _m = new THREE.Matrix4();
+      const put = (k, x, z, ry, opt) => {
+        const src = kkCaveLib[k]; if (!src) return;
+        const o = opt || {}, sc = (o.s || 1) * CAVE_S;
+        const yy = baseY + (o.top ? -kkCaveY[k].max * sc : -kkCaveY[k].min * sc) + (o.y || 0);
+        const holder = new THREE.Object3D(); holder.position.set(cx + x, yy, cz + z); holder.rotation.set(0, ry || 0, 0); holder.scale.setScalar(sc); holder.updateMatrixWorld(true);
+        src.traverse((m) => { if (!m.isMesh) return; _m.multiplyMatrices(holder.matrixWorld, m.matrixWorld);
+          const key = m.geometry.uuid + "|" + m.material.uuid; let e = inst.get(key);
+          if (!e) { e = { geo: m.geometry, mat: m.material, list: [], cast: m.castShadow }; inst.set(key, e); } e.list.push(_m.clone()); });
+      };
+      const T = 4 * CAVE_S, H = KK_DUN_H;
+      const rng = seedRng("cave:" + (G.dungeon.floor || 1));
+      for (let ix = -3; ix <= 2; ix++) for (let iz = -3; iz <= 2; iz++) put(rng() < 0.28 ? "floorR" : "floor", (ix + 0.5) * T, (iz + 0.5) * T, Math.floor(rng() * 4) * Math.PI / 2, { top: 1, y: 0.02 });
+      for (let i = -2.5; i <= 2.5; i += 1) {
+        const w = () => (rng() < 0.3 ? "wallB" : "wall");
+        put(w(), i * T, -H, 0); put(i === 0.5 ? "arch" : w(), i * T, H, Math.PI); put(w(), -H, i * T, Math.PI / 2); put(w(), H, i * T, -Math.PI / 2);
+      }
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) put("rubble", sx * (H - 1.8), sz * (H - 1.8), sx * sz > 0 ? Math.PI / 4 : -Math.PI / 4, { s: 0.55 });
+      for (const tx of [-T * 1.5, T * 0.5, T * 2]) { put("torchW", tx, -H + 0.6, 0, { y: 3.0 }); put("torchW", -tx, H - 0.6, Math.PI, { y: 3.0 }); }
+      for (const tz of [-T * 1.2, T * 1.2]) { put("torchW", -H + 0.6, tz, Math.PI / 2, { y: 3.0 }); put("torchW", H - 0.6, tz, -Math.PI / 2, { y: 3.0 }); }
+      // ของโจร — ลังของปล้น ถังเหล้า โต๊ะพัง ดาบโล่หัก กองเหรียญ ธงเขียว (เว้นกลางห้องไว้สู้)
+      const props = [["barrel", -12.5, -11.5, 0.4], ["keg", -10.2, -12.6, 1.1], ["crates", 12, -11.8, -0.3], ["boxes", 12.6, -8.8, 0.6, 0.7], ["table", -12.8, 8.4, 0.5],
+        ["swords", -11.2, 11.6, 0.3], ["coins", 12.2, 11.4, 0.2, 0.9], ["trunk", 10.6, 12.4, -0.4], ["barrel", 13.4, 1.8, 0.9], ["crates", -13.4, -2.6, 0.2], ["rubbleH", 13.2, -4.2, -Math.PI / 2, 0.5]];
+      props.forEach(([k, x, z, ry, ss]) => put(k, x, z, ry, { s: ss || 1 }));
+      for (const bx of [-T, 0, T]) put("banner", bx, -H + 0.6, 0, { y: 0.4 });
+      inst.forEach((e) => { const im = new THREE.InstancedMesh(e.geo, e.mat, e.list.length); e.list.forEach((mm, i) => im.setMatrixAt(i, mm)); im.instanceMatrix.needsUpdate = true; im.castShadow = !!e.cast; im.receiveShadow = true; im.frustumCulled = false; root.add(im); });
+      // 🪤 กับดักหนาม — ห้อง 2 เป็นต้นไป · สุ่มตำแหน่งให้พ้นกลางห้อง
+      G._caveSpikes = [];
+      const nSp = (G.dungeon.floor || 1) >= 2 ? Math.min(4, 1 + Math.floor((G.dungeon.floor || 1) / 2)) : 0;
+      const spots = [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1.6], [0, 1.6], [-1.6, 0], [1.6, 0]].sort(() => rng() - 0.5);
+      for (let k = 0; k < nSp && kkCaveLib.spikes; k++) {
+        const [ux, uz] = spots[k]; const x = ux * 6.2, z = uz * 6.2;
+        const o = kkCaveLib.spikes.clone(true); o.scale.setScalar(CAVE_S * 0.8); o.position.set(cx + x, baseY - kkCaveY.spikes.min * CAVE_S * 0.8 - 0.05, cz + z);
+        const spk = o.getObjectByName("spikes"); root.add(o);
+        G._caveSpikes.push({ o, spk, x: cx + x, z: cz + z, r: 2.0 * CAVE_S * 0.8, ph: k * 0.9, y0: spk ? spk.position.y : 0 });
+      }
+      root.name = "kkDungeon"; scene.add(root); kkDunGroup = root;
+      kkDunHidden = [];
+      const hide = (o) => { if (o && o.visible) { o.visible = false; kkDunHidden.push(o); } };
+      hide(G._worldRoot); (G.sceneryObjects || []).forEach(hide);
+      if (G._hideBiomeDecor) G._hideBiomeDecor();
+      hide(portal); hide(G.warpGate); hide(G._safeMarks); hide(G._borderGrp); hide(G._homePad); hide(G._ranchPad); hide(G._townPad); hide(G._caveGate);
+      wilds.forEach((w) => { if (!(w.userData && w.userData.twr)) hide(w); });
+      return true;
+    };
+    // 🪤 หนามพุ่งเป็นจังหวะ: ซ่อน 1.8 วิ → สั่นเตือน 0.5 วิ → พุ่งค้าง 0.9 วิ · โดนตอนพุ่ง = เสียเลือด 9% (เว้น 1 วิ)
+    G.caveSpikeTick = (dt, t) => {
+      const L = G._caveSpikes; if (!L || !L.length) return;
+      G._spkCd = Math.max(0, (G._spkCd || 0) - dt);
+      for (const S of L) {
+        const c = (t + S.ph) % 3.2, up = c > 2.3, warn = c > 1.8 && c <= 2.3;
+        if (S.spk) S.spk.position.y = S.y0 + (up ? 0 : warn ? -1.55 + Math.sin(t * 40) * 0.08 : -1.9);
+        if (up && G._spkCd <= 0 && G.player && G.player.hp > 0 && Math.abs(char.position.x - S.x) < S.r && Math.abs(char.position.z - S.z) < S.r && (G._jumpT || 0) <= 0) {
+          G._spkCd = 1.0;
+          const mx = G.effMaxHp ? G.effMaxHp() : G.player.maxHp, d = Math.max(1, Math.round(mx * 0.09));
+          G.player.hp = Math.max(1, G.player.hp - d);
+          popDamage(char.position, d, "hit"); G._camShake = Math.max(G._camShake || 0, 0.3);
+          if (!G._spkTold) { G._spkTold = true; toast("🪤 กับดักหนาม! ดูจังหวะแล้วเดินอ้อม (กระโดดข้ามได้)"); }
+          syncPlayer();
+        }
+      }
+    };
     G.kkDunClear = () => {
       if (!kkDunGroup) return false;
+      G._caveSpikes = null;
       scene.remove(kkDunGroup);
       kkDunGroup.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });   // geometry/วัสดุใช้ร่วมกับไลบรารี ห้าม dispose
       kkDunGroup = null;
@@ -24048,7 +24243,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.kkDunHas = () => !!kkDunGroup;        // 🏰 ห้องหอคอยสร้างเสร็จแล้วหรือยัง
     G.kkDunTick = () => {
       const want = !!(G.dungeon && G.kkOn);
-      if (want && !kkDunGroup) { if (G.kkDunReady) G.kkDunBuild(); else G.kkDunLoad(); }
+      if (want && !kkDunGroup) {
+        if (G.dungeon.cave) { if (G.kkCaveReady) G.kkDunBuild(); else G.kkCaveLoad(); }
+        else if (G.kkDunReady) G.kkDunBuild(); else G.kkDunLoad();
+      }
       else if (!want && kkDunGroup) G.kkDunClear();
     };
     G.exitDungeon = () => {
@@ -38435,7 +38633,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.sfx) G.sfx.lose && G.sfx.lose();
       G.combo = 0;
       // 🗼 ล้มกลางหอคอย = จบรอบนี้ — เก็บมอนของชั้นออกก่อน ไม่งั้นค้างอยู่กลางทุ่งตอนฟื้น
-      if (G.dungeon) { const wasRogue = !!G.dungeon.rogue; if (wasRogue && G.rogueEnd) G.rogueEnd("fail"); if (G.twrLeave) G.twrLeave(true); toast(`💀 ล้มในหอคอย — ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`); }
+      if (G.dungeon) { const wasRogue = !!G.dungeon.rogue, wasCave = !!G.dungeon.cave; if (wasRogue && G.rogueEnd) G.rogueEnd("fail"); if (G.twrLeave) G.twrLeave(true); toast(wasCave ? "💀 ล้มในถ้ำโจรก็อบลิน — กลับมาลองใหม่ได้เสมอ" : `💀 ล้มในหอคอย — ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`); }
       wilds.forEach((w) => { w.userData.aggro = false; });
       if (G.clearSummons) G.clearSummons();   // 🐾 เจ้าของล้ม — ฝูงแตกหนีกลับเข้าป่า
       const pen = Math.round(expForLevel(G.player.level) * 0.2);
@@ -43707,7 +43905,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           padChargeStep(G._ranchPad, G._ranchPadRing, "ranchPadShy", "_ranchPadT", () => { try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } });
           padChargeStep(G._homePad, G._homePadRing, "homePadShy", "_homePadT", () => { try { G.enterHomeZone(); } catch (err) { G.inHomeZone = false; try { console.warn("enterHomeZone failed", err); } catch (_) {} } });
           padChargeStep(G._townPad, G._townPadRing, "townPadShy", "_townPadT", () => { try { G.enterTownZone(); } catch (err) { G.inTownZone = false; try { console.warn("enterTownZone failed", err); } catch (_) {} } });
+          if (!G.dungeon) padChargeStep(G._caveGate, G._caveGateRing, "caveShy", "_caveT", () => { try { G.enterGoblinCave(); } catch (err) { try { console.warn("enterGoblinCave failed", err); } catch (_) {} } });   // ⛏️
         }
+        if (G._caveGate) G._caveGate.visible = (G.curBiome || 0) === 0 && !G.inRanchZone && !G.inHomeZone && !G.inTownZone && !G.dungeon;
         if (G.inTownZone) { // 🏰 ในเมือง: ประตูออก + กันของโลกภายนอกโผล่ + ชาวเมือง/ผู้เล่นเดินเล่น
           if (Math.hypot(char.position.x - 0, char.position.z - 29.8) < 2.3) try { G.exitTownZone(); } catch (err) { try { console.warn("exitTownZone failed", err); } catch (_) {} }
         }
@@ -59297,9 +59497,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         <div style={{ position: "absolute", inset: 0, zIndex: 60, pointerEvents: "auto", fontFamily: font,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12,
           background: "radial-gradient(circle at 50% 45%, #3c1470, #0d0618)" }}>
-          <div style={{ fontSize: 40, lineHeight: 1, filter: "drop-shadow(0 4px 14px rgba(201,168,240,0.7))" }}>🗼</div>
-          <div style={{ fontSize: 15, fontWeight: 900, color: "#f0e6ff", letterSpacing: 0.5 }}>กำลังเข้าหอคอยมิติ…</div>
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: "#c9a8f0" }}>ชั้น {ui.twrLoad.floor}/{ui.twrLoad.max || 100} · กำลังโหลดฉาก</div>
+          <div style={{ fontSize: 40, lineHeight: 1, filter: "drop-shadow(0 4px 14px rgba(201,168,240,0.7))" }}>{ui.twrLoad.cave ? "⛏️" : "🗼"}</div>
+          <div style={{ fontSize: 15, fontWeight: 900, color: "#f0e6ff", letterSpacing: 0.5 }}>{ui.twrLoad.cave ? "กำลังเข้าถ้ำโจรก็อบลิน…" : "กำลังเข้าหอคอยมิติ…"}</div>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: "#c9a8f0" }}>{ui.twrLoad.cave ? "ห้อง" : "ชั้น"} {ui.twrLoad.floor}/{ui.twrLoad.max || 100} · กำลังโหลดฉาก</div>
           <div style={{ position: "relative", width: 84, height: 84, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid rgba(201,168,240,0.25)" }} />
             <div style={{ position: "absolute", inset: 0, borderRadius: "50%",
@@ -59324,7 +59524,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               padding: "6px 10px 7px", boxShadow: "0 6px 20px rgba(40,10,70,0.5)", pointerEvents: "auto" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 900, color: "#ffe6c0" }}>
-                  {T.rogue ? "🎲" : "🗼"} ชั้น {T.floor}{T.rogue ? "" : "/" + T.max}{T.boss ? " 👑" : ""}
+                  {T.cave ? <>⛏️ ถ้ำโจรก็อบลิน · ห้อง {T.floor}/{T.max}{T.floor === T.max ? " 👺" : ""}</> : <>{T.rogue ? "🎲" : "🗼"} ชั้น {T.floor}{T.rogue ? "" : "/" + T.max}{T.boss ? " 👑" : ""}</>}
                 </span>
                 <span style={{ flex: 1 }} />
                 <span style={{ fontSize: 11.5, fontWeight: 900, color: low ? "#ff9a9a" : "#cfe8ff" }}>⏱️ {T.sec} วิ</span>
