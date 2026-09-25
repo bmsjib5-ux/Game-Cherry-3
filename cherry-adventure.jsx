@@ -24204,6 +24204,30 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ⛏️ ห้องถ้ำโจรก็อบลิน — ห้องเดียวกว้าง ±16 เหมือนหอคอย แต่ใช้ชุดถ้ำ + กับดักหนาม (โคลนแยก ไม่รวม instanced เพราะต้องขยับหนาม)
     const CAVE_S = 1.33;   // กำแพง/พื้นต้นฉบับกว้าง 4 → 5.3 หน่วย · กำแพงสูง 4 → 5.3 (พ้นหัวตัวละคร)
     const tintCache = {};
+    // 🏜️ แปลง texture ไล่สีของ KayKit เป็นโทนหินทราย — อ่านความสว่างแต่ละพิกเซล แล้วไล่สีทรายเข้ม→ทรายอ่อน (สว่างขึ้นได้ ไม่ใช่แค่คูณให้เข้ม)
+    const sandTexCache = {};
+    const ruinSandMat = (m0) => {
+      const c = m0.clone(); c.color.setHex(0xffffff);
+      const img = m0.map && m0.map.image;
+      if (img && img.width) {
+        let t = sandTexCache[m0.map.uuid];
+        if (!t) {
+          const cv = document.createElement("canvas"); cv.width = img.width; cv.height = img.height; const x = cv.getContext("2d"); x.drawImage(img, 0, 0);
+          const d = x.getImageData(0, 0, cv.width, cv.height), a = d.data;
+          const lo = [120, 88, 52], hi = [250, 228, 178];
+          for (let i = 0; i < a.length; i += 4) {
+            const l = Math.min(1, Math.pow((a[i] * 0.3 + a[i + 1] * 0.59 + a[i + 2] * 0.11) / 255, 0.7) * 1.25);
+            const warm = (a[i] - a[i + 2]) / 255;   // ไม้/ของสีร้อนเดิม คงความอมส้มไว้หน่อย
+            a[i] = lo[0] + (hi[0] - lo[0]) * l + warm * 18; a[i + 1] = lo[1] + (hi[1] - lo[1]) * l; a[i + 2] = lo[2] + (hi[2] - lo[2]) * l - warm * 10;
+          }
+          x.putImageData(d, 0, 0);
+          t = new THREE.CanvasTexture(cv); t.encoding = m0.map.encoding; t.flipY = m0.map.flipY; t.wrapS = m0.map.wrapS; t.wrapT = m0.map.wrapT;
+          t.magFilter = m0.map.magFilter; t.minFilter = m0.map.minFilter; sandTexCache[m0.map.uuid] = t;
+        }
+        c.map = t;
+      } else c.color.setHex(0xe8cfa0);
+      c.needsUpdate = true; return c;
+    };
     const caveBuild = () => {
       if (kkDunGroup || !G.kkCaveReady) return false;
       const cx = dungeonCenter.x, cz = dungeonCenter.z, baseY = char.position.y;
@@ -24215,7 +24239,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const holder = new THREE.Object3D(); holder.position.set(cx + x, yy, cz + z); holder.rotation.set(0, ry || 0, 0); holder.scale.setScalar(sc); holder.updateMatrixWorld(true);
         src.traverse((m) => { if (!m.isMesh) return; _m.multiplyMatrices(holder.matrixWorld, m.matrixWorld);
           const key = m.geometry.uuid + "|" + m.material.uuid; let e = inst.get(key);
-          if (!e) { let mat = m.material; if (tint) { mat = tintCache[m.material.uuid] || (tintCache[m.material.uuid] = (() => { const c = m.material.clone(); c.color.multiply(new THREE.Color(tint)); return c; })()); }
+          if (!e) { let mat = m.material; if (tint) { mat = tintCache[m.material.uuid] || (tintCache[m.material.uuid] = ruinSandMat(m.material)); }
             e = { geo: m.geometry, mat, list: [], cast: m.castShadow }; inst.set(key, e); } e.list.push(_m.clone()); });
       };
       const tint = (CAVE_DEF[G.dungeon.cave] || {}).theme === "ruins" ? 0xf2d49a : null;   // 🏜️ ย้อมสีทรายทั้งห้อง
