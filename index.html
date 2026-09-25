@@ -34047,6 +34047,32 @@ function CherryAdventure() {
             meteors.push(g);
         };
         const clearMeteors = () => { meteors.forEach((m) => { scene.remove(m); (G._disposeObj3D && G._disposeObj3D(m)); }); meteors.length = 0; };
+        // 🚪 หน้าประตูดันเจี้ยน (ประตูถ้ำของแมพนี้ + ประตูหอคอย) — มอนอีเวนต์ห้ามเกิด/ห้ามเดินเข้าใกล้
+        const GATE_CLEAR = 7;
+        const gatePts = () => {
+            const out = [];
+            (G._caveGates || []).forEach((Q) => { if (Q.bIdx === (G.curBiome || 0))
+                out.push({ x: Q.g.position.x, z: Q.g.position.z }); });
+            if (typeof portal !== "undefined" && portal)
+                out.push({ x: portal.position.x, z: portal.position.z });
+            return out;
+        };
+        const nearGate = (x, z, pad) => gatePts().some((q) => Math.hypot(x - q.x, z - q.z) < GATE_CLEAR + (pad || 0));
+        G.nearGate = nearGate;
+        const keepOffGates = (m) => {
+            for (const q of gatePts()) {
+                const dx = m.position.x - q.x, dz = m.position.z - q.z, d = Math.hypot(dx, dz);
+                if (d < GATE_CLEAR) {
+                    const k = GATE_CLEAR / (d || 0.001);
+                    m.position.x = q.x + dx * k;
+                    m.position.z = q.z + dz * k;
+                    if (m.userData.wander) {
+                        m.userData.wander.cx = m.position.x;
+                        m.userData.wander.cz = m.position.z;
+                    }
+                }
+            }
+        };
         const makeGolden = () => {
             const spId = SPAWN_POOL[Math.floor(Math.random() * SPAWN_POOL.length)];
             const m = buildMonster(spId);
@@ -34063,8 +34089,15 @@ function CherryAdventure() {
             m.userData.body = m.userData.body; // keep ref
             m.userData.lv = G.player.level + 1;
             m.userData.golden = true;
-            const a = Math.random() * Math.PI * 2;
-            m.position.set(Math.cos(a) * 6, 0, Math.sin(a) * 6);
+            let gx = 0, gz = 0; // 🌟 เกิดรอบตัวผู้เล่น นอกเขตปลอดภัย และไม่ใช่หน้าประตูดันเจี้ยน
+            for (let k = 0; k < 40; k++) {
+                const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * 9;
+                gx = char.position.x + Math.cos(a) * r;
+                gz = char.position.z + Math.sin(a) * r;
+                if (Math.hypot(gx, gz) < FIELD_R - 1 && !inSafeZone(gx, gz) && !nearGate(gx, gz, 1))
+                    break;
+            }
+            m.position.set(gx, 0, gz);
             m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: 0, r: 1, sp: 0.3 };
             scene.add(m);
             wilds.push(m);
@@ -34116,8 +34149,8 @@ function CherryAdventure() {
                             const x = char.position.x + Math.cos(a) * r, z = char.position.z + Math.sin(a) * r;
                             if (Math.hypot(x, z) > FIELD_R - 1)
                                 continue;
-                            if (!inSafeZone(x, z) && !(G._safePts || []).some((q) => Math.hypot(x - q.x, z - q.z) < q.r + 1.5))
-                                return { x, z }; // เผื่อระยะ 1.5 กันเดินไถลกลับเข้าเขต
+                            if (!inSafeZone(x, z) && !nearGate(x, z, 1) && !(G._safePts || []).some((q) => Math.hypot(x - q.x, z - q.z) < q.r + 1.5))
+                                return { x, z }; // 🚪 ไม่เกิดหน้าประตูดันเจี้ยน   // เผื่อระยะ 1.5 กันเดินไถลกลับเข้าเขต
                         }
                     return null;
                 };
@@ -68177,6 +68210,8 @@ function CherryAdventure() {
                                 }
                             }
                         }
+                        if ((m.userData.horde || m.userData.golden) && !m.userData.twr)
+                            keepOffGates(m); // 🚪 มอนอีเวนต์ไม่เดินมาขวางหน้าประตูดันเจี้ยน
                         m.position.y = terrainAt(m.position.x, m.position.z) - (G._gy || 0); // 🏔️ เหยียบพื้นตามความสูงจริงของภูมิประเทศ
                         if (m.userData.shinyRing) {
                             m.userData.shinyRing.rotation.z = t * 2;
