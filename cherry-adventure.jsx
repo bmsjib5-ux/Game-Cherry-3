@@ -2947,7 +2947,7 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Sword_Block: { from: 0.06, spd: 1.8 }, Sword_Regular_A_Rec: { from: 0, spd: 2.2 }, Sword_Regular_B_Rec: { from: 0, spd: 2.2 }, Melee_Hook_Rec: { from: 0, spd: 2.2 },   // 🗡️ ยกดาบรับ · เก็บดาบ/หมัดหลังฟันจบ
                       Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 },
                       Farm_PlantSeed: { from: 0, spd: 1.6 }, Farm_Watering: { from: 0, spd: 1.9 }, Farm_Harvest: { from: 0, spd: 1.5 },   // 🌱 ปลูก · 💧 ใส่ปุ๋ย/รดน้ำ · 🌾 เก็บเกี่ยว/เก็บสมุนไพร
-                      TreeChopping_Loop: { from: 0, spd: 1.1 }, Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
+                      TreeChopping_Loop: { from: 0, spd: 1.1 }, Chest_Open: { from: 0, spd: 1.0 }, Idle_Torch_Loop: { from: 0, spd: 1 }, Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
 const HERO_BARE_HANDS = { Farm_PlantSeed: 1, Farm_Watering: 1, Farm_Harvest: 1, PickUp_Table: 1 };   // ท่าที่ใช้มือเปล่า (ซ่อนอาวุธชั่วคราว)
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
@@ -10736,6 +10736,30 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       };
       G.heroEmote = (n, t, loop) => { const H = G._heroModel; if (n === "Consume" && heroHasShield()) return;   // 🛡️ ท่าดื่มใช้มือซ้าย — มือซ้ายถือโล่อยู่จะกลายเป็นยกโล่ขึ้นปาก
         if (H && H.acts[n]) { H.emote = { n, t: t || 1.2, loop: !!loop }; if (H.cur === n) H.cur = null; } };   // loop = ท่าวนซ้ำตลอดช่วงเวลา (เช่น ฟันไม้)
+      // 🔥 คบเพลิงในมือซ้าย — วางตามตำแหน่งกระดูก hand_l ทุกเฟรม ตั้งตรงเสมอ (ไม่หมุนตามข้อมือ เปลวไฟจะได้ชี้ขึ้น)
+      const _tV = new THREE.Vector3();
+      const heroTorchTick = (H, on) => {
+        if (!on && !H.torch) return;
+        if (!H.torch) {
+          const src = G._kkCaveLib && G._kkCaveLib.torch; if (!src) return;
+          const g = new THREE.Group(); const m = src.clone(true); m.scale.setScalar(1.05); m.position.y = 0.3; g.add(m);   // ด้ามยาว ~1.2 หน่วย มือกำช่วงล่างของด้าม
+          let fl = null; try { fl = kFlip("torch", 1.3, { add: true }); fl.sp.position.y = 1.25; fl.sp.renderOrder = 5; g.add(fl.sp); } catch (_) {}
+          const light = new THREE.PointLight(0xffa048, 0, 9, 1.6); light.position.y = 1.2; g.add(light);
+          scene.add(g);
+          let hb = null; H.g.traverse((o) => { if (!hb && o.isBone && /^hand_l$|hand\.?l$|lefthand$/i.test(o.name)) hb = o; });
+          H.torch = { g, fl, light, hb };
+        }
+        const T = H.torch;
+        T.g.visible = on || T.light.intensity > 0.01;
+        T.light.intensity += ((on ? 1.5 : 0) - T.light.intensity) * Math.min(1, 0.2 * 60 * (1 / 60));
+        if (!on) { T.g.children.forEach((c) => { if (c !== T.light) c.visible = false; }); return; }
+        T.g.children.forEach((c) => { c.visible = true; });
+        if (T.hb) { T.hb.getWorldPosition(_tV); T.g.position.copy(_tV); } else T.g.position.set(char.position.x, char.position.y + 1.2, char.position.z);
+        T.g.rotation.set(0, char.rotation.y, 0.18);
+        const tt = performance.now() * 0.001;
+        if (T.fl) T.fl.set((tt * 1.4) % 1);
+        T.light.intensity = 1.35 + Math.sin(tt * 13) * 0.12 + Math.sin(tt * 7.3) * 0.1;   // 🔥 ไฟกะพริบนิด ๆ
+      };
       // 🛡️ ถือโล่ KayKit อยู่ในมือซ้ายไหม (นักรบสายดาบ) — ใช้ท่ายืนตั้งโล่/ยกโล่รับแทนท่าสะดุ้ง
       const heroHasShield = () => { if (typeof wandL === "undefined" || !wandL || !wandL.visible) return false;
         for (const c of wandL.children) if (c.visible && c.userData.isShield) return true; return false; };
@@ -10764,10 +10788,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         H.atkAge = (H.atkAge || 0) + dt;
         const has = (n, f) => (n && H.acts[n] ? n : f);                      // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
         const shield = heroHasShield();
+        // 🔥 ถือคบเพลิงมือซ้ายตอนอยู่ในถ้ำ (มือซ้ายว่าง = ไม่ถือโล่) · ยืนนิ่ง = ท่าชูคบเพลิง
+        const torchOn = !!(G.dungeon && G.dungeon.cave && !G.dungeon.loading && !shield && !G.mountId && G.mode === "explore" && G._kkCaveLib && G._kkCaveLib.torch);
         if (H.wasAtk && H.recClip && !(sw > 0.02 || bat || G._skCast || H.atkT > 0))   // 🗡️ เพิ่งฟันจบเฟรมนี้ — ตั้งเวลาท่าเก็บดาบก่อนเลือกท่า (กันท่ายืนแวบ 1 เฟรม)
           H.recT = H.acts[H.recClip][0].getClip().duration / ((HERO_CLIP_T[H.recClip] || {}).spd || 1);
         if (sp > 0.25) H.recT = 0;
-        let want = has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false, opt = null;
+        let want = torchOn && H.acts.Idle_Torch_Loop ? "Idle_Torch_Loop" : has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false, opt = null;
         if (H.emote && (H.emote.t -= dt) <= 0) H.emote = null;
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
         else if (G.mountId) want = "Sitting_Idle_Loop";
@@ -10784,6 +10810,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (shield && H.shieldFxN !== H.hurtN) { H.shieldFxN = H.hurtN; if (G._skillFxAt) G._skillFxAt("shieldaura", char.position.x, char.position.z, 0xffffff); }   // 🛡️ ออร่าโล่วาบทุกครั้งที่ยกโล่รับ
         }
         else if (H.recT > 0 && sp <= 0.25 && H.acts[H.recClip]) { want = H.recClip; once = true; opt = HERO_CLIP_T[H.recClip]; }   // 🗡️ ฟันจบแล้วเก็บดาบ/ตั้งการ์ดก่อนกลับท่ายืน (เดินแล้วยกเลิก)
+        else if (G._chestLock && H.acts.Chest_Open) { want = "Chest_Open"; once = true; opt = HERO_CLIP_T.Chest_Open; }   // 🎁 คุกเข่าเปิดหีบ (ไม่ให้ท่ากินยาของออโต้มาแทรก)
         else if (G.mining && sp <= 0.25 && H.acts.TreeChopping_Loop) { want = "TreeChopping_Loop"; opt = HERO_CLIP_T.TreeChopping_Loop; }   // ⛏️ ระหว่างมินิเกมขุดแร่ — เหวี่ยงจอบวนไปเรื่อย ๆ
         else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = !H.emote.loop; opt = HERO_CLIP_T[want] || null; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
         else if (sp > 3.9) want = "Sprint_Loop";   // 🏃 วิ่ง (กดซ้ำ/คลิกซ้ำ) = 4.4 → ท่าวิ่งเต็มฝีเท้า
@@ -10797,6 +10824,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         { const bare = !!HERO_BARE_HANDS[H.cur];                // 🌱 ปลูก/รดน้ำ/เก็บผัก/ยกจาน ใช้มือเปล่า — ซ่อนอาวุธระหว่างท่า แล้วคืนให้ทันทีที่จบ
           if (bare !== !!H.bareHide) { H.bareHide = bare; if (H.grip) H.grip.visible = !bare; if (H.gripL) H.gripL.visible = !bare; } }
         H.mixers.forEach((m) => m.update(dt));
+        heroTorchTick(H, torchOn && !atk && !HERO_BARE_HANDS[H.cur] && H.cur !== "Chest_Open" && H.cur !== "Death01" && H.cur !== "Hit_Knockback" && H.cur !== "LayToIdle" && H.cur !== "Roll" && H.cur !== "Slide_Start");
         if (H.tk || H.deco) { H.g.updateMatrixWorld(true); if (H.tk) heroTopknotTick(H); if (H.deco) H.deco.forEach((K) => heroBoneFollow(H, K)); }
         {                                                  // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
           const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
@@ -21723,7 +21751,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const g = Math.round((300 + fl * 220) * R);
       G.gold += g; G.stardust = (G.stardust || 0) + 3;
       if (fl < CAVE_ROOMS) { toast(`✅ เคลียร์ห้อง ${fl}! +${g}💰 — เดินลึกเข้าไปอีก…`); caveSpawn(fl + 1); return; }
-      // 🏆 ผ่านถ้ำ — หีบสมบัติ
+      // 🎁 ผ่านห้องสุดท้าย — หีบสมบัติทองโผล่กลางห้อง เดินไปเปิด (ท่า Chest_Open) แล้วค่อยรับรางวัล
+      if (caveChestSpawn()) return;
+      caveReward(); G.twrLeave(true); syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    const caveReward = () => {
+      const D = G.dungeon; if (!D || D.rewarded) return; D.rewarded = true;
+      const C = caveCfg(), R = C.reward;
       const today = new Date().toDateString(); G.caveDays = G.caveDays || {};
       const first = G.caveDays[D.cave] !== today;
       G.caveDays[D.cave] = today; G.caveDay = today; G.caveClears = (G.caveClears || 0) + 1;
@@ -21736,8 +21770,58 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.showAnnounce) G.showAnnounce(`🏆 ${G.playerName || "ผู้กล้า"} พิชิต${C.name}แล้ว!`);
       if (G.questFx) G.questFx(); if (G.juice) G.juice("reward"); if (G.sfx && G.sfx.levelup) G.sfx.levelup();
       questProgress("boss", 1);
-      G.twrLeave(true);
-      syncPlayer(); if (G.saveGame) G.saveGame();
+    };
+    // 🎁 หีบสมบัติตอนพิชิตถ้ำ — KayKit chest_gold (ฝาแยกชิ้น บานพับด้านหลัง) · เดินเข้าใกล้ = คุกเข่าเปิด ฝาเปิด แสงทอง เหรียญพุ่ง
+    const caveChestSpawn = () => {
+      const D = G.dungeon, src = kkCaveLib.chest; if (!D || !src || D.chest) return false;
+      const g = src.clone(true);
+      const lid = g.getObjectByName("chest_gold_lid");
+      const sc = CAVE_S * 0.75;
+      g.scale.setScalar(sc);
+      const cx = dungeonCenter.x, cz = dungeonCenter.z;
+      let px = cx, pz = cz;
+      if (Math.hypot(char.position.x - cx, char.position.z - cz) < 2.6) { px = char.position.x + Math.sin(char.rotation.y) * 2.8; pz = char.position.z + Math.cos(char.rotation.y) * 2.8; }
+      g.position.set(px, char.position.y - (kkCaveY.chest ? kkCaveY.chest.min * sc : 0), pz);
+      g.rotation.y = Math.atan2(char.position.x - px, char.position.z - pz);          // หันหน้าหีบ (ฝั่งเปิด) เข้าหาผู้เล่น
+      scene.add(g);
+      if (!G._chestGlow) { G._chestGlow = new THREE.PointLight(0xffc860, 0, 7); scene.add(G._chestGlow); }   // ไฟค้างไว้ในฉาก ปรับแค่ความสว่าง (เพิ่ม/ลบไฟ = shader คอมไพล์ใหม่ทั้งฉาก กระตุก)
+      const glow = G._chestGlow; glow.position.set(px, char.position.y + 1.2, pz);
+      D.chest = { g, lid, glow, t: 0, phase: "walk", wait: 0, lid0: lid ? lid.rotation.x : 0 };
+      kImpact(px, 0.6, pz, 0xffd24a, 1.2); dustRing(px, pz, 1.2);
+      toast(`🎁 หีบสมบัติปรากฏ! เดินไปเปิดเลย`);
+      return true;
+    };
+    const caveChestDrop = (D) => { const K = D && D.chest; if (!K) return; scene.remove(K.g); K.glow.intensity = 0; D.chest = null; };
+    const caveChestTick = (dt) => {
+      const D = G.dungeon, K = D.chest; if (!K) return;
+      const cp = K.g.position, fx = Math.sin(K.g.rotation.y), fz = Math.cos(K.g.rotation.y);
+      const front = { x: cp.x + fx * 1.25, z: cp.z + fz * 1.25 };
+      const dist = Math.hypot(char.position.x - front.x, char.position.z - front.z);
+      K.glow.intensity = K.phase === "walk" ? 0.6 + Math.sin(performance.now() * 0.006) * 0.3 : K.glow.intensity;
+      if (K.phase === "walk") {
+        K.wait += dt;
+        if (G.auto && !G.moveTarget) G.moveTarget = new THREE.Vector3(front.x, 0, front.z);   // 🤖 ออโต้เดินไปเปิดให้เอง
+        if (dist < 0.9 || K.wait > 25) {                                                  // ถึงหน้าหีบ (หรือยืนเฉยนาน = เปิดให้เลย)
+          K.phase = "open"; K.t = 0; G.moveTarget = null; G.huntTarget = null;
+          char.position.x = front.x; char.position.z = front.z;
+          char.rotation.y = Math.atan2(cp.x - char.position.x, cp.z - char.position.z); yaw = char.rotation.y;
+          G._chestLock = true;
+        }
+        return;
+      }
+      K.t += dt;
+      G._chestLock = K.t < 1.3;                                                          // ระหว่างเปิดหีบยืนนิ่ง
+      const e = Math.max(0, Math.min(1, (K.t - 0.45) / 0.5)), ee = 1 - Math.pow(1 - e, 3);
+      if (K.lid) K.lid.rotation.x = K.lid0 - ee * 1.95;                                 // 🔓 ฝาหีบเปิดหงายไปด้านหลัง
+      K.glow.intensity = e > 0 ? 2.6 * ee * Math.max(0, 1 - (K.t - 1.6) / 1.4) + 0.4 : K.glow.intensity;
+      if (!K.popped && K.t >= 0.75) {
+        K.popped = true;
+        kImpact(cp.x, 0.9, cp.z, 0xffd24a, 1.6); burst(new THREE.Vector3(cp.x, 0.9, cp.z), 0xffe070, 1.2);
+        for (let k = 0; k < 10; k++) setTimeout(() => { if (G.dungeon && G.dungeon.chest === K) burst(new THREE.Vector3(cp.x + (Math.random() - 0.5) * 0.8, 1.2 + Math.random() * 0.6, cp.z + (Math.random() - 0.5) * 0.8), k % 2 ? 0xffd24a : 0xfff2b0, 0.6); }, k * 70);
+        G._camShake = Math.max(G._camShake || 0, 0.18);
+        caveReward();
+      }
+      if (K.t >= 3.2) { G._chestLock = false; caveChestDrop(D); G.twrLeave(true); syncPlayer(); if (G.saveGame) G.saveGame(); }
     };
     G.enterGoblinCave = () => G.enterCave("goblin");
     G.enterCave = (type) => {
@@ -21814,6 +21898,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (hb && hb.visible) { hb.visible = false; hid.push(hb); }
         }
       }
+      if (D.chest) { caveChestTick(dt); return; }              // 🎁 ฉากเปิดหีบ — หยุดนับเวลา
       if (D.waitPick) {                                        // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
         if (!G._rogueOffer && G.rogueOffer) G.rogueOffer();    // 🛟 กันค้าง: ถ้าไม่มีตัวเลือกค้างอยู่ (โหลดเซฟ/หน้าต่างหาย) ให้เสนอพรใหม่
         return;
@@ -21865,6 +21950,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🚪 ออกจากหอคอย — เก็บกวาดมอนแล้ววาร์ปกลับหน้าประตู
     G.twrLeave = (quiet) => {
       const D0 = G.dungeon;
+      if (D0 && D0.chest) { if (!D0.rewarded) { try { caveReward(); } catch (_) {} } caveChestDrop(D0); G._chestLock = false; }   // 🎁 กดออกก่อนเปิดหีบ = ยังได้รางวัลครบ
       if (D0 && D0.hid) { D0.hid.forEach((o) => { if (o) o.visible = true; }); D0.hid = null; }   // 👁️ คืนมอนโลกกว้างที่ซ่อนไว้
       twrClearMobs();
       const wasCave = !!(D0 && D0.cave), cDef = wasCave ? (CAVE_DEF[D0.cave] || CAVE_DEF.goblin) : null;
@@ -44486,7 +44572,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           }
         }
         // 💫😵 สถานะบนตัวเรา — สตัน = ขยับไม่ได้ · มึน = เดินเซไปมาและช้าลง
-        if (((G.wst && G.wst.stunT > 0) || G._getUpT > 0 || G._pKdT > 0) && G.mode === "explore") { dx = 0; dz = 0; G._lastPos = null; }   // 🛌 กำลังลุกจากพื้นก็ขยับไม่ได้
+        if (((G.wst && G.wst.stunT > 0) || G._getUpT > 0 || G._pKdT > 0 || G._chestLock) && G.mode === "explore") { dx = 0; dz = 0; G._lastPos = null; }   // 🛌 กำลังลุกจากพื้นก็ขยับไม่ได้
         else if (G.wst && G.wst.dazeT > 0 && (dx || dz)) { const wa = Math.sin(t * 2.7) * 0.8 + Math.sin(t * 6.1) * 0.3, ca = Math.cos(wa), sa = Math.sin(wa); const nx = dx * ca - dz * sa; dz = (dx * sa + dz * ca) * 0.75; dx = nx * 0.75; }
         // 🚶🏃 เดิน = 0.62 เท่า · วิ่ง = 1.3 เท่า (ท่าโมเดล: เดิน ≤2.6 · วิ่ง >3.9) · การเดินที่ระบบสั่งเอง (ออโต้ล่า/ออโต้อาชีพ/ตามมอน) ใช้ความเร็วเดิม 1.0
         const manualMove = (!G.moveTarget && !!(dx || dz)) || (!!G.moveTarget && G.moveTarget === G._tapTarget);   // ปุ่ม/จอย หรือจุดที่ผู้เล่นคลิกเอง
