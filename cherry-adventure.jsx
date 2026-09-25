@@ -32050,32 +32050,42 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       m.userData.watk = Math.max(1, Math.round(sp.atk * (1 + (lv - 1) * 0.13) * ng * (m.userData.shiny ? 1.2 : 1) * biomeAtkMul(_B))); // ⚖️ 0.15→0.13 ชดเชยช่วงเลเวลใหม่ที่กว้างขึ้น (Lv สูงสุด 750→1100) ไม่ให้มอนตีแรงเกินสัดส่วนเลือดผู้เล่น
       m.userData.wcd = 0.5 + Math.random();
     };
+    // ❤️ หลอดเลือดมอนโลกกว้าง — หน้าตาเดียวกับป้ายศัตรูตอนต่อสู้เดี่ยว: แคปซูลขอบขาวบาง พื้นดำโปร่ง แถบส้ม (ต่ำกว่า 35% = แดง) + "HP x/y" ใต้หลอด
+    const HPB_W = 256, HPB_H = 64;
     const wildBar = (m) => {
       if (!m.userData.hpbar) {
-        const g = new THREE.Group();
-        // ❤️ หลอดเลือดบนหัว — ขอบขาว + พื้นดำ + แถบสี (ใหญ่ขึ้นให้เห็นชัดจากมุมกล้องปกติ)
-        const rim = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false }));
-        const bg = new THREE.Mesh(new THREE.PlaneGeometry(1.44, 0.18), new THREE.MeshBasicMaterial({ color: 0x1a0e14, transparent: true, opacity: 0.9, depthTest: false }));
-        const fill = new THREE.Mesh(new THREE.PlaneGeometry(1.44, 0.18), new THREE.MeshBasicMaterial({ color: 0x6ae06a, transparent: true, depthTest: false }));
-        rim.renderOrder = 990; bg.renderOrder = 991; fill.renderOrder = 992; bg.position.z = 0.001; fill.position.z = 0.002;
-        g.add(rim, bg, fill); g.userData = { fill, w: 1.44 };
-        m.add(g); m.userData.hpbar = g;
+        const cv = document.createElement("canvas"); cv.width = HPB_W; cv.height = HPB_H;
+        const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter; tex.encoding = THREE.sRGBEncoding;   // สีส้มตรงกับป้ายต่อสู้เดี่ยว (ไม่ซีด)
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+        sp.renderOrder = 992; sp.userData = { cv, tex, key: "" };
+        m.add(sp); m.userData.hpbar = sp;
       }
       return m.userData.hpbar;
+    };
+    const drawWildBar = (g, hp, max) => {
+      const key = hp + "/" + max; if (g.userData.key === key) return; g.userData.key = key;
+      const x = g.userData.cv.getContext("2d"), pc = Math.max(0, Math.min(1, hp / max));
+      x.clearRect(0, 0, HPB_W, HPB_H);
+      const bx = 20, by = 6, bw = HPB_W - 40, bh = 20, r = bh / 2;
+      const pill = (w) => { x.beginPath(); x.moveTo(bx + r, by); x.lineTo(bx + Math.max(r, w) - r, by); x.arc(bx + Math.max(r * 2, w) - r, by + r, r, -Math.PI / 2, Math.PI / 2); x.lineTo(bx + r, by + bh); x.arc(bx + r, by + r, r, Math.PI / 2, Math.PI * 1.5); x.closePath(); };
+      pill(bw); x.fillStyle = "rgba(0,0,0,0.45)"; x.fill();
+      if (pc > 0) { x.save(); pill(bw); x.clip(); pill(bw * pc); x.fillStyle = pc > 0.35 ? "#f0a05a" : "#e05555"; x.fill(); x.restore(); }
+      pill(bw); x.lineWidth = 2.5; x.strokeStyle = "rgba(255,255,255,0.7)"; x.stroke();
+      x.font = "800 22px system-ui, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      const t = "HP " + Math.max(0, Math.ceil(hp)).toLocaleString("en-US") + "/" + Math.round(max).toLocaleString("en-US");
+      x.lineWidth = 5; x.strokeStyle = "rgba(0,0,0,0.65)"; x.lineJoin = "round"; x.strokeText(t, HPB_W / 2, 45); x.fillStyle = "#ffffff"; x.fillText(t, HPB_W / 2, 45);
+      g.userData.tex.needsUpdate = true;
     };
     const updateWildBar = (m) => {
       const g = m.userData.hpbar; if (!g) return;
       const hurt = m.userData.whp != null && m.userData.whp < m.userData.wmaxhp && m.userData.whp > 0
         && (performance.now() - (m.userData._hitAt || 0)) < 8000;          // ❤️ โชว์หลอดเลือดเฉพาะตอนเพิ่งโดนตี (ไม่โดนต่อ 8 วิ = ซ่อน)
       g.visible = hurt; if (!hurt) return;
-      const pc = Math.max(0, m.userData.whp / m.userData.wmaxhp);
-      g.userData.fill.scale.x = Math.max(0.001, pc); g.userData.fill.position.x = -(1 - pc) * 0.5 * (g.userData.w || 1);
-      g.userData.fill.material.color.setHex(pc > 0.4 ? 0x6ae06a : 0xe05555);
-      { const ms = m.scale.x || 1, L = m.userData.lbl;                  // ❤️ วางใต้ป้ายชื่อพอดี (ป้ายชื่ออยู่เหนือหัว)
-        const ly = L && L.sprite ? L.sprite.position.y : (FLOATY[m.userData.spId] ? 1.7 : 1.35);
-        g.position.set(0, ly - 0.34 * Math.min(ms, 1.8) / ms, 0); }
-      g.quaternion.copy(camera.quaternion);
-      g.scale.setScalar(Math.min(m.scale.x || 1, 1.8) / (m.scale.x || 1)); // ขนาดหลอดตามป้ายชื่อ (บอสใหญ่ขึ้นได้ไม่เกิน 1.8 เท่า)
+      drawWildBar(g, m.userData.whp, m.userData.wmaxhp);
+      const ms = m.scale.x || 1, k = Math.min(ms, 1.8) / ms, L = m.userData.lbl;   // ขนาดตามป้ายชื่อ (บอสใหญ่ขึ้นได้ไม่เกิน 1.8 เท่า)
+      const ly = L && L.sprite ? L.sprite.position.y : (FLOATY[m.userData.spId] ? 1.7 : 1.35);
+      g.scale.set(1.7 * k, 0.425 * k, 1);
+      g.position.set(0, ly - 0.36 * k, 0);                                // วางใต้ป้ายชื่อพอดี
     };
     G._updateWildBar = updateWildBar;
     G._wilds = wilds; // 🔧 debug/test hook: read-only reference to the live wild list
