@@ -2947,8 +2947,10 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Sword_Block: { from: 0.06, spd: 1.8 }, Sword_Regular_A_Rec: { from: 0, spd: 2.2 }, Sword_Regular_B_Rec: { from: 0, spd: 2.2 }, Melee_Hook_Rec: { from: 0, spd: 2.2 },   // 🗡️ ยกดาบรับ · เก็บดาบ/หมัดหลังฟันจบ
                       Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 },
                       Farm_PlantSeed: { from: 0, spd: 1.6 }, Farm_Watering: { from: 0, spd: 1.9 }, Farm_Harvest: { from: 0, spd: 1.5 },   // 🌱 ปลูก · 💧 ใส่ปุ๋ย/รดน้ำ · 🌾 เก็บเกี่ยว/เก็บสมุนไพร
-                      TreeChopping_Loop: { from: 0, spd: 1.1 }, Chest_Open: { from: 0, spd: 1.0 }, Idle_Torch_Loop: { from: 0, spd: 1 }, Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
-const HERO_BARE_HANDS = { Farm_PlantSeed: 1, Farm_Watering: 1, Farm_Harvest: 1, PickUp_Table: 1 };   // ท่าที่ใช้มือเปล่า (ซ่อนอาวุธชั่วคราว)
+                      TreeChopping_Loop: { from: 0, spd: 1.1 }, Chest_Open: { from: 0, spd: 1.0 }, Idle_Torch_Loop: { from: 0, spd: 1 },
+                      Dance_Loop: { from: 0, spd: 1 }, Idle_No_Loop: { from: 0, spd: 1.2 }, Swim_Fwd_Loop: { from: 0, spd: 1 }, Swim_Idle_Loop: { from: 0, spd: 1 },   /* 💃 เต้น · 🙅 ส่ายหน้า · 🏊 ว่ายน้ำ */ Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
+const HERO_SWIM_Y = { Swim_Idle_Loop: -0.12, Swim_Fwd_Loop: 0.28 };   // 🏊 คลิปว่ายน้ำลดตัวลงระดับน้ำเองอยู่แล้ว — ปรับละเอียดให้หัวไหล่พ้นน้ำ (ว่ายไปหน้า = ยกขึ้นนิด หัวไม่จม)
+const HERO_BARE_HANDS = { Farm_PlantSeed: 1, Farm_Watering: 1, Farm_Harvest: 1, PickUp_Table: 1, Dance_Loop: 1, Swim_Fwd_Loop: 1, Swim_Idle_Loop: 1 };   // ท่าที่ใช้มือเปล่า (ซ่อนอาวุธชั่วคราว)
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Idle_Loop" };                                    // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
@@ -10144,8 +10146,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const npcModels = []; G._npcRigs = npcModels;
       const npcModelSet = (grp, key) => {
         const M = grp && NPC_MODELS[key]; if (!M) return;
-        Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims")])).then((arr) => {
-          const anims = arr.pop(), srcs = arr.filter(Boolean);
+        Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims"), heroLoad("Anims2")])).then((arr) => {
+          const anims2 = arr.pop(), anims = arr.pop(), srcs = arr.filter(Boolean);   // 🎬 คลังเสริม: ท่าคุย/กอดอก
           if (!anims || !srcs.length || !THREE.SkeletonUtils) return;     // โหลดไม่ได้ก็คงร่างปั้นเองไว้เหมือนเดิม
           const g = new THREE.Group(); g.name = "npcModel";
           const parts = srcs.map((gl) => THREE.SkeletonUtils.clone(gl.scene));
@@ -10175,8 +10177,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             });
           });
           const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
+          const allClips = anims.animations.concat(anims2 ? anims2.animations : []);
           const clip = anims.animations.find((c) => c.name === M.idle) || anims.animations.find((c) => c.name === "Idle_Loop");
-          if (clip) mixers.forEach((mx) => { mx.clipAction(clip).play(); mx.setTime(M.off || 0); });   // เหลื่อมจังหวะทีละตัว จะได้ไม่ขยับพร้อมกันเป๊ะ
+          if (clip) mixers.forEach((mx) => { mx.clipAction(clip).play(); mx.setTime(M.off || 0); });
+          const nActs = {};
+          ["Idle_Talking_Loop", "Idle_FoldArms_Loop"].forEach((nm) => { const c = allClips.find((x) => x.name === nm); if (c) nActs[nm] = mixers.map((mx) => mx.clipAction(c)); });
+          if (clip) nActs[clip.name] = mixers.map((mx) => mx.clipAction(clip));   // เหลื่อมจังหวะทีละตัว จะได้ไม่ขยับพร้อมกันเป๊ะ
           let neck = null, neckPlane = null;
           if (/_Base$/.test(M.files[0]) && parts.length > 1) {     // ✂️ ตัดตัวฐานที่คอ กันเนื้อตัวโผล่พ้นชุด
             neck = parts[0].getObjectByName("neck_01");
@@ -10206,8 +10212,36 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             hold.forEach((oo) => { oo.position.set(0, 0, 0); oo.rotation.set(0, 0, 0); grip.add(oo); });
           }
           grp.userData.headY = M.h + 0.9;                          // 💬 ป้ายบทสนทนาลอยเหนือหัวโมเดลใหม่
-          npcModels.push({ key, grp, mixers, mats, lit: -1, neck, neckPlane, k, tmpV: new THREE.Vector3(), clips: anims.animations });
+          npcModels.push({ key, grp, mixers, mats, lit: -1, neck, neckPlane, k, tmpV: new THREE.Vector3(), clips: anims.animations,
+            acts: nActs, idle: clip ? clip.name : null, cur: clip ? clip.name : null, baseRot: grp.rotation.y, ambT: 6 + Math.random() * 10, foldT: 0 });
         });
+      };
+      // 🗣️ NPC มีชีวิตขึ้น — ผู้เล่นเดินเข้าใกล้ = หันมาหา + ท่าคุย · อยู่ว่าง ๆ บางอาชีพกอดอกเป็นพัก ๆ
+      const NPC_FOLD = { smith: 1, master: 1, miner: 1, chef: 1, fisher: 1 };
+      const _npcV = new THREE.Vector3();
+      const npcPlay = (N, name) => {
+        if (!name || N.cur === name || !N.acts[name]) return;
+        const prev = N.cur ? N.acts[N.cur] : null;
+        N.acts[name].forEach((a, i) => { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.fadeIn(0.35).play(); if (prev && prev[i] && prev[i] !== a) prev[i].fadeOut(0.35); });
+        N.cur = name;
+      };
+      const npcBehave = (N, dt) => {
+        if (!N.acts) return;
+        N.grp.getWorldPosition(_npcV);
+        const dx = char.position.x - _npcV.x, dz = char.position.z - _npcV.z, near = G.mode === "explore" && Math.hypot(dx, dz) < 6;
+        let want = N.idle;
+        if (near && N.acts.Idle_Talking_Loop) want = "Idle_Talking_Loop";
+        else if (NPC_FOLD[N.key] && N.acts.Idle_FoldArms_Loop) {
+          if (N.foldT > 0) { N.foldT -= dt; want = "Idle_FoldArms_Loop"; }
+          else if ((N.ambT -= dt) <= 0) { N.ambT = 10 + Math.random() * 12; N.foldT = 5 + Math.random() * 3; }
+        }
+        npcPlay(N, want);
+        // หันหน้า: ใกล้ = หันหาผู้เล่น · ไกล = ค่อย ๆ กลับทิศเดิม (มุมโลก → มุมในกลุ่มแม่)
+        const pYaw = N.grp.parent ? N.grp.parent.getWorldQuaternion(new THREE.Quaternion()) : null;
+        const parentYaw = pYaw ? new THREE.Euler().setFromQuaternion(pYaw, "YXZ").y : 0;
+        const target = near ? Math.atan2(dx, dz) - parentYaw : N.baseRot;
+        let d = target - N.grp.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
+        N.grp.rotation.y += d * Math.min(1, dt * 5);
       };
       // ⏱️ ไล่เฟรมท่ายืนของ NPC + เร่งความสว่างตอนกลางคืนเหมือนโมเดลผู้เล่น
       G.npcModelTick = (dt) => {
@@ -10224,6 +10258,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
         for (const N of npcModels) {
           if (N.grp && !N.grp.visible) continue;
+          npcBehave(N, dt);
           N.mixers.forEach((m) => m.update(dt));
           if (Math.abs(lit - N.lit) > 0.015) { N.lit = lit; N.mats.forEach((m) => { m.emissive.copy(m.color).multiplyScalar(lit); m.emissiveIntensity = 1; }); }
           if (N.neck && N.neckPlane) { N.neck.getWorldPosition(N.tmpV); N.tmpV.y -= 0.06 * N.k; N.neckPlane.setFromNormalAndCoplanarPoint(N.neckPlane.normal.set(0, 1, 0), N.tmpV); }
@@ -10734,6 +10769,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         return out;
       };
+      // 😊 ท่าทักทายที่ผู้เล่นกดเอง (ยืนนิ่งเท่านั้น — เดินแล้วยกเลิก)
+      G.EMOTES = [{ id: "dance", emoji: "💃", name: "เต้น", clip: "Dance_Loop", t: 4.0, loop: true }, { id: "yes", emoji: "🙆", name: "พยักหน้า", clip: "Yes", t: 1.8 }, { id: "no", emoji: "🙅", name: "ส่ายหน้า", clip: "Idle_No_Loop", t: 2.1, loop: true }];
+      G.doEmote = (id) => {
+        const E = G.EMOTES.find((e) => e.id === id); if (!E || G.mode !== "explore" || G._swimming) return;
+        G.moveTarget = null; G.huntTarget = null;
+        if (G.heroEmote) G.heroEmote(E.clip, E.t, E.loop);
+      };
       G.heroEmote = (n, t, loop) => { const H = G._heroModel; if (n === "Consume" && heroHasShield()) return;   // 🛡️ ท่าดื่มใช้มือซ้าย — มือซ้ายถือโล่อยู่จะกลายเป็นยกโล่ขึ้นปาก
         if (H && H.acts[n]) { H.emote = { n, t: t || 1.2, loop: !!loop }; if (H.cur === n) H.cur = null; } };   // loop = ท่าวนซ้ำตลอดช่วงเวลา (เช่น ฟันไม้)
       // 🔥 คบเพลิงในมือซ้าย — วางตามตำแหน่งกระดูก hand_l ทุกเฟรม ตั้งตรงเสมอ (ไม่หมุนตามข้อมือ เปลวไฟจะได้ชี้ขึ้น)
@@ -10812,6 +10854,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if (H.recT > 0 && sp <= 0.25 && H.acts[H.recClip]) { want = H.recClip; once = true; opt = HERO_CLIP_T[H.recClip]; }   // 🗡️ ฟันจบแล้วเก็บดาบ/ตั้งการ์ดก่อนกลับท่ายืน (เดินแล้วยกเลิก)
         else if (G._chestLock && H.acts.Chest_Open) { want = "Chest_Open"; once = true; opt = HERO_CLIP_T.Chest_Open; }   // 🎁 คุกเข่าเปิดหีบ (ไม่ให้ท่ากินยาของออโต้มาแทรก)
         else if (G.mining && sp <= 0.25 && H.acts.TreeChopping_Loop) { want = "TreeChopping_Loop"; opt = HERO_CLIP_T.TreeChopping_Loop; }   // ⛏️ ระหว่างมินิเกมขุดแร่ — เหวี่ยงจอบวนไปเรื่อย ๆ
+        else if (G._swimming && H.acts.Swim_Idle_Loop) want = sp > 0.25 ? "Swim_Fwd_Loop" : "Swim_Idle_Loop";   // 🏊 อยู่ในน้ำ — ว่ายไปข้างหน้า / ลอยตัวตีน้ำ
         else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = !H.emote.loop; opt = HERO_CLIP_T[want] || null; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
         else if (sp > 3.9) want = "Sprint_Loop";   // 🏃 วิ่ง (กดซ้ำ/คลิกซ้ำ) = 4.4 → ท่าวิ่งเต็มฝีเท้า
         else if (sp > 2.6) want = "Jog_Fwd_Loop";
@@ -10824,6 +10867,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         { const bare = !!HERO_BARE_HANDS[H.cur];                // 🌱 ปลูก/รดน้ำ/เก็บผัก/ยกจาน ใช้มือเปล่า — ซ่อนอาวุธระหว่างท่า แล้วคืนให้ทันทีที่จบ
           if (bare !== !!H.bareHide) { H.bareHide = bare; if (H.grip) H.grip.visible = !bare; if (H.gripL) H.gripL.visible = !bare; } }
         H.mixers.forEach((m) => m.update(dt));
+        { const ty = G._swimming ? (HERO_SWIM_Y[H.cur] || 0) : 0; H.swimY = (H.swimY || 0) + (ty - (H.swimY || 0)) * Math.min(1, dt * 6);   // 🏊 ปรับระดับตัวในน้ำ (ค่อย ๆ เปลี่ยน)
+          H.g.position.y = H.swimY; }
         heroTorchTick(H, torchOn && !atk && !HERO_BARE_HANDS[H.cur] && H.cur !== "Chest_Open" && H.cur !== "Death01" && H.cur !== "Hit_Knockback" && H.cur !== "LayToIdle" && H.cur !== "Roll" && H.cur !== "Slide_Start");
         if (H.tk || H.deco) { H.g.updateMatrixWorld(true); if (H.tk) heroTopknotTick(H); if (H.deco) H.deco.forEach((K) => heroBoneFollow(H, K)); }
         {                                                  // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
@@ -44602,6 +44647,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             }
           }
         }
+        // 🏊 ว่ายน้ำ — เดินลงบ่อ/สระ/ทะเลประจำด่าน (ยกเว้นบ่อลาวา) ตัวจมเหลือแต่ช่วงบน ช้าลง มีวงน้ำกระเพื่อม
+        { const P = G.pondPos, S = G.fishSpotOf ? G.fishSpotOf() : null;
+          const inW = !!(P && G.mode === "explore" && !G.dungeon && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.mountId && S && S.kind !== "lava"
+            && Math.hypot(char.position.x - P.x, char.position.z - P.z) < (P.r || 2.4) - 0.45);
+          if (inW !== !!G._swimming) { G._swimming = inW; if (inW) { try { kImpact(char.position.x, 0.2, char.position.z, 0x9fe0ff, 0.8); } catch (_) {} if (G.heroEmote && G._heroModel) G._heroModel.emote = null; } }
+          if (inW) { dx *= 0.62; dz *= 0.62; G._swimRip = (G._swimRip || 0) - dt;
+            if (G._swimRip <= 0) { G._swimRip = (dx || dz) ? 0.3 : 0.9; const wc = S.water || 0x9fe0ff;
+              try { kfxSpawn(char.position.x, char.position.z, 1.1, (g) => { g.position.y = char.position.y; const r = kDecal("circle_03", wc, 1, 0.08); g.add(r); return (pr) => { r.scale.setScalar(0.9 + pr * 2.4); r.material.opacity = 0.75 * (1 - pr); }; }); } catch (_) {} } } }
         // 💫😵 สถานะบนตัวเรา — สตัน = ขยับไม่ได้ · มึน = เดินเซไปมาและช้าลง
         if (((G.wst && G.wst.stunT > 0) || G._getUpT > 0 || G._pKdT > 0 || G._chestLock) && G.mode === "explore") { dx = 0; dz = 0; G._lastPos = null; }   // 🛌 กำลังลุกจากพื้นก็ขยับไม่ได้
         else if (G.wst && G.wst.dazeT > 0 && (dx || dz)) { const wa = Math.sin(t * 2.7) * 0.8 + Math.sin(t * 6.1) * 0.3, ca = Math.cos(wa), sa = Math.sin(wa); const nx = dx * ca - dz * sa; dz = (dx * sa + dz * ca) * 0.75; dx = nx * 0.75; }
@@ -60983,6 +61036,21 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               กำลังออกล่ามอนสเตอร์... 🏃‍♀️💨
             </div>
           )}
+          {/* 😊 ปุ่มท่าทักทาย — มุมขวาบนของจอยสติ๊ก · แตะแล้วกางตัวเลือก เต้น / พยักหน้า / ส่ายหน้า */}
+          {!ui.equipScreen && (() => {
+            const L0 = HUD_EDGE + HUD_BTN_L + (_shortHud ? 34 + 92 - 8 : 12 + 136 - 14), B0 = _shortHud ? 46 + 92 - 24 : 92 + 136 - 30, SZ = _shortHud ? 32 : 36;
+            const btn = (key, label, title, fn, bg) => (
+              <button key={key} title={title} onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); fn(); }} style={{
+                width: SZ, height: SZ, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", padding: 0,
+                background: bg || "rgba(255,255,255,0.85)", fontSize: SZ * 0.52, lineHeight: 1, boxShadow: "0 3px 9px rgba(90,120,70,0.3)", pointerEvents: "auto" }}>{label}</button>
+            );
+            return (
+              <div style={{ position: "absolute", left: `calc(${L0}px + var(--sa-l, 0px))`, bottom: B0, display: "flex", gap: 5, alignItems: "center", zIndex: 21, pointerEvents: "none" }}>
+                {btn("emo", "😊", "ท่าทักทาย", () => setUi((u) => ({ ...u, emoteOpen: !u.emoteOpen })), ui.emoteOpen ? "#ffe9a0" : null)}
+                {ui.emoteOpen && (G.EMOTES || []).map((E) => btn(E.id, E.emoji, E.name, () => { G.doEmote(E.id); setUi((u) => ({ ...u, emoteOpen: false })); }))}
+              </div>
+            );
+          })()}
           {/* joystick */}
           <div
             ref={joyRef}
