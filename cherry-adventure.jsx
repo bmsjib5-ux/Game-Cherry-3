@@ -2945,7 +2945,10 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Hit_Head: { from: 0, spd: 1.1 },
                       Hit_Knockback: { from: 0, spd: 1.15 }, Idle_Shield_Break: { from: 0, spd: 0.9 }, LayToIdle: { from: 0, spd: 1.25 },
                       Sword_Block: { from: 0.06, spd: 1.8 }, Sword_Regular_A_Rec: { from: 0, spd: 2.2 }, Sword_Regular_B_Rec: { from: 0, spd: 2.2 }, Melee_Hook_Rec: { from: 0, spd: 2.2 },   // 🗡️ ยกดาบรับ · เก็บดาบ/หมัดหลังฟันจบ
-                      Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 } };   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
+                      Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 },
+                      Farm_PlantSeed: { from: 0, spd: 1.6 }, Farm_Watering: { from: 0, spd: 1.9 }, Farm_Harvest: { from: 0, spd: 1.5 },   // 🌱 ปลูก · 💧 ใส่ปุ๋ย/รดน้ำ · 🌾 เก็บเกี่ยว/เก็บสมุนไพร
+                      TreeChopping_Loop: { from: 0, spd: 1.1 }, Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
+const HERO_BARE_HANDS = { Farm_PlantSeed: 1, Farm_Watering: 1, Farm_Harvest: 1, PickUp_Table: 1 };   // ท่าที่ใช้มือเปล่า (ซ่อนอาวุธชั่วคราว)
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Idle_Loop" };                                    // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
@@ -10731,8 +10734,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         return out;
       };
-      G.heroEmote = (n, t) => { const H = G._heroModel; if (n === "Consume" && heroHasShield()) return;   // 🛡️ ท่าดื่มใช้มือซ้าย — มือซ้ายถือโล่อยู่จะกลายเป็นยกโล่ขึ้นปาก
-        if (H && H.acts[n]) { H.emote = { n, t: t || 1.2 }; if (H.cur === n) H.cur = null; } };
+      G.heroEmote = (n, t, loop) => { const H = G._heroModel; if (n === "Consume" && heroHasShield()) return;   // 🛡️ ท่าดื่มใช้มือซ้าย — มือซ้ายถือโล่อยู่จะกลายเป็นยกโล่ขึ้นปาก
+        if (H && H.acts[n]) { H.emote = { n, t: t || 1.2, loop: !!loop }; if (H.cur === n) H.cur = null; } };   // loop = ท่าวนซ้ำตลอดช่วงเวลา (เช่น ฟันไม้)
       // 🛡️ ถือโล่ KayKit อยู่ในมือซ้ายไหม (นักรบสายดาบ) — ใช้ท่ายืนตั้งโล่/ยกโล่รับแทนท่าสะดุ้ง
       const heroHasShield = () => { if (typeof wandL === "undefined" || !wandL || !wandL.visible) return false;
         for (const c of wandL.children) if (c.visible && c.userData.isShield) return true; return false; };
@@ -10781,7 +10784,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (shield && H.shieldFxN !== H.hurtN) { H.shieldFxN = H.hurtN; if (G._skillFxAt) G._skillFxAt("shieldaura", char.position.x, char.position.z, 0xffffff); }   // 🛡️ ออร่าโล่วาบทุกครั้งที่ยกโล่รับ
         }
         else if (H.recT > 0 && sp <= 0.25 && H.acts[H.recClip]) { want = H.recClip; once = true; opt = HERO_CLIP_T[H.recClip]; }   // 🗡️ ฟันจบแล้วเก็บดาบ/ตั้งการ์ดก่อนกลับท่ายืน (เดินแล้วยกเลิก)
-        else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = true; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
+        else if (G.mining && sp <= 0.25 && H.acts.TreeChopping_Loop) { want = "TreeChopping_Loop"; opt = HERO_CLIP_T.TreeChopping_Loop; }   // ⛏️ ระหว่างมินิเกมขุดแร่ — เหวี่ยงจอบวนไปเรื่อย ๆ
+        else if (H.emote && sp <= 0.25) { want = has(H.emote.n, want); once = !H.emote.loop; opt = HERO_CLIP_T[want] || null; }   // 🍵 กินยา/อาหาร · 🙆 เลเวลอัพ — ยืนนิ่งเท่านั้น เดินแล้วยกเลิก
         else if (sp > 3.9) want = "Sprint_Loop";   // 🏃 วิ่ง (กดซ้ำ/คลิกซ้ำ) = 4.4 → ท่าวิ่งเต็มฝีเท้า
         else if (sp > 2.6) want = "Jog_Fwd_Loop";
         else if (sp > 0.25) want = "Walk_Loop";
@@ -10790,6 +10794,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (atk) { H.recClip = H.acts[want + "_Rec"] ? want + "_Rec" : null; H.recT = 0; }   // จำไว้ว่าเพิ่งฟันท่าไหน
         H.wasAtk = atk; if (H.recT > 0) H.recT = Math.max(0, H.recT - dt);
         heroPlay(want, once, opt);
+        { const bare = !!HERO_BARE_HANDS[H.cur];                // 🌱 ปลูก/รดน้ำ/เก็บผัก/ยกจาน ใช้มือเปล่า — ซ่อนอาวุธระหว่างท่า แล้วคืนให้ทันทีที่จบ
+          if (bare !== !!H.bareHide) { H.bareHide = bare; if (H.grip) H.grip.visible = !bare; if (H.gripL) H.gripL.visible = !bare; } }
         H.mixers.forEach((m) => m.update(dt));
         if (H.tk || H.deco) { H.g.updateMatrixWorld(true); if (H.tk) heroTopknotTick(H); if (H.deco) H.deco.forEach((K) => heroBoneFollow(H, K)); }
         {                                                  // 💡 ความสว่างของตัว — กลางวันเร่งนิดเดียว กลางคืนเร่งเต็ม
@@ -23364,6 +23370,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const P = pickOf();
       const mm = { i, pos: 0, dir: 1, speed: MINE_SPEED0, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
       G.mining = mm;
+      if (n.mesh) { char.rotation.y = Math.atan2(n.mesh.position.x - char.position.x, n.mesh.position.z - char.position.z); yaw = char.rotation.y; G.moveTarget = null; }   // ⛏️ หันหน้าเข้าหาสายแร่ก่อนเหวี่ยงจอบ
       if (G.sfx) G.sfx.hit && G.sfx.hit();
       // ⚠️ อ่านค่าจาก mm ที่จับไว้ ไม่ใช่ G.mining — ถ้าเดินหลุดระยะก่อน React เรนเดอร์ G.mining จะเป็น null แล้วเกมจะพัง
       setUi((u) => (G.mining !== mm ? u : { ...u, mining: { pos: 0, zone: mm.zone, zc: mm.zc, hits: 0, need: MINE_SWINGS, perfect: 0, miss: 0, ore: n.ore || null }, mineOre: n.ore || null, menuOpen: false }));
@@ -23665,6 +23672,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if ((G.herbLv || 1) >= HERB_LV_MAX) G.herbExp = Math.min(G.herbExp, HERB_LV_EXP(HERB_LV_MAX));
       n.uses = (n.uses == null ? HERB_USES : n.uses) - 1;
       if (n.mesh) { try { burst(n.mesh.position, 0x8ae06a, 0.8); } catch (_) {} }
+      if (n.mesh) { char.rotation.y = Math.atan2(n.mesh.position.x - char.position.x, n.mesh.position.z - char.position.z); yaw = char.rotation.y; }
+      if (G.heroEmote) G.heroEmote("Farm_Harvest", 1.5);   // 🌿 ก้มลงเด็ดสมุนไพร (หันเข้ากอก่อน)
       if (n.uses > 0) {
         // 🌿 กอยังเหลือให้เก็บอีก — ย่อลงตามที่เหลือ ให้เห็นว่าร่อยหรอลง
         if (n.mesh) n.mesh.scale.setScalar(0.58 + 0.42 * (n.uses / HERB_USES));
@@ -28494,11 +28503,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G.enhPity) delete G.enhPity[id];   // 💢 สำเร็จแล้ว ล้างโบนัสสะสม
         const T = plusTier(cur + 1);
         burst(char.position, T ? T.color : 0x7ad0e8, T ? 1.5 + T.s * 0.6 : 1.5);
+        if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);   // 🔨 คุกเข่าตีเหล็ก
         toast(`⚒️ ตีบวกสำเร็จ! ${it.emoji} ${it.name} +${cur + 1} ✨${(T && cur + 1 === T.min) ? ` — ออร่าสี${T.name}!` : ""}`);
         updateAura(); // glow grows with every +
       } else {
         const nb = Math.min(1 - base, pity + ENH_PITY_STEP(cur));
         G.enhPity[id] = { lv: cur, b: nb };
+        if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);
         toast(`💥 ตีบวกล้มเหลว... วัตถุดิบสลาย (ยังคง +${cur}) · สะสมโอกาสครั้งหน้า ${Math.round(Math.min(1, base + nb) * 100)}% 💢`);
       }
       G.player.hp = Math.min(G.player.hp, effMaxHp());
@@ -28524,6 +28535,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.gemDust -= c.gemDust; G.stardust -= c.stardust; G.mats.ironOre -= c.ironOre;
       G.plus[id] = cur + 1;
       burst(char.position, 0xf5a623, 1.6);
+      if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);
       toast(`💠 ตีบวกการันตีสำเร็จ! ${it.emoji} ${it.name} +${cur + 1} ✨ (−💠${c.gemDust} 🌟${c.stardust} ⛏️${c.ironOre})`);
       updateAura();
       G.player.hp = Math.min(G.player.hp, effMaxHp());
@@ -28634,6 +28646,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       burst(char.position, 0xd94a4a, 2.2);
       if (G.sfx) G.sfx.levelup();
       const dup = G.inv.filter((x) => x === itemId).length;
+      if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);   // 🔨 คราฟต์ = ตีขึ้นรูปบนทั่ง
       toast(`🔨🐉 คราฟต์ ${it.emoji} ${it.name} สำเร็จ!${px ? ` ${px.emoji}${px.name}` : ""}${dup > 1 ? ` (ชิ้นที่ ${dup} — ใช้ตีบวกได้)` : ""}`);
       setUi((u) => ({ ...u, mats: { ...G.mats }, inv: [...G.inv], rolls: { ...(G.rolls || {}) } }));
       syncPlayer();
@@ -30636,6 +30649,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (!useSeed && (G.gold || 0) < c.seed) { toast("💰 ทองไม่พอ — ซื้อเมล็ดจากตลาด หรือหาเงินเพิ่ม (ต้องมี " + c.seed + ")"); return; }
       if (useSeed) R.seeds -= 1; else G.gold -= c.seed;
       R.garden[plot] = { crop: cropId, readyAt: Date.now() + c.grow * 60000 };
+      if (G.heroEmote) G.heroEmote("Farm_PlantSeed", 1.7);   // 🌱 ก้มลงหยอดเมล็ด
       if (G.farmXp) G.farmXp(2); if (G.farmQuestProg) G.farmQuestProg("plant", 1);
       if (G.sfx) G.sfx.button && G.sfx.button();
       if (G.refreshRanchTimers) G.refreshRanchTimers(); // 🌱 อัปเดตต้นกล้าในโซน 3D ทันที
@@ -30653,6 +30667,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.sfx) G.sfx.coin && G.sfx.coin();
       if (G.refreshRanchTimers) G.refreshRanchTimers(); // 🌾 อัปเดตแปลงในโซน 3D ทันที
       toast(`🌾 เก็บเกี่ยว ${c.emoji} ${c.name} +${c.yield} — เก็บเข้าคลังแล้ว (📦 ${R.produce[c.id]})`);
+      if (G.heroEmote) G.heroEmote("Farm_Harvest", 1.7);   // 🌾 ก้มลงถอนผัก
       setUi((u) => ({ ...u, ranch: ranchUiSnap() }));
     };
     // 📦 ขายพืชผลในคลังเป็นทอง (ขายทั้งหมดของชนิดนั้น)
@@ -30787,6 +30802,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const Q = FOOD_Q_BY[dish.q] || FOOD_Q_BY.normal;
       const bt = Object.keys(dish.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.buff[k]}${L[1]}`; }).join(" · ");
       const ex = Object.keys(dish.extra || {});
+      if (G.heroEmote) G.heroEmote("PickUp_Table", 0.9);   // 🍳 ยกจานขึ้นจากโต๊ะ
       toast(`${R.emoji} ทำ${R.name}สำเร็จ! ${Q.emoji} ${Q.name} — ${bt} · ${dish.mins} นาที → เก็บเข้ากระเป๋าแล้ว`);
       if (ex.length) toast(`✨ ได้บัฟเสริมติดจานมาด้วย! ${ex.map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.extra[k]}${L[1]}`; }).join(" · ")}`);
       if (lvUp) toast(`🍳 เลเวลทำอาหารเพิ่ม! Lv.${G.cookLv} — สูตรใหม่ + โอกาสได้จานคุณภาพสูงขึ้น`);
@@ -31068,7 +31084,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       else if (id === "egg") { G.ranch.eggb = (G.ranch.eggb || 0) + 1; toast(`⚡ ซื้อตัวเร่งฟักไข่ +1 — เก็บเข้าคลัง (มี ${G.ranch.eggb})`); }
       else if (id === "lvl") { G.ranch.lvlf = (G.ranch.lvlf || 0) + 1; toast(`⭐ ซื้ออาหารเร่งเลเวล +1 — เก็บเข้าคลัง (มี ${G.ranch.lvlf})`); }
       else if (id === "decor") { G.ranch.decorCount = Math.min(24, (G.ranch.decorCount || 0) + 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🌻 ซื้อของตกแต่งสวน +1 ชิ้น"); }
-      else if (id === "saw") { G.ranch.decorCount = Math.max(0, (G.ranch.decorCount || 0) - 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🪚 ตัด/เก็บของตกแต่งออก 1 ชิ้น"); }
+      else if (id === "saw") { G.ranch.decorCount = Math.max(0, (G.ranch.decorCount || 0) - 1); if (G.buildRanchDecor) G.buildRanchDecor(); toast("🪚 ตัด/เก็บของตกแต่งออก 1 ชิ้น"); if (G.heroEmote) G.heroEmote("TreeChopping_Loop", 2.0, true); }   // 🪓 ฟันไม้
       else if (id === "pen") { G.ranch.pens = Math.min(PENS_MAX, (G.ranch.pens || 2) + 1); if (G.buildRanchPens) G.buildRanchPens(G.ranch.pens); toast(`🐄 ซื้อคอกสัตว์เพิ่ม! ตอนนี้ ${G.ranch.pens} คอก (${G.ranch.pens * PEN_SIZE} ช่อง)`); }
       else if (id === "plot") { G.ranch.plots = Math.min(PLOTS_MAX, (G.ranch.plots || 4) + 1); if (G.buildGardenPlots) G.buildGardenPlots(G.ranch.plots); toast(`🌾 ซื้อแปลงผักเพิ่ม! ตอนนี้ ${G.ranch.plots} แปลง`); }
       if (G.sfx) (id === "saw" ? (G.sfx.button && G.sfx.button()) : (G.sfx.coin && G.sfx.coin()));
@@ -31083,6 +31099,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         let k = 0; (R.garden || []).forEach((g) => { if (g && g.readyAt > Date.now()) { g.readyAt = Date.now(); k++; } });
         if (!k) { toast("💩 ยังไม่มีพืชกำลังโต — ปลูกก่อนแล้วค่อยใส่ปุ๋ย"); return; }
         R.fert -= 1; if (G.refreshRanchTimers) G.refreshRanchTimers();
+        if (G.heroEmote) G.heroEmote("Farm_Watering", 2.0);   // 💧 โรยปุ๋ย/รดน้ำทั่วแปลง
         toast(`💩 ใส่ปุ๋ย! พืช ${k} แปลงพร้อมเก็บทันที (เหลือปุ๋ย ${R.fert})`);
       } else if (kind === "eggb") {
         if ((R.eggb || 0) <= 0) { toast("⚡ ไม่มีตัวเร่งฟักไข่ในคลัง"); return; }
