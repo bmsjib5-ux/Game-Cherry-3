@@ -2942,7 +2942,8 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Sword_Dash: { from: 0.06, spd: 2.0 }, Sword_Heavy_Combo: { from: 0, spd: 2.8 }, Shield_Dash: { from: 0.05, spd: 1.5 },
                       Shield_OneShot: { from: 0.05, spd: 1.4 }, Melee_Hook: { from: 0.08, spd: 1.2 }, OverhandThrow: { from: 0.2, spd: 1.8 },
                       Punch_Jab: HERO_ATK_TIME, Punch_Cross: HERO_ATK_TIME, Sword_Attack: HERO_ATK_TIME, Spell_Simple_Shoot: HERO_ATK_TIME, Pistol_Shoot: HERO_ATK_TIME,
-                      Hit_Head: { from: 0, spd: 1.1 } };
+                      Hit_Head: { from: 0, spd: 1.1 },
+                      Hit_Knockback: { from: 0, spd: 1.15 }, Idle_Shield_Break: { from: 0, spd: 0.9 }, LayToIdle: { from: 0, spd: 1.25 } };   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
                     archer: "Idle_Loop" };                                    // 🏹 นักธนูยืนธรรมดา ถือธนูตั้งข้างตัว (ท่าเล็งปืนยื่นแขนมาหน้า ธนูจะบังหน้า) · ที่เหลือ = Idle_Loop
@@ -10762,6 +10763,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (H.emote && (H.emote.t -= dt) <= 0) H.emote = null;
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
         else if (G.mountId) want = "Sitting_Idle_Loop";
+        else if ((G._getUpT || 0) > 0 && H.acts.LayToIdle) { want = "LayToIdle"; once = true; opt = HERO_CLIP_T.LayToIdle; }   // 🛌 ฟื้นแล้วค่อย ๆ ลุกจากพื้น
+        else if ((G._pKdT || 0) > 0 && G.mode === "explore" && H.acts.Hit_Knockback) { want = "Hit_Knockback"; once = true; opt = HERO_CLIP_T.Hit_Knockback; }   // 💥 โดนบอสสตัน/โดนหนักมาก — ล้มหงายหลัง (แล้วต่อด้วยท่าลุก)
+        else if (G.mode === "explore" && G.wst && G.wst.stunT > 0 && H.acts.Idle_Shield_Break) { want = "Idle_Shield_Break"; once = true; opt = HERO_CLIP_T.Idle_Shield_Break; }   // 💫 ติดสตัน — ยืนเซหมดแรง
         else if ((G._dashT || 0) > 0) want = "Roll";
         else if ((G._jumpT || 0) > 0) want = (G._jumpN || 1) >= 2 && H.acts.NinjaJump_Idle_Loop ? "NinjaJump_Idle_Loop" : "Jump_Loop";   // 🦘 ชั้นแรก = ท่ากระโดดเดิม · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
         else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(H.atkClip, has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross")); once = true; atk = true; opt = HERO_CLIP_T[want] || HERO_ATK_TIME; }   // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
@@ -32116,15 +32120,26 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const WST_DAZE = { mekha: 1, wayu: 1, phi: 1, paksi: 1, taara: 1, kirara: 1 };
     const wstInflict = (m, raw) => {
       const W = G.wst || (G.wst = {}), U = m.userData, sp = U.spId, big = U.boss || U.caveBoss || U.mapBoss, r = Math.random();
-      if ((WST_STUN[sp] || big) && r < (big ? 0.22 : 0.15)) { if (!(W.stunImm > 0) && !(W.stunT > 0)) { W.stunT = big ? 1.3 : 1.0; W.stunImm = W.stunT + 3; } }
+      let stunned = false;
+      if ((WST_STUN[sp] || big) && r < (big ? 0.22 : 0.15)) { if (!(W.stunImm > 0) && !(W.stunT > 0)) { W.stunT = big ? 1.3 : 1.0; W.stunImm = W.stunT + 3; stunned = true; } }
       else if (WST_DAZE[sp] && r < 0.2) W.dazeT = Math.max(W.dazeT || 0, 2.5);
       else if (WST_POISON[sp] && r < 0.25) { W.psnT = 5; W.psnDmg = Math.max(1, Math.round(raw * 0.18)); W.psnNext = Math.min(W.psnNext || 0.6, 0.6); }
+      if (((stunned && big) || raw >= effMaxHp() * 0.3) && !(G._kdImm > 0) && !(G._pKdT > 0) && !(G._getUpT > 0)) {   // 💥 บอสสตัน/โดนหนักมาก — ล้มหงายแล้วลุก (~2 วิ) · กันล้มซ้ำ 5 วิ
+        G._pKdT = 0.72; G._kdImm = 5; W.stunT = Math.max(W.stunT || 0, 1.95); W.stunImm = Math.max(W.stunImm || 0, W.stunT + 3);
+      }
     };
     G.wstClear = () => { G.wst = {}; };
     const deathFly = [];                         // 💀💨 มอนที่ตายแล้วถูกกระเด็นปลิวออกไป (ตัวจริงหลุดจาก wilds แล้ว เหลือแค่ภาพ)
     const _stV = new THREE.Vector3();
     const stFxTick = (dt, t) => {
       // 🧍 สถานะบนตัวเรา
+      if (G._pKdT > 0) {                                   // 💥 ล้มหงาย → กระแทกพื้นมีฝุ่น → ต่อท่าลุก (LayToIdle)
+        const was = G._pKdT; G._pKdT = Math.max(0, G._pKdT - dt);
+        if (was > 0.4 && G._pKdT <= 0.4) { dustRing(char.position.x, char.position.z, 0.9); G._camShake = Math.max(G._camShake || 0, 0.15); }
+        if (G._pKdT <= 0 && G.mode === "explore") G._getUpT = 1.25;
+      }
+      if (G._kdImm > 0) G._kdImm = Math.max(0, G._kdImm - dt);
+      if (G._getUpT > 0) G._getUpT = Math.max(0, G._getUpT - dt);
       const W = G.wst;
       if (W) {
         if (W.stunT > 0) W.stunT = Math.max(0, W.stunT - dt);
@@ -38893,7 +38908,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // player fell in the open world
     G.worldFaint = () => {
       if (G.sfx) G.sfx.lose && G.sfx.lose();
-      G.wst = {};   // 💫 ล้มแล้วล้างสถานะผิดปกติทั้งหมด
+      G.wst = {}; G._pKdT = 0; G._getUpT = 0;   // 💫 ล้มแล้วล้างสถานะผิดปกติทั้งหมด
       G.combo = 0;
       // 🗼 ล้มกลางหอคอย = จบรอบนี้ — เก็บมอนของชั้นออกก่อน ไม่งั้นค้างอยู่กลางทุ่งตอนฟื้น
       if (G.dungeon) { const wasRogue = !!G.dungeon.rogue, wasCave = !!G.dungeon.cave; G._lastCave = G.dungeon.cave; if (wasRogue && G.rogueEnd) G.rogueEnd("fail"); if (G.twrLeave) G.twrLeave(true); toast(wasCave ? `💀 ล้มใน${(CAVE_DEF[G._lastCave] || CAVE_DEF.goblin).name} — กลับมาลองใหม่ได้เสมอ` : `💀 ล้มในหอคอย — ความคืบหน้าอยู่ที่ชั้น ${G.dungeonProgress || 1}`); }
@@ -38910,6 +38925,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G.spawnAtVillage(); // 🏡 ฟื้นที่หน้าบ้านในเขตปลอดภัย
         if (G.restoreScenery) G.restoreScenery();
         G.mode = "explore";
+        G._getUpT = 1.25;   // 🛌 ลุกขึ้นจากพื้นก่อน (ท่า LayToIdle) แล้วค่อยเดินต่อ
         if (setMouth) setMouth("smile");
         syncPlayer();
         setUi((u) => ({ ...u, mode: "explore" }));
@@ -44426,7 +44442,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           }
         }
         // 💫😵 สถานะบนตัวเรา — สตัน = ขยับไม่ได้ · มึน = เดินเซไปมาและช้าลง
-        if (G.wst && G.wst.stunT > 0 && G.mode === "explore") { dx = 0; dz = 0; G._lastPos = null; }
+        if (((G.wst && G.wst.stunT > 0) || G._getUpT > 0 || G._pKdT > 0) && G.mode === "explore") { dx = 0; dz = 0; G._lastPos = null; }   // 🛌 กำลังลุกจากพื้นก็ขยับไม่ได้
         else if (G.wst && G.wst.dazeT > 0 && (dx || dz)) { const wa = Math.sin(t * 2.7) * 0.8 + Math.sin(t * 6.1) * 0.3, ca = Math.cos(wa), sa = Math.sin(wa); const nx = dx * ca - dz * sa; dz = (dx * sa + dz * ca) * 0.75; dx = nx * 0.75; }
         // 🚶🏃 เดิน = 0.62 เท่า · วิ่ง = 1.3 เท่า (ท่าโมเดล: เดิน ≤2.6 · วิ่ง >3.9) · การเดินที่ระบบสั่งเอง (ออโต้ล่า/ออโต้อาชีพ/ตามมอน) ใช้ความเร็วเดิม 1.0
         const manualMove = (!G.moveTarget && !!(dx || dz)) || (!!G.moveTarget && G.moveTarget === G._tapTarget);   // ปุ่ม/จอย หรือจุดที่ผู้เล่นคลิกเอง
