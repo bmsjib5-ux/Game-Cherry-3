@@ -19229,11 +19229,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       g.userData.stage = stage;
       // 🏷️ floating level label (color set later in updateMonsterLabel)
       const lblCanvas = document.createElement("canvas");
-      lblCanvas.width = 128; lblCanvas.height = 64;
+      lblCanvas.width = 384; lblCanvas.height = 64;   // 🏷️ กว้างขึ้นให้ใส่ชื่อมอนต่อท้ายเลเวลได้
       const lblTex = new THREE.CanvasTexture(lblCanvas);
       const lblMat = new THREE.SpriteMaterial({ map: lblTex, transparent: true, depthTest: false });
       const lbl = new THREE.Sprite(lblMat);
-      lbl.scale.set(1.1, 0.55, 1);
+      lbl.scale.set(2.4, 0.4, 1);
       lbl.position.y = (FLOATY[spId] ? 1.7 : 1.35) * g.scale.y;
       g.add(lbl);
       g.userData.lbl = { sprite: lbl, canvas: lblCanvas, tex: lblTex, drawn: null };
@@ -19278,26 +19278,47 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
 
     // draw/refresh a monster's level tag (red if higher than player)
+    // 🏷️ ชื่อที่โชว์บนหัว — บอสถ้ำ/บอสประจำแมพใช้ชื่อบอส (ตัดอีโมจิท้ายชื่อออก) · ที่เหลือใช้ชื่อเผ่าพันธุ์
+    const monName = (m) => {
+      const U = m.userData; if (U.dispName) return U.dispName;
+      let n = null;
+      if (U.caveBoss && G.dungeon && G.dungeon.cave && CAVE_DEF[G.dungeon.cave]) n = CAVE_DEF[G.dungeon.cave].bossName;
+      else if (U.boss && !U.twr) { const B = BIOMES[G.curBiome || 0]; if (B && B.boss === U.spId && B.bossName) n = B.bossName; }
+      if (!n) n = (SPECIES[U.spId] || {}).name || "มอนสเตอร์";
+      n = String(n).replace(/\s*[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F]+\s*$/u, "").trim() || String(n);
+      return (U.dispName = n);
+    };
     const drawMonsterLabel = (m) => {
       const L = m.userData.lbl;
       if (!L) return;
+      { const ms = m.scale.x || 1, k = Math.min(ms, 1.8) / ms;       // 📏 ป้ายตามตัวมอนได้ไม่เกิน 1.8 เท่า (บอสยักษ์ป้ายไม่ใหญ่ล้นจอ)
+        if (L.k !== k) { L.k = k; L.sprite.scale.set(2.4 * k, 0.4 * k, 1); } }
       const lv = m.userData.lv || 1;
       const higher = lv > (G.player ? G.player.level : 1);
-      const boss = m.userData.boss;
-      const key = lv + (higher ? "H" : "L") + (boss ? "B" : "");
+      const boss = m.userData.boss || m.userData.caveBoss;
+      const name = monName(m);
+      const key = lv + (higher ? "H" : "L") + (boss ? "B" : "") + name;
       if (L.drawn === key) return; // no change
       L.drawn = key;
+      const W = L.canvas.width, Hh = L.canvas.height;
       const ctx = L.canvas.getContext("2d");
-      ctx.clearRect(0, 0, 128, 64);
-      ctx.font = "bold 30px system-ui, sans-serif";
-      ctx.textAlign = "center";
+      ctx.clearRect(0, 0, W, Hh);
       ctx.textBaseline = "middle";
-      const txt = (boss ? "👑 Lv." : "Lv.") + lv;
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "rgba(0,0,0,0.85)";
-      ctx.strokeText(txt, 64, 32);
+      const lvTxt = (boss ? "👑 Lv." : "Lv.") + lv + " ";
+      const fLv = "900 30px system-ui, sans-serif", fNm = "800 30px system-ui, sans-serif";
+      ctx.font = fLv; const wLv = ctx.measureText(lvTxt).width;
+      ctx.font = fNm; let wNm = ctx.measureText(name).width;
+      const sc = Math.min(1, (W - 12) / (wLv + wNm));                 // ชื่อยาวเกิน = ย่อทั้งบรรทัดให้พอดี
+      ctx.save(); ctx.translate(W / 2, Hh / 2); ctx.scale(sc, sc);
+      let x = -(wLv + wNm) / 2;
+      ctx.lineWidth = 7; ctx.strokeStyle = "rgba(0,0,0,0.85)"; ctx.lineJoin = "round";
+      ctx.font = fLv; ctx.textAlign = "left"; ctx.strokeText(lvTxt, x, 0);
       ctx.fillStyle = boss ? "#ff5a3a" : higher ? "#ff5a5a" : "#c8f0a0"; // 🔴 red when tougher
-      ctx.fillText(txt, 64, 32);
+      ctx.fillText(lvTxt, x, 0);
+      x += wLv;
+      ctx.font = fNm; ctx.strokeText(name, x, 0);
+      ctx.fillStyle = boss ? "#ffd27a" : "#ffffff"; ctx.fillText(name, x, 0);   // 🏷️ ชื่อมอน (บอสสีทอง)
+      ctx.restore();
       L.tex.needsUpdate = true;
     };
 
@@ -31926,24 +31947,29 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const wildBar = (m) => {
       if (!m.userData.hpbar) {
         const g = new THREE.Group();
-        const bg = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.14), new THREE.MeshBasicMaterial({ color: 0x1a0e14, transparent: true, opacity: 0.72, depthTest: false }));
-        const fill = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.12), new THREE.MeshBasicMaterial({ color: 0x6ae06a, transparent: true, depthTest: false }));
-        bg.renderOrder = 991; fill.renderOrder = 992; fill.position.z = 0.001;
-        g.add(bg, fill); g.userData = { fill };
+        // ❤️ หลอดเลือดบนหัว — ขอบขาว + พื้นดำ + แถบสี (ใหญ่ขึ้นให้เห็นชัดจากมุมกล้องปกติ)
+        const rim = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false }));
+        const bg = new THREE.Mesh(new THREE.PlaneGeometry(1.44, 0.18), new THREE.MeshBasicMaterial({ color: 0x1a0e14, transparent: true, opacity: 0.9, depthTest: false }));
+        const fill = new THREE.Mesh(new THREE.PlaneGeometry(1.44, 0.18), new THREE.MeshBasicMaterial({ color: 0x6ae06a, transparent: true, depthTest: false }));
+        rim.renderOrder = 990; bg.renderOrder = 991; fill.renderOrder = 992; bg.position.z = 0.001; fill.position.z = 0.002;
+        g.add(rim, bg, fill); g.userData = { fill, w: 1.44 };
         m.add(g); m.userData.hpbar = g;
       }
       return m.userData.hpbar;
     };
     const updateWildBar = (m) => {
       const g = m.userData.hpbar; if (!g) return;
-      const hurt = m.userData.whp != null && m.userData.whp < m.userData.wmaxhp && m.userData.whp > 0;
+      const hurt = m.userData.whp != null && m.userData.whp < m.userData.wmaxhp && m.userData.whp > 0
+        && (performance.now() - (m.userData._hitAt || 0)) < 8000;          // ❤️ โชว์หลอดเลือดเฉพาะตอนเพิ่งโดนตี (ไม่โดนต่อ 8 วิ = ซ่อน)
       g.visible = hurt; if (!hurt) return;
       const pc = Math.max(0, m.userData.whp / m.userData.wmaxhp);
-      g.userData.fill.scale.x = pc; g.userData.fill.position.x = -(1 - pc) * 0.5;
+      g.userData.fill.scale.x = Math.max(0.001, pc); g.userData.fill.position.x = -(1 - pc) * 0.5 * (g.userData.w || 1);
       g.userData.fill.material.color.setHex(pc > 0.4 ? 0x6ae06a : 0xe05555);
-      g.position.set(0, (FLOATY[m.userData.spId] ? 1.7 : 1.35), 0);
+      { const ms = m.scale.x || 1, L = m.userData.lbl;                  // ❤️ วางใต้ป้ายชื่อพอดี (ป้ายชื่ออยู่เหนือหัว)
+        const ly = L && L.sprite ? L.sprite.position.y : (FLOATY[m.userData.spId] ? 1.7 : 1.35);
+        g.position.set(0, ly - 0.34 * Math.min(ms, 1.8) / ms, 0); }
       g.quaternion.copy(camera.quaternion);
-      g.scale.setScalar(1 / (m.scale.x || 1)); // keep bar size constant regardless of monster size
+      g.scale.setScalar(Math.min(m.scale.x || 1, 1.8) / (m.scale.x || 1)); // ขนาดหลอดตามป้ายชื่อ (บอสใหญ่ขึ้นได้ไม่เกิน 1.8 เท่า)
     };
     G._updateWildBar = updateWildBar;
     G._wilds = wilds; // 🔧 debug/test hook: read-only reference to the live wild list
@@ -31982,7 +32008,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (m.userData.hpbar) { m.remove(m.userData.hpbar); m.userData.hpbar = null; }
       stFxDrop(m.userData);
       popPoseEnd(m);
-      if (m.parent && m.visible) {   // 💀💨 ตีปลิว — ร่างกระเด็นหมุนออกไปทางที่โดนตี แล้วค่อยสลายเป็นฝุ่น
+      const flyKill = (G._stSk && performance.now() < G._stSk.until && (G._stSk.sk.stun || G._stSk.heavy)) || Math.hypot(m.userData.kbx || 0, m.userData.kbz || 0) > 1.9;   // 💀💨 ตีปลิวเฉพาะสกิลสตัน/สกิลหนัก/สกิลกระแทกแรง — ตีธรรมดาตายแบบเดิม
+      if (m.parent && m.visible && flyKill) {   // 💀💨 ตีปลิว — ร่างกระเด็นหมุนออกไปทางที่โดนตี แล้วค่อยสลายเป็นฝุ่น
         m.children.forEach((c) => { if (isGroundKid(c)) c.visible = false; });   // 🔴 ตายแล้ว — วงบนพื้นหายไป ไม่ปลิวตามร่าง
         const big = m.userData.boss || m.userData.caveBoss;
         const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z, dl = Math.hypot(dx, dz) || 1, v = big ? 2.2 : 6.5;
@@ -32000,7 +32027,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       dmg = dmg * Math.max(0.4, 1 - lvGap * 0.03);
       if (m.userData.vulnT > 0) dmg = dmg * (1 + (m.userData.vuln || 0)); // 🌳🌟 เกราะแตก — รับดาเมจเพิ่มตลอดที่ยังติดคำสาป
       dmg = Math.max(1, Math.round(dmg));
-      m.userData.whp -= dmg;
+      m.userData.whp -= dmg; m.userData._hitAt = performance.now();   // ❤️ จำเวลาที่โดนตีล่าสุด (โชว์หลอดเลือด)
       popDamage(m.position, dmg, opts.crit ? "crit" : "hit");
       // ⏸️ hit-stop แบบอนิเมะ — โลกกว้างหน่วงให้ตรงจังหวะอาวุธลง · คริใหญ่มีแฟลชขาว
       { const hs = (opts.crit ? 0.085 : 0.05) + (G._combo3 === 2 ? 0.02 : 0);   // v487: สั้นลง — ท่าฟันไม่ค้างกลางคัน
@@ -32123,9 +32150,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!(U.stunImm > 0) && Math.random() < (big ? 0.25 : 0.6)) { U.stunT = big ? 0.8 : 1.8; U.stunImm = U.stunT + 1.5; }
         else if (!(U.stunT > 0)) U.dazeT = Math.max(U.dazeT || 0, 2.5);
         if (!big && !(U.popT > 0) && (heavy || crit)) launchMon(m, crit ? 2.0 : 1.5);
-      } else if (sk && heavy && !big && !(U.popT > 0) && crit) launchMon(m, 1.4);
+      }
       if (sk && sk.poison && !(U.dot && U.dot.kind === "poison")) applyDot(m, "poison", Math.max(1, Math.round(effAtk() * 0.04 * sk.poison)), 5, 0x7ad04a);
-      if (!sk && crit && !big && Math.random() < 0.15) U.dazeT = Math.max(U.dazeT || 0, 2);   // 🗡️ คริจากการตีธรรมดา — มีโอกาสตีจนมึน
     };
     G.statusOnHit = statusOnHit;
     // 👾➡️🧍 มอนบางเผ่าทำให้เราติดสถานะ: งู/ใบบัว/ก็อบลิน/ยมทูต = พิษ · มนุษย์ถ้ำ/ไวกิ้ง/ไททัน/เสือ/ครุฑ/มังกร/บอส = สตัน · เมฆ/สไลม์ลม/ผี/นก/ดาว = มึน
@@ -36293,7 +36319,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G._impactQ = { pos: { x: m.position.x, z: m.position.z }, dir: { x: m.position.x - char.position.x, z: m.position.z - char.position.z }, crit, y: hy, color: crit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xfff1c0) };
       }
       hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a, basic: true });
-      statusOnHit(m, null, crit);   // 😵 คริมีโอกาสทำให้มึน
       { const ls = talB("lifesteal"); if (ls) { const hl = Math.round(dmg * ls / 100); if (hl > 0) G.player.hp = Math.min(effMaxHp(), G.player.hp + hl); } }   // 📜 ดูดเลือด (โลกกว้าง)
       if (G.sfx) G.sfx.hit && G.sfx.hit();
     };
@@ -43538,7 +43563,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         m.position.y = terrainAt(m.position.x, m.position.z) - (G._gy || 0);   // 🏔️ เหยียบพื้นตามความสูงจริงของภูมิประเทศ
         if (m.userData.shinyRing) { m.userData.shinyRing.rotation.z = t * 2; m.userData.shinyRing.material.opacity = 0.5 + Math.abs(Math.sin(t * 4)) * 0.4; }
         drawMonsterLabel(m); // 🏷️ keep level tag current (red if higher)
-        if (G.actionMode) updateWildBar(m); // ⚔️ open-world HP bar
+        if (m.userData.hpbar) updateWildBar(m); // ❤️ หลอดเลือดบนหัว (ทุกโหมด เฉพาะตอนเพิ่งโดนตี)
         // 🌿🩸 พิษ/เลือดไหล — ดาเมจต่อเนื่องทุก 0.5 วิ (ยังกัดต่อแม้จะถูกตรึงอยู่)
         if (m.userData.vulnT > 0) m.userData.vulnT = Math.max(0, m.userData.vulnT - dt);
         if (m.userData.weakT > 0) m.userData.weakT = Math.max(0, m.userData.weakT - dt); // 🛡️ โดนโล่เทวฑูตทุบจนตีเบาลง
@@ -43568,7 +43593,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (D.next <= 0) {
             D.next = D.iv;
             if (m.userData.whp != null) {
-              m.userData.whp -= D.dmg;
+              m.userData.whp -= D.dmg; m.userData._hitAt = performance.now();
               popDamage(m.position, D.dmg, "hit");
               monGlow(m, D.col, 0.35);
               wildBar(m); updateWildBar(m);
