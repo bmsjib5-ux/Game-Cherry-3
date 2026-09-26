@@ -33,7 +33,7 @@ const BIOMES = [
     { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xf0f5fb, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara", "viking2d"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
     { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x4e463c, sky: 0x0f0c0a, fog: 0x1c1712, pool: ["ngu", "khiao", "phi", "garuda", "viking2d"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
     { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 250, lvMax: 350, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
-    { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
+    { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xf0f5fd, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
     // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 450-550 · โทนดำแดงมืด กลางคืนตลอด
     { id: "hell", name: "ขุมนรกันตร์", emoji: "🔥", lvMin: 450, lvMax: 550, ground: 0x2a0a12, sky: 0x160406, fog: 0x2a0a0c, pool: ["winyan", "pisaj", "zombie"], tree: "dead", boss: "yommathut", bossName: "ยมทูตมัจจุราช ☠️", night: true },
     // ☀️ ด่านสวรรค์ — เทพ เทวดา บอสพระโพธิสัตว์ Lv 550-650 · โทนครีมเหลืองทองส้ม สว่างตลอด
@@ -141,7 +141,7 @@ const TERRAIN = {
             { t: "wave", fx: 0.13, fz: 0.11, h: 0.85, p: 2.0, q: 0.5 }
         ], rim: { r0: 42, w: 14, h: 15, jag: 0.4, k: 8 } },
     // ☁️ เกาะลอยสวรรค์ — ที่ราบลอยฟ้า ขอบเกาะดิ่งหายไปในหมู่เมฆ (ไม่มีภูเขาล้อม)
-    sky: { lo: 0x9cc2df, hi: 0xf4fbff, rock: 0x8ea6c4, hN: 4, rockK: 0.45, f: [
+    sky: { lo: 0xd6e2f4, hi: 0xffffff, rock: 0xc4d0e8, hN: 4, rockK: 0.3, f: [
             { t: "hill", x: -21, z: 15, r: 9, h: 3.4 },
             { t: "hill", x: 19, z: -17, r: 8, h: 2.8 },
             { t: "mesa", x: 4, z: 24, r: 5, h: 2.6, e: 1.6 },
@@ -226,7 +226,7 @@ const DETAIL = {
     snow: { g: 160, gc: [0xe4eef6, 0xf6faff], gs: 0.8, r: 70, rc: 0xb8c6d4 }, // ❄️ พื้นหิมะเรียบ — กรวดน้อยลง สีอ่อน
     cave: { g: 50, gc: [0x4a5a40, 0x5a6a48], gs: 0.7, r: 560, rc: 0x5a5046 }, // ⛏️ พื้นเหมืองหินดินแห้ง — หญ้าแทบไม่มี กรวดเยอะ
     volcano: { g: 120, gc: [0x6a4030, 0x8a5038], gs: 0.7, r: 520, rc: 0x3a221a },
-    sky: { g: 900, gc: [0x8ec8a0, 0xbfe8c8, 0xe6f6ee], gs: 0.95, r: 140, rc: 0x9aa8c0 },
+    sky: { g: 120, gc: [0xf2f6ff, 0xe4ecfa], gs: 0.8, r: 20, rc: 0xdce4f2 }, // ☁️ พื้นเมฆ — ไม่มีหญ้า/กรวด เหลือปุยขาวบาง ๆ
     hell: { g: 260, gc: [0x6a1420, 0x8a2028], gs: 0.75, r: 460, rc: 0x2e0c12 },
     heaven: { g: 700, gc: [0xf2e2a0, 0xfff2c4, 0xffffe4], gs: 0.9, r: 120, rc: 0xd8c68a },
     moon: { g: 0, gc: [0x8a8a94], gs: 0.7, r: 560, rc: 0x7c7f88 },
@@ -4114,14 +4114,44 @@ function CherryAdventure() {
             tx.encoding = THREE.sRGBEncoding;
             return tx;
         })();
-        G._groundSkin = (snowy) => {
-            const m = ground.material, want = snowy ? snowGroundTex : groundTex;
+        // ☁️ ลายพื้นเมฆ — ปุยเมฆซ้อนกันนุ่ม ๆ เงาฟ้าอมม่วงจาง ๆ (เกาะลอยสวรรค์)
+        const cloudGroundTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 256;
+            const c2 = cv.getContext("2d");
+            c2.fillStyle = "#eef3fb";
+            c2.fillRect(0, 0, 256, 256);
+            const blob = (x, y, r, col) => { for (const [ox, oy] of [[0, 0], [256, 0], [-256, 0], [0, 256], [0, -256]]) {
+                const g = c2.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
+                g.addColorStop(0, col);
+                g.addColorStop(1, "rgba(255,255,255,0)");
+                c2.fillStyle = g;
+                c2.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
+            } };
+            for (let i = 0; i < 60; i++)
+                blob(Math.random() * 256, Math.random() * 256, 18 + Math.random() * 34, "rgba(186,196,232,0.22)"); // เงาใต้ปุย
+            for (let i = 0; i < 140; i++) {
+                const x = Math.random() * 256, y = Math.random() * 256, r = 10 + Math.random() * 26;
+                blob(x, y - r * 0.18, r, "rgba(255,255,255,0.75)");
+            } // ปุยเมฆ
+            for (let i = 0; i < 300; i++) {
+                c2.fillStyle = "rgba(255,255,255,0.9)";
+                c2.fillRect(Math.random() * 256, Math.random() * 256, 1, 1);
+            }
+            const tx = new THREE.CanvasTexture(cv);
+            tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+            tx.anisotropy = 4;
+            tx.encoding = THREE.sRGBEncoding;
+            return tx;
+        })();
+        G._groundSkin = (kind) => {
+            const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : groundTex;
             if (m.map === want)
                 return;
             m.map = want;
             m.bumpMap = want;
-            m.bumpScale = snowy ? 0.05 : 0.16;
-            m.emissive.setHex(snowy ? 0x2a3440 : 0x000000); // หิมะสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
+            m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : 0.16;
+            m.emissive.setHex(kind === "snow" ? 0x2a3440 : kind === "cloud" ? 0x3c4658 : 0x000000); // หิมะ/เมฆสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
             m.needsUpdate = true;
         };
         G._ground = ground;
@@ -34394,6 +34424,53 @@ function CherryAdventure() {
             skyMotes.push(m);
         }
         G.skyMotes = skyMotes;
+        // ☁️ กองเมฆบนพื้น — ปุยเมฆนุ่มจมพื้นครึ่งหนึ่ง กระจายทั่วเกาะ (เว้นถนน/ประตู/แท่นวาร์ป)
+        const puffM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0x8a96b0, emissiveIntensity: 0.65 });
+        const puffG = new THREE.SphereGeometry(1, 14, 10);
+        for (let i = 0, n = 0; i < 80 && n < 22; i++) {
+            const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 6), x = Math.cos(a) * r, z = Math.sin(a) * r;
+            if (Math.abs(x) < 3.2 || Math.abs(z) < 3.2 || inKeepOut(x, z) || nearWarpG(x, z))
+                continue;
+            if (Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 5))
+                continue;
+            const c = new THREE.Group(), k = 3 + Math.floor(Math.random() * 4), s0 = 0.7 + Math.random() * 0.9;
+            for (let j = 0; j < k; j++) {
+                const pf = new THREE.Mesh(puffG, puffM);
+                const rr = 0.4 + Math.random() * 0.8;
+                pf.position.set((Math.random() - 0.5) * 2.2, rr * 0.35, (Math.random() - 0.5) * 1.6);
+                pf.scale.set(rr * 1.3, rr, rr * 1.1);
+                c.add(pf);
+            }
+            c.position.set(x, 0, z);
+            c.scale.setScalar(s0);
+            skyDecor.add(c);
+            n++;
+        }
+        // 🌈 สายรุ้งใหญ่พาดข้ามฟ้า — ครึ่งวงแหวน 7 สี (โปร่งแสง ไม่โดนหมอกกลบ) + รุ้งจาง ๆ ชั้นนอก
+        {
+            const mkBow = (r0, w, op) => {
+                const segR = 7, geo = new THREE.RingGeometry(r0, r0 + w, 96, segR, 0, Math.PI), cols = [], P = geo.attributes.position;
+                const RB = [0x8a4ad8, 0x4a6aff, 0x3ab8ff, 0x4ade7a, 0xffe04a, 0xffa03a, 0xff4a5a].map((h) => new THREE.Color(h));
+                for (let i = 0; i < P.count; i++) {
+                    const rr = Math.hypot(P.getX(i), P.getY(i)), u = Math.max(0, Math.min(0.999, (rr - r0) / w)), f = u * (RB.length - 1), i0 = Math.floor(f);
+                    const c = RB[i0].clone().lerp(RB[Math.min(RB.length - 1, i0 + 1)], f - i0);
+                    cols.push(c.r, c.g, c.b);
+                }
+                geo.setAttribute("color", new THREE.Float32BufferAttribute(cols, 3));
+                const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+                return m;
+            };
+            const bow = new THREE.Group();
+            bow.add(mkBow(50, 7, 0.55));
+            const outer = mkBow(62, 5, 0.18);
+            outer.rotation.z = 0;
+            bow.add(outer); // รุ้งชั้นนอก (สีจางกว่า)
+            bow.position.set(4, -8, -30);
+            bow.rotation.y = 0.35;
+            bow.renderOrder = -1;
+            skyDecor.add(bow);
+            G._skyRainbow = bow;
+        }
         G.skyDecor = skyDecor;
         G.skyColliders = skyColliders;
         // 🔥 HELL DECOR — jagged blood-rock spires, glowing lava cracks, rising red embers
@@ -35574,7 +35651,7 @@ function CherryAdventure() {
         // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
         G.rebuildTerrain = (b) => {
             if (G._groundSkin)
-                G._groundSkin(b.id === "snow");
+                G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : null);
             TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
             TERR_FLATTEN = !!G._terrFlatMode;
             TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }]); // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
