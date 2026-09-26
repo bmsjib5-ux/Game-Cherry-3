@@ -10265,10 +10265,10 @@ function CherryAdventure() {
             qDagger: { url: "assets/quat/weapons/Dagger.gltf", s: 0.42, gripY: 0.08, gripZ: 0 },
             qDagger2: { url: "assets/quat/weapons/Dagger_2.gltf", s: 0.42, gripY: 0.08, gripZ: 0 },
             qSpear: { url: "assets/quat/weapons/Spear.gltf", s: 0.233, gripY: 0, gripZ: 0 },
-            qBowWood: { url: "assets/quat/weapons/Bow_Wooden.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
-            qBowWood2: { url: "assets/quat/weapons/Bow_Wooden2.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
-            qBowGold: { url: "assets/quat/weapons/Bow_Golden.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
-            qBowEvil: { url: "assets/quat/weapons/Bow_Evil.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowWood: { url: "assets/quat/weapons/Bow_Wooden.gltf", s: 0.90, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowWood2: { url: "assets/quat/weapons/Bow_Wooden2.gltf", s: 0.90, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowGold: { url: "assets/quat/weapons/Bow_Golden.gltf", s: 0.90, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowEvil: { url: "assets/quat/weapons/Bow_Evil.gltf", s: 0.90, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
             qAxe: { url: "assets/quat/weapons/Axe.gltf", s: 0.30, gripY: 0.12, gripZ: 0 },
             qAxe2: { url: "assets/quat/weapons/Axe_Double.gltf", s: 0.27, gripY: 0.12, gripZ: 0 },
             qHammer: { url: "assets/quat/weapons/Hammer_Small.gltf", s: 0.215, gripY: 0.14, gripZ: 0 },
@@ -10326,7 +10326,7 @@ function CherryAdventure() {
             daggerA: { fam: "dagger", top: 0.7, gY: 0.1, gW: 0.16, bW: 0.12, bT: 0.04 }, dagger: { fam: "dagger", top: 0.74, gY: 0.12, gW: 0.09, bW: 0.16, bT: 0.06 }, daggerB: { fam: "dagger", top: 0.78, gY: 0.3, gW: 0.21, bW: 0.06, bT: 0.04 },
             spear: { fam: "spear", headY: 0.85, top: 1.5, bot: -0.7, hW: 0.1 }, halberd: { fam: "spear", headY: 0.35, top: 1.45, bot: -0.7, hW: 0.63 },
             // ⚔️ Quaternius (วัดจากกล่องครอบหลังย่อ s)
-            qBowWood: { fam: "bow", tip: 0.82, limbX: -0.18 }, qBowWood2: { fam: "bow", tip: 0.82, limbX: -0.18 }, qBowGold: { fam: "bow", tip: 0.82, limbX: -0.18 }, qBowEvil: { fam: "bow", tip: 0.85, limbX: -0.18 },
+            qBowWood: { fam: "bow", tip: 2.46, limbX: -0.54 }, qBowWood2: { fam: "bow", tip: 2.46, limbX: -0.54 }, qBowGold: { fam: "bow", tip: 2.46, limbX: -0.54 }, qBowEvil: { fam: "bow", tip: 2.55, limbX: -0.54 }, /* 🏹 ธนูขยาย ×3 */
             qDagger: { fam: "dagger", top: 0.85, gY: 0.05, gW: 0.12, bW: 0.12, bT: 0.06 }, qDagger2: { fam: "dagger", top: 1.02, gY: 0.04, gW: 0.11, bW: 0.1, bT: 0.05 },
             qSpear: { fam: "spear", headY: 1.42, top: 1.76, bot: -0.5, hW: 0.06 },
         };
