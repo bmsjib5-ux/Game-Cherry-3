@@ -53,6 +53,7 @@ const BIOMES = [
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
 const TERR_FLAT_R = 15;   // รัศมีลานกลางแมพที่พื้นเรียบสนิท
+const WORLD_S = 2;        // 🗺️ ขยายทุกด่าน ×2 (รัศมี 34 → 68) — ภูมิประเทศยืดตาม ความสูงคงเดิม (ลาดชันนุ่มลง)
 const TERR_RAMP = 8;      // ระยะไล่ระดับจากลานกลางออกไปหาภูมิประเทศเต็มรูป
 // รูปทรงพื้นฐานที่เอามาบวกกันเป็นภูมิประเทศ
 //  hill=เนินกลม · ridge=สันเขายาว · mesa=ที่ราบสูงยอดตัด(ขอบเป็นหน้าผา) · drop=ขอบที่ราบดิ่งลง
@@ -213,9 +214,10 @@ const terrainAt = (x, z) => {
   }
   if (k <= 0) return 0;
   let h = 0;
-  for (let i = 0; i < P.f.length; i++) h += terrFeat(P.f[i], x, z);
-  if (P.rim && d > P.rim.r0) {   // 🏔️ เทือกเขาล้อมขอบแมพ — ยอดหยักไม่เท่ากันให้ดูเป็นธรรมชาติ
-    const u = Math.min(1, (d - P.rim.r0) / P.rim.w);
+  const sx = x / WORLD_S, sz = z / WORLD_S, sd = d / WORLD_S;   // ภูมิประเทศออกแบบไว้ที่ขนาดเดิม → ยืดตามขนาดแมพใหม่
+  for (let i = 0; i < P.f.length; i++) h += terrFeat(P.f[i], sx, sz);
+  if (P.rim && sd > P.rim.r0) {   // 🏔️ เทือกเขาล้อมขอบแมพ — ยอดหยักไม่เท่ากันให้ดูเป็นธรรมชาติ
+    const u = Math.min(1, (sd - P.rim.r0) / P.rim.w);
     h += P.rim.h * Math.pow(u, 1.6) * (1 + (P.rim.jag || 0) * Math.sin(Math.atan2(z, x) * (P.rim.k || 7)));
   }
   return h * k;
@@ -3344,7 +3346,7 @@ export default function CherryAdventure() {
     scene.background = new THREE.Color(0xf0fae2);
     scene.fog = new THREE.Fog(0xf0fae2, 46, 98);   // 🌫️ หมอกจับเฉพาะระยะไกล — สันเขาไกลจางเป็นชั้น ๆ ของใกล้ยังสีจัด
 
-    const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 240);   // 🗺️ แมพใหญ่ → มองได้ไกลขึ้น (หมอกยังกลบของไกลตามเดิม)
     let camDist = 8; // explore zoom 6..24 (also drives creator zoom)
     let bZoom = 1; // battle zoom factor 0.6..1.8
     const saveZoom = () => {
@@ -3723,7 +3725,7 @@ export default function CherryAdventure() {
 
     // ---------- World: sculpted terrain ----------
     // 🏔️ พื้นเป็นตาข่ายวงกลมที่ดันความสูงตามภูมิประเทศของแมพ + ระบายสีตามความสูง/ความชัน
-    const TERR_R = 54, TERR_TH = 120, TERR_RA = 54;
+    const TERR_R = 54 * WORLD_S, TERR_TH = 132, TERR_RA = 84;
     // 🪨 แยกจุดยอดออกจากกัน (non-indexed) → แต่ละหน้าสามเหลี่ยมมีเวกเตอร์ปกติและสีของตัวเอง = ลุค low-poly เหลี่ยม
     const groundGeo = new THREE.RingGeometry(0.02, TERR_R, TERR_TH, TERR_RA).toNonIndexed();
     groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(groundGeo.attributes.position.count * 3).fill(1), 3));
@@ -3816,7 +3818,7 @@ export default function CherryAdventure() {
       out.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
       return out;
     };
-    const GRASS_MAX = 2400, ROCK_MAX = 600;
+    const GRASS_MAX = 6000, ROCK_MAX = 1500;   // 🗺️ แมพใหญ่ขึ้น 4 เท่า (พื้นที่) → ของประดับพื้นเพิ่ม ~2.5 เท่า
     const tuftGeo = (() => {   // 🌿 กอละ 3 ใบ เอียงคนละทาง
       const blade = (rz, ry, px, pz, h) => { const g = new THREE.CylinderGeometry(0.004, 0.05, h, 3, 1, false); g.translate(0, h / 2, 0); g.rotateZ(rz); g.rotateY(ry); g.translate(px, 0, pz); return g; };
       return mergeGeos([blade(0.05, 0, 0, 0, 0.42), blade(0.4, 1.1, 0.055, 0.03, 0.34), blade(-0.36, 2.3, -0.05, -0.035, 0.3)]);
@@ -3859,18 +3861,18 @@ export default function CherryAdventure() {
         im.instanceMatrix.needsUpdate = true;
         if (im.instanceColor) im.instanceColor.needsUpdate = true;
       };
-      fill(grassIM, D && D.g, GRASS_MAX, (D && D.gs) || 1, (D && D.gc) || [0x88aa55], 0.28);
-      fill(rockIM, D && D.r, ROCK_MAX, 1, [(D && D.rc) || 0x8a8a80], 1.6);
+      fill(grassIM, D && D.g * 2.5, GRASS_MAX, (D && D.gs) || 1, (D && D.gc) || [0x88aa55], 0.28);
+      fill(rockIM, D && D.r * 2.5, ROCK_MAX, 1, [(D && D.rc) || 0x8a8a80], 1.6);
     };
 
     // 🚪 ประตูโซนกระจายคนละมุมของแมพ (หันหน้าเข้ากลางแมพ) — ไม่กระจุกอยู่กลางแมพแล้ว
     const GATE_POS = {
-      town:  { x: 19.5,  z: -19.5, ry: -Math.PI * 0.25 },  // 🏰 ตะวันออกเฉียงเหนือ — ถนนวิ่งตามแกน N/S/E/W เท่านั้น ประตูจึงอยู่แนวทแยงไม่ทับถนน (เดิมอยู่เหนือพอดี ทับถนนทิศเหนือในถ้ำ/นรก/ขนมหวาน/ไททัน)
-      home:  { x: -19.5, z: 19.5,  ry: -Math.PI * 0.75 }, // 🏠 ตะวันตกเฉียงใต้
-      ranch: { x: 19.5,  z: 19.5,  ry: Math.PI * 0.75 },  // 🐄 ตะวันออกเฉียงใต้
+      town:  { x: 19.5 * WORLD_S,  z: -19.5 * WORLD_S, ry: -Math.PI * 0.25 },  // 🏰 ตะวันออกเฉียงเหนือ — ถนนวิ่งตามแกน N/S/E/W เท่านั้น ประตูจึงอยู่แนวทแยงไม่ทับถนน (เดิมอยู่เหนือพอดี ทับถนนทิศเหนือในถ้ำ/นรก/ขนมหวาน/ไททัน)
+      home:  { x: -19.5 * WORLD_S, z: 19.5 * WORLD_S,  ry: -Math.PI * 0.75 }, // 🏠 ตะวันตกเฉียงใต้
+      ranch: { x: 19.5 * WORLD_S,  z: 19.5 * WORLD_S,  ry: Math.PI * 0.75 },  // 🐄 ตะวันออกเฉียงใต้
     };
     G.GATE_POS = GATE_POS;
-    const FIELD_R = 34; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
+    const FIELD_R = 34 * WORLD_S; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
     const TARGET_WILDS = 48; // 🐾 มอนสเตอร์ในแมพ ×2 (กระจายตามแคมป์มากขึ้น)
     // 🌲 ขอบแมพไม่ใช้เส้นวงกลมแล้ว — สร้างเป็นป่า/แม่น้ำ/กำแพง/รั้ว/เหว ตามแต่ละแมพ (ดู G.buildBorder)
 
@@ -8160,7 +8162,7 @@ export default function CherryAdventure() {
         const nm = "RockPath_Round_Small_" + (1 + ((k + pi) % 3)); (pathSpots[nm] = pathSpots[nm] || []).push([x, z]); } });
       NAT_COVER.forEach(([name, cnt, H, clump]) => {
         const L2 = natLib[name]; if (!L2) return;
-        const n = Math.round(cnt * cut), mats = [];
+        const n = Math.round(cnt * cut * 2.5), mats = [];   // 🗺️ แมพใหญ่ขึ้น → โรยมากขึ้น
         if (pathSpots[name]) {                                        // แผ่นหินทางเดิน — กว้าง ~1.1 หน่วย วางราบกับพื้น
           const bb = new THREE.Box3().setFromObject(L2.obj), w = Math.max(0.01, bb.max.x - bb.min.x);
           pathSpots[name].forEach(([x, z]) => { const sc = (1.0 + rng() * 0.25) / w; _q.setFromAxisAngle(up, rng() * Math.PI * 2); _s.setScalar(sc);
@@ -8221,7 +8223,7 @@ export default function CherryAdventure() {
       const ps = !!G.powerSave, pool = (opt.names ? (ps ? opt.names.slice(-2) : opt.names) : ps ? ["CommonTree_3", "CommonTree_4"] : NAT_SLOT.tree).map((n) => natLib[n]).filter(Boolean);
       if (!pool.length) return 0;
       const FH = opt.fh || NAT_FH.tree, pinkP = opt.pink != null ? opt.pink : 0.3, altMat = opt.alt || natPink;
-      const rng = seedRng(opt.seed || "meadowBorder"), SECT = 10, rows = opt.rows ? (ps ? opt.rows.slice(0, 1) : opt.rows) : ps ? [[R + 0.8, 1.35, 46]] : [[R, 1.2, 60], [R + 2.8, 1.55, 46]];
+      const rng = seedRng(opt.seed || "meadowBorder"), SECT = 16, rows = (opt.rows ? (ps ? opt.rows.slice(0, 1) : opt.rows) : ps ? [[R + 0.8, 1.35, 46]] : [[R, 1.2, 60], [R + 2.8, 1.55, 46]]).map(([r, b2, n]) => [r, b2, Math.round(n * WORLD_S)]);   // 🗺️ วงใหญ่ขึ้น → ต้นไม้มากขึ้นตามเส้นรอบวง
       const buckets = {};                                             // "ต้น|ชมพู|เสี้ยว" → เมทริกซ์
       const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
       let n = 0;
@@ -8238,7 +8240,7 @@ export default function CherryAdventure() {
       Object.keys(buckets).forEach((key) => {
         const [ti, pink, sec] = key.split("|").map(Number), mats = buckets[key], L2 = pool[ti];
         const a0 = (sec + 0.5) / SECT * Math.PI * 2, rMid = R + 1.3;
-        const sph = new THREE.Sphere(new THREE.Vector3(Math.cos(a0) * rMid, 3, Math.sin(a0) * rMid), rMid * Math.PI / SECT + 6);   // ครอบทั้งเสี้ยว
+        const sph = new THREE.Sphere(new THREE.Vector3(Math.cos(a0) * rMid, 3, Math.sin(a0) * rMid), rMid * Math.PI / SECT + 12);   // ครอบทั้งเสี้ยว
         L2.obj.traverse((o) => {
           if (!o.isMesh) return;
           const g2 = new THREE.BufferGeometry(); g2.setIndex(o.geometry.index);
@@ -19827,7 +19829,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const wilds = [];
     // 🏕️ MONSTER CAMPS — group monsters into a handful of camps spread across the map, each owning a
     // level band (lower Lv near the middle, higher Lv further out) so they cluster by level at points.
-    const CAMP_COUNT = 12; // 🏕️ จุดแคมป์มอนสเตอร์ ×2 — กระจายทั่วแมพมากขึ้น
+    const CAMP_COUNT = 20; // 🏕️ จุดแคมป์มอนสเตอร์ ×2 — กระจายทั่วแมพมากขึ้น
     const makeCamps = () => {
       const lo = G.biomeLvMin != null ? G.biomeLvMin : 1;
       const hi = G.biomeLvMax != null ? G.biomeLvMax : lo + 9;
@@ -20110,13 +20112,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // scatter cacti + small rocks
     const desertColliders = [];
-    for (let i = 0; i < 8; i++) { // 🏜️ fewer cacti — more room to walk
+    for (let i = 0; i < 16; i++) { // 🏜️ fewer cacti — more room to walk
       const a = Math.random() * Math.PI * 2, r = 2.5 + Math.random() * (FIELD_R - 3);
       const cx = Math.cos(a) * r, cz = Math.sin(a) * r;
       if (nearWarpG(cx, cz)) continue; // 🌀 keep the warp clear
       const cc = makeCactus(cx, cz); if (cc) desertColliders.push({ x: cx, z: cz, r: cc.r });
     }
-    for (let i = 0; i < 10; i++) {   // 🌵 ถังกลม/ใบพายเล็ก ๆ ประดับริมขอบ (ไม่กันทาง)
+    for (let i = 0; i < 20; i++) {   // 🌵 ถังกลม/ใบพายเล็ก ๆ ประดับริมขอบ (ไม่กันทาง)
       const a = Math.random() * Math.PI * 2, r = FIELD_R - 2.2 - Math.random() * 2.5, cx = Math.cos(a) * r, cz = Math.sin(a) * r;
       if (nearWarpG(cx, cz) || Math.abs(cx) < 3 || Math.abs(cz) < 3) continue;   // เว้นปากทางถนน 4 ทิศ
       if (Object.values(G.GATE_POS || {}).some((q) => Math.hypot(cx - q.x, cz - q.z) < 5)) continue;   // ไม่วางหน้าประตูเมือง/บ้าน/ฟาร์ม
@@ -20186,7 +20188,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       (G._pineQ = G._pineQ || []).push({ g: p, seed: Math.random() });   // 🌲 สลับเป็นต้นสน Stylized Nature เมื่อโหลดเสร็จ
       snowColliders.push({ x, z, r: 0.4 });
     };
-    for (let i = 0; i < 7; i++) { // ❄️ fewer pines
+    for (let i = 0; i < 14; i++) { // ❄️ fewer pines
       const a = Math.random() * Math.PI * 2, r = 2.5 + Math.random() * (FIELD_R - 3);
       const px = Math.cos(a) * r, pz = Math.sin(a) * r;
       if (nearWarpG(px, pz)) continue; // 🌀 keep the warp clear
@@ -20224,7 +20226,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       snowDecor.add(sm);
       snowColliders.push({ x, z, r: 0.5 * s0 });
     };
-    for (let i = 0, n = 0; i < 30 && n < 8; i++) {
+    for (let i = 0, n = 0; i < 60 && n < 14; i++) {
       const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * (FIELD_R - 6);
       const mx = Math.cos(a) * r, mz = Math.sin(a) * r;
       if (nearWarpG(mx, mz) || Math.abs(mx) < 2.5 || Math.abs(mz) < 2.5) continue; // 🌀 keep the warp + roads clear
@@ -20326,15 +20328,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ⛏️ เหมืองร้าง: โถงกลางเปิดโล่ง — ไม่สร้างแนวกำแพงหินเขาวงกตแล้ว (เสาหิน/ค้ำไม้/รางรถแทน · G.mineBuild)
     void mazeWalls; void makeWall;
     // scatter glowing crystals (some along the walls, some in the open)
-    for (let i = 0; i < 5; i++) { // 🕳️ fewer crystals
+    for (let i = 0; i < 10; i++) { // 🕳️ fewer crystals
       const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3);
       const cx = Math.cos(a) * r, cz = Math.sin(a) * r;
       if (nearWarp(cx, cz)) continue; // 🌀 keep the warp clear
       makeCrystal(cx, cz, i < 3);
     }
     // 🪨 stalagmites rising from the floor + a few big ones
-    for (let i = 0; i < 12; i++) {
-      const a = Math.random() * Math.PI * 2, r = 20 + Math.random() * (FIELD_R - 22);   // หินงอกอยู่นอกวงรางรถ (โถงกลางโล่ง)
+    for (let i = 0; i < 24; i++) {
+      const a = Math.random() * Math.PI * 2, r = 28 + Math.random() * (FIELD_R - 30);   // หินงอกอยู่นอกวงรางรถ (โถงกลางโล่ง)
       const sx = Math.cos(a) * r, sz = Math.sin(a) * r;
       if (nearWarp(sx, sz) || inKeepOut(sx, sz) || Math.abs(sx) < 3 || Math.abs(sz) < 3) continue; // 🌀 keep the warp + roads clear
       const sh = rnd(0.8, 2.2);
@@ -20357,7 +20359,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.caveColliders = caveColliders;
     // ⛏️🚃 เหมืองร้าง (ด่าน 4) — โถงใหญ่กลางถ้ำ: เสาหินยักษ์ + ค้ำไม้เหมือง + รางรถวนรอบโถง (รถเข็นแร่วิ่งจริง) + ปล่องเหมืองตัน + กองแร่/ลัง/ถัง
     //    สร้างครั้งแรกตอนเข้าถ้ำ (ต้องใช้ความสูงพื้นของถ้ำ) · ชิ้นซ้ำ ๆ (หมอนราง/ราง) วาดแบบ instanced
-    const MINE_RAIL_R = 17, MINE_SPUR_A = Math.PI * 1.36; G._mineSpurA = MINE_SPUR_A;          // วงรางรอบโถง · ทางแยกออกไปปล่องเหมืองด้านตะวันตกเฉียงเหนือ
+    const MINE_RAIL_R = 24, MINE_SPUR_A = Math.PI * 1.36; G._mineSpurA = MINE_SPUR_A;          // วงรางรอบโถง · ทางแยกออกไปปล่องเหมืองด้านตะวันตกเฉียงเหนือ
     let mineG = null; const mineCarts = [];
     const mineMat = {
       wood: new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: 0.9 }), woodD: new THREE.MeshStandardMaterial({ color: 0x4a3220, roughness: 0.95 }),
@@ -20391,7 +20393,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
       // 🛤️ ราง: หมอนไม้ + รางเหล็กคู่ (วงรอบโถง + ทางแยกออกไปปล่องเหมือง)
       const pts = [];                                               // [x, z, dirAngle]
-      const NL = 184;
+      const NL = 260;
       for (let i = 0; i < NL; i++) { const a = i / NL * Math.PI * 2; pts.push([Math.cos(a) * MINE_RAIL_R, Math.sin(a) * MINE_RAIL_R, a + Math.PI / 2, 0]); }
       const spur = []; for (let r = MINE_RAIL_R + 0.6; r < FIELD_R - 1.2; r += 0.6) spur.push([Math.cos(MINE_SPUR_A) * r, Math.sin(MINE_SPUR_A) * r, MINE_SPUR_A, 1]);
       const all = pts.concat(spur), ties = [], rails = [];
@@ -20407,7 +20409,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       { const a = MINE_SPUR_A + 0.35, r = MINE_RAIL_R + 3.2, x = Math.cos(a) * r, z = Math.sin(a) * r; const c = mineCart(false); c.position.set(x, ty(x, z) + 0.55, z); c.rotation.set(0.3, 1.1, 1.75); mineG.add(c);
         const pile = new THREE.Group(); pile.position.set(x + 0.9, ty(x, z), z + 0.4); mineOre(pile, 22, 0.9, 0); mineG.add(pile); caveColliders.push({ x, z, r: 1.0 }); }
       // 🗿 เสาหินยักษ์ค้ำเพดานโถง (หินงอก+หินย้อยต่อกันเป็นเสา)
-      [[0.38, 11], [1.95, 11.5], [3.55, 11], [5.1, 11.5]].forEach(([a, r]) => {
+      [[0.38, 15], [1.95, 15.5], [3.55, 15], [5.1, 15.5]].forEach(([a, r]) => {
         const x = Math.cos(a) * r, z = Math.sin(a) * r; if (inKeepOut(x, z) || Math.hypot(x - 6.5, z - 6.5) < 3) return;
         const g = new THREE.Group(); g.position.set(x, ty(x, z), z);
         const parts = [[0, 1.4, 1.5, 2.2], [0, 4.2, 1.05, 2.6], [0, 7.0, 0.8, 2.2], [0, 9.6, 1.0, 2.4], [0, 12.2, 1.45, 2.6]];
@@ -20416,8 +20418,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         mineG.add(g); caveColliders.push({ x, z, r: 1.6 });
       });
       // 🪵 ค้ำไม้เหมือง (เสาคู่ + คานบน + ตะเกียงแขวน) คร่อมรางเป็นช่วง ๆ
-      for (let k = 0; k < 8; k++) {
-        const a = k / 8 * Math.PI * 2 + Math.PI / 8; if (Math.abs(((a - MINE_SPUR_A) + 9.42) % 6.28 - 3.14) < 0.25) continue;
+      for (let k = 0; k < 12; k++) {
+        const a = k / 12 * Math.PI * 2 + Math.PI / 12; if (Math.abs(((a - MINE_SPUR_A) + 9.42) % 6.28 - 3.14) < 0.25) continue;
         const g = new THREE.Group(), x = Math.cos(a) * MINE_RAIL_R, z = Math.sin(a) * MINE_RAIL_R; g.position.set(x, ty(x, z), z); g.rotation.y = -a;
         for (const o of [-1.45, 1.45]) { mBox(g, mineMat.wood, o, 1.9, 0, 0.3, 3.8, 0.3); mBox(g, mineMat.woodD, o * 0.72, 3.25, 0, 0.12, 0.9, 0.14, 0).rotation.z = o > 0 ? -0.7 : 0.7; }
         mBox(g, mineMat.wood, 0, 3.9, 0, 3.5, 0.34, 0.36);
@@ -20433,7 +20435,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const sign = mBox(g, mineMat.woodD, 1.2, 2.6, 0.25, 1.0, 0.5, 0.05); sign.rotation.z = -0.25;
         mineG.add(g); }
       // 📦 ลังไม้ ถังไม้ พลั่วอีเต้อทิ้งไว้ + กองแร่ ข้างราง
-      const clutter = [[0.9, 20.2], [2.6, 20.0], [4.3, 20.4], [5.8, 19.8]];
+      const clutter = [[0.9, 28.2], [2.6, 28.0], [4.3, 28.4], [5.8, 27.8], [1.7, 40], [3.5, 42], [5.0, 40]];
       clutter.forEach(([a, r], ci) => {
         const x = Math.cos(a) * r, z = Math.sin(a) * r; if (inKeepOut(x, z) || Math.abs(x) < 2.6 || Math.abs(z) < 2.6) return;
         const g = new THREE.Group(); g.position.set(x, ty(x, z), z); g.rotation.y = Math.random() * 6;
@@ -20471,7 +20473,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🌋 ภูเขาไฟยักษ์ + แม่น้ำลาวา + รอยแยกควันไฟ → สร้างตอนเข้าด่านครั้งแรก (G.volBuild · ต้องใช้พื้นของด่านนี้ + ภาพเคลื่อนไหวไฟ/ควัน)
     G.volcanoEruptBlobs = null; G.volcanoSmoke = null; G.volcanoCraterLight = null; G.lavaPools = [];
     // 🪨 volcanic rocks scattered on the ground
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 32; i++) {
       const a = Math.random() * Math.PI * 2, r = 2.5 + Math.random() * (FIELD_R - 3);
       const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(0.3, 0.7), 0), i % 2 ? volRockMat : volRockDark);
       const rx = Math.cos(a) * r, rz = Math.sin(a) * r;
@@ -20577,7 +20579,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ☁️ กองเมฆบนพื้น — ปุยเมฆนุ่มจมพื้นครึ่งหนึ่ง กระจายทั่วเกาะ (เว้นถนน/ประตู/แท่นวาร์ป)
     const puffM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0x8a96b0, emissiveIntensity: 0.65 });
     const puffG = new THREE.SphereGeometry(1, 14, 10);
-    for (let i = 0, n = 0; i < 80 && n < 22; i++) {
+    for (let i = 0, n = 0; i < 160 && n < 44; i++) {
       const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 6), x = Math.cos(a) * r, z = Math.sin(a) * r;
       if (Math.abs(x) < 3.2 || Math.abs(z) < 3.2 || inKeepOut(x, z) || nearWarpG(x, z)) continue;
       if (Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 5)) continue;
@@ -20596,9 +20598,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         return m;
       };
       const bow = new THREE.Group();
-      bow.add(mkBow(50, 7, 0.55));
-      const outer = mkBow(62, 5, 0.18); outer.rotation.z = 0; bow.add(outer);   // รุ้งชั้นนอก (สีจางกว่า)
-      bow.position.set(4, -8, -30); bow.rotation.y = 0.35;
+      bow.add(mkBow(50 * WORLD_S, 7 * WORLD_S, 0.55));
+      const outer = mkBow(62 * WORLD_S, 5 * WORLD_S, 0.18); outer.rotation.z = 0; bow.add(outer);   // รุ้งชั้นนอก (สีจางกว่า)
+      bow.position.set(4 * WORLD_S, -8 * WORLD_S, -30 * WORLD_S); bow.rotation.y = 0.35;
       bow.renderOrder = -1; skyDecor.add(bow); G._skyRainbow = bow;
     }
     G.skyDecor = skyDecor;
@@ -21513,7 +21515,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const dx = ex.vec[0], dz = ex.vec[1];
         const px = -dz, pz = dx;                                   // แกนขวางทาง
         const at = (t, off) => [dx * t + px * off, dz * t + pz * off];
-        const SEG = 30, t0 = 2.5, t1 = FIELD_R + 2.4;
+        const SEG = 30 * WORLD_S, t0 = 2.5, t1 = FIELD_R + 2.4;
         if (stoneRoad) {                                           // ทางหินสองแถวสลับซ้ายขวา ส่ายตามแนวถนนเดิม
           for (let t = t0 + 0.4, k = 0; t < t1; t += 1.05, k++) { const sw = Math.sin(t * 0.16) * 0.35; for (const o of k % 2 ? [-0.55, 0.62] : [-0.62, 0.5]) { const c = at(t + (o > 0 ? 0.5 : 0), sw + o); stoneRoad.add(c[0], c[1]); } }
         }
@@ -21902,7 +21904,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const B = BORDER[bid] || BORDER.meadow;
       const R = FIELD_R + 1.4;
       const gaps = borderGaps();
-      const nearGap = (a) => gaps.some((g) => { let d = Math.abs(((a - g + Math.PI * 3) % (Math.PI * 2)) - Math.PI); return d > Math.PI - 0.2; });
+      const nearGap = (a) => gaps.some((g) => { let d = Math.abs(((a - g + Math.PI * 3) % (Math.PI * 2)) - Math.PI); return d > Math.PI - 0.2 / WORLD_S * 1.3; });   // ช่องกว้างคงที่ราว 9 หน่วยแม้แมพใหญ่ขึ้น
       const matA = new THREE.MeshLambertMaterial({ color: B.a, flatShading: true });
       const matB = new THREE.MeshLambertMaterial({ color: B.b, flatShading: true });
       const matC = B.c != null ? new THREE.MeshLambertMaterial({ color: B.c, flatShading: true }) : matB;
@@ -21911,7 +21913,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (B.kind === "forest" && bid === "meadow") {   // 🌳 ทุ่งซากุระ: ป่าขอบแมพใช้ต้นไม้ Stylized Nature (ต้นทรงกลมแบบเดิมเอาออกแล้ว)
         if (G.natBorderTrees) G.natBorderTrees(borderGrp, R, nearGap);   // ยังโหลดไม่เสร็จ = ว่างไว้ก่อน แล้ว natLoad จะสร้างใหม่ให้
       } else if (B.kind === "forest") {          // 🌲 ป่าทึบสองแถว
-        const N = 62;
+        const N = 62 * WORLD_S;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2 + 0.03;
           if (nearGap(a)) continue;
@@ -21933,15 +21935,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         );
         water.rotation.x = -Math.PI / 2; water.position.y = -0.12; borderGrp.add(water);
         G._borderWater = water;
-        for (let i = 0; i < 46; i++) {   // ก้อนหินริมน้ำ
-          const a = (i / 46) * Math.PI * 2;
+        for (let i = 0; i < 46 * WORLD_S; i++) {   // ก้อนหินริมน้ำ
+          const a = (i / (46 * WORLD_S)) * Math.PI * 2;
           if (nearGap(a)) continue;
           const rr = R + 0.3 + Math.random() * 1.2;
           const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.4 + Math.random() * 0.7, 0), matB);
           put(rk, Math.cos(a) * rr, Math.sin(a) * rr, 0.18);
         }
       } else if (B.kind === "wall") {     // 🧱 กำแพงหินก้อนใหญ่ + ป้อม
-        const N = 76;
+        const N = 76 * WORLD_S;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2;
           if (nearGap(a)) continue;
@@ -21952,8 +21954,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             put(blk, x + (k % 2 ? 0.12 : -0.1) * Math.cos(a), z + (k % 2 ? 0.12 : -0.1) * Math.sin(a), 0.75 + k * 1.5);
           }
         }
-        for (let i = 0; i < 12; i++) {   // ป้อมมุม
-          const a = (i / 12) * Math.PI * 2 + 0.26;
+        for (let i = 0; i < 12 * WORLD_S; i++) {   // ป้อมมุม
+          const a = (i / (12 * WORLD_S)) * Math.PI * 2 + 0.26;
           if (nearGap(a)) continue;
           const t = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.6, 7.4, 8), matB);
           put(t, Math.cos(a) * R, Math.sin(a) * R, 3.7);
@@ -21961,7 +21963,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           put(cap, Math.cos(a) * R, Math.sin(a) * R, 8.1);
         }
       } else if (B.kind === "fence") {   // 🚧 รั้วเสา + ราวสองชั้น
-        const N = 88;
+        const N = 88 * WORLD_S;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2;
           if (nearGap(a)) continue;
@@ -21981,7 +21983,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const wood = new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: 0.9 }), iron = new THREE.MeshStandardMaterial({ color: 0x3a3a40, metalness: 0.6, roughness: 0.5 });
         const voidM = new THREE.MeshBasicMaterial({ color: 0x050403 });
         const spurA = G._mineSpurA, nearSpur = (a) => spurA != null && Math.abs(((a - spurA) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.09;
-        const N = 84;
+        const N = 84 * WORLD_S;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2 + (Math.random() - 0.5) * 0.02;
           if (nearGap(a) || nearSpur(a)) continue;
@@ -22010,17 +22012,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (G.mineTorchFx) for (const o of [-3.3, 3.3]) G.mineTorchFx(borderGrp, x + Math.cos(ga + Math.PI / 2) * o - Math.cos(ga) * 0.6, z + Math.sin(ga + Math.PI / 2) * o - Math.sin(ga) * 0.6, 3.1);
         });
         // 🔥 คบเพลิงปักผนังถ้ำรอบโถง — ขายึดเหล็ก + ด้ามไม้เอียงออก + เปลวไฟ
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * Math.PI * 2 + 0.2; if (nearGap(a) || nearSpur(a)) continue;
+        for (let i = 0; i < 16 * WORLD_S; i++) {
+          const a = (i / (16 * WORLD_S)) * Math.PI * 2 + 0.2; if (nearGap(a) || nearSpur(a)) continue;
           const rr = R - 1.75, x = Math.cos(a) * rr, z = Math.sin(a) * rr;
           const br = new THREE.Mesh(boxG, iron); br.scale.set(0.12, 0.35, 0.12); put(br, x + Math.cos(a) * 0.3, z + Math.sin(a) * 0.3, 2.4);
           const st = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.9, 6), wood); st.rotation.set(0, 0, 0); st.lookAt(-Math.cos(a), 1.6, -Math.sin(a)); st.rotateX(Math.PI / 2); put(st, x, z, 2.7);
-          if (G.mineTorchFx) G.mineTorchFx(borderGrp, x - Math.cos(a) * 0.12, z - Math.sin(a) * 0.12, 3.25, i % 4 === 0);
+          if (G.mineTorchFx) G.mineTorchFx(borderGrp, x - Math.cos(a) * 0.12, z - Math.sin(a) * 0.12, 3.25, i % 8 === 0);
         }
       } else {                            // ⛰️ เหว/หน้าผา — แผ่นหินสูงเอียงสลับ
         if (bid === "snow" && G.natBorderTrees)   // 🌲 ทุ่งหิมะ: ป่าสนเรียงหน้าหน้าผา (ครึ่งหนึ่งใบปกคลุมหิมะ)
           G.natBorderTrees(borderGrp, R, nearGap, { names: NAT_PINES, fh: [5.5, 8.0], pink: 0.5, alt: natSnowy, seed: "snowBorder", rows: [[R - 0.9, 1, 54], [R + 1.4, 1.25, 40]] });
-        const N = 70;
+        const N = 70 * WORLD_S;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2;
           if (nearGap(a)) continue;
@@ -22067,8 +22069,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-        const FOG_D = { cave: [12, 52], hell: [26, 78], amazon: [22, 66], volcano: [40, 132], snow: [40, 96], moon: [40, 98] };
-        const fd = FOG_D[b.id] || [46, 98];
+        const FOG_D = { cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+        const fd = FOG_D[b.id] || [58, 124];
         G._fogBase = { near: fd[0], far: fd[1] };   // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
         if (scene.fog && !G._townFogPrev) { scene.fog.near = fd[0]; scene.fog.far = fd[1]; }
         const indoor = b.id === "cave";                       // 🕳️ ในถ้ำไม่มีฟ้า ไม่มีเมฆ ไม่มีตะวัน
@@ -26835,7 +26837,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const rockA = new THREE.MeshStandardMaterial({ color: 0x3a2622, roughness: 1, flatShading: true }), rockB = new THREE.MeshStandardMaterial({ color: 0x241815, roughness: 1, flatShading: true });
       const glowM = new THREE.MeshBasicMaterial({ color: 0xff7a20, fog: false });
       // 🌋 ภูเขาไฟยักษ์ — เนินลาดเว้า ปากปล่องบุ๋ม ทะเลสาบลาวา ลาวาไหลลงเป็นสาย
-      const VX = 0, VZ = -60, vy = terrainAt(VX, -46) - 3, VS = 1.25;
+      const VX = 0, VZ = -FIELD_R - 26, vy = terrainAt(VX, -FIELD_R - 8) - 4, VS = 2.3;
       const prof = [[19, 0], [15, 3.5], [11.5, 8], [8.6, 13], [6.4, 17.5], [5.0, 21], [4.4, 22.6], [3.7, 22.2], [3.0, 20.8], [0.01, 20.8]];
       const vol = new THREE.Group(); vol.position.set(VX, vy, VZ); vol.scale.setScalar(VS);
       const cone = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 18), rockA); cone.castShadow = true; vol.add(cone);
@@ -26856,20 +26858,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const bombM = new THREE.MeshBasicMaterial({ color: 0xffa040, fog: false }), bombG = new THREE.DodecahedronGeometry(0.7, 0);
       for (let k = 0; k < 14; k++) { const b = new THREE.Mesh(bombG, bombM); b.userData = { t: Math.random(), vx: 0, vz: 0, vy: 0 }; volG.add(b); volFx.bombs.push({ b, top }); }
       // 🌊 แม่น้ำลาวา — ไหลจากตีนภูเขาไฟลงมาตามมุมตะวันตกเฉียงเหนือ ออกขอบแมพฝั่งตะวันตก
-      const riverCtl = [[-7, -40], [-8, -32], [-12, -25], [-18, -19], [-24, -14], [-30, -10], [-40, -8]], rpts = [];
+      const riverCtl = [[-7, -40], [-8, -32], [-12, -25], [-18, -19], [-24, -14], [-30, -10], [-40, -8]].map(([x, z]) => [x * WORLD_S, z * WORLD_S]), rpts = [];
       const cat = new THREE.CatmullRomCurve3(riverCtl.map(([x, z]) => new THREE.Vector3(x, 0, z)));
-      cat.getPoints(90).forEach((v) => rpts.push([v.x, terrainAt(v.x, v.z), v.z]));
+      cat.getPoints(180).forEach((v) => rpts.push([v.x, terrainAt(v.x, v.z), v.z]));
       const river = new THREE.Mesh(ribbon(rpts, (u) => 1.6 + Math.sin(u * 9) * 0.35, 0.1), lavaM([1, 1])); volG.add(river);
       const crustM = rockB.clone(); crustM.side = THREE.DoubleSide; const crust = new THREE.Mesh(ribbon(rpts, (u) => 2.4 + Math.sin(u * 9) * 0.35, 0.05), crustM); volG.add(crust);   // ขอบลาวาเย็นตัวสีดำ
       rpts.forEach((p, i) => { if (i % 3) return; const r2 = Math.hypot(p[0], p[2]); if (r2 < FIELD_R + 1) cols.push({ x: p[0], z: p[2], r: 1.9 }); });   // เดินลุยลาวาไม่ได้
       rpts.forEach((p, i) => { if (i % 7 !== 3) return; for (const sd of [-1, 1]) { const q = rpts[Math.min(rpts.length - 1, i + 1)], tx = q[0] - p[0], tz = q[2] - p[2], tl = Math.hypot(tx, tz) || 1;
         const o = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 0), Math.random() < 0.5 ? rockA : rockB); o.position.set(p[0] - tz / tl * sd * 2.9, p[1] + 0.3, p[2] + tx / tl * sd * 2.9); o.scale.set(0.8 + Math.random(), 0.6 + Math.random() * 0.6, 0.8 + Math.random()); o.rotation.y = Math.random() * 3; volG.add(o); } });
-      for (let k = 0; k < 4; k++) { const p = rpts[10 + k * 20]; try { const F = kFlip("smoke", 7, { add: false, color: 0x5a4a44 }); F.sp.position.set(p[0], p[1] + 2, p[2]); volG.add(F.sp); volFx.crack.push({ F, x: p[0], y: p[1], z: p[2], ph: Math.random(), s: 7 }); } catch (_) {} }
+      for (let k = 0; k < 8; k++) { const p = rpts[10 + k * 20]; try { const F = kFlip("smoke", 7, { add: false, color: 0x5a4a44 }); F.sp.position.set(p[0], p[1] + 2, p[2]); volG.add(F.sp); volFx.crack.push({ F, x: p[0], y: p[1], z: p[2], ph: Math.random(), s: 7 }); } catch (_) {} }
       // ⚡ รอยแยกแผ่นดินเรืองแสง + ควันไฟลอยขึ้น (กระจายทั่วด่าน เว้นถนน/ประตู/แท่นวาร์ป)
       const crackM = new THREE.MeshBasicMaterial({ color: 0xff5a10, fog: false }), crackD = new THREE.MeshStandardMaterial({ color: 0x140c0a, roughness: 1 });
-      const spots = []; for (let i = 0; i < 60 && spots.length < 10; i++) {
+      const spots = []; for (let i = 0; i < 120 && spots.length < 18; i++) {
         const a = Math.random() * 6.28, r = 7 + Math.random() * (FIELD_R - 10), x = Math.cos(a) * r, z = Math.sin(a) * r;
-        if (Math.abs(x) < 3.5 || Math.abs(z) < 3.5 || inKeepOut(x, z) || (x < -4 && z < -4 && Math.hypot(x + 16, z + 20) < 16)) continue;
+        if (Math.abs(x) < 3.5 || Math.abs(z) < 3.5 || inKeepOut(x, z) || (x < -4 && z < -4 && Math.hypot(x + 16 * WORLD_S, z + 20 * WORLD_S) < 16 * WORLD_S)) continue;
         if (Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 5) || spots.some((q) => Math.hypot(q[0] - x, q[1] - z) < 6)) continue;
         spots.push([x, z]);
       }
