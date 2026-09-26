@@ -33356,6 +33356,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G._clothBurst = G._combo3 === 2 ? 0.85 : 0.5;
       if (G._combo3 === 2) { G._camPunch = 1; G._camShake = Math.max(G._camShake || 0, 0.28); } // 🎥 กล้องกระชากเข้าตอนท่าจบ
     };
+    // 🦴 ถ่ายท่าปัจจุบันของเมชโครงกระดูก (โมเดล 3D) เป็นเรขาคณิตนิ่ง — ถ้าใช้ o.geometry ตรง ๆ จะได้ท่า T-pose (bind pose)
+    //    ใช้กับเงาซ้อน/โคลนแสงของตัวละคร · แคชต่อเฟรม (เงาหลายร่างในเฟรมเดียวกันใช้ก้อนเดียวกัน)
+    const _sv = new THREE.Vector3();
+    const ghostGeo = (o) => {
+      if (!o.isSkinnedMesh) return o.geometry;
+      const src = o.geometry, pos = src.attributes.position, n = pos.count, out = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { _sv.fromBufferAttribute(pos, i); o.boneTransform(i, _sv); out[i * 3] = _sv.x; out[i * 3 + 1] = _sv.y; out[i * 3 + 2] = _sv.z; }
+      const gg = new THREE.BufferGeometry(); gg.setAttribute("position", new THREE.BufferAttribute(out, 3)); if (src.index) gg.setIndex(src.index);
+      gg.userData._ghostBaked = true; return gg;
+    };
+    G.ghostGeo = ghostGeo;
+    G.freeBaked = (g) => { g.traverse((o) => { if (o.geometry && o.geometry.userData && o.geometry.userData._ghostBaked) o.geometry.dispose(); }); };   // คืนหน่วยความจำของเรขาคณิตที่อบท่าไว้
     // 👻 เงาอาวุธ (smear frame) — ก๊อปท่าอาวุธ ณ เฟรมนั้นเป็นเงาแสงจาง ๆ ค้างไว้ครู่เดียว
     const wpnGhosts = [];
     const spawnWpnGhost = (life) => {
@@ -33380,17 +33392,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const spawnBodyGhost = (life, col) => {
       try {
         char.updateWorldMatrix(true, true);
-        const gm = new THREE.MeshBasicMaterial({ color: col || 0x9fd0ff, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false });
+        const gm = new THREE.MeshBasicMaterial({ color: col || 0x9fd0ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
         const g = new THREE.Group();
         let n = 0;
         char.traverse((o) => {
           if (n > 34 || !o.isMesh || (o.userData && o.userData._outlShell) || !o.geometry) return;
           let p = o, vis = o.visible; while (vis && p && p !== char) { if (!p.visible) vis = false; p = p.parent; }
           if (!vis) return;
-          const mm = new THREE.Mesh(o.geometry, gm); mm.matrixAutoUpdate = false; mm.matrix.copy(o.matrixWorld); mm.raycast = () => {}; g.add(mm); n++;
+          const mm = new THREE.Mesh(ghostGeo(o), gm); mm.matrixAutoUpdate = false; mm.matrix.copy(o.matrixWorld); mm.raycast = () => {}; g.add(mm); n++;
         });
         if (!n) { gm.dispose(); return; }
-        g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.32 };
+        g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.22 };
         scene.add(g); wpnGhosts.push(g);
       } catch (e) {}
     };
@@ -34698,7 +34710,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (n > 34 || !o.isMesh || (o.userData && o.userData._outlShell) || !o.geometry) return;
           let pp = o, vis = o.visible; while (vis && pp && pp !== char) { if (!pp.visible) vis = false; pp = pp.parent; }
           if (!vis) return;
-          const mm = new THREE.Mesh(o.geometry, gm); mm.matrixAutoUpdate = false;
+          const mm = new THREE.Mesh(G.ghostGeo ? G.ghostGeo(o) : o.geometry, gm); mm.matrixAutoUpdate = false;
           mm.matrix.multiplyMatrices(inv, o.matrixWorld); mm.raycast = () => {};
           g.add(mm); n++;
         });
@@ -35896,7 +35908,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (let i = archerFx.length - 1; i >= 0; i--) {
         const o = archerFx[i], u = o.userData;
         u.t += d;
-        const kill = () => { scene.remove(o); u.mats.forEach((m) => m.dispose()); archerFx.splice(i, 1); };
+        const kill = () => { scene.remove(o); u.mats.forEach((m) => m.dispose()); if (G.freeBaked) G.freeBaked(o); archerFx.splice(i, 1); };
         // ⏳ กันเหนียว — ถ้าเอฟเฟกต์ไหนอยู่เกินอายุที่ควรจะเป็นมากๆ (คอลแบ็กไม่ยิง/เป้าหายกลางคัน) ลบทิ้งเลย
         u.age = (u.age || 0) + d;
         if (u.age > (u.delay || 0) + (u.blowAt || 0) + (u.dur || 0) + 6) { kill(); continue; }
@@ -36647,7 +36659,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
       }
     };
-    G._animWpnGhosts = (d) => { for (let i = wpnGhosts.length - 1; i >= 0; i--) { const g = wpnGhosts[i]; g.userData.life -= d; const k = Math.max(0, g.userData.life / g.userData.max); g.userData.mat.opacity = (g.userData.base || 0.45) * k * k; if (g.userData.life <= 0) { scene.remove(g); g.userData.mat.dispose(); wpnGhosts.splice(i, 1); } } };
+    G._animWpnGhosts = (d) => { for (let i = wpnGhosts.length - 1; i >= 0; i--) { const g = wpnGhosts[i]; g.userData.life -= d; const k = Math.max(0, g.userData.life / g.userData.max); g.userData.mat.opacity = (g.userData.base || 0.45) * k * k; if (g.userData.life <= 0) { scene.remove(g); g.userData.mat.dispose(); G.freeBaked(g); wpnGhosts.splice(i, 1); } } };
     // 🎬 map a skill to its signature battle FX so open-world casts look like the 1-v-1 arena
     const worldFxFor = (sk) => {
       if (!sk) return "default";

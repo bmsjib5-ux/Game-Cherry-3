@@ -53318,6 +53318,30 @@ function CherryAdventure() {
                 G._camShake = Math.max(G._camShake || 0, 0.28);
             } // 🎥 กล้องกระชากเข้าตอนท่าจบ
         };
+        // 🦴 ถ่ายท่าปัจจุบันของเมชโครงกระดูก (โมเดล 3D) เป็นเรขาคณิตนิ่ง — ถ้าใช้ o.geometry ตรง ๆ จะได้ท่า T-pose (bind pose)
+        //    ใช้กับเงาซ้อน/โคลนแสงของตัวละคร · แคชต่อเฟรม (เงาหลายร่างในเฟรมเดียวกันใช้ก้อนเดียวกัน)
+        const _sv = new THREE.Vector3();
+        const ghostGeo = (o) => {
+            if (!o.isSkinnedMesh)
+                return o.geometry;
+            const src = o.geometry, pos = src.attributes.position, n = pos.count, out = new Float32Array(n * 3);
+            for (let i = 0; i < n; i++) {
+                _sv.fromBufferAttribute(pos, i);
+                o.boneTransform(i, _sv);
+                out[i * 3] = _sv.x;
+                out[i * 3 + 1] = _sv.y;
+                out[i * 3 + 2] = _sv.z;
+            }
+            const gg = new THREE.BufferGeometry();
+            gg.setAttribute("position", new THREE.BufferAttribute(out, 3));
+            if (src.index)
+                gg.setIndex(src.index);
+            gg.userData._ghostBaked = true;
+            return gg;
+        };
+        G.ghostGeo = ghostGeo;
+        G.freeBaked = (g) => { g.traverse((o) => { if (o.geometry && o.geometry.userData && o.geometry.userData._ghostBaked)
+            o.geometry.dispose(); }); }; // คืนหน่วยความจำของเรขาคณิตที่อบท่าไว้
         // 👻 เงาอาวุธ (smear frame) — ก๊อปท่าอาวุธ ณ เฟรมนั้นเป็นเงาแสงจาง ๆ ค้างไว้ครู่เดียว
         const wpnGhosts = [];
         const spawnWpnGhost = (life) => {
@@ -53359,7 +53383,7 @@ function CherryAdventure() {
         const spawnBodyGhost = (life, col) => {
             try {
                 char.updateWorldMatrix(true, true);
-                const gm = new THREE.MeshBasicMaterial({ color: col || 0x9fd0ff, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false });
+                const gm = new THREE.MeshBasicMaterial({ color: col || 0x9fd0ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
                 const g = new THREE.Group();
                 let n = 0;
                 char.traverse((o) => {
@@ -53373,7 +53397,7 @@ function CherryAdventure() {
                     }
                     if (!vis)
                         return;
-                    const mm = new THREE.Mesh(o.geometry, gm);
+                    const mm = new THREE.Mesh(ghostGeo(o), gm);
                     mm.matrixAutoUpdate = false;
                     mm.matrix.copy(o.matrixWorld);
                     mm.raycast = () => { };
@@ -53384,7 +53408,7 @@ function CherryAdventure() {
                     gm.dispose();
                     return;
                 }
-                g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.32 };
+                g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.22 };
                 scene.add(g);
                 wpnGhosts.push(g);
             }
@@ -55018,7 +55042,7 @@ function CherryAdventure() {
                     }
                     if (!vis)
                         return;
-                    const mm = new THREE.Mesh(o.geometry, gm);
+                    const mm = new THREE.Mesh(G.ghostGeo ? G.ghostGeo(o) : o.geometry, gm);
                     mm.matrixAutoUpdate = false;
                     mm.matrix.multiplyMatrices(inv, o.matrixWorld);
                     mm.raycast = () => { };
@@ -56597,7 +56621,8 @@ function CherryAdventure() {
             for (let i = archerFx.length - 1; i >= 0; i--) {
                 const o = archerFx[i], u = o.userData;
                 u.t += d;
-                const kill = () => { scene.remove(o); u.mats.forEach((m) => m.dispose()); archerFx.splice(i, 1); };
+                const kill = () => { scene.remove(o); u.mats.forEach((m) => m.dispose()); if (G.freeBaked)
+                    G.freeBaked(o); archerFx.splice(i, 1); };
                 // ⏳ กันเหนียว — ถ้าเอฟเฟกต์ไหนอยู่เกินอายุที่ควรจะเป็นมากๆ (คอลแบ็กไม่ยิง/เป้าหายกลางคัน) ลบทิ้งเลย
                 u.age = (u.age || 0) + d;
                 if (u.age > (u.delay || 0) + (u.blowAt || 0) + (u.dur || 0) + 6) {
@@ -57927,6 +57952,7 @@ function CherryAdventure() {
             if (g.userData.life <= 0) {
                 scene.remove(g);
                 g.userData.mat.dispose();
+                G.freeBaked(g);
                 wpnGhosts.splice(i, 1);
             }
         } };
