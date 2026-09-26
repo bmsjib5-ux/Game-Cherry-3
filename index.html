@@ -11335,7 +11335,7 @@ function CherryAdventure() {
         const QT_BASE = "assets/quat/";
         const QT_MON = {
             zombie: { f: "Zombie", size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
-                tint: { M_Main: 0x7c9468, M_Joints: 0x5a2a2a } }, // 🧟 หุ่น UAL2 ย้อมผิวเขียวซีด ข้อต่อแดงคล้ำ · ท่าซอมบี้ยืน/เดินลากขา/ตะปบ
+                tint: { M_Main: 0x7c9468, M_Joints: 0x5a2a2a }, wrap: 1 }, // 🧟 หุ่น UAL2 ย้อมผิวเขียวซีด ข้อต่อแดงคล้ำ · ท่าซอมบี้ยืน/เดินลากขา/ตะปบ
             ngu: { f: "Snake", size: 1.7, idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
             anaconda: { f: "Snake_angry", size: 2.6, idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
             mangkorn: { f: "Dragon", size: 2.4, y: 0.55, lift: 0.55, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death" },
@@ -11600,6 +11600,56 @@ function CherryAdventure() {
             });
             return qtFiles[P.f];
         };
+        // 🩹 ผ้าพันแผลมัมมี่/ซอมบี้ — ปลอกผ้าเปิดปลายสั้น ๆ เอียงสลับกันตามแนวกระดูก (หัว ลำตัว ต้นแขน ปลายแขน ต้นขา หน้าแข้ง)
+        //    เกาะกระดูก จึงขยับตามท่าเดิน/ตะปบ · รัศมีคิดจากความสูงตัวในโลก แล้วแปลงเป็นหน่วยของกระดูก
+        const BANDAGE_MATS = [0xe6dcc0, 0xd6c8a4, 0xc9b88e].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, side: THREE.DoubleSide }));
+        BANDAGE_MATS.forEach((m) => { m.userData._shared = true; });
+        const qtBandage = (node) => {
+            node.updateMatrixWorld(true);
+            const bb = new THREE.Box3().setFromObject(node), Hh = Math.max(0.01, bb.max.y - bb.min.y);
+            const V = () => new THREE.Vector3();
+            // [กระดูก, กระดูกปลาย, รัศมี(สัดส่วนความสูง), จำนวนรอบ]
+            const LIMBS = [["Head", null, 0.078, 3], ["spine_01", "spine_03", 0.115, 3], ["spine_03", "neck_01", 0.12, 2],
+                ["upperarm_l", "lowerarm_l", 0.042, 3], ["upperarm_r", "lowerarm_r", 0.042, 3], ["lowerarm_l", "hand_l", 0.036, 3], ["lowerarm_r", "hand_r", 0.036, 3],
+                ["thigh_l", "calf_l", 0.058, 3], ["thigh_r", "calf_r", 0.058, 3], ["calf_l", "foot_l", 0.045, 3], ["calf_r", "foot_r", 0.045, 3]];
+            let seed = 7;
+            const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+            LIMBS.forEach(([bn, en, rf, n]) => {
+                const b = node.getObjectByName(bn);
+                if (!b)
+                    return;
+                const e = en ? node.getObjectByName(en) : null;
+                const p0 = b.getWorldPosition(V()), p1 = e ? e.getWorldPosition(V()) : p0.clone().add(new THREE.Vector3(0, Hh * 0.13, 0));
+                const bs = V().setFromMatrixScale(b.matrixWorld).x || 1;
+                const segW = p1.clone().sub(p0), L = segW.length() || Hh * 0.1;
+                for (let k = 0; k < n; k++) {
+                    const f = (k + 0.5) / n * (bn === "Head" ? 0.9 : 0.85) + (bn === "Head" ? 0.1 : 0.08);
+                    const cW = p0.clone().addScaledVector(segW, f);
+                    const r = rf * Hh * (0.96 + rnd() * 0.12), w = Math.min(L / n * 0.9, Hh * 0.05);
+                    const geo = new THREE.CylinderGeometry(r / bs, r / bs, w / bs, 14, 1, true);
+                    const m = new THREE.Mesh(geo, BANDAGE_MATS[Math.floor(rnd() * 3)]);
+                    m.castShadow = true;
+                    // วางในพิกัดกระดูก: แกนปลอกตามแนวกระดูก + เอียงสุ่มนิดหน่อยให้ดูพันมือ
+                    const dirL = b.worldToLocal(p0.clone().add(segW.clone().normalize())).sub(b.worldToLocal(p0.clone())).normalize();
+                    m.position.copy(b.worldToLocal(cW.clone()));
+                    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirL);
+                    const tilt = new THREE.Vector3(rnd() - 0.5, 0, rnd() - 0.5).normalize();
+                    m.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(tilt, (rnd() - 0.5) * 0.5));
+                    b.add(m);
+                }
+            });
+            // หางผ้าห้อยจากหัวกับข้อมือ
+            [["Head", 0.07], ["lowerarm_r", 0.04]].forEach(([bn, rf]) => {
+                const b = node.getObjectByName(bn);
+                if (!b)
+                    return;
+                const bs = V().setFromMatrixScale(b.matrixWorld).x || 1;
+                const tail = new THREE.Mesh(new THREE.PlaneGeometry(Hh * 0.035 / bs, Hh * 0.16 / bs), BANDAGE_MATS[1]);
+                tail.position.set(rf * Hh / bs, -Hh * 0.05 / bs, 0);
+                tail.rotation.z = 0.3;
+                b.add(tail);
+            });
+        };
         G.qtSwap = (g) => {
             if (!g || !g.userData || !G.kkOn)
                 return false;
@@ -11657,6 +11707,12 @@ function CherryAdventure() {
                 });
             g.add(node);
             g.userData.qtNode = node;
+            if (P.wrap) {
+                try {
+                    qtBandage(node);
+                }
+                catch (_) { }
+            } // 🧟 ผ้าพันแผลรอบหัว ลำตัว แขน ขา
             // 🦄 เขาเกาะกระดูกหัว — ตำแหน่งตั้งเป็นพิกัดโมเดลในท่ายืน แปลงเข้าเฟรมของกระดูก จะได้ส่ายตามหัวตอนขยับ
             if (P.horn) {
                 const bone = node.getObjectByName(P.horn.bone);
