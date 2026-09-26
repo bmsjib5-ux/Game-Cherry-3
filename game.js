@@ -48,6 +48,8 @@ const BIOMES = [
     { id: "titan", name: "ลานประลองไททัน", emoji: "🗿", lvMin: 950, lvMax: 1000, ground: 0x46592c, sky: 0x8a8c78, fog: 0x9a9c86, pool: ["stonetitan", "cyclops", "caveman2d"], tree: "none", boss: "titanlord", bossName: "จอมไททันบรรพกาล ⛰️" },
     // 🌴 ด่านป่าอเมซอน — Lv 1000-1100 · ป่าดิบชื้น ต้นไม้ใหญ่ เฟิร์น แม่น้ำ ไร้แสงแดด
     { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 1000, lvMax: 1100, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda", "goblin2d"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
+    // 🤖 ด่านอาณาจักรหุ่นยนต์ — Lv 1100-1200 · เมืองโรงงานเหล็ก ไฟนีออน ฟันเฟือง สายพาน · หุ่นยนต์ Animated Mech (Quaternius)
+    { id: "robot", name: "อาณาจักรหุ่นยนต์", emoji: "🤖", lvMin: 1100, lvMax: 1200, ground: 0x4a505a, sky: 0x2a3446, fog: 0x2c3646, pool: ["mechscout", "mechstriker", "mechgunner", "mechtitan"], tree: "none", boss: "mechking", bossName: "จักรพรรดิหุ่นเหล็ก 🤖", hpMul: 1.1, atkMul: 1.1, dim: true },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -188,6 +190,11 @@ const TERRAIN = {
             { t: "wave", fx: 0.1, fz: 0.08, h: 0.65, p: 1.6, q: 0.4 }
         ], rim: { r0: 42, w: 12, h: 8, jag: 0.2, k: 5 } },
     // 🗿 ลานประลองไททัน — ลานที่ราบสูงยกพื้น ขอบตกเป็นคู แล้วล้อมด้วยกำแพงผาสูง
+    robot: { lo: 0x2c3038, hi: 0x6a7282, rock: 0x3a4048, hN: 5, rockK: 0.55, f: [
+            { t: "mesa", x: -20, z: -18, r: 5, h: 3.2, e: 1.2 },
+            { t: "mesa", x: 22, z: 14, r: 4.5, h: 2.6, e: 1.2 },
+            { t: "wave", fx: 0.1, fz: 0.09, h: 0.3, p: 0.5, q: 1.1 }
+        ], rim: { r0: 40, w: 12, h: 12, jag: 0.15, k: 6 } },
     titan: { lo: 0x36461f, hi: 0x8e9e6e, rock: 0x6a6a5a, hN: 8, rockK: 0.65, f: [
             { t: "drop", r0: 27, w: 5, h: -5 },
             { t: "mesa", x: -20, z: 15, r: 5, h: 3.2, e: 1.4 },
@@ -217,6 +224,7 @@ const AMBIENT = {
     moon: { n: 40, kind: "mote", c: [0xc8d0e0, 0x94a0b4], size: 0.2, fall: 0.05, sway: 0.35 }, // 🌑 ฝุ่นจันทร์
     candy: { n: 72, kind: "mote", c: [0xffd0ea, 0xfff6b0, 0xd0f0ff], size: 0.3, fall: 0.4, sway: 0.9, glow: 1 }, // 🍬 เกล็ดน้ำตาลโปรย
     beach: { n: 52, kind: "mote", c: [0xffffff, 0xdff4ff], size: 0.26, fall: 0.14, sway: 2.2 }, // 🏖️ ละอองน้ำทะเล
+    robot: { n: 50, kind: "mote", c: [0x6ad8ff, 0xffb84a], size: 0.24, fall: -0.35, sway: 0.5, glow: 1 }, // 🤖 ประกายไฟเชื่อมโลหะลอย
     titan: { n: 46, kind: "mote", c: [0xcfc8a8, 0xaaa68a], size: 0.24, fall: 0.12, sway: 1.2 }, // 🗿 ฝุ่นลานประลอง
     amazon: { n: 66, kind: "mote", c: [0x9ae06a, 0xfff2a0], size: 0.28, fall: -0.16, sway: 0.7, glow: 1 }, // 🌴 เกสร/หิ่งห้อยป่า
 };
@@ -233,6 +241,7 @@ const DETAIL = {
     moon: { g: 0, gc: [0x8a8a94], gs: 0.7, r: 560, rc: 0x7c7f88 },
     candy: { g: 1100, gc: [0xf7b0d6, 0xffd0e8, 0xfff0b8, 0xc8ecff], gs: 1.0, r: 260, rc: 0xefa8cf },
     beach: { g: 380, gc: [0x9ab86a, 0xbccb7c], gs: 0.9, r: 340, rc: 0xa89f8c },
+    robot: { g: 0, gc: [0x5a6272], gs: 0.7, r: 460, rc: 0x5a606a }, // 🤖 พื้นเหล็ก — ไม่มีหญ้า มีแต่น็อต/เศษเหล็ก
     titan: { g: 1300, gc: [0x5c7a38, 0x74924a, 0x8ba85c], gs: 0.95, r: 380, rc: 0x6e6e5e },
     amazon: { g: 1900, gc: [0x2e5c2e, 0x3f7a3a, 0x58974a, 0x76b055], gs: 1.15, r: 260, rc: 0x3a4230 },
 };
@@ -848,6 +857,7 @@ const WEATHER_POOL = {
     candy: ["clear", "clear", "clear", "rain"],
     beach: ["clear", "clear", "rain", "storm", "heat"],
     titan: ["clear", "clear", "storm", "fog", "rain"],
+    robot: ["clear", "fog", "storm", "clear"],
     amazon: ["rain", "rain", "storm", "fog", "clear"],
 };
 // ============ 📖 สมุดภารกิจ — รายวัน · รายสัปดาห์ · แทร็กรางวัลฤดูกาล ============
@@ -987,9 +997,20 @@ Object.assign(SPECIES, {
     piranha: { name: "ปลาปิรันย่า", emoji: "🐟", color: 0xc0503a, hp: 500, atk: 58, catch: 0.02, tier: 8, desc: "ฝูงปลากินเนื้อจอมดุแห่งแม่น้ำอเมซอน", animal: "fish", weak: "ice" },
     crocodile: { name: "จระเข้ยักษ์", emoji: "🐊", color: 0x4a6a3a, hp: 680, atk: 60, catch: 0.015, tier: 8, desc: "จระเข้ยักษ์ขากรรไกรเหล็กแห่งลุ่มน้ำ", animal: "beast", weak: "wind" },
     anaconda: { name: "อนาคอนด้าจ้าวป่า", emoji: "🐍", color: 0x5a7a3a, hp: 980, atk: 70, catch: 0.008, tier: 8, desc: "งูยักษ์รัดเหยื่อ จ้าวป่าดิบชื้นอเมซอน", animal: "snake", weak: "fire" },
+    // 🤖 อาณาจักรหุ่นยนต์ (Lv 1100-1200) — Animated Mech Pack (Quaternius · CC0)
+    mechscout: { name: "หุ่นสอดแนมเหล็ก", emoji: "🤖", color: 0x3ab89a, hp: 640, atk: 62, catch: 0.02, tier: 8, desc: "หุ่นยนต์สอดแนมขาเรียว วิ่งเร็ว ตาเลนส์คู่จับความเคลื่อนไหวได้ทุกทิศ", weak: "water" },
+    mechstriker: { name: "หุ่นจู่โจมใบมีด", emoji: "🦾", color: 0x7ab04a, hp: 720, atk: 68, catch: 0.018, tier: 8, desc: "หุ่นรบหนวดเสาอากาศคู่ ฟันด้วยแขนใบมีดไฮดรอลิก", weak: "water" },
+    mechgunner: { name: "หุ่นปืนกลพิฆาต", emoji: "🔫", color: 0xd8c8a0, hp: 700, atk: 74, catch: 0.016, tier: 8, desc: "หุ่นสี่ขาหัวโดม ยิงกระสุนเหล็กรัวจากระยะไกล", weak: "ice" },
+    mechtitan: { name: "หุ่นยักษ์เกราะหนัก", emoji: "🛡️", color: 0x6ab0c0, hp: 900, atk: 70, catch: 0.012, tier: 8, desc: "หุ่นยักษ์หมัดเหล็ก เกราะหนาทนทุกการโจมตี", weak: "water" },
+    mechking: { name: "จักรพรรดิหุ่นเหล็ก", emoji: "👑", color: 0xe8b83a, hp: 1300, atk: 82, catch: 0.006, tier: 8, desc: "จักรพรรดิเครื่องจักรผู้ปกครองอาณาจักรหุ่นยนต์ เกราะทองคำสั่งการกองทัพเหล็กทั้งแผ่นดิน", weak: "water" },
     // 🐤 สัตว์เลี้ยงลับสุดหายาก — ไก่น้อยหัวใจ (แอบซ่อน · จับได้อย่างเดียว · โจมตีไม่ได้)
     chickpet: { name: "ไก่น้อยหัวใจ", emoji: "🐤", color: 0xfdfaf2, hp: 1000, atk: 1000, catch: 0.20, tier: 8, desc: "สัตว์เลี้ยงลับสุดหายาก ขี้อายชอบหลบซ่อน ต้องเดินเข้าไปจับเอง โจมตีไม่ได้ · สเตตัสเริ่มต้นสูงสุด (HP/ATK 1000)", secret: true, weak: "arcane" },
 });
+Object.assign(EVOLVED, { mechscout: "หุ่นสอดแนมควอนตัม", mechstriker: "หุ่นดาบพลาสม่า", mechgunner: "หุ่นปืนใหญ่ไอออน", mechtitan: "หุ่นป้อมปราการ", mechking: "จักรพรรดิหุ่นเหล็กนิรันดร์" });
+Object.assign(WEAK, { mechscout: "water", mechstriker: "water", mechgunner: "ice", mechtitan: "water", mechking: "water" });
+Object.assign(PET_ELEM, { mechscout: "wind", mechstriker: "fire", mechgunner: "fire", mechtitan: "earth", mechking: "light" });
+Object.assign(PET_SKILL, { mechscout: "สแกนล็อกเป้า", mechstriker: "ใบมีดไฮดรอลิก", mechgunner: "ปืนกลรัว", mechtitan: "หมัดเหล็กกล้า", mechking: "คำสั่งจักรพรรดิ" });
+Object.assign(MON_SHAPE_EXTRA, { mechscout: "titan", mechstriker: "titan", mechgunner: "titan", mechtitan: "titan", mechking: "titan" });
 Object.assign(EVOLVED, { gummy: "กัมมี่ราชา", cupcake: "คัพเค้กจอมเวท", candyking: "เทพเจ้าขนมหวาน", pooyak: "ปูเทพสมุทร", chalam: "เมกาโลดอน", kraken: "คราเคนราชันสมุทร", stonetitan: "ไททันศิลาเทพ", cyclops: "ไซคลอปส์ราชายักษ์", titanlord: "ไททันเทพบรรพกาล", amzmonkey: "วานรจ้าวไพร", piranha: "ปิรันย่าราชัน", crocodile: "จระเข้เทพเจ้าน้ำ", anaconda: "อนาคอนด้าเทพนาคา" });
 Object.assign(WEAK, { gummy: "water", cupcake: "fire", candyking: "water", pooyak: "wind", chalam: "wind", kraken: "wind", stonetitan: "arcane", cyclops: "light", titanlord: "light", amzmonkey: "arcane", piranha: "ice", crocodile: "wind", anaconda: "fire" });
 Object.assign(PET_ELEM, { gummy: "water", cupcake: "arcane", candyking: "water", pooyak: "earth", chalam: "water", kraken: "water", stonetitan: "earth", cyclops: "earth", titanlord: "earth", amzmonkey: "earth", piranha: "water", crocodile: "water", anaconda: "earth" });
@@ -1886,6 +1907,7 @@ const ORE_TABLE = {
     moon: { ironOre: 56, crystal: 92, iceEss: 46, dragonScale: 14 },
     candy: { ironOre: 64, crystal: 58, earthEss: 34, windEss: 34 },
     beach: { ironOre: 88, crystal: 30, iceEss: 26, windEss: 40 },
+    robot: { ironOre: 150, crystal: 48, windEss: 36, dragonScale: 12 },
     titan: { ironOre: 62, crystal: 56, earthEss: 74, dragonScale: 22 },
     amazon: { ironOre: 70, crystal: 38, earthEss: 70, windEss: 42 },
 };
@@ -2046,6 +2068,7 @@ const HERB_W = {
     moon: { leaf: 40, root: 44, flower: 70, mush: 48, lotus: 14 },
     candy: { leaf: 58, root: 40, flower: 78, mush: 30, lotus: 12 },
     beach: { leaf: 72, root: 50, flower: 46, mush: 20, lotus: 12 },
+    robot: { leaf: 18, root: 36, flower: 16, mush: 30, lotus: 6 },
     titan: { leaf: 44, root: 72, flower: 38, mush: 44, lotus: 18 },
     amazon: { leaf: 88, root: 60, flower: 58, mush: 62, lotus: 24 },
 };
@@ -2163,6 +2186,7 @@ const FISH_SPOT = {
     moon: { kind: "crater", x: -6.5, z: -13.0, r: 3.4, lv: 14, bonus: 1.2, name: "หลุมอุกกาบาตน้ำเงิน", water: 0x7a6ae0, rim: 0x6a6e7a, deco: 0xc0a8ff },
     candy: { kind: "syrup", x: 12.5, z: -13.5, r: 3.2, lv: 15, bonus: 1.35, name: "สระน้ำเชื่อมสตรอว์เบอร์รี", water: 0xff8ac0, rim: 0xffd0e8, deco: 0xfff0f8 },
     beach: { kind: "shore", x: -14.0, z: 2.0, r: 3.9, lv: 16, bonus: 1.5, name: "ชายทะเลคราม", water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
+    robot: { kind: "basin", x: -9.0, z: 12.5, r: 3.4, lv: 22, bonus: 2.2, name: "บ่อหล่อเย็นเตาปฏิกรณ์", water: 0x2ad0e8, rim: 0x5a6070, deco: 0x6ad8ff },
     titan: { kind: "basin", x: 8.0, z: 13.0, r: 3.4, lv: 18, bonus: 1.7, name: "อ่างหินไททัน", water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
     amazon: { kind: "fall", x: -11.5, z: -12.0, r: 3.6, lv: 20, bonus: 2.0, name: "แอ่งน้ำตกอเมซอน", water: 0x2aa87a, rim: 0x4a5a38, deco: 0x8ae86a },
 };
@@ -2222,9 +2246,9 @@ const fishOdds = (lv, k, spotBonus) => {
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
 // 🗺️ โลกเดียวต่อกันหมด — เดินจากด่าน 1 ไปถึงด่าน 13 ได้โดยไม่ต้องวาร์ป
 // ทางเดินงูเลื้อยเป็นแถว ๆ ตามกลุ่มที่ตั้งไว้ (1+2+3 / 4+5+6 / 7+8+9 / 10+11 / 12+13)
-const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon"];
+const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot"];
 //                          1→2  2→3  3→4  4→5  5→6  6→7  7→8  8→9  9→10 10→11 11→12 12→13
-const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E"];
+const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S"]; // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
 // แถว/โซนของโลก — เอาไว้โชว์ว่าตอนนี้อยู่ช่วงไหนของเส้นทาง
 const ROUTES = [
     { id: "r1", name: "แถวต้นทาง", emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
@@ -2232,6 +2256,7 @@ const ROUTES = [
     { id: "r3", name: "แถวสวรรค์-นรก", emoji: "🔥", biomes: ["hell", "heaven", "moon"] },
     { id: "r4", name: "แถวชายทะเล", emoji: "🍬", biomes: ["candy", "beach"] },
     { id: "r5", name: "แถวไททัน", emoji: "🗿", biomes: ["titan", "amazon"] },
+    { id: "r6", name: "แถวจักรกล", emoji: "🤖", biomes: ["robot"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
@@ -2272,6 +2297,7 @@ const BORDER = {
     moon: { kind: "cliff", a: 0x8a90a0, b: 0x5a6070 },
     candy: { kind: "fence", a: 0xffd0e8, b: 0xf58ac0 },
     beach: { kind: "river", a: 0x4ab0e0, b: 0x8ae0e0, c: 0xe8d8a8 },
+    robot: { kind: "wall", a: 0x4a505c, b: 0x2e333c }, // 🤖 กำแพงเหล็กแผ่นหนา + ป้อม
     titan: { kind: "wall", a: 0x7a7060, b: 0x5a5040 },
     amazon: { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
 };
@@ -4146,14 +4172,60 @@ function CherryAdventure() {
             tx.encoding = THREE.sRGBEncoding;
             return tx;
         })();
+        // 🤖 ลายพื้นแผ่นเหล็ก — แผ่นโลหะต่อกันเป็นตาราง หมุดย้ำ รอยคราบน้ำมัน แถบเตือนบางแผ่น (อาณาจักรหุ่นยนต์)
+        const metalGroundTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 256;
+            const c2 = cv.getContext("2d");
+            c2.fillStyle = "#b8bec8";
+            c2.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 4; i++)
+                for (let j = 0; j < 4; j++) {
+                    const x = i * 64, y = j * 64, v = 180 + Math.floor(Math.random() * 30);
+                    c2.fillStyle = `rgb(${v},${v + 4},${v + 12})`;
+                    c2.fillRect(x + 2, y + 2, 60, 60);
+                    c2.strokeStyle = "rgba(40,44,52,0.7)";
+                    c2.lineWidth = 2;
+                    c2.strokeRect(x + 1, y + 1, 62, 62);
+                    c2.fillStyle = "rgba(60,64,72,0.8)";
+                    for (const [rx, ry] of [[6, 6], [58, 6], [6, 58], [58, 58]]) {
+                        c2.beginPath();
+                        c2.arc(x + rx, y + ry, 2, 0, 7);
+                        c2.fill();
+                    }
+                    if ((i + j * 3) % 7 === 0) {
+                        for (let k = -64; k < 64; k += 12) {
+                            c2.fillStyle = k / 12 % 2 ? "#d8a830" : "#2a2a2a";
+                            c2.beginPath();
+                            c2.moveTo(x + 4 + k, y + 56);
+                            c2.lineTo(x + 10 + k, y + 56);
+                            c2.lineTo(x + 16 + k, y + 50);
+                            c2.lineTo(x + 10 + k, y + 50);
+                            c2.fill();
+                        }
+                    }
+                }
+            for (let i = 0; i < 12; i++) {
+                const x = Math.random() * 256, y = Math.random() * 256, r = 6 + Math.random() * 16, g = c2.createRadialGradient(x, y, 0, x, y, r);
+                g.addColorStop(0, "rgba(40,36,30,0.35)");
+                g.addColorStop(1, "rgba(40,36,30,0)");
+                c2.fillStyle = g;
+                c2.fillRect(x - r, y - r, r * 2, r * 2);
+            }
+            const tx = new THREE.CanvasTexture(cv);
+            tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+            tx.anisotropy = 4;
+            tx.encoding = THREE.sRGBEncoding;
+            return tx;
+        })();
         G._groundSkin = (kind) => {
-            const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : groundTex;
+            const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : kind === "metal" ? metalGroundTex : groundTex;
             if (m.map === want)
                 return;
             m.map = want;
             m.bumpMap = want;
-            m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : 0.16;
-            m.emissive.setHex(kind === "snow" ? 0x2a3440 : kind === "cloud" ? 0x3c4658 : 0x000000); // หิมะ/เมฆสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
+            m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : kind === "metal" ? 0.12 : 0.16;
+            m.emissive.setHex(kind === "snow" ? 0x2a3440 : kind === "cloud" ? 0x3c4658 : kind === "metal" ? 0x14181e : 0x000000); // หิมะ/เมฆสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
             m.needsUpdate = true;
         };
         G._ground = ground;
@@ -11904,6 +11976,12 @@ function CherryAdventure() {
         const QT_MON = {
             zombie: { f: "Zombie", size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
                 tint: { M_Main: 0x7c9468, M_Joints: 0x5a2a2a }, wrap: 1 }, // 🧟 หุ่น UAL2 ย้อมผิวเขียวซีด ข้อต่อแดงคล้ำ · ท่าซอมบี้ยืน/เดินลากขา/ตะปบ
+            // 🤖 Animated Mech Pack (Quaternius · CC0) — คลิป Idle/Walk/Run/Punch/Kick/Shoot/SwordSlash/HitRecieve_1/Death ในไฟล์
+            mechscout: { f: "mech/Mech_Leela", c: "big", by: "h", size: 2.5, hit: "HitRecieve_1", atk: "Kick", tint: { Main: 0x3ab89a, Grey: 0x8a9098, LightGrey: 0xd0d4d8, Accent: 0xe8862a } }, // เขียวมรกต
+            mechstriker: { f: "mech/Mech_Mike", c: "big", by: "h", size: 2.8, hit: "HitRecieve_1", atk: "SwordSlash", tint: { Main: 0x7aa860, Grey: 0x80868c, LightGrey: 0xc8ccd0, Accent: 0xe8862a } }, // เขียวทหาร
+            mechgunner: { f: "mech/Mech_Stan", c: "big", by: "h", size: 2.7, hit: "HitRecieve_1", atk: "Shoot", tint: { Main: 0xe0d8c0, Grey: 0x6a7078, LightGrey: 0xc0c4c8, Accent: 0xe8862a } }, // ครีมสนิม
+            mechtitan: { f: "mech/Mech_George", c: "big", by: "h", size: 3.1, hit: "HitRecieve_1", atk: "Punch", tint: { Main: 0x7ab8c8, Grey: 0x8a9098, LightGrey: 0xd0d4d8, Accent: 0xe8862a } }, // ฟ้าหม่น
+            mechking: { f: "mech/Mech_George", c: "big", by: "h", size: 3.4, hit: "HitRecieve_2", atk: "Punch", tint: { Main: 0xe8b83a, Accent: 0xc0302a, Grey: 0x5a4a3a, LightGrey: 0xf0e0b0 } }, // 👑 ย้อมทองคำ + แดง
             ngu: { f: "Snake", size: 1.7, idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
             anaconda: { f: "Snake_angry", size: 2.6, idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
             mangkorn: { f: "Dragon", size: 2.4, y: 0.55, lift: 0.55, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death" },
@@ -35062,6 +35140,196 @@ function CherryAdventure() {
         G.amazonMist = amazonMist;
         G.amazonTrees = amazonTrees;
         G.amazonBush = amazonBush;
+        // 🤖 ROBOT KINGDOM DECOR — เมืองโรงงานเหล็ก: อาคารโรงงานหน้าต่างนีออน · เสาไฟนีออนกะพริบ · ฟันเฟืองยักษ์หมุน · สายพานลำเลียงลังเหล็ก · กองเศษเหล็ก · เสาส่งสัญญาณไฟแดง
+        const robotDecor = new THREE.Group();
+        robotDecor.visible = false;
+        scene.add(robotDecor);
+        const robotColliders = [], robotFx = { gears: [], belts: [], crates: [], neon: [], blink: [] };
+        {
+            const steel = new THREE.MeshStandardMaterial({ color: 0x5a616c, metalness: 0.55, roughness: 0.5 }), steelD = new THREE.MeshStandardMaterial({ color: 0x353a42, metalness: 0.5, roughness: 0.6 });
+            const rust = new THREE.MeshStandardMaterial({ color: 0x8a5a3a, metalness: 0.3, roughness: 0.8 }), hazard = new THREE.MeshStandardMaterial({ color: 0xe8b83a, roughness: 0.6 });
+            const neonC = new THREE.MeshStandardMaterial({ color: 0x9aeaff, emissive: 0x2ad0ff, emissiveIntensity: 1.6 }), neonO = new THREE.MeshStandardMaterial({ color: 0xffd8a0, emissive: 0xff8a2a, emissiveIntensity: 1.5 });
+            const redL = new THREE.MeshStandardMaterial({ color: 0xff6a6a, emissive: 0xff1a1a, emissiveIntensity: 2.0 });
+            robotFx.neon.push(neonC, neonO);
+            robotFx.blink.push(redL);
+            const boxG = new THREE.BoxGeometry(1, 1, 1), cylG = new THREE.CylinderGeometry(1, 1, 1, 16), rockG = new THREE.DodecahedronGeometry(1, 0);
+            const okAt = (x, z, pad) => !(inKeepOut(x, z) || nearWarpG(x, z) || Math.abs(x) < 4 + pad || Math.abs(z) < 4 + pad || Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 7 + pad));
+            const B = (par, m, x, y, z, sx, sy, sz, ry) => { const o = new THREE.Mesh(boxG, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); if (ry)
+                o.rotation.y = ry; o.castShadow = true; o.receiveShadow = true; par.add(o); return o; };
+            // 🏭 อาคารโรงงาน — วงนอก
+            for (let k = 0, n = 0; k < 60 && n < 14; k++) {
+                const a = Math.random() * Math.PI * 2, r = FIELD_R * (0.62 + Math.random() * 0.28), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (!okAt(x, z, 4) || robotColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 6))
+                    continue;
+                const g = new THREE.Group(), w = 5 + Math.random() * 4, d = 4 + Math.random() * 3, h = 5 + Math.random() * 6;
+                B(g, k % 3 ? steel : steelD, 0, h / 2, 0, w, h, d);
+                for (let f = 1; f < h - 0.8; f += 1.6) {
+                    B(g, f % 3.2 < 1.6 ? neonC : neonO, 0, f + 0.4, d / 2 + 0.03, w * 0.8, 0.28, 0.05);
+                    B(g, neonC, 0, f + 0.4, -d / 2 - 0.03, w * 0.8, 0.28, 0.05);
+                } // หน้าต่างเรืองแสงเป็นแถบ
+                B(g, hazard, 0, 0.35, d / 2 + 0.05, w, 0.7, 0.06); // แถบเตือนเหลืองดำที่ฐาน
+                for (let q = 0; q < 2; q++) {
+                    const c = new THREE.Mesh(cylG, rust);
+                    c.scale.set(0.45, 3 + Math.random() * 2, 0.45);
+                    c.position.set((q ? 1 : -1) * w * 0.3, h + c.scale.y / 2, -d * 0.2);
+                    c.castShadow = true;
+                    g.add(c);
+                } // ปล่องควัน
+                const pipe = new THREE.Mesh(cylG, steelD);
+                pipe.scale.set(0.3, w, 0.3);
+                pipe.rotation.z = Math.PI / 2;
+                pipe.position.set(0, h * 0.7, d / 2 + 0.4);
+                g.add(pipe);
+                g.position.set(x, 0, z);
+                g.rotation.y = Math.atan2(-x, -z);
+                robotDecor.add(g);
+                robotColliders.push({ x, z, r: Math.max(w, d) * 0.6 });
+                n++;
+            }
+            // 💡 เสาไฟนีออน
+            for (let k = 0, n = 0; k < 80 && n < 18; k++) {
+                const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * (FIELD_R - 12), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (!okAt(x, z, 0) || robotColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 2))
+                    continue;
+                const g = new THREE.Group(), h = 4.5 + Math.random() * 2, m = n % 2 ? neonC : neonO;
+                const pole = new THREE.Mesh(cylG, steelD);
+                pole.scale.set(0.14, h, 0.14);
+                pole.position.y = h / 2;
+                g.add(pole);
+                for (let q = 0; q < 3; q++) {
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 6, 16), m);
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.y = h * (0.45 + q * 0.2);
+                    g.add(ring);
+                }
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), m);
+                cap.position.y = h + 0.1;
+                g.add(cap);
+                g.position.set(x, 0, z);
+                robotDecor.add(g);
+                robotColliders.push({ x, z, r: 0.35 });
+                n++;
+            }
+            // ⚙️ ฟันเฟืองยักษ์ตั้งจมดิน หมุนช้า ๆ
+            const mkGear = (R, teeth, m) => {
+                const g = new THREE.Group();
+                const disc = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.6, 28), m);
+                disc.rotation.x = Math.PI / 2;
+                g.add(disc);
+                for (let t = 0; t < teeth; t++) {
+                    const a = t / teeth * Math.PI * 2, th = new THREE.Mesh(boxG, m);
+                    th.scale.set(R * 0.22, R * 0.3, 0.6);
+                    th.position.set(Math.cos(a) * (R + R * 0.12), Math.sin(a) * (R + R * 0.12), 0);
+                    th.rotation.z = a;
+                    g.add(th);
+                }
+                const hub = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.25, R * 0.25, 0.9, 16), hazard);
+                hub.rotation.x = Math.PI / 2;
+                g.add(hub);
+                g.traverse((o) => { if (o.isMesh)
+                    o.castShadow = true; });
+                return g;
+            };
+            for (let k = 0, n = 0; k < 60 && n < 6; k++) {
+                const a = Math.random() * Math.PI * 2, r = 14 + Math.random() * (FIELD_R - 22), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (!okAt(x, z, 3) || robotColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 5))
+                    continue;
+                const R = 2 + Math.random() * 1.8, gear = mkGear(R, 10 + Math.round(R * 3), n % 2 ? steel : rust);
+                const holder = new THREE.Group();
+                holder.position.set(x, R * 0.55, z);
+                holder.rotation.y = Math.random() * Math.PI;
+                holder.add(gear);
+                robotDecor.add(holder);
+                robotFx.gears.push({ g: gear, sp: (n % 2 ? 1 : -1) * (0.25 + Math.random() * 0.3) });
+                robotColliders.push({ x, z, r: 1.2 });
+                n++;
+            }
+            // 📦 สายพานลำเลียง + ลังเหล็กวิ่ง
+            const beltTex = (() => { const cv = document.createElement("canvas"); cv.width = 64; cv.height = 64; const c = cv.getContext("2d"); c.fillStyle = "#2a2e34"; c.fillRect(0, 0, 64, 64); c.fillStyle = "#4a505a"; for (let y = 0; y < 64; y += 16)
+                c.fillRect(0, y, 64, 6); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 6); return t; })();
+            for (let k = 0, n = 0; k < 40 && n < 3; k++) {
+                const a = Math.random() * Math.PI * 2, r = 18 + Math.random() * (FIELD_R - 30), x = Math.cos(a) * r, z = Math.sin(a) * r, L = 12;
+                if (!okAt(x, z, 6) || robotColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 8))
+                    continue;
+                const g = new THREE.Group();
+                g.position.set(x, 0, z);
+                g.rotation.y = a + Math.PI / 2;
+                B(g, steelD, 0, 0.45, 0, 1.8, 0.9, L);
+                const tx = beltTex.clone();
+                tx.needsUpdate = true;
+                const top = new THREE.Mesh(new THREE.PlaneGeometry(1.5, L), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.8 }));
+                top.rotation.x = -Math.PI / 2;
+                top.position.y = 0.92;
+                g.add(top);
+                robotFx.belts.push(tx);
+                for (const sd of [-1, 1])
+                    B(g, hazard, sd * 0.95, 0.95, 0, 0.1, 0.12, L);
+                for (let q = 0; q < 4; q++) {
+                    const cr = B(g, q % 2 ? rust : steel, 0, 1.35, 0, 0.8, 0.8, 0.8);
+                    robotFx.crates.push({ o: cr, u: q / 4, L });
+                }
+                robotDecor.add(g);
+                for (let q = -2; q <= 2; q++)
+                    robotColliders.push({ x: x + Math.cos(a + Math.PI / 2) * 0 + Math.sin(a + Math.PI / 2) * q * 2.6, z: z + Math.cos(a + Math.PI / 2) * q * 2.6, r: 1.2 });
+                n++;
+            }
+            // 🔩 กองเศษเหล็ก
+            for (let k = 0, n = 0; k < 60 && n < 12; k++) {
+                const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * (FIELD_R - 12), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (!okAt(x, z, 0))
+                    continue;
+                const g = new THREE.Group();
+                for (let q = 0; q < 7; q++) {
+                    const o = new THREE.Mesh(q % 3 ? rockG : boxG, q % 2 ? steel : rust);
+                    const s0 = 0.3 + Math.random() * 0.5;
+                    o.scale.set(s0 * (1 + Math.random()), s0, s0);
+                    o.position.set((Math.random() - 0.5) * 1.6, s0 * 0.5, (Math.random() - 0.5) * 1.6);
+                    o.rotation.set(q, q * 0.7, q * 1.3);
+                    o.castShadow = true;
+                    g.add(o);
+                }
+                g.position.set(x, 0, z);
+                robotDecor.add(g);
+                robotColliders.push({ x, z, r: 1.0 });
+                n++;
+            }
+            // 📡 เสาส่งสัญญาณโครงเหล็ก ไฟแดงกะพริบบนยอด
+            for (let k = 0, n = 0; k < 40 && n < 3; k++) {
+                const a = Math.random() * Math.PI * 2, r = FIELD_R * (0.5 + Math.random() * 0.3), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (!okAt(x, z, 2) || robotColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + 3))
+                    continue;
+                const g = new THREE.Group(), H = 14 + Math.random() * 4;
+                for (const [ox, oz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+                    const l = new THREE.Mesh(cylG, steelD);
+                    l.scale.set(0.12, H, 0.12);
+                    l.position.set(ox * 0.9, H / 2, oz * 0.9);
+                    l.rotation.set(-oz * 0.05, 0, ox * 0.05);
+                    g.add(l);
+                }
+                for (let y = 2; y < H; y += 2.5)
+                    B(g, steel, 0, y, 0, 1.9 * (1 - y / H * 0.5), 0.12, 1.9 * (1 - y / H * 0.5));
+                const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), redL);
+                lamp.position.y = H + 0.3;
+                g.add(lamp);
+                g.position.set(x, 0, z);
+                robotDecor.add(g);
+                robotColliders.push({ x, z, r: 1.3 });
+                n++;
+            }
+        }
+        G.robotDecor = robotDecor;
+        G.robotColliders = robotColliders;
+        G._robotFx = robotFx;
+        G.robotTick = (dt, t) => {
+            if (!robotDecor.visible)
+                return;
+            robotFx.gears.forEach((q) => { q.g.rotation.z += q.sp * dt; });
+            robotFx.belts.forEach((tx) => { tx.offset.y -= dt * 0.35; });
+            robotFx.crates.forEach((c) => { c.u = (c.u + dt * 0.06) % 1; c.o.position.z = (c.u - 0.5) * (c.L - 1.2); });
+            robotFx.neon[0].emissiveIntensity = 1.4 + Math.sin(t * 2.2) * 0.35;
+            robotFx.neon[1].emissiveIntensity = 1.3 + Math.sin(t * 1.7 + 1) * 0.35;
+            robotFx.blink[0].emissiveIntensity = (t % 1.4) < 0.5 ? 2.4 : 0.2;
+        };
         // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
         const titanDecor = new THREE.Group();
         titanDecor.visible = false;
@@ -35273,7 +35541,9 @@ function CherryAdventure() {
         }
         G.candyDecor = candyDecor;
         G.candyColliders = candyColliders;
-        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor, titanDecor, candyDecor); // 🌳 hide during battle too
+        G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor, titanDecor, candyDecor);
+        if (G.robotDecor)
+            G.biomeDecorGroups.push(G.robotDecor); // 🌳 hide during battle too
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -35727,7 +35997,7 @@ function CherryAdventure() {
         // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
         G.rebuildTerrain = (b) => {
             if (G._groundSkin)
-                G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : null);
+                G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : b.id === "robot" ? "metal" : null);
             TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
             TERR_FLATTEN = !!G._terrFlatMode;
             TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }]); // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
@@ -36720,7 +36990,7 @@ function CherryAdventure() {
             if (G.rollWeather)
                 G.rollWeather(b.id); // 🌦️ สุ่มสภาพอากาศของแมพนี้
             { // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-                const FOG_D = { cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+                const FOG_D = { robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
                 const fd = FOG_D[b.id] || [58, 124];
                 G._fogBase = { near: fd[0], far: fd[1] }; // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
                 if (scene.fog && !G._townFogPrev) {
@@ -36755,7 +37025,8 @@ function CherryAdventure() {
             const isAmazon = b.id === "amazon";
             const isTitan = b.id === "titan";
             const isCandy = b.id === "candy";
-            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon"; // 🔥😇🌙 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
+            const isRobot = b.id === "robot";
+            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
             if (G.snowDecor)
@@ -36780,6 +37051,8 @@ function CherryAdventure() {
                 G.titanDecor.visible = isTitan;
             if (G.candyDecor)
                 G.candyDecor.visible = isCandy;
+            if (G.robotDecor)
+                G.robotDecor.visible = isRobot;
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.refreshDecorFreeze)
                 G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
@@ -36798,7 +37071,8 @@ function CherryAdventure() {
                                                 : b.id === "hell" ? (G.hellColliders || [])
                                                     : b.id === "heaven" ? (G.heavenColliders || [])
                                                         : b.id === "moon" ? (G.moonColliders || [])
-                                                            : [];
+                                                            : isRobot ? (G.robotColliders || [])
+                                                                : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -36846,7 +37120,7 @@ function CherryAdventure() {
         };
         G.unfreezeStatic = (root) => { if (root)
             root.traverse((o) => { o.matrixAutoUpdate = true; }); };
-        G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor"];
+        G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor"];
         // 🚀 PERF ② — รวม material ที่คุณสมบัติเหมือนกันเป็นตัวเดียว (ประหยัดหน่วยความจำ + สลับ uniform)
         // ปลอดภัยเฉพาะวัสดุทึบไม่มีเท็กซ์เจอร์ (ของโปร่งใส/มีลาย มักถูกอนิเมตแยกชิ้น — ไม่ยุ่ง)
         G.dedupeMaterials = (root) => {
@@ -38556,7 +38830,7 @@ function CherryAdventure() {
         // ================= 🏠 MY HOME ZONE — บ้านส่วนตัว: แต่งบ้าน + นอนพักรับบัฟ + เยี่ยมบ้านเพื่อน =================
         G.inHomeZone = false;
         // 🌵 ซ่อน/คืนฉากประจำด่าน (ทะเลทราย หิมะ ฯลฯ) ตอนวาร์ปเข้าโซนฟาร์ม/บ้านจากด่านไหนก็ได้
-        const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor"];
+        const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor"];
         G._hideBiomeDecor = () => { G._decorPrev = {}; BIOME_DECOR_KEYS.forEach((k) => { if (G[k]) {
             G._decorPrev[k] = G[k].visible;
             G[k].visible = false;
@@ -42350,6 +42624,7 @@ function CherryAdventure() {
             candy: { a: "ผู้เฒ่า: \"หลังม่านดวงดาวมีแดนประหลาดหอมหวานซ่อนอยู่... แดนขนมหวาน!\"", h: "เหล่ากัมมี่คลั่งน้ำตาลกำลังอาละวาดทั่วเมืองคุกกี้ หยุดพวกมันให้ได้", b: "ราชาขนมหวานหวงบัลลังก์ลูกกวาดยิ่งชีพ โค่นมันอย่างนุ่มนวล...แต่เด็ดขาด!" },
             beach: { a: "ผู้เฒ่า: \"ได้ยินไหม เสียงคลื่นกำลังเรียกหาเจ้า หาดทะเลทรายซ่อนความลับไว้ใต้น้ำ\"", h: "ปูยักษ์กับฉลามอันธพาลป่วนชายหาดจนไม่มีใครกล้าลงเล่นน้ำ จัดระเบียบซะ", b: "คราเคนเจ้าสมุทรลากเรือลงเหวลึกมานักต่อนัก ปราบมันให้ท้องทะเลสงบ!" },
             titan: { a: "ผู้เฒ่า: \"ลานประลองไททันโบราณตื่นขึ้นอีกครั้ง เสียงหินลั่นสะเทือนถึงหมู่บ้าน\"", h: "เหล่าไททันหินตื่นจากหลับใหลนับพันปีด้วยความเกรี้ยวกราด สยบพวกมัน", b: "จอมไททันบรรพกาลรอผู้ท้าชิงอยู่กลางลานประลอง จงประกาศศักดาของเจ้า!" },
+            robot: { a: "ผู้เฒ่า: \"เหนือป่าดิบลงไปทางใต้ มีเสียงเครื่องจักรดังไม่หยุด... อาณาจักรหุ่นยนต์ตื่นขึ้นแล้ว!\"", h: "กองทัพหุ่นเหล็กกำลังรุกคืบ เดินทางไปหยุดยั้งพวกมันที่อาณาจักรหุ่นยนต์", b: "จักรพรรดิหุ่นเหล็กสั่งการกองทัพจักรกลทั้งหมด ทำลายมันเพื่อปลดปล่อยแผ่นดินเหล็ก!" },
             amazon: { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
         };
         const MSQ = [];
@@ -52349,7 +52624,7 @@ function CherryAdventure() {
             G.player.hp = effMaxHp();
             G.player.mp = effMaxMp();
             syncPlayer();
-            toast("👹 บอสรัชเริ่ม! ล้มเจ้าถิ่นทั้ง 13 แดนให้ไวที่สุด 🔥");
+            toast("👹 บอสรัชเริ่ม! ล้มเจ้าถิ่นทุกแดนให้ไวที่สุด 🔥");
             G.syncRushUi();
             G.rushSpawn();
         };
@@ -69156,8 +69431,9 @@ function CherryAdventure() {
                         const isAmazon = !preview && b.id === "amazon";
                         const isTitan = !preview && b.id === "titan";
                         const isCandy = !preview && b.id === "candy";
+                        const isRobot = !preview && b.id === "robot";
                         if (G.sceneryObjects)
-                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy));
+                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot));
                         wilds.forEach((m) => (m.visible = !preview));
                         if (G.desertDecor)
                             G.desertDecor.visible = isDesert;
@@ -69177,6 +69453,8 @@ function CherryAdventure() {
                             G.titanDecor.visible = isTitan;
                         if (G.candyDecor)
                             G.candyDecor.visible = isCandy;
+                        if (G.robotDecor)
+                            G.robotDecor.visible = isRobot;
                         if (G.warpGate)
                             G.warpGate.visible = !preview;
                         if (G.npc)
@@ -70855,6 +71133,8 @@ function CherryAdventure() {
                         });
                 }
                 // 💎 cave crystals pulse/flicker softly
+                if (G.robotTick)
+                    G.robotTick(dt, t); // 🤖 ฟันเฟืองหมุน สายพานวิ่ง ไฟนีออนกะพริบ
                 if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) {
                     G.caveMineTick(dt, t);
                     if (G.mineFxTick)
