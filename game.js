@@ -11111,12 +11111,12 @@ function CherryAdventure() {
                     g.userData.kkNode = null;
                 } G.kkForestSwap(g, true); });
                 natCoverBuild();
-                if ((G.curBiome || 0) === 0 && G.buildRoad) {
+                if ((G.curBiome || 0) <= 1 && G.buildRoad) {
                     try {
                         G.buildRoad();
                     }
                     catch (e) { }
-                } // 🪨 ถนนดิน → ทางหิน
+                } // 🪨 ถนนดิน → ทางหิน (ทุ่งซากุระ + ทะเลทราย)
                 if ((G.curBiome || 0) === 0 && G.buildBorder) {
                     try {
                         G.buildBorder("meadow");
@@ -11233,7 +11233,8 @@ function CherryAdventure() {
             root.visible = (G.curBiome || 0) === 0 && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.dungeon;
         };
         // 🪨 ตัวสร้างทางหิน (ถนนทุ่งซากุระ) — สะสมจุดแล้ววาดเป็น InstancedMesh ต่อแบบหิน 3 แบบ
-        G.natStoneRoad = () => {
+        const natSandMat = {}; // วัสดุหินย้อมสี (ใช้ร่วม ไม่สร้างซ้ำทุกครั้งที่สร้างถนนใหม่)
+        G.natStoneRoad = (tint) => {
             const kinds = ["RockPath_Round_Small_1", "RockPath_Round_Small_2", "RockPath_Round_Small_3"].map((n) => natLib[n]).filter(Boolean);
             if (!kinds.length)
                 return null;
@@ -11258,7 +11259,17 @@ function CherryAdventure() {
                         L2.obj.traverse((o) => {
                             if (!o.isMesh)
                                 return;
-                            const im = new THREE.InstancedMesh(o.geometry, o.material, mats.length);
+                            let mat = o.material;
+                            if (tint != null) {
+                                const k = o.material.uuid + ":" + tint;
+                                if (!natSandMat[k]) {
+                                    natSandMat[k] = o.material.clone();
+                                    natSandMat[k].color.set(tint).multiplyScalar(2.0);
+                                    natSandMat[k].userData._shared = true;
+                                }
+                                mat = natSandMat[k];
+                            }
+                            const im = new THREE.InstancedMesh(o.geometry, mat, mats.length);
                             const loc = o.matrixWorld.clone();
                             mats.forEach((M, i) => im.setMatrixAt(i, M.clone().multiply(loc)));
                             im.instanceMatrix.needsUpdate = true;
@@ -35364,7 +35375,7 @@ function CherryAdventure() {
             const pebM = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
             const ends = [];
             // 🪨 ทุ่งซากุระ: ถนนดินเปลี่ยนเป็นทางเดินแผ่นหิน (ชุดเดียวกับทางไปประตูเมือง) — ใช้เมื่อชุดธรรมชาติโหลดแล้ว
-            const stoneRoad = (G.curBiome || 0) === 0 && G.natStoneRoad ? G.natStoneRoad() : null;
+            const cb = G.curBiome || 0, stoneRoad = (cb === 0 || cb === 1) && G.natStoneRoad ? G.natStoneRoad(cb === 1 ? 0xe6c79a : null) : null; // 🏜️ ด่าน 2 ทะเลทราย: หินทรายโทนอุ่น
             info.exits.forEach((ex) => {
                 const dx = ex.vec[0], dz = ex.vec[1];
                 const px = -dz, pz = dx; // แกนขวางทาง
