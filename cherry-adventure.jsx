@@ -8117,7 +8117,7 @@ export default function CherryAdventure() {
             sm.emissiveIntensity = 0.3; sm.needsUpdate = true; sm.userData._shared = true; natSnowy[o.material.uuid] = sm; }); });
           (G._pineQ || []).forEach((q) => { try { natPineSwap(q); } catch (e) {} });   // 🌲 สนในทุ่งหิมะ → โมเดลจริง
           natCoverBuild();
-          if ((G.curBiome || 0) <= 2 && G.buildRoad) { try { G.buildRoad(); } catch (e) {} }   // 🪨 ถนนดิน → ทางหิน (ทุ่งซากุระ + ทะเลทราย)
+          if (((G.curBiome || 0) <= 2 || G.curBiome === 4) && G.buildRoad) { try { G.buildRoad(); } catch (e) {} }   // 🪨 ถนนดิน → ทางหิน (ทุ่งซากุระ + ทะเลทราย)
           if (((G.curBiome || 0) === 0 || G.curBiome === 2) && G.buildBorder) { try { G.buildBorder((BIOMES[G.curBiome || 0] || BIOMES[0]).id); } catch (e) {} }   // 🌳 ป่าขอบแมพ → ต้นไม้ชุดนี้
           return true;
         });
@@ -20456,60 +20456,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const lavaMat = new THREE.MeshStandardMaterial({ color: 0xff5a1a, emissive: 0xff3a00, emissiveIntensity: 1.3, roughness: 0.4 });
     const lavaHot = new THREE.MeshStandardMaterial({ color: 0xffc23a, emissive: 0xff8a1a, emissiveIntensity: 1.6, roughness: 0.3 });
     const volColliders = [];
-    // 🌋 the great volcano (big cone at the far edge) + glowing crater + smoke
-    const volcano = new THREE.Group();
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(7, 9, 7), volRockMat);
-    cone.position.y = 4.5; cone.castShadow = true; volcano.add(cone);
-    // dark lava streaks down the slope
-    for (let k = 0; k < 6; k++) {
-      const a = (k / 6) * Math.PI * 2;
-      const streak = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 8, 5), lavaMat);
-      streak.position.set(Math.cos(a) * 2.5, 4, Math.sin(a) * 2.5);
-      streak.rotation.z = Math.cos(a) * 0.35; streak.rotation.x = Math.sin(a) * 0.35;
-      volcano.add(streak);
-    }
-    // glowing crater rim
-    const crater = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.0, 0.8, 7), lavaHot);
-    crater.position.y = 8.8; volcano.add(crater);
-    const craterLight = new THREE.PointLight(0xff5a1a, 3, 18); craterLight.position.set(0, 9.5, 0); volcano.add(craterLight);
-    // erupting lava blobs + smoke plume (animated)
-    const eruptBlobs = [];
-    for (let i = 0; i < 10; i++) {
-      const b = new THREE.Mesh(new THREE.SphereGeometry(rnd(0.18, 0.4), 7, 7), i % 2 ? lavaHot : lavaMat);
-      b.userData = { base: 9, vy: rnd(2.5, 5), vx: rnd(-2, 2), vz: rnd(-2, 2), t: Math.random() };
-      volcano.add(b); eruptBlobs.push(b);
-    }
-    const smokePuffs = [];
-    const smokeMat = new THREE.MeshStandardMaterial({ color: 0x4a4038, transparent: true, opacity: 0.5, roughness: 1 });
-    for (let i = 0; i < 8; i++) {
-      const sm = new THREE.Mesh(new THREE.SphereGeometry(rnd(0.8, 1.5), 8, 8), smokeMat.clone());
-      sm.userData = { t: Math.random(), sp: rnd(0.4, 0.9) };
-      volcano.add(sm); smokePuffs.push(sm);
-    }
-    // place the volcano at the far edge of the field
-    volcano.position.set(0, 0, -FIELD_R - 2);
-    volcanoDecor.add(volcano);
-    G.volcanoEruptBlobs = eruptBlobs;
-    G.volcanoSmoke = smokePuffs;
-    G.volcanoCraterLight = craterLight;
-    // 🔥 lava flow patches on the cracked ground (glowing pools + veins)
-    const lavaPools = [];
-    for (let i = 0; i < 8; i++) {
-      const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4);
-      const px = Math.cos(a) * r, pz = Math.sin(a) * r;
-      const pool = new THREE.Mesh(new THREE.CircleGeometry(rnd(0.8, 1.8), 10), lavaMat.clone());
-      pool.rotation.x = -Math.PI / 2; pool.position.set(px, 0.03, pz);
-      volcanoDecor.add(pool); lavaPools.push(pool);
-      // glowing crack veins radiating out
-      for (let k = 0; k < 4; k++) {
-        const ang = Math.random() * Math.PI * 2, len = rnd(0.8, 2);
-        const vein = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.08), lavaHot.clone());
-        vein.rotation.x = -Math.PI / 2; vein.rotation.z = ang;
-        vein.position.set(px + Math.cos(ang) * len / 2, 0.02, pz + Math.sin(ang) * len / 2);
-        volcanoDecor.add(vein);
-      }
-    }
-    G.lavaPools = lavaPools;
+    // 🌋 ภูเขาไฟยักษ์ + แม่น้ำลาวา + รอยแยกควันไฟ → สร้างตอนเข้าด่านครั้งแรก (G.volBuild · ต้องใช้พื้นของด่านนี้ + ภาพเคลื่อนไหวไฟ/ควัน)
+    G.volcanoEruptBlobs = null; G.volcanoSmoke = null; G.volcanoCraterLight = null; G.lavaPools = [];
     // 🪨 volcanic rocks scattered on the ground
     for (let i = 0; i < 16; i++) {
       const a = Math.random() * Math.PI * 2, r = 2.5 + Math.random() * (FIELD_R - 3);
@@ -21521,7 +21469,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const pebM   = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
       const ends = [];
       // 🪨 ทุ่งซากุระ: ถนนดินเปลี่ยนเป็นทางเดินแผ่นหิน (ชุดเดียวกับทางไปประตูเมือง) — ใช้เมื่อชุดธรรมชาติโหลดแล้ว
-      const cb = G.curBiome || 0, stoneRoad = cb <= 2 && G.natStoneRoad ? G.natStoneRoad(cb === 1 ? 0xe6c79a : cb === 2 ? 0xc4d2e0 : null) : null;   // ❄️ ด่าน 3 ทุ่งหิมะ: หินเทาอมฟ้า   // 🏜️ ด่าน 2 ทะเลทราย: หินทรายโทนอุ่น
+      const cb = G.curBiome || 0, stoneRoad = (cb <= 2 || cb === 4) && G.natStoneRoad ? G.natStoneRoad(cb === 1 ? 0xe6c79a : cb === 2 ? 0xc4d2e0 : cb === 4 ? 0x7a6a62 : null) : null;   // ❄️ ด่าน 3 ทุ่งหิมะ: หินเทาอมฟ้า   // 🏜️ ด่าน 2 ทะเลทราย: หินทรายโทนอุ่น
       info.exits.forEach((ex) => {
         const dx = ex.vec[0], dz = ex.vec[1];
         const px = -dz, pz = dx;                                   // แกนขวางทาง
@@ -22080,7 +22028,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-        const FOG_D = { cave: [12, 52], hell: [26, 78], amazon: [22, 66], volcano: [32, 86], snow: [40, 96], moon: [40, 98] };
+        const FOG_D = { cave: [12, 52], hell: [26, 78], amazon: [22, 66], volcano: [40, 132], snow: [40, 96], moon: [40, 98] };
         const fd = FOG_D[b.id] || [46, 98];
         G._fogBase = { near: fd[0], far: fd[1] };   // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
         if (scene.fog && !G._townFogPrev) { scene.fog.near = fd[0]; scene.fog.far = fd[1]; }
@@ -26814,6 +26762,114 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const k = 1 + 0.07 * Math.sin(t * 11 + v.ph * 9); v.F.sp.scale.set(v.size * k, v.size * (1 + 0.12 * Math.sin(t * 7 + v.ph * 5)), 1);
         v.gl.material.opacity = 0.5 * (0.85 + 0.15 * Math.sin(t * 9 + v.ph * 7));
         if (v.L) v.L.intensity = 1.25 + Math.sin(t * 13 + v.ph * 5) * 0.15 + Math.sin(t * 7.3 + v.ph) * 0.1;
+      }
+    };
+    // 🌋 ด่านภูเขาไฟ — ภูเขาไฟยักษ์กำลังปะทุ (ทิศเหนือ) · แม่น้ำลาวาไหลเป็นทาง (มุมตะวันตกเฉียงเหนือ) · รอยแยกแผ่นดินเรืองแสงมีควันลอย
+    //    ลาวาใช้ texture เลื่อนไหล + ไม่โดนหมอกกลบ (fog:false) ให้เห็นแสงจากไกล
+    let volG = null; const volFx = { smoke: [], fire: [], bombs: [], lava: [], light: null, crack: [] };
+    const lavaTex = (() => {
+      const cv = document.createElement("canvas"); cv.width = cv.height = 128; const c = cv.getContext("2d");
+      c.fillStyle = "#7a1406"; c.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 70; i++) { const x = Math.random() * 128, y = Math.random() * 128, r = 4 + Math.random() * 16;
+        for (const [ox, oy] of [[0, 0], [128, 0], [-128, 0], [0, 128], [0, -128]]) { const g = c.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r); const hot = Math.random() < 0.4;
+          g.addColorStop(0, hot ? "rgba(255,236,120,0.95)" : "rgba(255,120,20,0.8)"); g.addColorStop(1, "rgba(255,80,0,0)"); c.fillStyle = g; c.fillRect(x + ox - r, y + oy - r, r * 2, r * 2); } }
+      c.strokeStyle = "rgba(40,6,2,0.55)"; c.lineWidth = 2;                           // เปลือกลาวาเย็นตัวเป็นแผ่น ๆ
+      for (let i = 0; i < 26; i++) { c.beginPath(); let x = Math.random() * 128, y = Math.random() * 128; c.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (Math.random() - 0.5) * 30; y += (Math.random() - 0.5) * 30; c.lineTo(x, y); } c.stroke(); }
+      const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; return t;
+    })();
+    const lavaM = (rep) => { const tx = lavaTex.clone(); tx.needsUpdate = true; tx.repeat.set(rep[0], rep[1]); const m = new THREE.MeshStandardMaterial({ color: 0xffffff, map: tx, emissive: 0xffffff, emissiveMap: tx, emissiveIntensity: 1.25, roughness: 0.5, fog: false, side: THREE.DoubleSide }); volFx.lava.push(tx); return m; };
+    const ribbon = (pts, wFn, lift) => {                           // แถบแบนตามเส้นทาง (x,y,z) กว้างตาม wFn(u)
+      const pos = [], uv = [], idx = []; let L = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i], q = pts[Math.min(pts.length - 1, i + 1)], o = pts[Math.max(0, i - 1)];
+        const tx = q[0] - o[0], tz = q[2] - o[2], tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl, w = wFn(i / (pts.length - 1));
+        if (i) L += Math.hypot(p[0] - pts[i - 1][0], p[2] - pts[i - 1][2]);
+        pos.push(p[0] + nx * w, p[1] + lift, p[2] + nz * w, p[0] - nx * w, p[1] + lift, p[2] - nz * w); uv.push(0, L / 4, 1, L / 4);
+        if (i) { const b = (i - 1) * 2; idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+    };
+    G.volBuild = () => {
+      if (volG) return volG;
+      volG = new THREE.Group(); volG.name = "volcanoWorld";
+      const VD = G.volcanoDecor, cols = G.volcanoColliders || [];
+      const rockA = new THREE.MeshStandardMaterial({ color: 0x3a2622, roughness: 1, flatShading: true }), rockB = new THREE.MeshStandardMaterial({ color: 0x241815, roughness: 1, flatShading: true });
+      const glowM = new THREE.MeshBasicMaterial({ color: 0xff7a20, fog: false });
+      // 🌋 ภูเขาไฟยักษ์ — เนินลาดเว้า ปากปล่องบุ๋ม ทะเลสาบลาวา ลาวาไหลลงเป็นสาย
+      const VX = 0, VZ = -60, vy = terrainAt(VX, -46) - 3, VS = 1.25;
+      const prof = [[19, 0], [15, 3.5], [11.5, 8], [8.6, 13], [6.4, 17.5], [5.0, 21], [4.4, 22.6], [3.7, 22.2], [3.0, 20.8], [0.01, 20.8]];
+      const vol = new THREE.Group(); vol.position.set(VX, vy, VZ); vol.scale.setScalar(VS);
+      const cone = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 18), rockA); cone.castShadow = true; vol.add(cone);
+      for (let k = 0; k < 10; k++) { const a = k / 10 * 6.28 + 0.3, r = 14 + Math.random() * 4; const o = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 0), rockB); o.position.set(Math.cos(a) * r, 2 + Math.random() * 2, Math.sin(a) * r); o.scale.set(3 + Math.random() * 2, 3 + Math.random() * 3, 3); vol.add(o); }
+      const lake = new THREE.Mesh(new THREE.CircleGeometry(3.3, 20), lavaM([1.5, 1.5])); lake.rotation.x = -Math.PI / 2; lake.position.y = 21.0; vol.add(lake);
+      const rOf = (y) => { for (let i = 1; i < prof.length; i++) if (prof[i][1] >= y) { const [r0, y0] = prof[i - 1], [r1, y1] = prof[i]; return r0 + (r1 - r0) * (y - y0) / ((y1 - y0) || 1); } return 4.4; };
+      for (let k = 0; k < 6; k++) {                                  // สายลาวาไหลลงไหล่เขา (หันมาทางด่านมากกว่า)
+        const a0 = Math.PI / 2 + (k - 2.5) * 0.42 + (Math.random() - 0.5) * 0.15, pts = [];
+        for (let y = 22.2; y >= 0.4; y -= 0.7) { const a = a0 + Math.sin(y * 0.5 + k) * 0.06, r = rOf(y) + 0.12; pts.push([Math.cos(a) * r, y, Math.sin(a) * r]); }
+        const m = new THREE.Mesh(ribbon(pts, (u) => 0.55 + u * (1.4 + (k % 2) * 0.7), 0.08), lavaM([1, 1])); vol.add(m);
+      }
+      const L = new THREE.PointLight(0xff5a1a, 4, 70, 1.4); L.position.set(0, 26, 0); vol.add(L); volFx.light = L;
+      volG.add(vol);
+      // 🔥💨 ปะทุ: เปลวไฟกลางปากปล่อง + ควันดำพวยพุ่ง + ก้อนลาวากระเด็นเป็นวงโค้ง
+      const top = new THREE.Vector3(VX, vy + 21.5 * VS, VZ);
+      for (let k = 0; k < 3; k++) { try { const F = kFlip("bonfire", 11 + k * 2, { add: true }); F.sp.material.fog = false; F.sp.position.set(top.x + (k - 1) * 2.2, top.y + 4 + k, top.z); volG.add(F.sp); volFx.fire.push({ F, ph: Math.random(), k }); } catch (_) {} }
+      for (let k = 0; k < 9; k++) { try { const F = kFlip("smoke", 16, { add: false, color: 0x3a302c }); F.sp.position.copy(top); volG.add(F.sp); volFx.smoke.push({ F, u: k / 9, sp: 0.05 + Math.random() * 0.03, dx: (Math.random() - 0.5) * 8 }); } catch (_) {} }
+      const bombM = new THREE.MeshBasicMaterial({ color: 0xffa040, fog: false }), bombG = new THREE.DodecahedronGeometry(0.7, 0);
+      for (let k = 0; k < 14; k++) { const b = new THREE.Mesh(bombG, bombM); b.userData = { t: Math.random(), vx: 0, vz: 0, vy: 0 }; volG.add(b); volFx.bombs.push({ b, top }); }
+      // 🌊 แม่น้ำลาวา — ไหลจากตีนภูเขาไฟลงมาตามมุมตะวันตกเฉียงเหนือ ออกขอบแมพฝั่งตะวันตก
+      const riverCtl = [[-7, -40], [-8, -32], [-12, -25], [-18, -19], [-24, -14], [-30, -10], [-40, -8]], rpts = [];
+      const cat = new THREE.CatmullRomCurve3(riverCtl.map(([x, z]) => new THREE.Vector3(x, 0, z)));
+      cat.getPoints(90).forEach((v) => rpts.push([v.x, terrainAt(v.x, v.z), v.z]));
+      const river = new THREE.Mesh(ribbon(rpts, (u) => 1.6 + Math.sin(u * 9) * 0.35, 0.1), lavaM([1, 1])); volG.add(river);
+      const crustM = rockB.clone(); crustM.side = THREE.DoubleSide; const crust = new THREE.Mesh(ribbon(rpts, (u) => 2.4 + Math.sin(u * 9) * 0.35, 0.05), crustM); volG.add(crust);   // ขอบลาวาเย็นตัวสีดำ
+      rpts.forEach((p, i) => { if (i % 3) return; const r2 = Math.hypot(p[0], p[2]); if (r2 < FIELD_R + 1) cols.push({ x: p[0], z: p[2], r: 1.9 }); });   // เดินลุยลาวาไม่ได้
+      rpts.forEach((p, i) => { if (i % 7 !== 3) return; for (const sd of [-1, 1]) { const q = rpts[Math.min(rpts.length - 1, i + 1)], tx = q[0] - p[0], tz = q[2] - p[2], tl = Math.hypot(tx, tz) || 1;
+        const o = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 0), Math.random() < 0.5 ? rockA : rockB); o.position.set(p[0] - tz / tl * sd * 2.9, p[1] + 0.3, p[2] + tx / tl * sd * 2.9); o.scale.set(0.8 + Math.random(), 0.6 + Math.random() * 0.6, 0.8 + Math.random()); o.rotation.y = Math.random() * 3; volG.add(o); } });
+      for (let k = 0; k < 4; k++) { const p = rpts[10 + k * 20]; try { const F = kFlip("smoke", 7, { add: false, color: 0x5a4a44 }); F.sp.position.set(p[0], p[1] + 2, p[2]); volG.add(F.sp); volFx.crack.push({ F, x: p[0], y: p[1], z: p[2], ph: Math.random(), s: 7 }); } catch (_) {} }
+      // ⚡ รอยแยกแผ่นดินเรืองแสง + ควันไฟลอยขึ้น (กระจายทั่วด่าน เว้นถนน/ประตู/แท่นวาร์ป)
+      const crackM = new THREE.MeshBasicMaterial({ color: 0xff5a10, fog: false }), crackD = new THREE.MeshStandardMaterial({ color: 0x140c0a, roughness: 1 });
+      const spots = []; for (let i = 0; i < 60 && spots.length < 10; i++) {
+        const a = Math.random() * 6.28, r = 7 + Math.random() * (FIELD_R - 10), x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (Math.abs(x) < 3.5 || Math.abs(z) < 3.5 || inKeepOut(x, z) || (x < -4 && z < -4 && Math.hypot(x + 16, z + 20) < 16)) continue;
+        if (Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 5) || spots.some((q) => Math.hypot(q[0] - x, q[1] - z) < 6)) continue;
+        spots.push([x, z]);
+      }
+      spots.forEach(([x, z], si) => {
+        let px = x, pz = z, ang = Math.random() * 6.28;
+        for (let k = 0; k < 6; k++) {
+          ang += (Math.random() - 0.5) * 1.1; const len = 0.8 + Math.random() * 1.0, nx = px + Math.cos(ang) * len, nz = pz + Math.sin(ang) * len;
+          const mx = (px + nx) / 2, mz = (pz + nz) / 2, y = terrainAt(mx, mz), w = 0.28 * (1 - k / 7);
+          const dark = new THREE.Mesh(gateGeoBox, crackD); dark.scale.set(len + 0.1, 0.04, w + 0.22); dark.position.set(mx, y + 0.02, mz); dark.rotation.y = -ang; volG.add(dark);
+          const hot = new THREE.Mesh(gateGeoBox, crackM); hot.scale.set(len, 0.05, w); hot.position.set(mx, y + 0.04, mz); hot.rotation.y = -ang; volG.add(hot);
+          px = nx; pz = nz;
+        }
+        try { const gl = kDecal("light_02", 0xff6a20, 3.4, 0.07); gl.position.set(x, terrainAt(x, z) + 0.07, z); volG.add(gl); } catch (_) {}
+        try { const F = kFlip("smoke", 4.2, { add: false, color: 0x6a5a54 }); F.sp.position.set(x, terrainAt(x, z) + 1.6, z); volG.add(F.sp); volFx.crack.push({ F, x, y: terrainAt(x, z), z, ph: Math.random(), s: 4.2 }); } catch (_) {}
+      });
+      volG.userData._y0 = -terrainAt(0, 0);                          // กันตัวจัดของแนบพื้นเลื่อนทั้งกลุ่ม (ชิ้นในกลุ่มวางตามพื้นจริงแล้ว)
+      VD.add(volG);
+      return volG;
+    };
+    const gateGeoBox = new THREE.BoxGeometry(1, 1, 1);
+    G.volTick = (dt, t) => {
+      if (!G.volcanoDecor || !G.volcanoDecor.visible || TERR_CUR !== TERRAIN.volcano) return;
+      if (!volG) { try { G.volBuild(); } catch (e) { G._volErr = String(e && e.stack || e); volG = new THREE.Group(); } }
+      for (const tx of volFx.lava) tx.offset.y -= dt * 0.12;          // ลาวาไหล
+      if (volFx.light) volFx.light.intensity = 3.6 + Math.sin(t * 3.1) * 0.8 + Math.sin(t * 7.7) * 0.4;
+      for (const f of volFx.fire) { f.F.set(t * 0.9 + f.ph); const k = 1 + 0.1 * Math.sin(t * 5 + f.k); f.F.sp.scale.set((11 + f.k * 2) * k, (11 + f.k * 2) * (1 + 0.15 * Math.sin(t * 3.3 + f.k)), 1); }
+      for (const s2 of volFx.smoke) {                                  // ควันพวยขึ้นฟ้า ค่อย ๆ ใหญ่และจาง
+        s2.u = (s2.u + dt * s2.sp) % 1; const u = s2.u, P = volFx.bombs[0] ? volFx.bombs[0].top : null; if (!P) break;
+        s2.F.set(t * 0.3 + u); s2.F.sp.position.set(P.x + s2.dx * u + Math.sin(u * 5) * 1.5, P.y + 6 + u * 34, P.z - u * 6);
+        const sc = 16 + u * 34; s2.F.sp.scale.set(sc, sc, 1); s2.F.sp.material.opacity = 0.75 * Math.min(1, u * 5) * (1 - u);
+      }
+      for (const bb of volFx.bombs) {                                  // ก้อนลาวากระเด็นเป็นวงโค้งแล้วตกลงไหล่เขา
+        const u = bb.b.userData; u.t += dt * 0.42;
+        if (u.t > 1) { u.t = 0; const a = Math.random() * 6.28, v = 3 + Math.random() * 7; u.vx = Math.cos(a) * v; u.vz = Math.sin(a) * v; u.vy = 14 + Math.random() * 10; }
+        const tt = u.t * 2.6; bb.b.position.set(bb.top.x + u.vx * tt, bb.top.y + u.vy * tt - 9.8 * 0.5 * tt * tt * 1.4, bb.top.z + u.vz * tt); bb.b.rotation.set(tt * 3, tt * 2, 0);
+      }
+      for (const c of volFx.crack) {                                   // ควันไฟลอยจากรอยแยก
+        const u = (t * 0.22 + c.ph) % 1; c.F.set(t * 0.4 + c.ph); c.F.sp.position.set(c.x + Math.sin(u * 4 + c.ph * 6) * 0.4, c.y + 1.0 + u * 3.6, c.z);
+        const sc = c.s * (0.7 + u * 0.8); c.F.sp.scale.set(sc, sc, 1); c.F.sp.material.opacity = 0.55 * Math.min(1, u * 4) * (1 - u);
       }
     };
     let vfxHub = null, vfxTown = null;
@@ -44882,27 +44938,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       // 🌋 volcano: eruption blobs, smoke plume, rising embers, pulsing lava (volcano biome only)
       if (G.volcanoDecor && G.volcanoDecor.visible) {
-        if (G.volcanoEruptBlobs) G.volcanoEruptBlobs.forEach((b) => {
-          b.userData.t += dt * 0.5;
-          if (b.userData.t > 1) { b.userData.t = 0; b.userData.vy = rnd(2.5, 5); b.userData.vx = rnd(-2, 2); b.userData.vz = rnd(-2, 2); }
-          const tt2 = b.userData.t;
-          b.position.set(b.userData.vx * tt2 * 2, b.userData.base + b.userData.vy * tt2 - tt2 * tt2 * 9, b.userData.vz * tt2 * 2);
-          b.material.opacity = 1 - tt2; b.material.transparent = true;
-        });
-        if (G.volcanoSmoke) G.volcanoSmoke.forEach((sm) => {
-          sm.userData.t += dt * sm.userData.sp * 0.3;
-          if (sm.userData.t > 1) sm.userData.t = 0;
-          const tt2 = sm.userData.t;
-          sm.position.set(Math.sin(tt2 * 4) * 1.2, 9 + tt2 * 6, Math.cos(tt2 * 3) * 1.2);
-          sm.material.opacity = 0.5 * (1 - tt2); sm.scale.setScalar(1 + tt2 * 1.5);
-        });
+        if (G.volTick) G.volTick(dt, t);   // 🌋 ภูเขาไฟปะทุ + ลาวาไหล + ควันรอยแยก
         if (G.volcanoEmbers) G.volcanoEmbers.forEach((e) => {
           e.position.y += e.userData.rise * dt;
           e.position.x += Math.sin(t * 2 + e.userData.sway) * 0.01;
           if (e.position.y > 3.5) { e.position.y = 0.2; e.position.x = rnd(-FIELD_R, FIELD_R); e.position.z = rnd(-FIELD_R, FIELD_R); }
         });
-        if (G.volcanoCraterLight) G.volcanoCraterLight.intensity = 2.5 + Math.sin(t * 4) * 0.8;
-        if (G.lavaPools) G.lavaPools.forEach((p, i) => { p.material.emissiveIntensity = 1.1 + Math.sin(t * 3 + i) * 0.4; });
       }
       // 💎 cave crystals pulse/flicker softly
       if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) { G.caveMineTick(dt, t); if (G.mineFxTick) G.mineFxTick(t); }   // ⛏️ เหมืองร้าง: รถแร่วิ่ง + คบเพลิงไหว
