@@ -21907,6 +21907,63 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       if (K.t >= 3.2 && K.phase !== "done") { K.phase = "done"; G._chestLock = false; syncPlayer(); if (G.saveGame) G.saveGame(); twrExitStart(D); }   // ⏳ เปิดหีบเสร็จ — นับถอยหลัง 1 นาทีก่อนออกเอง
     };
+    // 🎁 หีบสมบัติบอสอีเวนต์ (โลกกว้าง) — โผล่ตรงจุดที่บอสล้ม · เดินไปเปิด = คุกเข่าเปิด ฝาเปิด แสงทอง แล้วได้ของ
+    //    หีบอยู่ 60 วิหลังตีจบ (นับถอยหลังบนป้าย) · หมดเวลาแล้วยังไม่เปิด = แจกของให้อัตโนมัติ ไม่มีวันเสียรางวัล
+    const WCHEST_LIFE = 60;
+    G.worldChestSpawn = (x, z, name, onOpen) => {
+      const go = () => {
+        const src = kkCaveLib.chest; if (!src) { onOpen(); return; }
+        if (G._wChest) wChestEnd(true);
+        const g = src.clone(true), lid = g.getObjectByName("chest_gold_lid"), sc = CAVE_S * 0.8;
+        g.scale.setScalar(sc);
+        const gy = terrainAt(x, z) - (G._gy || 0);
+        g.position.set(x, gy - (kkCaveY.chest ? kkCaveY.chest.min * sc : 0), z);
+        g.rotation.y = Math.atan2(char.position.x - x, char.position.z - z);
+        scene.add(g);
+        if (!G._chestGlow) { G._chestGlow = new THREE.PointLight(0xffc860, 0, 7); scene.add(G._chestGlow); }
+        G._chestGlow.position.set(x, gy + 1.2, z);
+        const fx = Math.sin(g.rotation.y), fz = Math.cos(g.rotation.y);
+        G._wChest = { g, lid, lid0: lid ? lid.rotation.x : 0, t: 0, phase: "walk", life: WCHEST_LIFE, onOpen, name, front: { x: x + fx * 1.3, z: z + fz * 1.3 }, sec: -1 };
+        kImpact(x, 0.6, z, 0xffd24a, 1.3); dustRing(x, z, 1.3);
+        toast(`🎁 หีบสมบัติของ${name}ปรากฏ! เดินไปเปิดรับของ`);
+      };
+      if (kkCaveLib.chest) go(); else if (G.kkCaveLoad) { const pr = G.kkCaveLoad(); if (pr && pr.then) pr.then(go); else onOpen(); } else onOpen();
+    };
+    const wChestEnd = (silent) => {
+      const K = G._wChest; if (!K) return;
+      if (!K.given) { K.given = true; try { K.onOpen(); } catch (_) {} }
+      scene.remove(K.g); if (G._chestGlow) G._chestGlow.intensity = 0; G._chestLock = false;
+      G._wChest = null; setUi((u) => ({ ...u, wChest: null }));
+    };
+    G.wChestTick = (dt) => {
+      const K = G._wChest; if (!K) return;
+      K.life -= dt;
+      const sec = Math.max(0, Math.ceil(K.life));
+      if (sec !== K.sec) { K.sec = sec; setUi((u) => ({ ...u, wChest: { sec, name: K.name, opened: K.phase !== "walk" } })); }
+      if (K.life <= 0 || G.dungeon) { wChestEnd(); return; }
+      const cp = K.g.position;
+      if (K.phase === "walk") {
+        if (G._chestGlow) G._chestGlow.intensity = 0.6 + Math.sin(performance.now() * 0.006) * 0.3;
+        if (G.mode === "explore" && Math.hypot(char.position.x - K.front.x, char.position.z - K.front.z) < 0.9) {
+          K.phase = "open"; K.t = 0; G.moveTarget = null; G.huntTarget = null; G._chestLock = true;
+          char.position.x = K.front.x; char.position.z = K.front.z;
+          char.rotation.y = Math.atan2(cp.x - char.position.x, cp.z - char.position.z); yaw = char.rotation.y;
+          setUi((u) => ({ ...u, wChest: { sec, name: K.name, opened: true } }));
+        }
+        return;
+      }
+      K.t += dt;
+      if (K.t >= 1.3) G._chestLock = false;
+      const e = Math.max(0, Math.min(1, (K.t - 0.45) / 0.5)), ee = 1 - Math.pow(1 - e, 3);
+      if (K.lid) K.lid.rotation.x = K.lid0 - ee * 1.95;
+      if (G._chestGlow) G._chestGlow.intensity = e > 0 ? 2.6 * ee * Math.max(0, 1 - (K.t - 1.6) / 1.4) + 0.3 : 0.6;
+      if (!K.given && K.t >= 0.75) {
+        K.given = true;
+        kImpact(cp.x, 0.9, cp.z, 0xffd24a, 1.6); burst(new THREE.Vector3(cp.x, 0.9, cp.z), 0xffe070, 1.2);
+        G._camShake = Math.max(G._camShake || 0, 0.18);
+        try { K.onOpen(); } catch (_) {}
+      }
+    };
     G.enterGoblinCave = () => G.enterCave("goblin");
     G.enterCave = (type) => {
       const C = CAVE_DEF[type]; if (!C) return;
@@ -32361,6 +32418,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const _stV = new THREE.Vector3();
     const stFxTick = (dt, t) => {
       // 🧍 สถานะบนตัวเรา
+      if (G.wChestTick) G.wChestTick(dt);                  // 🎁 หีบบอสอีเวนต์
       if (G._pKdT > 0) {                                   // 💥 ล้มหงาย → กระแทกพื้นมีฝุ่น → ต่อท่าลุก (LayToIdle)
         const was = G._pKdT; G._pKdT = Math.max(0, G._pKdT - dt);
         if (was > 0.4 && G._pKdT <= 0.4) { dustRing(char.position.x, char.position.z, 0.9); G._camShake = Math.max(G._camShake || 0, 0.15); }
@@ -42229,6 +42287,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.mbDoneStamp = S.stamp;
       if (late && S.dealt <= 0) { toast(`👑 ${S.name} ถูกผู้เล่นคนอื่นปราบไปแล้ว — รอรอบหน้าอีก 30 นาที`); }
       else {
+        const bx = S.m ? S.m.position.x : char.position.x + 2, bz = S.m ? S.m.position.z : char.position.z + 2;
+        const give = () => {                                            // 🎁 ของจริงแจกตอนเปิดหีบ (หรือหีบหมดเวลา = แจกให้อัตโนมัติ)
         const gold = 50000 + Math.min(150000, Math.round(S.dealt / 20)), dia = 30;
         G.gold += gold; if (G.gainDiamonds) G.gainDiamonds(dia, "บอสบุกแมพ"); else G.diamonds = (G.diamonds || 0) + dia;
         let msg = `👑 ปราบ ${S.emoji} ${S.name} สำเร็จ! +${gold.toLocaleString()}💰 +${dia}💎`;
@@ -42237,6 +42297,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         toast(msg); if (G.sfx && G.sfx.levelup) G.sfx.levelup();
         questProgress("win", 1); if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id });
         syncPlayer(); if (G.saveGame) G.saveGame();
+        };
+        if (G.worldChestSpawn) G.worldChestSpawn(bx, bz, S.name, give); else give();
       }
       G.mapBoss = null; mbUi(null);
     };
@@ -44568,8 +44630,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             G.huntT = 0;
             const avoidBoss = G.autoNoBoss || G.player.hp < effMaxHp() * 0.6; // ⚙️ setting or too risky when hurt
             let target = null;
+            if (G._wChest && G._wChest.phase === "walk") target = G._wChest.front;   // 🎁 หีบบอสอีเวนต์รออยู่ — เดินไปเปิดก่อน
 
-            if (!G.autoNoEvent && !G.dungeon) { // ⚙️ setting: skip events entirely · 🗼 ในหอคอย/ดันเจี้ยนไม่ไล่อีเวนต์ข้างนอก
+            if (!target && !G.autoNoEvent && !G.dungeon) { // ⚙️ setting: skip events entirely · 🗼 ในหอคอย/ดันเจี้ยนไม่ไล่อีเวนต์ข้างนอก
               // 1) ☄️ grab landed meteor crystals nearby (free loot!)
               let mBest = null, mbd = Infinity;
               meteors.forEach((mt) => {
@@ -44595,7 +44658,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 const d = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
                 if (d < bestD) { bestD = d; best = m; }
               });
-              if (best) { target = { x: best.position.x, z: best.position.z }; targetMesh = best; }
+              if (best && !(G._wChest && G._wChest.phase === "walk")) { target = { x: best.position.x, z: best.position.z }; targetMesh = best; }
             }
 
             if (target) {
@@ -60061,6 +60124,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* 🗼 แผงสถานะชั้นหอคอย (โหมดสำรวจ) — ชั้น · เวลา · ธาตุประจำชั้น · เงื่อนไขสัตว์เลี้ยง · มอนที่เหลือ */}
+      {/* 🎁 หีบบอสอีเวนต์ — นับถอยหลัง 60 วิ */}
+      {ui.wChest && ui.mode === "explore" && (
+        <div style={{ position: "absolute", top: ST(118), left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 30 }}>
+          <div style={{ background: "linear-gradient(90deg,#3a2a0a,#7a5a14)", border: "2px solid #ffd76a", borderRadius: 14, padding: "7px 14px", color: "#fff", fontFamily: font, fontWeight: 800, fontSize: 13, boxShadow: "0 4px 14px rgba(0,0,0,0.35)" }}>
+            {ui.wChest.opened ? "🎁 รับของจากหีบแล้ว!" : `🎁 เดินไปเปิดหีบสมบัติของ${ui.wChest.name}`} · หีบหายใน <span style={{ color: "#ffe28a", fontSize: 15 }}>{ui.wChest.sec}</span> วิ
+          </div>
+        </div>
+      )}
       {/* ⏳ พิชิตดันเจี้ยนแล้ว — นับถอยหลังออกอัตโนมัติ + ปุ่มออกเลย */}
       {ui.twrExit && ui.mode === "explore" && (
         <div style={{ position: "absolute", top: ST(214), left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 30 }}>
