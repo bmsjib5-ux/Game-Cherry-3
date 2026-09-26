@@ -35842,10 +35842,28 @@ function CherryAdventure() {
             if (caveChestSpawn())
                 return;
             caveReward();
-            G.twrLeave(true);
             syncPlayer();
             if (G.saveGame)
                 G.saveGame();
+            twrExitStart(D);
+        };
+        // ⏳ พิชิตดันเจี้ยนแล้ว — รอ 60 วิก่อนพาออกอัตโนมัติ (เดินเล่น/ถ่ายรูป/เก็บของได้ · กด "ออกเลย" ได้ทุกเมื่อ)
+        const TWR_EXIT_WAIT = 60;
+        const twrExitStart = (D) => { if (!D || D.exitT != null)
+            return; D.exitT = TWR_EXIT_WAIT; D._exitSec = null; };
+        G.twrExitNow = () => { const D = G.dungeon; if (!D)
+            return; if (D.chest)
+            caveChestDrop(D); G._chestLock = false; setUi((u) => ({ ...u, twrExit: null })); G.twrLeave(true); };
+        const twrExitTick = (dt) => {
+            const D = G.dungeon;
+            D.exitT -= dt;
+            const sec = Math.max(0, Math.ceil(D.exitT));
+            if (sec !== D._exitSec) {
+                D._exitSec = sec;
+                setUi((u) => ({ ...u, twrExit: { sec, name: D.cave ? caveCfg().name : "หอคอยมิติ" } }));
+            }
+            if (D.exitT <= 0)
+                G.twrExitNow();
         };
         const caveReward = () => {
             const D = G.dungeon;
@@ -35920,7 +35938,7 @@ function CherryAdventure() {
             return; scene.remove(K.g); K.glow.intensity = 0; D.chest = null; };
         const caveChestTick = (dt) => {
             const D = G.dungeon, K = D.chest;
-            if (!K)
+            if (!K || K.phase === "done")
                 return;
             const cp = K.g.position, fx = Math.sin(K.g.rotation.y), fz = Math.cos(K.g.rotation.y);
             const front = { x: cp.x + fx * 1.25, z: cp.z + fz * 1.25 };
@@ -35959,14 +35977,14 @@ function CherryAdventure() {
                 G._camShake = Math.max(G._camShake || 0, 0.18);
                 caveReward();
             }
-            if (K.t >= 3.2) {
+            if (K.t >= 3.2 && K.phase !== "done") {
+                K.phase = "done";
                 G._chestLock = false;
-                caveChestDrop(D);
-                G.twrLeave(true);
                 syncPlayer();
                 if (G.saveGame)
                     G.saveGame();
-            }
+                twrExitStart(D);
+            } // ⏳ เปิดหีบเสร็จ — นับถอยหลัง 1 นาทีก่อนออกเอง
         };
         G.enterGoblinCave = () => G.enterCave("goblin");
         G.enterCave = (type) => {
@@ -36019,11 +36037,13 @@ function CherryAdventure() {
             }
             if (fl >= DUNGEON_MAX) {
                 toast("🏆 พิชิตหอคอยครบ 100 ชั้นแล้ว!");
-                if (D.rogue)
+                if (D.rogue) {
                     G.rogueEnd("clear");
-                else
-                    G.dungeonProgress = DUNGEON_MAX;
-                G.twrLeave(true);
+                    G.twrLeave(true);
+                    return;
+                }
+                G.dungeonProgress = DUNGEON_MAX;
+                twrExitStart(D); // ⏳ พิชิตครบ 100 ชั้น — นับถอยหลัง 1 นาทีก่อนออกเอง
                 return;
             }
             // 🎁 โหมดท้าทาย: ทุก 3 ชั้นเลือกพร 1 จาก 3 ก่อนไปต่อ
@@ -36038,6 +36058,24 @@ function CherryAdventure() {
         };
         G.twrNext = twrNext;
         // ⏱️ นับเวลา + เช็กเคลียร์ชั้น — เรียกทุกเฟรมตอนอยู่ในหอคอย
+        // 🧱 ล็อกไม่ให้เดินหลุดออกนอกห้อง (ใช้ทั้งตอนสู้ ตอนเปิดหีบ และตอนนับถอยหลังออก)
+        const twrRoomLock = (D, dt) => {
+            const ox = char.position.x - dungeonCenter.x, oz = char.position.z - dungeonCenter.z;
+            const od = Math.hypot(ox, oz);
+            if (od > TWR_ROOM_R) {
+                char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
+                char.position.z = dungeonCenter.z + (oz / od) * TWR_ROOM_R;
+                G.moveTarget = null;
+                if (D.exitT == null && !D.chest) {
+                    if (!D._wallT || D._wallT <= 0) {
+                        D._wallT = 2.5;
+                        toast(D.cave ? `🪨 ${caveCfg().wall} — เคลียร์ห้องนี้ก่อนถึงจะเดินลึกเข้าไปได้` : "🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้");
+                    }
+                }
+            }
+            if (D._wallT > 0)
+                D._wallT -= dt;
+        };
         G.twrTick = (dt) => {
             const D = G.dungeon;
             if (!D || G.mode !== "explore")
@@ -36095,8 +36133,14 @@ function CherryAdventure() {
                     }
                 }
             }
+            if (D.exitT != null) {
+                twrExitTick(dt);
+                twrRoomLock(D, dt);
+                return;
+            } // ⏳ นับถอยหลังออกจากดันเจี้ยน
             if (D.chest) {
                 caveChestTick(dt);
+                twrRoomLock(D, dt);
                 return;
             } // 🎁 ฉากเปิดหีบ — หยุดนับเวลา
             if (D.waitPick) { // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
@@ -36118,22 +36162,7 @@ function CherryAdventure() {
                 G.twrFail("⏱️ หมดเวลา");
                 return;
             }
-            // 🧱 ล็อกไม่ให้เดินหลุดออกนอกห้อง — เดิมเดินทะลุกำแพงออกไปโลกกว้างได้เลย
-            {
-                const ox = char.position.x - dungeonCenter.x, oz = char.position.z - dungeonCenter.z;
-                const od = Math.hypot(ox, oz);
-                if (od > TWR_ROOM_R) {
-                    char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
-                    char.position.z = dungeonCenter.z + (oz / od) * TWR_ROOM_R;
-                    G.moveTarget = null;
-                    if (!D._wallT || D._wallT <= 0) {
-                        D._wallT = 2.5;
-                        toast(D.cave ? `🪨 ${caveCfg().wall} — เคลียร์ห้องนี้ก่อนถึงจะเดินลึกเข้าไปได้` : "🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้");
-                    }
-                }
-                if (D._wallT > 0)
-                    D._wallT -= dt;
-            }
+            twrRoomLock(D, dt);
             if (D.cave && G.caveSpikeTick)
                 G.caveSpikeTick(dt, (D._spT = (D._spT || 0) + dt)); // 🪤
             const sec = Math.ceil(D.tLeft);
@@ -36177,6 +36206,7 @@ function CherryAdventure() {
         // 🚪 ออกจากหอคอย — เก็บกวาดมอนแล้ววาร์ปกลับหน้าประตู
         G.twrLeave = (quiet) => {
             const D0 = G.dungeon;
+            setUi((u) => (u.twrExit ? { ...u, twrExit: null } : u));
             if (D0 && D0.chest) {
                 if (!D0.rewarded) {
                     try {
@@ -91110,6 +91140,15 @@ function CherryAdventure() {
                         border: "3px solid transparent", borderTopColor: "#c9a8f0", animation: "cvSpin 0.9s linear infinite" } }),
                 React.createElement("span", { style: { fontSize: 30, fontWeight: 900, color: "#ffe6c0" } }, ui.twrLoad.sec)),
             React.createElement("div", { style: { fontSize: 10, color: "#a891c8", maxWidth: 260, textAlign: "center", lineHeight: 1.5 } }, "\u0E42\u0E2B\u0E25\u0E14\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01\u0E08\u0E30\u0E19\u0E32\u0E19\u0E2B\u0E19\u0E48\u0E2D\u0E22 \u0E04\u0E23\u0E31\u0E49\u0E07\u0E15\u0E48\u0E2D\u0E44\u0E1B\u0E40\u0E02\u0E49\u0E32\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35"))),
+        ui.twrExit && ui.mode === "explore" && (React.createElement("div", { style: { position: "absolute", top: ST(214), left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 30 } },
+            React.createElement("div", { style: { background: "linear-gradient(90deg,#3a2a0a,#7a5a14)", border: "2px solid #ffd76a", borderRadius: 14, padding: "7px 14px", color: "#fff", fontFamily: font, fontWeight: 800, fontSize: 13, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.35)", pointerEvents: "auto" } },
+                React.createElement("span", null,
+                    "\uD83C\uDFC6 \u0E1E\u0E34\u0E0A\u0E34\u0E15",
+                    ui.twrExit.name,
+                    "\u0E41\u0E25\u0E49\u0E27! \u0E2D\u0E2D\u0E01\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34\u0E43\u0E19 ",
+                    React.createElement("span", { style: { color: "#ffe28a", fontSize: 15 } }, ui.twrExit.sec),
+                    " \u0E27\u0E34"),
+                React.createElement("button", { onClick: () => G.twrExitNow && G.twrExitNow(), style: { border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: font, fontWeight: 900, fontSize: 12, color: "#5a3a00", background: "linear-gradient(180deg,#fff0b0,#ffc84a)" } }, "\uD83D\uDEAA \u0E2D\u0E2D\u0E01\u0E40\u0E25\u0E22")))),
         ui.twr && ui.mode === "explore" && !ui.rogueChoice && (() => {
             const T = ui.twr;
             const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));

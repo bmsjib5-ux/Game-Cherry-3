@@ -21818,7 +21818,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (fl < CAVE_ROOMS) { toast(`✅ เคลียร์ห้อง ${fl}! +${g}💰 — เดินลึกเข้าไปอีก…`); caveSpawn(fl + 1); return; }
       // 🎁 ผ่านห้องสุดท้าย — หีบสมบัติทองโผล่กลางห้อง เดินไปเปิด (ท่า Chest_Open) แล้วค่อยรับรางวัล
       if (caveChestSpawn()) return;
-      caveReward(); G.twrLeave(true); syncPlayer(); if (G.saveGame) G.saveGame();
+      caveReward(); syncPlayer(); if (G.saveGame) G.saveGame(); twrExitStart(D);
+    };
+    // ⏳ พิชิตดันเจี้ยนแล้ว — รอ 60 วิก่อนพาออกอัตโนมัติ (เดินเล่น/ถ่ายรูป/เก็บของได้ · กด "ออกเลย" ได้ทุกเมื่อ)
+    const TWR_EXIT_WAIT = 60;
+    const twrExitStart = (D) => { if (!D || D.exitT != null) return; D.exitT = TWR_EXIT_WAIT; D._exitSec = null; };
+    G.twrExitNow = () => { const D = G.dungeon; if (!D) return; if (D.chest) caveChestDrop(D); G._chestLock = false; setUi((u) => ({ ...u, twrExit: null })); G.twrLeave(true); };
+    const twrExitTick = (dt) => {
+      const D = G.dungeon; D.exitT -= dt;
+      const sec = Math.max(0, Math.ceil(D.exitT));
+      if (sec !== D._exitSec) { D._exitSec = sec; setUi((u) => ({ ...u, twrExit: { sec, name: D.cave ? caveCfg().name : "หอคอยมิติ" } })); }
+      if (D.exitT <= 0) G.twrExitNow();
     };
     const caveReward = () => {
       const D = G.dungeon; if (!D || D.rewarded) return; D.rewarded = true;
@@ -21858,7 +21868,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     const caveChestDrop = (D) => { const K = D && D.chest; if (!K) return; scene.remove(K.g); K.glow.intensity = 0; D.chest = null; };
     const caveChestTick = (dt) => {
-      const D = G.dungeon, K = D.chest; if (!K) return;
+      const D = G.dungeon, K = D.chest; if (!K || K.phase === "done") return;
       const cp = K.g.position, fx = Math.sin(K.g.rotation.y), fz = Math.cos(K.g.rotation.y);
       const front = { x: cp.x + fx * 1.25, z: cp.z + fz * 1.25 };
       const dist = Math.hypot(char.position.x - front.x, char.position.z - front.z);
@@ -21886,7 +21896,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G._camShake = Math.max(G._camShake || 0, 0.18);
         caveReward();
       }
-      if (K.t >= 3.2) { G._chestLock = false; caveChestDrop(D); G.twrLeave(true); syncPlayer(); if (G.saveGame) G.saveGame(); }
+      if (K.t >= 3.2 && K.phase !== "done") { K.phase = "done"; G._chestLock = false; syncPlayer(); if (G.saveGame) G.saveGame(); twrExitStart(D); }   // ⏳ เปิดหีบเสร็จ — นับถอยหลัง 1 นาทีก่อนออกเอง
     };
     G.enterGoblinCave = () => G.enterCave("goblin");
     G.enterCave = (type) => {
@@ -21915,8 +21925,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (D.rogue) { D.cleared = fl; D.gold = (D.gold || 0) + bonus; }
       if (fl >= DUNGEON_MAX) {
         toast("🏆 พิชิตหอคอยครบ 100 ชั้นแล้ว!");
-        if (D.rogue) G.rogueEnd("clear"); else G.dungeonProgress = DUNGEON_MAX;
-        G.twrLeave(true);
+        if (D.rogue) { G.rogueEnd("clear"); G.twrLeave(true); return; }
+        G.dungeonProgress = DUNGEON_MAX;
+        twrExitStart(D);   // ⏳ พิชิตครบ 100 ชั้น — นับถอยหลัง 1 นาทีก่อนออกเอง
         return;
       }
       // 🎁 โหมดท้าทาย: ทุก 3 ชั้นเลือกพร 1 จาก 3 ก่อนไปต่อ
@@ -21926,6 +21937,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     G.twrNext = twrNext;
     // ⏱️ นับเวลา + เช็กเคลียร์ชั้น — เรียกทุกเฟรมตอนอยู่ในหอคอย
+    // 🧱 ล็อกไม่ให้เดินหลุดออกนอกห้อง (ใช้ทั้งตอนสู้ ตอนเปิดหีบ และตอนนับถอยหลังออก)
+    const twrRoomLock = (D, dt) => {
+      const ox = char.position.x - dungeonCenter.x, oz = char.position.z - dungeonCenter.z;
+      const od = Math.hypot(ox, oz);
+      if (od > TWR_ROOM_R) {
+        char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
+        char.position.z = dungeonCenter.z + (oz / od) * TWR_ROOM_R;
+        G.moveTarget = null;
+        if (D.exitT == null && !D.chest) {
+          if (!D._wallT || D._wallT <= 0) { D._wallT = 2.5; toast(D.cave ? `🪨 ${caveCfg().wall} — เคลียร์ห้องนี้ก่อนถึงจะเดินลึกเข้าไปได้` : "🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้"); }
+        }
+      }
+      if (D._wallT > 0) D._wallT -= dt;
+    };
     G.twrTick = (dt) => {
       const D = G.dungeon; if (!D || G.mode !== "explore") return;
       // 🚪 กำลังรอฉากหอคอยขึ้น — นับถอยหลังแล้วค่อยเริ่มชั้นจริง
@@ -21963,7 +21988,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (hb && hb.visible) { hb.visible = false; hid.push(hb); }
         }
       }
-      if (D.chest) { caveChestTick(dt); return; }              // 🎁 ฉากเปิดหีบ — หยุดนับเวลา
+      if (D.exitT != null) { twrExitTick(dt); twrRoomLock(D, dt); return; }   // ⏳ นับถอยหลังออกจากดันเจี้ยน
+      if (D.chest) { caveChestTick(dt); twrRoomLock(D, dt); return; }              // 🎁 ฉากเปิดหีบ — หยุดนับเวลา
       if (D.waitPick) {                                        // รอเลือกพรอยู่ หยุดเวลาไว้ก่อน
         if (!G._rogueOffer && G.rogueOffer) G.rogueOffer();    // 🛟 กันค้าง: ถ้าไม่มีตัวเลือกค้างอยู่ (โหลดเซฟ/หน้าต่างหาย) ให้เสนอพรใหม่
         return;
@@ -21972,16 +21998,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (D.pending > 0) { D.pending -= dt; if (D.pending <= 0) twrNext(); return; }
       D.tLeft -= dt;
       if (D.tLeft <= 0) { D.tLeft = 0; G.twrFail("⏱️ หมดเวลา"); return; }
-      // 🧱 ล็อกไม่ให้เดินหลุดออกนอกห้อง — เดิมเดินทะลุกำแพงออกไปโลกกว้างได้เลย
-      { const ox = char.position.x - dungeonCenter.x, oz = char.position.z - dungeonCenter.z;
-        const od = Math.hypot(ox, oz);
-        if (od > TWR_ROOM_R) {
-          char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
-          char.position.z = dungeonCenter.z + (oz / od) * TWR_ROOM_R;
-          G.moveTarget = null;
-          if (!D._wallT || D._wallT <= 0) { D._wallT = 2.5; toast(D.cave ? `🪨 ${caveCfg().wall} — เคลียร์ห้องนี้ก่อนถึงจะเดินลึกเข้าไปได้` : "🧱 กำแพงหอคอยกั้นอยู่ — ต้องเคลียร์ชั้นนี้ก่อนถึงจะไปต่อได้"); }
-        }
-        if (D._wallT > 0) D._wallT -= dt; }
+      twrRoomLock(D, dt);
       if (D.cave && G.caveSpikeTick) G.caveSpikeTick(dt, (D._spT = (D._spT || 0) + dt));   // 🪤
       const sec = Math.ceil(D.tLeft);
       if (sec !== D._lastSec) {
@@ -22015,6 +22032,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🚪 ออกจากหอคอย — เก็บกวาดมอนแล้ววาร์ปกลับหน้าประตู
     G.twrLeave = (quiet) => {
       const D0 = G.dungeon;
+      setUi((u) => (u.twrExit ? { ...u, twrExit: null } : u));
       if (D0 && D0.chest) { if (!D0.rewarded) { try { caveReward(); } catch (_) {} } caveChestDrop(D0); G._chestLock = false; }   // 🎁 กดออกก่อนเปิดหีบ = ยังได้รางวัลครบ
       if (D0 && D0.hid) { D0.hid.forEach((o) => { if (o) o.visible = true; }); D0.hid = null; }   // 👁️ คืนมอนโลกกว้างที่ซ่อนไว้
       twrClearMobs();
@@ -60032,6 +60050,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* 🗼 แผงสถานะชั้นหอคอย (โหมดสำรวจ) — ชั้น · เวลา · ธาตุประจำชั้น · เงื่อนไขสัตว์เลี้ยง · มอนที่เหลือ */}
+      {/* ⏳ พิชิตดันเจี้ยนแล้ว — นับถอยหลังออกอัตโนมัติ + ปุ่มออกเลย */}
+      {ui.twrExit && ui.mode === "explore" && (
+        <div style={{ position: "absolute", top: ST(214), left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 30 }}>
+          <div style={{ background: "linear-gradient(90deg,#3a2a0a,#7a5a14)", border: "2px solid #ffd76a", borderRadius: 14, padding: "7px 14px", color: "#fff", fontFamily: font, fontWeight: 800, fontSize: 13, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.35)", pointerEvents: "auto" }}>
+            <span>🏆 พิชิต{ui.twrExit.name}แล้ว! ออกอัตโนมัติใน <span style={{ color: "#ffe28a", fontSize: 15 }}>{ui.twrExit.sec}</span> วิ</span>
+            <button onClick={() => G.twrExitNow && G.twrExitNow()} style={{ border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: font, fontWeight: 900, fontSize: 12, color: "#5a3a00", background: "linear-gradient(180deg,#fff0b0,#ffc84a)" }}>🚪 ออกเลย</button>
+          </div>
+        </div>
+      )}
       {ui.twr && ui.mode === "explore" && !ui.rogueChoice && (() => {
         const T = ui.twr;
         const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
