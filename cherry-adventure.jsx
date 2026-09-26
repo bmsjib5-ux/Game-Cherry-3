@@ -10795,17 +10795,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         h1: { c: 0xe0c070, k: "straw" }, h2: { c: 0x4a2a6a, kk: "hatWitch" }, hS: { c: 0xf5c542, k: "crown" }, hD: { c: 0x3a1418, kk: "helmHorned" }, lg_hat: { c: 0xffd870, k: "crown", big: 1 },
         m1: { c: 0xff6a9a, k: "glasses" }, m2: { c: 0xfff4ea, k: "fox" }, mD: { c: 0x3a1418, k: "demon" }, lg_msk: { c: 0xffd870, k: "sun" },
         g1: { c: 0xfff0f4, k: "fluffy" }, g2: { c: 0xd9443a, k: "gauntlet" }, gS: { c: 0xb8e8c0, k: "gauntlet" }, gD: { c: 0x3a1418, k: "claw" }, lg_glv: { c: 0xffd870, k: "gauntlet" },
-        p1: { c: 0x4a78c0, k: "patch", mh: "WoolPants" }, p2: { c: 0x2a2e3a, k: "plate", mh: "WoolPants" }, pD: { c: 0x5a1418, k: "plate", mh: "HaremPants" }, lg_pnt: { c: 0xffd870, k: "plate", mh: "HaremPants" },
-        sw_pants: { c: 0xe8e0c8, k: "patch", mh: "HaremPants" },
-        s1: { c: 0xff9ac0, k: "sneaker" }, s2: { c: 0xf5d24a, k: "boot", mh: "Boots" }, sD: { c: 0x5a1418, k: "boot", wing: 1, mh: "Boots" }, lg_sho: { c: 0xffe8a8, k: "boot", wing: 1, mh: "Boots" },
-        sw_boots: { c: 0x8a5a34, k: "boot", mh: "Boots" },
+        p1: { c: 0x4a78c0, k: "patch" }, p2: { c: 0x2a2e3a, k: "plate" }, pD: { c: 0x5a1418, k: "plate" }, lg_pnt: { c: 0xffd870, k: "plate" },
+        s1: { c: 0xff9ac0, k: "sneaker" }, s2: { c: 0xf5d24a, k: "boot" }, sD: { c: 0x5a1418, k: "boot", wing: 1 }, lg_sho: { c: 0xffe8a8, k: "boot", wing: 1 },
       };
       const HERO_GEAR_ARCH = {   // ชุดสุ่ม 3 สาย: จู่โจม / ปราการ / ว่องไว
         hat: { atk: { c: 0x8a4a2a, kk: "hatBarb" }, def: { c: 0x9aa4b4, kk: "helmKnight" }, agi: { c: 0x4aa06a, k: "feather" } },
         mask: { atk: { c: 0xa02a2a, k: "demon" }, def: { c: 0x8a8a84, k: "stone" }, agi: { c: 0x8ad0b0, k: "veil" } },
         gloves: { atk: { c: 0x2a2228, k: "gauntlet" }, def: { c: 0x9aa4b4, k: "gauntlet" }, agi: { c: 0xd0e8f0, k: "wrap" } },
-        pants: { atk: { c: 0x6a3a24, k: "plate", mh: "WoolPants" }, def: { c: 0x9aa4b4, k: "plate", mh: "WoolPants" }, agi: { c: 0x5aa07a, k: "wrap", mh: "HaremPants" } },
-        shoes: { atk: { c: 0x5a3a24, k: "boot", mh: "Boots" }, def: { c: 0x9aa4b4, k: "boot", mh: "Boots" }, agi: { c: 0x8ad0b0, k: "sneaker", wing: 1 } },
+        pants: { atk: { c: 0x6a3a24, k: "plate" }, def: { c: 0x9aa4b4, k: "plate" }, agi: { c: 0x5aa07a, k: "wrap" } },
+        shoes: { atk: { c: 0x5a3a24, k: "boot" }, def: { c: 0x9aa4b4, k: "boot" }, agi: { c: 0x8ad0b0, k: "sneaker", wing: 1 } },
       };
       const GEAR_SLOTS = ["hat", "mask", "gloves", "pants", "shoes"];
       G.heroGearInfo = () => {
@@ -10976,7 +10974,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const up = new THREE.Vector3(0, 1, 0).applyQuaternion(_bq.qc), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(_bq.qc), left = new THREE.Vector3(1, 0, 0).applyQuaternion(_bq.qc);
         // ②  IK แขนซ้าย: เป้า = ข้างแก้ม (ยอดไหล่ขวาของตัวคือมือขวาถือธนู → สายดึงกลับมาทางหน้า)
         const b0 = H.parts[0], ua = b0.getObjectByName("upperarm_l"), la = b0.getObjectByName("lowerarm_l"), hn = b0.getObjectByName("hand_l"), hr = b0.getObjectByName("hand_r"), hd = b0.getObjectByName("Head");
-        if (ua && la && hn && hr && hd) {
+        if (hn) hn.getWorldPosition(_bq.W);                              // จุดเริ่มลูกธนู = มือซ้ายตามท่าจริง
+        // 🚫 ปิดการดัดแขนซ้ายไปแก้ม (IK) — แขนที่ถูกดัดไม่ตรงกับของประดับถุงมือ/แขนเสื้อ ดูเป็นแขนเกิน · ใช้ท่าเล็งจากแอนิเมชันจริงทั้งตัว
+        if (false && ua && la && hn && hr && hd) {
           ua.getWorldPosition(_bq.S); la.getWorldPosition(_bq.E); hn.getWorldPosition(_bq.W);
           hd.getWorldPosition(_bq.T);
           const sc = char.scale.x * H.k;
