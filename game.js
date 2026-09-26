@@ -15199,8 +15199,8 @@ function CherryAdventure() {
                 bone.quaternion.copy(_bq.qp.multiply(_bq.q.multiply(_bq.qb)));
                 bone.updateMatrixWorld(true);
             };
-            const heroBowDraw = (H) => {
-                const bow = wand.children.find((x) => x.visible && x.userData && x.userData.kkFam === "bow") || wand.children.find((x) => x.visible && x.userData && x.userData.kk && /^bow/.test(x.userData.kk));
+            const heroBowDraw = (H, aim) => {
+                const bow = wand.children.find((x) => x.visible && x.userData && x.userData.kkFam === "bow") || wand.children.find((x) => x.visible && x.userData && x.userData.kk && /bow/i.test(x.userData.kk));
                 char.updateMatrixWorld(true);
                 char.getWorldQuaternion(_bq.qc);
                 const up = new THREE.Vector3(0, 1, 0).applyQuaternion(_bq.qc), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(_bq.qc), left = new THREE.Vector3(1, 0, 0).applyQuaternion(_bq.qc);
@@ -15252,7 +15252,20 @@ function CherryAdventure() {
                 wand.parent.getWorldQuaternion(_bq.qp).invert();
                 const qBowLocal = bow.quaternion.clone();
                 wand.quaternion.copy(_bq.qp).multiply(qWant).multiply(qBowLocal.invert());
+                // 🫲 ย้ายคันธนูไปอยู่ที่มือซ้าย (กลุ่มอาวุธผูกกับกระดูกมือขวา → แปลงตำแหน่งมือซ้ายเป็นพิกัดของกลุ่มนั้นทุกเฟรม)
+                if (hn) {
+                    hn.getWorldPosition(_bq.a);
+                    wand.parent.updateMatrixWorld(true);
+                    const gy = (bow.position.y || 0), off = new THREE.Vector3(0, gy, 0).applyQuaternion(wand.quaternion).multiply(wand.parent.getWorldScale(new THREE.Vector3()));
+                    wand.position.copy(wand.parent.worldToLocal(_bq.a.clone())).sub(new THREE.Vector3(0, gy, 0).applyQuaternion(wand.quaternion));
+                    void off;
+                }
                 wand.updateMatrixWorld(true);
+                if (!aim) {
+                    if (H.bowArrow)
+                        H.bowArrow.visible = false;
+                    return;
+                }
                 // ③  ลูกธนู: จากมือซ้าย (สาย) พุ่งผ่านมือขวา (คัน) ไปข้างหน้า
                 if (!H.bowArrow) {
                     const ar = new THREE.Group();
@@ -15279,7 +15292,8 @@ function CherryAdventure() {
                 }
                 const ar = H.bowArrow;
                 ar.visible = true;
-                hr.getWorldPosition(_bq.a);
+                hn.getWorldPosition(_bq.a); // คัน (มือซ้าย)
+                hr.getWorldPosition(_bq.W); // สาย (มือขวา) = โคนลูกธนู
                 const start = _bq.W.clone(), dirA = fwd.clone(), len = Math.max(0.6, _bq.a.clone().sub(start).dot(fwd) + 0.5 * char.scale.x * H.k * 0.25);
                 ar.position.copy(start);
                 ar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirA);
@@ -15978,8 +15992,8 @@ function CherryAdventure() {
                         H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
                     }
                 }
-                if (G.cls === "archer" && H.cur === "Pistol_Idle_Loop")
-                    heroBowDraw(H);
+                if (G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk)))))
+                    heroBowDraw(H, H.cur === "Pistol_Idle_Loop"); // 🏹 คันธนูอยู่มือซ้ายทุกท่า
                 else if (H.bowArrow)
                     H.bowArrow.visible = false;
                 if (H.neck && H.neckPlane) { // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
