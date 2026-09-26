@@ -35720,8 +35720,125 @@ function CherryAdventure() {
             G._roadGrp = null;
         };
         // 🏗️ ปูทางดินจากกลางแมพออกไปตามทิศของทางออกแต่ละทาง
+        // 🚪 ซุ้มทางเชื่อมด่าน — ให้เห็นชัดว่า "เดินออกไปด่านอื่นได้ตรงนี้"
+        //    ทุ่ง/ป่า = ซุ้มต้นไม้โค้ง · ทะเลทราย/หิมะ/ภูเขาไฟ/ดวงจันทร์ = ช่องร่องภูเขา · นรก = ปากถ้ำ · ถ้ำ = ปากอุโมงค์เหมือง (มีในแนวผนังแล้ว) · อื่น ๆ = ซุ้มประตูหิน
+        //    + ลูกศรเรืองแสงบนพื้น 3 อันไล่กะพริบชี้ออกไป
+        const GATE_STYLE = { meadow: "tree", amazon: "tree", desert: "pass", snow: "pass", volcano: "pass", moon: "pass", hell: "cavern", cave: "mine" };
+        const gateGeo = { rock: new THREE.DodecahedronGeometry(1, 0), box: new THREE.BoxGeometry(1, 1, 1), leaf: new THREE.IcosahedronGeometry(1, 0), ball: new THREE.SphereGeometry(1, 10, 8),
+            chev: (() => { const sh = new THREE.Shape(); sh.moveTo(-1, 0); sh.lineTo(0, 0.9); sh.lineTo(1, 0); sh.lineTo(1, 0.45); sh.lineTo(0, 1.35); sh.lineTo(-1, 0.45); sh.lineTo(-1, 0); return new THREE.ShapeGeometry(sh); })() };
+        Object.values(gateGeo).forEach((q) => { q.userData._shared = true; });
+        G._exitChev = [];
+        const exitGate = (g, dx, dz, dest) => {
+            const bid = (BIOMES[G.curBiome || 0] || BIOMES[0]).id, style = GATE_STYLE[bid] || "arch", B = BORDER[bid] || BORDER.meadow;
+            const T = FIELD_R - 0.6, gx = dx * T, gz = dz * T, G0 = new THREE.Group();
+            G0.position.set(gx, terrainAt(gx, gz), gz);
+            G0.rotation.y = Math.atan2(dx, dz); // แกน z ของกลุ่ม = ทิศออกจากแมพ · แกน x = ขวางทาง
+            const M = (c, o) => { const m = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85 }, o || {})); return m; };
+            const add = (geo, mat, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.scale.set(sx, sy == null ? sx : sy, sz == null ? sx : sz); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; G0.add(o); return o; };
+            const destCol = dest ? dest.ground : 0xe8c05a;
+            const arc = (R0, y0, tube, mat, n) => { const a = new THREE.Mesh(new THREE.TorusGeometry(R0, tube, 8, n || 24, Math.PI), mat); a.position.y = y0; a.castShadow = true; G0.add(a); return a; };
+            if (style === "tree") {
+                const nl = G._natLib || {}, trees = ["CommonTree_1", "CommonTree_2"].map((n) => nl[n]).filter(Boolean);
+                const bark = M(0x6a4a2c), vine = M(0x5a3e24), leafA = M(0x5e9a40, { flatShading: true }), leafB = M(0x7ab84e, { flatShading: true }), pink = M(0xf7a6c8, { emissive: 0x7a2a4a, emissiveIntensity: 0.25 });
+                for (const sx of [-1, 1]) {
+                    if (trees.length) {
+                        const L2 = trees[sx > 0 ? 1 % trees.length : 0], t = L2.obj.clone(), sc = 6.2 / L2.h;
+                        t.scale.setScalar(sc);
+                        t.position.set(sx * 5.0, -L2.y0 * sc, 0.3);
+                        t.rotation.set(0, sx * 0.8, sx * -0.16);
+                        G0.add(t);
+                    }
+                    else {
+                        add(gateGeo.box, bark, sx * 4.8, 2.4, 0, 0.6, 4.8, 0.6);
+                        add(gateGeo.leaf, leafA, sx * 4.8, 5.6, 0, 2.2);
+                    }
+                }
+                arc(4.2, 3.2, 0.28, vine, 22); // ซุ้มเถาไม้โค้งเหนือทาง
+                const bush = ["Bush_Common", "Bush_Common_Flowers"].map((n) => nl[n]).filter(Boolean);
+                for (let k = 0; k <= 12; k++) {
+                    const a = k / 12 * Math.PI, x = Math.cos(a) * 4.2, y = 3.2 + Math.sin(a) * 4.2;
+                    if (bush.length) {
+                        const L2 = bush[k % bush.length], b2 = L2.obj.clone(), sc = (1.35 + (k % 3) * 0.2) / L2.h;
+                        b2.scale.setScalar(sc);
+                        b2.position.set(x, y - L2.h * sc * 0.45, (k % 3 - 1) * 0.3);
+                        b2.rotation.set(0, k * 1.7, (a - Math.PI / 2) * 0.5);
+                        G0.add(b2);
+                    } // 🌿 พุ่มไม้จริงเรียงเป็นซุ้ม
+                    else
+                        add(gateGeo.leaf, k % 2 ? leafA : leafB, x, y, (k % 3 - 1) * 0.25, 0.7, null, null, k, k * 0.7, 0);
+                    if (k % 2 === 0)
+                        add(gateGeo.ball, pink, x + 0.2, y - 0.45, 0.55, 0.16);
+                }
+                for (let k = 0; k < 6; k++) {
+                    const a = (k + 0.5) / 6 * Math.PI, x = Math.cos(a) * 4.0, y = 3.0 + Math.sin(a) * 4.0;
+                    add(gateGeo.box, vine, x, y - 0.8, 0, 0.05, 1.4, 0.05);
+                    add(gateGeo.leaf, leafB, x, y - 1.6, 0, 0.22);
+                } // เถาห้อย
+            }
+            else if (style === "pass") { // ⛰️ ช่องร่องภูเขา — ผาสูงสองฝั่งบีบเป็นทางแคบ
+                const rA = M(B.a, { flatShading: true, roughness: 1 }), rB = M(B.b, { flatShading: true, roughness: 1 }), cap = M(0xf4f9ff, { flatShading: true });
+                for (const sx of [-1, 1]) {
+                    add(gateGeo.rock, rA, sx * 6.6, 4.4, 0.4, 2.6, 5.6, 3.2, 0, sx * 0.4, sx * 0.12);
+                    add(gateGeo.rock, rB, sx * 5.4, 2.0, -2.4, 1.7, 2.8, 2.0, 0, 1, -sx * 0.1);
+                    add(gateGeo.rock, rB, sx * 7.4, 6.8, 2.6, 2.4, 4.2, 2.6, 0, 2, sx * 0.2);
+                    add(gateGeo.rock, rA, sx * 5.0, 1.0, 2.4, 1.2, 1.5, 1.3, 0, 3, 0);
+                    if (bid === "snow") {
+                        add(gateGeo.rock, cap, sx * 6.6, 8.9, 0.4, 2.1, 1.3, 2.6, 0, sx * 0.4, sx * 0.12);
+                        add(gateGeo.rock, cap, sx * 7.4, 10.0, 2.6, 1.8, 1.1, 2.0, 0, 2, sx * 0.2);
+                    } // ❄️ หิมะคลุมยอดผา
+                }
+                const pole = M(0x6a4a2c), flag = M(destCol, { side: THREE.DoubleSide, emissive: destCol, emissiveIntensity: 0.25 });
+                for (const sx of [-1, 1]) {
+                    add(gateGeo.box, pole, sx * 3.9, 2.0, -1.2, 0.14, 4.0, 0.14);
+                    const f = add(gateGeo.box, flag, sx * 3.9 - sx * 0.6, 3.5, -1.2, 1.2, 0.8, 0.03);
+                    f.castShadow = false;
+                } // ธงสีของด่านปลายทาง
+            }
+            else if (style === "cavern") { // 🕳️ ปากถ้ำ — หินโค้งคร่อมทาง + โพรงมืด + คบเพลิง
+                const rA = M(B.a, { flatShading: true, roughness: 1 }), rB = M(B.b, { flatShading: true, roughness: 1 });
+                for (const sx of [-1, 1]) {
+                    add(gateGeo.rock, rA, sx * 5.6, 3.2, 0.6, 2.0, 4.2, 2.6, 0, sx, 0);
+                    add(gateGeo.rock, rB, sx * 6.8, 1.6, -1.2, 1.6, 2.2, 1.6, 0, 2, 0);
+                }
+                add(gateGeo.rock, rB, 0, 7.4, 0.6, 6.4, 1.9, 2.8, 0, 0.3, 0);
+                add(gateGeo.rock, rA, -2.2, 6.6, -0.2, 1.6, 1.4, 1.6);
+                add(gateGeo.rock, rA, 2.4, 6.7, -0.3, 1.7, 1.3, 1.5);
+                const hole = new THREE.Mesh(new THREE.PlaneGeometry(9, 7.2), new THREE.MeshBasicMaterial({ color: 0x080404 }));
+                hole.position.set(0, 3.4, 3.4);
+                hole.rotation.y = Math.PI;
+                G0.add(hole);
+                if (G.mineTorchFx)
+                    for (const sx of [-1, 1]) {
+                        const wx = gx + Math.cos(Math.atan2(dz, dx) + Math.PI / 2) * sx * 4.2, wz = gz + Math.sin(Math.atan2(dz, dx) + Math.PI / 2) * sx * 4.2;
+                        G.mineTorchFx(g, wx, wz, 3.2);
+                    }
+            }
+            else if (style === "arch") { // 🏛️ ซุ้มประตูหินโค้ง + ธงสีด่านปลายทาง + โคมไฟ
+                const st = M(0xd8d0c4), stD = M(0xa89e90), gold = M(0xe8c05a, { metalness: 0.5, roughness: 0.4 }), lamp = M(0xfff0c0, { emissive: 0xffc860, emissiveIntensity: 1.1 }), flag = M(destCol, { side: THREE.DoubleSide, emissive: destCol, emissiveIntensity: 0.2 });
+                for (const sx of [-1, 1]) {
+                    add(gateGeo.box, stD, sx * 4.6, 0.35, 0, 1.6, 0.7, 1.6);
+                    add(gateGeo.box, st, sx * 4.6, 3.2, 0, 1.1, 5.4, 1.1);
+                    add(gateGeo.box, stD, sx * 4.6, 6.0, 0, 1.4, 0.4, 1.4);
+                    add(gateGeo.ball, lamp, sx * 4.6, 6.6, 0, 0.35);
+                    const f = add(gateGeo.box, flag, sx * 4.6, 3.6, -0.6, 0.9, 3.2, 0.04);
+                    f.castShadow = false;
+                    add(gateGeo.box, gold, sx * 4.6, 5.25, -0.6, 1.0, 0.1, 0.08);
+                }
+                arc(4.6, 6.0, 0.5, st, 26);
+                add(gateGeo.box, gold, 0, 10.6, 0, 0.9, 1.1, 0.9);
+            }
+            // ✨ ลูกศรเรืองแสงบนพื้น (ทุกแบบ) — ไล่กะพริบชี้ออกไปทางซุ้ม
+            const cm = [0, 1, 2].map(() => new THREE.MeshBasicMaterial({ color: 0xffe07a, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide }));
+            [0, 1, 2].forEach((k) => { const t2 = T - 7.5 + k * 2.2, x = dx * t2, z = dz * t2; const ch = new THREE.Mesh(gateGeo.chev, cm[k]); ch.rotation.order = "YXZ"; ch.rotation.set(-Math.PI / 2, Math.atan2(dx, dz) + Math.PI, 0); ch.scale.set(1.3, 1.3, 1); ch.position.set(x, terrainAt(x, z) + 0.12, z); g.add(ch); G._exitChev.push({ m: cm[k], k }); });
+            if (style !== "mine")
+                g.add(G0);
+        };
+        G.exitChevTick = (t) => { const L = G._exitChev; if (!L || !L.length)
+            return; for (const c of L)
+            c.m.opacity = 0.18 + 0.62 * Math.max(0, Math.sin(t * 3.2 - c.k * 0.9)); };
         G.buildRoad = () => {
             roadClear();
+            G._exitChev = [];
             const info = G.roadInfo();
             const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
             if (indoor || !info.exits.length) {
@@ -35809,6 +35926,12 @@ function CherryAdventure() {
                 arrow.position.set(sp[0] + dx * 1.35, sy + 2.15, sp[1] + dz * 1.35);
                 arrow.rotation.set(dz ? (dz > 0 ? Math.PI / 2 : -Math.PI / 2) : 0, 0, dx ? (dx > 0 ? -Math.PI / 2 : Math.PI / 2) : 0);
                 g.add(arrow);
+                try {
+                    exitGate(g, dx, dz, biomeById(ex.id));
+                }
+                catch (e) {
+                    G._gateErr = String(e && e.message || e);
+                } // 🚪 ซุ้มทางออกตามธีมด่าน
                 ends.push({ dir: ex.dir, vx: dx, vz: dz, idx: ex.idx, id: ex.id, name: ex.name, emoji: ex.emoji, lvMin: ex.lvMin, side: ex.side, arrow: ex.arrow });
             });
             if (stoneRoad)
@@ -70724,6 +70847,8 @@ function CherryAdventure() {
                     // 🛣️ เดินสุดปลายถนน = ข้ามไปด่านถัดไปในสายเดียวกัน (มีหน่วงกันเด้งไป-กลับ)
                     if (G._roadCool > 0)
                         G._roadCool -= dt;
+                    if (G.exitChevTick)
+                        G.exitChevTick(t); // ✨ ลูกศรทางออกกะพริบ
                     if (G.mode === "explore" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && (G._roadEnds || []).length) {
                         const px = char.position.x, pz = char.position.z;
                         const lane = (e) => Math.abs(px * -e.vz + pz * e.vx) < ROAD_HALF; // อยู่ในความกว้างของทางไหม
