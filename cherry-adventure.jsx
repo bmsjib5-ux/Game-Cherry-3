@@ -8076,6 +8076,7 @@ export default function CherryAdventure() {
           (G.sceneryObjects || []).forEach((g) => { if (!g.userData || !NAT_SLOT[g.userData.kkSlot]) return; if (g.userData.kkNode) { g.remove(g.userData.kkNode); g.userData.kkNode = null; } G.kkForestSwap(g, true); });
           natCoverBuild();
           if ((G.curBiome || 0) === 0 && G.buildRoad) { try { G.buildRoad(); } catch (e) {} }   // 🪨 ถนนดิน → ทางหิน
+          if ((G.curBiome || 0) === 0 && G.buildBorder) { try { G.buildBorder("meadow"); } catch (e) {} }   // 🌳 ป่าขอบแมพ → ต้นไม้ชุดนี้
           return true;
         });
       return natLoading;
@@ -8155,6 +8156,42 @@ export default function CherryAdventure() {
           });
         },
       };
+    };
+    // 🌳 ป่าขอบแมพทุ่งซากุระ — InstancedMesh แบ่งเป็นเสี้ยววง (กล้องตัดเสี้ยวที่มองไม่เห็นทิ้งได้) · geometry ยืมของจริง ไม่ก๊อปข้อมูล
+    G.natBorderTrees = (grp, R, nearGap) => {
+      const ps = !!G.powerSave, pool = (ps ? ["CommonTree_3", "CommonTree_4"] : NAT_SLOT.tree).map((n) => natLib[n]).filter(Boolean);
+      if (!pool.length) return 0;
+      const rng = seedRng("meadowBorder"), SECT = 10, rows = ps ? [[R + 0.8, 1.35, 46]] : [[R, 1.2, 60], [R + 2.8, 1.55, 46]];
+      const buckets = {};                                             // "ต้น|ชมพู|เสี้ยว" → เมทริกซ์
+      const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+      let n = 0;
+      rows.forEach(([rr, big, N]) => { for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2 + (rng() - 0.5) * 0.06 + (rr > R ? 0.5 / N * Math.PI * 2 : 0);
+        if (nearGap(a)) continue;
+        const ti = Math.floor(rng() * pool.length), L2 = pool[ti], pink = rng() < 0.3;
+        const r2 = rr + (rng() - 0.5) * 0.8, x = Math.cos(a) * r2, z = Math.sin(a) * r2;
+        const sc = (NAT_FH.tree[0] + (NAT_FH.tree[1] - NAT_FH.tree[0]) * rng()) * big * 1.15 / L2.h;
+        _q.setFromAxisAngle(up, rng() * Math.PI * 2); _s.setScalar(sc); _p.set(x, terrainAt(x, z) - L2.y0 * sc, z);
+        const sec = Math.floor((((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * SECT) % SECT, key = ti + "|" + (pink ? 1 : 0) + "|" + sec;
+        (buckets[key] = buckets[key] || []).push(_m.compose(_p, _q, _s).clone()); n++;
+      } });
+      Object.keys(buckets).forEach((key) => {
+        const [ti, pink, sec] = key.split("|").map(Number), mats = buckets[key], L2 = pool[ti];
+        const a0 = (sec + 0.5) / SECT * Math.PI * 2, rMid = R + 1.3;
+        const sph = new THREE.Sphere(new THREE.Vector3(Math.cos(a0) * rMid, 3, Math.sin(a0) * rMid), rMid * Math.PI / SECT + 6);   // ครอบทั้งเสี้ยว
+        L2.obj.traverse((o) => {
+          if (!o.isMesh) return;
+          const g2 = new THREE.BufferGeometry(); g2.setIndex(o.geometry.index);
+          for (const k in o.geometry.attributes) g2.setAttribute(k, o.geometry.attributes[k]);
+          g2.boundingSphere = sph; g2.userData._shared = true;      // บัฟเฟอร์เป็นของต้นแบบ — ห้าม dispose
+          const mat = pink && natPink[o.material.uuid] ? natPink[o.material.uuid] : o.material;
+          const im = new THREE.InstancedMesh(g2, mat, mats.length), loc = o.matrixWorld.clone();
+          mats.forEach((M, k) => im.setMatrixAt(k, M.clone().multiply(loc)));
+          im.instanceMatrix.needsUpdate = true; im.castShadow = !ps; im.receiveShadow = false;
+          grp.add(im);
+        });
+      });
+      return n;
     };
     G.kkForestApply = (on) => {
       let n = 0;
@@ -19861,44 +19898,107 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const desertDecor = new THREE.Group();
     desertDecor.visible = false;
     scene.add(desertDecor);
-    const cactusMat = new THREE.MeshStandardMaterial({ color: 0x4a8a4a, roughness: 0.8 });
-    const cactusDark = new THREE.MeshStandardMaterial({ color: 0x3a7038, roughness: 0.85 });
-    const makeCactus = (x, z) => {
+    // 🌵 กระบองเพชรรุ่นใหม่ — 3 แบบ (ซากัวโรแขนงอ / ถังกลม / ใบพาย) · สันร่องจริงบนผิว + texture หนามขาว + ดอก/ผล
+    //    geometry/วัสดุสร้างครั้งเดียวใช้ร่วมทุกต้น
+    const cacTex = (() => {
+      const cv = document.createElement("canvas"); cv.width = 256; cv.height = 256; const x = cv.getContext("2d");
+      const RIB = 8, w = 256 / RIB;
+      for (let i = 0; i < RIB; i++) {                                  // แต่ละสัน: ร่องเข้ม → สันสว่าง → ร่องเข้ม
+        const gr = x.createLinearGradient(i * w, 0, (i + 1) * w, 0);
+        gr.addColorStop(0, "#9ccf7c"); gr.addColorStop(0.5, "#447f40"); gr.addColorStop(1, "#9ccf7c");   // สันตรงขอบช่อง (ตรงกับสันของ geometry)
+        x.fillStyle = gr; x.fillRect(i * w, 0, w, 256);
+      }
+      for (let i = 0; i < RIB; i++) for (let y = 6; y < 256; y += 16) {   // ตุ่มหนามบนสันทุกช่วง
+        const cx = i * w + (i ? 0 : 1.5), cy = y + ((i % 2) * 8);
+        x.fillStyle = "rgba(240,236,210,0.95)"; x.beginPath(); x.arc(cx, cy, 1.9, 0, 7); x.fill();
+        x.strokeStyle = "rgba(255,250,230,0.8)"; x.lineWidth = 0.9;
+        for (let k = 0; k < 4; k++) { const an = k * 1.57 + 0.6; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(an) * 5, cy + Math.sin(an) * 5); x.stroke(); }
+      }
+      const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 3); t.anisotropy = 4; return t;
+    })();
+    const cactusMat = new THREE.MeshStandardMaterial({ color: 0xe8f0d8, map: cacTex, roughness: 0.72 });
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x6aa84e, roughness: 0.75 });
+    const spineMat = new THREE.MeshBasicMaterial({ color: 0xf4efd2 });
+    const petalMats = [0xff7fb0, 0xffd04a, 0xff6a4a, 0xf2f0ff].map((c) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.18, roughness: 0.6 }));
+    const fruitMat = new THREE.MeshStandardMaterial({ color: 0xd8305a, roughness: 0.5 });
+    const ribR = (ang) => 1 + 0.075 * Math.cos(ang * 8);             // รัศมีตามมุม → เกิดสันร่อง 8 สัน
+    const ribLathe = (prof, segs) => {                                 // หมุนเส้นขอบรอบแกน Y แล้วดันผิวออกตามสัน
+      const g = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), segs);
+      const P = g.attributes.position;
+      for (let i = 0; i < P.count; i++) { const px = P.getX(i), pz = P.getZ(i), k = ribR(Math.atan2(pz, px)); P.setXYZ(i, px * k, P.getY(i), pz * k); }
+      g.computeVertexNormals(); return g;
+    };
+    const capsuleProf = (r, h) => { const pr = [[r * 0.92, 0], [r, h * 0.08]]; for (let k = 0; k <= 6; k++) { const t = k / 6 * Math.PI / 2; pr.push([Math.max(0.001, Math.cos(t) * r), h - r + Math.sin(t) * r]); } return pr; };
+    const cacGeo = { trunk: ribLathe(capsuleProf(0.28, 1), 24), arm: ribLathe(capsuleProf(0.16, 1), 18),
+      barrel: ribLathe([[0.34, 0], [0.44, 0.12], [0.48, 0.3], [0.44, 0.5], [0.3, 0.66], [0.1, 0.72], [0.001, 0.72]], 24),
+      elbow: new THREE.TorusGeometry(0.2, 0.15, 10, 12, Math.PI / 2),
+      pad: new THREE.SphereGeometry(0.3, 14, 10), spine: new THREE.ConeGeometry(0.012, 0.09, 3),
+      petal: new THREE.SphereGeometry(0.06, 7, 5), bud: new THREE.SphereGeometry(0.045, 7, 5), fruit: new THREE.SphereGeometry(0.055, 7, 6) };
+    [cacTex].forEach((t) => { t.userData = { _shared: true }; });
+    Object.values(cacGeo).forEach((g) => { g.userData._shared = true; });
+    [cactusMat, padMat, spineMat, fruitMat].concat(petalMats).forEach((m) => { m.userData._shared = true; });
+    const cacFlower = (par, x, y, z, s) => {                          // ดอกไม้ 5 กลีบ + เกสร
+      const f = new THREE.Group(), pm = petalMats[Math.floor(Math.random() * petalMats.length)];
+      for (let k = 0; k < 5; k++) { const pt = new THREE.Mesh(cacGeo.petal, pm), a = k / 5 * Math.PI * 2; pt.position.set(Math.cos(a) * 0.055, 0.02, Math.sin(a) * 0.055); pt.scale.set(1, 0.45, 0.7); pt.rotation.y = -a; f.add(pt); }
+      const bd = new THREE.Mesh(cacGeo.bud, petalMats[1]); bd.scale.y = 0.6; bd.position.y = 0.03; f.add(bd);
+      f.position.set(x, y, z); f.scale.setScalar(s || 1); par.add(f);
+    };
+    const makeSaguaro = (c) => {
+      const h = rnd(1.7, 2.8), body = new THREE.Mesh(cacGeo.trunk, cactusMat);
+      body.scale.set(1, h, 1); body.castShadow = true; c.add(body);
+      const arms = Math.random() < 0.25 ? 1 : Math.random() < 0.7 ? 2 : 3;
+      const baseA = Math.random() * Math.PI * 2;
+      for (let k = 0; k < arms; k++) {
+        const ang = baseA + k * (Math.PI * 2 / arms) + rnd(-0.3, 0.3), y = h * rnd(0.3, 0.55), up = rnd(0.55, 1.05);
+        const arm = new THREE.Group(); arm.rotation.y = -ang; arm.position.y = y; c.add(arm);
+        const hz = new THREE.Mesh(cacGeo.arm, cactusMat); hz.rotation.z = -Math.PI / 2; hz.scale.set(0.95, 0.5, 0.95); hz.castShadow = true; arm.add(hz);   // ท่อนนอนออกจากลำต้น
+        const el = new THREE.Mesh(cacGeo.elbow, cactusMat); el.rotation.z = -Math.PI / 2; el.position.set(0.45, 0.2, 0); arm.add(el);   // ข้อศอกโค้งหงายขึ้น
+        const st = new THREE.Mesh(cacGeo.arm, cactusMat); st.scale.set(0.95, up, 0.95); st.position.set(0.65, 0.2, 0); st.castShadow = true; arm.add(st);
+        if (Math.random() < 0.55) cacFlower(arm, 0.65, 0.2 + up, 0, 0.9);
+      }
+      const nfl = Math.random() < 0.6 ? 1 + Math.floor(Math.random() * 3) : 0;
+      for (let k = 0; k < nfl; k++) { const a = Math.random() * Math.PI * 2, r = k ? 0.15 : 0; cacFlower(c, Math.cos(a) * r, h - (k ? 0.04 : -0.01), Math.sin(a) * r, 1.1); }
+      return 0.6;
+    };
+    const makeBarrel = (c) => {
+      const n = Math.random() < 0.55 ? 1 : 2 + Math.floor(Math.random() * 2);
+      for (let k = 0; k < n; k++) {
+        const s = k ? rnd(0.45, 0.7) : rnd(0.85, 1.2), b = new THREE.Mesh(cacGeo.barrel, cactusMat);
+        const a = Math.random() * Math.PI * 2, r = k ? rnd(0.45, 0.6) : 0;
+        b.scale.set(s, s * rnd(0.9, 1.25), s); b.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); b.rotation.y = Math.random() * 3; b.castShadow = true; c.add(b);
+        const top = 0.72 * b.scale.y, fl = Math.random() < 0.8 ? 3 + Math.floor(Math.random() * 3) : 0;   // มงกุฎดอกรอบยอด
+        for (let q = 0; q < fl; q++) { const qa = q / fl * Math.PI * 2; cacFlower(c, b.position.x + Math.cos(qa) * 0.1 * s, top - 0.02, b.position.z + Math.sin(qa) * 0.1 * s, 0.75 * s + 0.2); }
+      }
+      return 0.5;
+    };
+    const makePear = (c) => {                                          // 🍐 กระบองเพชรใบพาย — ใบแบนซ้อนกันเป็นกิ่ง มีผลสีแดงที่ขอบ
+      const addPad = (par, depth) => {
+        const p = new THREE.Mesh(cacGeo.pad, padMat); p.scale.set(1, 1.25, 0.28); p.position.y = 0.3 * 1.25; p.castShadow = true; par.add(p);
+        for (let k = 0; k < 10; k++) {                                  // หนามเล็ก ๆ บนหน้าใบ
+          const a = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * 0.24, side = k % 2 ? 1 : -1;
+          const sp = new THREE.Mesh(cacGeo.spine, spineMat); sp.position.set(Math.cos(a) * rr, 0.375 + Math.sin(a) * rr * 1.25, side * 0.075 * Math.sqrt(1 - (rr / 0.3) ** 2));
+          sp.rotation.x = side * Math.PI / 2; par.add(sp);
+        }
+        if (depth >= 2) { if (Math.random() < 0.7) for (let k = 0; k < 2 + Math.floor(Math.random() * 3); k++) { const a = rnd(-1.0, 1.0), fr = new THREE.Mesh(cacGeo.fruit, fruitMat); fr.scale.y = 1.3; fr.position.set(Math.sin(a) * 0.28, 0.375 + Math.cos(a) * 0.36, 0); par.add(fr); } return; }
+        const kids = depth === 0 ? 2 : 1 + (Math.random() < 0.5 ? 1 : 0);
+        for (let k = 0; k < kids; k++) {
+          const g = new THREE.Group(), side = kids === 1 ? (Math.random() < 0.5 ? -1 : 1) : (k ? 1 : -1);
+          g.position.set(side * 0.16, 0.66, 0); g.rotation.z = -side * rnd(0.35, 0.7); g.rotation.y = rnd(-0.9, 0.9); g.scale.setScalar(rnd(0.78, 0.92));
+          par.add(g); addPad(g, depth + 1);
+        }
+      };
+      const n = Math.random() < 0.5 ? 1 : 2;
+      for (let k = 0; k < n; k++) { const g = new THREE.Group(); g.position.set(k ? rnd(-0.5, 0.5) : 0, 0, k ? rnd(0.3, 0.5) : 0); g.rotation.y = Math.random() * Math.PI * 2; g.scale.setScalar(k ? 0.8 : rnd(1.0, 1.25)); c.add(g); addPad(g, 0); }
+      return 0.55;
+    };
+    const makeCactus = (x, z, kind) => {
       if (inKeepOut(x, z)) return; // 🌀 never block the warp/pond/portal
       const c = new THREE.Group();
-      const h = rnd(1.4, 2.4);
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, h, 10), cactusMat);
-      body.position.y = h / 2; body.castShadow = true; c.add(body);
-      // ridges
-      for (let k = 0; k < 6; k++) {
-        const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.02, h * 0.9, 0.04), cactusDark);
-        const a = (k / 6) * Math.PI * 2;
-        ridge.position.set(Math.cos(a) * 0.23, h / 2, Math.sin(a) * 0.23);
-        c.add(ridge);
-      }
-      // 1-2 arms
-      const arms = 1 + (Math.random() < 0.6 ? 1 : 0);
-      for (let k = 0; k < arms; k++) {
-        const side = k === 0 ? 1 : -1;
-        const armH = rnd(0.5, 0.9);
-        const elbow = h * rnd(0.4, 0.6);
-        const horiz = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.4, 8), cactusMat);
-        horiz.rotation.z = Math.PI / 2; horiz.position.set(side * 0.3, elbow, 0); c.add(horiz);
-        const up = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, armH, 8), cactusMat);
-        up.position.set(side * 0.48, elbow + armH / 2, 0); up.castShadow = true; c.add(up);
-        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), cactusMat);
-        cap.position.set(side * 0.48, elbow + armH, 0); c.add(cap);
-        // pink flower on top sometimes
-        if (Math.random() < 0.4) {
-          const fl = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf5a0c0, emissive: 0x7a3a5a, emissiveIntensity: 0.2 }));
-          fl.position.set(side * 0.48, elbow + armH + 0.08, 0); fl.scale.y = 0.6; c.add(fl);
-        }
-      }
-      const topCap = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), cactusMat);
-      topCap.position.y = h; topCap.scale.y = 0.7; c.add(topCap);
+      const r = kind != null ? kind : Math.random(), rad = r < 0.5 ? makeSaguaro(c) : r < 0.75 ? makeBarrel(c) : makePear(c);
+      c.rotation.y = Math.random() * Math.PI * 2;
       c.position.set(x, 0, z);
       desertDecor.add(c);
-      return { x, z };
+      return { x, z, r: rad };
     };
     // scatter cacti + small rocks
     const desertColliders = [];
@@ -19906,7 +20006,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const a = Math.random() * Math.PI * 2, r = 2.5 + Math.random() * (FIELD_R - 3);
       const cx = Math.cos(a) * r, cz = Math.sin(a) * r;
       if (nearWarpG(cx, cz)) continue; // 🌀 keep the warp clear
-      makeCactus(cx, cz); desertColliders.push({ x: cx, z: cz, r: 0.5 });
+      const cc = makeCactus(cx, cz); if (cc) desertColliders.push({ x: cx, z: cz, r: cc.r });
+    }
+    for (let i = 0; i < 10; i++) {   // 🌵 ถังกลม/ใบพายเล็ก ๆ ประดับริมขอบ (ไม่กันทาง)
+      const a = Math.random() * Math.PI * 2, r = FIELD_R - 2.2 - Math.random() * 2.5, cx = Math.cos(a) * r, cz = Math.sin(a) * r;
+      if (nearWarpG(cx, cz) || Math.abs(cx) < 3 || Math.abs(cz) < 3) continue;   // เว้นปากทางถนน 4 ทิศ
+      if (Object.values(G.GATE_POS || {}).some((q) => Math.hypot(cx - q.x, cz - q.z) < 5)) continue;   // ไม่วางหน้าประตูเมือง/บ้าน/ฟาร์ม
+      const cc = makeCactus(cx, cz, 0.5 + Math.random() * 0.5); if (cc) cc.r = 0;
     }
     // 🏔️ big sand dunes / mountains around the horizon
     const duneMat = new THREE.MeshStandardMaterial({ color: 0xd9b877, roughness: 1, flatShading: true });
@@ -21550,7 +21656,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const matC = B.c != null ? new THREE.MeshLambertMaterial({ color: B.c, flatShading: true }) : matB;
       const put = (m, x, z, extraY) => { m.position.set(x, (extraY || 0) + terrainAt(x, z), z); borderGrp.add(m); };
 
-      if (B.kind === "forest") {          // 🌲 ป่าทึบสองแถว
+      if (B.kind === "forest" && bid === "meadow") {   // 🌳 ทุ่งซากุระ: ป่าขอบแมพใช้ต้นไม้ Stylized Nature (ต้นทรงกลมแบบเดิมเอาออกแล้ว)
+        if (G.natBorderTrees) G.natBorderTrees(borderGrp, R, nearGap);   // ยังโหลดไม่เสร็จ = ว่างไว้ก่อน แล้ว natLoad จะสร้างใหม่ให้
+      } else if (B.kind === "forest") {          // 🌲 ป่าทึบสองแถว
         const N = 62;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2 + 0.03;
