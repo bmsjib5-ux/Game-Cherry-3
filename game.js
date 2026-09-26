@@ -30,7 +30,7 @@ const FLOATY = { mekha: true, phi: true, paksi: true, wayu: true, taara: true };
 const BIOMES = [
     { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0x55a038, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam", "goblin2d"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 }, // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
     { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming", "caveman2d"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
-    { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xe4ecf5, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara", "viking2d"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
+    { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xf0f5fb, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara", "viking2d"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
     { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda", "viking2d"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
     { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 250, lvMax: 350, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
     { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
@@ -120,7 +120,7 @@ const TERRAIN = {
             { t: "ridge", x: -4, z: 27, a: 0.35, len: 16, w: 7, h: 4.5 }
         ], rim: { r0: 40, w: 15, h: 13, jag: 0.3, k: 5 } },
     // ❄️ ทุ่งหิมะเยือก — เทือกเขาหิมะสูงชัน + แอ่งหุบเขา
-    snow: { lo: 0xb6cce2, hi: 0xffffff, rock: 0x8794a8, hN: 10, rockK: 0.5, f: [
+    snow: { lo: 0xdbe7f3, hi: 0xffffff, rock: 0xb4c2d4, hN: 10, rockK: 0.35, f: [
             { t: "ridge", x: -6, z: -30, a: 0.15, len: 32, w: 13, h: 14 },
             { t: "ridge", x: 22, z: 18, a: 1.05, len: 20, w: 9, h: 9 },
             { t: "hill", x: -24, z: 20, r: 13, h: -2.6 },
@@ -223,7 +223,7 @@ const AMBIENT = {
 const DETAIL = {
     meadow: { g: 2300, gc: [0x74a047, 0x8cb857, 0xa6cd6c, 0xd8e07a], gs: 1.0, r: 220, rc: 0x8e9484 },
     desert: { g: 260, gc: [0x9aa060, 0xb0b070], gs: 0.85, r: 420, rc: 0xb08c5c },
-    snow: { g: 220, gc: [0xcfe0ea, 0xeef6ff], gs: 0.8, r: 300, rc: 0x9aa8b8 },
+    snow: { g: 160, gc: [0xe4eef6, 0xf6faff], gs: 0.8, r: 70, rc: 0xb8c6d4 }, // ❄️ พื้นหิมะเรียบ — กรวดน้อยลง สีอ่อน
     cave: { g: 620, gc: [0x4e7a48, 0x6a9a5a, 0x8ad07a], gs: 0.9, r: 480, rc: 0x55604f },
     volcano: { g: 120, gc: [0x6a4030, 0x8a5038], gs: 0.7, r: 520, rc: 0x3a221a },
     sky: { g: 900, gc: [0x8ec8a0, 0xbfe8c8, 0xe6f6ee], gs: 0.95, r: 140, rc: 0x9aa8c0 },
@@ -4076,6 +4076,54 @@ function CherryAdventure() {
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
+        // ❄️ ลายหิมะ — ผิวนุ่มขาว มีร่องลมพัดสีฟ้าจาง ๆ + เกล็ดประกาย (ใช้แทนลายดินเมื่ออยู่ทุ่งหิมะ)
+        const snowGroundTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 256;
+            const c2 = cv.getContext("2d");
+            c2.fillStyle = "#ffffff";
+            c2.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 70; i++) { // เนินหิมะนุ่ม ๆ (เงาฟ้าอ่อน)
+                const x = Math.random() * 256, y = Math.random() * 256, r = 14 + Math.random() * 40;
+                for (const [ox, oy] of [[0, 0], [256, 0], [-256, 0], [0, 256], [0, -256]]) {
+                    const g = c2.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
+                    g.addColorStop(0, "rgba(170,195,225,0.16)");
+                    g.addColorStop(1, "rgba(170,195,225,0)");
+                    c2.fillStyle = g;
+                    c2.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
+                }
+            }
+            c2.strokeStyle = "rgba(150,180,215,0.14)";
+            c2.lineCap = "round"; // ร่องลมพัด
+            for (let i = 0; i < 18; i++) {
+                c2.lineWidth = 2 + Math.random() * 4;
+                const x0 = Math.random() * 256, y0 = Math.random() * 256;
+                c2.beginPath();
+                c2.moveTo(x0, y0);
+                c2.bezierCurveTo(x0 + 30, y0 + 8, x0 + 60, y0 - 10, x0 + 95, y0 + 4);
+                c2.stroke();
+            }
+            for (let i = 0; i < 900; i++) {
+                c2.fillStyle = Math.random() < 0.7 ? "rgba(255,255,255,0.95)" : "rgba(190,215,240,0.5)";
+                const sz = Math.random() < 0.9 ? 1 : 2;
+                c2.fillRect(Math.random() * 256, Math.random() * 256, sz, sz);
+            }
+            const tx = new THREE.CanvasTexture(cv);
+            tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+            tx.anisotropy = 4;
+            tx.encoding = THREE.sRGBEncoding;
+            return tx;
+        })();
+        G._groundSkin = (snowy) => {
+            const m = ground.material, want = snowy ? snowGroundTex : groundTex;
+            if (m.map === want)
+                return;
+            m.map = want;
+            m.bumpMap = want;
+            m.bumpScale = snowy ? 0.05 : 0.16;
+            m.emissive.setHex(snowy ? 0x2a3440 : 0x000000); // หิมะสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
+            m.needsUpdate = true;
+        };
         G._ground = ground;
         // ---------- 🌿 กอหญ้า + ก้อนกรวด กระจายเต็มสนาม (วาดชุดละครั้งเดียวด้วย InstancedMesh) ----------
         const mergeGeos = (list) => {
@@ -11012,9 +11060,28 @@ function CherryAdventure() {
         const NAT_COVER = [["Grass_Common_Short", 170, [0.35, 0.55], 1], ["Grass_Common_Tall", 90, [0.55, 0.85], 1], ["Grass_Wispy_Short", 80, [0.4, 0.6], 1],
             ["Flower_3_Group", 45, [0.4, 0.6], 1], ["Flower_4_Group", 45, [0.4, 0.6], 1], ["Fern_1", 40, [0.55, 0.8], 0], ["Clover_1", 40, [0.15, 0.25], 1],
             ["Mushroom_Common", 22, [0.25, 0.4], 0], ["RockPath_Round_Small_1", 0, [0.1, 0.1], 0], ["RockPath_Round_Small_2", 0, [0.1, 0.1], 0], ["RockPath_Round_Small_3", 0, [0.1, 0.1], 0], ["Rock_Medium_1", 14, [0.5, 0.9], 0], ["Rock_Medium_2", 14, [0.45, 0.8], 0], ["Pebble_Round_1", 28, [0.12, 0.2], 1], ["Pebble_Round_3", 28, [0.12, 0.2], 1]];
-        const natLib = {}, natPink = {};
+        const natLib = {}, natPink = {}, natSnowy = {};
         let natLoading = null;
         G._natLib = natLib;
+        const NAT_PINES = ["Pine_1", "Pine_2", "Pine_3", "Pine_5", "Pine_4"]; // 🌲 ต้นสน (ทุ่งหิมะ) — 2 ตัวท้ายเบาสุด ใช้ในโหมดประหยัด
+        const natPineSwap = (q) => {
+            const g = q.g;
+            if (!g || g.userData.natPine)
+                return;
+            const names = G.powerSave ? NAT_PINES.slice(-2) : NAT_PINES, L2 = natLib[names[Math.floor(q.seed * names.length) % names.length]];
+            if (!L2)
+                return;
+            const node = L2.obj.clone(), H = 4.2 + ((q.seed * 7.7) % 1) * 2.4;
+            node.scale.setScalar(H / L2.h / (g.scale.x || 1));
+            node.position.y = -L2.y0 * node.scale.y;
+            node.rotation.y = q.seed * 6.28;
+            if (q.seed < 0.55)
+                node.traverse((o) => { if (o.isMesh && natSnowy[o.material.uuid])
+                    o.material = natSnowy[o.material.uuid]; });
+            g.children.forEach((c) => { c.visible = false; });
+            g.add(node);
+            g.userData.natPine = true;
+        };
         const natPrep = (name, gl) => {
             gl.scene.traverse((o) => {
                 if (!o.isMesh)
@@ -11086,7 +11153,7 @@ function CherryAdventure() {
             if (natLoading || !THREE.GLTFLoader)
                 return natLoading;
             const L = new THREE.GLTFLoader();
-            const names = [].concat(NAT_SLOT.tree, NAT_SLOT.bush, NAT_COVER.map((c) => c[0]));
+            const names = [].concat(NAT_SLOT.tree, NAT_SLOT.bush, NAT_COVER.map((c) => c[0]), NAT_PINES);
             natLoading = Promise.all(names.map((n) => new Promise((res) => L.load(NAT_BASE + n + ".gltf", (gl) => { natLib[n] = natPrep(n, gl); res(true); }, undefined, () => res(false)))))
                 .then(() => {
                 // 🌸 ใบซากุระ: ย้อม texture ใบไม้เป็นชมพูด้วยตัวย้อมเดียวกับชุดตัวละคร
@@ -11110,16 +11177,39 @@ function CherryAdventure() {
                     g.remove(g.userData.kkNode);
                     g.userData.kkNode = null;
                 } G.kkForestSwap(g, true); });
+                NAT_PINES.forEach((n) => {
+                    const L2 = natLib[n];
+                    if (!L2)
+                        return;
+                    L2.obj.traverse((o) => {
+                        if (!o.isMesh || natSnowy[o.material.uuid] || !/Leaves/.test(o.material.name || ""))
+                            return; // ❄️ ใบสนหิมะเกาะ
+                        const sm = o.material.clone();
+                        if (sm.map && G.qtHueMap) {
+                            sm.map = G.qtHueMap(sm.map, "natsnow:" + o.material.name, [205, 0.1, 2.3, 0.95, 0, 0.16]);
+                            if (sm.emissiveMap)
+                                sm.emissiveMap = sm.map;
+                        } // ย้อมใบเป็นขาวอมฟ้า เก็บลายแสงเงาเดิม
+                        sm.emissiveIntensity = 0.3;
+                        sm.needsUpdate = true;
+                        sm.userData._shared = true;
+                        natSnowy[o.material.uuid] = sm;
+                    });
+                });
+                (G._pineQ || []).forEach((q) => { try {
+                    natPineSwap(q);
+                }
+                catch (e) { } }); // 🌲 สนในทุ่งหิมะ → โมเดลจริง
                 natCoverBuild();
-                if ((G.curBiome || 0) <= 1 && G.buildRoad) {
+                if ((G.curBiome || 0) <= 2 && G.buildRoad) {
                     try {
                         G.buildRoad();
                     }
                     catch (e) { }
                 } // 🪨 ถนนดิน → ทางหิน (ทุ่งซากุระ + ทะเลทราย)
-                if ((G.curBiome || 0) === 0 && G.buildBorder) {
+                if (((G.curBiome || 0) === 0 || G.curBiome === 2) && G.buildBorder) {
                     try {
-                        G.buildBorder("meadow");
+                        G.buildBorder((BIOMES[G.curBiome || 0] || BIOMES[0]).id);
                     }
                     catch (e) { }
                 } // 🌳 ป่าขอบแมพ → ต้นไม้ชุดนี้
@@ -11282,11 +11372,13 @@ function CherryAdventure() {
             };
         };
         // 🌳 ป่าขอบแมพทุ่งซากุระ — InstancedMesh แบ่งเป็นเสี้ยววง (กล้องตัดเสี้ยวที่มองไม่เห็นทิ้งได้) · geometry ยืมของจริง ไม่ก๊อปข้อมูล
-        G.natBorderTrees = (grp, R, nearGap) => {
-            const ps = !!G.powerSave, pool = (ps ? ["CommonTree_3", "CommonTree_4"] : NAT_SLOT.tree).map((n) => natLib[n]).filter(Boolean);
+        G.natBorderTrees = (grp, R, nearGap, opt) => {
+            opt = opt || {};
+            const ps = !!G.powerSave, pool = (opt.names ? (ps ? opt.names.slice(-2) : opt.names) : ps ? ["CommonTree_3", "CommonTree_4"] : NAT_SLOT.tree).map((n) => natLib[n]).filter(Boolean);
             if (!pool.length)
                 return 0;
-            const rng = seedRng("meadowBorder"), SECT = 10, rows = ps ? [[R + 0.8, 1.35, 46]] : [[R, 1.2, 60], [R + 2.8, 1.55, 46]];
+            const FH = opt.fh || NAT_FH.tree, pinkP = opt.pink != null ? opt.pink : 0.3, altMat = opt.alt || natPink;
+            const rng = seedRng(opt.seed || "meadowBorder"), SECT = 10, rows = opt.rows ? (ps ? opt.rows.slice(0, 1) : opt.rows) : ps ? [[R + 0.8, 1.35, 46]] : [[R, 1.2, 60], [R + 2.8, 1.55, 46]];
             const buckets = {}; // "ต้น|ชมพู|เสี้ยว" → เมทริกซ์
             const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
             let n = 0;
@@ -11295,9 +11387,9 @@ function CherryAdventure() {
                     const a = (i / N) * Math.PI * 2 + (rng() - 0.5) * 0.06 + (rr > R ? 0.5 / N * Math.PI * 2 : 0);
                     if (nearGap(a))
                         continue;
-                    const ti = Math.floor(rng() * pool.length), L2 = pool[ti], pink = rng() < 0.3;
+                    const ti = Math.floor(rng() * pool.length), L2 = pool[ti], pink = rng() < pinkP;
                     const r2 = rr + (rng() - 0.5) * 0.8, x = Math.cos(a) * r2, z = Math.sin(a) * r2;
-                    const sc = (NAT_FH.tree[0] + (NAT_FH.tree[1] - NAT_FH.tree[0]) * rng()) * big * 1.15 / L2.h;
+                    const sc = (FH[0] + (FH[1] - FH[0]) * rng()) * big * 1.15 / L2.h;
                     _q.setFromAxisAngle(up, rng() * Math.PI * 2);
                     _s.setScalar(sc);
                     _p.set(x, terrainAt(x, z) - L2.y0 * sc, z);
@@ -11319,7 +11411,7 @@ function CherryAdventure() {
                         g2.setAttribute(k, o.geometry.attributes[k]);
                     g2.boundingSphere = sph;
                     g2.userData._shared = true; // บัฟเฟอร์เป็นของต้นแบบ — ห้าม dispose
-                    const mat = pink && natPink[o.material.uuid] ? natPink[o.material.uuid] : o.material;
+                    const mat = pink && altMat[o.material.uuid] ? altMat[o.material.uuid] : o.material;
                     const im = new THREE.InstancedMesh(g2, mat, mats.length), loc = o.matrixWorld.clone();
                     mats.forEach((M, k) => im.setMatrixAt(k, M.clone().multiply(loc)));
                     im.instanceMatrix.needsUpdate = true;
@@ -33720,6 +33812,7 @@ function CherryAdventure() {
             p.position.set(x, 0, z);
             p.scale.setScalar(rnd(0.85, 1.3));
             snowDecor.add(p);
+            (G._pineQ = G._pineQ || []).push({ g: p, seed: Math.random() }); // 🌲 สลับเป็นต้นสน Stylized Nature เมื่อโหลดเสร็จ
             snowColliders.push({ x, z, r: 0.4 });
         };
         for (let i = 0; i < 7; i++) { // ❄️ fewer pines
@@ -33730,53 +33823,66 @@ function CherryAdventure() {
             makePine(px, pz);
         }
         // ⛄ snowman (two stacked spheres + coal + carrot nose)
+        // ⛄ ตุ๊กตาหิมะ — ตัวใหญ่ขึ้น หมวก/ถังคลุมหัว ผ้าพันคอ กระดุมถ่าน แขนกิ่งไม้ · geometry/วัสดุใช้ร่วม
+        const smGeo = { ball: new THREE.SphereGeometry(1, 18, 14), dot: new THREE.SphereGeometry(1, 6, 5), nose: new THREE.ConeGeometry(0.045, 0.26, 7),
+            scarf: new THREE.TorusGeometry(0.25, 0.065, 8, 20), tail: new THREE.BoxGeometry(0.1, 0.34, 0.035), stick: new THREE.CylinderGeometry(0.018, 0.026, 0.62, 5),
+            hatTop: new THREE.CylinderGeometry(0.17, 0.17, 0.3, 14), hatRim: new THREE.CylinderGeometry(0.29, 0.29, 0.035, 16), bucket: new THREE.CylinderGeometry(0.15, 0.19, 0.24, 12) };
+        const smMat = { snow: new THREE.MeshStandardMaterial({ color: 0xf8fbff, roughness: 0.9, emissive: 0x28323c }), coal: new THREE.MeshStandardMaterial({ color: 0x1e1e22, roughness: 0.6 }),
+            carrot: new THREE.MeshStandardMaterial({ color: 0xf07a1c, roughness: 0.6 }), hat: new THREE.MeshStandardMaterial({ color: 0x26222a, roughness: 0.5 }),
+            band: new THREE.MeshStandardMaterial({ color: 0xc8303a, roughness: 0.6 }), bucket: new THREE.MeshStandardMaterial({ color: 0x8a9aa8, metalness: 0.6, roughness: 0.4 }),
+            scarves: [0xd83a4a, 0x3a7ad8, 0x3aa85a, 0xe8a83a].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85 })) };
         const makeSnowman = (x, z) => {
-            const sm = new THREE.Group();
-            const bot = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 12), snowMat);
-            bot.position.y = 0.4;
-            bot.castShadow = true;
-            sm.add(bot);
-            const mid = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), snowMat);
-            mid.position.y = 0.95;
-            mid.castShadow = true;
-            sm.add(mid);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), snowMat);
-            head.position.y = 1.35;
-            sm.add(head);
-            const coalMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-            for (const ey of [[-0.07, 1.4], [0.07, 1.4]]) {
-                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), coalMat);
-                eye.position.set(ey[0], ey[1], 0.18);
-                sm.add(eye);
-            }
-            // carrot nose
-            const nose = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.2, 6), new THREE.MeshStandardMaterial({ color: 0xe8791a }));
+            if (inKeepOut(x, z))
+                return;
+            const sm = new THREE.Group(), M = (g, m, px, py, pz, s) => { const o = new THREE.Mesh(g, m); o.position.set(px, py, pz); if (s)
+                (typeof s === "number" ? o.scale.setScalar(s) : o.scale.set(s[0], s[1], s[2])); sm.add(o); return o; };
+            M(smGeo.ball, smMat.snow, 0, 0.42, 0, [0.46, 0.42, 0.46]).castShadow = true;
+            M(smGeo.ball, smMat.snow, 0, 1.0, 0, 0.32).castShadow = true;
+            M(smGeo.ball, smMat.snow, 0, 1.47, 0, 0.23).castShadow = true;
+            for (const ex of [-0.08, 0.08])
+                M(smGeo.dot, smMat.coal, ex, 1.53, 0.2, 0.032);
+            for (let k = 0; k < 5; k++) {
+                const a = -0.55 + k * 0.275;
+                M(smGeo.dot, smMat.coal, Math.sin(a) * 0.16, 1.4 - Math.cos(a) * 0.035 - 0.02, Math.cos(a) * 0.17 + 0.02, 0.018);
+            } // ปากยิ้มถ่าน
+            const nose = M(smGeo.nose, smMat.carrot, 0, 1.47, 0.34);
             nose.rotation.x = Math.PI / 2;
-            nose.position.set(0, 1.35, 0.24);
-            sm.add(nose);
-            // buttons
-            for (const by of [0.95, 0.85, 1.05]) {
-                const btn = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), coalMat);
-                btn.position.set(0, by, 0.26);
-                sm.add(btn);
-            }
-            // stick arms
+            for (const by of [0.88, 1.02, 1.16])
+                M(smGeo.dot, smMat.coal, 0, by, 0.31 - Math.abs(by - 1.02) * 0.4, 0.034);
+            const sMat = smMat.scarves[Math.floor(Math.random() * smMat.scarves.length)];
+            const sc = M(smGeo.scarf, sMat, 0, 1.26, 0);
+            sc.rotation.x = Math.PI / 2;
+            const tl = M(smGeo.tail, sMat, 0.12, 1.1, 0.2);
+            tl.rotation.z = 0.25;
             for (const side of [-1, 1]) {
-                const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 5), trunkMat);
-                arm.rotation.z = side * 1.0;
-                arm.position.set(side * 0.32, 0.98, 0);
-                sm.add(arm);
+                const arm = M(smGeo.stick, trunkMat, side * 0.46, 1.1, 0);
+                arm.rotation.z = side * (1.0 + Math.random() * 0.35);
             }
+            if (Math.random() < 0.6) {
+                M(smGeo.hatRim, smMat.hat, 0, 1.66, 0);
+                M(smGeo.hatTop, smMat.hat, 0, 1.82, 0);
+                M(smGeo.hatRim, smMat.band, 0, 1.71, 0, [0.62, 1.6, 0.62]);
+            } // 🎩 หมวกทรงสูง
+            else {
+                const bk = M(smGeo.bucket, smMat.bucket, 0.02, 1.72, 0);
+                bk.rotation.z = 0.18;
+            } // 🪣 ถังคว่ำ
+            const s0 = 1.35 + Math.random() * 0.5;
+            sm.scale.setScalar(s0);
             sm.position.set(x, 0, z);
+            sm.rotation.y = Math.atan2(-x, -z) + (Math.random() - 0.5) * 0.9; // หันหน้าเข้าหากลางแมพ (มีส่ายนิดหน่อย)
             snowDecor.add(sm);
-            snowColliders.push({ x, z, r: 0.45 });
+            snowColliders.push({ x, z, r: 0.5 * s0 });
         };
-        for (let i = 0; i < 4; i++) {
-            const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4);
+        for (let i = 0, n = 0; i < 30 && n < 8; i++) {
+            const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * (FIELD_R - 6);
             const mx = Math.cos(a) * r, mz = Math.sin(a) * r;
-            if (nearWarpG(mx, mz))
-                continue; // 🌀 keep the warp clear
+            if (nearWarpG(mx, mz) || Math.abs(mx) < 2.5 || Math.abs(mz) < 2.5)
+                continue; // 🌀 keep the warp + roads clear
+            if (snowColliders.some((c) => Math.hypot(c.x - mx, c.z - mz) < 3))
+                continue;
             makeSnowman(mx, mz);
+            n++;
         }
         // 🏔️ jagged ice mountains around the horizon
         for (let i = 0; i < 9; i++) {
@@ -35275,6 +35381,8 @@ function CherryAdventure() {
         G.updateWarpLabels();
         // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
         G.rebuildTerrain = (b) => {
+            if (G._groundSkin)
+                G._groundSkin(b.id === "snow");
             TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
             TERR_FLATTEN = !!G._terrFlatMode;
             TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }]); // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
@@ -35375,7 +35483,7 @@ function CherryAdventure() {
             const pebM = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
             const ends = [];
             // 🪨 ทุ่งซากุระ: ถนนดินเปลี่ยนเป็นทางเดินแผ่นหิน (ชุดเดียวกับทางไปประตูเมือง) — ใช้เมื่อชุดธรรมชาติโหลดแล้ว
-            const cb = G.curBiome || 0, stoneRoad = (cb === 0 || cb === 1) && G.natStoneRoad ? G.natStoneRoad(cb === 1 ? 0xe6c79a : null) : null; // 🏜️ ด่าน 2 ทะเลทราย: หินทรายโทนอุ่น
+            const cb = G.curBiome || 0, stoneRoad = cb <= 2 && G.natStoneRoad ? G.natStoneRoad(cb === 1 ? 0xe6c79a : cb === 2 ? 0xc4d2e0 : null) : null; // ❄️ ด่าน 3 ทุ่งหิมะ: หินเทาอมฟ้า   // 🏜️ ด่าน 2 ทะเลทราย: หินทรายโทนอุ่น
             info.exits.forEach((ex) => {
                 const dx = ex.vec[0], dz = ex.vec[1];
                 const px = -dz, pz = dx; // แกนขวางทาง
@@ -35996,6 +36104,8 @@ function CherryAdventure() {
                 }
             }
             else { // ⛰️ เหว/หน้าผา — แผ่นหินสูงเอียงสลับ
+                if (bid === "snow" && G.natBorderTrees) // 🌲 ทุ่งหิมะ: ป่าสนเรียงหน้าหน้าผา (ครึ่งหนึ่งใบปกคลุมหิมะ)
+                    G.natBorderTrees(borderGrp, R, nearGap, { names: NAT_PINES, fh: [5.5, 8.0], pink: 0.5, alt: natSnowy, seed: "snowBorder", rows: [[R - 0.9, 1, 54], [R + 1.4, 1.25, 40]] });
                 const N = 70;
                 for (let i = 0; i < N; i++) {
                     const a = (i / N) * Math.PI * 2;
