@@ -1,0 +1,4 @@
+MakeHuman community assets (CC0) — pants01: toigo_wool_pants, toigo_harem_pants · shoes01: culturalibre_hero_boots_1, culturalibre_heroine_boots_1
+Source: https://static.makehumancommunity.org/assets/assetpacks.html
+License: CC0 1.0 Universal https://creativecommons.org/publicdomain/zero/1.0/
+Refit to the Quaternius Universal base bodies and skinned with mh2q.py; textures downscaled to 512px JPG.

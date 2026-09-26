@@ -10161,7 +10161,7 @@ function CherryAdventure() {
             dagger: { url: "assets/kaykit/dagger.gltf", s: 0.75, gripY: 0.1, gripZ: 0 },
             staff: { url: "assets/kaykit/staff.gltf", s: 1.25, gripY: 0.65, gripZ: 0 },
             bow: { url: "assets/kaykit/bow_withString.gltf", s: 0.72, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] }, // 🏹 ย่อลงให้ได้สัดส่วนกับตัวละคร ปลายคันไม่ทิ่มพื้น
-            shield: { url: "assets/kaykit/shield_round.gltf", s: 0.8, gripY: 0.12, gripZ: 0.04, rot: [0, -Math.PI / 2, 0] },
+            shield: { url: "assets/quat/weapons/Shield_Round_2.gltf", s: 0.35, gripY: 0.0, gripZ: 0.04, rot: [0, -Math.PI / 2, 0] }, // 🛡️ Quaternius Medieval Weapons
             // ⚔️ KayKit Fantasy Weapons Bits (CC0)
             swordWood: { url: "assets/kaykit/weapons/sword_A.gltf", s: 0.88, gripY: 0.1, gripZ: 0 },
             greatsword: { url: "assets/kaykit/weapons/sword_E.gltf", s: 0.52, gripY: 0.12, gripZ: 0 },
@@ -10177,24 +10177,42 @@ function CherryAdventure() {
             fistA: { url: "assets/kaykit/weapons/fistweapon_A.gltf", s: 1.3, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] },
             fistB: { url: "assets/kaykit/weapons/fistweapon_B.gltf", s: 1.15, gripY: 0, gripZ: 0, rot: [Math.PI / 2, 0, 0] },
             // 🦸 อาวุธประจำตัวฮีโร่ — ขวานอสูร · ค้อนพายุ · กระบองยักษ์
-            axeHero: { url: "assets/kaykit/weapons/axe_B.gltf", s: 0.95, gripY: 0.12, gripZ: 0.15 },
-            hammerHero: { url: "assets/kaykit/weapons/hammer_A.gltf", s: 0.82, gripY: 0.14, gripZ: 0.15 },
-            maceHero: { url: "assets/kaykit/weapons/hammer_B.gltf", s: 0.95, gripY: 0.12, gripZ: 0.15 },
+            axeHero: { url: "assets/quat/weapons/Axe.gltf", s: 0.30, gripY: 0.12, gripZ: 0 }, // ⚔️ Quaternius Medieval Weapons
+            hammerHero: { url: "assets/quat/weapons/Hammer_Small.gltf", s: 0.215, gripY: 0.14, gripZ: 0 },
+            maceHero: { url: "assets/quat/weapons/Hammer_Double.gltf", s: 0.25, gripY: 0.12, gripZ: 0 },
             // ✏️🪢 KayKit RPG Tools Bits (CC0) — ปากกาของสายออฟฟิศ · เชือกของสายเลี้ยงสัตว์
             pencilA: { url: "assets/kaykit/tools/pencil_A_long.gltf", s: 1.5, gripY: 0.1, gripZ: 0 },
             pencilB: { url: "assets/kaykit/tools/pencil_B_long.gltf", s: 1.5, gripY: 0.1, gripZ: 0 },
             rope: { url: "assets/kaykit/tools/rope_bundle_A.gltf", s: 0.75, gripY: 0, gripZ: 0, rot: [0, 0, Math.PI / 2] },
+            // ⚔️ Quaternius Medieval Weapons (CC0) — อาวุธหลักตามอาชีพ: ดาบ/มีดสั้น/หอก/ธนู/โล่ + ขวาน/ค้อนของฮีโร่ (ด้ามอยู่ใต้ y=0 ใบชี้ +y เหมือน KayKit)
+            qSword: { url: "assets/quat/weapons/Sword.gltf", s: 0.294, gripY: 0.08, gripZ: 0 },
+            qSword2: { url: "assets/quat/weapons/Sword_2.gltf", s: 0.294, gripY: 0.08, gripZ: 0 },
+            qSwordGold: { url: "assets/quat/weapons/Sword_Golden.gltf", s: 0.29, gripY: 0.08, gripZ: 0 },
+            qSwordBig: { url: "assets/quat/weapons/Sword_Big.gltf", s: 0.275, gripY: 0.1, gripZ: 0 },
+            qClaymore: { url: "assets/quat/weapons/Claymore.gltf", s: 0.27, gripY: 0.1, gripZ: 0 },
+            qDagger: { url: "assets/quat/weapons/Dagger.gltf", s: 0.42, gripY: 0.08, gripZ: 0 },
+            qDagger2: { url: "assets/quat/weapons/Dagger_2.gltf", s: 0.42, gripY: 0.08, gripZ: 0 },
+            qSpear: { url: "assets/quat/weapons/Spear.gltf", s: 0.233, gripY: 0, gripZ: 0 },
+            qBowWood: { url: "assets/quat/weapons/Bow_Wooden.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowWood2: { url: "assets/quat/weapons/Bow_Wooden2.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowGold: { url: "assets/quat/weapons/Bow_Golden.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qBowEvil: { url: "assets/quat/weapons/Bow_Evil.gltf", s: 0.30, gripY: 0, gripZ: 0, rot: [0, Math.PI, 0] },
+            qAxe: { url: "assets/quat/weapons/Axe.gltf", s: 0.30, gripY: 0.12, gripZ: 0 },
+            qAxe2: { url: "assets/quat/weapons/Axe_Double.gltf", s: 0.27, gripY: 0.12, gripZ: 0 },
+            qHammer: { url: "assets/quat/weapons/Hammer_Small.gltf", s: 0.215, gripY: 0.14, gripZ: 0 },
+            qHammer2: { url: "assets/quat/weapons/Hammer_Double.gltf", s: 0.25, gripY: 0.12, gripZ: 0 },
+            qShieldR: { url: "assets/quat/weapons/Shield_Round_2.gltf", s: 0.35, gripY: 0.0, gripZ: 0.04, rot: [0, -Math.PI / 2, 0] },
             // 🔫 Kenney Blaster Kit (CC0)
             blasterS: { url: "assets/kenney/blaster/blaster-k.glb", s: 1.5, gripY: 0.1, gripZ: 0, rot: [-Math.PI / 2, 0, 0] },
         };
         // ระดับ 0 ธรรมดา · 1 อีพิก/ซีเคร็ต · 2 ตำนาน/มังกร
         const KK_FAM = {
-            sword: ["swordWood", "sword_1handed", "sword_2handed"],
-            dagger: ["daggerA", "dagger", "daggerB"],
+            sword: ["qSword", "qSword2", "qClaymore"],
+            dagger: ["qDagger", "qDagger", "qDagger2"],
             staff: ["staffWood", "staff", "staffGem"],
-            bow: ["bowA", "bow", "bowB"],
+            bow: ["qBowWood", "qBowWood2", "qBowGold"],
             katana: ["katana", "katana", "greatsword"],
-            spear: ["spear", "halberd", "halberd"],
+            spear: ["qSpear", "qSpear", "halberd"],
             glove: ["fistA", "fistB", "fistB"],
             pen: ["pencilA", "pencilB", "pencilB"],
             whip: ["rope", "rope", "rope"],
@@ -10222,12 +10240,12 @@ function CherryAdventure() {
         // 🗡️✨ ดาบ/คาตานะ "ต่อไอเทม": KayKit เป็นต้นแบบ แล้ววาดเครื่องประดับต่างกันตามขั้น (ทั่วไป→ตำนาน) + ธาตุ + ชื่อ
         //    ทั่วไป = ไม้เปล่า · หายาก = คมเรืองธาตุ+อัญมณี 1 · มหากาพย์ = +ปีกการ์ด+อัญมณี 3 · SECRET = +วงรัศมี+รูน+เกล็ดพลัง
         //    มังกร = ดาบสองมือ+เขี้ยวตามคม+ตาแดง · ตำนาน = ดาบใหญ่+รัศมีคู่+ปีกทอง+เกล็ด 6 · ชื่อ: ซากุระ/จันทรา/เหล็กกล้า/สุริย/ฟ้าสวรรค์
-        const KKI_BASE = { sword: ["swordWood", "sword_1handed", "sword_1handed", "sword_2handed", "sword_2handed", "greatsword"],
+        const KKI_BASE = { sword: ["qSword", "qSword", "qSword2", "qSword2", "qSwordGold", "qClaymore"], // ⚔️ Quaternius: ธรรมดา→หายาก ดาบเหล็ก · SECRET ดาบทอง · ตำนาน/มังกร เคลย์มอร์แดง
             katana: ["katana", "katana", "katana", "katana", "katana", "katana"],
-            bow: ["bowA", "bowA", "bow", "bow", "bowB", "bowB"],
+            bow: ["qBowWood", "qBowWood", "qBowWood2", "qBowWood2", "qBowGold", "qBowEvil"],
             staff: ["staffWood", "staffWood", "staff", "staff", "staffGem", "staffGem"],
-            dagger: ["daggerA", "daggerA", "dagger", "dagger", "daggerB", "daggerB"],
-            spear: ["spear", "spear", "spear", "halberd", "halberd", "halberd"] };
+            dagger: ["qDagger", "qDagger", "qDagger", "qDagger2", "qDagger2", "qDagger2"],
+            spear: ["qSpear", "qSpear", "qSpear", "halberd", "halberd", "halberd"] };
         // 📏 จุดยึดเครื่องประดับต่อชิ้น (หน่วยหลังย่อ s วัดจากโมเดลจริง): top = ปลายบน · gY = แนวการ์ด/คอหัว · gW = ครึ่งกว้างการ์ด · bW/bT = กว้าง/หนาใบ
         //    bow = คันธนูอยู่ระนาบ x–y โค้งไปทาง -x ปลาย y=±tip · staff/spear = หัวอยู่บน (headY) · dagger = ดาบสั้น
         const KKI_ANCHOR = {
@@ -10235,6 +10253,10 @@ function CherryAdventure() {
             staffWood: { fam: "staff", headY: 1.05, bot: -1.2, hR: 0.1 }, staff: { fam: "staff", headY: 1.2, bot: -1.0, hR: 0.32 }, staffGem: { fam: "staff", headY: 1.15, bot: -0.9, hR: 0.3 },
             daggerA: { fam: "dagger", top: 0.7, gY: 0.1, gW: 0.16, bW: 0.12, bT: 0.04 }, dagger: { fam: "dagger", top: 0.74, gY: 0.12, gW: 0.09, bW: 0.16, bT: 0.06 }, daggerB: { fam: "dagger", top: 0.78, gY: 0.3, gW: 0.21, bW: 0.06, bT: 0.04 },
             spear: { fam: "spear", headY: 0.85, top: 1.5, bot: -0.7, hW: 0.1 }, halberd: { fam: "spear", headY: 0.35, top: 1.45, bot: -0.7, hW: 0.63 },
+            // ⚔️ Quaternius (วัดจากกล่องครอบหลังย่อ s)
+            qBowWood: { fam: "bow", tip: 0.82, limbX: -0.18 }, qBowWood2: { fam: "bow", tip: 0.82, limbX: -0.18 }, qBowGold: { fam: "bow", tip: 0.82, limbX: -0.18 }, qBowEvil: { fam: "bow", tip: 0.85, limbX: -0.18 },
+            qDagger: { fam: "dagger", top: 0.85, gY: 0.05, gW: 0.12, bW: 0.12, bT: 0.06 }, qDagger2: { fam: "dagger", top: 1.02, gY: 0.04, gW: 0.11, bW: 0.1, bT: 0.05 },
+            qSpear: { fam: "spear", headY: 1.42, top: 1.76, bot: -0.5, hW: 0.06 },
         };
         // 🏹🪄🔪🔱 ตกแต่งอาวุธตระกูลอื่นตามขั้น/ธาตุ/ชื่อ (ชุดเดียวกับดาบ แต่ยึดตามรูปทรงของแต่ละตระกูล)
         let _spearGlowTex = null;
@@ -10610,8 +10632,8 @@ function CherryAdventure() {
             const P = KK_PIECES[name] || {};
             const sc = P.s || 1;
             // 📏 ตำแหน่งจากโปรไฟล์ความกว้างของโมเดล KayKit (หน่วยหลังย่อ s): การ์ดกว้างสุดที่ y≈0.15-0.3 · ใบ 0.35→ยอด
-            const top = { swordWood: 1.3, sword_1handed: 1.27, sword_2handed: 1.47, greatsword: 1.47, katana: 1.33 }[name] || 1.3;
-            const gY = name === "sword_2handed" ? 0.3 : name === "greatsword" ? 0.22 : 0.18, gW = { sword_2handed: 0.31, greatsword: 0.23, katana: 0.1 }[name] || 0.22;
+            const top = { swordWood: 1.3, sword_1handed: 1.27, sword_2handed: 1.47, greatsword: 1.47, katana: 1.33, qSword: 1.36, qSword2: 1.33, qSwordGold: 1.55, qSwordBig: 1.67, qClaymore: 1.69 }[name] || 1.3;
+            const gY = name === "sword_2handed" ? 0.3 : name === "greatsword" ? 0.22 : /^q/.test(name) ? 0.06 : 0.18, gW = { sword_2handed: 0.31, greatsword: 0.23, katana: 0.1, qSword: 0.17, qSword2: 0.18, qSwordGold: 0.18, qSwordBig: 0.14, qClaymore: 0.13 }[name] || 0.22;
             const bW = name === "katana" ? 0.06 : name === "sword_2handed" ? 0.14 : 0.14, bT = 0.05;
             const gold = new THREE.MeshStandardMaterial({ color: t >= 6 ? 0xffd870 : t >= 5 ? 0x3a2a2a : 0xd9b45a, metalness: 0.8, roughness: 0.3, emissive: t >= 6 ? 0x7a5a10 : 0x000000, emissiveIntensity: 0.6 });
             const em = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.0 + t * 0.25, roughness: 0.3, metalness: 0.2, transparent: true, opacity: 0.9 });
@@ -14746,15 +14768,17 @@ function CherryAdventure() {
                 h1: { c: 0xe0c070, k: "straw" }, h2: { c: 0x4a2a6a, kk: "hatWitch" }, hS: { c: 0xf5c542, k: "crown" }, hD: { c: 0x3a1418, kk: "helmHorned" }, lg_hat: { c: 0xffd870, k: "crown", big: 1 },
                 m1: { c: 0xff6a9a, k: "glasses" }, m2: { c: 0xfff4ea, k: "fox" }, mD: { c: 0x3a1418, k: "demon" }, lg_msk: { c: 0xffd870, k: "sun" },
                 g1: { c: 0xfff0f4, k: "fluffy" }, g2: { c: 0xd9443a, k: "gauntlet" }, gS: { c: 0xb8e8c0, k: "gauntlet" }, gD: { c: 0x3a1418, k: "claw" }, lg_glv: { c: 0xffd870, k: "gauntlet" },
-                p1: { c: 0x4a78c0, k: "patch" }, p2: { c: 0x2a2e3a, k: "plate" }, pD: { c: 0x5a1418, k: "plate" }, lg_pnt: { c: 0xffd870, k: "plate" },
-                s1: { c: 0xff9ac0, k: "sneaker" }, s2: { c: 0xf5d24a, k: "boot" }, sD: { c: 0x5a1418, k: "boot", wing: 1 }, lg_sho: { c: 0xffe8a8, k: "boot", wing: 1 },
+                p1: { c: 0x4a78c0, k: "patch", mh: "WoolPants" }, p2: { c: 0x2a2e3a, k: "plate", mh: "WoolPants" }, pD: { c: 0x5a1418, k: "plate", mh: "HaremPants" }, lg_pnt: { c: 0xffd870, k: "plate", mh: "HaremPants" },
+                sw_pants: { c: 0xe8e0c8, k: "patch", mh: "HaremPants" },
+                s1: { c: 0xff9ac0, k: "sneaker" }, s2: { c: 0xf5d24a, k: "boot", mh: "Boots" }, sD: { c: 0x5a1418, k: "boot", wing: 1, mh: "Boots" }, lg_sho: { c: 0xffe8a8, k: "boot", wing: 1, mh: "Boots" },
+                sw_boots: { c: 0x8a5a34, k: "boot", mh: "Boots" },
             };
             const HERO_GEAR_ARCH = {
                 hat: { atk: { c: 0x8a4a2a, kk: "hatBarb" }, def: { c: 0x9aa4b4, kk: "helmKnight" }, agi: { c: 0x4aa06a, k: "feather" } },
                 mask: { atk: { c: 0xa02a2a, k: "demon" }, def: { c: 0x8a8a84, k: "stone" }, agi: { c: 0x8ad0b0, k: "veil" } },
                 gloves: { atk: { c: 0x2a2228, k: "gauntlet" }, def: { c: 0x9aa4b4, k: "gauntlet" }, agi: { c: 0xd0e8f0, k: "wrap" } },
-                pants: { atk: { c: 0x6a3a24, k: "plate" }, def: { c: 0x9aa4b4, k: "plate" }, agi: { c: 0x5aa07a, k: "wrap" } },
-                shoes: { atk: { c: 0x5a3a24, k: "boot" }, def: { c: 0x9aa4b4, k: "boot" }, agi: { c: 0x8ad0b0, k: "sneaker", wing: 1 } },
+                pants: { atk: { c: 0x6a3a24, k: "plate", mh: "WoolPants" }, def: { c: 0x9aa4b4, k: "plate", mh: "WoolPants" }, agi: { c: 0x5aa07a, k: "wrap", mh: "HaremPants" } },
+                shoes: { atk: { c: 0x5a3a24, k: "boot", mh: "Boots" }, def: { c: 0x9aa4b4, k: "boot", mh: "Boots" }, agi: { c: 0x8ad0b0, k: "sneaker", wing: 1 } },
             };
             const GEAR_SLOTS = ["hat", "mask", "gloves", "pants", "shoes"];
             G.heroGearInfo = () => {
@@ -14965,7 +14989,8 @@ function CherryAdventure() {
                         if (!th || !cf)
                             continue;
                         const sx = sd === "l" ? 1 : -1, k = PI_.D.k, M = matOf(PI_, k === "plate");
-                        if (k === "patch") {
+                        if (PI_.D.mh) { /* 👖 กางเกงจริงแทนเปลือกปั้น — เหลือแค่ของประดับ */ }
+                        else if (k === "patch") {
                             const pt = add(cf, new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.03), M), 0, 0.02, 0.22);
                         }
                         else if (k === "wrap") {
@@ -15004,6 +15029,21 @@ function CherryAdventure() {
                         if (!ft || !cf)
                             continue;
                         const sx = sd === "l" ? 1 : -1, k = SI.D.k, M = matOf(SI, k === "boot" && SI.t >= 3);
+                        if (SI.D.mh) { // 👢 บูทจริงแทนเปลือก — เหลือของประดับ (สายฟ้า/ปีก/อัญมณี)
+                            if (SI.id === "s2")
+                                for (const zz of [0.05, 0.3]) {
+                                    const bolt = add(ft, new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.14, 3), gemOf(SI, 0xffe040)), -sx * 0.2, -0.08, zz);
+                                    bolt.rotation.z = sx * 1.9;
+                                }
+                            if (SI.D.wing || SI.t >= 5)
+                                for (let q = 0; q < 3; q++) {
+                                    const w = add(cf, new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.26 - q * 0.05, 4), SI.t >= 5 && SI.id !== "lg_sho" ? fang : SI.t >= 6 ? gold : white), sx * 0.2, -0.62 - q * 0.06, -0.12 + q * 0.03);
+                                    w.rotation.set(-0.6, 0, sx * (1.2 + q * 0.2));
+                                }
+                            if (SI.t >= 2)
+                                add(ft, new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), gemOf(SI)), -sx * 0.04, -0.0, 0.42);
+                            continue;
+                        }
                         const shell = add(ft, new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), M), -sx * 0.04, -0.08, 0.2);
                         shell.scale.set(0.165, 0.13, 0.34); // 👟 ทรงรีมน ครอบรองเท้าเดิม (เท้า x 0.07..0.34 · z −0.3..0.36)
                         const sole = add(ft, new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 18), k === "sneaker" ? white : new THREE.MeshStandardMaterial({ color: 0x2a2226, roughness: 0.9 })), -sx * 0.04, -0.19, 0.2);
@@ -15149,6 +15189,17 @@ function CherryAdventure() {
                     M = Object.assign({}, M);
                     M.topknot = null;
                 } // 🎩 สวมหมวก — เก็บจุกไว้ใต้หมวก
+                // 👖👢 กางเกง/รองเท้าจากชุด MakeHuman (CC0) ที่ปรับให้เข้ากับหุ่นนี้แล้ว — ต่อท้ายรายชื่อไฟล์ (ตำแหน่ง ≥ 3 = ชิ้นสวมเพิ่ม)
+                if (M && GI) {
+                    const fem = /^Female/.test(M.files[0]), mhs = [];
+                    ["pants", "shoes"].forEach((sl) => { const I = GI[sl]; if (I && I.D && I.D.mh)
+                        mhs.push({ sl, file: "mh/" + (fem ? "Female_MH_" : "Male_MH_") + (I.D.mh === "Boots" ? (fem ? "HeroineBoots" : "HeroBoots") : I.D.mh) }); });
+                    if (mhs.length) {
+                        M = Object.assign({}, M);
+                        M.files = M.files.concat(mhs.map((x) => x.file));
+                        M.mhSlots = mhs.map((x) => x.sl);
+                    }
+                }
                 if (G._heroModel) {
                     const H0 = G._heroModel;
                     if (H0.gripHome && H0.grip) { // 🗡️ คืนอาวุธกลับข้อศอกของร่างปั้นเอง
@@ -15249,6 +15300,17 @@ function CherryAdventure() {
                                 //     เก็บค่าเป็นสีที่ "ตาเห็น" แล้วแปลงเป็น linear เอง เพราะ renderer อ่านค่าสีวัสดุเป็น linear
                                 if (pi === 2 && M.hairC)
                                     c.color.setHex(M.hairC).convertSRGBToLinear();
+                                if (pi >= 3 && M.mhSlots && GI) { // 👖👢 ชิ้น MakeHuman: ย้อมตามสีไอเทม/สีย้อมของช่องนั้น
+                                    const I = GI[M.mhSlots[pi - 3]];
+                                    if (I && c.map && G.qtHueMap) {
+                                        const hsl = {};
+                                        new THREE.Color(I.c).getHSL(hsl);
+                                        c.map = G.qtHueMap(c.map, M.files[pi] + ":" + I.c, [hsl.h * 360, Math.max(0.25, hsl.s * 0.9), 0.55 + hsl.l * 0.9, 0.97, 1, Math.max(0.2, hsl.s)]);
+                                        c.emissiveMap = c.map;
+                                    }
+                                    c.metalness = 0;
+                                    c.roughness = 0.9;
+                                }
                                 c.needsUpdate = true;
                                 seen.set(m, c);
                                 mats.push(c);
