@@ -32,7 +32,7 @@ const BIOMES = [
   { id: "meadow", name: "ทุ่งซากุระ", emoji: "🌸", lvMin: 1, lvMax: 20, ground: 0x55a038, sky: 0xf0fae2, fog: 0xf0fae2, pool: ["mochi", "baibua", "mekha", "plerng", "nam", "goblin2d"], tree: "normal", boss: "baibua", bossName: "ราชินีบุปผา 🌸", hpMul: 0.55, atkMul: 0.45 },   // 🌸 ด่านฝึกมือ — มอนเลือดน้อย ตีเบา
   { id: "desert", name: "ทะเลทรายเพลิง", emoji: "🏜️", lvMin: 50, lvMax: 100, ground: 0xe8cc8a, sky: 0xfbe8c0, fog: 0xf5dca8, pool: ["plerng", "ngu", "khiao", "saming", "caveman2d"], tree: "dead", boss: "saming", bossName: "ราชาเสือทะเลทราย 🐯" },
   { id: "snow", name: "ทุ่งหิมะเยือก", emoji: "❄️", lvMin: 100, lvMax: 150, ground: 0xf0f5fb, sky: 0xdce8f5, fog: 0xd0e0f0, pool: ["mekha", "paksi", "nam", "kirara", "viking2d"], tree: "snow", boss: "paksi", bossName: "พญาอินทรีเยือกแข็ง 🦅" },
-  { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x5a6a5a, sky: 0x2a3a3a, fog: 0x1a2a2a, pool: ["ngu", "khiao", "phi", "garuda", "viking2d"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
+  { id: "cave", name: "ถ้ำมรกต", emoji: "🕳️", lvMin: 150, lvMax: 250, ground: 0x4e463c, sky: 0x0f0c0a, fog: 0x1c1712, pool: ["ngu", "khiao", "phi", "garuda", "viking2d"], tree: "none", boss: "garuda", bossName: "อสูรครุฑเงามืด 🦁" },
   { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 250, lvMax: 350, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
   { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
   // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 450-550 · โทนดำแดงมืด กลางคืนตลอด
@@ -99,7 +99,7 @@ const TERRAIN = {
     { t: "hill", x: -24, z: 20, r: 13, h: -2.6 },
     { t: "wave", fx: 0.09, fz: 0.07, h: 0.8, p: 1.1, q: 0.3 } ], rim: { r0: 38, w: 16, h: 22, jag: 0.28, k: 7 } },
   // 🕳️ ถ้ำมรกต — พื้นถ้ำขรุขระ ชะง่อนหินยอดตัด แอ่งลึก ผนังถ้ำบีบเข้ามาใกล้
-  cave:    { lo: 0x2f3b2c, hi: 0x93a380, rock: 0x4a5548, hN: 5, rockK: 0.8, f: [
+  cave:    { lo: 0x2e2822, hi: 0x6e6254, rock: 0x3a332c, hN: 5, rockK: 0.8, f: [
     { t: "wave", fx: 0.16, fz: 0.13, h: 0.95, p: 0.4, q: 2.1 },
     { t: "mesa", x: -21, z: -19, r: 5, h: 4.5, e: 1.5 },
     { t: "mesa", x: 23, z: 12, r: 4.2, h: 3.6, e: 1.3 },
@@ -186,7 +186,7 @@ const DETAIL = {
   meadow:  { g: 2300, gc: [0x74a047, 0x8cb857, 0xa6cd6c, 0xd8e07a], gs: 1.0, r: 220, rc: 0x8e9484 },
   desert:  { g: 260,  gc: [0x9aa060, 0xb0b070], gs: 0.85, r: 420, rc: 0xb08c5c },
   snow:    { g: 160,  gc: [0xe4eef6, 0xf6faff], gs: 0.8, r: 70, rc: 0xb8c6d4 },   // ❄️ พื้นหิมะเรียบ — กรวดน้อยลง สีอ่อน
-  cave:    { g: 620,  gc: [0x4e7a48, 0x6a9a5a, 0x8ad07a], gs: 0.9, r: 480, rc: 0x55604f },
+  cave:    { g: 50,   gc: [0x4a5a40, 0x5a6a48], gs: 0.7, r: 560, rc: 0x5a5046 },   // ⛏️ พื้นเหมืองหินดินแห้ง — หญ้าแทบไม่มี กรวดเยอะ
   volcano: { g: 120,  gc: [0x6a4030, 0x8a5038], gs: 0.7, r: 520, rc: 0x3a221a },
   sky:     { g: 900,  gc: [0x8ec8a0, 0xbfe8c8, 0xe6f6ee], gs: 0.95, r: 140, rc: 0x9aa8c0 },
   hell:    { g: 260,  gc: [0x6a1420, 0x8a2028], gs: 0.75, r: 460, rc: 0x2e0c12 },
@@ -2143,7 +2143,7 @@ const BORDER = {
   meadow:  { kind: "forest", a: 0x4a7a3a, b: 0x6a9a4a, c: 0x8a6a4a },
   desert:  { kind: "cliff",  a: 0xc9a86a, b: 0xa88a52 },
   snow:    { kind: "cliff",  a: 0xd8e8f5, b: 0xa8c0d8 },
-  cave:    { kind: "wall",   a: 0x6a6e78, b: 0x4a4e58 },
+  cave:    { kind: "cave",   a: 0x4a4038, b: 0x332c26 },   // ⛏️ ผนังถ้ำหินขรุขระ + ปากอุโมงค์เหมืองโครงไม้ + คบเพลิง
   volcano: { kind: "cliff",  a: 0x5a3a32, b: 0x3a2420 },
   sky:     { kind: "fence",  a: 0xdfe8f5, b: 0xa0c8e8 },
   hell:    { kind: "wall",   a: 0x4a2028, b: 0x2a1016 },
@@ -20311,7 +20311,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       [-8, -4, 6, true], [3, -2, 5, true], [-2, 7, 6, true],
       [-9, 0, 6, false], [4, 3, 5, false], [8, -5, 4, false],
     ];
-    mazeWalls.forEach(([x, z, len, h]) => makeWall(x, z, len, h));
+    // ⛏️ เหมืองร้าง: โถงกลางเปิดโล่ง — ไม่สร้างแนวกำแพงหินเขาวงกตแล้ว (เสาหิน/ค้ำไม้/รางรถแทน · G.mineBuild)
+    void mazeWalls; void makeWall;
     // scatter glowing crystals (some along the walls, some in the open)
     for (let i = 0; i < 5; i++) { // 🕳️ fewer crystals
       const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3);
@@ -20321,9 +20322,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     }
     // 🪨 stalagmites rising from the floor + a few big ones
     for (let i = 0; i < 12; i++) {
-      const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * (FIELD_R - 4);
+      const a = Math.random() * Math.PI * 2, r = 20 + Math.random() * (FIELD_R - 22);   // หินงอกอยู่นอกวงรางรถ (โถงกลางโล่ง)
       const sx = Math.cos(a) * r, sz = Math.sin(a) * r;
-      if (nearWarp(sx, sz)) continue; // 🌀 keep the warp clear
+      if (nearWarp(sx, sz) || inKeepOut(sx, sz) || Math.abs(sx) < 3 || Math.abs(sz) < 3) continue; // 🌀 keep the warp + roads clear
       const sh = rnd(0.8, 2.2);
       const stal = new THREE.Mesh(new THREE.ConeGeometry(rnd(0.3, 0.6), sh, 6), i % 2 ? rockMat : rockDark);
       stal.position.set(sx, sh / 2, sz);
@@ -20342,6 +20343,109 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.caveDecor = caveDecor;
     G.caveLights = caveLights;
     G.caveColliders = caveColliders;
+    // ⛏️🚃 เหมืองร้าง (ด่าน 4) — โถงใหญ่กลางถ้ำ: เสาหินยักษ์ + ค้ำไม้เหมือง + รางรถวนรอบโถง (รถเข็นแร่วิ่งจริง) + ปล่องเหมืองตัน + กองแร่/ลัง/ถัง
+    //    สร้างครั้งแรกตอนเข้าถ้ำ (ต้องใช้ความสูงพื้นของถ้ำ) · ชิ้นซ้ำ ๆ (หมอนราง/ราง) วาดแบบ instanced
+    const MINE_RAIL_R = 17, MINE_SPUR_A = Math.PI * 1.36; G._mineSpurA = MINE_SPUR_A;          // วงรางรอบโถง · ทางแยกออกไปปล่องเหมืองด้านตะวันตกเฉียงเหนือ
+    let mineG = null; const mineCarts = [];
+    const mineMat = {
+      wood: new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: 0.9 }), woodD: new THREE.MeshStandardMaterial({ color: 0x4a3220, roughness: 0.95 }),
+      iron: new THREE.MeshStandardMaterial({ color: 0x55585e, metalness: 0.7, roughness: 0.45 }), rust: new THREE.MeshStandardMaterial({ color: 0x6e4a36, metalness: 0.4, roughness: 0.7 }),
+      rock: new THREE.MeshStandardMaterial({ color: 0x4a4038, roughness: 1, flatShading: true }), rockD: new THREE.MeshStandardMaterial({ color: 0x302923, roughness: 1, flatShading: true }),
+      ore: new THREE.MeshStandardMaterial({ color: 0x6a6660, roughness: 0.9, flatShading: true }), gold: new THREE.MeshStandardMaterial({ color: 0xe8b83a, emissive: 0x8a5a10, emissiveIntensity: 0.5, metalness: 0.6, roughness: 0.35, flatShading: true }),
+      gem: new THREE.MeshStandardMaterial({ color: 0x3af0a0, emissive: 0x1ac878, emissiveIntensity: 0.9, roughness: 0.2, flatShading: true }), void: new THREE.MeshBasicMaterial({ color: 0x050403 }),
+      lamp: new THREE.MeshStandardMaterial({ color: 0xffd890, emissive: 0xffb040, emissiveIntensity: 1.3 }) };
+    const mineGeo = { lump: new THREE.DodecahedronGeometry(0.2, 0), box: new THREE.BoxGeometry(1, 1, 1), cyl: new THREE.CylinderGeometry(1, 1, 1, 10), rock: new THREE.DodecahedronGeometry(1, 0),
+      wheel: new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), bucket: new THREE.CylinderGeometry(0.62, 0.46, 0.62, 4, 1, true), bottom: new THREE.BoxGeometry(0.64, 0.06, 0.64) };
+    const mBox = (par, m, x, y, z, sx, sy, sz, ry) => { const o = new THREE.Mesh(mineGeo.box, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); if (ry) o.rotation.y = ry; o.castShadow = true; par.add(o); return o; };
+    const mineOre = (par, n, rad, y0) => {                          // กองแร่: หินเทา + ทองวาว + มรกตเรืองแสง
+      for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, r = Math.sqrt(Math.random()) * rad; const m = k % 7 === 0 ? mineMat.gem : k % 3 === 0 ? mineMat.gold : mineMat.ore;
+        const o = new THREE.Mesh(mineGeo.lump, m); o.position.set(Math.cos(a) * r, y0 + (1 - r / rad) * rad * 0.55 + Math.random() * 0.08, Math.sin(a) * r); o.rotation.set(k, k * 1.3, k * 0.7); o.scale.setScalar(0.7 + Math.random() * 0.8); par.add(o); }
+    };
+    const mineCart = (full) => {                                    // รถเข็นแร่: ถังเหล็กทรงคางหมู + ขอบ + ล้อ 4 + แร่พูน
+      const c = new THREE.Group();
+      const b = new THREE.Mesh(mineGeo.bucket, mineMat.rust); b.rotation.y = Math.PI / 4; b.position.y = 0.72; b.scale.set(1.25, 1, 0.95); b.material.side = THREE.DoubleSide; b.castShadow = true; c.add(b);
+      const bt = new THREE.Mesh(mineGeo.bottom, mineMat.iron); bt.position.y = 0.42; bt.scale.set(1.25, 1, 0.95); c.add(bt);
+      mBox(c, mineMat.iron, 0, 1.04, 0.62, 1.62, 0.07, 0.07); mBox(c, mineMat.iron, 0, 1.04, -0.62, 1.62, 0.07, 0.07);
+      mBox(c, mineMat.iron, 0.8, 1.04, 0, 0.07, 0.07, 1.26); mBox(c, mineMat.iron, -0.8, 1.04, 0, 0.07, 0.07, 1.26);
+      for (const [wx, wz] of [[0.42, 0.5], [-0.42, 0.5], [0.42, -0.5], [-0.42, -0.5]]) { const w = new THREE.Mesh(mineGeo.wheel, mineMat.iron); w.rotation.x = Math.PI / 2; w.position.set(wx, 0.24, wz); c.add(w); }
+      mBox(c, mineMat.iron, 0, 0.24, 0.5, 1.0, 0.05, 0.05); mBox(c, mineMat.iron, 0, 0.24, -0.5, 1.0, 0.05, 0.05);
+      if (full) { const pile = new THREE.Group(); pile.position.y = 0.95; mineOre(pile, 16, 0.5, 0); c.add(pile); }
+      return c;
+    };
+    G.caveMineBuild = () => {
+      if (mineG) return mineG;
+      mineG = new THREE.Group(); mineG.name = "mine";
+      const ty = (x, z) => terrainAt(x, z);
+      const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(), _p = new THREE.Vector3();
+      // 🛤️ ราง: หมอนไม้ + รางเหล็กคู่ (วงรอบโถง + ทางแยกออกไปปล่องเหมือง)
+      const pts = [];                                               // [x, z, dirAngle]
+      const NL = 184;
+      for (let i = 0; i < NL; i++) { const a = i / NL * Math.PI * 2; pts.push([Math.cos(a) * MINE_RAIL_R, Math.sin(a) * MINE_RAIL_R, a + Math.PI / 2, 0]); }
+      const spur = []; for (let r = MINE_RAIL_R + 0.6; r < FIELD_R - 1.2; r += 0.6) spur.push([Math.cos(MINE_SPUR_A) * r, Math.sin(MINE_SPUR_A) * r, MINE_SPUR_A, 1]);
+      const all = pts.concat(spur), ties = [], rails = [];
+      all.forEach(([x, z, d]) => { _e.set(0, -d, 0); _q.setFromEuler(_e); _s.set(0.26, 0.1, 1.55); _p.set(x, ty(x, z) + 0.05, z); ties.push(_m.compose(_p, _q, _s).clone()); });
+      const seg = (A, B) => { for (const o of [-0.5, 0.5]) { const ax = A[0] + Math.cos(A[2] + Math.PI / 2) * o, az = A[1] + Math.sin(A[2] + Math.PI / 2) * o, bx = B[0] + Math.cos(B[2] + Math.PI / 2) * o, bz = B[1] + Math.sin(B[2] + Math.PI / 2) * o;
+        const L = Math.hypot(bx - ax, bz - az), ya = ty(ax, az) + 0.16, yb = ty(bx, bz) + 0.16; _e.set(0, -Math.atan2(bz - az, bx - ax), Math.atan2(yb - ya, L), "YZX"); _q.setFromEuler(_e); _s.set(L + 0.02, 0.09, 0.08); _p.set((ax + bx) / 2, (ya + yb) / 2, (az + bz) / 2); rails.push(_m.compose(_p, _q, _s).clone()); } };
+      for (let i = 0; i < NL; i++) seg(pts[i], pts[(i + 1) % NL]);
+      for (let i = 0; i + 1 < spur.length; i++) seg(spur[i], spur[i + 1]);
+      [[ties, mineMat.woodD], [rails, mineMat.iron]].forEach(([arr, m]) => { const im = new THREE.InstancedMesh(mineGeo.box, m, arr.length); arr.forEach((M, i) => im.setMatrixAt(i, M)); im.instanceMatrix.needsUpdate = true; im.receiveShadow = true; im.frustumCulled = false; mineG.add(im); });
+      // 🚃 รถเข็นแร่วิ่งวนบนราง 2 คัน + คันจอดท้ายทางแยก + คันคว่ำทิ้งร้าง
+      for (let k = 0; k < 2; k++) { const c = mineCart(true); c.userData.u = k * Math.PI; mineG.add(c); mineCarts.push(c); }
+      { const e = spur[spur.length - 3] || spur[0]; const c = mineCart(true); c.position.set(e[0], ty(e[0], e[1]), e[1]); c.rotation.y = -e[2]; mineG.add(c); caveColliders.push({ x: e[0], z: e[1], r: 0.9 }); }
+      { const a = MINE_SPUR_A + 0.35, r = MINE_RAIL_R + 3.2, x = Math.cos(a) * r, z = Math.sin(a) * r; const c = mineCart(false); c.position.set(x, ty(x, z) + 0.55, z); c.rotation.set(0.3, 1.1, 1.75); mineG.add(c);
+        const pile = new THREE.Group(); pile.position.set(x + 0.9, ty(x, z), z + 0.4); mineOre(pile, 22, 0.9, 0); mineG.add(pile); caveColliders.push({ x, z, r: 1.0 }); }
+      // 🗿 เสาหินยักษ์ค้ำเพดานโถง (หินงอก+หินย้อยต่อกันเป็นเสา)
+      [[0.38, 11], [1.95, 11.5], [3.55, 11], [5.1, 11.5]].forEach(([a, r]) => {
+        const x = Math.cos(a) * r, z = Math.sin(a) * r; if (inKeepOut(x, z) || Math.hypot(x - 6.5, z - 6.5) < 3) return;
+        const g = new THREE.Group(); g.position.set(x, ty(x, z), z);
+        const parts = [[0, 1.4, 1.5, 2.2], [0, 4.2, 1.05, 2.6], [0, 7.0, 0.8, 2.2], [0, 9.6, 1.0, 2.4], [0, 12.2, 1.45, 2.6]];
+        parts.forEach(([ox, y, w, h], i) => { const o = new THREE.Mesh(mineGeo.rock, i % 2 ? mineMat.rockD : mineMat.rock); o.position.set(ox + (Math.random() - 0.5) * 0.3, y, (Math.random() - 0.5) * 0.3); o.scale.set(w, h, w * (0.85 + Math.random() * 0.3)); o.rotation.y = Math.random() * 3; o.castShadow = i < 2; g.add(o); });
+        for (let k = 0; k < 4; k++) { const o = new THREE.Mesh(mineGeo.rock, mineMat.rockD); const aa = k * 1.6; o.position.set(Math.cos(aa) * 1.6, 0.3, Math.sin(aa) * 1.6); o.scale.set(0.6, 0.45, 0.5); g.add(o); }
+        mineG.add(g); caveColliders.push({ x, z, r: 1.6 });
+      });
+      // 🪵 ค้ำไม้เหมือง (เสาคู่ + คานบน + ตะเกียงแขวน) คร่อมรางเป็นช่วง ๆ
+      for (let k = 0; k < 8; k++) {
+        const a = k / 8 * Math.PI * 2 + Math.PI / 8; if (Math.abs(((a - MINE_SPUR_A) + 9.42) % 6.28 - 3.14) < 0.25) continue;
+        const g = new THREE.Group(), x = Math.cos(a) * MINE_RAIL_R, z = Math.sin(a) * MINE_RAIL_R; g.position.set(x, ty(x, z), z); g.rotation.y = -a;
+        for (const o of [-1.45, 1.45]) { mBox(g, mineMat.wood, o, 1.9, 0, 0.3, 3.8, 0.3); mBox(g, mineMat.woodD, o * 0.72, 3.25, 0, 0.12, 0.9, 0.14, 0).rotation.z = o > 0 ? -0.7 : 0.7; }
+        mBox(g, mineMat.wood, 0, 3.9, 0, 3.5, 0.34, 0.36);
+        const lp = new THREE.Mesh(mineGeo.box, mineMat.lamp); lp.position.set(0, 3.45, 0); lp.scale.set(0.2, 0.28, 0.2); g.add(lp); mBox(g, mineMat.iron, 0, 3.66, 0, 0.03, 0.18, 0.03);
+        mineG.add(g); for (const o of [-1.45, 1.45]) caveColliders.push({ x: x + Math.cos(a) * o, z: z + Math.sin(a) * o, r: 0.3 });
+      }
+      // ⛏️ ปล่องเหมืองตันท้ายทางแยก — โครงไม้ + โพรงมืด + ป้ายเตือน + กองหินถล่ม
+      { const r = FIELD_R - 0.6, x = Math.cos(MINE_SPUR_A) * r, z = Math.sin(MINE_SPUR_A) * r, g = new THREE.Group(); g.position.set(x, ty(x, z), z); g.rotation.y = -MINE_SPUR_A - Math.PI / 2;
+        const hole = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.6), mineMat.void); hole.position.set(0, 1.8, -0.4); g.add(hole);
+        for (const o of [-1.8, 1.8]) mBox(g, mineMat.wood, o, 1.95, 0, 0.36, 3.9, 0.36); mBox(g, mineMat.wood, 0, 3.95, 0, 4.2, 0.4, 0.42); mBox(g, mineMat.woodD, 0, 3.4, 0.05, 3.3, 0.14, 0.2);
+        for (let k = 0; k < 7; k++) { const o = new THREE.Mesh(mineGeo.rock, k % 2 ? mineMat.rock : mineMat.rockD); o.position.set((Math.random() - 0.5) * 3, 0.3 + Math.random() * 0.5, -0.1 + Math.random() * 0.5); o.scale.setScalar(0.35 + Math.random() * 0.4); g.add(o); }
+        for (let k = 0; k < 9; k++) { const o = new THREE.Mesh(mineGeo.rock, k % 2 ? mineMat.rock : mineMat.rockD); const sd = k % 2 ? 1 : -1; o.position.set(sd * (2.6 + Math.random() * 1.6), 0.8 + Math.random() * 4, -0.6 - Math.random()); o.scale.set(1.2 + Math.random(), 1.4 + Math.random() * 1.2, 1); g.add(o); }
+        const sign = mBox(g, mineMat.woodD, 1.2, 2.6, 0.25, 1.0, 0.5, 0.05); sign.rotation.z = -0.25;
+        mineG.add(g); }
+      // 📦 ลังไม้ ถังไม้ พลั่วอีเต้อทิ้งไว้ + กองแร่ ข้างราง
+      const clutter = [[0.9, 20.2], [2.6, 20.0], [4.3, 20.4], [5.8, 19.8]];
+      clutter.forEach(([a, r], ci) => {
+        const x = Math.cos(a) * r, z = Math.sin(a) * r; if (inKeepOut(x, z) || Math.abs(x) < 2.6 || Math.abs(z) < 2.6) return;
+        const g = new THREE.Group(); g.position.set(x, ty(x, z), z); g.rotation.y = Math.random() * 6;
+        mBox(g, mineMat.wood, 0, 0.45, 0, 0.9, 0.9, 0.9); mBox(g, mineMat.woodD, 0.1, 1.2, 0.05, 0.62, 0.6, 0.62, 0.4);
+        const br = new THREE.Mesh(mineGeo.cyl, mineMat.woodD); br.scale.set(0.38, 0.95, 0.38); br.position.set(1.05, 0.48, 0.2); g.add(br);
+        const hd = new THREE.Mesh(mineGeo.box, mineMat.iron); const hs = new THREE.Mesh(mineGeo.cyl, mineMat.wood); hs.scale.set(0.045, 1.3, 0.045); hs.position.set(-0.8, 0.62, 0.3); hs.rotation.z = 0.35; g.add(hs); hd.scale.set(0.7, 0.08, 0.1); hd.position.set(-1.02, 1.22, 0.3); hd.rotation.z = 0.35; g.add(hd);
+        const pile = new THREE.Group(); pile.position.set(-0.4, 0, -1.1); mineOre(pile, 14, 0.7, 0); g.add(pile);
+        mineG.add(g); caveColliders.push({ x, z, r: 1.1 });
+      });
+      mineG.userData._y0 = -terrainAt(0, 0);                        // ตัวจัดของให้แนบพื้นขยับกลุ่มตามความสูงกลางแมพ — หักล้างไว้ (ชิ้นในกลุ่มวางตามพื้นจริงแล้ว)
+      mineG.position.y = 0;
+      caveDecor.add(mineG);
+      return mineG;
+    };
+    G.caveMineTick = (dt, t) => {   // (ชื่อ G.mineTick ใช้กับระบบขุดแร่อยู่แล้ว)
+      if (!caveDecor.visible || TERR_CUR !== TERRAIN.cave) return;   // ต้องใช้พื้นของถ้ำจริง (ความสูงราง)
+      if (!mineG) { try { G.caveMineBuild(); } catch (e) { G._mineErr = String(e && e.stack || e); mineG = new THREE.Group(); } }
+      for (const c of mineCarts) {                                 // 🚃 รถแร่วิ่งวนช้า ๆ บนราง (โยกนิด ๆ ตามรอยต่อราง)
+        c.userData.u = (c.userData.u + dt * 0.085) % (Math.PI * 2);
+        const u = c.userData.u, x = Math.cos(u) * MINE_RAIL_R, z = Math.sin(u) * MINE_RAIL_R;
+        c.position.set(x, terrainAt(x, z) + 0.17 + Math.abs(Math.sin(t * 9 + u * 40)) * 0.02, z);
+        c.rotation.set(0, -u - Math.PI / 2, Math.sin(t * 5 + u * 20) * 0.02);
+      }
+    };
 
     // 🌋 VOLCANO DECOR — one huge erupting volcano, lava flows, cracked ground, volcanic rocks
     const volcanoDecor = new THREE.Group();
@@ -21823,6 +21927,47 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const a2 = a + Math.PI / N;
             put(rail, Math.cos(a2) * R, Math.sin(a2) * R, hy);
           }
+        }
+      } else if (B.kind === "cave") {     // ⛏️ ผนังถ้ำเหมืองร้าง — ก้อนหินยักษ์สูงเอนเข้าหาโถง + หินย้อย + ปากอุโมงค์โครงไม้ตรงทางออก + คบเพลิงติดผนัง
+        const rockG = new THREE.DodecahedronGeometry(1, 0), boxG = new THREE.BoxGeometry(1, 1, 1), coneG = new THREE.ConeGeometry(1, 1, 6);
+        const wood = new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: 0.9 }), iron = new THREE.MeshStandardMaterial({ color: 0x3a3a40, metalness: 0.6, roughness: 0.5 });
+        const voidM = new THREE.MeshBasicMaterial({ color: 0x050403 });
+        const spurA = G._mineSpurA, nearSpur = (a) => spurA != null && Math.abs(((a - spurA) + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.09;
+        const N = 84;
+        for (let i = 0; i < N; i++) {
+          const a = (i / N) * Math.PI * 2 + (Math.random() - 0.5) * 0.02;
+          if (nearGap(a) || nearSpur(a)) continue;
+          for (const [rr, hh] of [[R + 0.9, 1], [R + 3.4, 1.5]]) {
+            const h = (7 + Math.random() * 7) * hh, w = 2.2 + Math.random() * 1.6;
+            const x = Math.cos(a) * (rr + Math.random() * 0.6), z = Math.sin(a) * (rr + Math.random() * 0.6);
+            const o = new THREE.Mesh(rockG, Math.random() < 0.5 ? matA : matB); o.scale.set(w, h * 0.6, w * 0.8);
+            o.rotation.set(0, -a, 0); o.rotateZ(0.12 + Math.random() * 0.1); o.rotateY(Math.random() * 3);   // เอนเข้าหาโถงกลางเล็กน้อย
+            put(o, x, z, h * 0.45 - 0.8);
+          }
+          if (i % 3 === 0) {                                          // หินย้อยห้อยจากผนังด้านบน
+            const x = Math.cos(a) * (R - 1.6), z = Math.sin(a) * (R - 1.6), L = 1.4 + Math.random() * 2.4;
+            const st = new THREE.Mesh(coneG, matB); st.scale.set(0.45, L, 0.45); st.rotation.x = Math.PI; put(st, x, z, 9.5 + Math.random() * 3 - L / 2);
+          }
+        }
+        // 🚪 ปากอุโมงค์เหมืองตรงช่องทางออก/ประตู — โครงไม้ + โพรงมืด (ทางเดินยังผ่านได้ตามปกติ)
+        const gaps = borderGaps();
+        gaps.forEach((ga) => {
+          const x = Math.cos(ga) * (R + 1.2), z = Math.sin(ga) * (R + 1.2), g = new THREE.Group();
+          for (const o of [-2.6, 2.6]) { const p2 = new THREE.Mesh(boxG, wood); p2.scale.set(0.45, 5.2, 0.45); p2.position.set(o, 2.6, 0); g.add(p2); }
+          const beam = new THREE.Mesh(boxG, wood); beam.scale.set(6.2, 0.5, 0.5); beam.position.y = 5.3; g.add(beam);
+          const back = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 5.0), voidM); back.position.set(0, 2.5, -2.4); g.add(back);
+          for (const o of [-1, 1]) { const rk = new THREE.Mesh(rockG, matB); rk.scale.set(2.2, 4.2, 2.6); rk.position.set(o * 4.4, 3.2, -1); g.add(rk); }
+          const top = new THREE.Mesh(rockG, matA); top.scale.set(5.2, 2.2, 2.6); top.position.set(0, 7.2, -1); g.add(top);
+          g.rotation.y = -ga - Math.PI / 2; put(g, x, z, 0);
+          if (G.mineTorchFx) for (const o of [-3.3, 3.3]) G.mineTorchFx(borderGrp, x + Math.cos(ga + Math.PI / 2) * o - Math.cos(ga) * 0.6, z + Math.sin(ga + Math.PI / 2) * o - Math.sin(ga) * 0.6, 3.1);
+        });
+        // 🔥 คบเพลิงปักผนังถ้ำรอบโถง — ขายึดเหล็ก + ด้ามไม้เอียงออก + เปลวไฟ
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2 + 0.2; if (nearGap(a) || nearSpur(a)) continue;
+          const rr = R - 1.75, x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+          const br = new THREE.Mesh(boxG, iron); br.scale.set(0.12, 0.35, 0.12); put(br, x + Math.cos(a) * 0.3, z + Math.sin(a) * 0.3, 2.4);
+          const st = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.9, 6), wood); st.rotation.set(0, 0, 0); st.lookAt(-Math.cos(a), 1.6, -Math.sin(a)); st.rotateX(Math.PI / 2); put(st, x, z, 2.7);
+          if (G.mineTorchFx) G.mineTorchFx(borderGrp, x - Math.cos(a) * 0.12, z - Math.sin(a) * 0.12, 3.25, i % 4 === 0);
         }
       } else {                            // ⛰️ เหว/หน้าผา — แผ่นหินสูงเอียงสลับ
         if (bid === "snow" && G.natBorderTrees)   // 🌲 ทุ่งหิมะ: ป่าสนเรียงหน้าหน้าผา (ครึ่งหนึ่งใบปกคลุมหิมะ)
@@ -26587,6 +26732,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.12, 0.28, 8, 1, true), im); cup.position.y = h + 0.1; g.add(cup);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 14), im); ring.rotation.x = Math.PI / 2; ring.position.y = h + 0.22; g.add(ring);
       g.position.set(x, 0, z); (parent || scene).add(g); return g;
+    };
+    // 🔥 คบเพลิงเหมือง (ด่านถ้ำ) — เปลวไฟภาพเคลื่อนไหว + แสงส้มบนพื้น · ไฟจริง (PointLight) เฉพาะบางดวง และไม่ใช้ในโหมดประหยัด
+    const mineVfx = [];
+    G.mineTorchFx = (parent, x, z, h, light) => {
+      try {
+        const y = terrainAt(x, z) + h;
+        const F = kFlip("torch", 1.5, { add: true }); F.sp.position.set(x, y + 0.35, z); F.sp.renderOrder = 4; parent.add(F.sp);
+        const gl = kDecal("light_02", 0xff9a40, 3.6, 0.06); gl.position.set(x, terrainAt(x, z) + 0.06, z); parent.add(gl);
+        const v = { F, gl, ph: Math.random(), size: 1.5 };
+        if (light && !G.powerSave) { const L = new THREE.PointLight(0xff9a48, 1.4, 11, 1.6); L.position.set(x, y + 0.5, z); parent.add(L); v.L = L; }
+        mineVfx.push(v);
+      } catch (_) {}
+    };
+    G.mineFxTick = (t) => {
+      for (let i = mineVfx.length - 1; i >= 0; i--) {
+        const v = mineVfx[i];
+        if (!v.F.sp.parent) { mineVfx.splice(i, 1); continue; }   // แนวขอบแมพถูกสร้างใหม่ → ทิ้งของเก่า
+        v.F.set(t * 1.1 + v.ph);
+        const k = 1 + 0.07 * Math.sin(t * 11 + v.ph * 9); v.F.sp.scale.set(v.size * k, v.size * (1 + 0.12 * Math.sin(t * 7 + v.ph * 5)), 1);
+        v.gl.material.opacity = 0.5 * (0.85 + 0.15 * Math.sin(t * 9 + v.ph * 7));
+        if (v.L) v.L.intensity = 1.25 + Math.sin(t * 13 + v.ph * 5) * 0.15 + Math.sin(t * 7.3 + v.ph) * 0.1;
+      }
     };
     let vfxHub = null, vfxTown = null;
     const villageFxInit = () => {
@@ -44677,6 +44844,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G.lavaPools) G.lavaPools.forEach((p, i) => { p.material.emissiveIntensity = 1.1 + Math.sin(t * 3 + i) * 0.4; });
       }
       // 💎 cave crystals pulse/flicker softly
+      if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) { G.caveMineTick(dt, t); if (G.mineFxTick) G.mineFxTick(t); }   // ⛏️ เหมืองร้าง: รถแร่วิ่ง + คบเพลิงไหว
       if (G.caveDecor && G.caveDecor.visible && G.caveLights) {
         G.caveLights.forEach((L, i) => { L.intensity = (L.userData && L.userData.base || 1) * (0.75 + Math.sin(t * 2.5 + i * 1.3) * 0.25); });
       }
