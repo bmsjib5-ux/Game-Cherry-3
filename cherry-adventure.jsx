@@ -4730,35 +4730,49 @@ export default function CherryAdventure() {
     nameSprite.visible = false;
     char.add(nameSprite);
     G.nameSprite = nameSprite;
+    // ✨ ออร่านุ่มตา — ทุกวง/จุดแสงรอบตัวใช้พื้นผิวไล่ขอบเบลอ (ไม่ใช่ทอรัส/ทรงกลมขอบแข็ง) + บวกแสงแบบ additive
+    const auraTex = (() => {
+      const mk = (w, h, draw) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; };
+      return {
+        ring: mk(256, 256, (x, w) => { const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);   // แถบวงแหวนขอบฟุ้งทั้งด้านในและนอก + แกนกลางสว่าง
+          g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.5, "rgba(255,255,255,0)"); g.addColorStop(0.68, "rgba(255,255,255,0.35)"); g.addColorStop(0.78, "rgba(255,255,255,1)");
+          g.addColorStop(0.86, "rgba(255,255,255,0.35)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, 0, w, w);
+          const g2 = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g2.addColorStop(0, "rgba(255,255,255,0.18)"); g2.addColorStop(0.7, "rgba(255,255,255,0.05)"); g2.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g2; x.fillRect(0, 0, w, w); }),
+        dot: mk(64, 64, (x, w) => { const g = x.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.25, "rgba(255,255,255,0.75)"); g.addColorStop(0.6, "rgba(255,255,255,0.18)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, 0, w, w); }),
+        flame: mk(64, 128, (x, w, h) => { x.save(); x.translate(w / 2, h * 0.62); x.scale(1, 2.1); const g = x.createRadialGradient(0, 0, 0, 0, 0, w / 2); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.35, "rgba(255,255,255,0.55)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.beginPath(); x.arc(0, 0, w / 2, 0, 7); x.fill(); x.restore(); }),
+        column: mk(8, 128, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.45, "rgba(255,255,255,0.35)"); g.addColorStop(0.9, "rgba(255,255,255,0.9)"); g.addColorStop(1, "rgba(255,255,255,0.3)"); x.fillStyle = g; x.fillRect(0, 0, w, h); }),
+      };
+    })();
+    const auraMat = (tex, col, op) => new THREE.MeshBasicMaterial({ map: tex, color: col, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const softRing = (size, col, op) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), auraMat(auraTex.ring, col, op)); m.rotation.x = -Math.PI / 2; m.renderOrder = 3; return m; };
+    const softMote = (size, col, op) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: auraTex.dot, color: col, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false })); sp.scale.setScalar(size); return sp; };
+    G.auraTex = auraTex; G.softRing = softRing; G.softMote = softMote;
     // 🌟 CLASS-EVOLUTION AURA — a glowing ring + orbiting motes that appear once a class path (evolution) is chosen
     const pathAura = new THREE.Group();
-    const auraRing = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.06, 10, 44), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
-    auraRing.rotation.x = Math.PI / 2; auraRing.position.y = 0.06;
-    const auraRing2 = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 8, 36), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
-    auraRing2.rotation.x = Math.PI / 2; auraRing2.position.y = 0.14;
+    const auraRing = softRing(1.75, 0xffffff, 0.7); auraRing.position.y = 0.06;
+    const auraRing2 = softRing(1.2, 0xffffff, 0.5); auraRing2.position.y = 0.14;
     pathAura.add(auraRing); pathAura.add(auraRing2);
     const auraMotes = [];
     for (let i = 0; i < 6; i++) {
-      const mo = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const mo = softMote(0.24, 0xffffff, 0.9);
       mo.userData.ph = i / 6 * Math.PI * 2;
       pathAura.add(mo); auraMotes.push(mo);
     }
     pathAura.visible = false;
     char.add(pathAura);
+    pathAura.userData.heroKeep = true;   // ✨ ไม่ถูกซ่อนตอนใช้โมเดล 3D
     G.pathAura = pathAura; G.pathAuraRing = auraRing; G.pathAuraRing2 = auraRing2; G.pathAuraMotes = auraMotes;
     // ⚡ TRANSFORMATION (ร่างพลัง) AURA — a blazing super-form aura that erupts around Cherry while transformed
     const tfAura = new THREE.Group();
     const tfMat = (col, op) => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-    const tfColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.78, 3.4, 20, 1, true), tfMat(0xffd24a, 0.26));
+    const tfColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.78, 3.4, 28, 1, true), auraMat(auraTex.column, 0xffd24a, 0.26));   // เสาแสงไล่จางขึ้นด้านบน (ไม่ตัดขอบแข็ง)
     tfColumn.position.y = 1.6;
-    const tfGroundRing = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.09, 10, 40), tfMat(0xffa030, 0.8));
-    tfGroundRing.rotation.x = Math.PI / 2; tfGroundRing.position.y = 0.05;
-    const tfGroundRing2 = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.9, 36), tfMat(0xffe070, 0.5));
-    tfGroundRing2.rotation.x = -Math.PI / 2; tfGroundRing2.position.y = 0.04;
+    const tfGroundRing = softRing(2.1, 0xffa030, 0.8); tfGroundRing.position.y = 0.05;
+    const tfGroundRing2 = softRing(2.6, 0xffe070, 0.5); tfGroundRing2.position.y = 0.04;
     tfAura.add(tfColumn); tfAura.add(tfGroundRing); tfAura.add(tfGroundRing2);
     const tfFlames = [];
     for (let i = 0; i < 10; i++) {
-      const fl = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.62, 6), tfMat(i % 2 ? 0xffb020 : 0xff7020, 0.85));
+      const fl = new THREE.Sprite(new THREE.SpriteMaterial({ map: auraTex.flame, color: i % 2 ? 0xffb020 : 0xff7020, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false })); fl.scale.set(0.34, 0.78, 1);   // เปลวไฟนุ่มแทนกรวยเหลี่ยม
       fl.userData.ph = i / 10 * Math.PI * 2;
       tfAura.add(fl); tfFlames.push(fl);
     }
@@ -4767,18 +4781,18 @@ export default function CherryAdventure() {
     G.tfAura = tfAura; G.tfColumn = tfColumn; G.tfGroundRing = tfGroundRing; G.tfGroundRing2 = tfGroundRing2; G.tfFlames = tfFlames;
     // 👘✨ OUTFIT-SET AURA — a gentle themed glow (ground ring + floating motes) shown while a set is worn
     const setAura = new THREE.Group();
-    const setRing = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.05, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }));
-    setRing.rotation.x = Math.PI / 2; setRing.position.y = 0.05;
+    const setRing = softRing(1.85, 0xffffff, 0.6); setRing.position.y = 0.05;
     setAura.add(setRing);
     const setMotes = [];
     for (let i = 0; i < 7; i++) {
-      const mo = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const mo = softMote(0.22, 0xffffff, 0.85);
       mo.userData.ph = i / 7 * Math.PI * 2;
       setAura.add(mo); setMotes.push(mo);
     }
     setAura.visible = false;
     char.add(setAura);
     G.setAura = setAura; G.setRing = setRing; G.setMotes = setMotes;
+    tfAura.userData.heroKeep = true; setAura.userData.heroKeep = true;   // ✨ ไม่ถูกซ่อนตอนใช้โมเดล 3D
     // 🪽 CHARACTER WINGS — cosmetic back wings; wingL/wingR flap gently in the loop
     const wingsGroup = new THREE.Group();
     wingsGroup.position.set(0, 1.16, -0.3); // 🎒 mid-back (ต่ำลง เพื่อไม่ให้หัวบัง)
@@ -5136,7 +5150,7 @@ export default function CherryAdventure() {
       auraFx.add(sp);
       auraFxParts.push(sp);
     }
-    auraFx.visible = false;
+    auraFx.visible = false; auraFx.userData.heroKeep = true;
     char.add(auraFx);
     G.auraFx = auraFx;
     G.auraFxParts = auraFxParts;
@@ -10788,6 +10802,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           char.children.forEach((o) => {
             if (o === g) return;
             if (o.isSprite) { if (o.userData._heroY0 == null) o.userData._heroY0 = o.position.y; o.position.y = M.h + 0.45; return; }   // ป้ายลอยเหนือหัวโมเดล
+            if (o.userData && o.userData.heroKeep) return;   // ✨ ออร่ารอบตัวใช้กับโมเดล 3D ได้ — ไม่ซ่อน
             if (o.visible) { o.visible = false; hidden.push(o); }
           });
           G._heroHidden = hidden;
@@ -10911,7 +10926,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         for (const c of wandL.children) if (c.visible && c.userData.isShield) return true; return false; };
       G.heroModelTick = (dt) => {
         const H = G._heroModel; if (!H) return;
-        for (const o of char.children) if (o !== H.g && !o.isSprite && o.visible) { o.visible = false; G._heroHidden.push(o); }   // ของที่เพิ่งถูกเปิดทีหลัง (เปลี่ยนชุด/ผ้าคลุม) ก็ซ่อน
+        for (const o of char.children) if (o !== H.g && !o.isSprite && o.visible && !(o.userData && o.userData.heroKeep)) { o.visible = false; G._heroHidden.push(o); }   // ของที่เพิ่งถูกเปิดทีหลัง (เปลี่ยนชุด/ผ้าคลุม) ก็ซ่อน
         const P = G.player;
         if (P) { if (P.hp < H.lastHp - 0.5) { H.hurtT = 0.45; H.hurtN = (H.hurtN || 0) + 1; if (H.cur === "Hit_Chest" || H.cur === "Hit_Head" || H.cur === "Shield_OneShot") H.cur = null; } H.lastHp = P.hp; }
         H.hurtT = Math.max(0, H.hurtT - dt);
@@ -17605,24 +17620,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // beauty scales with rarity tier and +enhancement level
     const auraDots = [];
     for (let i = 0; i < 14; i++) {
-      const d = new THREE.Mesh(new THREE.OctahedronGeometry(0.05), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true }));
+      const d = G.softMote(1, 0xffe28a, 0.9);   // ✨ จุดแสงนุ่ม (เดิมเป็นเพชรเหลี่ยมขอบแข็ง)
       d.visible = false;
       scene.add(d);
       auraDots.push(d);
     }
-    const glowRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.62, 0.78, 36),
-      new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
-    );
-    glowRing.rotation.x = -Math.PI / 2;
+    const glowRing = G.softRing(1.95, 0xffe28a, 0.4);
     glowRing.position.y = 0.03;
     glowRing.visible = false;
     scene.add(glowRing);
-    const glowRing2 = new THREE.Mesh(
-      new THREE.RingGeometry(0.9, 0.98, 36),
-      new THREE.MeshBasicMaterial({ color: 0xff4a2a, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
-    );
-    glowRing2.rotation.x = -Math.PI / 2;
+    const glowRing2 = G.softRing(2.5, 0xff4a2a, 0.35);
     glowRing2.position.y = 0.035;
     glowRing2.visible = false;
     scene.add(glowRing2);
@@ -43503,10 +43510,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (nameSprite) nameSprite.visible = false;
       // 🌟 class-evolution aura — spin the rings + orbit the motes + gentle pulse
       if (pathAura.visible) {
-        const pulse = 0.6 + Math.abs(Math.sin(t * 2)) * 0.35;
+        const pulse = 0.78 + Math.sin(t * 1.6) * 0.18;   // ชีพจรไซน์นุ่ม (เดิม |sin| มีจุดหักกระตุก)
         auraRing.rotation.z = t * 1.2; auraRing.material.opacity = pulse * 0.7;
         auraRing2.rotation.z = -t * 1.8; auraRing2.material.opacity = pulse * 0.5;
-        auraMotes.forEach((m) => { const a = m.userData.ph + t * 1.6; m.position.set(Math.cos(a) * 0.6, 0.12 + Math.abs(Math.sin(a * 2 + t * 3)) * 0.5, Math.sin(a) * 0.6); m.material.opacity = pulse; });
+        auraMotes.forEach((m) => { const a = m.userData.ph + t * 1.1; m.position.set(Math.cos(a) * 0.6, 0.12 + (0.5 + 0.5 * Math.sin(a * 2 + t * 1.8)) * 0.5, Math.sin(a) * 0.6); m.material.opacity = pulse * 0.85; });
       }
       // 🗡️✨ weapon-skin glow — pulse the blade halos (rainbow cycles hue)
       if (enhGlow.visible && G._enhTier) {   // ⚒️✨ ออร่าตีบวก — เต้นหายใจช้า ๆ ตามขั้น
@@ -43516,15 +43523,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (enhLight.visible) enhLight.intensity = ET.li * pu;
       }
       if (wpGlow.visible) {
-        const gp = 0.45 + Math.abs(Math.sin(t * 4)) * 0.55;
+        const gp = 0.7 + Math.sin(t * 2.4) * 0.3;
         if (G._wpGlowColor === "rainbow") { const rc = new THREE.Color().setHSL((t * 0.3) % 1, 0.9, 0.6); wpGlowSprites.forEach((sp) => sp.material.color.copy(rc)); }
         wpGlowSprites.forEach((sp, i) => { sp.material.opacity = Math.max(0, (0.6 - i * 0.1) * gp); });
       }
       // 👘✨ outfit-set aura — spin the ground ring + orbit the motes with a soft pulse
       if (setAura.visible) {
-        const sp = 0.5 + Math.abs(Math.sin(t * 2.3)) * 0.4;
+        const sp = 0.7 + Math.sin(t * 1.6) * 0.2;
         setRing.rotation.z = t * 1.4; setRing.material.opacity = sp * 0.6;
-        setMotes.forEach((m) => { const a = m.userData.ph + t * 1.3; m.position.set(Math.cos(a) * 0.64, 0.1 + Math.abs(Math.sin(a * 2 + t * 2.5)) * 0.55, Math.sin(a) * 0.64); m.material.opacity = sp * 0.85; });
+        setMotes.forEach((m) => { const a = m.userData.ph + t * 1.0; m.position.set(Math.cos(a) * 0.64, 0.1 + (0.5 + 0.5 * Math.sin(a * 2 + t * 1.6)) * 0.55, Math.sin(a) * 0.64); m.material.opacity = sp * 0.85; });
       }
       // 🪽 character wings — gentle flap
       if (wingsGroup.visible) {
@@ -43878,7 +43885,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const y = u.t * 2.6;
           const ang = u.a + t * 0.8;
           p.position.set(Math.cos(ang) * u.r, y, Math.sin(ang) * u.r);
-          p.material.opacity = Math.sin(u.t * Math.PI) * 0.85;
+          { const f = Math.sin(u.t * Math.PI); p.material.opacity = f * f * 0.75; p.scale.setScalar(0.12 + 0.08 * f); }   // โผล่-จางแบบโค้งนุ่ม + ขยายตอนกลางทาง
         });
       }
       // ⚡ transformation (ร่างพลัง) aura — blazing rising flames + spinning ground rings while the super-form is active
@@ -43890,12 +43897,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           tfAura.visible = false; tfAura.userData.fade = false; tfAura.userData.fadeT = 0;
         } else {
           tfAura.visible = true;
-          const puls = 0.7 + Math.abs(Math.sin(t * 6)) * 0.3;
-          tfColumn.rotation.y = t * 1.5; tfColumn.material.opacity = 0.24 * puls * fk;
-          tfColumn.scale.set(1, 1 + Math.sin(t * 8) * 0.06, 1);
-          tfGroundRing.rotation.z = t * 2.6; tfGroundRing.material.opacity = 0.8 * fk;
-          tfGroundRing2.rotation.z = -t * 1.9; tfGroundRing2.scale.setScalar(1 + Math.abs(Math.sin(t * 3)) * 0.15); tfGroundRing2.material.opacity = 0.45 * puls * fk;
-          tfFlames.forEach((f) => { const a = f.userData.ph + t * 3; const r = 0.62; f.position.set(Math.cos(a) * r, 0.3 + Math.abs(Math.sin(a * 2 + t * 7)) * 0.7, Math.sin(a) * r); f.rotation.y = a; f.material.opacity = 0.85 * puls * fk; });
+          const puls = 0.85 + Math.sin(t * 3) * 0.15;
+          tfColumn.rotation.y = t * 1.5; tfColumn.material.opacity = 0.3 * puls * fk;
+          tfColumn.scale.set(1, 1 + Math.sin(t * 3.5) * 0.04, 1);
+          tfGroundRing.rotation.z = t * 2.6; tfGroundRing.material.opacity = 0.55 * fk;
+          tfGroundRing2.rotation.z = -t * 1.9; tfGroundRing2.scale.setScalar(1.05 + Math.sin(t * 2) * 0.07); tfGroundRing2.material.opacity = 0.3 * puls * fk;
+          tfFlames.forEach((f) => { const a = f.userData.ph + t * 3; const r = 0.62; const ph = 0.5 + 0.5 * Math.sin(a * 2 + t * 4); f.position.set(Math.cos(a) * r, 0.35 + ph * 0.7, Math.sin(a) * r); f.material.opacity = (0.35 + 0.5 * (1 - ph)) * puls * fk; });   // เปลวลอยขึ้นแล้วจางนุ่ม ๆ
         }
       }
       // 🏷️ float the player's nameplate (ชื่อ + เลือด + มานา) above Cherry's head (explore + battle)
@@ -56014,14 +56021,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         glowRing.position.x = char.position.x;
         glowRing.position.z = char.position.z;
         glowRing.rotation.z = t * (0.6 + gl.plus * 0.25);
-        glowRing.scale.setScalar(1 + Math.sin(t * 3) * 0.06 * beauty);
+        glowRing.scale.setScalar(1 + Math.sin(t * 1.8) * 0.045 * beauty);
         glowRing.material.opacity = 0.25 + 0.09 * gl.plus + (gl.tier >= 4 ? 0.12 : 0);
         if (glowRing2.visible) {
           glowRing2.position.x = char.position.x;
           glowRing2.position.z = char.position.z;
           glowRing2.rotation.z = -t * 1.1;
-          glowRing2.scale.setScalar(1 + Math.sin(t * 3 + 1.5) * 0.08 * beauty);
-          glowRing2.material.opacity = 0.3 + Math.sin(t * 5) * 0.12;
+          glowRing2.scale.setScalar(1 + Math.sin(t * 1.8 + 1.5) * 0.06 * beauty);
+          glowRing2.material.opacity = 0.3 + Math.sin(t * 2.2) * 0.1;
         }
         const orbitSpd = 1.1 + gl.plus * 0.3 + gl.tier * 0.18;
         auraDots.forEach((d, i) => {
@@ -56033,11 +56040,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             1.1 + Math.sin(t * 2.5 + i) * (0.45 + gl.plus * 0.1) + (gl.tier >= 5 ? Math.sin(t * 6 + i) * 0.2 : 0),
             char.position.z + Math.sin(a) * rad
           );
-          d.rotation.y = t * 3 + i;
           const sc = (0.7 + gl.plus * 0.12) * (gl.fullSet ? 1.5 : 1);
-          d.scale.setScalar(sc * (0.85 + Math.sin(t * 5 + i) * 0.25));
+          d.scale.setScalar(0.3 * sc * (0.92 + Math.sin(t * 2.2 + i) * 0.1));   // หายใจช้า ๆ แทนกะพริบถี่
           // 🐉 full dragon set: embers flicker between element color and gold
-          d.material.opacity = gl.fullSet ? 0.65 + Math.sin(t * 8 + i * 2) * 0.35 : 0.9;
+          d.material.opacity = gl.fullSet ? 0.7 + Math.sin(t * 3 + i * 2) * 0.25 : 0.85;
         });
       }
 
