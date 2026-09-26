@@ -2948,6 +2948,7 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 },
                       Farm_PlantSeed: { from: 0, spd: 1.6 }, Farm_Watering: { from: 0, spd: 1.9 }, Farm_Harvest: { from: 0, spd: 1.5 },   // 🌱 ปลูก · 💧 ใส่ปุ๋ย/รดน้ำ · 🌾 เก็บเกี่ยว/เก็บสมุนไพร
                       TreeChopping_Loop: { from: 0, spd: 1.1 }, Chest_Open: { from: 0, spd: 1.0 }, Idle_Torch_Loop: { from: 0, spd: 1 },
+                      Jump_Start: { from: 0, spd: 1.4 }, NinjaJump_Start: { from: 0, spd: 1.4 }, Jump_Land: { from: 0.08, spd: 2.0 }, NinjaJump_Land: { from: 0.08, spd: 2.0 },   /* 🦘 ถีบตัวขึ้น · ย่อรับตอนลงพื้น */
                       Dance_Loop: { from: 0, spd: 1 }, Idle_No_Loop: { from: 0, spd: 1.2 }, Swim_Fwd_Loop: { from: 0, spd: 1 }, Swim_Idle_Loop: { from: 0, spd: 1 },   /* 💃 เต้น · 🙅 ส่ายหน้า · 🏊 ว่ายน้ำ */ Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
 const HERO_SWIM_Y = { Swim_Idle_Loop: -0.12, Swim_Fwd_Loop: 0.28 };   // 🏊 คลิปว่ายน้ำลดตัวลงระดับน้ำเองอยู่แล้ว — ปรับละเอียดให้หัวไหล่พ้นน้ำ (ว่ายไปหน้า = ยกขึ้นนิด หัวไม่จม)
 const HERO_BARE_HANDS = { Farm_PlantSeed: 1, Farm_Watering: 1, Farm_Harvest: 1, PickUp_Table: 1, Dance_Loop: 1, Swim_Fwd_Loop: 1, Swim_Idle_Loop: 1 };   // ท่าที่ใช้มือเปล่า (ซ่อนอาวุธชั่วคราว)
@@ -10844,7 +10845,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         else if (G.mode === "explore" && G.wst && G.wst.stunT > 0 && H.acts.Idle_Shield_Break) { want = "Idle_Shield_Break"; once = true; opt = HERO_CLIP_T.Idle_Shield_Break; }   // 💫 ติดสตัน — ยืนเซหมดแรง
         else if ((G._dashT || 0) > 0) { if (G._dashSlide && H.acts.Slide_Start) { want = "Slide_Start"; once = true; opt = HERO_CLIP_T.Slide_Start; } else want = "Roll"; }
         else if ((G._slideExitT || 0) > 0 && H.acts.Slide_Exit) { want = "Slide_Exit"; once = true; opt = HERO_CLIP_T.Slide_Exit; }   // 🛷 ลุกจากสไลด์
-        else if ((G._jumpT || 0) > 0) want = (G._jumpN || 1) >= 2 && H.acts.NinjaJump_Idle_Loop ? "NinjaJump_Idle_Loop" : "Jump_Loop";   // 🦘 ชั้นแรก = ท่ากระโดดเดิม · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
+        else if ((G._jumpT || 0) > 0) {                   // 🦘 ช่วงแรก = ย่อถีบตัวขึ้น (Jump_Start) แล้วค่อยเป็นท่าลอยตัว · ชั้นสอง = ม้วนตัวแบบนินจา
+          const nin = (G._jumpN || 1) >= 2, st = nin ? "NinjaJump_Start" : "Jump_Start";
+          if (G._jumpT < 0.22 && H.acts[st]) { want = st; once = true; opt = HERO_CLIP_T[st]; if (G._jumpN !== H.jumpN) { H.jumpN = G._jumpN; if (H.cur === st) H.cur = null; } }
+          else want = nin && H.acts.NinjaJump_Idle_Loop ? "NinjaJump_Idle_Loop" : "Jump_Loop";
+        }
+        else if ((G._landT || 0) > 0 && sp <= 2.6 && H.acts.Jump_Land) { want = G._landNinja && H.acts.NinjaJump_Land ? "NinjaJump_Land" : "Jump_Land"; once = true; opt = HERO_CLIP_T[want]; }   // 🦶 ลงพื้นแล้วย่อรับแรงกระแทก (วิ่งอยู่ = ข้าม ไม่ให้ขาหยุดกลางทาง)   // 🦘 ชั้นแรก = ท่ากระโดดเดิม · ชั้นสอง = ม้วนตัวกลางอากาศแบบนินจา
         else if (sw > 0.02 || bat || G._skCast || H.atkT > 0) { want = has(H.atkClip, has(G._skCast && G.cls !== "archer" ? "Spell_Simple_Shoot" : HERO_ATK[G.cls], "Punch_Cross")); once = true; atk = true; opt = HERO_CLIP_T[want] || HERO_ATK_TIME; }   // 🏹 นักธนูใช้ท่าเล็งยิงทั้งตีปกติและสกิล (ท่าร่ายเวทยกมือเปล่า ธนูห้อยข้างตัว)
         else if (H.hurtT > 0) {                           // 💥 ถือโล่ = ยกโล่รับ · ถือดาบยืนนิ่ง = ยกดาบรับสลับสะดุ้ง · มือเปล่า = สะดุ้งสลับอก/หัว
           const swordBlock = !shield && HERO_IDLE[G.cls] === "Sword_Idle" && sp <= 0.25 && !(H.hurtN & 1) && H.acts.Sword_Block;
@@ -32360,6 +32366,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G._kdImm > 0) G._kdImm = Math.max(0, G._kdImm - dt);
       if (G._getUpT > 0) G._getUpT = Math.max(0, G._getUpT - dt);
       if (G._slideExitT > 0) G._slideExitT = Math.max(0, G._slideExitT - dt);
+      if (G._landT > 0) G._landT = Math.max(0, G._landT - dt);
       const W = G.wst;
       if (W) {
         if (W.stunT > 0) W.stunT = Math.max(0, W.stunT - dt);
@@ -32974,6 +32981,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           }
         }
         if (G._jumpT >= G._jumpDur) {
+          G._landT = 0.34; G._landNinja = (G._jumpN || 1) >= 2;   // 🦶 เล่นท่าลงพื้นต่อ
           G._jumpT = 0; G._jumpN = 0; G._airDashUsed = false; G._glideT = 0; G._jumpAirY = 0; G._jumpBase = 0;
           if (G.puffDust) G.puffDust(char.position.x, 0, char.position.z, 1.7);   // 💨 ฝุ่นตอนลงพื้น
           return 0;
