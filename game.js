@@ -11321,7 +11321,7 @@ function CherryAdventure() {
         };
         // 🏘️ Medieval Village MegaKit (Quaternius · CC0) — บ้าน 3 แบบที่ประกอบจากชิ้นส่วนไว้ล่วงหน้า (รวม mesh ต่อวัสดุ ~2MB)
         //    กระท่อมทุ่งซากุระ + บ้านรอบเมือง: ซ่อนทรงกล่องเดิมแล้วใส่โมเดลแทน (geometry/texture ใช้ร่วม วัสดุปูน/หลังคาแยกต่อหลังเพื่อย้อมสี)
-        const VIL_BASE = "assets/quat/village/", VIL_KINDS = ["Cottage", "House2", "Manor"];
+        const VIL_BASE = "assets/quat/village/", VIL_KINDS = ["Cottage", "House2", "Manor", "Stall", "Wagon"];
         const VIL_CHIM = { Cottage: [1.2, 6.2, -1.0], House2: [1.2, 9.4, -1.2], Manor: [-1.8, 9.6, -1.5] }; // ยอดปล่องไฟ (ควัน)
         const vilLib = {};
         let vilLoading = null;
@@ -11346,14 +11346,21 @@ function CherryAdventure() {
                         o.material.color.set(it.roof);
                     }
                 });
-            it.g.children.forEach((c) => { if (c !== it.chim)
+            it.g.children.forEach((c) => { if (c !== it.chim && !(it.keep && it.keep.includes(c)))
                 c.visible = false; });
             if (it.chim) {
                 const q = VIL_CHIM[it.kind];
                 it.chim.visible = false;
                 it.chim.position.set(q[0] * it.sc, q[1] * it.sc - 2.3, q[2] * it.sc);
-            } // ควันลอยจากปล่องจริง
+                it.chim.updateMatrix();
+            } // ชิ้นในเมืองถูกตรึงเมทริกซ์ไว้ — ต้องอัปเดตเอง   // ควันลอยจากปล่องจริง
             it.g.add(node);
+            if (it.after) {
+                try {
+                    it.after(node);
+                }
+                catch (e) { }
+            }
             if (it.col && it.colR) { // บ้านใหม่กว้างกว่าเดิม — ขยายตัวชน + เก็บต้นไม้/พุ่มที่งอกชิดผนังออก
                 it.col.r = it.colR;
                 const SO = G.sceneryObjects || [], near = (x, z) => Math.hypot(x - it.col.x, z - it.col.z) < it.colR + 0.9;
@@ -38636,11 +38643,28 @@ function CherryAdventure() {
                 const counter = new THREE.Mesh(new THREE.BoxGeometry(4.1, 1.15, 1.8), tWood);
                 counter.position.y = 0.85;
                 st.add(counter);
-                goods.forEach((gc, gi) => { const box = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.5, 0.66), new THREE.MeshStandardMaterial({ color: gc, roughness: 0.8 })); box.position.set(-1.2 + gi * 1.2, 1.67, 0); st.add(box); });
+                const boxes = goods.map((gc, gi) => { const box = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.5, 0.66), new THREE.MeshStandardMaterial({ color: gc, roughness: 0.8 })); box.position.set(-1.2 + gi * 1.2, 1.67, 0); st.add(box); return box; });
                 st.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 st.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(st);
+                // 🛒 แผงร้านค้ายุคกลาง (เสาไม้ + หลังคากระเบื้อง + ลังไม้) มาแทนเมื่อโหลดเสร็จ — คงสินค้าสีประจำร้าน + ผ้าลายทางคาดหน้าแผง
+                (G._vilQ = G._vilQ || []).push({ g: st, kind: "Stall", sc: 1.15, roof: new THREE.Color(0xffffff).lerp(new THREE.Color(awnAcc), 0.55).getHex(), keep: boxes, after: (node) => {
+                        boxes.forEach((b, gi) => { b.position.set(-1.25 + gi * 1.25, 1.47, 0.63); b.updateMatrix(); });
+                        const val = new THREE.Mesh(new THREE.PlaneGeometry(4.7, 0.62), new THREE.MeshStandardMaterial({ map: awn.material.map, roughness: 0.8, side: THREE.DoubleSide }));
+                        val.position.set(0, 3.12, 1.2);
+                        st.add(val);
+                        const val2 = val.clone();
+                        val2.position.z = -1.2;
+                        st.add(val2);
+                    } });
             };
+            for (const [wa, wr, wy] of [[1.55, 17.5, 0.4], [-0.45, 17.5, -0.3], [-2.05, 17.2, 2.4]]) { // 🛞 เกวียนบรรทุกลังสินค้าข้างตลาด
+                const wg = new THREE.Group();
+                wg.position.set(Math.cos(wa) * wr, 0, Math.sin(wa) * wr);
+                wg.rotation.y = wy;
+                townZone.add(wg);
+                (G._vilQ = G._vilQ || []).push({ g: wg, kind: "Wagon", sc: 1.15 });
+            }
             mkStall(2.1, 15.5, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
             mkStall(2.75, 15.5, "#eef4fd", "#6a90d8", [0x6a90d8, 0xd8d0c8, 0xb083d8]);
             mkStall(-2.7, 15.5, "#f4fdee", "#6ab86a", [0x8ac06a, 0xf2d83a, 0xe89a4a]);
