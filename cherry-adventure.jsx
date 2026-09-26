@@ -18,6 +18,7 @@ const SPECIES = {
   // 🗡️ มอนสเตอร์ภาพวาด 2D สี่ทิศ (CraftPix Top-Down Boss) — ยืนเป็นแผ่นหันเข้ากล้อง เลือกภาพหน้า/หลัง/ซ้าย/ขวาตามทิศที่เดินเทียบกับกล้อง
   goblin2d:  { name: "ก็อบลินยักษ์",    emoji: "👺", color: 0x6ab04a, hp: 95,  atk: 16, catch: 0.12, tier: 3, desc: "ก็อบลินหงอนแดงกวัดแกว่งลูกตุ้มหนาม", sprite2d: "goblin" },
   caveman2d: { name: "หัวหน้ามนุษย์ถ้ำ", emoji: "🪨", color: 0xd8a040, hp: 110, atk: 18, catch: 0.1,  tier: 4, desc: "มนุษย์ถ้ำหนังเสือถือกระบองหิน", sprite2d: "caveman" },
+  zombie:    { name: "ซอมบี้ผีดิบ",     emoji: "🧟", color: 0x7c9468, hp: 115, atk: 19, catch: 0.1,  tier: 4, desc: "ศพเดินได้จากสุสานเก่า เดินลากขาช้า ๆ แต่ตะปบแรงจนติดพิษ" },
   viking2d:  { name: "จ้าวไวกิ้ง",      emoji: "🪓", color: 0xb0603a, hp: 120, atk: 20, catch: 0.08, tier: 4, desc: "ผู้นำไวกิ้งหมวกเขาเหวี่ยงขวานศึก", sprite2d: "viking" },
   garuda: { name: "ครุฑอสูร", emoji: "🦁", color: 0xd07a2a, hp: 100, atk: 17, catch: 0.1, tier: 4, desc: "อสูรกายพญาครุฑ", animal: "beast", weak: "light" },
   // ☁️ sky-realm monsters (map 6: floating islands)
@@ -35,7 +36,7 @@ const BIOMES = [
   { id: "volcano", name: "ภูเขาไฟอสูร", emoji: "🌋", lvMin: 250, lvMax: 350, ground: 0x6a3a30, sky: 0x3a1810, fog: 0x5a2418, pool: ["plerng", "saming", "garuda", "phi"], tree: "dead", boss: "garuda", bossName: "พญาอัคคีอสูร 🔥" },
   { id: "sky", name: "เกาะลอยสวรรค์", emoji: "☁️", lvMin: 350, lvMax: 450, ground: 0xcfe0f0, sky: 0xbfe0ff, fog: 0xd8ecff, pool: ["wayu", "taara", "paksi", "kirara"], tree: "none", boss: "taara", bossName: "เทพเจ้าดวงดาว 💫" },
   // 🔥 ด่านนรก — ผี ปีศาจ บอสยมทูต Lv 450-550 · โทนดำแดงมืด กลางคืนตลอด
-  { id: "hell", name: "ขุมนรกันตร์", emoji: "🔥", lvMin: 450, lvMax: 550, ground: 0x2a0a12, sky: 0x160406, fog: 0x2a0a0c, pool: ["winyan", "pisaj"], tree: "dead", boss: "yommathut", bossName: "ยมทูตมัจจุราช ☠️", night: true },
+  { id: "hell", name: "ขุมนรกันตร์", emoji: "🔥", lvMin: 450, lvMax: 550, ground: 0x2a0a12, sky: 0x160406, fog: 0x2a0a0c, pool: ["winyan", "pisaj", "zombie"], tree: "dead", boss: "yommathut", bossName: "ยมทูตมัจจุราช ☠️", night: true },
   // ☀️ ด่านสวรรค์ — เทพ เทวดา บอสพระโพธิสัตว์ Lv 550-650 · โทนครีมเหลืองทองส้ม สว่างตลอด
   { id: "heaven", name: "สรวงสวรรค์ชั้นฟ้า", emoji: "☀️", lvMin: 550, lvMax: 650, ground: 0xf2e2ac, sky: 0xfff0c8, fog: 0xffe6ac, pool: ["thewada", "kinnara"], tree: "none", boss: "phothisat", bossName: "พระโพธิสัตว์ 🧘", bright: true },
   // 🌑 ด่านดวงจันทร์ — เอเลี่ยน สัตว์ต่างดาว บอสจักรพรรดิเอเลี่ยน Lv 650-750 · พื้นเทาขรุขระ ฟ้ามืดมีดาว+ดาวตก
@@ -846,7 +847,7 @@ const GUILD_BOSS = [
   { id: "gb_drake", name: "มังกรเพลิงราชันเถ้าธุลี", emoji: "🐉", hp: 1500000 },
   { id: "gb_reaper",name: "ยมทูตผู้เก็บเกี่ยววิญญาณ", emoji: "☠️", hp: 1800000 },
 ];
-const WEAK = { mochi: "wind", baibua: "fire", mekha: "earth", plerng: "water", kirara: "ice", phi: "fire", nam: "wind", khiao: "fire", ngu: "earth", paksi: "ice", saming: "water", garuda: "light", wayu: "earth", taara: "arcane" };
+const WEAK = { mochi: "wind", baibua: "fire", mekha: "earth", plerng: "water", kirara: "ice", phi: "fire", nam: "wind", khiao: "fire", ngu: "earth", paksi: "ice", saming: "water", garuda: "light", wayu: "earth", taara: "arcane", zombie: "light" };   // 🧟 ซอมบี้แพ้แสง
 const PET_ELEM = { mochi: "wind", baibua: "earth", mekha: "water", plerng: "fire", kirara: "ice", phi: "ice", nam: "water", khiao: "wind", ngu: "earth", paksi: "wind", saming: "fire", garuda: "light", wayu: "wind", taara: "arcane" };
 const PET_SKILL = { mochi: "ลมกระต่ายหมุน", baibua: "หินใบไม้ถล่ม", mekha: "ระเบิดหยดน้ำ", plerng: "เพลิงจิ้งจอก", kirara: "ดาวน้ำแข็ง", phi: "วิญญาณเยือกแข็ง", nam: "คลื่นวารี", khiao: "ตะปบพายุ", ngu: "พ่นพิษพสุธา", paksi: "โฉบเวหา", saming: "ตะปบเพลิง", garuda: "ปีกแสงสวรรค์", wayu: "พายุหมุนเทพ", taara: "แสงจักรวาล" };
 // 🌈 element display metadata (name + emoji) for clear weakness indicators
@@ -8213,6 +8214,8 @@ export default function CherryAdventure() {
     //    size = ด้านที่ยาวที่สุดของตัวในหน่วยเกม (ตัวละครผู้เล่นสูงราว 2) · y = ลอยเหนือพื้น (ปลา/มังกร)
     const QT_BASE = "assets/quat/";
     const QT_MON = {
+      zombie:     { f: "Zombie",          size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
+                    tint: { M_Main: 0x7c9468, M_Joints: 0x5a2a2a } },                                        // 🧟 หุ่น UAL2 ย้อมผิวเขียวซีด ข้อต่อแดงคล้ำ · ท่าซอมบี้ยืน/เดินลากขา/ตะปบ
       ngu:        { f: "Snake",           size: 1.7,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
       anaconda:   { f: "Snake_angry",     size: 2.6,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
       mangkorn:   { f: "Dragon",          size: 2.4, y: 0.55, lift: 0.55, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death" },
@@ -21767,7 +21770,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         bossName: "👺 หัวหน้าโจรก็อบลิน", foe: "โจรก็อบลิน", theme: "cave", reward: 1, gateCol: 0x9ae06a, labelCol: "#e8ffd0",
         wall: "ผนังถ้ำกั้นอยู่", kick: "ถูกโจรก็อบลินไล่ออกจากถ้ำ!" },
       viking: { name: "สุสานไวกิ้ง", emoji: "⚰️", bossEmoji: "🪓", biome: "snow", pos: { x: -23, z: -23 }, req: 60, lvMin: 100, lvMax: 160,
-        pool12: ["viking2d", "viking2d", "paksi", "mekha"], pool: ["viking2d", "viking2d", "kirara", "nam", "paksi"], boss: "viking2d", minion: "viking2d",
+        pool12: ["viking2d", "zombie", "paksi", "zombie"], pool: ["viking2d", "zombie", "viking2d", "zombie", "paksi"], boss: "viking2d", minion: "viking2d",
         bossName: "🪓 จ้าวไวกิ้งผู้ไม่หลับใหล", foe: "วิญญาณนักรบไวกิ้ง", theme: "tomb", reward: 3, gateCol: 0x8ac8ff, labelCol: "#dff0ff",
         wall: "ผนังสุสานกั้นอยู่", kick: "วิญญาณไวกิ้งผลักออกจากสุสาน!" },
       caveman: { name: "วิหารร้างมนุษย์ถ้ำ", emoji: "🗿", bossEmoji: "🪨", biome: "desert", pos: { x: -23, z: -23 }, req: 40, lvMin: 50, lvMax: 110,
@@ -32340,7 +32343,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     G.statusOnHit = statusOnHit;
     // 👾➡️🧍 มอนบางเผ่าทำให้เราติดสถานะ: งู/ใบบัว/ก็อบลิน/ยมทูต = พิษ · มนุษย์ถ้ำ/ไวกิ้ง/ไททัน/เสือ/ครุฑ/มังกร/บอส = สตัน · เมฆ/สไลม์ลม/ผี/นก/ดาว = มึน
-    const WST_POISON = { ngu: 1, baibua: 1, goblin2d: 1, yommathut: 1 };
+    const WST_POISON = { ngu: 1, baibua: 1, goblin2d: 1, yommathut: 1, zombie: 1 };   // 🧟 ซอมบี้ตะปบติดพิษ
     const WST_STUN = { caveman2d: 1, viking2d: 1, stonetitan: 1, saming: 1, garuda: 1, mangkorn: 1 };
     const WST_DAZE = { mekha: 1, wayu: 1, phi: 1, paksi: 1, taara: 1, kirara: 1 };
     const wstInflict = (m, raw) => {
@@ -43825,7 +43828,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             m.userData.aggro = pdist < WILD_AGGRO + 4; // drop aggro only if they get far away
             aggroHandled = true;
             if (pdist > WILD_MELEE) {
-              const sl = (m.userData.slowT > 0 ? 1 - (m.userData.slow || 0) : 1) * (m.userData.dazeT > 0 ? 0.55 : 1);   // 🧊 ติดความเย็น → ไล่ช้าลง · 😵 มึน → เดินเซ
+              const sl = (m.userData.slowT > 0 ? 1 - (m.userData.slow || 0) : 1) * (m.userData.dazeT > 0 ? 0.55 : 1) * (m.userData.spId === "zombie" ? 0.62 : 1);   // 🧟 ซอมบี้เดินลากขาไล่ช้ากว่าปกติ   // 🧊 ติดความเย็น → ไล่ช้าลง · 😵 มึน → เดินเซ
               let cdx = pdx / pdist, cdz = pdz / pdist;
               if (m.userData.dazeT > 0) { const wa = Math.sin(t * 3.3 + i * 1.7) * 1.3, ca = Math.cos(wa), sa = Math.sin(wa); const nx = cdx * ca - cdz * sa; cdz = cdx * sa + cdz * ca; cdx = nx; }
               m.position.x += cdx * 1.9 * sl * dt;
