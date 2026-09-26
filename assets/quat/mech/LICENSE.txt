@@ -1,0 +1,3 @@
+Animated Mech Pack by @Quaternius — https://quaternius.com/packs/animatedmech.html
+License: CC0 1.0 Universal (public domain) https://creativecommons.org/publicdomain/zero/1.0/
+Converted from the "Flat Colors" glTF release to GLB; unused animation clips removed.

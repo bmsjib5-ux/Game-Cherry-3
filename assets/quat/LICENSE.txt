@@ -1,0 +1,62 @@
+Quaternius low-poly animated models (CC0 1.0 Universal / public domain)
+https://quaternius.com  ·  https://quaternius.itch.io
+
+Packs used:
+  LowPoly Animated Monsters   -> Dragon, Slime
+  LowPoly Animated Easy Enemies -> Snake, Snake_angry
+  LowPoly Animated Fish       -> Fish1, Fish3, Shark
+  Animated LowPoly Dinosaurs  -> Parasaurolophus, Velociraptor
+  LowPoly Animated Animals    -> Horse, Pug
+
+Converted from the packs' .fbx to .glb with three.js FBXLoader + GLTFExporter.
+Unused animation clips and all .scale tracks were stripped to cut file size.
+
+Ultimate Monsters (50 models) — Quaternius, CC0, via the public Google Drive
+folder linked from https://www.patreon.com/posts/ultimate-50-73633148
+  -> Big_Bunny, Big_Birb, Big_Alien, Big_Orc_Skull, Big_Yeti, Big_Orc, Big_Monkroose,
+     Big_MushroomKing, Big_Fish, Blob_Cat, Blob_Chicken, Blob_Birb, Blob_Alien,
+     Blob_PinkBlob, Blob_GreenBlob, Blob_Mushnub, Blob_GreenSpikyBlob,
+     Big_Tribal, Flying_Squidle, Flying_Glub, Flying_Ghost, Flying_Hywirl, Flying_Pigeon
+     (shared Atlas_Monsters.png embedded per file)
+Ultimate Animated Animals (12 models) — Quaternius, CC0, via the public Google Drive
+folder linked from https://www.patreon.com/posts/ultimate-animals-53427821
+  -> Wolf, Fox
+Repacked .gltf -> .glb with three.js GLTFExporter; unused clips and .scale tracks stripped.
+
+--- OpenGameArt.org (CC0 / public domain) ---
+Crab.glb      — "Crab low poly animated 3d model" by methodical pixel, CC0
+                https://opengameart.org/content/crab-low-poly-animated-3d-model
+Crocodile.glb — "Crocodile" by br-n518, CC0 (diffuse texture only, downscaled to 512)
+                https://opengameart.org/content/crocodile-0
+Exported from .blend to .glb with Blender 4.2 (bpy) glTF exporter; each action as one animation.
+Duckling.glb  — "Rigged Duckling" by weirdybeardyman, CC0 (Peck / Waddle)
+                https://opengameart.org/content/rigged-duckling
+Turtle.glb    — "Turtle" by Heathal, CC0 (Walking-loop; texture downscaled to 512)
+                https://opengameart.org/content/turtle-0
+Elephant.glb  — "low poly elephant model" by syncopika, CC0 (Idle / Angry / Sitting kept, half keyframe rate)
+                https://opengameart.org/content/low-poly-elephant-model
+Duck.glb      — "Rigged Duck" by weirdybeardyman, CC0 (Peck / Waddle)
+                https://opengameart.org/content/rigged-duck
+
+--- assets/quat/hero/ — ตัวละครโมเดล 3D (ทดลอง) — Quaternius, CC0 1.0 ---
+Female_Base.glb / Male_Base.glb — "Universal Base Characters" (Standard/free: Superhero proportions only)
+  https://quaternius.com/packs/universalbasecharacters.html
+Female_Ranger.glb / Male_Ranger.glb / Female_Peasant.glb / Male_Peasant.glb
+  — "Modular Character Outfits - Fantasy" (Standard/free: Ranger + Peasant, both genders)
+  https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+Hair_Long.glb / Hair_Buns.glb / Hair_SimpleParted.glb / Hair_Buzzed.glb / Hair_BuzzedFemale.glb / Hair_Beard.glb
+  — hairstyles from Universal Base Characters (rigged to the head bone of the same 65-joint rig)
+Anims.glb — "Universal Animation Library" (Standard/free), trimmed to 17 clips:
+  Idle_Loop, Walk_Loop, Jog_Fwd_Loop, Sprint_Loop, Hit_Chest, Death01, Jump_Loop, Roll, Sitting_Idle_Loop,
+  Sword_Idle, Sword_Attack, Spell_Simple_Idle_Loop, Spell_Simple_Shoot, Pistol_Idle_Loop, Pistol_Shoot,
+  Punch_Cross, Punch_Jab
+  https://quaternius.com/packs/universalanimationlibrary.html
+All repacked .gltf/.glb -> .glb with three.js GLTFExporter; textures downscaled to 256px; two texture
+filenames in the free base pack (T_Eye_Normal_png.png, T_Hair_1_Normal_png.png) were fixed to the real files.
+
+Universal Animation Library 2 [Standard] + Universal Animation Library [Standard] — Quaternius, CC0
+https://quaternius.itch.io/universal-animation-library-2
+  -> hero/Anims2.glb: Sword_Regular_A/B/C, Sword_Heavy_Combo, Sword_Dash, Shield_OneShot,
+     Shield_Dash, Melee_Hook, NinjaJump_Idle_Loop, OverhandThrow, Consume,
+     Yes (UAL2) + Hit_Head (UAL1). Meshes removed, scale tracks dropped,
+     keyframes thinned (linear tolerance 0.0015).

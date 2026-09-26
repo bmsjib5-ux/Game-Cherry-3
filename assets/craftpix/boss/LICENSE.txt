@@ -1,0 +1,5 @@
+Free Top-Down Boss Character 4-Direction Pack — CraftPix.net
+License: CraftPix File License (https://craftpix.net/file-licenses/) — royalty-free use in personal and
+commercial projects; attribution not required. Raw assets must not be redistributed as assets.
+goblin.png = Giant Goblin · caveman.png = Caveman Boss · viking.png = Viking Leader
+Each sheet: 10 columns, 11 rows (walkF, walkL, walkR, walkB, idle, atkF, atkL, atkR, atkB, hurt, die), cropped frames.
