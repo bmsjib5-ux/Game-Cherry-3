@@ -2952,9 +2952,11 @@ const HERO_CLIP_T = { Sword_Regular_A: { from: 0.12, spd: 1.3 }, Sword_Regular_B
                       Slide_Start: { from: 0.12, spd: 1.9 }, Slide_Exit: { from: 0, spd: 2.0 },
                       Farm_PlantSeed: { from: 0, spd: 1.6 }, Farm_Watering: { from: 0, spd: 1.9 }, Farm_Harvest: { from: 0, spd: 1.5 },   // 🌱 ปลูก · 💧 ใส่ปุ๋ย/รดน้ำ · 🌾 เก็บเกี่ยว/เก็บสมุนไพร
                       TreeChopping_Loop: { from: 0, spd: 1.1 }, Chest_Open: { from: 0, spd: 1.0 }, Idle_Torch_Loop: { from: 0, spd: 1 },
+                      Boxer_Kick: { from: 0, spd: 1 }, Boxer_Knee: { from: 0, spd: 1 },
                       Jump_Start: { from: 0, spd: 1.4 }, NinjaJump_Start: { from: 0, spd: 1.4 }, Jump_Land: { from: 0.08, spd: 2.0 }, NinjaJump_Land: { from: 0.08, spd: 2.0 },   /* 🦘 ถีบตัวขึ้น · ย่อรับตอนลงพื้น */
                       Dance_Loop: { from: 0, spd: 1 }, Idle_No_Loop: { from: 0, spd: 1.2 }, Swim_Fwd_Loop: { from: 0, spd: 1 }, Swim_Idle_Loop: { from: 0, spd: 1 },   /* 💃 เต้น · 🙅 ส่ายหน้า · 🏊 ว่ายน้ำ */ Fixing_Kneeling: { from: 0.1, spd: 2.2 }, PickUp_Table: { from: 0, spd: 1.0 } };   // 🪓 ขุดแร่/ตัดไม้ · 🔨 คุกเข่าตีเหล็ก · 🍳 หยิบของบนโต๊ะ   // 🛷 วิ่งแล้วกดพุ่ง = สไลด์   // 💥 โดนหนักจนเซถอย · 💫 สตันยืนเซ · 🛌 ลุกจากพื้นหลังฟื้น
 const HERO_SWIM_Y = { Swim_Idle_Loop: -0.12, Swim_Fwd_Loop: 0.28 };   // 🏊 คลิปว่ายน้ำลดตัวลงระดับน้ำเองอยู่แล้ว — ปรับละเอียดให้หัวไหล่พ้นน้ำ (ว่ายไปหน้า = ยกขึ้นนิด หัวไม่จม)
+const HERO_SKILL_BY = { b_kick: "Boxer_Kick", x_mua_1: "Boxer_Kick", x_mua_3: "Boxer_Kick", b_knee: "Boxer_Knee", x_mua_4: "Boxer_Knee" };   // 🦵 สกิลเตะ/แทงเข่าของนักมวย → ท่าเท้าจริง
 const HERO_BARE_HANDS = { Farm_PlantSeed: 1, Farm_Watering: 1, Farm_Harvest: 1, PickUp_Table: 1, Dance_Loop: 1, Swim_Fwd_Loop: 1, Swim_Idle_Loop: 1 };   // ท่าที่ใช้มือเปล่า (ซ่อนอาวุธชั่วคราว)
 const HERO_IDLE = { warrior: "Sword_Idle", samurai: "Sword_Idle", lancer: "Sword_Idle", aegis: "Sword_Idle", assassin: "Sword_Idle",
                     mage: "Spell_Simple_Idle_Loop", coder: "Spell_Simple_Idle_Loop", office: "Spell_Simple_Idle_Loop", tamer: "Spell_Simple_Idle_Loop",
@@ -10688,6 +10690,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
           const acts = {};
           anims.animations.concat(anims2 ? anims2.animations : []).forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
+          try { heroGenFight(parts[0], mixers[0], anims.animations).forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); }); } catch (eGF) { try { console.warn("genFight", eGF); } catch (_) {} }   // 🦵 ท่าเตะ/แทงเข่า (สร้างจากโครงกระดูก)
           let neck = null, neckPlane = null;
           if (M.files.length > 1 && /_Base$/.test(M.files[0])) {
             neck = parts[0].getObjectByName("neck_01");
@@ -10786,6 +10789,57 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G.moveTarget = null; G.huntTarget = null;
         if (G.heroEmote) G.heroEmote(E.clip, E.t, E.loop);
       };
+      // 🦵🥊 ท่าเตะ + แทงเข่าของนักมวย — ชุดฟรีของ Quaternius ไม่มีท่าเท้า จึงสร้างคลิปเองจากโครงกระดูกตอนโหลด
+      //    ท่าตั้งการ์ด = เฟรมแรกของ Punch_Jab · หมุนต้นขา/หน้าแข้ง/ลำตัวรอบแกนข้างลำตัว (คิดในพิกัดโลกแล้วแปลงกลับเป็นของกระดูก)
+      //    แกน "หน้า" วัดจากทิศปลายเท้า (foot→ball) จึงไม่ขึ้นกับการหมุนของไฟล์โมเดล
+      const heroGenFight = (root, mixer, clips) => {
+        const base = clips.find((c) => c.name === "Punch_Jab") || clips.find((c) => c.name === "Idle_Loop"); if (!base) return [];
+        const B = (n) => root.getObjectByName(n);
+        const pel = B("pelvis"), sp = B("spine_01"), th = B("thigh_r"), ca = B("calf_r"), thl = B("thigh_l"), ft = B("foot_r"), ball = B("ball_r");
+        if (!pel || !sp || !th || !ca || !thl || !ft || !ball) return [];
+        const a0 = mixer.clipAction(base); a0.reset(); a0.play(); a0.time = 0; mixer.update(0); root.updateMatrixWorld(true);
+        const WQ = (o) => o.getWorldQuaternion(new THREE.Quaternion()), WP = (o) => o.getWorldPosition(new THREE.Vector3());
+        const Qroot = WQ(pel.parent), Qpel = WQ(pel), Qsp = WQ(sp), Qth = WQ(th), Qca = WQ(ca), Qthl = WQ(thl);
+        const fwd = WP(ball).sub(WP(ft)); fwd.y = 0; fwd.normalize();
+        const up = new THREE.Vector3(0, 1, 0), lat = new THREE.Vector3().crossVectors(new THREE.Vector3(0, -1, 0), fwd).normalize();   // หมุน + รอบแกนนี้ = ยกขาไปข้างหน้า
+        const legL = WP(pel).y - WP(ft).y;
+        const pelP0 = pel.position.clone(), pInv = new THREE.Matrix4().copy(pel.parent.matrixWorld).invert();
+        const pS = new THREE.Vector3().setFromMatrixScale(pel.parent.matrixWorld).x || 1;
+        const localUp = up.clone().transformDirection(pInv);
+        a0.stop(); mixer.stopAllAction();
+        const aq = (ax, deg) => new THREE.Quaternion().setFromAxisAngle(ax, deg * Math.PI / 180);
+        const mk = (name, D) => {
+          const times = D.t, N = times.length;
+          const tv = { pelvis: [], spine_01: [], thigh_r: [], calf_r: [], thigh_l: [], pos: [] };
+          for (let i = 0; i < N; i++) {
+            const Rp = aq(up, D.yaw[i]), L2 = lat.clone().applyQuaternion(Rp);
+            const pelW = Rp.clone().multiply(Qpel);
+            const thW = aq(L2, D.th[i]).multiply(Rp).multiply(Qth);
+            const caW = aq(L2, D.kn[i]).multiply(aq(L2, D.th[i])).multiply(Rp).multiply(Qca);
+            const spW = aq(lat, D.sp[i]).multiply(Qsp);
+            const loc = (parentW, w) => parentW.clone().invert().multiply(w);
+            const push = (k, q) => tv[k].push(q.x, q.y, q.z, q.w);
+            push("pelvis", loc(Qroot, pelW)); push("thigh_r", loc(pelW, thW)); push("calf_r", loc(thW, caW)); push("spine_01", loc(pelW, spW)); push("thigh_l", loc(pelW, Qthl));
+            const h = (D.lift ? D.lift[i] : 0) * legL / pS; tv.pos.push(pelP0.x + localUp.x * h, pelP0.y + localUp.y * h, pelP0.z + localUp.z * h);
+          }
+          const tracks = [];
+          const own = new Set(["pelvis.quaternion", "spine_01.quaternion", "thigh_r.quaternion", "calf_r.quaternion", "thigh_l.quaternion", "pelvis.position"]);
+          base.tracks.forEach((tr) => {                                    // ส่วนอื่นค้างท่าตั้งการ์ด (มือยกกันหน้า)
+            if (own.has(tr.name) || /\.scale$/.test(tr.name)) return;
+            const v = tr.createInterpolant().evaluate(0), vals = []; for (let i = 0; i < N; i++) for (let k = 0; k < v.length; k++) vals.push(v[k]);
+            tracks.push(new tr.constructor(tr.name, times.slice(), vals));
+          });
+          ["pelvis", "spine_01", "thigh_r", "calf_r", "thigh_l"].forEach((k) => tracks.push(new THREE.QuaternionKeyframeTrack(k + ".quaternion", times.slice(), tv[k])));
+          tracks.push(new THREE.VectorKeyframeTrack("pelvis.position", times.slice(), tv.pos));
+          return new THREE.AnimationClip(name, times[N - 1], tracks);
+        };
+        return [
+          // 🦵 เตะเหวี่ยง: ยกเข่าง้าง → เหยียดขาฟาดสูง (บิดสะโพก เอนตัวหลบ) → ค้าง → ดึงกลับ
+          mk("Boxer_Kick", { t: [0, 0.12, 0.24, 0.4, 0.56, 0.72], th: [0, 72, 102, 102, 60, 0], kn: [0, -112, -6, -6, -100, 0], sp: [0, -8, -20, -20, -8, 0], yaw: [0, 12, 30, 30, 12, 0] }),
+          // 🦿 กระโดดแทงเข่า: ย่อ → ทะยานขึ้นพร้อมเข่าพุ่งขึ้นอก (ลำตัวโน้มหน้า) → ค้างกลางอากาศ → ลงพื้น
+          mk("Boxer_Knee", { t: [0, 0.1, 0.24, 0.42, 0.58, 0.72], th: [0, 25, 118, 118, 40, 0], kn: [0, -40, -150, -150, -70, 0], sp: [0, 6, 16, 16, 6, 0], yaw: [0, 0, 6, 6, 0, 0], lift: [0, -0.06, 0.34, 0.3, 0.05, 0] }),
+        ];
+      };
       G.heroEmote = (n, t, loop) => { const H = G._heroModel; if (n === "Consume" && heroHasShield()) return;   // 🛡️ ท่าดื่มใช้มือซ้าย — มือซ้ายถือโล่อยู่จะกลายเป็นยกโล่ขึ้นปาก
         if (H && H.acts[n]) { H.emote = { n, t: t || 1.2, loop: !!loop }; if (H.cur === n) H.cur = null; } };   // loop = ท่าวนซ้ำตลอดช่วงเวลา (เช่น ฟันไม้)
       // 🔥 คบเพลิงในมือซ้าย — วางตามตำแหน่งกระดูก hand_l ทุกเฟรม ตั้งตรงเสมอ (ไม่หมุนตามข้อมือ เปลวไฟจะได้ชี้ขึ้น)
@@ -10830,7 +10884,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const skEdge = !!G._skCast && !H.skPrev; H.skPrev = !!G._skCast;
         if (atkEdge || skEdge) {                          // 🎬 เลือกท่าตอนเริ่มตี: สกิล → ท่าหนักประจำอาชีพ · ตีปกติ → ไล่ท่าตามจังหวะคอมโบ 3 ไม้
           const cmb = HERO_COMBO[G.cls];
-          const nm = G._skCast ? HERO_SKILL[G.cls] || (G.cls === "archer" ? HERO_ATK.archer : "Spell_Simple_Shoot")
+          const skId = G._skCast && G._stSk && performance.now() < G._stSk.until ? G._stSk.sk.id : null;
+          const nm = G._skCast ? (HERO_SKILL_BY[skId] && H.acts[HERO_SKILL_BY[skId]] ? HERO_SKILL_BY[skId] : HERO_SKILL[G.cls]) || (G.cls === "archer" ? HERO_ATK.archer : "Spell_Simple_Shoot")
                                : cmb ? cmb[(G._combo3 || 0) % cmb.length] : HERO_ATK[G.cls];
           H.atkClip = nm && H.acts[nm] ? nm : null;
           const T = H.atkClip && HERO_CLIP_T[H.atkClip], a0 = H.atkClip && H.acts[H.atkClip][0];
