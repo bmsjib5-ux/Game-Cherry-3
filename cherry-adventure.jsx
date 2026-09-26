@@ -25902,8 +25902,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       scene.add(s);
       sparks.push(s);
     }
+    // 🧹 จุดปะทะซ้อนกัน — โค้ดเก่าหลายจุดเรียก burst ซ้ำ 2-4 ครั้งในจุดเดียวกันพร้อมกัน (แสงวาบซ้อนจนจ้า)
+    //    รวมเป็นครั้งเดียว: ถ้ามี burst ภายในรัศมี 0.9 ใน 90 ms ที่ผ่านมา = ข้าม
+    const _bRecent = [];
     const burst = (pos, color, y = 0.8) => {
-      try { kImpact(pos.x, y, pos.z, color, 1); return; } catch (_) {}   // 🎇 จุดปะทะแบบภาพวาด Kenney — ประกายลูกกลมชุดเดิมใช้เฉพาะตอนภาพพัง
+      const now = performance.now();
+      while (_bRecent.length && now - _bRecent[0].t > 90) _bRecent.shift();
+      for (const b of _bRecent) if (Math.abs(b.x - pos.x) < 0.9 && Math.abs(b.z - pos.z) < 0.9) return;
+      _bRecent.push({ t: now, x: pos.x, z: pos.z }); if (_bRecent.length > 24) _bRecent.shift();
+      try { kImpact(pos.x, y, pos.z, color, 0.85); return; } catch (_) {}   // 🎇 จุดปะทะแบบภาพวาด Kenney — ประกายลูกกลมชุดเดิมใช้เฉพาะตอนภาพพัง
       sparks.forEach((s, i) => {
         s.visible = true;
         s.material.color.setHex(color);
@@ -26296,15 +26303,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const kImpact = (x, y, z, color, size) => {
       const S = size || 1;
       kfxSpawn(x, z, 0.42, (g) => {
-        const flash = kSprite("star_06", 0xffffff, 1.2 * S); flash.position.y = y; g.add(flash);
+        const flash = kSprite("star_06", 0xffffff, 1.0 * S, { op: 0.7 }); flash.position.y = y; g.add(flash);
         const ring = kSprite("circle_03", color, 0.5 * S); ring.position.y = y; g.add(ring);
         const spr = kSprite("spark_01", color, 1.0 * S, { rot: Math.random() * Math.PI * 2 }); spr.position.y = y; g.add(spr);
         const bits = [];
-        for (let k = 0; k < 5; k++) { const b = kSprite("star_01", k % 2 ? 0xffffff : color, 0.32 * S); const a = Math.random() * Math.PI * 2, vr = 1.4 + Math.random() * 1.6; b.userData = { vx: Math.cos(a) * vr, vz: Math.sin(a) * vr, vy: 1.5 + Math.random() * 2 }; b.position.y = y; g.add(b); bits.push(b); }
+        for (let k = 0; k < 3; k++) { const b = kSprite("star_01", k % 2 ? 0xffffff : color, 0.28 * S); const a = Math.random() * Math.PI * 2, vr = 1.4 + Math.random() * 1.6; b.userData = { vx: Math.cos(a) * vr, vz: Math.sin(a) * vr, vy: 1.5 + Math.random() * 2 }; b.position.y = y; g.add(b); bits.push(b); }
         return (pr) => {
-          const f = 1 - kEase(pr, 0, 0.55); flash.material.opacity = f; flash.scale.setScalar((1.2 + (1 - f) * 1.3) * S); flash.material.rotation = pr * 1.2;
-          const r = kEase(pr, 0.05, 0.8); ring.material.opacity = (1 - r) * 0.9; ring.scale.setScalar((0.5 + r * 2.4) * S);
-          const q = kEase(pr, 0, 0.7); spr.material.opacity = (1 - q) * 0.95; spr.scale.setScalar((1.0 + q * 1.1) * S);
+          const f = 1 - kEase(pr, 0, 0.45); flash.material.opacity = f * 0.7; flash.scale.setScalar((1.0 + (1 - f) * 1.0) * S); flash.material.rotation = pr * 1.2;
+          const r = kEase(pr, 0.05, 0.8); ring.material.opacity = (1 - r) * 0.7; ring.scale.setScalar((0.5 + r * 2.4) * S);
+          const q = kEase(pr, 0, 0.7); spr.material.opacity = (1 - q) * 0.75; spr.scale.setScalar((1.0 + q * 1.1) * S);
           for (const b of bits) { const u = b.userData, t = pr * 0.42; b.position.set(u.vx * t, y + u.vy * t - 6 * t * t, u.vz * t); b.material.opacity = 1 - pr; }
         };
       });
@@ -28092,7 +28099,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         if (kx.length) { const u0 = update; update = (pr, tn) => { if (u0) u0(pr, tn); for (const f of kx) f(pr); }; }
       } catch (_) { if (kOnly && !g.children.length) { fxType = kType; } }
-      activeFx.push({ group: g, t: 0, dur, update });
+      // 🔅 เอฟเฟกต์ชุดเก่า (ทรงเรขาคณิตเรืองแสง) — ลดความจ้า: emissive ไม่เกิน 0.7 · ความทึบสูงสุด ×0.75 · ไม่เขียน depth (ไม่บังกันเอง)
+      g.traverse((o) => { const m = o.material; if (!m || !(o.isMesh || o.isSprite)) return;   // ภาพ Kenney/Kalponic ×0.82 · ของเก่า ×0.75
+        (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm.emissiveIntensity > 0.7) mm.emissiveIntensity = 0.7; mm.userData._opMul = kOnly || o.isSprite ? 0.82 : 0.75; if (mm.transparent) mm.depthWrite = false; }); });
+      const upd0 = update;
+      const update2 = !upd0 ? upd0 : (pr, tn) => { upd0(pr, tn); g.traverse((o) => { const m = o.material; if ((o.isMesh || o.isSprite) && m && !Array.isArray(m) && m.userData._opMul && m.transparent && m.opacity !== m.userData._opLast) { m.opacity *= m.userData._opMul; m.userData._opLast = m.opacity; } }); };   // คูณเฉพาะเฟรมที่ update ตั้งค่าใหม่ (กันคูณสะสมจนหาย)
+      activeFx.push({ group: g, t: 0, dur, update: update2 });
     };
     // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
     const disposeObj3D = (grp) => {
@@ -32453,11 +32465,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._hitStopAmt = Math.max(G._hitStopAmt || 0, hs);
           if (opts.crit) G._hitStopFlash = 1;
         } }
-      if (opts.color != null) burst(m.position, opts.color, 0.5);
-      // 💥 แฟลชกระแทก 3 ชั้น ขาว-เหลือง-ส้ม (เดิมเป็นแสงขาวล้วน)
-      monGlow(m, 0xfff2d0, 0.55);
-      burst(m.position, 0xffd24a, 0.62);
-      burst(m.position, 0xff8a2a, 0.44);
+      // 💥 จุดปะทะ 1 ครั้ง/ตี (เดิมซ้อน 3-4 ชั้น ขาว-เหลือง-ส้ม+สีสกิล แสงวาบจ้าเกิน) · ตัวมอนเรืองแสงเบาลง
+      monGlow(m, 0xfff2d0, 0.38);
+      burst(m.position, opts.color != null ? opts.color : 0xffd24a, 0.62);
       // 💢 สะดุ้ง + เด้งถอยตามทิศที่โดนตี (บอส/ตัวใหญ่เด้งน้อยกว่า)
       { const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z;
         const dl = Math.hypot(dx, dz) || 1;
