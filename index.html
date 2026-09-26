@@ -11023,17 +11023,21 @@ function CherryAdventure() {
                 proc.forEach((c) => { c.visible = false; });
                 return true;
             }
-            const names = KK_FOREST[g.userData.kkSlot] || [];
             const seed = g.userData.kkSeed != null ? g.userData.kkSeed : Math.random();
-            const src = kkForest[names[Math.floor(seed * names.length) % names.length]];
+            const NS = !G.powerSave && NAT_SLOT[g.userData.kkSlot], nat = NS && NS.map((n) => natLib[n]).filter(Boolean); // 🔋 โหมดประหยัด = ใช้ต้นไม้ KayKit ที่เบากว่า   // 🌳 Stylized Nature MegaKit มาก่อน (ถ้าโหลดแล้ว)
+            const names = KK_FOREST[g.userData.kkSlot] || [];
+            const src = nat && nat.length ? nat[Math.floor(seed * nat.length) % nat.length] : kkForest[names[Math.floor(seed * names.length) % names.length]];
             if (!src)
                 return false;
             const node = src.obj.clone(); // geometry/วัสดุใช้ร่วมกัน (clone ไม่ก๊อปข้อมูลจริง)
-            const R = KK_FH[g.userData.kkSlot] || [3, 4];
+            const R = (nat && nat.length ? NAT_FH : KK_FH)[g.userData.kkSlot] || [3, 4];
             const sc = (R[0] + (R[1] - R[0]) * ((seed * 7.3) % 1)) / (src.h || 1);
             node.scale.setScalar(sc);
             node.rotation.y = seed * Math.PI * 2; // หมุนสุ่มกันซ้ำหน้า
-            if (g.userData.kkPink && kkPinkMat)
+            if (g.userData.kkPink && src.nat)
+                node.traverse((o) => { if (o.isMesh && natPink[o.material.uuid])
+                    o.material = natPink[o.material.uuid]; }); // 🌸 ซากุระ (ใบย้อมชมพู)
+            else if (g.userData.kkPink && kkPinkMat)
                 node.traverse((o) => { if (o.isMesh)
                     o.material = kkPinkMat; }); // 🌸 ซากุระ
             g.add(node);
@@ -11041,6 +11045,209 @@ function CherryAdventure() {
             g.userData._frz = 0; // ให้ตัวตรึงเมทริกซ์มาจัดการชิ้นใหม่รอบหน้า
             proc.forEach((c) => { c.visible = false; });
             return true;
+        };
+        // 🌿 Stylized Nature MegaKit (Quaternius · CC0) — ต้นไม้/พุ่มไม้/หญ้า/ดอกไม้/เฟิร์น/เห็ด/หิน สำหรับทุ่งซากุระ
+        //    ย่อ texture เหลือ 256-512px ตัดภาพนูนทิ้ง ใช้ texture ร่วมกัน (โฟลเดอร์ tex) รวม ~2.9MB
+        const NAT_BASE = "assets/quat/nature/";
+        const NAT_SLOT = { tree: ["CommonTree_1", "CommonTree_2", "CommonTree_3", "CommonTree_4"], bush: ["Bush_Common", "Bush_Common_Flowers"] };
+        const NAT_FH = { tree: [3.8, 5.2], bush: [0.75, 1.05] };
+        // ของคลุมดิน: [ไฟล์, จำนวน, ความสูง(min,max), กลุ่ม (ระยะห่างจากกันเป็นกระจุก)]
+        const NAT_COVER = [["Grass_Common_Short", 170, [0.35, 0.55], 1], ["Grass_Common_Tall", 90, [0.55, 0.85], 1], ["Grass_Wispy_Short", 80, [0.4, 0.6], 1],
+            ["Flower_3_Group", 45, [0.4, 0.6], 1], ["Flower_4_Group", 45, [0.4, 0.6], 1], ["Fern_1", 40, [0.55, 0.8], 0], ["Clover_1", 40, [0.15, 0.25], 1],
+            ["Mushroom_Common", 22, [0.25, 0.4], 0], ["RockPath_Round_Small_1", 0, [0.1, 0.1], 0], ["RockPath_Round_Small_2", 0, [0.1, 0.1], 0], ["RockPath_Round_Small_3", 0, [0.1, 0.1], 0], ["Rock_Medium_1", 14, [0.5, 0.9], 0], ["Rock_Medium_2", 14, [0.45, 0.8], 0], ["Pebble_Round_1", 28, [0.12, 0.2], 1], ["Pebble_Round_3", 28, [0.12, 0.2], 1]];
+        const natLib = {}, natPink = {};
+        let natLoading = null;
+        G._natLib = natLib;
+        const natPrep = (name, gl) => {
+            gl.scene.traverse((o) => {
+                if (!o.isMesh)
+                    return;
+                o.castShadow = !/Grass|Clover|Pebble|Flower/.test(name);
+                o.receiveShadow = true;
+                const m = o.material;
+                // 🎨 สีจุดยอดในชุดนี้เป็น "มาสก์ลม" ของเชดเดอร์ Quaternius (โคนดำ ปลายขาว) ไม่ใช่สีจริง — ถ้าปล่อยไว้ใบไม้/หญ้าจะดำ
+                //    หญ้า (texture ขาว ให้เชดเดอร์ย้อมเอง) → แปลงมาสก์เป็นไล่สีเขียวเข้มที่โคน → เขียวอ่อนที่ปลาย · อื่น ๆ ปิดสีจุดยอด
+                if (m && /^Grass/.test(m.name || "") && o.geometry.attributes.color) {
+                    const ca = o.geometry.attributes.color, lo = new THREE.Color(0x24561a).convertSRGBToLinear(), hi = new THREE.Color(0x86c24a).convertSRGBToLinear(), c = new THREE.Color();
+                    for (let i = 0; i < ca.count; i++) {
+                        c.copy(lo).lerp(hi, Math.min(1, ca.getX(i) * 1.1));
+                        ca.setXYZ(i, c.r, c.g, c.b);
+                    }
+                    if (ca.itemSize === 4)
+                        for (let i = 0; i < ca.count; i++)
+                            ca.setW(i, 1);
+                    ca.needsUpdate = true;
+                    m.vertexColors = true;
+                }
+                else if (m)
+                    m.vertexColors = false;
+                if (m) {
+                    m.metalness = 0;
+                    if (m.map) {
+                        m.map.anisotropy = 4;
+                    }
+                    if (m.alphaTest || m.transparent || /Leaves|Leaf|Grass|Flower/.test(m.name || "")) {
+                        m.alphaTest = 0.3;
+                        m.transparent = false;
+                        m.side = THREE.DoubleSide;
+                    }
+                    if (/Leaves|Leaf|Grass|Flower/.test(m.name || "")) { // 🍃 ใบไม้พุ่มหนาบังเงาตัวเองจนดำ — ไม่รับเงา + เรืองแสงอ่อน ๆ จากสีของตัวเอง
+                        o.receiveShadow = false;
+                        m.color.setScalar(1.25);
+                        if (m.map) {
+                            m.emissiveMap = m.map;
+                            m.emissive = new THREE.Color(0xffffff);
+                            m.emissiveIntensity = 0.45;
+                        }
+                    }
+                    else if (/PathRocks/.test(m.name || ""))
+                        m.color.setScalar(1.45);
+                    else if (/Bark|Rock|Mushroom/.test(m.name || ""))
+                        m.color.setScalar(1.18); // แสงในเกมนุ่มกว่า — ยกเนื้อสีขึ้นให้เข้ากับฉากเดิม
+                    m.userData.vivid = true;
+                }
+            });
+            gl.scene.updateMatrixWorld(true);
+            const b = new THREE.Box3().setFromObject(gl.scene);
+            return { obj: gl.scene, h: Math.max(0.01, b.max.y - b.min.y), y0: b.min.y, nat: true };
+        };
+        G.natLoad = () => {
+            if (natLoading || !THREE.GLTFLoader)
+                return natLoading;
+            const L = new THREE.GLTFLoader();
+            const names = [].concat(NAT_SLOT.tree, NAT_SLOT.bush, NAT_COVER.map((c) => c[0]));
+            natLoading = Promise.all(names.map((n) => new Promise((res) => L.load(NAT_BASE + n + ".gltf", (gl) => { natLib[n] = natPrep(n, gl); res(true); }, undefined, () => res(false)))))
+                .then(() => {
+                // 🌸 ใบซากุระ: ย้อม texture ใบไม้เป็นชมพูด้วยตัวย้อมเดียวกับชุดตัวละคร
+                NAT_SLOT.tree.forEach((n) => {
+                    const L2 = natLib[n];
+                    if (!L2)
+                        return;
+                    L2.obj.traverse((o) => {
+                        if (!o.isMesh || natPink[o.material.uuid] || !/Leaves/.test(o.material.name || ""))
+                            return;
+                        const pm = o.material.clone();
+                        if (pm.map && G.qtHueMap)
+                            pm.map = G.qtHueMap(pm.map, "natpink:" + o.material.name, [334, 0.62, 2.0, 0.93]);
+                        pm.needsUpdate = true;
+                        natPink[o.material.uuid] = pm;
+                    });
+                });
+                // 🔁 ต้นไม้/พุ่มที่สลับเป็นชุดอื่นไปแล้ว — ถอดของเดิมออกแล้วสลับใหม่เป็นชุดนี้
+                (G.sceneryObjects || []).forEach((g) => { if (!g.userData || !NAT_SLOT[g.userData.kkSlot])
+                    return; if (g.userData.kkNode) {
+                    g.remove(g.userData.kkNode);
+                    g.userData.kkNode = null;
+                } G.kkForestSwap(g, true); });
+                natCoverBuild();
+                return true;
+            });
+            return natLoading;
+        };
+        // 🌾 โรยหญ้า/ดอกไม้/เฟิร์น/เห็ด/หินทั่วทุ่งซากุระ — InstancedMesh ต่อชิ้นส่วน (วาดทั้งทุ่งไม่กี่รอบ) · เว้นถนน ประตู บ้าน บ่อ
+        let natCover = null;
+        const natCoverBuild = () => {
+            if (natCover)
+                return;
+            const root = new THREE.Group();
+            root.name = "natureCover";
+            const rng = seedRng("meadowCover"), cut = G.powerSave ? 0.45 : 1;
+            const cols = (G.activeColliders ? G.activeColliders() : colliders);
+            // 🪨 ทางเดินหินจากลานหมู่บ้านไปประตูเมือง/บ้าน/ฟาร์ม (แนวทแยง — ถนนดินใช้ 4 ทิศหลักอยู่แล้ว)
+            const paths = Object.keys(GATE_POS).map((k) => { const q = GATE_POS[k], L = Math.hypot(q.x, q.z); return { ux: q.x / L, uz: q.z / L, a: 6.2, b: L - 3.6 }; });
+            const nearPath = (x, z, w) => paths.some((P) => { const t = x * P.ux + z * P.uz; if (t < P.a - 0.6 || t > P.b + 0.6)
+                return false; return Math.abs(x * P.uz - z * P.ux) < w; });
+            const ok = (x, z) => {
+                const r = Math.hypot(x, z);
+                if (r > FIELD_R - 1.2 || r < 5.5)
+                    return false; // ขอบแมพ / ลานกลางหมู่บ้าน
+                if (nearPath(x, z, 1.1))
+                    return false;
+                if (Math.abs(x) < 2.2 || Math.abs(z) < 2.2)
+                    return false; // ถนนดิน 4 ทิศ
+                if (inKeepOut(x, z))
+                    return false;
+                for (const k in GATE_POS) {
+                    const q = GATE_POS[k];
+                    if (Math.hypot(x - q.x, z - q.z) < 4.2)
+                        return false;
+                }
+                for (const c of cols)
+                    if (Math.hypot(x - c.x, z - c.z) < c.r + 0.35)
+                        return false;
+                return true;
+            };
+            const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+            const pathSpots = {}; // ชื่อไฟล์ → จุดวางแผ่นหิน
+            paths.forEach((P, pi) => {
+                for (let t = P.a, k = 0; t <= P.b; t += 1.25, k++) {
+                    const off = Math.sin(k * 1.7 + pi) * 0.28, x = P.ux * t + P.uz * off, z = P.uz * t - P.ux * off;
+                    const nm = "RockPath_Round_Small_" + (1 + ((k + pi) % 3));
+                    (pathSpots[nm] = pathSpots[nm] || []).push([x, z]);
+                }
+            });
+            NAT_COVER.forEach(([name, cnt, H, clump]) => {
+                const L2 = natLib[name];
+                if (!L2)
+                    return;
+                const n = Math.round(cnt * cut), mats = [];
+                if (pathSpots[name]) { // แผ่นหินทางเดิน — กว้าง ~1.1 หน่วย วางราบกับพื้น
+                    const bb = new THREE.Box3().setFromObject(L2.obj), w = Math.max(0.01, bb.max.x - bb.min.x);
+                    pathSpots[name].forEach(([x, z]) => {
+                        const sc = (1.0 + rng() * 0.25) / w;
+                        _q.setFromAxisAngle(up, rng() * Math.PI * 2);
+                        _s.setScalar(sc);
+                        _p.set(x, (typeof terrainAt === "function" ? terrainAt(x, z) : 0) - L2.y0 * sc - 0.02, z);
+                        mats.push(_m.compose(_p, _q, _s).clone());
+                    });
+                }
+                let cx = 0, cz = 0, left = 0;
+                for (let i = 0, tries = 0; i < n && tries < n * 12; tries++) {
+                    let x, z;
+                    if (clump && left > 0) {
+                        x = cx + (rng() - 0.5) * 3.2;
+                        z = cz + (rng() - 0.5) * 3.2;
+                        left--;
+                    }
+                    else {
+                        const a = rng() * Math.PI * 2, r = 5.5 + Math.sqrt(rng()) * (FIELD_R - 6.7);
+                        x = Math.cos(a) * r;
+                        z = Math.sin(a) * r;
+                        if (clump) {
+                            cx = x;
+                            cz = z;
+                            left = 3 + Math.floor(rng() * 5);
+                        }
+                    }
+                    if (!ok(x, z))
+                        continue;
+                    const sc = (H[0] + (H[1] - H[0]) * rng()) / L2.h, y = (typeof terrainAt === "function" ? terrainAt(x, z) : 0) - L2.y0 * sc;
+                    _q.setFromAxisAngle(up, rng() * Math.PI * 2);
+                    _s.setScalar(sc);
+                    _p.set(x, y, z);
+                    mats.push(_m.compose(_p, _q, _s).clone());
+                    i++;
+                }
+                if (!mats.length)
+                    return;
+                L2.obj.traverse((o) => {
+                    if (!o.isMesh)
+                        return;
+                    const im = new THREE.InstancedMesh(o.geometry, o.material, mats.length);
+                    const local = o.matrixWorld.clone();
+                    mats.forEach((M, k) => im.setMatrixAt(k, M.clone().multiply(local)));
+                    im.instanceMatrix.needsUpdate = true;
+                    im.castShadow = o.castShadow;
+                    im.receiveShadow = true;
+                    im.frustumCulled = false;
+                    root.add(im);
+                });
+            });
+            scene.add(root);
+            natCover = root;
+            G._natCover = root;
+            sceneryObjects.push(root); // ซ่อน/แสดงพร้อมฉากทุ่งซากุระ (เมือง/บ้าน/ด่านอื่นซ่อนให้เอง)
+            root.visible = (G.curBiome || 0) === 0 && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.dungeon;
         };
         G.kkForestApply = (on) => {
             let n = 0;
@@ -11918,6 +12125,8 @@ function CherryAdventure() {
             if (G.kkOn) {
                 G.kkLoad();
                 G.kkForestLoad();
+                if (G.natLoad)
+                    G.natLoad();
                 if ((G._kkMons || []).length)
                     G.kkSkelLoad();
             }
@@ -11935,7 +12144,12 @@ function CherryAdventure() {
                 G.kkLoad();
                 G.kkForestLoad();
             }
-            catch (e) { } }, 1500); // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
+            catch (e) { } }, 1500);
+        if (kkOn)
+            setTimeout(() => { try {
+                G.natLoad();
+            }
+            catch (e) { } }, 2600); // 🌿 ชุดธรรมชาติทุ่งซากุระ (~2.9MB) โหลดตามหลังเล็กน้อย // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
         // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
         // 🦸 ฮีโร่ที่มีอาวุธประจำตัว — ใช้ทั้งตัวเราเองและผู้เล่นออนไลน์คนอื่น
         const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW" };
