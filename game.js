@@ -15124,6 +15124,18 @@ function CherryAdventure() {
                     hn.getWorldPosition(_bq.W);
                     _ikRot(la, _bq.W.clone().sub(_bq.E), _bq.T.clone().sub(_bq.E));
                     hn.getWorldPosition(_bq.W);
+                    // 👕 ทุกชิ้นสวม (เสื้อ/ผม/กางเกง/บูท) มีโครงกระดูกแยกกัน — ต้องส่งมุมข้อต่อแขนซ้ายที่ IK ได้ไปให้ทุกชิ้น ไม่งั้นแขนเสื้อค้างท่าเล็งซ้อนกับแขนเปล่า
+                    for (let pi = 1; pi < H.parts.length; pi++) {
+                        const P = H.parts[pi], u2 = P.getObjectByName("upperarm_l"), l2 = P.getObjectByName("lowerarm_l"), h2 = P.getObjectByName("hand_l");
+                        if (u2)
+                            u2.quaternion.copy(ua.quaternion);
+                        if (l2)
+                            l2.quaternion.copy(la.quaternion);
+                        if (h2)
+                            h2.quaternion.copy(hn.quaternion);
+                        if (u2 || l2)
+                            P.updateMatrixWorld(true);
+                    }
                 }
                 if (!bow)
                     return;

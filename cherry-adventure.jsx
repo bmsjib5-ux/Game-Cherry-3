@@ -10946,6 +10946,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           la.getWorldPosition(_bq.E); hn.getWorldPosition(_bq.W);
           _ikRot(la, _bq.W.clone().sub(_bq.E), _bq.T.clone().sub(_bq.E));
           hn.getWorldPosition(_bq.W);
+          // 👕 ทุกชิ้นสวม (เสื้อ/ผม/กางเกง/บูท) มีโครงกระดูกแยกกัน — ต้องส่งมุมข้อต่อแขนซ้ายที่ IK ได้ไปให้ทุกชิ้น ไม่งั้นแขนเสื้อค้างท่าเล็งซ้อนกับแขนเปล่า
+          for (let pi = 1; pi < H.parts.length; pi++) {
+            const P = H.parts[pi], u2 = P.getObjectByName("upperarm_l"), l2 = P.getObjectByName("lowerarm_l"), h2 = P.getObjectByName("hand_l");
+            if (u2) u2.quaternion.copy(ua.quaternion); if (l2) l2.quaternion.copy(la.quaternion); if (h2) h2.quaternion.copy(hn.quaternion);
+            if (u2 || l2) P.updateMatrixWorld(true);
+          }
         }
         if (!bow) return;
         // ①  ธนู: แกน y ของคัน = ขึ้น · แกน +x (ท้องคันที่นูน) = ไปข้างหน้า → สาย (ฝั่ง −x ที่โยงปลายคัน) หันเข้าตัวผู้ยิง
