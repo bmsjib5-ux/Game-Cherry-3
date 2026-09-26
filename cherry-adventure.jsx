@@ -2935,7 +2935,8 @@ const CREATE_TABS = [
 //    hue = [องศาสี, ความอิ่มตัวต่ำสุด, ตัวคูณความสว่าง, เพดานสว่าง?, ย้อมเทากลาง?, ความอิ่มตัวสูงสุด?] — ชุดเดียวกับที่ใช้ย้อมมอนสเตอร์
 const HERO_MODELS = {
   warrior:  { name: "นักรบ",        emoji: "⚔️", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_Buzzed"],           h: 4.0, hue: [215, 0.30, 1.02], hairC: 0x4a3222, desc: "นักรบเกราะหนังเหล็ก" },
-  aegis:    { name: "องครักษ์",     emoji: "🛡️", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_SimpleParted"],     h: 4.05, hue: [45, 0.60, 1.06], hairC: 0x5a4028, desc: "องครักษ์ชุดทอง" },
+  aegis:    { name: "จักรกลพิทักษ์", emoji: "🤖", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_SimpleParted"],     h: 4.05, hue: [45, 0.60, 1.06], hairC: 0x5a4028, desc: "หุ่นยนต์จักรกลพิทักษ์",
+              mech: "Mech_Mike", mechH: 3.9, mechTint: { Main: 0x2a86d8, Accent: 0x22c8e8, Grey: 0x5a6878, LightGrey: 0xb8c4d2 } },   // 🤖 ร่างหุ่นยนต์ Animated Mech (Quaternius · CC0)
   lancer:   { name: "ทหารหอก",      emoji: "🔱", gender: 1, files: ["Male_Base", "Male_Ranger", "Hair_Buzzed"],           h: 4.05, hue: [352, 0.50, 0.98], hairC: 0x2e2620, desc: "ทหารหอกชุดแดงเลือดหมู" },
   samurai:  { name: "ซามูไร",       emoji: "🗡️", gender: 1, files: ["Male_Base", "Male_Peasant", "Hair_Buzzed"],          h: 3.95, hue: [358, 0.60, 1.00], hairC: 0x2a2830, desc: "ซามูไรมัดจุกหางม้าชุดแดง",
               // 🎀 ผมสั้นเป็นฐาน + จุกมัดรวบหางม้าเดียวปั้นเพิ่มบนกระดูกหัว (คลังผมฟรีไม่มีทรงนี้) — พิกัดหน่วยตัวละคร: +y ขึ้น, -z หลัง, วัดจากกระดูกหัว
@@ -8984,6 +8985,59 @@ export default function CherryAdventure() {
     Object.values(gloveLModels).forEach((m) => { m.visible = false; wandL.add(m); });   // 🥊 นวมข้างซ้ายอยู่คนละช่องมือ
     weaponModels.default.visible = true;
     let curWeapon = "default";
+    // 🌌 เทวศาสตราปฐมกาล — ออร่าเหนืออาวุธมังกร: เปลือกเรืองแสงไล่สีรุ้งจักรวาลรอบตัวอาวุธ · ดาวหมุนวนเป็นเกลียวตามใบ
+    //    · วงแหวนเทพที่ด้ามและปลาย · แกนแสงบาง ๆ กลางใบ · แสงชมพูม่วง — ใช้กับโมเดลอาวุธทุกตระกูล (เพราะเทวศาสตราใช้ได้ทุกอาชีพ)
+    {
+      const starTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d");
+        const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.25, "rgba(255,220,255,0.85)"); gr.addColorStop(1, "rgba(255,120,255,0)");
+        x.fillStyle = gr; x.fillRect(0, 0, 64, 64); x.fillStyle = "rgba(255,255,255,0.9)"; x.fillRect(30, 4, 4, 56); x.fillRect(4, 30, 56, 4);
+        const t = new THREE.CanvasTexture(c); return t; })();
+      const fx = new THREE.Group(); fx.name = "godWpnFx"; fx.visible = false; wand.add(fx);
+      const add = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false };
+      const stars = [];
+      for (let i = 0; i < 26; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial(Object.assign({ map: starTex, color: 0xffffff }, add))); sp.userData.u = i / 26; sp.userData.ph = i * 2.4; fx.add(sp); stars.push(sp); }
+      const ringM = new THREE.MeshBasicMaterial(Object.assign({ color: 0xff7af0, opacity: 0.85, side: THREE.DoubleSide }, add));
+      const ringA = new THREE.Mesh(new THREE.TorusGeometry(1, 0.045, 8, 48), ringM), ringB = new THREE.Mesh(new THREE.TorusGeometry(1, 0.03, 8, 48), ringM.clone());
+      fx.add(ringA, ringB);
+      const coreM = new THREE.MeshBasicMaterial(Object.assign({ color: 0xffd6ff, opacity: 0.55 }, add));
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.05, 1, 10, 1, true), coreM); fx.add(core);
+      const lt = new THREE.PointLight(0xff5ae8, 0, 5); fx.add(lt);
+      let shells = [], box = null, on = false;
+      const shellM = new THREE.MeshBasicMaterial(Object.assign({ color: 0xff6af0, opacity: 0.32, side: THREE.BackSide }, add));
+      G.godWeaponFx = (model, want) => {
+        shells.forEach((m) => { if (m.parent) m.parent.remove(m); }); shells = [];
+        on = !!(want && model); fx.visible = on; lt.intensity = on ? 0.9 : 0;
+        if (!on) return;
+        const meshes = []; model.traverse((o) => { if (o.isMesh && o.visible && o.geometry && !o.userData.godShell) meshes.push(o); });
+        meshes.slice(0, 80).forEach((o) => { const sh = new THREE.Mesh(o.geometry, shellM); sh.userData.godShell = 1; sh.scale.setScalar(1.12); sh.renderOrder = 2; sh.matrixAutoUpdate = true; o.add(sh); sh.updateMatrix(); shells.push(sh); });
+        // 📏 ขอบเขตอาวุธในพิกัดของ wand (ไม่ยืดตามสเกลโมเดล — ดาว/วงแหวนจึงกลมเสมอ)
+        wand.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(wand.matrixWorld).invert(), b = new THREE.Box3(), tb = new THREE.Box3(), m4 = new THREE.Matrix4();
+        meshes.forEach((o) => { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); tb.copy(o.geometry.boundingBox).applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); b.union(tb); });
+        if (b.isEmpty()) b.set(new THREE.Vector3(-0.1, 0, -0.1), new THREE.Vector3(0.1, 1.5, 0.1));
+        box = b; const c = b.getCenter(new THREE.Vector3()), h = Math.max(0.3, b.max.y - b.min.y), r = Math.max(0.08, Math.min(0.35, Math.max(b.max.x - b.min.x, b.max.z - b.min.z) * 0.5));
+        fx.userData.c = c; fx.userData.h = h; fx.userData.r = r;
+        ringA.position.set(c.x, b.min.y + h * 0.18, c.z); ringA.scale.setScalar(r * 1.5); ringA.rotation.x = Math.PI / 2;
+        ringB.position.set(c.x, b.max.y - h * 0.05, c.z); ringB.scale.setScalar(r * 1.0); ringB.rotation.x = Math.PI / 2;
+        core.position.set(c.x, c.y, c.z); core.scale.set(1, h * 0.95, 1);
+        lt.position.copy(c);
+        stars.forEach((sp) => sp.scale.setScalar(Math.max(0.08, h * 0.05)));
+      };
+      G.godWeaponTick = (t) => {
+        if (!on || !box) return;
+        const c = fx.userData.c, h = fx.userData.h, r = fx.userData.r;
+        const hue = (t * 0.12) % 1;
+        shellM.color.setHSL((hue + 0.85) % 1, 1, 0.62); shellM.opacity = 0.26 + Math.sin(t * 3.1) * 0.08;
+        ringM.color.setHSL((hue + 0.9) % 1, 1, 0.66); ringB.material.color.setHSL((hue + 0.5) % 1, 1, 0.7);
+        coreM.opacity = 0.45 + Math.sin(t * 5.3) * 0.15; lt.color.setHSL((hue + 0.88) % 1, 1, 0.6);
+        ringA.rotation.z = t * 1.6; ringA.rotation.x = Math.PI / 2 + Math.sin(t * 1.3) * 0.25; ringB.rotation.z = -t * 2.3;
+        stars.forEach((sp, i) => {                                          // ✨ ดาวไหลขึ้นเป็นเกลียวตามใบ แล้ววนกลับที่ด้าม
+          const u = (sp.userData.u + t * 0.22) % 1, a = sp.userData.ph + t * 3.2 + u * 9;
+          const rr = r * (1.25 + 0.35 * Math.sin(u * Math.PI));
+          sp.position.set(c.x + Math.cos(a) * rr, box.min.y + u * h * 1.08, c.z + Math.sin(a) * rr);
+          sp.material.opacity = Math.sin(u * Math.PI) * 0.95; sp.material.color.setHSL((hue + i * 0.04) % 1, 0.9, 0.75);
+        });
+      };
+    }
     G.setWeaponVisual = (id) => {
       // 👗 fashion: if a costume weapon is set, SHOW that instead (stats stay from the real gear)
       if (G.costume && G.costume.weapon) id = G.costume.weapon;
@@ -9070,7 +9124,15 @@ export default function CherryAdventure() {
         model.scale.setScalar(big);
         model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
         model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
+        // 🌌 เทวศาสตรา: ยาวขึ้น 2 เท่า แต่หน้าตัดเท่าเดิม (บางเพียว ด้ามยังพอดีมือ) — นวมไม่ยืด (ยืดแล้วเสียทรง)
+        if (witS && witS.rarity === "god" && !G._gloveOn) {
+          const L = big * 2, W = big * 0.92;
+          model.scale.set(W, L, W);
+          model.position.y = gy * L + (1 - L) * BLADE_HILT;
+          model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * W;
+        }
       }
+      if (G.godWeaponFx) G.godWeaponFx(model, !!(model && LOOT.find((x) => x.id === id && x.rarity === "god")));   // 🌌 ออร่าจักรวาลของเทวศาสตรา
       if (famKey && (kkKey || !ownModel) && G.applyWpnElem) { // 🔥 ติดเครื่องประดับธาตุตามชื่ออาวุธ (โมเดลปั้นเองมีธาตุในตัวแล้ว · โมเดล KayKit ต่อไอเทมต้องติดเพิ่ม)
         const wit2 = LOOT.find((x) => x.id === id);
         const parts = famKey.split("_");
@@ -10698,7 +10760,81 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           a.fadeIn(0.1).play();
           if (prev && prev[i] && prev[i] !== a) prev[i].fadeOut(0.1);
         });
-        H.cur = name;
+        H.cur = name; H.playN = (H.playN || 0) + 1;
+      };
+      // 🤖 ร่างหุ่นยนต์ (อาชีพจักรกลพิทักษ์) — ร่างคนยังอยู่แต่ซ่อนตาข่าย ระบบเดิมเลือกท่า/ถืออาวุธได้ครบ แล้วแปลงชื่อท่าคน → ท่าหุ่นยนต์
+      //    หุ่น Mech ใช้โครงกระดูกคนละชุด ท่าคนเอามาเล่นตรง ๆ ไม่ได้ จึงเล่นคลิปของหุ่นเอง (Idle/Walk/Run/Shoot/Punch/…)
+      const mechFiles = {};
+      const mechLoad = (n) => mechFiles[n] || (mechFiles[n] = new Promise((res) => {
+        if (!THREE.GLTFLoader) return res(null);
+        new THREE.GLTFLoader().load("assets/quat/mech/" + n + ".glb", (gl) => res(gl), undefined, () => res(null));
+      }));
+      const HERO_MECH_CLIP = (n) => !n ? "Idle" : /Death/.test(n) ? "Death" : /Knockback|Shield_Break/.test(n) ? "HitRecieve_2"
+        : /^Hit_|Shield_OneShot|Sword_Block/.test(n) ? "HitRecieve_1" : /Jump/.test(n) ? "Jump"
+        : /Sprint|Jog|Swim_Fwd|Roll|Slide/.test(n) ? "Run" : /Walk/.test(n) ? "Walk" : /Dance/.test(n) ? "Dance"
+        : /Kick|Knee/.test(n) ? "Kick" : /Sword_Regular_C|Punch|Hook/.test(n) ? "Punch" : /Shield_Dash|Heavy|Sword_Dash/.test(n) ? "SwordSlash"
+        : /Sword_(Attack|Regular)|Shoot|Throw/.test(n) ? "Shoot" : "Idle";
+      const HERO_MECH_GRIP = { py: 0, pz: 0.5, s: 2.3 };   // 🔫 อาวุธบนฝ่ามือหุ่น (ปรับจากภาพทดสอบ)
+      const heroMechAttach = (H, M, token) => mechLoad(M.mech).then((gl) => {
+        if (!gl || token !== G._heroTok || G._heroModel !== H || !THREE.SkeletonUtils) return;
+        const m = THREE.SkeletonUtils.clone(gl.scene); m.name = "heroMech";
+        m.updateMatrixWorld(true);
+        const b = new THREE.Box3().setFromObject(m), k = (M.mechH || M.h) / Math.max(0.01, b.max.y - b.min.y);
+        m.scale.setScalar(k); m.position.y = -b.min.y * k;
+        const seen = new Map();
+        m.traverse((o) => {
+          if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false;
+          const f = (mt) => {
+            if (!mt) return mt; let c = seen.get(mt); if (c) return c;
+            c = mt.clone(); if (c.metalness > 0.35) c.metalness = 0.35;
+            if (M.mechTint && M.mechTint[mt.name] != null) c.color.setHex(M.mechTint[mt.name]);
+            if (mt.name === "Eye") { c.color.setHex(0xbff6ff); c.emissive = new THREE.Color(0x5ae0ff); c.emissiveIntensity = 1.8; }   // 👁️ ตาเรืองแสง
+            else H.mats.push(c);
+            seen.set(mt, c); return c;
+          };
+          o.material = Array.isArray(o.material) ? o.material.map(f) : f(o.material);
+        });
+        const mx = new THREE.AnimationMixer(m), acts = {};
+        gl.animations.forEach((c) => { acts[c.name] = mx.clipAction(c); });
+        H.g.add(m);
+        H.parts.forEach((pt) => pt.traverse((o) => { if (o.isSkinnedMesh) o.visible = false; }));   // 🙈 ซ่อนแค่ตาข่ายร่างคน (อาวุธ/คบเพลิงที่เกาะกระดูกมือยังแสดง · โครงกระดูกยังขยับให้ระบบเดิมใช้)
+        if (H.tk) H.tk.grp.visible = false;
+        if (H.deco) H.deco.forEach((K) => { if (K.grp) K.grp.visible = false; });
+        H.mech = { m, mx, acts, cur: null, n: -1, palm: m.getObjectByName("PalmIR"), palmL: m.getObjectByName("PalmIL"), arm: m.getObjectByName("LowerArmR"), armL: m.getObjectByName("LowerArmL"),   // GLTFLoader ตัดจุดออกจากชื่อกระดูก (PalmI.R → PalmIR)
+                   mW: new THREE.Matrix4(), mO: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), s: new THREE.Vector3(), e: new THREE.Euler() };
+        H.lit = -1;
+      });
+      const _mechOnce = { Death: 1, HitRecieve_1: 1, HitRecieve_2: 1, Jump: 1, Shoot: 1, Punch: 1, Kick: 1, SwordSlash: 1 };
+      const heroMechTick = (H, dt) => {
+        const Mc = H.mech, cl = HERO_MECH_CLIP(H.cur), a = Mc.acts[cl];
+        if (a && (cl !== Mc.cur || (H.playN !== Mc.n && _mechOnce[cl]))) {
+          const once = !!_mechOnce[cl], prev = Mc.cur ? Mc.acts[Mc.cur] : null;
+          a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity); a.clampWhenFinished = once;
+          a.timeScale = once && cl !== "Death" ? 1.7 : 1;
+          a.fadeIn(0.12).play(); if (prev && prev !== a) prev.fadeOut(0.12);
+          Mc.cur = cl;
+        }
+        Mc.n = H.playN;
+        Mc.mx.update(dt);
+      };
+      // 🔫 อาวุธ/ของมือซ้ายยังเกาะกระดูกมือของร่างคน (ที่ซ่อนไว้) — ย้ายตำแหน่งจริงไปอยู่หน้ากำปั้นหุ่นทุกเฟรม
+      //    แกนอาวุธชี้ตามแนวแขนท่อนล่าง (ศอก → ฝ่ามือ) แบบปืนติดแขน: ยกแขนยิง = ปืนชี้ไปหน้า · ห้อยแขน = ปืนชี้ลง ด้านบนหันไปหน้า
+      //    ในกรอบของ grip อาวุธชี้ +Z (มุมจับ wand หมุน x≈1.42 ให้ลำกล้อง +Y ของโมเดลชี้ไปหน้าอยู่แล้ว)
+      const heroMechGrip = (H, grip, bone, arm, hand) => {
+        if (!grip || !bone || !arm || !hand) return;
+        const Mc = H.mech, T = HERO_MECH_GRIP, V = THREE.Vector3;
+        const P = bone.getWorldPosition(Mc.v), A = arm.getWorldPosition(new V());
+        const Z = P.clone().sub(A).normalize();
+        const up = new V(0, 1, 0), F = new V(0, 0, 1).applyQuaternion(char.getWorldQuaternion(Mc.q));
+        const hint = up.multiplyScalar(1 - Math.abs(Z.y)).addScaledVector(F, -Z.y);
+        const X = new V().crossVectors(hint, Z); if (X.lengthSq() < 1e-6) X.set(1, 0, 0); X.normalize();
+        const Y = new V().crossVectors(Z, X);
+        Mc.q.setFromRotationMatrix(Mc.mO.makeBasis(X, Y, Z));
+        char.getWorldScale(Mc.s); const ws = Mc.s.x * HERO_GRIP.s * T.s;
+        P.addScaledVector(Z, T.pz * Mc.s.x).addScaledVector(Y, T.py * Mc.s.x);
+        Mc.mW.compose(P, Mc.q, Mc.s.set(ws, ws, ws));
+        Mc.mO.copy(hand.matrixWorld).invert().multiply(Mc.mW);
+        Mc.mO.decompose(grip.position, grip.quaternion, grip.scale);
       };
       // 👕 ชุดไอเทมบนโมเดล 3D — ① แบบชุด (cut: Peasant ผ้า/เสื้อคลุม · Ranger เกราะหนัง+ฮู้ด) ② ย้อมสีตามไอเทม (hue แบบเดียวกับที่แยกอาชีพ)
       //    ③ ของประดับเกาะกระดูกตามขั้น (heroOutfitDeco) · ไม่ระบุ cut = ใช้ชุดประจำอาชีพเดิม
@@ -11198,6 +11334,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (tkRig) { g.updateMatrixWorld(true); heroTopknotTick(G._heroModel); }
           { const hooded = /Ranger$/.test(M.files[1] || ""); const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded)); if (deco.length) { G._heroModel.deco = deco; g.updateMatrixWorld(true); deco.forEach((K) => heroBoneFollow(G._heroModel, K)); } }   // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
           heroPlay("Idle_Loop");
+          if (M.mech) heroMechAttach(G._heroModel, M, token);   // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์
         });
       };
       // 🎬 เลือกท่าจากสถานะจริงของผู้เล่นทุกเฟรม — ตาย > ขี่สัตว์ > พุ่ง > กระโดด > โจมตี/ร่าย > โดนตี > วิ่ง/เดิน > ยืน
@@ -11380,6 +11517,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         { const bare = !!HERO_BARE_HANDS[H.cur];                // 🌱 ปลูก/รดน้ำ/เก็บผัก/ยกจาน ใช้มือเปล่า — ซ่อนอาวุธระหว่างท่า แล้วคืนให้ทันทีที่จบ
           if (bare !== !!H.bareHide) { H.bareHide = bare; if (H.grip) H.grip.visible = !bare; if (H.gripL) H.gripL.visible = !bare; } }
         H.mixers.forEach((m) => m.update(dt));
+        if (H.mech) heroMechTick(H, dt);   // 🤖
         { const ty = G._swimming ? (HERO_SWIM_Y[H.cur] || 0) : 0; H.swimY = (H.swimY || 0) + (ty - (H.swimY || 0)) * Math.min(1, dt * 6);   // 🏊 ปรับระดับตัวในน้ำ (ค่อย ๆ เปลี่ยน)
           H.g.position.y = H.swimY; }
         heroTorchTick(H, torchOn && !atk && !HERO_BARE_HANDS[H.cur] && H.cur !== "Chest_Open" && H.cur !== "Death01" && H.cur !== "Hit_Knockback" && H.cur !== "LayToIdle" && H.cur !== "Roll" && H.cur !== "Slide_Start");
@@ -11404,6 +11542,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         if (G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk))))) heroBowDraw(H, H.cur === "Pistol_Idle_Loop");   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
         else if (H.bowArrow) H.bowArrow.visible = false;
+        if (H.mech) {                                      // 🤖 อาวุธไปอยู่บนฝ่ามือหุ่นยนต์
+          H.g.updateMatrixWorld(true);
+          heroMechGrip(H, H.grip, H.mech.palm, H.mech.arm, H.hand);
+          if (H.gripL) heroMechGrip(H, H.gripL, H.mech.palmL, H.mech.armL, H.gripL.parent);
+        }
         if (H.neck && H.neckPlane) {                       // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
           H.neck.getWorldPosition(H.tmpV); H.tmpV.y -= 0.06 * H.k;
           H.neckPlane.setFromNormalAndCoplanarPoint(H.neckPlane.normal.set(0, 1, 0), H.tmpV);
@@ -57092,6 +57235,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🎞️ ขัดเกลาท่าทาง — ทำหลังโค้ดท่าทั้งหมดเขียนค่าเสร็จ แล้วค่อยหน่วง/เติมลมหายใจก่อนวาด
       if (dtForce == null && G.mode !== "create" && !G.equipScreen) { try { polishPose(dt, t); } catch (_) {} }
       if (G.heroModelTick) { try { G.heroModelTick(dt); } catch (_) {} }   // 🧍 ตัวละครโมเดล 3D (ทดลอง)
+      if (G.godWeaponTick) G.godWeaponTick(performance.now() / 1000);   // 🌌 ออร่าเทวศาสตรา
       if (G.npcModelTick) { try { G.npcModelTick(dt); } catch (_) {} }        // 🧑‍🌾 NPC หมู่บ้านขยับท่ายืน
       if (G.villageFxTick && G.mode !== "battle") { try { G.villageFxTick(t); } catch (_) {} }   // 🔥💨 กองไฟ/คบเพลิง/ควันหมู่บ้าน
       if (G.ambientFxTick && dtForce == null) { try { G.ambientFxTick(dt, t); } catch (_) {} }   // 🪲🦋🍂 หิ่งห้อย/ผีเสื้อ/ใบไม้ร่วง
