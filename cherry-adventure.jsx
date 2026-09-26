@@ -913,6 +913,9 @@ Object.assign(SPECIES, {
   kraken:     { name: "คราเคนเจ้าสมุทร",  emoji: "🐙", color: 0x7a4ac0, hp: 470, atk: 44, catch: 0.01, tier: 8, desc: "อสูรหมึกยักษ์แห่งท้องทะเลลึก", animal: "snake", weak: "wind" },
   // 🗿 ดินแดนไททัน (Lv 500-600)
   stonetitan: { name: "ไททันกล้ามเหล็ก",  emoji: "🗿", color: 0xb03a2c, hp: 380, atk: 39, catch: 0.02, tier: 7, desc: "ยักษ์กล้ามเนื้อ กายสีเลือด หัวกะโหลกอสูร", animal: "beast", weak: "arcane" },
+  gobwarlord: { name: "จอมโจรก็อบลินยักษ์", emoji: "👹", color: 0x5a9a3a, hp: 400, atk: 40, catch: 0.01, tier: 7, desc: "หัวหน้าโจรก็อบลินร่างยักษ์ ครองถ้ำใต้ทุ่งหิมะ" },          // 👹 บอสถ้ำโจรก็อบลิน (ด่าน 3)
+  tribalking: { name: "ราชันเผ่าบรรพกาล",  emoji: "🗿", color: 0xc0502a, hp: 480, atk: 46, catch: 0.01, tier: 8, desc: "ราชาเผ่ามนุษย์ถ้ำผู้หลับใหลในวิหารกลางขุมนรก" },          // 🗿 บอสวิหารร้าง (ด่าน 7)
+  skullking:  { name: "จ้าวกะโหลกไวกิ้ง",  emoji: "💀", color: 0x6ab0d8, hp: 560, atk: 52, catch: 0.01, tier: 8, desc: "อสูรกะโหลกผู้เฝ้าสุสานไวกิ้งกลางป่าอเมซอน" },            // 💀 บอสสุสานไวกิ้ง (ด่าน 13)
   cyclops:    { name: "ยักษ์กะโหลก",       emoji: "👹", color: 0x9a2f8a, hp: 420, atk: 43, catch: 0.02, tier: 7, desc: "อสูรยักษ์กล้ามเนื้อ ตาเพลิงสีคราม", animal: "beast", weak: "light" },
   titanlord:  { name: "จอมไททันบรรพกาล", emoji: "⛰️", color: 0x7a1e18, hp: 580, atk: 50, catch: 0.01, tier: 8, desc: "ราชันยักษ์กล้ามเหล็ก หัวกะโหลกจอมมาร", animal: "beast", weak: "light" },
   // 🌴 ป่าอเมซอน (Lv 1000-1100) — ป่าดิบชื้น
@@ -3838,7 +3841,7 @@ export default function CherryAdventure() {
     const rnd = (a, b) => a + Math.random() * (b - a);
     // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
     G.biomeColliders = [];
-    const activeColliders = () => (G.inHomeZone || G.inTownZone || (G.dungeon && G.dungeon.cave)) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
+    const activeColliders = () => (G.dungeon && G.dungeon.cave) ? (G._mazeCols || []) : (G.inHomeZone || G.inTownZone) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
     G.activeColliders = activeColliders;
     // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
     // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -8249,6 +8252,9 @@ export default function CherryAdventure() {
       ufoboss:    { f: "Blob_Alien",          c: "blob", by: "h", size: 2.4, y: 0.4, mul: 0xb080ff },
       gummy:      { f: "Blob_PinkBlob",       c: "blob", by: "h", size: 1.6 },
       cyclops:    { f: "Big_Orc_Skull",       c: "big",  by: "h", size: 2.7 },
+      gobwarlord: { f: "Big_Orc",             c: "big",  by: "h", size: 2.2, hue: [105, 0.55, 1.0] },       // 👹 ออร์คย้อมเขียวก็อบลิน (ไม่ซ้ำไททัน)
+      tribalking: { f: "Big_Tribal",          c: "big",  by: "h", size: 2.2, hue: [12, 0.7, 1.05] },        // 🗿 ชนเผ่าย้อมแดงเพลิง (ไม่ซ้ำโพธิสัตว์)
+      skullking:  { f: "Big_Orc_Skull",       c: "big",  by: "h", size: 2.2, hue: [200, 0.6, 1.1] },        // 💀 กะโหลกย้อมฟ้าน้ำแข็ง (ไม่ซ้ำยักษ์กะโหลก)
       stonetitan: { f: "Big_Yeti",            c: "big",  by: "h", size: 2.7, mul: 0x9a9aa0 },
       titanlord:  { f: "Big_Orc",             c: "big",  by: "h", size: 3.1, mul: 0x7a7a80 },
       hanuman:    { f: "Big_Monkroose",       c: "big",  by: "h", size: 2.3, mul: 0xf0f0f0 },
@@ -19367,7 +19373,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (U.caveBoss && G.dungeon && G.dungeon.cave && CAVE_DEF[G.dungeon.cave]) n = CAVE_DEF[G.dungeon.cave].bossName;
       else if (U.boss && !U.twr) { const B = BIOMES[G.curBiome || 0]; if (B && B.boss === U.spId && B.bossName) n = B.bossName; }
       if (!n) n = (SPECIES[U.spId] || {}).name || "มอนสเตอร์";
-      n = String(n).replace(/\s*[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F]+\s*$/u, "").trim() || String(n);
+      n = String(n).replace(/\s*[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F\u200D]+\s*$/u, "").replace(/^\s*[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F\u200D]+\s*/u, "").trim() || String(n);   // ตัดอีโมจิหน้า/ท้ายชื่อ
       return (U.dispName = n);
     };
     const drawMonsterLabel = (m) => {
@@ -21765,21 +21771,55 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const CAVE_ROOMS = 5;
     // 🗺️ ดันเจี้ยนประจำด่าน — ใช้ระบบห้อง/เวลา/นับตัวชุดเดียวกัน ต่างกันที่ฉาก ศัตรู บอส เลเวล และด่านที่ตั้งปากทาง
     const CAVE_DEF = {
-      goblin: { name: "ถ้ำโจรก็อบลิน", emoji: "⛏️", bossEmoji: "👺", biome: "meadow", pos: { x: -23, z: -23 }, req: 5, lvMin: 10, lvMax: 45,
-        pool12: ["goblin2d", "goblin2d", "mochi", "plerng"], pool: ["goblin2d", "goblin2d", "khiao", "ngu", "plerng"], boss: "goblin2d", minion: "goblin2d",
-        bossName: "👺 หัวหน้าโจรก็อบลิน", foe: "โจรก็อบลิน", theme: "cave", reward: 1, gateCol: 0x9ae06a, labelCol: "#e8ffd0",
+      goblin: { name: "ถ้ำโจรก็อบลิน", emoji: "⛏️", bossEmoji: "👹", biome: "snow", pos: { x: -23, z: -23 }, req: 100, lvMin: 110, lvMax: 175, atkMul: 1.4,   /* ด่าน 3 */
+        pool12: ["goblin2d", "goblin2d", "mochi", "plerng"], pool: ["goblin2d", "goblin2d", "khiao", "ngu", "plerng"], boss: "gobwarlord", minion: "goblin2d",
+        bossName: "👹 จอมโจรก็อบลินยักษ์", foe: "โจรก็อบลิน", theme: "cave", reward: 2, gateCol: 0x9ae06a, labelCol: "#e8ffd0",
         wall: "ผนังถ้ำกั้นอยู่", kick: "ถูกโจรก็อบลินไล่ออกจากถ้ำ!" },
-      viking: { name: "สุสานไวกิ้ง", emoji: "⚰️", bossEmoji: "🪓", biome: "snow", pos: { x: -23, z: -23 }, req: 60, lvMin: 100, lvMax: 160,
-        pool12: ["viking2d", "zombie", "paksi", "zombie"], pool: ["viking2d", "zombie", "viking2d", "zombie", "paksi"], boss: "viking2d", minion: "viking2d",
-        bossName: "🪓 จ้าวไวกิ้งผู้ไม่หลับใหล", foe: "วิญญาณนักรบไวกิ้ง", theme: "tomb", reward: 3, gateCol: 0x8ac8ff, labelCol: "#dff0ff",
+      viking: { name: "สุสานไวกิ้ง", emoji: "⚰️", bossEmoji: "🪓", biome: "amazon", pos: { x: -23, z: -23 }, req: 1000, lvMin: 1015, lvMax: 1140, atkMul: 1.8,   /* ด่าน 13 */
+        pool12: ["viking2d", "zombie", "paksi", "zombie"], pool: ["viking2d", "zombie", "viking2d", "zombie", "paksi"], boss: "skullking", minion: "viking2d",
+        bossName: "💀 จ้าวกะโหลกไวกิ้ง", foe: "วิญญาณนักรบไวกิ้ง", theme: "tomb", reward: 6, gateCol: 0x8ac8ff, labelCol: "#dff0ff",
         wall: "ผนังสุสานกั้นอยู่", kick: "วิญญาณไวกิ้งผลักออกจากสุสาน!" },
-      caveman: { name: "วิหารร้างมนุษย์ถ้ำ", emoji: "🗿", bossEmoji: "🪨", biome: "desert", pos: { x: -23, z: -23 }, req: 40, lvMin: 50, lvMax: 110,
-        pool12: ["caveman2d", "caveman2d", "plerng", "ngu"], pool: ["caveman2d", "caveman2d", "khiao", "saming", "ngu"], boss: "caveman2d", minion: "caveman2d",
-        bossName: "🪨 หัวหน้าเผ่ามนุษย์ถ้ำ", foe: "นักรบเผ่ามนุษย์ถ้ำ", theme: "ruins", reward: 2, gateCol: 0xffc070, labelCol: "#fff0d0",
+      caveman: { name: "วิหารร้างมนุษย์ถ้ำ", emoji: "🗿", bossEmoji: "🪨", biome: "hell", pos: { x: -23, z: -23 }, req: 450, lvMin: 465, lvMax: 585, atkMul: 1.6,   /* ด่าน 7 */
+        pool12: ["caveman2d", "caveman2d", "plerng", "ngu"], pool: ["caveman2d", "caveman2d", "khiao", "saming", "ngu"], boss: "tribalking", minion: "caveman2d",
+        bossName: "🗿 ราชันเผ่าบรรพกาล", foe: "นักรบเผ่ามนุษย์ถ้ำ", theme: "ruins", reward: 4, gateCol: 0xffc070, labelCol: "#fff0d0",
         wall: "ซากกำแพงวิหารกั้นอยู่", kick: "เผ่ามนุษย์ถ้ำไล่ออกจากวิหาร!" },
     };
     G.CAVE_DEF = CAVE_DEF;
     const caveCfg = () => CAVE_DEF[(G.dungeon && G.dungeon.cave) || "goblin"] || CAVE_DEF.goblin;
+    // 🌀 เขาวงกตในดันเจี้ยน — ตาราง 6×6 ช่อง (ช่องละ 5.32 = กำแพง KayKit 1 แผ่น) · ขุดทางแบบ DFS + เจาะเพิ่มนิดหน่อยให้มีทางวน
+    //    เริ่มที่ช่องหน้าประตูโค้ง (ล่างกลาง) → ปลายทาง = ช่องที่ไกลที่สุด (ห้องบอส) · สุ่มจาก seed ถ้ำ+ห้อง = ผังเดิมทุกครั้งที่เข้า
+    const MZ_N = 6, MZ_T = 4 * 1.33;
+    const caveMaze = () => {
+      const D = G.dungeon; if (!D || !D.cave) return null;
+      const key = D.cave + ":" + (D.floor || 1);
+      if (G._maze && G._maze.key === key) return G._maze;
+      const rng = seedRng("maze:" + key), N = MZ_N, id = (i, j) => j * N + i;
+      const open = new Set(), ek = (a, b) => (a < b ? a + "|" + b : b + "|" + a);
+      const start = { i: 3, j: 5 }, vis = new Uint8Array(N * N), st = [start]; vis[id(3, 5)] = 1;
+      const nb = (c) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => ({ i: c.i + a, j: c.j + b })).filter((q) => q.i >= 0 && q.j >= 0 && q.i < N && q.j < N);
+      while (st.length) { const c = st[st.length - 1], fr = nb(c).filter((q) => !vis[id(q.i, q.j)]);
+        if (!fr.length) { st.pop(); continue; }
+        const q = fr[Math.floor(rng() * fr.length)]; open.add(ek(id(c.i, c.j), id(q.i, q.j))); vis[id(q.i, q.j)] = 1; st.push(q); }
+      for (let k = 0; k < 5; k++) { const i = Math.floor(rng() * N), j = Math.floor(rng() * N), q = nb({ i, j })[Math.floor(rng() * 4) % nb({ i, j }).length]; open.add(ek(id(i, j), id(q.i, q.j))); }   // ทางวนเพิ่ม
+      // BFS หาช่องไกลสุด + เส้นทางหลัก
+      const dist = new Int16Array(N * N).fill(-1), prev = new Int16Array(N * N).fill(-1), qu = [id(3, 5)]; dist[id(3, 5)] = 0;
+      while (qu.length) { const c = qu.shift(), ci = c % N, cj = (c / N) | 0;
+        for (const q of nb({ i: ci, j: cj })) { const qi = id(q.i, q.j); if (dist[qi] < 0 && open.has(ek(c, qi))) { dist[qi] = dist[c] + 1; prev[qi] = c; qu.push(qi); } } }
+      let end = 0; for (let k = 0; k < N * N; k++) if (dist[k] > dist[end]) end = k;
+      const path = []; for (let c = end; c >= 0; c = prev[c]) path.unshift(c);
+      const cxz = (c) => ({ x: dungeonCenter.x + ((c % N) - 2.5) * MZ_T, z: dungeonCenter.z + (((c / N) | 0) - 2.5) * MZ_T });
+      // กำแพงด้านใน (ขอบที่ไม่ได้ขุด) + collider เป็นวงกลมเรียงตามแนวกำแพง
+      const walls = [], cols = [];
+      const seg = (x0, z0, x1, z1) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.ceil(L / 0.9); for (let k = 0; k <= n; k++) cols.push({ x: x0 + (x1 - x0) * k / n, z: z0 + (z1 - z0) * k / n, r: 0.72 }); };
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+        if (i < N - 1 && !open.has(ek(id(i, j), id(i + 1, j)))) { const x = dungeonCenter.x + (i - 2) * MZ_T, z = dungeonCenter.z + (j - 2.5) * MZ_T; walls.push({ x, z, ry: Math.PI / 2 }); seg(x, z - MZ_T / 2, x, z + MZ_T / 2); }
+        if (j < N - 1 && !open.has(ek(id(i, j), id(i, j + 1)))) { const x = dungeonCenter.x + (i - 2.5) * MZ_T, z = dungeonCenter.z + (j - 2) * MZ_T; walls.push({ x, z, ry: 0 }); seg(x - MZ_T / 2, z, x + MZ_T / 2, z); }
+      }
+      const H = MZ_T * 3; [[-H, -H, H, -H], [-H, H, H, H], [-H, -H, -H, H], [H, -H, H, H]].forEach(([a, b, c, d]) => seg(dungeonCenter.x + a, dungeonCenter.z + b, dungeonCenter.x + c, dungeonCenter.z + d));   // ขอบห้อง
+      G._maze = { key, open, start: id(3, 5), end, path, cxz, walls, cols, dist };
+      return G._maze;
+    };
+    G.caveMaze = caveMaze;
     const CAVE_POS = CAVE_DEF.goblin.pos;   // ⛏️ ปากถ้ำ — มุมตะวันตกเฉียงเหนือของทุ่งซากุระ
     G.CAVE_POS = CAVE_POS;
     const caveSpawn = (floor) => {
@@ -21797,21 +21837,30 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const spId = isBoss ? C.boss : pool[Math.floor(Math.random() * pool.length)];
         const m = buildMonster(spId, isBoss ? 3 : 1);
         if (isBoss) m.scale.multiplyScalar(1.9); else if (spId === C.minion) m.scale.multiplyScalar(0.72);   // ลูกสมุนตัวเล็กกว่า
+        const MZ = caveMaze();
+        if (MZ) {                                                     // 🌀 เรียงมอนตามเส้นทางเขาวงกต — บอสรอที่ช่องปลายทาง
+          const P = MZ.path, cell = isBoss ? MZ.end : P[Math.min(P.length - 1, 1 + Math.floor(((boss ? i - 1 : i) + 0.5) * (P.length - (boss ? 2 : 1)) / Math.max(1, boss ? n - 1 : n)))];
+          const c = MZ.cxz(cell), jit = isBoss ? 0 : 1.4;
+          m.position.set(c.x + (Math.random() - 0.5) * jit, 0, c.z + (Math.random() - 0.5) * jit);
+          m.rotation.y = Math.random() * Math.PI * 2;
+        } else {
         const a = (i / n) * Math.PI * 2 + Math.random() * 0.6, rr = isBoss ? 6 : 5 + Math.random() * 3;
         m.position.set(dungeonCenter.x + Math.cos(a) * rr, 0, dungeonCenter.z + Math.sin(a) * rr);
         m.rotation.y = a + Math.PI;
+        }
         m.userData.lv = baseLv + floor * 2 + (isBoss ? 6 : 0);
         m.userData.twr = true; m.userData.twrBoss = isBoss; m.userData.caveBoss = isBoss;
         m.userData.wander = { cx: m.position.x, cz: m.position.z, ph: Math.random() * Math.PI * 2, r: isBoss ? 0.6 : 1.2 + Math.random(), sp: 0.3 + Math.random() * 0.3 };
         applyMenace(m); vivify(m); initWildHp(m);
         const hpMul = (isBoss ? 9 : 1.2) * (1 + floor * 0.12);
         m.userData.wmaxhp = Math.max(10, Math.round(m.userData.wmaxhp * hpMul)); m.userData.whp = m.userData.wmaxhp;
-        m.userData.watk = Math.max(1, Math.round(m.userData.watk * (1 + floor * 0.08) * (isBoss ? 1.6 : 1)));
+        m.userData.watk = Math.max(1, Math.round(m.userData.watk * (1 + floor * 0.08) * (isBoss ? 1.6 : 1) * (C.atkMul || 1)));   // ⚔️ ดันเจี้ยนแต่ละด่านตีแรงขึ้นตามตัวคูณ
         scene.add(m); wilds.push(m);
       }
       D.alive = n; D.total = n;
       D.obj = boss ? { kind: "kind", need: 1, done: 0, sp: C.boss, spName: C.bossName, bossOnly: true } : { kind: "count", need: n, done: 0, sp: null, spName: "" };
-      char.position.copy(dungeonCenter); char.position.z += 9;
+      { const MZ = caveMaze(); if (MZ) { const c = MZ.cxz(MZ.start); char.position.set(c.x, dungeonCenter.y || 0, c.z + 1.2); G._mazeCols = MZ.cols; if (G.rebuildNav) G.rebuildNav(); }   // 🌀 เริ่มที่ปากทางเขาวงกต
+        else { char.position.copy(dungeonCenter); char.position.z += 9; } }
       G._spkTold = false;
       if (G.kkDunClear) G.kkDunClear();   // สร้างห้องใหม่ทุกห้อง (ผังพื้น/กำแพง/หนามเปลี่ยนตามห้อง)
       toast(boss ? `${C.bossEmoji} ห้อง ${floor}/${CAVE_ROOMS} — ${C.bossName}ปรากฏตัว! ล้มมันให้ได้ใน ${D.sec} วิ`
@@ -21864,7 +21913,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       g.scale.setScalar(sc);
       const cx = dungeonCenter.x, cz = dungeonCenter.z;
       let px = cx, pz = cz;
-      if (Math.hypot(char.position.x - cx, char.position.z - cz) < 2.6) { px = char.position.x + Math.sin(char.rotation.y) * 2.8; pz = char.position.z + Math.cos(char.rotation.y) * 2.8; }
+      const MZc = caveMaze();
+      if (MZc) { const c = MZc.cxz(MZc.end); px = c.x; pz = c.z; }        // 🌀 เขาวงกต: หีบโผล่กลางช่องบอส (กลางห้องอาจเป็นแนวกำแพง)
+      else if (Math.hypot(char.position.x - cx, char.position.z - cz) < 2.6) { px = char.position.x + Math.sin(char.rotation.y) * 2.8; pz = char.position.z + Math.cos(char.rotation.y) * 2.8; }
       g.position.set(px, char.position.y - (kkCaveY.chest ? kkCaveY.chest.min * sc : 0), pz);
       g.rotation.y = Math.atan2(char.position.x - px, char.position.z - pz);          // หันหน้าหีบ (ฝั่งเปิด) เข้าหาผู้เล่น
       scene.add(g);
@@ -22006,6 +22057,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🧱 ล็อกไม่ให้เดินหลุดออกนอกห้อง (ใช้ทั้งตอนสู้ ตอนเปิดหีบ และตอนนับถอยหลังออก)
     const twrRoomLock = (D, dt) => {
       const ox = char.position.x - dungeonCenter.x, oz = char.position.z - dungeonCenter.z;
+      if (D.cave) {                                                   // 🌀 เขาวงกตเป็นห้องสี่เหลี่ยม — ล็อกแบบกล่อง ให้เดินถึงมุมห้องได้
+        const L = MZ_T * 3 - 1.0;
+        if (Math.abs(ox) > L || Math.abs(oz) > L) { char.position.x = dungeonCenter.x + Math.max(-L, Math.min(L, ox)); char.position.z = dungeonCenter.z + Math.max(-L, Math.min(L, oz)); }
+        return;
+      }
       const od = Math.hypot(ox, oz);
       if (od > TWR_ROOM_R) {
         char.position.x = dungeonCenter.x + (ox / od) * TWR_ROOM_R;
@@ -22099,6 +22155,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.twrLeave = (quiet) => {
       const D0 = G.dungeon;
       setUi((u) => (u.twrExit ? { ...u, twrExit: null } : u));
+      G._mazeCols = null; G._maze = null; if (G.rebuildNav) setTimeout(() => { try { G.rebuildNav(); } catch (_) {} }, 0);   // 🌀 ออกจากเขาวงกต — คืนกริดหาทางของโลกกว้าง
       if (D0 && D0.chest) { if (!D0.rewarded) { try { caveReward(); } catch (_) {} } caveChestDrop(D0); G._chestLock = false; }   // 🎁 กดออกก่อนเปิดหีบ = ยังได้รางวัลครบ
       if (D0 && D0.hid) { D0.hid.forEach((o) => { if (o) o.visible = true; }); D0.hid = null; }   // 👁️ คืนมอนโลกกว้างที่ซ่อนไว้
       twrClearMobs();
@@ -24518,7 +24575,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const src = kkCaveLib[k]; if (!src) return;
         const o = opt || {}, sc = (o.s || 1) * CAVE_S;
         const yy = baseY + (o.top ? -kkCaveY[k].max * sc : -kkCaveY[k].min * sc) + (o.y || 0);
-        const holder = new THREE.Object3D(); holder.position.set(cx + x, yy, cz + z); holder.rotation.set(0, ry || 0, 0); holder.scale.setScalar(sc); holder.updateMatrixWorld(true);
+        const holder = new THREE.Object3D(); holder.position.set(cx + x, yy, cz + z); holder.rotation.set(0, ry || 0, 0); holder.scale.set(sc, sc * (o.sy || 1), sc); holder.updateMatrixWorld(true);
         src.traverse((m) => { if (!m.isMesh) return; _m.multiplyMatrices(holder.matrixWorld, m.matrixWorld);
           const key = m.geometry.uuid + "|" + m.material.uuid; let e = inst.get(key);
           if (!e) { let mat = m.material; if (tint) { mat = tintCache[m.material.uuid] || (tintCache[m.material.uuid] = ruinSandMat(m.material)); }
@@ -24527,6 +24584,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const tint = (CAVE_DEF[G.dungeon.cave] || {}).theme === "ruins" ? 0xf2d49a : null;   // 🏜️ ย้อมสีทรายทั้งห้อง
       const T = 4 * CAVE_S, H = KK_DUN_H;
       const rng = seedRng((G.dungeon.cave || "cave") + ":" + (G.dungeon.floor || 1));
+      const MZON = !!caveMaze();   // 🌀 ห้องเขาวงกต — ของตกแต่งกลางห้องที่จะชนแนวกำแพงเขาวงกตงดวาง
       if ((CAVE_DEF[G.dungeon.cave] || {}).theme === "ruins") {
         // 🗿 วิหารร้าง: ลานหินแตกกลางทะเลทราย · กำแพงครึ่งซีก/พังสลับช่องโหว่ · เสาใหญ่เรียงเป็นวง (บางต้นหักเหลือตอ) · ซากหินกอง · แท่นบูชากลางหลัง
         for (let ix = -3; ix <= 2; ix++) for (let iz = -3; iz <= 2; iz++) put(rng() < 0.4 ? "rFloor" : rng() < 0.5 ? "floorR" : "tFloor", (ix + 0.5) * T, (iz + 0.5) * T, Math.floor(rng() * 4) * Math.PI / 2, { top: 1, y: 0.02 });
@@ -24534,7 +24592,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const w = () => { const r = rng(); return r < 0.4 ? "rWallH" : r < 0.75 ? "wallB" : "wall"; };
           put(w(), i * T, -H, 0); put(i === 0.5 ? "arch" : w(), i * T, H, Math.PI); put(w(), -H, i * T, Math.PI / 2); put(w(), H, i * T, -Math.PI / 2);
         }
-        for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + Math.PI / 8, x = Math.cos(a) * 10.6, z = Math.sin(a) * 10.6;
+        if (!MZON) for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2 + Math.PI / 8, x = Math.cos(a) * 10.6, z = Math.sin(a) * 10.6;
           if (rng() < 0.35) put("rCol", x, z, rng() * 3, { s: 1.4 }); else put("rPillar", x, z, 0, { s: 0.85 }); }
         for (const sx of [-1, 1]) for (const sz of [-1, 1]) put("rubble", sx * (H - 2), sz * (H - 2), rng() * 3, { s: 0.55 });
         put("rubbleH", -6, -12.6, 0, { s: 0.5 }); put("rubbleH", 7.5, 12.4, Math.PI, { s: 0.45 });
@@ -24551,7 +24609,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         for (const sx of [-1, 1]) for (const sz of [-1, 1]) put("tPillar", sx * (H - 1.2), sz * (H - 1.2), 0);
         for (const tx of [-T * 1.5, T * 0.5, T * 2]) { put("torchW", tx, -H + 0.6, 0, { y: 3.0 }); put("torchW", -tx, H - 0.6, Math.PI, { y: 3.0 }); }
-        for (const sx of [-1, 1]) for (let k = -1; k <= 1; k++) { put("coffin", sx * 12.4, k * 5.2, sx * Math.PI / 2, { s: 1.25 }); put("candles", sx * 11.2, k * 5.2 + 1.6, 0); }
+        if (!MZON) for (const sx of [-1, 1]) for (let k = -1; k <= 1; k++) { put("coffin", sx * 12.4, k * 5.2, sx * Math.PI / 2, { s: 1.25 }); put("candles", sx * 11.2, k * 5.2 + 1.6, 0); }
         for (const bx of [-T * 1.5, T * 1.5]) put("tBanner", bx, -H + 0.6, 0, { y: 0.4 });
         put("tBanner2", 0, -H + 0.6, 0, { y: 0.4 });
         for (const sx of [-1, 1]) { put(rng() < 0.5 ? "shieldG" : "shield", sx * (H - 0.7), -T * 1.4, sx * -Math.PI / 2, { y: 3.4 }); put("shield", sx * (H - 0.7), T * 1.4, sx * -Math.PI / 2, { y: 3.4 }); }
@@ -24571,6 +24629,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         ["swords", -11.2, 11.6, 0.3], ["coins", 12.2, 11.4, 0.2, 0.9], ["trunk", 10.6, 12.4, -0.4], ["barrel", 13.4, 1.8, 0.9], ["crates", -13.4, -2.6, 0.2], ["rubbleH", 13.2, -4.2, -Math.PI / 2, 0.5]];
       props.forEach(([k, x, z, ry, ss]) => put(k, x, z, ry, { s: ss || 1 }));
       for (const bx of [-T, 0, T]) put("banner", bx, -H + 0.6, 0, { y: 0.4 });
+      }
+      if (MZON) {                                                     // 🌀 กำแพงเขาวงกตสูงกว่ากำแพงห้อง 35% · คบเพลิงแขวนบางแผ่นให้มีแสงนำทาง
+        const th = (CAVE_DEF[G.dungeon.cave] || {}).theme, MZ = caveMaze();
+        MZ.walls.forEach((w, k) => {
+          const r = rng(), key = th === "tomb" ? (r < 0.3 ? "tWallG" : "tWall") : (r < 0.3 ? "wallB" : "wall");
+          put(key, w.x - cx, w.z - cz, w.ry, { sy: 1.35 });
+          if (k % 3 === 0) { const ox = Math.cos(w.ry) * 0, oz = 0; put("torchW", w.x - cx + (w.ry ? 0.55 : 0) + ox, w.z - cz + (w.ry ? 0 : 0.55) + oz, w.ry ? -Math.PI / 2 : Math.PI, { y: 3.2 }); }
+        });
       }
       inst.forEach((e) => { const im = new THREE.InstancedMesh(e.geo, e.mat, e.list.length); e.list.forEach((mm, i) => im.setMatrixAt(i, mm)); im.instanceMatrix.needsUpdate = true; im.castShadow = !!e.cast; im.receiveShadow = true; im.frustumCulled = false; root.add(im); });
       // 🪤 กับดักหนาม — ห้อง 2 เป็นต้นไป · สุ่มตำแหน่งให้พ้นกลางห้อง
@@ -43275,6 +43341,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         amb.intensity *= wxDim; hemi.intensity *= wxDim;
         if (G._wxFlash > 0) { amb.intensity += G._wxFlash * 0.9; hemi.intensity += G._wxFlash * 0.5; }   // ⚡ ฟ้าผ่าสว่างวาบ
         key.intensity = (0.16 + 0.30 * dayAmt) * (1 + gold * 0.34) * wxDim;   // 🌅 แดดเย็นแรงขึ้นนิด ให้เงาเข้ม
+        { const inMz = !!(G.dungeon && G.dungeon.cave && !G.dungeon.loading);   // 🌑 ในเขาวงกตดันเจี้ยน — มืดทึบ เห็นแค่รอบตัว (ไฟตะเกียงตามตัว + คบเพลิงบนกำแพง)
+          if (inMz) { amb.intensity *= 0.3; hemi.intensity *= 0.28; key.intensity *= 0.22; rimL.intensity *= 0.3; }
+          if (!G._dunLamp) { G._dunLamp = new THREE.PointLight(0xffc890, 0, 12, 1.4); scene.add(G._dunLamp); }
+          G._dunLamp.intensity = inMz ? 1.5 : 0;
+          if (inMz) G._dunLamp.position.set(char.position.x, char.position.y + 3.2, char.position.z); }
         key.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
         if (gold > 0.01) key.color.lerp(dayColors.sunGold, gold * 0.78);   // แสงส้มทองอาบทั้งฉาก
         // sun/moon travels across the sky → shadows move through the day
@@ -55967,9 +56038,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const LK = G._camLock;
         const fx = LK ? char.position.x + (LK.x - char.position.x) * LK.w : char.position.x;
         const fz = LK ? char.position.z + (LK.z - char.position.z) * LK.w : char.position.z;
-        const camX = fx + Math.sin(yaw) * hd;
-        const camY = camDistE * (G.camPitch != null ? G.camPitch : 0.77);
-        const camZ = fz + Math.cos(yaw) * hd;
+        const inMz = !!(G.dungeon && G.dungeon.cave && !G.dungeon.loading);   // 🌀 เขาวงกต: กล้องก้มมองเกือบตั้งฉาก ไม่ให้กำแพงสูงบังตัวละคร
+        const hdE = inMz ? Math.max(1.2, camDistE * 0.3) : hd;
+        const camX = fx + Math.sin(yaw) * hdE;
+        const camY = inMz ? Math.max(11, camDistE * 1.25) : camDistE * (G.camPitch != null ? G.camPitch : 0.77);
+        const camZ = fz + Math.cos(yaw) * hdE;
         camera.position.x += (camX - camera.position.x) * 0.1;
         camera.position.y += (camY - camera.position.y) * 0.08;
         camera.position.z += (camZ - camera.position.z) * 0.1;
@@ -59775,7 +59848,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
       {/* ===== explore HUD ===== */}
       {/* 🗺️ มินิแมพมุมขวาบน — แตะเพื่อขยายดูรายละเอียดแผนที่ */}
-      {MINI_ON && (
+      {MINI_ON && !ui.twr && !ui.twrLoad && (   // 🗼 ในดันเจี้ยนไม่โชว์มินิแมพ — ป้ายความคืบหน้าดันเจี้ยนขึ้นแทนที่ตรงนี้
         <div onClick={() => G.toggleMap && G.toggleMap(true)} title="แตะเพื่อขยายแผนที่" style={{
           position: "absolute", top: ST(MINI_TOP), right: EDGE_R, zIndex: 27,
           width: MINI_SZ, cursor: "pointer", pointerEvents: "auto", fontFamily: font,
@@ -60124,6 +60197,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
 
       {/* 🗼 แผงสถานะชั้นหอคอย (โหมดสำรวจ) — ชั้น · เวลา · ธาตุประจำชั้น · เงื่อนไขสัตว์เลี้ยง · มอนที่เหลือ */}
+      {/* 🌑 เขาวงกตดันเจี้ยน — ขอบจอมืด เห็นชัดแค่รอบตัวละคร */}
+      {ui.twr && ui.twr.cave && ui.mode === "explore" && (
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4, background: "radial-gradient(ellipse 46% 52% at 50% 56%, rgba(0,0,0,0) 45%, rgba(4,2,10,0.62) 78%, rgba(2,1,6,0.9) 100%)" }} />
+      )}
       {/* 🎁 หีบบอสอีเวนต์ — นับถอยหลัง 60 วิ */}
       {ui.wChest && ui.mode === "explore" && (
         <div style={{ position: "absolute", top: ST(118), left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 30 }}>
@@ -60146,8 +60223,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const pct = Math.max(0, Math.min(1, T.sec / Math.max(1, T.secMax)));
         const low = T.sec <= 15;
         return (
-          <div style={{ position: "absolute", top: ST(_shortHud ? 96 : 128), left: "50%", transform: "translateX(-50%)",
-            width: "min(94vw, 340px)", zIndex: 30, pointerEvents: "none", fontFamily: font }}>
+          <div style={{ position: "absolute", top: ST(MINI_TOP), right: EDGE_R,   // 🗺️ อยู่ตรงตำแหน่งมินิแมพ (มินิแมพซ่อนระหว่างอยู่ในดันเจี้ยน)
+            width: "min(62vw, 250px)", zIndex: 30, pointerEvents: "none", fontFamily: font }}>
             <div style={{ background: "rgba(40,16,72,0.92)", border: "1px solid #7a4ad0", borderRadius: 13,
               padding: "6px 10px 7px", boxShadow: "0 6px 20px rgba(40,10,70,0.5)", pointerEvents: "auto" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
