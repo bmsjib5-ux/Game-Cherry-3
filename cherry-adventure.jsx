@@ -8012,7 +8012,8 @@ export default function CherryAdventure() {
         return true;
       }
       const seed = g.userData.kkSeed != null ? g.userData.kkSeed : Math.random();
-      const NS = !G.powerSave && NAT_SLOT[g.userData.kkSlot], nat = NS && NS.map((n) => natLib[n]).filter(Boolean);   // 🔋 โหมดประหยัด = ใช้ต้นไม้ KayKit ที่เบากว่า   // 🌳 Stylized Nature MegaKit มาก่อน (ถ้าโหลดแล้ว)
+      const NS0 = NAT_SLOT[g.userData.kkSlot], NS = NS0 && (G.powerSave && g.userData.kkSlot === "tree" ? ["CommonTree_3", "CommonTree_4"] : NS0);   // 🔋 โหมดประหยัด (มือถือเปิดเป็นค่าเริ่มต้น) = ใช้ 2 ต้นที่เบาที่สุด
+      const nat = NS && NS.map((n) => natLib[n]).filter(Boolean);   // 🌳 Stylized Nature MegaKit มาก่อน (ถ้าโหลดแล้ว)
       const names = KK_FOREST[g.userData.kkSlot] || [];
       const src = nat && nat.length ? nat[Math.floor(seed * nat.length) % nat.length] : kkForest[names[Math.floor(seed * names.length) % names.length]];
       if (!src) return false;
@@ -8053,9 +8054,11 @@ export default function CherryAdventure() {
         if (m) { m.metalness = 0; if (m.map) { m.map.anisotropy = 4; } if (m.alphaTest || m.transparent || /Leaves|Leaf|Grass|Flower/.test(m.name || "")) { m.alphaTest = 0.3; m.transparent = false; m.side = THREE.DoubleSide; }
           if (/Leaves|Leaf|Grass|Flower/.test(m.name || "")) {   // 🍃 ใบไม้พุ่มหนาบังเงาตัวเองจนดำ — ไม่รับเงา + เรืองแสงอ่อน ๆ จากสีของตัวเอง
             o.receiveShadow = false; m.color.setScalar(1.25); if (m.map) { m.emissiveMap = m.map; m.emissive = new THREE.Color(0xffffff); m.emissiveIntensity = 0.45; } }
-          else if (/PathRocks/.test(m.name || "")) m.color.setScalar(1.45);
+          else if (/PathRocks/.test(m.name || "")) m.color.setScalar(1.75);
           else if (/Bark|Rock|Mushroom/.test(m.name || "")) m.color.setScalar(1.18);   // แสงในเกมนุ่มกว่า — ยกเนื้อสีขึ้นให้เข้ากับฉากเดิม
           m.userData.vivid = true; } });
+      gl.scene.traverse((o) => { if (!o.isMesh) return; const sh = (x) => { if (x) { x.userData = x.userData || {}; x.userData._shared = true; } };   // 🔒 ใช้ร่วมหลายที่ — ห้ามตัวล้างฉากทิ้ง
+        sh(o.geometry); sh(o.material); if (o.material) { sh(o.material.map); sh(o.material.emissiveMap); } });
       gl.scene.updateMatrixWorld(true);
       const b = new THREE.Box3().setFromObject(gl.scene);
       return { obj: gl.scene, h: Math.max(0.01, b.max.y - b.min.y), y0: b.min.y, nat: true };
@@ -8072,6 +8075,7 @@ export default function CherryAdventure() {
           // 🔁 ต้นไม้/พุ่มที่สลับเป็นชุดอื่นไปแล้ว — ถอดของเดิมออกแล้วสลับใหม่เป็นชุดนี้
           (G.sceneryObjects || []).forEach((g) => { if (!g.userData || !NAT_SLOT[g.userData.kkSlot]) return; if (g.userData.kkNode) { g.remove(g.userData.kkNode); g.userData.kkNode = null; } G.kkForestSwap(g, true); });
           natCoverBuild();
+          if ((G.curBiome || 0) === 0 && G.buildRoad) { try { G.buildRoad(); } catch (e) {} }   // 🪨 ถนนดิน → ทางหิน
           return true;
         });
       return natLoading;
@@ -8130,6 +8134,27 @@ export default function CherryAdventure() {
       scene.add(root); natCover = root; G._natCover = root;
       sceneryObjects.push(root);                                   // ซ่อน/แสดงพร้อมฉากทุ่งซากุระ (เมือง/บ้าน/ด่านอื่นซ่อนให้เอง)
       root.visible = (G.curBiome || 0) === 0 && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.dungeon;
+    };
+    // 🪨 ตัวสร้างทางหิน (ถนนทุ่งซากุระ) — สะสมจุดแล้ววาดเป็น InstancedMesh ต่อแบบหิน 3 แบบ
+    G.natStoneRoad = () => {
+      const kinds = ["RockPath_Round_Small_1", "RockPath_Round_Small_2", "RockPath_Round_Small_3"].map((n) => natLib[n]).filter(Boolean);
+      if (!kinds.length) return null;
+      const pts = kinds.map(() => []); let k = 0;
+      const rngR = seedRng("meadowRoad");
+      return {
+        add: (x, z) => { pts[k++ % kinds.length].push([x, z]); },
+        build: (g) => {
+          const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+          kinds.forEach((L2, ki) => {
+            if (!pts[ki].length) return;
+            const bb = new THREE.Box3().setFromObject(L2.obj), w = Math.max(0.01, bb.max.x - bb.min.x);
+            const mats = pts[ki].map(([x, z]) => { const sc = (1.05 + rngR() * 0.3) / w; _q.setFromAxisAngle(up, rngR() * Math.PI * 2); _s.setScalar(sc);
+              _p.set(x, terrainAt(x, z) - L2.y0 * sc - 0.02, z); return _m.compose(_p, _q, _s).clone(); });
+            L2.obj.traverse((o) => { if (!o.isMesh) return; const im = new THREE.InstancedMesh(o.geometry, o.material, mats.length); const loc = o.matrixWorld.clone();
+              mats.forEach((M, i) => im.setMatrixAt(i, M.clone().multiply(loc))); im.instanceMatrix.needsUpdate = true; im.receiveShadow = true; im.frustumCulled = false; g.add(im); });
+          });
+        },
+      };
     };
     G.kkForestApply = (on) => {
       let n = 0;
@@ -21125,12 +21150,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const grassM = new THREE.MeshLambertMaterial({ color: ROAD_COL.grass, flatShading: true });
       const pebM   = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
       const ends = [];
+      // 🪨 ทุ่งซากุระ: ถนนดินเปลี่ยนเป็นทางเดินแผ่นหิน (ชุดเดียวกับทางไปประตูเมือง) — ใช้เมื่อชุดธรรมชาติโหลดแล้ว
+      const stoneRoad = (G.curBiome || 0) === 0 && G.natStoneRoad ? G.natStoneRoad() : null;
       info.exits.forEach((ex) => {
         const dx = ex.vec[0], dz = ex.vec[1];
         const px = -dz, pz = dx;                                   // แกนขวางทาง
         const at = (t, off) => [dx * t + px * off, dz * t + pz * off];
         const SEG = 30, t0 = 2.5, t1 = FIELD_R + 2.4;
-        for (let i = 0; i < SEG; i++) {
+        if (stoneRoad) {                                           // ทางหินสองแถวสลับซ้ายขวา ส่ายตามแนวถนนเดิม
+          for (let t = t0 + 0.4, k = 0; t < t1; t += 1.05, k++) { const sw = Math.sin(t * 0.16) * 0.35; for (const o of k % 2 ? [-0.55, 0.62] : [-0.62, 0.5]) { const c = at(t + (o > 0 ? 0.5 : 0), sw + o); stoneRoad.add(c[0], c[1]); } }
+        }
+        for (let i = 0; i < SEG && !stoneRoad; i++) {
           const ta = t0 + (t1 - t0) * (i / SEG), tb = t0 + (t1 - t0) * ((i + 1) / SEG);
           const tm = (ta + tb) / 2, len = (tb - ta) + 0.15;
           // 🟤 ทางดินอัดแน่น — ส่ายซ้ายขวานิดหน่อยให้ดูเป็นทางเดินจริง ไม่ใช่เส้นตรงเป๊ะ
@@ -21188,6 +21218,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.add(arrow);
         ends.push({ dir: ex.dir, vx: dx, vz: dz, idx: ex.idx, id: ex.id, name: ex.name, emoji: ex.emoji, lvMin: ex.lvMin, side: ex.side, arrow: ex.arrow });
       });
+      if (stoneRoad) stoneRoad.build(g);
       (G._worldRoot || scene).add(g);
       G._roadGrp = g;
       G._roadEnds = ends;
@@ -44176,7 +44207,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const tgtP = guard ? guard.m.position : char.position;
           const pdx = tgtP.x - m.position.x, pdz = tgtP.z - m.position.z;
           const pdist = Math.hypot(pdx, pdz) || 0.001;
-          const playerSafe = G.inHomeZone || G.inRanchZone || G.inTownZone || inSafeZone(char.position.x, char.position.z); // 🛡️ ในบ้าน/ฟาร์ม/เมือง/เขตปลอดภัย = มอนสเตอร์แตะไม่ได้
+          const meadowCalm = (G.curBiome || 0) === 0 && !G.dungeon && !m.userData.twr && !m.userData.mapBoss;   // 🌸 ด่าน 1 ทุ่งซากุระ — มอนสงบ ไม่ไล่ ไม่ตีตัวละคร (ตีได้ฝ่ายเดียว)
+          const playerSafe = meadowCalm || G.inHomeZone || G.inRanchZone || G.inTownZone || inSafeZone(char.position.x, char.position.z); // 🛡️ ในบ้าน/ฟาร์ม/เมือง/เขตปลอดภัย = มอนสเตอร์แตะไม่ได้
           if (playerSafe) {
             m.userData.aggro = false; // 🌀 drop the chase — can't follow into the safe zone
           } else if (m.userData.fearT > 0) {                                    // 😱 ขวัญเสีย — หันหลังวิ่งหนีแทนที่จะสู้
