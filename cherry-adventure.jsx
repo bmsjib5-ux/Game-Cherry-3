@@ -4144,7 +4144,9 @@ export default function CherryAdventure() {
       g.position.set(x, 0, z);
       g.rotation.y = rotY;
       scene.add(g);
-      colliders.push({ x, z, r: 2.0 });
+      const col = { x, z, r: 2.0 };
+      colliders.push(col);
+      (G._vilQ = G._vilQ || []).push({ g, kind: "Cottage", sc: 1.1, col, colR: 2.7 });   // 🏡 บ้านยุคกลาง (Medieval Village MegaKit) มาแทนเมื่อโหลดเสร็จ
     };
     const addWell = (x, z) => {
       const g = new THREE.Group();
@@ -8193,6 +8195,52 @@ export default function CherryAdventure() {
       });
       return n;
     };
+    // 🏘️ Medieval Village MegaKit (Quaternius · CC0) — บ้าน 3 แบบที่ประกอบจากชิ้นส่วนไว้ล่วงหน้า (รวม mesh ต่อวัสดุ ~2MB)
+    //    กระท่อมทุ่งซากุระ + บ้านรอบเมือง: ซ่อนทรงกล่องเดิมแล้วใส่โมเดลแทน (geometry/texture ใช้ร่วม วัสดุปูน/หลังคาแยกต่อหลังเพื่อย้อมสี)
+    const VIL_BASE = "assets/quat/village/", VIL_KINDS = ["Cottage", "House2", "Manor"];
+    const VIL_CHIM = { Cottage: [1.2, 6.2, -1.0], House2: [1.2, 9.4, -1.2], Manor: [-1.8, 9.6, -1.5] };   // ยอดปล่องไฟ (ควัน)
+    const vilLib = {}; let vilLoading = null;
+    const vilApply = (it) => {
+      const L2 = vilLib[it.kind]; if (!L2 || !it.g || it.done) return;
+      it.done = true;
+      const node = L2.clone();
+      node.scale.setScalar(it.sc || 1);
+      if (it.tint != null || it.roof != null) node.traverse((o) => {
+        if (!o.isMesh) return;
+        const nm = o.material.name || "";
+        if (it.tint != null && /Plaster/.test(nm)) { o.material = o.material.clone(); o.material.color.set(it.tint).multiplyScalar(1.12); }
+        else if (it.roof != null && /RoundTiles/.test(nm)) { o.material = o.material.clone(); o.material.color.set(it.roof); }
+      });
+      it.g.children.forEach((c) => { if (c !== it.chim) c.visible = false; });
+      if (it.chim) { const q = VIL_CHIM[it.kind]; it.chim.visible = false; it.chim.position.set(q[0] * it.sc, q[1] * it.sc - 2.3, q[2] * it.sc); }   // ควันลอยจากปล่องจริง
+      it.g.add(node);
+      if (it.col && it.colR) {                                        // บ้านใหม่กว้างกว่าเดิม — ขยายตัวชน + เก็บต้นไม้/พุ่มที่งอกชิดผนังออก
+        it.col.r = it.colR;
+        const SO = G.sceneryObjects || [], near = (x, z) => Math.hypot(x - it.col.x, z - it.col.z) < it.colR + 0.9;
+        for (let i = SO.length - 1; i >= 0; i--) { const o = SO[i]; if (o.userData && o.userData.kkSlot && near(o.position.x, o.position.z)) { if (o.parent) o.parent.remove(o); SO.splice(i, 1); } }
+        for (let i = colliders.length - 1; i >= 0; i--) { const c = colliders[i]; if (c !== it.col && c.r < 0.6 && near(c.x, c.z)) colliders.splice(i, 1); }
+      }
+      it.g.userData._frz = 0;
+    };
+    G.vilLoad = () => {
+      if (vilLoading || !THREE.GLTFLoader) return vilLoading;
+      const L = new THREE.GLTFLoader();
+      vilLoading = Promise.all(VIL_KINDS.map((n) => new Promise((res) => L.load(VIL_BASE + n + ".gltf", (gl) => {
+        gl.scene.traverse((o) => {
+          if (!o.isMesh) return;
+          o.castShadow = true; o.receiveShadow = true;
+          const m = o.material;
+          if (/WindowGlass/.test(m.name || "")) {                    // 🪟 กระจก → เรืองแสงอุ่นตอนกลางคืน (ใช้ตัวคุมเดียวกับหน้าต่างกระท่อมเดิม)
+            if (!vilLib._glass) { vilLib._glass = new THREE.MeshStandardMaterial({ name: "VilGlass", color: 0xa8c8e8, emissive: 0xf5c542, emissiveIntensity: 0.15, roughness: 0.25 }); windowMats.push(vilLib._glass); }
+            o.material = vilLib._glass;
+          } else { m.metalness = 0; m.color.setScalar(1.12); if (m.map) m.map.anisotropy = 4; m.userData.vivid = true; }
+          const sh = (x) => { if (x) { x.userData = x.userData || {}; x.userData._shared = true; } };
+          sh(o.geometry); sh(o.material); if (o.material) { sh(o.material.map); sh(o.material.normalMap); }
+        });
+        vilLib[n] = gl.scene; res(true);
+      }, undefined, () => res(false))))).then(() => { (G._vilQ || []).forEach(vilApply); return true; });
+      return vilLoading;
+    };
     G.kkForestApply = (on) => {
       let n = 0;
       (G.sceneryObjects || []).forEach((g) => { if (G.kkForestSwap(g, on)) n++; });
@@ -8782,7 +8830,7 @@ export default function CherryAdventure() {
     G.toggleKayKit = () => {
       G.kkOn = !G.kkOn;
       try { window.localStorage.setItem("cherry-kaykit", G.kkOn ? "1" : "0"); } catch (e) {}
-      if (G.kkOn) { G.kkLoad(); G.kkForestLoad(); if (G.natLoad) G.natLoad(); if ((G._kkMons || []).length) G.kkSkelLoad(); }
+      if (G.kkOn) { G.kkLoad(); G.kkForestLoad(); if (G.natLoad) G.natLoad(); if (G.vilLoad) G.vilLoad(); if ((G._kkMons || []).length) G.kkSkelLoad(); }
       if (G.kkForestReady) G.kkForestApply(G.kkOn);
       G.kkSkelShow(G.kkOn);
       G.qtShow(G.kkOn);   // 🐾 มอนสัตว์ Quaternius สลับตามสวิตช์เดียวกัน
@@ -8790,7 +8838,8 @@ export default function CherryAdventure() {
       if (G.toast) G.toast(G.kkOn ? "🗡️🌳🐾 เปิดโมเดล 3D (อาวุธ + หมวก/ผม + ผ้าคลุม + ต้นไม้ + อันเดด + ห้องดันเจี้ยน + มอนสัตว์)" : "🗡️🌳💀 ปิดโมเดล 3D KayKit — กลับไปใช้ของที่ปั้นเอง");
     };
     if (kkOn) setTimeout(() => { try { G.kkLoad(); G.kkForestLoad(); } catch (e) {} }, 1500);
-    if (kkOn) setTimeout(() => { try { G.natLoad(); } catch (e) {} }, 2600);   // 🌿 ชุดธรรมชาติทุ่งซากุระ (~2.9MB) โหลดตามหลังเล็กน้อย // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
+    if (kkOn) setTimeout(() => { try { G.natLoad(); } catch (e) {} }, 2600);
+    if (kkOn) setTimeout(() => { try { G.vilLoad(); } catch (e) {} }, 3400);   // 🏘️ บ้านยุคกลาง (~2MB) โหลดต่อจากชุดธรรมชาติ   // 🌿 ชุดธรรมชาติทุ่งซากุระ (~2.9MB) โหลดตามหลังเล็กน้อย // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
     // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
     // 🦸 ฮีโร่ที่มีอาวุธประจำตัว — ใช้ทั้งตัวเราเองและผู้เล่นออนไลน์คนอื่น
     const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW" };
@@ -23271,6 +23320,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const tRoof = new THREE.MeshStandardMaterial({ color: 0xc0574e, roughness: 0.8 });
       const tRoof2 = new THREE.MeshStandardMaterial({ color: 0x7a8fb0, roughness: 0.8 });
       const tWin = new THREE.MeshStandardMaterial({ color: 0xfff2c8, emissive: 0xd0a850, emissiveIntensity: 0.5 });
+      let townHouseN = 0;
       const mkHouse = (hue, a, rr, big) => {
         const g = new THREE.Group();
         const w = big ? 7.0 : 5.4, h = big ? 5.0 : 3.8, d = big ? 6.0 : 4.6;
@@ -23290,6 +23340,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
         g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
         townZone.add(g);
+        (G._vilQ = G._vilQ || []).push({ g, kind: big ? "Manor" : (rr >= 40 && (townHouseN % 3 === 1) ? "Cottage" : "House2"), sc: big ? 1.2 : 1.25, tint: hue, roof: townHouseN % 3 === 2 ? 0x9fb4d8 : big ? 0xc8d4e8 : null, chim });   // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
+        townHouseN++;
       };
       // วงนอก — บ้านเรียงรอบเมือง (เว้นช่องประตูทิศใต้)
       const HUES = [0xf2d8c0, 0xd8e8f2, 0xf8e2ee, 0xe2f2d8, 0xf2ecd0, 0xe8d8f2, 0xd8f2ea, 0xfce4d0, 0xdde4f6, 0xf6e0e8];
