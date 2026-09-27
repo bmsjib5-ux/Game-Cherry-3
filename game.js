@@ -1204,6 +1204,13 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+    // 🌌 วิชาขั้น 4 ของนักเวท (จอมเวทจักรวาล) — ปลดจากภารกิจอาจารย์ Lv.500 · ใช้ได้ทุกสายของนักเวท · ถือคทาดาราขนาดใหญ่
+    m_arc: { ult: { name: "บิกแบงจักรวาล", emoji: "🌌💥", mul: 1.75, burn: 4, freeze: true, stun: true, defDown: 18, buffTeam: true, desc: "บีบจักรวาลทั้งใบให้เหลือจุดเดียวแล้วปลดปล่อยเป็นบิกแบง ไฟ น้ำแข็ง และแสงดาวถล่มทั้งสนาม เผา แช่แข็ง สตัน ลดเกราะ + Cosmic Insight (มานา/คริให้ทีม)" }, skills: [
+            { id: "x_arc_1", cost: 9, name: "ฝนดาวตก", emoji: "☄️", color: 0xff7a3a, mult: 0.9, perLv: 0.2, hits: 4, aoe: true, burn: 3, fx: "orb", desc: "เรียกอุกกาบาตร่วงถล่ม ×4 โดนทั้งพื้นที่ ติดไฟ" },
+            { id: "x_arc_2", cost: 12, name: "หลุมดำกลืนกิน", emoji: "🌀", color: 0x8a4aff, mult: 2.0, perLv: 0.42, aoe: true, stun: true, slow: true, fx: "orb", desc: "เปิดหลุมดำดูดศัตรูเข้ากลาง บดขยี้ สตัน + ช้าลง" },
+            { id: "x_arc_3", cost: 13, name: "โล่ดาราจักร", emoji: "🌟", color: 0xfff0a0, mult: 1.2, perLv: 0.26, heal: 0.35, buffDef: 8, fx: "heal", desc: "ดวงดาวหมุนเป็นโล่ ฟื้น HP 35% + ป้องกัน +8" },
+            { id: "x_arc_4", cost: 18, name: "สุริยะพิพากษา", emoji: "☀️", color: 0xffd24a, mult: 3.6, perLv: 0.72, pierce: true, guaranteedCrit: true, defDown: 14, burn: 4, fx: "bolt", desc: "ดึงแสงสุริยะลงมาเป็นลำเดียว เจาะเกราะ คริการันตี เผาต่อเนื่อง" }
+        ] },
     // ⚔️ วิชาขั้น 4 ของนักรบ (ขุนศึกดาบสวรรค์) — ปลดจากภารกิจอาจารย์ Lv.500 · ใช้ได้ทุกสายของนักรบ · ถือดาบยักษ์
     w_war: { ult: { name: "สงครามเทพพิฆาต", emoji: "⚔️🌋", mul: 1.75, stun: true, defDown: 18, bleed: 4, buffTeam: true, desc: "ปักดาบยักษ์ลงพื้นปลุกกองทัพวิญญาณนักรบ ฟันกากบาทไฟทั่วสนาม ปิดท้ายด้วยลำแสงดาบจากฟ้า สตัน ลดเกราะ เลือดไหล + Warlord's Roar (โจมตี/ป้องกันให้ทีม)" }, skills: [
             { id: "x_war_1", cost: 8, name: "พายุดาบยักษ์", emoji: "🌪️", color: 0xff8a3a, mult: 0.95, perLv: 0.2, hits: 3, aoe: true, bleed: 3, fx: "slash", desc: "เหวี่ยงดาบยักษ์หมุนเป็นพายุ ×3 โดนทั้งวง เลือดไหล" },
@@ -1369,6 +1376,11 @@ const T4 = {
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า",
         reward: "🔫 ผ่านขั้นนี้แล้วจะวางคันธนูมาใช้ปืน — ปลดชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน",
         done: "🎓🔫 ผ่านบททดสอบขั้น 4! รับปืนจากอาจารย์แล้ว — สลับเป็น “ชุดปืน” ในหน้าวิชาสกิล", on: "🔫 จับปืน! สลับเป็นชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน" },
+    mage: { pid: "m_arc", label: "🌌 ชุดจักรวาล", title: "ขั้น 4 · จอมเวทจักรวาล", emoji: "🌌",
+        intro: "เวทธาตุของเจ้าเชี่ยวชาญแล้ว... แต่เหนือธาตุทั้งปวงยังมีพลังของดวงดาวที่ไม่เคยมีใครแตะต้อง",
+        task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับคทาดาราจากข้า",
+        reward: "🌌 ผ่านขั้นนี้แล้วจะได้คทาดาราและเวทจักรวาล — ปลดชุดสกิลขั้น 4 · จักรวาล + ท่าไม้ตายใหม่",
+        done: "🎓🌌 ผ่านบททดสอบขั้น 4! รับคทาดาราจากอาจารย์แล้ว — สลับเป็น “ชุดจักรวาล” ในหน้าวิชาสกิล", on: "🌌 ปลุกพลังดวงดาว! สลับเป็นชุดสกิลขั้น 4 · จักรวาล + ท่าไม้ตายใหม่" },
     warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
         intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
@@ -1381,6 +1393,7 @@ const advUiPid = (u) => (u && u.skillMode === "t4" && T4[u.cls]) ? T4[u.cls].pid
 const ADV_SIG = {
     a_gun: { c: 0xffb040, c2: 0xffffff, aura: "ring", fx: ["snipe", "multi", "snipe"] }, // 🔫🌠 ห่ากระสุนพิพากษา
     w_war: { c: 0xff6a2a, c2: 0xffe08a, aura: "pillar", fx: ["crossslash", "swordbeam", "quake"] }, // ⚔️🌋 สงครามเทพพิฆาต
+    m_arc: { c: 0x9a6aff, c2: 0x6ae0ff, aura: "orbs", fx: ["fire", "thunderstorm", "ice"] }, // 🌌💥 บิกแบงจักรวาล
     b_king: { c: 0xf5d24a, c2: 0xffffff, aura: "ring", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🥊👑 ราชันสังเวียน
     b_muay: { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] }, // 🐒🔥 หนุมานถวายแหวน
     w_pal: { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring", fx: ["healbless", "swordbeam", "shieldbash"] }, // ⚖️✨ ศาลเทพพิพากษา
@@ -1572,7 +1585,7 @@ const ADV_STAGES = [
         intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
         task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
     // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
+    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
         targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
         intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1740,6 +1753,7 @@ const SK_ARCH = {
     x_shp_1: "pierce", x_shp_2: "hawk", x_shp_3: "kneel", x_shp_4: "arrowrain", // 🎯💫 จอมแม่นปืน
     x_gun_1: "volley", x_gun_2: "pierce", x_gun_3: "volley", x_gun_4: "snipe", // 🔫 นักธนูขั้น 4 (ปืน)
     x_war_1: "swordspin", x_war_2: "swordquake", x_war_3: "swordbash", x_war_4: "swordrage", // ⚔️ นักรบขั้น 4 (ขุนศึก)
+    x_arc_1: "meteorcall", x_arc_2: "blackhole", x_arc_3: "blessing", x_arc_4: "lightjudge", // 🌌 นักเวทขั้น 4 (จักรวาล)
     x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse", // 🌿🏹 เรนเจอร์พงไพร
     m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff", // 🔮 เวทมนตร์
     x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata", // 🔮💥 จอมเวทธาตุ
@@ -1809,7 +1823,7 @@ const SKILL_TIERS = [
     { n: 1, name: "วิชาพื้นฐาน", emoji: "📗", lv: 1, desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
     { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
     { n: 3, name: "วิชาขั้นสูง", emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {};
@@ -1897,6 +1911,7 @@ const SKILL_ELEM = {
     k_slash: null, k_double: null, k_iai: "wind", k_moon: null,
     p_frostpierce: "ice", x_frz_1: "ice", x_frz_2: "ice", x_frz_3: "ice", x_frz_4: "ice", // 🧊 อัศวินน้ำแข็งดำ
     x_elm_1: "fire", x_elm_2: "ice", x_elm_3: "arcane", x_elm_4: "earth", // 🌈 จอมเวทธาตุ (ไฟ/น้ำแข็ง/สายฟ้า/ธรรมชาติ)
+    x_arc_1: "fire", x_arc_2: "arcane", x_arc_3: "light", x_arc_4: "light", // 🌌 จอมเวทจักรวาล
 };
 // ---------- ⚡ ปฏิกิริยาธาตุ (Elemental Reaction) ----------
 // ตีศัตรูด้วยธาตุ = ธาตุนั้น "เกาะ" ไว้ 3 เทิร์น · ตีซ้ำด้วยธาตุอื่น = ธาตุชนกัน ระเบิดเป็นปฏิกิริยา
@@ -12892,7 +12907,7 @@ function CherryAdventure() {
                 const witS = LOOT.find((x) => x.id === id), isSpear = model.userData.kkFam === "spear" || !!(witS && WPN_FAMILY[witS.cls] === "spear");
                 if (isSpear)
                     spearTipGlow(model, witS); // ✨ หอกทุกด้ามมีแสงที่ปลาย
-                const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1) * (G.cls === "warrior" && G.t4Mode && G.t4Mode() ? 1.5 : 1); // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6 · ⚔️ นักรบขั้น 4 ถือดาบยักษ์ ×1.5   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
+                const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1) * (G.t4Mode && G.t4Mode() ? (G.cls === "warrior" ? 1.5 : G.cls === "mage" ? 1.35 : 1) : 1); // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6 · ⚔️ นักรบขั้น 4 ถือดาบยักษ์ ×1.5   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
                 model.scale.setScalar(big);
                 model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
                 model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
