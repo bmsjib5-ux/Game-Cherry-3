@@ -1204,6 +1204,13 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+    // 🤖 วิชาขั้น 4 ของโปรแกรมเมอร์ (นักสร้างหุ่นยนต์) — ปลดจากภารกิจอาจารย์ Lv.500 · สร้าง/เรียกหุ่นรบ + อาวุธหนัก (จรวด ปืนกล รถถัง)
+    c_bot: { ult: { name: "กองทัพจักรกล", emoji: "🤖🚀", mul: 1.75, stun: true, defDown: 18, burn: 4, buffTeam: true, desc: "เปิดโรงงานกลางสนาม ปล่อยโดรนรบนับสิบ ระดมจรวดถล่มทุกทิศ ปิดท้ายด้วยปืนใหญ่พลังงาน สตัน ลดเกราะ เผาไหม้ + Overclock (โจมตี/ความเร็วให้ทีม)" }, skills: [
+            { id: "x_bot_1", cost: 12, name: "สร้างหุ่นรบ", emoji: "🤖", color: 0x3ad0ff, mult: 0.9, perLv: 0.2, summon: 3, summonKind: "robot", summonDur: 60, fx: "summon", desc: "ประกอบหุ่นรบ 3 ตัวออกมาช่วยสู้ 60 วินาที (ปืนกล · ใบมีด · สอดแนม) — หุ่นรับดาเมจแทนได้" },
+            { id: "x_bot_2", cost: 11, name: "ห่าจรวดถล่ม", emoji: "🚀", color: 0xff7a2a, mult: 1.8, perLv: 0.38, aoe: true, burn: 3, defDown: 8, fx: "multi", desc: "ยิงจรวดนำวิถี ×6 ระเบิดเป็นวง ติดไฟ + ลดเกราะ" },
+            { id: "x_bot_3", cost: 14, name: "ป้อมปืนกล", emoji: "🔫", color: 0xffd04a, mult: 0.9, perLv: 0.2, deploy: "gatling", deployDur: 10, fx: "multi", desc: "ทิ้งป้อมปืนกลหกลำกล้องลงข้างตัว ยิงรัวใส่มอนที่ใกล้ที่สุดเอง 10 วินาที" },
+            { id: "x_bot_4", cost: 18, name: "เรียกรถถัง", emoji: "🛡️", color: 0x8ab06a, mult: 1.4, perLv: 0.3, deploy: "tank", deployDur: 14, fx: "multi", desc: "รถถังหล่นจากฟ้ามาจอดข้างตัว ยิงกระสุนปืนใหญ่ระเบิดเป็นวงใส่ศัตรูเอง 14 วินาที" }
+        ] },
     // ⚔️⚔️ วิชาขั้น 4 ของซามูไร (นิโตริว จ้าวดาบคู่) — ปลดจากภารกิจอาจารย์ Lv.500 · ใช้ได้ทุกสายของซามูไร · ถือคาตานะสองมือ ข้างละเล่ม
     k_twn: { ult: { name: "นิโตริว·หมื่นดาบคู่", emoji: "⚔️🌸", mul: 1.75, bleed: 5, stun: true, defDown: 18, buffTeam: true, desc: "ชักดาบคู่ออกพร้อมกัน ร่างแยกเป็นหมื่นเงาฟันกากบาททุกทิศจนกลีบซากุระปลิวทั้งสนาม ปิดท้ายด้วยดาบคู่ผ่าฟ้า เลือดไหล สตัน ลดเกราะ + Bushido Spirit (คริ/ความเร็วให้ทีม)" }, skills: [
             { id: "x_twn_1", cost: 8, name: "ดาบคู่พายุพันใบ", emoji: "🌪️", color: 0xe8e8f8, mult: 0.6, perLv: 0.14, hits: 6, aoe: true, bleed: 3, fx: "slash", desc: "หมุนดาบคู่เป็นพายุใบมีด ×6 โดนทั้งวง เลือดไหล" },
@@ -1417,6 +1424,11 @@ const T4 = {
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบเล่มที่สองจากข้า",
         reward: "⚔️ ผ่านขั้นนี้แล้วจะถือคาตานะสองมือ ข้างละเล่ม — ปลดชุดสกิลขั้น 4 · ดาบคู่ + ท่าไม้ตายใหม่",
         done: "🎓⚔️ ผ่านบททดสอบขั้น 4! รับดาบเล่มที่สองจากอาจารย์แล้ว — สลับเป็น “ชุดดาบคู่” ในหน้าวิชาสกิล", on: "⚔️⚔️ ชักดาบคู่! สลับเป็นชุดสกิลขั้น 4 · ดาบคู่ + ท่าไม้ตายใหม่" },
+    coder: { pid: "c_bot", label: "🤖 ชุดหุ่นยนต์", title: "ขั้น 4 · นักสร้างหุ่นยนต์", emoji: "🤖",
+        intro: "โค้ดของเจ้าเจาะระบบได้ทั้งโลกแล้ว... แต่ถ้าจะชนะสงคราม เจ้าต้องเขียนโค้ดให้เหล็กลุกขึ้นมาสู้แทน",
+        task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับพิมพ์เขียวหุ่นรบจากข้า",
+        reward: "🤖 ผ่านขั้นนี้แล้วจะสร้างหุ่นรบและเรียกอาวุธหนักได้ (จรวด ปืนกล รถถัง) — ปลดชุดสกิลขั้น 4 · หุ่นยนต์ + ท่าไม้ตายใหม่",
+        done: "🎓🤖 ผ่านบททดสอบขั้น 4! รับพิมพ์เขียวหุ่นรบจากอาจารย์แล้ว — สลับเป็น “ชุดหุ่นยนต์” ในหน้าวิชาสกิล", on: "🤖 เปิดโรงงานหุ่นรบ! สลับเป็นชุดสกิลขั้น 4 · หุ่นยนต์ + อาวุธหนัก" },
     warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
         intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
@@ -1433,6 +1445,7 @@ const ADV_SIG = {
     s_rea: { c: 0x8a3aff, c2: 0x1a0a2a, aura: "spikes", fx: ["shadow", "shadowdance", "crossslash"] }, // 🌑💀 สุริยุปราคามรณะ
     l_thn: { c: 0x4ac0ff, c2: 0xeaf6ff, aura: "pillar", fx: ["bolt", "thunderstorm", "pierce"] }, // ⚡🔱 อัสนีบาตเทพสงคราม
     k_twn: { c: 0xffb0c8, c2: 0xffffff, aura: "spikes", fx: ["crossslash", "crescent", "swordbeam"] }, // ⚔️🌸 นิโตริว·หมื่นดาบคู่
+    c_bot: { c: 0x3ad0ff, c2: 0xffb040, aura: "ring", fx: ["dronebarrage", "omega", "shieldbash"] }, // 🤖🚀 กองทัพจักรกล
     b_king: { c: 0xf5d24a, c2: 0xffffff, aura: "ring", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🥊👑 ราชันสังเวียน
     b_muay: { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] }, // 🐒🔥 หนุมานถวายแหวน
     w_pal: { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring", fx: ["healbless", "swordbeam", "shieldbash"] }, // ⚖️✨ ศาลเทพพิพากษา
@@ -1624,7 +1637,7 @@ const ADV_STAGES = [
         intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
         task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
     // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
+    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
         targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
         intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1796,6 +1809,7 @@ const SK_ARCH = {
     x_rea_1: "bladestorm", x_rea_2: "cobraclaw", x_rea_3: "shadow3", x_rea_4: "reaperhand", // 🌑 นักฆ่าขั้น 4 (เงามรณะ)
     x_thn_1: "spearstorm", x_thn_2: "quakespear", x_thn_3: "mountainarmor", x_thn_4: "spearpierce", // ⚡ นักหอกขั้น 4 (เทพสงคราม)
     x_twn_1: "bladestorm", x_twn_2: "twinmoon", x_twn_3: "twinbolt", x_twn_4: "godblade", // ⚔️⚔️ ซามูไรขั้น 4 (ดาบคู่)
+    x_bot_1: "summon", x_bot_2: "shouldercannon", x_bot_3: "buff", x_bot_4: "buff", // 🤖 โปรแกรมเมอร์ขั้น 4 (หุ่นยนต์)
     x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse", // 🌿🏹 เรนเจอร์พงไพร
     m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff", // 🔮 เวทมนตร์
     x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata", // 🔮💥 จอมเวทธาตุ
@@ -1865,7 +1879,7 @@ const SKILL_TIERS = [
     { n: 1, name: "วิชาพื้นฐาน", emoji: "📗", lv: 1, desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
     { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
     { n: 3, name: "วิชาขั้นสูง", emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {};
@@ -54780,7 +54794,7 @@ function CherryAdventure() {
             m.userData.allyTop = top;
             return rad;
         };
-        G.summonPack = (n, dur) => {
+        G.summonPack = (n, dur, kind) => {
             n = Math.max(1, Math.min(5, n || 3));
             dur = dur || 60;
             // ⏳ มีฝูงได้ครั้งละชุด — กดสกิลซ้ำระหว่างนั้นก็ตีได้ตามปกติ แต่ฝูงไม่รีเซ็ต
@@ -54790,7 +54804,8 @@ function CherryAdventure() {
                 toast(`🐾 ฝูงสัตว์กำลังพัก อีก ${G.summonWait()} วิค่อยเรียกใหม่ได้`);
                 return 0;
             }
-            const picks = summonPicks(n);
+            const robo = kind === "robot"; // 🤖 นักสร้างหุ่นยนต์ — ประกอบหุ่นรบ (หุ่น Animated Mech) แทนฝูงสัตว์
+            const picks = robo ? Array.from({ length: n }, (_, i) => ({ sp: ["mechgunner", "mechstriker", "mechscout", "mechtitan"][i % 4], stage: 1, lv: (G.player && G.player.level) || 1, mut: 0 })) : summonPicks(n);
             picks.forEach((p, i) => {
                 let m = null;
                 try {
@@ -54806,6 +54821,8 @@ function CherryAdventure() {
                 if (!m)
                     return;
                 vivify(m);
+                if (robo)
+                    m.scale.multiplyScalar(1.4); // 🤖 หุ่นรบตัวใหญ่กว่ามอนปกติ ดูเป็นเครื่องจักรสงคราม
                 const rad = markAlly(m); // 🐾 ตัวเท่ามอนสเตอร์ปกติ — ติดป้ายฝูงของเราไว้แทนการย่อขนาด
                 const ang = (i / picks.length) * Math.PI * 2 + Math.random() * 0.6;
                 const sr = 2.6 + rad;
@@ -54822,8 +54839,8 @@ function CherryAdventure() {
                 updateWildBar(m);
                 summons.push({ m, rad, cd: 0.35 + i * 0.22, reT: 0, tgt: null, lunge: null, hp: _mx, maxHp: _mx, name: (_sp.name || "เพื่อนซี้") });
                 try {
-                    spawnSkillFx("summonpop", m.position, 0x9ae06a);
-                    burst(m.position, 0x9ae06a, 0.7);
+                    spawnSkillFx("summonpop", m.position, robo ? 0x3ad0ff : 0x9ae06a);
+                    burst(m.position, robo ? 0x3ad0ff : 0x9ae06a, 0.7);
                 }
                 catch (e2) { }
             });
@@ -54831,7 +54848,7 @@ function CherryAdventure() {
             G._summonSec = Math.ceil(G.summonT);
             setUi((u) => ({ ...u, summonLeft: Math.ceil(G.summonT) }));
             if (summons.length)
-                toast(`🐾 เรียกฝูงสัตว์ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!`);
+                toast(robo ? `🤖 ประกอบหุ่นรบ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!` : `🐾 เรียกฝูงสัตว์ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!`);
             return summons.length;
         };
         // 🛡️🐾 สัตว์ที่เรียกออกมา "รับหน้า" แทนเจ้าของ — มอนสเตอร์ตัวไหนมีสัตว์อยู่ใกล้จะเข้าใส่สัตว์ก่อน
@@ -57773,6 +57790,221 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        // 🔫🛡️ อาวุธหนักของนักสร้างหุ่นยนต์ — ป้อมปืนกลหกลำกล้อง / รถถัง หล่นจากฟ้ามาจอดข้างตัว แล้วเล็งยิงมอนที่ใกล้ที่สุดเองจนหมดเวลา
+        const deploys = [], dShells = [];
+        const dMat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.45 }, o || {}));
+        const buildGatling = () => {
+            const g = new THREE.Group(), steel = dMat(0x5a6470), dark = dMat(0x2a2e34), gold = dMat(0xc8a040, { metalness: 0.7 });
+            for (let k = 0; k < 3; k++) {
+                const a = k / 3 * Math.PI * 2;
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 6), dark);
+                leg.position.set(Math.cos(a) * 0.42, 0.55, Math.sin(a) * 0.42);
+                leg.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5);
+                g.add(leg);
+            }
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.5, 8), steel);
+            post.position.y = 1.2;
+            g.add(post);
+            const head = new THREE.Group();
+            head.position.y = 1.45;
+            g.add(head);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.7), steel);
+            head.add(body);
+            const ammo = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.36), dMat(0x4a5a3a));
+            ammo.position.set(0.42, -0.05, -0.05);
+            head.add(ammo);
+            const shield = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.06), dark);
+            shield.position.set(0, 0.05, 0.28);
+            head.add(shield);
+            const spin = new THREE.Group();
+            spin.position.set(0, 0, 0.45);
+            head.add(spin);
+            for (let k = 0; k < 6; k++) {
+                const a = k / 6 * Math.PI * 2;
+                const b = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.95, 6), steel);
+                b.rotation.x = Math.PI / 2;
+                b.position.set(Math.cos(a) * 0.09, Math.sin(a) * 0.09, 0.45);
+                spin.add(b);
+            }
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.03, 6, 16), gold);
+            ring.position.z = 0.2;
+            spin.add(ring);
+            const muzzle = new THREE.Object3D();
+            muzzle.position.set(0, 0, 0.95);
+            spin.add(muzzle);
+            return { g, head, spin, muzzle, range: 11, hp: 1 };
+        };
+        const buildTank = () => {
+            const g = new THREE.Group(), olive = dMat(0x5a6a3a), dark = dMat(0x26282a, { roughness: 0.8 }), steel = dMat(0x6a7078);
+            const hull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.6, 2.8), olive);
+            hull.position.y = 0.75;
+            g.add(hull);
+            const front = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.35, 0.6), olive);
+            front.position.set(0, 0.62, 1.55);
+            front.rotation.x = 0.5;
+            g.add(front);
+            for (const sx of [-1, 1]) {
+                const tr = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.62, 3.1), dark);
+                tr.position.set(sx * 1.15, 0.36, 0);
+                g.add(tr);
+                for (let k = 0; k < 5; k++) {
+                    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.52, 10), steel);
+                    w.rotation.z = Math.PI / 2;
+                    w.position.set(sx * 1.15, 0.3, -1.2 + k * 0.6);
+                    g.add(w);
+                }
+            }
+            const head = new THREE.Group();
+            head.position.y = 1.2;
+            g.add(head);
+            const tur = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.85, 0.5, 12), olive);
+            head.add(tur);
+            const hatch = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.12, 10), dark);
+            hatch.position.set(-0.25, 0.3, -0.2);
+            head.add(hatch);
+            const gun = new THREE.Group();
+            gun.position.set(0, 0.05, 0.6);
+            head.add(gun);
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 1.9, 10), steel);
+            barrel.rotation.x = Math.PI / 2;
+            barrel.position.z = 0.95;
+            gun.add(barrel);
+            const brake = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.3, 10), dark);
+            brake.rotation.x = Math.PI / 2;
+            brake.position.z = 1.9;
+            gun.add(brake);
+            const star = new THREE.Mesh(new THREE.CircleGeometry(0.2, 5), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            star.position.set(0.86, 0.02, 0);
+            star.rotation.y = Math.PI / 2;
+            head.add(star);
+            const muzzle = new THREE.Object3D();
+            muzzle.position.set(0, 0, 2.05);
+            gun.add(muzzle);
+            return { g, head, spin: null, gun, muzzle, range: 15, hp: 1 };
+        };
+        const dRemove = (d) => { const i = deploys.indexOf(d); if (i >= 0)
+            deploys.splice(i, 1); try {
+            burst(d.g.position, 0xffd04a, 1.2);
+        }
+        catch (e) { } scene.remove(d.g); d.g.traverse((o) => { if (o.geometry)
+            o.geometry.dispose(); if (o.material)
+            o.material.dispose(); }); };
+        G.deployHeavy = (kind, dur, sk) => {
+            deploys.filter((d) => d.kind === kind).forEach(dRemove); // ชนิดเดียวกันมีได้ทีละคัน — เรียกใหม่ = เปลี่ยนคันใหม่
+            const B = kind === "tank" ? buildTank() : buildGatling();
+            const side = kind === "tank" ? -3.6 : 2.4, s0 = Math.sin(char.rotation.y), c0 = Math.cos(char.rotation.y);
+            const x = char.position.x + c0 * side - s0 * 0.8, z = char.position.z - s0 * side - c0 * 0.8;
+            B.g.position.set(x, terrainAt(x, z) - (G._gy || 0) + 9, z);
+            B.g.rotation.y = char.rotation.y;
+            B.g.traverse((o) => { if (o.isMesh) {
+                o.castShadow = true;
+                o.raycast = () => { };
+            } });
+            scene.add(B.g);
+            const rk = (sk && G.skillRanks && G.skillRanks[sk.id]) || 1, mul = sk ? skillMul(sk, rk) : 1;
+            deploys.push(Object.assign(B, { kind, t: 0, dur: dur || 10, cd: 0.9, atk: effAtk() * mul, gy: terrainAt(x, z) - (G._gy || 0), landed: false, recoil: 0 }));
+            toast(kind === "tank" ? `🛡️ รถถังมาถึงแล้ว! ยิงสนับสนุน ${Math.round(dur)} วินาที` : `🔫 ตั้งป้อมปืนกลแล้ว! ยิงรัว ${Math.round(dur)} วินาที`);
+        };
+        const dTarget = (d) => {
+            let best = null, bd = d.range * d.range;
+            for (const m of wilds) {
+                if (!m.parent || !m.visible || (G.dungeon && !m.userData.twr))
+                    continue;
+                const dx = m.position.x - d.g.position.x, dz = m.position.z - d.g.position.z, q = dx * dx + dz * dz;
+                if (q < bd) {
+                    bd = q;
+                    best = m;
+                }
+            }
+            return best;
+        };
+        G.deployTick = (dt) => {
+            for (let i = deploys.length - 1; i >= 0; i--) {
+                const d = deploys[i];
+                d.t += dt;
+                if (d.t >= d.dur || (G.mode !== "explore" && G.mode !== "fainted")) {
+                    dRemove(d);
+                    continue;
+                }
+                if (!d.landed) { // 🪂 หล่นจากฟ้า → กระแทกพื้นเป็นฝุ่น
+                    d.g.position.y = Math.max(d.gy, d.g.position.y - dt * 26);
+                    if (d.g.position.y <= d.gy) {
+                        d.landed = true;
+                        try {
+                            dustRing(d.g.position.x, d.g.position.z, d.kind === "tank" ? 2.2 : 1.2);
+                        }
+                        catch (e) { }
+                        G._camShake = Math.max(G._camShake || 0, d.kind === "tank" ? 0.25 : 0.1);
+                    }
+                    continue;
+                }
+                if (d.dur - d.t < 0.6)
+                    d.g.scale.setScalar(Math.max(0.05, (d.dur - d.t) / 0.6)); // หดหายตอนหมดเวลา
+                const tg = dTarget(d);
+                if (d.spin)
+                    d.spin.rotation.z += dt * (tg ? 28 : 3);
+                if (d.recoil > 0) {
+                    d.recoil = Math.max(0, d.recoil - dt * 3);
+                    if (d.gun)
+                        d.gun.position.z = 0.6 - d.recoil * 0.35;
+                }
+                if (!tg)
+                    continue;
+                const want = Math.atan2(tg.position.x - d.g.position.x, tg.position.z - d.g.position.z) - d.g.rotation.y;
+                let diff = want - d.head.rotation.y;
+                diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                d.head.rotation.y += diff * Math.min(1, dt * (d.kind === "tank" ? 4 : 10));
+                d.cd -= dt;
+                if (d.cd > 0 || Math.abs(diff) > 0.35)
+                    continue;
+                d.g.updateMatrixWorld(true);
+                const from = d.muzzle.getWorldPosition(new THREE.Vector3());
+                const to = new THREE.Vector3(tg.position.x, tg.position.y + 0.9, tg.position.z);
+                if (d.kind === "gatling") {
+                    d.cd = 0.2;
+                    const dmg = d.atk * 0.14;
+                    spawnBullet(from, to, 0xffd04a, Math.max(0.1, from.distanceTo(to) / 40), () => { if (wilds.indexOf(tg) >= 0) {
+                        hurtWild(tg, dmg, {});
+                        burst(to, 0xffd04a, 0.35);
+                    } });
+                }
+                else {
+                    d.cd = 1.4;
+                    d.recoil = 1;
+                    const sm = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe08a }));
+                    sm.position.copy(from);
+                    scene.add(sm);
+                    dShells.push({ m: sm, from: from.clone(), to: new THREE.Vector3(tg.position.x, tg.position.y + 0.3, tg.position.z), t: 0, dur: Math.max(0.3, from.distanceTo(to) / 30), dmg: d.atk * 0.7 });
+                    try {
+                        burst(from, 0xffc04a, 0.9);
+                    }
+                    catch (e) { }
+                    G._camShake = Math.max(G._camShake || 0, 0.08);
+                }
+            }
+            for (let i = dShells.length - 1; i >= 0; i--) { // 💥 กระสุนปืนใหญ่ — โค้งเล็กน้อยแล้วระเบิดเป็นวง
+                const S = dShells[i];
+                S.t += dt;
+                const k = Math.min(1, S.t / S.dur);
+                S.m.position.lerpVectors(S.from, S.to, k);
+                S.m.position.y += Math.sin(k * Math.PI) * 1.2;
+                if (k < 1)
+                    continue;
+                dShells.splice(i, 1);
+                scene.remove(S.m);
+                S.m.geometry.dispose();
+                S.m.material.dispose();
+                const hx = S.to.x, hz = S.to.z;
+                try {
+                    spawnHolyRing(hx, hz, 0xff8a2a, 2.6);
+                    spawnFirePillar(hx, hz, 0xff7a2a);
+                    dustRing(hx, hz, 1.6);
+                }
+                catch (e) { }
+                wildsInRadius(hx, hz, 2.6).forEach((m) => { hurtWild(m, S.dmg, {}); burst(new THREE.Vector3(m.position.x, 0.9, m.position.z), 0xff8a2a, 0.7); });
+                G._camShake = Math.max(G._camShake || 0, 0.18);
+            }
+        };
         // 🛸 โดรนรบ — จานบินเล็กมีไฟใต้ท้อง บินวนล้อมเป้าแล้วยิงเลเซอร์ลงมา
         const spawnCombatDrone = (idx, target, col, life) => {
             try {
@@ -60591,6 +60823,19 @@ function CherryAdventure() {
             // 🥷 ประหารเงา = ท่าระยะไกล — เล็งได้ไกลกว่าสกิลประชิดของนักฆ่ามาก
             const focus = nearestWild(worldRange() + (arch0 === "shadow3" ? 8 : arch0 === "knives" ? 5 : aoe ? 3 : 2));
             if (!focus) {
+                if (sk.deploy && G.deployHeavy) { // 🔫🛡️ อาวุธหนัก — ไม่มีเป้าใกล้ ๆ ก็ทิ้งลงมาเฝ้าไว้ก่อนได้
+                    G.player.mp -= cost;
+                    G.startCd(sk);
+                    try {
+                        worldGestureFx(char.position, sk.color || 0xffd24a);
+                    }
+                    catch (eDp) { }
+                    G.deployHeavy(sk.deploy, sk.deployDur || 10, sk);
+                    if (G.sfx && G.sfx.skill)
+                        G.sfx.skill();
+                    syncPlayer();
+                    return;
+                }
                 if (!sk.summon)
                     return;
                 if (G.summonWait() > 0) {
@@ -60604,7 +60849,7 @@ function CherryAdventure() {
                     worldGestureFx(char.position, sk.color || 0xffd24a);
                 }
                 catch (eSm) { }
-                G.summonPack(sk.summon, sk.summonDur || 60);
+                G.summonPack(sk.summon, sk.summonDur || 60, sk.summonKind);
                 if (G.sfx && G.sfx.skill)
                     G.sfx.skill();
                 syncPlayer();
@@ -63362,7 +63607,9 @@ function CherryAdventure() {
                 const at = tgt ? tgt.position : focus.position;
                 const selfFx = fk === "healbless" || fk === "warfrenzy" || fk === "overclock";
                 if (sk.summon)
-                    G.summonPack(sk.summon, sk.summonDur || 60); // 🐾 เรียกฝูงสัตว์ออกมาอยู่ช่วยรบตามเวลาที่กำหนด
+                    G.summonPack(sk.summon, sk.summonDur || 60, sk.summonKind); // 🐾 เรียกฝูงสัตว์ออกมาอยู่ช่วยรบตามเวลาที่กำหนด
+                if (sk.deploy && G.deployHeavy)
+                    G.deployHeavy(sk.deploy, sk.deployDur || 10, sk); // 🔫🛡️ ป้อมปืนกล / รถถัง
                 // 🏹 นักธนู: ปล่อยลูกธนูออกไปก่อน — เอฟเฟคต์ประจำสกิลค่อยแตกตอนลูกธนูปักเป้า
                 //    (ท่าบำรุงตัวเอง/ยิงจากฟ้า/ขึ้นจากพื้น ใช้จังหวะเดิม)
                 let arrowLead = false;
@@ -64240,7 +64487,7 @@ function CherryAdventure() {
                 G.player.mp -= cost;
                 G.startCd(sk); // ⏳ begin this skill's cooldown
                 if (sk.summon)
-                    G.summonPack(sk.summon, sk.summonDur || 60); // 🐾 เรียกฝูงสัตว์ — นับเป็นเวลาจริง อยู่ข้ามเทิร์นได้
+                    G.summonPack(sk.summon, sk.summonDur || 60, sk.summonKind); // 🐾 เรียกฝูงสัตว์ — นับเป็นเวลาจริง อยู่ข้ามเทิร์นได้
                 // ⚔️ COMBO CHAIN — using different skills in a row builds a chain multiplier
                 G.comboSeq = G.comboSeq || [];
                 if (G.comboSeq.length && G.comboSeq[G.comboSeq.length - 1] === sk.id) {
@@ -90344,6 +90591,12 @@ function CherryAdventure() {
                 } // 🧍 ตัวละครโมเดล 3D (ทดลอง)
                 if (G.godWeaponTick)
                     G.godWeaponTick(performance.now() / 1000); // 🌌 ออร่าเทวศาสตรา
+                if (G.deployTick) {
+                    try {
+                        G.deployTick(dt);
+                    }
+                    catch (_) { }
+                } // 🔫🛡️ ป้อมปืนกล / รถถังของนักสร้างหุ่นยนต์
                 if (G.npcModelTick) {
                     try {
                         G.npcModelTick(dt);
