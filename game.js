@@ -55071,7 +55071,7 @@ function CherryAdventure() {
         const summons = [];
         const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
         // 🐾 ตำแหน่งยืนของฝูงในสนามต่อสู้ (ระยะจากจุดกลางเวที) — กระจายฝั่งเชอร์รี่ เลี่ยงจุดยืนของเพื่อนซี้ (-2.8, +1.1)
-        const SUMMON_SLOT = [[-2.7, -1.6], [-3.6, 0.3], [-2.9, 2.2], [-4.3, 1.7], [-4.4, -0.7]];
+        const SUMMON_SLOT = [[-2.9, -2.2], [-4.0, 0.3], [-3.1, 2.8], [-5.2, 2.0], [-5.3, -1.1]]; // 🐾 ช่องยืนในสนาม — ห่างกันพอไม่ทับ
         const clearSummons = (quiet) => {
             for (const s of summons) {
                 if (!s.m)
@@ -55391,8 +55391,10 @@ function CherryAdventure() {
                         const dx = tg.position.x - m.position.x, dz = tg.position.z - m.position.z;
                         const d = Math.hypot(dx, dz) || 1;
                         const stand = 0.85 + (s.rad || 0.7) + (tg.scale ? tg.scale.x : 1) * 0.45; // 🐾 ตัวใหญ่ขึ้น ก็ต้องยืนห่างขึ้น ไม่งั้นตัวทะลุกัน
-                        gx = tg.position.x - (dx / d) * stand;
-                        gz = tg.position.z - (dz / d) * stand;
+                        // 🐾 กระจายยืนล้อมเป้าคนละมุม (ฝั่งที่เจ้าของยืน) — เดิมทุกตัวเข้าจุดเดียวกันหน้าเป้า เลยยืนทับกันเป็นก้อน
+                        const baseA = Math.atan2(char.position.x - tg.position.x, char.position.z - tg.position.z), spreadA = baseA + (i - (summons.length - 1) / 2) * 0.95;
+                        gx = tg.position.x + Math.sin(spreadA) * stand;
+                        gz = tg.position.z + Math.cos(spreadA) * stand;
                         spd = 7.4;
                         if (d < stand + 0.9 && s.cd <= 0) { // 🦷 ถึงตัวแล้ว = กัดหนึ่งที แล้วตั้งคูลดาวน์ของมันเอง
                             s.cd = 1.15 + Math.random() * 0.25;
@@ -55441,6 +55443,28 @@ function CherryAdventure() {
                     m.userData.allyMark.position.y = (m.userData.allyTop || 1.6) + 0.5 + Math.sin(t * 2.4 + i * 1.1) * 0.09;
                 if (G._animPetFx)
                     G._animPetFx(m, t); // ✨ หมุนดาว/วงเวทประจำตัวสัตว์
+            }
+            // 👣 เว้นระยะระหว่างสัตว์ที่เรียกออกมา — ตัวที่ใกล้กันเกินค่อย ๆ ดันออก (ยกเว้นตัวที่กำลังพุ่งขย้ำ)
+            if (!battle) {
+                const kS = Math.min(1, dt * 6);
+                for (let a = 0; a < summons.length; a++) {
+                    const A = summons[a];
+                    if (!A.m || A.lunge)
+                        continue;
+                    for (let b = a + 1; b < summons.length; b++) {
+                        const B = summons[b];
+                        if (!B.m || B.lunge)
+                            continue;
+                        const dx = B.m.position.x - A.m.position.x, dz = B.m.position.z - A.m.position.z, need = (A.rad || 0.7) + (B.rad || 0.7) + 0.6, d2 = dx * dx + dz * dz;
+                        if (d2 >= need * need)
+                            continue;
+                        const d = Math.sqrt(d2) || 0.001, nx = d2 > 1e-6 ? dx / d : Math.cos(a + b), nz = d2 > 1e-6 ? dz / d : Math.sin(a + b), push = (need - d) * 0.5 * kS;
+                        A.m.position.x -= nx * push;
+                        A.m.position.z -= nz * push;
+                        B.m.position.x += nx * push;
+                        B.m.position.z += nz * push;
+                    }
+                }
             }
         };
         // ================= 🖱️ MOUSE MARKERS + เดินไปตี =================
