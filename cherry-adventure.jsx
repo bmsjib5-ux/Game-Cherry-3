@@ -1140,6 +1140,12 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+  // 🍳 วิชาขั้น 4 ของพนักงานออฟฟิศ (เจ้าของกิจการร้านอาหาร) — ปลดจากภารกิจอาจารย์ Lv.500 · ถือกระทะ ใช้ของในครัว + อาหาร/ขนมหวานเป็นอาวุธ
+  o_chf: { ult: { name: "ร้านอาหารมิชลินสามดาว", emoji: "🍳⭐", mul: 1.75, stun: true, defDown: 18, burn: 4, heal: 0.3, buffTeam: true, desc: "เปิดครัวกลางสนาม เสิร์ฟคอร์สมิชลินถล่มศัตรูทุกโต๊ะ กระทะยักษ์ทุบ มีดครัวปลิวว่อน ปิดท้ายด้วยเค้กยักษ์ระเบิดครีม สตัน ลดเกราะ ไหม้ + ฟื้น HP ทีม + Chef's Special (โจมตี/ป้องกันให้ทีม)" }, skills: [
+    { id: "x_chf_1", cost: 8,  name: "เสิร์ฟด่วนจานร้อน", emoji: "🍔", color: 0xffa040, mult: 0.7, perLv: 0.16, hits: 5, burn: 2, chef: "food", fx: "multi", desc: "โยนเบอร์เกอร์ ซูชิ โดนัท ข้าวปั้น ร้อน ๆ ใส่ศัตรู ×5 ติดไฟ" },
+    { id: "x_chf_2", cost: 11, name: "มีดครัวพายุ",       emoji: "🔪", color: 0xd8e0e8, mult: 0.8, perLv: 0.18, hits: 4, bleed: 3, fx: "stab", desc: "ปามีดครัวเป็นพัด ×4 เลือดไหล" },
+    { id: "x_chf_3", cost: 13, name: "บุฟเฟ่ต์ขนมหวาน",   emoji: "🍰", color: 0xffb0d0, mult: 1.1, perLv: 0.24, heal: 0.4, buffDef: 8, chef: "dessert", fx: "heal", desc: "เค้ก โดนัท มาการอง ลอยรอบตัว กินแล้วฟื้น HP 40% + ป้องกัน +8" },
+    { id: "x_chf_4", cost: 18, name: "กระทะยักษ์ทุบโลก",  emoji: "🍳", color: 0x4a4a52, mult: 3.6, perLv: 0.72, aoe: true, stun: true, guaranteedCrit: true, defDown: 12, chef: "pan", fx: "quake", desc: "กระทะเหล็กยักษ์หล่นจากฟ้าทุบทั้งกลุ่ม สตัน คริการันตี + ลดเกราะ" } ] },
   // 🤖 วิชาขั้น 4 ของโปรแกรมเมอร์ (นักสร้างหุ่นยนต์) — ปลดจากภารกิจอาจารย์ Lv.500 · สร้าง/เรียกหุ่นรบ + อาวุธหนัก (จรวด ปืนกล รถถัง)
   c_bot: { ult: { name: "กองทัพจักรกล", emoji: "🤖🚀", mul: 1.75, stun: true, defDown: 18, burn: 4, buffTeam: true, desc: "เปิดโรงงานกลางสนาม ปล่อยโดรนรบนับสิบ ระดมจรวดถล่มทุกทิศ ปิดท้ายด้วยปืนใหญ่พลังงาน สตัน ลดเกราะ เผาไหม้ + Overclock (โจมตี/ความเร็วให้ทีม)" }, skills: [
     { id: "x_bot_1", cost: 12, name: "สร้างหุ่นรบ",     emoji: "🤖", color: 0x3ad0ff, mult: 0.9, perLv: 0.2, summon: 3, summonKind: "robot", summonDur: 60, fx: "summon", desc: "ประกอบหุ่นรบ 3 ตัวออกมาช่วยสู้ 60 วินาที (ปืนกล · ใบมีด · สอดแนม) — หุ่นรับดาเมจแทนได้" },
@@ -1335,6 +1341,11 @@ const T4 = {
              task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับพิมพ์เขียวหุ่นรบจากข้า",
              reward: "🤖 ผ่านขั้นนี้แล้วจะสร้างหุ่นรบและเรียกอาวุธหนักได้ (จรวด ปืนกล รถถัง) — ปลดชุดสกิลขั้น 4 · หุ่นยนต์ + ท่าไม้ตายใหม่",
              done: "🎓🤖 ผ่านบททดสอบขั้น 4! รับพิมพ์เขียวหุ่นรบจากอาจารย์แล้ว — สลับเป็น “ชุดหุ่นยนต์” ในหน้าวิชาสกิล", on: "🤖 เปิดโรงงานหุ่นรบ! สลับเป็นชุดสกิลขั้น 4 · หุ่นยนต์ + อาวุธหนัก" },
+  office:  { pid: "o_chf", label: "🍳 ชุดเชฟ", title: "ขั้น 4 · เจ้าของกิจการร้านอาหาร", emoji: "🍳",
+             intro: "เจ้าทำงานให้คนอื่นมามากพอแล้ว... ถึงเวลาเปิดกิจการของตัวเอง — ร้านอาหารที่อาหารทุกจานเป็นอาวุธ",
+             task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว เก็บวัตถุดิบให้พอ แล้วกลับมารับกระทะประจำร้านจากข้า",
+             reward: "🍳 ผ่านขั้นนี้แล้วจะเปิดร้านอาหารของตัวเอง ใช้กระทะ มีดครัว อาหาร และขนมหวานเป็นอาวุธ — ปลดชุดสกิลขั้น 4 · เชฟ + ท่าไม้ตายใหม่",
+             done: "🎓🍳 ผ่านบททดสอบขั้น 4! รับกระทะประจำร้านจากอาจารย์แล้ว — สลับเป็น “ชุดเชฟ” ในหน้าวิชาสกิล", on: "🍳 เปิดร้าน! สลับเป็นชุดสกิลขั้น 4 · เชฟ + ท่าไม้ตายใหม่" },
   warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
              intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
              task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
@@ -1352,6 +1363,7 @@ const ADV_SIG = {
   l_thn:     { c: 0x4ac0ff, c2: 0xeaf6ff, aura: "pillar", fx: ["bolt", "thunderstorm", "pierce"] },       // ⚡🔱 อัสนีบาตเทพสงคราม
   k_twn:     { c: 0xffb0c8, c2: 0xffffff, aura: "spikes", fx: ["crossslash", "crescent", "swordbeam"] }, // ⚔️🌸 นิโตริว·หมื่นดาบคู่
   c_bot:     { c: 0x3ad0ff, c2: 0xffb040, aura: "ring",   fx: ["dronebarrage", "omega", "shieldbash"] }, // 🤖🚀 กองทัพจักรกล
+  o_chf:     { c: 0xffa040, c2: 0xffe0f0, aura: "ring",   fx: ["fire", "healbless", "quake"] },          // 🍳⭐ ร้านอาหารมิชลินสามดาว
   b_king:    { c: 0xf5d24a, c2: 0xffffff, aura: "ring",   fx: ["punchwave", "warfrenzy", "punchwave"] },   // 🥊👑 ราชันสังเวียน
   b_muay:    { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] },        // 🐒🔥 หนุมานถวายแหวน
   w_pal:     { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring",   fx: ["healbless", "swordbeam", "shieldbash"] },  // ⚖️✨ ศาลเทพพิพากษา
@@ -1540,7 +1552,7 @@ const ADV_STAGES = [
     intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
     task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
   // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-  { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder"], t4: true,   // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
+  { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office"], t4: true,   // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
     targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
     intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
     task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1709,6 +1721,7 @@ const SK_ARCH = {
   x_thn_1: "spearstorm", x_thn_2: "quakespear", x_thn_3: "mountainarmor", x_thn_4: "spearpierce",  // ⚡ นักหอกขั้น 4 (เทพสงคราม)
   x_twn_1: "bladestorm", x_twn_2: "twinmoon", x_twn_3: "twinbolt", x_twn_4: "godblade",            // ⚔️⚔️ ซามูไรขั้น 4 (ดาบคู่)
   x_bot_1: "summon", x_bot_2: "shouldercannon", x_bot_3: "buff", x_bot_4: "buff",                  // 🤖 โปรแกรมเมอร์ขั้น 4 (หุ่นยนต์)
+  x_chf_1: "throw", x_chf_2: "knives", x_chf_3: "buff", x_chf_4: "smash",                          // 🍳 พนักงานออฟฟิศขั้น 4 (เชฟ)
   x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse",            // 🌿🏹 เรนเจอร์พงไพร
   m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff",                       // 🔮 เวทมนตร์
   x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata",    // 🔮💥 จอมเวทธาตุ
@@ -1777,7 +1790,7 @@ const SKILL_TIERS = [
   { n: 1, name: "วิชาพื้นฐาน",  emoji: "📗", lv: 1,  desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
   { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
   { n: 3, name: "วิชาขั้นสูง",  emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-  { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+  { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {}; SKILL_TIERS.forEach((t) => (SKILL_TIER_BY[t.n] = t));
@@ -5552,6 +5565,7 @@ export default function CherryAdventure() {
       if (id === "licStaffW") return { x: -0.22, y: 0, z: 0.12 }; // 💀 คทาวิญญาณ — หัวกะโหลกชูขึ้น
       if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove" || id === "fenClaw" || id === "nekoPaw") return { x: 0, y: 0, z: 0 };   // 🥊🐺🐱 นวม/กรงเล็บ/อุ้งมือ — สวมทับกำปั้น ไม่ได้ถือด้าม
       if (id === "usaCarrot") return { x: -0.35, y: 0, z: 0.15 }; // 🐰🥕 ค้อนแครอทพาดไหล่เฉียงหน้า
+      if (id === "chef_pan") return { x: -0.35, y: 0, z: 0 };   // 🍳 กระทะชูขึ้นหน้า
       if (id === "cx" || id === "wDx" || id === "lg_ox") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
       if (typeof id === "string" && /^(w|kk)_blaster/.test(id)) return (G.heroModelId && cls === "archer") ? { x: 0.65, y: 0, z: 0 } : { x: 1.42, y: 0, z: 0 };   // 🧍 โมเดล 3D ท่าเล็งปืนสองมือ — วัดจากภาพให้ลำกล้องชี้ไปหน้า   // 🔫 ปืนตระกูล blaster (รวมนักธนูขั้น 4) — ต้องมาก่อนเงื่อนไขนักธนูถือคันธนู
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
@@ -7785,6 +7799,19 @@ export default function CherryAdventure() {
       ["sword", "bow", "staff", "dagger", "spear", "katana", "pen", "keyboard", "blaster", "whip"].forEach((fam) => {
         for (let t = 0; t < 3; t++) { const k = `w_${fam}_${t}`; G._wpnFactories[k] = () => buildTierWeapon(fam, t); G._tierWpnKeys.push(k); }
       });
+      G._wpnFactories = G._wpnFactories || {};
+      G._wpnFactories.chef_pan = () => {                                   // 🍳 กระทะเหล็กของเชฟ (ด้ามไม้ + ไข่ดาวบนหน้า) — ด้ามตามแกน +Y
+        const g = new THREE.Group();
+        const wood = new THREE.MeshStandardMaterial({ color: 0x7a4a2a, roughness: 0.8 }), iron = new THREE.MeshStandardMaterial({ color: 0x3a3c42, roughness: 0.45, metalness: 0.75 });
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.042, 0.55, 10), wood); handle.position.y = 0.06; g.add(handle);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.16, 8), iron); neck.position.y = 0.4; g.add(neck);
+        const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 0.07, 22), iron); pan.rotation.x = Math.PI / 2; pan.position.y = 0.76; g.add(pan);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.02, 6, 26), iron); rim.position.set(0, 0.76, 0.035); g.add(rim);
+        const white = new THREE.Mesh(new THREE.CircleGeometry(0.13, 16), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.6 })); white.position.set(0.03, 0.74, 0.04); g.add(white);
+        const yolk = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffb020, roughness: 0.4 })); yolk.scale.z = 0.5; yolk.position.set(0.04, 0.75, 0.05); g.add(yolk);
+        g.userData.gripY = 0.1;
+        return g;
+      };
       G.ensureWeaponModel = (k) => {
         if (!k || weaponModels[k]) return weaponModels[k] || null;
         const f = G._wpnFactories && G._wpnFactories[k]; if (!f) return null;
@@ -9212,6 +9239,7 @@ export default function CherryAdventure() {
       if (kkKey) famKey = kkKey;
       G._gloveOn = false;   // 🥊 ตั้งใหม่ด้านล่างเมื่อรู้ว่า curWeapon เป็นนวม (ท่าจับบนโมเดล 3D ต่างจากดาบ)
       curWeapon = kkKey ? kkKey : !gunM && id && weaponModels[id] ? id : (famKey && !famHasOwn && weaponModels[famKey] ? famKey : (gunM ? "cx" : (CLASS_WEAPON[G.cls] || "default")));
+      if (G.cls === "office" && G.t4Mode && G.t4Mode() && !(G.costume && G.costume.weapon) && !sigHero && G.ensureWeaponModel && G.ensureWeaponModel("chef_pan")) curWeapon = "chef_pan";   // 🍳 เชฟถือกระทะ
       Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
       { const wm = weaponModels[curWeapon]; G._curWeaponKey = curWeapon; G._gloveOn = !!(GLOVE_SPEC[curWeapon] || curWeapon === "fenClaw" || curWeapon === "nekoPaw" || (wm && wm.userData && wm.userData.kkFam === "glove") || /^kk_glove/.test(curWeapon) || (/^kki_/.test(curWeapon) && WPN_FAMILY[G.cls] === "glove")); }
       // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา · 🐺🐱 เผ่าสัตว์สวมกรงเล็บ/อุ้งมือข้างซ้ายเป็นส่วนของชุดเสมอ
@@ -36255,7 +36283,62 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (const m of wilds) { if (!m.parent || !m.visible || (G.dungeon && !m.userData.twr)) continue; const dx = m.position.x - d.g.position.x, dz = m.position.z - d.g.position.z, q = dx * dx + dz * dz; if (q < bd) { bd = q; best = m; } }
       return best;
     };
+    // 🍳 เอฟเฟกต์ครัวของเชฟ (เสริมภาพ — ดาเมจคิดตามระบบสกิลปกติ) — อาหารพุ่งโค้งใส่เป้า · กระทะยักษ์หล่นทุบ · ขนมหวานลอยวนรอบตัว
+    const chefFx = [];
+    const foodMesh = (k) => {
+      const g = new THREE.Group(), M = (c, r) => new THREE.MeshStandardMaterial({ color: c, roughness: r == null ? 0.6 : r });
+      if (k === 0) { const bun = M(0xd89040); const t = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), bun); t.position.y = 0.05; const pat = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.07, 14), M(0x5a3020)); const lettuce = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.02, 14), M(0x5ab040)); lettuce.position.y = 0.045; const b = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.08, 14), bun); b.position.y = -0.07; g.add(t, pat, lettuce, b); }
+      else if (k === 1) { const d = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.08, 10, 18), M(0xe8b070)); const ic = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.082, 10, 18, Math.PI * 2), M(0xff7ab0, 0.4)); ic.scale.set(1, 1, 0.55); ic.position.z = 0.03; g.add(d, ic); g.rotation.x = Math.PI / 2; }
+      else if (k === 2) { const r = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.3, 3), M(0xfafafa, 0.8)); r.rotation.y = Math.PI / 6; const n = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.2), M(0x1a2a1a)); n.position.y = -0.08; g.add(r, n); }
+      else { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.2, 16, 1, false, 0, Math.PI / 2.2), M(0xfff0d8)); const cr = new THREE.Mesh(new THREE.CylinderGeometry(0.225, 0.225, 0.05, 16, 1, false, 0, Math.PI / 2.2), M(0xff9ac8, 0.4)); cr.position.y = 0.12; const st = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xe02030, 0.3)); st.position.set(0.12, 0.18, 0.08); g.add(c, cr, st); }
+      g.traverse((o) => { o.raycast = () => {}; });
+      return g;
+    };
+    const chefDispose = (g) => { scene.remove(g); g.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); };
+    G.chefFx = (kind, tgt, sk) => {
+      try {
+        const col = (sk && sk.color) || 0xffa040;
+        if (kind === "food") {
+          const pool = tgt ? [tgt].concat(wildsInRadius(tgt.position.x, tgt.position.z, 4).filter((m) => m !== tgt)) : [];
+          for (let i = 0; i < 5; i++) {
+            const m = pool.length ? pool[i % pool.length] : null;
+            const to = m ? new THREE.Vector3(m.position.x, 0.9, m.position.z) : new THREE.Vector3(char.position.x + Math.sin(char.rotation.y) * 6, 0.6, char.position.z + Math.cos(char.rotation.y) * 6);
+            const g = foodMesh(i % 4); g.scale.setScalar(1.9); const from = new THREE.Vector3(char.position.x, 1.9, char.position.z);
+            g.position.copy(from); g.visible = false; scene.add(g);
+            chefFx.push({ kind: "food", g, from, to, t: -i * 0.09, dur: 0.5, spin: new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0), col: [0xffb040, 0xff7ab0, 0xffffff, 0xffc0e0][i % 4] });
+          }
+        } else if (kind === "pan") {
+          const at = tgt ? tgt.position : char.position;
+          const g = G._wpnFactories.chef_pan(); g.scale.setScalar(7); g.rotation.set(-Math.PI / 2, 0, Math.random() * 6);   // หน้ากระทะคว่ำลงพื้น
+          const off = new THREE.Vector3(0, 0.76 * 7, 0).applyEuler(g.rotation); g.position.set(at.x - off.x, 14, at.z - off.z); scene.add(g);   // เลื่อนให้ "หน้ากระทะ" (ไม่ใช่ด้าม) อยู่เหนือเป้าพอดีทุกมุมหมุน
+          chefFx.push({ kind: "pan", g, t: 0, dur: 1.4, x: at.x, z: at.z, landed: false });
+        } else if (kind === "dessert") {
+          for (let i = 0; i < 6; i++) { const g = foodMesh(i % 2 ? 1 : 3); g.scale.setScalar(2); scene.add(g); chefFx.push({ kind: "dessert", g, t: 0, dur: 2.4, a0: i / 6 * Math.PI * 2 }); }
+        }
+      } catch (e) {}
+    };
+    const chefTick = (dt) => {
+      for (let i = chefFx.length - 1; i >= 0; i--) {
+        const F = chefFx[i]; F.t += dt;
+        if (F.kind === "food") {
+          if (F.t < 0) continue; F.g.visible = true;
+          const k = Math.min(1, F.t / F.dur);
+          F.g.position.lerpVectors(F.from, F.to, k); F.g.position.y += Math.sin(k * Math.PI) * 2.2;
+          F.g.rotation.x += F.spin.x * dt; F.g.rotation.y += F.spin.y * dt;
+          if (k >= 1) { burst(F.to, F.col, 0.9); burst(F.to, 0xfff6e0, 0.5); chefFx.splice(i, 1); chefDispose(F.g); }
+        } else if (F.kind === "pan") {
+          if (!F.landed) { F.g.position.y = Math.max(0.3, F.g.position.y - dt * 40); if (F.g.position.y <= 0.3) { F.landed = true; try { dustRing(F.x, F.z, 3); spawnHolyRing(F.x, F.z, 0xffe0a0, 3); } catch (e) {} G._camShake = Math.max(G._camShake || 0, 0.35); } }
+          if (F.t > F.dur - 0.4) F.g.scale.setScalar(Math.max(0.05, 7 * (F.dur - F.t) / 0.4));
+          if (F.t >= F.dur) { chefFx.splice(i, 1); chefDispose(F.g); }
+        } else if (F.kind === "dessert") {
+          const a = F.a0 + F.t * 2.2, r = 1.4 + Math.sin(F.t * 3) * 0.15;
+          F.g.position.set(char.position.x + Math.cos(a) * r, 1.2 + F.t * 0.5 + Math.sin(F.t * 4 + F.a0) * 0.15, char.position.z + Math.sin(a) * r); F.g.rotation.y += dt * 3;
+          if (F.t >= F.dur) { burst(F.g.position, 0xffb0d0, 0.7); chefFx.splice(i, 1); chefDispose(F.g); }
+        }
+      }
+    };
     G.deployTick = (dt) => {
+      if (chefFx.length) chefTick(dt);
       for (let i = deploys.length - 1; i >= 0; i--) {
         const d = deploys[i]; d.t += dt;
         if (d.t >= d.dur || (G.mode !== "explore" && G.mode !== "fainted")) { dRemove(d); continue; }
@@ -40532,6 +40615,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const selfFx = fk === "healbless" || fk === "warfrenzy" || fk === "overclock";
         if (sk.summon) G.summonPack(sk.summon, sk.summonDur || 60, sk.summonKind);   // 🐾 เรียกฝูงสัตว์ออกมาอยู่ช่วยรบตามเวลาที่กำหนด
         if (sk.deploy && G.deployHeavy) G.deployHeavy(sk.deploy, sk.deployDur || 10, sk);   // 🔫🛡️ ป้อมปืนกล / รถถัง
+        if (sk.chef && G.chefFx) G.chefFx(sk.chef, tgt, sk);   // 🍳 อาหาร / กระทะยักษ์ / ขนมหวาน
         // 🏹 นักธนู: ปล่อยลูกธนูออกไปก่อน — เอฟเฟคต์ประจำสกิลค่อยแตกตอนลูกธนูปักเป้า
         //    (ท่าบำรุงตัวเอง/ยิงจากฟ้า/ขึ้นจากพื้น ใช้จังหวะเดิม)
         let arrowLead = false;
