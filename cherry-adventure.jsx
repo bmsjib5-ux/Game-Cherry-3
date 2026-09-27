@@ -1140,6 +1140,12 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+  // 🦾 วิชาขั้น 4 ของจักรกลพิทักษ์ (จักรกลสังหาร) — ปลดจากภารกิจอาจารย์ Lv.500 · หุ่นติดอาวุธหนักครบมือ: ปืนกลสองมือ · ฝักจรวดหลัง · แขนกลแมงมุม 4 แขนถืออาวุธ 4 อย่าง
+  g_kil: { ult: { name: "โปรโตคอลจักรกลสังหาร", emoji: "🦾💀", mul: 1.8, stun: true, defDown: 18, burn: 4, bleed: 4, buffTeam: true, desc: "ปลดล็อกอาวุธทุกชิ้นพร้อมกัน ปืนกลคู่ + ฝนจรวด + แขนแมงมุมทั้งสี่ + ลำแสงจากฟ้า ถล่มจนสนามลุกเป็นไฟ สตัน ลดเกราะ ไหม้ เลือดไหล + Kill Mode (โจมตี/คริให้ทีม)" }, skills: [
+    { id: "x_kil_1", cost: 8,  name: "ปืนกลคู่ถล่ม",    emoji: "🔫", color: 0xffd04a, mult: 0.42, perLv: 0.1, hits: 10, critBonus: 0.2, mechfx: "guns", fx: "multi", desc: "ปืนกลหกลำกล้องทั้งสองมือกระหน่ำพร้อมกัน ×10" },
+    { id: "x_kil_2", cost: 11, name: "ฝักจรวดหลัง",     emoji: "🚀", color: 0xff7a2a, mult: 1.9, perLv: 0.4, aoe: true, burn: 3, defDown: 8, fx: "multi", desc: "ฝักจรวดบนหลังเปิดออก ยิงจรวด ×6 ระเบิดเป็นวง ติดไฟ + ลดเกราะ" },
+    { id: "x_kil_3", cost: 13, name: "แขนแมงมุมสังหาร",  emoji: "🕷️", color: 0xc0c8d8, mult: 0.9, perLv: 0.2, hits: 4, aoe: true, bleed: 4, stun: true, mechfx: "arms", fx: "stab", desc: "แขนกลทั้งสี่พุ่งแทง — เลื่อยวงเดือน · ปืนเลเซอร์ · คีมหนีบ · สว่านเจาะ ×4 เลือดไหล + สตัน" },
+    { id: "x_kil_4", cost: 18, name: "ลำแสงล้างโลก",    emoji: "☄️", color: 0x3ad0ff, mult: 3.9, perLv: 0.78, pierce: true, guaranteedCrit: true, defDown: 14, fx: "bolt", desc: "ดาวเทียมล็อกเป้ายิงลำแสงหนาลงมานัดเดียว เจาะเกราะ คริการันตี" } ] },
   // 🏆 วิชาขั้น 4 ของนักมวย (แชมป์โลก) — ปลดจากภารกิจอาจารย์ Lv.500 · คาดเข็มขัดแชมป์โลกสีทอง
   b_wch: { ult: { name: "เข็มขัดแชมป์โลก", emoji: "🏆👊", mul: 1.8, stun: true, defDown: 18, bleed: 4, buffTeam: true, desc: "เสียงระฆังดังขึ้น แสงสปอตไลต์ทั่วสนาม รัวหมัดแชมป์โลกนับพันนัดจนศัตรูลอย ปิดท้ายด้วยหมัดน็อกเอาต์ทองคำ สตัน ลดเกราะ เลือดไหล + Champion's Glory (คริ/ความเร็ว/โจมตีให้ทีม)" }, skills: [
     { id: "x_wch_1", cost: 8,  name: "คอมโบแชมป์โลก",     emoji: "👊", color: 0xf5d24a, mult: 0.5, perLv: 0.12, hits: 8, critBonus: 0.3, buffSpd: true, fx: "multi", desc: "รัวหมัดคอมโบระดับแชมป์ ×8 เร็วจนเห็นเป็นเงา · คริง่าย + เร่งความเร็ว" },
@@ -1357,6 +1363,11 @@ const T4 = {
              task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับเข็มขัดแชมป์โลกจากข้า",
              reward: "🏆 ผ่านขั้นนี้แล้วจะได้คาดเข็มขัดแชมป์โลกสีทอง — ปลดชุดสกิลขั้น 4 · แชมป์โลก + ท่าไม้ตายใหม่",
              done: "🎓🏆 ผ่านบททดสอบขั้น 4! คาดเข็มขัดแชมป์โลกแล้ว — สลับเป็น “ชุดแชมป์โลก” ในหน้าวิชาสกิล", on: "🏆 แชมป์โลกขึ้นสังเวียน! สลับเป็นชุดสกิลขั้น 4 · แชมป์โลก + ท่าไม้ตายใหม่" },
+  aegis:   { pid: "g_kil", label: "🦾 ชุดจักรกลสังหาร", title: "ขั้น 4 · จักรกลสังหาร", emoji: "🦾",
+             intro: "เกราะของเจ้าปกป้องคนอื่นได้แล้ว... แต่สงครามครั้งหน้า ผู้พิทักษ์ต้องกลายเป็นเครื่องจักรสังหารที่ติดอาวุธครบทุกแขน",
+             task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมาติดตั้งชุดอาวุธหนักจากข้า",
+             reward: "🦾 ผ่านขั้นนี้แล้วจะติดอาวุธหนักครบตัว — ปืนกลสองมือ · ฝักจรวดบนหลัง · แขนกลแมงมุม 4 แขนถืออาวุธ 4 อย่าง + ท่าไม้ตายใหม่",
+             done: "🎓🦾 ผ่านบททดสอบขั้น 4! ติดตั้งชุดอาวุธหนักแล้ว — สลับเป็น “ชุดจักรกลสังหาร” ในหน้าวิชาสกิล", on: "🦾 KILL MODE ON! สลับเป็นชุดสกิลขั้น 4 · จักรกลสังหาร + อาวุธหนักครบตัว" },
   warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
              intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
              task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
@@ -1376,6 +1387,7 @@ const ADV_SIG = {
   c_bot:     { c: 0x3ad0ff, c2: 0xffb040, aura: "ring",   fx: ["dronebarrage", "omega", "shieldbash"] }, // 🤖🚀 กองทัพจักรกล
   o_chf:     { c: 0xffa040, c2: 0xffe0f0, aura: "ring",   fx: ["fire", "healbless", "quake"] },          // 🍳⭐ ร้านอาหารมิชลินสามดาว
   b_wch:     { c: 0xffd24a, c2: 0xffffff, aura: "pillar", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🏆👊 เข็มขัดแชมป์โลก
+  g_kil:     { c: 0xff4a2a, c2: 0x3ad0ff, aura: "spikes", fx: ["dronebarrage", "omega", "hellfire"] },   // 🦾💀 โปรโตคอลจักรกลสังหาร
   b_king:    { c: 0xf5d24a, c2: 0xffffff, aura: "ring",   fx: ["punchwave", "warfrenzy", "punchwave"] },   // 🥊👑 ราชันสังเวียน
   b_muay:    { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] },        // 🐒🔥 หนุมานถวายแหวน
   w_pal:     { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring",   fx: ["healbless", "swordbeam", "shieldbash"] },  // ⚖️✨ ศาลเทพพิพากษา
@@ -1564,7 +1576,7 @@ const ADV_STAGES = [
     intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
     task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
   // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-  { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office", "boxer"], t4: true,   // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
+  { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office", "boxer", "aegis"], t4: true,   // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
     targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
     intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
     task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1735,6 +1747,7 @@ const SK_ARCH = {
   x_bot_1: "summon", x_bot_2: "shouldercannon", x_bot_3: "buff", x_bot_4: "buff",                  // 🤖 โปรแกรมเมอร์ขั้น 4 (หุ่นยนต์)
   x_chf_1: "throw", x_chf_2: "knives", x_chf_3: "buff", x_chf_4: "smash",                          // 🍳 พนักงานออฟฟิศขั้น 4 (เชฟ)
   x_wch_1: "comborush", x_wch_2: "staruppercut", x_wch_3: "ironfist", x_wch_4: "koblow",           // 🏆 นักมวยขั้น 4 (แชมป์โลก)
+  x_kil_1: "railgun", x_kil_2: "shouldercannon", x_kil_3: "buff", x_kil_4: "satellite",            // 🦾 จักรกลพิทักษ์ขั้น 4 (จักรกลสังหาร)
   x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse",            // 🌿🏹 เรนเจอร์พงไพร
   m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff",                       // 🔮 เวทมนตร์
   x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata",    // 🔮💥 จอมเวทธาตุ
@@ -1803,7 +1816,7 @@ const SKILL_TIERS = [
   { n: 1, name: "วิชาพื้นฐาน",  emoji: "📗", lv: 1,  desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
   { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
   { n: 3, name: "วิชาขั้นสูง",  emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-  { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · นักมวยเป็นแชมป์โลก · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+  { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · นักมวยเป็นแชมป์โลก · จักรกลพิทักษ์ติดอาวุธหนัก · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {}; SKILL_TIERS.forEach((t) => (SKILL_TIER_BY[t.n] = t));
@@ -10992,6 +11005,108 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         Mc.n = H.playN;
         Mc.mx.update(dt);
       };
+      // 🦾 ชุดอาวุธหนักของจักรกลสังหาร (จักรกลพิทักษ์ขั้น 4) — ปืนกลหกลำกล้องสองมือ · ฝักจรวดบนหลัง · แขนกลแมงมุม 4 แขน (เลื่อย/เลเซอร์/คีม/สว่าน)
+      //    ทุกชิ้นอยู่ใน H.g (หน่วยตัวละคร) · ปืนตามแนวแขนท่อนล่างของหุ่น · ของบนหลังตามกระดูกอก (Chest)
+      const kkM = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.6 }, o || {}));
+      const killGun = () => {
+        const g = new THREE.Group(), steel = kkM(0x5a6470), dark = kkM(0x22262c), glow = new THREE.MeshBasicMaterial({ color: 0xffb040 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.6), dark); body.position.z = 0.1; g.add(body);
+        const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.24, 12), steel); drum.rotation.z = Math.PI / 2; drum.position.set(0.25, -0.05, 0); g.add(drum);
+        const spin = new THREE.Group(); spin.position.z = 0.42; g.add(spin);
+        for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; const b = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.9, 6), steel); b.rotation.x = Math.PI / 2; b.position.set(Math.cos(a) * 0.08, Math.sin(a) * 0.08, 0.45); spin.add(b); }
+        const tip = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 6, 16), glow); tip.position.z = 0.9; spin.add(tip);
+        const muzzle = new THREE.Object3D(); muzzle.position.z = 0.95; spin.add(muzzle);
+        g.userData = { spin, muzzle };
+        return g;
+      };
+      const killArmWeapon = (k) => {
+        const g = new THREE.Group(), steel = kkM(0xa0a8b4), red = kkM(0xc02a2a), glow = new THREE.MeshBasicMaterial({ color: 0x3ad0ff });
+        if (k === 0) { const saw = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.03, 20), steel); saw.rotation.x = Math.PI / 2; g.add(saw); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; const t = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 3), steel); t.position.set(Math.cos(a) * 0.36, Math.sin(a) * 0.36, 0); t.rotation.z = a - Math.PI / 2; saw.add(t); } g.userData.spinner = saw; }
+        else if (k === 1) { const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.7, 10), kkM(0x2a2e34)); bar.rotation.x = Math.PI / 2; bar.position.z = 0.25; g.add(bar); const lens = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), glow); lens.position.z = 0.62; g.add(lens); g.userData.lens = lens; }
+        else if (k === 2) { for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; const pr = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.42, 5), red); pr.position.set(Math.cos(a) * 0.1, Math.sin(a) * 0.1, 0.22); pr.rotation.x = Math.PI / 2; pr.rotation.y = Math.cos(a) * 0.4; pr.rotation.z = Math.sin(a) * 0.4; g.add(pr); } }
+        else { const dr = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.6, 10), kkM(0xd0a040, { metalness: 0.8 })); dr.rotation.x = Math.PI / 2; dr.position.z = 0.3; g.add(dr); g.userData.spinner = dr; }
+        return g;
+      };
+      const killKitBuild = (H) => {
+        const chest = H.mech.m.getObjectByName("Chest") || H.mech.m.getObjectByName("Torso"); if (!chest) return null;
+        const back = new THREE.Group(); back.name = "killBack"; H.g.add(back);
+        const dark = kkM(0x2a2e34), steel = kkM(0x6a7480), red = kkM(0xc03a2a), cyan = new THREE.MeshBasicMaterial({ color: 0x3ad0ff });
+        const pod = new THREE.Group(); pod.position.set(0, 0.55, -0.95); back.add(pod);   // 🚀 ฝักจรวด 2×3 บนหลัง
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 0.5), dark); pod.add(box);
+        for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) { const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.52, 10), steel); tube.rotation.x = Math.PI / 2; tube.position.set(-0.3 + c * 0.3, -0.15 + r * 0.3, 0.02); pod.add(tube); const war = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.16, 8), red); war.rotation.x = Math.PI / 2; war.position.set(-0.3 + c * 0.3, -0.15 + r * 0.3, 0.3); pod.add(war); }
+        pod.rotation.set(1.0, Math.PI, 0);                                                 // ปากท่อหันหลัง + เงยขึ้นฟ้า
+        const arms = [];
+        [[-0.5, 0.35, -1], [0.5, 0.35, 1], [-0.45, -0.1, -1], [0.45, -0.1, 1]].forEach(([x, y, sx], i) => {   // 🕷️ แขนกลแมงมุม 4 แขน — สามท่อน งอออกนอกแล้วชี้ไปหน้า
+          const root = new THREE.Group(); root.position.set(x, y, -0.7); back.add(root);
+          const hub = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), steel); root.add(hub);
+          const j1 = new THREE.Group(); root.add(j1);
+          const s1 = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.0, 8), dark); s1.position.y = 0.5; j1.add(s1);
+          const j2 = new THREE.Group(); j2.position.y = 1.0; j1.add(j2);
+          const k2 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), steel); j2.add(k2);
+          const led = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), cyan); led.position.set(0, 0, 0.1); j2.add(led);
+          const s2 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 1.1, 8), dark); s2.position.y = 0.55; j2.add(s2);
+          const j3 = new THREE.Group(); j3.position.y = 1.1; j2.add(j3);
+          const w = killArmWeapon(i); w.rotation.x = -Math.PI / 2; j3.add(w);
+          arms.push({ root, j1, j2, j3, w, sx, i });
+        });
+        back.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (o.material && o.material.isMeshStandardMaterial) H.mats.push(o.material); } });
+        const guns = [killGun(), killGun()]; guns.forEach((gn) => { gn.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } }); H.g.add(gn); });
+        const K = { grp: back, head: chest, q0: null, qg: new THREE.Quaternion(), qh: new THREE.Quaternion() };
+        H.deco = (H.deco || []).concat([K]);
+        return { K, back, pod, arms, guns, q: [], lunge: 0, tgt: null, t: 0 };
+      };
+      const killKitRemove = (H) => {
+        const KK = H.killKit; if (!KK) return;
+        H.g.remove(KK.back); KK.guns.forEach((gn) => H.g.remove(gn));
+        H.deco = (H.deco || []).filter((K) => K !== KK.K); H.killKit = null;
+        if (H.grip) H.grip.visible = true;
+      };
+      const _kkV = new THREE.Vector3(), _kkV2 = new THREE.Vector3(), _kkQ = new THREE.Quaternion(), _kkM = new THREE.Matrix4(), _kkM2 = new THREE.Matrix4(), _kkS = new THREE.Vector3();
+      const killGunPlace = (H, gn, bone, arm) => {                        // 🔫 ปืนตามแนวแขนท่อนล่าง (ศอก → ฝ่ามือ) แบบเดียวกับปืนติดแขนของหุ่น
+        if (!bone || !arm) return;
+        const P = bone.getWorldPosition(_kkV), A = arm.getWorldPosition(_kkV2);
+        const Z = P.clone().sub(A).normalize(), up = new THREE.Vector3(0, 1, 0), F = new THREE.Vector3(0, 0, 1).applyQuaternion(char.getWorldQuaternion(_kkQ));
+        const hint = up.multiplyScalar(1 - Math.abs(Z.y)).addScaledVector(F, -Z.y);
+        const X = new THREE.Vector3().crossVectors(hint, Z); if (X.lengthSq() < 1e-6) X.set(1, 0, 0); X.normalize();
+        const Y = new THREE.Vector3().crossVectors(Z, X);
+        _kkQ.setFromRotationMatrix(_kkM.makeBasis(X, Y, Z));
+        char.getWorldScale(_kkS); const ws = _kkS.x * 1.0;
+        P.addScaledVector(Z, 0.35 * _kkS.x);
+        _kkM.compose(P, _kkQ, _kkS.set(ws, ws, ws));
+        _kkM2.copy(H.g.matrixWorld).invert().multiply(_kkM);
+        _kkM2.decompose(gn.position, gn.quaternion, gn.scale);
+      };
+      G.killKitFx = (kind, tgt) => {
+        const H = G._heroModel, KK = H && H.killKit; if (!KK) return;
+        if (kind === "guns") { for (let i = 0; i < 16; i++) KK.q.push({ at: i * 0.06, side: i % 2, tgt }); KK.t = 0; }
+        else if (kind === "arms") { KK.lunge = 1.3; KK.tgt = tgt; }
+      };
+      const killKitTick = (H, dt) => {
+        const KK = H.killKit; KK.t += dt;
+        const firing = (H.atkT || 0) > 0 || KK.q.length > 0;
+        KK.guns.forEach((gn) => { gn.userData.spin.rotation.z += dt * (firing ? 30 : 2); });
+        killGunPlace(H, KK.guns[0], H.mech.palm, H.mech.arm); killGunPlace(H, KK.guns[1], H.mech.palmL, H.mech.armL);
+        if (H.grip) H.grip.visible = false;                                   // ปืนประจำตัวเดิมหลบให้ปืนกลคู่
+        const t = performance.now() / 1000; KK.lunge = Math.max(0, KK.lunge - dt);
+        const reach = KK.lunge > 0 ? Math.sin(Math.min(1, (1.3 - KK.lunge) / 0.35) * Math.PI / 2) * Math.min(1, KK.lunge / 0.3) : 0;
+        KK.arms.forEach((A) => {                                             // 🕷️ ขยับเหมือนขาแมงมุมตอนยืน · พุ่งไปหน้าตอนโจมตี
+          const ph = t * 2.2 + A.i * 1.7;
+          A.j1.rotation.z = -A.sx * (0.9 + Math.sin(ph) * 0.12) * (1 - reach * 0.6);
+          A.j1.rotation.x = -0.35 - Math.cos(ph) * 0.1 - reach * 0.9;
+          A.j2.rotation.x = 1.5 + Math.sin(ph + 1) * 0.15 - reach * 1.1;
+          A.j3.rotation.x = 0.4 - reach * 0.3;
+          if (A.w.userData.spinner) A.w.userData.spinner.rotation.y += dt * (reach > 0 ? 40 : 6);
+          if (A.w.userData.lens) A.w.userData.lens.scale.setScalar(1 + Math.sin(t * 8) * 0.2 + reach);
+        });
+        if (reach > 0.9 && KK.tgt && !KK._hitFx) { KK._hitFx = true; try { burst(new THREE.Vector3(KK.tgt.position.x, 1, KK.tgt.position.z), 0xc0c8d8, 1.1); } catch (e) {} }
+        if (KK.lunge <= 0) KK._hitFx = false;
+        for (let i = KK.q.length - 1; i >= 0; i--) {                        // 🔫 คิวกระสุนปืนกลคู่ (สลับซ้าย-ขวา)
+          const S = KK.q[i]; if (KK.t < S.at) continue; KK.q.splice(i, 1);
+          const tg = S.tgt && wilds.indexOf(S.tgt) >= 0 ? S.tgt : null; if (!tg || !G._spawnBullet) continue;
+          const mz = KK.guns[S.side].userData.muzzle.getWorldPosition(new THREE.Vector3());
+          G._spawnBullet(mz, new THREE.Vector3(tg.position.x + (Math.random() - 0.5) * 0.6, tg.position.y + 0.9, tg.position.z + (Math.random() - 0.5) * 0.6), 0xffd04a, 0.12, null);
+        }
+      };
       // 🔫 อาวุธ/ของมือซ้ายยังเกาะกระดูกมือของร่างคน (ที่ซ่อนไว้) — ย้ายตำแหน่งจริงไปอยู่หน้ากำปั้นหุ่นทุกเฟรม
       //    แกนอาวุธชี้ตามแนวแขนท่อนล่าง (ศอก → ฝ่ามือ) แบบปืนติดแขน: ยกแขนยิง = ปืนชี้ไปหน้า · ห้อยแขน = ปืนชี้ลง ด้านบนหันไปหน้า
       //    ในกรอบของ grip อาวุธชี้ +Z (มุมจับ wand หมุน x≈1.42 ให้ลำกล้อง +Y ของโมเดลชี้ไปหน้าอยู่แล้ว)
@@ -11742,6 +11857,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           H.g.updateMatrixWorld(true);
           heroMechGrip(H, H.grip, H.mech.palm, H.mech.arm, H.hand);
           if (H.gripL) heroMechGrip(H, H.gripL, H.mech.palmL, H.mech.armL, H.gripL.parent);
+          const wantKit = G.cls === "aegis" && !!(G.t4Mode && G.t4Mode());   // 🦾 จักรกลสังหาร — ติด/ถอดชุดอาวุธหนักตามโหมดสกิล
+          if (wantKit && !H.killKit) H.killKit = killKitBuild(H);
+          else if (!wantKit && H.killKit) killKitRemove(H);
+          if (H.killKit) { try { killKitTick(H, dt); } catch (eKK) {} }
         }
         if (H.neck && H.neckPlane) {                       // ✂️ ระนาบตัดตัวฐานตามคอ (พิกัดโลก) — เก็บไว้แค่หัว
           H.neck.getWorldPosition(H.tmpV); H.tmpV.y -= 0.06 * H.k;
@@ -35766,7 +35885,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       } catch (e) {}
     };
     // 🔫 กระสุนพลังงาน — หัวกระสุนสว่าง + หางแสงยาว พุ่งตรง (ไม่โค้งแบบลูกธนู) เร็วกว่า + ไฟแลบที่ปากกระบอก
-    const spawnBullet = (from, to, col, dur, onHit, delay) => {
+    const spawnBullet = (from, to, col, dur, onHit, delay) => { G._spawnBullet = G._spawnBullet || spawnBullet;
       try {
         const c = col || 0xffc04a;
         const coreM = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
@@ -40650,6 +40769,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (sk.summon) G.summonPack(sk.summon, sk.summonDur || 60, sk.summonKind);   // 🐾 เรียกฝูงสัตว์ออกมาอยู่ช่วยรบตามเวลาที่กำหนด
         if (sk.deploy && G.deployHeavy) G.deployHeavy(sk.deploy, sk.deployDur || 10, sk);   // 🔫🛡️ ป้อมปืนกล / รถถัง
         if (sk.chef && G.chefFx) G.chefFx(sk.chef, tgt, sk);   // 🍳 อาหาร / กระทะยักษ์ / ขนมหวาน
+        if (sk.mechfx && G.killKitFx) G.killKitFx(sk.mechfx, tgt);   // 🦾 ปืนกลคู่ยิงรัว / แขนแมงมุมพุ่งแทง
         // 🏹 นักธนู: ปล่อยลูกธนูออกไปก่อน — เอฟเฟคต์ประจำสกิลค่อยแตกตอนลูกธนูปักเป้า
         //    (ท่าบำรุงตัวเอง/ยิงจากฟ้า/ขึ้นจากพื้น ใช้จังหวะเดิม)
         let arrowLead = false;
