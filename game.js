@@ -1204,6 +1204,13 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+    // ⚔️ วิชาขั้น 4 ของนักรบ (ขุนศึกดาบสวรรค์) — ปลดจากภารกิจอาจารย์ Lv.500 · ใช้ได้ทุกสายของนักรบ · ถือดาบยักษ์
+    w_war: { ult: { name: "สงครามเทพพิฆาต", emoji: "⚔️🌋", mul: 1.75, stun: true, defDown: 18, bleed: 4, buffTeam: true, desc: "ปักดาบยักษ์ลงพื้นปลุกกองทัพวิญญาณนักรบ ฟันกากบาทไฟทั่วสนาม ปิดท้ายด้วยลำแสงดาบจากฟ้า สตัน ลดเกราะ เลือดไหล + Warlord's Roar (โจมตี/ป้องกันให้ทีม)" }, skills: [
+            { id: "x_war_1", cost: 8, name: "พายุดาบยักษ์", emoji: "🌪️", color: 0xff8a3a, mult: 0.95, perLv: 0.2, hits: 3, aoe: true, bleed: 3, fx: "slash", desc: "เหวี่ยงดาบยักษ์หมุนเป็นพายุ ×3 โดนทั้งวง เลือดไหล" },
+            { id: "x_war_2", cost: 11, name: "ทุบธรณีแยก", emoji: "🌋", color: 0xc0602a, mult: 2.2, perLv: 0.45, stun: true, aoe: true, defDown: 10, fx: "quake", desc: "ฟาดดาบลงพื้นจนแผ่นดินแยก ลาวาพุ่ง สตันทั้งกลุ่ม + ลดเกราะ" },
+            { id: "x_war_3", cost: 13, name: "เกราะเหล็กสวรรค์", emoji: "🛡️", color: 0xf5d24a, mult: 1.4, perLv: 0.3, buffDef: 10, heal: 0.25, fx: "bash", desc: "ตั้งการ์ดด้วยดาบยักษ์ ป้องกัน +10 ฟื้น HP 25% แล้วกระแทกสวน" },
+            { id: "x_war_4", cost: 18, name: "ดาบประหารฟ้าผ่า", emoji: "⚡", color: 0xffe24a, mult: 3.7, perLv: 0.74, rage: true, pierce: true, guaranteedCrit: true, defDown: 14, fx: "rage", desc: "ชูดาบรับสายฟ้าแล้วฟันลงนัดเดียว เจาะเกราะ คริการันตี ยิ่งเลือดน้อยยิ่งแรง" }
+        ] },
     // 🔫 วิชาขั้น 4 ของนักธนู (ปืน) — ปลดจากภารกิจอาจารย์ Lv.500 · ใช้ได้ทุกสายของนักธนู
     a_gun: { ult: { name: "ห่ากระสุนพิพากษา", emoji: "🔫🌠", mul: 1.75, defDown: 18, stun: true, buffTeam: true, desc: "ปืนคู่ลอยล้อมตัว ล็อกทุกเป้าแล้วกระหน่ำกระสุนพลังงานนับพันนัด ปิดท้ายด้วยกระสุนปืนใหญ่จากฟ้า เจาะเกราะ สตัน + Deadeye (คริ/ความเร็วให้ทีม)" }, skills: [
             { id: "x_gun_1", cost: 8, name: "ยิงรัวปืนคู่", emoji: "🔫", color: 0xffc04a, mult: 0.62, perLv: 0.14, hits: 6, critBonus: 0.3, fx: "multi", desc: "ชักปืนคู่ยิงรัว ×6 เร็วจนเห็นเป็นเส้นไฟ · โอกาสคริสูง" },
@@ -1355,11 +1362,25 @@ let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสล�
 const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
 const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls]; // ท่าไม้ตายทั่วไป (ขั้นสูงแยกเป็นปุ่ม/แอ็กชันต่างหาก)
 const advUltOf = (pathId) => (pathId && PATH_ADV[pathId]) ? PATH_ADV[pathId].ult : null;
-const advUiPid = (u) => (u && u.skillMode === "gun") ? "a_gun" : (u && u.skillMode === "adv" ? u.pathId : null); // 🔫 สายของท่าไม้ตายขั้นสูงที่ใช้อยู่ (ชุดปืน = a_gun)
+// 🎓 วิชาขั้น 4 ต่ออาชีพ — ชุดสกิล (PATH_ADV[pid]) · ชื่อปุ่มสลับ · ข้อความเควส/ตอนผ่าน
+const T4 = {
+    archer: { pid: "a_gun", label: "🔫 ชุดปืน", title: "ขั้น 4 · จอมปืน", emoji: "🔫",
+        intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
+        task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า",
+        reward: "🔫 ผ่านขั้นนี้แล้วจะวางคันธนูมาใช้ปืน — ปลดชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน",
+        done: "🎓🔫 ผ่านบททดสอบขั้น 4! รับปืนจากอาจารย์แล้ว — สลับเป็น “ชุดปืน” ในหน้าวิชาสกิล", on: "🔫 จับปืน! สลับเป็นชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน" },
+    warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
+        intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
+        task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
+        reward: "⚔️ ผ่านขั้นนี้แล้วจะได้ถือดาบยักษ์ — ปลดชุดสกิลขั้น 4 · ขุนศึก + ท่าไม้ตายใหม่",
+        done: "🎓⚔️ ผ่านบททดสอบขั้น 4! รับดาบยักษ์จากอาจารย์แล้ว — สลับเป็น “ชุดขุนศึก” ในหน้าวิชาสกิล", on: "⚔️ ชูดาบยักษ์! สลับเป็นชุดสกิลขั้น 4 · ขุนศึก + ท่าไม้ตายใหม่" },
+};
+const advUiPid = (u) => (u && u.skillMode === "t4" && T4[u.cls]) ? T4[u.cls].pid : (u && u.skillMode === "adv" ? u.pathId : null); // 🔫 สายของท่าไม้ตายขั้นสูงที่ใช้อยู่ (ชุดปืน = a_gun)
 // 👑 เอกลักษณ์ท่าไม้ตายขั้นสูงประจำสาย — สี · ทรงออร่า · เอฟเฟกต์ 3 จังหวะ (เลือกให้ตรงชื่อท่าและคุณสมบัติ)
 //    aura: ring=วงแหวนหมุนรอบตัว · pillar=ลำแสงพุ่งขึ้นฟ้า · orbs=ลูกแก้วโคจร · spikes=ขวากแทงขึ้นจากพื้น
 const ADV_SIG = {
     a_gun: { c: 0xffb040, c2: 0xffffff, aura: "ring", fx: ["snipe", "multi", "snipe"] }, // 🔫🌠 ห่ากระสุนพิพากษา
+    w_war: { c: 0xff6a2a, c2: 0xffe08a, aura: "pillar", fx: ["crossslash", "swordbeam", "quake"] }, // ⚔️🌋 สงครามเทพพิฆาต
     b_king: { c: 0xf5d24a, c2: 0xffffff, aura: "ring", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🥊👑 ราชันสังเวียน
     b_muay: { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] }, // 🐒🔥 หนุมานถวายแหวน
     w_pal: { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring", fx: ["healbless", "swordbeam", "shieldbash"] }, // ⚖️✨ ศาลเทพพิพากษา
@@ -1551,7 +1572,7 @@ const ADV_STAGES = [
         intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
         task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
     // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-    { tier: 3, lv: 500, kill: 40, emoji: "🔫", name: "ขั้น 4 · จอมปืน", cls: ["archer"],
+    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
         targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
         intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1718,6 +1739,7 @@ const SK_ARCH = {
     a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe", // 🏹 นักธนู
     x_shp_1: "pierce", x_shp_2: "hawk", x_shp_3: "kneel", x_shp_4: "arrowrain", // 🎯💫 จอมแม่นปืน
     x_gun_1: "volley", x_gun_2: "pierce", x_gun_3: "volley", x_gun_4: "snipe", // 🔫 นักธนูขั้น 4 (ปืน)
+    x_war_1: "swordspin", x_war_2: "swordquake", x_war_3: "swordbash", x_war_4: "swordrage", // ⚔️ นักรบขั้น 4 (ขุนศึก)
     x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse", // 🌿🏹 เรนเจอร์พงไพร
     m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff", // 🔮 เวทมนตร์
     x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata", // 🔮💥 จอมเวทธาตุ
@@ -1787,7 +1809,7 @@ const SKILL_TIERS = [
     { n: 1, name: "วิชาพื้นฐาน", emoji: "📗", lv: 1, desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
     { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
     { n: 3, name: "วิชาขั้นสูง", emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-    { n: 4, name: "วิชาขั้น 4 · ปืน", emoji: "🔫", lv: 500, desc: "นักธนูวางคันธนูแล้วจับปืน — ทำภารกิจอาจารย์ที่ Lv.500 · ท่าปืน 4 ท่า + ท่าไม้ตายปืน" },
+    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {};
@@ -1847,17 +1869,17 @@ const skillBoard = (cls, pathId, level, ranks, stats, skillMode, ultRank, advTie
         note: !adv ? "🔒 ต้องเลือกสายอาชีพที่มีชุดสกิลขั้นสูงก่อน" : (skillMode !== "adv" ? "🔒 กดสลับเป็น “ชุดสกิลขั้นสูง” เพื่อใช้ขั้นนี้" : null),
         cards: t3 });
     // ── ขั้น 4: ชุดปืนของนักธนู ──
-    if (cls === "archer") {
-        const G4 = PATH_ADV.a_gun, unlocked = (advTier || 0) >= 3, on = skillMode === "gun";
+    if (T4[cls]) {
+        const T = T4[cls], G4 = PATH_ADV[T.pid], unlocked = (advTier || 0) >= 3, on = skillMode === "t4";
         const t4 = G4.skills.map((sk, i) => ({ kind: "adv", id: sk.id, sk, tier: 4, needLv: TIER4_LV[i],
             open: on && level >= TIER4_LV[i],
-            reasons: [{ ok: unlocked, text: "ผ่านภารกิจขั้น 4 กับอาจารย์" }, { ok: on, text: "สลับไปชุดปืนก่อน" }, { ok: level >= TIER4_LV[i], text: `เลเวล ${level}/${TIER4_LV[i]}` }],
+            reasons: [{ ok: unlocked, text: "ผ่านภารกิจขั้น 4 กับอาจารย์" }, { ok: on, text: `สลับไป${T.label}ก่อน` }, { ok: level >= TIER4_LV[i], text: `เลเวล ${level}/${TIER4_LV[i]}` }],
             rank: ranks[sk.id] || 1 }));
-        t4.push({ kind: "advult", id: "advult_a_gun", sk: { ...G4.ult, id: "advult_a_gun", cost: 0, name: "🌟 " + G4.ult.name }, tier: 4, needLv: TIER4_LV[4],
-            open: on && level >= TIER4_LV[4], reasons: [{ ok: unlocked, text: "ผ่านภารกิจขั้น 4 กับอาจารย์" }, { ok: on, text: "สลับไปชุดปืนก่อน" }, { ok: level >= TIER4_LV[4], text: `เลเวล ${level}/${TIER4_LV[4]}` }],
+        t4.push({ kind: "advult", id: "advult_" + T.pid, sk: { ...G4.ult, id: "advult_" + T.pid, cost: 0, name: "🌟 " + G4.ult.name }, tier: 4, needLv: TIER4_LV[4],
+            open: on && level >= TIER4_LV[4], reasons: [{ ok: unlocked, text: "ผ่านภารกิจขั้น 4 กับอาจารย์" }, { ok: on, text: `สลับไป${T.label}ก่อน` }, { ok: level >= TIER4_LV[4], text: `เลเวล ${level}/${TIER4_LV[4]}` }],
             rank: ultRank || 1 });
         rows.push({ tier: 4, open: unlocked && on,
-            note: !unlocked ? "🔒 ถึง Lv.500 แล้วคุยกับอาจารย์ประจำอาชีพ ทำภารกิจขั้น 4 (ล่ามอน Lv.500-600) เพื่อจับปืน" : (!on ? "🔫 กดสลับเป็น “ชุดปืน” เพื่อใช้ขั้นนี้" : null),
+            note: !unlocked ? "🔒 ถึง Lv.500 แล้วคุยกับอาจารย์ประจำอาชีพ ทำภารกิจขั้น 4 (ล่ามอน Lv.500-600) เพื่อปลดขั้นนี้" : (!on ? `${T.emoji} กดสลับเป็น “${T.label.replace(/^\S+\s/, "")}” เพื่อใช้ขั้นนี้` : null),
             cards: t4 });
     }
     return rows;
@@ -12870,7 +12892,7 @@ function CherryAdventure() {
                 const witS = LOOT.find((x) => x.id === id), isSpear = model.userData.kkFam === "spear" || !!(witS && WPN_FAMILY[witS.cls] === "spear");
                 if (isSpear)
                     spearTipGlow(model, witS); // ✨ หอกทุกด้ามมีแสงที่ปลาย
-                const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1); // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
+                const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1) * (G.cls === "warrior" && G.t4Mode && G.t4Mode() ? 1.5 : 1); // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6 · ⚔️ นักรบขั้น 4 ถือดาบยักษ์ ×1.5   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
                 model.scale.setScalar(big);
                 model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
                 model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
@@ -50043,7 +50065,7 @@ function CherryAdventure() {
             });
             return {
                 tier: G.advTier(), allDone: false,
-                stage: { tier: st.tier, lv: st.lv, kill: st.kill, emoji: st.emoji, name: st.name, intro: st.intro, task: st.task, lvRange: st.lvRange || null },
+                stage: (() => { const T = st.t4 && T4[G.cls]; return { tier: st.tier, lv: st.lv, kill: st.kill, emoji: T ? T.emoji : st.emoji, name: T ? T.title : st.name, intro: T ? T.intro : st.intro, task: T ? T.task : st.task, lvRange: st.lvRange || null, reward: T ? T.reward : null }; })(),
                 maxTier: ADV_STAGES.filter((x) => !x.cls || x.cls.indexOf(G.cls) >= 0).length,
                 cls: G.cls, className: (CLASSES[G.cls] || {}).name || "", classEmoji: (CLASSES[G.cls] || {}).emoji || "🧙",
                 lvOk: lv >= st.lv, lv, taken: !!G.adv.taken[st.tier], done: advDone(st), targets,
@@ -50117,7 +50139,7 @@ function CherryAdventure() {
             G.player.mp = effMaxMp();
             toast(st.tier === 1
                 ? "🎓🌟 ผ่านบททดสอบขั้นสูง 1! เลือกสายอาชีพขั้นสูงได้แล้ว"
-                : st.tier === 3 ? "🎓🔫 ผ่านบททดสอบขั้น 4! รับปืนจากอาจารย์แล้ว — สลับเป็น “ชุดปืน” ในหน้าวิชาสกิล"
+                : st.t4 && T4[G.cls] ? T4[G.cls].done
                     : "🎓💫 ผ่านบททดสอบขั้นสูง 2! ใช้ชุดสกิลขั้นสูงของสายได้แล้ว");
             if (G.sfx) {
                 G.sfx.levelup && G.sfx.levelup();
@@ -50132,27 +50154,29 @@ function CherryAdventure() {
                 G.saveGame();
             // ขั้น 1 ผ่านแล้วเปิดหน้าเลือกสายให้เลย · ขั้น 2 เปิดหน้าสลับชุดสกิล
             setUi((u) => ({ ...u, masterOpen: false, ...(st.tier === 1 ? { skillPanel: true, pathOpen: true } : {}) }));
-            if (st.tier === 3 && G.setSkillMode)
-                G.setSkillMode("gun"); // 🔫 จับปืนทันที
+            if (st.t4 && G.setSkillMode)
+                G.setSkillMode("t4"); // 🎓 สลับไปชุดขั้น 4 ทันที
             return true;
         };
         G.toggleMaster = () => { const d = G.advInfo(); setUi((u) => ({ ...u, masterOpen: !u.masterOpen, adv: d })); };
         // ================= 🎓 END =================
-        G.gunMode = () => G.cls === "archer" && G.skillMode === "gun"; // 🔫 นักธนูขั้น 4 ถือปืน
-        G.advPid = () => (G.skillMode === "gun" ? "a_gun" : G.skillMode === "adv" ? G.pathId : null); // สายของชุดขั้นสูงที่ใช้อยู่
+        G.gunMode = () => G.cls === "archer" && G.skillMode === "t4"; // 🔫 นักธนูขั้น 4 ถือปืน
+        G.t4Mode = () => G.skillMode === "t4" && !!T4[G.cls]; // 🎓 ใช้ชุดขั้น 4 อยู่
+        G.advPid = () => (G.skillMode === "t4" ? (T4[G.cls] ? T4[G.cls].pid : null) : G.skillMode === "adv" ? G.pathId : null); // สายของชุดขั้นสูงที่ใช้อยู่
         G.setSkillMode = (m) => {
-            if (m === "gun") {
-                if (G.cls !== "archer") {
-                    toast("🔫 ชุดปืนมีเฉพาะนักธนู");
+            if (m === "t4" || m === "gun") {
+                const T = T4[G.cls];
+                if (!T) {
+                    toast("🎓 อาชีพนี้ยังไม่มีวิชาขั้น 4");
                     return;
                 }
                 if (G.advTier() < 3) {
                     toast("🎓 ต้องถึง Lv.500 แล้วทำภารกิจขั้น 4 กับอาจารย์ประจำอาชีพให้สำเร็จก่อน");
                     return;
                 }
-                G.skillMode = "gun";
-                setSkillModeGlobals(true, "a_gun");
-                toast("🔫 จับปืน! สลับเป็นชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน");
+                G.skillMode = "t4";
+                setSkillModeGlobals(true, T.pid);
+                toast(T.on);
                 if (G.setWeaponVisual)
                     G.setWeaponVisual(G.equip ? G.equip.weapon : null);
                 setUi((u) => ({ ...u, skillMode: G.skillMode, skillRanks: { ...(G.skillRanks || {}) } }));
@@ -50170,7 +50194,7 @@ function CherryAdventure() {
                 toast(`🎓 ต้องทำภารกิจขั้นสูง 2 กับอาจารย์ประจำอาชีพให้สำเร็จก่อน (Lv.${ADV_STAGES[1].lv})`);
                 return;
             }
-            const wasGun = G.skillMode === "gun";
+            const wasGun = G.skillMode === "t4";
             G.skillMode = m === "adv" ? "adv" : "basic";
             setSkillModeGlobals(G.skillMode === "adv", G.pathId);
             if (wasGun && G.setWeaponVisual)
@@ -50204,7 +50228,7 @@ function CherryAdventure() {
             if (!p)
                 return;
             G.pathId = pathId;
-            if (G.skillMode !== "gun")
+            if (G.skillMode !== "t4")
                 setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 อัปเดตชุดสกิลขั้นสูงของสายที่เลือก (ชุดปืนไม่ขึ้นกับสาย)
             G.player.hp = effMaxHp();
             G.player.mp = effMaxMp(); // 🌟 fully restored on awakening
@@ -69370,8 +69394,8 @@ function CherryAdventure() {
                 catch (e) { }
             } // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
             G.pathId = d.pathId || null;
-            G.skillMode = d.skillMode === "gun" && G.cls === "archer" ? "gun" : d.skillMode === "adv" && G.pathId ? "adv" : "basic";
-            setSkillModeGlobals(G.skillMode !== "basic", G.skillMode === "gun" ? "a_gun" : G.pathId); // 🔀 คืนโหมดสกิลที่ใช้อยู่ · 🔫 ชุดปืน
+            G.skillMode = (d.skillMode === "t4" || d.skillMode === "gun") && T4[G.cls] ? "t4" : d.skillMode === "adv" && G.pathId ? "adv" : "basic"; // "gun" = เซฟรุ่นแรกของขั้น 4
+            setSkillModeGlobals(G.skillMode !== "basic", G.skillMode === "t4" ? T4[G.cls].pid : G.pathId); // 🔀 คืนโหมดสกิลที่ใช้อยู่ · 🔫 ชุดปืน
             if (G.applyPathLook)
                 G.applyPathLook(); // 🌟 restore the evolution aura on load
             if (G.applySetAura)
@@ -91378,7 +91402,7 @@ function CherryAdventure() {
                                                     : ((ui.level || 1) >= c.needLv ? "🔗 ยังไม่ครบเงื่อนไข" : `Lv.${c.needLv}`))));
                                         }))));
                             }),
-                            G.setSkillMode && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4, marginBottom: wide ? 0 : 10 } }, [["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].concat(ui.cls === "archer" ? [["gun", "🔫 ชุดปืน"]] : []).map(([k, lbl]) => {
+                            G.setSkillMode && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 4, marginBottom: wide ? 0 : 10 } }, [["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].concat(T4[ui.cls] ? [["t4", T4[ui.cls].label]] : []).map(([k, lbl]) => {
                                 const on = (ui.skillMode || "basic") === k;
                                 return React.createElement("button", { key: k, onClick: () => { G.setSkillMode(k); setUi((u) => ({ ...u, boardTick: (u.boardTick || 0) + 1, boardPick: null })); }, style: {
                                         flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
@@ -92993,7 +93017,7 @@ function CherryAdventure() {
                                 color: A.done ? "#fff" : "#a89ab8",
                                 background: A.done ? "linear-gradient(135deg,#ffd76a,#e0a83a)" : "#efeaf6",
                                 boxShadow: A.done ? "0 4px 14px rgba(224,168,58,0.5)" : "none" } }, A.done ? `${st.emoji} เปลี่ยนอาชีพ${st.name}` : "ยังล่าไม่ครบ — ออกไปล่าต่อ"))),
-                    React.createElement("div", { style: { fontSize: 9, color: "#9a8ab8", marginTop: 9, lineHeight: 1.55 } }, st.tier === 3 ? "🔫 ผ่านขั้นนี้แล้วจะวางคันธนูมาใช้ปืน — ปลดชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน"
+                    React.createElement("div", { style: { fontSize: 9, color: "#9a8ab8", marginTop: 9, lineHeight: 1.55 } }, st.reward ? st.reward
                         : st.tier === 1
                             ? "🌟 ผ่านขั้นนี้แล้วถึงจะเลือกสายอาชีพขั้นสูงและใช้ท่าประจำสายได้"
                             : "💫 ผ่านขั้นนี้แล้วถึงจะสลับไปใช้ชุดสกิลขั้นสูงของสายได้")))));
