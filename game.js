@@ -1204,6 +1204,13 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+    // 🏆 วิชาขั้น 4 ของนักมวย (แชมป์โลก) — ปลดจากภารกิจอาจารย์ Lv.500 · คาดเข็มขัดแชมป์โลกสีทอง
+    b_wch: { ult: { name: "เข็มขัดแชมป์โลก", emoji: "🏆👊", mul: 1.8, stun: true, defDown: 18, bleed: 4, buffTeam: true, desc: "เสียงระฆังดังขึ้น แสงสปอตไลต์ทั่วสนาม รัวหมัดแชมป์โลกนับพันนัดจนศัตรูลอย ปิดท้ายด้วยหมัดน็อกเอาต์ทองคำ สตัน ลดเกราะ เลือดไหล + Champion's Glory (คริ/ความเร็ว/โจมตีให้ทีม)" }, skills: [
+            { id: "x_wch_1", cost: 8, name: "คอมโบแชมป์โลก", emoji: "👊", color: 0xf5d24a, mult: 0.5, perLv: 0.12, hits: 8, critBonus: 0.3, buffSpd: true, fx: "multi", desc: "รัวหมัดคอมโบระดับแชมป์ ×8 เร็วจนเห็นเป็นเงา · คริง่าย + เร่งความเร็ว" },
+            { id: "x_wch_2", cost: 11, name: "อัปเปอร์คัตสวรรค์", emoji: "🌟", color: 0xffe08a, mult: 2.3, perLv: 0.48, stun: true, defDown: 10, fx: "stab", desc: "อัปเปอร์คัตส่งศัตรูลอยขึ้นฟ้า สตัน + ลดเกราะ" },
+            { id: "x_wch_3", cost: 13, name: "การ์ดเหล็กเคาน์เตอร์", emoji: "🛡️", color: 0xc0c8d8, mult: 1.3, perLv: 0.28, buffDef: 10, heal: 0.25, fx: "rage", desc: "ยกการ์ดแชมป์รับหมัด ป้องกัน +10 ฟื้น HP 25% แล้วสวนกลับทันที" },
+            { id: "x_wch_4", cost: 18, name: "หมัดน็อกเอาต์โลก", emoji: "🏆", color: 0xffb020, mult: 3.9, perLv: 0.78, pierce: true, guaranteedCrit: true, stun: true, defDown: 14, fx: "rage", desc: "หมัดทองคำนัดเดียวน็อกทั้งสนาม เจาะเกราะ คริการันตี สตัน" }
+        ] },
     // 🍳 วิชาขั้น 4 ของพนักงานออฟฟิศ (เจ้าของกิจการร้านอาหาร) — ปลดจากภารกิจอาจารย์ Lv.500 · ถือกระทะ ใช้ของในครัว + อาหาร/ขนมหวานเป็นอาวุธ
     o_chf: { ult: { name: "ร้านอาหารมิชลินสามดาว", emoji: "🍳⭐", mul: 1.75, stun: true, defDown: 18, burn: 4, heal: 0.3, buffTeam: true, desc: "เปิดครัวกลางสนาม เสิร์ฟคอร์สมิชลินถล่มศัตรูทุกโต๊ะ กระทะยักษ์ทุบ มีดครัวปลิวว่อน ปิดท้ายด้วยเค้กยักษ์ระเบิดครีม สตัน ลดเกราะ ไหม้ + ฟื้น HP ทีม + Chef's Special (โจมตี/ป้องกันให้ทีม)" }, skills: [
             { id: "x_chf_1", cost: 8, name: "เสิร์ฟด่วนจานร้อน", emoji: "🍔", color: 0xffa040, mult: 0.7, perLv: 0.16, hits: 5, burn: 2, chef: "food", fx: "multi", desc: "โยนเบอร์เกอร์ ซูชิ โดนัท ข้าวปั้น ร้อน ๆ ใส่ศัตรู ×5 ติดไฟ" },
@@ -1441,6 +1448,11 @@ const T4 = {
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว เก็บวัตถุดิบให้พอ แล้วกลับมารับกระทะประจำร้านจากข้า",
         reward: "🍳 ผ่านขั้นนี้แล้วจะเปิดร้านอาหารของตัวเอง ใช้กระทะ มีดครัว อาหาร และขนมหวานเป็นอาวุธ — ปลดชุดสกิลขั้น 4 · เชฟ + ท่าไม้ตายใหม่",
         done: "🎓🍳 ผ่านบททดสอบขั้น 4! รับกระทะประจำร้านจากอาจารย์แล้ว — สลับเป็น “ชุดเชฟ” ในหน้าวิชาสกิล", on: "🍳 เปิดร้าน! สลับเป็นชุดสกิลขั้น 4 · เชฟ + ท่าไม้ตายใหม่" },
+    boxer: { pid: "b_wch", label: "🏆 ชุดแชมป์โลก", title: "ขั้น 4 · แชมป์โลก", emoji: "🏆",
+        intro: "เจ้าชนะทุกสังเวียนในแผ่นดินนี้แล้ว... แต่แชมป์โลกตัวจริงต้องชนะแม้แต่สัตว์ร้ายจากนรกและสวรรค์",
+        task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับเข็มขัดแชมป์โลกจากข้า",
+        reward: "🏆 ผ่านขั้นนี้แล้วจะได้คาดเข็มขัดแชมป์โลกสีทอง — ปลดชุดสกิลขั้น 4 · แชมป์โลก + ท่าไม้ตายใหม่",
+        done: "🎓🏆 ผ่านบททดสอบขั้น 4! คาดเข็มขัดแชมป์โลกแล้ว — สลับเป็น “ชุดแชมป์โลก” ในหน้าวิชาสกิล", on: "🏆 แชมป์โลกขึ้นสังเวียน! สลับเป็นชุดสกิลขั้น 4 · แชมป์โลก + ท่าไม้ตายใหม่" },
     warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
         intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
@@ -1459,6 +1471,7 @@ const ADV_SIG = {
     k_twn: { c: 0xffb0c8, c2: 0xffffff, aura: "spikes", fx: ["crossslash", "crescent", "swordbeam"] }, // ⚔️🌸 นิโตริว·หมื่นดาบคู่
     c_bot: { c: 0x3ad0ff, c2: 0xffb040, aura: "ring", fx: ["dronebarrage", "omega", "shieldbash"] }, // 🤖🚀 กองทัพจักรกล
     o_chf: { c: 0xffa040, c2: 0xffe0f0, aura: "ring", fx: ["fire", "healbless", "quake"] }, // 🍳⭐ ร้านอาหารมิชลินสามดาว
+    b_wch: { c: 0xffd24a, c2: 0xffffff, aura: "pillar", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🏆👊 เข็มขัดแชมป์โลก
     b_king: { c: 0xf5d24a, c2: 0xffffff, aura: "ring", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🥊👑 ราชันสังเวียน
     b_muay: { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] }, // 🐒🔥 หนุมานถวายแหวน
     w_pal: { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring", fx: ["healbless", "swordbeam", "shieldbash"] }, // ⚖️✨ ศาลเทพพิพากษา
@@ -1650,7 +1663,7 @@ const ADV_STAGES = [
         intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
         task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
     // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
+    { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office", "boxer"], t4: true, // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
         targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
         intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
         task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1824,6 +1837,7 @@ const SK_ARCH = {
     x_twn_1: "bladestorm", x_twn_2: "twinmoon", x_twn_3: "twinbolt", x_twn_4: "godblade", // ⚔️⚔️ ซามูไรขั้น 4 (ดาบคู่)
     x_bot_1: "summon", x_bot_2: "shouldercannon", x_bot_3: "buff", x_bot_4: "buff", // 🤖 โปรแกรมเมอร์ขั้น 4 (หุ่นยนต์)
     x_chf_1: "throw", x_chf_2: "knives", x_chf_3: "buff", x_chf_4: "smash", // 🍳 พนักงานออฟฟิศขั้น 4 (เชฟ)
+    x_wch_1: "comborush", x_wch_2: "staruppercut", x_wch_3: "ironfist", x_wch_4: "koblow", // 🏆 นักมวยขั้น 4 (แชมป์โลก)
     x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse", // 🌿🏹 เรนเจอร์พงไพร
     m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff", // 🔮 เวทมนตร์
     x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata", // 🔮💥 จอมเวทธาตุ
@@ -1893,7 +1907,7 @@ const SKILL_TIERS = [
     { n: 1, name: "วิชาพื้นฐาน", emoji: "📗", lv: 1, desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
     { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
     { n: 3, name: "วิชาขั้นสูง", emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+    { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · นักมวยเป็นแชมป์โลก · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {};
@@ -16372,6 +16386,56 @@ function CherryAdventure() {
                     H.g.position.y = H.swimY;
                 }
                 heroTorchTick(H, torchOn && !atk && !HERO_BARE_HANDS[H.cur] && H.cur !== "Chest_Open" && H.cur !== "Death01" && H.cur !== "Hit_Knockback" && H.cur !== "LayToIdle" && H.cur !== "Roll" && H.cur !== "Slide_Start");
+                { // 🏆 เข็มขัดแชมป์โลก (นักมวยขั้น 4) — เกาะกระดูกเชิงกรานเหมือนของประดับชุด
+                    const wantBelt = G.cls === "boxer" && !!(G.t4Mode && G.t4Mode()) && !H.mech;
+                    if (wantBelt !== !!H.belt) {
+                        if (H.belt) {
+                            H.g.remove(H.belt.grp);
+                            H.deco = (H.deco || []).filter((K) => K !== H.belt);
+                            H.belt = null;
+                        }
+                        else {
+                            const pel = H.parts[0] && H.parts[0].getObjectByName("pelvis");
+                            if (pel) {
+                                const grp = new THREE.Group();
+                                grp.name = "champBelt";
+                                const gold = new THREE.MeshStandardMaterial({ color: 0xf5c542, metalness: 0.85, roughness: 0.25, emissive: 0x5a3a08, emissiveIntensity: 0.5 });
+                                const leather = new THREE.MeshStandardMaterial({ color: 0x1a1a20, roughness: 0.6 });
+                                const band = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.16, 28, 1, true), leather);
+                                band.material.side = THREE.DoubleSide;
+                                grp.add(band);
+                                for (const y of [-0.075, 0.075]) {
+                                    const edge = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.014, 6, 32), gold);
+                                    edge.rotation.x = Math.PI / 2;
+                                    edge.position.y = y;
+                                    grp.add(edge);
+                                }
+                                const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 20), gold);
+                                plate.rotation.x = Math.PI / 2;
+                                plate.scale.set(1.25, 1, 1);
+                                plate.position.set(0, 0, 0.36);
+                                grp.add(plate);
+                                const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), new THREE.MeshStandardMaterial({ color: 0xe0203a, metalness: 0.4, roughness: 0.2, emissive: 0x600010 }));
+                                gem.position.set(0, 0, 0.39);
+                                grp.add(gem);
+                                for (const sx of [-1, 1]) {
+                                    const side = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.03), gold);
+                                    side.position.set(sx * 0.26, 0, 0.24);
+                                    side.rotation.y = sx * 0.8;
+                                    grp.add(side);
+                                }
+                                grp.traverse((o) => { if (o.isMesh) {
+                                    o.castShadow = true;
+                                    o.frustumCulled = false;
+                                } });
+                                H.g.add(grp);
+                                H.mats.push(gold);
+                                H.belt = { grp, head: pel, q0: null, qg: new THREE.Quaternion(), qh: new THREE.Quaternion() };
+                                H.deco = (H.deco || []).concat([H.belt]);
+                            }
+                        }
+                    }
+                }
                 if (H.tk || H.deco) {
                     H.g.updateMatrixWorld(true);
                     if (H.tk)
