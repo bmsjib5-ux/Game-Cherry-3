@@ -45202,6 +45202,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         pushOut(m, 0.3);
         if (!isArenaFoe(m)) clampOutOfSafe(m); // 🛡️🌀 keep the warp-portal safe zones monster-free
       });
+      // 👣 เว้นระยะมอนสเตอร์ทุกแมพ — ตัวที่เดินเบียดกันค่อย ๆ ดันออกจากกัน (ย้ายจุดศูนย์กลางการเดินเล่นตามไปด้วย ไม่งั้นเดินกลับมาชนอีก)
+      //    บอส/ตัวที่ยืนนิ่ง/โดนแช่แข็ง/สตัน ไม่ขยับ — อีกตัวถอยให้แทน
+      if (!G.inRanchZone) {
+        const sepR = (o) => (o.userData.boss || o.userData.caveBoss || o.userData.mapBoss ? 2.0 : 1.15) * Math.max(0.8, Math.min(1.8, o.scale.x || 1));
+        const pinned = (o) => !!(o.userData.stay || o.userData.boss || o.userData.mapBoss || o.userData.frzT > 0 || o.userData.stunT > 0 || o.userData.popT > 0);
+        const k = Math.min(1, dt * 2.5), L = wilds.length;
+        for (let a = 0; a < L; a++) {
+          const A = wilds[a]; if (!A.parent || !A.visible || (G.dungeon && !A.userData.twr)) continue;
+          const ra = sepR(A), pa = pinned(A);
+          for (let b = a + 1; b < L; b++) {
+            const B = wilds[b]; if (!B.parent || !B.visible || (G.dungeon && !B.userData.twr)) continue;
+            const ddx = B.position.x - A.position.x, ddz = B.position.z - A.position.z, need = ra + sepR(B), d2 = ddx * ddx + ddz * ddz;
+            if (d2 >= need * need) continue;
+            const pb = pinned(B); if (pa && pb) continue;
+            let d = Math.sqrt(d2), nx, nz;
+            if (d < 1e-3) { const ang = (a * 2.39 + b) % 6.283; nx = Math.cos(ang); nz = Math.sin(ang); d = 0; } else { nx = ddx / d; nz = ddz / d; }
+            const push = (need - d) * k, sa = pa ? 0 : pb ? 1 : 0.5, sb = pb ? 0 : pa ? 1 : 0.5;
+            const mv = (o, s2, sg) => { if (!s2) return; const px = nx * push * s2 * sg, pz = nz * push * s2 * sg; o.position.x += px; o.position.z += pz; const w = o.userData.wander; if (w) { w.cx += px; w.cz += pz; } };
+            mv(A, sa, -1); mv(B, sb, 1);
+          }
+        }
+      }
 
       // 🧹 กวาดซากทุก 3 วิ — แยกอิสระจากเงื่อนไข respawn เพราะ "มอนผี" ทำให้ wilds.length บวมจนระบบคิดว่าโลกเต็ม
       //    มอนผี = อยู่ใน wilds แต่หลุดจากฉาก (มองไม่เห็นแต่ไล่ตีเราได้) · มอนกำพร้า = อยู่ในฉากแต่ไม่อยู่ใน wilds (มองเห็นแต่ตีไม่ตาย)
