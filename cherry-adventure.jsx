@@ -10952,15 +10952,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const heroPlay = (name, once, opt) => {
         const H = G._heroModel; if (!H) return;
         const list = H.acts[name]; if (!list || H.cur === name) return;
-        const prev = H.cur ? H.acts[H.cur] : null;
         const spd = (opt && opt.spd) || 1, from = (opt && opt.from) || 0;
-        list.forEach((a, i) => {
+        // 🎬 จางท่า "ทุกท่า" ที่ยังค้างอยู่ออก ไม่ใช่แค่ท่าก่อนหน้า — ตอนเริ่มตีโค้ดตั้ง H.cur = null เพื่อเล่นท่าซ้ำ
+        //    เดิมจึงไม่รู้ว่าต้องจางท่าไหน ท่าฟัน (LoopOnce + ค้างเฟรมสุดท้าย) เลยค้างน้ำหนักเต็มผสมกับท่าเดิน → เดินเป็นท่าสู้
+        const live = H._live || (H._live = new Set());
+        live.forEach((nm) => { if (nm === name) return; const L = H.acts[nm]; if (L) L.forEach((a) => a.fadeOut(0.12)); live.delete(nm); });
+        list.forEach((a) => {
           a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity); a.clampWhenFinished = !!once;
           a.timeScale = spd;
           if (from > 0) a.time = a.getClip().duration * from;      // ข้ามช่วงเงื้อ เริ่มที่จังหวะเหวี่ยงจริง
           a.fadeIn(0.1).play();
-          if (prev && prev[i] && prev[i] !== a) prev[i].fadeOut(0.1);
         });
+        live.add(name);
         H.cur = name; H.playN = (H.playN || 0) + 1;
       };
       // 🤖 ร่างหุ่นยนต์ (อาชีพจักรกลพิทักษ์) — ร่างคนยังอยู่แต่ซ่อนตาข่าย ระบบเดิมเลือกท่า/ถืออาวุธได้ครบ แล้วแปลงชื่อท่าคน → ท่าหุ่นยนต์
@@ -58090,6 +58093,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     return "พืชผลฟาร์ม";
   };
   const mktIcon = (L) => ((L && L.item && L.item.emoji) || (MKT_KIND[L && L.kind] || {}).ic || "📦");
+  const MKT_KIND_COL = { all: ["#8a4cf0", "#5a2ab0"], gear: ["#ff6a5a", "#c0302a"], mat: ["#c0925a", "#7a5a2a"], fish: ["#3ab0f0", "#1a70b0"], food: ["#ffa83a", "#d0701a"],
+                         produce: ["#6ad04a", "#3a8a2a"], pet: ["#ff7ab8", "#c03a80"], herb: ["#3ad0a0", "#1a8a6a"], pot: ["#b06aff", "#7030c0"] };   // 🎨 สีประจำหมวด (อ่อน, เข้ม)
   // ⭐ คะแนนคุณภาพของรายการในตลาด (ใช้เรียงลำดับ) — ของดรอปดูระดับหายาก+ตีบวก · เพ็ตดูพรสวรรค์+เลเวล+ร่าง · ยาดูฤทธิ์ · อาหารดูเวลาบัฟ
   const mktQuality = (L) => {
     const it = (L && L.item) || {}, k = L && L.kind;
@@ -66046,18 +66051,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
           {/* 🌐 online player market — buy/sell farm produce & pets */}
           {ui.mktOpen && (
-            <div style={ui.mktBig !== false ? { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 52, width: "96%", maxWidth: Math.round(1080 * _uiInv), height: `calc((92vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", ...CHIBI_FRAME, borderRadius: 18, padding: 14, boxShadow: MODAL_SHADOW }   /* ⛶ จอใหญ่กลางหน้าจอ */
+            <div style={ui.mktBig !== false ? { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 52, width: "96%", maxWidth: Math.round(560 * _uiInv), height: `calc((62vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, minHeight: 340, overflowY: "auto", display: "flex", flexDirection: "column", borderRadius: 20, padding: 12,
+                background: "linear-gradient(160deg,#fff6d8 0%,#ffe4f0 45%,#dff4ff 100%)", border: "4px solid #ffb347", boxShadow: "0 0 0 3px #7a3cc8, 0 10px 34px rgba(90,40,140,0.45), inset 0 2px 0 rgba(255,255,255,0.8)" }   /* ⛶ กลางหน้าจอ · กรอบสีสันแบบเกม */
               : { position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 52, width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(470 * _uiInv), maxHeight: `calc((86vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", ...CHIBI_FRAME, borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW }}>
               {closeBtn("mktOpen")}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0, paddingRight: 36 }}>
-                <div style={{ fontSize: 16.5, fontWeight: 900, color: "#2f8f9a" }}>🌐 ตลาดออนไลน์</div>
+                <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", padding: "4px 14px", borderRadius: 999, background: "linear-gradient(90deg,#8a4cf0,#e0508a,#ff9a3a)", textShadow: "0 2px 0 rgba(90,20,90,0.45)", boxShadow: "0 3px 0 #5a2a9a, 0 4px 10px rgba(138,76,240,0.35)" }}>🌐 ตลาดออนไลน์</div>
                 <button onClick={() => setUi((u) => ({ ...u, mktBig: u.mktBig === false }))} title={ui.mktBig !== false ? "ย่อหน้าต่าง" : "ขยายเต็มกลางจอ"} style={{ padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#2f8f9a", background: "#e0f0ee" }}>{ui.mktBig !== false ? "🗗 ย่อ" : "⛶ ขยาย"}</button>
                 <div style={{ flex: 1 }} />
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: "#7a4a00", background: "linear-gradient(180deg,#ffe98a,#ffc23a)", border: "2px solid #e0960a", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 0 #b8740a" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
               </div>
               <div style={{ display: "flex", gap: 4, marginBottom: 10, flexShrink: 0 }}>
                 {[["buy", "🛒 ซื้อ"], ["sell", "🏷️ ขาย"], ["mine", "📋 ของฉัน"], ["contest", "🏆 ประกวด"], ["board", "📊 อันดับ"]].map(([id, label]) => (
-                  <button key={id} onClick={() => { setUi((u) => ({ ...u, mktTab: id })); if (id === "buy" || id === "mine") G.marketRefresh(id); if (id === "board") G.contestBoard(); }} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800, color: ui.mktTab === id ? "#fff" : "#5a8088", background: ui.mktTab === id ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#e8f2f0" }}>{label}</button>
+                  <button key={id} onClick={() => { setUi((u) => ({ ...u, mktTab: id })); if (id === "buy" || id === "mine") G.marketRefresh(id); if (id === "board") G.contestBoard(); }} style={{ flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 900, color: ui.mktTab === id ? "#fff" : "#7a4ab0", textShadow: ui.mktTab === id ? "0 1px 0 rgba(60,20,90,0.4)" : "none", background: ui.mktTab === id ? "linear-gradient(180deg,#b07aff,#7a3cc8)" : "rgba(255,255,255,0.75)", boxShadow: ui.mktTab === id ? "0 3px 0 #4a1a8a" : "0 2px 0 rgba(122,60,200,0.18)" }}>{label}</button>
                 ))}
               </div>
               {ui.mktErr === "offline" && (<div style={{ fontSize: 11, color: "#a06a6a", background: "#fbeeee", borderRadius: 10, padding: "9px 11px", marginBottom: 8, lineHeight: 1.5 }}>🌐 ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ออนไลน์ — ดูวิธีตั้งค่าใน ONLINE_SETUP.md (ต้องสร้างตาราง market)</div>)}
@@ -66069,19 +66075,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   const cat = ui.mktBuyCat || "all", sort = ui.mktSort || "quality";
                   return (<>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexShrink: 0 }}>
-                      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, background: "#fff", border: "2px solid #cfe4e0", borderRadius: 999, padding: "4px 12px" }}>
+                      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, background: "#fff", border: "3px solid #8a4cf0", borderRadius: 999, padding: "3px 12px", boxShadow: "0 3px 0 #5a2ab0" }}>
                         <span style={{ fontSize: 14 }}>🔎</span>
                         <input value={ui.mktQ || ""} onChange={(e) => setUi((u) => ({ ...u, mktQ: e.target.value }))} placeholder="ค้นหาชื่อสินค้า / ผู้ขาย..." style={{ flex: 1, minWidth: 0, border: "none", outline: "none", fontFamily: font, fontSize: 12.5, background: "transparent", color: "#2f7a80" }} />
                         {ui.mktQ ? <button onClick={() => setUi((u) => ({ ...u, mktQ: "" }))} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 13, color: "#9ab" }}>✕</button> : null}
                       </div>
                       <button onClick={() => G.marketRefresh("buy")} style={{ padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#2f8f9a", background: "#e0f0ee", flexShrink: 0 }}>🔄 รีเฟรช</button>
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7, padding: 3, borderRadius: 11, background: "#eef5f3", border: "1px solid #d8e8e4", flexShrink: 0 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7, padding: 4, borderRadius: 13, background: "rgba(255,255,255,0.55)", border: "2px dashed #ffb347", flexShrink: 0 }}>
                       {[["all", "🌐", "ทั้งหมด", all.length]].concat(Object.keys(MKT_KIND).map((k) => [k, MKT_KIND[k].ic, MKT_KIND[k].nm, cnt[k] || 0])).map(([k, ic, nm, n]) => {
-                        const on = cat === k;
+                        const on = cat === k, KC = MKT_KIND_COL[k] || MKT_KIND_COL.all;
                         return (
-                          <button key={k} onClick={() => setUi((u) => ({ ...u, mktBuyCat: k }))} style={{ flex: "1 1 auto", minWidth: 58, position: "relative", padding: "5px 4px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, lineHeight: 1.15,
-                            background: on ? "linear-gradient(135deg,#5ab0a0,#2f8f9a)" : "#fff", color: on ? "#fff" : "#5a8088", boxShadow: on ? "0 2px 8px rgba(47,143,154,0.35)" : "none" }}>
+                          <button key={k} onClick={() => setUi((u) => ({ ...u, mktBuyCat: k }))} style={{ flex: "1 1 auto", minWidth: 50, position: "relative", padding: "5px 4px", borderRadius: 10, border: on ? "2px solid #fff" : "2px solid " + KC[0] + "55", cursor: "pointer", fontFamily: font, lineHeight: 1.15,
+                            background: on ? `linear-gradient(135deg,${KC[0]},${KC[1]})` : "#fff", color: on ? "#fff" : KC[1], boxShadow: on ? `0 3px 0 ${KC[1]}, 0 3px 10px ${KC[0]}88` : "0 2px 0 rgba(0,0,0,0.06)", textShadow: on ? "0 1px 0 rgba(0,0,0,0.25)" : "none" }}>
                             <div style={{ fontSize: 15 }}>{ic}</div>
                             <div style={{ fontSize: 8.5, fontWeight: 800, whiteSpace: "nowrap" }}>{nm}</div>
                             {n > 0 && <span style={{ position: "absolute", top: 1, right: 3, minWidth: 13, height: 13, borderRadius: 999, background: on ? "#fff" : "#2f8f9a", color: on ? "#2f8f9a" : "#fff", fontSize: 8, fontWeight: 900, lineHeight: "13px", padding: "0 3px" }}>{n}</span>}
@@ -66093,7 +66099,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       <span style={{ fontSize: 10.5, fontWeight: 800, color: "#5a8088" }}>เรียงตาม:</span>
                       {[["quality", "⭐ คุณภาพสูง→ต่ำ"], ["qualityAsc", "⭐ คุณภาพต่ำ→สูง"], ["priceAsc", "💰 ราคาถูก→แพง"], ["priceDesc", "💰 ราคาแพง→ถูก"], ["new", "🆕 ล่าสุด"]].map(([k, lbl]) => (
                         <button key={k} onClick={() => setUi((u) => ({ ...u, mktSort: k }))} style={{ padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800,
-                          background: sort === k ? "#2f8f9a" : "#fff", color: sort === k ? "#fff" : "#5a8088", boxShadow: sort === k ? "none" : "inset 0 0 0 1px #cfe4e0" }}>{lbl}</button>
+                          background: sort === k ? "linear-gradient(180deg,#ff8ac0,#e0508a)" : "#fff", color: sort === k ? "#fff" : "#c0507a", boxShadow: sort === k ? "0 2px 0 #a02a5a" : "inset 0 0 0 1.5px #ffc0d8" }}>{lbl}</button>
                       ))}
                     </div>
                   </>);
@@ -66108,9 +66114,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     : sort === "qualityAsc" ? (mktQuality(a) - mktQuality(b)) || ((a.price || 0) - (b.price || 0)) : (mktQuality(b) - mktQuality(a)) || ((a.price || 0) - (b.price || 0)));
                   if (!ui.mktListings.length) return <div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>ยังไม่มีของลงขายตอนนี้ — กลับมาดูใหม่ภายหลัง</div>;
                   if (!rows.length) return <div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>🔎 ไม่พบสินค้าที่ตรงกับการค้นหา/หมวดนี้</div>;
-                  return (<div style={{ display: "grid", gridTemplateColumns: ui.mktBig !== false ? "repeat(auto-fill, minmax(300px, 1fr))" : "1fr", gap: 7 }}>
+                  return (<div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 7 }}>
                   {rows.map((L) => { const it = L.item || {}; const mine = L.seller === ui.pid; const poor = (ui.gold || 0) < L.price; const rc = mktRarColor(L); return (
-                    <div key={L.id} style={{ display: "flex", alignItems: "center", gap: 9, background: "#f6faf9", border: rc ? `2px solid ${rc}88` : "1px solid #d8ebe7", borderRadius: 12, padding: "8px 10px" }}>
+                    <div key={L.id} style={{ display: "flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,#ffffff 0%,${(MKT_KIND_COL[L.kind] || MKT_KIND_COL.all)[0]}22 100%)`, border: `2px solid ${rc || (MKT_KIND_COL[L.kind] || MKT_KIND_COL.all)[0]}99`, borderRadius: 14, padding: "8px 10px", boxShadow: rc ? `0 0 10px ${rc}55, 0 3px 0 rgba(0,0,0,0.06)` : "0 3px 0 rgba(0,0,0,0.06)" }}>
                       <div style={{ fontSize: 26, flexShrink: 0 }}>{mktIcon(L)}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12.5, fontWeight: 800, color: "#2f7a80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -66119,7 +66125,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         <div style={{ fontSize: 9.5, color: "#8aa8a4", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{mktSub(L)} · ผู้ขาย {L.seller_name || "?"}</div>
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 900, color: "#c9843e", flexShrink: 0 }}>💰{(L.price || 0).toLocaleString()}</div>
-                      <button onClick={() => !mine && G.marketBuyListing(L)} disabled={mine || poor || ui.mktBusy} style={{ flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(90deg,#5ab0a0,#2f8f9a)" }}>{mine ? "ของคุณ" : "ซื้อ"}</button>
+                      <button onClick={() => !mine && G.marketBuyListing(L)} disabled={mine || poor || ui.mktBusy} style={{ flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900, color: "#fff", textShadow: "0 1px 0 rgba(120,50,0,0.4)", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(180deg,#ffb84a,#ff7a2a)", boxShadow: (mine || poor || ui.mktBusy) ? "none" : "0 3px 0 #c24a10, 0 4px 8px rgba(255,122,42,0.35)" }}>{mine ? "ของคุณ" : "🛒 ซื้อ"}</button>
                     </div>
                   ); })}
                   </div>);

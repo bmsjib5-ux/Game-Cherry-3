@@ -15059,9 +15059,14 @@ function CherryAdventure() {
                 const list = H.acts[name];
                 if (!list || H.cur === name)
                     return;
-                const prev = H.cur ? H.acts[H.cur] : null;
                 const spd = (opt && opt.spd) || 1, from = (opt && opt.from) || 0;
-                list.forEach((a, i) => {
+                // 🎬 จางท่า "ทุกท่า" ที่ยังค้างอยู่ออก ไม่ใช่แค่ท่าก่อนหน้า — ตอนเริ่มตีโค้ดตั้ง H.cur = null เพื่อเล่นท่าซ้ำ
+                //    เดิมจึงไม่รู้ว่าต้องจางท่าไหน ท่าฟัน (LoopOnce + ค้างเฟรมสุดท้าย) เลยค้างน้ำหนักเต็มผสมกับท่าเดิน → เดินเป็นท่าสู้
+                const live = H._live || (H._live = new Set());
+                live.forEach((nm) => { if (nm === name)
+                    return; const L = H.acts[nm]; if (L)
+                    L.forEach((a) => a.fadeOut(0.12)); live.delete(nm); });
+                list.forEach((a) => {
                     a.reset();
                     a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
                     a.clampWhenFinished = !!once;
@@ -15069,9 +15074,8 @@ function CherryAdventure() {
                     if (from > 0)
                         a.time = a.getClip().duration * from; // ข้ามช่วงเงื้อ เริ่มที่จังหวะเหวี่ยงจริง
                     a.fadeIn(0.1).play();
-                    if (prev && prev[i] && prev[i] !== a)
-                        prev[i].fadeOut(0.1);
                 });
+                live.add(name);
                 H.cur = name;
                 H.playN = (H.playN || 0) + 1;
             };
@@ -91487,6 +91491,8 @@ function CherryAdventure() {
         return "พืชผลฟาร์ม";
     };
     const mktIcon = (L) => ((L && L.item && L.item.emoji) || (MKT_KIND[L && L.kind] || {}).ic || "📦");
+    const MKT_KIND_COL = { all: ["#8a4cf0", "#5a2ab0"], gear: ["#ff6a5a", "#c0302a"], mat: ["#c0925a", "#7a5a2a"], fish: ["#3ab0f0", "#1a70b0"], food: ["#ffa83a", "#d0701a"],
+        produce: ["#6ad04a", "#3a8a2a"], pet: ["#ff7ab8", "#c03a80"], herb: ["#3ad0a0", "#1a8a6a"], pot: ["#b06aff", "#7030c0"] }; // 🎨 สีประจำหมวด (อ่อน, เข้ม)
     // ⭐ คะแนนคุณภาพของรายการในตลาด (ใช้เรียงลำดับ) — ของดรอปดูระดับหายาก+ตีบวก · เพ็ตดูพรสวรรค์+เลเวล+ร่าง · ยาดูฤทธิ์ · อาหารดูเวลาบัฟ
     const mktQuality = (L) => {
         const it = (L && L.item) || {}, k = L && L.kind;
@@ -98741,19 +98747,20 @@ function CherryAdventure() {
                                         p.lv)));
                             })))))));
             })(),
-            ui.mktOpen && (React.createElement("div", { style: ui.mktBig !== false ? { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 52, width: "96%", maxWidth: Math.round(1080 * _uiInv), height: `calc((92vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", ...CHIBI_FRAME, borderRadius: 18, padding: 14, boxShadow: MODAL_SHADOW } /* ⛶ จอใหญ่กลางหน้าจอ */
+            ui.mktOpen && (React.createElement("div", { style: ui.mktBig !== false ? { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", zIndex: 52, width: "96%", maxWidth: Math.round(560 * _uiInv), height: `calc((62vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, minHeight: 340, overflowY: "auto", display: "flex", flexDirection: "column", borderRadius: 20, padding: 12,
+                    background: "linear-gradient(160deg,#fff6d8 0%,#ffe4f0 45%,#dff4ff 100%)", border: "4px solid #ffb347", boxShadow: "0 0 0 3px #7a3cc8, 0 10px 34px rgba(90,40,140,0.45), inset 0 2px 0 rgba(255,255,255,0.8)" } /* ⛶ กลางหน้าจอ · กรอบสีสันแบบเกม */
                     : { position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 52, width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(470 * _uiInv), maxHeight: `calc((86vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column", ...CHIBI_FRAME, borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW } },
                 closeBtn("mktOpen"),
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0, paddingRight: 36 } },
-                    React.createElement("div", { style: { fontSize: 16.5, fontWeight: 900, color: "#2f8f9a" } }, "\uD83C\uDF10 \u0E15\u0E25\u0E32\u0E14\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C"),
+                    React.createElement("div", { style: { fontSize: 17, fontWeight: 900, color: "#fff", padding: "4px 14px", borderRadius: 999, background: "linear-gradient(90deg,#8a4cf0,#e0508a,#ff9a3a)", textShadow: "0 2px 0 rgba(90,20,90,0.45)", boxShadow: "0 3px 0 #5a2a9a, 0 4px 10px rgba(138,76,240,0.35)" } }, "\uD83C\uDF10 \u0E15\u0E25\u0E32\u0E14\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C"),
                     React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mktBig: u.mktBig === false })), title: ui.mktBig !== false ? "ย่อหน้าต่าง" : "ขยายเต็มกลางจอ", style: { padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#2f8f9a", background: "#e0f0ee" } }, ui.mktBig !== false ? "🗗 ย่อ" : "⛶ ขยาย"),
                     React.createElement("div", { style: { flex: 1 } }),
-                    React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" } },
+                    React.createElement("div", { style: { fontSize: 13, fontWeight: 900, color: "#7a4a00", background: "linear-gradient(180deg,#ffe98a,#ffc23a)", border: "2px solid #e0960a", borderRadius: 999, padding: "3px 11px", boxShadow: "0 2px 0 #b8740a" } },
                         "\uD83D\uDCB0 ",
                         (ui.gold || 0).toLocaleString())),
                 React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 10, flexShrink: 0 } }, [["buy", "🛒 ซื้อ"], ["sell", "🏷️ ขาย"], ["mine", "📋 ของฉัน"], ["contest", "🏆 ประกวด"], ["board", "📊 อันดับ"]].map(([id, label]) => (React.createElement("button", { key: id, onClick: () => { setUi((u) => ({ ...u, mktTab: id })); if (id === "buy" || id === "mine")
                         G.marketRefresh(id); if (id === "board")
-                        G.contestBoard(); }, style: { flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800, color: ui.mktTab === id ? "#fff" : "#5a8088", background: ui.mktTab === id ? "linear-gradient(90deg,#5ab0a0,#2f8f9a)" : "#e8f2f0" } }, label)))),
+                        G.contestBoard(); }, style: { flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 900, color: ui.mktTab === id ? "#fff" : "#7a4ab0", textShadow: ui.mktTab === id ? "0 1px 0 rgba(60,20,90,0.4)" : "none", background: ui.mktTab === id ? "linear-gradient(180deg,#b07aff,#7a3cc8)" : "rgba(255,255,255,0.75)", boxShadow: ui.mktTab === id ? "0 3px 0 #4a1a8a" : "0 2px 0 rgba(122,60,200,0.18)" } }, label)))),
                 ui.mktErr === "offline" && (React.createElement("div", { style: { fontSize: 11, color: "#a06a6a", background: "#fbeeee", borderRadius: 10, padding: "9px 11px", marginBottom: 8, lineHeight: 1.5 } }, "\uD83C\uDF10 \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E40\u0E0B\u0E34\u0E23\u0E4C\u0E1F\u0E40\u0E27\u0E2D\u0E23\u0E4C\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C \u2014 \u0E14\u0E39\u0E27\u0E34\u0E18\u0E35\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E43\u0E19 ONLINE_SETUP.md (\u0E15\u0E49\u0E2D\u0E07\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E15\u0E32\u0E23\u0E32\u0E07 market)")),
                 ui.mktTab === "buy" && (React.createElement(React.Fragment, null,
                     (() => {
@@ -98763,15 +98770,15 @@ function CherryAdventure() {
                         const cat = ui.mktBuyCat || "all", sort = ui.mktSort || "quality";
                         return (React.createElement(React.Fragment, null,
                             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexShrink: 0 } },
-                                React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 6, background: "#fff", border: "2px solid #cfe4e0", borderRadius: 999, padding: "4px 12px" } },
+                                React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 6, background: "#fff", border: "3px solid #8a4cf0", borderRadius: 999, padding: "3px 12px", boxShadow: "0 3px 0 #5a2ab0" } },
                                     React.createElement("span", { style: { fontSize: 14 } }, "\uD83D\uDD0E"),
                                     React.createElement("input", { value: ui.mktQ || "", onChange: (e) => setUi((u) => ({ ...u, mktQ: e.target.value })), placeholder: "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E0A\u0E37\u0E48\u0E2D\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 / \u0E1C\u0E39\u0E49\u0E02\u0E32\u0E22...", style: { flex: 1, minWidth: 0, border: "none", outline: "none", fontFamily: font, fontSize: 12.5, background: "transparent", color: "#2f7a80" } }),
                                     ui.mktQ ? React.createElement("button", { onClick: () => setUi((u) => ({ ...u, mktQ: "" })), style: { border: "none", background: "none", cursor: "pointer", fontSize: 13, color: "#9ab" } }, "\u2715") : null),
                                 React.createElement("button", { onClick: () => G.marketRefresh("buy"), style: { padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: "#2f8f9a", background: "#e0f0ee", flexShrink: 0 } }, "\uD83D\uDD04 \u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A")),
-                            React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7, padding: 3, borderRadius: 11, background: "#eef5f3", border: "1px solid #d8e8e4", flexShrink: 0 } }, [["all", "🌐", "ทั้งหมด", all.length]].concat(Object.keys(MKT_KIND).map((k) => [k, MKT_KIND[k].ic, MKT_KIND[k].nm, cnt[k] || 0])).map(([k, ic, nm, n]) => {
-                                const on = cat === k;
-                                return (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, mktBuyCat: k })), style: { flex: "1 1 auto", minWidth: 58, position: "relative", padding: "5px 4px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, lineHeight: 1.15,
-                                        background: on ? "linear-gradient(135deg,#5ab0a0,#2f8f9a)" : "#fff", color: on ? "#fff" : "#5a8088", boxShadow: on ? "0 2px 8px rgba(47,143,154,0.35)" : "none" } },
+                            React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 7, padding: 4, borderRadius: 13, background: "rgba(255,255,255,0.55)", border: "2px dashed #ffb347", flexShrink: 0 } }, [["all", "🌐", "ทั้งหมด", all.length]].concat(Object.keys(MKT_KIND).map((k) => [k, MKT_KIND[k].ic, MKT_KIND[k].nm, cnt[k] || 0])).map(([k, ic, nm, n]) => {
+                                const on = cat === k, KC = MKT_KIND_COL[k] || MKT_KIND_COL.all;
+                                return (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, mktBuyCat: k })), style: { flex: "1 1 auto", minWidth: 50, position: "relative", padding: "5px 4px", borderRadius: 10, border: on ? "2px solid #fff" : "2px solid " + KC[0] + "55", cursor: "pointer", fontFamily: font, lineHeight: 1.15,
+                                        background: on ? `linear-gradient(135deg,${KC[0]},${KC[1]})` : "#fff", color: on ? "#fff" : KC[1], boxShadow: on ? `0 3px 0 ${KC[1]}, 0 3px 10px ${KC[0]}88` : "0 2px 0 rgba(0,0,0,0.06)", textShadow: on ? "0 1px 0 rgba(0,0,0,0.25)" : "none" } },
                                     React.createElement("div", { style: { fontSize: 15 } }, ic),
                                     React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, whiteSpace: "nowrap" } }, nm),
                                     n > 0 && React.createElement("span", { style: { position: "absolute", top: 1, right: 3, minWidth: 13, height: 13, borderRadius: 999, background: on ? "#fff" : "#2f8f9a", color: on ? "#2f8f9a" : "#fff", fontSize: 8, fontWeight: 900, lineHeight: "13px", padding: "0 3px" } }, n)));
@@ -98779,7 +98786,7 @@ function CherryAdventure() {
                             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, marginBottom: 8, flexWrap: "wrap", flexShrink: 0 } },
                                 React.createElement("span", { style: { fontSize: 10.5, fontWeight: 800, color: "#5a8088" } }, "\u0E40\u0E23\u0E35\u0E22\u0E07\u0E15\u0E32\u0E21:"),
                                 [["quality", "⭐ คุณภาพสูง→ต่ำ"], ["qualityAsc", "⭐ คุณภาพต่ำ→สูง"], ["priceAsc", "💰 ราคาถูก→แพง"], ["priceDesc", "💰 ราคาแพง→ถูก"], ["new", "🆕 ล่าสุด"]].map(([k, lbl]) => (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, mktSort: k })), style: { padding: "4px 9px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800,
-                                        background: sort === k ? "#2f8f9a" : "#fff", color: sort === k ? "#fff" : "#5a8088", boxShadow: sort === k ? "none" : "inset 0 0 0 1px #cfe4e0" } }, lbl))))));
+                                        background: sort === k ? "linear-gradient(180deg,#ff8ac0,#e0508a)" : "#fff", color: sort === k ? "#fff" : "#c0507a", boxShadow: sort === k ? "0 2px 0 #a02a5a" : "inset 0 0 0 1.5px #ffc0d8" } }, lbl))))));
                     })(),
                     ui.mktListings == null ? (React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 } }, "\u23F3 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14...")) : (() => {
                         const q = (ui.mktQ || "").trim().toLowerCase(), cat = ui.mktBuyCat || "all", sort = ui.mktSort || "quality";
@@ -98791,12 +98798,12 @@ function CherryAdventure() {
                             return React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E25\u0E07\u0E02\u0E32\u0E22\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 \u2014 \u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32\u0E14\u0E39\u0E43\u0E2B\u0E21\u0E48\u0E20\u0E32\u0E22\u0E2B\u0E25\u0E31\u0E07");
                         if (!rows.length)
                             return React.createElement("div", { style: { textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 } }, "\uD83D\uDD0E \u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E17\u0E35\u0E48\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E04\u0E49\u0E19\u0E2B\u0E32/\u0E2B\u0E21\u0E27\u0E14\u0E19\u0E35\u0E49");
-                        return (React.createElement("div", { style: { display: "grid", gridTemplateColumns: ui.mktBig !== false ? "repeat(auto-fill, minmax(300px, 1fr))" : "1fr", gap: 7 } }, rows.map((L) => {
+                        return (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr", gap: 7 } }, rows.map((L) => {
                             const it = L.item || {};
                             const mine = L.seller === ui.pid;
                             const poor = (ui.gold || 0) < L.price;
                             const rc = mktRarColor(L);
-                            return (React.createElement("div", { key: L.id, style: { display: "flex", alignItems: "center", gap: 9, background: "#f6faf9", border: rc ? `2px solid ${rc}88` : "1px solid #d8ebe7", borderRadius: 12, padding: "8px 10px" } },
+                            return (React.createElement("div", { key: L.id, style: { display: "flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,#ffffff 0%,${(MKT_KIND_COL[L.kind] || MKT_KIND_COL.all)[0]}22 100%)`, border: `2px solid ${rc || (MKT_KIND_COL[L.kind] || MKT_KIND_COL.all)[0]}99`, borderRadius: 14, padding: "8px 10px", boxShadow: rc ? `0 0 10px ${rc}55, 0 3px 0 rgba(0,0,0,0.06)` : "0 3px 0 rgba(0,0,0,0.06)" } },
                                 React.createElement("div", { style: { fontSize: 26, flexShrink: 0 } }, mktIcon(L)),
                                 React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                                     React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#2f7a80", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
@@ -98809,7 +98816,7 @@ function CherryAdventure() {
                                 React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#c9843e", flexShrink: 0 } },
                                     "\uD83D\uDCB0",
                                     (L.price || 0).toLocaleString()),
-                                React.createElement("button", { onClick: () => !mine && G.marketBuyListing(L), disabled: mine || poor || ui.mktBusy, style: { flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: "#fff", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(90deg,#5ab0a0,#2f8f9a)" } }, mine ? "ของคุณ" : "ซื้อ")));
+                                React.createElement("button", { onClick: () => !mine && G.marketBuyListing(L), disabled: mine || poor || ui.mktBusy, style: { flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900, color: "#fff", textShadow: "0 1px 0 rgba(120,50,0,0.4)", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(180deg,#ffb84a,#ff7a2a)", boxShadow: (mine || poor || ui.mktBusy) ? "none" : "0 3px 0 #c24a10, 0 4px 8px rgba(255,122,42,0.35)" } }, mine ? "ของคุณ" : "🛒 ซื้อ")));
                         })));
                     })())),
                 ui.mktTab === "sell" && (React.createElement(React.Fragment, null,
