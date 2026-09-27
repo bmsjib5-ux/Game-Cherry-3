@@ -1140,6 +1140,12 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+  // 🐉 วิชาขั้น 4 ของนักฝึกสัตว์ (จ้าวแห่งสัตว์เทพ) — ปลดจากภารกิจอาจารย์ Lv.500 · อัญเชิญสัตว์เทพ 5 ตัว (ครุฑ · เสือสมิง · อนาคอนด้า · กินนร · เทวดา)
+  t_div: { ult: { name: "สัตว์เทพพิทักษ์จักรวาล", emoji: "🐉🌌", mul: 1.75, stun: true, defDown: 18, bleed: 4, heal: 0.3, buffTeam: true, desc: "เป่าเขาสัตว์เทพ ครุฑ มังกร เสือสมิง พญานาค ลงมาจากฟ้าพร้อมกัน ขย้ำ ฟาด ดิ่งทับทั้งสนาม สตัน ลดเกราะ เลือดไหล + ฟื้น HP ทีม + Beast Bond (โจมตี/ความเร็วให้ทีม)" }, skills: [
+    { id: "x_div_1", cost: 14, name: "อัญเชิญสัตว์เทพ",  emoji: "🐉", color: 0xffd24a, mult: 1.0, perLv: 0.22, summon: 5, summonKind: "divine", summonDur: 70, fx: "summon", desc: "อัญเชิญสัตว์เทพ 5 ตัวลงมาช่วยรบ 70 วินาที (ครุฑ · เสือสมิง · อนาคอนด้า · กินนร · เทวดา) รับดาเมจแทนได้" },
+    { id: "x_div_2", cost: 10, name: "ฝูงหมาป่าวิญญาณ",  emoji: "🐺", color: 0x8ab0ff, mult: 0.75, perLv: 0.17, hits: 5, bleed: 4, aoe: true, fx: "stab", desc: "หมาป่าวิญญาณพุ่งขย้ำทั้งฝูง ×5 เลือดไหล" },
+    { id: "x_div_3", cost: 13, name: "พรแห่งสัตว์เทพ",   emoji: "🌟", color: 0xfff0a0, mult: 1.1, perLv: 0.24, heal: 0.35, buffDef: 10, fx: "heal", desc: "สัตว์เทพเปล่งแสงอวยพร ฟื้น HP 35% + ป้องกัน +10" },
+    { id: "x_div_4", cost: 18, name: "ครุฑดิ่งฟ้า",      emoji: "🦅", color: 0xff8a2a, mult: 3.8, perLv: 0.76, aoe: true, stun: true, guaranteedCrit: true, defDown: 14, fx: "quake", desc: "พญาครุฑดิ่งจากฟ้าทับทั้งกลุ่ม สตัน คริการันตี + ลดเกราะ" } ] },
   // 🦾 วิชาขั้น 4 ของจักรกลพิทักษ์ (จักรกลสังหาร) — ปลดจากภารกิจอาจารย์ Lv.500 · หุ่นติดอาวุธหนักครบมือ: ปืนกลสองมือ · ฝักจรวดหลัง · แขนกลแมงมุม 4 แขนถืออาวุธ 4 อย่าง
   g_kil: { ult: { name: "โปรโตคอลจักรกลสังหาร", emoji: "🦾💀", mul: 1.8, stun: true, defDown: 18, burn: 4, bleed: 4, buffTeam: true, desc: "ปลดล็อกอาวุธทุกชิ้นพร้อมกัน ปืนกลคู่ + ฝนจรวด + แขนแมงมุมทั้งสี่ + ลำแสงจากฟ้า ถล่มจนสนามลุกเป็นไฟ สตัน ลดเกราะ ไหม้ เลือดไหล + Kill Mode (โจมตี/คริให้ทีม)" }, skills: [
     { id: "x_kil_1", cost: 8,  name: "ปืนกลคู่ถล่ม",    emoji: "🔫", color: 0xffd04a, mult: 0.42, perLv: 0.1, hits: 10, critBonus: 0.2, mechfx: "guns", fx: "multi", desc: "ปืนกลหกลำกล้องทั้งสองมือกระหน่ำพร้อมกัน ×10" },
@@ -1368,6 +1374,11 @@ const T4 = {
              task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมาติดตั้งชุดอาวุธหนักจากข้า",
              reward: "🦾 ผ่านขั้นนี้แล้วจะติดอาวุธหนักครบตัว — ปืนกลสองมือ · ฝักจรวดบนหลัง · แขนกลแมงมุม 4 แขนถืออาวุธ 4 อย่าง + ท่าไม้ตายใหม่",
              done: "🎓🦾 ผ่านบททดสอบขั้น 4! ติดตั้งชุดอาวุธหนักแล้ว — สลับเป็น “ชุดจักรกลสังหาร” ในหน้าวิชาสกิล", on: "🦾 KILL MODE ON! สลับเป็นชุดสกิลขั้น 4 · จักรกลสังหาร + อาวุธหนักครบตัว" },
+  tamer:   { pid: "t_div", label: "🐉 ชุดสัตว์เทพ", title: "ขั้น 4 · จ้าวแห่งสัตว์เทพ", emoji: "🐉",
+             intro: "สัตว์ป่าทุกตัวยอมรับเจ้าเป็นนายแล้ว... แต่เหนือพงไพรยังมีสัตว์เทพที่รอผู้คู่ควรจะเรียกขาน",
+             task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับเขาสัตว์เทพจากข้า",
+             reward: "🐉 ผ่านขั้นนี้แล้วจะอัญเชิญสัตว์เทพ 5 ตัวมาช่วยรบได้ — ปลดชุดสกิลขั้น 4 · สัตว์เทพ + ท่าไม้ตายใหม่",
+             done: "🎓🐉 ผ่านบททดสอบขั้น 4! รับเขาสัตว์เทพจากอาจารย์แล้ว — สลับเป็น “ชุดสัตว์เทพ” ในหน้าวิชาสกิล", on: "🐉 สัตว์เทพตอบรับเสียงเรียก! สลับเป็นชุดสกิลขั้น 4 · สัตว์เทพ + ท่าไม้ตายใหม่" },
   warrior: { pid: "w_war", label: "⚔️ ชุดขุนศึก", title: "ขั้น 4 · ขุนศึกดาบสวรรค์", emoji: "⚔️",
              intro: "ดาบของเจ้าคมพอแล้ว แต่แขนของเจ้ายังเบาเกินไป... ขุนศึกที่แท้จริงต้องแบกดาบยักษ์ที่ไม่มีใครยกไหว",
              task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับดาบยักษ์จากข้า",
@@ -1388,6 +1399,7 @@ const ADV_SIG = {
   o_chf:     { c: 0xffa040, c2: 0xffe0f0, aura: "ring",   fx: ["fire", "healbless", "quake"] },          // 🍳⭐ ร้านอาหารมิชลินสามดาว
   b_wch:     { c: 0xffd24a, c2: 0xffffff, aura: "pillar", fx: ["punchwave", "warfrenzy", "punchwave"] }, // 🏆👊 เข็มขัดแชมป์โลก
   g_kil:     { c: 0xff4a2a, c2: 0x3ad0ff, aura: "spikes", fx: ["dronebarrage", "omega", "hellfire"] },   // 🦾💀 โปรโตคอลจักรกลสังหาร
+  t_div:     { c: 0xffd24a, c2: 0x9ae06a, aura: "pillar", fx: ["summonpop", "healbless", "quake"] },     // 🐉🌌 สัตว์เทพพิทักษ์จักรวาล
   b_king:    { c: 0xf5d24a, c2: 0xffffff, aura: "ring",   fx: ["punchwave", "warfrenzy", "punchwave"] },   // 🥊👑 ราชันสังเวียน
   b_muay:    { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] },        // 🐒🔥 หนุมานถวายแหวน
   w_pal:     { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring",   fx: ["healbless", "swordbeam", "shieldbash"] },  // ⚖️✨ ศาลเทพพิพากษา
@@ -1576,7 +1588,7 @@ const ADV_STAGES = [
     intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
     task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
   // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
-  { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office", "boxer", "aegis"], t4: true,   // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
+  { tier: 3, lv: 500, kill: 40, emoji: "🎓", name: "ขั้น 4", cls: ["archer", "warrior", "mage", "assassin", "lancer", "samurai", "coder", "office", "boxer", "aegis", "tamer"], t4: true,   // ข้อความ/ชื่อต่ออาชีพอยู่ใน T4
     targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
     intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
     task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
@@ -1748,6 +1760,7 @@ const SK_ARCH = {
   x_chf_1: "throw", x_chf_2: "knives", x_chf_3: "buff", x_chf_4: "smash",                          // 🍳 พนักงานออฟฟิศขั้น 4 (เชฟ)
   x_wch_1: "comborush", x_wch_2: "staruppercut", x_wch_3: "ironfist", x_wch_4: "koblow",           // 🏆 นักมวยขั้น 4 (แชมป์โลก)
   x_kil_1: "railgun", x_kil_2: "shouldercannon", x_kil_3: "buff", x_kil_4: "satellite",            // 🦾 จักรกลพิทักษ์ขั้น 4 (จักรกลสังหาร)
+  x_div_1: "summon", x_div_2: "wolfcall", x_div_3: "blessing", x_div_4: "meteordive",               // 🐉 นักฝึกสัตว์ขั้น 4 (สัตว์เทพ)
   x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse",            // 🌿🏹 เรนเจอร์พงไพร
   m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff",                       // 🔮 เวทมนตร์
   x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata",    // 🔮💥 จอมเวทธาตุ
@@ -1816,7 +1829,7 @@ const SKILL_TIERS = [
   { n: 1, name: "วิชาพื้นฐาน",  emoji: "📗", lv: 1,  desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
   { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
   { n: 3, name: "วิชาขั้นสูง",  emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
-  { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · นักมวยเป็นแชมป์โลก · จักรกลพิทักษ์ติดอาวุธหนัก · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+  { n: 4, name: "วิชาขั้น 4", emoji: "🎓", lv: 500, desc: "ทำภารกิจอาจารย์ที่ Lv.500 — นักธนูจับปืน · นักรบถือดาบยักษ์ · นักเวทคุมพลังจักรวาล · นักฆ่ากลายเป็นเงามรณะ · นักหอกถือทวนสายฟ้า · ซามูไรถือดาบคู่ · โปรแกรมเมอร์สร้างหุ่นรบ · พนักงานออฟฟิศเปิดร้านอาหาร · นักมวยเป็นแชมป์โลก · จักรกลพิทักษ์ติดอาวุธหนัก · นักฝึกสัตว์อัญเชิญสัตว์เทพ · ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
 ];
 const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {}; SKILL_TIERS.forEach((t) => (SKILL_TIER_BY[t.n] = t));
@@ -9297,7 +9310,7 @@ export default function CherryAdventure() {
         //    ขยายทั้งชิ้นแล้วเลื่อนด้ามลงตามสัดส่วน มือจึงยังกำอยู่ที่ด้ามเดิม ไม่ใช่กลางใบดาบ
         const witS = LOOT.find((x) => x.id === id), isSpear = model.userData.kkFam === "spear" || !!(witS && WPN_FAMILY[witS.cls] === "spear");
         if (isSpear) spearTipGlow(model, witS);                       // ✨ หอกทุกด้ามมีแสงที่ปลาย
-        const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1) * (G.t4Mode && G.t4Mode() ? (G.cls === "warrior" ? 1.5 : G.cls === "mage" ? 1.35 : G.cls === "assassin" ? 1.3 : G.cls === "lancer" ? 1.35 : 1) : 1);   // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6 · ⚔️ นักรบขั้น 4 ถือดาบยักษ์ ×1.5   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
+        const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1) * (G.t4Mode && G.t4Mode() ? (G.cls === "warrior" ? 1.5 : G.cls === "mage" ? 1.35 : G.cls === "assassin" ? 1.3 : G.cls === "lancer" ? 1.35 : G.cls === "tamer" ? 1.3 : 1) : 1);   // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6 · ⚔️ นักรบขั้น 4 ถือดาบยักษ์ ×1.5   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
         model.scale.setScalar(big);
         model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
         model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
@@ -34123,7 +34136,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         return 0;
       }
       const robo = kind === "robot";   // 🤖 นักสร้างหุ่นยนต์ — ประกอบหุ่นรบ (หุ่น Animated Mech) แทนฝูงสัตว์
-      const picks = robo ? Array.from({ length: n }, (_, i) => ({ sp: ["mechgunner", "mechstriker", "mechscout", "mechtitan"][i % 4], stage: 1, lv: (G.player && G.player.level) || 1, mut: 0 })) : summonPicks(n);
+      const divine = kind === "divine";   // 🐉 จ้าวแห่งสัตว์เทพ — อัญเชิญสัตว์ระดับเทพ (เลเวลเท่าผู้เล่น)
+      const KIND_POOL = robo ? ["mechgunner", "mechstriker", "mechscout", "mechtitan"] : divine ? ["garuda", "saming", "anaconda", "kinnara", "thewada"].filter((k) => SPECIES[k]) : null;
+      const picks = KIND_POOL && KIND_POOL.length ? Array.from({ length: n }, (_, i) => ({ sp: KIND_POOL[i % KIND_POOL.length], stage: divine ? 3 : 1, lv: (G.player && G.player.level) || 1, mut: 0 })) : summonPicks(n);
       picks.forEach((p, i) => {
         let m = null;
         try {
@@ -34133,7 +34148,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         } catch (e) { m = null; }
         if (!m) return;
         vivify(m);
-        if (robo) m.scale.multiplyScalar(1.4);   // 🤖 หุ่นรบตัวใหญ่กว่ามอนปกติ ดูเป็นเครื่องจักรสงคราม
+        if (robo || divine) m.scale.multiplyScalar(robo ? 1.4 : 1.3);   // 🤖 หุ่นรบ / 🐉 สัตว์เทพ ตัวใหญ่กว่ามอนปกติ
         const rad = markAlly(m);                 // 🐾 ตัวเท่ามอนสเตอร์ปกติ — ติดป้ายฝูงของเราไว้แทนการย่อขนาด
         const ang = (i / picks.length) * Math.PI * 2 + Math.random() * 0.6;
         const sr = 2.6 + rad;
@@ -34152,7 +34167,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.summonT = summons.length ? dur : 0;
       G._summonSec = Math.ceil(G.summonT);
       setUi((u) => ({ ...u, summonLeft: Math.ceil(G.summonT) }));
-      if (summons.length) toast(robo ? `🤖 ประกอบหุ่นรบ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!` : `🐾 เรียกฝูงสัตว์ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!`);
+      if (summons.length) toast(divine ? `🐉 อัญเชิญสัตว์เทพ ${summons.length} ตัวลงมาช่วยรบ ${Math.round(dur)} วินาที!` : robo ? `🤖 ประกอบหุ่นรบ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!` : `🐾 เรียกฝูงสัตว์ ${summons.length} ตัวออกมาช่วยรบ ${Math.round(dur)} วินาที!`);
       return summons.length;
     };
     // 🛡️🐾 สัตว์ที่เรียกออกมา "รับหน้า" แทนเจ้าของ — มอนสเตอร์ตัวไหนมีสัตว์อยู่ใกล้จะเข้าใส่สัตว์ก่อน
