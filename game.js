@@ -5459,6 +5459,7 @@ function CherryAdventure() {
         for (let i = 0; i < 6; i++) {
             const mo = softMote(0.24, 0xffffff, 0.9);
             mo.userData.ph = i / 6 * Math.PI * 2;
+            mo.visible = false; // 🚫 ลูกแสงกลมหมุนรอบตัว — ปิดตามคำขอ (เหลือวงแหวนพื้น)
             pathAura.add(mo);
             auraMotes.push(mo);
         }
@@ -5505,6 +5506,7 @@ function CherryAdventure() {
         for (let i = 0; i < 7; i++) {
             const mo = softMote(0.22, 0xffffff, 0.85);
             mo.userData.ph = i / 7 * Math.PI * 2;
+            mo.visible = false; // 🚫 ปิดลูกแสงหมุนรอบตัว
             setAura.add(mo);
             setMotes.push(mo);
         }
