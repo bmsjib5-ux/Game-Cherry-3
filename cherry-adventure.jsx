@@ -66086,7 +66086,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       {[["all", "🌐", "ทั้งหมด", all.length]].concat(Object.keys(MKT_KIND).map((k) => [k, MKT_KIND[k].ic, MKT_KIND[k].nm, cnt[k] || 0])).map(([k, ic, nm, n]) => {
                         const on = cat === k, KC = MKT_KIND_COL[k] || MKT_KIND_COL.all;
                         return (
-                          <button key={k} onClick={() => setUi((u) => ({ ...u, mktBuyCat: k }))} style={{ flex: "1 1 auto", minWidth: 50, position: "relative", padding: "5px 4px", borderRadius: 10, border: on ? "2px solid #fff" : "2px solid " + KC[0] + "55", cursor: "pointer", fontFamily: font, lineHeight: 1.15,
+                          <button key={k} onClick={() => setUi((u) => ({ ...u, mktBuyCat: k, mktSub: null }))} style={{ flex: "1 1 auto", minWidth: 50, position: "relative", padding: "5px 4px", borderRadius: 10, border: on ? "2px solid #fff" : "2px solid " + KC[0] + "55", cursor: "pointer", fontFamily: font, lineHeight: 1.15,
                             background: on ? `linear-gradient(135deg,${KC[0]},${KC[1]})` : "#fff", color: on ? "#fff" : KC[1], boxShadow: on ? `0 3px 0 ${KC[1]}, 0 3px 10px ${KC[0]}88` : "0 2px 0 rgba(0,0,0,0.06)", textShadow: on ? "0 1px 0 rgba(0,0,0,0.25)" : "none" }}>
                             <div style={{ fontSize: 15 }}>{ic}</div>
                             <div style={{ fontSize: 8.5, fontWeight: 800, whiteSpace: "nowrap" }}>{nm}</div>
@@ -66113,9 +66113,30 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     : sort === "new" ? String(b.created_at || b.id || "").localeCompare(String(a.created_at || a.id || ""))
                     : sort === "qualityAsc" ? (mktQuality(a) - mktQuality(b)) || ((a.price || 0) - (b.price || 0)) : (mktQuality(b) - mktQuality(a)) || ((a.price || 0) - (b.price || 0)));
                   if (!ui.mktListings.length) return <div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>ยังไม่มีของลงขายตอนนี้ — กลับมาดูใหม่ภายหลัง</div>;
+                  // 🗂️ แถบย่อยด้านซ้าย — ของดรอปแยกตามช่องสวมใส่ · หมวดอื่นแยกตามชื่อสินค้า (มีจำนวนกำกับ)
+                  const subOf = (L) => { const it = L.item || {}; return L.kind === "gear" ? (it.slot || "other") : (it.name || "?"); };
+                  const subLabel = (L) => { const it = L.item || {}; return L.kind === "gear" ? `${SLOT_ICON[it.slot] || "📦"} ${SLOT_NAMES[it.slot] || "อื่น ๆ"}` : `${it.emoji || mktIcon(L)} ${it.name || "?"}`; };
+                  const subs = []; const subIdx = {};
+                  if (cat !== "all") rows.forEach((L) => { const k = subOf(L); if (subIdx[k] == null) { subIdx[k] = subs.length; subs.push({ k, label: subLabel(L), n: 0 }); } subs[subIdx[k]].n++; });
+                  const sub = ui.mktSub && subIdx[ui.mktSub] != null ? ui.mktSub : null;
+                  const KC = MKT_KIND_COL[cat] || MKT_KIND_COL.all;
+                  const sideBtn = (k, label, n) => { const on = sub === k; return (
+                    <button key={k || "_all"} onClick={() => setUi((u) => ({ ...u, mktSub: k }))} style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", padding: "8px 9px", marginBottom: 6, borderRadius: 999, cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 900, textAlign: "left",
+                      border: "2.5px solid " + (on ? "#fff" : "#ffa83a"), background: on ? "linear-gradient(180deg,#ffb84a,#ff7a2a)" : "#fff", color: on ? "#fff" : "#c06a1a", boxShadow: on ? "0 3px 0 #c24a10, 0 3px 10px rgba(255,122,42,0.4)" : "0 2px 0 rgba(255,168,58,0.35)", textShadow: on ? "0 1px 0 rgba(120,50,0,0.35)" : "none" }}>
+                      <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+                      <span style={{ flexShrink: 0, minWidth: 16, height: 16, lineHeight: "16px", borderRadius: 999, fontSize: 8.5, textAlign: "center", background: on ? "#fff" : KC[0], color: on ? "#ff7a2a" : "#fff", padding: "0 4px" }}>{n}</span>
+                    </button>); };
+                  const shown = sub ? rows.filter((L) => subOf(L) === sub) : rows;
                   if (!rows.length) return <div style={{ textAlign: "center", padding: "20px 0", color: "#9ab", fontSize: 12 }}>🔎 ไม่พบสินค้าที่ตรงกับการค้นหา/หมวดนี้</div>;
-                  return (<div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 7 }}>
-                  {rows.map((L) => { const it = L.item || {}; const mine = L.seller === ui.pid; const poor = (ui.gold || 0) < L.price; const rc = mktRarColor(L); return (
+                  return (<div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  {subs.length > 0 && (
+                    <div style={{ width: 118, flexShrink: 0, position: "sticky", top: 0, padding: "8px 6px 2px", borderRadius: 14, background: "rgba(255,255,255,0.6)", border: "2px solid #ffc27a" }}>
+                      {sideBtn(null, "📋 ทั้งหมด", rows.length)}
+                      {subs.map((S) => sideBtn(S.k, S.label, S.n))}
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr", gap: 7 }}>
+                  {shown.map((L) => { const it = L.item || {}; const mine = L.seller === ui.pid; const poor = (ui.gold || 0) < L.price; const rc = mktRarColor(L); return (
                     <div key={L.id} style={{ display: "flex", alignItems: "center", gap: 9, background: `linear-gradient(135deg,#ffffff 0%,${(MKT_KIND_COL[L.kind] || MKT_KIND_COL.all)[0]}22 100%)`, border: `2px solid ${rc || (MKT_KIND_COL[L.kind] || MKT_KIND_COL.all)[0]}99`, borderRadius: 14, padding: "8px 10px", boxShadow: rc ? `0 0 10px ${rc}55, 0 3px 0 rgba(0,0,0,0.06)` : "0 3px 0 rgba(0,0,0,0.06)" }}>
                       <div style={{ fontSize: 26, flexShrink: 0 }}>{mktIcon(L)}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -66128,7 +66149,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       <button onClick={() => !mine && G.marketBuyListing(L)} disabled={mine || poor || ui.mktBusy} style={{ flexShrink: 0, padding: "8px 13px", borderRadius: 999, border: "none", cursor: (mine || poor || ui.mktBusy) ? "default" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900, color: "#fff", textShadow: "0 1px 0 rgba(120,50,0,0.4)", background: (mine || poor || ui.mktBusy) ? "#cdd3d0" : "linear-gradient(180deg,#ffb84a,#ff7a2a)", boxShadow: (mine || poor || ui.mktBusy) ? "none" : "0 3px 0 #c24a10, 0 4px 8px rgba(255,122,42,0.35)" }}>{mine ? "ของคุณ" : "🛒 ซื้อ"}</button>
                     </div>
                   ); })}
-                  </div>);
+                  </div></div>);
                 })()}
               </React.Fragment>)}
 
