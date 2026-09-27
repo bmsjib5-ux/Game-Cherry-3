@@ -1140,6 +1140,12 @@ const ULT_ALT = {
 // resolve which ultimate a class is currently using
 // 🌟 ADVANCED SKILL SETS — เลือกสายอาชีพขั้นสูงแล้วสลับมาใช้ชุดสกิลขั้นสูง (4 สกิล + ท่าไม้ตายใหม่) ได้
 const PATH_ADV = {
+  // 🔫 วิชาขั้น 4 ของนักธนู (ปืน) — ปลดจากภารกิจอาจารย์ Lv.500 · ใช้ได้ทุกสายของนักธนู
+  a_gun: { ult: { name: "ห่ากระสุนพิพากษา", emoji: "🔫🌠", mul: 1.75, defDown: 18, stun: true, buffTeam: true, desc: "ปืนคู่ลอยล้อมตัว ล็อกทุกเป้าแล้วกระหน่ำกระสุนพลังงานนับพันนัด ปิดท้ายด้วยกระสุนปืนใหญ่จากฟ้า เจาะเกราะ สตัน + Deadeye (คริ/ความเร็วให้ทีม)" }, skills: [
+    { id: "x_gun_1", cost: 8,  name: "ยิงรัวปืนคู่",     emoji: "🔫", color: 0xffc04a, mult: 0.62, perLv: 0.14, hits: 6, critBonus: 0.3, fx: "multi", desc: "ชักปืนคู่ยิงรัว ×6 เร็วจนเห็นเป็นเส้นไฟ · โอกาสคริสูง" },
+    { id: "x_gun_2", cost: 11, name: "กระสุนเจาะเกราะ",  emoji: "💥", color: 0xff8a2a, mult: 2.4, perLv: 0.5, pierce: true, defDown: 12, critBonus: 0.35, fx: "shot", desc: "กระสุนหัวเพชรทะลุทุกการ์ด ลดเกราะหนัก" },
+    { id: "x_gun_3", cost: 14, name: "ลูกซองกระจาย",    emoji: "💢", color: 0xffe07a, mult: 0.8, perLv: 0.18, hits: 4, slow: true, stun: true, aoe: true, fx: "multi", desc: "ลูกซองกระจายเป็นวงกว้าง ×4 โดนทั้งกลุ่ม ช้าลง + มีโอกาสมึน" },
+    { id: "x_gun_4", cost: 18, name: "สไนเปอร์มรณะ",    emoji: "🎯", color: 0xff4a3a, mult: 3.8, perLv: 0.75, pierce: true, guaranteedCrit: true, defDown: 14, fx: "shot", desc: "เล็งนิ่งหนึ่งนัด ยิงทะลุทั้งแถว คริการันตี" } ] },
   b_king: { ult: { name: "หมัดสังหารราชันสังเวียน", emoji: "🥊👑", mul: 1.7, stun: true, defDown: 14, bleed: 4, buffTeam: true, desc: "ขึ้นสังเวียนครั้งสุดท้าย — รัวหมัดเป็นพันนัดจนอากาศแตก ปิดท้ายหมัดน็อกทะลุเกราะ สตัน + เลือดไหล + Champion's Aura (คริ/ความเร็ว/ดาเมจคริให้ทีม)" }, skills: [
     { id: "x_box_1", cost: 7,  name: "หมัดสายฟ้าแลบ",  emoji: "👊", color: 0xf5d24a, mult: 0.68, perLv: 0.15, hits: 6, buffSpd: true, critBonus: 0.25, fx: "multi", desc: "แย็บสายฟ้ารัว ×6 เร็วจนเห็นเป็นเงา · เร่งความเร็ว + คริ" },
     { id: "x_box_2", cost: 10, name: "ฮุกทลายกำแพง",   emoji: "💥", color: 0xe8622a, mult: 1.9, perLv: 0.4,  stun: true, defDown: 10, fx: "bash",  desc: "ฮุกซ้าย-ขวาทลายการ์ด กระแทกถอยหลัง · สตัน + ทำลายเกราะ" },
@@ -1261,9 +1267,11 @@ let SKILL_MODE_ADV = false, ACTIVE_ADV_PATH = null; // 🔀 โหมดสล�
 const setSkillModeGlobals = (adv, pathId) => { SKILL_MODE_ADV = !!adv && !!pathId && !!PATH_ADV[pathId]; ACTIVE_ADV_PATH = pathId || null; };
 const ultOf = (cls, alt) => (alt && ULT_ALT[cls]) ? ULT_ALT[cls] : ULTS[cls]; // ท่าไม้ตายทั่วไป (ขั้นสูงแยกเป็นปุ่ม/แอ็กชันต่างหาก)
 const advUltOf = (pathId) => (pathId && PATH_ADV[pathId]) ? PATH_ADV[pathId].ult : null;
+const advUiPid = (u) => (u && u.skillMode === "gun") ? "a_gun" : (u && u.skillMode === "adv" ? u.pathId : null);   // 🔫 สายของท่าไม้ตายขั้นสูงที่ใช้อยู่ (ชุดปืน = a_gun)
 // 👑 เอกลักษณ์ท่าไม้ตายขั้นสูงประจำสาย — สี · ทรงออร่า · เอฟเฟกต์ 3 จังหวะ (เลือกให้ตรงชื่อท่าและคุณสมบัติ)
 //    aura: ring=วงแหวนหมุนรอบตัว · pillar=ลำแสงพุ่งขึ้นฟ้า · orbs=ลูกแก้วโคจร · spikes=ขวากแทงขึ้นจากพื้น
 const ADV_SIG = {
+  a_gun:     { c: 0xffb040, c2: 0xffffff, aura: "ring",   fx: ["snipe", "multi", "snipe"] },             // 🔫🌠 ห่ากระสุนพิพากษา
   b_king:    { c: 0xf5d24a, c2: 0xffffff, aura: "ring",   fx: ["punchwave", "warfrenzy", "punchwave"] },   // 🥊👑 ราชันสังเวียน
   b_muay:    { c: 0xff7a2a, c2: 0xffd76a, aura: "pillar", fx: ["kneeburst", "hellfire", "quake"] },        // 🐒🔥 หนุมานถวายแหวน
   w_pal:     { c: 0xffe9a0, c2: 0xfff6d8, aura: "ring",   fx: ["healbless", "swordbeam", "shieldbash"] },  // ⚖️✨ ศาลเทพพิพากษา
@@ -1451,6 +1459,11 @@ const ADV_STAGES = [
   { tier: 2, lv: 80, kill: 20, emoji: "💫", name: "ขั้นสูง 2",
     intro: "วิชาขั้นสูงไม่ใช่ของเล่น มันจะกลืนกินคนที่ใจไม่นิ่งพอ",
     task: "คราวนี้ยากกว่าเดิมเท่าตัว — ล่าสัตว์ร้ายทั้งห้าให้ได้ชนิดละ 20 ตัว แล้วมาพบข้าอีกครั้ง" },
+  // 🔫 ขั้น 4 ของนักธนู — วางคันธนูแล้วจับปืน · ล่ามอน Lv.500-600 (นรกภูมิ + สวรรค์ชั้นฟ้า) 5 ชนิด ชนิดละ 40 ตัว
+  { tier: 3, lv: 500, kill: 40, emoji: "🔫", name: "ขั้น 4 · จอมปืน", cls: ["archer"],
+    targets: ["winyan", "pisaj", "zombie", "thewada", "kinnara"], lvRange: [500, 600],
+    intro: "ลูกศรของเจ้าแม่นพอจะผ่าเส้นผมได้แล้ว... แต่ศัตรูในดินแดนเบื้องหน้าเกราะหนาเกินกว่าคันธนูจะเจาะได้ ถึงเวลาจับปืน",
+    task: "ไปนรกภูมิและสวรรค์ชั้นฟ้า ล่ามอนสเตอร์ Lv.500-600 ทั้งห้าชนิด ชนิดละ 40 ตัว แล้วกลับมารับปืนจากข้า" },
 ];
 // 🐾 มอนสเตอร์ 5 ชนิดที่แต่ละอาชีพต้องล่า
 const ADV_TARGETS = {
@@ -1590,7 +1603,7 @@ const CLASS_PATHS = {
 const pathOf = (cls, pathId) => (CLASS_PATHS[cls] || []).find((p) => p.id === pathId) || null;
 // a path's signature skill appears as a 6th entry in the skill list
 const skillsOf = (cls, pathId) => {
-  if (SKILL_MODE_ADV && pathId && PATH_ADV[pathId]) return PATH_ADV[pathId].skills; // 🌟 ชุดสกิลขั้นสูงของสาย
+  { const ap = SKILL_MODE_ADV ? (ACTIVE_ADV_PATH || pathId) : null; if (ap && PATH_ADV[ap]) return PATH_ADV[ap].skills; } // 🌟 ชุดสกิลขั้นสูงของสาย · 🔫 ชุดปืน (a_gun)
   const base = CLASS_SKILLS[cls] || [];
   const p = pathOf(cls, pathId);
   return p && p.skill ? base.concat([p.skill]) : base;
@@ -1609,6 +1622,7 @@ const SK_ARCH = {
   x_ber_1: "axecombo", x_ber_2: "bloodrage", x_ber_3: "groundsplit", x_ber_4: "axestorm",         // 🪓🔥 เบอร์เซิร์ก
   a_power: "shot", a_multi: "volley", a_poison: "throw", a_snipe: "snipe", a_weak: "snipe",     // 🏹 นักธนู
   x_shp_1: "pierce", x_shp_2: "hawk", x_shp_3: "kneel", x_shp_4: "arrowrain",                    // 🎯💫 จอมแม่นปืน
+  x_gun_1: "volley", x_gun_2: "pierce", x_gun_3: "volley", x_gun_4: "snipe",                      // 🔫 นักธนูขั้น 4 (ปืน)
   x_rng_1: "vine", x_rng_2: "poisonvolley", x_rng_3: "wolfcall", x_rng_4: "rootcurse",            // 🌿🏹 เรนเจอร์พงไพร
   m_fire: "firestorm", m_ice: "icefreeze", m_bolt: "beam", m_heal: "buff",                       // 🔮 เวทมนตร์
   x_elm_1: "meteorcall", x_elm_2: "frostrain", x_elm_3: "thunderjudge", x_elm_4: "naturecata",    // 🔮💥 จอมเวทธาตุ
@@ -1677,14 +1691,16 @@ const SKILL_TIERS = [
   { n: 1, name: "วิชาพื้นฐาน",  emoji: "📗", lv: 1,  desc: "ท่าประจำอาชีพ — ปลดทีละท่าตามเลเวลและสถานะ" },
   { n: 2, name: "วิชาสายอาชีพ", emoji: "📘", lv: 40, desc: "เลือกสายอาชีพที่ Lv.40 → ได้ท่าประจำสาย + ท่าไม้ตาย" },
   { n: 3, name: "วิชาขั้นสูง",  emoji: "📕", lv: 60, desc: "สลับเป็นชุดสกิลขั้นสูงของสาย — ท่าใหม่ 4 ท่า + ท่าไม้ตายใหม่" },
+  { n: 4, name: "วิชาขั้น 4 · ปืน", emoji: "🔫", lv: 500, desc: "นักธนูวางคันธนูแล้วจับปืน — ทำภารกิจอาจารย์ที่ Lv.500 · ท่าปืน 4 ท่า + ท่าไม้ตายปืน" },
 ];
+const TIER4_LV = [500, 520, 540, 560, 600];
 const SKILL_TIER_BY = {}; SKILL_TIERS.forEach((t) => (SKILL_TIER_BY[t.n] = t));
 // เลเวลที่ต้องมีของแต่ละท่าในขั้นนั้น (ไล่จากซ้ายไปขวา) — ขั้น 1 ใช้ SKILL_GATE เดิม
 const TIER2_LV = [40, 45];
 const TIER3_LV = [60, 66, 72, 80, 90];
 
 // 📋 ประกอบกระดานวิชาทั้งหมดของอาชีพนี้ — คืนเป็นแถวละขั้น พร้อมสถานะล็อก/ปลดของทุกใบ
-const skillBoard = (cls, pathId, level, ranks, stats, skillMode, ultRank) => {
+const skillBoard = (cls, pathId, level, ranks, stats, skillMode, ultRank, advTier) => {
   ranks = ranks || {}; stats = stats || {}; level = level || 1;
   const rows = [];
   const P = pathOf(cls, pathId);
@@ -1734,6 +1750,21 @@ const skillBoard = (cls, pathId, level, ranks, stats, skillMode, ultRank) => {
   rows.push({ tier: 3, open: !!adv && skillMode === "adv",
     note: !adv ? "🔒 ต้องเลือกสายอาชีพที่มีชุดสกิลขั้นสูงก่อน" : (skillMode !== "adv" ? "🔒 กดสลับเป็น “ชุดสกิลขั้นสูง” เพื่อใช้ขั้นนี้" : null),
     cards: t3 });
+
+  // ── ขั้น 4: ชุดปืนของนักธนู ──
+  if (cls === "archer") {
+    const G4 = PATH_ADV.a_gun, unlocked = (advTier || 0) >= 3, on = skillMode === "gun";
+    const t4 = G4.skills.map((sk, i) => ({ kind: "adv", id: sk.id, sk, tier: 4, needLv: TIER4_LV[i],
+      open: on && level >= TIER4_LV[i],
+      reasons: [{ ok: unlocked, text: "ผ่านภารกิจขั้น 4 กับอาจารย์" }, { ok: on, text: "สลับไปชุดปืนก่อน" }, { ok: level >= TIER4_LV[i], text: `เลเวล ${level}/${TIER4_LV[i]}` }],
+      rank: ranks[sk.id] || 1 }));
+    t4.push({ kind: "advult", id: "advult_a_gun", sk: { ...G4.ult, id: "advult_a_gun", cost: 0, name: "🌟 " + G4.ult.name }, tier: 4, needLv: TIER4_LV[4],
+      open: on && level >= TIER4_LV[4], reasons: [{ ok: unlocked, text: "ผ่านภารกิจขั้น 4 กับอาจารย์" }, { ok: on, text: "สลับไปชุดปืนก่อน" }, { ok: level >= TIER4_LV[4], text: `เลเวล ${level}/${TIER4_LV[4]}` }],
+      rank: ultRank || 1 });
+    rows.push({ tier: 4, open: unlocked && on,
+      note: !unlocked ? "🔒 ถึง Lv.500 แล้วคุยกับอาจารย์ประจำอาชีพ ทำภารกิจขั้น 4 (ล่ามอน Lv.500-600) เพื่อจับปืน" : (!on ? "🔫 กดสลับเป็น “ชุดปืน” เพื่อใช้ขั้นนี้" : null),
+      cards: t4 });
+  }
 
   return rows;
 };
@@ -5435,6 +5466,7 @@ export default function CherryAdventure() {
       if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove" || id === "fenClaw" || id === "nekoPaw") return { x: 0, y: 0, z: 0 };   // 🥊🐺🐱 นวม/กรงเล็บ/อุ้งมือ — สวมทับกำปั้น ไม่ได้ถือด้าม
       if (id === "usaCarrot") return { x: -0.35, y: 0, z: 0.15 }; // 🐰🥕 ค้อนแครอทพาดไหล่เฉียงหน้า
       if (id === "cx" || id === "wDx" || id === "lg_ox") return { x: 1.42, y: 0, z: 0 }; // 🤖🔫 aegis blasters/cannons — muzzle levelled forward (barrel faces ahead)
+      if (typeof id === "string" && /^(w|kk)_blaster/.test(id)) return (G.heroModelId && cls === "archer") ? { x: 0.65, y: 0, z: 0 } : { x: 1.42, y: 0, z: 0 };   // 🧍 โมเดล 3D ท่าเล็งปืนสองมือ — วัดจากภาพให้ลำกล้องชี้ไปหน้า   // 🔫 ปืนตระกูล blaster (รวมนักธนูขั้น 4) — ต้องมาก่อนเงื่อนไขนักธนูถือคันธนู
       // bows are held sideways; swords angled up-forward with the flat face outward; staves upright
       if (cls === "archer" || id === "ca" || id === "wDa" || id === "lg_oa") return G.heroModelId ? { ...BOW_GRIP_MODEL } : { x: -0.15, y: 0, z: Math.PI / 2 }; // bow held horizontal (โมเดล 3D ตั้งขึ้น)
       if (cls === "mage" || id === "cm" || id === "wDm" || id === "lg_om") return { x: -0.15, y: 0, z: 0 };
@@ -9063,6 +9095,7 @@ export default function CherryAdventure() {
       else if (G.heroId === "lich" && weaponModels.licStaffW) id = "licStaffW";         // 💀 คทาวิญญาณ
       // 🦸 อาวุธประจำตัวฮีโร่ต้องมาก่อนโมเดลตระกูลอาวุธตามอาชีพเสมอ (ไม่งั้นโดน KayKit ของอาชีพทับ)
       const sigHero = !!(G.heroId && HERO_WEAPON[G.heroId] === id);
+      const gunM = !!(G.gunMode && G.gunMode()) && !(G.costume && G.costume.weapon) && !sigHero;   // 🔫 นักธนูขั้น 4 — ถือปืนตระกูล blaster ตามระดับไอเทมแทนคันธนู
       { const kh = G.kkHeroKey && G.kkHeroKey(id); if (kh) id = kh; }   // 🪓⚡👹 สามชิ้นนี้มีรุ่น KayKit ของจริง
       // 🐉😈🦅🐍🕊️👼🧝🦸 ฮีโร่ที่ไม่มีอาวุธประจำตัว — มือขวาถืออาวุธตามอาชีพ/ของที่สวมจริง
       // ⚔️ ไม่มีโมเดลเฉพาะ → ใช้โมเดลตระกูลอาวุธตามอาชีพ + ระดับคุณภาพของไอเทม (ยิ่งสูงยิ่งวิจิตร)
@@ -9071,15 +9104,16 @@ export default function CherryAdventure() {
       let famKey = null, famHasOwn = false;
       {
         const wit = LOOT.find((x) => x.id === id);
-        const fam = WPN_FAMILY[(wit && wit.cls) || G.cls];
-        if (wit && fam) { famKey = `w_${fam}_${wpnTierOf(wit.rarity)}`; famHasOwn = !!(id && weaponModels[id]); }
+        const fam = gunM ? "blaster" : WPN_FAMILY[(wit && wit.cls) || G.cls];
+        if (wit && fam) { famKey = `w_${fam}_${wpnTierOf(wit.rarity)}`; famHasOwn = !gunM && !!(id && weaponModels[id]); }
+        else if (gunM) famKey = "w_blaster_0";
       }
       if (famKey && !famHasOwn && G.ensureWeaponModel) G.ensureWeaponModel(famKey); // 🚀 สร้างโมเดลตระกูลอาวุธเมื่อใช้จริง
       // 🗡️ KayKit: อาวุธตระกูล (ดาบ/มีด/ไม้เท้า/ธนู) และอาวุธเริ่มต้นของอาชีพ → โมเดล glTF ถ้าโหลดแล้วและเปิดใช้
       // 🗡️ อาวุธที่มีโมเดลปั้นเฉพาะตัว (ดาบ/คาตานะทุกใบ) ใช้โมเดลของตัวเอง — เดิม KayKit ทับหมดจนดาบทุกใบในระดับเดียวกันหน้าตาเหมือนกัน
-      const ownModel = !!(id && weaponModels[id]);
+      const ownModel = !gunM && !!(id && weaponModels[id]);
       let kkKey = null;
-      { const wit3 = LOOT.find((x) => x.id === id); const kki = (!sigHero && G.kkItem) ? G.kkItem(id, wit3) : null; if (kki) kkKey = kki; }   // 🗡️✨ ดาบ/คาตานะ KayKit ต่อไอเทม (ตกแต่งตามขั้น)
+      { const wit3 = LOOT.find((x) => x.id === id); const kki = (!sigHero && !gunM && G.kkItem) ? G.kkItem(id, wit3) : null; if (kki) kkKey = kki; }   // 🗡️✨ ดาบ/คาตานะ KayKit ต่อไอเทม (ตกแต่งตามขั้น)
       if (!kkKey && G.kkKey && !sigHero && !ownModel) {
         const fam2 = famKey ? famKey.split("_")[1] : (WPN_FAMILY[G.cls] || null);
         const t2 = famKey ? +famKey.split("_")[2] : 0;
@@ -9088,7 +9122,7 @@ export default function CherryAdventure() {
       }
       if (kkKey) famKey = kkKey;
       G._gloveOn = false;   // 🥊 ตั้งใหม่ด้านล่างเมื่อรู้ว่า curWeapon เป็นนวม (ท่าจับบนโมเดล 3D ต่างจากดาบ)
-      curWeapon = kkKey ? kkKey : id && weaponModels[id] ? id : (famKey && !famHasOwn && weaponModels[famKey] ? famKey : (CLASS_WEAPON[G.cls] || "default"));
+      curWeapon = kkKey ? kkKey : !gunM && id && weaponModels[id] ? id : (famKey && !famHasOwn && weaponModels[famKey] ? famKey : (gunM ? "cx" : (CLASS_WEAPON[G.cls] || "default")));
       Object.entries(weaponModels).forEach(([k, m]) => setVisFrozen(m, k === curWeapon));
       { const wm = weaponModels[curWeapon]; G._curWeaponKey = curWeapon; G._gloveOn = !!(GLOVE_SPEC[curWeapon] || curWeapon === "fenClaw" || curWeapon === "nekoPaw" || (wm && wm.userData && wm.userData.kkFam === "glove") || /^kk_glove/.test(curWeapon) || (/^kki_/.test(curWeapon) && WPN_FAMILY[G.cls] === "glove")); }
       // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา · 🐺🐱 เผ่าสัตว์สวมกรงเล็บ/อุ้งมือข้างซ้ายเป็นส่วนของชุดเสมอ
@@ -9120,7 +9154,7 @@ export default function CherryAdventure() {
         //    ขยายทั้งชิ้นแล้วเลื่อนด้ามลงตามสัดส่วน มือจึงยังกำอยู่ที่ด้ามเดิม ไม่ใช่กลางใบดาบ
         const witS = LOOT.find((x) => x.id === id), isSpear = model.userData.kkFam === "spear" || !!(witS && WPN_FAMILY[witS.cls] === "spear");
         if (isSpear) spearTipGlow(model, witS);                       // ✨ หอกทุกด้ามมีแสงที่ปลาย
-        const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : 1);   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
+        const big = BLADE_BIG(curWeapon) * (G.heroModelId && model.userData.kkFam === "bow" ? 1.8 : G.heroModelId && isSpear ? 1.5 : gunM && G.heroModelId ? 1.6 : 1);   // 🔫 ปืนนักธนูบนโมเดล 3D ขยาย 1.6   // 🔱 หอกบนโมเดล 3D ขยาย 1.5 เท่า — เดิมเรียวเล็กจนมองแทบไม่เห็น   // 🏹 ธนูบนโมเดล 3D ขยายให้ได้สัดส่วนกับตัวโมเดล (ชิบิย่อไว้แล้ว)
         model.scale.setScalar(big);
         model.position.y = gy * big + (1 - big) * BLADE_HILT; // raise weapon so grip point is at the hand
         model.position.z = (model.userData.gripZ != null ? model.userData.gripZ : 0) * big; // push away from the body if set
@@ -30839,20 +30873,22 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.adv = G.adv || { tier: 0, taken: {}, kills: {} };
     G.advTier = () => (G.adv && G.adv.tier) || 0;
     // ขั้นที่กำลังทำอยู่ (ขั้นแรกที่ยังไม่ผ่าน) — ผ่านครบแล้วคืน null
-    const advStage = () => ADV_STAGES.find((st) => st.tier > G.advTier()) || null;
+    const advStage = () => ADV_STAGES.find((st) => st.tier > G.advTier() && (!st.cls || st.cls.indexOf(G.cls) >= 0)) || null;   // 🔫 ขั้น 4 มีเฉพาะบางอาชีพ
     const advKey = (tier, sp) => tier + ":" + sp;
-    const advDone = (st) => !!st && advTargets(G.cls).every((sp) => (G.adv.kills[advKey(st.tier, sp)] || 0) >= st.kill);
+    const stTargets = (st) => (st && st.targets) || advTargets(G.cls);
+    const advDone = (st) => !!st && stTargets(st).every((sp) => (G.adv.kills[advKey(st.tier, sp)] || 0) >= st.kill);
     G.advInfo = () => {
       const st = advStage();
       const lv = (G.player && G.player.level) || 1;
-      if (!st) return { tier: G.advTier(), stage: null, allDone: true };
-      const targets = advTargets(G.cls).map((sp) => {
+      if (!st) return { tier: G.advTier(), stage: null, allDone: true, maxTier: ADV_STAGES.filter((x) => !x.cls || x.cls.indexOf(G.cls) >= 0).length };
+      const targets = stTargets(st).map((sp) => {
         const S = SPECIES[sp] || {};
         return { sp, name: S.name || sp, emoji: S.emoji || "❓", need: st.kill, cur: Math.min(st.kill, G.adv.kills[advKey(st.tier, sp)] || 0) };
       });
       return {
         tier: G.advTier(), allDone: false,
-        stage: { tier: st.tier, lv: st.lv, kill: st.kill, emoji: st.emoji, name: st.name, intro: st.intro, task: st.task },
+        stage: { tier: st.tier, lv: st.lv, kill: st.kill, emoji: st.emoji, name: st.name, intro: st.intro, task: st.task, lvRange: st.lvRange || null },
+        maxTier: ADV_STAGES.filter((x) => !x.cls || x.cls.indexOf(G.cls) >= 0).length,
         cls: G.cls, className: (CLASSES[G.cls] || {}).name || "", classEmoji: (CLASSES[G.cls] || {}).emoji || "🧙",
         lvOk: lv >= st.lv, lv, taken: !!G.adv.taken[st.tier], done: advDone(st), targets,
       };
@@ -30871,10 +30907,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return true;
     };
     // 🐾 นับมอนที่ล่าได้ (เฉพาะขั้นที่รับภารกิจแล้วและยังไม่ผ่าน)
-    G.advKill = (spId) => {
+    G.advKill = (spId, lv) => {
       if (!spId || !G.adv) return;
       const st = advStage(); if (!st || !G.adv.taken[st.tier]) return;
-      if (advTargets(G.cls).indexOf(spId) < 0) return;
+      if (stTargets(st).indexOf(spId) < 0) return;
+      if (st.lvRange && lv != null && (lv < st.lvRange[0] || lv > st.lvRange[1])) return;   // 🔫 นับเฉพาะมอนในช่วงเลเวลที่อาจารย์สั่ง
       const k = advKey(st.tier, spId);
       const cur = G.adv.kills[k] || 0;
       if (cur >= st.kill) return;
@@ -30895,6 +30932,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp();
       toast(st.tier === 1
         ? "🎓🌟 ผ่านบททดสอบขั้นสูง 1! เลือกสายอาชีพขั้นสูงได้แล้ว"
+        : st.tier === 3 ? "🎓🔫 ผ่านบททดสอบขั้น 4! รับปืนจากอาจารย์แล้ว — สลับเป็น “ชุดปืน” ในหน้าวิชาสกิล"
         : "🎓💫 ผ่านบททดสอบขั้นสูง 2! ใช้ชุดสกิลขั้นสูงของสายได้แล้ว");
       if (G.sfx) { G.sfx.levelup && G.sfx.levelup(); G.sfx.boom && G.sfx.boom(); }
       G._camShake = 0.6;
@@ -30902,17 +30940,32 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.advSync(); syncPlayer(); if (G.saveGame) G.saveGame();
       // ขั้น 1 ผ่านแล้วเปิดหน้าเลือกสายให้เลย · ขั้น 2 เปิดหน้าสลับชุดสกิล
       setUi((u) => ({ ...u, masterOpen: false, ...(st.tier === 1 ? { skillPanel: true, pathOpen: true } : {}) }));
+      if (st.tier === 3 && G.setSkillMode) G.setSkillMode("gun");   // 🔫 จับปืนทันที
       return true;
     };
     G.toggleMaster = () => { const d = G.advInfo(); setUi((u) => ({ ...u, masterOpen: !u.masterOpen, adv: d })); };
     // ================= 🎓 END =================
 
+    G.gunMode = () => G.cls === "archer" && G.skillMode === "gun";   // 🔫 นักธนูขั้น 4 ถือปืน
+    G.advPid = () => (G.skillMode === "gun" ? "a_gun" : G.skillMode === "adv" ? G.pathId : null);   // สายของชุดขั้นสูงที่ใช้อยู่
     G.setSkillMode = (m) => {
+      if (m === "gun") {
+        if (G.cls !== "archer") { toast("🔫 ชุดปืนมีเฉพาะนักธนู"); return; }
+        if (G.advTier() < 3) { toast("🎓 ต้องถึง Lv.500 แล้วทำภารกิจขั้น 4 กับอาจารย์ประจำอาชีพให้สำเร็จก่อน"); return; }
+        G.skillMode = "gun"; setSkillModeGlobals(true, "a_gun");
+        toast("🔫 จับปืน! สลับเป็นชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน");
+        if (G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null);
+        setUi((u) => ({ ...u, skillMode: G.skillMode, skillRanks: { ...(G.skillRanks || {}) } }));
+        syncPlayer(); if (G.saveGame) G.saveGame();
+        return;
+      }
       if (m === "adv" && !G.pathId) { toast("🔒 ต้องเลือกสายอาชีพขั้นสูงก่อน จึงใช้ชุดสกิลขั้นสูงได้"); return; }
       // 🎓 ชุดสกิลขั้นสูงเปิดได้หลังผ่านภารกิจ "เปลี่ยนอาชีพขั้นสูง 2" จากอาจารย์ (Lv.80)
       if (m === "adv" && G.advTier() < 2) { toast(`🎓 ต้องทำภารกิจขั้นสูง 2 กับอาจารย์ประจำอาชีพให้สำเร็จก่อน (Lv.${ADV_STAGES[1].lv})`); return; }
+      const wasGun = G.skillMode === "gun";
       G.skillMode = m === "adv" ? "adv" : "basic";
       setSkillModeGlobals(G.skillMode === "adv", G.pathId);
+      if (wasGun && G.setWeaponVisual) G.setWeaponVisual(G.equip ? G.equip.weapon : null);   // 🏹 กลับมาถือคันธนู
       toast(G.skillMode === "adv" ? "🌟 สลับเป็นชุดสกิลขั้นสูง + ท่าไม้ตายใหม่!" : "⚔️ กลับมาใช้ชุดสกิลพื้นฐาน");
       setUi((u) => ({ ...u, skillMode: G.skillMode, skillRanks: { ...(G.skillRanks || {}) } }));
       syncPlayer(); if (G.saveGame) G.saveGame();
@@ -30927,7 +30980,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const p = pathOf(G.cls, pathId);
       if (!p) return;
       G.pathId = pathId;
-      setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 อัปเดตชุดสกิลขั้นสูงของสายที่เลือก
+      if (G.skillMode !== "gun") setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 อัปเดตชุดสกิลขั้นสูงของสายที่เลือก (ชุดปืนไม่ขึ้นกับสาย)
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp(); // 🌟 fully restored on awakening
       if (G.sfx) { G.sfx.levelup && G.sfx.levelup(); G.sfx.boom && G.sfx.boom(); }
       // 🌟✨ AWAKENING MOMENT — a pillar of light + expanding rings + a shower of tinted sparks
@@ -31088,7 +31141,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       syncPlayer(); // re-sync boosted stats
     };
 // ================= 📖 วิชาสกิล — กระดานปลดล็อกเป็นขั้น =================
-    G.skillBoard = () => skillBoard(G.cls, G.pathId, (G.player && G.player.level) || 1, G.skillRanks || {}, G.baseStats || {}, G.skillMode || "basic", G.ultRank || 1);
+    G.skillBoard = () => skillBoard(G.cls, G.pathId, (G.player && G.player.level) || 1, G.skillRanks || {}, G.baseStats || {}, G.skillMode || "basic", G.ultRank || 1, G.advTier ? G.advTier() : 0);
     // 📄 รายละเอียดของท่าที่เลือก — ค่าปัจจุบัน → ค่าถัดไป (ให้เห็นว่าอัพแล้วได้อะไรเพิ่ม)
     G.skillDetail = (id) => {
       const rows = G.skillBoard();
@@ -33436,7 +33489,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.sfx) G.sfx.win && G.sfx.win();
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
       if (G.qingEvent) G.qingEvent("win", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 1
-      if (G.advKill) G.advKill(m.userData.spId);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง
+      if (G.advKill) G.advKill(m.userData.spId, m.userData.lv);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง
       if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id }); // 📖
       G.combo = (G.combo || 0) + 1;
       const comboMult = 1 + Math.min(2, (G.combo - 1) * 0.15);
@@ -35528,6 +35581,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     // 🏹 ลูกธนูหนึ่งดอก — ใช้ทั้งยิงตรงเข้าเป้า และร่วงลงจากฟ้าตอนฝนลูกธนู
     const spawnArrow = (from, to, col, dur, onHit, delay) => {
+      if (G.gunMode && G.gunMode()) return spawnBullet(from, to, col, dur, onHit, delay);   // 🔫 นักธนูขั้น 4 — ยิงกระสุนแทนลูกธนู
       try {
         const shaftM = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.85 });
         const tipM = new THREE.MeshStandardMaterial({ color: col || 0xf5d24a, metalness: 0.75, roughness: 0.2, emissive: col || 0xf5d24a, emissiveIntensity: 0.55 });
@@ -35543,6 +35597,29 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.visible = !delay;
         g.userData = { kind: "arrow", t: 0, dur: dur || 0.16, delay: delay || 0, from: from.clone(), to: to.clone(), onHit, mats: [shaftM, tipM] };
         scene.add(g); archerFx.push(g);
+      } catch (e) {}
+    };
+    // 🔫 กระสุนพลังงาน — หัวกระสุนสว่าง + หางแสงยาว พุ่งตรง (ไม่โค้งแบบลูกธนู) เร็วกว่า + ไฟแลบที่ปากกระบอก
+    const spawnBullet = (from, to, col, dur, onHit, delay) => {
+      try {
+        const c = col || 0xffc04a;
+        const coreM = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
+        const trM = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+        const g = new THREE.Group();
+        const core = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), coreM); core.scale.set(1, 1, 2.2); g.add(core);
+        const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.075, 1.1, 8, 1, true), trM); tr.rotation.x = Math.PI / 2; tr.position.z = -0.6; g.add(tr);
+        g.traverse((o) => { o.raycast = () => {}; });
+        g.position.copy(from);
+        g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), to.clone().sub(from).normalize());
+        g.visible = !delay;
+        g.userData = { kind: "arrow", bullet: true, t: 0, dur: Math.max(0.07, (dur || 0.16) * 0.55), delay: delay || 0, from: from.clone(), to: to.clone(), onHit, mats: [coreM, trM] };
+        scene.add(g); archerFx.push(g);
+        if (!delay) {                                              // 💥 ไฟแลบปากกระบอก
+          const fm = new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+          const fl = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), fm); fl.position.copy(from); fl.raycast = () => {};
+          scene.add(fl); let k = 0;
+          const iv = setInterval(() => { k++; fl.scale.setScalar(1 + k * 0.5); fm.opacity = Math.max(0, 0.95 - k * 0.3); if (k >= 4) { clearInterval(iv); scene.remove(fl); fl.geometry.dispose(); fm.dispose(); } }, 30);
+        }
       } catch (e) {}
     };
     const spawnRainArrow = (x, z, col, delay, onHit) => {        // 💥 ลูกธนูหนึ่งดอกในฝนลูกธนู — ปักลงจากฟ้าเฉียง ๆ
@@ -36950,7 +37027,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const pa = Math.min(1, (u.t - u.delay) / u.dur);
             const ax = u.from.x + (u.to.x - u.from.x) * pa;
             const az = u.from.z + (u.to.z - u.from.z) * pa;
-            const ay = u.from.y + (u.to.y - u.from.y) * pa + Math.sin(pa * Math.PI) * 0.2;   // วิถีโค้งเล็กน้อย
+            const ay = u.from.y + (u.to.y - u.from.y) * pa + (u.bullet ? 0 : Math.sin(pa * Math.PI) * 0.2);   // วิถีโค้งเล็กน้อย (กระสุนพุ่งตรง)
             o.position.set(ax, ay, az);
             if (pa < 0.98) o.lookAt(u.to.x, u.to.y - 0.05, u.to.z);   // หัวลูกธนูชี้ไปทางที่บิน
             if (pa >= 1) { if (u.onHit) { try { u.onHit(u.to.x, u.to.z); } catch (eAr) {} } kill(); }
@@ -40450,7 +40527,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const em = G.enemy.mesh;
       const sp = SPECIES[G.enemy.spId];
       const wasBoss = G.enemy.boss;
-      if (G.advKill) G.advKill(G.enemy.spId);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง (นับจากสนามต่อสู้ด้วย)
+      if (G.advKill) G.advKill(G.enemy.spId, G.enemy.lv);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง (นับจากสนามต่อสู้ด้วย)
       burst(em.position, 0xf5d05a);
       setMouth("laugh");
       const eLv = G.enemy.lv; // 📸 อ่านเลเวลไว้ก่อน — ข้อความนี้ถูกประกอบทีหลังตอน React เรนเดอร์
@@ -40902,7 +40979,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, ultUsed: true, msg: `🌟 ${U.emoji} ${U.name}!!` }));
       } else if (kind === "advUlt") {
         // 👑 ท่าไม้ตายขั้นสูงประจำสาย — แยกจากท่าไม้ตายทั่วไป ใช้ได้อีก 1 ครั้ง/ศึก
-        const AU = advUltOf(G.pathId);
+        const AU = advUltOf(G.advPid());
         if (!AU) { toast("🔒 ต้องเลือกสายอาชีพขั้นสูงก่อน"); return; }
         if (G.advUltUsed) { toast("ท่าไม้ตายขั้นสูงใช้ได้ 1 ครั้งต่อศึก!"); return; }
         G.advUltUsed = true;
@@ -40910,7 +40987,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G.banim = { type: "ult", t: 0, dur: G.cls === "warrior" ? 6.0 : G.cls === "lancer" ? 6.0 : G.cls === "samurai" ? 6.0 : G.cls === "archer" ? 6.5 : G.cls === "mage" ? 6.5 : G.cls === "assassin" ? 6.0 : G.cls === "office" ? 6.0 : G.cls === "coder" ? 6.0 : G.cls === "aegis" ? 6.0 : G.cls === "boxer" ? 6.0 : 2.4, hits: 0, total: 0, altUlt: altUlt2, advU: true };
         if (G.sfx && G.sfx.charge) G.sfx.charge();
         if (G.showSkillBanner) { G.showSkillBanner(`${AU.emoji || "👑"} ${AU.name}`, "— ADVANCED ULTIMATE —"); G.speedLines && G.speedLines(1050); } // 🎬 cut-in อัลติขั้นสูง
-        { const uc = (PATH_ADV[G.pathId] && PATH_ADV[G.pathId].skills[3] && PATH_ADV[G.pathId].skills[3].color) || 0xf5c542; // 🌟 ซีนีมาติก SSS ของอัลติขั้นสูง
+        { const uc = (PATH_ADV[G.advPid()] && PATH_ADV[G.advPid()].skills[3] && PATH_ADV[G.advPid()].skills[3].color) || 0xf5c542; // 🌟 ซีนีมาติก SSS ของอัลติขั้นสูง
           spawnAdvCast(uc, char.position, true);
           const dly2 = 1500 / (G.battleSpeed || 1);
           setTimeout(() => { if (G.mode === "battle" && G.enemy && G.enemy.mesh) spawnAdvImpact(uc, G.enemy.mesh.position, true); }, dly2);
@@ -41197,7 +41274,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (!G.dungeon && !e.boss && !G.pets[e.spId] && G.player.balls > 0 && e.hp / e.maxHp < 0.3) { G.act("catch"); return; }   // 🗼 ในหอคอยจับไม่ได้
       // 4) open strong fights with the ultimate — ใช้ท่าไม้ตายให้ตรงโหมดสกิลที่เลือก (ขั้นสูง/พื้นฐาน)
       if (e.boss || e.maxHp > effMaxHp()) {
-        if (G.skillMode === "adv" && G.pathId && advUltOf(G.pathId)) { // 👑 โหมดขั้นสูง → ใช้ท่าไม้ตายขั้นสูง
+        if (G.advPid() && advUltOf(G.advPid())) { // 👑 โหมดขั้นสูง → ใช้ท่าไม้ตายขั้นสูง
           if (!G.advUltUsed) { G.act("advUlt"); return; }
         } else if (!G.ultUsed) { G.act("ult"); return; } // 🌟 โหมดพื้นฐาน → ท่าไม้ตายทั่วไป
       }
@@ -43926,8 +44003,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.guildId && G.guildRefresh) { try { G.guildRefresh(); } catch (e) {} }
       if (G.mbRefresh) { try { G.mbRefresh(); } catch (e) {} }   // เซฟไม่มีสมุด (เกมใหม่/เซฟเก่า) → สุ่มชุดใหม่ให้ทันที
       G.pathId = d.pathId || null;
-      G.skillMode = d.skillMode === "adv" && G.pathId ? "adv" : "basic";
-      setSkillModeGlobals(G.skillMode === "adv", G.pathId); // 🔀 คืนโหมดสกิลที่ใช้อยู่
+      G.skillMode = d.skillMode === "gun" && G.cls === "archer" ? "gun" : d.skillMode === "adv" && G.pathId ? "adv" : "basic";
+      setSkillModeGlobals(G.skillMode !== "basic", G.skillMode === "gun" ? "a_gun" : G.pathId); // 🔀 คืนโหมดสกิลที่ใช้อยู่ · 🔫 ชุดปืน
       if (G.applyPathLook) G.applyPathLook(); // 🌟 restore the evolution aura on load
       if (G.applySetAura) G.applySetAura(); // 👘 restore the outfit-set aura on load
       if (G.buildWings) G.buildWings(G.activeWing || "none"); // 🪽 restore wings on load
@@ -54150,7 +54227,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           } else if (A.type === "ult") {
             const cls = G.cls || "warrior";   // 🤖 ทุกอาชีพมีท่าไม้ตายเป็นของตัวเอง (aegis ไม่ยืมของ coder แล้ว)
             if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
-            const ultMul = ultMulOf(G.ultRank || 1, (A.advU && G.pathId && PATH_ADV[G.pathId]) ? PATH_ADV[G.pathId].ult.mul : 1); // 🌟 rank สูง + อัลติ · ⚖️ ตันที่ 300% ขั้นสูงแรงกว่า
+            const ultMul = ultMulOf(G.ultRank || 1, (A.advU && G.advPid() && PATH_ADV[G.advPid()]) ? PATH_ADV[G.advPid()].ult.mul : 1); // 🌟 rank สูง + อัลติ · ⚖️ ตันที่ 300% ขั้นสูงแรงกว่า
             const roll = () => (effAtk() + Math.random() * 4) * ultMul;
             // 🔮 CAST PHASE: magic-circle wind-up, then a snappy strike
             // ⚔️ warrior is a melee bruiser — no chanting, straight into the attack
@@ -54207,13 +54284,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               setTimeout(() => monGlow(em, 0x000000, null), 150);
               setUi((u) => ({
                 ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp },
-                msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.pathId)) ? advUltOf(G.pathId).name : ultOf(G.cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
+                msg: `${A.advU ? "👑" : "🌟"} ${(A.advU && advUltOf(G.advPid())) ? advUltOf(G.advPid()).name : ultOf(G.cls, A.altUlt).name} -${dmg}${extraMsg} (รวม ${A.total})`,
               }));
             };
             // 👑 ชั้นเอกลักษณ์ของท่าไม้ตายขั้นสูง — ซ้อนออร่า/สี/เอฟเฟกต์ประจำสายทับลีลาของอาชีพพื้นฐาน
             //    ทำให้ทั้ง 21 สายมีหน้าตาต่างกันชัดเจน ตรงกับชื่อท่าและคุณสมบัติของสายนั้น ๆ
-            if (A.advU && G.pathId && ADV_SIG[G.pathId]) {
-              const SG = ADV_SIG[G.pathId];
+            if (A.advU && G.advPid() && ADV_SIG[G.advPid()]) {
+              const SG = ADV_SIG[G.advPid()];
               const sMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               if (!A.sg) {
                 A.sg = { fx: new THREE.Group(), parts: [], motes: [], beat: 0 };
@@ -56554,8 +56631,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               orbFx.visible = false;
               rainArrows.forEach((a) => (a.visible = false));
               // 👑 advanced-path ultimate bonus payload — bind + armor shred + team blessing/heal
-              if (A.advU && G.pathId && PATH_ADV[G.pathId] && PATH_ADV[G.pathId].ult) {
-                const AU = PATH_ADV[G.pathId].ult; let note = "";
+              if (A.advU && G.advPid() && PATH_ADV[G.advPid()] && PATH_ADV[G.advPid()].ult) {
+                const AU = PATH_ADV[G.advPid()].ult; let note = "";
                 if (AU.defDown && G.enemy && G.enemy.hp > 0) { G.enemy.def = Math.max(0, (G.enemy.def || 0) - AU.defDown); note += ` เกราะ -${AU.defDown} 🛡️💔`; }
                 if (AU.stun && G.enemy && G.enemy.hp > 0) { G.est.frozen = true; note += " ตรึง/ล้มศัตรู 🔗💫"; }
                 if (AU.freeze && G.enemy && G.enemy.hp > 0) { G.est.frozen = true; note += " แช่แข็ง ❄️"; }
@@ -58392,7 +58469,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   {/* 🔀 สลับชุดสกิลพื้นฐาน / ขั้นสูง */}
                   {G.setSkillMode && (
                     <div style={{ display: "flex", gap: 6, marginTop: 4, marginBottom: wide ? 0 : 10 }}>
-                      {[["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].map(([k, lbl]) => {
+                      {[["basic", "⚔️ ชุดพื้นฐาน"], ["adv", "🌟 ชุดขั้นสูง"]].concat(ui.cls === "archer" ? [["gun", "🔫 ชุดปืน"]] : []).map(([k, lbl]) => {
                         const on = (ui.skillMode || "basic") === k;
                         return <button key={k} onClick={() => { G.setSkillMode(k); setUi((u) => ({ ...u, boardTick: (u.boardTick || 0) + 1, boardPick: null })); }} style={{
                           flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
@@ -60278,7 +60355,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               <span style={{ fontSize: 24 }}>🎓</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 900, color: "#6a4ab0" }}>อาจารย์ประจำอาชีพ</div>
-                <div style={{ fontSize: 10, color: "#8a7aa0" }}>{A.classEmoji} สาย{A.className} · ผ่านแล้ว {A.tier}/2 ขั้น</div>
+                <div style={{ fontSize: 10, color: "#8a7aa0" }}>{A.classEmoji} สาย{A.className} · ผ่านแล้ว {A.tier}/{A.maxTier || 2} ขั้น</div>
               </div>
             </div>
 
@@ -60303,7 +60380,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 ) : !A.taken ? (
                   <div>
                     <div style={{ fontSize: 10.5, color: "#7a6a95", marginBottom: 8, lineHeight: 1.55 }}>
-                      🐾 ล่าสัตว์ร้าย 5 ชนิด ชนิดละ <b style={{ color: "#6a4ab0" }}>{st.kill} ตัว</b> — รับภารกิจก่อนถึงจะเริ่มนับ
+                      🐾 ล่าสัตว์ร้าย 5 ชนิด ชนิดละ <b style={{ color: "#6a4ab0" }}>{st.kill} ตัว</b>{st.lvRange ? <> (เฉพาะมอน <b style={{ color: "#6a4ab0" }}>Lv.{st.lvRange[0]}-{st.lvRange[1]}</b>)</> : null} — รับภารกิจก่อนถึงจะเริ่มนับ
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5, marginBottom: 9 }}>
                       {A.targets.map((t) => (
@@ -60347,7 +60424,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   </div>
                 )}
                 <div style={{ fontSize: 9, color: "#9a8ab8", marginTop: 9, lineHeight: 1.55 }}>
-                  {st.tier === 1
+                  {st.tier === 3 ? "🔫 ผ่านขั้นนี้แล้วจะวางคันธนูมาใช้ปืน — ปลดชุดสกิลขั้น 4 · ปืน + ท่าไม้ตายปืน"
+                    : st.tier === 1
                     ? "🌟 ผ่านขั้นนี้แล้วถึงจะเลือกสายอาชีพขั้นสูงและใช้ท่าประจำสายได้"
                     : "💫 ผ่านขั้นนี้แล้วถึงจะสลับไปใช้ชุดสกิลขั้นสูงของสายได้"}
                 </div>
@@ -66224,15 +66302,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   <div style={cornerStyle("right")}>
                     {iconBtn(<Ico n="swords" size={28} color="#fff" />, "#d9536b", () => G.act("attack"), null, { title: "โจมตี" })}
                     {/* 🌟 ท่าไม้ตายทั่วไป — โชว์เฉพาะโหมดสกิลพื้นฐาน (หรือยังไม่มีสายขั้นสูง) */}
-                    {!(ui.skillMode === "adv" && ui.pathId && advUltOf(ui.pathId)) && iconBtn(<Ico n="star" size={29} color={ui.ultUsed ? "#f4ece4" : "#fff"} />,
+                    {!(advUiPid(ui) && advUltOf(advUiPid(ui))) && iconBtn(<Ico n="star" size={29} color={ui.ultUsed ? "#f4ece4" : "#fff"} />,
                       ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)",
                       () => G.act("ult"), null,
                       { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตายทั่วไป" })}
                     {/* 👑 ท่าไม้ตายขั้นสูง — โชว์เฉพาะเมื่อสลับเป็นโหมดสกิลขั้นสูง */}
-                    {ui.skillMode === "adv" && ui.pathId && advUltOf(ui.pathId) && iconBtn(<Ico n="crown" size={28} color={ui.advUltUsed ? "#f4ece4" : "#fff"} />,
+                    {advUiPid(ui) && advUltOf(advUiPid(ui)) && iconBtn(<Ico n="crown" size={28} color={ui.advUltUsed ? "#f4ece4" : "#fff"} />,
                       ui.advUltUsed ? "#b0a396" : "linear-gradient(135deg,#9a6ad0,#d07ae0)",
                       () => G.act("advUlt"), null,
-                      { key: "advult", title: `👑 ${advUltOf(ui.pathId).name} — ${advUltOf(ui.pathId).desc} (ท่าไม้ตายขั้นสูง)` })}
+                      { key: "advult", title: `👑 ${advUltOf(advUiPid(ui)).name} — ${advUltOf(advUiPid(ui)).desc} (ท่าไม้ตายขั้นสูง)` })}
                     {iconBtn(ui.tfActive ? <Ico n="fire" size={28} color="#fff" /> : <Ico n="bolt" size={27} color="#fff" />,
                       ui.tfActive ? "linear-gradient(135deg,#ff7020,#f5c542)" : ((ui.tfGauge || 0) >= 100 ? "linear-gradient(135deg,#ffd24a,#ff7020)" : "#8a8a7a"),
                       () => G.doTransform(),
