@@ -18192,7 +18192,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // orbiting particles: epic+ · more particles the higher the + level
       if (G.applyEnhGlow) G.applyEnhGlow();   // ⚒️✨ ออร่าตีบวกของอาวุธที่ถืออยู่
       if (G.applyOffhandLook) G.applyOffhandLook();   // 🛡️ รูปลักษณ์ของมือรองที่มือซ้าย
-      const dots = g2.tier >= 3 ? Math.min(14, 3 + g2.plus * 2 + (g2.tier - 3) * 3) : 0;
+      const dots = 0;   // 🚫 ลูกแสงกลมหมุนรอบตัว (ออร่าไอเทม) — ปิดตามคำขอ · วงแหวนพื้นยังอยู่
       auraDots.forEach((d, i) => {
         d.visible = i < dots;
         if (d.visible) d.material.color.setHex(g2.color);
