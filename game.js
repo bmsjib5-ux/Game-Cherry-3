@@ -50108,8 +50108,6 @@ function CherryAdventure() {
                 if (G.player.level % 10 === 0) { // 🎉 milestone bonus keeps the curve rewarding late
                     G.player.sp += 5;
                     toast(`🎉 เลเวล ${G.player.level}! โบนัสแต้มสกิล +5 ⭐`);
-                    if (G.player.level >= 20 && G.announce)
-                        G.announce(`🎉 ${G.playerName || "ผู้เล่น"} ถึงเลเวล ${G.player.level} แล้ว!`);
                 }
                 G.player.statPts = (G.player.statPts || 0) + 3; // 💪 3 stat points per level (แทนระบบอัพเดิม)
                 G.player.hp = effMaxHp();
@@ -64634,8 +64632,6 @@ function CherryAdventure() {
                 if (G.sfx)
                     G.sfx.levelup();
                 toast(`🌟✨ สัตว์เลี้ยง${petRarity(lp).name}หลุดจากบอส! ได้ ${SPECIES[lp].emoji} ${SPECIES[lp].name}!`);
-                if (G.announce)
-                    G.announce(`🌟 ${G.playerName || "ผู้เล่น"} ได้สัตว์เลี้ยง${petRarity(lp).name} ${SPECIES[lp].emoji} ${SPECIES[lp].name} จากบอส!`);
             }
             // ⛏️ material drops — every fight drops some ore; tougher/special foes drop essences & scales
             {
@@ -68350,8 +68346,9 @@ function CherryAdventure() {
                 return;
             const rows = await CN.getMsgs(token, G.chat.room, G.chat.lastId);
             if (rows && rows.length) {
-                G.chat.msgs = G.chat.msgs.concat(rows).slice(-80);
                 G.chat.lastId = rows[rows.length - 1].id;
+                const keep = G.chat.room === "announce" && G._annMuted ? rows.filter((m) => !G._annMuted(m.body)) : rows;
+                G.chat.msgs = G.chat.msgs.concat(keep).slice(-80);
                 setUi(u => ({ ...u, chatMsgs: G.chat.msgs.slice(), chatLastId: G.chat.lastId }));
             }
         };
@@ -68375,10 +68372,14 @@ function CherryAdventure() {
             setUi((u) => ({ ...u, announce: { text: txt, key: Date.now() } }));
             setTimeout(() => { G._annShowing = false; setUi((u) => ({ ...u, announce: null })); setTimeout(annNext, 400); }, 10000); // 🕙 ตัววิ่ง ~10 วินาที
         };
-        G.showAnnounce = (txt) => { if (!txt)
+        // 🔕 ไม่แจ้งเตือนเรื่องเลเวลและการได้/จับสัตว์เลี้ยง (รวมประกาศเก่าจากผู้เล่นเวอร์ชันก่อน)
+        const annMuted = G._annMuted = (t) => /ถึงเลเวล|สัตว์เลี้ยง|ผสมพันธุ์ได้|จับ.{0,20}ได้/.test(String(t));
+        G.showAnnounce = (txt) => { if (!txt || annMuted(txt))
             return; G._annQueue.push(String(txt).slice(0, 160)); if (G._annQueue.length > 6)
             G._annQueue.shift(); annNext(); };
         G.announce = async (txt) => {
+            if (annMuted(txt))
+                return;
             G.showAnnounce(txt); // เจ้าของเหตุการณ์เห็นบนจอตัวเองทันที
             try {
                 if (G.auth.status !== "in" || !CN.enabled())
