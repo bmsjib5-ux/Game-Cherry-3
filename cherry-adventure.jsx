@@ -28426,13 +28426,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         update = (pr) => rays.forEach((m) => { m.scale.x = 1 + pr * 2; m.material.opacity = 1 - pr; });
       } else if (fxType === "multi") {
         // 🏹 three impact pops in a spread
+        // ✨ ประกายแสงกระทบ 3 จุดกระจายกัน (เดิมเป็นลูกบอลทึบซ้อนแนวตั้ง ดูเหมือนตุ๊กตาหิมะ)
         const pops = [];
-        for (const dy of [-0.5, 0, 0.5]) {
-          const m = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), new THREE.MeshStandardMaterial({ color: 0x7ba05b, emissive: 0x4a7030, emissiveIntensity: 0.9, transparent: true }));
-          m.position.set(0, 1.4 + dy, 0); g.add(m); pops.push(m);
-        }
-        dur = 0.5;
-        update = (pr) => pops.forEach((m) => { m.scale.setScalar(1 + pr * 1.5); m.material.opacity = 1 - pr; });
+        [[-0.45, 1.2], [0.4, 1.55], [0.05, 0.9]].forEach(([dx, y], i) => {
+          const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), new THREE.MeshBasicMaterial({ color: i === 1 ? 0xffffff : (col || 0x7ba05b), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+          m.position.set(dx, y, 0.05); m.userData.d = i * 0.12; g.add(m); pops.push(m);
+        });
+        dur = 0.55;
+        update = (pr) => pops.forEach((m) => { const q = Math.max(0, Math.min(1, (pr - m.userData.d) / 0.4)); m.scale.setScalar(0.4 + q * 2.2); m.material.opacity = q > 0 ? 0.85 * (1 - q) : 0; });
       } else if (fxType === "hellfire") {
         // 🔥 เพลิงนรก — เสาเพลิงพวยพุ่งจากพื้น
         //    ไฟจริงไม่มีผิวแข็ง: ใช้สไปรท์หันเข้ากล้องซ้อนกันแบบ additive
@@ -29342,9 +29343,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // after-image silhouettes flickering at the sides
         const ghosts = [];
         for (const sx of [-0.9, 0.9]) {
-          const gh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), new THREE.MeshBasicMaterial({ color: 0x2a2a3a, transparent: true, opacity: 0 }));
-          gh.scale.set(1, 1.9, 0.7);
-          gh.position.set(sx, 0.9, -0.1); gh.userData = { ph: sx > 0 ? 0 : Math.PI };
+          // 🥷 ร่างเงาของตัวละครจริงกระพริบสองข้าง (เดิมเป็นทรงกลมยืด)
+          const sh = G.charShadow ? G.charShadow(0x8affc0) : null;
+          let gh;
+          if (sh) { gh = sh.g; gh.position.set(sx * 1.2, 0, -0.1); gh.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2; gh.material = sh.mat; }
+          else { gh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), new THREE.MeshBasicMaterial({ color: 0x2a2a3a, transparent: true, opacity: 0 })); gh.scale.set(1, 1.9, 0.7); gh.position.set(sx, 0.9, -0.1); }
+          gh.userData.ph = sx > 0 ? 0 : Math.PI;
           g.add(gh); ghosts.push(gh);
         }
         const sdLight = new THREE.PointLight(0x8affc0, 0, 3); sdLight.position.y = 1; /* sdLight not added: dynamic FX lights force shader recompiles -> multi-second GPU stall on mobile */
@@ -29356,7 +29360,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             cut.material.opacity = Math.sin(lp * Math.PI) * 0.9;
             cut.scale.x = 0.4 + lp * 0.6;
           });
-          ghosts.forEach((gh) => { gh.material.opacity = Math.max(0, Math.sin(pr * Math.PI * 10 + gh.userData.ph)) * 0.45 * (1 - pr); });
+          ghosts.forEach((gh) => { gh.material.opacity = Math.max(0, Math.sin(pr * Math.PI * 10 + gh.userData.ph)) * (gh.isGroup ? 0.85 : 0.45) * (1 - pr); });
           sdLight.intensity = 1.5 * Math.sin(pr * Math.PI);
         };
       } else if (fxType === "evolve") {
@@ -34831,6 +34835,23 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       gg.userData._ghostBaked = true; return gg;
     };
     G.ghostGeo = ghostGeo;
+    // 🥷 ร่างเงาของตัวละครจริง (ท่าปัจจุบัน) เป็นกลุ่มพร้อมใช้ — พิกัดในตัวละคร วางที่ไหนก็ได้ · คืน { g, mat } (ปรับ mat.opacity เอง)
+    G.charShadow = (col) => {
+      char.updateWorldMatrix(true, true);
+      const inv = new THREE.Matrix4().copy(char.matrixWorld).invert();
+      const mat = new THREE.MeshLambertMaterial({ color: 0x1a0c2a, emissive: col || 0x9a40ff, emissiveIntensity: 0.35, transparent: true, opacity: 0, depthWrite: true });
+      const g = new THREE.Group(); let n = 0;
+      char.traverse((o) => {
+        if (n > 40 || !o.isMesh || (o.userData && o.userData._outlShell) || !o.geometry) return;
+        let pp = o, vis = o.visible; while (vis && pp && pp !== char) { if (!pp.visible) vis = false; pp = pp.parent; }
+        if (!vis) return;
+        const m = new THREE.Mesh(ghostGeo(o), mat); m.matrixAutoUpdate = false; m.matrix.multiplyMatrices(inv, o.matrixWorld); m.raycast = () => {}; g.add(m); n++;
+      });
+      g.scale.copy(char.scale);
+      g.userData._shadowMat = mat;
+      return n ? { g, mat } : null;
+    };
+    G.freeCharShadow = (sh) => { if (!sh) return; if (sh.g.parent) sh.g.parent.remove(sh.g); if (G.freeBaked) G.freeBaked(sh.g); sh.mat.dispose(); };
     G.freeBaked = (g) => { g.traverse((o) => { if (o.geometry && o.geometry.userData && o.geometry.userData._ghostBaked) o.geometry.dispose(); }); };   // คืนหน่วยความจำของเรขาคณิตที่อบท่าไว้
     // 👻 เงาอาวุธ (smear frame) — ก๊อปท่าอาวุธ ณ เฟรมนั้นเป็นเงาแสงจาง ๆ ค้างไว้ครู่เดียว
     const wpnGhosts = [];
@@ -34975,10 +34996,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.position.x = char.position.x; g.position.z = char.position.z;                     // ตามตัวละครไปด้วย
         const drop = Math.min(1, u.t / 0.35), fade = p < 0.7 ? 1 : Math.max(0, 1 - (p - 0.7) / 0.3);
         g.children.forEach((c) => { if (c.userData.spin != null) { c.rotation.y += c.userData.spin * d; c.scale.set(1, drop, 1); c.position.y = u.H - (u.H / 2) * drop; } });   // แสงพุ่งลงมาจากฟ้าจนถึงพื้น
-        const flash = drop < 1 ? drop : 1 + 0.35 * Math.max(0, 1 - (u.t - 0.35) / 0.3);        // กระทบพื้นแล้ววาบสว่างครู่หนึ่ง
-        u.mats[0].opacity = 0.75 * flash * fade; u.mats[1].opacity = 0.9 * flash * fade;
-        u.mats[2].opacity = 0.9 * drop * fade; u.ring.scale.setScalar(0.6 + 0.6 * Math.min(1, u.t / 0.5) + 0.08 * Math.sin(u.t * 9));
-        u.mats[3].opacity = drop >= 1 ? 0.95 * fade : 0;
+        const flash = drop < 1 ? drop : 1 + 0.15 * Math.max(0, 1 - (u.t - 0.35) / 0.3);        // กระทบพื้นแล้ววาบสว่างครู่หนึ่ง
+        u.mats[0].opacity = 0.38 * flash * fade; u.mats[1].opacity = 0.42 * flash * fade;   // 🌟 จางลง ไม่แสบตา
+        u.mats[2].opacity = 0.5 * drop * fade; u.ring.scale.setScalar(0.6 + 0.6 * Math.min(1, u.t / 0.5) + 0.08 * Math.sin(u.t * 9));
+        u.mats[3].opacity = drop >= 1 ? 0.7 * fade : 0;
         u.motes.forEach((m) => { const k = m.userData, y = (k.y0 + u.t * k.sp) % 4.5; const a = k.a + u.t * k.w; m.position.set(Math.cos(a) * k.r, y, Math.sin(a) * k.r); m.quaternion.copy(camera.quaternion); m.scale.setScalar(1 - y / 5); });
         if (p >= 1) { scene.remove(g); g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); u.mats.forEach((m) => m.dispose()); lvBeams.splice(i, 1); }
       }
@@ -52343,7 +52364,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   else if (p < 0.8) { char.position.x = ex + 0.9; char.rotation.y = -Math.PI / 2; char.traverse((o) => { if (o.isMesh && o.material) o.material.opacity = 1; }); const sp2 = (p - 0.18) / 0.62; const sw = Math.sin(sp2 * Math.PI * 4); armR.rotation.z = 0.12 + sw * 2.5; armL.rotation.z = -0.12 - sw * 2.1; char.position.z = battleCenter.z + Math.sin(sp2 * Math.PI * 4) * 0.16; if (Math.random() < 0.9) burst(new THREE.Vector3(ex + (Math.random() - 0.5) * 1.6, 0.5 + Math.random() * 1.6, battleCenter.z + (Math.random() - 0.5) * 1.4), Math.random() < 0.6 ? purple : neon, 0.4 + Math.random() * 0.5); G._camShake = Math.max(G._camShake || 0, 0.2); }
                   else { const rp = (p - 0.8) / 0.2; char.position.x = ex + 0.9 - rp * (ex + 0.9 - bx); char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2; char.traverse((o) => { if (o.isMesh && o.material) o.material.opacity = 1; }); armR.rotation.z = 0.12; armL.rotation.z = -0.12; }
                 } else if (skId === "x_shd_2") {
-                  // 👥 แฝดเงามรณะ — หมุนตัวกลางสนาม + ร่างเงา 3 ตัวรุมฟันรอบศัตรู
+                  // 👥 แฝดเงามรณะ — หมุนตัวกลางสนาม + ร่างเงา 3 ตัว (ร่างเงาของตัวละครจริง) รุมฟันรอบศัตรู
+                  if (!A._shd2 && G.charShadow) {
+                    A._shd2 = [0, 1, 2].map((c) => { const sh = G.charShadow(neon); if (sh) scene.add(sh.g); return sh; }).filter(Boolean);
+                    const kill = A._shd2; setTimeout(() => kill.forEach((sh) => G.freeCharShadow(sh)), 2200);
+                  }
+                  if (A._shd2) A._shd2.forEach((sh, c) => {
+                    const a = c / 3 * Math.PI * 2 + p * 2.2, r = 1.5 - 0.55 * Math.sin(Math.min(1, p * 1.2) * Math.PI);   // วนรอบแล้วพุ่งเข้าฟัน
+                    sh.g.position.set(ex + Math.cos(a) * r, battleCenter.y || 0, battleCenter.z + Math.sin(a) * r);
+                    sh.g.rotation.y = Math.atan2(ex - sh.g.position.x, battleCenter.z - sh.g.position.z);
+                    sh.mat.opacity = 0.88 * Math.min(1, p * 6) * Math.min(1, (1 - p) * 5);
+                  });
                   char.position.x = bx + 0.3; char.rotation.y = Math.PI / 2 + p * Math.PI * 6; char.position.z = battleCenter.z;
                   armR.rotation.z = 0.12 + Math.sin(p * Math.PI * 6) * 1.5; armL.rotation.z = -0.12 - Math.sin(p * Math.PI * 6) * 1.5;
                   for (let c = 0; c < 3; c++) { const a = c / 3 * Math.PI * 2 + p * 2.2; if (Math.random() < 0.45) burst(new THREE.Vector3(ex + Math.cos(a) * 1.3, 0.6 + Math.random() * 1.3, battleCenter.z + Math.sin(a) * 1.3), c === 0 ? neon : purple, 0.5); }
