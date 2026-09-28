@@ -1,0 +1,4 @@
+Medieval Village MegaKit (Standard / free) by Quaternius — https://quaternius.com
+License: CC0 1.0 Universal (public domain) https://creativecommons.org/publicdomain/zero/1.0/
+Source: https://quaternius.itch.io/medieval-village-megakit
+Houses here were assembled from the kit modules and merged per material (vil.py); textures downscaled to 512/256px JPG.

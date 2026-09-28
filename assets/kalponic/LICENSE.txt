@@ -1,0 +1,15 @@
+Free Stylized Sprite VFX — Kalponic Studio
+https://kalponic-studio.itch.io/free-stylized-sprite-vfx
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+
+Used sets (frames packed into 128px grid sprite sheets, left-to-right, top-to-bottom):
+  slash.png     <- "Sword Slash"     16 frames, 4x4
+  heal.png      <- "Heal"            16 frames, 4x4
+  shield.png    <- "Shield Aura"      7 frames, 4x2
+  quest.png     <- "Quest"           16 frames, 4x4
+  questdone.png <- "Quest Complete"  16 frames, 4x4
+  bonfire.png   <- "Bonfire"         16 frames, 4x4
+  torch.png     <- "Torch"           16 frames, 4x4
+  smoke.png     <- "Smoke"            8 frames, 4x2
+  fireflies.png <- "FireFlies"       16 frames, 4x4
