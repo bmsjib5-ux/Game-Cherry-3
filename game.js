@@ -47452,10 +47452,30 @@ function CherryAdventure() {
             else if (fxType === "crossslash") {
                 // 🔥 คลั่งสงคราม — two burning slashes carve an X, with fiery core lines + embers
                 const cc = color || 0xf5652e;
+                // ⚔️✨ รอยฟันเป็น "แสง" รูปใบมีด — กลางหนาปลายเรียวแหลม ขอบฟุ้งจาง (ไม่ใช่แผ่นสี่เหลี่ยมซ้อนกัน)
+                const bladeTex = G._slashBladeTex || (G._slashBladeTex = (() => {
+                    const cv = document.createElement("canvas");
+                    cv.width = 256;
+                    cv.height = 64;
+                    const c = cv.getContext("2d"), img = c.createImageData(256, 64);
+                    for (let y = 0; y < 64; y++)
+                        for (let x = 0; x < 256; x++) {
+                            const u = x / 255, half = Math.pow(Math.sin(u * Math.PI), 0.8) * 0.5; // ความหนาครึ่งหนึ่งของใบมีดตามแนวยาว
+                            const v = Math.abs(y - 31.5) / 32, d = half > 0.001 ? v / half : 9;
+                            const a = d < 1 ? Math.pow(1 - d, 1.4) : 0;
+                            const i4 = (y * 256 + x) * 4;
+                            img.data[i4] = img.data[i4 + 1] = img.data[i4 + 2] = 255;
+                            img.data[i4 + 3] = Math.round(255 * Math.min(1, a * 1.25));
+                        }
+                    c.putImageData(img, 0, 0);
+                    return new THREE.CanvasTexture(cv);
+                })());
+                const bladeMat = (col) => new THREE.MeshBasicMaterial({ color: col, map: bladeTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
                 const mkSlash = (rot) => {
                     const grp = new THREE.Group();
-                    const outer = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.22), new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0, side: THREE.DoubleSide }));
-                    const core = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.07), new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+                    const outer = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.62), bladeMat(cc)); // ฟุ้งสีประจำสกิล
+                    const core = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.16), bladeMat(0xffffff)); // แกนแสงขาวคม
+                    outer.raycast = core.raycast = () => { };
                     grp.add(outer, core);
                     grp.rotation.z = rot;
                     grp.position.y = 1.0;
@@ -50128,8 +50148,8 @@ function CherryAdventure() {
             }
             if (leveled) {
                 toast(`🎉 เลเวลอัพ! Lv.${G.player.level} — ได้แต้มสกิล เลือกอัพเกรดเลย!`);
-                if (G.juice)
-                    G.juice("level");
+                if (G.levelBeam)
+                    G.levelBeam(); // 🌟 ลำแสงส่องลงมาที่ตัวละคร (แทนพลุกระดาษเดิม)
                 if (G.heroEmote)
                     G.heroEmote("Yes", 1.6); // 🙆 โมเดล 3D พยักหน้าดีใจตอนเลเวลอัพ
                 setUi((u) => ({ ...u, levelUpAt: Date.now(), levelUpLv: G.player.level })); // 🎉 แบนเนอร์ LEVEL UP
@@ -56158,12 +56178,48 @@ function CherryAdventure() {
         };
         // 🥷 เงาพุ่ง — ร่างเงาของตัวละครทะยานจากตัวไปหาเป้า แล้วสลายเป็นควันตอนถึง (ท่าประหารเงา)
         const shadowBolts = [];
-        const spawnShadowBolt = (idx, target, col, onHit) => {
+        const spawnShadowBolt = (idx, target, col, onHit, skull) => {
             try {
-                // 💀 ร่างเงารูปหัวกะโหลก — กะโหลกดำโปร่ง ตาเรืองแสง มีหางควันลากท้าย
-                const boneMat = new THREE.MeshBasicMaterial({ color: 0x2a1240, transparent: true, opacity: 0, depthWrite: false });
+                const boneMat = skull ? new THREE.MeshBasicMaterial({ color: 0x2a1240, transparent: true, opacity: 0, depthWrite: false })
+                    : new THREE.MeshLambertMaterial({ color: 0x1a0c2a, emissive: col || 0x9a40ff, emissiveIntensity: 0.18, transparent: true, opacity: 0, depthWrite: true }); // 🥷 เงาดำทึบ (เขียนความลึก → ชั้นเสื้อผ้าไม่ซ้อนสว่าง) เรืองสีสกิลจาง ๆ
                 const eyeMat = new THREE.MeshBasicMaterial({ color: col || 0x9a40ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
                 const g = new THREE.Group();
+                // 🥷 ร่างเงาของตัวละครจริง — ก๊อปท่าปัจจุบันของโมเดลทั้งตัว (อาวุธด้วย) เป็นเงาดำโปร่ง + ขอบเรืองแสงสีสกิล
+                if (!skull) {
+                    char.updateWorldMatrix(true, true);
+                    const inv = new THREE.Matrix4().copy(char.matrixWorld).invert();
+                    let n = 0;
+                    char.traverse((o) => {
+                        if (n > 40 || !o.isMesh || (o.userData && o.userData._outlShell) || !o.geometry)
+                            return;
+                        let pp = o, vis = o.visible;
+                        while (vis && pp && pp !== char) {
+                            if (!pp.visible)
+                                vis = false;
+                            pp = pp.parent;
+                        }
+                        if (!vis)
+                            return;
+                        const geo = ghostGeo(o);
+                        const body = new THREE.Mesh(geo, boneMat);
+                        body.matrixAutoUpdate = false;
+                        body.matrix.multiplyMatrices(inv, o.matrixWorld);
+                        body.renderOrder = 3;
+                        g.add(body);
+                        n++;
+                    });
+                    if (n) {
+                        g.traverse((o) => { o.raycast = () => { }; });
+                        const a = (idx % 5) / 5 * Math.PI * 2 + 0.9, OFF = [Math.sin(a) * 2.3, 0, Math.cos(a) * 2.3]; // ยืนล้อมตัวเราบนพื้น
+                        g.position.set(char.position.x + OFF[0], 0, char.position.z + OFF[2]);
+                        g.scale.copy(char.scale); // ขนาดเท่าตัวจริง (เรขาคณิตถูกอบเป็นพิกัดในตัวละครที่หักสเกลออกแล้ว)
+                        g.userData = { boneMat, eyeMat, t: 0, hold: 0.2, dur: 0.2, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: char.position.y, oz: OFF[2], ey: char.position.y, real: true, target, onHit };
+                        scene.add(g);
+                        shadowBolts.push(g);
+                        return;
+                    }
+                }
+                // 💀 ร่างเงารูปหัวกะโหลก — กะโหลกดำโปร่ง ตาเรืองแสง มีหางควันลากท้าย
                 const cran = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), boneMat);
                 cran.scale.set(1, 1.06, 1.12);
                 const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.26), boneMat);
@@ -56192,6 +56248,106 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        // 🌟 เลเวลอัพ — ลำแสงสีทองส่องลงมาจากฟ้าครอบตัวละคร + วงแสงบนพื้น + ประกายลอยขึ้น (แทนพลุกระดาษ)
+        const lvBeams = [];
+        const lvBeamTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = 64;
+            cv.height = 256;
+            const c = cv.getContext("2d"), img = c.createImageData(64, 256);
+            for (let y = 0; y < 256; y++)
+                for (let x = 0; x < 64; x++) {
+                    const u = Math.abs(x - 31.5) / 32, v = y / 255; // v: 0 = บนสุด (ฟ้า) · 1 = พื้น
+                    const across = Math.exp(-u * u * 7) * 0.75 + Math.exp(-u * u * 40) * 0.6;
+                    const along = Math.min(1, v * 1.6) * (0.55 + 0.45 * v); // จางหายขึ้นไปบนฟ้า สว่างสุดที่พื้น
+                    const i4 = (y * 64 + x) * 4;
+                    img.data[i4] = img.data[i4 + 1] = img.data[i4 + 2] = 255;
+                    img.data[i4 + 3] = Math.round(255 * Math.min(1, across * along));
+                }
+            c.putImageData(img, 0, 0);
+            const t = new THREE.CanvasTexture(cv);
+            t.wrapS = THREE.ClampToEdgeWrapping;
+            return t;
+        })();
+        const lvGlowTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 128;
+            const c = cv.getContext("2d");
+            const gr = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gr.addColorStop(0, "rgba(255,255,255,1)");
+            gr.addColorStop(0.35, "rgba(255,255,255,0.55)");
+            gr.addColorStop(0.7, "rgba(255,255,255,0.15)");
+            gr.addColorStop(1, "rgba(255,255,255,0)");
+            c.fillStyle = gr;
+            c.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(cv);
+        })();
+        G.levelBeam = () => {
+            try {
+                const g = new THREE.Group(), mats = [];
+                const mk = (m) => { mats.push(m); return m; };
+                const add = { transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false };
+                const H = 14;
+                for (const [r, col, sp] of [[1.15, 0xffd76a, 0.35], [0.55, 0xfff6d0, -0.6]]) { // ลำแสงสองชั้น (ฟุ้งทอง + แกนขาวนวล) หมุนสวนกันช้า ๆ
+                    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.82, r, H, 28, 1, true), new THREE.MeshBasicMaterial(Object.assign({ color: col, map: lvBeamTex, side: THREE.DoubleSide }, add)));
+                    cyl.position.y = H / 2;
+                    cyl.userData.spin = sp;
+                    cyl.raycast = () => { };
+                    g.add(cyl);
+                    mk(cyl.material);
+                }
+                const ring = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6), mk(new THREE.MeshBasicMaterial(Object.assign({ color: 0xffd76a, map: lvGlowTex, side: THREE.DoubleSide }, add))));
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.06;
+                ring.raycast = () => { };
+                g.add(ring);
+                const motes = [];
+                const moteM = mk(new THREE.MeshBasicMaterial(Object.assign({ color: 0xfff0a0, map: lvGlowTex }, add)));
+                for (let i = 0; i < 26; i++) {
+                    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), moteM);
+                    const a = Math.random() * Math.PI * 2, r = 0.25 + Math.random() * 0.9;
+                    m.userData = { a, r, y0: Math.random() * 1.5, sp: 1.2 + Math.random() * 2.2, w: (Math.random() - 0.5) * 2 };
+                    m.raycast = () => { };
+                    g.add(m);
+                    motes.push(m);
+                }
+                g.position.copy(char.position);
+                g.position.y = 0;
+                g.userData = { t: 0, dur: 2.4, mats, ring, motes, H };
+                scene.add(g);
+                lvBeams.push(g);
+            }
+            catch (e) { }
+        };
+        G.levelBeamTick = (d) => {
+            for (let i = lvBeams.length - 1; i >= 0; i--) {
+                const g = lvBeams[i], u = g.userData;
+                u.t += d;
+                const p = u.t / u.dur;
+                g.position.x = char.position.x;
+                g.position.z = char.position.z; // ตามตัวละครไปด้วย
+                const drop = Math.min(1, u.t / 0.35), fade = p < 0.7 ? 1 : Math.max(0, 1 - (p - 0.7) / 0.3);
+                g.children.forEach((c) => { if (c.userData.spin != null) {
+                    c.rotation.y += c.userData.spin * d;
+                    c.scale.set(1, drop, 1);
+                    c.position.y = u.H - (u.H / 2) * drop;
+                } }); // แสงพุ่งลงมาจากฟ้าจนถึงพื้น
+                const flash = drop < 1 ? drop : 1 + 0.35 * Math.max(0, 1 - (u.t - 0.35) / 0.3); // กระทบพื้นแล้ววาบสว่างครู่หนึ่ง
+                u.mats[0].opacity = 0.75 * flash * fade;
+                u.mats[1].opacity = 0.9 * flash * fade;
+                u.mats[2].opacity = 0.9 * drop * fade;
+                u.ring.scale.setScalar(0.6 + 0.6 * Math.min(1, u.t / 0.5) + 0.08 * Math.sin(u.t * 9));
+                u.mats[3].opacity = drop >= 1 ? 0.95 * fade : 0;
+                u.motes.forEach((m) => { const k = m.userData, y = (k.y0 + u.t * k.sp) % 4.5; const a = k.a + u.t * k.w; m.position.set(Math.cos(a) * k.r, y, Math.sin(a) * k.r); m.quaternion.copy(camera.quaternion); m.scale.setScalar(1 - y / 5); });
+                if (p >= 1) {
+                    scene.remove(g);
+                    g.traverse((o) => { if (o.geometry)
+                        o.geometry.dispose(); });
+                    u.mats.forEach((m) => m.dispose());
+                    lvBeams.splice(i, 1);
+                }
+            }
+        };
         G._animShadowBolts = (d) => {
             for (let i = shadowBolts.length - 1; i >= 0; i--) {
                 const b = shadowBolts[i], u = b.userData;
@@ -56205,17 +56361,30 @@ function CherryAdventure() {
                     b.position.set(px, u.oy + Math.sin(h * Math.PI * 2) * 0.12, pz);
                     face(px, pz);
                     const o = Math.min(1, h * 2.5);
-                    u.boneMat.opacity = 0.72 * o;
-                    u.eyeMat.opacity = 0.95 * o;
+                    if (u.real) {
+                        b.position.y = u.oy;
+                        u.boneMat.opacity = 0.9 * o;
+                    }
+                    else {
+                        u.boneMat.opacity = 0.72 * o;
+                        u.eyeMat.opacity = 0.95 * o;
+                    }
                 }
                 else { // 💨 ช่วงพุ่งเข้าใส่เป้า
                     const p = Math.min(1, (u.t - u.hold) / u.dur);
                     const e = p * p;
                     const px = (u.sx + u.ox) + (tx - u.sx - u.ox) * e, pz = (u.sz + u.oz) + (tz - u.sz - u.oz) * e;
-                    b.position.set(px, u.oy + (0.95 - u.oy) * e, pz);
+                    if (u.real) { // 🥷 ร่างเงาพุ่งเข้าฟันถึงตัวเป้า (หยุดหน้าเป้านิดหนึ่ง) แล้วจางหาย
+                        const dx = tx - px, dz = tz - pz, dl = Math.hypot(dx, dz) || 1, stop = Math.min(0.9, dl);
+                        b.position.set(px - (dx / dl) * stop * e, u.ey, pz - (dz / dl) * stop * e);
+                        u.boneMat.opacity = 0.9 * (1 - e * e);
+                    }
+                    else {
+                        b.position.set(px, u.oy + (0.95 - u.oy) * e, pz);
+                        u.boneMat.opacity = 0.72 * (1 - e);
+                        u.eyeMat.opacity = 0.95 * (1 - e * 0.7);
+                    }
                     face(px, pz);
-                    u.boneMat.opacity = 0.72 * (1 - e);
-                    u.eyeMat.opacity = 0.95 * (1 - e * 0.7);
                     if (p >= 1) {
                         if (u.onHit) {
                             try {
@@ -56224,6 +56393,8 @@ function CherryAdventure() {
                             catch (e2) { }
                         }
                         scene.remove(b);
+                        if (u.real && G.freeBaked)
+                            G.freeBaked(b);
                         u.boneMat.dispose();
                         u.eyeMat.dispose();
                         shadowBolts.splice(i, 1);
@@ -57807,11 +57978,14 @@ function CherryAdventure() {
             catch (e) { }
         };
         // 👼 โคลนแสง — ร่างจำลองของผู้เล่นเรืองแสง ผุดรอบเป้า พุ่งเข้าฟัน แล้วสลาย
-        const spawnHolyClone = (idx, target, col, onSlash) => {
+        const spawnHolyClone = (idx, target, col, onSlash, dark) => {
             try {
                 char.updateWorldMatrix(true, true);
                 const inv = new THREE.Matrix4().copy(char.matrixWorld).invert(); // ⚙️ อบเมชเป็นพิกัด "ในตัวละคร" ให้ย้ายกลุ่มได้อิสระ
-                const gm = new THREE.MeshBasicMaterial({ color: col || 0xf5c542, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                // 🥷 dark = ร่างเงาดำของตัวละครจริง (นักฆ่า) · ปกติ = โคลนแสงเรืองโปร่ง
+                const gm = dark ? new THREE.MeshLambertMaterial({ color: 0x1a0c2a, emissive: col || 0x9a40ff, emissiveIntensity: 0.18, transparent: true, opacity: 0, depthWrite: true })
+                    : new THREE.MeshBasicMaterial({ color: col || 0xf5c542, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                const rimM = null;
                 const g = new THREE.Group();
                 let n = 0;
                 char.traverse((o) => {
@@ -57825,15 +57999,25 @@ function CherryAdventure() {
                     }
                     if (!vis)
                         return;
-                    const mm = new THREE.Mesh(G.ghostGeo ? G.ghostGeo(o) : o.geometry, gm);
+                    const geo = G.ghostGeo ? G.ghostGeo(o) : o.geometry;
+                    const mm = new THREE.Mesh(geo, gm);
                     mm.matrixAutoUpdate = false;
                     mm.matrix.multiplyMatrices(inv, o.matrixWorld);
                     mm.raycast = () => { };
                     g.add(mm);
                     n++;
+                    if (rimM) {
+                        const rm = new THREE.Mesh(geo, rimM);
+                        rm.matrixAutoUpdate = false;
+                        rm.matrix.copy(mm.matrix);
+                        rm.raycast = () => { };
+                        g.add(rm);
+                    }
                 });
                 if (!n) {
                     gm.dispose();
+                    if (rimM)
+                        rimM.dispose();
                     return;
                 }
                 const tp = target ? target.position : char.position;
@@ -57841,7 +58025,7 @@ function CherryAdventure() {
                 const sx0 = tp.x + Math.sin(a) * 3.0, sz0 = tp.z + Math.cos(a) * 3.0;
                 g.position.set(sx0, 0, sz0);
                 g.rotation.y = Math.atan2(tp.x - sx0, tp.z - sz0);
-                g.userData = { kind: "hclone", t: 0, hold: 0.22, dur: 0.28, sx: sx0, sz: sz0, target, onSlash, mats: [gm] };
+                g.userData = { kind: "hclone", t: 0, hold: 0.22, dur: 0.28, sx: sx0, sz: sz0, target, onSlash, mats: rimM ? [gm, rimM] : [gm], pk: dark ? 0.9 : 0.55 };
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -60947,14 +61131,18 @@ function CherryAdventure() {
                     o.rotation.y = Math.atan2(tx - o.position.x, tz - o.position.z);
                     if (u.t < u.hold) {
                         o.position.set(u.sx, 0, u.sz);
-                        u.mats[0].opacity = 0.55 * Math.min(1, (u.t / u.hold) * 2.2);
+                        u.mats[0].opacity = (u.pk || 0.55) * Math.min(1, (u.t / u.hold) * 2.2);
+                        if (u.mats[1])
+                            u.mats[1].opacity = 0.3 * Math.min(1, (u.t / u.hold) * 2.2);
                     }
                     else {
                         const pc = Math.min(1, (u.t - u.hold) / u.dur), e4 = pc * pc;
                         const dxc = tx - u.sx, dzc = tz - u.sz, dl = Math.hypot(dxc, dzc) || 1;
                         const go = Math.max(0, dl - 1.1) * e4; // หยุดหน้าเป้าแล้วฟัน ไม่ทะลุตัว
                         o.position.set(u.sx + (dxc / dl) * go, 0, u.sz + (dzc / dl) * go);
-                        u.mats[0].opacity = 0.55 * (1 - e4 * 0.8);
+                        u.mats[0].opacity = (u.pk || 0.55) * (1 - e4 * 0.8);
+                        if (u.mats[1])
+                            u.mats[1].opacity = 0.3 + 0.3 * e4;
                         if (pc >= 1) {
                             if (u.onSlash) {
                                 try {
@@ -61297,18 +61485,109 @@ function CherryAdventure() {
             G._dashLine = line;
         };
         // 🌟 เส้นดาว 5 แฉกบนพื้น — วาดทีละเส้นตามที่ตัวละครวิ่งผ่าน
+        // 🌟 ระบำเงา — เส้นดาวเป็นลำแสงขอบนุ่ม (แกนสว่าง + ฟุ้งจางออกข้าง + ปลายเรียว) ไม่ใช่แผ่นสี่เหลี่ยมทึบ
+        const starBeamTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = 64;
+            cv.height = 256;
+            const c = cv.getContext("2d");
+            const img = c.createImageData(64, 256);
+            for (let y = 0; y < 256; y++)
+                for (let x = 0; x < 64; x++) {
+                    const u = Math.abs(x - 31.5) / 32, v = y / 255;
+                    const across = Math.exp(-u * u * 38) + 0.45 * Math.exp(-u * u * 6); // แกนแคบสว่าง + รัศมีฟุ้ง
+                    const along = Math.min(1, Math.sin(v * Math.PI) * 1.6); // ปลายสองข้างเรียวจางหาย
+                    const a = Math.min(1, across * along), i4 = (y * 64 + x) * 4;
+                    img.data[i4] = 255;
+                    img.data[i4 + 1] = 255;
+                    img.data[i4 + 2] = 255;
+                    img.data[i4 + 3] = Math.round(255 * a);
+                }
+            c.putImageData(img, 0, 0);
+            const t = new THREE.CanvasTexture(cv);
+            return t;
+        })();
+        const starGlowTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 128;
+            const c = cv.getContext("2d");
+            const gr = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gr.addColorStop(0, "rgba(255,255,255,1)");
+            gr.addColorStop(0.18, "rgba(255,255,255,0.85)");
+            gr.addColorStop(0.45, "rgba(255,255,255,0.25)");
+            gr.addColorStop(1, "rgba(255,255,255,0)");
+            c.fillStyle = gr;
+            c.fillRect(0, 0, 128, 128);
+            c.globalCompositeOperation = "lighter";
+            c.strokeStyle = "rgba(255,255,255,0.9)";
+            c.lineCap = "round"; // ✦ ประกายแฉก 4 ทิศ
+            for (const [w, a] of [[3, 0], [3, Math.PI / 2], [1.6, Math.PI / 4], [1.6, -Math.PI / 4]]) {
+                c.lineWidth = w;
+                c.beginPath();
+                c.moveTo(64 - Math.cos(a) * 60, 64 - Math.sin(a) * 60);
+                c.lineTo(64 + Math.cos(a) * 60, 64 + Math.sin(a) * 60);
+                c.stroke();
+            }
+            return new THREE.CanvasTexture(cv);
+        })();
+        const starFxMat = (tex) => new THREE.MeshBasicMaterial({ color: 0x6ad0ff, map: tex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
         const ensureStarFx = () => {
             if (G._starLines)
                 return;
             G._starLines = [];
+            G._starFlares = [];
             for (let i = 0; i < 5; i++) {
-                const ln = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 1), new THREE.MeshBasicMaterial({ color: 0x6ad0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+                const ln = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 1), starFxMat(starBeamTex));
                 ln.rotation.x = -Math.PI / 2;
                 ln.visible = false;
                 ln.raycast = () => { };
+                ln.renderOrder = 5;
                 scene.add(ln);
                 G._starLines.push(ln);
+                const fl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), starFxMat(starGlowTex)); // ✦ ประกายตรงแฉกที่ฟันผ่าน
+                fl.rotation.x = -Math.PI / 2;
+                fl.visible = false;
+                fl.raycast = () => { };
+                fl.renderOrder = 6;
+                scene.add(fl);
+                G._starFlares.push(fl);
             }
+            const gl = new THREE.Mesh(new THREE.BufferGeometry(), starFxMat(starGlowTex)); // 🌟 รูปดาวเรืองแสงวาบบนพื้นตอนครบรูป
+            gl.rotation.x = -Math.PI / 2;
+            gl.visible = false;
+            gl.raycast = () => { };
+            gl.renderOrder = 4;
+            scene.add(gl);
+            G._starGlyph = gl;
+        };
+        // 🌟 ปั้นรูปดาว 5 แฉก (ดาวทึบ) ตามจุดแฉกจริงบนพื้น — ใช้เงาแสงไล่จากกลางดาว
+        const starGlyphAt = (cx, cz, R, a0, col) => {
+            const gl = G._starGlyph;
+            if (!gl)
+                return;
+            const sh = new THREE.Shape();
+            for (let k = 0; k < 10; k++) {
+                const a = a0 + k * Math.PI / 5, r = k % 2 ? R * 0.40 : R;
+                const x = Math.sin(a) * r, y = -Math.cos(a) * r;
+                if (k)
+                    sh.lineTo(x, y);
+                else
+                    sh.moveTo(x, y);
+            }
+            const geo = new THREE.ShapeGeometry(sh);
+            const P = geo.attributes.position, uv = new Float32Array(P.count * 2);
+            for (let i = 0; i < P.count; i++) {
+                uv[i * 2] = 0.5 + P.getX(i) / (R * 2.2);
+                uv[i * 2 + 1] = 0.5 + P.getY(i) / (R * 2.2);
+            }
+            geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+            if (gl.geometry)
+                gl.geometry.dispose();
+            gl.geometry = geo;
+            gl.position.set(cx, 0.04, cz);
+            gl.material.color.setHex(col);
+            gl.material.opacity = 0.9;
+            gl.visible = true;
         };
         const hideCastFx = () => {
             if (G._castRing)
@@ -61323,6 +61602,10 @@ function CherryAdventure() {
                 G._dashLine.visible = false;
             if (G._starLines)
                 G._starLines.forEach((l) => (l.visible = false));
+            if (G._starFlares)
+                G._starFlares.forEach((l) => (l.visible = false));
+            if (G._starGlyph)
+                G._starGlyph.visible = false;
         };
         // 🎭 จัดสกิลเข้ากลุ่มท่า — สกิลคนละแบบต้องร่ายคนละท่า ไม่ใช่ท่าตีธรรมดาเหมือนกันหมด
         const skillArch = (sk, fk) => {
@@ -62383,7 +62666,7 @@ function CherryAdventure() {
                 const tgt = wilds.indexOf(focus) >= 0 ? focus : nearestWild(worldRange() + 3);
                 if (!tgt)
                     return;
-                spawnHolyClone(idx, tgt, 0x6a4a9a, (hx, hz) => {
+                spawnHolyClone(idx, tgt, 0x9a5ad0, (hx, hz) => {
                     const at = new THREE.Vector3(hx, 0.95, hz);
                     applyDmg(tgt, 1 / 3);
                     tgt.userData.blind = 0.4;
@@ -62391,7 +62674,7 @@ function CherryAdventure() {
                     fireSlash(at, col);
                     burst(at, col, 0.8);
                     G._camShake = Math.max(G._camShake || 0, 0.2);
-                });
+                }, true);
                 if (idx === 0) {
                     G.wHasteT = 12; // ⚡ เร่งสปีด
                     G.wCrit = Math.max(G.wCrit || 0, 15);
@@ -65997,6 +66280,8 @@ function CherryAdventure() {
         G.startGame = (clsId) => {
             G.cls = clsId || "warrior";
             G.playerName = (G.pendingName && G.pendingName.trim()) || "เชอร์รี่";
+            if (!G.custom.model)
+                G.setCustom("model", G.cls); // 🚫 ยกเลิกชิบิ — เริ่มเกมด้วยโมเดล 3D ตามอาชีพเสมอ
             const C = CLASSES[G.cls];
             G.mode = "explore";
             if (G.camFit)
@@ -70223,6 +70508,8 @@ function CherryAdventure() {
             G.cls = d.cls || "warrior";
             G.playerName = d.name || "เชอร์รี่";
             Object.entries(d.custom || {}).forEach(([k, v]) => G.setCustom(k, v));
+            if (!G.custom.model)
+                G.setCustom("model", G.cls); // 🚫 ยกเลิกชิบิ — เซฟเก่าที่ไม่มีโมเดลใช้โมเดล 3D ตามอาชีพ
             G.heroesOwned = d.heroesOwned || {};
             if (d.heroId && !d.heroesOwned)
                 G.heroesOwned[d.heroId] = 1; // 🎁 grandfather heroes owned before the unlock economy
@@ -72563,6 +72850,8 @@ function CherryAdventure() {
                         }
                     });
                 }
+                if (G.levelBeamTick)
+                    G.levelBeamTick(dt); // 🌟 แสงเลเวลอัพส่องลงมาที่ตัวละคร
                 // 🌋 volcano: eruption blobs, smoke plume, rising embers, pulsing lava (volcano biome only)
                 if (G.volcanoDecor && G.volcanoDecor.visible) {
                     if (G.volTick)
@@ -74581,10 +74870,15 @@ function CherryAdventure() {
                                 S.cx = cx;
                                 S.cz = cz;
                                 S.leg = 0;
+                                S.a0 = a0;
+                                S.R = R;
                                 // 🎥 ตรึงจอไว้ระหว่างจุดยืนกับใจกลางดาว — เห็นรูปดาวครบโดยที่กล้องแทบไม่ขยับเลย
                                 G._camLock = { x: char.position.x + (cx - char.position.x) * 0.45, z: char.position.z + (cz - char.position.z) * 0.45, w: 0, off: false };
                                 ensureStarFx();
                                 G._starLines.forEach((l) => { l.visible = false; l.material.color.setHex(S.col); });
+                                G._starFlares.forEach((l) => { l.visible = false; l.material.color.setHex(S.col); });
+                                if (G._starGlyph)
+                                    G._starGlyph.visible = false;
                             }
                             else if (tp) {
                                 const ddx = tp.x - char.position.x, ddz = tp.z - char.position.z;
@@ -74624,16 +74918,34 @@ function CherryAdventure() {
                                     if (ln) {
                                         const dxl = Q[0] - P[0], dzl = Q[1] - P[1], L = Math.hypot(dxl, dzl) || 1;
                                         ln.visible = true;
-                                        ln.material.opacity = 0.85;
+                                        ln.material.opacity = 1;
                                         ln.position.set((P[0] + Q[0]) / 2, 0.05, (P[1] + Q[1]) / 2);
-                                        ln.scale.set(1, L, 1);
-                                        ln.rotation.z = -Math.atan2(dxl, dzl);
+                                        ln.scale.set(1, L + 0.9, 1);
+                                        ln.rotation.z = -Math.atan2(dxl, dzl); // ยาวเลยแฉกนิดหน่อย ปลายเรียวจะบรรจบกันพอดี
+                                    }
+                                    const fl = G._starFlares && G._starFlares[S.leg - 2];
+                                    if (fl) {
+                                        fl.visible = true;
+                                        fl.material.opacity = 1;
+                                        fl.position.set(Q[0], 0.07, Q[1]);
+                                        fl.scale.setScalar(1.4);
+                                        fl.userData.spin = (Math.random() - 0.5) * 3;
                                     }
                                 }
+                                if (S.leg === legs && S.R)
+                                    starGlyphAt(S.cx, S.cz, S.R, S.a0, S.col); // 🌟 ครบ 5 เส้น → ดาวทั้งดวงสว่างวาบ
                             }
                             if (G._starLines)
                                 G._starLines.forEach((l) => { if (l.visible)
-                                    l.material.opacity = Math.max(0, l.material.opacity - dt * 0.7); });
+                                    l.material.opacity = Math.max(0, l.material.opacity - dt * 0.55); });
+                            if (G._starFlares)
+                                G._starFlares.forEach((l) => { if (l.visible) {
+                                    l.material.opacity = Math.max(0, l.material.opacity - dt * 1.6);
+                                    l.scale.multiplyScalar(1 + dt * 0.8);
+                                    l.rotation.z += (l.userData.spin || 0) * dt;
+                                } });
+                            if (G._starGlyph && G._starGlyph.visible)
+                                G._starGlyph.material.opacity = Math.max(0, G._starGlyph.material.opacity - dt * 0.9);
                         }
                         else if (S.dsh && S.dashed && dp < 1) {
                             const de = 1 - Math.pow(1 - dp, 3); // ออกตัวแรงแล้วค่อยเบรก
@@ -77173,9 +77485,9 @@ function CherryAdventure() {
                                                         spawnSkillFx("shadow", new THREE.Vector3(hx, 0.9, hz), S.col || 0x9a6ad0);
                                                     }
                                                     catch (_) { }
-                                                });
+                                                }, true);
                                             }
-                                            catch (_) { }
+                                            catch (_) { } // 💀 ลิชยังใช้วิญญาณหัวกะโหลก
                                         }
                                     G._camShake = Math.max(G._camShake || 0, 0.28);
                                     if (G.sfx && G.sfx.slash)
