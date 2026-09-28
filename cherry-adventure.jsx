@@ -22561,15 +22561,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (lv + 30 < end.lvMin) toast(`⚠️ ${end.emoji} ${end.name} แนะนำเลเวล ${end.lvMin}+ — ตอนนี้ Lv.${lv} ระวังตัวด้วยนะ`);
       // เยื้องข้างทางเดิม — หนีบไว้ในความกว้างทาง กันโผล่นอกทางถ้ากดปุ่มตอนยืนเฉียง ๆ
       const off = Math.max(-(ROAD_HALF - 0.8), Math.min(ROAD_HALF - 0.8, char.position.x * -end.vz + char.position.z * end.vx));
-      switchBiome(end.idx, true);
-      const back = FIELD_R - 4.5;
-      char.position.x = -end.vx * back + (-end.vz) * off;
-      char.position.z = -end.vz * back + (end.vx) * off;
-      char.position.y = terrainAt(char.position.x, char.position.z);
-      G._roadCool = 1.6;
-      if (G.qingEvent) G.qingEvent("cross", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 3
-      const inf = G.roadInfo();
-      toast(`🚶 ข้ามเขตเข้าสู่ ${end.emoji} ${end.name}${inf.route ? ` (${inf.route.emoji} ${inf.route.name} ${inf.step}/${inf.total})` : ""}`);
+      G._roadCool = 3.0;   // 🔒 กันเดินข้ามซ้ำระหว่างหน้าโหลด
+      warpWithLoad(end.idx, true, () => {
+        const back = FIELD_R - 4.5;
+        char.position.x = -end.vx * back + (-end.vz) * off;
+        char.position.z = -end.vz * back + (end.vx) * off;
+        char.position.y = terrainAt(char.position.x, char.position.z);
+        G._roadCool = 1.6;
+        if (G.qingEvent) G.qingEvent("cross", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 3
+        const inf = G.roadInfo();
+        toast(`🚶 ข้ามเขตเข้าสู่ ${end.emoji} ${end.name}${inf.route ? ` (${inf.route.emoji} ${inf.route.name} ${inf.step}/${inf.total})` : ""}`);
+      });
       return true;
     };
     // ================= 🛣️ END ROADS =================
@@ -22941,8 +22943,26 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return frozen;
     };
     G.switchBiome = switchBiome;
-    G.warpNext = () => switchBiome(G.curBiome + 1);
-    G.warpTo = (i) => { if (G.inTownZone && G.exitTownZone) G.exitTownZone(); switchBiome(i); }; // 🏰 วาร์ปจากในเมือง = ออกเมืองก่อนอัตโนมัติ
+    // 🌀⏳ วาร์ป/ข้ามด่านผ่านหน้าจอโหลด — โชว์ฉากตัวอย่างของด่านปลายทางก่อน แล้วค่อยสร้างด่านจริง (การสร้างด่านค้างจอครู่หนึ่ง จึงซ่อนไว้หลังหน้าโหลด)
+    const warpWithLoad = (idx, quiet, after) => {
+      const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
+      if (G._warpLoading) return;
+      G._warpLoading = true;
+      const hex = (c) => "#" + (c || 0).toString(16).padStart(6, "0");
+      const mix = (a, b, t) => { const A = new THREE.Color(a), B = new THREE.Color(b); return "#" + A.lerp(B, t).getHexString(); };   // ผสมสีใน JS (ไม่พึ่ง color-mix ของ CSS)
+      const mons = (b.pool || []).slice(0, 5).map((id) => (SPECIES[id] || {}).emoji).filter(Boolean);
+      const bossEm = b.boss && SPECIES[b.boss] ? SPECIES[b.boss].emoji : "👑";
+      setUi((u) => ({ ...u, warpLoad: { key: Date.now(), id: b.id, name: b.name, emoji: b.emoji, lvMin: b.lvMin, lvMax: b.lvMax, bossName: b.bossName || "", bossEm, sky: hex(b.sky), fog: hex(b.fog), ground: hex(b.ground), g70: mix(b.ground, b.fog, 0.3), g60: mix(b.ground, b.fog, 0.4), gDark: mix(b.ground, 0x000000, 0.4), night: !!b.night, mons } }));
+      const t0 = performance.now();
+      setTimeout(() => {                                   // ให้หน้าโหลดวาดขึ้นจอก่อน แล้วค่อยสร้างด่าน
+        try { switchBiome(idx, quiet); if (after) after(); } catch (e) { try { console.warn("warp failed", e); } catch (_) {} }
+        let wait = Math.max(250, 1300 - (performance.now() - t0));   // โชว์อย่างน้อยให้อ่านชื่อด่านทัน
+        setTimeout(() => { G._warpLoading = false; setUi((u) => ({ ...u, warpLoad: null })); }, wait);
+      }, 90);
+    };
+    G.warpWithLoad = warpWithLoad;
+    G.warpNext = () => warpWithLoad(G.curBiome + 1);
+    G.warpTo = (i) => { if (G.inTownZone && G.exitTownZone) G.exitTownZone(); warpWithLoad(i); }; // 🏰 วาร์ปจากในเมือง = ออกเมืองก่อนอัตโนมัติ
     G.warpAsk = false;
     // 🏰 biome boss challenge
     G.biomeBossDefeated = {};
@@ -46349,7 +46369,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 const target = near === "L" ? t.L : t.R;
                 G._warpChargeT = 0; G._warpSide = null;
                 P3.userData.beam.material.opacity = 1; G._camShake = Math.max(G._camShake || 0, 0.5);
-                switchBiome(target); // sets G._warpLock = true
+                G._warpLock = true; warpWithLoad(target); // switchBiome sets G._warpLock = true ด้วย
               }
             } else {
               G._warpSide = null; G._warpChargeT = 0;
@@ -58535,7 +58555,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     <div style={{ width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box",
       /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
       paddingLeft: "var(--sa-l, 0px)", paddingRight: "var(--sa-r, 0px)" }}>
-      <style>{`:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} @keyframes cvSpin{to{transform:rotate(360deg);}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}}`}</style>
+      <style>{`:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} @keyframes cvSpin{to{transform:rotate(360deg);}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}} @keyframes warpIn{from{transform:scale(1.04);}to{transform:scale(1);}} @keyframes warpBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}} @keyframes warpBar{0%{width:4%;}60%{width:72%;}100%{width:100%;}}`}</style>
       {/* 🎮 ภาพ 3D กินเต็มขอบจอ (ดึงกลับออกไปนอกกรอบเว้นรอยบาก) เพื่อไม่ให้เห็นแถบพื้นหลังข้างจอ */}
       <div ref={mountRef} style={{ position: "absolute", top: 0, bottom: 0,
         left: "calc(-1 * var(--sa-l, 0px))",
@@ -62449,6 +62469,37 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         </div>
       )}
 
+      {/* 🌀⏳ หน้าจอโหลดตอนวาร์ป/ข้ามด่าน — ฉากตัวอย่างของด่านปลายทาง */}
+      {ui.warpLoad && (() => {
+        const W = ui.warpLoad;
+        return (
+          <div key={W.key} style={{ position: "absolute", inset: 0, zIndex: 80, overflow: "hidden", fontFamily: font, animation: "warpIn 0.25s ease-out", background: `linear-gradient(180deg, ${W.sky} 0%, ${W.fog} 58%, ${W.ground} 100%)` }}>
+            {/* 🌄 ฉากจำลอง: ฟ้า · ดวงดาว/ตะวัน · เนินไกล · พื้นด่าน */}
+            {W.night && [...Array(26)].map((_, i) => <span key={i} style={{ position: "absolute", left: `${(i * 37) % 100}%`, top: `${(i * 23) % 48}%`, width: 3, height: 3, borderRadius: "50%", background: "#fff", opacity: 0.35 + ((i * 7) % 6) / 10, boxShadow: "0 0 6px #fff" }} />)}
+            {!W.night && <div style={{ position: "absolute", right: "14%", top: "11%", width: 92, height: 92, borderRadius: "50%", background: "radial-gradient(circle, #fffbe0 0%, #ffe9a0 45%, rgba(255,230,150,0) 72%)", filter: "blur(1px)" }} />}
+            <div style={{ position: "absolute", left: "-10%", right: "-10%", bottom: "30%", height: "22%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.fog, opacity: 0.85, transform: "scaleX(1.4)" }} />
+            <div style={{ position: "absolute", left: "-14%", right: "40%", bottom: "28%", height: "30%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.g70, opacity: 0.9 }} />
+            <div style={{ position: "absolute", left: "35%", right: "-14%", bottom: "28%", height: "26%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.g60, opacity: 0.9 }} />
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "31%", background: `linear-gradient(180deg, ${W.ground}, ${W.gDark})` }} />
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: "24%", textAlign: "center", fontSize: 40, letterSpacing: 18, opacity: 0.95, filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.35))" }}>{W.mons.join("")}</div>
+            {/* 🏷️ ชื่อด่าน */}
+            <div style={{ position: "absolute", left: 0, right: 0, top: "18%", textAlign: "center", padding: "0 16px" }}>
+              <div style={{ fontSize: 64, lineHeight: 1, filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.4))", animation: "warpBob 1.4s ease-in-out infinite" }}>{W.emoji}</div>
+              <div style={{ display: "inline-block", marginTop: 10, padding: "8px 26px", borderRadius: 999, background: "rgba(20,10,30,0.62)", border: "2px solid rgba(255,255,255,0.55)", boxShadow: "0 6px 18px rgba(0,0,0,0.35)" }}>
+                <div style={{ fontSize: 24, fontWeight: 900, color: "#fff", textShadow: "0 2px 0 rgba(0,0,0,0.45)" }}>{W.name}</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#ffe9a8", marginTop: 2 }}>Lv.{W.lvMin}–{W.lvMax}{W.bossName ? ` · ${W.bossEm} ${W.bossName}` : ""}</div>
+              </div>
+            </div>
+            {/* ⏳ แถบโหลด */}
+            <div style={{ position: "absolute", left: "50%", bottom: "9%", transform: "translateX(-50%)", width: "min(360px, 76%)", textAlign: "center" }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", textShadow: "0 2px 4px rgba(0,0,0,0.6)", marginBottom: 7, animation: "titleBlink 1.1s ease-in-out infinite" }}>🌀 กำลังเดินทางสู่ {W.name}...</div>
+              <div style={{ height: 12, borderRadius: 999, background: "rgba(0,0,0,0.45)", border: "2px solid rgba(255,255,255,0.7)", overflow: "hidden", boxShadow: "0 3px 10px rgba(0,0,0,0.35)" }}>
+                <div style={{ height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#ffd76a,#ff8ac0,#8ad0ff)", animation: "warpBar 1.3s ease-in-out forwards" }} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {/* 🎉 LEVEL UP banner */}
       {ui.levelUpAt && Date.now() - ui.levelUpAt < 2400 && (
         <div key={ui.levelUpAt} style={{ position: "absolute", top: "30%", left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 62 }}>
