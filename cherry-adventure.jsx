@@ -3379,6 +3379,7 @@ export default function CherryAdventure() {
     if (!mount) return; // 🛡️ guard: bail if the container isn't mounted yet
     const W = mount.clientWidth, H = mount.clientHeight;
     const G = gameRef.current;
+    G.HERO_OFF = true;   // 🦸🚫 ปิดชุดฮีโร่ไว้ก่อน (ตั้ง false เพื่อเปิดคืน)
     G.joy = { x: 0, y: 0 };
     G.keys = {};
 
@@ -11884,6 +11885,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
       };
       G.setHero = id => {
+        if (G.HERO_OFF) id = null;   // 🦸🚫 ปิดชุดฮีโร่ชั่วคราว (ยังจำฮีโร่ที่เลือก/ปลดล็อกไว้ เปิดคืนได้ภายหลัง)
         G.heroId = id || null;
         if (id) G.heroPick = id; // 🦸 จำฮีโร่ที่เลือกไว้ เพื่อสลับซ่อน/แสดงชุดฮีโร่ได้
         const heroVis = (arr, on) => (arr || []).forEach(p => { if (G._setVisFrozen) G._setVisFrozen(p, on); else p.visible = on; });
@@ -18366,8 +18368,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     G._applyBody = () => applyGender(G.custom.gender || 0);   // 🦸 ให้โค้ดอื่น (เช่นสลับชุดฮีโร่) สั่งคำนวณหุ่นใหม่ได้
     G.setCustom = (cat, i) => {
+      if (cat === "model" && !i) i = HERO_MODELS[G.cls] ? G.cls : Object.keys(HERO_MODELS)[0];   // 🚫 ยกเลิกตัวชิบิ — ใช้โมเดล 3D เสมอ
       G.custom[cat] = i;
-      if (cat === "model") {                                 // 🧍 ตัวละครโมเดล 3D (ทดลอง)
+      if (cat === "model") {                                 // 🧍 ตัวละครโมเดล 3D
         if (G.heroModelSet) G.heroModelSet(i || null);
       } else if (CUSTOM.faceSliders.some((f) => f.k === cat)) {   // 🧑‍🎨 แถบเลื่อนโครงหน้า
         if (G.applyFaceShape) G.applyFaceShape();
@@ -25599,7 +25602,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       } catch (_) {}
     };
 
+    G.BOTS_OFF = true;   // 🤖🚫 ยกเลิกตัวละครบอทที่เดินไปมาในโลกกว้าง (ตั้ง false เพื่อเปิดคืน)
     G.botInit = () => {
+      if (G.BOTS_OFF) return G.bots;
       if (G.bots.length) return G.bots;
       const saved = botLoad();
       G.bots = BOT_CHARS.map((def, i) => {
@@ -31928,6 +31933,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.saveGame) G.saveGame();
     };
     G.pickHero = (id) => {
+      if (id && G.HERO_OFF) { toast("🦸 ชุดฮีโร่ปิดใช้งานชั่วคราว"); return; }
       if (id && !G.heroUnlocked(id)) { toast("🔒 ต้องปลดล็อกฮีโร่นี้ก่อน"); return; }
       if (id) G.heroHide = false; // 🦸 เลือกฮีโร่ใหม่ = เลิกซ่อนชุดฮีโร่ให้อัตโนมัติ
       if (G.setHero) G.setHero(id);
@@ -41826,18 +41832,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const pointer = new THREE.Vector2();
     const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     let pinchDist = 0;
-    const touchDist = (e) => Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+    // 📱 นับเฉพาะนิ้วที่แตะบนจอเกม (ไม่รวมนิ้วที่กดจอยสติ๊กค้างอยู่) → เดินไปด้วยหมุนกล้องไปด้วยได้
+    const camTouches = (e) => e.targetTouches || e.touches;
+    const touchDist = (e) => { const T = camTouches(e); return Math.hypot(T[0].clientX - T[1].clientX, T[0].clientY - T[1].clientY); };
     let touchCam = null;
     const onTap = (e) => {
-      if (e.touches && e.touches.length === 2) { pinchDist = touchDist(e); touchCam = null; return; }
-      if (e.touches && e.touches.length === 1) touchCam = { x: e.touches[0].clientX, y: e.touches[0].clientY };   // 📱 จุดเริ่มลากหมุนกล้อง
+      const TT = e.touches ? camTouches(e) : null;
+      if (TT && TT.length === 2) { pinchDist = touchDist(e); touchCam = null; return; }
+      if (TT && TT.length === 1) touchCam = { id: TT[0].identifier, x: TT[0].clientX, y: TT[0].clientY };   // 📱 จุดเริ่มลากหมุนกล้อง
+      if (e.touches && (!TT || !TT.length)) return;
       if (e.button != null && e.button !== 0) return;   // 🖱️ ปุ่มขวา/กลาง = หมุนกล้องอย่างเดียว ไม่ปักจุดเดิน
       if (G.mode !== "explore") return;
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      const P0 = e.touches ? ((e.changedTouches && e.changedTouches[0]) || TT[0]) : e;
+      const cx = P0.clientX, cy = P0.clientY;
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((cx - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((cy - rect.top) / rect.height) * 2 + 1;
@@ -41914,7 +41921,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
     };
     const onPinchMove = (e) => {
-      if (e.touches && e.touches.length === 2 && pinchDist > 0) {
+      const TT = e.touches ? camTouches(e) : null;
+      if (TT && TT.length === 2 && pinchDist > 0) {
         const d = touchDist(e);
         G.zoom((pinchDist - d) * 0.02);
         pinchDist = d;
@@ -41922,12 +41930,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         return;
       }
       // 📱🔄 ลากนิ้วเดียวบนจอ = หมุนมุมมอง (แทนการแตะปักจุดเดินแบบเดิม)
-      if (!touchCam || !e.touches || e.touches.length !== 1 || G._dragFurni) return;
-      const t = e.touches[0], dx = t.clientX - touchCam.x, dy = t.clientY - touchCam.y;
+      if (!touchCam || !TT || TT.length !== 1 || G._dragFurni) return;
+      const t = TT[0], dx = t.clientX - touchCam.x, dy = t.clientY - touchCam.y;
       touchCam.x = t.clientX; touchCam.y = t.clientY;
       if (G.rotateCam) G.rotateCam(-dx * 0.008, -dy * 0.006);
     };
-    const onPinchEnd = () => { pinchDist = 0; touchCam = null; };
+    const onPinchEnd = (e) => {
+      pinchDist = 0; touchCam = null;
+      const TT = e && e.touches ? camTouches(e) : null;   // ยกนิ้วหนึ่งจาก 2 นิ้ว → นิ้วที่เหลือลากหมุนต่อได้เลย
+      if (TT && TT.length === 1) touchCam = { id: TT[0].identifier, x: TT[0].clientX, y: TT[0].clientY };
+    };
     // 🛋️🖐️ ลากเฟอร์นิเจอร์ตามนิ้ว/เมาส์ บนระนาบพื้นบ้าน แล้วบันทึกตำแหน่งตอนปล่อย
     const onFurniDrag = (e) => {
       if (!G._dragFurni) return;
@@ -42350,6 +42362,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!this.enabled() || !code) return null;
         try {
           const res = await fetch(this._url(`party_member?party=eq.${encodeURIComponent(code)}&select=*&order=seen.desc&limit=8`), { headers: this._headers() });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) { return null; }
+      },
+      // 🤝 ปาร์ตี้ที่ผู้เล่นคนนี้มีแถวอยู่ (ถูกเพื่อนเชิญ / ค้างจากก่อนหลุด) — ล่าสุดก่อน
+      async partyOf(pid) {
+        if (!this.enabled() || !pid) return null;
+        try {
+          const res = await fetch(this._url(`party_member?pid=eq.${encodeURIComponent(pid)}&select=party,seen,t&order=t.desc&limit=3`), { headers: this._headers() });
           if (!res.ok) return null;
           return await res.json();
         } catch (e) { return null; }
@@ -42886,7 +42907,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     G.startPresence = () => {
       if (G._presenceT || !CN.enabled()) return;
-      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); if (G.pollAnnounce) G.pollAnnounce(); };
+      const beat = () => { if (G.publishProfile) G.publishProfile(true); G.pollFriendsOnline(); if (G.partyAutoCheck) G.partyAutoCheck(); if (G.syncServerFriends) G.syncServerFriends(); if (G.pollDuels) G.pollDuels(); if (G.pollAnnounce) G.pollAnnounce(); };
       beat();
       G._presenceT = setInterval(beat, 25000);
       if (!G._duelT) G._duelT = setInterval(() => { if (G.pollDuels) G.pollDuels(); }, 6000); // ⚔️ faster incoming-challenge detection
@@ -43003,6 +43024,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🧍‍♂️✨ FULL "เป๊ะทุกชิ้น" avatar — replicate char's anchor coordinate system + CLONE the real cosmetic models
     // (outfit, class accessory, hat, mask, wings, weapon) so a remote player looks (near-)identical. Any throw → simple fallback.
     const buildFullAvatar = (info) => {
+      if (info && info.hero && G.HERO_OFF) info = Object.assign({}, info, { hero: null });   // 🦸🚫 ปิดชุดฮีโร่ชั่วคราว — อวตารคนอื่น/บอทก็ใส่ลุคปกติ
       try {
         const cl = CLASSES[info.c] || CLASSES.warrior;
         const co = CLASS_OUTFIT[info.c] || CLASS_OUTFIT.warrior;
@@ -44298,12 +44320,44 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     const startPartyTimer = () => { if (!G._partyT) G._partyT = setInterval(partyBeat, 12000); };
     const stopPartyTimer = () => { if (G._partyT) { clearInterval(G._partyT); G._partyT = null; } };
-    G.partyCreate = async () => {
+    // 💾 จำปาร์ตี้ไว้ในเครื่อง (ต่อ ID ผู้เล่น) — หลุด/ออกเกมแล้วกลับมาก็ยังอยู่ปาร์ตี้เดิม (ออกจริงต้องกด "ออก" เท่านั้น)
+    const partyKey = () => "cherry_party_" + (G.pid || "");
+    const partyRemember = (code) => { try { if (code) localStorage.setItem(partyKey(), code); else localStorage.removeItem(partyKey()); } catch (_) {} };
+    const partyEnter = async (code) => { G.partyCode = code; G._partyXpg = 0; G._partyXpgSeen = null; partyRemember(code); await partyBeat(); startPartyTimer(); };
+    G.partyCreate = async (quiet) => {
       if (!CN.enabled()) { toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)"); return; }
       const code = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 5).toUpperCase() || "CHRY1";
-      G.partyCode = code; G._partyXpg = 0; G._partyXpgSeen = {};
-      await partyBeat(); startPartyTimer();
-      toast(`🤝 สร้างปาร์ตี้แล้ว! รหัส: ${code} — ส่งรหัสให้เพื่อนกดเข้าร่วม`);
+      await partyEnter(code);
+      if (!quiet) toast(`🤝 สร้างปาร์ตี้แล้ว! รหัส: ${code} — ส่งรหัสให้เพื่อนกดเข้าร่วม`);
+    };
+    // 👆 กดชื่อเพื่อน = ชวนเข้าปาร์ตี้ (ยังไม่มีปาร์ตี้ก็สร้างให้เลย) · เพื่อนจะเข้าปาร์ตี้อัตโนมัติเมื่อออนไลน์
+    G.partyInvite = async (f) => {
+      if (!f || !f.pid) { toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์ — เพิ่มเพื่อนด้วย ID ก่อน"); return; }
+      if (!CN.enabled()) { toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)"); return; }
+      if (f.pid === G.pid) return;
+      if (!G.partyCode) await G.partyCreate(true);
+      if (!G.partyCode) return;
+      const rows = (await CN.partyMembers(G.partyCode)) || G.partyMembers || [];
+      if (rows.some((r) => r.pid === f.pid)) { toast(`${f.n || "เพื่อน"} อยู่ในปาร์ตี้แล้ว`); return; }
+      if (rows.length >= 4) { toast("ปาร์ตี้เต็มแล้ว (สูงสุด 4 คน)"); return; }
+      const ok = await CN.partyUpsert({ party: G.partyCode, pid: f.pid, n: String(f.n || "เพื่อน").slice(0, 12), c: f.c || null, lv: f.lv || 1, seen: 0, xpg: 0 });
+      if (!ok) { toast("🌐 ชวนเข้าปาร์ตี้ไม่สำเร็จ ลองใหม่"); return; }
+      await partyBeat();
+      toast(`🤝 ชวน ${f.n || "เพื่อน"} เข้าปาร์ตี้แล้ว! (เข้าร่วมอัตโนมัติเมื่อเพื่อนออนไลน์)`);
+    };
+    // 🔁 เช็กตอนเข้าเกม/ทุกรอบ presence: กลับเข้าปาร์ตี้เดิม หรือรับคำชวนจากเพื่อน
+    G.partyAutoCheck = async () => {
+      if (G.partyCode || !CN.enabled() || !G.pid || !G.player || G._partyChecking) return;
+      G._partyChecking = true;
+      try {
+        const rows = await CN.partyOf(G.pid);
+        if (!rows || !rows.length || G.partyCode) return;
+        let saved = null; try { saved = localStorage.getItem(partyKey()); } catch (_) {}
+        const pick = rows.find((r) => r.party === saved) || rows[0];
+        const invited = pick.party !== saved && !(pick.seen > 0);
+        await partyEnter(pick.party);
+        toast(invited ? `🤝 เพื่อนชวนคุณเข้าปาร์ตี้ ${pick.party} — เข้าร่วมแล้ว!` : `🤝 กลับเข้าปาร์ตี้ ${pick.party} แล้ว`);
+      } catch (_) {} finally { G._partyChecking = false; }
     };
     G.partyJoin = async (code) => {
       code = String(code || "").trim().toUpperCase();
@@ -44314,14 +44368,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const others = rows.filter(r => r.pid !== G.pid);
       if (!others.length) { toast("ไม่พบปาร์ตี้รหัสนี้ — เช็ครหัสอีกครั้ง"); return; }
       if (others.length >= 4) { toast("ปาร์ตี้เต็มแล้ว (สูงสุด 4 คน)"); return; }
-      G.partyCode = code; G._partyXpg = 0; G._partyXpgSeen = {};
-      await partyBeat(); startPartyTimer();
+      await partyEnter(code);
       toast(`🤝 เข้าร่วมปาร์ตี้ ${code} แล้ว! ล่ามอนสเตอร์ใกล้กันเพื่อโบนัส XP`);
     };
     G.partyLeaveNow = async () => {
       if (!G.partyCode) return;
       const c = G.partyCode;
-      G.partyCode = null; stopPartyTimer();
+      G.partyCode = null; stopPartyTimer(); partyRemember(null);
       G.partyMembers = []; G._partyXpgSeen = null;
       setUi(u => ({ ...u, partyCode: null, partyMembers: [] }));
       await CN.partyLeave(c, G.pid);
@@ -59735,7 +59788,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>🧍 ตัวละครโมเดล 3D <span style={{ fontSize: 9.5, color: "#c09020" }}>ทดลอง</span></div>
               {/* 12 ตัวเลือก (ร่างปั้นเอง + 11 อาชีพ) — ใช้กริดยืดหยุ่น จอแคบได้ 2 คอลัมน์ จอกว้างได้ 3-4 ไม่ยาวเป็นพรืด */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(74px, 1fr))", gap: 5 }}>
-                {[["", "🎨", "ร่างปั้นเอง"]].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (
+                {[].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (
                   <button key={k || "none"} onClick={() => G.setCustom("model", k || null)} style={{
                     display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
                     padding: "6px 3px", borderRadius: 11, cursor: "pointer", fontFamily: font, lineHeight: 1.15,
@@ -59744,7 +59797,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   }}><span style={{ fontSize: 17 }}>{e}</span>{n}</button>
                 ))}
               </div>
-              <div style={{ marginTop: 5, fontSize: 9.5, color: "#a58a7a" }}>โมเดลจาก Quaternius (CC0) — โหลดครั้งแรกประมาณ 6-8 MB · หน้าตา/ผม/ชุด ถูกกำหนดตามอาชีพแล้ว (แถบปรับแต่งด้านล่างจะมีผลเมื่อสลับกลับไป "ร่างปั้นเอง")</div>
+              <div style={{ marginTop: 5, fontSize: 9.5, color: "#a58a7a" }}>โมเดลจาก Quaternius (CC0) — โหลดครั้งแรกประมาณ 6-8 MB · หน้าตา/ผม/ชุด ถูกกำหนดตามอาชีพแล้ว</div>
             </div>
             <div>
               <div style={{ fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 }}>② ตั้งชื่อตัวละคร</div>
@@ -59766,7 +59819,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         )}
         {ui.custom.model && ui.customTab !== "char" && (
           <div style={{ padding: "7px 10px", borderRadius: 10, background: "#fff6d8", border: "1px solid #f0d890", fontSize: 10.5, fontWeight: 700, color: "#8a6a20", marginBottom: 6 }}>
-            🧍 กำลังใช้ตัวละครโมเดล 3D ({(HERO_MODELS[ui.custom.model] || {}).name}) — การปรับในแท็บนี้จะมีผลเมื่อสลับกลับไป "ร่างปั้นเอง"
+            🧍 กำลังใช้ตัวละครโมเดล 3D ({(HERO_MODELS[ui.custom.model] || {}).name}) — หน้าตาและชุดกำหนดตามอาชีพ
           </div>
         )}
         {ui.customTab === "body" && (
@@ -63970,6 +64023,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       <div key={m.pid} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #ddf0e4" }}>
                         <span style={{ fontSize: 8, color: m.online ? "#3ac06a" : "#b8c4bc" }}>●</span>
                         <span style={{ flex: 1, fontWeight: 700, color: "#3a6a4e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[m.c] && CLASSES[m.c].emoji) || ""} {m.n}{m.pid === ui.pid ? " (ฉัน)" : ""}</span>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: m.online ? "#2a9a5a" : "#9aa29c" }}>{m.online ? "ออนไลน์" : "ออฟไลน์"}</span>
                         <b style={{ color: "#5a8a70" }}>Lv.{m.lv}</b>
                       </div>
                     ))}
@@ -64054,9 +64108,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   return (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, background: i < 3 ? "#fef8e8" : "#f7f7f2", borderRadius: 9, padding: "6px 8px", border: i < 3 ? "1px solid #eddba0" : "1px solid #e8e8de" }}>
                       <div style={{ fontSize: 13, fontWeight: 800, width: 22, textAlign: "center" }}>{medal}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: "#4a5a4a" }}>{clsEmoji} {f.n} {f.ng > 0 && <span style={{ fontSize: 8.5, color: "#fff", background: "#7a3ad0", borderRadius: 999, padding: "0 5px" }}>ตื่น{f.ng}</span>}</div>
-                        <div style={{ fontSize: 9.5, color: "#8a9a7a" }}>Lv.{f.lv} · ⚔️{f.atk} 🛡️{f.def} ❤️{f.hp}</div>
+                      <div style={{ flex: 1, minWidth: 0, cursor: f.pid ? "pointer" : "default" }} title={f.pid ? "กดเพื่อชวนเข้าปาร์ตี้" : ""}
+                        onClick={() => { if (!f.pid) { G.toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์"); return; } const inP = (ui.partyMembers || []).some((m) => m.pid === f.pid); if (inP) { G.toast(`${f.n} อยู่ในปาร์ตี้แล้ว`); return; } G.partyInvite(f); }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: "#4a5a4a", textDecoration: f.pid ? "underline dotted #9ab0a0" : "none" }}>{clsEmoji} {f.n} {f.ng > 0 && <span style={{ fontSize: 8.5, color: "#fff", background: "#7a3ad0", borderRadius: 999, padding: "0 5px" }}>ตื่น{f.ng}</span>}
+                          {f.pid && (() => { const on = !!(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online); return <span style={{ fontSize: 8.5, fontWeight: 800, marginLeft: 4, color: on ? "#2a9a5a" : "#9aa29c" }}>● {on ? "ออนไลน์" : "ออฟไลน์"}</span>; })()}
+                          {f.pid && (ui.partyMembers || []).some((m) => m.pid === f.pid) && <span style={{ fontSize: 8.5, marginLeft: 4, color: "#fff", background: "#3a9a5a", borderRadius: 999, padding: "0 5px" }}>🤝 ปาร์ตี้</span>}
+                        </div>
+                        <div style={{ fontSize: 9.5, color: "#8a9a7a" }}>Lv.{f.lv} · ⚔️{f.atk} 🛡️{f.def} ❤️{f.hp}{f.pid && !(ui.partyMembers || []).some((m) => m.pid === f.pid) ? " · 👆 กดชื่อเพื่อชวนเข้าปาร์ตี้" : ""}</div>
                       </div>
                       {f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online && (
                         <button onClick={() => G.pvpChallenge(f)} title="ท้าดวลสด (ออนไลน์)" style={{ border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" }}>

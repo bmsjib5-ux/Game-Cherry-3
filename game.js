@@ -3522,6 +3522,7 @@ function CherryAdventure() {
             return; // 🛡️ guard: bail if the container isn't mounted yet
         const W = mount.clientWidth, H = mount.clientHeight;
         const G = gameRef.current;
+        G.HERO_OFF = true; // 🦸🚫 ปิดชุดฮีโร่ไว้ก่อน (ตั้ง false เพื่อเปิดคืน)
         G.joy = { x: 0, y: 0 };
         G.keys = {};
         // ---------- 🎵 Audio (synthesized — no files, works offline) ----------
@@ -16785,6 +16786,8 @@ function CherryAdventure() {
                 }
             };
             G.setHero = id => {
+                if (G.HERO_OFF)
+                    id = null; // 🦸🚫 ปิดชุดฮีโร่ชั่วคราว (ยังจำฮีโร่ที่เลือก/ปลดล็อกไว้ เปิดคืนได้ภายหลัง)
                 G.heroId = id || null;
                 if (id)
                     G.heroPick = id; // 🦸 จำฮีโร่ที่เลือกไว้ เพื่อสลับซ่อน/แสดงชุดฮีโร่ได้
@@ -30475,8 +30478,10 @@ function CherryAdventure() {
         };
         G._applyBody = () => applyGender(G.custom.gender || 0); // 🦸 ให้โค้ดอื่น (เช่นสลับชุดฮีโร่) สั่งคำนวณหุ่นใหม่ได้
         G.setCustom = (cat, i) => {
+            if (cat === "model" && !i)
+                i = HERO_MODELS[G.cls] ? G.cls : Object.keys(HERO_MODELS)[0]; // 🚫 ยกเลิกตัวชิบิ — ใช้โมเดล 3D เสมอ
             G.custom[cat] = i;
-            if (cat === "model") { // 🧍 ตัวละครโมเดล 3D (ทดลอง)
+            if (cat === "model") { // 🧍 ตัวละครโมเดล 3D
                 if (G.heroModelSet)
                     G.heroModelSet(i || null);
             }
@@ -42340,7 +42345,10 @@ function CherryAdventure() {
             }
             catch (_) { }
         };
+        G.BOTS_OFF = true; // 🤖🚫 ยกเลิกตัวละครบอทที่เดินไปมาในโลกกว้าง (ตั้ง false เพื่อเปิดคืน)
         G.botInit = () => {
+            if (G.BOTS_OFF)
+                return G.bots;
             if (G.bots.length)
                 return G.bots;
             const saved = botLoad();
@@ -51702,6 +51710,10 @@ function CherryAdventure() {
                 G.saveGame();
         };
         G.pickHero = (id) => {
+            if (id && G.HERO_OFF) {
+                toast("🦸 ชุดฮีโร่ปิดใช้งานชั่วคราว");
+                return;
+            }
             if (id && !G.heroUnlocked(id)) {
                 toast("🔒 ต้องปลดล็อกฮีโร่นี้ก่อน");
                 return;
@@ -65678,22 +65690,27 @@ function CherryAdventure() {
         const pointer = new THREE.Vector2();
         const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
         let pinchDist = 0;
-        const touchDist = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        // 📱 นับเฉพาะนิ้วที่แตะบนจอเกม (ไม่รวมนิ้วที่กดจอยสติ๊กค้างอยู่) → เดินไปด้วยหมุนกล้องไปด้วยได้
+        const camTouches = (e) => e.targetTouches || e.touches;
+        const touchDist = (e) => { const T = camTouches(e); return Math.hypot(T[0].clientX - T[1].clientX, T[0].clientY - T[1].clientY); };
         let touchCam = null;
         const onTap = (e) => {
-            if (e.touches && e.touches.length === 2) {
+            const TT = e.touches ? camTouches(e) : null;
+            if (TT && TT.length === 2) {
                 pinchDist = touchDist(e);
                 touchCam = null;
                 return;
             }
-            if (e.touches && e.touches.length === 1)
-                touchCam = { x: e.touches[0].clientX, y: e.touches[0].clientY }; // 📱 จุดเริ่มลากหมุนกล้อง
+            if (TT && TT.length === 1)
+                touchCam = { id: TT[0].identifier, x: TT[0].clientX, y: TT[0].clientY }; // 📱 จุดเริ่มลากหมุนกล้อง
+            if (e.touches && (!TT || !TT.length))
+                return;
             if (e.button != null && e.button !== 0)
                 return; // 🖱️ ปุ่มขวา/กลาง = หมุนกล้องอย่างเดียว ไม่ปักจุดเดิน
             if (G.mode !== "explore")
                 return;
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const P0 = e.touches ? ((e.changedTouches && e.changedTouches[0]) || TT[0]) : e;
+            const cx = P0.clientX, cy = P0.clientY;
             const rect = renderer.domElement.getBoundingClientRect();
             pointer.x = ((cx - rect.left) / rect.width) * 2 - 1;
             pointer.y = -((cy - rect.top) / rect.height) * 2 + 1;
@@ -65798,7 +65815,8 @@ function CherryAdventure() {
             }
         };
         const onPinchMove = (e) => {
-            if (e.touches && e.touches.length === 2 && pinchDist > 0) {
+            const TT = e.touches ? camTouches(e) : null;
+            if (TT && TT.length === 2 && pinchDist > 0) {
                 const d = touchDist(e);
                 G.zoom((pinchDist - d) * 0.02);
                 pinchDist = d;
@@ -65806,15 +65824,21 @@ function CherryAdventure() {
                 return;
             }
             // 📱🔄 ลากนิ้วเดียวบนจอ = หมุนมุมมอง (แทนการแตะปักจุดเดินแบบเดิม)
-            if (!touchCam || !e.touches || e.touches.length !== 1 || G._dragFurni)
+            if (!touchCam || !TT || TT.length !== 1 || G._dragFurni)
                 return;
-            const t = e.touches[0], dx = t.clientX - touchCam.x, dy = t.clientY - touchCam.y;
+            const t = TT[0], dx = t.clientX - touchCam.x, dy = t.clientY - touchCam.y;
             touchCam.x = t.clientX;
             touchCam.y = t.clientY;
             if (G.rotateCam)
                 G.rotateCam(-dx * 0.008, -dy * 0.006);
         };
-        const onPinchEnd = () => { pinchDist = 0; touchCam = null; };
+        const onPinchEnd = (e) => {
+            pinchDist = 0;
+            touchCam = null;
+            const TT = e && e.touches ? camTouches(e) : null; // ยกนิ้วหนึ่งจาก 2 นิ้ว → นิ้วที่เหลือลากหมุนต่อได้เลย
+            if (TT && TT.length === 1)
+                touchCam = { id: TT[0].identifier, x: TT[0].clientX, y: TT[0].clientY };
+        };
         // 🛋️🖐️ ลากเฟอร์นิเจอร์ตามนิ้ว/เมาส์ บนระนาบพื้นบ้าน แล้วบันทึกตำแหน่งตอนปล่อย
         const onFurniDrag = (e) => {
             if (!G._dragFurni)
@@ -66452,6 +66476,20 @@ function CherryAdventure() {
                     return null;
                 try {
                     const res = await fetch(this._url(`party_member?party=eq.${encodeURIComponent(code)}&select=*&order=seen.desc&limit=8`), { headers: this._headers() });
+                    if (!res.ok)
+                        return null;
+                    return await res.json();
+                }
+                catch (e) {
+                    return null;
+                }
+            },
+            // 🤝 ปาร์ตี้ที่ผู้เล่นคนนี้มีแถวอยู่ (ถูกเพื่อนเชิญ / ค้างจากก่อนหลุด) — ล่าสุดก่อน
+            async partyOf(pid) {
+                if (!this.enabled() || !pid)
+                    return null;
+                try {
+                    const res = await fetch(this._url(`party_member?pid=eq.${encodeURIComponent(pid)}&select=party,seen,t&order=t.desc&limit=3`), { headers: this._headers() });
                     if (!res.ok)
                         return null;
                     return await res.json();
@@ -67345,7 +67383,8 @@ function CherryAdventure() {
             if (G._presenceT || !CN.enabled())
                 return;
             const beat = () => { if (G.publishProfile)
-                G.publishProfile(true); G.pollFriendsOnline(); if (G.syncServerFriends)
+                G.publishProfile(true); G.pollFriendsOnline(); if (G.partyAutoCheck)
+                G.partyAutoCheck(); if (G.syncServerFriends)
                 G.syncServerFriends(); if (G.pollDuels)
                 G.pollDuels(); if (G.pollAnnounce)
                 G.pollAnnounce(); };
@@ -67533,6 +67572,8 @@ function CherryAdventure() {
         // 🧍‍♂️✨ FULL "เป๊ะทุกชิ้น" avatar — replicate char's anchor coordinate system + CLONE the real cosmetic models
         // (outfit, class accessory, hat, mask, wings, weapon) so a remote player looks (near-)identical. Any throw → simple fallback.
         const buildFullAvatar = (info) => {
+            if (info && info.hero && G.HERO_OFF)
+                info = Object.assign({}, info, { hero: null }); // 🦸🚫 ปิดชุดฮีโร่ชั่วคราว — อวตารคนอื่น/บอทก็ใส่ลุคปกติ
             try {
                 const cl = CLASSES[info.c] || CLASSES.warrior;
                 const co = CLASS_OUTFIT[info.c] || CLASS_OUTFIT.warrior;
@@ -70012,18 +70053,82 @@ function CherryAdventure() {
             clearInterval(G._partyT);
             G._partyT = null;
         } };
-        G.partyCreate = async () => {
+        // 💾 จำปาร์ตี้ไว้ในเครื่อง (ต่อ ID ผู้เล่น) — หลุด/ออกเกมแล้วกลับมาก็ยังอยู่ปาร์ตี้เดิม (ออกจริงต้องกด "ออก" เท่านั้น)
+        const partyKey = () => "cherry_party_" + (G.pid || "");
+        const partyRemember = (code) => { try {
+            if (code)
+                localStorage.setItem(partyKey(), code);
+            else
+                localStorage.removeItem(partyKey());
+        }
+        catch (_) { } };
+        const partyEnter = async (code) => { G.partyCode = code; G._partyXpg = 0; G._partyXpgSeen = null; partyRemember(code); await partyBeat(); startPartyTimer(); };
+        G.partyCreate = async (quiet) => {
             if (!CN.enabled()) {
                 toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)");
                 return;
             }
             const code = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 5).toUpperCase() || "CHRY1";
-            G.partyCode = code;
-            G._partyXpg = 0;
-            G._partyXpgSeen = {};
+            await partyEnter(code);
+            if (!quiet)
+                toast(`🤝 สร้างปาร์ตี้แล้ว! รหัส: ${code} — ส่งรหัสให้เพื่อนกดเข้าร่วม`);
+        };
+        // 👆 กดชื่อเพื่อน = ชวนเข้าปาร์ตี้ (ยังไม่มีปาร์ตี้ก็สร้างให้เลย) · เพื่อนจะเข้าปาร์ตี้อัตโนมัติเมื่อออนไลน์
+        G.partyInvite = async (f) => {
+            if (!f || !f.pid) {
+                toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์ — เพิ่มเพื่อนด้วย ID ก่อน");
+                return;
+            }
+            if (!CN.enabled()) {
+                toast("🌐 ต้องเปิดโหมดออนไลน์ก่อน (ONLINE_SETUP.md)");
+                return;
+            }
+            if (f.pid === G.pid)
+                return;
+            if (!G.partyCode)
+                await G.partyCreate(true);
+            if (!G.partyCode)
+                return;
+            const rows = (await CN.partyMembers(G.partyCode)) || G.partyMembers || [];
+            if (rows.some((r) => r.pid === f.pid)) {
+                toast(`${f.n || "เพื่อน"} อยู่ในปาร์ตี้แล้ว`);
+                return;
+            }
+            if (rows.length >= 4) {
+                toast("ปาร์ตี้เต็มแล้ว (สูงสุด 4 คน)");
+                return;
+            }
+            const ok = await CN.partyUpsert({ party: G.partyCode, pid: f.pid, n: String(f.n || "เพื่อน").slice(0, 12), c: f.c || null, lv: f.lv || 1, seen: 0, xpg: 0 });
+            if (!ok) {
+                toast("🌐 ชวนเข้าปาร์ตี้ไม่สำเร็จ ลองใหม่");
+                return;
+            }
             await partyBeat();
-            startPartyTimer();
-            toast(`🤝 สร้างปาร์ตี้แล้ว! รหัส: ${code} — ส่งรหัสให้เพื่อนกดเข้าร่วม`);
+            toast(`🤝 ชวน ${f.n || "เพื่อน"} เข้าปาร์ตี้แล้ว! (เข้าร่วมอัตโนมัติเมื่อเพื่อนออนไลน์)`);
+        };
+        // 🔁 เช็กตอนเข้าเกม/ทุกรอบ presence: กลับเข้าปาร์ตี้เดิม หรือรับคำชวนจากเพื่อน
+        G.partyAutoCheck = async () => {
+            if (G.partyCode || !CN.enabled() || !G.pid || !G.player || G._partyChecking)
+                return;
+            G._partyChecking = true;
+            try {
+                const rows = await CN.partyOf(G.pid);
+                if (!rows || !rows.length || G.partyCode)
+                    return;
+                let saved = null;
+                try {
+                    saved = localStorage.getItem(partyKey());
+                }
+                catch (_) { }
+                const pick = rows.find((r) => r.party === saved) || rows[0];
+                const invited = pick.party !== saved && !(pick.seen > 0);
+                await partyEnter(pick.party);
+                toast(invited ? `🤝 เพื่อนชวนคุณเข้าปาร์ตี้ ${pick.party} — เข้าร่วมแล้ว!` : `🤝 กลับเข้าปาร์ตี้ ${pick.party} แล้ว`);
+            }
+            catch (_) { }
+            finally {
+                G._partyChecking = false;
+            }
         };
         G.partyJoin = async (code) => {
             code = String(code || "").trim().toUpperCase();
@@ -70047,11 +70152,7 @@ function CherryAdventure() {
                 toast("ปาร์ตี้เต็มแล้ว (สูงสุด 4 คน)");
                 return;
             }
-            G.partyCode = code;
-            G._partyXpg = 0;
-            G._partyXpgSeen = {};
-            await partyBeat();
-            startPartyTimer();
+            await partyEnter(code);
             toast(`🤝 เข้าร่วมปาร์ตี้ ${code} แล้ว! ล่ามอนสเตอร์ใกล้กันเพื่อโบนัส XP`);
         };
         G.partyLeaveNow = async () => {
@@ -70060,6 +70161,7 @@ function CherryAdventure() {
             const c = G.partyCode;
             G.partyCode = null;
             stopPartyTimer();
+            partyRemember(null);
             G.partyMembers = [];
             G._partyXpgSeen = null;
             setUi(u => ({ ...u, partyCode: null, partyMembers: [] }));
@@ -92943,7 +93045,7 @@ function CherryAdventure() {
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } },
                                 "\uD83E\uDDCD \u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E42\u0E21\u0E40\u0E14\u0E25 3D ",
                                 React.createElement("span", { style: { fontSize: 9.5, color: "#c09020" } }, "\u0E17\u0E14\u0E25\u0E2D\u0E07")),
-                            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(74px, 1fr))", gap: 5 } }, [["", "🎨", "ร่างปั้นเอง"]].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (React.createElement("button", { key: k || "none", onClick: () => G.setCustom("model", k || null), style: {
+                            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(74px, 1fr))", gap: 5 } }, [].concat(Object.keys(HERO_MODELS).map((k) => [k, HERO_MODELS[k].emoji, HERO_MODELS[k].name])).map(([k, e, n]) => (React.createElement("button", { key: k || "none", onClick: () => G.setCustom("model", k || null), style: {
                                     display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
                                     padding: "6px 3px", borderRadius: 11, cursor: "pointer", fontFamily: font, lineHeight: 1.15,
                                     fontSize: 10, fontWeight: 800, border: (ui.custom.model || "") === k ? "2px solid #d9536b" : "2px solid #ece2d8",
@@ -92951,7 +93053,7 @@ function CherryAdventure() {
                                 } },
                                 React.createElement("span", { style: { fontSize: 17 } }, e),
                                 n)))),
-                            React.createElement("div", { style: { marginTop: 5, fontSize: 9.5, color: "#a58a7a" } }, "\u0E42\u0E21\u0E40\u0E14\u0E25\u0E08\u0E32\u0E01 Quaternius (CC0) \u2014 \u0E42\u0E2B\u0E25\u0E14\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13 6-8 MB \u00B7 \u0E2B\u0E19\u0E49\u0E32\u0E15\u0E32/\u0E1C\u0E21/\u0E0A\u0E38\u0E14 \u0E16\u0E39\u0E01\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E15\u0E32\u0E21\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E41\u0E25\u0E49\u0E27 (\u0E41\u0E16\u0E1A\u0E1B\u0E23\u0E31\u0E1A\u0E41\u0E15\u0E48\u0E07\u0E14\u0E49\u0E32\u0E19\u0E25\u0E48\u0E32\u0E07\u0E08\u0E30\u0E21\u0E35\u0E1C\u0E25\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E25\u0E31\u0E1A\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B \"\u0E23\u0E48\u0E32\u0E07\u0E1B\u0E31\u0E49\u0E19\u0E40\u0E2D\u0E07\")")),
+                            React.createElement("div", { style: { marginTop: 5, fontSize: 9.5, color: "#a58a7a" } }, "\u0E42\u0E21\u0E40\u0E14\u0E25\u0E08\u0E32\u0E01 Quaternius (CC0) \u2014 \u0E42\u0E2B\u0E25\u0E14\u0E04\u0E23\u0E31\u0E49\u0E07\u0E41\u0E23\u0E01\u0E1B\u0E23\u0E30\u0E21\u0E32\u0E13 6-8 MB \u00B7 \u0E2B\u0E19\u0E49\u0E32\u0E15\u0E32/\u0E1C\u0E21/\u0E0A\u0E38\u0E14 \u0E16\u0E39\u0E01\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E15\u0E32\u0E21\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E41\u0E25\u0E49\u0E27")),
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\u2461 \u0E15\u0E31\u0E49\u0E07\u0E0A\u0E37\u0E48\u0E2D\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23"),
                             React.createElement("input", { key: "nm-" + (ui.pendingName || ""), type: "text", maxLength: 12, defaultValue: ui.pendingName || "", placeholder: "\u0E15\u0E31\u0E49\u0E07\u0E0A\u0E37\u0E48\u0E2D\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13...", onChange: (e) => { G.pendingName = e.target.value; if (ui.nameErr)
@@ -92966,7 +93068,7 @@ function CherryAdventure() {
                     ui.custom.model && ui.customTab !== "char" && (React.createElement("div", { style: { padding: "7px 10px", borderRadius: 10, background: "#fff6d8", border: "1px solid #f0d890", fontSize: 10.5, fontWeight: 700, color: "#8a6a20", marginBottom: 6 } },
                         "\uD83E\uDDCD \u0E01\u0E33\u0E25\u0E31\u0E07\u0E43\u0E0A\u0E49\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E42\u0E21\u0E40\u0E14\u0E25 3D (",
                         (HERO_MODELS[ui.custom.model] || {}).name,
-                        ") \u2014 \u0E01\u0E32\u0E23\u0E1B\u0E23\u0E31\u0E1A\u0E43\u0E19\u0E41\u0E17\u0E47\u0E1A\u0E19\u0E35\u0E49\u0E08\u0E30\u0E21\u0E35\u0E1C\u0E25\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E2A\u0E25\u0E31\u0E1A\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B \"\u0E23\u0E48\u0E32\u0E07\u0E1B\u0E31\u0E49\u0E19\u0E40\u0E2D\u0E07\"")),
+                        ") \u2014 \u0E2B\u0E19\u0E49\u0E32\u0E15\u0E32\u0E41\u0E25\u0E30\u0E0A\u0E38\u0E14\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E15\u0E32\u0E21\u0E2D\u0E32\u0E0A\u0E35\u0E1E")),
                     ui.customTab === "body" && (React.createElement(React.Fragment, null,
                         React.createElement("div", null,
                             React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#8a5a4a", marginBottom: 5 } }, "\uD83E\uDDCD \u0E23\u0E39\u0E1B\u0E23\u0E48\u0E32\u0E07"),
@@ -96669,6 +96771,7 @@ function CherryAdventure() {
                                 " ",
                                 m.n,
                                 m.pid === ui.pid ? " (ฉัน)" : ""),
+                            React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: m.online ? "#2a9a5a" : "#9aa29c" } }, m.online ? "ออนไลน์" : "ออฟไลน์"),
                             React.createElement("b", { style: { color: "#5a8a70" } },
                                 "Lv.",
                                 m.lv)))),
@@ -96739,15 +96842,25 @@ function CherryAdventure() {
                     const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
                     return (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5, background: i < 3 ? "#fef8e8" : "#f7f7f2", borderRadius: 9, padding: "6px 8px", border: i < 3 ? "1px solid #eddba0" : "1px solid #e8e8de" } },
                         React.createElement("div", { style: { fontSize: 13, fontWeight: 800, width: 22, textAlign: "center" } }, medal),
-                        React.createElement("div", { style: { flex: 1 } },
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#4a5a4a" } },
+                        React.createElement("div", { style: { flex: 1, minWidth: 0, cursor: f.pid ? "pointer" : "default" }, title: f.pid ? "กดเพื่อชวนเข้าปาร์ตี้" : "", onClick: () => { if (!f.pid) {
+                                G.toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์");
+                                return;
+                            } const inP = (ui.partyMembers || []).some((m) => m.pid === f.pid); if (inP) {
+                                G.toast(`${f.n} อยู่ในปาร์ตี้แล้ว`);
+                                return;
+                            } G.partyInvite(f); } },
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#4a5a4a", textDecoration: f.pid ? "underline dotted #9ab0a0" : "none" } },
                                 clsEmoji,
                                 " ",
                                 f.n,
                                 " ",
                                 f.ng > 0 && React.createElement("span", { style: { fontSize: 8.5, color: "#fff", background: "#7a3ad0", borderRadius: 999, padding: "0 5px" } },
                                     "\u0E15\u0E37\u0E48\u0E19",
-                                    f.ng)),
+                                    f.ng),
+                                f.pid && (() => { const on = !!(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online); return React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginLeft: 4, color: on ? "#2a9a5a" : "#9aa29c" } },
+                                    "\u25CF ",
+                                    on ? "ออนไลน์" : "ออฟไลน์"); })(),
+                                f.pid && (ui.partyMembers || []).some((m) => m.pid === f.pid) && React.createElement("span", { style: { fontSize: 8.5, marginLeft: 4, color: "#fff", background: "#3a9a5a", borderRadius: 999, padding: "0 5px" } }, "\uD83E\uDD1D \u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49")),
                             React.createElement("div", { style: { fontSize: 9.5, color: "#8a9a7a" } },
                                 "Lv.",
                                 f.lv,
@@ -96756,7 +96869,8 @@ function CherryAdventure() {
                                 " \uD83D\uDEE1\uFE0F",
                                 f.def,
                                 " \u2764\uFE0F",
-                                f.hp)),
+                                f.hp,
+                                f.pid && !(ui.partyMembers || []).some((m) => m.pid === f.pid) ? " · 👆 กดชื่อเพื่อชวนเข้าปาร์ตี้" : "")),
                         f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online && (React.createElement("button", { onClick: () => G.pvpChallenge(f), title: "\u0E17\u0E49\u0E32\u0E14\u0E27\u0E25\u0E2A\u0E14 (\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C)", style: { border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" } }, "\u2694\uFE0F \u0E14\u0E27\u0E25\u0E2A\u0E14")),
                         React.createElement("button", { onClick: () => G.fightGhost(f), style: { border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#d9536b,#e87a5a)" } }, "\uD83D\uDC7B \u0E2A\u0E39\u0E49\u0E1C\u0E35"),
                         f.pid && (React.createElement("button", { onClick: () => G.visitHome(f), title: "\u0E40\u0E22\u0E35\u0E48\u0E22\u0E21\u0E1A\u0E49\u0E32\u0E19", style: { border: "none", borderRadius: 8, padding: "6px 8px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0a04a,#c8783a)" } }, "\uD83C\uDFE0")),
