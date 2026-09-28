@@ -33388,10 +33388,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (let i = 0; i < hiN && hiPool.length; i++) { const it = hiPool[Math.floor(Math.random() * hiPool.length)]; gainItem(it.id); out.items.push(it.id); }
       const midPool = LOOT.filter((x) => x.rarity === "rare" && !x.forge && !x.sew); // a couple of mid-tier pieces
       for (let i = 0; i < 2 && midPool.length; i++) { const it = midPool[Math.floor(Math.random() * midPool.length)]; gainItem(it.id); out.items.push(it.id); }
-      if (getLegendary) { // ⭐ legendary weapon/outfit — the one random winner of the 20% roll
-        const lgPool = LOOT.filter((x) => x.rarity === "legend" && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+      const lgPool = LOOT.filter((x) => x.rarity === "legend" && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+      // 🎁 ชนะอีเวนต์บอสโลก = ได้ไอเทมตัวละครขั้นสูง (ระดับตำนาน ตรงอาชีพ) การันตี 1 ชิ้นทุกครั้ง
+      if (lgPool.length) { const it = lgPool[Math.floor(Math.random() * lgPool.length)]; gainItem(it.id); out.adv = it.id; }
+      if (getLegendary) { // ⭐ ผู้โชคดี (สุ่ม 20% / ผู้ชนะในปาร์ตี้) ได้ของตำนานเพิ่มอีก 1 ชิ้น
         if (lgPool.length) { const it = lgPool[Math.floor(Math.random() * lgPool.length)]; gainItem(it.id); out.legend = it.id; }
       }
+      // ⭐ EXP มหาศาล — เท่ากับค่า EXP ของ 3 เลเวลถัดไป (ขั้นต่ำ 50,000)
+      { const lv = (G.player && G.player.level) || 1; let ex = 0; for (let k = 0; k < 3; k++) ex += expForLevel(lv + k);
+        out.exp = Math.max(50000, Math.round(ex)); try { gainExp(out.exp); } catch (e) {} }
       syncPlayer();
       return out;
     };
@@ -33415,8 +33420,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const legName = rw.legend ? (LOOT.find((x) => x.id === rw.legend) || {}).name : null;
       setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard(),
         wbResult: { reason: "win", hp: 0, maxHp: wb.maxHp, pct: 0, reward: rw, legName }, msg: "" }));
-      toast(`🏆 ปราบ ${WORLD_BOSS.name} สำเร็จ! +100,000💰 +1,000💎 +100💠`);
-      if (legName) toast(`⭐ ได้ของตำนาน: ${legName}!`);
+      toast(`🏆 ปราบ ${WORLD_BOSS.name} สำเร็จ! +${(rw.exp || 0).toLocaleString()} EXP +100,000💰 +1,000💎`);
+      { const adv = rw.adv ? LOOT.find((x) => x.id === rw.adv) : null; if (adv) setTimeout(() => toast(`🎁 ได้ไอเทมขั้นสูง: ${adv.emoji || ""} ${adv.name}!`), 1200); }
+      if (legName) setTimeout(() => toast(`⭐ โชคดี! ได้ของตำนานเพิ่ม: ${legName}!`), 2400);
     };
 
     // 👻 spawn a friend's ghost as a special battle opponent (mirror match)
@@ -67427,6 +67433,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   <div style={{ marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 12 }}>
                     <div style={{ fontSize: 12, fontWeight: 900, color: "#f5d0a0", marginBottom: 6 }}>🎁 รางวัลที่ได้รับ</div>
                     <div style={{ fontSize: 12.5, color: "#fff", lineHeight: 1.8 }}>
+                      {rw.exp > 0 && <span style={{ color: "#9ae8ff", fontWeight: 900 }}>⭐ EXP +{rw.exp.toLocaleString()}<br /></span>}
                       💎 เพชร +{(rw.diamonds || 0).toLocaleString()}<br />
                       💰 ทอง +{(rw.gold || 0).toLocaleString()}<br />
                       💠 ผงเพชร +{rw.gemDust || 0}<br />
@@ -67434,6 +67441,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     </div>
                     {(rw.items || []).length > 0 && (
                       <div style={{ fontSize: 9.5, color: "#c8b8a8", marginTop: 4, lineHeight: 1.5 }}>{(rw.items || []).map(itemName).join(" · ")}</div>
+                    )}
+                    {rw.adv && (
+                      <div style={{ marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#ffe9a8", background: "linear-gradient(90deg,rgba(245,166,35,0.25),rgba(255,77,224,0.2))", borderRadius: 10, padding: "8px", border: "1px solid #f5c542" }}>
+                        🎁 ไอเทมตัวละครขั้นสูง: {itemName(rw.adv)}
+                      </div>
                     )}
                     {r.legName ? (
                       <div style={{ marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#f5c542", background: "rgba(245,197,66,0.14)", borderRadius: 10, padding: "8px", border: "1px solid #f5a623" }}>

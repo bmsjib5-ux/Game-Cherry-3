@@ -54045,13 +54045,31 @@ function CherryAdventure() {
                 gainItem(it.id);
                 out.items.push(it.id);
             }
-            if (getLegendary) { // ⭐ legendary weapon/outfit — the one random winner of the 20% roll
-                const lgPool = LOOT.filter((x) => x.rarity === "legend" && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+            const lgPool = LOOT.filter((x) => x.rarity === "legend" && (x.slot !== "weapon" || !x.cls || x.cls === G.cls));
+            // 🎁 ชนะอีเวนต์บอสโลก = ได้ไอเทมตัวละครขั้นสูง (ระดับตำนาน ตรงอาชีพ) การันตี 1 ชิ้นทุกครั้ง
+            if (lgPool.length) {
+                const it = lgPool[Math.floor(Math.random() * lgPool.length)];
+                gainItem(it.id);
+                out.adv = it.id;
+            }
+            if (getLegendary) { // ⭐ ผู้โชคดี (สุ่ม 20% / ผู้ชนะในปาร์ตี้) ได้ของตำนานเพิ่มอีก 1 ชิ้น
                 if (lgPool.length) {
                     const it = lgPool[Math.floor(Math.random() * lgPool.length)];
                     gainItem(it.id);
                     out.legend = it.id;
                 }
+            }
+            // ⭐ EXP มหาศาล — เท่ากับค่า EXP ของ 3 เลเวลถัดไป (ขั้นต่ำ 50,000)
+            {
+                const lv = (G.player && G.player.level) || 1;
+                let ex = 0;
+                for (let k = 0; k < 3; k++)
+                    ex += expForLevel(lv + k);
+                out.exp = Math.max(50000, Math.round(ex));
+                try {
+                    gainExp(out.exp);
+                }
+                catch (e) { }
             }
             syncPlayer();
             return out;
@@ -54093,9 +54111,14 @@ function CherryAdventure() {
             const legName = rw.legend ? (LOOT.find((x) => x.id === rw.legend) || {}).name : null;
             setUi((u) => ({ ...u, mode: "explore", enemy: null, wbActive: true, wbMyScore: G.wbMyScore || 0, wbBoard: wbBoard(),
                 wbResult: { reason: "win", hp: 0, maxHp: wb.maxHp, pct: 0, reward: rw, legName }, msg: "" }));
-            toast(`🏆 ปราบ ${WORLD_BOSS.name} สำเร็จ! +100,000💰 +1,000💎 +100💠`);
+            toast(`🏆 ปราบ ${WORLD_BOSS.name} สำเร็จ! +${(rw.exp || 0).toLocaleString()} EXP +100,000💰 +1,000💎`);
+            {
+                const adv = rw.adv ? LOOT.find((x) => x.id === rw.adv) : null;
+                if (adv)
+                    setTimeout(() => toast(`🎁 ได้ไอเทมขั้นสูง: ${adv.emoji || ""} ${adv.name}!`), 1200);
+            }
             if (legName)
-                toast(`⭐ ได้ของตำนาน: ${legName}!`);
+                setTimeout(() => toast(`⭐ โชคดี! ได้ของตำนานเพิ่ม: ${legName}!`), 2400);
         };
         // 👻 spawn a friend's ghost as a special battle opponent (mirror match)
         const startGhostBattle = (friend) => {
@@ -100353,6 +100376,10 @@ function CherryAdventure() {
                     React.createElement("div", { style: { marginTop: 12, background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 12 } },
                         React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#f5d0a0", marginBottom: 6 } }, "\uD83C\uDF81 \u0E23\u0E32\u0E07\u0E27\u0E31\u0E25\u0E17\u0E35\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A"),
                         React.createElement("div", { style: { fontSize: 12.5, color: "#fff", lineHeight: 1.8 } },
+                            rw.exp > 0 && React.createElement("span", { style: { color: "#9ae8ff", fontWeight: 900 } },
+                                "\u2B50 EXP +",
+                                rw.exp.toLocaleString(),
+                                React.createElement("br", null)),
                             "\uD83D\uDC8E \u0E40\u0E1E\u0E0A\u0E23 +",
                             (rw.diamonds || 0).toLocaleString(),
                             React.createElement("br", null),
@@ -100366,6 +100393,9 @@ function CherryAdventure() {
                             (rw.items || []).length,
                             " \u0E0A\u0E34\u0E49\u0E19"),
                         (rw.items || []).length > 0 && (React.createElement("div", { style: { fontSize: 9.5, color: "#c8b8a8", marginTop: 4, lineHeight: 1.5 } }, (rw.items || []).map(itemName).join(" · "))),
+                        rw.adv && (React.createElement("div", { style: { marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#ffe9a8", background: "linear-gradient(90deg,rgba(245,166,35,0.25),rgba(255,77,224,0.2))", borderRadius: 10, padding: "8px", border: "1px solid #f5c542" } },
+                            "\uD83C\uDF81 \u0E44\u0E2D\u0E40\u0E17\u0E21\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07: ",
+                            itemName(rw.adv))),
                         r.legName ? (React.createElement("div", { style: { marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 900, color: "#f5c542", background: "rgba(245,197,66,0.14)", borderRadius: 10, padding: "8px", border: "1px solid #f5a623" } },
                             "\u2B50 \u0E02\u0E2D\u0E07\u0E15\u0E33\u0E19\u0E32\u0E19! ",
                             itemName(r.legend || ""))) : (React.createElement("div", { style: { marginTop: 8, textAlign: "center", fontSize: 10, color: "#a89888" } }, "\u2B50 \u0E02\u0E2D\u0E07\u0E15\u0E33\u0E19\u0E32\u0E19: \u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E23\u0E2D\u0E1A\u0E19\u0E35\u0E49 (\u0E42\u0E2D\u0E01\u0E32\u0E2A 20%)"))),
