@@ -51781,9 +51781,12 @@ function CherryAdventure() {
             }
             return { ...e };
         };
+        const gachaPool = () => G.HERO_OFF ? GACHA_POOL.filter((x) => x.type !== "hero" && x.type !== "pass") : GACHA_POOL; // 🦸🚫 ปิดชุดฮีโร่ = ตู้สุ่มไม่มีฮีโร่/บัตรฮีโร่
         const gachaRollOne = () => {
-            G.gachaPity = (G.gachaPity || 0) + 1;
             let e;
+            if (G.HERO_OFF)
+                return gachaWeighted(gachaPool());
+            G.gachaPity = (G.gachaPity || 0) + 1;
             if (G.gachaPity >= 60)
                 e = G.gachaPickHero(); // 🎯 hard pity → guaranteed hero
             else
@@ -51845,7 +51848,7 @@ function CherryAdventure() {
             for (let i = 0; i < n; i++)
                 results.push(gachaRollOne());
             if (n === 10 && !results.some((r) => r.rarity !== "common")) { // 🎯 10x floor → guarantee a rare+
-                results[9] = gachaWeighted(GACHA_POOL.filter((x) => x.rarity !== "common"));
+                results[9] = gachaWeighted(gachaPool().filter((x) => x.rarity !== "common"));
                 if (results[9].type === "hero")
                     G.gachaPity = 0;
             }
@@ -95365,7 +95368,7 @@ function CherryAdventure() {
                         ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
                         ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
                         ["💍", "เครื่องประดับ", () => G.openAccessories(), "#f5a0d0"],
-                        ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
+                        ...(G.HERO_OFF ? [] : [["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"]]), // 🦸🚫 ปิดร้านชุดฮีโร่ไว้ก่อน
                         ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
                     ]],
                 ["🛠️", "ผลิต & อาชีพ", [
@@ -95785,12 +95788,12 @@ function CherryAdventure() {
                 React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", border: "1px solid #3a6aa0", marginRight: 32 } },
                     "\uD83D\uDC8E ",
                     (ui.diamonds || 0).toLocaleString())),
-            React.createElement("div", { style: { fontSize: 10.5, color: "#c8a8e0", marginBottom: 10 } }, "\u0E2A\u0E38\u0E48\u0E21\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19 \u00B7 \u0E2A\u0E01\u0E34\u0E19\u0E2D\u0E32\u0E27\u0E38\u0E18 \u00B7 \u0E44\u0E2D\u0E40\u0E17\u0E47\u0E21 \u2014 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E04\u0E23\u0E1A 60 \u0E04\u0E23\u0E31\u0E49\u0E07"),
+            React.createElement("div", { style: { fontSize: 10.5, color: "#c8a8e0", marginBottom: 10 } }, G.HERO_OFF ? "สุ่มสกินอาวุธ · เพชร · ทอง" : "สุ่มฮีโร่ในตำนาน · สกินอาวุธ · ไอเท็ม — การันตีฮีโร่ครบ 60 ครั้ง"),
             React.createElement("div", { style: { borderRadius: 16, padding: "18px 10px", marginBottom: 12, textAlign: "center", background: "radial-gradient(circle at 50% 28%, rgba(255,150,230,0.30), rgba(120,60,200,0.08)), linear-gradient(135deg,#3a1a5a,#1a1030)", border: "1px solid #6a4a9a", position: "relative", overflow: "hidden" } },
-                React.createElement("div", { style: { fontSize: 46, filter: "drop-shadow(0 3px 10px rgba(255,180,240,0.6))" } }, "\uD83E\uDDB8\u2728\uD83D\uDDE1\uFE0F"),
+                React.createElement("div", { style: { fontSize: 46, filter: "drop-shadow(0 3px 10px rgba(255,180,240,0.6))" } }, G.HERO_OFF ? "✨🗡️💎" : "🦸✨🗡️"),
                 React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#fff", marginTop: 4 } }, "\u0E1E\u0E39\u0E25\u0E2D\u0E31\u0E0D\u0E40\u0E0A\u0E34\u0E0D\u0E1E\u0E34\u0E40\u0E28\u0E29"),
-                React.createElement("div", { style: { fontSize: 9.5, color: "#e0c0ff", marginTop: 2 } }, "\u0E2E\u0E35\u0E42\u0E23\u0E48 8 \u0E15\u0E31\u0E27 \u00B7 \u0E2A\u0E01\u0E34\u0E19\u0E2B\u0E32\u0E22\u0E32\u0E01 8 \u0E41\u0E1A\u0E1A \u00B7 \u0E1A\u0E31\u0E15\u0E23 & \u0E40\u0E1E\u0E0A\u0E23")),
-            React.createElement("div", { style: { marginBottom: 12 } },
+                React.createElement("div", { style: { fontSize: 9.5, color: "#e0c0ff", marginTop: 2 } }, G.HERO_OFF ? "สกินหายาก · เพชร · ทอง" : React.createElement(React.Fragment, null, "\u0E2E\u0E35\u0E42\u0E23\u0E48 8 \u0E15\u0E31\u0E27 \u00B7 \u0E2A\u0E01\u0E34\u0E19\u0E2B\u0E32\u0E22\u0E32\u0E01 8 \u0E41\u0E1A\u0E1A \u00B7 \u0E1A\u0E31\u0E15\u0E23 & \u0E40\u0E1E\u0E0A\u0E23"))),
+            !G.HERO_OFF && React.createElement("div", { style: { marginBottom: 12 } },
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: "#c8a8e0", marginBottom: 3 } },
                     React.createElement("span", null, "\uD83C\uDFAF \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35\u0E2E\u0E35\u0E42\u0E23\u0E48"),
                     React.createElement("span", null,
@@ -95808,19 +95811,19 @@ function CherryAdventure() {
                     React.createElement("div", { style: { fontSize: 11.5, color: "#ffe08a" } }, "\uD83D\uDC8E 270"))),
             React.createElement("div", { style: { marginTop: 12, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "9px 11px", fontSize: 10, color: "#c0b0d8" } },
                 React.createElement("div", { style: { fontWeight: 800, color: "#e6c6ff", marginBottom: 4 } }, "\u0E2D\u0E31\u0E15\u0E23\u0E32\u0E2D\u0E2D\u0E01"),
-                React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
+                !G.HERO_OFF && React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
                     React.createElement("span", { style: { color: "#ffcf4a" } }, "\uD83E\uDDB8 \u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19"),
                     React.createElement("span", null, "2%")),
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
                     React.createElement("span", { style: { color: "#c98aff" } }, "\uD83D\uDDE1\uFE0F \u0E2A\u0E01\u0E34\u0E19\u0E2D\u0E35\u0E1E\u0E34\u0E04"),
                     React.createElement("span", null, "9%")),
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
-                    React.createElement("span", { style: { color: "#6ac0ff" } }, "\u2694\uFE0F \u0E2A\u0E01\u0E34\u0E19\u0E41\u0E23\u0E23\u0E4C \u00B7 \u0E1A\u0E31\u0E15\u0E23 \u00B7 \u0E40\u0E1E\u0E0A\u0E23"),
+                    React.createElement("span", { style: { color: "#6ac0ff" } }, G.HERO_OFF ? "⚔️ สกินแรร์ · เพชร" : "⚔️ สกินแรร์ · บัตร · เพชร"),
                     React.createElement("span", null, "32%")),
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between" } },
                     React.createElement("span", { style: { color: "#b8c0a8" } }, "\uD83D\uDCB0 \u0E17\u0E2D\u0E07"),
                     React.createElement("span", null, "57%")),
-                React.createElement("div", { style: { marginTop: 5, color: "#9a8ab8", fontSize: 9 } }, "* \u0E44\u0E14\u0E49\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33 \u2192 \u0E04\u0E37\u0E19\u0E40\u0E1E\u0E0A\u0E23\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E2E\u0E35\u0E42\u0E23\u0E48 +60\uD83D\uDC8E \u00B7 \u0E2A\u0E01\u0E34\u0E19 +15\uD83D\uDC8E)")))),
+                React.createElement("div", { style: { marginTop: 5, color: "#9a8ab8", fontSize: 9 } }, G.HERO_OFF ? "* ได้สกินซ้ำ → คืนเพชรอัตโนมัติ +15💎" : "* ได้ของซ้ำ → คืนเพชรอัตโนมัติ (ฮีโร่ +60💎 · สกิน +15💎)")))),
         ui.gachaResult && (React.createElement("div", { onClick: () => G.closeGachaResult(), style: { position: "absolute", inset: 0, background: "rgba(10,6,20,0.82)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 80, fontFamily: font, padding: 16 } },
             React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#ffe0f5", marginBottom: 12, textShadow: "0 2px 10px rgba(255,150,230,0.6)" } },
                 "\uD83C\uDFB0 ",

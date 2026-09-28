@@ -31970,9 +31970,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (const it of pool) { if ((x -= it.weight) < 0) { e = it; break; } }
       return { ...e };
     };
+    const gachaPool = () => G.HERO_OFF ? GACHA_POOL.filter((x) => x.type !== "hero" && x.type !== "pass") : GACHA_POOL;   // 🦸🚫 ปิดชุดฮีโร่ = ตู้สุ่มไม่มีฮีโร่/บัตรฮีโร่
     const gachaRollOne = () => {
-      G.gachaPity = (G.gachaPity || 0) + 1;
       let e;
+      if (G.HERO_OFF) return gachaWeighted(gachaPool());
+      G.gachaPity = (G.gachaPity || 0) + 1;
       if (G.gachaPity >= 60) e = G.gachaPickHero();          // 🎯 hard pity → guaranteed hero
       else e = gachaWeighted(GACHA_POOL);
       if (e.type === "hero") G.gachaPity = 0;                // reset pity whenever a hero drops
@@ -32002,7 +32004,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const results = [];
       for (let i = 0; i < n; i++) results.push(gachaRollOne());
       if (n === 10 && !results.some((r) => r.rarity !== "common")) {  // 🎯 10x floor → guarantee a rare+
-        results[9] = gachaWeighted(GACHA_POOL.filter((x) => x.rarity !== "common"));
+        results[9] = gachaWeighted(gachaPool().filter((x) => x.rarity !== "common"));
         if (results[9].type === "hero") G.gachaPity = 0;
       }
       results.forEach((r) => gachaApply(r));
@@ -62441,7 +62443,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             ["🐾", "สัตว์เลี้ยง", () => toggleMenu("panelOpen"), "#5fc98a"],
             ["🐎", "สัตว์ขี่", () => G.toggleMount(), "#7b9ae0"],
             ["💍", "เครื่องประดับ", () => G.openAccessories(), "#f5a0d0"],
-            ["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"],
+            ...(G.HERO_OFF ? [] : [["🦸", "ฮีโร่", () => { G.sweepHeroTemp && G.sweepHeroTemp(); toggleMenu("heroGalleryOpen"); }, "#e07ac0"]]),   // 🦸🚫 ปิดร้านชุดฮีโร่ไว้ก่อน
             ["✨", "คอลเลกชัน", () => G.toggleCollection(), "#b79bff"],
           ]],
           ["🛠️", "ผลิต & อาชีพ", [
@@ -62894,20 +62896,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             <div style={{ flex: 1 }} />
             <div style={{ fontSize: 13, fontWeight: 800, color: "#8fd0ff", background: "rgba(90,160,240,0.15)", borderRadius: 999, padding: "2px 10px", border: "1px solid #3a6aa0", marginRight: 32 }}>💎 {(ui.diamonds || 0).toLocaleString()}</div>
           </div>
-          <div style={{ fontSize: 10.5, color: "#c8a8e0", marginBottom: 10 }}>สุ่มฮีโร่ในตำนาน · สกินอาวุธ · ไอเท็ม — การันตีฮีโร่ครบ 60 ครั้ง</div>
+          <div style={{ fontSize: 10.5, color: "#c8a8e0", marginBottom: 10 }}>{G.HERO_OFF ? "สุ่มสกินอาวุธ · เพชร · ทอง" : "สุ่มฮีโร่ในตำนาน · สกินอาวุธ · ไอเท็ม — การันตีฮีโร่ครบ 60 ครั้ง"}</div>
           <div style={{ borderRadius: 16, padding: "18px 10px", marginBottom: 12, textAlign: "center", background: "radial-gradient(circle at 50% 28%, rgba(255,150,230,0.30), rgba(120,60,200,0.08)), linear-gradient(135deg,#3a1a5a,#1a1030)", border: "1px solid #6a4a9a", position: "relative", overflow: "hidden" }}>
-            <div style={{ fontSize: 46, filter: "drop-shadow(0 3px 10px rgba(255,180,240,0.6))" }}>🦸✨🗡️</div>
+            <div style={{ fontSize: 46, filter: "drop-shadow(0 3px 10px rgba(255,180,240,0.6))" }}>{G.HERO_OFF ? "✨🗡️💎" : "🦸✨🗡️"}</div>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginTop: 4 }}>พูลอัญเชิญพิเศษ</div>
-            <div style={{ fontSize: 9.5, color: "#e0c0ff", marginTop: 2 }}>ฮีโร่ 8 ตัว · สกินหายาก 8 แบบ · บัตร &amp; เพชร</div>
+            <div style={{ fontSize: 9.5, color: "#e0c0ff", marginTop: 2 }}>{G.HERO_OFF ? "สกินหายาก · เพชร · ทอง" : <>ฮีโร่ 8 ตัว · สกินหายาก 8 แบบ · บัตร &amp; เพชร</>}</div>
           </div>
-          <div style={{ marginBottom: 12 }}>
+          {!G.HERO_OFF && <div style={{ marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 700, color: "#c8a8e0", marginBottom: 3 }}>
               <span>🎯 การันตีฮีโร่</span><span>{(ui.gachaPity || 0)} / 60</span>
             </div>
             <div style={{ height: 8, background: "rgba(0,0,0,0.35)", borderRadius: 999, overflow: "hidden", border: "1px solid #4a3a6a" }}>
               <div style={{ width: `${Math.min(100, ((ui.gachaPity || 0) / 60) * 100)}%`, height: "100%", background: "linear-gradient(90deg,#f5a623,#ff6ac0)", transition: "width 0.3s" }} />
             </div>
-          </div>
+          </div>}
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={() => G.gachaPull(1)} disabled={(ui.diamonds || 0) < 30} style={{ flex: 1, padding: "12px 0", borderRadius: 14, border: "none", cursor: (ui.diamonds || 0) >= 30 ? "pointer" : "not-allowed", fontFamily: font, fontWeight: 800, color: "#fff", background: (ui.diamonds || 0) >= 30 ? "linear-gradient(135deg,#6a8ae0,#8a5ad0)" : "rgba(255,255,255,0.08)", opacity: (ui.diamonds || 0) >= 30 ? 1 : 0.5 }}>
               <div style={{ fontSize: 14 }}>สุ่ม ×1</div><div style={{ fontSize: 11.5, color: "#ffe08a" }}>💎 30</div>
@@ -62919,11 +62921,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           </div>
           <div style={{ marginTop: 12, background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "9px 11px", fontSize: 10, color: "#c0b0d8" }}>
             <div style={{ fontWeight: 800, color: "#e6c6ff", marginBottom: 4 }}>อัตราออก</div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#ffcf4a" }}>🦸 ฮีโร่ในตำนาน</span><span>2%</span></div>
+            {!G.HERO_OFF && <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#ffcf4a" }}>🦸 ฮีโร่ในตำนาน</span><span>2%</span></div>}
             <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#c98aff" }}>🗡️ สกินอีพิค</span><span>9%</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#6ac0ff" }}>⚔️ สกินแรร์ · บัตร · เพชร</span><span>32%</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#6ac0ff" }}>{G.HERO_OFF ? "⚔️ สกินแรร์ · เพชร" : "⚔️ สกินแรร์ · บัตร · เพชร"}</span><span>32%</span></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#b8c0a8" }}>💰 ทอง</span><span>57%</span></div>
-            <div style={{ marginTop: 5, color: "#9a8ab8", fontSize: 9 }}>* ได้ของซ้ำ → คืนเพชรอัตโนมัติ (ฮีโร่ +60💎 · สกิน +15💎)</div>
+            <div style={{ marginTop: 5, color: "#9a8ab8", fontSize: 9 }}>{G.HERO_OFF ? "* ได้สกินซ้ำ → คืนเพชรอัตโนมัติ +15💎" : "* ได้ของซ้ำ → คืนเพชรอัตโนมัติ (ฮีโร่ +60💎 · สกิน +15💎)"}</div>
           </div>
         </div>
       )}
