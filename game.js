@@ -45326,9 +45326,7 @@ function CherryAdventure() {
             crustM.side = THREE.DoubleSide;
             const crust = new THREE.Mesh(ribbon(rpts, (u) => 2.4 + Math.sin(u * 9) * 0.35, 0.05), crustM);
             volG.add(crust); // ขอบลาวาเย็นตัวสีดำ
-            rpts.forEach((p, i) => { if (i % 3)
-                return; const r2 = Math.hypot(p[0], p[2]); if (r2 < FIELD_R + 1)
-                cols.push({ x: p[0], z: p[2], r: 1.9 }); }); // เดินลุยลาวาไม่ได้
+            // 🚶 แม่น้ำลาวาเดินข้ามได้ (ไม่มีตัวกั้น)
             rpts.forEach((p, i) => {
                 if (i % 7 !== 3)
                     return;

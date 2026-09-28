@@ -27539,7 +27539,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       cat.getPoints(180).forEach((v) => rpts.push([v.x, terrainAt(v.x, v.z), v.z]));
       const river = new THREE.Mesh(ribbon(rpts, (u) => 1.6 + Math.sin(u * 9) * 0.35, 0.1), lavaM([1, 1])); volG.add(river);
       const crustM = rockB.clone(); crustM.side = THREE.DoubleSide; const crust = new THREE.Mesh(ribbon(rpts, (u) => 2.4 + Math.sin(u * 9) * 0.35, 0.05), crustM); volG.add(crust);   // ขอบลาวาเย็นตัวสีดำ
-      rpts.forEach((p, i) => { if (i % 3) return; const r2 = Math.hypot(p[0], p[2]); if (r2 < FIELD_R + 1) cols.push({ x: p[0], z: p[2], r: 1.9 }); });   // เดินลุยลาวาไม่ได้
+      // 🚶 แม่น้ำลาวาเดินข้ามได้ (ไม่มีตัวกั้น)
       rpts.forEach((p, i) => { if (i % 7 !== 3) return; for (const sd of [-1, 1]) { const q = rpts[Math.min(rpts.length - 1, i + 1)], tx = q[0] - p[0], tz = q[2] - p[2], tl = Math.hypot(tx, tz) || 1;
         const o = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 0), Math.random() < 0.5 ? rockA : rockB); o.position.set(p[0] - tz / tl * sd * 2.9, p[1] + 0.3, p[2] + tx / tl * sd * 2.9); o.scale.set(0.8 + Math.random(), 0.6 + Math.random() * 0.6, 0.8 + Math.random()); o.rotation.y = Math.random() * 3; volG.add(o); } });
       for (let k = 0; k < 8; k++) { const p = rpts[10 + k * 20]; try { const F = kFlip("smoke", 7, { add: false, color: 0x5a4a44 }); F.sp.position.set(p[0], p[1] + 2, p[2]); volG.add(F.sp); volFx.crack.push({ F, x: p[0], y: p[1], z: p[2], ph: Math.random(), s: 7 }); } catch (_) {} }
