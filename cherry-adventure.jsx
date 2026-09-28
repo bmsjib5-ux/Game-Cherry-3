@@ -32596,6 +32596,42 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (kind === "mats") { const m = MATERIALS[id]; return m ? `${m.emoji}${m.name}` : id; }
       return id;
     };
+    // 🎒 รวมของทุกประเภทให้หน้ากระเป๋า (นอกจากอุปกรณ์สวมใส่) — ยา · อาหาร · สมุนไพร · แร่ · ปลา · ผลผลิตฟาร์ม
+    //    made = ของที่คราฟ/ทำเอง · use = กดใช้ได้เลยจากกระเป๋า
+    G.bagData = () => {
+      const out = { pot: [], food: [], herb: [], mat: [], fish: [], farm: [] };
+      const HPP = G.HP_POT || {}, MPP = G.MP_POT || {};
+      ["s", "m", "l"].forEach((k) => {
+        const nh = (G.hpPots || {})[k] || 0, nm = (G.mpPots || {})[k] || 0;
+        if (nh > 0 && HPP[k]) out.pot.push({ key: "hp:" + k, emoji: "🧪", name: `ยาเลือด${HPP[k].name}`, n: nh, grade: k === "l" ? 3 : k === "m" ? 2 : 1, desc: `ฟื้นพลังชีวิตทันที +${HPP[k].heal.toLocaleString()}`, tag: "ร้านค้า", use: () => G.usePotion(k) });
+        if (nm > 0 && MPP[k]) out.pot.push({ key: "mp:" + k, emoji: "💧", name: `ยามานา${MPP[k].name}`, n: nm, grade: k === "l" ? 3 : k === "m" ? 2 : 1, desc: `ฟื้นมานาทันที +${MPP[k].rest.toLocaleString()}`, tag: "ร้านค้า", use: () => G.useManaPotion(k) });
+      });
+      (G.potBagList ? G.potBagList() : []).forEach((q) => {
+        const D = q.def || {}, K = BREW_KIND[q.kind] || {};
+        out.pot.push({ key: "brew:" + q.i, emoji: D.emoji || K.emoji || "🧪", name: D.name || "ยาปรุงเอง", n: q.n, grade: 2 + Math.min(2, Math.floor((q.lv || 1) / 8)), made: true,
+          desc: `${K.label || "ยา"} ${q.pct || 0}%${q.mins ? ` · นาน ${q.mins} นาที` : ""} · ปรุงที่ Lv.${q.lv || 1}`, tag: "ปรุงเอง", use: () => G.useBrew(q.i) });
+      });
+      (G.foodBagList ? G.foodBagList() : []).forEach((f) => {
+        const bf = Object.keys(f.buff || {}).map((k) => { const L = BUFF_LABEL[k]; return L ? `${L[0]} +${f.buff[k]}${L[1]}` : null; }).filter(Boolean).join(" · ");
+        out.food.push({ key: "food:" + f.uid, emoji: f.emoji, name: f.name, n: 1, grade: 1 + (f.qi || 0), made: true, qName: f.qName, qEmoji: f.qEmoji, qCol: f.qCol,
+          desc: `${bf || "อาหารบัฟ"} · นาน ${f.mins} นาที`, tag: "ทำเอง", use: () => G.eatFood(f.uid) });
+      });
+      HERBS.forEach((h) => { const n = (G.herbBag || {})[h.id] || 0; if (n > 0) out.herb.push({ key: "herb:" + h.id, emoji: h.emoji, name: h.name, n, grade: h.tier, desc: `${h.desc} · ใช้ปรุงยา`, tag: "เก็บได้", sell: h.sell }); });
+      Object.keys(MATERIALS).forEach((id) => { const n = (G.mats || {})[id] || 0, M = MATERIALS[id]; if (n > 0) out.mat.push({ key: "mat:" + id, emoji: M.emoji, name: M.name, n, grade: id === "dragonScale" ? 4 : id === "crystal" ? 2 : /Ess$/.test(id) ? 2 : 1, desc: M.desc, tag: "ขุดได้" }); });
+      Object.keys(FISH_TIER).forEach((id) => { const n = (G.fishBag || {})[id] || 0, F = FISH_TIER[id]; if (n > 0) out.fish.push({ key: "fish:" + id, emoji: F.emoji, name: F.name, n, grade: id === "epic" ? 4 : id === "rare" ? 2 : 1, desc: "ใช้ทำอาหาร หรือขายในตลาด", tag: "ตกได้" }); });
+      const R = G.ranch || {};
+      Object.keys(R.produce || {}).forEach((id) => { const n = R.produce[id] || 0, C = CROP_BY[id]; if (n > 0 && C) out.farm.push({ key: "crop:" + id, emoji: C.emoji, name: C.name, n, grade: 1, desc: "ผลผลิตจากแปลงปลูก · ใช้ทำอาหาร", tag: "ปลูกเอง", made: true }); });
+      Object.keys(R.goods || {}).forEach((id) => { const n = R.goods[id] || 0, Gd = GOODS_BY[id]; if (n > 0 && Gd) out.farm.push({ key: "good:" + id, emoji: Gd.emoji, name: Gd.name, n, grade: /^fruit_/.test(id) ? 1 : 2, desc: /^fruit_/.test(id) ? "ผลไม้จากต้นไม้ในฟาร์ม" : "ของแปรรูปจากโรงงานฟาร์ม · ใช้ทำอาหาร", tag: /^fruit_/.test(id) ? "เก็บได้" : "แปรรูปเอง", made: !/^fruit_/.test(id) }); });
+      return out;
+    };
+    G.bagUse = (key) => {
+      const all = G.bagData(); let hit = null;
+      Object.values(all).forEach((arr) => arr.forEach((x) => { if (x.key === key) hit = x; }));
+      if (!hit || !hit.use) return;
+      try { hit.use(); } catch (e) {}
+      if (typeof syncPlayer === "function") syncPlayer();
+      setUi((u) => ({ ...u, bagTick: Date.now(), hpPots: { ...(G.hpPots || {}) }, mpPots: { ...(G.mpPots || {}) } }));
+    };
     // ✅ ทำสูตรนี้ได้ไหม + ขาดอะไรบ้าง
     G.cookCheck = (rid) => {
       const R = RECIPE_BY[rid];
@@ -65312,19 +65348,57 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             );
           })()}
 
-          {ui.invOpen && (
+          {ui.invOpen && (() => {
+            const bagK = ui.bagKind || "gear";
+            const BD = G.bagData ? G.bagData() : { pot: [], food: [], herb: [], mat: [], fish: [], farm: [] };
+            const gearN = new Set(ui.inv).size;
+            const KINDS = [["gear", "⚔️", "อุปกรณ์", gearN, "#ff6a5a", "#c0302a"], ["pot", "🧪", "ยา", BD.pot.reduce((a, x) => a + x.n, 0), "#b06aff", "#7030c0"], ["food", "🍳", "อาหาร", BD.food.length, "#ffa83a", "#d0701a"],
+              ["herb", "🌿", "สมุนไพร", BD.herb.reduce((a, x) => a + x.n, 0), "#3ad0a0", "#1a8a6a"], ["mat", "⛏️", "แร่", BD.mat.reduce((a, x) => a + x.n, 0), "#c0925a", "#7a5a2a"],
+              ["fish", "🐟", "ปลา", BD.fish.reduce((a, x) => a + x.n, 0), "#3ab0f0", "#1a70b0"], ["farm", "🌾", "ฟาร์ม", BD.farm.reduce((a, x) => a + x.n, 0), "#6ad04a", "#3a8a2a"]];
+            const KC = KINDS.find((k) => k[0] === bagK) || KINDS[0];
+            const GRADE_COL = ["#9aa4ae", "#9aa4ae", "#4aa0e8", "#b06aff", "#ff9a2a"];
+            const toolBtn = (label, onClick, c1, c2) => (
+              <button onClick={onClick} style={{ flex: "1 1 auto", padding: "7px 9px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, fontFamily: font, color: "#fff", whiteSpace: "nowrap",
+                background: `linear-gradient(180deg, ${c1}, ${c2})`, boxShadow: `0 3px 0 ${c2}, 0 4px 8px rgba(0,0,0,0.18)`, textShadow: "0 1px 1px rgba(0,0,0,0.3)" }}>{label}</button>
+            );
+            return (
             <div style={{
-              position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              ...CHIBI_FRAME, borderRadius: 16, padding: 12,
-              boxShadow: MODAL_SHADOW,
+              position: "absolute", ...MODAL_POS, zIndex: 50, width: "94%", maxWidth: 600, maxHeight: "calc(86vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
+              borderRadius: 20, padding: 0, background: "linear-gradient(180deg,#fffaf2 0%,#f6efe2 100%)", border: "3px solid #3a2a5a",
+              boxShadow: "0 0 0 3px #f5c542, 0 10px 30px rgba(20,10,40,0.45)",
             }}>
-              {closeBtn("invOpen")}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#5a7a4a" }}>🎒 กระเป๋า</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#c09020", background: "#fdf6e2", borderRadius: 999, padding: "3px 10px", border: "1px solid #eddba0" }}>
-                  💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}
+              <div style={{ position: "sticky", top: 0, zIndex: 3, background: `linear-gradient(135deg,#3a2a5a,${KC[5]})`, padding: "10px 12px 8px", borderRadius: "16px 16px 0 0" }}>
+                {closeBtn("invOpen")}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, paddingRight: 34 }}>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", textShadow: "0 2px 0 rgba(0,0,0,0.35)", letterSpacing: 0.5 }}>🎒 กระเป๋า</div>
+                  <div style={{ flex: 1 }} />
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "#5a3a10", background: "linear-gradient(180deg,#ffe98a,#f5b82a)", borderRadius: 999, padding: "3px 10px", boxShadow: "0 2px 0 #b07a10" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</div>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "#123a6a", background: "linear-gradient(180deg,#cfe8ff,#8ac0f0)", borderRadius: 999, padding: "3px 10px", boxShadow: "0 2px 0 #4a80b0" }}>💠 {ui.gemDust || 0}</div>
+                </div>
+                {/* 📂 แท็บประเภทของ (แบบตลาดออนไลน์) */}
+                <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 2 }}>
+                  {KINDS.map(([k, ic, nm, n, c1, c2]) => { const on = bagK === k; return (
+                    <button key={k} onClick={() => setUi((u) => ({ ...u, bagKind: k, invSel: null, bagSel: null }))} style={{
+                      flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                      border: on ? "2px solid #fff" : "2px solid rgba(255,255,255,0.18)", color: on ? "#fff" : "rgba(255,255,255,0.82)",
+                      background: on ? `linear-gradient(180deg,${c1},${c2})` : "rgba(255,255,255,0.1)", boxShadow: on ? `0 3px 0 ${c2}, 0 0 10px ${c1}88` : "none" }}>
+                      <span style={{ fontSize: 14 }}>{ic}</span>{nm}{n > 0 && <span style={{ fontSize: 9.5, background: on ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.18)", borderRadius: 999, padding: "0 6px" }}>{n > 999 ? "999+" : n}</span>}
+                    </button>); })}
                 </div>
               </div>
+              <div style={{ padding: 12 }}>
+              {bagK === "gear" && (<>
+              {/* 🛠️ แถบเครื่องมือหลัก */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 9 }}>
+                {toolBtn("🎽 สวมออโต้", () => G.autoEquip(), "#8ac86a", "#4a9a4a")}
+                {toolBtn(ui.smithNear ? "⚒️ ตีบวก" : "⚒️ ช่างตีเหล็ก", () => G.toggleForge(), "#f0c050", "#b0801a")}
+                {toolBtn("💠 แยกของซ้ำ", () => { G.salvageDupes(); setUi((u) => ({ ...u, invSel: G.inv.includes(u.invSel) ? u.invSel : null })); }, "#8a7ae0", "#4a5ab0")}
+                {toolBtn("💰 ขายของเกิน", () => G.autoSell(), "#ffc84a", "#c08a10")}
+                {toolBtn(ui.invTools ? "⚙️ ซ่อน ▲" : "⚙️ เพิ่มเติม ▼", () => setUi((u) => ({ ...u, invTools: !u.invTools })), "#b0a494", "#7a6e5e")}
+              </div>
+              {ui.invTools && (
+              <div style={{ background: "#fff", border: "2px solid #eadfcb", borderRadius: 14, padding: 10, marginBottom: 10 }}>
+              <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} style={{ width: "100%", padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#8a5a4a", background: ui.sellSetup ? "#f0d0a0" : "#f3ede4", marginBottom: 6 }}>⚙️ ลำดับการขายออโต้ {ui.sellSetup ? "▲" : "▼"}</button>
               {/* 🎁 active set bonuses */}
               {(() => {
                 const rc = G._rarityCount || {};
@@ -65346,43 +65420,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   </div>
                 );
               })()}
-              {/* auto buttons */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-                <button onClick={() => G.autoEquip()} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
-                  fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                  background: "linear-gradient(90deg,#7ba05b,#5aa06a)",
-                }}>🎽 สวมใส่ออโต้</button>
-                <button onClick={() => G.toggleForge()} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
-                  fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                  background: "linear-gradient(90deg,#c0902a,#e0b850)",
-                }}>{ui.smithNear ? "⚒️ ตีบวกกับช่าง" : "⚒️ ไปหาช่างตีเหล็ก"}</button>
-              </div>
-              {/* 💠 แยกของซ้ำทั้งหมดทีเดียว */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}>
-                <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, invSel: G.inv.includes(u.invSel) ? u.invSel : null })); }} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
-                  fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                  background: "linear-gradient(90deg,#7a6ad0,#4a86e0)",
-                }}>💠 แยกของซ้ำ → ผงเพชร</button>
-                <div style={{ fontSize: 12, fontWeight: 800, color: "#3a72b0", background: "#eaf3fd", borderRadius: 999, padding: "6px 11px", border: "1px solid #c4ddf2", whiteSpace: "nowrap" }}>
-                  💠 {ui.gemDust || 0}
-                </div>
-              </div>
-              {/* 💰 auto-sell row */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-                <button onClick={() => G.autoSell()} style={{
-                  flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer",
-                  fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                  background: "linear-gradient(90deg,#e0a020,#f5c542)",
-                }}>💰 ขายของเกินออโต้</button>
-                <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} style={{
-                  padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer",
-                  fontSize: 12, fontWeight: 800, fontFamily: font, color: "#8a5a4a",
-                  background: ui.sellSetup ? "#f0d0a0" : "#f3ede4",
-                }}>⚙️ ลำดับ</button>
-              </div>
               {/* 🏷️ auto-sell rarity limit — never sells above this */}
               <button onClick={() => G.cycleSellRarity()} style={{
                 width: "100%", padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer",
@@ -65436,9 +65473,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   </div>
                 ) : null;
               })()}
-              {ui.inv.length === 0 && (
-                <div style={{ fontSize: 12.5, color: "#a3a396" }}>ยังว่างเปล่า ชนะมอนสเตอร์เพื่อลุ้นดรอป!</div>
-              )}
               {/* 👗 FASHION — costume overrides the LOOK, stats stay from the real gear */}
               <button onClick={() => setUi((u) => ({ ...u, fashionOpen: !u.fashionOpen }))} style={{
                 width: "100%", padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", marginBottom: 8,
@@ -65540,20 +65574,28 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   </div>
                 </div>
               )}
-              {/* 📂 category tabs: รวม + แยกประเภท */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
-                {[["all", "📦 รวม"], ...SLOTS.map((s) => [s, `${SLOT_ICON[s] || "▫️"} ${SLOT_NAMES[s]}`])].map(([ck, label]) => {
-                  const n = ck === "all" ? new Set(ui.inv).size : new Set(ui.inv.filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === ck; })).size;
-                  return (
-                    <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null }))} style={{
-                      padding: "5px 9px", borderRadius: 999, border: "none", cursor: "pointer",
-                      fontSize: 10.5, fontWeight: 800, fontFamily: font,
-                      background: (ui.invCat || "all") === ck ? "#7ba05b" : "#f3ede4",
-                      color: (ui.invCat || "all") === ck ? "#fff" : "#8a5a4a",
-                    }}>{label}{n > 0 ? ` ${n}` : ""}</button>
-                  );
-                })}
               </div>
+              )}
+              {ui.inv.length === 0 && (
+                <div style={{ fontSize: 12.5, color: "#a3a396" }}>ยังว่างเปล่า ชนะมอนสเตอร์เพื่อลุ้นดรอป!</div>
+              )}
+              {/* 📂 แท็บย่อยด้านซ้าย (ช่องสวมใส่) + ตารางไอเทม */}
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0, width: 78, position: "sticky", top: 96 }}>
+                  {[["all", "📦", "ทั้งหมด"], ...SLOTS.map((s) => [s, SLOT_ICON[s] || "▫️", SLOT_NAMES[s]])].map(([ck, ic, label]) => {
+                    const n = ck === "all" ? new Set(ui.inv).size : new Set(ui.inv.filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === ck; })).size;
+                    const on = (ui.invCat || "all") === ck;
+                    return (
+                      <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null }))} style={{
+                        display: "flex", alignItems: "center", gap: 4, padding: "6px 6px", borderRadius: 10, cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 900, textAlign: "left",
+                        border: on ? "2px solid #c0302a" : "2px solid #eadfcb", color: on ? "#fff" : "#7a5a4a",
+                        background: on ? "linear-gradient(180deg,#ff7a6a,#d0402a)" : "#fff", boxShadow: on ? "0 2px 0 #902010" : "0 2px 0 #e6d8c0" }}>
+                        <span style={{ fontSize: 13 }}>{ic}</span><span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>{n > 0 && <span style={{ fontSize: 9, opacity: 0.85 }}>{n}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
               {/* 🔲 item grid */}
               {(() => {
                 const cat = ui.invCat || "all";
@@ -65585,7 +65627,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       </div>
                     );
                   })()}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(62px, 1fr))", gap: 7 }}>
                     {ids.map((id) => {
                       const it = LOOT.find((x) => x.id === id);
                       const count = ui.inv.filter((x) => x === id).length;
@@ -65646,11 +65688,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 const canPlus = count >= 2 && plus < 5;
                 const rate = Math.round((G.enhRateNow ? G.enhRateNow(id) : 1) * 100); // ⚒️ รวมโบนัสสะสมจากครั้งที่พลาดแล้ว
                 return (
-                  <div style={{ marginTop: 8, background: "#fff", borderRadius: 14, padding: 12, border: `2px solid ${RARITY[it.rarity].color}`, boxShadow: "0 3px 12px rgba(90,120,70,0.2)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      <span style={{ fontSize: 30 }}>{it.emoji}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: RARITY[it.rarity].color }}>
+                  <div style={{ marginTop: 10, background: "#fff", borderRadius: 16, padding: 12, border: `3px solid ${RARITY[it.rarity].color}`, boxShadow: `0 0 0 2px #fff inset, 0 6px 18px ${RARITY[it.rarity].color}55` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "-12px -12px 10px", padding: "10px 12px", borderRadius: "12px 12px 0 0", background: `linear-gradient(135deg, #2a1e3e, ${RARITY[it.rarity].color})` }}>
+                      <span style={{ width: 60, height: 60, flexShrink: 0, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, background: `radial-gradient(circle,#fff 0%,${RARITY[it.rarity].color}66 65%,${RARITY[it.rarity].color}22 100%)`, boxShadow: `0 0 16px ${RARITY[it.rarity].color}` }}>{it.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0, background: "rgba(255,255,255,0.92)", borderRadius: 10, padding: "5px 8px" }}>
+                        <div style={{ fontSize: 14.5, fontWeight: 900, color: RARITY[it.rarity].color }}>
                           {it.name}{plus > 0 && <span style={{ color: "#e0a020" }}> +{plus}</span>}{awkN > 0 && <span style={{ color: "#f5c542" }}> {awkStars(awkN)}</span>}
                         </div>
                         <div style={{ fontSize: 10.5, color: "#8a8a7a" }}>[{RARITY[it.rarity].name}] {SLOT_ICON[it.slot] || ""} {SLOT_NAMES[it.slot]}{count > 1 ? ` · มี ${count} ชิ้น` : ""}</div>
@@ -65808,8 +65850,60 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   </div>
                 );
               })()}
+                </div>
+              </div>
+              </>)}
+              {bagK !== "gear" && (() => {
+                const list = (BD[bagK] || []).slice().sort((a, b) => (b.made ? 1 : 0) - (a.made ? 1 : 0) || (b.grade || 0) - (a.grade || 0));
+                const sel = list.find((x) => x.key === ui.bagSel) || null;
+                const hint = { pot: "🧪 ยาจากร้านค้าและยาที่ปรุงเอง — กดใช้ได้ทันที", food: "🍳 อาหารที่ทำเองในครัว — กดกินเพื่อรับบัฟ", herb: "🌿 สมุนไพรที่เก็บได้ — นำไปปรุงยาที่หม้อปรุงยา", mat: "⛏️ แร่ที่ขุดได้ — ใช้ตีบวก/ใส่ธาตุ/ทำอาหารพิเศษ", fish: "🐟 ปลาที่ตกได้ — ใช้ทำอาหาร หรือขายในตลาด", farm: "🌾 ผลผลิตและของแปรรูปจากฟาร์ม — ใช้ทำอาหาร" }[bagK];
+                return (<>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: KC[5], background: `${KC[4]}1f`, border: `1.5px solid ${KC[4]}66`, borderRadius: 10, padding: "6px 9px", marginBottom: 9 }}>{hint}</div>
+                  {!list.length ? (
+                    <div style={{ textAlign: "center", padding: "28px 0", color: "#a8988a", fontSize: 12, fontWeight: 700 }}><div style={{ fontSize: 34, opacity: 0.6 }}>{KC[1]}</div>ยังไม่มี{KC[2]}ในกระเป๋า</div>
+                  ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(66px, 1fr))", gap: 8 }}>
+                    {list.map((x) => { const gc = x.qCol || GRADE_COL[Math.min(4, x.grade || 1)], on = ui.bagSel === x.key; return (
+                      <button key={x.key} onClick={() => setUi((u) => ({ ...u, bagSel: u.bagSel === x.key ? null : x.key }))} style={{
+                        position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 2,
+                        border: on ? `3px solid ${KC[4]}` : `2px solid ${gc}aa`, background: `radial-gradient(circle at 50% 38%, #ffffff 0%, ${gc}33 70%, ${gc}55 100%)`,
+                        boxShadow: on ? `0 0 12px ${KC[4]}aa, 0 3px 0 ${KC[5]}` : "0 3px 0 rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: 28, filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.2))" }}>{x.emoji}</span>
+                        {x.n > 1 && <span style={{ position: "absolute", right: 3, bottom: 2, fontSize: 10, fontWeight: 900, color: "#fff", background: "rgba(40,30,60,0.78)", borderRadius: 7, padding: "0 5px" }}>×{x.n}</span>}
+                        {x.made && <span title="ทำเอง" style={{ position: "absolute", left: 2, top: 1, fontSize: 10 }}>✨</span>}
+                        {x.use && <span style={{ position: "absolute", right: 3, top: 2, width: 8, height: 8, borderRadius: "50%", background: "#3ad06a", boxShadow: "0 0 5px #3ad06a" }} />}
+                      </button>); })}
+                  </div>)}
+                  {sel && (
+                    <div style={{ marginTop: 11, borderRadius: 16, overflow: "hidden", border: `3px solid ${KC[4]}`, boxShadow: `0 0 0 2px #fff inset, 0 6px 16px ${KC[5]}55`, background: "#fff" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: `linear-gradient(135deg,${KC[5]},${KC[4]})` }}>
+                        <div style={{ width: 58, height: 58, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, background: "radial-gradient(circle,#fff 0%,rgba(255,255,255,0.55) 60%,rgba(255,255,255,0.15) 100%)", boxShadow: "0 0 14px rgba(255,255,255,0.7)" }}>{sel.emoji}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", textShadow: "0 2px 0 rgba(0,0,0,0.3)" }}>{sel.name}</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 3 }}>
+                            <span style={{ fontSize: 9.5, fontWeight: 900, color: KC[5], background: "#fff", borderRadius: 999, padding: "1px 8px" }}>{sel.made ? "✨ " : ""}{sel.tag}</span>
+                            {sel.qName && <span style={{ fontSize: 9.5, fontWeight: 900, color: "#fff", background: sel.qCol || "#888", borderRadius: 999, padding: "1px 8px" }}>{sel.qEmoji} {sel.qName}</span>}
+                            <span style={{ fontSize: 9.5, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.25)", borderRadius: 999, padding: "1px 8px" }}>มี {sel.n} ชิ้น</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ padding: "10px 12px" }}>
+                        <div style={{ fontSize: 12, color: "#5a4a3a", fontWeight: 700, lineHeight: 1.55, background: "#faf6ee", borderRadius: 10, padding: "8px 10px", marginBottom: 9 }}>{sel.desc}{sel.sell ? <span style={{ color: "#b08020" }}> · ราคาขาย ~{sel.sell}💰/ชิ้น</span> : null}</div>
+                        {sel.use ? (
+                          <button onClick={() => { G.bagUse(sel.key); }} style={{ width: "100%", padding: "11px 0", borderRadius: 13, border: "none", cursor: "pointer", fontFamily: font, fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: 0.5,
+                            background: "linear-gradient(180deg,#5ae07a,#2a9a4a)", boxShadow: "0 4px 0 #1a6a30, 0 6px 12px rgba(40,140,70,0.35)", textShadow: "0 1px 1px rgba(0,0,0,0.3)" }}>{bagK === "food" ? "🍽️ กินเลย" : "✨ ใช้งาน"}</button>
+                        ) : (
+                          <div style={{ fontSize: 10.5, color: "#a8988a", textAlign: "center", fontWeight: 700 }}>ใช้เป็นวัตถุดิบ — ไปที่ {bagK === "herb" ? "⚗️ หม้อปรุงยา" : bagK === "mat" ? "⚒️ ช่างตีเหล็ก / 🍳 ครัว" : "🍳 ครัว"} หรือขายใน 🏪 ตลาดออนไลน์</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>);
+              })()}
+              </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* 🏡 in-zone quick buttons — ซ้าย: ฟาร์ม/เพาะพันธุ์/ปลูกผัก · ขวา: ตลาด/คลัง/ตลาดออนไลน์ (ตรงที่เคยเป็นปุ่มต่อสู้) */}
           {ui.inRanchZone && !ui.ranchOpen && ui.mode === "explore" && !HUD_HIDE && (<React.Fragment>
