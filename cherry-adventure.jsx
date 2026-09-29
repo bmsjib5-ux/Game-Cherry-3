@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v673";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v674";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -65502,13 +65502,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               return (
                 <div key={slot} title={SLOT_NAMES[slot]} onClick={() => setUi((u) => ({ ...u, invCat: on ? "all" : slot, invSel: null, equipPage: 0 }))}
                   style={{ position: "relative", aspectRatio: "1", borderRadius: 14, cursor: "pointer",
-                    background: it ? `linear-gradient(150deg, ${col}3a, rgba(255,255,255,0.92))` : "linear-gradient(150deg, rgba(232,128,158,0.12), rgba(255,250,244,0.92))",
+                    background: it ? `radial-gradient(circle at 50% 35%, ${col}66, rgba(0,0,0,0.45) 78%)` : "radial-gradient(circle at 50% 35%, rgba(255,255,255,0.08), rgba(0,0,0,0.35) 78%)",
                     border: `1.5px solid ${on ? "#f0cf7a" : it ? col + "aa" : "rgba(232,128,158,0.35)"}`,
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.28), 0 4px 12px rgba(120,60,90,0.18)" : "0 3px 10px rgba(120,60,90,0.16), inset 0 1px 0 rgba(232,128,158,0.2)",
+                    boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.45), 0 0 12px rgba(240,207,122,0.5)" : it ? `0 0 8px ${col}55, inset 0 1px 0 rgba(255,255,255,0.12)` : "inset 0 1px 0 rgba(255,255,255,0.06)",
                     transition: "border-color .15s, box-shadow .15s" }}>
-                  <span style={{ fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 }}>{it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : <Ico n={SLOT_GI[slot]} size={22} color="#b09aa8" />}</span>
-                  <span style={{ marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : twoLock ? "#c09a5a" : "#a08a98", opacity: it ? 0.95 : 0.75, letterSpacing: 0.2 }}>{twoLock ? "สองมือ" : SLOT_NAMES[slot]}</span>
+                  <span style={{ fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 }}>{it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : <Ico n={SLOT_GI[slot]} size={22} color="#d8c0d0" />}</span>
+                  <span style={{ marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : twoLock ? "#e0b86a" : "#c8b0c0", opacity: it ? 0.95 : 0.8, letterSpacing: 0.2 }}>{twoLock ? "สองมือ" : SLOT_NAMES[slot]}</span>
                   {it && <button title={`ถอด${SLOT_NAMES[slot]}`} onClick={(e) => { e.stopPropagation(); G.unequipSlot(slot); }} style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", border: "none", background: "linear-gradient(135deg,#d05050,#9a2c2c)", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "17px", boxShadow: "0 2px 6px rgba(0,0,0,0.45)" }}>✕</button>}
                 </div>
               );
@@ -65537,15 +65537,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               const locked = it.req && ui.level < it.req;
               return (
                 <button key={id} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
-                  border: aw > 0 ? "1.5px solid #ffd76a" : PT ? `1.5px solid ${PT.css}` : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : "1.5px solid rgba(232,128,158,0.3)",
-                  background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `linear-gradient(150deg, ${RARITY[it.rarity].color}30, rgba(255,255,255,0.92))`,
+                  border: aw > 0 ? "1.5px solid #ffd76a" : PT ? `1.5px solid ${PT.css}` : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : `1.5px solid ${RARITY[it.rarity].color}88`,
+                  background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `radial-gradient(circle at 50% 35%, ${RARITY[it.rarity].color}55, rgba(0,0,0,0.45) 78%)`,
                   boxShadow: aw > 0 ? `0 0 0 2px #f5c54255, 0 0 ${6 + aw * 3}px #ffd76a${aw >= 3 ? "aa" : "77"}, 0 3px 10px rgba(120,60,90,0.18)`
                             : PT ? `0 0 0 2px ${PT.css}55, 0 0 ${7 + (plus - PT.min) * 0.6 + PT.s * 6}px ${PT.css}99, 0 3px 10px rgba(120,60,90,0.18)`
                             : equipped ? `0 0 0 2px ${RARITY[it.rarity].color}44, 0 3px 10px rgba(120,60,90,0.16)` : "0 3px 10px rgba(120,60,90,0.14), inset 0 1px 0 rgba(232,128,158,0.12)",
                   display: "flex", alignItems: "center", justifyContent: "center", opacity: locked ? 0.5 : 1 }}>
                   {aw > 0 && <span style={{ position: "absolute", inset: 2, borderRadius: 10, border: "1px solid #ffe9a866", pointerEvents: "none" }} />}
                   {aw > 0 && <span style={{ position: "absolute", top: -3, left: 3, fontSize: 9 }}>✨</span>}
-                  <span style={{ fontSize: 22 }}>{it.emoji}</span>
+                  <span style={{ fontSize: 22, filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.45))" }}>{it.emoji}</span>
                   {plus > 0 && <span style={{ position: "absolute", top: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#f5c542" }}>+{plus}{((ui.awk || {})[id] || 0) > 0 ? "★" + ((ui.awk || {})[id]) : ""}</span>}
                   {count > 1 && <span style={{ position: "absolute", top: 15, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" }}>×{count}</span>}
                   {equipped && <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, fontSize: 8.5, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: "0 0 11px 11px", letterSpacing: 0.3, padding: "1px 0" }}>✓ สวมใส่</span>}
@@ -65579,7 +65579,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0",
                 boxShadow: (ui.invCat || "all") === ck ? "0 2px 8px rgba(201,162,74,0.35)" : "none" }}>{label}</button>
             );
-            const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 13, border: "1.5px dashed rgba(232,128,158,0.07)", background: "rgba(232,128,158,0.015)" }} />;
+            const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 13, border: "1.5px dashed rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.22)" }} />;
             const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? itemTile(cell.id) : emptyTile(i);
             return (
               <div key="eqscr" onClick={() => G.closeEquip()} style={{
@@ -65590,25 +65590,26 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               }}>
                 <div onClick={(e) => e.stopPropagation()} style={{
                   width: wide ? "min(99vw, 1240px)" : two ? "min(96vw, 700px)" : "min(96vw, 430px)", height: wide ? "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px))" : undefined, maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px))",
-                  display: "flex", flexDirection: "column", borderRadius: 22, overflow: wide ? "visible" : "hidden", color: "#5a3a5a", boxSizing: "border-box",
+                  display: "flex", flexDirection: "column", borderRadius: 22, overflow: wide ? "visible" : "hidden", color: "#f0e0e8", boxSizing: "border-box",
                   padding: wide ? 9 : 0,
-                  background: wide ? "linear-gradient(168deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))" : "linear-gradient(168deg,#fff4f8 0%,#fffaf4 45%,#fff0f5 100%)",
-                  border: wide ? "2px solid rgba(255,255,255,0.80)" : "3px solid #f2b6c9",
-                  boxShadow: wide ? "0 18px 50px rgba(0,0,0,0.42), inset 0 0 60px rgba(255,255,255,0.04)" : "0 24px 60px rgba(120,60,90,0.35), inset 0 0 0 2px #fff",
+                  background: wide ? "linear-gradient(168deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))" : "radial-gradient(120% 40% at 50% 0%, #5a2a4a 0%, #2e1628 50%, #160a14 100%)",   // 📱 มือถือ = แผงเกมสีเข้ม ขอบทอง
+                  border: wide ? "2px solid rgba(255,255,255,0.80)" : "2px solid #2a1426",
+                  boxShadow: wide ? "0 18px 50px rgba(0,0,0,0.42), inset 0 0 60px rgba(255,255,255,0.04)" : "0 0 0 2px #f5c542, 0 24px 60px rgba(0,0,0,0.5)",
                 }}>
                   {/* ── หัวป๊อปอัป ── */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
                     padding: "11px 13px", paddingTop: "max(11px, calc(env(safe-area-inset-top) * 0.5 + 11px))",
-                    background: wide ? "linear-gradient(180deg, rgba(20,28,22,0.86), rgba(20,28,22,0.62))" : "linear-gradient(180deg, rgba(232,128,158,0.18), rgba(232,128,158,0.02))",
+                    background: wide ? "linear-gradient(180deg, rgba(20,28,22,0.86), rgba(20,28,22,0.62))" : "linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.05))",
                     borderRadius: wide ? 16 : 0, border: wide ? "1px solid rgba(232,128,158,0.22)" : "none",
                     marginBottom: wide ? 10 : 0,
                     borderBottom: wide ? "1px solid rgba(232,128,158,0.22)" : "1px solid rgba(232,128,158,0.20)" }}>
-                    <span style={{ fontSize: 14.5, fontWeight: 900, color: "#c0446a", letterSpacing: 0.2 }}>🎒 กระเป๋า &amp; ชุดสวมใส่</span>
-                    <span title="เวอร์ชันเกม" style={{ fontSize: 9.5, fontWeight: 800, color: "#9aa896", background: "rgba(120,60,90,0.22)", borderRadius: 999, padding: "2px 7px" }}>{GAME_BUILD}</span>
+                    <span style={{ width: 36, height: 36, borderRadius: 11, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: "radial-gradient(circle,#ffe8f0,#d0608a 72%)", boxShadow: "0 0 12px #ff8ab0", border: "2px solid rgba(255,255,255,0.85)" }}>🎒</span>
+                    <span style={{ fontSize: 14.5, fontWeight: 900, color: "#ffe9f0", letterSpacing: 0.2, textShadow: "0 0 10px rgba(255,140,180,0.7), 0 2px 0 rgba(0,0,0,0.4)", lineHeight: 1.15, whiteSpace: "nowrap" }}>กระเป๋า &amp; ชุด</span>
+                    <span title="เวอร์ชันเกม" style={{ fontSize: 9.5, fontWeight: 800, color: "#d8c0d0", background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "2px 7px" }}>{GAME_BUILD}</span>
                     <div style={{ flex: 1 }} />
-                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#f5d24a", background: "rgba(120,60,90,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(245,210,74,0.24)" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
-                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#7fd0f5", background: "rgba(120,60,90,0.28)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(127,208,245,0.24)" }}>💎 {(ui.diamonds || 0).toLocaleString()}</span>
-                    <button title="ปิด" onClick={() => G.closeEquip()} style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(232,128,158,0.14)", background: "rgba(120,60,90,0.34)", color: "#5a3a5a", fontSize: 15, cursor: "pointer", padding: 0, flexShrink: 0 }}>✕</button>
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#ffe98a", background: "rgba(0,0,0,0.4)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(245,210,74,0.45)" }}>💰 {ui.gold != null ? ui.gold.toLocaleString() : 0}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "#9ae0ff", background: "rgba(0,0,0,0.4)", borderRadius: 999, padding: "3px 9px", border: "1px solid rgba(127,208,245,0.45)" }}>💎 {(ui.diamonds || 0).toLocaleString()}</span>
+                    <button title="ปิด" onClick={() => G.closeEquip()} style={{ width: 34, height: 34, borderRadius: "50%", border: "2px solid #f2b6c9", background: "#fff3f7", color: "#d0608a", fontWeight: 900, fontSize: 15, cursor: "pointer", padding: 0, flexShrink: 0 }}>✕</button>
                   </div>
 
                   {/* ── เนื้อหา ── */}
@@ -65631,7 +65632,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       <div style={{ borderRadius: 16, padding: "9px 10px 10px",
                         background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.20))",
                         border: "1px solid rgba(232,128,158,0.09)", boxShadow: "0 4px 16px rgba(120,60,90,0.30) inset" }}>
-                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#8a9a88", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#c8b0c0", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>
                         <div style={{ display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: tight ? 5 : 7 }}>
                           {GEAR.map(slotCell)}
                         </div>
@@ -65643,7 +65644,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         const hw = G.heroId ? HERO_WPN_INFO[G.heroId] : null;
                         const hero = hw ? HERO_GALLERY.find((h) => h.id === G.heroId) : null;
                         const plus = (ui.plus || {})[wid] || 0;
-                        const col = hw ? (hero ? hero.c2 : "#7a4ad0") : wit ? RARITY[wit.rarity].color : "#9a8a92";   // c2 = โทนเข้มของฮีโร่ อ่านออกบนการ์ดสีอ่อน
+                        const col = hw ? (hero ? hero.c1 : "#b08aff") : wit ? RARITY[wit.rarity].color : "#c8b0c0";   // c2 = โทนเข้มของฮีโร่ อ่านออกบนการ์ดสีอ่อน
                         const chip = hw && hero ? `linear-gradient(135deg, ${hero.c1}, ${hero.c2})` : wit ? RARITY[wit.rarity].color : "rgba(255,255,255,0.14)";
                         const sub = hw
                           ? `🦸 อาวุธประจำตัว${hero ? hero.name : "ฮีโร่"} · พลังยังคิดจาก ${wit ? wit.emoji + " " + wit.name : "ไม่มีอาวุธสวม"}`
@@ -65668,7 +65669,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                                 {hw ? hw.name : wit ? wit.name : "ยังไม่ได้สวมอาวุธ"}
                                 {!hw && plus > 0 && <span style={{ color: "#f5d24a" }}> +{plus}</span>}
                               </span>
-                              <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "#9a7a8a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</span>
+                              <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "#c8b0c0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</span>
                             </span>
                             <span style={{ fontSize: 16, fontWeight: 900, color: col, flexShrink: 0 }}>›</span>
                           </button>
@@ -65689,7 +65690,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           <div style={{ borderRadius: 16, padding: "9px 10px 10px", maxHeight: 250, overflowY: "auto",
                             background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.22))",
                             border: "1px solid rgba(232,128,158,0.09)" }}>
-                            <div style={{ fontSize: 10.5, fontWeight: 800, color: "#9a7a8a", marginBottom: 2 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></div>
+                            <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 2 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></div>
                             <div style={{ fontSize: 8.5, color: "#8a9a88", marginBottom: 6 }}>ใส่ของ “ระดับเดียวกัน” ให้ครบตามจำนวน · ได้โบนัสขั้นสูงสุดที่ถึง</div>
                             {!SI.rows.length && <div style={{ fontSize: 10, color: "#8a9080", textAlign: "center", padding: "6px 0" }}>ยังไม่ได้ใส่ของ — สวมของระดับเดียวกัน 3 ชิ้นขึ้นไปเพื่อรับโบนัสเซ็ต</div>}
                             {SI.rows.map((r) => (
@@ -65807,8 +65808,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                             {KINDS.map(([k, ic, nm, n, c1, c2]) => { const on = bagK === k; return (
                               <button key={k} onClick={() => setUi((u) => ({ ...u, bagKind: k, invSel: null, bagSel: null }))} style={{
                                 flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: tight ? "4px 8px" : "5px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: tight ? 10.5 : 11.5, fontWeight: 900,
-                                border: on ? "1.5px solid #fff" : wide ? "1.5px solid rgba(255,255,255,0.14)" : "1.5px solid rgba(120,60,90,0.22)", color: on ? "#fff" : wide ? "#c8d0c0" : "#6a4a5a",   // 📱 จอมือถือพื้นสว่าง — ตัวหนังสือแท็บที่ไม่ได้เลือกต้องเข้มพออ่านออก
-                                background: on ? `linear-gradient(180deg,${c1},${c2})` : wide ? "rgba(255,255,255,0.06)" : "rgba(120,60,90,0.10)", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "none", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>
+                                border: on ? "1.5px solid #fff" : "1.5px solid rgba(255,255,255,0.14)", color: on ? "#fff" : "#d8c8d0",   // 📱 จอมือถือพื้นสว่าง — ตัวหนังสือแท็บที่ไม่ได้เลือกต้องเข้มพออ่านออก
+                                background: on ? `linear-gradient(180deg,${c1},${c2})` : "rgba(255,255,255,0.07)", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "none", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>
                                 <span style={{ fontSize: 14 }}>{ic}</span>{nm}{n > 0 && <span style={{ fontSize: 9.5, background: on ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.12)", borderRadius: 999, padding: "0 6px" }}>{n > 999 ? "999+" : n}</span>}
                               </button>); })}
                           </div>
@@ -65848,8 +65849,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     </div>
                   )}
                       <div style={{ borderRadius: 16, padding: 9,
-                        background: "linear-gradient(170deg, rgba(120,60,90,0.26), rgba(120,60,90,0.10))",
-                        border: "1px solid rgba(232,128,158,0.07)" }}>
+                        background: "linear-gradient(170deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15))",
+                        border: "1px solid rgba(255,200,220,0.14)" }}>
                         <div style={{ display: "grid", gridTemplateColumns: `repeat(${wide ? bagCols : 6}, 1fr)`, gap: 6 }}>
                           {pageCells.map(renderCell)}
                         </div>
@@ -65857,12 +65858,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                     {totalPages > 1 ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#5a3a5a", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font }}>‹</button>
+                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#fff", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font }}>‹</button>
                         <span style={{ fontSize: 11.5, fontWeight: 800, color: "#d8c898", minWidth: 34, textAlign: "center" }}>{`${page + 1}/${totalPages}`}</span>
-                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.min(totalPages - 1, page + 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page >= totalPages - 1 ? "default" : "pointer", background: page >= totalPages - 1 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#5a3a5a", fontSize: 15, fontWeight: 800, opacity: page >= totalPages - 1 ? 0.4 : 1, fontFamily: font }}>›</button>
+                        <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.min(totalPages - 1, page + 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page >= totalPages - 1 ? "default" : "pointer", background: page >= totalPages - 1 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#fff", fontSize: 15, fontWeight: 800, opacity: page >= totalPages - 1 ? 0.4 : 1, fontFamily: font }}>›</button>
                       </div>
                     ) : <span />}
-                        <span style={{ fontSize: 10.5, color: "#9aa896" }}>ของในกระเป๋า {(ui.inv || []).length} ชิ้น</span>
+                        <span style={{ fontSize: 10.5, color: "#c8b0c0" }}>ของในกระเป๋า {(ui.inv || []).length} ชิ้น</span>
                       </div>
                       </>)}
                       {(ui.bagKind || "gear") !== "gear" && (() => {
@@ -65874,16 +65875,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         const ICON = { pot: "🧪", food: "🍳", herb: "🌿", mat: "⛏️", fish: "🐟", farm: "🌾" }[bagK];
                         return (<>
                           <div style={{ fontSize: 10.5, fontWeight: 800, color: "#e8e0f0", background: `linear-gradient(90deg,${KC[1]}cc,${KC[0]}55)`, border: `1px solid ${KC[0]}88`, borderRadius: 10, padding: "6px 9px" }}>{hint}</div>
-                          <div style={{ borderRadius: 16, padding: 9, background: "linear-gradient(170deg, rgba(120,60,90,0.26), rgba(120,60,90,0.10))", border: "1px solid rgba(232,128,158,0.07)", minHeight: 120 }}>
+                          <div style={{ borderRadius: 16, padding: 9, background: "linear-gradient(170deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15))", border: "1px solid rgba(255,200,220,0.14)", minHeight: 120 }}>
                             {!list.length ? (
-                              <div style={{ textAlign: "center", padding: "26px 0", color: "#9aa896", fontSize: 12, fontWeight: 700 }}><div style={{ fontSize: 34, opacity: 0.55 }}>{ICON}</div>ยังไม่มีของประเภทนี้ในกระเป๋า</div>
+                              <div style={{ textAlign: "center", padding: "26px 0", color: "#c8b0c0", fontSize: 12, fontWeight: 700 }}><div style={{ fontSize: 34, opacity: 0.55 }}>{ICON}</div>ยังไม่มีของประเภทนี้ในกระเป๋า</div>
                             ) : (
                               <div style={{ display: "grid", gridTemplateColumns: `repeat(${wide ? bagCols : 6}, 1fr)`, gap: 6 }}>
                                 {list.map((x) => { const gc = x.qCol || GRADE_COL[Math.min(4, x.grade || 1)], on = ui.invSel === "bag:" + x.key; return (
                                   <button key={x.key} onClick={() => setUi((u) => ({ ...u, invSel: "bag:" + x.key }))} title={x.name} style={{
                                     position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
-                                    border: on ? `2px solid ${KC[0]}` : `1.5px solid ${gc}aa`, background: `radial-gradient(circle at 50% 40%, rgba(255,255,255,0.95) 0%, ${gc}44 72%, ${gc}66 100%)`,
-                                    boxShadow: on ? `0 0 0 2px ${KC[0]}55, 0 0 12px ${KC[0]}aa` : "0 3px 10px rgba(120,60,90,0.16), inset 0 1px 0 rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    border: on ? `2px solid ${KC[0]}` : `1.5px solid ${gc}aa`, background: `radial-gradient(circle at 50% 35%, ${gc}66, rgba(0,0,0,0.45) 78%)`,
+                                    boxShadow: on ? `0 0 0 2px ${KC[0]}55, 0 0 12px ${KC[0]}aa` : `0 0 7px ${gc}44, inset 0 1px 0 rgba(255,255,255,0.1)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                     <span style={{ fontSize: 22, filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.25))" }}>{x.emoji}</span>
                                     {x.n > 1 && <span style={{ position: "absolute", right: 3, bottom: 2, fontSize: 9.5, fontWeight: 900, color: "#fff", background: "rgba(40,30,60,0.8)", borderRadius: 7, padding: "0 5px" }}>×{x.n}</span>}
                                     {x.made && <span title="ทำเอง" style={{ position: "absolute", left: 2, top: 1, fontSize: 9 }}>✨</span>}
@@ -65892,7 +65893,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                               </div>
                             )}
                           </div>
-                          <div style={{ fontSize: 10.5, color: wide ? "#9aa896" : "#8a6a7a" }}>{list.length} รายการ · จุดเขียว = กดใช้ได้ · ✨ = ทำเอง</div>
+                          <div style={{ fontSize: 10.5, color: "#c8b0c0" }}>{list.length} รายการ · จุดเขียว = กดใช้ได้ · ✨ = ทำเอง</div>
                         </>);
                       })()}
                     </div>
