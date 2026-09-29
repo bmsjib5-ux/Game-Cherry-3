@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v667"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v668"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -100021,78 +100021,114 @@ function CherryAdventure() {
             ui.panelOpen && (React.createElement("div", { style: {
                     position: "absolute", ...MODAL_POS, zIndex: 50, width: "96%", maxWidth: 460,
                     maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", display: "flex", flexDirection: "column",
-                    ...CHIBI_FRAME, borderRadius: 16, padding: 12,
-                    boxShadow: MODAL_SHADOW,
+                    borderRadius: 18, padding: 12, fontFamily: font,
+                    background: "radial-gradient(120% 45% at 50% 0%, #2f7a5a 0%, #184a38 48%, #0c241c 100%)",
+                    border: "2px solid #123a2c", boxShadow: "0 0 0 2px #f5c542, 0 10px 28px rgba(0,0,0,0.5)",
                 } },
                 closeBtn("panelOpen"),
-                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 6, flexShrink: 0 } },
-                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, dexTab: false })), style: {
-                            flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
-                            fontSize: 12, fontWeight: 800, color: !ui.dexTab ? "#fff" : "#5a7a4a",
-                            background: !ui.dexTab ? "#7ba05b" : "#eaf5e0",
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexShrink: 0 } },
+                    React.createElement("span", { style: { width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#e8fff0,#4ac08a 72%)", boxShadow: "0 0 14px #5ae0a0", border: "2px solid rgba(255,255,255,0.85)" } }, "\uD83D\uDC3E"),
+                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                        React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#eafff2", textShadow: "0 0 10px rgba(120,240,170,0.6), 0 2px 0 rgba(0,0,0,0.4)" } }, "\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07"),
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#a8dcc0" } },
+                            "\u26A1 \u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25\u0E40\u0E1E\u0E47\u0E15 ",
+                            ui.petSp || 0,
+                            " \u00B7 \uD83D\uDC65 \u0E17\u0E35\u0E21 ",
+                            (ui.team || []).length,
+                            "/3")),
+                    React.createElement("div", { style: { textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "rgba(0,0,0,0.35)", marginRight: 30 } },
+                        React.createElement("div", { style: { fontSize: 8.5, fontWeight: 900, color: "#a8dcc0" } }, "\u0E01\u0E25\u0E48\u0E2D\u0E07"),
+                        React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.05 } },
+                            G.petBagUsed(),
+                            "/",
+                            G.petCap()))),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, flexShrink: 0 } }, [[false, "📦", "กล่องสัตว์"], [true, "📖", "สมุดภาพ"]].map(([k, ic, nm]) => {
+                    const on = !!ui.dexTab === k;
+                    return (React.createElement("button", { key: nm, onClick: () => setUi((u) => ({ ...u, dexTab: k })), style: {
+                            flex: 1, padding: "8px 0", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 900,
+                            border: on ? "2px solid #fff4c0" : "2px solid rgba(255,255,255,0.12)",
+                            color: on ? "#3a2408" : "#cfe8da",
+                            background: on ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.3)",
+                            boxShadow: on ? "0 3px 0 #9a6a10" : "none",
                         } },
-                        "\uD83D\uDCE6 \u0E01\u0E25\u0E48\u0E2D\u0E07 (",
-                        G.petBagUsed(),
-                        "/",
-                        G.petCap(),
-                        ")"),
-                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, dexTab: true })), style: {
-                            flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
-                            fontSize: 12, fontWeight: 800, color: ui.dexTab ? "#fff" : "#5a7a4a",
-                            background: ui.dexTab ? "#7ba05b" : "#eaf5e0",
-                        } }, "\uD83D\uDCD6 \u0E2A\u0E21\u0E38\u0E14\u0E20\u0E32\u0E1E")),
+                        ic,
+                        " ",
+                        nm));
+                })),
                 React.createElement("button", { onClick: () => G.openRanch && G.openRanch(), style: {
-                        position: "relative", flexShrink: 0, width: "100%", padding: "8px 0", marginBottom: 6, borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-                        fontSize: 12.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e0a86a,#c9843e)", boxShadow: "0 3px 10px rgba(201,132,62,0.4)",
+                        position: "relative", flexShrink: 0, width: "100%", padding: "9px 12px", marginBottom: 8, borderRadius: 12, cursor: "pointer", fontFamily: font,
+                        display: "flex", alignItems: "center", gap: 9, textAlign: "left",
+                        border: "2px solid #ffd79a", color: "#fff", background: "linear-gradient(180deg,#d8a060,#a8682c)", boxShadow: "0 3px 0 #6a3e14",
                     } },
-                    "\uD83D\uDC04 \u0E1F\u0E32\u0E23\u0E4C\u0E21\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07 \u2014 \u0E1B\u0E25\u0E48\u0E2D\u0E22\u0E40\u0E1E\u0E47\u0E15\u0E2B\u0E32\u0E17\u0E2D\u0E07/EXP \u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34",
+                    React.createElement("span", { style: { fontSize: 24 } }, "\uD83D\uDC04"),
+                    React.createElement("span", { style: { flex: 1 } },
+                        React.createElement("b", { style: { fontSize: 12.5, display: "block" } }, "\u0E1F\u0E32\u0E23\u0E4C\u0E21\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07"),
+                        React.createElement("span", { style: { fontSize: 9.5, fontWeight: 700, opacity: 0.92 } }, "\u0E1B\u0E25\u0E48\u0E2D\u0E22\u0E40\u0E1E\u0E47\u0E15\u0E2B\u0E32\u0E17\u0E2D\u0E07/EXP \u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34")),
+                    React.createElement("span", { style: { fontSize: 16, fontWeight: 900 } }, "\u203A"),
                     todoDot(TODO.ranch)),
                 ui.dexTab ? (React.createElement("div", { style: { overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" } }, (() => {
                     const allIds = Object.keys(SPECIES);
                     const caughtCount = allIds.filter((id) => ui.col[id] || (ui.dexSeen && ui.dexSeen[id])).length;
                     return (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#c09020", marginBottom: 6 } },
-                            "\u0E2A\u0E30\u0E2A\u0E21\u0E41\u0E25\u0E49\u0E27 ",
-                            caughtCount,
-                            "/",
-                            allIds.length,
-                            " \u0E0A\u0E19\u0E34\u0E14 ",
-                            caughtCount === allIds.length ? "🏆 ครบทุกชนิด!" : ""),
-                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 } }, allIds.map((id) => {
+                        React.createElement("div", { style: { padding: "7px 10px", borderRadius: 12, background: "rgba(0,0,0,0.3)", marginBottom: 8 } },
+                            React.createElement("div", { style: { display: "flex", fontSize: 11, fontWeight: 900, color: "#ffe98a", marginBottom: 4 } },
+                                React.createElement("span", { style: { flex: 1 } },
+                                    "\uD83D\uDCD6 \u0E2A\u0E30\u0E2A\u0E21\u0E41\u0E25\u0E49\u0E27 ",
+                                    caughtCount,
+                                    "/",
+                                    allIds.length,
+                                    " \u0E0A\u0E19\u0E34\u0E14 ",
+                                    caughtCount === allIds.length ? "🏆 ครบทุกชนิด!" : ""),
+                                React.createElement("span", null,
+                                    Math.round((caughtCount / allIds.length) * 100),
+                                    "%")),
+                            React.createElement("div", { style: { height: 7, borderRadius: 4, background: "rgba(0,0,0,0.4)", overflow: "hidden" } },
+                                React.createElement("div", { style: { width: `${(caughtCount / allIds.length) * 100}%`, height: "100%", background: "linear-gradient(90deg,#ffe98a,#f0a82a)" } }))),
+                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 } }, allIds.map((id) => {
                             const sp = SPECIES[id];
                             const got = !!ui.col[id] || !!(ui.dexSeen && ui.dexSeen[id]);
                             const rr = petRarity(id);
                             return (React.createElement("div", { key: id, style: {
-                                    padding: "8px 6px", borderRadius: 10, textAlign: "center",
-                                    background: got ? "#f0f9e8" : "#eee",
-                                    border: got ? "2px solid " + rr.color : "2px solid transparent",
-                                    boxShadow: got && sp.tier >= 5 ? "0 0 9px " + rr.color + "99" : "none",
+                                    padding: "8px 4px", borderRadius: 12, textAlign: "center",
+                                    background: got ? `radial-gradient(circle at 50% 30%, ${rr.color}44, rgba(0,0,0,0.35) 70%)` : "rgba(0,0,0,0.3)",
+                                    border: got ? "2px solid " + rr.color : "2px solid rgba(255,255,255,0.08)",
+                                    boxShadow: got && sp.tier >= 5 ? "0 0 10px " + rr.color + "aa" : "none",
                                 } },
                                 React.createElement("div", { style: { fontSize: 26, filter: got ? "none" : "grayscale(1) brightness(0.6)", opacity: got ? 1 : 0.5 } }, got ? sp.emoji : "❓"),
-                                React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: got ? "#5a7a4a" : "#a3a396" } }, got ? sp.name : "???"),
+                                React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: got ? "#fff" : "#6a7a70" } }, got ? sp.name : "???"),
                                 got && React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, color: rr.color } },
                                     "\u25C6 ",
                                     rr.name),
-                                got && React.createElement("div", { style: { fontSize: 9, color: "#8a8a7a" } },
+                                got && React.createElement("div", { style: { fontSize: 8.5, color: "#a8c8b8" } },
                                     "\u0E18\u0E32\u0E15\u0E38 ",
                                     (ELEM_META[PET_ELEM[id]] || {}).emoji || "❓",
                                     " \u00B7 \u0E08\u0E31\u0E1A ",
                                     ui.col[id] || 0)));
                         }))));
                 })())) : (React.createElement("div", { style: { overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" } },
-                    (ui.petBox || []).length === 0 && (React.createElement("div", { style: { fontSize: 12.5, color: "#a3a396" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E25\u0E22 \u0E44\u0E1B\u0E08\u0E31\u0E1A\u0E01\u0E31\u0E19\u0E40\u0E16\u0E2D\u0E30!")),
-                    (ui.petBox || []).length > 0 && (React.createElement("div", { style: { background: "#eaf5e0", borderRadius: 10, padding: "6px 9px", marginBottom: 8, fontSize: 11, fontWeight: 700, color: "#5a7a4a" } },
-                        "\uD83D\uDC65 \u0E17\u0E35\u0E21 (",
-                        (ui.team || []).length,
-                        "/3): ",
-                        (ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม",
-                        React.createElement("span", { style: { float: "right", color: "#7a9a5a" } },
-                            "\uD83D\uDCE6 ",
-                            G.petBagUsed(),
-                            "/",
-                            G.petCap(),
-                            " \u0E0A\u0E48\u0E2D\u0E07"),
-                        React.createElement("div", { style: { fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 } }, "\u0E17\u0E38\u0E01\u0E15\u0E31\u0E27\u0E43\u0E19\u0E17\u0E35\u0E21\u0E0A\u0E48\u0E27\u0E22\u0E1A\u0E31\u0E1F \u00B7 \u0E15\u0E31\u0E27\u0E41\u0E23\u0E01\u0E40\u0E14\u0E34\u0E19\u0E15\u0E32\u0E21 \u00B7 \u0E41\u0E15\u0E48\u0E25\u0E30\u0E15\u0E31\u0E27\u0E21\u0E35 \"\u0E1E\u0E23\u0E2A\u0E27\u0E23\u0E23\u0E04\u0E4C\" \u0E1B\u0E23\u0E30\u0E08\u0E33\u0E15\u0E31\u0E27\u0E44\u0E21\u0E48\u0E0B\u0E49\u0E33\u0E01\u0E31\u0E19"))),
+                    (ui.petBox || []).length === 0 && (React.createElement("div", { style: { fontSize: 12.5, color: "#a8dcc0", textAlign: "center", padding: "18px 0" } }, "\uD83E\uDD5A \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E25\u0E22 \u0E44\u0E1B\u0E08\u0E31\u0E1A\u0E01\u0E31\u0E19\u0E40\u0E16\u0E2D\u0E30!")),
+                    (ui.petBox || []).length > 0 && (React.createElement("div", { style: { borderRadius: 14, padding: "9px 10px", marginBottom: 8, background: "linear-gradient(170deg, rgba(255,255,255,0.07), rgba(0,0,0,0.28))", border: "1px solid rgba(255,255,255,0.12)" } },
+                        React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#ffe98a", marginBottom: 7 } },
+                            "\uD83D\uDC65 \u0E17\u0E35\u0E21\u0E2A\u0E39\u0E49 (",
+                            (ui.team || []).length,
+                            "/3)"),
+                        React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "space-around" } }, [0, 1, 2].map((k) => {
+                            const iid = (ui.team || [])[k];
+                            const tp = iid != null ? (ui.petBox || []).find((x) => x.i === iid) : null;
+                            const rr = tp ? petRarity(tp.sp) : null;
+                            return (React.createElement("div", { key: k, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 } },
+                                React.createElement("div", { style: { position: "relative", width: 58, height: 58, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30,
+                                        background: tp ? `radial-gradient(circle at 50% 35%, ${rr.color}66, #0e2a20 72%)` : "rgba(0,0,0,0.3)",
+                                        border: tp ? `2.5px solid ${rr.color}` : "2px dashed rgba(255,255,255,0.25)",
+                                        boxShadow: tp ? `0 0 12px ${rr.color}99` : "none" } },
+                                    tp ? SPECIES[tp.sp].emoji : React.createElement("span", { style: { fontSize: 18, color: "rgba(255,255,255,0.35)" } }, "\uFF0B"),
+                                    tp && ui.buddy === tp.i && React.createElement("span", { style: { position: "absolute", top: -9, fontSize: 14 } }, "\uD83D\uDC51"),
+                                    tp && React.createElement("span", { style: { position: "absolute", bottom: -6, fontSize: 8.5, fontWeight: 900, color: "#fff", background: "#1a3a2c", border: `1px solid ${rr.color}`, borderRadius: 7, padding: "0 5px" } },
+                                        "Lv.",
+                                        tp.lv)),
+                                React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: tp ? "#eafff2" : "#7a9a88", marginTop: 3, maxWidth: 80, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, tp ? SPECIES[tp.sp].name : "ว่าง — กด ➕ ทีม")));
+                        })),
+                        React.createElement("div", { style: { fontSize: 9, color: "#9ac8b0", fontWeight: 700, marginTop: 6, textAlign: "center" } }, "\u0E17\u0E38\u0E01\u0E15\u0E31\u0E27\u0E43\u0E19\u0E17\u0E35\u0E21\u0E0A\u0E48\u0E27\u0E22\u0E1A\u0E31\u0E1F \u00B7 \uD83D\uDC51 \u0E1A\u0E31\u0E14\u0E14\u0E35\u0E49\u0E40\u0E14\u0E34\u0E19\u0E15\u0E32\u0E21 \u00B7 \u0E41\u0E15\u0E48\u0E25\u0E30\u0E15\u0E31\u0E27\u0E21\u0E35 \"\u0E1E\u0E23\u0E2A\u0E27\u0E23\u0E23\u0E04\u0E4C\" \u0E44\u0E21\u0E48\u0E0B\u0E49\u0E33\u0E01\u0E31\u0E19"))),
                     (() => {
                         const c = G.petSlotCost();
                         const afford = c.kind === "gold" ? (ui.gold || 0) >= c.amount : (ui.diamonds || 0) >= c.amount;
@@ -100107,8 +100143,8 @@ function CherryAdventure() {
                                 " ",
                                 (ui.petSlotsBought || 0) < 5 ? `(เหลืออีก ${5 - (ui.petSlotsBought || 0)} ช่องราคาทอง)` : "(ช่องละ 10 เพชร)")));
                     })(),
-                    Object.keys(ui.mountsOwned || {}).length > 0 && (React.createElement("div", { style: { background: "#e8f0f8", borderRadius: 10, padding: "6px 9px", marginBottom: 8 } },
-                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#4a6a9a" } }, "\uD83D\uDC0E \u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E02\u0E35\u0E48:"),
+                    Object.keys(ui.mountsOwned || {}).length > 0 && (React.createElement("div", { style: { background: "rgba(40,80,140,0.35)", border: "1px solid rgba(140,190,255,0.3)", borderRadius: 12, padding: "6px 9px", marginBottom: 8 } },
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#b8d8ff" } }, "\uD83D\uDC0E \u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E02\u0E35\u0E48:"),
                         MOUNTS.filter((m) => (ui.mountsOwned || {})[m.id]).map((m) => (React.createElement("button", { key: m.id, onClick: () => G.setMount(ui.mountId === m.id ? null : m.id), style: { margin: "2px 3px", padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: ui.mountId === m.id ? "#fff" : "#4a6a9a", background: ui.mountId === m.id ? "linear-gradient(90deg,#5a8ad0,#7b6ad0)" : "#fff" } },
                             m.emoji,
                             " ",
@@ -100170,7 +100206,7 @@ function CherryAdventure() {
                         (() => {
                             const inFarm = new Set(((G.ranch && G.ranch.slots) || []).filter((x) => x != null));
                             const farmN = (ui.petBox || []).filter((p) => inFarm.has(p.i)).length;
-                            return farmN > 0 ? (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#7a9a5a", background: "#eef8e4", borderRadius: 9, padding: "5px 9px", marginBottom: 6 } },
+                            return farmN > 0 ? (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#cfe8da", background: "rgba(0,0,0,0.3)", borderRadius: 9, padding: "5px 9px", marginBottom: 6, gridColumn: "1 / -1" } },
                                 "\uD83C\uDFE1 \u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E1F\u0E32\u0E23\u0E4C\u0E21 ",
                                 farmN,
                                 " \u0E15\u0E31\u0E27 \u2014 \u0E16\u0E39\u0E01\u0E1E\u0E31\u0E01\u0E08\u0E32\u0E01\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27 \u0E08\u0E19\u0E01\u0E27\u0E48\u0E32\u0E08\u0E30\u0E19\u0E33\u0E2D\u0E2D\u0E01\u0E08\u0E32\u0E01\u0E04\u0E2D\u0E01\u0E1F\u0E32\u0E23\u0E4C\u0E21")) : null;
@@ -100188,12 +100224,12 @@ function CherryAdventure() {
                             const buff = { atk: Math.round((sp.tier * 2 * p.stage + p.lv + (skLv - 1) * 2 + iv.a + (p.plus || 0) * 3) * _mm), hp: Math.round((3 * p.lv + 5 * (p.stage - 1) + (skLv - 1) * 4 + iv.h + (p.plus || 0) * 5) * _mm), def: Math.round(((p.stage - 1) + Math.floor(p.lv / 2) + iv.d + (p.plus || 0) * 2) * _mm) };
                             const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
                             const selFuse = (ui.fuseSel || []).includes(p.i);
-                            return (React.createElement("div", { key: p.i, style: { position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font } },
-                                p.fresh && React.createElement("span", { style: { position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 } }, "\u0E43\u0E2B\u0E21\u0E48 \u2728"),
+                            return (React.createElement("div", { key: p.i, style: { position: "relative", padding: "7px 7px", borderRadius: 12, background: `linear-gradient(170deg, ${rr.color}2a, rgba(8,24,18,0.85) 60%)`, border: selFuse ? "2px solid #d07aff" : isBuddy ? "2px solid #ffe98a" : "2px solid " + rr.color + "88", boxShadow: selFuse ? "0 0 10px #b07aff" : sp.tier >= 5 ? "0 0 10px " + rr.color + "99" : "0 2px 6px rgba(0,0,0,0.35)", fontFamily: font } },
+                                !!p.fresh && React.createElement("span", { style: { position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 } }, "\u0E43\u0E2B\u0E21\u0E48 \u2728"),
                                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5 } },
-                                    React.createElement("span", { style: { fontSize: 19 } }, sp.emoji),
+                                    React.createElement("span", { style: { width: 36, height: 36, flex: "none", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, background: `radial-gradient(circle at 50% 35%, ${rr.color}77, rgba(0,0,0,0.4) 75%)`, border: `1.5px solid ${rr.color}` } }, sp.emoji),
                                     React.createElement("div", { style: { minWidth: 0, flex: 1 } },
-                                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#c09020" : "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+                                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#ffe98a" : "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
                                             dispName,
                                             p.plus ? React.createElement("b", { style: { color: "#e0862f" } },
                                                 " +",
@@ -100208,18 +100244,18 @@ function CherryAdventure() {
                                             _mt ? React.createElement("span", { style: { color: _mt >= 3 ? "#e0a020" : _mt === 2 ? "#ba5af5" : "#3ab0d0" } },
                                                 " \u00B7 \uD83E\uDDEC",
                                                 _mt) : null)),
-                                    isBuddy && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#7ba05b" } }, "\u0E1A\u0E31\u0E14\u0E14\u0E35\u0E49"),
-                                    !isBuddy && inTeam && React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#5a8ad0" } }, "\u0E17\u0E35\u0E21")),
-                                React.createElement("div", { style: { background: "#e5e5da", borderRadius: 99, height: 4, marginTop: 3, overflow: "hidden" } },
-                                    React.createElement("div", { style: { width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "#b07ae0", borderRadius: 99 } })),
-                                React.createElement("div", { style: { fontSize: 8.5, color: "#7a9a5a", fontWeight: 700, marginTop: 2 } },
+                                    isBuddy && React.createElement("span", { style: { fontSize: 8.5, fontWeight: 900, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", borderRadius: 6, padding: "1px 5px" } }, "\uD83D\uDC51"),
+                                    !isBuddy && inTeam && React.createElement("span", { style: { fontSize: 8.5, fontWeight: 900, color: "#fff", background: "#3a70c0", borderRadius: 6, padding: "1px 5px" } }, "\u0E17\u0E35\u0E21")),
+                                React.createElement("div", { style: { background: "rgba(0,0,0,0.45)", borderRadius: 99, height: 5, marginTop: 4, overflow: "hidden" } },
+                                    React.createElement("div", { style: { width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "linear-gradient(90deg,#9a5ae0,#d07aff)", borderRadius: 99 } })),
+                                React.createElement("div", { style: { fontSize: 8.5, color: "#9af0b8", fontWeight: 800, marginTop: 3 } },
                                     "\u2694\uFE0F+",
                                     buff.atk,
                                     " \u2764\uFE0F+",
                                     buff.hp,
                                     " \uD83D\uDEE1\uFE0F+",
                                     buff.def),
-                                React.createElement("div", { style: { fontSize: 8, color: "#b0526a", fontWeight: 700 } },
+                                React.createElement("div", { style: { fontSize: 8, color: "#ffb0c8", fontWeight: 700 } },
                                     (ELEM_META[PET_ELEM[p.sp]] || {}).emoji || "",
                                     " ",
                                     PET_SKILL[p.sp],
