@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v669";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v670";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -2800,15 +2800,72 @@ const CONSTELLATION = (() => {
       { n: "จ่าฝูงแกร่ง", e: "🐺", d: "ATK +10% · DEF +6", atkPct: 10, def: 6 },
       { n: "ราชาสรรพสัตว์", e: "👑", d: "HP +10% · โชค +8 · ร่างพลังนาน +1 เทิร์น", hpPct: 10, luck: 8, tfTurns: 1 },
     ] },
+    aegis: { name: "แกนพลาสมา", star: 0x5ac8ff, emoji: "🤖", nodes: [
+      { n: "เกราะนาโน", e: "🛡️", d: "DEF +6", def: 6 },
+      { n: "แกนพลังงาน", e: "🔋", d: "มานาสูงสุด +10", mp: 10 },
+      { n: "ปืนพลาสมา", e: "🔫", d: "ATK +8", atk: 8 },
+      { n: "ระบบเล็งเป้า", e: "🎯", d: "คริ +5% · DEF +4%", crit: 5, defPct: 4 },
+      { n: "โดรนคุ้มกัน", e: "🛸", d: "HP +8% · ATK +6%", hpPct: 8, atkPct: 6 },
+      { n: "ป้อมปราการจักรกล", e: "🌌", d: "DEF +10% · ATK +8% · ร่างพลังนาน +1 เทิร์น", defPct: 10, atkPct: 8, tfTurns: 1 },
+    ] },
+    boxer: { name: "หมัดดารา", star: 0xff8a4a, emoji: "🥊", nodes: [
+      { n: "ฟุตเวิร์ก", e: "💨", d: "หลบ +5%", eva: 5 },
+      { n: "หมัดหนัก", e: "🥊", d: "ATK +8", atk: 8 },
+      { n: "กรามเหล็ก", e: "🛡️", d: "HP สูงสุด +8%", hpPct: 8 },
+      { n: "จังหวะสวน", e: "🎯", d: "คริ +5% · ดาเมจคริ +10%", crit: 5, critDmg: 10 },
+      { n: "ไฟนักสู้", e: "🔥", d: "ATK +8% · เริ่มศึกด้วยเกจพลัง +15%", atkPct: 8, tfStart: 15 },
+      { n: "แชมป์โลก", e: "👑", d: "ATK +10% · คริ +6% · ร่างพลังนาน +1 เทิร์น", atkPct: 10, crit: 6, tfTurns: 1 },
+    ] },
   };
+  // 🌌 หมู่ดาวขั้น 2 / ขั้น 3 ตามอาชีพ — ชื่อ+ไอคอนเฉพาะอาชีพ · ค่าพลังอิงดาวขั้น 1 ตำแหน่งเดียวกัน × ตัวคูณขั้น
+  const TIERS = {
+    warrior:  [["ปราการเหล็กกล้า", [["ผิวเหล็ก", "🔩"], ["หัวใจสิงห์", "🦁"], ["คำรามศึก", "📣"], ["โล่ทองคำ", "🛡️"], ["กำลังยักษ์", "🗿"], ["จอมทัพไร้พ่าย", "🏰"]]],
+               ["ปราการเทพเจ้า", [["กายเพชร", "💎"], ["เลือดมังกร", "🐉"], ["วิญญาณนักรบ", "👻"], ["โล่สุริยะ", "☀️"], ["พลังไททัน", "⛰️"], ["เทพสงคราม", "⚜️"]]]],
+    archer:   [["ดาวพรานเหยี่ยว", [["ตาอินทรี", "🦅"], ["ศรเพลิง", "🔥"], ["ยิงทะลุเกราะ", "💢"], ["ลมนำทาง", "🍃"], ["ฝนธนู", "🌧️"], ["พรานดวงจันทร์", "🌙"]]],
+               ["ดาวพรานสวรรค์", [["ตาทิพย์", "🔭"], ["ศรสายฟ้า", "⚡"], ["จุดตายนิรันดร์", "☠️"], ["เงาลม", "🌬️"], ["พายุศร", "🌪️"], ["เทพธนูดารา", "🌠"]]]],
+    mage:     [["ห้วงเวทจันทรา", [["ทะเลมานา", "🌊"], ["เพลิงอาคม", "🔥"], ["วงเวทซ้อน", "🌀"], ["คัมภีร์โบราณ", "📜"], ["ม่านพลัง", "🔰"], ["จอมเวทจันทรา", "🌙"]]],
+               ["ห้วงเวทนิรันดร์", [["ต้นธารเวท", "💠"], ["อัคนีสวรรค์", "☄️"], ["กาลเวลาหยุด", "⏳"], ["เวทต้องสาป", "📕"], ["เกราะดารา", "🌟"], ["มหาปราชญ์นิรันดร์", "🪐"]]]],
+    assassin: [["เงาจันทร์ดับ", [["ย่างไร้เสียง", "🐾"], ["มีดอาบพิษ", "🧪"], ["ตาเหยี่ยวราตรี", "🦉"], ["แยกร่างเงา", "👥"], ["สังหารฉับไว", "⚡"], ["เจ้าแห่งราตรี", "🌘"]]],
+               ["เงามรณะ", [["หายวับ", "🌫️"], ["คมมรณะ", "💀"], ["เนตรมรณะ", "👁️"], ["เงาพันร่าง", "🌑"], ["ประหารเงียบ", "🩸"], ["ยมทูตเงา", "☠️"]]]],
+    lancer:   [["หอกพายุ", [["ด้ามมังกร", "🐲"], ["กายเหล็ก", "🛡️"], ["แทงพายุ", "🌪️"], ["ขวัญทัพ", "🚩"], ["หอกทะลวงฟ้า", "⚔️"], ["แม่ทัพหอกพายุ", "🌩️"]]],
+               ["หอกเทพวายุ", [["ด้ามเทพ", "✨"], ["กายอมตะ", "❤️"], ["ทะลวงสวรรค์", "💥"], ["ฮึกเหิมนิรันดร์", "🔥"], ["หอกสายฟ้า", "⚡"], ["เทพหอกวายุ", "🔱"]]]],
+    samurai:  [["วิถีดาบซากุระ", [["ดาบเงา", "🌑"], ["สมาธิแน่วแน่", "🧘"], ["ฟันจันทร์เสี้ยว", "🌙"], ["บุปผาร่วง", "🌸"], ["เฉือนลม", "🍃"], ["โชกุนซากุระ", "🏯"]]],
+               ["วิถีดาบเทพ", [["ดาบเทวะ", "✨"], ["จิตไร้ใจ", "☯️"], ["ฟันสวรรค์", "⚡"], ["พายุซากุระ", "🌪️"], ["ดาบพันคม", "🗡️"], ["เทพดาบนิรันดร์", "⛩️"]]]],
+    coder:    [["เมทริกซ์ควอนตัม", [["แพตช์โชค", "🎲"], ["คอมไพล์เร็ว", "⚡"], ["รีแฟกเตอร์", "🔧"], ["ดีบักเกอร์", "🔍"], ["คลาวด์พลัง", "☁️"], ["สถาปนิกระบบ", "🏗️"]]],
+               ["เมทริกซ์เอไอ", [["เอไอนำโชค", "🤖"], ["ซูเปอร์คอม", "🖥️"], ["นิวรัลเน็ต", "🧠"], ["ซีโร่เดย์", "🐞"], ["ควอนตัมคอร์", "⚛️"], ["เทพเจ้าเอไอ", "🌐"]]]],
+    office:   [["ตึกระฟ้าดารา", [["เอสเปรสโซ่", "☕"], ["แผนกลยุทธ์", "📈"], ["โบนัสก้อนโต", "💰"], ["ประชุมด่วน", "📅"], ["สวัสดิการดี", "🏥"], ["ผู้อำนวยการ", "👔"]]],
+               ["อาณาจักรบริษัท", [["กาแฟทองคำ", "🏆"], ["วิสัยทัศน์", "🔭"], ["หุ้นปันผล", "💹"], ["ควบรวมกิจการ", "🤝"], ["ประกันชีวิต", "🛡️"], ["ประธานจักรวาล", "🌌"]]]],
+    tamer:    [["ดาวพงไพร", [["กลิ่นป่า", "🌿"], ["หนังหนา", "🦏"], ["เสียงหอน", "🐺"], ["กรงเล็บ", "🐾"], ["ฝูงใหญ่", "🦬"], ["เจ้าป่า", "🐯"]]],
+               ["ดาวสัตว์เทพ", [["วิญญาณป่า", "🍃"], ["เกราะมังกร", "🐉"], ["ใจเดียวกัน", "💞"], ["เขี้ยวเทพ", "🦷"], ["จ่าฝูงเทพ", "🦁"], ["ราชันสัตว์เทพ", "🦄"]]]],
+    aegis:    [["แกนควอนตัม", [["เกราะไทเทเนียม", "🔩"], ["เตาปฏิกรณ์", "⚛️"], ["ปืนเลเซอร์", "🔦"], ["เรดาร์ล็อก", "📡"], ["ฝูงโดรน", "🛸"], ["ป้อมควอนตัม", "🏰"]]],
+               ["แกนดาราจักร", [["โล่พลังงาน", "🔰"], ["แกนดาวฤกษ์", "☀️"], ["ปืนแรงโน้มถ่วง", "🌀"], ["ระบบทำนาย", "🧠"], ["กองทัพจักรกล", "🤖"], ["จักรกลเทพ", "🌌"]]]],
+    boxer:    [["หมัดพายุ", [["ก้าวสายฟ้า", "⚡"], ["หมัดเหล็ก", "🔨"], ["คางหิน", "🪨"], ["สวนกลับ", "🔄"], ["ใจแชมป์", "🔥"], ["แชมป์ไร้พ่าย", "🏆"]]],
+               ["หมัดเทพ", [["ก้าวเงา", "👣"], ["หมัดอุกกาบาต", "☄️"], ["กายเพชร", "💎"], ["หมัดมรณะ", "💥"], ["วิญญาณนักสู้", "👊"], ["เทพเจ้าสังเวียน", "👑"]]]],
+  };
+  const TIER_COSTS = [COSTS, [30, 36, 44, 54, 66, 80], [90, 105, 125, 150, 180, 220]];
+  const TIER_MUL = [1, 1.3, 1.6];
+  const LAB = { atk: ["ATK +", ""], atkPct: ["ATK +", "%"], def: ["DEF +", ""], defPct: ["DEF +", "%"], hpPct: ["HP +", "%"], crit: ["คริ +", "%"], critDmg: ["ดาเมจคริ +", "%"], luck: ["โชค +", ""], mp: ["มานา +", ""], eva: ["หลบ +", "%"], tfStart: ["เริ่มศึกด้วยเกจพลัง +", "%"], tfTurns: ["ร่างพลังนาน +", " เทิร์น"] };
   const out = {};
   Object.keys(raw).forEach((cls) => {
     const c = raw[cls];
-    out[cls] = { name: c.name, star: c.star, emoji: c.emoji, nodes: c.nodes.map((nd, i) => {
-      const node = { id: `c_${cls}_${i + 1}`, name: nd.n, emoji: nd.e, desc: nd.d, cost: COSTS[i], req: i > 0 ? `c_${cls}_${i}` : null };
-      FIELDS.forEach((f) => { node[f] = nd[f] || 0; });
-      return node;
-    }) };
+    const T = TIERS[cls] || [];
+    const tierNames = [c.name, ...(T.map((t) => t[0]))];
+    const nodes = [];
+    tierNames.forEach((_, t) => {
+      c.nodes.forEach((nd, i) => {
+        const g = t * 6 + i;   // ลำดับรวม 0..17 → id c_<cls>_1..18 (ขั้น 1 ใช้ id เดิม เซฟเก่าไม่หาย)
+        const nm = t === 0 ? [nd.n, nd.e] : T[t - 1][1][i];
+        const node = { id: `c_${cls}_${g + 1}`, name: nm[0], emoji: nm[1], cost: TIER_COSTS[t][i], req: g > 0 ? `c_${cls}_${g}` : null, tier: t + 1, ti: i,
+          needLv: t === 0 ? (i + 1) * 3 : t === 1 ? 60 + i * 8 : 120 + i * 12 };   // 🔒 ขั้น 2 เริ่ม Lv.60 · ขั้น 3 เริ่ม Lv.120
+        FIELDS.forEach((f) => {
+          const v = nd[f] || 0;
+          node[f] = t === 0 || f === "tfTurns" || f === "tfStart" ? v : Math.round(v * TIER_MUL[t]);
+        });
+        node.desc = t === 0 ? nd.d : FIELDS.filter((f) => node[f]).map((f) => LAB[f][0] + node[f] + LAB[f][1]).join(" · ");
+        nodes.push(node);
+      });
+    });
+    out[cls] = { name: c.name, star: c.star, emoji: c.emoji, tierNames, nodes };
   });
   return out;
 })();
@@ -26359,9 +26416,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       t.constel = _n(() => {
         const board = CONSTELLATION[G.cls]; if (!board || !G.player) return 0;
         const owned = G.constNodes || {};
-        const needLv = (Object.keys(owned).length + 1) * 3;
-        if (G.player.level < needLv) return 0;
-        return board.nodes.filter((nd) => !owned[nd.id] && (!nd.req || owned[nd.req]) && (G.stardust || 0) >= nd.cost).length ? 1 : 0;
+        return board.nodes.filter((nd) => !owned[nd.id] && (!nd.req || owned[nd.req]) && (G.stardust || 0) >= nd.cost && G.player.level >= nd.needLv).length ? 1 : 0;
       });
       // ⚡ แต้มสกิล/สเตตัสที่ยังไม่ได้ลง
       t.skill = _n(() => (G.player ? (G.player.sp || 0) + (G.player.statPts || 0) : 0));
@@ -31468,7 +31523,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         toast(`🔒 ต้องปลดล็อก "${pre ? pre.name : ""}" ก่อน`);
         return;
       }
-      { const uc = Object.keys(G.constNodes || {}).length; const needLv = (uc + 1) * 3; if (G.player.level < needLv) { toast(`🔒 ต้องเลเวล ${needLv} เพื่อปลดล็อกดาวดวงต่อไป (ตอนนี้ Lv.${G.player.level})`); return; } } // ⚖️ เงื่อนไขเลเวลเพิ่มขึ้นเรื่อยๆ
+      if (G.player.level < node.needLv) { toast(`🔒 ต้องเลเวล ${node.needLv} เพื่อปลดล็อกดาวดวงนี้ (ตอนนี้ Lv.${G.player.level})`); return; } // ⚖️ เงื่อนไขเลเวลเพิ่มขึ้นเรื่อยๆ · ขั้น 2 เริ่ม Lv.60 · ขั้น 3 เริ่ม Lv.120
       if ((G.stardust || 0) < node.cost) { toast(`✨ ผงดาวไม่พอ — ต้องใช้ ${node.cost} (มี ${G.stardust || 0})`); return; }
       const oldMax = effMaxHp();
       G.stardust -= node.cost;
@@ -31478,6 +31533,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.sfx) G.sfx.levelup();
       if (char) burst(char.position, board.star, 1.6);
       toast(`✨⭐ ปลดล็อก ${node.emoji} ${node.name}! (−${node.cost}✨) — ${node.desc}`);
+      if (node.ti === 5 && node.tier < 3) setTimeout(() => toast(`🌌🔓 ปลดล็อกหมู่ดาวขั้น ${node.tier + 1} "${board.tierNames[node.tier]}" แล้ว! (เริ่มที่ Lv.${node.tier === 1 ? 60 : 120})`), 1200);
       setUi((u) => ({ ...u, constNodes: { ...G.constNodes }, stardust: G.stardust || 0 }));
       syncPlayer(); // re-sync boosted stats
     };
@@ -64999,32 +65055,58 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 if (!board) return <div style={{ fontSize: 12, color: "#8a7aa0" }}>เลือกอาชีพก่อนจึงจะเปิดกระดานพรสวรรค์ได้</div>;
                 const un = ui.constNodes || {};
                 const dust = ui.stardust || 0;
-                const N = board.nodes;
+                const ALL = board.nodes;
+                const doneAll = ALL.filter((n) => un[n.id]).length;
+                const tierOpen = (t) => { const f = ALL.find((n) => n.tier === t); return !f.req || !!un[f.req]; };
+                const autoT = Math.min(3, Math.floor(Math.min(doneAll, ALL.length - 1) / 6) + 1);
+                const tierSel = ui.constTier && tierOpen(ui.constTier) ? ui.constTier : autoT;
+                const N = ALL.filter((n) => n.tier === tierSel);
                 const done = N.filter((n) => un[n.id]).length;
+                const TT = [null, { c1: "#7a4ae0", map: "radial-gradient(90% 80% at 60% 40%, #3a2270 0%, #1a0e3a 60%, #0a0520 100%)", ic: "radial-gradient(circle,#e8d8ff,#7a4ae0 72%)", glow: "#9a6aff" },
+                  { c1: "#3a8ae0", map: "radial-gradient(90% 80% at 60% 40%, #1a4a80 0%, #0c2248 60%, #050e24 100%)", ic: "radial-gradient(circle,#d8f0ff,#3a8ae0 72%)", glow: "#5ab0ff" },
+                  { c1: "#e04a6a", map: "radial-gradient(90% 80% at 60% 40%, #702040 0%, #3a0c22 60%, #1a0510 100%)", ic: "radial-gradient(circle,#ffe0e8,#e04a6a 72%)", glow: "#ff6a8a" }][tierSel];
                 // 🌌 ตำแหน่งดาวบนแผนที่ฟ้า (เป็นรูปกลุ่มดาวซิกแซก) — % ของกรอบ
                 const POS = [[16, 78], [36, 56], [22, 30], [52, 20], [70, 44], [84, 16]];
-                const needLv = (done + 1) * 3, lvOk = (ui.level || 1) >= needLv;   // 🔒 เกมบังคับเลเวล 3 ต่อดาวที่ปลดแล้ว
-                const st = (node) => { const u2 = !!un[node.id]; const av = !u2 && (!node.req || un[node.req]); return { unlocked: u2, available: av, can: av && dust >= node.cost && lvOk }; };
+                const st = (node) => { const u2 = !!un[node.id]; const av = !u2 && (!node.req || un[node.req]); return { unlocked: u2, available: av, can: av && dust >= node.cost && (ui.level || 1) >= node.needLv }; };
                 const nextIdx = N.findIndex((n) => st(n).available);
                 const pickIdx = ui.constPick != null && N[ui.constPick] ? ui.constPick : (nextIdx >= 0 ? nextIdx : N.length - 1);
                 const P = N[pickIdx], PS = st(P);
+                const needLv = P.needLv, lvOk = (ui.level || 1) >= needLv;   // 🔒 เลเวลขั้นต่ำของดาวดวงที่เลือก
                 const stars = [...Array(46)].map((_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 100, 1 + (i % 3), 0.25 + ((i * 7) % 6) / 10]);
                 return (
                   <div style={{ borderRadius: 18, overflow: "hidden", border: "2px solid #3a2a6a", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(20,10,50,0.45)", background: "linear-gradient(180deg,#140a2e 0%,#1e1244 55%,#0c0620 100%)" }}>
                     {/* หัวกระดาน */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px 8px" }}>
-                      <span style={{ width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#e8d8ff,#7a4ae0 72%)", boxShadow: "0 0 14px #9a6aff", border: "2px solid rgba(255,255,255,0.8)" }}>{board.emoji}</span>
+                      <span style={{ width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: TT.ic, boxShadow: `0 0 14px ${TT.glow}`, border: "2px solid rgba(255,255,255,0.8)" }}>{board.emoji}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 15.5, fontWeight: 900, color: "#f0e8ff", textShadow: "0 0 10px rgba(180,140,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.name}</div>
-                        <div style={{ fontSize: 9.5, color: "#b8a8e0", fontWeight: 700 }}>หมู่ดาวพรสวรรค์ · ปลดแล้ว {done}/{N.length}</div>
+                        <div style={{ fontSize: 15.5, fontWeight: 900, color: "#f0e8ff", textShadow: "0 0 10px rgba(180,140,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.tierNames[tierSel - 1]}</div>
+                        <div style={{ fontSize: 9.5, color: "#b8a8e0", fontWeight: 700 }}>หมู่ดาวขั้น {tierSel} · ปลดแล้ว {done}/{N.length} · รวม {doneAll}/{ALL.length}</div>
                       </div>
                       <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))", border: "1.5px solid #c8a8ff88", boxShadow: "0 0 12px rgba(160,120,255,0.45)", marginRight: 30 }}>
                         <div style={{ fontSize: 8.5, fontWeight: 900, color: "#c8b8f0" }}>ผงดาว</div>
                         <div style={{ fontSize: 16, fontWeight: 900, color: "#fff4c0", textShadow: "0 0 8px rgba(255,230,140,0.9)", lineHeight: 1.05 }}>✨ {dust}</div>
                       </div>
                     </div>
+                    {/* 🌌 แท็บขั้นหมู่ดาว 1 / 2 / 3 */}
+                    <div style={{ display: "flex", gap: 6, padding: "0 10px 8px" }}>
+                      {[1, 2, 3].map((t) => {
+                        const open = tierOpen(t), on = t === tierSel;
+                        const tN = ALL.filter((n) => n.tier === t), tD = tN.filter((n) => un[n.id]).length;
+                        const col = ["", "#9a6aff", "#5ab0ff", "#ff6a8a"][t];
+                        return (
+                          <button key={t} onClick={() => { if (open) setUi((u) => ({ ...u, constTier: t, constPick: null })); else G.toast && G.toast(`🔒 ต้องปลดดาวขั้น ${t - 1} ให้ครบ 6 ดวงก่อน · เริ่มที่ Lv.${t === 2 ? 60 : 120}`); }} style={{
+                            flex: 1, padding: "6px 2px", borderRadius: 12, fontFamily: font, cursor: "pointer", lineHeight: 1.2,
+                            border: on ? "2px solid #fff" : `1.5px solid ${open ? col + "88" : "rgba(255,255,255,0.12)"}`,
+                            background: on ? `linear-gradient(180deg, ${col}, ${col}88)` : open ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.35)",
+                            boxShadow: on ? `0 3px 0 rgba(0,0,0,0.45), 0 0 12px ${col}aa` : "none", color: open ? "#fff" : "#7a6a98" }}>
+                            <div style={{ fontSize: 11.5, fontWeight: 900 }}>{open ? (tD === 6 ? "🌟" : "✦") : "🔒"} ขั้น {t}</div>
+                            <div style={{ fontSize: 8.5, fontWeight: 800, opacity: 0.9 }}>{open ? `${tD}/6 ดวง` : `Lv.${t === 2 ? 60 : 120}+`}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
                     {/* 🗺️ แผนที่ฟ้า */}
-                    <div style={{ position: "relative", height: 230, margin: "0 10px", borderRadius: 16, overflow: "hidden", background: "radial-gradient(90% 80% at 60% 40%, #3a2270 0%, #1a0e3a 60%, #0a0520 100%)", border: "1px solid rgba(200,170,255,0.25)" }}>
+                    <div style={{ position: "relative", height: 230, margin: "0 10px", borderRadius: 16, overflow: "hidden", background: TT.map, border: "1px solid rgba(200,170,255,0.25)" }}>
                       {stars.map(([x, y, r, o], i) => <span key={i} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, width: r, height: r, borderRadius: "50%", background: "#fff", opacity: o, boxShadow: "0 0 4px #fff" }} />)}
                       <div style={{ position: "absolute", left: "-10%", top: "35%", width: "120%", height: 60, background: "linear-gradient(90deg,transparent,rgba(180,140,255,0.12),rgba(255,180,220,0.1),transparent)", transform: "rotate(-18deg)", filter: "blur(8px)" }} />
                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
@@ -65045,7 +65127,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                             boxShadow: S2.unlocked ? "0 0 18px #ffd24a, 0 0 36px rgba(255,210,74,0.4)" : S2.can ? "0 0 14px #ffd24a" : S2.available ? "0 0 10px #9a6aff" : "none",
                             animation: S2.can ? "todoPop 2.2s ease-in-out infinite" : "none", fontSize: big ? 22 : 17, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", zIndex: sel ? 3 : 2 }}>
                             <span style={{ filter: S2.unlocked || S2.available ? "none" : "grayscale(1) brightness(0.7)" }}>{S2.unlocked || S2.available ? n.emoji : "✦"}</span>
-                            <span style={{ position: "absolute", bottom: -13, left: "50%", transform: "translateX(-50%)", fontSize: 8.5, fontWeight: 900, color: S2.unlocked ? "#ffe9a0" : "#c8b8f0", whiteSpace: "nowrap", textShadow: "0 1px 2px #000" }}>C{i + 1}{big ? " 🌟" : ""}</span>
+                            <span style={{ position: "absolute", bottom: -13, left: "50%", transform: "translateX(-50%)", fontSize: 8.5, fontWeight: 900, color: S2.unlocked ? "#ffe9a0" : "#c8b8f0", whiteSpace: "nowrap", textShadow: "0 1px 2px #000" }}>C{(tierSel - 1) * 6 + i + 1}{big ? " 🌟" : ""}</span>
                           </button>
                         );
                       })}
@@ -65055,7 +65137,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                         <span style={{ width: 42, height: 42, borderRadius: "50%", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: PS.unlocked ? "radial-gradient(circle,#fffbe0,#ffd24a 70%)" : "radial-gradient(circle,#e8d8ff,#7a4ae0 72%)", boxShadow: PS.unlocked ? "0 0 12px #ffd24a" : "0 0 10px #9a6aff" }}>{P.emoji}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>C{pickIdx + 1} · {P.name}{pickIdx === N.length - 1 ? " 🌟" : ""}</div>
+                          <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>C{(tierSel - 1) * 6 + pickIdx + 1} · {P.name}{pickIdx === N.length - 1 ? " 🌟" : ""}</div>
                           <div style={{ fontSize: 10, color: "#d0c4f0", lineHeight: 1.4 }}>{P.desc}</div>
                         </div>
                       </div>
@@ -65064,10 +65146,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         cursor: PS.can ? "pointer" : "default", color: PS.can ? "#3a2408" : PS.unlocked ? "#3a2408" : "#9a8ab8",
                         background: PS.can ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : PS.unlocked ? "linear-gradient(180deg,#fff3c0,#e8c060)" : "rgba(255,255,255,0.08)",
                         boxShadow: PS.can ? "0 4px 0 #9a6a10, 0 0 14px rgba(255,210,74,0.6)" : "none" }}>
-                        {PS.unlocked ? "✅ ปลดดาวดวงนี้แล้ว" : !PS.available ? "🔒 ต้องปลดดาวก่อนหน้าก่อน" : !lvOk ? `🔒 ต้องเลเวล ${needLv}` : PS.can ? `🌟 ปลดดาว (✨ ${P.cost})` : `✨ ผงดาวไม่พอ (ต้อง ${P.cost} · มี ${dust})`}
+                        {PS.unlocked ? "✅ ปลดดาวดวงนี้แล้ว" : !PS.available ? (P.ti === 0 ? `🔒 ต้องปลดดาวขั้น ${P.tier - 1} ให้ครบก่อน` : "🔒 ต้องปลดดาวก่อนหน้าก่อน") : !lvOk ? `🔒 ต้องเลเวล ${needLv}` : PS.can ? `🌟 ปลดดาว (✨ ${P.cost})` : `✨ ผงดาวไม่พอ (ต้อง ${P.cost} · มี ${dust})`}
                       </button>
                     </div>
-                    <div style={{ fontSize: 9.5, color: "#a898d0", textAlign: "center", padding: "0 10px 10px" }}>แตะดาวเพื่อดูรายละเอียด · รับ ✨ ผงดาวจากการชนะศึก (บอสให้เยอะ) · ดาว C6 🌟 คือพลังพิเศษประจำอาชีพ</div>
+                    <div style={{ fontSize: 9.5, color: "#a898d0", textAlign: "center", padding: "0 10px 10px" }}>แตะดาวเพื่อดูรายละเอียด · รับ ✨ ผงดาวจากการชนะศึก (บอสให้เยอะ) · ดาว 🌟 ปิดท้ายแต่ละขั้นคือพลังพิเศษประจำอาชีพ · ปลดครบขั้นเพื่อเปิดขั้นถัดไป (ขั้น 2 Lv.60 · ขั้น 3 Lv.120)</div>
                   </div>
                 );
               })()}
