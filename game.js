@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v662"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v663"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -92865,7 +92865,7 @@ function CherryAdventure() {
                 React.createElement("div", { style: { ...SKILL_DARK, background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e" } },
                     React.createElement("div", { style: { fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 } }, "\uD83D\uDCD6 \u0E27\u0E34\u0E0A\u0E32\u0E2A\u0E01\u0E34\u0E25"),
                     React.createElement("div", { style: { fontSize: 10, color: "#7fae97", marginBottom: 9 } },
-                        "\u0E1B\u0E25\u0E14\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E25\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E31\u0E49\u0E19 \u2014 \u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19 \u00B7 \u0E41\u0E15\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14 \u00B7 \u26A1 \u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25 ",
+                        "\u0E1B\u0E25\u0E14\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E25\u0E48\u0E40\u0E1B\u0E47\u0E19\u0E02\u0E31\u0E49\u0E19 \u2014 \u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25\u0E2A\u0E39\u0E07\u0E02\u0E36\u0E49\u0E19 \u00B7 \u0E41\u0E15\u0E30 \uFF0B \u0E1A\u0E19\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2D\u0E31\u0E1B\u0E2A\u0E01\u0E34\u0E25\u0E17\u0E31\u0E19\u0E17\u0E35 \u00B7 \u0E41\u0E15\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14 \u00B7 \u26A1 \u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25 ",
                         ui.sp || 0),
                     React.createElement("div", { style: { display: wide ? "flex" : "block", gap: 12, alignItems: "flex-start" } },
                         React.createElement("div", { style: { flex: wide ? 1.25 : "none", minWidth: 0 } },
@@ -92885,6 +92885,10 @@ function CherryAdventure() {
                                         row.cards.length === 0 && (React.createElement("div", { style: { gridColumn: "1 / -1", fontSize: 9.5, color: "#5f7f6f", textAlign: "center", padding: "10px 0" } }, "\u2014 \u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E17\u0E48\u0E32\u0E43\u0E19\u0E02\u0E31\u0E49\u0E19\u0E19\u0E35\u0E49 \u2014")),
                                         row.cards.map((c) => {
                                             const on = c.id === pickId;
+                                            // ➕ อัปสกิลได้จากการ์ดเลย ไม่ต้องเลื่อนลงไปกดปุ่มในแผงรายละเอียด
+                                            const DD = c.open && G.skillDetail ? G.skillDetail(c.id) : null;
+                                            const canUp = !!(DD && DD.open && !DD.maxed && !DD.atCap && DD.canPay);
+                                            const upNote = !DD ? "" : DD.maxed ? "⭐ เต็ม" : DD.atCap ? "🔒 เพดาน" : !DD.canPay ? `⚡${DD.cost}` : "";
                                             return (React.createElement("button", { key: c.id, onClick: () => setUi((u) => ({ ...u, boardPick: c.id })), style: {
                                                     position: "relative", padding: "8px 3px 6px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "center",
                                                     border: on ? "2px solid #ffd76a" : c.open ? "1.5px solid #4f9a76" : "1.5px dashed #35594a",
@@ -92894,6 +92898,11 @@ function CherryAdventure() {
                                                 React.createElement("span", { style: { position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#0d2018", background: "#f5d24a", borderRadius: 5, padding: "0 4px" } },
                                                     "\u0E02\u0E31\u0E49\u0E19 ",
                                                     c.tier),
+                                                c.open && (canUp ? (React.createElement("span", { role: "button", title: `อัปเกรดเป็น Lv.${DD.rank + 1} (⚡ ${DD.cost})`, onClick: (e) => { e.stopPropagation(); G.boardUpgrade(c.id); setUi((u) => ({ ...u, boardPick: c.id })); }, style: {
+                                                        position: "absolute", top: -7, right: -6, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                                                        fontSize: 19, fontWeight: 900, lineHeight: 1, color: "#1a3a10", cursor: "pointer", zIndex: 2,
+                                                        background: "radial-gradient(circle at 35% 30%, #fff9c0, #ffd24a 55%, #e09a1a)", border: "2px solid #fff", boxShadow: "0 3px 0 #9a6a10, 0 0 10px rgba(255,210,74,0.8)"
+                                                    } }, "\uFF0B")) : upNote ? (React.createElement("span", { style: { position: "absolute", top: 2, right: 3, fontSize: 8, fontWeight: 900, color: DD.maxed ? "#ffd76a" : "#9ab8a8", background: "rgba(0,0,0,0.35)", borderRadius: 5, padding: "0 4px" } }, upNote)) : null),
                                                 React.createElement("div", { style: { fontSize: 25, marginTop: 7, filter: c.open ? "none" : "grayscale(1)" } }, c.open ? c.sk.emoji : "🔒"),
                                                 React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: c.open ? "#d8f0e2" : "#7f9d8e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" } }, c.sk.name),
                                                 React.createElement("div", { style: { fontSize: 9, fontWeight: 900, color: c.open ? "#9fe8c0" : "#e0a05a" } }, c.open ? `Lv.${c.rank}`
