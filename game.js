@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v672"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v673"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -96646,203 +96646,178 @@ function CherryAdventure() {
                     display: "none",
                     fontSize: 26, background: "#fff", boxShadow: "0 4px 12px rgba(90,120,70,0.3)",
                 } }, "\uD83C\uDFEA"),
-            ui.shopOpen && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-                    ...CHIBI_FRAME, borderRadius: 16, padding: 12,
-                    boxShadow: MODAL_SHADOW,
-                } },
-                closeBtn("shopOpen"),
-                React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } },
-                    React.createElement("span", { style: { fontSize: 14, fontWeight: 800, color: "#5a7a4a" } }, "\uD83C\uDFEA \u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E40\u0E23\u0E48"),
-                    React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: "#c09020" } },
-                        "\uD83D\uDCB0 ",
-                        ui.gold)),
-                React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 } },
-                    React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#8a8a7a" } }, "\u0E02\u0E2D\u0E07\u0E43\u0E0A\u0E49 (\u0E0B\u0E37\u0E49\u0E2D\u0E44\u0E14\u0E49\u0E44\u0E21\u0E48\u0E08\u0E33\u0E01\u0E31\u0E14)"),
-                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
-                        React.createElement("span", { style: { fontSize: 10.5, fontWeight: 800, color: "#8a8a7a" } }, "\u0E08\u0E33\u0E19\u0E27\u0E19\u0E0B\u0E37\u0E49\u0E2D"),
-                        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, shopQty: Math.max(1, (u.shopQty || 1) - 1) })), style: { width: 22, height: 24, borderRadius: 7, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, background: "#f0e8de", color: "#8a5a3a" } }, "\u2212"),
-                        React.createElement("input", { type: "number", min: 1, value: ui.shopQty || 1, onChange: (e) => { const v = Math.max(1, Math.floor(+e.target.value || 1)); setUi((u) => ({ ...u, shopQty: v })); }, style: { width: 44, textAlign: "center", padding: "3px 2px", borderRadius: 7, border: "1.5px solid #e5d5cc", fontSize: 12.5, fontWeight: 800, fontFamily: font, color: "#5a5a4a", background: "#fff" } }),
-                        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, shopQty: (u.shopQty || 1) + 1 })), style: { width: 22, height: 24, borderRadius: 7, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 800, background: "#f0e8de", color: "#8a5a3a" } }, "+"),
-                        [10, 50].map((q) => React.createElement("button", { key: q, onClick: () => setUi((u) => ({ ...u, shopQty: q })), style: { padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 10, fontWeight: 800, fontFamily: font, background: (ui.shopQty || 1) === q ? "#c9a24a" : "#f3ede4", color: (ui.shopQty || 1) === q ? "#fff" : "#8a7a5a" } },
-                            "\u00D7",
-                            q)))),
-                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#5aa06a", marginBottom: 3 } },
-                    "\uD83E\uDDEA \u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E25\u0E37\u0E2D\u0E14 (\u0E23\u0E27\u0E21 ",
-                    ui.potions || 0,
-                    ")"),
-                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 7 } }, ["s", "m", "l"].map((sz) => {
-                    const p = (G.HP_POT || {})[sz] || {};
-                    const cnt = ((ui.hpPots || {})[sz]) || 0;
-                    const q = ui.shopQty || 1;
-                    const afford = (ui.gold || 0) >= p.price * q;
-                    return (React.createElement("button", { key: sz, disabled: !afford, onClick: () => G.buyHpPot(sz, ui.shopQty || 1), style: { flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#eaf7ec" : "#eee", opacity: afford ? 1 : 0.55 } },
-                        React.createElement("div", { style: { fontSize: 16 } }, "\uD83E\uDDEA"),
-                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#5aa06a" } },
-                            p.name,
-                            " +",
-                            p.heal),
-                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#c09020" } },
-                            p.price * q,
-                            "\uD83D\uDCB0 ",
-                            React.createElement("span", { style: { color: "#8a8a7a" } },
-                                "(\u0E21\u0E35 ",
-                                cnt,
-                                ")"))));
-                })),
-                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#4a90c0", marginBottom: 3 } },
-                    "\uD83D\uDCA7 \u0E19\u0E49\u0E33\u0E22\u0E32\u0E21\u0E32\u0E19\u0E32 (\u0E23\u0E27\u0E21 ",
-                    ui.mpPotions || 0,
-                    ")"),
-                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 7 } }, ["s", "m", "l"].map((sz) => {
-                    const p = (G.MP_POT || {})[sz] || {};
-                    const cnt = ((ui.mpPots || {})[sz]) || 0;
-                    const q = ui.shopQty || 1;
-                    const afford = (ui.gold || 0) >= p.price * q;
-                    return (React.createElement("button", { key: sz, disabled: !afford, onClick: () => G.buyMpPot(sz, ui.shopQty || 1), style: { flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#e8f2fb" : "#eee", opacity: afford ? 1 : 0.55 } },
-                        React.createElement("div", { style: { fontSize: 16 } }, "\uD83D\uDCA7"),
-                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#4a90c0" } },
-                            p.name,
-                            " +",
-                            p.rest),
-                        React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#c09020" } },
-                            p.price * q,
-                            "\uD83D\uDCB0 ",
-                            React.createElement("span", { style: { color: "#8a8a7a" } },
-                                "(\u0E21\u0E35 ",
-                                cnt,
-                                ")"))));
-                })),
-                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } }, (() => {
-                    const q = ui.shopQty || 1;
-                    const total = 1000 * q;
-                    const afford = (ui.gold || 0) >= total;
-                    return (React.createElement("button", { onClick: () => G.buyBall(ui.shopQty || 1), disabled: !afford, style: {
-                            flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
-                            cursor: afford ? "pointer" : "not-allowed", fontFamily: font,
-                            background: afford ? "#fdf3ea" : "#eee", opacity: afford ? 1 : 0.6,
-                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                        } },
-                        React.createElement("span", { style: { width: 20, height: 20, borderRadius: "50%", display: "inline-block",
-                                background: "conic-gradient(#e5533b 0deg 120deg, #f0c33b 120deg 240deg, #3b8ae0 240deg 360deg)",
-                                boxShadow: "inset -2px -2px 4px rgba(0,0,0,0.28), inset 2px 2px 4px rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.7)" } }),
-                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c0603b" } }, "\u0E25\u0E39\u0E01\u0E1A\u0E2D\u0E25\u0E08\u0E31\u0E1A\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C"),
-                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c09020" } },
-                            total,
-                            "\uD83D\uDCB0 (\u0E21\u0E35 ",
-                            ui.balls || 0,
-                            ")")));
-                })()),
-                (() => {
-                    const cur = PICKS[Math.min(PICKS.length, Math.max(1, ui.pickLv || 1)) - 1];
-                    const nx = PICKS[Math.min(PICKS.length - 1, ui.pickLv || 1)];
-                    const top = !nx || nx.lv <= (ui.pickLv || 1);
-                    const afford = (ui.gold || 0) >= (nx ? nx.cost : 0);
-                    return (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#a07a3a", marginBottom: 3 } },
-                            "\u26CF\uFE0F \u0E2D\u0E35\u0E40\u0E15\u0E49\u0E2D\u0E02\u0E38\u0E14\u0E41\u0E23\u0E48 (\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 ",
-                            cur.emoji,
-                            " ",
-                            cur.name,
-                            " \u00B7 \u0E41\u0E23\u0E48 \u00D7",
-                            cur.yield,
-                            ")"),
-                        React.createElement("button", { onClick: () => G.buyPick(), disabled: top || !afford, style: {
-                                width: "100%", marginBottom: 8, padding: "8px 10px", borderRadius: 10, border: "none",
-                                cursor: (top || !afford) ? "not-allowed" : "pointer", fontFamily: font,
-                                background: top ? "#eee" : afford ? "#fdf3e2" : "#eee", opacity: (top || !afford) ? 0.62 : 1,
-                                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, textAlign: "left",
-                            } },
-                            React.createElement("span", { style: { fontSize: 17 } }, top ? cur.emoji : nx.emoji),
-                            React.createElement("span", { style: { flex: 1, minWidth: 0 } },
-                                React.createElement("span", { style: { display: "block", fontSize: 11.5, fontWeight: 800, color: "#8a5a20" } }, top ? "ขั้นสูงสุดแล้ว" : `อัปเกรดเป็น${nx.name}`),
-                                React.createElement("span", { style: { display: "block", fontSize: 9.5, color: "#a08a6a" } }, top ? cur.desc : nx.desc)),
-                            !top && React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c09020", whiteSpace: "nowrap" } },
-                                nx.cost.toLocaleString(),
-                                "\uD83D\uDCB0"))));
-                })(),
-                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#3a86c0", marginBottom: 3 } },
-                    "\uD83D\uDCDC \u0E43\u0E1A\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E02\u0E49\u0E32\u0E21\u0E41\u0E14\u0E19 (\u0E21\u0E35 ",
-                    ui.warpScrolls || 0,
-                    " \u0E43\u0E1A)"),
-                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } }, (() => {
-                    const q = ui.shopQty || 1;
-                    const total = (G.WARP_SCROLL_PRICE || 12000) * q;
-                    const afford = (ui.gold || 0) >= total;
-                    return (React.createElement("button", { onClick: () => G.buyWarpScroll(ui.shopQty || 1), disabled: !afford, style: {
-                            flex: 1, padding: "8px 4px", borderRadius: 10, border: "none",
-                            cursor: afford ? "pointer" : "not-allowed", fontFamily: font,
-                            background: afford ? "#eaf2fd" : "#eee", opacity: afford ? 1 : 0.6,
-                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                        } },
-                        React.createElement("span", { style: { fontSize: 17 } }, "\uD83D\uDCDC"),
-                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#3a6ac0" } }, "\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E44\u0E1B\u0E41\u0E21\u0E1E\u0E44\u0E2B\u0E19\u0E01\u0E47\u0E44\u0E14\u0E49 \u0E17\u0E31\u0E19\u0E17\u0E35"),
-                        React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "#c09020" } },
-                            total.toLocaleString(),
-                            "\uD83D\uDCB0")));
-                })()),
-                (ui.warpScrolls || 0) > 0 && (React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, shopOpen: false })); G.useWarpScroll(); }, style: {
-                        width: "100%", padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-                        fontSize: 11.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#4a86e0,#6a5ad0)", marginBottom: 8,
+            ui.shopOpen && (() => {
+                const q = ui.shopQty || 1;
+                const gold = ui.gold || 0;
+                const SH = (ic, t, c, sub) => (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, margin: "4px 0 7px" } },
+                    React.createElement("span", { style: { width: 26, height: 26, flex: "none", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, background: `radial-gradient(circle at 40% 35%, #fff, ${c} 75%)`, boxShadow: `0 0 8px ${c}99` } }, ic),
+                    React.createElement("span", { style: { fontSize: 12, fontWeight: 900, color: "#fff", textShadow: `0 0 8px ${c}aa` } }, t),
+                    sub && React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: "#e0c890" } }, sub),
+                    React.createElement("div", { style: { flex: 1, height: 1, background: `linear-gradient(90deg, ${c}88, transparent)` } })));
+                const PRICE = (ok, txt) => (React.createElement("span", { style: { display: "block", marginTop: 5, padding: "4px 0", borderRadius: 9, fontSize: 10.5, fontWeight: 900,
+                        color: ok ? "#3a2408" : "#9a8a70", background: ok ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.08)", boxShadow: ok ? "0 2px 0 #9a6a10" : "none" } }, txt));
+                const TILE = (ok, c) => ({ position: "relative", flex: 1, minWidth: 0, padding: "8px 4px 6px", borderRadius: 13, cursor: ok ? "pointer" : "not-allowed", fontFamily: font, textAlign: "center",
+                    background: `linear-gradient(170deg, ${c}33, rgba(0,0,0,0.35) 70%)`, border: `1.5px solid ${ok ? c + "aa" : "rgba(255,255,255,0.1)"}`, opacity: ok ? 1 : 0.6 });
+                const ICO = (c, content) => (React.createElement("div", { style: { width: 38, height: 38, margin: "0 auto", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: `radial-gradient(circle at 40% 35%, ${c}cc, rgba(0,0,0,0.4) 75%)`, boxShadow: `0 0 10px ${c}77` } }, content));
+                const CNT = (n) => React.createElement("span", { style: { position: "absolute", top: 4, right: 5, fontSize: 8.5, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.5)", borderRadius: 6, padding: "0 5px" } },
+                    "\u0E21\u0E35 ",
+                    n);
+                const ROW = (ok, c) => ({ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "8px 9px", marginBottom: 8, borderRadius: 13, cursor: ok ? "pointer" : "not-allowed", fontFamily: font, textAlign: "left",
+                    background: `linear-gradient(135deg, ${c}33, rgba(0,0,0,0.35))`, border: `1.5px solid ${ok ? c + "aa" : "rgba(255,255,255,0.1)"}`, opacity: ok ? 1 : 0.62 });
+                const RP = (ok, txt) => React.createElement("span", { style: { flex: "none", padding: "6px 10px", borderRadius: 10, fontSize: 11, fontWeight: 900, whiteSpace: "nowrap", color: ok ? "#3a2408" : "#9a8a70", background: ok ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.08)", boxShadow: ok ? "0 3px 0 #9a6a10" : "none" } }, txt);
+                return (React.createElement("div", { style: {
+                        position: "absolute", ...MODAL_POS, zIndex: 50, width: "92%", maxWidth: 400, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
+                        borderRadius: 18, padding: 12, fontFamily: font,
+                        background: "radial-gradient(120% 40% at 50% 0%, #6a4420 0%, #34200e 50%, #170d05 100%)",
+                        border: "2px solid #2a1808", boxShadow: "0 0 0 2px #f5c542, 0 10px 28px rgba(0,0,0,0.5)",
                     } },
-                    "\uD83C\uDF00 \u0E43\u0E0A\u0E49\u0E43\u0E1A\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E40\u0E14\u0E35\u0E4B\u0E22\u0E27\u0E19\u0E35\u0E49 (\u0E40\u0E2B\u0E25\u0E37\u0E2D ",
-                    ui.warpScrolls,
-                    " \u0E43\u0E1A)")),
-                (() => {
-                    const left = G.expBoostLeftText ? G.expBoostLeftText() : null;
-                    return (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#a05ac0", marginBottom: 3 } },
-                            "\uD83D\uDCDC \u0E43\u0E1A\u0E1B\u0E23\u0E30\u0E2A\u0E1A\u0E01\u0E32\u0E23\u0E13\u0E4C x2 ",
-                            left ? `· ⏳ กำลังใช้งาน เหลือ ${left}` : "(EXP คูณ 2 · ซื้อซ้ำต่อเวลาได้)"),
-                        React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } }, [["h", "1 ชั่วโมง", 10000], ["d", "1 วัน", 100000]].map(([k, nm, pr]) => {
-                            const afford = (ui.gold || 0) >= pr;
-                            return (React.createElement("button", { key: k, disabled: !afford, onClick: () => G.buyExpScroll(k), style: { flex: 1, padding: "7px 3px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontFamily: font, background: afford ? "#f6ecfb" : "#eee", opacity: afford ? 1 : 0.55 } },
-                                React.createElement("div", { style: { fontSize: 16 } }, "\uD83D\uDCDC"),
-                                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#a05ac0" } },
-                                    "x2 EXP \u00B7 ",
-                                    nm),
-                                React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#c09020" } },
-                                    pr.toLocaleString(),
-                                    "\uD83D\uDCB0")));
-                        }))));
-                })(),
-                React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#8a8a7a", marginBottom: 4 } }, "\u0E2D\u0E38\u0E1B\u0E01\u0E23\u0E13\u0E4C"),
-                ui.shop.length === 0 && (React.createElement("div", { style: { fontSize: 12.5, color: "#a3a396" } }, "\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E2B\u0E21\u0E14\u0E41\u0E25\u0E49\u0E27 \u0E01\u0E14\u0E2A\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22")),
-                ui.shop.map((id, si) => {
-                    const it = LOOT.find((x) => x.id === id);
-                    if (!it)
-                        return null;
-                    const price = (G.sellPrice ? G.sellPrice(id) : 0) * 3;
-                    const afford = ui.gold >= price;
-                    return (React.createElement("div", { key: si, style: {
-                            display: "flex", alignItems: "center", gap: 8,
-                            padding: "7px 8px", borderRadius: 10, marginBottom: 4, background: "#f7f7f0",
+                    closeBtn("shopOpen"),
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 10 } },
+                        React.createElement("span", { style: { width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#fff0d0,#e09a3a 72%)", boxShadow: "0 0 14px #ffb04a", border: "2px solid rgba(255,255,255,0.85)" } }, "\uD83C\uDFEA"),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#fff0d0", textShadow: "0 0 10px rgba(255,180,90,0.7), 0 2px 0 rgba(0,0,0,0.4)" } }, "\u0E23\u0E49\u0E32\u0E19\u0E04\u0E49\u0E32\u0E40\u0E23\u0E48"),
+                            React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#e0c090" } }, "\u0E02\u0E2D\u0E07\u0E43\u0E0A\u0E49\u0E0B\u0E37\u0E49\u0E2D\u0E44\u0E14\u0E49\u0E44\u0E21\u0E48\u0E08\u0E33\u0E01\u0E31\u0E14 \u00B7 \u0E2D\u0E38\u0E1B\u0E01\u0E23\u0E13\u0E4C\u0E2A\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E14\u0E49")),
+                        React.createElement("div", { style: { textAlign: "center", padding: "4px 10px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1.5px solid #f5c54288", marginRight: 30 } },
+                            React.createElement("div", { style: { fontSize: 8.5, fontWeight: 900, color: "#e0c090" } }, "\u0E17\u0E2D\u0E07"),
+                            React.createElement("div", { style: { fontSize: 14, fontWeight: 900, color: "#ffe98a", lineHeight: 1.1, textShadow: "0 0 6px rgba(255,210,74,0.7)" } },
+                                "\uD83D\uDCB0 ",
+                                gold.toLocaleString()))),
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, padding: "7px 9px", borderRadius: 12, marginBottom: 8, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,220,160,0.2)" } },
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 900, color: "#ffe0a0", flex: 1 } }, "\uD83D\uDD22 \u0E08\u0E33\u0E19\u0E27\u0E19\u0E0B\u0E37\u0E49\u0E2D"),
+                        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, shopQty: Math.max(1, (u.shopQty || 1) - 1) })), style: { width: 28, height: 28, borderRadius: 9, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, color: "#fff", background: "linear-gradient(180deg,#8a6a4a,#5a3a1a)", boxShadow: "0 2px 0 #2a1808" } }, "\u2212"),
+                        React.createElement("input", { type: "number", min: 1, value: q, onChange: (e) => { const v = Math.max(1, Math.floor(+e.target.value || 1)); setUi((u) => ({ ...u, shopQty: v })); }, style: { width: 48, textAlign: "center", padding: "4px 2px", borderRadius: 9, border: "1.5px solid #f5c54288", fontSize: 13, fontWeight: 900, fontFamily: font, color: "#ffe98a", background: "rgba(0,0,0,0.45)" } }),
+                        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, shopQty: (u.shopQty || 1) + 1 })), style: { width: 28, height: 28, borderRadius: 9, border: "none", cursor: "pointer", fontSize: 16, fontWeight: 900, color: "#fff", background: "linear-gradient(180deg,#8a6a4a,#5a3a1a)", boxShadow: "0 2px 0 #2a1808" } }, "+"),
+                        [10, 50].map((n) => React.createElement("button", { key: n, onClick: () => setUi((u) => ({ ...u, shopQty: n })), style: { padding: "5px 8px", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 900, fontFamily: font, color: q === n ? "#3a2408" : "#e0c890", background: q === n ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.08)", boxShadow: q === n ? "0 2px 0 #9a6a10" : "none" } },
+                            "\u00D7",
+                            n))),
+                    SH("🧪", "น้ำยาเลือด", "#ff5a7a", `รวม ${ui.potions || 0}`),
+                    React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } }, ["s", "m", "l"].map((sz) => {
+                        const p = (G.HP_POT || {})[sz] || {};
+                        const cnt = ((ui.hpPots || {})[sz]) || 0;
+                        const afford = gold >= p.price * q;
+                        return (React.createElement("button", { key: sz, disabled: !afford, onClick: () => G.buyHpPot(sz, q), style: TILE(afford, "#ff5a7a") },
+                            CNT(cnt),
+                            ICO("#ff5a7a", React.createElement("span", { style: { fontSize: sz === "s" ? 16 : sz === "m" ? 19 : 22 } }, "\uD83E\uDDEA")),
+                            React.createElement("div", { style: { fontSize: 10, fontWeight: 900, color: "#ffd0d8", marginTop: 4 } }, p.name),
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#9af0b8" } },
+                                "+",
+                                p.heal,
+                                " HP"),
+                            PRICE(afford, `${(p.price * q).toLocaleString()}💰`)));
+                    })),
+                    SH("💧", "น้ำยามานา", "#4ab0ff", `รวม ${ui.mpPotions || 0}`),
+                    React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } }, ["s", "m", "l"].map((sz) => {
+                        const p = (G.MP_POT || {})[sz] || {};
+                        const cnt = ((ui.mpPots || {})[sz]) || 0;
+                        const afford = gold >= p.price * q;
+                        return (React.createElement("button", { key: sz, disabled: !afford, onClick: () => G.buyMpPot(sz, q), style: TILE(afford, "#4ab0ff") },
+                            CNT(cnt),
+                            ICO("#4ab0ff", React.createElement("span", { style: { fontSize: sz === "s" ? 16 : sz === "m" ? 19 : 22 } }, "\uD83D\uDCA7")),
+                            React.createElement("div", { style: { fontSize: 10, fontWeight: 900, color: "#d0ecff", marginTop: 4 } }, p.name),
+                            React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#9ad8ff" } },
+                                "+",
+                                p.rest,
+                                " MP"),
+                            PRICE(afford, `${(p.price * q).toLocaleString()}💰`)));
+                    })),
+                    SH("🎒", "ของใช้พิเศษ", "#f0a040"),
+                    (() => {
+                        const total = 1000 * q;
+                        const afford = gold >= total;
+                        return (React.createElement("button", { onClick: () => G.buyBall(q), disabled: !afford, style: ROW(afford, "#e5533b") },
+                            React.createElement("span", { style: { width: 36, height: 36, flex: "none", borderRadius: "50%", display: "inline-block",
+                                    background: "conic-gradient(#e5533b 0deg 120deg, #f0c33b 120deg 240deg, #3b8ae0 240deg 360deg)",
+                                    boxShadow: "inset -3px -3px 6px rgba(0,0,0,0.3), inset 3px 3px 6px rgba(255,255,255,0.5), 0 0 10px rgba(240,180,60,0.5)", border: "2px solid rgba(255,255,255,0.8)" } }),
+                            React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("span", { style: { display: "block", fontSize: 12, fontWeight: 900, color: "#fff" } }, "\u0E25\u0E39\u0E01\u0E1A\u0E2D\u0E25\u0E08\u0E31\u0E1A\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C"),
+                                React.createElement("span", { style: { display: "block", fontSize: 9.5, color: "#e0c890" } },
+                                    "\u0E21\u0E35\u0E2D\u0E22\u0E39\u0E48 ",
+                                    ui.balls || 0,
+                                    " \u0E25\u0E39\u0E01")),
+                            RP(afford, `${total.toLocaleString()}💰`)));
+                    })(),
+                    (() => {
+                        const total = (G.WARP_SCROLL_PRICE || 12000) * q;
+                        const afford = gold >= total;
+                        return (React.createElement("button", { onClick: () => G.buyWarpScroll(q), disabled: !afford, style: ROW(afford, "#4a8ae0") },
+                            React.createElement("span", { style: { width: 36, height: 36, flex: "none", borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: "radial-gradient(circle at 40% 35%, #d8ecff, #3a6ad0 75%)", boxShadow: "0 0 10px #5a9aff88" } }, "\uD83D\uDCDC"),
+                            React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("span", { style: { display: "block", fontSize: 12, fontWeight: 900, color: "#fff" } }, "\u0E43\u0E1A\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E02\u0E49\u0E32\u0E21\u0E41\u0E14\u0E19"),
+                                React.createElement("span", { style: { display: "block", fontSize: 9.5, color: "#c8dcf8" } },
+                                    "\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E44\u0E1B\u0E41\u0E21\u0E1E\u0E44\u0E2B\u0E19\u0E01\u0E47\u0E44\u0E14\u0E49\u0E17\u0E31\u0E19\u0E17\u0E35 \u00B7 \u0E21\u0E35 ",
+                                    ui.warpScrolls || 0,
+                                    " \u0E43\u0E1A")),
+                            RP(afford, `${total.toLocaleString()}💰`)));
+                    })(),
+                    (ui.warpScrolls || 0) > 0 && (React.createElement("button", { onClick: () => { setUi((u) => ({ ...u, shopOpen: false })); G.useWarpScroll(); }, style: {
+                            width: "100%", padding: "9px 0", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: font, marginTop: -2,
+                            fontSize: 12, fontWeight: 900, color: "#fff", background: "linear-gradient(180deg,#6a9aff,#4a5ad0)", boxShadow: "0 3px 0 #2a2a80", marginBottom: 10,
                         } },
-                        React.createElement("span", { style: { fontSize: 20 } }, it.emoji),
-                        React.createElement("span", { style: { flex: 1 } },
-                            React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, color: RARITY[it.rarity].color } }, it.name),
-                            React.createElement("div", { style: { fontSize: 10, color: "#8a8a7a" } },
-                                "[",
-                                RARITY[it.rarity].name,
-                                "] ",
-                                SLOT_NAMES[it.slot])),
-                        React.createElement("button", { onClick: () => afford && G.buyItem(id, si), style: {
-                                padding: "6px 10px", borderRadius: 8, border: "none",
-                                cursor: afford ? "pointer" : "not-allowed",
-                                fontSize: 11.5, fontWeight: 800, fontFamily: font,
-                                color: afford ? "#fff" : "#a8a89a",
-                                background: afford ? "#c09020" : "#e8e8de",
-                            } },
-                            "\u0E0B\u0E37\u0E49\u0E2D ",
-                            price,
-                            "\uD83D\uDCB0")));
-                }),
-                React.createElement("button", { onClick: () => G.refreshShop(false), style: {
-                        width: "100%", marginTop: 4, padding: "7px 0", borderRadius: 8, border: "none",
-                        cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font,
-                        color: "#5a7a4a", background: "#eaf5e0",
-                    } }, "\uD83C\uDFB2 \u0E2A\u0E38\u0E48\u0E21\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E43\u0E2B\u0E21\u0E48 (30\uD83D\uDCB0)"),
-                React.createElement("div", { style: { fontSize: 10.5, color: "#a3a396", marginTop: 6, textAlign: "center" } }, "\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E44\u0E14\u0E49\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 \uD83C\uDF92 \u00B7 \u0E0A\u0E19\u0E30\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C\u0E44\u0E14\u0E49\u0E17\u0E2D\u0E07"))),
+                        "\uD83C\uDF00 \u0E43\u0E0A\u0E49\u0E43\u0E1A\u0E27\u0E32\u0E23\u0E4C\u0E1B\u0E40\u0E14\u0E35\u0E4B\u0E22\u0E27\u0E19\u0E35\u0E49 (\u0E40\u0E2B\u0E25\u0E37\u0E2D ",
+                        ui.warpScrolls,
+                        " \u0E43\u0E1A)")),
+                    (() => {
+                        const cur = PICKS[Math.min(PICKS.length, Math.max(1, ui.pickLv || 1)) - 1];
+                        const nx = PICKS[Math.min(PICKS.length - 1, ui.pickLv || 1)];
+                        const top = !nx || nx.lv <= (ui.pickLv || 1);
+                        const afford = gold >= (nx ? nx.cost : 0);
+                        return (React.createElement("button", { onClick: () => G.buyPick(), disabled: top || !afford, style: ROW(!top && afford, "#c8903a") },
+                            React.createElement("span", { style: { width: 36, height: 36, flex: "none", borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, background: "radial-gradient(circle at 40% 35%, #fff0d0, #a8702a 75%)", boxShadow: "0 0 10px #e0a04a88" } }, top ? cur.emoji : nx.emoji),
+                            React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("span", { style: { display: "block", fontSize: 12, fontWeight: 900, color: "#fff" } }, top ? "อีเต้อขั้นสูงสุดแล้ว" : `อัปเกรดอีเต้อ → ${nx.name}`),
+                                React.createElement("span", { style: { display: "block", fontSize: 9.5, color: "#e0c890" } },
+                                    "\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49 ",
+                                    cur.emoji,
+                                    " ",
+                                    cur.name,
+                                    " \u00B7 \u0E41\u0E23\u0E48 \u00D7",
+                                    cur.yield,
+                                    " \u00B7 ",
+                                    top ? cur.desc : nx.desc)),
+                            !top ? RP(afford, `${nx.cost.toLocaleString()}💰`) : React.createElement("span", { style: { fontSize: 16 } }, "\uD83C\uDF1F")));
+                    })(),
+                    (() => {
+                        const left = G.expBoostLeftText ? G.expBoostLeftText() : null;
+                        return (React.createElement(React.Fragment, null,
+                            SH("✨", "ใบประสบการณ์ x2", "#c07aff", left ? `⏳ เหลือ ${left}` : "ซื้อซ้ำต่อเวลาได้"),
+                            React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } }, [["h", "1 ชั่วโมง", 10000], ["d", "1 วัน", 100000]].map(([k, nm, pr]) => {
+                                const afford = gold >= pr;
+                                return (React.createElement("button", { key: k, disabled: !afford, onClick: () => G.buyExpScroll(k), style: TILE(afford, "#c07aff") },
+                                    ICO("#c07aff", "📜"),
+                                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#f0e0ff", marginTop: 4 } }, "x2 EXP"),
+                                    React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#d8c0ff" } }, nm),
+                                    PRICE(afford, `${pr.toLocaleString()}💰`)));
+                            }))));
+                    })(),
+                    SH("⚔️", "อุปกรณ์", "#ffc84a", `${ui.shop.length} ชิ้น`),
+                    ui.shop.length === 0 && (React.createElement("div", { style: { fontSize: 11, color: "#c8a878", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "12px", textAlign: "center", marginBottom: 6 } }, "\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E2B\u0E21\u0E14\u0E41\u0E25\u0E49\u0E27 \u0E01\u0E14\u0E2A\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22")),
+                    ui.shop.map((id, si) => {
+                        const it = LOOT.find((x) => x.id === id);
+                        if (!it)
+                            return null;
+                        const price = (G.sellPrice ? G.sellPrice(id) : 0) * 3;
+                        const afford = gold >= price;
+                        const rc = RARITY[it.rarity].color;
+                        return (React.createElement("div", { key: si, style: { display: "flex", alignItems: "center", gap: 9, padding: "7px 8px", borderRadius: 13, marginBottom: 6,
+                                background: `linear-gradient(135deg, ${rc}33, rgba(0,0,0,0.35))`, border: `1.5px solid ${rc}99` } },
+                            React.createElement("span", { style: { width: 40, height: 40, flex: "none", borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, background: `radial-gradient(circle at 40% 35%, ${rc}aa, rgba(0,0,0,0.45) 75%)`, border: `1.5px solid ${rc}`, boxShadow: `0 0 8px ${rc}77` } }, it.emoji),
+                            React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 12, fontWeight: 900, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, it.name),
+                                React.createElement("div", { style: { display: "flex", gap: 4, marginTop: 2 } },
+                                    React.createElement("span", { style: { fontSize: 8.5, fontWeight: 900, color: "#fff", background: rc, borderRadius: 5, padding: "0 5px" } }, RARITY[it.rarity].name),
+                                    React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: "#e0c890" } }, SLOT_NAMES[it.slot]))),
+                            React.createElement("button", { onClick: () => afford && G.buyItem(id, si), style: { flex: "none", padding: "7px 10px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontSize: 11, fontWeight: 900, fontFamily: font,
+                                    color: afford ? "#3a2408" : "#9a8a70", background: afford ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.08)", boxShadow: afford ? "0 3px 0 #9a6a10" : "none" } },
+                                "\u0E0B\u0E37\u0E49\u0E2D ",
+                                price.toLocaleString(),
+                                "\uD83D\uDCB0")));
+                    }),
+                    React.createElement("button", { onClick: () => G.refreshShop(false), style: {
+                            width: "100%", marginTop: 4, padding: "9px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 900, fontFamily: font,
+                            color: "#fff", background: "linear-gradient(180deg,#4ad08a,#2a9a5a)", boxShadow: "0 3px 0 #1a5a34",
+                        } }, "\uD83C\uDFB2 \u0E2A\u0E38\u0E48\u0E21\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E43\u0E2B\u0E21\u0E48 (30\uD83D\uDCB0)"),
+                    React.createElement("div", { style: { fontSize: 9.5, color: "#c8a878", marginTop: 8, textAlign: "center" } }, "\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E44\u0E14\u0E49\u0E43\u0E19\u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32 \uD83C\uDF92 \u00B7 \u0E0A\u0E19\u0E30\u0E21\u0E2D\u0E19\u0E2A\u0E40\u0E15\u0E2D\u0E23\u0E4C\u0E44\u0E14\u0E49\u0E17\u0E2D\u0E07")));
+            })(),
             React.createElement("button", { onClick: () => G.usePotion(G.hpPotUse), style: {
                     position: "absolute", right: 12, bottom: 82,
                     width: 50, height: 50, borderRadius: 15, border: "none", cursor: "pointer",
