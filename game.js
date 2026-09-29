@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v676"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v677"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -15110,6 +15110,141 @@ function CherryAdventure() {
             npcModelSet(G.smith, "smith");
             npcModelSet(G.master, "master");
             G.npcModelSet = npcModelSet;
+            // 🌐🧍 ผู้เล่นออนไลน์คนอื่นใช้ "ตัวละครใหม่" (โมเดล 3D ตามอาชีพ) แบบเดียวกับตัวเรา — เลิกใช้ร่างชิบิปั้นเอง
+            //    ร่างชิบิยังสร้างไว้เป็นตัวสำรองระหว่างโหลด / ถ้าโหลดไฟล์ไม่ได้ · โหลดเสร็จแล้วซ่อนร่างชิบิทั้งหมด
+            //    เหลือป้ายชื่อ + อาวุธ (ย้ายไปเกาะกระดูก hand_r เหมือนตัวเรา)
+            G.remoteModelSet = (grp, info) => {
+                const M = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
+                if (!grp || !M)
+                    return;
+                // 🚫 ไม่โชว์ร่างชิบิเลยระหว่างรอโหลด (เห็นแค่ป้ายชื่อ) — ถ้าโหลดไม่ได้ค่อยคืนร่างสำรอง
+                const fallback = grp.children.filter((oo) => !oo.isSprite && oo.visible);
+                fallback.forEach((oo) => (oo.visible = false));
+                const restore = () => fallback.forEach((oo) => (oo.visible = true));
+                Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims")])).then((arr) => {
+                    const anims = arr.pop(), srcs = arr.filter(Boolean);
+                    if (!anims || !srcs.length || !THREE.SkeletonUtils || !grp.parent) {
+                        restore();
+                        return;
+                    } // โหลดไม่ได้ / คนนั้นออกไปแล้ว → คืนร่างสำรอง
+                    const g = new THREE.Group();
+                    g.name = "remoteModel";
+                    const parts = srcs.map((gl) => THREE.SkeletonUtils.clone(gl.scene));
+                    const bx = new THREE.Box3();
+                    parts.forEach((pt) => { pt.updateMatrixWorld(true); bx.expandByObject(pt); });
+                    const k = M.h / Math.max(0.01, bx.max.y - bx.min.y);
+                    const mats = [], seen = new Map();
+                    parts.forEach((pt, pi) => {
+                        pt.scale.setScalar(k);
+                        pt.position.y = -bx.min.y * k;
+                        g.add(pt);
+                        pt.traverse((oo) => {
+                            if (!oo.isMesh)
+                                return;
+                            oo.castShadow = true;
+                            oo.frustumCulled = false;
+                            if (oo.geometry)
+                                oo.geometry.userData._shared = true; // ♻️ เรขาคณิต/เท็กซ์เจอร์ใช้ร่วมกับไฟล์ที่แคชไว้ (รวมโมเดลตัวเรา) — ห้าม dispose ตอนคนนั้นออก
+                            const ms = Array.isArray(oo.material) ? oo.material : [oo.material];
+                            const fresh = ms.map((m) => {
+                                if (!m)
+                                    return m;
+                                let c = seen.get(m);
+                                if (!c) {
+                                    c = m.clone();
+                                    c.userData._shared = true;
+                                    if (c.metalness > 0.2)
+                                        c.metalness = 0.2;
+                                    if (c.map && !c.emissiveMap)
+                                        c.emissiveMap = c.map;
+                                    if (pi === 1 && M.hue && c.map && G.qtHueMap)
+                                        c.map = G.qtHueMap(c.map, M.files[1] + ":" + (c.name || "m"), M.hue);
+                                    if (pi === 2 && M.hairC)
+                                        c.color.setHex(M.hairC).convertSRGBToLinear();
+                                    c.needsUpdate = true;
+                                    seen.set(m, c);
+                                    mats.push(c);
+                                }
+                                return c;
+                            });
+                            oo.material = Array.isArray(oo.material) ? fresh : fresh[0];
+                        });
+                    });
+                    const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
+                    const acts = {};
+                    ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Spell_Simple_Idle_Loop"].forEach((nm) => { const c = anims.animations.find((x) => x.name === nm); if (c)
+                        acts[nm] = mixers.map((mx) => mx.clipAction(c)); });
+                    let neck = null, neckPlane = null;
+                    if (/_Base$/.test(M.files[0]) && parts.length > 1) {
+                        neck = parts[0].getObjectByName("neck_01");
+                        if (neck) {
+                            neckPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                            renderer.localClippingEnabled = true;
+                            parts[0].traverse((oo) => { if (oo.isMesh) {
+                                const ms = Array.isArray(oo.material) ? oo.material : [oo.material];
+                                ms.forEach((m) => { if (m) {
+                                    m.clippingPlanes = [neckPlane];
+                                    m.clipShadows = true;
+                                } });
+                            } });
+                        }
+                    }
+                    // ซ่อนร่างชิบิทุกชิ้น (ยกเว้นป้ายชื่อ) แล้วใส่โมเดลใหม่
+                    grp.children.slice().forEach((oo) => {
+                        if (oo === g)
+                            return;
+                        if (oo.isSprite) {
+                            oo.position.y = M.h + 0.55;
+                            return;
+                        }
+                        oo.visible = false;
+                    });
+                    grp.add(g);
+                    // ⚔️ อาวุธ: ย้ายจากศอกร่างชิบิไปกระดูกมือขวาของโมเดล (สเกลหารกลับเหมือนตัวเรา)
+                    const hand = parts[0].getObjectByName("hand_r"), wand = grp.userData.wand;
+                    if (hand && wand) {
+                        const grip = new THREE.Group();
+                        grip.name = "remoteGrip";
+                        grip.scale.setScalar(HERO_GRIP.s / k);
+                        grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+                        grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
+                        hand.add(grip);
+                        grip.add(wand);
+                    }
+                    const R = { mixers, acts, mats, neck, neckPlane, k, cur: null, lit: -1, tmpV: new THREE.Vector3(), off: Math.random() * 2 };
+                    grp.userData.rig = R;
+                    G.remoteModelTick(R, 0, false, null);
+                }).catch(() => restore());
+            };
+            // 🎞️ ต่อเฟรม: ยืน/เดิน/วิ่ง/ร่ายเวท + ตัดคอ + สว่างขึ้นตอนกลางคืน (เหมือนโมเดลตัวเรา)
+            G.remoteModelTick = (R, dt, moving, act, fast) => {
+                if (!R)
+                    return;
+                const want = act && R.acts.Spell_Simple_Idle_Loop ? "Spell_Simple_Idle_Loop" : moving ? (fast && R.acts.Jog_Fwd_Loop ? "Jog_Fwd_Loop" : (R.acts.Walk_Loop ? "Walk_Loop" : "Jog_Fwd_Loop")) : "Idle_Loop";
+                if (want !== R.cur && R.acts[want]) {
+                    const prev = R.cur ? R.acts[R.cur] : null;
+                    R.acts[want].forEach((a, i) => { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.fadeIn(0.25).play(); if (!prev)
+                        a.time = R.off; if (prev && prev[i] && prev[i] !== a)
+                        prev[i].fadeOut(0.25); });
+                    R.cur = want;
+                }
+                if (dt)
+                    R.mixers.forEach((m) => m.update(dt));
+                const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
+                const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
+                if (Math.abs(lit - R.lit) > 0.015) {
+                    R.lit = lit;
+                    R.mats.forEach((m) => { if (m.emissive) {
+                        m.emissive.copy(m.color).multiplyScalar(lit);
+                        m.emissiveIntensity = 1;
+                    } });
+                }
+                if (R.neck && R.neckPlane) {
+                    R.neck.getWorldPosition(R.tmpV);
+                    R.tmpV.y -= 0.06 * R.k;
+                    R.neckPlane.setFromNormalAndCoplanarPoint(R.neckPlane.normal.set(0, 1, 0), R.tmpV);
+                }
+            };
             (G.townNpcs || []).forEach((N) => npcModelSet(N.grp, N.key)); // 🏘️ NPC อาชีพรองในเมือง (สร้างไว้ก่อนหน้าแล้ว)
             const heroPlay = (name, once, opt) => {
                 const H = G._heroModel;
@@ -68535,6 +68670,7 @@ function CherryAdventure() {
                         model.position.z = model.userData.gripZ != null ? model.userData.gripZ : 0;
                         wand.add(model);
                         (grp.userData.armR.userData.elbow || grp.userData.armR).add(wand);
+                        grp.userData.wand = wand; // 🌐🧍 โมเดลใหม่จะย้ายอาวุธนี้ไปเกาะมือ
                     }
                 }
                 catch (e) { }
@@ -68618,7 +68754,9 @@ function CherryAdventure() {
                 scene.add(grp);
                 a = { grp, walk: 0 };
                 remoteAvatars.set(m.pid, a);
-            } // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
+                if (G.remoteModelSet)
+                    G.remoteModelSet(grp, m);
+            } // 🌐🧍 ตัวละครใหม่ (ร่างชิบิเป็นแค่ตัวสำรองระหว่างโหลด) // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
             a.tx = m.x || 0;
             a.tz = m.z || 0;
             a.tyaw = m.yaw || 0;
@@ -68679,6 +68817,8 @@ function CherryAdventure() {
                 a.grp.rotation.y += dy * k;
                 const spd = Math.hypot(a.tx - a.grp.position.x, a.tz - a.grp.position.z);
                 const moving = a.moving || spd > 0.04;
+                if (a.grp.userData.rig && G.remoteModelTick)
+                    G.remoteModelTick(a.grp.userData.rig, dt, moving, a.act, spd > 0.35); // 🌐🧍 ท่าของโมเดลใหม่
                 a.walk += dt * (moving ? 9 : 0);
                 const sw = Math.sin(a.walk) * (moving ? 0.6 : 0);
                 if (a.grp.userData.legL) {
