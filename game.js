@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v671"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v672"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -97420,148 +97420,175 @@ function CherryAdventure() {
                                 React.createElement("b", { style: { color: pt.color } }, p.rank || 1000)));
                         })))));
                 })())),
-            ui.socialOpen && (React.createElement("div", { style: {
-                    position: "absolute", ...MODAL_POS, zIndex: 50,
-                    width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-                    ...CHIBI_FRAME, borderRadius: 20, padding: 16,
-                    boxShadow: MODAL_SHADOW,
-                } },
-                closeBtn("socialOpen"),
-                React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#4a7ad0", marginBottom: 6 } }, "\uD83D\uDC65 \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 & \u0E2A\u0E39\u0E49\u0E1C\u0E35"),
-                React.createElement("div", { style: { background: "linear-gradient(135deg,#eefbf1,#e2f5ea)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #a8dcc0" } },
-                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#2a8a5a", marginBottom: 4 } }, "\uD83E\uDD1D \u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49\u0E40\u0E01\u0E47\u0E1A\u0E40\u0E25\u0E40\u0E27\u0E25\u0E23\u0E48\u0E27\u0E21\u0E01\u0E31\u0E19"),
-                    !ui.partyCode ? (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { fontSize: 9.5, color: "#5a8a70", lineHeight: 1.5, marginBottom: 6 } }, "\u0E15\u0E31\u0E49\u0E07\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49\u0E01\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 (\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 4 \u0E04\u0E19) \u2014 \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E01\u0E31\u0E19\u0E23\u0E31\u0E1A\u0E42\u0E1A\u0E19\u0E31\u0E2A XP +15%/\u0E04\u0E19 \u0E41\u0E25\u0E30\u0E41\u0E1A\u0E48\u0E07 XP 10% \u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E41\u0E15\u0E48\u0E25\u0E30\u0E04\u0E19\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E14\u0E49\u0E43\u0E2B\u0E49\u0E01\u0E31\u0E19\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34"),
-                        React.createElement("div", { style: { display: "flex", gap: 6 } },
-                            React.createElement("button", { onClick: () => G.partyCreate(), style: { flex: 1, border: "none", borderRadius: 9, padding: "8px 0", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3a9a5a,#2a8ab0)" } }, "\u2795 \u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49"),
-                            React.createElement("input", { id: "partyCodeInput", placeholder: "\u0E23\u0E2B\u0E31\u0E2A\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49", maxLength: 8, style: { width: 84, fontSize: 12, fontFamily: "monospace", borderRadius: 8, border: "1px solid #a8dcc0", padding: "6px 8px", outline: "none", textTransform: "uppercase" } }),
-                            React.createElement("button", { onClick: () => { const el = document.getElementById("partyCodeInput"); if (el && el.value) {
-                                    G.partyJoin(el.value);
-                                    el.value = "";
-                                } }, style: { border: "none", borderRadius: 9, padding: "0 10px", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" } }, "\u0E40\u0E02\u0E49\u0E32\u0E23\u0E48\u0E27\u0E21")))) : (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5 } },
-                            React.createElement("div", { style: { fontSize: 9.5, color: "#5a8a70" } }, "\u0E23\u0E2B\u0E31\u0E2A\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49:"),
-                            React.createElement("div", { style: { fontSize: 13, fontWeight: 800, fontFamily: "monospace", color: "#2a8a5a", background: "#fff", borderRadius: 8, padding: "3px 10px", letterSpacing: 2 } }, ui.partyCode),
-                            React.createElement("button", { onClick: () => { try {
-                                    navigator.clipboard && navigator.clipboard.writeText(ui.partyCode);
-                                    G.toast("📋 คัดลอกรหัสปาร์ตี้แล้ว!");
-                                }
-                                catch (e) { } }, style: { border: "none", borderRadius: 8, padding: "4px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#4a7ad0" } }, "\u0E04\u0E31\u0E14\u0E25\u0E2D\u0E01"),
-                            React.createElement("div", { style: { flex: 1 } }),
-                            React.createElement("button", { onClick: () => G.partyLeaveNow(), style: { border: "none", borderRadius: 8, padding: "4px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#c05a5a" } }, "\u0E2D\u0E2D\u0E01")),
-                        (ui.partyMembers || []).map((m) => (React.createElement("div", { key: m.pid, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #ddf0e4" } },
-                            React.createElement("span", { style: { fontSize: 8, color: m.online ? "#3ac06a" : "#b8c4bc" } }, "\u25CF"),
-                            React.createElement("span", { style: { flex: 1, fontWeight: 700, color: "#3a6a4e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
-                                (CLASSES[m.c] && CLASSES[m.c].emoji) || "",
-                                " ",
-                                m.n,
-                                m.pid === ui.pid ? " (ฉัน)" : ""),
-                            React.createElement("span", { style: { fontSize: 9, fontWeight: 800, color: m.online ? "#2a9a5a" : "#9aa29c" } }, m.online ? "ออนไลน์" : "ออฟไลน์"),
-                            React.createElement("b", { style: { color: "#5a8a70" } },
-                                "Lv.",
-                                m.lv)))),
-                        (() => {
-                            const act = (ui.partyMembers || []).filter(m => m.online && m.pid !== ui.pid).length;
-                            return (React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: act > 0 ? "#2a8a5a" : "#8aa090", marginTop: 4 } }, act > 0 ? `🔥 โบนัส XP +${Math.min(45, act * 15)}% (เพื่อนออนไลน์ ${act} คน) + แบ่ง XP ให้กัน 10%` : "รอเพื่อนออนไลน์... (โบนัสเริ่มเมื่อออนไลน์พร้อมกัน)"));
-                        })()))),
-                (() => {
-                    const enabled = ui.netEnabled;
-                    const st = ui.netStatus || "off";
-                    const stColor = st === "ok" ? "#3a9a5a" : st === "error" ? "#c04a4a" : "#8a8a8a";
-                    const stText = !enabled ? "ยังไม่ได้ตั้งค่า" : st === "ok" ? "เชื่อมต่อแล้ว" : st === "error" ? "เชื่อมต่อไม่ได้" : "พร้อม";
-                    return (React.createElement("div", { style: { background: "linear-gradient(135deg,#eef4ff,#e4ecfb)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #b8ccf0" } },
-                        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 } },
-                            React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#3a6ac0" } }, "\uD83C\uDF10 \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C (\u0E40\u0E25\u0E48\u0E19\u0E01\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E08\u0E23\u0E34\u0E07)"),
-                            React.createElement("div", { style: { fontSize: 9.5, fontWeight: 800, color: stColor, background: "#fff", borderRadius: 999, padding: "1px 8px" } },
+            ui.socialOpen && (() => {
+                const SEC = { borderRadius: 14, padding: "10px 11px", marginBottom: 10, background: "linear-gradient(170deg, rgba(255,255,255,0.07), rgba(0,0,0,0.3))", border: "1px solid rgba(160,190,255,0.2)" };
+                const H = (ic, t, c, right) => (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, marginBottom: 7 } },
+                    React.createElement("span", { style: { width: 28, height: 28, flex: "none", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, background: `radial-gradient(circle at 40% 35%, #fff, ${c} 75%)`, boxShadow: `0 0 8px ${c}99` } }, ic),
+                    React.createElement("span", { style: { flex: 1, fontSize: 12.5, fontWeight: 900, color: "#fff", textShadow: `0 0 8px ${c}aa` } }, t),
+                    right));
+                const BTN = (bg, sh) => ({ border: "none", borderRadius: 10, cursor: "pointer", fontFamily: font, fontWeight: 900, color: "#fff", background: bg, boxShadow: `0 3px 0 ${sh}` });
+                const INP = { fontSize: 12, fontFamily: "monospace", borderRadius: 9, border: "1.5px solid rgba(160,190,255,0.35)", padding: "7px 8px", outline: "none", background: "rgba(0,0,0,0.35)", color: "#fff" };
+                const friends = ui.friends || [];
+                const onN = friends.filter((f) => f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online).length;
+                return (React.createElement("div", { style: {
+                        position: "absolute", ...MODAL_POS, zIndex: 50,
+                        width: "92%", maxWidth: 400, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
+                        borderRadius: 18, padding: 12, fontFamily: font,
+                        background: "radial-gradient(120% 40% at 50% 0%, #2a4a8a 0%, #16244a 50%, #0a1024 100%)",
+                        border: "2px solid #142040", boxShadow: "0 0 0 2px #f5c542, 0 10px 28px rgba(0,0,0,0.5)",
+                    } },
+                    closeBtn("socialOpen"),
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 10 } },
+                        React.createElement("span", { style: { width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#e8f0ff,#4a7ad0 72%)", boxShadow: "0 0 14px #6a9aff", border: "2px solid rgba(255,255,255,0.85)" } }, "\uD83D\uDC65"),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#eef4ff", textShadow: "0 0 10px rgba(120,170,255,0.7), 0 2px 0 rgba(0,0,0,0.4)" } }, "\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 & \u0E2A\u0E39\u0E49\u0E1C\u0E35"),
+                            React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#a8c0e8" } },
+                                "\uD83D\uDFE2 \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C ",
+                                onN,
+                                " \u0E04\u0E19 \u00B7 \uD83E\uDD1D \u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49 ",
+                                (ui.partyMembers || []).length,
+                                "/4")),
+                        React.createElement("div", { style: { textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "rgba(0,0,0,0.35)", marginRight: 30 } },
+                            React.createElement("div", { style: { fontSize: 8.5, fontWeight: 900, color: "#a8c0e8" } }, "\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19"),
+                            React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.05 } }, friends.length))),
+                    React.createElement("div", { style: SEC },
+                        H("🤝", "ปาร์ตี้เก็บเลเวลร่วมกัน", "#3ac07a"),
+                        !ui.partyCode ? (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { fontSize: 9.5, color: "#b8d8c8", lineHeight: 1.5, marginBottom: 7 } }, "\u0E15\u0E31\u0E49\u0E07\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49\u0E01\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 (\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 4 \u0E04\u0E19) \u2014 \u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E01\u0E31\u0E19\u0E23\u0E31\u0E1A\u0E42\u0E1A\u0E19\u0E31\u0E2A XP +15%/\u0E04\u0E19 \u0E41\u0E25\u0E30\u0E41\u0E1A\u0E48\u0E07 XP 10% \u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E41\u0E15\u0E48\u0E25\u0E30\u0E04\u0E19\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E14\u0E49\u0E43\u0E2B\u0E49\u0E01\u0E31\u0E19\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34"),
+                            React.createElement("div", { style: { display: "flex", gap: 6 } },
+                                React.createElement("button", { onClick: () => G.partyCreate(), style: { ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), flex: 1, padding: "8px 0", fontSize: 11.5 } }, "\u2795 \u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49"),
+                                React.createElement("input", { id: "partyCodeInput", placeholder: "\u0E23\u0E2B\u0E31\u0E2A\u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49", maxLength: 8, style: { ...INP, width: 84, textTransform: "uppercase" } }),
+                                React.createElement("button", { onClick: () => { const el = document.getElementById("partyCodeInput"); if (el && el.value) {
+                                        G.partyJoin(el.value);
+                                        el.value = "";
+                                    } }, style: { ...BTN("linear-gradient(180deg,#5aa0ff,#3a6ad0)", "#1a3a80"), padding: "0 10px", fontSize: 11.5 } }, "\u0E40\u0E02\u0E49\u0E32\u0E23\u0E48\u0E27\u0E21")))) : (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 7 } },
+                                React.createElement("div", { style: { fontSize: 9.5, color: "#b8d8c8" } }, "\u0E23\u0E2B\u0E31\u0E2A"),
+                                React.createElement("div", { style: { fontSize: 14, fontWeight: 900, fontFamily: "monospace", color: "#ffe98a", background: "rgba(0,0,0,0.4)", border: "1px solid #ffe98a66", borderRadius: 8, padding: "3px 10px", letterSpacing: 2 } }, ui.partyCode),
+                                React.createElement("button", { onClick: () => { try {
+                                        navigator.clipboard && navigator.clipboard.writeText(ui.partyCode);
+                                        G.toast("📋 คัดลอกรหัสปาร์ตี้แล้ว!");
+                                    }
+                                    catch (e) { } }, style: { ...BTN("linear-gradient(180deg,#5aa0ff,#3a6ad0)", "#1a3a80"), padding: "5px 9px", fontSize: 10.5 } }, "\uD83D\uDCCB \u0E04\u0E31\u0E14\u0E25\u0E2D\u0E01"),
+                                React.createElement("div", { style: { flex: 1 } }),
+                                React.createElement("button", { onClick: () => G.partyLeaveNow(), style: { ...BTN("linear-gradient(180deg,#e06a6a,#b03a3a)", "#6a1a1a"), padding: "5px 9px", fontSize: 10.5 } }, "\u0E2D\u0E2D\u0E01")),
+                            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 } }, [0, 1, 2, 3].map((k) => {
+                                const m = (ui.partyMembers || [])[k];
+                                return (React.createElement("div", { key: k, style: { textAlign: "center", borderRadius: 11, padding: "6px 2px", background: m ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.15)", border: m ? `1.5px solid ${m.online ? "#3ac07a" : "rgba(255,255,255,0.15)"}` : "1.5px dashed rgba(255,255,255,0.18)" } },
+                                    React.createElement("div", { style: { position: "relative", fontSize: 20, lineHeight: 1.2, opacity: m ? 1 : 0.35 } },
+                                        m ? ((CLASSES[m.c] && CLASSES[m.c].emoji) || "🙂") : "＋",
+                                        m && React.createElement("span", { style: { position: "absolute", right: 6, bottom: 0, width: 8, height: 8, borderRadius: "50%", background: m.online ? "#3ae07a" : "#6a7a70", boxShadow: m.online ? "0 0 6px #3ae07a" : "none" } })),
+                                    React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, color: m ? "#fff" : "#7a8aa0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" } }, m ? `${m.n}${m.pid === ui.pid ? " (ฉัน)" : ""}` : "ว่าง"),
+                                    m && React.createElement("div", { style: { fontSize: 8, fontWeight: 900, color: "#ffe98a" } },
+                                        "Lv.",
+                                        m.lv)));
+                            })),
+                            (() => {
+                                const act = (ui.partyMembers || []).filter(m => m.online && m.pid !== ui.pid).length;
+                                return (React.createElement("div", { style: { fontSize: 9.5, fontWeight: 900, color: act > 0 ? "#9af0b8" : "#8aa0b8", marginTop: 7, textAlign: "center" } }, act > 0 ? `🔥 โบนัส XP +${Math.min(45, act * 15)}% (เพื่อนออนไลน์ ${act} คน) + แบ่ง XP ให้กัน 10%` : "รอเพื่อนออนไลน์... (โบนัสเริ่มเมื่อออนไลน์พร้อมกัน)"));
+                            })()))),
+                    (() => {
+                        const enabled = ui.netEnabled;
+                        const st = ui.netStatus || "off";
+                        const stColor = st === "ok" ? "#3ae07a" : st === "error" ? "#ff6a6a" : "#9aa0b0";
+                        const stText = !enabled ? "ยังไม่ได้ตั้งค่า" : st === "ok" ? "เชื่อมต่อแล้ว" : st === "error" ? "เชื่อมต่อไม่ได้" : "พร้อม";
+                        return (React.createElement("div", { style: SEC },
+                            H("🌐", "ออนไลน์ (เล่นกับเพื่อนจริง)", "#5a9aff", React.createElement("span", { style: { fontSize: 9.5, fontWeight: 900, color: stColor, background: "rgba(0,0,0,0.4)", borderRadius: 999, padding: "2px 8px" } },
                                 "\u25CF ",
                                 stText)),
-                        !enabled ? (React.createElement("div", { style: { fontSize: 9.5, color: "#7a86a0", lineHeight: 1.5 } }, "\u0E22\u0E31\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E42\u0E2B\u0E21\u0E14\u0E2D\u0E2D\u0E1F\u0E44\u0E25\u0E19\u0E4C \u2014 \u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32 Supabase \u0E43\u0E19 ONLINE_CONFIG (\u0E14\u0E39\u0E44\u0E1F\u0E25\u0E4C ONLINE_SETUP.md) \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19/\u0E01\u0E23\u0E30\u0E14\u0E32\u0E19\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E49\u0E32\u0E21\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E41\u0E1A\u0E1A\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E08\u0E23\u0E34\u0E07")) : (React.createElement(React.Fragment, null,
-                            React.createElement("div", { style: { fontSize: 9.5, color: "#6a7a9a", marginBottom: 3 } }, "\uD83E\uDEAA ID \u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19 (\u0E2A\u0E48\u0E07\u0E43\u0E2B\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E1B\u0E47\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19):"),
-                            React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 6 } },
-                                React.createElement("div", { style: { flex: 1, fontSize: 13, fontWeight: 800, fontFamily: "monospace", color: "#3a6ac0", background: "#fff", borderRadius: 8, padding: "5px 8px", letterSpacing: 1 } }, ui.pid || "..."),
-                                React.createElement("button", { onClick: () => { try {
-                                        if (navigator.clipboard && ui.pid) {
-                                            navigator.clipboard.writeText(ui.pid);
-                                            G.toast("📋 คัดลอก ID แล้ว! ส่งให้เพื่อนได้เลย");
+                            !enabled ? (React.createElement("div", { style: { fontSize: 9.5, color: "#a8b8d8", lineHeight: 1.5 } }, "\u0E22\u0E31\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E42\u0E2B\u0E21\u0E14\u0E2D\u0E2D\u0E1F\u0E44\u0E25\u0E19\u0E4C \u2014 \u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32 Supabase \u0E43\u0E19 ONLINE_CONFIG (\u0E14\u0E39\u0E44\u0E1F\u0E25\u0E4C ONLINE_SETUP.md) \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19/\u0E01\u0E23\u0E30\u0E14\u0E32\u0E19\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E02\u0E49\u0E32\u0E21\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E41\u0E1A\u0E1A\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C\u0E08\u0E23\u0E34\u0E07")) : (React.createElement(React.Fragment, null,
+                                React.createElement("div", { style: { fontSize: 9.5, color: "#a8c0e8", marginBottom: 3 } }, "\uD83E\uDEAA ID \u0E02\u0E2D\u0E07\u0E09\u0E31\u0E19 (\u0E2A\u0E48\u0E07\u0E43\u0E2B\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E1B\u0E47\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19)"),
+                                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 7 } },
+                                    React.createElement("div", { style: { flex: 1, fontSize: 14, fontWeight: 900, fontFamily: "monospace", color: "#ffe98a", background: "rgba(0,0,0,0.4)", border: "1px solid #ffe98a55", borderRadius: 9, padding: "6px 9px", letterSpacing: 1 } }, ui.pid || "..."),
+                                    React.createElement("button", { onClick: () => { try {
+                                            if (navigator.clipboard && ui.pid) {
+                                                navigator.clipboard.writeText(ui.pid);
+                                                G.toast("📋 คัดลอก ID แล้ว! ส่งให้เพื่อนได้เลย");
+                                            }
                                         }
-                                    }
-                                    catch (e) { } }, style: { border: "none", borderRadius: 8, padding: "0 10px", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "#4a7ad0" } }, "\u0E04\u0E31\u0E14\u0E25\u0E2D\u0E01")),
-                            React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 6 } },
-                                React.createElement("input", { id: "onlineIdInput", placeholder: "\u0E43\u0E2A\u0E48 ID \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 (\u0E40\u0E0A\u0E48\u0E19 CH...)", style: { flex: 1, fontSize: 12, fontFamily: "monospace", borderRadius: 8, border: "1px solid #c8d4ee", padding: "6px 8px", outline: "none" } }),
-                                React.createElement("button", { onClick: () => { const el = document.getElementById("onlineIdInput"); const v = el && el.value; if (v) {
-                                        G.addFriendOnline(v);
-                                        if (el)
-                                            el.value = "";
-                                    } }, style: { border: "none", borderRadius: 8, padding: "0 12px", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" } }, "\u2795 \u0E40\u0E1E\u0E34\u0E48\u0E21")),
-                            React.createElement("button", { onClick: () => G.loadGlobalBoard(), style: { width: "100%", padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#4a7ad0,#7a5ad0)" } }, "\uD83C\uDFC6 \u0E42\u0E2B\u0E25\u0E14\u0E01\u0E23\u0E30\u0E14\u0E32\u0E19\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
-                            ui.globalBoard && ui.globalBoard.length > 0 && (React.createElement("div", { style: { marginTop: 6 } }, ui.globalBoard.map((p, i) => (React.createElement("div", { key: p.pid || i, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #eef" } },
-                                React.createElement("b", { style: { width: 22, color: i === 0 ? "#e0a020" : i === 1 ? "#9aa0b0" : i === 2 ? "#c08050" : "#8a8a9a" } },
-                                    "#",
-                                    i + 1),
-                                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                                    React.createElement("div", { style: { fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
-                                        (CLASSES[p.c] && CLASSES[p.c].emoji) || "",
-                                        " ",
-                                        p.n),
-                                    boardTitle(p, 12) && React.createElement("div", { style: { margin: "1px 0" } }, boardTitle(p, 12)),
-                                    React.createElement("div", { style: { fontSize: 9, color: "#9a8ab0" } },
-                                        "\u2694\uFE0F \u0E1E\u0E25\u0E31\u0E07\u0E23\u0E27\u0E21 ",
-                                        powerOf(p).toLocaleString(),
-                                        (p.ng || 0) > 0 ? ` · ⚡ ตื่น ${p.ng}` : "")),
-                                React.createElement("span", { style: { color: "#8a7aa0", fontWeight: 800 } },
-                                    "Lv.",
-                                    p.lv),
-                                p.pid && p.pid !== ui.pid && (React.createElement("button", { onClick: () => G.addFriendOnline(p.pid), style: { border: "none", borderRadius: 6, padding: "2px 7px", cursor: "pointer", fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" } }, "+")))))))))));
-                })(),
-                React.createElement("div", { style: { background: "linear-gradient(135deg,#e8fff0,#dcf5e8)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #a0e0b8" } },
-                    React.createElement("div", { style: { fontSize: 11.5, fontWeight: 800, color: "#3a9a5a", marginBottom: 2 } }, "\u267E\uFE0F \u0E42\u0E2B\u0E21\u0E14\u0E40\u0E2D\u0E32\u0E0A\u0E35\u0E27\u0E34\u0E15\u0E23\u0E2D\u0E14"),
-                    React.createElement("div", { style: { fontSize: 9.5, color: "#6a9a7a", marginBottom: 6 } },
-                        "\u0E2A\u0E39\u0E49\u0E04\u0E25\u0E37\u0E48\u0E19\u0E21\u0E2D\u0E19\u0E44\u0E21\u0E48\u0E2A\u0E34\u0E49\u0E19\u0E2A\u0E38\u0E14 \u0E22\u0E34\u0E48\u0E07\u0E44\u0E01\u0E25\u0E22\u0E34\u0E48\u0E07\u0E42\u0E2B\u0E14 \u00B7 \u0E2A\u0E16\u0E34\u0E15\u0E34\u0E14\u0E35\u0E2A\u0E38\u0E14: ",
-                        React.createElement("b", null,
-                            ui.endlessBest || 0,
-                            " \u0E40\u0E27\u0E1F")),
-                    React.createElement("button", { onClick: () => G.startEndless(), style: { width: "100%", padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3a9a5a,#5ab87a)" } }, "\u267E\uFE0F \u0E40\u0E23\u0E34\u0E48\u0E21\u0E40\u0E2D\u0E32\u0E0A\u0E35\u0E27\u0E34\u0E15\u0E23\u0E2D\u0E14")),
-                React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#b08020", marginBottom: 5 } }, "\uD83C\uDFC6 \u0E01\u0E23\u0E30\u0E14\u0E32\u0E19\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19"),
-                (!ui.friends || ui.friends.length === 0) ? (React.createElement("div", { style: { fontSize: 10.5, color: "#a8a89a", textAlign: "center", padding: "10px 0", background: "#f7f7f2", borderRadius: 8 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 \u2014 \u0E02\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u0E08\u0E32\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E21\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2A\u0E34! \uD83E\uDD1D")) : (ui.friends.map((f, i) => {
-                    const clsEmoji = { warrior: "🛡️", archer: "🏹", mage: "🔮", assassin: "🗡️", lancer: "🔱", samurai: "⚔️" }[f.c] || "❓";
-                    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
-                    return (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 5, background: i < 3 ? "#fef8e8" : "#f7f7f2", borderRadius: 9, padding: "6px 8px", border: i < 3 ? "1px solid #eddba0" : "1px solid #e8e8de" } },
-                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, width: 22, textAlign: "center" } }, medal),
-                        React.createElement("div", { style: { flex: 1, minWidth: 0, cursor: f.pid ? "pointer" : "default" }, title: f.pid ? "กดเพื่อชวนเข้าปาร์ตี้" : "", onClick: () => { if (!f.pid) {
-                                G.toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์");
-                                return;
-                            } const inP = (ui.partyMembers || []).some((m) => m.pid === f.pid); if (inP) {
-                                G.toast(`${f.n} อยู่ในปาร์ตี้แล้ว`);
-                                return;
-                            } G.partyInvite(f); } },
-                            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#4a5a4a", textDecoration: f.pid ? "underline dotted #9ab0a0" : "none" } },
-                                clsEmoji,
-                                " ",
-                                f.n,
-                                " ",
-                                f.ng > 0 && React.createElement("span", { style: { fontSize: 8.5, color: "#fff", background: "#7a3ad0", borderRadius: 999, padding: "0 5px" } },
-                                    "\u0E15\u0E37\u0E48\u0E19",
-                                    f.ng),
-                                f.pid && (() => { const on = !!(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online); return React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, marginLeft: 4, color: on ? "#2a9a5a" : "#9aa29c" } },
-                                    "\u25CF ",
-                                    on ? "ออนไลน์" : "ออฟไลน์"); })(),
-                                f.pid && (ui.partyMembers || []).some((m) => m.pid === f.pid) && React.createElement("span", { style: { fontSize: 8.5, marginLeft: 4, color: "#fff", background: "#3a9a5a", borderRadius: 999, padding: "0 5px" } }, "\uD83E\uDD1D \u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49")),
-                            React.createElement("div", { style: { fontSize: 9.5, color: "#8a9a7a" } },
-                                "Lv.",
-                                f.lv,
-                                " \u00B7 \u2694\uFE0F",
-                                f.atk,
-                                " \uD83D\uDEE1\uFE0F",
-                                f.def,
-                                " \u2764\uFE0F",
-                                f.hp,
-                                f.pid && !(ui.partyMembers || []).some((m) => m.pid === f.pid) ? " · 👆 กดชื่อเพื่อชวนเข้าปาร์ตี้" : "")),
-                        f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online && (React.createElement("button", { onClick: () => G.pvpChallenge(f), title: "\u0E17\u0E49\u0E32\u0E14\u0E27\u0E25\u0E2A\u0E14 (\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C)", style: { border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" } }, "\u2694\uFE0F \u0E14\u0E27\u0E25\u0E2A\u0E14")),
-                        React.createElement("button", { onClick: () => G.fightGhost(f), style: { border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#d9536b,#e87a5a)" } }, "\uD83D\uDC7B \u0E2A\u0E39\u0E49\u0E1C\u0E35"),
-                        f.pid && (React.createElement("button", { onClick: () => G.visitHome(f), title: "\u0E40\u0E22\u0E35\u0E48\u0E22\u0E21\u0E1A\u0E49\u0E32\u0E19", style: { border: "none", borderRadius: 8, padding: "6px 8px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0a04a,#c8783a)" } }, "\uD83C\uDFE0")),
-                        React.createElement("button", { onClick: () => G.removeFriend(i), style: { border: "none", borderRadius: 8, padding: "6px 7px", cursor: "pointer", fontSize: 11, background: "#f0e8e8", color: "#a06a6a" } }, "\uD83D\uDDD1\uFE0F")));
-                })),
-                React.createElement("div", { style: { fontSize: 9.5, color: "#a3a396", marginTop: 8, textAlign: "center", lineHeight: 1.5 } }, "\u0E41\u0E25\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E01\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 \u2192 \u0E2A\u0E39\u0E49 \"\u0E1C\u0E35\" \u0E02\u0E2D\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 (\u0E43\u0E0A\u0E49\u0E1E\u0E25\u0E31\u0E07\u0E08\u0E23\u0E34\u0E07\u0E02\u0E2D\u0E07\u0E40\u0E02\u0E32) \u2192 \u0E44\u0E15\u0E48\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A! \uD83C\uDFC6"))),
+                                        catch (e) { } }, style: { ...BTN("linear-gradient(180deg,#5aa0ff,#3a6ad0)", "#1a3a80"), padding: "0 10px", fontSize: 11.5 } }, "\uD83D\uDCCB \u0E04\u0E31\u0E14\u0E25\u0E2D\u0E01")),
+                                React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8 } },
+                                    React.createElement("input", { id: "onlineIdInput", placeholder: "\u0E43\u0E2A\u0E48 ID \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 (\u0E40\u0E0A\u0E48\u0E19 CH...)", style: { ...INP, flex: 1, minWidth: 0 } }),
+                                    React.createElement("button", { onClick: () => { const el = document.getElementById("onlineIdInput"); const v = el && el.value; if (v) {
+                                            G.addFriendOnline(v);
+                                            if (el)
+                                                el.value = "";
+                                        } }, style: { ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), padding: "0 12px", fontSize: 11.5 } }, "\u2795 \u0E40\u0E1E\u0E34\u0E48\u0E21")),
+                                React.createElement("button", { onClick: () => G.loadGlobalBoard(), style: { ...BTN("linear-gradient(180deg,#ffe98a,#f0a82a)", "#9a6a10"), width: "100%", padding: "9px 0", fontSize: 12, color: "#3a2408" } }, "\uD83C\uDFC6 \u0E42\u0E2B\u0E25\u0E14\u0E01\u0E23\u0E30\u0E14\u0E32\u0E19\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A\u0E42\u0E25\u0E01"),
+                                ui.globalBoard && ui.globalBoard.length > 0 && (React.createElement("div", { style: { marginTop: 8, display: "flex", flexDirection: "column", gap: 4 } }, ui.globalBoard.map((p, i) => (React.createElement("div", { key: p.pid || i, style: { display: "flex", alignItems: "center", gap: 7, padding: "5px 7px", borderRadius: 10, background: i < 3 ? `linear-gradient(90deg, ${["#e0a020", "#a0a8b8", "#c08050"][i]}44, rgba(0,0,0,0.25))` : "rgba(0,0,0,0.25)", border: i < 3 ? `1px solid ${["#e0a020", "#a0a8b8", "#c08050"][i]}88` : "1px solid rgba(255,255,255,0.06)" } },
+                                    React.createElement("b", { style: { width: 24, textAlign: "center", fontSize: i < 3 ? 15 : 10.5, color: "#c8d4f0" } }, i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`),
+                                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+                                            (CLASSES[p.c] && CLASSES[p.c].emoji) || "",
+                                            " ",
+                                            p.n),
+                                        boardTitle(p, 12) && React.createElement("div", { style: { margin: "1px 0" } }, boardTitle(p, 12)),
+                                        React.createElement("div", { style: { fontSize: 9, color: "#a8b8d8" } },
+                                            "\u2694\uFE0F \u0E1E\u0E25\u0E31\u0E07\u0E23\u0E27\u0E21 ",
+                                            powerOf(p).toLocaleString(),
+                                            (p.ng || 0) > 0 ? ` · ⚡ ตื่น ${p.ng}` : "")),
+                                    React.createElement("span", { style: { fontSize: 10, color: "#ffe98a", fontWeight: 900 } },
+                                        "Lv.",
+                                        p.lv),
+                                    p.pid && p.pid !== ui.pid && (React.createElement("button", { onClick: () => G.addFriendOnline(p.pid), title: "\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19", style: { ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), padding: "3px 8px", fontSize: 11 } }, "\uFF0B")))))))))));
+                    })(),
+                    React.createElement("div", { style: { ...SEC, display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(135deg, rgba(60,180,110,0.3), rgba(0,0,0,0.3))", border: "1px solid rgba(120,230,160,0.35)" } },
+                        React.createElement("span", { style: { width: 44, height: 44, flex: "none", borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, background: "radial-gradient(circle,#e8fff0,#3ac07a 72%)", boxShadow: "0 0 12px #5ae0a0" } }, "\u267E\uFE0F"),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("div", { style: { fontSize: 12.5, fontWeight: 900, color: "#fff" } }, "\u0E42\u0E2B\u0E21\u0E14\u0E40\u0E2D\u0E32\u0E0A\u0E35\u0E27\u0E34\u0E15\u0E23\u0E2D\u0E14"),
+                            React.createElement("div", { style: { fontSize: 9.5, color: "#b8e8c8" } },
+                                "\u0E2A\u0E39\u0E49\u0E04\u0E25\u0E37\u0E48\u0E19\u0E21\u0E2D\u0E19\u0E44\u0E21\u0E48\u0E2A\u0E34\u0E49\u0E19\u0E2A\u0E38\u0E14 \u00B7 \u0E2A\u0E16\u0E34\u0E15\u0E34 ",
+                                React.createElement("b", { style: { color: "#ffe98a" } },
+                                    ui.endlessBest || 0,
+                                    " \u0E40\u0E27\u0E1F"))),
+                        React.createElement("button", { onClick: () => G.startEndless(), style: { ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), padding: "9px 12px", fontSize: 12 } }, "\u25B6 \u0E40\u0E23\u0E34\u0E48\u0E21")),
+                    React.createElement("div", { style: SEC },
+                        H("🏆", "กระดานอันดับเพื่อน", "#f0b030"),
+                        friends.length === 0 ? (React.createElement("div", { style: { fontSize: 10.5, color: "#a8b8d8", textAlign: "center", padding: "12px 0", background: "rgba(0,0,0,0.25)", borderRadius: 10 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 \u2014 \u0E02\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u0E08\u0E32\u0E01\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19\u0E21\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2A\u0E34! \uD83E\uDD1D")) : (friends.map((f, i) => {
+                            const clsEmoji = (CLASSES[f.c] && CLASSES[f.c].emoji) || "❓";
+                            const MC = ["#e0a020", "#a0a8b8", "#c08050"][i];
+                            const on = !!(f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online);
+                            const inP = !!(f.pid && (ui.partyMembers || []).some((m) => m.pid === f.pid));
+                            return (React.createElement("div", { key: i, style: { position: "relative", marginBottom: 7, borderRadius: 13, padding: "8px 9px", background: MC ? `linear-gradient(135deg, ${MC}40, rgba(0,0,0,0.3))` : "rgba(0,0,0,0.28)", border: MC ? `1.5px solid ${MC}` : "1.5px solid rgba(160,190,255,0.18)", boxShadow: i === 0 ? `0 0 10px ${MC}88` : "none" } },
+                                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
+                                    React.createElement("div", { style: { position: "relative", width: 42, height: 42, flex: "none", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, background: "radial-gradient(circle at 40% 35%, #5a7ab8, #1a2a50 75%)", border: `2px solid ${MC || "rgba(160,190,255,0.4)"}` } },
+                                        clsEmoji,
+                                        React.createElement("span", { style: { position: "absolute", top: -8, left: -6, fontSize: i < 3 ? 15 : 9.5, fontWeight: 900, color: "#fff", ...(i < 3 ? {} : { background: "#2a3a60", borderRadius: 6, padding: "0 4px" }) } }, i < 3 ? ["🥇", "🥈", "🥉"][i] : `${i + 1}`),
+                                        f.pid && React.createElement("span", { style: { position: "absolute", right: -3, bottom: -3, width: 11, height: 11, borderRadius: "50%", border: "2px solid #16244a", background: on ? "#3ae07a" : "#6a7a88", boxShadow: on ? "0 0 6px #3ae07a" : "none" } })),
+                                    React.createElement("div", { style: { flex: 1, minWidth: 0, cursor: f.pid ? "pointer" : "default" }, title: f.pid ? "กดเพื่อชวนเข้าปาร์ตี้" : "", onClick: () => { if (!f.pid) {
+                                            G.toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์");
+                                            return;
+                                        } if (inP) {
+                                            G.toast(`${f.n} อยู่ในปาร์ตี้แล้ว`);
+                                            return;
+                                        } G.partyInvite(f); } },
+                                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" } },
+                                            React.createElement("span", { style: { fontSize: 12.5, fontWeight: 900, color: "#fff", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, f.n),
+                                            React.createElement("span", { style: { fontSize: 9, fontWeight: 900, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", borderRadius: 6, padding: "0 5px" } },
+                                                "Lv.",
+                                                f.lv),
+                                            f.ng > 0 && React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, color: "#fff", background: "#7a3ad0", borderRadius: 6, padding: "0 5px" } },
+                                                "\u26A1\u0E15\u0E37\u0E48\u0E19",
+                                                f.ng),
+                                            inP && React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, color: "#fff", background: "#2a9a5a", borderRadius: 6, padding: "0 5px" } }, "\uD83E\uDD1D \u0E1B\u0E32\u0E23\u0E4C\u0E15\u0E35\u0E49")),
+                                        React.createElement("div", { style: { fontSize: 9.5, color: "#c8d4f0", marginTop: 2 } },
+                                            "\u2694\uFE0F",
+                                            f.atk,
+                                            " \u00B7 \uD83D\uDEE1\uFE0F",
+                                            f.def,
+                                            " \u00B7 \u2764\uFE0F",
+                                            f.hp),
+                                        f.pid && React.createElement("div", { style: { fontSize: 8.5, fontWeight: 800, color: on ? "#9af0b8" : "#8a98b0" } },
+                                            on ? "● ออนไลน์" : "● ออฟไลน์",
+                                            !inP ? " · 👆 แตะชื่อเพื่อชวนเข้าปาร์ตี้" : ""))),
+                                React.createElement("div", { style: { display: "flex", gap: 5, marginTop: 7 } },
+                                    on && (React.createElement("button", { onClick: () => G.pvpChallenge(f), title: "\u0E17\u0E49\u0E32\u0E14\u0E27\u0E25\u0E2A\u0E14 (\u0E2D\u0E2D\u0E19\u0E44\u0E25\u0E19\u0E4C)", style: { ...BTN("linear-gradient(180deg,#ff8a4a,#c0392b)", "#6a1a10"), flex: 1, padding: "6px 0", fontSize: 10.5 } }, "\u2694\uFE0F \u0E14\u0E27\u0E25\u0E2A\u0E14")),
+                                    React.createElement("button", { onClick: () => G.fightGhost(f), style: { ...BTN("linear-gradient(180deg,#b08aff,#6a4ad0)", "#3a2080"), flex: 1, padding: "6px 0", fontSize: 10.5 } }, "\uD83D\uDC7B \u0E2A\u0E39\u0E49\u0E1C\u0E35"),
+                                    f.pid && (React.createElement("button", { onClick: () => G.visitHome(f), title: "\u0E40\u0E22\u0E35\u0E48\u0E22\u0E21\u0E1A\u0E49\u0E32\u0E19", style: { ...BTN("linear-gradient(180deg,#f0b060,#c8783a)", "#6a3e14"), flex: 1, padding: "6px 0", fontSize: 10.5 } }, "\uD83C\uDFE0 \u0E40\u0E22\u0E35\u0E48\u0E22\u0E21\u0E1A\u0E49\u0E32\u0E19")),
+                                    React.createElement("button", { onClick: () => G.removeFriend(i), title: "\u0E25\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19", style: { border: "1px solid rgba(255,140,140,0.4)", borderRadius: 10, padding: "6px 9px", cursor: "pointer", fontSize: 11, background: "rgba(120,30,30,0.35)", color: "#ffb0b0" } }, "\uD83D\uDDD1\uFE0F"))));
+                        }))),
+                    React.createElement("div", { style: { fontSize: 9.5, color: "#a8b8d8", marginTop: 2, textAlign: "center", lineHeight: 1.5 } }, "\u0E41\u0E25\u0E01\u0E23\u0E2B\u0E31\u0E2A\u0E01\u0E31\u0E1A\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 \u2192 \u0E2A\u0E39\u0E49 \"\u0E1C\u0E35\" \u0E02\u0E2D\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E19 (\u0E43\u0E0A\u0E49\u0E1E\u0E25\u0E31\u0E07\u0E08\u0E23\u0E34\u0E07\u0E02\u0E2D\u0E07\u0E40\u0E02\u0E32) \u2192 \u0E44\u0E15\u0E48\u0E2D\u0E31\u0E19\u0E14\u0E31\u0E1A! \uD83C\uDFC6")));
+            })(),
             ui.forgeOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("forgeOpen"),
                 React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#a06020", marginBottom: 6 } }, "\u2692\uFE0F \u0E0A\u0E48\u0E32\u0E07\u0E15\u0E35\u0E40\u0E2B\u0E25\u0E47\u0E01 \u2014 \u0E15\u0E35\u0E1A\u0E27\u0E01 \u00B7 \u0E2B\u0E25\u0E2D\u0E21 \u00B7 \u0E2D\u0E31\u0E1E\u0E40\u0E01\u0E23\u0E14"),
