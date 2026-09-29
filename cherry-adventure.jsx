@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v671";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v672";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -64513,47 +64513,77 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           )}
 
           {/* 👥 SOCIAL panel — friend codes, ghost battles, leaderboard */}
-          {ui.socialOpen && (
+          {ui.socialOpen && (() => {
+            const SEC = { borderRadius: 14, padding: "10px 11px", marginBottom: 10, background: "linear-gradient(170deg, rgba(255,255,255,0.07), rgba(0,0,0,0.3))", border: "1px solid rgba(160,190,255,0.2)" };
+            const H = (ic, t, c, right) => (
+              <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+                <span style={{ width: 28, height: 28, flex: "none", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, background: `radial-gradient(circle at 40% 35%, #fff, ${c} 75%)`, boxShadow: `0 0 8px ${c}99` }}>{ic}</span>
+                <span style={{ flex: 1, fontSize: 12.5, fontWeight: 900, color: "#fff", textShadow: `0 0 8px ${c}aa` }}>{t}</span>
+                {right}
+              </div>
+            );
+            const BTN = (bg, sh) => ({ border: "none", borderRadius: 10, cursor: "pointer", fontFamily: font, fontWeight: 900, color: "#fff", background: bg, boxShadow: `0 3px 0 ${sh}` });
+            const INP = { fontSize: 12, fontFamily: "monospace", borderRadius: 9, border: "1.5px solid rgba(160,190,255,0.35)", padding: "7px 8px", outline: "none", background: "rgba(0,0,0,0.35)", color: "#fff" };
+            const friends = ui.friends || [];
+            const onN = friends.filter((f) => f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online).length;
+            return (
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50,
-              width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
-              ...CHIBI_FRAME, borderRadius: 20, padding: 16,
-              boxShadow: MODAL_SHADOW,
+              width: "92%", maxWidth: 400, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto",
+              borderRadius: 18, padding: 12, fontFamily: font,
+              background: "radial-gradient(120% 40% at 50% 0%, #2a4a8a 0%, #16244a 50%, #0a1024 100%)",
+              border: "2px solid #142040", boxShadow: "0 0 0 2px #f5c542, 0 10px 28px rgba(0,0,0,0.5)",
             }}>
               {closeBtn("socialOpen")}
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#4a7ad0", marginBottom: 6 }}>👥 เพื่อน & สู้ผี</div>
+              {/* header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <span style={{ width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#e8f0ff,#4a7ad0 72%)", boxShadow: "0 0 14px #6a9aff", border: "2px solid rgba(255,255,255,0.85)" }}>👥</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#eef4ff", textShadow: "0 0 10px rgba(120,170,255,0.7), 0 2px 0 rgba(0,0,0,0.4)" }}>เพื่อน & สู้ผี</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: "#a8c0e8" }}>🟢 ออนไลน์ {onN} คน · 🤝 ปาร์ตี้ {(ui.partyMembers || []).length}/4</div>
+                </div>
+                <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "rgba(0,0,0,0.35)", marginRight: 30 }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 900, color: "#a8c0e8" }}>เพื่อน</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.05 }}>{friends.length}</div>
+                </div>
+              </div>
 
               {/* 🤝 party — เก็บเลเวลร่วมกัน */}
-              <div style={{ background: "linear-gradient(135deg,#eefbf1,#e2f5ea)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #a8dcc0" }}>
-                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#2a8a5a", marginBottom: 4 }}>🤝 ปาร์ตี้เก็บเลเวลร่วมกัน</div>
+              <div style={SEC}>
+                {H("🤝", "ปาร์ตี้เก็บเลเวลร่วมกัน", "#3ac07a")}
                 {!ui.partyCode ? (
                   <>
-                    <div style={{ fontSize: 9.5, color: "#5a8a70", lineHeight: 1.5, marginBottom: 6 }}>ตั้งปาร์ตี้กับเพื่อน (สูงสุด 4 คน) — ออนไลน์พร้อมกันรับโบนัส XP +15%/คน และแบ่ง XP 10% ของที่แต่ละคนเก็บได้ให้กันอัตโนมัติ</div>
+                    <div style={{ fontSize: 9.5, color: "#b8d8c8", lineHeight: 1.5, marginBottom: 7 }}>ตั้งปาร์ตี้กับเพื่อน (สูงสุด 4 คน) — ออนไลน์พร้อมกันรับโบนัส XP +15%/คน และแบ่ง XP 10% ของที่แต่ละคนเก็บได้ให้กันอัตโนมัติ</div>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => G.partyCreate()} style={{ flex: 1, border: "none", borderRadius: 9, padding: "8px 0", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3a9a5a,#2a8ab0)" }}>➕ สร้างปาร์ตี้</button>
-                      <input id="partyCodeInput" placeholder="รหัสปาร์ตี้" maxLength={8} style={{ width: 84, fontSize: 12, fontFamily: "monospace", borderRadius: 8, border: "1px solid #a8dcc0", padding: "6px 8px", outline: "none", textTransform: "uppercase" }} />
-                      <button onClick={() => { const el = document.getElementById("partyCodeInput"); if (el && el.value) { G.partyJoin(el.value); el.value = ""; } }} style={{ border: "none", borderRadius: 9, padding: "0 10px", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>เข้าร่วม</button>
+                      <button onClick={() => G.partyCreate()} style={{ ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), flex: 1, padding: "8px 0", fontSize: 11.5 }}>➕ สร้างปาร์ตี้</button>
+                      <input id="partyCodeInput" placeholder="รหัสปาร์ตี้" maxLength={8} style={{ ...INP, width: 84, textTransform: "uppercase" }} />
+                      <button onClick={() => { const el = document.getElementById("partyCodeInput"); if (el && el.value) { G.partyJoin(el.value); el.value = ""; } }} style={{ ...BTN("linear-gradient(180deg,#5aa0ff,#3a6ad0)", "#1a3a80"), padding: "0 10px", fontSize: 11.5 }}>เข้าร่วม</button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-                      <div style={{ fontSize: 9.5, color: "#5a8a70" }}>รหัสปาร์ตี้:</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, fontFamily: "monospace", color: "#2a8a5a", background: "#fff", borderRadius: 8, padding: "3px 10px", letterSpacing: 2 }}>{ui.partyCode}</div>
-                      <button onClick={() => { try { navigator.clipboard && navigator.clipboard.writeText(ui.partyCode); G.toast("📋 คัดลอกรหัสปาร์ตี้แล้ว!"); } catch (e) {} }} style={{ border: "none", borderRadius: 8, padding: "4px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#4a7ad0" }}>คัดลอก</button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
+                      <div style={{ fontSize: 9.5, color: "#b8d8c8" }}>รหัส</div>
+                      <div style={{ fontSize: 14, fontWeight: 900, fontFamily: "monospace", color: "#ffe98a", background: "rgba(0,0,0,0.4)", border: "1px solid #ffe98a66", borderRadius: 8, padding: "3px 10px", letterSpacing: 2 }}>{ui.partyCode}</div>
+                      <button onClick={() => { try { navigator.clipboard && navigator.clipboard.writeText(ui.partyCode); G.toast("📋 คัดลอกรหัสปาร์ตี้แล้ว!"); } catch (e) {} }} style={{ ...BTN("linear-gradient(180deg,#5aa0ff,#3a6ad0)", "#1a3a80"), padding: "5px 9px", fontSize: 10.5 }}>📋 คัดลอก</button>
                       <div style={{ flex: 1 }} />
-                      <button onClick={() => G.partyLeaveNow()} style={{ border: "none", borderRadius: 8, padding: "4px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#c05a5a" }}>ออก</button>
+                      <button onClick={() => G.partyLeaveNow()} style={{ ...BTN("linear-gradient(180deg,#e06a6a,#b03a3a)", "#6a1a1a"), padding: "5px 9px", fontSize: 10.5 }}>ออก</button>
                     </div>
-                    {(ui.partyMembers || []).map((m) => (
-                      <div key={m.pid} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #ddf0e4" }}>
-                        <span style={{ fontSize: 8, color: m.online ? "#3ac06a" : "#b8c4bc" }}>●</span>
-                        <span style={{ flex: 1, fontWeight: 700, color: "#3a6a4e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[m.c] && CLASSES[m.c].emoji) || ""} {m.n}{m.pid === ui.pid ? " (ฉัน)" : ""}</span>
-                        <span style={{ fontSize: 9, fontWeight: 800, color: m.online ? "#2a9a5a" : "#9aa29c" }}>{m.online ? "ออนไลน์" : "ออฟไลน์"}</span>
-                        <b style={{ color: "#5a8a70" }}>Lv.{m.lv}</b>
-                      </div>
-                    ))}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                      {[0, 1, 2, 3].map((k) => {
+                        const m = (ui.partyMembers || [])[k];
+                        return (
+                          <div key={k} style={{ textAlign: "center", borderRadius: 11, padding: "6px 2px", background: m ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.15)", border: m ? `1.5px solid ${m.online ? "#3ac07a" : "rgba(255,255,255,0.15)"}` : "1.5px dashed rgba(255,255,255,0.18)" }}>
+                            <div style={{ position: "relative", fontSize: 20, lineHeight: 1.2, opacity: m ? 1 : 0.35 }}>{m ? ((CLASSES[m.c] && CLASSES[m.c].emoji) || "🙂") : "＋"}
+                              {m && <span style={{ position: "absolute", right: 6, bottom: 0, width: 8, height: 8, borderRadius: "50%", background: m.online ? "#3ae07a" : "#6a7a70", boxShadow: m.online ? "0 0 6px #3ae07a" : "none" }} />}</div>
+                            <div style={{ fontSize: 8.5, fontWeight: 800, color: m ? "#fff" : "#7a8aa0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>{m ? `${m.n}${m.pid === ui.pid ? " (ฉัน)" : ""}` : "ว่าง"}</div>
+                            {m && <div style={{ fontSize: 8, fontWeight: 900, color: "#ffe98a" }}>Lv.{m.lv}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
                     {(() => { const act = (ui.partyMembers || []).filter(m => m.online && m.pid !== ui.pid).length; return (
-                      <div style={{ fontSize: 9.5, fontWeight: 800, color: act > 0 ? "#2a8a5a" : "#8aa090", marginTop: 4 }}>
+                      <div style={{ fontSize: 9.5, fontWeight: 900, color: act > 0 ? "#9af0b8" : "#8aa0b8", marginTop: 7, textAlign: "center" }}>
                         {act > 0 ? `🔥 โบนัส XP +${Math.min(45, act * 15)}% (เพื่อนออนไลน์ ${act} คน) + แบ่ง XP ให้กัน 10%` : "รอเพื่อนออนไลน์... (โบนัสเริ่มเมื่อออนไลน์พร้อมกัน)"}
                       </div>
                     ); })()}
@@ -64565,41 +64595,38 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               {(() => {
                 const enabled = ui.netEnabled;
                 const st = ui.netStatus || "off";
-                const stColor = st === "ok" ? "#3a9a5a" : st === "error" ? "#c04a4a" : "#8a8a8a";
+                const stColor = st === "ok" ? "#3ae07a" : st === "error" ? "#ff6a6a" : "#9aa0b0";
                 const stText = !enabled ? "ยังไม่ได้ตั้งค่า" : st === "ok" ? "เชื่อมต่อแล้ว" : st === "error" ? "เชื่อมต่อไม่ได้" : "พร้อม";
                 return (
-                  <div style={{ background: "linear-gradient(135deg,#eef4ff,#e4ecfb)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #b8ccf0" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 800, color: "#3a6ac0" }}>🌐 ออนไลน์ (เล่นกับเพื่อนจริง)</div>
-                      <div style={{ fontSize: 9.5, fontWeight: 800, color: stColor, background: "#fff", borderRadius: 999, padding: "1px 8px" }}>● {stText}</div>
-                    </div>
+                  <div style={SEC}>
+                    {H("🌐", "ออนไลน์ (เล่นกับเพื่อนจริง)", "#5a9aff", <span style={{ fontSize: 9.5, fontWeight: 900, color: stColor, background: "rgba(0,0,0,0.4)", borderRadius: 999, padding: "2px 8px" }}>● {stText}</span>)}
                     {!enabled ? (
-                      <div style={{ fontSize: 9.5, color: "#7a86a0", lineHeight: 1.5 }}>ยังเป็นโหมดออฟไลน์ — ตั้งค่า Supabase ใน ONLINE_CONFIG (ดูไฟล์ ONLINE_SETUP.md) เพื่อเปิดระบบเพื่อน/กระดานอันดับข้ามเครื่องแบบออนไลน์จริง</div>
+                      <div style={{ fontSize: 9.5, color: "#a8b8d8", lineHeight: 1.5 }}>ยังเป็นโหมดออฟไลน์ — ตั้งค่า Supabase ใน ONLINE_CONFIG (ดูไฟล์ ONLINE_SETUP.md) เพื่อเปิดระบบเพื่อน/กระดานอันดับข้ามเครื่องแบบออนไลน์จริง</div>
                     ) : (
                       <>
-                        <div style={{ fontSize: 9.5, color: "#6a7a9a", marginBottom: 3 }}>🪪 ID ของฉัน (ส่งให้เพื่อนเพื่อเพิ่มเป็นเพื่อน):</div>
-                        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-                          <div style={{ flex: 1, fontSize: 13, fontWeight: 800, fontFamily: "monospace", color: "#3a6ac0", background: "#fff", borderRadius: 8, padding: "5px 8px", letterSpacing: 1 }}>{ui.pid || "..."}</div>
-                          <button onClick={() => { try { if (navigator.clipboard && ui.pid) { navigator.clipboard.writeText(ui.pid); G.toast("📋 คัดลอก ID แล้ว! ส่งให้เพื่อนได้เลย"); } } catch (e) {} }} style={{ border: "none", borderRadius: 8, padding: "0 10px", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "#4a7ad0" }}>คัดลอก</button>
+                        <div style={{ fontSize: 9.5, color: "#a8c0e8", marginBottom: 3 }}>🪪 ID ของฉัน (ส่งให้เพื่อนเพื่อเพิ่มเป็นเพื่อน)</div>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 7 }}>
+                          <div style={{ flex: 1, fontSize: 14, fontWeight: 900, fontFamily: "monospace", color: "#ffe98a", background: "rgba(0,0,0,0.4)", border: "1px solid #ffe98a55", borderRadius: 9, padding: "6px 9px", letterSpacing: 1 }}>{ui.pid || "..."}</div>
+                          <button onClick={() => { try { if (navigator.clipboard && ui.pid) { navigator.clipboard.writeText(ui.pid); G.toast("📋 คัดลอก ID แล้ว! ส่งให้เพื่อนได้เลย"); } } catch (e) {} }} style={{ ...BTN("linear-gradient(180deg,#5aa0ff,#3a6ad0)", "#1a3a80"), padding: "0 10px", fontSize: 11.5 }}>📋 คัดลอก</button>
                         </div>
-                        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-                          <input id="onlineIdInput" placeholder="ใส่ ID เพื่อน (เช่น CH...)" style={{ flex: 1, fontSize: 12, fontFamily: "monospace", borderRadius: 8, border: "1px solid #c8d4ee", padding: "6px 8px", outline: "none" }} />
-                          <button onClick={() => { const el = document.getElementById("onlineIdInput"); const v = el && el.value; if (v) { G.addFriendOnline(v); if (el) el.value = ""; } }} style={{ border: "none", borderRadius: 8, padding: "0 12px", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>➕ เพิ่ม</button>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                          <input id="onlineIdInput" placeholder="ใส่ ID เพื่อน (เช่น CH...)" style={{ ...INP, flex: 1, minWidth: 0 }} />
+                          <button onClick={() => { const el = document.getElementById("onlineIdInput"); const v = el && el.value; if (v) { G.addFriendOnline(v); if (el) el.value = ""; } }} style={{ ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), padding: "0 12px", fontSize: 11.5 }}>➕ เพิ่ม</button>
                         </div>
-                        <button onClick={() => G.loadGlobalBoard()} style={{ width: "100%", padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#4a7ad0,#7a5ad0)" }}>🏆 โหลดกระดานอันดับโลก</button>
+                        <button onClick={() => G.loadGlobalBoard()} style={{ ...BTN("linear-gradient(180deg,#ffe98a,#f0a82a)", "#9a6a10"), width: "100%", padding: "9px 0", fontSize: 12, color: "#3a2408" }}>🏆 โหลดกระดานอันดับโลก</button>
                         {ui.globalBoard && ui.globalBoard.length > 0 && (
-                          <div style={{ marginTop: 6 }}>
+                          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
                             {ui.globalBoard.map((p, i) => (
-                              <div key={p.pid || i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, padding: "3px 4px", borderBottom: "1px solid #eef" }}>
-                                <b style={{ width: 22, color: i === 0 ? "#e0a020" : i === 1 ? "#9aa0b0" : i === 2 ? "#c08050" : "#8a8a9a" }}>#{i + 1}</b>
+                              <div key={p.pid || i} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 7px", borderRadius: 10, background: i < 3 ? `linear-gradient(90deg, ${["#e0a020", "#a0a8b8", "#c08050"][i]}44, rgba(0,0,0,0.25))` : "rgba(0,0,0,0.25)", border: i < 3 ? `1px solid ${["#e0a020", "#a0a8b8", "#c08050"][i]}88` : "1px solid rgba(255,255,255,0.06)" }}>
+                                <b style={{ width: 24, textAlign: "center", fontSize: i < 3 ? 15 : 10.5, color: "#c8d4f0" }}>{i < 3 ? ["🥇", "🥈", "🥉"][i] : `#${i + 1}`}</b>
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ fontWeight: 700, color: "#4a5a7a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</div>
+                                  <div style={{ fontSize: 11, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(CLASSES[p.c] && CLASSES[p.c].emoji) || ""} {p.n}</div>
                                   {boardTitle(p, 12) && <div style={{ margin: "1px 0" }}>{boardTitle(p, 12)}</div>}
-                                  <div style={{ fontSize: 9, color: "#9a8ab0" }}>⚔️ พลังรวม {powerOf(p).toLocaleString()}{(p.ng || 0) > 0 ? ` · ⚡ ตื่น ${p.ng}` : ""}</div>
+                                  <div style={{ fontSize: 9, color: "#a8b8d8" }}>⚔️ พลังรวม {powerOf(p).toLocaleString()}{(p.ng || 0) > 0 ? ` · ⚡ ตื่น ${p.ng}` : ""}</div>
                                 </div>
-                                <span style={{ color: "#8a7aa0", fontWeight: 800 }}>Lv.{p.lv}</span>
+                                <span style={{ fontSize: 10, color: "#ffe98a", fontWeight: 900 }}>Lv.{p.lv}</span>
                                 {p.pid && p.pid !== ui.pid && (
-                                  <button onClick={() => G.addFriendOnline(p.pid)} style={{ border: "none", borderRadius: 6, padding: "2px 7px", cursor: "pointer", fontSize: 9.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "#3a9a5a" }}>+</button>
+                                  <button onClick={() => G.addFriendOnline(p.pid)} title="เพิ่มเพื่อน" style={{ ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), padding: "3px 8px", fontSize: 11 }}>＋</button>
                                 )}
                               </div>
                             ))}
@@ -64612,60 +64639,69 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               })()}
 
               {/* ♾️ endless survival mode */}
-              <div style={{ background: "linear-gradient(135deg,#e8fff0,#dcf5e8)", borderRadius: 12, padding: "9px 10px", marginBottom: 10, border: "1.5px solid #a0e0b8" }}>
-                <div style={{ fontSize: 11.5, fontWeight: 800, color: "#3a9a5a", marginBottom: 2 }}>♾️ โหมดเอาชีวิตรอด</div>
-                <div style={{ fontSize: 9.5, color: "#6a9a7a", marginBottom: 6 }}>สู้คลื่นมอนไม่สิ้นสุด ยิ่งไกลยิ่งโหด · สถิติดีสุด: <b>{ui.endlessBest || 0} เวฟ</b></div>
-                <button onClick={() => G.startEndless()} style={{ width: "100%", padding: "8px 0", borderRadius: 9, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3a9a5a,#5ab87a)" }}>
-                  ♾️ เริ่มเอาชีวิตรอด
-                </button>
+              <div style={{ ...SEC, display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(135deg, rgba(60,180,110,0.3), rgba(0,0,0,0.3))", border: "1px solid rgba(120,230,160,0.35)" }}>
+                <span style={{ width: 44, height: 44, flex: "none", borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, background: "radial-gradient(circle,#e8fff0,#3ac07a 72%)", boxShadow: "0 0 12px #5ae0a0" }}>♾️</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 900, color: "#fff" }}>โหมดเอาชีวิตรอด</div>
+                  <div style={{ fontSize: 9.5, color: "#b8e8c8" }}>สู้คลื่นมอนไม่สิ้นสุด · สถิติ <b style={{ color: "#ffe98a" }}>{ui.endlessBest || 0} เวฟ</b></div>
+                </div>
+                <button onClick={() => G.startEndless()} style={{ ...BTN("linear-gradient(180deg,#4ad08a,#2a9a5a)", "#1a5a34"), padding: "9px 12px", fontSize: 12 }}>▶ เริ่ม</button>
               </div>
 
               {/* leaderboard of friends */}
-              <div style={{ fontSize: 12, fontWeight: 800, color: "#b08020", marginBottom: 5 }}>🏆 กระดานอันดับเพื่อน</div>
-              {(!ui.friends || ui.friends.length === 0) ? (
-                <div style={{ fontSize: 10.5, color: "#a8a89a", textAlign: "center", padding: "10px 0", background: "#f7f7f2", borderRadius: 8 }}>
+              <div style={SEC}>
+              {H("🏆", "กระดานอันดับเพื่อน", "#f0b030")}
+              {friends.length === 0 ? (
+                <div style={{ fontSize: 10.5, color: "#a8b8d8", textAlign: "center", padding: "12px 0", background: "rgba(0,0,0,0.25)", borderRadius: 10 }}>
                   ยังไม่มีเพื่อน — ขอรหัสจากเพื่อนมาเพิ่มสิ! 🤝
                 </div>
               ) : (
-                ui.friends.map((f, i) => {
-                  const clsEmoji = { warrior: "🛡️", archer: "🏹", mage: "🔮", assassin: "🗡️", lancer: "🔱", samurai: "⚔️" }[f.c] || "❓";
-                  const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+                friends.map((f, i) => {
+                  const clsEmoji = (CLASSES[f.c] && CLASSES[f.c].emoji) || "❓";
+                  const MC = ["#e0a020", "#a0a8b8", "#c08050"][i];
+                  const on = !!(f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online);
+                  const inP = !!(f.pid && (ui.partyMembers || []).some((m) => m.pid === f.pid));
                   return (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, background: i < 3 ? "#fef8e8" : "#f7f7f2", borderRadius: 9, padding: "6px 8px", border: i < 3 ? "1px solid #eddba0" : "1px solid #e8e8de" }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, width: 22, textAlign: "center" }}>{medal}</div>
-                      <div style={{ flex: 1, minWidth: 0, cursor: f.pid ? "pointer" : "default" }} title={f.pid ? "กดเพื่อชวนเข้าปาร์ตี้" : ""}
-                        onClick={() => { if (!f.pid) { G.toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์"); return; } const inP = (ui.partyMembers || []).some((m) => m.pid === f.pid); if (inP) { G.toast(`${f.n} อยู่ในปาร์ตี้แล้ว`); return; } G.partyInvite(f); }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: "#4a5a4a", textDecoration: f.pid ? "underline dotted #9ab0a0" : "none" }}>{clsEmoji} {f.n} {f.ng > 0 && <span style={{ fontSize: 8.5, color: "#fff", background: "#7a3ad0", borderRadius: 999, padding: "0 5px" }}>ตื่น{f.ng}</span>}
-                          {f.pid && (() => { const on = !!(ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online); return <span style={{ fontSize: 8.5, fontWeight: 800, marginLeft: 4, color: on ? "#2a9a5a" : "#9aa29c" }}>● {on ? "ออนไลน์" : "ออฟไลน์"}</span>; })()}
-                          {f.pid && (ui.partyMembers || []).some((m) => m.pid === f.pid) && <span style={{ fontSize: 8.5, marginLeft: 4, color: "#fff", background: "#3a9a5a", borderRadius: 999, padding: "0 5px" }}>🤝 ปาร์ตี้</span>}
+                    <div key={i} style={{ position: "relative", marginBottom: 7, borderRadius: 13, padding: "8px 9px", background: MC ? `linear-gradient(135deg, ${MC}40, rgba(0,0,0,0.3))` : "rgba(0,0,0,0.28)", border: MC ? `1.5px solid ${MC}` : "1.5px solid rgba(160,190,255,0.18)", boxShadow: i === 0 ? `0 0 10px ${MC}88` : "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ position: "relative", width: 42, height: 42, flex: "none", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, background: "radial-gradient(circle at 40% 35%, #5a7ab8, #1a2a50 75%)", border: `2px solid ${MC || "rgba(160,190,255,0.4)"}` }}>
+                          {clsEmoji}
+                          <span style={{ position: "absolute", top: -8, left: -6, fontSize: i < 3 ? 15 : 9.5, fontWeight: 900, color: "#fff", ...(i < 3 ? {} : { background: "#2a3a60", borderRadius: 6, padding: "0 4px" }) }}>{i < 3 ? ["🥇", "🥈", "🥉"][i] : `${i + 1}`}</span>
+                          {f.pid && <span style={{ position: "absolute", right: -3, bottom: -3, width: 11, height: 11, borderRadius: "50%", border: "2px solid #16244a", background: on ? "#3ae07a" : "#6a7a88", boxShadow: on ? "0 0 6px #3ae07a" : "none" }} />}
                         </div>
-                        <div style={{ fontSize: 9.5, color: "#8a9a7a" }}>Lv.{f.lv} · ⚔️{f.atk} 🛡️{f.def} ❤️{f.hp}{f.pid && !(ui.partyMembers || []).some((m) => m.pid === f.pid) ? " · 👆 กดชื่อเพื่อชวนเข้าปาร์ตี้" : ""}</div>
+                        <div style={{ flex: 1, minWidth: 0, cursor: f.pid ? "pointer" : "default" }} title={f.pid ? "กดเพื่อชวนเข้าปาร์ตี้" : ""}
+                          onClick={() => { if (!f.pid) { G.toast("เพื่อนคนนี้ยังไม่มี ID ออนไลน์"); return; } if (inP) { G.toast(`${f.n} อยู่ในปาร์ตี้แล้ว`); return; } G.partyInvite(f); }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 12.5, fontWeight: 900, color: "#fff", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.n}</span>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", borderRadius: 6, padding: "0 5px" }}>Lv.{f.lv}</span>
+                            {f.ng > 0 && <span style={{ fontSize: 8.5, fontWeight: 800, color: "#fff", background: "#7a3ad0", borderRadius: 6, padding: "0 5px" }}>⚡ตื่น{f.ng}</span>}
+                            {inP && <span style={{ fontSize: 8.5, fontWeight: 800, color: "#fff", background: "#2a9a5a", borderRadius: 6, padding: "0 5px" }}>🤝 ปาร์ตี้</span>}
+                          </div>
+                          <div style={{ fontSize: 9.5, color: "#c8d4f0", marginTop: 2 }}>⚔️{f.atk} · 🛡️{f.def} · ❤️{f.hp}</div>
+                          {f.pid && <div style={{ fontSize: 8.5, fontWeight: 800, color: on ? "#9af0b8" : "#8a98b0" }}>{on ? "● ออนไลน์" : "● ออฟไลน์"}{!inP ? " · 👆 แตะชื่อเพื่อชวนเข้าปาร์ตี้" : ""}</div>}
+                        </div>
                       </div>
-                      {f.pid && ui.onlineMap && ui.onlineMap[f.pid] && ui.onlineMap[f.pid].online && (
-                        <button onClick={() => G.pvpChallenge(f)} title="ท้าดวลสด (ออนไลน์)" style={{ border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c0392b,#e0a020)" }}>
-                          ⚔️ ดวลสด
-                        </button>
-                      )}
-                      <button onClick={() => G.fightGhost(f)} style={{ border: "none", borderRadius: 8, padding: "6px 9px", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#d9536b,#e87a5a)" }}>
-                        👻 สู้ผี
-                      </button>
-                      {f.pid && (
-                        <button onClick={() => G.visitHome(f)} title="เยี่ยมบ้าน" style={{ border: "none", borderRadius: 8, padding: "6px 8px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#e0a04a,#c8783a)" }}>
-                          🏠
-                        </button>
-                      )}
-                      <button onClick={() => G.removeFriend(i)} style={{ border: "none", borderRadius: 8, padding: "6px 7px", cursor: "pointer", fontSize: 11, background: "#f0e8e8", color: "#a06a6a" }}>
-                        🗑️
-                      </button>
+                      <div style={{ display: "flex", gap: 5, marginTop: 7 }}>
+                        {on && (
+                          <button onClick={() => G.pvpChallenge(f)} title="ท้าดวลสด (ออนไลน์)" style={{ ...BTN("linear-gradient(180deg,#ff8a4a,#c0392b)", "#6a1a10"), flex: 1, padding: "6px 0", fontSize: 10.5 }}>⚔️ ดวลสด</button>
+                        )}
+                        <button onClick={() => G.fightGhost(f)} style={{ ...BTN("linear-gradient(180deg,#b08aff,#6a4ad0)", "#3a2080"), flex: 1, padding: "6px 0", fontSize: 10.5 }}>👻 สู้ผี</button>
+                        {f.pid && (
+                          <button onClick={() => G.visitHome(f)} title="เยี่ยมบ้าน" style={{ ...BTN("linear-gradient(180deg,#f0b060,#c8783a)", "#6a3e14"), flex: 1, padding: "6px 0", fontSize: 10.5 }}>🏠 เยี่ยมบ้าน</button>
+                        )}
+                        <button onClick={() => G.removeFriend(i)} title="ลบเพื่อน" style={{ border: "1px solid rgba(255,140,140,0.4)", borderRadius: 10, padding: "6px 9px", cursor: "pointer", fontSize: 11, background: "rgba(120,30,30,0.35)", color: "#ffb0b0" }}>🗑️</button>
+                      </div>
                     </div>
                   );
                 })
               )}
-              <div style={{ fontSize: 9.5, color: "#a3a396", marginTop: 8, textAlign: "center", lineHeight: 1.5 }}>
+              </div>
+              <div style={{ fontSize: 9.5, color: "#a8b8d8", marginTop: 2, textAlign: "center", lineHeight: 1.5 }}>
                 แลกรหัสกับเพื่อน → สู้ "ผี" ของเพื่อน (ใช้พลังจริงของเขา) → ไต่อันดับ! 🏆
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* ⛏️ FORGE panel — craft with materials */}
           {ui.forgeOpen && (
