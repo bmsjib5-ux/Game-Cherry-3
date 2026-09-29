@@ -59,6 +59,7 @@
     ["three@0.128.0/examples/js/loaders/GLTFLoader.js", 97], ["three@0.128.0/examples/js/utils/SkeletonUtils.js", 12], ["@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js", 111],
     ["canvas-confetti@1.9.3/dist/confetti.browser.min.js", 11]];
   var GAME_URL = "./game.js?v=0849fe2144", GAME_KB = 7398;
+  window.__GAME_VER = "0849fe2144";   // 🆕 ให้ตัวเช็กเวอร์ชันใหม่ (ท้ายหน้า) เทียบกับเซิร์ฟเวอร์
   var TIPS = ["💡 แตะมอนสเตอร์เพื่อเดินเข้าไปตีอัตโนมัติ", "💡 กด 2 ครั้งติดกันเพื่อวิ่ง", "💡 ดันเจี้ยนเขาวงกตอยู่ด่าน 3 · 7 · 13", "💡 ตีบวกอาวุธได้ที่ช่างตีเหล็ก",
     "💡 เปิดออโต้แล้วตัวละครจะล่ามอนให้เอง", "💡 บอสบุกแมพดรอปอาวุธเทพ 1%", "💡 ติดตั้งเกมลงเครื่องเพื่อเปิดเร็วขึ้นครั้งถัดไป"];
   var $ = function (id) { return document.getElementById(id); };
@@ -126,11 +127,39 @@
 <!-- 📲 PWA: service worker + install prompt -->
 <script>
 (function () {
+  var swReg = null;
   if ("serviceWorker" in navigator) {
+    // 🔄 มี service worker ตัวใหม่เข้าคุมหน้า (อัปเดตเกม) → โหลดหน้าใหม่ 1 ครั้งให้ได้เวอร์ชันล่าสุดทันที (ไม่ต้องปิด-เปิด 2 รอบ)
+    var hadCtrl = !!navigator.serviceWorker.controller, swReloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () { if (hadCtrl && !swReloaded) { swReloaded = true; location.reload(); } });
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("./sw.js").catch(function () {});
+      navigator.serviceWorker.register("./sw.js").then(function (r) { swReg = r; }).catch(function () {});
     });
   }
+  // 🆕 เช็กเวอร์ชันใหม่กับเซิร์ฟเวอร์ (ตอนเปิด + ทุกครั้งที่กลับมาที่แอป) — ต่างจากที่รันอยู่ = ขึ้นแถบ "มีเวอร์ชันใหม่" แตะแล้วล้างแคชและโหลดใหม่
+  var nvLast = 0, nvShown = false;
+  function checkNewVersion() {
+    var now = Date.now(); if (nvShown || now - nvLast < 45000 || !window.__GAME_VER) return; nvLast = now;
+    if (swReg && swReg.update) { try { swReg.update(); } catch (e) {} }
+    fetch("./index.html?nv=" + now, { cache: "no-store", credentials: "same-origin" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
+      var m = /game\.js\?v=([0-9a-f]+)/.exec(t || "");
+      if (m && m[1] !== window.__GAME_VER) showUpdateBar();
+    }).catch(function () {});
+  }
+  function showUpdateBar() {
+    if (nvShown) return; nvShown = true;
+    var b = document.createElement("div"); b.id = "nvBar";
+    b.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:99999;padding:9px 16px;border-radius:999px;background:linear-gradient(90deg,#ff8ac0,#f5c542);color:#3a1a2a;font:800 13px/1.2 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,0.35);cursor:pointer;white-space:nowrap";
+    b.textContent = "🆕 มีเวอร์ชันใหม่ — แตะเพื่ออัปเดต";
+    b.onclick = function () {
+      b.textContent = "⏳ กำลังอัปเดต...";
+      var done = function () { location.replace(location.pathname + "?v=" + Date.now()); };
+      if (window.caches && caches.keys) caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).then(done, done); else done();
+    };
+    document.body.appendChild(b);
+  }
+  window.addEventListener("load", function () { setTimeout(checkNewVersion, 6000); });
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") checkNewVersion(); });
   var deferred = null;
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches || window.navigator.standalone === true;

@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v659";
+const CACHE = "cherry-adventure-v660";
 const SHELL = [
   "./",
   "./index.html",
@@ -92,10 +92,21 @@ self.addEventListener("fetch", (e) => {
     const KNOWN = ["dashboard.html", "items.html", "classes.html", "heroes.html"];
     const hit = KNOWN.find((p) => url.pathname.endsWith("/" + p));
     const dest = hit ? "./" + hit : "./index.html"; // keep each page in its own cache slot
+    // ⚠️ ข้าม HTTP cache ของเบราว์เซอร์ด้วย (GitHub Pages ตั้ง max-age 10 นาที) — ไม่งั้นได้ index.html เก่า → game.js เก่า
     e.respondWith(
-      fetch(req)
-        .then((r) => { const cp = r.clone(); caches.open(CACHE).then((c) => c.put(dest, cp)); return r; })
+      fetch(req.url, { cache: "no-cache", credentials: "same-origin" })
+        .then((r) => { if (r && r.ok) { const cp = r.clone(); caches.open(CACHE).then((c) => c.put(dest, cp)); } return r; })
         .catch(() => caches.match(dest).then((r) => r || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // 🆕 โค้ดเกม / หน้า html / manifest ของโดเมนเราเอง → network-first เสมอ (อัปเดตเกมแล้วเห็นทันที) · ออฟไลน์ค่อยใช้ของในแคช
+  if (url.origin === self.location.origin && /\.(js|html|webmanifest)$/.test(url.pathname)) {
+    e.respondWith(
+      fetch(req.url, { cache: "no-cache", credentials: "same-origin" })
+        .then((r) => { if (r && r.ok) { const cp = r.clone(); caches.open(CACHE).then((c) => c.put(req, cp)); } return r; })
+        .catch(() => caches.match(req))
     );
     return;
   }
