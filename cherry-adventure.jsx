@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v664";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v665";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -64921,40 +64921,76 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 if (!board) return <div style={{ fontSize: 12, color: "#8a7aa0" }}>เลือกอาชีพก่อนจึงจะเปิดกระดานพรสวรรค์ได้</div>;
                 const un = ui.constNodes || {};
                 const dust = ui.stardust || 0;
-                const done = board.nodes.filter((n) => un[n.id]).length;
+                const N = board.nodes;
+                const done = N.filter((n) => un[n.id]).length;
+                // 🌌 ตำแหน่งดาวบนแผนที่ฟ้า (เป็นรูปกลุ่มดาวซิกแซก) — % ของกรอบ
+                const POS = [[16, 78], [36, 56], [22, 30], [52, 20], [70, 44], [84, 16]];
+                const needLv = (done + 1) * 3, lvOk = (ui.level || 1) >= needLv;   // 🔒 เกมบังคับเลเวล 3 ต่อดาวที่ปลดแล้ว
+                const st = (node) => { const u2 = !!un[node.id]; const av = !u2 && (!node.req || un[node.req]); return { unlocked: u2, available: av, can: av && dust >= node.cost && lvOk }; };
+                const nextIdx = N.findIndex((n) => st(n).available);
+                const pickIdx = ui.constPick != null && N[ui.constPick] ? ui.constPick : (nextIdx >= 0 ? nextIdx : N.length - 1);
+                const P = N[pickIdx], PS = st(P);
+                const stars = [...Array(46)].map((_, i) => [(i * 37 + 11) % 100, (i * 53 + 7) % 100, 1 + (i % 3), 0.25 + ((i * 7) % 6) / 10]);
                 return (
-                  <>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "#6a4ab0", marginBottom: 2 }}>{board.emoji} {board.name} 🌌</div>
-                    <div style={{ fontSize: 11, color: "#8a7aa0", marginBottom: 6 }}>กระดานพรสวรรค์ประจำอาชีพ · ปลดล็อกดาวตามลำดับ ({done}/6)</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7a5ad0", background: "#f0eaff", borderRadius: 999, padding: "4px 10px", display: "inline-block", marginBottom: 8, border: "1px solid #d8c8f0" }}>✨ ผงดาว {dust}</div>
-                    {board.nodes.map((node, idx) => {
-                      const unlocked = !!un[node.id];
-                      const available = !unlocked && (!node.req || un[node.req]);
-                      const afford = dust >= node.cost;
-                      const can = available && afford;
-                      return (
-                        <div key={node.id} style={{
-                          display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6,
-                          background: unlocked ? "#efe8ff" : available ? "#fbf7ff" : "#f4f2f7", borderRadius: 10, padding: "7px 9px",
-                          border: unlocked ? "1.5px solid #a98ae0" : available ? "1.5px solid #d8c8f0" : "1px solid #e6e2ee",
-                          opacity: unlocked || available ? 1 : 0.7,
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: unlocked ? "#6a4ab0" : "#7a6a8a" }}>C{idx + 1} {node.emoji} {node.name}{idx === 5 && " 🌟"}</div>
-                            <div style={{ fontSize: 9.5, color: "#9a8ab0" }}>{node.desc}</div>
-                            {!available && !unlocked && <div style={{ fontSize: 9.5, color: "#c07a4a", fontWeight: 700 }}>🔒 ต้องปลดดาวก่อนหน้าก่อน</div>}
-                          </div>
-                          <button onClick={() => G.unlockConst(node.id)} disabled={!can} style={{
-                            border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6,
-                            cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font,
-                            color: unlocked ? "#fff" : can ? "#fff" : "#a89ab8",
-                            background: unlocked ? "#a98ae0" : can ? "#7a5ad0" : "#e6e2ee",
-                          }}>{unlocked ? "✅" : !available ? "🔒" : `✨${node.cost}`}</button>
+                  <div style={{ borderRadius: 18, overflow: "hidden", border: "2px solid #3a2a6a", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(20,10,50,0.45)", background: "linear-gradient(180deg,#140a2e 0%,#1e1244 55%,#0c0620 100%)" }}>
+                    {/* หัวกระดาน */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px 8px" }}>
+                      <span style={{ width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#e8d8ff,#7a4ae0 72%)", boxShadow: "0 0 14px #9a6aff", border: "2px solid rgba(255,255,255,0.8)" }}>{board.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15.5, fontWeight: 900, color: "#f0e8ff", textShadow: "0 0 10px rgba(180,140,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{board.name}</div>
+                        <div style={{ fontSize: 9.5, color: "#b8a8e0", fontWeight: 700 }}>หมู่ดาวพรสวรรค์ · ปลดแล้ว {done}/{N.length}</div>
+                      </div>
+                      <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))", border: "1.5px solid #c8a8ff88", boxShadow: "0 0 12px rgba(160,120,255,0.45)", marginRight: 30 }}>
+                        <div style={{ fontSize: 8.5, fontWeight: 900, color: "#c8b8f0" }}>ผงดาว</div>
+                        <div style={{ fontSize: 16, fontWeight: 900, color: "#fff4c0", textShadow: "0 0 8px rgba(255,230,140,0.9)", lineHeight: 1.05 }}>✨ {dust}</div>
+                      </div>
+                    </div>
+                    {/* 🗺️ แผนที่ฟ้า */}
+                    <div style={{ position: "relative", height: 230, margin: "0 10px", borderRadius: 16, overflow: "hidden", background: "radial-gradient(90% 80% at 60% 40%, #3a2270 0%, #1a0e3a 60%, #0a0520 100%)", border: "1px solid rgba(200,170,255,0.25)" }}>
+                      {stars.map(([x, y, r, o], i) => <span key={i} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, width: r, height: r, borderRadius: "50%", background: "#fff", opacity: o, boxShadow: "0 0 4px #fff" }} />)}
+                      <div style={{ position: "absolute", left: "-10%", top: "35%", width: "120%", height: 60, background: "linear-gradient(90deg,transparent,rgba(180,140,255,0.12),rgba(255,180,220,0.1),transparent)", transform: "rotate(-18deg)", filter: "blur(8px)" }} />
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+                        {N.map((n, i) => {
+                          if (i === 0) return null;
+                          const lit = !!un[n.id] && !!un[N[i - 1].id];
+                          return <line key={n.id} x1={POS[i - 1][0]} y1={POS[i - 1][1]} x2={POS[i][0]} y2={POS[i][1]} stroke={lit ? "#ffe9a0" : "rgba(200,180,255,0.3)"} strokeWidth={lit ? 1.1 : 0.6} strokeDasharray={lit ? "0" : "2 1.5"} vectorEffect="non-scaling-stroke" style={{ filter: lit ? "drop-shadow(0 0 2px #ffd76a)" : "none" }} />;
+                        })}
+                      </svg>
+                      {N.map((n, i) => {
+                        const S2 = st(n), sel = i === pickIdx, big = i === N.length - 1;
+                        const sz = big ? 50 : 40;
+                        return (
+                          <button key={n.id} onClick={() => setUi((u) => ({ ...u, constPick: i }))} title={n.name} style={{
+                            position: "absolute", left: `${POS[i][0]}%`, top: `${POS[i][1]}%`, transform: "translate(-50%,-50%)", width: sz, height: sz, borderRadius: "50%", padding: 0, cursor: "pointer",
+                            border: sel ? "2px solid #fff" : S2.unlocked ? "2px solid #ffe9a0" : S2.can ? "2px solid #ffd24a" : "1.5px solid rgba(200,180,255,0.45)",
+                            background: S2.unlocked ? "radial-gradient(circle at 40% 35%, #fffbe0, #ffd24a 55%, #c07a10)" : S2.available ? "radial-gradient(circle at 40% 35%, #f0e0ff, #8a5ae0 65%, #3a2080)" : "radial-gradient(circle, #4a3a70, #1e1440)",
+                            boxShadow: S2.unlocked ? "0 0 18px #ffd24a, 0 0 36px rgba(255,210,74,0.4)" : S2.can ? "0 0 14px #ffd24a" : S2.available ? "0 0 10px #9a6aff" : "none",
+                            animation: S2.can ? "todoPop 2.2s ease-in-out infinite" : "none", fontSize: big ? 22 : 17, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", zIndex: sel ? 3 : 2 }}>
+                            <span style={{ filter: S2.unlocked || S2.available ? "none" : "grayscale(1) brightness(0.7)" }}>{S2.unlocked || S2.available ? n.emoji : "✦"}</span>
+                            <span style={{ position: "absolute", bottom: -13, left: "50%", transform: "translateX(-50%)", fontSize: 8.5, fontWeight: 900, color: S2.unlocked ? "#ffe9a0" : "#c8b8f0", whiteSpace: "nowrap", textShadow: "0 1px 2px #000" }}>C{i + 1}{big ? " 🌟" : ""}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* 🔍 การ์ดดาวที่เลือก */}
+                    <div style={{ margin: 10, borderRadius: 14, padding: "10px 11px", background: PS.unlocked ? "linear-gradient(135deg,rgba(255,210,74,0.22),rgba(255,255,255,0.04))" : "linear-gradient(135deg,rgba(150,110,255,0.22),rgba(255,255,255,0.04))", border: `1.5px solid ${PS.unlocked ? "#ffd24a88" : "#a88aff66"}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                        <span style={{ width: 42, height: 42, borderRadius: "50%", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: PS.unlocked ? "radial-gradient(circle,#fffbe0,#ffd24a 70%)" : "radial-gradient(circle,#e8d8ff,#7a4ae0 72%)", boxShadow: PS.unlocked ? "0 0 12px #ffd24a" : "0 0 10px #9a6aff" }}>{P.emoji}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>C{pickIdx + 1} · {P.name}{pickIdx === N.length - 1 ? " 🌟" : ""}</div>
+                          <div style={{ fontSize: 10, color: "#d0c4f0", lineHeight: 1.4 }}>{P.desc}</div>
                         </div>
-                      );
-                    })}
-                    <div style={{ fontSize: 10, color: "#a99ac0", marginTop: 6, textAlign: "center" }}>รับ ✨ ผงดาว จากการชนะศึก (บอสให้เยอะ) · ดาว C6 คือพลังพิเศษประจำอาชีพ</div>
-                  </>
+                      </div>
+                      <button onClick={() => { if (PS.can) G.unlockConst(P.id); }} disabled={!PS.can} style={{
+                        width: "100%", marginTop: 9, padding: "10px 0", borderRadius: 12, border: "none", fontFamily: font, fontSize: 13, fontWeight: 900,
+                        cursor: PS.can ? "pointer" : "default", color: PS.can ? "#3a2408" : PS.unlocked ? "#3a2408" : "#9a8ab8",
+                        background: PS.can ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : PS.unlocked ? "linear-gradient(180deg,#fff3c0,#e8c060)" : "rgba(255,255,255,0.08)",
+                        boxShadow: PS.can ? "0 4px 0 #9a6a10, 0 0 14px rgba(255,210,74,0.6)" : "none" }}>
+                        {PS.unlocked ? "✅ ปลดดาวดวงนี้แล้ว" : !PS.available ? "🔒 ต้องปลดดาวก่อนหน้าก่อน" : !lvOk ? `🔒 ต้องเลเวล ${needLv}` : PS.can ? `🌟 ปลดดาว (✨ ${P.cost})` : `✨ ผงดาวไม่พอ (ต้อง ${P.cost} · มี ${dust})`}
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 9.5, color: "#a898d0", textAlign: "center", padding: "0 10px 10px" }}>แตะดาวเพื่อดูรายละเอียด · รับ ✨ ผงดาวจากการชนะศึก (บอสให้เยอะ) · ดาว C6 🌟 คือพลังพิเศษประจำอาชีพ</div>
+                  </div>
                 );
               })()}
             </div>
