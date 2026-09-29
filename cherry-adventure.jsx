@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v670";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v671";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -64319,94 +64319,150 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               {closeBtn("questOpen")}
               {questTabs(ui.achTab ? "ach" : "quest")}
               {ui.achTab ? (
-                <div>
+                <div style={{ borderRadius: 18, padding: 12, border: "2px solid #3a2a10", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(30,15,0,0.45)", background: "radial-gradient(120% 45% at 50% 0%, #5a4418 0%, #2a1e0a 55%, #140e05 100%)" }}>
                   {(() => {
                     const done = G.ACHIEVEMENTS.filter((a) => ui.achUnlocked && ui.achUnlocked[a.id]).length;
-                    return <div style={{ fontSize: 11, fontWeight: 800, color: "#c09020", marginBottom: 8 }}>ปลดล็อกแล้ว {done}/{G.ACHIEVEMENTS.length} 🏅</div>;
+                    const tot = G.ACHIEVEMENTS.length;
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                        <span style={{ width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#fff6d0,#e0a020 72%)", boxShadow: "0 0 14px #ffc84a", border: "2px solid rgba(255,255,255,0.85)" }}>🏅</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: "#fff4d0", textShadow: "0 0 10px rgba(255,200,90,0.7), 0 2px 0 rgba(0,0,0,0.4)" }}>ความสำเร็จ</div>
+                          <div style={{ height: 7, borderRadius: 4, background: "rgba(0,0,0,0.45)", overflow: "hidden", marginTop: 4 }}><div style={{ width: `${(done / tot) * 100}%`, height: "100%", background: "linear-gradient(90deg,#ffe98a,#f0a82a)" }} /></div>
+                        </div>
+                        <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "rgba(0,0,0,0.35)", marginRight: 30 }}>
+                          <div style={{ fontSize: 8.5, fontWeight: 900, color: "#e0c890" }}>ปลดแล้ว</div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.05 }}>{done}/{tot}</div>
+                        </div>
+                      </div>
+                    );
                   })()}
                   {G.ACHIEVEMENTS.map((a) => {
                     const got = ui.achUnlocked && ui.achUnlocked[a.id];
                     return (
                       <div key={a.id} style={{
-                        display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
-                        borderRadius: 10, marginBottom: 6,
-                        background: got ? "#fff7e8" : "#f3f3ee",
-                        border: got ? "2px solid #f5c542" : "2px solid transparent",
-                        opacity: got ? 1 : 0.7,
+                        display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 12, marginBottom: 6,
+                        background: got ? "linear-gradient(135deg, rgba(255,200,74,0.28), rgba(0,0,0,0.25))" : "rgba(0,0,0,0.3)",
+                        border: got ? "1.5px solid #f5c542" : "1.5px solid rgba(255,255,255,0.08)",
+                        boxShadow: got ? "0 0 8px rgba(245,197,66,0.35)" : "none",
                       }}>
-                        <span style={{ fontSize: 24, filter: got ? "none" : "grayscale(1)" }}>{got ? a.emoji : "🔒"}</span>
-                        <span style={{ flex: 1 }}>
-                          <div style={{ fontSize: 12.5, fontWeight: 800, color: got ? "#c09020" : "#8a8a7a" }}>{a.name}</div>
-                          <div style={{ fontSize: 10, color: "#8a8a7a" }}>{a.desc} · 🎁 {a.reward}💰</div>
+                        <span style={{ width: 38, height: 38, flex: "none", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                          background: got ? "radial-gradient(circle at 40% 35%, #fff6d0, #e0a020 70%)" : "radial-gradient(circle, #4a3e2a, #1e180e)",
+                          border: got ? "2px solid #fff" : "1.5px solid rgba(255,255,255,0.15)", filter: got ? "none" : "grayscale(1)" }}>{got ? a.emoji : "🔒"}</span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 900, color: got ? "#ffe9a8" : "#b8a888" }}>{a.name}</div>
+                          <div style={{ fontSize: 9.5, color: got ? "#e8d8b0" : "#8a7a60", lineHeight: 1.4 }}>{a.desc}</div>
                         </span>
-                        {got && <span style={{ fontSize: 12, fontWeight: 800, color: "#5aa06a" }}>✓</span>}
+                        <span style={{ flex: "none", fontSize: 10, fontWeight: 900, padding: "3px 8px", borderRadius: 8, color: got ? "#3a2408" : "#e0c890", background: got ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.35)" }}>{got ? "✓ " : ""}{a.reward}💰</span>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-              <>
+              <div style={{ borderRadius: 18, padding: 12, border: "2px solid #3a2410", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(30,15,0,0.45)", background: "radial-gradient(120% 45% at 50% 0%, #6a4a22 0%, #33220e 55%, #170f06 100%)" }}>
+              {(() => {
+                const act = ui.quests.filter((q) => !q.claimed);
+                const ready = act.filter((q) => q.done).length;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <span style={{ width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#fff0d0,#d08a3a 72%)", boxShadow: "0 0 14px #ffb04a", border: "2px solid rgba(255,255,255,0.85)" }}>📜</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: 900, color: "#fff0d0", textShadow: "0 0 10px rgba(255,180,90,0.7), 0 2px 0 rgba(0,0,0,0.4)" }}>กระดานภารกิจ</div>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "#e0c090" }}>ทำสำเร็จแล้วกดรับ EXP + ทองก้อนโต</div>
+                    </div>
+                    <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: ready ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.35)", boxShadow: ready ? "0 3px 0 #9a6a10" : "none", marginRight: 30 }}>
+                      <div style={{ fontSize: 8.5, fontWeight: 900, color: ready ? "#5a3a08" : "#e0c090" }}>รอรับ</div>
+                      <div style={{ fontSize: 16, fontWeight: 900, color: ready ? "#3a2408" : "#fff", lineHeight: 1.05 }}>{ready}/{act.length}</div>
+                    </div>
+                  </div>
+                );
+              })()}
               {/* 📖 เนื้อเรื่องหลัก — story questline card */}
               {(() => {
                 const S = G.MSQ || [];
                 const ch = ui.storyCh != null ? ui.storyCh : (G.storyCh || 0);
                 const c = S[ch];
                 if (!c) return (
-                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "10px 12px", background: "linear-gradient(135deg,#3a2a5a,#6a4a9a)", color: "#ffd84a", fontSize: 12.5, fontWeight: 800, textAlign: "center" }}>🏆 จบเนื้อเรื่องครบ {S.length} บทแล้ว! สุดยอดตำนานนักผจญภัย</div>
+                  <div style={{ borderRadius: 14, marginBottom: 10, padding: "12px", background: "linear-gradient(135deg,#3a2a5a,#6a4a9a)", border: "2px solid #ffd84a", boxShadow: "0 0 14px rgba(255,216,74,0.5)", color: "#ffd84a", fontSize: 12.5, fontWeight: 900, textAlign: "center" }}>🏆 จบเนื้อเรื่องครบ {S.length} บทแล้ว! สุดยอดตำนานนักผจญภัย</div>
                 );
                 const tgt = G.storyTarget(c);
                 const prog = Math.min(tgt, ui.storyProg || 0);
                 const done = prog >= tgt;
                 const r = G.storyReward(ch);
                 return (
-                  <div style={{ borderRadius: 12, marginBottom: 10, padding: "10px 12px", background: "linear-gradient(135deg,#2a2248,#4a3a7a)", border: done ? "2px solid #ffd84a" : "2px solid transparent" }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: "#b8a8e8" }}>📖 เนื้อเรื่องหลัก · บทที่ {ch + 1}/{S.length}</div>
-                    <div style={{ fontSize: 13.5, fontWeight: 900, color: "#fff", margin: "2px 0" }}>{c.title}</div>
-                    <div style={{ fontSize: 10.5, color: "#cfc4ee", lineHeight: 1.55, marginBottom: 6 }}>{c.txt}</div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#ffd84a" }}>🎯 {G.storyLabel(c)}</div>
-                    <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 999, height: 8, overflow: "hidden", margin: "5px 0" }}>
-                      <div style={{ width: `${(prog / tgt) * 100}%`, height: "100%", background: done ? "#ffd84a" : "linear-gradient(90deg,#8a6ae0,#c09aff)", transition: "width 0.3s" }} />
+                  <div style={{ position: "relative", borderRadius: 14, marginBottom: 12, padding: "12px 12px 11px", overflow: "hidden",
+                    background: "radial-gradient(120% 90% at 0% 0%, #5a3ab0 0%, #2a1c5a 55%, #140c30 100%)",
+                    border: done ? "2px solid #ffd84a" : "2px solid #7a5ae0", boxShadow: done ? "0 0 16px rgba(255,216,74,0.6)" : "0 0 10px rgba(122,90,224,0.4)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <span style={{ width: 40, height: 40, flex: "none", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: "radial-gradient(circle,#efe6ff,#8a5ae0 72%)", border: "2px solid rgba(255,255,255,0.8)", boxShadow: "0 0 10px #a07aff" }}>📖</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "inline-block", fontSize: 9, fontWeight: 900, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", borderRadius: 6, padding: "1px 7px" }}>เนื้อเรื่องหลัก · บทที่ {ch + 1}/{S.length}</div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: "#fff", marginTop: 2, textShadow: "0 0 8px rgba(190,150,255,0.7)" }}>{c.title}</div>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 10.5, color: "#b8a8e8", fontWeight: 700 }}>{prog}/{tgt} · 🎁 {r.gold.toLocaleString()}💰 + {r.dia}💎 + EXP</span>
+                    <div style={{ fontSize: 10.5, color: "#d8ccf4", lineHeight: 1.55, marginBottom: 7, padding: "6px 9px", borderRadius: 9, background: "rgba(0,0,0,0.28)" }}>{c.txt}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 900, color: "#ffd84a" }}>
+                      <span>🎯 {G.storyLabel(c)}</span><span style={{ color: "#fff" }}>{prog}/{tgt}</span>
+                    </div>
+                    <div style={{ background: "rgba(0,0,0,0.45)", borderRadius: 999, height: 10, overflow: "hidden", margin: "5px 0 8px", border: "1px solid rgba(255,255,255,0.15)" }}>
+                      <div style={{ width: `${(prog / tgt) * 100}%`, height: "100%", background: done ? "linear-gradient(90deg,#ffe98a,#f0a82a)" : "linear-gradient(90deg,#8a6ae0,#c09aff)", transition: "width 0.3s" }} />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      {[["💰", r.gold.toLocaleString()], ["💎", r.dia], ["⭐", "EXP"]].map(([ic, v]) => (
+                        <span key={ic} style={{ fontSize: 10, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.35)", borderRadius: 8, padding: "3px 7px" }}>{ic} {v}</span>
+                      ))}
+                      <div style={{ flex: 1 }} />
                       {done && (
-                        <button onClick={() => G.storyClaim()} style={{ padding: "5px 14px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#3a2a10", background: "linear-gradient(90deg,#ffd84a,#ffb020)" }}>รับรางวัล</button>
+                        <button onClick={() => G.storyClaim()} style={{ padding: "7px 16px", borderRadius: 11, border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", boxShadow: "0 3px 0 #9a6a10, 0 0 12px rgba(255,216,74,0.6)", animation: "todoPop 1.1s ease-in-out infinite" }}>🎁 รับรางวัล</button>
                       )}
                     </div>
                   </div>
                 );
               })()}
-              <div style={{ fontSize: 10.5, color: "#a3a396", marginBottom: 8 }}>
-                ทำภารกิจสำเร็จแล้วกดรับ EXP + ทองก้อนโต
-              </div>
+              <div style={{ fontSize: 11.5, fontWeight: 900, color: "#ffe0a0", marginBottom: 6 }}>⚔️ ภารกิจประจำ</div>
+              {ui.quests.filter((q) => !q.claimed).length === 0 && (
+                <div style={{ fontSize: 11, color: "#c8a878", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "12px", textAlign: "center" }}>✨ รับรางวัลครบหมดแล้ว — รอภารกิจใหม่นะ!</div>
+              )}
               {ui.quests.filter((q) => !q.claimed).map((q, i) => {
                 const realIdx = ui.quests.indexOf(q);
+                const pct = Math.min(100, (q.prog / q.target) * 100);
                 return (
                   <div key={i} style={{
-                    borderRadius: 12, marginBottom: 8, padding: "9px 11px",
-                    background: q.done ? "#f0f9e8" : "#f7f7f0",
-                    border: q.done ? "2px solid #7ba05b" : "2px solid transparent",
+                    display: "flex", alignItems: "center", gap: 9, borderRadius: 13, marginBottom: 7, padding: "9px 10px",
+                    background: q.done ? "linear-gradient(135deg, rgba(255,200,74,0.3), rgba(0,0,0,0.25))" : "linear-gradient(135deg, rgba(255,255,255,0.07), rgba(0,0,0,0.3))",
+                    border: q.done ? "1.5px solid #f5c542" : "1.5px solid rgba(255,220,160,0.18)",
+                    boxShadow: q.done ? "0 0 10px rgba(245,197,66,0.4)" : "0 2px 6px rgba(0,0,0,0.3)",
                   }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "#5a5a4a" }}>
-                      {q.emoji} {q.label}
+                    <span style={{ width: 40, height: 40, flex: "none", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21,
+                      background: q.done ? "radial-gradient(circle at 40% 35%, #fff6d0, #e0a020 70%)" : "radial-gradient(circle at 40% 35%, #8a6a3a, #3a2a14 75%)",
+                      border: q.done ? "2px solid #fff" : "1.5px solid rgba(255,220,160,0.35)" }}>{q.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 900, color: q.done ? "#ffe9a8" : "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{q.label}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "4px 0" }}>
+                        <div style={{ flex: 1, background: "rgba(0,0,0,0.45)", borderRadius: 999, height: 8, overflow: "hidden" }}>
+                          <div style={{ width: `${pct}%`, height: "100%", background: q.done ? "linear-gradient(90deg,#ffe98a,#f0a82a)" : "linear-gradient(90deg,#f5a623,#ffc84a)", transition: "width 0.3s" }}/>
+                        </div>
+                        <span style={{ fontSize: 9.5, fontWeight: 900, color: "#e8d0a0", fontVariantNumeric: "tabular-nums" }}>{q.prog}/{q.target}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <span style={{ fontSize: 9, fontWeight: 900, color: "#c8f0ff", background: "rgba(40,110,180,0.4)", borderRadius: 6, padding: "1px 6px" }}>⭐ {q.exp} EXP</span>
+                        <span style={{ fontSize: 9, fontWeight: 900, color: "#ffe9a8", background: "rgba(180,120,20,0.4)", borderRadius: 6, padding: "1px 6px" }}>💰 {q.gold}</span>
+                      </div>
                     </div>
-                    <div style={{ background: "#e5e5da", borderRadius: 999, height: 8, overflow: "hidden", margin: "6px 0" }}>
-                      <div style={{ width: `${(q.prog / q.target) * 100}%`, height: "100%", background: q.done ? "#7ba05b" : "#f5a623", transition: "width 0.3s" }}/>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 11, color: "#8a8a7a" }}>{q.prog}/{q.target} · 🎁 +{q.exp}EXP +{q.gold}💰</span>
-                      {q.done && (
-                        <button onClick={() => G.claimQuest(realIdx)} style={{
-                          padding: "5px 14px", borderRadius: 999, border: "none", cursor: "pointer",
-                          fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff",
-                          background: "linear-gradient(90deg,#f5a623,#f5c542)",
-                        }}>รับรางวัล</button>
-                      )}
-                    </div>
+                    {q.done ? (
+                      <button onClick={() => G.claimQuest(realIdx)} style={{
+                        flex: "none", padding: "8px 11px", borderRadius: 11, border: "none", cursor: "pointer",
+                        fontSize: 11.5, fontWeight: 900, fontFamily: font, color: "#3a2408",
+                        background: "linear-gradient(180deg,#ffe98a,#f0a82a)", boxShadow: "0 3px 0 #9a6a10, 0 0 10px rgba(255,216,74,0.55)",
+                        animation: "todoPop 1.1s ease-in-out infinite",
+                      }}>🎁 รับ</button>
+                    ) : (
+                      <span style={{ flex: "none", fontSize: 10, fontWeight: 900, color: "#c8a878", minWidth: 34, textAlign: "center" }}>{Math.floor(pct)}%</span>
+                    )}
                   </div>
                 );
               })}
-              </>
+              </div>
               )}
             </div>
           )}
