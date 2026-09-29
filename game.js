@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v666"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v667"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -51139,8 +51139,7 @@ function CherryAdventure() {
             { k: "skillBoardOpen", ic: "📖", name: "วิชาสกิล" },
             { k: "treeOpen", ic: "🌳", name: "ต้นไม้ทักษะ" },
             { k: "constOpen", ic: "🌌", name: "หมู่ดาว" },
-            { k: "masteryOpen", ic: "🗡️", name: "มาสเตอรี่" },
-            { k: "qingOpen", ic: "🍃", name: "วิชาตัวเบา" },
+            { k: "qingOpen", ic: "🗡️", name: "มาสเตอรี่" }, // 🗡️🍃 รวมมาสเตอรี่อาวุธ + วิชาตัวเบาไว้แท็บเดียว (สลับด้วยแท็บย่อยในหน้า)
             { k: "awakenOpen", ic: "⚡", name: "ตื่นพลัง" },
         ];
         G.skillTab = (key) => {
@@ -92117,13 +92116,25 @@ function CherryAdventure() {
         return (L.price || 0) / Math.max(1, it.qty || 1) / 1000; // แร่/สมุนไพร/พืชผล — ราคาต่อชิ้นแทนคุณภาพ
     };
     const mktRarColor = (L) => { const it = (L && L.item) || {}; return (L && L.kind === "gear" && RARITY[it.rarity]) ? RARITY[it.rarity].color : null; };
+    // 🗡️🍃 แท็บย่อยของหน้า "มาสเตอรี่" — ความชำนาญอาวุธ / วิชาตัวเบา
+    const masterySub = (active) => (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 9 } }, [["masteryOpen", "🗡️", "ความชำนาญอาวุธ", "#ffc84a", "#a0600a"], ["qingOpen", "🍃", "วิชาตัวเบา", "#6ae0a0", "#1f7a4a"]].map(([k, ic, nm, c1, c2]) => {
+        const on = k === active;
+        return (React.createElement("button", { key: k, onClick: () => { if (!on && G.skillTab)
+                G.skillTab(k); }, style: {
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 6px", borderRadius: 12, cursor: on ? "default" : "pointer", fontFamily: font,
+                fontSize: 12, fontWeight: 900, border: on ? "2px solid #fff" : "1.5px solid rgba(120,60,90,0.22)", color: on ? "#fff" : "#8a6a7a",
+                background: on ? `linear-gradient(180deg,${c1},${c2})` : "#fff", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "0 2px 0 #eadfd6", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none"
+            } },
+            React.createElement("span", { style: { fontSize: 16 } }, ic),
+            nm));
+    })));
     const skillTabs = (active, dark) => (React.createElement("div", { style: {
             display: "flex", gap: 3, marginBottom: 9, padding: 3, borderRadius: 12, flexWrap: "wrap", boxSizing: "border-box",
             paddingRight: 38, // ⛔ เว้นที่ให้ปุ่ม ✕ ที่ลอยอยู่มุมขวาบน แท็บสุดท้ายจะได้ไม่โดน (border-box ไม่งั้นแถบล้นขวา 5px)ทับ
             position: "sticky", top: 0, zIndex: 11,
             background: dark ? "rgba(0,0,0,0.24)" : "#fff1f5", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #f6cfdc",
         } }, (G.SKILL_TABS || []).map((t) => {
-        const on = t.k === active;
+        const on = t.k === active || (t.k === "qingOpen" && active === "masteryOpen");
         return (React.createElement("button", { key: t.k, onClick: () => { if (!on && G.skillTab)
                 G.skillTab(t.k); }, title: t.name, style: {
                 flex: "1 1 auto", minWidth: 0, padding: "5px 3px", borderRadius: 9, cursor: on ? "default" : "pointer",
@@ -93990,60 +94001,86 @@ function CherryAdventure() {
                             background: "linear-gradient(90deg,#7a4a6a,#a85a72)",
                         } }, "\u2715 \u0E1B\u0E34\u0E14\u0E41\u0E1C\u0E19\u0E17\u0E35\u0E48"))));
         })(),
-        ui.awakenOpen && (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, awakenOpen: false })), style: { position: "absolute", inset: 0, zIndex: 57 } },
-            React.createElement("div", { onClick: (e) => e.stopPropagation(), style: SKILL_SHELL },
-                skillTabs("awakenOpen"),
-                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
-                    React.createElement("span", { style: { fontSize: 15, fontWeight: 900, color: "#7a3ad0" } }, "\u26A1 \u0E01\u0E32\u0E23\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07"),
-                    ui.ngPlus > 0 && React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "#7a3ad0", background: "#efe2ff", borderRadius: 7, padding: "2px 8px" } },
-                        "\u0E02\u0E31\u0E49\u0E19 ",
-                        ui.ngPlus,
-                        " \u00B7 +",
-                        (ui.ngPlus || 0) * 5,
-                        "% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A"),
-                    React.createElement("div", { style: { flex: 1 } }),
-                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, awakenOpen: false })), title: "\u0E1B\u0E34\u0E14", style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#efe6f8", color: "#7a5aa0", fontSize: 15, fontWeight: 900, padding: 0 } }, "\u2715")),
-                React.createElement("div", { style: { background: "#f3e8ff", borderRadius: 12, padding: 12, marginTop: 12 } },
-                    React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#7a3ad0", marginBottom: 4 } },
-                        "\u26A1 \u0E01\u0E32\u0E23\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07 ",
-                        ui.ngPlus > 0 ? `(ขั้น ${ui.ngPlus})` : ""),
-                    (() => {
-                        const tiers = AWAKEN_TIERS;
-                        const cur = ui.ngPlus || 0;
-                        const maxed = cur >= tiers.length;
-                        const m = maxed ? null : tiers[cur];
-                        const need = m ? m.at : null;
-                        const ready = !maxed && (ui.level || 0) >= need;
-                        return (React.createElement(React.Fragment, null,
-                            React.createElement("div", { style: { fontSize: 10.5, color: "#8a6ac0", marginBottom: 6, lineHeight: 1.6 } },
-                                "\u0E1B\u0E25\u0E38\u0E01\u0E1E\u0E25\u0E31\u0E07\u0E43\u0E19\u0E15\u0E31\u0E27\u0E43\u0E2B\u0E49\u0E41\u0E02\u0E47\u0E07\u0E41\u0E01\u0E23\u0E48\u0E07\u0E02\u0E36\u0E49\u0E19 \u2014 ",
-                                React.createElement("b", null, "\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07/\u0E2A\u0E01\u0E34\u0E25/\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07/\u0E17\u0E2D\u0E07\u0E44\u0E27\u0E49\u0E04\u0E23\u0E1A"),
-                                " \u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E40\u0E25\u0E40\u0E27\u0E25\u0E01\u0E25\u0E31\u0E1A\u0E15\u0E32\u0E21\u0E02\u0E31\u0E49\u0E19 \u00B7 ",
-                                React.createElement("b", { style: { color: "#7a3ad0" } }, "\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19 +5% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A (+2% \u0E04\u0E23\u0E34) \u0E16\u0E32\u0E27\u0E23!"),
-                                cur > 0 ? ` ตอนนี้ +${cur * 5}%` : "",
-                                m ? React.createElement(React.Fragment, null,
-                                    React.createElement("br", null),
-                                    "\u0E04\u0E23\u0E31\u0E49\u0E07\u0E19\u0E35\u0E49: \u0E16\u0E36\u0E07 ",
-                                    React.createElement("b", null,
+        ui.awakenOpen && (() => {
+            const tiers = AWAKEN_TIERS;
+            const cur = ui.ngPlus || 0;
+            const maxed = cur >= tiers.length;
+            const m = maxed ? null : tiers[cur];
+            const need = m ? m.at : 0;
+            const lvNow = ui.level || 1;
+            const ready = !maxed && lvNow >= need;
+            const prog = maxed ? 1 : Math.min(1, lvNow / need);
+            return (React.createElement("div", { onClick: () => setUi((u) => ({ ...u, awakenOpen: false })), style: { position: "absolute", inset: 0, zIndex: 57 } },
+                React.createElement("div", { onClick: (e) => e.stopPropagation(), style: SKILL_SHELL },
+                    closeBtn("awakenOpen"),
+                    skillTabs("awakenOpen"),
+                    React.createElement("div", { style: { ...SKILL_DARK,
+                            background: "radial-gradient(120% 55% at 50% 0%, #6a3ab8 0%, #33186a 50%, #140828 100%)",
+                            border: "2px solid #3a1a70", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(40,10,80,0.5)",
+                        } },
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } },
+                            React.createElement("span", { style: { width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#f4e8ff,#9a5ae0 72%)", boxShadow: "0 0 14px #b07aff", border: "2px solid rgba(255,255,255,0.85)" } }, "\u26A1"),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#f6ecff", textShadow: "0 0 10px rgba(190,140,255,0.7), 0 2px 0 rgba(0,0,0,0.4)" } }, "\u0E01\u0E32\u0E23\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07"),
+                                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#d8c0ff", marginTop: 2 } },
+                                    "\u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E16\u0E32\u0E27\u0E23 +",
+                                    cur * 5,
+                                    "% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A \u00B7 +",
+                                    cur * 2,
+                                    "% \u0E04\u0E23\u0E34")),
+                            React.createElement("div", { style: { textAlign: "center", padding: "4px 11px", borderRadius: 12, background: maxed ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.35)", boxShadow: maxed ? "0 3px 0 #9a6a10" : "none", marginRight: 30 } },
+                                React.createElement("div", { style: { fontSize: 8.5, fontWeight: 900, color: maxed ? "#5a3a08" : "#c8b0f0" } }, "\u0E02\u0E31\u0E49\u0E19"),
+                                React.createElement("div", { style: { fontSize: 17, fontWeight: 900, color: maxed ? "#3a2408" : "#fff", lineHeight: 1.05 } },
+                                    cur,
+                                    "/",
+                                    tiers.length))),
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 12px", borderRadius: 16, marginBottom: 12, background: "linear-gradient(170deg, rgba(255,255,255,0.06), rgba(0,0,0,0.25))", border: "1px solid rgba(255,255,255,0.1)" } },
+                            React.createElement("div", { style: { width: 88, height: 88, borderRadius: "50%", flex: "none", padding: 5, background: `conic-gradient(${ready || maxed ? "#ffd84a" : "#c07aff"} ${prog * 360}deg, rgba(255,255,255,0.12) 0deg)`, boxShadow: ready ? "0 0 22px rgba(255,216,74,0.7)" : "0 0 16px rgba(170,110,255,0.45)", animation: ready ? "todoPop 1.1s ease-in-out infinite" : "none" } },
+                                React.createElement("div", { style: { width: "100%", height: "100%", borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(circle at 50% 35%, #7a4ad0, #1e0c40 75%)" } },
+                                    React.createElement("span", { style: { fontSize: 30, lineHeight: 1, filter: "drop-shadow(0 0 8px #d0a0ff)" } }, maxed ? "⭐" : "🔮"),
+                                    React.createElement("span", { style: { fontSize: 10, fontWeight: 900, color: "#fff", marginTop: 3 } }, maxed ? "MAX" : `Lv.${lvNow}/${need}`))),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } }, maxed ? (React.createElement("div", { style: { fontSize: 13, fontWeight: 900, color: "#ffe98a" } }, "\u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E1A\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19\u0E41\u0E25\u0E49\u0E27!")) : (React.createElement(React.Fragment, null,
+                                React.createElement("div", { style: { fontSize: 12.5, fontWeight: 900, color: "#fff", marginBottom: 6 } },
+                                    "\u0E04\u0E23\u0E31\u0E49\u0E07\u0E17\u0E35\u0E48 ",
+                                    cur + 1),
+                                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 6 } },
+                                    React.createElement("span", { style: { padding: "3px 8px", borderRadius: 8, background: "rgba(0,0,0,0.35)", fontSize: 11, fontWeight: 900, color: "#ffe98a" } },
                                         "Lv.",
                                         m.at),
-                                    " \u2192 \u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E01\u0E25\u0E31\u0E1A ",
-                                    React.createElement("b", null,
+                                    React.createElement("span", { style: { color: "#c8a8ff", fontWeight: 900 } }, "\u279C"),
+                                    React.createElement("span", { style: { padding: "3px 8px", borderRadius: 8, background: "rgba(0,0,0,0.35)", fontSize: 11, fontWeight: 900, color: "#a8e0ff" } },
                                         "Lv.",
-                                        m.to)) : null),
-                            React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" } }, tiers.map((tr, i) => (React.createElement("div", { key: i, style: { minWidth: 40, textAlign: "center", fontSize: 9, fontWeight: 800, borderRadius: 8, padding: "4px 4px",
-                                    background: i < cur ? "#7a3ad0" : (i === cur && ready) ? "#c0a0f0" : "#eae0f5",
-                                    color: i < cur ? "#fff" : "#7a5aa0", border: i === cur ? "1.5px solid #9a5ad0" : "none" } }, i < cur ? "✓" : `${tr.at}→${tr.to}`)))),
-                            maxed ? (React.createElement("div", { style: { textAlign: "center", fontSize: 12, fontWeight: 800, color: "#7a3ad0", padding: "8px 0" } }, "\u2B50 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E1A\u0E17\u0E38\u0E01\u0E02\u0E31\u0E49\u0E19\u0E41\u0E25\u0E49\u0E27!")) : (React.createElement(React.Fragment, null,
-                                React.createElement("div", { style: { fontSize: 10.5, color: ready ? "#4a9a5a" : "#c06a4a", fontWeight: 700, marginBottom: 6, textAlign: "center" } }, ready ? `✅ พร้อมตื่นพลังครั้งที่ ${cur + 1}!` : `🔒 ครั้งที่ ${cur + 1} ต้องถึง Lv.${need} (ตอนนี้ Lv.${ui.level || 1})`),
-                                React.createElement("button", { onClick: () => G.startNGPlus(), disabled: !ready, style: {
-                                        width: "100%", padding: "9px 0", borderRadius: 10, border: "none", cursor: ready ? "pointer" : "not-allowed",
-                                        fontSize: 13, fontWeight: 800, fontFamily: font, color: ready ? "#fff" : "#a89ab8",
-                                        background: ready ? "linear-gradient(90deg,#7a3ad0,#c04ad0)" : "#e0d8ec",
-                                    } },
-                                    "\u26A1 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E31\u0E49\u0E07\u0E17\u0E35\u0E48 ",
-                                    cur + 1)))));
-                    })())))),
+                                        m.to)),
+                                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#9af0b8" } }, "\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25: +5% \u0E17\u0E38\u0E01\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A \u00B7 +2% \u0E04\u0E23\u0E34"))))),
+                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 12 } }, tiers.map((tr, i) => {
+                            const done = i < cur, now = i === cur;
+                            return (React.createElement("div", { key: i, style: { position: "relative", borderRadius: 10, padding: "6px 2px 5px", textAlign: "center",
+                                    background: done ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : now ? "linear-gradient(180deg,#8a5ae0,#4a2090)" : "rgba(0,0,0,0.32)",
+                                    border: now ? "2px solid #fff" : "1px solid rgba(255,255,255,0.12)",
+                                    boxShadow: done ? "0 2px 0 #9a6a10" : now ? "0 0 10px rgba(190,140,255,0.8)" : "none" } },
+                                React.createElement("div", { style: { fontSize: 9, fontWeight: 900, color: done ? "#5a3a08" : now ? "#fff" : "#8a78b0" } },
+                                    "\u0E02\u0E31\u0E49\u0E19 ",
+                                    i + 1),
+                                React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: done ? "#3a2408" : now ? "#ffe98a" : "#b0a0d0" } }, done ? "✓" : `${tr.at}→${tr.to}`)));
+                        })),
+                        React.createElement("div", { style: { fontSize: 10, color: "#cdb8f0", lineHeight: 1.6, marginBottom: 10, padding: "7px 10px", borderRadius: 10, background: "rgba(0,0,0,0.25)" } },
+                            "\uD83C\uDF92 ",
+                            React.createElement("b", { style: { color: "#fff" } }, "\u0E02\u0E2D\u0E07/\u0E2A\u0E01\u0E34\u0E25/\u0E2A\u0E31\u0E15\u0E27\u0E4C\u0E40\u0E25\u0E35\u0E49\u0E22\u0E07/\u0E17\u0E2D\u0E07\u0E22\u0E31\u0E07\u0E2D\u0E22\u0E39\u0E48\u0E04\u0E23\u0E1A"),
+                            " \u2014 \u0E40\u0E25\u0E40\u0E27\u0E25\u0E08\u0E30\u0E23\u0E35\u0E40\u0E0B\u0E47\u0E15\u0E01\u0E25\u0E31\u0E1A\u0E15\u0E32\u0E21\u0E02\u0E31\u0E49\u0E19 \u0E41\u0E15\u0E48\u0E44\u0E14\u0E49\u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E16\u0E32\u0E27\u0E23"),
+                        !maxed && (React.createElement(React.Fragment, null,
+                            React.createElement("div", { style: { height: 8, borderRadius: 4, background: "rgba(0,0,0,0.4)", overflow: "hidden", marginBottom: 6 } },
+                                React.createElement("div", { style: { width: `${prog * 100}%`, height: "100%", background: ready ? "linear-gradient(90deg,#ffe98a,#f0a82a)" : "linear-gradient(90deg,#9a5ae0,#d07aff)" } })),
+                            React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: ready ? "#9af0b8" : "#ffb0a0", textAlign: "center", marginBottom: 8 } }, ready ? `✅ พร้อมตื่นพลังครั้งที่ ${cur + 1}!` : `🔒 ต้องถึง Lv.${need} (ตอนนี้ Lv.${lvNow})`),
+                            React.createElement("button", { onClick: () => G.startNGPlus(), disabled: !ready, style: {
+                                    width: "100%", padding: "11px 0", borderRadius: 12, border: "none", cursor: ready ? "pointer" : "not-allowed",
+                                    fontSize: 14, fontWeight: 900, fontFamily: font, color: ready ? "#3a2408" : "#8a78a8",
+                                    background: ready ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.1)",
+                                    boxShadow: ready ? "0 4px 0 #9a6a10, 0 0 16px rgba(255,216,74,0.6)" : "none",
+                                    animation: ready ? "todoPop 1.1s ease-in-out infinite" : "none",
+                                } },
+                                "\u26A1 \u0E15\u0E37\u0E48\u0E19\u0E1E\u0E25\u0E31\u0E07\u0E04\u0E23\u0E31\u0E49\u0E07\u0E17\u0E35\u0E48 ",
+                                cur + 1)))))));
+        })(),
         ui.qingOpen && (() => {
             const QI = ui.qing || { step: 0, list: [] };
             const wide = _uiWideModal; // อิงความกว้างของกรอบมาตรฐาน ไม่ใช่ความกว้างจอ
@@ -94077,18 +94114,23 @@ function CherryAdventure() {
             return (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("qingOpen"),
                 skillTabs("qingOpen"),
+                masterySub("qingOpen"),
                 React.createElement("div", { style: { ...SKILL_DARK,
-                        background: "linear-gradient(168deg,#2f4a3c 0%,#1c2e26 46%,#141f1a 100%)",
-                        border: "1px solid rgba(160,220,180,0.28)",
+                        background: "radial-gradient(120% 55% at 50% 0%, #2f6a4c 0%, #173a2a 50%, #0b1c14 100%)",
+                        border: "2px solid #1f4a34", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(10,40,25,0.45)",
                     } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 6 } },
+                        React.createElement("span", { style: { width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#dfffe8,#3aa870 72%)", boxShadow: "0 0 14px #5ae0a0", border: "2px solid rgba(255,255,255,0.85)" } }, "\uD83C\uDF43"),
+                        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#e8fff0", textShadow: "0 0 10px rgba(120,240,170,0.6), 0 2px 0 rgba(0,0,0,0.4)" } }, "\u0E27\u0E34\u0E0A\u0E32\u0E15\u0E31\u0E27\u0E40\u0E1A\u0E32"),
+                            React.createElement("div", { style: { display: "flex", gap: 3, marginTop: 3 } }, [1, 2, 3].map((i) => React.createElement("span", { key: i, style: { width: 22, height: 6, borderRadius: 3, background: i <= QI.step ? "linear-gradient(90deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.15)", boxShadow: i <= QI.step ? "0 0 6px rgba(255,210,74,0.7)" : "none" } })))),
+                        React.createElement("div", { style: { textAlign: "center", padding: "4px 11px", borderRadius: 12, background: QI.step >= 3 ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.35)", boxShadow: QI.step >= 3 ? "0 3px 0 #9a6a10" : "none", marginRight: 30 } },
+                            React.createElement("div", { style: { fontSize: 8.5, fontWeight: 900, color: QI.step >= 3 ? "#5a3a08" : "#a8d8b8" } }, "\u0E1D\u0E36\u0E01\u0E41\u0E25\u0E49\u0E27"),
+                            React.createElement("div", { style: { fontSize: 17, fontWeight: 900, color: QI.step >= 3 ? "#3a2408" : "#fff", lineHeight: 1.05 } },
+                                QI.step,
+                                "/3"))),
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 } },
-                        React.createElement("span", { style: { fontSize: 15, fontWeight: 900, color: "#bff0cf" } }, "\uD83C\uDF43 \u0E27\u0E34\u0E0A\u0E32\u0E15\u0E31\u0E27\u0E40\u0E1A\u0E32"),
-                        React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.24)", borderRadius: 7, padding: "2px 7px" } }, "\u0E1D\u0E36\u0E01\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E40\u0E04\u0E27\u0E2A\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19"),
-                        React.createElement("div", { style: { flex: 1 } }),
-                        React.createElement("span", { style: { fontSize: 10.5, fontWeight: 800, color: "#f5d24a" } },
-                            "\u0E02\u0E31\u0E49\u0E19 ",
-                            QI.step,
-                            "/3")),
+                        React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: "#9ad0ff", background: "rgba(60,120,180,0.24)", borderRadius: 7, padding: "2px 7px" } }, "\u0E1D\u0E36\u0E01\u0E44\u0E14\u0E49\u0E08\u0E32\u0E01\u0E40\u0E04\u0E27\u0E2A\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E40\u0E17\u0E48\u0E32\u0E19\u0E31\u0E49\u0E19")),
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: wide ? 12 : 7, padding: "11px 10px", borderRadius: 16, marginBottom: 10,
                             background: "linear-gradient(170deg, rgba(255,255,255,0.05), rgba(0,0,0,0.22))", border: "1px solid rgba(255,255,255,0.09)" } },
                         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 } },
@@ -98017,6 +98059,7 @@ function CherryAdventure() {
             ui.masteryOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("masteryOpen"),
                 skillTabs("masteryOpen"),
+                masterySub("masteryOpen"),
                 (() => {
                     const mi = WP_MASTERY[(G && G.cls) || ui.cls];
                     if (!mi)
@@ -98035,32 +98078,62 @@ function CherryAdventure() {
                         for (const k in mi.cap)
                             bon[k] = (bon[k] || 0) + mi.cap[k];
                     const keys = Object.keys(bon).filter((k) => bon[k] > 0);
-                    return (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#a07a20", marginBottom: 2 } },
-                            mi.emoji,
-                            " \u0E04\u0E27\u0E32\u0E21\u0E0A\u0E33\u0E19\u0E32\u0E0D",
-                            mi.name,
-                            maxed ? " 🌟" : ""),
-                        React.createElement("div", { style: { fontSize: 11, color: "#9a8a6a", marginBottom: 6 } }, "\u0E22\u0E34\u0E48\u0E07\u0E43\u0E0A\u0E49\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E1B\u0E23\u0E30\u0E08\u0E33\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E2A\u0E39\u0E49 \u0E22\u0E34\u0E48\u0E07\u0E0A\u0E33\u0E19\u0E32\u0E0D \u2192 \u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E16\u0E32\u0E27\u0E23\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E02\u0E36\u0E49\u0E19"),
-                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } },
-                            React.createElement("div", { style: { width: 46, height: 46, borderRadius: "50%", background: maxed ? "linear-gradient(135deg,#f5c542,#e0894a)" : "#f0e6cf", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: maxed ? "#fff" : "#a07a20", border: "2px solid " + (maxed ? "#e0a020" : "#dcc890") } },
-                                "Lv",
-                                lv),
-                            React.createElement("div", { style: { flex: 1 } },
-                                React.createElement("div", { style: { fontSize: 10, color: "#9a8a6a", marginBottom: 2 } }, maxed ? "ชำนาญขั้นสูงสุดแล้ว!" : `XP ${xp} / ${nextT} (เหลือ ${nextT - xp})`),
-                                React.createElement("div", { style: { height: 9, borderRadius: 6, background: "#eadfc4", overflow: "hidden" } },
-                                    React.createElement("div", { style: { width: Math.round(prog * 100) + "%", height: "100%", background: "linear-gradient(90deg,#e0a020,#f5c542)" } })))),
-                        React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#8a7040", margin: "6px 0 3px" } }, "\u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E17\u0E35\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49"),
-                        keys.length === 0 ? (React.createElement("div", { style: { fontSize: 10.5, color: "#a89a7a", background: "#f5efdd", borderRadius: 8, padding: "6px 8px" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 \u2014 \u0E0A\u0E19\u0E30\u0E28\u0E36\u0E01\u0E14\u0E49\u0E27\u0E22\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E19\u0E35\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2A\u0E30\u0E2A\u0E21\u0E04\u0E27\u0E32\u0E21\u0E0A\u0E33\u0E19\u0E32\u0E0D")) : (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5 } }, keys.map((k) => (React.createElement("div", { key: k, style: { fontSize: 10.5, fontWeight: 800, color: "#7a5a10", background: "#faf0d2", border: "1px solid #e6d5a0", borderRadius: 999, padding: "3px 9px" } },
-                            "+",
-                            Math.round(bon[k] * 10) / 10,
-                            " ",
-                            LAB[k] || k))))),
-                        maxed ? (React.createElement("div", { style: { fontSize: 10.5, color: "#c07a10", fontWeight: 800, marginTop: 8, background: "#fff3d6", borderRadius: 8, padding: "6px 8px" } },
-                            "\uD83C\uDF1F \u0E1E\u0E25\u0E31\u0E07\u0E1E\u0E34\u0E40\u0E28\u0E29\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14: ",
-                            mi.capDesc)) : (React.createElement("div", { style: { fontSize: 10, color: "#a89a7a", marginTop: 8, textAlign: "center" } },
-                            "\u0E40\u0E25\u0E40\u0E27\u0E25\u0E16\u0E31\u0E14\u0E44\u0E1B\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E2D\u0E35\u0E01 \u00B7 Lv.10 \u0E1B\u0E25\u0E14\u0E1E\u0E25\u0E31\u0E07\u0E1E\u0E34\u0E40\u0E28\u0E29: ",
-                            mi.capDesc))));
+                    const IC = { atkPct: ["⚔️", "#ff7a5a", "#b0301a"], def: ["🛡️", "#6ab0ff", "#1f5aa0"], crit: ["🎯", "#ffb03a", "#b0601a"], critDmg: ["💥", "#ff5a4a", "#a02a1a"], hpPct: ["❤️", "#ff6a8a", "#b02a4a"], mp: ["💧", "#4ac8ff", "#1a6ab0"], luck: ["🍀", "#5ad07a", "#2a8a4a"], eva: ["💨", "#9a8aff", "#4a3ab0"] };
+                    const ring = maxed ? 100 : Math.round(prog * 100);
+                    return (React.createElement("div", { style: { borderRadius: 18, overflow: "hidden", border: "2px solid #4a3418", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(40,20,5,0.45)", background: "radial-gradient(120% 55% at 50% 0%, #5a3a14 0%, #2a1a0a 55%, #140c05 100%)" } },
+                        React.createElement("div", { style: { padding: "12px 12px 4px", textAlign: "center" } },
+                            React.createElement("div", { style: { fontSize: 15.5, fontWeight: 900, color: "#ffe9b0", textShadow: "0 0 10px rgba(255,190,90,0.7), 0 2px 0 rgba(0,0,0,0.45)" } },
+                                "\u0E04\u0E27\u0E32\u0E21\u0E0A\u0E33\u0E19\u0E32\u0E0D",
+                                mi.name,
+                                maxed ? " 🌟" : ""),
+                            React.createElement("div", { style: { fontSize: 9.5, color: "#c8a878", fontWeight: 700 } }, "\u0E43\u0E0A\u0E49\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E1B\u0E23\u0E30\u0E08\u0E33\u0E2D\u0E32\u0E0A\u0E35\u0E1E\u0E2A\u0E39\u0E49 \u2192 \u0E0A\u0E33\u0E19\u0E32\u0E0D\u0E02\u0E36\u0E49\u0E19 \u2192 \u0E2A\u0E40\u0E15\u0E15\u0E31\u0E2A\u0E16\u0E32\u0E27\u0E23\u0E40\u0E1E\u0E34\u0E48\u0E21")),
+                        React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "8px 0 4px" } },
+                            React.createElement("div", { style: { position: "relative", width: 132, height: 132, borderRadius: "50%", padding: 7, boxSizing: "border-box",
+                                    background: `conic-gradient(${maxed ? "#ffd24a" : "#ffb03a"} ${ring}%, rgba(255,255,255,0.1) 0)`, boxShadow: maxed ? "0 0 26px rgba(255,210,74,0.8)" : "0 0 16px rgba(255,160,60,0.45)" } },
+                                React.createElement("div", { style: { width: "100%", height: "100%", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 58,
+                                        background: "radial-gradient(circle at 40% 30%, #fff6dc, #e0a040 62%, #6a3a10 100%)", border: "3px solid rgba(255,255,255,0.75)", boxShadow: "inset 0 -6px 12px rgba(0,0,0,0.35)", filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.4))" } }, mi.emoji),
+                                React.createElement("div", { style: { position: "absolute", left: "50%", bottom: -6, transform: "translateX(-50%)", padding: "2px 12px", borderRadius: 999, whiteSpace: "nowrap", fontSize: 12, fontWeight: 900, color: "#4a2a04",
+                                        background: "linear-gradient(180deg,#ffe98a,#e8a020)", border: "2px solid #fff", boxShadow: "0 3px 0 #9a6a10, 0 0 10px rgba(255,210,74,0.6)" } },
+                                    "Lv.",
+                                    lv,
+                                    "/",
+                                    WP_MASTERY_MAX))),
+                        React.createElement("div", { style: { padding: "12px 14px 4px" } },
+                            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 900, color: "#f0d4a0", marginBottom: 3 } },
+                                React.createElement("span", null, maxed ? "🌟 ชำนาญขั้นสูงสุดแล้ว!" : "⭐ XP ความชำนาญ"),
+                                React.createElement("span", { style: { fontVariantNumeric: "tabular-nums" } }, maxed ? "MAX" : `${xp.toLocaleString()} / ${nextT.toLocaleString()}`)),
+                            React.createElement("div", { style: { height: 14, borderRadius: 999, background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,220,160,0.4)", overflow: "hidden" } },
+                                React.createElement("div", { style: { width: ring + "%", height: "100%", borderRadius: 999, background: "linear-gradient(180deg,#ffe98a,#f0a020)", boxShadow: "0 0 10px rgba(255,200,60,0.8)" } })),
+                            !maxed && React.createElement("div", { style: { fontSize: 9, color: "#b89868", marginTop: 2, textAlign: "right" } },
+                                "\u0E2D\u0E35\u0E01 ",
+                                (nextT - xp).toLocaleString(),
+                                " XP \u0E16\u0E36\u0E07 Lv.",
+                                lv + 1)),
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3, padding: "8px 14px 4px" } }, Array.from({ length: WP_MASTERY_MAX }).map((_, i) => {
+                            const got = i < lv, last = i === WP_MASTERY_MAX - 1;
+                            return (React.createElement(React.Fragment, { key: i },
+                                i > 0 && React.createElement("div", { style: { flex: 1, height: 3, borderRadius: 2, background: got ? "#ffc84a" : "rgba(255,255,255,0.12)" } }),
+                                React.createElement("div", { title: last ? `Lv.10 · ${mi.capDesc}` : `Lv.${i + 1}`, style: { width: last ? 24 : 16, height: last ? 24 : 16, flex: "none", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: last ? 12 : 8, fontWeight: 900,
+                                        color: got ? "#4a2a04" : "#8a7a5a", background: got ? "radial-gradient(circle at 35% 30%, #fff6c0, #f0a020)" : "rgba(255,255,255,0.08)", border: got ? "1.5px solid #fff" : "1px solid rgba(255,255,255,0.18)", boxShadow: got ? "0 0 6px rgba(255,200,60,0.8)" : "none" } }, last ? "🌟" : i + 1)));
+                        })),
+                        React.createElement("div", { style: { padding: "8px 12px 4px" } },
+                            React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: "#ffe0a0", marginBottom: 6 } }, "\uD83C\uDF81 \u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E17\u0E35\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49"),
+                            keys.length === 0 ? (React.createElement("div", { style: { fontSize: 10.5, color: "#c8a878", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "8px 10px", textAlign: "center" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 \u2014 \u0E0A\u0E19\u0E30\u0E28\u0E36\u0E01\u0E14\u0E49\u0E27\u0E22\u0E2D\u0E32\u0E27\u0E38\u0E18\u0E19\u0E35\u0E49\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2A\u0E30\u0E2A\u0E21\u0E04\u0E27\u0E32\u0E21\u0E0A\u0E33\u0E19\u0E32\u0E0D")) : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6 } }, keys.map((k) => {
+                                const c = IC[k] || ["✨", "#ffc84a", "#9a6a10"];
+                                return (React.createElement("div", { key: k, style: { display: "flex", alignItems: "center", gap: 7, padding: "6px 8px", borderRadius: 12, background: `linear-gradient(135deg, ${c[2]}66, rgba(255,255,255,0.04))`, border: `1px solid ${c[1]}77` } },
+                                    React.createElement("span", { style: { width: 26, height: 26, flex: "none", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, background: `radial-gradient(circle at 35% 30%, ${c[1]}, ${c[2]})`, boxShadow: `0 0 8px ${c[1]}88` } }, c[0]),
+                                    React.createElement("span", { style: { minWidth: 0 } },
+                                        React.createElement("span", { style: { display: "block", fontSize: 8.5, fontWeight: 800, color: "#e0c8a0" } }, LAB[k] || k),
+                                        React.createElement("span", { style: { display: "block", fontSize: 14, fontWeight: 900, color: "#fff", textShadow: `0 0 6px ${c[1]}99` } },
+                                            "+",
+                                            Math.round(bon[k] * 10) / 10))));
+                            })))),
+                        React.createElement("div", { style: { margin: "10px 12px 12px", borderRadius: 14, padding: "9px 11px", display: "flex", alignItems: "center", gap: 9,
+                                background: maxed ? "linear-gradient(135deg,#ffd24a,#e0802a)" : "rgba(0,0,0,0.35)", border: maxed ? "2px solid #fff" : "1.5px dashed rgba(255,210,120,0.4)", boxShadow: maxed ? "0 0 16px rgba(255,210,74,0.7)" : "none" } },
+                            React.createElement("span", { style: { fontSize: 26, filter: maxed ? "none" : "grayscale(1) brightness(0.8)" } }, maxed ? "🌟" : "🔒"),
+                            React.createElement("span", { style: { minWidth: 0 } },
+                                React.createElement("span", { style: { display: "block", fontSize: 11, fontWeight: 900, color: maxed ? "#4a2a04" : "#f0d4a0" } }, maxed ? "พลังพิเศษสูงสุด — ปลดแล้ว!" : "พลังพิเศษ · ปลดที่ Lv.10"),
+                                React.createElement("span", { style: { display: "block", fontSize: 10, color: maxed ? "#5a3408" : "#c8a878", lineHeight: 1.4 } }, mi.capDesc)))));
                 })())),
             ui.collectionOpen && (React.createElement("div", { style: { position: "absolute", ...MODAL_POS, zIndex: 50, width: "90%", maxWidth: 380, maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", background: "#fff7fb", borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW, animation: UI_POP } },
                 closeBtn("collectionOpen"),
