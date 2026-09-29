@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v674";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v675";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -66495,63 +66495,76 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               position: "absolute", ...MODAL_POS, ...uiScale(MODAL_POS.transform, _uiWideModal ? "100% 50%" : "50% 50%"), zIndex: 50,
               width: `${Math.round(96 * _uiInv)}%`, maxWidth: Math.round(460 * _uiInv),
               maxHeight: `calc((84vh - var(--sa-t, 0px) - var(--sa-b, 0px)) * ${_uiInv.toFixed(3)})`, overflowY: "auto", display: "flex", flexDirection: "column",
-              ...CHIBI_FRAME, borderRadius: 16, padding: 12, boxShadow: MODAL_SHADOW,
+              borderRadius: 18, padding: 10, fontFamily: font,
+              background: "linear-gradient(180deg,#fff8e6 0%,#f7e8c6 100%)",   // 🪵 กระดานฟาร์ม: กรอบไม้ + กระดาษด้านใน
+              border: "4px solid #8a5424", boxShadow: "0 0 0 2px #f5c542, inset 0 0 0 2px #d8a860, 0 10px 28px rgba(60,30,0,0.45)",
             }}>
               {closeBtn("ranchOpen")}
-              <div style={{ paddingRight: 36, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexShrink: 0 }}>
-                <div style={{ fontSize: 17, fontWeight: 900, color: "#b0702a" }}>🐄 ฟาร์มสัตว์เลี้ยง</div>
-                <div style={{ flex: 1 }} />
-                <div style={{ fontSize: 12.5, fontWeight: 800, color: "#c9843e", background: "#fdf3e6", borderRadius: 999, padding: "4px 10px" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
-              </div>
-              {/* 🌟 farm level bar */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(90deg,#fff6df,#fdeecb)", border: "1px solid #f0dcae", borderRadius: 11, padding: "6px 10px", marginBottom: 9, flexShrink: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 900, color: "#c98a2a", whiteSpace: "nowrap" }}>🌟 ฟาร์ม Lv.{ui.ranch.farmLv || 1}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ height: 8, borderRadius: 999, background: "#efe0c4", overflow: "hidden" }}><div style={{ height: "100%", width: Math.min(100, Math.round(((ui.ranch.farmXp || 0) / (ui.ranch.farmNeed || 1)) * 100)) + "%", borderRadius: 999, background: "linear-gradient(90deg,#f5c04a,#e0902a)" }} /></div>
-                  <div style={{ fontSize: 8.5, color: "#b0904a", fontWeight: 700, marginTop: 1 }}>XP {ui.ranch.farmXp || 0}/{ui.ranch.farmNeed || 0}</div>
+              {/* 🌄 แบนเนอร์ฟาร์ม — ฟ้า + ทุ่งหญ้า · เลเวลฟาร์ม + รายได้ */}
+              <div style={{ position: "relative", flexShrink: 0, borderRadius: 14, overflow: "hidden", marginBottom: 9, border: "2px solid #6a3e14",
+                background: "linear-gradient(180deg,#8fd8ff 0%,#c8ecff 52%,#7ccc52 53%,#4a9a2e 100%)", boxShadow: "inset 0 -4px 0 rgba(0,0,0,0.12)" }}>
+                <span style={{ position: "absolute", left: "58%", top: 2, fontSize: 16, opacity: 0.9 }}>☀️</span>
+                <span style={{ position: "absolute", left: "44%", top: 5, fontSize: 13, opacity: 0.85 }}>☁️</span>
+                <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 9, padding: "9px 10px 8px" }}>
+                  <span style={{ width: 46, height: 46, flex: "none", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, background: "radial-gradient(circle,#fff8e0,#e0a040 75%)", border: "2.5px solid #fff", boxShadow: "0 3px 0 #8a5424, 0 0 12px rgba(255,200,80,0.6)" }}>🐄</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", textShadow: "0 2px 0 #6a3e14, 0 0 6px rgba(0,0,0,0.35)", whiteSpace: "nowrap" }}>ฟาร์มสัตว์เลี้ยง</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+                      <span style={{ fontSize: 9.5, fontWeight: 900, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", borderRadius: 7, padding: "1px 6px", boxShadow: "0 2px 0 #9a6a10", whiteSpace: "nowrap" }}>🌟 Lv.{ui.ranch.farmLv || 1}</span>
+                      <div style={{ flex: 1, height: 9, borderRadius: 999, background: "rgba(40,20,0,0.45)", border: "1px solid rgba(255,255,255,0.6)", overflow: "hidden", position: "relative" }}>
+                        <div style={{ height: "100%", width: Math.min(100, Math.round(((ui.ranch.farmXp || 0) / (ui.ranch.farmNeed || 1)) * 100)) + "%", background: "linear-gradient(90deg,#ffe98a,#f0a82a)" }} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 8.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 1px rgba(0,0,0,0.5)", marginTop: 1 }}>XP {ui.ranch.farmXp || 0}/{ui.ranch.farmNeed || 0} · รายได้ +{ui.ranch.farmMult || 0}%</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "3px 8px", borderRadius: 11, background: "rgba(60,30,0,0.55)", border: "1.5px solid #ffe98a88", marginRight: 34 }}>
+                    <div style={{ fontSize: 8, fontWeight: 900, color: "#ffe0a0" }}>ทอง</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 900, color: "#ffe98a", whiteSpace: "nowrap" }}>💰 {(ui.gold || 0).toLocaleString()}</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: 10.5, fontWeight: 800, color: "#5aa06a", background: "#eaf7e4", borderRadius: 8, padding: "3px 8px", whiteSpace: "nowrap" }}>รายได้ +{ui.ranch.farmMult || 0}%</div>
               </div>
               {/* 🗂️ tabs: farm / breed / garden */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 10, flexShrink: 0 }}>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "farm" ? "#fff" : "#8a7a5a", background: ui.ranchTab === "farm" ? "linear-gradient(90deg,#e0a86a,#c9843e)" : "#f0e6d6" }}>🐄 ฟาร์ม</button>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "breed" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#fff" : "#8a6a9a", background: ui.ranchTab === "breed" ? "linear-gradient(90deg,#b06ad0,#8a4ac0)" : "#f2ecf8" }}>🥚 เพาะ</button>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "garden" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "garden" ? "#fff" : "#6a8a4a", background: ui.ranchTab === "garden" ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#e8f2dc" }}>🌾 ปลูก</button>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "market" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "market" ? "#fff" : "#a08040", background: ui.ranchTab === "market" ? "linear-gradient(90deg,#f0c060,#d9a020)" : "#f7eecf" }}>🛒 ตลาด</button>
-                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "storage" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "storage" ? "#fff" : "#6a7688", background: ui.ranchTab === "storage" ? "linear-gradient(90deg,#8a9ab0,#5f7088)" : "#eceff4" }}>📦 คลัง</button>
+              <div style={{ display: "flex", gap: 5, marginBottom: 11, flexShrink: 0 }}>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "farm" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "farm" ? "#fff" : "#7a5424", background: ui.ranchTab === "farm" ? "linear-gradient(180deg,#e0a86a,#c9843e)" : "linear-gradient(180deg,#fff6e0,#f0dcb0)", border: ui.ranchTab === "farm" ? "2px solid #fff" : "2px solid #d8b070", boxShadow: ui.ranchTab === "farm" ? "0 3px 0 rgba(60,30,0,0.45)" : "0 3px 0 #c09050", textShadow: ui.ranchTab === "farm" ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>🐄 ฟาร์ม</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "breed" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800, color: ui.ranchTab === "breed" ? "#fff" : "#7a5424", background: ui.ranchTab === "breed" ? "linear-gradient(180deg,#b06ad0,#8a4ac0)" : "linear-gradient(180deg,#fff6e0,#f0dcb0)", border: ui.ranchTab === "breed" ? "2px solid #fff" : "2px solid #d8b070", boxShadow: ui.ranchTab === "breed" ? "0 3px 0 rgba(60,30,0,0.45)" : "0 3px 0 #c09050", textShadow: ui.ranchTab === "breed" ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>🥚 เพาะ</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "garden" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "garden" ? "#fff" : "#7a5424", background: ui.ranchTab === "garden" ? "linear-gradient(180deg,#7ac06a,#4f9a3f)" : "linear-gradient(180deg,#fff6e0,#f0dcb0)", border: ui.ranchTab === "garden" ? "2px solid #fff" : "2px solid #d8b070", boxShadow: ui.ranchTab === "garden" ? "0 3px 0 rgba(60,30,0,0.45)" : "0 3px 0 #c09050", textShadow: ui.ranchTab === "garden" ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>🌾 ปลูก</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "market" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "market" ? "#fff" : "#7a5424", background: ui.ranchTab === "market" ? "linear-gradient(180deg,#f0c060,#d9a020)" : "linear-gradient(180deg,#fff6e0,#f0dcb0)", border: ui.ranchTab === "market" ? "2px solid #fff" : "2px solid #d8b070", boxShadow: ui.ranchTab === "market" ? "0 3px 0 rgba(60,30,0,0.45)" : "0 3px 0 #c09050", textShadow: ui.ranchTab === "market" ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>🛒 ตลาด</button>
+                <button onClick={() => setUi((u) => ({ ...u, ranchTab: "storage" }))} style={{ flex: 1, padding: "8px 0", borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 800, color: ui.ranchTab === "storage" ? "#fff" : "#7a5424", background: ui.ranchTab === "storage" ? "linear-gradient(180deg,#8a9ab0,#5f7088)" : "linear-gradient(180deg,#fff6e0,#f0dcb0)", border: ui.ranchTab === "storage" ? "2px solid #fff" : "2px solid #d8b070", boxShadow: ui.ranchTab === "storage" ? "0 3px 0 rgba(60,30,0,0.45)" : "0 3px 0 #c09050", textShadow: ui.ranchTab === "storage" ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>📦 คลัง</button>
               </div>
               {ui.ranchTab === "farm" && (<React.Fragment>
               {/* 📋 daily farm quests */}
-              <div style={{ background: "#f7f4fb", border: "1px solid #e6ddf2", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 900, color: "#8a6aa8", marginBottom: 6 }}>📋 ภารกิจฟาร์มวันนี้ <span style={{ fontSize: 9, fontWeight: 700, color: "#a99" }}>(รีเซ็ตทุกวัน)</span></div>
+              <div style={{ background: "linear-gradient(180deg,#b07a42,#8a5a2a)", border: "2px solid #6a3e14", borderRadius: 13, padding: "8px 9px", marginBottom: 10, boxShadow: "0 3px 0 #5a3410" }}>
+                <div style={{ fontSize: 12, fontWeight: 900, color: "#fff4d0", marginBottom: 6, textShadow: "0 1px 1px rgba(0,0,0,0.4)" }}>📋 ภารกิจฟาร์มวันนี้ <span style={{ fontSize: 9, fontWeight: 700, color: "#f0d8a8" }}>(รีเซ็ตทุกวัน)</span></div>
                 {(ui.ranch.quests || []).length ? (ui.ranch.quests || []).map((q, i) => { const done = q.prog >= q.target; return (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <div style={{ fontSize: 18, flexShrink: 0 }}>{q.emoji}</div>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, padding: "6px 8px", borderRadius: 10, background: done && !q.claimed ? "linear-gradient(135deg,#fff6c8,#ffe68a)" : "#fff6e2", border: done && !q.claimed ? "1.5px solid #f0b030" : "1px solid #e8d0a0" }}>
+                    <div style={{ width: 32, height: 32, flexShrink: 0, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: "radial-gradient(circle,#fff,#f0d8a0 75%)", border: "1.5px solid #d8b070" }}>{q.emoji}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 10.5, fontWeight: 800, color: q.claimed ? "#a8b0a0" : "#6a5a7a", textDecoration: q.claimed ? "line-through" : "none" }}>{q.label}</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                        <div style={{ flex: 1, height: 5, borderRadius: 999, background: "#e6ddf2", overflow: "hidden" }}><div style={{ height: "100%", width: Math.round(Math.min(1, q.prog / q.target) * 100) + "%", borderRadius: 999, background: done ? "#5aa06a" : "#b08ad0" }} /></div>
+                        <div style={{ flex: 1, height: 7, borderRadius: 999, background: "#e8d8b8", overflow: "hidden", border: "1px solid #d8c090" }}><div style={{ height: "100%", width: Math.round(Math.min(1, q.prog / q.target) * 100) + "%", borderRadius: 999, background: done ? "linear-gradient(90deg,#7ad05a,#4a9a2e)" : "linear-gradient(90deg,#f5c04a,#e0902a)" }} /></div>
                         <span style={{ fontSize: 8.5, fontWeight: 800, color: "#a08ab0" }}>{Math.min(q.prog, q.target)}/{q.target}</span>
                       </div>
                     </div>
                     <div style={{ fontSize: 8.5, fontWeight: 700, color: "#b09a5a", textAlign: "right", whiteSpace: "nowrap" }}>+{q.gold}💰{q.gem ? ` +${q.gem}💎` : ""}<br/>+{q.xp}XP</div>
-                    <button onClick={() => G.claimFarmQuest && G.claimFarmQuest(i)} disabled={!done || q.claimed} style={{ flexShrink: 0, padding: "6px 9px", borderRadius: 8, border: "none", cursor: (done && !q.claimed) ? "pointer" : "default", fontFamily: font, fontSize: 9.5, fontWeight: 800, color: "#fff", background: q.claimed ? "#cdd3c8" : (done ? "linear-gradient(90deg,#7ac06a,#4f9a3f)" : "#d8cfe6") }}>{q.claimed ? "รับแล้ว" : "รับ"}</button>
+                    <button onClick={() => G.claimFarmQuest && G.claimFarmQuest(i)} disabled={!done || q.claimed} style={{ flexShrink: 0, padding: "6px 10px", borderRadius: 9, border: "none", cursor: (done && !q.claimed) ? "pointer" : "default", fontFamily: font, fontSize: 10, fontWeight: 900, color: done && !q.claimed ? "#3a2408" : "#fff", background: q.claimed ? "#c8c0b0" : (done ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "#d8c8a8"), boxShadow: done && !q.claimed ? "0 2px 0 #9a6a10" : "none", animation: done && !q.claimed ? "todoPop 1.1s ease-in-out infinite" : "none" }}>{q.claimed ? "รับแล้ว" : "รับ"}</button>
                   </div>
                 ); }) : (<div style={{ fontSize: 10, color: "#a99", textAlign: "center", padding: "4px 0" }}>กำลังโหลดภารกิจ...</div>)}
               </div>
               {/* pending + claim */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(90deg,#fff6e8,#fdeccf)", border: "1px solid #f0dcc0", borderRadius: 12, padding: "9px 11px", marginBottom: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "#a9885a" }}>ผลผลิตรอเก็บ (สะสมได้แม้ปิดเกม · สูงสุด 8 ชม.)</div>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: "#c9843e" }}>💰 {(ui.ranch.pending || 0).toLocaleString()}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, background: "linear-gradient(135deg,#fff3c8,#ffd878)", border: "2px solid #d8a030", borderRadius: 13, padding: "9px 11px", marginBottom: 10, boxShadow: "0 3px 0 #b07a18" }}>
+                <span style={{ width: 46, height: 46, flex: "none", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, background: "radial-gradient(circle,#fff8e0,#e0a040 75%)", border: "2px solid #fff", boxShadow: (ui.ranch.pending || 0) > 0 ? "0 0 12px rgba(255,200,60,0.8)" : "none" }}>{(ui.ranch.pending || 0) > 0 ? "💰" : "📦"}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: "#8a5a18" }}>ผลผลิตรอเก็บ <span style={{ fontWeight: 700, color: "#a87a30" }}>(สะสมแม้ปิดเกม · สูงสุด 8 ชม.)</span></div>
+                  <div style={{ fontSize: 21, fontWeight: 900, color: "#8a4a08", textShadow: "0 1px 0 #fff" }}>{(ui.ranch.pending || 0).toLocaleString()} <span style={{ fontSize: 12 }}>ทอง</span></div>
                 </div>
                 <button onClick={() => G.claimRanch && G.claimRanch()} disabled={(ui.ranch.pending || 0) <= 0} style={{
-                  padding: "10px 18px", borderRadius: 999, border: "none", cursor: (ui.ranch.pending || 0) > 0 ? "pointer" : "default", fontFamily: font,
-                  fontSize: 13, fontWeight: 900, color: "#fff", background: (ui.ranch.pending || 0) > 0 ? "linear-gradient(90deg,#5aa06a,#7ac08a)" : "#cdd3c8", boxShadow: (ui.ranch.pending || 0) > 0 ? "0 4px 12px rgba(90,160,106,0.45)" : "none",
-                }}>เก็บผลผลิต</button>
+                  padding: "10px 14px", borderRadius: 12, border: "none", cursor: (ui.ranch.pending || 0) > 0 ? "pointer" : "default", fontFamily: font,
+                  fontSize: 13, fontWeight: 900, color: "#fff", background: (ui.ranch.pending || 0) > 0 ? "linear-gradient(180deg,#6ad05a,#3a9a2e)" : "#c8c0b0", boxShadow: (ui.ranch.pending || 0) > 0 ? "0 4px 0 #1f5a18" : "none",
+                  animation: (ui.ranch.pending || 0) > 0 ? "todoPop 1.1s ease-in-out infinite" : "none", textShadow: "0 1px 1px rgba(0,0,0,0.3)",
+                }}>🧺 เก็บ</button>
               </div>
               {/* slot grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, flexShrink: 0 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, rowGap: 14, flexShrink: 0, paddingTop: 4 }}>
                 {ui.ranch.slots.every(Boolean) && (
                   <button onClick={() => setUi((u) => ({ ...u, ranchTab: "market" }))} style={{
                     gridColumn: "1 / -1", padding: "10px", borderRadius: 12, border: "2px dashed #e0c8a8", cursor: "pointer",
@@ -66559,29 +66572,33 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   }}>🐄 คอกเต็มแล้ว ({ui.ranch.slots.length}/{ui.ranch.slots.length} ช่อง)<br /><span style={{ fontSize: 10, color: "#c0a080" }}>แตะเพื่อไปแท็บ 🛒 ตลาด ซื้อคอกเพิ่ม หรือกด "เอาออก" ที่ตัวใดตัวหนึ่งก่อน</span></button>
                 )}
                 {ui.ranch.slots.map((s, k) => s ? (
-                  <div key={k} style={{ background: "#f7f9f0", border: "1px solid #e4ecd6", borderRadius: 12, padding: "9px 10px" }}>
+                  <div key={k} style={{ position: "relative", background: "linear-gradient(180deg,#d8f4c0 0%,#a8dc80 100%)", border: "3px solid #a0682a", borderRadius: 13, padding: "8px 9px", boxShadow: "0 3px 0 #6a3e14, inset 0 0 0 2px rgba(255,255,255,0.35)" }}>
+                    <span style={{ position: "absolute", top: -9, left: 10, fontSize: 9, fontWeight: 900, color: "#fff", background: "linear-gradient(180deg,#b07a42,#8a5424)", border: "1.5px solid #fff", borderRadius: 6, padding: "0 6px" }}>คอก {k + 1}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <div style={{ fontSize: 26 }}>{s.emoji}</div>
+                      <div style={{ width: 44, height: 44, flex: "none", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 27, background: "radial-gradient(circle at 50% 40%, #fff, #e8f8d8 70%)", border: "2px solid #fff", boxShadow: "0 2px 6px rgba(40,90,20,0.35)", animation: s.happy >= 60 ? "pulse 1.4s ease-in-out infinite alternate" : "none" }}>{s.emoji}</div>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "#8aa070" }}>Lv.{s.lv}{s.plus ? ` +${s.plus}` : ""} · ร่าง {s.stage}</div>
+                        <div style={{ fontSize: 12, fontWeight: 900, color: "#2a5a18", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: "#4a7a30" }}>Lv.{s.lv}{s.plus ? ` +${s.plus}` : ""} · ร่าง {s.stage}</div>
                       </div>
                     </div>
                     {/* happiness bar */}
                     <div style={{ marginTop: 7, marginBottom: 6 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontWeight: 800, color: "#c98a3a", marginBottom: 2 }}><span>😊 ความสุข</span><span>{s.happy}%</span></div>
-                      <div style={{ height: 6, borderRadius: 999, background: "#eadfce", overflow: "hidden" }}><div style={{ height: "100%", width: s.happy + "%", borderRadius: 999, background: s.happy >= 60 ? "#5aa06a" : s.happy >= 30 ? "#e0a83a" : "#d9536b" }} /></div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontWeight: 900, color: "#6a4a10", marginBottom: 2 }}><span>{s.happy >= 60 ? "😊" : s.happy >= 30 ? "😐" : "😢"} ความสุข</span><span>{s.happy}%</span></div>
+                      <div style={{ height: 8, borderRadius: 999, background: "rgba(60,40,0,0.25)", overflow: "hidden", border: "1px solid rgba(255,255,255,0.6)" }}><div style={{ height: "100%", width: s.happy + "%", borderRadius: 999, background: s.happy >= 60 ? "#5aa06a" : s.happy >= 30 ? "#e0a83a" : "#d9536b" }} /></div>
                     </div>
-                    <div style={{ fontSize: 9.5, fontWeight: 700, color: "#8a9a70", marginBottom: 7 }}>💰 {s.goldHr}/ชม. · ⭐ {s.expHr} EXP/ชม.</div>
+                    <div style={{ display: "flex", gap: 4, marginBottom: 7 }}>
+                      <span style={{ fontSize: 9, fontWeight: 900, color: "#6a4a08", background: "rgba(255,240,180,0.85)", borderRadius: 6, padding: "1px 5px" }}>💰 {s.goldHr}/ชม.</span>
+                      <span style={{ fontSize: 9, fontWeight: 900, color: "#1a4a80", background: "rgba(210,235,255,0.85)", borderRadius: 6, padding: "1px 5px" }}>⭐ {s.expHr}/ชม.</span>
+                    </div>
                     <div style={{ display: "flex", gap: 5 }}>
-                      <button onClick={() => G.feedBest && G.feedBest(s.i)} disabled={(ui.ranch.food || 0) <= 0} style={{ flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: (ui.ranch.food || 0) > 0 ? "pointer" : "default", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#fff", background: (ui.ranch.food || 0) > 0 ? "#5aa06a" : "#c8cdc2" }}>{(ui.ranch.food || 0) > 0 ? `🌾 ให้อาหาร (${ui.ranch.food})` : `🌾 ไม่มีอาหาร`}</button>
-                      <button onClick={() => G.ranchRemove && G.ranchRemove(k)} style={{ padding: "6px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 800, color: "#a06a6a", background: "#f0e6e0" }}>เอาออก</button>
+                      <button onClick={() => G.feedBest && G.feedBest(s.i)} disabled={(ui.ranch.food || 0) <= 0} style={{ flex: 1, padding: "6px 0", borderRadius: 9, border: "none", cursor: (ui.ranch.food || 0) > 0 ? "pointer" : "default", fontFamily: font, fontSize: 10.5, fontWeight: 900, color: "#fff", background: (ui.ranch.food || 0) > 0 ? "linear-gradient(180deg,#f0b050,#c8782a)" : "#b8b0a0", boxShadow: (ui.ranch.food || 0) > 0 ? "0 2px 0 #7a4410" : "none" }}>{(ui.ranch.food || 0) > 0 ? `🌾 ให้อาหาร (${ui.ranch.food})` : `🌾 ไม่มีอาหาร`}</button>
+                      <button onClick={() => G.ranchRemove && G.ranchRemove(k)} style={{ padding: "6px 8px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font, fontSize: 10.5, fontWeight: 900, color: "#8a3a3a", background: "rgba(255,255,255,0.75)", boxShadow: "0 2px 0 rgba(0,0,0,0.15)" }}>เอาออก</button>
                     </div>
                   </div>
                 ) : (
                   <button key={k} onClick={() => setUi((u) => ({ ...u, ranchPick: k }))} style={{
-                    minHeight: 118, borderRadius: 12, border: "2px dashed #d8ceb8", cursor: "pointer", fontFamily: font,
-                    background: "#fcfaf3", color: "#b8a888", fontSize: 12.5, fontWeight: 800, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                    minHeight: 118, borderRadius: 13, border: "3px dashed #b08a50", cursor: "pointer", fontFamily: font,
+                    background: "linear-gradient(180deg,#eef8e0,#d4ecb8)", color: "#6a8a3a", fontSize: 12.5, fontWeight: 800, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
                   }}><span style={{ fontSize: 24 }}>＋</span>ปล่อยเพ็ตลงคอก</button>
                 ))}
               </div>
