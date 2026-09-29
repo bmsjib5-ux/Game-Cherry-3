@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v661";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v662";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -63859,82 +63859,122 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             <div style={SKILL_SHELL}>
               {closeBtn("skillPanel")}
               {skillTabs("skillPanel")}
-              {/* 🪪 การ์ดสรุปตัวละคร + ค่าพลังจริง */}
-              <div style={{ borderRadius: 14, padding: "10px 12px", marginBottom: 8, background: `linear-gradient(135deg, ${hex}22, #fff6fa)`, border: `1.5px solid ${hex}55` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 14, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, boxShadow: `0 3px 10px ${hex}44`, flex: "none" }}>{P.classEmoji || "🧍"}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#5a4a3a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{P.name} <span style={{ color: hex }}>Lv.{P.level}</span></div>
-                    <div style={{ fontSize: 10.5, fontWeight: 800, color: "#8a7a6a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {P.className}{P.path ? ` · ${P.pathEmoji} ${P.path}` : ""}{P.title ? ` · 🏅 ${P.title}` : ""}
+              {/* 🪪 การ์ดฮีโร่แบบเกม — แบนเนอร์สีประจำอาชีพ · ป้ายเลเวลวงกลม · พลังรบเรืองแสง · ไทล์ค่าสถานะมีวงไอคอนสี */}
+              {(() => {
+                const TILE = { "โจมตี": ["#ff7a5a", "#c0402a"], "ป้องกัน": ["#6ab0ff", "#2a6ac0"], "เลือด": ["#ff6a8a", "#c02a50"], "มานา": ["#5ac8ff", "#1a7ac0"],
+                  "คริ": ["#ffb03a", "#c0701a"], "ดาเมจคริ": ["#ff5a3a", "#b02a1a"], "โชค": ["#5ad07a", "#2a8a4a"], "หลบ": ["#9a8aff", "#5a4ac0"], "ความเร็ว": ["#ffd84a", "#b08a10"] };
+                const hpPct = P.maxHp ? Math.max(0, Math.min(100, (P.hp / P.maxHp) * 100)) : 100, mpPct = P.maxMp ? Math.max(0, Math.min(100, (P.mp / P.maxMp) * 100)) : 100;
+                return (
+                  <div style={{ borderRadius: 18, overflow: "hidden", marginBottom: 9, border: "2px solid #3a2a5a", boxShadow: `0 0 0 2px #f5c542, 0 8px 22px rgba(40,20,60,0.35)` }}>
+                    {/* แบนเนอร์หัวการ์ด */}
+                    <div style={{ position: "relative", padding: "12px 12px 10px", background: `radial-gradient(120% 140% at 0% 0%, ${hex}ee 0%, #3a2458 55%, #1c1230 100%)` }}>
+                      <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(135deg, rgba(255,255,255,0.05) 0 6px, transparent 6px 14px)", pointerEvents: "none" }} />
+                      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ position: "relative", flex: "none" }}>
+                          <div style={{ width: 58, height: 58, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, background: `radial-gradient(circle, #fff 0%, ${hex}88 70%, ${hex}44 100%)`, boxShadow: `0 0 16px ${hex}, inset 0 -3px 6px rgba(0,0,0,0.2)`, border: "2px solid rgba(255,255,255,0.85)" }}>{P.classEmoji || "🧍"}</div>
+                          <div style={{ position: "absolute", left: "50%", bottom: -9, transform: "translateX(-50%)", minWidth: 40, padding: "1px 7px", borderRadius: 999, background: "linear-gradient(180deg,#ffe98a,#e8a020)", border: "2px solid #fff", color: "#5a3a08", fontSize: 10.5, fontWeight: 900, textAlign: "center", whiteSpace: "nowrap", boxShadow: "0 2px 6px rgba(0,0,0,0.35)" }}>Lv.{P.level}</div>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", textShadow: "0 2px 0 rgba(0,0,0,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{P.name}</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 3 }}>
+                            <span style={{ fontSize: 9.5, fontWeight: 900, color: "#fff", background: `${hex}cc`, border: "1px solid rgba(255,255,255,0.5)", borderRadius: 999, padding: "1px 8px" }}>{P.className}</span>
+                            {P.path && <span style={{ fontSize: 9.5, fontWeight: 900, color: "#ffe9a8", background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "1px 8px", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{P.pathEmoji} {P.path}</span>}
+                            {P.title && <span style={{ fontSize: 9.5, fontWeight: 900, color: "#ffd76a", background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "1px 8px", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🏅 {P.title}</span>}
+                          </div>
+                        </div>
+                        <div style={{ flex: "none", textAlign: "center", padding: "5px 10px", borderRadius: 12, background: "linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.25))", border: "1.5px solid #f5c54299", boxShadow: "0 0 12px rgba(245,197,66,0.35)", marginRight: 30 }}>
+                          <div style={{ fontSize: 8.5, fontWeight: 900, color: "#f5d88a", letterSpacing: "0.12em" }}>⚔️ พลังรบ</div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: "#ffd24a", textShadow: "0 0 8px rgba(255,200,60,0.8)", fontVariantNumeric: "tabular-nums" }}>{P.power != null ? P.power.toLocaleString() : "-"}</div>
+                        </div>
+                      </div>
+                      {/* แถบเลือด / มานา */}
+                      <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginTop: 14 }}>
+                        {[["❤️", P.hp, P.maxHp, hpPct, "#ff5a7a", "#c02a4a"], ["💧", P.mp, P.maxMp, mpPct, "#4ac8ff", "#1a6ac0"]].map(([ic, v, mx, pc, c1, c2]) => (
+                          <div key={ic} style={{ position: "relative", height: 18, borderRadius: 999, background: "rgba(0,0,0,0.45)", border: "1.5px solid rgba(255,255,255,0.35)", overflow: "hidden" }}>
+                            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${pc}%`, background: `linear-gradient(180deg,${c1},${c2})`, boxShadow: `0 0 8px ${c1}` }} />
+                            <div style={{ position: "relative", fontSize: 10, fontWeight: 900, color: "#fff", textAlign: "center", lineHeight: "15px", textShadow: "0 1px 2px rgba(0,0,0,0.7)", fontVariantNumeric: "tabular-nums" }}>{ic} {v}/{mx}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* ไทล์ค่าสถานะ */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, padding: 9, background: "linear-gradient(180deg,#2a2040,#221a34)" }}>
+                      {STATS.filter(([, nm]) => nm !== "เลือด" && nm !== "มานา").concat([["❤️", "เลือดสูงสุด", P.maxHp], ["💧", "มานาสูงสุด", P.maxMp]]).map(([ic, nm, v]) => {
+                        const tc = TILE[nm] || TILE[nm.replace("สูงสุด", "")] || ["#c0a0ff", "#6a4ac0"];
+                        return (
+                          <div key={nm} style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, padding: "6px 7px", borderRadius: 12, background: `linear-gradient(135deg, ${tc[1]}55, rgba(255,255,255,0.05))`, border: `1px solid ${tc[0]}66`, overflow: "hidden" }}>
+                            <span style={{ width: 26, height: 26, flex: "none", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, background: `radial-gradient(circle at 35% 30%, ${tc[0]}, ${tc[1]})`, boxShadow: `0 0 8px ${tc[0]}88, inset 0 -2px 3px rgba(0,0,0,0.25)` }}>{ic}</span>
+                            <span style={{ minWidth: 0 }}>
+                              <span style={{ display: "block", fontSize: 8.5, fontWeight: 800, color: "#c8bce0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm}</span>
+                              <span style={{ display: "block", fontSize: 13, fontWeight: 900, color: "#fff", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textShadow: `0 0 6px ${tc[0]}99` }}>{v}</span>
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div style={{ textAlign: "center", background: "#fff", borderRadius: 12, padding: "5px 10px", flex: "none", boxShadow: "0 2px 8px rgba(90,70,50,0.12)" }}>
-                    <div style={{ fontSize: 8.5, fontWeight: 800, color: "#b09a80", letterSpacing: "0.1em" }}>พลังรบ</div>
-                    <div style={{ fontSize: 15, fontWeight: 900, color: "#d0703a" }}>💪 {P.power != null ? P.power.toLocaleString() : "-"}</div>
+                );
+              })()}
+              {/* ⚡ แต้มรอใช้ (ไอคอนแต้มเด้ง) + ปุ่มไปกระดานสกิล */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 9 }}>
+                {[["💪", "แต้มสถานะ", ui.statPts || 0, "#ff8ac0", "#c0407a"], ["📖", "แต้มสกิล", ui.sp || 0, "#8ab0ff", "#4a5ac0"]].map(([ic, nm, n, c1, c2]) => (
+                  <div key={nm} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 14, background: n > 0 ? `linear-gradient(135deg,${c1},${c2})` : "linear-gradient(135deg,#d8d4e0,#b8b4c4)", boxShadow: n > 0 ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "0 3px 0 #9a96a6", animation: n > 0 ? "todoPop 2.4s ease-in-out infinite" : "none" }}>
+                    <span style={{ fontSize: 22, filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.3))" }}>{ic}</span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 9.5, fontWeight: 900, color: "rgba(255,255,255,0.9)" }}>{nm}</span>
+                      <span style={{ display: "block", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.05, textShadow: "0 2px 0 rgba(0,0,0,0.25)", fontVariantNumeric: "tabular-nums" }}>{n}</span>
+                    </span>
                   </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: wideS ? "repeat(9, 1fr)" : "repeat(3, 1fr)", gap: 5, marginTop: 9 }}>
-                  {STATS.map(([ic, nm, v]) => (
-                    <div key={nm} style={{ background: "rgba(255,255,255,0.85)", borderRadius: 10, padding: "6px 4px", textAlign: "center" }}>
-                      <div style={{ fontSize: 9.5, fontWeight: 800, color: "#9a8a7a", whiteSpace: "nowrap" }}>{ic} {nm}</div>
-                      <div style={{ fontSize: 13.5, fontWeight: 900, color: "#4a4a3a", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{v}</div>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
-              {/* ⚡ แต้มรอใช้ + ทางไปกระดานสกิล */}
-              <div style={{ display: "grid", gridTemplateColumns: wideS ? "1fr 1fr" : "1fr", gap: 8, marginBottom: 8 }}>
-                <div style={{ borderRadius: 12, padding: "8px 11px", background: "linear-gradient(90deg,#f3ecff,#fdeef6)", border: "1px solid #e0d0f5", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 20 }}>⚡</span>
-                  <span style={{ flex: 1 }}>
-                    <span style={{ display: "block", fontSize: 10, fontWeight: 800, color: "#9a8ab0" }}>แต้มที่ยังไม่ได้ใช้</span>
-                    <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: "#6a3ac0" }}>💪 สถานะ {ui.statPts || 0} · 📖 สกิล {ui.sp || 0}</span>
-                  </span>
-                </div>
-                <button onClick={() => { setUi((u) => ({ ...u, skillPanel: false })); G.toggleSkillBoard(); }} style={{
-                  padding: "8px 11px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: font, textAlign: "left",
-                  display: "flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg,#1d3a2c,#12261f)", boxShadow: "0 4px 12px rgba(30,80,60,0.3)",
-                }}>
-                  <span style={{ fontSize: 20 }}>📖</span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: "block", fontSize: 12.5, fontWeight: 900, color: "#9fe8c0" }}>อัพสกิล / ท่าไม้ตาย</span>
-                    <span style={{ display: "block", fontSize: 9.5, color: "#7fae97" }}>เปิดกระดานวิชาสกิล · เพดาน Lv.{ui.skillCap || 1}</span>
-                  </span>
-                  {(ui.sp || 0) > 0 && <span style={{ fontSize: 10.5, fontWeight: 900, color: "#0d2018", background: "#ffd76a", borderRadius: 999, padding: "3px 8px" }}>⚡ {ui.sp}</span>}
-                  <span style={{ fontSize: 18, color: "#7fae97" }}>›</span>
-                </button>
-              </div>
-              {/* 💪 อัพค่าสถานะ — กริดปุ่มใหญ่ */}
-              <div style={{ borderRadius: 12, padding: "9px 10px", marginBottom: 8, background: "linear-gradient(135deg,#f0f6ff,#f6f0ff)", border: "1.5px solid #c0d0f0" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <div style={{ flex: 1, fontSize: 12.5, fontWeight: 900, color: "#4a6ac0" }}>💪 อัพค่าสถานะ <span style={{ color: (ui.statPts || 0) > 0 ? "#d04a8a" : "#9a6ad0" }}>· มี {ui.statPts || 0} แต้ม</span></div>
+              <button onClick={() => { setUi((u) => ({ ...u, skillPanel: false })); G.toggleSkillBoard(); }} style={{
+                width: "100%", marginBottom: 9, padding: "10px 12px", borderRadius: 14, border: "2px solid #4ad08a", cursor: "pointer", fontFamily: font, textAlign: "left",
+                display: "flex", alignItems: "center", gap: 9, background: "linear-gradient(135deg,#1d4a36,#0f2a20)", boxShadow: "0 4px 0 #0a1c14, 0 0 14px rgba(74,208,138,0.35)",
+              }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, background: "radial-gradient(circle,#8affc0,#2a9a5a)", boxShadow: "0 0 10px #4ad08a" }}>📖</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 900, color: "#bfffd8", textShadow: "0 1px 0 rgba(0,0,0,0.5)" }}>อัพสกิล / ท่าไม้ตาย</span>
+                  <span style={{ display: "block", fontSize: 9.5, color: "#7fcea0" }}>เปิดกระดานวิชาสกิล · เพดาน Lv.{ui.skillCap || 1}</span>
+                </span>
+                {(ui.sp || 0) > 0 && <span style={{ fontSize: 11, fontWeight: 900, color: "#3a2a08", background: "linear-gradient(180deg,#ffe98a,#f5b82a)", borderRadius: 999, padding: "3px 9px", boxShadow: "0 2px 0 #b07a10" }}>⚡ {ui.sp}</span>}
+                <span style={{ fontSize: 20, color: "#7fcea0", fontWeight: 900 }}>›</span>
+              </button>
+              {/* 💪 อัพค่าสถานะ — แถวแบบเกม: วงไอคอนสี · เลเวล · แถบความคืบหน้าถึงขั้นแต้มถัดไป · ปุ่มนูน */}
+              <div style={{ borderRadius: 16, padding: "10px 10px 8px", marginBottom: 9, background: "linear-gradient(180deg,#2a2040,#1e1830)", border: "2px solid #4a3a6a", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <div style={{ flex: 1, fontSize: 13, fontWeight: 900, color: "#fff", textShadow: "0 1px 0 rgba(0,0,0,0.5)" }}>💪 อัพค่าสถานะ <span style={{ fontSize: 11, color: (ui.statPts || 0) > 0 ? "#ff9ad0" : "#9a8ab8" }}>· มี {ui.statPts || 0} แต้ม</span></div>
                   <button onClick={() => G.autoAllocStats()} disabled={(ui.statPts || 0) <= 0} title={ui.cls && G.STAT_RECO && G.STAT_RECO[ui.cls] ? G.STAT_RECO[ui.cls].desc : ""} style={{
-                    padding: "5px 10px", borderRadius: 999, border: "none", cursor: (ui.statPts || 0) > 0 ? "pointer" : "default", fontFamily: font,
-                    fontSize: 10.5, fontWeight: 800, color: "#fff", background: (ui.statPts || 0) > 0 ? "linear-gradient(90deg,#5aa06a,#7ac08a)" : "#c8ccd4",
+                    padding: "5px 11px", borderRadius: 999, border: "none", cursor: (ui.statPts || 0) > 0 ? "pointer" : "default", fontFamily: font,
+                    fontSize: 10.5, fontWeight: 900, color: "#fff", background: (ui.statPts || 0) > 0 ? "linear-gradient(180deg,#6ae08a,#2a9a4a)" : "#5a5470", boxShadow: (ui.statPts || 0) > 0 ? "0 2px 0 #1a6a30" : "none",
                   }}>🎯 อัพอัตโนมัติ</button>
                 </div>
-                {/* 💪 แยกเป็นบรรทัดละค่า (ตามที่ผู้เล่นขอ) — ไอคอน · ชื่อ+เลเวล · ผลต่อแต้ม · ปุ่ม ＋ ขวาสุด */}
                 {Object.entries(G.STAT_INFO || {}).map(([k, inf]) => {
                   const rank = (ui.baseStats || {})[k] || 0;
                   const c2 = 1 + Math.floor(rank / 10);
                   const can = (ui.statPts || 0) >= c2;
+                  const pc = ((rank % 10) / 10) * 100;
                   return (
-                    <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", borderRadius: 10, padding: "5px 8px 5px 9px", marginBottom: 4, border: "1px solid #dfe6f5" }}>
-                      <span style={{ fontSize: 17, width: 22, textAlign: "center", lineHeight: 1 }}>{inf.emoji}</span>
+                    <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, borderRadius: 12, padding: "6px 7px 6px 7px", marginBottom: 5, background: "linear-gradient(90deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <span style={{ width: 32, height: 32, flex: "none", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, background: "radial-gradient(circle at 35% 30%, #fff, #d8cff0 70%)", boxShadow: "inset 0 -2px 3px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.3)" }}>{inf.emoji}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 11.5, fontWeight: 900, color: "#4a5a7a" }}>{inf.name} <span style={{ color: "#9aa4b8" }}>Lv.{rank}</span></div>
-                        <div style={{ fontSize: 9, color: "#9aa0b0" }}>{inf.per}</div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                          <span style={{ fontSize: 12, fontWeight: 900, color: "#fff" }}>{inf.name}</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 900, color: "#ffd76a" }}>Lv.{rank}</span>
+                          <span style={{ fontSize: 8.5, color: "#a89cc8", marginLeft: "auto", whiteSpace: "nowrap" }}>{inf.per}</span>
+                        </div>
+                        <div title="ความคืบหน้าถึงขั้นที่ใช้แต้มเพิ่ม" style={{ height: 5, borderRadius: 999, background: "rgba(0,0,0,0.4)", marginTop: 4, overflow: "hidden" }}>
+                          <div style={{ width: `${pc}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#8ab0ff,#ff8ac0)" }} />
+                        </div>
                       </div>
                       <button onClick={() => G.allocStat(k)} disabled={!can} style={{
-                        width: 58, height: 30, borderRadius: 8, border: "none", cursor: can ? "pointer" : "default", flex: "none",
-                        fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff",
-                        background: can ? "linear-gradient(90deg,#59a0e8,#7ac0f0)" : "#d0d5dd",
-                      }}>＋{c2 > 1 ? ` (${c2})` : ""}</button>
+                        minWidth: 52, height: 32, borderRadius: 10, border: "none", cursor: can ? "pointer" : "default", flex: "none", padding: "0 8px",
+                        fontSize: 13, fontWeight: 900, fontFamily: font, color: can ? "#fff" : "#8a849a",
+                        background: can ? "linear-gradient(180deg,#6ac0ff,#2a78d0)" : "#3e3852", boxShadow: can ? "0 3px 0 #1a4a90, 0 0 8px rgba(106,192,255,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)", textShadow: can ? "0 1px 1px rgba(0,0,0,0.35)" : "none",
+                      }}>＋{c2 > 1 ? <span style={{ fontSize: 10, opacity: 0.9 }}> {c2}</span> : ""}</button>
                     </div>
                   );
                 })}
-                <div style={{ fontSize: 9, color: "#8a94a8", marginTop: 5 }}>ได้ 3 แต้ม/เลเวล · ทุก 10 ระดับของค่านั้นใช้แต้มเพิ่ม 1 (เลขในวงเล็บ)</div>
+                <div style={{ fontSize: 9, color: "#9a8eb8", marginTop: 4 }}>ได้ 3 แต้ม/เลเวล · ทุก 10 ระดับของค่านั้นใช้แต้มเพิ่ม 1 (เลขบนปุ่ม) · แถบใต้ชื่อ = ใกล้ขั้นถัดไป</div>
               </div>
               {/* 📂 หัวข้อย่อยพับได้ — ฉายา · สายอาชีพขั้นสูง · ท่าไม้ตาย · รีเซ็ตแต้ม */}
               <div style={{ display: "grid", gridTemplateColumns: wideS ? "1fr 1fr" : "1fr", gap: 6 }}>
