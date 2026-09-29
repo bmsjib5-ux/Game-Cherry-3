@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v665";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v666";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -59219,9 +59219,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             <div style={SKILL_SHELL}>
               {closeBtn("skillBoardOpen")}
               {skillTabs("skillBoardOpen")}
-              <div style={{ ...SKILL_DARK, background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e" }}>
-              <div style={{ fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 }}>📖 วิชาสกิล</div>
-              <div style={{ fontSize: 10, color: "#7fae97", marginBottom: 9 }}>
+              <div style={{ ...SKILL_DARK, background: "radial-gradient(120% 50% at 50% 0%, #2e2466 0%, #17123a 55%, #0c0a22 100%)", border: "2px solid #3a2a6a", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(20,10,50,0.45)" }}>
+              {/* 📖 หัวกระดานแบบเกม — ไอคอนตำราเรืองแสง · ชื่อ · กล่องแต้มสกิล */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <span style={{ width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#fff3c8,#e0a030 72%)", boxShadow: "0 0 14px #f5c542", border: "2px solid rgba(255,255,255,0.85)" }}>📖</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#fff4d0", textShadow: "0 0 10px rgba(255,210,120,0.6), 0 2px 0 rgba(0,0,0,0.4)" }}>วิชาสกิล</div>
+                  <div style={{ fontSize: 9.5, color: "#b8b0e0", fontWeight: 700 }}>{((ui.skillMode || "basic") === "t4" && T4[ui.cls]) ? T4[ui.cls].label : (ui.skillMode || "basic") === "adv" ? "🌟 ชุดขั้นสูง" : "⚔️ ชุดพื้นฐาน"}</div>
+                </div>
+                <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: (ui.sp || 0) > 0 ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.35)", boxShadow: (ui.sp || 0) > 0 ? "0 3px 0 #9a6a10, 0 0 12px rgba(255,210,74,0.6)" : "none", marginRight: 30 }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 900, color: (ui.sp || 0) > 0 ? "#5a3a08" : "#b8b0e0" }}>แต้มสกิล</div>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: (ui.sp || 0) > 0 ? "#3a2408" : "#fff", lineHeight: 1.05 }}>⚡ {ui.sp || 0}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 9.5, color: "#a8a0d0", marginBottom: 10 }}>
                 ปลดล็อกไล่เป็นขั้น — ขั้นสูงขึ้นต้องเลเวลสูงขึ้น · แตะ ＋ บนการ์ดเพื่ออัปสกิลทันที · แตะการ์ดเพื่อดูรายละเอียด · ⚡ แต้มสกิล {ui.sp || 0}
               </div>
 
@@ -59230,13 +59241,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 <div style={{ flex: wide ? 1.25 : "none", minWidth: 0 }}>
                   {rows.map((row) => {
                     const T = SKILL_TIER_BY[row.tier] || SKILL_TIERS[0];
+                    const TC = ({ 1: ["#5ad08a", "#1f6a3e"], 2: ["#5aa8ff", "#1f4a9a"], 3: ["#ff6a7a", "#8a1f3a"], 4: ["#ffc84a", "#9a5a10"] })[row.tier] || ["#b08aff", "#4a2a9a"];
                     return (
-                      <div key={row.tier} style={{ marginBottom: 10 }}>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 5 }}>
-                          <span style={{ fontSize: 11.5, fontWeight: 900, color: row.open ? "#f5d24a" : "#6a8a7a" }}>
-                            {T.emoji} ขั้น {row.tier} · {T.name}
-                          </span>
-                          <span style={{ fontSize: 9, color: "#6a8a7a" }}>{T.desc}</span>
+                      <div key={row.tier} style={{ marginBottom: 12 }}>
+                        {/* 🎀 ริบบิ้นหัวขั้น — สีประจำขั้น */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6, padding: "5px 9px", borderRadius: 10, background: row.open ? `linear-gradient(90deg, ${TC[1]}, ${TC[0]}55 70%, transparent)` : "linear-gradient(90deg, rgba(255,255,255,0.08), transparent)", borderLeft: `4px solid ${row.open ? TC[0] : "#4a4666"}` }}>
+                          <span style={{ fontSize: 12, fontWeight: 900, color: row.open ? "#fff" : "#8a86a6", textShadow: row.open ? "0 1px 2px rgba(0,0,0,0.5)" : "none", whiteSpace: "nowrap" }}>{T.emoji} ขั้น {row.tier} · {T.name}</span>
+                          <span style={{ fontSize: 8.5, color: row.open ? "rgba(255,255,255,0.75)" : "#6a6688", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{T.desc}</span>
                         </div>
                         {row.note && (
                           <div style={{ fontSize: 9.5, fontWeight: 800, color: "#e0a05a", background: "rgba(224,160,90,0.10)", border: "1px solid rgba(224,160,90,0.28)", borderRadius: 8, padding: "5px 8px", marginBottom: 5 }}>{row.note}</div>
@@ -59253,10 +59264,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                             const upNote = !DD ? "" : DD.maxed ? "⭐ เต็ม" : DD.atCap ? "🔒 เพดาน" : !DD.canPay ? `⚡${DD.cost}` : "";
                             return (
                               <button key={c.id} onClick={() => setUi((u) => ({ ...u, boardPick: c.id }))} style={{
-                                position: "relative", padding: "8px 3px 6px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "center",
-                                border: on ? "2px solid #ffd76a" : c.open ? "1.5px solid #4f9a76" : "1.5px dashed #35594a",
-                                background: c.open ? (on ? "linear-gradient(180deg,#2c4a38,#1c3227)" : "rgba(79,154,118,0.14)") : "rgba(255,255,255,0.03)",
-                                opacity: c.open ? 1 : 0.62,
+                                position: "relative", padding: "9px 3px 6px", borderRadius: 14, cursor: "pointer", fontFamily: font, textAlign: "center",
+                                border: on ? "2px solid #fff" : canUp ? "2px solid #ffd24a" : c.open ? `1.5px solid ${TC[0]}aa` : "1.5px dashed #4a4666",
+                                background: c.open ? `radial-gradient(circle at 50% 30%, ${TC[0]}${on ? "77" : "44"}, ${TC[1]}66 60%, rgba(10,8,30,0.85) 100%)` : "rgba(255,255,255,0.03)",
+                                boxShadow: on ? `0 0 0 2px ${TC[0]}, 0 0 16px ${TC[0]}aa` : canUp ? "0 0 12px rgba(255,210,74,0.55)" : c.open ? `0 3px 0 ${TC[1]}` : "none",
+                                opacity: c.open ? 1 : 0.6,
                               }}>
                                 {/* 🏷️ ป้ายขั้นมุมซ้ายบน */}
                                 <span style={{ position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#0d2018", background: "#f5d24a", borderRadius: 5, padding: "0 4px" }}>ขั้น {c.tier}</span>
@@ -59268,10 +59280,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                                 ) : upNote ? (
                                   <span style={{ position: "absolute", top: 2, right: 3, fontSize: 8, fontWeight: 900, color: DD.maxed ? "#ffd76a" : "#9ab8a8", background: "rgba(0,0,0,0.35)", borderRadius: 5, padding: "0 4px" }}>{upNote}</span>
                                 ) : null)}
-                                <div style={{ fontSize: 25, marginTop: 7, filter: c.open ? "none" : "grayscale(1)" }}>{c.open ? c.sk.emoji : "🔒"}</div>
-                                <div style={{ fontSize: 9.5, fontWeight: 800, color: c.open ? "#d8f0e2" : "#7f9d8e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>{c.sk.name}</div>
+                                {/* ⭕ ไอคอนในวงแหวนเลเวล (วงแหวนเติมตามเลเวลวิชา/เลเวลสูงสุด) */}
+                                <div style={{ width: 46, height: 46, margin: "6px auto 3px", borderRadius: "50%", padding: 3, boxSizing: "border-box",
+                                  background: c.open && DD ? `conic-gradient(${DD.maxed ? "#ffd24a" : TC[0]} ${Math.round((DD.rank / Math.max(1, DD.maxR)) * 100)}%, rgba(255,255,255,0.12) 0)` : "rgba(255,255,255,0.08)" }}>
+                                  <div style={{ width: "100%", height: "100%", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+                                    background: c.open ? `radial-gradient(circle at 35% 30%, #fff, ${TC[0]}cc 70%)` : "radial-gradient(circle, #3a3656, #1c1a30)", filter: c.open ? "none" : "grayscale(1)" }}>{c.open ? c.sk.emoji : "🔒"}</div>
+                                </div>
+                                <div style={{ fontSize: 9.5, fontWeight: 900, color: c.open ? "#fff" : "#8a86a6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px", textShadow: c.open ? "0 1px 2px rgba(0,0,0,0.6)" : "none" }}>{c.sk.name}</div>
                                 {/* 🔢 ปลดแล้วโชว์เลเวลท่า · ยังไม่ปลดโชว์เลเวลที่ต้องมี */}
-                                <div style={{ fontSize: 9, fontWeight: 900, color: c.open ? "#9fe8c0" : "#e0a05a" }}>
+                                <div style={{ fontSize: 9, fontWeight: 900, color: c.open ? (DD && DD.maxed ? "#ffd76a" : "#c8f0ff") : "#ffb07a" }}>
                                   {c.open ? `Lv.${c.rank}`
                                     : ((ui.level || 1) >= c.needLv ? "🔗 ยังไม่ครบเงื่อนไข" : `Lv.${c.needLv}`)}
                                 </div>
@@ -59289,8 +59306,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         const on = (ui.skillMode || "basic") === k;
                         return <button key={k} onClick={() => { G.setSkillMode(k); setUi((u) => ({ ...u, boardTick: (u.boardTick || 0) + 1, boardPick: null })); }} style={{
                           flex: 1, padding: "7px 0", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-                          fontSize: 11, fontWeight: 800, color: on ? "#0d2018" : "#8fbfa6",
-                          background: on ? "linear-gradient(90deg,#7fd0a0,#4f9a76)" : "rgba(255,255,255,0.06)",
+                          fontSize: 11, fontWeight: 900, color: on ? "#3a2408" : "#b8b0e0",
+                          background: on ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.07)", boxShadow: on ? "0 3px 0 #9a6a10" : "none",
                         }}>{lbl}</button>;
                       })}
                     </div>
@@ -59298,14 +59315,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 </div>
 
                 {/* ── แผงรายละเอียดของท่าที่เลือก ── */}
-                <div style={{ flex: wide ? 1 : "none", minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid #35594a", borderRadius: 13, padding: "10px 11px" }}>
+                <div style={{ flex: wide ? 1 : "none", minWidth: 0, background: "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))", border: "1.5px solid #f5c54266", borderRadius: 16, padding: "10px 11px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
                   {!D ? (
                     <div style={{ fontSize: 11, color: "#7fae97", textAlign: "center", padding: "18px 0" }}>แตะการ์ดท่าทางซ้ายเพื่อดูรายละเอียด</div>
                   ) : (
                     <>
-                      <div style={{ textAlign: "center", marginBottom: 7 }}>
-                        <div style={{ fontSize: 30 }}>{D.open ? D.emoji : "🔒"}</div>
-                        <div style={{ fontSize: 13.5, fontWeight: 900, color: "#ffe9a0" }}>{D.name}</div>
+                      <div style={{ textAlign: "center", marginBottom: 8, margin: "-10px -11px 8px", padding: "12px 10px 9px", borderRadius: "14px 14px 0 0", background: "radial-gradient(90% 100% at 50% 0%, rgba(245,197,66,0.35), transparent 75%)" }}>
+                        <div style={{ width: 58, height: 58, margin: "0 auto 4px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, background: D.open ? "radial-gradient(circle at 35% 30%, #fff, #f5c542 72%)" : "radial-gradient(circle,#3a3656,#1c1a30)", boxShadow: D.open ? "0 0 18px rgba(245,197,66,0.8)" : "none", border: "2px solid rgba(255,255,255,0.7)" }}>{D.open ? D.emoji : "🔒"}</div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: "#fff4d0", textShadow: "0 0 8px rgba(255,210,120,0.6)" }}>{D.name}</div>
                         <div style={{ fontSize: 9.5, fontWeight: 800, color: "#7fae97" }}>{D.tierEmoji} ขั้น {D.tier} · {D.tierName}</div>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 10.5, marginBottom: 8 }}>
@@ -59351,7 +59368,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         cursor: (D.open && !D.maxed && !D.atCap && D.canPay) ? "pointer" : "not-allowed",
                         fontSize: 12.5, fontWeight: 900,
                         color: (D.open && !D.maxed && !D.atCap && D.canPay) ? "#0d2018" : "#6f8f7f",
-                        background: (D.open && !D.maxed && !D.atCap && D.canPay) ? "linear-gradient(90deg,#ffd76a,#f0a83a)" : "rgba(255,255,255,0.06)",
+                        background: (D.open && !D.maxed && !D.atCap && D.canPay) ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(255,255,255,0.06)",
+                        boxShadow: (D.open && !D.maxed && !D.atCap && D.canPay) ? "0 4px 0 #9a6a10, 0 0 14px rgba(255,210,74,0.55)" : "none",
                       }}>
                         {!D.open ? `🔒 ต้องเลเวล ${D.needLv}` : D.maxed ? `⭐ เต็ม Lv.${D.maxR}` : D.atCap ? "🔒 อัพเลเวลตัวละครก่อน"
                           : !D.canPay ? `⚡ แต้มสกิลไม่พอ (ต้อง ${D.cost})` : `⬆️ อัปเกรดเป็น Lv.${D.rank + 1} (⚡ ${D.cost})`}
