@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v662";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v663";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -59222,7 +59222,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               <div style={{ ...SKILL_DARK, background: "linear-gradient(180deg,#12261f,#0c1a16)", border: "1.5px solid #3f7a5e" }}>
               <div style={{ fontSize: 15, fontWeight: 900, color: "#9fe8c0", marginBottom: 2 }}>📖 วิชาสกิล</div>
               <div style={{ fontSize: 10, color: "#7fae97", marginBottom: 9 }}>
-                ปลดล็อกไล่เป็นขั้น — ขั้นสูงขึ้นต้องเลเวลสูงขึ้น · แตะการ์ดเพื่อดูรายละเอียด · ⚡ แต้มสกิล {ui.sp || 0}
+                ปลดล็อกไล่เป็นขั้น — ขั้นสูงขึ้นต้องเลเวลสูงขึ้น · แตะ ＋ บนการ์ดเพื่ออัปสกิลทันที · แตะการ์ดเพื่อดูรายละเอียด · ⚡ แต้มสกิล {ui.sp || 0}
               </div>
 
               <div style={{ display: wide ? "flex" : "block", gap: 12, alignItems: "flex-start" }}>
@@ -59247,6 +59247,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           )}
                           {row.cards.map((c) => {
                             const on = c.id === pickId;
+                            // ➕ อัปสกิลได้จากการ์ดเลย ไม่ต้องเลื่อนลงไปกดปุ่มในแผงรายละเอียด
+                            const DD = c.open && G.skillDetail ? G.skillDetail(c.id) : null;
+                            const canUp = !!(DD && DD.open && !DD.maxed && !DD.atCap && DD.canPay);
+                            const upNote = !DD ? "" : DD.maxed ? "⭐ เต็ม" : DD.atCap ? "🔒 เพดาน" : !DD.canPay ? `⚡${DD.cost}` : "";
                             return (
                               <button key={c.id} onClick={() => setUi((u) => ({ ...u, boardPick: c.id }))} style={{
                                 position: "relative", padding: "8px 3px 6px", borderRadius: 11, cursor: "pointer", fontFamily: font, textAlign: "center",
@@ -59256,6 +59260,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                               }}>
                                 {/* 🏷️ ป้ายขั้นมุมซ้ายบน */}
                                 <span style={{ position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#0d2018", background: "#f5d24a", borderRadius: 5, padding: "0 4px" }}>ขั้น {c.tier}</span>
+                                {c.open && (canUp ? (
+                                  <span role="button" title={`อัปเกรดเป็น Lv.${DD.rank + 1} (⚡ ${DD.cost})`} onClick={(e) => { e.stopPropagation(); G.boardUpgrade(c.id); setUi((u) => ({ ...u, boardPick: c.id })); }} style={{
+                                    position: "absolute", top: -7, right: -6, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 19, fontWeight: 900, lineHeight: 1, color: "#1a3a10", cursor: "pointer", zIndex: 2,
+                                    background: "radial-gradient(circle at 35% 30%, #fff9c0, #ffd24a 55%, #e09a1a)", border: "2px solid #fff", boxShadow: "0 3px 0 #9a6a10, 0 0 10px rgba(255,210,74,0.8)" }}>＋</span>
+                                ) : upNote ? (
+                                  <span style={{ position: "absolute", top: 2, right: 3, fontSize: 8, fontWeight: 900, color: DD.maxed ? "#ffd76a" : "#9ab8a8", background: "rgba(0,0,0,0.35)", borderRadius: 5, padding: "0 4px" }}>{upNote}</span>
+                                ) : null)}
                                 <div style={{ fontSize: 25, marginTop: 7, filter: c.open ? "none" : "grayscale(1)" }}>{c.open ? c.sk.emoji : "🔒"}</div>
                                 <div style={{ fontSize: 9.5, fontWeight: 800, color: c.open ? "#d8f0e2" : "#7f9d8e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>{c.sk.name}</div>
                                 {/* 🔢 ปลดแล้วโชว์เลเวลท่า · ยังไม่ปลดโชว์เลเวลที่ต้องมี */}
