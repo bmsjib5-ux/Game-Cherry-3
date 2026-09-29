@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v663"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v664"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -97801,106 +97801,123 @@ function CherryAdventure() {
             ui.treeOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("treeOpen"),
                 skillTabs("treeOpen"),
-                React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#4a9a5a", marginBottom: 2 } }, "\uD83C\uDF33 \u0E2A\u0E01\u0E34\u0E25\u0E15\u0E49\u0E19\u0E44\u0E21\u0E49 (\u0E1E\u0E32\u0E2A\u0E0B\u0E35\u0E1F)"),
-                React.createElement("div", { style: { fontSize: 11, color: "#7a8a6a", marginBottom: 8 } },
-                    "\u0E21\u0E35\u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25 \u26A1 ",
-                    React.createElement("b", { style: { color: "#4a9a5a" } }, ui.sp || 0),
-                    " \u00B7 \u0E1B\u0E25\u0E14\u0E25\u0E47\u0E2D\u0E01\u0E42\u0E2B\u0E19\u0E14\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E04\u0E48\u0E32\u0E16\u0E32\u0E27\u0E23"),
-                (() => {
-                    const nodes = [...SKILL_TREE.common];
-                    const cls = (G && G.cls) || ui.cls;
-                    const cn = SKILL_TREE[cls];
-                    if (cn)
-                        nodes.push(cn);
-                    const tn = ui.treeNodes || {};
-                    return nodes.map((node) => {
-                        const rank = tn[node.id] || 0;
-                        const max = node.max || 1;
-                        const isClass = cn && node.id === cn.id;
-                        const maxed = rank >= max;
-                        const lvLocked = node.reqLv && ((ui.level != null ? ui.level : (G && G.player ? G.player.level : 1)) < node.reqLv);
-                        const preLocked = node.req && !(tn[node.req] > 0);
-                        const locked = lvLocked || preLocked;
-                        // 🎚️ this node's rank is also capped by character level
-                        const tcap = Math.min(max, ui.treeCap || 1);
-                        const capped = !maxed && rank >= tcap;
-                        const can = (ui.sp || 0) >= node.cost && !maxed && !locked && !capped;
-                        const preName = node.req ? (nodes.find((n) => n.id === node.req) || {}).name : "";
-                        return (React.createElement("div", { key: node.id, style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, background: rank > 0 ? "#eef8ee" : isClass ? "#fef6e8" : locked ? "#f2f0ee" : "#f7f7f2", borderRadius: 10, padding: "7px 9px", border: rank > 0 ? "1.5px solid #6ac09a" : isClass ? "1.5px solid #e8c070" : "1px solid #e8e8de", opacity: locked ? 0.7 : 1 } },
+                React.createElement("div", { style: { borderRadius: 18, overflow: "hidden", border: "2px solid #2a5a3a", boxShadow: "0 0 0 2px #f5c542, 0 8px 22px rgba(10,40,20,0.4)", background: "radial-gradient(120% 60% at 50% 0%, #1f4a30 0%, #10261a 55%, #0a1810 100%)" } },
+                    React.createElement("div", { style: { position: "relative", padding: "12px 12px 10px", background: "linear-gradient(180deg,rgba(90,200,120,0.18),rgba(0,0,0,0))", borderBottom: "1px solid rgba(120,220,150,0.18)" } },
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } },
+                            React.createElement("span", { style: { width: 44, height: 44, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, background: "radial-gradient(circle,#c8ffd8,#3aa060 70%)", boxShadow: "0 0 14px #5ad08a", border: "2px solid rgba(255,255,255,0.8)" } }, "\uD83C\uDF33"),
                             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                                React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: isClass ? "#b08020" : "#5a6a4a" } },
-                                    node.emoji,
-                                    " ",
-                                    node.name,
-                                    isClass && " ⭐",
-                                    React.createElement("span", { style: { fontSize: 10, color: "#8aa07a", marginLeft: 4 } },
-                                        "Lv.",
-                                        rank,
-                                        "/",
-                                        max)),
-                                React.createElement("div", { style: { fontSize: 9.5, color: "#8a9a7a" } }, node.desc),
-                                lvLocked && React.createElement("div", { style: { fontSize: 9.5, color: "#d06a4a", fontWeight: 700 } },
-                                    "\uD83D\uDD12 \u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25 ",
-                                    node.reqLv),
-                                !lvLocked && preLocked && React.createElement("div", { style: { fontSize: 9.5, color: "#d06a4a", fontWeight: 700 } },
-                                    "\uD83D\uDD12 \u0E15\u0E49\u0E2D\u0E07\u0E1B\u0E25\u0E14 \"",
-                                    preName,
-                                    "\" \u0E01\u0E48\u0E2D\u0E19"),
-                                !locked && capped && React.createElement("div", { style: { fontSize: 9.5, color: "#c07a10", fontWeight: 700 } },
-                                    "\uD83C\uDF9A\uFE0F \u0E40\u0E25\u0E40\u0E27\u0E25\u0E08\u0E33\u0E01\u0E31\u0E14\u0E17\u0E35\u0E48 Lv.",
-                                    tcap,
-                                    " \u00B7 \u0E16\u0E36\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25 ",
-                                    rank * 8,
-                                    " \u0E2D\u0E31\u0E1E\u0E15\u0E48\u0E2D\u0E44\u0E14\u0E49"),
-                                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 3, marginTop: 3 } }, Array.from({ length: max }).map((_, i) => (React.createElement("div", { key: i, style: { width: 12, height: 5, borderRadius: 3, background: i < rank ? "#4a9a5a" : "#dcdcd2" } }))))),
-                            React.createElement("button", { onClick: () => { G.unlockNode(node.id); }, disabled: !can, style: { border: "none", borderRadius: 8, padding: "6px 10px", marginLeft: 6, flexShrink: 0, whiteSpace: "nowrap", cursor: can ? "pointer" : "not-allowed", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: maxed ? "#fff" : can ? "#fff" : "#a8a89a", background: maxed ? "#6ac09a" : can ? "#4a9a5a" : "#e8e8de" } }, maxed ? "MAX" : locked ? "🔒" : `⚡${node.cost}`)));
-                    });
-                })(),
-                (() => {
-                    const cls = (G && G.cls) || ui.cls;
-                    const br = TALENTS[cls];
-                    if (!br)
-                        return null;
-                    const T = ui.talents || {};
-                    const lv = ui.level != null ? ui.level : (G && G.player ? G.player.level : 1);
-                    const total = br.reduce((a, b) => a + b.nodes.length, 0), have = br.reduce((a, b) => a + b.nodes.filter((n) => T[n.id]).length, 0);
-                    return (React.createElement("div", { style: { marginTop: 10 } },
-                        kdiv,
-                        React.createElement("div", { style: { fontSize: 14, fontWeight: 900, color: "#b07a20" } },
-                            "\uD83D\uDCDC \u0E15\u0E33\u0E23\u0E32\u0E27\u0E34\u0E0A\u0E32",
-                            (CLASSES[cls] || {}).name ? ` ${(CLASSES[cls] || {}).name}` : "",
-                            " ",
-                            React.createElement("span", { style: { fontSize: 10.5, color: "#a09070" } },
-                                have,
-                                "/",
-                                total)),
-                        React.createElement("div", { style: { fontSize: 10.5, color: "#8a8a6a", marginBottom: 8 } }, "3 \u0E2A\u0E32\u0E22 \u00D7 5 \u0E27\u0E34\u0E0A\u0E32 \u00B7 \u0E1B\u0E25\u0E14\u0E15\u0E32\u0E21\u0E25\u0E33\u0E14\u0E31\u0E1A\u0E43\u0E19\u0E2A\u0E32\u0E22 \u00B7 \u0E27\u0E34\u0E0A\u0E32\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E27\u0E34\u0E18\u0E35\u0E40\u0E25\u0E48\u0E19 \u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48\u0E41\u0E04\u0E48 +% \u00B7 \u0E43\u0E0A\u0E49\u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25 \u26A1 \u0E40\u0E14\u0E35\u0E22\u0E27\u0E01\u0E31\u0E19"),
-                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 } }, br.map((b) => (React.createElement("div", { key: b.id, style: { background: "#fbf9f2", border: `1px solid ${b.col}44`, borderRadius: 12, padding: 6 } },
-                            React.createElement("div", { style: { fontSize: 11.5, fontWeight: 900, color: b.col, textAlign: "center", marginBottom: 5 } },
-                                b.emoji,
-                                " ",
-                                b.name),
-                            b.nodes.map((n, i) => {
-                                const got = !!T[n.id];
-                                const prevOk = i === 0 || !!T[b.nodes[i - 1].id];
-                                const lvOk = lv >= n.reqLv;
-                                const can = !got && prevOk && lvOk && (ui.sp || 0) >= n.cost;
-                                const dim = !got && !prevOk;
-                                return (React.createElement("div", { key: n.id, style: { position: "relative", marginBottom: 5 } },
-                                    i > 0 && React.createElement("div", { style: { position: "absolute", left: "50%", top: -5, width: 2, height: 5, background: got ? b.col : "#ddd8cc" } }),
-                                    React.createElement("button", { onClick: () => G.unlockTalent(n.id), disabled: !can && !got, title: n.desc, style: {
-                                            width: "100%", textAlign: "left", border: got ? `2px solid ${b.col}` : `1px solid ${can ? b.col : "#e2ddd0"}`, borderRadius: 9, padding: "5px 6px",
-                                            background: got ? `${b.col}22` : can ? "#fff" : "#f4f2ea", cursor: can ? "pointer" : "default", fontFamily: font, opacity: dim ? 0.6 : 1,
+                                React.createElement("div", { style: { fontSize: 16, fontWeight: 900, color: "#dfffe8", textShadow: "0 2px 0 rgba(0,0,0,0.45)" } }, "\u0E15\u0E49\u0E19\u0E44\u0E21\u0E49\u0E17\u0E31\u0E01\u0E29\u0E30"),
+                                React.createElement("div", { style: { fontSize: 9.5, color: "#8fc8a0", fontWeight: 700 } }, "\u0E1E\u0E32\u0E2A\u0E0B\u0E35\u0E1F\u0E16\u0E32\u0E27\u0E23 \u00B7 \u0E41\u0E15\u0E30\u0E42\u0E2B\u0E19\u0E14\u0E2A\u0E35\u0E17\u0E2D\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E1B\u0E25\u0E14/\u0E2D\u0E31\u0E1B")),
+                            React.createElement("div", { style: { textAlign: "center", padding: "4px 11px", borderRadius: 12, background: (ui.sp || 0) > 0 ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.35)", boxShadow: (ui.sp || 0) > 0 ? "0 3px 0 #9a6a10, 0 0 12px rgba(255,210,74,0.6)" : "none", marginRight: 30 } },
+                                React.createElement("div", { style: { fontSize: 8.5, fontWeight: 900, color: (ui.sp || 0) > 0 ? "#5a3a08" : "#8fc8a0" } }, "\u0E41\u0E15\u0E49\u0E21\u0E2A\u0E01\u0E34\u0E25"),
+                                React.createElement("div", { style: { fontSize: 17, fontWeight: 900, color: (ui.sp || 0) > 0 ? "#3a2408" : "#dfffe8", lineHeight: 1.05 } },
+                                    "\u26A1 ",
+                                    ui.sp || 0)))),
+                    React.createElement("div", { style: { padding: "12px 10px 8px" } },
+                        (() => {
+                            const nodes = [...SKILL_TREE.common];
+                            const cls = (G && G.cls) || ui.cls;
+                            const cn = SKILL_TREE[cls];
+                            if (cn)
+                                nodes.push(cn);
+                            const tn = ui.treeNodes || {};
+                            return nodes.map((node, ni) => {
+                                const rank = tn[node.id] || 0;
+                                const max = node.max || 1;
+                                const isClass = cn && node.id === cn.id;
+                                const maxed = rank >= max;
+                                const lvLocked = node.reqLv && ((ui.level != null ? ui.level : (G && G.player ? G.player.level : 1)) < node.reqLv);
+                                const preLocked = node.req && !(tn[node.req] > 0);
+                                const locked = lvLocked || preLocked;
+                                // 🎚️ this node's rank is also capped by character level
+                                const tcap = Math.min(max, ui.treeCap || 1);
+                                const capped = !maxed && rank >= tcap;
+                                const can = (ui.sp || 0) >= node.cost && !maxed && !locked && !capped;
+                                const preName = node.req ? (nodes.find((n) => n.id === node.req) || {}).name : "";
+                                const pc = Math.round((rank / max) * 100);
+                                const col = maxed ? "#ffd24a" : isClass ? "#ffb04a" : rank > 0 ? "#5ae08a" : can ? "#ffd24a" : "#5a6a60";
+                                return (React.createElement("div", { key: node.id, style: { position: "relative", display: "flex", alignItems: "center", gap: 10, marginBottom: 8, paddingLeft: 2 } },
+                                    ni > 0 && React.createElement("div", { style: { position: "absolute", left: 29, top: -10, width: 4, height: 14, borderRadius: 2, background: rank > 0 || (tn[nodes[ni - 1].id] || 0) > 0 ? "linear-gradient(180deg,#5ae08a,#2a8a4a)" : "#2a3a30" } }),
+                                    React.createElement("button", { onClick: () => { if (can)
+                                            G.unlockNode(node.id);
+                                        else if (locked)
+                                            G.toast(lvLocked ? `🔒 ต้องเลเวล ${node.reqLv}` : `🔒 ต้องปลด "${preName}" ก่อน`); }, title: node.desc, style: {
+                                            position: "relative", flex: "none", width: 58, height: 58, borderRadius: "50%", border: "none", padding: 0, cursor: can ? "pointer" : "default",
+                                            background: `conic-gradient(${col} ${pc}%, rgba(255,255,255,0.1) 0)`, boxShadow: can ? "0 0 14px rgba(255,210,74,0.85)" : rank > 0 ? `0 0 10px ${col}88` : "none",
+                                            animation: can ? "todoPop 2.2s ease-in-out infinite" : "none"
                                         } },
-                                        React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: got ? b.col : "#5a5a4a", display: "flex", justifyContent: "space-between", gap: 4 } },
-                                            React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
-                                                n.emoji,
-                                                " ",
-                                                n.name),
-                                            React.createElement("span", { style: { flexShrink: 0, fontSize: 10, color: got ? b.col : !lvOk ? "#d06a4a" : "#8a8a6a" } }, got ? "✓" : !lvOk ? `Lv.${n.reqLv}` : `⚡${n.cost}`)),
-                                        React.createElement("div", { style: { fontSize: 9.5, color: "#7a7a62", lineHeight: 1.35, marginTop: 2 } }, n.desc))));
-                            })))))));
-                })(),
+                                        React.createElement("span", { style: { position: "absolute", inset: 5, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24,
+                                                background: locked ? "radial-gradient(circle,#3a4640,#1e2622)" : rank > 0 || can ? `radial-gradient(circle at 35% 30%, #fff, ${col} 75%)` : "radial-gradient(circle,#54645a,#2a342e)",
+                                                filter: locked ? "grayscale(1)" : "none", border: "2px solid rgba(255,255,255,0.35)" } }, locked ? "🔒" : node.emoji),
+                                        isClass && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, fontSize: 14 } }, "\u2B50"),
+                                        can && React.createElement("span", { style: { position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%,#fff9c0,#f0a82a)", border: "2px solid #fff", color: "#3a2408", fontSize: 14, fontWeight: 900, lineHeight: "18px", boxShadow: "0 2px 0 #9a6a10" } }, "\uFF0B")),
+                                    React.createElement("div", { style: { flex: 1, minWidth: 0, borderRadius: 12, padding: "7px 9px", background: rank > 0 ? "linear-gradient(90deg,rgba(90,224,138,0.18),rgba(255,255,255,0.03))" : "rgba(255,255,255,0.05)", border: `1px solid ${rank > 0 ? "rgba(90,224,138,0.35)" : can ? "rgba(255,210,74,0.45)" : "rgba(255,255,255,0.08)"}` } },
+                                        React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 6 } },
+                                            React.createElement("span", { style: { fontSize: 12.5, fontWeight: 900, color: isClass ? "#ffcf7a" : locked ? "#8a9a90" : "#e8fff0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, node.name),
+                                            React.createElement("span", { style: { fontSize: 10.5, fontWeight: 900, color: maxed ? "#ffd24a" : "#8fe8a8" } }, maxed ? "MAX" : `Lv.${rank}/${max}`),
+                                            React.createElement("span", { style: { marginLeft: "auto", fontSize: 10, fontWeight: 900, color: can ? "#ffd76a" : "#7a8a80", whiteSpace: "nowrap" } }, maxed ? "" : `⚡${node.cost}`)),
+                                        React.createElement("div", { style: { fontSize: 9.5, color: "#a8c8b0", lineHeight: 1.35 } }, node.desc),
+                                        lvLocked && React.createElement("div", { style: { fontSize: 9.5, color: "#ff9a6a", fontWeight: 800 } },
+                                            "\uD83D\uDD12 \u0E15\u0E49\u0E2D\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25 ",
+                                            node.reqLv),
+                                        !lvLocked && preLocked && React.createElement("div", { style: { fontSize: 9.5, color: "#ff9a6a", fontWeight: 800 } },
+                                            "\uD83D\uDD12 \u0E15\u0E49\u0E2D\u0E07\u0E1B\u0E25\u0E14 \"",
+                                            preName,
+                                            "\" \u0E01\u0E48\u0E2D\u0E19"),
+                                        !locked && capped && React.createElement("div", { style: { fontSize: 9.5, color: "#ffc05a", fontWeight: 800 } },
+                                            "\uD83C\uDF9A\uFE0F \u0E08\u0E33\u0E01\u0E31\u0E14\u0E17\u0E35\u0E48 Lv.",
+                                            tcap,
+                                            " \u00B7 \u0E16\u0E36\u0E07\u0E40\u0E25\u0E40\u0E27\u0E25 ",
+                                            rank * 8,
+                                            " \u0E2D\u0E31\u0E1E\u0E15\u0E48\u0E2D\u0E44\u0E14\u0E49"))));
+                            });
+                        })(),
+                        (() => {
+                            const cls = (G && G.cls) || ui.cls;
+                            const br = TALENTS[cls];
+                            if (!br)
+                                return null;
+                            const T = ui.talents || {};
+                            const lv = ui.level != null ? ui.level : (G && G.player ? G.player.level : 1);
+                            const total = br.reduce((a, b) => a + b.nodes.length, 0), have = br.reduce((a, b) => a + b.nodes.filter((n) => T[n.id]).length, 0);
+                            return (React.createElement("div", { style: { marginTop: 12 } },
+                                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } },
+                                    React.createElement("div", { style: { flex: 1, height: 1, background: "linear-gradient(90deg,transparent,#f5c54288)" } }),
+                                    React.createElement("div", { style: { fontSize: 13.5, fontWeight: 900, color: "#ffd76a", textShadow: "0 0 8px rgba(255,200,60,0.5)" } },
+                                        "\uD83D\uDCDC \u0E15\u0E33\u0E23\u0E32\u0E27\u0E34\u0E0A\u0E32",
+                                        (CLASSES[cls] || {}).name ? ` ${(CLASSES[cls] || {}).name}` : "",
+                                        " ",
+                                        React.createElement("span", { style: { fontSize: 10.5, color: "#c8b070" } },
+                                            have,
+                                            "/",
+                                            total)),
+                                    React.createElement("div", { style: { flex: 1, height: 1, background: "linear-gradient(90deg,#f5c54288,transparent)" } })),
+                                React.createElement("div", { style: { fontSize: 9.5, color: "#a8c8b0", marginBottom: 8, textAlign: "center" } }, "3 \u0E2A\u0E32\u0E22 \u00D7 5 \u0E27\u0E34\u0E0A\u0E32 \u00B7 \u0E1B\u0E25\u0E14\u0E44\u0E25\u0E48\u0E08\u0E32\u0E01\u0E1A\u0E19\u0E25\u0E07\u0E25\u0E48\u0E32\u0E07 \u00B7 \u0E27\u0E34\u0E0A\u0E32\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E27\u0E34\u0E18\u0E35\u0E40\u0E25\u0E48\u0E19 \u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48\u0E41\u0E04\u0E48 +%"),
+                                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6 } }, br.map((b) => (React.createElement("div", { key: b.id, style: { borderRadius: 14, padding: "7px 5px", background: `linear-gradient(180deg, ${b.col}33, rgba(0,0,0,0.25))`, border: `1.5px solid ${b.col}77` } },
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#fff", textAlign: "center", marginBottom: 7, textShadow: `0 0 6px ${b.col}` } },
+                                        b.emoji,
+                                        " ",
+                                        b.name),
+                                    b.nodes.map((n, i) => {
+                                        const got = !!T[n.id];
+                                        const prevOk = i === 0 || !!T[b.nodes[i - 1].id];
+                                        const lvOk = lv >= n.reqLv;
+                                        const can = !got && prevOk && lvOk && (ui.sp || 0) >= n.cost;
+                                        const dim = !got && !prevOk;
+                                        return (React.createElement("div", { key: n.id, style: { position: "relative", display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 6 } },
+                                            i > 0 && React.createElement("div", { style: { width: 3, height: 8, marginTop: -6, marginBottom: 1, borderRadius: 2, background: got || prevOk ? b.col : "#3a4640" } }),
+                                            React.createElement("button", { onClick: () => (can ? G.unlockTalent(n.id) : G.toast(`${n.emoji} ${n.name} — ${n.desc}${got ? "" : !prevOk ? " · 🔒 ปลดวิชาก่อนหน้าก่อน" : !lvOk ? ` · 🔒 ต้องเลเวล ${n.reqLv}` : ` · ⚡ ต้องใช้ ${n.cost} แต้ม`}`)), title: n.desc, style: {
+                                                    width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "5px 3px 4px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+                                                    border: got ? `2px solid ${b.col}` : can ? "2px solid #ffd24a" : "1px solid rgba(255,255,255,0.1)",
+                                                    background: got ? `radial-gradient(circle at 50% 25%, ${b.col}88, rgba(0,0,0,0.3))` : can ? "radial-gradient(circle at 50% 25%, rgba(255,210,74,0.35), rgba(0,0,0,0.3))" : "rgba(0,0,0,0.3)",
+                                                    boxShadow: got ? `0 0 10px ${b.col}88` : can ? "0 0 12px rgba(255,210,74,0.7)" : "none", opacity: dim ? 0.5 : 1, animation: can ? "todoPop 2.2s ease-in-out infinite" : "none"
+                                                } },
+                                                React.createElement("span", { style: { fontSize: 20, filter: got || can ? "none" : "grayscale(0.8)" } }, n.emoji),
+                                                React.createElement("span", { style: { fontSize: 9.5, fontWeight: 900, color: got ? "#fff" : "#d8e8dc", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, n.name),
+                                                React.createElement("span", { style: { fontSize: 9, fontWeight: 900, color: got ? "#aaffc8" : !lvOk ? "#ff9a6a" : can ? "#ffd76a" : "#8a9a90" } }, got ? "✓ ปลดแล้ว" : !lvOk ? `🔒 Lv.${n.reqLv}` : `⚡${n.cost}`))));
+                                    }))))),
+                                React.createElement("div", { style: { fontSize: 9, color: "#8ab098", textAlign: "center", marginTop: 4 } }, "\u0E41\u0E15\u0E30\u0E27\u0E34\u0E0A\u0E32\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E14\u0E39\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14 \u00B7 \u0E01\u0E23\u0E2D\u0E1A\u0E17\u0E2D\u0E07\u0E01\u0E30\u0E1E\u0E23\u0E34\u0E1A = \u0E1B\u0E25\u0E14\u0E44\u0E14\u0E49\u0E15\u0E2D\u0E19\u0E19\u0E35\u0E49")));
+                        })())),
                 React.createElement("div", { style: { fontSize: 10, color: "#a3a396", marginTop: 6, textAlign: "center" } }, "\u0E2D\u0E31\u0E1E\u0E0B\u0E49\u0E33\u0E44\u0E14\u0E49\u0E08\u0E19\u0E40\u0E15\u0E47\u0E21 \u00B7 \u0E42\u0E2B\u0E19\u0E14 \u2B50 \u0E1B\u0E23\u0E30\u0E08\u0E33\u0E2D\u0E32\u0E0A\u0E35\u0E1E \u00B7 \u0E1A\u0E32\u0E07\u0E42\u0E2B\u0E19\u0E14\u0E15\u0E49\u0E2D\u0E07\u0E1B\u0E25\u0E14\u0E42\u0E2B\u0E19\u0E14\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32"))),
             ui.constOpen && (React.createElement("div", { style: SKILL_SHELL },
                 closeBtn("constOpen"),
