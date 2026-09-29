@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v667";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v668";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -67102,27 +67102,47 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             <div style={{
               position: "absolute", ...MODAL_POS, zIndex: 50, width: "96%", maxWidth: 460,
               maxHeight: "calc(84vh - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", display: "flex", flexDirection: "column",
-              ...CHIBI_FRAME, borderRadius: 16, padding: 12,
-              boxShadow: MODAL_SHADOW,
+              borderRadius: 18, padding: 12, fontFamily: font,
+              background: "radial-gradient(120% 45% at 50% 0%, #2f7a5a 0%, #184a38 48%, #0c241c 100%)",
+              border: "2px solid #123a2c", boxShadow: "0 0 0 2px #f5c542, 0 10px 28px rgba(0,0,0,0.5)",
             }}>
               {closeBtn("panelOpen")}
-              <div style={{ display: "flex", gap: 6, marginBottom: 6, flexShrink: 0 }}>
-                <button onClick={() => setUi((u) => ({ ...u, dexTab: false }))} style={{
-                  flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
-                  fontSize: 12, fontWeight: 800, color: !ui.dexTab ? "#fff" : "#5a7a4a",
-                  background: !ui.dexTab ? "#7ba05b" : "#eaf5e0",
-                }}>📦 กล่อง ({G.petBagUsed()}/{G.petCap()})</button>
-                <button onClick={() => setUi((u) => ({ ...u, dexTab: true }))} style={{
-                  flex: 1, padding: "6px 0", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font,
-                  fontSize: 12, fontWeight: 800, color: ui.dexTab ? "#fff" : "#5a7a4a",
-                  background: ui.dexTab ? "#7ba05b" : "#eaf5e0",
-                }}>📖 สมุดภาพ</button>
+              {/* header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexShrink: 0 }}>
+                <span style={{ width: 44, height: 44, borderRadius: 14, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 25, background: "radial-gradient(circle,#e8fff0,#4ac08a 72%)", boxShadow: "0 0 14px #5ae0a0", border: "2px solid rgba(255,255,255,0.85)" }}>🐾</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#eafff2", textShadow: "0 0 10px rgba(120,240,170,0.6), 0 2px 0 rgba(0,0,0,0.4)" }}>สัตว์เลี้ยง</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: "#a8dcc0" }}>⚡ แต้มสกิลเพ็ต {ui.petSp || 0} · 👥 ทีม {(ui.team || []).length}/3</div>
+                </div>
+                <div style={{ textAlign: "center", padding: "4px 11px", borderRadius: 12, background: "rgba(0,0,0,0.35)", marginRight: 30 }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 900, color: "#a8dcc0" }}>กล่อง</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.05 }}>{G.petBagUsed()}/{G.petCap()}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginBottom: 8, flexShrink: 0 }}>
+                {[[false, "📦", "กล่องสัตว์"], [true, "📖", "สมุดภาพ"]].map(([k, ic, nm]) => {
+                  const on = !!ui.dexTab === k;
+                  return (
+                    <button key={nm} onClick={() => setUi((u) => ({ ...u, dexTab: k }))} style={{
+                      flex: 1, padding: "8px 0", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 900,
+                      border: on ? "2px solid #fff4c0" : "2px solid rgba(255,255,255,0.12)",
+                      color: on ? "#3a2408" : "#cfe8da",
+                      background: on ? "linear-gradient(180deg,#ffe98a,#f0a82a)" : "rgba(0,0,0,0.3)",
+                      boxShadow: on ? "0 3px 0 #9a6a10" : "none",
+                    }}>{ic} {nm}</button>
+                  );
+                })}
               </div>
               {/* 🐄 ranch entry */}
               <button onClick={() => G.openRanch && G.openRanch()} style={{
-                position: "relative", flexShrink: 0, width: "100%", padding: "8px 0", marginBottom: 6, borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-                fontSize: 12.5, fontWeight: 800, color: "#fff", background: "linear-gradient(90deg,#e0a86a,#c9843e)", boxShadow: "0 3px 10px rgba(201,132,62,0.4)",
-              }}>🐄 ฟาร์มสัตว์เลี้ยง — ปล่อยเพ็ตหาทอง/EXP อัตโนมัติ{todoDot(TODO.ranch)}</button>
+                position: "relative", flexShrink: 0, width: "100%", padding: "9px 12px", marginBottom: 8, borderRadius: 12, cursor: "pointer", fontFamily: font,
+                display: "flex", alignItems: "center", gap: 9, textAlign: "left",
+                border: "2px solid #ffd79a", color: "#fff", background: "linear-gradient(180deg,#d8a060,#a8682c)", boxShadow: "0 3px 0 #6a3e14",
+              }}>
+                <span style={{ fontSize: 24 }}>🐄</span>
+                <span style={{ flex: 1 }}><b style={{ fontSize: 12.5, display: "block" }}>ฟาร์มสัตว์เลี้ยง</b><span style={{ fontSize: 9.5, fontWeight: 700, opacity: 0.92 }}>ปล่อยเพ็ตหาทอง/EXP อัตโนมัติ</span></span>
+                <span style={{ fontSize: 16, fontWeight: 900 }}>›</span>{todoDot(TODO.ranch)}
+              </button>
               {/* 📖 DEX tab: all species, caught or not */}
               {ui.dexTab ? (
                 <div style={{ overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" }}>
@@ -67131,29 +67151,33 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     const caughtCount = allIds.filter((id) => ui.col[id] || (ui.dexSeen && ui.dexSeen[id])).length;
                     return (
                       <>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: "#c09020", marginBottom: 6 }}>
-                          สะสมแล้ว {caughtCount}/{allIds.length} ชนิด {caughtCount === allIds.length ? "🏆 ครบทุกชนิด!" : ""}
+                        <div style={{ padding: "7px 10px", borderRadius: 12, background: "rgba(0,0,0,0.3)", marginBottom: 8 }}>
+                          <div style={{ display: "flex", fontSize: 11, fontWeight: 900, color: "#ffe98a", marginBottom: 4 }}>
+                            <span style={{ flex: 1 }}>📖 สะสมแล้ว {caughtCount}/{allIds.length} ชนิด {caughtCount === allIds.length ? "🏆 ครบทุกชนิด!" : ""}</span>
+                            <span>{Math.round((caughtCount / allIds.length) * 100)}%</span>
+                          </div>
+                          <div style={{ height: 7, borderRadius: 4, background: "rgba(0,0,0,0.4)", overflow: "hidden" }}><div style={{ width: `${(caughtCount / allIds.length) * 100}%`, height: "100%", background: "linear-gradient(90deg,#ffe98a,#f0a82a)" }} /></div>
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
                           {allIds.map((id) => {
                             const sp = SPECIES[id];
                             const got = !!ui.col[id] || !!(ui.dexSeen && ui.dexSeen[id]);
                             const rr = petRarity(id);
                             return (
                               <div key={id} style={{
-                                padding: "8px 6px", borderRadius: 10, textAlign: "center",
-                                background: got ? "#f0f9e8" : "#eee",
-                                border: got ? "2px solid " + rr.color : "2px solid transparent",
-                                boxShadow: got && sp.tier >= 5 ? "0 0 9px " + rr.color + "99" : "none",
+                                padding: "8px 4px", borderRadius: 12, textAlign: "center",
+                                background: got ? `radial-gradient(circle at 50% 30%, ${rr.color}44, rgba(0,0,0,0.35) 70%)` : "rgba(0,0,0,0.3)",
+                                border: got ? "2px solid " + rr.color : "2px solid rgba(255,255,255,0.08)",
+                                boxShadow: got && sp.tier >= 5 ? "0 0 10px " + rr.color + "aa" : "none",
                               }}>
                                 <div style={{ fontSize: 26, filter: got ? "none" : "grayscale(1) brightness(0.6)", opacity: got ? 1 : 0.5 }}>
                                   {got ? sp.emoji : "❓"}
                                 </div>
-                                <div style={{ fontSize: 11, fontWeight: 800, color: got ? "#5a7a4a" : "#a3a396" }}>
+                                <div style={{ fontSize: 10.5, fontWeight: 800, color: got ? "#fff" : "#6a7a70" }}>
                                   {got ? sp.name : "???"}
                                 </div>
                                 {got && <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name}</div>}
-                                {got && <div style={{ fontSize: 9, color: "#8a8a7a" }}>ธาตุ {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} · จับ {ui.col[id] || 0}</div>}
+                                {got && <div style={{ fontSize: 8.5, color: "#a8c8b8" }}>ธาตุ {(ELEM_META[PET_ELEM[id]] || {}).emoji || "❓"} · จับ {ui.col[id] || 0}</div>}
                               </div>
                             );
                           })}
@@ -67165,13 +67189,32 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               ) : (
               <div style={{ overflowY: "auto", flex: 1, margin: "0 -4px", padding: "0 4px" }}>
               {(ui.petBox || []).length === 0 && (
-                <div style={{ fontSize: 12.5, color: "#a3a396" }}>ยังไม่มีเลย ไปจับกันเถอะ!</div>
+                <div style={{ fontSize: 12.5, color: "#a8dcc0", textAlign: "center", padding: "18px 0" }}>🥚 ยังไม่มีเลย ไปจับกันเถอะ!</div>
               )}
               {(ui.petBox || []).length > 0 && (
-                <div style={{ background: "#eaf5e0", borderRadius: 10, padding: "6px 9px", marginBottom: 8, fontSize: 11, fontWeight: 700, color: "#5a7a4a" }}>
-                  👥 ทีม ({(ui.team || []).length}/3): {(ui.team || []).length ? (ui.team || []).map((iid) => { const tp = (ui.petBox || []).find((x) => x.i === iid); return tp ? SPECIES[tp.sp].emoji : ""; }).join(" ") : "ยังไม่มี — กด ➕ ทีม"}
-                  <span style={{ float: "right", color: "#7a9a5a" }}>📦 {G.petBagUsed()}/{G.petCap()} ช่อง</span>
-                  <div style={{ fontSize: 9.5, color: "#7a9a5a", fontWeight: 600, marginTop: 2 }}>ทุกตัวในทีมช่วยบัฟ · ตัวแรกเดินตาม · แต่ละตัวมี "พรสวรรค์" ประจำตัวไม่ซ้ำกัน</div>
+                <div style={{ borderRadius: 14, padding: "9px 10px", marginBottom: 8, background: "linear-gradient(170deg, rgba(255,255,255,0.07), rgba(0,0,0,0.28))", border: "1px solid rgba(255,255,255,0.12)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe98a", marginBottom: 7 }}>👥 ทีมสู้ ({(ui.team || []).length}/3)</div>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "space-around" }}>
+                    {[0, 1, 2].map((k) => {
+                      const iid = (ui.team || [])[k];
+                      const tp = iid != null ? (ui.petBox || []).find((x) => x.i === iid) : null;
+                      const rr = tp ? petRarity(tp.sp) : null;
+                      return (
+                        <div key={k} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                          <div style={{ position: "relative", width: 58, height: 58, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30,
+                            background: tp ? `radial-gradient(circle at 50% 35%, ${rr.color}66, #0e2a20 72%)` : "rgba(0,0,0,0.3)",
+                            border: tp ? `2.5px solid ${rr.color}` : "2px dashed rgba(255,255,255,0.25)",
+                            boxShadow: tp ? `0 0 12px ${rr.color}99` : "none" }}>
+                            {tp ? SPECIES[tp.sp].emoji : <span style={{ fontSize: 18, color: "rgba(255,255,255,0.35)" }}>＋</span>}
+                            {tp && ui.buddy === tp.i && <span style={{ position: "absolute", top: -9, fontSize: 14 }}>👑</span>}
+                            {tp && <span style={{ position: "absolute", bottom: -6, fontSize: 8.5, fontWeight: 900, color: "#fff", background: "#1a3a2c", border: `1px solid ${rr.color}`, borderRadius: 7, padding: "0 5px" }}>Lv.{tp.lv}</span>}
+                          </div>
+                          <span style={{ fontSize: 9, fontWeight: 800, color: tp ? "#eafff2" : "#7a9a88", marginTop: 3, maxWidth: 80, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tp ? SPECIES[tp.sp].name : "ว่าง — กด ➕ ทีม"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ fontSize: 9, color: "#9ac8b0", fontWeight: 700, marginTop: 6, textAlign: "center" }}>ทุกตัวในทีมช่วยบัฟ · 👑 บัดดี้เดินตาม · แต่ละตัวมี "พรสวรรค์" ไม่ซ้ำกัน</div>
                 </div>
               )}
               {/* 🛒 ซื้อช่องสัตว์เลี้ยงเพิ่ม — 5 ช่องแรกช่องละ 10,000 ทอง · หลังจากนั้นช่องละ 10 เพชร */}
@@ -67190,8 +67233,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 );
               })()}
               {Object.keys(ui.mountsOwned || {}).length > 0 && (
-                <div style={{ background: "#e8f0f8", borderRadius: 10, padding: "6px 9px", marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#4a6a9a" }}>🐎 สัตว์ขี่:</span>
+                <div style={{ background: "rgba(40,80,140,0.35)", border: "1px solid rgba(140,190,255,0.3)", borderRadius: 12, padding: "6px 9px", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#b8d8ff" }}>🐎 สัตว์ขี่:</span>
                   {MOUNTS.filter((m) => (ui.mountsOwned || {})[m.id]).map((m) => (
                     <button key={m.id} onClick={() => G.setMount(ui.mountId === m.id ? null : m.id)} style={{ margin: "2px 3px", padding: "4px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, color: ui.mountId === m.id ? "#fff" : "#4a6a9a", background: ui.mountId === m.id ? "linear-gradient(90deg,#5a8ad0,#7b6ad0)" : "#fff" }}>{m.emoji} {m.name} {ui.mountId === m.id ? "✓" : ""}</button>
                   ))}
@@ -67233,7 +67276,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               ); })()}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
               {(() => { const inFarm = new Set(((G.ranch && G.ranch.slots) || []).filter((x) => x != null)); const farmN = (ui.petBox || []).filter((p) => inFarm.has(p.i)).length; return farmN > 0 ? (
-                <div style={{ fontSize: 10.5, fontWeight: 800, color: "#7a9a5a", background: "#eef8e4", borderRadius: 9, padding: "5px 9px", marginBottom: 6 }}>🏡 อยู่ในฟาร์ม {farmN} ตัว — ถูกพักจากกระเป๋าชั่วคราว จนกว่าจะนำออกจากคอกฟาร์ม</div>
+                <div style={{ fontSize: 10.5, fontWeight: 800, color: "#cfe8da", background: "rgba(0,0,0,0.3)", borderRadius: 9, padding: "5px 9px", marginBottom: 6, gridColumn: "1 / -1" }}>🏡 อยู่ในฟาร์ม {farmN} ตัว — ถูกพักจากกระเป๋าชั่วคราว จนกว่าจะนำออกจากคอกฟาร์ม</div>
               ) : null; })()}
               {(ui.petBox || []).filter((p) => !(((G.ranch && G.ranch.slots) || []).includes(p.i))).slice().sort((a, b) => ((b.fresh ? 1 : 0) - (a.fresh ? 1 : 0)) || (SPECIES[b.sp].tier - SPECIES[a.sp].tier) || (b.lv - a.lv)).map((p) => {
                 const sp = SPECIES[p.sp];
@@ -67249,22 +67292,22 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 const dupes = (ui.petBox || []).filter((x) => x.sp === p.sp && x.i !== p.i && !(ui.team || []).includes(x.i) && ui.buddy !== x.i).length;
                 const selFuse = (ui.fuseSel || []).includes(p.i);
                 return (
-                  <div key={p.i} style={{ position: "relative", padding: "7px 7px", borderRadius: 10, background: isBuddy ? "#eaf5e0" : inTeam ? "#eef3ea" : "#f7f7f0", border: selFuse ? "2px solid #9a6ad0" : "2px solid " + rr.color + "55", borderLeft: "4px solid " + rr.color, boxShadow: sp.tier >= 5 ? "0 0 8px " + rr.color + "77" : "none", fontFamily: font }}>
-                    {p.fresh && <span style={{ position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 }}>ใหม่ ✨</span>}
+                  <div key={p.i} style={{ position: "relative", padding: "7px 7px", borderRadius: 12, background: `linear-gradient(170deg, ${rr.color}2a, rgba(8,24,18,0.85) 60%)`, border: selFuse ? "2px solid #d07aff" : isBuddy ? "2px solid #ffe98a" : "2px solid " + rr.color + "88", boxShadow: selFuse ? "0 0 10px #b07aff" : sp.tier >= 5 ? "0 0 10px " + rr.color + "99" : "0 2px 6px rgba(0,0,0,0.35)", fontFamily: font }}>
+                    {!!p.fresh && <span style={{ position: "absolute", top: -7, right: -4, background: "linear-gradient(90deg,#ff4a8a,#ff7a5a)", color: "#fff", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "1px 7px", boxShadow: "0 1px 5px rgba(255,74,138,0.55)", zIndex: 1 }}>ใหม่ ✨</span>}
                     <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ fontSize: 19 }}>{sp.emoji}</span>
+                      <span style={{ width: 36, height: 36, flex: "none", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, background: `radial-gradient(circle at 50% 35%, ${rr.color}77, rgba(0,0,0,0.4) 75%)`, border: `1.5px solid ${rr.color}` }}>{sp.emoji}</span>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#c09020" : "#5a7a4a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{dispName}{p.plus ? <b style={{ color: "#e0862f" }}> +{p.plus}</b> : null}</div>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: p.stage >= 2 ? "#ffe98a" : "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{dispName}{p.plus ? <b style={{ color: "#e0862f" }}> +{p.plus}</b> : null}</div>
                         <div style={{ fontSize: 8.5, fontWeight: 800, color: rr.color }}>◆ {rr.name} · Lv.{p.lv} · ร่าง {p.stage}{_mt ? <span style={{ color: _mt >= 3 ? "#e0a020" : _mt === 2 ? "#ba5af5" : "#3ab0d0" }}> · 🧬{_mt}</span> : null}</div>
                       </div>
-                      {isBuddy && <span style={{ fontSize: 9, fontWeight: 800, color: "#7ba05b" }}>บัดดี้</span>}
-                      {!isBuddy && inTeam && <span style={{ fontSize: 9, fontWeight: 800, color: "#5a8ad0" }}>ทีม</span>}
+                      {isBuddy && <span style={{ fontSize: 8.5, fontWeight: 900, color: "#3a2408", background: "linear-gradient(180deg,#ffe98a,#f0a82a)", borderRadius: 6, padding: "1px 5px" }}>👑</span>}
+                      {!isBuddy && inTeam && <span style={{ fontSize: 8.5, fontWeight: 900, color: "#fff", background: "#3a70c0", borderRadius: 6, padding: "1px 5px" }}>ทีม</span>}
                     </div>
-                    <div style={{ background: "#e5e5da", borderRadius: 99, height: 4, marginTop: 3, overflow: "hidden" }}>
-                      <div style={{ width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "#b07ae0", borderRadius: 99 }}/>
+                    <div style={{ background: "rgba(0,0,0,0.45)", borderRadius: 99, height: 5, marginTop: 4, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.min(100, (p.exp / (p.lv * 30)) * 100)}%`, height: "100%", background: "linear-gradient(90deg,#9a5ae0,#d07aff)", borderRadius: 99 }}/>
                     </div>
-                    <div style={{ fontSize: 8.5, color: "#7a9a5a", fontWeight: 700, marginTop: 2 }}>⚔️+{buff.atk} ❤️+{buff.hp} 🛡️+{buff.def}</div>
-                    <div style={{ fontSize: 8, color: "#b0526a", fontWeight: 700 }}>{(ELEM_META[PET_ELEM[p.sp]] || {}).emoji || ""} {PET_SKILL[p.sp]} Lv.{skLv} · ✨ พรสวรรค์ {iv.a + iv.h + iv.d}</div>
+                    <div style={{ fontSize: 8.5, color: "#9af0b8", fontWeight: 800, marginTop: 3 }}>⚔️+{buff.atk} ❤️+{buff.hp} 🛡️+{buff.def}</div>
+                    <div style={{ fontSize: 8, color: "#ffb0c8", fontWeight: 700 }}>{(ELEM_META[PET_ELEM[p.sp]] || {}).emoji || ""} {PET_SKILL[p.sp]} Lv.{skLv} · ✨ พรสวรรค์ {iv.a + iv.h + iv.d}</div>
                     <div style={{ display: "flex", gap: 3, marginTop: 4, flexWrap: "wrap" }}>
                       <button onClick={() => G.setBuddy(isBuddy ? null : p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: isBuddy ? "#d9536b" : "#7ba05b" }}>{isBuddy ? "ถอดบัดดี้" : "🐾 บัดดี้"}</button>
                       <button onClick={() => G.toggleTeam(p.i)} style={{ flex: "1 1 30%", padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 8.5, fontWeight: 800, fontFamily: font, color: "#fff", background: inTeam ? "#d9536b" : "#5a8ad0" }}>{inTeam ? "ออกทีม" : "➕ ทีม"}</button>
