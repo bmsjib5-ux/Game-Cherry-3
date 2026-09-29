@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v675";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v676";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -42658,7 +42658,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       async partyOf(pid) {
         if (!this.enabled() || !pid) return null;
         try {
-          const res = await fetch(this._url(`party_member?pid=eq.${encodeURIComponent(pid)}&select=party,seen,t&order=t.desc&limit=3`), { headers: this._headers() });
+          const res = await fetch(this._url(`party_member?pid=eq.${encodeURIComponent(pid)}&select=party,seen,t&order=t.desc&limit=6`), { headers: this._headers() });
           if (!res.ok) return null;
           return await res.json();
         } catch (e) { return null; }
@@ -44589,8 +44589,32 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ================= 🤝 PARTY — ปาร์ตี้เก็บเลเวลร่วมกัน (โบนัส XP + แชร์ XP ให้กันข้ามเครื่อง) =================
     G.partyCode = null; G.partyMembers = []; G._partyXpg = 0; G._partyXpgSeen = null;
     G.partyActiveOthers = () => (G.partyMembers || []).filter(r => r.pid !== G.pid && Date.now() - (r.seen || 0) < 90000).length;
+    // 🔁 ให้ผู้เล่นอยู่ปาร์ตี้เดียวเสมอ — เดิมหลุดแล้วกลับมาอาจไปเต้นหัวใจอยู่อีกปาร์ตี้ (แถวค้าง/รหัสเก่า)
+    //    ปาร์ตี้ที่เพื่อนเห็นเราเลยขึ้น "ออฟไลน์" ทั้งที่รายชื่อเพื่อนขึ้นออนไลน์ และ XP ไม่แบ่งกัน
+    //    · มีคำชวนใหม่ (seen = 0) ในปาร์ตี้อื่น → ย้ายเข้าร่วมอัตโนมัติ (ตามที่ปุ่มชวนบอกไว้)
+    //    · แถวค้างในปาร์ตี้อื่น → ลบทิ้ง เพื่อนจะได้ไม่เห็นเราค้างเป็นออฟไลน์
+    const partySync = async () => {
+      if (!G.partyCode || !G.pid || G._partySyncing) return false;
+      G._partySyncing = true;
+      try {
+        const mine = await CN.partyOf(G.pid);
+        if (!mine || !G.partyCode) return false;
+        const inv = mine.find((r) => r.party !== G.partyCode && !(r.seen > 0));
+        if (inv) {
+          const old = G.partyCode;
+          await CN.partyLeave(old, G.pid);
+          G._partySyncing = false;
+          await partyEnter(inv.party);
+          toast(`🤝 เพื่อนชวนเข้าปาร์ตี้ ${inv.party} — ย้ายเข้าร่วมแล้ว!`);
+          return true;
+        }
+        for (const r of mine) if (r.party !== G.partyCode) await CN.partyLeave(r.party, G.pid);
+        return false;
+      } catch (_) { return false; } finally { G._partySyncing = false; }
+    };
     const partyBeat = async () => {
       if (!G.partyCode || !CN.enabled()) return;
+      if (await partySync()) return;   // ย้ายไปปาร์ตี้ที่ถูกชวนแล้ว (partyEnter เต้นหัวใจให้เอง)
       await CN.partyUpsert({ party: G.partyCode, pid: G.ensurePid(), n: (G.playerName || "เชอร์รี่").slice(0, 12), c: G.cls, lv: G.player ? G.player.level : 1, seen: Date.now(), xpg: Math.round(G._partyXpg || 0) });
       const rows = await CN.partyMembers(G.partyCode);
       if (!rows) return;
@@ -64578,12 +64602,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
                       {[0, 1, 2, 3].map((k) => {
                         const m = (ui.partyMembers || [])[k];
+                        // 🟡 อยู่ในเกม (presence ออนไลน์) แต่ยังไม่เชื่อมปาร์ตี้นี้ — เดิมขึ้นเทาเหมือนออฟไลน์ ทำให้งง
+                        const inGame = !!(m && !m.online && m.pid !== ui.pid && ui.onlineMap && ui.onlineMap[m.pid] && ui.onlineMap[m.pid].online);
+                        const dot = m && m.online ? "#3ae07a" : inGame ? "#f0c040" : "#6a7a70";
                         return (
-                          <div key={k} style={{ textAlign: "center", borderRadius: 11, padding: "6px 2px", background: m ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.15)", border: m ? `1.5px solid ${m.online ? "#3ac07a" : "rgba(255,255,255,0.15)"}` : "1.5px dashed rgba(255,255,255,0.18)" }}>
+                          <div key={k} title={inGame ? "เพื่อนอยู่ในเกม กำลังเชื่อมปาร์ตี้..." : ""} style={{ textAlign: "center", borderRadius: 11, padding: "6px 2px", background: m ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.15)", border: m ? `1.5px solid ${m.online ? "#3ac07a" : inGame ? "#f0c040" : "rgba(255,255,255,0.15)"}` : "1.5px dashed rgba(255,255,255,0.18)" }}>
                             <div style={{ position: "relative", fontSize: 20, lineHeight: 1.2, opacity: m ? 1 : 0.35 }}>{m ? ((CLASSES[m.c] && CLASSES[m.c].emoji) || "🙂") : "＋"}
-                              {m && <span style={{ position: "absolute", right: 6, bottom: 0, width: 8, height: 8, borderRadius: "50%", background: m.online ? "#3ae07a" : "#6a7a70", boxShadow: m.online ? "0 0 6px #3ae07a" : "none" }} />}</div>
+                              {m && <span style={{ position: "absolute", right: 6, bottom: 0, width: 8, height: 8, borderRadius: "50%", background: dot, boxShadow: dot !== "#6a7a70" ? `0 0 6px ${dot}` : "none" }} />}</div>
                             <div style={{ fontSize: 8.5, fontWeight: 800, color: m ? "#fff" : "#7a8aa0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>{m ? `${m.n}${m.pid === ui.pid ? " (ฉัน)" : ""}` : "ว่าง"}</div>
                             {m && <div style={{ fontSize: 8, fontWeight: 900, color: "#ffe98a" }}>Lv.{m.lv}</div>}
+                            {inGame && <div style={{ fontSize: 7.5, fontWeight: 900, color: "#f0c040" }}>ในเกม · กำลังเชื่อม</div>}
                           </div>
                         );
                       })}
