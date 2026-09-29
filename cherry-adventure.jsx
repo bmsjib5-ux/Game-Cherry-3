@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v668";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v669";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -31543,7 +31543,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       { k: "skillBoardOpen", ic: "📖", name: "วิชาสกิล" },
       { k: "treeOpen",       ic: "🌳", name: "ต้นไม้ทักษะ" },
       { k: "constOpen",      ic: "🌌", name: "หมู่ดาว" },
-      { k: "qingOpen",       ic: "🗡️", name: "มาสเตอรี่" },   // 🗡️🍃 รวมมาสเตอรี่อาวุธ + วิชาตัวเบาไว้แท็บเดียว (สลับด้วยแท็บย่อยในหน้า)
+      { k: "masteryOpen",    ic: "🗡️", name: "มาสเตอรี่" },   // 🗡️🍃 รวมมาสเตอรี่อาวุธ + วิชาตัวเบาไว้แท็บเดียว (สลับด้วยแท็บย่อยในหน้า)
       { k: "awakenOpen",     ic: "⚡", name: "ตื่นพลัง" },
     ];
     G.skillTab = (key) => {
@@ -58436,8 +58436,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         return (
           <button key={k} onClick={() => { if (!on && G.skillTab) G.skillTab(k); }} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 6px", borderRadius: 12, cursor: on ? "default" : "pointer", fontFamily: font,
-            fontSize: 12, fontWeight: 900, border: on ? "2px solid #fff" : "1.5px solid rgba(120,60,90,0.22)", color: on ? "#fff" : "#8a6a7a",
-            background: on ? `linear-gradient(180deg,${c1},${c2})` : "#fff", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "0 2px 0 #eadfd6", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>
+            fontSize: 12, fontWeight: 900, border: on ? "2px solid #fff" : "2px solid #3a2a40", color: on ? "#fff" : "#d8c8e0",
+            background: on ? `linear-gradient(180deg,${c1},${c2})` : "linear-gradient(180deg,#4a3a52,#2a1e30)", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "0 3px 0 #140c18", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none" }}>
             <span style={{ fontSize: 16 }}>{ic}</span>{nm}
           </button>
         );
@@ -58452,7 +58452,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       background: dark ? "rgba(0,0,0,0.24)" : "#fff1f5", border: dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid #f6cfdc",
     }}>
       {(G.SKILL_TABS || []).map((t) => {
-        const on = t.k === active || (t.k === "qingOpen" && active === "masteryOpen");
+        const on = t.k === active || (t.k === "masteryOpen" && active === "qingOpen");
         return (
           <button key={t.k} onClick={() => { if (!on && G.skillTab) G.skillTab(t.k); }} title={t.name} style={{
             flex: "1 1 auto", minWidth: 0, padding: "5px 3px", borderRadius: 9, cursor: on ? "default" : "pointer",
