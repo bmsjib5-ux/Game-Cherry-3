@@ -14,7 +14,13 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+    # 💾 แคช: โค้ดเกม/หน้าเว็บ = no-cache (ถามเซิร์ฟเวอร์ทุกครั้ง แต่ไฟล์ไม่เปลี่ยนได้ 304 ไม่ต้องโหลดใหม่)
+    #    เดิมตั้ง no-store ทุกไฟล์ → ผู้เล่นโหลด game.js ~7.7MB + โมเดล/เสียงใหม่หมดทุกครั้งที่เปิด = เปลือง bandwidth มาก
+    #    ไฟล์ใน assets/ (โมเดล · เท็กซ์เจอร์ · เสียง) เปลี่ยนน้อย → ให้เบราว์เซอร์เก็บไว้ 7 วัน
     headers:
       - path: /*
         name: Cache-Control
-        value: no-cache, no-store, must-revalidate
+        value: no-cache
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=604800

@@ -1,0 +1,7 @@
+# 💾 Cache rules for Cloudflare Pages / Netlify (same as render.yaml)
+# game code + pages: always revalidate (ETag → 304 when unchanged)
+/*
+  Cache-Control: no-cache
+# models / textures / audio change rarely: cache 7 days
+/assets/*
+  Cache-Control: public, max-age=604800
