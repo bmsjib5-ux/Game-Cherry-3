@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v677";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v678";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -23108,6 +23108,37 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }, 90);
     };
     G.warpWithLoad = warpWithLoad;
+    // 🏰🐄🏠⏳ หน้าโหลดตอนวาร์ปเข้า/ออก เมือง · ฟาร์ม · บ้าน — ใช้หน้าโหลดชุดเดียวกับข้ามด่าน แต่ฉากตามสถานที่
+    const ZONE_LOOK = {
+      town: { emoji: "🏰", name: "เมืองเชอร์รี่", sub: "🏪 ร้านค้า · ⚒️ ช่างตีเหล็ก · 🧑‍🌾 ชาวเมือง", mons: ["🏪", "⛲", "🏠", "🎪", "🌸"], sky: 0x8fd0ff, fog: 0xffe4f0, ground: 0xc8a878 },
+      ranch: { emoji: "🐄", name: "ฟาร์มสัตว์เลี้ยง", sub: "🧺 เก็บผลผลิต · 🌾 ปลูกผัก · 🥚 เพาะไข่", mons: ["🐄", "🐔", "🌾", "🥕", "🐑"], sky: 0x9ad8ff, fog: 0xe8f8d8, ground: 0x6ac04a },
+      home: { emoji: "🏠", name: "บ้านของฉัน", sub: "🛋️ ตกแต่งบ้าน · 😴 พักผ่อน", mons: ["🛋️", "🪴", "🛏️", "🖼️", "🕯️"], sky: 0xffcfa0, fog: 0xfff0e0, ground: 0xc89a6a },
+    };
+    const zoneWithLoad = (kind, fn, opt) => {
+      if (G._warpLoading) return;
+      const Z = ZONE_LOOK[kind];
+      let L;
+      if (Z) L = Object.assign({}, Z, opt && opt.name ? { name: opt.name } : null, { verb: "กำลังเดินทางสู่" });
+      else {   // 🔙 ออกจากเมือง/ฟาร์ม/บ้าน → กลับด่านเดิม
+        const b = BIOMES[((G.curBiome % BIOMES.length) + BIOMES.length) % BIOMES.length] || {};
+        L = { emoji: b.emoji || "🌳", name: b.name || "โลกกว้าง", sub: `Lv.${b.lvMin || 1}–${b.lvMax || 1}`, mons: (b.pool || []).slice(0, 5).map((id) => (SPECIES[id] || {}).emoji).filter(Boolean),
+          sky: b.sky, fog: b.fog, ground: b.ground, night: !!b.night, verb: "กำลังกลับสู่" };
+      }
+      G._warpLoading = true;
+      const hex = (c) => "#" + (c || 0).toString(16).padStart(6, "0");
+      const mix = (a, b, t) => { const A = new THREE.Color(a || 0), B = new THREE.Color(b || 0); return "#" + A.lerp(B, t).getHexString(); };
+      setUi((u) => ({ ...u, warpLoad: { key: Date.now(), name: L.name, emoji: L.emoji, sub: L.sub, verb: L.verb, sky: hex(L.sky), fog: hex(L.fog), ground: hex(L.ground),
+        g70: mix(L.ground, L.fog, 0.3), g60: mix(L.ground, L.fog, 0.4), gDark: mix(L.ground, 0x000000, 0.4), night: !!L.night, mons: L.mons || [] } }));
+      const t0 = performance.now();
+      const run = () => {
+        try { fn(); } catch (e) { try { console.warn("zone warp failed", e); } catch (_) {} }
+        const wait = Math.max(250, 1100 - (performance.now() - t0));
+        setTimeout(() => { G._warpLoading = false; setUi((u) => ({ ...u, warpLoad: null })); }, wait);
+      };
+      // ให้หน้าโหลดวาดขึ้นจอจริงก่อน (รอ 2 เฟรม) แล้วค่อยสร้างโซน — งานสร้างโซนหนัก ถ้าเริ่มเร็วไปจอจะค้างภาพเดิม
+      setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(run)), 60);
+    };
+    G.zoneWithLoad = zoneWithLoad;
     G.warpNext = () => warpWithLoad(G.curBiome + 1);
     G.warpTo = (i) => { if (G.inTownZone && G.exitTownZone) G.exitTownZone(); warpWithLoad(i); }; // 🏰 วาร์ปจากในเมือง = ออกเมืองก่อนอัตโนมัติ
     G.warpAsk = false;
@@ -24372,7 +24403,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (!row || !Array.isArray(row.furni) || !row.furni.length) { toast("เพื่อนยังไม่ได้แต่งบ้าน (ต้องเข้า-ออกบ้านตัวเองอย่างน้อย 1 ครั้ง)"); return; }
       G.socialOpen = false;
       setUi((u) => ({ ...u, socialOpen: false }));
-      G.enterHomeZone({ visitFurni: row.furni, owner: row.n || friend.n || "เพื่อน" });
+      const owner = row.n || friend.n || "เพื่อน";
+      G.zoneWithLoad("home", () => G.enterHomeZone({ visitFurni: row.furni, owner }), { name: `บ้านของ${owner}` });
     };
     // ================= 🏰 CHERRY TOWN — เมืองเริ่มต้น: ศูนย์รวมผู้เล่น ไม่มีมอนสเตอร์ =================
     G.inTownZone = false;
@@ -46759,14 +46791,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           }
         };
         if (!G.inRanchZone && !G.inHomeZone && !G.inTownZone && G.mode === "explore" && !G.banim) {
-          padChargeStep(G._ranchPad, G._ranchPadRing, "ranchPadShy", "_ranchPadT", () => { try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } });
-          padChargeStep(G._homePad, G._homePadRing, "homePadShy", "_homePadT", () => { try { G.enterHomeZone(); } catch (err) { G.inHomeZone = false; try { console.warn("enterHomeZone failed", err); } catch (_) {} } });
-          padChargeStep(G._townPad, G._townPadRing, "townPadShy", "_townPadT", () => { try { G.enterTownZone(); } catch (err) { G.inTownZone = false; try { console.warn("enterTownZone failed", err); } catch (_) {} } });
+          padChargeStep(G._ranchPad, G._ranchPadRing, "ranchPadShy", "_ranchPadT", () => G.zoneWithLoad("ranch", () => { try { G.enterRanchZone(); } catch (err) { G.inRanchZone = false; try { console.warn("enterRanchZone failed", err); } catch (_) {} } }));
+          padChargeStep(G._homePad, G._homePadRing, "homePadShy", "_homePadT", () => G.zoneWithLoad("home", () => { try { G.enterHomeZone(); } catch (err) { G.inHomeZone = false; try { console.warn("enterHomeZone failed", err); } catch (_) {} } }));
+          padChargeStep(G._townPad, G._townPadRing, "townPadShy", "_townPadT", () => G.zoneWithLoad("town", () => { try { G.enterTownZone(); } catch (err) { G.inTownZone = false; try { console.warn("enterTownZone failed", err); } catch (_) {} } }));
           if (!G.dungeon) (G._caveGates || []).forEach((Q) => padChargeStep(Q.g, Q.ring, "caveShy_" + Q.type, "_caveT_" + Q.type, () => { try { G.enterCave(Q.type); } catch (err) { try { console.warn("enterCave failed", err); } catch (_) {} } }));   // ⛏️⚰️
         }
         (G._caveGates || []).forEach((Q) => { Q.g.visible = (G.curBiome || 0) === Q.bIdx && !G.inRanchZone && !G.inHomeZone && !G.inTownZone && !G.dungeon; if (Q.g.visible) Q.g.position.y = terrainAt(Q.g.position.x, Q.g.position.z); });   // เกาะพื้นเนิน
         if (G.inTownZone) { // 🏰 ในเมือง: ประตูออก + กันของโลกภายนอกโผล่ + ชาวเมือง/ผู้เล่นเดินเล่น
-          if (Math.hypot(char.position.x - 0, char.position.z - 29.8) < 2.3) try { G.exitTownZone(); } catch (err) { try { console.warn("exitTownZone failed", err); } catch (_) {} }
+          if (Math.hypot(char.position.x - 0, char.position.z - 29.8) < 2.3) try { G.zoneWithLoad(null, () => G.exitTownZone()); } catch (err) { try { console.warn("exitTownZone failed", err); } catch (_) {} }
         }
         if (G.inTownZone) { // ⚠️ ต้องเช็คซ้ำ — ถ้าเพิ่งออกเมืองไปเฟรมนี้ ห้ามสั่งซ่อนมอนสเตอร์ทับของที่คืนไปแล้ว
           if (portal) portal.visible = false;
@@ -46793,7 +46825,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         if (G.inHomeZone) {
           const exd = Math.hypot(char.position.x - 0, char.position.z - 5.6);
-          if (exd < 1.1) try { G.exitHomeZone(); } catch (err) { try { console.warn("exitHomeZone failed", err); } catch (_) {} }
+          if (exd < 1.1) try { G.zoneWithLoad(null, () => G.exitHomeZone()); } catch (err) { try { console.warn("exitHomeZone failed", err); } catch (_) {} }
         }
         if (G.inHomeZone) { // ⚠️ เช็คซ้ำ — ถ้าเพิ่งออกจากบ้านเฟรมนี้ ห้ามซ่อนมอนสเตอร์ทับของที่คืนไปแล้ว
           // 🛡️ กันหลุดทุกเฟรม: ของโลกภายนอกต้องไม่โผล่/ไม่ทำงานในบ้าน
@@ -46826,7 +46858,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._ranchRefreshT = (G._ranchRefreshT || 0) + dt;
           if (G._ranchRefreshT > 2) { G._ranchRefreshT = 0; G.refreshRanchTimers(); }
           // ⬅️ ใกล้แท่นกลับ → ออกจากโซน
-          if (Math.hypot(char.position.x - 0, char.position.z - 12) < 1.5) G.exitRanchZone();
+          if (Math.hypot(char.position.x - 0, char.position.z - 12) < 1.5) G.zoneWithLoad(null, () => G.exitRanchZone());
           // 🥚 ยืนใกล้แท่นไข่ที่พร้อมฟัก → ฟักอัตโนมัติ (debounce ครั้งเดียว)
           else {
             const e = G.ranch && G.ranch.egg;
@@ -62750,12 +62782,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               <div style={{ fontSize: 64, lineHeight: 1, filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.4))", animation: "warpBob 1.4s ease-in-out infinite" }}>{W.emoji}</div>
               <div style={{ display: "inline-block", marginTop: 10, padding: "8px 26px", borderRadius: 999, background: "rgba(20,10,30,0.62)", border: "2px solid rgba(255,255,255,0.55)", boxShadow: "0 6px 18px rgba(0,0,0,0.35)" }}>
                 <div style={{ fontSize: 24, fontWeight: 900, color: "#fff", textShadow: "0 2px 0 rgba(0,0,0,0.45)" }}>{W.name}</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: "#ffe9a8", marginTop: 2 }}>Lv.{W.lvMin}–{W.lvMax}{W.bossName ? ` · ${W.bossEm} ${W.bossName}` : ""}</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#ffe9a8", marginTop: 2 }}>{W.sub || `Lv.${W.lvMin}–${W.lvMax}${W.bossName ? ` · ${W.bossEm} ${W.bossName}` : ""}`}</div>
               </div>
             </div>
             {/* ⏳ แถบโหลด */}
             <div style={{ position: "absolute", left: "50%", bottom: "9%", transform: "translateX(-50%)", width: "min(360px, 76%)", textAlign: "center" }}>
-              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", textShadow: "0 2px 4px rgba(0,0,0,0.6)", marginBottom: 7, animation: "titleBlink 1.1s ease-in-out infinite" }}>🌀 กำลังเดินทางสู่ {W.name}...</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", textShadow: "0 2px 4px rgba(0,0,0,0.6)", marginBottom: 7, animation: "titleBlink 1.1s ease-in-out infinite" }}>🌀 {W.verb || "กำลังเดินทางสู่"} {W.name}...</div>
               <div style={{ height: 12, borderRadius: 999, background: "rgba(0,0,0,0.45)", border: "2px solid rgba(255,255,255,0.7)", overflow: "hidden", boxShadow: "0 3px 10px rgba(0,0,0,0.35)" }}>
                 <div style={{ height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#ffd76a,#ff8ac0,#8ad0ff)", animation: "warpBar 1.3s ease-in-out forwards" }} />
               </div>
