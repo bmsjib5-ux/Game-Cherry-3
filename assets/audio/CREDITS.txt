@@ -1,7 +1,13 @@
 Cherry Adventure — audio credits (all CC0 / public domain, no attribution required)
 
-Sound effects (assets/audio/sfx) — Kenney (kenney.nl), CC0 1.0
-  RPG Audio, Impact Sounds, Interface Sounds, Music Jingles
+Sound effects (assets/audio/sfx)
+  Kenney (kenney.nl), CC0 1.0 — RPG Audio, Impact Sounds, Interface Sounds, Music Jingles
+    (coin, button, catch, fish, win, levelup, warp, open, close)
+  Action set — OpenGameArt.org, CC0 1.0
+    slash*, guard*, clang*  "20 Sword Sound Effects (Attacks and Clashes)" — StarNinjas
+    hit0-3, crit*, boom1    "100 CC0 SFX" — rubberduck
+    hit4, skill*            "80 CC0 RPG SFX" — rubberduck
+    boom0                   "Chunky Explosion" — opengameart.org/content/chunky-explosion
 
 Music (assets/audio/bgm) — OpenGameArt.org, CC0 1.0
   town.mp3   "Town1 - Home Town"            — Juhani Junkala, JRPG Music Pack #2 [Towns]

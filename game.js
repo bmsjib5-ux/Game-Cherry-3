@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v683"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v684"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3586,8 +3586,9 @@ function CherryAdventure() {
         // ---------- 🎵 Audio — ไฟล์เสียงจริง Kenney (CC0) + เพลงประกอบ OpenGameArt (CC0) · สังเคราะห์เป็นตัวสำรอง ----------
         let actx = null;
         // 🔊 ชุดเสียงเอฟเฟกต์ (assets/audio/sfx) — ตัวเลข = จำนวนแบบให้สุ่มสลับ ไม่ซ้ำซาก
+        //    แนวแอ็กชัน (CC0 · OpenGameArt): ฟันดาบ/ดาบกระทบ StarNinjas · ตี/กระแทก 100 CC0 SFX · ร่ายเวท 80 CC0 RPG SFX · ระเบิด Chunky Explosion
         const SFX_BASE = "assets/audio/sfx/";
-        const SFX_FILES = { slash: 4, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, warp: 0, open: 0, close: 0 };
+        const SFX_FILES = { slash: 6, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, skill: 3, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, warp: 0, open: 0, close: 0 };
         const sfxBuf = {};
         let sfxLoading = false;
         const loadSfx = () => {
@@ -3715,10 +3716,8 @@ function CherryAdventure() {
         G.sfx = {
             // ⚔️ sword: เสียงฟันจริง (Kenney) + ลมตัดอากาศบาง ๆ · ยังไม่โหลด = เสียงสังเคราะห์เดิม
             slash: () => { if (!bsx())
-                return; if (smp("slash", 0.55)) {
-                noise(0.1, 0.05, 4200, 1.2, 900);
-                return;
-            } sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
+                return; if (smp("slash", 0.6))
+                return; sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
             // 👊 hit: หมัด/ตีโดนจริง + ซับเบสให้หนัก
             hit: () => { if (!bsx())
                 return; if (smp("hit", 0.7)) {
@@ -3737,7 +3736,14 @@ function CherryAdventure() {
             } sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28); },
             // 💣 big explosion (ults / heavy skills) — ระเบิดสังเคราะห์ + แรงกระแทกจริงเสียงต่ำ
             boom: () => { if (!bsx())
-                return; noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); smp("boom", 0.5, 0.7); },
+                return; if (smp("boom", 0.75)) {
+                thump(60, 0.45, 0.25);
+                return;
+            } noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); },
+            // ✨ ร่ายสกิล — เสียงเวทจริง (ก่อนหน้านี้สกิลไม่มีเสียงเลย)
+            skill: () => { if (!bsx())
+                return; if (smp("skill", 0.5))
+                return; sfx([500, 800, 1200], "sine", 0.14, 0.1, 300); noise(0.25, 0.05, 3000, 0.8, 6000); },
             // ⚡ charging hum for ultimates
             charge: () => {
                 if (!actx || !G.soundOn || !bsx())
@@ -62317,6 +62323,8 @@ function CherryAdventure() {
             // 💫☠️🚀 ทุกดาเมจที่เกิดจากสกิลนี้ (ช่วงท่า ~2.5 วิ) ติดสถานะตามสกิล — สตัน/มึน/พิษ/ทุบลอย
             G._stSk = { sk, until: performance.now() + 2500, heavy: fk0 === "quake" || fk0 === "bash" || (sk.mult || 0) >= 2.3 };
             char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
+            if (G.sfx && G.sfx.skill)
+                G.sfx.skill(); // ✨ เสียงร่ายสกิลในโลกกว้าง
             if (advFx && G.spawnAdvCast) {
                 try {
                     G.spawnAdvCast(sk.color || 0xb07ae0, char.position, false);
@@ -66014,6 +66022,8 @@ function CherryAdventure() {
                 const warDur = G.cls === "warrior" ? ({ w_cleave: 1.15, w_bash: 1.0, w_rage: 1.5, w_quake: 1.35 }[sk.id] || 0.95) : null;
                 const aegisDur = G.cls === "aegis" ? ({ g_dash: 0.95, g_drone: 1.25, g_grav: 1.4, g_over: 1.1 }[sk.id] || 0.85) : null; // 🤖 room for the AAA plasma FX
                 G.banim = { type: "playerAttack", t: 0, dur: (lastBullet || weakPoint) ? 2.0 : poisonArrow ? 1.6 : chargeSkill ? 1.75 : tripleShot ? 1.0 : mageSpell ? mageDur : twinRush ? 1.2 : poisonBarrage ? 1.4 : shadowKill ? 2.2 : shadowDance ? 1.5 : pierceThrust ? 1.1 : cycloneSweep ? 1.4 : earthBreak ? 1.5 : dragonCharge ? 1.8 : swiftSlash ? 1.1 : twinSky ? 1.3 : thunderDraw ? 1.9 : moonDance ? 2.6 : paperStorm ? 1.9 : laptopSmash ? 1.7 : coffeeBoost ? 1.6 : deadlineRush ? 1.9 : ceoCommand ? 3.2 : (coderSkill && coderDur) ? coderDur : boxDur ? boxDur : aegisDur ? aegisDur : warDur ? warDur : 0.6, mult: 1, skill: sk, boxDur, warDur, chargeSkill, lastBullet, weakPoint, poisonArrow, mageSpell, twinRush, poisonBarrage, shadowKill, shadowDance, pierceThrust, cycloneSweep, earthBreak, dragonCharge, swiftSlash, twinSky, thunderDraw, moonDance, paperStorm, laptopSmash, coffeeBoost, deadlineRush, ceoCommand, coderSkill };
+                if (G.sfx && G.sfx.skill)
+                    G.sfx.skill(); // ✨ เสียงร่ายสกิลในสนามรบ
                 setUi((u) => ({ ...u, bstate: "busy", skillMenu: false, msg: `${sk.emoji} ${sk.name}! (-${cost}💧)` }));
                 syncPlayer();
             }
