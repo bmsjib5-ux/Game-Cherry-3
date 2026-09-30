@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v680"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v681"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3759,7 +3759,7 @@ function CherryAdventure() {
                 return; sfx([440, 660, 880, 1100], "sine", 0.11, 0.16); },
             win: () => { if (smp("win", 0.62))
                 return; sfx([523, 659, 784, 1047], "triangle", 0.15, 0.16); setTimeout(() => sfx([1047, 1319], "triangle", 0.22, 0.14), 240); },
-            lose: () => sfx([330, 262, 196], "sine", 0.22, 0.16, -40),
+            lose: () => { }, // 🔇 เอาเสียงตอนตายออก (ตามที่ผู้เล่นขอ)
             levelup: () => { if (smp("levelup", 0.62))
                 return; sfx([523, 659, 784, 1047, 1319], "triangle", 0.16, 0.17); noise(0.3, 0.07, 6000, 1); },
             button: () => { if (smp("button", 0.4))
@@ -51198,8 +51198,7 @@ function CherryAdventure() {
                 const diff = effMaxHp() - oldMax;
                 if (diff > 0)
                     G.player.hp += diff;
-                if (G.sfx)
-                    G.sfx.levelup();
+                /* 🔇 ไม่มีเสียงตอนกดอัพ */
                 if (char)
                     burst(char.position, 0xffd27a, 1.4);
                 toast(`📜✨ เรียนวิชา "${node.emoji} ${node.name}" สำเร็จ! (−${node.cost}⚡)`);
@@ -51259,8 +51258,7 @@ function CherryAdventure() {
                 const diff = effMaxHp() - oldMax;
                 if (diff > 0)
                     G.player.hp += diff;
-                if (G.sfx)
-                    G.sfx.levelup();
+                /* 🔇 ไม่มีเสียงตอนกดอัพ */
                 if (char)
                     burst(char.position, 0x7ad0e8, 1.4);
                 toast(`🌳✨ ${node.emoji} ${node.name} → Lv.${cur + 1}/${max}! (−${node.cost}⚡)`);
@@ -51360,8 +51358,7 @@ function CherryAdventure() {
             const diff = effMaxHp() - oldMax;
             if (diff > 0)
                 G.player.hp += diff; // hpPct nodes raise current HP too
-            if (G.sfx)
-                G.sfx.levelup();
+            /* 🔇 ไม่มีเสียงตอนกดอัพ */
             if (char)
                 burst(char.position, board.star, 1.6);
             toast(`✨⭐ ปลดล็อก ${node.emoji} ${node.name}! (−${node.cost}✨) — ${node.desc}`);
@@ -51517,8 +51514,7 @@ function CherryAdventure() {
             G.player.sp -= cost;
             G.skillRanks[skillId] = cur + 1;
             const sk = skillsOf(G.cls, G.pathId).find((s) => s.id === skillId);
-            if (G.sfx)
-                G.sfx.levelup();
+            /* 🔇 ไม่มีเสียงตอนกดอัพ */
             toast(`⬆️ ${sk.emoji} ${sk.name} → Lv.${cur + 1}! (−${cost}⚡)`);
             syncPlayer();
         };
@@ -51553,8 +51549,7 @@ function CherryAdventure() {
             }
             G.player.sp -= cost;
             G.ultRank = cur + 1;
-            if (G.sfx)
-                G.sfx.levelup();
+            /* 🔇 ไม่มีเสียงตอนกดอัพ */
             toast(`🌟 ${ultOf(G.cls, G.ultAlt).name} → Lv.${cur + 1}! ท่าไม้ตายแรงขึ้น! (−${cost}⚡)`);
             syncPlayer();
         };
@@ -51586,8 +51581,7 @@ function CherryAdventure() {
             }
             G.player.statPts -= cost;
             G.baseStats[stat] = cur + 1;
-            if (G.sfx)
-                G.sfx.levelup();
+            /* 🔇 ไม่มีเสียงตอนกดอัพ */
             G.player.hp = Math.min(G.player.hp, effMaxHp());
             toast(`${STAT_INFO[stat].emoji} ${STAT_INFO[stat].name} → ${cur + 1} (${STAT_INFO[stat].per})`);
             syncPlayer();
