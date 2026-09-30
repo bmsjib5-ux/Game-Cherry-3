@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v681";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v682";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -34073,8 +34073,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (m.userData.mapBoss) { if (G.mbKilled) G.mbKilled(false); return; }   // 👑 บอสบุกแมพ — จบแบบของตัวเอง
       const sp = SPECIES[m.userData.spId] || { tier: 1, name: "มอนสเตอร์" };
       const lv = m.userData.lv || 1; const shiny = m.userData.shiny;
-      burst(m.position, 0xf5d05a, 1.0);
-      if (G.sfx) G.sfx.win && G.sfx.win();
+      burst(m.position, 0xf5d05a, 1.0);   // 🔇 ไม่มีเสียงตอนมอนสเตอร์ตาย (ตามที่ผู้เล่นขอ)
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
       if (G.qingEvent) G.qingEvent("win", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 1
       if (G.advKill) G.advKill(m.userData.spId, m.userData.lv);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง
