@@ -1,0 +1,14 @@
+Cherry Adventure — audio credits (all CC0 / public domain, no attribution required)
+
+Sound effects (assets/audio/sfx) — Kenney (kenney.nl), CC0 1.0
+  RPG Audio, Impact Sounds, Interface Sounds, Music Jingles
+
+Music (assets/audio/bgm) — OpenGameArt.org, CC0 1.0
+  town.mp3   "Town1 - Home Town"            — Juhani Junkala, JRPG Music Pack #2 [Towns]
+  field.mp3  "Grasslands"                   — Juhani Junkala, JRPG Music Pack #1 [Exploration]
+  home.mp3   "Calm1 - A Place I Call Home"  — Juhani Junkala, JRPG Music Pack #4 [Calm]
+  ranch.mp3  "Calm2 - Childhood Friends"    — Juhani Junkala, JRPG Music Pack #4 [Calm]
+  battle.mp3 "Action1 - Encounter With The Witches" — Juhani Junkala, JRPG Music Pack #5 [Action]
+  boss.mp3   "Battle RPG Theme (Var)"       — CleytonRX, opengameart.org/content/boss-battle-theme
+
+Converted to MP3 (64 kbps) for size and iOS compatibility.

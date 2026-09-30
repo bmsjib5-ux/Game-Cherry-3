@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v679";
+const CACHE = "cherry-adventure-v680";
 const SHELL = [
   "./",
   "./index.html",
@@ -86,6 +86,8 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   // never cache Supabase / API traffic — always go to network
   if (url.hostname.includes("supabase")) return;
+  // 🎵 ไฟล์เสียง/เพลง → ปล่อยให้เบราว์เซอร์โหลดเอง (Safari เล่น <audio> ต้องได้คำตอบแบบ range/206 · SW ส่งไฟล์เต็มจากแคชแล้วเล่นไม่ได้)
+  if (/\.(mp3|ogg|m4a|wav)$/.test(url.pathname)) return;
 
   // navigations → network-first (so game updates land), fall back to cached shell offline
   if (req.mode === "navigate") {
