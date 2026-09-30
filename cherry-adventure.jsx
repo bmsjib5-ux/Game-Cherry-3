@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v678";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v679";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -55333,23 +55333,57 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               if (!A.dj) {
                 A.dj = { fx: new THREE.Group(), feathers: [], wings: [], slashes: [], teleT: 0, struck: 0 };
                 scene.add(A.dj.fx);
-                // holy feathers
+                // 🎨 เท็กซ์เจอร์วาดเองบน canvas (ครั้งเดียว) — ปีก/ขนนก/รอยฟันเป็นทรงโค้งนุ่ม ขอบฟุ้ง ไม่ใช่แผ่นสี่เหลี่ยม
+                if (!G._djTex) {
+                  const mk = (w, h, draw) => { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; draw(cv.getContext("2d"), w, h); const tx = new THREE.CanvasTexture(cv); tx.minFilter = THREE.LinearFilter; return tx; };
+                  const plume = (c, x, y, len, wid, ang, a) => {   // ขนนก 1 เส้น: หยดน้ำยาว ไล่ขาว→ทองที่ปลาย
+                    c.save(); c.translate(x, y); c.rotate(ang);
+                    const g = c.createLinearGradient(0, 0, len, 0); g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(0.7, `rgba(255,248,220,${a * 0.95})`); g.addColorStop(1, `rgba(255,214,110,${a * 0.55})`);
+                    c.fillStyle = g; c.beginPath(); c.moveTo(0, 0);
+                    c.bezierCurveTo(len * 0.3, -wid, len * 0.8, -wid * 0.9, len, 0); c.bezierCurveTo(len * 0.8, wid * 0.7, len * 0.3, wid * 0.8, 0, 0); c.fill();
+                    c.strokeStyle = `rgba(255,236,170,${a * 0.6})`; c.lineWidth = 1.5; c.beginPath(); c.moveTo(2, 0); c.lineTo(len * 0.92, 0); c.stroke();
+                    c.restore();
+                  };
+                  const wingTex = mk(512, 512, (c, W, H) => {   // ปีกขวาเต็มปีก — โคนปีกอยู่ขอบซ้ายกลาง
+                    c.shadowColor = "rgba(255,220,120,0.9)"; c.shadowBlur = 18;
+                    const ox = 20, oy = H * 0.5;
+                    for (let k = 0; k < 11; k++) plume(c, ox, oy, 470 - k * 22, 34, -1.05 + k * 0.2, 0.95);          // ขนปีกหลักแผ่เป็นพัด
+                    for (let k = 0; k < 9; k++) plume(c, ox + 16, oy + 4, 280 - k * 12, 30, -0.8 + k * 0.2, 0.9);     // ขนชั้นกลาง
+                    for (let k = 0; k < 7; k++) plume(c, ox + 10, oy + 6, 150, 26, -0.55 + k * 0.2, 1);               // ขนอ่อนใกล้โคน
+                    const g = c.createRadialGradient(ox, oy, 4, ox, oy, 120); g.addColorStop(0, "rgba(255,255,255,0.95)"); g.addColorStop(1, "rgba(255,255,255,0)");
+                    c.shadowBlur = 0; c.fillStyle = g; c.beginPath(); c.arc(ox, oy, 120, 0, Math.PI * 2); c.fill();
+                  });
+                  const glowTex = mk(128, 128, (c, W) => { const g = c.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.35, "rgba(255,230,150,0.55)"); g.addColorStop(1, "rgba(255,210,100,0)"); c.fillStyle = g; c.fillRect(0, 0, W, W); });
+                  const featherTex = mk(64, 128, (c, W, H) => { c.shadowColor = "rgba(255,230,160,0.9)"; c.shadowBlur = 6; plume(c, W / 2, H - 6, H - 14, 16, -Math.PI / 2, 1); });
+                  const slashTex = mk(512, 128, (c, W, H) => {   // รอยฟันพระจันทร์เสี้ยว ปลายสองข้างจางหาย
+                    c.shadowColor = "rgba(255,230,140,1)"; c.shadowBlur = 16;
+                    const g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.25, "rgba(255,240,190,0.8)"); g.addColorStop(0.55, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)");
+                    c.fillStyle = g; c.beginPath(); c.moveTo(8, H * 0.62);
+                    c.quadraticCurveTo(W / 2, -H * 0.25, W - 8, H * 0.62); c.quadraticCurveTo(W / 2, H * 0.28, 8, H * 0.62); c.fill();
+                  });
+                  const ringTex = mk(256, 256, (c, W) => { const g = c.createRadialGradient(W / 2, W / 2, W * 0.28, W / 2, W / 2, W / 2); g.addColorStop(0, "rgba(255,230,150,0)"); g.addColorStop(0.55, "rgba(255,245,210,1)"); g.addColorStop(0.75, "rgba(255,210,100,0.6)"); g.addColorStop(1, "rgba(255,200,90,0)"); c.fillStyle = g; c.fillRect(0, 0, W, W); });
+                  G._djTex = { wingTex, glowTex, featherTex, slashTex, ringTex };
+                }
+                const TX = G._djTex;
+                const addMat = (map, col, op) => new THREE.MeshBasicMaterial({ map, color: col, transparent: true, opacity: op, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+                // holy feathers — ขนนกทรงหยดน้ำ
                 for (let i = 0; i < 16; i++) {
-                  const f = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.34), new THREE.MeshBasicMaterial({ color: i % 3 ? white : holy, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  const f = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.44), addMat(TX.featherTex, i % 3 ? white : holy, 0));
                   f.userData.ph = Math.random() * Math.PI * 2; f.userData.sp = 0.5 + Math.random(); f.visible = false; A.dj.fx.add(f); A.dj.feathers.push(f);
                 }
-                // angel wings (two)
+                // angel wings (two) — ปีกเต็มผืนจากเท็กซ์เจอร์ + ชั้นแสงฟุ้งสีทองด้านหลัง
                 for (const s of [-1, 1]) {
                   const wing = new THREE.Group();
-                  for (let k = 0; k < 4; k++) {
-                    const fe = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 1.3 - k * 0.18), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-                    fe.position.set(s * (0.3 + k * 0.34), 0.4 - k * 0.1, 0); fe.rotation.z = s * (0.5 + k * 0.15); wing.add(fe);
-                  }
+                  const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.8), addMat(TX.glowTex, 0x6a5018, 0));
+                  glow.position.set(s * 1.05, 0.3, -0.02); wing.add(glow);
+                  // ปีกหลักใช้ normal blending — เห็นลายขนนกขาวปลายทองชัด ไม่สว่างจ้าจนเป็นก้อนขาว
+                  const main = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), new THREE.MeshBasicMaterial({ map: TX.wingTex, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+                  main.scale.x = s; main.position.set(s * 1.18, 0.3, 0); wing.add(main);
                   wing.visible = false; A.dj.fx.add(wing); A.dj.wings.push(wing);
                 }
-                // holy slash arcs (reused for the combo)
+                // holy slash arcs (reused for the combo) — พระจันทร์เสี้ยวเรืองแสง
                 for (let i = 0; i < 6; i++) {
-                  const sl = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.3), new THREE.MeshBasicMaterial({ color: i % 2 ? gold : white, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+                  const sl = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 0.75), addMat(TX.slashTex, i % 2 ? gold : white, 0));
                   sl.visible = false; A.dj.fx.add(sl); A.dj.slashes.push(sl);
                 }
                 // guardian halo + presence high above
@@ -55360,10 +55394,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 guard.add(halo); guard.add(core); guard.visible = false; A.dj.fx.add(guard); A.dj.guard = guard; A.dj.halo = halo;
                 // colossal heaven blade for the finale
                 const blade = new THREE.Group();
-                const bl = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.05, 5.5, 6), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
-                const guardBar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.28, 0.28), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
-                guardBar.position.y = -2.4; blade.add(bl); blade.add(guardBar);
+                const bl = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.03, 5.5, 28, 1), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
+                const guardBar = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.6, 20), new THREE.MeshBasicMaterial({ color: gold, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
+                guardBar.rotation.z = Math.PI / 2; guardBar.position.y = -2.4; blade.add(bl); blade.add(guardBar);
+                const bGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: G._djTex.glowTex, color: 0xffe6a0, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+                bGlow.scale.set(2.2, 7, 1); blade.add(bGlow);   // ✨ ออร่ารอบดาบแสง
                 blade.visible = false; A.dj.fx.add(blade); A.dj.blade = blade;
+                // 💫 คลื่นแสงวงกลมตอนดาบแสงกระแทกพื้น (แทนดาวหกแฉกที่ขยายใหญ่จนเป็นเหลี่ยม)
+                const shock = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), addMat(TX.ringTex, 0xffe8a0, 0));
+                shock.rotation.x = -Math.PI / 2; shock.visible = false; A.dj.fx.add(shock); A.dj.shock = shock;
                 if (G.sfx && G.sfx.charge) G.sfx.charge();
               }
               const DJ = A.dj;
@@ -55387,7 +55426,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 armR.rotation.x = -1.4; armL.rotation.x = -1.2;
                 DJ.feathers.forEach(f => { const a = f.userData.ph + t * f.userData.sp; f.position.set(base.x + Math.cos(a) * 1.5, 0.6 + (a % 3), base.z + Math.sin(a) * 1.5); f.material.opacity = 1; });
                 // angel wings spread behind the paladin
-                DJ.wings.forEach((w, i) => { w.visible = true; w.position.set(base.x, 1.6, base.z); w.rotation.y = Math.PI / 2; w.scale.setScalar(0.5 + cp * 1.2); const flap = Math.sin(t * 4) * 0.15; w.children.forEach((fe, k) => fe.material.opacity = Math.min(1, cp * 1.4)); w.rotation.z = flap; });
+                DJ.wings.forEach((w, i) => { w.visible = true; w.position.set(base.x - 0.35, 2.55, base.z); w.rotation.y = Math.PI / 2; w.scale.setScalar(0.5 + cp * 1.2); const flap = Math.sin(t * 4) * 0.15; w.children.forEach((fe, k) => fe.material.opacity = Math.min(1, cp * 1.4)); w.rotation.z = flap; });
                 // guardian rises above
                 DJ.guard.visible = true; DJ.guard.position.set(base.x + 2.5, 6, base.z - 0.5); DJ.guard.scale.setScalar(0.6 + cp); DJ.guard.children.forEach(c => c.material.opacity = Math.min(0.8, cp)); DJ.halo.rotation.z = t;
                 if (Math.random() < 0.6) burst(new THREE.Vector3(base.x + (Math.random() - 0.5) * 3, 0, base.z + (Math.random() - 0.5) * 3), white, 2 + Math.random() * 3);
@@ -55398,7 +55437,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               else if (p < 0.5) {
                 const cp = (p - 0.38) / 0.12; G._ultCamOrbit = 0.65 - cp * 0.3;
                 armR.rotation.x = -2.0 - cp * 0.4; wand.scale.setScalar(1 + cp * 1.0);
-                DJ.wings.forEach(w => { w.position.set(base.x, 1.6, base.z); w.rotation.z = Math.sin(t * 4) * 0.15; w.children.forEach(fe => fe.material.opacity = 1); });
+                DJ.wings.forEach(w => { w.position.set(base.x - 0.35, 2.55, base.z); w.rotation.z = Math.sin(t * 4) * 0.15; w.children.forEach(fe => fe.material.opacity = 1); });
                 DJ.guard.children.forEach(c => c.material.opacity = 0.8); DJ.halo.rotation.z = t;
                 if (Math.random() < 0.8) burst(new THREE.Vector3(char.position.x + 0.3, 1.8, char.position.z), Math.random() < 0.5 ? gold : white, 1.8);
                 G._camShake = 0.12 + cp * 0.1;
@@ -55407,7 +55446,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               else if (p < 0.72) {
                 const cp = (p - 0.5) / 0.22; G._ultCamOrbit = 0.4 - cp * 0.2;
                 wand.scale.setScalar(1.5);
-                DJ.wings.forEach(w => { w.position.set(char.position.x, 1.6, char.position.z); w.rotation.z = Math.sin(t * 5) * 0.2; });
+                DJ.wings.forEach(w => { w.position.set(char.position.x - Math.sin(char.rotation.y) * 0.35, 2.55, char.position.z - Math.cos(char.rotation.y) * 0.35); w.rotation.y = char.rotation.y; w.rotation.z = Math.sin(t * 5) * 0.2; });
                 DJ.teleT += dt;
                 if (DJ.teleT > 0.11) {
                   DJ.teleT = 0;
@@ -55446,10 +55485,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   G.enemy.def = Math.max(0, (G.enemy.def || 0) - 5); G.est.frozen = true;
                   if (typeof effMaxHp === "function") { const heal = Math.round(effMaxHp() * 0.3); G.player.hp = Math.min(effMaxHp(), (G.player.hp || 0) + heal); popDamage(new THREE.Vector3(char.position.x, 1.5, char.position.z), heal, "heal"); setUi(u => ({ ...u, hp: G.player.hp })); }
                   for (let k = 0; k < 22; k++) setTimeout(() => burst(new THREE.Vector3(EP.x + (Math.random() - 0.5) * 5, 0, EP.z + (Math.random() - 0.5) * 5), [gold, holy, white, sky][k % 4], 0.2 + Math.random() * 3.2), k * 20);
-                  magicCircle.visible = true; magicCircle.position.set(EP.x, 0.12, EP.z); magicCircle.rotation.x = Math.PI / 2;
+                  magicCircle.visible = false;
+                  DJ.shock.visible = true; DJ.shock.position.set(EP.x, 0.1, EP.z);
                   if (em.userData.body) em.position.y = 1.1;
                 }
-                if (A.djBoom) { magicCircle.visible = true; magicCircle.scale.setScalar(4 + cp * 7); magicCircle.userData.stars.forEach(st => st.children.forEach(c => { c.material.opacity = Math.max(0, 1 - cp); c.material.color.setHex(gold); })); if (em.userData.body) em.position.y = Math.max(0, em.position.y - dt * 3); }
+                if (A.djBoom) { magicCircle.visible = false; const e = Math.min(1, (DJ.shockT = (DJ.shockT || 0) + dt) / 0.9); DJ.shock.scale.setScalar(2 + e * 12); DJ.shock.material.opacity = Math.max(0, 1 - e); if (em.userData.body) em.position.y = Math.max(0, em.position.y - dt * 3); }
                 G._camShake = Math.max(G._camShake || 0, 0.2);
               }
               // ============ PHASE 6 — AFTERMATH (p 0.9 → 1) ============
@@ -55459,6 +55499,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 DJ.blade.visible = cp < 0.7; DJ.blade.children.forEach(c => { if (c.material) c.material.opacity = Math.max(0, c.material.opacity - dt * 3); });
                 DJ.wings.forEach(w => w.children.forEach(fe => fe.material.opacity = Math.max(0, fe.material.opacity - dt * 3)));
                 DJ.guard.children.forEach(c => c.material.opacity = Math.max(0, c.material.opacity - dt * 3));
+                if (DJ.shock) DJ.shock.material.opacity = Math.max(0, DJ.shock.material.opacity - dt * 3);
                 DJ.feathers.forEach(f => { f.material.opacity = Math.max(0, f.material.opacity - dt * 1.5); f.position.y = Math.max(0.05, f.position.y - dt * 1.5); });
                 DJ.slashes.forEach(sl => sl.material.opacity = Math.max(0, sl.material.opacity - dt * 4));
                 if (em.userData.body) { em.position.y = Math.max(0, em.position.y - dt * 3); em.rotation.z = 0; }
