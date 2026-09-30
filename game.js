@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v682"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v683"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -44995,89 +44995,239 @@ function CherryAdventure() {
         // 🌟💫 SSS ADVANCED-SKILL CINEMATICS — วงเวทซ้อน + เสาแสง + รูนลอย ตอนร่าย และช็อกเวฟ+เศษพลัง ตอนกระทบ
         const advRigs = [];
         const _advMat = (color, op) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+        // 🌟 เอฟเฟกต์สกิลขั้นสูง/ขั้น 4 (ทุกอาชีพ) — เท็กซ์เจอร์วาดเองบน canvas ครั้งเดียว: วงเวท · ลำแสง · แสงฟุ้ง · รังสี · คลื่นวง
+        //    (เดิมเป็นคริสตัลแปดเหลี่ยม/กรวยแหลม/ห่วงเส้นบาง → ดูเป็นเหลี่ยม)
+        let _advTex = null;
+        const advTex = () => {
+            if (_advTex)
+                return _advTex;
+            const mk = (w, h, draw) => { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; draw(cv.getContext("2d"), w, h); const t = new THREE.CanvasTexture(cv); t.minFilter = THREE.LinearFilter; return t; };
+            const circle = mk(512, 512, (c, W) => {
+                const C = W / 2;
+                c.translate(C, C);
+                c.strokeStyle = "#fff";
+                c.fillStyle = "#fff";
+                c.shadowColor = "#fff";
+                c.shadowBlur = 10;
+                const ring = (r, w, a) => { c.globalAlpha = a; c.lineWidth = w; c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke(); };
+                ring(240, 6, 1);
+                ring(222, 2.5, 0.8);
+                ring(160, 4, 0.95);
+                ring(146, 2, 0.7);
+                ring(60, 3, 0.9);
+                c.globalAlpha = 0.85;
+                c.lineWidth = 3;
+                for (let t = 0; t < 2; t++) {
+                    c.beginPath();
+                    for (let k = 0; k <= 3; k++) {
+                        const a = (k / 3) * Math.PI * 2 + t * Math.PI / 3 - Math.PI / 2;
+                        const x = Math.cos(a) * 146, y = Math.sin(a) * 146;
+                        if (k)
+                            c.lineTo(x, y);
+                        else
+                            c.moveTo(x, y);
+                    }
+                    c.stroke();
+                }
+                for (let k = 0; k < 48; k++) {
+                    const a = (k / 48) * Math.PI * 2;
+                    c.globalAlpha = k % 4 ? 0.55 : 1;
+                    c.lineWidth = k % 4 ? 2 : 4;
+                    c.beginPath();
+                    c.moveTo(Math.cos(a) * 226, Math.sin(a) * 226);
+                    c.lineTo(Math.cos(a) * (k % 4 ? 236 : 244), Math.sin(a) * (k % 4 ? 236 : 244));
+                    c.stroke();
+                }
+                for (let k = 0; k < 24; k++) {
+                    const a = (k / 24) * Math.PI * 2;
+                    c.globalAlpha = 0.9;
+                    c.beginPath();
+                    c.arc(Math.cos(a) * 184, Math.sin(a) * 184, k % 3 ? 4 : 7, 0, Math.PI * 2);
+                    c.fill();
+                }
+                for (let k = 0; k < 6; k++) {
+                    const a = (k / 6) * Math.PI * 2 - Math.PI / 2;
+                    c.globalAlpha = 1;
+                    c.beginPath();
+                    c.arc(Math.cos(a) * 146, Math.sin(a) * 146, 10, 0, Math.PI * 2);
+                    c.fill();
+                }
+                const g = c.createRadialGradient(0, 0, 0, 0, 0, 240);
+                g.addColorStop(0, "rgba(255,255,255,0.35)");
+                g.addColorStop(0.5, "rgba(255,255,255,0.08)");
+                g.addColorStop(1, "rgba(255,255,255,0)");
+                c.globalAlpha = 1;
+                c.shadowBlur = 0;
+                c.fillStyle = g;
+                c.beginPath();
+                c.arc(0, 0, 240, 0, Math.PI * 2);
+                c.fill();
+            });
+            const beam = mk(64, 256, (c, W, H) => {
+                const gx = c.createLinearGradient(0, 0, W, 0);
+                gx.addColorStop(0, "rgba(255,255,255,0)");
+                gx.addColorStop(0.5, "rgba(255,255,255,1)");
+                gx.addColorStop(1, "rgba(255,255,255,0)");
+                c.fillStyle = gx;
+                c.fillRect(0, 0, W, H);
+                c.globalCompositeOperation = "destination-in";
+                const gy = c.createLinearGradient(0, 0, 0, H);
+                gy.addColorStop(0, "rgba(0,0,0,0)");
+                gy.addColorStop(0.35, "rgba(0,0,0,0.7)");
+                gy.addColorStop(1, "rgba(0,0,0,1)");
+                c.fillStyle = gy;
+                c.fillRect(0, 0, W, H);
+            });
+            const glow = mk(128, 128, (c, W) => { const g = c.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.25, "rgba(255,255,255,0.75)"); g.addColorStop(0.6, "rgba(255,255,255,0.18)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W, W); });
+            const rays = mk(256, 256, (c, W) => {
+                const C = W / 2;
+                c.translate(C, C);
+                for (let k = 0; k < 16; k++) {
+                    const a = (k / 16) * Math.PI * 2 + (k % 2 ? 0.1 : 0);
+                    const L = k % 2 ? 0.62 : 1;
+                    c.save();
+                    c.rotate(a);
+                    const g = c.createLinearGradient(0, 0, C * L, 0);
+                    g.addColorStop(0, "rgba(255,255,255,0.95)");
+                    g.addColorStop(1, "rgba(255,255,255,0)");
+                    c.fillStyle = g;
+                    c.beginPath();
+                    c.moveTo(0, -5);
+                    c.lineTo(C * L, 0);
+                    c.lineTo(0, 5);
+                    c.fill();
+                    c.restore();
+                }
+            });
+            const ringT = mk(256, 256, (c, W) => { const g = c.createRadialGradient(W / 2, W / 2, W * 0.3, W / 2, W / 2, W / 2); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.6, "rgba(255,255,255,1)"); g.addColorStop(0.8, "rgba(255,255,255,0.45)"); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W, W); });
+            _advTex = { circle, beam, glow, rays, ring: ringT };
+            return _advTex;
+        };
+        const _advTexMat = (map, color, op) => new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+        const _advSprite = (map, color, op) => new THREE.Sprite(new THREE.SpriteMaterial({ map, color, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false }));
         const spawnAdvCast = (color, pos, big) => {
+            const T = advTex();
             const g = new THREE.Group();
-            g.position.set(pos.x, 0.05, pos.z);
-            const sc = big ? 1.5 : 1;
-            const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.95 * sc, 0.045, 8, 48), _advMat(color, 0.95));
-            r1.rotation.x = Math.PI / 2;
-            const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.6 * sc, 0.03, 8, 40), _advMat(0xffffff, 0.8));
-            r2.rotation.x = Math.PI / 2;
-            r2.position.y = 0.05;
-            const r3 = new THREE.Mesh(new THREE.TorusGeometry(1.3 * sc, 0.025, 8, 56), _advMat(color, 0.6));
-            r3.rotation.x = Math.PI / 2;
-            r3.position.y = 0.02;
-            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5 * sc, 0.62 * sc, 3.4, 20, 1, true), _advMat(color, 0.3));
-            pillar.position.y = 1.7;
-            g.add(r1, r2, r3, pillar);
-            const runes = [];
-            for (let k = 0; k < 8; k++) {
-                const ru = new THREE.Mesh(new THREE.OctahedronGeometry(0.07 * sc, 0), _advMat(k % 2 ? 0xffffff : color, 0.95));
-                ru.userData.a = (k / 8) * Math.PI * 2;
-                g.add(ru);
-                runes.push(ru);
+            g.position.set(pos.x, 0.06, pos.z);
+            const sc = big ? 1.55 : 1;
+            const c1 = new THREE.Mesh(new THREE.PlaneGeometry(3.2 * sc, 3.2 * sc), _advTexMat(T.circle, color, 1));
+            c1.rotation.x = -Math.PI / 2;
+            const c2 = new THREE.Mesh(new THREE.PlaneGeometry(1.9 * sc, 1.9 * sc), _advTexMat(T.circle, new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.35), 0.75));
+            c2.rotation.x = -Math.PI / 2;
+            c2.position.y = 0.03;
+            const pool = new THREE.Mesh(new THREE.PlaneGeometry(3.6 * sc, 3.6 * sc), _advTexMat(T.glow, color, 0.55));
+            pool.rotation.x = -Math.PI / 2;
+            pool.position.y = -0.01;
+            g.add(pool, c1, c2);
+            const beams = [];
+            for (let k = 0; k < 2; k++) {
+                const bm = new THREE.Mesh(new THREE.PlaneGeometry(1.5 * sc, 5.2 * sc), _advTexMat(T.beam, color, 0.6));
+                bm.position.y = 2.6 * sc;
+                bm.rotation.y = k * Math.PI / 2;
+                g.add(bm);
+                beams.push(bm);
             }
-            g.userData = { kind: "cast", life: big ? 1.5 : 1.05, max: big ? 1.5 : 1.05, runes, r1, r2, r3, pillar };
-            g.scale.setScalar(0.25);
+            const core = new THREE.Mesh(new THREE.PlaneGeometry(0.55 * sc, 5.2 * sc), _advTexMat(T.beam, new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.5), 0.5));
+            core.position.y = 2.6 * sc;
+            core.userData.bb = true;
+            g.add(core);
+            beams.push(core);
+            const motes = [];
+            for (let k = 0; k < (big ? 22 : 14); k++) {
+                const m = _advSprite(T.glow, k % 3 ? color : 0xffffff, 0.95);
+                const s0 = (0.18 + Math.random() * 0.22) * sc;
+                m.scale.set(s0, s0, 1);
+                m.userData = { a: Math.random() * Math.PI * 2, r: (0.5 + Math.random() * 0.9) * sc, h: Math.random(), sp: 0.6 + Math.random() * 0.8, s0 };
+                g.add(m);
+                motes.push(m);
+            }
+            g.userData = { kind: "cast", life: big ? 1.6 : 1.1, max: big ? 1.6 : 1.1, c1, c2, pool, beams, motes, sc };
+            g.scale.setScalar(0.3);
             scene.add(g);
             advRigs.push(g);
         };
         const spawnAdvImpact = (color, pos, big) => {
+            const T = advTex();
             const g = new THREE.Group();
-            g.position.set(pos.x, 0.5, pos.z);
+            g.position.set(pos.x, 0, pos.z);
             const sc = big ? 1.6 : 1;
-            const wave = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.06, 8, 40), _advMat(color, 0.95));
-            wave.rotation.x = Math.PI / 2;
-            wave.position.y = -0.35;
-            const flash = new THREE.Mesh(new THREE.SphereGeometry(0.42 * sc, 18, 14), _advMat(0xffffff, 0.9));
-            g.add(wave, flash);
-            const shards = [];
-            for (let k = 0; k < 14; k++) {
-                const sh = new THREE.Mesh(new THREE.ConeGeometry(0.05 * sc, 0.3 * sc, 5), _advMat(k % 3 ? color : 0xffe08a, 0.95));
-                const a = Math.random() * Math.PI * 2, up = 0.5 + Math.random() * 1.6;
-                sh.userData = { vx: Math.cos(a) * (1.6 + Math.random() * 2.2), vz: Math.sin(a) * (1.6 + Math.random() * 2.2), vy: up * 2.2 };
-                sh.rotation.set(Math.random() * 3, 0, Math.random() * 3);
-                g.add(sh);
-                shards.push(sh);
+            const flash = _advSprite(T.glow, 0xffffff, 1);
+            flash.position.y = 1.0;
+            flash.scale.set(2.2 * sc, 2.2 * sc, 1);
+            const halo = _advSprite(T.glow, color, 0.9);
+            halo.position.y = 1.0;
+            halo.scale.set(3.4 * sc, 3.4 * sc, 1);
+            const rays = _advSprite(T.rays, color, 1);
+            rays.position.y = 1.0;
+            rays.scale.set(3.6 * sc, 3.6 * sc, 1);
+            const wave = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), _advTexMat(T.ring, color, 1));
+            wave.rotation.x = -Math.PI / 2;
+            wave.position.y = 0.08;
+            const wave2 = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), _advTexMat(T.ring, 0xffffff, 0.8));
+            wave2.rotation.x = -Math.PI / 2;
+            wave2.position.y = 0.1;
+            g.add(halo, flash, rays, wave, wave2);
+            const sparks = [];
+            for (let k = 0; k < (big ? 26 : 16); k++) {
+                const sp = _advSprite(T.glow, k % 3 ? color : 0xffe8a0, 1);
+                const s0 = (0.14 + Math.random() * 0.16) * sc;
+                sp.scale.set(s0, s0, 1);
+                sp.position.y = 1.0;
+                const a = Math.random() * Math.PI * 2, v = (2.2 + Math.random() * 3) * sc;
+                sp.userData = { vx: Math.cos(a) * v, vz: Math.sin(a) * v, vy: 1.8 + Math.random() * 3.2, s0 };
+                g.add(sp);
+                sparks.push(sp);
             }
-            g.userData = { kind: "boom", life: 0.85, max: 0.85, wave, flash, shards, sc };
+            g.userData = { kind: "boom", life: big ? 1.0 : 0.8, max: big ? 1.0 : 0.8, flash, halo, rays, wave, wave2, sparks, sc };
             scene.add(g);
             advRigs.push(g);
             burst(pos, color, big ? 2.2 : 1.6);
             burst(pos, 0xffffff, big ? 1.5 : 1.0);
-            burst(pos, 0xffe08a, 0.9);
             if (G.sfx && G.sfx.crit)
                 G.sfx.crit();
         };
+        G.spawnAdvCast = spawnAdvCast;
+        G.spawnAdvImpact = spawnAdvImpact;
         const updateAdvFx = (dt) => {
             for (let i = advRigs.length - 1; i >= 0; i--) {
                 const g = advRigs[i], U = g.userData;
                 U.life -= dt;
                 const pr = 1 - U.life / U.max;
+                const fade = pr > 0.72 ? Math.max(0, 1 - (pr - 0.72) / 0.28) : 1;
                 if (U.kind === "cast") {
-                    g.scale.setScalar(0.25 + Math.min(1, pr * 3.2) * 0.75);
-                    g.rotation.y += dt * 2.4;
-                    U.r2.rotation.z += dt * 3.5;
-                    U.r3.rotation.z -= dt * 1.8;
-                    U.runes.forEach((ru, k) => { const a = ru.userData.a + pr * 5; ru.position.set(Math.cos(a) * 1.0, 0.25 + pr * 2.0 + Math.sin(pr * 9 + k) * 0.08, Math.sin(a) * 1.0); ru.rotation.y += dt * 6; });
-                    U.pillar.material.opacity = 0.3 * (1 - pr * 0.6);
-                    if (pr > 0.7)
-                        g.traverse((o) => { if (o.material)
-                            o.material.opacity *= 0.93; });
+                    g.scale.setScalar(0.3 + Math.min(1, pr * 3.4) * 0.7); // วงเวทกางออกเร็ว ๆ
+                    U.c1.rotation.z += dt * 1.6;
+                    U.c2.rotation.z -= dt * 2.8;
+                    U.c1.material.opacity = fade;
+                    U.c2.material.opacity = 0.75 * fade;
+                    U.pool.material.opacity = 0.55 * fade;
+                    const bh = Math.min(1, pr * 2.5);
+                    U.beams.forEach((bm) => { bm.scale.y = bh; bm.position.y = 2.6 * U.sc * bh; bm.material.opacity = (bm.userData.bb ? 0.55 : 0.6) * fade * (0.8 + Math.sin(pr * 40) * 0.2); if (bm.userData.bb && camera)
+                        bm.rotation.y = Math.atan2(camera.position.x - g.position.x, camera.position.z - g.position.z); });
+                    U.motes.forEach((m) => { const d = m.userData; const a = d.a + pr * 6 * d.sp; const h = ((d.h + pr * d.sp) % 1); m.position.set(Math.cos(a) * d.r * (1 - h * 0.4), 0.2 + h * 4 * U.sc, Math.sin(a) * d.r * (1 - h * 0.4)); m.material.opacity = 0.95 * fade * Math.sin(h * Math.PI); });
                 }
                 else {
-                    U.wave.scale.setScalar(1 + pr * (5.2 * U.sc));
-                    U.wave.material.opacity = 0.95 * (1 - pr);
-                    U.flash.scale.setScalar(1 + pr * 2.6);
-                    U.flash.material.opacity = 0.9 * (1 - pr);
-                    U.shards.forEach((sh) => { const v = sh.userData; sh.position.x += v.vx * dt; sh.position.z += v.vz * dt; sh.position.y += v.vy * dt; v.vy -= 7.5 * dt; sh.material.opacity = 0.95 * (1 - pr); });
+                    const e = 1 - Math.pow(1 - Math.min(1, pr), 3); // ease-out
+                    U.flash.material.opacity = Math.max(0, 1 - pr * 3.2);
+                    U.flash.scale.setScalar((2.2 + e * 1.6) * U.sc);
+                    U.halo.material.opacity = 0.9 * (1 - pr);
+                    U.halo.scale.setScalar((3.4 + e * 2.4) * U.sc);
+                    U.rays.material.opacity = Math.max(0, 1 - pr * 1.6);
+                    U.rays.material.rotation += dt * 1.5;
+                    U.rays.scale.setScalar((3.6 + e * 3.4) * U.sc);
+                    U.wave.scale.setScalar((0.8 + e * 7.5) * U.sc);
+                    U.wave.material.opacity = 1 - pr;
+                    U.wave2.scale.setScalar((0.5 + Math.min(1, pr * 1.6) * 5) * U.sc);
+                    U.wave2.material.opacity = Math.max(0, 0.8 - pr * 1.4);
+                    U.sparks.forEach((sp) => { const v = sp.userData; sp.position.x += v.vx * dt; sp.position.z += v.vz * dt; sp.position.y = Math.max(0.05, sp.position.y + v.vy * dt); v.vy -= 7 * dt; v.vx *= 0.97; v.vz *= 0.97; sp.material.opacity = 1 - pr; const s = v.s0 * (1 - pr * 0.6); sp.scale.set(s, s, 1); });
                 }
                 if (U.life <= 0) {
                     scene.remove(g);
-                    if (G._disposeObj3D)
-                        G._disposeObj3D(g);
+                    g.traverse((o) => { if (o.geometry)
+                        o.geometry.dispose(); if (o.material)
+                        o.material.dispose(); });
                     advRigs.splice(i, 1);
-                }
+                } // เท็กซ์เจอร์ใช้ร่วม — ทิ้งแค่เรขาคณิต/วัสดุ
             }
         };
         for (let i = 0; i < 14; i++) {
@@ -62126,6 +62276,7 @@ function CherryAdventure() {
             }
             const aoe = isAoeSkill(sk);
             const fk0 = worldFxFor(sk), arch0 = skillArch(sk, fk0);
+            const advFx = sk.id && sk.id.indexOf("x_") === 0; // 🌟 สกิลขั้นสูง/ขั้น 4 — วงเวท + จุดปะทะแบบเดียวกับในสนามรบ
             // 🥷 ประหารเงา = ท่าระยะไกล — เล็งได้ไกลกว่าสกิลประชิดของนักฆ่ามาก
             const focus = nearestWild(worldRange() + (arch0 === "shadow3" ? 8 : arch0 === "knives" ? 5 : aoe ? 3 : 2));
             if (!focus) {
@@ -62166,6 +62317,18 @@ function CherryAdventure() {
             // 💫☠️🚀 ทุกดาเมจที่เกิดจากสกิลนี้ (ช่วงท่า ~2.5 วิ) ติดสถานะตามสกิล — สตัน/มึน/พิษ/ทุบลอย
             G._stSk = { sk, until: performance.now() + 2500, heavy: fk0 === "quake" || fk0 === "bash" || (sk.mult || 0) >= 2.3 };
             char.rotation.y = Math.atan2(focus.position.x - char.position.x, focus.position.z - char.position.z);
+            if (advFx && G.spawnAdvCast) {
+                try {
+                    G.spawnAdvCast(sk.color || 0xb07ae0, char.position, false);
+                    const fp = focus.position.clone();
+                    setTimeout(() => { try {
+                        if (G.mode === "explore")
+                            G.spawnAdvImpact(sk.color || 0xb07ae0, fp, false);
+                    }
+                    catch (_) { } }, 520);
+                }
+                catch (_) { }
+            }
             yaw = char.rotation.y; // 🧭 ล็อกทิศเดินตามไปด้วย ไม่งั้นท่าเดินจะค่อย ๆ หมุนตัวกลับทิศเก่าระหว่างร่าย
             const base = (effAtk() + Math.random() * 4) * skillMul(sk, rank); // ⚖️ ตันที่ 200%
             const col = sk.color || 0xffd24a;
