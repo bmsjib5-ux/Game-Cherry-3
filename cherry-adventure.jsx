@@ -368,7 +368,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v679";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v680";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3441,11 +3441,42 @@ export default function CherryAdventure() {
     G.joy = { x: 0, y: 0 };
     G.keys = {};
 
-    // ---------- 🎵 Audio (synthesized — no files, works offline) ----------
+    // ---------- 🎵 Audio — ไฟล์เสียงจริง Kenney (CC0) + เพลงประกอบ OpenGameArt (CC0) · สังเคราะห์เป็นตัวสำรอง ----------
     let actx = null;
+    // 🔊 ชุดเสียงเอฟเฟกต์ (assets/audio/sfx) — ตัวเลข = จำนวนแบบให้สุ่มสลับ ไม่ซ้ำซาก
+    const SFX_BASE = "assets/audio/sfx/";
+    const SFX_FILES = { slash: 4, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, warp: 0, open: 0, close: 0 };
+    const sfxBuf = {};
+    let sfxLoading = false;
+    const loadSfx = () => {
+      if (sfxLoading || !actx) return;
+      sfxLoading = true;
+      Object.keys(SFX_FILES).forEach((k) => {
+        const n = SFX_FILES[k];
+        sfxBuf[k] = [];
+        (n ? [...Array(n)].map((_, i) => k + i) : [k]).forEach((nm) => {
+          fetch(SFX_BASE + nm + ".mp3").then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
+            .then((ab) => new Promise((res, rej) => actx.decodeAudioData(ab, res, rej)))   // แบบ callback — Safari รุ่นเก่ารองรับ
+            .then((b) => sfxBuf[k].push(b)).catch(() => {});
+        });
+      });
+    };
+    // เล่นไฟล์เสียง (สุ่มแบบ + ส่ายระดับเสียงนิดหน่อย) · คืน false ถ้ายังโหลดไม่เสร็จ → ใช้เสียงสังเคราะห์แทน
+    const smp = (k, gain = 0.6, rate = 1) => {
+      const L = sfxBuf[k];
+      if (!actx || !G.soundOn || !L || !L.length) return false;
+      try {
+        const src = actx.createBufferSource(); src.buffer = L[(Math.random() * L.length) | 0];
+        src.playbackRate.value = rate * (0.94 + Math.random() * 0.12);
+        const g = actx.createGain(); g.gain.value = gain;
+        src.connect(g); g.connect(actx.destination); src.start();
+        return true;
+      } catch (e) { return false; }
+    };
     const initAudio = () => {
       if (actx) return;
       try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+      loadSfx();
     };
     // 🔊 การตั้งค่าเสียง — จำค่าไว้ข้ามรอบเล่น
     const prefBool = (k, dflt) => { try { const v = window.localStorage.getItem(k); return v == null ? dflt : v === "1"; } catch (e) { return dflt; } };
@@ -3502,82 +3533,76 @@ export default function CherryAdventure() {
     // named sound effects — layered (tone + noise + sub) so hits actually land
     const bsx = () => G.battleSfxOn !== false; // ⚔️ เปิด/ปิดเสียงต่อสู้แยกจากเสียงอื่น
     G.sfx = {
-      // ⚔️ sword: a bright metallic shing over an air-cutting whoosh
-      slash: () => { if (!bsx()) return; sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
-      // 👊 hit: crunchy impact + sub thump
-      hit: () => { if (!bsx()) return; noise(0.09, 0.16, 1500, 0.8, 300); thump(110, 0.14, 0.22); sfx([200, 130], "square", 0.07, 0.08, -70); },
-      guard: () => { if (!bsx()) return; sfx([1200, 1800, 900], "square", 0.09, 0.13, 140); noise(0.09, 0.12, 5000, 2); }, // 🛡️ metallic clang
-      // 💥 crit: rising stab + bright noise crack + sub
-      crit: () => { if (!bsx()) return; sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28); },
-      // 💣 big explosion (ults / heavy skills)
-      boom: () => { if (!bsx()) return; noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); },
+      // ⚔️ sword: เสียงฟันจริง (Kenney) + ลมตัดอากาศบาง ๆ · ยังไม่โหลด = เสียงสังเคราะห์เดิม
+      slash: () => { if (!bsx()) return; if (smp("slash", 0.55)) { noise(0.1, 0.05, 4200, 1.2, 900); return; } sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
+      // 👊 hit: หมัด/ตีโดนจริง + ซับเบสให้หนัก
+      hit: () => { if (!bsx()) return; if (smp("hit", 0.7)) { thump(110, 0.12, 0.14); return; } noise(0.09, 0.16, 1500, 0.8, 300); thump(110, 0.14, 0.22); sfx([200, 130], "square", 0.07, 0.08, -70); },
+      guard: () => { if (!bsx()) return; if (smp("guard", 0.6)) return; sfx([1200, 1800, 900], "square", 0.09, 0.13, 140); noise(0.09, 0.12, 5000, 2); }, // 🛡️ metallic clang
+      // 💥 crit: กระแทกหนัก + เหล็กกระทบ + ซับ
+      crit: () => { if (!bsx()) return; if (smp("crit", 0.75)) { smp("clang", 0.32); thump(80, 0.22, 0.22); return; } sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28); },
+      // 💣 big explosion (ults / heavy skills) — ระเบิดสังเคราะห์ + แรงกระแทกจริงเสียงต่ำ
+      boom: () => { if (!bsx()) return; noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); smp("boom", 0.5, 0.7); },
       // ⚡ charging hum for ultimates
       charge: () => { if (!actx || !G.soundOn || !bsx()) return; const now = actx.currentTime; const o = actx.createOscillator(), g = actx.createGain();
         o.type = "sawtooth"; o.frequency.setValueAtTime(120, now); o.frequency.exponentialRampToValueAtTime(900, now + 0.9);
         g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.14, now + 0.75); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
         o.connect(g); g.connect(actx.destination); o.start(now); o.stop(now + 1.05); },
-      catch: () => sfx([440, 660, 880, 1100], "sine", 0.11, 0.16),
-      win: () => { sfx([523, 659, 784, 1047], "triangle", 0.15, 0.16); setTimeout(() => sfx([1047, 1319], "triangle", 0.22, 0.14), 240); },
+      catch: () => { if (smp("catch", 0.6)) return; sfx([440, 660, 880, 1100], "sine", 0.11, 0.16); },
+      win: () => { if (smp("win", 0.62)) return; sfx([523, 659, 784, 1047], "triangle", 0.15, 0.16); setTimeout(() => sfx([1047, 1319], "triangle", 0.22, 0.14), 240); },
       lose: () => sfx([330, 262, 196], "sine", 0.22, 0.16, -40),
-      levelup: () => { sfx([523, 659, 784, 1047, 1319], "triangle", 0.16, 0.17); noise(0.3, 0.07, 6000, 1); },
-      button: () => sfx([600], "sine", 0.05, 0.08),
-      coin: () => sfx([880, 1320], "square", 0.07, 0.1),
-      warp: () => { sfx([300, 500, 800, 1200], "sine", 0.12, 0.14, 200); noise(0.35, 0.09, 2200, 0.7, 5000); },
+      levelup: () => { if (smp("levelup", 0.62)) return; sfx([523, 659, 784, 1047, 1319], "triangle", 0.16, 0.17); noise(0.3, 0.07, 6000, 1); },
+      button: () => { if (smp("button", 0.4)) return; sfx([600], "sine", 0.05, 0.08); },
+      coin: () => { if (smp("coin", 0.5)) return; sfx([880, 1320], "square", 0.07, 0.1); },
+      warp: () => { sfx([300, 500, 800, 1200], "sine", 0.12, 0.1, 200); noise(0.35, 0.07, 2200, 0.7, 5000); smp("warp", 0.5); },
+      open: () => smp("open", 0.45),     // 📖 เปิด/ปิดหน้าต่างเมนู
+      close: () => smp("close", 0.4),
       splash: () => { sfx([400, 250], "sine", 0.18, 0.12, -120); noise(0.2, 0.1, 900, 0.6); },
       reel: () => sfx([700, 500, 700, 500], "triangle", 0.08, 0.1),
-      fish: () => sfx([660, 880, 1100, 1320], "sine", 0.12, 0.16),
+      fish: () => { if (smp("fish", 0.55)) return; sfx([660, 880, 1100, 1320], "sine", 0.12, 0.16); },
     };
-    // ---------- 🎵 MUSIC: calm overworld vs. driving battle theme ----------
+    // ---------- 🎵 MUSIC: เพลงประกอบจริง (Juhani Junkala / CleytonRX · CC0) — เปลี่ยนเพลงตามสถานที่ + ครอสเฟด ----------
+    //  เมือง · ทุ่ง/โลกกว้าง · บ้าน · ฟาร์ม · ต่อสู้ · บอส  (ไฟล์ assets/audio/bgm/*.mp3 โหลดตอนจะเล่นเท่านั้น)
+    const BGM_BASE = "assets/audio/bgm/";
+    const BGM_VOL = 0.38;
     let musicTimer = null;
-    const notesDay = [523, 587, 659, 784, 659, 587];   // major, cheerful
-    const notesNight = [440, 523, 587, 494, 440, 392]; // softer
-    // ⚔️ battle: a 16-step driving loop in A minor with kick/hat/bass
-    const battleBass = [110, 110, 110, 110, 87, 87, 87, 87, 98, 98, 98, 98, 82, 82, 82, 82];
-    const battleLead = [440, 523, 659, 523, 415, 494, 622, 494, 392, 466, 587, 466, 330, 415, 523, 659];
-    let musicStep = 0;
-    const tone = (f, type, dur, gain, when = 0) => {
-      const now = actx.currentTime + when;
-      const o = actx.createOscillator(), g = actx.createGain();
-      o.type = type; o.frequency.value = f;
-      g.gain.setValueAtTime(gain, now);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      o.connect(g); g.connect(actx.destination);
-      o.start(now); o.stop(now + dur + 0.02);
+    const bgmEls = [0, 1].map(() => { try { const el = new Audio(); el.loop = true; el.preload = "none"; el.volume = 0; return el; } catch (e) { return null; } });
+    let bgmCur = 0, bgmTrack = null;
+    const bgmWant = () => {
+      if (G.mode === "battle" || G.mode === "fainted") return G.enemy && G.enemy.boss ? "boss" : "battle";
+      if (G.inTownZone) return "town";
+      if (G.inHomeZone) return "home";
+      if (G.inRanchZone) return "ranch";
+      if (G.mode === "explore") return "field";
+      return "town";   // หน้าเริ่มเกม / สร้างตัวละคร
     };
-    const playMusicNote = () => {
-      if (!actx || !G.musicOn) return;
-      const inBattle = G.mode === "battle";
-      const step = musicStep++;
-      if (inBattle) {
-        // 🥁 kick on the beat, hat on the off-beat = momentum
-        const s = step % 16;
-        if (s % 4 === 0) thump(55, 0.16, 0.22);                 // kick
-        if (s % 4 === 2) noise(0.05, 0.05, 8000, 2);            // hi-hat
-        if (s % 8 === 4) noise(0.12, 0.09, 1800, 0.9);          // snare
-        tone(battleBass[s], "sawtooth", 0.16, 0.055);           // bass pulse
-        if (s % 2 === 0) tone(battleLead[s], "square", 0.13, 0.035); // lead arp
-      } else {
-        const night = G.dayPhaseAmt != null && G.dayPhaseAmt < 0.35;
-        const scale = night ? notesNight : notesDay;
-        tone(scale[step % scale.length], "triangle", 0.5, 0.05);
-        if (step % 3 === 0) tone(scale[step % scale.length] / 2, "sine", 0.6, 0.04);
+    const bgmPlay = (el) => { try { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} };
+    const bgmTick = () => {
+      if (!bgmEls[0] || document.hidden) return;
+      if (!G.musicOn) {   // 🔇 ปิดเพลง: ค่อย ๆ เบาลงแล้วหยุด
+        bgmEls.forEach((el) => { el.volume = Math.max(0, el.volume - 0.06); if (el.volume <= 0.001 && !el.paused) el.pause(); });
+        return;
       }
+      const want = bgmWant();
+      if (want !== bgmTrack) {                        // 🔁 เปลี่ยนสถานที่ → เพลงใหม่เข้าอีกตัว แล้วครอสเฟด
+        bgmCur = 1 - bgmCur; bgmTrack = want;
+        const el = bgmEls[bgmCur];
+        el.src = BGM_BASE + want + ".mp3"; el.volume = 0;
+        bgmPlay(el);
+      }
+      bgmEls.forEach((el, i) => {
+        if (i === bgmCur) { if (el.paused) bgmPlay(el); el.volume = Math.min(BGM_VOL, el.volume + 0.04); }
+        else { el.volume = Math.max(0, el.volume - 0.06); if (el.volume <= 0.001 && !el.paused) el.pause(); }
+      });
     };
-    // ⏱️ battle runs at double tempo — retimed whenever the mode flips
-    const musicTempo = () => (G.mode === "battle" ? 200 : 480);
+    // 📱 สลับแอป/ปิดจอ → หยุดเพลง · กลับมา → ตัวจับเวลาเล่นต่อเอง
+    document.addEventListener("visibilitychange", () => { if (document.hidden) bgmEls.forEach((el) => { try { if (el && !el.paused) el.pause(); } catch (e) {} }); });
     const startMusic = () => {
-      if (musicTimer) return;
-      let curTempo = musicTempo();
-      const tick = () => {
-        playMusicNote();
-        const want = musicTempo();
-        if (want !== curTempo) { // 🔁 mode changed — restart the interval at the new tempo
-          curTempo = want;
-          clearInterval(musicTimer);
-          musicTimer = setInterval(tick, curTempo);
-        }
-      };
-      musicTimer = setInterval(tick, curTempo);
+      if (!bgmEls[0]) return;
+      if (!musicTimer) musicTimer = setInterval(bgmTick, 150);
+      bgmTick();
+      // 📱 iOS: เสียงจาก <audio> ต้องเริ่มจากการแตะของผู้เล่นครั้งแรก — ปลุกตัวเล่นตัวที่สองไว้ด้วย จะได้ครอสเฟดได้ภายหลัง
+      const other = bgmEls[1 - bgmCur];
+      if (other && !other.src && bgmTrack) { other.src = BGM_BASE + bgmTrack + ".mp3"; other.volume = 0; bgmPlay(other); setTimeout(() => { try { if (bgmEls.indexOf(other) !== bgmCur) other.pause(); } catch (e) {} }, 60); }
     };
     const savePref = (k, v) => { try { window.localStorage.setItem(k, v ? "1" : "0"); } catch (e) {} };
     G.toggleSound = () => { G.soundOn = !G.soundOn; savePref("cherry-sound", G.soundOn); setUi((u) => ({ ...u, soundOn: G.soundOn })); if (G.soundOn) { initAudio(); G.sfx.button(); } };
@@ -58776,7 +58801,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       </svg>
     );
   };
-  const toggleMenu = (name) => setUi((u) => {
+  const toggleMenu = (name) => { try { const sx = G.sfx; if (sx) (ui[name] ? sx.close : sx.open)(); } catch (e) {} return toggleMenuState(name); };   // 📖 เสียงเปิด/ปิดหน้าต่าง
+  const toggleMenuState = (name) => setUi((u) => {
     const willOpen = !u[name];
     const cleared = {};
     MENU_FLAGS.forEach((f) => (cleared[f] = false));
