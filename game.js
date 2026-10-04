@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v718"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v719"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -16552,7 +16552,19 @@ function CherryAdventure() {
                             console.warn("lego remote", eLR);
                         }
                     }
-                    const R = { mixers, acts, mats, neck, neckPlane, k, cur: null, lit: -1, tmpV: new THREE.Vector3(), off: Math.random() * 2 };
+                    const R = { mixers, acts, mats, neck, neckPlane, k, cur: null, lit: -1, tmpV: new THREE.Vector3(), off: Math.random() * 2, g };
+                    if (info && info.fest) {
+                        try {
+                            g.updateMatrixWorld(true);
+                            const rg = heroSeasonDeco(parts, g, info.fest);
+                            if (rg.length) {
+                                R.deco = rg;
+                                R.flag = rg.flag || null;
+                                rg.forEach((K) => heroBoneFollow(R, K));
+                            }
+                        }
+                        catch (eFs) { }
+                    } // 🎉 ของประดับชุดเทศกาลของเพื่อน
                     grp.userData.rig = R;
                     G.remoteModelTick(R, 0, false, null);
                 }).catch(() => restore());
@@ -16571,6 +16583,19 @@ function CherryAdventure() {
                 }
                 if (dt)
                     R.mixers.forEach((m) => m.update(dt));
+                if (R.deco) {
+                    R.g.updateMatrixWorld(true);
+                    R.deco.forEach((K) => heroBoneFollow(R, K));
+                } // 🎉 ของประดับเกาะกระดูก
+                if (R.flag) {
+                    R.ft = (R.ft || 0) + (dt || 0);
+                    const pa = R.flag.geometry.attributes.position, b = R.flag.userData.base;
+                    for (let i = 0; i < pa.count; i++) {
+                        const bx = b[i * 3];
+                        pa.setZ(i, b[i * 3 + 2] + Math.sin(bx * 7 - R.ft * 6) * 0.05 * (bx / 0.9));
+                    }
+                    pa.needsUpdate = true;
+                }
                 const dayAmt = G.dayPhaseAmt != null ? G.dayPhaseAmt : 1;
                 const lit = +(0.14 + 0.44 * Math.max(0, Math.min(1, (0.62 - dayAmt) / 0.55))).toFixed(2);
                 if (Math.abs(lit - R.lit) > 0.015) {
@@ -17403,8 +17428,8 @@ function CherryAdventure() {
             };
             // 🎉 ของประดับชุดเทศกาล (บนโมเดล 3D) — 💦 สงกรานต์: ปืนฉีดน้ำสะพายหลัง · 🎄 คริสต์มาส: หัวต้นคริสต์มาส · 🎃 ฮาโลวีน: หัวฟักทอง · 🎆 ปีใหม่: ธง HAPPY NEW YEAR ปักหลัง
             //    พิกัดหน่วยตัวละครแบบเดียวกับ heroOutfitDeco: หัว (Head) ยอด +0.45 · หน้า z +0.29 · อก spine_03 แผ่นหลัง z ≈ −0.3 · +x = ซ้ายของตัวละคร
-            const heroSeasonDeco = (parts, g) => {
-                const rigs = [], sid = G.activeSet;
+            const heroSeasonDeco = (parts, g, sidIn) => {
+                const rigs = [], sid = sidIn === undefined ? G.activeSet : sidIn;
                 if (!sid || !["songkran", "xmas", "halloween", "newyear"].includes(sid))
                     return rigs;
                 const bone = (n) => parts[0].getObjectByName(n);
@@ -17523,7 +17548,9 @@ function CherryAdventure() {
                     fg.translate(0.45, 0, 0);
                     const flag = add(c, new THREE.Mesh(fg, new THREE.MeshStandardMaterial({ map: tx, side: THREE.DoubleSide, roughness: 0.7 })), 0.02, 1.43, -0.34, 0, Math.PI / 2 + 0.25, 0);
                     flag.userData.base = fg.attributes.position.array.slice();
-                    G._seasonFlag = flag;
+                    if (sidIn === undefined)
+                        G._seasonFlag = flag;
+                    rigs.flag = flag;
                 }
                 return rigs;
             };
@@ -72816,7 +72843,7 @@ function CherryAdventure() {
             if (!m || !m.pid || m.pid === G.pid)
                 return;
             let a = remoteAvatars.get(m.pid);
-            const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk, m.lego].map((v) => (v == null ? "" : v)).join("|");
+            const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk, m.lego, m.fest].map((v) => (v == null ? "" : v)).join("|");
             if (a && a.lookSig !== lookSig && (a.lookT || 0) < Date.now() - 1500) {
                 G._rtRemove(m.pid);
                 a = null;
@@ -73050,7 +73077,7 @@ function CherryAdventure() {
                         pet = { s: p.sp, st: p.stage || 1, lv: p.lv || 1, mu: p.mut || 0 };
                 }
                 // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin + pet; the class accessory derives from c)
-                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, lego: (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned()) ? 1 : 0, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, lego: (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned()) ? 1 : 0, fest: (G.activeSet && ["songkran", "xmas", "halloween", "newyear"].includes(G.activeSet)) ? G.activeSet : null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
             }
             catch (e) { }
         };
