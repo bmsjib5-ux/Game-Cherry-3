@@ -390,7 +390,7 @@ const awkBonus = (n) => {
     return b;
 };
 const awkPerkTxt = (i) => { const k = AWK_PERK[i]; return k ? `${k.emoji} ${k.name} +${k.val}${k.unit}` : ""; };
-const MENU_FLAGS = ["tailorOpen", "minerOpen", "shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
+const MENU_FLAGS = ["legoShopOpen", "tailorOpen", "minerOpen", "shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
 const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
 // 🦸 ท่าฟาดของ "ชุดฮีโร่" ในโลกกว้าง — แต่ละชุดมีท่าประจำตัว + เอฟเฟคประจำตัว
 //    style: claw ตะปบไขว้ · smash ทุบสองมือ · cast ผลักฝ่ามือ · breath พ่นลมหายใจ · dance ร่ายรำ · throw ขว้าง
@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v710"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v711"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -38766,8 +38766,43 @@ function CherryAdventure() {
                     studGrid(st, hx - hl / 2, hx + hl / 2, hz - 0.4, hz + 0.4, BH * 2, C.dgreen);
                 }
                 mergeByMat(g);
-                return { g, st, r: Math.max(w, d) * 0.62 + 0.4 };
+                return { g, st, r: Math.max(w, d) * 0.62 + 0.4, w, d };
             };
+            { // 🏪 ร้านตัวต่อ — ร้านค้าหลังใหญ่ติดลานกลางเมือง ป้ายชื่อร้านตัวโต · เดินไปหน้าประตูแล้วกด "เข้าร้าน"
+                const x = -15, z = -14, H = house(1), ry = Math.atan2(-x, -z);
+                const sc = document.createElement("canvas");
+                sc.width = 256;
+                sc.height = 64;
+                const sx = sc.getContext("2d");
+                sx.fillStyle = "#c91a09";
+                sx.fillRect(0, 0, 256, 64);
+                sx.strokeStyle = "#f2cd37";
+                sx.lineWidth = 6;
+                sx.strokeRect(3, 3, 250, 58);
+                sx.fillStyle = "#ffffff";
+                sx.font = "bold 34px sans-serif";
+                sx.textAlign = "center";
+                sx.textBaseline = "middle";
+                sx.fillText("🧱 ร้านตัวต่อ", 128, 34);
+                const tx = new THREE.CanvasTexture(sc);
+                tx.encoding = THREE.sRGBEncoding;
+                const sign = new THREE.Mesh(new THREE.PlaneGeometry(H.w * 0.7, H.w * 0.175), new THREE.MeshBasicMaterial({ map: tx }));
+                sign.position.set(0, BH * 12 + 0.95, H.d / 2 + 0.12);
+                H.g.add(sign);
+                const post = new THREE.Mesh(new THREE.BoxGeometry(H.w * 0.74, H.w * 0.2, 0.1), PM(C.yellow));
+                post.position.set(0, BH * 12 + 0.95, H.d / 2 + 0.05);
+                H.g.add(post);
+                place(H.g, H.st, x, z, ry);
+                legoColliders.push({ x, z, r: H.r });
+                const dr = H.r + 0.7;
+                G.legoShopDoor = { x: x + Math.sin(ry) * dr, z: z + Math.cos(ry) * dr };
+                const anc = new THREE.Object3D();
+                anc.position.set(G.legoShopDoor.x - Math.sin(ry) * 0.9, 0, G.legoShopDoor.z - Math.cos(ry) * 0.9);
+                anc.userData.headY = 3.4;
+                anc.userData.noHide = true;
+                legoDecor.add(anc);
+                G.legoShopAnchor = anc;
+            }
             for (let n = 0; n < 34; n++) { // 🏘️ บ้านเยอะขึ้น ~3 เท่า — วงในชิดลานกลางเมืองก่อน แล้วค่อยกระจายออกไปถึงขอบเมือง
                 const at = spot(2.5, 5.2, 160, FIELD_R * (n < 10 ? 0.2 : 0.28), FIELD_R * (n < 10 ? 0.5 : 0.9));
                 if (!at)
@@ -39099,16 +39134,76 @@ function CherryAdventure() {
                 setUi((u) => ({ ...u, legoTalk: null }));
             };
             G.legoCloseTalk = () => setUi((u) => ({ ...u, legoTalk: null }));
+            // 🏪 ร้านตัวต่อ — น้ำยา/ใบวาร์ป (ราคาร้านปกติ) + กล่องสุ่มตัวต่อ (ทอง/น้ำยา/เพชร/อุปกรณ์หายาก)
+            G.LEGO_BOX_PRICE = 5000;
+            G.legoShop = (on) => setUi((u) => ({ ...u, legoShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0 }));
+            G.legoBox = () => {
+                const price = G.LEGO_BOX_PRICE;
+                if ((G.gold || 0) < price) {
+                    toast(`ทองไม่พอ! ต้องมี ${price.toLocaleString()}💰`);
+                    return;
+                }
+                G.gold -= price;
+                const r = Math.random();
+                let msg = "";
+                if (r < 0.38) {
+                    const g = 2000 + Math.round(Math.random() * 13000);
+                    G.gold += g;
+                    msg = `💰 ทอง ${g.toLocaleString()}`;
+                }
+                else if (r < 0.62) {
+                    G.hpPots.l = (G.hpPots.l || 0) + 3;
+                    G.mpPots.l = (G.mpPots.l || 0) + 3;
+                    msg = "🧪 น้ำยาเลือดใหญ่ ×3 + 💧 น้ำยามานาใหญ่ ×3";
+                }
+                else if (r < 0.78) {
+                    const d = 1 + ((Math.random() * 5) | 0);
+                    if (G.gainDiamonds)
+                        G.gainDiamonds(d, "กล่องสุ่มตัวต่อ");
+                    else
+                        G.diamonds = (G.diamonds || 0) + d;
+                    msg = `💎 เพชร ${d}`;
+                }
+                else {
+                    const want = r < 0.95 ? ["rare", "epic"] : ["legend", "legendary"];
+                    const pool = LOOT.filter((x) => want.includes(x.rarity) && x.slot && !x.sew && !x.costume);
+                    const it = pool[(Math.random() * pool.length) | 0];
+                    if (it) {
+                        G.gainItem(it.id);
+                        msg = `${it.emoji} ${it.name}${r >= 0.95 ? " ✨ (หายากมาก!)" : ""}`;
+                    }
+                    else {
+                        G.gold += price;
+                        msg = "💰 คืนทอง";
+                    }
+                }
+                if (G.sfx && G.sfx.coin)
+                    G.sfx.coin();
+                toast(`🎁 เปิดกล่องสุ่มตัวต่อ ได้ ${msg}!`);
+                setUi((u) => ({ ...u, gold: G.gold, legoBoxLast: msg, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots } }));
+                if (G.syncPotions)
+                    G.syncPotions();
+                if (G.saveGame)
+                    G.saveGame();
+            };
             G.legoTick = (dt, t) => {
                 if (!legoDecor.visible || !folk.length) {
-                    if (G.legoNear != null) {
+                    if (G.legoNear != null || G.legoShopNear) {
                         G.legoNear = null;
-                        setUi((u) => ({ ...u, legoNear: null, legoTalk: null }));
+                        G.legoShopNear = false;
+                        setUi((u) => ({ ...u, legoNear: null, legoTalk: null, legoShopNear: false, legoShopOpen: false }));
                     }
                     return;
                 }
                 dt = Math.min(dt, 0.1);
                 const cx = char.position.x, cz = char.position.z;
+                if (G.legoShopDoor) {
+                    const sn = G.mode === "explore" && Math.hypot(cx - G.legoShopDoor.x, cz - G.legoShopDoor.z) < 3.2;
+                    if (sn !== !!G.legoShopNear) {
+                        G.legoShopNear = sn;
+                        setUi((u) => ({ ...u, legoShopNear: sn }));
+                    }
+                }
                 {
                     let ni = null, bd = 2.6;
                     if (G.mode === "explore")
@@ -77020,7 +77115,8 @@ function CherryAdventure() {
                         const PR = G._npcPrompt;
                         const src = PR.who === "npc" ? G.npc : PR.who === "smith" ? G.smith : PR.who === "master" ? G.master
                             : PR.who === "townNpc" ? (((G.townNpcs || []).find((N) => N.key === G.townNpcNear) || {}).grp || null)
-                                : PR.who === "lego" ? (G.legoFolkAt ? G.legoFolkAt(G.legoNear) : null) : null;
+                                : PR.who === "lego" ? (G.legoFolkAt ? G.legoFolkAt(G.legoNear) : null)
+                                    : PR.who === "legoShop" ? (G.legoShopAnchor || null) : null;
                         if (src) {
                             src.getWorldPosition(_promptV);
                             _promptV.y += (src.userData.headY || 2.62); // เหนือหัวขึ้นไปนิดหนึ่ง (โมเดลตัวสูงกว่าร่างเก่า)
@@ -95785,7 +95881,7 @@ function CherryAdventure() {
     const _hpCount = _hpBrew ? (_hpBrew.n || 1) : (ui.potions || 0);
     const _mpCount = _mpBrew ? (_mpBrew.n || 1) : (ui.mpPotions || 0);
     const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-        : ui.herbNear ? "herb" : ui.legoNear != null ? "lego" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot" // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
+        : ui.herbNear ? "herb" : ui.legoShopNear ? "legoShop" : ui.legoNear != null ? "lego" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot" // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
             : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
     const isPrompt = (name) => _promptTop === name;
     // 🎯 เดินเข้าใกล้ สายแร่/บ่อน้ำ/กอสมุนไพร → ปุ่มโจมตีกลางจอสลับเป็น ขุด/ตกปลา/เก็บ
@@ -98357,6 +98453,43 @@ function CherryAdventure() {
                         : st.tier === 1
                             ? "🌟 ผ่านขั้นนี้แล้วถึงจะเลือกสายอาชีพขั้นสูงและใช้ท่าประจำสายได้"
                             : "💫 ผ่านขั้นนี้แล้วถึงจะสลับไปใช้ชุดสกิลขั้นสูงของสายได้")))));
+        })(),
+        ui.mode === "explore" && isPrompt("legoShop") && !ui.legoShopOpen && (React.createElement("div", { ref: headPromptRef("legoShop"), style: HEAD_PROMPT },
+            React.createElement("button", { onClick: () => G.legoShop(true), style: { padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c91a09,#e8503a)", boxShadow: "0 5px 16px rgba(201,26,9,0.5)" } }, "\uD83D\uDED2 \u0E40\u0E02\u0E49\u0E32\u0E23\u0E49\u0E32\u0E19\u0E15\u0E31\u0E27\u0E15\u0E48\u0E2D"),
+            React.createElement("div", { style: { width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #c91a09" } }))),
+        ui.legoShopOpen && (() => {
+            const HP = G.HP_POT || {}, MP = G.MP_POT || {}, wp = G.repPrice ? G.repPrice(G.WARP_SCROLL_PRICE || 0) : (G.WARP_SCROLL_PRICE || 0), g = ui.gold || 0;
+            const rows = [
+                ["🧪", `น้ำยาเลือด${(HP.l || {}).name || "ใหญ่"} ×5`, `ฟื้น ${(HP.l || {}).heal || 0} HP ต่อขวด`, ((HP.l || {}).price || 0) * 5, () => G.buyHpPot("l", 5)],
+                ["🧪", `น้ำยาเลือด${(HP.m || {}).name || "กลาง"} ×10`, `ฟื้น ${(HP.m || {}).heal || 0} HP ต่อขวด`, ((HP.m || {}).price || 0) * 10, () => G.buyHpPot("m", 10)],
+                ["💧", `น้ำยามานา${(MP.l || {}).name || "ใหญ่"} ×5`, `ฟื้น ${(MP.l || {}).rest || 0} มานาต่อขวด`, ((MP.l || {}).price || 0) * 5, () => G.buyMpPot("l", 5)],
+                ["📜", "ใบวาร์ปข้ามแดน ×3", "วาร์ปไปแดนที่ปลดล็อกแล้วได้ทันที", wp * 3, () => G.buyWarpScroll(3)],
+                ["🎁", "กล่องสุ่มตัวต่อ", "สุ่มได้ ทอง · น้ำยาใหญ่ · เพชร · อุปกรณ์หายาก (มีลุ้นระดับตำนาน!)", G.LEGO_BOX_PRICE || 5000, () => G.legoBox()],
+            ];
+            return (React.createElement("div", { onClick: () => G.legoShop(false), style: { position: "absolute", inset: 0, background: "rgba(20,14,10,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 } },
+                React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 470, maxHeight: "84%", overflowY: "auto", background: "#fffbea", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px", borderTop: "5px solid #c91a09" } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 4 } },
+                        React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#c91a09" } }, "\uD83E\uDDF1 \u0E23\u0E49\u0E32\u0E19\u0E15\u0E31\u0E27\u0E15\u0E48\u0E2D"),
+                        React.createElement("div", { style: { flex: 1 } }),
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#c09020", marginRight: 10 } },
+                            g.toLocaleString(),
+                            " \uD83D\uDCB0"),
+                        React.createElement("button", { onClick: () => G.legoShop(false), style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f6e6b0", fontWeight: 800 } }, "\u2715")),
+                    React.createElement("div", { style: { fontSize: 11.5, color: "#a08050", marginBottom: 11 } }, "\u0E22\u0E34\u0E19\u0E14\u0E35\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E08\u0E49\u0E32! \u0E02\u0E2D\u0E07\u0E17\u0E38\u0E01\u0E0A\u0E34\u0E49\u0E19\u0E43\u0E19\u0E23\u0E49\u0E32\u0E19\u0E15\u0E48\u0E2D\u0E08\u0E32\u0E01\u0E2D\u0E34\u0E10\u0E41\u0E17\u0E49 100% \uD83D\uDE04"),
+                    ui.legoBoxLast && React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#3a9a4a", background: "#eaf7ec", borderRadius: 10, padding: "7px 10px", marginBottom: 10 } },
+                        "\uD83C\uDF81 \u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E44\u0E14\u0E49: ",
+                        ui.legoBoxLast),
+                    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, rows.map(([em, name, desc, price, buy], i) => {
+                        const afford = g >= price;
+                        return (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 10, border: "2px solid #f2cd37", borderRadius: 14, padding: "9px 11px", background: "#fff" } },
+                            React.createElement("span", { style: { fontSize: 26 } }, em),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#4a3a2a" } }, name),
+                                React.createElement("div", { style: { fontSize: 11, color: "#8a7a5a" } }, desc)),
+                            React.createElement("button", { onClick: () => { buy(); setUi((u) => ({ ...u, gold: G.gold })); }, disabled: !afford, style: { padding: "8px 12px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: afford ? "linear-gradient(90deg,#c91a09,#e8503a)" : "#c8c0b0", whiteSpace: "nowrap" } },
+                                price.toLocaleString(),
+                                "\uD83D\uDCB0")));
+                    })))));
         })(),
         ui.mode === "explore" && isPrompt("lego") && !ui.legoTalk && (React.createElement("div", { ref: headPromptRef("lego"), style: HEAD_PROMPT },
             React.createElement("button", { onClick: () => G.legoTalk(), style: {
