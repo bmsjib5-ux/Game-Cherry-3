@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v708"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v709"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -38917,6 +38917,158 @@ function CherryAdventure() {
         }
         G.legoDecor = legoDecor;
         G.legoColliders = legoColliders;
+        // 🧍 ชาวเมืองมินิฟิกเกอร์ — เดินเล่นทั่วเมืองเลโก้: หัวเหลืองมีปุ่ม หน้ายิ้ม ผม/หมวก/หมวกกันน็อก สุ่มสีเสื้อ-กางเกง
+        //    เดินไปจุดสุ่ม (เลี่ยงบ้าน/ต้นไม้/บ่อน้ำ) แกว่งแขนขาตามจังหวะ · หยุดยืนโบกมือบ้าง · หลบตัวผู้เล่น
+        //    แต่ละตัวรวมชิ้นเป็น 5 ก้อน (ตัว + แขน 2 + ขา 2) ใช้สีจุดยอด วัสดุเดียวทั้งเมือง
+        {
+            const sl2 = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+            const LCr = (h) => [sl2(((h >> 16) & 255) / 255), sl2(((h >> 8) & 255) / 255), sl2((h & 255) / 255)];
+            const folkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.34, metalness: 0 });
+            const _mm = new THREE.Matrix4(), _e = new THREE.Euler(), _qq = new THREE.Quaternion(), _ss = new THREE.Vector3(1, 1, 1), _pp = new THREE.Vector3();
+            const vgeo = (parts) => {
+                const P = [], N = [], Cc = [];
+                parts.forEach(([g0, p, r, hex]) => {
+                    const g = g0.index ? g0.toNonIndexed() : g0;
+                    _pp.set(p[0], p[1], p[2]);
+                    _qq.setFromEuler(_e.set(r ? r[0] : 0, r ? r[1] : 0, r ? r[2] : 0));
+                    _mm.compose(_pp, _qq, _ss);
+                    g.applyMatrix4(_mm);
+                    const c = LCr(hex), pa = g.attributes.position, na = g.attributes.normal;
+                    for (let i = 0; i < pa.count; i++) {
+                        P.push(pa.getX(i), pa.getY(i), pa.getZ(i));
+                        N.push(na.getX(i), na.getY(i), na.getZ(i));
+                        Cc.push(c[0], c[1], c[2]);
+                    }
+                });
+                const out = new THREE.BufferGeometry();
+                out.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+                out.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
+                out.setAttribute("color", new THREE.Float32BufferAttribute(Cc, 3));
+                out.computeBoundingSphere();
+                return out;
+            };
+            const torsoGeo = (() => { const g = new THREE.BoxGeometry(0.8, 0.9, 0.42), pa = g.attributes.position; for (let i = 0; i < pa.count; i++)
+                if (pa.getY(i) > 0)
+                    pa.setX(i, pa.getX(i) * 0.72); g.computeVertexNormals(); return g; })();
+            const YEL = 0xf2cd37, SHIRT = [0xc91a09, 0x0055bf, 0x4b9f4a, 0xf4f4f4, 0xfe8a18, 0x1b2a34, 0x923978, 0x36aebf, 0xf2cd37], PANT = [0x0055bf, 0x1b2a34, 0x6c6e68, 0x582a12, 0x0a3463, 0xe4cd9e, 0xc91a09];
+            const HAIR = [0x582a12, 0x1b2a34, 0xf2cd37, 0xfe8a18, 0x6c6e68];
+            const folk = [], folkGrp = new THREE.Group();
+            folkGrp.userData.noHide = true;
+            legoDecor.add(folkGrp);
+            const blocked = (x, z, pad) => Math.hypot(x, z) > FIELD_R - 3 || inKeepOut(x, z) || legoColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + pad);
+            const pickTarget = (F) => { for (let k = 0; k < 30; k++) {
+                const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * 18, x = F.g.position.x + Math.cos(a) * r, z = F.g.position.z + Math.sin(a) * r;
+                if (!blocked(x, z, 0.9)) {
+                    F.tx = x;
+                    F.tz = z;
+                    return;
+                }
+            } F.tx = F.g.position.x * 0.5; F.tz = F.g.position.z * 0.5; };
+            for (let n = 0; n < 26; n++) {
+                let x = 0, z = 0, ok = false;
+                for (let k = 0; k < 80 && !ok; k++) {
+                    const a = Math.random() * Math.PI * 2, r = 9 + Math.random() * (FIELD_R - 14);
+                    x = Math.cos(a) * r;
+                    z = Math.sin(a) * r;
+                    ok = !blocked(x, z, 1.2);
+                }
+                if (!ok)
+                    continue;
+                const sh = SHIRT[(Math.random() * SHIRT.length) | 0], pt = PANT[(Math.random() * PANT.length) | 0], hc = HAIR[(Math.random() * HAIR.length) | 0], style = (Math.random() * 4) | 0;
+                const body = [[new THREE.BoxGeometry(0.8, 0.2, 0.44), [0, 1.0, 0], null, pt], [torsoGeo, [0, 1.55, 0], null, sh], [new THREE.CylinderGeometry(0.14, 0.14, 0.1, 10), [0, 2.04, 0], null, YEL],
+                    [new THREE.CylinderGeometry(0.3, 0.3, 0.52, 16), [0, 2.35, 0], null, YEL],
+                    [new THREE.SphereGeometry(0.045, 6, 5), [-0.11, 2.42, 0.28], null, 0x1b2a34], [new THREE.SphereGeometry(0.045, 6, 5), [0.11, 2.42, 0.28], null, 0x1b2a34],
+                    [new THREE.TorusGeometry(0.11, 0.022, 5, 12, Math.PI), [0, 2.29, 0.285], [0, 0, Math.PI], 0x1b2a34]]; // หน้ายิ้ม
+                if (style === 0)
+                    body.push([new THREE.CylinderGeometry(0.33, 0.33, 0.14, 16), [0, 2.66, 0], null, hc], [new THREE.CylinderGeometry(0.3, 0.33, 0.16, 16), [0, 2.78, -0.02], null, hc]); // ผมทรงกะลา
+                else if (style === 1)
+                    body.push([new THREE.CylinderGeometry(0.33, 0.33, 0.18, 16), [0, 2.68, 0], null, sh], [new THREE.BoxGeometry(0.5, 0.05, 0.3), [0, 2.6, 0.38], null, sh]); // หมวกแก๊ป
+                else if (style === 2)
+                    body.push([new THREE.SphereGeometry(0.37, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), [0, 2.5, 0], null, 0xf4f4f4], [new THREE.BoxGeometry(0.6, 0.06, 0.08), [0, 2.52, 0.34], null, 0x1b2a34]); // หมวกกันน็อก
+                else
+                    body.push([new THREE.CylinderGeometry(0.33, 0.36, 0.42, 16), [0, 2.55, -0.06], null, hc], [new THREE.CylinderGeometry(0.12, 0.12, 0.1, 10), [0, 2.66, 0], null, YEL]); // ผมยาว + ปุ่มบนหัว
+                if (style !== 2)
+                    body.push([new THREE.CylinderGeometry(0.12, 0.12, 0.1, 10), [0, 2.88, 0], null, style === 1 ? sh : hc]);
+                const g = new THREE.Group();
+                g.position.set(x, 0.03, z);
+                g.rotation.y = Math.random() * Math.PI * 2;
+                folkGrp.add(g);
+                const bm = new THREE.Mesh(vgeo(body), folkMat);
+                bm.castShadow = true;
+                g.add(bm);
+                const limb = (geoParts, px, py) => { const pv = new THREE.Group(); pv.position.set(px, py, 0); g.add(pv); const m = new THREE.Mesh(vgeo(geoParts), folkMat); m.castShadow = true; pv.add(m); return pv; };
+                const legs = [-1, 1].map((s) => limb([[new THREE.BoxGeometry(0.37, 0.82, 0.44), [0, -0.41, 0], null, pt], [new THREE.BoxGeometry(0.37, 0.14, 0.52), [0, -0.84, 0.04], null, pt]], s * 0.2, 0.92));
+                const arms = [-1, 1].map((s) => limb([[new THREE.BoxGeometry(0.2, 0.62, 0.24), [s * 0.04, -0.3, 0], [0, 0, s * 0.18], sh], [new THREE.CylinderGeometry(0.1, 0.1, 0.16, 10), [s * 0.1, -0.66, 0.06], [Math.PI / 2, 0, 0], YEL]], s * 0.48, 1.9));
+                const F = { g, legs, arms, sp: 1.3 + Math.random() * 0.6, ph: Math.random() * 6, idle: Math.random() * 3, tx: x, tz: z, wave: 0 };
+                pickTarget(F);
+                folk.push(F);
+            }
+            G.legoTick = (dt, t) => {
+                if (!legoDecor.visible || !folk.length)
+                    return;
+                dt = Math.min(dt, 0.1);
+                const cx = char.position.x, cz = char.position.z;
+                for (const F of folk) {
+                    const p = F.g.position;
+                    if ((p.x - camera.position.x) ** 2 + (p.z - camera.position.z) ** 2 > 3600) {
+                        F.g.visible = false;
+                        continue;
+                    } // ไกลกล้องเกินไม่ต้องวาด/ขยับ
+                    F.g.visible = true;
+                    let moving = false;
+                    if (F.idle > 0) {
+                        F.idle -= dt;
+                        if (F.idle <= 0)
+                            pickTarget(F);
+                    }
+                    else {
+                        const dx = F.tx - p.x, dz = F.tz - p.z, d = Math.hypot(dx, dz);
+                        if (d < 0.5) {
+                            F.idle = 1 + Math.random() * 3;
+                            F.wave = Math.random() < 0.35 ? 1.6 : 0;
+                        }
+                        else {
+                            const want = Math.atan2(dx, dz);
+                            let da = want - F.g.rotation.y;
+                            da = Math.atan2(Math.sin(da), Math.cos(da));
+                            F.g.rotation.y += da * Math.min(1, dt * 5);
+                            const nx = p.x + Math.sin(F.g.rotation.y) * F.sp * dt, nz = p.z + Math.cos(F.g.rotation.y) * F.sp * dt;
+                            if (blocked(nx, nz, 0.6))
+                                pickTarget(F);
+                            else {
+                                p.x = nx;
+                                p.z = nz;
+                                moving = true;
+                            }
+                        }
+                    }
+                    const pd = Math.hypot(p.x - cx, p.z - cz);
+                    if (pd < 1.4 && pd > 0.01) {
+                        const k = (1.4 - pd) / pd;
+                        const nx = p.x + (p.x - cx) * k, nz = p.z + (p.z - cz) * k;
+                        if (!blocked(nx, nz, 0.5)) {
+                            p.x = nx;
+                            p.z = nz;
+                        }
+                    } // หลบผู้เล่น
+                    p.y = terrainAt(p.x, p.z) + 0.03 - (legoDecor.position.y || 0);
+                    F.ph += dt * (moving ? F.sp * 4.2 : 0);
+                    const sw = moving ? Math.sin(F.ph) * 0.7 : 0;
+                    F.legs[0].rotation.x = sw;
+                    F.legs[1].rotation.x = -sw;
+                    F.arms[0].rotation.x = -sw * 0.8;
+                    F.arms[1].rotation.x = sw * 0.8;
+                    if (F.wave > 0) {
+                        F.wave -= dt;
+                        F.arms[1].rotation.x = -2.6;
+                        F.arms[1].rotation.z = 0.3 + Math.sin(t * 12) * 0.35;
+                    }
+                    else
+                        F.arms[1].rotation.z = 0; // โบกมือทักทาย
+                    F.g.position.y += moving ? Math.abs(Math.sin(F.ph)) * 0.05 : 0;
+                }
+            };
+        }
         // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
         const titanDecor = new THREE.Group();
         titanDecor.visible = false;
@@ -76406,6 +76558,8 @@ function CherryAdventure() {
                 // 💎 cave crystals pulse/flicker softly
                 if (G.robotTick)
                     G.robotTick(dt, t);
+                if (G.legoTick)
+                    G.legoTick(dt, t); // 🧍 ชาวเมืองมินิฟิกเกอร์เดินเล่น
                 if (G.ghostTick)
                     G.ghostTick(dt, t); // 🏚️ ตะเกียงผีกะพริบ หมอกลอย   // 🤖 ฟันเฟืองหมุน สายพานวิ่ง ไฟนีออนกะพริบ
                 if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) {
