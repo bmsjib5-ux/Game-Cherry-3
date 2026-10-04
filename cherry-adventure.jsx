@@ -395,7 +395,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v713";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v714";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -11565,7 +11565,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const M0r = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
         const THr = info && info.hero && !G.HERO_OFF && HERO_THEME[info.hero];
         const legoR = !!(info && info.outfit === "lego_suit" && !THr);   // 🧱 เพื่อนใส่ชุดตัวต่อ = เห็นเป็นอิฐเลโก้ทั้งตัวเหมือนกัน
-        const M = THr ? heroThemeModel(M0r, THr) : legoR ? Object.assign({}, M0r, { hue: [4, 0.85, 1.05] }) : M0r;   // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
+        let M = THr ? heroThemeModel(M0r, THr) : legoR ? Object.assign({}, M0r, { hue: [4, 0.85, 1.05] }) : M0r;   // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
+        if (!THr && !legoR && info && (info.outfit || info.dy != null)) {   // 👕 ชุดที่เพื่อนใส่ (แบบตัด/สี) + สีย้อม — ตรงกับที่เจ้าตัวเห็น
+          let O = (info.outfit && HERO_OUTFIT[info.outfit]) || null;
+          if (!O && info.outfit) { const mm = /^o[res](atk|def|agi)$/.exec(info.outfit); O = mm ? HERO_OUTFIT_ARCH[mm[1]] : null; }
+          O = O || {};
+          let hue = O.hue || null;
+          if (info.dy != null) { const hsl = {}; new THREE.Color(info.dy).getHSL(hsl); hue = [hsl.h * 360, Math.max(0.3, hsl.s), 0.6 + hsl.l * 0.8]; }
+          if (O.cut || hue) {
+            M = Object.assign({}, M0r);
+            if (O.cut) M.files = [M0r.files[0], (/^Female/.test(M0r.files[0]) ? "Female_" : "Male_") + O.cut].concat(M0r.files.slice(2));
+            if (hue) M.hue = hue;
+            if (O.cut === "Ranger") M.topknot = null;
+          }
+        }
         if (!grp || !M) return;
         // 🚫 ไม่โชว์ร่างชิบิเลยระหว่างรอโหลด (เห็นแค่ป้ายชื่อ) — ถ้าโหลดไม่ได้ค่อยคืนร่างสำรอง
         const fallback = grp.children.filter((oo) => !oo.isSprite && oo.visible);
@@ -45445,8 +45458,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G._rtOnPos = (m) => {
       if (!m || !m.pid || m.pid === G.pid) return;
       let a = remoteAvatars.get(m.pid);
-      if (a && !!a.legoOn !== (m.outfit === "lego_suit")) { G._rtRemove(m.pid); a = null; }   // 🧱 เพื่อนใส่/ถอดชุดตัวต่อ → สร้างร่างใหม่
-      if (!a) { const grp = buildFullAvatar(m); grp.position.set(m.x || 0, 0, m.z || 0); scene.add(grp); a = { grp, walk: 0, legoOn: m.outfit === "lego_suit" }; remoteAvatars.set(m.pid, a); if (G.remoteModelSet) G.remoteModelSet(grp, m); }   // 🌐🧍 ตัวละครใหม่ (ร่างชิบิเป็นแค่ตัวสำรองระหว่างโหลด) // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
+      const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk].map((v) => (v == null ? "" : v)).join("|");
+      if (a && a.lookSig !== lookSig && (a.lookT || 0) < Date.now() - 1500) { G._rtRemove(m.pid); a = null; }   // 👕🧱 เพื่อนเปลี่ยนชุด/อาวุธ/ทรงผม/ฮีโร่ระหว่างเล่น → สร้างร่างใหม่ตามลุคล่าสุด (กันสร้างถี่เกินด้วยหน่วง 1.5 วิ)
+      if (!a) { const grp = buildFullAvatar(m); grp.position.set(m.x || 0, 0, m.z || 0); scene.add(grp); a = { grp, walk: 0, lookSig, lookT: Date.now() }; remoteAvatars.set(m.pid, a); if (G.remoteModelSet) G.remoteModelSet(grp, m); }   // 🌐🧍 ตัวละครใหม่ (ร่างชิบิเป็นแค่ตัวสำรองระหว่างโหลด) // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
       a.tx = m.x || 0; a.tz = m.z || 0; a.tyaw = m.yaw || 0; a.biome = m.biome; a.moving = !!m.moving; a.last = Date.now();
       // 🦸 เริ่มท่าใหม่ = นับเวลาท่าใหม่ · ตอน "จบท่า" ห้ามล้างตัวนับตรงนี้
       //    ไม่งั้นโค้ดคืนมุมแขนต่อเฟรม (ที่เช็ก castT) จะไม่ทำงาน แขนค้างกางอยู่อย่างนั้น
