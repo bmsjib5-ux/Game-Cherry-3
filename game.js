@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v696"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v697"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3406,24 +3406,106 @@ const HERO_THEME = {
     mermaid: { g: "F", cut: "Peasant", hue: HDY(190, 0.6, 1.4), hair: "Hair_Long", hairC: 0x4ac8e8, skin: 0xaee8f8, skinK: 0.35, t: 2, col: 0x6ae0ff, fx: { tiara: "shell", ears: "fin", earC: 0x6ae0ff, collar: "pearl" } },
     lich: { g: "M", cut: "Ranger", hue: [270, 0.35, 0.45], hair: "Hair_Buzzed", hairC: 0x2a1a3a, skin: 0x9aa8b0, skinK: 0.72, t: 4, col: 0x7affa8, fx: { orbs: 0x7affa8, tiara: "bone" }, gear: { mask: { k: "stone", c: 0xe8e4d8 } } },
     kitsune: { g: "F", cut: "Peasant", hue: HDY(8, 0.7, 1.15), hair: "Hair_Long", hairC: 0xffd6a0, t: 3, col: 0xffc24a, fx: { ears: "fox", earC: 0xffb060, earIn: 0xfff0e0, tail: "fox9", tailC: 0xffb060, tailTip: 0xffffff } },
+    swimM: { g: "M", bare: 1, hair: "Hair_SimpleParted", hairC: 0x3a2a1a, t: 1, col: 0x6ad8ff, fx: { swim: "trunks", swimC: 0x1a8ad8, swimC2: 0xffffff }, gear: { mask: { k: "glasses", c: 0x2a2a34 } } }, // 🩳 กางเกงว่ายน้ำลายทาง + แว่นกันแดด
+    swimF: { g: "F", bare: 1, hair: "Hair_Long", hairC: 0x6a3a22, t: 1, col: 0xff7ab0, fx: { swim: "suit", swimC: 0xff4a8a, swimC2: 0xfff0f6, flowers: 0xff8ac0 } }, // 👙 ชุดว่ายน้ำวันพีซสีชมพู + ดอกไม้ติดผม
     phoenix: { g: "F", cut: "Peasant", hue: HDY(28, 0.85, 1.3), hair: "Hair_Long", hairC: 0xff7a2a, skin: 0xffd8a2, skinK: 0.28, t: 4, col: 0xff8a2a, fx: { tiara: "flame", wings: "flame", wingS: 0.95, tail: "feather", tailC: 0xff6a1a, tailC2: 0xffd04a, tailGlow: 1 } },
 };
 // โมเดลตามธีม: เปลี่ยนร่าง (เพศ) · แบบชุด · ผม · ความสูง — เก็บค่าผิว/ฮู้ด/เครา ไว้ให้ตัวประกอบร่างใช้
 const heroThemeModel = (M0, TH) => {
     const fem = TH.g === "F", M = Object.assign({}, M0);
-    M.files = [fem ? "Female_Base" : "Male_Base", (fem ? "Female_" : "Male_") + (TH.cut || "Peasant"), TH.hair || (fem ? "Hair_Long" : "Hair_SimpleParted")];
+    M.files = TH.bare ? [fem ? "Female_Base" : "Male_Base", TH.hair || (fem ? "Hair_Long" : "Hair_SimpleParted")] // 🩱 ชุดว่ายน้ำ: ร่างเต็มตัว + ผม (ไม่มีไฟล์ชุด)
+        : [fem ? "Female_Base" : "Male_Base", (fem ? "Female_" : "Male_") + (TH.cut || "Peasant"), TH.hair || (fem ? "Hair_Long" : "Hair_SimpleParted")];
     if (TH.beard)
         M.files.push("Hair_Beard");
+    M.bare = !!TH.bare;
     M.hue = TH.hue || null;
     M.hairC = TH.hairC || M0.hairC;
     M.h = TH.h || (fem ? 3.85 : 4.0);
+    if (fem && (TH.cut || "Peasant") === "Peasant" && M.hue) { // 👗 ฮีโร่หญิงชุดผ้า: แขนเสื้อ/อกเสื้อตัวในสีอ่อน → สีเนื้อ (ผสมโทนผิวประจำตัว เช่น นาคีอมเขียว)
+        const sk = new THREE.Color(0xe2b494);
+        if (TH.skin)
+            sk.lerp(new THREE.Color(TH.skin), TH.skinK || 0.4);
+        M.hue = M.hue.slice(0, 6).concat([sk.getHex()]);
+        while (M.hue.length < 7)
+            M.hue.splice(M.hue.length - 1, 0, null);
+    }
     M.topknot = TH.topknot ? HERO_MODELS.samurai.topknot : null;
     M.mech = null;
+    M.swim = (TH.fx && TH.fx.swim) || null;
+    M.swimC = TH.fx && TH.fx.swimC;
+    M.swimC2 = TH.fx && TH.fx.swimC2;
     M.skin = TH.skin || null;
     M.skinK = TH.skinK || 0.4;
-    M.beardIdx = TH.beard ? 3 : -1;
+    M.beardIdx = TH.beard ? (TH.bare ? 2 : 3) : -1;
     M.noHood = !!TH.noHood;
     return M;
+};
+// 🩱 ชุดว่ายน้ำ — ตัดสามเหลี่ยมของร่างฐาน (ท่า T, หน่วยเมตร, สูง ~1.8) เฉพาะช่วงตัวที่เป็นชุด แล้วดันออกตามแนวตั้งฉากนิดเดียว
+//    ผูกกระดูกชุดเดียวกับร่าง → แนบเนื้อและขยับตามท่าทุกท่า ไม่ทะลุ · trunks = กางเกงว่ายน้ำชาย · suit = วันพีซหญิง (เว้าขาสูง คอเว้า)
+const heroSwimSuit = (root, kind, c1, c2) => {
+    let src = null;
+    root.traverse((o) => { if (o.isSkinnedMesh && (!src || o.geometry.attributes.position.count > src.geometry.attributes.position.count))
+        src = o; });
+    if (!src)
+        return null;
+    const G0 = src.geometry, P = G0.attributes.position, Nn = G0.attributes.normal, SI = G0.attributes.skinIndex, SW = G0.attributes.skinWeight;
+    if (!P || !Nn || !SI || !SW)
+        return null;
+    const inR = (x, y, z) => {
+        const ax = Math.abs(x);
+        if (kind === "trunks")
+            return y >= 0.72 && y <= 1.07 && ax < 0.42;
+        if (y > 1.25 && ax > 0.15)
+            return false; // แขน (ท่า T เริ่มที่ไหล่)
+        if (y > (z > 0.03 ? 1.395 : 1.42))
+            return false; // คอเสื้อด้านหน้าเว้าลึกกว่าด้านหลัง
+        return y >= 0.9 || (y >= 0.82 && ax < 0.05 + (y - 0.82) * 2.0); // เว้าขาสูงแบบวันพีซ
+    };
+    const pos = [], nor = [], si = [], sw = [], col = [], cA = new THREE.Color(c1).convertSRGBToLinear(), cB = new THREE.Color(c2).convertSRGBToLinear(), EPS = 0.0055;
+    const IX = G0.index, triN = IX ? IX.count : P.count, vid = (n) => (IX ? IX.getX(n) : n);
+    for (let t = 0; t < triN; t += 3) {
+        let ok = true;
+        for (let k = 0; k < 3; k++) {
+            const i = vid(t + k);
+            if (!inR(P.getX(i), P.getY(i), P.getZ(i))) {
+                ok = false;
+                break;
+            }
+        }
+        if (!ok)
+            continue;
+        for (let k = 0; k < 3; k++) {
+            const i = vid(t + k), x = P.getX(i), y = P.getY(i), z = P.getZ(i), ax = Math.abs(x);
+            pos.push(x + Nn.getX(i) * EPS, y + Nn.getY(i) * EPS, z + Nn.getZ(i) * EPS);
+            nor.push(Nn.getX(i), Nn.getY(i), Nn.getZ(i));
+            si.push(SI.getX(i), SI.getY(i), SI.getZ(i), SI.getW(i));
+            sw.push(SW.getX(i), SW.getY(i), SW.getZ(i), SW.getW(i));
+            const trim = kind === "trunks" ? (y > 1.035 || (ax > 0.13 && ax < 0.165 && y > 0.8)) : (y > (z > 0.03 ? 1.37 : 1.395) || (y < 0.98 && y < 0.9 + ax * 0.6));
+            const c = trim ? cB : cA;
+            col.push(c.r, c.g, c.b);
+        }
+    }
+    if (!pos.length)
+        return null;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(si, 4));
+    geo.setAttribute("skinWeight", new THREE.Float32BufferAttribute(sw, 4));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    geo.computeBoundingSphere();
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0, emissive: 0x111111 });
+    mat.skinning = true;
+    const sm = new THREE.SkinnedMesh(geo, mat);
+    sm.name = "heroSwimSuit";
+    sm.castShadow = true;
+    sm.frustumCulled = false;
+    sm.position.copy(src.position);
+    sm.quaternion.copy(src.quaternion);
+    sm.scale.copy(src.scale);
+    src.parent.add(sm);
+    sm.bind(src.skeleton, src.bindMatrix);
+    return mat;
 };
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
 const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.1, pz: 0 };
@@ -3545,6 +3627,8 @@ const HERO_GALLERY = [
     { id: "lich", name: "มอร์ทิส", emoji: "💀", title: "ลิชจ้าวกองทัพกระดูก", c1: "#b8f0c8", c2: "#2a1a3a", price: 300 },
     { id: "kitsune", name: "ทามะโมะ", emoji: "🦊", title: "จิ้งจอกเก้าหางจอมมายา", c1: "#ffd6a0", c2: "#c4302a", price: 300 },
     { id: "phoenix", name: "เพลิงฟ้า", emoji: "🔥", title: "วิหคเพลิงคืนชีพ", c1: "#ffd76a", c2: "#c42a10", price: 300 },
+    { id: "swimM", name: "ไทด์", emoji: "🩳", title: "หนุ่มชุดว่ายน้ำริมหาด", c1: "#8fe0ff", c2: "#1a7ac0", price: 300 },
+    { id: "swimF", name: "มารีน", emoji: "👙", title: "สาวชุดว่ายน้ำซัมเมอร์", c1: "#ffb0d0", c2: "#e0407a", price: 300 },
 ];
 // ⚔️ ชื่ออาวุธประจำตัวของฮีโร่ที่มีโมเดลเฉพาะ — ฮีโร่พวกนี้จะถืออาวุธนี้แทนของที่สวม (สถิติยังคิดจากของที่สวมจริง)
 const HERO_WPN_INFO = {
@@ -3569,7 +3653,7 @@ const HERO_WPN_INFO = {
     lich: { emoji: "💀", name: "คทาวิญญาณ" },
 };
 // 💎 ราคาเพชรชุดฮีโร่ — แหล่งข้อมูลเดียว ทั้งการ์ดในร้านและตอนหักเพชรจริงอ่านจากตารางนี้
-const HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200, naki: 2200, kinnaree: 2200, mermaid: 2400, lich: 2400, kitsune: 2500, phoenix: 2500 };
+const HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200, naki: 2200, kinnaree: 2200, mermaid: 2400, lich: 2400, kitsune: 2500, phoenix: 2500, swimM: 900, swimF: 900 };
 HERO_GALLERY.forEach((h) => { h.price = HERO_PRICE[h.id] || h.price || 1000; });
 // ---------- 🎰 GACHA (สุ่มฮีโร่/สกิน ด้วยเพชร) — premium summon ----------
 const GACHA_COST = { single: 30, ten: 270 }; // 10x = 9 pulls' price + guaranteed rare+
@@ -12786,9 +12870,17 @@ function CherryAdventure() {
             cx.drawImage(im, 0, 0);
             const d = cx.getImageData(0, 0, cv.width, cv.height), a = d.data, th = ((H[0] % 360) + 360) % 360 / 360, smin = H[1] == null ? 0.7 : H[1], lm = H[2] == null ? 1 : H[2];
             const h2r = (p, q, t) => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+            const SK = H[6] != null ? [((H[6] >> 16) & 255) / 255, ((H[6] >> 8) & 255) / 255, (H[6] & 255) / 255] : null; // 🦸 H[6] = สีผิว: ผ้าลินินสีอ่อน (แขนเสื้อ/อกเสื้อตัวใน) → เปลือยแขน/ไหล่เป็นสีเนื้อ
             for (let i = 0; i < a.length; i += 4) {
                 const r = a[i] / 255, g = a[i + 1] / 255, b = a[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l0 = (mx + mn) / 2;
                 const sat = mx === mn ? 0 : (mx - mn) / (l0 > 0.5 ? 2 - mx - mn : mx + mn);
+                if (SK && sat < 0.24 && l0 > 0.42 && l0 <= 0.96) {
+                    const sh = Math.max(0.62, Math.min(1.08, l0 / 0.8));
+                    a[i] = Math.round(Math.min(1, SK[0] * sh) * 255);
+                    a[i + 1] = Math.round(Math.min(1, SK[1] * sh) * 255);
+                    a[i + 2] = Math.round(Math.min(1, SK[2] * sh) * 255);
+                    continue;
+                }
                 if (l0 < 0.06 || l0 > 0.96 || (sat < 0.18 && !(H[4] && l0 > 0.22 && l0 < 0.8)))
                     continue; // ขาว/ดำ/เทา (ตา ฟัน ขอบ) → ไม่แตะ · H[4]=1 ยอมย้อมเทากลางด้วย (โมเดลที่หนาม/ตาใช้สีเดียวกันจะโดนทั้งคู่)
                 const sN = Math.min(H[5] == null ? 1 : H[5], Math.max(sat, smin)), l = Math.min(H[3] == null ? 0.97 : H[3], l0 * lm), q = l < 0.5 ? l * (1 + sN) : l + sN - l * sN, pp = 2 * l - q;
@@ -15552,7 +15644,7 @@ function CherryAdventure() {
                                         c.emissiveMap = c.map;
                                     if (pi === 1 && M.hue && c.map && G.qtHueMap)
                                         c.map = G.qtHueMap(c.map, M.files[1] + ":" + (c.name || "m"), M.hue);
-                                    if (pi === 2 && M.hairC)
+                                    if (pi === (M.bare ? 1 : 2) && M.hairC)
                                         c.color.setHex(M.hairC).convertSRGBToLinear();
                                     if (pi === M.beardIdx && M.hairC)
                                         c.color.setHex(M.hairC).convertSRGBToLinear();
@@ -15570,12 +15662,18 @@ function CherryAdventure() {
                     if (M.noHood && parts[1])
                         parts[1].traverse((oo) => { if (oo.isMesh && /Head_Hood/.test(oo.name))
                             oo.visible = false; });
+                    if (M.swim) {
+                        try {
+                            heroSwimSuit(parts[0], M.swim, M.swimC || 0x1a8ad8, M.swimC2 || 0xffffff);
+                        }
+                        catch (eSw) { }
+                    }
                     const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
                     const acts = {};
                     ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Spell_Simple_Idle_Loop"].forEach((nm) => { const c = anims.animations.find((x) => x.name === nm); if (c)
                         acts[nm] = mixers.map((mx) => mx.clipAction(c)); });
                     let neck = null, neckPlane = null;
-                    if (/_Base$/.test(M.files[0]) && parts.length > 1) {
+                    if (/_Base$/.test(M.files[0]) && parts.length > 1 && !M.bare) {
                         neck = parts[0].getObjectByName("neck_01");
                         if (neck) {
                             neckPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -17073,7 +17171,7 @@ function CherryAdventure() {
                                     c.map = G.qtHueMap(c.map, M.files[1] + ":" + (c.name || "m"), M.hue);
                                 // ผม: texture เป็นสีขาวเกือบล้วน คูณสีตรง ๆ จึงได้สีที่ต้องการเป๊ะ (ตัวย้อม hue จะข้ามพิกเซลขาว)
                                 //     เก็บค่าเป็นสีที่ "ตาเห็น" แล้วแปลงเป็น linear เอง เพราะ renderer อ่านค่าสีวัสดุเป็น linear
-                                if (pi === 2 && M.hairC)
+                                if (pi === (M.bare ? 1 : 2) && M.hairC)
                                     c.color.setHex(M.hairC).convertSRGBToLinear();
                                 if (pi === M.beardIdx && M.hairC)
                                     c.color.setHex(M.hairC).convertSRGBToLinear(); // 🧔 เครา = สีเดียวกับผม
@@ -17101,6 +17199,17 @@ function CherryAdventure() {
                     if (M.noHood && parts[1])
                         parts[1].traverse((o) => { if (o.isMesh && /Head_Hood/.test(o.name))
                             o.visible = false; }); // 🦸 ถอดฮู้ด — เห็นผม/มงกุฎ
+                    if (M.swim) {
+                        try {
+                            heroSwimSuit(parts[0], M.swim, M.swimC || 0x1a8ad8, M.swimC2 || 0xffffff);
+                        }
+                        catch (eSw) {
+                            try {
+                                console.warn("swim", eSw);
+                            }
+                            catch (_) { }
+                        }
+                    } // 🩱 ไม่เข้ารายการเร่งความสว่าง (สีอยู่ที่สีจุดยอด ถ้าเร่งจะกลายเป็นขาว)
                     const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
                     const acts = {};
                     anims.animations.concat(anims2 ? anims2.animations : []).forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
@@ -17114,7 +17223,7 @@ function CherryAdventure() {
                         catch (_) { }
                     } // 🦵 ท่าเตะ/แทงเข่า (สร้างจากโครงกระดูก)
                     let neck = null, neckPlane = null;
-                    if (M.files.length > 1 && /_Base$/.test(M.files[0])) {
+                    if (M.files.length > 1 && /_Base$/.test(M.files[0]) && !M.bare) { // 🩱 ชุดว่ายน้ำ (bare) = โชว์ร่างเต็มตัว ไม่ตัดที่คอ
                         neck = parts[0].getObjectByName("neck_01");
                         if (neck) {
                             neckPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
