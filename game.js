@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v697"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v698"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3651,6 +3651,8 @@ const HERO_WPN_INFO = {
     thunder: { emoji: "🔨", name: "ค้อนพายุ" },
     mermaid: { emoji: "🔱", name: "ไตรศูลบาดาล" },
     lich: { emoji: "💀", name: "คทาวิญญาณ" },
+    swimM: { emoji: "🏄", name: "กระดานโต้คลื่น + ห่วงยาง" },
+    swimF: { emoji: "🏄", name: "กระดานโต้คลื่น + ห่วงยาง" },
 };
 // 💎 ราคาเพชรชุดฮีโร่ — แหล่งข้อมูลเดียว ทั้งการ์ดในร้านและตอนหักเพชรจริงอ่านจากตารางนี้
 const HERO_PRICE = { haru: 1000, yuki: 1100, luna: 1100, celestia: 1300, rose: 1200, kentaro: 1400, kotaro: 1500, kairi: 1600, aurelius: 1800, ragnar: 1800, khaosai: 1500, fenrir: 1600, neko: 1600, usagi: 1600, ryujin: 1800, ignis: 1800, captain: 1800, thunder: 1800, yaksa: 1800, luminia: 1700, apsara: 2000, asura: 2000, hanuman: 2200, garuda: 2200, naki: 2200, kinnaree: 2200, mermaid: 2400, lich: 2400, kitsune: 2500, phoenix: 2500, swimM: 900, swimF: 900 };
@@ -6818,7 +6820,9 @@ function CherryAdventure() {
             if (id === "cb" || id === "wDb" || id === "lg_ob" || id === "khGlove" || id === "fenClaw" || id === "nekoPaw")
                 return { x: 0, y: 0, z: 0 }; // 🥊🐺🐱 นวม/กรงเล็บ/อุ้งมือ — สวมทับกำปั้น ไม่ได้ถือด้าม
             if (id === "usaCarrot")
-                return { x: -0.35, y: 0, z: 0.15 }; // 🐰🥕 ค้อนแครอทพาดไหล่เฉียงหน้า
+                return { x: -0.35, y: 0, z: 0.15 };
+            if (id === "swimBoard")
+                return { x: -0.1, y: 0, z: 0.08 }; // 🏄 กระดานตั้งข้างตัว // 🐰🥕 ค้อนแครอทพาดไหล่เฉียงหน้า
             if (id === "chef_pan")
                 return { x: -0.35, y: 0, z: 0 }; // 🍳 กระทะชูขึ้นหน้า
             if (id === "cx" || id === "wDx" || id === "lg_ox")
@@ -10020,6 +10024,54 @@ function CherryAdventure() {
             };
             weaponModels.nekoPaw = mkNekoPaw();
             gloveLModels.nekoPaw = mkNekoPaw();
+        }
+        { // 🏄 swimBoard — กระดานโต้คลื่น (มือขวา) · 🛟 swimRing — ห่วงยางลายแดงขาว (มือซ้าย) · ของประจำตัวฮีโร่ชุดว่ายน้ำ
+            const g = new THREE.Group();
+            const cv = document.createElement("canvas");
+            cv.width = 64;
+            cv.height = 256;
+            const cx = cv.getContext("2d");
+            const gr = cx.createLinearGradient(0, 0, 0, 256);
+            gr.addColorStop(0, "#ffe680");
+            gr.addColorStop(0.5, "#ff9a3a");
+            gr.addColorStop(1, "#ff5a8a");
+            cx.fillStyle = gr;
+            cx.fillRect(0, 0, 64, 256);
+            cx.fillStyle = "#ffffff";
+            cx.fillRect(29, 0, 6, 256);
+            cx.fillStyle = "#1a8ad8";
+            for (let y = 40; y < 230; y += 60) {
+                cx.beginPath();
+                cx.arc(32, y, 9, 0, Math.PI * 2);
+                cx.fill();
+            }
+            const tx = new THREE.CanvasTexture(cv);
+            const board = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.35, metalness: 0.05 }));
+            board.scale.set(0.24, 0.85, 0.045);
+            board.position.y = 0.25;
+            g.add(board);
+            const fin = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 3), new THREE.MeshStandardMaterial({ color: 0x1a5a9a, roughness: 0.5 }));
+            fin.scale.set(1, 1, 0.25);
+            fin.position.set(0, -0.45, -0.07);
+            fin.rotation.x = Math.PI;
+            g.add(fin);
+            g.userData.gripY = -0.05;
+            g.userData.gripZ = 0.06;
+            weaponModels.swimBoard = g;
+            const rg = new THREE.Group(), red = new THREE.MeshStandardMaterial({ color: 0xe8303a, roughness: 0.4 }), wht = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+            for (let k = 0; k < 8; k++) {
+                const seg = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.12, 12, 8, Math.PI / 4), k % 2 ? wht : red);
+                seg.rotation.z = k * Math.PI / 4;
+                rg.add(seg);
+            }
+            rg.rotation.y = Math.PI / 2;
+            const ring = new THREE.Group();
+            ring.add(rg);
+            ring.visible = false;
+            ring.userData.gripY = -0.3;
+            ring.userData.gripZ = 0;
+            wandL.add(ring);
+            gloveLModels.swimRing = ring;
         }
         { // 🐰🥕 usaCarrot — ค้อนแครอทยักษ์เผ่ากระต่าย: หัวแครอทส้มมีร่อง + ใบเขียวเป็นด้ามจับ
             const g = new THREE.Group();
@@ -13354,7 +13406,7 @@ function CherryAdventure() {
             catch (e) { } }, 3400); // 🏘️ บ้านยุคกลาง (~2MB) โหลดต่อจากชุดธรรมชาติ   // 🌿 ชุดธรรมชาติทุ่งซากุระ (~2.9MB) โหลดตามหลังเล็กน้อย // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
         // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
         // 🦸 ฮีโร่ที่มีอาวุธประจำตัว — ใช้ทั้งตัวเราเองและผู้เล่นออนไลน์คนอื่น
-        const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW" };
+        const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW", swimM: "swimBoard", swimF: "swimBoard" };
         G._regHeroWeapon = (key, mesh) => { if (!key || !mesh || weaponModels[key])
             return; mesh.visible = false; wand.add(mesh); weaponModels[key] = mesh; };
         Object.values(gloveLModels).forEach((m) => { m.visible = false; wandL.add(m); }); // 🥊 นวมข้างซ้ายอยู่คนละช่องมือ
@@ -13493,7 +13545,9 @@ function CherryAdventure() {
             else if (G.heroId === "neko" && weaponModels.nekoPaw)
                 id = "nekoPaw"; // 🐱 อุ้งมือแมว
             else if (G.heroId === "usagi" && weaponModels.usaCarrot)
-                id = "usaCarrot"; // 🐰 ค้อนแครอท
+                id = "usaCarrot";
+            else if ((G.heroId === "swimM" || G.heroId === "swimF") && weaponModels.swimBoard)
+                id = "swimBoard"; // 🏄 กระดานโต้คลื่น        // 🐰 ค้อนแครอท
             else if (G.heroId === "hanuman" && weaponModels.hanTriW)
                 id = "hanTriW"; // 🐒 ตรีเพชร
             else if (G.heroId === "yaksa" && weaponModels.yakClubW)
@@ -13506,6 +13560,7 @@ function CherryAdventure() {
                 id = "licStaffW"; // 💀 คทาวิญญาณ
             // 🦸 อาวุธประจำตัวฮีโร่ต้องมาก่อนโมเดลตระกูลอาวุธตามอาชีพเสมอ (ไม่งั้นโดน KayKit ของอาชีพทับ)
             const sigHero = !!(G.heroId && HERO_WEAPON[G.heroId] === id);
+            G._sigWpnBig = sigHero && !/^(khGlove|fenClaw|nekoPaw)$/.test(id || ""); // 🦸 อาวุธประจำตัวฮีโร่บนโมเดล 3D ขยายใหญ่ (นวม/กรงเล็บสวมมือ ไม่ขยาย)
             const gunM = !!(G.gunMode && G.gunMode()) && !(G.costume && G.costume.weapon) && !sigHero; // 🔫 นักธนูขั้น 4 — ถือปืนตระกูล blaster ตามระดับไอเทมแทนคันธนู
             {
                 const kh = G.kkHeroKey && G.kkHeroKey(id);
@@ -13558,7 +13613,7 @@ function CherryAdventure() {
                 G._gloveOn = !!(GLOVE_SPEC[curWeapon] || curWeapon === "fenClaw" || curWeapon === "nekoPaw" || (wm && wm.userData && wm.userData.kkFam === "glove") || /^kk_glove/.test(curWeapon) || (/^kki_/.test(curWeapon) && WPN_FAMILY[G.cls] === "glove"));
             }
             // 🥊 นวมมวยสวมสองข้าง — โชว์นวมซ้ายคู่กับข้างขวา · 🐺🐱 เผ่าสัตว์สวมกรงเล็บ/อุ้งมือข้างซ้ายเป็นส่วนของชุดเสมอ
-            const lKey = G.heroId === "fenrir" ? "fenClaw" : G.heroId === "neko" ? "nekoPaw" : curWeapon;
+            const lKey = G.heroId === "fenrir" ? "fenClaw" : G.heroId === "neko" ? "nekoPaw" : (G.heroId === "swimM" || G.heroId === "swimF") ? "swimRing" : curWeapon; // 🛟 ชุดว่ายน้ำถือห่วงยางมือซ้าย
             Object.entries(gloveLModels).forEach(([k, m]) => setVisFrozen(m, k === lKey));
             {
                 const gL = gloveLModels[lKey];
@@ -17821,10 +17876,10 @@ function CherryAdventure() {
                         H.grip.position.copy(gv.r.p);
                     }
                     else {
-                        H.grip.scale.setScalar(HERO_GRIP.s / H.k);
+                        H.grip.scale.setScalar(HERO_GRIP.s / H.k * (G._sigWpnBig ? 2.3 : 1));
                         H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
                         H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
-                    }
+                    } // 🦸 อาวุธฮีโร่ใหญ่ ×2.3
                 }
                 if (H.gripL) { // 🛡️ มือซ้ายก็ถูกรีเซ็ตทุกเฟรมเหมือนกัน
                     wandL.position.set(0, 0, 0);
@@ -17835,7 +17890,7 @@ function CherryAdventure() {
                         H.gripL.position.copy(gv.l.p);
                     }
                     else {
-                        H.gripL.scale.setScalar(HERO_GRIP.s / H.k);
+                        H.gripL.scale.setScalar(HERO_GRIP.s / H.k * ((G.heroId === "swimM" || G.heroId === "swimF") ? 2.0 : 1));
                         H.gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz);
                         H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz);
                     }
