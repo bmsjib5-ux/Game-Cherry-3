@@ -417,7 +417,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v684"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v685"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -4042,6 +4042,38 @@ function CherryAdventure() {
         scene.add(skyDome);
         G._skyDome = skyDome;
         G._skyTex = skyTex;
+        // 🌅 ท้องฟ้าจริง 360° (Poly Haven · CC0) — กลางวัน / เย็นทอง / กลางคืนทางช้างเผือก · โหลดเสร็จค่อยสลับจากฟ้าวาด
+        //    เก็บสีเฉลี่ยแถบขอบฟ้าไว้ด้วย เพื่อย้อมหมอกให้กลืนกับฟ้า (ไม่เห็นรอยต่อตรงเส้นขอบฟ้า)
+        const skyPhoto = {}, skyHz = {};
+        try {
+            const SKY_IMG = { day: "assets/sky/day.jpg", dusk: "assets/sky/dusk.jpg", night: "assets/sky/night.jpg" };
+            const tl = new THREE.TextureLoader();
+            Object.keys(SKY_IMG).forEach((k) => tl.load(SKY_IMG[k], (t) => {
+                t.wrapS = THREE.RepeatWrapping;
+                t.wrapT = THREE.ClampToEdgeWrapping;
+                t.minFilter = THREE.LinearFilter;
+                try {
+                    const cv = document.createElement("canvas");
+                    cv.width = 64;
+                    cv.height = 32;
+                    const c2 = cv.getContext("2d");
+                    c2.drawImage(t.image, 0, 0, 64, 32);
+                    const d = c2.getImageData(0, 13, 64, 3).data;
+                    let r = 0, g = 0, b = 0, n = 0;
+                    for (let i = 0; i < d.length; i += 4) {
+                        r += d[i];
+                        g += d[i + 1];
+                        b += d[i + 2];
+                        n++;
+                    }
+                    skyHz[k] = new THREE.Color(r / n / 255, g / n / 255, b / n / 255);
+                }
+                catch (e) { }
+                skyPhoto[k] = t;
+            }));
+        }
+        catch (e) { }
+        const _skyCol = new THREE.Color(), _skyFog = new THREE.Color();
         const sunSpr = (() => {
             const cv = document.createElement("canvas");
             cv.width = cv.height = 128;
@@ -38115,6 +38147,7 @@ function CherryAdventure() {
                     scene.fog.far = fd[1];
                 }
                 const indoor = b.id === "cave"; // 🕳️ ในถ้ำไม่มีฟ้า ไม่มีเมฆ ไม่มีตะวัน
+                G._skyIndoor = indoor;
                 if (G._skyDome) {
                     G._skyDome.material.map = indoor ? null : G._skyTex;
                     G._skyDome.material.needsUpdate = true;
@@ -38407,6 +38440,10 @@ function CherryAdventure() {
         };
         G.switchBiome = switchBiome;
         // 🌀⏳ วาร์ป/ข้ามด่านผ่านหน้าจอโหลด — โชว์ฉากตัวอย่างของด่านปลายทางก่อน แล้วค่อยสร้างด่านจริง (การสร้างด่านค้างจอครู่หนึ่ง จึงซ่อนไว้หลังหน้าโหลด)
+        // 🖼️ ภาพฉากหน้าโหลดประจำแมพ (assets/bg · CC0 OpenGameArt: Nidhoggn "Backgrounds" + ฟ้า Poly Haven)
+        const BIOME_BG = { meadow: "meadow", desert: "desert", snow: "snow", cave: "cave", volcano: "volcano", sky: "skyday", hell: "hell", heaven: "skyday",
+            moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall" };
+        const bgUrl = (k) => (k ? "assets/bg/" + k + ".jpg" : null);
         const warpWithLoad = (idx, quiet, after) => {
             const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
             if (G._warpLoading)
@@ -38416,7 +38453,7 @@ function CherryAdventure() {
             const mix = (a, b, t) => { const A = new THREE.Color(a), B = new THREE.Color(b); return "#" + A.lerp(B, t).getHexString(); }; // ผสมสีใน JS (ไม่พึ่ง color-mix ของ CSS)
             const mons = (b.pool || []).slice(0, 5).map((id) => (SPECIES[id] || {}).emoji).filter(Boolean);
             const bossEm = b.boss && SPECIES[b.boss] ? SPECIES[b.boss].emoji : "👑";
-            setUi((u) => ({ ...u, warpLoad: { key: Date.now(), id: b.id, name: b.name, emoji: b.emoji, lvMin: b.lvMin, lvMax: b.lvMax, bossName: b.bossName || "", bossEm, sky: hex(b.sky), fog: hex(b.fog), ground: hex(b.ground), g70: mix(b.ground, b.fog, 0.3), g60: mix(b.ground, b.fog, 0.4), gDark: mix(b.ground, 0x000000, 0.4), night: !!b.night, mons } }));
+            setUi((u) => ({ ...u, warpLoad: { key: Date.now(), id: b.id, name: b.name, emoji: b.emoji, lvMin: b.lvMin, lvMax: b.lvMax, bossName: b.bossName || "", bossEm, sky: hex(b.sky), fog: hex(b.fog), ground: hex(b.ground), g70: mix(b.ground, b.fog, 0.3), g60: mix(b.ground, b.fog, 0.4), gDark: mix(b.ground, 0x000000, 0.4), night: !!b.night, mons, bg: bgUrl(BIOME_BG[b.id]) } }));
             const t0 = performance.now();
             setTimeout(() => {
                 try {
@@ -38437,8 +38474,8 @@ function CherryAdventure() {
         G.warpWithLoad = warpWithLoad;
         // 🏰🐄🏠⏳ หน้าโหลดตอนวาร์ปเข้า/ออก เมือง · ฟาร์ม · บ้าน — ใช้หน้าโหลดชุดเดียวกับข้ามด่าน แต่ฉากตามสถานที่
         const ZONE_LOOK = {
-            town: { emoji: "🏰", name: "เมืองเชอร์รี่", sub: "🏪 ร้านค้า · ⚒️ ช่างตีเหล็ก · 🧑‍🌾 ชาวเมือง", mons: ["🏪", "⛲", "🏠", "🎪", "🌸"], sky: 0x8fd0ff, fog: 0xffe4f0, ground: 0xc8a878 },
-            ranch: { emoji: "🐄", name: "ฟาร์มสัตว์เลี้ยง", sub: "🧺 เก็บผลผลิต · 🌾 ปลูกผัก · 🥚 เพาะไข่", mons: ["🐄", "🐔", "🌾", "🥕", "🐑"], sky: 0x9ad8ff, fog: 0xe8f8d8, ground: 0x6ac04a },
+            town: { bg: "town", emoji: "🏰", name: "เมืองเชอร์รี่", sub: "🏪 ร้านค้า · ⚒️ ช่างตีเหล็ก · 🧑‍🌾 ชาวเมือง", mons: ["🏪", "⛲", "🏠", "🎪", "🌸"], sky: 0x8fd0ff, fog: 0xffe4f0, ground: 0xc8a878 },
+            ranch: { bg: "meadow", emoji: "🐄", name: "ฟาร์มสัตว์เลี้ยง", sub: "🧺 เก็บผลผลิต · 🌾 ปลูกผัก · 🥚 เพาะไข่", mons: ["🐄", "🐔", "🌾", "🥕", "🐑"], sky: 0x9ad8ff, fog: 0xe8f8d8, ground: 0x6ac04a },
             home: { emoji: "🏠", name: "บ้านของฉัน", sub: "🛋️ ตกแต่งบ้าน · 😴 พักผ่อน", mons: ["🛋️", "🪴", "🛏️", "🖼️", "🕯️"], sky: 0xffcfa0, fog: 0xfff0e0, ground: 0xc89a6a },
         };
         const zoneWithLoad = (kind, fn, opt) => {
@@ -38451,13 +38488,13 @@ function CherryAdventure() {
             else { // 🔙 ออกจากเมือง/ฟาร์ม/บ้าน → กลับด่านเดิม
                 const b = BIOMES[((G.curBiome % BIOMES.length) + BIOMES.length) % BIOMES.length] || {};
                 L = { emoji: b.emoji || "🌳", name: b.name || "โลกกว้าง", sub: `Lv.${b.lvMin || 1}–${b.lvMax || 1}`, mons: (b.pool || []).slice(0, 5).map((id) => (SPECIES[id] || {}).emoji).filter(Boolean),
-                    sky: b.sky, fog: b.fog, ground: b.ground, night: !!b.night, verb: "กำลังกลับสู่" };
+                    sky: b.sky, fog: b.fog, ground: b.ground, night: !!b.night, verb: "กำลังกลับสู่", bg: BIOME_BG[b.id] };
             }
             G._warpLoading = true;
             const hex = (c) => "#" + (c || 0).toString(16).padStart(6, "0");
             const mix = (a, b, t) => { const A = new THREE.Color(a || 0), B = new THREE.Color(b || 0); return "#" + A.lerp(B, t).getHexString(); };
             setUi((u) => ({ ...u, warpLoad: { key: Date.now(), name: L.name, emoji: L.emoji, sub: L.sub, verb: L.verb, sky: hex(L.sky), fog: hex(L.fog), ground: hex(L.ground),
-                    g70: mix(L.ground, L.fog, 0.3), g60: mix(L.ground, L.fog, 0.4), gDark: mix(L.ground, 0x000000, 0.4), night: !!L.night, mons: L.mons || [] } }));
+                    g70: mix(L.ground, L.fog, 0.3), g60: mix(L.ground, L.fog, 0.4), gDark: mix(L.ground, 0x000000, 0.4), night: !!L.night, mons: L.mons || [], bg: bgUrl(L.bg) } }));
             const t0 = performance.now();
             const run = () => {
                 try {
@@ -72116,7 +72153,35 @@ function CherryAdventure() {
                             skyTmp.lerp(new THREE.Color(0xffffff), G._wxFlash * 0.55); // ⚡ แสงฟ้าผ่าวาบ
                     }
                     skyDome.position.copy(camera.position);
-                    skyDome.material.color.copy(skyTmp);
+                    { // 🌅 เลือกฟ้าจริงตามช่วงเวลา · ย้อมตามบรรยากาศแมพ/อากาศเล็กน้อย · ไม่มีรูป (ยังโหลดไม่เสร็จ/ในถ้ำ) = ฟ้าวาดแบบเดิม
+                        const pk = dayAmt < 0.32 ? "night" : gold > 0.45 ? "dusk" : "day";
+                        const ph = !G._skyIndoor && skyPhoto[pk];
+                        if (ph) {
+                            if (skyDome.material.map !== ph) {
+                                skyDome.material.map = ph;
+                                skyDome.material.needsUpdate = true;
+                            }
+                            const cb = BIOMES[G.curBiome] || {};
+                            const lum = pk === "night" ? 0.55 + dayAmt * 0.9 : 0.8 + dayAmt * 0.2;
+                            const tintK = cb.night || G.curBiome == null ? 0.55 : (cb.id === "candy" || cb.id === "volcano" || cb.id === "robot") ? 0.4 : 0.18; // 🔥 นรก/แมพพิเศษ ย้อมสีแมพแรงกว่า
+                            if (pk === "night")
+                                _skyCol.setRGB(0.36 * lum * 1.6, 0.44 * lum * 1.6, 0.66 * lum * 1.6).lerp(skyTmp, tintK * 0.6); // 🌌 กลางคืนอมน้ำเงินเข้ม ดาวเด่น
+                            else
+                                _skyCol.setRGB(lum, lum, lum).lerp(skyTmp, tintK);
+                            skyDome.material.color.copy(_skyCol);
+                            if (skyHz[pk]) {
+                                _skyFog.copy(skyHz[pk]).multiply(_skyCol);
+                                scene.fog.color.lerp(_skyFog, 0.65);
+                            }
+                        }
+                        else {
+                            if (!G._skyIndoor && skyDome.material.map !== G._skyTex) {
+                                skyDome.material.map = G._skyTex;
+                                skyDome.material.needsUpdate = true;
+                            }
+                            skyDome.material.color.copy(skyTmp);
+                        }
+                    }
                     // ☀️🌑 ดวงตะวันลอยตามทิศแสงหลัก — กลางวันเป็นดวงอาทิตย์อุ่น กลางคืนเป็นดวงจันทร์เย็น
                     sunSpr.position.copy(key.position).normalize().multiplyScalar(66).add(camera.position);
                     sunSpr.material.color.lerpColors(dayColors.sunNight, dayColors.sunDay, dayAmt);
@@ -92852,7 +92917,7 @@ function CherryAdventure() {
     return (React.createElement("div", { style: { width: "100%", height: "var(--app-height, 100dvh)", position: "relative", background: "#eef2df", fontFamily: font, overflow: "hidden", boxSizing: "border-box",
             /* 📱 แนวนอน: เว้นขอบให้พ้นรอยบาก/กล้องหน้า — UI ทุกชิ้นวางอิงกรอบนี้ ส่วนภาพ 3D ยังเต็มจอ */
             paddingLeft: "var(--sa-l, 0px)", paddingRight: "var(--sa-r, 0px)" } },
-        React.createElement("style", null, `:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} @keyframes cvSpin{to{transform:rotate(360deg);}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}} @keyframes warpIn{from{transform:scale(1.04);}to{transform:scale(1);}} @keyframes warpBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}} @keyframes warpBar{0%{width:4%;}60%{width:72%;}100%{width:100%;}}`),
+        React.createElement("style", null, `:root{--sa-t:env(safe-area-inset-top,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px);--sa-r:env(safe-area-inset-right,0px);} @keyframes toastUp { 0%{opacity:0;transform:translateY(10px);} 15%{opacity:1;transform:translateY(0);} 75%{opacity:1;} 100%{opacity:0;transform:translateY(-14px);} } @keyframes pulse { from{transform:scale(1);} to{transform:scale(1.08);} } @keyframes hudscroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} } @keyframes annRun { 0%{transform:translateX(100vw);} 100%{transform:translateX(-100%);} } @keyframes titleBlink { 0%,100%{opacity:1;} 50%{opacity:0.4;} } @keyframes todoPop { 0%,72%,100%{transform:scale(1);} 82%{transform:scale(1.22);} 92%{transform:scale(0.96);} } button,input,select,textarea{font-family:inherit;} *{-webkit-tap-highlight-color:transparent;font-synthesis:none;} ::-webkit-scrollbar{width:7px;height:7px;} ::-webkit-scrollbar-thumb{background:#f2c4d4;border-radius:99px;} ::-webkit-scrollbar-track{background:transparent;} @keyframes cpop{0%{opacity:0;scale:.94;}100%{opacity:1;scale:1;}} @keyframes cvSpin{to{transform:rotate(360deg);}} button:not([disabled]):active{filter:brightness(.95);transform:scale(.96);} @keyframes lvlPop{0%{opacity:1;transform:scale(1.25) rotate(-4deg);}14%{transform:scale(1) rotate(0);}80%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:scale(1.05) translateY(-30px);}} @keyframes bounceInX{0%{opacity:0;transform:translateX(-50%) scale(.5);}55%{opacity:1;transform:translateX(-50%) scale(1.08);}75%{transform:translateX(-50%) scale(.96);}100%{transform:translateX(-50%) scale(1);}} @keyframes heartBeat{0%,28%,70%,100%{transform:scale(1);}14%,42%{transform:scale(1.12);}} @keyframes tada{0%,100%{transform:scale(1) rotate(0);}10%,20%{transform:scale(.92) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.08) rotate(3deg);}40%,60%,80%{transform:scale(1.08) rotate(-3deg);}} @keyframes warpIn{from{transform:scale(1.04);}to{transform:scale(1);}} @keyframes warpBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}} @keyframes warpZoom{from{transform:scale(1.0)}to{transform:scale(1.07)}}@keyframes warpBar{0%{width:4%;}60%{width:72%;}100%{width:100%;}}`),
         React.createElement("div", { ref: mountRef, style: { position: "absolute", top: 0, bottom: 0,
                 left: "calc(-1 * var(--sa-l, 0px))",
                 right: "calc(-1 * var(--sa-r, 0px))" } }),
@@ -93878,7 +93943,7 @@ function CherryAdventure() {
             React.createElement("div", { style: { whiteSpace: "nowrap", fontSize: 13.5, fontWeight: 800, fontFamily: font, color: "#ffd76a", textShadow: "0 1px 6px rgba(255,170,60,0.6)", animation: "annRun 10s linear forwards", willChange: "transform", background: "rgba(40,20,60,0.74)", padding: "4px 18px", borderRadius: 999, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" } },
                 "\uD83D\uDCE2 ",
                 ui.announce.text))),
-        ui.mode === "login" && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font } },
+        ui.mode === "login" && (React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "linear-gradient(180deg, rgba(255,236,244,0.3), rgba(30,50,30,0.35)), url(assets/bg/meadow.jpg) center / cover no-repeat, linear-gradient(180deg,#fdeef2,#f4e2ec)", fontFamily: font } },
             React.createElement("div", { style: { width: "100%", maxWidth: 360, background: "#fffaf4", border: "4px solid #f2b6c9", borderRadius: 28, padding: "24px 20px", boxShadow: "0 14px 44px rgba(150,90,120,0.28), inset 0 0 0 3px #fff", textAlign: "center", animation: UI_POP } },
                 React.createElement("div", { style: { fontSize: 42 } }, "\uD83C\uDF52"),
                 React.createElement("div", { style: { fontSize: 22, fontWeight: 800, color: "#c0446a", marginBottom: 2 } }, "Cherry Adventure"),
@@ -93907,11 +93972,11 @@ function CherryAdventure() {
         ui.mode === "title" && (React.createElement("div", { style: {
                 position: "absolute", inset: 0, display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "flex-start", gap: 12, padding: "24px 20px", overflowY: "auto",
-                background: "linear-gradient(180deg,#fce8f0,#eef2df)",
+                background: "linear-gradient(180deg, rgba(255,236,244,0.35) 0%, rgba(255,255,255,0.05) 40%, rgba(30,50,30,0.35) 100%), url(assets/bg/meadow.jpg) center / cover no-repeat, linear-gradient(180deg,#fce8f0,#eef2df)", // 🖼️ ฉากทุ่งหญ้าวาดมือ (CC0)
             } },
-            React.createElement("div", { style: { fontSize: 40, marginBottom: -6 } }, "\uD83C\uDF52"),
-            React.createElement("div", { style: { fontSize: 26, fontWeight: 800, color: "#8a5a4a" } }, "\u0E19\u0E49\u0E2D\u0E07\u0E40\u0E0A\u0E2D\u0E23\u0E4C\u0E23\u0E35\u0E48\u0E1C\u0E08\u0E0D\u0E20\u0E31\u0E22"),
-            React.createElement("div", { style: { fontSize: 12.5, color: "#a3796a", marginBottom: 2 } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01 \u2014 \u0E40\u0E25\u0E48\u0E19\u0E44\u0E14\u0E49\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23!"),
+            React.createElement("div", { style: { fontSize: 46, marginBottom: -6, filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.35))" } }, "\uD83C\uDF52"),
+            React.createElement("div", { style: { fontSize: 28, fontWeight: 900, color: "#fff", textShadow: "0 3px 0 #c0446a, 0 0 14px rgba(255,140,180,0.8), 0 4px 10px rgba(0,0,0,0.4)" } }, "\u0E19\u0E49\u0E2D\u0E07\u0E40\u0E0A\u0E2D\u0E23\u0E4C\u0E23\u0E35\u0E48\u0E1C\u0E08\u0E0D\u0E20\u0E31\u0E22"),
+            React.createElement("div", { style: { fontSize: 12.5, fontWeight: 800, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.7)", marginBottom: 2 } }, "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E0A\u0E48\u0E2D\u0E07\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01 \u2014 \u0E40\u0E25\u0E48\u0E19\u0E44\u0E14\u0E49\u0E2B\u0E25\u0E32\u0E22\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23!"),
             React.createElement("div", { style: { fontSize: 9.5, color: "#c0b0a4", marginBottom: 6 } },
                 "v",
                 BUILD_VER),
@@ -96342,12 +96407,15 @@ function CherryAdventure() {
         ui.warpLoad && (() => {
             const W = ui.warpLoad;
             return (React.createElement("div", { key: W.key, style: { position: "absolute", inset: 0, zIndex: 80, overflow: "hidden", fontFamily: font, animation: "warpIn 0.25s ease-out", background: `linear-gradient(180deg, ${W.sky} 0%, ${W.fog} 58%, ${W.ground} 100%)` } },
-                W.night && [...Array(26)].map((_, i) => React.createElement("span", { key: i, style: { position: "absolute", left: `${(i * 37) % 100}%`, top: `${(i * 23) % 48}%`, width: 3, height: 3, borderRadius: "50%", background: "#fff", opacity: 0.35 + ((i * 7) % 6) / 10, boxShadow: "0 0 6px #fff" } })),
-                !W.night && React.createElement("div", { style: { position: "absolute", right: "14%", top: "11%", width: 92, height: 92, borderRadius: "50%", background: "radial-gradient(circle, #fffbe0 0%, #ffe9a0 45%, rgba(255,230,150,0) 72%)", filter: "blur(1px)" } }),
-                React.createElement("div", { style: { position: "absolute", left: "-10%", right: "-10%", bottom: "30%", height: "22%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.fog, opacity: 0.85, transform: "scaleX(1.4)" } }),
-                React.createElement("div", { style: { position: "absolute", left: "-14%", right: "40%", bottom: "28%", height: "30%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.g70, opacity: 0.9 } }),
-                React.createElement("div", { style: { position: "absolute", left: "35%", right: "-14%", bottom: "28%", height: "26%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.g60, opacity: 0.9 } }),
-                React.createElement("div", { style: { position: "absolute", left: 0, right: 0, bottom: 0, height: "31%", background: `linear-gradient(180deg, ${W.ground}, ${W.gDark})` } }),
+                W.bg && React.createElement("div", { style: { position: "absolute", inset: "-4%", backgroundImage: `url(${W.bg})`, backgroundSize: "cover", backgroundPosition: "center", animation: "warpZoom 2.6s ease-out forwards" } }),
+                W.bg && React.createElement("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.55) 100%)" } }),
+                !W.bg && React.createElement(React.Fragment, null,
+                    W.night && [...Array(26)].map((_, i) => React.createElement("span", { key: i, style: { position: "absolute", left: `${(i * 37) % 100}%`, top: `${(i * 23) % 48}%`, width: 3, height: 3, borderRadius: "50%", background: "#fff", opacity: 0.35 + ((i * 7) % 6) / 10, boxShadow: "0 0 6px #fff" } })),
+                    !W.night && React.createElement("div", { style: { position: "absolute", right: "14%", top: "11%", width: 92, height: 92, borderRadius: "50%", background: "radial-gradient(circle, #fffbe0 0%, #ffe9a0 45%, rgba(255,230,150,0) 72%)", filter: "blur(1px)" } }),
+                    React.createElement("div", { style: { position: "absolute", left: "-10%", right: "-10%", bottom: "30%", height: "22%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.fog, opacity: 0.85, transform: "scaleX(1.4)" } }),
+                    React.createElement("div", { style: { position: "absolute", left: "-14%", right: "40%", bottom: "28%", height: "30%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.g70, opacity: 0.9 } }),
+                    React.createElement("div", { style: { position: "absolute", left: "35%", right: "-14%", bottom: "28%", height: "26%", borderRadius: "50% 50% 0 0 / 100% 100% 0 0", background: W.g60, opacity: 0.9 } }),
+                    React.createElement("div", { style: { position: "absolute", left: 0, right: 0, bottom: 0, height: "31%", background: `linear-gradient(180deg, ${W.ground}, ${W.gDark})` } })),
                 React.createElement("div", { style: { position: "absolute", left: 0, right: 0, bottom: "24%", textAlign: "center", fontSize: 40, letterSpacing: 18, opacity: 0.95, filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.35))" } }, W.mons.join("")),
                 React.createElement("div", { style: { position: "absolute", left: 0, right: 0, top: "18%", textAlign: "center", padding: "0 16px" } },
                     React.createElement("div", { style: { fontSize: 64, lineHeight: 1, filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.4))", animation: "warpBob 1.4s ease-in-out infinite" } }, W.emoji),
