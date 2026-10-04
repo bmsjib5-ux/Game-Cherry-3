@@ -51,6 +51,8 @@ const BIOMES = [
   { id: "amazon", name: "ป่าดิบอเมซอน", emoji: "🌴", lvMin: 1000, lvMax: 1100, ground: 0x2e5a34, sky: 0x24382a, fog: 0x1c2e20, pool: ["amzmonkey", "piranha", "crocodile", "anaconda", "goblin2d"], tree: "none", boss: "anaconda", bossName: "อนาคอนด้าจ้าวป่า 🐍", dim: true },
   // 🤖 ด่านอาณาจักรหุ่นยนต์ — Lv 1100-1200 · เมืองโรงงานเหล็ก ไฟนีออน ฟันเฟือง สายพาน · หุ่นยนต์ Animated Mech (Quaternius)
   { id: "robot", name: "อาณาจักรหุ่นยนต์", emoji: "🤖", lvMin: 1100, lvMax: 1200, ground: 0x4a505a, sky: 0x2a3446, fog: 0x2c3646, pool: ["mechscout", "mechstriker", "mechgunner", "mechtitan"], tree: "none", boss: "mechking", bossName: "จักรพรรดิหุ่นเหล็ก 🤖", hpMul: 1.1, atkMul: 1.1, dim: true },
+  // 🏚️ ด่านเมืองร้าง — Lv 1200-1300 · บ้านพังหลังคาโหว่ สุสาน ต้นไม้ตาย ตะเกียงผีไฟเขียว หมอกหนา · ผีดิบชาวเมือง โครงกระดูก วิญญาณ บอสจอมลิช
+  { id: "ghosttown", name: "เมืองร้าง", emoji: "🏚️", lvMin: 1200, lvMax: 1300, ground: 0x4a4a40, sky: 0x1e2228, fog: 0x2a2e34, pool: ["ghoul", "skelguard", "wraith", "banshee"], tree: "none", boss: "lichking", bossName: "จอมลิชเมืองร้าง 💀", hpMul: 1.15, atkMul: 1.15, night: true, dim: true },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -158,6 +160,10 @@ const TERRAIN = {
     { t: "mesa", x: -20, z: -18, r: 5, h: 3.2, e: 1.2 },
     { t: "mesa", x: 22, z: 14, r: 4.5, h: 2.6, e: 1.2 },
     { t: "wave", fx: 0.1, fz: 0.09, h: 0.3, p: 0.5, q: 1.1 } ], rim: { r0: 40, w: 12, h: 12, jag: 0.15, k: 6 } },
+  ghosttown: { lo: 0x2a2a24, hi: 0x6a6656, rock: 0x3e3c38, hN: 5, rockK: 0.5, f: [   // 🏚️ ที่ราบเมืองเก่า เนินสุสานเตี้ย ๆ ล้อมด้วยสันเขาหินมืด
+    { t: "hill", x: -22, z: 18, r: 9, h: 2.6 },
+    { t: "hill", x: 21, z: -19, r: 8, h: 2.2 },
+    { t: "wave", fx: 0.11, fz: 0.1, h: 0.35, p: 0.4, q: 1.2 } ], rim: { r0: 40, w: 12, h: 14, jag: 0.18, k: 5 } },
   titan:   { lo: 0x36461f, hi: 0x8e9e6e, rock: 0x6a6a5a, hN: 8, rockK: 0.65, f: [
     { t: "drop", r0: 27, w: 5, h: -5 },
     { t: "mesa", x: -20, z: 15, r: 5, h: 3.2, e: 1.4 },
@@ -185,7 +191,8 @@ const AMBIENT = {
   moon:    { n: 40, kind: "mote",  c: [0xc8d0e0, 0x94a0b4], size: 0.2, fall: 0.05, sway: 0.35 },           // 🌑 ฝุ่นจันทร์
   candy:   { n: 72, kind: "mote",  c: [0xffd0ea, 0xfff6b0, 0xd0f0ff], size: 0.3, fall: 0.4, sway: 0.9, glow: 1 }, // 🍬 เกล็ดน้ำตาลโปรย
   beach:   { n: 52, kind: "mote",  c: [0xffffff, 0xdff4ff], size: 0.26, fall: 0.14, sway: 2.2 },           // 🏖️ ละอองน้ำทะเล
-  robot:   { n: 50, kind: "mote",  c: [0x6ad8ff, 0xffb84a], size: 0.24, fall: -0.35, sway: 0.5, glow: 1 },  // 🤖 ประกายไฟเชื่อมโลหะลอย
+  robot:   { n: 50, kind: "mote",  c: [0x6ad8ff, 0xffb84a], size: 0.24, fall: -0.35, sway: 0.5, glow: 1 },
+  ghosttown: { n: 58, kind: "mote", c: [0x9affc8, 0xb8c0d0], size: 0.26, fall: -0.08, sway: 1.1, glow: 1 },   // 🏚️ ดวงไฟวิญญาณเขียวซีด + ขี้เถ้าลอย  // 🤖 ประกายไฟเชื่อมโลหะลอย
   titan:   { n: 46, kind: "mote",  c: [0xcfc8a8, 0xaaa68a], size: 0.24, fall: 0.12, sway: 1.2 },           // 🗿 ฝุ่นลานประลอง
   amazon:  { n: 66, kind: "mote",  c: [0x9ae06a, 0xfff2a0], size: 0.28, fall: -0.16, sway: 0.7, glow: 1 }, // 🌴 เกสร/หิ่งห้อยป่า
 };
@@ -202,7 +209,8 @@ const DETAIL = {
   moon:    { g: 0,    gc: [0x8a8a94], gs: 0.7, r: 560, rc: 0x7c7f88 },
   candy:   { g: 1100, gc: [0xf7b0d6, 0xffd0e8, 0xfff0b8, 0xc8ecff], gs: 1.0, r: 260, rc: 0xefa8cf },
   beach:   { g: 380,  gc: [0x9ab86a, 0xbccb7c], gs: 0.9, r: 340, rc: 0xa89f8c },
-  robot:   { g: 0,    gc: [0x5a6272], gs: 0.7, r: 460, rc: 0x5a606a },   // 🤖 พื้นเหล็ก — ไม่มีหญ้า มีแต่น็อต/เศษเหล็ก
+  robot:   { g: 0,    gc: [0x5a6272], gs: 0.7, r: 460, rc: 0x5a606a },
+  ghosttown: { g: 900, gc: [0x5a5838, 0x6a6444, 0x4a4a34, 0x7a6e4a], gs: 0.9, r: 420, rc: 0x5a5852 },   // 🏚️ หญ้าแห้งตายซาก + เศษหิน   // 🤖 พื้นเหล็ก — ไม่มีหญ้า มีแต่น็อต/เศษเหล็ก
   titan:   { g: 1300, gc: [0x5c7a38, 0x74924a, 0x8ba85c], gs: 0.95, r: 380, rc: 0x6e6e5e },
   amazon:  { g: 1900, gc: [0x2e5c2e, 0x3f7a3a, 0x58974a, 0x76b055], gs: 1.15, r: 260, rc: 0x3a4230 },
 };
@@ -373,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v690";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v691";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -803,6 +811,7 @@ const WEATHER_POOL = {
   beach:   ["clear", "clear", "rain", "storm", "heat"],
   titan:   ["clear", "clear", "storm", "fog", "rain"],
   robot:   ["clear", "fog", "storm", "clear"],
+  ghosttown: ["fog", "fog", "rain", "storm", "clear"],
   amazon:  ["rain", "rain", "storm", "fog", "clear"],
 };
 
@@ -949,6 +958,20 @@ Object.assign(SPECIES, {
   // 🐤 สัตว์เลี้ยงลับสุดหายาก — ไก่น้อยหัวใจ (แอบซ่อน · จับได้อย่างเดียว · โจมตีไม่ได้)
   chickpet:   { name: "ไก่น้อยหัวใจ",     emoji: "🐤", color: 0xfdfaf2, hp: 1000, atk: 1000, catch: 0.20, tier: 8, desc: "สัตว์เลี้ยงลับสุดหายาก ขี้อายชอบหลบซ่อน ต้องเดินเข้าไปจับเอง โจมตีไม่ได้ · สเตตัสเริ่มต้นสูงสุด (HP/ATK 1000)", secret: true, weak: "arcane" },
 });
+// 🏚️ เมืองร้าง (Lv 1200-1300) — ใช้โมเดลที่มีอยู่แล้วย้อมสีใหม่ (ไม่โหลดไฟล์เพิ่ม)
+Object.assign(SPECIES, {
+  ghoul:     { name: "ชาวเมืองผีดิบ",     emoji: "🧟", color: 0x8a8a78, hp: 760, atk: 70, catch: 0.018, tier: 8, desc: "อดีตชาวเมืองที่ฟื้นจากหลุมศพ เดินลากขาตามหาบ้านที่ไม่มีวันกลับไปได้", weak: "light" },
+  skelguard: { name: "ทหารโครงกระดูก",    emoji: "💀", color: 0xd8d0b8, hp: 820, atk: 74, catch: 0.016, tier: 8, desc: "ทหารยามเมืองเก่าที่ยังเฝ้าประตูแม้เหลือแต่กระดูก", weak: "light" },
+  wraith:    { name: "วิญญาณเมืองร้าง",   emoji: "👻", color: 0x7a6aa8, hp: 720, atk: 80, catch: 0.015, tier: 8, desc: "เงาวิญญาณสีม่วงที่ล่องลอยตามตรอกซอยมืด ดูดพลังชีวิตผู้หลงทาง", weak: "light" },
+  banshee:   { name: "แม่หม้ายกรีดร้อง",   emoji: "😱", color: 0x8ad0c8, hp: 700, atk: 84, catch: 0.014, tier: 8, desc: "ภูตหญิงลอยตัว เสียงกรีดร้องทำให้หัวใจแทบหยุดเต้น", weak: "light" },
+  lichking:  { name: "จอมลิชเมืองร้าง",   emoji: "💀", color: 0x8a5ad0, hp: 1450, atk: 90, catch: 0.005, tier: 8, desc: "จอมเวทอมตะผู้สาปทั้งเมืองให้กลายเป็นเมืองร้าง ปลุกคนตายขึ้นมาเป็นกองทัพ", weak: "light" },
+});
+Object.assign(EVOLVED, { ghoul: "ผีดิบจ้าวสุสาน", skelguard: "อัศวินกระดูกทมิฬ", wraith: "วิญญาณราตรีนิรันดร์", banshee: "ราชินีภูตกรีดร้อง", lichking: "จักรพรรดิลิชอมตะ" });
+Object.assign(WEAK, { ghoul: "light", skelguard: "light", wraith: "light", banshee: "light", lichking: "light" });
+Object.assign(PET_ELEM, { ghoul: "earth", skelguard: "earth", wraith: "arcane", banshee: "ice", lichking: "arcane" });
+Object.assign(PET_SKILL, { ghoul: "ตะปบผีดิบ", skelguard: "ฟันดาบกระดูก", wraith: "ดูดวิญญาณ", banshee: "เสียงกรีดร้องมรณะ", lichking: "คำสาปเมืองร้าง" });
+Object.assign(MON_SHAPE_EXTRA, { ghoul: "titan", skelguard: "titan", wraith: "ghost", banshee: "ghost", lichking: "reaper" });
+Object.assign(FLOATY, { wraith: true, banshee: true });
 Object.assign(EVOLVED, { mechscout: "หุ่นสอดแนมควอนตัม", mechstriker: "หุ่นดาบพลาสม่า", mechgunner: "หุ่นปืนใหญ่ไอออน", mechtitan: "หุ่นป้อมปราการ", mechking: "จักรพรรดิหุ่นเหล็กนิรันดร์" });
 Object.assign(WEAK, { mechscout: "water", mechstriker: "water", mechgunner: "ice", mechtitan: "water", mechking: "water" });
 Object.assign(PET_ELEM, { mechscout: "wind", mechstriker: "fire", mechgunner: "fire", mechtitan: "earth", mechking: "light" });
@@ -1996,6 +2019,7 @@ const ORE_TABLE = {
   candy:   { ironOre: 64, crystal: 58, earthEss: 34, windEss: 34 },
   beach:   { ironOre: 88, crystal: 30, iceEss: 26, windEss: 40 },
   robot:   { ironOre: 150, crystal: 48, windEss: 36, dragonScale: 12 },
+  ghosttown: { ironOre: 110, crystal: 60, earthEss: 50, dragonScale: 16 },
   titan:   { ironOre: 62, crystal: 56, earthEss: 74, dragonScale: 22 },
   amazon:  { ironOre: 70, crystal: 38, earthEss: 70, windEss: 42 },
 };
@@ -2008,6 +2032,7 @@ const ORE_LOOK = {
   moon:    { rock: 0x8a90a0, gem: 0xc0a8ff }, candy:  { rock: 0xe0a8c8, gem: 0xffd0e8 },
   beach:   { rock: 0xd8c8a0, gem: 0x8ae0e0 }, titan:  { rock: 0x7a7060, gem: 0xd0a060 },
   amazon:  { rock: 0x6a7a58, gem: 0x9ae86a },
+  ghosttown: { rock: 0x5a5a58, gem: 0x9a7ae8 },
 };
 
 // ---------- 🍳 ครัว — เอาผลผลิตฟาร์ม ปลา และแร่มาทำอาหาร ได้บัฟติดตัวตามเวลาจริง ----------
@@ -2140,6 +2165,7 @@ const HERB_W = {
   candy:   { leaf: 58,  root: 40, flower: 78, mush: 30, lotus: 12 },
   beach:   { leaf: 72,  root: 50, flower: 46, mush: 20, lotus: 12 },
   robot:   { leaf: 18,  root: 36, flower: 16, mush: 30, lotus: 6 },
+  ghosttown: { leaf: 20, root: 52, flower: 12, mush: 72, lotus: 4 },
   titan:   { leaf: 44,  root: 72, flower: 38, mush: 44, lotus: 18 },
   amazon:  { leaf: 88,  root: 60, flower: 58, mush: 62, lotus: 24 },
 };
@@ -2253,6 +2279,7 @@ const FISH_SPOT = {
   moon:    { kind: "crater", x: -6.5,  z: -13.0, r: 3.4, lv: 14, bonus: 1.2,  name: "หลุมอุกกาบาตน้ำเงิน",  water: 0x7a6ae0, rim: 0x6a6e7a, deco: 0xc0a8ff },
   candy:   { kind: "syrup",  x: 12.5,  z: -13.5, r: 3.2, lv: 15, bonus: 1.35, name: "สระน้ำเชื่อมสตรอว์เบอร์รี", water: 0xff8ac0, rim: 0xffd0e8, deco: 0xfff0f8 },
   beach:   { kind: "shore",  x: -14.0, z: 2.0,   r: 3.9, lv: 16, bonus: 1.5,  name: "ชายทะเลคราม",          water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
+  ghosttown: { kind: "basin", x: 9.5,  z: -12.5, r: 3.2, lv: 24, bonus: 2.4,  name: "บ่อน้ำเก่ากลางเมืองร้าง",   water: 0x3a4e4c, rim: 0x5a5650, deco: 0x9a8ae8 },
   robot:   { kind: "basin",  x: -9.0,  z: 12.5,  r: 3.4, lv: 22, bonus: 2.2,  name: "บ่อหล่อเย็นเตาปฏิกรณ์",   water: 0x2ad0e8, rim: 0x5a6070, deco: 0x6ad8ff },
   titan:   { kind: "basin",  x: 8.0,   z: 13.0,  r: 3.4, lv: 18, bonus: 1.7,  name: "อ่างหินไททัน",          water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
   amazon:  { kind: "fall",   x: -11.5, z: -12.0, r: 3.6, lv: 20, bonus: 2.0,  name: "แอ่งน้ำตกอเมซอน",      water: 0x2aa87a, rim: 0x4a5a38, deco: 0x8ae86a },
@@ -2305,9 +2332,9 @@ const fishOdds = (lv, k, spotBonus) => {
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
 // 🗺️ โลกเดียวต่อกันหมด — เดินจากด่าน 1 ไปถึงด่าน 13 ได้โดยไม่ต้องวาร์ป
 // ทางเดินงูเลื้อยเป็นแถว ๆ ตามกลุ่มที่ตั้งไว้ (1+2+3 / 4+5+6 / 7+8+9 / 10+11 / 12+13)
-const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot"];
+const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown"];
 //                          1→2  2→3  3→4  4→5  5→6  6→7  7→8  8→9  9→10 10→11 11→12 12→13
-const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S"];   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
+const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W"];   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
 // แถว/โซนของโลก — เอาไว้โชว์ว่าตอนนี้อยู่ช่วงไหนของเส้นทาง
 const ROUTES = [
   { id: "r1", name: "แถวต้นทาง",      emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
@@ -2316,6 +2343,7 @@ const ROUTES = [
   { id: "r4", name: "แถวชายทะเล",     emoji: "🍬", biomes: ["candy", "beach"] },
   { id: "r5", name: "แถวไททัน",       emoji: "🗿", biomes: ["titan", "amazon"] },
   { id: "r6", name: "แถวจักรกล",      emoji: "🤖", biomes: ["robot"] },
+  { id: "r7", name: "แถวเมืองร้าง",    emoji: "🏚️", biomes: ["ghosttown"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
@@ -2353,7 +2381,8 @@ const BORDER = {
   moon:    { kind: "cliff",  a: 0x8a90a0, b: 0x5a6070 },
   candy:   { kind: "fence",  a: 0xffd0e8, b: 0xf58ac0 },
   beach:   { kind: "river",  a: 0x4ab0e0, b: 0x8ae0e0, c: 0xe8d8a8 },
-  robot:   { kind: "wall",   a: 0x4a505c, b: 0x2e333c },   // 🤖 กำแพงเหล็กแผ่นหนา + ป้อม
+  robot:   { kind: "wall",   a: 0x4a505c, b: 0x2e333c },
+  ghosttown: { kind: "wall", a: 0x5a544a, b: 0x3a3630 },   // 🏚️ กำแพงหินเก่าผุพัง   // 🤖 กำแพงเหล็กแผ่นหนา + ป้อม
   titan:   { kind: "wall",   a: 0x7a7060, b: 0x5a5040 },
   amazon:  { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
 };
@@ -8648,11 +8677,29 @@ export default function CherryAdventure() {
     const VIL_BASE = "assets/quat/village/", VIL_KINDS = ["Cottage", "House2", "Manor", "Stall", "Wagon"];
     const VIL_CHIM = { Cottage: [1.2, 6.2, -1.0], House2: [1.2, 9.4, -1.2], Manor: [-1.8, 9.6, -1.5] };   // ยอดปล่องไฟ (ควัน)
     const vilLib = {}; let vilLoading = null;
+    const vilRuinCache = {};
+    const vilRuinMat = (m) => {
+      if (vilRuinCache[m.uuid]) return vilRuinCache[m.uuid];
+      let r;
+      if (/Glass/.test(m.name || "")) r = new THREE.MeshStandardMaterial({ name: "RuinGlass", color: 0x14181c, roughness: 0.6 });
+      else { r = m.clone(); r.color = m.color.clone().lerp(new THREE.Color(0x707068), 0.45).multiplyScalar(0.62); r.emissive && r.emissive.setScalar(0); }
+      r.userData = Object.assign({}, r.userData, { _shared: true });
+      return (vilRuinCache[m.uuid] = r);
+    };
     const vilApply = (it) => {
       const L2 = vilLib[it.kind]; if (!L2 || !it.g || it.done) return;
       it.done = true;
       const node = L2.clone();
       node.scale.setScalar(it.sc || 1);
+      if (it.ruin) {   // 🏚️ บ้านร้าง: สีซีดหม่น กระจกแตกมืด (ไม่เรืองแสง) · บางหลังหลังคาพังโหว่ · เอียงทรุดนิด ๆ
+        node.traverse((o) => {
+          if (!o.isMesh) return;
+          const nm = o.material.name || "";
+          if (it.noRoof && /RoundTiles/.test(nm)) { o.visible = false; return; }
+          o.material = vilRuinMat(o.material);
+        });
+        if (it.tilt) node.rotation.z = it.tilt;
+      }
       if (it.tint != null || it.roof != null) node.traverse((o) => {
         if (!o.isMesh) return;
         const nm = o.material.name || "";
@@ -8728,7 +8775,7 @@ export default function CherryAdventure() {
     // 💀 KayKit Skeletons (CC0 — Kay Lousberg) — มอนสเตอร์อันเดดใช้โมเดลมีโครงกระดูกจริง + อนิเมชัน
     //    ยืน · เดิน · วิ่งไล่ · สะดุ้งตอนโดนตี · เงื้อตี · ล้มตาย  (คลิปดึงมาจากชุด Rig_Medium ของ KayKit)
     //    ⏳ โหลดตอนเจอมอนพวกนี้ครั้งแรกเท่านั้น (ราว 1.2MB) — คนที่ยังไม่ถึงด่านนรกไม่ต้องโหลด
-    const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage" };   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
+    const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage", skelguard: "Skeleton_Warrior" };   // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
     const KK_SKEL_H = 1.5;            // ความสูงในเกม (ตัวละครผู้เล่นสูงราว 2)
     const KK_ONCE = ["Hit_A", "Death_A", "Throw"];
     const kkSkelLib = {};
@@ -8903,6 +8950,11 @@ export default function CherryAdventure() {
       mechstriker: { f: "mech/Mech_Mike",  c: "big", by: "h", size: 2.8, hit: "HitRecieve_1", atk: "SwordSlash", tint: { Main: 0x7aa860, Grey: 0x80868c, LightGrey: 0xc8ccd0, Accent: 0xe8862a } },   // เขียวทหาร
       mechgunner:  { f: "mech/Mech_Stan",  c: "big", by: "h", size: 2.7, hit: "HitRecieve_1", atk: "Shoot", tint: { Main: 0xe0d8c0, Grey: 0x6a7078, LightGrey: 0xc0c4c8, Accent: 0xe8862a } },        // ครีมสนิม
       mechtitan:   { f: "mech/Mech_George", c: "big", by: "h", size: 3.1, hit: "HitRecieve_1", atk: "Punch", tint: { Main: 0x7ab8c8, Grey: 0x8a9098, LightGrey: 0xd0d4d8, Accent: 0xe8862a } },       // ฟ้าหม่น
+      ghoul:      { f: "Zombie",          size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
+                    tint: { M_Main: 0x8a8c80, M_Joints: 0x3a2a3a } },                                           // 🏚️ ผีดิบชาวเมือง — ผิวเทาซีด ข้อต่อม่วงคล้ำ
+      wraith:     { f: "Flying_Ghost",    c: "fly",           size: 2.4, y: 0.8, hue: [262, 0.5, 2.2] },             // 🏚️ วิญญาณม่วงหม่น
+      banshee:    { f: "Flying_Hywirl",   c: "fly",           size: 2.5, y: 0.7, hue: [172, 0.3, 1.25] },           // 🏚️ ภูตหญิงเขียวซีด
+      lichking:   { f: "Big_Orc_Skull",   c: "big",  by: "h", size: 3.4, hue: [278, 0.6, 1.35] },                   // 🏚️💀 จอมลิช — กะโหลกยักษ์ย้อมม่วงเวทมนตร์
       mechking:    { f: "mech/Mech_George", c: "big", by: "h", size: 3.4, hit: "HitRecieve_2", atk: "Punch", tint: { Main: 0xe8b83a, Accent: 0xc0302a, Grey: 0x5a4a3a, LightGrey: 0xf0e0b0 } },   // 👑 ย้อมทองคำ + แดง
       ngu:        { f: "Snake",           size: 1.7,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
       anaconda:   { f: "Snake_angry",     size: 2.6,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
@@ -21928,6 +21980,117 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       robotFx.neon[0].emissiveIntensity = 1.4 + Math.sin(t * 2.2) * 0.35; robotFx.neon[1].emissiveIntensity = 1.3 + Math.sin(t * 1.7 + 1) * 0.35;
       robotFx.blink[0].emissiveIntensity = (t % 1.4) < 0.5 ? 2.4 : 0.2;
     };
+    // 🏚️ GHOST TOWN DECOR — บ้านร้าง (โมเดลบ้านยุคกลางย้อมหม่น หลังคาโหว่) · สุสาน · ต้นไม้ตาย · รั้วพัง · ตะเกียงผีไฟเขียวกะพริบ · กองซาก · หมอกต่ำ
+    const ghostDecor = new THREE.Group(); ghostDecor.visible = false; scene.add(ghostDecor);
+    const ghostColliders = [], ghostFx = { lamps: [], mist: [] };
+    {
+      const wood = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.95 }), woodD = new THREE.MeshStandardMaterial({ color: 0x2e241a, roughness: 0.98 });
+      const stone = new THREE.MeshStandardMaterial({ color: 0x6a6862, roughness: 0.95, flatShading: true }), stoneD = new THREE.MeshStandardMaterial({ color: 0x45433f, roughness: 0.98, flatShading: true });
+      const bark = new THREE.MeshStandardMaterial({ color: 0x2a2420, roughness: 1 }), iron = new THREE.MeshStandardMaterial({ color: 0x2a2c30, metalness: 0.5, roughness: 0.6 });
+      const boxG = new THREE.BoxGeometry(1, 1, 1), cylG = new THREE.CylinderGeometry(1, 1, 1, 8), rockG = new THREE.DodecahedronGeometry(1, 0);
+      const okAt = (x, z, pad) => !(inKeepOut(x, z) || nearWarpG(x, z) || Math.abs(x) < 3.5 + pad || Math.abs(z) < 3.5 + pad || Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 7 + pad));
+      const free = (x, z, r) => !ghostColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + r);
+      const B = (par, m, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new THREE.Mesh(boxG, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; o.receiveShadow = true; par.add(o); return o; };
+      // 🏚️ บ้านร้าง — วงกลางถึงวงนอก หันหน้าเข้าลาน (ตัวปั้นเองเป็นตัวสำรองจนกว่าโมเดลบ้านจะโหลดเสร็จ)
+      const KINDS = ["Cottage", "House2", "Manor", "House2", "Cottage"];
+      for (let k = 0, n = 0; k < 90 && n < 13; k++) {
+        const a = Math.random() * Math.PI * 2, r = FIELD_R * (0.4 + Math.random() * 0.48), x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (!okAt(x, z, 3) || !free(x, z, 6.5)) continue;
+        const g = new THREE.Group(), w = 5, d = 4.4, h = 4;
+        B(g, stoneD, 0, h / 2, 0, w, h, d); B(g, woodD, 0, h + 1.1, 0, w * 1.05, 0.25, d * 1.05, 0, 0, 0.25);
+        B(g, woodD, -0.8, h + 1.3, 0, w * 0.6, 0.22, d * 1.05, 0, 0, -0.5);
+        g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z) + (Math.random() - 0.5) * 0.5;
+        ghostDecor.add(g);
+        const col = { x, z, r: 3.1 }; ghostColliders.push(col);
+        (G._vilQ = G._vilQ || []).push({ g, kind: KINDS[n % KINDS.length], sc: 1.05 + Math.random() * 0.2, ruin: true, noRoof: n % 3 === 0, tilt: (Math.random() - 0.5) * 0.06, col, colR: 3.4 });
+        // ไม้กระดานตีปิดประตู/หน้าต่าง
+        for (let q = 0; q < 3; q++) B(g, wood, (Math.random() - 0.5) * 2.4, 1 + Math.random() * 2, d / 2 + 0.75, 1.6, 0.18, 0.06, 0, 0, (Math.random() - 0.5) * 1.2);
+        n++;
+      }
+      // 🪦 สุสาน — ป้ายหลุมศพเอียง ๆ + ไม้กางเขน + รั้วเหล็กครึ่งวง
+      for (let gq = 0; gq < 2; gq++) {
+        let cx = 0, cz = 0, found = false;
+        for (let k = 0; k < 60 && !found; k++) { const a = Math.random() * Math.PI * 2, r = FIELD_R * (0.35 + Math.random() * 0.4); cx = Math.cos(a) * r; cz = Math.sin(a) * r; found = okAt(cx, cz, 4) && free(cx, cz, 7); }
+        if (!found) continue;
+        const yard = new THREE.Group(); yard.position.set(cx, 0, cz); yard.rotation.y = Math.random() * Math.PI; ghostDecor.add(yard);
+        for (let i = -2; i <= 2; i++) for (let j = -1; j <= 1; j++) {
+          if (Math.random() < 0.2) continue;
+          const tx = i * 1.6 + (Math.random() - 0.5) * 0.4, tz = j * 1.8 + (Math.random() - 0.5) * 0.4;
+          if ((i + j) % 3 === 0) { B(yard, woodD, tx, 0.75, tz, 0.14, 1.5, 0.14, 0, 0, (Math.random() - 0.5) * 0.4); B(yard, woodD, tx, 1.1, tz, 0.7, 0.13, 0.14, 0, 0, (Math.random() - 0.5) * 0.3); }
+          else { const st = B(yard, Math.random() < 0.5 ? stone : stoneD, tx, 0.5, tz, 0.75, 1.0, 0.18, (Math.random() - 0.5) * 0.35, 0, (Math.random() - 0.5) * 0.3); const top = new THREE.Mesh(new THREE.CylinderGeometry(0.375, 0.375, 0.18, 10, 1, false, 0, Math.PI), st.material); top.rotation.set(Math.PI / 2, 0, Math.PI / 2); top.position.set(0, 0.5, 0); top.scale.set(1 / 0.75, 1 / 0.18, 1); st.add(top); }
+          B(yard, stoneD, tx, 0.06, tz + 0.7, 0.8, 0.12, 1.2);   // เนินดินหลุม
+        }
+        for (let q = 0; q < 14; q++) { const a = Math.PI * 0.15 + (q / 13) * Math.PI * 1.7; if (q === 7) continue; B(yard, iron, Math.cos(a) * 5.4, 0.7, Math.sin(a) * 4.4, 0.08, 1.4, 0.08); if (q < 13) B(yard, iron, Math.cos(a + 0.065) * 5.4, 1.25, Math.sin(a + 0.065) * 4.4, 0.6, 0.06, 0.06, 0, -a - Math.PI / 2 + Math.PI / 2, 0); }
+        ghostColliders.push({ x: cx, z: cz, r: 1.2 });
+      }
+      // 🌳 ต้นไม้ตายกิ่งบิดเบี้ยว
+      const deadTree = (x, z) => {
+        const g = new THREE.Group(), h = 4 + Math.random() * 3;
+        const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.38, h, 7), bark); tr.position.y = h / 2; tr.rotation.z = (Math.random() - 0.5) * 0.2; tr.castShadow = true; g.add(tr);
+        for (let b = 0; b < 5; b++) {
+          const bl = 1.2 + Math.random() * 1.8, br = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.12, bl, 5), bark);
+          const piv = new THREE.Group(); piv.position.y = h * (0.5 + b * 0.1); piv.rotation.y = (b / 5) * Math.PI * 2 + Math.random(); piv.rotation.z = 0.7 + Math.random() * 0.6;
+          br.position.y = bl / 2; br.castShadow = true; piv.add(br);
+          const tw = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.05, bl * 0.5, 4), bark); tw.position.set(0, bl * 0.85, 0); tw.rotation.z = -0.8; br.add(tw);
+          g.add(piv);
+        }
+        g.position.set(x, 0, z); g.rotation.y = Math.random() * 6.28; ghostDecor.add(g); ghostColliders.push({ x, z, r: 0.5 });
+      };
+      for (let k = 0, n = 0; k < 80 && n < 16; k++) { const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (FIELD_R - 7), x = Math.cos(a) * r, z = Math.sin(a) * r; if (!okAt(x, z, 0) || !free(x, z, 1.5)) continue; deadTree(x, z); n++; }
+      // 🪵 รั้วไม้ผุ — บางแผ่นล้ม บางเสาเอียง
+      for (let k = 0, n = 0; k < 60 && n < 10; k++) {
+        const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 9), x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (!okAt(x, z, 1) || !free(x, z, 3)) continue;
+        const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.random() * Math.PI; ghostDecor.add(g);
+        for (let q = 0; q < 5; q++) {
+          if (Math.random() < 0.25) { B(g, wood, q * 1.1 - 2.2, 0.08, (Math.random() - 0.5) * 1.2, 0.12, 0.1, 1.1, 0, Math.random(), 0); continue; }   // ล้มกองกับพื้น
+          B(g, woodD, q * 1.1 - 2.2, 0.55, 0, 0.12, 1.1, 0.12, 0, 0, (Math.random() - 0.5) * 0.35);
+        }
+        B(g, wood, -0.6, 0.75, 0.05, 2.6, 0.1, 0.05, 0, 0, 0.08); B(g, wood, 1.0, 0.4, 0.05, 1.8, 0.1, 0.05, 0, 0, -0.25);
+        n++;
+      }
+      // 🏮 ตะเกียงผี — เสาเหล็กคดงอ โคมไฟเขียวซีดกะพริบ (ไม่มีแสงจริง ใช้เรืองแสงเอง)
+      const lampMat = new THREE.MeshStandardMaterial({ color: 0xb8ffd8, emissive: 0x3aff9a, emissiveIntensity: 1.6 });
+      const lampMat2 = new THREE.MeshStandardMaterial({ color: 0xc8f0ff, emissive: 0x5ad8ff, emissiveIntensity: 1.4 });
+      ghostFx.lamps.push(lampMat, lampMat2);
+      for (let k = 0, n = 0; k < 60 && n < 12; k++) {
+        const a = (n / 12) * Math.PI * 2 + Math.random() * 0.3, r = 9 + Math.random() * 10, x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (!okAt(x, z, 0) || !free(x, z, 1)) continue;
+        const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.z = (Math.random() - 0.5) * 0.18; ghostDecor.add(g);
+        B(g, iron, 0, 1.7, 0, 0.12, 3.4, 0.12); B(g, iron, 0.35, 3.35, 0, 0.75, 0.08, 0.08);
+        const lamp = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), n % 2 ? lampMat2 : lampMat); lamp.position.set(0.7, 3.0, 0); lamp.scale.y = 1.4; g.add(lamp);
+        const cage = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 0), new THREE.MeshBasicMaterial({ color: 0x1a1c20, wireframe: true })); cage.position.copy(lamp.position); cage.scale.y = 1.4; g.add(cage);
+        ghostColliders.push({ x, z, r: 0.3 }); n++;
+      }
+      // 🛞 เกวียนพัง + กองซากไม้/หิน + ลังผุ
+      for (let k = 0, n = 0; k < 60 && n < 5; k++) {
+        const a = Math.random() * Math.PI * 2, r = 7 + Math.random() * (FIELD_R - 10), x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (!okAt(x, z, 1) || !free(x, z, 2.5)) continue;
+        const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.set(0, Math.random() * 6.28, 0.12); ghostDecor.add(g);
+        B(g, wood, 0, 0.7, 0, 2.2, 0.5, 1.3);
+        (G._vilQ = G._vilQ || []).push({ g, kind: "Wagon", sc: 1.1, ruin: true, tilt: 0.14 });
+        ghostColliders.push({ x, z, r: 1.4 }); n++;
+      }
+      for (let k = 0, n = 0; k < 80 && n < 14; k++) {
+        const a = Math.random() * Math.PI * 2, r = 5 + Math.random() * (FIELD_R - 7), x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (!okAt(x, z, 0) || !free(x, z, 1.4)) continue;
+        const g = new THREE.Group(); g.position.set(x, 0, z); ghostDecor.add(g);
+        for (let q = 0; q < 4; q++) { const rk = new THREE.Mesh(rockG, q % 2 ? stone : stoneD); rk.scale.setScalar(0.3 + Math.random() * 0.4); rk.position.set((Math.random() - 0.5) * 1.4, 0.15, (Math.random() - 0.5) * 1.4); rk.rotation.set(Math.random(), Math.random(), Math.random()); rk.castShadow = true; g.add(rk); }
+        for (let q = 0; q < 3; q++) B(g, q % 2 ? wood : woodD, (Math.random() - 0.5) * 1.2, 0.12 + q * 0.1, (Math.random() - 0.5) * 1.2, 1.4 + Math.random(), 0.12, 0.2, 0, Math.random() * 3, (Math.random() - 0.5) * 0.4);
+        if (n % 3 === 0) B(g, woodD, 0.6, 0.35, -0.5, 0.7, 0.7, 0.7, 0, 0.4, 0.15);
+        ghostColliders.push({ x, z, r: 0.7 }); n++;
+      }
+      // 🌫️ หมอกต่ำลอยเอื่อย ๆ
+      const mistM = new THREE.MeshBasicMaterial({ color: 0xa8b8c0, transparent: true, opacity: 0.1, depthWrite: false });
+      for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1.6 + Math.random() * 1.4, 8, 6), mistM); m.position.set((Math.random() - 0.5) * FIELD_R * 2, 0.5 + Math.random(), (Math.random() - 0.5) * FIELD_R * 2); m.scale.set(1.8, 0.45, 1.8); m.userData = { sp: 0.15 + Math.random() * 0.3, noHide: true }; ghostDecor.add(m); ghostFx.mist.push(m); }
+    }
+    G.ghostDecor = ghostDecor; G.ghostColliders = ghostColliders;
+    G.ghostTick = (dt, t) => {
+      if (!ghostDecor.visible) return;
+      ghostFx.lamps[0].emissiveIntensity = 1.3 + Math.sin(t * 3.1) * 0.25 + (Math.sin(t * 17) > 0.93 ? -1.1 : 0);   // กะพริบแบบไฟจะดับ
+      ghostFx.lamps[1].emissiveIntensity = 1.2 + Math.sin(t * 2.3 + 1) * 0.3 + (Math.sin(t * 13 + 2) > 0.95 ? -1.0 : 0);
+      ghostFx.mist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) { m.position.x = -FIELD_R - 4; m.position.z = (Math.random() - 0.5) * FIELD_R * 2; } });
+    };
     // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
     const titanDecor = new THREE.Group(); titanDecor.visible = false; scene.add(titanDecor);
     const titanColliders = [];
@@ -22019,6 +22182,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     G.biomeDecorGroups.push(hellDecor, heavenDecor, moonDecor, beachDecor, amazonDecor, titanDecor, candyDecor);
     if (G.robotDecor) G.biomeDecorGroups.push(G.robotDecor); // 🌳 hide during battle too
+    if (G.ghostDecor) G.biomeDecorGroups.push(G.ghostDecor);
 
 
     // ---------- 👻 Night ghost boss (dead-tree grove) ----------
@@ -23098,7 +23262,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-        const FOG_D = { robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+        const FOG_D = { ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
         const fd = FOG_D[b.id] || [58, 124];
         G._fogBase = { near: fd[0], far: fd[1] };   // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
         if (scene.fog && !G._townFogPrev) { scene.fog.near = fd[0]; scene.fog.far = fd[1]; }
@@ -23124,7 +23288,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const isTitan = b.id === "titan";
       const isCandy = b.id === "candy";
       const isRobot = b.id === "robot";
-      const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
+      const isGhost = b.id === "ghosttown";
+      const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
       if (G.desertDecor) G.desertDecor.visible = isDesert;
       if (G.snowDecor) G.snowDecor.visible = isSnow;
       if (G.caveDecor) G.caveDecor.visible = isCave;
@@ -23138,6 +23303,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.titanDecor) G.titanDecor.visible = isTitan;
       if (G.candyDecor) G.candyDecor.visible = isCandy;
       if (G.robotDecor) G.robotDecor.visible = isRobot;
+      if (G.ghostDecor) G.ghostDecor.visible = isGhost;
       G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
       if (G.refreshDecorFreeze) G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isEndgame));
@@ -23155,6 +23321,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         : b.id === "heaven" ? (G.heavenColliders || [])
         : b.id === "moon" ? (G.moonColliders || [])
         : isRobot ? (G.robotColliders || [])
+        : isGhost ? (G.ghostColliders || [])
         : [];
       if (G.rebuildNav) G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
       G.path = null; G._pathGoal = null;
@@ -23185,7 +23352,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return n;
     };
     G.unfreezeStatic = (root) => { if (root) root.traverse((o) => { o.matrixAutoUpdate = true; }); };
-    G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor"];
+    G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor"];
     // 🚀 PERF ② — รวม material ที่คุณสมบัติเหมือนกันเป็นตัวเดียว (ประหยัดหน่วยความจำ + สลับ uniform)
     // ปลอดภัยเฉพาะวัสดุทึบไม่มีเท็กซ์เจอร์ (ของโปร่งใส/มีลาย มักถูกอนิเมตแยกชิ้น — ไม่ยุ่ง)
     G.dedupeMaterials = (root) => {
@@ -23299,7 +23466,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🌀⏳ วาร์ป/ข้ามด่านผ่านหน้าจอโหลด — โชว์ฉากตัวอย่างของด่านปลายทางก่อน แล้วค่อยสร้างด่านจริง (การสร้างด่านค้างจอครู่หนึ่ง จึงซ่อนไว้หลังหน้าโหลด)
     // 🖼️ ภาพฉากหน้าโหลดประจำแมพ (assets/bg · CC0 OpenGameArt: Nidhoggn "Backgrounds" + ฟ้า Poly Haven)
     const BIOME_BG = { meadow: "meadow", desert: "desert", snow: "snow", cave: "cave", volcano: "volcano", sky: "skyday", hell: "hell", heaven: "skyday",
-      moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall" };
+      moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town" };
     const bgUrl = (k) => (k ? "assets/bg/" + k + ".jpg" : null);
     const warpWithLoad = (idx, quiet, after) => {
       const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
@@ -24369,7 +24536,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ================= 🏠 MY HOME ZONE — บ้านส่วนตัว: แต่งบ้าน + นอนพักรับบัฟ + เยี่ยมบ้านเพื่อน =================
     G.inHomeZone = false;
     // 🌵 ซ่อน/คืนฉากประจำด่าน (ทะเลทราย หิมะ ฯลฯ) ตอนวาร์ปเข้าโซนฟาร์ม/บ้านจากด่านไหนก็ได้
-    const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor"];
+    const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor"];
     G._hideBiomeDecor = () => { G._decorPrev = {}; BIOME_DECOR_KEYS.forEach((k) => { if (G[k]) { G._decorPrev[k] = G[k].visible; G[k].visible = false; } }); };
     G._restoreBiomeDecor = () => { if (!G._decorPrev) return; BIOME_DECOR_KEYS.forEach((k) => { if (G[k] && G._decorPrev[k] != null) G[k].visible = G._decorPrev[k]; }); G._decorPrev = null; };
     if (!G.home) G.home = { owned: {}, furni: [] };
@@ -26917,6 +27084,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       candy:   { a: "ผู้เฒ่า: \"หลังม่านดวงดาวมีแดนประหลาดหอมหวานซ่อนอยู่... แดนขนมหวาน!\"", h: "เหล่ากัมมี่คลั่งน้ำตาลกำลังอาละวาดทั่วเมืองคุกกี้ หยุดพวกมันให้ได้", b: "ราชาขนมหวานหวงบัลลังก์ลูกกวาดยิ่งชีพ โค่นมันอย่างนุ่มนวล...แต่เด็ดขาด!" },
       beach:   { a: "ผู้เฒ่า: \"ได้ยินไหม เสียงคลื่นกำลังเรียกหาเจ้า หาดทะเลทรายซ่อนความลับไว้ใต้น้ำ\"", h: "ปูยักษ์กับฉลามอันธพาลป่วนชายหาดจนไม่มีใครกล้าลงเล่นน้ำ จัดระเบียบซะ", b: "คราเคนเจ้าสมุทรลากเรือลงเหวลึกมานักต่อนัก ปราบมันให้ท้องทะเลสงบ!" },
       titan:   { a: "ผู้เฒ่า: \"ลานประลองไททันโบราณตื่นขึ้นอีกครั้ง เสียงหินลั่นสะเทือนถึงหมู่บ้าน\"", h: "เหล่าไททันหินตื่นจากหลับใหลนับพันปีด้วยความเกรี้ยวกราด สยบพวกมัน", b: "จอมไททันบรรพกาลรอผู้ท้าชิงอยู่กลางลานประลอง จงประกาศศักดาของเจ้า!" },
+      ghosttown: { a: "ผู้เฒ่า: \"ทางตะวันตกของแดนเหล็ก มีเมืองที่เงียบสนิทมาร้อยปี... ว่ากันว่ากลางคืนยังได้ยินเสียงคนเดินอยู่\"", h: "เมืองทั้งเมืองถูกคำสาปจนกลายเป็นเมืองร้าง คนตายลุกขึ้นมาเดินเพ่นพ่าน ไปสืบหาต้นตอคำสาปที่เมืองร้าง", b: "จอมลิชผู้สาปเมืองซ่อนตัวอยู่กลางซากเมือง ปราบมันเพื่อให้ดวงวิญญาณชาวเมืองได้พักผ่อนเสียที!" },
       robot:   { a: "ผู้เฒ่า: \"เหนือป่าดิบลงไปทางใต้ มีเสียงเครื่องจักรดังไม่หยุด... อาณาจักรหุ่นยนต์ตื่นขึ้นแล้ว!\"", h: "กองทัพหุ่นเหล็กกำลังรุกคืบ เดินทางไปหยุดยั้งพวกมันที่อาณาจักรหุ่นยนต์", b: "จักรพรรดิหุ่นเหล็กสั่งการกองทัพจักรกลทั้งหมด ทำลายมันเพื่อปลดปล่อยแผ่นดินเหล็ก!" },
       amazon:  { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
     };
@@ -45683,7 +45851,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const isTitan = !preview && b.id === "titan";
           const isCandy = !preview && b.id === "candy";
           const isRobot = !preview && b.id === "robot";
-          if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot));
+          const isGhost = !preview && b.id === "ghosttown";
+          if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost));
           wilds.forEach((m) => (m.visible = !preview));
           if (G.desertDecor) G.desertDecor.visible = isDesert;
           if (G.snowDecor) G.snowDecor.visible = isSnow;
@@ -45695,6 +45864,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (G.titanDecor) G.titanDecor.visible = isTitan;
           if (G.candyDecor) G.candyDecor.visible = isCandy;
           if (G.robotDecor) G.robotDecor.visible = isRobot;
+          if (G.ghostDecor) G.ghostDecor.visible = isGhost;
           if (G.warpGate) G.warpGate.visible = !preview;
           if (G.npc) G.npc.visible = !preview;
         }
@@ -46825,7 +46995,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         });
       }
       // 💎 cave crystals pulse/flicker softly
-      if (G.robotTick) G.robotTick(dt, t);   // 🤖 ฟันเฟืองหมุน สายพานวิ่ง ไฟนีออนกะพริบ
+      if (G.robotTick) G.robotTick(dt, t);
+      if (G.ghostTick) G.ghostTick(dt, t);   // 🏚️ ตะเกียงผีกะพริบ หมอกลอย   // 🤖 ฟันเฟืองหมุน สายพานวิ่ง ไฟนีออนกะพริบ
       if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) { G.caveMineTick(dt, t); if (G.mineFxTick) G.mineFxTick(t); }   // ⛏️ เหมืองร้าง: รถแร่วิ่ง + คบเพลิงไหว
       if (G.caveDecor && G.caveDecor.visible && G.caveLights) {
         G.caveLights.forEach((L, i) => { L.intensity = (L.userData && L.userData.base || 1) * (0.75 + Math.sin(t * 2.5 + i * 1.3) * 0.25); });
