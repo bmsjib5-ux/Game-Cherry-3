@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v698"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v699"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3395,14 +3395,14 @@ const HERO_THEME = {
     ignis: { g: "M", cut: "Ranger", noHood: 1, hue: [8, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x2a1a10, t: 4, col: 0x6ad8ff, fx: { core: 0x6ad8ff }, gear: { hat: { kk: "helmKnight", tint: 0xc0302a }, gloves: { k: "gauntlet", c: 0xf0c040 }, pants: { k: "plate", c: 0xc0302a }, shoes: { k: "boot", c: 0xf0c040 } } },
     captain: { g: "M", cut: "Ranger", noHood: 1, hue: [218, 0.65, 0.85], hair: "Hair_SimpleParted", hairC: 0xc8a060, t: 3, col: 0x7ab0e8, fx: { emblem: 1, shield: 1 }, gear: { gloves: { k: "gauntlet", c: 0xc0302a }, shoes: { k: "boot", c: 0xc0302a } } },
     thunder: { g: "M", cut: "Ranger", noHood: 1, hue: [215, 0.25, 0.75], hair: "Hair_SimpleParted", hairC: 0xe8c060, beard: 1, t: 4, col: 0xb0e0ff, fx: { cape: 0xc0302a, bolts: 1 }, gear: { hat: { kk: "helmHorned", tint: 0xd8dce4 } } },
-    yaksa: { g: "M", cut: "Ranger", noHood: 1, hue: [42, 0.75, 0.95], hair: "Hair_Buzzed", hairC: 0x1a1a1a, skin: 0x2a9a5a, skinK: 0.6, h: 4.4, t: 4, col: 0xffe08a, fx: { tiara: "chada", fangs: 1, collar: 1 }, gear: { gloves: { k: "gauntlet", c: 0xe8b840 } } },
+    yaksa: { g: "M", cut: "Ranger", noHood: 1, hue: [42, 0.75, 0.95], hair: "Hair_Buzzed", hairC: 0x1a1a1a, skin: 0x2a9a5a, skinK: 0.6, h: 4.4, t: 4, col: 0xffe08a, fx: { halo: 0xffffff, fangs: 1, collar: 1 }, gear: { gloves: { k: "gauntlet", c: 0xe8b840 } } },
     luminia: { g: "F", cut: "Peasant", hue: HDY(145, 0.45, 1.3), hair: "Hair_Long", hairC: 0xf8f0c8, t: 3, leaf: 1, col: 0x8ee8b4, fx: { ears: "elf", flowers: 0xffffff } },
-    apsara: { g: "F", cut: "Peasant", hue: HDY(45, 0.55, 1.6, 0.45), hair: "Hair_Buns", hairC: 0x2a1a10, t: 4, col: 0xffe08a, fx: { tiara: "chada", collar: 1, wings: "angel", wingS: 0.8 } },
+    apsara: { g: "F", cut: "Peasant", hue: HDY(45, 0.55, 1.6, 0.45), hair: "Hair_Buns", hairC: 0x2a1a10, t: 4, col: 0xffe08a, fx: { halo: 0xffffff, collar: 1, wings: "angel", wingS: 0.8 } },
     asura: { g: "M", cut: "Ranger", noHood: 1, hue: [320, 0.6, 0.5], hair: "Hair_Buzzed", hairC: 0x1a0a14, skin: 0x8a5a78, skinK: 0.45, t: 5, col: 0xff3a5a, fx: { horns: "demon", wings: "bat", wingS: 0.9 } },
-    hanuman: { g: "M", cut: "Peasant", hue: HDY(45, 0.7, 1.35), hair: "Hair_Buzzed", hairC: 0xffffff, skin: 0xf6f4ee, skinK: 0.8, t: 3, col: 0xffd36a, fx: { tiara: "chada", tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1 } },
-    garuda: { g: "M", cut: "Ranger", noHood: 1, hue: [10, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x3a2010, skin: 0xe8a848, skinK: 0.55, t: 4, col: 0xffd24a, fx: { tiara: "chada", wings: "gold", wingS: 1.1, collar: 1 }, gear: { gloves: { k: "claw", c: 0xe8b840 } } },
-    naki: { g: "F", cut: "Peasant", hue: HDY(165, 0.6, 1.15), hair: "Hair_Long", hairC: 0x0e5a5a, skin: 0x8ae8d0, skinK: 0.4, t: 3, col: 0x4ae8c0, fx: { naga: 0x2a9a7a, tiara: "chada", collar: 1 } },
-    kinnaree: { g: "F", cut: "Peasant", hue: HDY(335, 0.4, 1.6, 0.4), hair: "Hair_Buns", hairC: 0x2a1a10, t: 3, col: 0xffb0d0, fx: { tiara: "chada", wings: "swan", wingS: 0.85, tail: "feather", tailC: 0xfff4f8, tailC2: 0xffc0d8, collar: 1 } },
+    hanuman: { g: "M", cut: "Peasant", hue: HDY(45, 0.7, 1.35), hair: "Hair_Buzzed", hairC: 0xffffff, skin: 0xf6f4ee, skinK: 0.8, t: 3, col: 0xffd36a, fx: { halo: 0xffffff, tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1 } },
+    garuda: { g: "M", cut: "Ranger", noHood: 1, hue: [10, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x3a2010, skin: 0xe8a848, skinK: 0.55, t: 4, col: 0xffd24a, fx: { halo: 0xffffff, wings: "gold", wingS: 1.1, collar: 1 }, gear: { gloves: { k: "claw", c: 0xe8b840 } } },
+    naki: { g: "F", cut: "Peasant", hue: HDY(165, 0.6, 1.15), hair: "Hair_Long", hairC: 0x0e5a5a, skin: 0x8ae8d0, skinK: 0.4, t: 3, col: 0x4ae8c0, fx: { naga: 0x2a9a7a, halo: 0xffffff, collar: 1 } },
+    kinnaree: { g: "F", cut: "Peasant", hue: HDY(335, 0.4, 1.6, 0.4), hair: "Hair_Buns", hairC: 0x2a1a10, t: 3, col: 0xffb0d0, fx: { halo: 0xffffff, wings: "swan", wingS: 0.85, tail: "feather", tailC: 0xfff4f8, tailC2: 0xffc0d8, collar: 1 } },
     mermaid: { g: "F", cut: "Peasant", hue: HDY(190, 0.6, 1.4), hair: "Hair_Long", hairC: 0x4ac8e8, skin: 0xaee8f8, skinK: 0.35, t: 2, col: 0x6ae0ff, fx: { tiara: "shell", ears: "fin", earC: 0x6ae0ff, collar: "pearl" } },
     lich: { g: "M", cut: "Ranger", hue: [270, 0.35, 0.45], hair: "Hair_Buzzed", hairC: 0x2a1a3a, skin: 0x9aa8b0, skinK: 0.72, t: 4, col: 0x7affa8, fx: { orbs: 0x7affa8, tiara: "bone" }, gear: { mask: { k: "stone", c: 0xe8e4d8 } } },
     kitsune: { g: "F", cut: "Peasant", hue: HDY(8, 0.7, 1.15), hair: "Hair_Long", hairC: 0xffd6a0, t: 3, col: 0xffc24a, fx: { ears: "fox", earC: 0xffb060, earIn: 0xfff0e0, tail: "fox9", tailC: 0xffb060, tailTip: 0xffffff } },
