@@ -55,6 +55,8 @@ const BIOMES = [
   { id: "ghosttown", name: "เมืองร้าง", emoji: "🏚️", lvMin: 1200, lvMax: 1300, ground: 0x4a4a40, sky: 0x1e2228, fog: 0x2a2e34, pool: ["ghoul", "skelguard", "wraith", "banshee"], tree: "none", boss: "lichking", bossName: "จอมลิชเมืองร้าง 💀", hpMul: 1.15, atkMul: 1.15, night: true, dim: true },
   // 🏝️ ด่านเกาะร้าง — Lv 1300-1400 · ตึกเก่าพังทลาย ซากปรักหักพัง จอมปลวกยักษ์ ไข่มดเกลื่อนเกาะ · กองทัพมดบุก + ปีศาจซากเมือง · บอสราชามด
   { id: "antisle", name: "เกาะร้าง", emoji: "🏝️", lvMin: 1300, lvMax: 1400, ground: 0x8a8266, sky: 0xc8c4a8, fog: 0xb8b29a, pool: ["antworker", "antsoldier", "antqueen", "anteggs", "ruindemon"], tree: "none", boss: "antking", bossName: "ราชามดจอมทัพ 🐜", hpMul: 1.2, atkMul: 1.2 },
+  // 🧱 ด่านเมืองเลโก้ — Lv 1400-1500 · ทั้งเมืองต่อจากตัวต่อพลาสติก: พื้นแผ่นฐานมีปุ่ม บ้าน/ร้าน/หอคอยก่อด้วยอิฐเลโก้ ต้นไม้ตัวต่อ ก้อนอิฐยักษ์ · มอนสเตอร์ทุกตัวเป็นตัวต่อ
+  { id: "legotown", name: "เมืองเลโก้", emoji: "🧱", lvMin: 1400, lvMax: 1500, ground: 0x4b9f4a, sky: 0x7cc4f4, fog: 0xcfe6f8, pool: ["legoraptor", "legowolf", "legozombie", "legotroll", "legocrab"], tree: "none", boss: "legodragon", bossName: "มังกรตัวต่อจอมราชัน 🐉", hpMul: 1.25, atkMul: 1.25 },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -166,6 +168,8 @@ const TERRAIN = {
     { t: "hill", x: -21, z: -17, r: 10, h: 3.2 },
     { t: "mesa", x: 20, z: 18, r: 5, h: 2.6, e: 1.3 },
     { t: "wave", fx: 0.12, fz: 0.1, h: 0.55, p: 0.6, q: 1.4 } ], rim: { r0: 40, w: 12, h: 9, jag: 0.2, k: 5 } },
+  legotown: { lo: 0x3f8f3d, hi: 0x5cb052, rock: 0x6c6e68, hN: 4, rockK: 0.08, f: [   // 🧱 แผ่นฐานเลโก้เรียบ (พื้นราบเกือบสนิท) ล้อมด้วยเนินเขียว
+    { t: "wave", fx: 0.1, fz: 0.1, h: 0.02, p: 0.1, q: 0.1 } ], rim: { r0: 40, w: 12, h: 8, jag: 0.05, k: 4 } },
   ghosttown: { lo: 0x2a2a24, hi: 0x6a6656, rock: 0x3e3c38, hN: 5, rockK: 0.5, f: [   // 🏚️ ที่ราบเมืองเก่า เนินสุสานเตี้ย ๆ ล้อมด้วยสันเขาหินมืด
     { t: "hill", x: -22, z: 18, r: 9, h: 2.6 },
     { t: "hill", x: 21, z: -19, r: 8, h: 2.2 },
@@ -199,6 +203,7 @@ const AMBIENT = {
   beach:   { n: 52, kind: "mote",  c: [0xffffff, 0xdff4ff], size: 0.26, fall: 0.14, sway: 2.2 },           // 🏖️ ละอองน้ำทะเล
   robot:   { n: 50, kind: "mote",  c: [0x6ad8ff, 0xffb84a], size: 0.24, fall: -0.35, sway: 0.5, glow: 1 },
   antisle: { n: 52, kind: "mote", c: [0xe8d8a8, 0xc8b888], size: 0.24, fall: 0.18, sway: 1.4 },   // 🏝️ ฝุ่นทรายปลิว
+  legotown: { n: 56, kind: "mote", c: [0xf2cd37, 0xc91a09, 0x0055bf, 0x4b9f4a, 0xf4f4f4], size: 0.22, fall: 0.22, sway: 1.2 },   // 🧱 เศษปุ่มตัวต่อหลากสีปลิว
   ghosttown: { n: 58, kind: "mote", c: [0x9affc8, 0xb8c0d0], size: 0.26, fall: -0.08, sway: 1.1, glow: 1 },   // 🏚️ ดวงไฟวิญญาณเขียวซีด + ขี้เถ้าลอย  // 🤖 ประกายไฟเชื่อมโลหะลอย
   titan:   { n: 46, kind: "mote",  c: [0xcfc8a8, 0xaaa68a], size: 0.24, fall: 0.12, sway: 1.2 },           // 🗿 ฝุ่นลานประลอง
   amazon:  { n: 66, kind: "mote",  c: [0x9ae06a, 0xfff2a0], size: 0.28, fall: -0.16, sway: 0.7, glow: 1 }, // 🌴 เกสร/หิ่งห้อยป่า
@@ -218,6 +223,7 @@ const DETAIL = {
   beach:   { g: 380,  gc: [0x9ab86a, 0xbccb7c], gs: 0.9, r: 340, rc: 0xa89f8c },
   robot:   { g: 0,    gc: [0x5a6272], gs: 0.7, r: 460, rc: 0x5a606a },
   antisle: { g: 1000, gc: [0x8a8a4a, 0xa09a5a, 0x7a7a42, 0xb8a86a], gs: 0.95, r: 380, rc: 0x8a8678 },
+  legotown: { g: 0, gc: [0x4b9f4a], gs: 0.7, r: 0, rc: 0xa0a5a9 },   // 🧱 พื้นพลาสติกเรียบ — ไม่มีหญ้า/กรวดธรรมชาติ
   ghosttown: { g: 900, gc: [0x5a5838, 0x6a6444, 0x4a4a34, 0x7a6e4a], gs: 0.9, r: 420, rc: 0x5a5852 },   // 🏚️ หญ้าแห้งตายซาก + เศษหิน   // 🤖 พื้นเหล็ก — ไม่มีหญ้า มีแต่น็อต/เศษเหล็ก
   titan:   { g: 1300, gc: [0x5c7a38, 0x74924a, 0x8ba85c], gs: 0.95, r: 380, rc: 0x6e6e5e },
   amazon:  { g: 1900, gc: [0x2e5c2e, 0x3f7a3a, 0x58974a, 0x76b055], gs: 1.15, r: 260, rc: 0x3a4230 },
@@ -389,7 +395,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v706";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v707";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -821,6 +827,7 @@ const WEATHER_POOL = {
   robot:   ["clear", "fog", "storm", "clear"],
   ghosttown: ["fog", "fog", "rain", "storm", "clear"],
   antisle: ["clear", "clear", "fog", "rain", "clear"],
+  legotown: ["clear", "clear", "clear", "rain", "clear"],
   amazon:  ["rain", "rain", "storm", "fog", "clear"],
 };
 
@@ -981,6 +988,20 @@ Object.assign(WEAK, { antworker: "fire", antsoldier: "fire", antqueen: "ice", an
 Object.assign(PET_ELEM, { antworker: "earth", antsoldier: "earth", antqueen: "arcane", anteggs: "earth", ruindemon: "fire", antking: "earth" });
 Object.assign(PET_SKILL, { antworker: "กรามคีมเหล็ก", antsoldier: "บุกทะลวงรัง", antqueen: "ฟีโรโมนสั่งทัพ", anteggs: "ฟักตัวฉับพลัน", ruindemon: "เพลิงซากเมือง", antking: "กรามราชันย์" });
 Object.assign(MON_SHAPE_EXTRA, { antworker: "beast", antsoldier: "beast", antqueen: "beast", anteggs: "slime", ruindemon: "demon", antking: "beast" });
+// 🧱 เมืองเลโก้ (Lv 1400-1500) — มอนสเตอร์ตัวต่อ: แปลงโมเดลเดิมเป็นอิฐเลโก้ทั้งตัว (ขยับตามกระดูกเดิมได้ทุกท่า)
+Object.assign(SPECIES, {
+  legoraptor: { name: "ไดโนตัวต่อ",          emoji: "🦖", color: 0x4b9f4a, hp: 880,  atk: 86, catch: 0.018, tier: 8, desc: "ไดโนเสาร์ต่อจากอิฐเลโก้สีเขียว วิ่งเร็วจนปุ่มตัวต่อแทบหลุด", animal: "beast", weak: "fire" },
+  legowolf:   { name: "หมาป่าตัวต่อ",         emoji: "🐺", color: 0xa0a5a9, hp: 820,  atk: 88, catch: 0.02,  tier: 8, desc: "หมาป่าอิฐเทาขาว ล่าเป็นฝูงตามซอกตึกตัวต่อ", animal: "beast", weak: "fire" },
+  legozombie: { name: "ซอมบี้ตัวต่อ",         emoji: "🧟", color: 0xa0bcac, hp: 860,  atk: 84, catch: 0.02,  tier: 8, desc: "ตัวต่อรูปคนที่ถูกต่อผิดชิ้น เดินโซเซหาชิ้นส่วนที่หายไป", weak: "fire" },
+  legotroll:  { name: "ยักษ์ตัวต่อ",          emoji: "👹", color: 0x237841, hp: 1080, atk: 94, catch: 0.01,  tier: 8, desc: "ยักษ์ก่อจากอิฐนับพันก้อน หมัดเดียวทุบบ้านตัวต่อพังทั้งหลัง", animal: "beast", weak: "fire" },
+  legocrab:   { name: "ปูตัวต่อ",             emoji: "🦀", color: 0xc91a09, hp: 900,  atk: 82, catch: 0.016, tier: 8, desc: "ปูอิฐแดงก้ามใหญ่ เดินข้างเฝ้าบ่อน้ำตัวต่อ", animal: "beast", weak: "fire" },
+  legodragon: { name: "มังกรตัวต่อจอมราชัน",   emoji: "🐉", color: 0xc91a09, hp: 1750, atk: 104, catch: 0.005, tier: 8, desc: "มังกรอิฐแดงทองที่ต่อขึ้นจากตัวต่อทั้งเมือง ปกครองเมืองเลโก้จากบนฟ้า", animal: "beast", weak: "ice" },
+});
+Object.assign(EVOLVED, { legoraptor: "ไดโนตัวต่อทองคำ", legowolf: "หมาป่าตัวต่อเงิน", legozombie: "ซอมบี้ตัวต่อเรืองแสง", legotroll: "ยักษ์ตัวต่อเหล็กกล้า", legocrab: "ปูตัวต่อคริสตัล", legodragon: "จักรพรรดิมังกรตัวต่อ" });
+Object.assign(WEAK, { legoraptor: "fire", legowolf: "fire", legozombie: "fire", legotroll: "fire", legocrab: "fire", legodragon: "ice" });
+Object.assign(PET_ELEM, { legoraptor: "earth", legowolf: "wind", legozombie: "arcane", legotroll: "earth", legocrab: "water", legodragon: "fire" });
+Object.assign(PET_SKILL, { legoraptor: "พุ่งชนอิฐ", legowolf: "เขี้ยวพลาสติก", legozombie: "ต่อร่างใหม่", legotroll: "ทุบอิฐถล่ม", legocrab: "ก้ามหนีบตัวต่อ", legodragon: "ไฟอิฐหลอมเมือง" });
+Object.assign(MON_SHAPE_EXTRA, { legoraptor: "gecko", legowolf: "beast", legozombie: "titan", legotroll: "titan", legocrab: "beast", legodragon: "serpent" });
 // 🏚️ เมืองร้าง (Lv 1200-1300) — ใช้โมเดลที่มีอยู่แล้วย้อมสีใหม่ (ไม่โหลดไฟล์เพิ่ม)
 Object.assign(SPECIES, {
   ghoul:     { name: "ชาวเมืองผีดิบ",     emoji: "🧟", color: 0x8a8a78, hp: 760, atk: 70, catch: 0.018, tier: 8, desc: "อดีตชาวเมืองที่ฟื้นจากหลุมศพ เดินลากขาตามหาบ้านที่ไม่มีวันกลับไปได้", weak: "light" },
@@ -2044,6 +2065,7 @@ const ORE_TABLE = {
   robot:   { ironOre: 150, crystal: 48, windEss: 36, dragonScale: 12 },
   ghosttown: { ironOre: 110, crystal: 60, earthEss: 50, dragonScale: 16 },
   antisle: { ironOre: 120, crystal: 54, earthEss: 66, windEss: 40, dragonScale: 18 },
+  legotown: { ironOre: 110, crystal: 62, earthEss: 60, windEss: 48, dragonScale: 20 },
   titan:   { ironOre: 62, crystal: 56, earthEss: 74, dragonScale: 22 },
   amazon:  { ironOre: 70, crystal: 38, earthEss: 70, windEss: 42 },
 };
@@ -2058,6 +2080,7 @@ const ORE_LOOK = {
   amazon:  { rock: 0x6a7a58, gem: 0x9ae86a },
   ghosttown: { rock: 0x5a5a58, gem: 0x9a7ae8 },
   antisle: { rock: 0x8a8070, gem: 0xffb84a },
+  legotown: { rock: 0xa0a5a9, gem: 0xfe8a18 },
 };
 
 // ---------- 🍳 ครัว — เอาผลผลิตฟาร์ม ปลา และแร่มาทำอาหาร ได้บัฟติดตัวตามเวลาจริง ----------
@@ -2192,6 +2215,7 @@ const HERB_W = {
   robot:   { leaf: 18,  root: 36, flower: 16, mush: 30, lotus: 6 },
   ghosttown: { leaf: 20, root: 52, flower: 12, mush: 72, lotus: 4 },
   antisle: { leaf: 48, root: 60, flower: 30, mush: 40, lotus: 14 },
+  legotown: { leaf: 50, root: 40, flower: 56, mush: 30, lotus: 18 },
   titan:   { leaf: 44,  root: 72, flower: 38, mush: 44, lotus: 18 },
   amazon:  { leaf: 88,  root: 60, flower: 58, mush: 62, lotus: 24 },
 };
@@ -2306,6 +2330,7 @@ const FISH_SPOT = {
   candy:   { kind: "syrup",  x: 12.5,  z: -13.5, r: 3.2, lv: 15, bonus: 1.35, name: "สระน้ำเชื่อมสตรอว์เบอร์รี", water: 0xff8ac0, rim: 0xffd0e8, deco: 0xfff0f8 },
   beach:   { kind: "shore",  x: -14.0, z: 2.0,   r: 3.9, lv: 16, bonus: 1.5,  name: "ชายทะเลคราม",          water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
   antisle: { kind: "shore", x: -10.0, z: 12.0, r: 3.4, lv: 25, bonus: 2.6, name: "ลากูนเกาะร้าง", water: 0x2aa8c8, rim: 0xe0d0a0, deco: 0x8ae0e0 },
+  legotown: { kind: "pond", x: 11.0, z: 12.5, r: 3.2, lv: 26, bonus: 2.8, name: "บ่อน้ำตัวต่อสีฟ้า", water: 0x36aebf, rim: 0xf2cd37, deco: 0x4b9f4a },
   ghosttown: { kind: "basin", x: 9.5,  z: -12.5, r: 3.2, lv: 24, bonus: 2.4,  name: "บ่อน้ำเก่ากลางเมืองร้าง",   water: 0x3a4e4c, rim: 0x5a5650, deco: 0x9a8ae8 },
   robot:   { kind: "basin",  x: -9.0,  z: 12.5,  r: 3.4, lv: 22, bonus: 2.2,  name: "บ่อหล่อเย็นเตาปฏิกรณ์",   water: 0x2ad0e8, rim: 0x5a6070, deco: 0x6ad8ff },
   titan:   { kind: "basin",  x: 8.0,   z: 13.0,  r: 3.4, lv: 18, bonus: 1.7,  name: "อ่างหินไททัน",          water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
@@ -2359,9 +2384,9 @@ const fishOdds = (lv, k, spotBonus) => {
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
 // 🗺️ โลกเดียวต่อกันหมด — เดินจากด่าน 1 ไปถึงด่าน 13 ได้โดยไม่ต้องวาร์ป
 // ทางเดินงูเลื้อยเป็นแถว ๆ ตามกลุ่มที่ตั้งไว้ (1+2+3 / 4+5+6 / 7+8+9 / 10+11 / 12+13)
-const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown", "antisle"];
+const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown", "antisle", "legotown"];
 //                          1→2  2→3  3→4  4→5  5→6  6→7  7→8  8→9  9→10 10→11 11→12 12→13
-const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W", "W"];   // 15→16 เมืองร้าง → เกาะร้าง (ทิศตะวันตก)   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
+const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W", "W", "S"];   // 16→17 เกาะร้าง → เมืองเลโก้ (ทิศใต้)   // 15→16 เมืองร้าง → เกาะร้าง (ทิศตะวันตก)   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
 // แถว/โซนของโลก — เอาไว้โชว์ว่าตอนนี้อยู่ช่วงไหนของเส้นทาง
 const ROUTES = [
   { id: "r1", name: "แถวต้นทาง",      emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
@@ -2372,6 +2397,7 @@ const ROUTES = [
   { id: "r6", name: "แถวจักรกล",      emoji: "🤖", biomes: ["robot"] },
   { id: "r7", name: "แถวเมืองร้าง",    emoji: "🏚️", biomes: ["ghosttown"] },
   { id: "r8", name: "แถวเกาะร้าง",     emoji: "🏝️", biomes: ["antisle"] },
+  { id: "r9", name: "แถวเมืองเลโก้",    emoji: "🧱", biomes: ["legotown"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
@@ -2428,6 +2454,7 @@ const BORDER = {
   beach:   { kind: "river",  a: 0x4ab0e0, b: 0x8ae0e0, c: 0xe8d8a8 },
   robot:   { kind: "wall",   a: 0x4a505c, b: 0x2e333c },
   ghosttown: { kind: "wall", a: 0x5a544a, b: 0x3a3630 },
+  legotown: { kind: "wall", a: 0xc91a09, b: 0xf2cd37 },   // 🧱 กำแพงอิฐเลโก้แดง-เหลือง
   antisle: { kind: "river", a: 0x2a9ac8, b: 0x7ad0d8, c: 0xe0d0a0 },   // 🏝️ ทะเลล้อมเกาะ   // 🏚️ กำแพงหินเก่าผุพัง   // 🤖 กำแพงเหล็กแผ่นหนา + ป้อม
   titan:   { kind: "wall",   a: 0x7a7060, b: 0x5a5040 },
   amazon:  { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
@@ -9151,6 +9178,16 @@ export default function CherryAdventure() {
                     gen: { GenIdle: { period: 1.8, tracks: [["Bone001", "x", 0.07, 0], ["Bone032", "z", 0.2, 0], ["Bone033", "z", 0.2, 1.7], ["Bone031", "x", 0.14, 0.8]] } } },
       anteggs:    { f: "AntEggs", size: 1.6, by: "h", idle: "idle", walk: "idle", run: "idle", atk: "idle", hit: "idle", die: "idle" },   // 🥚 กองไข่ขยับหายใจ
       ruindemon:  { f: "Big_Orc", c: "big", by: "h", size: 2.7, hue: [300, 0.6, 0.8] },                                                    // 😈 ปีศาจซากเมือง — ออร์คย้อมม่วงบานเย็น
+      // 🧱 มอนสเตอร์ตัวต่อเลโก้ — lego: แปลงทั้งตัวเป็นอิฐ 1×1 (ปุ่มกลมบนหน้าบน) ผูกกับกระดูก · legoTint = สีอิฐตามชื่อวัสดุ · legoN = จำนวนชั้นอิฐตามความสูง
+      legoraptor: { f: "Velociraptor",    size: 2.3, idle: "Velociraptor_Idle", walk: "Velociraptor_Walk", run: "Velociraptor_Run", atk: "Velociraptor_Attack", die: "Velociraptor_Death",
+                    lego: 1, legoN: 24, legoTint: { Brown: 0x4b9f4a, LightBrown: 0xbbe90b, Black: 0x1b2a34 } },
+      legowolf:   { f: "Wolf",            c: "ani", by: "h", size: 1.7, lego: 1, legoN: 20, legoTint: { Main: 0xa0a5a9, Main_Light: 0xf4f4f4, Nose: 0x1b2a34, Eyes_Black: 0x1b2a34 } },
+      legozombie: { f: "Zombie",          size: 2.4, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
+                    lego: 1, legoN: 24, legoTint: { M_Main: 0xa0bcac, M_Joints: 0x0a3463 } },
+      legotroll:  { f: "Big_Orc",         c: "big", by: "h", size: 2.9, lego: 1, legoN: 26, legoRemap: { 0x923978: 0x237841, 0xfe8a18: 0xf2cd37 } },
+      legocrab:   { f: "Crab",            size: 2.5, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle", lego: 1, legoN: 18, legoRemap: { 0x923978: 0xc91a09, 0xd09168: 0xfe8a18, 0xfc97ac: 0xc91a09 } },
+      legodragon: { f: "Dragon",          size: 3.8, y: 0.6, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
+                    lego: 1, legoN: 30, legoTint: { Main: 0xc91a09, Wings: 0xf2cd37, Belly: 0xf8bb3d, Claws: 0xf4f4f4, Eyes: 0xfff03a } },
       ghoul:      { f: "Zombie",          size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
                     tint: { M_Main: 0x8a8c80, M_Joints: 0x3a2a3a } },                                           // 🏚️ ผีดิบชาวเมือง — ผิวเทาซีด ข้อต่อม่วงคล้ำ
       wraith:     { f: "Flying_Ghost",    c: "fly",           size: 2.4, y: 0.8, hue: [262, 0.5, 2.2] },             // 🏚️ วิญญาณม่วงหม่น
@@ -9430,6 +9467,128 @@ export default function CherryAdventure() {
       [["Head", 0.07], ["lowerarm_r", 0.04]].forEach(([bn, rf]) => { const b = node.getObjectByName(bn); if (!b) return; const bs = V().setFromMatrixScale(b.matrixWorld).x || 1;
         const tail = new THREE.Mesh(new THREE.PlaneGeometry(Hh * 0.035 / bs, Hh * 0.16 / bs), BANDAGE_MATS[1]); tail.position.set(rf * Hh / bs, -Hh * 0.05 / bs, 0); tail.rotation.z = 0.3; b.add(tail); });
     };
+    // 🧱 แปลงมอนสเตอร์เป็นตัวต่อเลโก้ — สุ่มจุดบนผิวโมเดลในท่าพัก → ลงตาราง voxel (อิฐ 1×1 สูง 1.2 เท่าของความกว้าง) → สีจากวัสดุ/texture ปัดเข้าจานสีเลโก้ (โหวตสีที่เจอมากสุดในช่อง)
+    //    อิฐแต่ละก้อนผูกกับกระดูกที่มีน้ำหนักมากสุด → ทั้งตัวยังขยับตามท่าเดิมทุกท่า (แขน/ขา/หาง/ปีก เป็นท่อนอิฐแข็ง) · หน้าอิฐที่ชนก้อนข้าง ๆ ในท่อนเดียวกันตัดทิ้ง · ปุ่มกลมบนหน้าบนสุด
+    //    คำนวณครั้งเดียวต่อสายพันธุ์ (cache) แล้วแชร์ geometry ทุกตัว · วัสดุแยกต่อตัว (กันเอฟเฟกต์สี/จางหายลามไปตัวอื่น)
+    const LEGO_PAL = [0xf4f4f4, 0xa0a5a9, 0x6c6e68, 0x1b2a34, 0xc91a09, 0x720e0f, 0xfe8a18, 0xf2cd37, 0xfff03a, 0xbbe90b, 0x4b9f4a, 0x237841, 0x184632, 0xe4cd9e, 0x958a73, 0x582a12,
+      0x5a93db, 0x0055bf, 0x0a3463, 0x36aebf, 0xfc97ac, 0x923978, 0xa5a5cb, 0xa0bcac, 0x9b9a5a, 0xf8bb3d, 0xd09168, 0x6874ca];
+    const LEGO_RGB = LEGO_PAL.map((h) => [(h >> 16) & 255, (h >> 8) & 255, h & 255]);
+    const s2l = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)), l2s = (c) => (c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+    const LEGO_LIN = LEGO_RGB.map((c) => [s2l(c[0] / 255), s2l(c[1] / 255), s2l(c[2] / 255)]);   // สีจริงบนจอ = จานสีพอดี (renderer แปลง linear → sRGB)
+    const legoNearest = (r, g, b) => { let bi = 0, bd = 1e12; for (let i = 0; i < LEGO_RGB.length; i++) { const p = LEGO_RGB[i], rm = (r + p[0]) / 2, dr = r - p[0], dg = g - p[1], db = b - p[2]; const d = (2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db; if (d < bd) { bd = d; bi = i; } } return bi; };
+    let legoFaceTex = null;
+    const legoMat = () => {
+      if (!legoFaceTex) { const cv = document.createElement("canvas"); cv.width = cv.height = 32; const x = cv.getContext("2d"); x.fillStyle = "#ffffff"; x.fillRect(0, 0, 32, 32); x.strokeStyle = "rgba(0,0,0,0.3)"; x.lineWidth = 2; x.strokeRect(1, 1, 30, 30); x.strokeStyle = "rgba(255,255,255,0.9)"; x.lineWidth = 1; x.beginPath(); x.moveTo(3, 29); x.lineTo(3, 3); x.lineTo(29, 3); x.stroke(); legoFaceTex = new THREE.CanvasTexture(cv); legoFaceTex.anisotropy = 4; legoFaceTex.userData = Object.assign(legoFaceTex.userData || {}, { _shared: true }); }   // ขอบอิฐเข้ม + ไฮไลต์มุมบน = เห็นรอยต่อแต่ละก้อน
+      return new THREE.MeshStandardMaterial({ map: legoFaceTex, vertexColors: true, roughness: 0.32, metalness: 0 });
+    };
+    const legoTexData = (() => { const C = new WeakMap(); return (tex) => {
+      if (!tex || !tex.image) return null; if (C.has(tex)) return C.get(tex); let d = null;
+      try { const im = tex.image, w = Math.min(256, im.width || 0), h = Math.min(256, im.height || 0); if (w && h) { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; const x = cv.getContext("2d"); x.drawImage(im, 0, 0, w, h); d = { w, h, a: x.getImageData(0, 0, w, h).data, flip: tex.flipY, srgb: tex.encoding === THREE.sRGBEncoding }; } } catch (eT) { d = null; }
+      C.set(tex, d); return d; }; })();
+    const comp4 = (A, i, k) => (k === 0 ? A.getX(i) : k === 1 ? A.getY(i) : k === 2 ? A.getZ(i) : A.getW(i));
+    const legoBuild = (node, objs, P, src) => {
+      const OI = new Map(objs.map((o, i) => [o, i]));
+      const inv = new THREE.Matrix4().copy(node.matrixWorld).invert();
+      const N = P.legoN || 22, s = (P.by === "h" ? src.h : src.max) / N, sy = s * 1.2;
+      const LT = {}; if (P.legoTint) for (const k in P.legoTint) LT[k] = legoNearest((P.legoTint[k] >> 16) & 255, (P.legoTint[k] >> 8) & 255, P.legoTint[k] & 255);
+      const RMP = {}; if (P.legoRemap) for (const k in P.legoRemap) RMP[LEGO_PAL.indexOf(+k)] = LEGO_PAL.indexOf(P.legoRemap[k]);   // สลับสีอิฐหลังปัดเข้าจานสี (เช่น ปูชมพู → แดง)
+      const v = new THREE.Vector3();
+      let minY = Infinity;
+      const MD = [];
+      objs.forEach((o) => {
+        if (!o.isMesh || !o.geometry || !o.geometry.attributes.position || o.userData.lego) return;
+        const g = o.geometry, pa = g.attributes.position, n = pa.count, P3 = new Float32Array(n * 3), anc = new Int32Array(n);
+        const sk = o.isSkinnedMesh && o.skeleton && g.attributes.skinIndex && g.attributes.skinWeight ? o : null;
+        const toNode = new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld), si = sk && g.attributes.skinIndex, sw = sk && g.attributes.skinWeight, pIdx = OI.has(o.parent) ? OI.get(o.parent) : 0;
+        for (let i = 0; i < n; i++) {
+          v.fromBufferAttribute(pa, i); if (sk) sk.boneTransform(i, v); v.applyMatrix4(toNode);
+          P3[i * 3] = v.x; P3[i * 3 + 1] = v.y; P3[i * 3 + 2] = v.z; if (v.y < minY) minY = v.y;
+          if (sk) { let bw = -1, bb = 0; for (let k = 0; k < 4; k++) { const w = comp4(sw, i, k); if (w > bw) { bw = w; bb = comp4(si, i, k); } } const bo = sk.skeleton.bones[bb]; anc[i] = bo && OI.has(bo) ? OI.get(bo) : pIdx; }
+          else anc[i] = pIdx;
+        }
+        MD.push({ o, P3, anc });
+      });
+      const vox = new Map(), key3 = (ix, iy, iz) => ((ix + 512) * 1024 + (iy + 512)) * 1024 + (iz + 512);
+      MD.forEach(({ o, P3, anc }) => {
+        const g = o.geometry, idx = g.index, uvA = g.attributes.uv, mats = Array.isArray(o.material) ? o.material : [o.material];
+        const triN = Math.floor((idx ? idx.count : g.attributes.position.count) / 3);
+        const matOf = (t) => { if (!Array.isArray(o.material)) return o.material; for (const gr of g.groups) if (t * 3 >= gr.start && t * 3 < gr.start + gr.count) return mats[gr.materialIndex]; return mats[0]; };
+        for (let t = 0; t < triN; t++) {
+          const m = matOf(t); if (!m) continue;
+          const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+          const fixed = LT[m.name], td = fixed == null ? legoTexData(m.map) : null, mc = m.color || { r: 1, g: 1, b: 1 };
+          const ax = P3[i0 * 3], ay = P3[i0 * 3 + 1], az = P3[i0 * 3 + 2], bx = P3[i1 * 3], by = P3[i1 * 3 + 1], bz = P3[i1 * 3 + 2], cx = P3[i2 * 3], cy = P3[i2 * 3 + 1], cz = P3[i2 * 3 + 2];
+          const e = Math.max(Math.hypot(bx - ax, by - ay, bz - az), Math.hypot(cx - bx, cy - by, cz - bz), Math.hypot(ax - cx, ay - cy, az - cz));
+          const K = Math.max(1, Math.min(60, Math.ceil(e / (s * 0.45))));
+          for (let a = 0; a <= K; a++) for (let b = 0; b <= K - a; b++) {
+            const u = a / K, w = b / K, l0 = 1 - u - w;
+            const px = ax * l0 + bx * u + cx * w, py = ay * l0 + by * u + cy * w, pz = az * l0 + bz * u + cz * w;
+            let pi = fixed;
+            if (pi == null) {
+              let r = mc.r, gg = mc.g, bb = mc.b;
+              if (td && uvA) {
+                const tu = uvA.getX(i0) * l0 + uvA.getX(i1) * u + uvA.getX(i2) * w, tv = uvA.getY(i0) * l0 + uvA.getY(i1) * u + uvA.getY(i2) * w;
+                const fu = tu - Math.floor(tu), fv = tv - Math.floor(tv), X = Math.min(td.w - 1, (fu * td.w) | 0), Y = Math.min(td.h - 1, ((td.flip ? 1 - fv : fv) * td.h) | 0), q = (Y * td.w + X) * 4;
+                let tr = td.a[q] / 255, tg = td.a[q + 1] / 255, tb = td.a[q + 2] / 255; if (td.srgb) { tr = s2l(tr); tg = s2l(tg); tb = s2l(tb); }
+                r *= tr; gg *= tg; bb *= tb;
+              }
+              pi = legoNearest(l2s(Math.min(1, r)) * 255, l2s(Math.min(1, gg)) * 255, l2s(Math.min(1, bb)) * 255);
+            }
+            const an = anc[l0 >= u && l0 >= w ? i0 : u >= w ? i1 : i2];
+            const ix = Math.floor((px + s / 2) / s), iy = Math.floor((py - minY) / sy), iz = Math.floor((pz + s / 2) / s), kk = key3(ix, iy, iz);
+            let V = vox.get(kk); if (!V) { V = { ix, iy, iz, c: new Map(), a: new Map() }; vox.set(kk, V); }
+            V.c.set(pi, (V.c.get(pi) || 0) + 1); V.a.set(an, (V.a.get(an) || 0) + 1);
+          }
+        }
+      });
+      const top = (M) => { let bk = 0, bc = -1; M.forEach((c, k) => { if (c > bc) { bc = c; bk = k; } }); return bk; };
+      const hist = {};
+      vox.forEach((V) => { V.pc = top(V.c); if (RMP[V.pc] != null && RMP[V.pc] >= 0) V.pc = RMP[V.pc]; V.an = top(V.a); V.c = null; V.a = null; hist[LEGO_PAL[V.pc].toString(16)] = (hist[LEGO_PAL[V.pc].toString(16)] || 0) + 1; });
+      const FACES = [[1, 0, 0, 0, 1, 0, 0, 0, 1], [-1, 0, 0, 0, 0, 1, 0, 1, 0], [0, 1, 0, 0, 0, 1, 1, 0, 0], [0, -1, 0, 1, 0, 0, 0, 0, 1], [0, 0, 1, 1, 0, 0, 0, 1, 0], [0, 0, -1, 0, 1, 0, 1, 0, 0]];   // n · u · v (u×v = n → หันออกนอก)
+      const H = [s / 2, sy / 2, s / 2], SR = s * 0.3, SH = s * 0.2, SEG = 6;
+      const byA = new Map();
+      vox.forEach((V) => {
+        let B = byA.get(V.an); if (!B) byA.set(V.an, (B = { p: [], n: [], c: [], uv: [], ix: [] }));
+        const cx = V.ix * s, cy = minY + (V.iy + 0.5) * sy, cz = V.iz * s, col = LEGO_LIN[V.pc];
+        FACES.forEach((F) => {
+          const nb = vox.get(key3(V.ix + F[0], V.iy + F[1], V.iz + F[2])); if (nb && nb.an === V.an) return;
+          const b0 = B.p.length / 3;
+          for (const [cu, cv] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+            B.p.push(cx + F[0] * H[0] + F[3] * H[0] * cu + F[6] * H[0] * cv, cy + F[1] * H[1] + F[4] * H[1] * cu + F[7] * H[1] * cv, cz + F[2] * H[2] + F[5] * H[2] * cu + F[8] * H[2] * cv);
+            B.n.push(F[0], F[1], F[2]); B.c.push(col[0], col[1], col[2]); B.uv.push((cu + 1) / 2, (cv + 1) / 2);
+          }
+          B.ix.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3);
+        });
+        if (!vox.get(key3(V.ix, V.iy + 1, V.iz))) {   // 🔘 ปุ่มกลมบนหน้าบนสุด
+          const yb = cy + sy / 2, b0 = B.p.length / 3;
+          for (let k = 0; k < SEG; k++) { const an = (k / SEG) * Math.PI * 2, ca = Math.cos(an), sa = Math.sin(an); B.p.push(cx + ca * SR, yb, cz + sa * SR, cx + ca * SR, yb + SH, cz + sa * SR); B.n.push(ca, 0, sa, ca, 0, sa); B.c.push(col[0], col[1], col[2], col[0], col[1], col[2]); B.uv.push(0.5, 0.5, 0.5, 0.5); }
+          for (let k = 0; k < SEG; k++) { const q0 = b0 + k * 2, q1 = b0 + ((k + 1) % SEG) * 2; B.ix.push(q0, q0 + 1, q1, q0 + 1, q1 + 1, q1); }
+          const cI = B.p.length / 3; B.p.push(cx, yb + SH, cz); B.n.push(0, 1, 0); B.c.push(col[0], col[1], col[2]); B.uv.push(0.5, 0.5);
+          for (let k = 0; k < SEG; k++) { const an = (k / SEG) * Math.PI * 2; B.p.push(cx + Math.cos(an) * SR, yb + SH, cz + Math.sin(an) * SR); B.n.push(0, 1, 0); B.c.push(col[0], col[1], col[2]); B.uv.push(0.5, 0.5); }
+          for (let k = 0; k < SEG; k++) B.ix.push(cI, cI + 1 + ((k + 1) % SEG), cI + 1 + k);
+        }
+      });
+      const parts = [];
+      byA.forEach((B, a) => {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(B.p, 3)); geo.setAttribute("normal", new THREE.Float32BufferAttribute(B.n, 3));
+        geo.setAttribute("color", new THREE.Float32BufferAttribute(B.c, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(B.uv, 2)); geo.setIndex(B.ix);
+        const anc = objs[a] || node, A = new THREE.Matrix4().copy(anc.matrixWorld).invert().multiply(node.matrixWorld);
+        geo.applyMatrix4(A); geo.computeBoundingSphere(); geo.userData._shared = true;
+        parts.push({ a, geo });
+      });
+      return { parts, n: vox.size, hist };
+    };
+    const legoCache = {};
+    const qtLegoize = (node, P, src, key) => {
+      node.updateMatrixWorld(true);
+      const objs = []; node.traverse((o) => objs.push(o));
+      const C = legoCache[key] || (legoCache[key] = legoBuild(node, objs, P, src));
+      const mat = legoMat();
+      objs.forEach((o) => { if (o.isMesh) o.visible = false; });
+      C.parts.forEach((pt) => { const anc = objs[pt.a] || node; const m = new THREE.Mesh(pt.geo, mat); m.castShadow = true; m.userData.lego = 1; anc.add(m); });
+      node.userData.lego = C.n; node.userData.legoHist = C.hist;
+    };
     G.qtSwap = (g) => {
       if (!g || !g.userData || !G.kkOn) return false;
       const P = qtP(g.userData.spId, g.userData.stage);
@@ -9457,6 +9616,7 @@ export default function CherryAdventure() {
         });
         o.material = Array.isArray(o.material) ? fresh : fresh[0];
       });
+      if (P.lego) { try { qtLegoize(node, P, src, (g.userData.spId || P.f) + ":" + (g.userData.stage || 1)); } catch (eLg) { console.warn("lego", eLg); } }   // 🧱 มอนสเตอร์ตัวต่อเลโก้
       g.add(node);
       g.userData.qtNode = node;
       if (P.wrap) { try { qtBandage(node); } catch (_) {} }   // 🧟 ผ้าพันแผลรอบหัว ลำตัว แขน ขา
@@ -22553,6 +22713,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       ghostFx.lamps[1].emissiveIntensity = 1.2 + Math.sin(t * 2.3 + 1) * 0.3 + (Math.sin(t * 13 + 2) > 0.95 ? -1.0 : 0);
       ghostFx.mist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) { m.position.x = -FIELD_R - 4; m.position.z = (Math.random() - 0.5) * FIELD_R * 2; } });
     };
+    const mergeByMat = (g) => {   // รวมทุกชิ้นในหลังเดียวกันเป็นก้อนเดียวต่อวัสดุ
+      g.updateMatrixWorld(true); const buckets = new Map();
+      g.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.uv) return; const geo = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrixWorld); let b = buckets.get(o.material); if (!b) buckets.set(o.material, (b = [])); b.push(geo); });
+      while (g.children.length) g.remove(g.children[0]);
+      buckets.forEach((list, mat) => {
+        let pc = 0; list.forEach((q) => (pc += q.attributes.position.count));
+        const pos = new Float32Array(pc * 3), nor = new Float32Array(pc * 3), uvs = new Float32Array(pc * 2); let o = 0;
+        list.forEach((q) => { pos.set(q.attributes.position.array, o * 3); nor.set(q.attributes.normal.array, o * 3); uvs.set(q.attributes.uv.array, o * 2); o += q.attributes.position.count; q.dispose(); });
+        const out = new THREE.BufferGeometry(); out.setAttribute("position", new THREE.BufferAttribute(pos, 3)); out.setAttribute("normal", new THREE.BufferAttribute(nor, 3)); out.setAttribute("uv", new THREE.BufferAttribute(uvs, 2)); out.computeBoundingSphere();
+        const m = new THREE.Mesh(out, mat); m.castShadow = !mat.transparent; m.receiveShadow = !mat.transparent && !(mat.alphaTest > 0); g.add(m);
+      });
+    };
     // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
     const antDecor = new THREE.Group(); antDecor.visible = false; scene.add(antDecor);
     const antColliders = [];
@@ -22611,18 +22783,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const dm = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
         for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, ox + uv.getX(i) * dm[f][0] / T, oy + uv.getY(i) * dm[f][1] / T); }
         return geo;
-      };
-      const mergeByMat = (g) => {   // รวมทุกชิ้นในหลังเดียวกันเป็นก้อนเดียวต่อวัสดุ
-        g.updateMatrixWorld(true); const buckets = new Map();
-        g.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.uv) return; const geo = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrixWorld); let b = buckets.get(o.material); if (!b) buckets.set(o.material, (b = [])); b.push(geo); });
-        while (g.children.length) g.remove(g.children[0]);
-        buckets.forEach((list, mat) => {
-          let pc = 0; list.forEach((q) => (pc += q.attributes.position.count));
-          const pos = new Float32Array(pc * 3), nor = new Float32Array(pc * 3), uvs = new Float32Array(pc * 2); let o = 0;
-          list.forEach((q) => { pos.set(q.attributes.position.array, o * 3); nor.set(q.attributes.normal.array, o * 3); uvs.set(q.attributes.uv.array, o * 2); o += q.attributes.position.count; q.dispose(); });
-          const out = new THREE.BufferGeometry(); out.setAttribute("position", new THREE.BufferAttribute(pos, 3)); out.setAttribute("normal", new THREE.BufferAttribute(nor, 3)); out.setAttribute("uv", new THREE.BufferAttribute(uvs, 2)); out.computeBoundingSphere();
-          const m = new THREE.Mesh(out, mat); m.castShadow = !mat.transparent; m.receiveShadow = !mat.transparent && !(mat.alphaTest > 0); g.add(m);
-        });
       };
       for (let n = 0; n < 11; n++) {
         const at = spot(4, 6, 80, FIELD_R * 0.38, FIELD_R * 0.86); if (!at) continue; const [x, z] = at;
@@ -22712,6 +22872,212 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
     }
     G.antDecor = antDecor; G.antColliders = antColliders;
+    // 🧱 LEGO TOWN DECOR — ทั้งเมืองเป็นตัวต่อเลโก้: พื้นแผ่นฐานเขียวมีปุ่ม (ลานกลางเมืองแผ่นเทา) · บ้าน/ร้านค้า/หอคอย/บ้านสองชั้น ก่อด้วยอิฐ (ลายรอยต่ออิฐ + ปุ่มบนหน้าบน)
+    //    หลังคาอิฐลาด/หลังคาขั้นบันได · ต้นไม้ตัวต่อ (ทรงกลม/ทรงสน) · ก้อนอิฐ 2×4 ยักษ์วางกองเกลื่อน · รถตัวต่อ · เสาไฟ · พุ่มรั้ว · ดอกไม้ปุ่มกลม
+    //    ปุ่มทั้งเมืองรวมเป็น InstancedMesh เดียว (สีต่อชิ้น) · ชิ้นส่วนแต่ละหลังรวมเป็นก้อนเดียวต่อวัสดุ · สีเป๊ะตามจานสีเลโก้ (แปลง sRGB → linear)
+    const legoDecor = new THREE.Group(); legoDecor.visible = false; scene.add(legoDecor);
+    const legoColliders = [];
+    {
+      const U = 0.4, BH = 0.48;   // 1 ปุ่ม = 0.4 · อิฐสูง 0.48
+      const sl2 = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+      const LC = (h) => new THREE.Color(sl2(((h >> 16) & 255) / 255), sl2(((h >> 8) & 255) / 255), sl2((h & 255) / 255));
+      const C = { white: 0xf4f4f4, lgrey: 0xa0a5a9, dgrey: 0x6c6e68, black: 0x1b2a34, red: 0xc91a09, dred: 0x720e0f, orange: 0xfe8a18, yellow: 0xf2cd37, lime: 0xbbe90b, green: 0x4b9f4a,
+        dgreen: 0x237841, tan: 0xe4cd9e, brown: 0x582a12, mblue: 0x5a93db, blue: 0x0055bf, dblue: 0x0a3463, azure: 0x36aebf, pink: 0xfc97ac, sand: 0xa0bcac };
+      const WALLC = [C.white, C.yellow, C.red, C.mblue, C.tan, C.sand, C.pink, C.white, C.yellow], ROOFC = [C.red, C.blue, C.dgreen, C.black, C.dred, C.dblue, C.orange];
+      const cvTex = (w, h, draw, srgb) => { const cv = document.createElement("canvas"); cv.width = w; cv.height = h; draw(cv.getContext("2d")); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (srgb) t.encoding = THREE.sRGBEncoding; return t; };
+      const brickTex = cvTex(256, 256, (x) => {   // อิฐ 2 ปุ่ม × 8 แถว (1 แผ่น = 3.2 × 3.84) · รอยต่อเข้ม + ไฮไลต์ขอบบน + เงาขอบล่าง
+        x.fillStyle = "#9a9a9a"; x.fillRect(0, 0, 256, 256);
+        for (let r = 0; r < 8; r++) for (let bx = -64 + (r % 2) * 32; bx < 256; bx += 64) { const sh = 236 + ((Math.random() * 18) | 0); x.fillStyle = `rgb(${sh},${sh},${sh})`; x.fillRect(bx + 1, r * 32 + 1, 62, 30); x.fillStyle = "rgba(255,255,255,0.85)"; x.fillRect(bx + 2, r * 32 + 2, 60, 2); x.fillStyle = "rgba(0,0,0,0.16)"; x.fillRect(bx + 1, r * 32 + 27, 62, 4); }
+      });
+      const roofTex = cvTex(64, 64, (x) => { for (let r = 0; r < 2; r++) { const gr = x.createLinearGradient(0, r * 32, 0, r * 32 + 32); gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.75, "#dadada"); gr.addColorStop(1, "#8a8a8a"); x.fillStyle = gr; x.fillRect(0, r * 32, 64, 32); } });   // ร่องอิฐลาด (2 ร่อง/แผ่น)
+      const plateTex = cvTex(128, 128, (x) => {   // แผ่นฐาน 4×4 ปุ่ม: เงาปุ่ม + ตัวปุ่ม + ขอบ + ไฮไลต์
+        x.fillStyle = "#e6e6e6"; x.fillRect(0, 0, 128, 128);
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const cx = 16 + i * 32, cy = 16 + j * 32;
+          x.fillStyle = "rgba(0,0,0,0.22)"; x.beginPath(); x.ellipse(cx + 3, cy + 3, 11, 11, 0, 0, Math.PI * 2); x.fill();
+          x.fillStyle = "#f6f6f6"; x.beginPath(); x.arc(cx, cy, 10, 0, Math.PI * 2); x.fill();
+          x.strokeStyle = "rgba(0,0,0,0.25)"; x.lineWidth = 1.5; x.stroke();
+          x.strokeStyle = "rgba(255,255,255,0.95)"; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, 7.5, Math.PI * 0.95, Math.PI * 1.6); x.stroke(); }
+      });
+      const stripeTex = cvTex(64, 8, (x) => { for (let k = 0; k < 4; k++) { x.fillStyle = k % 2 ? "#ffffff" : "#c91a09"; x.fillRect(k * 16, 0, 16, 8); } }, true);   // ผ้ากันสาดลายทาง
+      const MC = {}, RC = {}, PC = {};
+      const LM = (c) => MC[c] || (MC[c] = new THREE.MeshStandardMaterial({ map: brickTex, color: LC(c), roughness: 0.36, metalness: 0 }));
+      const RM = (c) => RC[c] || (RC[c] = new THREE.MeshStandardMaterial({ map: roofTex, color: LC(c), roughness: 0.36, metalness: 0 }));
+      const PM = (c) => PC[c] || (PC[c] = new THREE.MeshStandardMaterial({ color: LC(c), roughness: 0.32, metalness: 0 }));
+      const glassM = new THREE.MeshStandardMaterial({ color: LC(0x9fd8ff), roughness: 0.06, metalness: 0.1, transparent: true, opacity: 0.6 });
+      const lampM = new THREE.MeshBasicMaterial({ color: 0xffe9a0 }), awnM = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.5 });
+      const lbox = (sx, sy, sz, y0) => {   // กล่องลายอิฐ — UV ยาวตามขนาดจริง แถวอิฐเริ่มนับจากพื้น (y0 = ความสูงฐานของกล่อง)
+        const geo = new THREE.BoxGeometry(sx, sy, sz), uv = geo.attributes.uv, ox = ((Math.random() * 4) | 0) / 4, oy = (y0 || 0) / 3.84;
+        const dm = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
+        for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k, isY = f === 2 || f === 3; uv.setXY(i, ox + uv.getX(i) * dm[f][0] / 3.2, (isY ? 0 : oy) + uv.getY(i) * dm[f][1] / (isY ? 3.2 : 3.84)); }
+        return geo;
+      };
+      // 🔘 ปุ่มทั้งเมือง (InstancedMesh เดียว · สีต่อชิ้น · ขนาดต่อชิ้นได้สำหรับอิฐยักษ์)
+      const STUD_MAX = 9000, studGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.09, 10); studGeo.translate(0, 0.045, 0);
+      const studIM = new THREE.InstancedMesh(studGeo, new THREE.MeshStandardMaterial({ roughness: 0.32, metalness: 0 }), STUD_MAX);
+      studIM.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(STUD_MAX * 3), 3);   // ต้องจองสีเต็มจำนวนก่อน — setColorAt ของ r128 จองตาม count ตอนเรียกครั้งแรก (count = 0 → สีดำทั้งหมด)
+      studIM.count = 0; studIM.frustumCulled = false; studIM.userData.noHide = true;
+      const FL_MAX = 700, flGeo = new THREE.BoxGeometry(0.36, 0.12, 0.36); flGeo.translate(0, 0.06, 0);
+      const flIM = new THREE.InstancedMesh(flGeo, new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0 }), FL_MAX);   // แผ่น 1×1 เขียวใต้ดอกไม้
+      flIM.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(FL_MAX * 3), 3);
+      flIM.count = 0; flIM.frustumCulled = false; flIM.userData.noHide = true;
+      const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), CC = {};
+      const colOf = (h) => CC[h] || (CC[h] = LC(h));
+      const putStud = (x, y, z, col, k) => { if (studIM.count >= STUD_MAX) return; _p.set(x, y, z); _s.setScalar(k || 1); _m4.compose(_p, _q.identity(), _s); studIM.setMatrixAt(studIM.count, _m4); studIM.setColorAt(studIM.count, colOf(col)); studIM.count++; };
+      const studGrid = (st, x0, x1, z0, z1, y, col, skip) => { for (let x = x0 + U / 2; x < x1 - 0.01; x += U) for (let z = z0 + U / 2; z < z1 - 0.01; z += U) if (!skip || !skip(x, z)) st.push([x, y, z, col, 1]); };
+      const place = (g, st, x, z, ry) => {   // วางกลุ่ม + แปลงปุ่มจากพิกัดในกลุ่มไปพิกัดเมือง
+        g.position.set(x, 0, z); g.rotation.y = ry; legoDecor.add(g);
+        const c = Math.cos(ry), sn = Math.sin(ry);
+        st.forEach(([px, py, pz, col, k]) => putStud(x + px * c + pz * sn, py, z - px * sn + pz * c, col, k));
+      };
+      const okAt = (x, z, pad) => !(inKeepOut(x, z) || nearWarpG(x, z) || Math.abs(x) < 3.5 + pad || Math.abs(z) < 3.5 + pad || Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 7 + pad) || Math.hypot(x, z) < 8 + pad);
+      const free = (x, z, r) => !legoColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + r);
+      const spot = (pad, rr, tries, r0, r1) => { for (let k = 0; k < tries; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = Math.cos(a) * r, z = Math.sin(a) * r; if (okAt(x, z, pad) && free(x, z, rr)) return [x, z]; } return null; };
+      const A = (g, geo, mat, x, y, z, rx, ry, rz) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; };
+      // 🏠 บ้านตัวต่อ — 0 หลังคาจั่วอิฐลาด + ปล่องไฟ · 1 ร้านค้าหลังคาแบนมีปุ่ม + กันสาดลายทาง · 2 หอคอยใบเสมา + ธง · 3 บ้านสองชั้นหลังคาขั้นบันได
+      const house = (n) => {
+        const g = new THREE.Group(), st = [], type = n % 4;
+        const wc = WALLC[(Math.random() * WALLC.length) | 0], tc = wc === C.white ? (Math.random() < 0.5 ? C.blue : C.red) : C.white, rc = ROOFC[(Math.random() * ROOFC.length) | 0];
+        const w = type === 2 ? 4.8 : 6.4 + ((Math.random() * 4) | 0) * 0.8, d = type === 2 ? 4.8 : 5.6 + ((Math.random() * 3) | 0) * 0.8;
+        const h = BH * (type === 2 ? 22 : type === 3 ? 16 : 12);
+        A(g, lbox(w, h, d), LM(wc), 0, h / 2, 0);                                                                   // ตัวบ้านก่ออิฐ
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) A(g, lbox(U + 0.06, h, U + 0.06), LM(tc), sx * (w / 2 - U / 2 + 0.03), h / 2, sz * (d / 2 - U / 2 + 0.03));   // เสามุมสีตัด
+        if (type !== 1) for (let yy = BH * 6; yy < h - BH * 3; yy += BH * 7) A(g, lbox(w + 0.1, BH * 0.5, d + 0.1, yy), LM(tc), 0, yy + BH * 0.25, 0);   // คาดอิฐแบ่งชั้น
+        const dw = 1.6, dh = BH * 7;                                                                                 // ประตูหน้า: กรอบ + บาน + ลูกบิด
+        A(g, new THREE.BoxGeometry(dw + 0.3, dh + 0.16, 0.12), PM(C.white), 0, (dh + 0.16) / 2, d / 2 + 0.06);
+        A(g, new THREE.BoxGeometry(dw, dh, 0.16), PM(n % 2 ? C.dblue : C.brown), 0, dh / 2, d / 2 + 0.08);
+        A(g, new THREE.SphereGeometry(0.09, 8, 6), PM(C.yellow), dw * 0.32, dh * 0.48, d / 2 + 0.2);
+        const win = (x, y, z, ry, ww, wh) => { const q = new THREE.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+          A(q, new THREE.BoxGeometry(ww + 0.22, wh + 0.22, 0.1), PM(C.white), 0, 0, 0.05); A(q, new THREE.BoxGeometry(ww, wh, 0.12), glassM, 0, 0, 0.07);
+          A(q, new THREE.BoxGeometry(0.08, wh, 0.16), PM(C.white), 0, 0, 0.08); A(q, new THREE.BoxGeometry(ww, 0.08, 0.16), PM(C.white), 0, 0, 0.08);
+          A(q, new THREE.BoxGeometry(ww + 0.34, 0.12, 0.3), PM(C.white), 0, -wh / 2 - 0.08, 0.14); };
+        const floors = type === 2 ? [BH * 5, BH * 11, BH * 17] : type === 3 ? [BH * 4.5, BH * 11.5] : [BH * 4.5];
+        floors.forEach((fy, fi) => {
+          if (w >= 6) for (const sx of [-1, 1]) win(sx * w * 0.3, fy, d / 2, 0, 1.2, 1.4); else if (fi > 0) win(0, fy, d / 2, 0, 1.2, 1.4);   // หน้า (ชั้นล่างเว้นช่องประตู)
+          if (fi > 0 && w >= 6) win(0, fy, d / 2, 0, 1.2, 1.4);
+          for (const sx of [-1, 1]) win(sx * w / 2, fy, 0, sx * Math.PI / 2, 1.2, 1.4);                                     // ข้าง
+          win(0, fy, -d / 2, Math.PI, 1.6, 1.4);                                                                             // หลัง
+        });
+        if (type === 0) {   // 🔺 หลังคาจั่วอิฐลาด (สันตามแกน x) + จั่วก่ออิฐ + ฝ้าใต้ชายคา + ปล่องไฟ
+          const L = w + 0.5, D = d + 0.7, RH = d * 0.5, sl = Math.hypot(D / 2, RH);
+          const pos = [], nor = [], uvs = [], ix = [];
+          const quad = (pts, n, ul, vl) => { const b0 = pos.length / 3; pts.forEach((p) => pos.push(p[0], p[1], p[2])); for (let k = 0; k < 4; k++) nor.push(n[0], n[1], n[2]); uvs.push(0, 0, ul, 0, ul, vl, 0, vl); ix.push(b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3); };
+          quad([[-L / 2, h, D / 2], [L / 2, h, D / 2], [L / 2, h + RH, 0], [-L / 2, h + RH, 0]], [0, D / 2 / sl, RH / sl], L / 1.6, sl / 0.96);
+          quad([[L / 2, h, -D / 2], [-L / 2, h, -D / 2], [-L / 2, h + RH, 0], [L / 2, h + RH, 0]], [0, D / 2 / sl, -RH / sl], L / 1.6, sl / 0.96);
+          const rg = new THREE.BufferGeometry(); rg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); rg.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3)); rg.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2)); rg.setIndex(ix);
+          A(g, rg, RM(rc), 0, 0, 0);
+          const tri = (xx, sgn) => { const gg = new THREE.BufferGeometry(); const P3 = sgn > 0 ? [xx, h, D / 2, xx, h, -D / 2, xx, h + RH, 0] : [xx, h, -D / 2, xx, h, D / 2, xx, h + RH, 0];
+            gg.setAttribute("position", new THREE.Float32BufferAttribute(P3, 3)); gg.setAttribute("normal", new THREE.Float32BufferAttribute([sgn, 0, 0, sgn, 0, 0, sgn, 0, 0], 3));
+            gg.setAttribute("uv", new THREE.Float32BufferAttribute([P3[2] / 3.2, h / 3.84, P3[5] / 3.2, h / 3.84, 0, (h + RH) / 3.84], 2)); return gg; };
+          A(g, tri(w / 2, 1), LM(wc), 0, 0, 0); A(g, tri(-w / 2, -1), LM(wc), 0, 0, 0);
+          A(g, new THREE.BoxGeometry(L, 0.1, D), PM(C.white), 0, h - 0.05, 0);                                          // ฝ้าใต้ชายคา
+          A(g, new THREE.BoxGeometry(L + 0.1, 0.22, 0.5), PM(rc === C.black ? C.dgrey : rc), 0, h + RH, 0);              // อิฐครอบสันหลังคา
+          const cx = w * 0.26, cz = -D * 0.2, chH = RH * 0.75 + 1.0;
+          A(g, lbox(0.8, chH, 0.8, h), LM(C.dred), cx, h + chH / 2, cz); studGrid(st, cx - 0.4, cx + 0.4, cz - 0.4, cz + 0.4, h + chH, C.dred);
+        } else if (type === 1) {   // 🏪 ร้านค้า: หลังคาแบนปุ่มเต็ม + ขอบกันตก + กันสาดลายทาง + ป้ายร้าน
+          A(g, lbox(w + 0.2, BH / 2, d + 0.2, h), LM(tc), 0, h + BH / 4, 0); studGrid(st, -w / 2 - 0.1, w / 2 + 0.1, -d / 2 - 0.1, d / 2 + 0.1, h + BH / 2, tc);
+          const aw = A(g, new THREE.BoxGeometry(w * 0.8, 0.08, 1.5), awnM, 0, BH * 8.4, d / 2 + 0.7, 0.32, 0, 0); aw.geometry.attributes.uv.array.forEach((v, i, arr) => { if (i % 2 === 0) arr[i] = v * w * 0.8 / 0.8; });
+          A(g, new THREE.BoxGeometry(w * 0.55, 0.9, 0.14), PM(n % 3 ? C.yellow : C.orange), 0, BH * 10.2, d / 2 + 0.08);
+        } else if (type === 2) {   // 🏰 หอคอย: ใบเสมารอบยอด (ปุ่มบนทุกก้อน) + แผ่นยอด + เสาธง
+          A(g, lbox(w + 0.3, BH, d + 0.3, h), LM(tc), 0, h + BH / 2, 0); studGrid(st, -w / 2 + 0.4, w / 2 - 0.4, -d / 2 + 0.4, d / 2 - 0.4, h + BH, tc);
+          for (let k = 0; k < 6; k++) for (const [sx, sz, along] of [[1, 0, "z"], [-1, 0, "z"], [0, 1, "x"], [0, -1, "x"]]) {
+            if (k % 2) continue; const t = -w / 2 + 0.4 + k * 0.8, mx = along === "z" ? sx * (w / 2 - 0.25) : t + 0.4, mz = along === "z" ? t + 0.4 : sz * (d / 2 - 0.25);
+            A(g, lbox(0.8, BH * 2, 0.8, h + BH), LM(wc), mx, h + BH * 2, mz); studGrid(st, mx - 0.4, mx + 0.4, mz - 0.4, mz + 0.4, h + BH * 3, wc);
+          }
+          A(g, new THREE.CylinderGeometry(0.06, 0.06, 2.6, 8), PM(C.lgrey), 0, h + BH + 1.3, 0);
+          const fl = new THREE.BufferGeometry(); fl.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0, 1.3, -0.35, 0, 0, -0.7, 0], 3)); fl.setAttribute("normal", new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 0, 0, 1], 3)); fl.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1], 2));
+          A(g, fl, new THREE.MeshStandardMaterial({ color: LC(rc === C.black ? C.red : rc), roughness: 0.5, side: THREE.DoubleSide }), 0.06, h + BH + 2.55, 0);
+        } else {   // 🪜 บ้านสองชั้น: หลังคาขั้นบันได 4 ชั้น ปุ่มบนทุกขั้น
+          let sx2 = w + 0.4, sz2 = d + 0.4, y = h;
+          for (let i = 0; i < 4 && sx2 > 0.8 && sz2 > 0.8; i++) {
+            A(g, lbox(sx2, BH, sz2, y), LM(i % 2 ? tc : rc), 0, y + BH / 2, 0);
+            const nx = sx2 - 1.6, nz = sz2 - 1.6, last = i === 3 || nx <= 0.8 || nz <= 0.8;
+            studGrid(st, -sx2 / 2, sx2 / 2, -sz2 / 2, sz2 / 2, y + BH, i % 2 ? tc : rc, last ? null : (x, z) => Math.abs(x) < nx / 2 && Math.abs(z) < nz / 2);
+            sx2 = nx; sz2 = nz; y += BH;
+          }
+        }
+        for (const sx of [-1, 1]) { const hx = sx * (w / 2 - 1.2), hz = d / 2 + 1.0, hl = Math.min(2.4, w / 2 - 1.4); if (hl < 0.8) continue;   // พุ่มรั้วอิฐเขียวหน้าบ้าน
+          A(g, lbox(hl, BH * 2, 0.8), LM(C.dgreen), hx, BH, hz); studGrid(st, hx - hl / 2, hx + hl / 2, hz - 0.4, hz + 0.4, BH * 2, C.dgreen); }
+        mergeByMat(g);
+        return { g, st, r: Math.max(w, d) * 0.62 + 0.4 };
+      };
+      for (let n = 0; n < 12; n++) {
+        const at = spot(4, 6.5, 90, FIELD_R * 0.3, FIELD_R * 0.86); if (!at) continue; const [x, z] = at;
+        const H = house(n), ry = Math.atan2(-x, -z);   // หันหน้าเข้าหากลางเมือง
+        place(H.g, H.st, x, z, ry); legoColliders.push({ x, z, r: H.r });
+      }
+      // 🌳 ต้นไม้ตัวต่อ — ทรงกลม (ชั้นเขียวสลับเขียวอ่อน) / ทรงสนขั้นบันได
+      for (let n = 0; n < 22; n++) {
+        const at = spot(1.5, 2.2, 60, 10, FIELD_R - 4); if (!at) continue; const [x, z] = at;
+        const g = new THREE.Group(), st = [], pine = n % 3 === 0, trunkH = BH * (pine ? 3 : 5);
+        A(g, lbox(0.8, trunkH, 0.8), LM(C.brown), 0, trunkH / 2, 0);
+        const L = pine ? [[4.0, 2], [3.2, 2], [2.4, 2], [1.6, 2], [0.8, 2]] : [[2.4, 1], [3.2, 2], [3.2, 1], [2.4, 1], [1.6, 1]];
+        let y = trunkH;
+        L.forEach(([sz, nb], i) => {
+          const hh = BH * nb, col = pine ? (i % 2 ? C.green : C.dgreen) : (i % 2 ? C.dgreen : C.green);
+          A(g, lbox(sz, hh, sz, y), LM(col), 0, y + hh / 2, 0); y += hh;
+          const nx = L[i + 1] ? L[i + 1][0] : 0;
+          studGrid(st, -sz / 2, sz / 2, -sz / 2, sz / 2, y, col, nx ? (px, pz) => Math.abs(px) < nx / 2 && Math.abs(pz) < nx / 2 : null);
+        });
+        mergeByMat(g); place(g, st, x, z, ((Math.random() * 4) | 0) * Math.PI / 2); legoColliders.push({ x, z, r: 1.1 });
+      }
+      // 🧱 ก้อนอิฐ 2×4 ยักษ์ วางเดี่ยว/ซ้อนเหลื่อมกัน 2-3 ก้อน
+      const BIGC = [C.red, C.yellow, C.blue, C.green, C.white, C.orange, C.lime, C.azure];
+      for (let n = 0; n < 12; n++) {
+        const at = spot(2, 2.6, 60, 9, FIELD_R - 5); if (!at) continue; const [x, z] = at;
+        const g = new THREE.Group(), st = [], K = 2.5, bw = 2 * U * K, bl = 4 * U * K, bh = BH * K, nb = 1 + ((Math.random() * 3) | 0);
+        let ox = 0, oz = 0, rot = 0;
+        for (let i = 0; i < nb; i++) {
+          const col = BIGC[(Math.random() * BIGC.length) | 0], sx = rot ? bl : bw, sz = rot ? bw : bl, y0 = i * bh;
+          A(g, new THREE.BoxGeometry(sx, bh, sz), PM(col), ox, y0 + bh / 2, oz);
+          for (let a = 0; a < (rot ? 4 : 2); a++) for (let b = 0; b < (rot ? 2 : 4); b++) st.push([ox - sx / 2 + (a + 0.5) * U * K, y0 + bh, oz - sz / 2 + (b + 0.5) * U * K, col, K]);
+          if (i < nb - 1) { const sh = U * K * (Math.random() < 0.5 ? 1 : -1); if (Math.random() < 0.5) { rot = 1 - rot; } else { ox += rot ? sh : 0; oz += rot ? 0 : sh; } }
+        }
+        mergeByMat(g); place(g, st, x, z, Math.random() * Math.PI); legoColliders.push({ x, z, r: 2.3 });
+      }
+      // 🚗 รถตัวต่อจอดข้างทาง
+      for (let n = 0; n < 4; n++) {
+        const at = spot(2, 2, 60, 12, FIELD_R - 6); if (!at) continue; const [x, z] = at;
+        const g = new THREE.Group(), st = [], bc = [C.red, C.blue, C.yellow, C.lime][n % 4];
+        A(g, lbox(1.8, 0.62, 3.4, 0.4), LM(bc), 0, 0.71, 0); A(g, lbox(1.6, 0.72, 1.6, 1.02), LM(C.white), 0, 1.38, -0.3);
+        A(g, new THREE.BoxGeometry(1.5, 0.56, 0.06), glassM, 0, 1.36, 0.52, -0.25, 0, 0);
+        for (const sx of [-1, 1]) for (const sz of [-1, 1]) { A(g, new THREE.CylinderGeometry(0.38, 0.38, 0.34, 14), PM(C.black), sx * 0.95, 0.38, sz * 1.1, 0, 0, Math.PI / 2); A(g, new THREE.CylinderGeometry(0.16, 0.16, 0.36, 10), PM(C.lgrey), sx * 0.96, 0.38, sz * 1.1, 0, 0, Math.PI / 2); }
+        for (const sx of [-1, 1]) A(g, new THREE.BoxGeometry(0.34, 0.2, 0.06), PM(C.yellow), sx * 0.6, 0.78, 1.72);
+        studGrid(st, -0.8, 0.8, 0.6, 1.6, 1.02, bc); studGrid(st, -0.8, 0.8, -1.1, 0.5, 1.74, C.white);
+        mergeByMat(g); place(g, st, x, z, Math.random() * Math.PI * 2); legoColliders.push({ x, z, r: 1.9 });
+      }
+      // 💡 เสาไฟรอบลานกลางเมือง
+      for (let k = 0; k < 8; k++) {
+        const a = (k + 0.5) / 8 * Math.PI * 2, x = Math.cos(a) * 10.5, z = Math.sin(a) * 10.5; if (inKeepOut(x, z)) continue;
+        const g = new THREE.Group(), st = [];
+        A(g, lbox(0.4, BH, 0.4), LM(C.black), 0, BH / 2, 0); A(g, new THREE.CylinderGeometry(0.09, 0.11, 3.4, 10), PM(C.black), 0, BH + 1.7, 0);
+        A(g, new THREE.CylinderGeometry(0.28, 0.22, 0.42, 12), lampM, 0, BH + 3.6, 0); A(g, new THREE.CylinderGeometry(0.34, 0.34, 0.12, 12), PM(C.black), 0, BH + 3.87, 0);
+        st.push([0, BH + 3.93, 0, C.black, 1]);
+        mergeByMat(g); place(g, st, x, z, 0); legoColliders.push({ x, z, r: 0.35 });
+      }
+      // 🌼 ดอกไม้ปุ่มกลมเป็นกอ ๆ (แผ่น 1×1 เขียว + ปุ่มสี)
+      const FLC = [C.red, C.yellow, C.white, C.pink, C.orange, C.mblue];
+      for (let n = 0; n < 46; n++) {
+        const at = spot(0.5, 0.8, 30, 9, FIELD_R - 3); if (!at) continue; const [x, z] = at, fc = FLC[(Math.random() * FLC.length) | 0];
+        for (let q = 0; q < 7 && flIM.count < FL_MAX; q++) { const fx = x + (Math.random() - 0.5) * 2.2, fz = z + (Math.random() - 0.5) * 2.2;
+          _p.set(fx, 0.03, fz); _s.setScalar(1); _m4.compose(_p, _q.identity(), _s); flIM.setMatrixAt(flIM.count, _m4); flIM.setColorAt(flIM.count, colOf(C.green)); flIM.count++; putStud(fx, 0.15, fz, fc, 1.1); }
+      }
+      // 🟩 พื้นแผ่นฐานมีปุ่ม (แผ่นละ 8×8 · ลานกลางเมืองแผ่นเทา) — เว้นบ่อน้ำ · รวมเป็นก้อนเดียวต่อสี
+      {
+        const tg = new THREE.Group(), TS = 8, FS = FISH_SPOT.legotown, lr = FS ? (FS.r || 3) * 1.35 + 1.5 : 0;
+        const gM = new THREE.MeshStandardMaterial({ map: plateTex, color: LC(C.green), roughness: 0.42, metalness: 0 }), pM = new THREE.MeshStandardMaterial({ map: plateTex, color: LC(C.lgrey), roughness: 0.42, metalness: 0 });
+        for (let ix = -10; ix < 10; ix++) for (let iz = -10; iz < 10; iz++) {
+          const cx = (ix + 0.5) * TS, cz = (iz + 0.5) * TS; if (Math.hypot(cx, cz) > FIELD_R + 6) continue;
+          if (FS && Math.hypot(cx - FS.x, cz - FS.z) < lr + TS * 0.71) continue;
+          const pg = new THREE.PlaneGeometry(TS - 0.03, TS - 0.03); pg.rotateX(-Math.PI / 2); const uv = pg.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * TS / 1.6, uv.getY(k) * TS / 1.6);
+          A(tg, pg, Math.hypot(cx, cz) < 10 ? pM : gM, cx, 0.03, cz);
+        }
+        mergeByMat(tg); tg.children.forEach((m) => { m.castShadow = false; m.receiveShadow = true; }); tg.userData.noHide = true; legoDecor.add(tg);
+      }
+      legoDecor.add(studIM, flIM);
+      studIM.instanceMatrix.needsUpdate = true; if (studIM.instanceColor) studIM.instanceColor.needsUpdate = true;
+      flIM.instanceMatrix.needsUpdate = true; if (flIM.instanceColor) flIM.instanceColor.needsUpdate = true;
+    }
+    G.legoDecor = legoDecor; G.legoColliders = legoColliders;
     // 🗿 TITAN ARENA DECOR — wide plaza ringed by high walls, giant weapons planted in green/brown ground
     const titanDecor = new THREE.Group(); titanDecor.visible = false; scene.add(titanDecor);
     const titanColliders = [];
@@ -22805,6 +23171,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     if (G.robotDecor) G.biomeDecorGroups.push(G.robotDecor); // 🌳 hide during battle too
     if (G.ghostDecor) G.biomeDecorGroups.push(G.ghostDecor);
     if (G.antDecor) G.biomeDecorGroups.push(G.antDecor);
+    if (G.legoDecor) G.biomeDecorGroups.push(G.legoDecor);
 
 
     // ---------- 👻 Night ghost boss (dead-tree grove) ----------
@@ -23316,7 +23683,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
       if (indoor || !info.exits.length) { G._roadEnds = []; return; }
       const g = new THREE.Group();
-      const dirtM  = new THREE.MeshLambertMaterial({ color: ROAD_COL.dirt, flatShading: true });
+      const legoRd = (BIOMES[G.curBiome || 0] || {}).id === "legotown";   // 🧱 เมืองเลโก้: ถนนแผ่นเทาตรงเป๊ะ + เส้นประขาวกลางถนน
+      const dirtM  = new THREE.MeshLambertMaterial({ color: legoRd ? 0x3c3e3a : ROAD_COL.dirt, flatShading: true });
+      const dashM  = legoRd ? new THREE.MeshLambertMaterial({ color: 0xf0f0f0 }) : null;
       const rutM   = new THREE.MeshLambertMaterial({ color: ROAD_COL.rut, flatShading: true });
       const grassM = new THREE.MeshLambertMaterial({ color: ROAD_COL.grass, flatShading: true });
       const pebM   = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
@@ -23335,12 +23704,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const ta = t0 + (t1 - t0) * (i / SEG), tb = t0 + (t1 - t0) * ((i + 1) / SEG);
           const tm = (ta + tb) / 2, len = (tb - ta) + 0.15;
           // 🟤 ทางดินอัดแน่น — ส่ายซ้ายขวานิดหน่อยให้ดูเป็นทางเดินจริง ไม่ใช่เส้นตรงเป๊ะ
-          const sway = Math.sin(tm * 0.16) * 0.35;
+          const sway = legoRd ? 0 : Math.sin(tm * 0.16) * 0.35;
           const c = at(tm, sway);
           const slab = new THREE.Mesh(new THREE.BoxGeometry(dx ? len : ROAD_VIS * 2, 0.14, dx ? ROAD_VIS * 2 : len), dirtM);
           slab.position.set(c[0], terrainAt(c[0], c[1]) + 0.05, c[1]);
-          slab.rotation.y = Math.sin(tm * 0.16) * 0.06;
+          slab.rotation.y = legoRd ? 0 : Math.sin(tm * 0.16) * 0.06;
           g.add(slab);
+          if (legoRd) { if (i % 2 === 0) { const ds = new THREE.Mesh(new THREE.BoxGeometry(dx ? len * 0.55 : 0.18, 0.03, dx ? 0.18 : len * 0.55), dashM); ds.position.set(c[0], terrainAt(c[0], c[1]) + 0.135, c[1]); g.add(ds); } continue; }
           // 🛞 ร่องล้อเกวียนสองเส้น
           if (i % 2 === 0) for (const o of [-0.45, 0.45]) {
             const r = at(tm, sway + o);
@@ -23884,7 +24254,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-        const FOG_D = { antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+        const FOG_D = { legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
         const fd = FOG_D[b.id] || [58, 124];
         G._fogBase = { near: fd[0], far: fd[1] };   // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
         if (scene.fog && !G._townFogPrev) { scene.fog.near = fd[0]; scene.fog.far = fd[1]; }
@@ -23912,7 +24282,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const isRobot = b.id === "robot";
       const isGhost = b.id === "ghosttown";
       const isAnt = b.id === "antisle";
-      const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost || isAnt; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
+      const isLego = b.id === "legotown";
+      const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost || isAnt || isLego; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
       if (G.desertDecor) G.desertDecor.visible = isDesert;
       if (G.snowDecor) G.snowDecor.visible = isSnow;
       if (G.caveDecor) G.caveDecor.visible = isCave;
@@ -23928,6 +24299,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.robotDecor) G.robotDecor.visible = isRobot;
       if (G.ghostDecor) G.ghostDecor.visible = isGhost;
       if (G.antDecor) G.antDecor.visible = isAnt;
+      if (G.legoDecor) G.legoDecor.visible = isLego;
       G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
       if (G.refreshDecorFreeze) G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
       if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isEndgame));
@@ -23947,6 +24319,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         : isRobot ? (G.robotColliders || [])
         : isGhost ? (G.ghostColliders || [])
         : isAnt ? (G.antColliders || [])
+        : isLego ? (G.legoColliders || [])
         : [];
       if (G.rebuildNav) G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
       G.path = null; G._pathGoal = null;
@@ -23977,7 +24350,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return n;
     };
     G.unfreezeStatic = (root) => { if (root) root.traverse((o) => { o.matrixAutoUpdate = true; }); };
-    G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor"];
+    G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor"];
     // 🚀 PERF ② — รวม material ที่คุณสมบัติเหมือนกันเป็นตัวเดียว (ประหยัดหน่วยความจำ + สลับ uniform)
     // ปลอดภัยเฉพาะวัสดุทึบไม่มีเท็กซ์เจอร์ (ของโปร่งใส/มีลาย มักถูกอนิเมตแยกชิ้น — ไม่ยุ่ง)
     G.dedupeMaterials = (root) => {
@@ -24091,7 +24464,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🌀⏳ วาร์ป/ข้ามด่านผ่านหน้าจอโหลด — โชว์ฉากตัวอย่างของด่านปลายทางก่อน แล้วค่อยสร้างด่านจริง (การสร้างด่านค้างจอครู่หนึ่ง จึงซ่อนไว้หลังหน้าโหลด)
     // 🖼️ ภาพฉากหน้าโหลดประจำแมพ (assets/bg · CC0 OpenGameArt: Nidhoggn "Backgrounds" + ฟ้า Poly Haven)
     const BIOME_BG = { meadow: "meadow", desert: "desert", snow: "snow", cave: "cave", volcano: "volcano", sky: "skyday", hell: "hell", heaven: "skyday",
-      moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town", antisle: "desert" };
+      moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town", antisle: "desert", legotown: "candy" };
     const bgUrl = (k) => (k ? "assets/bg/" + k + ".jpg" : null);
     const warpWithLoad = (idx, quiet, after) => {
       const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
@@ -25161,7 +25534,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ================= 🏠 MY HOME ZONE — บ้านส่วนตัว: แต่งบ้าน + นอนพักรับบัฟ + เยี่ยมบ้านเพื่อน =================
     G.inHomeZone = false;
     // 🌵 ซ่อน/คืนฉากประจำด่าน (ทะเลทราย หิมะ ฯลฯ) ตอนวาร์ปเข้าโซนฟาร์ม/บ้านจากด่านไหนก็ได้
-    const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor"];
+    const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor"];
     G._hideBiomeDecor = () => { G._decorPrev = {}; BIOME_DECOR_KEYS.forEach((k) => { if (G[k]) { G._decorPrev[k] = G[k].visible; G[k].visible = false; } }); };
     G._restoreBiomeDecor = () => { if (!G._decorPrev) return; BIOME_DECOR_KEYS.forEach((k) => { if (G[k] && G._decorPrev[k] != null) G[k].visible = G._decorPrev[k]; }); G._decorPrev = null; };
     if (!G.home) G.home = { owned: {}, furni: [] };
@@ -27644,6 +28017,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       beach:   { a: "ผู้เฒ่า: \"ได้ยินไหม เสียงคลื่นกำลังเรียกหาเจ้า หาดทะเลทรายซ่อนความลับไว้ใต้น้ำ\"", h: "ปูยักษ์กับฉลามอันธพาลป่วนชายหาดจนไม่มีใครกล้าลงเล่นน้ำ จัดระเบียบซะ", b: "คราเคนเจ้าสมุทรลากเรือลงเหวลึกมานักต่อนัก ปราบมันให้ท้องทะเลสงบ!" },
       titan:   { a: "ผู้เฒ่า: \"ลานประลองไททันโบราณตื่นขึ้นอีกครั้ง เสียงหินลั่นสะเทือนถึงหมู่บ้าน\"", h: "เหล่าไททันหินตื่นจากหลับใหลนับพันปีด้วยความเกรี้ยวกราด สยบพวกมัน", b: "จอมไททันบรรพกาลรอผู้ท้าชิงอยู่กลางลานประลอง จงประกาศศักดาของเจ้า!" },
       antisle: { a: "ผู้เฒ่า: \"เลยเมืองร้างไปทางตะวันตก มีเกาะที่เคยเป็นเมืองใหญ่... ตอนนี้เหลือแต่ซากตึก กับเสียงอะไรบางอย่างขุดดินอยู่ใต้เท้า\"", h: "กองทัพมดยักษ์บุกยึดเกาะร้าง ขุดรังใต้ซากเมืองและวางไข่เต็มเกาะ ปีศาจในซากตึกก็ตื่นขึ้น ไปหยุดยั้งพวกมันที่เกาะร้าง", b: "ราชามดจอมทัพสั่งการกองทัพมดทั้งเกาะ โค่นมันลงเพื่อยึดเกาะร้างคืนมา!" },
+      legotown: { a: "ผู้เฒ่า: \"ใต้เกาะร้างลงไป มีเมืองที่ทุกอย่างต่อจากตัวต่อพลาสติก... บ้าน ต้นไม้ แม้แต่สัตว์ประหลาดก็เป็นตัวต่อ ระวังเหยียบปุ่มด้วยล่ะ\"", h: "ตัวต่อในเมืองเลโก้มีชีวิตขึ้นมาเอง ไดโน หมาป่า ซอมบี้ ยักษ์ และปูตัวต่อออกอาละวาดทั่วเมือง ไปหยุดพวกมันที่เมืองเลโก้", b: "มังกรตัวต่อจอมราชันต่อร่างจากอิฐทั้งเมืองแล้วยึดเมืองเลโก้ โค่นมันลงแล้วเรียงตัวต่อคืนให้ชาวเมือง!" },
       ghosttown: { a: "ผู้เฒ่า: \"ทางตะวันตกของแดนเหล็ก มีเมืองที่เงียบสนิทมาร้อยปี... ว่ากันว่ากลางคืนยังได้ยินเสียงคนเดินอยู่\"", h: "เมืองทั้งเมืองถูกคำสาปจนกลายเป็นเมืองร้าง คนตายลุกขึ้นมาเดินเพ่นพ่าน ไปสืบหาต้นตอคำสาปที่เมืองร้าง", b: "จอมลิชผู้สาปเมืองซ่อนตัวอยู่กลางซากเมือง ปราบมันเพื่อให้ดวงวิญญาณชาวเมืองได้พักผ่อนเสียที!" },
       robot:   { a: "ผู้เฒ่า: \"เหนือป่าดิบลงไปทางใต้ มีเสียงเครื่องจักรดังไม่หยุด... อาณาจักรหุ่นยนต์ตื่นขึ้นแล้ว!\"", h: "กองทัพหุ่นเหล็กกำลังรุกคืบ เดินทางไปหยุดยั้งพวกมันที่อาณาจักรหุ่นยนต์", b: "จักรพรรดิหุ่นเหล็กสั่งการกองทัพจักรกลทั้งหมด ทำลายมันเพื่อปลดปล่อยแผ่นดินเหล็ก!" },
       amazon:  { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
@@ -46419,7 +46793,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const isRobot = !preview && b.id === "robot";
           const isGhost = !preview && b.id === "ghosttown";
           const isAnt = !preview && b.id === "antisle";
-          if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost && !isAnt));
+          const isLego = !preview && b.id === "legotown";
+          if (G.sceneryObjects) G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost && !isAnt && !isLego));
           wilds.forEach((m) => (m.visible = !preview));
           if (G.desertDecor) G.desertDecor.visible = isDesert;
           if (G.snowDecor) G.snowDecor.visible = isSnow;
@@ -46433,6 +46808,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (G.robotDecor) G.robotDecor.visible = isRobot;
           if (G.ghostDecor) G.ghostDecor.visible = isGhost;
           if (G.antDecor) G.antDecor.visible = isAnt;
+          if (G.legoDecor) G.legoDecor.visible = isLego;
           if (G.warpGate) G.warpGate.visible = !preview;
           if (G.npc) G.npc.visible = !preview;
         }
