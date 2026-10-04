@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v717"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v718"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3201,10 +3201,10 @@ const OUTFIT_SETS = [
 ];
 // ---------- 🎉 SEASONAL COSTUMES (ชุดตามเทศกาล) — cosmetic-only themed looks (no stats) ----------
 const SEASONAL_SETS = [
-    { id: "songkran", name: "ชุดสงกรานต์", emoji: "💦", desc: "คอสเมติกล้วน", dye: { outfit: 0x6ac0e0, weapon: 0xbfe8ff, pants: 0x4a90c0, shoes: 0xffffff, gloves: 0x9ad0ff }, bonus: {}, aura: 0x8fe0ff, seasonal: true, unlock: { stat: "wins", val: 10 } },
-    { id: "xmas", name: "ชุดคริสต์มาส", emoji: "🎄", desc: "คอสเมติกล้วน", dye: { outfit: 0xd0402a, weapon: 0x4aa04a, pants: 0x2a5a2a, shoes: 0xffffff, gloves: 0xd0402a }, bonus: {}, aura: 0xff5a5a, seasonal: true, unlock: { stat: "bosses", val: 5 } },
-    { id: "halloween", name: "ชุดฮาโลวีน", emoji: "🎃", desc: "คอสเมติกล้วน", dye: { outfit: 0xe08020, weapon: 0x9a4ad0, pants: 0x2a1a2a, shoes: 0x1a1a24, gloves: 0xe08020 }, bonus: {}, aura: 0xff9020, seasonal: true, unlock: { stat: "catches", val: 20 } },
-    { id: "newyear", name: "ชุดปีใหม่", emoji: "🎆", desc: "คอสเมติกล้วน", dye: { outfit: 0xf5c542, weapon: 0xff70b0, pants: 0x9a4ad0, shoes: 0xffe070, gloves: 0xf5c542 }, bonus: {}, aura: 0xffd24a, seasonal: true, unlock: { stat: "level", val: 20 } },
+    { id: "songkran", name: "ชุดสงกรานต์", emoji: "💦", desc: "คอสเมติก · ปืนฉีดน้ำสะพายหลัง", dye: { outfit: 0x6ac0e0, weapon: 0xbfe8ff, pants: 0x4a90c0, shoes: 0xffffff, gloves: 0x9ad0ff }, bonus: {}, aura: 0x8fe0ff, seasonal: true, unlock: { stat: "wins", val: 10 } },
+    { id: "xmas", name: "ชุดคริสต์มาส", emoji: "🎄", desc: "คอสเมติก · สวมหัวต้นคริสต์มาส", dye: { outfit: 0xd0402a, weapon: 0x4aa04a, pants: 0x2a5a2a, shoes: 0xffffff, gloves: 0xd0402a }, bonus: {}, aura: 0xff5a5a, seasonal: true, unlock: { stat: "bosses", val: 5 } },
+    { id: "halloween", name: "ชุดฮาโลวีน", emoji: "🎃", desc: "คอสเมติก · สวมหัวฟักทอง", dye: { outfit: 0xe08020, weapon: 0x9a4ad0, pants: 0x2a1a2a, shoes: 0x1a1a24, gloves: 0xe08020 }, bonus: {}, aura: 0xff9020, seasonal: true, unlock: { stat: "catches", val: 20 } },
+    { id: "newyear", name: "ชุดปีใหม่", emoji: "🎆", desc: "คอสเมติก · ธง HAPPY NEW YEAR ปักหลัง", dye: { outfit: 0xf5c542, weapon: 0xff70b0, pants: 0x9a4ad0, shoes: 0xffe070, gloves: 0xf5c542 }, bonus: {}, aura: 0xffd24a, seasonal: true, unlock: { stat: "level", val: 20 } },
 ];
 const findSet = (id) => OUTFIT_SETS.find((x) => x.id === id) || SEASONAL_SETS.find((x) => x.id === id) || null;
 // ---------- 🐉⭐ GEAR SET BONUSES (ใส่อุปกรณ์ครบเซ็ตมังกร/ตำนาน) — counts EQUIPPED pieces sharing a `set` tag ----------
@@ -16977,7 +16977,7 @@ function CherryAdventure() {
                 if (!G.heroModelId || !G.heroModelSet)
                     return;
                 const OI2 = G.heroOutfitInfo(), GI2 = G.heroGearInfo ? G.heroGearInfo() : null;
-                const sig2 = (OI2 ? OI2.sig : "") + "#" + (GI2 ? GI2.sig : "");
+                const sig2 = (OI2 ? OI2.sig : "") + "#" + (GI2 ? GI2.sig : "") + "#" + (G.activeSet || "");
                 if (sig2 !== (G._heroOutfitSig || ""))
                     G.heroModelSet(G.heroModelId);
             };
@@ -17400,6 +17400,132 @@ function CherryAdventure() {
                         }
                     }
                 }
+            };
+            // 🎉 ของประดับชุดเทศกาล (บนโมเดล 3D) — 💦 สงกรานต์: ปืนฉีดน้ำสะพายหลัง · 🎄 คริสต์มาส: หัวต้นคริสต์มาส · 🎃 ฮาโลวีน: หัวฟักทอง · 🎆 ปีใหม่: ธง HAPPY NEW YEAR ปักหลัง
+            //    พิกัดหน่วยตัวละครแบบเดียวกับ heroOutfitDeco: หัว (Head) ยอด +0.45 · หน้า z +0.29 · อก spine_03 แผ่นหลัง z ≈ −0.3 · +x = ซ้ายของตัวละคร
+            const heroSeasonDeco = (parts, g) => {
+                const rigs = [], sid = G.activeSet;
+                if (!sid || !["songkran", "xmas", "halloween", "newyear"].includes(sid))
+                    return rigs;
+                const bone = (n) => parts[0].getObjectByName(n);
+                const rig = (bn) => { const b = bone(bn); if (!b)
+                    return null; const grp = new THREE.Group(); grp.name = "heroSeason_" + bn; g.add(grp); rigs.push({ grp, head: b, q0: null, qg: new THREE.Quaternion(), qh: new THREE.Quaternion() }); return grp; };
+                const L = (c) => new THREE.Color(c).convertSRGBToLinear();
+                const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: L(c), roughness: 0.45 }, o || {}));
+                const GL = (c, k) => new THREE.MeshStandardMaterial({ color: L(c), emissive: L(c), emissiveIntensity: k || 1.4, roughness: 0.3 });
+                const add = (grp, mesh, x, y, z, rx, ry, rz) => { mesh.position.set(x, y, z); mesh.rotation.set(rx || 0, ry || 0, rz || 0); mesh.castShadow = true; mesh.frustumCulled = false; grp.add(mesh); return mesh; };
+                if (sid === "halloween") { // 🎃 หัวฟักทองครอบทั้งหัว — ผิวเป็นพูตามแนวตั้ง · ตา/จมูก/ปากแกะสลักเรืองแสงข้างใน · ขั้วเขียว
+                    const h = rig("Head");
+                    if (!h)
+                        return rigs;
+                    const geo = new THREE.SphereGeometry(0.47, 32, 22), p = geo.attributes.position;
+                    for (let i = 0; i < p.count; i++) {
+                        const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x), k = 1 + Math.abs(Math.sin(a * 5)) * 0.07 - 0.035;
+                        p.setXYZ(i, x * k, y * (y < 0 ? 0.86 : 0.8), z * k);
+                    }
+                    geo.computeVertexNormals();
+                    add(h, new THREE.Mesh(geo, M(0xe8781a, { roughness: 0.55 })), 0, 0.2, 0.02);
+                    const face = GL(0xffc23a, 2.2), dark = M(0x2a1404);
+                    const tri = (pts) => { const sh = new THREE.Shape(); pts.forEach(([px, py], i) => (i ? sh.lineTo(px, py) : sh.moveTo(px, py))); sh.closePath(); return new THREE.ShapeGeometry(sh); };
+                    for (const sx of [-1, 1]) {
+                        add(h, new THREE.Mesh(tri([[-0.08, -0.05], [0.08, -0.05], [0, 0.08]]), face), sx * 0.15, 0.3, 0.465);
+                    } // ตาสามเหลี่ยม
+                    add(h, new THREE.Mesh(tri([[-0.04, -0.03], [0.04, -0.03], [0, 0.04]]), face), 0, 0.18, 0.48); // จมูก
+                    add(h, new THREE.Mesh(tri([[-0.24, 0.04], [-0.16, -0.02], [-0.1, 0.03], [-0.04, -0.04], [0.04, -0.04], [0.1, 0.03], [0.16, -0.02], [0.24, 0.04], [0.14, -0.1], [0, -0.13], [-0.14, -0.1]]), face), 0, 0.06, 0.455); // ปากยิ้มฟันเลื่อย
+                    add(h, new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.16, 8), M(0x3a6a1a)), 0.02, 0.6, 0, 0, 0, -0.25); // ขั้ว
+                    const leaf = add(h, new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), M(0x4a8a2a)), 0.1, 0.6, 0.02);
+                    leaf.scale.set(1.4, 0.3, 0.8);
+                    const lt = new THREE.PointLight(0xffa030, 0.6, 1.6);
+                    lt.position.set(0, 0.2, 0.3);
+                    h.add(lt);
+                    void dark;
+                }
+                else if (sid === "xmas") { // 🎄 หัวต้นคริสต์มาส — ใบสนสามชั้นครอบทั้งหัว · ลูกบอลหลากสี · สายไฟวิบวับ · ดาวทองบนยอด
+                    const h = rig("Head");
+                    if (!h)
+                        return rigs;
+                    const pine = M(0x1f6a34, { roughness: 0.7 }), pine2 = M(0x2a8a44, { roughness: 0.7 });
+                    [[0.5, 0.42, 0.12], [0.4, 0.4, 0.42], [0.28, 0.36, 0.7]].forEach(([r, hh, y], i) => add(h, new THREE.Mesh(new THREE.ConeGeometry(r, hh, 14, 1), i % 2 ? pine2 : pine), 0, y + hh / 2 - 0.02, 0));
+                    add(h, new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.44, 0.22, 16, 1, true), pine), 0, 0.05, 0); // ช่วงล่างคลุมรอบหัว (เปิดหน้า)
+                    const BC = [0xe02a2a, 0xf5c542, 0x3a7ae0, 0xd04ad0, 0xffffff];
+                    for (let k = 0; k < 14; k++) {
+                        const tier = k % 3, a = k * 2.4, r = [0.44, 0.34, 0.22][tier] * 0.92, y = [0.2, 0.5, 0.76][tier];
+                        if (Math.cos(a) > 0.7 && tier === 0)
+                            continue;
+                        add(h, new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), M(BC[k % BC.length], { metalness: 0.5, roughness: 0.2, emissive: L(BC[k % BC.length]), emissiveIntensity: 0.35 })), Math.sin(a) * r, y, Math.cos(a) * r);
+                    }
+                    for (let k = 0; k < 18; k++) {
+                        const a = k * 0.9, y = 0.15 + k * 0.045, r = 0.46 - k * 0.018;
+                        add(h, new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 5), GL([0xfff070, 0xff6a6a, 0x7affaa][k % 3], 2.5)), Math.sin(a) * r, y, Math.cos(a) * r);
+                    } // สายไฟ
+                    const st = new THREE.Shape();
+                    for (let k = 0; k < 10; k++) {
+                        const r = k % 2 ? 0.05 : 0.12, a = k / 10 * Math.PI * 2 + Math.PI / 2;
+                        k ? st.lineTo(Math.cos(a) * r, Math.sin(a) * r) : st.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                    }
+                    st.closePath();
+                    add(h, new THREE.Mesh(new THREE.ExtrudeGeometry(st, { depth: 0.04, bevelEnabled: false }), GL(0xffd23a, 1.8)), 0, 1.12, -0.02); // ดาวยอดต้น
+                }
+                else if (sid === "songkran") { // 💦 ปืนฉีดน้ำสะพายหลังเฉียง — ตัวปืนพลาสติกสีสด · ถังน้ำใส · ลำกล้อง+หัวฉีด · สายสะพายพาดอก
+                    const c = rig("spine_03");
+                    if (!c)
+                        return rigs;
+                    const gun = new THREE.Group();
+                    gun.position.set(0, 0.0, -0.4);
+                    gun.rotation.set(0, 0, 0.75);
+                    gun.scale.setScalar(1.45);
+                    c.add(gun);
+                    const body = M(0xff6a1a, { roughness: 0.3 }), blue = M(0x2a8ae0, { roughness: 0.3 }), yel = M(0xffd23a, { roughness: 0.3 });
+                    const water = new THREE.MeshStandardMaterial({ color: L(0x7ad8ff), roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.6 });
+                    add(gun, new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.16, 0.12), body), 0, 0, 0); // ตัวปืน
+                    add(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.5, 10), blue), 0.68, 0.02, 0, 0, 0, Math.PI / 2); // ลำกล้อง
+                    add(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.035, 0.08, 10), yel), 0.95, 0.02, 0, 0, 0, Math.PI / 2); // หัวฉีด
+                    add(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.36, 16), water), -0.05, 0.17, 0, 0, 0, Math.PI / 2); // ถังน้ำใส
+                    add(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.04, 16), blue), -0.24, 0.17, 0, 0, 0, Math.PI / 2);
+                    add(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.04, 16), blue), 0.14, 0.17, 0, 0, 0, Math.PI / 2);
+                    add(gun, new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.24, 0.1), blue), -0.15, -0.16, 0, 0, 0, -0.25); // ด้ามจับ
+                    add(gun, new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.1), yel), -0.42, -0.06, 0); // ท้ายปืน
+                    add(gun, new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.04), yel), -0.02, -0.13, 0); // ไก
+                    const strap = add(c, new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.022, 6, 32), M(0x2a8ae0)), 0, 0.02, -0.02, Math.PI / 2, 0.75, 0);
+                    strap.scale.set(1, 0.78, 1); // สายสะพายพาดอก
+                }
+                else if (sid === "newyear") { // 🎆 ธง HAPPY NEW YEAR ปักหลัง — เสาทองยาวเหนือหัว · ผืนธงแดงตัวอักษรทองโบกพลิ้ว (G._seasonFlag)
+                    const c = rig("spine_03");
+                    if (!c)
+                        return rigs;
+                    add(c, new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.9, 10), M(0xe8b840, { metalness: 0.8, roughness: 0.25 })), 0, 0.75, -0.34);
+                    add(c, new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), M(0xffd860, { metalness: 0.8, roughness: 0.2 })), 0, 1.72, -0.34);
+                    const cv = document.createElement("canvas");
+                    cv.width = 512;
+                    cv.height = 256;
+                    const x = cv.getContext("2d");
+                    const bg = x.createLinearGradient(0, 0, 0, 256);
+                    bg.addColorStop(0, "#e0202a");
+                    bg.addColorStop(1, "#a01018");
+                    x.fillStyle = bg;
+                    x.fillRect(0, 0, 512, 256);
+                    x.strokeStyle = "#ffd23a";
+                    x.lineWidth = 10;
+                    x.strokeRect(8, 8, 496, 240);
+                    x.fillStyle = "#ffe070";
+                    x.textAlign = "center";
+                    x.textBaseline = "middle";
+                    x.font = "bold 76px sans-serif";
+                    x.fillText("HAPPY", 256, 70);
+                    x.font = "bold 64px sans-serif";
+                    x.fillText("NEW YEAR", 256, 150);
+                    x.font = "bold 40px sans-serif";
+                    x.fillText("🎆 " + (new Date().getFullYear() + (new Date().getMonth() >= 10 ? 1 : 0)) + " 🎆", 256, 214);
+                    const tx = new THREE.CanvasTexture(cv);
+                    tx.encoding = THREE.sRGBEncoding;
+                    tx.anisotropy = 4;
+                    const fg = new THREE.PlaneGeometry(0.9, 0.45, 16, 4);
+                    fg.translate(0.45, 0, 0);
+                    const flag = add(c, new THREE.Mesh(fg, new THREE.MeshStandardMaterial({ map: tx, side: THREE.DoubleSide, roughness: 0.7 })), 0.02, 1.43, -0.34, 0, Math.PI / 2 + 0.25, 0);
+                    flag.userData.base = fg.attributes.position.array.slice();
+                    G._seasonFlag = flag;
+                }
+                return rigs;
             };
             const heroOutfitDeco = (OI, parts, g) => {
                 const rigs = [];
@@ -17979,7 +18105,7 @@ function CherryAdventure() {
                 const M0 = id && HERO_MODELS[id];
                 const OI = M0 && G.heroOutfitInfo ? G.heroOutfitInfo() : null; // 👕 ชุดไอเทมที่สวมอยู่
                 const GI = M0 && G.heroGearInfo ? G.heroGearInfo() : null; // 🎩🎭🧤👖👟 ของสวมชิ้นอื่น
-                G._heroOutfitSig = (OI ? OI.sig : "") + "#" + (GI ? GI.sig : "");
+                G._heroOutfitSig = (OI ? OI.sig : "") + "#" + (GI ? GI.sig : "") + "#" + (G.activeSet || ""); // 🎉 ชุดเทศกาลมีของประดับบนโมเดล — เปลี่ยนเซ็ตต้องประกอบร่างใหม่
                 const hatKK = GI && GI.hat && GI.hat.D.kk && G.kkHatEnsure ? G.kkHatEnsure(GI.hat.D.kk) : null; // ⏳ หมวก KayKit ต้องมาก่อนประกอบร่าง
                 let M = M0;
                 if (M0 && OI && OI.theme)
@@ -18263,7 +18389,8 @@ function CherryAdventure() {
                     }
                     {
                         const hooded = /Ranger$/.test(M.files[1] || "") && !M.noHood;
-                        const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded));
+                        G._seasonFlag = null;
+                        const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded)).concat(heroSeasonDeco(parts, g));
                         if (deco.length) {
                             G._heroModel.deco = deco;
                             g.updateMatrixWorld(true);
@@ -54757,6 +54884,8 @@ function CherryAdventure() {
             if (char)
                 burst(char.position, s.aura || 0xffffff, 1.6);
             toast(`👘✨ สวมเซ็ต ${s.emoji} ${s.name}! (${s.desc})`);
+            if (G.heroModelId && G.heroModelSet)
+                G.heroModelSet(G.heroModelId); // 🎉 ของประดับชุดเทศกาล (หัวฟักทอง/ต้นคริสต์มาส/ปืนฉีดน้ำ/ธงปีใหม่)
             setUi((u) => ({ ...u, activeSet: id, dye: { ...G.dye }, costume: { ...G.costume } }));
             syncPlayer();
         };
@@ -54772,6 +54901,8 @@ function CherryAdventure() {
                 applyGear(); });
             if (G.applySetAura)
                 G.applySetAura();
+            if (G.heroModelId && G.heroModelSet)
+                G.heroModelSet(G.heroModelId);
             toast("👘 ถอดเซ็ตแล้ว (ลุค/สียังอยู่ ปรับได้ในแฟชั่น)");
             setUi((u) => ({ ...u, activeSet: null }));
             syncPlayer();
@@ -75939,6 +76070,14 @@ function CherryAdventure() {
                     setMotes.forEach((m) => { const a = m.userData.ph + t * 1.0; m.position.set(Math.cos(a) * 0.64, 0.1 + (0.5 + 0.5 * Math.sin(a * 2 + t * 1.6)) * 0.55, Math.sin(a) * 0.64); m.material.opacity = sp * 0.85; });
                 }
                 // 🪽 character wings — gentle flap
+                if (G._seasonFlag && G._seasonFlag.parent) { // 🎆 ธงปีใหม่โบกพลิ้ว
+                    const F = G._seasonFlag, pa = F.geometry.attributes.position, b = F.userData.base;
+                    for (let i = 0; i < pa.count; i++) {
+                        const bx = b[i * 3];
+                        pa.setZ(i, b[i * 3 + 2] + Math.sin(bx * 7 - t * 6) * 0.05 * (bx / 0.9));
+                    }
+                    pa.needsUpdate = true;
+                }
                 if (wingsGroup.visible) {
                     const hh = G._heroModel && G._heroH ? G._heroH : 0; // 🧍 โมเดล 3D สูงกว่าร่างชิบิ — ยกปีกขึ้นกลางหลังและขยายตาม
                     const by = hh ? hh * 0.64 : 1.42, sc = hh ? hh / 4.4 * 1.45 : 0.95;
