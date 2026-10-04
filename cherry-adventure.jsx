@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v702";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v703";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -30577,6 +30577,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         if (kx.length) { const u0 = update; update = (pr, tn) => { if (u0) u0(pr, tn); for (const f of kx) f(pr); }; }
       } catch (_) { if (kOnly && !g.children.length) { fxType = kType; } }
+      { const DIM = { punchwave: 0.62, kneeburst: 0.62 }[kType];   // 🥊 ท่าสกิลนักมวย (หมัด/เข่า) — ลดความจ้าลงนิดหน่อย (สีเข้มขึ้น = แสงบวกน้อยลง)
+        if (DIM) g.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { if (!m || m.userData._dimmed) return; m.userData._dimmed = 1; if (m.color) m.color.multiplyScalar(DIM); if (m.emissive && m.emissiveIntensity != null) m.emissiveIntensity *= DIM; }); }); }
       // 🔅 เอฟเฟกต์ชุดเก่า (ทรงเรขาคณิตเรืองแสง) — ลดความจ้า: emissive ไม่เกิน 0.7 · ความทึบสูงสุด ×0.75 · ไม่เขียน depth (ไม่บังกันเอง)
       g.traverse((o) => { const m = o.material; if (!m || !(o.isMesh || o.isSprite)) return;   // ภาพ Kenney/Kalponic ×0.82 · ของเก่า ×0.75
         (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm.emissiveIntensity > 0.7) mm.emissiveIntensity = 0.7; mm.userData._opMul = kOnly || o.isSprite ? 0.82 : 0.75; if (mm.transparent) mm.depthWrite = false; }); });

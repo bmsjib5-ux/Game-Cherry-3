@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v702"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v703"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -50322,6 +50322,14 @@ function CherryAdventure() {
                 if (kOnly && !g.children.length) {
                     fxType = kType;
                 }
+            }
+            {
+                const DIM = { punchwave: 0.62, kneeburst: 0.62 }[kType]; // 🥊 ท่าสกิลนักมวย (หมัด/เข่า) — ลดความจ้าลงนิดหน่อย (สีเข้มขึ้น = แสงบวกน้อยลง)
+                if (DIM)
+                    g.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { if (!m || m.userData._dimmed)
+                        return; m.userData._dimmed = 1; if (m.color)
+                        m.color.multiplyScalar(DIM); if (m.emissive && m.emissiveIntensity != null)
+                        m.emissiveIntensity *= DIM; }); });
             }
             // 🔅 เอฟเฟกต์ชุดเก่า (ทรงเรขาคณิตเรืองแสง) — ลดความจ้า: emissive ไม่เกิน 0.7 · ความทึบสูงสุด ×0.75 · ไม่เขียน depth (ไม่บังกันเอง)
             g.traverse((o) => {
