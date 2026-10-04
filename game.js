@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v700"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v701"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3399,8 +3399,8 @@ const HERO_THEME = {
     luminia: { g: "F", cut: "Peasant", hue: HDY(145, 0.45, 1.3), hair: "Hair_Long", hairC: 0xf8f0c8, t: 3, leaf: 1, col: 0x8ee8b4, fx: { ears: "elf", flowers: 0xffffff } },
     apsara: { g: "F", cut: "Peasant", hue: HDY(45, 0.55, 1.6, 0.45), hair: "Hair_Buns", hairC: 0x2a1a10, t: 4, col: 0xffe08a, fx: { halo: 0xffffff, collar: 1, wings: "angel", wingS: 0.8 } },
     asura: { g: "M", cut: "Ranger", noHood: 1, hue: [320, 0.6, 0.5], hair: "Hair_Buzzed", hairC: 0x1a0a14, skin: 0x8a5a78, skinK: 0.45, t: 5, col: 0xff3a5a, fx: { horns: "demon", wings: "bat", wingS: 0.9 } },
-    hanuman: { g: "M", bare: 1, hair: "Hair_Buzzed", hairC: 0xffffff, skinMap: [40, 0.04, 2.1, 0.97, 1, 0.07], t: 1, col: 0xffd36a, // 🐒 วานรเผือกขาวทั้งตัว + ผ้านุ่งทองขลิบแดง
-        fx: { halo: 0xffffff, tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1, ears: "monkey", earC: 0xffffff, earIn: 0xf4c4bc, muzzle: 0xfff6f2, swim: "trunks", swimC: 0xe8b840, swimC2: 0xc02a2a } },
+    hanuman: { g: "M", bare: 1, hair: "Hair_Buzzed", hairC: 0xffffff, skinMap: [40, 0.04, 2.1, 0.97, 1, 0.07, null, 0x1e2a5a, 0xc02a2a], t: 1, col: 0xffd36a, // 🐒 + ลายสักยันต์น้ำเงินเข้ม จุดแดง วานรเผือกขาวทั้งตัว + ผ้านุ่งทองขลิบแดง
+        fx: { halo: 0xffffff, tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1, ears: "monkey", earC: 0xffffff, earIn: 0xf4c4bc, muzzle: 0xfff6f2, tiara: "crown", armlets: 1, swim: "trunks", swimC: 0xe8b840, swimC2: 0xc02a2a } },
     garuda: { g: "M", cut: "Ranger", noHood: 1, hue: [10, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x3a2010, skin: 0xe8a848, skinK: 0.55, t: 4, col: 0xffd24a, fx: { halo: 0xffffff, wings: "gold", wingS: 1.1, collar: 1 }, gear: { gloves: { k: "claw", c: 0xe8b840 } } },
     naki: { g: "F", cut: "Peasant", hue: HDY(165, 0.6, 1.15), hair: "Hair_Long", hairC: 0x0e5a5a, skin: 0x8ae8d0, skinK: 0.4, t: 3, col: 0x4ae8c0, fx: { naga: 0x2a9a7a, halo: 0xffffff, collar: 1 } },
     kinnaree: { g: "F", cut: "Peasant", hue: HDY(335, 0.4, 1.6, 0.4), hair: "Hair_Buns", hairC: 0x2a1a10, t: 3, col: 0xffb0d0, fx: { halo: 0xffffff, wings: "swan", wingS: 0.85, tail: "feather", tailC: 0xfff4f8, tailC2: 0xffc0d8, collar: 1 } },
@@ -12939,6 +12939,17 @@ function CherryAdventure() {
                 a[i] = Math.round(h2r(pp, q, th + 1 / 3) * 255);
                 a[i + 1] = Math.round(h2r(pp, q, th) * 255);
                 a[i + 2] = Math.round(h2r(pp, q, th - 1 / 3) * 255);
+                if (H[7] != null) { // 🖋️ ลายสักยันต์ — ตาข่ายข้าวหลามตัด + จุดกลางช่อง + เส้นคู่ (วาดในพิกัดเท็กซ์เจอร์ จึงกระจายทั่วตัว)
+                    const px = (i >> 2) % cv.width, py = ((i >> 2) / cv.width) | 0, P = cv.width / 14;
+                    const A = ((px + py) / P) % 1, B = ((px - py + cv.width * 4) / P) % 1, C = ((py / P) * 2) % 1;
+                    const ink = A < 0.07 || B < 0.07 || (A > 0.46 && A < 0.54 && B > 0.46 && B < 0.54) || (C < 0.04 && ((px / P) % 1) < 0.5);
+                    if (ink) {
+                        const ic = (A > 0.46 && B > 0.46 && A < 0.54 && B < 0.54) ? (H[8] != null ? H[8] : H[7]) : H[7];
+                        a[i] = a[i] * 0.15 + ((ic >> 16) & 255) * 0.85;
+                        a[i + 1] = a[i + 1] * 0.15 + ((ic >> 8) & 255) * 0.85;
+                        a[i + 2] = a[i + 2] * 0.15 + (ic & 255) * 0.85;
+                    }
+                }
             }
             cx.putImageData(d, 0, 0);
             const t = new THREE.CanvasTexture(cv);
@@ -16363,6 +16374,18 @@ function CherryAdventure() {
                             add(hd, new THREE.Mesh(SP(0.016, 8, 6), MT(0xfff8f0, { roughness: 0.25, metalness: 0.3 })), Math.sin(a) * R, y0, Math.cos(a) * R);
                         }
                     }
+                    else if (T === "crown") { // 👑 มงกุฎทองยอดแหลม + พลอย
+                        for (let k = 0; k < 9; k++) {
+                            const a = (k / 9) * Math.PI * 2, big = k % 2 === 0;
+                            add(hd, new THREE.Mesh(CN(0.03, big ? 0.15 : 0.1, 4), GOLD), Math.sin(a) * R, y0 + (big ? 0.085 : 0.06), Math.cos(a) * R);
+                        }
+                        const b2 = add(hd, new THREE.Mesh(new THREE.CylinderGeometry(R * 1.01, R * 1.03, 0.06, 28, 1, true), GOLD), 0, y0 + 0.01, 0);
+                        b2.material = GOLD.clone();
+                        b2.material.side = THREE.DoubleSide;
+                        add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), GW(0xff3a3a, 1.3)), 0, y0 + 0.02, R + 0.02);
+                        for (const sx of [1, -1])
+                            add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), GW(0x3ad0ff, 1.2)), sx * Math.sin(0.7) * R, y0 + 0.02, Math.cos(0.7) * R + 0.01);
+                    }
                     else if (T === "bone") {
                         for (let k = -3; k <= 3; k++) {
                             const a = k * 0.35;
@@ -16494,6 +16517,24 @@ function CherryAdventure() {
                 }
                 if (ch && FX.orbs)
                     [[0.5, 0.35, -0.2], [-0.5, 0.42, -0.18], [0, 0.72, -0.42]].forEach(([x, y, z]) => { add(ch, new THREE.Mesh(SP(0.07), GW(FX.orbs, 2.0, { transparent: true, opacity: 0.9 })), x, y, z); add(ch, new THREE.Mesh(SP(0.12), GW(FX.orbs, 0.8, { transparent: true, opacity: 0.25, depthWrite: false })), x, y, z); });
+                if (FX.armlets)
+                    for (const sd of ["l", "r"]) { // 💛 กำไลต้นแขน (มีพลอย) + กำไลข้อมือทอง
+                        const ua = rig("upperarm_" + sd), la = rig("lowerarm_" + sd);
+                        const sx = sd === "l" ? 1 : -1;
+                        if (ua) {
+                            for (const [ox, rr] of [[0.15, 0.14], [0.21, 0.135]]) {
+                                const b = add(ua, new THREE.Mesh(new THREE.TorusGeometry(rr, 0.022, 8, 24), GOLD), sx * ox, 0, 0);
+                                b.rotation.y = Math.PI / 2;
+                            }
+                            const gm = add(ua, new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), GW(0xff3a3a, 1.2)), sx * 0.18, 0.02, 0.14);
+                            gm.scale.set(0.8, 1.2, 0.6);
+                        }
+                        if (la)
+                            for (const ox of [0.4, 0.45]) {
+                                const b = add(la, new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.02, 8, 22), GOLD), sx * ox, -0.02, -0.02);
+                                b.rotation.y = Math.PI / 2;
+                            }
+                    }
                 if (FX.ice || FX.bolts)
                     for (const sd of ["l", "r"]) { // ❄️ ผลึกน้ำแข็ง / ⚡ ประกายสายฟ้าเหนือไหล่
                         const sh = rig("upperarm_" + sd);
