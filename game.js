@@ -248,8 +248,8 @@ const DETAIL = {
 let TERR_CUR = null; // โปรไฟล์ภูมิประเทศของแมพปัจจุบัน
 let TERR_FLATTEN = false; // 🏰 ในเมือง/บ้าน/ฟาร์ม — พื้นราบสนิท (ลานเมืองใช้พิกัดเดียวกับสนามนอก)
 let TERR_SAFE = null; // จุดปลอดภัย (แท่นวาร์ป/หมู่บ้าน) — บังคับให้พื้นเรียบ
-// ความสูงพื้นที่พิกัดใด ๆ ของแมพปัจจุบัน
-const terrainAt = (x, z) => {
+// ความสูงพื้นตามสูตร (ใช้ปั้นจุดยอดของพื้น) — ของที่วางบนพื้นให้ใช้ terrainAt ด้านล่าง
+const terrainRaw = (x, z) => {
     const P = TERR_CUR;
     if (!P || TERR_FLATTEN)
         return 0;
@@ -278,6 +278,15 @@ const terrainAt = (x, z) => {
     }
     return h * k;
 };
+// 🪨 ความสูง "จริง" ของพื้นที่เห็นบนจอ — พื้นเป็นสามเหลี่ยมแบนเชื่อมจุดยอด ส่วนสูตรเป็นเส้นโค้ง
+//    บนเนินโค้งนูน สูตรสูงกว่าผิวสามเหลี่ยม → หิน/หญ้า/ต้นไม้ลอย · ในแอ่งกลับจมดิน
+//    ตั้งค่าหลังปั้นพื้นแต่ละครั้ง (rebuildTerrain) · นอกขอบพื้น/ยังไม่ปั้น = ใช้สูตรเดิม
+let TERR_MESH_AT = null;
+const terrainAt = (x, z) => { if (TERR_MESH_AT) {
+    const h = TERR_MESH_AT(x, z);
+    if (h != null)
+        return h;
+} return terrainRaw(x, z); };
 // 📱 กันรอยบาก/กล้องหน้า (Dynamic Island): เลื่อน UI ขอบบนลงตาม safe-area ของเครื่อง
 // ================= 🍃 วิชาตัวเบา (ฝึกได้จากเควสพิเศษเท่านั้น) =================
 // สายวิชาเคลื่อนไหว 3 ขั้น ต่อยอดกันเป็นทอด ๆ — ซื้อด้วยทอง/เพชร/แต้มสกิลไม่ได้เลย
@@ -417,7 +426,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v685"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v686"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -4435,6 +4444,31 @@ function CherryAdventure() {
         const TERR_R = 54 * WORLD_S, TERR_TH = 132, TERR_RA = 84;
         // 🪨 แยกจุดยอดออกจากกัน (non-indexed) → แต่ละหน้าสามเหลี่ยมมีเวกเตอร์ปกติและสีของตัวเอง = ลุค low-poly เหลี่ยม
         const groundGeo = new THREE.RingGeometry(0.02, TERR_R, TERR_TH, TERR_RA).toNonIndexed();
+        // 🪨 หาสามเหลี่ยมของพื้นที่อยู่ใต้จุด (x, z) แล้วเกลี่ยความสูงแบบ barycentric
+        //    RingGeometry: วงรัศมี j × ช่องมุม i → สามเหลี่ยม 2 ชิ้นต่อช่อง ตามลำดับ (j * TH + i) * 2 · พื้นหมุน -90° รอบแกน X: (x, z) โลก = (x, -y) แผ่น
+        const groundMeshAt = (x, z) => {
+            const gx = x, gy = -z, r = Math.hypot(gx, gy), inner = 0.02;
+            if (r >= TERR_R || r <= inner)
+                return null;
+            let th = Math.atan2(gy, gx);
+            if (th < 0)
+                th += Math.PI * 2;
+            const j = Math.min(TERR_RA - 1, Math.floor(((r - inner) / (TERR_R - inner)) * TERR_RA));
+            const i = Math.min(TERR_TH - 1, Math.floor((th / (Math.PI * 2)) * TERR_TH));
+            const pa = groundGeo.attributes.position.array, base = (j * TERR_TH + i) * 2;
+            for (let t = 0; t < 2; t++) {
+                const o = (base + t) * 9;
+                const x0 = pa[o], y0 = pa[o + 1], x1 = pa[o + 3], y1 = pa[o + 4], x2 = pa[o + 6], y2 = pa[o + 7];
+                const d = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
+                if (Math.abs(d) < 1e-12)
+                    continue;
+                const a = ((y1 - y2) * (gx - x2) + (x2 - x1) * (gy - y2)) / d, b = ((y2 - y0) * (gx - x2) + (x0 - x2) * (gy - y2)) / d, c = 1 - a - b;
+                if (a >= -1e-4 && b >= -1e-4 && c >= -1e-4)
+                    return a * pa[o + 2] + b * pa[o + 5] + c * pa[o + 8];
+            }
+            return null;
+        };
+        G._groundMeshAt = groundMeshAt;
         groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(groundGeo.attributes.position.count * 3).fill(1), 3));
         { // 🗺️ UV แบบระนาบตามพิกัดโลก — ลายพื้นไม่บิดวนตามวงแหวน
             const gp = groundGeo.attributes.position, guv = groundGeo.attributes.uv;
@@ -37153,8 +37187,9 @@ function CherryAdventure() {
             const cHi = new THREE.Color(P.hi != null ? P.hi : b.ground), cRk = new THREE.Color(P.rock != null ? P.rock : b.ground);
             const pos = groundGeo.attributes.position, col = groundGeo.attributes.color, tmpC = new THREE.Color();
             const pa = pos.array;
+            TERR_MESH_AT = null; // ปั้นจุดยอดจากสูตรก่อน แล้วค่อยให้ของบนพื้นอ่านความสูงจากผิวสามเหลี่ยมจริง
             for (let i = 0; i < pos.count; i++)
-                pa[i * 3 + 2] = terrainAt(pa[i * 3], -pa[i * 3 + 1]); // แผ่นถูกหมุน -90° รอบแกน X → (x, -y) คือ (x, z) ของโลก · แกน z คือความสูง
+                pa[i * 3 + 2] = terrainRaw(pa[i * 3], -pa[i * 3 + 1]); // แผ่นถูกหมุน -90° รอบแกน X → (x, -y) คือ (x, z) ของโลก · แกน z คือความสูง
             const ca = col.array;
             for (let f = 0; f < pos.count; f += 3) { // 🪨 ทีละหน้าสามเหลี่ยม — ทั้งหน้าใช้สีเดียวกัน
                 const i0 = f * 3, i1 = i0 + 3, i2 = i0 + 6;
@@ -37178,6 +37213,7 @@ function CherryAdventure() {
             pos.needsUpdate = true;
             col.needsUpdate = true;
             groundGeo.computeVertexNormals(); // จุดยอดไม่แชร์กันแล้ว → ได้เวกเตอร์ปกติต่อหน้า = เหลี่ยมคม
+            TERR_MESH_AT = groundMeshAt; // 🪨 จากนี้ terrainAt = ความสูงผิวพื้นจริง (หญ้า/หิน/ต้นไม้/ตัวละครแนบพื้นพอดี)
             if (G.snapWorldDecor)
                 G.snapWorldDecor();
             if (G.scatterDetail)
