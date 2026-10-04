@@ -426,7 +426,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v687"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v688"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -36188,6 +36188,43 @@ function CherryAdventure() {
         const canopy1 = new THREE.MeshStandardMaterial({ color: 0x2f6b34, roughness: 0.85, flatShading: true });
         const canopy2 = new THREE.MeshStandardMaterial({ color: 0x256030, roughness: 0.85, flatShading: true });
         const canopy3 = new THREE.MeshStandardMaterial({ color: 0x3a7a3e, roughness: 0.85, flatShading: true });
+        // 🍃 ใบไม้ใหม่: แผ่นกิ่งใบจริง (Quaternius Leaves · CC0 — ไฟล์เดียวกับต้นไม้ทุ่งซากุระ) เรียงซ้อนเป็นพุ่มฟู ๆ แทนก้อนกลมเหลี่ยม
+        //    ทั้งพุ่มรวมเป็นเมชเดียวต่อต้น · แนวตั้งฉากชี้ออกจากกลางพุ่ม → แสงเงานุ่มเหมือนพุ่มไม้จริง · สีเขียวป่าดิบไล่ 4 เฉด
+        const amzLeafTex = new THREE.TextureLoader().load("assets/quat/nature/tex/Leaves_NormalTree_C.png");
+        amzLeafTex.anisotropy = 4;
+        const amzLeafMat = new THREE.MeshStandardMaterial({ map: amzLeafTex, alphaTest: 0.42, side: THREE.DoubleSide, vertexColors: true, roughness: 0.85,
+            emissive: 0xffffff, emissiveMap: amzLeafTex, emissiveIntensity: 0.14 });
+        const amzCoreMat = new THREE.MeshStandardMaterial({ color: 0x2c5a2a, roughness: 0.95 }); // แกนพุ่มสีเข้มด้านใน กันมองทะลุเป็นรู
+        const AMZ_LEAF_C = [0x5f9a48, 0x467f3c, 0x6eaa4c, 0x3a7038].map((h) => new THREE.Color(h));
+        const amzCanopyGeo = (blobs) => {
+            const pos = [], nor = [], uv = [], col = [], idx = [];
+            const q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), n = new THREE.Vector3(), c = new THREE.Color();
+            const CORN = [[-0.5, -0.5, 0, 1], [0.5, -0.5, 1, 1], [0.5, 0.5, 1, 0], [-0.5, 0.5, 0, 0]];
+            blobs.forEach((B) => {
+                const cnt = Math.round(B.r * 11);
+                for (let k = 0; k < cnt; k++) {
+                    // จุดสุ่มบนผิว/ในพุ่ม (เอนไปทางผิวนอก) — ด้านบนแน่นกว่าด้านล่าง
+                    const th = Math.random() * Math.PI * 2, ph = Math.acos(rnd(-0.55, 1)), rr = B.r * rnd(0.55, 1.0);
+                    const cx = B.x + Math.sin(ph) * Math.cos(th) * rr, cy = B.y + Math.cos(ph) * rr * 0.75, cz = B.z + Math.sin(ph) * Math.sin(th) * rr;
+                    const sz = rnd(1.7, 2.6) * Math.min(1.25, 0.6 + B.r * 0.25);
+                    e.set(rnd(-1.2, 1.2) - 0.6, th + rnd(-0.6, 0.6), rnd(-0.8, 0.8));
+                    q.setFromEuler(e);
+                    n.set(cx - B.x, (cy - B.y) + B.r * 0.5, cz - B.z).normalize(); // ชี้ออก + เอนขึ้นฟ้า
+                    c.copy(AMZ_LEAF_C[(Math.random() * 4) | 0]).multiplyScalar(0.62 + (cy - B.y + B.r) / (B.r * 2) * 0.4); // ใต้พุ่มเข้ม ยอดพุ่มสว่าง
+                    const base = pos.length / 3;
+                    CORN.forEach(([u, w, tu, tv]) => { v.set(u * sz, w * sz, 0).applyQuaternion(q); pos.push(cx + v.x, cy + v.y, cz + v.z); nor.push(n.x, n.y, n.z); uv.push(tu, tv); col.push(c.r, c.g, c.b); });
+                    idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+                }
+            });
+            const g = new THREE.BufferGeometry();
+            g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+            g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+            g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+            g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+            g.setIndex(idx);
+            g.computeBoundingSphere();
+            return g;
+        };
         const makeBigTree = (x, z) => {
             if (inKeepOut(x, z))
                 return;
@@ -36207,27 +36244,26 @@ function CherryAdventure() {
                 root.rotation.y = -a;
                 g.add(root);
             }
-            // hanging vines
-            for (let k = 0; k < 3; k++) {
-                const a = Math.random() * Math.PI * 2;
-                const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, rnd(1.4, 2.6), 5), canopy2);
-                vine.position.set(Math.cos(a) * 1.2, h - rnd(1, 2.5), Math.sin(a) * 1.2);
+            // hanging vines — เถาวัลย์ห้อยจากพุ่ม มีใบเล็ก ๆ ติดเป็นช่วง
+            for (let k = 0; k < 5; k++) {
+                const a = Math.random() * Math.PI * 2, vl = rnd(1.6, 3.2), vr = rnd(1.6, 2.6);
+                const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, vl, 5), canopy2);
+                vine.position.set(Math.cos(a) * vr, h - vl / 2 + 0.2, Math.sin(a) * vr);
                 g.add(vine);
             }
-            // layered canopy (big overlapping blobs) high up
-            const cy = h + 0.2;
+            // 🍃 พุ่มใบหลายชั้นสูงเท่าเดิม (ยอด ≈ h + 3) — แกนเข้มด้านใน + แผ่นกิ่งใบรอบนอก
+            const cy = h + 0.2, blobs = [];
             for (let k = 0; k < 7; k++) {
-                const a = (k / 7) * Math.PI * 2;
+                const a = (k / 7) * Math.PI * 2 + rnd(-0.2, 0.2);
                 const r = 1.7 + (k % 3) * 0.5;
-                const blob = new THREE.Mesh(new THREE.SphereGeometry(rnd(1.5, 2.4), 12, 10), [canopy1, canopy2, canopy3][k % 3]);
-                blob.position.set(Math.cos(a) * r, cy + rnd(-0.6, 0.9), Math.sin(a) * r);
-                blob.castShadow = true;
-                g.add(blob);
+                blobs.push({ x: Math.cos(a) * r, y: cy + rnd(-0.6, 0.9), z: Math.sin(a) * r, r: rnd(1.5, 2.3) });
             }
-            const crown = new THREE.Mesh(new THREE.SphereGeometry(2.4, 14, 12), canopy1);
-            crown.position.y = cy + 1;
-            crown.scale.set(1, 0.8, 1);
-            g.add(crown);
+            blobs.push({ x: 0, y: cy + 1.2, z: 0, r: 2.4 });
+            blobs.forEach((B, k) => { if (k % 2)
+                return; const core = new THREE.Mesh(new THREE.SphereGeometry(B.r * 0.5, 8, 6), amzCoreMat); core.position.set(B.x, B.y, B.z); g.add(core); });
+            const leaves = new THREE.Mesh(amzCanopyGeo(blobs), amzLeafMat);
+            leaves.castShadow = true;
+            g.add(leaves);
             g.position.set(x, 0, z);
             g.scale.setScalar(rnd(0.85, 1.2));
             amazonDecor.add(g);
@@ -36277,6 +36313,86 @@ function CherryAdventure() {
             g.position.set(x, 0, z);
             amazonDecor.add(g);
         };
+        // 🌾 ทุ่งหญ้าสูงเป็นหย่อม ๆ — ใบหญ้ายาวเรียว (วาดเอง) ปักไขว้ 3 แผ่นต่อกอ สูงราวเอว · ทั้งหย่อมเป็นเมชเดียว · ปลายใบโอนตามลม
+        const amzGrassTex = (() => {
+            const cv = document.createElement("canvas");
+            cv.width = 256;
+            cv.height = 256;
+            const c = cv.getContext("2d");
+            for (let i = 0; i < 44; i++) {
+                const bx = 8 + Math.random() * 240, w = 7 + Math.random() * 9, top = 4 + Math.random() * 70, lean = (Math.random() - 0.5) * 70;
+                const gr = c.createLinearGradient(0, 256, 0, top);
+                gr.addColorStop(0, "#1f4a1c");
+                gr.addColorStop(0.55, ["#4f9a3a", "#5aa844", "#6bb24a"][i % 3]);
+                gr.addColorStop(1, ["#a8d870", "#b8de78", "#cfe68a"][i % 3]);
+                c.fillStyle = gr;
+                c.beginPath();
+                c.moveTo(bx - w / 2, 256);
+                c.quadraticCurveTo(bx + lean * 0.3, (256 + top) / 2, bx + lean, top);
+                c.quadraticCurveTo(bx + lean * 0.3 + w * 0.3, (256 + top) / 2, bx + w / 2, 256);
+                c.fill();
+            }
+            const t = new THREE.CanvasTexture(cv);
+            t.anisotropy = 4;
+            return t;
+        })();
+        const amzGrassU = { value: 0 };
+        const amzGrassMat = new THREE.MeshStandardMaterial({ map: amzGrassTex, alphaTest: 0.45, side: THREE.DoubleSide, vertexColors: true, roughness: 0.9, emissive: 0xffffff, emissiveMap: amzGrassTex, emissiveIntensity: 0.18 });
+        amzGrassMat.onBeforeCompile = (sh) => {
+            sh.uniforms.uWind = amzGrassU;
+            sh.vertexShader = "uniform float uWind;\n" + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
+        { float tip = uv.y; tip *= tip; vec4 wp = modelMatrix * vec4(position, 1.0);
+          float w = sin(uWind * 1.7 + wp.x * 0.35 + wp.z * 0.22) * 0.22 + sin(uWind * 3.1 + wp.z * 0.9) * 0.06;
+          transformed.x += w * tip; transformed.z += w * 0.6 * tip; }`);
+        };
+        const amzGrass = [];
+        const makeTallGrass = (x, z) => {
+            if (inKeepOut(x, z))
+                return;
+            const pos = [], uv = [], col = [], idx = [], clumps = [];
+            const R = rnd(2.4, 4.2), n = Math.round(R * R * 5.5);
+            const c = new THREE.Color();
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * R, px = Math.cos(a) * r, pz = Math.sin(a) * r;
+                const H = rnd(1.4, 2.1) * (1 - (r / R) * 0.45), W = rnd(1.0, 1.5); // ขอบหย่อมเตี้ยลง ดูเป็นกอธรรมชาติ
+                c.setHSL(0.27 + rnd(-0.03, 0.04), 0.5, 0.42 + rnd(-0.06, 0.08)).multiplyScalar(1.6);
+                const rot = Math.random() * Math.PI;
+                for (let k = 0; k < 3; k++) {
+                    const ang = rot + (k * Math.PI) / 3, dx = Math.cos(ang) * W / 2, dz = Math.sin(ang) * W / 2, base = pos.length / 3;
+                    pos.push(px - dx, 0, pz - dz, px + dx, 0, pz + dz, px + dx, H, pz + dz, px - dx, H, pz - dz);
+                    uv.push(0, 0, 1, 0, 1, 1, 0, 1); // v = 0 ที่โคน (ภาพแคนวาสพลิกแกน y)
+                    for (let m = 0; m < 4; m++)
+                        col.push(c.r, c.g, c.b);
+                    idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+                    clumps.push(px, pz);
+                }
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+            geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+            geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+            geo.setIndex(idx);
+            geo.setAttribute("normal", new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3)); // แนวตั้งฉากชี้ฟ้า → สว่างสม่ำเสมอทั้งสองด้าน
+            geo.userData.y0 = Float32Array.from(pos.filter((_, i) => i % 3 === 1));
+            geo.userData.clumps = clumps;
+            const m = new THREE.Mesh(geo, amzGrassMat);
+            m.position.set(x, 0, z);
+            m.receiveShadow = true;
+            amazonDecor.add(m);
+            amzGrass.push(m);
+        };
+        // ⛰️ ให้แต่ละกอเกาะเนินของตัวเอง (หย่อมกว้างหลายเมตร ถ้ายกทั้งก้อนตามจุดกลาง ขอบหย่อมจะลอย/จม)
+        G.amazonGrassSnap = () => amzGrass.forEach((m) => {
+            const pa = m.geometry.attributes.position, y0 = m.geometry.userData.y0, cl = m.geometry.userData.clumps, h0 = terrainAt(m.position.x, m.position.z);
+            for (let q = 0; q < cl.length / 2; q++) {
+                const dh = terrainAt(m.position.x + cl[q * 2], m.position.z + cl[q * 2 + 1]) - h0 - 0.06;
+                for (let v = 0; v < 4; v++)
+                    pa.setY(q * 4 + v, y0[q * 4 + v] + dh);
+            }
+            pa.needsUpdate = true;
+            m.geometry.computeBoundingSphere();
+        });
+        G.amazonGrassWind = amzGrassU;
         // 💧 swamp puddles (wetland)
         const swampMat = new THREE.MeshStandardMaterial({ color: 0x2e5648, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.8 });
         const makeSwamp = (x, z) => {
@@ -36303,6 +36419,10 @@ function CherryAdventure() {
         for (let i = 0; i < 22; i++) {
             const a = Math.random() * Math.PI * 2, r = 2 + Math.random() * (FIELD_R - 3);
             makeGrass(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        for (let i = 0; i < 20; i++) {
+            const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 9);
+            makeTallGrass(Math.cos(a) * r, Math.sin(a) * r);
         }
         for (let i = 0; i < 5; i++) {
             const a = Math.random() * Math.PI * 2, r = 6 + Math.random() * (FIELD_R - 8);
@@ -38141,6 +38261,8 @@ function CherryAdventure() {
                 grp.children.forEach(snap); });
             if (G.mineSnapAll)
                 G.mineSnapAll(); // ⛏️ สายแร่เกาะพื้นใหม่ด้วย
+            if (G.amazonGrassSnap && G.curBiome === BIOMES.findIndex((b) => b.id === "amazon"))
+                G.amazonGrassSnap(); // 🌾 หญ้าสูงอเมซอนเกาะเนินทีละกอ
             if (G._borderGrp)
                 G._borderGrp.children.forEach(snap); // 🧱 แนวกั้นขอบแมพเกาะพื้นด้วย
             if (G.warpGate && G.warpGate.children)
@@ -73814,6 +73936,8 @@ function CherryAdventure() {
                 if (G.amazonDecor && G.amazonDecor.visible) {
                     if (G.amazonRiver)
                         G.amazonRiver.material.opacity = 0.85 + Math.sin(t * 1.2) * 0.08;
+                    if (G.amazonGrassWind)
+                        G.amazonGrassWind.value = t;
                     if (G.amazonMist)
                         G.amazonMist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) {
                             m.position.x = -FIELD_R - 4;
