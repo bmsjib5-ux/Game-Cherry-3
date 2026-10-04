@@ -389,7 +389,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v705";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v706";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3266,7 +3266,7 @@ const HERO_THEME = {
   haru:     { g: "F", cut: "Peasant", hue: HDY(330, 0.5, 1.6), hair: "Hair_Buns", hairC: 0xf4b0d4, t: 2, col: 0xff8ac0, fx: { flowers: 0xffb8dc }, gear: { shoes: { k: "sneaker", c: 0xffb0d0 } } },
   luna:     { g: "F", cut: "Peasant", hue: HDY(238, 0.42, 1.35), hair: "Hair_Long", hairC: 0xdcdff8, t: 2, col: 0xb0b8ff, fx: { tiara: "moon" }, gear: { shoes: { k: "boot", c: 0x5a6ad0 } } },
   celestia: { g: "F", cut: "Peasant", hue: HDY(215, 0.3, 1.75, 0.3), hair: "Hair_Long", hairC: 0xfff0b0, t: 4, star: 1, col: 0x9ab0ff, fx: { tiara: "star", halo: 0xfff0a0, wings: "angel", wingS: 0.72 } },
-  yuki:     { g: "F", cut: "Ranger", hue: [200, 0.45, 1.5], hair: "Hair_Long", hairC: 0xeef6ff, t: 2, scarf: 1, scarfC: 0xf2f8ff, col: 0x9ad0ff, fx: { ice: 1 }, gear: { gloves: { k: "wrap", c: 0xe8f4ff } } },
+  yuki:     { g: "F", cut: "Ranger", hue: [205, 0.04, 3.4, 0.97, 1, 0.1], hair: "Hair_Long", hairC: 0xffffff, t: 2, scarf: 1, scarfC: 0xffffff, col: 0xd8f0ff, fx: { ice: 1 }, gear: { gloves: { k: "wrap", c: 0xffffff } } },   // ❄️ ชุดขาวหิมะน้ำแข็ง
   rose:     { g: "F", cut: "Ranger", noHood: 1, hue: [42, 0.55, 1.12], hair: "Hair_Long", hairC: 0xf2c66a, t: 4, col: 0xffd36a, fx: { tiara: "rose", cape: 0xc0303a }, gear: { gloves: { k: "gauntlet", c: 0xf0d27a }, shoes: { k: "boot", c: 0xf0d27a } } },
   kentaro:  { g: "M", cut: "Peasant", hue: [358, 0.6, 0.95], hair: "Hair_Buzzed", hairC: 0x2a2830, topknot: 1, t: 3, col: 0xff5a3a, fx: { band: "hachimaki" }, gear: { pants: { k: "wrap", c: 0x2a2228 } } },
   kotaro:   { g: "M", cut: "Ranger", hue: [38, 0.45, 0.9], hair: "Hair_SimpleParted", hairC: 0x3a2a1a, t: 2, col: 0xe0c088, gear: { mask: { k: "veil", c: 0xc8a878 }, gloves: { k: "wrap", c: 0xd8c8a0 } } },
@@ -5898,6 +5898,7 @@ export default function CherryAdventure() {
     G.wpnReady = (sec) => { G._wpnReadyT = Math.max(G._wpnReadyT || 0, sec == null ? 2.5 : sec); };   // ⚔️ ชักอาวุธออกมาถือข้างหน้า
     // 🤚 realistic grip: each weapon type is held at a natural angle
     // 🏹 ธนูบนโมเดล 3D: ถือตั้งขึ้นข้างตัว คันโค้งหันไปหน้า — ค้นหาเชิงตัวเลขบนกระดูกมือ (ชิบิยังถือแนวนอนเหมือนเดิม)
+    const HERO_HANDLE_Y = { roseSword: 0.0, kenKatana: 0.06, kotDaggerR: 0.03, kairiBlade: 0.16, aurSword: -0.05, haruStaff: 0.0, lunaStaff: 0.0, celStaff: 0.0 };   // 🤚 จุดกึ่งกลางด้ามจับ (แกน y ของโมเดล ก่อนขยาย) — วัดจากโปรไฟล์ความกว้างของแต่ละชิ้น
     const BOW_GRIP_MODEL = { x: -2.09, y: 1.31, z: -1.05 };   // วัดกับท่า Idle_Loop: แกนคัน ↑ 1.00 · ท้องคัน (+x ของโมเดล) หันหน้า 0.99 → สายอยู่ฝั่งตัว
     const gripFor = (id) => {
       if (id && id.indexOf("kkh_") === 0) return { x: 0.9, y: 0, z: 0.3 };   // 🦸🪓 อาวุธหนักรุ่น KayKit — พาดเฉียงข้างลำตัว หัวอาวุธชี้ออกนอก
@@ -7602,7 +7603,7 @@ export default function CherryAdventure() {
       arrow.add(shaft, ahead); arrow.userData.isArrow = true; g.add(arrow);
       const bowGlow = new THREE.PointLight(0x6aa0ff, 0.6, 2.2); g.add(bowGlow);
       g.userData.arrow = arrow; g.userData.bowGem = bowGem; g.userData.wings = [up.wing, lo.wing]; g.userData.glow = bowGlow;
-      g.userData.gripY = 0.3; g.userData.gripZ = 0.3; g.scale.setScalar(1.35);
+      g.userData.gripY = 0.3; g.userData.gripZ = 0.3; g.userData.heroBow = 1; g.scale.setScalar(1.35);   // 🏹 heroBow: บนโมเดล 3D ถือมือซ้าย สายหันเข้าตัว (heroBowDraw)
       weaponModels.yukiBow = g;
     }
     { // 🌹 roseSword — Princess Knight rose sword (ดาบเจ้าหญิงอัศวิน ตามภาพ)
@@ -12144,7 +12145,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         bone.updateMatrixWorld(true);
       };
       const heroBowDraw = (H, aim) => {   // 🏹 มือซ้ายถือคัน · มือขวาง้างสาย/ยิง (aim = ท่าเล็งอยู่ → วาดลูกธนูพาดสาย)
-        const bow = wand.children.find((x) => x.visible && x.userData && x.userData.kkFam === "bow") || wand.children.find((x) => x.visible && x.userData && x.userData.kk && /bow/i.test(x.userData.kk));
+        const bow = wand.children.find((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || x.userData.heroBow)) || wand.children.find((x) => x.visible && x.userData && x.userData.kk && /bow/i.test(x.userData.kk));
         char.updateMatrixWorld(true);
         char.getWorldQuaternion(_bq.qc);
         const up = new THREE.Vector3(0, 1, 0).applyQuaternion(_bq.qc), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(_bq.qc), left = new THREE.Vector3(1, 0, 0).applyQuaternion(_bq.qc);
@@ -12611,6 +12612,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           wand.scale.set(1, 1, 1);
           if (gv && gv.r) { H.grip.scale.setScalar(gv.r.s); H.grip.quaternion.copy(gv.r.q); H.grip.position.copy(gv.r.p); }
           else { H.grip.scale.setScalar(HERO_GRIP.s / H.k * (G._sigWpnBig ? 2.3 : 1)); H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz); H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz); }   // 🦸 อาวุธฮีโร่ใหญ่ ×2.3
+          if (G._sigWpnBig && !(gv && gv.r)) {             // 🤚 อาวุธประจำฮีโร่ขยาย ×2.3 รอบจุดกลางฝ่ามือ → ด้ามเลื่อนหลุดมือ — เลื่อนทั้งชิ้นให้ "ด้าม" มาอยู่กลางฝ่ามือพอดี
+            const hm = weaponModels[G._curWeaponKey], hy = HERO_HANDLE_Y[G._curWeaponKey];
+            if (hm && hm.visible && hy != null) { const hv = H._hv || (H._hv = new THREE.Vector3()); hv.set(0, hy, 0).multiply(hm.scale).applyQuaternion(hm.quaternion).add(hm.position).applyQuaternion(wand.quaternion).negate(); wand.position.copy(hv); }
+          }
         }
         if (H.gripL) {                                     // 🛡️ มือซ้ายก็ถูกรีเซ็ตทุกเฟรมเหมือนกัน
           wandL.position.set(0, 0, 0); wandL.scale.set(1, 1, 1);
@@ -12627,7 +12632,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             if (sr > 0 && sl > sr * 1.15) { gv.l.s *= sr / sl; H.gripL.scale.setScalar(gv.l.s); }
           } catch (eFL) {}
         }
-        if (G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk))))) heroBowDraw(H, H.cur === "Pistol_Idle_Loop");   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
+        if ((G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk))))) || wand.children.some((x) => x.visible && x.userData && x.userData.heroBow)) heroBowDraw(H, H.cur === "Pistol_Idle_Loop");   // ❄️ ธนูยูกิ — มือซ้ายถือคันทุกอาชีพ   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
         else if (H.bowArrow) H.bowArrow.visible = false;
         if (H.mech) {                                      // 🤖 อาวุธไปอยู่บนฝ่ามือหุ่นยนต์
           H.g.updateMatrixWorld(true);
@@ -22562,24 +22567,113 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const free = (x, z, r) => !antColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + r);
       const B = (par, m, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new THREE.Mesh(boxG, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.set(rx || 0, ry || 0, rz || 0); o.castShadow = true; o.receiveShadow = true; par.add(o); return o; };
       const spot = (pad, rr, tries, r0, r1) => { for (let k = 0; k < tries; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = Math.cos(a) * r, z = Math.sin(a) * r; if (okAt(x, z, pad) && free(x, z, rr)) return [x, z]; } return null; };
-      // 🏢 ตึกพัง — ผนัง 4 ด้านสูงไม่เท่ากัน (ยอดหยัก) หน้าต่างดำโหว่ เหล็กเส้นโผล่ มอสเกาะ · บางหลังเหลือแค่ครึ่งเดียว
+      // 🏢 ตึกพังเก่าโทรม — ผิวคอนกรีตสีซีด (คราบน้ำไหลเป็นทาง · รอยร้าว · สีลอกเห็นอิฐ) · ยอดผนังหักแหว่ง · มุมตึกถล่มเป็นแนวเฉียง
+      //    พื้นชั้นบนถล่มลงมาเอียงพาดกัน · หน้าต่างโหว่ + คราบเขม่า บางบานตีไม้กระดานปิด · เถาวัลย์ห้อยตามผนัง · หญ้ารกบนยอดผนัง · กองซากรอบตึก
+      //    ชิ้นส่วนทั้งหลังรวมเป็นก้อนเดียวต่อวัสดุ (draw call น้อย)
+      const ruinTex = (() => {
+        const cv = document.createElement("canvas"); cv.width = cv.height = 256; const x = cv.getContext("2d");
+        x.fillStyle = "#dedbd3"; x.fillRect(0, 0, 256, 256);
+        const id = x.getImageData(0, 0, 256, 256), a = id.data;
+        for (let i = 0; i < a.length; i += 4) { const n = (Math.random() - 0.5) * 22; a[i] += n; a[i + 1] += n; a[i + 2] += n; }
+        x.putImageData(id, 0, 0);
+        for (let k = 0; k < 24; k++) { const r = 10 + Math.random() * 40, px = Math.random() * 256, py = Math.random() * 256, v = Math.random() < 0.6 ? "70,62,50" : "128,118,98"; const gr = x.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, `rgba(${v},0.3)`); gr.addColorStop(1, `rgba(${v},0)`); x.fillStyle = gr; x.fillRect(px - r, py - r, r * 2, r * 2); }   // คราบสกปรกเป็นดวง
+        for (let k = 0; k < 13; k++) { const px = Math.random() * 256, w = 3 + Math.random() * 10, py = Math.random() * 140, L = 40 + Math.random() * 140; const gr = x.createLinearGradient(0, py, 0, py + L); gr.addColorStop(0, "rgba(40,36,30,0.36)"); gr.addColorStop(1, "rgba(36,32,26,0)"); x.fillStyle = gr; x.fillRect(px, py, w, L); }   // คราบน้ำไหลเป็นทางยาว
+        for (let k = 0; k < 3; k++) {   // สีลอกเป็นแผ่น เห็นอิฐข้างใน
+          const px = 40 + Math.random() * 176, py = 40 + Math.random() * 176, rw = 28 + Math.random() * 24, rh = 18 + Math.random() * 16;
+          x.save(); x.beginPath(); for (let s = 0; s < 9; s++) { const an = (s / 9) * Math.PI * 2, rr = 0.65 + Math.random() * 0.45; x.lineTo(px + Math.cos(an) * rw * rr, py + Math.sin(an) * rh * rr); } x.closePath(); x.clip();
+          x.fillStyle = "#77685c"; x.fillRect(px - rw * 1.2, py - rh * 1.2, rw * 2.4, rh * 2.4);
+          for (let yy = py - rh * 1.2, row = 0; yy < py + rh * 1.2; yy += 7, row++) for (let xx = px - rw * 1.2 - (row % 2) * 6; xx < px + rw * 1.2; xx += 13) { const sh = 112 + Math.random() * 34 | 0; x.fillStyle = `rgb(${sh + 16},${sh * 0.74 | 0},${sh * 0.62 | 0})`; x.fillRect(xx + 1, yy + 1, 11, 5); }
+          x.restore(); x.strokeStyle = "rgba(240,236,224,0.55)"; x.lineWidth = 1.2; x.stroke();
+        }
+        x.strokeStyle = "rgba(22,18,14,0.85)";   // รอยร้าวแตกกิ่ง
+        for (let k = 0; k < 8; k++) { let px = Math.random() * 256, py = Math.random() * 256; x.lineWidth = 0.8 + Math.random() * 1.6; x.beginPath(); x.moveTo(px, py); for (let s = 0; s < 9; s++) { px += (Math.random() - 0.5) * 24; py += 5 + Math.random() * 15; x.lineTo(px, py); if (Math.random() < 0.3) { x.lineTo(px + (Math.random() - 0.5) * 30, py + 8 + Math.random() * 10); x.moveTo(px, py); } } x.stroke(); }
+        const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
+      })();
+      const sootTex = (() => { const cv = document.createElement("canvas"); cv.width = 64; cv.height = 128; const x = cv.getContext("2d");
+        for (let k = 0; k < 7; k++) { const px = 12 + Math.random() * 40, w = 12 + Math.random() * 22, top = 10 + Math.random() * 50; const gr = x.createLinearGradient(0, 128, 0, top); gr.addColorStop(0, "rgba(0,0,0,0.7)"); gr.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = gr; x.beginPath(); x.ellipse(px, 128, w / 2, 128 - top, 0, 0, Math.PI * 2); x.fill(); }
+        return new THREE.CanvasTexture(cv); })();
+      const ivyTex = (() => { const cv = document.createElement("canvas"); cv.width = 128; cv.height = 256; const x = cv.getContext("2d"), GC = ["#2c5420", "#3c7228", "#4c8630", "#26461a", "#5a8a36"];
+        for (let s = 0; s < 6; s++) { let px = 10 + Math.random() * 108; const L = 110 + Math.random() * 146, ph = Math.random() * 6;
+          x.strokeStyle = "#3a3a1e"; x.lineWidth = 2; x.beginPath(); x.moveTo(px, 0);
+          const pts = []; for (let y = 0; y <= L; y += 5) { const qx = px + Math.sin(y * 0.05 + ph) * 7; x.lineTo(qx, y); pts.push([qx, y]); } x.stroke();
+          pts.forEach(([qx, y], i) => { if (i % 1) return; for (let l = 0; l < 2; l++) { x.fillStyle = GC[(Math.random() * GC.length) | 0]; x.beginPath(); x.ellipse(qx + (Math.random() - 0.5) * 14, y + (Math.random() - 0.5) * 6, 4 + Math.random() * 4, 2.6 + Math.random() * 2.4, Math.random() * 3, 0, Math.PI * 2); x.fill(); } });
+        }
+        const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t; })();
+      const PAL = [0xbdb39a, 0xa3ad98, 0xb59c90, 0xb3a37e, 0x9ea2a3, 0xa99aa8, 0xaaa290];
+      const wood = new THREE.MeshStandardMaterial({ color: 0x5e4a34, roughness: 0.95 });
+      const sootM = new THREE.MeshBasicMaterial({ map: sootTex, color: 0x000000, transparent: true, opacity: 0.6, depthWrite: false });
+      const ivyM = new THREE.MeshStandardMaterial({ map: ivyTex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.9 });
+      const bushM = new THREE.MeshStandardMaterial({ color: 0x4a6a2e, roughness: 1, flatShading: true }), bushM2 = new THREE.MeshStandardMaterial({ color: 0x5f7a34, roughness: 1, flatShading: true });
+      const sootGeo = new THREE.PlaneGeometry(1, 1); sootGeo.translate(0, 0.5, 0);    // ยึดขอบล่าง (เหนือหน้าต่าง) ลามขึ้น
+      const ivyGeo = new THREE.PlaneGeometry(1, 1); ivyGeo.translate(0, -0.5, 0);     // ยึดขอบบน ห้อยลง
+      const boxUV = (sx, sy, sz, T) => {   // กล่องที่ UV ยาวตามขนาดจริง — ลายผิวไม่ยืดตามความสูง/ความกว้าง
+        const geo = new THREE.BoxGeometry(sx, sy, sz), uv = geo.attributes.uv, ox = Math.random(), oy = Math.random();
+        const dm = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
+        for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, ox + uv.getX(i) * dm[f][0] / T, oy + uv.getY(i) * dm[f][1] / T); }
+        return geo;
+      };
+      const mergeByMat = (g) => {   // รวมทุกชิ้นในหลังเดียวกันเป็นก้อนเดียวต่อวัสดุ
+        g.updateMatrixWorld(true); const buckets = new Map();
+        g.traverse((o) => { if (!o.isMesh || !o.geometry.attributes.uv) return; const geo = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrixWorld); let b = buckets.get(o.material); if (!b) buckets.set(o.material, (b = [])); b.push(geo); });
+        while (g.children.length) g.remove(g.children[0]);
+        buckets.forEach((list, mat) => {
+          let pc = 0; list.forEach((q) => (pc += q.attributes.position.count));
+          const pos = new Float32Array(pc * 3), nor = new Float32Array(pc * 3), uvs = new Float32Array(pc * 2); let o = 0;
+          list.forEach((q) => { pos.set(q.attributes.position.array, o * 3); nor.set(q.attributes.normal.array, o * 3); uvs.set(q.attributes.uv.array, o * 2); o += q.attributes.position.count; q.dispose(); });
+          const out = new THREE.BufferGeometry(); out.setAttribute("position", new THREE.BufferAttribute(pos, 3)); out.setAttribute("normal", new THREE.BufferAttribute(nor, 3)); out.setAttribute("uv", new THREE.BufferAttribute(uvs, 2)); out.computeBoundingSphere();
+          const m = new THREE.Mesh(out, mat); m.castShadow = !mat.transparent; m.receiveShadow = !mat.transparent && !(mat.alphaTest > 0); g.add(m);
+        });
+      };
       for (let n = 0; n < 11; n++) {
         const at = spot(4, 6, 80, FIELD_R * 0.38, FIELD_R * 0.86); if (!at) continue; const [x, z] = at;
         const g = new THREE.Group(), w = 5 + Math.random() * 3, d = 4 + Math.random() * 3, h = 4 + Math.random() * 6, half = n % 3 === 0;
-        const wallT = 0.4;
-        [[0, d / 2, w, 0], [0, -d / 2, w, 0], [w / 2, 0, d, Math.PI / 2], [-w / 2, 0, d, Math.PI / 2]].forEach(([wx, wz, L, ry], wi) => {
+        const wallT = 0.4, T = 3.4, pc = new THREE.Color(PAL[n % PAL.length]);
+        const wm = new THREE.MeshStandardMaterial({ map: ruinTex, color: pc, roughness: 0.96 }), wm2 = new THREE.MeshStandardMaterial({ map: ruinTex, color: pc.clone().multiplyScalar(0.8), roughness: 0.98 });
+        const W = (par, m, px, py, pz, sx, sy, sz, rx, ry, rz) => { const o = new THREE.Mesh(boxUV(sx, sy, sz, T), m); o.position.set(px, py, pz); o.rotation.set(rx || 0, ry || 0, rz || 0); par.add(o); return o; };
+        const rock = (m, px, py, pz, s) => { const rk = new THREE.Mesh(rockG, m); rk.scale.set(s * (0.6 + Math.random() * 0.8), s * (0.4 + Math.random() * 0.5), s * (0.6 + Math.random() * 0.8)); rk.position.set(px, py, pz); rk.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3); g.add(rk); return rk; };
+        const fallWall = half ? -1 : (Math.random() < 0.65 ? (Math.random() * 4) | 0 : -1), fallDir = Math.random() < 0.5 ? 1 : -1;   // ผนังด้านที่มุมตึกถล่มเป็นแนวเฉียง
+        const WALLS = [[0, d / 2, w, 0, 1], [0, -d / 2, w, 0, -1], [w / 2, 0, d, Math.PI / 2, 1], [-w / 2, 0, d, Math.PI / 2, -1]];
+        WALLS.forEach(([wx, wz, L, ry, s], wi) => {
           if (half && wi === 1) return;
-          const segs = 4; for (let q = 0; q < segs; q++) { const hh = h * (half && wi > 1 ? 0.4 + Math.random() * 0.3 : 0.55 + Math.random() * 0.45); const lx = -L / 2 + (q + 0.5) * L / segs;
+          const segs = 4, sl = L / segs;
+          for (let q = 0; q < segs; q++) {
+            let hh = h * (half && wi > 1 ? 0.4 + Math.random() * 0.3 : 0.55 + Math.random() * 0.45);
+            if (wi === fallWall) { const u = fallDir > 0 ? q / (segs - 1) : 1 - q / (segs - 1); hh *= 0.16 + 0.84 * u; }
+            hh = Math.max(0.9, hh);
+            const lx = -L / 2 + (q + 0.5) * sl;
             const seg = new THREE.Group(); seg.position.set(wx, 0, wz); seg.rotation.y = ry; g.add(seg);
-            B(seg, q % 2 ? conc : concD, lx, hh / 2, 0, L / segs + 0.02, hh, wallT);
-            for (let f = 1.6; f < hh - 0.8; f += 2.2) if (Math.random() < 0.75) B(seg, hole, lx, f, 0, L / segs * 0.45, 0.9, wallT + 0.04);
-            if (Math.random() < 0.5) for (let r = 0; r < 3; r++) B(seg, rebar, lx + (r - 1) * 0.25, hh + 0.35, 0, 0.05, 0.7 + Math.random() * 0.5, 0.05, (Math.random() - 0.5) * 0.6, 0, (Math.random() - 0.5) * 0.6);
-            if (Math.random() < 0.4) B(seg, moss, lx, hh * 0.3, wallT / 2 + 0.03, L / segs * 0.6, hh * 0.4, 0.04);
+            W(seg, q % 2 ? wm : wm2, lx, hh / 2, 0, sl + 0.02, hh, wallT);
+            for (let c = 0, nc = 1 + ((Math.random() * 2) | 0); c < nc; c++) { const cw = sl * (0.25 + Math.random() * 0.35), ch = 0.35 + Math.random() * 0.7; W(seg, q % 2 ? wm2 : wm, lx + (Math.random() - 0.5) * sl * 0.6, hh + ch * 0.22, (Math.random() - 0.5) * 0.06, cw, ch, wallT * (0.7 + Math.random() * 0.3), 0, 0, (Math.random() - 0.5) * 1.1); }   // ยอดผนังหักแหว่ง
+            for (let f = 1.6; f < hh - 0.8; f += 2.2) {
+              if (Math.random() > 0.8) continue;
+              const big = Math.random() < 0.22, ww = sl * (big ? 0.62 : 0.45), wh = big ? 1.25 : 0.9;
+              B(seg, hole, lx, f, 0, ww, wh, wallT + 0.04, 0, 0, big ? (Math.random() - 0.5) * 0.5 : 0);   // หน้าต่างโหว่ · บานใหญ่ = ผนังแตกเป็นรูเบี้ยว
+              if (!big && Math.random() < 0.3) for (let b = 0; b < 2; b++) B(seg, wood, lx, f + (b - 0.5) * 0.26, s * (wallT / 2 + 0.04), ww * 1.2, 0.13, 0.04, 0, 0, (b ? 1 : -1) * (0.22 + Math.random() * 0.22));   // ไม้กระดานตีปิด
+              if (Math.random() < 0.45) { const so = new THREE.Mesh(sootGeo, sootM); so.position.set(lx, f + wh / 2 - 0.05, s * (wallT / 2 + 0.025)); so.rotation.y = s > 0 ? 0 : Math.PI; so.scale.set(ww * 1.4, 0.8 + Math.random() * 0.9, 1); seg.add(so); }   // คราบเขม่าลามขึ้นเหนือหน้าต่าง
+            }
+            if (Math.random() < 0.55) for (let r = 0; r < 3; r++) B(seg, rebar, lx + (r - 1) * 0.25, hh + 0.35, 0, 0.05, 0.7 + Math.random() * 0.5, 0.05, (Math.random() - 0.5) * 0.7, 0, (Math.random() - 0.5) * 0.7);
+            if (Math.random() < 0.45) { const iv = new THREE.Mesh(ivyGeo, ivyM), ih = Math.min(hh - 0.2, 1.4 + Math.random() * hh * 0.7); iv.scale.set(sl * (0.7 + Math.random() * 0.5), ih, 1); iv.position.set(lx + (Math.random() - 0.5) * sl * 0.3, hh - 0.05, s * (wallT / 2 + 0.05)); iv.rotation.y = s > 0 ? 0 : Math.PI; seg.add(iv); }   // เถาวัลย์ห้อย
+            if (Math.random() < 0.4) { const bu = new THREE.Mesh(rockG, bushM2); bu.scale.set(0.3 + Math.random() * 0.3, 0.2 + Math.random() * 0.2, 0.28); bu.position.set(lx + (Math.random() - 0.5) * sl * 0.4, hh + 0.1, 0); seg.add(bu); }   // หญ้ารกขึ้นบนยอดผนัง
+            if (Math.random() < 0.5) { const bu = new THREE.Mesh(rockG, Math.random() < 0.5 ? bushM : bushM2); bu.scale.set(0.45 + Math.random() * 0.4, 0.32 + Math.random() * 0.3, 0.42); bu.position.set(lx + (Math.random() - 0.5) * sl * 0.5, 0.18, s * (wallT / 2 + 0.36)); seg.add(bu); }   // พุ่มไม้รกโคนผนัง
+          }
+          if (wi === fallWall) {   // กองซากตรงมุมที่ถล่ม
+            const X = fallDir > 0 ? -L / 2 : L / 2, cx = wx + X * Math.cos(ry), cz = wz - X * Math.sin(ry);
+            for (let r = 0; r < 9; r++) rock(r % 3 ? wm2 : concD, cx + (Math.random() - 0.5) * 2.6, 0.15 + Math.random() * 0.3, cz + (Math.random() - 0.5) * 2.6, 0.35 + Math.random() * 0.4);
+            for (let r = 0; r < 2; r++) W(g, wm, cx + (Math.random() - 0.5) * 1.8, 0.35, cz + (Math.random() - 0.5) * 1.8, 1.2 + Math.random() * 0.8, 0.22, 0.8 + Math.random() * 0.6, (Math.random() - 0.5) * 0.7, Math.random() * 3, (Math.random() - 0.5) * 0.7);
           }
         });
         B(g, concD, 0, 0.12, 0, w + 0.4, 0.24, d + 0.4);   // พื้นฐานราก
-        for (let r = 0; r < 6; r++) { const rk = new THREE.Mesh(rockG, r % 2 ? conc : concD); rk.scale.set(0.4 + Math.random() * 0.6, 0.3 + Math.random() * 0.4, 0.4 + Math.random() * 0.6); rk.position.set((Math.random() - 0.5) * (w + 3), 0.2, (Math.random() - 0.5) * (d + 3)); rk.rotation.set(Math.random(), Math.random(), Math.random()); rk.castShadow = true; g.add(rk); }
-        g.position.set(x, 0, z); g.rotation.y = Math.random() * Math.PI; if (n % 4 === 1) g.rotation.z = 0.05;
+        const iw = w - wallT * 2 - 0.1, idp = d - wallT * 2 - 0.1;
+        for (let f = 2.3; f < h * (half ? 0.38 : 0.52); f += 2.2) {   // พื้นชั้นบน: บางชั้นยังอยู่ · บางชั้นหักครึ่งเอียงพาดลงมา · บางชั้นถล่มหายไปเลย
+          const r = Math.random(); if (r < 0.25) continue;
+          if (r < 0.5) W(g, wm2, 0, f, 0, iw, 0.22, idp);
+          else { W(g, wm2, -iw / 4, f, 0, iw / 2, 0.22, idp); const tl = 0.35 + Math.random() * 0.4; W(g, wm2, Math.cos(tl) * iw / 4, f - Math.sin(tl) * iw / 4, 0, iw / 2, 0.22, idp * 0.92, 0, 0, -tl); }
+        }
+        { const mh = 0.9 + Math.random() * 0.9, mound = new THREE.Mesh(new THREE.ConeGeometry(Math.min(iw, idp) * 0.42, mh, 7, 1), concD); mound.scale.z = idp / iw; mound.position.set((Math.random() - 0.5) * iw * 0.3, mh / 2, (Math.random() - 0.5) * idp * 0.3); g.add(mound); }   // กองเศษปูนในตึก
+        for (let r = 0; r < 12; r++) { const a = Math.random() * 6.28, rr = 0.4 + Math.random() * 1.1; rock(r % 3 ? concD : wm, Math.cos(a) * (w / 2 + rr), 0.12, Math.sin(a) * (d / 2 + rr), 0.25 + Math.random() * 0.4); }   // เศษปูนกระจายรอบตึก
+        for (let r = 0; r < 2; r++) { const wsd = WALLS[(Math.random() * 4) | 0]; const nx = wsd[3] ? wsd[4] : 0, nz = wsd[3] ? 0 : wsd[4]; W(g, wm, wsd[0] + nx * 0.7 + (wsd[3] ? 0 : (Math.random() - 0.5) * w * 0.6), 0.75, wsd[1] + nz * 0.7 + (wsd[3] ? (Math.random() - 0.5) * d * 0.6 : 0), wsd[3] ? 0.2 : 1.4, 1.6, wsd[3] ? 1.4 : 0.2, wsd[3] ? 0 : -nz * 0.45, 0, wsd[3] ? nx * 0.45 : 0); }   // แผ่นผนังหลุดพิงตึก
+        mergeByMat(g);
+        g.position.set(x, n % 4 === 1 ? -0.3 : 0, z); g.rotation.y = Math.random() * Math.PI; if (n % 4 === 1) g.rotation.z = 0.075; else if (n % 5 === 2) g.rotation.x = -0.055;   // บางหลังทรุดเอียง
         antDecor.add(g); antColliders.push({ x, z, r: Math.max(w, d) * 0.55 });
       }
       // 🏛️ เสาหักล้ม + ตอเสา
@@ -28622,14 +28716,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     //    ใช้เป็นสไปรท์บวกแสงซ้อน "บน" เอฟเฟกต์เดิม ไม่ได้แทนที่ — ของเดิมยังทำงานเหมือนเดิมถ้ารูปโหลดไม่ขึ้น
     const KFX_BASE = "assets/kenney/fx/";
     const kfxTex = (() => { const c = {}; return (n) => { if (c[n]) return c[n]; const t = new THREE.TextureLoader().load(KFX_BASE + n + ".png"); t.encoding = THREE.sRGBEncoding; t.minFilter = THREE.LinearMipmapLinearFilter; return (c[n] = t); }; })();
+    const fxDimK = () => (G.cls === "assassin" && (G._skCast || G.banim)) ? 0.55 : 1;   // 🥷 ลดแสงเอฟเฟกต์ตอนนักฆ่าออกสกิล/ต่อสู้ (สีบวกแสงเข้มลง = จ้าน้อยลง)
+    const fxDimObj = (g, k) => { const D = k == null ? fxDimK() : k; if (D >= 1 || !g) return g;
+      g.traverse((o) => { if (o.isLight && !o.userData._dimmed) { o.userData._dimmed = 1; o.intensity *= D; } const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { if (!m || m.userData._dimmed) return; m.userData._dimmed = 1; if (m.color) m.color.multiplyScalar(D); if (m.emissive && m.emissiveIntensity != null) m.emissiveIntensity *= D; }); });
+      return g; };
     const kSprite = (name, color, size, o) => {     // สไปรท์หันหน้าเข้ากล้อง · o.normal = ผสมสีปกติ (ควัน/ฝุ่น) · o.rot = หมุนในระนาบจอ
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: kfxTex(name), color: color == null ? 0xffffff : color, transparent: true, opacity: o && o.op != null ? o.op : 1,
         blending: o && o.normal ? THREE.NormalBlending : THREE.AdditiveBlending, depthWrite: false, rotation: (o && o.rot) || 0 }));
-      sp.scale.set(size, (o && o.h) || size, 1); return sp;
+      sp.scale.set(size, (o && o.h) || size, 1); fxDimObj(sp); return sp;
     };
     const kDecal = (name, color, size, y) => {      // แผ่นวางราบบนพื้น (รอยไหม้/รอยแตก/วงเวท)
       const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: kfxTex(name), color: color == null ? 0xffffff : color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-      m.rotation.x = -Math.PI / 2; m.position.y = y == null ? 0.05 : y; m.renderOrder = 2; return m;
+      m.rotation.x = -Math.PI / 2; m.position.y = y == null ? 0.05 : y; m.renderOrder = 2; fxDimObj(m); return m;
     };
     const kfxSpawn = (x, z, dur, build) => { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const update = build(g); activeFx.push({ group: g, t: 0, dur, update }); return g; };
     const kEase = (pr, a, b) => Math.max(0, Math.min(1, (pr - a) / (b - a)));
@@ -30709,8 +30807,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         if (kx.length) { const u0 = update; update = (pr, tn) => { if (u0) u0(pr, tn); for (const f of kx) f(pr); }; }
       } catch (_) { if (kOnly && !g.children.length) { fxType = kType; } }
-      { const DIM = { punchwave: 0.62, kneeburst: 0.62 }[kType];   // 🥊 ท่าสกิลนักมวย (หมัด/เข่า) — ลดความจ้าลงนิดหน่อย (สีเข้มขึ้น = แสงบวกน้อยลง)
-        if (DIM) g.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { if (!m || m.userData._dimmed) return; m.userData._dimmed = 1; if (m.color) m.color.multiplyScalar(DIM); if (m.emissive && m.emissiveIntensity != null) m.emissiveIntensity *= DIM; }); }); }
+      { const DIM = { punchwave: 0.62, kneeburst: 0.62 }[kType] || (fxDimK() < 1 ? fxDimK() : 0);   // 🥊 ท่าสกิลนักมวย (หมัด/เข่า) — ลดความจ้าลงนิดหน่อย (สีเข้มขึ้น = แสงบวกน้อยลง) · 🥷 นักฆ่าลดลงอีก
+        if (DIM) fxDimObj(g, DIM); }
       // 🔅 เอฟเฟกต์ชุดเก่า (ทรงเรขาคณิตเรืองแสง) — ลดความจ้า: emissive ไม่เกิน 0.7 · ความทึบสูงสุด ×0.75 · ไม่เขียน depth (ไม่บังกันเอง)
       g.traverse((o) => { const m = o.material; if (!m || !(o.isMesh || o.isSprite)) return;   // ภาพ Kenney/Kalponic ×0.82 · ของเก่า ×0.75
         (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm.emissiveIntensity > 0.7) mm.emissiveIntensity = 0.7; mm.userData._opMul = kOnly || o.isSprite ? 0.82 : 0.75; if (mm.transparent) mm.depthWrite = false; }); });
@@ -36146,7 +36244,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const a = (idx % 5) / 5 * Math.PI * 2 + 0.9, OFF = [Math.sin(a) * 2.3, 0, Math.cos(a) * 2.3];   // ยืนล้อมตัวเราบนพื้น
             g.position.set(char.position.x + OFF[0], 0, char.position.z + OFF[2]); g.scale.copy(char.scale);   // ขนาดเท่าตัวจริง (เรขาคณิตถูกอบเป็นพิกัดในตัวละครที่หักสเกลออกแล้ว)
             g.userData = { boneMat, eyeMat, t: 0, hold: 0.2, dur: 0.2, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: char.position.y, oz: OFF[2], ey: char.position.y, real: true, target, onHit };
-            scene.add(g); shadowBolts.push(g);
+            fxDimObj(g); scene.add(g); shadowBolts.push(g);
             return;
           }
         }
@@ -36172,7 +36270,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const OFF = [[-1.6, 1.9, -0.15], [1.6, 2.2, -0.05], [0, 2.6, -1.3]][idx % 3]; // จุดลอยรอบตัว เหนือไหล่ ให้เห็นชัด
         g.position.set(char.position.x + OFF[0], OFF[1], char.position.z + OFF[2]);
         g.userData = { boneMat, eyeMat, t: 0, hold: 0.18, dur: 0.17, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: OFF[1], oz: OFF[2], target, onHit };
-        scene.add(g); shadowBolts.push(g);
+        fxDimObj(g); scene.add(g); shadowBolts.push(g);
       } catch (e) {}
     };
     // 🌟 เลเวลอัพ — ลำแสงสีทองส่องลงมาจากฟ้าครอบตัวละคร + วงแสงบนพื้น + ประกายลอยขึ้น (แทนพลุกระดาษ)
@@ -36284,7 +36382,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const sx = char.position.x + Math.sin(char.rotation.y) * 0.35, sz = char.position.z + Math.cos(char.rotation.y) * 0.35;
         g.position.set(sx, 1.55, sz);
         g.userData = { kind: "knife", t: 0, dur: 0.24, sx, sz, sy: 1.55, target, onHit, mats: [bladeMat, gripMat] };
-        scene.add(g); poisonFx.push(g);
+        fxDimObj(g); scene.add(g); poisonFx.push(g);
       } catch (e) {}
     };
     const spawnPoisonCloud = (x, z, col, big) => {
