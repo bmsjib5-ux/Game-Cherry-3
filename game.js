@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v707"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v708"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -38614,7 +38614,7 @@ function CherryAdventure() {
                 return geo;
             };
             // 🔘 ปุ่มทั้งเมือง (InstancedMesh เดียว · สีต่อชิ้น · ขนาดต่อชิ้นได้สำหรับอิฐยักษ์)
-            const STUD_MAX = 9000, studGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.09, 10);
+            const STUD_MAX = 18000, studGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.09, 10);
             studGeo.translate(0, 0.045, 0);
             const studIM = new THREE.InstancedMesh(studGeo, new THREE.MeshStandardMaterial({ roughness: 0.32, metalness: 0 }), STUD_MAX);
             studIM.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(STUD_MAX * 3), 3); // ต้องจองสีเต็มจำนวนก่อน — setColorAt ของ r128 จองตาม count ตอนเรียกครั้งแรก (count = 0 → สีดำทั้งหมด)
@@ -38768,8 +38768,8 @@ function CherryAdventure() {
                 mergeByMat(g);
                 return { g, st, r: Math.max(w, d) * 0.62 + 0.4 };
             };
-            for (let n = 0; n < 12; n++) {
-                const at = spot(4, 6.5, 90, FIELD_R * 0.3, FIELD_R * 0.86);
+            for (let n = 0; n < 34; n++) { // 🏘️ บ้านเยอะขึ้น ~3 เท่า — วงในชิดลานกลางเมืองก่อน แล้วค่อยกระจายออกไปถึงขอบเมือง
+                const at = spot(2.5, 5.2, 160, FIELD_R * (n < 10 ? 0.2 : 0.28), FIELD_R * (n < 10 ? 0.5 : 0.9));
                 if (!at)
                     continue;
                 const [x, z] = at;
