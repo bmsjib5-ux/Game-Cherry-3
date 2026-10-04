@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v703";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v704";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3252,7 +3252,8 @@ const HERO_THEME = {
   ignis:    { g: "M", cut: "Ranger", noHood: 1, hue: [8, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x2a1a10, t: 4, col: 0x6ad8ff, fx: { core: 0x6ad8ff }, gear: { hat: { kk: "helmKnight", tint: 0xc0302a }, gloves: { k: "gauntlet", c: 0xf0c040 }, pants: { k: "plate", c: 0xc0302a }, shoes: { k: "boot", c: 0xf0c040 } } },
   captain:  { g: "M", cut: "Ranger", noHood: 1, hue: [218, 0.65, 0.85], hair: "Hair_SimpleParted", hairC: 0xc8a060, t: 3, col: 0x7ab0e8, fx: { emblem: 1, shield: 1 }, gear: { gloves: { k: "gauntlet", c: 0xc0302a }, shoes: { k: "boot", c: 0xc0302a } } },
   thunder:  { g: "M", cut: "Ranger", noHood: 1, hue: [215, 0.25, 0.75], hair: "Hair_SimpleParted", hairC: 0xe8c060, beard: 1, t: 4, col: 0xb0e0ff, fx: { cape: 0xc0302a, bolts: 1 }, gear: { hat: { kk: "helmHorned", tint: 0xd8dce4 } } },
-  yaksa:    { g: "M", cut: "Ranger", noHood: 1, hue: [42, 0.75, 0.95], hair: "Hair_Buzzed", hairC: 0x1a1a1a, skin: 0x2a9a5a, skinK: 0.6, h: 4.4, t: 4, col: 0xffe08a, fx: { halo: 0xffffff, fangs: 1, collar: 1 }, gear: { gloves: { k: "gauntlet", c: 0xe8b840 } } },
+  yaksa:    { g: "M", bare: 1, hair: "Hair_Buzzed", hairC: 0x1a1a1a, skinMap: [138, 0.5, 1.05, 0.9, 1, 0.62], h: 4.4, t: 1, col: 0xffe08a,   // 👹 ยักษ์กายเขียว นุ่งกางเกง กำไลแขนขา มงกุฎ 3 ชั้น
+              fx: { tiara: "tier3", fangs: 1, collar: 1, armlets: 1, anklets: 1, swim: "trunks", swimC: 0xe8b840, swimC2: 0xc02a2a } },
   luminia:  { g: "F", cut: "Peasant", hue: HDY(145, 0.45, 1.3), hair: "Hair_Long", hairC: 0xf8f0c8, t: 3, leaf: 1, col: 0x8ee8b4, fx: { ears: "elf", flowers: 0xffffff } },
   apsara:   { g: "F", cut: "Peasant", hue: HDY(45, 0.55, 1.6, 0.45), hair: "Hair_Buns", hairC: 0x2a1a10, t: 4, col: 0xffe08a, fx: { halo: 0xffffff, collar: 1, wings: "angel", wingS: 0.8 } },
   asura:    { g: "M", cut: "Ranger", noHood: 1, hue: [320, 0.6, 0.5], hair: "Hair_Buzzed", hairC: 0x1a0a14, skin: 0x8a5a78, skinK: 0.45, t: 5, col: 0xff3a5a, fx: { horns: "demon", wings: "bat", wingS: 0.9 } },
@@ -11742,6 +11743,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const sh = add(hd, new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.012, 0.02, 9, 1, false, -Math.PI / 2, Math.PI), MT(0xffe8f0, { roughness: 0.35, metalness: 0.2 })), 0, y0 + 0.07, R + 0.01); sh.rotation.x = Math.PI / 2; sh.rotation.y = Math.PI;
             for (let k = -4; k <= 4; k++) { if (!k) continue; const a = k * 0.2; add(hd, new THREE.Mesh(SP(0.016, 8, 6), MT(0xfff8f0, { roughness: 0.25, metalness: 0.3 })), Math.sin(a) * R, y0, Math.cos(a) * R); }
           }
+          else if (T === "tier3") {   // 👑 มงกุฎทองทรงสูง 3 ชั้น + ยอดแหลม + พลอย
+            const base = 0.4 + hy; let y = base;
+            [[0.2, 0.17, 0.13], [0.15, 0.115, 0.13], [0.105, 0.07, 0.13]].forEach(([r1, r2, hh]) => {
+              add(hd, new THREE.Mesh(new THREE.CylinderGeometry(r2 * hs, r1 * hs, hh, 18), GOLD), 0, y + hh / 2, -0.02);
+              const rim = add(hd, new THREE.Mesh(new THREE.TorusGeometry(r1 * hs, 0.014, 6, 22), GOLD), 0, y + 0.006, -0.02); rim.rotation.x = Math.PI / 2;
+              for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; add(hd, new THREE.Mesh(CN(0.022, 0.07, 4), GOLD), Math.sin(a) * r2 * hs, y + hh + 0.03, Math.cos(a) * r2 * hs - 0.02); }
+              add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.026, 0), GW(0xff3a3a, 1.2)), 0, y + hh * 0.5, r1 * hs * 0.95 - 0.02);
+              y += hh;
+            });
+            add(hd, new THREE.Mesh(CN(0.04, 0.32, 8), GOLD), 0, y + 0.16, -0.02);
+            add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), GW(0x3ad0ff, 1.4)), 0, y + 0.34, -0.02);
+          }
           else if (T === "crown") {   // 👑 มงกุฎทองยอดแหลม + พลอย
             for (let k = 0; k < 9; k++) { const a = (k / 9) * Math.PI * 2, big = k % 2 === 0; add(hd, new THREE.Mesh(CN(0.03, big ? 0.15 : 0.1, 4), GOLD), Math.sin(a) * R, y0 + (big ? 0.085 : 0.06), Math.cos(a) * R); }
             const b2 = add(hd, new THREE.Mesh(new THREE.CylinderGeometry(R * 1.01, R * 1.03, 0.06, 28, 1, true), GOLD), 0, y0 + 0.01, 0); b2.material = GOLD.clone(); b2.material.side = THREE.DoubleSide;
@@ -11823,6 +11836,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (ua) { for (const [ox, rr] of [[0.15, 0.14], [0.21, 0.135]]) { const b = add(ua, new THREE.Mesh(new THREE.TorusGeometry(rr, 0.022, 8, 24), GOLD), sx * ox, 0, 0); b.rotation.y = Math.PI / 2; }
             const gm = add(ua, new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), GW(0xff3a3a, 1.2)), sx * 0.18, 0.02, 0.14); gm.scale.set(0.8, 1.2, 0.6); }
           if (la) for (const ox of [0.4, 0.45]) { const b = add(la, new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.02, 8, 22), GOLD), sx * ox, -0.02, -0.02); b.rotation.y = Math.PI / 2; }
+        }
+        if (FX.anklets) for (const sd of ["l", "r"]) {   // 💛 กำไลข้อเท้าทอง 2 วง
+          const cf = rig("calf_" + sd); if (!cf) continue;
+          for (const oy of [-0.74, -0.68]) { const b = add(cf, new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.02, 8, 22), GOLD), 0, oy, -0.03); b.rotation.x = Math.PI / 2; }
         }
         if (FX.ice || FX.bolts) for (const sd of ["l", "r"]) {   // ❄️ ผลึกน้ำแข็ง / ⚡ ประกายสายฟ้าเหนือไหล่
           const sh = rig("upperarm_" + sd); if (!sh) continue; const sx = sd === "l" ? 1 : -1;
