@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v692"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v693"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -12277,7 +12277,10 @@ function CherryAdventure() {
         //    ยืน · เดิน · วิ่งไล่ · สะดุ้งตอนโดนตี · เงื้อตี · ล้มตาย  (คลิปดึงมาจากชุด Rig_Medium ของ KayKit)
         //    ⏳ โหลดตอนเจอมอนพวกนี้ครั้งแรกเท่านั้น (ราว 1.2MB) — คนที่ยังไม่ถึงด่านนรกไม่ต้องโหลด
         const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage", skelguard: "Skeleton_Warrior" }; // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
-        const KK_SKEL_H = 1.5; // ความสูงในเกม (ตัวละครผู้เล่นสูงราว 2)
+        const KK_SKEL_H = 1.5;
+        // 🎨 ย้อมสีเฉพาะสายพันธุ์ (ใช้ร่างเดียวกันแต่คนละด่าน) — hue = ย้อม texture รักษาลายเดิม · glow = เรืองแสงอ่อน ๆ
+        const KK_SKEL_TINT = { skelguard: { hue: [168, 0.55, 1.45, 0.92, 0, 0.25], glow: 0x10483a, gi: 0.7 } }; // 🏚️ ทหารโครงกระดูกเมืองร้าง — กระดูกเขียวหยกผีสิง
+        const kkSkelTintCache = {}; // ความสูงในเกม (ตัวละครผู้เล่นสูงราว 2)
         const KK_ONCE = ["Hit_A", "Death_A", "Throw"];
         const kkSkelLib = {};
         let kkSkelClips = null, kkSkelLoading = null;
@@ -12422,6 +12425,28 @@ function CherryAdventure() {
             }
             const src = kkSkelLib[name];
             const node = THREE.SkeletonUtils.clone(src.obj); // ต้องใช้ SkeletonUtils — clone ปกติจะแชร์กระดูกกันทั้งฝูง
+            const TT = KK_SKEL_TINT[g.userData.spId];
+            if (TT)
+                node.traverse((o) => {
+                    if (!o.isMesh || !o.material)
+                        return;
+                    const ck = g.userData.spId + ":" + o.material.uuid;
+                    if (!kkSkelTintCache[ck]) {
+                        const m = o.material.clone();
+                        if (TT.hue && m.map && G.qtHueMap)
+                            m.map = G.qtHueMap(m.map, "kks:" + ck, TT.hue);
+                        if (TT.glow != null) {
+                            m.emissive = new THREE.Color(TT.glow);
+                            m.emissiveIntensity = TT.gi || 0.5;
+                            if (m.map)
+                                m.emissiveMap = m.map;
+                        }
+                        m.userData = Object.assign({}, m.userData, { _shared: true });
+                        m.needsUpdate = true;
+                        kkSkelTintCache[ck] = m;
+                    }
+                    o.material = kkSkelTintCache[ck];
+                });
             const sc = KK_SKEL_H / src.h;
             node.scale.setScalar(sc);
             node.position.y = -src.y0 * sc; // ฝ่าเท้าแตะพื้น
