@@ -1,0 +1,3 @@
+Ant.glb — "Ant 3D Model + Rigging + Animated (Low-poly-ish)" by Michael Van Ham, OpenGameArt.org, CC0 1.0
+  https://opengameart.org/content/ant-3d-model-rigging-animated-low-poly-ish (converted .blend -> .glb)
+AntEggs.glb — made for Cherry Adventure (CC0)
