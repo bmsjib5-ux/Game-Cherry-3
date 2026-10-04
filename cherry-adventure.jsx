@@ -395,7 +395,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v714";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v715";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -11564,9 +11564,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.remoteModelSet = (grp, info) => {
         const M0r = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
         const THr = info && info.hero && !G.HERO_OFF && HERO_THEME[info.hero];
-        const legoR = !!(info && info.outfit === "lego_suit" && !THr);   // 🧱 เพื่อนใส่ชุดตัวต่อ = เห็นเป็นอิฐเลโก้ทั้งตัวเหมือนกัน
-        let M = THr ? heroThemeModel(M0r, THr) : legoR ? Object.assign({}, M0r, { hue: [4, 0.85, 1.05] }) : M0r;   // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
-        if (!THr && !legoR && info && (info.outfit || info.dy != null)) {   // 👕 ชุดที่เพื่อนใส่ (แบบตัด/สี) + สีย้อม — ตรงกับที่เจ้าตัวเห็น
+        const legoR = !!(info && info.lego);   // 🧱 เพื่อนเปิดชุดตัวต่อ (สวมแยก) = เห็นลุคเดิมของเขาในร่างอิฐเลโก้
+        let M = THr ? heroThemeModel(M0r, THr) : M0r;   // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
+        if (!THr && info && (info.outfit || info.dy != null)) {   // 👕 ชุดที่เพื่อนใส่ (แบบตัด/สี) + สีย้อม — ตรงกับที่เจ้าตัวเห็น
           let O = (info.outfit && HERO_OUTFIT[info.outfit]) || null;
           if (!O && info.outfit) { const mm = /^o[res](atk|def|agi)$/.exec(info.outfit); O = mm ? HERO_OUTFIT_ARCH[mm[1]] : null; }
           O = O || {};
@@ -11655,7 +11655,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               parts.forEach(walk); grp.updateMatrixWorld(true);
               const sk = objs.filter((o) => o.isSkinnedMesh);
               if (sk.length) {
-                const key = "remote|" + (info.c || "warrior"); G._heroLegoCache = G._heroLegoCache || {};
+                const key = "remote|" + (info.c || "warrior") + "|" + (info.hero || "") + "|" + (info.outfit || "") + "|" + (info.dy == null ? "" : info.dy); G._heroLegoCache = G._heroLegoCache || {};
                 const C = G._heroLegoCache[key] || (G._heroLegoCache[key] = G.legoBuildFn(g, objs, { legoN: 32, by: "h" }, { h: M.h, max: M.h }));
                 const lm = G.legoMatFn(); sk.forEach((o) => { o.visible = false; });
                 C.parts.forEach((pt) => { const anc = objs[pt.a] || g; const m = new THREE.Mesh(pt.geo, lm); m.castShadow = true; m.frustumCulled = false; m.userData.lego = 1; anc.add(m); });
@@ -12432,7 +12432,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const sk = objs.filter((o) => o.isSkinnedMesh); if (!sk.length) return;
         const box = new THREE.Box3(); sk.forEach((o) => box.expandByObject(o));
         const ws = H.g.getWorldScale(new THREE.Vector3()).y || 1, hh = (box.max.y - box.min.y) / ws;
-        const key = (G._heroOutfitSig || "") + "|" + (G.heroModelId || "");
+        const key = (G._heroOutfitSig || "") + "|" + (G.heroModelId || "") + "|" + (G.heroId || "");
         G._heroLegoCache = G._heroLegoCache || {};
         const C = G._heroLegoCache[key] || (G._heroLegoCache[key] = G.legoBuildFn(H.g, objs, { legoN: 32, by: "h" }, { h: hh, max: hh }));
         const mat = G.legoMatFn();
@@ -12604,7 +12604,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (tkRig) { g.updateMatrixWorld(true); heroTopknotTick(G._heroModel); }
           { const hooded = /Ranger$/.test(M.files[1] || "") && !M.noHood; const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded)); if (deco.length) { G._heroModel.deco = deco; g.updateMatrixWorld(true); deco.forEach((K) => heroBoneFollow(G._heroModel, K)); } }   // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
           heroPlay("Idle_Loop");
-          if (OI && OI.id === "lego_suit" && G.heroLegoize) { try { G.heroLegoize(G._heroModel); } catch (eHL) { console.warn("lego hero", eHL); } }   // 🧱 ชุดตัวต่อเลโก้ → ทั้งตัวเป็นอิฐ
+          if (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned() && G.heroLegoize) { try { G.heroLegoize(G._heroModel); } catch (eHL) { console.warn("lego hero", eHL); } }   // 🧱 ชุดตัวต่อเลโก้ → ทั้งตัวเป็นอิฐ
           if (M.mech) heroMechAttach(G._heroModel, M, token);   // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์
         });
       };
@@ -23263,14 +23263,24 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.legoCloseTalk = () => setUi((u) => ({ ...u, legoTalk: null }));
       // 🏪 ร้านตัวต่อ — น้ำยา/ใบวาร์ป (ราคาร้านปกติ) + กล่องสุ่มตัวต่อ (ทอง/น้ำยา/เพชร/อุปกรณ์หายาก)
       G.LEGO_BOX_PRICE = 5000;
+      G.legoSkinOwned = () => (G.inv || []).includes("lego_suit");
+      G.legoSkinToggle = (on) => {   // 🧱 สวม/ถอดชุดตัวต่อ — แยกจากช่องชุด: ชุด/อาวุธ/ค่าสถานะที่ใส่อยู่ยังเหมือนเดิม แค่ร่างกลายเป็นอิฐ
+        if (!G.legoSkinOwned()) { toast("ยังไม่มีชุดตัวต่อ — ซื้อได้ที่ร้านตัวต่อ เมืองเลโก้ 🧱"); return; }
+        G.legoSkinOn = on == null ? !G.legoSkinOn : !!on;
+        if (G.heroModelId && G.heroModelSet) G.heroModelSet(G.heroModelId);
+        toast(G.legoSkinOn ? "🧱 สวมชุดตัวต่อแล้ว! (ชุดและอาวุธที่ใส่อยู่ไม่เปลี่ยน)" : "🧱 ถอดชุดตัวต่อแล้ว");
+        setUi((u) => ({ ...u, legoSkinOn: G.legoSkinOn }));
+        if (G.saveGame) G.saveGame();
+      };
       G.legoBuyItem = (id) => {
         const it = LOOT.find((x) => x.id === id && x.lego); if (!it) return;
         if ((G.gold || 0) < it.price) { toast(`ทองไม่พอ! ต้องมี ${it.price.toLocaleString()}💰`); return; }
         G.gold -= it.price; G.gainItem(id); if (G.sfx && G.sfx.coin) G.sfx.coin();
+        if (id === "lego_suit") { setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] })); G.legoSkinToggle(true); return; }   // ชุดตัวต่อสวมแยก — ซื้อแล้วใส่ให้เลย
         toast(`🧱 ซื้อ ${it.emoji} ${it.name} แล้ว! — สวมได้ที่หน้ากระเป๋า หรือใช้เป็นแฟชั่น 👗`);
         setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] })); if (G.saveGame) G.saveGame();
       };
-      G.legoShop = (on) => setUi((u) => ({ ...u, legoShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0 }));
+      G.legoShop = (on) => setUi((u) => ({ ...u, legoShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0, legoSkinOn: !!G.legoSkinOn }));
       G.legoBox = () => {
         const price = G.LEGO_BOX_PRICE;
         if ((G.gold || 0) < price) { toast(`ทองไม่พอ! ต้องมี ${price.toLocaleString()}💰`); return; }
@@ -32481,6 +32491,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     // equip an item (tap in the bag panel)
     G.equipItem = (id) => {
+      if (id === "lego_suit" && G.legoSkinToggle) { G.legoSkinToggle(); return; }   // 🧱 ชุดตัวต่อสวมแยก — ไม่เข้าช่องชุด
       const _r = G._equipItemRaw(id);
       { const eq = G.equip || {}; const n = Object.keys(eq).filter((k) => eq[k]).length; if (G.storyEvent) G.storyEvent("gear", n); }   // 🎓 บทสอนเล่น: นับของที่สวมอยู่
       return _r;
@@ -32992,6 +33003,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       else applyGear();
     };
     G.setCostume = (slot, id) => {
+      if (id === "lego_suit" && G.legoSkinToggle) { G.legoSkinToggle(true); return; }
       G.costume = G.costume || {};
       G.costume[slot] = id;
       refreshLook(slot);
@@ -44357,7 +44369,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           titleId: G.titleId || "t_none", // 🏅 equipped title
           titleId: G.titleId || "t_none", // 🏅 equipped title
           rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
-          costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
+          costume: G.costume || null, legoSkin: G.legoSkinOn ? 1 : 0, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
           profile: (G.profileInfo ? G.profileInfo() : null), // 📊 computed profile snapshot (for the web dashboard's character detail)
           pos: (G.inTownZone && G._townReturn) ? { x: G._townReturn.x, z: G._townReturn.z } : { x: char.position.x, z: char.position.z }, // 🏰 เซฟระหว่างอยู่ในเมือง = จำจุดผจญภัยเดิมไว้แทน
         }));
@@ -45458,7 +45470,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G._rtOnPos = (m) => {
       if (!m || !m.pid || m.pid === G.pid) return;
       let a = remoteAvatars.get(m.pid);
-      const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk].map((v) => (v == null ? "" : v)).join("|");
+      const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk, m.lego].map((v) => (v == null ? "" : v)).join("|");
       if (a && a.lookSig !== lookSig && (a.lookT || 0) < Date.now() - 1500) { G._rtRemove(m.pid); a = null; }   // 👕🧱 เพื่อนเปลี่ยนชุด/อาวุธ/ทรงผม/ฮีโร่ระหว่างเล่น → สร้างร่างใหม่ตามลุคล่าสุด (กันสร้างถี่เกินด้วยหน่วง 1.5 วิ)
       if (!a) { const grp = buildFullAvatar(m); grp.position.set(m.x || 0, 0, m.z || 0); scene.add(grp); a = { grp, walk: 0, lookSig, lookT: Date.now() }; remoteAvatars.set(m.pid, a); if (G.remoteModelSet) G.remoteModelSet(grp, m); }   // 🌐🧍 ตัวละครใหม่ (ร่างชิบิเป็นแค่ตัวสำรองระหว่างโหลด) // 🧍‍♂️✨ full look (falls back to simple avatar internally on any error)
       a.tx = m.x || 0; a.tz = m.z || 0; a.tyaw = m.yaw || 0; a.biome = m.biome; a.moving = !!m.moving; a.last = Date.now();
@@ -45577,7 +45589,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // 🐾 active pet descriptor (species/stage/level/mutation) so the receiver can rebuild the same buddy
         let pet = null; if (G.buddy != null && G.petAt) { const p = G.petAt(G.buddy); if (p) pet = { s: p.sp, st: p.stage || 1, lv: p.lv || 1, mu: p.mut || 0 }; }
         // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin + pet; the class accessory derives from c)
-        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+        G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, lego: (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned()) ? 1 : 0, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
       } catch (e) {}
     };
     G.rtLeave = () => { try { if (G.rtChannel) { G.rtChannel.send({ type: "broadcast", event: "leave", payload: { pid: G.pid } }); G.rtClient.removeChannel(G.rtChannel); G.rtChannel = null; } G._rtClear(); } catch (e) {} };
@@ -46750,6 +46762,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.titleId = d.titleId || "t_none";
       G.rolls = d.rolls || {}; G.sockets = d.sockets || {}; G.gems = d.gems || {};
       G.costume = d.costume || { weapon: null, outfit: null };
+      G.legoSkinOn = !!d.legoSkin;   // 🧱 ชุดตัวต่อแบบสวมแยก (เปิด/ปิด) ไม่ทับชุด/อาวุธที่ใส่อยู่
+      if (G.costume && G.costume.outfit === "lego_suit") { G.costume.outfit = null; G.legoSkinOn = true; }   // ♻️ เซฟเก่า (v712) ใส่ชุดตัวต่อเป็นแฟชั่น → ย้ายมาเป็นสวมแยก
       G.dye = d.dye || { outfit: null, weapon: null };
       G.wardrobePresets = d.wardrobePresets || [];
       G.dyePalette = d.dyePalette || [];
@@ -63380,7 +63394,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           ["🧪", `น้ำยาเลือด${(HP.m || {}).name || "กลาง"} ×10`, `ฟื้น ${(HP.m || {}).heal || 0} HP ต่อขวด`, ((HP.m || {}).price || 0) * 10, () => G.buyHpPot("m", 10)],
           ["💧", `น้ำยามานา${(MP.l || {}).name || "ใหญ่"} ×5`, `ฟื้น ${(MP.l || {}).rest || 0} มานาต่อขวด`, ((MP.l || {}).price || 0) * 5, () => G.buyMpPot("l", 5)],
           ["📜", "ใบวาร์ปข้ามแดน ×3", "วาร์ปไปแดนที่ปลดล็อกแล้วได้ทันที", wp * 3, () => G.buyWarpScroll(3)],
-          ...LOOT.filter((x) => x.lego).map((it) => [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), (it.slot === "outfit" ? "👕 ชุด · ใส่แล้วตัวละครกลายเป็นตัวต่อเลโก้ทั้งตัว! · " : "⚔️ อาวุธ (ทุกอาชีพ) · ") + [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : ""].filter(Boolean).join(" "), it.price, () => G.legoBuyItem(it.id)]),
+          ...LOOT.filter((x) => x.lego).map((it) => it.id === "lego_suit"
+            ? [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), "🧱 สวมแยก ไม่ทับชุด/อาวุธที่ใส่อยู่ — ร่างกลายเป็นตัวต่อเลโก้ทั้งตัว เปิด/ปิดได้ตลอด (เพื่อนเห็นด้วย)", it.price, () => G.legoBuyItem(it.id), (ui.inv || []).includes(it.id) ? { label: ui.legoSkinOn ? "ถอดชุด" : "สวมชุด", fn: () => G.legoSkinToggle() } : null]
+            : [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), "⚔️ อาวุธ (ทุกอาชีพ) · " + [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : ""].filter(Boolean).join(" "), it.price, () => G.legoBuyItem(it.id)]),
           ["🎁", "กล่องสุ่มตัวต่อ", "สุ่มได้ ทอง · น้ำยาใหญ่ · เพชร · อุปกรณ์หายาก (มีลุ้นระดับตำนาน!)", G.LEGO_BOX_PRICE || 5000, () => G.legoBox()],
         ];
         return (
@@ -63395,8 +63411,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               <div style={{ fontSize: 11.5, color: "#a08050", marginBottom: 11 }}>ยินดีต้อนรับจ้า! ของทุกชิ้นในร้านต่อจากอิฐแท้ 100% 😄</div>
               {ui.legoBoxLast && <div style={{ fontSize: 12, fontWeight: 800, color: "#3a9a4a", background: "#eaf7ec", borderRadius: 10, padding: "7px 10px", marginBottom: 10 }}>🎁 ล่าสุดได้: {ui.legoBoxLast}</div>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {rows.map(([em, name, desc, price, buy], i) => {
+                {rows.map(([em, name, desc, price, buy, alt], i) => {
                   const afford = g >= price;
+                  if (alt) return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, border: "2px solid #f2cd37", borderRadius: 14, padding: "9px 11px", background: "#fff" }}>
+                      <span style={{ fontSize: 26 }}>{em}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontSize: 13, fontWeight: 800, color: "#4a3a2a" }}>{name}</div><div style={{ fontSize: 11, color: "#8a7a5a" }}>{desc}</div></div>
+                      <button onClick={alt.fn} style={{ padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: ui.legoSkinOn ? "linear-gradient(90deg,#6c6e68,#a0a5a9)" : "linear-gradient(90deg,#3aa84a,#6ac87a)", whiteSpace: "nowrap" }}>{alt.label}</button>
+                    </div>
+                  );
                   return (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, border: "2px solid #f2cd37", borderRadius: 14, padding: "9px 11px", background: "#fff" }}>
                       <span style={{ fontSize: 26 }}>{em}</span>
@@ -68104,7 +68127,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 ) : null;
               })()}
               {/* 👗 FASHION — costume overrides the LOOK, stats stay from the real gear */}
-              <button onClick={() => setUi((u) => ({ ...u, fashionOpen: !u.fashionOpen }))} style={{
+              <button onClick={() => setUi((u) => ({ ...u, fashionOpen: !u.fashionOpen, legoSkinOn: !!G.legoSkinOn }))} style={{
                 width: "100%", padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", marginBottom: 8,
                 fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff",
                 background: "linear-gradient(90deg,#d06ab0,#e88ac8)",
@@ -68114,6 +68137,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   <div style={{ fontSize: 9.5, color: "#a3789a", marginBottom: 7 }}>
                     เปลี่ยนเฉพาะ<b>รูปลักษณ์</b> — ค่าสถานะยังมาจากของที่สวมจริง ✨ (ครบทั้ง 7 ช่อง)
                   </div>
+                  {(ui.inv || []).includes("lego_suit") && (
+                    <button onClick={() => G.legoSkinToggle()} style={{ width: "100%", marginBottom: 8, padding: "7px 0", borderRadius: 10, border: "2px solid #f2cd37", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: ui.legoSkinOn ? "#fff" : "#a06a00", background: ui.legoSkinOn ? "linear-gradient(90deg,#c91a09,#e8503a)" : "#fffbea" }}>
+                      🧱 ชุดตัวต่อ (สวมแยก): {ui.legoSkinOn ? "สวมอยู่ — กดเพื่อถอด" : "ถอดอยู่ — กดเพื่อสวม"}
+                    </button>
+                  )}
                   {SLOTS.map((slot) => {
                     const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot; });
                     const cur = (ui.costume || {})[slot];

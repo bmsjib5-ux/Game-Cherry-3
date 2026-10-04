@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v714"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v715"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -16041,9 +16041,9 @@ function CherryAdventure() {
             G.remoteModelSet = (grp, info) => {
                 const M0r = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
                 const THr = info && info.hero && !G.HERO_OFF && HERO_THEME[info.hero];
-                const legoR = !!(info && info.outfit === "lego_suit" && !THr); // 🧱 เพื่อนใส่ชุดตัวต่อ = เห็นเป็นอิฐเลโก้ทั้งตัวเหมือนกัน
-                let M = THr ? heroThemeModel(M0r, THr) : legoR ? Object.assign({}, M0r, { hue: [4, 0.85, 1.05] }) : M0r; // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
-                if (!THr && !legoR && info && (info.outfit || info.dy != null)) { // 👕 ชุดที่เพื่อนใส่ (แบบตัด/สี) + สีย้อม — ตรงกับที่เจ้าตัวเห็น
+                const legoR = !!(info && info.lego); // 🧱 เพื่อนเปิดชุดตัวต่อ (สวมแยก) = เห็นลุคเดิมของเขาในร่างอิฐเลโก้
+                let M = THr ? heroThemeModel(M0r, THr) : M0r; // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
+                if (!THr && info && (info.outfit || info.dy != null)) { // 👕 ชุดที่เพื่อนใส่ (แบบตัด/สี) + สีย้อม — ตรงกับที่เจ้าตัวเห็น
                     let O = (info.outfit && HERO_OUTFIT[info.outfit]) || null;
                     if (!O && info.outfit) {
                         const mm = /^o[res](atk|def|agi)$/.exec(info.outfit);
@@ -16189,7 +16189,7 @@ function CherryAdventure() {
                             grp.updateMatrixWorld(true);
                             const sk = objs.filter((o) => o.isSkinnedMesh);
                             if (sk.length) {
-                                const key = "remote|" + (info.c || "warrior");
+                                const key = "remote|" + (info.c || "warrior") + "|" + (info.hero || "") + "|" + (info.outfit || "") + "|" + (info.dy == null ? "" : info.dy);
                                 G._heroLegoCache = G._heroLegoCache || {};
                                 const C = G._heroLegoCache[key] || (G._heroLegoCache[key] = G.legoBuildFn(g, objs, { legoN: 32, by: "h" }, { h: M.h, max: M.h }));
                                 const lm = G.legoMatFn();
@@ -17616,7 +17616,7 @@ function CherryAdventure() {
                 const box = new THREE.Box3();
                 sk.forEach((o) => box.expandByObject(o));
                 const ws = H.g.getWorldScale(new THREE.Vector3()).y || 1, hh = (box.max.y - box.min.y) / ws;
-                const key = (G._heroOutfitSig || "") + "|" + (G.heroModelId || "");
+                const key = (G._heroOutfitSig || "") + "|" + (G.heroModelId || "") + "|" + (G.heroId || "");
                 G._heroLegoCache = G._heroLegoCache || {};
                 const C = G._heroLegoCache[key] || (G._heroLegoCache[key] = G.legoBuildFn(H.g, objs, { legoN: 32, by: "h" }, { h: hh, max: hh }));
                 const mat = G.legoMatFn();
@@ -17919,7 +17919,7 @@ function CherryAdventure() {
                         }
                     } // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
                     heroPlay("Idle_Loop");
-                    if (OI && OI.id === "lego_suit" && G.heroLegoize) {
+                    if (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned() && G.heroLegoize) {
                         try {
                             G.heroLegoize(G._heroModel);
                         }
@@ -39248,6 +39248,20 @@ function CherryAdventure() {
             G.legoCloseTalk = () => setUi((u) => ({ ...u, legoTalk: null }));
             // 🏪 ร้านตัวต่อ — น้ำยา/ใบวาร์ป (ราคาร้านปกติ) + กล่องสุ่มตัวต่อ (ทอง/น้ำยา/เพชร/อุปกรณ์หายาก)
             G.LEGO_BOX_PRICE = 5000;
+            G.legoSkinOwned = () => (G.inv || []).includes("lego_suit");
+            G.legoSkinToggle = (on) => {
+                if (!G.legoSkinOwned()) {
+                    toast("ยังไม่มีชุดตัวต่อ — ซื้อได้ที่ร้านตัวต่อ เมืองเลโก้ 🧱");
+                    return;
+                }
+                G.legoSkinOn = on == null ? !G.legoSkinOn : !!on;
+                if (G.heroModelId && G.heroModelSet)
+                    G.heroModelSet(G.heroModelId);
+                toast(G.legoSkinOn ? "🧱 สวมชุดตัวต่อแล้ว! (ชุดและอาวุธที่ใส่อยู่ไม่เปลี่ยน)" : "🧱 ถอดชุดตัวต่อแล้ว");
+                setUi((u) => ({ ...u, legoSkinOn: G.legoSkinOn }));
+                if (G.saveGame)
+                    G.saveGame();
+            };
             G.legoBuyItem = (id) => {
                 const it = LOOT.find((x) => x.id === id && x.lego);
                 if (!it)
@@ -39260,12 +39274,17 @@ function CherryAdventure() {
                 G.gainItem(id);
                 if (G.sfx && G.sfx.coin)
                     G.sfx.coin();
+                if (id === "lego_suit") {
+                    setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] }));
+                    G.legoSkinToggle(true);
+                    return;
+                } // ชุดตัวต่อสวมแยก — ซื้อแล้วใส่ให้เลย
                 toast(`🧱 ซื้อ ${it.emoji} ${it.name} แล้ว! — สวมได้ที่หน้ากระเป๋า หรือใช้เป็นแฟชั่น 👗`);
                 setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] }));
                 if (G.saveGame)
                     G.saveGame();
             };
-            G.legoShop = (on) => setUi((u) => ({ ...u, legoShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0 }));
+            G.legoShop = (on) => setUi((u) => ({ ...u, legoShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0, legoSkinOn: !!G.legoSkinOn }));
             G.legoBox = () => {
                 const price = G.LEGO_BOX_PRICE;
                 if ((G.gold || 0) < price) {
@@ -53514,6 +53533,10 @@ function CherryAdventure() {
         };
         // equip an item (tap in the bag panel)
         G.equipItem = (id) => {
+            if (id === "lego_suit" && G.legoSkinToggle) {
+                G.legoSkinToggle();
+                return;
+            } // 🧱 ชุดตัวต่อสวมแยก — ไม่เข้าช่องชุด
             const _r = G._equipItemRaw(id);
             {
                 const eq = G.equip || {};
@@ -54193,6 +54216,10 @@ function CherryAdventure() {
                 applyGear();
         };
         G.setCostume = (slot, id) => {
+            if (id === "lego_suit" && G.legoSkinToggle) {
+                G.legoSkinToggle(true);
+                return;
+            }
             G.costume = G.costume || {};
             G.costume[slot] = id;
             refreshLook(slot);
@@ -70468,7 +70495,7 @@ function CherryAdventure() {
                     titleId: G.titleId || "t_none", // 🏅 equipped title
                     titleId: G.titleId || "t_none", // 🏅 equipped title
                     rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
-                    costume: G.costume || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
+                    costume: G.costume || null, legoSkin: G.legoSkinOn ? 1 : 0, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
                     profile: (G.profileInfo ? G.profileInfo() : null), // 📊 computed profile snapshot (for the web dashboard's character detail)
                     pos: (G.inTownZone && G._townReturn) ? { x: G._townReturn.x, z: G._townReturn.z } : { x: char.position.x, z: char.position.z }, // 🏰 เซฟระหว่างอยู่ในเมือง = จำจุดผจญภัยเดิมไว้แทน
                 }));
@@ -72379,7 +72406,7 @@ function CherryAdventure() {
             if (!m || !m.pid || m.pid === G.pid)
                 return;
             let a = remoteAvatars.get(m.pid);
-            const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk].map((v) => (v == null ? "" : v)).join("|");
+            const lookSig = [m.c, m.w, m.hat, m.mask, m.outfit, m.gl, m.pa, m.sh, m.wing, m.hero, m.dy, m.hair, m.hc, m.sk, m.lego].map((v) => (v == null ? "" : v)).join("|");
             if (a && a.lookSig !== lookSig && (a.lookT || 0) < Date.now() - 1500) {
                 G._rtRemove(m.pid);
                 a = null;
@@ -72611,7 +72638,7 @@ function CherryAdventure() {
                         pet = { s: p.sp, st: p.stage || 1, lv: p.lv || 1, mu: p.mut || 0 };
                 }
                 // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin + pet; the class accessory derives from c)
-                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, lego: (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned()) ? 1 : 0, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
             }
             catch (e) { }
         };
@@ -74707,6 +74734,11 @@ function CherryAdventure() {
             G.sockets = d.sockets || {};
             G.gems = d.gems || {};
             G.costume = d.costume || { weapon: null, outfit: null };
+            G.legoSkinOn = !!d.legoSkin; // 🧱 ชุดตัวต่อแบบสวมแยก (เปิด/ปิด) ไม่ทับชุด/อาวุธที่ใส่อยู่
+            if (G.costume && G.costume.outfit === "lego_suit") {
+                G.costume.outfit = null;
+                G.legoSkinOn = true;
+            } // ♻️ เซฟเก่า (v712) ใส่ชุดตัวต่อเป็นแฟชั่น → ย้ายมาเป็นสวมแยก
             G.dye = d.dye || { outfit: null, weapon: null };
             G.wardrobePresets = d.wardrobePresets || [];
             G.dyePalette = d.dyePalette || [];
@@ -98598,7 +98630,9 @@ function CherryAdventure() {
                 ["🧪", `น้ำยาเลือด${(HP.m || {}).name || "กลาง"} ×10`, `ฟื้น ${(HP.m || {}).heal || 0} HP ต่อขวด`, ((HP.m || {}).price || 0) * 10, () => G.buyHpPot("m", 10)],
                 ["💧", `น้ำยามานา${(MP.l || {}).name || "ใหญ่"} ×5`, `ฟื้น ${(MP.l || {}).rest || 0} มานาต่อขวด`, ((MP.l || {}).price || 0) * 5, () => G.buyMpPot("l", 5)],
                 ["📜", "ใบวาร์ปข้ามแดน ×3", "วาร์ปไปแดนที่ปลดล็อกแล้วได้ทันที", wp * 3, () => G.buyWarpScroll(3)],
-                ...LOOT.filter((x) => x.lego).map((it) => [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), (it.slot === "outfit" ? "👕 ชุด · ใส่แล้วตัวละครกลายเป็นตัวต่อเลโก้ทั้งตัว! · " : "⚔️ อาวุธ (ทุกอาชีพ) · ") + [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : ""].filter(Boolean).join(" "), it.price, () => G.legoBuyItem(it.id)]),
+                ...LOOT.filter((x) => x.lego).map((it) => it.id === "lego_suit"
+                    ? [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), "🧱 สวมแยก ไม่ทับชุด/อาวุธที่ใส่อยู่ — ร่างกลายเป็นตัวต่อเลโก้ทั้งตัว เปิด/ปิดได้ตลอด (เพื่อนเห็นด้วย)", it.price, () => G.legoBuyItem(it.id), (ui.inv || []).includes(it.id) ? { label: ui.legoSkinOn ? "ถอดชุด" : "สวมชุด", fn: () => G.legoSkinToggle() } : null]
+                    : [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), "⚔️ อาวุธ (ทุกอาชีพ) · " + [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : ""].filter(Boolean).join(" "), it.price, () => G.legoBuyItem(it.id)]),
                 ["🎁", "กล่องสุ่มตัวต่อ", "สุ่มได้ ทอง · น้ำยาใหญ่ · เพชร · อุปกรณ์หายาก (มีลุ้นระดับตำนาน!)", G.LEGO_BOX_PRICE || 5000, () => G.legoBox()],
             ];
             return (React.createElement("div", { onClick: () => G.legoShop(false), style: { position: "absolute", inset: 0, background: "rgba(20,14,10,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 } },
@@ -98614,8 +98648,15 @@ function CherryAdventure() {
                     ui.legoBoxLast && React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#3a9a4a", background: "#eaf7ec", borderRadius: 10, padding: "7px 10px", marginBottom: 10 } },
                         "\uD83C\uDF81 \u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E44\u0E14\u0E49: ",
                         ui.legoBoxLast),
-                    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, rows.map(([em, name, desc, price, buy], i) => {
+                    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, rows.map(([em, name, desc, price, buy, alt], i) => {
                         const afford = g >= price;
+                        if (alt)
+                            return (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 10, border: "2px solid #f2cd37", borderRadius: 14, padding: "9px 11px", background: "#fff" } },
+                                React.createElement("span", { style: { fontSize: 26 } }, em),
+                                React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                    React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#4a3a2a" } }, name),
+                                    React.createElement("div", { style: { fontSize: 11, color: "#8a7a5a" } }, desc)),
+                                React.createElement("button", { onClick: alt.fn, style: { padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800, fontFamily: font, color: "#fff", background: ui.legoSkinOn ? "linear-gradient(90deg,#6c6e68,#a0a5a9)" : "linear-gradient(90deg,#3aa84a,#6ac87a)", whiteSpace: "nowrap" } }, alt.label)));
                         return (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 10, border: "2px solid #f2cd37", borderRadius: 14, padding: "9px 11px", background: "#fff" } },
                             React.createElement("span", { style: { fontSize: 26 } }, em),
                             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
@@ -102886,7 +102927,7 @@ function CherryAdventure() {
                                         dn >= 5 && " · 🛡️+6 ❤️+30",
                                         dn >= 7 && " · 🔥ครบเซ็ต! +12/+40/+6/👟+10")) : null;
                                 })(),
-                                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, fashionOpen: !u.fashionOpen })), style: {
+                                React.createElement("button", { onClick: () => setUi((u) => ({ ...u, fashionOpen: !u.fashionOpen, legoSkinOn: !!G.legoSkinOn })), style: {
                                         width: "100%", padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", marginBottom: 8,
                                         fontSize: 11.5, fontWeight: 800, fontFamily: font, color: "#fff",
                                         background: "linear-gradient(90deg,#d06ab0,#e88ac8)",
@@ -102898,6 +102939,9 @@ function CherryAdventure() {
                                         "\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E40\u0E09\u0E1E\u0E32\u0E30",
                                         React.createElement("b", null, "\u0E23\u0E39\u0E1B\u0E25\u0E31\u0E01\u0E29\u0E13\u0E4C"),
                                         " \u2014 \u0E04\u0E48\u0E32\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E22\u0E31\u0E07\u0E21\u0E32\u0E08\u0E32\u0E01\u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E08\u0E23\u0E34\u0E07 \u2728 (\u0E04\u0E23\u0E1A\u0E17\u0E31\u0E49\u0E07 7 \u0E0A\u0E48\u0E2D\u0E07)"),
+                                    (ui.inv || []).includes("lego_suit") && (React.createElement("button", { onClick: () => G.legoSkinToggle(), style: { width: "100%", marginBottom: 8, padding: "7px 0", borderRadius: 10, border: "2px solid #f2cd37", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: ui.legoSkinOn ? "#fff" : "#a06a00", background: ui.legoSkinOn ? "linear-gradient(90deg,#c91a09,#e8503a)" : "#fffbea" } },
+                                        "\uD83E\uDDF1 \u0E0A\u0E38\u0E14\u0E15\u0E31\u0E27\u0E15\u0E48\u0E2D (\u0E2A\u0E27\u0E21\u0E41\u0E22\u0E01): ",
+                                        ui.legoSkinOn ? "สวมอยู่ — กดเพื่อถอด" : "ถอดอยู่ — กดเพื่อสวม")),
                                     SLOTS.map((slot) => {
                                         const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot; });
                                         const cur = (ui.costume || {})[slot];
