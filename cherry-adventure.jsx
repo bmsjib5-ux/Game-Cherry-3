@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v695";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v696";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3543,7 +3543,7 @@ export default function CherryAdventure() {
     // 🔊 ชุดเสียงเอฟเฟกต์ (assets/audio/sfx) — ตัวเลข = จำนวนแบบให้สุ่มสลับ ไม่ซ้ำซาก
     //    แนวแอ็กชัน (CC0 · OpenGameArt): ฟันดาบ/ดาบกระทบ StarNinjas · ตี/กระแทก 100 CC0 SFX · ร่ายเวท 80 CC0 RPG SFX · ระเบิด Chunky Explosion
     const SFX_BASE = "assets/audio/sfx/";
-    const SFX_FILES = { slash: 6, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, skill: 3, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, warp: 0, open: 0, close: 0 };
+    const SFX_FILES = { slash: 6, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, skill: 3, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, portal: 0, open: 0, close: 0 };
     const sfxBuf = {};
     let sfxLoading = false;
     const loadSfx = () => {
@@ -3653,7 +3653,8 @@ export default function CherryAdventure() {
       levelup: () => { if (smp("levelup", 0.62)) return; sfx([523, 659, 784, 1047, 1319], "triangle", 0.16, 0.17); noise(0.3, 0.07, 6000, 1); },
       button: () => { if (smp("button", 0.4)) return; sfx([600], "sine", 0.05, 0.08); },
       coin: () => { if (smp("coin", 0.5)) return; sfx([880, 1320], "square", 0.07, 0.1); },
-      warp: () => { sfx([300, 500, 800, 1200], "sine", 0.12, 0.1, 200); noise(0.35, 0.07, 2200, 0.7, 5000); smp("warp", 0.5); },
+      // 🌀✨ เข้าเกม/วาร์ป/เข้า-ออกโซน — เสียงวาร์ปเวทมนตร์ (ลมหมุน Teleport Spell CC0 + กระดิ่งประกายไล่โน้ตขึ้น) · ยังโหลดไม่เสร็จ = กระดิ่งสังเคราะห์เบา ๆ
+      warp: () => { if (smp("portal", 0.62)) return; sfx([1046, 1318, 1568, 2093], "sine", 0.09, 0.07); },
       open: () => smp("open", 0.45),     // 📖 เปิด/ปิดหน้าต่างเมนู
       close: () => smp("close", 0.4),
       splash: () => { sfx([400, 250], "sine", 0.18, 0.12, -120); noise(0.2, 0.1, 900, 0.6); },

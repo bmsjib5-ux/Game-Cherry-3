@@ -2,7 +2,9 @@ Cherry Adventure — audio credits (all CC0 / public domain, no attribution requ
 
 Sound effects (assets/audio/sfx)
   Kenney (kenney.nl), CC0 1.0 — RPG Audio, Impact Sounds, Interface Sounds, Music Jingles
-    (coin, button, catch, fish, win, levelup, warp, open, close)
+    (coin, button, catch, fish, win, levelup, open, close)
+  portal.mp3 (enter game / warp) — "Teleport Spell" from the FOSS RPG Summoning Wars, OpenGameArt.org, CC0 1.0
+    (opengameart.org/content/teleport-spell), layered with a synthesized bell sparkle
   Action set — OpenGameArt.org, CC0 1.0
     slash*, guard*, clang*  "20 Sword Sound Effects (Attacks and Clashes)" — StarNinjas
     hit0-3, crit*, boom1    "100 CC0 SFX" — rubberduck
