@@ -426,7 +426,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v688"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v690"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -12499,7 +12499,11 @@ function CherryAdventure() {
             kinnara: { f: "Flying_Hywirl", c: "fly", size: 2.6, y: 0.7, hue: [332, 0.45, 2.4, 0.8, 0, 0.6], halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } }, // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
             phothisat: { f: "Big_Tribal", c: "big", by: "h", size: 3.0, hue: [44, 0.85, 1.7, 0.62, 1], gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } }, // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
             pooyak: { f: "Crab", size: 2.6, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle" }, // 🦀 ปูยักษ์ทราย — OpenGameArt (methodical pixel, CC0) มีแค่ idle/walk
-            crocodile: { f: "Crocodile", size: 3.8, idle: "idle-loop", walk: "walk-loop", run: "walk-loop", atk: "attack", hit: "idle-loop", die: "death" }, // 🐊 จระเข้ยักษ์ — OpenGameArt (CC0)
+            crocodile: { f: "Crocodile", size: 3.6, by: "h", idle: "idle-loop",
+                // 🐊 ยืนสองขา: ยกลำตัวตั้ง · ขาหลังชี้ลงพื้น · หางลากไปด้านหลัง · ขาหน้ากลายเป็นแขน · หัวมองตรงไปข้างหน้า (แกนในพิกัดโมเดล หน่วยเรเดียน)
+                pose: [["base", [1, 0, 0], -1.3], ["hip_L", [1, 0, 0], 1.3], ["hip_R", [1, 0, 0], 1.3], ["hip_L", [0, 0, 1], -1.2], ["hip_R", [0, 0, 1], 1.2],
+                    ["hip_L", [1, 0, 0], -0.5], ["hip_R", [1, 0, 0], -0.5], ["tail1", [1, 0, 0], 1.05],
+                    ["shoulder_L", [1, 0, 0], 0.55], ["shoulder_R", [1, 0, 0], 0.55], ["shoulder_L", [0, 0, 1], -0.9], ["shoulder_R", [0, 0, 1], 0.9], ["neck", [1, 0, 0], 1.15]], walk: "walk-loop", run: "walk-loop", atk: "attack", hit: "idle-loop", die: "death" }, // 🐊 จระเข้ยักษ์ — OpenGameArt (CC0)
             eggduck: { f: "Duckling", size: 1.4, by: "h", lift: 0.8, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck" }, // 🐤 ลูกเป็ดน้อย — OpenGameArt (weirdybeardyman, CC0) ท่าจิก/เดิน
             eggturtle: { f: "Turtle", size: 2.0, idle: "GenIdle", walk: "Walking-loop",
                 gen: { GenIdle: { period: 2.6, tracks: [["Bone016", "x", 0.07, 0], ["Bone017", "x", 0.06, 0.6], ["Bone018", "x", 0.05, 1.2], ["Bone", "py", 0.015, 0], ["Bone006", "z", 0.1, 0.9]] } }, run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop" }, // 🐢 เต่ามงคล — OpenGameArt (Heathal, CC0) มีแค่ท่าเดิน
@@ -12665,7 +12669,46 @@ function CherryAdventure() {
                             o.geometry.userData._kkInflated = 1;
                         }
                     });
-                    const b = new THREE.Box3().setFromObject(gl.scene);
+                    let b = new THREE.Box3().setFromObject(gl.scene);
+                    // 🧍 จัดท่าใหม่ทั้งไฟล์ (pose) — หมุนกระดูกในพิกัดโมเดล แล้วฝังลงทุกคีย์เฟรมของทุกท่า (ไม่มีต้นทุนต่อเฟรม)
+                    //    q' = (P⁻¹ · R · P) · q  — P = การหมุนสะสมของกระดูกแม่ในท่าพัก (หลังจัดชิ้นก่อนหน้าแล้ว)
+                    if (P.pose) {
+                        gl.scene.updateMatrixWorld(true);
+                        const pq = new THREE.Quaternion(), R = new THREE.Quaternion(), OFF = {};
+                        P.pose.forEach(([bn, ax, ang]) => {
+                            const bone = gl.scene.getObjectByName(bn);
+                            if (!bone || !bone.parent)
+                                return;
+                            bone.parent.getWorldQuaternion(pq);
+                            R.setFromAxisAngle(new THREE.Vector3(ax[0], ax[1], ax[2]).normalize(), ang);
+                            const off = pq.clone().invert().multiply(R).multiply(pq);
+                            bone.quaternion.premultiply(off);
+                            bone.updateMatrixWorld(true);
+                            OFF[bone.name] = OFF[bone.name] ? off.multiply(OFF[bone.name]) : off; // กระดูกเดียวหมุนหลายครั้ง → ซ้อนกัน
+                        });
+                        const q = new THREE.Quaternion();
+                        (gl.animations || []).forEach((clip) => clip.tracks.forEach((tr) => {
+                            const m = /^(.*)\.quaternion$/.exec(tr.name), off = m && OFF[m[1]];
+                            if (!off)
+                                return;
+                            for (let i = 0; i < tr.values.length; i += 4)
+                                q.fromArray(tr.values, i).premultiply(off).toArray(tr.values, i);
+                        }));
+                        // กรอบตัวใหม่จากจุดยอดที่ผ่านกระดูกแล้ว (กรอบเดิมเป็นท่านอน) → สเกลความสูง/เท้าแตะพื้นถูกต้อง
+                        gl.scene.updateMatrixWorld(true);
+                        const pb = new THREE.Box3(), v = new THREE.Vector3();
+                        gl.scene.traverse((o) => {
+                            if (!o.isSkinnedMesh || !o.boneTransform)
+                                return;
+                            const pa = o.geometry.attributes.position;
+                            for (let i = 0; i < pa.count; i += 2) {
+                                o.boneTransform(i, v);
+                                pb.expandByPoint(v.applyMatrix4(o.matrixWorld));
+                            }
+                        });
+                        if (!pb.isEmpty())
+                            b = pb;
+                    }
                     // 🦶 ท่าที่ไฟล์ไม่มี (เดิน/ยืน) สร้างเองจาก sine บนกระดูก: gen: { ชื่อท่า: { period, tracks: [[กระดูก, แกน x|y|z|py, แอมพลิจูด(เรเดียน/หน่วย), เฟส], ...] } }
                     //    หมุนซ้อนบนท่าพัก (q = q0 · rot) — ทุกสายพันธุ์ที่ใช้ไฟล์เดียวกันได้ท่าเดียวกัน
                     const genClips = [];
@@ -36337,13 +36380,25 @@ function CherryAdventure() {
             return t;
         })();
         const amzGrassU = { value: 0 };
+        const amzGrassCam = { value: new THREE.Vector3() }, amzGrassChr = { value: new THREE.Vector3(0, -999, 0) };
         const amzGrassMat = new THREE.MeshStandardMaterial({ map: amzGrassTex, alphaTest: 0.45, side: THREE.DoubleSide, vertexColors: true, roughness: 0.9, emissive: 0xffffff, emissiveMap: amzGrassTex, emissiveIntensity: 0.18 });
         amzGrassMat.onBeforeCompile = (sh) => {
             sh.uniforms.uWind = amzGrassU;
-            sh.vertexShader = "uniform float uWind;\n" + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
+            sh.uniforms.uCam = amzGrassCam;
+            sh.uniforms.uChr = amzGrassChr;
+            sh.vertexShader = "uniform float uWind;\nvarying vec3 vAmzW;\n" + sh.vertexShader.replace("#include <begin_vertex>", `#include <begin_vertex>
         { float tip = uv.y; tip *= tip; vec4 wp = modelMatrix * vec4(position, 1.0);
           float w = sin(uWind * 1.7 + wp.x * 0.35 + wp.z * 0.22) * 0.22 + sin(uWind * 3.1 + wp.z * 0.9) * 0.06;
-          transformed.x += w * tip; transformed.z += w * 0.6 * tip; }`);
+          transformed.x += w * tip; transformed.z += w * 0.6 * tip;
+          vAmzW = (modelMatrix * vec4(transformed, 1.0)).xyz; }`);
+            // 🎥 หญ้าหลบกล้อง: ตัดเฉพาะใบที่อยู่ในแนว "กล้อง → ตัวละคร" (ทางเดินกว้าง ~1.7 หน่วย + ขอบจางแบบจุดสลับ) — ไม่ซ่อนทั้งหย่อม
+            sh.fragmentShader = "uniform vec3 uCam;\nuniform vec3 uChr;\nvarying vec3 vAmzW;\n" + sh.fragmentShader.replace("#include <clipping_planes_fragment>", `#include <clipping_planes_fragment>
+        { vec2 a = uCam.xz, ab = uChr.xz - uCam.xz, ap = vAmzW.xz - a;
+          float u = clamp(dot(ap, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+          float d = length(ap - ab * u);
+          float cut = 1.0 - smoothstep(1.3, 2.1, d);                       // 1 = กลางแนวสายตา → 0 = พ้นขอบ
+          float dith = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898, 78.233))) * 43758.5453);
+          if (cut > dith) discard; }`);
         };
         const amzGrass = [];
         const makeTallGrass = (x, z) => {
@@ -36393,6 +36448,8 @@ function CherryAdventure() {
             m.geometry.computeBoundingSphere();
         });
         G.amazonGrassWind = amzGrassU;
+        G.amazonGrassCam = amzGrassCam;
+        G.amazonGrassChr = amzGrassChr;
         // 💧 swamp puddles (wetland)
         const swampMat = new THREE.MeshStandardMaterial({ color: 0x2e5648, roughness: 0.35, metalness: 0.1, transparent: true, opacity: 0.8 });
         const makeSwamp = (x, z) => {
@@ -73938,6 +73995,10 @@ function CherryAdventure() {
                         G.amazonRiver.material.opacity = 0.85 + Math.sin(t * 1.2) * 0.08;
                     if (G.amazonGrassWind)
                         G.amazonGrassWind.value = t;
+                    if (G.amazonGrassCam) {
+                        G.amazonGrassCam.value.copy(camera.position);
+                        G.amazonGrassChr.value.copy(char.position);
+                    } // 🎥 แนวสายตาให้หญ้าสูงหลบ
                     if (G.amazonMist)
                         G.amazonMist.forEach((m) => { m.position.x += m.userData.sp * dt; if (m.position.x > FIELD_R + 4) {
                             m.position.x = -FIELD_R - 4;
