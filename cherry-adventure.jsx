@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v699";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v700";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3256,7 +3256,8 @@ const HERO_THEME = {
   luminia:  { g: "F", cut: "Peasant", hue: HDY(145, 0.45, 1.3), hair: "Hair_Long", hairC: 0xf8f0c8, t: 3, leaf: 1, col: 0x8ee8b4, fx: { ears: "elf", flowers: 0xffffff } },
   apsara:   { g: "F", cut: "Peasant", hue: HDY(45, 0.55, 1.6, 0.45), hair: "Hair_Buns", hairC: 0x2a1a10, t: 4, col: 0xffe08a, fx: { halo: 0xffffff, collar: 1, wings: "angel", wingS: 0.8 } },
   asura:    { g: "M", cut: "Ranger", noHood: 1, hue: [320, 0.6, 0.5], hair: "Hair_Buzzed", hairC: 0x1a0a14, skin: 0x8a5a78, skinK: 0.45, t: 5, col: 0xff3a5a, fx: { horns: "demon", wings: "bat", wingS: 0.9 } },
-  hanuman:  { g: "M", cut: "Peasant", hue: HDY(45, 0.7, 1.35), hair: "Hair_Buzzed", hairC: 0xffffff, skin: 0xf6f4ee, skinK: 0.8, t: 3, col: 0xffd36a, fx: { halo: 0xffffff, tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1 } },
+  hanuman:  { g: "M", bare: 1, hair: "Hair_Buzzed", hairC: 0xffffff, skinMap: [40, 0.04, 2.1, 0.97, 1, 0.07], t: 1, col: 0xffd36a,   // 🐒 วานรเผือกขาวทั้งตัว + ผ้านุ่งทองขลิบแดง
+              fx: { halo: 0xffffff, tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1, ears: "monkey", earC: 0xffffff, earIn: 0xf4c4bc, muzzle: 0xfff6f2, swim: "trunks", swimC: 0xe8b840, swimC2: 0xc02a2a } },
   garuda:   { g: "M", cut: "Ranger", noHood: 1, hue: [10, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x3a2010, skin: 0xe8a848, skinK: 0.55, t: 4, col: 0xffd24a, fx: { halo: 0xffffff, wings: "gold", wingS: 1.1, collar: 1 }, gear: { gloves: { k: "claw", c: 0xe8b840 } } },
   naki:     { g: "F", cut: "Peasant", hue: HDY(165, 0.6, 1.15), hair: "Hair_Long", hairC: 0x0e5a5a, skin: 0x8ae8d0, skinK: 0.4, t: 3, col: 0x4ae8c0, fx: { naga: 0x2a9a7a, halo: 0xffffff, collar: 1 } },
   kinnaree: { g: "F", cut: "Peasant", hue: HDY(335, 0.4, 1.6, 0.4), hair: "Hair_Buns", hairC: 0x2a1a10, t: 3, col: 0xffb0d0, fx: { halo: 0xffffff, wings: "swan", wingS: 0.85, tail: "feather", tailC: 0xfff4f8, tailC2: 0xffc0d8, collar: 1 } },
@@ -3281,7 +3282,7 @@ const heroThemeModel = (M0, TH) => {
   }
   M.topknot = TH.topknot ? HERO_MODELS.samurai.topknot : null; M.mech = null;
   M.swim = (TH.fx && TH.fx.swim) || null; M.swimC = TH.fx && TH.fx.swimC; M.swimC2 = TH.fx && TH.fx.swimC2;
-  M.skin = TH.skin || null; M.skinK = TH.skinK || 0.4; M.beardIdx = TH.beard ? (TH.bare ? 2 : 3) : -1; M.noHood = !!TH.noHood;
+  M.skin = TH.skin || null; M.skinK = TH.skinK || 0.4; M.skinMap = TH.skinMap || null;   // skinMap = ย้อมเท็กซ์เจอร์ผิว (ทำให้ขาว/สว่างได้ — สีคูณทำได้แค่มืดลง) M.beardIdx = TH.beard ? (TH.bare ? 2 : 3) : -1; M.noHood = !!TH.noHood;
   return M;
 };
 // 🩱 ชุดว่ายน้ำ — ตัดสามเหลี่ยมของร่างฐาน (ท่า T, หน่วยเมตร, สูง ~1.8) เฉพาะช่วงตัวที่เป็นชุด แล้วดันออกตามแนวตั้งฉากนิดเดียว
@@ -11361,7 +11362,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   if (pi === 1 && M.hue && c.map && G.qtHueMap) c.map = G.qtHueMap(c.map, M.files[1] + ":" + (c.name || "m"), M.hue);
                   if (pi === (M.bare ? 1 : 2) && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
                   if (pi === M.beardIdx && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
-                  if (pi === 0 && M.skin) c.color.lerp(new THREE.Color(M.skin).convertSRGBToLinear(), M.skinK || 0.4);
+                  if (pi === 0 && M.skinMap && c.map && G.qtHueMap && !/Eye/.test(oo.name || "")) { c.map = G.qtHueMap(c.map, M.files[0] + ":skin", M.skinMap); c.emissiveMap = c.map; }
+                  if (pi === 0 && M.skin && !/Eye/.test(oo.name || "")) c.color.lerp(new THREE.Color(M.skin).convertSRGBToLinear(), M.skinK || 0.4);
                   c.needsUpdate = true; seen.set(m, c); mats.push(c);
                 }
                 return c;
@@ -11673,7 +11675,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const SP = (r, a, b) => new THREE.SphereGeometry(r, a || 12, b || 10), CN = (r, h, sg) => new THREE.ConeGeometry(r, h, sg || 8);
         const PV = (par, x, y, z, rx, ry, rz) => { const q = new THREE.Group(); q.position.set(x, y, z); q.rotation.set(rx || 0, ry || 0, rz || 0); par.add(q); return q; };
         const hy = hooded ? 0.05 : 0, hs = hooded ? 1.18 : 1;   // ฮู้ดคลุมหัว — ของบนหัวขยับขึ้น/กว้างออกนิด
-        const hd = (FX.ears || FX.horns || FX.tiara || FX.halo || FX.flowers || FX.band || FX.naga || FX.fangs) ? rig("Head") : null;
+        const hd = (FX.ears || FX.horns || FX.tiara || FX.halo || FX.flowers || FX.band || FX.naga || FX.fangs || FX.muzzle) ? rig("Head") : null;
+        if (hd && FX.muzzle) { const mz = add(hd, new THREE.Mesh(SP(0.085, 14, 10), MT(FX.muzzle, { roughness: 0.85 })), 0, 0.09, 0.225); mz.scale.set(1.25, 0.8, 0.75); add(hd, new THREE.Mesh(SP(0.022, 8, 6), MT(0x5a3a3a)), 0, 0.135, 0.29).scale.set(1.4, 0.7, 0.6); }   // 🐒 ปากจมูกลิงสีอ่อน + จมูก
         const ch = (FX.wings || FX.cape || FX.core || FX.emblem || FX.shield || FX.orbs) ? rig("spine_03") : null;
         const ws = FX.tail ? rig("spine_01") : null, nk = FX.collar ? rig("neck_01") : null;
         const star = (R, r) => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + (i / 10) * Math.PI * 2, rr = i % 2 ? r : R; if (i) sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } return new THREE.ShapeGeometry(sh); };
@@ -11688,6 +11691,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             } else if (E === "elf") {
               const p = PV(hd, sx * 0.2, 0.22, -0.03, 0, 0, -sx * (Math.PI / 2 - 0.55));
               add(p, new THREE.Mesh(CN(0.042, 0.2, 6), MT(0xf2c8a8)), 0, 0.09, 0).scale.set(1, 1, 0.45);
+            } else if (E === "monkey") {   // 🐒 หูลิงกลมแบนข้างหัว
+              const p = PV(hd, sx * 0.215, 0.24, -0.02, 0, sx * 0.25, 0);
+              add(p, new THREE.Mesh(SP(0.075), m), 0, 0, 0).scale.set(0.42, 1, 1);
+              add(p, new THREE.Mesh(SP(0.05), inner), sx * 0.018, 0, 0.004).scale.set(0.3, 0.9, 0.9);
             } else if (E === "fin") {
               for (let q = 0; q < 3; q++) { const p = PV(hd, sx * 0.205, 0.22 + q * 0.035, -0.03 - q * 0.04, -0.4, 0, -sx * (1.15 - q * 0.22)); add(p, new THREE.Mesh(CN(0.04, 0.22 - q * 0.04, 4), GW(FX.earC || 0x6ae0ff, 0.45, { transparent: true, opacity: 0.85 })), 0, 0.09, 0).scale.set(1, 1, 0.22); }
             } else {
@@ -12205,7 +12212,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 //     เก็บค่าเป็นสีที่ "ตาเห็น" แล้วแปลงเป็น linear เอง เพราะ renderer อ่านค่าสีวัสดุเป็น linear
                 if (pi === (M.bare ? 1 : 2) && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
                 if (pi === M.beardIdx && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();   // 🧔 เครา = สีเดียวกับผม
-                if (pi === 0 && M.skin) c.color.lerp(new THREE.Color(M.skin).convertSRGBToLinear(), M.skinK || 0.4);   // 🦸 โทนผิวตามคาแรกเตอร์ (ยักษ์เขียว/วานรเผือก/ลิชซีด…)
+                if (pi === 0 && M.skinMap && c.map && G.qtHueMap && !/Eye/.test(o.name || "")) { c.map = G.qtHueMap(c.map, M.files[0] + ":skin", M.skinMap); c.emissiveMap = c.map; }   // 🐒 ขนขาวทั้งตัว
+                if (pi === 0 && M.skin && !/Eye/.test(o.name || "")) c.color.lerp(new THREE.Color(M.skin).convertSRGBToLinear(), M.skinK || 0.4);   // 🦸 โทนผิวตามคาแรกเตอร์ (ยักษ์เขียว/วานรเผือก/ลิชซีด…)
                 if (pi >= 3 && M.mhSlots && GI) {                        // 👖👢 ชิ้น MakeHuman: ย้อมตามสีไอเทม/สีย้อมของช่องนั้น
                   const I = GI[M.mhSlots[pi - 3]];
                   if (I && c.map && G.qtHueMap) { const hsl = {}; new THREE.Color(I.c).getHSL(hsl); c.map = G.qtHueMap(c.map, M.files[pi] + ":" + I.c, [hsl.h * 360, Math.max(0.25, hsl.s * 0.9), 0.55 + hsl.l * 0.9, 0.97, 1, Math.max(0.2, hsl.s)]); c.emissiveMap = c.map; }
