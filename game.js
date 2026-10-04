@@ -426,7 +426,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v686"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v687"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -40635,23 +40635,43 @@ function CherryAdventure() {
         const tLeafP = new THREE.MeshStandardMaterial({ color: 0xf2b8d0, roughness: 0.8 }); // 🌸 พุ่มซากุระ
         const TR = 38; // 📏 รัศมีลานเมือง (เดิม 17 → พื้นที่กว้างขึ้น ~5 เท่า)
         { // 🧱 ลานหินกลางเมือง + ขอบลาน
+            // 🪨 หินปูถนนโทนอุ่น ก้อนไม่เท่ากัน สลับสี + ร่องปูนเข้ม (เดิมเป็นตารางเทาเรียบ)
             const cv = document.createElement("canvas");
-            cv.width = cv.height = 128;
+            cv.width = cv.height = 256;
             const cx = cv.getContext("2d");
-            cx.fillStyle = "#cfc8ba";
-            cx.fillRect(0, 0, 128, 128);
-            cx.strokeStyle = "#b3ac9e";
-            cx.lineWidth = 3;
-            for (let y = 0; y < 4; y++)
-                for (let x = 0; x < 4; x++)
-                    cx.strokeRect(x * 32 + 2, y * 32 + 2, 28, 28);
-            cx.fillStyle = "rgba(160,150,135,0.35)";
-            for (let n = 0; n < 40; n++)
-                cx.fillRect((n * 53) % 128, (n * 31) % 128, 3, 3);
+            cx.fillStyle = "#8f8270";
+            cx.fillRect(0, 0, 256, 256);
+            const STN = ["#d8cbb2", "#cdbfa4", "#e2d6bf", "#c4b49a", "#d6c4a8", "#bfb3a0", "#e0cfb2"];
+            let sd = 7;
+            const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+            for (let row = 0; row < 8; row++) {
+                let x = row % 2 ? -14 : 0;
+                while (x < 256) {
+                    const w = 26 + rnd() * 16, y = row * 32;
+                    cx.fillStyle = STN[(rnd() * STN.length) | 0];
+                    const r = 6;
+                    cx.beginPath();
+                    cx.moveTo(x + r + 2, y + 2);
+                    cx.arcTo(x + w - 2, y + 2, x + w - 2, y + 30, r);
+                    cx.arcTo(x + w - 2, y + 30, x + 2, y + 30, r);
+                    cx.arcTo(x + 2, y + 30, x + 2, y + 2, r);
+                    cx.arcTo(x + 2, y + 2, x + w - 2, y + 2, r);
+                    cx.fill();
+                    cx.fillStyle = "rgba(255,255,255,0.18)";
+                    cx.fillRect(x + 5, y + 4, w - 12, 3);
+                    for (let n = 0; n < 4; n++) {
+                        cx.fillStyle = `rgba(90,75,55,${0.1 + rnd() * 0.12})`;
+                        cx.fillRect(x + 4 + rnd() * (w - 10), y + 6 + rnd() * 20, 3, 3);
+                    }
+                    if (x < 0) { /* แถวเหลื่อม: วาดก้อนต่อเนื่องอีกฝั่งให้ลายต่อกันไร้รอยต่อ */ }
+                    x += w;
+                }
+            }
             const tex = new THREE.CanvasTexture(cv);
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            tex.repeat.set(27, 27);
-            const plaza = new THREE.Mesh(new THREE.CircleGeometry(TR, 56), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92 }));
+            tex.repeat.set(17, 17);
+            tex.anisotropy = 4;
+            const plaza = new THREE.Mesh(new THREE.CircleGeometry(TR, 56), new THREE.MeshStandardMaterial({ map: tex, color: 0xeadcc4, roughness: 0.92 }));
             plaza.rotation.x = -Math.PI / 2;
             plaza.position.y = 0.03;
             townZone.add(plaza);
@@ -40773,6 +40793,13 @@ function CherryAdventure() {
                 const towardGate = Math.abs(Math.sin(a) - 1) < 0.16 && Math.abs(Math.cos(a)) < 0.35; // เว้นทางออกทิศ +z
                 if (towardGate)
                     continue;
+                if (k === 12)
+                    continue; // 🏰 ทิศเหนือเว้นไว้ให้ปราสาท — มองจากน้ำพุเห็นปราสาทสุดถนน
+                const land = { 0: "smith", 8: "tavern", 10: "church" }[k]; // ⛪🍺⚒️ อาคารสำคัญแทรกในวงบ้าน หันหน้าเข้าลาน (โหลดโมเดลเสร็จค่อยโผล่)
+                if (land) {
+                    (G._townLandSlots = G._townLandSlots || []).push({ k: land, a, r: 34.5 + (k % 3) * 1.6 });
+                    continue;
+                }
                 mkHouse(HUES[k % HUES.length], a, 33 + (k % 3) * 1.6, k % 4 === 0);
             }
             // แถวหลัง — อาคารอีกชั้นถัดออกไป ให้เมืองดูมีย่านลึก (อยู่นอกเขตเดิน ไม่ทับตัวละคร)
@@ -40780,6 +40807,8 @@ function CherryAdventure() {
                 const a = (k / 10) * Math.PI * 2 + 0.32;
                 if (Math.abs(Math.sin(a) - 1) < 0.3 && Math.abs(Math.cos(a)) < 0.5)
                     continue;
+                if (k === 7)
+                    continue; // 🏰 ทางเข้าปราสาท
                 mkHouse(HUES[(k + 3) % HUES.length], a, 40 + (k % 2) * 1.8, k % 3 === 0);
             }
         }
@@ -41001,6 +41030,209 @@ function CherryAdventure() {
             townZone.add(exRing);
             G._townExitRing = exRing;
         }
+        { // 🌿 พื้นหญ้าของเมืองเอง (กว้างถึงขอบฟ้า) — เข้ามาจากด่านไหนก็เห็นทุ่งหญ้าเขียวรอบกำแพงเหมือนกัน
+            const cv = document.createElement("canvas");
+            cv.width = cv.height = 128;
+            const cx = cv.getContext("2d");
+            cx.fillStyle = "#7fb85a";
+            cx.fillRect(0, 0, 128, 128);
+            for (let n = 0; n < 260; n++) {
+                const g = 150 + ((n * 37) % 60);
+                cx.fillStyle = `rgba(${g - 60},${g + 20},${g - 90},0.35)`;
+                cx.fillRect((n * 53) % 128, (n * 97) % 128, 2 + (n % 3), 2 + (n % 2));
+            }
+            const tex = new THREE.CanvasTexture(cv);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(70, 70);
+            const gr = new THREE.Mesh(new THREE.CircleGeometry(190, 64), new THREE.MeshStandardMaterial({ map: tex, roughness: 1 }));
+            gr.rotation.x = -Math.PI / 2;
+            gr.position.y = 0.0;
+            gr.receiveShadow = true;
+            townZone.add(gr);
+        }
+        // 🏰✨ อัพเกรดเมือง — ปราสาท · โบสถ์ · โรงเตี๊ยม · โรงตีเหล็ก · กังหันลม · หอคอย · กำแพงเมืองรอบวง · ป่า/ภูเขารอบนอก · ถังไม้/ลังสินค้า
+        //    KayKit Medieval Hexagon Pack (CC0 · Kay Lousberg) — รวม 35 ชิ้นเป็นไฟล์เดียว + บีบอัดจุดยอด (~1 MB) โหลดครั้งแรกที่เข้าเมือง
+        const townKitG = new THREE.Group();
+        townZone.add(townKitG);
+        let townKitLoading = null;
+        const TOWN_WALL_R = 62;
+        const buildTownKit = (root) => {
+            root.updateMatrixWorld(true);
+            const lib = {};
+            root.children.forEach((k) => {
+                if (!/^K_/.test(k.name))
+                    return;
+                const parts = [];
+                k.traverse((o) => {
+                    if (!o.isMesh)
+                        return;
+                    const m = o.material;
+                    m.metalness = 0;
+                    m.roughness = 0.82;
+                    if (m.map)
+                        m.map.anisotropy = 4;
+                    parts.push({ geo: o.geometry, mat: m, m: o.matrixWorld.clone() });
+                });
+                lib[k.name.slice(2)] = { node: k, parts };
+            });
+            // ชิ้นเดี่ยว (คงโครงสร้างโหนด → หมุนใบกังหันได้)
+            const one = (key, x, z, ry, sc, y) => {
+                const L = lib[key];
+                if (!L)
+                    return null;
+                const g = L.node.clone();
+                g.position.set(x, y || 0, z);
+                g.rotation.y = ry;
+                g.scale.setScalar(sc);
+                g.traverse((o) => { if (o.isMesh) {
+                    o.castShadow = true;
+                    o.receiveShadow = true;
+                } });
+                townKitG.add(g);
+                return g;
+            };
+            // ชิ้นซ้ำเยอะ (กำแพง/ต้นไม้/ภูเขา/ของตกแต่ง) → InstancedMesh ทีละชนิด ประหยัดดรอว์คอล
+            const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _v = new THREE.Vector3(), _s = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+            const many = (key, list, shadow) => {
+                const L = lib[key];
+                if (!L || !list.length)
+                    return;
+                L.parts.forEach((pt) => {
+                    const im = new THREE.InstancedMesh(pt.geo, pt.mat, list.length);
+                    list.forEach((it, i) => {
+                        _q.setFromAxisAngle(_up, it.ry || 0);
+                        _v.set(it.x, it.y || 0, it.z);
+                        const sx = it.sx || it.s, sy = it.sy || it.s, sz = it.sz || it.s;
+                        _s.set(sx, sy, sz);
+                        _m.compose(_v, _q, _s).multiply(pt.m);
+                        im.setMatrixAt(i, _m);
+                    });
+                    im.instanceMatrix.needsUpdate = true;
+                    im.castShadow = shadow !== false;
+                    im.receiveShadow = true;
+                    townKitG.add(im);
+                });
+            };
+            const P = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+            const faceIn = (a) => -a - Math.PI / 2; // หันหน้า (แกน +z ของโมเดล) เข้าหาน้ำพุกลางเมือง
+            // 🏰 ปราสาทสุดถนนทิศเหนือ + อาคารสำคัญรอบในกำแพง
+            const LSC = { smith: 7.2, tavern: 6.6, church: 6.4 };
+            const LAND = [["castle", -Math.PI / 2, 50, 6.4], ["windmill", -0.62, 80, 13], ["towerA", 2.42, 52, 5.6], ["towerB", 0.72, 52, 5.4], ["towerA", -2.3, 52, 5.0], ["towerB", 3.9, 53, 5.0]]
+                .concat((G._townLandSlots || []).map((L) => [L.k, L.a, L.r, LSC[L.k]]));
+            LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = one(k, x, z, faceIn(a), sc); if (k === "windmill" && g)
+                G._townFan = g.getObjectByName("building_windmill_top_fan_yellow"); });
+            // 🧱 กำแพงเมืองวงรอบ + ประตูใหญ่ทิศใต้ + ป้อมทุกช่วง 3 ท่อน
+            const NSEG = 36, dA = Math.PI * 2 / NSEG, segL = 2 * Math.PI * TOWN_WALL_R / NSEG;
+            const walls = [], gates = [], towers = [], flags = [];
+            for (let i = 0; i < NSEG; i++) {
+                const a = Math.PI / 2 + i * dA, [x, z] = P(a, TOWN_WALL_R);
+                (i === 0 ? gates : walls).push({ x, z, ry: -a - Math.PI / 2, sx: segL / 2 * 1.02, sy: 5, sz: 5 });
+                if (i % 3 === 0) {
+                    const ta = a + dA / 2, [tx, tz] = P(ta, TOWN_WALL_R), tb = a - dA / 2, [ux, uz] = P(tb, TOWN_WALL_R);
+                    towers.push({ x: tx, z: tz, ry: -ta, s: 5 });
+                    if (i === 0)
+                        towers.push({ x: ux, z: uz, ry: -tb, s: 5 });
+                }
+            }
+            towers.forEach((t) => flags.push({ x: t.x, y: 7.5, z: t.z, ry: t.ry, s: 6 }));
+            many("wall", walls);
+            many("gate", gates);
+            many("towerBase", towers);
+            many("flagR", flags.filter((_, i) => i % 2 === 0), false);
+            many("flagB", flags.filter((_, i) => i % 2 === 1), false);
+            // 🌲 ป่ารอบนอกกำแพง + เนินเขา + ทิวเขาไกล (สุ่มแบบคงที่ ทุกคนเห็นเหมือนกัน)
+            let sd = 11;
+            const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+            const tA = [], tB = [], tM = [], tS = [], hl = [], hl2 = [], mA = [], mB = [], mC = [], rocks = [];
+            for (let i = 0; i < 46; i++) {
+                const a = (i / 46) * Math.PI * 2 + rnd() * 0.1, r = 72 + rnd() * 26, [x, z] = P(a, r);
+                if (Math.abs(Math.cos(a)) < 0.12 && Math.sin(a) > 0)
+                    continue; // เว้นถนนออกประตูใต้
+                if (Math.hypot(x - Math.cos(-0.62) * 80, z - Math.sin(-0.62) * 80) < 13)
+                    continue; // ลานกังหันลม
+                [tA, tB, tM][i % 3].push({ x, z, ry: rnd() * 6.28, s: 6.5 + rnd() * 3 });
+            }
+            for (let i = 0; i < 18; i++) {
+                const a = rnd() * Math.PI * 2, r = 66 + rnd() * 6, [x, z] = P(a, r);
+                tS.push({ x, z, ry: rnd() * 6.28, s: 5 + rnd() * 2.5 });
+            }
+            for (let i = 0; i < 20; i++) { // ⛰️ ทิวเขาไกล — ฝังฐานหกเหลี่ยมลงดิน เหลือแต่ยอดเขียวโผล่พ้นป่า หมอกกลืนขอบ
+                const a = (i / 20) * Math.PI * 2 + rnd() * 0.12, r = 150 + rnd() * 22, [x, z] = P(a, r), sc = 30 + rnd() * 12;
+                [mA, mB, mC][i % 3].push({ x, z, y: -sc * 0.55, ry: rnd() * 6.28, s: sc, sy: sc * (0.9 + rnd() * 0.4) });
+            }
+            for (let i = 0; i < 24; i++) {
+                const a = rnd() * Math.PI * 2, r = 64 + rnd() * 40, [x, z] = P(a, r);
+                rocks.push({ x, z, ry: rnd() * 6.28, s: 5 + rnd() * 5 });
+            }
+            many("treesA", tA);
+            many("treesB", tB);
+            many("treesM", tM);
+            many("treeA", tS.filter((_, i) => i % 2));
+            many("treeB", tS.filter((_, i) => !(i % 2)));
+            many("mtA", mA, false);
+            many("mtB", mB, false);
+            many("mtC", mC, false);
+            many("rock", rocks, false);
+            // 🛢️ ของตกแต่งในลาน — กองถังไม้/ลังสินค้า/กระสอบข้างบ้าน · บ่อน้ำ · ชั้นวางอาวุธ (เดินผ่านได้ ไม่กั้นทาง)
+            const props = { barrel: [], crateA: [], crateL: [], sack: [], bucket: [], lumber: [], barrow: [], rack: [], target: [] };
+            const pile = (a, r, kind) => {
+                const [x, z] = P(a, r), ry = faceIn(a), ca = Math.cos(ry), sa = Math.sin(ry);
+                const at = (lx, lz, y) => ({ x: x + lx * ca + lz * sa, z: z - lx * sa + lz * ca, y: y || 0, ry: ry + (lx * 7 % 1), s: 5 });
+                if (kind === 0) {
+                    props.barrel.push(at(-0.9, 0), at(-0.2, -0.5), at(-0.55, -0.15, 1.05));
+                    props.crateA.push(at(0.8, 0));
+                    props.sack.push(at(0.3, 0.6), at(0.8, 0.8));
+                }
+                else if (kind === 1) {
+                    props.crateA.push(at(-0.6, 0), at(0.5, -0.2), at(-0.05, -0.1, 1.05));
+                    props.crateL.push(at(0.2, 0.9));
+                    props.bucket.push(at(1.3, 0.4));
+                }
+                else {
+                    props.lumber.push(at(0, 0));
+                    props.barrow.push(at(1.6, 0.6));
+                    props.barrel.push(at(-1.4, 0.2));
+                }
+            };
+            [[0.62, 27.5, 0], [1.38, 27, 1], [2.55, 27.5, 2], [3.6, 27, 0], [4.2, 27.5, 1], [5.25, 27, 2], [5.85, 27.5, 0], [2.95, 26.5, 1]].forEach(([a, r, k]) => pile(a, r, k));
+            {
+                const [x, z] = P(-0.3, 29), ry = faceIn(-0.3);
+                props.rack.push({ x, z, ry, s: 5 });
+                const [x2, z2] = P(-0.42, 29.5);
+                props.target.push({ x: x2, z: z2, ry, s: 5 });
+            }
+            Object.keys(props).forEach((k) => many(k, props[k]));
+            {
+                const [x, z] = P(3.95, 23.5);
+                one("well", x, z, faceIn(3.95), 3.6);
+            }
+            G.freezeStatic && G.freezeStatic(townKitG, 1);
+            if (G._townFan) {
+                let o = G._townFan;
+                while (o && o !== townKitG) {
+                    o.matrixAutoUpdate = true;
+                    o = o.parent;
+                }
+            }
+            townKitG.userData.ok = true;
+        };
+        G.townKitLoad = () => {
+            if (townKitLoading || !THREE.GLTFLoader)
+                return townKitLoading;
+            townKitLoading = new Promise((res) => new THREE.GLTFLoader().load("assets/kaykit/town/town_kit.gltf", (gl) => {
+                try {
+                    buildTownKit(gl.scene);
+                }
+                catch (e) {
+                    try {
+                        console.warn("townKit", e);
+                    }
+                    catch (_) { }
+                }
+                res(true);
+            }, undefined, () => res(false)));
+            return townKitLoading;
+        };
         if (G.freezeStatic) {
             try {
                 G.freezeStatic(townZone, 0);
@@ -41148,6 +41380,10 @@ function CherryAdventure() {
                 scene.fog.far = 210;
             } // 🌫️ เมืองกว้าง — ดันหมอกออกไป ให้เห็นทั่วทั้งเมือง
             townZone.visible = true;
+            if (G._ground)
+                G._ground.visible = false; // 🌿 ใช้พื้นหญ้าของเมืองเอง (ภูมิประเทศด่านอาจนูนทะลุลาน)
+            if (G.townKitLoad)
+                G.townKitLoad();
             G.refreshTownFolk();
             if (G.sfx && G.sfx.warp)
                 G.sfx.warp();
@@ -41159,6 +41395,8 @@ function CherryAdventure() {
                 return;
             G.inTownZone = false;
             townZone.visible = false;
+            if (G._ground)
+                G._ground.visible = true;
             townWorldShow(); // 🌳 คืนต้นไม้/อาคารของโลกภายนอก
             if (scene.fog && G._townFogPrev) {
                 scene.fog.near = G._townFogPrev.near;
@@ -74307,6 +74545,8 @@ function CherryAdventure() {
                             G._townWater.material.emissiveIntensity = 0.3 + Math.sin(t * 2) * 0.12; // 💧 น้ำพุระยิบ
                         if (G._townExitRing)
                             G._townExitRing.rotation.z = t * 1.3;
+                        if (G._townFan)
+                            G._townFan.rotation.z = t * 0.9; // 🌬️ ใบกังหันลมหมุน
                         (G._townFolk || []).forEach((f, i) => {
                             const w = f.userData.wander;
                             if (!w)
