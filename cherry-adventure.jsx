@@ -395,7 +395,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v711";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v712";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -664,6 +664,10 @@ const LOOT = [
 { id: "sw_beret",  slot: "hat",    name: "หมวกเบเร่ต์ผ้าวูล",   emoji: "🎩", rarity: "rare", def: 3, crit: 3, sew: true },
 { id: "sw_gloves", slot: "gloves", name: "ถุงมือหนังเย็บมือ",   emoji: "🧤", rarity: "rare", atk: 3, def: 2, sew: true },
 { id: "sw_pants",  slot: "pants",  name: "กางเกงลินินเย็นสบาย", emoji: "👖", rarity: "rare", hp: 14, spd: 4, sew: true },
+// 🧱 ของธีมเลโก้จากร้านตัวต่อ (เมืองเลโก้) — lego: ขายเฉพาะร้านตัวต่อ (sew = ไม่หลุดจากมอน/กาชา) · ชุดตัวต่อแปลงทั้งตัวเป็นอิฐเลโก้
+{ id: "lego_suit",   slot: "outfit", name: "ชุดตัวต่อเลโก้", emoji: "🧱", rarity: "epic", hp: 36, def: 5, spd: 4, sew: true, lego: true, price: 25000 },
+{ id: "lego_sword",  slot: "weapon", name: "ดาบอิฐตัวต่อ",   emoji: "🗡️", rarity: "epic", atk: 13, crit: 5, sew: true, lego: true, price: 30000 },
+{ id: "lego_hammer", slot: "weapon", name: "ค้อนอิฐยักษ์",    emoji: "🔨", rarity: "epic", atk: 14, def: 2, sew: true, lego: true, price: 30000 },
 { id: "sw_boots",  slot: "shoes",  name: "บูทหนังนุ่มเย็บมือ",  emoji: "👢", rarity: "epic", def: 4, spd: 10, eva: 4, sew: true },
 // 👑 เทวศาสตราปฐมกาล — อาวุธขั้น "เทวศาสตรา" ชิ้นเดียวในเกม ทุกอาชีพใช้ได้ ดรอปจากบอสบุกแมพ 1% เท่านั้น (ไม่ดรอป/ไม่สุ่ม/ไม่ขายที่อื่น)
 { id: "god_wpn", slot: "weapon", name: "เทวศาสตราปฐมกาล", emoji: "🌌", rarity: "god", atk: 99999, def: 99999, crit: 99999, elem: "light", mapBoss: true },
@@ -7667,6 +7671,25 @@ export default function CherryAdventure() {
       g.scale.setScalar(1.25);
       weaponModels.roseSword = g;
     }
+    { // 🧱 lego_sword / lego_hammer — อาวุธตัวต่อเลโก้ (อิฐพลาสติกสีสด + ปุ่มกลม) · ด้ามอยู่ราว y −0.28 ให้ตรงจุดจับมาตรฐาน
+      const pm = (c) => new THREE.MeshStandardMaterial({ color: new THREE.Color(c).convertSRGBToLinear(), roughness: 0.32, metalness: 0 });
+      const studG = new THREE.CylinderGeometry(0.045, 0.045, 0.035, 10);
+      const brick = (g, m, x, y, z, sx, sy, sz, studs) => { const b = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), m); b.position.set(x, y, z); g.add(b); (studs || []).forEach(([px, pz]) => { const st = new THREE.Mesh(studG, m); st.position.set(x + px, y + sy / 2 + 0.017, z + pz); g.add(st); }); return b; };
+      const grey = pm(0xa0a5a9), lgrey = pm(0xe0e2e4), brown = pm(0x582a12), yellow = pm(0xf2cd37), red = pm(0xc91a09), blue = pm(0x0055bf);
+      const sw = new THREE.Group();
+      brick(sw, brown, 0, -0.3, 0, 0.13, 0.5, 0.13);                                   // ด้ามอิฐ 1×1
+      brick(sw, yellow, 0, -0.6, 0, 0.17, 0.1, 0.17);                                  // ท้ายด้าม
+      brick(sw, red, 0, -0.01, 0, 0.52, 0.11, 0.17, [[-0.17, 0], [0.17, 0]]);          // การ์ด 1×3 มีปุ่มสองข้าง
+      for (let i = 0; i < 6; i++) brick(sw, i % 2 ? lgrey : grey, 0, 0.14 + i * 0.2, 0, 0.17, 0.19, 0.07);   // ใบดาบอิฐซ้อน 6 ชั้น
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.26, 4), lgrey); tip.rotation.y = Math.PI / 4; tip.scale.z = 0.42; tip.position.y = 1.36; sw.add(tip);
+      sw.userData.bladeScale = 1.9; weaponModels.lego_sword = sw;   // ขยายผ่าน BLADE_BIG (scale ถูกตั้งใหม่ทุกครั้งที่สลับอาวุธ)
+      const hm = new THREE.Group();
+      brick(hm, grey, 0, -0.18, 0, 0.12, 1.1, 0.12);                                   // ด้ามยาว
+      brick(hm, yellow, 0, -0.76, 0, 0.17, 0.1, 0.17);
+      brick(hm, red, 0, 0.52, 0, 0.62, 0.32, 0.32, [[-0.23, -0.08], [-0.08, -0.08], [0.08, -0.08], [0.23, -0.08], [-0.23, 0.08], [-0.08, 0.08], [0.08, 0.08], [0.23, 0.08]]);   // หัวค้อน = อิฐ 2×4
+      for (const sx of [-1, 1]) brick(hm, blue, sx * 0.34, 0.52, 0, 0.06, 0.26, 0.26);   // แผ่นหน้าค้อน
+      hm.userData.bladeScale = 2.1; weaponModels.lego_hammer = hm;
+    }
     { // 🗡️ kenKatana — Shirohikari (silver blade, gold edge, sakura tsuba — Kentaro's right sword)
       const g = new THREE.Group();
       const kSt = new THREE.MeshStandardMaterial({ color: 0xdde3ee, roughness: 0.18, metalness: 0.92 });
@@ -9580,6 +9603,7 @@ export default function CherryAdventure() {
       return { parts, n: vox.size, hist };
     };
     const legoCache = {};
+    G.legoBuildFn = legoBuild; G.legoMatFn = legoMat;   // 🧱 ใช้แปลงตัวละครที่ใส่ชุดตัวต่อด้วย
     const qtLegoize = (node, P, src, key) => {
       node.updateMatrixWorld(true);
       const objs = []; node.traverse((o) => objs.push(o));
@@ -11827,6 +11851,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 👕 ชุดไอเทมบนโมเดล 3D — ① แบบชุด (cut: Peasant ผ้า/เสื้อคลุม · Ranger เกราะหนัง+ฮู้ด) ② ย้อมสีตามไอเทม (hue แบบเดียวกับที่แยกอาชีพ)
       //    ③ ของประดับเกาะกระดูกตามขั้น (heroOutfitDeco) · ไม่ระบุ cut = ใช้ชุดประจำอาชีพเดิม
       const HERO_OUTFIT = {
+        lego_suit: { hue: [4, 0.85, 1.05] },                          // 🧱 ชุดตัวต่อ — เสื้อแดงสด (แล้วแปลงทั้งตัวเป็นอิฐ)
         o1:     { scarf: 1 },                                        // 🧣 ผ้าพันคอนุ่มฟู — ชุดเดิม + ผ้าพันคอ
         o2:     { cut: "Peasant", hue: [112, 0.45, 0.95, 0.97, 1, 0.55], leaf: 1 },   // H[4]=1 ย้อมเสื้อตัวในสีเบจด้วย ไม่งั้นเปลี่ยนแค่แขน  // 🍀 ชุดใบไม้พราย — ผ้าเขียวใบไม้
         o3:     { cut: "Ranger",  hue: [212, 0.60, 0.92] },           // 🌩️ เกราะเมฆานิล — น้ำเงินพายุ
@@ -12369,6 +12394,24 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         ar.position.copy(start); ar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirA); ar.scale.set(1, len, 1);
         ar.children.forEach((o) => { if (o.geometry && o.geometry.type === "ConeGeometry") o.scale.set(1, 1 / len, 1); });
       };
+      // 🧱 แปลงโมเดลตัวละครเป็นอิฐเลโก้ (ชุดตัวต่อ) — ใช้ตัวแปลงเดียวกับมอนสเตอร์ตัวต่อ · ข้ามอาวุธในมือ/ของประดับ · แคชตามชุดที่ใส่
+      G.heroLegoize = (H) => {
+        if (!G.legoBuildFn || !H || !H.g) return;
+        const skip = new Set([H.grip, H.gripL].filter(Boolean)), objs = [H.g];
+        const walk = (o) => { if (skip.has(o)) return; if (o !== H.g && (o.isBone || o.isSkinnedMesh)) objs.push(o); o.children.forEach(walk); };
+        (H.parts || []).forEach(walk);
+        H.g.updateMatrixWorld(true);
+        const sk = objs.filter((o) => o.isSkinnedMesh); if (!sk.length) return;
+        const box = new THREE.Box3(); sk.forEach((o) => box.expandByObject(o));
+        const ws = H.g.getWorldScale(new THREE.Vector3()).y || 1, hh = (box.max.y - box.min.y) / ws;
+        const key = (G._heroOutfitSig || "") + "|" + (G.heroModelId || "");
+        G._heroLegoCache = G._heroLegoCache || {};
+        const C = G._heroLegoCache[key] || (G._heroLegoCache[key] = G.legoBuildFn(H.g, objs, { legoN: 32, by: "h" }, { h: hh, max: hh }));
+        const mat = G.legoMatFn();
+        sk.forEach((o) => { o.visible = false; });
+        C.parts.forEach((pt) => { const anc = objs[pt.a] || H.g; const m = new THREE.Mesh(pt.geo, mat); m.castShadow = true; m.userData.lego = 1; anc.add(m); });
+        H.lego = C.n;
+      };
       G.heroModelSet = (id) => {
         const M0 = id && HERO_MODELS[id];
         const OI = M0 && G.heroOutfitInfo ? G.heroOutfitInfo() : null;   // 👕 ชุดไอเทมที่สวมอยู่
@@ -12533,6 +12576,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (tkRig) { g.updateMatrixWorld(true); heroTopknotTick(G._heroModel); }
           { const hooded = /Ranger$/.test(M.files[1] || "") && !M.noHood; const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded)); if (deco.length) { G._heroModel.deco = deco; g.updateMatrixWorld(true); deco.forEach((K) => heroBoneFollow(G._heroModel, K)); } }   // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
           heroPlay("Idle_Loop");
+          if (OI && OI.id === "lego_suit" && G.heroLegoize) { try { G.heroLegoize(G._heroModel); } catch (eHL) { console.warn("lego hero", eHL); } }   // 🧱 ชุดตัวต่อเลโก้ → ทั้งตัวเป็นอิฐ
           if (M.mech) heroMechAttach(G._heroModel, M, token);   // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์
         });
       };
@@ -23191,6 +23235,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.legoCloseTalk = () => setUi((u) => ({ ...u, legoTalk: null }));
       // 🏪 ร้านตัวต่อ — น้ำยา/ใบวาร์ป (ราคาร้านปกติ) + กล่องสุ่มตัวต่อ (ทอง/น้ำยา/เพชร/อุปกรณ์หายาก)
       G.LEGO_BOX_PRICE = 5000;
+      G.legoBuyItem = (id) => {
+        const it = LOOT.find((x) => x.id === id && x.lego); if (!it) return;
+        if ((G.gold || 0) < it.price) { toast(`ทองไม่พอ! ต้องมี ${it.price.toLocaleString()}💰`); return; }
+        G.gold -= it.price; G.gainItem(id); if (G.sfx && G.sfx.coin) G.sfx.coin();
+        toast(`🧱 ซื้อ ${it.emoji} ${it.name} แล้ว! — สวมได้ที่หน้ากระเป๋า หรือใช้เป็นแฟชั่น 👗`);
+        setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] })); if (G.saveGame) G.saveGame();
+      };
       G.legoShop = (on) => setUi((u) => ({ ...u, legoShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0 }));
       G.legoBox = () => {
         const price = G.LEGO_BOX_PRICE;
@@ -63299,6 +63350,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           ["🧪", `น้ำยาเลือด${(HP.m || {}).name || "กลาง"} ×10`, `ฟื้น ${(HP.m || {}).heal || 0} HP ต่อขวด`, ((HP.m || {}).price || 0) * 10, () => G.buyHpPot("m", 10)],
           ["💧", `น้ำยามานา${(MP.l || {}).name || "ใหญ่"} ×5`, `ฟื้น ${(MP.l || {}).rest || 0} มานาต่อขวด`, ((MP.l || {}).price || 0) * 5, () => G.buyMpPot("l", 5)],
           ["📜", "ใบวาร์ปข้ามแดน ×3", "วาร์ปไปแดนที่ปลดล็อกแล้วได้ทันที", wp * 3, () => G.buyWarpScroll(3)],
+          ...LOOT.filter((x) => x.lego).map((it) => [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), (it.slot === "outfit" ? "👕 ชุด · ใส่แล้วตัวละครกลายเป็นตัวต่อเลโก้ทั้งตัว! · " : "⚔️ อาวุธ (ทุกอาชีพ) · ") + [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : ""].filter(Boolean).join(" "), it.price, () => G.legoBuyItem(it.id)]),
           ["🎁", "กล่องสุ่มตัวต่อ", "สุ่มได้ ทอง · น้ำยาใหญ่ · เพชร · อุปกรณ์หายาก (มีลุ้นระดับตำนาน!)", G.LEGO_BOX_PRICE || 5000, () => G.legoBox()],
         ];
         return (
@@ -65121,7 +65173,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             </div>
             <div style={{ fontSize: 11.5, color: "#a07090", marginBottom: 11 }}>เย็บมือทุกชิ้น ใส่แล้วสวมบนตัวละคร 3D ได้เลยจ้ะ · ของที่มีแล้วจะขึ้น ✓</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
-              {LOOT.filter((x) => x.sew).map((it) => {
+              {LOOT.filter((x) => x.sew && !x.lego).map((it) => {
                 const price = (G.SEW_PRICE && G.SEW_PRICE[it.rarity]) || 9000;
                 const afford = (ui.gold || 0) >= price, owned = (ui.inv || []).includes(it.id);
                 const rc = it.rarity === "epic" ? "#a24ad0" : "#3a7ad0";
