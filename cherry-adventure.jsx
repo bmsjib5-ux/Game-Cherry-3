@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v694";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v695";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3229,6 +3229,52 @@ const HERO_MODELS = {
   coder:    { name: "โปรแกรมเมอร์", emoji: "💻", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_SimpleParted"], h: 3.85, hue: [186, 0.55, 1.02], hairC: 0x2a3a3e, desc: "โปรแกรมเมอร์ชุดฟ้าน้ำทะเล" },
   tamer:    { name: "นักฝึกสัตว์",  emoji: "🐾", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_Long"],        h: 3.9, hue: [36, 0.50, 1.02], hairC: 0xb08a4a, desc: "นักฝึกสัตว์ชุดน้ำตาลทอง" },
 };
+// 🦸👗 ธีมชุดฮีโร่บนโมเดล 3D — แต่ละฮีโร่ได้ลุคตามคาแรกเตอร์: เพศ · แบบชุด (Peasant ผ้า/Ranger เกราะหนัง) · สีย้อม · ทรงผม/สีผม · โทนผิว
+//    + ของสวม (ใช้ตัวปั้นหมวก/หน้ากาก/ถุงมือ/กางเกง/รองเท้าเดิม) + ของประดับเฉพาะตัว fx (หู หาง เขา ปีก มงกุฎ/ชฎา รัศมี ผ้าคลุม ฯลฯ)
+//    noHood = ถอดฮู้ดของชุด Ranger (เห็นผม/มงกุฎ) · t = ระดับของประดับทั่วไป (เข็มกลัด/เกราะไหล่/เข็มขัดรูน) · col = สีเรืองแสงประจำตัว
+const HDY = (h, s, l, sm) => [h, s, l, 0.97, 1, sm == null ? 0.5 : sm];   // ย้อมทั้งชุด (รวมเสื้อตัวในสีอ่อน)
+const HERO_THEME = {
+  haru:     { g: "F", cut: "Peasant", hue: HDY(330, 0.5, 1.6), hair: "Hair_Buns", hairC: 0xf4b0d4, t: 2, col: 0xff8ac0, fx: { flowers: 0xffb8dc }, gear: { shoes: { k: "sneaker", c: 0xffb0d0 } } },
+  luna:     { g: "F", cut: "Peasant", hue: HDY(238, 0.42, 1.35), hair: "Hair_Long", hairC: 0xdcdff8, t: 2, col: 0xb0b8ff, fx: { tiara: "moon" }, gear: { shoes: { k: "boot", c: 0x5a6ad0 } } },
+  celestia: { g: "F", cut: "Peasant", hue: HDY(215, 0.3, 1.75, 0.3), hair: "Hair_Long", hairC: 0xfff0b0, t: 4, star: 1, col: 0x9ab0ff, fx: { tiara: "star", halo: 0xfff0a0, wings: "angel", wingS: 0.72 } },
+  yuki:     { g: "F", cut: "Ranger", hue: [200, 0.45, 1.5], hair: "Hair_Long", hairC: 0xeef6ff, t: 2, scarf: 1, scarfC: 0xf2f8ff, col: 0x9ad0ff, fx: { ice: 1 }, gear: { gloves: { k: "wrap", c: 0xe8f4ff } } },
+  rose:     { g: "F", cut: "Ranger", noHood: 1, hue: [42, 0.55, 1.12], hair: "Hair_Long", hairC: 0xf2c66a, t: 4, col: 0xffd36a, fx: { tiara: "rose", cape: 0xc0303a }, gear: { gloves: { k: "gauntlet", c: 0xf0d27a }, shoes: { k: "boot", c: 0xf0d27a } } },
+  kentaro:  { g: "M", cut: "Peasant", hue: [358, 0.6, 0.95], hair: "Hair_Buzzed", hairC: 0x2a2830, topknot: 1, t: 3, col: 0xff5a3a, fx: { band: "hachimaki" }, gear: { pants: { k: "wrap", c: 0x2a2228 } } },
+  kotaro:   { g: "M", cut: "Ranger", hue: [38, 0.45, 0.9], hair: "Hair_SimpleParted", hairC: 0x3a2a1a, t: 2, col: 0xe0c088, gear: { mask: { k: "veil", c: 0xc8a878 }, gloves: { k: "wrap", c: 0xd8c8a0 } } },
+  kairi:    { g: "M", cut: "Ranger", noHood: 1, hue: [215, 0.65, 1.0], hair: "Hair_SimpleParted", hairC: 0xf0f4ff, t: 4, col: 0x50a8ff, fx: { bolts: 1, cape: 0x1e3a8a }, gear: { gloves: { k: "gauntlet", c: 0x3a6ae0 } } },
+  aurelius: { g: "M", cut: "Ranger", noHood: 1, hue: HDY(45, 0.2, 1.25, 0.35), hair: "Hair_SimpleParted", hairC: 0xf2d27a, t: 4, col: 0xffe08a, fx: { halo: 0xffe8a0, cape: 0xf6f0e0 }, gear: { hat: { kk: "helmKnight", tint: 0xf0d27a }, gloves: { k: "gauntlet", c: 0xf0d27a }, shoes: { k: "boot", c: 0xf0d27a } } },
+  ragnar:   { g: "M", cut: "Ranger", noHood: 1, hue: [356, 0.72, 0.6], hair: "Hair_Buzzed", hairC: 0x1a1a1a, beard: 1, skin: 0xa77fd4, skinK: 0.32, t: 5, col: 0xff3a3a, gear: { hat: { kk: "helmHorned", tint: 0x9a3a32 }, gloves: { k: "claw", c: 0x2a1418 } } },
+  khaosai:  { g: "M", cut: "Peasant", hue: [24, 0.8, 1.06], hair: "Hair_Buzzed", hairC: 0x2a1a10, t: 1, col: 0xf0a04a, fx: { band: "mongkol" }, gear: { pants: { k: "wrap", c: 0xb02020 } } },
+  fenrir:   { g: "M", cut: "Ranger", noHood: 1, hue: [220, 0.12, 0.6], hair: "Hair_SimpleParted", hairC: 0x8a94a8, t: 3, col: 0xf07818, fx: { ears: "wolf", earC: 0x7a8498, earIn: 0x3a3a44, tail: "wolf", tailC: 0x7a8498, tailTip: 0xdfe4ec }, gear: { gloves: { k: "claw", c: 0x2a2e3a } } },
+  neko:     { g: "F", cut: "Peasant", hue: HDY(30, 0.75, 1.4), hair: "Hair_Long", hairC: 0xffbe70, t: 2, col: 0x5ae082, fx: { ears: "cat", earC: 0xffa040, tail: "cat", tailC: 0xffa040, tailTip: 0xfff6ee }, gear: { gloves: { k: "fluffy", c: 0xfff4e8 } } },
+  usagi:    { g: "F", cut: "Peasant", hue: HDY(340, 0.35, 1.8, 0.3), hair: "Hair_Long", hairC: 0xffffff, t: 2, col: 0xff7ab0, fx: { ears: "bunny", earC: 0xffffff, earIn: 0xffb0c8, tail: "bunny" }, gear: { shoes: { k: "sneaker", c: 0xff9ac0 } } },
+  ryujin:   { g: "M", cut: "Ranger", noHood: 1, hue: [12, 0.8, 0.85], hair: "Hair_SimpleParted", hairC: 0x7a1420, t: 5, col: 0xff7a2a, fx: { horns: "dragon", tail: "dragon", tailC: 0xb02818 } },
+  ignis:    { g: "M", cut: "Ranger", noHood: 1, hue: [8, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x2a1a10, t: 4, col: 0x6ad8ff, fx: { core: 0x6ad8ff }, gear: { hat: { kk: "helmKnight", tint: 0xc0302a }, gloves: { k: "gauntlet", c: 0xf0c040 }, pants: { k: "plate", c: 0xc0302a }, shoes: { k: "boot", c: 0xf0c040 } } },
+  captain:  { g: "M", cut: "Ranger", noHood: 1, hue: [218, 0.65, 0.85], hair: "Hair_SimpleParted", hairC: 0xc8a060, t: 3, col: 0x7ab0e8, fx: { emblem: 1, shield: 1 }, gear: { gloves: { k: "gauntlet", c: 0xc0302a }, shoes: { k: "boot", c: 0xc0302a } } },
+  thunder:  { g: "M", cut: "Ranger", noHood: 1, hue: [215, 0.25, 0.75], hair: "Hair_SimpleParted", hairC: 0xe8c060, beard: 1, t: 4, col: 0xb0e0ff, fx: { cape: 0xc0302a, bolts: 1 }, gear: { hat: { kk: "helmHorned", tint: 0xd8dce4 } } },
+  yaksa:    { g: "M", cut: "Ranger", noHood: 1, hue: [42, 0.75, 0.95], hair: "Hair_Buzzed", hairC: 0x1a1a1a, skin: 0x2a9a5a, skinK: 0.6, h: 4.4, t: 4, col: 0xffe08a, fx: { tiara: "chada", fangs: 1, collar: 1 }, gear: { gloves: { k: "gauntlet", c: 0xe8b840 } } },
+  luminia:  { g: "F", cut: "Peasant", hue: HDY(145, 0.45, 1.3), hair: "Hair_Long", hairC: 0xf8f0c8, t: 3, leaf: 1, col: 0x8ee8b4, fx: { ears: "elf", flowers: 0xffffff } },
+  apsara:   { g: "F", cut: "Peasant", hue: HDY(45, 0.55, 1.6, 0.45), hair: "Hair_Buns", hairC: 0x2a1a10, t: 4, col: 0xffe08a, fx: { tiara: "chada", collar: 1, wings: "angel", wingS: 0.8 } },
+  asura:    { g: "M", cut: "Ranger", noHood: 1, hue: [320, 0.6, 0.5], hair: "Hair_Buzzed", hairC: 0x1a0a14, skin: 0x8a5a78, skinK: 0.45, t: 5, col: 0xff3a5a, fx: { horns: "demon", wings: "bat", wingS: 0.9 } },
+  hanuman:  { g: "M", cut: "Peasant", hue: HDY(45, 0.7, 1.35), hair: "Hair_Buzzed", hairC: 0xffffff, skin: 0xf6f4ee, skinK: 0.8, t: 3, col: 0xffd36a, fx: { tiara: "chada", tail: "monkey", tailC: 0xffffff, collar: 1, fangs: 1 } },
+  garuda:   { g: "M", cut: "Ranger", noHood: 1, hue: [10, 0.75, 0.8], hair: "Hair_Buzzed", hairC: 0x3a2010, skin: 0xe8a848, skinK: 0.55, t: 4, col: 0xffd24a, fx: { tiara: "chada", wings: "gold", wingS: 1.1, collar: 1 }, gear: { gloves: { k: "claw", c: 0xe8b840 } } },
+  naki:     { g: "F", cut: "Peasant", hue: HDY(165, 0.6, 1.15), hair: "Hair_Long", hairC: 0x0e5a5a, skin: 0x8ae8d0, skinK: 0.4, t: 3, col: 0x4ae8c0, fx: { naga: 0x2a9a7a, tiara: "chada", collar: 1 } },
+  kinnaree: { g: "F", cut: "Peasant", hue: HDY(335, 0.4, 1.6, 0.4), hair: "Hair_Buns", hairC: 0x2a1a10, t: 3, col: 0xffb0d0, fx: { tiara: "chada", wings: "swan", wingS: 0.85, tail: "feather", tailC: 0xfff4f8, tailC2: 0xffc0d8, collar: 1 } },
+  mermaid:  { g: "F", cut: "Peasant", hue: HDY(190, 0.6, 1.4), hair: "Hair_Long", hairC: 0x4ac8e8, skin: 0xaee8f8, skinK: 0.35, t: 2, col: 0x6ae0ff, fx: { tiara: "shell", ears: "fin", earC: 0x6ae0ff, collar: "pearl" } },
+  lich:     { g: "M", cut: "Ranger", hue: [270, 0.35, 0.45], hair: "Hair_Buzzed", hairC: 0x2a1a3a, skin: 0x9aa8b0, skinK: 0.72, t: 4, col: 0x7affa8, fx: { orbs: 0x7affa8, tiara: "bone" }, gear: { mask: { k: "stone", c: 0xe8e4d8 } } },
+  kitsune:  { g: "F", cut: "Peasant", hue: HDY(8, 0.7, 1.15), hair: "Hair_Long", hairC: 0xffd6a0, t: 3, col: 0xffc24a, fx: { ears: "fox", earC: 0xffb060, earIn: 0xfff0e0, tail: "fox9", tailC: 0xffb060, tailTip: 0xffffff } },
+  phoenix:  { g: "F", cut: "Peasant", hue: HDY(28, 0.85, 1.3), hair: "Hair_Long", hairC: 0xff7a2a, skin: 0xffd8a2, skinK: 0.28, t: 4, col: 0xff8a2a, fx: { tiara: "flame", wings: "flame", wingS: 0.95, tail: "feather", tailC: 0xff6a1a, tailC2: 0xffd04a, tailGlow: 1 } },
+};
+// โมเดลตามธีม: เปลี่ยนร่าง (เพศ) · แบบชุด · ผม · ความสูง — เก็บค่าผิว/ฮู้ด/เครา ไว้ให้ตัวประกอบร่างใช้
+const heroThemeModel = (M0, TH) => {
+  const fem = TH.g === "F", M = Object.assign({}, M0);
+  M.files = [fem ? "Female_Base" : "Male_Base", (fem ? "Female_" : "Male_") + (TH.cut || "Peasant"), TH.hair || (fem ? "Hair_Long" : "Hair_SimpleParted")];
+  if (TH.beard) M.files.push("Hair_Beard");
+  M.hue = TH.hue || null; M.hairC = TH.hairC || M0.hairC; M.h = TH.h || (fem ? 3.85 : 4.0);
+  M.topknot = TH.topknot ? HERO_MODELS.samurai.topknot : null; M.mech = null;
+  M.skin = TH.skin || null; M.skinK = TH.skinK || 0.4; M.beardIdx = TH.beard ? 3 : -1; M.noHood = !!TH.noHood;
+  return M;
+};
 // 🗡️ ท่าจับอาวุธบนกระดูกมือของโมเดล — s = ตัวคูณขนาดเทียบกับอาวุธบนร่างปั้นเอง · rx/ry/rz = แก้มุมให้ด้ามอยู่ในกำปั้นและใบชี้ออก
 const HERO_GRIP = { s: 0.55, rx: -0.6, ry: 0, rz: 0, px: 0, py: 0.1, pz: 0 };
 const HERO_GRIP_L = { rx: -0.6, ry: -Math.PI, rz: -2.36, px: 0, py: 0.1, pz: 0 };   // 🛡️ ท่าจับมือซ้าย (โล่/นวมซ้าย) บนกระดูก hand_l — ค้นหาเชิงตัวเลขให้หน้าโล่หันออกซ้าย-หน้า ขอบบนชี้ขึ้น   // py 0.1 = กำปั้นอยู่ระหว่างลูกทุยกับโกร่งดาบพอดี (ต่ำกว่านี้มือไปกำใบดาบ)   // px/py/pz = เลื่อนจุดจับจากโคนข้อมือไปกลางกำปั้น (หน่วยกระดูก)
@@ -3488,7 +3534,7 @@ export default function CherryAdventure() {
     if (!mount) return; // 🛡️ guard: bail if the container isn't mounted yet
     const W = mount.clientWidth, H = mount.clientHeight;
     const G = gameRef.current;
-    G.HERO_OFF = true;   // 🦸🚫 ปิดชุดฮีโร่ไว้ก่อน (ตั้ง false เพื่อเปิดคืน)
+    G.HERO_OFF = false;   // 🦸 เปิดชุดฮีโร่คืน — ใช้ธีมชุดบนโมเดล 3D (HERO_THEME) · ตั้ง true เพื่อปิด
     G.joy = { x: 0, y: 0 };
     G.keys = {};
 
@@ -11207,7 +11253,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       //    ร่างชิบิยังสร้างไว้เป็นตัวสำรองระหว่างโหลด / ถ้าโหลดไฟล์ไม่ได้ · โหลดเสร็จแล้วซ่อนร่างชิบิทั้งหมด
       //    เหลือป้ายชื่อ + อาวุธ (ย้ายไปเกาะกระดูก hand_r เหมือนตัวเรา)
       G.remoteModelSet = (grp, info) => {
-        const M = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
+        const M0r = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
+        const THr = info && info.hero && !G.HERO_OFF && HERO_THEME[info.hero];
+        const M = THr ? heroThemeModel(M0r, THr) : M0r;   // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
         if (!grp || !M) return;
         // 🚫 ไม่โชว์ร่างชิบิเลยระหว่างรอโหลด (เห็นแค่ป้ายชื่อ) — ถ้าโหลดไม่ได้ค่อยคืนร่างสำรอง
         const fallback = grp.children.filter((oo) => !oo.isSprite && oo.visible);
@@ -11237,6 +11285,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   if (c.map && !c.emissiveMap) c.emissiveMap = c.map;
                   if (pi === 1 && M.hue && c.map && G.qtHueMap) c.map = G.qtHueMap(c.map, M.files[1] + ":" + (c.name || "m"), M.hue);
                   if (pi === 2 && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
+                  if (pi === M.beardIdx && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
+                  if (pi === 0 && M.skin) c.color.lerp(new THREE.Color(M.skin).convertSRGBToLinear(), M.skinK || 0.4);
                   c.needsUpdate = true; seen.set(m, c); mats.push(c);
                 }
                 return c;
@@ -11244,6 +11294,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               oo.material = Array.isArray(oo.material) ? fresh : fresh[0];
             });
           });
+          if (M.noHood && parts[1]) parts[1].traverse((oo) => { if (oo.isMesh && /Head_Hood/.test(oo.name)) oo.visible = false; });
           const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
           const acts = {};
           ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Spell_Simple_Idle_Loop"].forEach((nm) => { const c = anims.animations.find((x) => x.name === nm); if (c) acts[nm] = mixers.map((mx) => mx.clipAction(c)); });
@@ -11508,6 +11559,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (sig2 !== (G._heroOutfitSig || "")) G.heroModelSet(G.heroModelId);
       };
       G.heroOutfitInfo = () => {
+        const TH = G.heroId && !G.HERO_OFF && HERO_THEME[G.heroId];   // 🦸 สวมฮีโร่ = ใช้ธีมชุดประจำตัวแทนชุดที่ใส่
+        if (TH) return { id: "hero:" + G.heroId, it: null, t: TH.t || 2, col: TH.col || 0xf5c542, cut: TH.cut, hue: TH.hue || null, scarf: !!TH.scarf, scarfC: TH.scarfC, leaf: !!TH.leaf, star: !!TH.star,
+          theme: TH, hooded: TH.cut === "Ranger" && !TH.noHood, sig: "hero:" + G.heroId };
         let id = G.equip ? G.equip.outfit : null;
         if (G.heroId || G._gearHidden) id = null; else if (G.costume && G.costume.outfit) id = G.costume.outfit;
         const it = id ? LOOT.find((x) => x.id === id) : null;
@@ -11532,6 +11586,171 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // ✨ ของประดับตามขั้น — พิกัดวัดจากท่าผูก (T-pose) ของโมเดลจริง: หน้า = +z · อกหน้า z≈+0.29 · หลัง z≈−0.27 · ไหล่ = กระดูก upperarm
       //    ทั่วไป: ผ้าพันคอ(ถ้าเป็นชุดผ้าพันคอ) · หายาก: เข็มกลัดอัญมณีธาตุที่อก · มหากาพย์: +เกราะไหล่คู่ขอบเรือง
       //    SECRET: +เข็มขัดรูนเรืองรอบเอว+เกล็ดพลังลอยข้างไหล่ · มังกร: +หนามไหล่+หนามแนวสันหลัง · ตำนาน: +ปีกทอง+วงรัศมีหลัง
+      // 🦸✨ ของประดับเฉพาะตัวฮีโร่ — ปั้นเองเกาะกระดูก (หน่วยตัวละคร): หัว ยอด +0.45 · ตา +0.2 · หน้า z +0.29 · กว้าง ±0.2
+      //    อก spine_03 (แผ่นหลัง z ≈ −0.3) · เอว spine_01 (รัศมี ~0.37) · +x = ซ้ายของตัวละคร · หันหน้า +z
+      const heroThemeFx = (TH, rig, add, hooded) => {
+        const FX = TH.fx || {};
+        const L = (c) => new THREE.Color(c).convertSRGBToLinear();
+        const MT = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: L(c), roughness: 0.7 }, o || {}));
+        const GW = (c, k, o) => new THREE.MeshStandardMaterial(Object.assign({ color: L(c), emissive: L(c), emissiveIntensity: k || 1.2, roughness: 0.4 }, o || {}));
+        const GOLD = new THREE.MeshStandardMaterial({ color: 0xe8b840, metalness: 0.85, roughness: 0.28, emissive: 0x4a3008, emissiveIntensity: 0.55 });
+        const SP = (r, a, b) => new THREE.SphereGeometry(r, a || 12, b || 10), CN = (r, h, sg) => new THREE.ConeGeometry(r, h, sg || 8);
+        const PV = (par, x, y, z, rx, ry, rz) => { const q = new THREE.Group(); q.position.set(x, y, z); q.rotation.set(rx || 0, ry || 0, rz || 0); par.add(q); return q; };
+        const hy = hooded ? 0.05 : 0, hs = hooded ? 1.18 : 1;   // ฮู้ดคลุมหัว — ของบนหัวขยับขึ้น/กว้างออกนิด
+        const hd = (FX.ears || FX.horns || FX.tiara || FX.halo || FX.flowers || FX.band || FX.naga || FX.fangs) ? rig("Head") : null;
+        const ch = (FX.wings || FX.cape || FX.core || FX.emblem || FX.shield || FX.orbs) ? rig("spine_03") : null;
+        const ws = FX.tail ? rig("spine_01") : null, nk = FX.collar ? rig("neck_01") : null;
+        const star = (R, r) => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + (i / 10) * Math.PI * 2, rr = i % 2 ? r : R; if (i) sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } return new THREE.ShapeGeometry(sh); };
+        // 👂 หู — แมว/จิ้งจอก/หมาป่า (สามเหลี่ยม) · กระต่าย (ยาวรี) · เอลฟ์ (แหลมข้างหัว) · ครีบเงือก
+        if (hd && FX.ears) {
+          const E = FX.ears, m = MT(FX.earC || TH.hairC || 0x8a6a4a), inner = MT(FX.earIn || 0xf4b8c8);
+          for (const sx of [1, -1]) {
+            if (E === "bunny") {
+              const p = PV(hd, sx * 0.075 * hs, 0.42 + hy, -0.05, -0.12, 0, -sx * 0.16);
+              add(p, new THREE.Mesh(SP(0.06), m), 0, 0.2, 0).scale.set(1, 3.2, 0.42);
+              add(p, new THREE.Mesh(SP(0.038), inner), 0, 0.2, 0.022).scale.set(1, 3.0, 0.3);
+            } else if (E === "elf") {
+              const p = PV(hd, sx * 0.2, 0.22, -0.03, 0, 0, -sx * (Math.PI / 2 - 0.55));
+              add(p, new THREE.Mesh(CN(0.042, 0.2, 6), MT(0xf2c8a8)), 0, 0.09, 0).scale.set(1, 1, 0.45);
+            } else if (E === "fin") {
+              for (let q = 0; q < 3; q++) { const p = PV(hd, sx * 0.205, 0.22 + q * 0.035, -0.03 - q * 0.04, -0.4, 0, -sx * (1.15 - q * 0.22)); add(p, new THREE.Mesh(CN(0.04, 0.22 - q * 0.04, 4), GW(FX.earC || 0x6ae0ff, 0.45, { transparent: true, opacity: 0.85 })), 0, 0.09, 0).scale.set(1, 1, 0.22); }
+            } else {
+              const H = E === "fox" ? 0.24 : E === "wolf" ? 0.21 : 0.17, R = E === "cat" ? 0.08 : 0.085;
+              const p = PV(hd, sx * 0.135 * hs, 0.4 + hy, -0.02, E === "wolf" ? -0.15 : 0, 0, -sx * 0.32);
+              const o = add(p, new THREE.Mesh(CN(R, H, 4), m), 0, H / 2, 0); o.rotation.y = Math.PI / 4; o.scale.set(1, 1, 0.55);
+              const i = add(p, new THREE.Mesh(CN(R * 0.58, H * 0.72, 4), inner), 0, H * 0.42, 0.02); i.rotation.y = Math.PI / 4; i.scale.set(1, 1, 0.3);
+              if (E === "fox") { const tp = add(p, new THREE.Mesh(CN(R * 0.42, H * 0.3, 4), MT(0xfff6ee)), 0, H * 0.86, 0); tp.rotation.y = Math.PI / 4; tp.scale.set(1, 1, 0.55); }
+            }
+          }
+        }
+        // 🐉😈 เขา
+        if (hd && FX.horns) for (const sx of [1, -1]) {
+          if (FX.horns === "dragon") {
+            add(PV(hd, sx * 0.11 * hs, 0.4 + hy, -0.03, -1.0, 0, -sx * 0.25), new THREE.Mesh(CN(0.042, 0.34, 7), GOLD), 0, 0.17, 0);
+            add(PV(hd, sx * 0.17 * hs, 0.33 + hy, -0.06, -1.2, 0, -sx * 0.5), new THREE.Mesh(CN(0.028, 0.2, 6), GOLD), 0, 0.1, 0);
+          } else {
+            const p = PV(hd, sx * 0.12 * hs, 0.4 + hy, 0.02, -0.35, 0, -sx * 0.55), dk = MT(0x2a1418, { roughness: 0.5, emissive: L(0x5a0a10), emissiveIntensity: 0.4 });
+            add(p, new THREE.Mesh(CN(0.05, 0.22, 8), dk), 0, 0.11, 0);
+            add(PV(p, 0, 0.21, 0, -0.7, 0, sx * 0.6), new THREE.Mesh(CN(0.03, 0.16, 8), dk), 0, 0.08, 0);
+          }
+        }
+        // 👑 มงกุฎ/ชฎา/รัดเกล้า
+        if (hd && FX.tiara) {
+          const T = FX.tiara, R = 0.215 * hs, y0 = 0.33 + hy;
+          const bandM = T === "moon" ? MT(0xe8ecff, { metalness: 0.8, roughness: 0.25 }) : T === "bone" ? MT(0x2a2030, { roughness: 0.5 }) : GOLD;
+          if (T !== "chada" && T !== "flame") { const b = add(hd, new THREE.Mesh(new THREE.TorusGeometry(R, 0.013, 6, 36), bandM), 0, y0, 0.0); b.rotation.x = Math.PI / 2 - 0.14; }
+          if (T === "moon") { const cr = add(hd, new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.024, 8, 22, Math.PI * 1.25), GW(0xe8ecff, 1.1)), 0, y0 + 0.09, R + 0.01); cr.rotation.z = -Math.PI * 0.12; add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.022, 0), GW(0x9ab0ff, 1.4)), 0, y0 + 0.02, R + 0.02); }
+          else if (T === "star") { add(hd, new THREE.Mesh(star(0.11, 0.045), GW(0xfff0a0, 1.3, { side: THREE.DoubleSide })), 0, y0 + 0.09, R + 0.015); for (const sx of [1, -1]) add(hd, new THREE.Mesh(star(0.035, 0.015), GW(0xfff0a0, 1.0, { side: THREE.DoubleSide })), sx * 0.11, y0 + 0.05, R * 0.82).rotation.y = sx * 0.55; }
+          else if (T === "rose") {
+            for (let k = -2; k <= 2; k++) { const a = k * 0.42; add(hd, new THREE.Mesh(CN(0.024, 0.1, 4), GOLD), Math.sin(a) * R, y0 + 0.06, Math.cos(a) * R); }
+            const rm = MT(0xd02a3a, { roughness: 0.55 }), rp = PV(hd, 0.16 * hs, y0 + 0.04, 0.1);
+            add(rp, new THREE.Mesh(SP(0.035), rm), 0, 0, 0);
+            for (let q = 0; q < 6; q++) { const a = (q / 6) * Math.PI * 2; add(rp, new THREE.Mesh(SP(0.03, 8, 6), rm), Math.cos(a) * 0.035, 0, Math.sin(a) * 0.035).scale.set(1, 0.55, 1); }
+            for (const sx of [1, -1]) add(rp, new THREE.Mesh(SP(0.025, 6, 4), MT(0x3a8a3a)), sx * 0.05, -0.03, -0.02).scale.set(1.4, 0.3, 0.8);
+          }
+          else if (T === "shell") {
+            const sh = add(hd, new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.012, 0.02, 9, 1, false, -Math.PI / 2, Math.PI), MT(0xffe8f0, { roughness: 0.35, metalness: 0.2 })), 0, y0 + 0.07, R + 0.01); sh.rotation.x = Math.PI / 2; sh.rotation.y = Math.PI;
+            for (let k = -4; k <= 4; k++) { if (!k) continue; const a = k * 0.2; add(hd, new THREE.Mesh(SP(0.016, 8, 6), MT(0xfff8f0, { roughness: 0.25, metalness: 0.3 })), Math.sin(a) * R, y0, Math.cos(a) * R); }
+          }
+          else if (T === "bone") { for (let k = -3; k <= 3; k++) { const a = k * 0.35; const sp = add(hd, new THREE.Mesh(CN(0.026, 0.13 + (k === 0 ? 0.06 : 0), 5), MT(0xe8e2d0)), Math.sin(a) * R, y0 + 0.07, Math.cos(a) * R); sp.rotation.z = -Math.sin(a) * 0.3; } add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.03, 0), GW(FX.orbs || 0x7affa8, 1.5)), 0, y0 + 0.02, R + 0.02); }
+          else if (T === "flame") { for (let k = 0; k < 6; k++) { const p = PV(hd, (k - 2.5) * 0.035, 0.42 + hy, 0.02 - k * 0.01, -0.25 - k * 0.2, 0, (k - 2.5) * -0.12); add(p, new THREE.Mesh(CN(0.035, 0.26 - Math.abs(k - 2.5) * 0.03, 5), GW(k % 2 ? 0xffc040 : 0xff6a1a, 1.5, { transparent: true, opacity: 0.92 })), 0, 0.12, 0).scale.set(1, 1, 0.4); } }
+          else if (T === "chada") {   // 🇹🇭 ชฎาทรงเจดีย์ซ้อนชั้น + กรรเจียกข้างหู
+            const base = 0.41 + hy, TIERS = [[0.17, 0.15, 0.07], [0.14, 0.115, 0.075], [0.11, 0.085, 0.075], [0.082, 0.06, 0.07], [0.058, 0.04, 0.065]];
+            let y = base; TIERS.forEach(([r1, r2, h], i) => { add(hd, new THREE.Mesh(new THREE.CylinderGeometry(r2 * hs, r1 * hs, h, 16), GOLD), 0, y + h / 2, -0.02); const rim = add(hd, new THREE.Mesh(new THREE.TorusGeometry(r1 * hs, 0.009, 6, 20), GW(TH.col || 0xffe08a, 0.8)), 0, y + 0.004, -0.02); rim.rotation.x = Math.PI / 2; y += h; });
+            add(hd, new THREE.Mesh(CN(0.035, 0.3, 8), GOLD), 0, y + 0.15, -0.02);
+            add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), GW(TH.col || 0xff4a4a, 1.3)), 0, base + 0.04, 0.17 * hs);
+            for (const sx of [1, -1]) { const p = PV(hd, sx * 0.205 * hs, 0.2, -0.04, -0.35, 0, -sx * 0.25); add(p, new THREE.Mesh(CN(0.04, 0.2, 4), GOLD), 0, 0.09, 0).scale.set(1, 1, 0.3); }
+          }
+        }
+        if (hd && FX.halo) { const h = add(hd, new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.016, 8, 40), GW(FX.halo, 1.6)), 0, 0.72 + hy, -0.14); h.rotation.x = Math.PI / 2 - 0.35; }
+        if (hd && FX.flowers) {   // 🌸 ดอกไม้ติดผม
+          const pm = MT(FX.flowers, { roughness: 0.6 }), cm = MT(0xffd84a);
+          [[-0.17, 0.36, 0.06], [-0.2, 0.29, -0.03], [-0.15, 0.42, -0.07], [0.18, 0.37, -0.05]].forEach(([x, y, z], fi) => {
+            const p = PV(hd, x * hs * 1.08, y + hy, z, 0, x > 0 ? 1.2 : -1.2, 0); const sc = (fi === 0 ? 1.25 : 1) * 1.7;
+            for (let q = 0; q < 5; q++) { const a = (q / 5) * Math.PI * 2; add(p, new THREE.Mesh(SP(0.026 * sc, 8, 6), pm), Math.cos(a) * 0.03 * sc, Math.sin(a) * 0.03 * sc, 0).scale.set(1, 1, 0.4); }
+            add(p, new THREE.Mesh(SP(0.014 * sc, 6, 4), cm), 0, 0, 0.008);
+          });
+        }
+        if (hd && FX.band) {   // 🎌 ผ้าคาดหัวซามูไร / 🥊 มงคลนักมวย
+          const mong = FX.band === "mongkol", bm = MT(mong ? 0xf4f0e8 : 0xf4f0e8), b = add(hd, new THREE.Mesh(new THREE.TorusGeometry(0.212 * hs, mong ? 0.03 : 0.022, 8, 32), bm), 0, 0.31 + hy, 0); b.rotation.x = Math.PI / 2 - 0.1;
+          if (mong) { const b2 = add(hd, new THREE.Mesh(new THREE.TorusGeometry(0.212 * hs, 0.018, 6, 32), MT(0xc0202a)), 0, 0.31 + hy, 0.006); b2.rotation.x = Math.PI / 2 - 0.1; add(PV(hd, 0, 0.33 + hy, -0.2, -0.6), new THREE.Mesh(CN(0.03, 0.22, 6), bm), 0, 0.1, 0); }
+          else { add(hd, new THREE.Mesh(SP(0.035, 8, 6), MT(0xd02a2a)), 0, 0.32 + hy, 0.215 * hs); for (const sx of [1, -1]) { const tl = add(PV(hd, sx * 0.03, 0.3 + hy, -0.2, 0.25, 0, sx * 0.2), new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.012), bm), 0, -0.13, 0); } }
+        }
+        if (hd && FX.fangs) for (const sx of [1, -1]) { const f = add(hd, new THREE.Mesh(CN(0.016, 0.07, 6), MT(0xfffaf0)), sx * 0.04, 0.09, 0.26); }
+        if (hd && FX.naga) {   // 🐍 พังพานนาคเจ็ดเศียรแผ่หลังศีรษะ
+          const nm = MT(FX.naga, { roughness: 0.5 }), gm = GW(TH.col || 0x4ae8c0, 1.0);
+          for (let i = -3; i <= 3; i++) {
+            const a = i * 0.34, p = PV(hd, Math.sin(a) * 0.24, 0.26 + Math.cos(a) * 0.1, -0.22, -0.3, 0, -a * 0.85);
+            add(p, new THREE.Mesh(CN(0.045, 0.36, 8), nm), 0, 0.18, 0).rotation.x = Math.PI;
+            const h = add(p, new THREE.Mesh(SP(0.062), nm), 0, 0.38, 0.03); h.scale.set(1, 0.8, 1.4);
+            add(p, new THREE.Mesh(CN(0.018, 0.08, 5), GOLD), 0, 0.44, 0.0);
+            for (const sx of [1, -1]) add(p, new THREE.Mesh(SP(0.011, 6, 4), gm), sx * 0.028, 0.395, 0.1);
+          }
+        }
+        // 🪽 ปีก — ขนเรียงเป็นพัดจากจุดหมุนบนแผ่นหลัง (ขนปีกหลัก + ขนคลุมชั้นใน) · ค้างคาว = แผ่นพังผืดระหว่างก้านนิ้ว
+        if (ch && FX.wings) {
+          const W = FX.wings, Sc = FX.wingS || 1;
+          const prim = W === "gold" ? GOLD : W === "flame" ? GW(0xff6a1a, 1.4, { transparent: true, opacity: 0.92 }) : MT(W === "swan" ? 0xfffafc : 0xffffff, { roughness: 0.6, emissive: L(0x3a3a3a), emissiveIntensity: 0.3 });
+          const cov = W === "gold" ? new THREE.MeshStandardMaterial({ color: 0xffd870, metalness: 0.7, roughness: 0.3, emissive: 0x5a4010, emissiveIntensity: 0.6 }) : W === "flame" ? GW(0xffc040, 1.6, { transparent: true, opacity: 0.95 }) : MT(W === "swan" ? 0xffd6e8 : 0xfff3dc, { roughness: 0.6, emissive: L(0x3a3020), emissiveIntensity: 0.3 });
+          for (const sx of [1, -1]) {
+            const pv = PV(ch, sx * 0.13, 0.22, -0.3, 0, sx * 0.42, 0);
+            if (W === "bat") {
+              const bone = MT(0x2a1020), mem = MT(0x4a1438, { side: THREE.DoubleSide, transparent: true, opacity: 0.92, emissive: L(0x3a0a20), emissiveIntensity: 0.35 });
+              const tips = [];
+              [[0.45, 1.0], [0.95, 0.95], [1.45, 0.82], [1.95, 0.6]].forEach(([ang, len]) => { const l = len * Sc, dx = sx * Math.sin(ang) * l, dy = Math.cos(ang) * l; tips.push([dx, dy]); const f = add(pv, new THREE.Mesh(CN(0.018, l, 5), bone), dx / 2, dy / 2, 0); f.rotation.z = -sx * ang; });
+              const sh = new THREE.Shape(); sh.moveTo(0, 0); tips.forEach(([x, y], i) => { const px = i ? tips[i - 1] : [0, 0]; sh.quadraticCurveTo((x + px[0]) * 0.42, (y + px[1]) * 0.42, x, y); }); sh.lineTo(0, -0.15 * Sc); sh.lineTo(0, 0);
+              add(pv, new THREE.Mesh(new THREE.ShapeGeometry(sh, 6), mem), 0, 0, -0.005);
+            } else {
+              const LEN = [0.95, 1.0, 0.97, 0.9, 0.8, 0.7, 0.6, 0.5];
+              LEN.forEach((ln, i) => { const ang = 0.35 + i * (2.0 / (LEN.length - 1)), l = ln * Sc; const f = add(pv, new THREE.Mesh(SP(1, 10, 6), prim), sx * Math.sin(ang) * l * 0.48, Math.cos(ang) * l * 0.48, -i * 0.006); f.scale.set(0.075 * Sc, l / 2, 0.02); f.rotation.z = -sx * ang; });
+              for (let i = 0; i < 6; i++) { const ang = 0.5 + i * 0.3, l = (0.46 - i * 0.03) * Sc; const f = add(pv, new THREE.Mesh(SP(1, 10, 6), cov), sx * Math.sin(ang) * l * 0.48, Math.cos(ang) * l * 0.48, 0.012); f.scale.set(0.085 * Sc, l / 2, 0.022); f.rotation.z = -sx * ang; }
+            }
+          }
+        }
+        if (ch && FX.cape) {   // 🧥 ผ้าคลุมหลัง (โค้งตามแผ่นหลัง บานออกที่ชาย)
+          const geo = new THREE.PlaneGeometry(0.66, 0.9, 6, 8); geo.translate(0, -0.45, 0);
+          const pa = geo.attributes.position; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), y = pa.getY(i), tt = -y / 0.9; const nx = x * (1 + 0.35 * tt); pa.setX(i, nx); pa.setZ(i, -0.07 * (1 - Math.pow(nx / 0.45, 2)) - 0.05 * tt); }
+          geo.computeVertexNormals();
+          const cp = PV(ch, 0, 0.14, -0.31, 0.16, 0, 0); add(cp, new THREE.Mesh(geo, MT(FX.cape, { side: THREE.DoubleSide, roughness: 0.8 })), 0, 0, 0);
+          add(cp, new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.045, 0.04), GOLD), 0, 0, 0.0);
+        }
+        if (ch && FX.core) { const r = add(ch, new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.018, 8, 22), MT(0xc8ccd4, { metalness: 0.8, roughness: 0.3 })), 0, 0.1, 0.31); add(ch, new THREE.Mesh(new THREE.CircleGeometry(0.065, 20), GW(FX.core, 2.2)), 0, 0.1, 0.315); }
+        if (ch && FX.emblem) add(ch, new THREE.Mesh(star(0.11, 0.045), MT(0xffffff, { side: THREE.DoubleSide, emissive: L(0x5a5a5a), emissiveIntensity: 0.4 })), 0, 0.1, 0.315);
+        if (ch && FX.shield) {   // 🛡️ โล่กลมสะพายหลัง (ขาวแดงน้ำเงิน + ดาว)
+          const sp = PV(ch, 0, 0.02, -0.38, 0, Math.PI, 0);
+          [[0.34, 0xc0302a], [0.27, 0xf4f4f4], [0.2, 0xc0302a], [0.13, 0x1e4a9a]].forEach(([r, c], i) => { const d = add(sp, new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.03, 32), MT(c, { metalness: 0.5, roughness: 0.35 })), 0, 0, -i * 0.006); d.rotation.x = Math.PI / 2; });
+          add(sp, new THREE.Mesh(star(0.1, 0.04), MT(0xffffff, { side: THREE.DoubleSide })), 0, 0, -0.04).rotation.y = Math.PI;
+        }
+        if (ch && FX.orbs) [[0.5, 0.35, -0.2], [-0.5, 0.42, -0.18], [0, 0.72, -0.42]].forEach(([x, y, z]) => { add(ch, new THREE.Mesh(SP(0.07), GW(FX.orbs, 2.0, { transparent: true, opacity: 0.9 })), x, y, z); add(ch, new THREE.Mesh(SP(0.12), GW(FX.orbs, 0.8, { transparent: true, opacity: 0.25, depthWrite: false })), x, y, z); });
+        if (FX.ice || FX.bolts) for (const sd of ["l", "r"]) {   // ❄️ ผลึกน้ำแข็ง / ⚡ ประกายสายฟ้าเหนือไหล่
+          const sh = rig("upperarm_" + sd); if (!sh) continue; const sx = sd === "l" ? 1 : -1;
+          for (let q = 0; q < 3; q++) {
+            if (FX.ice) add(sh, new THREE.Mesh(new THREE.OctahedronGeometry(0.05 - q * 0.01, 0), GW(0xbfe8ff, 0.9, { transparent: true, opacity: 0.85 })), sx * (0.06 + q * 0.06), 0.2 + q * 0.05, 0.06 - q * 0.06).scale.set(0.7, 1.6, 0.7);
+            else { const b = add(sh, new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.14, 0.02), GW(0x9adcff, 2.2)), sx * (0.05 + q * 0.07), 0.22 + (q % 2) * 0.06, 0.04 - q * 0.05); b.rotation.z = (q % 2 ? 0.7 : -0.7) * sx; }
+          }
+        }
+        if (nk && FX.collar) {   // 📿 กรองศอทอง / สร้อยไข่มุก
+          const pearl = FX.collar === "pearl";
+          const c = add(nk, new THREE.Mesh(new THREE.TorusGeometry(0.22, pearl ? 0.014 : 0.034, 6, 28, Math.PI), pearl ? MT(0xfff8f0, { metalness: 0.3, roughness: 0.25 }) : GOLD), 0, -0.1, 0.02); c.rotation.x = Math.PI / 2 + 0.3;
+          for (let q = 0; q < 5; q++) { const a = 0.35 + q * 0.6; add(nk, new THREE.Mesh(pearl ? SP(0.022, 8, 6) : new THREE.OctahedronGeometry(0.025, 0), pearl ? MT(0xfff8f0, { metalness: 0.3, roughness: 0.25 }) : GW(TH.col || 0xff4a4a, 1.2)), Math.cos(a) * 0.22, -0.16 - Math.sin(a) * 0.04, 0.02 + Math.sin(a) * 0.2); }
+        }
+        // 🐾 หาง — ลูกกลมเรียงตามเส้นโค้ง (ฟูกลางหาง) · ลิง = ท่อยาวม้วนปลาย · มังกร = เรียวลงพื้นพร้อมหนาม · ขนนก = พัดขนยาว
+        if (ws && FX.tail) {
+          const T = FX.tail, tm = MT(FX.tailC || TH.hairC || 0x8a6a4a, { roughness: 0.8 }), tipM = MT(FX.tailTip || FX.tailC || 0xffffff, { roughness: 0.8 });
+          const chain = (pts, rF, rot) => { const cv = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(q[0], q[1], q[2]))); const par = rot != null ? PV(ws, 0, 0, -0.27, 0, 0, rot) : PV(ws, 0, 0, -0.27); for (let i = 0; i <= 16; i++) { const tt = i / 16, P = cv.getPoint(tt); add(par, new THREE.Mesh(SP(1, 10, 8), tt > 0.8 && FX.tailTip ? tipM : tm), P.x, P.y, P.z).scale.setScalar(rF(tt)); } return cv; };
+          if (T === "cat") chain([[0, 0, 0], [0, -0.18, -0.2], [0, -0.12, -0.45], [0.04, 0.14, -0.6], [0.07, 0.38, -0.55]], () => 0.045);
+          else if (T === "wolf") chain([[0, 0, 0], [0, -0.22, -0.2], [0, -0.5, -0.34], [0, -0.78, -0.32]], (t) => 0.055 + 0.07 * Math.sin(Math.PI * Math.min(1, t * 1.1)));
+          else if (T === "fox9") for (let j = 0; j < 5; j++) chain([[0, 0, 0], [0, 0.05, -0.28], [0, 0.35, -0.5], [0, 0.72, -0.55], [0, 1.0, -0.42]], (t) => 0.05 + 0.075 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.05)), 0.8), -0.9 + j * 0.45);
+          else if (T === "bunny") add(PV(ws, 0, -0.04, -0.3), new THREE.Mesh(SP(0.1, 12, 10), MT(0xffffff, { roughness: 0.9 })), 0, 0, 0);
+          else if (T === "monkey") { const cv = new THREE.CatmullRomCurve3([[0, 0, 0], [0, -0.35, -0.22], [0, -0.25, -0.58], [0, 0.15, -0.72], [0, 0.42, -0.58], [0, 0.46, -0.42]].map((q) => new THREE.Vector3(q[0], q[1], q[2]))); add(PV(ws, 0, 0, -0.27), new THREE.Mesh(new THREE.TubeGeometry(cv, 40, 0.032, 8, false), tm), 0, 0, 0); }
+          else if (T === "dragon") { const cv = chain([[0, -0.02, 0], [0, -0.35, -0.28], [0, -0.8, -0.48], [0, -1.25, -0.6], [0, -1.55, -0.92]], (t) => 0.11 * (1 - t) + 0.02); const par = PV(ws, 0, 0, -0.27); for (let i = 1; i < 8; i++) { const tt = i / 9, P = cv.getPoint(tt); const sp = add(par, new THREE.Mesh(CN(0.03 * (1 - tt) + 0.012, 0.12 * (1 - tt) + 0.05, 5), GOLD), P.x, P.y + 0.1 * (1 - tt) + 0.03, P.z - 0.02); sp.rotation.x = -0.6; } }
+          else if (T === "feather") {
+            const c1 = FX.tailGlow ? GW(FX.tailC, 1.4, { transparent: true, opacity: 0.92 }) : MT(FX.tailC, { roughness: 0.6 }), c2 = FX.tailGlow ? GW(FX.tailC2 || FX.tailC, 1.6) : MT(FX.tailC2 || FX.tailC, { roughness: 0.6 });
+            const par = PV(ws, 0, -0.05, -0.28), up = new THREE.Vector3(0, 1, 0);
+            for (let i = 0; i < 7; i++) { const a = -0.9 + i * 0.3, dir = new THREE.Vector3(Math.sin(a) * 0.9, -Math.cos(a) * 0.75, -0.45).normalize(), ln = 0.85 - Math.abs(i - 3) * 0.08; const f = add(par, new THREE.Mesh(SP(1, 10, 6), i % 2 ? c2 : c1), dir.x * ln * 0.5, dir.y * ln * 0.5, dir.z * ln * 0.5); f.scale.set(0.075, ln / 2, 0.02); f.quaternion.setFromUnitVectors(up, dir); }
+          }
+        }
+      };
       const heroOutfitDeco = (OI, parts, g) => {
         const rigs = [];
         if (!OI) return rigs;
@@ -11546,7 +11765,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const chest = rig("spine_03"), waist = rig("spine_01"), neck = rig("neck_01");
         // 🧣 ผ้าพันคอ
         if (OI.scarf && neck) {
-          const cloth = new THREE.MeshStandardMaterial({ color: new THREE.Color(0xd9536b).convertSRGBToLinear(), roughness: 0.85 });
+          const cloth = new THREE.MeshStandardMaterial({ color: new THREE.Color(OI.scarfC || 0xd9536b).convertSRGBToLinear(), roughness: 0.85 });
           const ring = add(neck, new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.07, 10, 22), cloth), 0, -0.06, 0.08); ring.rotation.x = Math.PI / 2 - 0.3; ring.scale.set(1.1, 1.05, 1);
           for (const [dx, dz, rz, L] of [[0.1, 0.3, 0.1, 0.28], [0.17, 0.27, 0.3, 0.22]]) { const tail = add(neck, new THREE.Mesh(new THREE.BoxGeometry(0.085, L, 0.035), cloth), dx, -0.1 - L / 2, dz); tail.rotation.z = rz; tail.rotation.x = -0.15; }
         }
@@ -11557,7 +11776,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           rim.rotation.set(0, 0, 0);
         }
         // 🛡️ มหากาพย์ขึ้นไป: เกราะไหล่คู่ + ขอบเรือง
-        if (t >= 3) for (const side of ["l", "r"]) {
+        if (t >= 3 && (!OI.theme || OI.theme.cut === "Ranger")) for (const side of ["l", "r"]) {   // 🦸 ธีมชุดผ้า (นางฟ้า/เจ้าหญิง) ไม่ใส่เกราะไหล่
           const sh = rig("upperarm_" + side); if (!sh) continue;
           const sx = side === "l" ? 1 : -1;
           const pad = add(sh, new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), metal), sx * 0.06, 0.07, 0.12);
@@ -11574,6 +11793,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         // 🐉 มังกร: หนามแนวสันหลัง
         if (t === 5 && chest) for (let k = 0; k < 4; k++) { const sp = add(chest, new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.22 - k * 0.03, 5), fang), 0, 0.2 - k * 0.2, -0.3); sp.rotation.x = -1.1; }
+        if (OI.theme) { try { heroThemeFx(OI.theme, rig, add, !!OI.hooded); } catch (eTF) { try { console.warn("heroThemeFx", eTF); } catch (_) {} } }
         // 👼 ตำนาน: ปีกทองคู่ + วงรัศมีกลางหลัง
         if (t >= 6 && chest) {
           for (const sx of [1, -1]) for (let k = 0; k < 3; k++) { const f = add(chest, new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.6 - k * 0.12, 4), metal), sx * (0.22 + k * 0.1), 0.25 - k * 0.12, -0.36 - k * 0.03); f.scale.set(1, 1, 0.25); f.rotation.z = sx * -(0.9 + k * 0.3); f.rotation.y = sx * 0.3; }
@@ -11601,6 +11821,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       };
       const GEAR_SLOTS = ["hat", "mask", "gloves", "pants", "shoes"];
       G.heroGearInfo = () => {
+        const TH = G.heroId && !G.HERO_OFF && HERO_THEME[G.heroId];
+        if (TH) { const o2 = {}; Object.keys(TH.gear || {}).forEach((sl) => { const D = TH.gear[sl]; o2[sl] = { id: "hero", it: null, t: TH.t || 2, D, c: D.c != null ? D.c : 0x9aa4b4, glow: TH.col || 0xf5c542 }; }); o2.sig = "hero:" + G.heroId; return o2; }
         const out = {}; const sig = [];
         GEAR_SLOTS.forEach((sl) => {
           let id = G.equip ? G.equip[sl] : null;
@@ -11641,7 +11863,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const sxz = (P.w / 1.5) * W / Math.max(0.01, Math.max(sz.x, sz.z)), sy = (P.h / 1.85) * 0.52 / Math.max(0.01, sz.y);
             m.scale.set(sxz, sy, sxz);
             m.position.set(0, -0.05 + ((P.y + 0.85) / 1.85) * 0.5 - b.min.y * sy, 0.02 - ((b.min.z + b.max.z) / 2) * sxz);
-            if (HI.D.c != null && (HI.id === "hD")) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(0xa02a2a), 0.45); } });
+            if (HI.D.tint != null) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(HI.D.tint), 0.6); } });   // 🦸 หมวกธีมฮีโร่ย้อมสี
+            else if (HI.D.c != null && (HI.id === "hD")) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(0xa02a2a), 0.45); } });
             m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
             hd.add(m);
           } else if (HI.D.k === "straw") {
@@ -11658,8 +11881,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const cap = add(hd, new THREE.Mesh(new THREE.SphereGeometry(W * 0.56, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), M), 0, base + 0.16, -0.01); cap.scale.set(1.05, 0.55, 1.1);
             const fe = add(hd, new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.34, 5), new THREE.MeshStandardMaterial({ color: lin(0xf0e8d0), roughness: 0.6 })), W * 0.35, base + 0.34, -0.08); fe.rotation.set(-0.5, 0, -0.5); fe.scale.set(1, 1, 0.35);
           }
-          if (HI.t >= 2 && HI.D.k !== "crown") add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), gemOf(HI)), 0, base + 0.18, (hooded ? 0.36 : 0.27));   // 💎 อัญมณีหน้าหมวก
-          if (HI.t >= 4 && HI.D.k !== "crown") { const r = add(hd, new THREE.Mesh(new THREE.TorusGeometry(W * 0.62, 0.012, 8, 28), emOf(HI)), 0, base + 0.08, 0.01); r.rotation.x = Math.PI / 2; }
+          if (HI.t >= 2 && HI.D.k !== "crown" && HI.id !== "hero") add(hd, new THREE.Mesh(new THREE.OctahedronGeometry(0.035, 0), gemOf(HI)), 0, base + 0.18, (hooded ? 0.36 : 0.27));   // 💎 อัญมณีหน้าหมวก
+          if (HI.t >= 4 && HI.D.k !== "crown" && HI.id !== "hero") { const r = add(hd, new THREE.Mesh(new THREE.TorusGeometry(W * 0.62, 0.012, 8, 28), emOf(HI)), 0, base + 0.08, 0.01); r.rotation.x = Math.PI / 2; }
         }
         // 🎭 หน้ากาก (หน้า = +z · ตา y+0.2)
         const MI = GI.mask;
@@ -11833,7 +12056,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G._heroOutfitSig = (OI ? OI.sig : "") + "#" + (GI ? GI.sig : "");
         const hatKK = GI && GI.hat && GI.hat.D.kk && G.kkHatEnsure ? G.kkHatEnsure(GI.hat.D.kk) : null;   // ⏳ หมวก KayKit ต้องมาก่อนประกอบร่าง
         let M = M0;
-        if (M0 && OI && (OI.cut || OI.hue)) {
+        if (M0 && OI && OI.theme) M = heroThemeModel(M0, OI.theme);   // 🦸 ธีมชุดฮีโร่: ร่าง/ชุด/ผม/สีตามคาแรกเตอร์
+        else if (M0 && OI && (OI.cut || OI.hue)) {
           M = Object.assign({}, M0);
           if (OI.cut) M.files = [M0.files[0], (/^Female/.test(M0.files[0]) ? "Female_" : "Male_") + OI.cut].concat(M0.files.slice(2));
           if (OI.hue) M.hue = OI.hue;
@@ -11904,6 +12128,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 // ผม: texture เป็นสีขาวเกือบล้วน คูณสีตรง ๆ จึงได้สีที่ต้องการเป๊ะ (ตัวย้อม hue จะข้ามพิกเซลขาว)
                 //     เก็บค่าเป็นสีที่ "ตาเห็น" แล้วแปลงเป็น linear เอง เพราะ renderer อ่านค่าสีวัสดุเป็น linear
                 if (pi === 2 && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();
+                if (pi === M.beardIdx && M.hairC) c.color.setHex(M.hairC).convertSRGBToLinear();   // 🧔 เครา = สีเดียวกับผม
+                if (pi === 0 && M.skin) c.color.lerp(new THREE.Color(M.skin).convertSRGBToLinear(), M.skinK || 0.4);   // 🦸 โทนผิวตามคาแรกเตอร์ (ยักษ์เขียว/วานรเผือก/ลิชซีด…)
                 if (pi >= 3 && M.mhSlots && GI) {                        // 👖👢 ชิ้น MakeHuman: ย้อมตามสีไอเทม/สีย้อมของช่องนั้น
                   const I = GI[M.mhSlots[pi - 3]];
                   if (I && c.map && G.qtHueMap) { const hsl = {}; new THREE.Color(I.c).getHSL(hsl); c.map = G.qtHueMap(c.map, M.files[pi] + ":" + I.c, [hsl.h * 360, Math.max(0.25, hsl.s * 0.9), 0.55 + hsl.l * 0.9, 0.97, 1, Math.max(0.2, hsl.s)]); c.emissiveMap = c.map; }
@@ -11915,6 +12141,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             });
             o.material = Array.isArray(o.material) ? fresh : fresh[0];
           }));
+          if (M.noHood && parts[1]) parts[1].traverse((o) => { if (o.isMesh && /Head_Hood/.test(o.name)) o.visible = false; });   // 🦸 ถอดฮู้ด — เห็นผม/มงกุฎ
           const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
           const acts = {};
           anims.animations.concat(anims2 ? anims2.animations : []).forEach((c) => { acts[c.name] = mixers.map((mx) => mx.clipAction(c)); });
@@ -11982,7 +12209,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._heroHidden = hidden;
           G._heroModel = { g, parts, mixers, acts, glove: null, cur: null, k, lastHp: G.player ? G.player.hp : 0, hurtT: 0, swPrev: 0, batPrev: false, neck, neckPlane, tmpV: new THREE.Vector3(), grip, gripHome, hand, gripL, gripHomeL, mats, lit: -1, tk: tkRig };
           if (tkRig) { g.updateMatrixWorld(true); heroTopknotTick(G._heroModel); }
-          { const hooded = /Ranger$/.test(M.files[1] || ""); const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded)); if (deco.length) { G._heroModel.deco = deco; g.updateMatrixWorld(true); deco.forEach((K) => heroBoneFollow(G._heroModel, K)); } }   // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
+          { const hooded = /Ranger$/.test(M.files[1] || "") && !M.noHood; const deco = heroOutfitDeco(OI, parts, g).concat(heroGearDeco(GI, parts, g, hooded)); if (deco.length) { G._heroModel.deco = deco; g.updateMatrixWorld(true); deco.forEach((K) => heroBoneFollow(G._heroModel, K)); } }   // 👕✨ ของประดับชุดตามขั้น   // 🎀 จำท่าหัวตอนยังไม่ขยับเป็นท่าอ้างอิง
           heroPlay("Idle_Loop");
           if (M.mech) heroMechAttach(G._heroModel, M, token);   // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์
         });
@@ -12205,6 +12432,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (Math.abs(lit - H.lit) > 0.015) { H.lit = lit; H.mats.forEach((m) => { m.emissive.copy(m.color).multiplyScalar(lit); m.emissiveIntensity = 1; }); }   // คูณสีวัสดุด้วย ไม่งั้นชิ้นที่ย้อมสีเข้ม (เช่นผม) จะถูกแสงขาวจาก emissiveMap กลบจนออกเทา
         }
         if (G._gloveOn && !H.glove) { H.g.updateMatrixWorld(true); try { H.glove = heroGloveFit(H.parts[0], H.k); } catch (_) { H.glove = {}; } }   // คำนวณครั้งแรกจากกระดูกที่อัปเดตจริงแล้ว
+        if (G._gloveOn && H.glove && !H.glove._k && /^(khGlove|fenClaw|nekoPaw)$/.test(G._curWeaponKey || "")) {   // 🦸 นวม/กรงเล็บ/อุ้งมือประจำฮีโร่ปั้นมาใหญ่กว่านวมมาตรฐาน — ย่อให้ยาวเท่านวมซ้อม (cb)
+          H.glove._k = 1;
+          try {
+            const lsz = (root) => { if (!root) return 0; root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), b = new THREE.Box3(), tb = new THREE.Box3(), m4 = new THREE.Matrix4();
+              root.traverse((o) => { if (o.isMesh && o.geometry) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); tb.copy(o.geometry.boundingBox).applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld)); b.union(tb); } });
+              if (b.isEmpty()) return 0; const v = b.getSize(new THREE.Vector3()); return Math.max(v.x, v.y, v.z); };
+            const fit = (refM, sigM) => { const ref = lsz(refM), sig = lsz(sigM); return ref > 0 && sig > 0 ? Math.max(0.15, Math.min(1.2, ref / sig)) : 0.55; };
+            const lKey = G.heroId === "fenrir" ? "fenClaw" : G.heroId === "neko" ? "nekoPaw" : G._curWeaponKey;   // มือซ้ายเป็นโมเดลแยก (ขนาดไม่เท่ามือขวา) — วัดแยกข้าง
+            if (H.glove.r) H.glove.r.s *= fit(weaponModels.cb, weaponModels[G._curWeaponKey]);
+            if (H.glove.l) H.glove.l.s *= (typeof gloveLModels !== "undefined" && gloveLModels.cb && gloveLModels[lKey]) ? fit(gloveLModels.cb, gloveLModels[lKey]) : fit(weaponModels.cb, weaponModels[G._curWeaponKey]);
+          } catch (eGK) {}
+        }
         const gv = G._gloveOn && H.glove;                  // 🥊 นวม: ท่าสวมจากกระดูกนิ้ว (ไม่ใช่ท่าจับดาบ/โล่)
         if (H.grip) {                                      // 🗡️ โค้ดร่างปั้นเองรีเซ็ตตำแหน่งอาวุธทุกเฟรม (ไปที่ข้อศอก) — ดึงกลับมากลางฝ่ามือ
           wand.position.set(0, 0, 0);
@@ -12216,6 +12455,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           wandL.position.set(0, 0, 0); wandL.scale.set(1, 1, 1);
           if (gv && gv.l) { H.gripL.scale.setScalar(gv.l.s); H.gripL.quaternion.copy(gv.l.q); H.gripL.position.copy(gv.l.p); }
           else { H.gripL.scale.setScalar(HERO_GRIP.s / H.k); H.gripL.rotation.set(HERO_GRIP_L.rx, HERO_GRIP_L.ry, HERO_GRIP_L.rz); H.gripL.position.set(HERO_GRIP_L.px, HERO_GRIP_L.py, HERO_GRIP_L.pz); }
+        }
+        if (gv && gv.l && gv._k && H.grip && H.gripL && ((H.glFixT = (H.glFixT || 0) - dt) <= 0)) {   // 🦸 นวมซ้ายของฮีโร่เป็นโมเดลคนละชิ้น (ใหญ่กว่า/สลับทีหลัง) — วัดขนาดจริงในโลกทุก ~1 วิ แล้วย่อให้เท่าข้างขวา
+          H.glFixT = 0.6;
+          try {
+            const vsz = (root) => { root.updateMatrixWorld(true); const b = new THREE.Box3(), tb = new THREE.Box3();
+              root.traverse((o) => { if (!o.isMesh || !o.geometry) return; let v = true, q = o; while (q && q !== root) { if (!q.visible) { v = false; break; } q = q.parent; } if (!v) return; if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); tb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld); b.union(tb); });
+              if (b.isEmpty()) return 0; const sv = b.getSize(new THREE.Vector3()); return Math.max(sv.x, sv.y, sv.z); };
+            const sr = vsz(wand), sl = vsz(wandL);
+            if (sr > 0 && sl > sr * 1.15) { gv.l.s *= sr / sl; H.gripL.scale.setScalar(gv.l.s); }
+          } catch (eFL) {}
         }
         if (G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk))))) heroBowDraw(H, H.cur === "Pistol_Idle_Loop");   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
         else if (H.bowArrow) H.bowArrow.visible = false;
