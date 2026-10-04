@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v693";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v694";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -12130,7 +12130,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (H.wasAtk && H.recClip && !(sw > 0.02 || bat || G._skCast || H.atkT > 0))   // 🗡️ เพิ่งฟันจบเฟรมนี้ — ตั้งเวลาท่าเก็บดาบก่อนเลือกท่า (กันท่ายืนแวบ 1 เฟรม)
           H.recT = H.acts[H.recClip][0].getClip().duration / ((HERO_CLIP_T[H.recClip] || {}).spd || 1);
         if (sp > 0.25) H.recT = 0;
-        let want = torchOn && H.acts.Idle_Torch_Loop ? "Idle_Torch_Loop" : has(HERO_IDLE[G.cls], "Idle_Loop"), once = false, atk = false, opt = null;
+        // 🪄 นักเวท: นอกการต่อสู้ยืนถือคทามือขวาชี้ไปข้างหน้า (มือซ้ายวางลง) · ยกมือซ้ายร่ายเวทค้างไว้เฉพาะตอนต่อสู้
+        //    "ต่อสู้" = โหมดต่อสู้ · ออโต้กำลังล่า · เพิ่งตี/ร่ายสกิล/โดนตีภายใน 4 วิ
+        if (atkEdge || skEdge || bat || H.hurtT > 0 || G.mode === "battle") H.fightT = 4;
+        H.fightT = Math.max(0, (H.fightT || 0) - dt);
+        const inFight = H.fightT > 0 || G.mode === "battle" || !!(G.auto && G.huntTarget);
+        const idleClip = G.cls === "mage" && !inFight && H.acts.Sword_Idle ? "Sword_Idle" : HERO_IDLE[G.cls];
+        let want = torchOn && H.acts.Idle_Torch_Loop ? "Idle_Torch_Loop" : has(idleClip, "Idle_Loop"), once = false, atk = false, opt = null;
         if (H.emote && (H.emote.t -= dt) <= 0) H.emote = null;
         if (G.mode === "fainted" || (P && P.hp <= 0)) { want = "Death01"; once = true; }
         else if (G.mountId) want = "Sitting_Idle_Loop";
