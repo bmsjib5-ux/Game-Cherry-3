@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v716"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v717"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3181,6 +3181,14 @@ const DIAMOND_SHOP = [
     { id: "wg_phoenix", kind: "wing", ref: "phoenix", cat: "wing", emoji: "🔥", name: "ปีกนกฟินิกซ์ (แดง-ส้ม)", price: 1000 },
     { id: "wg_angel", kind: "wing", ref: "angel", cat: "wing", emoji: "😇", name: "ปีกนางฟ้า (ขาว-ทอง)", price: 1500 },
     { id: "wg_demon", kind: "wing", ref: "demon", cat: "wing", emoji: "😈", name: "ปีกจอมมาร (ดำ-แดง)", price: 2000 },
+    { id: "wg_sakura", kind: "wing", ref: "sakura", cat: "wing", emoji: "🌸", name: "ปีกซากุระ (ชมพู)", price: 1200 },
+    { id: "wg_butterfly", kind: "wing", ref: "butterfly", cat: "wing", emoji: "🦋", name: "ปีกผีเสื้อราตรี (ม่วง-ฟ้า)", price: 1500 },
+    { id: "wg_fairy", kind: "wing", ref: "fairy", cat: "wing", emoji: "🧚", name: "ปีกภูตแก้ว (ใสเหลือบรุ้ง)", price: 1800 },
+    { id: "wg_ice", kind: "wing", ref: "ice", cat: "wing", emoji: "❄️", name: "ปีกคริสตัลน้ำแข็ง (ฟ้า)", price: 2200 },
+    { id: "wg_dragon", kind: "wing", ref: "dragon", cat: "wing", emoji: "🐉", name: "ปีกมังกรมรกต (เขียว-ทอง)", price: 2800 },
+    { id: "wg_void", kind: "wing", ref: "void", cat: "wing", emoji: "🌑", name: "ปีกเงาทมิฬ (ดำ-ม่วง)", price: 3000 },
+    { id: "wg_gold", kind: "wing", ref: "gold", cat: "wing", emoji: "👑", name: "ปีกเทพทองคำ (ทอง)", price: 3500 },
+    { id: "wg_rainbow", kind: "wing", ref: "rainbow", cat: "wing", emoji: "🌈", name: "ปีกสายรุ้ง (เจ็ดสี)", price: 4000 },
     { id: "wg_robot", kind: "wing", ref: "robot", cat: "wing", emoji: "🤖", name: "ปีกหุ่นยนต์ (เหล็ก)", price: 2500 },
 ];
 // ---------- 👘✨ OUTFIT SETS (ชุดคอสตูมเป็นเซ็ต) — themed look + set bonus + aura ----------
@@ -3282,6 +3290,15 @@ const WINGS = [
     { id: "phoenix", name: "ปีกนกฟินิกซ์", emoji: "🔥", kind: "phoenix", price: 1000, cols: [0xff2a10, 0xff5a1a, 0xff9020, 0xffc040], glow: 1.1, desc: "เพลิงฟินิกซ์ สีแดง-ส้ม" },
     { id: "angel", name: "ปีกนางฟ้า", emoji: "😇", kind: "angel", price: 1500, cols: [0xffffff, 0xfff4e0, 0xffe9b0, 0xf5d24a], glow: 0.5, desc: "ขนนกสวรรค์ สีขาว-ทอง" },
     { id: "demon", name: "ปีกจอมมาร", emoji: "😈", kind: "demon", price: 2000, cols: [0x140810, 0x2a0e1a, 0xd0203a, 0xff3050], glow: 0.9, desc: "ปีกค้างคาว ดำ-แดง" },
+    // ✨ ปีกชุดใหม่ (style: feather ขนนก · membrane พังผืด · blade แผงใบ · crystal คริสตัล · butterfly ผีเสื้อ · fairy ปีกใสแบบแมลงปอ)
+    { id: "sakura", name: "ปีกซากุระ", emoji: "🌸", kind: "sakura", style: "feather", price: 1200, cols: [0xf7a8c8, 0xffd0e4, 0xfff4f8, 0xff7ab0], glow: 0.5, glowCol: 0xffb0d8, fxCol: 0xffc0dc, desc: "ขนนกชมพูซากุระ กลีบดอกปลิวตาม" },
+    { id: "butterfly", name: "ปีกผีเสื้อราตรี", emoji: "🦋", kind: "butterfly", style: "butterfly", price: 1500, cols: [0x1a1050, 0x5a3ad0, 0x40d0ff, 0xffe060], glow: 0.9, glowCol: 0x60c8ff, fxCol: 0x80e0ff, desc: "ปีกผีเสื้อลายตาเรืองแสง" },
+    { id: "fairy", name: "ปีกภูตแก้ว", emoji: "🧚", kind: "fairy", style: "fairy", price: 1800, cols: [0xa8ecff, 0xe4d0ff, 0xffffff, 0x9adfff], glow: 0.7, glowCol: 0xc8f0ff, fxCol: 0xe0f8ff, desc: "ปีกใสเหลือบรุ้งแบบภูตน้อย" },
+    { id: "ice", name: "ปีกคริสตัลน้ำแข็ง", emoji: "❄️", kind: "ice", style: "crystal", price: 2200, cols: [0xe0f6ff, 0x8ad0f4, 0x3a8ad0, 0x9ae8ff], glow: 1.0, glowCol: 0x8ae0ff, fxCol: 0xd8f8ff, desc: "เกล็ดน้ำแข็งเหลี่ยมคม เรืองฟ้า" },
+    { id: "dragon", name: "ปีกมังกรมรกต", emoji: "🐉", kind: "dragon", style: "membrane", price: 2800, cols: [0x3a2a10, 0x1e6a3a, 0x0e3a1e, 0xffd040], glow: 0.8, glowCol: 0xffd040, fxCol: 0xffe070, desc: "พังผืดมังกรเขียวมรกต ข้อทองคำ" },
+    { id: "void", name: "ปีกเงาทมิฬ", emoji: "🌑", kind: "void", style: "feather", price: 3000, cols: [0x120820, 0x2a1450, 0x7a3ae0, 0xb06aff], glow: 1.1, glowCol: 0x9a4aff, fxCol: 0xb070ff, desc: "ขนนกเงามืด เรืองม่วงลึกลับ" },
+    { id: "gold", name: "ปีกเทพทองคำ", emoji: "👑", kind: "gold", style: "feather", price: 3500, cols: [0xa06a10, 0xe8b840, 0xfff0a0, 0xffe070], glow: 0.7, glowCol: 0xffd060, fxCol: 0xffe890, metal: 0.55, desc: "ขนนกทองคำแท้ ประกายเทพ" },
+    { id: "rainbow", name: "ปีกสายรุ้ง", emoji: "🌈", kind: "rainbow", style: "feather", price: 4000, cols: [0xff6060, 0xffd060, 0x60c0ff, 0xffffff], glow: 0.3, glowCol: 0xfff0ff, fxCol: 0xffffff, rainbow: 1, desc: "ขนนกเจ็ดสีไล่ทั้งปีก" },
     { id: "robot", name: "ปีกหุ่นยนต์", emoji: "🤖", kind: "robot", price: 2500, cols: [0x9aa4b0, 0xc0c8d0, 0x6a7480, 0x4aa0e0], glow: 0.7, desc: "ปีกกลไก เหล็กโลหะ" },
 ];
 const findWing = (id) => WINGS.find((w) => w.id === id) || null;
@@ -3341,23 +3358,26 @@ const wingTexOf = (w) => {
     };
     // พิกัดภาพ: โคนปีก (ติดหลัง) ≈ (34, 300) · ข้อมือปีก ≈ (270, 150) · ปลายปีก ≈ (500, 70)
     const arm = (t) => (t < 0.5 ? [34 + (270 - 34) * t * 2, 300 - 150 * t * 2] : [270 + (430 - 270) * (t - 0.5) * 2, 150 - 60 * (t - 0.5) * 2]);
-    if (kind === "angel" || kind === "phoenix") {
-        const ang = kind === "angel";
-        const cRoot = ang ? "#e8e4dc" : C[0], cMid = ang ? "#ffffff" : C[1], cTip = ang ? "#fff6dc" : C[3], edge = ang ? "rgba(150,140,120,0.45)" : "rgba(90,0,0,0.5)";
+    const style = w.style || (kind === "angel" || kind === "phoenix" ? "feather" : kind === "demon" ? "membrane" : "blade");
+    const rb = (t, l) => `hsl(${(t * 300) | 0},90%,${l}%)`; // 🌈 สีไล่เจ็ดสีตามตำแหน่งขน
+    if (style === "feather") {
+        const ang = kind === "angel", phx = kind === "phoenix", rain = !!w.rainbow;
+        const cRoot = ang ? "#e8e4dc" : C[0], cMid = ang ? "#ffffff" : C[1], cTip = ang ? "#fff6dc" : phx ? C[3] : C[2], edge = ang ? "rgba(150,140,120,0.45)" : phx ? "rgba(90,0,0,0.5)" : "rgba(0,0,0,0.35)";
+        const c2 = ang ? "#f4f0e6" : C[2], cv1 = ang ? "#f2eee6" : C[1], cv2 = ang ? "#ffffff" : C[2], cv3 = ang ? "#ffffff" : phx ? C[3] : C[2];
         for (let i = 0; i < 11; i++) {
             const t = i / 10, o = arm(0.5 + t * 0.5);
-            feather(x, o[0], o[1], -0.42 + t * 1.55, 250 - t * 70, 26, cRoot, cMid, cTip, edge);
+            feather(x, o[0], o[1], -0.42 + t * 1.55, 250 - t * 70, 26, rain ? rb(t * 0.5, 45) : cRoot, rain ? rb(t * 0.5, 60) : cMid, rain ? rb(t * 0.5, 80) : cTip, edge);
         } // ขนปลายปีก (primaries) แผ่ออก
         for (let i = 0; i < 12; i++) {
             const t = i / 11, o = arm(0.05 + t * 0.47);
-            feather(x, o[0], o[1], 1.42 - t * 0.35, 205 - t * 25, 24, cRoot, cMid, ang ? "#f4f0e6" : C[2], edge);
+            feather(x, o[0], o[1], 1.42 - t * 0.35, 205 - t * 25, 24, rain ? rb(0.5 + t * 0.5, 45) : cRoot, rain ? rb(0.5 + t * 0.5, 62) : cMid, rain ? rb(0.5 + t * 0.5, 82) : c2, edge);
         } // ขนแถวใน (secondaries) ห้อยลง
         for (let r = 0; r < 3; r++)
             for (let i = 0; i < 14 - r * 2; i++) {
                 const t = i / (13 - r * 2), o = arm(0.04 + t * (0.8 - r * 0.12));
-                feather(x, o[0], o[1] + 6 + r * 4, 1.15 - t * 0.6, 90 - r * 18, 18 - r * 3, ang ? "#f2eee6" : C[1], ang ? "#ffffff" : C[2], ang ? "#ffffff" : C[3], edge);
+                feather(x, o[0], o[1] + 6 + r * 4, 1.15 - t * 0.6, 90 - r * 18, 18 - r * 3, rain ? rb(t, 70) : cv1, rain ? rb(t, 82) : cv2, rain ? "#ffffff" : cv3, edge);
             } // ขนคลุม 3 แถวตามแนวแขนปีก
-        x.strokeStyle = ang ? "rgba(240,200,90,0.9)" : "rgba(255,230,120,0.9)";
+        x.strokeStyle = ang ? "rgba(240,200,90,0.9)" : phx ? "rgba(255,230,120,0.9)" : C[3];
         x.lineWidth = 5;
         x.lineCap = "round";
         x.beginPath();
@@ -3365,7 +3385,7 @@ const wingTexOf = (w) => {
             const o = arm(i / 20);
             i ? x.lineTo(o[0], o[1] - 4) : x.moveTo(o[0], o[1] - 4);
         }
-        x.stroke(); // ขอบปีกทอง
+        x.stroke(); // ขอบปีก
         gx.save();
         gx.setTransform(1, 0, 0, 1, 0, 0);
         gx.filter = "blur(10px)";
@@ -3375,15 +3395,99 @@ const wingTexOf = (w) => {
         gx.save();
         gx.setTransform(1, 0, 0, 1, 0, 0);
         gx.globalCompositeOperation = "source-in";
-        gx.fillStyle = ang ? "#fff0b0" : "#ff9a30";
+        gx.fillStyle = ang ? "#fff0b0" : phx ? "#ff9a30" : hex(w.glowCol || w.cols[3]);
         gx.fillRect(0, 0, S, S);
         gx.restore();
     }
-    else if (kind === "demon") {
+    else if (style === "butterfly" || style === "fairy") { // 🦋 ปีกผีเสื้อ (ลายตา) · 🧚 ปีกใสแบบแมลงปอ (ลายเส้นเหลือบรุ้ง)
+        const fairy = style === "fairy";
+        const lobes = fairy ? [[-0.5, 300, 78], [-0.15, 275, 70], [0.42, 230, 62], [0.85, 200, 56]] : [[-0.42, 300, 150], [0.62, 230, 125]];
+        lobes.forEach(([a, L, Wd], li) => {
+            x.save();
+            x.translate(40, 290);
+            x.rotate(a);
+            x.beginPath();
+            x.moveTo(0, 0);
+            x.bezierCurveTo(L * 0.25, -Wd, L * 0.95, -Wd * 0.9, L, 0);
+            x.bezierCurveTo(L * 0.9, Wd * 0.75, L * 0.3, Wd * 0.6, 0, 0);
+            x.closePath();
+            const g = x.createLinearGradient(0, 0, L, 0);
+            if (fairy) {
+                g.addColorStop(0, "rgba(200,240,255,0.55)");
+                g.addColorStop(0.5, "rgba(230,210,255,0.4)");
+                g.addColorStop(1, "rgba(255,255,255,0.6)");
+            }
+            else {
+                g.addColorStop(0, C[0]);
+                g.addColorStop(0.45, C[1]);
+                g.addColorStop(0.85, C[2]);
+                g.addColorStop(1, "#101028");
+            }
+            x.fillStyle = g;
+            x.fill();
+            x.save();
+            x.clip();
+            x.strokeStyle = fairy ? "rgba(255,255,255,0.85)" : "rgba(10,8,30,0.85)";
+            x.lineWidth = fairy ? 1.4 : 3;
+            for (let k = 0; k < (fairy ? 9 : 6); k++) {
+                x.beginPath();
+                x.moveTo(0, 0);
+                x.quadraticCurveTo(L * 0.5, (k / (fairy ? 8 : 5) - 0.5) * Wd * 1.4, L, (k / (fairy ? 8 : 5) - 0.5) * Wd * 0.6);
+                x.stroke();
+            } // เส้นปีก
+            if (fairy) {
+                x.lineWidth = 0.8;
+                for (let k = 0; k < 40; k++) {
+                    const px = Math.random() * L, py = (Math.random() - 0.5) * Wd * 1.4;
+                    x.beginPath();
+                    x.moveTo(px, py);
+                    x.lineTo(px + 10 + Math.random() * 12, py + (Math.random() - 0.5) * 14);
+                    x.stroke();
+                }
+            } // ตาข่ายเส้นเล็ก
+            else {
+                [[0.62, -0.28, 22], [0.4, 0.15, 14]].forEach(([u, v, r]) => { x.beginPath(); x.arc(L * u, Wd * v, r, 0, Math.PI * 2); x.fillStyle = C[3]; x.fill(); x.beginPath(); x.arc(L * u, Wd * v, r * 0.55, 0, Math.PI * 2); x.fillStyle = "#101028"; x.fill(); x.beginPath(); x.arc(L * u - r * 0.15, Wd * v - r * 0.15, r * 0.18, 0, Math.PI * 2); x.fillStyle = "#ffffff"; x.fill(); }); // ลายตา
+                x.fillStyle = "rgba(255,255,255,0.9)";
+                for (let k = 0; k < 7; k++) {
+                    const t = 0.25 + k * 0.1;
+                    x.beginPath();
+                    x.arc(L * (0.15 + t * 0.85), -Wd * 0.62 * Math.sin(t * Math.PI) - 4, 4, 0, Math.PI * 2);
+                    x.fill();
+                }
+            } // จุดขาวตามขอบ
+            x.restore();
+            x.lineWidth = fairy ? 2 : 4;
+            x.strokeStyle = fairy ? "rgba(180,230,255,0.95)" : "#101028";
+            x.stroke();
+            x.restore();
+            gx.save();
+            gx.translate(40, 290);
+            gx.rotate(a);
+            gx.beginPath();
+            gx.moveTo(0, 0);
+            gx.bezierCurveTo(L * 0.25, -Wd, L * 0.95, -Wd * 0.9, L, 0);
+            gx.bezierCurveTo(L * 0.9, Wd * 0.75, L * 0.3, Wd * 0.6, 0, 0);
+            gx.closePath();
+            gx.strokeStyle = hex(w.glowCol || w.cols[3]);
+            gx.lineWidth = fairy ? 5 : 3;
+            gx.stroke();
+            if (!fairy) {
+                [[0.62, -0.28, 22], [0.4, 0.15, 14]].forEach(([u, v, r]) => { gx.beginPath(); gx.arc(L * u, Wd * v, r, 0, Math.PI * 2); gx.fillStyle = hex(w.cols[3]); gx.fill(); });
+            }
+            else {
+                gx.globalAlpha = 0.25;
+                gx.fillStyle = hex(w.glowCol || w.cols[3]);
+                gx.fill();
+                gx.globalAlpha = 1;
+            }
+            gx.restore();
+        });
+    }
+    else if (style === "membrane") {
         const tips = [[500, 60], [470, 210], [380, 330], [250, 380], [120, 360]], wr = [250, 150];
         const mg = x.createRadialGradient(wr[0], wr[1], 10, wr[0], wr[1], 330);
         mg.addColorStop(0, C[1]);
-        mg.addColorStop(0.6, "#4a0f22");
+        mg.addColorStop(0.6, kind === "demon" ? "#4a0f22" : C[2]);
         mg.addColorStop(1, C[2]);
         x.beginPath();
         x.moveTo(34, 300);
@@ -3398,7 +3502,7 @@ const wingTexOf = (w) => {
         x.closePath();
         x.fillStyle = mg;
         x.fill();
-        x.strokeStyle = "rgba(255,60,80,0.35)";
+        x.strokeStyle = kind === "demon" ? "rgba(255,60,80,0.35)" : "rgba(255,220,120,0.3)";
         x.lineWidth = 1.5;
         for (let k = 0; k < 40; k++) {
             const t = tips[(Math.random() * tips.length) | 0];
@@ -3423,7 +3527,7 @@ const wingTexOf = (w) => {
         tips.forEach((t) => { gx.beginPath(); gx.moveTo(wr[0], wr[1]); gx.quadraticCurveTo((wr[0] + t[0]) / 2 + 12, (wr[1] + t[1]) / 2 - 10, t[0], t[1]); gx.stroke(); });
         gx.save();
         gx.setTransform(1, 0, 0, 1, 0, 0);
-        gx.globalAlpha = 0.35;
+        gx.globalAlpha = kind === "demon" ? 0.35 : 0.06;
         gx.drawImage(cv, 0, 0);
         gx.globalCompositeOperation = "source-in";
         gx.fillStyle = C[3];
@@ -3442,24 +3546,36 @@ const wingTexOf = (w) => {
             ctx.lineTo(L * 0.82, W * 0.5);
             ctx.lineTo(0, W * 0.35);
             ctx.closePath();
+            const cry = style === "crystal";
             if (!glowOnly) {
                 const g = ctx.createLinearGradient(0, -W / 2, 0, W / 2);
-                g.addColorStop(0, "#e8eef4");
+                g.addColorStop(0, cry ? C[0] : "#e8eef4");
                 g.addColorStop(0.45, C[1]);
                 g.addColorStop(1, C[2]);
                 ctx.fillStyle = g;
                 ctx.fill();
-                ctx.strokeStyle = "#3a4048";
+                ctx.strokeStyle = cry ? "rgba(255,255,255,0.9)" : "#3a4048";
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
+            if (cry && !glowOnly) {
+                ctx.strokeStyle = "rgba(255,255,255,0.7)";
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(0, -W * 0.35);
+                ctx.lineTo(L * 0.6, W * 0.1);
+                ctx.lineTo(L, 0);
+                ctx.moveTo(0, W * 0.35);
+                ctx.lineTo(L * 0.45, -W * 0.15);
+                ctx.stroke();
+            } // เหลี่ยมคริสตัล
             ctx.strokeStyle = C[3];
             ctx.lineWidth = glowOnly ? 5 : 3;
             ctx.beginPath();
             ctx.moveTo(L * 0.08, 0);
             ctx.lineTo(L * 0.9, 0);
             ctx.stroke();
-            if (!glowOnly) {
+            if (!glowOnly && !cry) {
                 ctx.fillStyle = "#4a5058";
                 for (let k = 1; k < 4; k++) {
                     ctx.beginPath();
@@ -3479,7 +3595,7 @@ const wingTexOf = (w) => {
             B.push([o[0], o[1], 1.4 - t * 0.35, 190 - t * 20, 30]);
         }
         B.forEach((b) => blade(x, b[0], b[1], b[2], b[3], b[4], false));
-        x.strokeStyle = "#5a626c";
+        x.strokeStyle = style === "crystal" ? C[1] : "#5a626c";
         x.lineWidth = 16;
         x.lineCap = "round";
         x.beginPath();
@@ -3525,10 +3641,12 @@ const wingPlaneGeo = (() => {
 })();
 const makeWings = (w) => {
     const T = wingTexOf(w), grp = new THREE.Group(), fx = [];
-    const glowCol = w.kind === "angel" ? 0xfff0b0 : w.kind === "phoenix" ? 0xff8a30 : w.kind === "demon" ? w.cols[3] : w.cols[3];
-    const mat = new THREE.MeshStandardMaterial({ map: T.map, alphaTest: 0.4, side: THREE.DoubleSide, roughness: w.kind === "robot" ? 0.3 : 0.62, metalness: w.kind === "robot" ? 0.75 : 0.02,
-        emissive: new THREE.Color(glowCol), emissiveMap: T.glow, emissiveIntensity: (w.glow || 0.6) * (w.kind === "angel" ? 0.45 : w.kind === "demon" ? 0.45 : 0.9) });
-    const halo = w.kind === "robot" ? null : new THREE.MeshBasicMaterial({ map: T.glow, color: glowCol, transparent: true, opacity: w.kind === "demon" ? 0.25 : w.kind === "angel" ? 0.16 : 0.32, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const glowCol = w.glowCol || (w.kind === "angel" ? 0xfff0b0 : w.kind === "phoenix" ? 0xff8a30 : w.cols[3]);
+    const st = w.style || "", fairy = st === "fairy", cry = st === "crystal";
+    const mat = new THREE.MeshStandardMaterial({ map: T.map, alphaTest: fairy ? 0.02 : 0.4, transparent: fairy, depthWrite: !fairy, side: THREE.DoubleSide,
+        roughness: w.kind === "robot" ? 0.3 : cry ? 0.08 : w.metal ? 0.3 : 0.62, metalness: w.kind === "robot" ? 0.75 : w.metal || (cry ? 0.15 : 0.02),
+        emissive: new THREE.Color(glowCol), emissiveMap: T.glow, emissiveIntensity: (w.glow || 0.6) * (w.kind === "angel" ? 0.45 : w.kind === "demon" || st === "membrane" ? 0.45 : 0.9) });
+    const halo = w.kind === "robot" ? null : new THREE.MeshBasicMaterial({ map: T.glow, color: glowCol, transparent: true, opacity: w.kind === "demon" ? 0.25 : w.style === "membrane" ? 0.08 : w.kind === "angel" ? 0.16 : 0.32, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
     const side = (s) => {
         const r = new THREE.Group();
         r.position.x = s * 0.06;
@@ -3550,7 +3668,7 @@ const makeWings = (w) => {
     };
     const R = side(1), L = side(-1);
     if (w.kind !== "robot" || true) { // ✨ ประกาย/ขนนก/สะเก็ดไฟ ลอยออกจากปีก
-        const pc = w.kind === "angel" ? 0xfff6d0 : w.kind === "phoenix" ? 0xffa040 : w.kind === "demon" ? 0xff3050 : 0x6ad8ff;
+        const pc = w.fxCol || (w.kind === "angel" ? 0xfff6d0 : w.kind === "phoenix" ? 0xffa040 : w.kind === "demon" ? 0xff3050 : 0x6ad8ff);
         const pm = new THREE.SpriteMaterial({ map: G_WING_DOT(), color: pc, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
         for (let i = 0; i < 14; i++) {
             const sp = new THREE.Sprite(pm.clone());
