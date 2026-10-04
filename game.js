@@ -435,7 +435,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v701"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v702"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -12942,7 +12942,8 @@ function CherryAdventure() {
                 if (H[7] != null) { // 🖋️ ลายสักยันต์ — ตาข่ายข้าวหลามตัด + จุดกลางช่อง + เส้นคู่ (วาดในพิกัดเท็กซ์เจอร์ จึงกระจายทั่วตัว)
                     const px = (i >> 2) % cv.width, py = ((i >> 2) / cv.width) | 0, P = cv.width / 14;
                     const A = ((px + py) / P) % 1, B = ((px - py + cv.width * 4) / P) % 1, C = ((py / P) * 2) % 1;
-                    const ink = A < 0.07 || B < 0.07 || (A > 0.46 && A < 0.54 && B > 0.46 && B < 0.54) || (C < 0.04 && ((px / P) % 1) < 0.5);
+                    const fu = px / cv.width, fv = py / cv.height, onFace = (fu < 0.4 && fv < 0.37) || (fu > 0.22 && fu < 0.46 && fv > 0.27 && fv < 0.53); // 🙂 เว้นหน้า + หู/ข้างศีรษะ (ตำแหน่งบนเท็กซ์เจอร์ร่างฐาน)
+                    const ink = !onFace && (A < 0.07 || B < 0.07 || (A > 0.46 && A < 0.54 && B > 0.46 && B < 0.54) || (C < 0.04 && ((px / P) % 1) < 0.5));
                     if (ink) {
                         const ic = (A > 0.46 && B > 0.46 && A < 0.54 && B < 0.54) ? (H[8] != null ? H[8] : H[7]) : H[7];
                         a[i] = a[i] * 0.15 + ((ic >> 16) & 255) * 0.85;
