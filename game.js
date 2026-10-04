@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v715"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v716"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -3285,6 +3285,305 @@ const WINGS = [
     { id: "robot", name: "ปีกหุ่นยนต์", emoji: "🤖", kind: "robot", price: 2500, cols: [0x9aa4b0, 0xc0c8d0, 0x6a7480, 0x4aa0e0], glow: 0.7, desc: "ปีกกลไก เหล็กโลหะ" },
 ];
 const findWing = (id) => WINGS.find((w) => w.id === id) || null;
+// 🪽 ปีกแฟชั่นแบบเกม — วาดลายขนนก/พังผืด/แผงกลไกละเอียดลงภาพ (มีโปร่งใส) แล้วแปะบนแผ่นโค้งหลายส่วน · 2 ชั้น (ปีกหลัก + ชั้นขนคลุมด้านหน้า) · ชั้นแสงฟุ้ง · ประกายลอยออกปลายปีก
+//    ใช้ร่วมทั้งตัวเรา (ร่างชิบิ/โมเดล 3D) และผู้เล่นคนอื่น · ปีกขวาวาดครั้งเดียว ปีกซ้ายกลับด้าน
+const WING_TEX = {};
+const wingTexOf = (w) => {
+    if (WING_TEX[w.id])
+        return WING_TEX[w.id];
+    const S = 512, mk = () => { const c = document.createElement("canvas"); c.width = c.height = S; return c; };
+    const cv = mk(), x = cv.getContext("2d"), gv = mk(), gx = gv.getContext("2d"); // gv = ภาพแสงเรือง (emissive)
+    const hex = (n) => "#" + n.toString(16).padStart(6, "0");
+    const C = w.cols.map(hex), kind = w.kind;
+    [x, gx].forEach((ctx) => { ctx.translate(34, 300); ctx.scale(0.86, 0.86); ctx.translate(-34, -300); }); // ย่อรอบโคนปีก เว้นขอบภาพให้แสงฟุ้งไม่โดนตัดเป็นเหลี่ยม
+    const feather = (ctx, x0, y0, ang, L, W, cA, cB, cT, edge, shaft) => {
+        ctx.save();
+        ctx.translate(x0, y0);
+        ctx.rotate(ang);
+        const g = ctx.createLinearGradient(0, 0, L, 0);
+        g.addColorStop(0, cA);
+        g.addColorStop(0.55, cB);
+        g.addColorStop(1, cT);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(L * 0.3, -W, L * 0.86, -W * 0.5);
+        ctx.quadraticCurveTo(L * 1.02, 0, L * 0.86, W * 0.42);
+        ctx.quadraticCurveTo(L * 0.3, W * 0.85, 0, 0);
+        ctx.closePath();
+        ctx.fillStyle = g;
+        ctx.fill();
+        if (edge) {
+            ctx.strokeStyle = edge;
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = shaft || "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 1.2;
+        for (let k = 1; k < 9; k++) {
+            const t = k / 9;
+            ctx.beginPath();
+            ctx.moveTo(L * t * 0.9, 0);
+            ctx.lineTo(L * (t * 0.9 + 0.07), -W * 0.55 * (1 - t * 0.5));
+            ctx.moveTo(L * t * 0.9, 0);
+            ctx.lineTo(L * (t * 0.9 + 0.07), W * 0.5 * (1 - t * 0.5));
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 0.85;
+        ctx.strokeStyle = shaft || "rgba(255,255,255,0.95)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(L * 0.9, 0);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+    };
+    // พิกัดภาพ: โคนปีก (ติดหลัง) ≈ (34, 300) · ข้อมือปีก ≈ (270, 150) · ปลายปีก ≈ (500, 70)
+    const arm = (t) => (t < 0.5 ? [34 + (270 - 34) * t * 2, 300 - 150 * t * 2] : [270 + (430 - 270) * (t - 0.5) * 2, 150 - 60 * (t - 0.5) * 2]);
+    if (kind === "angel" || kind === "phoenix") {
+        const ang = kind === "angel";
+        const cRoot = ang ? "#e8e4dc" : C[0], cMid = ang ? "#ffffff" : C[1], cTip = ang ? "#fff6dc" : C[3], edge = ang ? "rgba(150,140,120,0.45)" : "rgba(90,0,0,0.5)";
+        for (let i = 0; i < 11; i++) {
+            const t = i / 10, o = arm(0.5 + t * 0.5);
+            feather(x, o[0], o[1], -0.42 + t * 1.55, 250 - t * 70, 26, cRoot, cMid, cTip, edge);
+        } // ขนปลายปีก (primaries) แผ่ออก
+        for (let i = 0; i < 12; i++) {
+            const t = i / 11, o = arm(0.05 + t * 0.47);
+            feather(x, o[0], o[1], 1.42 - t * 0.35, 205 - t * 25, 24, cRoot, cMid, ang ? "#f4f0e6" : C[2], edge);
+        } // ขนแถวใน (secondaries) ห้อยลง
+        for (let r = 0; r < 3; r++)
+            for (let i = 0; i < 14 - r * 2; i++) {
+                const t = i / (13 - r * 2), o = arm(0.04 + t * (0.8 - r * 0.12));
+                feather(x, o[0], o[1] + 6 + r * 4, 1.15 - t * 0.6, 90 - r * 18, 18 - r * 3, ang ? "#f2eee6" : C[1], ang ? "#ffffff" : C[2], ang ? "#ffffff" : C[3], edge);
+            } // ขนคลุม 3 แถวตามแนวแขนปีก
+        x.strokeStyle = ang ? "rgba(240,200,90,0.9)" : "rgba(255,230,120,0.9)";
+        x.lineWidth = 5;
+        x.lineCap = "round";
+        x.beginPath();
+        for (let i = 0; i <= 20; i++) {
+            const o = arm(i / 20);
+            i ? x.lineTo(o[0], o[1] - 4) : x.moveTo(o[0], o[1] - 4);
+        }
+        x.stroke(); // ขอบปีกทอง
+        gx.save();
+        gx.setTransform(1, 0, 0, 1, 0, 0);
+        gx.filter = "blur(10px)";
+        gx.drawImage(cv, 0, 0);
+        gx.filter = "none";
+        gx.restore();
+        gx.save();
+        gx.setTransform(1, 0, 0, 1, 0, 0);
+        gx.globalCompositeOperation = "source-in";
+        gx.fillStyle = ang ? "#fff0b0" : "#ff9a30";
+        gx.fillRect(0, 0, S, S);
+        gx.restore();
+    }
+    else if (kind === "demon") {
+        const tips = [[500, 60], [470, 210], [380, 330], [250, 380], [120, 360]], wr = [250, 150];
+        const mg = x.createRadialGradient(wr[0], wr[1], 10, wr[0], wr[1], 330);
+        mg.addColorStop(0, C[1]);
+        mg.addColorStop(0.6, "#4a0f22");
+        mg.addColorStop(1, C[2]);
+        x.beginPath();
+        x.moveTo(34, 300);
+        x.lineTo(wr[0], wr[1]);
+        x.lineTo(tips[0][0], tips[0][1]);
+        for (let i = 1; i < tips.length; i++) {
+            const a = tips[i - 1], b = tips[i], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+            const dx = mx - wr[0], dy = my - wr[1], dl = Math.hypot(dx, dy);
+            x.quadraticCurveTo(mx - dx / dl * 55, my - dy / dl * 55, b[0], b[1]);
+        } // ขอบพังผืดเว้าเป็นลอน
+        x.quadraticCurveTo(70, 330, 34, 300);
+        x.closePath();
+        x.fillStyle = mg;
+        x.fill();
+        x.strokeStyle = "rgba(255,60,80,0.35)";
+        x.lineWidth = 1.5;
+        for (let k = 0; k < 40; k++) {
+            const t = tips[(Math.random() * tips.length) | 0];
+            x.beginPath();
+            x.moveTo(wr[0] + (t[0] - wr[0]) * 0.2, wr[1] + (t[1] - wr[1]) * 0.2);
+            x.quadraticCurveTo(wr[0] + (t[0] - wr[0]) * 0.5 + (Math.random() - 0.5) * 60, wr[1] + (t[1] - wr[1]) * 0.5 + (Math.random() - 0.5) * 60, wr[0] + (t[0] - wr[0]) * (0.6 + Math.random() * 0.3) + (Math.random() - 0.5) * 50, wr[1] + (t[1] - wr[1]) * (0.6 + Math.random() * 0.3) + (Math.random() - 0.5) * 50);
+            x.stroke();
+        } // เส้นเลือดบนพังผืด
+        x.lineCap = "round";
+        x.strokeStyle = C[0];
+        x.lineWidth = 13;
+        x.beginPath();
+        x.moveTo(34, 300);
+        x.lineTo(wr[0], wr[1]);
+        x.stroke(); // กระดูกแขนปีก
+        tips.forEach((t, i) => { x.lineWidth = 9 - i; x.beginPath(); x.moveTo(wr[0], wr[1]); x.quadraticCurveTo((wr[0] + t[0]) / 2 + 12, (wr[1] + t[1]) / 2 - 10, t[0], t[1]); x.stroke(); }); // กระดูกนิ้ว
+        x.fillStyle = C[3];
+        tips.concat([wr]).forEach((t) => { x.beginPath(); x.arc(t[0], t[1], 7, 0, Math.PI * 2); x.fill(); }); // ข้อ/เล็บเรืองแดง
+        gx.strokeStyle = C[3];
+        gx.lineWidth = 6;
+        gx.lineCap = "round";
+        tips.forEach((t) => { gx.beginPath(); gx.moveTo(wr[0], wr[1]); gx.quadraticCurveTo((wr[0] + t[0]) / 2 + 12, (wr[1] + t[1]) / 2 - 10, t[0], t[1]); gx.stroke(); });
+        gx.save();
+        gx.setTransform(1, 0, 0, 1, 0, 0);
+        gx.globalAlpha = 0.35;
+        gx.drawImage(cv, 0, 0);
+        gx.globalCompositeOperation = "source-in";
+        gx.fillStyle = C[3];
+        gx.fillRect(0, 0, S, S);
+        gx.restore();
+    }
+    else { // 🤖 กลไก: แผงใบมีดโลหะเรียงซ้อน + เส้นพลังงานเรือง
+        const blade = (ctx, x0, y0, ang, L, W, glowOnly) => {
+            ctx.save();
+            ctx.translate(x0, y0);
+            ctx.rotate(ang);
+            ctx.beginPath();
+            ctx.moveTo(0, -W * 0.35);
+            ctx.lineTo(L * 0.82, -W * 0.5);
+            ctx.lineTo(L, 0);
+            ctx.lineTo(L * 0.82, W * 0.5);
+            ctx.lineTo(0, W * 0.35);
+            ctx.closePath();
+            if (!glowOnly) {
+                const g = ctx.createLinearGradient(0, -W / 2, 0, W / 2);
+                g.addColorStop(0, "#e8eef4");
+                g.addColorStop(0.45, C[1]);
+                g.addColorStop(1, C[2]);
+                ctx.fillStyle = g;
+                ctx.fill();
+                ctx.strokeStyle = "#3a4048";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            ctx.strokeStyle = C[3];
+            ctx.lineWidth = glowOnly ? 5 : 3;
+            ctx.beginPath();
+            ctx.moveTo(L * 0.08, 0);
+            ctx.lineTo(L * 0.9, 0);
+            ctx.stroke();
+            if (!glowOnly) {
+                ctx.fillStyle = "#4a5058";
+                for (let k = 1; k < 4; k++) {
+                    ctx.beginPath();
+                    ctx.arc(L * k * 0.22, -W * 0.22, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        };
+        const B = [];
+        for (let i = 0; i < 9; i++) {
+            const t = i / 8, o = arm(0.42 + t * 0.58);
+            B.push([o[0], o[1], -0.35 + t * 1.45, 240 - t * 70, 34]);
+        }
+        for (let i = 0; i < 8; i++) {
+            const t = i / 7, o = arm(0.06 + t * 0.4);
+            B.push([o[0], o[1], 1.4 - t * 0.35, 190 - t * 20, 30]);
+        }
+        B.forEach((b) => blade(x, b[0], b[1], b[2], b[3], b[4], false));
+        x.strokeStyle = "#5a626c";
+        x.lineWidth = 16;
+        x.lineCap = "round";
+        x.beginPath();
+        for (let i = 0; i <= 20; i++) {
+            const o = arm(i / 20);
+            i ? x.lineTo(o[0], o[1]) : x.moveTo(o[0], o[1]);
+        }
+        x.stroke(); // โครงแขนกลไก
+        x.strokeStyle = C[3];
+        x.lineWidth = 3;
+        x.stroke();
+        B.forEach((b) => blade(gx, b[0], b[1], b[2], b[3], b[4], true));
+        gx.strokeStyle = C[3];
+        gx.lineWidth = 6;
+        gx.beginPath();
+        for (let i = 0; i <= 20; i++) {
+            const o = arm(i / 20);
+            i ? gx.lineTo(o[0], o[1]) : gx.moveTo(o[0], o[1]);
+        }
+        gx.stroke();
+    }
+    const t1 = new THREE.CanvasTexture(cv), t2 = new THREE.CanvasTexture(gv);
+    t1.encoding = THREE.sRGBEncoding;
+    t2.encoding = THREE.sRGBEncoding;
+    t1.anisotropy = 4;
+    return (WING_TEX[w.id] = { map: t1, glow: t2 });
+};
+const wingPlaneGeo = (() => {
+    let G0 = null;
+    return () => {
+        if (G0)
+            return G0;
+        const SZ = 1.75, g = new THREE.PlaneGeometry(SZ, SZ, 24, 24), p = g.attributes.position;
+        const ox = (34 / 512 - 0.5) * SZ, oy = (0.5 - 300 / 512) * SZ;
+        for (let i = 0; i < p.count; i++) {
+            const X = p.getX(i) - ox, Y = p.getY(i) - oy, r = Math.max(0, X);
+            p.setXYZ(i, X, Y, -0.22 * r * r - 0.06 * Math.sin(Math.max(0, Y) * 1.8) * r);
+        }
+        g.computeVertexNormals();
+        g.userData._shared = true;
+        return (G0 = g);
+    };
+})();
+const makeWings = (w) => {
+    const T = wingTexOf(w), grp = new THREE.Group(), fx = [];
+    const glowCol = w.kind === "angel" ? 0xfff0b0 : w.kind === "phoenix" ? 0xff8a30 : w.kind === "demon" ? w.cols[3] : w.cols[3];
+    const mat = new THREE.MeshStandardMaterial({ map: T.map, alphaTest: 0.4, side: THREE.DoubleSide, roughness: w.kind === "robot" ? 0.3 : 0.62, metalness: w.kind === "robot" ? 0.75 : 0.02,
+        emissive: new THREE.Color(glowCol), emissiveMap: T.glow, emissiveIntensity: (w.glow || 0.6) * (w.kind === "angel" ? 0.45 : w.kind === "demon" ? 0.45 : 0.9) });
+    const halo = w.kind === "robot" ? null : new THREE.MeshBasicMaterial({ map: T.glow, color: glowCol, transparent: true, opacity: w.kind === "demon" ? 0.25 : w.kind === "angel" ? 0.16 : 0.32, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const side = (s) => {
+        const r = new THREE.Group();
+        r.position.x = s * 0.06;
+        const q = new THREE.Group();
+        q.scale.x = s;
+        r.add(q);
+        const m = new THREE.Mesh(wingPlaneGeo(), mat);
+        m.castShadow = true;
+        q.add(m);
+        if (halo) {
+            const h = new THREE.Mesh(wingPlaneGeo(), halo);
+            h.scale.setScalar(1.06);
+            h.position.z = -0.02;
+            h.renderOrder = 2;
+            q.add(h);
+        }
+        grp.add(r);
+        return r;
+    };
+    const R = side(1), L = side(-1);
+    if (w.kind !== "robot" || true) { // ✨ ประกาย/ขนนก/สะเก็ดไฟ ลอยออกจากปีก
+        const pc = w.kind === "angel" ? 0xfff6d0 : w.kind === "phoenix" ? 0xffa040 : w.kind === "demon" ? 0xff3050 : 0x6ad8ff;
+        const pm = new THREE.SpriteMaterial({ map: G_WING_DOT(), color: pc, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+        for (let i = 0; i < 14; i++) {
+            const sp = new THREE.Sprite(pm.clone());
+            sp.userData = { t: Math.random(), s: i % 2 ? 1 : -1, sp: 0.35 + Math.random() * 0.4, r: Math.random() };
+            sp.scale.setScalar(0.06);
+            grp.add(sp);
+            fx.push(sp);
+        }
+    }
+    return { grp, L, R, fx, kind: w.kind };
+};
+const G_WING_DOT = (() => { let t = null; return () => { if (t)
+    return t; const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d"); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.3, "rgba(255,255,255,0.7)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return (t = new THREE.CanvasTexture(c)); }; })();
+const wingsTick = (Wg, t, dt, speed) => {
+    if (!Wg)
+        return;
+    const f = Math.sin(t * (speed || 3.0)), f2 = Math.sin(t * (speed || 3.0) - 0.6);
+    Wg.R.rotation.set(0, -(0.55 + f * 0.28), f2 * 0.12);
+    Wg.L.rotation.set(0, 0.55 + f * 0.28, -f2 * 0.12);
+    Wg.fx.forEach((sp) => {
+        const u = sp.userData;
+        u.t += dt * u.sp;
+        if (u.t > 1) {
+            u.t = 0;
+            u.r = Math.random();
+        }
+        const a = 0.2 + u.r * 1.0, d = 0.25 + u.r * 1.15, yaw = (0.55 + f * 0.28);
+        const lx = Math.cos(a) * d, ly = Math.sin(a) * d * 0.6 - 0.1;
+        sp.position.set(u.s * (0.06 + lx * Math.cos(yaw)), ly - u.t * (Wg.kind === "phoenix" ? -0.6 : 0.5), -lx * Math.sin(yaw) - 0.1 - u.t * 0.2);
+        sp.material.opacity = Math.sin(u.t * Math.PI) * 0.9;
+        sp.scale.setScalar(0.05 + (1 - u.t) * 0.05);
+    });
+};
 // ---------- 🗡️⭐ LEGENDARY WEAPON ENCHANTS (จารึกอาวุธ) — a combat proc on your weapon ----------
 const WEAPON_ENCHANTS = [
     { id: "none", name: "ไม่มี", emoji: "⚪", desc: "ไม่มีจารึก", unlock: null },
@@ -6208,6 +6507,7 @@ function CherryAdventure() {
         wingsGroup.add(wingL);
         wingsGroup.add(wingR);
         wingsGroup.visible = false;
+        wingsGroup.userData.heroKeep = true; // 🪽 โชว์บนโมเดล 3D ด้วย (เดิมโดนซ่อนพร้อมร่างชิบิ)
         char.add(wingsGroup);
         G.wingsGroup = wingsGroup;
         G.wingL = wingL;
@@ -6222,94 +6522,18 @@ function CherryAdventure() {
         G.buildWings = (id) => {
             clearGroup(wingL);
             clearGroup(wingR);
+            if (G._wingsObj) {
+                wingsGroup.remove(G._wingsObj.grp);
+                G._wingsObj = null;
+            }
             const w = findWing(id);
             if (!w || w.id === "none") {
                 wingsGroup.visible = false;
                 return;
             }
+            G._wingsObj = makeWings(w);
+            wingsGroup.add(G._wingsObj.grp);
             wingsGroup.visible = true;
-            const cols = w.cols, glow = w.glow, kind = w.kind;
-            const build = (side, root) => {
-                if (kind === "phoenix" || kind === "angel") {
-                    // 🪶 layered feathers fanning up & out
-                    const rows = 8;
-                    for (let k = 0; k < rows; k++) {
-                        const len = 1.15 - k * 0.085;
-                        const col = cols[Math.min(cols.length - 1, Math.floor(k / rows * cols.length))];
-                        const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: glow * (0.5 + k / rows), roughness: kind === "angel" ? 0.5 : 0.35, metalness: 0.1, side: THREE.DoubleSide, transparent: true, opacity: 0.97 });
-                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.1, len, 5), mat);
-                        f.scale.set(1, 1, 0.22); // flatten into a feather
-                        // 🪽 fan up-and-OUT so tips clear the body silhouette
-                        const spread = 0.85 + k * 0.16; // more horizontal at the base
-                        f.position.set(side * (0.18 + k * 0.16), 0.05 + k * 0.13, 0);
-                        f.rotation.z = side * spread;
-                        f.rotation.x = -0.14;
-                        root.add(f);
-                    }
-                    if (kind === "angel") { // ✨ soft glow tips
-                        const tipMat = new THREE.MeshBasicMaterial({ color: 0xfff3c0, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
-                        const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 10), tipMat);
-                        halo.position.set(side * 0.5, 0.55, -0.05);
-                        halo.scale.set(1.2, 1.4, 0.4);
-                        root.add(halo);
-                    }
-                }
-                else if (kind === "demon") {
-                    // 🦇 webbed bat membrane between spiny fingers
-                    const boneMat = new THREE.MeshStandardMaterial({ color: cols[0], roughness: 0.6, metalness: 0.2 });
-                    const memMat = new THREE.MeshStandardMaterial({ color: cols[1], emissive: cols[2], emissiveIntensity: glow * 0.5, roughness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.94 });
-                    const edgeMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow, roughness: 0.3 });
-                    const fingers = 4;
-                    for (let k = 0; k < fingers; k++) {
-                        const len = 1.0 - k * 0.14;
-                        const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, len, 5), boneMat);
-                        const ang = side * (0.3 + k * 0.32);
-                        bone.position.set(side * (0.16 + k * 0.16), 0.16 + k * 0.14, 0);
-                        bone.rotation.z = ang;
-                        root.add(bone);
-                        // membrane panel (flattened cone) filling the gap
-                        const mem = new THREE.Mesh(new THREE.ConeGeometry(0.16, len * 0.92, 3), memMat);
-                        mem.scale.set(1, 1, 0.12);
-                        mem.position.set(side * (0.16 + k * 0.16 - 0.06), 0.13 + k * 0.14, -0.01);
-                        mem.rotation.z = ang;
-                        root.add(mem);
-                        // 🔴 glowing spike at each finger tip
-                        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 5), edgeMat);
-                        spike.position.set(side * (0.16 + k * 0.16) + Math.sin(ang) * len / 2, 0.16 + k * 0.14 + Math.cos(ang) * len / 2, 0);
-                        spike.rotation.z = ang;
-                        root.add(spike);
-                    }
-                }
-                else if (kind === "robot") {
-                    // 🤖 angular metallic blade panels
-                    const steel = new THREE.MeshStandardMaterial({ color: cols[1], metalness: 0.9, roughness: 0.28 });
-                    const dark = new THREE.MeshStandardMaterial({ color: cols[2], metalness: 0.85, roughness: 0.35 });
-                    const glowMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow * 1.4, roughness: 0.2, metalness: 0.4 });
-                    const blades = 4;
-                    for (let k = 0; k < blades; k++) {
-                        const len = 1.0 - k * 0.13, wdt = 0.16 - k * 0.02;
-                        const bl = new THREE.Mesh(new THREE.BoxGeometry(len, wdt, 0.05), k % 2 ? dark : steel);
-                        const ang = side * (0.45 + k * 0.28);
-                        // position so the blade extends outward from the shoulder
-                        bl.position.set(side * (0.12 + Math.cos(ang) * len / 2), 0.16 + k * 0.14 + Math.sin(ang) * len / 2, 0);
-                        bl.rotation.z = ang;
-                        root.add(bl);
-                        // glowing edge strip
-                        const strip = new THREE.Mesh(new THREE.BoxGeometry(len * 0.92, 0.03, 0.06), glowMat);
-                        strip.position.copy(bl.position);
-                        strip.position.y += wdt / 2;
-                        strip.rotation.z = ang;
-                        root.add(strip);
-                    }
-                    // thruster core at the base
-                    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 10), glowMat);
-                    core.rotation.z = Math.PI / 2;
-                    core.position.set(side * 0.14, 0.14, 0.02);
-                    root.add(core);
-                }
-            };
-            build(-1, wingL);
-            build(1, wingR);
         };
         G.setWings = (id) => {
             const w = findWing(id);
@@ -16168,6 +16392,15 @@ function CherryAdventure() {
                         oo.visible = false;
                     });
                     grp.add(g);
+                    if (info && info.wing && G.buildRemoteWings) {
+                        const wg = G.buildRemoteWings(info.wing);
+                        if (wg) {
+                            wg.position.set(0, M.h * 0.64, -0.3 * M.h / 4.4);
+                            wg.scale.setScalar(M.h / 4.4 * 1.45);
+                            g.add(wg);
+                            (grp.userData.wingsObjs = grp.userData.wingsObjs || []).push(wg.userData.wingsObj);
+                        }
+                    } // 🪽 ปีกบนโมเดล 3D ของเพื่อน
                     // ⚔️ อาวุธ: ย้ายจากศอกร่างชิบิไปกระดูกมือขวาของโมเดล (สเกลหารกลับเหมือนตัวเรา)
                     const hand = parts[0].getObjectByName("hand_r"), wand = grp.userData.wand;
                     if (hand && wand) {
@@ -17720,6 +17953,7 @@ function CherryAdventure() {
                     const b = new THREE.Box3();
                     parts.forEach((pt) => { pt.updateMatrixWorld(true); b.expandByObject(pt); });
                     const k = M.h / Math.max(0.01, b.max.y - b.min.y);
+                    G._heroH = M.h;
                     parts.forEach((pt) => {
                         pt.scale.setScalar(k);
                         pt.position.y = -b.min.y * k;
@@ -71771,90 +72005,15 @@ function CherryAdventure() {
             if (!w || w.id === "none")
                 return null;
             const grp = new THREE.Group();
-            grp.position.set(0, 1.16, -0.3);
-            grp.scale.setScalar(1.45); // 🎒 same mount as char's wingsGroup
-            const wingL = new THREE.Group();
-            wingL.position.x = -0.12;
-            const wingR = new THREE.Group();
-            wingR.position.x = 0.12;
-            grp.add(wingL, wingR);
-            const cols = w.cols, glow = w.glow, kind = w.kind;
-            const build = (side, root) => {
-                if (kind === "phoenix" || kind === "angel") {
-                    const rows = 8;
-                    for (let k = 0; k < rows; k++) {
-                        const len = 1.15 - k * 0.085;
-                        const col = cols[Math.min(cols.length - 1, Math.floor(k / rows * cols.length))];
-                        const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: glow * (0.5 + k / rows), roughness: kind === "angel" ? 0.5 : 0.35, metalness: 0.1, side: THREE.DoubleSide, transparent: true, opacity: 0.97 });
-                        const f = new THREE.Mesh(new THREE.ConeGeometry(0.1, len, 5), mat);
-                        f.scale.set(1, 1, 0.22);
-                        const spread = 0.85 + k * 0.16;
-                        f.position.set(side * (0.18 + k * 0.16), 0.05 + k * 0.13, 0);
-                        f.rotation.z = side * spread;
-                        f.rotation.x = -0.14;
-                        root.add(f);
-                    }
-                    if (kind === "angel") {
-                        const tipMat = new THREE.MeshBasicMaterial({ color: 0xfff3c0, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
-                        const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 10), tipMat);
-                        halo.position.set(side * 0.5, 0.55, -0.05);
-                        halo.scale.set(1.2, 1.4, 0.4);
-                        root.add(halo);
-                    }
-                }
-                else if (kind === "demon") {
-                    const boneMat = new THREE.MeshStandardMaterial({ color: cols[0], roughness: 0.6, metalness: 0.2 });
-                    const memMat = new THREE.MeshStandardMaterial({ color: cols[1], emissive: cols[2], emissiveIntensity: glow * 0.5, roughness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.94 });
-                    const edgeMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow, roughness: 0.3 });
-                    const fingers = 4;
-                    for (let k = 0; k < fingers; k++) {
-                        const len = 1.0 - k * 0.14;
-                        const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, len, 5), boneMat);
-                        const ang = side * (0.3 + k * 0.32);
-                        bone.position.set(side * (0.16 + k * 0.16), 0.16 + k * 0.14, 0);
-                        bone.rotation.z = ang;
-                        root.add(bone);
-                        const mem = new THREE.Mesh(new THREE.ConeGeometry(0.16, len * 0.92, 3), memMat);
-                        mem.scale.set(1, 1, 0.12);
-                        mem.position.set(side * (0.16 + k * 0.16 - 0.06), 0.13 + k * 0.14, -0.01);
-                        mem.rotation.z = ang;
-                        root.add(mem);
-                        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 5), edgeMat);
-                        spike.position.set(side * (0.16 + k * 0.16) + Math.sin(ang) * len / 2, 0.16 + k * 0.14 + Math.cos(ang) * len / 2, 0);
-                        spike.rotation.z = ang;
-                        root.add(spike);
-                    }
-                }
-                else if (kind === "robot") {
-                    const steel = new THREE.MeshStandardMaterial({ color: cols[1], metalness: 0.9, roughness: 0.28 });
-                    const dark = new THREE.MeshStandardMaterial({ color: cols[2], metalness: 0.85, roughness: 0.35 });
-                    const glowMat = new THREE.MeshStandardMaterial({ color: cols[3], emissive: cols[3], emissiveIntensity: glow * 1.4, roughness: 0.2, metalness: 0.4 });
-                    const blades = 4;
-                    for (let k = 0; k < blades; k++) {
-                        const len = 1.0 - k * 0.13, wdt = 0.16 - k * 0.02;
-                        const bl = new THREE.Mesh(new THREE.BoxGeometry(len, wdt, 0.05), k % 2 ? dark : steel);
-                        const ang = side * (0.45 + k * 0.28);
-                        bl.position.set(side * (0.12 + Math.cos(ang) * len / 2), 0.16 + k * 0.14 + Math.sin(ang) * len / 2, 0);
-                        bl.rotation.z = ang;
-                        root.add(bl);
-                        const strip = new THREE.Mesh(new THREE.BoxGeometry(len * 0.92, 0.03, 0.06), glowMat);
-                        strip.position.copy(bl.position);
-                        strip.position.y += wdt / 2;
-                        strip.rotation.z = ang;
-                        root.add(strip);
-                    }
-                    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.14, 10), glowMat);
-                    core.rotation.z = Math.PI / 2;
-                    core.position.set(side * 0.14, 0.14, 0.02);
-                    root.add(core);
-                }
-            };
-            build(-1, wingL);
-            build(1, wingR);
-            grp.userData.wingL = wingL;
-            grp.userData.wingR = wingR;
+            grp.position.set(0, 1.42, -0.3);
+            grp.scale.setScalar(0.95);
+            grp.name = "remoteWings";
+            const W = makeWings(w);
+            grp.add(W.grp);
+            grp.userData.wingsObj = W;
             return grp;
         };
+        G.buildRemoteWings = buildRemoteWings;
         // 🧍‍♂️✨ FULL "เป๊ะทุกชิ้น" avatar — replicate char's anchor coordinate system + CLONE the real cosmetic models
         // (outfit, class accessory, hat, mask, wings, weapon) so a remote player looks (near-)identical. Any throw → simple fallback.
         const buildFullAvatar = (info) => {
@@ -72035,8 +72194,10 @@ function CherryAdventure() {
                 // ---- 🪽 wings ----
                 if (info.wing) {
                     const wg = buildRemoteWings(info.wing);
-                    if (wg)
+                    if (wg) {
                         body.add(wg);
+                        (grp.userData.wingsObjs = grp.userData.wingsObjs || []).push(wg.userData.wingsObj);
+                    }
                 }
                 // ---- 🧤🦵👢 real 3D gloves / pants / shoes (dragon & legend) cloned onto matching limb joints ----
                 if (G._gearModels) {
@@ -72544,6 +72705,8 @@ function CherryAdventure() {
                         }
                     }
                 }
+                if (a.grp.userData.wingsObjs)
+                    a.grp.userData.wingsObjs.forEach((W) => wingsTick(W, t, dt, 3.0)); // 🪽 ปีกเพื่อนกระพือ
                 // 🐾 buddy pet trails behind the avatar (same follow feel as the local buddy)
                 if (a.petMesh) {
                     const fd = a.petMesh.userData.followDist || 1.8;
@@ -75659,10 +75822,11 @@ function CherryAdventure() {
                 }
                 // 🪽 character wings — gentle flap
                 if (wingsGroup.visible) {
-                    const flap = Math.sin(t * 3.4) * 0.28;
-                    wingL.rotation.y = 0.35 + flap; // sweep the wings back/forth
-                    wingR.rotation.y = -0.35 - flap;
-                    wingsGroup.position.y = 1.42 + Math.sin(t * 3.4) * 0.02;
+                    const hh = G._heroModel && G._heroH ? G._heroH : 0; // 🧍 โมเดล 3D สูงกว่าร่างชิบิ — ยกปีกขึ้นกลางหลังและขยายตาม
+                    const by = hh ? hh * 0.64 : 1.42, sc = hh ? hh / 4.4 * 1.45 : 0.95;
+                    wingsGroup.position.set(0, by + Math.sin(t * 3.0) * 0.025, hh ? -0.3 * hh / 4.4 : -0.3);
+                    wingsGroup.scale.setScalar(sc);
+                    wingsTick(G._wingsObj, t, dt, 3.0);
                 }
                 // 🌸 Haru's floating sakura petals — orbit, spin, and drift down gently
                 if (G._haruPetals && G._haruPetals.length && G._haruPetals[0].parent && G._haruPetals[0].parent.visible) {
