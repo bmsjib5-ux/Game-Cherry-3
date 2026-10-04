@@ -451,7 +451,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v712"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v713"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -16041,7 +16041,8 @@ function CherryAdventure() {
             G.remoteModelSet = (grp, info) => {
                 const M0r = (info && HERO_MODELS[info.c]) || HERO_MODELS.warrior;
                 const THr = info && info.hero && !G.HERO_OFF && HERO_THEME[info.hero];
-                const M = THr ? heroThemeModel(M0r, THr) : M0r; // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
+                const legoR = !!(info && info.outfit === "lego_suit" && !THr); // 🧱 เพื่อนใส่ชุดตัวต่อ = เห็นเป็นอิฐเลโก้ทั้งตัวเหมือนกัน
+                const M = THr ? heroThemeModel(M0r, THr) : legoR ? Object.assign({}, M0r, { hue: [4, 0.85, 1.05] }) : M0r; // 🦸 เพื่อนสวมฮีโร่ = เห็นชุด/ผม/สีตามธีม
                 if (!grp || !M)
                     return;
                 // 🚫 ไม่โชว์ร่างชิบิเลยระหว่างรอโหลด (เห็นแค่ป้ายชื่อ) — ถ้าโหลดไม่ได้ค่อยคืนร่างสำรอง
@@ -16154,6 +16155,28 @@ function CherryAdventure() {
                         grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
                         hand.add(grip);
                         grip.add(wand);
+                    }
+                    if (legoR && G.legoBuildFn) { // 🧱 แปลงเป็นอิฐ (ข้ามอาวุธในมือ) · แคชตามอาชีพ
+                        try {
+                            const objs = [g], gripR = hand ? hand.getObjectByName("remoteGrip") : null;
+                            const walk = (o) => { if (o === gripR)
+                                return; if (o !== g && (o.isBone || o.isSkinnedMesh))
+                                objs.push(o); o.children.forEach(walk); };
+                            parts.forEach(walk);
+                            grp.updateMatrixWorld(true);
+                            const sk = objs.filter((o) => o.isSkinnedMesh);
+                            if (sk.length) {
+                                const key = "remote|" + (info.c || "warrior");
+                                G._heroLegoCache = G._heroLegoCache || {};
+                                const C = G._heroLegoCache[key] || (G._heroLegoCache[key] = G.legoBuildFn(g, objs, { legoN: 32, by: "h" }, { h: M.h, max: M.h }));
+                                const lm = G.legoMatFn();
+                                sk.forEach((o) => { o.visible = false; });
+                                C.parts.forEach((pt) => { const anc = objs[pt.a] || g; const m = new THREE.Mesh(pt.geo, lm); m.castShadow = true; m.frustumCulled = false; m.userData.lego = 1; anc.add(m); });
+                            }
+                        }
+                        catch (eLR) {
+                            console.warn("lego remote", eLR);
+                        }
                     }
                     const R = { mixers, acts, mats, neck, neckPlane, k, cur: null, lit: -1, tmpV: new THREE.Vector3(), off: Math.random() * 2 };
                     grp.userData.rig = R;
@@ -72333,11 +72356,15 @@ function CherryAdventure() {
             if (!m || !m.pid || m.pid === G.pid)
                 return;
             let a = remoteAvatars.get(m.pid);
+            if (a && !!a.legoOn !== (m.outfit === "lego_suit")) {
+                G._rtRemove(m.pid);
+                a = null;
+            } // 🧱 เพื่อนใส่/ถอดชุดตัวต่อ → สร้างร่างใหม่
             if (!a) {
                 const grp = buildFullAvatar(m);
                 grp.position.set(m.x || 0, 0, m.z || 0);
                 scene.add(grp);
-                a = { grp, walk: 0 };
+                a = { grp, walk: 0, legoOn: m.outfit === "lego_suit" };
                 remoteAvatars.set(m.pid, a);
                 if (G.remoteModelSet)
                     G.remoteModelSet(grp, m);
