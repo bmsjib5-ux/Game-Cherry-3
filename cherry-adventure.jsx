@@ -381,7 +381,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v691";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v692";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -2363,6 +2363,23 @@ const routeExits = (bid) => {
 };
 const biomeById = (bid) => BIOMES.find((b) => b.id === bid) || null;
 const ROAD_HALF = 4.6;      // ครึ่งความกว้างช่องเดินออกจากแมพ (กติกา) — คงเดิมไว้ ไม่งั้นเดินออกยาก
+// 🏞️ จุดตกปลา → ทะเลสาบเล็ก (เดินผ่านไม่ได้) — ขยายรัศมี ×1.6 · ขอบโค้งไม่เป็นวงกลม (สุ่มคงที่ต่อด่าน)
+//    ย้ายออกไปห่างศูนย์กลางราว 27 หน่วยในทิศเดิม ให้พ้นถนนออกแมพ 4 ทิศ ปากถ้ำ บ้าน/NPC กลางแมพ
+const LAKE_AVOID = [{ x: -23, z: -23, r: 4 }, { x: -9.5, z: -8, r: 5.5 }, { x: 8.5, z: -7, r: 3.4 }, { x: -6.6, z: 7, r: 3.6 }, { x: -13, z: -8.2, r: 2.2 }];
+Object.keys(FISH_SPOT).forEach((k) => {
+  const S = FISH_SPOT[k]; S.r0 = S.r; S.r = +(S.r * 1.6).toFixed(2);
+  let h = 7; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) % 9973;
+  S.ph = [(h % 628) / 100, ((h * 7) % 628) / 100, ((h * 13) % 628) / 100];
+  const Rmax = S.r * 1.3, a0 = Math.atan2(S.z, S.x);
+  for (let t = 0; t < 60; t++) {
+    const a = a0 + (t % 2 ? 1 : -1) * Math.ceil(t / 2) * 0.06;
+    const hit = [27, 29, 25, 31].map((D) => [Math.cos(a) * D, Math.sin(a) * D]).find(([x, z]) =>
+      Math.abs(x) >= Rmax + ROAD_HALF + 1.5 && Math.abs(z) >= Rmax + ROAD_HALF + 1.5 && !LAKE_AVOID.some((q) => Math.hypot(x - q.x, z - q.z) < Rmax + q.r + 2));
+    if (hit) { S.x = +hit[0].toFixed(1); S.z = +hit[1].toFixed(1); break; }
+  }
+});
+// รัศมีขอบทะเลสาบตามมุม (มุมโลก a = atan2(z, x))
+const lakeR = (S, a) => S.r * (1 + 0.16 * Math.sin(2 * a + S.ph[0]) + 0.09 * Math.sin(3 * a + S.ph[1]) + 0.05 * Math.sin(5 * a + S.ph[2]));
 const ROAD_VIS = ROAD_HALF / 3;   // 🛣️ ครึ่งความกว้าง "ที่มองเห็น" ของทางดิน = 1/3 ของช่องเดิน (ทางแคบลง ทุ่งโล่งขึ้น)
 // 🟤 สีทางดิน — ดินอัดแน่น · ร่องล้อ · หญ้าริมทาง · กรวด
 const ROAD_COL = { dirt: 0x9a7a52, rut: 0x7d6140, grass: 0x7d9a58, peb: 0xb0a189 };
@@ -4208,7 +4225,9 @@ export default function CherryAdventure() {
       const flatZone = !!G._terrFlatMode;
       const mtx = new THREE.Matrix4(), qt = new THREE.Quaternion(), euler = new THREE.Euler(), sc = new THREE.Vector3(), pv = new THREE.Vector3(), tmpC2 = new THREE.Color();
       const sPts = G._safePts || [];
-      const inSafe = (x, z) => { for (let i = 0; i < sPts.length; i++) { const q = sPts[i]; if (Math.hypot(x - q.x, z - q.z) < q.r + 0.6) return true; } return false; };
+      const LK = FISH_SPOT[bid];   // 🏞️ ไม่โรยหญ้า/หินลงในทะเลสาบ (โผล่ทะลุผิวน้ำ)
+      const inSafe = (x, z) => { for (let i = 0; i < sPts.length; i++) { const q = sPts[i]; if (Math.hypot(x - q.x, z - q.z) < q.r + 0.6) return true; }
+        if (LK) { const d = Math.hypot(x - LK.x, z - LK.z); if (d < LK.r * 1.35 + 0.6 && d < lakeR(LK, Math.atan2(z - LK.z, x - LK.x)) + 0.7) return true; } return false; };
       const fill = (im, cnt, max, sizeF, colors, jitter) => {
         const n = Math.min(max, flatZone ? 0 : cnt || 0);
         im.count = n;
@@ -4216,7 +4235,7 @@ export default function CherryAdventure() {
         for (let i = 0; i < n; i++) {
           let x = 0, z = 0, guard = 0;
           do { const a2 = Math.random() * Math.PI * 2, r2 = 2 + Math.sqrt(Math.random()) * (FIELD_R - 2.5); x = Math.cos(a2) * r2; z = Math.sin(a2) * r2; }
-          while (inSafe(x, z) && guard++ < 6);
+          while (inSafe(x, z) && guard++ < 14);
           euler.set(jitter * (Math.random() - 0.5), Math.random() * Math.PI * 2, jitter * (Math.random() - 0.5));
           qt.setFromEuler(euler);
           const k = sizeF * (0.7 + Math.random() * 0.7);
@@ -4264,7 +4283,7 @@ export default function CherryAdventure() {
       // 🎣 จุดตกปลา "ทุกด่าน" — ฉากประจำด่านสร้างครั้งเดียวตอนเปิดเกม แต่บ่อย้ายที่ตามด่าน
       //    ถ้ากันไว้แค่บ่อทุ่งหญ้า บ่อด่านอื่น (ที่ยังล็อกอยู่) จะโดนของประดับทับ แล้วเดินไปติดค้างตรงนั้น
       //    เผื่อรัศมีของตัวของประดับเองด้วย (inKeepOut วัดแค่จุดศูนย์กลาง) — ของใหญ่สุดที่สุ่มวางมีรัศมี ~1.3
-      ...Object.keys(FISH_SPOT).map((k) => ({ x: FISH_SPOT[k].x, z: FISH_SPOT[k].z, r: FISH_SPOT[k].r + 1.6 })),
+      ...Object.keys(FISH_SPOT).map((k) => ({ x: FISH_SPOT[k].x, z: FISH_SPOT[k].z, r: FISH_SPOT[k].r * 1.3 + 2.2 })),   // 🏞️ ทะเลสาบ + หาดรอบ
     ];
     const inKeepOut = (x, z) => KEEP_OUT.some((k) => Math.hypot(x - k.x, z - k.z) < k.r);
     const nearWarpG = (x, z) => inKeepOut(x, z);
@@ -4277,6 +4296,12 @@ export default function CherryAdventure() {
           if (d > 0.0001) { obj.position.x = c.x + (dx / d) * min; obj.position.z = c.z + (dz / d) * min; }
           else { obj.position.x = c.x + min; obj.position.z = c.z; }   // 🆘 ยืนตรงใจกลางพอดี — ดันออกด้านใดด้านหนึ่งเสมอ ไม่งั้นติดค้างถาวร
         }
+      }
+      // 🏞️ ทะเลสาบ: วงกันชนหลายวงซ้อนกัน ถ้าถูกกระแทก/วาร์ปเข้าไปลึกอาจติดค้างกลางน้ำ — ดันออกตามแนวรัศมีไปยืนริมฝั่งเสมอ
+      const LP = G.pondPos;
+      if (LP && LP.S && !G.dungeon) {
+        const lx = obj.position.x - LP.x, lz = obj.position.z - LP.z, ld = Math.hypot(lx, lz);
+        if (ld < LP.r * 1.35 + extra) { const a = Math.atan2(lz, lx), R = lakeR(LP.S, a) + extra * 0.6; if (ld < R) { obj.position.x = LP.x + Math.cos(a) * R; obj.position.z = LP.z + Math.sin(a) * R; } }
       }
     };
     // 🗺️ NAV GRID + A* PATHFINDING
@@ -22557,7 +22582,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G._groundSkin) G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : b.id === "robot" ? "metal" : null);
       TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
       TERR_FLATTEN = !!G._terrFlatMode;
-      TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }]);   // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
+      TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }], FISH_SPOT[b.id] ? [{ x: FISH_SPOT[b.id].x, z: FISH_SPOT[b.id].z, r: FISH_SPOT[b.id].r * 1.3 + 1.6 }] : []);   // 🏞️ พื้นรอบทะเลสาบเรียบ   // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
       const P = TERR_CUR, hN = P.hN || 8, rockK = P.rockK != null ? P.rockK : 0.6;
       const cMid = new THREE.Color(b.ground), cLo = new THREE.Color(P.lo != null ? P.lo : b.ground);
       const cHi = new THREE.Color(P.hi != null ? P.hi : b.ground), cRk = new THREE.Color(P.rock != null ? P.rock : b.ground);
@@ -25360,165 +25385,92 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
     };
 
-    // 🏗️ ปั้นจุดตกปลาตามชนิดของด่าน
+    // 🏞️ ปั้นทะเลสาบเล็กตามชนิดของด่าน — ผิวน้ำขอบโค้งอิสระ · ก้นทะเลสาบไล่ตื้น→ลึก · หาด/ตลิ่งรอบวง · ของประดับตามธีมด่านริมฝั่ง
+    //    พิกัดในกลุ่ม: มุม a ในโลก → (cos a, sin a) · แผ่นระนาบ XY ถูกหมุน -90° รอบแกน X (y ของระนาบ = -z ของโลก)
+    const lakeDisc = (S, k0, k1, off, seg, rings, colIn, colOut) => {
+      const pos = [], col = [], idx = [], c0 = new THREE.Color(colIn), c1 = new THREE.Color(colOut != null ? colOut : colIn), c = new THREE.Color();
+      for (let j = 0; j <= rings; j++) {
+        const t = j / rings;
+        for (let i = 0; i < seg; i++) {
+          const a = (i / seg) * Math.PI * 2, R = lakeR(S, a) * (k0 + (k1 - k0) * t) + off * t;
+          pos.push(Math.cos(a) * R, -Math.sin(a) * R, 0);
+          c.copy(c0).lerp(c1, t); col.push(c.r, c.g, c.b);
+        }
+      }
+      for (let j = 0; j < rings; j++) for (let i = 0; i < seg; i++) {
+        const A = j * seg + i, B2 = j * seg + (i + 1) % seg, C = A + seg, D = B2 + seg;
+        idx.push(A, B2, D, A, D, C);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+      g.setIndex(idx); g.computeVertexNormals(); return g;
+    };
+    const shoreAt = (S, a, off) => { const R = lakeR(S, a) + off; return [Math.cos(a) * R, Math.sin(a) * R]; };
     const buildFishSpot = (S) => {
-      const g = new THREE.Group();
-      let water = null;
-      const K = S.kind;
-      if (K === "river" || K === "styx" || K === "under" || K === "fall") {
-        // 🌊 น้ำไหลเป็นแถบยาว — วางเฉียง ๆ ให้ดูเป็นสายน้ำ
-        water = fsWater(g, new THREE.PlaneGeometry(S.r * 4.6, S.r * 1.5, 26, 8), S.water, 0.86, 0.055);
-        water.rotation.z = K === "styx" ? 0.5 : K === "fall" ? -0.35 : 0.22;
-        const bankMat = new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.95 });
-        for (const sgn of [-1, 1]) {
-          const bank = new THREE.Mesh(new THREE.BoxGeometry(S.r * 4.6, 0.52, 0.72), bankMat);   // 🧱 ตลิ่งหนา-สูงขึ้น ให้เห็นเป็นร่องน้ำลึก
-          bank.position.set(-Math.sin(water.rotation.z) * sgn * S.r * 0.92, 0.2, Math.cos(water.rotation.z) * sgn * S.r * 0.92);
-          bank.rotation.y = -water.rotation.z;
-          g.add(bank);
-        }
-        if (K === "fall") {   // 💦 ม่านน้ำตกไหลลงมาที่ปลายแอ่ง
-          const fallM = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.6), _fsMat(S.deco, 0.6));
-          fallM.position.set(S.r * 1.9, 1.3, -S.r * 0.5);
-          g.add(fallM);
-          const mist = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), _fsMat(0xffffff, 0.22));
-          mist.position.set(S.r * 1.8, 0.35, -S.r * 0.5); mist.scale.set(1, 0.5, 1); g.add(mist);
-        }
-        if (K === "under") {  // ✨ ผลึกเรืองแสงริมธาร
-          for (let i = 0; i < 7; i++) {
-            const c = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.5, 5), new THREE.MeshStandardMaterial({ color: S.deco, emissive: S.deco, emissiveIntensity: 0.8, roughness: 0.3 }));
-            const a = Math.random() * Math.PI * 2, rr = S.r * (1.0 + Math.random() * 0.9);
-            c.position.set(Math.cos(a) * rr, 0.25, Math.sin(a) * rr); g.add(c);
-          }
-        }
-        if (K === "styx") {   // 👻 เปลวไฟวิญญาณลอยเหนือน้ำ
-          for (let i = 0; i < 6; i++) {
-            const f = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshStandardMaterial({ color: S.deco, emissive: S.deco, emissiveIntensity: 1.1 }));
-            f.position.set((Math.random() - 0.5) * S.r * 3.6, 0.5 + Math.random() * 0.7, (Math.random() - 0.5) * S.r * 1.2);
-            g.add(f);
-          }
-        }
-      } else if (K === "hole") {
-        // 🧊 แผ่นน้ำแข็งเจาะรูตรงกลาง
-        const ice = new THREE.Mesh(new THREE.CircleGeometry(S.r * 1.9, 26), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.35, metalness: 0.1 }));
-        ice.rotation.x = -Math.PI / 2; ice.position.y = 0.08; g.add(ice);
-        water = fsWater(g, new THREE.CircleGeometry(S.r * 0.7, 20), S.water, 0.92, 0.03);
-        water.position.y = 0.1;
-        for (let i = 0; i < 9; i++) {   // 🧊 ก้อนน้ำแข็งที่เจาะออกมากองไว้
-          const b = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.24, 0.3), new THREE.MeshStandardMaterial({ color: S.deco, roughness: 0.4 }));
-          const a = Math.random() * Math.PI * 2, rr = S.r * (0.95 + Math.random() * 0.7);
-          b.position.set(Math.cos(a) * rr, 0.18, Math.sin(a) * rr); b.rotation.y = Math.random() * 3; g.add(b);
-        }
-      } else if (K === "cloud") {
-        // ☁️ สระบนก้อนเมฆ
-        water = fsWater(g, new THREE.CircleGeometry(S.r, 26), S.water, 0.8, 0.05);
-        for (let i = 0; i < 12; i++) {
-          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.55 + Math.random() * 0.35, 9, 7), _fsMat(S.rim, 0.9));
-          const a = (i / 12) * Math.PI * 2;
-          puff.position.set(Math.cos(a) * (S.r + 0.25), -0.05, Math.sin(a) * (S.r + 0.25));
-          puff.scale.y = 0.62; g.add(puff);
-        }
-      } else if (K === "lava") {
-        // 🌋 บ่อร้อนขอบหินภูเขาไฟ + ไอน้ำ
-        fsBasin(g, S.r, S, { lipH: 0.34, wallW: 0.54, deep: 0x3a1208 });
-        water = fsWater(g, new THREE.CircleGeometry(S.r, 24), S.water, 0.92, 0.06);
-        water.material.emissive = new THREE.Color(S.deco); water.material.emissiveIntensity = 0.55;
-        fsRocks(g, 14, S.r + 0.86, S.rim, 0.3);
-        for (let i = 0; i < 5; i++) {
-          const st = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), _fsMat(0xffffff, 0.16));
-          st.position.set((Math.random() - 0.5) * S.r * 1.5, 0.7 + Math.random() * 0.8, (Math.random() - 0.5) * S.r * 1.5);
-          g.add(st);
-        }
-      } else if (K === "sacred") {
-        // ☀️ สระศักดิ์สิทธิ์ + เสาหินล้อม
-        fsBasin(g, S.r, S, { lipH: 0.28, wallW: 0.5 });
-        water = fsWater(g, new THREE.CircleGeometry(S.r, 28), S.water, 0.85, 0.035);
-        water.material.emissive = new THREE.Color(S.water); water.material.emissiveIntensity = 0.35;
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2;
-          const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 1.5, 8), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.7 }));
-          pil.position.set(Math.cos(a) * (S.r + 0.6), 0.75, Math.sin(a) * (S.r + 0.6)); g.add(pil);
-          const orb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshStandardMaterial({ color: S.deco, emissive: S.deco, emissiveIntensity: 0.9 }));
-          orb.position.set(Math.cos(a) * (S.r + 0.6), 1.62, Math.sin(a) * (S.r + 0.6)); g.add(orb);
-        }
-      } else if (K === "crater") {
-        // 🌑 หลุมอุกกาบาต ขอบหินคม
-        fsBasin(g, S.r * 0.85, S, { lipH: 0.4, wallW: 0.6 });
-        water = fsWater(g, new THREE.CircleGeometry(S.r * 0.85, 22), S.water, 0.9, 0.03);
-        water.material.emissive = new THREE.Color(S.deco); water.material.emissiveIntensity = 0.4;
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * Math.PI * 2;
-          const sh = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 5), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 1, flatShading: true }));
-          sh.position.set(Math.cos(a) * (S.r + 0.15), 0.28, Math.sin(a) * (S.r + 0.15));
-          sh.rotation.z = (Math.random() - 0.5) * 0.5; g.add(sh);
-        }
-      } else if (K === "syrup") {
-        // 🍬 สระน้ำเชื่อม ขอบวิปครีม + ลูกอมลอย
-        fsBasin(g, S.r, S, { lipH: 0.26, wallW: 0.48, deep: 0xc04a86 });
-        water = fsWater(g, new THREE.CircleGeometry(S.r, 26), S.water, 0.95, 0.04);
-        for (let i = 0; i < 14; i++) {
-          const a = (i / 14) * Math.PI * 2;
-          const cr = new THREE.Mesh(new THREE.SphereGeometry(0.3, 9, 7), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.85 }));
-          cr.position.set(Math.cos(a) * (S.r + 0.22), 0.14, Math.sin(a) * (S.r + 0.22)); cr.scale.y = 0.75; g.add(cr);
-        }
-        for (let i = 0; i < 5; i++) {
-          const cd = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.07, 6, 12), new THREE.MeshStandardMaterial({ color: S.deco, roughness: 0.4 }));
-          cd.rotation.x = -Math.PI / 2;
-          cd.position.set((Math.random() - 0.5) * S.r * 1.3, 0.12, (Math.random() - 0.5) * S.r * 1.3); g.add(cd);
-        }
-      } else if (K === "shore") {
-        // 🏖️ ชายทะเล — น้ำเป็นแถบกว้างด้านหนึ่ง + คลื่นขาว
-        water = fsWater(g, new THREE.PlaneGeometry(S.r * 5.5, S.r * 2.4, 28, 10), S.water, 0.85, 0.07);
-        water.position.z = -S.r * 0.6;
-        const foam = new THREE.Mesh(new THREE.PlaneGeometry(S.r * 5.5, 0.5), _fsMat(0xffffff, 0.45));
-        foam.rotation.x = -Math.PI / 2; foam.position.set(0, 0.07, S.r * 0.55); g.add(foam);
-        for (let i = 0; i < 6; i++) {   // 🐚 เปลือกหอย/หินริมหาด
-          const sh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 0.9 }));
-          sh.position.set((Math.random() - 0.5) * S.r * 4, 0.08, S.r * (0.8 + Math.random() * 0.5)); sh.scale.y = 0.5; g.add(sh);
-        }
+      const g = new THREE.Group(), K = S.kind;
+      const flat = (geo, y, mat) => { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; g.add(m); return m; };
+      const deep = new THREE.Color(S.water).multiplyScalar(K === "lava" ? 0.5 : 0.3), shallow = new THREE.Color(S.water).lerp(new THREE.Color(S.rim), 0.45);
+      // ① ก้นทะเลสาบ: ขอบตื้นสีอ่อน → กลางลึกเข้ม (จากศูนย์กลางออกขอบ = ลึก → ตื้น)
+      flat(lakeDisc(S, 0, 1.0, 0, 64, 6, deep.getHex(), shallow.getHex()), 0.012, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }));
+      // ② หาด/ตลิ่งรอบวง กว้างไม่เท่ากัน ไล่สีจากขอบน้ำ (เปียกเข้ม) ออกไปแห้ง
+      const sandIn = new THREE.Color(S.rim).multiplyScalar(0.72), sandOut = new THREE.Color(S.rim);
+      flat(lakeDisc(S, 0.97, 1.0, 1.5, 64, 2, sandIn.getHex(), sandOut.getHex()), 0.028, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+      // ③ ผิวน้ำ (คลื่นไหวด้วย fsWater)
+      const water = fsWater(g, lakeDisc(S, 0, 1.02, 0, 64, 6, 0xffffff), S.water, K === "lava" ? 0.94 : 0.8, K === "shore" ? 0.06 : 0.04);
+      water.geometry.deleteAttribute("color");
+      if (K === "lava" || K === "sacred" || K === "crater" || K === "under" || K === "styx") { water.material.emissive = new THREE.Color(K === "sacred" ? S.water : S.deco); water.material.emissiveIntensity = K === "lava" ? 0.55 : 0.32; }
+      const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, o || {}));
+      const rockG = new THREE.DodecahedronGeometry(1, 0), rockM = M(new THREE.Color(S.rim).multiplyScalar(0.8).getHex(), { flatShading: true });
+      const rocks = (n, off, sz) => { for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + Math.random() * 0.3, [x, z] = shoreAt(S, a, off + Math.random() * 0.6); const rk = new THREE.Mesh(rockG, rockM); rk.scale.set(sz * (0.7 + Math.random() * 0.8), sz * (0.45 + Math.random() * 0.5), sz * (0.7 + Math.random() * 0.8)); rk.position.set(x, 0.08, z); rk.rotation.set(Math.random(), Math.random() * 6, Math.random()); rk.castShadow = true; g.add(rk); } };
+      const reeds = (n) => { const st = M(0x4a7a34), tp = M(0x7a4a22); for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, [x, z] = shoreAt(S, a, -0.15 + Math.random() * 0.4); for (let q = 0; q < 4; q++) { const h = 0.7 + Math.random() * 0.6, r = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, h, 4), st); r.position.set(x + (Math.random() - 0.5) * 0.5, h / 2, z + (Math.random() - 0.5) * 0.5); r.rotation.z = (Math.random() - 0.5) * 0.3; g.add(r); if (q % 2 === 0) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.2, 6), tp); c.position.set(r.position.x, h - 0.05, r.position.z); g.add(c); } } } };
+      const lilies = (n, col, flower) => { const pm = M(col, { side: THREE.DoubleSide }), fm = M(flower || 0xffd8ec); for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, rr = lakeR(S, a) * (0.35 + Math.random() * 0.5); const p = new THREE.Mesh(new THREE.CircleGeometry(0.32 + Math.random() * 0.2, 12, 0.3, Math.PI * 2 - 0.6), pm); p.rotation.x = -Math.PI / 2; p.rotation.z = Math.random() * 6; p.position.set(Math.cos(a) * rr, 0.075, Math.sin(a) * rr); g.add(p); if (i % 3 === 0) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), fm); f.position.set(p.position.x, 0.14, p.position.z); f.scale.y = 0.6; g.add(f); } } };
+      const ringOf = (n, off, make) => { for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, [x, z] = shoreAt(S, a, off); make(x, z, a, i); } };
+      if (K === "pond") { rocks(14, 0.5, 0.3); reeds(7); lilies(9, 0x4a8a3a); }
+      else if (K === "fall") {   // 💦 น้ำตกตกจากหน้าผาริมทะเลสาบ
+        rocks(10, 0.5, 0.35); reeds(6); lilies(8, 0x3a7a34, 0xfff2a0);
+        const a = 0.9, [x, z] = shoreAt(S, a, 1.3), cliffM = M(new THREE.Color(S.rim).multiplyScalar(1.15).getHex(), { flatShading: true }), mossM = M(S.deco, { flatShading: true });
+        [[0, 1.3, 0, 1.9, 1.6], [-1.3, 0.8, 0.3, 1.3, 1.1], [1.3, 0.9, 0.2, 1.4, 1.2], [0.2, 2.6, -0.3, 1.3, 1.1], [-0.6, 0.4, 1.0, 0.8, 0.6], [0.9, 0.35, 1.0, 0.7, 0.5]].forEach(([lx, ly, lz, sx, sy], i) => {   // ⛰️ หน้าผาหินกองซ้อน + มอสบนยอด
+          const ca = Math.cos(-a + Math.PI / 2), sa = Math.sin(-a + Math.PI / 2), rk = new THREE.Mesh(rockG, cliffM);
+          rk.position.set(x + lx * ca + lz * sa, ly, z - lx * sa + lz * ca); rk.scale.set(sx, sy, sx * 0.9); rk.rotation.set(Math.random(), Math.random() * 6, Math.random() * 0.4); rk.castShadow = true; g.add(rk);
+          if (i < 4) { const mo = new THREE.Mesh(new THREE.SphereGeometry(sx * 0.6, 8, 6), mossM); mo.position.set(rk.position.x, ly + sy * 0.75, rk.position.z); mo.scale.y = 0.35; g.add(mo); }
+        });
+        const fallM = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 3.4), _fsMat(0xd8f8ff, 0.7)); const [fx, fz] = shoreAt(S, a, 0.15); fallM.position.set(fx, 1.7, fz); fallM.rotation.y = -a + Math.PI / 2; g.add(fallM);
+        const mist = new THREE.Mesh(new THREE.SphereGeometry(1.0, 10, 8), _fsMat(0xffffff, 0.2)); const [mx, mz] = shoreAt(S, a, -1.0); mist.position.set(mx, 0.35, mz); mist.scale.set(1.3, 0.45, 1.3); g.add(mist);
       } else if (K === "oasis") {
-        // 🏜️ โอเอซิส — น้ำใสกลางทราย + ต้นปาล์ม
-        fsBasin(g, S.r, S, { lipH: 0.24, wallW: 0.46 });
-        water = fsWater(g, new THREE.CircleGeometry(S.r, 24), S.water, 0.88, 0.04);
-        fsRocks(g, 10, S.r + 0.78, S.rim, 0.22);
-        for (let i = 0; i < 3; i++) {
-          const a = (i / 3) * Math.PI * 2 + 0.6;
-          const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 2.2, 6), new THREE.MeshStandardMaterial({ color: 0x8a6a3a }));
-          tr.position.set(Math.cos(a) * (S.r + 0.9), 1.1, Math.sin(a) * (S.r + 0.9));
-          tr.rotation.z = (Math.random() - 0.5) * 0.25; g.add(tr);
-          for (let k = 0; k < 5; k++) {
-            const lf = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.0, 4), new THREE.MeshStandardMaterial({ color: S.deco }));
-            const la = (k / 5) * Math.PI * 2;
-            lf.position.set(Math.cos(a) * (S.r + 0.9) + Math.cos(la) * 0.42, 2.2, Math.sin(a) * (S.r + 0.9) + Math.sin(la) * 0.42);
-            lf.rotation.set(Math.cos(la) * 1.15, 0, -Math.sin(la) * 1.15); g.add(lf);
-          }
-        }
-      } else if (K === "basin") {
-        // 🗿 อ่างหินยักษ์ ขอบหินเรียงเป็นกำแพงเตี้ย
-        fsBasin(g, S.r * 0.9, S, { lipH: 0.42, wallW: 0.58 });
-        water = fsWater(g, new THREE.CircleGeometry(S.r * 0.9, 24), S.water, 0.9, 0.04);
-        for (let i = 0; i < 18; i++) {
-          const a = (i / 18) * Math.PI * 2;
-          const bk = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.42), new THREE.MeshStandardMaterial({ color: S.rim, roughness: 1, flatShading: true }));
-          bk.position.set(Math.cos(a) * (S.r + 0.1), 0.27, Math.sin(a) * (S.r + 0.1));
-          bk.rotation.y = -a; g.add(bk);
-        }
-        for (let i = 0; i < 4; i++) {
-          const mo = new THREE.Mesh(new THREE.SphereGeometry(0.2, 7, 6), new THREE.MeshStandardMaterial({ color: S.deco, roughness: 1 }));
-          const a = Math.random() * Math.PI * 2;
-          mo.position.set(Math.cos(a) * (S.r + 0.1), 0.56, Math.sin(a) * (S.r + 0.1)); mo.scale.y = 0.4; g.add(mo);
-        }
-      } else {
-        // 🌸 บ่อกลมมาตรฐาน (ทุ่งซากุระ) — หินล้อม + ต้นกก
-        fsBasin(g, S.r, S, { lipH: 0.28, wallW: 0.5 });
-        water = fsWater(g, new THREE.RingGeometry(0.02, S.r, 30, 6), S.water, 0.85, 0.045);
-        fsRocks(g, 16, S.r + 0.86, S.rim, 0.28);
-        for (let i = 0; i < 5; i++) {
-          const a = Math.random() * Math.PI * 2;
-          const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 5), new THREE.MeshStandardMaterial({ color: S.deco }));
-          st.position.set(Math.cos(a) * (S.r - 0.1), 0.4, Math.sin(a) * (S.r - 0.1)); g.add(st);
-          const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.22, 6), new THREE.MeshStandardMaterial({ color: 0x8a5a2a }));
-          tp.position.set(Math.cos(a) * (S.r - 0.1), 0.85, Math.sin(a) * (S.r - 0.1)); g.add(tp);
-        }
+        rocks(9, 0.7, 0.25); reeds(4);
+        ringOf(4, 1.0, (x, z, a, i) => { if (i === 3) return; const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 2.6, 6), M(0x8a6a3a)); tr.position.set(x, 1.3, z); tr.rotation.z = (Math.random() - 0.5) * 0.3; g.add(tr);
+          for (let q = 0; q < 6; q++) { const la = (q / 6) * Math.PI * 2, lf = new THREE.Mesh(new THREE.ConeGeometry(0.17, 1.2, 4), M(S.deco)); lf.position.set(x + Math.cos(la) * 0.48, 2.6, z + Math.sin(la) * 0.48); lf.rotation.set(Math.cos(la) * 1.15, 0, -Math.sin(la) * 1.15); g.add(lf); } });
+      } else if (K === "hole") {   // 🧊 ทะเลสาบน้ำแข็งละลายครึ่ง — ขอบน้ำแข็งหนา + แพน้ำแข็งลอย
+        flat(lakeDisc(S, 0.82, 1.0, 1.0, 64, 2, 0xdff0fa, 0xf2f8fc), 0.06, M(0xffffff, { vertexColors: true, roughness: 0.3, metalness: 0.1 }));
+        for (let i = 0; i < 6; i++) { const a = Math.random() * Math.PI * 2, rr = lakeR(S, a) * (0.2 + Math.random() * 0.45), fl = new THREE.Mesh(new THREE.CylinderGeometry(0.4 + Math.random() * 0.5, 0.5, 0.12, 6), M(S.deco, { roughness: 0.4 })); fl.position.set(Math.cos(a) * rr, 0.07, Math.sin(a) * rr); fl.rotation.y = Math.random() * 3; g.add(fl); }
+        ringOf(10, 0.9, (x, z) => { const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.26, 0.35), M(S.deco, { roughness: 0.4 })); b2.position.set(x + (Math.random() - 0.5), 0.15, z + (Math.random() - 0.5)); b2.rotation.y = Math.random() * 3; g.add(b2); });
+      } else if (K === "cloud") {
+        ringOf(18, 0.2, (x, z) => { const pf = new THREE.Mesh(new THREE.SphereGeometry(0.6 + Math.random() * 0.4, 9, 7), _fsMat(S.rim, 0.92)); pf.position.set(x, -0.02, z); pf.scale.y = 0.6; g.add(pf); });
+      } else if (K === "lava") {
+        rocks(16, 0.5, 0.38);
+        for (let i = 0; i < 6; i++) { const st = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), _fsMat(0xffffff, 0.15)); const a = Math.random() * Math.PI * 2, rr = lakeR(S, a) * Math.random() * 0.7; st.position.set(Math.cos(a) * rr, 0.8 + Math.random(), Math.sin(a) * rr); g.add(st); }
+      } else if (K === "sacred") {
+        ringOf(8, 0.8, (x, z) => { const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.22, 1.7, 8), M(S.rim, { roughness: 0.7 })); pil.position.set(x, 0.85, z); g.add(pil);
+          const orb = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), M(S.deco, { emissive: S.deco, emissiveIntensity: 0.9 })); orb.position.set(x, 1.82, z); g.add(orb); });
+        lilies(7, 0xd8e8b0, 0xffffff);
+      } else if (K === "crater") {
+        ringOf(20, 0.25, (x, z) => { const sh = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.7, 5), M(S.rim, { roughness: 1, flatShading: true })); sh.position.set(x, 0.3, z); sh.rotation.z = (Math.random() - 0.5) * 0.5; g.add(sh); });
+      } else if (K === "syrup") {
+        ringOf(18, 0.25, (x, z) => { const cr = new THREE.Mesh(new THREE.SphereGeometry(0.34, 9, 7), M(S.rim, { roughness: 0.85 })); cr.position.set(x, 0.16, z); cr.scale.y = 0.75; g.add(cr); });
+        for (let i = 0; i < 7; i++) { const cd = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.07, 6, 12), M(S.deco, { roughness: 0.4 })); cd.rotation.x = -Math.PI / 2; const a = Math.random() * Math.PI * 2, rr = lakeR(S, a) * Math.random() * 0.75; cd.position.set(Math.cos(a) * rr, 0.12, Math.sin(a) * rr); g.add(cd); }
+      } else if (K === "shore") {   // 🏖️ ทะเลสาบน้ำเค็มริมหาด — ฟองคลื่นขาวรอบขอบ + เปลือกหอย
+        flat(lakeDisc(S, 0.95, 1.04, 0, 64, 1, 0xffffff), 0.065, _fsMat(0xffffff, 0.4));
+        for (let i = 0; i < 10; i++) { const a = Math.random() * Math.PI * 2, [x, z] = shoreAt(S, a, 0.4 + Math.random()); const sh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), M(0xfff0e0)); sh.position.set(x, 0.08, z); sh.scale.y = 0.5; g.add(sh); }
+      } else if (K === "styx") {
+        rocks(12, 0.5, 0.35);
+        for (let i = 0; i < 8; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), M(S.deco, { emissive: S.deco, emissiveIntensity: 1.1 })); const a = Math.random() * Math.PI * 2, rr = lakeR(S, a) * Math.random() * 0.8; f.position.set(Math.cos(a) * rr, 0.5 + Math.random() * 0.8, Math.sin(a) * rr); g.add(f); }
+      } else if (K === "under") {
+        rocks(10, 0.5, 0.32);
+        for (let i = 0; i < 12; i++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.6, 5), M(S.deco, { emissive: S.deco, emissiveIntensity: 0.8, roughness: 0.3 })); const a = Math.random() * Math.PI * 2, [x, z] = shoreAt(S, a, 0.3 + Math.random() * 1.0); c.position.set(x, 0.28, z); c.rotation.z = (Math.random() - 0.5) * 0.5; g.add(c); }
+      } else {   // basin — ทะเลสาบในอ่างหิน: ก้อนหินตัดเรียงเป็นแนวกำแพงเตี้ยรอบขอบ + มอส
+        ringOf(30, 0.3, (x, z, a) => { const bk = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.5 + Math.random() * 0.2, 0.45), M(S.rim, { roughness: 1, flatShading: true })); bk.position.set(x, 0.25, z); bk.rotation.y = -a; bk.castShadow = true; g.add(bk); });
+        for (let i = 0; i < 6; i++) { const a = Math.random() * Math.PI * 2, [x, z] = shoreAt(S, a, 0.3); const mo = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 6), M(S.deco, { roughness: 1 })); mo.position.set(x, 0.55, z); mo.scale.y = 0.4; g.add(mo); }
+        lilies(5, 0x3a6a3a);
       }
       return { grp: g, water };
     };
@@ -25534,6 +25486,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G._fishGrp = null; G.pondWater = null;
       }
       const indoor = G.inTownZone || G.inHomeZone || G.inRanchZone;
+      const dropLakeCols = () => { (G._pondCols || []).forEach((c) => { const i = colliders.indexOf(c); if (i >= 0) colliders.splice(i, 1); }); G._pondCols = []; };
+      dropLakeCols();
       if (indoor) {
         if (G._pondCol) { const pi = colliders.indexOf(G._pondCol); if (pi >= 0) colliders.splice(pi, 1); G._pondCol = null; } // 🏡 ไม่งั้นเหลือกำแพงล่องหนตรงบ่อของด่านล่าสุด
         G.pondPos = null; G.pondNear = false; setUi((u) => ({ ...u, pondNear: false, fishSpot: null })); return;
@@ -25543,9 +25497,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       built.grp.position.set(S.x, terrainAt(S.x, S.z), S.z);
       (G._worldRoot || scene).add(built.grp);
       G._fishGrp = built.grp; G.pondWater = built.water;
-      G.pondPos = { x: S.x, z: S.z, r: S.r };   // 📏 จำรัศมีไว้ให้ระยะตรวจ "ยืนใกล้บ่อ" ขยายตามขนาดบ่อ
+      G.pondPos = { x: S.x, z: S.z, r: S.r, S };   // 📏 จำรัศมีไว้ให้ระยะตรวจ "ยืนใกล้บ่อ" ขยายตามขนาดบ่อ
+      // 🚧 ทะเลสาบเดินผ่านไม่ได้ — วงกันชนกลาง + วงย่อยเรียงตามขอบโค้ง (ครอบถึงริมน้ำพอดี) · ระบบนำทางเดินอ้อมเอง
+      { const cs = [{ x: S.x, z: S.z, r: S.r * 0.62 }];
+        for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2, R = lakeR(S, a); cs.push({ x: S.x + Math.cos(a) * R * 0.64, z: S.z + Math.sin(a) * R * 0.64, r: R * 0.38 }); }
+        cs.forEach((c) => { c.lake = true; colliders.push(c); }); G._pondCols = cs;
+        if (G.rebuildNav) { try { G.rebuildNav(); } catch (e) {} } }
       G.pondNear = false;
-      // 🚶 บ่อน้ำไม่กันการเดินอีกแล้ว — ลุยลงบ่อได้ทุกบ่อ
+      // (เดิม) บ่อน้ำลุยลงได้ — ตอนนี้เป็นทะเลสาบ กันการเดินด้วยวงกันชนด้านบนแทน
       //    บ่อที่เลเวลตกปลายังไม่ถึงจะถูกล็อกไว้ที่ "ปุ่มตกปลา" เท่านั้น ไม่ใช่กำแพงมองไม่เห็นรอบบ่อ
       //    (เดิมมีตัวกันชนรัศมี r+0.1 วางทับบ่อ ทำให้เดินชนขอบบ่อที่ล็อกไว้แล้วไปต่อไม่ได้)
       if (G._pondCol) { const _pi = colliders.indexOf(G._pondCol); if (_pi >= 0) colliders.splice(_pi, 1); G._pondCol = null; }
@@ -47259,7 +47218,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         if (G.pondPos) {
           const fd = Math.hypot(char.position.x - G.pondPos.x, char.position.z - G.pondPos.z);
-          const near = fd < (G.pondPos.r || 2.4) + 1.5;   // ⚠️ ต้องอิงรัศมีบ่อ ไม่ใช่ค่าคงที่ ไม่งั้นบ่อใหญ่จะยืนขอบแล้วตกไม่ได้
+          const shoreR = G.pondPos.S ? lakeR(G.pondPos.S, Math.atan2(char.position.z - G.pondPos.z, char.position.x - G.pondPos.x)) : (G.pondPos.r || 2.4);
+          const near = fd < shoreR + 1.9;   // 🏞️ ยืนริมฝั่งตรงไหนของทะเลสาบก็ตกได้   // ⚠️ ต้องอิงรัศมีบ่อ ไม่ใช่ค่าคงที่ ไม่งั้นบ่อใหญ่จะยืนขอบแล้วตกไม่ได้
           const near2 = near && !G.dungeon;              // 🗼 ในหอคอยบ่อถูกซ่อน ปุ่มตกปลาต้องไม่โผล่
           if (near2 !== G.pondNear) {
             G.pondNear = near2;
@@ -47328,7 +47288,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   if (G.autoFish && G.pondPos) {
                     // 🎣 เล็งไปที่ "ขอบบ่อ" ฝั่งที่ยืนอยู่ ไม่ใช่กลางบ่อ จะได้ไม่เดินลงน้ำ
                     const agVx = char.position.x - G.pondPos.x, agVz = char.position.z - G.pondPos.z;
-                    const agL = Math.hypot(agVx, agVz) || 1, agR = (G.pondPos.r || 2.4) + 1.0;
+                    const agL = Math.hypot(agVx, agVz) || 1, agR = (G.pondPos.S ? lakeR(G.pondPos.S, Math.atan2(agVz, agVx)) : (G.pondPos.r || 2.4)) + 1.1;
                     agPick(G.pondPos.x + (agVx / agL) * agR, G.pondPos.z + (agVz / agL) * agR);
                   }
                   if (agD2 < Infinity && agD2 > 1.2) G.moveTarget = new THREE.Vector3(agX, 0, agZ);
@@ -47621,7 +47581,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // 🏊 ว่ายน้ำ — เดินลงบ่อ/สระ/ทะเลประจำด่าน (ยกเว้นบ่อลาวา) ตัวจมเหลือแต่ช่วงบน ช้าลง มีวงน้ำกระเพื่อม
         { const P = G.pondPos, S = G.fishSpotOf ? G.fishSpotOf() : null;
           const inW = !!(P && G.mode === "explore" && !G.dungeon && !G.inTownZone && !G.inHomeZone && !G.inRanchZone && !G.mountId && S && S.kind !== "lava"
-            && Math.hypot(char.position.x - P.x, char.position.z - P.z) < (P.r || 2.4) - 0.45);
+            && Math.hypot(char.position.x - P.x, char.position.z - P.z) < (P.S ? lakeR(P.S, Math.atan2(char.position.z - P.z, char.position.x - P.x)) * 0.5 : (P.r || 2.4) - 0.45));   // ทะเลสาบกันเดินแล้ว — ว่ายได้เฉพาะถ้าหลุดเข้าไปลึก
           if (inW !== !!G._swimming) { G._swimming = inW; if (inW) { try { kImpact(char.position.x, 0.2, char.position.z, 0x9fe0ff, 0.8); } catch (_) {} if (G.heroEmote && G._heroModel) G._heroModel.emote = null; } }
           if (inW) { dx *= 0.62; dz *= 0.62; G._swimRip = (G._swimRip || 0) - dt;
             if (G._swimRip <= 0) { G._swimRip = (dx || dz) ? 0.3 : 0.9; const wc = S.water || 0x9fe0ff;
