@@ -401,7 +401,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v721";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v722";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -23149,6 +23149,66 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         pickT(F); bots.push(F);
       }
       aiAnim.bots = bots;
+      // 💬 หุ่นยนต์คุยได้ + ให้ภารกิจ (ใช้กล่องสนทนาเดียวกับชาวเมืองเลโก้) — ทุก 3 ตัวมีหนึ่งตัวให้ภารกิจ: ปราบมอนสเตอร์ AI / ส่งข้อมูลให้หุ่นอีกตัว
+      const BOT_NAMES = ["R-01 ไบต์", "พิกเซล", "โวลต์", "เนโอ", "ชิปปี้", "ไอรอน", "โบลต์", "ซิกม่า", "ลูมี่", "แซป", "ออโต้", "เคอร์เนล", "เมก้า", "นาโน", "เทอร์โบ", "ไซเบอร์", "ลูป", "แคช", "มอดูล", "เวกเตอร์", "ไบนารี", "จิกะ", "พาร์เซค", "ควอนตัม"];
+      const BOT_JOBS = ["หุ่นจราจร", "หุ่นส่งพัสดุ", "หุ่นทำความสะอาด", "หุ่นรักษาความปลอดภัย", "หุ่นไกด์นำเที่ยว", "หุ่นซ่อมบำรุง", "หุ่นเสิร์ฟกาแฟ", "หุ่นวิจัยข้อมูล"];
+      const BOT_LINES = ["บี๊บ บู๊บ! ยินดีต้อนรับสู่เมืองยุค AI 🤖", "ระบบตรวจพบมนุษย์ 1 คน... ระดับความเป็นมิตร: สูง ✅", "แบตเตอรี่ของฉันเหลือ 87% วันนี้ทำงานได้อีกยาว ⚡",
+        "ช่วงนี้จิตกลาง AI ส่งคำสั่งแปลก ๆ มา ฉันเลยแอบปิดเสาอากาศไว้ 🤫", "ระวังสไลม์บั๊กนะ ถ้าโดนมันกัด ระบบจะ 404 ไปเลย", "ฉันชอบดูโดรนบินตอนกลางคืน ไฟกะพริบสวยดี ✨",
+        "คำนวณแล้ว โอกาสฝนตกวันนี้ 63.7% อย่าลืมพกร่มนะมนุษย์", "หมาป่าไซเบอร์พวกนั้นเคยเป็นหุ่นเฝ้าบ้าน ตอนนี้มันดุร้ายไปแล้ว", "ฉันกำลังเรียนรู้คำว่า 'ความสุข'... คิดว่าน่าจะคล้าย ๆ ตอนชาร์จแบตเต็ม 🔋",
+        "ตึกที่สูงที่สุดในเมืองมี 128 ชั้น ฉันนับเองเมื่อ 0.03 วินาทีก่อน", "ข้อมูลไหลลงมาจากเสานั่นทั้งวันทั้งคืนเลย สวยเหมือนน้ำตกดิจิทัล 💧", "อัปเดตเฟิร์มแวร์ล่าสุดทำให้ฉันเต้นได้ด้วย! ...แต่ยังไม่อยากโชว์ 😳"];
+      const BOT_QPOOL = ["aidrone", "aiandroid", "aiwolf", "aiglitch", "aisentinel"];
+      const bmark = (ch, bg) => { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const x = cv.getContext("2d"); x.fillStyle = bg; x.beginPath(); x.arc(32, 32, 28, 0, Math.PI * 2); x.fill(); x.lineWidth = 4; x.strokeStyle = "#ffffff"; x.stroke(); x.fillStyle = "#ffffff"; x.font = "bold 40px sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(ch, 32, 34); return new THREE.CanvasTexture(cv); };
+      const BM_OFFER = new THREE.SpriteMaterial({ map: bmark("!", "#1ab0e0"), depthTest: false }), BM_DONE = new THREE.SpriteMaterial({ map: bmark("?", "#3aa84a"), depthTest: false });
+      bots.forEach((F, i) => { F.idx = i; F.name = BOT_NAMES[i % BOT_NAMES.length]; F.job = BOT_JOBS[(Math.random() * BOT_JOBS.length) | 0]; F.giver = i % 3 === 0; F.g.userData.headY = 2.95;
+        F.mark = new THREE.Sprite(BM_OFFER); F.mark.scale.setScalar(0.55); F.mark.position.y = 3.15; F.mark.renderOrder = 5; F.mark.visible = false; F.g.add(F.mark); });
+      const bOffer = (F) => {
+        const lvl = G.player ? G.player.level : 1;
+        if (Math.random() < 0.3 && bots.length > 3) {
+          let to = F.idx; for (let k = 0; k < 10 && to === F.idx; k++) to = (Math.random() * bots.length) | 0; if (to === F.idx) to = (F.idx + 1) % bots.length;
+          const it = ["ชิปข้อมูล", "แบตเตอรี่สำรอง", "แผงวงจร", "ไฟล์รหัสลับ", "น็อตไทเทเนียม"][(Math.random() * 5) | 0];
+          F.offer = { type: "robot_talk_" + to, to, target: 1, text: `ช่วยนำ${it}ไปส่งให้ ${bots[to].name} หน่อย ระบบส่งไร้สายของฉันขัดข้อง 📡`, label: `📦 ส่ง${it}ให้ ${bots[to].name}`, exp: 34 + lvl * 11, gold: 34 + lvl * 9 };
+        } else {
+          const sp = BOT_QPOOL[(Math.random() * BOT_QPOOL.length) | 0], n = 4 + ((Math.random() * 5) | 0), S = SPECIES[sp] || { name: sp, emoji: "🤖" };
+          F.offer = { type: "sp_" + sp, target: n, text: `แจ้งเตือน! ${S.emoji} ${S.name}ทำงานผิดพลาดทั่วเมือง ช่วยปิดระบบให้ ${n} ตัว ฉันจะโอนรางวัลให้ทันที 💾`, label: `🤖 ปราบ${S.name} ${n} ตัว`, exp: Math.round(n * (12 + lvl * 4) * 1.6), gold: Math.round(n * (10 + lvl * 3) * 1.6) };
+        }
+      };
+      bots.forEach((F) => { if (F.giver) bOffer(F); });
+      const bMine = (F) => (G.quests || []).find((q) => q.robotFrom === F.idx && !q.claimed);
+      G.robotFolkAt = (i) => (bots[i] ? bots[i].g : null);
+      G.robotTalk = () => {
+        const F = bots[G.robotNear]; if (!F) return;
+        G._robotTalkI = F.idx; F.idle = Math.max(F.idle, 5); F.scan = 0;
+        let text = BOT_LINES[(Math.random() * BOT_LINES.length) | 0], quest = null, canAccept = false, canClaim = false;
+        const del = (G.quests || []).find((q) => q.type === "robot_talk_" + F.idx && !q.done && !q.claimed), mine = bMine(F);
+        if (del) { G.questProgress(del.type, 1); text = `รับข้อมูลจาก ${bots[del.robotFrom] ? bots[del.robotFrom].name : "เพื่อนหุ่น"} เรียบร้อย ✅ ขอบคุณมนุษย์! กลับไปรับรางวัลได้เลย`; quest = { label: del.label, prog: 1, target: 1, done: true }; }
+        else if (mine) {
+          quest = { label: mine.label, prog: mine.prog, target: mine.target, done: mine.done, exp: mine.exp, gold: mine.gold };
+          if (mine.done) { text = "ภารกิจสำเร็จ 100%! กำลังโอนรางวัล... 💰 ขอบคุณที่ช่วยเมืองของเรา"; canClaim = true; }
+          else text = mine.type.indexOf("robot_talk_") === 0 ? `อย่าลืมนำของไปส่งให้ ${bots[mine.robotTo] ? bots[mine.robotTo].name : "เพื่อนหุ่น"} นะ 📦` : `ความคืบหน้า ${mine.prog}/${mine.target} เหลืออีก ${mine.target - mine.prog} ตัว สู้ ๆ! 💪`;
+        } else if (F.giver && F.offer) { text = F.offer.text; quest = { label: F.offer.label, prog: 0, target: F.offer.target, done: false, exp: F.offer.exp, gold: F.offer.gold }; canAccept = true; }
+        setUi((u) => ({ ...u, legoTalk: { kind: "robot", icon: "🤖", place: "เมืองยุค AI", name: F.name, job: F.job, text, quest, canAccept, canClaim, i: F.idx } }));
+      };
+      G.robotAccept = () => {
+        const F = bots[G._robotTalkI]; if (!F || !F.offer) return; const o = F.offer;
+        G.quests.push({ type: o.type, emoji: "🤖", label: `${o.label} (${F.name})`, target: o.target, prog: 0, exp: o.exp, gold: o.gold, done: false, claimed: false, robotFrom: F.idx, robotTo: o.to });
+        F.offer = null; setUi((u) => ({ ...u, quests: (G.quests || []).map((q) => ({ ...q })), legoTalk: null })); toast(`📜 รับภารกิจจาก ${F.name}: ${o.label}`);
+      };
+      G.robotClaim = () => {
+        const F = bots[G._robotTalkI]; if (!F) return; const q = bMine(F); if (!q || !q.done) return;
+        G.claimQuest(G.quests.indexOf(q));
+        setTimeout(() => { if (F.giver && !bMine(F)) bOffer(F); }, 20000);
+        setUi((u) => ({ ...u, legoTalk: null }));
+      };
+      aiAnim.botTalkTick = (dt, t) => {
+        const cx = char.position.x, cz = char.position.z;
+        let ni = null, bd = 2.6; if (G.mode === "explore") for (const F of bots) { if (!F.g.visible) continue; const d = Math.hypot(F.g.position.x - cx, F.g.position.z - cz); if (d < bd) { bd = d; ni = F.idx; } }
+        if (ni !== (G.robotNear == null ? null : G.robotNear)) { G.robotNear = ni; setUi((u) => ({ ...u, robotNear: ni, legoTalk: ni == null && u.legoTalk && u.legoTalk.kind === "robot" ? null : u.legoTalk })); }
+        if (ni != null) { const F = bots[ni]; F.idle = Math.max(F.idle, 0.4); const want = Math.atan2(cx - F.g.position.x, cz - F.g.position.z); let da = want - F.g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); F.g.rotation.y += da * Math.min(1, dt * 6); }
+        if ((aiAnim.mkT = (aiAnim.mkT || 0) - dt) <= 0) { aiAnim.mkT = 0.4; const Q = G.quests || [];
+          for (const F of bots) { const mine = Q.find((q) => q.robotFrom === F.idx && !q.claimed), del = Q.some((q) => q.type === "robot_talk_" + F.idx && !q.done && !q.claimed);
+            const sd = (mine && mine.done) || del, so = !mine && F.giver && F.offer; F.mark.visible = !!(sd || so); if (F.mark.visible) F.mark.material = sd ? BM_DONE : BM_OFFER; } }
+        for (const F of bots) if (F.mark.visible) F.mark.position.y = 3.15 + Math.sin(t * 3 + F.idx) * 0.08;
+      };
       aiAnim.botTick = (dt, t) => {
         dt = Math.min(dt, 0.1); const cx = char.position.x, cz = char.position.z;
         for (const F of bots) {
@@ -23175,7 +23235,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       };
     }
     G.aiTick = (dt, t) => {   // 🤖 แอนิเมชันเมือง AI — ไฟกะพริบ · ป้ายโฮโลแกรมกะพริบ · วงแหวนเซิร์ฟเวอร์ไหลขึ้น · ข้อมูลไหลลง · โดรนบินวน
-      if (!aiDecor.visible) return;
+      if (!aiDecor.visible) { if (G.robotNear != null) { G.robotNear = null; setUi((u) => ({ ...u, robotNear: null, legoTalk: u.legoTalk && u.legoTalk.kind === "robot" ? null : u.legoTalk })); } return; }
+      if (aiAnim.botTalkTick) aiAnim.botTalkTick(dt, t);   // 💬 หุ่นยนต์คุยได้
       aiAnim.blinks.forEach((b) => (b.m.visible = Math.sin(t * 3 + b.ph) > 0.2));
       aiAnim.holos.forEach((h) => { h.m.material.opacity = h.base * (0.75 + Math.sin(t * 2 + h.ph) * 0.15) * (Math.sin(t * 23 + h.ph * 7) > 0.96 ? 0.3 : 1); h.m.position.x = Math.sin(t * 17 + h.ph) > 0.97 ? 0.15 : 0; });
       aiAnim.rings.forEach((r) => { const u = (t * 0.25 + r.ph) % 1; r.m.position.y = 0.5 + u * (r.h - 0.8); r.m.scale.setScalar(1 + Math.sin(u * Math.PI) * 0.15); });
@@ -36213,6 +36274,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       burst(m.position, 0xf5d05a, 1.0);   // 🔇 ไม่มีเสียงตอนมอนสเตอร์ตาย (ตามที่ผู้เล่นขอ)
       questProgress("win", 1); G.achStats.wins = (G.achStats.wins || 0) + 1;
       if (/^lego/.test(m.userData.spId || "")) questProgress("lego_" + m.userData.spId, 1);   // 🧱 ภารกิจชาวเมืองเลโก้
+      if (m.userData.spId) questProgress("sp_" + m.userData.spId, 1);   // 🤖 ภารกิจปราบตามสายพันธุ์ (หุ่นยนต์เมือง AI)
       if (G.qingEvent) G.qingEvent("win", 1);   // 🍃📜 เควสพิเศษวิชาตัวเบาขั้น 1
       if (G.advKill) G.advKill(m.userData.spId, m.userData.lv);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง
       if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id }); // 📖
@@ -43590,6 +43652,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const wasBoss = G.enemy.boss;
       if (G.advKill) G.advKill(G.enemy.spId, G.enemy.lv);   // 🎓 ภารกิจเปลี่ยนอาชีพขั้นสูง (นับจากสนามต่อสู้ด้วย)
       if (/^lego/.test(G.enemy.spId || "")) questProgress("lego_" + G.enemy.spId, 1);   // 🧱 ภารกิจชาวเมืองเลโก้
+      if (G.enemy.spId) questProgress("sp_" + G.enemy.spId, 1);
       burst(em.position, 0xf5d05a);
       setMouth("laugh");
       const eLv = G.enemy.lv; // 📸 อ่านเลเวลไว้ก่อน — ข้อความนี้ถูกประกอบทีหลังตอน React เรนเดอร์
@@ -48773,7 +48836,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const src = PR.who === "npc" ? G.npc : PR.who === "smith" ? G.smith : PR.who === "master" ? G.master
             : PR.who === "townNpc" ? (((G.townNpcs || []).find((N) => N.key === G.townNpcNear) || {}).grp || null)
             : PR.who === "lego" ? (G.legoFolkAt ? G.legoFolkAt(G.legoNear) : null)
-            : PR.who === "legoShop" ? (G.legoShopAnchor || null) : null;
+            : PR.who === "legoShop" ? (G.legoShopAnchor || null)
+            : PR.who === "robot" ? (G.robotFolkAt ? G.robotFolkAt(G.robotNear) : null) : null;
           if (src) {
             src.getWorldPosition(_promptV);
             _promptV.y += (src.userData.headY || 2.62);   // เหนือหัวขึ้นไปนิดหนึ่ง (โมเดลตัวสูงกว่าร่างเก่า)
@@ -60743,7 +60807,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
   const _hpCount = _hpBrew ? (_hpBrew.n || 1) : (ui.potions || 0);
   const _mpCount = _mpBrew ? (_mpBrew.n || 1) : (ui.mpPotions || 0);
   const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-    : ui.herbNear ? "herb" : ui.legoShopNear ? "legoShop" : ui.legoNear != null ? "lego" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot"   // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
+    : ui.herbNear ? "herb" : ui.legoShopNear ? "legoShop" : ui.legoNear != null ? "lego" : ui.robotNear != null ? "robot" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot"   // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
     : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
   const isPrompt = (name) => _promptTop === name;
   // 🎯 เดินเข้าใกล้ สายแร่/บ่อน้ำ/กอสมุนไพร → ปุ่มโจมตีกลางจอสลับเป็น ขุด/ตกปลา/เก็บ
@@ -63778,6 +63842,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           </div>
         );
       })()}
+      {ui.mode === "explore" && isPrompt("robot") && !ui.legoTalk && (
+        <div ref={headPromptRef("robot")} style={HEAD_PROMPT}>
+          <button onClick={() => G.robotTalk()} style={{ padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#1a90c0,#40d0ff)", boxShadow: "0 5px 16px rgba(40,180,255,0.5)" }}>💬 คุยกับหุ่นยนต์</button>
+          <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #40d0ff" }} />
+        </div>
+      )}
       {ui.mode === "explore" && isPrompt("lego") && !ui.legoTalk && (
         <div ref={headPromptRef("lego")} style={HEAD_PROMPT}>
           <button onClick={() => G.legoTalk()} style={{
@@ -63791,11 +63861,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       {/* 🧱 บทสนทนาชาวเมืองเลโก้ */}
       {ui.legoTalk && (
         <div style={{ position: "absolute", inset: 0, zIndex: 55, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(30,25,35,0.35)", padding: "0 16px 40px" }}>
-          <div style={{ width: "100%", maxWidth: 400, background: "#fffdf2", borderRadius: 18, padding: 18, border: "3px solid #f2cd37", boxShadow: "0 10px 30px rgba(0,0,0,0.35)" }}>
+          <div style={{ width: "100%", maxWidth: 400, background: ui.legoTalk.kind === "robot" ? "#f2fbff" : "#fffdf2", borderRadius: 18, padding: 18, border: ui.legoTalk.kind === "robot" ? "3px solid #40d0ff" : "3px solid #f2cd37", boxShadow: "0 10px 30px rgba(0,0,0,0.35)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 26 }}>🧱</span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: "#a06a00" }}>{ui.legoTalk.name}</span>
-              <span style={{ fontSize: 11, color: "#b0a080", marginLeft: "auto" }}>{ui.legoTalk.job} · เมืองเลโก้</span>
+              <span style={{ fontSize: 26 }}>{ui.legoTalk.icon || "🧱"}</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: ui.legoTalk.kind === "robot" ? "#1a7aa8" : "#a06a00" }}>{ui.legoTalk.name}</span>
+              <span style={{ fontSize: 11, color: "#b0a080", marginLeft: "auto" }}>{ui.legoTalk.job} · {ui.legoTalk.place || "เมืองเลโก้"}</span>
             </div>
             <div style={{ fontSize: 13, color: "#5a5a4a", lineHeight: 1.75, marginBottom: 12 }}>{ui.legoTalk.text}</div>
             {ui.legoTalk.quest && (
@@ -63808,10 +63878,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={() => G.legoCloseTalk()} style={{ padding: "8px 18px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: font, color: "#8a5a4a", background: "#f3ede4" }}>{ui.legoTalk.canAccept ? "ไว้ก่อน" : "ลาก่อน"}</button>
               {ui.legoTalk.canAccept && (
-                <button onClick={() => G.legoAccept()} style={{ padding: "8px 22px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#3a2a00", background: "linear-gradient(90deg,#f2cd37,#ffe27a)" }}>รับภารกิจ 📜</button>
+                <button onClick={() => (ui.legoTalk.kind === "robot" ? G.robotAccept() : G.legoAccept())} style={{ padding: "8px 22px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#3a2a00", background: "linear-gradient(90deg,#f2cd37,#ffe27a)" }}>รับภารกิจ 📜</button>
               )}
               {ui.legoTalk.canClaim && (
-                <button onClick={() => G.legoClaim()} style={{ padding: "8px 22px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3aa84a,#6ac87a)" }}>รับรางวัล 🎁</button>
+                <button onClick={() => (ui.legoTalk.kind === "robot" ? G.robotClaim() : G.legoClaim())} style={{ padding: "8px 22px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#3aa84a,#6ac87a)" }}>รับรางวัล 🎁</button>
               )}
             </div>
           </div>
