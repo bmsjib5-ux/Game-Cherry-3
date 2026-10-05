@@ -458,7 +458,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v720"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v721"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -39053,6 +39053,207 @@ function CherryAdventure() {
         }
         G.aiDecor = aiDecor;
         G.aiColliders = aiColliders;
+        // 🤖🚶 ชาวเมืองหุ่นยนต์ — เดินเล่นทั่วเมืองยุค AI: 3 แบบ (หุ่นเดินสองขาหัววงรีแถบไฟ · หุ่นหัวกลมหน้าจอแสดงตา · หุ่นลอยตัวแคปซูลวงแหวนเรือง)
+        //    เดินไปจุดสุ่ม (เลี่ยงตึก/เสา/สระ) แกว่งแขนขา · หุ่นลอยโคลงตัวขึ้นลง · หยุดยืนสแกนรอบตัวบ้าง (หัวหมุน) · หลบตัวผู้เล่น
+        {
+            const sl2 = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+            const LCr = (h) => [sl2(((h >> 16) & 255) / 255), sl2(((h >> 8) & 255) / 255), sl2((h & 255) / 255)];
+            const bodyM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.28, metalness: 0.55 });
+            const _mm = new THREE.Matrix4(), _e = new THREE.Euler(), _qq = new THREE.Quaternion(), _ss = new THREE.Vector3(1, 1, 1), _pp = new THREE.Vector3();
+            const vgeo = (parts) => {
+                const P = [], N = [], Cc = [];
+                parts.forEach(([g0, p, r, hex]) => {
+                    const g = g0.index ? g0.toNonIndexed() : g0.clone();
+                    _pp.set(p[0], p[1], p[2]);
+                    _qq.setFromEuler(_e.set(r ? r[0] : 0, r ? r[1] : 0, r ? r[2] : 0));
+                    _mm.compose(_pp, _qq, _ss);
+                    g.applyMatrix4(_mm);
+                    const c = LCr(hex), pa = g.attributes.position, na = g.attributes.normal;
+                    for (let i = 0; i < pa.count; i++) {
+                        P.push(pa.getX(i), pa.getY(i), pa.getZ(i));
+                        N.push(na.getX(i), na.getY(i), na.getZ(i));
+                        Cc.push(c[0], c[1], c[2]);
+                    }
+                });
+                const out = new THREE.BufferGeometry();
+                out.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+                out.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
+                out.setAttribute("color", new THREE.Float32BufferAttribute(Cc, 3));
+                out.computeBoundingSphere();
+                return out;
+            };
+            const B = (w, h, d) => new THREE.BoxGeometry(w, h, d), CY = (r1, r2, h, s) => new THREE.CylinderGeometry(r1, r2, h, s || 12), SP = (r, a, b) => new THREE.SphereGeometry(r, a || 14, b || 10);
+            const SHELL = [0xf0f4fa, 0xd8dee8, 0x3a4250, 0xffd23a, 0x9aa6b8], GLOW = [0x40e0ff, 0xff40c8, 0x40ffa0, 0xffb040];
+            const glowMats = {};
+            const GM = (c) => glowMats[c] || (glowMats[c] = new THREE.MeshBasicMaterial({ color: c }));
+            const bots = [], botGrp = new THREE.Group();
+            botGrp.userData.noHide = true;
+            aiDecor.add(botGrp);
+            const blocked = (x, z, pad) => Math.hypot(x, z) > FIELD_R - 3 || inKeepOut(x, z) || aiColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + pad);
+            const pickT = (F) => { for (let k = 0; k < 30; k++) {
+                const a = Math.random() * Math.PI * 2, r = 4 + Math.random() * 18, x = F.g.position.x + Math.cos(a) * r, z = F.g.position.z + Math.sin(a) * r;
+                if (!blocked(x, z, 0.9)) {
+                    F.tx = x;
+                    F.tz = z;
+                    return;
+                }
+            } F.tx = F.g.position.x * 0.5; F.tz = F.g.position.z * 0.5; };
+            for (let n = 0; n < 24; n++) {
+                let x = 0, z = 0, ok = false;
+                for (let k = 0; k < 80 && !ok; k++) {
+                    const a = Math.random() * Math.PI * 2, r = 9 + Math.random() * (FIELD_R - 14);
+                    x = Math.cos(a) * r;
+                    z = Math.sin(a) * r;
+                    ok = !blocked(x, z, 1.2);
+                }
+                if (!ok)
+                    continue;
+                const type = n % 3, sc = SHELL[(Math.random() * SHELL.length) | 0], dk = sc === 0x3a4250 ? 0x9aa6b8 : 0x3a4250, gc = GLOW[(Math.random() * GLOW.length) | 0];
+                const g = new THREE.Group();
+                g.position.set(x, 0.03, z);
+                g.rotation.y = Math.random() * Math.PI * 2;
+                botGrp.add(g);
+                const F = { g, type, sp: 1.1 + Math.random() * 0.6, ph: Math.random() * 6, idle: Math.random() * 3, tx: x, tz: z, scan: 0, legs: [], arms: [] };
+                const head = new THREE.Group();
+                g.add(head);
+                F.head = head;
+                if (type === 2) { // 🛸 หุ่นลอยตัว — ลำตัวแคปซูล · วงแหวนพลังงานใต้ตัว · หัวโดมตาเดียว
+                    g.add(new THREE.Mesh(vgeo([[CY(0.42, 0.32, 1.0, 16), [0, 1.35, 0], null, sc], [SP(0.42, 16, 8), [0, 1.85, 0], null, sc], [CY(0.33, 0.2, 0.25, 16), [0, 0.75, 0], null, dk], [B(0.9, 0.08, 0.2), [0, 1.45, 0], null, dk]]), bodyM));
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.05, 8, 24), GM(gc));
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.y = 0.6;
+                    g.add(ring);
+                    F.ring = ring;
+                    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), new THREE.MeshBasicMaterial({ color: gc, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    glow.rotation.x = -Math.PI / 2;
+                    glow.position.y = 0.02;
+                    g.add(glow);
+                    F.glow = glow;
+                    head.position.y = 1.95;
+                    head.add(new THREE.Mesh(vgeo([[SP(0.3, 16, 12), [0, 0, 0], null, dk]]), bodyM));
+                    const eye = new THREE.Mesh(SP(0.1, 12, 8), GM(gc));
+                    eye.position.set(0, 0.02, 0.24);
+                    eye.scale.z = 0.5;
+                    head.add(eye);
+                    for (const s of [-1, 1]) {
+                        const pv = new THREE.Group();
+                        pv.position.set(s * 0.48, 1.55, 0);
+                        g.add(pv);
+                        pv.add(new THREE.Mesh(vgeo([[B(0.14, 0.5, 0.14), [0, -0.25, 0], null, dk], [SP(0.09), [0, -0.52, 0], null, sc]]), bodyM));
+                        F.arms.push(pv);
+                    }
+                }
+                else { // 🚶 หุ่นสองขา
+                    g.add(new THREE.Mesh(vgeo([[B(0.82, 0.9, 0.5), [0, 1.55, 0], null, sc], [B(0.6, 0.22, 0.42), [0, 1.0, 0], null, dk], [CY(0.12, 0.14, 0.14), [0, 2.06, 0], null, dk], [B(0.36, 0.22, 0.05), [0, 1.65, 0.26], null, dk]]), bodyM));
+                    const core = new THREE.Mesh(new THREE.CircleGeometry(0.09, 16), GM(gc));
+                    core.position.set(0, 1.65, 0.29);
+                    g.add(core); // ไฟกลางอก
+                    head.position.y = 2.15;
+                    if (type === 0) {
+                        head.add(new THREE.Mesh(vgeo([[B(0.56, 0.42, 0.48), [0, 0.2, 0], null, sc], [CY(0.03, 0.03, 0.3, 6), [0.18, 0.55, 0], null, dk], [SP(0.06), [0.18, 0.72, 0], null, gc]]), bodyM));
+                        const visor = new THREE.Mesh(B(0.48, 0.1, 0.04), GM(gc));
+                        visor.position.set(0, 0.24, 0.25);
+                        head.add(visor);
+                    } // แถบไฟตาแนวนอน
+                    else {
+                        head.add(new THREE.Mesh(vgeo([[SP(0.34, 18, 14), [0, 0.28, 0], null, sc], [CY(0.36, 0.36, 0.08, 18), [0, 0.12, 0], null, dk]]), bodyM));
+                        const scr = new THREE.Mesh(new THREE.CircleGeometry(0.22, 20), new THREE.MeshBasicMaterial({ color: 0x0a1020 }));
+                        scr.position.set(0, 0.3, 0.32);
+                        head.add(scr);
+                        for (const s of [-1, 1]) {
+                            const e2 = new THREE.Mesh(new THREE.CircleGeometry(0.05, 12), GM(gc));
+                            e2.position.set(s * 0.08, 0.33, 0.325);
+                            head.add(e2);
+                        } // ตาบนจอ
+                        const sm = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.015, 4, 10, Math.PI), GM(gc));
+                        sm.position.set(0, 0.25, 0.325);
+                        sm.rotation.z = Math.PI;
+                        head.add(sm);
+                    }
+                    for (const s of [-1, 1]) {
+                        const lp = new THREE.Group();
+                        lp.position.set(s * 0.2, 0.92, 0);
+                        g.add(lp);
+                        lp.add(new THREE.Mesh(vgeo([[CY(0.1, 0.09, 0.8, 10), [0, -0.42, 0], null, dk], [B(0.24, 0.12, 0.36), [0, -0.86, 0.05], null, sc], [SP(0.1), [0, -0.06, 0], null, dk]]), bodyM));
+                        F.legs.push(lp);
+                        const ap = new THREE.Group();
+                        ap.position.set(s * 0.5, 1.9, 0);
+                        g.add(ap);
+                        ap.add(new THREE.Mesh(vgeo([[SP(0.12), [0, 0, 0], null, dk], [CY(0.08, 0.07, 0.62, 10), [s * 0.03, -0.34, 0], [0, 0, s * 0.12], sc], [SP(0.1), [s * 0.06, -0.7, 0], null, dk]]), bodyM));
+                        F.arms.push(ap);
+                    }
+                }
+                pickT(F);
+                bots.push(F);
+            }
+            aiAnim.bots = bots;
+            aiAnim.botTick = (dt, t) => {
+                dt = Math.min(dt, 0.1);
+                const cx = char.position.x, cz = char.position.z;
+                for (const F of bots) {
+                    const p = F.g.position;
+                    if ((p.x - camera.position.x) ** 2 + (p.z - camera.position.z) ** 2 > 3600) {
+                        F.g.visible = false;
+                        continue;
+                    }
+                    F.g.visible = true;
+                    let moving = false;
+                    if (F.idle > 0) {
+                        F.idle -= dt;
+                        F.head.rotation.y = F.scan > 0 ? Math.sin(t * 2.5 + F.ph) * 0.9 : F.head.rotation.y * 0.9;
+                        if (F.idle <= 0)
+                            pickT(F);
+                    }
+                    else {
+                        const dx = F.tx - p.x, dz = F.tz - p.z, d = Math.hypot(dx, dz);
+                        if (d < 0.5) {
+                            F.idle = 1 + Math.random() * 3;
+                            F.scan = Math.random() < 0.5 ? 1 : 0;
+                        }
+                        else {
+                            const want = Math.atan2(dx, dz);
+                            let da = want - F.g.rotation.y;
+                            da = Math.atan2(Math.sin(da), Math.cos(da));
+                            F.g.rotation.y += da * Math.min(1, dt * 4);
+                            const nx = p.x + Math.sin(F.g.rotation.y) * F.sp * dt, nz = p.z + Math.cos(F.g.rotation.y) * F.sp * dt;
+                            if (blocked(nx, nz, 0.6))
+                                pickT(F);
+                            else {
+                                p.x = nx;
+                                p.z = nz;
+                                moving = true;
+                            }
+                        }
+                    }
+                    const pd = Math.hypot(p.x - cx, p.z - cz);
+                    if (pd < 1.5 && pd > 0.01) {
+                        const k = (1.5 - pd) / pd, nx = p.x + (p.x - cx) * k, nz = p.z + (p.z - cz) * k;
+                        if (!blocked(nx, nz, 0.5)) {
+                            p.x = nx;
+                            p.z = nz;
+                        }
+                    }
+                    F.ph += dt * (moving ? F.sp * 4 : 0);
+                    const base = terrainAt(p.x, p.z) + 0.03 - (aiDecor.position.y || 0);
+                    if (F.type === 2) {
+                        p.y = base + 0.25 + Math.sin(t * 2.2 + F.ph) * 0.12;
+                        F.g.rotation.z = moving ? Math.sin(t * 3 + F.ph) * 0.05 : 0;
+                        F.ring.rotation.z = t * 3;
+                        F.glow.position.y = 0.02 - (p.y - base);
+                        F.glow.material.opacity = 0.25 + Math.sin(t * 5) * 0.08;
+                        F.arms.forEach((a, i) => (a.rotation.x = Math.sin(t * 2 + i) * 0.25));
+                    }
+                    else {
+                        const sw = moving ? Math.sin(F.ph) * 0.6 : 0;
+                        p.y = base + (moving ? Math.abs(Math.sin(F.ph)) * 0.04 : 0);
+                        F.legs[0].rotation.x = sw;
+                        F.legs[1].rotation.x = -sw;
+                        F.arms[0].rotation.x = -sw * 0.7;
+                        F.arms[1].rotation.x = sw * 0.7;
+                    }
+                }
+            };
+        }
         G.aiTick = (dt, t) => {
             if (!aiDecor.visible)
                 return;
@@ -39060,6 +39261,8 @@ function CherryAdventure() {
             aiAnim.holos.forEach((h) => { h.m.material.opacity = h.base * (0.75 + Math.sin(t * 2 + h.ph) * 0.15) * (Math.sin(t * 23 + h.ph * 7) > 0.96 ? 0.3 : 1); h.m.position.x = Math.sin(t * 17 + h.ph) > 0.97 ? 0.15 : 0; });
             aiAnim.rings.forEach((r) => { const u = (t * 0.25 + r.ph) % 1; r.m.position.y = 0.5 + u * (r.h - 0.8); r.m.scale.setScalar(1 + Math.sin(u * Math.PI) * 0.15); });
             aiAnim.streams.forEach((s) => { s.t.offset.y = (s.t.offset.y + dt * s.sp) % 1; });
+            if (aiAnim.botTick)
+                aiAnim.botTick(dt, t); // 🤖🚶 ชาวเมืองหุ่นยนต์
             aiAnim.drones.forEach((d) => { const a = d.ph + t * d.sp; d.g.position.set(d.cx + Math.cos(a) * d.r, d.y + Math.sin(t * 1.3 + d.ph) * 0.6, d.cz + Math.sin(a) * d.r); d.g.rotation.y = -a; d.lt.visible = Math.sin(t * 6 + d.ph) > 0; });
         };
         // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
