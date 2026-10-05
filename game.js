@@ -458,7 +458,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v724"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v725"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -16898,8 +16898,8 @@ function CherryAdventure() {
                 const fallback = grp.children.filter((oo) => !oo.isSprite && oo.visible);
                 fallback.forEach((oo) => (oo.visible = false));
                 const restore = () => fallback.forEach((oo) => (oo.visible = true));
-                Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims")])).then((arr) => {
-                    const anims = arr.pop(), srcs = arr.filter(Boolean);
+                Promise.all(M.files.map(heroLoad).concat([heroLoad("Anims"), heroLoad("Anims2")])).then((arr) => {
+                    const anims2 = arr.pop(), anims = arr.pop(), srcs = arr.filter(Boolean); // Anims2 = ท่าเต้น (ให้เพื่อนเห็นตอนเต้น)
                     if (!anims || !srcs.length || !THREE.SkeletonUtils || !grp.parent) {
                         restore();
                         return;
@@ -16966,7 +16966,7 @@ function CherryAdventure() {
                     }
                     const mixers = parts.map((pt) => new THREE.AnimationMixer(pt));
                     const acts = {};
-                    ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Spell_Simple_Idle_Loop"].forEach((nm) => { const c = anims.animations.find((x) => x.name === nm); if (c)
+                    ["Idle_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Spell_Simple_Idle_Loop", "Dance_Loop"].forEach((nm) => { const c = anims.animations.find((x) => x.name === nm) || (anims2 && anims2.animations.find((x) => x.name === nm)); if (c)
                         acts[nm] = mixers.map((mx) => mx.clipAction(c)); });
                     let neck = null, neckPlane = null;
                     if (/_Base$/.test(M.files[0]) && parts.length > 1 && !M.bare) {
@@ -17054,10 +17054,10 @@ function CherryAdventure() {
                 }).catch(() => restore());
             };
             // 🎞️ ต่อเฟรม: ยืน/เดิน/วิ่ง/ร่ายเวท + ตัดคอ + สว่างขึ้นตอนกลางคืน (เหมือนโมเดลตัวเรา)
-            G.remoteModelTick = (R, dt, moving, act, fast) => {
+            G.remoteModelTick = (R, dt, moving, act, fast, dance) => {
                 if (!R)
                     return;
-                const want = act && R.acts.Spell_Simple_Idle_Loop ? "Spell_Simple_Idle_Loop" : moving ? (fast && R.acts.Jog_Fwd_Loop ? "Jog_Fwd_Loop" : (R.acts.Walk_Loop ? "Walk_Loop" : "Jog_Fwd_Loop")) : "Idle_Loop";
+                const want = dance && !moving && R.acts.Dance_Loop ? "Dance_Loop" : act && R.acts.Spell_Simple_Idle_Loop ? "Spell_Simple_Idle_Loop" : moving ? (fast && R.acts.Jog_Fwd_Loop ? "Jog_Fwd_Loop" : (R.acts.Walk_Loop ? "Walk_Loop" : "Jog_Fwd_Loop")) : "Idle_Loop";
                 if (want !== R.cur && R.acts[want]) {
                     const prev = R.cur ? R.acts[R.cur] : null;
                     R.acts[want].forEach((a, i) => { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.fadeIn(0.25).play(); if (!prev)
@@ -39932,10 +39932,12 @@ function CherryAdventure() {
                 aiAnim.botTalkTick(dt, t); // 💬 หุ่นยนต์คุยได้
             const DF = G._danceFloor;
             if (DF) { // 🪩 ฟลอร์เต้น — ไฟพื้นวิ่งเป็นคลื่นตอนว่าง · เต้นอยู่ = กระพริบตามจังหวะ + วงแสงแผ่จากจุดที่กดโดน
-                const nowS = performance.now() / 1000, bp = G.dancing ? Math.exp(-(nowS - (G._danceBeatAt || 0)) * 6) : 0, hp = G.dancing ? Math.max(0, 1 - (nowS - (G._danceHitAt || 0)) * 2.2) : 0, bn = G._danceBeatN || 0, c = DF.col, NN = DF.N;
+                const fr = !G.dancing && (G._rtDancers || []).some((q) => Math.hypot(q.x - DF.x, q.z - DF.z) < DF.half + 0.5); // 👯 เพื่อนเต้นอยู่บนฟลอร์ → ไฟพื้นเต้นตามจังหวะด้วย
+                const live = G.dancing || fr, nowS = performance.now() / 1000, bt = 60 / 122;
+                const bp = G.dancing ? Math.exp(-(nowS - (G._danceBeatAt || 0)) * 6) : fr ? Math.exp(-(nowS % bt) * 6) : 0, hp = G.dancing ? Math.max(0, 1 - (nowS - (G._danceHitAt || 0)) * 2.2) : 0, bn = G.dancing ? (G._danceBeatN || 0) : Math.floor(nowS / bt), c = DF.col, NN = DF.N;
                 for (let i = 0; i < NN * NN; i++) {
                     const ix = i % NN, iz = (i / NN) | 0, rr = Math.hypot(ix - (NN - 1) / 2, iz - (NN - 1) / 2);
-                    if (G.dancing) {
+                    if (live) {
                         const on = (ix + iz + bn) % 2 === 0;
                         c.setHSL(((bn * 0.13) + (on ? 0 : 0.5) + rr * 0.03) % 1, 1, (on ? 0.32 + bp * 0.35 : 0.12) + Math.max(0, hp - Math.abs(rr - (1 - hp) * 4.5) * 0.5) * 0.4);
                     }
@@ -39944,10 +39946,10 @@ function CherryAdventure() {
                     DF.tiles.setColorAt(i, c);
                 }
                 DF.tiles.instanceColor.needsUpdate = true;
-                DF.woofers.forEach((w, k) => w.scale.setScalar(1 + (G.dancing ? bp * 0.28 : 0.04 * Math.sin(t * 4 + k))));
+                DF.woofers.forEach((w, k) => w.scale.setScalar(1 + (live ? bp * 0.28 : 0.04 * Math.sin(t * 4 + k))));
                 DF.ball.rotation.y += dt * 0.9;
-                DF.pivot.rotation.y += dt * (G.dancing ? 1.7 : 0.5);
-                DF.beams.forEach((b, k) => { b.material.opacity = (G.dancing ? 0.14 + bp * 0.2 : 0.1); b.rotation.x = 0.55 + Math.sin(t * 1.3 + k) * 0.18; });
+                DF.pivot.rotation.y += dt * (live ? 1.7 : 0.5);
+                DF.beams.forEach((b, k) => { b.material.opacity = live ? 0.14 + bp * 0.2 : 0.1; b.rotation.x = 0.55 + Math.sin(t * 1.3 + k) * 0.18; });
                 const dn = G.mode === "explore" && !G.dancing && Math.hypot(char.position.x - DF.x, char.position.z - DF.z) < DF.half;
                 if (dn !== !!G.danceNear) {
                     G.danceNear = dn;
@@ -74230,7 +74232,8 @@ function CherryAdventure() {
             a.tyaw = m.yaw || 0;
             a.biome = m.biome;
             a.moving = !!m.moving;
-            a.last = Date.now();
+            a.dance = !!m.dance;
+            a.last = Date.now(); // 💃 เพื่อนกำลังเต้น (มินิเกมเต้น/ท่าเต้น)
             // 🦸 เริ่มท่าใหม่ = นับเวลาท่าใหม่ · ตอน "จบท่า" ห้ามล้างตัวนับตรงนี้
             //    ไม่งั้นโค้ดคืนมุมแขนต่อเฟรม (ที่เช็ก castT) จะไม่ทำงาน แขนค้างกางอยู่อย่างนั้น
             if (a.act !== (m.act || null)) {
@@ -74251,6 +74254,7 @@ function CherryAdventure() {
         G.updateRemoteAvatars = (dt, t) => {
             const prevCount = G._rtOnlineCount || 0;
             if (!remoteAvatars.size) {
+                G._rtDancers = null;
                 if (prevCount !== 0) {
                     G._rtOnlineCount = 0;
                     setUi((u) => ({ ...u, rtOnline: 0 }));
@@ -74259,6 +74263,7 @@ function CherryAdventure() {
             }
             const now = Date.now();
             let vis = 0;
+            G._rtDancers = [];
             remoteAvatars.forEach((a, pid) => {
                 if (a.last && now - a.last > 6000) {
                     G._rtDropPet(a);
@@ -74274,6 +74279,8 @@ function CherryAdventure() {
                 if (!show)
                     return;
                 vis++;
+                if (a.dance)
+                    G._rtDancers.push(a.grp.position);
                 const k = Math.min(1, dt * 8);
                 a.grp.position.x += (a.tx - a.grp.position.x) * k;
                 a.grp.position.z += (a.tz - a.grp.position.z) * k;
@@ -74286,7 +74293,7 @@ function CherryAdventure() {
                 const spd = Math.hypot(a.tx - a.grp.position.x, a.tz - a.grp.position.z);
                 const moving = a.moving || spd > 0.04;
                 if (a.grp.userData.rig && G.remoteModelTick)
-                    G.remoteModelTick(a.grp.userData.rig, dt, moving, a.act, spd > 0.35); // 🌐🧍 ท่าของโมเดลใหม่
+                    G.remoteModelTick(a.grp.userData.rig, dt, moving, a.act, spd > 0.35, a.dance); // 🌐🧍 ท่าของโมเดลใหม่
                 a.walk += dt * (moving ? 9 : 0);
                 const sw = Math.sin(a.walk) * (moving ? 0.6 : 0);
                 if (a.grp.userData.legL) {
@@ -74445,7 +74452,7 @@ function CherryAdventure() {
                         pet = { s: p.sp, st: p.stage || 1, lv: p.lv || 1, mu: p.mut || 0 };
                 }
                 // 🧍‍♂️ full cosmetic descriptor so the receiver can rebuild an identical-looking avatar (hat/mask/outfit/wing/hero + hair/skin + pet; the class accessory derives from c)
-                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, lego: (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned()) ? 1 : 0, fest: (G.activeSet && ["songkran", "xmas", "halloween", "newyear"].includes(G.activeSet)) ? G.activeSet : null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
+                G.rtChannel.send({ type: "broadcast", event: "pos", payload: { pid: G.pid, n: (G.playerName || "ผู้เล่น").slice(0, 12), c: G.cls, w: look("weapon"), hat: look("hat"), mask: look("mask"), outfit: look("outfit"), gl: look("gloves"), pa: look("pants"), sh: look("shoes"), wing: (G.activeWing && G.activeWing !== "none") ? G.activeWing : null, hero: G.heroId || null, lego: (G.legoSkinOn && G.legoSkinOwned && G.legoSkinOwned()) ? 1 : 0, fest: (G.activeSet && ["songkran", "xmas", "halloween", "newyear"].includes(G.activeSet)) ? G.activeSet : null, dy: (G.dye && G.dye.outfit) || null, hair: cu.hairStyle || 0, hc: cu.hairColor || 0, sk: cu.skin || 0, pet, dance: (G.dancing || (G._heroModel && G._heroModel.emote && G._heroModel.emote.n === "Dance_Loop")) ? 1 : 0, x: Math.round(char.position.x * 100) / 100, z: Math.round(char.position.z * 100) / 100, yaw: Math.round((char.rotation.y || 0) * 100) / 100, biome: G.curBiome, moving } });
             }
             catch (e) { }
         };
