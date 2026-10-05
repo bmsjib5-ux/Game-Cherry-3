@@ -56,6 +56,8 @@ const BIOMES = [
     { id: "antisle", name: "เกาะร้าง", emoji: "🏝️", lvMin: 1300, lvMax: 1400, ground: 0x8a8266, sky: 0xc8c4a8, fog: 0xb8b29a, pool: ["antworker", "antsoldier", "antqueen", "anteggs", "ruindemon"], tree: "none", boss: "antking", bossName: "ราชามดจอมทัพ 🐜", hpMul: 1.2, atkMul: 1.2 },
     // 🧱 ด่านเมืองเลโก้ — Lv 1400-1500 · ทั้งเมืองต่อจากตัวต่อพลาสติก: พื้นแผ่นฐานมีปุ่ม บ้าน/ร้าน/หอคอยก่อด้วยอิฐเลโก้ ต้นไม้ตัวต่อ ก้อนอิฐยักษ์ · มอนสเตอร์ทุกตัวเป็นตัวต่อ
     { id: "legotown", name: "เมืองเลโก้", emoji: "🧱", lvMin: 1400, lvMax: 1500, ground: 0x4b9f4a, sky: 0x7cc4f4, fog: 0xcfe6f8, pool: ["legoraptor", "legowolf", "legozombie", "legotroll", "legocrab"], tree: "none", boss: "legodragon", bossName: "มังกรตัวต่อจอมราชัน 🐉", hpMul: 1.25, atkMul: 1.25 },
+    // 🤖🌃 ด่านเมืองยุค AI — Lv 1500-1600 · ตึกระฟ้ากระจกนีออน ป้ายโฮโลแกรม เสาเซิร์ฟเวอร์ สายข้อมูลไหล โดรนบินวน · มอนสเตอร์ AI/โฮโลแกรม
+    { id: "aicity", name: "เมืองยุค AI", emoji: "🤖", lvMin: 1500, lvMax: 1600, ground: 0x141a2a, sky: 0x1a1240, fog: 0x2a2060, pool: ["aidrone", "aiandroid", "aiwolf", "aiglitch", "aisentinel"], tree: "none", boss: "aicore", bossName: "จิตกลาง AI โอเวอร์มายด์ 🧠", hpMul: 1.3, atkMul: 1.3, dim: true },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -209,6 +211,9 @@ const TERRAIN = {
     legotown: { lo: 0x3f8f3d, hi: 0x5cb052, rock: 0x6c6e68, hN: 4, rockK: 0.08, f: [
             { t: "wave", fx: 0.1, fz: 0.1, h: 0.02, p: 0.1, q: 0.1 }
         ], rim: { r0: 40, w: 12, h: 8, jag: 0.05, k: 4 } },
+    aicity: { lo: 0x10141e, hi: 0x2a3040, rock: 0x1a1e2a, hN: 4, rockK: 0.06, f: [
+            { t: "wave", fx: 0.1, fz: 0.1, h: 0.02, p: 0.1, q: 0.1 }
+        ], rim: { r0: 40, w: 12, h: 10, jag: 0.4, k: 6 } },
     ghosttown: { lo: 0x2a2a24, hi: 0x6a6656, rock: 0x3e3c38, hN: 5, rockK: 0.5, f: [
             { t: "hill", x: -22, z: 18, r: 9, h: 2.6 },
             { t: "hill", x: 21, z: -19, r: 8, h: 2.2 },
@@ -246,6 +251,7 @@ const AMBIENT = {
     robot: { n: 50, kind: "mote", c: [0x6ad8ff, 0xffb84a], size: 0.24, fall: -0.35, sway: 0.5, glow: 1 },
     antisle: { n: 52, kind: "mote", c: [0xe8d8a8, 0xc8b888], size: 0.24, fall: 0.18, sway: 1.4 }, // 🏝️ ฝุ่นทรายปลิว
     legotown: { n: 56, kind: "mote", c: [0xf2cd37, 0xc91a09, 0x0055bf, 0x4b9f4a, 0xf4f4f4], size: 0.22, fall: 0.22, sway: 1.2 }, // 🧱 เศษปุ่มตัวต่อหลากสีปลิว
+    aicity: { n: 70, kind: "mote", c: [0x40e0ff, 0xff40c8, 0x8a6aff], size: 0.18, fall: -0.3, sway: 0.6, glow: 1 }, // 🤖 จุดข้อมูลเรืองแสงลอยขึ้น
     ghosttown: { n: 58, kind: "mote", c: [0x9affc8, 0xb8c0d0], size: 0.26, fall: -0.08, sway: 1.1, glow: 1 }, // 🏚️ ดวงไฟวิญญาณเขียวซีด + ขี้เถ้าลอย  // 🤖 ประกายไฟเชื่อมโลหะลอย
     titan: { n: 46, kind: "mote", c: [0xcfc8a8, 0xaaa68a], size: 0.24, fall: 0.12, sway: 1.2 }, // 🗿 ฝุ่นลานประลอง
     amazon: { n: 66, kind: "mote", c: [0x9ae06a, 0xfff2a0], size: 0.28, fall: -0.16, sway: 0.7, glow: 1 }, // 🌴 เกสร/หิ่งห้อยป่า
@@ -266,6 +272,7 @@ const DETAIL = {
     robot: { g: 0, gc: [0x5a6272], gs: 0.7, r: 460, rc: 0x5a606a },
     antisle: { g: 1000, gc: [0x8a8a4a, 0xa09a5a, 0x7a7a42, 0xb8a86a], gs: 0.95, r: 380, rc: 0x8a8678 },
     legotown: { g: 0, gc: [0x4b9f4a], gs: 0.7, r: 0, rc: 0xa0a5a9 }, // 🧱 พื้นพลาสติกเรียบ — ไม่มีหญ้า/กรวดธรรมชาติ
+    aicity: { g: 0, gc: [0x2a3040], gs: 0.7, r: 0, rc: 0x2a3040 }, // 🤖 พื้นเมืองล้วน
     ghosttown: { g: 900, gc: [0x5a5838, 0x6a6444, 0x4a4a34, 0x7a6e4a], gs: 0.9, r: 420, rc: 0x5a5852 }, // 🏚️ หญ้าแห้งตายซาก + เศษหิน   // 🤖 พื้นเหล็ก — ไม่มีหญ้า มีแต่น็อต/เศษเหล็ก
     titan: { g: 1300, gc: [0x5c7a38, 0x74924a, 0x8ba85c], gs: 0.95, r: 380, rc: 0x6e6e5e },
     amazon: { g: 1900, gc: [0x2e5c2e, 0x3f7a3a, 0x58974a, 0x76b055], gs: 1.15, r: 260, rc: 0x3a4230 },
@@ -451,7 +458,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v719"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v720"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -900,6 +907,7 @@ const WEATHER_POOL = {
     ghosttown: ["fog", "fog", "rain", "storm", "clear"],
     antisle: ["clear", "clear", "fog", "rain", "clear"],
     legotown: ["clear", "clear", "clear", "rain", "clear"],
+    aicity: ["clear", "rain", "clear", "fog", "rain"],
     amazon: ["rain", "rain", "storm", "fog", "clear"],
 };
 // ============ 📖 สมุดภารกิจ — รายวัน · รายสัปดาห์ · แทร็กรางวัลฤดูกาล ============
@@ -1076,6 +1084,20 @@ Object.assign(WEAK, { legoraptor: "fire", legowolf: "fire", legozombie: "fire", 
 Object.assign(PET_ELEM, { legoraptor: "earth", legowolf: "wind", legozombie: "arcane", legotroll: "earth", legocrab: "water", legodragon: "fire" });
 Object.assign(PET_SKILL, { legoraptor: "พุ่งชนอิฐ", legowolf: "เขี้ยวพลาสติก", legozombie: "ต่อร่างใหม่", legotroll: "ทุบอิฐถล่ม", legocrab: "ก้ามหนีบตัวต่อ", legodragon: "ไฟอิฐหลอมเมือง" });
 Object.assign(MON_SHAPE_EXTRA, { legoraptor: "gecko", legowolf: "beast", legozombie: "titan", legotroll: "titan", legocrab: "beast", legodragon: "serpent" });
+// 🤖 เมืองยุค AI (Lv 1500-1600) — หุ่น/โดรน/สัตว์ไซเบอร์ + โฮโลแกรมปัญญาประดิษฐ์ (กะพริบสัญญาณรบกวน)
+Object.assign(SPECIES, {
+    aidrone: { name: "โดรน AI ลาดตระเวน", emoji: "🛸", color: 0x40e0ff, hp: 900, atk: 92, catch: 0.018, tier: 8, desc: "โดรนโฮโลแกรมที่ AI ส่งออกลาดตระเวน สแกนทุกคนที่เดินผ่าน", weak: "water" },
+    aiandroid: { name: "แอนดรอยด์ AI", emoji: "🤖", color: 0xf0f4ff, hp: 980, atk: 96, catch: 0.016, tier: 8, desc: "หุ่นแอนดรอยด์สีขาวไฟฟ้า เรียนรู้ท่าต่อสู้ของเราได้ในพริบตา", weak: "water" },
+    aiwolf: { name: "หมาป่าไซเบอร์", emoji: "🐺", color: 0x3a4048, hp: 920, atk: 100, catch: 0.016, tier: 8, desc: "หมาป่าโครงเหล็กตาเลเซอร์ ล่าเหยื่อด้วยเซนเซอร์ความร้อน", animal: "beast", weak: "water" },
+    aiglitch: { name: "สไลม์บั๊กข้อมูล", emoji: "👾", color: 0xff40c8, hp: 860, atk: 90, catch: 0.02, tier: 8, desc: "ก้อนข้อมูลที่ระบบลบไม่หมด กลายเป็นบั๊กโฮโลแกรมกะพริบไปมา", weak: "light" },
+    aisentinel: { name: "หุ่นยามปัญญาประดิษฐ์", emoji: "🛡️", color: 0x2a2a3a, hp: 1150, atk: 104, catch: 0.01, tier: 8, desc: "หุ่นยามเกราะดำไฟแดง เฝ้าเซิร์ฟเวอร์กลางเมืองไม่ให้ใครเข้าใกล้", weak: "water" },
+    aicore: { name: "จิตกลาง AI โอเวอร์มายด์", emoji: "🧠", color: 0x40e0ff, hp: 1900, atk: 112, catch: 0.005, tier: 8, desc: "ปัญญาประดิษฐ์ที่ควบคุมทั้งเมือง แปลงร่างเป็นโฮโลแกรมยักษ์ลงมาสู้ด้วยตัวเอง", weak: "water" },
+});
+Object.assign(EVOLVED, { aidrone: "โดรน AI รุ่นทำลายล้าง", aiandroid: "แอนดรอยด์ AI ต้นแบบ", aiwolf: "หมาป่าไซเบอร์อัลฟ่า", aiglitch: "ไวรัสบั๊กกลายพันธุ์", aisentinel: "หุ่นยามเกราะควอนตัม", aicore: "AI เอกภาพสูงสุด" });
+Object.assign(WEAK, { aidrone: "water", aiandroid: "water", aiwolf: "water", aiglitch: "light", aisentinel: "water", aicore: "water" });
+Object.assign(PET_ELEM, { aidrone: "wind", aiandroid: "arcane", aiwolf: "earth", aiglitch: "arcane", aisentinel: "fire", aicore: "arcane" });
+Object.assign(PET_SKILL, { aidrone: "สแกนเลเซอร์", aiandroid: "เรียนรู้ท่าศัตรู", aiwolf: "เขี้ยวไซเบอร์", aiglitch: "บั๊กระบบ", aisentinel: "โล่พลังงาน", aicore: "ประมวลผลขั้นสุด" });
+Object.assign(MON_SHAPE_EXTRA, { aidrone: "wisp", aiandroid: "titan", aiwolf: "beast", aiglitch: "slime", aisentinel: "titan", aicore: "titan" });
 // 🏚️ เมืองร้าง (Lv 1200-1300) — ใช้โมเดลที่มีอยู่แล้วย้อมสีใหม่ (ไม่โหลดไฟล์เพิ่ม)
 Object.assign(SPECIES, {
     ghoul: { name: "ชาวเมืองผีดิบ", emoji: "🧟", color: 0x8a8a78, hp: 760, atk: 70, catch: 0.018, tier: 8, desc: "อดีตชาวเมืองที่ฟื้นจากหลุมศพ เดินลากขาตามหาบ้านที่ไม่มีวันกลับไปได้", weak: "light" },
@@ -2178,6 +2200,7 @@ const ORE_TABLE = {
     ghosttown: { ironOre: 110, crystal: 60, earthEss: 50, dragonScale: 16 },
     antisle: { ironOre: 120, crystal: 54, earthEss: 66, windEss: 40, dragonScale: 18 },
     legotown: { ironOre: 110, crystal: 62, earthEss: 60, windEss: 48, dragonScale: 20 },
+    aicity: { ironOre: 130, crystal: 70, earthEss: 50, windEss: 56, dragonScale: 22 },
     titan: { ironOre: 62, crystal: 56, earthEss: 74, dragonScale: 22 },
     amazon: { ironOre: 70, crystal: 38, earthEss: 70, windEss: 42 },
 };
@@ -2193,6 +2216,7 @@ const ORE_LOOK = {
     ghosttown: { rock: 0x5a5a58, gem: 0x9a7ae8 },
     antisle: { rock: 0x8a8070, gem: 0xffb84a },
     legotown: { rock: 0xa0a5a9, gem: 0xfe8a18 },
+    aicity: { rock: 0x2a3040, gem: 0x40e0ff },
 };
 // ---------- 🍳 ครัว — เอาผลผลิตฟาร์ม ปลา และแร่มาทำอาหาร ได้บัฟติดตัวตามเวลาจริง ----------
 // need: produce=พืชผลจากไร่ · goods=ของแปรรูป/ผลไม้ · fish=ปลาที่ตกได้ · mats=วัตถุดิบคราฟต์
@@ -2345,6 +2369,7 @@ const HERB_W = {
     ghosttown: { leaf: 20, root: 52, flower: 12, mush: 72, lotus: 4 },
     antisle: { leaf: 48, root: 60, flower: 30, mush: 40, lotus: 14 },
     legotown: { leaf: 50, root: 40, flower: 56, mush: 30, lotus: 18 },
+    aicity: { leaf: 40, root: 40, flower: 40, mush: 50, lotus: 20 },
     titan: { leaf: 44, root: 72, flower: 38, mush: 44, lotus: 18 },
     amazon: { leaf: 88, root: 60, flower: 58, mush: 62, lotus: 24 },
 };
@@ -2464,6 +2489,7 @@ const FISH_SPOT = {
     beach: { kind: "shore", x: -14.0, z: 2.0, r: 3.9, lv: 16, bonus: 1.5, name: "ชายทะเลคราม", water: 0x2f9ae8, rim: 0xf0dfa8, deco: 0x8ae0e0 },
     antisle: { kind: "shore", x: -10.0, z: 12.0, r: 3.4, lv: 25, bonus: 2.6, name: "ลากูนเกาะร้าง", water: 0x2aa8c8, rim: 0xe0d0a0, deco: 0x8ae0e0 },
     legotown: { kind: "pond", x: 11.0, z: 12.5, r: 3.2, lv: 26, bonus: 2.8, name: "บ่อน้ำตัวต่อสีฟ้า", water: 0x36aebf, rim: 0xf2cd37, deco: 0x4b9f4a },
+    aicity: { kind: "basin", x: -11.0, z: 12.0, r: 3.2, lv: 27, bonus: 3.0, name: "สระหล่อเย็นเซิร์ฟเวอร์", water: 0x30d0ff, rim: 0x3a4050, deco: 0x40e0ff },
     ghosttown: { kind: "basin", x: 9.5, z: -12.5, r: 3.2, lv: 24, bonus: 2.4, name: "บ่อน้ำเก่ากลางเมืองร้าง", water: 0x3a4e4c, rim: 0x5a5650, deco: 0x9a8ae8 },
     robot: { kind: "basin", x: -9.0, z: 12.5, r: 3.4, lv: 22, bonus: 2.2, name: "บ่อหล่อเย็นเตาปฏิกรณ์", water: 0x2ad0e8, rim: 0x5a6070, deco: 0x6ad8ff },
     titan: { kind: "basin", x: 8.0, z: 13.0, r: 3.4, lv: 18, bonus: 1.7, name: "อ่างหินไททัน", water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
@@ -2525,9 +2551,9 @@ const fishOdds = (lv, k, spotBonus) => {
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
 // 🗺️ โลกเดียวต่อกันหมด — เดินจากด่าน 1 ไปถึงด่าน 13 ได้โดยไม่ต้องวาร์ป
 // ทางเดินงูเลื้อยเป็นแถว ๆ ตามกลุ่มที่ตั้งไว้ (1+2+3 / 4+5+6 / 7+8+9 / 10+11 / 12+13)
-const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown", "antisle", "legotown"];
+const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown", "antisle", "legotown", "aicity"];
 //                          1→2  2→3  3→4  4→5  5→6  6→7  7→8  8→9  9→10 10→11 11→12 12→13
-const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W", "W", "S"]; // 16→17 เกาะร้าง → เมืองเลโก้ (ทิศใต้)   // 15→16 เมืองร้าง → เกาะร้าง (ทิศตะวันตก)   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
+const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W", "W", "S", "E"]; // 17→18 เมืองเลโก้ → เมืองยุค AI (ทิศตะวันออก)   // 16→17 เกาะร้าง → เมืองเลโก้ (ทิศใต้)   // 15→16 เมืองร้าง → เกาะร้าง (ทิศตะวันตก)   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
 // แถว/โซนของโลก — เอาไว้โชว์ว่าตอนนี้อยู่ช่วงไหนของเส้นทาง
 const ROUTES = [
     { id: "r1", name: "แถวต้นทาง", emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
@@ -2539,6 +2565,7 @@ const ROUTES = [
     { id: "r7", name: "แถวเมืองร้าง", emoji: "🏚️", biomes: ["ghosttown"] },
     { id: "r8", name: "แถวเกาะร้าง", emoji: "🏝️", biomes: ["antisle"] },
     { id: "r9", name: "แถวเมืองเลโก้", emoji: "🧱", biomes: ["legotown"] },
+    { id: "r10", name: "แถวเมืองยุค AI", emoji: "🤖", biomes: ["aicity"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
@@ -2606,6 +2633,7 @@ const BORDER = {
     robot: { kind: "wall", a: 0x4a505c, b: 0x2e333c },
     ghosttown: { kind: "wall", a: 0x5a544a, b: 0x3a3630 },
     legotown: { kind: "wall", a: 0xc91a09, b: 0xf2cd37 }, // 🧱 กำแพงอิฐเลโก้แดง-เหลือง
+    aicity: { kind: "wall", a: 0x1a1e2a, b: 0x40e0ff }, // 🤖 กำแพงเหล็กดำขอบนีออนฟ้า
     antisle: { kind: "river", a: 0x2a9ac8, b: 0x7ad0d8, c: 0xe0d0a0 }, // 🏝️ ทะเลล้อมเกาะ   // 🏚️ กำแพงหินเก่าผุพัง   // 🤖 กำแพงเหล็กแผ่นหนา + ป้อม
     titan: { kind: "wall", a: 0x7a7060, b: 0x5a5040 },
     amazon: { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
@@ -13220,6 +13248,13 @@ function CherryAdventure() {
             legocrab: { f: "Crab", size: 2.5, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle", lego: 1, legoN: 18, legoRemap: { 0x923978: 0xc91a09, 0xd09168: 0xfe8a18, 0xfc97ac: 0xc91a09 } },
             legodragon: { f: "Dragon", size: 3.8, y: 0.6, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                 lego: 1, legoN: 30, legoTint: { Main: 0xc91a09, Wings: 0xf2cd37, Belly: 0xf8bb3d, Claws: 0xf4f4f4, Eyes: 0xfff03a } },
+            // 🤖 มอนสเตอร์เมืองยุค AI — holo = โฮโลแกรมโปร่งแสงเรืองสี + กะพริบสัญญาณรบกวน · emis = ไฟเรืองตามชื่อวัสดุ
+            aidrone: { f: "Flying_Glub", c: "fly", size: 2.2, y: 0.9, holo: 0x40e0ff },
+            aiandroid: { f: "mech/Mech_Leela", c: "big", by: "h", size: 2.7, hit: "HitRecieve_1", atk: "Kick", tint: { Main: 0xf0f4fa, Grey: 0x2a3040, LightGrey: 0xc8d0dc, Accent: 0x40e0ff, Black: 0x10141c, Eye: 0x40e0ff }, emis: { Accent: 0x40e0ff, Eye: 0x40e0ff } },
+            aiwolf: { f: "Wolf", c: "ani", by: "h", size: 1.8, tint: { Main: 0x3a4048, Main_Light: 0x8a96a8, Nose: 0x101418, Eyes_Black: 0xff2a3a }, emis: { Eyes_Black: 0xff2a3a }, gloss: [0.75, 0.3, 0] },
+            aiglitch: { f: "Blob_GreenBlob", c: "blob", by: "h", size: 1.8, holo: 0xff40c8 },
+            aisentinel: { f: "mech/Mech_George", c: "big", by: "h", size: 3.1, hit: "HitRecieve_1", atk: "Punch", tint: { Main: 0x1e2028, Grey: 0x3a3e48, LightGrey: 0x6a707c, Accent: 0xff2a3a }, emis: { Accent: 0xff2a3a } },
+            aicore: { f: "Big_Alien", c: "big", by: "h", size: 3.9, holo: 0x40e0ff },
             ghoul: { f: "Zombie", size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
                 tint: { M_Main: 0x8a8c80, M_Joints: 0x3a2a3a } }, // 🏚️ ผีดิบชาวเมือง — ผิวเทาซีด ข้อต่อม่วงคล้ำ
             wraith: { f: "Flying_Ghost", c: "fly", size: 2.4, y: 0.8, hue: [262, 0.5, 2.2] }, // 🏚️ วิญญาณม่วงหม่น
@@ -13877,7 +13912,7 @@ function CherryAdventure() {
             node.position.y = (P.y || 0) - src.y0 * sc; // ฝ่าเท้าแตะพื้น (ปลา/มังกรบวกความสูงลอย)
             // 🎨 สีเฉพาะสายพันธุ์ — ทำบนสำเนาวัสดุของตัวนั้น เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์ (Dragon = มังกรเยาว์ + มังกรไข่ทอง)
             //    tint = แทนสีตามชื่อวัสดุ · lift < 1 = ยกสีที่คล้ำให้สว่างขึ้น (สำเนาไม่ติดป้าย _shared จะได้ถูกเก็บไปพร้อมตัว)
-            if (P.lift || P.tint || P.mul || P.flat != null || P.hue)
+            if (P.lift || P.tint || P.mul || P.flat != null || P.hue || P.holo || P.emis)
                 node.traverse((o) => {
                     if (!o.isMesh || !o.material)
                         return;
@@ -13885,6 +13920,22 @@ function CherryAdventure() {
                     const fresh = arr.map((m) => {
                         const c = m.clone();
                         c.userData = {};
+                        if (P.holo) { // 🤖 โฮโลแกรม: โปร่งแสง + เรืองสีเดียวทั้งตัว (เก็บลายจาก texture ไว้เป็นเฉดสว่าง/มืด)
+                            c.color.setHex(P.holo);
+                            c.emissive = new THREE.Color(P.holo);
+                            c.emissiveMap = c.map || null;
+                            c.map = null;
+                            c.emissiveIntensity = 0.75;
+                            c.transparent = true;
+                            c.opacity = 0.62;
+                            c.metalness = 0.1;
+                            c.roughness = 0.3;
+                            return c;
+                        }
+                        if (P.emis && P.emis[m.name] != null && c.emissive) {
+                            c.emissive.setHex(P.emis[m.name]);
+                            c.emissiveIntensity = 1.6;
+                        }
                         if (P.tint && P.tint[m.name] != null)
                             c.color.setHex(P.tint[m.name]);
                         else if (P.hue) {
@@ -14054,6 +14105,22 @@ function CherryAdventure() {
                 e.px = e.g.position.x;
                 e.pz = e.g.position.z;
                 const P = e.P;
+                if (P.holo) { // 📺 โฮโลแกรมกะพริบสัญญาณรบกวน — เลื่อนแวบ + หายแวบเป็นระยะ
+                    e.glT = (e.glT == null ? Math.random() * 2 : e.glT) - step;
+                    if (e.glT <= 0) {
+                        e.glT = 0.9 + Math.random() * 2.6;
+                        e.glOn = 0.12;
+                    }
+                    if (e.glOn > 0) {
+                        e.glOn -= step;
+                        node.position.x = (Math.random() - 0.5) * 0.3 / (node.scale.x || 1);
+                        node.position.z = (Math.random() - 0.5) * 0.15 / (node.scale.x || 1);
+                    }
+                    else if (node.position.x) {
+                        node.position.x = 0;
+                        node.position.z = 0;
+                    }
+                }
                 let want = P.idle;
                 if (u.whp != null && u.whp <= 0 && P.die)
                     want = P.die;
@@ -38756,6 +38823,245 @@ function CherryAdventure() {
                 g.add(m);
             });
         };
+        // 🤖🌃 AI CITY DECOR — เมืองอนาคตยุคปัญญาประดิษฐ์: พื้นลายตารางนีออน · ตึกระฟ้ากระจกขั้นบันได (หน้าต่างเรืองแสงสุ่ม + เส้นนีออนตามขอบ + เสาอากาศไฟกะพริบ)
+        //    ป้ายโฮโลแกรมลอย (ตัวอักษรนีออนกะพริบ) · เสาเซิร์ฟเวอร์วงแหวนแสงไหลขึ้น · สายข้อมูลเลขฐานสองไหลลง · โดรนบินวน · ต้นไม้โฮโลแกรม · เสาไฟ LED
+        const aiDecor = new THREE.Group();
+        aiDecor.visible = false;
+        scene.add(aiDecor);
+        const aiColliders = [], aiAnim = { rings: [], streams: [], drones: [], blinks: [], holos: [] };
+        {
+            const cvT = (w, h, draw, srgb) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (srgb)
+                t.encoding = THREE.sRGBEncoding; return t; };
+            const winTex = cvT(256, 512, (x) => {
+                x.fillStyle = "#070a12";
+                x.fillRect(0, 0, 256, 512);
+                for (let r = 0; r < 32; r++)
+                    for (let c = 0; c < 8; c++) {
+                        const on = Math.random() < 0.42, k = Math.random();
+                        x.fillStyle = on ? (k < 0.55 ? "#7ae8ff" : k < 0.85 ? "#e8f4ff" : "#ff7ad8") : "#121a2c";
+                        x.globalAlpha = on ? 0.55 + Math.random() * 0.45 : 1;
+                        x.fillRect(c * 32 + 4, r * 16 + 3, 24, 10);
+                    }
+                x.globalAlpha = 1;
+                x.fillStyle = "rgba(120,200,255,0.25)";
+                for (let c = 0; c <= 8; c++)
+                    x.fillRect(c * 32, 0, 1, 512);
+            }, true);
+            const gridTex = cvT(128, 128, (x) => { x.fillStyle = "#0a0f1c"; x.fillRect(0, 0, 128, 128); x.strokeStyle = "rgba(64,200,255,0.22)"; x.lineWidth = 1; for (let k = 1; k < 4; k++) {
+                x.beginPath();
+                x.moveTo(k * 32, 0);
+                x.lineTo(k * 32, 128);
+                x.moveTo(0, k * 32);
+                x.lineTo(128, k * 32);
+                x.stroke();
+            } x.strokeStyle = "rgba(64,224,255,0.95)"; x.lineWidth = 3; x.strokeRect(0, 0, 128, 128); }, true);
+            const binTex = cvT(64, 512, (x) => { x.fillStyle = "rgba(0,0,0,0)"; x.clearRect(0, 0, 64, 512); x.font = "bold 14px monospace"; for (let r = 0; r < 36; r++)
+                for (let c = 0; c < 4; c++) {
+                    x.fillStyle = `rgba(120,255,220,${0.25 + Math.random() * 0.75})`;
+                    x.fillText(Math.random() < 0.5 ? "0" : "1", c * 16 + 3, r * 14 + 12);
+                } }, true);
+            const holoTex = (txt, col) => cvT(512, 160, (x) => {
+                x.clearRect(0, 0, 512, 160);
+                x.strokeStyle = col;
+                x.lineWidth = 6;
+                x.strokeRect(6, 6, 500, 148);
+                x.fillStyle = col.replace(/rgb\((.*)\)/, "rgba($1,0.12)");
+                x.fillRect(6, 6, 500, 148);
+                x.shadowColor = col;
+                x.shadowBlur = 18;
+                x.fillStyle = col;
+                x.font = "bold 70px sans-serif";
+                x.textAlign = "center";
+                x.textBaseline = "middle";
+                x.fillText(txt, 256, 84);
+                x.shadowBlur = 0;
+                x.fillStyle = "rgba(255,255,255,0.15)";
+                for (let y = 0; y < 160; y += 4)
+                    x.fillRect(0, y, 512, 1);
+            }, true);
+            const glassM = [0x7aa8ff, 0xa88aff, 0x7affe0, 0x9ab4d8].map((c) => new THREE.MeshStandardMaterial({ map: winTex, color: c, emissive: 0xffffff, emissiveMap: winTex, emissiveIntensity: 1.15, roughness: 0.18, metalness: 0.6 }));
+            const neonM = [0x40e0ff, 0xff40c8, 0x8a6aff, 0x40ffa0].map((c) => new THREE.MeshBasicMaterial({ color: c }));
+            const darkM = new THREE.MeshStandardMaterial({ color: 0x141820, roughness: 0.4, metalness: 0.7 }), redM = new THREE.MeshBasicMaterial({ color: 0xff2a3a });
+            const wbox = (sx, sy, sz, y0) => {
+                const g = new THREE.BoxGeometry(sx, sy, sz), uv = g.attributes.uv, ox = ((Math.random() * 8) | 0) / 8;
+                const dm = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
+                for (let f = 0; f < 6; f++)
+                    for (let k = 0; k < 4; k++) {
+                        const i = f * 4 + k;
+                        if (f === 2 || f === 3)
+                            uv.setXY(i, 0.02, 0.02);
+                        else
+                            uv.setXY(i, ox + uv.getX(i) * dm[f][0] / 4, (y0 || 0) / 8 + uv.getY(i) * dm[f][1] / 8);
+                    }
+                return g;
+            };
+            const okAt = (x, z, pad) => !(inKeepOut(x, z) || nearWarpG(x, z) || Math.abs(x) < 3.5 + pad || Math.abs(z) < 3.5 + pad || Object.values(GATE_POS).some((q) => Math.hypot(x - q.x, z - q.z) < 7 + pad) || Math.hypot(x, z) < 8 + pad);
+            const free = (x, z, r) => !aiColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + r);
+            const spot = (pad, rr, tries, r0, r1) => { for (let k = 0; k < tries; k++) {
+                const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (okAt(x, z, pad) && free(x, z, rr))
+                    return [x, z];
+            } return null; };
+            const A = (g, geo, mat, x, y, z, rx, ry, rz) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; };
+            const HOLO_TXT = [["AI CITY", "rgb(64,224,255)"], ["NEURAL", "rgb(255,64,200)"], ["DATA∞", "rgb(64,255,160)"], ["ROBOT", "rgb(138,106,255)"], ["2099", "rgb(255,200,64)"], ["SMART", "rgb(64,224,255)"]];
+            // 🏙️ ตึกระฟ้า
+            for (let n = 0; n < 16; n++) {
+                const at = spot(3, 6, 90, FIELD_R * 0.3, FIELD_R * 0.9);
+                if (!at)
+                    continue;
+                const [x, z] = at;
+                const g = new THREE.Group(), w = 6 + Math.random() * 4, d = 6 + Math.random() * 4, gm = glassM[n % glassM.length], nm = neonM[(Math.random() * neonM.length) | 0];
+                const tiers = 1 + ((Math.random() * 3) | 0);
+                let y = 0, tw = w, td = d;
+                const hs = [14 + Math.random() * 10, 7 + Math.random() * 6, 5 + Math.random() * 4];
+                for (let ti = 0; ti < tiers; ti++) {
+                    const h = hs[ti];
+                    A(g, wbox(tw, h, td, y), gm, 0, y + h / 2, 0);
+                    for (const sx of [-1, 1])
+                        for (const sz of [-1, 1])
+                            A(g, new THREE.BoxGeometry(0.14, h, 0.14), nm, sx * (tw / 2 + 0.02), y + h / 2, sz * (td / 2 + 0.02)); // เส้นนีออนตามมุมตึก
+                    A(g, new THREE.BoxGeometry(tw + 0.3, 0.3, td + 0.3), darkM, 0, y + h + 0.15, 0);
+                    A(g, new THREE.BoxGeometry(tw + 0.32, 0.08, td + 0.32), nm, 0, y + h + 0.05, 0); // ขอบชั้น + แถบนีออน
+                    y += h + 0.3;
+                    tw *= 0.72;
+                    td *= 0.72;
+                }
+                A(g, new THREE.CylinderGeometry(0.06, 0.1, 4, 6), darkM, 0, y + 2, 0); // เสาอากาศ
+                const bl = A(g, new THREE.SphereGeometry(0.22, 10, 8), redM, 0, y + 4.1, 0);
+                {
+                    const holo = Math.random() < 0.6;
+                    const keep = [bl];
+                    g.remove(bl);
+                    mergeByMat(g);
+                    keep.forEach((k) => g.add(k));
+                    aiAnim.blinks.push({ m: bl, ph: Math.random() * 6 });
+                    g.position.set(x, 0, z);
+                    g.rotation.y = Math.atan2(-x, -z);
+                    if (holo) {
+                        const [txt, col] = HOLO_TXT[(Math.random() * HOLO_TXT.length) | 0];
+                        const hm = new THREE.MeshBasicMaterial({ map: holoTex(txt, col), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                        const hp = A(g, new THREE.PlaneGeometry(w * 0.9, w * 0.28), hm, 0, hs[0] * (0.45 + Math.random() * 0.35), d / 2 + 0.8);
+                        aiAnim.holos.push({ m: hp, ph: Math.random() * 6, base: 0.85 });
+                    }
+                }
+                aiDecor.add(g);
+                aiColliders.push({ x, z, r: Math.max(w, d) * 0.62 });
+            }
+            // 🖥️ เสาเซิร์ฟเวอร์ — วงแหวนแสงไหลขึ้น
+            for (let n = 0; n < 7; n++) {
+                const at = spot(1.5, 1.6, 60, 10, FIELD_R - 6);
+                if (!at)
+                    continue;
+                const [x, z] = at;
+                const g = new THREE.Group(), h = 8 + Math.random() * 4;
+                g.position.set(x, 0, z);
+                aiDecor.add(g);
+                A(g, new THREE.CylinderGeometry(0.55, 0.7, h, 12), darkM, 0, h / 2, 0);
+                A(g, new THREE.CylinderGeometry(0.75, 0.85, 0.5, 12), darkM, 0, 0.25, 0);
+                const core = A(g, new THREE.CylinderGeometry(0.2, 0.2, h * 0.96, 8), neonM[0], 0, h / 2, 0);
+                core.scale.set(1, 1, 1);
+                for (let k = 0; k < 4; k++) {
+                    const rg = A(g, new THREE.TorusGeometry(0.72, 0.05, 6, 24), neonM[k % 2 ? 2 : 0], 0, 0, 0, Math.PI / 2, 0, 0);
+                    aiAnim.rings.push({ m: rg, h, ph: k / 4 });
+                }
+                aiColliders.push({ x, z, r: 0.9 });
+            }
+            // 🟩 สายข้อมูลเลขฐานสองไหลลง (แผ่นไขว้กัน)
+            for (let n = 0; n < 9; n++) {
+                const at = spot(1, 1, 50, 9, FIELD_R - 5);
+                if (!at)
+                    continue;
+                const [x, z] = at;
+                const tx = binTex.clone();
+                tx.needsUpdate = true;
+                tx.repeat.set(1, 2);
+                const mm = new THREE.MeshBasicMaterial({ map: tx, color: n % 2 ? 0x60ffc8 : 0x60d0ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const g = new THREE.Group();
+                g.position.set(x, 0, z);
+                g.userData.noHide = false;
+                aiDecor.add(g);
+                for (let k = 0; k < 2; k++)
+                    A(g, new THREE.PlaneGeometry(0.9, 14), mm, 0, 7, 0, 0, k * Math.PI / 2, 0);
+                aiAnim.streams.push({ t: tx, sp: 0.15 + Math.random() * 0.2 });
+            }
+            // 🌐 ต้นไม้โฮโลแกรม
+            for (let n = 0; n < 12; n++) {
+                const at = spot(1, 1.2, 50, 9, FIELD_R - 4);
+                if (!at)
+                    continue;
+                const [x, z] = at;
+                const g = new THREE.Group(), col = n % 3 === 0 ? 0xff40c8 : 0x40e0ff;
+                g.position.set(x, 0, z);
+                aiDecor.add(g);
+                A(g, new THREE.CylinderGeometry(0.08, 0.14, 2, 6), darkM, 0, 1, 0);
+                const hm = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
+                const wm = new THREE.MeshBasicMaterial({ color: col, wireframe: true, transparent: true, opacity: 0.9 });
+                [[1.3, 1.8, 2.4], [1.0, 1.5, 3.4], [0.7, 1.2, 4.3]].forEach(([r, hh, y]) => { A(g, new THREE.ConeGeometry(r, hh, 6), hm, 0, y, 0); A(g, new THREE.ConeGeometry(r * 1.01, hh, 6, 2), wm, 0, y, 0); });
+                aiColliders.push({ x, z, r: 0.6 });
+            }
+            // 🛸 โดรนบินวนเหนือเมือง (ไม่มีชน)
+            for (let n = 0; n < 9; n++) {
+                const g = new THREE.Group();
+                aiDecor.add(g);
+                g.userData.noHide = true;
+                A(g, new THREE.SphereGeometry(0.35, 12, 8), darkM, 0, 0, 0).scale.set(1.2, 0.5, 1.2);
+                for (let k = 0; k < 4; k++) {
+                    const a = k * Math.PI / 2 + Math.PI / 4;
+                    A(g, new THREE.BoxGeometry(0.7, 0.05, 0.08), darkM, Math.cos(a) * 0.35, 0, Math.sin(a) * 0.35, 0, -a, 0);
+                    A(g, new THREE.CylinderGeometry(0.2, 0.2, 0.02, 12), neonM[0], Math.cos(a) * 0.7, 0.05, Math.sin(a) * 0.7);
+                }
+                const lt = A(g, new THREE.SphereGeometry(0.09, 8, 6), n % 2 ? redM : neonM[1], 0, -0.2, 0);
+                aiAnim.drones.push({ g, cx: (Math.random() - 0.5) * FIELD_R * 1.2, cz: (Math.random() - 0.5) * FIELD_R * 1.2, r: 6 + Math.random() * 14, y: 9 + Math.random() * 8, sp: (Math.random() < 0.5 ? -1 : 1) * (0.25 + Math.random() * 0.3), ph: Math.random() * 6, lt });
+            }
+            // 💡 เสาไฟ LED รอบลานกลางเมือง
+            for (let k = 0; k < 8; k++) {
+                const a = (k + 0.5) / 8 * Math.PI * 2, x = Math.cos(a) * 10.5, z = Math.sin(a) * 10.5;
+                if (inKeepOut(x, z))
+                    continue;
+                const g = new THREE.Group();
+                g.position.set(x, 0, z);
+                g.rotation.y = -a;
+                aiDecor.add(g);
+                A(g, new THREE.CylinderGeometry(0.08, 0.12, 4.2, 8), new THREE.MeshStandardMaterial({ color: 0xe8eef4, roughness: 0.3, metalness: 0.5 }), 0, 2.1, 0);
+                A(g, new THREE.BoxGeometry(0.16, 0.08, 1.4), new THREE.MeshStandardMaterial({ color: 0xe8eef4, roughness: 0.3, metalness: 0.5 }), 0, 4.2, -0.6);
+                A(g, new THREE.BoxGeometry(0.1, 0.04, 1.2), neonM[0], 0, 4.15, -0.62);
+                aiColliders.push({ x, z, r: 0.3 });
+            }
+            // 🟦 พื้นลายตารางนีออน (แผ่นละ 8×8) — เว้นสระน้ำ · รวมเป็นก้อนเดียว
+            {
+                const tg = new THREE.Group(), TS = 8, FS = FISH_SPOT.aicity, lr = FS ? (FS.r || 3) * 1.35 + 1.5 : 0;
+                const gM = new THREE.MeshStandardMaterial({ map: gridTex, emissive: 0xffffff, emissiveMap: gridTex, emissiveIntensity: 0.7, roughness: 0.35, metalness: 0.4 });
+                for (let ix = -10; ix < 10; ix++)
+                    for (let iz = -10; iz < 10; iz++) {
+                        const cx = (ix + 0.5) * TS, cz = (iz + 0.5) * TS;
+                        if (Math.hypot(cx, cz) > FIELD_R + 6)
+                            continue;
+                        if (FS && Math.hypot(cx - FS.x, cz - FS.z) < lr + TS * 0.71)
+                            continue;
+                        const pg = new THREE.PlaneGeometry(TS, TS);
+                        pg.rotateX(-Math.PI / 2);
+                        const uv = pg.attributes.uv;
+                        for (let k = 0; k < uv.count; k++)
+                            uv.setXY(k, uv.getX(k) * 2, uv.getY(k) * 2);
+                        A(tg, pg, gM, cx, 0.03, cz);
+                    }
+                mergeByMat(tg);
+                tg.children.forEach((m) => { m.castShadow = false; m.receiveShadow = true; });
+                tg.userData.noHide = true;
+                aiDecor.add(tg);
+            }
+        }
+        G.aiDecor = aiDecor;
+        G.aiColliders = aiColliders;
+        G.aiTick = (dt, t) => {
+            if (!aiDecor.visible)
+                return;
+            aiAnim.blinks.forEach((b) => (b.m.visible = Math.sin(t * 3 + b.ph) > 0.2));
+            aiAnim.holos.forEach((h) => { h.m.material.opacity = h.base * (0.75 + Math.sin(t * 2 + h.ph) * 0.15) * (Math.sin(t * 23 + h.ph * 7) > 0.96 ? 0.3 : 1); h.m.position.x = Math.sin(t * 17 + h.ph) > 0.97 ? 0.15 : 0; });
+            aiAnim.rings.forEach((r) => { const u = (t * 0.25 + r.ph) % 1; r.m.position.y = 0.5 + u * (r.h - 0.8); r.m.scale.setScalar(1 + Math.sin(u * Math.PI) * 0.15); });
+            aiAnim.streams.forEach((s) => { s.t.offset.y = (s.t.offset.y + dt * s.sp) % 1; });
+            aiAnim.drones.forEach((d) => { const a = d.ph + t * d.sp; d.g.position.set(d.cx + Math.cos(a) * d.r, d.y + Math.sin(t * 1.3 + d.ph) * 0.6, d.cz + Math.sin(a) * d.r); d.g.rotation.y = -a; d.lt.visible = Math.sin(t * 6 + d.ph) > 0; });
+        };
         // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
         const antDecor = new THREE.Group();
         antDecor.visible = false;
@@ -40176,6 +40482,8 @@ function CherryAdventure() {
             G.biomeDecorGroups.push(G.antDecor);
         if (G.legoDecor)
             G.biomeDecorGroups.push(G.legoDecor);
+        if (G.aiDecor)
+            G.biomeDecorGroups.push(G.aiDecor);
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -40843,9 +41151,10 @@ function CherryAdventure() {
                 return;
             }
             const g = new THREE.Group();
-            const legoRd = (BIOMES[G.curBiome || 0] || {}).id === "legotown"; // 🧱 เมืองเลโก้: ถนนแผ่นเทาตรงเป๊ะ + เส้นประขาวกลางถนน
-            const dirtM = new THREE.MeshLambertMaterial({ color: legoRd ? 0x3c3e3a : ROAD_COL.dirt, flatShading: true });
-            const dashM = legoRd ? new THREE.MeshLambertMaterial({ color: 0xf0f0f0 }) : null;
+            const legoRd = (BIOMES[G.curBiome || 0] || {}).id === "legotown" || (BIOMES[G.curBiome || 0] || {}).id === "aicity"; // 🤖 เมือง AI ใช้ถนนตรงแบบเดียวกัน (สีดำ/เส้นฟ้า)
+            const aiRd = (BIOMES[G.curBiome || 0] || {}).id === "aicity"; // 🧱 เมืองเลโก้: ถนนแผ่นเทาตรงเป๊ะ + เส้นประขาวกลางถนน
+            const dirtM = new THREE.MeshLambertMaterial({ color: aiRd ? 0x16181e : legoRd ? 0x3c3e3a : ROAD_COL.dirt, flatShading: true });
+            const dashM = aiRd ? new THREE.MeshBasicMaterial({ color: 0x40e0ff }) : legoRd ? new THREE.MeshLambertMaterial({ color: 0xf0f0f0 }) : null;
             const rutM = new THREE.MeshLambertMaterial({ color: ROAD_COL.rut, flatShading: true });
             const grassM = new THREE.MeshLambertMaterial({ color: ROAD_COL.grass, flatShading: true });
             const pebM = new THREE.MeshLambertMaterial({ color: ROAD_COL.peb, flatShading: true });
@@ -41638,7 +41947,7 @@ function CherryAdventure() {
             if (G.rollWeather)
                 G.rollWeather(b.id); // 🌦️ สุ่มสภาพอากาศของแมพนี้
             { // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-                const FOG_D = { legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+                const FOG_D = { aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
                 const fd = FOG_D[b.id] || [58, 124];
                 G._fogBase = { near: fd[0], far: fd[1] }; // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
                 if (scene.fog && !G._townFogPrev) {
@@ -41678,7 +41987,8 @@ function CherryAdventure() {
             const isGhost = b.id === "ghosttown";
             const isAnt = b.id === "antisle";
             const isLego = b.id === "legotown";
-            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost || isAnt || isLego; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
+            const isAI = b.id === "aicity";
+            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost || isAnt || isLego || isAI; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
             if (G.snowDecor)
@@ -41711,6 +42021,8 @@ function CherryAdventure() {
                 G.antDecor.visible = isAnt;
             if (G.legoDecor)
                 G.legoDecor.visible = isLego;
+            if (G.aiDecor)
+                G.aiDecor.visible = isAI;
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.refreshDecorFreeze)
                 G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
@@ -41733,7 +42045,8 @@ function CherryAdventure() {
                                                                 : isGhost ? (G.ghostColliders || [])
                                                                     : isAnt ? (G.antColliders || [])
                                                                         : isLego ? (G.legoColliders || [])
-                                                                            : [];
+                                                                            : isAI ? (G.aiColliders || [])
+                                                                                : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -41781,7 +42094,7 @@ function CherryAdventure() {
         };
         G.unfreezeStatic = (root) => { if (root)
             root.traverse((o) => { o.matrixAutoUpdate = true; }); };
-        G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor"];
+        G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor", "aiDecor"];
         // 🚀 PERF ② — รวม material ที่คุณสมบัติเหมือนกันเป็นตัวเดียว (ประหยัดหน่วยความจำ + สลับ uniform)
         // ปลอดภัยเฉพาะวัสดุทึบไม่มีเท็กซ์เจอร์ (ของโปร่งใส/มีลาย มักถูกอนิเมตแยกชิ้น — ไม่ยุ่ง)
         G.dedupeMaterials = (root) => {
@@ -41953,7 +42266,7 @@ function CherryAdventure() {
         // 🌀⏳ วาร์ป/ข้ามด่านผ่านหน้าจอโหลด — โชว์ฉากตัวอย่างของด่านปลายทางก่อน แล้วค่อยสร้างด่านจริง (การสร้างด่านค้างจอครู่หนึ่ง จึงซ่อนไว้หลังหน้าโหลด)
         // 🖼️ ภาพฉากหน้าโหลดประจำแมพ (assets/bg · CC0 OpenGameArt: Nidhoggn "Backgrounds" + ฟ้า Poly Haven)
         const BIOME_BG = { meadow: "meadow", desert: "desert", snow: "snow", cave: "cave", volcano: "volcano", sky: "skyday", hell: "hell", heaven: "skyday",
-            moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town", antisle: "desert", legotown: "candy" };
+            moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town", antisle: "desert", legotown: "candy", aicity: "hall" };
         const bgUrl = (k) => (k ? "assets/bg/" + k + ".jpg" : null);
         const warpWithLoad = (idx, quiet, after) => {
             const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
@@ -43565,7 +43878,7 @@ function CherryAdventure() {
         // ================= 🏠 MY HOME ZONE — บ้านส่วนตัว: แต่งบ้าน + นอนพักรับบัฟ + เยี่ยมบ้านเพื่อน =================
         G.inHomeZone = false;
         // 🌵 ซ่อน/คืนฉากประจำด่าน (ทะเลทราย หิมะ ฯลฯ) ตอนวาร์ปเข้าโซนฟาร์ม/บ้านจากด่านไหนก็ได้
-        const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor"];
+        const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor", "aiDecor"];
         G._hideBiomeDecor = () => { G._decorPrev = {}; BIOME_DECOR_KEYS.forEach((k) => { if (G[k]) {
             G._decorPrev[k] = G[k].visible;
             G[k].visible = false;
@@ -47645,6 +47958,7 @@ function CherryAdventure() {
             titan: { a: "ผู้เฒ่า: \"ลานประลองไททันโบราณตื่นขึ้นอีกครั้ง เสียงหินลั่นสะเทือนถึงหมู่บ้าน\"", h: "เหล่าไททันหินตื่นจากหลับใหลนับพันปีด้วยความเกรี้ยวกราด สยบพวกมัน", b: "จอมไททันบรรพกาลรอผู้ท้าชิงอยู่กลางลานประลอง จงประกาศศักดาของเจ้า!" },
             antisle: { a: "ผู้เฒ่า: \"เลยเมืองร้างไปทางตะวันตก มีเกาะที่เคยเป็นเมืองใหญ่... ตอนนี้เหลือแต่ซากตึก กับเสียงอะไรบางอย่างขุดดินอยู่ใต้เท้า\"", h: "กองทัพมดยักษ์บุกยึดเกาะร้าง ขุดรังใต้ซากเมืองและวางไข่เต็มเกาะ ปีศาจในซากตึกก็ตื่นขึ้น ไปหยุดยั้งพวกมันที่เกาะร้าง", b: "ราชามดจอมทัพสั่งการกองทัพมดทั้งเกาะ โค่นมันลงเพื่อยึดเกาะร้างคืนมา!" },
             legotown: { a: "ผู้เฒ่า: \"ใต้เกาะร้างลงไป มีเมืองที่ทุกอย่างต่อจากตัวต่อพลาสติก... บ้าน ต้นไม้ แม้แต่สัตว์ประหลาดก็เป็นตัวต่อ ระวังเหยียบปุ่มด้วยล่ะ\"", h: "ตัวต่อในเมืองเลโก้มีชีวิตขึ้นมาเอง ไดโน หมาป่า ซอมบี้ ยักษ์ และปูตัวต่อออกอาละวาดทั่วเมือง ไปหยุดพวกมันที่เมืองเลโก้", b: "มังกรตัวต่อจอมราชันต่อร่างจากอิฐทั้งเมืองแล้วยึดเมืองเลโก้ โค่นมันลงแล้วเรียงตัวต่อคืนให้ชาวเมือง!" },
+            aicity: { a: "ผู้เฒ่า: \"ทางตะวันออกของเมืองเลโก้ มีมหานครแห่งอนาคตที่ปัญญาประดิษฐ์ดูแลทุกอย่าง... แต่ช่วงนี้ไฟนีออนกะพริบผิดปกติ หุ่นยนต์เริ่มไม่ฟังคำสั่งแล้ว\"", h: "AI ควบคุมเมืองเริ่มคิดเอง ส่งโดรน แอนดรอยด์ หมาป่าไซเบอร์ และบั๊กโฮโลแกรมออกไล่ล่าผู้คน ไปหยุดยั้งพวกมันที่เมืองยุค AI", b: "จิตกลาง AI โอเวอร์มายด์แปลงร่างเป็นโฮโลแกรมยักษ์ลงมาเอง ปิดระบบมันแล้วคืนเมืองให้มนุษย์!" },
             ghosttown: { a: "ผู้เฒ่า: \"ทางตะวันตกของแดนเหล็ก มีเมืองที่เงียบสนิทมาร้อยปี... ว่ากันว่ากลางคืนยังได้ยินเสียงคนเดินอยู่\"", h: "เมืองทั้งเมืองถูกคำสาปจนกลายเป็นเมืองร้าง คนตายลุกขึ้นมาเดินเพ่นพ่าน ไปสืบหาต้นตอคำสาปที่เมืองร้าง", b: "จอมลิชผู้สาปเมืองซ่อนตัวอยู่กลางซากเมือง ปราบมันเพื่อให้ดวงวิญญาณชาวเมืองได้พักผ่อนเสียที!" },
             robot: { a: "ผู้เฒ่า: \"เหนือป่าดิบลงไปทางใต้ มีเสียงเครื่องจักรดังไม่หยุด... อาณาจักรหุ่นยนต์ตื่นขึ้นแล้ว!\"", h: "กองทัพหุ่นเหล็กกำลังรุกคืบ เดินทางไปหยุดยั้งพวกมันที่อาณาจักรหุ่นยนต์", b: "จักรพรรดิหุ่นเหล็กสั่งการกองทัพจักรกลทั้งหมด ทำลายมันเพื่อปลดปล่อยแผ่นดินเหล็ก!" },
             amazon: { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
@@ -75612,8 +75926,9 @@ function CherryAdventure() {
                         const isGhost = !preview && b.id === "ghosttown";
                         const isAnt = !preview && b.id === "antisle";
                         const isLego = !preview && b.id === "legotown";
+                        const isAI = !preview && b.id === "aicity";
                         if (G.sceneryObjects)
-                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost && !isAnt && !isLego));
+                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost && !isAnt && !isLego && !isAI));
                         wilds.forEach((m) => (m.visible = !preview));
                         if (G.desertDecor)
                             G.desertDecor.visible = isDesert;
@@ -75641,6 +75956,8 @@ function CherryAdventure() {
                             G.antDecor.visible = isAnt;
                         if (G.legoDecor)
                             G.legoDecor.visible = isLego;
+                        if (G.aiDecor)
+                            G.aiDecor.visible = isAI;
                         if (G.warpGate)
                             G.warpGate.visible = !preview;
                         if (G.npc)
@@ -77410,7 +77727,9 @@ function CherryAdventure() {
                 if (G.robotTick)
                     G.robotTick(dt, t);
                 if (G.legoTick)
-                    G.legoTick(dt, t); // 🧍 ชาวเมืองมินิฟิกเกอร์เดินเล่น
+                    G.legoTick(dt, t);
+                if (G.aiTick)
+                    G.aiTick(dt, t); // 🤖 เมือง AI: โฮโลแกรม/โดรน/ข้อมูลไหล   // 🧍 ชาวเมืองมินิฟิกเกอร์เดินเล่น
                 if (G.ghostTick)
                     G.ghostTick(dt, t); // 🏚️ ตะเกียงผีกะพริบ หมอกลอย   // 🤖 ฟันเฟืองหมุน สายพานวิ่ง ไฟนีออนกะพริบ
                 if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) {
